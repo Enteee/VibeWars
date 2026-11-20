@@ -1628,8 +1628,9 @@ export interface LeaveControl {
  * Fill the leave control: a "leave match (F10)" button that asks "leave?
  * yes / no" first, so a stray click or key cannot drop a player out of a
  * match.
+ * In a `ranked` match (#3680) the question says leaving counts as a loss.
  */
-export function renderLeave(hud: HudElements, onLeave: () => void): LeaveControl {
+export function renderLeave(hud: HudElements, onLeave: () => void, ranked: boolean): LeaveControl {
   let answers: readonly HTMLButtonElement[] = [];
   let left = false;
   const button = (label: string, onClick: () => void): HTMLButtonElement => {
@@ -1642,7 +1643,7 @@ export function renderLeave(hud: HudElements, onLeave: () => void): LeaveControl
   const control: LeaveControl = {
     open: () => {
       const question = document.createElement("span");
-      question.textContent = t("hud.leaveQuestion");
+      question.textContent = t(ranked ? "hud.leaveRanked" : "hud.leaveQuestion");
       const yes = button(t("hud.leaveYes"), () => {
         if (!left) {
           left = true;

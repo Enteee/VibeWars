@@ -3,19 +3,19 @@
 ## Darah dan energi
 
 Kamu mulai dengan 500 **Darah** dan 50 **Energi**; rune dan moral mengubah
-keduanya. Skill memakan Energi, dan Energi pulih dengan sendirinya, perlahan. Warrior
-dan Paragon memulihkannya paling lambat, Ranger sedikit lebih cepat, sisanya
+keduanya. Skill memakan Energi, dan Energi pulih dengan sendirinya, perlahan. ![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior**
+dan ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** memulihkannya paling lambat, ![Ranger](../../../apps/web/public/icons/profession/ranger.svg) **Ranger** sedikit lebih cepat, sisanya
 paling cepat.
 
 Panah-panah di bar-mu adalah **pip**: masing-masing berarti Darah atau Energi yang
-pulih, atau terkuras, sedikit setiap detik. Bleeding, Burning dan
-Poison menguras Darah; Regeneration dan mantra penyembuhan menambahnya. Setelah 5 detik
+pulih, atau terkuras, sedikit setiap detik. ![Bleeding](../../../apps/web/public/icons/status/bleeding.svg) **Bleeding**, ![Burning](../../../apps/web/public/icons/status/burning.svg) **Burning** dan
+![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison** menguras Darah; Regeneration dan mantra penyembuhan menambahnya. Setelah 5 detik
 di luar pertarungan, Darah-mu mulai pulih sendiri, makin cepat
 makin lama kamu berada di luar pertarungan.
 
 ## Adrenalin
 
-Warrior, Paragon dan profesi lain punya skill yang memakan **adrenalin**
+![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior**, ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** dan profesi lain punya skill yang memakan **adrenalin**
 alih-alih Energi. Setiap skill seperti itu terisi sendiri-sendiri: setiap pukulan senjata
 yang kamu daratkan memberi masing-masing satu strike, begitu juga saat kamu menerima pukulan besar. Memakai
 salah satunya mengosongkannya dan mengambil satu strike dari yang lain. Setelah 25 detik
@@ -27,13 +27,13 @@ Sebuah skill bisa butuh waktu sejenak untuk **dirapal**, lalu butuh waktu
 **cooldown** sebelum bisa dipakai lagi. Kalau targetmu di luar jangkauan,
 kamu berjalan ke arahnya dulu. Bergerak, atau Esc, membatalkan rapalan: Energinya hilang,
 tapi skill tidak masuk cooldown. Setelah skill apa pun yang punya waktu rapal, kecuali
-skill serangan, ada jeda singkat saat kamu tidak bisa bertindak.
+![Skill serangan](../../../apps/web/public/icons/skill-type/attack.svg) **skill serangan**, ada jeda singkat saat kamu tidak bisa bertindak.
 
 Skill yang kamu tekan selagi memakai skill lain, atau selama jeda itu, **diantrekan**:
 skill itu jalan berikutnya, dan slotnya berdenyut sampai saatnya tiba. Hanya satu yang menunggu; menekan
 skill lain menggantikannya. Bergerak, Esc, interupsi atau knockdown membuangnya.
 
-**Teriakan dan kuda-kuda** tidak pernah diantrekan: keduanya langsung aktif, bahkan selagi
+![Teriakan](../../../apps/web/public/icons/skill-type/shout.svg) **Teriakan** dan ![Kuda-kuda](../../../apps/web/public/icons/skill-type/stance.svg) **kuda-kuda** tidak pernah diantrekan: keduanya langsung aktif, bahkan selagi
 kamu merapal skill lain, selama jeda itu, atau saat terjatuh. Rapalan tetap
 berjalan. Dipakai dengan cara itu, keduanya tidak membuatmu berjalan mendekat: di luar jangkauan, skill ditolak.
 
@@ -50,30 +50,30 @@ mendarat dan ayunan dimulai dari awal. Musuh yang masih berjalan menuju targetny
 tidak punya apa pun untuk diinterupsi. Interupsi yang kartunya bertuliskan "a skill" atau "a
 spell" tidak mengganggu serangan biasa.
 
-Sebagian kuda-kuda, seperti Mantra of Concentration, menghentikan interupsi yang diarahkan
+Sebagian ![Kuda-kuda](../../../apps/web/public/icons/skill-type/stance.svg) **kuda-kuda**, seperti Mantra of Concentration, menghentikan interupsi yang diarahkan
 kepadamu. Tak satu pun menghentikan knockdown.
 
 **Terjatuh**, kamu tidak bisa bergerak, menyerang atau memakai skill untuk sesaat,
-kecuali teriakan atau kuda-kuda, dan rapalan yang sedang berjalan gagal.
+kecuali ![Teriakan](../../../apps/web/public/icons/skill-type/shout.svg) **teriakan** atau kuda-kuda, dan rapalan yang sedang berjalan gagal.
 
 ## Kondisi, kutukan dan berkah
 
 **Kondisi** melukaimu sampai habis atau dihapus:
 
-| Kondisi       | Efeknya                                                  |
-| ------------- | -------------------------------------------------------- |
-| Bleeding      | menguras Darah                                           |
-| Burning       | menguras Darah dengan cepat                              |
-| Poison        | menguras Darah                                           |
-| Disease       | menguras Darah, dan menular ke siapa pun di sebelahmu    |
-| Crippled      | kamu bergerak dengan setengah kecepatan                  |
-| Blind         | kebanyakan seranganmu meleset                            |
-| Weakness      | pukulan senjatamu jauh lebih lemah                       |
-| Cracked Armor | armor berkurang                                          |
-| Deep Wound    | Darah maksimum berkurang, dan penyembuhan kurang manjur  |
-| Dazed         | mantra dirapal lambat; serangan apa pun menginterupsinya |
+| Kondisi                                                                                     | Efeknya                                                  |
+| ------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| ![Bleeding](../../../apps/web/public/icons/status/bleeding.svg) **Bleeding**                | menguras Darah                                           |
+| ![Burning](../../../apps/web/public/icons/status/burning.svg) **Burning**                   | menguras Darah dengan cepat                              |
+| ![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison**                      | menguras Darah                                           |
+| ![Disease](../../../apps/web/public/icons/status/disease.svg) **Disease**                   | menguras Darah, dan menular ke siapa pun di sebelahmu    |
+| ![Crippled](../../../apps/web/public/icons/status/crippled.svg) **Crippled**                | kamu bergerak dengan setengah kecepatan                  |
+| ![Blind](../../../apps/web/public/icons/status/blind.svg) **Blind**                         | kebanyakan seranganmu meleset                            |
+| ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness**                | pukulan senjatamu jauh lebih lemah                       |
+| ![Cracked Armor](../../../apps/web/public/icons/status/cracked-armor.svg) **Cracked Armor** | armor berkurang                                          |
+| ![Deep Wound](../../../apps/web/public/icons/status/deep-wound.svg) **Deep Wound**          | Darah maksimum berkurang, dan penyembuhan kurang manjur  |
+| ![Dazed](../../../apps/web/public/icons/status/dazed.svg) **Dazed**                         | mantra dirapal lambat; serangan apa pun menginterupsinya |
 
-**Kutukan** dirapal kepadamu oleh musuh; **berkah** oleh dirimu sendiri atau
+![Kutukan](../../../apps/web/public/icons/skill-type/hex.svg) **Kutukan** dirapal kepadamu oleh musuh; ![Berkah](../../../apps/web/public/icons/skill-type/enchantment.svg) **berkah** oleh dirimu sendiri atau
 sekutumu. Masing-masing dihapus oleh jenis skill-nya sendiri. Sebagian berkah
 **dipertahankan**: berkah itu bertahan sampai kamu mengakhirinya, memakan satu pip Energi selama
 berjalan. Klik dua kali ikonnya untuk mengakhirinya.
@@ -84,8 +84,8 @@ serangan, jadi serangan yang meleset atau ditangkis menghabiskan satu sama pasti
 
 ## Armor dan damage
 
-Warrior dan Paragon memakai armor paling banyak; Ranger, Assassin dan
-Dervish lebih sedikit; perapal paling sedikit. Armor memperkecil damage senjata, elemen, chaos
+![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior** dan ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** memakai armor paling banyak; ![Ranger](../../../apps/web/public/icons/profession/ranger.svg) **Ranger**, ![Assassin](../../../apps/web/public/icons/profession/assassin.svg) **Assassin** dan
+![Dervish](../../../apps/web/public/icons/profession/dervish.svg) **Dervish** lebih sedikit; perapal paling sedikit. Armor memperkecil damage senjata, elemen, chaos
 dan dark. Damage holy, shadow dan tanpa jenis, kuras Darah dan pencurian
 nyawa mengabaikannya. Hanya pukulan senjata yang bisa kritis.
 Sebagian berkah membuat pemakainya kebal terhadap pukulan kritis.

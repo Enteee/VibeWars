@@ -285,6 +285,19 @@ export interface ReplayRecording {
   readonly sha256: Sha256;
 }
 
+/** How a finished match ended, as its ranked result says it (ADR-0055, #3573). */
+export interface MatchEnding {
+  readonly endReason: MatchEndReason;
+  /** Match time, whole seconds. */
+  readonly durationSeconds: number;
+  /**
+   * The player keys of the humans whose seat the match freed before its
+   * end: a bye, a drop not back within `RECONNECT_WINDOW_SECONDS`, or a
+   * planned player that left the room before taking its seat.
+   */
+  readonly leavers: readonly string[];
+}
+
 export interface MatchHost {
   /** Run as many whole ticks as `seconds` holds, carrying the rest. */
   advance(seconds: number): void;
@@ -304,6 +317,8 @@ export interface MatchHost {
    * its players; `null` before, and always for a match not recording one.
    */
   readonly replay: RecordedReplay | null;
+  /** How it ended, once `finished`; `null` before, and for a match the host closed. */
+  readonly ending: MatchEnding | null;
   /**
    * Finished, and its observers not yet sent the end, which reaches them
    * `OBSERVER_DELAY_SECONDS` late (#480), or its replay still hashing
@@ -507,6 +522,9 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     [1, "[]"],
   ]);
   let seated = 0;
+  /** The player keys of the humans whose seats were freed (`MatchEnding.leavers`). */
+  const freedKeys = new Set<string>();
+  let ending: MatchEnding | null = null;
   /**
    * The seats the match had, in seat order: whoever left still has a line
    * in the summary (#1057), under the name they joined with. At most
@@ -942,6 +960,10 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     const setup = nextSetup(build, team, bot, startMorale);
     seated += 1;
     const signet = pubkey === null ? null : options.signetOf(pubkey);
+    // Back in its seat: it did not leave after all.
+    if (pubkey !== null) {
+      freedKeys.delete(pubkey);
+    }
     const playerId = setup.id;
     const loadout = loadoutOf(build);
     sim.add(participantSpec(map, setup));
@@ -1249,6 +1271,10 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     if (seat.peerId !== undefined) {
       seatOfPeer.delete(seat.peerId);
     }
+    const pubkey = everSeated.get(seat.playerId)?.pubkey ?? null;
+    if (!seat.bot && pubkey !== null && !finished) {
+      freedKeys.add(pubkey);
+    }
     sim.remove(seat.playerId);
     logInput([sim.tick, "remove", seat.playerId]);
     seats.delete(seat.playerId);
@@ -1307,6 +1333,9 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     const plan = awaited.delete(peerId) ? planned?.get(peerId) : undefined;
     syncAwaitedTeams();
     if (plan !== undefined && !finished) {
+      if (!plan.bot) {
+        freedKeys.add(plan.playerPubkey);
+      }
       forfeitIfNoHumans(plan.team);
     }
     challenges.delete(peerId);
@@ -1547,6 +1576,11 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     let ended: WireEnded | undefined;
     if (result.phase === "finished") {
       finished = true;
+      ending = {
+        endReason: sim.outcome.reason ?? "time",
+        durationSeconds: Math.round(sim.elapsedSeconds),
+        leavers: [...freedKeys],
+      };
       ended = {
         winningTeam: wireTeam(sim.outcome.winningTeam),
         endReason: sim.outcome.reason ?? "time",
@@ -1618,6 +1652,9 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     },
     get replay() {
       return recorded;
+    },
+    get ending() {
+      return ending;
     },
     get droppedWeaponSwaps() {
       return droppedWeaponSwaps;

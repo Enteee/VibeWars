@@ -17,6 +17,8 @@ import {
 } from "@vibewars/game-core";
 import {
   MAX_CHART_EVENTS,
+  EMBLEM_GRID,
+  MAX_EMBLEM_COLOURS,
   packEmblem,
   type WireCapes,
   MAX_CHART_PARTS,
@@ -103,8 +105,18 @@ const PEER_ID = "abcdefghijklmnopqrst/local";
 const NAME = sanitizeName("👩‍🚀".repeat(40), "player");
 /** A guild tag as long as `sanitizeGuildTag` lets through (#1406). */
 const GUILD_TAG = sanitizeGuildTag("WWWW");
-/** A cape of the longest colour names (#1422); every emblem is as long (#3554). */
-const CAPE: WireCape = { main: "violet", trim: "orange", emblem: packEmblem([]) };
+/**
+ * The largest cape (#1422, #3628): 15 emblem colours, each used, in order
+ * of first use; every emblem is as long (#3554).
+ */
+const CAPE: WireCape = {
+  main: "a078e0",
+  trim: "f0963c",
+  emblemColours: Array.from({ length: MAX_EMBLEM_COLOURS }, (_, index) =>
+    (index + 1).toString(16).padStart(6, "0"),
+  ),
+  emblem: packEmblem(Array.from({ length: EMBLEM_GRID * EMBLEM_GRID }, (_, index) => index % 16)),
+};
 
 const SKILL_IDS = IMPLEMENTED_SKILLS.map((skill) => skill.id);
 const STATUS_IDS = Object.keys(STATUS_DEFINITIONS);

@@ -557,7 +557,12 @@ describe("WirePlayer and PlayerSnapshot (#375 §2)", () => {
   });
 
   it('wear the cape its id has on the host\'s last "capes", and none without one (#3554)', () => {
-    const cape = { main: "teal", trim: "white", emblem: packEmblem([]) } as const;
+    const cape = {
+      main: "2fb8a0",
+      trim: "f2f2f2",
+      emblemColours: [],
+      emblem: packEmblem([]),
+    } as const;
     expect(playerSnapshot(WIRE_PLAYER, new Map([["p1", cape]]))?.guildCape).toEqual(cape);
     expect(playerSnapshot(WIRE_PLAYER, new Map([["p2", cape]]))?.guildCape).toBeUndefined();
   });

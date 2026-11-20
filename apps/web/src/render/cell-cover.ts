@@ -253,3 +253,26 @@ export function shownFill(
   ).map((box) => ({ ...box, x: box.x + left, y: box.y + top }));
   return { boxes, pieces };
 }
+
+/**
+ * The boxes of a `width` × `height` picture, in cells of `cell`, that
+ * are not wholly `hidden` (#3671): what an opaque thing drawn over it
+ * later covers, by `margin` past a hiding edge so its smoothing still
+ * blends with what is under it. In doubt, a cell is shown.
+ */
+export function shownBoxes(
+  width: number,
+  height: number,
+  cell: number,
+  hidden: readonly (readonly Vec2[])[],
+  margin: number,
+): readonly CellBox[] {
+  const covers = hidden.map((points) => ({ points, box: bounds(points) }));
+  return coverBoxes(
+    width,
+    height,
+    cell,
+    (box) =>
+      !covers.some((cover) => overlaps(cover.box, box) && boxUnder(cover.points, box, margin)),
+  );
+}

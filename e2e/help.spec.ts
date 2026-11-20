@@ -5,9 +5,12 @@ import { OVERLAY_VIEWPORTS, clickTopbarIcon, expectCloseAtTopRight } from "./hel
 import { startSoloMatch } from "./helpers/peers.js";
 
 /**
- * The Help screen (#1257): the [?] of the top bar and of the HUD opens
- * the player docs over what runs under it, and Esc puts them away.
+ * Help (#1257): the [?] of the top bar and of the HUD drops the player
+ * docs as a window (#3552), beside what runs under it, and Esc puts them away.
  */
+
+/** Help's page picker. */
+const picker = (help: Locator): Locator => help.getByRole("combobox", { name: "help pages" });
 
 for (const viewport of OVERLAY_VIEWPORTS) {
   test(`Help's × sits at its own top right at ${String(viewport.width)} px; it and Esc close it (#2381)`, async ({
@@ -42,17 +45,14 @@ test("[?] opens Help on Getting started; Esc returns to the menu as it was (#125
   await expect(help).toBeVisible();
   // Help shuts the Lobby window it opens over (#2385).
   await expect(page.locator("#topbar .lobby-window")).toHaveCount(0);
-  await expect(page.locator("#topbar .topbar-crumbs")).toHaveText(
-    "VibeWars > Help > Getting started",
-  );
+  // A window, not a screen: the bar still says where you are (#3552).
+  await expect(page.locator("#topbar .topbar-crumbs")).not.toContainText("Help");
   await expect(help.locator(".help-page h1")).toHaveText("Getting started");
   // The bar over the match has no status: it once still said "entering
   // match…" (#1272).
   await expect(page.locator("#status")).toBeHidden();
-  await expect(help.locator('.options-entry[data-page="getting-started"]')).toHaveAttribute(
-    "aria-current",
-    "page",
-  );
+  await expect(picker(help)).toBeFocused();
+  await expect(picker(help)).toHaveValue("getting-started");
   // Markdown, rendered: headings and lists, no raw syntax.
   await expect(help.locator(".help-page h2", { hasText: "Make a character" })).toBeVisible();
   await expect(help.locator(".help-page ol li").first()).toContainText("New character");
@@ -66,7 +66,7 @@ test("[?] opens Help on Getting started; Esc returns to the menu as it was (#125
   await expect(lobby).toHaveText("Your lobby");
 });
 
-test("[?] stays in the bar, shown open, while Help is open; a second press closes it (#2724)", async ({
+test("[?] stays in the bar, shown open, while Help is open; a second press closes it (#2724, #3552)", async ({
   page,
 }) => {
   await page.goto("./");
@@ -77,8 +77,11 @@ test("[?] stays in the bar, shown open, while Help is open; a second press close
   await expect(icon).toBeVisible();
   await expect(icon).toHaveAttribute("aria-expanded", "true");
 
-  await help.locator(".options-entry").nth(1).click();
-  await expect(help.locator(".options-entry").nth(1)).toHaveAttribute("aria-current", "page");
+  // An in-page link switches the page in place, and the picker follows.
+  await help.locator('.help-page a[data-page="modes"]').first().click();
+  await expect(picker(help)).toHaveValue("modes");
+  await picker(help).selectOption("controls");
+  await expect(help.locator(".help-page")).toHaveAttribute("data-page", "controls");
   await expect(icon).toBeVisible();
 
   await icon.click();
@@ -122,23 +125,19 @@ async function openLicences(page: Page): Promise<Locator> {
   await page.goto("./");
   await page.locator(".topbar-help").click();
   const help = page.getByRole("dialog", { name: "Help" });
-  await help.getByRole("button", { name: "Third-party licences" }).click();
+  await picker(help).selectOption({ label: "Third-party licences" });
   return help;
 }
 
 test("Help's last page is the third-party licences, not Options' (#2559)", async ({ page }) => {
   const help = await openLicences(page);
-  const nav = help.locator(".options-nav");
-  // After the docs: then the source link, then the release and build.
-  await expect(nav.locator(":scope > *").last()).toHaveClass("help-version");
-  await expect(nav.locator(":scope > *").nth(-2)).toHaveText("Source code");
-  await expect(nav.locator(":scope > *").nth(-3)).toHaveText("Third-party licences");
-  const entry = nav.locator('.options-entry[data-page="licences"]');
-  await expect(entry).toHaveClass(/is-selected/);
-  await expect(entry).toHaveAttribute("aria-current", "page");
-  await expect(page.locator("#topbar .topbar-crumbs")).toHaveText(
-    "VibeWars > Help > Third-party licences",
-  );
+  // After the docs; the source link, then the release and build, at the foot.
+  await expect(picker(help).locator("option").last()).toHaveText("Third-party licences");
+  await expect(picker(help)).toHaveValue("licences");
+  await expect(help.locator(".help-page")).toHaveAttribute("data-page", "licences");
+  const foot = help.locator(".help-footer > *");
+  await expect(foot.last()).toHaveClass("help-version");
+  await expect(foot.nth(-2)).toHaveText("Source code");
 
   await page.keyboard.press("Escape");
   await page.locator(".topbar-options").click();

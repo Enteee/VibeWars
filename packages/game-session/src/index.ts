@@ -50,6 +50,7 @@ export { createLocalPeer } from "./local-peer.js";
 export { OBSERVER_DELAY_SECONDS, RECONNECT_WINDOW_SECONDS, createMatchHost } from "./match-host.js";
 export type {
   HostMap,
+  MatchEnding,
   MatchHost,
   MatchHostOptions,
   PlannedSeat,
@@ -82,6 +83,8 @@ export {
   LOBBY_PROOF_MS,
   PARTY_CONSENT_MS,
   PROFILE_INTERVAL_MS,
+  RANKED_RESULT_TIMEOUT_MS,
+  RANKED_START_TIMEOUT_MS,
   SHARE_INTERVAL_MS,
   canStart,
   createLobbyHost,
@@ -93,11 +96,12 @@ export type {
   LobbyReach,
   MatchPlan,
   QueuedPlan,
+  RankedHostOptions,
 } from "./lobby-host.js";
 export { RELAY_ADMIT_MS, RELAY_ROOMS_LINGER_MS, createRelayAdmission } from "./relay-admission.js";
 export type { RelayAdmission, RelayAdmissionLobby } from "./relay-admission.js";
 export { LobbyNoAnswerError, LobbyRefusedError, joinLobby } from "./lobby-client.js";
-export type { JoinLobbyOptions } from "./lobby-client.js";
+export type { JoinLobbyOptions, RankedPlay } from "./lobby-client.js";
 export { scopeTransport } from "./scoped-transport.js";
 export {
   WIRE_STATUS_IDS,
@@ -110,7 +114,14 @@ export {
   wireStatuses,
   wireWeaponSets,
 } from "./wire.js";
-export { ROOM_PREFIX, formGroups, groupOf, isLive, ticketsOf } from "./queue-formation.js";
+export {
+  ROOM_PREFIX,
+  formGroups,
+  groupOf,
+  isLive,
+  isRankedGroup,
+  ticketsOf,
+} from "./queue-formation.js";
 export type { FormGroupsInput, FormedGroup } from "./queue-formation.js";
 export { createMemoryBoard } from "./queue-board.js";
 export type { MemoryBoard, QueueBoard, QueueBoardEvent } from "./queue-board.js";

@@ -6,8 +6,8 @@ huit compétences et les points d'attribut derrière. Ouvre-en un avec
 
 ## Professions
 
-Il y en a dix : Warrior, Ranger, Monk, Necromancer, Mesmer, Elementalist,
-Assassin, Ritualist, Paragon et Dervish. Ta profession **principale** est ce
+Il y en a dix : ![Guerrier](../../../apps/web/public/icons/profession/warrior.svg) **Guerrier**, ![Rôdeur](../../../apps/web/public/icons/profession/ranger.svg) **Rôdeur**, ![Moine](../../../apps/web/public/icons/profession/monk.svg) **Moine**, ![Nécromant](../../../apps/web/public/icons/profession/necromancer.svg) **Nécromant**, ![Envoûteur](../../../apps/web/public/icons/profession/mesmer.svg) **Envoûteur**, ![Élémentaliste](../../../apps/web/public/icons/profession/elementalist.svg) **Élémentaliste**,
+![Assassin](../../../apps/web/public/icons/profession/assassin.svg) **Assassin**, ![Ritualiste](../../../apps/web/public/icons/profession/ritualist.svg) **Ritualiste**, ![Parangon](../../../apps/web/public/icons/profession/paragon.svg) **Parangon** et ![Derviche](../../../apps/web/public/icons/profession/dervish.svg) **Derviche**. Ta profession **principale** est ce
 que tu es : ses compétences, et son **attribut principal** (marqué ★), que
 seule une principale obtient. Ta **secondaire** te prête ses compétences, mais
 pas son attribut principal.
@@ -18,11 +18,11 @@ La barre a **huit emplacements**. Une seule compétence d'**élite** (cadre
 doré) tient sur une barre : en équiper une deuxième remplace la première.
 Appuie sur **×** sur un emplacement pour le vider.
 
-Les **Flash enchantments** (Dervish) sont instantanés : en utiliser un
+Les ![Enchantement](../../../apps/web/public/icons/skill-type/enchantment.svg) **Flash enchantments** (![Derviche](../../../apps/web/public/icons/profession/dervish.svg) **Derviche**) sont instantanés : en utiliser un
 conserve ton geste et ta marche, tu peux donc les glisser entre deux coups.
 Chacun désactive tes autres Flash enchantments pendant 1 seconde.
 
-Les **formes** (les cinq Avatars de Dervish : Balthazar, Dwayna, Grenth, Lyssa
+Les ![Forme](../../../apps/web/public/icons/skill-type/form.svg) **formes** (les cinq Avatars de Derviche : Balthazar, Dwayna, Grenth, Lyssa
 et Melandru) te transforment pendant plus d'une minute. Une forme n'est pas
 un enchantement, personne ne peut donc la retirer, et tu ne peux être que
 dans une forme à la fois. En utiliser une la désactive pendant 45 secondes.
@@ -32,7 +32,7 @@ déplacement pour repartir.
 
 **Certains tirs désactivent tes autres attaques.** Focused Shot et Needling
 Shot volent plus vite qu'une flèche ne devrait, mais chacun qui touche
-désactive tes autres compétences d'attaque quelques secondes. Les sorts ne
+désactive tes autres ![Compétence d'attaque](../../../apps/web/public/icons/skill-type/attack.svg) **compétences d'attaque** quelques secondes. Les ![Sort](../../../apps/web/public/icons/skill-type/spell.svg) **sorts** ne
 sont pas concernés.
 
 ## Attributs
@@ -45,10 +45,10 @@ qu'utilise une compétence la rend plus forte : les nombres qui grandissent
 avec l'attribut sont affichés en vert et en gras, à tes rangs actuels, runes
 et casque compris.
 
-En combat, tes rangs peuvent changer un moment. Weakness retire un rang à
-chacun. Certains maléfices mettent les attributs d'un ennemi à 0, et Master of
+En combat, tes rangs peuvent changer un moment. ![Faiblesse](../../../apps/web/public/icons/status/weakness.svg) **Faiblesse** retire un rang à
+chacun. Certains ![Maléfice](../../../apps/web/public/icons/skill-type/hex.svg) **maléfices** mettent les attributs d'un ennemi à 0, et Master of
 Magic met tes attributs élémentaires à 13 : un rang fixé ainsi prime sur les
-runes comme sur Weakness. Signet of Illusions permet à tes prochains sorts
+runes comme sur Faiblesse. Sceau d'illusions permet à tes prochains ![Sort](../../../apps/web/public/icons/skill-type/spell.svg) **sorts**
 d'autres attributs d'utiliser ton rang d'Illusion Magic. Certaines compétences
 augmentent tes attributs pour un temps ou pour tes prochains sorts, comme
 Glyph of Elemental Power et Ritual Lord, même un attribut laissé à 0 ; un rang
@@ -56,19 +56,19 @@ fixé, comme celui de Master of Magic, l'emporte sur un tel bonus.
 
 ## Échos
 
-Les **échos** d'un Paragon sont de longs bonus sur un allié. Un **refrain** se
+Les ![Écho](../../../apps/web/public/icons/skill-type/echo.svg) **échos** d'un ![Parangon](../../../apps/web/public/icons/profession/paragon.svg) **Parangon** sont de longs bonus sur un allié. Un **refrain** se
 renouvelle à sa pleine durée, et un **finale** prend effet, chaque fois qu'un
-chant ou un cri prend fin sur cet allié. Un chant ou un cri réappliqué avant
+![Chant](../../../apps/web/public/icons/skill-type/chant.svg) **chant** ou un ![Cri](../../../apps/web/public/icons/skill-type/shout.svg) **cri** prend fin sur cet allié. Un chant ou un cri réappliqué avant
 sa fin n'a pas pris fin. Rien ne retire un écho : il prend fin quand il
 expire ou que son porteur meurt. La plupart ne peuvent pas cibler un esprit.
 
 ## Compétences qui deviennent une autre compétence
 
-Certaines compétences de Mesmer placent une autre compétence dans leur propre
-emplacement pendant un moment. Arcane Echo et Echo copient la prochaine
+Certaines compétences d'![Envoûteur](../../../apps/web/public/icons/profession/mesmer.svg) **Envoûteur** placent une autre compétence dans leur propre
+emplacement pendant un moment. ![Arcane Echo](../../../apps/web/public/icons/status/arcane-echo.svg) **Arcane Echo** et ![Echo](../../../apps/web/public/icons/status/echo.svg) **Echo** copient la prochaine
 compétence que tu utilises. **Inspired Enchantment** et **Inspired Hex**
-deviennent la compétence qui a lancé l'enchantement ou le maléfice qu'ils ont
-retiré, pendant 20 secondes. **Arcane Thievery** devient le sort qu'elle a
+deviennent la compétence qui a lancé l'![Enchantement](../../../apps/web/public/icons/skill-type/enchantment.svg) **enchantement** ou le ![Maléfice](../../../apps/web/public/icons/skill-type/hex.svg) **maléfice** qu'ils ont
+retiré, pendant 20 secondes. **Arcane Thievery** devient le ![Sort](../../../apps/web/public/icons/skill-type/spell.svg) **sort** qu'elle a
 désactivé chez ton ennemi, tant que dure la désactivation. La copie a sa
 propre recharge. Quand elle prend fin, la compétence d'origine revient et
 commence sa propre recharge, et une incantation de la copie encore en cours
@@ -77,11 +77,11 @@ copié, mais le retirer te rend quand même l'énergie.
 
 ## Puits et glyphes
 
-Les **puits** d'un Necromancer exploitent le cadavre le plus proche. Sans
+Les ![Puits](../../../apps/web/public/icons/skill-type/well.svg) **puits** d'un ![Nécromant](../../../apps/web/public/icons/profession/necromancer.svg) **Nécromant** exploitent le cadavre le plus proche. Sans
 cadavre à proximité, un puits sacrifie à la place 66% de ta santé et apparaît
 là où tu te tiens.
 
-Les **glyphes** d'un Elementalist modifient ton prochain sort : il ne peut pas
+Les ![Glyphe](../../../apps/web/public/icons/skill-type/glyph.svg) **glyphes** d'un ![Élémentaliste](../../../apps/web/public/icons/profession/elementalist.svg) **Élémentaliste** modifient ton prochain ![Sort](../../../apps/web/public/icons/skill-type/spell.svg) **sort** : il ne peut pas
 être interrompu, se lance instantanément, se recharge aussitôt ou coûte moins.
 Un nouveau glyphe remplace celui que tu avais.
 
@@ -91,8 +91,8 @@ Une compétence qui réagit à « la prochaine fois que des dégâts font passer
 santé sous N% » réagit à tout coup ou vol de vie qui te laisse en vie sous la
 limite, même si tu y étais déjà avant le coup, et jamais à la santé que tu
 sacrifies ou perds par dégénérescence. La protection contre les dégâts
-mortels, comme Judge's Intervention, annule tout le coup fatal : aucun dégât,
-aucune mort. Faithful Intervention et Illusion of Weakness n'ont pas de durée :
+mortels, comme ![Judge's Intervention](../../../apps/web/public/icons/status/judges-intervention.svg) **Judge's Intervention**, annule tout le coup fatal : aucun dégât,
+aucune mort. ![Intervention fidèle](../../../apps/web/public/icons/status/faithful-intervention.svg) **Intervention fidèle** et ![Illusion de faiblesse](../../../apps/web/public/icons/status/illusion-of-weakness.svg) **Illusion de faiblesse** n'ont pas de durée :
 elles durent jusqu'à ce que des dégâts, un retrait ou la mort y mettent fin,
 et te soignent au passage.
 
@@ -122,20 +122,20 @@ comme les tiens.
 
 ## Sorts d'objet
 
-Les **sorts d'objet** d'un Ritualist placent les **cendres** d'un esprit dans
+Les ![Sort d'objet](../../../apps/web/public/icons/skill-type/item-spell.svg) **sorts d'objet** d'un ![Ritualiste](../../../apps/web/public/icons/profession/ritualist.svg) **Ritualiste** placent les **cendres** d'un esprit dans
 tes mains : un bonus tant que tu les tiens, et un **effet de chute** quand
 elles tombent. Elles tombent quand elles expirent, quand tu meurs, quand tu
 appuies sur **Lâcher cendres** au-dessus de ta barre de santé, que tu lances
 un autre sort d'objet, utilises un shadow step, changes d'armes ou prends un
 drapeau ou une relique. Tes mains sont prises tant que tu les tiens : ni
-attaques ni compétences d'attaque, mais tu marches à pleine vitesse et lances
-toujours des sorts. Rien ne retire les cendres ; toute fin est une chute.
+attaques ni ![Compétence d'attaque](../../../apps/web/public/icons/skill-type/attack.svg) **compétences d'attaque**, mais tu marches à pleine vitesse et lances
+toujours des ![Sort](../../../apps/web/public/icons/skill-type/spell.svg) **sorts**. Rien ne retire les cendres ; toute fin est une chute.
 
 ## Shadow steps
 
 Un **shadow step** te déplace aussitôt, sans marche entre les deux. La plupart
 t'amènent à ta cible ; certains te ramènent à l'endroit où tu les as lancés
-quand ils prennent fin, comme Shadow of Haste et Shadow Walk. **Recall** ne
+quand ils prennent fin, comme Shadow of Haste et Shadow Walk. ![Recall](../../../apps/web/public/icons/status/recall.svg) **Recall** ne
 t'amène à son allié qu'à sa fin, et désactive toutes tes compétences pendant
 3 secondes. **Swap** échange ta place avec l'un des esprits ou serviteurs de
 ton camp.

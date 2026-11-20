@@ -340,12 +340,14 @@ export default {
   "controls.targetCalled": "Bemondott ellenség célzása",
   "controls.targetClosest": "Legközelebbi ellenség célzása",
   "controls.targetNext": "Következő célpont",
+  "controls.targetPrevious": "Előző célpont",
   "controls.targetSelf": "Saját magad célzása",
   "controls.weaponSet1": "1. fegyverkészlet",
   "controls.weaponSet2": "2. fegyverkészlet",
   "controls.weaponSet3": "3. fegyverkészlet",
   "controls.weaponSet4": "4. fegyverkészlet",
   "controls.weaponSets": "Fegyverkészletek",
+  "controls.withShift": "Shift + {key}",
   "creature.rat": "Patkány",
 
   "echo.secondsLeft": {
@@ -517,6 +519,7 @@ export default {
   "hud.leaveExtra": " a meccsből (F10)",
   "hud.leaveNo": "nem",
   "hud.leaveQuestion": "kilépsz?",
+  "hud.leaveRanked": "kilépsz? Vereségnek számít",
   "hud.leaveYes": "igen",
   "hud.lordPercent": "Céhúr {percent}%",
   "hud.moraleBoostOurs": "Morálnövelés! +{percent}%",
@@ -855,14 +858,7 @@ export default {
   "pips.title": { one: "{sign}{count} csík", other: "{sign}{count} csík" },
 
   "player.cape": "Köpeny",
-  "player.colourBlack": "fekete",
-  "player.colourGold": "arany",
-  "player.colourLime": "limezöld",
-  "player.colourOrange": "narancs",
-  "player.colourPink": "rózsaszín",
-  "player.colourTeal": "pávakék",
-  "player.colourViolet": "ibolya",
-  "player.colourWhite": "fehér",
+  "player.capePreview": "Előnézet",
   "player.emblem": "Embléma",
   "player.emblemBar": "sáv",
   "player.emblemChevron": "ék",
@@ -872,15 +868,18 @@ export default {
   "player.emblemHalfDisc": "félkorong",
   "player.emblemRing": "gyűrű",
   "player.emblemTriangle": "háromszög",
-  "player.editEmblem": "Embléma szerkesztése",
   "player.emblemPencil": "Ceruza",
   "player.emblemUndo": "Vissza",
   "player.emblemEraser": "Radír",
   "player.emblemFill": "Kitöltés",
   "player.emblemMirror": "Tükrözés",
   "player.emblemClear": "Törlés",
-  "player.emblemDone": "Kész",
   "player.emblemEmpty": "Üres",
+  "player.capeColour": "Köpeny színe",
+  "player.trimColour": "Szegély színe",
+  "player.emblemColour": "Rajzszín",
+  "player.emblemAddColour": "Szín hozzáadása",
+  "player.emblemStartFrom": "Kiindulás",
   "player.emblemPalette": "Színek",
   "player.emblemInGame": "Játékbeli méret",
   "player.guildCape": "Céhköpeny",
@@ -922,6 +921,12 @@ export default {
   "queue.playBotsIn": "Játék botok ellen ({seconds} mp)",
   "queue.queueAgain": "Újra sorba",
   "queue.randomArena": "Véletlen Aréna {size}",
+  "queue.rankedCancelled": "Rangsorolt meccs törölve: egy játékos nem erősített meg.",
+  "queue.rankedConfirming": "Rangsorolt meccs megerősítése…",
+  "queue.rankedNote":
+    "Botok nélkül a meccs rangsorolt: az eredmény a kulcsoddal és a karaktered nevével jelenik meg. Egy bot a meccsen rangsorolatlanul hagyja.",
+  "queue.rankedPending": "A pontszámod egy órán belül frissül.",
+  "queue.rankedPublished": "Rangsorolt eredmény közzétéve.",
   "queue.searchingCount": "{searching} keres · {needed} kell",
   "queue.startingIn": "Kezdés: {seconds}",
   "queue.stayTogether": "Együtt maradunk",
@@ -1485,6 +1490,22 @@ export default {
   "tutorial.ground.praise": "Átértél! Most már tudod, mire képes a talaj.",
   "tutorial.front.end": "Most már tudod az alapokat. Odakint találkozunk!",
   "tutorial.front.menu": "Vissza a menübe",
+  "tutorial.menu.arena.farewell": "Sorban állsz. Sok sikert!",
+  "tutorial.menu.arena.find":
+    "Nyomd meg a Meccskeresés gombot a jelentkezéshez. A csapatod az egyik oldal: a meghívólinkeden csatlakozó társ elfoglal egy helyet, a többit botok játsszák.",
+  "tutorial.menu.arena.findDone": "Meccskeresés",
+  "tutorial.menu.arena.open": "Nyisd meg a Csapatarénát a sávon.",
+  "tutorial.menu.arena.openDone": "Nyisd meg a Csapatarénát",
+  "tutorial.menu.arena.queue":
+    "Szavazz a csapatodra, majd válassz egy karaktert. Ha mindkettő megvan, a csapatod sorba áll.",
+  "tutorial.menu.arena.queueDone": "Állj sorba",
+  "tutorial.menu.arena.signup":
+    "Nyisd meg a Csapatbuildjeid fület, válaszd az általad készített csapatot, és javasold.",
+  "tutorial.menu.arena.signupDone": "Javasold a csapatod",
+  "tutorial.menu.arena.size":
+    "Állítsd a csapatméretet 2v2-re. Csak azonos méretű csapatok kerülnek össze.",
+  "tutorial.menu.arena.sizeDone": "Válaszd a 2v2-t",
+  "tutorial.menu.arena.title": "Bizonyítsd a csapatod egy 2v2-es Csapataréna-meccsen.",
   "tutorial.menu.gotIt": "Értem",
   "tutorial.menu.menu.characters":
     "A Karakterekben hozod létre és módosítod, kivel játszol: szakma, képességek és felszerelés.",
@@ -1494,6 +1515,56 @@ export default {
     "A Csapatokban karaktereket raksz össze egy csapatba a csapatharcokhoz.",
   "tutorial.menu.menu.title": "A továbblépéshez meg kell változtatnod a specializációdat.",
   "tutorial.menu.skipAsk": "Kihagyod az oktatóanyag hátralévő részét?",
+  "tutorial.menu.modes.gvg":
+    "A GvG céh céh ellen, 8 a 8 ellen, a Guild Hall Isle pályán. Öld meg az ellenséges Céhurat a győzelemhez, és tartsd életben a sajátodat.",
+  "tutorial.menu.modes.heroesAscent":
+    "A Hősök Útja pályák sorozata, 8 a 8 ellen, a te körödben lévő csapatok ellen. Ha nyersz, a következő pályára lépsz, egészen a Hősök Csarnokáig; ha veszítesz, elölről kezded.",
+  "tutorial.menu.modes.hostedGame":
+    "A Saját játék a saját lobbid: küldd el a barátaidnak a meghívó linket, és válaszd ki a pályát és a csapatméretet. Minden helyen, amit senki sem foglal el, botok játszanak.",
+  "tutorial.menu.modes.open": "Nyisd meg oldalt a kivilágított játékmódot.",
+  "tutorial.menu.modes.randomArena":
+    "A Véletlen Aréna a leggyorsabb harc: a saját karaktered idegenekből álló csapatban, 1v1, 2v2 vagy 4v4. A pályát kisorsolják neked, és minden helyen valódi játékos áll.",
+  "tutorial.menu.modes.teamArena":
+    "A Csapataréna a csapatod egy csapatbuilddel egy másik csapat ellen, 2v2, 4v4 vagy 8v8, általad választott méretben. Botok töltenek be minden szabad helyet, és minden meccs kisorsolja a pályáját.",
+  "tutorial.menu.modes.title": "Tudd, hol harcolj.",
+  "tutorial.menu.spec.attributes":
+    "Oszd el a tulajdonságpontjaidat. Minden szint erősebbé teszi az adott tulajdonság képességeit.",
+  "tutorial.menu.spec.attributesDone": "Változtass egy tulajdonságot",
+  "tutorial.menu.spec.gear":
+    "Páncél, rúnák és jelvények: válassz egy darabot a figurán, aztán hogy mi kerüljön rá.",
+  "tutorial.menu.spec.gearDone": "Cserélj egy felszerelésdarabot",
+  "tutorial.menu.spec.open":
+    "Nyisd meg a Karaktereket, majd egy karaktert, hogy módosítsd a buildjét.",
+  "tutorial.menu.spec.openDone": "Nyiss meg egy karaktert",
+  "tutorial.menu.spec.professions":
+    "Az elsődleges kasztod adja a tulajdonságaidat és képességeidet; a másodlagos a saját képességeit is kölcsönadja.",
+  "tutorial.menu.spec.professionsDone": "Válts kasztot",
+  "tutorial.menu.spec.save": "Mentsd el a karaktered, hogy megmaradjon az új build.",
+  "tutorial.menu.spec.saveDone": "Mentés",
+  "tutorial.menu.spec.skills":
+    "Nyiss meg egy csoportot a listában, majd húzz egy képességet a sávod egy helyére, hogy becseréld.",
+  "tutorial.menu.spec.skillsDone": "Tegyél egy képességet a sávodra",
+  "tutorial.menu.spec.title": "Változtasd meg a specializációdat.",
+  "tutorial.menu.spec.weapons": "Válassz a listából fegyvert a fegyverkészletedhez.",
+  "tutorial.menu.spec.weaponsDone": "Cserélj fegyvert",
+  "tutorial.menu.team.build":
+    "Egy tag neve megnyitja a buildjét a buildszerkesztőben. Visszatérve megmarad, amit módosítottál, mentetlenül.",
+  "tutorial.menu.team.character":
+    "Húzd a karakteredet a Karaktereim közül egy tagra. A tag a másolata lesz.",
+  "tutorial.menu.team.characterDone": "Tedd a karakteredet a csapatba",
+  "tutorial.menu.team.fill": "Adj buildet minden tagnak, amíg a csapatnak nem marad problémája.",
+  "tutorial.menu.team.fillDone": "Töltsd fel a csapatot",
+  "tutorial.menu.team.members":
+    "Egy csapatnak mindig annyi tagja van, amekkora a mérete. Tagot sosem adsz hozzá: lecserélsz egyet.",
+  "tutorial.menu.team.new": "Állítsd a csapatméretet 2v2-re, majd készíts új csapatbuildet.",
+  "tutorial.menu.team.newDone": "Indíts egy 2 fős csapatot",
+  "tutorial.menu.team.open": "Nyisd meg a Csapatokat, ahol a csapatbuildjeid vannak.",
+  "tutorial.menu.team.openDone": "Nyisd meg a Csapatokat",
+  "tutorial.menu.team.problems":
+    "A Mentés mindig eltárolja a csapatot. A tippje megnevezi az első dolgot, ami miatt a csapat nem játszható.",
+  "tutorial.menu.team.save": "Mentsd el a csapatod.",
+  "tutorial.menu.team.saveDone": "Mentés",
+  "tutorial.menu.team.title": "Építs csapatot a sikerhez.",
   "tutorial.gate.hint": "Be a ködbe, utánam.",
   "tutorial.gate.how": "Kattints a földre bal gombbal, vagy járj ezekkel: {keys}.",
   "tutorial.gate.intro": "A csapatunk a ködön túl harcol. Kövess!",

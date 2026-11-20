@@ -39,10 +39,12 @@ describe("play-build ends its own upkeep when Energy-starved (#2492)", () => {
       participants: [...sim.participants()],
       dt: DT,
       stepUnits: 1,
+      touchUnits: () => 28,
       check: () => ({ ok: true }),
       isBot: () => true,
       isIdle: () => false,
       calledTargetId: undefined,
+      jammedGoal: undefined,
       sees: () => true,
       seesBetween: () => true,
       walkable: () => true,
@@ -54,6 +56,7 @@ describe("play-build ends its own upkeep when Energy-starved (#2492)", () => {
       highGround: [],
       cover: [],
       routeLength: () => 0,
+      leverHolder: () => undefined,
     });
   }
 

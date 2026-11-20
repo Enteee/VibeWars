@@ -1,3 +1,8 @@
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+import { Lexer, marked } from "marked";
 import { afterEach, describe, expect, it } from "vitest";
 
 import {
@@ -227,10 +232,14 @@ describe("renderPlayerDoc (#1257)", () => {
     expect(textOf(nodes)).toBe("keys site bad gone rel");
   });
 
-  it("shows images from docs/player/img and the game's icons, nothing else", () => {
+  it("shows a game icon by the path GitHub follows too, from either folder depth (#3556)", () => {
     const nodes = renderPlayerDoc(
-      "![Lobby](img/lobby.png) ![Icon](/icons/skill/monk.heal.svg) " +
-        "![x](https://evil.example/x.png) ![y](/icons/../secret.svg) ![z](javascript:1)",
+      "![Burning](../../apps/web/public/icons/status/burning.svg) " +
+        "![Brennen](../../../apps/web/public/icons/status/burning.svg) " +
+        "![old](/icons/status/burning.svg) ![x](https://evil.example/x.png) " +
+        "![y](../../apps/web/public/icons/../../secret.svg) " +
+        "![w](../../apps/web/public/icons/status/../../../x.svg) " +
+        "![z](../apps/web/public/icons/status/burning.svg) ![q](javascript:1)",
       TARGETS,
     );
     expect(
@@ -238,8 +247,119 @@ describe("renderPlayerDoc (#1257)", () => {
         .filter((node) => node.tag === "img")
         .map((node) => node.attrs),
     ).toEqual([
-      { src: "/assets/lobby-abc.png", alt: "Lobby" },
-      { src: "/vibewars/icons/skill/monk.heal.svg", alt: "Icon" },
+      {
+        src: "/vibewars/icons/status/burning.svg",
+        alt: "Burning",
+        title: "Burning",
+        class: "doc-icon",
+      },
+      {
+        src: "/vibewars/icons/status/burning.svg",
+        alt: "Brennen",
+        title: "Brennen",
+        class: "doc-icon",
+      },
     ]);
+  });
+
+  it("makes an icon with bold text right after it one chip, and nothing else (#3556)", () => {
+    const icon = "../../apps/web/public/icons/status/burning.svg";
+    const nodes = renderPlayerDoc(
+      `![Burning](${icon}) **Burning** hurts. ![Burning](${icon}) burns *a* **lot**.\n\n` +
+        `- ![Burning](${icon})**Burning**\n\n| a |\n|---|\n| ![Burning](${icon}) **Burning** |\n\n` +
+        `## ![Burning](${icon}) **Burning**\n`,
+      TARGETS,
+    );
+    const chips = elements(nodes).filter((node) => node.tag === "span");
+    expect(chips.map((chip) => chip.attrs)).toEqual([
+      { class: "doc-chip" },
+      { class: "doc-chip" },
+      { class: "doc-chip" },
+    ]);
+    expect(
+      chips.map((chip) => chip.children.map((child) => child.kind === "element" && child.tag)),
+    ).toEqual([
+      ["img", "strong"],
+      ["img", "strong"],
+      ["img", "strong"],
+    ]);
+    const heading = elements(nodes).find((node) => node.tag === "h2");
+    expect(heading?.children.map((child) => child.kind === "element" && child.tag)).toEqual([
+      "img",
+      false,
+      "strong",
+    ]);
+    expect(textOf(nodes)).toContain("hurts.");
+  });
+
+  it("makes a paragraph of only a diagram a captioned figure (#3556)", () => {
+    const nodes = renderPlayerDoc(
+      "![The lobby, three teams](img/lobby.png)\n\n![The lobby](../img/lobby.png) beside text\n",
+      TARGETS,
+    );
+    expect(elements(nodes).map((node) => [node.tag, node.attrs])).toEqual([
+      ["figure", { class: "doc-figure" }],
+      ["img", { src: "/assets/lobby-abc.png", alt: "The lobby, three teams" }],
+      ["figcaption", {}],
+      ["p", {}],
+      ["img", { src: "/assets/lobby-abc.png", alt: "The lobby" }],
+    ]);
+    expect(textOf(nodes)).toBe("The lobby, three teams beside text");
+  });
+
+  it("shows no image without alt text (#3556)", () => {
+    const nodes = renderPlayerDoc(
+      "![](img/lobby.png)\n\n![ ](../../apps/web/public/icons/status/burning.svg) **Burning**\n",
+      TARGETS,
+    );
+    expect(elements(nodes).filter((node) => node.tag === "img")).toEqual([]);
+    expect(elements(nodes).filter((node) => node.tag === "span")).toEqual([]);
+  });
+
+  it("produces no class but its own, whatever the Markdown says (#3556)", () => {
+    const nodes = renderPlayerDoc(
+      '<span class="x">a</span> ![a{.x}](img/lobby.png "t") **b**\n\n' +
+        '<figure class="y"></figure>\n\n![c](../../apps/web/public/icons/status/burning.svg "class=z") **d**\n',
+      TARGETS,
+    );
+    const classes = new Set(elements(nodes).flatMap((node) => node.attrs.class ?? []));
+    expect(
+      [...classes].every((name) => ["doc-icon", "doc-chip", "doc-figure"].includes(name)),
+    ).toBe(true);
+    expect(
+      elements(nodes).filter((node) => node.tag === "span" && node.attrs.class !== "doc-chip"),
+    ).toEqual([]);
+  });
+});
+
+describe("docs/player images (#3556)", () => {
+  const root = fileURLToPath(new URL("../../../../", import.meta.url));
+  const docs = path.join(root, "docs/player");
+  const images = fs
+    .readdirSync(docs, { recursive: true, encoding: "utf8" })
+    .filter((file) => file.endsWith(".md"))
+    .flatMap((file) => {
+      const found: { file: string; href: string; alt: string }[] = [];
+      void marked.walkTokens(Lexer.lex(fs.readFileSync(path.join(docs, file), "utf8")), (token) => {
+        if (token.type === "image") {
+          found.push({ file, href: token.href, alt: token.text });
+        }
+      });
+      return found;
+    });
+
+  it("every image in docs/player has alt text", () => {
+    expect(images.filter((image) => image.alt.trim() === "")).toEqual([]);
+  });
+
+  it("every image in docs/player is a game icon or a diagram that exists", () => {
+    const missing = images.filter(({ file, href }) => {
+      const target = path.resolve(docs, path.dirname(file), href);
+      const allowed = [path.join(root, "apps/web/public/icons"), path.join(docs, "img")];
+      return (
+        !allowed.some((dir) => target.startsWith(`${dir}${path.sep}`)) || !fs.existsSync(target)
+      );
+    });
+    expect(missing).toEqual([]);
   });
 });

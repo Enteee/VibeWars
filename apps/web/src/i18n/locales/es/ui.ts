@@ -360,12 +360,14 @@ export default {
   "controls.targetCalled": "Apuntar al enemigo marcado",
   "controls.targetClosest": "Apuntar al enemigo más cercano",
   "controls.targetNext": "Siguiente objetivo",
+  "controls.targetPrevious": "Objetivo anterior",
   "controls.targetSelf": "Apuntarte a ti",
   "controls.weaponSet1": "Set de armas 1",
   "controls.weaponSet2": "Set de armas 2",
   "controls.weaponSet3": "Set de armas 3",
   "controls.weaponSet4": "Set de armas 4",
   "controls.weaponSets": "Sets de armas",
+  "controls.withShift": "Mayús + {key}",
   "creature.rat": "Rata",
 
   "echo.secondsLeft": {
@@ -547,6 +549,7 @@ export default {
   "hud.leaveExtra": " de la partida (F10)",
   "hud.leaveNo": "no",
   "hud.leaveQuestion": "¿salir?",
+  "hud.leaveRanked": "¿salir? Cuenta como derrota",
   "hud.leaveYes": "sí",
   "hud.lordPercent": "Señor {percent}%",
   "hud.moraleBoostOurs": "¡Bonus de moral! +{percent}%",
@@ -914,14 +917,7 @@ export default {
   },
 
   "player.cape": "Capa",
-  "player.colourBlack": "negro",
-  "player.colourGold": "dorado",
-  "player.colourLime": "lima",
-  "player.colourOrange": "naranja",
-  "player.colourPink": "rosa",
-  "player.colourTeal": "turquesa",
-  "player.colourViolet": "violeta",
-  "player.colourWhite": "blanco",
+  "player.capePreview": "Vista previa",
   "player.emblem": "Emblema",
   "player.emblemBar": "barra",
   "player.emblemChevron": "galón",
@@ -931,15 +927,18 @@ export default {
   "player.emblemHalfDisc": "semidisco",
   "player.emblemRing": "anillo",
   "player.emblemTriangle": "triángulo",
-  "player.editEmblem": "Editar emblema",
   "player.emblemPencil": "Lápiz",
   "player.emblemUndo": "Deshacer",
   "player.emblemEraser": "Borrador",
   "player.emblemFill": "Rellenar",
   "player.emblemMirror": "Espejo",
   "player.emblemClear": "Borrar todo",
-  "player.emblemDone": "Listo",
   "player.emblemEmpty": "Vacío",
+  "player.capeColour": "Color de la capa",
+  "player.trimColour": "Color del ribete",
+  "player.emblemColour": "Color de dibujo",
+  "player.emblemAddColour": "Añadir color",
+  "player.emblemStartFrom": "Empezar desde",
   "player.emblemPalette": "Colores",
   "player.emblemInGame": "Tamaño en juego",
   "player.guildCape": "Capa de gremio",
@@ -982,6 +981,12 @@ export default {
   "queue.playBotsIn": "Jugar contra bots ({seconds} s)",
   "queue.queueAgain": "Otra vez",
   "queue.randomArena": "Arena aleatoria {size}",
+  "queue.rankedCancelled": "Partida clasificatoria cancelada: un jugador no confirmó.",
+  "queue.rankedConfirming": "Confirmando partida clasificatoria…",
+  "queue.rankedNote":
+    "Sin bots es clasificatoria: el resultado se publica con tu clave y el nombre de tu personaje. Un bot en la partida la deja sin clasificar.",
+  "queue.rankedPending": "Tu puntuación se actualiza en menos de una hora.",
+  "queue.rankedPublished": "Resultado clasificatorio publicado.",
   "queue.searchingCount": "{searching} buscando · faltan {needed}",
   "queue.startingIn": "Empieza en {seconds}",
   "queue.stayTogether": "Seguir juntos",
@@ -1566,6 +1571,23 @@ export default {
   "tutorial.ground.praise": "¡Al otro lado! Ya sabes lo que hace el suelo.",
   "tutorial.front.end": "Ya sabes lo básico. ¡Nos vemos ahí fuera!",
   "tutorial.front.menu": "Volver al menú",
+  "tutorial.menu.arena.farewell": "Estás en la cola. Buena suerte.",
+  "tutorial.menu.arena.find":
+    "Pulsa Buscar partida para apuntarte. Tu grupo es un bando: un compañero que entre con tu enlace de invitación ocupa un puesto, y los bots juegan el resto.",
+  "tutorial.menu.arena.findDone": "Buscar partida",
+  "tutorial.menu.arena.open": "Abre Arena por equipos en la barra.",
+  "tutorial.menu.arena.openDone": "Abre Arena por equipos",
+  "tutorial.menu.arena.queue":
+    "Vota por tu equipo y luego toma un personaje. Cuando hayas hecho ambas cosas, tu grupo entra en la cola.",
+  "tutorial.menu.arena.queueDone": "Entra en la cola",
+  "tutorial.menu.arena.signup":
+    "Abre Tus builds de equipo, elige el equipo que creaste y propónlo.",
+  "tutorial.menu.arena.signupDone": "Propón tu equipo",
+  "tutorial.menu.arena.size":
+    "Pon el tamaño del equipo en 2v2. Solo se enfrentan equipos del mismo tamaño.",
+  "tutorial.menu.arena.sizeDone": "Elige 2v2",
+  "tutorial.menu.arena.title":
+    "Demuestra lo que vale tu equipo en una partida 2v2 de Arena por equipos.",
   "tutorial.menu.gotIt": "Entendido",
   "tutorial.menu.menu.characters":
     "En Personajes creas y cambias con quién juegas: profesión, habilidades y equipo.",
@@ -1575,6 +1597,56 @@ export default {
     "En Equipos juntas personajes en un equipo para los combates por equipos.",
   "tutorial.menu.menu.title": "Para seguir, tienes que cambiar tu especialización.",
   "tutorial.menu.skipAsk": "¿Saltar el resto del tutorial?",
+  "tutorial.menu.modes.gvg":
+    "GvG es gremio contra gremio, 8 contra 8, en la Isla del gremio. Mata al Señor del Gremio enemigo para ganar, y mantén vivo al tuyo.",
+  "tutorial.menu.modes.heroesAscent":
+    "Ascenso de los Héroes es una serie de mapas, 8 contra 8, contra equipos de tu ronda. Si ganas, pasas al siguiente mapa, hasta el Salón de los héroes; si pierdes, empiezas de nuevo.",
+  "tutorial.menu.modes.hostedGame":
+    "Una Partida alojada es tu propia sala: envía a tus amigos el enlace de invitación y elige el mapa y el tamaño del equipo. Los bots ocupan cada plaza que nadie toma.",
+  "tutorial.menu.modes.open": "Abre el modo iluminado del lateral.",
+  "tutorial.menu.modes.randomArena":
+    "Arena aleatoria es la lucha más rápida: tu propio personaje, en un equipo de desconocidos, 1v1, 2v2 o 4v4. El mapa se sortea por ti, y cada plaza es un jugador real.",
+  "tutorial.menu.modes.teamArena":
+    "Arena por equipos es tu grupo y una build contra otro equipo, 2v2, 4v4 u 8v8, del tamaño que elijas. Los bots ocupan cada plaza libre, y cada partida sortea su mapa.",
+  "tutorial.menu.modes.title": "Aprende dónde luchar.",
+  "tutorial.menu.spec.attributes":
+    "Reparte tus puntos de atributo. Cada rango hace más fuertes las habilidades de ese atributo.",
+  "tutorial.menu.spec.attributesDone": "Cambia un atributo",
+  "tutorial.menu.spec.gear":
+    "Armadura, runas e insignias: elige una pieza en la figura y luego qué lleva.",
+  "tutorial.menu.spec.gearDone": "Cambia una pieza de equipo",
+  "tutorial.menu.spec.open": "Abre Personajes y luego un personaje para cambiar su build.",
+  "tutorial.menu.spec.openDone": "Abre un personaje",
+  "tutorial.menu.spec.professions":
+    "Tu profesión principal te da atributos y habilidades; la secundaria también te presta sus habilidades.",
+  "tutorial.menu.spec.professionsDone": "Cambia una profesión",
+  "tutorial.menu.spec.save": "Guarda tu personaje para conservar el nuevo build.",
+  "tutorial.menu.spec.saveDone": "Guardar",
+  "tutorial.menu.spec.skills":
+    "Abre un grupo de la lista y arrastra una habilidad a un hueco de tu barra para cambiarla.",
+  "tutorial.menu.spec.skillsDone": "Pon una habilidad en tu barra",
+  "tutorial.menu.spec.title": "Cambia tu especialización.",
+  "tutorial.menu.spec.weapons": "Elige de la lista un arma para tu set de armas.",
+  "tutorial.menu.spec.weaponsDone": "Cambia un arma",
+  "tutorial.menu.team.build":
+    "El nombre de un miembro abre su build en el editor de builds. Al volver, conservas lo que cambiaste, sin guardar.",
+  "tutorial.menu.team.character":
+    "Arrastra tu personaje desde Mis personajes a un miembro. El miembro se convierte en una copia de él.",
+  "tutorial.menu.team.characterDone": "Pon tu personaje en el equipo",
+  "tutorial.menu.team.fill":
+    "Dale una build a cada miembro, hasta que el equipo no tenga problemas.",
+  "tutorial.menu.team.fillDone": "Completa el equipo",
+  "tutorial.menu.team.members":
+    "Un equipo siempre tiene tantos miembros como su tamaño. Nunca añades un miembro: reemplazas uno.",
+  "tutorial.menu.team.new": "Pon el tamaño del equipo en 2v2 y luego crea una nueva build.",
+  "tutorial.menu.team.newDone": "Empieza un equipo de 2",
+  "tutorial.menu.team.open": "Abre Equipos, donde están las builds de tus equipos.",
+  "tutorial.menu.team.openDone": "Abre Equipos",
+  "tutorial.menu.team.problems":
+    "Guardar siempre guarda el equipo. Su pista nombra lo primero que impide jugar con el equipo.",
+  "tutorial.menu.team.save": "Guarda tu equipo.",
+  "tutorial.menu.team.saveDone": "Guardar",
+  "tutorial.menu.team.title": "Arma un equipo para triunfar.",
   "tutorial.gate.hint": "A la niebla, detrás de mí.",
   "tutorial.gate.how": "Haz clic izquierdo en el suelo o camina con {keys}.",
   "tutorial.gate.intro": "Nuestro equipo lucha más allá de la niebla. Sígueme.",

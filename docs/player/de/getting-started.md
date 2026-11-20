@@ -6,6 +6,10 @@ Du brauchst kein Konto und musst nichts installieren: Das Spiel läuft in diesem
 Browser-Tab. VibeWars braucht Tastatur und Maus. Auf dem Handy oder einem reinen
 Touch-Tablet läuft es nicht: Öffne es am Computer.
 
+## Das Tutorial
+
+Beim ersten Öffnen bietet dir VibeWars ein kurzes Tutorial an: einen Gang durch eine Schlucht, der dir Bewegen und Kämpfen beibringt. Danach geht es im Menü weiter, Schritt für Schritt: Ändere die Ausrichtung deines Charakters, bau ein Team aus zwei, sieh dir an, wofür jeder Modus da ist, und stell dieses Team für ein erstes 2v2-Match in der Teamarena in die Warteschlange. Solange ein Schritt auf ein Bedienelement zeigt, ist der Rest des Menüs abgedunkelt. Mit **Tutorial überspringen** kannst du jederzeit aussteigen.
+
 ## Die Modus-Leiste
 
 Die Leiste links im Hauptbildschirm enthält die [Modi](modes.md), von oben nach
@@ -174,14 +178,14 @@ was dir gehört, egal was du spielst. Das Spiel gibt dir beim ersten Besuch eine
 wie `AshenWolf`; tippe darüber, um ihn zu ändern. Bleibt er leer, spielst du als `Spieler`.
 Tippe daneben ein **Gildenkürzel** aus 2 bis 4 Buchstaben oder Ziffern ein, und alle sehen
 es hinter deinem Namen, etwa `Ente [VIBE]`. Mit Kürzel erscheint darunter der Designer für
-den **Gildenumhang**: Wähle Umhangfarbe, Saumfarbe und ein Emblem, und dein Körper trägt den
+den **Gildenumhang**: Wähle eine beliebige Umhang- und Saumfarbe, zeichne ein Emblem, und dein Körper trägt den
 Umhang in jedem Match: Er faltet sich an deinem Rand zu einem schmalen Band, wenn du stehst,
 und weht hinter dir, wenn du läufst. Deine Charaktere im Menü zeigen ihn auch. **Kein Umhang**
-nimmt ihn ab.
+nimmt ihn ab. Eine Figur zeigt den Umhang so, wie er im Spiel aussieht. Eine Farbe, die dem Blau deines Teams oder dem Rot deiner Gegner zu nahe ist, wird beim Zeichnen ein wenig davon weggerückt, damit kein Umhang wie ein Team aussieht; die Figur zeigt ihn so, wie alle ihn sehen werden.
 
 Eine Änderung gilt sofort für die Lobby, in der du bist.
 
-**Zeichne dein eigenes Emblem.** **Emblem bearbeiten** unter den Start-Emblemen öffnet an ihrer Stelle ein Raster aus 16×16 Feldern. Wähle eine Farbe oder **Leer**, dann zeichne mit dem **Stift**, radiere mit dem **Radierer** oder färbe eine Fläche mit **Füllen**. **Spiegeln** malt die linke und die rechte Hälfte zugleich. **Leeren** leert das Raster, **Rückgängig** geht einen Schritt zurück. Die kleine Ansicht neben dem Raster zeigt das Emblem so groß wie im Match. **Fertig** behält es, **Abbrechen** verwirft die Zeichnung. Mit Pfeiltasten und Leertaste zeichnest du auch per Tastatur.
+**Zeichne dein Emblem.** Das Emblem-Raster aus 16×16 Feldern liegt immer unter Umhang- und Saumfarbe. Wähle eine Farbe oder **Leer**, dann zeichne mit dem **Stift**, radiere mit dem **Radierer** oder färbe eine Fläche mit **Füllen**. **Farbe hinzufügen** gibt dem Emblem eine weitere Farbe, bis zu 15, und der Farbwähler daneben ändert die gewählte Farbe samt allem, was in ihr gezeichnet ist. **Beginnen mit** legt eine von acht Formen in der gewählten Farbe auf das Raster. **Spiegeln** malt die linke und die rechte Hälfte zugleich. **Leeren** leert das Raster, **Rückgängig** geht einen Schritt zurück. Die kleine Ansicht neben dem Raster zeigt das Emblem so groß wie im Match. Jeder Strich wird gespeichert, sobald du ihn beendest. Mit Pfeiltasten und Leertaste zeichnest du auch per Tastatur.
 
 **Gildenlink kopieren** unter dem Umhang-Designer kopiert einen Link mit deinem Kürzel und Umhang. Wer ihn öffnet, wird gefragt **Der Gilde [VIBE] beitreten?**: **Beitreten** gibt ihm dein Kürzel und deinen Umhang, **Nein** ändert nichts. Jeder kann so einen Link schicken, und niemandem gehört ein Kürzel, darum fragt das Spiel immer zuerst.
 

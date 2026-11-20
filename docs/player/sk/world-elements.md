@@ -11,12 +11,12 @@ Postav sa na jednu z týchto plôch a začne na teba pôsobiť; jej účinok eš
 chvíľu trvá aj potom, čo z nej zídeš. Na nepriateľov a spojencov pôsobí
 rovnako ako na teba.
 
-- **Spálená zem** na teba uvalí Burning. Zuhoľnatená zem so žeravými uhlíkmi
+- **Spálená zem** na teba uvalí Horenie. Zuhoľnatená zem so žeravými uhlíkmi
   a oranžovým okrajom.
-- **Láva** uvalí Burning a Crippled. Tmavá kôra rozbrázdená tečúcimi,
+- **Láva** uvalí Horenie a Ochromenie. Tmavá kôra rozbrázdená tečúcimi,
   žiariacimi puklinami, ktoré blikajú.
-- **Jedovatá hmla** uvalí Poison. Plávajúce kyslozelené obláčiky, cez ktoré
-  vidno. Zelená na zemi vždy znamená Poison.
+- **Jedovatá hmla** uvalí Jed. Plávajúce kyslozelené obláčiky, cez ktoré
+  vidno. Zelená na zemi vždy znamená Jed.
 - **Močiar** ťa spomalí a každý útok alebo schopnosť, ktorú tam použiješ, ťa
   stojí energiu. Hnedé blato s mlákami a pomalými bublinami.
 - **Špinavá voda** ti znižuje regeneráciu zdravia. Kalná tmavá modrozelená
@@ -35,10 +35,10 @@ rovnako ako na teba.
 Udierajú znova a znova na svojom mieste a zasiahnu každého, kto tam práve
 stojí.
 
-- **Prieduch** vychrlí stĺp plameňa, ktorý uvalí Burning. Medzi výbuchmi je to
+- **Prieduch** vychrlí stĺp plameňa, ktorý uvalí Horenie. Medzi výbuchmi je to
   tlejúci kamenný golier.
-- **Plynový výron** vypúšťa zelený plyn, ktorý uvalí Poison.
-- **Padajúce kamene** zhadzujú skaly, ktoré uvalia Crippled. Niektoré padajú
+- **Plynový výron** vypúšťa zelený plyn, ktorý uvalí Jed.
+- **Padajúce kamene** zhadzujú skaly, ktoré uvalia Ochromenie. Niektoré padajú
   na jedno miesto, iné sa kotúľajú po dráhe tam a späť.
 
 Každá nástraha ťa varuje tesne predtým, ako udrie: kruh na jej okraji sa

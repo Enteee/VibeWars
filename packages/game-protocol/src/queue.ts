@@ -195,7 +195,23 @@ export interface QueueTicket {
    * claims the latest is the holder.
    */
   readonly holdsHallSince: number | null;
+  /**
+   * Each member's claimed rating (ADR-0055), by member key, every one of
+   * `members` and no other, an integer: the conservative value of the
+   * leaderboard at `leaderboardAsOf`. Each seat's ranked start carries it,
+   * and every player checks it there. `UNLISTED_CLAIM` for a key the
+   * leaderboard does not list, and until rating pairing (#3575), for every key.
+   */
+  readonly claims: Readonly<Record<string, number>>;
+  /** The `asOf` of the leaderboard `claims` were read from, unix seconds; 0 until #3575. */
+  readonly leaderboardAsOf: number;
 }
+
+/**
+ * The claim of a key no leaderboard lists (ADR-0055): 1500 − 2 · 350, the
+ * conservative value of a rating nobody has played yet.
+ */
+export const UNLISTED_CLAIM = 800;
 
 /** How a party ticket proves every member is in it (#1078). */
 export interface TicketParty {
@@ -216,7 +232,7 @@ const TICKET_ID = /^[0-9a-f]{64}$/;
 /** A group id is a sha256, as hex. */
 const GROUP_ID = TICKET_ID;
 const CONSENT = /^[0-9a-f]{128}$/;
-const TICKET_FIELDS = 11;
+const TICKET_FIELDS = 13;
 const PARTY_FIELDS = 2;
 /** Longer than any `PROTOCOL_VERSION`, short enough to cost nothing. */
 const MAX_PROTOCOL_LENGTH = 64;
@@ -319,7 +335,38 @@ function parseParty(value: unknown, members: readonly string[]): TicketParty | n
   return { groupId, consents: signed };
 }
 
-/** A lone player's Random Arena ticket: no party, no bots, no Ascent round, no Hall. */
+/**
+ * `value` as the claims of a ticket of `members`: one integer for each
+ * member key and for no other key.
+ */
+function parseClaims(
+  value: unknown,
+  members: readonly string[],
+): Readonly<Record<string, number>> | undefined {
+  if (
+    typeof value !== "object" ||
+    value === null ||
+    Array.isArray(value) ||
+    Object.keys(value).length !== members.length
+  ) {
+    return undefined;
+  }
+  const raw = value as Record<string, unknown>;
+  const claims: Record<string, number> = {};
+  for (const member of members) {
+    const claim = Object.hasOwn(raw, member) ? raw[member] : undefined;
+    if (typeof claim !== "number" || !Number.isSafeInteger(claim)) {
+      return undefined;
+    }
+    claims[member] = claim;
+  }
+  return claims;
+}
+
+/**
+ * A lone player's Random Arena ticket: no party, no bots, no Ascent round,
+ * no Hall, and the claim of a key no leaderboard lists.
+ */
 export function soloQueueTicket(
   ticketId: string,
   mode: QueueMode,
@@ -338,6 +385,8 @@ export function soloQueueTicket(
     ascentRound: null,
     hardNat,
     holdsHallSince: null,
+    claims: { [ticketId]: UNLISTED_CLAIM },
+    leaderboardAsOf: 0,
   };
 }
 
@@ -347,7 +396,8 @@ export function soloQueueTicket(
  * team in Random Arena or not a whole side in a team mode, members
  * out of party order or not led by its id, a party that does not match
  * them, an `ascentRound` that is not its mode's, a `hardNat` that is not
- * a boolean, a time that is not a whole number of ms, or any field more than a
+ * a boolean, claims that are not one integer a member, a time that is not
+ * a whole number of ms, or any field more than a
  * ticket has, so a flood of padded events costs a client nothing to
  * refuse.
  */
@@ -370,6 +420,8 @@ export function parseQueueTicket(raw: unknown): QueueTicket | undefined {
     ascentRound,
     hardNat,
     holdsHallSince,
+    claims,
+    leaderboardAsOf,
   } = raw as Record<string, unknown>;
   if (
     typeof ticketId !== "string" ||
@@ -385,13 +437,15 @@ export function parseQueueTicket(raw: unknown): QueueTicket | undefined {
     !isTime(heartbeatAt) ||
     !isAscentRoundOf(ascentRound, mode) ||
     typeof hardNat !== "boolean" ||
-    !(holdsHallSince === null || isTime(holdsHallSince))
+    !(holdsHallSince === null || isTime(holdsHallSince)) ||
+    !isTime(leaderboardAsOf)
   ) {
     return undefined;
   }
   const parsed = parseMembers(members, ticketId, mode, bots);
   const proof = parsed === undefined ? undefined : parseParty(party, parsed);
-  return parsed === undefined || proof === undefined
+  const claimed = parsed === undefined ? undefined : parseClaims(claims, parsed);
+  return parsed === undefined || proof === undefined || claimed === undefined
     ? undefined
     : {
         ticketId,
@@ -405,5 +459,7 @@ export function parseQueueTicket(raw: unknown): QueueTicket | undefined {
         ascentRound,
         hardNat,
         holdsHallSince,
+        claims: claimed,
+        leaderboardAsOf,
       };
 }

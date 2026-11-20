@@ -15,6 +15,10 @@ const GROUP: FormedGroup = {
   parties: [],
   mapId: "arena-crossroads",
   mode: "random-arena-1v1",
+  ranked: true,
+  seed: 0,
+  claims: { a: 800, b: 800 },
+  leaderboardAsOf: 0,
 };
 
 describe("queueStatus (#2743)", () => {

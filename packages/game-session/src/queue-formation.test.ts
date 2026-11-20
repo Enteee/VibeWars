@@ -4,6 +4,7 @@ import type { TeamCount } from "@vibewars/game-core";
 import {
   PROTOCOL_VERSION,
   TICKET_TTL_MS,
+  UNLISTED_CLAIM,
   teamSizeOf,
   type QueueMode,
   type QueueTicket,
@@ -15,6 +16,7 @@ import {
   THIRD_TEAM_WAIT_SECONDS,
   formGroups,
   groupOf,
+  isRankedGroup,
   ticketsOf,
   type FormedGroup,
 } from "./queue-formation.js";
@@ -44,6 +46,8 @@ function ticket(n: number, fields: Partial<QueueTicket> = {}): QueueTicket {
     ascentRound: roundOf(fields.mode ?? "random-arena-4v4"),
     hardNat: false,
     holdsHallSince: null,
+    claims: { [ticketId]: UNLISTED_CLAIM },
+    leaderboardAsOf: 0,
     ...fields,
   };
 }
@@ -62,7 +66,8 @@ function party(n: number, mode: QueueMode = "random-arena-4v4"): QueueTicket {
   );
   const members = [leader.ticketId, ...others];
   const consents = members.map(() => "e".repeat(128));
-  return { ...leader, members, party: { groupId: "f".repeat(64), consents } };
+  const claims = Object.fromEntries(members.map((member) => [member, UNLISTED_CLAIM]));
+  return { ...leader, members, claims, party: { groupId: "f".repeat(64), consents } };
 }
 
 function solos(from: number, count: number, fields: Partial<QueueTicket> = {}): QueueTicket[] {
@@ -345,6 +350,7 @@ describe("team modes (ADR-0042)", () => {
     return {
       ...whole,
       members,
+      claims: Object.fromEntries(members.map((member) => [member, UNLISTED_CLAIM])),
       bots: teamSizeOf(mode) - humans,
       party:
         humans === 1
@@ -768,5 +774,61 @@ describe("the Hall in its slots (#2701)", () => {
   it("leaves out a side that queued at or after the slot's start", async () => {
     const groups = await formAt(OPEN + 1_000, [hall(1), hall(2), hall(3, { enteredAt: OPEN })]);
     expect(seated(groups)).toEqual([idOf(1), idOf(2)].sort());
+  });
+});
+
+describe("ranked groups (ADR-0055, #3573)", () => {
+  /** Ticket `n` as a side of 2v2 Team Arena: a party of two humans, or one and a bot. */
+  function side(n: number, humans: 1 | 2): QueueTicket {
+    const whole = party(n, "team-arena-2v2");
+    const members = whole.members.slice(0, humans);
+    return {
+      ...whole,
+      members,
+      claims: Object.fromEntries(members.map((member) => [member, UNLISTED_CLAIM])),
+      bots: 2 - humans,
+      party: humans === 1 ? null : whole.party,
+    };
+  }
+
+  it("is every ticket bringing no bot: a bot ticket keeps its group unranked", () => {
+    expect(isRankedGroup(solos(1, 8))).toBe(true);
+    expect(isRankedGroup([side(1, 2), side(2, 2)])).toBe(true);
+    expect(isRankedGroup([side(1, 2), side(2, 1)])).toBe(false);
+    expect(isRankedGroup([])).toBe(false);
+  });
+
+  it("forms solos ranked, a side with a bot unranked", async () => {
+    const [solo] = await form(solos(1, 8));
+    expect(solo?.ranked).toBe(true);
+    const [humans] = await form([side(1, 2), side(2, 2)], "team-arena-2v2");
+    expect(humans?.ranked).toBe(true);
+    const [botted] = await form([side(1, 2), side(2, 1)], "team-arena-2v2");
+    expect(botted?.ranked).toBe(false);
+  });
+
+  it("draws one u32 seed from the group's id, whatever order its tickets are seen in", async () => {
+    const tickets = solos(1, 8);
+    const [group] = await form(tickets);
+    const [again] = await form([...tickets].reverse());
+    const [other] = await form(solos(20, 8));
+    expect(group?.seed).toBe(again?.seed);
+    expect(Number.isInteger(group?.seed)).toBe(true);
+    expect(group?.seed).toBeGreaterThanOrEqual(0);
+    expect(group?.seed).toBeLessThan(2 ** 32);
+    expect(other?.seed).not.toBe(group?.seed);
+  });
+
+  it("carries every seat key's claim and the newest leaderboard its tickets read", async () => {
+    const tickets = solos(1, 8).map((each, n) => ({
+      ...each,
+      claims: { [each.ticketId]: 700 + n },
+      leaderboardAsOf: n * 10,
+    }));
+    const [group] = await form(tickets);
+    expect(group?.claims).toEqual(
+      Object.fromEntries(tickets.flatMap((each) => Object.entries(each.claims))),
+    );
+    expect(group?.leaderboardAsOf).toBe(70);
   });
 });

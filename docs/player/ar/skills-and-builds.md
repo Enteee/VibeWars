@@ -6,8 +6,8 @@
 
 ## المهن
 
-هناك عشر: Warrior وRanger وMonk وNecromancer وMesmer
-وElementalist وAssassin وRitualist وParagon وDervish. مهنتك **الأساسية**
+هناك عشر: ![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior** و![Ranger](../../../apps/web/public/icons/profession/ranger.svg) **Ranger** و![Monk](../../../apps/web/public/icons/profession/monk.svg) **Monk** و![Necromancer](../../../apps/web/public/icons/profession/necromancer.svg) **Necromancer** و![Mesmer](../../../apps/web/public/icons/profession/mesmer.svg) **Mesmer**
+و![Elementalist](../../../apps/web/public/icons/profession/elementalist.svg) **Elementalist** و![Assassin](../../../apps/web/public/icons/profession/assassin.svg) **Assassin** و![Ritualist](../../../apps/web/public/icons/profession/ritualist.svg) **Ritualist** و![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** و![Dervish](../../../apps/web/public/icons/profession/dervish.svg) **Dervish**. مهنتك **الأساسية**
 هي ما أنت عليه: مهاراتها، و**سمتها الأساسية**
 (المعلّمة بـ ★)، التي لا تنالها إلا المهنة الأساسية. ومهنتك **الثانوية** تعيرك
 مهاراتها، لكن لا تعيرك سمتها الأساسية.
@@ -18,11 +18,11 @@
 جهّز ثانية فتحل محل الأولى. اضغط **×** على خانة
 لتفرغها.
 
-**الطلاسم الخاطفة** (Dervish) فورية: استخدام أحدها يُبقي
+![طلسم خاطف](../../../apps/web/public/icons/skill-type/enchantment.svg) **الطلاسم الخاطفة** (![Dervish](../../../apps/web/public/icons/profession/dervish.svg) **Dervish**) فورية: استخدام أحدها يُبقي
 ضربتك وخطوتك، فتستطيع حياكتها بين الضربات. وكل واحد منها
 يوقف طلاسمك الخاطفة الأخرى لثانية واحدة.
 
-**الهيئات** (تجسّدات Dervish الخمسة: Balthazar وDwayna وGrenth وLyssa
+![هيئة](../../../apps/web/public/icons/skill-type/form.svg) **الهيئات** (تجسّدات Dervish الخمسة: Balthazar وDwayna وGrenth وLyssa
 وMelandru) تغيّرك لأكثر من دقيقة. الهيئة
 ليست طلسمًا، فلا يستطيع أحد نزعها، ولا يمكنك أن تكون إلا في هيئة واحدة
 في كل مرة. استخدام إحداها يعطّلها 45 ثانية. وحين تنتهي الهيئة،
@@ -31,7 +31,7 @@
 
 **بعض الطلقات تعطّل هجماتك الأخرى.** Focused Shot وNeedling
 Shot تطيران أسرع مما ينبغي لسهم، لكن كل واحدة تصيب توقف
-مهارات الهجوم الأخرى لديك لبضع ثوانٍ. التعاويذ لا تتأثر.
+![مهارة هجوم](../../../apps/web/public/icons/skill-type/attack.svg) **مهارات الهجوم** الأخرى لديك لبضع ثوانٍ. ![تعويذة](../../../apps/web/public/icons/skill-type/spell.svg) **التعاويذ** لا تتأثر.
 
 ## السمات
 
@@ -43,10 +43,10 @@ Shot تطيران أسرع مما ينبغي لسهم، لكن كل واحدة �
 السمة تظهر بالأخضر والخط العريض، برتبك الحالية بما فيها
 الرونات وغطاء الرأس.
 
-في القتال قد تتغير رتبك لبعض الوقت. Weakness تُنقص واحدة من
-كل منها. بعض اللعنات تجعل سمات العدو 0، وMaster of Magic يجعل
+في القتال قد تتغير رتبك لبعض الوقت. ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness** تُنقص واحدة من
+كل منها. بعض ![لعنة](../../../apps/web/public/icons/skill-type/hex.svg) **اللعنات** تجعل سمات العدو 0، وMaster of Magic يجعل
 سماتك العنصرية 13: الرتبة المعيّنة بهذه الطريقة تتغلب على الرونات
-وعلى Weakness معًا. وSignet of Illusions يتيح لتعاويذك التالية من سمات
+وعلى Weakness معًا. وSignet of Illusions يتيح ل![تعويذة](../../../apps/web/public/icons/skill-type/spell.svg) **تعاويذك** التالية من سمات
 أخرى أن تستخدم رتبة Illusion Magic لديك. وبعض المهارات ترفع
 سماتك لفترة أو لتعاويذك التالية، كما يفعل Glyph of Elemental
 Power وRitual Lord، حتى السمة التي تركتها على 0؛ والرتبة المعيّنة، كرتبة Master
@@ -54,19 +54,19 @@ of Magic، تتغلب على مثل هذا التعزيز.
 
 ## الأصداء
 
-**أصداء** Paragon تعزيزات طويلة على حليف واحد. **اللازمة** تتجدد
-إلى مدتها الكاملة، و**الخاتمة** تُحدث أثرها، كلما انتهت ترتيلة أو
-صيحة على ذلك الحليف. والترتيلة أو الصيحة التي يُعاد إلقاؤها قبل انتهائها لم
+![صدى](../../../apps/web/public/icons/skill-type/echo.svg) **أصداء** ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** تعزيزات طويلة على حليف واحد. **اللازمة** تتجدد
+إلى مدتها الكاملة، و**الخاتمة** تُحدث أثرها، كلما انتهت ![ترتيلة](../../../apps/web/public/icons/skill-type/chant.svg) **ترتيلة** أو
+![صيحة](../../../apps/web/public/icons/skill-type/shout.svg) **صيحة** على ذلك الحليف. والترتيلة أو الصيحة التي يُعاد إلقاؤها قبل انتهائها لم
 تنتهِ. لا شيء يزيل الصدى: ينتهي حين ينفد أمده أو يموت
 حامله. ومعظمها لا يمكنه استهداف روح.
 
 ## مهارات تتحول إلى مهارة أخرى
 
-بعض مهارات Mesmer تضع مهارة أخرى في خانتها لبعض الوقت.
-Arcane Echo وEcho تنسخان المهارة التالية التي تستخدمها. **Inspired
+بعض مهارات ![Mesmer](../../../apps/web/public/icons/profession/mesmer.svg) **Mesmer** تضع مهارة أخرى في خانتها لبعض الوقت.
+![Arcane Echo](../../../apps/web/public/icons/status/arcane-echo.svg) **Arcane Echo** و![Echo](../../../apps/web/public/icons/status/echo.svg) **Echo** تنسخان المهارة التالية التي تستخدمها. **Inspired
 Enchantment** و**Inspired Hex** تصيران المهارة التي ألقت
-الطلسم أو اللعنة التي أزالتاها، لمدة 20 ثانية. **Arcane Thievery**
-تصير التعويذة التي عطّلتها لدى عدوك، ما دام التعطيل
+![طلسم](../../../apps/web/public/icons/skill-type/enchantment.svg) **الطلسم** أو ![لعنة](../../../apps/web/public/icons/skill-type/hex.svg) **اللعنة** التي أزالتاها، لمدة 20 ثانية. **Arcane Thievery**
+تصير ![تعويذة](../../../apps/web/public/icons/skill-type/spell.svg) **التعويذة** التي عطّلتها لدى عدوك، ما دام التعطيل
 قائمًا. للنسخة إعادة شحنها الخاصة. وحين تنتهي، تعود المهارة الأصلية
 وتبدأ إعادة شحنها الخاصة، ويفشل إلقاء النسخة إن كان لا يزال
 جاريًا. والحالة التي وضعتها روح أو حالة أخرى لا يمكن
@@ -74,10 +74,10 @@ Enchantment** و**Inspired Hex** تصيران المهارة التي ألقت
 
 ## الآبار والنقوش
 
-**آبار** Necromancer تستغل أقرب جثة. وإن لم تكن هناك جثة قريبة،
+![بئر](../../../apps/web/public/icons/skill-type/well.svg) **آبار** ![Necromancer](../../../apps/web/public/icons/profession/necromancer.svg) **Necromancer** تستغل أقرب جثة. وإن لم تكن هناك جثة قريبة،
 يضحّي البئر بـ 66% من صحتك بدلًا منها ويظهر حيث تقف.
 
-**نقوش** Elementalist تغيّر تعويذتك التالية: لا يمكن
+![نقش](../../../apps/web/public/icons/skill-type/glyph.svg) **نقوش** ![Elementalist](../../../apps/web/public/icons/profession/elementalist.svg) **Elementalist** تغيّر ![تعويذة](../../../apps/web/public/icons/skill-type/spell.svg) **تعويذتك** التالية: لا يمكن
 مقاطعتها، أو تُلقى فورًا، أو تُعاد شحنها في الحال، أو تكلّف أقل. والنقش
 الجديد يحل محل الذي كان لديك.
 
@@ -86,9 +86,9 @@ Enchantment** و**Inspired Hex** تصيران المهارة التي ألقت
 المهارة التي تستجيب "في المرة التالية التي يُنزل فيها الضرر الصحة دون N%"
 تستجيب لأي ضربة أو سرقة حياة تتركك حيًّا وتحت
 الخط، حتى لو كنت تحته أصلًا قبل الضربة، ولا تستجيب أبدًا لصحة
-تضحّي بها أو تفقدها بالتدهور. والحماية من الضرر القاتل، مثل Judge's Intervention،
-تُسقط الضربة القاتلة كلها: لا ضرر ولا موت. وFaithful Intervention
-وIllusion of Weakness لا مدة لهما: تدومان حتى ينهيهما ضرر أو
+تضحّي بها أو تفقدها بالتدهور. والحماية من الضرر القاتل، مثل ![Judge's Intervention](../../../apps/web/public/icons/status/judges-intervention.svg) **Judge's Intervention**،
+تُسقط الضربة القاتلة كلها: لا ضرر ولا موت. و![Faithful Intervention](../../../apps/web/public/icons/status/faithful-intervention.svg) **Faithful Intervention**
+و![Illusion of Weakness](../../../apps/web/public/icons/status/illusion-of-weakness.svg) **Illusion of Weakness** لا مدة لهما: تدومان حتى ينهيهما ضرر أو
 نزع أو موت، وتعالجانك وهما تمضيان.
 
 ## المكتبة
@@ -114,19 +114,19 @@ Enchantment** و**Inspired Hex** تصيران المهارة التي ألقت
 
 ## تعاويذ الأغراض
 
-**تعاويذ الأغراض** لدى Ritualist تضع **رماد** روح في يديك: مكافأة
+![تعويذة غرض](../../../apps/web/public/icons/skill-type/item-spell.svg) **تعاويذ الأغراض** لدى ![Ritualist](../../../apps/web/public/icons/profession/ritualist.svg) **Ritualist** تضع **رماد** روح في يديك: مكافأة
 ما دمت تحمله، و**أثر سقوط** حين يسقط. يسقط
 حين ينفد، أو حين تموت، أو حين تضغط **إسقاط الرماد** فوق
 شريط صحتك، أو تلقي تعويذة غرض أخرى، أو تخطو خطوة ظل، أو تبدّل الأسلحة، أو
 ترفع راية أو أثرًا. يداك مشغولتان ما دمت تحمله: لا
-هجمات ولا مهارات هجوم، لكنك تمشي بكامل سرعتك وتظل تلقي
-التعاويذ. لا شيء يزيل الرماد؛ فكل نهاية هي سقوط.
+هجمات ولا ![مهارة هجوم](../../../apps/web/public/icons/skill-type/attack.svg) **مهارات هجوم**، لكنك تمشي بكامل سرعتك وتظل تلقي
+![تعويذة](../../../apps/web/public/icons/skill-type/spell.svg) **التعاويذ**. لا شيء يزيل الرماد؛ فكل نهاية هي سقوط.
 
 ## خطوات الظل
 
 **خطوة الظل** تنقلك فورًا، بلا مشي بين المكانين. معظمها يخطو بك إلى
 هدفك؛ وبعضها يعيدك إلى حيث ألقيته حين ينتهي، كما يفعل
-Shadow of Haste وShadow Walk. **Recall** يخطو بك إلى حليفه
+Shadow of Haste وShadow Walk. ![Recall](../../../apps/web/public/icons/status/recall.svg) **Recall** يخطو بك إلى حليفه
 حين ينتهي فقط، ويعطّل كل مهاراتك 3 ثوانٍ. و**Swap** يبادل
 الأماكن مع إحدى أرواح جانبك أو توابعه.
 

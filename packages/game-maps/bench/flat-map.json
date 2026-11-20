@@ -1,0 +1,268 @@
+{
+  "id": "bench-flat",
+  "name": "Bench flat",
+  "mode": "annihilation",
+  "teamSizes": [8],
+  "teams": 2,
+  "width": 6200,
+  "height": 2400,
+  "bounds": {
+    "kind": "rect"
+  },
+  "layers": 1,
+  "biome": "hall",
+  "ascentAct": null,
+  "groundLayer": 0,
+  "pits": [],
+  "tunnels": [],
+  "decks": [],
+  "overhangs": [],
+  "transitions": [],
+  "dropOffs": [],
+  "walls": [
+    {
+      "kind": "rect",
+      "layer": 0,
+      "x": 1410,
+      "y": 0,
+      "width": 60,
+      "height": 240
+    },
+    {
+      "kind": "rect",
+      "layer": 0,
+      "x": 4730,
+      "y": 2160,
+      "width": 60,
+      "height": 240
+    },
+    {
+      "kind": "rect",
+      "layer": 0,
+      "x": 1410,
+      "y": 570,
+      "width": 60,
+      "height": 370
+    },
+    {
+      "kind": "rect",
+      "layer": 0,
+      "x": 4730,
+      "y": 1460,
+      "width": 60,
+      "height": 370
+    },
+    {
+      "kind": "rect",
+      "layer": 0,
+      "x": 1710,
+      "y": 670,
+      "width": 2790,
+      "height": 310
+    },
+    {
+      "kind": "rect",
+      "layer": 0,
+      "x": 1700,
+      "y": 1420,
+      "width": 2790,
+      "height": 310
+    },
+    {
+      "kind": "rect",
+      "layer": 0,
+      "x": 2340,
+      "y": 0,
+      "width": 60,
+      "height": 370
+    },
+    {
+      "kind": "rect",
+      "layer": 0,
+      "x": 3800,
+      "y": 2030,
+      "width": 60,
+      "height": 370
+    },
+    {
+      "kind": "rect",
+      "layer": 0,
+      "x": 3120,
+      "y": 310,
+      "width": 60,
+      "height": 370
+    },
+    {
+      "kind": "rect",
+      "layer": 0,
+      "x": 3020,
+      "y": 1720,
+      "width": 60,
+      "height": 370
+    },
+    {
+      "kind": "rect",
+      "layer": 0,
+      "x": 3890,
+      "y": 0,
+      "width": 60,
+      "height": 370
+    },
+    {
+      "kind": "rect",
+      "layer": 0,
+      "x": 2250,
+      "y": 2030,
+      "width": 60,
+      "height": 370
+    },
+    {
+      "kind": "rect",
+      "layer": 0,
+      "x": 2340,
+      "y": 980,
+      "width": 60,
+      "height": 250
+    },
+    {
+      "kind": "rect",
+      "layer": 0,
+      "x": 3800,
+      "y": 1170,
+      "width": 60,
+      "height": 250
+    }
+  ],
+  "gates": [],
+  "objectives": [],
+  "spawnPoints": [
+    {
+      "team": 0,
+      "layer": 0,
+      "position": {
+        "x": 560,
+        "y": 850
+      }
+    },
+    {
+      "team": 0,
+      "layer": 0,
+      "position": {
+        "x": 560,
+        "y": 1000
+      }
+    },
+    {
+      "team": 0,
+      "layer": 0,
+      "position": {
+        "x": 560,
+        "y": 1160
+      }
+    },
+    {
+      "team": 0,
+      "layer": 0,
+      "position": {
+        "x": 560,
+        "y": 1310
+      }
+    },
+    {
+      "team": 0,
+      "layer": 0,
+      "position": {
+        "x": 740,
+        "y": 920
+      }
+    },
+    {
+      "team": 0,
+      "layer": 0,
+      "position": {
+        "x": 740,
+        "y": 1070
+      }
+    },
+    {
+      "team": 0,
+      "layer": 0,
+      "position": {
+        "x": 740,
+        "y": 1220
+      }
+    },
+    {
+      "team": 0,
+      "layer": 0,
+      "position": {
+        "x": 740,
+        "y": 1370
+      }
+    },
+    {
+      "team": 1,
+      "layer": 0,
+      "position": {
+        "x": 5640,
+        "y": 1550
+      }
+    },
+    {
+      "team": 1,
+      "layer": 0,
+      "position": {
+        "x": 5640,
+        "y": 1400
+      }
+    },
+    {
+      "team": 1,
+      "layer": 0,
+      "position": {
+        "x": 5640,
+        "y": 1240
+      }
+    },
+    {
+      "team": 1,
+      "layer": 0,
+      "position": {
+        "x": 5640,
+        "y": 1090
+      }
+    },
+    {
+      "team": 1,
+      "layer": 0,
+      "position": {
+        "x": 5460,
+        "y": 1480
+      }
+    },
+    {
+      "team": 1,
+      "layer": 0,
+      "position": {
+        "x": 5460,
+        "y": 1330
+      }
+    },
+    {
+      "team": 1,
+      "layer": 0,
+      "position": {
+        "x": 5460,
+        "y": 1180
+      }
+    },
+    {
+      "team": 1,
+      "layer": 0,
+      "position": {
+        "x": 5460,
+        "y": 1030
+      }
+    }
+  ]
+}

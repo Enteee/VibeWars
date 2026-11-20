@@ -22,6 +22,7 @@ import {
   PROTOCOL_VERSION,
   TICKET_HEARTBEAT_MS,
   TICKET_TTL_MS,
+  UNLISTED_CLAIM,
   isTeamQueueMode,
   teamSizeOf,
   type QueueMode,
@@ -200,11 +201,12 @@ export function createQueueClient(options: QueueClientOptions): QueueClient {
   }
 
   function publish(): void {
+    const seated = party === undefined ? [key.ticketId] : members;
     const ticket: QueueTicket = {
       ticketId: key.ticketId,
       protocol: PROTOCOL_VERSION,
       mode,
-      members: party === undefined ? [key.ticketId] : members,
+      members: seated,
       bots,
       enteredAt,
       heartbeatAt: now(),
@@ -213,6 +215,9 @@ export function createQueueClient(options: QueueClientOptions): QueueClient {
       ascentRound,
       hardNat,
       holdsHallSince,
+      // Every key unlisted until rating pairing reads the leaderboard (#3575).
+      claims: Object.fromEntries(seated.map((member) => [member, UNLISTED_CLAIM])),
+      leaderboardAsOf: 0,
     };
     publishedAt = ticket.heartbeatAt;
     // Counted at once, not when the board echoes it back.

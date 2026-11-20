@@ -173,9 +173,8 @@ Cinder Sanctum (8v8, 5600x2800) lo juega: un templo en la ladera de un volcán e
 **Lleva a tu Héroe Fantasmal al altar y mantenlo.** Cada equipo tiene un **Héroe
 Fantasmal** en su base, un fantasma que lucha con un hacha y que nadie juega. El
 **altar** está en el centro, a la misma distancia de ambas bases. En **Threefold
-Keep**, tres equipos (dos si no hay un tercero libre) luchan por él dentro de un
-recinto amurallado. Sus puertas solo se abren desde dentro, con una placa: para
-entrar, rodéalo hasta una esquina abierta. Como máximo 12 puntos por equipo, y si
+Keep**, tres equipos (dos si no hay un tercero libre) luchan por él en la torre de
+un recinto amurallado. Como máximo 12 puntos por equipo, y si
 todos los rivales están a -60 % de moral, ganas al instante. **Hall of Heroes** (8v8, 5000x4400), el mapa
 que cierra el Ascenso de los Héroes, es un salón dorado para tres equipos: el
 altar se alza sobre un estrado con pilares y seis escalinatas, en un zócalo con
@@ -233,7 +232,7 @@ tu equipo no controla el altar, cada bot mata primero al Héroe Fantasmal del ot
 equipo en cuanto esté sobre el altar a su alcance: es el único enemigo que impide
 que tu fantasma lo reclame.
 
-Se juega en Threefold Keep.
+Se juega en Threefold Keep (4v4 y 8v8, 5000x4400): una fortaleza sobre una colina en las alturas, para tres equipos. Sube al adarve por las escaleras junto a tu puerta y cruza una calzada hasta la colina; luego sube al altar en la torre. Una palanca en cada patio abre las cuatro puertas: el paso de tu puerta bajo la muralla, y la cripta, el camino largo bajo la colina.
 
 ## Puntos de captura
 
@@ -366,7 +365,7 @@ El equipo elige una vez, en la Sala de equipo de su primer mapa, y conserva su b
 de equipo y sus asientos el resto del recorrido: tras una victoria vuelve a la cola
 sin votar ni reclamar. Quien se va a mitad libera su asiento pero no su build. Quien
 llega nuevo al grupo entre mapas solo reclama los asientos vacantes (**Libre: build
-Monk**), y juega la build de ese asiento; un asiento vacante que nadie reclama es de
+Monje**), y juega la build de ese asiento; un asiento vacante que nadie reclama es de
 un bot. Una derrota lo reinicia: el siguiente recorrido vota de nuevo. También si
 sigues a tu anfitrión a otro grupo, cuyo anfitrión no puede responder del recorrido
 anterior. La ronda la recuerda el anfitrión de tu grupo, y solo hasta que cierres la
@@ -377,8 +376,7 @@ Un grupo de menos de 8 entra en la cola con bots en los puestos vacíos, usando 
 
 **Barrow Field** (8v8, 5400x2600) es una arena del Ascenso que también se elige en una Partida alojada: Aniquilación de sacerdote en un páramo de túmulos funerarios al anochecer, y el sacerdote resucita a sus muertos cada 2 minutos. Sube a un túmulo para tener la altura, o recorre el paso de los túmulos por debajo cuando una palanca en el túmulo lejano abra su puerta. Lleva tu bandera al **Storm Beacon** del centro y golpeará a un enemigo al azar a distancia de oído con 50 de daño de rayo cada 2,5 segundos, hasta que el otro equipo plante allí su bandera. Cada golpe es un rayo del faro a quien alcanza, visible para ambos equipos.
 
-Tres arenas del Ascenso también se eligen en una Partida alojada: **The Hollow Deep** (Aniquilación
-8v8, tres túneles sinuosos alrededor de una roca central), **Blackwater Ford**
+Tres arenas del Ascenso también se eligen en una Partida alojada: **The Hollow Deep** (Aniquilación 8v8, 6200x2400, en una caverna oscura: cruza un puente colgante sobre un abismo, trepa por una cornisa central o toma la cripta bajo ella cuando una palanca en un saliente abra su reja), **Blackwater Ford**
 (Aniquilación de sacerdote 8v8, 5200x2800, en un oscuro vado de río: se cruza vadeando un vado poco profundo,
 por el puente roto sobre sus pilares encima del molino o por una alcantarilla bajo el puente cuando una palanca
 del molino abre su compuerta; el sacerdote resucita a sus muertos cada 2 minutos) y **Mosslit Cairns** (Puntos de captura 8v8, 5400x3000, en cinco colinas de túmulos que brillan con musgo al anochecer: se sube a un túmulo por sus escaleras, se defiende el gran túmulo del centro o se toma el túnel de raíces bajo las colinas del sur cuando una palanca de un túmulo del norte abre sus puertas; los muros de raíces se pueden romper). La cuarta es **The Brazen Causeway** (Aniquilación de sacerdote 8v8, 5600x2800, en una calzada de piedra elevada sobre una marisma al anochecer: se avanza por la calzada cuando una palanca de la torre de la puerta del otro extremo abre su puerta de bronce, se cruza la marisma hasta las escaleras de su centro o uno se escabulle por una alcantarilla bajo ella; el sacerdote resucita a sus muertos cada 2 minutos).
@@ -390,7 +388,7 @@ lado más cercano y deteniendo los disparos que aún la atraviesan, y no se pued
 otra vez durante medio segundo. Una placa del color de un equipo solo responde a ese
 equipo. Los bots se colocan en la placa de su equipo si no hay enemigos cerca.
 
-Cada recorrido empieza con la **Batalla de los Zaishen de élite**, sin cola: tu grupo contra seis Zaishen controlados por bots (2 Monjes, un Elementalista y 3 más). El reloj arranca cuando uno de vosotros cruza la línea de salida o muere el primer Zaishen, lo que ocurra antes. Si matáis a los seis en menos de 30 segundos, el grupo empieza el recorrido con +10 % de moral; en menos de 60, +8 %; en menos de 80, +6 %; en menos de 100, +4 %; en menos de 120, +2 %; más lento, nada. Si ganáis, el grupo entra solo en la cola de su primer mapa. Si cae todo el grupo, o si queda algún Zaishen vivo al cumplirse el límite de 8 minutos, el recorrido termina.
+Cada recorrido empieza con la **Batalla de los Zaishen de élite**, sin cola: tu grupo contra seis Zaishen controlados por bots (2 Monjes, un Elementalista y 3 más). Se libra en una arena ceremonial (8v8, 5400x2400): gradas escalonadas al norte y al sur, estatuas sobre pedestales en el suelo hundido y una cripta bajo cada grada, cuyo rastrillo abre una palanca en la grada de enfrente. El reloj arranca cuando uno de vosotros cruza la línea de salida en el centro de la arena o muere el primer Zaishen, lo que ocurra antes. Si matáis a los seis en menos de 30 segundos, el grupo empieza el recorrido con +10 % de moral; en menos de 60, +8 %; en menos de 80, +6 %; en menos de 100, +4 %; en menos de 120, +2 %; más lento, nada. Si ganáis, el grupo entra solo en la cola de su primer mapa. Si cae todo el grupo, o si queda algún Zaishen vivo al cumplirse el límite de 8 minutos, el recorrido termina.
 
 Cada victoria de un recorrido da **fama**: 1, 2, 3, 4, 6, 8, 12, 16, 20, 24, 28, 32, 36 las trece primeras y luego 40 cada una, con un máximo de 300 al día (el día cambia a las 15:00 UTC). La Batalla de los Zaishen de élite no da fama. Tu fama total fija tu **rango de héroe**, de 1 con 25 de fama a 15 con 100 000, que se muestra como ★ y un número junto a tu nombre. Puedes ver ambos en Opciones > Jugador. Ambos se guardan en tu dispositivo.
 
@@ -438,3 +436,7 @@ bots incluidos, así que una Partida alojada de 3v2 no encaja con ningún tamañ
 chips se quedan como los dejaste hasta que se recarga la página.
 
 Encima de los filtros, la franja **Salón de los héroes** muestra los últimos 20 dominios, del más reciente al más antiguo: quien domina (una etiqueta de gremio o el nombre del líder), las personas del equipo ganador, cuándo terminó la victoria más reciente y, desde dos victorias, cuántas seguidas. Un dominio es una racha ininterrumpida de victorias en el Salón de quien domina. La franja lee los registros de esta página, ignora los filtros y se oculta si ninguno es una victoria en el Salón. Como todo registro, es lo que informó el anfitrión de cada partida, y nada lo comprueba.
+
+## Clasificatorias
+
+Una partida de la cola sin bots es clasificatoria. La pantalla de la cola y el lobby de equipo lo dicen antes de que entres en cola; un solo bot la deja sin clasificar. Al encontrarse una partida clasificatoria, cada jugador firma su inicio y la pantalla muestra **Confirmando partida clasificatoria…** hasta 15 segundos. Si alguien no confirma, la partida se cancela y todos vuelven a la cola. Al final cada jugador firma el resultado y el recibo de la partida se publica en los relés de Nostr con la clave pública y el nombre del personaje de cada jugador; un jugador sin personaje figura como starter. Tu puntuación cambia en menos de una hora. Salir de una partida clasificatoria cuenta como derrota, y el botón de salir lo dice.

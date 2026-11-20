@@ -6,6 +6,10 @@ laga. Kamu tidak perlu akun dan tidak perlu memasang apa pun: game berjalan di
 tab browser ini. VibeWars butuh keyboard dan mouse. Game ini tidak bisa
 dimainkan di ponsel atau tablet yang hanya layar sentuh: bukalah di komputer.
 
+## Tutorial
+
+Saat pertama kali kamu membuka VibeWars, game ini menawarkan tutorial singkat: berjalan melewati ngarai yang mengajarimu bergerak dan bertarung. Lalu tutorial berlanjut di menu, selangkah demi selangkah: ubah spesialisasi karaktermu, buat tim berisi dua, lihat kegunaan setiap mode, dan masukkan tim itu ke antrean untuk pertandingan 2v2 pertama di Arena Tim. Selama satu langkah menunjuk sebuah kontrol, sisa menu diredupkan. Kamu bisa melewati tutorial kapan saja dengan **Lewati tutorial**.
+
 ## Rel mode
 
 Rel di sisi kiri layar utama berisi
@@ -185,14 +189,14 @@ sebuah **Nama** saat kunjungan pertamamu, misalnya `AshenWolf`; ketik di atasnya
 menggantinya. Kalau dikosongkan, kamu bermain sebagai `Player`. Ketik **Tag guild** berisi 2 sampai 4 huruf
 atau angka di sebelahnya, dan semua orang melihatnya setelah namamu, misalnya
 `Ente [VIBE]`. Begitu tag diisi, perancang **Jubah guild** muncul di
-bawahnya: pilih warna jubah, warna pinggiran dan sebuah lambang, dan tubuhmu
+bawahnya: pilih warna jubah dan pinggiran apa saja, gambar sebuah lambang, dan tubuhmu
 memakai jubah itu di setiap laga: jubah terlipat menjadi pita tipis di tepi tubuhmu saat
 kamu berdiri dan berkibar di belakangmu saat kamu bergerak. Karakter-karaktermu di
-menu juga menampilkannya. **Tanpa jubah** melepasnya.
+menu juga menampilkannya. **Tanpa jubah** melepasnya. Sebuah figur menampilkan jubah seperti tampilannya di dalam game. Warna yang terlalu dekat dengan biru timmu atau merah lawanmu digeser sedikit menjauh darinya saat digambar, supaya tidak ada jubah yang mirip sebuah tim; figur menampilkannya seperti yang akan dilihat semua orang.
 
 Perubahan langsung berlaku di lobi tempat kamu berada.
 
-**Gambar lambangmu sendiri.** **Sunting lambang**, di bawah lambang awal, membuka kisi 16×16 di tempatnya. Pilih warna atau **Kosong**, lalu gambar dengan **Pensil**, hapus dengan **Penghapus**, atau warnai satu area dengan **Isi**. **Cermin** mewarnai belahan kiri dan kanan sekaligus. **Bersihkan** mengosongkan kisi dan **Urung** mundur satu langkah. Tampilan kecil di samping kisi menunjukkan lambang sebesar di dalam pertandingan. **Beres** menyimpannya, **Batal** membuang gambarnya. Tombol panah dan Spasi juga menggambar dari keyboard.
+**Gambar lambangmu.** Kisi lambang 16×16 selalu ada di bawah warna jubah dan pinggiran. Pilih warna atau **Kosong**, lalu gambar dengan **Pensil**, hapus dengan **Penghapus**, atau warnai satu area dengan **Isi**. **Tambah warna** memberi lambang satu warna lagi, sampai 15, dan pemilih warna di sampingnya mengubah warna yang dipilih beserta semua yang digambar dengannya. **Mulai dari** menaruh salah satu dari delapan bentuk di kisi dengan warna yang dipilih. **Cermin** mewarnai belahan kiri dan kanan sekaligus. **Bersihkan** mengosongkan kisi dan **Urung** mundur satu langkah. Tampilan kecil di samping kisi menunjukkan lambang sebesar di dalam pertandingan. Setiap goresan disimpan begitu kamu menyelesaikannya. Tombol panah dan Spasi juga menggambar dari keyboard.
 
 **Salin link guild**, di bawah perancang jubah, menyalin link yang membawa tag dan jubahmu. Siapa pun yang membukanya akan ditanya **Gabung ke guild [VIBE]?**: **Gabung** memberinya tag dan jubahmu, **Tidak** tidak mengubah apa pun. Siapa saja bisa mengirim link seperti itu dan tidak ada yang memiliki sebuah tag, jadi game selalu bertanya dulu.
 

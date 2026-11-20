@@ -183,8 +183,7 @@ Cinder Sanctum (8v8, 5600x2800) spelar det: ett tempel på en vulkans sluttning 
 **spökhjälte** i sin bas, ett spöke som slåss med yxa och som ingen
 spelar. **Altaret** står i mitten, lika långt från båda baserna. På
 **Threefold Keep** slåss tre lag (två när inget tredje är ledigt) om det
-inne i en muromgärdad borg. Dess dörrar öppnas bara inifrån, med en platta
-på insidan: gå runt till ett öppet hörn för att komma in. Högst 12 poäng
+på tornet i en muromgärdad borg. Högst 12 poäng
 per lag, och om varje fiende står på -60 % moral vinner du direkt.
 **Hjältarnas sal** (8v8, 5000x4400), kartan som avslutar Heroes' Ascent,
 är en gyllene sal för tre lag: altaret står på en estrad med pelare och sex
@@ -247,7 +246,7 @@ dödar varje bot först det andra lagets spökhjälte när den står på
 altaret inom deras räckhåll: det är den enda fienden som hindrar ert
 spöke från att ta det.
 
-Threefold Keep spelar det.
+Threefold Keep spelar det (4v4 och 8v8, 5000x4400): en borg på en kulle i höglandet, för tre lag. Gå upp på vallgången via trappan bredvid din port och korsa en vägbank till kullen, och klättra sedan upp till altaret på tornet. En spak på varje borggård öppnar alla fyra portar: din portgång under muren, och kryptan, den långa vägen under kullen.
 
 ## Erövringspunkter
 
@@ -382,7 +381,7 @@ Salen drar ett av tre lägen för varje match: King of the Hill, Reliklöpning e
 
 **Valvet.** Salen bildas bara var 12:e minut enligt UTC-klockan, vid :00, :12, :24, :36 och :48. Fram till dess väntar din grupp i Valvet: köikonen visar tiden till nästa öppning och vem som håller Salen. Vid varje öppning möter innehavaren upp till två utmanare, eller så möts upp till tre utmanare om ingen håller den. Bara grupper som väntar före öppningen deltar, och de som inte får plats väntar till nästa. En innehavare utan någon att slåss mot behåller Salen och väntar, utan att någon vinst räknas, och en ensam utmanare väntar också. När en grupp vinner Salen säger varje öppet spel vem som håller den nu: dess ledare, eller dess gilletagg när mer än halva gruppen delar en.
 
-Varje vandring börjar med **Elite Zaishen Battle**, utan kö: din grupp mot sex Zaishen som spelas av bottar (2 Monk, en Elementalist och 3 andra). Klockan startar när någon av er korsar startlinjen eller den första Zaishen dör, vilket som kommer först. Döda alla sex på under 30 sekunder så börjar gruppen vandringen med +10 % moral; under 60, +8 %; under 80, +6 %; under 100, +4 %; under 120, +2 %; långsammare, inget. Vinn så köar din grupp för sin första karta av sig själv. Blir ni utplånade, eller lever en Zaishen fortfarande när gränsen på 8 minuter nås, är vandringen över.
+Varje vandring börjar med **Elite Zaishen Battle**, utan kö: din grupp mot sex Zaishen som spelas av bottar (2 Monk, en Elementalist och 3 andra). Den utkämpas på en ceremoniell arena (8v8, 5400x2400): terrasserade läktare i norr och söder, statyer på socklar på den nedsänkta planen och ett valv under varje läktare, vars fällgaller öppnas med en spak på den motsatta läktaren. Klockan startar när någon av er korsar startlinjen mitt på arenan eller den första Zaishen dör, vilket som kommer först. Döda alla sex på under 30 sekunder så börjar gruppen vandringen med +10 % moral; under 60, +8 %; under 80, +6 %; under 100, +4 %; under 120, +2 %; långsammare, inget. Vinn så köar din grupp för sin första karta av sig själv. Blir ni utplånade, eller lever en Zaishen fortfarande när gränsen på 8 minuter nås, är vandringen över.
 
 Varje vinst i en vandring ger **berömmelse**: 1, 2, 3, 4, 6, 8, 12, 16, 20, 24, 28, 32, 36 för de första tretton, sedan 40 var, högst 300 per dag (dagen vänder kl. 15:00 UTC). Elite Zaishen Battle ger ingen. Din totala berömmelse bestämmer din **hjälterang**, från 1 vid 25 berömmelse till 15 vid 100 000, som visas som ★ och en siffra bredvid ditt namn. Alternativ > Spelare visar båda. Båda sparas på din enhet.
 
@@ -414,8 +413,7 @@ hörhåll med 50 blixtskada var 2,5:e sekund, tills det andra laget
 sätter sin flagga där. Varje nedslag är en blixt från fyren till den
 den träffade, synlig för båda lagen.
 
-Tre Ascent-arenor kan också väljas i ett eget spel: **The Hollow Deep** (8v8 Förintelse, tre
-slingrande tunnlar runt en klippa i mitten),
+Tre Ascent-arenor kan också väljas i ett eget spel: **The Hollow Deep** (8v8 Förintelse, 6200x2400, i en mörk grotta: gå över en repbro över en klyfta, klättra över en avsats i mitten, eller ta kryptan under den när en spak på en klipphylla öppnar dess port),
 **Blackwater Ford** (8v8, 5200x2800,
 Prästförintelse vid ett mörkt vadställe i en flod: man vadar över ett grunt vadställe, går över den trasiga
 bron på sina pelare ovanför kvarnen eller tar en kulvert under bron när en spak på kvarnen öppnar dess galler;
@@ -476,3 +474,7 @@ bottar inräknade, så ett eget spel med 3v2 passar ingen storlek.
 Chipsen står kvar som du lämnade dem tills sidan laddas om.
 
 Ovanför chipsen listar remsan **Hjältarnas sal** de senaste 20 innehaven, nyaste först: innehavaren (en gilletagg eller ledarens namn), det vinnande lagets spelare, när den senaste vinsten slutade och, från två vinster och uppåt, hur många i rad. Ett innehav är en obruten följd av vinster i Salen av en innehavare. Remsan läser protokollen på den här sidan, bryr sig inte om chipsen, och döljs när inget av dem är en vinst i Salen. Som varje protokoll är den vad varje matchs värd rapporterade, och inget kontrollerar den.
+
+## Rankat
+
+En match från kön utan botar är rankad. Köskärmen och lagets lobby säger det innan du ställer dig i kö; en enda bot håller matchen orankad. När en rankad match hittas signerar varje spelare dess start, och skärmen visar **Bekräftar rankad match…** i upp till 15 sekunder. Om någon inte bekräftar avbryts matchen och alla är tillbaka i kön. I slutet signerar varje spelare resultatet, och matchens kvitto publiceras på Nostr-reläerna med varje spelares publika nyckel och figurnamn; en spelare utan figur står som starter. Din rating ändras inom en timme. Att lämna en rankad match räknas som förlust, och lämna-knappen säger det.

@@ -198,9 +198,13 @@ function teamCards(
           }),
     );
   }
-  cards.appendChild(
-    button(t("teamPlay.newTeamBuild"), "play-card play-card-new", callbacks.onNewTeam),
+  const newBuild = button(
+    t("teamPlay.newTeamBuild"),
+    "play-card play-card-new",
+    callbacks.onNewTeam,
   );
+  newBuild.setAttribute("data-tutorial", "team-new");
+  cards.appendChild(newBuild);
   section.appendChild(cards);
   if (shown.length === 0) {
     section.appendChild(h("p", "team-play-hint", noTeamBuilds(size)));

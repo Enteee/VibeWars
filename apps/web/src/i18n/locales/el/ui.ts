@@ -347,12 +347,14 @@ export default {
   "controls.targetCalled": "Στόχευση ανακοινωμένου εχθρού",
   "controls.targetClosest": "Στόχευση πλησιέστερου εχθρού",
   "controls.targetNext": "Επόμενος στόχος",
+  "controls.targetPrevious": "Προηγούμενος στόχος",
   "controls.targetSelf": "Στόχευση εαυτού",
   "controls.weaponSet1": "Σετ όπλων 1",
   "controls.weaponSet2": "Σετ όπλων 2",
   "controls.weaponSet3": "Σετ όπλων 3",
   "controls.weaponSet4": "Σετ όπλων 4",
   "controls.weaponSets": "Σετ όπλων",
+  "controls.withShift": "Shift + {key}",
   "creature.rat": "Αρουραίος",
 
   "echo.secondsLeft": { one: "Ηχώ: απομένει {count} δ", other: "Ηχώ: απομένουν {count} δ" },
@@ -521,6 +523,7 @@ export default {
   "hud.leaveExtra": " από τον αγώνα (F10)",
   "hud.leaveNo": "όχι",
   "hud.leaveQuestion": "έξοδος;",
+  "hud.leaveRanked": "αποχώρηση; Μετράει ως ήττα",
   "hud.leaveYes": "ναι",
   "hud.lordPercent": "Άρχοντας {percent}%",
   "hud.moraleBoostOurs": "Ενίσχυση ηθικού! +{percent}%",
@@ -862,14 +865,7 @@ export default {
   "pips.title": { one: "{sign}{count} ένδειξη", other: "{sign}{count} ενδείξεις" },
 
   "player.cape": "Κάπα",
-  "player.colourBlack": "μαύρο",
-  "player.colourGold": "χρυσό",
-  "player.colourLime": "λάιμ",
-  "player.colourOrange": "πορτοκαλί",
-  "player.colourPink": "ροζ",
-  "player.colourTeal": "τιρκουάζ",
-  "player.colourViolet": "βιολετί",
-  "player.colourWhite": "λευκό",
+  "player.capePreview": "Προεπισκόπηση",
   "player.emblem": "Έμβλημα",
   "player.emblemBar": "ράβδος",
   "player.emblemChevron": "σιρίτι",
@@ -879,15 +875,18 @@ export default {
   "player.emblemHalfDisc": "ημιδίσκος",
   "player.emblemRing": "δακτύλιος",
   "player.emblemTriangle": "τρίγωνο",
-  "player.editEmblem": "Επεξεργασία εμβλήματος",
   "player.emblemPencil": "Μολύβι",
   "player.emblemUndo": "Αναίρεση",
   "player.emblemEraser": "Γόμα",
   "player.emblemFill": "Γέμισμα",
   "player.emblemMirror": "Κατοπτρισμός",
   "player.emblemClear": "Καθαρισμός",
-  "player.emblemDone": "Τέλος",
   "player.emblemEmpty": "Άδειο",
+  "player.capeColour": "Χρώμα κάπας",
+  "player.trimColour": "Χρώμα τελειώματος",
+  "player.emblemColour": "Χρώμα σχεδίασης",
+  "player.emblemAddColour": "Προσθήκη χρώματος",
+  "player.emblemStartFrom": "Ξεκίνα από",
   "player.emblemPalette": "Χρώματα",
   "player.emblemInGame": "Μέγεθος στο παιχνίδι",
   "player.guildCape": "Κάπα συντεχνίας",
@@ -930,6 +929,12 @@ export default {
   "queue.playBotsIn": "Παίξε με bots ({seconds} δ)",
   "queue.queueAgain": "Ξανά στην ουρά",
   "queue.randomArena": "Τυχαία Αρένα {size}",
+  "queue.rankedCancelled": "Ο βαθμολογημένος αγώνας ακυρώθηκε: ένας παίκτης δεν επιβεβαίωσε.",
+  "queue.rankedConfirming": "Επιβεβαίωση βαθμολογημένου αγώνα…",
+  "queue.rankedNote":
+    "Χωρίς bots ο αγώνας είναι βαθμολογημένος: το αποτέλεσμα δημοσιεύεται με το κλειδί σου και το όνομα του χαρακτήρα σου. Ένα bot στον αγώνα τον κρατά μη βαθμολογημένο.",
+  "queue.rankedPending": "Η βαθμολογία σου ενημερώνεται μέσα σε μία ώρα.",
+  "queue.rankedPublished": "Το βαθμολογημένο αποτέλεσμα δημοσιεύτηκε.",
   "queue.searchingCount": "{searching} ψάχνουν · χρειάζονται {needed}",
   "queue.startingIn": "Έναρξη σε {seconds}",
   "queue.stayTogether": "Μείνετε μαζί",
@@ -1499,6 +1504,22 @@ export default {
   "tutorial.ground.praise": "Πέρασες! Τώρα ξέρεις τι κάνει το έδαφος.",
   "tutorial.front.end": "Τώρα ξέρεις τα βασικά. Τα λέμε εκεί έξω!",
   "tutorial.front.menu": "Πίσω στο μενού",
+  "tutorial.menu.arena.farewell": "Είσαι στην ουρά. Καλή τύχη.",
+  "tutorial.menu.arena.find":
+    "Πάτα Βρες αγώνα για να δηλώσεις συμμετοχή. Η παρέα σου είναι η μία πλευρά: ένας συμπαίκτης που μπαίνει με τον σύνδεσμο πρόσκλησής σου παίρνει μια θέση, και τα bots παίζουν τις υπόλοιπες.",
+  "tutorial.menu.arena.findDone": "Βρες αγώνα",
+  "tutorial.menu.arena.open": "Άνοιξε την Αρένα Ομάδων από τη μπάρα.",
+  "tutorial.menu.arena.openDone": "Άνοιξε την Αρένα Ομάδων",
+  "tutorial.menu.arena.queue":
+    "Ψήφισε την ομάδα σου και μετά πάρε έναν χαρακτήρα. Μόλις γίνουν και τα δύο, η παρέα σου μπαίνει στην ουρά.",
+  "tutorial.menu.arena.queueDone": "Μπες στην ουρά",
+  "tutorial.menu.arena.signup":
+    "Άνοιξε τις Συνθέσεις ομάδας σου, διάλεξε την ομάδα που έφτιαξες και πρότεινέ την.",
+  "tutorial.menu.arena.signupDone": "Πρότεινε την ομάδα σου",
+  "tutorial.menu.arena.size":
+    "Όρισε το μέγεθος ομάδας σε 2v2. Αντιμέτωπες βρίσκονται μόνο ομάδες ίδιου μεγέθους.",
+  "tutorial.menu.arena.sizeDone": "Διάλεξε 2v2",
+  "tutorial.menu.arena.title": "Απόδειξε την ομάδα σου σε αγώνα 2v2 στην Αρένα Ομάδων.",
   "tutorial.menu.gotIt": "Το κατάλαβα",
   "tutorial.menu.menu.characters":
     "Στους Χαρακτήρες φτιάχνεις και αλλάζεις με ποιον παίζεις: επάγγελμα, δεξιότητες και εξοπλισμό.",
@@ -1508,6 +1529,58 @@ export default {
     "Στις Ομάδες βάζεις χαρακτήρες μαζί σε μια ομάδα για τις ομαδικές μάχες.",
   "tutorial.menu.menu.title": "Για να συνεχίσεις, πρέπει να αλλάξεις την ειδίκευσή σου.",
   "tutorial.menu.skipAsk": "Παράλειψη του υπόλοιπου οδηγού;",
+  "tutorial.menu.modes.gvg":
+    "Το GvG είναι συντεχνία εναντίον συντεχνίας, 8 εναντίον 8, στο Guild Hall Isle. Σκότωσε τον εχθρικό Άρχοντα της συντεχνίας για να νικήσεις, και κράτα τον δικό σου ζωντανό.",
+  "tutorial.menu.modes.heroesAscent":
+    "Η Ανάβαση των Ηρώων είναι μια σειρά από χάρτες, 8 εναντίον 8, απέναντι σε ομάδες του γύρου σου. Αν νικήσεις, περνάς στον επόμενο χάρτη, ως την Αίθουσα των Ηρώων· αν χάσεις, ξεκινάς από την αρχή.",
+  "tutorial.menu.modes.hostedGame":
+    "Το Ιδιωτικό παιχνίδι είναι το δικό σου λόμπι: στείλε σε φίλους τον σύνδεσμο πρόσκλησης και διάλεξε τον χάρτη και το μέγεθος ομάδας. Τα bots παίζουν κάθε θέση που δεν παίρνει κανείς.",
+  "tutorial.menu.modes.open": "Άνοιξε τον φωτισμένο τρόπο παιχνιδιού στο πλάι.",
+  "tutorial.menu.modes.randomArena":
+    "Η Τυχαία Αρένα είναι η πιο γρήγορη μάχη: ο δικός σου χαρακτήρας, σε ομάδα με αγνώστους, 1v1, 2v2 ή 4v4. Ο χάρτης κληρώνεται για σένα, και κάθε θέση είναι αληθινός παίκτης.",
+  "tutorial.menu.modes.teamArena":
+    "Η Αρένα Ομάδων είναι η παρέα σου με μια σύνθεση ομάδας απέναντι σε άλλη ομάδα, 2v2, 4v4 ή 8v8, στο μέγεθος που διαλέγεις. Τα bots παίρνουν κάθε κενή θέση, και κάθε αγώνας κληρώνει τον χάρτη του.",
+  "tutorial.menu.modes.title": "Μάθε πού να πολεμάς.",
+  "tutorial.menu.spec.attributes":
+    "Μοίρασε τους πόντους χαρακτηριστικών. Κάθε βαθμίδα δυναμώνει τις ικανότητες του χαρακτηριστικού.",
+  "tutorial.menu.spec.attributesDone": "Άλλαξε ένα χαρακτηριστικό",
+  "tutorial.menu.spec.gear":
+    "Πανοπλία, ρούνοι και διακριτικά: διάλεξε ένα κομμάτι στη φιγούρα, μετά τι μπαίνει πάνω του.",
+  "tutorial.menu.spec.gearDone": "Άλλαξε ένα κομμάτι εξοπλισμού",
+  "tutorial.menu.spec.open":
+    "Άνοιξε τους Χαρακτήρες και μετά έναν χαρακτήρα για να αλλάξεις το build του.",
+  "tutorial.menu.spec.openDone": "Άνοιξε έναν χαρακτήρα",
+  "tutorial.menu.spec.professions":
+    "Το κύριο επάγγελμα σου δίνει χαρακτηριστικά και ικανότητες· το δευτερεύον σου δανείζει κι αυτό τις ικανότητές του.",
+  "tutorial.menu.spec.professionsDone": "Άλλαξε ένα επάγγελμα",
+  "tutorial.menu.spec.save": "Αποθήκευσε τον χαρακτήρα σου για να κρατήσεις το νέο build.",
+  "tutorial.menu.spec.saveDone": "Αποθήκευση",
+  "tutorial.menu.spec.skills":
+    "Άνοιξε μια ομάδα στη λίστα και σύρε μια ικανότητα σε μια θέση της μπάρας σου για να την αλλάξεις.",
+  "tutorial.menu.spec.skillsDone": "Βάλε μια ικανότητα στη μπάρα σου",
+  "tutorial.menu.spec.title": "Άλλαξε την ειδίκευσή σου.",
+  "tutorial.menu.spec.weapons": "Διάλεξε από τη λίστα ένα όπλο για το σετ όπλων σου.",
+  "tutorial.menu.spec.weaponsDone": "Άλλαξε ένα όπλο",
+  "tutorial.menu.team.build":
+    "Το όνομα ενός μέλους ανοίγει το build του στον επεξεργαστή build. Όταν επιστρέψεις, οι αλλαγές σου μένουν, χωρίς αποθήκευση.",
+  "tutorial.menu.team.character":
+    "Σύρε τον χαρακτήρα σου από το «Οι χαρακτήρες μου» σε ένα μέλος. Το μέλος γίνεται αντίγραφό του.",
+  "tutorial.menu.team.characterDone": "Βάλε τον χαρακτήρα σου στην ομάδα",
+  "tutorial.menu.team.fill":
+    "Δώσε build σε κάθε μέλος, μέχρι να μη μείνει κανένα πρόβλημα στην ομάδα.",
+  "tutorial.menu.team.fillDone": "Συμπλήρωσε την ομάδα",
+  "tutorial.menu.team.members":
+    "Μια ομάδα έχει πάντα τόσα μέλη όσο το μέγεθός της. Ποτέ δεν προσθέτεις μέλος: αντικαθιστάς ένα.",
+  "tutorial.menu.team.new":
+    "Όρισε το μέγεθος ομάδας σε 2v2 και μετά φτιάξε μια νέα σύνθεση ομάδας.",
+  "tutorial.menu.team.newDone": "Ξεκίνα μια ομάδα των 2",
+  "tutorial.menu.team.open": "Άνοιξε τις Ομάδες, όπου είναι οι συνθέσεις ομάδων σου.",
+  "tutorial.menu.team.openDone": "Άνοιξε τις Ομάδες",
+  "tutorial.menu.team.problems":
+    "Η Αποθήκευση αποθηκεύει πάντα την ομάδα. Η υπόδειξή της ονομάζει το πρώτο που εμποδίζει την ομάδα να παίξει.",
+  "tutorial.menu.team.save": "Αποθήκευσε την ομάδα σου.",
+  "tutorial.menu.team.saveDone": "Αποθήκευση",
+  "tutorial.menu.team.title": "Φτιάξε μια ομάδα για να πετύχεις.",
   "tutorial.gate.hint": "Μέσα στην ομίχλη, πίσω μου.",
   "tutorial.gate.how": "Αριστερό κλικ στο έδαφος, ή περπάτα με {keys}.",
   "tutorial.gate.intro": "Η ομάδα μας μάχεται πέρα από την ομίχλη. Ακολούθησέ με.",

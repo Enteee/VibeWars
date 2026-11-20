@@ -7,7 +7,7 @@
 ## 무기 세트
 
 **무기 세트**는 **네 개**까지 가지고 다닐 수 있어요. 각 세트는 무기 하나와, 무기가
-한 손을 비워 두면 Shield나 Focus 같은 보조 장비 하나로 이루어져요. 세트 1로
+한 손을 비워 두면 ![Shield](../../../apps/web/public/icons/offhand/shield.svg) **Shield**나 ![Focus](../../../apps/web/public/icons/offhand/focus.svg) **Focus** 같은 보조 장비 하나로 이루어져요. 세트 1로
 시작하고, 나머지는 비워 둬도 돼요.
 
 매치에서는 **1~4**(클래식 키에서는 **F1~F4**)로 세트를 바꿔요. 교체는 지금 하고
@@ -16,7 +16,7 @@
 든 세트를 따라가요.
 
 무기는 그 속성이 랭크 9 이상이어야 해요. 그보다 낮으면 피해가 3분의 1만 들어가고,
-편집기가 빨간색으로 알려 줘요. Sword는 항상 Swordsmanship이지만, Staff, Wand,
+편집기가 빨간색으로 알려 줘요. ![Sword](../../../apps/web/public/icons/weapon/sword.svg) **Sword**는 항상 Swordsmanship이지만, ![Staff](../../../apps/web/public/icons/weapon/staff.svg) **Staff**, ![Wand](../../../apps/web/public/icons/weapon/wand.svg) **Wand**,
 Shield, Focus는 내가 고르는 속성용으로 만들어져요. 인형에서 그 손(무기는 **6**,
 보조 장비는 **7**)을 클릭하고 하나 고르세요.
 
@@ -24,38 +24,38 @@ Shield, Focus는 내가 고르는 속성용으로 만들어져요. 인형에서 
 
 모든 무기와 보조 장비에는 개조 슬롯이 있어요. **접두사**, **접미사**,
 **각인**이에요. 인형의 손이나 그 옆의 줄을 클릭해서 고르세요. 각각 무슨 효과인지
-나와요. Wand, Shield, Focus에는 접두사가 들어가지 않고, 맨손에는 아무것도 들어가지
+나와요. ![Wand](../../../apps/web/public/icons/weapon/wand.svg) **Wand**, ![Shield](../../../apps/web/public/icons/offhand/shield.svg) **Shield**, ![Focus](../../../apps/web/public/icons/offhand/focus.svg) **Focus**에는 접두사가 들어가지 않고, 맨손에는 아무것도 들어가지
 않아요. 개조는 항상 최고 수치이고, 무기 세트마다 자기 개조를 달고 있어서 세트를
 바꾸면 개조도 함께 바뀌어요. 최대 체력과 에너지는 손에 든 세트를 따라가요. 무기를
 바꾸면 여전히 맞는 개조는 유지되고, 어떤 개조가 빠졌는지 알려 줘요.
 
-| 개조                      | 슬롯   | 장착 가능                            | 효과                                      |
-| ------------------------- | ------ | ------------------------------------ | ----------------------------------------- |
-| Defensive                 | 접두사 | Staff                                | 방어력 +5                                 |
-| Hale                      | 접두사 | Staff                                | 체력 +30                                  |
-| Insightful                | 접두사 | Staff                                | 에너지 +5                                 |
-| of Defense                | 접미사 | 모든 전투 무기, Staff                | 방어력 +5                                 |
-| of Fortitude              | 접미사 | 모든 전투 무기, Staff, Shield, Focus | 체력 +30                                  |
-| of Shelter                | 접미사 | 모든 전투 무기, Staff                | 방어력 +7 (물리 피해 상대)                |
-| of Warding                | 접미사 | 모든 전투 무기, Staff                | 방어력 +7 (원소 피해 상대)                |
-| "Cast Out the Unclean"    | 각인   | Shield, Focus                        | 나에게 걸린 Disease 지속 시간 20% 감소    |
-| "Fear Cuts Deeper"        | 각인   | Shield, Focus                        | 나에게 걸린 Bleeding 지속 시간 20% 감소   |
-| "I Can See Clearly Now"   | 각인   | Shield, Focus                        | 나에게 걸린 Blinded 지속 시간 20% 감소    |
-| "I have the power!"       | 각인   | 모든 전투 무기                       | 에너지 +5                                 |
-| "Leaf on the Wind"        | 각인   | Shield, Focus                        | 방어력 +10 (냉기 피해 상대)               |
-| "Like a Rolling Stone"    | 각인   | Shield, Focus                        | 방어력 +10 (대지 피해 상대)               |
-| "Live for Today"          | 각인   | Focus                                | 에너지 +15, 에너지 재생 -1                |
-| "Not the face!"           | 각인   | Shield, Focus                        | 방어력 +10 (둔기 피해 상대)               |
-| "Only the Strong Survive" | 각인   | Shield, Focus                        | 나에게 걸린 Weakness 지속 시간 20% 감소   |
-| "Pure of Heart"           | 각인   | Shield, Focus                        | 나에게 걸린 Poison 지속 시간 20% 감소     |
-| "Riders on the Storm"     | 각인   | Shield, Focus                        | 방어력 +10 (번개 피해 상대)               |
-| "Seize the Day"           | 각인   | Staff, Wand                          | 에너지 +15, 에너지 재생 -1                |
-| "Sleep Now in the Fire"   | 각인   | Shield, Focus                        | 방어력 +10 (화염 피해 상대)               |
-| "Soundness of Mind"       | 각인   | Shield, Focus                        | 나에게 걸린 Dazed 지속 시간 20% 감소      |
-| "Strength of Body"        | 각인   | Shield, Focus                        | 나에게 걸린 Deep Wound 지속 시간 20% 감소 |
-| "Swift as the Wind"       | 각인   | Shield, Focus                        | 나에게 걸린 Crippled 지속 시간 20% 감소   |
-| "The Riddle of Steel"     | 각인   | Shield, Focus                        | 방어력 +10 (참격 피해 상대)               |
-| "Through Thick and Thin"  | 각인   | Shield, Focus                        | 방어력 +10 (관통 피해 상대)               |
+| 개조                      | 슬롯   | 장착 가능                                                           | 효과                                                                                                              |
+| ------------------------- | ------ | ------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| Defensive                 | 접두사 | ![Staff](../../../apps/web/public/icons/weapon/staff.svg) **Staff** | 방어력 +5                                                                                                         |
+| Hale                      | 접두사 | Staff                                                               | 체력 +30                                                                                                          |
+| Insightful                | 접두사 | Staff                                                               | 에너지 +5                                                                                                         |
+| of Defense                | 접미사 | 모든 전투 무기, Staff                                               | 방어력 +5                                                                                                         |
+| of Fortitude              | 접미사 | 모든 전투 무기, Staff, Shield, Focus                                | 체력 +30                                                                                                          |
+| of Shelter                | 접미사 | 모든 전투 무기, Staff                                               | 방어력 +7 (물리 피해 상대)                                                                                        |
+| of Warding                | 접미사 | 모든 전투 무기, Staff                                               | 방어력 +7 (원소 피해 상대)                                                                                        |
+| "Cast Out the Unclean"    | 각인   | Shield, Focus                                                       | 나에게 걸린 ![Disease](../../../apps/web/public/icons/status/disease.svg) **Disease** 지속 시간 20% 감소          |
+| "Fear Cuts Deeper"        | 각인   | Shield, Focus                                                       | 나에게 걸린 ![Bleeding](../../../apps/web/public/icons/status/bleeding.svg) **Bleeding** 지속 시간 20% 감소       |
+| "I Can See Clearly Now"   | 각인   | Shield, Focus                                                       | 나에게 걸린 ![Blinded](../../../apps/web/public/icons/status/blind.svg) **Blinded** 지속 시간 20% 감소            |
+| "I have the power!"       | 각인   | 모든 전투 무기                                                      | 에너지 +5                                                                                                         |
+| "Leaf on the Wind"        | 각인   | Shield, Focus                                                       | 방어력 +10 (냉기 피해 상대)                                                                                       |
+| "Like a Rolling Stone"    | 각인   | Shield, Focus                                                       | 방어력 +10 (대지 피해 상대)                                                                                       |
+| "Live for Today"          | 각인   | Focus                                                               | 에너지 +15, 에너지 재생 -1                                                                                        |
+| "Not the face!"           | 각인   | Shield, Focus                                                       | 방어력 +10 (둔기 피해 상대)                                                                                       |
+| "Only the Strong Survive" | 각인   | Shield, Focus                                                       | 나에게 걸린 ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness** 지속 시간 20% 감소       |
+| "Pure of Heart"           | 각인   | Shield, Focus                                                       | 나에게 걸린 ![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison** 지속 시간 20% 감소             |
+| "Riders on the Storm"     | 각인   | Shield, Focus                                                       | 방어력 +10 (번개 피해 상대)                                                                                       |
+| "Seize the Day"           | 각인   | Staff, Wand                                                         | 에너지 +15, 에너지 재생 -1                                                                                        |
+| "Sleep Now in the Fire"   | 각인   | Shield, Focus                                                       | 방어력 +10 (화염 피해 상대)                                                                                       |
+| "Soundness of Mind"       | 각인   | Shield, Focus                                                       | 나에게 걸린 ![Dazed](../../../apps/web/public/icons/status/dazed.svg) **Dazed** 지속 시간 20% 감소                |
+| "Strength of Body"        | 각인   | Shield, Focus                                                       | 나에게 걸린 ![Deep Wound](../../../apps/web/public/icons/status/deep-wound.svg) **Deep Wound** 지속 시간 20% 감소 |
+| "Swift as the Wind"       | 각인   | Shield, Focus                                                       | 나에게 걸린 ![Crippled](../../../apps/web/public/icons/status/crippled.svg) **Crippled** 지속 시간 20% 감소       |
+| "The Riddle of Steel"     | 각인   | Shield, Focus                                                       | 방어력 +10 (참격 피해 상대)                                                                                       |
+| "Through Thick and Thin"  | 각인   | Shield, Focus                                                       | 방어력 +10 (관통 피해 상대)                                                                                       |
 
 ### 적중 시 발동하는 전투 접두사
 
@@ -146,16 +146,16 @@ Shield, Focus는 내가 고르는 속성용으로 만들어져요. 인형에서 
 
 ## 룬
 
-| 룬                                     | 효과                                  |
-| -------------------------------------- | ------------------------------------- |
-| 하급 속성 룬                           | 속성 하나에 +1                        |
-| 상급 속성 룬                           | 속성 하나에 +2, 체력 -35              |
-| 최상급 속성 룬                         | 속성 하나에 +3, 체력 -75              |
-| Vigor                                  | 체력 증가 (+30, +41, +50)             |
-| Vitae                                  | 체력 +10                              |
-| Attunement                             | 에너지 증가 (+3, +6, +9)              |
-| Clarity, Purity, Recovery, Restoration | 상태이상 두 가지가 각각 20% 빨리 풀림 |
-| Absorption (Warrior)                   | 공격마다 받는 물리 피해 감소          |
+| 룬                                                                                                                                                                                                                                                                                                             | 효과                                  |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------- |
+| 하급 속성 룬                                                                                                                                                                                                                                                                                                   | 속성 하나에 +1                        |
+| 상급 속성 룬                                                                                                                                                                                                                                                                                                   | 속성 하나에 +2, 체력 -35              |
+| 최상급 속성 룬                                                                                                                                                                                                                                                                                                 | 속성 하나에 +3, 체력 -75              |
+| ![Vigor](../../../apps/web/public/icons/rune/vigor.svg) **Vigor**                                                                                                                                                                                                                                              | 체력 증가 (+30, +41, +50)             |
+| ![Vitae](../../../apps/web/public/icons/rune/vitae.svg) **Vitae**                                                                                                                                                                                                                                              | 체력 +10                              |
+| ![Attunement](../../../apps/web/public/icons/rune/attunement.svg) **Attunement**                                                                                                                                                                                                                               | 에너지 증가 (+3, +6, +9)              |
+| ![Clarity](../../../apps/web/public/icons/rune/clarity.svg) **Clarity**, ![Purity](../../../apps/web/public/icons/rune/purity.svg) **Purity**, ![Recovery](../../../apps/web/public/icons/rune/recovery.svg) **Recovery**, ![Restoration](../../../apps/web/public/icons/rune/restoration.svg) **Restoration** | 상태이상 두 가지가 각각 20% 빨리 풀림 |
+| ![Absorption](../../../apps/web/public/icons/rune/absorption.svg) **Absorption** (![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior**)                                                                                                                                               | 공격마다 받는 물리 피해 감소          |
 
 부위의 룬은 휘장과 같은 곳에서 골라요. 인형의 그 부위를 클릭하세요.
 

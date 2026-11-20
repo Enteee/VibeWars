@@ -699,25 +699,6 @@ body {
   letter-spacing: normal;
 }
 
-/* Help over a screen or a match (#1257): the match runs on behind it. */
-.options-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 30;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  overflow-y: auto;
-  padding: 3.5rem 1rem 2rem;
-  background: rgb(14 17 22 / 70%);
-}
-
-/* An overlay window (#2381): its × at its own top right, not in the top
-   bar. The window holds it; its body keeps clear of it. */
-.options-overlay > .screen {
-  position: relative;
-}
-
 .options-window .options-body {
   padding-inline-end: 2.25rem;
 }
@@ -1643,28 +1624,21 @@ body:has(> .splash) #menu-background::after {
   font-size: 0.8rem;
 }
 
-.screen .player-cape-swatch,
-.screen .player-cape-emblem {
-  display: grid;
-  place-items: center;
-  width: 24px;
+/* CAPE and TRIM (#3628): one native colour picker each, any colour. */
+.screen .player-cape-colour,
+.screen .emblem-editor-recolour {
+  width: 32px;
   height: 24px;
   padding: 0;
+  background: none;
   border: 1px solid var(--line);
   border-radius: 3px;
+  cursor: pointer;
 }
 
-.screen .player-cape-swatch {
-  background: var(--swatch);
-}
-
-.screen .player-cape-emblem {
-  background: var(--bg);
-}
-
-.screen .player-cape-swatch[aria-pressed="true"],
-.screen .player-cape-emblem[aria-pressed="true"] {
-  border: 2px solid var(--ink);
+.screen .emblem-editor-recolour:disabled {
+  cursor: default;
+  opacity: 0.4;
 }
 
 .screen .player-cape-none {
@@ -1684,21 +1658,39 @@ body:has(> .splash) #menu-background::after {
   gap: 0.3rem;
 }
 
-.player-cape-picks[hidden] {
+/*
+ * The cape on a figure (#3551) beside the picks; on a narrow screen,
+ * above them.
+ */
+.player-cape-body {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.player-cape-body[hidden] {
   display: none;
 }
 
-.screen .player-cape-edit {
-  align-self: flex-start;
-  padding: 0.15rem 0.6rem;
+.player-cape-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  align-items: center;
+}
+
+@media (max-width: 479px) {
+  .player-cape-body {
+    flex-direction: column-reverse;
+  }
 }
 
 /*
- * The emblem editor (#3555), in place of the cape designer's rows: the
- * 16x16 grid on the cape's cloth, the emblem at game size beside it, the
- * palette, the tools, Done and Cancel. Picks are ringed in ink, as above.
- * On a phone the cells shrink to the pane and the preview wraps under the
- * grid, so nothing scrolls sideways.
+ * The emblem editor (#3555), always under the cape designer's pickers
+ * (#3628): the 16x16 grid on the cape's cloth, the emblem at game size
+ * beside it, the palette, the tools and Start from. Picks are ringed in
+ * ink. On a phone the cells shrink to the pane and the preview wraps
+ * under the grid, so nothing scrolls sideways.
  */
 .emblem-editor {
   display: flex;
@@ -1809,17 +1801,26 @@ body:has(> .splash) #menu-background::after {
 }
 
 .screen .emblem-editor-tool,
-.screen .emblem-editor-done,
-.screen .emblem-editor-cancel {
+.screen .emblem-editor-start {
   padding: 0.15rem 0.6rem;
 }
 
-.screen .emblem-editor-tool[aria-pressed="true"] {
-  border-color: var(--accent);
-  color: var(--accent);
+.screen .emblem-editor-start {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 3px;
 }
 
-.screen .emblem-editor-done {
+.emblem-editor-swatches {
+  display: contents;
+}
+
+.screen .emblem-editor-tool[aria-pressed="true"] {
   border-color: var(--accent);
   color: var(--accent);
 }
@@ -3761,16 +3762,48 @@ body:has(> .splash) #menu-background::after {
 
 /* --- help (#1257) ------------------------------------------------------- */
 
-/* As wide as Options: the page list beside a page of prose. */
-.screen.help-screen {
-  width: min(52rem, 100%);
+/* A window just under the [?] that opened it (#3552), no backdrop: the
+   screen or match goes on beside it. Fixed, so it sits over the tutorial's
+   dim (`.coach`, z 55) from the bar and the HUD alike. It scrolls inside. */
+.screen.help-screen.help-window {
+  position: fixed;
+  top: calc(var(--help-top, 3rem) + 0.3rem);
+  inset-inline-end: 8px;
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  width: min(640px, calc(100vw - 16px));
+  max-height: calc(100vh - var(--help-top, 3rem) - 0.3rem - 8px);
+  overflow-y: auto;
   padding: 1rem;
-  background: var(--bg);
+  background: rgb(14 17 22 / 96%);
   border: 1px solid var(--line);
+  /* The size it has in a match, not the slim bar's. */
+  font-size: 1rem;
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+/* The page scrolls between the picker and the foot, which stay put. */
+.help-window .help-page {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+/* Clear of the × at the window's top right. */
+.help-picker {
+  align-self: flex-start;
+  max-width: calc(100% - 2.5rem);
+}
+
+.help-footer {
+  border-top: 1px solid var(--line);
+  padding-top: 0.4rem;
 }
 
 .help-source {
-  margin-top: 0.6rem;
   color: var(--ink-dim);
   font-size: 0.85rem;
 }
@@ -3829,6 +3862,58 @@ body:has(> .splash) #menu-background::after {
   max-width: 100%;
 }
 
+/* A game icon in prose (#3556): a line high, centred on the text. Every
+   icon is square, and a fixed box keeps a narrow table column or a full
+   chip from squashing it. */
+.help-page .doc-icon {
+  width: 1.4em;
+  height: 1.4em;
+  max-width: none;
+  flex-shrink: 0;
+  vertical-align: middle;
+}
+
+/* An icon and its name, as the effects bar shows a status: the icon's own
+   plate, then the label, on a dark pill. Never wider than the page. */
+.doc-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+  max-width: 100%;
+  padding-block: 0.1em;
+  padding-inline: 0.15em 0.6em;
+  vertical-align: middle;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 0.9em;
+}
+
+/* A long name wraps inside its chip rather than being cut: the name is the
+   one thing a reader must be able to read. */
+.doc-chip > strong {
+  min-width: 0;
+  overflow-wrap: break-word;
+  color: var(--ink);
+}
+
+/* A diagram on its own line (#3556), captioned by its alt text. */
+.doc-figure {
+  margin: 0.8rem 0;
+}
+
+.doc-figure img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  border: 1px solid var(--line);
+}
+
+.doc-figure figcaption {
+  margin-top: 0.3rem;
+  color: var(--ink-dim);
+  font-size: 0.85rem;
+}
+
 /* --- keys (#309) -------------------------------------------------------- */
 
 .keys-screen {
@@ -3868,6 +3953,11 @@ body:has(> .splash) #menu-background::after {
   padding: 0.35rem 0.6rem;
   border: 1px solid var(--line);
   background: var(--panel);
+}
+
+/* Previous target's second cell, with no second Next target key (#3630). */
+.key-cell.is-fixed[hidden] {
+  display: none;
 }
 
 .screen button.key-cell.is-capturing {
@@ -8045,6 +8135,52 @@ body:has(#screens[style*="none"]) .now-playing {
   color: var(--accent);
 }
 
+/* Under the outcome of a ranked match (#3680): its result is out, the rating to follow. */
+.queue-ranked {
+  color: var(--ink-dim);
+  font-size: 0.9rem;
+}
+
+.queue-ranked[hidden] {
+  display: none;
+}
+
+/* Over the versus splash while every seat signs a ranked start (#3680). */
+.screen-queue {
+  position: relative;
+}
+
+.ranked-confirm {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgb(14 17 22 / 50%);
+}
+
+.ranked-confirm[hidden] {
+  display: none;
+}
+
+.ranked-confirm-box {
+  padding: 0.9rem 1.6rem;
+  background: rgb(14 17 22 / 92%);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  font-size: 1.3rem;
+  letter-spacing: 0.04em;
+  text-align: center;
+}
+
+/* Under Find a match (#3680): what a queued match without bots publishes. */
+.queue-ranked-note {
+  margin: 0;
+  color: var(--ink-dim);
+  font-size: 0.8rem;
+}
+
 .queue-actions {
   position: sticky;
   bottom: 0;
@@ -8682,6 +8818,15 @@ body:has(#screens[style*="none"]) .now-playing {
   flex-wrap: wrap;
   gap: 0.4rem;
   justify-content: flex-end;
+}
+
+.coach-panel-actions[hidden] {
+  display: none;
+}
+
+/* The closing line (#3544): a click takes it away. */
+.coach-farewell {
+  cursor: pointer;
 }
 
 /* A narrow window docks the panel to its bottom edge, or its top one. */

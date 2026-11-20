@@ -40,6 +40,7 @@ layer draws flat whatever its biome, until its family card rebuilds it.
 | Marsh    | `#2a3430` | `#54594f` | reed `#5c5a3a`, silt `#4a4034`           |
 | Jungle   | `#232c26` | `#5a5c52` | vine `#545a38`, clay `#5a4a30`           |
 | Coast    | `#7d7358` | `#5b6770` | dry olive `#6d6a3e`, tide sand `#5e5644` |
+| Cavern   | `#232a33` | `#4a5260` | lichen `#4f4a5c`, silt `#403428`         |
 
 The heights still draw in the hall's tones. The wilds (#3071, Crossroads) keep
 the hall's dressed stone and wood, and its moss: a greener moss sits too near
@@ -50,7 +51,7 @@ Frozen Crossing) is neutral grey at low chroma: its ground is the river ice,
 the only floor that shows (the banks are decks), its decks `#9ea4ab`. Snow
 stays mid-grey so the friend blue keeps its contrast. The ice is the study's
 `#7d8a94` with a little less blue, because the hall's blue grid tinted from
-it came too near the friend blue. Open water is the shared deep water look. The marsh biome (#3434, Blackwater Ford) keeps the wilds' dark ground a little cooler, with dry olive reed and silt; its tones are all low chroma and well away from the friend blue, the foe red and the nature green; open water is the shared look. The jungle biome (#3436, Jungle Ruins) is a dark wet floor with mossy grey stone, olive vine and clay; all low chroma, so the nature green and the friend blue stay the loudest things. The coast biome (#3445, Guild Hall Isle) is wet sand and grey rock with dry olive plants beside a deep teal sea; no tone is near the friend blue, the foe red or the nature green.
+it came too near the friend blue. Open water is the shared deep water look. The marsh biome (#3434, Blackwater Ford) keeps the wilds' dark ground a little cooler, with dry olive reed and silt; its tones are all low chroma and well away from the friend blue, the foe red and the nature green; open water is the shared look. The jungle biome (#3436, Jungle Ruins) is a dark wet floor with mossy grey stone, olive vine and clay; all low chroma, so the nature green and the friend blue stay the loudest things. The coast biome (#3445, Guild Hall Isle) is wet sand and grey rock with dry olive plants beside a deep teal sea; no tone is near the friend blue, the foe red or the nature green. The cavern biome (#3444, The Hollow Deep) is a cold slate under a thin ceiling, its decks dressed slate `#8a909c`; the only colour is the violet glow `#8a6fc9` of its pools, and that is light, never a ground, wall or deck tone, because it sits within a hand's width of the magic violet. No tone is near the friend blue (~200°), the foe red (~5°) or the nature green (~110°).
 
 **Overhangs** (#3293) are roofs nobody stands on. They hang at their layer's
 height over whoever is under them, with a thin eave below their front edge and
@@ -436,7 +437,31 @@ leaning back when up and lying right when thrown, in `SWITCH_MARK_LOOK`, a
 small brass glow round the knob while up. A flip plays a quarter-second
 throw (`leverThrown`); under reduced motion it snaps.
 
-Every SVG here is made by `scripts/assets/visual-style.mjs`; regenerate with
+### Portcullis, up and down
+
+**Down** is an iron grid filling the gap, its bars spiked at the camera's
+side. **Up** is a dark gap between stone jambs with no bars in it, only
+their bottom ends showing at the lintel side, so a player sees where it
+drops. Both read from the gate's own footprint on its layer, also where a
+tunnel's cover hides its face and the raised grid. Shape differs, not
+only colour.
+
+![portcullis](visual-style/portcullis.svg)
+
+Recipe (#3068, #3644): `gate-mark.ts` `GATE_ART`. Down, the wall pass
+draws the dark of the arch as a wall box, bars down its front face, and a
+grid over its top in `GATE_PORTCULLIS_LOOK` iron `#3b4759`; on its layer's
+ground the grid also fills the footprint, bars across it `BAR_EVERY` apart,
+an iron frame, a lit camera-facing edge (`litStructurePalette`) and
+`SPIKE`d tips. Up, `drawGate` lays the dark gap in a lit frame, its jambs
+and sills, a `STUB` of bars a quarter of its depth at its north
+or west side, and hangs the grid above the lintel: only the part of it
+that lands north of the footprint is drawn, so a strip deeper than the
+lift shows its top end and nothing of it lands in the gap. On a flat map
+the hung grid is left out. The study SVG is made by
+`scripts/assets/portcullis-svg.sh`.
+
+Every other SVG here is made by `scripts/assets/visual-style.mjs`; regenerate with
 `node scripts/assets/visual-style.mjs`.
 
 ## 8. Review checklist

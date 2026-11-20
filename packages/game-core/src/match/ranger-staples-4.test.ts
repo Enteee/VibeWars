@@ -321,10 +321,10 @@ describe("the pet attacks (#1676)", () => {
   };
 
   it("Pounce knocks down a moving foe, not a standing one", () => {
-    // Crippled, so the wolf catches it walking away.
+    // Crippled and walking in past the wolf, so the wolf meets it on the move.
     const moving = petBlow(POUNCE, (sim) => {
       get(sim, "f").combatant.statuses.apply("crippled", 1000, "r", NO_RANKS);
-      sim.setInputDirection("f", vec2(0, 1));
+      sim.setInputDirection("f", vec2(-1, 0));
     });
     expect(knockedDown(moving.events, "f")).toBe(true);
     expect(knockedDown(petBlow(POUNCE).events, "f")).toBe(false);

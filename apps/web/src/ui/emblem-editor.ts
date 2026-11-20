@@ -1,14 +1,21 @@
 import {
-  CAPE_COLOURS,
+  canonicalEmblem,
   EMBLEM_GRID,
+  MAX_EMBLEM_COLOURS,
   packEmblem,
   unpackEmblem,
   type WireCape,
 } from "@vibewars/game-protocol";
 
 import { t, type MessageKey } from "../i18n/index.js";
-import { paintEmblem } from "../render/body-painter.js";
-import { CAPE_PALETTE, emblemShape, type CapeColour } from "../render/cape-shape.js";
+import { SELF_RIM, paintEmblem } from "../render/body-painter.js";
+import {
+  EMBLEM_PRESET_NAMES,
+  capeLook,
+  emblemShape,
+  presetEmblem,
+  type EmblemPresetName,
+} from "../render/cape-shape.js";
 import { canvasPainter } from "./character-figure.js";
 import { cssColour } from "./character-preview.js";
 import { button, h } from "./kit.js";
@@ -16,8 +23,8 @@ import { button, h } from "./kit.js";
 /**
  * The emblem editor (#3555): the cape designer's 16×16 pixel grid, drawn
  * by hand. The model is pure functions on `number[]` grids, row-major,
- * each pixel 0 for empty or `i` for `CAPE_COLOURS[i - 1]`, as
- * `packEmblem` packs them; the DOM editor round them is `emblemEditor`.
+ * each pixel 0 for empty or `i` for the emblem's colour `i - 1` (#3628),
+ * as `packEmblem` packs them; the DOM editor round them is `emblemEditor`.
  */
 export type EmblemGrid = readonly number[];
 
@@ -27,16 +34,16 @@ export type EmblemTool = "pencil" | "eraser" | "fill";
 /** How many steps Undo goes back. */
 export const UNDO_LIMIT = 20;
 
-/** Each cape colour's name, for its swatch's label (#1422). */
-export const COLOUR_NAMES: Readonly<Record<CapeColour, MessageKey>> = {
-  gold: "player.colourGold",
-  violet: "player.colourViolet",
-  white: "player.colourWhite",
-  black: "player.colourBlack",
-  lime: "player.colourLime",
-  orange: "player.colourOrange",
-  teal: "player.colourTeal",
-  pink: "player.colourPink",
+/** Each starting emblem's name (#3554), for its Start from button's label. */
+export const EMBLEM_NAMES: Readonly<Record<EmblemPresetName, MessageKey>> = {
+  disc: "player.emblemDisc",
+  bar: "player.emblemBar",
+  chevron: "player.emblemChevron",
+  diamond: "player.emblemDiamond",
+  triangle: "player.emblemTriangle",
+  cross: "player.emblemCross",
+  ring: "player.emblemRing",
+  "half-disc": "player.emblemHalfDisc",
 };
 
 /** The column a mirrored stroke also paints: 0 and 15, …, 7 and 8. */
@@ -116,7 +123,7 @@ export function useTool(
 }
 
 /** `steps` with `before` as the newest, the oldest dropped past `UNDO_LIMIT`. */
-export function pushStep(steps: readonly EmblemGrid[], before: EmblemGrid): EmblemGrid[] {
+export function pushStep<Step>(steps: readonly Step[], before: Step): Step[] {
   return [...steps, before].slice(-UNDO_LIMIT);
 }
 
@@ -129,6 +136,8 @@ export function emptyGrid(): EmblemGrid {
 const PREVIEW_PX = 24;
 /** The emblem's size inside it, CSS px. */
 const IN_GAME_EMBLEM_PX = 8;
+/** A Start from button's size, CSS px. */
+const START_BUTTON_PX = 20;
 
 const TOOLS: readonly {
   readonly tool: EmblemTool;
@@ -147,27 +156,66 @@ const ARROWS: Readonly<Record<string, readonly [number, number]>> = {
   ArrowRight: [0, 1],
 };
 
+/** `hex`, six hex digits as a cape colour is spelled (#3628), as CSS. */
+function hexCss(hex: string): string {
+  return `#${hex}`;
+}
+
+/** A colour input's `#rrggbb` as a cape colour: no `#`, lower case (#3628). */
+export function inputHex(value: string): string {
+  return value.replace(/^#/, "").toLowerCase();
+}
+
+/** An emblem as the cape carries it (#3628): its packed grid and the colours it names. */
+export type EmblemPick = Pick<WireCape, "emblem" | "emblemColours">;
+
+/** The editor's state an Undo goes back to: the grid and the colours it is drawn in. */
+interface EmblemStep {
+  readonly grid: EmblemGrid;
+  readonly colours: readonly string[];
+}
+
 /**
- * The editor for `cape`'s emblem, in place in the cape designer (#3555).
- * Done calls `onClose` with the packed grid, Cancel with `null`; nothing
- * is saved here. Trim is the colour picked first.
+ * The editor for `cape`'s emblem, always shown in the cape designer
+ * (#3555, #3628). Each finished stroke or tool action calls `onChange`
+ * with the emblem in its one spelling (`canonicalEmblem`), as a pick
+ * does. While it works it may hold colours no pixel uses. `show` puts
+ * another cape behind it: its cloth, and its emblem when that is not the
+ * one drawn here.
  */
 export function emblemEditor(
   cape: WireCape,
-  onClose: (emblem: string | null) => void,
-): HTMLElement {
-  let grid: EmblemGrid = unpackEmblem(cape.emblem) ?? emptyGrid();
-  let steps: EmblemGrid[] = [];
+  onChange: (emblem: EmblemPick) => void,
+): { readonly root: HTMLElement; readonly show: (cape: WireCape) => void } {
+  let cloth = { main: cape.main, trim: cape.trim };
+  let grid: EmblemGrid = emptyGrid();
+  let colours: readonly string[] = [];
+  /** The drawing colour, 1-based into `colours`; 0 for Empty. */
+  let pick = 1;
+  let steps: EmblemStep[] = [];
   let tool: EmblemTool = "pencil";
-  let pick = CAPE_COLOURS.indexOf(cape.trim) + 1;
   let mirror = false;
   let cursor = { row: EMBLEM_GRID / 2, column: EMBLEM_GRID / 2 };
   /** The grid as the pointer stroke under way found it, or `null` for none. */
   let stroke: EmblemGrid | null = null;
+  /** The state before the recolour under way, or `null` for none. */
+  let recolouring: EmblemStep | null = null;
+
+  /** The emblem as drawn here, in its one spelling. */
+  const drawn = (): EmblemPick => {
+    const canonical = canonicalEmblem(grid, colours);
+    return { emblem: packEmblem(canonical.pixels), emblemColours: canonical.colours };
+  };
+  /** Draw `from`'s emblem: its colours, the trim to start with when it has none. */
+  const load = (from: WireCape): void => {
+    grid = unpackEmblem(from.emblem, from.emblemColours.length) ?? emptyGrid();
+    colours = from.emblemColours.length === 0 ? [from.trim] : [...from.emblemColours];
+    pick = 1;
+    steps = [];
+  };
+  load(cape);
 
   const root = h("div", "emblem-editor");
-  root.style.setProperty("--cape-main", cssColour(CAPE_PALETTE[cape.main]));
-  root.style.setProperty("--cape-trim", cssColour(CAPE_PALETTE[cape.trim]));
 
   const top = h("div", "emblem-editor-top");
   const board = h("div", "emblem-editor-grid");
@@ -189,28 +237,74 @@ export function emblemEditor(
   side.append(preview, h("span", "emblem-editor-caption", t("player.emblemInGame")));
   top.append(board, side);
 
+  const snapshot = (): EmblemStep => ({ grid, colours });
+  const apply = (): void => {
+    onChange(drawn());
+  };
+  /** Make `next` the editor's state, one Undo step, and apply it. */
+  const commit = (next: EmblemStep): void => {
+    if (next.grid !== grid || next.colours !== colours) {
+      steps = pushStep(steps, snapshot());
+      grid = next.grid;
+      colours = next.colours;
+      apply();
+    }
+    render();
+  };
+
   const palette = h("div", "emblem-editor-row");
   palette.setAttribute("role", "group");
   palette.setAttribute("aria-label", t("player.emblemPalette"));
-  const swatches = [null, ...CAPE_COLOURS].map((colour, index) => {
-    const label = t(colour === null ? "player.emblemEmpty" : COLOUR_NAMES[colour]);
-    const swatch = button("", "emblem-editor-swatch", () => {
-      pick = index;
-      if (tool === "eraser") {
-        tool = "pencil";
-      }
-      render();
-    });
-    if (colour === null) {
-      swatch.classList.add("emblem-editor-empty");
-    } else {
-      swatch.style.setProperty("--swatch", cssColour(CAPE_PALETTE[colour]));
-    }
-    swatch.setAttribute("aria-label", label);
-    swatch.title = label;
-    swatch.dataset.pixel = String(index);
-    return palette.appendChild(swatch);
+  const empty = button("", "emblem-editor-swatch emblem-editor-empty", () => {
+    choose(0);
   });
+  empty.setAttribute("aria-label", t("player.emblemEmpty"));
+  empty.title = t("player.emblemEmpty");
+  empty.dataset.pixel = "0";
+  const swatches = h("span", "emblem-editor-swatches");
+  const addColour = button(
+    t("player.emblemAddColour"),
+    "emblem-editor-tool emblem-editor-add",
+    () => {
+      if (colours.length < MAX_EMBLEM_COLOURS) {
+        const next = [...colours, colours[pick - 1] ?? cloth.trim];
+        pick = next.length;
+        tool = tool === "eraser" ? "pencil" : tool;
+        commit({ grid, colours: next });
+      }
+    },
+  );
+  const recolour = document.createElement("input");
+  recolour.type = "color";
+  recolour.className = "emblem-editor-recolour";
+  recolour.setAttribute("aria-label", t("player.emblemColour"));
+  recolour.title = t("player.emblemColour");
+  recolour.addEventListener("input", () => {
+    if (pick === 0) {
+      return;
+    }
+    recolouring ??= snapshot();
+    colours = colours.map((colour, index) =>
+      index === pick - 1 ? inputHex(recolour.value) : colour,
+    );
+    render();
+  });
+  recolour.addEventListener("change", () => {
+    if (recolouring !== null) {
+      steps = pushStep(steps, recolouring);
+      recolouring = null;
+      apply();
+      render();
+    }
+  });
+  palette.append(empty, swatches, addColour, recolour);
+  const choose = (index: number): void => {
+    pick = index;
+    if (tool === "eraser" && index > 0) {
+      tool = "pencil";
+    }
+    render();
+  };
 
   const tools = h("div", "emblem-editor-row");
   const toolButtons = TOOLS.map(({ tool: each, key, label }) => {
@@ -228,21 +322,17 @@ export function emblemEditor(
   };
   const mirrorButton = button(t("player.emblemMirror"), "emblem-editor-tool", toggleMirror);
   mirrorButton.setAttribute("aria-keyshortcuts", "M");
-  const commit = (next: EmblemGrid): void => {
-    if (next !== grid) {
-      steps = pushStep(steps, grid);
-      grid = next;
-    }
-    render();
-  };
   const clear = button(t("player.emblemClear"), "emblem-editor-tool", () => {
-    commit(grid.every((pixel) => pixel === 0) ? grid : emptyGrid());
+    commit({ grid: grid.every((pixel) => pixel === 0) ? grid : emptyGrid(), colours });
   });
   const undo = (): void => {
     const last = steps.at(-1);
     if (last !== undefined) {
       steps = steps.slice(0, -1);
-      grid = last;
+      grid = last.grid;
+      colours = last.colours;
+      pick = Math.min(pick, colours.length);
+      apply();
       render();
     }
   };
@@ -250,16 +340,41 @@ export function emblemEditor(
   undoButton.setAttribute("aria-keyshortcuts", "Control+Z");
   tools.append(mirrorButton, clear, undoButton);
 
-  const actions = h("div", "emblem-editor-row emblem-editor-actions");
-  actions.append(
-    button(t("player.emblemDone"), "emblem-editor-done", () => {
-      onClose(packEmblem(grid));
-    }),
-    button(t("kit.cancel"), "emblem-editor-cancel", () => {
-      onClose(null);
-    }),
-  );
-  root.append(top, palette, tools, actions);
+  // Start from (#3628): a preset in the drawing colour, the trim with none picked.
+  const starts = h("div", "emblem-editor-row");
+  starts.setAttribute("role", "group");
+  starts.setAttribute("aria-label", t("player.emblemStartFrom"));
+  starts.appendChild(h("span", "emblem-editor-caption", t("player.emblemStartFrom")));
+  const startFrom = (name: EmblemPresetName): void => {
+    let next = colours;
+    let index = pick;
+    if (index === 0) {
+      const trim = colours.indexOf(cloth.trim);
+      if (trim >= 0) {
+        index = trim + 1;
+      } else if (colours.length < MAX_EMBLEM_COLOURS) {
+        next = [...colours, cloth.trim];
+        index = next.length;
+      } else {
+        index = 1;
+      }
+    }
+    pick = index;
+    tool = tool === "eraser" ? "pencil" : tool;
+    commit({ grid: presetEmblem(name).map((pixel) => pixel * index), colours: next });
+  };
+  for (const name of EMBLEM_PRESET_NAMES) {
+    const choice = button("", "emblem-editor-start", () => {
+      startFrom(name);
+    });
+    choice.setAttribute("aria-label", t(EMBLEM_NAMES[name]));
+    choice.title = t(EMBLEM_NAMES[name]);
+    choice.dataset.emblem = name;
+    // Drawn in one ink: the shape is what is picked.
+    choice.appendChild(emblemIcon(packEmblem(presetEmblem(name)), [SELF_RIM], START_BUTTON_PX));
+    starts.appendChild(choice);
+  }
+  root.append(top, palette, tools, starts);
 
   /** The cell under a pointer event, or `undefined` off the grid. */
   const cellAt = (event: PointerEvent): { row: number; column: number } | undefined => {
@@ -280,7 +395,8 @@ export function emblemEditor(
   };
   const endStroke = (): void => {
     if (stroke !== null && stroke !== grid) {
-      steps = pushStep(steps, stroke);
+      steps = pushStep(steps, { grid: stroke, colours });
+      apply();
     }
     stroke = null;
     render();
@@ -323,6 +439,10 @@ export function emblemEditor(
     if (event.altKey) {
       return false;
     }
+    // The tool keys only off the colour input, which may take typing.
+    if (event.target === recolour) {
+      return false;
+    }
     const picked = TOOLS.find((each) => each.key === key);
     if (picked !== undefined) {
       tool = picked.tool;
@@ -345,40 +465,41 @@ export function emblemEditor(
       return true;
     }
     if (event.key === " ") {
-      commit(useTool(grid, tool, cursor.row, cursor.column, pick, mirror));
+      commit({ grid: useTool(grid, tool, cursor.row, cursor.column, pick, mirror), colours });
       return true;
     }
     return false;
   };
 
-  const colourOf = (pixel: number): string | undefined => {
-    const colour = CAPE_COLOURS[pixel - 1];
-    return colour === undefined ? undefined : cssColour(CAPE_PALETTE[colour]);
-  };
-  const drawPreview = (): void => {
+  const drawPreview = (look: ReturnType<typeof capeLook>): void => {
     const context = preview.getContext("2d");
     if (context === null) {
       return;
     }
     context.setTransform(ratio, 0, 0, ratio, 0, 0);
     context.clearRect(0, 0, PREVIEW_PX, PREVIEW_PX);
-    context.fillStyle = cssColour(CAPE_PALETTE[cape.trim]);
+    context.fillStyle = cssColour(look.trim);
     context.fillRect(0, 0, PREVIEW_PX, PREVIEW_PX);
-    context.fillStyle = cssColour(CAPE_PALETTE[cape.main]);
+    context.fillStyle = cssColour(look.main);
     context.fillRect(2, 2, PREVIEW_PX - 4, PREVIEW_PX - 4);
     paintEmblem(
       canvasPainter(context),
-      emblemShape(packEmblem(grid), { x: PREVIEW_PX / 2, y: PREVIEW_PX / 2 }, 0, IN_GAME_EMBLEM_PX),
-      CAPE_COLOURS.map((colour) => CAPE_PALETTE[colour]),
+      emblemShape(look.emblem, { x: PREVIEW_PX / 2, y: PREVIEW_PX / 2 }, 0, IN_GAME_EMBLEM_PX),
+      look.palette,
     );
   };
   const render = (): void => {
+    // The cloth and the preview as others will see them, nudged clear of
+    // the team colours; the grid and the swatches as picked.
+    const look = capeLook({ ...cloth, emblemColours: colours, emblem: packEmblem(grid) });
+    root.style.setProperty("--cape-main", cssColour(look.main));
+    root.style.setProperty("--cape-trim", cssColour(look.trim));
     cells.forEach((cell, index) => {
-      const colour = colourOf(grid[index] ?? 0);
+      const colour = colours[(grid[index] ?? 0) - 1];
       if (colour === undefined) {
         cell.style.removeProperty("--pixel");
       } else {
-        cell.style.setProperty("--pixel", colour);
+        cell.style.setProperty("--pixel", hexCss(colour));
       }
       cell.classList.toggle(
         "emblem-editor-cursor",
@@ -386,16 +507,75 @@ export function emblemEditor(
       );
     });
     board.classList.toggle("emblem-editor-mirrored", mirror);
-    swatches.forEach((swatch, index) => {
-      swatch.setAttribute("aria-pressed", String(tool !== "eraser" && index === pick));
-    });
+    empty.setAttribute("aria-pressed", String(tool === "eraser" || pick === 0));
+    swatches.replaceChildren(
+      ...colours.map((colour, index) => {
+        const swatch = button("", "emblem-editor-swatch", () => {
+          choose(index + 1);
+        });
+        swatch.style.setProperty("--swatch", hexCss(colour));
+        swatch.setAttribute("aria-label", hexCss(colour));
+        swatch.title = hexCss(colour);
+        swatch.dataset.pixel = String(index + 1);
+        swatch.setAttribute("aria-pressed", String(tool !== "eraser" && index + 1 === pick));
+        return swatch;
+      }),
+    );
+    addColour.disabled = colours.length >= MAX_EMBLEM_COLOURS;
+    const picked = colours[pick - 1];
+    recolour.disabled = picked === undefined;
+    if (picked !== undefined) {
+      recolour.value = hexCss(picked);
+    }
     toolButtons.forEach((choice, index) => {
       choice.setAttribute("aria-pressed", String(TOOLS[index]?.tool === tool));
     });
     mirrorButton.setAttribute("aria-pressed", String(mirror));
     undoButton.disabled = steps.length === 0;
-    drawPreview();
+    drawPreview(look);
   };
   render();
-  return root;
+  return {
+    root,
+    show: (next) => {
+      cloth = { main: next.main, trim: next.trim };
+      const here = drawn();
+      if (here.emblem !== next.emblem || here.emblemColours.join() !== next.emblemColours.join()) {
+        load(next);
+      }
+      render();
+    },
+  };
+}
+
+/**
+ * `emblem` in `palette`, upright, `px` across, sharp at the device's pixel
+ * ratio. An image of a canvas, not the canvas: Options keeps no canvases
+ * of its own (#1422).
+ */
+export function emblemIcon(
+  emblem: string,
+  palette: readonly number[],
+  px: number,
+): HTMLImageElement {
+  const ratio = window.devicePixelRatio;
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.round(px * ratio);
+  canvas.height = Math.round(px * ratio);
+  const context = canvas.getContext("2d");
+  if (context !== null) {
+    context.scale(ratio, ratio);
+    const half = px / 2;
+    paintEmblem(
+      canvasPainter(context),
+      emblemShape(emblem, { x: half, y: half }, 0, px - 4),
+      palette,
+    );
+  }
+  const image = document.createElement("img");
+  image.src = canvas.toDataURL();
+  image.alt = "";
+  image.width = px;
+  image.height = px;
+  return image;
 }

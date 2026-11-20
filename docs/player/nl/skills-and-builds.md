@@ -6,8 +6,8 @@ het hoofdmenu, of **Nieuw personage**.
 
 ## Klassen
 
-Er zijn er tien: Warrior, Ranger, Monk, Necromancer, Mesmer, Elementalist,
-Assassin, Ritualist, Paragon en Dervish. Je **primaire** klasse is wat je bent:
+Er zijn er tien: ![Krijger](../../../apps/web/public/icons/profession/warrior.svg) **Krijger**, ![Jager](../../../apps/web/public/icons/profession/ranger.svg) **Jager**, ![Monnik](../../../apps/web/public/icons/profession/monk.svg) **Monnik**, ![Necromancer](../../../apps/web/public/icons/profession/necromancer.svg) **Necromancer**, ![Mesmer](../../../apps/web/public/icons/profession/mesmer.svg) **Mesmer**, ![Elementalist](../../../apps/web/public/icons/profession/elementalist.svg) **Elementalist**,
+![Sluipmoordenaar](../../../apps/web/public/icons/profession/assassin.svg) **Sluipmoordenaar**, ![Ritualist](../../../apps/web/public/icons/profession/ritualist.svg) **Ritualist**, ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** en ![Derwisj](../../../apps/web/public/icons/profession/dervish.svg) **Derwisj**. Je **primaire** klasse is wat je bent:
 de skills ervan, en het **primaire attribuut** (gemarkeerd met ★), dat alleen
 een primaire klasse krijgt. Je **secundaire** klasse leent je zijn skills, maar
 niet zijn primaire attribuut.
@@ -18,11 +18,11 @@ De balk heeft **acht vakken**. Er past maar één **elite**-skill (gouden rand) 
 een balk: rust je een tweede uit, dan vervangt die de eerste. Druk op **×** op
 een vak om het leeg te maken.
 
-**Flash-betoveringen** (Dervish) zijn direct: als je er een gebruikt, behoud je
+![Betovering](../../../apps/web/public/icons/skill-type/enchantment.svg) **Flash-betoveringen** (![Derwisj](../../../apps/web/public/icons/profession/dervish.svg) **Derwisj**) zijn direct: als je er een gebruikt, behoud je
 je zwaai en je pas, dus je kunt ze tussen je klappen door gebruiken. Elke zet
 je andere flash-betoveringen 1 seconde uit.
 
-**Vormen** (de vijf Dervish-Avatars: Balthazar, Dwayna, Grenth, Lyssa en
+![Vorm](../../../apps/web/public/icons/skill-type/form.svg) **Vormen** (de vijf Derwisj-Avatars: Balthazar, Dwayna, Grenth, Lyssa en
 Melandru) veranderen je voor meer dan een minuut. Een vorm is geen betovering,
 dus niemand kan hem wegstrippen, en je kunt in één vorm tegelijk zijn. Eén
 gebruiken schakelt hem 45 seconden uit. Als een vorm eindigt, stop je met wat
@@ -31,7 +31,7 @@ opnieuw op een bewegingstoets om verder te lopen.
 
 **Sommige schoten schakelen je andere aanvallen uit.** Focused Shot en Needling
 Shot vliegen sneller dan een pijl zou moeten, maar elk schot dat raakt, zet je
-andere aanvalsskills een paar seconden uit. Spreuken hebben er geen last van.
+andere ![Aanvalsskill](../../../apps/web/public/icons/skill-type/attack.svg) **aanvalsskills** een paar seconden uit. ![Spreuk](../../../apps/web/public/icons/skill-type/spell.svg) **Spreuken** hebben er geen last van.
 
 ## Attributen
 
@@ -42,10 +42,10 @@ bovenop doen; zie [Uitrusting](equipment.md). Het attribuut verhogen dat een
 skill gebruikt, maakt die sterker: getallen die met het attribuut meegroeien,
 staan groen en vet, bij je huidige rangen inclusief runen en hoofddeksels.
 
-In een gevecht kunnen je rangen een tijdje veranderen. Weakness haalt er van
-elk één af. Sommige vloeken zetten de attributen van een vijand op 0, en
+In een gevecht kunnen je rangen een tijdje veranderen. ![Zwakte](../../../apps/web/public/icons/status/weakness.svg) **Zwakte** haalt er van
+elk één af. Sommige ![Vloek](../../../apps/web/public/icons/skill-type/hex.svg) **vloeken** zetten de attributen van een vijand op 0, en
 Master of Magic zet je elementaire op 13: een zo gezette rang gaat boven runen
-en Weakness. Met Signet of Illusions gebruiken je volgende spreuken van andere
+en Zwakte. Met Signet of Illusions gebruiken je volgende ![Spreuk](../../../apps/web/public/icons/skill-type/spell.svg) **spreuken** van andere
 attributen je Illusion Magic-rang. Sommige skills verhogen je attributen een
 tijdje of voor je volgende spreuken, zoals Glyph of Elemental Power en Ritual
 Lord doen, zelfs een die je op 0 liet staan; een gezette rang, zoals die van
@@ -53,20 +53,20 @@ Master of Magic, wint van zo'n boost.
 
 ## Echoes
 
-De **echoes** van een Paragon zijn lange buffs op één bondgenoot. Een
+De ![Echo](../../../apps/web/public/icons/skill-type/echo.svg) **echoes** van een ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** zijn lange buffs op één bondgenoot. Een
 **refrain** vernieuwt zich tot zijn volle duur, en een **finale** treedt in
-werking, telkens als een chant of een kreet op die bondgenoot eindigt. Een chant
+werking, telkens als een ![Chant](../../../apps/web/public/icons/skill-type/chant.svg) **chant** of een ![Kreet](../../../apps/web/public/icons/skill-type/shout.svg) **kreet** op die bondgenoot eindigt. Een chant
 of kreet die opnieuw wordt toegepast voordat hij eindigt, is niet geëindigd.
 Niets verwijdert een echo: hij eindigt als hij afloopt of als zijn drager
 sterft. De meeste kunnen geen geest als doelwit nemen.
 
 ## Skills die een andere skill worden
 
-Sommige Mesmer-skills zetten een tijdje een andere skill in hun eigen vak.
-Arcane Echo en Echo kopiëren de volgende skill die je gebruikt. **Inspired
+Sommige ![Mesmer](../../../apps/web/public/icons/profession/mesmer.svg) **Mesmer**-skills zetten een tijdje een andere skill in hun eigen vak.
+![Arcane Echo](../../../apps/web/public/icons/status/arcane-echo.svg) **Arcane Echo** en ![Echo](../../../apps/web/public/icons/status/echo.svg) **Echo** kopiëren de volgende skill die je gebruikt. **Inspired
 Enchantment** en **Inspired Hex** worden 20 seconden lang de skill die de
-betovering of vloek castte die ze verwijderden. **Arcane Thievery** wordt de
-spreuk die hij bij je vijand heeft uitgeschakeld, zolang die uitschakeling duurt.
+![Betovering](../../../apps/web/public/icons/skill-type/enchantment.svg) **betovering** of ![Vloek](../../../apps/web/public/icons/skill-type/hex.svg) **vloek** castte die ze verwijderden. **Arcane Thievery** wordt de
+![Spreuk](../../../apps/web/public/icons/skill-type/spell.svg) **spreuk** die hij bij je vijand heeft uitgeschakeld, zolang die uitschakeling duurt.
 De kopie heeft zijn eigen oplaadtijd. Als hij eindigt, komt de originele skill
 terug en begint die zijn eigen oplaadtijd, en een cast van de kopie die nog
 bezig is, mislukt. Een status die door een geest of door een andere status is
@@ -75,11 +75,11 @@ Energie.
 
 ## Wells en glyphs
 
-De **wells** van een Necromancer gebruiken het dichtstbijzijnde lijk. Is er geen
+De ![Well](../../../apps/web/public/icons/skill-type/well.svg) **wells** van een ![Necromancer](../../../apps/web/public/icons/profession/necromancer.svg) **Necromancer** gebruiken het dichtstbijzijnde lijk. Is er geen
 in de buurt, dan offert een well in plaats daarvan 66% van je Gezondheid en
 verschijnt hij waar jij staat.
 
-De **glyphs** van een Elementalist veranderen je volgende spreuk: die kan niet
+De ![Glyph](../../../apps/web/public/icons/skill-type/glyph.svg) **glyphs** van een ![Elementalist](../../../apps/web/public/icons/profession/elementalist.svg) **Elementalist** veranderen je volgende ![Spreuk](../../../apps/web/public/icons/skill-type/spell.svg) **spreuk**: die kan niet
 onderbroken worden, cast direct, laadt meteen op, of kost minder. Een nieuwe
 glyph vervangt de vorige.
 
@@ -89,8 +89,8 @@ Een skill die reageert op "de volgende keer dat schade de Gezondheid onder N%
 brengt" reageert op elke klap of levensdiefstal die je levend en onder de grens
 laat, zelfs als je er voor de treffer al onder zat, en nooit op gezondheid die
 je offert of verliest aan degeneratie. Bescherming tegen dodelijke schade, zoals
-Judge's Intervention, laat de hele fatale klap wegvallen: geen schade, geen
-dood. Faithful Intervention en Illusion of Weakness hebben geen duur: ze duren
+![Judge's Intervention](../../../apps/web/public/icons/status/judges-intervention.svg) **Judge's Intervention**, laat de hele fatale klap wegvallen: geen schade, geen
+dood. ![Trouwe tussenkomst](../../../apps/web/public/icons/status/faithful-intervention.svg) **Trouwe tussenkomst** en ![Illusie van zwakte](../../../apps/web/public/icons/status/illusion-of-weakness.svg) **Illusie van zwakte** hebben geen duur: ze duren
 tot schade, een strip of de dood ze beëindigt, en genezen je ondertussen.
 
 ## De bibliotheek
@@ -115,19 +115,19 @@ genezing van je geesten, dienaren en pet als die van jou.
 
 ## Itemspreuken
 
-De **itemspreuken** van een Ritualist leggen de **as** van een geest in je
+De ![Itemspreuk](../../../apps/web/public/icons/skill-type/item-spell.svg) **itemspreuken** van een ![Ritualist](../../../apps/web/public/icons/profession/ritualist.svg) **Ritualist** leggen de **as** van een geest in je
 handen: een bonus zolang je hem vasthoudt, en een **drop-effect** als hij valt.
 Hij valt als hij afloopt, als je sterft, als je op **As neerleggen** boven je
 Gezondheid-balk drukt, een andere itemspreuk cast, shadow stept, van wapen
 wisselt of een vlag of relikwie opneemt. Je handen zijn vol zolang je hem
-vasthoudt: geen aanvallen en geen aanvalsskills, maar je loopt op volle snelheid
-en cast nog gewoon spreuken. Niets verwijdert as; elk einde is een val.
+vasthoudt: geen aanvallen en geen ![Aanvalsskill](../../../apps/web/public/icons/skill-type/attack.svg) **aanvalsskills**, maar je loopt op volle snelheid
+en cast nog gewoon ![Spreuk](../../../apps/web/public/icons/skill-type/spell.svg) **spreuken**. Niets verwijdert as; elk einde is een val.
 
 ## Shadow steps
 
 Een **shadow step** verplaatst je meteen, zonder ertussen te lopen. De meeste
 brengen je naar je doelwit; sommige brengen je terug naar waar je ze castte als
-ze eindigen, zoals Shadow of Haste en Shadow Walk doen. **Recall** brengt je
+ze eindigen, zoals Shadow of Haste en Shadow Walk doen. ![Recall](../../../apps/web/public/icons/status/recall.svg) **Recall** brengt je
 pas naar zijn bondgenoot als hij eindigt, en schakelt al je skills 3 seconden
 uit. **Swap** ruilt van plaats met een van de geesten of dienaren van je kant.
 

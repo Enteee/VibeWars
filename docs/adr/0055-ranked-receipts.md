@@ -45,6 +45,8 @@ The new package `packages/ranking` holds the types, the canonical encoding and t
 
    Every player who is not a leaver signs it. A player still seated who has not signed within `RANKED_RESULT_TIMEOUT_MS` (30 s) is added to `leavers` and the others sign again. **Refusing to sign is leaving.**
 
+   A player publishes its own partial receipt, the start and its signature over that round's result, the moment it signs, in every round. That is the evidence against a host that re-rounds an honest signer into a leaver: the job voids a match when a key named a leaver in the final receipt has a valid signature on an earlier round's result for the same `matchId`. A player who really refused has no such signature, so it loses.
+
 **A host that leaves loses.** Without the host, the match is over. Each remaining player builds the same `RankedResult` without talking to anyone else:
 
 - `leavers`: the host's key;
@@ -55,7 +57,7 @@ The new package `packages/ranking` holds the types, the canonical encoding and t
 
 Each signs it and publishes a partial receipt. The job merges result signatures over identical result bytes. The host takes a loss. A `host-left` result rates nobody else.
 
-A **receipt** holds the start, all start signatures, the result and every signature on the result. It is about 1 KB at 8v8.
+A **receipt** holds the start, all start signatures, the result and every signature on the result. It is about 11 KB at 8v8.
 
 It is valid when:
 
@@ -118,7 +120,8 @@ Floats are evaluated in a single engine: the job runs on Node, and players run t
 
 ## Consequences
 
-- **What a host decides.** The host proposes who left, but its team cannot win alone: a result counts only if more than half of the seats signed it (Q109, answer B, replacing the every-team rule of #3594), so a host team listing all opponents as leavers voids the match instead of winning it. In a 2v2v2, two teams signing rate the match even when the third signed nothing. A host can still name some opponents as leavers while one of their teammates signs; that teammate's client signs only a result whose leavers it has itself seen drop from the snapshot. A team that leaves whole, exactly half the seats or more, escapes a loss: the price of majority consent.
+- **What a host decides.** The host proposes who left, but its team cannot win alone: a result counts only if more than half of the seats signed it (Q109, answer B, replacing the every-team rule of #3594), so a host team listing all opponents as leavers voids the match instead of winning it. In a 2v2v2, two teams signing rate the match even when the third signed nothing. A host can still name some opponents as leavers while one of their teammates signs; that teammate's client signs only a result whose leavers it has itself seen drop from the snapshot. A re-round is the result it signed with more leavers and nothing else changed; it takes the host's word for the new leavers, since nobody else can see a refusal. A result it refused is never an earlier round. A team that leaves whole, exactly half the seats or more, escapes a loss: the price of majority consent.
+- **A hostile host can make a player who stayed look like a leaver**, by withholding a result round or by cutting their connection. Clients can't tell the difference, and this design accepts it. Per-round partials void only a re-round that names a player who signed an earlier round.
 - **A host can still forge its peers' inputs.** Players sign the replay hash without re-simulating it. The host is chosen by hash, not by itself (ADR-0032), which limits this. Replay disputes (re-simulating and penalising a lying host) are a later card, and so is offline clique detection.
 - **Ranked play publishes who played whom**, by key and character name. The queue screen says so before the first queue.
 - **The leaderboard lags** by up to an hour. Matchmaking tolerates this because claims are checked against a stated `asOf`.

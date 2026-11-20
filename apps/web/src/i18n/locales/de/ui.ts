@@ -344,12 +344,14 @@ export default {
   "controls.targetCalled": "Angesagten Gegner anvisieren",
   "controls.targetClosest": "Nächsten Gegner anvisieren",
   "controls.targetNext": "Nächstes Ziel",
+  "controls.targetPrevious": "Vorheriges Ziel",
   "controls.targetSelf": "Dich anvisieren",
   "controls.weaponSet1": "Waffenset 1",
   "controls.weaponSet2": "Waffenset 2",
   "controls.weaponSet3": "Waffenset 3",
   "controls.weaponSet4": "Waffenset 4",
   "controls.weaponSets": "Waffensets",
+  "controls.withShift": "Umschalt + {key}",
   "creature.rat": "Ratte",
 
   "echo.secondsLeft": { one: "Echo: noch {count} s", other: "Echo: noch {count} s" },
@@ -518,6 +520,7 @@ export default {
   "hud.leaveExtra": " (F10)",
   "hud.leaveNo": "nein",
   "hud.leaveQuestion": "verlassen?",
+  "hud.leaveRanked": "verlassen? Zählt als Niederlage",
   "hud.leaveYes": "ja",
   "hud.lordPercent": "Lord {percent}%",
   "hud.moraleBoostOurs": "Moralschub! +{percent}%",
@@ -861,14 +864,7 @@ export default {
   "pips.title": { one: "{sign}{count} Pip", other: "{sign}{count} Pips" },
 
   "player.cape": "Umhang",
-  "player.colourBlack": "schwarz",
-  "player.colourGold": "gold",
-  "player.colourLime": "hellgrün",
-  "player.colourOrange": "orange",
-  "player.colourPink": "pink",
-  "player.colourTeal": "türkis",
-  "player.colourViolet": "violett",
-  "player.colourWhite": "weiß",
+  "player.capePreview": "Vorschau",
   "player.emblem": "Emblem",
   "player.emblemBar": "Balken",
   "player.emblemChevron": "Sparren",
@@ -878,15 +874,18 @@ export default {
   "player.emblemHalfDisc": "Halbscheibe",
   "player.emblemRing": "Ring",
   "player.emblemTriangle": "Dreieck",
-  "player.editEmblem": "Emblem bearbeiten",
   "player.emblemPencil": "Stift",
   "player.emblemUndo": "Rückgängig",
   "player.emblemEraser": "Radierer",
   "player.emblemFill": "Füllen",
   "player.emblemMirror": "Spiegeln",
   "player.emblemClear": "Leeren",
-  "player.emblemDone": "Fertig",
   "player.emblemEmpty": "Leer",
+  "player.capeColour": "Umhangfarbe",
+  "player.trimColour": "Besatzfarbe",
+  "player.emblemColour": "Zeichenfarbe",
+  "player.emblemAddColour": "Farbe hinzufügen",
+  "player.emblemStartFrom": "Beginnen mit",
   "player.emblemPalette": "Farben",
   "player.emblemInGame": "Spielgröße",
   "player.guildCape": "Gildenumhang",
@@ -930,6 +929,12 @@ export default {
   "queue.playBotsIn": "Gegen Bots spielen ({seconds} s)",
   "queue.queueAgain": "Nochmal",
   "queue.randomArena": "Zufallsarena {size}",
+  "queue.rankedCancelled": "Gewertetes Match abgebrochen: ein Spieler hat nicht bestätigt.",
+  "queue.rankedConfirming": "Gewertetes Match wird bestätigt…",
+  "queue.rankedNote":
+    "Ohne Bots ist es gewertet: Das Ergebnis wird mit deinem Schlüssel und Charakternamen veröffentlicht. Ein Bot im Match hält es ungewertet.",
+  "queue.rankedPending": "Deine Wertung wird innerhalb einer Stunde aktualisiert.",
+  "queue.rankedPublished": "Gewertetes Ergebnis veröffentlicht.",
   "queue.searchingCount": "{searching} suchen · {needed} benötigt",
   "queue.startingIn": "Start in {seconds}",
   "queue.stayTogether": "Zusammenbleiben",
@@ -1498,6 +1503,22 @@ export default {
   "tutorial.ground.praise": "Drüben! Jetzt weißt du, was der Boden kann.",
   "tutorial.front.end": "Jetzt kennst du dich aus. Wir sehen uns da draußen!",
   "tutorial.front.menu": "Zum Menü",
+  "tutorial.menu.arena.farewell": "Du bist in der Warteschlange. Viel Glück.",
+  "tutorial.menu.arena.find":
+    "Drück Match suchen, um dich anzumelden. Deine Gruppe ist eine Seite: Wer über deinen Einladungslink beitritt, nimmt einen Platz, Bots spielen den Rest.",
+  "tutorial.menu.arena.findDone": "Match suchen",
+  "tutorial.menu.arena.open": "Öffne die Teamarena in der Leiste.",
+  "tutorial.menu.arena.openDone": "Öffne die Teamarena",
+  "tutorial.menu.arena.queue":
+    "Stimm für dein Team, dann nimm einen Charakter. Sobald beides erledigt ist, steht deine Gruppe in der Warteschlange.",
+  "tutorial.menu.arena.queueDone": "Tritt der Warteschlange bei",
+  "tutorial.menu.arena.signup":
+    "Öffne Deine Team-Builds, wähle das Team, das du gebaut hast, und schlag es vor.",
+  "tutorial.menu.arena.signupDone": "Schlag dein Team vor",
+  "tutorial.menu.arena.size":
+    "Stell die Teamgröße auf 2v2. Nur Teams gleicher Größe treffen aufeinander.",
+  "tutorial.menu.arena.sizeDone": "Wähle 2v2",
+  "tutorial.menu.arena.title": "Beweise dein Team in einem 2v2-Match der Teamarena.",
   "tutorial.menu.gotIt": "Verstanden",
   "tutorial.menu.menu.characters":
     "Unter Charaktere erstellst und änderst du, wen du spielst: Beruf, Fertigkeiten und Ausrüstung.",
@@ -1507,6 +1528,57 @@ export default {
     "Unter Teams stellst du Charaktere zu einem Team für die Teamkämpfe zusammen.",
   "tutorial.menu.menu.title": "Um weiterzukommen, musst du deine Spezialisierung ändern.",
   "tutorial.menu.skipAsk": "Den Rest des Tutorials überspringen?",
+  "tutorial.menu.modes.gvg":
+    "GvG ist Gilde gegen Gilde, 8 gegen 8, auf der Gildenhallen-Insel. Töte den gegnerischen Gildenlord, um zu gewinnen, und halte deinen am Leben.",
+  "tutorial.menu.modes.heroesAscent":
+    "Aufstieg der Helden ist eine Folge von Karten, 8 gegen 8, gegen Teams in deiner Runde. Gewinnst du, geht es weiter zur nächsten Karte, bis hinauf zur Halle der Helden; verlierst du, fängst du von vorn an.",
+  "tutorial.menu.modes.hostedGame":
+    "Ein Gehostetes Spiel ist deine eigene Lobby: Schick Freunden den Einladungslink und wähle Karte und Teamgröße. Bots spielen jeden Platz, den niemand nimmt.",
+  "tutorial.menu.modes.open": "Öffne an der Seite die leuchtende Spielart.",
+  "tutorial.menu.modes.randomArena":
+    "Die Zufallsarena ist der schnellste Kampf: dein eigener Charakter in einem Team aus Fremden, 1v1, 2v2 oder 4v4. Die Karte wird für dich ausgelost, und jeder Platz ist ein echter Spieler.",
+  "tutorial.menu.modes.teamArena":
+    "Die Teamarena ist deine Gruppe mit einem Team-Build gegen ein anderes Team, 2v2, 4v4 oder 8v8, in der Größe deiner Wahl. Bots übernehmen jeden freien Platz, und jedes Match lost seine Karte aus.",
+  "tutorial.menu.modes.title": "Wisse, wo du kämpfst.",
+  "tutorial.menu.spec.attributes":
+    "Verteile deine Attributpunkte. Jeder Rang stärkt die Fertigkeiten dieses Attributs.",
+  "tutorial.menu.spec.attributesDone": "Ändere ein Attribut",
+  "tutorial.menu.spec.gear":
+    "Rüstung, Runen und Insignien: Wähle ein Teil an der Figur, dann, was darauf kommt.",
+  "tutorial.menu.spec.gearDone": "Ändere ein Ausrüstungsteil",
+  "tutorial.menu.spec.open":
+    "Öffne Charaktere und dann einen Charakter, um seinen Build zu ändern.",
+  "tutorial.menu.spec.openDone": "Öffne einen Charakter",
+  "tutorial.menu.spec.professions":
+    "Deine Primärklasse gibt dir Attribute und Fertigkeiten; deine Sekundärklasse leiht dir ihre Fertigkeiten dazu.",
+  "tutorial.menu.spec.professionsDone": "Wechsle eine Klasse",
+  "tutorial.menu.spec.save": "Speichere deinen Charakter, um den neuen Build zu behalten.",
+  "tutorial.menu.spec.saveDone": "Speichern",
+  "tutorial.menu.spec.skills":
+    "Öffne eine Gruppe in der Liste und zieh dann eine Fertigkeit auf einen Platz deiner Leiste, um sie einzuwechseln.",
+  "tutorial.menu.spec.skillsDone": "Lege eine Fertigkeit auf deine Leiste",
+  "tutorial.menu.spec.title": "Ändere deine Spezialisierung.",
+  "tutorial.menu.spec.weapons": "Wähle aus der Liste eine Waffe für dein Waffenset.",
+  "tutorial.menu.spec.weaponsDone": "Ändere eine Waffe",
+  "tutorial.menu.team.build":
+    "Der Name eines Mitglieds öffnet seinen Build im Build-Editor. Beim Zurückkehren bleibt, was du geändert hast, ungespeichert.",
+  "tutorial.menu.team.character":
+    "Zieh deinen Charakter aus Meine Charaktere auf ein Mitglied. Das Mitglied wird eine Kopie davon.",
+  "tutorial.menu.team.characterDone": "Setz deinen Charakter ins Team",
+  "tutorial.menu.team.fill":
+    "Gib jedem Mitglied einen Build, bis das Team keine Probleme mehr hat.",
+  "tutorial.menu.team.fillDone": "Füll das Team",
+  "tutorial.menu.team.members":
+    "Ein Team hat immer so viele Mitglieder wie seine Größe. Du fügst nie ein Mitglied hinzu: Du ersetzt eines.",
+  "tutorial.menu.team.new": "Stell die Teamgröße auf 2v2 und erstelle dann einen neuen Team-Build.",
+  "tutorial.menu.team.newDone": "Starte ein Team zu zweit",
+  "tutorial.menu.team.open": "Öffne Teams, wo deine Team-Builds sind.",
+  "tutorial.menu.team.openDone": "Öffne Teams",
+  "tutorial.menu.team.problems":
+    "Speichern speichert das Team immer. Sein Hinweis nennt das Erste, was das Team am Spielen hindert.",
+  "tutorial.menu.team.save": "Speichere dein Team.",
+  "tutorial.menu.team.saveDone": "Speichern",
+  "tutorial.menu.team.title": "Bau ein Team, um erfolgreich zu sein.",
   "tutorial.gate.hint": "In den Nebel, mir nach.",
   "tutorial.gate.how": "Linksklick auf den Boden, oder geh mit {keys}.",
   "tutorial.gate.intro": "Unser Team kämpft jenseits des Nebels. Folge mir.",

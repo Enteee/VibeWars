@@ -5,6 +5,12 @@ import { openRail } from "./helpers/menu.js";
 import { expectTeamSize, expectTeamSizeAtMost, openPeers, setTeamSize } from "./helpers/peers.js";
 import { namePlayer } from "./helpers/player.js";
 import { bringStarter, starterKey } from "./helpers/starter.js";
+import {
+  parseReceipt,
+  validateReceipt,
+  type RankedReceipt,
+} from "../packages/ranking/src/index.js";
+import { nobleReceiptCrypto } from "../packages/ranking/src/receipt.test-support.js";
 import { key } from "./keys.js";
 
 /**
@@ -115,6 +121,9 @@ test("two players queue for a 1v1, are matched, see the versus splash, play it o
   test.setTimeout(150_000);
   const { context, pages } = await openPeers(browser, 2);
   const [alice, bob] = pages as [Page, Page];
+  // Strangers' 1v1 is ranked: each page needs a key of its own.
+  await ownRankedSelf(alice);
+  await ownRankedSelf(bob);
   await seedTicketKeys(alice, 1);
   await seedTicketKeys(bob, 2);
 
@@ -159,30 +168,7 @@ test("two players queue for a 1v1, are matched, see the versus splash, play it o
     // Its hover label, signet beside the name (#3232).
     await expect(pip.locator(".hud-enemy-label")).toContainText("Bob");
     await expect(pip).not.toHaveClass(/is-dead/);
-    // Alice beats Bob, who stands still, with the starter build's spells.
-    // The result is up for QUEUED_RESULT_SECONDS only, and a pass of
-    // presses can take longer than that on a loaded runner (#3002): each
-    // page reads its HUD the frame the result shows, while Alice casts.
-    await alice.keyboard.press(key("target-next"));
-    await alice.keyboard.press(key("attack"));
-    const aliceSaw = resultShown(alice);
-    const bobSaw = resultShown(bob);
-    const fight = { on: true };
-    const stop = (): void => {
-      fight.on = false;
-    };
-    aliceSaw.then(stop, stop);
-    while (fight.on) {
-      for (const skill of [
-        "elementalist.glyph-of-lesser-energy",
-        "elementalist.fireball",
-        "elementalist.chain-lightning",
-        "elementalist.lightning-orb",
-      ]) {
-        await alice.keyboard.press(starterKey(BUILD, skill));
-      }
-    }
-    const [aliceHud, bobHud] = await Promise.all([aliceSaw, bobSaw]);
+    const [aliceHud, bobHud] = await aliceBeatsBob(alice, bob);
     expect(aliceHud.result).toMatch(/victory/i);
     expect(bobHud.result).toMatch(/defeat/i);
     expect(aliceHud.scoreboard).toContain("1 v 0");
@@ -207,7 +193,134 @@ test("two players queue for a 1v1, are matched, see the versus splash, play it o
   }
 });
 
+/**
+ * Alice beats Bob, who stands still, with the starter build's spells,
+ * and what each HUD said as the result showed. The result is up for
+ * QUEUED_RESULT_SECONDS only, and a pass of presses can take longer than
+ * that on a loaded runner (#3002): each page reads its HUD the frame the
+ * result shows, while Alice casts.
+ */
+async function aliceBeatsBob(alice: Page, bob: Page): Promise<[ResultHud, ResultHud]> {
+  await alice.keyboard.press(key("target-next"));
+  await alice.keyboard.press(key("attack"));
+  const aliceSaw = resultShown(alice);
+  const bobSaw = resultShown(bob);
+  const fight = { on: true };
+  const stop = (): void => {
+    fight.on = false;
+  };
+  aliceSaw.then(stop, stop);
+  while (fight.on) {
+    for (const skill of [
+      "elementalist.glyph-of-lesser-energy",
+      "elementalist.fireball",
+      "elementalist.chain-lightning",
+      "elementalist.lightning-orb",
+    ]) {
+      await alice.keyboard.press(starterKey(BUILD, skill));
+    }
+  }
+  return Promise.all([aliceSaw, bobSaw]);
+}
+
+/**
+ * Give `page` a player key of its own (#3680): two pages of one context
+ * share localStorage, and so one key, which a ranked match cannot seat
+ * twice. The key and its receipt chain live in the tab's sessionStorage.
+ * And keep, in `__rankedPosts`, every ranked receipt the page posts.
+ */
+async function ownRankedSelf(page: Page): Promise<void> {
+  // Source text, as the e2e tsconfig has no DOM lib (see builds.spec.ts).
+  await page.addInitScript(`
+    const own = (key) => key.endsWith(".playerKey") || key.endsWith(".rankedPrev");
+    const get = Storage.prototype.getItem;
+    const set = Storage.prototype.setItem;
+    Storage.prototype.getItem = function (key) {
+      return this === localStorage && own(key) ? get.call(sessionStorage, key) : get.call(this, key);
+    };
+    Storage.prototype.setItem = function (key, value) {
+      return this === localStorage && own(key)
+        ? set.call(sessionStorage, key, value)
+        : set.call(this, key, value);
+    };
+    window.__rankedPosts = [];
+    const post = BroadcastChannel.prototype.postMessage;
+    BroadcastChannel.prototype.postMessage = function (message) {
+      if (this.name.endsWith(":ranked")) window.__rankedPosts.push(message);
+      return post.call(this, message);
+    };
+  `);
+}
+
+/** The receipts `page` posted, as their events carry them. */
+async function rankedPosts(page: Page): Promise<RankedReceipt[]> {
+  const posts = await page.evaluate("window.__rankedPosts");
+  expect(Array.isArray(posts)).toBe(true);
+  return (posts as string[]).flatMap((post) => {
+    const [, , event] = JSON.parse(post) as [string, string, { content: string }];
+    const receipt = parseReceipt(event.content);
+    return receipt === undefined ? [] : [receipt];
+  });
+}
+
+test("a ranked 1v1 ends in a receipt both players published, which holds (#3680)", async ({
+  browser,
+}) => {
+  test.setTimeout(150_000);
+  const { context, pages } = await openPeers(browser, 2);
+  const [alice, bob] = pages as [Page, Page];
+  for (const [page, seed] of [
+    [alice, 1],
+    [bob, 2],
+  ] as const) {
+    await ownRankedSelf(page);
+    await seedTicketKeys(page, seed);
+  }
+  try {
+    await makeCharacter(alice);
+    await bob.goto("./");
+    await queue1v1(alice, "Alice");
+    // Said before the first queue: a match of strangers is ranked, and public.
+    await expect(alice.locator(".queue-ranked-note")).toContainText("ranked");
+    await queue1v1(bob, "Bob");
+    for (const page of [alice, bob]) {
+      await expect(page.locator(".hud-bar-health .hud-bar-label")).toContainText("hp", {
+        timeout: 60_000,
+      });
+    }
+    // The leave question says what leaving costs.
+    await alice.locator(".hud-leave").getByRole("button", { name: "leave match" }).click();
+    await expect(alice.locator(".hud-leave")).toContainText("counts as a loss");
+    await alice.locator(".hud-leave").getByRole("button", { name: "no" }).click();
+
+    const [aliceHud] = await aliceBeatsBob(alice, bob);
+    expect(aliceHud.result).toMatch(/victory/i);
+    for (const page of [alice, bob]) {
+      await expect(page.locator(".queue-ranked")).toHaveText(
+        "Ranked result published. Your rating updates within the hour.",
+        { timeout: 15_000 },
+      );
+    }
+    const [aliceReceipts, bobReceipts] = [await rankedPosts(alice), await rankedPosts(bob)];
+    // Each signed one result round, then published the whole receipt, once.
+    const whole = (receipts: RankedReceipt[]): RankedReceipt[] =>
+      receipts.filter((receipt) => Object.keys(receipt.resultSigs).length === 2);
+    expect(whole(aliceReceipts)).toHaveLength(1);
+    expect(whole(bobReceipts)).toEqual(whole(aliceReceipts));
+    const [receipt] = whole(aliceReceipts);
+    if (receipt === undefined) throw new Error("no receipt");
+    expect(validateReceipt(receipt, nobleReceiptCrypto)).toEqual({ ok: true, void: false });
+    // The host orders the teams; Alice's is the one that won.
+    const teams = receipt.start.teams.map((team) => team.map((seat) => seat.name));
+    expect(teams.flat().sort()).toEqual(["Alice", "Bob"]);
+    expect(receipt.result.winningTeam).toBe(teams.findIndex((team) => team.includes("Alice")));
+  } finally {
+    await context.close();
+  }
+});
+
 /** What a page's HUD said on the frame its match result first showed. */
+
 interface ResultHud {
   readonly result: string;
   readonly scoreboard: string;
@@ -241,6 +354,8 @@ async function resultShown(page: Page): Promise<ResultHud> {
 
 /** Queue seeds 1 and 2, which make Alice the host, into a match, both in the arena. */
 async function meetInMatch(alice: Page, bob: Page): Promise<void> {
+  await ownRankedSelf(alice);
+  await ownRankedSelf(bob);
   await seedTicketKeys(alice, 1);
   await seedTicketKeys(bob, 2);
   await makeCharacter(alice);

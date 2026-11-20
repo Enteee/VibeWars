@@ -270,9 +270,14 @@ describe("sanitizeGuildTag (#1406)", () => {
 });
 
 describe("sanitizeGuildCape (#1422)", () => {
-  const cape = { main: "teal", trim: "teal", emblem: packEmblem([8]) } as const;
+  const cape = {
+    main: "2fb8a0",
+    trim: "2fb8a0",
+    emblemColours: ["2fb8a0"],
+    emblem: packEmblem([1]),
+  };
 
-  it("keeps a cape of the palette's colours and an emblem, the same colour twice too", () => {
+  it("keeps a cape of any colours and an emblem, the same colour thrice too (#3628)", () => {
     expect(sanitizeGuildCape(cape)).toEqual(cape);
   });
 
@@ -283,6 +288,7 @@ describe("sanitizeGuildCape (#1422)", () => {
       "teal",
       [],
       { ...cape, main: "red" },
+      { ...cape, emblemColours: [] },
       { ...cape, emblem: "skull" },
       { main: "teal", trim: "teal" },
       { ...cape, extra: 1 },

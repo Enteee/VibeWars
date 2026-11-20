@@ -195,8 +195,7 @@ csapatnak van egy **Kísértethőse** a bázisán, egy baltával harcoló
 kísértet, akit senki sem irányít. Az **oltár** középen van, mindkét
 bázistól ugyanakkora sétára. A **Threefold Keep** pályán három csapat
 (kettő, ha nincs szabad harmadik) harcol érte egy fallal körülvett
-várban. Az ajtói csak belülről nyílnak, egy belső lappal: sétálj körbe
-egy nyitott sarokig, hogy bejuss. Csapatonként legfeljebb 12 pont, és
+vár tornyán. Csapatonként legfeljebb 12 pont, és
 ha minden ellenség -60% morálon áll, azonnal nyersz. A **Hősök
 Csarnoka** (8v8, 5000x4400), a pálya, amely a Hősök Útját zárja, egy arany
 csarnok három csapatnak: az oltár egy oszlopos, hat lépcsős emelvényen áll,
@@ -262,7 +261,7 @@ először a másik csapat Kísértethősét öli meg, amint az az oltáron áll 
 hatótávjukon belül: ez az egyetlen ellenség, amely megakadályozza, hogy
 a kísértetetek elfoglalja.
 
-A Threefold Keep játssza.
+A Threefold Keep játssza (4v4 és 8v8, 5000x4400): egy vár egy dombon a hegyvidéken, három csapatnak. Menj fel a kapud melletti lépcsőn a gyilokjáróra, és kelj át egy töltésúton a dombra, aztán mássz fel a torony tetején álló oltárhoz. Minden udvarban egy kar mind a négy kaput kinyitja: a saját kapuátjáródat a fal alatt, és az altemplomot, a hosszú utat a domb alatt.
 
 ## Pontfoglalás
 
@@ -445,13 +444,16 @@ vezetője, vagy a céhjele, ha az osztag több mint felének ugyanaz.
 
 Minden út az **Elite Zaishen Battle**-lel kezdődik, sor nélkül: az
 osztagod hat, botok által játszott Zaishen ellen (2 Monk, egy
-Elementalist és 3 másik). Az óra akkor indul, amikor valamelyikőtök
-átlépi a rajtvonalat, vagy meghal az első Zaishen, amelyik előbb
-történik. Öld meg mind a hatot 30 másodpercen belül, és az osztag +10%
-morállal kezdi az utat; 60 alatt +8%; 80 alatt +6%; 100 alatt +4%; 120
-alatt +2%; lassabban semmi. Ha nyersz, az osztagod magától sorba áll az
-első pályájára. Ha elsöpörnek, vagy a 8 perces korlát elérésekor még él
-egy Zaishen, az útnak vége.
+Elementalist és 3 másik). Egy ünnepélyes arénában zajlik (8v8,
+5400x2400): lépcsőzetes lelátók északon és délen, szobrok talapzaton a
+süllyesztett küzdőtéren, és minden lelátó alatt egy pince, amelynek
+csapórácsát a túlsó lelátón lévő kar nyitja ki. Az óra akkor indul,
+amikor valamelyikőtök átlépi a rajtvonalat az aréna közepén, vagy meghal
+az első Zaishen, amelyik előbb történik. Öld meg mind a hatot 30
+másodpercen belül, és az osztag +10% morállal kezdi az utat; 60 alatt
++8%; 80 alatt +6%; 100 alatt +4%; 120 alatt +2%; lassabban semmi. Ha
+nyersz, az osztagod magától sorba áll az első pályájára. Ha elsöpörnek,
+vagy a 8 perces korlát elérésekor még él egy Zaishen, az útnak vége.
 
 Az út minden győzelme **hírnevet** hoz: 1, 2, 3, 4, 6, 8, 12, 16, 20,
 24, 28, 32, 36 az első tizenháromért, aztán 40-et mindegyik, naponta
@@ -495,8 +497,7 @@ másik csapat le nem szúrja ott a zászlaját. Minden csapás egy villám a
 jelzőtűztől ahhoz, akit eltalált, és mindkét csapat látja.
 
 Három további aréna a Hősök Útjából a Saját játékban is választható:
-a **The Hollow Deep** (8v8 Megsemmisítés, három kanyargós alagút egy
-központi szikla körül), a **Blackwater Ford** (8v8, 5200x2800, Papirtás egy sötét
+a **The Hollow Deep** (8v8 Megsemmisítés, 6200x2400, egy sötét barlangban: kelj át egy kötélhídon egy szakadék felett, mássz át a középső párkányon, vagy menj át alatta a kriptán, miután egy sziklapárkányon lévő kar kinyitja a kapuját), a **Blackwater Ford** (8v8, 5200x2800, Papirtás egy sötét
 folyami gázlónál: át lehet gázolni egy sekély gázlón, át lehet kelni a malom fölött a pillérein álló romos hídon,
 vagy a híd alatti áteresszel, miután a malmon lévő kar kinyitja a kapuját; a pap 2 percenként
 feltámasztja a halottait) és a **Mosslit Cairns** (8v8, 5400x3000, Pontfoglalás öt kőhalmos dombon, amelyek alkonyatkor mohától izzanak: fel lehet mászni egy kőhalomra a lépcsőin, meg lehet tartani a középső nagy kőhalmot, vagy át lehet jutni a déli dombok alatti gyökéralagúton, miután egy északi kőhalmon lévő kar kinyitja a kapuit; a gyökérfalak összetörhetők). A negyedik a **The Brazen
@@ -572,3 +573,7 @@ győzelemsorozata. A csík az ezen az oldalon lévő jegyzőkönyveket
 olvassa, figyelmen kívül hagyja a chipeket, és rejtve marad, ha egyik
 sem Csarnok-győzelem. Mint minden jegyzőkönyv, ez is az, amit az egyes
 meccsek házigazdája jelentett, és semmi sem ellenőrzi.
+
+## Rangsorolt
+
+A sorból jövő, botok nélküli meccs rangsorolt. A sorképernyő és a csapat-lobby ezt jelzi, mielőtt sorba állsz; egyetlen bot rangsorolatlanul hagyja a meccset. Ha rangsorolt meccs akad, minden játékos aláírja a kezdetét, és a képernyő legfeljebb 15 másodpercig ezt mutatja: **Rangsorolt meccs megerősítése…**. Ha valaki nem erősít meg, a meccs elmarad, és mindenki visszakerül a sorba. A végén minden játékos aláírja az eredményt, és a meccs nyugtája megjelenik a Nostr reléken minden játékos nyilvános kulcsával és karakternevével; a karakter nélküli játékos starterként szerepel. A pontszámod egy órán belül változik. Rangsorolt meccs elhagyása vereségnek számít, és a kilépés gomb ezt jelzi.
