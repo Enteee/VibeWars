@@ -11033,7 +11033,8 @@ export class MatchSimulation {
     );
     // Off a drop-off, it is on the layer below from this step (#3069),
     // where it stepped: pushed out there, not held at the edge above.
-    if (this.#dropsOff(start, position, record.layer)) {
+    const dropped = this.#dropsOff(start, position, record.layer);
+    if (dropped) {
       record.layer -= 1;
       this.#refreshFloors(record);
     }
@@ -11065,6 +11066,12 @@ export class MatchSimulation {
       }
     }
 
+    // A step off pushed back over the deck it left never left it (#3700).
+    if (dropped && this.#isOnLayer(position, record.layer + 1)) {
+      this.#undrop(record, dropped);
+      return;
+    }
+
     // A doorway a body stands in stays held (#291): a move that ends any
     // deeper inside a living body than it started is refused, so hugging
     // the wall never squeezes past. Per body and against the start, so two
@@ -11083,6 +11090,7 @@ export class MatchSimulation {
         penetration(position, other.position, reach) >
         penetration(start, other.position, reach) + 1e-6
       ) {
+        this.#undrop(record, dropped);
         return;
       }
     }
@@ -11092,6 +11100,18 @@ export class MatchSimulation {
     if (moved) {
       this.#refreshFloors(record);
       this.#climb(record, direction);
+    }
+  }
+
+  /**
+   * `record` back on the deck it stepped off this step, when the step is
+   * refused (#3700): left below at its start, it would stand inside the
+   * wall under the edge, for good.
+   */
+  #undrop(record: ParticipantRecord, dropped: boolean): void {
+    if (dropped) {
+      record.layer += 1;
+      this.#refreshFloors(record);
     }
   }
 
