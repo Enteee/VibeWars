@@ -121,6 +121,9 @@ test("two players queue for a 1v1, are matched, see the versus splash, play it o
   test.setTimeout(150_000);
   const { context, pages } = await openPeers(browser, 2);
   const [alice, bob] = pages as [Page, Page];
+  // Strangers' 1v1 is ranked: each page needs a key of its own.
+  await ownRankedSelf(alice);
+  await ownRankedSelf(bob);
   await seedTicketKeys(alice, 1);
   await seedTicketKeys(bob, 2);
 
@@ -307,8 +310,10 @@ test("a ranked 1v1 ends in a receipt both players published, which holds (#3680)
     const [receipt] = whole(aliceReceipts);
     if (receipt === undefined) throw new Error("no receipt");
     expect(validateReceipt(receipt, nobleReceiptCrypto)).toEqual({ ok: true, void: false });
-    expect(receipt.start.teams.flat().map((seat) => seat.name)).toEqual(["Alice", "Bob"]);
-    expect(receipt.result.winningTeam).toBe(0);
+    // The host orders the teams; Alice's is the one that won.
+    const teams = receipt.start.teams.map((team) => team.map((seat) => seat.name));
+    expect(teams.flat().sort()).toEqual(["Alice", "Bob"]);
+    expect(receipt.result.winningTeam).toBe(teams.findIndex((team) => team.includes("Alice")));
   } finally {
     await context.close();
   }
@@ -349,6 +354,8 @@ async function resultShown(page: Page): Promise<ResultHud> {
 
 /** Queue seeds 1 and 2, which make Alice the host, into a match, both in the arena. */
 async function meetInMatch(alice: Page, bob: Page): Promise<void> {
+  await ownRankedSelf(alice);
+  await ownRankedSelf(bob);
   await seedTicketKeys(alice, 1);
   await seedTicketKeys(bob, 2);
   await makeCharacter(alice);
