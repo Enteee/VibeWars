@@ -13,6 +13,12 @@ export const FOE_COLOUR = 0xff7b72;
 /** A hand's width on the colour wheel: a quarter of its radius. */
 export const HAND = 0.25;
 
+/** How far, in degrees, a vivid colour's hue must sit from a team's not to read as it (#3698). */
+export const TEAM_HUE_BAND = 30;
+
+/** The chroma from which a colour is vivid: its team is read by hue alone (#3698). */
+export const VIVID_CHROMA = 0.3;
+
 /** `colour`'s channels, 0 to 1. */
 function channels(colour: number): readonly [number, number, number] {
   return [((colour >> 16) & 0xff) / 255, ((colour >> 8) & 0xff) / 255, (colour & 0xff) / 255];
@@ -72,16 +78,35 @@ function withHue(colour: number, hue: number): number {
   return (byte(red) << 16) | (byte(green) << 8) | byte(blue);
 }
 
-/** Whether `colour` is a hand clear of both team colours. */
-function clearOfTeams(colour: number): boolean {
-  return wheelDistance(colour, FRIEND_COLOUR) >= HAND && wheelDistance(colour, FOE_COLOUR) >= HAND;
+/** How far apart two hues are, in degrees, 0 to 180. */
+function hueGap(a: number, b: number): number {
+  const gap = Math.abs(a - b) % 360;
+  return gap > 180 ? 360 - gap : gap;
 }
 
 /**
- * `colour` as a cape draws it (#3628): as it is, unless it sits within a
- * hand of friend blue or foe red, so no cape reads as a team. Then its
+ * Whether `colour` reads as the `team` colour: within a hand of it, or
+ * vivid and within `TEAM_HUE_BAND` of its hue, since players read a team
+ * by hue and a pure red far out on the wheel still reads as foe red (#3698).
+ */
+function readsAs(colour: number, team: number): boolean {
+  if (wheelDistance(colour, team) < HAND) {
+    return true;
+  }
+  const { hue, chroma } = hueOf(colour);
+  return chroma >= VIVID_CHROMA && hueGap(hue, hueOf(team).hue) < TEAM_HUE_BAND;
+}
+
+/** Whether `colour` reads as neither team colour. */
+function clearOfTeams(colour: number): boolean {
+  return !readsAs(colour, FRIEND_COLOUR) && !readsAs(colour, FOE_COLOUR);
+}
+
+/**
+ * `colour` as a cape draws it (#3628): as it is, unless it reads as
+ * friend blue or foe red (`readsAs`), so no cape reads as a team. Then its
  * hue turns away from the nearer one, a degree at a time, chroma and
- * lightness kept, until it is a hand clear of both. Equally near both, it
+ * lightness kept, until it reads as neither. Equally near both, it
  * turns away from friend blue. Pure, so every peer draws the same, and
  * idempotent: what it returns is clear already. Remembered per colour,
  * since every cape is drawn every frame and a near-team colour costs up to
