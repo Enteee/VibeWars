@@ -199,6 +199,11 @@ export interface RankedPlay {
    * round must not replace an earlier one's evidence.
    */
   readonly onResultSigned: (partial: RankedReceipt, round: number) => void;
+  /**
+   * This player signed the host's start (#3680): the match waits on every
+   * other seat's signature now, for up to `RANKED_START_TIMEOUT_MS`.
+   */
+  readonly onStartSigned: () => void;
   /** The host cancelled the match before it began: some seat never signed its start. */
   readonly onCancel: () => void;
 }
@@ -1157,6 +1162,7 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
           sig: options.playerKey.signRankedStart(said.start),
         };
         transport.send("ranked-start-sig", signed, from);
+        rankedPlay.onStartSigned();
       }),
       // Every seat's start signature: kept only if each verifies.
       transport.on("ranked-start-sigs", (data, from) => {

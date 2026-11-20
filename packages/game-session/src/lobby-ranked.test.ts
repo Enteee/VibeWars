@@ -237,6 +237,8 @@ interface Seat {
   readonly signed: RankedReceipt[];
   /** The round each of `signed` was handed on with. */
   readonly rounds: number[];
+  /** How many times it signed the host's start. */
+  startsSigned: number;
   cancelled: number;
 }
 
@@ -283,6 +285,9 @@ async function joinSeat(
       signed.push(partial);
       rounds.push(round);
     },
+    onStartSigned: () => {
+      seat.startsSigned += 1;
+    },
     onCancel: () => {
       seat.cancelled += 1;
     },
@@ -301,7 +306,7 @@ async function joinSeat(
     queued: { group, key: keyOf(seatKey(n)), verifyTicketSig, ascentMorale: 0 },
     ...(ranked ? { ranked: play } : {}),
   });
-  const seat: Seat = { key, connection, transport, receipts, signed, rounds, cancelled: 0 };
+  const seat: Seat = { key, connection, transport, receipts, signed, rounds, startsSigned: 0, cancelled: 0 };
   return seat;
 }
 
@@ -434,6 +439,7 @@ describe("a ranked queued match (ADR-0055, #3573)", () => {
       expect(Object.keys(receipt.resultSigs).sort()).toEqual([...pubkeys(ranked)].sort());
       for (const seat of ranked.seats) {
         expect(seat.receipts).toEqual([{ receipt, partial: false }]);
+        expect(seat.startsSigned).toBe(1);
       }
     },
   );

@@ -1,4 +1,5 @@
 import type { LobbyRoom, MatchRecord, Transport } from "@vibewars/game-session";
+import type { RankedReceipt } from "@vibewars/ranking";
 
 import { checkNat } from "../nat-check.js";
 import { joinWithRelayOffers } from "../relay-join.js";
@@ -6,7 +7,11 @@ import { relaySibling, withSiblingRoom, type RelayRoomsSource } from "../relay-r
 
 import { BROADCAST_SELF_ID, joinBroadcastRoom } from "./broadcast-channel.js";
 import { joinBroadcastQueue } from "./broadcast-queue.js";
-import { publishBroadcastRecord, watchBroadcastRecords } from "./broadcast-records.js";
+import {
+  publishBroadcastReceipt,
+  publishBroadcastRecord,
+  watchBroadcastRecords,
+} from "./broadcast-records.js";
 import {
   publishMatchRecord,
   watchMatchRecords,
@@ -14,6 +19,7 @@ import {
   type MatchRecordWatchHandlers,
 } from "./match-records.js";
 import { createNostrQueue, type NostrQueue } from "./nostr-queue.js";
+import { publishRankedReceipt } from "./ranked-receipts.js";
 import {
   holdRelay,
   watchRelayAsks,
@@ -202,4 +208,16 @@ export function watchRecords(on: MatchRecordWatchHandlers): MatchRecordWatch {
   return import.meta.env.VITE_VIBEWARS_TRANSPORT === "broadcast"
     ? watchBroadcastRecords(on)
     : watchMatchRecords(on);
+}
+
+/**
+ * Publish a ranked receipt under `address` (#3680), on the same switch as
+ * `publishRecord`: a test match's receipt never reaches the public relays.
+ */
+export function publishReceipt(receipt: RankedReceipt, address: string): void {
+  if (import.meta.env.VITE_VIBEWARS_TRANSPORT === "broadcast") {
+    publishBroadcastReceipt(receipt, address);
+    return;
+  }
+  publishRankedReceipt(receipt, address);
 }

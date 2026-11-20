@@ -44,9 +44,12 @@ import {
   type QueuedPlan,
   type QueuedSeat,
   type PlayerKey,
+  type RankedHostOptions,
+  type RankedPlay,
   type TicketKey,
   type ConnectionState,
 } from "@vibewars/game-session";
+import type { RankedReceipt } from "@vibewars/ranking";
 
 import { isStaleChunkError } from "../build-check.js";
 import { keySignet } from "../identity/key-signet.js";
@@ -74,6 +77,7 @@ import {
   joinHostRoom,
   joinQueueBoard,
   joinRoom,
+  publishReceipt,
   publishRecord,
   roomSelfId,
   holdLobbyRelay,
@@ -82,7 +86,14 @@ import {
 import type { NostrQueue } from "./transport/nostr-queue.js";
 import { relayRoomsSwitch } from "./relay-room.js";
 import type { RelayHold } from "./transport/relay-offer.js";
-import { verifyPlayerProof } from "./transport/player-key.js";
+import { receiptCrypto, verifyPlayerProof } from "./transport/player-key.js";
+import {
+  loadRankedPrev,
+  hostLeftAddress,
+  partialAddress,
+  receiptAddress,
+  saveRankedPrev,
+} from "./transport/ranked-receipts.js";
 import { verifyTicketSig } from "./transport/ticket-key.js";
 import { loadRelay } from "./transport/turn-config.js";
 
@@ -304,7 +315,9 @@ export function holdInLobby(
  * message budget counts on it, and its match runs on it.
  *
  * `queued` hosts a Random Arena group's lobby (#880) in the group's room
- * instead of under a fresh code.
+ * instead of under a fresh code. `ranked`, for a ranked group (#3680), is
+ * how its own player plays it; the lobby runs the signing rounds with the
+ * same build and curve code.
  */
 export async function hostLobby(
   name: string,
@@ -313,6 +326,7 @@ export async function hostLobby(
   teamLobby: boolean,
   hostedTeamSize: LobbyTeamSize,
   queued?: Omit<QueuedPlan, "onDone">,
+  ranked?: RankedPlay,
 ): Promise<HostedLobby> {
   // A queued lobby meets in its group's room, which no lobby key can
   // name, and goes by the group's id, as every member of it knows it.
@@ -355,6 +369,7 @@ export async function hostLobby(
     teamLobby,
     random: lobbyRandom(import.meta.env.VITE_VIBEWARS_LOBBY_SEED),
     verifyPlayerProof,
+    ...(ranked === undefined ? {} : { ranked: rankedHost(ranked) }),
     ...(queued === undefined
       ? // Its party queues for a team mode under a group its room id names (#1766).
         { matchmaking: { roomId: lobbyRoom.roomId, verifyTicketSig, newNonce: newQueueNonce } }
@@ -421,6 +436,7 @@ export async function hostLobby(
       timeoutMs: JOIN_TIMEOUT_MS,
       // The host is one of its own group: it proves its ticket like the rest.
       ...(queued === undefined ? { roomId: lobbyRoom.roomId } : { queued }),
+      ...(ranked === undefined ? {} : { ranked }),
     });
     holdInLobby(lobby, hold);
     return {
@@ -449,6 +465,7 @@ export async function joinLobbyByCode(
   guild: Guild,
   playerKey: PlayerKey,
   queued?: QueuedSeat,
+  ranked?: RankedPlay,
 ): Promise<LobbyConnection> {
   // Refused before any derivation or relay traffic.
   if (queued === undefined && !isLobbyCode(code)) {
@@ -479,6 +496,7 @@ export async function joinLobbyByCode(
       ...guild,
       timeoutMs: JOIN_TIMEOUT_MS,
       ...(queued === undefined ? { roomId: lobbyRoom.roomId } : { queued }),
+      ...(ranked === undefined ? {} : { ranked }),
     });
     guest.reached(joined.getSnapshot().hostId);
     joined.onRelayOffers(({ holders }) => {
@@ -541,6 +559,77 @@ export interface RandomArenaEvents {
   readonly onRefused: (notice: string) => void;
   /** A party member's leader is gone from the queue (#882): this place is over. */
   readonly onPartyGone: () => void;
+  /** This player signed its ranked match's start (#3680): the match waits on the other seats. */
+  readonly onRankedConfirming: () => void;
+  /** Its ranked match was cancelled before it began (#3680): a seat did not confirm. */
+  readonly onRankedCancelled: () => void;
+  /** Its ranked match's receipt went out to the relays (#3680). */
+  readonly onRankedPublished: () => void;
+}
+
+/**
+ * How this tab plays a ranked group's match (ADR-0055, #3680), as
+ * `playerKey` with `characterId`: chained on its last receipt, it
+ * publishes every result round it signs under that round's own address,
+ * as the evidence that it signed, and then the receipt, once, keeping its
+ * hash as the next `prev`.
+ */
+export function rankedPlayOf(
+  playerKey: PlayerKey,
+  characterId: string,
+  events: Pick<
+    RandomArenaEvents,
+    "onRankedConfirming" | "onRankedCancelled" | "onRankedPublished"
+  >,
+  storage: Storage,
+): RankedPlay {
+  // A host hands its receipt on twice: as the lobby's host, and to its own player.
+  let published = false;
+  // Called mid-tick, as a match record is: a throw must not cost the match its end.
+  const publish = (receipt: RankedReceipt, address: string): void => {
+    try {
+      publishReceipt(receipt, address);
+    } catch (error) {
+      console.warn("[web] could not publish the ranked receipt", error);
+    }
+  };
+  return {
+    characterId,
+    prev: loadRankedPrev(storage, playerKey.pubkey),
+    buildHash: __VIBEWARS_BUILD__,
+    crypto: receiptCrypto,
+    onStartSigned: events.onRankedConfirming,
+    onCancel: events.onRankedCancelled,
+    onResultSigned: (partial, round) => {
+      publish(partial, partialAddress(partial.start.matchId, round, playerKey.pubkey));
+    },
+    onReceipt: (receipt, partial) => {
+      if (published) {
+        return;
+      }
+      published = true;
+      const { matchId } = receipt.start;
+      // A host-left receipt holds this player's signature alone, as a round's does.
+      publish(
+        receipt,
+        partial ? hostLeftAddress(matchId, playerKey.pubkey) : receiptAddress(matchId),
+      );
+      saveRankedPrev(storage, playerKey.pubkey, receipt, receiptCrypto.sha256);
+      events.onRankedPublished();
+    },
+  };
+}
+
+/** The lobby host's side of `play` (#3680): its signing rounds, and its receipt published first. */
+function rankedHost(play: RankedPlay): RankedHostOptions {
+  return {
+    buildHash: play.buildHash,
+    crypto: play.crypto,
+    nowSeconds: () => Date.now() / 1000,
+    onReceipt: (receipt) => {
+      play.onReceipt(receipt, false);
+    },
+  };
 }
 
 /**
@@ -623,6 +712,7 @@ export function leaveOnPageHide(target: EventTarget, leave: () => void): () => v
  * `ascentRound` (#1996), every other mode at `null`, and its player
  * brings `ascentMorale` (#2686), the run's from the last map; 0 elsewhere.
  * A party still holding the Hall says since when, in `holdsHallSince` (#2701).
+ * It plays as `characterId`, which a ranked group's match (#3680) signs with.
  */
 export function enterQueue(
   mode: QueueMode,
@@ -632,6 +722,7 @@ export function enterQueue(
   name: string,
   guild: Guild,
   playerKey: PlayerKey,
+  characterId: string,
   events: RandomArenaEvents,
   party?: PartyPlace,
   teamPlan?: HostedLobby["teamPlan"],
@@ -672,6 +763,8 @@ export function enterQueue(
     queueClient: QueueClient,
   ): Promise<void> => {
     queueClient.enteredLobby();
+    // Every ticket brought no bot: this player signs the match, and it is published (#3680).
+    const ranked = group.ranked ? rankedPlayOf(playerKey, characterId, events, localStorage) : undefined;
     let lobby: LobbyConnection;
     let hosted: HostedLobby | undefined;
     try {
@@ -690,7 +783,7 @@ export function enterQueue(
               queueClient.fellThrough(noShows);
             }
           },
-        });
+        }, ranked);
         lobby = hosted.lobby;
       } else {
         lobby = await joinLobbyByCode(group.groupId, name, guild, playerKey, {
@@ -698,7 +791,7 @@ export function enterQueue(
           key,
           verifyTicketSig,
           ascentMorale,
-        });
+        }, ranked);
       }
     } catch (error) {
       if (done) {
