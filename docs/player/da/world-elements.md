@@ -47,6 +47,8 @@ eller en skygge, der bliver mørkere, under stenskred. Gå væk, når du ser det
 
 ## Håndtag og porte
 
+![Et håndtag på dækket styrer den lukkede port under det](../img/world-lever-gate.png)
+
 En **port** er en egetræsdør med jernbånd. Lukket spærrer den vejen; åben
 svinger dens fløje til side ind mod en mørk gang. Et **håndtag** åbner eller
 lukker de porte, det styrer: en stensokkel med en træarm, hvis messingknop
@@ -77,6 +79,8 @@ stadig gå igennem.
 
 ## Glitrende porte og revnede mure
 
+![En revnet mur ved siden af et stykke mose](../img/world-wall-mire.png)
+
 En **glitrende port** stopper kroppe, pile og andre projektiler, men ikke
 synet: en besværgelse kastet direkte på et mål slipper igennem. Den er et
 glitrende akvablåt forhæng mellem to stenstolper med akvablå lamper. Når den er
@@ -89,6 +93,8 @@ eller har den som mål; revnerne breder sig, efterhånden som den svækkes, og d
 falder sammen til murbrokker.
 
 ## Højder
+
+![Et hævet dæk med trapper ned til jorden: én spiller oppe på dækket, én på jorden nedenfor](../img/layers-deck.png)
 
 Noget jord er hævet, og du kan kun komme op ad dens ramper, trapper,
 grove trin eller stiger: kanten af et hævet dæk stopper dig som en mur.
@@ -105,6 +111,8 @@ og spillere nedenunder kan gå under den. At stå højere oppe ændrer
 hverken din rækkevidde eller din skade.
 
 ## Tunneler
+
+![Ovenfra markerer en søm med gitterslidser en tunnel; den stiplede ring er en spiller nede i den](../img/layers-tunnel.png)
 
 Nogle passager løber under jorden. Ovenfra markerer en nedsænket fuge
 med gitterspalter, hvor en af dem løber, og lyset i dens to ender passer

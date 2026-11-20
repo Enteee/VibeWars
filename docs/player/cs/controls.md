@@ -30,6 +30,9 @@ Tyto klávesy jsou pevné:
 
 - **Kliknutím levým** na zem tam dojdeš. Bez Shiftu levé tlačítko jen chodí.
 - Na mapách s vyvýšenými plošinami levé kliknutí míří na povrch, který vidíš, a **Alt + kliknutí levým** na zem pod ním. Kroužek pod kurzorem značí plošinu, čárkovaný kroužek zem. Nad tunelem jde levé kliknutí do úrovně, na které jsi. **Alt + levé kliknutí** nikdy nejde nad úroveň, na které stojíš: ze země jde do tunelu a v tunelu v něm zůstane.
+
+![Plný kroužek značí kliknutí na plošinu, přerušovaný kliknutí na zem pod ní](../img/alt-click.png)
+
 - **Kliknutím pravým** na nepřítele nebo spojence ho zaměříš. Dalším rychlým kliknutím pravým na stejného nepřítele na něj zaútočíš.
 - **Kliknutím pravým** na vlajku nebo stojan vlajky, v Bitvě cechů nebo na Barrow Field, je zaměříš; **Space** tě tam dovede a vlajku vezme nebo zasadí.
 - **Pravým kliknutím** na páku ji zaměříš; **Space** k ní dojde a přepne ji, čímž otevře nebo zavře brány, které ovládá.

@@ -30,6 +30,9 @@ Questi tasti sono fissi:
 
 - **Clic sinistro** sul terreno per camminare fin lì. Senza Shift, il tasto sinistro serve solo a camminare.
 - Nelle mappe con piattaforme rialzate, il clic sinistro porta alla superficie che vedi e **Alt + clic sinistro** al terreno sottostante. Un anello sotto il cursore indica una piattaforma, uno tratteggiato il terreno. Sopra un tunnel, un clic sinistro va al livello in cui sei. **Alt + clic sinistro** non va mai sopra il livello su cui ti trovi: dal terreno va nel tunnel, e in un tunnel resta lì.
+
+![Un anello pieno segna un clic sulla piattaforma, uno tratteggiato un clic sul suolo sottostante](../img/alt-click.png)
+
 - **Clic destro** su un nemico o un alleato per bersagliarlo. Clicca di nuovo col destro sullo stesso nemico, rapidamente, per attaccarlo.
 - **Clic destro** su una bandiera o sulla Base bandiera, in una Battaglia di gilda o su Barrow Field, per bersagliarla; **Space** ti ci porta e prende o pianta la bandiera.
 - **Clic destro** su una leva per selezionarla; **Space** ti porta lì e la aziona, aprendo o chiudendo i cancelli che comanda.

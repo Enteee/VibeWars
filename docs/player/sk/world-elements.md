@@ -47,6 +47,8 @@ výronom alebo tmavnúci tieň pod padajúcimi kameňmi. Keď to uvidíš, odst�
 
 ## Páky a brány
 
+![Páka na plošine ovláda zatvorenú bránu pod ňou](../img/world-lever-gate.png)
+
 **Brána** sú dubové dvere okované železom. Zatvorená zahradí cestu; otvorená
 roztvorí krídla do tmavého priechodu. **Páka** otvára alebo zatvára brány,
 ktoré ovláda: kamenný podstavec s dreveným ramenom, ktorého mosadzná hlavica
@@ -74,6 +76,8 @@ späť; ktokoľvek iný ním však prejsť môže.
 
 ## Trblietavé brány a popraskané múry
 
+![Popraskaný múr vedľa kúska močiara](../img/world-wall-mire.png)
+
 **Trblietavá brána** zastaví telá, šípy aj iné strely, ale nie pohľad: kúzlo
 zoslané priamo na cieľ ňou prejde. Je to trblietavá tyrkysová opona medzi
 dvoma kamennými stĺpmi s tyrkysovými lampami. Keď je otvorená, zostanú len
@@ -86,6 +90,8 @@ Jeho lišta zdravia sa ukazuje, kým naň ukazuješ alebo ho máš zameraný; ak
 slabne, šíria sa po ňom praskliny, až sa zrúti na sutiny.
 
 ## Výšky
+
+![Vyvýšená plošina so schodmi dolu na zem: jeden hráč hore na plošine, druhý na zemi pod ňou](../img/layers-deck.png)
 
 Niektorá zem je vyvýšená a hore sa dostaneš len po jej rampách,
 schodoch, hrubých stupňoch alebo rebríkoch: okraj vyvýšenej plošiny ťa
@@ -102,6 +108,8 @@ pod ním môžu prejsť popod neho. Byť vyššie nemení tvoj dosah ani tvoje
 zranenie.
 
 ## Tunely
+
+![Zhora tunel prezrádza škára s mriežkovými otvormi; prerušovaný krúžok je hráč dolu v ňom](../img/layers-tunnel.png)
 
 Niektoré priechody vedú pod zemou. Zhora ukazuje zapustená škára so
 štrbinami mreže, kadiaľ taký priechod vedie, a svetlá na jeho dvoch

@@ -38,6 +38,9 @@ Tombol-tombol ini tetap:
 
 - **Klik kiri** tanah untuk berjalan ke sana. Tanpa Shift, tombol kiri hanya untuk berjalan.
 - Di peta dengan panggung yang ditinggikan, klik kiri menuju permukaan yang kamu lihat, dan **Alt + klik kiri** ke tanah di bawahnya. Cincin di bawah kursor menandai panggung, cincin putus-putus menandai tanah. Di atas terowongan, klik kiri menuju tingkat tempatmu berada. **Alt + klik kiri** tidak pernah menuju ke atas tingkat tempatmu berdiri: dari tanah ia menuju ke dalam terowongan, dan di dalam terowongan ia tetap di sana.
+
+![Cincin penuh menandai klik di dek, cincin putus-putus klik di tanah di bawahnya](../img/alt-click.png)
+
 - **Klik kanan** musuh atau sekutu untuk menjadikannya target. Klik kanan musuh yang sama
   lagi, dengan cepat, untuk menyerangnya.
 - **Klik kanan** bendera atau tiang bendera, di Perang Guild atau di Barrow Field, untuk menjadikannya

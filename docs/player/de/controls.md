@@ -38,6 +38,9 @@ Diese Tasten sind fest:
 
 - **Linksklick** auf den Boden: Du läufst dorthin. Ohne Shift läuft die linke Taste nur.
 - Auf Karten mit erhöhten Plattformen führt ein Linksklick auf die sichtbare Fläche, **Alt + Linksklick** auf den Boden darunter. Ein Ring am Mauszeiger zeigt eine Plattform an, ein gestrichelter Ring den Boden. Über einem Tunnel führt ein Linksklick auf die Ebene, auf der du bist. **Alt + Linksklick** führt nie über die Ebene, auf der du stehst: vom Boden geht es in den Tunnel, und im Tunnel bleibt es dort.
+
+![Ein durchgezogener Ring markiert einen Klick auf die Plattform, ein gestrichelter einen Klick auf den Boden darunter](../img/alt-click.png)
+
 - **Rechtsklick** auf einen Gegner oder Verbündeten visiert ihn an. Klicke denselben
   Gegner kurz danach noch einmal rechts, um ihn anzugreifen.
 - **Rechtsklick** auf eine Flagge oder den Flaggenstand in einer Gildenschlacht oder auf dem Barrow Field

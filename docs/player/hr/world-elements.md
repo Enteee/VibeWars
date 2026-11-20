@@ -47,6 +47,8 @@ ili sjenu koja tamni ispod odrona. Kad to vidiš, makni se.
 
 ## Poluge i vrata
 
+![Poluga na platformi pokreće zatvorena vrata ispod nje](../img/world-lever-gate.png)
+
 **Vrata** su od hrastovine okovane željezom. Zatvorena priječe put;
 otvorena se razmaknu i otkriju mračan prolaz. **Poluga** otvara ili
 zatvara vrata kojima upravlja: kameno postolje s drvenom ručicom čija
@@ -76,6 +78,8 @@ pa se ne možeš odmah odbiti natrag; svi ostali i dalje mogu proći.
 
 ## Svjetlucava vrata i napukli zidovi
 
+![Napukli zid pokraj komada gliba](../img/world-wall-mire.png)
+
 **Svjetlucava vrata** zaustavljaju tijela, strijele i druge projektile, ali
 ne i pogled: čarolija bačena izravno na metu prolazi kroz njih. To je
 svjetlucavi akvamarinski zastor između dva kamena stupa s akvamarinskim
@@ -89,6 +93,8 @@ prikazuje dok pokazuješ na njega ili ga imaš kao metu; pukotine se šire kako
 slabi i na kraju se uruši u ruševine.
 
 ## Visine
+
+![Uzdignuta platforma sa stubama do tla: jedan igrač gore na platformi, drugi na tlu ispod nje](../img/layers-deck.png)
 
 Dio tla je uzdignut i na njega se možeš popeti samo njegovim rampama,
 stepenicama, grubim stubama ili ljestvama: rub uzdignute platforme
@@ -105,6 +111,8 @@ palog debla premošćuje procjep, a igrači ispod mogu proći ispod
 njega. To što si više ne mijenja ni tvoj domet ni štetu.
 
 ## Tuneli
+
+![Odozgo tunel označava šav s rešetkastim prorezima; isprekidani krug je igrač u njemu](../img/layers-tunnel.png)
 
 Neki prolazi vode ispod zemlje. Odozgo udubljeni šav s prorezima rešetke
 pokazuje kuda takav prolaz vodi, a svjetla na njegova dva kraja se

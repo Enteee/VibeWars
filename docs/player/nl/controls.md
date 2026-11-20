@@ -38,6 +38,9 @@ Deze toetsen liggen vast:
 
 - **Linksklik** op de grond om erheen te lopen. Zonder Shift loopt de linkerknop alleen.
 - Op maps met verhoogde platforms gaat een linksklik naar het oppervlak dat je ziet, en **Alt + linksklik** naar de grond eronder. Een ring onder de cursor markeert een platform, een gestippelde ring de grond. Boven een tunnel gaat een linkerklik naar het niveau waarop je staat. **Alt + linkerklik** gaat nooit boven het niveau waarop je staat: vanaf de grond gaat hij de tunnel in, en in een tunnel blijft hij daar.
+
+![Een volle ring markeert een klik op het platform, een gestippelde ring een klik op de grond eronder](../img/alt-click.png)
+
 - **Rechtsklik** op een vijand of bondgenoot om die te kiezen. Rechtsklik snel
   nog eens op dezelfde vijand om hem aan te vallen.
 - **Rechtsklik** op een vlag of de vlaggenstandaard, in een Guild Battle of op Barrow Field, om
