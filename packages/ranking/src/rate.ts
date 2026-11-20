@@ -191,9 +191,11 @@ const byKey = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0);
  * one whole one, and only then validated. A void or invalid copy is
  * dropped there, so a forgery can neither fork nor void anything. Two
  * different valid results for one start void the match for everyone, and
- * so does a leaver's own signature on any other result of that `matchId`:
+ * so does a leaver's own signature on any other result of that start:
  * the per-round partial (#3573) that proves the host re-rounded a player
- * who signed into a leaver.
+ * who signed into a leaver. Only the same signed start counts, so a
+ * leaver cannot void their loss with a receipt of their own that merely
+ * reuses the `matchId`.
  */
 function matchesOf(
   receipts: readonly RankedReceipt[],
@@ -201,16 +203,9 @@ function matchesOf(
   crypto: ReceiptCrypto,
 ): Match[] {
   const byStart = new Map<string, RankedReceipt[]>();
-  const byMatch = new Map<string, RankedReceipt[]>();
   for (const receipt of receipts) {
     if (utcDay(receipt.start.startedAt) > asOfDay) {
       continue;
-    }
-    const ofMatch = byMatch.get(receipt.start.matchId);
-    if (ofMatch) {
-      ofMatch.push(receipt);
-    } else {
-      byMatch.set(receipt.start.matchId, [receipt]);
     }
     const key = startHash(receipt.start, crypto.sha256);
     const copies = byStart.get(key);
@@ -237,11 +232,7 @@ function matchesOf(
       return validity.ok && !validity.void;
     });
     const [receipt] = rated;
-    if (
-      receipt &&
-      rated.length === 1 &&
-      !reRounded(receipt, byMatch.get(receipt.start.matchId) ?? [], crypto)
-    ) {
+    if (receipt && rated.length === 1 && !reRounded(receipt, copies, crypto)) {
       matches.push({
         receipt,
         hash: receiptHash(receipt, crypto.sha256),
@@ -256,7 +247,7 @@ function matchesOf(
 
 /**
  * Whether a key `receipt` names a leaver signed another of `results`,
- * every receipt published for its match: the host re-rounded a player who
+ * every receipt published for its start: the host re-rounded a player who
  * signed into one who would not. A key that really refused signed none.
  */
 function reRounded(

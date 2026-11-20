@@ -416,6 +416,43 @@ describe("rate", () => {
     }
   });
 
+  it("loses for a leaver whose own receipt only reuses the matchId", () => {
+    const ledger = new Ledger();
+    const pool = trustedPool(ledger);
+    const [host, mate, x, y] = pool;
+    const day0 = rate(ledger.receipts, 1, crypto);
+    const final = ledger.play(
+      1,
+      [
+        [host, mate],
+        [x, y],
+      ],
+      { leavers: [x] },
+    );
+    // x alone holds both keys of a start of their own under final's matchId.
+    const sock = key("x's sock puppet");
+    const seat = (pubkey: string) => ({
+      pubkey,
+      characterId: "puppet",
+      name: "Puppet",
+      claimedRating: 0,
+      prev: ZERO_HASH,
+    });
+    const start = { ...final.start, teams: [[seat(x)], [seat(sock)]] };
+    const result = { ...final.result, startHash: startHash(start, sha256), leavers: [] };
+    const signed = (digest: Uint8Array) =>
+      Object.fromEntries([x, sock].map((pubkey) => [pubkey, sigOf(pubkey, digest)]));
+    const own: RankedReceipt = {
+      start,
+      startSigs: signed(startDigest(start, sha256)),
+      result,
+      resultSigs: signed(resultDigest(result, sha256)),
+    };
+    const ratings = rate([...ledger.receipts, own], 1, crypto);
+    expect(of(ratings, x).rating).toBeLessThan(of(day0, x).rating);
+    expect(of(ratings, host).rating).toBeGreaterThan(of(day0, host).rating);
+  });
+
   it("loses for a leaver that signed no round, beside another seat's partial", () => {
     const ledger = new Ledger();
     const pool = trustedPool(ledger);

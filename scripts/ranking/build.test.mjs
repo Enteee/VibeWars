@@ -206,6 +206,21 @@ describe("the leaderboard job", () => {
     expect(down.log).toContain("no relay reached: the archive is unchanged");
   });
 
+  it("takes in no receipt from after the as-of day, so none pins since or asOf", async () => {
+    const dir = archiveDir();
+    const match = receipt({ matchId: "m1" });
+    const future = receipt({ matchId: "m2", at: 80 * 365 * 86_400 });
+    const first = await runOn(dir, [[event(match), event(future)], []]);
+    expect(first.log).toMatch(/future: 1\n/);
+    expect(first.receipts.split("\n").filter(Boolean)).toHaveLength(1);
+
+    // An archive built as of a later day holds it: it still pins nothing.
+    fs.appendFileSync(path.join(dir, "receipts.ndjson"), `${JSON.stringify(future)}\n`);
+    const second = await runOn(dir, [[], []]);
+    expect(second.asked).toEqual(RELAYS.map(() => match.start.startedAt - 2 * 86_400));
+    expect(entriesOf(second.leaderboard).asOf).toBe(match.start.startedAt);
+  });
+
   it("voids a re-round that names a signer a leaver, and rates one that names a true non-signer", async () => {
     const [, , x, y] = KEYS.map((key) => key.pubkey);
     if (x === undefined || y === undefined) {

@@ -55,6 +55,14 @@ const RELAY_TIMEOUT_MS = 20_000;
 /** Events asked for per page: relays cap a `REQ`, so older ones are paged with `until`. */
 const PAGE_LIMIT = 500;
 
+/**
+ * The first second after `day`. A receipt from then on is in the future:
+ * taken in, it would pin the relays' `since` and the leaderboard's `asOf`
+ * there for good, so nothing past it is taken in or counted.
+ * @param {number} day
+ */
+const endOf = (day) => (day + 1) * RATING.secondsPerDay;
+
 /** @param {Uint8Array} bytes */
 const sha256 = (bytes) => new Uint8Array(createHash("sha256").update(bytes).digest());
 hashes.sha256 = sha256;
@@ -202,7 +210,12 @@ export function build({ archived, events, relaysReached, relays, asOfDay }) {
   let added = 0;
   for (const event of events) {
     const receipt = receiptOf(event);
-    const reason = receipt === undefined ? "malformed" : rejection(receipt, crypto);
+    const reason =
+      receipt === undefined
+        ? "malformed"
+        : receipt.start.startedAt >= endOf(asOfDay)
+          ? "future"
+          : rejection(receipt, crypto);
     if (reason !== undefined) {
       rejected.set(reason, (rejected.get(reason) ?? 0) + 1);
     } else if (receipt && keep(receipt)) {
@@ -227,9 +240,10 @@ export function build({ archived, events, relaysReached, relays, asOfDay }) {
   const entries = [...order, ...[...ratings.keys()].filter((pubkey) => !rankOf.has(pubkey))].map(
     (pubkey) => ({ pubkey, rank: rankOf.get(pubkey) ?? null, ...ratings.get(pubkey) }),
   );
+  const newest = receipts.findLast(({ receipt }) => receipt.start.startedAt < endOf(asOfDay));
   const leaderboard = `${JSON.stringify({
     // The as-of day's midnight, or the newest match if later (architect, #3574).
-    asOf: Math.max(asOfDay * RATING.secondsPerDay, receipts.at(-1)?.receipt.start.startedAt ?? 0),
+    asOf: Math.max(asOfDay * RATING.secondsPerDay, newest?.receipt.start.startedAt ?? 0),
     engine: process.version,
     count: entries.length,
     entries,
@@ -364,7 +378,8 @@ export async function run({ dir, asOfDay, relays = RELAYS, fetch = fetchRelay })
     .split("\n")
     .map((line) => (line === "" ? undefined : parseReceipt(line)?.start.startedAt))
     .reduce(
-      (max, at) => (at === undefined || (max !== undefined && max >= at) ? max : at),
+      (max, at) =>
+        at === undefined || at >= endOf(asOfDay) || (max !== undefined && max >= at) ? max : at,
       undefined,
     );
   const since = newest === undefined ? undefined : newest - SINCE_SLACK_SECONDS;
