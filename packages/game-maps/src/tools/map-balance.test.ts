@@ -7,6 +7,7 @@ import {
   createLayeredPathFinder,
   switchTargetId,
   vec2,
+  type LayeredPathFinder,
   type Vec2,
 } from "@vibewars/game-core";
 
@@ -1916,6 +1917,36 @@ describe("walks and high ground (#3070)", () => {
         for (const walk of walks) expect(walk / seconds).toBeLessThan(25);
       },
     );
+
+    // Lead-dev's review: a team whose spawns split between two galleries splits its band and is
+    // crushed. Every spawn's own way to the altar is up its team's anticlockwise gallery.
+    it("walks every spawn to the altar up its team's anticlockwise gallery, the crypts shut", () => {
+      const doorsShut = shut(king);
+      const finder = layeredFinder(doorsShut, MINIMAL_GW_INSPIRED_PVP_V1.collision.playerRadius);
+      const only = (stair: string): LayeredPathFinder =>
+        layeredFinder(
+          {
+            ...doorsShut,
+            transitions: doorsShut.transitions.filter(
+              ({ id }) => id === stair || !galleryStairs.includes(id),
+            ),
+          },
+          MINIMAL_GW_INSPIRED_PVP_V1.collision.playerRadius,
+        );
+      const finders = TEAMS.map((team) => ({
+        own: only(anticlockwise[team] ?? ""),
+        other: only(clockwise[team] ?? ""),
+      }));
+      for (const spawn of king.spawnPoints) {
+        const by = finders[spawn.team];
+        if (by === undefined) throw new Error(`no team ${String(spawn.team)}`);
+        const { own, other } = by;
+        const walk = (by: LayeredPathFinder): number =>
+          walkedFrom(spawn.position, by.find(spawn.position, spawn.layer, altar, 3));
+        expect(walk(finder)).toBeCloseTo(walk(own), 0);
+        expect(walk(own)).toBeLessThan(walk(other));
+      }
+    }, 60_000);
 
     it("walks each team to the altar through its own crypt, its door open, within 10 %, in under 25 s", () => {
       const walks = walksByRoute(king, altar, 3, byCrypt);
