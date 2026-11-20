@@ -8,7 +8,7 @@ name: Pages
 # hosted backend (ADR-0022).
 #
 # All targets write the one gh-pages branch, with plain git rather than a
-# deploy action, because the release must replace everything except next/ and rc/.
+# deploy action, because the release must replace everything except next/, rc/ and ranking/.
 #
 # Two jobs, so the write token never meets repository code: `build` runs
 # the repo's and its dependencies' build code with a read-only token that
@@ -190,10 +190,10 @@ jobs:
             mkdir -p rc
             rsync -a --checksum --delete "$dist/" rc/
           else
-            # Replace everything but next/ and rc/, so stale hashed assets from
+            # Replace everything but next/, rc/ and ranking/ (#3574), so stale hashed assets from
             # older releases don't pile up. A release before any next deploy must
             # not create next/; rsync leaves an absent excluded path absent.
-            rsync -a --checksum --delete --exclude /next/ --exclude /rc/ --exclude /.git "$dist/" ./
+            rsync -a --checksum --delete --exclude /next/ --exclude /rc/ --exclude /ranking/ --exclude /.git "$dist/" ./
           fi
           # Pages must not run Jekyll over the site, even before a release
           # has put one at the root.
