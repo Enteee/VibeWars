@@ -164,7 +164,10 @@ another layer, and a verdict (#3354). A bot is stuck when, over 5 seconds,
 it stayed within 64 units, took part in no damage or heal and started no
 skill while a foe lived: _stuck %_ is those seconds over all living-bot
 seconds, _apart %_ the share of them with the nearest foe on another
-layer. Creatures are not counted. `BENCH_STUCK=1` also prints, per row,
+layer. A bot holding an objective, on a capture point its team does
+not fully own or on the altar its team holds, is never stuck (#3689);
+Relic Run escorts waiting at the altar still count. Creatures are not
+counted. `BENCH_STUCK=1` also prints, per row,
 the cells (64 units, with their layer) where bots were stuck longest. A
 match the mode does not decide by its time limit is a draw; a mode
 without a wipe is won by whoever its own outcome names. The verdict is
