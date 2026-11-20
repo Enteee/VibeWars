@@ -287,6 +287,7 @@ export function fetchRelay(relay, since) {
     let finished = false;
     let page = 0;
     let fresh = 0;
+    let received = 0;
     let oldest = Infinity;
     /** @type {WebSocket | undefined} */
     let socket;
@@ -307,6 +308,7 @@ export function fetchRelay(relay, since) {
     const ask = (until) => {
       page += 1;
       fresh = 0;
+      received = 0;
       send([
         "REQ",
         `ranked-${String(page)}`,
@@ -346,6 +348,7 @@ export function fetchRelay(relay, since) {
       const event = message[2];
       if (message[0] === "EVENT" && typeof event === "object" && event !== null) {
         const id = "id" in event ? event.id : undefined;
+        received += 1;
         if (!seen.has(id)) {
           seen.add(id);
           events.push(event);
@@ -355,9 +358,15 @@ export function fetchRelay(relay, since) {
         }
       } else if (message[0] === "EOSE" || message[0] === "CLOSED") {
         send(["CLOSE", message[1]]);
-        // A page with nothing new is the end; otherwise ask for older ones.
-        if (message[0] === "EOSE" && fresh > 0 && Number.isFinite(oldest)) {
+        // A page with nothing new is the end, unless it was full: then one
+        // second holds a page of events, maybe a flood, and only that second
+        // is skipped. Otherwise ask for older ones; `until` is inclusive.
+        if (message[0] !== "EOSE" || !Number.isFinite(oldest)) {
+          done();
+        } else if (fresh > 0) {
           ask(oldest);
+        } else if (received >= PAGE_LIMIT) {
+          ask(oldest - 1);
         } else {
           done();
         }

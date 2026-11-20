@@ -10,9 +10,9 @@ import path from "node:path";
 
 import { schnorr } from "@noble/secp256k1";
 import { parseReceipt, resultDigest, startDigest, startHash, ZERO_HASH } from "@vibewars/ranking";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { run } from "./build.mjs";
+import { fetchRelay, run } from "./build.mjs";
 
 /** @typedef {import("@vibewars/ranking").RankedReceipt} RankedReceipt */
 /** @typedef {{ kind: number, tags: string[][], content: string }} RelayEvent */
@@ -244,5 +244,81 @@ describe("the leaderboard job", () => {
       // Rated, not void: which way it moves each key is rate.test.ts's to show.
       expect(rated.entries.every((entry) => entry.matches === 1)).toBe(true);
     }
+  });
+});
+
+/** @typedef {{ id: string, created_at: number }} Stored */
+/**
+ * A NIP-01 relay holding `store`, as a `WebSocket`: newest first,
+ * `since` and `until` inclusive, at most `limit` a page.
+ * @param {Stored[]} store
+ */
+function fakeRelay(store) {
+  return class {
+    /** @type {Map<string, ((event: { data?: string }) => void)[]>} */
+    listeners = new Map();
+    closed = false;
+    constructor() {
+      setTimeout(() => {
+        this.emit("open", {});
+      });
+    }
+    /** @param {string} type @param {(event: { data?: string }) => void} listener */
+    addEventListener(type, listener) {
+      this.listeners.set(type, [...(this.listeners.get(type) ?? []), listener]);
+    }
+    /** @param {string} type @param {{ data?: string }} event */
+    emit(type, event) {
+      for (const listener of this.closed ? [] : (this.listeners.get(type) ?? [])) {
+        listener(event);
+      }
+    }
+    /** @param {string} json */
+    send(json) {
+      /** @type {unknown} */
+      const parsed = JSON.parse(json);
+      const [verb, sub, filter] =
+        /** @type {[string, string, { since?: number, until?: number, limit: number }]} */ (parsed);
+      if (verb !== "REQ") {
+        return;
+      }
+      const page = store
+        .filter(
+          ({ created_at: at }) =>
+            at >= (filter.since ?? -Infinity) && at <= (filter.until ?? Infinity),
+        )
+        .sort((a, b) => b.created_at - a.created_at)
+        .slice(0, filter.limit);
+      setTimeout(() => {
+        for (const event of page) {
+          this.emit("message", { data: JSON.stringify(["EVENT", sub, event]) });
+        }
+        this.emit("message", { data: JSON.stringify(["EOSE", sub]) });
+      });
+    }
+    close() {
+      this.closed = true;
+    }
+  };
+}
+
+describe("fetchRelay", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("pages past a full second of spam to the receipts older than it", async () => {
+    const real = Array.from({ length: 30 }, (_, i) => ({
+      id: `real-${String(i)}`,
+      created_at: 1000 + i,
+    }));
+    const spam = Array.from({ length: 500 }, (_, i) => ({
+      id: `spam-${String(i)}`,
+      created_at: 2000,
+    }));
+    vi.stubGlobal("WebSocket", fakeRelay([...real, ...spam]));
+    const events = /** @type {Stored[]} */ ((await fetchRelay("wss://a.example", 0)) ?? []);
+    expect(events.filter(({ id }) => id.startsWith("real-"))).toHaveLength(real.length);
+    expect(events).toHaveLength(real.length + spam.length);
   });
 });
