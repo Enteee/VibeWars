@@ -18,6 +18,7 @@ import type { MapData } from "../schema.js";
 import {
   balanceVerdict,
   benchSeeds,
+  failingRows,
   highGround,
   narrowestWalks,
   playBuildBot,
@@ -49,6 +50,26 @@ const percent = (share: number): string => (share * 100).toFixed(1);
 function result(wins: readonly number[], draws = 0): MapBalanceResult {
   return { wins, draws, meanSeconds: 60, stuckShare: 0, apartShare: 0, stuckCells: [] };
 }
+
+describe("the failing rows (#3711)", () => {
+  it("names each failing row and its reason, in order", () => {
+    expect(
+      failingRows([
+        { map: "a", size: 2, verdict: { pass: true } },
+        {
+          map: "b",
+          size: 4,
+          verdict: { pass: false, reason: "team 0 favoured (61 % of decided)" },
+        },
+        { map: "c", size: 8, verdict: { pass: false, reason: "no contact" } },
+      ]),
+    ).toEqual(["b 4v4: team 0 favoured (61 % of decided)", "c 8v8: no contact"]);
+  });
+
+  it("is empty when every row passes", () => {
+    expect(failingRows([{ map: "a", size: 2, verdict: { pass: true } }])).toEqual([]);
+  });
+});
 
 describe("the balance verdict (#3065)", () => {
   it("passes an even split", () => {
@@ -2472,6 +2493,17 @@ describe.runIf(BENCH)("the map balance bench (#3065)", () => {
           .map((row) => `| ${row.join(" | ")} |`)
           .join("\n"),
       );
+      // The CI gate on pull requests (#3711); the table above is printed either way.
+      if (process.env.BENCH_GATE !== undefined) {
+        const failing = failingRows(
+          runs.map(({ map, perTeam, balance }) => ({
+            map: map.id,
+            size: perTeam,
+            verdict: balanceVerdict(balance),
+          })),
+        );
+        expect(failing).toEqual([]);
+      }
     },
     // Every map at every size: hours, not minutes.
     24 * 3_600_000,

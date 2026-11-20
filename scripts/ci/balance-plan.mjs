@@ -6,14 +6,14 @@
  * the hosted runners for hours; the dropped rows are listed, never an error.
  *
  * Usage:
- *   node scripts/ci/balance-plan.mjs <base> [head]   (base...head) prints {"rows":[...],"dropped":[...]}
+ *   node scripts/ci/balance-plan.mjs <base> [head]   (base...head) prints {"rows":[...],"dropped":[...],"seeds":N}
  */
 
 import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-export const SEEDS = 20;
+export const SEEDS = 48;
 export const MAX_ROWS = 12;
 
 /** Plays on a rule change, next to every touched map. */
@@ -66,5 +66,5 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   })
     .split("\n")
     .filter((line) => line !== "");
-  console.log(JSON.stringify(planBalance(files, sizesFromDisk)));
+  console.log(JSON.stringify({ ...planBalance(files, sizesFromDisk), seeds: SEEDS }));
 }

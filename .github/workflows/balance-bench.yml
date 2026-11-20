@@ -2,8 +2,11 @@ name: balance bench
 
 # The map balance bench on GitHub-hosted runners (#3356, #3065): all-bot
 # matches on real maps, so a map or bot PR carries its table without loading
-# the company host. Information, never a gate: it fails only if the bench
-# crashes, never because a verdict says FAIL. Not an expected check.
+# the company host. A gate on pull requests (#3711): the job fails when a
+# row's verdict is FAIL (BENCH_GATE) or the bench crashes, so a tick means
+# every row passed. A dispatched run stays a survey and never fails on a
+# verdict. The table, summary and artifacts are produced red or green. Not
+# (yet) a required check in branch protection; that is the operator's call.
 # Read the table: the run's job summary, or `hub run view <id> --log`
 # between the lines `--- balance table ---` and `--- end ---`.
 
@@ -64,7 +67,7 @@ jobs:
         run: |
           if [ "$EVENT" = pull_request ]; then
             plan=$(node scripts/ci/balance-plan.mjs "$BASE" "$HEAD")
-            seeds=20
+            seeds=$(jq -r .seeds <<<"$plan")
           else
             seeds=$SEEDS_INPUT
             case "$seeds" in '' | *[!0-9]*) echo "seeds must be a number" >&2; exit 1 ;; esac
@@ -121,19 +124,26 @@ jobs:
           STUCK: ${{ inputs.stuck }}
         run: |
           set -o pipefail
+          # Only a pull request gates on the verdicts (#3711).
+          if [ "$EVENT" = pull_request ]; then export BENCH_GATE=1; fi
           # The bench tests for the variable being set, so it is set only to ask.
           if [ "$EVENT" = pull_request ] || [ "$STUCK" = true ]; then export BENCH_STUCK=1; fi
-          devenv shell -- pnpm bench:balance -t "prints each map" | tee bench.log
-          sed 's/\x1b\[[0-9;]*m//g' bench.log | grep '^|' > row.md
+          status=0
+          devenv shell -- pnpm bench:balance -t "prints each map" | tee bench.log || status=$?
+          # A failing verdict keeps its table; only a crash leaves it empty.
+          sed 's/\x1b\[[0-9;]*m//g' bench.log | grep '^|' > row.md || true
+          [ -s row.md ] || { echo "the bench printed no table" >&2; status=1; }
+          exit "$status"
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: ${{ always() }}
         with:
           name: balance-row-${{ matrix.row.map }}-${{ matrix.row.size }}
           path: row.md
 
   report:
     needs: [plan, bench]
-    if: ${{ !cancelled() && needs.bench.result == 'success' }}
+    if: ${{ !cancelled() && needs.bench.result != 'skipped' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -143,7 +153,11 @@ jobs:
           path: rows
 
       - name: Join
+        env:
+          ROWS: ${{ needs.plan.outputs.rows }}
         run: |
+          # A crashed row has no table; the bench job is red then, and so is this.
+          [ "$(find rows -mindepth 1 -maxdepth 1 -type d | wc -l)" = "$(jq length <<<"$ROWS")" ] || { echo "a row printed no table" >&2; exit 1; }
           set -- rows/*/row.md; first=$1
           {
             head -n 2 "$first"

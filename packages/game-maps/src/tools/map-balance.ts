@@ -171,6 +171,20 @@ export function balanceVerdict({ wins, draws }: MapBalanceResult): BalanceVerdic
     : { pass: true };
 }
 
+/** One played row: what `failingRows` needs to name it. */
+export interface BalanceRow {
+  readonly map: string;
+  readonly size: number;
+  readonly verdict: BalanceVerdict;
+}
+
+/** The failing rows as `map size: reason` lines (#3711): empty when every row passes. */
+export function failingRows(rows: readonly BalanceRow[]): string[] {
+  return rows.flatMap(({ map, size, verdict }) =>
+    verdict.pass ? [] : [`${map} ${String(size)}v${String(size)}: ${verdict.reason}`],
+  );
+}
+
 /** A bot playing `build` (#1189): what a seated bot is, without a lobby. */
 export function playBuildBot(
   build: PlayerBuild,
