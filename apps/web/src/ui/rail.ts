@@ -164,6 +164,9 @@ export function teamSizeStepper(
   const sizes = TEAM_SIZES_BY_ENTRY[entry];
   const stepper = h("div", "mode-rail-stepper");
   stepper.setAttribute("data-entry", "team-size");
+  // Team Builder's size is the new team's (#3542), a mode's who it meets
+  // (#3544): the menu quest points at either.
+  stepper.setAttribute("data-tutorial", entry === "teams" ? "team-new" : "team-size");
   stepper.setAttribute("role", "group");
   stepper.setAttribute("aria-label", t("rail.teamSize"));
   let shown = value;
@@ -408,7 +411,12 @@ export function railScreen(
   teamSizeListener = undefined;
   const panel = h("div", `screen screen-rail screen-${active}`);
   const body = h("div", "rail-body");
-  body.append(h("h2", "rail-title", railLabel(active)));
+  const title = body.appendChild(h("h2", "rail-title", railLabel(active)));
+  // What the menu quest's modes step explains a mode beside (#3543): its
+  // heading, so the lock keeps the screen's own controls out of reach.
+  if (isModeEntry(active)) {
+    title.setAttribute("data-tutorial", `mode-${active}`);
+  }
   panel.append(modeRail(active, onSwitch), body);
   root.replaceChildren(panel);
   return body;

@@ -71,7 +71,8 @@ Aceste taste sunt fixe:
 în afară de Lobby, stau în dreapta sus pe ecran. Într-o fereastră îngustă, aceste pictograme și
 celelalte butoane ale ecranului se strâng în **⋯**; doar butonul principal rămâne afară.
 ⚙ deschide Opțiunile ca fereastră sub bară, cu ecranul încă în spate; Esc, × sau un clic în afară o închide. La **Afișare**, **Iluminare** pornește sau oprește lumina și umbra unei hărți luminate, imediat, chiar și în meci.
-Ajutorul se închide cu × din dreapta sus, cu Esc sau apăsând din nou [?].
+[?] deschide Ajutorul la fel, ca fereastră sub el cu un selector de pagină sus; meciul continuă în spate.
+Ajutorul se închide cu propriul ×, cu Esc, cu un clic în afară sau apăsând din nou [?].
 
 **Trimite un beat lobby-ului tău.** În editorul de beaturi (♪, apoi **Editează**),
 **Trimite lobby-ului** trimite ce ai scris, salvat sau nu, tuturor celorlalți

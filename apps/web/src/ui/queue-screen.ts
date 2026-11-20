@@ -1,5 +1,9 @@
 import type { QueueMode, WireMatchChart } from "@vibewars/game-protocol";
-import type { LobbyPlayerSnapshot, LobbySnapshot } from "@vibewars/game-session";
+import {
+  RANKED_START_TIMEOUT_MS,
+  type LobbyPlayerSnapshot,
+  type LobbySnapshot,
+} from "@vibewars/game-session";
 
 import { mapName } from "../i18n/game-names.js";
 import { t } from "../i18n/index.js";
@@ -188,6 +192,14 @@ export interface QueueScreenCallbacks {
 
 export interface QueueScreen {
   show(view: QueueView): void;
+  /**
+   * "Confirming ranked match…" over the screen (#3680), from this player's
+   * start signature until the match starts, the host cancels it, or
+   * `RANKED_START_TIMEOUT_MS` is up; `false` takes it down.
+   */
+  confirming(on: boolean): void;
+  /** Its ranked result went out (#3680): said under the outcome, with when the rating moves. */
+  published(): void;
   /** Stops the title flashing; the next screen replaces the DOM. */
   dispose(): void;
 }
@@ -447,9 +459,11 @@ export function mountQueueScreen(
   status.setAttribute("role", "status");
   const problem = h("div", "screen-problem queue-problem");
   const streak = h("div", "queue-streak");
+  const ranked = h("div", "queue-ranked");
+  ranked.hidden = true;
   const summaryHost = h("div", "queue-results");
   const body = h("div", "queue-body");
-  body.append(status, problem, streak, summaryHost);
+  body.append(status, problem, streak, ranked, summaryHost);
   const splashHost = h("div", "queue-splash");
   const stay = button(t("queue.stayTogether"), "primary", callbacks.onStayTogether);
   const again = button(t("queue.queueAgain"), "primary", callbacks.onQueueAgain);
@@ -457,6 +471,21 @@ export function mountQueueScreen(
   const actions = h("div", "menu-row queue-actions");
   actions.append(stay, again, back);
   panel.append(body, splashHost, actions);
+  const confirm = h("div", "ranked-confirm");
+  confirm.setAttribute("role", "status");
+  confirm.hidden = true;
+  confirm.appendChild(h("div", "ranked-confirm-box", t("queue.rankedConfirming")));
+  panel.appendChild(confirm);
+  let confirmTimer: number | undefined;
+  const confirming = (on: boolean): void => {
+    window.clearTimeout(confirmTimer);
+    confirm.hidden = !on;
+    if (on) {
+      confirmTimer = window.setTimeout(() => {
+        confirm.hidden = true;
+      }, RANKED_START_TIMEOUT_MS);
+    }
+  };
   root.appendChild(panel);
 
   let stopFlash: (() => void) | undefined;
@@ -514,6 +543,12 @@ export function mountQueueScreen(
   };
 
   return {
+    confirming,
+    published: () => {
+      confirming(false);
+      ranked.textContent = `${t("queue.rankedPublished")} ${t("queue.rankedPending")}`;
+      ranked.hidden = false;
+    },
     show: (view) => {
       switch (view.kind) {
         case "splash":
@@ -536,6 +571,7 @@ export function mountQueueScreen(
       }
     },
     dispose: () => {
+      window.clearTimeout(confirmTimer);
       stopFlash?.();
       stopFlash = undefined;
     },

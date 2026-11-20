@@ -68,6 +68,10 @@ export class FakeElement {
     return this.attributes.get(name) ?? null;
   }
 
+  hasAttribute(name: string): boolean {
+    return this.attributes.has(name);
+  }
+
   removeAttribute(name: string): void {
     this.attributes.delete(name);
   }

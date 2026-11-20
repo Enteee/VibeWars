@@ -348,7 +348,6 @@ export default {
   "controls.presetClassic": "Classique (compétences 1-8, déplacement WASD)",
   "controls.presetVibeWars": "VibeWars (compétences Q-F, déplacement flèches)",
   "controls.pressAKey": "appuie sur une touche...",
-  "controls.reset": "Rétablir VibeWars",
   "controls.shortcutRefusal":
     "Ctrl, Alt et la touche Windows/Command ne sont jamais utilisées : elles appartiennent au navigateur.",
   "controls.showNames": "Noms (maintenir)",
@@ -363,12 +362,14 @@ export default {
   "controls.targetCalled": "Cibler l'ennemi annoncé",
   "controls.targetClosest": "Cibler l'ennemi le plus proche",
   "controls.targetNext": "Cible suivante",
+  "controls.targetPrevious": "Cible précédente",
   "controls.targetSelf": "Te cibler",
   "controls.weaponSet1": "Set d'armes 1",
   "controls.weaponSet2": "Set d'armes 2",
   "controls.weaponSet3": "Set d'armes 3",
   "controls.weaponSet4": "Set d'armes 4",
   "controls.weaponSets": "Sets d'armes",
+  "controls.withShift": "Maj + {key}",
   "creature.rat": "Rat",
 
   "echo.secondsLeft": {
@@ -550,6 +551,7 @@ export default {
   "hud.leaveExtra": " le match (F10)",
   "hud.leaveNo": "non",
   "hud.leaveQuestion": "quitter ?",
+  "hud.leaveRanked": "quitter ? Compte comme une défaite",
   "hud.leaveYes": "oui",
   "hud.lordPercent": "Seigneur {percent}%",
   "hud.moraleBoostOurs": "Bonus de moral ! +{percent}%",
@@ -720,7 +722,7 @@ export default {
   "lobby.joinTeamLabel": "Rejoindre l'équipe {team}",
   "lobby.leaveTeam": "Quitter",
   "lobby.leaveTeamLabel": "Quitter l'équipe {team}",
-  "lobby.map": "Carte",
+  "lobby.map": "Carte :",
   "lobby.mapLabel": "{name} ({size})",
   "lobby.mapRandom": "Carte : aléatoire (Arène d'équipe)",
   "lobby.mapShown": "Carte : {map}",
@@ -914,14 +916,7 @@ export default {
   },
 
   "player.cape": "Cape",
-  "player.colourBlack": "noir",
-  "player.colourGold": "or",
-  "player.colourLime": "lime",
-  "player.colourOrange": "orange",
-  "player.colourPink": "rose",
-  "player.colourTeal": "sarcelle",
-  "player.colourViolet": "violet",
-  "player.colourWhite": "blanc",
+  "player.capePreview": "Aperçu",
   "player.emblem": "Emblème",
   "player.emblemBar": "barre",
   "player.emblemChevron": "chevron",
@@ -931,15 +926,18 @@ export default {
   "player.emblemHalfDisc": "demi-disque",
   "player.emblemRing": "anneau",
   "player.emblemTriangle": "triangle",
-  "player.editEmblem": "Modifier l'emblème",
   "player.emblemPencil": "Crayon",
   "player.emblemUndo": "Défaire",
   "player.emblemEraser": "Gomme",
   "player.emblemFill": "Remplir",
   "player.emblemMirror": "Miroir",
   "player.emblemClear": "Tout effacer",
-  "player.emblemDone": "OK",
   "player.emblemEmpty": "Vide",
+  "player.capeColour": "Couleur de la cape",
+  "player.trimColour": "Couleur de la bordure",
+  "player.emblemColour": "Couleur de dessin",
+  "player.emblemAddColour": "Ajouter une couleur",
+  "player.emblemStartFrom": "Partir de",
   "player.emblemPalette": "Couleurs",
   "player.emblemInGame": "Taille en jeu",
   "player.guildCape": "Cape de guilde",
@@ -982,6 +980,12 @@ export default {
   "queue.playBotsIn": "Jouer contre des bots ({seconds} s)",
   "queue.queueAgain": "Relancer la file",
   "queue.randomArena": "Arène aléatoire {size}",
+  "queue.rankedCancelled": "Match classé annulé : un joueur n’a pas confirmé.",
+  "queue.rankedConfirming": "Confirmation du match classé…",
+  "queue.rankedNote":
+    "Sans bots, le match est classé : le résultat est publié avec ta clé et le nom de ton personnage. Un bot dans le match le laisse non classé.",
+  "queue.rankedPending": "Ton classement se met à jour dans l’heure.",
+  "queue.rankedPublished": "Résultat classé publié.",
   "queue.searchingCount": "{searching} en recherche · {needed} requis",
   "queue.startingIn": "Début dans {seconds}",
   "queue.stayTogether": "Rester ensemble",
@@ -1396,7 +1400,6 @@ export default {
   "teamPlay.edit": "Éditer",
   "teamPlay.loadLine": "code d'équipe à charger",
   "teamPlay.loadPlaceholder": "Colle un code d'équipe partagé",
-  "teamPlay.loadTeam": "Charger une équipe",
   "teamPlay.memberLabel": "{name}, {professions}",
   "teamPlay.newTeamBuild": "Nouveau build",
   "teamPlay.noTeamBuilds": "Aucun Build d'équipe de {size} pour l'instant.",
@@ -1571,6 +1574,23 @@ export default {
   "tutorial.ground.praise": "De l'autre côté ! Tu sais ce que fait le sol.",
   "tutorial.front.end": "Tu connais les bases maintenant. À tout à l'heure là-bas !",
   "tutorial.front.menu": "Retour au menu",
+  "tutorial.menu.arena.farewell": "Tu es dans la file. Bonne chance.",
+  "tutorial.menu.arena.find":
+    "Appuie sur Trouver un match pour t'inscrire. Ton groupe est un camp : un coéquipier qui rejoint par ton lien d'invitation prend une place, et des bots jouent le reste.",
+  "tutorial.menu.arena.findDone": "Trouver un match",
+  "tutorial.menu.arena.open": "Ouvre l'Arène d'équipe dans la barre.",
+  "tutorial.menu.arena.openDone": "Ouvre l'Arène d'équipe",
+  "tutorial.menu.arena.queue":
+    "Vote pour ton équipe, puis prends un personnage. Une fois les deux faits, ton groupe est dans la file.",
+  "tutorial.menu.arena.queueDone": "Rejoins la file",
+  "tutorial.menu.arena.signup":
+    "Ouvre Tes Builds d'équipe, choisis l'équipe que tu as créée et propose-la.",
+  "tutorial.menu.arena.signupDone": "Propose ton équipe",
+  "tutorial.menu.arena.size":
+    "Règle la taille d'équipe sur 2v2. Seules des équipes de même taille s'affrontent.",
+  "tutorial.menu.arena.sizeDone": "Choisis 2v2",
+  "tutorial.menu.arena.title":
+    "Fais tes preuves avec ton équipe dans un match 2v2 en Arène d'équipe.",
   "tutorial.menu.gotIt": "Compris",
   "tutorial.menu.menu.characters":
     "Dans Personnages, tu crées et modifies qui tu joues : profession, compétences et équipement.",
@@ -1580,6 +1600,56 @@ export default {
     "Dans Équipes, tu réunis des personnages en une équipe pour les combats en équipe.",
   "tutorial.menu.menu.title": "Pour continuer, tu dois changer ta spécialisation.",
   "tutorial.menu.skipAsk": "Passer le reste du tutoriel ?",
+  "tutorial.menu.modes.gvg":
+    "Le GvG, c'est guilde contre guilde, 8 contre 8, sur l'Île du hall de guilde. Tue le Seigneur de guilde ennemi pour gagner, et garde le tien en vie.",
+  "tutorial.menu.modes.heroesAscent":
+    "L'Ascension des héros est une suite de cartes, 8 contre 8, contre des équipes de ton tour. Gagne et tu passes à la carte suivante, jusqu'au Hall des héros ; perds et tu recommences.",
+  "tutorial.menu.modes.hostedGame":
+    "Une Partie hébergée est ton propre salon : envoie le lien d'invitation à tes amis, et choisis la carte et la taille d'équipe. Des bots jouent chaque place que personne ne prend.",
+  "tutorial.menu.modes.open": "Ouvre le mode allumé sur le côté.",
+  "tutorial.menu.modes.randomArena":
+    "L'Arène aléatoire est le combat le plus rapide : ton propre personnage, dans une équipe d'inconnus, en 1v1, 2v2 ou 4v4. La carte est tirée pour toi, et chaque place est un vrai joueur.",
+  "tutorial.menu.modes.teamArena":
+    "L'Arène d'équipe, c'est ton groupe et un build contre une autre équipe, en 2v2, 4v4 ou 8v8, à la taille de ton choix. Des bots prennent chaque place libre, et chaque match tire sa carte.",
+  "tutorial.menu.modes.title": "Sache où combattre.",
+  "tutorial.menu.spec.attributes":
+    "Dépense tes points d'attribut. Chaque rang renforce les compétences de cet attribut.",
+  "tutorial.menu.spec.attributesDone": "Change un attribut",
+  "tutorial.menu.spec.gear":
+    "Armure, runes et insignes : choisis une pièce sur la figurine, puis ce qui va dessus.",
+  "tutorial.menu.spec.gearDone": "Change une pièce d'équipement",
+  "tutorial.menu.spec.open": "Ouvre Personnages, puis un personnage pour changer son build.",
+  "tutorial.menu.spec.openDone": "Ouvre un personnage",
+  "tutorial.menu.spec.professions":
+    "Ta profession principale donne tes attributs et compétences ; ta secondaire te prête aussi ses compétences.",
+  "tutorial.menu.spec.professionsDone": "Change de profession",
+  "tutorial.menu.spec.save": "Sauve ton personnage pour garder le nouveau build.",
+  "tutorial.menu.spec.saveDone": "Sauver",
+  "tutorial.menu.spec.skills":
+    "Ouvre un groupe de la liste, puis fais glisser une compétence sur un emplacement de ta barre pour l'échanger.",
+  "tutorial.menu.spec.skillsDone": "Mets une compétence dans ta barre",
+  "tutorial.menu.spec.title": "Change ta spécialisation.",
+  "tutorial.menu.spec.weapons": "Choisis dans la liste une arme pour ton set d'armes.",
+  "tutorial.menu.spec.weaponsDone": "Change une arme",
+  "tutorial.menu.team.build":
+    "Le nom d'un membre ouvre son build dans l'éditeur de build. Au retour, tes changements restent, non sauvés.",
+  "tutorial.menu.team.character":
+    "Glisse ton personnage depuis Mes personnages sur un membre. Le membre en devient une copie.",
+  "tutorial.menu.team.characterDone": "Mets ton personnage dans l'équipe",
+  "tutorial.menu.team.fill":
+    "Donne un build à chaque membre, jusqu'à ce que l'équipe n'ait plus de problème.",
+  "tutorial.menu.team.fillDone": "Complète l'équipe",
+  "tutorial.menu.team.members":
+    "Une équipe a toujours autant de membres que sa taille. Tu n'ajoutes jamais de membre : tu en remplaces un.",
+  "tutorial.menu.team.new": "Règle la taille d'équipe sur 2v2, puis crée un nouveau build.",
+  "tutorial.menu.team.newDone": "Lance une équipe de 2",
+  "tutorial.menu.team.open": "Ouvre Équipes, où sont tes builds d'équipe.",
+  "tutorial.menu.team.openDone": "Ouvre Équipes",
+  "tutorial.menu.team.problems":
+    "Sauver enregistre toujours l'équipe. Son indice nomme la première chose qui empêche de jouer l'équipe.",
+  "tutorial.menu.team.save": "Sauve ton équipe.",
+  "tutorial.menu.team.saveDone": "Sauver",
+  "tutorial.menu.team.title": "Bâtis une équipe pour réussir.",
   "tutorial.gate.hint": "Dans la brume, derrière moi.",
   "tutorial.gate.how": "Clic gauche sur le sol, ou marche avec {keys}.",
   "tutorial.gate.intro": "Notre équipe se bat de l'autre côté de la brume. Suis-moi.",

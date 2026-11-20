@@ -9,6 +9,7 @@ import {
   lockLets,
   panelSpot,
   tutorialTargetSelector,
+  unionBox,
 } from "./coach-overlay.js";
 import type { PanelSpot } from "./coach-overlay.js";
 
@@ -159,7 +160,18 @@ describe("the coach's layout", () => {
     expect(at).toEqual({ left: 16, top: 664 });
   });
 
-  it("finds a target by its data-tutorial id, never by class", () => {
-    expect(tutorialTargetSelector("rail-teams")).toBe('[data-tutorial="rail-teams"]');
+  it("finds a target by its data-tutorial id, one of a list, never by class", () => {
+    expect(tutorialTargetSelector("rail-teams")).toBe('[data-tutorial~="rail-teams"]');
+  });
+
+  it("cuts out round every element of a region, the undrawn left out", () => {
+    expect(
+      unionBox([
+        { left: 100, top: 50, width: 200, height: 40 },
+        { left: 600, top: 120, width: 300, height: 500 },
+        { left: 0, top: 0, width: 0, height: 0 },
+      ]),
+    ).toEqual({ left: 100, top: 50, width: 800, height: 570 });
+    expect(unionBox([{ left: 5, top: 5, width: 0, height: 0 }])).toBeUndefined();
   });
 });

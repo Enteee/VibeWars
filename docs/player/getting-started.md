@@ -6,6 +6,10 @@ match. You need no account and nothing to install: the game runs in
 this browser tab. VibeWars needs a keyboard and mouse. It does not work
 on a phone or a touch-only tablet: open it on a computer.
 
+## The tutorial
+
+The first time you open VibeWars, it offers a short tutorial: a walk through a canyon that teaches you to move and fight. It then carries on in the menu, one step at a time: change your character's spec, build a team of two, see what each mode is for, and queue that team for a first 2v2 Team Arena match. While a step points at a control, the rest of the menu is dimmed. You can skip the tutorial at any time with **Skip tutorial**.
+
 ## The mode rail
 
 The rail down the left of the main screen holds the
@@ -184,14 +188,17 @@ a **Name** on your first visit, like `AshenWolf`; type over it to change
 it. Left empty, you play as `Player`. Type a **Guild tag** of 2 to 4 letters
 or digits beside it, and everyone sees it after your name, like
 `Ente [VIBE]`. With a tag set, the **Guild cape** designer appears under
-it: pick the cape colour, the trim colour and an emblem, and your body
+it: pick any cape colour and trim colour, draw an emblem, and your body
 wears the cape in every match: it folds to a thin band on your rim when
 you stand and streams out behind you when you move. Your characters in
-the menu show it too. **No cape** takes it off.
+the menu show it too. **No cape** takes it off. A figure shows the cape as
+it looks in the game. A colour too close to the blue of your team or the
+red of your foes is turned a little away from it when it is drawn, so no
+cape looks like a team; the figure shows it as everyone will see it.
 
 A change applies at once to the lobby you are in.
 
-**Draw your own emblem.** **Edit emblem**, under the starting emblems, opens a 16×16 grid in their place. Pick a colour or **Empty**, then draw with the **Pencil**, rub out with the **Eraser**, or flood an area with **Fill**. **Mirror** paints the left and right halves at once. **Clear** empties the grid and **Undo** goes back a step. The small view beside the grid shows the emblem as big as in a match. **Done** keeps it, **Cancel** throws the drawing away. Arrow keys and Space draw from the keyboard too.
+**Draw your emblem.** The 16×16 emblem grid is always under the cape and trim colours. Pick a colour or **Empty**, then draw with the **Pencil**, rub out with the **Eraser**, or flood an area with **Fill**. **Add colour** gives the emblem another colour, up to 15, and the colour picker beside them changes the picked one, along with everything drawn in it. **Start from** puts one of eight shapes on the grid in the picked colour. **Mirror** paints the left and right halves at once. **Clear** empties the grid and **Undo** goes back a step. The small view beside the grid shows the emblem as big as in a match. Each stroke is kept as you finish it. Arrow keys and Space draw from the keyboard too.
 
 **Copy guild link**, under the cape designer, copies a link that carries
 your tag and cape. Whoever opens it is asked **Join guild [VIBE]?**:

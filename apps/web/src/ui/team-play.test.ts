@@ -3,19 +3,15 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { t } from "../i18n/index.js";
 import { ARENA_MAPS, modeMapIds } from "../net/maps.js";
-import { exportBuild } from "../storage/build-transfer.js";
 import {
-  CHARACTER_SCHEMA_VERSION,
   TEAM_SCHEMA_VERSION,
   type StoredTeam,
   type TeamCharacter,
   type TeamBuildSize,
 } from "../storage/schema.js";
-import { exportTeam } from "../storage/team-transfer.js";
 import type { FigureLook } from "./character-card.js";
 import type * as Figure from "./character-figure.js";
 import { mapLabel, type LobbyMap } from "./lobby-screen.js";
-import { teamOf } from "./team-builder.js";
 import {
   noTeamBuilds,
   renderHostScreen,
@@ -248,19 +244,19 @@ describe("the team screens' Team Builds (#1515, #1525, #2031)", () => {
     vi.unstubAllGlobals();
   });
 
-  it("lists each Team Build, then New team build and Load team (#3181), and no None", () => {
+  it("lists each Team Build, then New team build, no Load team (#3638) and no None", () => {
     const root = render([team("a"), team("b")]);
     const [cards] = root.all("play-cards");
     expect(cards?.children.map((card) => card.className)).toEqual([
       "play-card",
       "play-card",
       "play-card play-card-new",
-      "team-play-load",
     ]);
     expect(root.all("play-card-name").map((name) => name.textContent)).toEqual([
       "Team a",
       "Team b",
     ]);
+    expect(root.all("play-card-load")).toEqual([]);
     expect(root.everything().some((node) => node.textContent === "None")).toBe(false);
     expect(
       root
@@ -437,52 +433,5 @@ describe("the team screens' Team Builds (#1515, #1525, #2031)", () => {
     expect(root.all("roster-random-tag")).toHaveLength(1);
     root.all("play-card-reroll")[0]?.click();
     expect(rerolled).toEqual(["s2"]);
-  });
-
-  describe("Load team (#3181)", () => {
-    const duo: StoredTeam = {
-      ...teamOf("duo", 2, [warrior("Ann"), warrior("Bo")]),
-      name: "Duo",
-    };
-    /** Load team opened, `text` in its line, and Load pressed: what it says is wrong. */
-    const loadText = (root: FakeElement, text: string): string[] => {
-      root
-        .everything()
-        .find((node) => node.textContent === t("teamPlay.loadTeam"))
-        ?.click();
-      const [line] = root.all("editor-load");
-      expect(line?.hidden).toBe(false);
-      const input = line?.all("editor-share-line")[0];
-      if (input !== undefined) {
-        input.value = text;
-      }
-      line?.children.find((node) => node.textContent === t("kit.load"))?.click();
-      return root.all("editor-load-problems")[0]?.children.map((li) => li.textContent) ?? [];
-    };
-
-    it("opens a shared team line, whitespace and all, and puts the line away", () => {
-      const root = render([team("a")]);
-      expect(root.all("editor-load")[0]?.hidden).toBe(true);
-      expect(loadText(root, `  ${exportTeam(duo)}\n`)).toEqual([]);
-      expect(loaded.map((one) => one.name)).toEqual(["Duo"]);
-      expect(loaded[0]?.members.map((member) => member.character.name)).toEqual(["Ann", "Bo"]);
-      expect(root.all("editor-load")[0]?.hidden).toBe(true);
-    });
-
-    it("says what is wrong with an empty line, a single build, a broken or an illegal team", () => {
-      const root = render([]);
-      const build = exportBuild({
-        ...warrior("Ann"),
-        schemaVersion: CHARACTER_SCHEMA_VERSION,
-        updatedAt: 1,
-      });
-      const short = exportTeam({ ...duo, members: duo.members.slice(0, 1) });
-      expect(loadText(root, " ")).toEqual([t("buildEditor.pasteFirst")]);
-      expect(loadText(root, build)).toEqual([t("teamPlay.buildCodeLoad")]);
-      expect(loadText(root, "{not json")).toEqual([t("storage.teamNotJson")]);
-      expect(loadText(root, short)).toEqual([t("storage.teamMemberCount", { size: 2, found: 1 })]);
-      expect(loaded).toEqual([]);
-      expect(root.all("editor-load")[0]?.hidden).toBe(false);
-    });
   });
 });

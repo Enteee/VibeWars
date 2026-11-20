@@ -130,10 +130,12 @@ export function contextFor(
     participants,
     dt: DT,
     stepUnits: 1,
+    touchUnits: () => 28,
     check: () => ({ ok: true }),
     isBot: () => true,
     isIdle: () => false,
     calledTargetId: undefined,
+    jammedGoal: undefined,
     sees: () => true,
     seesBetween: () => true,
     walkable: () => true,
@@ -145,6 +147,7 @@ export function contextFor(
     highGround: [],
     cover: [],
     routeLength: (to) => distance(self.position, to),
+    leverHolder: () => undefined,
     ...extra,
   };
 }

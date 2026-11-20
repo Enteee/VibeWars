@@ -360,10 +360,12 @@ describe("auto-attack", () => {
         participants: [...sim.participants()],
         dt: DT,
         stepUnits: STEP,
+        touchUnits: () => 24,
         check: () => ({ ok: false, reason: "skill-not-on-bar" }),
         isBot: () => false,
         isIdle: () => false,
         calledTargetId: undefined,
+        jammedGoal: undefined,
         sees: () => true,
         seesBetween: () => true,
         walkable: () => true,
@@ -375,6 +377,7 @@ describe("auto-attack", () => {
         highGround: [],
         cover: [],
         routeLength: () => 0,
+        leverHolder: () => undefined,
       },
     );
     expect(intent.attackTargetId).toBe("first");
@@ -431,10 +434,12 @@ describe("follow-and-attack (#467)", () => {
       participants: [...sim.participants()],
       dt: DT,
       stepUnits: STEP,
+      touchUnits: () => 24,
       check: () => ({ ok: false, reason: "skill-not-on-bar" }),
       isBot: () => false,
       isIdle: () => false,
       calledTargetId: undefined,
+      jammedGoal: undefined,
       sees: () => true,
       seesBetween: () => true,
       walkable: () => true,
@@ -446,6 +451,7 @@ describe("follow-and-attack (#467)", () => {
       highGround: [],
       cover: [],
       routeLength: () => 0,
+      leverHolder: () => undefined,
     });
   }
 

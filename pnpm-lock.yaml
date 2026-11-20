@@ -146,7 +146,11 @@ importers:
         specifier: 4.6.7
         version: 4.6.7
 
-  packages/game-protocol: {}
+  packages/game-protocol:
+    dependencies:
+      '@vibewars/ranking':
+        specifier: workspace:*
+        version: link:../ranking
 
   packages/game-session:
     dependencies:
@@ -159,6 +163,10 @@ importers:
       '@vibewars/ranking':
         specifier: workspace:*
         version: link:../ranking
+    devDependencies:
+      '@noble/hashes':
+        specifier: 2.4.0
+        version: 2.4.0
 
   packages/ranking:
     devDependencies:

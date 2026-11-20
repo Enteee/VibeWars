@@ -2,7 +2,7 @@ import { RANGE_SPELL } from "../../../distances.js";
 import { distance, type Vec2 } from "../../../vec2.js";
 import { onCapturePoint, type CapturePoint } from "../../capture-points.js";
 import type { Participant } from "../../simulation.js";
-import { NOTHING, POSITION_SLACK, foeNear, pressed, shoots } from "./shared.js";
+import { NOTHING, POSITION_SLACK, foeNear, nearJammedGoal, pressed, shoots } from "./shared.js";
 import type { BotRule } from "./types.js";
 
 /**
@@ -33,7 +33,12 @@ const shrines: BotRule = {
     ) {
       return isPressed ? undefined : NOTHING;
     }
-    const goal = goalShrine(points, team, self, allies);
+    const goal = goalShrine(
+      points.filter((point) => !nearJammedGoal(context, point.position, point.layer)),
+      team,
+      self,
+      allies,
+    );
     if (
       goal === undefined ||
       (isPressed &&

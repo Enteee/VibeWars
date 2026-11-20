@@ -1,10 +1,15 @@
+import { defaultBuildEquipment } from "@vibewars/game-core";
+import { packEmblem } from "@vibewars/game-protocol";
 import { sanitizeName } from "@vibewars/game-session";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { EMBLEM_PRESET_NAMES, presetEmblem } from "../render/cape-shape.js";
 import { STORAGE_NAMESPACE } from "../storage/namespace.js";
+import { CHARACTER_SCHEMA_VERSION, type StoredCharacter } from "../storage/schema.js";
+import { saveActiveCharacterId, saveStarterCharacterId } from "./menu.js";
 import {
   FIRST_CAPE,
+  capeWearer,
   isInvalidGuildTag,
   loadGuildCape,
   loadGuildTag,
@@ -16,6 +21,7 @@ import {
   playerSection,
   saveGuildCape,
   saveGuildTag,
+  setCapeWearers,
   showsCapeDesigner,
 } from "./player-section.js";
 import { SIGNET_HEADING_PX, signetUrl } from "./player-label.js";
@@ -87,18 +93,19 @@ describe("the cape designer (#1422)", () => {
   });
 
   it("starts a first pick from the sample, changes one part a pick, and No cape clears it", () => {
-    const gold = pickCape(null, { part: "main", colour: "gold" });
-    expect(gold).toEqual({ ...FIRST_CAPE, main: "gold" });
-    expect(pickCape(gold, { part: "trim", colour: "gold" })).toEqual({
+    const gold = pickCape(null, { part: "main", colour: "e6c04a" });
+    expect(gold).toEqual({ ...FIRST_CAPE, main: "e6c04a" });
+    // The trim no longer drives the emblem's colours (#3628).
+    expect(pickCape(gold, { part: "trim", colour: "e6c04a" })).toEqual({
       ...FIRST_CAPE,
-      main: "gold",
-      trim: "gold",
-      emblem: presetEmblem("diamond", "gold"),
+      main: "e6c04a",
+      trim: "e6c04a",
     });
-    expect(pickCape(gold, { part: "emblem", preset: "ring" })).toEqual({
+    const ring = { emblem: packEmblem(presetEmblem("ring")), emblemColours: ["23272e"] };
+    expect(pickCape(gold, { part: "emblem", ...ring })).toEqual({
       ...FIRST_CAPE,
-      main: "gold",
-      emblem: presetEmblem("ring", "white"),
+      main: "e6c04a",
+      ...ring,
     });
     expect(pickCape(gold, { part: "none" })).toBeNull();
   });
@@ -127,6 +134,8 @@ describe("the cape designer (#1422)", () => {
       '"violet"',
       JSON.stringify({ ...FIRST_CAPE, main: "red" }),
       JSON.stringify({ main: "violet", trim: "white", emblem: "diamond" }),
+      // A cape from before its colours were picked freely (#3628).
+      JSON.stringify({ main: "violet", trim: "white", emblem: FIRST_CAPE.emblem }),
     ]) {
       stored.set(`${STORAGE_NAMESPACE}.guildCape`, corrupt);
       expect(loadGuildCape()).toEqual(FIRST_CAPE);
@@ -186,6 +195,11 @@ class FakeElement {
     }
   }
 
+  replaceChildren(...children: FakeElement[]): void {
+    this.children.length = 0;
+    this.append(...children);
+  }
+
   remove(): void {
     // Detached by the container's owner; nothing to do here.
   }
@@ -216,8 +230,9 @@ describe("the Player section of Options (#1513)", () => {
       setItem: (key: string, value: string) => stored.set(key, value),
       removeItem: (key: string) => stored.delete(key),
     });
-    vi.stubGlobal("window", { devicePixelRatio: 1 });
+    vi.stubGlobal("window", { devicePixelRatio: 1, matchMedia: () => ({ matches: false }) });
     vi.stubGlobal("document", { createElement: (tag: string) => new FakeElement(tag) });
+    setCapeWearers(() => Promise.resolve([]));
   });
 
   afterEach(() => {
@@ -277,44 +292,99 @@ describe("the Player section of Options (#1513)", () => {
     expect(tag.attributes.get("aria-invalid")).toBe("true");
   });
 
-  it("opens the emblem editor from Edit emblem, shown only with the cape designer (#3555)", () => {
+  it("always shows the emblem editor with the cape designer, and no emblem row (#3628)", () => {
     const { tag, cape, shown } = mount();
-    const edit = shown.find((node) => node.textContent === "Edit emblem");
-    expect(edit).toBeDefined();
     expect(cape.hidden).toBe(true);
     tag.typeIn("VIBE");
     expect(cape.hidden).toBe(false);
-    edit?.click();
-    const editor = cape.all().find((node) => node.className === "emblem-editor");
-    expect(editor).toBeDefined();
-    expect(cape.all().find((node) => node.className === "player-cape-picks")?.hidden).toBe(true);
-    // Done keeps the grid it opened with: the sample's.
-    editor
-      ?.all()
-      .find((node) => node.textContent === "Done")
-      ?.click();
-    expect(loadGuildCape()).toEqual(FIRST_CAPE);
+    expect(cape.all().find((node) => node.className === "emblem-editor")).toBeDefined();
+    expect(shown.find((node) => node.textContent === "Edit emblem")).toBeUndefined();
+    expect(shown.find((node) => node.className === "player-cape-emblem")).toBeUndefined();
+    expect(shown.find((node) => node.className === "player-cape-swatch")).toBeUndefined();
+    // Nothing applied by showing it.
+    expect(loadGuildCape()).toBeNull();
   });
 
-  it("saves a cape on every pick", () => {
+  /** The CAPE or TRIM colour picker. */
+  function colourInput(shown: FakeElement[], part: "main" | "trim"): FakeElement {
+    const input = shown.find((node) => node.dataset.part === part);
+    if (input === undefined) throw new Error(`no ${part} picker`);
+    return input;
+  }
+
+  it("saves a cape on every pick, CAPE and TRIM any colour (#3628)", () => {
     stored.set(`${STORAGE_NAMESPACE}.guildTag`, "VIBE");
     const { shown } = mount();
-    const gold = shown.find((node) => node.dataset.colour === "gold");
-    gold?.click();
-    expect(loadGuildCape()).toEqual({ ...FIRST_CAPE, main: "gold" });
-    expect(gold?.attributes.get("aria-pressed")).toBe("true");
+    const main = colourInput(shown, "main");
+    expect(main.type).toBe("color");
+    expect(main.value).toBe(`#${FIRST_CAPE.main}`);
+    main.typeIn("#12AB34");
+    expect(loadGuildCape()).toEqual({ ...FIRST_CAPE, main: "12ab34" });
+    colourInput(shown, "trim").typeIn("#ff7b72");
+    expect(loadGuildCape()).toEqual({ ...FIRST_CAPE, main: "12ab34", trim: "ff7b72" });
     shown.find((node) => node.textContent === "No cape")?.click();
     expect(loadGuildCape()).toBeNull();
   });
 
-  it("sets each starting emblem's grid in the trim colour, and marks it picked (#3554)", () => {
+  it("saves the emblem as a stroke or a Start from applies it (#3628)", () => {
+    stored.set(`${STORAGE_NAMESPACE}.guildTag`, "VIBE");
+    const { shown } = mount();
+    shown.find((node) => node.textContent === "Clear")?.click();
+    expect(loadGuildCape()).toEqual({
+      ...FIRST_CAPE,
+      emblemColours: [],
+      emblem: packEmblem([]),
+    });
+    shown.find((node) => node.dataset.emblem === "ring")?.click();
+    expect(loadGuildCape()).toEqual({
+      ...FIRST_CAPE,
+      emblem: packEmblem(presetEmblem("ring")),
+    });
+  });
+
+  /** The cape designer's figure, the one shown now. */
+  function figureIn(cape: FakeElement): FakeElement | undefined {
+    return cape.all().find((node) => node.className === "character-figure");
+  }
+
+  it("dresses a figure in the cape being designed, redrawn on every pick (#3551)", () => {
+    stored.set(`${STORAGE_NAMESPACE}.guildTag`, "VIBE");
+    const { cape, shown } = mount();
+    const first = figureIn(cape);
+    expect(first?.tagName).toBe("canvas");
+    // Nothing saved yet: no cape.
+    expect(first?.dataset.cape).toBeUndefined();
+    colourInput(shown, "main").typeIn("#e6c04a");
+    const second = figureIn(cape);
+    expect(second).not.toBe(first);
+    expect(second?.dataset.cape).toBe(`e6c04a.${FIRST_CAPE.trim}.${FIRST_CAPE.emblem}`);
+    shown.find((node) => node.textContent === "No cape")?.click();
+    expect(figureIn(cape)?.dataset.cape).toBeUndefined();
+    expect(cape.all().filter((node) => node.className === "character-figure")).toHaveLength(1);
+  });
+
+  it("shows no figure without a valid tag (#3551)", () => {
+    const { cape } = mount();
+    expect(cape.hidden).toBe(true);
+  });
+
+  it("dresses the menu's character once the roster is read, else the bare body (#3551)", async () => {
+    stored.set(`${STORAGE_NAMESPACE}.guildTag`, "VIBE");
+    setCapeWearers(() => Promise.resolve([pyro()]));
+    saveActiveCharacterId("a");
+    const { cape } = mount();
+    expect(figureIn(cape)?.attributes.get("aria-label")).toContain("Warrior");
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(figureIn(cape)?.attributes.get("aria-label")).toContain("Elementalist");
+  });
+
+  it("starts from each preset in the drawing colour (#3554, #3628)", () => {
     stored.set(`${STORAGE_NAMESPACE}.guildTag`, "VIBE");
     const { shown } = mount();
     for (const name of EMBLEM_PRESET_NAMES) {
-      const preset = shown.find((node) => node.dataset.emblem === name);
-      preset?.click();
-      expect(loadGuildCape()).toEqual({ ...FIRST_CAPE, emblem: presetEmblem(name, "white") });
-      expect(preset?.attributes.get("aria-pressed")).toBe("true");
+      shown.find((node) => node.dataset.emblem === name)?.click();
+      expect(loadGuildCape()).toEqual({ ...FIRST_CAPE, emblem: packEmblem(presetEmblem(name)) });
     }
   });
 
@@ -334,11 +404,58 @@ describe("the Player section of Options (#1513)", () => {
     copy?.click();
     await vi.waitFor(() => {
       expect(writeText).toHaveBeenCalledWith(
-        `https://vibewars.example/#guild=VW.violet.white.${FIRST_CAPE.emblem}`,
+        `https://vibewars.example/#guild=VW.a078e0.f2f2f2.${FIRST_CAPE.emblem}.f2f2f2`,
       );
     });
     tag.typeIn("V!");
     expect(copy?.hidden).toBe(true);
+  });
+});
+
+/** A playable character, as saved. */
+function pyro(overrides: Partial<StoredCharacter> = {}): StoredCharacter {
+  return {
+    schemaVersion: CHARACTER_SCHEMA_VERSION,
+    id: "a",
+    name: "Pyro",
+    primaryProfession: "elementalist",
+    secondaryProfession: "monk",
+    attributes: [],
+    skillBar: ["elementalist.fireball", null, null, null, null, null, null, null],
+    equipment: defaultBuildEquipment("elementalist"),
+    updatedAt: 1,
+    ...overrides,
+  };
+}
+
+describe("capeWearer (#3551)", () => {
+  beforeEach(() => {
+    const stored = new Map<string, string>();
+    vi.stubGlobal("localStorage", {
+      getItem: (key: string) => stored.get(key) ?? null,
+      setItem: (key: string, value: string) => stored.set(key, value),
+      removeItem: (key: string) => stored.delete(key),
+    });
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  const illegal = pyro({
+    id: "b",
+    skillBar: ["no.such-skill", null, null, null, null, null, null, null],
+  });
+  const starter = pyro({ id: "c" });
+
+  it("is the active character when it is playable, else the starter, else none", () => {
+    expect(capeWearer([pyro(), starter])).toBeUndefined();
+    saveStarterCharacterId("c");
+    expect(capeWearer([pyro(), starter])?.id).toBe("c");
+    saveActiveCharacterId("a");
+    expect(capeWearer([pyro(), starter])?.id).toBe("a");
+    saveActiveCharacterId("b");
+    expect(capeWearer([illegal, starter])?.id).toBe("c");
   });
 });
 

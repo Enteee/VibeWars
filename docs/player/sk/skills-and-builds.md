@@ -6,8 +6,8 @@ menu alebo cez **Nová postava**.
 
 ## Povolania
 
-Je ich desať: Warrior, Ranger, Monk, Necromancer, Mesmer,
-Elementalist, Assassin, Ritualist, Paragon a Dervish. Tvoje **hlavné**
+Je ich desať: ![Bojovník](../../../apps/web/public/icons/profession/warrior.svg) **Bojovník**, ![Hraničiar](../../../apps/web/public/icons/profession/ranger.svg) **Hraničiar**, ![Mních](../../../apps/web/public/icons/profession/monk.svg) **Mních**, ![Nekromant](../../../apps/web/public/icons/profession/necromancer.svg) **Nekromant**, ![Hypnotizér](../../../apps/web/public/icons/profession/mesmer.svg) **Hypnotizér**,
+![Elementalista](../../../apps/web/public/icons/profession/elementalist.svg) **Elementalista**, ![Vrah](../../../apps/web/public/icons/profession/assassin.svg) **Vrah**, ![Ritualista](../../../apps/web/public/icons/profession/ritualist.svg) **Ritualista**, ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** a ![Derviš](../../../apps/web/public/icons/profession/dervish.svg) **Derviš**. Tvoje **hlavné**
 povolanie je to, čím si: jeho schopnosti a jeho **hlavný atribút**
 (označený ★), ktorý má len hlavné povolanie. Tvoje **vedľajšie** ti požičia
 svoje schopnosti, ale nie svoj hlavný atribút.
@@ -18,11 +18,11 @@ Lišta má **osem pozícií**. Na lištu sa zmestí len jedna **elitná** schopn
 (zlatý rám): ak vybavíš druhú, nahradí prvú. Stlačením **×** na pozícii ju
 vyprázdniš.
 
-**Bleskové očarovania** (Dervish) sú okamžité: ich použitím si zachováš
+![Očarovanie](../../../apps/web/public/icons/skill-type/enchantment.svg) **Bleskové očarovania** (![Derviš](../../../apps/web/public/icons/profession/dervish.svg) **Derviš**) sú okamžité: ich použitím si zachováš
 švih aj krok, takže ich môžeš vkladať medzi údery. Každé z nich vypne tvoje
 ostatné bleskové očarovania na 1 sekundu.
 
-**Formy** (päť Dervishových Avatarov: Balthazar, Dwayna, Grenth, Lyssa
+![Forma](../../../apps/web/public/icons/skill-type/form.svg) **Formy** (päť Dervišových Avatarov: Balthazar, Dwayna, Grenth, Lyssa
 a Melandru) ťa zmenia na viac než minútu. Forma nie je
 očarovanie, takže ti ju nikto nemôže strhnúť, a naraz môžeš byť len v jednej
 forme. Použitím sa forma na 45 sekúnd zablokuje. Keď forma skončí, prestaneš s
@@ -31,7 +31,7 @@ aktivoval. Ak chceš kráčať ďalej, znova stlač klávesu pohybu.
 
 **Niektoré strely zablokujú tvoje ostatné útoky.** Focused Shot a Needling
 Shot letia rýchlejšie, než by šíp mal, ale každá, ktorá zasiahne, ti na
-niekoľko sekúnd vypne ostatné útočné schopnosti. Kúzla to neovplyvní.
+niekoľko sekúnd vypne ostatné ![Útočná schopnosť](../../../apps/web/public/icons/skill-type/attack.svg) **útočné schopnosti**. ![Kúzlo](../../../apps/web/public/icons/skill-type/spell.svg) **Kúzla** to neovplyvní.
 
 ## Atribúty
 
@@ -43,10 +43,10 @@ atribútu, ktorý schopnosť používa, ju posilní: čísla, ktoré rastú s
 atribútom, sú zobrazené zeleným tučným písmom, pri tvojich aktuálnych
 hodnostiach vrátane rún a pokrývky hlavy.
 
-V boji sa tvoje hodnosti môžu na čas zmeniť. Weakness uberie z každej jednu.
-Niektoré kliatby nastavia atribúty nepriateľa na 0 a Master of Magic nastaví
-tvoje elementálne na 13: takto nastavená hodnosť prebije runy aj Weakness.
-Signet of Illusions umožní tvojim ďalším kúzlam iných atribútov použiť
+V boji sa tvoje hodnosti môžu na čas zmeniť. ![Slabosť](../../../apps/web/public/icons/status/weakness.svg) **Slabosť** uberie z každej jednu.
+Niektoré ![Kliatba](../../../apps/web/public/icons/skill-type/hex.svg) **kliatby** nastavia atribúty nepriateľa na 0 a Master of Magic nastaví
+tvoje elementálne na 13: takto nastavená hodnosť prebije runy aj Slabosť.
+Signet of Illusions umožní tvojim ďalším ![Kúzlo](../../../apps/web/public/icons/skill-type/spell.svg) **kúzlam** iných atribútov použiť
 tvoju hodnosť Illusion Magic. Niektoré schopnosti zvyšujú tvoje atribúty na
 čas alebo pre tvoje ďalšie kúzla, ako to robia Glyph of Elemental Power a
 Ritual Lord, dokonca aj taký, ktorý si nechal na 0; nastavená hodnosť, ako pri
@@ -54,19 +54,19 @@ Master of Magic, má pred takým zvýšením prednosť.
 
 ## Ozveny
 
-**Ozveny** Paragona sú dlhé posilnenia na jednom spojencovi. **Refrén** sa
+![Ozvena](../../../apps/web/public/icons/skill-type/echo.svg) **Ozveny** ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragona** sú dlhé posilnenia na jednom spojencovi. **Refrén** sa
 obnoví na plnú dĺžku a **finále** sa prejaví vždy, keď na tom spojencovi
-skončí spev alebo pokrik. Spev alebo pokrik obnovený pred koncom neskončil.
+skončí ![Spev](../../../apps/web/public/icons/skill-type/chant.svg) **spev** alebo ![Pokrik](../../../apps/web/public/icons/skill-type/shout.svg) **pokrik**. Spev alebo pokrik obnovený pred koncom neskončil.
 Ozvenu nič neodstráni: skončí, keď vyprší alebo keď jej nositeľ zomrie.
 Väčšina nemôže zamerať ducha.
 
 ## Schopnosti, ktoré sa menia na inú schopnosť
 
-Niektoré schopnosti Mesmera na čas vložia do svojej pozície inú schopnosť.
-Arcane Echo a Echo skopírujú ďalšiu schopnosť, ktorú použiješ. **Inspired
+Niektoré schopnosti ![Hypnotizér](../../../apps/web/public/icons/profession/mesmer.svg) **Hypnotizéra** na čas vložia do svojej pozície inú schopnosť.
+![Arcane Echo](../../../apps/web/public/icons/status/arcane-echo.svg) **Arcane Echo** a ![Echo](../../../apps/web/public/icons/status/echo.svg) **Echo** skopírujú ďalšiu schopnosť, ktorú použiješ. **Inspired
 Enchantment** a **Inspired Hex** sa na 20 sekúnd stanú schopnosťou, ktorá
-zoslala očarovanie alebo kliatbu, ktorú odstránili. **Arcane Thievery**
-sa stane kúzlom, ktoré zablokovala tvojmu nepriateľovi, a to tak dlho, ako
+zoslala ![Očarovanie](../../../apps/web/public/icons/skill-type/enchantment.svg) **očarovanie** alebo ![Kliatba](../../../apps/web/public/icons/skill-type/hex.svg) **kliatbu**, ktorú odstránili. **Arcane Thievery**
+sa stane ![Kúzlo](../../../apps/web/public/icons/skill-type/spell.svg) **kúzlom**, ktoré zablokovala tvojmu nepriateľovi, a to tak dlho, ako
 blokovanie trvá. Kópia má vlastné dobíjanie. Keď skončí, pôvodná schopnosť
 sa vráti a začne svoje vlastné dobíjanie a prebiehajúce zosielanie kópie
 zlyhá. Stav uvalený duchom alebo iným stavom sa nedá skopírovať, hoci jeho
@@ -74,11 +74,11 @@ odstránenie ti energiu stále dá.
 
 ## Studne a glyfy
 
-**Studne** Necromancera využívajú najbližšiu mŕtvolu. Ak žiadna nie je
+![Studňa](../../../apps/web/public/icons/skill-type/well.svg) **Studne** ![Nekromant](../../../apps/web/public/icons/profession/necromancer.svg) **Nekromanta** využívajú najbližšiu mŕtvolu. Ak žiadna nie je
 blízko, studňa namiesto toho obetuje 66 % tvojho zdravia a objaví sa tam, kde
 stojíš.
 
-**Glyfy** Elementalistu menia tvoje ďalšie kúzlo: nedá sa prerušiť,
+![Glyf](../../../apps/web/public/icons/skill-type/glyph.svg) **Glyfy** ![Elementalista](../../../apps/web/public/icons/profession/elementalist.svg) **Elementalistu** menia tvoje ďalšie ![Kúzlo](../../../apps/web/public/icons/skill-type/spell.svg) **kúzlo**: nedá sa prerušiť,
 zošle sa okamžite, hneď sa dobije alebo stojí menej. Nový
 glyf nahradí ten, ktorý si mal.
 
@@ -88,8 +88,8 @@ Schopnosť, ktorá reaguje na „ďalšie poškodenie, ktoré zníži zdravie po
 reaguje na každý úder alebo kradnutie života, po ktorom zostaneš nažive a
 pod hranicou, aj keď si pod ňou bol už pred zásahom, a nikdy nie na
 zdravie, ktoré obetuješ alebo stratíš degeneráciou. Ochrana pred smrteľným
-poškodením, ako Judge's Intervention, zruší celý smrteľný úder: žiadne
-poškodenie, žiadna smrť. Faithful Intervention a Illusion of Weakness nemajú
+poškodením, ako ![Judge's Intervention](../../../apps/web/public/icons/status/judges-intervention.svg) **Judge's Intervention**, zruší celý smrteľný úder: žiadne
+poškodenie, žiadna smrť. ![Faithful Intervention](../../../apps/web/public/icons/status/faithful-intervention.svg) **Faithful Intervention** a ![Ilúzia slabosti](../../../apps/web/public/icons/status/illusion-of-weakness.svg) **Ilúzia slabosti** nemajú
 trvanie: trvajú, kým ich neukončí poškodenie, strhnutie alebo smrť, a
 priebežne ťa liečia.
 
@@ -116,19 +116,19 @@ počíta poškodenie a liečenie tvojich duchov, prisluhovačov a zvieraťa ako 
 
 ## Kúzla predmetov
 
-**Kúzla predmetov** Ritualistu ti dajú do rúk **popol** ducha: bonus, kým ho
+![Kúzlo predmetu](../../../apps/web/public/icons/skill-type/item-spell.svg) **Kúzla predmetov** ![Ritualista](../../../apps/web/public/icons/profession/ritualist.svg) **Ritualistu** ti dajú do rúk **popol** ducha: bonus, kým ho
 držíš, a **efekt pri položení**, keď padne. Popol sa položí, keď vyprší, keď
 zomrieš, keď stlačíš **Položiť popol** nad lištou zdravia, zošleš iné kúzlo
 predmetu, urobíš tieňový krok, vymeníš zbrane alebo zdvihneš vlajku či
-relikviu. Kým ho držíš, máš plné ruky: žiadne útoky ani útočné schopnosti,
-ale kráčaš plnou rýchlosťou a stále zosielaš kúzla. Popol nič neodstráni;
+relikviu. Kým ho držíš, máš plné ruky: žiadne útoky ani ![Útočná schopnosť](../../../apps/web/public/icons/skill-type/attack.svg) **útočné schopnosti**,
+ale kráčaš plnou rýchlosťou a stále zosielaš ![Kúzlo](../../../apps/web/public/icons/skill-type/spell.svg) **kúzla**. Popol nič neodstráni;
 každý koniec je položenie.
 
 ## Tieňové kroky
 
 **Tieňový krok** ťa okamžite premiestni, bez chôdze medzi tým. Väčšina ťa
 prenesie k cieľu; niektoré ťa po skončení vrátia tam, kde si ich zoslal, ako
-to robia Shadow of Haste a Shadow Walk. **Recall** ťa prenesie k svojmu
+to robia Shadow of Haste a Shadow Walk. ![Recall](../../../apps/web/public/icons/status/recall.svg) **Recall** ťa prenesie k svojmu
 spojencovi až po skončení a zablokuje všetky tvoje schopnosti na 3 sekundy.
 **Swap** si vymení miesto s jedným z duchov alebo prisluhovačov tvojej strany.
 
@@ -149,14 +149,14 @@ ešte nemá, príde ako prázdna pozícia. Build je tvoj, keď stlačíš
 **Esc** odíde bez uloženia, a ak si niečo zmenil, najprv sa opýta.
 **Zdieľať**, **Načítať kód GW1**, **Duplikovať** a **Zmazať** sú pod **⋯**.
 
-Tímový kód sa namiesto toho načítava v **Tvorba tímov**: stlač **Načítať tím**,
-vlož kód a stlač **Načítať**, alebo ho vlož kamkoľvek v **Tvorba tímov**.
+Tímový kód sa namiesto toho načítava v **Tvorba tímov**: vlož ho tam kamkoľvek,
+alebo otvor tímový build a použi jeho **⋯** → **Načítať tím**.
 
 ## Tímové buildy
 
 **Tímový build** je tím s vlastnými postavami, vytvorený v **Tvorba
 tímov** a oddelený od tvojich vlastných postáv. Každý z nich je tam karta,
-a len tam: **Nový tímový build** ho vytvorí, **Načítať tím**
+a len tam: **Nový tímový build** ho vytvorí, tímový kód vložený tam
 načíta ten, ktorý s tebou niekto zdieľal, a kliknutie na kartu alebo na jej **Upraviť** ho otvorí. Navrhuješ ho v
 [tímovom lobby](modes.md#tímové-lobby).
 

@@ -952,6 +952,33 @@ describe("the approach round bodies (#277)", () => {
     expect(get(match, "a").combatant.attack).toBeUndefined();
   });
 
+  it("walks round two bodies shoulder to shoulder before its target, not back and forth (#3707)", () => {
+    // Touching, square across its line to the target just past them.
+    const match = sim(
+      swordsman("a", vec2(100, 210)),
+      dummy("p", vec2(150, 196)),
+      dummy("q", vec2(150, 224)),
+      dummy("d", vec2(190, 210)),
+    );
+    match.requestAttack("a", "d");
+    let turns = 0;
+    let side = 0;
+    let hitAt: number | undefined;
+    for (let t = 0; t < 4 && hitAt === undefined; t += DT) {
+      const before = get(match, "a").position.y;
+      const { log } = match.step(DT);
+      const sideways = get(match, "a").position.y - before;
+      if (Math.abs(sideways) > 0.5) {
+        if (side !== 0 && Math.sign(sideways) !== side) turns += 1;
+        side = Math.sign(sideways);
+      }
+      if (swings(log).some((entry) => entry.events.some((e) => e.targetId === "d"))) hitAt = t;
+    }
+    expect(turns).toBeLessThanOrEqual(1);
+    // 100 u round the pair at its walk speed, with room to spare.
+    expect(hitAt).toBeLessThan(2);
+  });
+
   it("is held, not lost, when it cannot move at all", () => {
     // No speed: every step asks for nothing, so no step is a stall.
     const still = { ...RULES, movement: { ...RULES.movement, maxSpeedUnitsPerSecond: 0 } };

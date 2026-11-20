@@ -9,7 +9,11 @@ import { button, h, inlineConfirm } from "../ui/kit.js";
  * tutorial. DOM only: what to show comes from the session.
  */
 
-/** The attribute a control a step points at carries, never a CSS class. */
+/**
+ * The attribute a control a step points at carries, never a CSS class: a
+ * space-separated list of ids, for a control that is part of more than one
+ * beat's region (#3541).
+ */
 export const TUTORIAL_TARGET = "data-tutorial";
 
 /** The cut-out's room round its target, in px. */
@@ -44,7 +48,7 @@ const POINTER_EVENTS = [
 export interface CoachView {
   readonly title: string;
   readonly line: string;
-  /** The `data-tutorial` id of the control, or region, the beat points at. */
+  /** The `data-tutorial` id of the control, or region, the beat points at: every element with it. */
   readonly target: string;
   readonly objectives: readonly { readonly label: string; readonly done: boolean }[];
   /** Got it, on a pure explanation; a thing to do has no button. */
@@ -53,6 +57,11 @@ export interface CoachView {
 
 export interface CoachOverlay {
   show(view: CoachView): void;
+  /**
+   * The lock lifted and the dim gone, the panel says `line` alone (#3544),
+   * until clicked or `ms` have passed: then the overlay goes, and `onGone`.
+   */
+  farewell(line: string, ms: number, onGone: () => void): void;
   remove(): void;
 }
 
@@ -69,7 +78,20 @@ export interface CoachViewport {
 }
 
 export function tutorialTargetSelector(id: string): string {
-  return `[${TUTORIAL_TARGET}="${id}"]`;
+  return `[${TUTORIAL_TARGET}~="${id}"]`;
+}
+
+/** The box round all of `boxes` that are drawn; none drawn is none. */
+export function unionBox(boxes: readonly CoachRect[]): CoachRect | undefined {
+  const drawn = boxes.filter(({ width, height }) => width > 0 && height > 0);
+  if (drawn.length === 0) {
+    return undefined;
+  }
+  const left = Math.min(...drawn.map((box) => box.left));
+  const top = Math.min(...drawn.map((box) => box.top));
+  const right = Math.max(...drawn.map((box) => box.left + box.width));
+  const bottom = Math.max(...drawn.map((box) => box.top + box.height));
+  return { left, top, width: right - left, height: bottom - top };
 }
 
 /** The lit cut-out round a target's box. */
@@ -229,22 +251,19 @@ export function mountCoachOverlay(
   const skip = button(t("tutorial.skipTutorial"), "coach-skip", () => {
     inlineConfirm(skip, t("tutorial.menu.skipAsk"), t("tutorial.skip"), options.onSkip);
   });
-  panel.appendChild(h("div", "coach-panel-actions")).append(skip);
+  const actions = panel.appendChild(h("div", "coach-panel-actions"));
+  actions.append(skip);
   root.appendChild(coach);
 
   let view: CoachView | undefined;
-  let target: HTMLElement | undefined;
+  let targets: readonly HTMLElement[] = [];
   let shownHole: CoachRect | undefined;
   // A new beat re-places everything, even round the same cut-out.
   let stale = true;
   let frame = 0;
   let removed = false;
 
-  const open = (): HTMLElement[] => [
-    ...(target === undefined ? [] : [target]),
-    ...(bubble.hidden ? [] : [bubble]),
-    panel,
-  ];
+  const open = (): HTMLElement[] => [...targets, ...(bubble.hidden ? [] : [bubble]), panel];
   const above = (node: EventTarget | null): boolean =>
     node instanceof Element && node.closest(ABOVE_THE_LOCK) !== null;
   const swallow = (event: Event): void => {
@@ -278,7 +297,15 @@ export function mountCoachOverlay(
 
   const place = (): void => {
     const viewport = { width: window.innerWidth, height: window.innerHeight };
-    const box = target?.getBoundingClientRect();
+    // A target's own popover, as the profession grid, may hang out of its
+    // box: the cut-out takes it in, so the bubble never sits on it.
+    const box = unionBox(
+      targets.flatMap((target) =>
+        [target, ...target.querySelectorAll(ABOVE_THE_LOCK)].map((node) =>
+          node.getBoundingClientRect(),
+        ),
+      ),
+    );
     const next = box === undefined ? undefined : cutOut(box);
     if (!stale && sameRect(next, shownHole) && !hole.hidden === (next !== undefined)) {
       return;
@@ -324,12 +351,16 @@ export function mountCoachOverlay(
     }
     const found =
       view === undefined
-        ? undefined
-        : (doc.querySelector<HTMLElement>(tutorialTargetSelector(view.target)) ?? undefined);
-    if (found !== target) {
-      target?.classList.remove(PULSE_CLASS);
-      target = found;
-      target?.classList.add(PULSE_CLASS);
+        ? []
+        : [...doc.querySelectorAll<HTMLElement>(tutorialTargetSelector(view.target))];
+    if (found.length !== targets.length || found.some((node, at) => node !== targets[at])) {
+      for (const target of targets) {
+        target.classList.remove(PULSE_CLASS);
+      }
+      targets = found;
+      for (const target of targets) {
+        target.classList.add(PULSE_CLASS);
+      }
       shownHole = undefined;
       hole.hidden = true;
     }
@@ -343,6 +374,25 @@ export function mountCoachOverlay(
   doc.addEventListener("keydown", trapTab, true);
   doc.addEventListener("focusin", keepFocus, true);
   follow();
+
+  let farewellTimer = 0;
+  const unlock = (): void => {
+    cancelAnimationFrame(frame);
+    for (const type of POINTER_EVENTS) {
+      doc.removeEventListener(type, swallow, true);
+    }
+    doc.removeEventListener("keydown", trapTab, true);
+    doc.removeEventListener("focusin", keepFocus, true);
+    for (const target of targets) {
+      target.classList.remove(PULSE_CLASS);
+    }
+  };
+  const remove = (): void => {
+    removed = true;
+    clearTimeout(farewellTimer);
+    unlock();
+    coach.remove();
+  };
 
   return {
     show: (next) => {
@@ -365,16 +415,25 @@ export function mountCoachOverlay(
       follow();
       (next.gotIt === undefined ? open().flatMap(focusables)[0] : gotIt)?.focus();
     },
-    remove: () => {
-      removed = true;
-      cancelAnimationFrame(frame);
-      for (const type of POINTER_EVENTS) {
-        doc.removeEventListener(type, swallow, true);
-      }
-      doc.removeEventListener("keydown", trapTab, true);
-      doc.removeEventListener("focusin", keepFocus, true);
-      target?.classList.remove(PULSE_CLASS);
-      coach.remove();
+    farewell: (line, ms, onGone) => {
+      unlock();
+      dim.hidden = true;
+      hole.hidden = true;
+      bubble.hidden = true;
+      checklist.replaceChildren();
+      actions.hidden = true;
+      panelLine.textContent = line;
+      panelLine.hidden = false;
+      panel.classList.add("coach-farewell");
+      const gone = (): void => {
+        if (!removed) {
+          remove();
+          onGone();
+        }
+      };
+      panel.addEventListener("click", gone);
+      farewellTimer = window.setTimeout(gone, ms);
     },
+    remove,
   };
 }

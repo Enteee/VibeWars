@@ -5,8 +5,8 @@
 
 ## 직업
 
-직업은 열 개예요. Warrior, Ranger, Monk, Necromancer, Mesmer, Elementalist,
-Assassin, Ritualist, Paragon, Dervish. **주** 직업은 내가 무엇인지를 정해요. 그
+직업은 열 개예요. ![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior**, ![Ranger](../../../apps/web/public/icons/profession/ranger.svg) **Ranger**, ![Monk](../../../apps/web/public/icons/profession/monk.svg) **Monk**, ![Necromancer](../../../apps/web/public/icons/profession/necromancer.svg) **Necromancer**, ![Mesmer](../../../apps/web/public/icons/profession/mesmer.svg) **Mesmer**, ![Elementalist](../../../apps/web/public/icons/profession/elementalist.svg) **Elementalist**,
+![Assassin](../../../apps/web/public/icons/profession/assassin.svg) **Assassin**, ![Ritualist](../../../apps/web/public/icons/profession/ritualist.svg) **Ritualist**, ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon**, ![Dervish](../../../apps/web/public/icons/profession/dervish.svg) **Dervish**. **주** 직업은 내가 무엇인지를 정해요. 그
 직업의 스킬과, 주 직업만 받는 **주 속성**(★ 표시)이에요. **보조** 직업은 스킬을
 빌려주지만 주 속성은 빌려주지 않아요.
 
@@ -15,18 +15,18 @@ Assassin, Ritualist, Paragon, Dervish. **주** 직업은 내가 무엇인지를 
 바에는 **슬롯이 여덟 개** 있어요. **정예** 스킬(금색 테두리)은 바에 하나만 들어가요.
 두 번째를 장착하면 첫 번째를 대체해요. 슬롯의 **×** 버튼을 누르면 비워요.
 
-**섬광 인챈트**(Dervish)는 즉시 발동해요. 써도 휘두르기와 걸음이 끊기지 않아서
+![인챈트](../../../apps/web/public/icons/skill-type/enchantment.svg) **섬광 인챈트**(![Dervish](../../../apps/web/public/icons/profession/dervish.svg) **Dervish**)는 즉시 발동해요. 써도 휘두르기와 걸음이 끊기지 않아서
 공격 사이사이에 끼워 넣을 수 있어요. 하나를 쓸 때마다 다른 섬광 인챈트가 1초 동안
 꺼져요.
 
-**형상**(Dervish의 다섯 가지 Avatar: Balthazar, Dwayna, Grenth, Lyssa, Melandru)은
+![형상](../../../apps/web/public/icons/skill-type/form.svg) **형상**(Dervish의 다섯 가지 Avatar: Balthazar, Dwayna, Grenth, Lyssa, Melandru)은
 1분 넘게 나를 바꿔 놓아요. 형상은 인챈트가 아니라서 아무도 벗길 수 없고, 한 번에
 하나의 형상만 될 수 있어요. 하나를 쓰면 그 형상은 45초 동안 사용 불가가 돼요.
 형상이 끝나면 하던 일이 멈춰요. 공격, 걷기, 발동 중이던 스킬 모두요. 계속 걸으려면
 이동 키를 다시 누르세요.
 
 **일부 사격은 다른 공격을 막아요.** Focused Shot과 Needling Shot은 보통 화살보다
-빠르게 날아가지만, 적중할 때마다 다른 공격 스킬이 몇 초 동안 꺼져요. 주문은 영향을
+빠르게 날아가지만, 적중할 때마다 다른 ![공격 스킬](../../../apps/web/public/icons/skill-type/attack.svg) **공격 스킬**이 몇 초 동안 꺼져요. ![주문](../../../apps/web/public/icons/skill-type/spell.svg) **주문**은 영향을
 받지 않아요.
 
 ## 속성
@@ -37,37 +37,37 @@ Assassin, Ritualist, Paragon, Dervish. **주** 직업은 내가 무엇인지를 
 속성을 올리면 그 스킬이 강해져요. 속성에 따라 커지는 수치는 초록색 굵은 글씨로,
 룬과 머리 장비를 포함한 현재 랭크 기준으로 표시돼요.
 
-전투 중에는 랭크가 한동안 바뀔 수 있어요. Weakness는 각 랭크를 하나씩 깎아요. 일부
-저주는 적의 속성을 0으로 정하고, Master of Magic은 내 원소 속성을 13으로 정해요.
+전투 중에는 랭크가 한동안 바뀔 수 있어요. ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness**는 각 랭크를 하나씩 깎아요. 일부
+![저주](../../../apps/web/public/icons/skill-type/hex.svg) **저주**는 적의 속성을 0으로 정하고, Master of Magic은 내 원소 속성을 13으로 정해요.
 이렇게 정해진 랭크는 룬과 Weakness를 모두 무시해요. Signet of Illusions를 쓰면
-다음에 쓰는 다른 속성의 주문들이 내 Illusion Magic 랭크를 써요. Glyph of Elemental
+다음에 쓰는 다른 속성의 ![주문](../../../apps/web/public/icons/skill-type/spell.svg) **주문**들이 내 Illusion Magic 랭크를 써요. Glyph of Elemental
 Power와 Ritual Lord처럼 일부 스킬은 한동안, 또는 다음 주문들에 대해 속성을 올려요.
 0으로 둔 속성도요. Master of Magic처럼 정해진 랭크는 이런 상승보다 우선해요.
 
 ## 메아리
 
-Paragon의 **메아리**는 아군 하나에게 거는 긴 버프예요. 그 아군에게 걸린 영창이나
-외침이 끝날 때마다 **후렴**은 전체 지속 시간으로 갱신되고, **피날레**는 효과를
+![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon**의 ![메아리](../../../apps/web/public/icons/skill-type/echo.svg) **메아리**는 아군 하나에게 거는 긴 버프예요. 그 아군에게 걸린 ![영창](../../../apps/web/public/icons/skill-type/chant.svg) **영창**이나
+![외침](../../../apps/web/public/icons/skill-type/shout.svg) **외침**이 끝날 때마다 **후렴**은 전체 지속 시간으로 갱신되고, **피날레**는 효과를
 발휘해요. 끝나기 전에 다시 걸린 영창이나 외침은 끝난 게 아니에요. 메아리를 제거하는
 것은 없어요. 시간이 다 되거나 지닌 사람이 죽으면 끝나요. 대부분은 정령을 대상으로
 할 수 없어요.
 
 ## 다른 스킬로 바뀌는 스킬
 
-일부 Mesmer 스킬은 한동안 자기 슬롯에 다른 스킬을 넣어요. Arcane Echo와 Echo는
+일부 ![Mesmer](../../../apps/web/public/icons/profession/mesmer.svg) **Mesmer** 스킬은 한동안 자기 슬롯에 다른 스킬을 넣어요. ![Arcane Echo](../../../apps/web/public/icons/status/arcane-echo.svg) **Arcane Echo**와 ![Echo](../../../apps/web/public/icons/status/echo.svg) **Echo**는
 다음에 쓰는 스킬을 복사해요. **Inspired Enchantment**와 **Inspired Hex**는 자기가
-제거한 인챈트나 저주를 건 스킬로 20초 동안 바뀌어요. **Arcane Thievery**는 적에게서
-사용 불가로 만든 주문으로, 그 사용 불가가 지속되는 동안 바뀌어요. 복사본은 자기만의
+제거한 ![인챈트](../../../apps/web/public/icons/skill-type/enchantment.svg) **인챈트**나 ![저주](../../../apps/web/public/icons/skill-type/hex.svg) **저주**를 건 스킬로 20초 동안 바뀌어요. **Arcane Thievery**는 적에게서
+사용 불가로 만든 ![주문](../../../apps/web/public/icons/skill-type/spell.svg) **주문**으로, 그 사용 불가가 지속되는 동안 바뀌어요. 복사본은 자기만의
 재충전이 있어요. 복사본이 끝나면 원래 스킬이 돌아와서 자기 재충전을 시작하고, 아직
 진행 중이던 복사본의 시전은 실패해요. 정령이나 다른 효과가 건 효과는 복사할 수
 없지만, 그것을 제거하면 에너지는 여전히 받아요.
 
 ## 샘과 문양
 
-Necromancer의 **샘**은 가장 가까운 시체를 이용해요. 근처에 시체가 없으면 샘이 대신
+![Necromancer](../../../apps/web/public/icons/profession/necromancer.svg) **Necromancer**의 ![샘](../../../apps/web/public/icons/skill-type/well.svg) **샘**은 가장 가까운 시체를 이용해요. 근처에 시체가 없으면 샘이 대신
 내 체력의 66%를 희생시키고 내가 서 있는 곳에 나타나요.
 
-Elementalist의 **문양**은 다음 주문을 바꿔요. 차단되지 않거나, 즉시 시전되거나,
+![Elementalist](../../../apps/web/public/icons/profession/elementalist.svg) **Elementalist**의 ![문양](../../../apps/web/public/icons/skill-type/glyph.svg) **문양**은 다음 ![주문](../../../apps/web/public/icons/skill-type/spell.svg) **주문**을 바꿔요. 차단되지 않거나, 즉시 시전되거나,
 바로 재충전되거나, 비용이 줄어요. 새 문양은 기존 문양을 대체해요.
 
 ## 개입
@@ -75,8 +75,8 @@ Elementalist의 **문양**은 다음 주문을 바꿔요. 차단되지 않거나
 "다음에 피해로 체력이 N% 아래로 떨어지면" 반응하는 스킬은, 나를 살려 두면서 그 선
 아래로 떨어뜨리는 모든 공격이나 생명력 강탈에 반응해요. 공격 전에 이미 선 아래에
 있었어도 마찬가지예요. 희생하거나 체력 감소로 잃는 체력에는 절대 반응하지 않아요.
-Judge's Intervention 같은 치명 피해 방지는 죽이는 공격 전체를 없애요. 피해도 없고
-죽음도 없어요. Faithful Intervention과 Illusion of Weakness는 지속 시간이 없어요.
+![Judge's Intervention](../../../apps/web/public/icons/status/judges-intervention.svg) **Judge's Intervention** 같은 치명 피해 방지는 죽이는 공격 전체를 없애요. 피해도 없고
+죽음도 없어요. ![Faithful Intervention](../../../apps/web/public/icons/status/faithful-intervention.svg) **Faithful Intervention**과 ![Illusion of Weakness](../../../apps/web/public/icons/status/illusion-of-weakness.svg) **Illusion of Weakness**는 지속 시간이 없어요.
 피해, 제거, 죽음으로 끝날 때까지 지속되고, 그동안 나를 치유해요.
 
 ## 라이브러리
@@ -99,18 +99,18 @@ Judge's Intervention 같은 치명 피해 방지는 죽이는 공격 전체를 �
 
 ## 아이템 주문
 
-Ritualist의 **아이템 주문**은 정령의 **유골**을 손에 쥐여 줘요. 들고 있는 동안
+![Ritualist](../../../apps/web/public/icons/profession/ritualist.svg) **Ritualist**의 ![아이템 주문](../../../apps/web/public/icons/skill-type/item-spell.svg) **아이템 주문**은 정령의 **유골**을 손에 쥐여 줘요. 들고 있는 동안
 보너스가 있고, 떨어뜨릴 때 **내려놓기 효과**가 있어요. 시간이 다 되거나, 죽거나,
 체력 바 위의 **유골 내려놓기**를 누르거나, 다른 아이템 주문을 시전하거나, 그림자
 이동을 하거나, 무기를 바꾸거나, 깃발이나 유물을 들면 떨어뜨려요. 들고 있는 동안은
-손이 차 있어요. 공격도 공격 스킬도 못 쓰지만, 최고 속도로 걷고 주문은 그대로 시전할
+손이 차 있어요. 공격도 ![공격 스킬](../../../apps/web/public/icons/skill-type/attack.svg) **공격 스킬**도 못 쓰지만, 최고 속도로 걷고 ![주문](../../../apps/web/public/icons/skill-type/spell.svg) **주문**은 그대로 시전할
 수 있어요. 유골을 제거하는 것은 없어요. 모든 끝은 내려놓기예요.
 
 ## 그림자 이동
 
 **그림자 이동**은 중간에 걷지 않고 나를 바로 옮겨요. 대부분은 대상에게 이동시켜요.
 Shadow of Haste와 Shadow Walk처럼 일부는 끝날 때 시전했던 곳으로 돌려보내요.
-**Recall**은 끝날 때만 그 아군에게 이동시키고, 3초 동안 모든 스킬을 사용 불가로
+![Recall](../../../apps/web/public/icons/status/recall.svg) **Recall**은 끝날 때만 그 아군에게 이동시키고, 3초 동안 모든 스킬을 사용 불가로
 만들어요. **Swap**은 우리 편 정령이나 미니언 하나와 자리를 바꿔요.
 
 ## 빌드 공유
@@ -128,14 +128,14 @@ GW1 템플릿 코드로 줘요. **복사**를 누르고 보내세요.
 바꾼 게 있으면 먼저 물어봐요. **공유**, **GW1 코드 불러오기**, **복제**, **삭제**는
 **⋯** 아래에 있어요.
 
-팀 코드는 대신 **팀 빌더**에서 불러와요. **팀 불러오기**를 누르고, 코드를 붙여넣고
-**불러오기**를 누르거나, 팀 빌더 아무 곳에나 붙여넣으세요.
+팀 코드는 대신 **팀 빌더**에서 불러와요. 거기 아무 곳에나 붙여넣거나, 팀 빌드를
+열고 그 팀의 **⋯** → **팀 불러오기**를 쓰세요.
 
 ## 팀 빌드
 
 **팀 빌드**는 자기만의 캐릭터들로 이루어진 팀이에요. **팀 빌더**에서 만들고, 내
 캐릭터와는 따로 보관돼요. 팀 빌드는 각각 거기에, 오직 거기에만 카드로 나와요. **새 팀
-빌드**로 만들고, **팀 불러오기**로 공유받은 팀을 불러오고, 카드나 그 카드의 **편집**을 클릭하면 열려요. 팀 빌드는
+빌드**로 만들고, 거기에 팀 코드를 붙여넣으면 공유받은 팀을 불러오고, 카드나 그 카드의 **편집**을 클릭하면 열려요. 팀 빌드는
 [팀 로비](modes.md#팀-로비)에서 제안해요.
 
 모든 팀 빌드에는 규모가 있어요. 2v2, 4v4, 8v8이에요(1v1 팀 빌드는 없어요). 사이드바의

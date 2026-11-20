@@ -160,7 +160,12 @@ describe("lobby host", () => {
 
   it("plays a member's cape in the lobby's match, and none without a valid tag (#1422)", async () => {
     const lobby = await openLobby();
-    const cape = { main: "gold", trim: "black", emblem: packEmblem([7, 7, 7]) } as const;
+    const cape = {
+      main: "e6c04a",
+      trim: "23272e",
+      emblemColours: ["9bd445"],
+      emblem: packEmblem([1, 1, 1]),
+    } as const;
     const ann = await lobby.join("Ann", "Vb", cape);
     const bob = await lobby.join("Bob", null, cape);
     const cy = await lobby.join("Cy", "[x]", cape);
@@ -2149,6 +2154,7 @@ describe("the key gate (#1681, ADR-0043)", () => {
     relayPub: null,
     playerPubkey: WIRE_PLAYER_KEY.pubkey,
     ascentMorale: 0,
+    ranked: null,
   });
 
   /** The nonce `got` was challenged with. */

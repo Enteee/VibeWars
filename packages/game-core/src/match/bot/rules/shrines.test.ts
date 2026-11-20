@@ -1,7 +1,13 @@
 import { describe, expect, it } from "vitest";
 
 import { distance, vec2, type Vec2 } from "../../../vec2.js";
-import { NO_OBJECTIVES, type BotObjectives } from "../../behaviour.js";
+import {
+  createCursor,
+  decide,
+  NO_OBJECTIVES,
+  type BehaviourContext,
+  type BotObjectives,
+} from "../../behaviour.js";
 import type { CapturePoint } from "../../capture-points.js";
 import {
   ANNIHILATION_MATCH_RULES,
@@ -15,6 +21,7 @@ import {
   body,
   BOT,
   BOUNDS,
+  contextFor,
   DT,
   fighter,
   match,
@@ -54,6 +61,17 @@ describe("shrines: Capture Points bots take and hold shrines (#2580)", () => {
     const intent = askBot(sim, "bot", playing(shrine(vec2(110, 100))));
     expect(intent.moveTo).toBeUndefined();
     expect(intent.useSkillId).toBeUndefined();
+  });
+
+  it("passes over a shrine it gave up, boxed in on the way, for the next (#3702)", () => {
+    const sim = match([body("bot", 0, vec2(100, 100), { behaviour: BOT }), far()]);
+    const objectives = playing(shrine(vec2(400, 100)), shrine(vec2(100, 600)));
+    const ask = (jammedGoal: BehaviourContext["jammedGoal"]) =>
+      decide(BOT, createCursor(), contextFor(sim, "bot", { objectives, jammedGoal })).moveTo;
+    expect(ask(undefined)).toEqual(vec2(400, 100));
+    expect(ask({ at: vec2(390, 110), layer: 0 })).toEqual(vec2(100, 600));
+    // Given up on another layer: not this one.
+    expect(ask({ at: vec2(400, 100), layer: 1 })).toEqual(vec2(400, 100));
   });
 
   it("walks to the one shrine it does not own", () => {

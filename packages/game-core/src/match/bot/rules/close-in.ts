@@ -1,4 +1,4 @@
-import { NOTHING, nearestToWalk } from "./shared.js";
+import { NOTHING, nearJammedGoal, nearestToWalk } from "./shared.js";
 import type { BotRule } from "./types.js";
 
 /** How long close-in keeps a foe it priced walks to before pricing again (#3353). */
@@ -13,7 +13,8 @@ export const REPRICE_SECONDS = 0.5;
 const closeIn: BotRule = {
   order: 120,
   name: "close-in",
-  decide: ({ context, self, foes, cursor }) => {
+  decide: ({ context, self, foes: all, cursor }) => {
+    const foes = all.filter((foe) => !nearJammedGoal(context, foe.position, foe.layer));
     const kept = cursor.walkFoe;
     let foe =
       kept !== undefined && context.now - kept.pricedAt < REPRICE_SECONDS

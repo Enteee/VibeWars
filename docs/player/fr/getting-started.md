@@ -6,6 +6,10 @@ match. Pas de compte, rien à installer : le jeu tourne dans cet onglet du
 navigateur. VibeWars requiert un clavier et une souris. Ça ne marche pas sur
 téléphone ni sur tablette tactile : ouvre-le sur un ordinateur.
 
+## Le tutoriel
+
+La première fois que tu ouvres VibeWars, il te propose un court tutoriel : une marche dans un canyon qui t'apprend à te déplacer et à combattre. Il continue ensuite dans le menu, une étape à la fois : change la spécialisation de ton personnage, monte une équipe de deux, découvre à quoi sert chaque mode, puis inscris cette équipe dans la file pour un premier match 2v2 en Arène d'équipe. Tant qu'une étape désigne un contrôle, le reste du menu est assombri. Tu peux passer le tutoriel à tout moment avec **Passer le tutoriel**.
+
 ## La colonne des modes
 
 La colonne à gauche de l'écran principal contient les
@@ -194,14 +198,14 @@ première visite, comme `AshenWolf` ; écris par-dessus pour le changer. Vide, t
 joues sous le nom `Joueur`. Tape un **Tag de guilde** de 2 à 4 lettres ou
 chiffres à côté, et tout le monde le voit après ton nom, comme `Ente [VIBE]`.
 Avec un tag, le créateur de **Cape de guilde** apparaît en dessous : choisis la
-couleur de la cape, celle de la bordure et un emblème, et ton corps porte la
+couleur de cape et de bordure que tu veux, dessine un emblème, et ton corps porte la
 cape dans chaque match : elle se replie en une fine bande sur ton bord quand tu
 es immobile et flotte derrière toi quand tu bouges. Tes personnages dans le
-menu la montrent aussi. **Sans cape** la retire.
+menu la montrent aussi. **Sans cape** la retire. Une figurine montre la cape telle qu'elle apparaît en jeu. Une couleur trop proche du bleu de ton équipe ou du rouge de tes adversaires en est un peu écartée quand elle est dessinée, pour qu'aucune cape ne ressemble à une équipe ; la figurine la montre telle que tout le monde la verra.
 
 Un changement s'applique tout de suite au salon où tu es.
 
-**Dessine ton propre emblème.** **Modifier l'emblème**, sous les emblèmes de départ, ouvre à leur place une grille de 16×16. Choisis une couleur ou **Vide**, puis dessine au **Crayon**, efface à la **Gomme** ou colore une zone avec **Remplir**. **Miroir** peint les moitiés gauche et droite à la fois. **Tout effacer** vide la grille et **Défaire** revient d'un pas. La petite vue à côté de la grille montre l'emblème à sa taille en match. **OK** le garde, **Annuler** jette le dessin. Les flèches et Espace dessinent aussi au clavier.
+**Dessine ton emblème.** La grille d'emblème de 16×16 est toujours sous les couleurs de la cape et de la bordure. Choisis une couleur ou **Vide**, puis dessine au **Crayon**, efface à la **Gomme** ou colore une zone avec **Remplir**. **Ajouter une couleur** donne une couleur de plus à l'emblème, jusqu'à 15, et le sélecteur de couleur à côté change celle choisie, avec tout ce qui est dessiné dans cette couleur. **Partir de** pose une des huit formes sur la grille dans la couleur choisie. **Miroir** peint les moitiés gauche et droite à la fois. **Tout effacer** vide la grille et **Défaire** revient d'un pas. La petite vue à côté de la grille montre l'emblème à sa taille en match. Chaque trait est gardé dès que tu le termines. Les flèches et Espace dessinent aussi au clavier.
 
 **Copier le lien de guilde**, sous le créateur de cape, copie un lien qui porte ton tag et ta cape. Qui l'ouvre voit **Rejoindre la guilde [VIBE] ?** : **Rejoindre** lui donne ton tag et ta cape, **Non** ne change rien. N'importe qui peut envoyer un tel lien et personne ne possède un tag, donc le jeu demande toujours d'abord.
 

@@ -7,7 +7,7 @@
 ## ชุดอาวุธ
 
 คุณพกได้ถึง **สี่ชุดอาวุธ** แต่ละชุดคืออาวุธหนึ่งชิ้น และถ้าอาวุธนั้น
-เหลือมือว่างหนึ่งข้าง ก็มีของมือรอง เช่น โล่หรือโฟกัส ชุดที่ 1 คือ
+เหลือมือว่างหนึ่งข้าง ก็มีของมือรอง เช่น ![โล่](../../../apps/web/public/icons/offhand/shield.svg) **โล่** หรือ ![โฟกัส](../../../apps/web/public/icons/offhand/focus.svg) **โฟกัส** ชุดที่ 1 คือ
 ชุดที่คุณเริ่มด้วย ชุดอื่นๆ ปล่อยว่างไว้ได้
 
 ในแมตช์ สลับชุดด้วย **1 ถึง 4** (**F1 ถึง F4** ในปุ่มแบบคลาสสิก)
@@ -16,8 +16,8 @@
 อาวุธบางประเภท และพลังงานสูงสุดของคุณ ทั้งหมดเป็นไปตามชุดที่ถืออยู่
 
 อาวุธต้องการระดับ 9 ในค่าสถานะของมัน: ต่ำกว่านั้นจะตีได้หนึ่งในสามของ
-ความเสียหาย และตัวแก้ไขจะบอกเป็นสีแดง ดาบใช้
-Swordsmanship เสมอ แต่ไม้เท้า คทา โล่ หรือโฟกัส ทำมาสำหรับ
+ความเสียหาย และตัวแก้ไขจะบอกเป็นสีแดง ![ดาบ](../../../apps/web/public/icons/weapon/sword.svg) **ดาบ** ใช้
+Swordsmanship เสมอ แต่ ![ไม้เท้า](../../../apps/web/public/icons/weapon/staff.svg) **ไม้เท้า** ![คทา](../../../apps/web/public/icons/weapon/wand.svg) **คทา** โล่ หรือโฟกัส ทำมาสำหรับ
 ค่าสถานะที่คุณเลือก: คลิกมือของมันบนหุ่น (**6** สำหรับอาวุธ
 **7** สำหรับมือรอง) แล้วเลือก
 
@@ -25,8 +25,8 @@ Swordsmanship เสมอ แต่ไม้เท้า คทา โล่ �
 
 อาวุธและของมือรองทุกชิ้นมีช่องสำหรับม็อด: **คำนำหน้า** **คำต่อท้าย**
 และ **จารึก** คลิกมือบนหุ่น หรือแถวของมันที่อยู่ข้างๆ
-เพื่อเลือก แต่ละอันบอกว่ามันทำอะไร คทา โล่
-และโฟกัสไม่รับคำนำหน้า มือเปล่าไม่รับอะไรเลย ม็อดมีค่า
+เพื่อเลือก แต่ละอันบอกว่ามันทำอะไร ![คทา](../../../apps/web/public/icons/weapon/wand.svg) **คทา** ![โล่](../../../apps/web/public/icons/offhand/shield.svg) **โล่**
+และ ![โฟกัส](../../../apps/web/public/icons/offhand/focus.svg) **โฟกัส** ไม่รับคำนำหน้า มือเปล่าไม่รับอะไรเลย ม็อดมีค่า
 ดีที่สุดเสมอ และแต่ละชุดอาวุธมีม็อดของตัวเอง ดังนั้นการสลับชุดก็สลับ
 ม็อดด้วย: พลังชีวิตและพลังงานสูงสุดเปลี่ยนตามชุดที่ถืออยู่
 การเปลี่ยนอาวุธจะเก็บม็อดที่ยังใส่ได้ไว้ และบอกคุณว่ามัน
@@ -35,29 +35,29 @@ Swordsmanship เสมอ แต่ไม้เท้า คทา โล่ �
 <!-- prettier-ignore -->
 | ม็อด | ช่อง | ใส่ได้กับ | ผล |
 | --- | --- | --- | --- |
-| Defensive | คำนำหน้า | ไม้เท้า | เกราะ +5 |
+| Defensive | คำนำหน้า | ![ไม้เท้า](../../../apps/web/public/icons/weapon/staff.svg) **ไม้เท้า** | เกราะ +5 |
 | Hale | คำนำหน้า | ไม้เท้า | พลังชีวิต +30 |
 | Insightful | คำนำหน้า | ไม้เท้า | พลังงาน +5 |
 | of Defense | คำต่อท้าย | อาวุธประชิดหรือยิงทุกชนิด, ไม้เท้า | เกราะ +5 |
 | of Fortitude | คำต่อท้าย | อาวุธประชิดหรือยิงทุกชนิด, ไม้เท้า, โล่, โฟกัส | พลังชีวิต +30 |
 | of Shelter | คำต่อท้าย | อาวุธประชิดหรือยิงทุกชนิด, ไม้เท้า | เกราะ +7 (ต่อความเสียหายกายภาพ) |
 | of Warding | คำต่อท้าย | อาวุธประชิดหรือยิงทุกชนิด, ไม้เท้า | เกราะ +7 (ต่อความเสียหายธาตุ) |
-| "Cast Out the Unclean" | จารึก | โล่, โฟกัส | ลดระยะเวลา Disease บนตัวคุณ 20% |
-| "Fear Cuts Deeper" | จารึก | โล่, โฟกัส | ลดระยะเวลา Bleeding บนตัวคุณ 20% |
-| "I Can See Clearly Now" | จารึก | โล่, โฟกัส | ลดระยะเวลา Blinded บนตัวคุณ 20% |
+| "Cast Out the Unclean" | จารึก | โล่, โฟกัส | ลดระยะเวลา ![Disease](../../../apps/web/public/icons/status/disease.svg) **Disease** บนตัวคุณ 20% |
+| "Fear Cuts Deeper" | จารึก | โล่, โฟกัส | ลดระยะเวลา ![Bleeding](../../../apps/web/public/icons/status/bleeding.svg) **Bleeding** บนตัวคุณ 20% |
+| "I Can See Clearly Now" | จารึก | โล่, โฟกัส | ลดระยะเวลา ![Blinded](../../../apps/web/public/icons/status/blind.svg) **Blinded** บนตัวคุณ 20% |
 | "I have the power!" | จารึก | อาวุธประชิดหรือยิงทุกชนิด | พลังงาน +5 |
 | "Leaf on the Wind" | จารึก | โล่, โฟกัส | เกราะ +10 (ต่อความเสียหายความเย็น) |
 | "Like a Rolling Stone" | จารึก | โล่, โฟกัส | เกราะ +10 (ต่อความเสียหายดิน) |
 | "Live for Today" | จารึก | โฟกัส | พลังงาน +15, การฟื้นพลังงาน -1 |
 | "Not the face!" | จารึก | โล่, โฟกัส | เกราะ +10 (ต่อความเสียหายทุบ) |
-| "Only the Strong Survive" | จารึก | โล่, โฟกัส | ลดระยะเวลา Weakness บนตัวคุณ 20% |
-| "Pure of Heart" | จารึก | โล่, โฟกัส | ลดระยะเวลา Poison บนตัวคุณ 20% |
+| "Only the Strong Survive" | จารึก | โล่, โฟกัส | ลดระยะเวลา ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness** บนตัวคุณ 20% |
+| "Pure of Heart" | จารึก | โล่, โฟกัส | ลดระยะเวลา ![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison** บนตัวคุณ 20% |
 | "Riders on the Storm" | จารึก | โล่, โฟกัส | เกราะ +10 (ต่อความเสียหายสายฟ้า) |
 | "Seize the Day" | จารึก | ไม้เท้า, คทา | พลังงาน +15, การฟื้นพลังงาน -1 |
 | "Sleep Now in the Fire" | จารึก | โล่, โฟกัส | เกราะ +10 (ต่อความเสียหายไฟ) |
-| "Soundness of Mind" | จารึก | โล่, โฟกัส | ลดระยะเวลา Dazed บนตัวคุณ 20% |
-| "Strength of Body" | จารึก | โล่, โฟกัส | ลดระยะเวลา Deep Wound บนตัวคุณ 20% |
-| "Swift as the Wind" | จารึก | โล่, โฟกัส | ลดระยะเวลา Crippled บนตัวคุณ 20% |
+| "Soundness of Mind" | จารึก | โล่, โฟกัส | ลดระยะเวลา ![Dazed](../../../apps/web/public/icons/status/dazed.svg) **Dazed** บนตัวคุณ 20% |
+| "Strength of Body" | จารึก | โล่, โฟกัส | ลดระยะเวลา ![Deep Wound](../../../apps/web/public/icons/status/deep-wound.svg) **Deep Wound** บนตัวคุณ 20% |
+| "Swift as the Wind" | จารึก | โล่, โฟกัส | ลดระยะเวลา ![Crippled](../../../apps/web/public/icons/status/crippled.svg) **Crippled** บนตัวคุณ 20% |
 | "The Riddle of Steel" | จารึก | โล่, โฟกัส | เกราะ +10 (ต่อความเสียหายฟัน) |
 | "Through Thick and Thin" | จารึก | โล่, โฟกัส | เกราะ +10 (ต่อความเสียหายแทง) |
 
@@ -161,11 +161,11 @@ Swordsmanship เสมอ แต่ไม้เท้า คทา โล่ �
 | รูนค่าสถานะ Minor | +1 ให้ค่าสถานะหนึ่ง |
 | รูนค่าสถานะ Major | +2 ให้ค่าสถานะหนึ่ง, พลังชีวิต -35 |
 | รูนค่าสถานะ Superior | +3 ให้ค่าสถานะหนึ่ง, พลังชีวิต -75 |
-| Vigor | พลังชีวิตเพิ่มขึ้น (+30, +41 หรือ +50) |
-| Vitae | พลังชีวิต +10 |
-| Attunement | พลังงานเพิ่มขึ้น (+3, +6 หรือ +9) |
-| Clarity, Purity, Recovery, Restoration | สภาวะผิดปกติสองอย่างหมดผลเร็วขึ้นอย่างละ 20% |
-| Absorption (Warrior) | ความเสียหายกายภาพจากการโจมตีแต่ละครั้งลดลง |
+| ![Vigor](../../../apps/web/public/icons/rune/vigor.svg) **Vigor** | พลังชีวิตเพิ่มขึ้น (+30, +41 หรือ +50) |
+| ![Vitae](../../../apps/web/public/icons/rune/vitae.svg) **Vitae** | พลังชีวิต +10 |
+| ![Attunement](../../../apps/web/public/icons/rune/attunement.svg) **Attunement** | พลังงานเพิ่มขึ้น (+3, +6 หรือ +9) |
+| ![Clarity](../../../apps/web/public/icons/rune/clarity.svg) **Clarity**, ![Purity](../../../apps/web/public/icons/rune/purity.svg) **Purity**, ![Recovery](../../../apps/web/public/icons/rune/recovery.svg) **Recovery**, ![Restoration](../../../apps/web/public/icons/rune/restoration.svg) **Restoration** | สภาวะผิดปกติสองอย่างหมดผลเร็วขึ้นอย่างละ 20% |
+| ![Absorption](../../../apps/web/public/icons/rune/absorption.svg) **Absorption** (![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior**) | ความเสียหายกายภาพจากการโจมตีแต่ละครั้งลดลง |
 
 คุณเลือกรูนของชิ้นเกราะได้ที่เดียวกับอินซิกเนีย: คลิกชิ้นนั้น
 บนหุ่น

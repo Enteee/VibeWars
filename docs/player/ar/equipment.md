@@ -7,7 +7,7 @@
 ## مجموعات الأسلحة
 
 تحمل حتى **أربع مجموعات أسلحة**، كل منها سلاح، وإن ترك السلاح
-يدًا حرة، يد ثانية مثل Shield أو Focus. المجموعة 1 هي
+يدًا حرة، يد ثانية مثل ![Shield](../../../apps/web/public/icons/offhand/shield.svg) **Shield** أو ![Focus](../../../apps/web/public/icons/offhand/focus.svg) **Focus**. المجموعة 1 هي
 التي تبدأ بها؛ ويمكن أن تبقى الأخريات فارغة.
 
 في المباراة، بدّل المجموعات بـ **1 إلى 4** (**F1 إلى F4** في مفاتيح كلاسيكي).
@@ -16,8 +16,8 @@
 سلاحًا معينًا، وطاقتك القصوى كلها تتبع المجموعة التي في يدك.
 
 يحتاج السلاح إلى الرتبة 9 في سمته: ودونها يضرب بثلث
-ضرره، ويقول المحرر ذلك بالأحمر. الـ Sword دائمًا
-Swordsmanship، أما Staff أو Wand أو Shield أو Focus فيُصنع لسمة
+ضرره، ويقول المحرر ذلك بالأحمر. الـ ![Sword](../../../apps/web/public/icons/weapon/sword.svg) **Sword** دائمًا
+Swordsmanship، أما ![Staff](../../../apps/web/public/icons/weapon/staff.svg) **Staff** أو ![Wand](../../../apps/web/public/icons/weapon/wand.svg) **Wand** أو Shield أو Focus فيُصنع لسمة
 تختارها أنت: انقر يده على المجسّم (**6** للسلاح،
 **7** لليد الثانية) واختر واحدة.
 
@@ -25,40 +25,40 @@ Swordsmanship، أما Staff أو Wand أو Shield أو Focus فيُصنع لس�
 
 لكل سلاح ويد ثانية خانات للتعديلات: **بادئة**، و**لاحقة**،
 و**نقش**. انقر اليد على المجسّم، أو صفّها بجانبه،
-لتختارها؛ وكل واحدة تقول ما تفعله. لا يقبل Wand وShield
-وFocus بادئة؛ واليدان العاريتان لا تقبلان شيئًا. التعديل دائمًا بأفضل
+لتختارها؛ وكل واحدة تقول ما تفعله. لا يقبل ![Wand](../../../apps/web/public/icons/weapon/wand.svg) **Wand** و![Shield](../../../apps/web/public/icons/offhand/shield.svg) **Shield**
+و![Focus](../../../apps/web/public/icons/offhand/focus.svg) **Focus** بادئة؛ واليدان العاريتان لا تقبلان شيئًا. التعديل دائمًا بأفضل
 قيمه، وكل مجموعة أسلحة ترتدي تعديلاتها الخاصة، فتبديل المجموعات يبدّل
 تعديلاتها أيضًا: الصحة والطاقة القصويان تنتقلان مع المجموعة التي في اليد.
 وتغيير السلاح يُبقي التعديلات التي لا تزال تناسبه ويخبرك بما
 أسقطه.
 
-| التعديل                   | الخانة | يناسب                               | الأثر                              |
-| ------------------------- | ------ | ----------------------------------- | ---------------------------------- |
-| Defensive                 | بادئة  | Staff                               | درع +5                             |
-| Hale                      | بادئة  | Staff                               | +30 صحة                            |
-| Insightful                | بادئة  | Staff                               | طاقة +5                            |
-| of Defense                | لاحقة  | أي سلاح قتالي، Staff                | درع +5                             |
-| of Fortitude              | لاحقة  | أي سلاح قتالي، Staff، Shield، Focus | +30 صحة                            |
-| of Shelter                | لاحقة  | أي سلاح قتالي، Staff                | درع +7 (ضد الضرر الجسدي)           |
-| of Warding                | لاحقة  | أي سلاح قتالي، Staff                | درع +7 (ضد الضرر العنصري)          |
-| "Cast Out the Unclean"    | نقش    | Shield، Focus                       | يقلل مدة Disease عليك بنسبة 20%    |
-| "Fear Cuts Deeper"        | نقش    | Shield، Focus                       | يقلل مدة Bleeding عليك بنسبة 20%   |
-| "I Can See Clearly Now"   | نقش    | Shield، Focus                       | يقلل مدة Blinded عليك بنسبة 20%    |
-| "I have the power!"       | نقش    | أي سلاح قتالي                       | طاقة +5                            |
-| "Leaf on the Wind"        | نقش    | Shield، Focus                       | درع +10 (ضد ضرر البرد)             |
-| "Like a Rolling Stone"    | نقش    | Shield، Focus                       | درع +10 (ضد ضرر الأرض)             |
-| "Live for Today"          | نقش    | Focus                               | طاقة +15، تجدد الطاقة -1           |
-| "Not the face!"           | نقش    | Shield، Focus                       | درع +10 (ضد الضرر الراض)           |
-| "Only the Strong Survive" | نقش    | Shield، Focus                       | يقلل مدة Weakness عليك بنسبة 20%   |
-| "Pure of Heart"           | نقش    | Shield، Focus                       | يقلل مدة Poison عليك بنسبة 20%     |
-| "Riders on the Storm"     | نقش    | Shield، Focus                       | درع +10 (ضد ضرر البرق)             |
-| "Seize the Day"           | نقش    | Staff، Wand                         | طاقة +15، تجدد الطاقة -1           |
-| "Sleep Now in the Fire"   | نقش    | Shield، Focus                       | درع +10 (ضد ضرر النار)             |
-| "Soundness of Mind"       | نقش    | Shield، Focus                       | يقلل مدة Dazed عليك بنسبة 20%      |
-| "Strength of Body"        | نقش    | Shield، Focus                       | يقلل مدة Deep Wound عليك بنسبة 20% |
-| "Swift as the Wind"       | نقش    | Shield، Focus                       | يقلل مدة Crippled عليك بنسبة 20%   |
-| "The Riddle of Steel"     | نقش    | Shield، Focus                       | درع +10 (ضد الضرر القاطع)          |
-| "Through Thick and Thin"  | نقش    | Shield، Focus                       | درع +10 (ضد الضرر الثاقب)          |
+| التعديل                   | الخانة | يناسب                                                               | الأثر                                                                                                      |
+| ------------------------- | ------ | ------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| Defensive                 | بادئة  | ![Staff](../../../apps/web/public/icons/weapon/staff.svg) **Staff** | درع +5                                                                                                     |
+| Hale                      | بادئة  | Staff                                                               | +30 صحة                                                                                                    |
+| Insightful                | بادئة  | Staff                                                               | طاقة +5                                                                                                    |
+| of Defense                | لاحقة  | أي سلاح قتالي، Staff                                                | درع +5                                                                                                     |
+| of Fortitude              | لاحقة  | أي سلاح قتالي، Staff، Shield، Focus                                 | +30 صحة                                                                                                    |
+| of Shelter                | لاحقة  | أي سلاح قتالي، Staff                                                | درع +7 (ضد الضرر الجسدي)                                                                                   |
+| of Warding                | لاحقة  | أي سلاح قتالي، Staff                                                | درع +7 (ضد الضرر العنصري)                                                                                  |
+| "Cast Out the Unclean"    | نقش    | Shield، Focus                                                       | يقلل مدة ![Disease](../../../apps/web/public/icons/status/disease.svg) **Disease** عليك بنسبة 20%          |
+| "Fear Cuts Deeper"        | نقش    | Shield، Focus                                                       | يقلل مدة ![Bleeding](../../../apps/web/public/icons/status/bleeding.svg) **Bleeding** عليك بنسبة 20%       |
+| "I Can See Clearly Now"   | نقش    | Shield، Focus                                                       | يقلل مدة ![Blinded](../../../apps/web/public/icons/status/blind.svg) **Blinded** عليك بنسبة 20%            |
+| "I have the power!"       | نقش    | أي سلاح قتالي                                                       | طاقة +5                                                                                                    |
+| "Leaf on the Wind"        | نقش    | Shield، Focus                                                       | درع +10 (ضد ضرر البرد)                                                                                     |
+| "Like a Rolling Stone"    | نقش    | Shield، Focus                                                       | درع +10 (ضد ضرر الأرض)                                                                                     |
+| "Live for Today"          | نقش    | Focus                                                               | طاقة +15، تجدد الطاقة -1                                                                                   |
+| "Not the face!"           | نقش    | Shield، Focus                                                       | درع +10 (ضد الضرر الراض)                                                                                   |
+| "Only the Strong Survive" | نقش    | Shield، Focus                                                       | يقلل مدة ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness** عليك بنسبة 20%       |
+| "Pure of Heart"           | نقش    | Shield، Focus                                                       | يقلل مدة ![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison** عليك بنسبة 20%             |
+| "Riders on the Storm"     | نقش    | Shield، Focus                                                       | درع +10 (ضد ضرر البرق)                                                                                     |
+| "Seize the Day"           | نقش    | Staff، Wand                                                         | طاقة +15، تجدد الطاقة -1                                                                                   |
+| "Sleep Now in the Fire"   | نقش    | Shield، Focus                                                       | درع +10 (ضد ضرر النار)                                                                                     |
+| "Soundness of Mind"       | نقش    | Shield، Focus                                                       | يقلل مدة ![Dazed](../../../apps/web/public/icons/status/dazed.svg) **Dazed** عليك بنسبة 20%                |
+| "Strength of Body"        | نقش    | Shield، Focus                                                       | يقلل مدة ![Deep Wound](../../../apps/web/public/icons/status/deep-wound.svg) **Deep Wound** عليك بنسبة 20% |
+| "Swift as the Wind"       | نقش    | Shield، Focus                                                       | يقلل مدة ![Crippled](../../../apps/web/public/icons/status/crippled.svg) **Crippled** عليك بنسبة 20%       |
+| "The Riddle of Steel"     | نقش    | Shield، Focus                                                       | درع +10 (ضد الضرر القاطع)                                                                                  |
+| "Through Thick and Thin"  | نقش    | Shield، Focus                                                       | درع +10 (ضد الضرر الثاقب)                                                                                  |
 
 ### البادئات القتالية عند الإصابة
 
@@ -151,16 +151,16 @@ Swordsmanship، أما Staff أو Wand أو Shield أو Focus فيُصنع لس�
 
 ## الرونات
 
-| الرون                                  | ما يمنحه                           |
-| -------------------------------------- | ---------------------------------- |
-| رون سمة صغير                           | +1 لسمة                            |
-| رون سمة كبير                           | +2 لسمة، -35 صحة                   |
-| رون سمة فائق                           | +3 لسمة، -75 صحة                   |
-| Vigor                                  | صحة أكثر (+30 أو +41 أو +50)       |
-| Vitae                                  | +10 صحة                            |
-| Attunement                             | طاقة أكثر (+3 أو +6 أو +9)         |
-| Clarity, Purity, Recovery, Restoration | علتان تزول كل منهما أسرع بنسبة 20% |
-| Absorption (Warrior)                   | ضرر جسدي أقل من كل ضربة            |
+| الرون                                                                                                                                                                                                                                                                                                          | ما يمنحه                           |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
+| رون سمة صغير                                                                                                                                                                                                                                                                                                   | +1 لسمة                            |
+| رون سمة كبير                                                                                                                                                                                                                                                                                                   | +2 لسمة، -35 صحة                   |
+| رون سمة فائق                                                                                                                                                                                                                                                                                                   | +3 لسمة، -75 صحة                   |
+| ![Vigor](../../../apps/web/public/icons/rune/vigor.svg) **Vigor**                                                                                                                                                                                                                                              | صحة أكثر (+30 أو +41 أو +50)       |
+| ![Vitae](../../../apps/web/public/icons/rune/vitae.svg) **Vitae**                                                                                                                                                                                                                                              | +10 صحة                            |
+| ![Attunement](../../../apps/web/public/icons/rune/attunement.svg) **Attunement**                                                                                                                                                                                                                               | طاقة أكثر (+3 أو +6 أو +9)         |
+| ![Clarity](../../../apps/web/public/icons/rune/clarity.svg) **Clarity**, ![Purity](../../../apps/web/public/icons/rune/purity.svg) **Purity**, ![Recovery](../../../apps/web/public/icons/rune/recovery.svg) **Recovery**, ![Restoration](../../../apps/web/public/icons/rune/restoration.svg) **Restoration** | علتان تزول كل منهما أسرع بنسبة 20% |
+| ![Absorption](../../../apps/web/public/icons/rune/absorption.svg) **Absorption** (![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior**)                                                                                                                                               | ضرر جسدي أقل من كل ضربة            |
 
 تختار رون القطعة في المكان نفسه الذي تختار فيه شارتها: انقر القطعة
 على المجسّم.

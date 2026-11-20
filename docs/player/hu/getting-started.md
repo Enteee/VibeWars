@@ -7,6 +7,10 @@ böngészőlapban fut. A VibeWarshoz billentyűzet és egér kell. Telefonon
 vagy csak érintéssel működő táblagépen nem működik: nyisd meg
 számítógépen.
 
+## Az oktatás
+
+Amikor először nyitod meg a VibeWarst, rövid oktatást ajánl: egy sétát egy kanyonon át, ami megtanít mozogni és harcolni. Utána a menüben folytatódik, lépésről lépésre: változtasd meg a karaktered specializációját, rakj össze egy kétfős csapatot, nézd meg, mire való az egyes módok, majd állítsd sorba ezt a csapatot egy első 2v2-es Csapataréna-meccsre. Amíg egy lépés egy vezérlőre mutat, a menü többi része elsötétül. Az oktatást bármikor kihagyhatod az **Oktatás kihagyása** gombbal.
+
 ## A módsáv
 
 A főképernyő bal oldalán lefutó sáv tartalmazza a
@@ -205,14 +209,14 @@ látogatásodkor ad egy **Nevet**, például `AshenWolf`; írd felül, hogy
 megváltoztasd. Üresen hagyva `Játékos` néven játszol. Írj mellé egy
 2–4 betűből vagy számjegyből álló **Céhjelet**, és mindenki látja a
 neved után, például `Ente [VIBE]`. Ha van céhjeled, alatta megjelenik a
-**Céhköpeny** tervező: válaszd ki a köpeny színét, a szegély színét és
-egy címert, és a tested minden meccsen viseli a köpenyt: álló helyzetben
+**Céhköpeny** tervező: válassz bármilyen köpeny- és szegélyszínt,
+rajzolj egy címert, és a tested minden meccsen viseli a köpenyt: álló helyzetben
 vékony csíkká hajtódik a peremeden, mozgás közben pedig mögötted lobog.
-A menüben a karaktereid is mutatják. A **Nincs köpeny** leveszi.
+A menüben a karaktereid is mutatják. A **Nincs köpeny** leveszi. Egy alak mutatja a köpenyt úgy, ahogy a játékban kinéz. A csapatod kékjéhez vagy az ellenfeleid pirosához túl közeli szín rajzoláskor kicsit eltolódik tőle, hogy egyik köpeny se hasonlítson egy csapatra; az alak úgy mutatja, ahogy mindenki látni fogja.
 
 A módosítás azonnal érvényes abban a lobbiban, amelyikben vagy.
 
-**Rajzold meg a saját emblémádat.** A kezdő emblémák alatti **Embléma szerkesztése** a helyükön megnyit egy 16×16-os rácsot. Válassz színt vagy **Üres** mezőt, majd rajzolj a **Ceruza** eszközzel, radírozz a **Radír** eszközzel, vagy színezz ki egy területet a **Kitöltés** eszközzel. A **Tükrözés** egyszerre festi a bal és a jobb felet. A **Törlés** kiüríti a rácsot, a **Vissza** egy lépést visszalép. A rács melletti kis nézet akkorának mutatja az emblémát, mint egy meccsen. A **Kész** megtartja, a **Mégse** eldobja a rajzot. A nyilak és a szóköz billentyűzetről is rajzolnak.
+**Rajzold meg az emblémádat.** A 16×16-os emblémarács mindig a köpeny és a szegély színe alatt van. Válassz színt vagy **Üres** mezőt, majd rajzolj a **Ceruza** eszközzel, radírozz a **Radír** eszközzel, vagy színezz ki egy területet a **Kitöltés** eszközzel. A **Szín hozzáadása** újabb színt ad az emblémához, legfeljebb 15-öt, a mellettük lévő színválasztó pedig megváltoztatja a kiválasztott színt mindazzal együtt, ami vele van rajzolva. A **Kiindulás** nyolc forma egyikét teszi a rácsra a kiválasztott színnel. A **Tükrözés** egyszerre festi a bal és a jobb felet. A **Törlés** kiüríti a rácsot, a **Vissza** egy lépést visszalép. A rács melletti kis nézet akkorának mutatja az emblémát, mint egy meccsen. Minden vonás megmarad, amint befejezed. A nyilak és a szóköz billentyűzetről is rajzolnak.
 
 A köpenytervező alatti **Céhlink másolása** egy linket másol, amely a céhjeledet és a köpenyedet viszi. Aki megnyitja, ezt a kérdést kapja: **Csatlakozol a(z) [VIBE] céhhez?**: a **Csatlakozás** megadja neki a céhjeledet és a köpenyedet, a **Nem** semmit sem változtat. Bárki küldhet ilyen linket, és senkié sem egy céhjel, ezért a játék mindig előbb kérdez.
 

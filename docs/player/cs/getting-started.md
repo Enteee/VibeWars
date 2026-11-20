@@ -2,6 +2,10 @@
 
 VibeWars je týmový souboj v malé aréně. Každý hráč si přinese jednu postavu s osmi dovednostmi. Tým, který vyhraje boj, vyhrává zápas. Nepotřebuješ účet ani nic instalovat: hra běží v této kartě prohlížeče. VibeWars vyžaduje klávesnici a myš. Na telefonu ani na tabletu ovládaném jen dotykem nefunguje: otevři ji na počítači.
 
+## Výuka
+
+Když VibeWars otevřeš poprvé, nabídne ti krátkou výuku: procházku kaňonem, která tě naučí pohybovat se a bojovat. Pak pokračuje v menu, krok za krokem: změň zaměření své postavy, sestav tým o dvou, podívej se, k čemu je který režim, a zařaď ten tým do fronty na první zápas 2v2 v Týmové aréně. Když krok ukazuje na ovládací prvek, zbytek menu je ztmavený. Výuku můžeš kdykoli přeskočit tlačítkem **Přeskočit výuku**.
+
 ## Lišta režimů
 
 Lišta na levé straně hlavní obrazovky obsahuje [režimy](modes.md), shora dolů: **Náhodná aréna**, **Týmová aréna**, **Výstup hrdinů**, **GvG** a **Vlastní hra**. Pod režimy je **Velikost týmu**, `‹ 4v4 ›`: šipky přepínají na nejbližší menší nebo větší velikost, kterou daná obrazovka hraje. Každá obrazovka si pamatuje svou vlastní a otevře se na velikosti, kterou hraje (GvG na 8v8). Pod ní je **Tvůrce postav**, kde si vytváříš postavy, a **Tvůrce týmů**, kde si vytváříš [Týmové buildy](skills-and-builds.md#týmové-buildy), a pak **Zápasy**, [dohrané zápasy](modes.md#záznamy-zápasů), jak je nahlásili jejich hostitelé. Hra se otevře na té položce, kterou jsi použil naposledy.
@@ -51,11 +55,11 @@ V **Týmové aréně** (2, 4 nebo 8 na stranu, podle **Velikosti týmu** hostite
 
 ## Tvoje jméno, značka cechu a plášť
 
-Otevři **Možnosti** přes ⚙ v horní liště: jejich sekce **hráč** obsahuje to, co je tvoje bez ohledu na to, co hraješ. Hra ti při první návštěvě přidělí **Jméno**, například `AshenWolf`; přepsáním ho změníš. Když ho necháš prázdné, hraješ jako `Player`. Vedle něj napiš **Značku cechu** ze 2 až 4 písmen nebo číslic a každý ji uvidí za tvým jménem, například `Ente [VIBE]`. S nastavenou značkou se pod ní objeví návrhář **Pláště cechu**: vyber barvu pláště, barvu lemu a znak a tvoje tělo bude plášť nosit v každém zápase: když stojíš, složí se do tenkého proužku na tvém okraji, a když se pohybuješ, vlaje za tebou. Ukazují ho i tvoje postavy v menu. **Bez pláště** ho sundá.
+Otevři **Možnosti** přes ⚙ v horní liště: jejich sekce **hráč** obsahuje to, co je tvoje bez ohledu na to, co hraješ. Hra ti při první návštěvě přidělí **Jméno**, například `AshenWolf`; přepsáním ho změníš. Když ho necháš prázdné, hraješ jako `Player`. Vedle něj napiš **Značku cechu** ze 2 až 4 písmen nebo číslic a každý ji uvidí za tvým jménem, například `Ente [VIBE]`. S nastavenou značkou se pod ní objeví návrhář **Pláště cechu**: vyber libovolnou barvu pláště a lemu, nakresli znak a tvoje tělo bude plášť nosit v každém zápase: když stojíš, složí se do tenkého proužku na tvém okraji, a když se pohybuješ, vlaje za tebou. Ukazují ho i tvoje postavy v menu. **Bez pláště** ho sundá. Postava ukazuje plášť tak, jak vypadá ve hře. Barva příliš blízká modré tvého týmu nebo červené tvých nepřátel se při kreslení trochu odchýlí, aby žádný plášť nevypadal jako tým; postava ho ukazuje tak, jak ho uvidí všichni.
 
 Změna platí okamžitě pro lobby, ve které jsi.
 
-**Nakresli si vlastní znak.** **Upravit znak** pod výchozími znaky otevře na jejich místě mřížku 16×16. Vyber barvu nebo **Prázdné** a kresli nástrojem **Tužka**, gumuj nástrojem **Guma** nebo vybarvi plochu nástrojem **Výplň**. **Zrcadlit** maluje levou a pravou polovinu najednou. **Vymazat** mřížku vyprázdní a **Zpět** vrátí krok. Malý náhled vedle mřížky ukazuje znak tak velký jako v zápase. **Hotovo** ho ponechá, **Zrušit** kresbu zahodí. Šipky a mezerník kreslí i z klávesnice.
+**Nakresli si znak.** Mřížka znaku 16×16 je vždy pod barvami pláště a lemu. Vyber barvu nebo **Prázdné** a kresli nástrojem **Tužka**, gumuj nástrojem **Guma** nebo vybarvi plochu nástrojem **Výplň**. **Přidat barvu** dá znaku další barvu, až 15, a výběr barvy vedle nich změní zvolenou barvu i se vším, co je jí nakresleno. **Začít od** položí na mřížku jeden z osmi tvarů ve zvolené barvě. **Zrcadlit** maluje levou a pravou polovinu najednou. **Vymazat** mřížku vyprázdní a **Zpět** vrátí krok. Malý náhled vedle mřížky ukazuje znak tak velký jako v zápase. Každý tah se uloží, jakmile ho dokončíš. Šipky a mezerník kreslí i z klávesnice.
 
 **Kopírovat odkaz na cech** pod návrhářem pláště zkopíruje odkaz s tvou značkou a pláštěm. Kdo ho otevře, dostane otázku **Přidat se do cechu [VIBE]?**: **Přidat se** mu dá tvou značku a plášť, **Ne** nic nezmění. Takový odkaz může poslat kdokoli a značku nikdo nevlastní, proto se hra vždy nejdřív zeptá.
 

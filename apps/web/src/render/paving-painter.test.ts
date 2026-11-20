@@ -93,8 +93,12 @@ describe("paving (#3210)", () => {
 
   it("is laid in the biome's tones, and in the flat palette's on a map of one layer", () => {
     expect(BIOME.desert.paving.cobbles.stone).not.toBe(BIOME.hall.paving.cobbles.stone);
-    expect(pavingPalette({ layerCount: 2, biome: "desert" })).toBe(BIOME.desert.paving);
-    expect(pavingPalette({ layerCount: 1, biome: "desert" })).not.toBe(BIOME.desert.paving);
+    expect(pavingPalette({ layerCount: 2, biome: "desert", ascentAct: null })).toBe(
+      BIOME.desert.paving,
+    );
+    expect(pavingPalette({ layerCount: 1, biome: "desert", ascentAct: null })).not.toBe(
+      BIOME.desert.paving,
+    );
   });
 
   it("is never brighter than a deck's stone: a floor material, not a decal", () => {

@@ -11,11 +11,11 @@ Stellst du dich auf eine dieser Flächen, wirkt sie auf dich; ihre Wirkung hält
 noch kurz an, nachdem du sie verlassen hast. Gegner und Verbündete trifft es
 genauso wie dich.
 
-- **Versengter Boden** lässt dich brennen (Burning). Verkohlte Erde mit
+- **Versengter Boden** lässt dich brennen (Brennen). Verkohlte Erde mit
   glühender Glut und einem orangen Rand.
-- **Lava** verbrennt dich und macht dich Crippled. Eine dunkle Kruste, durch
+- **Lava** verbrennt dich und macht dich verkrüppelt. Eine dunkle Kruste, durch
   die fließende, glühende Risse laufen, die flackern.
-- **Giftnebel** vergiftet dich (Poison). Treibende säuregrüne Schwaden, durch
+- **Giftnebel** vergiftet dich (Vergiftung). Treibende säuregrüne Schwaden, durch
   die du hindurchsehen kannst. Grün auf dem Boden bedeutet immer Gift.
 - **Sumpf** verlangsamt dich, und jeder Angriff und jeder Skill, den du dort
   nutzt, kostet dich Energie. Brauner Schlamm mit Pfützen und langsamen Blasen.
@@ -39,7 +39,7 @@ Moment dort steht.
 - **Ein Schlot** stößt eine Flammensäule aus, die dich verbrennt. Zwischen den
   Ausbrüchen ist er ein glimmender Steinkragen.
 - **Eine Gasquelle** pufft grünes Gas aus, das dich vergiftet.
-- **Steinschlag** lässt Felsen fallen, die dich Crippled machen. Manche fallen
+- **Steinschlag** lässt Felsen fallen, die dich verkrüppelt machen. Manche fallen
   an einer Stelle, andere rollen einen Weg entlang und zurück.
 
 Jede warnt dich kurz bevor sie zuschlägt: Ihr Randring schwillt in ihrer Farbe

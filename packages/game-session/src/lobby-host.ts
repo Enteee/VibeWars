@@ -28,6 +28,8 @@ import {
   parsePeerLobbyJoin,
   parsePeerLobbyProof,
   parsePeerPartyConsent,
+  parsePeerRankedResultSig,
+  parsePeerRankedStartSig,
   parsePeerRelayCredOut,
   parsePeerRelayHolding,
   parsePeerStayTogether,
@@ -35,6 +37,7 @@ import {
   lobbyModeOfQueue,
   teamQueueModeOf,
   teamSizeOf,
+  type Channel,
   type LobbyMode,
   type LobbyPhase,
   type LobbyTeamSize,
@@ -63,7 +66,26 @@ import {
   type WireTeamLobby,
   type WireTeam,
   type WireTeamSide,
+  type WireRankedCancel,
+  type WireRankedJoin,
+  type WireRankedReceipt,
+  type WireRankedResult,
+  type WireRankedStart,
+  type WireRankedStartSigs,
 } from "@vibewars/game-protocol";
+import {
+  MAX_SEAT_NAME_LENGTH,
+  ZERO_HASH,
+  parseRankedStart,
+  resultDigest,
+  startDigest,
+  startHash,
+  type RankedReceipt,
+  type RankedResult,
+  type RankedSeat,
+  type RankedStart,
+  type ReceiptCrypto,
+} from "@vibewars/ranking";
 
 import { MESSAGE_BURST, MESSAGES_PER_SECOND, MessageBudget } from "./intent-budget.js";
 import type { LobbyCharacter, PartyPlanSeat } from "./lobby-connection.js";
@@ -87,7 +109,7 @@ import { ticketsOf, type FormedGroup } from "./queue-formation.js";
 import { createRelayAdmission } from "./relay-admission.js";
 import { scopeTransport } from "./scoped-transport.js";
 import { decideStayTogether } from "./stay-together.js";
-import { sizeChecked, type Transport } from "./transport.js";
+import { sizeChecked, type Json, type Transport } from "./transport.js";
 
 /**
  * The pre-match lobby, hosted in one player's browser (#15, #379): the
@@ -131,6 +153,19 @@ export const LOBBY_PROOF_MS = 10_000;
  * every 50 min, so a real one never meets it.
  */
 export const RELAY_CRED_EVERY_MS = 60_000;
+
+/**
+ * From a ranked start, on the lobby's clock, until every seat must have
+ * signed it (ADR-0055), or the match is cancelled, unrated.
+ */
+export const RANKED_START_TIMEOUT_MS = 15_000;
+
+/**
+ * From a ranked result, on the lobby's clock, until every seat that did
+ * not leave must have signed it (ADR-0055): one that has not is a leaver,
+ * and the rest sign again.
+ */
+export const RANKED_RESULT_TIMEOUT_MS = 30_000;
 
 /** A party every winner said yes to, waiting for each one's consent (#1078). */
 interface PartyProposal {
@@ -214,6 +249,45 @@ interface AscentLock {
   claimers: (string | null)[];
 }
 
+/** A ranked match's two signing rounds (ADR-0055, #3573), from its start to its receipt. */
+interface RankedRound {
+  readonly start: RankedStart;
+  readonly startHash: string;
+  /** Each seat's seat key, by its pubkey, in seat order. */
+  readonly seatKeys: ReadonlyMap<string, string>;
+  stage: "start" | "match" | "result" | "done";
+  /** What the round on signs, and the signatures it has, by pubkey. */
+  digest: Uint8Array;
+  sigs: Map<string, string>;
+  /** When the round on runs out, on the lobby's clock. */
+  endsAt: number;
+  /** Every seat's start signature, once the start round is over. */
+  startSigs: Readonly<Record<string, string>>;
+  /** The result being signed, in the result round. */
+  result: RankedResult | undefined;
+  /** Seats away as the match began: no bot plays one, and each is a leaver. */
+  readonly absent: Set<string>;
+  /** Its match, once over: the result waits for its replay's hash. */
+  played: MatchHost | undefined;
+  /** Start the match: every seat signed. */
+  readonly play: () => void;
+}
+
+/**
+ * `name` cut to a ranked seat's `MAX_SEAT_NAME_LENGTH` UTF-16 units, never
+ * inside a character: a sanitised name may be longer in units than that.
+ */
+function seatName(name: string): string {
+  let cut = "";
+  for (const character of name) {
+    if (cut.length + character.length > MAX_SEAT_NAME_LENGTH) {
+      break;
+    }
+    cut += character;
+  }
+  return cut;
+}
+
 /** One seat of a queueing party's side (#1766): its human's peer, `null` for a bot, and its build. */
 export interface PartySeat {
   readonly holder: string | null;
@@ -249,6 +323,23 @@ export interface MatchPlan {
   readonly isSpectator: (peerId: string) => boolean;
   /** The room, for this match alone: build the `MatchHost` on it. */
   readonly transport: Transport;
+  /**
+   * It must record its replay (#3573): a ranked match, whose result
+   * names the replay's hash.
+   */
+  readonly recordReplay: boolean;
+}
+
+/** What a ranked queued lobby's host runs its two signing rounds with (ADR-0055, #3573). */
+export interface RankedHostOptions {
+  /** The game build, as the handshake names it: the start's `buildHash`. */
+  readonly buildHash: string;
+  /** What every seat's signatures are checked with. Injected: game-session has no curve code. */
+  readonly crypto: ReceiptCrypto;
+  /** Wall-clock unix seconds: the start's `startedAt`. */
+  readonly nowSeconds: () => number;
+  /** The match's receipt, every signature in: once, after the match. */
+  readonly onReceipt: (receipt: RankedReceipt) => void;
 }
 
 /**
@@ -321,6 +412,11 @@ export interface LobbyHostOptions {
   readonly random: () => number;
   /** Checks a joiner's player-key proof (#2706). Injected: game-session has no curve code. */
   readonly verifyPlayerProof: VerifyPlayerProof;
+  /**
+   * How a queued group that is `ranked` plays ranked (ADR-0055, #3573).
+   * Without it, every group plays unranked.
+   */
+  readonly ranked?: RankedHostOptions;
 }
 
 /**
@@ -391,6 +487,8 @@ type Member = MemberBase &
         readonly playerPubkey: string;
         /** Its join's Heroes' Ascent morale (#2686), clamped by `carriedMorale`. */
         readonly ascentMorale: number;
+        /** Its join's part of a ranked seat (#3573); `null` for none. */
+        readonly ranked: WireRankedJoin | null;
       }
   );
 
@@ -705,6 +803,8 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
    * by a `find-match` past round 0, and gone with round 0 or a new mode.
    */
   let ascentLock: AscentLock | undefined;
+  /** A ranked match's rounds (#3573), from its start round on; never in an unranked lobby. */
+  let rankedRound: RankedRound | undefined;
 
   const nowMs = (): number => elapsed * 1000;
   /** The clock in whole ms, so a countdown of ticks that do not add up exactly still ends. */
@@ -958,6 +1058,13 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
         seats.set(member.id, seatOf(member, member.team));
         continue;
       }
+      // Never a bot in a ranked seat (ADR-0055): it stays empty, its player a leaver.
+      if (rankedRound !== undefined) {
+        if (member.bot === null) {
+          rankedRound.absent.add(member.playerPubkey);
+        }
+        continue;
+      }
       const build = assigned.get(member.id) ?? starterBuild();
       seats.set(freeBotId(), {
         team: member.team,
@@ -986,12 +1093,14 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
           teamCount: queued?.group.teams.length === 3 ? 3 : 2,
           isSpectator: (peerId) => peerMember(peerId)?.team === null,
           transport: room,
+          recordReplay: rankedRound !== undefined,
         }),
         room,
       };
     } catch {
       // The caller's to report; the lobby only has to stay usable.
       void room.leave();
+      rankedRound = undefined;
       phase = "waiting";
       // Back as before the vote (#2086): no retry adds a second set of
       // bots, and nobody stays ready to start the same failure again.
@@ -1949,6 +2058,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       bot: null,
       playerPubkey: join.playerPubkey,
       ascentMorale: carriedMorale(join.ascentMorale),
+      ranked: join.ranked,
     });
     relayAdmission.seated(from);
     forgetForwards(from, false);
@@ -2656,11 +2766,214 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     broadcast();
   };
   /** Not all seated in time: everyone is sent off, and the queue told who never came. */
-  const fallThrough = (plan: QueuedPlan): void => {
+  const fallThrough = (plan: QueuedPlan, noShows: readonly string[] = unseated(plan)): void => {
     closed = true;
     note("refused", "fell-through" satisfies LobbyRefusal);
-    plan.onFellThrough(ticketsOf(plan.group, unseated(plan)));
+    plan.onFellThrough(ticketsOf(plan.group, noShows));
     void transport.leave();
+  };
+
+  /** `message` on `channel` to every human member, away ones too. */
+  const toHumans = <T>(channel: Channel, message: Json<T>): void => {
+    for (const member of members.values()) {
+      if (member.bot === null) {
+        transport.send(channel, message, member.id);
+      }
+    }
+  };
+
+  /**
+   * The ranked start of `plan`'s group (ADR-0055), each seat as its member
+   * joined; or the seat keys whose member brought no ranked seat, or is
+   * not here. `undefined` for a start that would not parse.
+   */
+  const rankedStartOf = (
+    plan: QueuedPlan,
+    buildHash: string,
+    startedAt: number,
+  ): RankedStart | { readonly unready: readonly string[] } | undefined => {
+    const humans = [...members.values()].flatMap((member) => (member.bot === null ? [member] : []));
+    const unready: string[] = [];
+    const teams: RankedSeat[][] = [];
+    for (const team of plan.group.teams) {
+      const seats: RankedSeat[] = [];
+      for (const seatKey of team) {
+        const member = humans.find((human) => human.seatKey === seatKey);
+        const claimedRating = plan.group.claims[seatKey];
+        if (member === undefined || member.ranked === null || claimedRating === undefined) {
+          unready.push(seatKey);
+          continue;
+        }
+        seats.push({
+          pubkey: member.playerPubkey,
+          characterId: member.ranked.characterId,
+          name: seatName(member.name),
+          claimedRating,
+          prev: member.ranked.prev,
+        });
+      }
+      teams.push(seats);
+    }
+    if (unready.length > 0) {
+      return { unready };
+    }
+    return parseRankedStart({
+      matchId: plan.group.groupId,
+      buildHash,
+      mode: plan.group.mode,
+      map: plan.group.mapId,
+      seed: plan.group.seed,
+      startedAt,
+      leaderboardAsOf: plan.group.leaderboardAsOf,
+      teams,
+    } satisfies RankedStart);
+  };
+
+  /**
+   * Not every seat signed the start, or one signed it wrong (ADR-0055):
+   * the match is cancelled, unrated, and everyone queues again, `noShows`
+   * reported as no-shows.
+   */
+  const cancelRanked = (plan: QueuedPlan, noShows: readonly string[]): void => {
+    if (rankedRound !== undefined) {
+      rankedRound.stage = "done";
+    }
+    toHumans("ranked-cancel", { matchId: plan.group.groupId } satisfies WireRankedCancel);
+    fallThrough(plan, noShows);
+  };
+
+  /**
+   * Instead of `play`ing a ranked group's match at once, have every seat
+   * sign its start first (ADR-0055): the host's own player too, as one
+   * more member.
+   */
+  const beginRankedStart = (
+    plan: QueuedPlan,
+    ranked: RankedHostOptions,
+    play: () => void,
+  ): void => {
+    countdownEndsAt = undefined;
+    const start = rankedStartOf(plan, ranked.buildHash, Math.floor(ranked.nowSeconds()));
+    if (start === undefined || "unready" in start) {
+      cancelRanked(plan, start?.unready ?? []);
+      return;
+    }
+    const seatKeys = new Map(
+      start.teams.flatMap((team, t) =>
+        team.map((seat, i) => [seat.pubkey, plan.group.teams[t]?.[i] ?? ""] as const),
+      ),
+    );
+    rankedRound = {
+      start,
+      startHash: startHash(start, ranked.crypto.sha256),
+      seatKeys,
+      stage: "start",
+      digest: startDigest(start, ranked.crypto.sha256),
+      sigs: new Map(),
+      endsAt: clockMs() + RANKED_START_TIMEOUT_MS,
+      startSigs: {},
+      result: undefined,
+      absent: new Set(),
+      played: undefined,
+      play,
+    };
+    toHumans("ranked-start", { start } satisfies WireRankedStart);
+    broadcast();
+  };
+
+  /** The seats of `round` that have not signed the round on, as seat keys. */
+  const unsigned = (round: RankedRound, leavers: ReadonlySet<string> = new Set()): string[] =>
+    [...round.seatKeys].flatMap(([pubkey, seatKey]) =>
+      round.sigs.has(pubkey) || leavers.has(pubkey) ? [] : [seatKey],
+    );
+
+  /** Have every seat of `round` that did not leave sign `result` (ADR-0055). */
+  const beginRankedResult = (
+    round: RankedRound,
+    ranked: RankedHostOptions,
+    result: RankedResult,
+  ): void => {
+    round.stage = "result";
+    round.result = result;
+    round.digest = resultDigest(result, ranked.crypto.sha256);
+    round.sigs = new Map();
+    round.endsAt = clockMs() + RANKED_RESULT_TIMEOUT_MS;
+    toHumans("ranked-result", { result } satisfies WireRankedResult);
+    settleRankedResult(round, ranked);
+  };
+
+  /** Every seat that did not leave signed: the receipt goes to every seat, and the caller. */
+  const settleRankedResult = (round: RankedRound, ranked: RankedHostOptions): void => {
+    const { result } = round;
+    if (
+      round.stage !== "result" ||
+      result === undefined ||
+      unsigned(round, new Set(result.leavers)).length > 0
+    ) {
+      return;
+    }
+    round.stage = "done";
+    const receipt: RankedReceipt = {
+      start: round.start,
+      startSigs: round.startSigs,
+      result,
+      resultSigs: Object.fromEntries(round.sigs),
+    };
+    toHumans("ranked-receipt", { receipt } satisfies WireRankedReceipt);
+    ranked.onReceipt(receipt);
+  };
+
+  /**
+   * The ranked rounds at the lobby's clock now: a start round out of
+   * time cancels; a match over, once its replay is hashed, has its result
+   * signed; a result round out of time makes its non-signers leavers,
+   * and the rest sign again, until every seat that did not leave signed.
+   * Whether the lobby is still open.
+   */
+  const runRanked = (plan: QueuedPlan, ranked: RankedHostOptions): boolean => {
+    const round = rankedRound;
+    if (round === undefined) {
+      return true;
+    }
+    if (round.stage === "start" && clockMs() >= round.endsAt) {
+      cancelRanked(plan, unsigned(round));
+      return false;
+    }
+    const { played } = round;
+    if (round.stage === "match" && played !== undefined) {
+      if (played.replay === null && played.draining) {
+        return true;
+      }
+      const { ending } = played;
+      // Everyone walked out: nobody is left to sign anything.
+      if (ending === null) {
+        round.stage = "done";
+        return true;
+      }
+      const left = new Set([...ending.leavers, ...round.absent]);
+      beginRankedResult(round, ranked, {
+        startHash: round.startHash,
+        winningTeam: played.winningTeam,
+        endReason: ending.endReason,
+        leavers: [...round.seatKeys.keys()].filter((pubkey) => left.has(pubkey)),
+        durationSeconds: ending.durationSeconds,
+        replayHash: played.replay?.hash ?? ZERO_HASH,
+      });
+      return true;
+    }
+    const { result } = round;
+    if (round.stage === "result" && result !== undefined && clockMs() >= round.endsAt) {
+      // Refusing to sign is leaving (ADR-0055).
+      const left = new Set([
+        ...result.leavers,
+        ...[...round.seatKeys.keys()].filter((pubkey) => !round.sigs.has(pubkey)),
+      ]);
+      beginRankedResult(round, ranked, {
+        ...result,
+        leavers: [...round.seatKeys.keys()].filter((pubkey) => left.has(pubkey)),
+      });
+    }
+    return true;
   };
 
   /**
@@ -2670,6 +2983,10 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
    */
   const runQueue = (plan: QueuedPlan, shown: number | null): boolean => {
     if (queuedStarted) {
+      return true;
+    }
+    // Its start being signed: `runRanked` starts the match, or cancels it.
+    if (rankedRound !== undefined) {
       return true;
     }
     if (countdownEndsAt === undefined) {
@@ -2685,12 +3002,19 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       return false;
     }
     if (clockMs() >= countdownEndsAt) {
-      if (isTeamQueueMode(plan.group.mode)) {
-        const { assigned, rejected } = seatTeamPlans(plan);
-        start(assigned, rejected);
-      } else {
-        start();
+      const play = (): void => {
+        if (isTeamQueueMode(plan.group.mode)) {
+          const { assigned, rejected } = seatTeamPlans(plan);
+          start(assigned, rejected);
+        } else {
+          start();
+        }
+      };
+      if (plan.group.ranked && options.ranked !== undefined) {
+        beginRankedStart(plan, options.ranked, play);
+        return !closed;
       }
+      play();
     } else if (countdownLeft(countdownEndsAt) !== shown) {
       broadcast();
     }
@@ -2800,6 +3124,10 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       }
     }
     if (proposal !== undefined && !proposal.settled) {
+      return;
+    }
+    // A ranked match is not done until its receipt is.
+    if (rankedRound !== undefined && rankedRound.stage !== "done") {
       return;
     }
     const waited = vote.winners.some((peerId) => peerId !== local.selfId && !gone.has(peerId));
@@ -2963,6 +3291,11 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       if (queued !== undefined && !runQueue(queued, shown)) {
         return;
       }
+      if (queued !== undefined && options.ranked !== undefined) {
+        if (!runRanked(queued, options.ranked)) {
+          return;
+        }
+      }
       if (queued !== undefined) {
         runVote(queued);
       }
@@ -2985,6 +3318,9 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
         // round, and ready cleared, so nobody is dragged into a match
         // they did not confirm.
         const { winningTeam } = match.host;
+        if (rankedRound?.stage === "match") {
+          rankedRound.played = match.host;
+        }
         zaishenBeaten = zaishenFight && winningTeam === 0;
         zaishenFight = false;
         if (match.host.draining) {
@@ -3030,6 +3366,80 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       await transport.leave();
     },
   };
+
+  /** `from`'s seat of the ranked round on, if it is a seat's member and `budget` lets it speak. */
+  const rankedSeatOf = (
+    from: string,
+  ):
+    | { readonly round: RankedRound; readonly pubkey: string; readonly ranked: RankedHostOptions }
+    | undefined => {
+    const member = peerMember(from);
+    const round = rankedRound;
+    const { ranked } = options;
+    if (
+      closed ||
+      queued === undefined ||
+      round === undefined ||
+      ranked === undefined ||
+      member === undefined ||
+      member.playerPubkey === null ||
+      !round.seatKeys.has(member.playerPubkey) ||
+      !budget.take(from, nowMs())
+    ) {
+      return undefined;
+    }
+    return { round, pubkey: member.playerPubkey, ranked };
+  };
+
+  // A seat's start signature (#3573): one that does not verify cancels the match.
+  transport.on("ranked-start-sig", (data, from) => {
+    const seat = rankedSeatOf(from);
+    const said = parsePeerRankedStartSig(data);
+    if (
+      seat?.round.stage !== "start" ||
+      queued === undefined ||
+      said?.matchId !== seat.round.start.matchId ||
+      seat.round.sigs.has(seat.pubkey)
+    ) {
+      return;
+    }
+    const { round, pubkey, ranked } = seat;
+    if (!ranked.crypto.verify(pubkey, round.digest, said.sig)) {
+      cancelRanked(queued, [round.seatKeys.get(pubkey) ?? pubkey]);
+      return;
+    }
+    round.sigs.set(pubkey, said.sig);
+    if (unsigned(round).length > 0) {
+      return;
+    }
+    round.stage = "match";
+    round.startSigs = Object.fromEntries(round.sigs);
+    toHumans("ranked-start-sigs", {
+      matchId: round.start.matchId,
+      sigs: round.startSigs,
+    } satisfies WireRankedStartSigs);
+    round.play();
+  });
+
+  // A seat's result signature (#3573): one that does not verify is none,
+  // and its seat leaves if no good one comes in time.
+  transport.on("ranked-result-sig", (data, from) => {
+    const seat = rankedSeatOf(from);
+    const said = parsePeerRankedResultSig(data);
+    const result = seat?.round.result;
+    if (
+      seat?.round.stage !== "result" ||
+      result === undefined ||
+      said?.startHash !== result.startHash ||
+      result.leavers.includes(seat.pubkey) ||
+      seat.round.sigs.has(seat.pubkey) ||
+      !seat.ranked.crypto.verify(seat.pubkey, seat.round.digest, said.sig)
+    ) {
+      return;
+    }
+    seat.round.sigs.set(seat.pubkey, said.sig);
+    settleRankedResult(seat.round, seat.ranked);
+  });
 
   transport.onPeerLeave((peerId) => {
     budget.forget(peerId);

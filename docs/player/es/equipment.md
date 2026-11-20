@@ -7,7 +7,7 @@ clic en una para equiparla. La armadura se elige en la figura, más abajo.
 ## Sets de armas
 
 Llevas hasta **cuatro sets de armas**, cada uno con un arma y, si el arma
-deja una mano libre, una mano secundaria como un Shield o un Focus. El set 1
+deja una mano libre, una mano secundaria como un ![Shield](../../../apps/web/public/icons/offhand/shield.svg) **Shield** o un ![Focus](../../../apps/web/public/icons/offhand/focus.svg) **Focus**. El set 1
 es con el que empiezas; los demás pueden quedar vacíos.
 
 En una partida, cambia de set con **1 a 4** (**F1 a F4** con las teclas de
@@ -17,8 +17,8 @@ habilidades que requieren cierta arma y tu energía máxima siguen al set que
 tienes en la mano.
 
 Un arma necesita rango 9 en su atributo: por debajo golpea con un tercio de
-su daño, y el editor lo avisa en rojo. Una Sword siempre es de Swordsmanship,
-pero un Staff, una Wand, un Shield o un Focus se hace para el atributo que
+su daño, y el editor lo avisa en rojo. Una ![Sword](../../../apps/web/public/icons/weapon/sword.svg) **Sword** siempre es de Swordsmanship,
+pero un ![Staff](../../../apps/web/public/icons/weapon/staff.svg) **Staff**, una ![Wand](../../../apps/web/public/icons/weapon/wand.svg) **Wand**, un Shield o un Focus se hace para el atributo que
 elijas: haz clic en su mano en la figura (**6** para el arma, **7** para la
 mano secundaria) y elige uno.
 
@@ -26,40 +26,40 @@ mano secundaria) y elige uno.
 
 Cada arma y mano secundaria tiene huecos para mods: un **prefijo**, un
 **sufijo** y una **inscripción**. Haz clic en la mano de la figura, o en su
-fila al lado, para elegirlos; cada uno dice qué hace. Una Wand, un Shield y
-un Focus no llevan prefijo; las manos vacías tampoco. Un mod siempre tiene su
+fila al lado, para elegirlos; cada uno dice qué hace. Una ![Wand](../../../apps/web/public/icons/weapon/wand.svg) **Wand**, un ![Shield](../../../apps/web/public/icons/offhand/shield.svg) **Shield** y
+un ![Focus](../../../apps/web/public/icons/offhand/focus.svg) **Focus** no llevan prefijo; las manos vacías tampoco. Un mod siempre tiene su
 mejor valor, y cada set de armas lleva los suyos, así que cambiar de set
 cambia también sus mods: la salud y la energía máximas varían con el set que
 tienes en la mano. Al cambiar un arma se conservan los mods que aún le sirven
 y se te dice cuáles perdió.
 
-| Mod                       | Hueco       | Sirve para                                   | Efecto                                           |
-| ------------------------- | ----------- | -------------------------------------------- | ------------------------------------------------ |
-| Defensive                 | Prefijo     | Staff                                        | Armadura +5                                      |
-| Hale                      | Prefijo     | Staff                                        | +30 de salud                                     |
-| Insightful                | Prefijo     | Staff                                        | Energía +5                                       |
-| of Defense                | Sufijo      | cualquier arma marcial, Staff                | Armadura +5                                      |
-| of Fortitude              | Sufijo      | cualquier arma marcial, Staff, Shield, Focus | +30 de salud                                     |
-| of Shelter                | Sufijo      | cualquier arma marcial, Staff                | Armadura +7 (contra daño físico)                 |
-| of Warding                | Sufijo      | cualquier arma marcial, Staff                | Armadura +7 (contra daño elemental)              |
-| "Cast Out the Unclean"    | Inscripción | Shield, Focus                                | Reduce un 20% la duración de Disease sobre ti    |
-| "Fear Cuts Deeper"        | Inscripción | Shield, Focus                                | Reduce un 20% la duración de Bleeding sobre ti   |
-| "I Can See Clearly Now"   | Inscripción | Shield, Focus                                | Reduce un 20% la duración de Blind sobre ti      |
-| "I have the power!"       | Inscripción | cualquier arma marcial                       | Energía +5                                       |
-| "Leaf on the Wind"        | Inscripción | Shield, Focus                                | Armadura +10 (contra daño de frío)               |
-| "Like a Rolling Stone"    | Inscripción | Shield, Focus                                | Armadura +10 (contra daño de tierra)             |
-| "Live for Today"          | Inscripción | Focus                                        | Energía +15, regeneración de energía -1          |
-| "Not the face!"           | Inscripción | Shield, Focus                                | Armadura +10 (contra daño contundente)           |
-| "Only the Strong Survive" | Inscripción | Shield, Focus                                | Reduce un 20% la duración de Weakness sobre ti   |
-| "Pure of Heart"           | Inscripción | Shield, Focus                                | Reduce un 20% la duración de Poison sobre ti     |
-| "Riders on the Storm"     | Inscripción | Shield, Focus                                | Armadura +10 (contra daño de rayo)               |
-| "Seize the Day"           | Inscripción | Staff, Wand                                  | Energía +15, regeneración de energía -1          |
-| "Sleep Now in the Fire"   | Inscripción | Shield, Focus                                | Armadura +10 (contra daño de fuego)              |
-| "Soundness of Mind"       | Inscripción | Shield, Focus                                | Reduce un 20% la duración de Dazed sobre ti      |
-| "Strength of Body"        | Inscripción | Shield, Focus                                | Reduce un 20% la duración de Deep Wound sobre ti |
-| "Swift as the Wind"       | Inscripción | Shield, Focus                                | Reduce un 20% la duración de Crippled sobre ti   |
-| "The Riddle of Steel"     | Inscripción | Shield, Focus                                | Armadura +10 (contra daño cortante)              |
-| "Through Thick and Thin"  | Inscripción | Shield, Focus                                | Armadura +10 (contra daño perforante)            |
+| Mod                       | Hueco       | Sirve para                                                          | Efecto                                                                                                                             |
+| ------------------------- | ----------- | ------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| Defensive                 | Prefijo     | ![Staff](../../../apps/web/public/icons/weapon/staff.svg) **Staff** | Armadura +5                                                                                                                        |
+| Hale                      | Prefijo     | Staff                                                               | +30 de salud                                                                                                                       |
+| Insightful                | Prefijo     | Staff                                                               | Energía +5                                                                                                                         |
+| of Defense                | Sufijo      | cualquier arma marcial, Staff                                       | Armadura +5                                                                                                                        |
+| of Fortitude              | Sufijo      | cualquier arma marcial, Staff, Shield, Focus                        | +30 de salud                                                                                                                       |
+| of Shelter                | Sufijo      | cualquier arma marcial, Staff                                       | Armadura +7 (contra daño físico)                                                                                                   |
+| of Warding                | Sufijo      | cualquier arma marcial, Staff                                       | Armadura +7 (contra daño elemental)                                                                                                |
+| "Cast Out the Unclean"    | Inscripción | Shield, Focus                                                       | Reduce un 20% la duración de ![Enfermedad](../../../apps/web/public/icons/status/disease.svg) **Enfermedad** sobre ti              |
+| "Fear Cuts Deeper"        | Inscripción | Shield, Focus                                                       | Reduce un 20% la duración de ![Sangrado](../../../apps/web/public/icons/status/bleeding.svg) **Sangrado** sobre ti                 |
+| "I Can See Clearly Now"   | Inscripción | Shield, Focus                                                       | Reduce un 20% la duración de ![Ceguera](../../../apps/web/public/icons/status/blind.svg) **Ceguera** sobre ti                      |
+| "I have the power!"       | Inscripción | cualquier arma marcial                                              | Energía +5                                                                                                                         |
+| "Leaf on the Wind"        | Inscripción | Shield, Focus                                                       | Armadura +10 (contra daño de frío)                                                                                                 |
+| "Like a Rolling Stone"    | Inscripción | Shield, Focus                                                       | Armadura +10 (contra daño de tierra)                                                                                               |
+| "Live for Today"          | Inscripción | Focus                                                               | Energía +15, regeneración de energía -1                                                                                            |
+| "Not the face!"           | Inscripción | Shield, Focus                                                       | Armadura +10 (contra daño contundente)                                                                                             |
+| "Only the Strong Survive" | Inscripción | Shield, Focus                                                       | Reduce un 20% la duración de ![Debilidad](../../../apps/web/public/icons/status/weakness.svg) **Debilidad** sobre ti               |
+| "Pure of Heart"           | Inscripción | Shield, Focus                                                       | Reduce un 20% la duración de ![Veneno](../../../apps/web/public/icons/status/poison.svg) **Veneno** sobre ti                       |
+| "Riders on the Storm"     | Inscripción | Shield, Focus                                                       | Armadura +10 (contra daño de rayo)                                                                                                 |
+| "Seize the Day"           | Inscripción | Staff, Wand                                                         | Energía +15, regeneración de energía -1                                                                                            |
+| "Sleep Now in the Fire"   | Inscripción | Shield, Focus                                                       | Armadura +10 (contra daño de fuego)                                                                                                |
+| "Soundness of Mind"       | Inscripción | Shield, Focus                                                       | Reduce un 20% la duración de ![Aturdido](../../../apps/web/public/icons/status/dazed.svg) **Aturdido** sobre ti                    |
+| "Strength of Body"        | Inscripción | Shield, Focus                                                       | Reduce un 20% la duración de ![Herida profunda](../../../apps/web/public/icons/status/deep-wound.svg) **Herida profunda** sobre ti |
+| "Swift as the Wind"       | Inscripción | Shield, Focus                                                       | Reduce un 20% la duración de ![Lisiado](../../../apps/web/public/icons/status/crippled.svg) **Lisiado** sobre ti                   |
+| "The Riddle of Steel"     | Inscripción | Shield, Focus                                                       | Armadura +10 (contra daño cortante)                                                                                                |
+| "Through Thick and Thin"  | Inscripción | Shield, Focus                                                       | Armadura +10 (contra daño perforante)                                                                                              |
 
 ### Prefijos marciales al golpear
 
@@ -69,10 +69,10 @@ y se te dice cuáles perdió.
 | Zealous                      | cualquier arma marcial     | da 1 de energía; -1 de regeneración de energía                            |
 | Sundering                    | cualquier arma marcial     | 20% de probabilidad de +20% de penetración de armadura                    |
 | Furious                      | marcial, no Bows           | 10% de probabilidad de adrenalina doble                                   |
-| Barbed, Crippling, Poisonous | marcial, no Hammer         | el Bleeding, Crippled y Poison que causas duran un 33% más                |
-| Cruel                        | marcial, no Bows           | el Deep Wound que causas dura un 33% más                                  |
-| Heavy                        | Axe, Hammer, Scythe, Spear | la Weakness que causas dura un 33% más                                    |
-| Silencing                    | Daggers, Spear, Bows       | el Dazed que causas dura un 33% más                                       |
+| Barbed, Crippling, Poisonous | marcial, no Hammer         | los estados Sangrado, Lisiado y Veneno que causas duran un 33% más        |
+| Cruel                        | marcial, no Bows           | la Herida profunda que causas dura un 33% más                             |
+| Heavy                        | Axe, Hammer, Scythe, Spear | la Debilidad que causas dura un 33% más                                   |
+| Silencing                    | Daggers, Spear, Bows       | el estado Aturdido que causas dura un 33% más                             |
 | Ebon, Fiery, Icy, Shocking   | cualquier arma marcial     | su daño pasa a ser de tierra, fuego, frío o rayo                          |
 
 "Al golpear" significa un golpe conectado de un ataque o una habilidad de
@@ -154,16 +154,16 @@ sostiene las armas del set que estás viendo, con sus mods.
 
 ## Runas
 
-| Runa                                   | Qué da                                      |
-| -------------------------------------- | ------------------------------------------- |
-| Runa de atributo Minor                 | +1 a un atributo                            |
-| Runa de atributo Major                 | +2 a un atributo, -35 de salud              |
-| Runa de atributo Superior              | +3 a un atributo, -75 de salud              |
-| Vigor                                  | más salud (+30, +41 o +50)                  |
-| Vitae                                  | +10 de salud                                |
-| Attunement                             | más energía (+3, +6 o +9)                   |
-| Clarity, Purity, Recovery, Restoration | dos condiciones duran un 20% menos cada una |
-| Absorption (Warrior)                   | menos daño físico de cada golpe             |
+| Runa                                                                                                                                                                                                                                                                                                           | Qué da                                      |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------- |
+| Runa de atributo Minor                                                                                                                                                                                                                                                                                         | +1 a un atributo                            |
+| Runa de atributo Major                                                                                                                                                                                                                                                                                         | +2 a un atributo, -35 de salud              |
+| Runa de atributo Superior                                                                                                                                                                                                                                                                                      | +3 a un atributo, -75 de salud              |
+| ![Vigor](../../../apps/web/public/icons/rune/vigor.svg) **Vigor**                                                                                                                                                                                                                                              | más salud (+30, +41 o +50)                  |
+| ![Vitae](../../../apps/web/public/icons/rune/vitae.svg) **Vitae**                                                                                                                                                                                                                                              | +10 de salud                                |
+| ![Attunement](../../../apps/web/public/icons/rune/attunement.svg) **Attunement**                                                                                                                                                                                                                               | más energía (+3, +6 o +9)                   |
+| ![Clarity](../../../apps/web/public/icons/rune/clarity.svg) **Clarity**, ![Purity](../../../apps/web/public/icons/rune/purity.svg) **Purity**, ![Recovery](../../../apps/web/public/icons/rune/recovery.svg) **Recovery**, ![Restoration](../../../apps/web/public/icons/rune/restoration.svg) **Restoration** | dos condiciones duran un 20% menos cada una |
+| ![Absorption](../../../apps/web/public/icons/rune/absorption.svg) **Absorption** (![Guerrero](../../../apps/web/public/icons/profession/warrior.svg) **Guerrero**)                                                                                                                                             | menos daño físico de cada golpe             |
 
 La runa de una pieza se elige en el mismo sitio que su insignia: haz clic en
 la pieza de la figura.

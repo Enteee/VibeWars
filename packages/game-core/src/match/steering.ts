@@ -25,6 +25,12 @@ export const LOOKAHEAD_RADII = 4;
  */
 export const STEER_MARGIN = 1;
 
+/** What `steerAround` walks: the direction, and the side it passed a body on, if one was in the way. */
+export interface Steer {
+  readonly direction: Vec2;
+  readonly passRight: boolean | undefined;
+}
+
 /**
  * The direction to walk from `position` toward `waypoint`, bent round the
  * first of `bodies` in the way. All bodies have `radius`.
@@ -32,25 +38,32 @@ export const STEER_MARGIN = 1;
  * A body is in the way when its centre lies ahead, no further than the
  * waypoint or `LOOKAHEAD_RADII` radii, and within two radii of the line
  * of travel, so the two bodies would touch. The nearest such body is
- * passed on the side away from it, along the tangent to a circle of
- * `2 * radius + STEER_MARGIN` round it; already that close, along the
- * perpendicular to it, so the walk slides round. A body dead ahead is
- * passed on the right of the direction of travel, so two attackers
- * meeting head-on both turn right and pass each other.
+ * passed along the tangent to a circle of `2 * radius + STEER_MARGIN`
+ * round it; already that close, along the perpendicular to it, so the
+ * walk slides round.
+ *
+ * The side is `kept`, the one the last step passed on, while bodies stay
+ * in the way (#3707). Picked afresh, it is the side away from the body,
+ * and a body dead ahead is passed on the right of the direction of
+ * travel, so two attackers meeting head-on both turn right and pass each
+ * other. Picked afresh every step, two bodies shoulder to shoulder before
+ * the waypoint would send the walk left of one, onto the other, and right
+ * of that one, back: it would never get round either.
  *
  * With nothing in the way it returns `waypoint - position` itself, so the
- * walk is exactly what it was before steering existed.
+ * walk is exactly what it was before steering existed, and no side.
  */
 export function steerAround(
   position: Vec2,
   waypoint: Vec2,
   radius: number,
   bodies: readonly Vec2[],
-): Vec2 {
+  kept?: boolean,
+): Steer {
   const toWaypoint = sub(waypoint, position);
   const span = Math.hypot(toWaypoint.x, toWaypoint.y);
   if (span < 1e-9) {
-    return toWaypoint;
+    return { direction: toWaypoint, passRight: undefined };
   }
   const dx = toWaypoint.x / span;
   const dy = toWaypoint.y / span;
@@ -73,11 +86,11 @@ export function steerAround(
     }
   }
   if (nearest === undefined) {
-    return toWaypoint;
+    return { direction: toWaypoint, passRight: undefined };
   }
 
-  // Pass on the side away from the body; dead ahead, on the right.
-  const passRight = offset <= 0;
+  // The side kept; else away from the body, and dead ahead, on the right.
+  const passRight = kept ?? offset <= 0;
   const rx = nearest.x - position.x;
   const ry = nearest.y - position.y;
   const gap = Math.hypot(rx, ry);
@@ -88,11 +101,11 @@ export function steerAround(
   const ny = passRight ? ux : -ux;
   const room = 2 * radius + STEER_MARGIN;
   if (gap <= room) {
-    return vec2(nx, ny);
+    return { direction: vec2(nx, ny), passRight };
   }
   // The tangent to the circle of `room` round the body: `asin(room / gap)`
   // off the line to its centre.
   const sin = room / gap;
   const cos = Math.sqrt(1 - sin * sin);
-  return vec2(ux * cos + nx * sin, uy * cos + ny * sin);
+  return { direction: vec2(ux * cos + nx * sin, uy * cos + ny * sin), passRight };
 }

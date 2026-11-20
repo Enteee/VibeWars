@@ -98,6 +98,11 @@ const GROUP: FormedGroup = {
   parties: [],
   mapId: "other-arena",
   mode: "random-arena-2v2",
+  // Its host plays no ranked match (#3573): lobby-ranked.test.ts does.
+  ranked: false,
+  seed: 1,
+  claims: {},
+  leaderboardAsOf: 0,
 };
 
 /** The same seats, as a party of HOST and ALLY against two solos (#882). */
@@ -135,6 +140,7 @@ function fakeMatch(): FakeMatch {
     abandoned: false,
     droppedWeaponSwaps: 0,
     replay: null,
+    ending: null,
     draining: false,
     retire: () => undefined,
     close: () => Promise.resolve(),
@@ -356,6 +362,7 @@ async function forgedJoin(
     rejoinToken: null,
     playerPubkey: WIRE_PLAYER_KEY.pubkey,
     ascentMorale: 0,
+    ranked: null,
   };
 }
 
@@ -426,6 +433,7 @@ describe("a queued lobby", () => {
         relayPub: null,
         playerPubkey: WIRE_PLAYER_KEY.pubkey,
         ascentMorale: 0,
+        ranked: null,
       },
       "host",
     );
