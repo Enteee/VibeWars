@@ -209,35 +209,31 @@ export const CREATURE_LOOKS = [
   "rat",
 ] as const;
 
-/**
- * A guild cape's colours (#1422): the palette of the cape study (#1410,
- * `docs/art/art-direction.md`), apart from both team colours.
- */
-export const CAPE_COLOURS = [
-  "gold",
-  "violet",
-  "white",
-  "black",
-  "lime",
-  "orange",
-  "teal",
-  "pink",
-] as const;
-
 /** A guild emblem's side in pixels (#3554): it is a square grid of `EMBLEM_GRID`². */
 export const EMBLEM_GRID = 16;
+
+/** The most colours one emblem carries (#3628): what a 4-bit pixel names past empty. */
+export const MAX_EMBLEM_COLOURS = 15;
 
 /** An emblem's length on the wire: 128 bytes as base64url without padding. */
 const EMBLEM_TEXT_LENGTH = 171;
 
 const BASE64URL = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
 
+/** A cape colour (#3628): six lowercase hex digits, no `#`. */
+const CAPE_HEX = /^[0-9a-f]{6}$/;
+
+/** Whether `value` is a cape colour (#3628): six lowercase hex digits, no `#`. */
+export function isCapeColour(value: unknown): value is string {
+  return typeof value === "string" && CAPE_HEX.test(value);
+}
+
 /**
  * An emblem grid (#3554) as the wire carries it: `EMBLEM_GRID`² pixels,
- * row-major, each 0 for empty or `i` for `CAPE_COLOURS[i - 1]`, packed
- * two to a byte, high nibble first, as base64url without padding, the
- * convention of the public keys. Pure, so this package needs neither
- * `Buffer` nor `atob`.
+ * row-major, each 0 for empty or `i` for its cape's `emblemColours[i - 1]`
+ * (#3628), packed two to a byte, high nibble first, as base64url without
+ * padding, the convention of the public keys. Pure, so this package needs
+ * neither `Buffer` nor `atob`.
  */
 export function packEmblem(pixels: readonly number[]): string {
   const bytes: number[] = [];
@@ -259,9 +255,9 @@ export function packEmblem(pixels: readonly number[]): string {
 /**
  * The pixels of a packed emblem, or `undefined` for a string of the wrong
  * length, a character outside base64url, trailing bits that are not 0
- * (so each grid has one spelling), or a pixel past `CAPE_COLOURS`.
+ * (so each grid has one spelling), or a pixel past `colourCount` (#3628).
  */
-export function unpackEmblem(text: string): number[] | undefined {
+export function unpackEmblem(text: string, colourCount: number): number[] | undefined {
   if (text.length !== EMBLEM_TEXT_LENGTH) {
     return undefined;
   }
@@ -287,13 +283,46 @@ export function unpackEmblem(text: string): number[] | undefined {
   for (const byte of bytes) {
     pixels.push(byte >> 4, byte & 15);
   }
-  return pixels.every((pixel) => pixel <= CAPE_COLOURS.length) ? pixels : undefined;
+  return pixels.every((pixel) => pixel <= colourCount) ? pixels : undefined;
 }
 
-/** A guild cape (#1422): its cloth, its trim, and its emblem grid as `packEmblem` packs it (#3554). */
+/**
+ * `pixels` and `colours` in their one spelling (#3628): the colours no
+ * pixel uses dropped, the rest listed in order of first use, row-major,
+ * and the pixels renumbered to match. Pure; a pixel naming no colour is
+ * empty.
+ */
+export function canonicalEmblem(
+  pixels: readonly number[],
+  colours: readonly string[],
+): { pixels: number[]; colours: string[] } {
+  const renumbered = new Map<number, number>();
+  const used: string[] = [];
+  const canonical = pixels.map((pixel) => {
+    const colour = colours[pixel - 1];
+    if (pixel === 0 || colour === undefined) {
+      return 0;
+    }
+    let index = renumbered.get(pixel);
+    if (index === undefined) {
+      used.push(colour);
+      index = used.length;
+      renumbered.set(pixel, index);
+    }
+    return index;
+  });
+  return { pixels: canonical, colours: used };
+}
+
+/**
+ * A guild cape (#1422): its cloth, its trim, and its emblem grid as
+ * `packEmblem` packs it (#3554), each pixel naming one of `emblemColours`
+ * (#3628). Every colour is six lowercase hex digits, any the player picked.
+ */
 export interface WireCape {
-  readonly main: (typeof CAPE_COLOURS)[number];
-  readonly trim: (typeof CAPE_COLOURS)[number];
+  readonly main: string;
+  readonly trim: string;
+  readonly emblemColours: readonly string[];
   readonly emblem: string;
 }
 
@@ -1923,16 +1952,36 @@ function parseRawGuildTag(value: unknown): string | null | undefined {
   return typeof value === "string" ? value.slice(0, MAX_WIRE_TEXT) : undefined;
 }
 
-/** `value` as a cape (#1422) if it is exactly one, else `undefined`. */
+/**
+ * `value` as a cape (#1422) if it is exactly one, else `undefined`: in
+ * its one spelling (#3628), every listed colour used, in order of first
+ * use, as `canonicalEmblem` leaves it.
+ */
 export function parseWireCape(value: unknown): WireCape | undefined {
   const raw = fields(value);
-  return raw !== undefined &&
-    Object.keys(raw).length === 3 &&
-    isOneOf(raw.main, CAPE_COLOURS) &&
-    isOneOf(raw.trim, CAPE_COLOURS) &&
-    typeof raw.emblem === "string" &&
-    unpackEmblem(raw.emblem) !== undefined
-    ? { main: raw.main, trim: raw.trim, emblem: raw.emblem }
+  if (
+    raw === undefined ||
+    Object.keys(raw).length !== 4 ||
+    !isCapeColour(raw.main) ||
+    !isCapeColour(raw.trim) ||
+    !Array.isArray(raw.emblemColours) ||
+    raw.emblemColours.length > MAX_EMBLEM_COLOURS ||
+    typeof raw.emblem !== "string"
+  ) {
+    return undefined;
+  }
+  const colours: unknown[] = raw.emblemColours;
+  if (!colours.every(isCapeColour)) {
+    return undefined;
+  }
+  const pixels = unpackEmblem(raw.emblem, colours.length);
+  if (pixels === undefined) {
+    return undefined;
+  }
+  const canonical = canonicalEmblem(pixels, colours);
+  return canonical.colours.length === colours.length &&
+    canonical.pixels.every((pixel, index) => pixel === pixels[index])
+    ? { main: raw.main, trim: raw.trim, emblemColours: canonical.colours, emblem: raw.emblem }
     : undefined;
 }
 

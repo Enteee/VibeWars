@@ -190,14 +190,14 @@ bir **Ad** verir; değiştirmek için üzerine yaz. Boş bırakırsan `Player`
 olarak oynarsın. Yanına 2 ila 4 harf ya da rakamdan oluşan bir **Lonca
 etiketi** yaz; herkes onu adından sonra görür, `Ente [VIBE]` gibi.
 Etiket ayarlıyken altında **Lonca pelerini** tasarımcısı belirir:
-pelerin rengini, kenar rengini ve bir amblemi seç; bedenin her maçta
+istediğin pelerin ve kenar rengini seç, bir amblem çiz; bedenin her maçta
 pelerini giyer: dururken kenarında ince bir şeride katlanır, hareket
 ederken arkanda dalgalanır. Menüdeki karakterlerin de onu gösterir.
-**Pelerin yok** onu çıkarır. Bir figür pelerini oyunda göründüğü gibi gösterir.
+**Pelerin yok** onu çıkarır. Bir figür pelerini oyunda göründüğü gibi gösterir. Takımının mavisine ya da rakiplerinin kırmızısına fazla yakın bir renk, çizilirken ondan biraz uzaklaştırılır, böylece hiçbir pelerin bir takıma benzemez; figür onu herkesin göreceği gibi gösterir.
 
 Bir değişiklik, içinde olduğun lobide hemen geçerli olur.
 
-**Kendi amblemini çiz.** Başlangıç amblemlerinin altındaki **Amblemi düzenle**, onların yerinde 16×16'lık bir ızgara açar. Bir renk ya da **Boş** seç, sonra **Kalem** ile çiz, **Silgi** ile sil ya da **Doldur** ile bir alanı boya. **Ayna** sol ve sağ yarıyı aynı anda boyar. **Temizle** ızgarayı boşaltır, **Geri al** bir adım geri gider. Izgaranın yanındaki küçük görünüm amblemi bir maçtaki boyutunda gösterir. **Tamam** onu tutar, **İptal** çizimi atar. Ok tuşları ve Boşluk klavyeyle de çizer.
+**Amblemini çiz.** 16×16'lık amblem ızgarası her zaman pelerin ve kenar renklerinin altındadır. Bir renk ya da **Boş** seç, sonra **Kalem** ile çiz, **Silgi** ile sil ya da **Doldur** ile bir alanı boya. **Renk ekle** ambleme bir renk daha verir, en fazla 15, yanlarındaki renk seçici de seçili rengi, onunla çizilen her şeyle birlikte değiştirir. **Şununla başla** seçili renkte sekiz şekilden birini ızgaraya koyar. **Ayna** sol ve sağ yarıyı aynı anda boyar. **Temizle** ızgarayı boşaltır, **Geri al** bir adım geri gider. Izgaranın yanındaki küçük görünüm amblemi bir maçtaki boyutunda gösterir. Her çizgi, bitirdiğin anda saklanır. Ok tuşları ve Boşluk klavyeyle de çizer.
 
 Pelerin tasarımcısının altındaki **Lonca bağlantısını kopyala**, etiketini ve pelerinini taşıyan bir bağlantı kopyalar. Bağlantıyı açan kişiye **[VIBE] loncasına katılınsın mı?** diye sorulur: **Katıl** ona etiketini ve pelerinini verir, **Hayır** hiçbir şeyi değiştirmez. Böyle bir bağlantıyı herkes gönderebilir ve hiç kimse bir etiketin sahibi değildir, bu yüzden oyun her zaman önce sorar.
 

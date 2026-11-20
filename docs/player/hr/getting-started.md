@@ -182,14 +182,14 @@ sadrži ono što je tvoje što god igrao. Igra ti daje
 promijeniš. Ostane li prazno, igraš kao `Igrač`. Upiši **Oznaku ceha** od 2 do 4 slova
 ili znamenke pokraj njega i svi je vide iza tvog imena, poput
 `Ente [VIBE]`. S postavljenom oznakom ispod se pojavljuje dizajner **Plašta ceha**:
-odaberi boju plašta, boju ruba i amblem, i tvoje tijelo
+odaberi bilo koju boju plašta i ruba, nacrtaj amblem, i tvoje tijelo
 nosi plašt u svakom meču: skuplja se u tanku traku na tvom rubu dok
 stojiš i vijori se iza tebe dok se krećeš. Prikazuju ga i tvoji likovi u
-izborniku. **Bez plašta** ga skida. Lik prikazuje plašt onako kako izgleda u igri.
+izborniku. **Bez plašta** ga skida. Lik prikazuje plašt onako kako izgleda u igri. Boja preblizu plavoj boji tvog tima ili crvenoj boji tvojih protivnika pri crtanju se malo odmakne od nje, da nijedan plašt ne izgleda kao tim; lik ga prikazuje onako kako će ga svi vidjeti.
 
 Promjena odmah vrijedi za sobu u kojoj si.
 
-**Nacrtaj vlastiti amblem.** **Uredi amblem** ispod početnih amblema otvara na njihovu mjestu mrežu 16×16. Odaberi boju ili **Prazno**, pa crtaj alatom **Olovka**, briši alatom **Gumica** ili oboji područje alatom **Ispuna**. **Zrcaljenje** boji lijevu i desnu polovicu odjednom. **Očisti** prazni mrežu, a **Poništi** vraća korak. Mali prikaz pokraj mreže pokazuje amblem velik kao u meču. **Gotovo** ga zadržava, **Odustani** odbacuje crtež. Strelice i razmaknica crtaju i tipkovnicom.
+**Nacrtaj svoj amblem.** Mreža amblema 16×16 uvijek je ispod boja plašta i ruba. Odaberi boju ili **Prazno**, pa crtaj alatom **Olovka**, briši alatom **Gumica** ili oboji područje alatom **Ispuna**. **Dodaj boju** daje amblemu još jednu boju, do 15, a birač boje pokraj njih mijenja odabranu boju zajedno sa svime što je njome nacrtano. **Započni od** stavlja jedan od osam oblika na mrežu u odabranoj boji. **Zrcaljenje** boji lijevu i desnu polovicu odjednom. **Očisti** prazni mrežu, a **Poništi** vraća korak. Mali prikaz pokraj mreže pokazuje amblem velik kao u meču. Svaki potez sprema se čim ga završiš. Strelice i razmaknica crtaju i tipkovnicom.
 
 **Kopiraj poveznicu ceha**, ispod dizajnera plašta, kopira poveznicu s tvojom oznakom i plaštom. Tko je otvori, dobije pitanje **Pridružiti se cehu [VIBE]?**: **Pridruži se** daje mu tvoju oznaku i plašt, **Ne** ne mijenja ništa. Takvu poveznicu može poslati bilo tko i nitko nije vlasnik oznake, pa igra uvijek prvo pita.
 

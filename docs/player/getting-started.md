@@ -184,15 +184,17 @@ a **Name** on your first visit, like `AshenWolf`; type over it to change
 it. Left empty, you play as `Player`. Type a **Guild tag** of 2 to 4 letters
 or digits beside it, and everyone sees it after your name, like
 `Ente [VIBE]`. With a tag set, the **Guild cape** designer appears under
-it: pick the cape colour, the trim colour and an emblem, and your body
+it: pick any cape colour and trim colour, draw an emblem, and your body
 wears the cape in every match: it folds to a thin band on your rim when
 you stand and streams out behind you when you move. Your characters in
 the menu show it too. **No cape** takes it off. A figure shows the cape as
-it looks in the game.
+it looks in the game. A colour too close to the blue of your team or the
+red of your foes is turned a little away from it when it is drawn, so no
+cape looks like a team; the figure shows it as everyone will see it.
 
 A change applies at once to the lobby you are in.
 
-**Draw your own emblem.** **Edit emblem**, under the starting emblems, opens a 16×16 grid in their place. Pick a colour or **Empty**, then draw with the **Pencil**, rub out with the **Eraser**, or flood an area with **Fill**. **Mirror** paints the left and right halves at once. **Clear** empties the grid and **Undo** goes back a step. The small view beside the grid shows the emblem as big as in a match. **Done** keeps it, **Cancel** throws the drawing away. Arrow keys and Space draw from the keyboard too.
+**Draw your emblem.** The 16×16 emblem grid is always under the cape and trim colours. Pick a colour or **Empty**, then draw with the **Pencil**, rub out with the **Eraser**, or flood an area with **Fill**. **Add colour** gives the emblem another colour, up to 15, and the colour picker beside them changes the picked one, along with everything drawn in it. **Start from** puts one of eight shapes on the grid in the picked colour. **Mirror** paints the left and right halves at once. **Clear** empties the grid and **Undo** goes back a step. The small view beside the grid shows the emblem as big as in a match. Each stroke is kept as you finish it. Arrow keys and Space draw from the keyboard too.
 
 **Copy guild link**, under the cape designer, copies a link that carries
 your tag and cape. Whoever opens it is asked **Join guild [VIBE]?**:

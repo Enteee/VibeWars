@@ -1,5 +1,5 @@
 import { randomPlayerName } from "@vibewars/game-core";
-import { CAPE_COLOURS, type WireCape } from "@vibewars/game-protocol";
+import { packEmblem, unpackEmblem, type WireCape } from "@vibewars/game-protocol";
 import {
   sanitizeGuild,
   sanitizeGuildCape,
@@ -7,26 +7,22 @@ import {
   type Guild,
 } from "@vibewars/game-session";
 
-import { t, type MessageKey } from "../i18n/index.js";
+import { t } from "../i18n/index.js";
 import { GUILD_FRAGMENT_KEY } from "../net/fragment.js";
-import { SELF_RIM, paintEmblem } from "../render/body-painter.js";
-import {
-  CAPE_PALETTE,
-  EMBLEM_PRESET_NAMES,
-  capeLook,
-  emblemShape,
-  presetEmblem,
-  recolourEmblem,
-  type CapeColour,
-  type EmblemPresetName,
-} from "../render/cape-shape.js";
+import { EMBLEM_PRESET_NAMES, capeLook, presetEmblem } from "../render/cape-shape.js";
 import { heroRankOf, loadFame } from "../storage/fame.js";
 import { STORAGE_NAMESPACE } from "../storage/namespace.js";
 import type { StoredCharacter } from "../storage/schema.js";
 import { lookOfCharacter } from "./character-card.js";
-import { canvasPainter, createCharacterFigure } from "./character-figure.js";
+import { createCharacterFigure } from "./character-figure.js";
 import { cssColour } from "./character-preview.js";
-import { COLOUR_NAMES, emblemEditor } from "./emblem-editor.js";
+import {
+  EMBLEM_NAMES,
+  emblemEditor,
+  emblemIcon,
+  inputHex,
+  type EmblemPick,
+} from "./emblem-editor.js";
 import { button, h, shareLine, toast, type ShareLine } from "./kit.js";
 import { isPlayable, loadActiveCharacterId, loadStarterCharacterId } from "./menu.js";
 import type { OptionsSection } from "./options-sections.js";
@@ -180,15 +176,17 @@ export function showsCapeDesigner(typed: string): boolean {
 
 /**
  * The guild link to `tag` and `cape` (#3167): this page's own origin and
- * path, with `#guild=<TAG>.<main>.<trim>.<emblem>`, or `#guild=<TAG>` with
- * no cape. `parseGuildFragment` reads it back.
+ * path, with `#guild=<TAG>.<main>.<trim>.<emblem>.<colours>`, the emblem's
+ * colours run together (#3628), or `#guild=<TAG>` with no cape.
+ * `parseGuildFragment` reads it back.
  */
 export function guildLink(
   tag: string,
   cape: WireCape | null,
   where: Pick<Location, "origin" | "pathname"> = location,
 ): string {
-  const parts = cape === null ? [tag] : [tag, cape.main, cape.trim, cape.emblem];
+  const parts =
+    cape === null ? [tag] : [tag, cape.main, cape.trim, cape.emblem, cape.emblemColours.join("")];
   return `${where.origin}${where.pathname}#${GUILD_FRAGMENT_KEY}=${parts.join(".")}`;
 }
 
@@ -208,23 +206,19 @@ async function copyGuildLink(url: string, share: ShareLine): Promise<void> {
 
 /** One press in the cape designer (#1422). */
 export type CapePick =
-  | { readonly part: "main" | "trim"; readonly colour: CapeColour }
-  | { readonly part: "emblem"; readonly preset: EmblemPresetName }
-  | { readonly part: "drawn"; readonly emblem: string }
+  | { readonly part: "main" | "trim"; readonly colour: string }
+  | ({ readonly part: "emblem" } & EmblemPick)
   | { readonly part: "none" };
 
-/** What a first pick starts from: the study's sample of variant B (#1410). */
+/** What a first pick starts from: the study's sample of variant B (#1410), violet, white trim. */
 export const FIRST_CAPE: WireCape = {
-  main: "violet",
-  trim: "white",
-  emblem: presetEmblem("diamond", "white"),
+  main: "a078e0",
+  trim: "f2f2f2",
+  emblemColours: ["f2f2f2"],
+  emblem: packEmblem(presetEmblem("diamond")),
 };
 
-/**
- * The cape after `pick`; a pick on no cape starts from `FIRST_CAPE`. A
- * preset is drawn in the trim colour, and a new trim takes the emblem's
- * pixels in the old one along (#3554), as the emblem followed the trim.
- */
+/** The cape after `pick`; a pick on no cape starts from `FIRST_CAPE`. */
 export function pickCape(cape: WireCape | null, pick: CapePick): WireCape | null {
   const from = cape ?? FIRST_CAPE;
   switch (pick.part) {
@@ -233,28 +227,11 @@ export function pickCape(cape: WireCape | null, pick: CapePick): WireCape | null
     case "main":
       return { ...from, main: pick.colour };
     case "trim":
-      return {
-        ...from,
-        trim: pick.colour,
-        emblem: recolourEmblem(from.emblem, from.trim, pick.colour),
-      };
+      return { ...from, trim: pick.colour };
     case "emblem":
-      return { ...from, emblem: presetEmblem(pick.preset, from.trim) };
-    case "drawn":
-      return { ...from, emblem: pick.emblem };
+      return { ...from, emblem: pick.emblem, emblemColours: pick.emblemColours };
   }
 }
-
-const EMBLEM_NAMES: Readonly<Record<EmblemPresetName, MessageKey>> = {
-  disc: "player.emblemDisc",
-  bar: "player.emblemBar",
-  chevron: "player.emblemChevron",
-  diamond: "player.emblemDiamond",
-  triangle: "player.emblemTriangle",
-  cross: "player.emblemCross",
-  ring: "player.emblemRing",
-  "half-disc": "player.emblemHalfDisc",
-};
 
 /** Whether `typed` should show as invalid: something, but not a tag. */
 export function isInvalidGuildTag(typed: string): boolean {
@@ -390,15 +367,15 @@ function capeFigure(wearer: StoredCharacter | undefined, cape: WireCape | null):
   return figure;
 }
 
-/** The emblem buttons' size, CSS px. */
-const EMBLEM_BUTTON_PX = 20;
+/** The guild link banner's emblem size, CSS px. */
+const BANNER_EMBLEM_PX = 20;
 
 /**
- * The cape designer (#1422): a row of eight swatches each for the cape's
- * colour and its trim's, eight starting emblems (#3554), *Edit emblem*
- * (#3555) and *No cape*. `show` marks what `cape` has picked; with none,
- * only *No cape* is pressed. *Edit emblem* puts the emblem editor in
- * place of the rows until Done or Cancel; Done is a pick.
+ * The cape designer (#1422, #3628): a colour picker each for the cape's
+ * cloth and its trim, any colour, the emblem editor always under them,
+ * and *No cape*. Each pick, and each finished stroke or tool action in
+ * the editor, is a pick. `show` puts `cape` in the pickers and on the
+ * figure; with none, only *No cape* is pressed.
  */
 function capeDesigner(onPick: (pick: CapePick) => void): {
   readonly root: HTMLElement;
@@ -424,69 +401,40 @@ function capeDesigner(onPick: (pick: CapePick) => void): {
     wearer = capeWearer(characters);
     redraw();
   });
-  const pressed: {
-    readonly button: HTMLButtonElement;
-    readonly on: (cape: WireCape) => boolean;
-  }[] = [];
-  const swatchRow = (part: "main" | "trim", label: string): void => {
-    const row = h("div", "player-cape-row");
-    row.setAttribute("role", "group");
-    row.setAttribute("aria-label", label);
+  const colourRow = (part: "main" | "trim", label: string, name: string): HTMLInputElement => {
+    const row = h("label", "player-cape-row");
     row.appendChild(h("span", "player-cape-row-label", label));
-    for (const colour of CAPE_COLOURS) {
-      const swatch = button("", "player-cape-swatch", () => {
-        onPick({ part, colour });
-      });
-      swatch.style.setProperty("--swatch", cssColour(CAPE_PALETTE[colour]));
-      swatch.setAttribute("aria-label", t(COLOUR_NAMES[colour]));
-      swatch.title = t(COLOUR_NAMES[colour]);
-      swatch.dataset.colour = colour;
-      row.appendChild(swatch);
-      pressed.push({ button: swatch, on: (cape) => cape[part] === colour });
-    }
+    const input = document.createElement("input");
+    input.type = "color";
+    input.className = "player-cape-colour";
+    input.dataset.part = part;
+    input.setAttribute("aria-label", name);
+    input.title = name;
+    input.addEventListener("input", () => {
+      onPick({ part, colour: inputHex(input.value) });
+    });
+    row.appendChild(input);
     picks.appendChild(row);
+    return input;
   };
-  swatchRow("main", t("player.cape"));
-  swatchRow("trim", t("player.trim"));
-  const emblems = h("div", "player-cape-row");
-  emblems.setAttribute("role", "group");
-  emblems.setAttribute("aria-label", t("player.emblem"));
-  emblems.appendChild(h("span", "player-cape-row-label", t("player.emblem")));
-  for (const preset of EMBLEM_PRESET_NAMES) {
-    const choice = button("", "player-cape-emblem", () => {
-      onPick({ part: "emblem", preset });
-    });
-    choice.setAttribute("aria-label", t(EMBLEM_NAMES[preset]));
-    choice.title = t(EMBLEM_NAMES[preset]);
-    choice.dataset.emblem = preset;
-    // Drawn in one ink, whatever its pixel: the shape is what is picked.
-    choice.appendChild(emblemIcon(presetEmblem(preset, "white"), INK));
-    emblems.appendChild(choice);
-    pressed.push({ button: choice, on: (cape) => cape.emblem === presetEmblem(preset, cape.trim) });
-  }
-  picks.appendChild(emblems);
-  const edit = button(t("player.editEmblem"), "player-cape-edit", () => {
-    const editor = emblemEditor(shown ?? FIRST_CAPE, (emblem) => {
-      editor.remove();
-      body.hidden = false;
-      if (emblem !== null) {
-        onPick({ part: "drawn", emblem });
-      }
-    });
-    body.hidden = true;
-    root.appendChild(editor);
+  const main = colourRow("main", t("player.cape"), t("player.capeColour"));
+  const trim = colourRow("trim", t("player.trim"), t("player.trimColour"));
+  const editor = emblemEditor(FIRST_CAPE, (emblem) => {
+    onPick({ part: "emblem", ...emblem });
   });
   const none = button(t("player.noCape"), "player-cape-none", () => {
     onPick({ part: "none" });
   });
-  picks.append(edit, none);
+  picks.append(none);
+  root.appendChild(editor.root);
   return {
     root,
     show: (cape) => {
       shown = cape;
-      for (const { button: each, on } of pressed) {
-        each.setAttribute("aria-pressed", String(cape !== null && on(cape)));
-      }
+      const worn = cape ?? FIRST_CAPE;
+      main.value = `#${worn.main}`;
+      trim.value = `#${worn.trim}`;
+      editor.show(worn);
       none.setAttribute("aria-pressed", String(cape === null));
       redraw();
     },
@@ -495,57 +443,25 @@ function capeDesigner(onPick: (pick: CapePick) => void): {
 
 /**
  * `cape` as a small banner (#3167): its colour, its trim round it, and its
- * emblem, for a guild link's question.
+ * emblem, for a guild link's question, as a match draws them (#3628).
  */
 export function capePreview(cape: WireCape): HTMLElement {
+  const look = capeLook(cape);
   const banner = h("span", "guild-cape-preview");
-  banner.style.setProperty("--cape-main", cssColour(CAPE_PALETTE[cape.main]));
-  banner.style.setProperty("--cape-trim", cssColour(CAPE_PALETTE[cape.trim]));
+  banner.style.setProperty("--cape-main", cssColour(look.main));
+  banner.style.setProperty("--cape-trim", cssColour(look.trim));
   banner.setAttribute("role", "img");
-  const preset = EMBLEM_PRESET_NAMES.find((name) => presetEmblem(name, cape.trim) === cape.emblem);
+  const pixels = unpackEmblem(cape.emblem, cape.emblemColours.length);
+  const preset =
+    cape.emblemColours.length === 1
+      ? EMBLEM_PRESET_NAMES.find((name) => presetEmblem(name).join() === pixels?.join())
+      : undefined;
   banner.setAttribute(
     "aria-label",
-    [
-      t(COLOUR_NAMES[cape.main]),
-      t(COLOUR_NAMES[cape.trim]),
-      ...(preset === undefined ? [] : [t(EMBLEM_NAMES[preset])]),
-    ].join(", "),
+    preset === undefined
+      ? t("player.guildCape")
+      : `${t("player.guildCape")}, ${t(EMBLEM_NAMES[preset])}`,
   );
-  banner.appendChild(
-    emblemIcon(
-      cape.emblem,
-      CAPE_COLOURS.map((colour) => CAPE_PALETTE[colour]),
-    ),
-  );
+  banner.appendChild(emblemIcon(cape.emblem, look.palette, BANNER_EMBLEM_PX));
   return banner;
-}
-
-/** A preset button's one ink for every pixel. */
-const INK: readonly number[] = CAPE_COLOURS.map(() => SELF_RIM);
-
-/**
- * `emblem` in `palette`, upright, sharp at the device's pixel ratio. An image
- * of a canvas, not the canvas: Options keeps no canvases of its own (#1422).
- */
-function emblemIcon(emblem: string, palette: readonly number[]): HTMLImageElement {
-  const ratio = window.devicePixelRatio;
-  const canvas = document.createElement("canvas");
-  canvas.width = Math.round(EMBLEM_BUTTON_PX * ratio);
-  canvas.height = Math.round(EMBLEM_BUTTON_PX * ratio);
-  const context = canvas.getContext("2d");
-  if (context !== null) {
-    context.scale(ratio, ratio);
-    const half = EMBLEM_BUTTON_PX / 2;
-    paintEmblem(
-      canvasPainter(context),
-      emblemShape(emblem, { x: half, y: half }, 0, EMBLEM_BUTTON_PX - 4),
-      palette,
-    );
-  }
-  const image = document.createElement("img");
-  image.src = canvas.toDataURL();
-  image.alt = "";
-  image.width = EMBLEM_BUTTON_PX;
-  image.height = EMBLEM_BUTTON_PX;
-  return image;
 }

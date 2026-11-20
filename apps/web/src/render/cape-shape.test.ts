@@ -1,14 +1,14 @@
-import { CAPE_COLOURS, EMBLEM_GRID, packEmblem, unpackEmblem } from "@vibewars/game-protocol";
+import { EMBLEM_GRID, packEmblem } from "@vibewars/game-protocol";
 import { describe, expect, it } from "vitest";
 
 import {
-  CAPE_PALETTE,
   EMBLEM_PRESET_NAMES,
+  capeLook,
   emblemRects,
   emblemShape,
   presetEmblem,
-  recolourEmblem,
 } from "./cape-shape.js";
+import { FOE_COLOUR, FRIEND_COLOUR, HAND, wheelDistance } from "./colour-wheel.js";
 
 /** Every pixel of `emblem` the rectangles of `emblemShape` cover, back on the grid. */
 function coverage(emblem: string): number[] {
@@ -26,10 +26,10 @@ function coverage(emblem: string): number[] {
 
 describe("emblemShape (#1422, #3554)", () => {
   it.each(EMBLEM_PRESET_NAMES)("draws the %s preset as quads inside its box", (name) => {
-    const parts = emblemShape(presetEmblem(name, "gold"), { x: 0, y: 0 }, 0, 10);
+    const parts = emblemShape(packEmblem(presetEmblem(name)), { x: 0, y: 0 }, 0, 10);
     expect(parts.length).toBeGreaterThan(0);
     for (const part of parts) {
-      expect(part.pixel).toBe(CAPE_COLOURS.indexOf("gold") + 1);
+      expect(part.pixel).toBe(1);
       expect(part.points).toHaveLength(4);
       for (const point of part.points) {
         expect(Math.max(Math.abs(point.x), Math.abs(point.y))).toBeLessThanOrEqual(5);
@@ -58,7 +58,7 @@ describe("emblemShape (#1422, #3554)", () => {
   });
 
   it("works a grid's rectangles out once and reuses them", () => {
-    const emblem = presetEmblem("ring", "teal");
+    const emblem = packEmblem(presetEmblem("ring"));
     expect(emblemRects(emblem)).toBe(emblemRects(emblem));
   });
 
@@ -79,11 +79,11 @@ describe("emblemShape (#1422, #3554)", () => {
 
 describe("the starting emblems (#3554)", () => {
   it("are eight distinct, filled shapes, each still distinct drawn 8 px across", () => {
-    const grids = EMBLEM_PRESET_NAMES.map((name) => presetEmblem(name, "white"));
-    expect(new Set(grids).size).toBe(EMBLEM_PRESET_NAMES.length);
+    const grids = EMBLEM_PRESET_NAMES.map((name) => presetEmblem(name));
+    expect(new Set(grids.map((grid) => grid.join())).size).toBe(EMBLEM_PRESET_NAMES.length);
     // 8 px across, each pixel of the drawing the grid's 2×2 block, filled if any of it is.
     const small = grids.map((grid) => {
-      const pixels = unpackEmblem(grid) ?? [];
+      const pixels = grid;
       return Array.from({ length: 64 }, (_, index) => {
         const row = Math.floor(index / 8) * 2;
         const column = (index % 8) * 2;
@@ -98,20 +98,39 @@ describe("the starting emblems (#3554)", () => {
     expect(new Set(small).size).toBe(EMBLEM_PRESET_NAMES.length);
   });
 
-  it("draw in the colour asked for", () => {
-    const pixels = unpackEmblem(presetEmblem("cross", "pink")) ?? [];
-    expect(new Set(pixels)).toEqual(new Set([0, CAPE_COLOURS.indexOf("pink") + 1]));
-  });
-
-  it("follow a new trim: its pixels change colour, the rest stay", () => {
-    const two = packEmblem([1, 2, 3, 0]);
-    expect(unpackEmblem(recolourEmblem(two, "violet", "pink"))?.slice(0, 4)).toEqual([1, 8, 3, 0]);
+  it("are drawn in their one colour (#3628)", () => {
+    for (const name of EMBLEM_PRESET_NAMES) {
+      expect(new Set(presetEmblem(name))).toEqual(new Set([0, 1]));
+    }
   });
 });
 
-describe("CAPE_PALETTE (#1422)", () => {
-  it("gives every colour its own hue", () => {
-    const hues = CAPE_COLOURS.map((colour) => CAPE_PALETTE[colour]);
-    expect(new Set(hues).size).toBe(CAPE_COLOURS.length);
+describe("capeLook (#3628)", () => {
+  it("draws the colours picked, the emblem's by its pixels", () => {
+    const look = capeLook({
+      main: "a078e0",
+      trim: "f2f2f2",
+      emblemColours: ["e6c04a", "23272e"],
+      emblem: packEmblem([1, 2]),
+    });
+    expect(look).toEqual({
+      main: 0xa078e0,
+      trim: 0xf2f2f2,
+      emblem: packEmblem([1, 2]),
+      palette: [0xe6c04a, 0x23272e],
+    });
+  });
+
+  it("turns a team's own colours a hand clear of both teams", () => {
+    const look = capeLook({
+      main: "59c2ff",
+      trim: "ff7b72",
+      emblemColours: ["ff7b72"],
+      emblem: packEmblem([1]),
+    });
+    for (const colour of [look.main, look.trim, ...look.palette]) {
+      expect(wheelDistance(colour, FRIEND_COLOUR)).toBeGreaterThanOrEqual(HAND);
+      expect(wheelDistance(colour, FOE_COLOUR)).toBeGreaterThanOrEqual(HAND);
+    }
   });
 });
