@@ -134,6 +134,20 @@ function prevOf(receipt: RankedReceipt, pubkey: string): string {
   return seat.prev;
 }
 
+/** `signer`'s partial receipt for an earlier round of `receipt`, with `leavers` instead. */
+function roundOf(
+  receipt: RankedReceipt,
+  leavers: readonly string[],
+  signer: string,
+): RankedReceipt {
+  const result = { ...receipt.result, leavers };
+  return {
+    ...receipt,
+    result,
+    resultSigs: { [signer]: sigOf(signer, resultDigest(result, sha256)) },
+  };
+}
+
 /** `receipt`'s start with another result, signed by every seat. */
 function resultSwapped(receipt: RankedReceipt, winningTeam: number | null): RankedReceipt {
   const result = { ...receipt.result, winningTeam };
@@ -381,6 +395,44 @@ describe("rate", () => {
     expect(of(ratings, leaver).streak).toBe(0);
     expect(of(ratings, stayer).rating).toBeGreaterThan(of(day0, stayer).rating);
     expect(of(ratings, x).rating).toBeLessThan(of(day0, x).rating);
+  });
+
+  it("voids a match whose host re-rounded a signer into a leaver", () => {
+    const ledger = new Ledger();
+    const pool = trustedPool(ledger);
+    const [host, mate, x, y] = pool;
+    const day0 = rate(ledger.receipts, 1, crypto);
+    const final = ledger.play(
+      1,
+      [
+        [host, mate],
+        [x, y],
+      ],
+      { leavers: [x] },
+    );
+    const ratings = rate([...ledger.receipts, roundOf(final, [], x)], 1, crypto);
+    for (const pubkey of [host, mate, x, y]) {
+      expect(of(ratings, pubkey)).toEqual(of(day0, pubkey));
+    }
+  });
+
+  it("loses for a leaver that signed no round, beside another seat's partial", () => {
+    const ledger = new Ledger();
+    const pool = trustedPool(ledger);
+    const [host, mate, x, y] = pool;
+    const day0 = rate(ledger.receipts, 1, crypto);
+    const final = ledger.play(
+      1,
+      [
+        [host, mate],
+        [x, y],
+      ],
+      { leavers: [x] },
+    );
+    const ratings = rate([...ledger.receipts, roundOf(final, [], y)], 1, crypto);
+    expect(of(ratings, x).rating).toBeLessThan(of(day0, x).rating);
+    expect(of(ratings, host).rating).toBeGreaterThan(of(day0, host).rating);
+    expect(of(ratings, y).matches).toBe(of(day0, y).matches + 1);
   });
 
   it("rates only the host when the host left", () => {
