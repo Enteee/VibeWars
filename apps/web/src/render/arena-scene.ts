@@ -637,16 +637,49 @@ export interface SceneMarker {
   readonly dashed: boolean;
 }
 
-function drawRing(g: Phaser.GameObjects.Graphics, x: number, y: number, dashed: boolean): void {
-  g.lineStyle(1.5, HOVER_RING, 0.8);
+/**
+ * How much larger the docs' fixed rings are than the pointer's (#3716): a
+ * diagram is shown at about a third of its size, where the game's ring
+ * would be a 0.6 px line.
+ */
+export const DIAGRAM_RING_SCALE = 2.5;
+/** The dark line under a diagram's ring, so it reads on pale paving too (#3716). */
+const DIAGRAM_RING_UNDER = 0x000000;
+
+/** One hover ring, `scale` times the pointer's: dashed on the ground, solid off it. */
+export function drawRing(
+  g: Phaser.GameObjects.Graphics,
+  x: number,
+  y: number,
+  dashed: boolean,
+  scale: number,
+): void {
+  g.lineStyle(1.5 * scale, HOVER_RING, 0.8);
+  strokeRing(g, x, y, dashed, HOVER_RADIUS * scale);
+}
+
+/** A ring fixed on the map for a diagram (#3716): larger, over a dark under-stroke. */
+export function drawDiagramRing(g: Phaser.GameObjects.Graphics, marker: SceneMarker): void {
+  g.lineStyle(2 * 1.5 * DIAGRAM_RING_SCALE, DIAGRAM_RING_UNDER, 0.5);
+  strokeRing(g, marker.x, marker.y, marker.dashed, HOVER_RADIUS * DIAGRAM_RING_SCALE);
+  drawRing(g, marker.x, marker.y, marker.dashed, DIAGRAM_RING_SCALE);
+}
+
+function strokeRing(
+  g: Phaser.GameObjects.Graphics,
+  x: number,
+  y: number,
+  dashed: boolean,
+  radius: number,
+): void {
   if (!dashed) {
-    g.strokeCircle(x, y, HOVER_RADIUS);
+    g.strokeCircle(x, y, radius);
     return;
   }
   const dash = Math.PI / HOVER_DASHES;
   for (let k = 0; k < HOVER_DASHES; k += 1) {
     g.beginPath();
-    g.arc(x, y, HOVER_RADIUS, 2 * k * dash, (2 * k + 1) * dash);
+    g.arc(x, y, radius, 2 * k * dash, (2 * k + 1) * dash);
     g.strokePath();
   }
 }
@@ -4110,7 +4143,7 @@ export class ArenaScene extends Phaser.Scene {
   /** Where a click would go, before it does (#2831): a ring off the ground (#2973), dashed on it. */
   private drawHoverMarker(g: Phaser.GameObjects.Graphics): void {
     for (const marker of this.fixedMarkers ?? []) {
-      drawRing(g, marker.x, marker.y, marker.dashed);
+      drawDiagramRing(g, marker);
     }
     const { structure, walls } = this.snapshot;
     const pointer = this.input.activePointer;
@@ -4125,7 +4158,7 @@ export class ArenaScene extends Phaser.Scene {
       this.alt?.held() === true,
       selfLayer(this.snapshot),
     );
-    drawRing(g, world.x, world.y, layer === structure.ground);
+    drawRing(g, world.x, world.y, layer === structure.ground, 1);
   }
 
   /** Each lift's platform where the snapshot has it now (#3079), drawn afresh every frame. */

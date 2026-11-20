@@ -5,7 +5,8 @@ import { ARENA_ATLAS_JSON, ARENA_ATLAS_SVG } from "./arena-atlas.js";
 // Phaser probes for a browser when it loads: the scene only needs a base class.
 vi.mock("phaser", () => ({ default: { Scene: Object } }));
 
-const { ArenaScene } = await import("./arena-scene.js");
+const { ArenaScene, DIAGRAM_RING_SCALE, drawDiagramRing, drawRing } =
+  await import("./arena-scene.js");
 // Loaded once here, not in the tunnel tests: the first import is most of
 // their time (#3672).
 const { mapStructure } = await import("../net/maps.js");
@@ -20,6 +21,46 @@ describe("ArenaScene preload (#1671)", () => {
     };
     ArenaScene.prototype.preload.call(Object.assign(Object.create(ArenaScene.prototype), { load }));
     expect(queued).toEqual([`/${ARENA_ATLAS_SVG}`, `/${ARENA_ATLAS_JSON}`]);
+  });
+});
+
+/** A Graphics that writes down each stroke it is asked for. */
+function strokeLog(): { g: Parameters<typeof drawRing>[0]; log: string[] } {
+  const log: string[] = [];
+  const g = {
+    lineStyle: (width: number, colour: number, alpha: number) =>
+      log.push(`line ${String(width)} ${colour.toString(16)} ${String(alpha)}`),
+    strokeCircle: (x: number, y: number, radius: number) =>
+      log.push(`circle ${String(x)},${String(y)} r${String(radius)}`),
+    beginPath: () => undefined,
+    arc: (x: number, y: number, radius: number) =>
+      log.push(`arc ${String(x)},${String(y)} r${String(radius)}`),
+    strokePath: () => undefined,
+  };
+  return { g: g as unknown as Parameters<typeof drawRing>[0], log };
+}
+
+describe("the hover ring (#2831, #3716)", () => {
+  it("draws the pointer's ring as it always has: radius 12, a 1.5 line, eight dashes on the ground", () => {
+    const solid = strokeLog();
+    drawRing(solid.g, 10, 20, false, 1);
+    expect(solid.log).toEqual(["line 1.5 d7dee8 0.8", "circle 10,20 r12"]);
+    const dashed = strokeLog();
+    drawRing(dashed.g, 10, 20, true, 1);
+    expect(dashed.log).toEqual(["line 1.5 d7dee8 0.8", ...Array(8).fill("arc 10,20 r12")]);
+  });
+
+  it("draws a diagram's fixed ring larger, over a dark under-stroke twice as wide", () => {
+    const { g, log } = strokeLog();
+    drawDiagramRing(g, { x: 5, y: 6, dashed: true });
+    const radius = 12 * DIAGRAM_RING_SCALE;
+    const line = 1.5 * DIAGRAM_RING_SCALE;
+    expect(log).toEqual([
+      `line ${String(2 * line)} 0 0.5`,
+      ...Array(8).fill(`arc 5,6 r${String(radius)}`),
+      `line ${String(line)} d7dee8 0.8`,
+      ...Array(8).fill(`arc 5,6 r${String(radius)}`),
+    ]);
   });
 });
 
