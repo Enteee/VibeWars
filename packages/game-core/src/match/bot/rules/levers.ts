@@ -1,7 +1,7 @@
 import type { BotLever } from "../../behaviour.js";
 import { distance } from "../../../vec2.js";
 import { countsForTeam } from "../../simulation.js";
-import { nearestTo, NOTHING, pressed } from "./shared.js";
+import { nearJammedGoal, nearestTo, NOTHING, pressed } from "./shared.js";
 import type { BotRule } from "./types.js";
 
 /** How much cheaper a lever must make the team's way to the foes to walk, in units at base pace (#3521), to be worth the walk. */
@@ -51,6 +51,7 @@ const levers: BotRule = {
         context.now >= lever.readyAt &&
         context.now - lever.flippedAt >= LEVER_SETTLE_SECONDS &&
         context.leverHolder(lever.targetId) === undefined &&
+        !nearJammedGoal(context, lever.position, lever.layer) &&
         (best === undefined || gain > bestGain || (gain === bestGain && reach(lever) < reach(best)))
       ) {
         best = lever;

@@ -262,7 +262,7 @@ describe("King of the Hill bots (#2582)", () => {
     // This seed's ghosts die together on the altar before either claim ends.
     const sim = hill(
       twoTeams,
-      "a",
+      "h",
       casterBots(hall, 8, 1).map((spec) =>
         spec.id === "0-0" ? { ...spec, behaviour: undefined } : spec,
       ),

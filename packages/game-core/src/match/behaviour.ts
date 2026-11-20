@@ -332,6 +332,11 @@ export interface BehaviourContext {
   isIdle(participantId: string): boolean;
   /** The foe `self`'s team called (#443), if any: a bot's target while it lives (#1193). */
   readonly calledTargetId: string | undefined;
+  /**
+   * A goal `self` gave up, boxed in by bodies on the way (#3702): rules
+   * that pick where to go skip one near it while it is set.
+   */
+  readonly jammedGoal: { readonly at: Vec2; readonly layer: number } | undefined;
   /** Whether nothing blocks the line of sight from `self` to `point` (#1222). */
   sees(point: Vec2, layer?: number): boolean;
   /** Whether nothing blocks the line of sight from `from` to `to`, each on its layer (#2545, ADR-0051). */

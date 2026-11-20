@@ -341,6 +341,19 @@ export const DODGE_CHANCE = 0.5;
 /** The share of the casts worth it a bot tries to interrupt (#2633); it misses the rest. */
 export const INTERRUPT_CHANCE = 0.75;
 
+/** How near a given-up goal (#3702) a destination counts as that goal. */
+export const JAMMED_GOAL_REACH = 64;
+
+/**
+ * Whether `point` on `layer` is the goal `context`'s bot gave up, boxed
+ * in by bodies on the way there (#3702), or near it: a rule picking where
+ * to go takes its next choice instead, or holds if it has none.
+ */
+export function nearJammedGoal(context: BehaviourContext, point: Vec2, layer: number): boolean {
+  const jammed = context.jammedGoal;
+  return jammed?.layer === layer && distance(jammed.at, point) <= JAMMED_GOAL_REACH;
+}
+
 /**
  * A bot's coin for one thing it may react to, in [0, 1): a shot to dodge
  * (#2590) or a cast to interrupt (#2633). A pure hash of the match's

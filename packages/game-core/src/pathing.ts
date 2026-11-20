@@ -1070,6 +1070,40 @@ export function rampLength(area: Polygon, uphill: Vec2): number {
   return distance(pointAlong(area, uphill, 0), pointAlong(area, uphill, 1));
 }
 
+/**
+ * A body a route keeps clear of if it can (#3702): each unit walked inside
+ * it costs `AVOID_COST` units. It never blocks, so a lone way still goes.
+ */
+export interface Avoid {
+  readonly at: Vec2;
+  readonly layer: number;
+  readonly radius: number;
+}
+
+/** What a unit walked inside an `Avoid` costs a route (#3702). */
+export const AVOID_COST = 8;
+
+/** How much of the segment from `a` to `b` lies within `radius` of `at`. */
+export function lengthInCircle(a: Vec2, b: Vec2, at: Vec2, radius: number): number {
+  const d = sub(b, a);
+  const f = sub(a, at);
+  const dd = dot(d, d);
+  if (dd === 0) {
+    return 0;
+  }
+  // |f + t d| = radius, for t along the segment.
+  const half = dot(f, d) / dd;
+  const rest = (dot(f, f) - radius * radius) / dd;
+  const under = half * half - rest;
+  if (!(under > 0)) {
+    return 0;
+  }
+  const root = Math.sqrt(under);
+  const enter = Math.max(0, -half - root);
+  const leave = Math.min(1, -half + root);
+  return leave > enter ? (leave - enter) * Math.sqrt(dd) : 0;
+}
+
 /** Finds paths over a map's layers, reusing its own scratch from one query to the next. */
 export interface LayeredPathFinder {
   /** Every node of every layer, portals included: what the 600-node budget (#2544) counts. */
@@ -1081,8 +1115,15 @@ export interface LayeredPathFinder {
    * leaves it by, carrying the far layer, after one at the end it enters
    * by: going up its foot, so a body does not cut in under the deck it
    * tops, and going down its top, so it does not walk into its rim (#3177). A fresh array the caller may keep.
+   * With `avoid`, the way keeps clear of those bodies where it can (#3702).
    */
-  find(from: Vec2, fromLayer: number, to: Vec2, toLayer: number): RouteWaypoint[] | undefined;
+  find(
+    from: Vec2,
+    fromLayer: number,
+    to: Vec2,
+    toLayer: number,
+    options?: { readonly avoid?: readonly Avoid[] },
+  ): RouteWaypoint[] | undefined;
 }
 
 /** One layer of a map, as `buildLayeredNavGraph` reads it. */
@@ -1176,6 +1217,7 @@ const GOAL_CLEAR = 1;
 const GOAL_BLOCKED = 2;
 
 const NO_EDGES: readonly number[] = [];
+const NO_AVOID: readonly Avoid[] = [];
 
 const ZERO_POINT: Vec2 = { x: 0, y: 0 };
 
@@ -1187,6 +1229,8 @@ class AStar implements LayeredPathFinder {
   /** Vertices are every layer's nodes then portals, in layer order, then `from`, then `to`. */
   readonly #points: Vec2[] = [];
   readonly #layerOf: Uint8Array;
+  /** The bodies the query under way keeps clear of (#3702). */
+  #avoid: readonly Avoid[] = NO_AVOID;
   readonly #isPortal: Uint8Array;
   /** Where a route crossing a ramp to this portal vertex is sent. */
   readonly #exits = new Map<number, Vec2>();
@@ -1426,7 +1470,9 @@ class AStar implements LayeredPathFinder {
     fromLayer: number,
     to: Vec2,
     toLayer: number,
+    options?: { readonly avoid?: readonly Avoid[] },
   ): RouteWaypoint[] | undefined {
+    this.#avoid = options?.avoid ?? NO_AVOID;
     // No estimate to a point off every number line is ever the best (#2735).
     if (![from.x, from.y, to.x, to.y].every(Number.isFinite)) {
       return undefined;
@@ -1459,7 +1505,7 @@ class AStar implements LayeredPathFinder {
     const fromZones = this.#graphs[fromLayer]?.zones ?? [];
     const straight =
       fromLayer === toLayer && isClear(fromGrid, from, to)
-        ? walkCost(fromZones, from, to)
+        ? walkCost(fromZones, from, to) + this.#avoidCost(fromLayer, from, to)
         : Number.POSITIVE_INFINITY;
     this.#pastEntry =
       this.#jumpCost +
@@ -1510,7 +1556,11 @@ class AStar implements LayeredPathFinder {
             (this.#isPortal[j] === 1 || distance(node, from) > ARRIVED) &&
             isClear(fromGrid, from, node)
           ) {
-            this.#relax(current, j, here + walkCost(fromZones, from, node));
+            this.#relax(
+              current,
+              j,
+              here + walkCost(fromZones, from, node) + this.#avoidCost(fromLayer, from, node),
+            );
           }
         }
         // Clear, but through harmful ground: still a way, at its cost.
@@ -1522,15 +1572,39 @@ class AStar implements LayeredPathFinder {
         const costs = this.#costs[current] ?? NO_EDGES;
         for (let at = 0; at < edges.length; at += 1) {
           const next = edges[at] ?? current;
-          this.#relax(current, next, here + (costs[at] ?? Number.POSITIVE_INFINITY));
+          const avoided =
+            this.#avoid.length === 0
+              ? 0
+              : this.#avoidCost(
+                  this.#layerOf[current] ?? 0,
+                  this.#point(current),
+                  this.#point(next),
+                );
+          this.#relax(current, next, here + (costs[at] ?? Number.POSITIVE_INFINITY) + avoided);
         }
         if (this.#nodeSeesGoal(current)) {
           const toZones = this.#graphs[toLayer]?.zones ?? [];
-          this.#relax(current, goal, here + walkCost(toZones, this.#point(current), to));
+          const point = this.#point(current);
+          this.#relax(
+            current,
+            goal,
+            here + walkCost(toZones, point, to) + this.#avoidCost(toLayer, point, to),
+          );
         }
       }
     }
     return undefined;
+  }
+
+  /** What the walk from `a` to `b` on `layer` costs past its length, for the bodies it avoids. */
+  #avoidCost(layer: number, a: Vec2, b: Vec2): number {
+    let extra = 0;
+    for (const body of this.#avoid) {
+      if (body.layer === layer) {
+        extra += (AVOID_COST - 1) * lengthInCircle(a, b, body.at, body.radius);
+      }
+    }
+    return extra;
   }
 
   /**
