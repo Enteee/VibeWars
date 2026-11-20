@@ -1,0 +1,86 @@
+import type { ProfessionId } from "@vibewars/game-core";
+
+/** A body in a diagram: idle, where it says, on the layer it says. */
+export interface SceneActor {
+  readonly profession: ProfessionId;
+  readonly team: number;
+  readonly x: number;
+  readonly y: number;
+  /** Its layer; omitted, the map's ground. */
+  readonly layer?: number;
+}
+
+/** A hover ring at a point: dashed on the ground, solid off it. */
+export interface SceneRing {
+  readonly x: number;
+  readonly y: number;
+  readonly dashed: boolean;
+}
+
+/** A diagram drawn by the game's own renderer (#3557); its id names the PNG. */
+export interface DiagramScene {
+  readonly id: string;
+  readonly map: string;
+  readonly camera: { readonly x: number; readonly y: number; readonly zoom: number };
+  readonly actors: readonly SceneActor[];
+  readonly markers: readonly SceneRing[];
+}
+
+/** A diagram of a screen, taken through the e2e helpers. */
+export interface UiScene {
+  readonly id: string;
+  readonly ui: "team-arena-size" | "team-arena-signup";
+}
+
+/**
+ * The first set (#3557). Cameras and compositions are the asset
+ * designer's to adjust; re-run `pnpm docs:diagrams` after a change.
+ */
+export const DIAGRAM_SCENES: readonly DiagramScene[] = [
+  {
+    id: "layers-deck",
+    map: "canthan-terraces",
+    camera: { x: 520, y: 1290, zoom: 1.1 },
+    actors: [
+      { profession: "warrior", team: 0, x: 520, y: 1200, layer: 2 },
+      { profession: "monk", team: 1, x: 520, y: 1450, layer: 1 },
+    ],
+    markers: [],
+  },
+  {
+    id: "layers-tunnel",
+    map: "canthan-terraces",
+    camera: { x: 700, y: 1380, zoom: 1.2 },
+    actors: [{ profession: "ranger", team: 0, x: 700, y: 1330, layer: 0 }],
+    markers: [],
+  },
+  {
+    id: "alt-click",
+    map: "canthan-terraces",
+    camera: { x: 520, y: 1290, zoom: 1.1 },
+    actors: [{ profession: "warrior", team: 0, x: 520, y: 1450, layer: 1 }],
+    markers: [
+      { x: 520, y: 1200, dashed: false },
+      { x: 520, y: 1320, dashed: true },
+    ],
+  },
+  {
+    id: "world-lever-gate",
+    map: "arena-crossroads",
+    camera: { x: 2200, y: 470, zoom: 1.3 },
+    actors: [{ profession: "elementalist", team: 0, x: 2260, y: 530, layer: 1 }],
+    markers: [],
+  },
+  {
+    id: "world-wall-mire",
+    map: "canthan-terraces",
+    camera: { x: 1110, y: 1740, zoom: 1 },
+    actors: [{ profession: "warrior", team: 0, x: 1120, y: 1780, layer: 1 }],
+    markers: [],
+  },
+];
+
+export const UI_SCENES: readonly UiScene[] = [
+  { id: "team-arena-1", ui: "team-arena-size" },
+  { id: "team-arena-2", ui: "team-arena-signup" },
+];

@@ -291,7 +291,9 @@ describe("Training Wilds (#3024)", () => {
   });
 
   it("breaks the side room's cracked wall, and walks you in through the gap (#3031)", () => {
-    const { simulation } = setupScenario(scenario, newCharacter("c1"));
+    // No dummies: the wall takes 45 s of hitting, and their ticks were most
+    // of this test's time (#3672).
+    const { simulation } = setupScenario({ ...scenario, dummies: [] }, newCharacter("c1"));
     const room = { x: 80, y: 700 };
     const walkIn = (): { x: number; y: number } => {
       applyIntent(simulation, SELF_ID, { kind: "walk-to", ...room, layer: 1 });
