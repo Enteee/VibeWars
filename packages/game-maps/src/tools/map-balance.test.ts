@@ -2442,11 +2442,7 @@ describe("the width of each team's way in (#3688)", () => {
    * The maps whose teams' narrowest ways in were uneven when #3688 measured
    * them, each with the card that fixes it. One that is fixed leaves this list.
    */
-  const UNEVEN: Readonly<Record<string, number>> = {
-    "hall-of-heroes-capture": 3442,
-    "hall-of-heroes-king": 3442,
-    "hall-of-heroes-relic": 3442,
-  };
+  const UNEVEN: Readonly<Record<string, number>> = {};
 
   /** Where `map` is fought over: its own point, else its shared objective nearest the centre, else its centre. */
   const foughtOver = (map: MapData): { readonly at: Vec2; readonly layer: number } => {

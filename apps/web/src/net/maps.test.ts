@@ -623,8 +623,8 @@ describe("mapShrines (#1199)", () => {
 
 describe("structureOf's paving (#3210)", () => {
   it("hands the renderer a map's paving, so a map of one layer with a road is not flat", () => {
-    const [flat] = ARENA_MAPS.filter((map) => map.layers === 1);
-    if (flat === undefined) throw new Error("no flat arena");
+    const flat = TRAINING_MAPS.get("training-field");
+    if (flat === undefined) throw new Error("no training-field");
     const paving = [
       {
         id: "road",
@@ -648,8 +648,8 @@ describe("structureOf's water (#2984)", () => {
   ] as const;
 
   it("hands the renderer every body of water, deep and shallow, on a map of one layer", () => {
-    const [flat] = ARENA_MAPS.filter((map) => map.layers === 1);
-    if (flat === undefined) throw new Error("no flat arena");
+    const flat = TRAINING_MAPS.get("training-field");
+    if (flat === undefined) throw new Error("no training-field");
     expect(structureOf(flat).structure.water).toEqual([]);
     expect(structureOf({ ...flat, water: [...water] }).structure).toMatchObject({
       layerCount: 1,
