@@ -1072,6 +1072,8 @@ interface ParticipantRecord extends Participant {
   route: { goal: Vec2; layer: number; waypoints: RouteWaypoint[] } | undefined;
   /** How a body holds up its follow (#3702); `undefined` while it makes headway. */
   jam: Jam | undefined;
+  /** The side its last step passed a body on (#3707), kept while bodies stay in its way; `undefined` with none. */
+  passRight: boolean | undefined;
   /** The body its follow's routes keep clear of after a jam (#3702), until `until`. */
   avoid: { readonly body: Avoid; readonly until: number } | undefined;
   /** A goal it gave up, boxed in on the way (#3702): its behaviour picks another until `until`. */
@@ -2177,6 +2179,7 @@ export class MatchSimulation {
       followGoal: undefined,
       route: undefined,
       jam: undefined,
+      passRight: undefined,
       avoid: undefined,
       jammedGoal: undefined,
       teleportReadyAt: 0,
@@ -6856,11 +6859,24 @@ export class MatchSimulation {
       record.route = undefined;
       return "arrived";
     }
-    const next = this.#route(
-      record,
-      this.#chaseGoal(target.position, target.layer),
-      target.layer,
-    )?.[0];
+    const goal = this.#chaseGoal(target.position, target.layer);
+    const path = this.#route(record, goal, target.layer);
+    let next: Vec2 | undefined = path?.[0];
+    // As near the target as the spot nearest it the graph has room for, or
+    // within a step of that, and still short of it: the target stands by a
+    // wall where the graph says no body fits, but one does. Walking on to
+    // that spot, it would step past it and back every tick, or off the
+    // graph and back, and never arrive (#3707); so it walks on at the
+    // target, which a wall stops if one is in the way.
+    if (
+      next !== undefined &&
+      path?.length === 1 &&
+      target.layer === record.layer &&
+      distance(record.position, target.position) <=
+        distance(goal, target.position) + this.#stepUnits(record, dt)
+    ) {
+      next = target.position;
+    }
     if (next === undefined) {
       // No way there, this tick. It has to last before the approach ends
       // (#218); meanwhile, on its own layer, steer straight at the target,
@@ -6877,7 +6893,7 @@ export class MatchSimulation {
     // A path that leads nowhere counts as none: an approach that cannot
     // move, boxed in or with a body in a doorway, ends as unreachable
     // too. One held is neither lost nor progress.
-    const step = this.#stepToward(record, next, target.id, false, dt);
+    const step = this.#stepToward(record, next, target.id, next === target.position, dt);
     if (step === "stalled") {
       if (this.#stalledFor(progress, dt)) {
         record.route = undefined;
@@ -6939,11 +6955,31 @@ export class MatchSimulation {
     // The same speed for less of the tick: on the goal, never past it.
     const asked = land ? Math.min(full, left) : full;
     const seconds = asked < full ? (dt * asked) / full : dt;
-    this.advanceMovement(record, steerAround(before, next, radius, this.#bodies), seconds);
+    let steer = steerAround(before, next, radius, this.#bodies, record.passRight);
+    // A side picked afresh that takes it out of sight of `next`, round a
+    // corner, is the other side's if that one keeps it in sight (#3707):
+    // the route would only send it back, and steering out again, it would
+    // never get on.
+    if (steer.passRight !== undefined && record.passRight === undefined) {
+      const graph = this.#graphOn(record.layer);
+      const sees = (direction: Vec2) =>
+        walkIsClear(graph, add(before, scale(normalize(direction), full)), next);
+      if (!sees(steer.direction)) {
+        const other = steerAround(before, next, radius, this.#bodies, !steer.passRight);
+        if (sees(other.direction)) {
+          steer = other;
+        }
+      }
+    }
+    this.advanceMovement(record, steer.direction, seconds);
     if (!(asked > 0)) {
+      record.passRight = steer.passRight;
       return "held";
     }
-    return distance(before, record.position) < STALL_FRACTION * asked ? "stalled" : "moved";
+    const stalled = distance(before, record.position) < STALL_FRACTION * asked;
+    // A side kept into a wall is let go: the next step picks again.
+    record.passRight = stalled ? undefined : steer.passRight;
+    return stalled ? "stalled" : "moved";
   }
 
   /** How far `record` walks in `dt` at its speed now, slowed or not. */
@@ -10255,6 +10291,7 @@ export class MatchSimulation {
     record.route = undefined;
     record.jam = undefined;
     record.avoid = undefined;
+    record.passRight = undefined;
     record.history.clear();
     this.#stepStart.set(record.id, position);
   }
@@ -11221,6 +11258,7 @@ export class MatchSimulation {
     record.route = undefined;
     record.jam = undefined;
     record.avoid = undefined;
+    record.passRight = undefined;
     record.interact = undefined;
     record.respawnInSeconds = 0;
     record.combatant.cast.cancelCast();
