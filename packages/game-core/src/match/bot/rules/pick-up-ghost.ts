@@ -25,7 +25,7 @@ const pickUpGhost: BotRule = {
       !ghost.combatant.dead &&
       ghost.creature?.leaderId === undefined &&
       !onHill(altar, altarLayer, ghost) &&
-      sentTo(context, ghost.position, true, false)
+      sentTo(context, ghost.position, ghost.id, true, false)
     ) {
       return { ...NOTHING, attackTargetId: ghost.id };
     }

@@ -140,6 +140,21 @@ describe("fetch-relic: Relic Run bots fetch their relic and return the foe's (#2
     expect(askBot(sim, "other", BOTH_HOME).attackTargetId).not.toBe(relicId(0));
   });
 
+  it("leaves the run to the teammate already on its way, though it is nearer itself (#3707)", () => {
+    for (const foe of [far(), body("foe", 1, vec2(900, 400))]) {
+      const sim = match([
+        body("near", 0, vec2(650, 400), { behaviour: BOT }),
+        body("other", 0, vec2(750, 400), { behaviour: BOT }),
+        foe,
+      ]);
+      const other = sim.get("other");
+      if (other === undefined) throw new Error("no other");
+      other.interact = { targetId: relicId(0), unreachableSeconds: 0 };
+      expect(askBot(sim, "near", BOTH_HOME).attackTargetId).not.toBe(relicId(0));
+      expect(askBot(sim, "other", BOTH_HOME).attackTargetId).toBe(relicId(0));
+    }
+  });
+
   it("leaves the relic to a teammate when it is a healer or resting in a fight", () => {
     for (const near of [
       fighter("near", 0, MONK, vec2(300, 400)),
