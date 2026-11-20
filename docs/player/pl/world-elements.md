@@ -48,6 +48,8 @@ zobaczysz.
 
 ## Dźwignie i bramy
 
+![Dźwignia na pomoście porusza zamkniętą bramę pod nim](../img/world-lever-gate.png)
+
 **Brama** to dębowe drzwi okute żelazem. Zamknięta blokuje drogę; otwarta
 rozchyla skrzydła na ciemne przejście. **Dźwignia** otwiera lub zamyka bramy,
 którymi steruje: kamienna podstawa z drewnianym ramieniem, której mosiężna
@@ -78,6 +80,8 @@ każdy inny wciąż może przejść.
 
 ## Migoczące bramy i popękane mury
 
+![Popękany mur obok płachty bagna](../img/world-wall-mire.png)
+
 **Migocząca brama** zatrzymuje ciała, strzały i inne pociski, ale nie wzrok:
 czar rzucony prosto na cel przez nią przechodzi. To migocząca turkusowa
 kurtyna między dwoma kamiennymi słupami z turkusowymi lampami. Gdy jest
@@ -90,6 +94,8 @@ zdrowia widać, gdy na niego wskazujesz lub masz go za cel; w miarę słabnięci
 rozchodzą się po nim pęknięcia, aż rozpada się w gruz.
 
 ## Wysokości
+
+![Podwyższony pomost ze schodami na ziemię: jeden gracz na górze, drugi na ziemi pod spodem](../img/layers-deck.png)
 
 Część terenu jest podniesiona i można na nią wejść tylko po rampach,
 schodach, nierównych stopniach albo drabinach: krawędź podwyższonego
@@ -107,6 +113,8 @@ dole mogą przejść pod nim. Przebywanie wyżej nie zmienia twojego zasięgu
 ani obrażeń.
 
 ## Tunele
+
+![Z góry tunel zdradza szew z kratowymi szczelinami; przerywany pierścień to gracz w środku](../img/layers-tunnel.png)
 
 Niektóre przejścia biegną pod ziemią. Z góry wpuszczona w grunt spoina z
 otworami kraty pokazuje, którędy biegnie takie przejście, a światła na

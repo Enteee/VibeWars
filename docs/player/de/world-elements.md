@@ -49,6 +49,8 @@ sobald du es siehst.
 
 ## Hebel und Tore
 
+![Ein Hebel auf der Plattform bedient das geschlossene Tor darunter](../img/world-lever-gate.png)
+
 Ein **Tor** ist eine eisenbeschlagene Eichentür. Geschlossen versperrt es den
 Weg; offen schwingen seine Flügel zur Seite und geben einen dunklen Durchgang
 frei. Ein **Hebel** öffnet oder schließt die Tore, die er steuert: ein
@@ -79,6 +81,8 @@ nicht sofort zurückspringen kannst; alle anderen können weiterhin hindurch.
 
 ## Schimmernde Tore und rissige Mauern
 
+![Eine rissige Mauer neben einem Stück Sumpf](../img/world-wall-mire.png)
+
 Ein **schimmerndes Tor** hält Körper, Pfeile und andere Geschosse auf, aber
 nicht die Sicht: Ein Zauber, der direkt auf ein Ziel gewirkt wird, kommt durch.
 Es ist ein schimmernder türkiser Vorhang zwischen zwei Steinpfosten mit
@@ -92,6 +96,8 @@ zu sehen, solange du auf sie zeigst oder sie anvisierst; Risse breiten sich aus,
 während sie schwächer wird, und sie zerfällt zu Schutt.
 
 ## Höhen
+
+![Eine erhöhte Plattform mit Treppe zum Boden: ein Spieler oben auf der Plattform, einer unten am Boden](../img/layers-deck.png)
 
 Mancher Boden ist erhöht, und du kommst nur über seine Rampen, Treppen,
 groben Stufen oder Leitern hinauf: Die Kante eines erhöhten Decks hält
@@ -110,6 +116,8 @@ unter ihr hindurchgehen. Weiter oben zu stehen ändert weder deine
 Reichweite noch deinen Schaden.
 
 ## Tunnel
+
+![Von oben zeigt eine Naht mit Gitterschlitzen einen Tunnel; der gestrichelte Ring ist ein Spieler darin](../img/layers-tunnel.png)
 
 Manche Durchgänge verlaufen unter der Erde. Von oben zeigt eine
 eingelassene Fuge mit Gitterschlitzen, wo einer verläuft, und die

@@ -53,6 +53,8 @@ Sors de là quand tu le vois.
 
 ## Leviers et portes
 
+![Un levier sur la plateforme actionne la porte fermée en dessous](../img/world-lever-gate.png)
+
 Une **porte** est faite de chêne cerclé de fer. Fermée, elle bloque le
 passage ; ouverte, ses battants s'écartent sur un passage sombre. Un
 **levier** ouvre ou ferme les portes qu'il commande : un socle de pierre avec
@@ -85,6 +87,8 @@ passer.
 
 ## Portes miroitantes et murs fissurés
 
+![Un mur fissuré à côté d'une flaque de bourbier](../img/world-wall-mire.png)
+
 Une **porte miroitante** arrête les corps, les flèches et les autres
 projectiles, mais pas la vue : un sort lancé directement sur une cible la
 traverse. C'est un rideau miroitant couleur aqua entre deux poteaux de pierre
@@ -98,6 +102,8 @@ de vie s'affiche tant que tu le pointes ou le cibles ; les fissures
 s'étendent à mesure qu'il faiblit, et il finit en gravats.
 
 ## Hauteurs
+
+![Une plateforme surélevée avec un escalier jusqu'au sol : un joueur en haut, un autre au sol en dessous](../img/layers-deck.png)
 
 Certains sols sont surélevés, et tu ne peux monter que par leurs rampes,
 escaliers, marches grossières ou échelles : le bord d'une plate-forme
@@ -116,6 +122,8 @@ un vide, et les joueurs d'en bas peuvent passer sous lui. Être plus haut
 ne change ni ta portée ni tes dégâts.
 
 ## Tunnels
+
+![Vu d'en haut, une jointure à grilles marque un tunnel ; l'anneau en pointillés est un joueur dedans](../img/layers-tunnel.png)
 
 Certains passages courent sous terre. Vu d'en haut, un joint encastré
 percé de fentes de grille marque par où passe l'un d'eux, et les

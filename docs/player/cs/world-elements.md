@@ -29,6 +29,8 @@ Každé tě varuje těsně předtím, než udeří: jeho okrajový kruh se nafou
 
 ## Páky a brány
 
+![Páka na plošině ovládá zavřenou bránu pod ní](../img/world-lever-gate.png)
+
 **Brána** je z dubových vrat pobitých železem. Zavřená blokuje cestu;
 když je otevřená, její křídla se rozevřou a odhalí tmavý průchod.
 **Páka** otevírá nebo zavírá brány, které ovládá: kamenný podstavec s
@@ -49,15 +51,21 @@ Vejdeš-li do **portálu**, okamžitě se objevíš u jeho výstupu. Portál ved
 
 ## Třpytivé brány a popraskané zdi
 
+![Popraskaná zeď vedle kusu bažiny](../img/world-wall-mire.png)
+
 **Třpytivá brána** zastaví těla, šípy i jiné střely, ale ne pohled: kouzlo seslané přímo na cíl jí projde. Je to třpytivá tyrkysová opona mezi dvěma kamennými sloupky s tyrkysovými lampami. Když je otevřená, zbydou jen sloupky a slabý přerušovaný obrys.
 
 **Popraskanou zeď** jde rozbít. Je to teplý, tesaný kámen, na rozdíl od modrošedých zdí, které se nikdy nerozbijí. Klikni na ni pravým tlačítkem a pak na ni zaútoč nebo ji zasáhni dovedností, která způsobuje zranění. Její ukazatel zdraví je vidět, když na ni ukazuješ nebo ji máš zaměřenou; jak slábne, šíří se praskliny, až se rozpadne v suť.
 
 ## Výšky
 
+![Vyvýšená plošina se schody dolů na zem: jeden hráč nahoře na plošině, druhý na zemi pod ní](../img/layers-deck.png)
+
 Část terénu je vyvýšená a nahoru se dostaneš jen po jejích rampách, schodech, hrubých stupních nebo žebřících: okraj vyvýšené plošiny tě zastaví jako zeď. Kde je ale její okraj rozbitý, můžeš z ní sestoupit a hned spadnout na zem pod ní, ale nikdy se tam nevyšplháš zpátky nahoru. Rampy a schody přejdeš plnou rychlostí, hrubé stupně o něco pomaleji a žebřík poloviční rychlostí: seskočit dolů je rychlé, vyšplhat zpátky pomalé. **Věž** je malá kamenná plošina na zděném těle, s místem pro pár hráčů, na kterou vede úzké schodiště nebo žebřík. **Ochoz** vede po vrcholu silné zdi, s poprsní zídkou a schody na obou koncích. Žebřík je dost široký jen pro jednoho hráče najednou. **Most** z kamene, prken nebo padlého kmene překlenuje mezeru a hráči pod ním mohou procházet. Výška nemění tvůj dosah ani zranění.
 
 ## Tunely
+
+![Shora tunel prozrazuje spára s mřížovými otvory; přerušovaný kroužek je hráč dole v něm](../img/layers-tunnel.png)
 
 Některé průchody vedou pod zemí. Shora ukazuje zapuštěná spára se
 štěrbinami mříže, kudy takový průchod vede, a světla na jeho dvou

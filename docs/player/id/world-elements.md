@@ -51,6 +51,8 @@ bawah longsoran batu. Menyingkirlah saat melihatnya.
 
 ## Tuas dan gerbang
 
+![Tuas di atas dek menggerakkan gerbang tertutup di bawahnya](../img/world-lever-gate.png)
+
 **Gerbang** adalah pintu kayu ek berlapis besi. Saat tertutup, ia menghalangi
 jalan; saat terbuka, daun pintunya mengayun ke samping memperlihatkan lorong
 gelap. **Tuas** membuka atau menutup gerbang yang dikendalikannya: alas batu
@@ -82,6 +84,8 @@ kamu tidak bisa langsung memantul kembali; orang lain tetap bisa lewat.
 
 ## Gerbang berkilau dan tembok retak
 
+![Tembok retak di samping sepetak rawa](../img/world-wall-mire.png)
+
 **Gerbang berkilau** menahan tubuh, panah dan proyektil lain, tapi tidak
 menahan pandangan: mantra yang dirapal langsung ke target tetap lewat. Ia
 berupa tirai aqua berkilau di antara dua tiang batu dengan lampu aqua. Saat
@@ -95,6 +99,8 @@ Darah-nya tampil selama kamu menunjuknya atau menargetkannya; retakannya
 menyebar saat ia melemah, dan akhirnya ia runtuh menjadi puing.
 
 ## Ketinggian
+
+![Dek yang ditinggikan dengan tangga turun ke tanah: satu pemain di atas dek, satu di tanah di bawahnya](../img/layers-deck.png)
 
 Sebagian tanah lebih tinggi, dan kamu hanya bisa naik lewat landaian,
 tangga, undakan kasar, atau tangga panjatnya: tepi dek yang ditinggikan
@@ -113,6 +119,8 @@ pemain di bawahnya bisa lewat di kolongnya. Berada lebih tinggi tidak
 mengubah jangkauan atau damage-mu.
 
 ## Terowongan
+
+![Dari atas, sambungan bercelah kisi menandai terowongan; cincin putus-putus adalah pemain di dalamnya](../img/layers-tunnel.png)
 
 Sebagian lorong berada di bawah tanah. Dari atas, sambungan cekung
 dengan celah-celah kisi menandai jalur lorong itu, dan cahaya di kedua

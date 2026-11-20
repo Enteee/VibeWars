@@ -48,6 +48,8 @@ làn khói mảnh phía trên miệng phun khí hoặc một cái bóng sẫm d�
 
 ## Cần gạt và cổng
 
+![Cần gạt trên sàn điều khiển cổng đang đóng bên dưới](../img/world-lever-gate.png)
+
 **Cổng** là một cánh cửa gỗ sồi đai sắt. Khi đóng, nó chặn đường; khi
 mở, các cánh cửa xoay sang bên để lộ một lối đi tối. **Cần gạt** mở hoặc
 đóng các cổng mà nó điều khiển: một đế đá với cần gỗ, núm đồng thau của
@@ -77,6 +79,8 @@ bạn không thể bật ngược về ngay; người khác vẫn đi qua đư�
 
 ## Cổng lấp lánh và tường nứt
 
+![Tường nứt bên cạnh một vũng đầm lầy](../img/world-wall-mire.png)
+
 **Cổng lấp lánh** chặn cơ thể, mũi tên và các loại đạn khác, nhưng không
 chặn tầm nhìn: phép thi triển thẳng vào mục tiêu vẫn đi xuyên qua nó. Nó
 là một tấm màn ngọc lam lấp lánh giữa hai cột đá có đèn ngọc lam. Khi nó
@@ -89,6 +93,8 @@ hiện ra khi bạn trỏ vào hoặc nhắm nó; các vết nứt lan ra khi n�
 và cuối cùng nó sụp thành đống đá vụn.
 
 ## Độ cao
+
+![Một sàn nâng có cầu thang xuống mặt đất: một người chơi ở trên sàn, một người ở mặt đất bên dưới](../img/layers-deck.png)
 
 Một số nền đất được nâng cao, và bạn chỉ có thể lên qua dốc, cầu thang,
 bậc thô hoặc thang leo của nó: mép của một sàn nâng chặn bạn lại như một
@@ -105,6 +111,8 @@ khoảng trống, và người chơi bên dưới có thể đi qua bên dưới
 hơn không thay đổi tầm đánh hay sát thương của bạn.
 
 ## Đường hầm
+
+![Nhìn từ trên, một đường nối có khe lưới đánh dấu đường hầm; vòng nét đứt là người chơi ở dưới đó](../img/layers-tunnel.png)
 
 Một số lối đi chạy dưới mặt đất. Nhìn từ trên xuống, một đường nối lõm
 có các khe lưới đánh dấu nơi lối đi đó chạy qua, và ánh đèn ở hai đầu

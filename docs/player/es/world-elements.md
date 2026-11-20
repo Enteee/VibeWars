@@ -48,6 +48,8 @@ cuanto lo veas.
 
 ## Palancas y puertas
 
+![Una palanca en la plataforma mueve la puerta cerrada que hay debajo](../img/world-lever-gate.png)
+
 Una **puerta** es una puerta de roble con bandas de hierro. Cerrada, bloquea
 el paso; abierta, sus hojas se apartan hacia un pasillo oscuro. Una
 **palanca** abre o cierra las puertas que controla: una base de piedra con un
@@ -78,6 +80,8 @@ instante; cualquier otro sí puede pasar.
 
 ## Puertas relucientes y muros agrietados
 
+![Un muro agrietado junto a una zona de fango](../img/world-wall-mire.png)
+
 Una **puerta reluciente** detiene cuerpos, flechas y otros proyectiles, pero no
 la vista: un hechizo lanzado directamente sobre un objetivo la atraviesa. Es
 una cortina aguamarina reluciente entre dos postes de piedra con faroles
@@ -91,6 +95,8 @@ lo señalas o lo tienes como objetivo; las grietas se extienden a medida que se
 debilita, y acaba hecho escombros.
 
 ## Alturas
+
+![Una plataforma elevada con escaleras hasta el suelo: un jugador arriba en la plataforma y otro en el suelo, debajo](../img/layers-deck.png)
 
 Parte del suelo está elevada, y solo puedes subir por sus rampas,
 escaleras, escalones toscos o escaleras de mano: el borde de una
@@ -109,6 +115,8 @@ los jugadores de abajo pueden pasar por debajo. Estar más alto no cambia
 tu alcance ni tu daño.
 
 ## Túneles
+
+![Desde arriba, una juntura con rejillas marca un túnel; el anillo discontinuo es un jugador dentro de él](../img/layers-tunnel.png)
 
 Algunos pasadizos van bajo tierra. Desde arriba, una junta hundida con
 ranuras de rejilla marca por dónde va uno, y las luces de sus dos

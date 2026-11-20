@@ -49,6 +49,8 @@ darkening shadow under rockfall. Step out when you see it.
 
 ## Levers and gates
 
+![A lever on the deck works the shut gate below it](img/world-lever-gate.png)
+
 A **gate** is an oak door banded with iron. Shut, it blocks the way;
 open, its doors swing aside onto a dark passage. A **lever** opens or
 closes the gates it works: a stone base with a wooden arm, its brass
@@ -77,6 +79,8 @@ still go through.
 
 ## Shimmering gates and cracked walls
 
+![A cracked wall beside a patch of mire](img/world-wall-mire.png)
+
 A **shimmering gate** stops bodies, arrows and other projectiles, but
 not sight: a spell cast straight at a target passes through it. It is a
 shimmering aqua curtain between two stone posts with aqua lamps. When it
@@ -88,6 +92,8 @@ hit it with a damage skill. Its health bar shows while you point at it
 or target it; cracks spread as it weakens, and it falls to rubble.
 
 ## Heights
+
+![A raised deck with stairs down to the ground: one player up on the deck, one on the ground below](img/layers-deck.png)
 
 Some ground is raised, and you can only get up by its ramps, stairs,
 rough steps or ladders: the edge of a raised deck stops you like a wall.
@@ -103,6 +109,8 @@ fallen log spans a gap, and players below can walk underneath it. Being
 higher up does not change your range or your damage.
 
 ## Tunnels
+
+![From above, a seam with grating slots marks a tunnel; the dashed ring is a player down in it](img/layers-tunnel.png)
 
 Some passages run under the ground. From above, a recessed seam with
 grating slots marks where one runs, and the lights at its two ends

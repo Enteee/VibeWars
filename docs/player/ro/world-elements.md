@@ -47,6 +47,8 @@ vezi asta.
 
 ## Manete și porți
 
+![O manetă de pe platformă acționează poarta închisă de dedesubt](../img/world-lever-gate.png)
+
 O **poartă** este o ușă de stejar ferecată în fier. Închisă, blochează drumul;
 deschisă, canaturile se dau la o parte spre un pasaj întunecat. O **manetă**
 deschide sau închide porțile pe care le acționează: o bază de piatră cu un braț
@@ -77,6 +79,8 @@ continuare.
 
 ## Porți sclipitoare și ziduri crăpate
 
+![Un zid crăpat lângă o porțiune de mlaștină](../img/world-wall-mire.png)
+
 O **poartă sclipitoare** oprește trupurile, săgețile și alte proiectile, dar nu
 și privirea: o vrajă aruncată direct asupra unei ținte trece prin ea. Este o
 perdea sclipitoare de culoarea apei între doi stâlpi de piatră cu felinare de
@@ -90,6 +94,8 @@ vede cât timp arăți spre el sau îl ai ca țintă; crăpăturile se întind p
 ce slăbește, până se prăbușește în dărâmături.
 
 ## Înălțimi
+
+![O platformă înălțată cu scări până la sol: un jucător sus pe platformă, unul pe solul de dedesubt](../img/layers-deck.png)
 
 Unele porțiuni de teren sunt înălțate, și poți urca doar pe rampele,
 scările, treptele grosolane sau scările de mână ale lor: marginea unei
@@ -107,6 +113,8 @@ peste un gol, iar jucătorii de dedesubt pot merge pe sub el. Dacă stai mai
 sus, nu ți se schimbă nici raza, nici daunele.
 
 ## Tuneluri
+
+![Văzut de sus, un rost cu fante de grilaj marchează un tunel; inelul punctat este un jucător înăuntru](../img/layers-tunnel.png)
 
 Unele pasaje trec pe sub pământ. De sus, un rost adâncit cu fante de
 grătar arată pe unde trece unul, iar luminile de la cele două capete ale

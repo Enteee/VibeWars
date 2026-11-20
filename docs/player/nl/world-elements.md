@@ -47,6 +47,8 @@ een donker wordende schaduw onder steenslag. Stap weg zodra je het ziet.
 
 ## Hendels en poorten
 
+![Een hendel op het platform bedient de gesloten poort eronder](../img/world-lever-gate.png)
+
 Een **poort** is een eikenhouten deur met ijzeren banden. Dicht verspert
 hij de weg; open zwaaien de deuren opzij naar een donkere doorgang. Een
 **hendel** opent of sluit de poorten die hij bedient: een stenen voet met een
@@ -78,6 +80,8 @@ meteen terug kunt stuiteren; iedereen anders kan er gewoon door.
 
 ## Glinsterende poorten en gebarsten muren
 
+![Een gebarsten muur naast een stuk moeras](../img/world-wall-mire.png)
+
 Een **glinsterende poort** houdt lichamen, pijlen en andere projectielen
 tegen, maar geen zicht: een spreuk die rechtstreeks op een doel wordt
 uitgesproken, gaat erdoor. Het is een glinsterend aquakleurig gordijn tussen
@@ -91,6 +95,8 @@ zolang je ernaar wijst of hem als doel hebt; scheuren verspreiden zich
 naarmate hij verzwakt, en hij valt uiteen tot puin.
 
 ## Hoogtes
+
+![Een verhoogd platform met een trap naar de grond: één speler boven op het platform, één op de grond eronder](../img/layers-deck.png)
 
 Sommige grond ligt hoger, en je kunt alleen via de hellingen, trappen,
 ruwe treden of ladders omhoog: de rand van een verhoogd dek houdt je
@@ -108,6 +114,8 @@ kloof, en spelers eronder kunnen eronderdoor lopen. Hoger staan
 verandert niets aan je bereik of je schade.
 
 ## Tunnels
+
+![Van boven markeert een naad met roostergleuven een tunnel; de gestippelde ring is een speler erin](../img/layers-tunnel.png)
 
 Sommige doorgangen lopen onder de grond. Van bovenaf geeft een verzonken
 naad met roostersleuven aan waar er een loopt, en de lichten aan de twee

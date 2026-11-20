@@ -49,6 +49,8 @@ du ser det.
 
 ## Spakar och portar
 
+![En spak på däcket styr den stängda porten under det](../img/world-lever-gate.png)
+
 En **port** är en ekdörr med järnbeslag. Stängd blockerar den vägen;
 öppen svänger dörrarna åt sidan mot en mörk gång. En **spak** öppnar
 eller stänger portarna den styr: en stenfot med en träarm, och dess
@@ -78,6 +80,8 @@ tillbaka; alla andra kan fortfarande gå igenom.
 
 ## Skimrande portar och spruckna murar
 
+![En sprucken mur bredvid en fläck myr](../img/world-wall-mire.png)
+
 En **skimrande port** stoppar kroppar, pilar och andra projektiler, men
 inte synen: en besvärjelse som kastas direkt på ett mål går igenom den.
 Den är en skimrande akvamarinblå ridå mellan två stenstolpar med
@@ -91,6 +95,8 @@ hälsomätare syns medan du pekar på den eller har den som mål; sprickor
 sprider sig när den försvagas, och till sist rasar den till grus.
 
 ## Höjder
+
+![Ett upphöjt däck med trappor ner till marken: en spelare uppe på däcket, en på marken nedanför](../img/layers-deck.png)
 
 En del mark ligger högre, och du kan bara ta dig upp via dess ramper,
 trappor, grova steg eller stegar: kanten på ett upphöjt däck stoppar dig
@@ -107,6 +113,8 @@ och spelare nedanför kan gå under den. Att stå högre upp ändrar inte din
 räckvidd eller din skada.
 
 ## Tunnlar
+
+![Uppifrån markerar en fog med gallerspringor en tunnel; den streckade ringen är en spelare nere i den](../img/layers-tunnel.png)
 
 En del gångar går under marken. Uppifrån visar en försänkt fog med
 gallerspringor var en sådan går, och ljusen i dess två ändar matchar:

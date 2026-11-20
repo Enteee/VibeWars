@@ -42,6 +42,9 @@ Ces touches sont fixes :
 - **Clic gauche** au sol pour y marcher. Sans Shift, le bouton gauche ne fait
   que marcher.
 - Sur les cartes à plateformes surélevées, un clic gauche mène à la surface visible, et **Alt + clic gauche** au sol en dessous. Un anneau sous le curseur indique une plateforme, un anneau en pointillés le sol. Au-dessus d'un tunnel, un clic gauche mène au niveau où vous êtes. **Alt + clic gauche** ne mène jamais au-dessus du niveau où vous vous tenez : depuis le sol, il mène dans le tunnel, et dans un tunnel, il y reste.
+
+![Un anneau plein marque un clic sur la plateforme, un anneau en pointillés un clic sur le sol en dessous](../img/alt-click.png)
+
 - **Clic droit** sur un ennemi ou un allié pour le cibler. Clic droit sur le
   même ennemi à nouveau, rapidement, pour l'attaquer.
 - **Clic droit** sur un drapeau ou le Socle du drapeau, en Bataille de guilde ou sur Barrow Field,
