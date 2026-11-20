@@ -106,6 +106,14 @@ export interface ArenaViewportOptions {
 const DESTROY_WAIT_MS = 500;
 
 /**
+ * Phaser's renderer config (#3627). Its `pathDetailThreshold` (1 game px by
+ * default) drops every path point that close to the one before, and a cape
+ * emblem's cells are about half a px at Default zoom: they collapsed to
+ * nothing. Zero keeps every point; a `Graphics` cannot go below the game's.
+ */
+export const ARENA_RENDER = { pathDetailThreshold: 0 } as const;
+
+/**
  * Start a Phaser game in `parent` with the arena scene, resolved once the
  * scene exists. Only this and `ArenaScene` touch Phaser (ADR-0010); the
  * callers wire a connection to it. Throws `NoWebGlError` without WebGL.
@@ -128,6 +136,7 @@ export async function createArenaViewport(
     type: Phaser.WEBGL,
     parent,
     backgroundColor: ARENA_BACKGROUND,
+    render: ARENA_RENDER,
     // The canvas is its parent's size in CSS px; the camera decides how
     // much world that shows (camera-rig.ts).
     scale: { mode: Phaser.Scale.RESIZE, autoCenter: Phaser.Scale.CENTER_BOTH },
