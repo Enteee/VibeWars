@@ -17,10 +17,12 @@ import { mapMatchRules, mapSimulationFields } from "../match-fields.js";
 import type { MapData } from "../schema.js";
 import {
   balanceVerdict,
+  benchSeeds,
   highGround,
   narrowestWalks,
   playBuildBot,
   runMapBalance,
+  seedStride,
   walkSecondsByRoute,
   walksByRoute,
   walksTo,
@@ -2387,6 +2389,20 @@ describe("a seated bot (#3344)", () => {
   });
 });
 
+describe("the balance bench's seeds (#3694)", () => {
+  it("spreads a short run over 0..99, plays 0..99 at 100, and repeats none past it", () => {
+    expect(benchSeeds(20)).toEqual(Array.from({ length: 20 }, (_, i) => i * 5));
+    expect(seedStride(20)).toBe(5);
+    expect(benchSeeds(100)).toEqual(Array.from({ length: 100 }, (_, i) => i));
+    expect(seedStride(100)).toBe(1);
+    const seven = benchSeeds(7);
+    expect(seven).toHaveLength(7);
+    expect(seven).toEqual([...new Set(seven)].sort((a, b) => a - b));
+    expect(seven.every((seed) => seed >= 0 && seed <= 99)).toBe(true);
+    expect(benchSeeds(120)).toEqual(Array.from({ length: 120 }, (_, i) => i));
+  });
+});
+
 describe.runIf(BENCH)("the map balance bench (#3065)", () => {
   it("plays every match of a smoke run", () => {
     const seeds = 4;
@@ -2433,7 +2449,7 @@ describe.runIf(BENCH)("the map balance bench (#3065)", () => {
       const header = [
         "map",
         "size",
-        "matches",
+        `matches (${String(seeds)} seeds, stride ${String(seedStride(seeds))})`,
         "wins by team",
         "draws",
         "mean s",
