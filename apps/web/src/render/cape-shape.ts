@@ -43,8 +43,11 @@ export function capeLook(cape: WireCape): CapeLook {
   };
 }
 
-/** How wide an emblem is on a cape. */
-export const EMBLEM_SIZE = 5;
+/**
+ * How wide an emblem is on a fully unfolded cape (#3627): 1.55 times the old
+ * 5.5, the largest that clears the band and the notch on a player's body.
+ */
+export const EMBLEM_SIZE = 8.5;
 
 /** The starting emblems (#3554), in the order the cape designer shows them. */
 export const EMBLEM_PRESET_NAMES = [
