@@ -1608,6 +1608,18 @@ export default {
   "tutorial.menu.menu.teams": "V Tímoch skladáš postavy do tímu na tímové boje.",
   "tutorial.menu.menu.title": "Aby si mohol pokračovať, musíš zmeniť svoju špecializáciu.",
   "tutorial.menu.skipAsk": "Preskočiť zvyšok návodu?",
+  "tutorial.menu.modes.gvg":
+    "GvG je cech proti cechu, 8 na 8, na Ostrove cechovej siene. Zabi nepriateľského Pána cechu a vyhráš; svojho udrž nažive.",
+  "tutorial.menu.modes.heroesAscent":
+    "Výstup hrdinov je séria máp, 8 na 8, proti tímom v tvojom kole. Vyhráš a postupuješ na ďalšiu mapu, až do Siene hrdinov; prehráš a začínaš odznova.",
+  "tutorial.menu.modes.hostedGame":
+    "Vlastná hra je tvoja vlastná lobby: pošli priateľom pozývací odkaz a vyber mapu a veľkosť tímu. Boti hrajú každé miesto, ktoré nikto nezaberie.",
+  "tutorial.menu.modes.open": "Otvor zvýraznený spôsob hry na boku.",
+  "tutorial.menu.modes.randomArena":
+    "Náhodná aréna je najrýchlejší boj: tvoja vlastná postava v tíme s cudzími hráčmi, 1v1, 2v2 alebo 4v4. Mapa sa ti vylosuje a každé miesto je skutočný hráč.",
+  "tutorial.menu.modes.teamArena":
+    "Tímová aréna je tvoja skupina a tímový build proti inému tímu, 2v2, 4v4 alebo 8v8, podľa tvojej voľby. Boti obsadia každé voľné miesto a každý zápas si losuje mapu.",
+  "tutorial.menu.modes.title": "Vedz, kde bojovať.",
   "tutorial.menu.spec.attributes":
     "Rozdeľ body atribútov. Každý stupeň posilní schopnosti daného atribútu.",
   "tutorial.menu.spec.attributesDone": "Zmeň atribút",

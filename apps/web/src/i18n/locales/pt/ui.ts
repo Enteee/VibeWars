@@ -1562,6 +1562,18 @@ export default {
     "Em Equipes você junta personagens numa equipe para as lutas em equipe.",
   "tutorial.menu.menu.title": "Para continuar, você precisa mudar sua especialização.",
   "tutorial.menu.skipAsk": "Pular o resto do tutorial?",
+  "tutorial.menu.modes.gvg":
+    "GvG é guilda contra guilda, 8 contra 8, na Ilha do Salão da Guilda. Mate o Lorde da Guilda inimigo para vencer e mantenha o seu vivo.",
+  "tutorial.menu.modes.heroesAscent":
+    "Ascensão dos Heróis é uma sequência de mapas, 8 contra 8, contra equipes da sua rodada. Vença e avance para o próximo mapa, até o Salão dos Heróis; perca e comece de novo.",
+  "tutorial.menu.modes.hostedGame":
+    "Uma Partida Hospedada é a sua própria sala: envie o link de convite aos amigos e escolha o mapa e o tamanho da equipe. Bots jogam em cada vaga que ninguém ocupar.",
+  "tutorial.menu.modes.open": "Abra o modo aceso na lateral.",
+  "tutorial.menu.modes.randomArena":
+    "Arena Aleatória é a luta mais rápida: seu próprio personagem, numa equipe de desconhecidos, 1v1, 2v2 ou 4v4. O mapa é sorteado para você, e cada vaga é um jogador de verdade.",
+  "tutorial.menu.modes.teamArena":
+    "Arena de Equipes é o seu grupo e uma build de equipe contra outra equipe, 2v2, 4v4 ou 8v8, no tamanho que você escolher. Bots ocupam cada vaga livre, e cada partida sorteia o seu mapa.",
+  "tutorial.menu.modes.title": "Saiba onde lutar.",
   "tutorial.menu.spec.attributes":
     "Gaste seus pontos de atributo. Cada nível deixa as habilidades desse atributo mais fortes.",
   "tutorial.menu.spec.attributesDone": "Mude um atributo",

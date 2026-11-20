@@ -1407,6 +1407,18 @@ export default {
   "tutorial.menu.menu.teams": "팀에서는 캐릭터를 모아 팀 전투용 팀을 꾸립니다.",
   "tutorial.menu.menu.title": "계속하려면 스펙을 바꿔야 합니다.",
   "tutorial.menu.skipAsk": "튜토리얼의 나머지를 건너뛸까요?",
+  "tutorial.menu.modes.gvg":
+    "GvG는 길드 대 길드, 8대8로 Guild Hall Isle에서 싸웁니다. 적 길드 로드를 처치하면 이기고, 우리 길드 로드는 지켜야 합니다.",
+  "tutorial.menu.modes.heroesAscent":
+    "영웅의 승천은 8대8로 같은 라운드의 팀과 맵을 이어 가며 싸웁니다. 이기면 다음 맵으로 나아가 영웅의 전당까지 오르고, 지면 처음부터 다시 시작합니다.",
+  "tutorial.menu.modes.hostedGame":
+    "호스트 게임은 나만의 로비입니다: 친구에게 초대 링크를 보내고 맵과 팀 규모를 고르세요. 아무도 들어오지 않은 자리는 봇이 플레이합니다.",
+  "tutorial.menu.modes.open": "옆에서 빛나는 모드를 여세요.",
+  "tutorial.menu.modes.randomArena":
+    "랜덤 아레나는 가장 빠른 전투입니다: 내 캐릭터로 낯선 사람들과 팀을 이뤄 1v1, 2v2 또는 4v4로 싸웁니다. 맵은 무작위로 정해지고, 모든 자리가 실제 플레이어입니다.",
+  "tutorial.menu.modes.teamArena":
+    "팀 아레나는 내 파티와 팀 빌드로 다른 팀과 싸웁니다. 규모는 2v2, 4v4, 8v8 중에서 고릅니다. 빈자리는 봇이 채우고, 맵은 매치마다 무작위로 정해집니다.",
+  "tutorial.menu.modes.title": "어디서 싸울지 알아 두세요.",
   "tutorial.menu.spec.attributes":
     "속성 포인트를 쓰세요. 랭크가 오를수록 그 속성의 스킬이 강해집니다.",
   "tutorial.menu.spec.attributesDone": "속성 바꾸기",

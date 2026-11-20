@@ -1418,6 +1418,18 @@ export default {
     "Di Tim kamu menggabungkan karakter menjadi satu tim untuk pertarungan tim.",
   "tutorial.menu.menu.title": "Untuk lanjut, kamu harus mengganti spesialisasimu.",
   "tutorial.menu.skipAsk": "Lewati sisa tutorial?",
+  "tutorial.menu.modes.gvg":
+    "GvG adalah guild lawan guild, 8 lawan 8, di Guild Hall Isle. Bunuh Penguasa Guild musuh untuk menang, dan jaga milikmu tetap hidup.",
+  "tutorial.menu.modes.heroesAscent":
+    "Pendakian Pahlawan adalah rangkaian peta, 8 lawan 8, melawan tim di babakmu. Menang, dan kamu lanjut ke peta berikutnya, sampai Aula Pahlawan; kalah, dan kamu mulai lagi.",
+  "tutorial.menu.modes.hostedGame":
+    "Game Host adalah lobimu sendiri: kirim link undangan ke teman, lalu pilih peta dan ukuran tim. Bot mengisi setiap tempat yang tidak diambil siapa pun.",
+  "tutorial.menu.modes.open": "Buka mode yang menyala di samping.",
+  "tutorial.menu.modes.randomArena":
+    "Arena Acak adalah pertarungan tercepat: karaktermu sendiri, dalam tim orang asing, 1v1, 2v2, atau 4v4. Peta diundi untukmu, dan setiap tempat adalah pemain sungguhan.",
+  "tutorial.menu.modes.teamArena":
+    "Arena Tim adalah rombonganmu dan build tim melawan tim lain, 2v2, 4v4, atau 8v8, ukuran pilihanmu. Bot mengisi setiap kursi kosong, dan setiap laga mengundi petanya.",
+  "tutorial.menu.modes.title": "Ketahui di mana bertarung.",
   "tutorial.menu.spec.attributes":
     "Bagikan poin atributmu. Tiap rank membuat skill atribut itu lebih kuat.",
   "tutorial.menu.spec.attributesDone": "Ubah sebuah atribut",

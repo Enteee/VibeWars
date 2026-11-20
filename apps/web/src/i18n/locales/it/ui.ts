@@ -1569,6 +1569,18 @@ export default {
     "In Squadre metti insieme personaggi in una squadra per i combattimenti a squadre.",
   "tutorial.menu.menu.title": "Per andare avanti, devi cambiare la tua specializzazione.",
   "tutorial.menu.skipAsk": "Saltare il resto del tutorial?",
+  "tutorial.menu.modes.gvg":
+    "Il GvG è gilda contro gilda, 8 contro 8, sull'Isola della sala di gilda. Uccidi il Signore della gilda nemico per vincere, e tieni in vita il tuo.",
+  "tutorial.menu.modes.heroesAscent":
+    "L'Ascesa degli Eroi è una serie di mappe, 8 contro 8, contro squadre del tuo turno. Vinci e passi alla mappa successiva, fino alla Sala degli eroi; perdi e ricominci da capo.",
+  "tutorial.menu.modes.hostedGame":
+    "Una Partita ospitata è la tua lobby: manda agli amici il link d'invito, e scegli la mappa e la dimensione della squadra. I bot giocano ogni posto che nessuno prende.",
+  "tutorial.menu.modes.open": "Apri la modalità illuminata sul lato.",
+  "tutorial.menu.modes.randomArena":
+    "L'Arena casuale è lo scontro più rapido: il tuo personaggio, in una squadra di sconosciuti, 1v1, 2v2 o 4v4. La mappa viene sorteggiata per te, e ogni posto è un giocatore vero.",
+  "tutorial.menu.modes.teamArena":
+    "L'Arena a squadre è il tuo gruppo con una build contro un'altra squadra, 2v2, 4v4 o 8v8, della dimensione che scegli. I bot occupano ogni posto libero, e ogni partita sorteggia la sua mappa.",
+  "tutorial.menu.modes.title": "Sappi dove combattere.",
   "tutorial.menu.spec.attributes":
     "Spendi i punti attributo. Ogni grado rende più forti le abilità di quell'attributo.",
   "tutorial.menu.spec.attributesDone": "Cambia un attributo",

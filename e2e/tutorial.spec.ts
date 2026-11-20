@@ -922,9 +922,45 @@ test.describe("the menu quest (#3540)", () => {
 
     await expect(save).toHaveClass(/tutorial-pulse/);
     await save.click();
-    // The last step so far: the quest is done, and the editor is left.
-    await expect(page.locator(".coach")).toHaveCount(0);
+    // The editor is left, and on to the modes step (#3543).
     await expect(page.locator(".team-grid")).toHaveCount(0);
+    await expect(panel).toContainText("Know where to fight.");
+  });
+
+  test("opens and explains the five modes from the rail, locked (#3543)", async ({ page }) => {
+    await page.goto(`./?menu-background=${FLAT_MAP}&tutorial-menu=modes`);
+    const panel = page.locator(".coach-panel");
+    const bubble = page.locator(".coach-bubble");
+    await expect(panel).toContainText("Know where to fight.");
+    const target = (id: string): Locator => page.locator(`[data-tutorial~="${id}"]`);
+    const ticked = panel.locator(`li[aria-checked="true"]`);
+
+    const modes = [
+      ["random-arena", "Random Arena is the quickest fight"],
+      ["team-arena", "Team Arena is your party"],
+      ["heroes-ascent", "Heroes' Ascent is a run of maps"],
+      ["gvg", "GvG is guild against guild"],
+      ["hosted-game", "A Hosted Game is your own lobby"],
+    ] as const;
+    for (const [at, [mode, line]] of modes.entries()) {
+      // Already on Random Arena, the first beat is past: its entry does nothing.
+      if (at > 0) {
+        await expect(target(`rail-${mode}`)).toHaveClass(/tutorial-pulse/);
+        await target(`rail-${mode}`).click();
+      }
+      await expect(target(`mode-${mode}`)).toHaveClass(/tutorial-pulse/);
+      await expect(bubble).toContainText(line);
+      await expect(ticked).toHaveCount(at + 1);
+      if (mode === "team-arena") {
+        // Find a match is dimmed: a click on it queues nothing.
+        await page.locator("#topbar .lobby-find").click({ force: true });
+        await expect(page.locator(".team-lobby-stage")).toHaveCount(0);
+        await expect(page.locator("#topbar .topbar-queue")).toBeHidden();
+      }
+      await bubble.getByRole("button", { name: "Got it" }).click();
+    }
+    // The last step so far: the quest is done.
+    await expect(page.locator(".coach")).toHaveCount(0);
   });
 
   test("Skip tutorial, confirmed, ends it for good", async ({ page }) => {

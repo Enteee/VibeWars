@@ -1,9 +1,9 @@
-import type { QueueMode } from "@vibewars/game-protocol";
+import type { LobbyMode, QueueMode } from "@vibewars/game-protocol";
 
 import type { MessageKey } from "../i18n/index.js";
 import { validateBuild } from "../storage/build-validation.js";
 import type { StoredCharacter, StoredTeam, TeamCharacter } from "../storage/schema.js";
-import type { RailEntry } from "../ui/rail.js";
+import { RAIL, isModeEntry, type RailEntry } from "../ui/rail.js";
 import { validateTeam } from "../ui/team-builder.js";
 
 /**
@@ -110,7 +110,67 @@ export interface MenuQuestStep {
   readonly id: string;
   readonly title: MessageKey;
   readonly beats: readonly MenuBeat[];
+  /**
+   * The step's own list (#3543), shown on every one of its beats in place
+   * of the beat's objectives: each line ticked once the quest is past the
+   * beat it names.
+   */
+  readonly checklist?: readonly { readonly label: MessageKey; readonly beat: number }[];
 }
+
+/** What the modes step says about each mode (#3543), as `docs/player/modes.md` has it. */
+const MODE_LINES: Readonly<Record<LobbyMode, MessageKey>> = {
+  "random-arena": "tutorial.menu.modes.randomArena",
+  "team-arena": "tutorial.menu.modes.teamArena",
+  "heroes-ascent": "tutorial.menu.modes.heroesAscent",
+  gvg: "tutorial.menu.modes.gvg",
+  "hosted-game": "tutorial.menu.modes.hostedGame",
+};
+
+/**
+ * The modes step (#3543): for each of `modes`, in order, the player opens
+ * it from the rail, then reads what it is beside its heading. The list
+ * ticks a mode once its screen was opened.
+ */
+export function modesStep(modes: readonly LobbyMode[]): {
+  readonly id: "modes";
+  readonly title: MessageKey;
+  readonly beats: readonly MenuBeat[];
+  readonly checklist: readonly { readonly label: MessageKey; readonly beat: number }[];
+} {
+  return {
+    id: "modes",
+    title: "tutorial.menu.modes.title",
+    beats: modes.flatMap((mode): MenuBeat[] => [
+      {
+        kind: "do",
+        target: `rail-${mode}`,
+        line: "tutorial.menu.modes.open",
+        objectives: [
+          {
+            id: mode,
+            label: railItemLabel(mode),
+            // Already there counts: a click on the shown entry does nothing.
+            done: (state) => state.screen === mode,
+          },
+        ],
+      },
+      { kind: "explain", target: `mode-${mode}`, line: MODE_LINES[mode] },
+    ]),
+    checklist: modes.map((mode, at) => ({ label: railItemLabel(mode), beat: 2 * at })),
+  };
+}
+
+function railItemLabel(entry: RailEntry): MessageKey {
+  const item = RAIL.find((each) => each.entry === entry);
+  if (item === undefined) {
+    throw new Error(`no rail entry ${entry}`);
+  }
+  return item.label;
+}
+
+/** The modes the rail shows, in its order: the ones the modes step explains. */
+const RAIL_MODES: readonly LobbyMode[] = RAIL.map(({ entry }) => entry).filter(isModeEntry);
 
 /** The steps, in order. The step cards of #3538 add theirs after the menu's. */
 export const MENU_QUEST_STEPS = [
@@ -286,6 +346,7 @@ export const MENU_QUEST_STEPS = [
       },
     ],
   },
+  modesStep(RAIL_MODES),
 ] as const satisfies readonly MenuQuestStep[];
 
 export type MenuQuestStepId = (typeof MENU_QUEST_STEPS)[number]["id"];
@@ -446,6 +507,24 @@ export function foldMenuQuestEvent(state: MenuQuestState, event: MenuQuestEvent)
 export interface MenuQuestCursor {
   readonly step: MenuQuestStepId;
   readonly beat: number;
+}
+
+/**
+ * The quest's list for `cursor` after `state`: its step's own, if it has
+ * one, else the current beat's objectives.
+ */
+export function menuQuestChecklist(
+  cursor: MenuQuestCursor,
+  state: MenuQuestState,
+): readonly { readonly label: MessageKey; readonly done: boolean }[] {
+  const { checklist } = menuQuestStep(cursor.step);
+  if (checklist !== undefined) {
+    return checklist.map(({ label, beat }) => ({ label, done: cursor.beat > beat }));
+  }
+  const beat = currentBeat(cursor);
+  return beat.kind === "do"
+    ? beat.objectives.map(({ label, done }) => ({ label, done: done(state) }))
+    : [];
 }
 
 /** A launch with `menu:<id>` resumes at the start of that step, never mid-way. */
