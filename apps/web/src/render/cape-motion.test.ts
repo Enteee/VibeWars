@@ -146,11 +146,25 @@ describe("the cape's emblem (#3627)", () => {
     return { ...newCapeMotion(), unfold, nodeX: -reach, primed: true };
   }
 
+  /** How far the segment from `a` to `b` comes to the origin. */
+  function reach(a: Point, b: Point): number {
+    const dx = b.x - a.x;
+    const dy = b.y - a.y;
+    const length = dx * dx + dy * dy;
+    const t = length === 0 ? 0 : Math.max(0, Math.min(1, -(a.x * dx + a.y * dy) / length));
+    return Math.hypot(a.x + t * dx, a.y + t * dy);
+  }
+
   function expectOnCloth(state: CapeMotion): void {
     const { cloth, emblem } = capeMotionShape(state, { x: 0, y: 0, r: R }, FULL);
-    for (const point of emblem.flatMap((part) => part.points)) {
-      expect(inside(point, cloth)).toBe(true);
-      expect(Math.hypot(point.x, point.y)).toBeGreaterThanOrEqual(R + CAPE_BAND_REACH - 1e-9);
+    for (const { points } of emblem) {
+      // The cloth is convex where the emblem lies, so its corners suffice; the
+      // disc is not, so every edge, whose nearest point may be its middle.
+      for (const [i, point] of points.entries()) {
+        expect(inside(point, cloth)).toBe(true);
+        const next = points[(i + 1) % points.length] ?? point;
+        expect(reach(point, next)).toBeGreaterThanOrEqual(R + CAPE_BAND_REACH - 1e-9);
+      }
     }
   }
 
@@ -177,6 +191,6 @@ describe("the cape's emblem (#3627)", () => {
   it("is at least 1.5 times the old 5.5 across, unfolded", () => {
     const [part] = capeMotionShape(rested(1), { x: 0, y: 0, r: R }, FULL).emblem;
     const [a, b] = part?.points ?? [];
-    expect(Math.hypot((b?.x ?? 0) - (a?.x ?? 0), (b?.y ?? 0) - (a?.y ?? 0))).toBeCloseTo(9);
+    expect(Math.hypot((b?.x ?? 0) - (a?.x ?? 0), (b?.y ?? 0) - (a?.y ?? 0))).toBeCloseTo(8.5);
   });
 });

@@ -135,7 +135,7 @@ export function emptyGrid(): EmblemGrid {
 /** The 8 px view's side, CSS px: the emblem as big as on a cape in a match, on its cloth. */
 const PREVIEW_PX = 24;
 /** The emblem's size inside it, CSS px. */
-const IN_GAME_EMBLEM_PX = 13;
+const IN_GAME_EMBLEM_PX = 12;
 /** A Start from button's size, CSS px. */
 const START_BUTTON_PX = 20;
 

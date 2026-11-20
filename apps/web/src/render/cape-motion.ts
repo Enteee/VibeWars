@@ -170,18 +170,13 @@ const EMBLEM_NOTCH_GAP = 0.5;
 
 /**
  * The largest emblem, up to `EMBLEM_SIZE`, whose far edge stops `EMBLEM_NOTCH_GAP`
- * short of the notch `notch` along the tab and whose near corners lie `clear`
- * or more from the body's centre (#3627): the near edge at `far - size`, its
- * corners `size / 2` aside, `(far - size)^2 + (size / 2)^2 >= clear^2`. None
- * while the cloth is under the disc and the band.
+ * short of the notch `notch` along the tab and whose near edge lies `clear` or
+ * more from the body's centre (#3627). That edge is nearest the centre at its
+ * middle, `size` short of the far edge, not at its corners. None while the cloth is under
+ * the disc and the band.
  */
 function emblemFit(notch: number, clear: number): number {
-  const far = notch - EMBLEM_NOTCH_GAP;
-  if (far <= clear) {
-    return 0;
-  }
-  const room = 5 * clear * clear - far * far;
-  return room <= 0 ? EMBLEM_SIZE : Math.min(EMBLEM_SIZE, (2 * far - Math.sqrt(room)) / 2.5);
+  return Math.max(0, Math.min(EMBLEM_SIZE, notch - EMBLEM_NOTCH_GAP - clear));
 }
 
 /**
