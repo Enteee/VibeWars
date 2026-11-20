@@ -146,6 +146,20 @@ function resultSwapped(receipt: RankedReceipt, winningTeam: number | null): Rank
   };
 }
 
+/** A round-one partial of `receipt`: its start, an earlier result naming `leavers`, signed by `signer` alone. */
+function partialOf(
+  receipt: RankedReceipt,
+  leavers: readonly string[],
+  signer: string,
+): RankedReceipt {
+  const result = { ...receipt.result, leavers };
+  return {
+    ...receipt,
+    result,
+    resultSigs: { [signer]: sigOf(signer, resultDigest(result, sha256)) },
+  };
+}
+
 /** A round robin of 1v1s among `pool` on `day`: every key meets every other once. */
 function roundRobin(ledger: Ledger, day: number, pool: readonly string[]): void {
   pool.forEach((a, i) => {
@@ -381,6 +395,28 @@ describe("rate", () => {
     expect(of(ratings, leaver).streak).toBe(0);
     expect(of(ratings, stayer).rating).toBeGreaterThan(of(day0, stayer).rating);
     expect(of(ratings, x).rating).toBeLessThan(of(day0, x).rating);
+  });
+
+  it("voids a match whose host re-rounded a signer into a leaver, and a true refuser still loses", () => {
+    const ledger = new Ledger();
+    const pool = trustedPool(ledger);
+    const [stayer, signer, x, y] = pool;
+    const day0 = rate(ledger.receipts, 1, crypto);
+    const teams = [
+      [stayer, signer],
+      [x, y],
+    ];
+    const rerounded = ledger.play(1, teams, { winningTeam: 1, leavers: [signer] });
+    const evidence = partialOf(rerounded, [], signer);
+    const voided = rate([...ledger.receipts, evidence], 1, crypto);
+    for (const pubkey of [stayer, signer, x, y]) {
+      expect(of(voided, pubkey).rating).toBe(of(day0, pubkey).rating);
+      expect(of(voided, pubkey).matches).toBe(of(day0, pubkey).matches);
+    }
+    // Another seat's partial is no evidence for the leaver: it refused.
+    const ratings = rate([...ledger.receipts, partialOf(rerounded, [], stayer)], 1, crypto);
+    expect(of(ratings, signer).rating).toBeLessThan(of(day0, signer).rating);
+    expect(of(ratings, x).rating).toBeGreaterThan(of(day0, x).rating);
   });
 
   it("rates only the host when the host left", () => {

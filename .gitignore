@@ -30,6 +30,9 @@ devenv.local.nix
 
 # Test / coverage
 coverage/
+
+# The leaderboard job's archive when run locally (#3574)
+ranking-out/
 .vitest/
 test-results/
 playwright-report/

@@ -3,6 +3,7 @@ import {
   type RankedReceipt,
   type ReceiptCrypto,
   receiptHash,
+  resultDigest,
   startHash,
   validateReceipt,
   ZERO_HASH,
@@ -185,11 +186,36 @@ interface Match {
 const byKey = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0);
 
 /**
+ * Whether a leaver of `receipt` signed another result of its start, as
+ * its own partial of an earlier round shows (ADR-0055, #3573): a host
+ * that re-rounds an honest signer into a leaver voids the match. A key
+ * that really refused has no such signature, and loses.
+ */
+function reRoundedSigner(
+  receipt: RankedReceipt,
+  copies: readonly RankedReceipt[],
+  crypto: ReceiptCrypto,
+): boolean {
+  const { leavers, startHash: started } = receipt.result;
+  return copies.some((copy) => {
+    if (copy === receipt || copy.result.startHash !== started) {
+      return false;
+    }
+    const digest = resultDigest(copy.result, crypto.sha256);
+    return leavers.some((pubkey) => {
+      const sig = copy.resultSigs[pubkey];
+      return sig !== undefined && crypto.verify(pubkey, digest, sig);
+    });
+  });
+}
+
+/**
  * Step 1: one receipt per match. Copies of one start are grouped; copies
  * with the same result are merged, so partial `host-left` receipts make
  * one whole one, and only then validated. A void or invalid copy is
  * dropped there, so a forgery can neither fork nor void anything. Two
- * different valid results for one start void the match for everyone.
+ * different valid results for one start void the match for everyone, and
+ * so does a leaver's signature on another result of it.
  */
 function matchesOf(
   receipts: readonly RankedReceipt[],
@@ -226,7 +252,7 @@ function matchesOf(
       return validity.ok && !validity.void;
     });
     const [receipt] = rated;
-    if (receipt && rated.length === 1) {
+    if (receipt && rated.length === 1 && !reRoundedSigner(receipt, results, crypto)) {
       matches.push({
         receipt,
         hash: receiptHash(receipt, crypto.sha256),
