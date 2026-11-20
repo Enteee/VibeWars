@@ -159,7 +159,7 @@ jobs:
           ROWS: ${{ needs.plan.outputs.rows }}
         run: |
           # A crashed row has no table; the bench job is red then, and so is this.
-          [ "$(find rows -mindepth 1 -maxdepth 1 -type d | wc -l)" = "$(jq length <<<"$ROWS")" ] || { echo "a row printed no table" >&2; exit 1; }
+          [ "$(find rows -mindepth 2 -maxdepth 2 -name row.md -size +0 | wc -l)" = "$(jq length <<<"$ROWS")" ] || { echo "a row printed no table" >&2; exit 1; }
           set -- rows/*/row.md; first=$1
           {
             head -n 2 "$first"
