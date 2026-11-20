@@ -564,7 +564,7 @@ export interface RandomArenaEvents {
 
 /**
  * How this tab plays a ranked group's match (ADR-0055, #3680), as
- * `playerKey` with `characterId`: chained on its last receipt, it
+ * the player key with `characterId`: chained on its last receipt, it
  * publishes every result round it signs under that round's own address,
  * as the evidence that it signed, and then the receipt, once, keeping its
  * hash as the next `prev`.
