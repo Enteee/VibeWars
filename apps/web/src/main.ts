@@ -5,6 +5,7 @@ import type {
   LobbySnapshot,
   MatchRecordTeam,
   MatchStarting,
+  RecordedReplay,
   QueueState,
 } from "@vibewars/game-session";
 
@@ -20,6 +21,7 @@ import {
   ascentRoundOf,
   modeMapIds,
 } from "./net/maps.js";
+import { RANKED_STARTER_ID } from "./net/transport/ranked-receipts.js";
 import {
   connectMatchFor,
   observeMatchFor,
@@ -67,6 +69,7 @@ import {
   type BuildWatch,
 } from "./build-check.js";
 import { keySignet } from "./identity/key-signet.js";
+import { createProfilePacer } from "./profile-pacer.js";
 import { mapName } from "./i18n/game-names.js";
 import { t } from "./i18n/index.js";
 import { loadLocale } from "./i18n/load-locale.js";
@@ -84,6 +87,7 @@ import {
   openIndexedDbStore,
   type KeyValueStore,
 } from "./storage/repository.js";
+import { ReplayStore } from "./storage/replays.js";
 import { cloneCharacter } from "./storage/clone-character.js";
 import { missingSkillsNote } from "./storage/gw1-template.js";
 import { characterFromMatch, teamFromMatch } from "./storage/match-team.js";
@@ -115,7 +119,6 @@ import {
   type BuildEditorCallbacks,
   type BuildEditorView,
 } from "./ui/build-editor.js";
-import { closeHelpOverlay, openHelpOverlay } from "./ui/help-screen.js";
 import { setLanguageBusy } from "./ui/language-section.js";
 import { mountChat, type ChatPanel } from "./ui/chat.js";
 import { openRelayPrompt } from "./ui/relay-prompt.js";
@@ -145,7 +148,6 @@ import {
   type TeamEndAction,
 } from "./ui/queue-screen.js";
 import {
-  PLAY_BOTS_AFTER_MS,
   hostMaps,
   lobbyPanel,
   type LobbyMap,
@@ -154,6 +156,7 @@ import {
 } from "./ui/lobby-screen.js";
 import { setRelayStatus } from "./ui/relay-status.js";
 import {
+  proposableTeams,
   renderTeamLobbyScreen,
   soloCharacterKey,
   soloEntries,
@@ -181,6 +184,7 @@ import {
   playerGuild,
   playerGuildTag,
   sameTypedGuild,
+  setCapeWearers,
 } from "./ui/player-section.js";
 import { isAlone, partyOf } from "./ui/lobby-window.js";
 import {
@@ -225,10 +229,22 @@ import { watchHall } from "./ui/vault-screen.js";
 import { shouldShowSplash } from "./ui/splash-gate.js";
 import { showSplash, splashSeen, type Splash } from "./ui/splash-screen.js";
 import { showTutorialOffer } from "./tutorial/tutorial-offer.js";
-import { loadTutorialRecord, saveTutorialRecord } from "./tutorial/tutorial-preference.js";
+import { mountCoachOverlay } from "./tutorial/coach-overlay.js";
+import {
+  MENU_QUEST_STEPS,
+  isMenuQuestStepId,
+  type MenuQuestStepId,
+} from "./tutorial/menu-quest.js";
+import { startMenuQuest, type MenuQuestSession } from "./tutorial/menu-quest-session.js";
+import {
+  loadTutorialRecord,
+  menuQuestStepOf,
+  saveTutorialRecord,
+} from "./tutorial/tutorial-preference.js";
 import { startTutorialSession, type TutorialSession } from "./tutorial/tutorial-session.js";
 import { drawTutorProfession } from "./tutorial/tutorial-world.js";
 import {
+  lobbyModeOfQueue,
   teamQueueModeOf,
   teamSizeOf,
   type LobbyMode,
@@ -263,6 +279,30 @@ function tutorialFirstStation(): number {
   }
   const station = Number(new URLSearchParams(window.location.search).get("tutorial-station"));
   return Number.isInteger(station) && station > 1 ? station - 1 : 0;
+}
+
+/**
+ * The menu quest step to start at (#3540): the URL's `?tutorial-menu=<step>`,
+ * in an e2e build only; none in a player's, whose build folds the check away.
+ */
+function tutorialMenuStep(): MenuQuestStepId | undefined {
+  if (import.meta.env.VITE_VIBEWARS_TUTORIAL_STATION !== "on") {
+    return undefined;
+  }
+  const step = new URLSearchParams(window.location.search).get("tutorial-menu") ?? "";
+  return isMenuQuestStepId(step) ? step : undefined;
+}
+
+/**
+ * Whether to show the HUD's end of a match from a fixed summary (#3563):
+ * the URL's `?summary-fixture`, in an e2e build only; never in a
+ * player's, whose build folds the check and the fixture away.
+ */
+function summaryFixtureAsked(): boolean {
+  if (import.meta.env.VITE_VIBEWARS_SUMMARY_FIXTURE !== "on") {
+    return false;
+  }
+  return new URLSearchParams(window.location.search).has("summary-fixture");
 }
 
 function requireElement(selector: string): HTMLElement {
@@ -465,6 +505,15 @@ async function main(): Promise<void> {
     notices.add(t("app.framedRelayLink"));
   }
   const characters = new CharacterRepository(store);
+  // Options' cape designer dresses the menu's character (#3551).
+  setCapeWearers(async () => (await characters.list()).characters);
+  // The last matches' replays (#3572), for a dispute later; nothing shows them yet.
+  const replays = new ReplayStore(store);
+  const keepReplay = (recorded: RecordedReplay): void => {
+    replays.keep(recorded).catch((error: unknown) => {
+      console.warn("[web] could not keep the match replay", error);
+    });
+  };
   const teams = new TeamRepository(store);
   // The first start plays a rolled starter character (#853). Not into
   // memory: it would be gone next start, with the key saying it was rolled.
@@ -628,8 +677,6 @@ async function main(): Promise<void> {
           | undefined;
         /** The party lobby closed while out of sight: what to say back on the menu. */
         partyClosed: string | undefined;
-        /** Whether the screen offers *Play against bots* yet. */
-        playBotsShown: boolean;
         /** Teams its queue last heard searching (#1881); `undefined` until it says, or while it can't. */
         teams: number | undefined;
         /** Its match is over: whoever leaves it first is no news. */
@@ -676,6 +723,8 @@ async function main(): Promise<void> {
   /** The queued match's result line once it finished, whether this side won, and the timer to its ended view. */
   let queuedEnd:
     { readonly outcome: string; readonly won: boolean; readonly timer: number } | undefined;
+  /** This player signed the start of the match about to begin, so it is ranked (#3680). */
+  let rankedSigned = false;
   /**
    * A team match's end (#1997), once it finished: what comes next, when
    * by `Date.now`, the party a win queues again, and the countdown's tick.
@@ -798,6 +847,8 @@ async function main(): Promise<void> {
       since: team.since,
       teams: team.teams,
       isHost: snapshot.isHost,
+      // Heroes' Ascent waits for a side at its round, never for bots (#1996).
+      playBots: snapshot.isHost && snapshot.mode !== "heroes-ascent",
       hallHolder: hallWatch.holder(),
     };
   };
@@ -835,6 +886,8 @@ async function main(): Promise<void> {
    * build may reload away. Every screen change clears it first.
    */
   let idleScreen = false;
+  /** The menu quest (#3540) while it runs: told about every screen the rail shows. */
+  let menuQuest: MenuQuestSession | undefined;
   /** The cape the menu was last drawn with (#1513), to redraw it only for a new one (#2386). */
   let menuCape = "";
 
@@ -874,9 +927,6 @@ async function main(): Promise<void> {
   const topbarView = mountTopbar(
     topbar,
     {
-      onHelp: () => {
-        openHelpOverlay(app);
-      },
       onOptionsClosed: () => {
         // Closed over the menu, its characters wear the cape just picked in
         // Options (#1513). Not when a match starting closed it, which leaves
@@ -884,19 +934,7 @@ async function main(): Promise<void> {
         // a new cape redraws it: a redraw would swallow the press outside
         // that closed the window (#2386).
         const menu = idleScreen && screenRoot.querySelector(".screen-rail") !== null;
-        if (renamedAlone()) {
-          // Nobody else is in it to keep its code for: the lobby is opened
-          // again under the new name and tag (#1526).
-          void (async () => {
-            await closeLobby();
-            if (menu) {
-              showMenu();
-            } else {
-              openOwnLobby();
-            }
-          })();
-          return;
-        }
+        profilePacer.request();
         if (menu && menuCape !== JSON.stringify(playerGuild().guildCape)) {
           showMenu();
         }
@@ -914,6 +952,9 @@ async function main(): Promise<void> {
       onLeaveQueue: () => {
         leaveAnyQueue();
       },
+      onPlayBots: () => {
+        lobby?.playAgainstBots();
+      },
     },
     ownSignet,
   );
@@ -924,7 +965,6 @@ async function main(): Promise<void> {
       // From the bar, over a lobby whose match just started: it goes with
       // the screens.
       closeTopbarPopover();
-      closeHelpOverlay();
     }
     // In a match the viewport has the whole height; the HUD has the bar's
     // buttons (#454).
@@ -1043,6 +1083,7 @@ async function main(): Promise<void> {
     drawnParty = party === undefined ? "" : `${party.mode}:${String(party.isHost)}`;
     const entry = railEntry();
     drawnEntry = entry;
+    menuQuest?.event({ kind: "screen-shown", screen: entry });
     if (entry === "matches") {
       matchesScreen?.close();
       matchesScreen = renderMatchesScreen(screenRoot, {
@@ -1177,7 +1218,14 @@ async function main(): Promise<void> {
     leaveScreen();
     music().menu("character-builder");
     const editorCallbacks = {
-      onSave: (saved: StoredCharacter) => characters.save(saved),
+      onSave: async (saved: StoredCharacter) => {
+        const before = await characters.load(saved.id);
+        await characters.save(saved);
+        menuQuest?.event({ kind: "character-saved", before, after: saved });
+      },
+      onDraft: (before: StoredCharacter, draft: StoredCharacter) => {
+        menuQuest?.event({ kind: "build-draft", before, draft });
+      },
       onDelete: (id: string) => {
         void (async () => {
           await characters.delete(id);
@@ -1199,6 +1247,7 @@ async function main(): Promise<void> {
     teamEditor?.dispose();
     teamEditor = undefined;
     openEditor(character, editorCallbacks);
+    menuQuest?.event({ kind: "screen-shown", screen: "character-builder" });
   };
 
   /**
@@ -1262,12 +1311,30 @@ async function main(): Promise<void> {
       teamQueue !== undefined,
   );
 
-  /** Whether this player is alone in its own lobby, under another name or guild than now. */
-  const renamedAlone = (): boolean =>
-    hosted !== undefined &&
-    lobby === hosted.lobby &&
-    isAlone(railParty()) &&
-    (lobbyName !== loadPlayerName() || !sameTypedGuild(lobbyEntrant?.guild, playerGuild()));
+  /**
+   * The name and guild just set in Options, to the lobby this tab is in
+   * (#3548), which shows them at once; nothing when they are the same. A
+   * match on keeps the ones it started with, and the next plays these.
+   */
+  const sendProfile = (): boolean => {
+    const name = loadPlayerName();
+    const guild = playerGuild();
+    if (
+      lobby === undefined ||
+      lobbyEntrant === undefined ||
+      (name === lobbyName &&
+        sameTypedGuild(lobbyEntrant.guild, guild) &&
+        lobbyEntrant.guild.heroRank === guild.heroRank)
+    ) {
+      return false;
+    }
+    lobby.setProfile({ name, ...guild });
+    lobbyName = name;
+    lobbyEntrant = { ...lobbyEntrant, guild };
+    return true;
+  };
+  // The host takes one a PROFILE_INTERVAL_MS: a quicker change waits, not dropped.
+  const profilePacer = createProfilePacer({ send: sendProfile });
 
   /**
    * Out of the lobby this tab is in, ending it for everyone if it is this
@@ -1287,6 +1354,7 @@ async function main(): Promise<void> {
     syncShares();
     hosted = undefined;
     lobbyEntrant = undefined;
+    profilePacer.reset();
     lobbyName = undefined;
     closeChat();
     syncParty(undefined);
@@ -1495,13 +1563,6 @@ async function main(): Promise<void> {
       onFindMatch: () => {
         lobby?.findMatch(roundFor(entry));
       },
-      // Heroes' Ascent waits for a side at its round, never for bots (#1996).
-      onPlayBots:
-        entry === "heroes-ascent"
-          ? undefined
-          : () => {
-              lobby?.playAgainstBots();
-            },
     };
   };
 
@@ -1592,6 +1653,11 @@ async function main(): Promise<void> {
           lobby?.selectTeamSize(size);
         });
       }
+      // The menu quest waits for a Team Arena of two (#3544): the size shown counts.
+      const shown = lobby?.getSnapshot();
+      if (entry === "team-arena" && shown?.mode === entry) {
+        menuQuest?.event({ kind: "team-size", size: shown.teamSize });
+      }
     } else {
       renderTeamBuilder(screenRoot, teamList.teams, problems, menuNotice, callbacks);
     }
@@ -1631,6 +1697,7 @@ async function main(): Promise<void> {
           team = replaceMember(left.team, character);
           return Promise.resolve();
         },
+        onDraft: undefined,
         onDelete: undefined,
         onDuplicate: undefined,
         onClose: () => {
@@ -1690,7 +1757,18 @@ async function main(): Promise<void> {
     // The sidebar comes back at the build's size, to its list (#2109).
     saveTeamSize("teams", state.team.size);
     teamEditor = mountTeamEditor(screenRoot, state, available, {
-      onSave: (saved) => teams.save(saved),
+      onSave: async (saved) => {
+        await teams.save(saved);
+        menuQuest?.event({ kind: "team-saved", team: saved, isNew: !state.stored });
+      },
+      onDraft: (draft) => {
+        menuQuest?.event({
+          kind: "team-draft",
+          draft,
+          isNew: !state.stored,
+          characters: available,
+        });
+      },
       onDuplicate: (source) => {
         void (async () => {
           await teams.save(duplicateTeam(source, crypto.randomUUID()));
@@ -1799,6 +1877,7 @@ async function main(): Promise<void> {
       name,
       entrant.guild,
       playerKey,
+      id,
       {
         onState,
         onLobby: (joined, host) => {
@@ -1837,6 +1916,7 @@ async function main(): Promise<void> {
         onPartyGone: () => {
           requeue(mode, name, { note: t("session.teamSplit") });
         },
+        ...rankedEvents,
       },
       from.party,
     );
@@ -1858,6 +1938,33 @@ async function main(): Promise<void> {
     redrawRail();
     music().menu("queue");
     return true;
+  };
+
+  /**
+   * A ranked match's moments (#3680), on the queue screen when there is
+   * one, else, for a party's team match, as toasts.
+   */
+  const rankedEvents = {
+    onRankedConfirming: () => {
+      rankedSigned = true;
+      if (queue?.screen === undefined) {
+        toast(t("queue.rankedConfirming"));
+        return;
+      }
+      queue.screen.confirming(true);
+    },
+    onRankedCancelled: () => {
+      rankedSigned = false;
+      queue?.screen?.confirming(false);
+      toast(t("queue.rankedCancelled"));
+    },
+    onRankedPublished: () => {
+      if (queue?.screen === undefined) {
+        toast(`${t("queue.rankedPublished")} ${t("queue.rankedPending")}`);
+        return;
+      }
+      queue.screen.published();
+    },
   };
 
   /**
@@ -2047,22 +2154,17 @@ async function main(): Promise<void> {
       ? Date.now() - teamQueue.since
       : null;
 
-  /** The party's wait, each second; the screen again once Play against bots is offered. */
+  /** The party's wait, each second. */
   const tickTeamQueue = (): void => {
     const current = teamQueue;
     if (current === undefined || current.parked !== undefined || lobby !== current.party) {
       return;
     }
     const snapshot = current.party.getSnapshot();
-    const queuedMs = queuedMsOf(snapshot);
-    if (queuedMs === null) {
+    if (queuedMsOf(snapshot) === null) {
       return;
     }
     syncParty(snapshot);
-    if (!current.playBotsShown && queuedMs >= PLAY_BOTS_AFTER_MS) {
-      current.playBotsShown = true;
-      redrawRail();
-    }
   };
 
   /**
@@ -2096,7 +2198,6 @@ async function main(): Promise<void> {
       place: undefined,
       parked: undefined,
       partyClosed: undefined,
-      playBotsShown: false,
       teams: undefined,
       finished: false,
       ascentRound: snapshot.ascentRound,
@@ -2141,6 +2242,8 @@ async function main(): Promise<void> {
       name,
       entrant.guild,
       playerKey,
+      // A member with no character plays a host starter, and signs as one (#3680).
+      entrant.characterId ?? RANKED_STARTER_ID,
       {
         // The queue line says the wait and how many teams it last heard
         // searching (#1881), none while the relays are down; the queue's
@@ -2204,10 +2307,16 @@ async function main(): Promise<void> {
             endTeamQueue();
           }
         },
+        ...rankedEvents,
       },
       party,
       own === undefined ? undefined : (selfKey) => own.teamPlan(selfKey),
     );
+    menuQuest?.event({
+      kind: "queue-joined",
+      mode: lobbyModeOfQueue(mode),
+      size: teamSizeOf(mode),
+    });
   };
 
   /** The party lobby back in sight (#1766), its match's lobby left; or the menu, if it closed. */
@@ -2231,6 +2340,7 @@ async function main(): Promise<void> {
     if (current.partyClosed !== undefined) {
       menuNotice = current.partyClosed;
       lobbyEntrant = undefined;
+      profilePacer.reset();
       lobbyName = undefined;
       endTeamQueue();
       syncParty(undefined);
@@ -2240,6 +2350,7 @@ async function main(): Promise<void> {
     publishRelayStatus();
     hosted = parked.hosted;
     lobbyEntrant = parked.entrant;
+    profilePacer.reset();
     lobbyName = parked.name;
     mountLobbyChat(current.party);
     syncParty(current.party.getSnapshot());
@@ -2397,6 +2508,13 @@ async function main(): Promise<void> {
       team === undefined ? null : team.members.map((member) => toPlayerBuild(member.character)),
     );
     teamPicks.proposed = team?.id;
+    if (team !== undefined) {
+      menuQuest?.event({
+        kind: "team-picked",
+        teamId: team.id,
+        offered: proposableTeams(teamPicks.teams, team.size).map(({ id }) => id),
+      });
+    }
     lobbyChanged();
   };
 
@@ -2466,6 +2584,7 @@ async function main(): Promise<void> {
         soloClaimed: false,
       };
       teamPicks = picks;
+      menuQuest?.event({ kind: "screen-shown", screen: "team-lobby" });
       void Promise.all([teams.list(), characters.list()]).then(
         ([{ teams: saved }, { characters: roster }]) => {
           if (teamPicks !== picks || lobby !== joined) {
@@ -2590,6 +2709,7 @@ async function main(): Promise<void> {
     lobby = joined;
     publishRelayStatus();
     lobbyEntrant = entrant;
+    profilePacer.reset();
     lobbyName = name;
     lobbyNotice = undefined;
     if (matchmade) {
@@ -2692,7 +2812,7 @@ async function main(): Promise<void> {
     joined.onMatchStarting((start) => {
       // Only players on a team are sent this; a spectator stays here.
       if (lobby === joined) {
-        void enterMatch(name, start, lobbyEntrant ?? entrant);
+        void enterMatch(lobbyName ?? name, start, lobbyEntrant ?? entrant);
       } else {
         console.warn("[web] a match started in a lobby this page has left");
       }
@@ -2716,6 +2836,7 @@ async function main(): Promise<void> {
       syncShares();
       hosted = undefined;
       lobbyEntrant = undefined;
+      profilePacer.reset();
       closeChat();
       if (teamQueue?.parked !== undefined && match === undefined && !enteringMatch) {
         // A team's match's lobby fell through (#1766): the party lobby, still queued.
@@ -3007,6 +3128,9 @@ async function main(): Promise<void> {
     }
     enteringMatch = true;
     matchFinished = false;
+    // The menu quest's closing line goes as its match is found (#3544).
+    menuQuest?.stop();
+    menuQuest = undefined;
     stopShare();
     menuNotice = undefined;
     lobbyNotice = undefined;
@@ -3093,11 +3217,15 @@ async function main(): Promise<void> {
         },
         {
           kind: "play",
-          connect: () => connectMatchFor(from, start, name, entrant.guild, entrant.build),
+          connect: () =>
+            connectMatchFor(from, start, name, entrant.guild, entrant.build, keepReplay),
+          ranked: rankedSigned,
         },
         ownSignet,
       );
       hallWatch.pause();
+      // Said by the match about to begin, never by the next one.
+      rankedSigned = false;
       // In the match, the status has nothing to say until it is lost.
       setStatus("", "online");
       // Said once, on the match screen: the lobby's went with it.
@@ -3235,6 +3363,38 @@ async function main(): Promise<void> {
   /** A lobby, relay or guild link came with this tab or in it: it is what the player is here for. */
   let linked =
     lobbyLink.kind === "invite" || relayLink.kind === "config" || guildLink.kind === "guild";
+  /** The menu quest from the start of `from` (#3540), on the menu shown. */
+  const startMenuQuestAt = (from: MenuQuestStepId): void => {
+    menuQuest?.stop();
+    const quest = startMenuQuest({
+      from,
+      coach: (callbacks) => mountCoachOverlay(document.body, callbacks),
+      onEnd: () => {
+        if (menuQuest === quest) {
+          menuQuest = undefined;
+        }
+      },
+    });
+    menuQuest = quest;
+    quest.event({ kind: "screen-shown", screen: railEntry() });
+  };
+  /** Nobody on a touch device gets the tutorial (#3218), nor its menu quest. */
+  const onTouch = (): boolean =>
+    needsTouchNotice(
+      (query) => matchMedia(query).matches,
+      () => false,
+    );
+  /**
+   * The menu, and the menu quest at the start of the step it got to if a
+   * launch finds it under way (#3540), unless a link came or on touch.
+   */
+  const enterMenuOrQuest = (): void => {
+    enterMenu();
+    const step = menuQuestStepOf(loadTutorialRecord());
+    if (step !== undefined && !linked && !onTouch()) {
+      startMenuQuestAt(step);
+    }
+  };
   const startTutorial = async (mapId: string, teamSize: number): Promise<void> => {
     const run = {};
     tutorialRun = run;
@@ -3250,8 +3410,13 @@ async function main(): Promise<void> {
         onEnd: (end) => {
           tutorialRun = undefined;
           tutorial = undefined;
-          saveTutorialRecord(end);
           enterMenu();
+          // Out of the front, the menu quest (#3540), which saves `done` at its end.
+          if (end === "done") {
+            startMenuQuestAt(MENU_QUEST_STEPS[0].id);
+          } else {
+            saveTutorialRecord(end);
+          }
         },
       });
       if (tutorialRun === run) {
@@ -3269,8 +3434,13 @@ async function main(): Promise<void> {
       }
     }
   };
-  /** A link came: the offer or the tutorial goes, nothing recorded, so it is offered again. */
+  /**
+   * A link came: the offer or the tutorial goes, nothing recorded, so it
+   * is offered again; the menu quest goes too, and keeps its step (#3540).
+   */
   const dropTutorial = (): void => {
+    menuQuest?.stop();
+    menuQuest = undefined;
     if (closeOffer === undefined && tutorialRun === undefined) {
       return;
     }
@@ -3284,7 +3454,7 @@ async function main(): Promise<void> {
   /**
    * After the splash, a first-timer is offered the tutorial (#3218) over
    * its fight; nobody is on a touch device, without a fight to stand in,
-   * or once a link has come.
+   * or once a link has come. One into the menu quest resumes it (#3540).
    */
   const afterSplash = (): void => {
     const { map: mapId, teamSize } = requireElement("#menu-background").dataset;
@@ -3293,12 +3463,9 @@ async function main(): Promise<void> {
       loadTutorialRecord() !== undefined ||
       mapId === undefined ||
       teamSize === undefined ||
-      needsTouchNotice(
-        (query) => matchMedia(query).matches,
-        () => false,
-      )
+      onTouch()
     ) {
-      enterMenu();
+      enterMenuOrQuest();
       return;
     }
     closeOffer = showTutorialOffer(document.body, {
@@ -3314,11 +3481,29 @@ async function main(): Promise<void> {
     });
   };
   let splash: Splash | undefined;
-  if (tutorialFirstStation() > 0) {
+  const seededMenuStep = tutorialMenuStep();
+  if (summaryFixtureAsked()) {
+    // An e2e build's fixed end of a match (#3563), over no arena.
+    if (new URLSearchParams(window.location.search).get("summary-fixture") === "queue") {
+      // The queue screen after it (#3565), its scores beside its charts.
+      void import("./ui/summary-fixture.js").then(({ mountQueueFixture }) => {
+        mountQueueFixture(screenRoot);
+      });
+    } else {
+      showViewport(true);
+      void import("./ui/summary-fixture.js").then(({ mountSummaryFixture }) => {
+        mountSummaryFixture(viewport);
+      });
+    }
+  } else if (tutorialFirstStation() > 0) {
     // An e2e build's seeded start (#3383) goes straight to its station,
     // on the pinned menu map: no splash, no offer, no menu fight.
     const { mapId, teamSize } = pinnedChoice(window.location.search);
     void startTutorial(mapId, teamSize);
+  } else if (seededMenuStep !== undefined) {
+    // An e2e build's seeded menu quest (#3540): the menu, no splash, no offer.
+    enterMenu();
+    startMenuQuestAt(seededMenuStep);
   } else if (
     shouldShowSplash({
       forced: new URLSearchParams(window.location.search).has("splash"),
@@ -3344,7 +3529,7 @@ async function main(): Promise<void> {
       onDone: afterSplash,
     });
   } else {
-    enterMenu();
+    enterMenuOrQuest();
   }
   // A lobby or relay link opened in this tab, once any guild link with it is answered (#3167).
   const askLobbyAndRelay = (invited: LobbyFragment, pasted: TurnFragment): void => {

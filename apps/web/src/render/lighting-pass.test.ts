@@ -24,6 +24,7 @@ import {
   lightsByStability,
   litStructurePalette,
   regionsInView,
+  boxInView,
   roofedOver,
   shownStage,
   stageShadows,
@@ -158,7 +159,7 @@ describe("baseTint", () => {
 });
 
 describe("litStructurePalette", () => {
-  const palette = arenaPalette({ layerCount: 2, biome: "hall" });
+  const palette = arenaPalette({ layerCount: 2, biome: "hall", ascentAct: null });
 
   it("leaves an unlit map's colours alone", () => {
     expect(litStructurePalette(palette, undefined, WALL, 0)).toBe(palette);
@@ -197,6 +198,7 @@ describe("layerSurfaces", () => {
   const HEIGHTS: MapStructure = {
     layerCount: 3,
     biome: "hall",
+    ascentAct: null,
     bounds: { kind: "rect" },
     ground: 0,
     decks: [deck(1, 420, 250, 360, 200), deck(2, 520, 60, 160, 110)],
@@ -422,6 +424,53 @@ describe("layerSurfaces", () => {
       expect(box.y + box.height).toBeLessThanOrEqual(extent.height);
     }
   });
+
+  it("lights none of a raised layer a deck above it covers (#3671)", () => {
+    const stacked: MapStructure = {
+      ...HEIGHTS,
+      decks: [deck(1, 420, 250, 360, 200), deck(2, 500, 300, 160, 100)],
+      transitions: [ramp(0, 1, [300, 250, 140, 200], "e")],
+    };
+    const extent = lightMapExtent(stacked, 1, 1200, 800);
+    // A point of the layer's map, unlifted, at the half scale it is drawn at.
+    const at = (x: number, y: number) => ({ x: x / 2 - extent.x, y: y / 2 - extent.y });
+    const lit = (cover: readonly LightMapBox[], x: number, y: number) => {
+      const p = at(x, y);
+      return cover.some((box) => holds(box, p.x, p.y));
+    };
+    const under = lightMapCover(stacked, [], 1, extent);
+    const open = lightMapCover({ ...stacked, decks: [deck(1, 420, 250, 360, 200)] }, [], 1, extent);
+    // The upper deck's middle, drawn a step above the layer's map.
+    expect(lit(open, 580, 350 - ELEVATION_STEP)).toBe(true);
+    expect(lit(under, 580, 350 - ELEVATION_STEP)).toBe(false);
+    expect(lit(under, 440, 430)).toBe(true);
+    // An arch fades over whoever walks under it, so what it stands over stays lit.
+    const arch = { ...deck(2, 500, 300, 160, 100), look: "arch" as const };
+    const arched = lightMapCover(
+      { ...stacked, decks: [deck(1, 420, 250, 360, 200), arch] },
+      [],
+      1,
+      extent,
+    );
+    expect(lit(arched, 580, 350 - ELEVATION_STEP)).toBe(true);
+  });
+
+  it("lights a tunnel's floor under a deck over it, seen once it is cut away (#3671)", () => {
+    const tunnel = { kind: "rect" as const, x: 200, y: 600, width: 400, height: 80 };
+    const walled: MapStructure = {
+      ...HEIGHTS,
+      ground: 1,
+      decks: [deck(2, 180, 560, 440, 160)],
+      tunnels: [{ footprint: tunnel }],
+      transitions: [ramp(0, 1, [300, 560, 60, 100], "n")],
+    };
+    const extent = lightMapExtent(walled, 0, 1200, 800);
+    const cover = lightMapCover(walled, [], 0, extent);
+    const lit = (x: number, y: number): boolean =>
+      cover.some((box) => holds(box, x * 0.5 - extent.x, y * 0.5 - extent.y));
+    expect(lit(450, 640)).toBe(true);
+    expect(lit(250, 620)).toBe(true);
+  });
 });
 
 describe("flickerRegions (#3157, #3254)", () => {
@@ -518,6 +567,24 @@ describe("regionsInView (#3499)", () => {
   });
 });
 
+describe("boxInView (#3660)", () => {
+  const extent = { x: 100, y: 50, width: 200, height: 100 };
+  // In the arena, 200..300 by 100..200.
+  const box = { x: 0, y: 0, width: 50, height: 50 };
+
+  it("meets a view over the box and misses one beside it", () => {
+    expect(boxInView(box, extent, 0, { left: 250, top: 150, right: 400, bottom: 400 })).toBe(true);
+    expect(boxInView(box, extent, 0, { left: 300, top: 100, right: 400, bottom: 200 })).toBe(false);
+    expect(boxInView(box, extent, 0, { left: 0, top: 0, right: 200, bottom: 1000 })).toBe(false);
+  });
+
+  it("finds a raised map's box where it is drawn, lifted", () => {
+    const view = { left: 200, top: -200, right: 300, bottom: -120 };
+    expect(boxInView(box, extent, 300, view)).toBe(true);
+    expect(boxInView(box, extent, 0, view)).toBe(false);
+  });
+});
+
 describe("LightingPass", () => {
   /**
    * A scene whose light maps, as Phaser 4's DynamicTexture does, queue a
@@ -527,7 +594,7 @@ describe("LightingPass", () => {
   function fakeScene() {
     const destroyed = new Set<object>();
     const drawn: { colour: number; alive: boolean }[] = [];
-    const images: { key: string; alpha: number; blendMode: number }[] = [];
+    const images: { key: string; alpha: number; blendMode: number; visible: boolean }[] = [];
     const flats: { colour: number; blendMode: number; rects: number }[] = [];
     const graphics = () => {
       const painter = {
@@ -603,7 +670,12 @@ describe("LightingPass", () => {
             key,
             alpha: 1,
             blendMode: -1,
+            visible: true,
             setOrigin: () => image,
+            setVisible(visible: boolean) {
+              image.visible = visible;
+              return image;
+            },
             setScale: () => image,
             setDepth: () => image,
             setBlendMode(mode: number) {
@@ -627,6 +699,7 @@ describe("LightingPass", () => {
   const STRUCTURE: MapStructure = {
     layerCount: 1,
     biome: "hall",
+    ascentAct: null,
     bounds: { kind: "rect" },
     ground: 0,
     pits: [],
@@ -668,6 +741,24 @@ describe("LightingPass", () => {
     ]);
     expect(flats[0]?.rects).toBeGreaterThan(0);
     expect(images.length).toBeGreaterThan(0);
+  });
+
+  it("hides the images the camera's view misses, and shows them again in view (#3660)", () => {
+    const { scene, images } = fakeScene();
+    const lit: MapLighting = {
+      ...SUNLIT,
+      lights: [
+        { ...light("near", 0, 0), position: { x: 50, y: 50 } },
+        { ...light("far", 0, 0), position: { x: 350, y: 350 } },
+      ],
+    };
+    const pass = new LightingPass(scene);
+    pass.show(lit, STRUCTURE, [], 400, 400, false);
+    pass.update(0, { left: 0, top: 0, right: 100, bottom: 100 });
+    expect(images.some(({ visible }) => visible)).toBe(true);
+    expect(images.some(({ visible }) => !visible)).toBe(true);
+    pass.update(0, { left: 0, top: 0, right: 400, bottom: 400 });
+    expect(images.every(({ visible }) => visible)).toBe(true);
   });
 
   describe("a tunnel's lights (#3350)", () => {
@@ -722,6 +813,7 @@ describe("lightMapCells (#3524)", () => {
   const TUNNELLED: MapStructure = {
     layerCount: 2,
     biome: "hall",
+    ascentAct: null,
     bounds: { kind: "rect" },
     ground: 1,
     pits: [],
@@ -783,6 +875,35 @@ describe("lightMapCells (#3524)", () => {
     expect(cells.lit.length).toBeGreaterThan(0);
     expect(cells.lit.every((cell) => meets(cell, box))).toBe(true);
     expect(area(cells.lit)).toBeLessThan(area(lightMapCover(TUNNELLED, [], 0, extent)));
+  });
+
+  it("marks only the cells a shape meets, not every cell in its box", () => {
+    const extent = lightMapExtent(TUNNELLED, 1, ARENA, ARENA);
+    // A thin diagonal hall across the arena: its box is all of it.
+    const diagonal: MapLighting = {
+      ...LIT,
+      lights: [],
+      indoor: [
+        {
+          kind: "polygon",
+          points: [
+            { x: 0, y: 0 },
+            { x: 60, y: 0 },
+            { x: 1000, y: 940 },
+            { x: 1000, y: 1000 },
+            { x: 940, y: 1000 },
+            { x: 0, y: 60 },
+          ],
+        },
+      ],
+    };
+    const cells = lightMapCells(diagonal, TUNNELLED, [], 1, extent, "full");
+    // Far off the diagonal, inside its box: flat. On it: textured.
+    const off = { x: 400 - extent.x, y: 50 - extent.y, width: 25, height: 25 };
+    const on = { x: 250 - extent.x, y: 250 - extent.y, width: 5, height: 5 };
+    expect(cells.flat.some((cell) => meets(cell, off))).toBe(true);
+    expect(cells.textured.some((cell) => meets(cell, on))).toBe(true);
+    expect(cells.flat.some((cell) => meets(cell, on))).toBe(false);
   });
 
   it("textures a cell the indoors or a sun shadow marks", () => {

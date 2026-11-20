@@ -26,7 +26,7 @@ const fetchRelic: BotRule = {
       if (
         !carriesRelic(relicCarry, relic.team, team) &&
         relic.place.kind === "ground" &&
-        sentTo(context, relic.place.position, false, false)
+        sentTo(context, relic.place.position, relicId(relic.team), false, false)
       ) {
         return { ...NOTHING, attackTargetId: relicId(relic.team) };
       }
@@ -36,7 +36,7 @@ const fetchRelic: BotRule = {
         continue;
       }
       const lying = lyingPoint(relicSpawns, relic);
-      if (lying !== undefined && sentTo(context, lying.position, true, true)) {
+      if (lying !== undefined && sentTo(context, lying.position, relicId(relic.team), true, true)) {
         return { ...NOTHING, attackTargetId: relicId(relic.team) };
       }
       if (relicCarry === "foe" && lying !== undefined) {

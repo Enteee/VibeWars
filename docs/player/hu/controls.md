@@ -21,7 +21,7 @@ Az alapértelmezett előbeállítás a **Klasszikus**, a GW1-hez szokott kezekne
 | Következő ellenség (Shift: előző)    | Tab                          | Tab              |
 | Legközelebbi ellenség                | C                            | C                |
 | A csapatod bemondott ellensége       | T                            | T                |
-| Saját magad                          | G                            | G                |
+| Saját magad                          | F vagy G                     | G                |
 | Nevek mutatása (nyomva tartva)       | Shift                        | Shift            |
 | Némítás                              | M                            | M                |
 | Zászló, ereklye vagy hamvak eldobása | nincs                        | nincs            |
@@ -41,7 +41,7 @@ Ezek a billentyűk rögzítettek:
 ## Egér
 
 - **Bal kattintás** a talajra: odasétálsz. Shift nélkül a bal gomb csak sétál.
-- Megemelt platformokkal rendelkező pályákon a bal kattintás a látott felületre visz, az **Alt + bal kattintás** pedig az alatta lévő talajra. A kurzor alatti gyűrű platformot jelöl, a szaggatott gyűrű a talajt. Alagút fölött a bal kattintás arra a szintre visz, ahol vagy, az **Alt + bal kattintás** a másikra.
+- Megemelt platformokkal rendelkező pályákon a bal kattintás a látott felületre visz, az **Alt + bal kattintás** pedig az alatta lévő talajra. A kurzor alatti gyűrű platformot jelöl, a szaggatott gyűrű a talajt. Alagút fölött a bal kattintás arra a szintre visz, ahol vagy. Az **Alt + bal kattintás** sosem visz annál a szintnél feljebb, amelyen állsz: a talajról az alagútba visz, alagútban pedig ott marad.
 - **Jobb kattintás** egy ellenségen vagy szövetségesen: célba veszed.
   Kattints jobb gombbal ugyanarra az ellenségre újra, gyorsan, hogy
   megtámadd.
@@ -77,7 +77,8 @@ a **♪** (zene: mi szól, és milyen hangosan), a hangnémítás és a teljes k
 a Lobbi kivételével, a képernyő jobb felső sarkában ülnek. Keskeny ablakban ezek az ikonok és
 a képernyő többi gombja a **⋯** mögé csukódik; csak a fő gomb marad kint.
 A ⚙ az Opciókat ablakként nyitja meg a sáv alatt, a képernyővel mögötte; az Esc, a × vagy egy kívülre kattintás bezárja. A **megjelenítés** részben a **Világítás** be- vagy kikapcsolja egy megvilágított pálya fényeit és árnyékait, azonnal, akár meccs közben is.
-A Súgó a jobb felső sarkában lévő ×-szel, az Esc-kel vagy a [?] újabb megnyomásával zárul be.
+A [?] ugyanígy nyitja meg a Súgót, alatta lévő ablakként, felül oldalválasztóval; a meccs mögötte tovább fut.
+A Súgó a saját ×-ével, az Esc-kel, egy kívülre kattintással vagy a [?] újabb megnyomásával zárul be.
 
 **Ossz meg egy ütemet a lobbiddal.** Az ütemszerkesztőben (♪, majd **Szerk.**)
 a **Megosztás a lobbival** elküldi, amit begépeltél, akár mentetted, akár nem, mindenki

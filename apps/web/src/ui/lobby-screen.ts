@@ -40,12 +40,7 @@ export interface LobbyMatchmaking {
   /** The map of the group the queue formed (#2687); `undefined` until it has. */
   readonly groupMapId: string | undefined;
   readonly onFindMatch: () => void;
-  /** `undefined` where bots are not offered: Heroes' Ascent waits for a side (#1996). */
-  readonly onPlayBots: (() => void) | undefined;
 }
-
-/** The host may play against bots after this long with no other team (Q191). */
-export const PLAY_BOTS_AFTER_MS = 60_000;
 
 /** The teams a player can pick. Two for now; the map decides capacity. */
 export const SELECTABLE_TEAMS = [0, 1] as const;
@@ -284,9 +279,7 @@ export function lobbyPanel(
   let queueAction: HTMLElement | undefined;
   if (matchmaking !== undefined) {
     if (snapshot.isHost) {
-      const buttons = matchmakingButtons(matchmaking, controls);
-      queueAction = buttons.queueAction;
-      actions.push(...buttons.actions);
+      queueAction = matchmakingButtons(matchmaking, controls).queueAction;
     }
   } else if (snapshot.isHost) {
     const start = button(t("lobby.startMatch"), ready ? "primary" : "", callbacks.onStart);
@@ -301,6 +294,10 @@ export function lobbyPanel(
   if (matchmaking !== undefined && !snapshot.isHost && matchmaking.queuedMs === null) {
     // A guest's word on a team-mode screen: matchmaking is the host's.
     panel.appendChild(h("div", "screen-info lobby-waiting", t("lobby.hostStartsMatchmaking")));
+  }
+  if (matchmaking?.queuedMs === null) {
+    // A party without bots plays ranked (ADR-0055): said before it queues.
+    panel.appendChild(h("p", "queue-ranked-note", t("queue.rankedNote")));
   }
 
   // Everyone sees it, not only the host: a guest who is the one being
@@ -331,27 +328,20 @@ export function lobbyPanel(
 }
 
 /**
- * The host's matchmaking buttons (#1766): Find a match, and once queued
- * (#2980), whose way out is the spinner's flyout, after a minute alone
- * Play against bots.
+ * The host's matchmaking buttons (#1766): Find a match, and none once
+ * queued (#2980), when the spinner's flyout holds the way out and Play
+ * against bots (#3547).
  */
 export function matchmakingButtons(
   matchmaking: LobbyMatchmaking,
   controls: LobbyControls,
-): { readonly queueAction: HTMLElement | undefined; readonly actions: HTMLElement[] } {
-  if (matchmaking.queuedMs === null) {
-    const find = findMatchButton(matchmaking.onFindMatch);
-    find.disabled = controls.mapDisabled;
-    return { queueAction: find, actions: [] };
+): { readonly queueAction: HTMLElement | undefined } {
+  if (matchmaking.queuedMs !== null) {
+    return { queueAction: undefined };
   }
-  const { onPlayBots } = matchmaking;
-  return {
-    queueAction: undefined,
-    actions:
-      matchmaking.queuedMs < PLAY_BOTS_AFTER_MS || onPlayBots === undefined
-        ? []
-        : [button(t("lobby.playBots"), "primary lobby-play-bots", onPlayBots)],
-  };
+  const find = findMatchButton(matchmaking.onFindMatch);
+  find.disabled = controls.mapDisabled;
+  return { queueAction: find };
 }
 
 /**

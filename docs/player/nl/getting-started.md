@@ -6,6 +6,10 @@ Je hebt geen account nodig en hoeft niets te installeren: het spel draait in
 dit browsertabblad. VibeWars heeft een toetsenbord en muis nodig. Het werkt
 niet op een telefoon of een tablet met alleen touch: open het op een computer.
 
+## De tutorial
+
+De eerste keer dat je VibeWars opent, biedt het een korte tutorial aan: een wandeling door een kloof die je leert bewegen en vechten. Daarna gaat hij verder in het menu, stap voor stap: verander de specialisatie van je personage, stel een team van twee samen, bekijk waar elke modus voor is en zet dat team in de wachtrij voor een eerste 2v2-match in de Team Arena. Zolang een stap naar een knop wijst, is de rest van het menu gedimd. Je kunt de tutorial altijd overslaan met **Tutorial overslaan**.
+
 ## De modusbalk
 
 De balk links op het hoofdscherm bevat de [modi](modes.md), van boven naar
@@ -79,6 +83,15 @@ wachtrij.
 
 Als de match afloopt, kun je **Opnieuw zoeken**, of **Bij elkaar** blijven met
 het team waarmee je net speelde.
+
+Naast de scores vertellen twee grafieken het verloop van de match. **Jij**
+tekent je toegebrachte schade, ontvangen schade, genezing en Energie; **Teams**
+tekent de levenspool van elk team boven zijn totale schade. Markeringen onder
+de tijdas tonen kills, doden, onderbrekingen, veroveringen en
+wederopstandingen: wijs er een aan, of ga er met Tab naartoe, om te lezen wat
+er gebeurde. Druk op een legenda-item om de lijn te verbergen of te tonen. Op
+een telefoon staan de grafieken onder de scores, die jou en twee anderen tonen
+tot **Alles tonen**.
 
 ## Een match hosten of meedoen
 
@@ -163,8 +176,8 @@ tabblad, dan gaat de groep meteen uit de wachtrij. Als er een ander team van
 dezelfde modus in de wachtrij opduikt, speel je tegen hen op een van de maps
 van de modus, elke kant met zijn eigen builds, en kom je daarna terug in je
 lobby. De host kan op elk moment de wachtrij verlaten via het venster van de ring; een gast die
-vertrekt, haalt de hele groep eruit. Is er na een minuut geen ander team, dan
-kan de host ook op **Tegen bots spelen** drukken: een match in je eigen lobby
+vertrekt, haalt de hele groep eruit. Na 10 s in de wachtrij kan de host ook
+in het venster van de ring op **Tegen bots spelen** drukken: een match in je eigen lobby
 tegen een willekeurig kant-en-klaar team van bots, behalve in
 [Heroes' Ascent](modes.md#heroes-ascent), dat wacht op een team van jouw ronde.
 
@@ -175,14 +188,15 @@ jou is, wat je ook speelt. Het spel geeft je bij je eerste bezoek een **Naam**,
 zoals `AshenWolf`; typ eroverheen om hem te wijzigen. Laat je hem leeg, dan
 speel je als `Speler`. Typ ernaast een **Gildetag** van 2 tot 4 letters of
 cijfers, en iedereen ziet die achter je naam, zoals `Ente [VIBE]`. Met een tag
-verschijnt daaronder de ontwerper voor je **Gildecape**: kies de capekleur, de
-randkleur en een embleem, en je lichaam draagt de cape in elke match: hij vouwt
+verschijnt daaronder de ontwerper voor je **Gildecape**: kies elke cape- en
+randkleur die je wilt, teken een embleem, en je lichaam draagt de cape in elke match: hij vouwt
 tot een dunne band op je rand als je stilstaat en wappert achter je aan als je
 beweegt. Ook je personages in het menu laten hem zien. **Geen cape** doet hem
-af.
+af. Een figuur toont de cape zoals die er in het spel uitziet. Een kleur die te dicht bij het blauw van je team of het rood van je tegenstanders ligt, wordt bij het tekenen een beetje daarvan weggeschoven, zodat geen cape op een team lijkt; de figuur toont hem zoals iedereen hem zal zien.
 
-Een wijziging geldt vanaf de volgende lobby waar je binnenkomt, of je volgende
-nieuwe: in een lobby waar je al in zit, houd je wat je had toen je erin kwam.
+Een wijziging geldt meteen voor de lobby waar je in zit.
+
+**Teken je embleem.** Het embleemraster van 16×16 staat altijd onder de cape- en randkleur. Kies een kleur of **Leeg** en teken met het **Potlood**, gum uit met de **Gum** of kleur een vlak met **Vullen**. **Kleur toevoegen** geeft het embleem nog een kleur, tot 15, en de kleurkiezer ernaast verandert de gekozen kleur, samen met alles wat erin getekend is. **Begin met** zet een van acht vormen op het raster in de gekozen kleur. **Spiegelen** schildert de linker- en rechterhelft tegelijk. **Wissen** maakt het raster leeg en **Ongedaan** gaat een stap terug. Het kleine beeld naast het raster toont het embleem zo groot als in een match. Elke streek wordt bewaard zodra je hem afmaakt. Pijltjestoetsen en spatie tekenen ook met het toetsenbord.
 
 **Gildelink kopiëren**, onder de capeontwerper, kopieert een link met je tag en cape. Wie hem opent, krijgt de vraag **Lid worden van gilde [VIBE]?**: **Lid worden** geeft diegene je tag en cape, **Nee** verandert niets. Iedereen kan zo'n link sturen en niemand is eigenaar van een tag, dus het spel vraagt het altijd eerst.
 

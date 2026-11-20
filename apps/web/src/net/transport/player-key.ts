@@ -2,13 +2,15 @@
  * The player key (#2706): one long-lived secp256k1 key per browser, the
  * player's identity, kept in localStorage. Its secret half stays in this
  * module: it is never rendered, logged, sent or put in a URL, and the
- * `PlayerKey` handed out signs only digests built here, each under its
- * purpose's own BIP-340 tag. A key of its own, never the ticket key's.
+ * `PlayerKey` handed out signs only digests built here or in
+ * `@vibewars/ranking`, each under its purpose's own BIP-340 tag. A key of
+ * its own, never the ticket key's.
  */
 import { sha256 } from "@noble/hashes/sha2.js";
 import { bytesToHex, concatBytes, hexToBytes, utf8ToBytes } from "@noble/hashes/utils.js";
 import { hashes, schnorr, utils } from "@noble/secp256k1";
 import type { LobbyProofFields, PlayerKey } from "@vibewars/game-session";
+import { resultDigest, startDigest, type ReceiptCrypto } from "@vibewars/ranking";
 
 import { STORAGE_NAMESPACE } from "../../storage/namespace.js";
 
@@ -61,6 +63,8 @@ function keyOf(secretKey: Uint8Array): PlayerKey {
       }
       return bytesToHex(schnorr.sign(digest, secretKey));
     },
+    signRankedStart: (start) => bytesToHex(schnorr.sign(startDigest(start, sha256), secretKey)),
+    signRankedResult: (result) => bytesToHex(schnorr.sign(resultDigest(result, sha256), secretKey)),
   };
 }
 
@@ -90,6 +94,25 @@ export function loadPlayerKey(storage: Storage): PlayerKey {
   }
   return keyOf(secretKey);
 }
+
+/**
+ * The curve code ranked receipts are checked with (ADR-0055, #3680): the
+ * hash player keys sign with, and BIP-340's check. Total, as
+ * `verifyPlayerProof` is.
+ */
+export const receiptCrypto: ReceiptCrypto = {
+  sha256,
+  verify: (pubkey, digest, sig) => {
+    if (!HEX_32.test(pubkey) || !HEX_64.test(sig)) {
+      return false;
+    }
+    try {
+      return schnorr.verify(hexToBytes(sig), digest, hexToBytes(pubkey));
+    } catch {
+      return false;
+    }
+  },
+};
 
 /**
  * Whether `sig` is `pubkey`'s lobby proof of `fields`. Total: anything

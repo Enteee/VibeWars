@@ -6,6 +6,10 @@ behöver inget konto och inget att installera: spelet körs i den här
 webbläsarfliken. VibeWars kräver tangentbord och mus. Det fungerar inte
 på en telefon eller en surfplatta med bara pekskärm: öppna det på en dator.
 
+## Guiden
+
+Första gången du öppnar VibeWars erbjuder spelet en kort guide: en promenad genom en kanjon som lär dig att röra dig och slåss. Sedan fortsätter den i menyn, ett steg i taget: byt din karaktärs inriktning, bygg ett lag på två, se vad varje läge är till för och ställ laget i kö till en första 2v2-match på Lagarena. Medan ett steg pekar på en kontroll är resten av menyn nedtonad. Du kan hoppa över guiden när som helst med **Hoppa över guiden**.
+
 ## Lägesraden
 
 Raden längs huvudskärmens vänsterkant innehåller
@@ -80,6 +84,14 @@ direkt.
 
 När matchen är slut kan du **Köa igen**, eller **Håll ihop** med laget
 du just spelade med.
+
+Bredvid poängen berättar två diagram matchen över tid. **Du** ritar din
+utdelade skada, mottagna skada, helning och Energi; **Lag** ritar varje lags
+hälsopool ovanför dess totala skada. Markeringar under tidsaxeln visar
+dödanden, dödsfall, avbrott, erövringar och återupplivningar: peka på en, eller
+gå till den med Tab, för att läsa vad som hände. Tryck på en post i
+förklaringen för att dölja eller visa dess linje. På en telefon ligger
+diagrammen under poängen, som visar dig och två andra tills **Visa alla**.
 
 ## Var värd för eller gå med i en match
 
@@ -163,8 +175,8 @@ hur många lag som söker, ert inräknat: `2 lag söker`. Bara värden har
 ett annat köande lag i samma läge dyker upp spelar ni mot dem på en av
 lägets kartor, varje sida med sina egna builds, och kommer sedan tillbaka
 till er lobby. Värden kan lämna från ringens fönster när som helst; en
-gäst som lämnar tar hela gruppen ur kön. Finns inget annat lag efter en
-minut kan värden också trycka på **Spela mot bottar**: en match i er
+gäst som lämnar tar hela gruppen ur kön. Efter 10 s i kön kan värden
+också trycka på **Spela mot bottar** i ringens fönster: en match i er
 egen lobby mot ett slumpat förvalt lag av bottar,
 utom i [Heroes' Ascent](modes.md#heroes-ascent), som väntar på ett
 lag i er runda.
@@ -177,14 +189,15 @@ ett **Namn** vid ditt första besök, som `AshenWolf`; skriv över det för
 att ändra det. Lämnas det tomt spelar du som `Spelare`. Skriv en
 **Gilletagg** på 2 till 4 bokstäver eller siffror bredvid, så ser alla
 den efter ditt namn, som `Ente [VIBE]`. När en tagg är satt visas
-designverktyget **Gillesmantel** under den: välj mantelns färg,
-kantens färg och ett emblem, så bär din kropp manteln i varje match:
+designverktyget **Gillesmantel** under den: välj vilken färg du vill
+på mantel och kant, rita ett emblem, så bär din kropp manteln i varje match:
 den viks ihop till ett smalt band vid din kant när du står still och
 fladdrar ut bakom dig när du rör dig. Dina karaktärer i menyn visar den
-också. **Ingen mantel** tar av den.
+också. **Ingen mantel** tar av den. En figur visar manteln som den ser ut i spelet. En färg för nära ditt lags blå eller dina fienders röda vrids lite bort från den när den ritas, så att ingen mantel ser ut som ett lag; figuren visar den som alla kommer att se den.
 
-En ändring gäller från nästa lobby du går med i, eller din nästa nya:
-en du redan är med i behåller det du gick med med.
+En ändring gäller direkt i den lobby du är i.
+
+**Rita ditt emblem.** Emblemets rutnät på 16×16 finns alltid under mantelns och kantens färger. Välj en färg eller **Tom**, och rita med **Penna**, sudda med **Suddgummi** eller fyll en yta med **Fyll**. **Lägg till färg** ger emblemet ännu en färg, upp till 15, och färgväljaren bredvid dem ändrar den valda färgen tillsammans med allt som är ritat i den. **Börja från** lägger en av åtta former på rutnätet i den valda färgen. **Spegla** målar vänster och höger halva på en gång. **Rensa** tömmer rutnätet och **Ångra** går ett steg tillbaka. Den lilla vyn bredvid rutnätet visar emblemet lika stort som i en match. Varje drag sparas när du avslutar det. Piltangenter och mellanslag ritar också med tangentbordet.
 
 **Kopiera gilleslänk**, under mantelverktyget, kopierar en länk med din tagg och din mantel. Den som öppnar den får frågan **Gå med i gillet [VIBE]?**: **Gå med** ger hen din tagg och din mantel, **Nej** ändrar ingenting. Vem som helst kan skicka en sådan länk och ingen äger en tagg, så spelet frågar alltid först.
 

@@ -123,7 +123,7 @@ på fjendens herre. Under den nævner en linje den, der bærer et flag. Et
 løft dukker op som "Moralløft! +10%" eller "Fjendens moralløft". På
 kompasset markerer ♛ hver Laugsherre, ⚑ hvert flag og ◎ standen.
 
-Guild Hall Isle spiller den.
+Guild Hall Isle (8v8, 6000x2600) spiller den: en ø i havet. Hver Guild Lord står oven på en hal bag en ringmur; vejen ud går gennem porthuset, over muren eller langs en mole. En portdør åbnes med et håndtag på fjendens mur. Flagstanden står på en forhøjning i midten.
 
 ## Relikvieløb
 
@@ -175,14 +175,15 @@ sejren til det hold, der scorede sidst. Hver base genopliver sine døde,
 og sit spøgelse, hvert 2. minut. Bots går samlet efter fjendens relikvie
 og bringer den hjem.
 
+Cinder Sanctum (8v8, 5600x2800) spiller det: et tempel på en vulkans skråning mellem to lavafloder. Gå over en bro eller dæmningen til helligdommen på dens forgård; et håndtag på forgården åbner den skjulte gang under helligdommen, og askevægge kan slås i stykker. Lava brænder.
+
 ## Kongen af bakken
 
 **Før din Spøgelseshelt op på alteret, og hold det.** Hvert hold har en
 **Spøgelseshelt** i sin base, et spøgelse, der kæmper med økse, og som
 ingen spiller. **Alteret** står i midten, samme gåtur fra begge baser.
 På **Threefold Keep** kæmper tre hold (to, når intet tredje er ledigt) om
-det inde i en indmuret borg. Dens døre åbner kun indefra, med en plade
-indenfor: gå rundt til et åbent hjørne for at komme ind. Højst 12 point
+det på tårnet i en indmuret borg. Højst 12 point
 pr. hold, og står alle fjender på -60 % moral, vinder du med det samme.
 **Heltenes Hal**, den Kongen af bakken-bane, der afslutter Heltenes
 opstigning, hæver det på en forhøjning med mure mod vest og øst, op ad en
@@ -243,7 +244,7 @@ alteret, dræber hver bot først det andet holds Spøgelseshelt, så snart
 den står på alteret inden for deres rækkevidde: den er den ene fjende,
 der forhindrer dit spøgelse i at gøre krav på det.
 
-Threefold Keep spiller den.
+Threefold Keep (4v4 og 8v8, 5000x4400) spiller den: en borg på en bakke i højlandet, for tre hold. Gå op på murgangen ad trappen ved din port og kryds en dæmning til bakken, og klatr så op til alteret på tårnet. Et håndtag i hver gård åbner alle fire porte: din portgang under muren, og krypten, den lange vej under bakken.
 
 ## Erobring
 
@@ -286,8 +287,9 @@ på dem, indtil de er taget. En fjende inden for besværgelsesrækkevidde
 trækker dem ikke væk: de træder op på en helligdom inden for rækkevidde og
 kæmper derfra.
 
-Scarred Earth spiller den: hver helligdom står i en brudt ring af mure,
-åben mod vest og øst.
+Scarred Earth (4v4 og 8v8, 5400x2800) spiller den: en kraterfyldt slagmark i skumringen. Helligdommene står på ødelagte belejringstårne, den midterste på det store tårns dæk, hver ved siden af et krater; håndtag på tårnene åbner to skyttegrave under marken, og ødelagte palisader kan slås ned.
+
+I Heltenes opstigning spiller The Warden's Gallery (8v8, 5200x2500) den: et solbeskinnet skulpturgalleri under ovenlysvinduer. Den midterste helligdom står på toppen af den store sokkel, og hvert hold har tre nær sin forhal, én på en sokkel; håndtag på den store sokkel åbner to krypter under gulvet, og væltede statuer kan slås ned.
 
 ## Holdlobby
 
@@ -389,7 +391,7 @@ Hallen trækker en af tre spiltilstande til hver kamp: Kongen af bakken, Relikvi
 
 **Hvælvingen.** Hallen dannes kun hvert 12. minut efter UTC-uret, kl. :00, :12, :24, :36 og :48. Indtil da venter din gruppe i Hvælvingen: køikonet viser tiden til næste åbning, og hvem der holder Hallen. Ved hver åbning møder holderen op til to udfordrere, eller op til tre udfordrere mødes, hvis ingen holder den. Kun grupper, der venter før åbningen, er med, og dem ud over de pladser venter til den næste. En holder uden nogen at kæmpe mod beholder Hallen og venter, uden at en sejr tælles, og en enlig udfordrer venter også. Når en gruppe vinder Hallen, siger hvert åbent spil, hvem der holder den nu: dens leder, eller dens laugsmærke, når mere end halvdelen af gruppen deler ét.
 
-Hvert løb starter med **Elite Zaishen Battle**, uden kø: din gruppe mod seks Zaishen spillet af bots (2 Monks, en Elementalist og 3 andre). Uret starter, når en af jer krydser startlinjen, eller den første Zaishen dør, hvad der end sker først. Dræb alle seks på under 30 sekunder, så starter gruppen løbet med +10 % moral; under 60, +8 %; under 80, +6 %; under 100, +4 %; under 120, +2 %; langsommere, ingenting. Vind, så stiller din gruppe sig selv i kø til sin første bane. Bliver I udslettet, eller er der stadig en Zaishen i live, når grænsen på 8 minutter nås, er løbet slut.
+Hvert løb starter med **Elite Zaishen Battle**, uden kø: din gruppe mod seks Zaishen spillet af bots (2 Monks, en Elementalist og 3 andre). Den udkæmpes i en ceremoniel arena (8v8, 5400x2400): terrasserede tribuner mod nord og syd, statuer på sokler på den nedsænkede bane og en hvælving under hver tribune, hvis faldgitter åbnes med et håndtag på den modsatte tribune. Uret starter, når en af jer krydser startlinjen midt i arenaen, eller den første Zaishen dør, hvad der end sker først. Dræb alle seks på under 30 sekunder, så starter gruppen løbet med +10 % moral; under 60, +8 %; under 80, +6 %; under 100, +4 %; under 120, +2 %; langsommere, ingenting. Vind, så stiller din gruppe sig selv i kø til sin første bane. Bliver I udslettet, eller er der stadig en Zaishen i live, når grænsen på 8 minutter nås, er løbet slut.
 
 Hver sejr i et løb giver **berømmelse**: 1, 2, 3, 4, 6, 8, 12, 16, 20, 24, 28, 32, 36 for de første tretten, derefter 40 hver, højst 300 om dagen (dagen skifter kl. 15:00 UTC). Elite Zaishen Battle giver ingen. Din samlede berømmelse bestemmer din **heltegrad**, fra 1 ved 25 berømmelse til 15 ved 100.000, vist som ★ og et tal ved siden af dit navn. Valg > Spiller viser begge. Begge gemmes på din enhed.
 
@@ -421,14 +423,12 @@ hørevidde af det med 50 lynskade hvert 2,5 sekund, indtil det andet hold
 planter sit flag der. Hvert slag er en lynstråle fra fyret til den, det
 ramte, synlig for begge hold.
 
-Tre arenaer fra Opstigningen kan også vælges i et Værtsspil: **The Hollow Deep** (8v8 Udslettelse, tre
-snoede tunneler rundt om en klippe i midten),
+Tre arenaer fra Opstigningen kan også vælges i et Værtsspil: **The Hollow Deep** (8v8, 6200x2400, Udslettelse i en mørk hule: gå over en rebbro over en kløft, klatr over en afsats i midten, eller tag krypten under den, når et håndtag på en klippehylde åbner dens port),
 **Blackwater Ford** (8v8, 5200x2800,
 Præsteudslettelse ved et mørkt vadested i en flod: man vader over et lavvandet vadested, går over den
 ødelagte bro på sine piller over møllen eller tager en kulvert under broen, når et håndtag på møllen
 åbner dens port; præsten genopliver sine døde hvert 2. minut) og
-**Mosslit Cairns** (8v8 Erobring, fem varder i en flad zigzag mellem
-baserne). En fjerde er **The Brazen Causeway** (8v8, 5600x2800, Præsteudslettelse på en hævet stendæmning over en marsk i skumringen: man marcherer ad dæmningen, når et håndtag i det fjerne porthus åbner dens bronzeport, krydser marsken til trappen midt på den eller smutter gennem en kulvert under den; præsten genopliver sine døde hvert 2. minut).
+**Mosslit Cairns** (8v8, 5400x3000, Erobring på fem varde-høje, der gløder af mos i skumringen: man klatrer op på en varde ad dens trapper, holder den store varde i midten eller tager rodtunnelen under de sydlige høje, når et håndtag på en nordlig varde åbner dens porte; rodmure kan brydes ned). En fjerde er **The Brazen Causeway** (8v8, 5600x2800, Præsteudslettelse på en hævet stendæmning over en marsk i skumringen: man marcherer ad dæmningen, når et håndtag i det fjerne porthus åbner dens bronzeport, krydser marsken til trappen midt på den eller smutter gennem en kulvert under den; præsten genopliver sine døde hvert 2. minut).
 
 En bane kan have **porte**: mure, der stopper kroppe, skud og udsyn, mens
 de er lukkede. Stå på en ports trykplade for at åbne den. Den lukker, når
@@ -486,3 +486,7 @@ Værtsspil passer ikke til nogen størrelse. Chipsene bliver, som du
 efterlod dem, indtil siden genindlæses.
 
 Over chipsene viser **Heltenes Hal**-striben de seneste 20 besiddelser, nyeste først: holderen (et laugsmærke eller lederens navn), det vindende holds folk, hvornår den nyeste sejr sluttede og, fra to sejre og op, hvor mange i træk. En besiddelse er en ubrudt række af sejre i Hallen af én holder. Striben læser registreringerne på denne side, ignorerer chipsene og er skjult, når ingen af dem er en sejr i Hallen. Som enhver registrering er den, hvad hver kamps vært rapporterede, og intet tjekker den.
+
+## Rangeret
+
+En kamp fra køen uden bots er rangeret. Køskærmen og hold-lobbyen siger det, før du stiller dig i kø; én bot holder en kamp urangeret. Når en rangeret kamp er fundet, underskriver hver spiller dens start, og skærmen viser **Bekræfter rangeret kamp…** i op til 15 sekunder. Hvis nogen ikke bekræfter, aflyses kampen, og alle er tilbage i køen. Til sidst underskriver hver spiller resultatet, og kampens kvittering offentliggøres på Nostr-relæerne med hver spillers offentlige nøgle og figurnavn; en spiller uden figur står som starter. Din rating ændres inden for en time. At forlade en rangeret kamp tæller som et nederlag, og forlad-knappen siger det.

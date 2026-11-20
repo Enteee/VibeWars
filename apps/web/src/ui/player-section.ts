@@ -1,5 +1,5 @@
 import { randomPlayerName } from "@vibewars/game-core";
-import { CAPE_COLOURS, CAPE_EMBLEMS, type WireCape } from "@vibewars/game-protocol";
+import { packEmblem, unpackEmblem, type WireCape } from "@vibewars/game-protocol";
 import {
   sanitizeGuild,
   sanitizeGuildCape,
@@ -7,20 +7,24 @@ import {
   type Guild,
 } from "@vibewars/game-session";
 
-import { t, type MessageKey } from "../i18n/index.js";
+import { t } from "../i18n/index.js";
 import { GUILD_FRAGMENT_KEY } from "../net/fragment.js";
-import { SELF_RIM, paintEmblem } from "../render/body-painter.js";
-import {
-  CAPE_PALETTE,
-  emblemShape,
-  type CapeColour,
-  type CapeEmblem,
-} from "../render/cape-shape.js";
+import { EMBLEM_PRESET_NAMES, capeLook, presetEmblem } from "../render/cape-shape.js";
 import { heroRankOf, loadFame } from "../storage/fame.js";
 import { STORAGE_NAMESPACE } from "../storage/namespace.js";
-import { canvasPainter } from "./character-figure.js";
+import type { StoredCharacter } from "../storage/schema.js";
+import { lookOfCharacter } from "./character-card.js";
+import { createCharacterFigure } from "./character-figure.js";
 import { cssColour } from "./character-preview.js";
+import {
+  EMBLEM_NAMES,
+  emblemEditor,
+  emblemIcon,
+  inputHex,
+  type EmblemPick,
+} from "./emblem-editor.js";
 import { button, h, shareLine, toast, type ShareLine } from "./kit.js";
+import { isPlayable, loadActiveCharacterId, loadStarterCharacterId } from "./menu.js";
 import type { OptionsSection } from "./options-sections.js";
 import { SIGNET_HEADING_PX, signetElement } from "./player-label.js";
 
@@ -108,15 +112,33 @@ const GUILD_CAPE_STORAGE_KEY = `${STORAGE_NAMESPACE}.guildCape`;
 
 /**
  * The cape last designed (#1422), kept even while there is no valid tag
- * to wear it with; `null` for none, and for anything stored that is not
- * a cape.
+ * to wear it with; `null` for none. One stored that is not a cape, such
+ * as one from before the emblem was a grid (#3554), is replaced by
+ * `FIRST_CAPE`: no migration (ADR-0016).
  */
 export function loadGuildCape(): WireCape | null {
   try {
     const stored = localStorage.getItem(GUILD_CAPE_STORAGE_KEY);
-    return stored === null ? null : sanitizeGuildCape(JSON.parse(stored));
+    if (stored === null) {
+      return null;
+    }
+    const cape = storedCape(stored);
+    if (cape === null) {
+      saveGuildCape(FIRST_CAPE);
+      return FIRST_CAPE;
+    }
+    return cape;
   } catch {
-    // Unparseable, or the name's reasoning: no cape.
+    // The name's reasoning: no cape.
+    return null;
+  }
+}
+
+/** `stored` as a cape, or `null` if it is not JSON or not a cape. */
+function storedCape(stored: string): WireCape | null {
+  try {
+    return sanitizeGuildCape(JSON.parse(stored));
+  } catch {
     return null;
   }
 }
@@ -154,15 +176,17 @@ export function showsCapeDesigner(typed: string): boolean {
 
 /**
  * The guild link to `tag` and `cape` (#3167): this page's own origin and
- * path, with `#guild=<TAG>.<main>.<trim>.<emblem>`, or `#guild=<TAG>` with
- * no cape. `parseGuildFragment` reads it back.
+ * path, with `#guild=<TAG>.<main>.<trim>.<emblem>.<colours>`, the emblem's
+ * colours run together (#3628), or `#guild=<TAG>` with no cape.
+ * `parseGuildFragment` reads it back.
  */
 export function guildLink(
   tag: string,
   cape: WireCape | null,
   where: Pick<Location, "origin" | "pathname"> = location,
 ): string {
-  const parts = cape === null ? [tag] : [tag, cape.main, cape.trim, cape.emblem];
+  const parts =
+    cape === null ? [tag] : [tag, cape.main, cape.trim, cape.emblem, cape.emblemColours.join("")];
   return `${where.origin}${where.pathname}#${GUILD_FRAGMENT_KEY}=${parts.join(".")}`;
 }
 
@@ -182,12 +206,17 @@ async function copyGuildLink(url: string, share: ShareLine): Promise<void> {
 
 /** One press in the cape designer (#1422). */
 export type CapePick =
-  | { readonly part: "main" | "trim"; readonly colour: CapeColour }
-  | { readonly part: "emblem"; readonly emblem: CapeEmblem }
+  | { readonly part: "main" | "trim"; readonly colour: string }
+  | ({ readonly part: "emblem" } & EmblemPick)
   | { readonly part: "none" };
 
-/** What a first pick starts from: the study's sample of variant B (#1410). */
-export const FIRST_CAPE: WireCape = { main: "violet", trim: "white", emblem: "diamond" };
+/** What a first pick starts from: the study's sample of variant B (#1410), violet, white trim. */
+export const FIRST_CAPE: WireCape = {
+  main: "a078e0",
+  trim: "f2f2f2",
+  emblemColours: ["f2f2f2"],
+  emblem: packEmblem(presetEmblem("diamond")),
+};
 
 /** The cape after `pick`; a pick on no cape starts from `FIRST_CAPE`. */
 export function pickCape(cape: WireCape | null, pick: CapePick): WireCape | null {
@@ -200,31 +229,9 @@ export function pickCape(cape: WireCape | null, pick: CapePick): WireCape | null
     case "trim":
       return { ...from, trim: pick.colour };
     case "emblem":
-      return { ...from, emblem: pick.emblem };
+      return { ...from, emblem: pick.emblem, emblemColours: pick.emblemColours };
   }
 }
-
-const COLOUR_NAMES: Readonly<Record<CapeColour, MessageKey>> = {
-  gold: "player.colourGold",
-  violet: "player.colourViolet",
-  white: "player.colourWhite",
-  black: "player.colourBlack",
-  lime: "player.colourLime",
-  orange: "player.colourOrange",
-  teal: "player.colourTeal",
-  pink: "player.colourPink",
-};
-
-const EMBLEM_NAMES: Readonly<Record<CapeEmblem, MessageKey>> = {
-  disc: "player.emblemDisc",
-  bar: "player.emblemBar",
-  chevron: "player.emblemChevron",
-  diamond: "player.emblemDiamond",
-  triangle: "player.emblemTriangle",
-  cross: "player.emblemCross",
-  ring: "player.emblemRing",
-  "half-disc": "player.emblemHalfDisc",
-};
 
 /** Whether `typed` should show as invalid: something, but not a tag. */
 export function isInvalidGuildTag(typed: string): boolean {
@@ -306,19 +313,69 @@ function mountPlayer(container: HTMLElement, signet: number): () => void {
   showCape();
   panel.appendChild(designer.root);
   panel.append(copy, link.element);
-  panel.appendChild(h("p", "player-applies", t("player.applies")));
   return () => {
     panel.remove();
   };
 }
 
-/** The emblem buttons' size, CSS px. */
-const EMBLEM_BUTTON_PX = 20;
+/** Every saved character, for the cape designer's figure (#3551); none until main sets it. */
+let listCharacters: () => Promise<readonly StoredCharacter[]> = () => Promise.resolve([]);
+
+/** Where Options finds the roster (#3551): set once by main, read as the designer opens. */
+export function setCapeWearers(list: () => Promise<readonly StoredCharacter[]>): void {
+  listCharacters = list;
+}
 
 /**
- * The cape designer (#1422): a row of eight swatches each for the cape's
- * colour and its trim's, eight emblems, and *No cape*. `show` marks what
- * `cape` has picked; with none, only *No cape* is pressed.
+ * Who wears the cape being designed (#3551): the character the menu
+ * highlights, the active one when it is playable, else the starter;
+ * `undefined` with neither, and the figure is the bare body.
+ */
+export function capeWearer(characters: readonly StoredCharacter[]): StoredCharacter | undefined {
+  const active = loadActiveCharacterId();
+  const starter = loadStarterCharacterId();
+  return (
+    characters.find((each) => each.id === active && isPlayable(each)) ??
+    characters.find((each) => each.id === starter)
+  );
+}
+
+/** The cape figure's scale (#3551), and on a narrow screen, where it goes above the swatches. */
+const FIGURE_SCALE = 2;
+const NARROW_FIGURE_SCALE = 1.5;
+const NARROW_QUERY = "(max-width: 479px)";
+
+/** The figure without a character (#3551): a Warrior holding nothing. */
+const BARE_LOOK = {
+  primary: "warrior",
+  secondary: undefined,
+  appearance: { weaponId: undefined, offhandId: undefined },
+} as const;
+
+/**
+ * `wearer` in `cape`, drawn as a match draws them (#3551); with no
+ * wearer, the bare body. `data-cape` names the cape, for tests and tooling.
+ */
+function capeFigure(wearer: StoredCharacter | undefined, cape: WireCape | null): HTMLCanvasElement {
+  const worn = cape === null ? undefined : capeLook(cape);
+  const look = wearer === undefined ? { ...BARE_LOOK, cape: worn } : lookOfCharacter(wearer, worn);
+  const scale = window.matchMedia(NARROW_QUERY).matches ? NARROW_FIGURE_SCALE : FIGURE_SCALE;
+  const figure = createCharacterFigure(look, scale);
+  if (cape !== null) {
+    figure.dataset.cape = `${cape.main}.${cape.trim}.${cape.emblem}`;
+  }
+  return figure;
+}
+
+/** The guild link banner's emblem size, CSS px. */
+const BANNER_EMBLEM_PX = 20;
+
+/**
+ * The cape designer (#1422, #3628): a colour picker each for the cape's
+ * cloth and its trim, any colour, the emblem editor always under them,
+ * and *No cape*. Each pick, and each finished stroke or tool action in
+ * the editor, is a pick. `show` puts `cape` in the pickers and on the
+ * figure; with none, only *No cape* is pressed.
  */
 function capeDesigner(onPick: (pick: CapePick) => void): {
   readonly root: HTMLElement;
@@ -326,103 +383,85 @@ function capeDesigner(onPick: (pick: CapePick) => void): {
 } {
   const root = h("div", "player-cape");
   root.appendChild(h("span", "field-label", t("player.guildCape")));
-  const pressed: {
-    readonly button: HTMLButtonElement;
-    readonly on: (cape: WireCape) => boolean;
-  }[] = [];
-  const swatchRow = (part: "main" | "trim", label: string): void => {
-    const row = h("div", "player-cape-row");
-    row.setAttribute("role", "group");
-    row.setAttribute("aria-label", label);
-    row.appendChild(h("span", "player-cape-row-label", label));
-    for (const colour of CAPE_COLOURS) {
-      const swatch = button("", "player-cape-swatch", () => {
-        onPick({ part, colour });
-      });
-      swatch.style.setProperty("--swatch", cssColour(CAPE_PALETTE[colour]));
-      swatch.setAttribute("aria-label", t(COLOUR_NAMES[colour]));
-      swatch.title = t(COLOUR_NAMES[colour]);
-      swatch.dataset.colour = colour;
-      row.appendChild(swatch);
-      pressed.push({ button: swatch, on: (cape) => cape[part] === colour });
-    }
-    root.appendChild(row);
+  const body = h("div", "player-cape-body");
+  root.appendChild(body);
+  const picks = h("div", "player-cape-picks");
+  // Beside the picks, the cape on a figure (#3551), redrawn on every pick.
+  const preview = h("div", "player-cape-preview");
+  preview.appendChild(h("span", "player-cape-row-label", t("player.capePreview")));
+  const stage = h("div", "player-cape-stage");
+  preview.appendChild(stage);
+  body.append(picks, preview);
+  let shown: WireCape | null = null;
+  let wearer: StoredCharacter | undefined;
+  const redraw = (): void => {
+    stage.replaceChildren(capeFigure(wearer, shown));
   };
-  swatchRow("main", t("player.cape"));
-  swatchRow("trim", t("player.trim"));
-  const emblems = h("div", "player-cape-row");
-  emblems.setAttribute("role", "group");
-  emblems.setAttribute("aria-label", t("player.emblem"));
-  emblems.appendChild(h("span", "player-cape-row-label", t("player.emblem")));
-  for (const emblem of CAPE_EMBLEMS) {
-    const choice = button("", "player-cape-emblem", () => {
-      onPick({ part: "emblem", emblem });
+  void listCharacters().then((characters) => {
+    wearer = capeWearer(characters);
+    redraw();
+  });
+  const colourRow = (part: "main" | "trim", label: string, name: string): HTMLInputElement => {
+    const row = h("label", "player-cape-row");
+    row.appendChild(h("span", "player-cape-row-label", label));
+    const input = document.createElement("input");
+    input.type = "color";
+    input.className = "player-cape-colour";
+    input.dataset.part = part;
+    input.setAttribute("aria-label", name);
+    input.title = name;
+    input.addEventListener("input", () => {
+      onPick({ part, colour: inputHex(input.value) });
     });
-    choice.setAttribute("aria-label", t(EMBLEM_NAMES[emblem]));
-    choice.title = t(EMBLEM_NAMES[emblem]);
-    choice.dataset.emblem = emblem;
-    choice.appendChild(emblemIcon(emblem));
-    emblems.appendChild(choice);
-    pressed.push({ button: choice, on: (cape) => cape.emblem === emblem });
-  }
-  root.appendChild(emblems);
+    row.appendChild(input);
+    picks.appendChild(row);
+    return input;
+  };
+  const main = colourRow("main", t("player.cape"), t("player.capeColour"));
+  const trim = colourRow("trim", t("player.trim"), t("player.trimColour"));
+  const editor = emblemEditor(FIRST_CAPE, (emblem) => {
+    onPick({ part: "emblem", ...emblem });
+  });
   const none = button(t("player.noCape"), "player-cape-none", () => {
     onPick({ part: "none" });
   });
-  root.appendChild(none);
+  picks.append(none);
+  root.appendChild(editor.root);
   return {
     root,
     show: (cape) => {
-      for (const { button: each, on } of pressed) {
-        each.setAttribute("aria-pressed", String(cape !== null && on(cape)));
-      }
+      shown = cape;
+      const worn = cape ?? FIRST_CAPE;
+      main.value = `#${worn.main}`;
+      trim.value = `#${worn.trim}`;
+      editor.show(worn);
       none.setAttribute("aria-pressed", String(cape === null));
+      redraw();
     },
   };
 }
 
 /**
  * `cape` as a small banner (#3167): its colour, its trim round it, and its
- * emblem, for a guild link's question.
+ * emblem, for a guild link's question, as a match draws them (#3628).
  */
 export function capePreview(cape: WireCape): HTMLElement {
+  const look = capeLook(cape);
   const banner = h("span", "guild-cape-preview");
-  banner.style.setProperty("--cape-main", cssColour(CAPE_PALETTE[cape.main]));
-  banner.style.setProperty("--cape-trim", cssColour(CAPE_PALETTE[cape.trim]));
+  banner.style.setProperty("--cape-main", cssColour(look.main));
+  banner.style.setProperty("--cape-trim", cssColour(look.trim));
   banner.setAttribute("role", "img");
+  const pixels = unpackEmblem(cape.emblem, cape.emblemColours.length);
+  const preset =
+    cape.emblemColours.length === 1
+      ? EMBLEM_PRESET_NAMES.find((name) => presetEmblem(name).join() === pixels?.join())
+      : undefined;
   banner.setAttribute(
     "aria-label",
-    [t(COLOUR_NAMES[cape.main]), t(COLOUR_NAMES[cape.trim]), t(EMBLEM_NAMES[cape.emblem])].join(
-      ", ",
-    ),
+    preset === undefined
+      ? t("player.guildCape")
+      : `${t("player.guildCape")}, ${t(EMBLEM_NAMES[preset])}`,
   );
-  banner.appendChild(emblemIcon(cape.emblem));
+  banner.appendChild(emblemIcon(cape.emblem, look.palette, BANNER_EMBLEM_PX));
   return banner;
-}
-
-/**
- * `emblem` in `ink`, upright, sharp at the device's pixel ratio. An image of a
- * canvas, not the canvas: Options keeps no canvases of its own (#1422).
- */
-function emblemIcon(emblem: CapeEmblem): HTMLImageElement {
-  const ratio = window.devicePixelRatio;
-  const canvas = document.createElement("canvas");
-  canvas.width = Math.round(EMBLEM_BUTTON_PX * ratio);
-  canvas.height = Math.round(EMBLEM_BUTTON_PX * ratio);
-  const context = canvas.getContext("2d");
-  if (context !== null) {
-    context.scale(ratio, ratio);
-    const half = EMBLEM_BUTTON_PX / 2;
-    paintEmblem(
-      canvasPainter(context),
-      emblemShape(emblem, { x: half, y: half }, 0, EMBLEM_BUTTON_PX - 4),
-      SELF_RIM,
-    );
-  }
-  const image = document.createElement("img");
-  image.src = canvas.toDataURL();
-  image.alt = "";
-  image.width = EMBLEM_BUTTON_PX;
-  image.height = EMBLEM_BUTTON_PX;
-  return image;
 }

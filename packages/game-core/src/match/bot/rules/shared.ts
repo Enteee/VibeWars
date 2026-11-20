@@ -152,23 +152,28 @@ export function relicGoal(
 
 /**
  * Whether `self` is the one of its team to go to `point` for an
- * objective (#2581): the living teammate with empty hands nearest to it,
- * ties to simulation order, a bot or, when `humans`, a human within
- * `FLAG_REACH_UNITS` of it, about to take it up, and then no bot goes.
- * A bot free to go comes first. Then, when `fromFight`, one with a foe in
- * spell range, which `run-relic` sends from its fight; else that one is
- * passed over. Last, one an earlier rule holds back, a healer behind its
- * ward or one resting below `REST_FRACTION`, out of any fight.
+ * objective (#2581), by Interact with `targetId`: the living teammate
+ * with empty hands nearest to it, ties to simulation order, a bot or,
+ * when `humans`, a human within `FLAG_REACH_UNITS` of it, about to take
+ * it up, and then no bot goes. A bot free to go comes first. Then, when
+ * `fromFight`, one with a foe in spell range, which `run-relic` sends
+ * from its fight; else that one is passed over. Last, one an earlier
+ * rule holds back, a healer behind its ward or one resting below
+ * `REST_FRACTION`, out of any fight. Among equals, one already on its
+ * way keeps the errand, however its route bends (#3707): nearest by a
+ * straight line, two bots would hand it back and forth as each walks.
  */
 export function sentTo(
   context: BehaviourContext,
   point: Vec2,
+  targetId: string,
   humans: boolean,
   fromFight: boolean,
 ): boolean {
   const team = context.self.combatant.team;
   let best: Participant | undefined;
   let bestTier = Infinity;
+  let bestGoing = false;
   let bestDistance = Infinity;
   for (const mate of context.participants) {
     const bot = context.isBot(mate.id);
@@ -185,10 +190,16 @@ export function sentTo(
     if (tier === undefined) {
       continue;
     }
+    const going = mate.interact?.targetId === targetId;
     const away = distance(mate.position, point);
-    if (tier < bestTier || (tier === bestTier && away < bestDistance)) {
+    if (
+      tier < bestTier ||
+      (tier === bestTier && going && !bestGoing) ||
+      (tier === bestTier && going === bestGoing && away < bestDistance)
+    ) {
       best = mate;
       bestTier = tier;
+      bestGoing = going;
       bestDistance = away;
     }
   }
@@ -340,6 +351,19 @@ export const DODGE_CHANCE = 0.5;
 
 /** The share of the casts worth it a bot tries to interrupt (#2633); it misses the rest. */
 export const INTERRUPT_CHANCE = 0.75;
+
+/** How near a given-up goal (#3702) a destination counts as that goal. */
+export const JAMMED_GOAL_REACH = 64;
+
+/**
+ * Whether `point` on `layer` is the goal `context`'s bot gave up, boxed
+ * in by bodies on the way there (#3702), or near it: a rule picking where
+ * to go takes its next choice instead, or holds if it has none.
+ */
+export function nearJammedGoal(context: BehaviourContext, point: Vec2, layer: number): boolean {
+  const jammed = context.jammedGoal;
+  return jammed?.layer === layer && distance(jammed.at, point) <= JAMMED_GOAL_REACH;
+}
 
 /**
  * A bot's coin for one thing it may react to, in [0, 1): a shot to dodge

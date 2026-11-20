@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { FormedGroup } from "@vibewars/game-session";
 
 import { ASCENT_PROGRESSION } from "../net/maps.js";
-import { queueStatus, type QueueStatusInput } from "./queue-popover.js";
+import { PLAY_BOTS_AFTER_MS, queueStatus, type QueueStatusInput } from "./queue-popover.js";
 
 const NOW = 1_000_000;
 
@@ -15,6 +15,10 @@ const GROUP: FormedGroup = {
   parties: [],
   mapId: "arena-crossroads",
   mode: "random-arena-1v1",
+  ranked: true,
+  seed: 0,
+  claims: { a: 800, b: 800 },
+  leaderboardAsOf: 0,
 };
 
 describe("queueStatus (#2743)", () => {
@@ -55,6 +59,7 @@ describe("queueStatus (#2743)", () => {
           since: NOW - 9_999,
           teams,
           isHost,
+          playBots: false,
           hallHolder: undefined,
         },
         NOW,
@@ -80,6 +85,7 @@ describe("queueStatus (#2743)", () => {
         since: 0,
         teams: 1,
         isHost: false,
+        playBots: false,
         hallHolder: { name: "Ana", signet: 5 },
       },
       720_000 - 90_000,
@@ -99,6 +105,7 @@ describe("queueStatus (#2743)", () => {
       since: NOW,
       teams: 3,
       isHost: true,
+      playBots: false,
       hallHolder: undefined,
     } as const;
     expect(queueStatus({ ...base, mode: "heroes-ascent", ascentRound: 2 }, NOW)).toEqual({
@@ -110,6 +117,53 @@ describe("queueStatus (#2743)", () => {
       title: "Guild vs Guild",
       waited: "0:00",
       leave: "button",
+    });
+  });
+
+  describe("Play against bots (#3547)", () => {
+    const team = (
+      waitedMs: number,
+      overrides: Partial<Extract<QueueStatusInput, { kind: "team" }>> = {},
+    ) =>
+      queueStatus(
+        {
+          kind: "team",
+          mode: "team-arena",
+          teamSize: 2,
+          ascentRound: null,
+          since: NOW - waitedMs,
+          teams: undefined,
+          isHost: true,
+          playBots: true,
+          hallHolder: undefined,
+          ...overrides,
+        },
+        NOW,
+      )?.playBots;
+
+    it("counts down from 10 s and is enabled at exactly PLAY_BOTS_AFTER_MS", () => {
+      expect(team(0)).toEqual({ inSeconds: 10 });
+      expect(team(9_200)).toEqual({ inSeconds: 1 });
+      expect(team(PLAY_BOTS_AFTER_MS)).toEqual({ inSeconds: 0 });
+      expect(team(10 * PLAY_BOTS_AFTER_MS)).toEqual({ inSeconds: 0 });
+    });
+
+    it("is none for a guest, where bots are not offered, in the Vault, and in Random Arena", () => {
+      expect(team(PLAY_BOTS_AFTER_MS, { isHost: false })).toBeUndefined();
+      // main.ts says Heroes' Ascent may not (#1996).
+      expect(
+        team(PLAY_BOTS_AFTER_MS, { mode: "heroes-ascent", ascentRound: 1, playBots: false }),
+      ).toBeUndefined();
+      expect(
+        team(PLAY_BOTS_AFTER_MS, {
+          mode: "heroes-ascent",
+          ascentRound: ASCENT_PROGRESSION.length - 1,
+        }),
+      ).toBeUndefined();
+      expect(
+        queueStatus({ kind: "random", mode: "random-arena-4v4", since: 0, state: undefined }, NOW)
+          ?.playBots,
+      ).toBeUndefined();
     });
   });
 });

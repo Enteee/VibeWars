@@ -125,6 +125,15 @@ above `main`'s are the bar. The counts are deterministic, so a
 difference is a real one, but a seed set is small: read a few deaths
 either way as noise.
 
+## The ranking bench
+
+`pnpm run bench:ranking` (#3571) rates 10 000 2v2 receipts among 400
+keys over 100 days with `rate` (ADR-0055) and prints how long it took.
+Signatures are checked by a stand-in hash, not BIP-340, so it measures
+the rating, not the curve. Without `BENCH_RANKING` the test file runs
+and the bench is skipped. On a dev machine it takes about 6 s; the hourly
+leaderboard job can afford far more.
+
 ## The map balance bench
 
 `BENCH_MAP=<id> BENCH_SIZE=<n> company heavy pnpm run bench:balance` (#3065) plays
@@ -172,8 +181,9 @@ The operator's playtest is the final word on every map.
 
 `BENCH_TICKS=600 BENCH_HOST=arena-canyon,arena-crossroads pnpm run
 bench:ticks` (#3240) times the host's step of a 4v4 of bots on each map
-named: every layer, structure and objective, as a match plays it. It
-prints p50, p95 and max per map. Report-only; CI runs only a short smoke
+named: every layer, structure and objective, as a match plays it;
+`BENCH_SIZE=8` makes it an 8v8 (#3599). It prints p50, p95 and max per
+map. Report-only; CI runs only a short smoke
 of it.
 
 ## The render bench
@@ -187,7 +197,9 @@ is over `BENCH_MAX_RATIO` times the reference's. It measures two cases:
 - **The menu background** on every layered map: the bots' fight, the
   camera still, at the menu's 30 fps cap.
 - **Follow** (`--follow` runs only this one) on every layered map and
-  one flat map, `hollow-deep`, the baseline. A Hosted match there at the smallest size it seats, its
+  one flat map, the baseline: `bench-flat`, the frozen
+  `packages/game-maps/bench/flat-map.json` (#3444), as no player map stays
+  flat. A Hosted match there at the smallest size it seats, its
   body walking a fixed loop by left clicks: over the transition nearest
   its spawn, to the map's centre, and back. The camera follows, the
   pointer sweeps the ground every 50 ms so hover runs, and nothing caps
@@ -203,7 +215,11 @@ is over `BENCH_MAX_RATIO` times the reference's. It measures two cases:
   map shares cancels out of the `BENCH_MAX_RATIO` ratio, but not out of this
   one. 10 is the highest value in a green pull-request run against the
   `hollow-deep` baseline (7.87, sandstone-steps, #3436) times 1.15, rounded
-  up. A breach is a perf card, not a raise.
+  up. The baseline moved to `bench-flat` with #3444: an edit to
+  `flat-map.json` re-derives the gate in the same pull request, as an edit
+  to the reference map does. Against `bench-flat`, in CI's green run on
+  #3444, the highest was 8.60 (sandstone-steps), so 8.60 x 1.15 rounds up
+  to 10 again. A breach is a perf card, not a raise.
 
 The follow case measures the page through `?frametiming`
 (`render/frame-timing.ts`), which any client takes: open a match with
@@ -323,7 +339,9 @@ maps (#3157, #3190, #3243, #3255), in its own `render bench` job of `ci.yml` (#3
 **The reference map.** `packages/game-maps/bench/reference-map.json` is a
 synthetic medium arena in the real map schema: three layers, walls, three decks
 and a ramp, a pit with a tunnel, lights and a zone. Only the bench's build
-(`VIBEWARS_BENCH_REFERENCE=1`) offers it in the lobby, and it is
+(`VIBEWARS_BENCH_REFERENCE=1`) offers it, and `bench-flat`, in the Hosted
+lobby, never in a draw; the e2e build sets it too, for the tutorial spec's
+flat map. It is
 drawn through the menu background like any map, so whatever bounds a
 runner (fill, geometry, JS) bounds the reference and the maps alike. It
 is frozen: a pull request that edits it re-derives the gate below in the

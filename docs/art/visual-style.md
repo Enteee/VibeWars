@@ -29,16 +29,18 @@ ramps and stairs draw in them, tinted from the hall's materials
 ground, never the signals, and brass and iron stay as they are. A map of one
 layer draws flat whatever its biome, until its family card rebuilds it.
 
-| Biome    | Ground    | Rock      | Plant / earth                          |
-| -------- | --------- | --------- | -------------------------------------- |
-| Hall     | `#26303f` | `#4b5a70` | none (stone and steel)                 |
-| Wilds    | `#2a3328` | `#5b5f58` | moss `#4f5e3c`, earth `#5a4630`        |
-| Heights  | `#26303f` | `#4b5a70` | none, decks `#a0b2c7`                  |
-| Desert   | `#3b3226` | `#6e6252` | earth `#6e5a40`, scrub `#6a6448`       |
-| Volcanic | `#2b2421` | `#4a4340` | earth `#4a3426`, ash scrub `#5a5444`   |
-| Snow     | `#7d8a8e` | `#4d4a4a` | slush earth `#6a6050`, plant `#6a6a58` |
-| Marsh    | `#2a3430` | `#54594f` | reed `#5c5a3a`, silt `#4a4034`         |
-| Jungle   | `#232c26` | `#5a5c52` | vine `#545a38`, clay `#5a4a30`         |
+| Biome    | Ground    | Rock      | Plant / earth                            |
+| -------- | --------- | --------- | ---------------------------------------- |
+| Hall     | `#26303f` | `#4b5a70` | none (stone and steel)                   |
+| Wilds    | `#2a3328` | `#5b5f58` | moss `#4f5e3c`, earth `#5a4630`          |
+| Heights  | `#26303f` | `#4b5a70` | none, decks `#a0b2c7`                    |
+| Desert   | `#3b3226` | `#6e6252` | earth `#6e5a40`, scrub `#6a6448`         |
+| Volcanic | `#2b2421` | `#4a4340` | earth `#4a3426`, ash scrub `#5a5444`     |
+| Snow     | `#7d8a8e` | `#4d4a4a` | slush earth `#6a6050`, plant `#6a6a58`   |
+| Marsh    | `#2a3430` | `#54594f` | reed `#5c5a3a`, silt `#4a4034`           |
+| Jungle   | `#232c26` | `#5a5c52` | vine `#545a38`, clay `#5a4a30`           |
+| Coast    | `#7d7358` | `#5b6770` | dry olive `#6d6a3e`, tide sand `#5e5644` |
+| Cavern   | `#232a33` | `#4a5260` | lichen `#4f4a5c`, silt `#403428`         |
 
 The heights still draw in the hall's tones. The wilds (#3071, Crossroads) keep
 the hall's dressed stone and wood, and its moss: a greener moss sits too near
@@ -49,7 +51,7 @@ Frozen Crossing) is neutral grey at low chroma: its ground is the river ice,
 the only floor that shows (the banks are decks), its decks `#9ea4ab`. Snow
 stays mid-grey so the friend blue keeps its contrast. The ice is the study's
 `#7d8a94` with a little less blue, because the hall's blue grid tinted from
-it came too near the friend blue. Open water is the shared deep water look. The marsh biome (#3434, Blackwater Ford) keeps the wilds' dark ground a little cooler, with dry olive reed and silt; its tones are all low chroma and well away from the friend blue, the foe red and the nature green; open water is the shared look. The jungle biome (#3436, Jungle Ruins) is a dark wet floor with mossy grey stone, olive vine and clay; all low chroma, so the nature green and the friend blue stay the loudest things.
+it came too near the friend blue. Open water is the shared deep water look. The marsh biome (#3434, Blackwater Ford) keeps the wilds' dark ground a little cooler, with dry olive reed and silt; its tones are all low chroma and well away from the friend blue, the foe red and the nature green; open water is the shared look. The jungle biome (#3436, Jungle Ruins) is a dark wet floor with mossy grey stone, olive vine and clay; all low chroma, so the nature green and the friend blue stay the loudest things. The coast biome (#3445, Guild Hall Isle) is wet sand and grey rock with dry olive plants beside a deep teal sea; no tone is near the friend blue, the foe red or the nature green. The cavern biome (#3444, The Hollow Deep) is a cold slate under a thin ceiling, its decks dressed slate `#8a909c`; the only colour is the violet glow `#8a6fc9` of its pools, and that is light, never a ground, wall or deck tone, because it sits within a hand's width of the magic violet. No tone is near the friend blue (~200°), the foe red (~5°) or the nature green (~110°).
 
 **Overhangs** (#3293) are roofs nobody stands on. They hang at their layer's
 height over whoever is under them, with a thin eave below their front edge and
@@ -86,6 +88,44 @@ on screen. Shallow water is `#8fb8d6` at 30 %, paler and greyer than a spring.
 
 Colour never decides alone: danger is also **warm** (damage; poison and drain have their own hues, §6), help is
 **cool and still**, and each zone kind should have its own outline pattern (target, see §6).
+
+## 1b. Ascent acts
+
+The Heroes' Ascent is a climb with a three-act look (#3589): **volcanic**,
+then **underworld**, then **heavenly**. The act belongs to the map, set by
+`ascentAct` in its `map.json` (`null` for every map outside the Ascent), and a
+map looks the same in every mode. It is a palette and atmosphere arc, not a
+copy of any GW1 level, and it is render-only: play stays symmetric.
+
+| Act        | Ground    | Wall / rock | Accent    | Ambient (colour, intensity) | Sun                     | Fog             | View particle |
+| ---------- | --------- | ----------- | --------- | --------------------------- | ----------------------- | --------------- | ------------- |
+| Volcanic   | `#2b2320` | `#4a4340`   | `#ff6a1a` | `#5a3a2a`, 0.35 to 0.5      | warm, low, `#ffb070`    | none, ash haze  | embers        |
+| Underworld | `#1f2428` | `#38424a`   | `#4fd1b5` | `#2a3a44`, 0.25 to 0.4      | none, or weak moonlike  | `#3d5560` banks | none or rain  |
+| Heavenly   | `#e8dfc8` | `#b9ad92`   | `#ffcc4d` | `#fff1cc`, 0.7 to 0.9       | strong, high, `#fff4d6` | thin gold haze  | motes, shafts |
+
+The act's ground and wall / rock override the biome's; every other material of the map, its decks, stairs, paving, dressing and breakable walls, is tinted from them (#3618).
+
+- **Volcanic.** Basalt crust lit from below. Lava is the warm rim light; embers
+  rise over the view as small, slow, flickering points, never larger than a
+  body's hand and always fainter than a strike edge.
+- **Underworld.** Slate, cold blue-green light, at least two fog banks per
+  layer-0 play area. The world darkens, the actors do not: bodies, team marks,
+  rings and telegraphs keep their §1 hex and §6 contrast. Lava here is cooled to
+  a dull glow (Cinder Sanctum), so it is the descent from act 1, not a second
+  act 1.
+- **Heavenly.** Pale stone, gold trim, strong high sun. Motes are slow gold dust;
+  at least one light shaft slants from the sun direction onto a point of the
+  map. Brightness comes from light, motes and shafts, not from a bloom pass.
+
+**Reserved colours still win.** The accents are trim, light and particles, never
+a ground or wall fill: magma `#ff6a1a` and gold `#ffcc4d` sit near the danger
+warm pair, so on a harmless surface they stay thin lines or points, and on
+screen the real hazard edge must remain the loudest warm thing. The teal
+`#4fd1b5` sits between help blue and nature green and is limited the same way.
+Ground and wall tones keep their chroma low, so the signal check against
+`arena-palette.test.ts` biome tones holds. The heavenly ground is the one pale
+floor; friend blue `#59c2ff` and foe red `#ff7b72` bodies still need an
+outline on it (§4) to stay clear.
 
 ## 2. Light
 
@@ -397,7 +437,31 @@ leaning back when up and lying right when thrown, in `SWITCH_MARK_LOOK`, a
 small brass glow round the knob while up. A flip plays a quarter-second
 throw (`leverThrown`); under reduced motion it snaps.
 
-Every SVG here is made by `scripts/assets/visual-style.mjs`; regenerate with
+### Portcullis, up and down
+
+**Down** is an iron grid filling the gap, its bars spiked at the camera's
+side. **Up** is a dark gap between stone jambs with no bars in it, only
+their bottom ends showing at the lintel side, so a player sees where it
+drops. Both read from the gate's own footprint on its layer, also where a
+tunnel's cover hides its face and the raised grid. Shape differs, not
+only colour.
+
+![portcullis](visual-style/portcullis.svg)
+
+Recipe (#3068, #3644): `gate-mark.ts` `GATE_ART`. Down, the wall pass
+draws the dark of the arch as a wall box, bars down its front face, and a
+grid over its top in `GATE_PORTCULLIS_LOOK` iron `#3b4759`; on its layer's
+ground the grid also fills the footprint, bars across it `BAR_EVERY` apart,
+an iron frame, a lit camera-facing edge (`litStructurePalette`) and
+`SPIKE`d tips. Up, `drawGate` lays the dark gap in a lit frame, its jambs
+and sills, a `STUB` of bars a quarter of its depth at its north
+or west side, and hangs the grid above the lintel: only the part of it
+that lands north of the footprint is drawn, so a strip deeper than the
+lift shows its top end and nothing of it lands in the gap. On a flat map
+the hung grid is left out. The study SVG is made by
+`scripts/assets/portcullis-svg.sh`.
+
+Every other SVG here is made by `scripts/assets/visual-style.mjs`; regenerate with
 `node scripts/assets/visual-style.mjs`.
 
 ## 8. Review checklist
@@ -411,6 +475,7 @@ A reviewer or QA ticks these on a map or world-art PR, from a screenshot.
 - [ ] 16 lights or fewer; fire is warm, magic is cold.
 - [ ] Every height step reads: lit top, lip, darker face, shadow or pit.
 - [ ] The map names its biome.
+- [ ] An Ascent map states its `ascentAct` and follows the §1b palette; bodies and signals read as well in the dark act as in the bright one.
 - [ ] Every zone has a visible edge, over water and light.
 - [ ] Hue follows signal class (§6 rule 2): harmful never wears help blue or green.
 - [ ] Hazards telegraph by edge width within 0.3 s.

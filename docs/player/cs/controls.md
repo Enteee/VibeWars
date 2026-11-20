@@ -15,7 +15,7 @@ Výchozí předvolba je **Klasické**, pro ruce zvyklé na GW1. **VibeWars** ses
 | Další nepřítel (Shift: předchozí)   | Tab                | Tab              |
 | Nejbližší nepřítel                  | C                  | C                |
 | Nepřítel nahlášený tvým týmem       | T                  | T                |
-| Ty sám                              | G                  | G                |
+| Ty sám                              | F nebo G           | G                |
 | Ukázat jména (držet)                | Shift              | Shift            |
 | Ztlumit                             | M                  | M                |
 | Odhodit vlajku, relikvii nebo popel | žádná              | žádná            |
@@ -29,7 +29,7 @@ Tyto klávesy jsou pevné:
 ## Myš
 
 - **Kliknutím levým** na zem tam dojdeš. Bez Shiftu levé tlačítko jen chodí.
-- Na mapách s vyvýšenými plošinami levé kliknutí míří na povrch, který vidíš, a **Alt + kliknutí levým** na zem pod ním. Kroužek pod kurzorem značí plošinu, čárkovaný kroužek zem. Nad tunelem jde levé kliknutí do úrovně, na které jsi, a **Alt + levé kliknutí** do té druhé.
+- Na mapách s vyvýšenými plošinami levé kliknutí míří na povrch, který vidíš, a **Alt + kliknutí levým** na zem pod ním. Kroužek pod kurzorem značí plošinu, čárkovaný kroužek zem. Nad tunelem jde levé kliknutí do úrovně, na které jsi. **Alt + levé kliknutí** nikdy nejde nad úroveň, na které stojíš: ze země jde do tunelu a v tunelu v něm zůstane.
 - **Kliknutím pravým** na nepřítele nebo spojence ho zaměříš. Dalším rychlým kliknutím pravým na stejného nepřítele na něj zaútočíš.
 - **Kliknutím pravým** na vlajku nebo stojan vlajky, v Bitvě cechů nebo na Barrow Field, je zaměříš; **Space** tě tam dovede a vlajku vezme nebo zasadí.
 - **Pravým kliknutím** na páku ji zaměříš; **Space** k ní dojde a přepne ji, čímž otevře nebo zavře brány, které ovládá.
@@ -43,7 +43,7 @@ Tyto klávesy jsou pevné:
 
 ## Horní lišta
 
-Mimo zápas je v horní liště **[?]** (tato Nápověda), **⚙** (Možnosti), **Lobby** (tvůj odkaz na pozvánku, Připojit se k lobby, Otevřeno/Zavřeno, Opustit a kdo je v tvojí lobby; její odznak je počítá), **♪** (hudba: co hraje a jak hlasitě), ztlumení zvuku a celá obrazovka. V zápase jsou tatáž tlačítka, kromě Lobby, vpravo nahoře na obrazovce. V úzkém okně se tyto ikony a ostatní tlačítka obrazovky složí do **⋯**; venku zůstane jen její hlavní tlačítko. ⚙ otevře Možnosti jako okno pod lištou, s obrazovkou stále za ním; zavře ho Esc, × nebo kliknutí mimo. V části **Zobrazení** zapne nebo vypne **Osvětlení** světlo a stín osvětlené mapy, hned, i v zápase. Nápověda se zavírá křížkem × vpravo nahoře, Esc nebo dalším stisknutím [?].
+Mimo zápas je v horní liště **[?]** (tato Nápověda), **⚙** (Možnosti), **Lobby** (tvůj odkaz na pozvánku, Připojit se k lobby, Otevřeno/Zavřeno, Opustit a kdo je v tvojí lobby; její odznak je počítá), **♪** (hudba: co hraje a jak hlasitě), ztlumení zvuku a celá obrazovka. V zápase jsou tatáž tlačítka, kromě Lobby, vpravo nahoře na obrazovce. V úzkém okně se tyto ikony a ostatní tlačítka obrazovky složí do **⋯**; venku zůstane jen její hlavní tlačítko. ⚙ otevře Možnosti jako okno pod lištou, s obrazovkou stále za ním; zavře ho Esc, × nebo kliknutí mimo. V části **Zobrazení** zapne nebo vypne **Osvětlení** světlo a stín osvětlené mapy, hned, i v zápase. [?] otevře Nápovědu stejně, jako okno pod ním s výběrem stránky nahoře; zápas za ním běží dál. Nápověda se zavírá svým křížkem ×, Esc, kliknutím mimo nebo dalším stisknutím [?].
 
 **Sdílej beat se svou lobby.** V editoru beatů (♪, pak **Upravit**) pošle **Sdílet s lobby** to, co jsi napsal, ať uložené, nebo ne, všem ostatním v lobby, kterou jsi hostoval nebo ke které ses připojil odkazem (nikdy v té, kterou našla fronta; nejvýše 8 KB, jedno sdílení za deset sekund). Uvidí odznak na ♪ a v jeho okně pod **Sdíleno s tebou** řádek za každého hráče, "Ann · Ember Deep", s **Přehrát**. Nic nehraje, dokud nestiskneš Přehrát, a jen mimo zápas; **Zpět na moji hudbu** vrátí tvoji. Sdílený beat se nikdy neuloží: zmizí, když opustíš lobby nebo znovu načteš stránku.
 

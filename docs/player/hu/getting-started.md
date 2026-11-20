@@ -7,6 +7,10 @@ böngészőlapban fut. A VibeWarshoz billentyűzet és egér kell. Telefonon
 vagy csak érintéssel működő táblagépen nem működik: nyisd meg
 számítógépen.
 
+## Az oktatás
+
+Amikor először nyitod meg a VibeWarst, rövid oktatást ajánl: egy sétát egy kanyonon át, ami megtanít mozogni és harcolni. Utána a menüben folytatódik, lépésről lépésre: változtasd meg a karaktered specializációját, rakj össze egy kétfős csapatot, nézd meg, mire való az egyes módok, majd állítsd sorba ezt a csapatot egy első 2v2-es Csapataréna-meccsre. Amíg egy lépés egy vezérlőre mutat, a menü többi része elsötétül. Az oktatást bármikor kihagyhatod az **Oktatás kihagyása** gombbal.
+
 ## A módsáv
 
 A főképernyő bal oldalán lefutó sáv tartalmazza a
@@ -86,6 +90,16 @@ sorból.
 Amikor a meccs véget ér, választhatod az **Újra sorba** lehetőséget,
 vagy azt, hogy **Együtt maradunk** azzal a csapattal, amellyel épp
 játszottál.
+
+Az eredmények mellett két diagram meséli el a meccs menetét. A **Te** a
+kiosztott sebzésedet, az elszenvedett sebzést, a gyógyítást és az Energiát
+rajzolja; a **Csapatok** minden csapat életerő-készletét rajzolja az
+összesített sebzése fölé. Az időtengely alatti jelek az öléseket, halálokat,
+megszakításokat, foglalásokat és feltámasztásokat mutatják: mutass rá egyre,
+vagy lépj rá Tabbal, hogy elolvasd, mi történt. Nyomj meg egy
+jelmagyarázat-elemet a vonala elrejtéséhez vagy megjelenítéséhez. Telefonon a
+diagramok az eredmények alatt vannak, amelyek téged és két másik játékost
+mutatnak, amíg meg nem nyomod az **Összes mutatása** gombot.
 
 ## Meccs indítása vagy csatlakozás
 
@@ -181,7 +195,7 @@ ugyanabban a módban sorban álló csapat, a mód valamelyik pályáján
 játszotok ellenük, mindkét oldal a saját buildjeivel, utána pedig
 visszatértek a lobbitokba. A házigazda bármikor kiléphet a sorból a
 gyűrű ablakából; a vendég, aki kilép, az egész osztagot kiveszi a
-sorból. Ha egy perc után sincs másik csapat, a házigazda megnyomhatja a
+sorból. 10 mp sorban állás után a házigazda a gyűrű ablakában megnyomhatja a
 **Játék botok ellen** gombot is: egy meccs a saját lobbidban egy
 véletlen előre beállított botcsapat ellen, kivéve a
 [Hősök Útját](modes.md#hősök-útja), amely egy, a te körödben lévő
@@ -195,14 +209,14 @@ látogatásodkor ad egy **Nevet**, például `AshenWolf`; írd felül, hogy
 megváltoztasd. Üresen hagyva `Játékos` néven játszol. Írj mellé egy
 2–4 betűből vagy számjegyből álló **Céhjelet**, és mindenki látja a
 neved után, például `Ente [VIBE]`. Ha van céhjeled, alatta megjelenik a
-**Céhköpeny** tervező: válaszd ki a köpeny színét, a szegély színét és
-egy címert, és a tested minden meccsen viseli a köpenyt: álló helyzetben
+**Céhköpeny** tervező: válassz bármilyen köpeny- és szegélyszínt,
+rajzolj egy címert, és a tested minden meccsen viseli a köpenyt: álló helyzetben
 vékony csíkká hajtódik a peremeden, mozgás közben pedig mögötted lobog.
-A menüben a karaktereid is mutatják. A **Nincs köpeny** leveszi.
+A menüben a karaktereid is mutatják. A **Nincs köpeny** leveszi. Egy alak mutatja a köpenyt úgy, ahogy a játékban kinéz. A csapatod kékjéhez vagy az ellenfeleid pirosához túl közeli szín rajzoláskor kicsit eltolódik tőle, hogy egyik köpeny se hasonlítson egy csapatra; az alak úgy mutatja, ahogy mindenki látni fogja.
 
-A módosítás a következő lobbitól érvényes, amelybe belépsz, vagy a
-következő friss sajátodtól: abban, amelyikben már vagy, az marad, amivel
-beléptél.
+A módosítás azonnal érvényes abban a lobbiban, amelyikben vagy.
+
+**Rajzold meg az emblémádat.** A 16×16-os emblémarács mindig a köpeny és a szegély színe alatt van. Válassz színt vagy **Üres** mezőt, majd rajzolj a **Ceruza** eszközzel, radírozz a **Radír** eszközzel, vagy színezz ki egy területet a **Kitöltés** eszközzel. A **Szín hozzáadása** újabb színt ad az emblémához, legfeljebb 15-öt, a mellettük lévő színválasztó pedig megváltoztatja a kiválasztott színt mindazzal együtt, ami vele van rajzolva. A **Kiindulás** nyolc forma egyikét teszi a rácsra a kiválasztott színnel. A **Tükrözés** egyszerre festi a bal és a jobb felet. A **Törlés** kiüríti a rácsot, a **Vissza** egy lépést visszalép. A rács melletti kis nézet akkorának mutatja az emblémát, mint egy meccsen. Minden vonás megmarad, amint befejezed. A nyilak és a szóköz billentyűzetről is rajzolnak.
 
 A köpenytervező alatti **Céhlink másolása** egy linket másol, amely a céhjeledet és a köpenyedet viszi. Aki megnyitja, ezt a kérdést kapja: **Csatlakozol a(z) [VIBE] céhhez?**: a **Csatlakozás** megadja neki a céhjeledet és a köpenyedet, a **Nem** semmit sem változtat. Bárki küldhet ilyen linket, és senkié sem egy céhjel, ezért a játék mindig előbb kérdez.
 

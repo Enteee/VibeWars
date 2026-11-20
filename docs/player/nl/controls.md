@@ -19,7 +19,7 @@ De standaardpreset is **Klassiek**, voor GW1-handen. **VibeWars** cast met de li
 | Volgende vijand (Shift: vorige) | Tab                         | Tab              |
 | Dichtstbijzijnde vijand         | C                           | C                |
 | Aangewezen vijand van je team   | T                           | T                |
-| Jezelf                          | G                           | G                |
+| Jezelf                          | F of G                      | G                |
 | Namen tonen (ingedrukt)         | Shift                       | Shift            |
 | Dempen                          | M                           | M                |
 | Vlag, relikwie of as neerleggen | geen toets                  | geen toets       |
@@ -37,7 +37,7 @@ Deze toetsen liggen vast:
 ## Muis
 
 - **Linksklik** op de grond om erheen te lopen. Zonder Shift loopt de linkerknop alleen.
-- Op maps met verhoogde platforms gaat een linksklik naar het oppervlak dat je ziet, en **Alt + linksklik** naar de grond eronder. Een ring onder de cursor markeert een platform, een gestippelde ring de grond. Boven een tunnel gaat een linkerklik naar het niveau waarop je staat, en **Alt + linkerklik** naar het andere.
+- Op maps met verhoogde platforms gaat een linksklik naar het oppervlak dat je ziet, en **Alt + linksklik** naar de grond eronder. Een ring onder de cursor markeert een platform, een gestippelde ring de grond. Boven een tunnel gaat een linkerklik naar het niveau waarop je staat. **Alt + linkerklik** gaat nooit boven het niveau waarop je staat: vanaf de grond gaat hij de tunnel in, en in een tunnel blijft hij daar.
 - **Rechtsklik** op een vijand of bondgenoot om die te kiezen. Rechtsklik snel
   nog eens op dezelfde vijand om hem aan te vallen.
 - **Rechtsklik** op een vlag of de vlaggenstandaard, in een Guild Battle of op Barrow Field, om
@@ -70,7 +70,8 @@ Buiten een match staan in de bovenste balk **[?]** (deze Help), **⚙** (Opties)
 behalve Lobby, rechtsboven in het scherm. In een smal venster klappen deze pictogrammen en
 de andere knoppen van het scherm in tot **⋯**; alleen de hoofdknop blijft staan.
 ⚙ opent Opties als venster onder de balk, met het scherm er nog achter; Esc, × of een klik erbuiten sluit het. Onder **Weergave** zet **Belichting** het licht en de schaduw van een belichte kaart aan of uit, meteen, ook in een match.
-Help sluit met de × rechtsboven, Esc, of nog een druk op [?].
+[?] opent Help op dezelfde manier, als venster eronder met een paginakiezer bovenaan; een match loopt erachter door.
+Help sluit met zijn ×, Esc, een klik erbuiten, of nog een druk op [?].
 
 **Deel een beat met je lobby.** In de beat-editor (♪, dan **Bewerken**)
 stuurt **Delen met lobby** wat je getypt hebt, opgeslagen of niet, naar

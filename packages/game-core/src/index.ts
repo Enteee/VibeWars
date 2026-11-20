@@ -48,6 +48,7 @@ export { closestPointOnPolygon, pointInPolygon, polygonCentre, progressAlong } f
 export {
   buildLayeredNavGraph,
   buildNavGraph,
+  costZone,
   createLayeredPathFinder,
   createPathFinder,
   dropOffEnds,
@@ -336,7 +337,7 @@ export type {
   MatchChartResult,
   MatchChartState,
 } from "./match/match-chart.js";
-export { EVENT_CAP, MatchChart, SAMPLE_CAP, samplePeriod } from "./match/match-chart.js";
+export { EVENT_CAPS, MatchChart, SAMPLE_CAP, samplePeriod } from "./match/match-chart.js";
 export { creatureSummonerOf } from "./match/creature-id.js";
 
 export type {
@@ -356,6 +357,7 @@ export {
   resolveTargeting,
 } from "./match/behaviour.js";
 export { isSpikeSkill } from "./match/bot/skill-intent.js";
+export { LEVER_WORTH_UNITS } from "./match/bot/rules/levers.js";
 
 export type {
   TrainingDummy,

@@ -1,6 +1,6 @@
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "@vibewars/game-core";
 
-import { emblemShape, EMBLEM_SIZE, type CapeEmblem, type EmblemPart } from "./cape-shape.js";
+import { emblemShape, EMBLEM_SIZE, type EmblemPart } from "./cape-shape.js";
 import type { Point } from "./weapon-mark-geometry.js";
 
 /**
@@ -171,7 +171,7 @@ const EMBLEM_SCALE = 1.1;
 export function capeMotionShape(
   state: CapeMotion,
   body: { readonly x: number; readonly y: number; readonly r: number },
-  emblem: CapeEmblem,
+  emblem: string,
 ): CapeShape {
   const { x, y, r } = body;
   const u = state.unfold;

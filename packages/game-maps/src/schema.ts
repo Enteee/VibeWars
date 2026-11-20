@@ -20,6 +20,8 @@ import { z } from "zod";
 import {
   allWallSegments,
   pointInShape,
+  segmentsCross,
+  shapesOverlapInterior,
   shapeVertices,
   shapeInBounds,
   shapesOverlap,
@@ -65,6 +67,11 @@ const wallSchema = z.discriminatedUnion("kind", [
   polygonWallSchema.extend({ layer: layerSchema }),
 ]);
 
+/** The acts of the Heroes' Ascent's look, in climbing order (#3589, docs/art/visual-style.md §1b). */
+export const ASCENT_ACTS = ["volcanic", "underworld", "heavenly"] as const;
+
+export type AscentAct = (typeof ASCENT_ACTS)[number];
+
 /** The materials a map is drawn in (#3172, docs/art/visual-style.md §1). */
 export const BIOMES = [
   "hall",
@@ -75,6 +82,8 @@ export const BIOMES = [
   "snow",
   "marsh",
   "jungle",
+  "coast",
+  "cavern",
 ] as const;
 export type Biome = (typeof BIOMES)[number];
 
@@ -313,6 +322,44 @@ const zoneSchema = z.object({
 });
 
 /**
+ * What is wrong with an atmosphere for its Ascent act (#3589): a volcanic
+ * map has embers; an underworld one fog and no weather but rain; a
+ * heavenly one motes and a shaft. Embers, motes and shafts belong to the
+ * act that asks for them, so a map off the Ascent has none.
+ */
+function actIssues(
+  act: AscentAct | null,
+  atmosphere: z.infer<typeof atmosphereSchema>,
+): { readonly path: readonly string[]; readonly message: string }[] {
+  const issues: { path: readonly string[]; message: string }[] = [];
+  const weather = atmosphere.weather?.kind ?? null;
+  const needs: { readonly weather: readonly (typeof weather)[]; readonly shafts: boolean } =
+    act === "volcanic"
+      ? { weather: ["embers"], shafts: false }
+      : act === "underworld"
+        ? { weather: [null, "rain"], shafts: false }
+        : act === "heavenly"
+          ? { weather: ["motes"], shafts: true }
+          : { weather: [null, "rain", "snow"], shafts: false };
+  if (!needs.weather.includes(weather)) {
+    issues.push({
+      path: ["weather"],
+      message: `a map of act ${String(act)} has weather ${needs.weather.map(String).join(" or ")}`,
+    });
+  }
+  if (needs.shafts && atmosphere.shafts.length === 0) {
+    issues.push({ path: ["shafts"], message: "a heavenly map has a light shaft" });
+  }
+  if (!needs.shafts && atmosphere.shafts.length > 0) {
+    issues.push({ path: ["shafts"], message: "only a heavenly map has light shafts" });
+  }
+  if (act === "underworld" && atmosphere.fog.length === 0) {
+    issues.push({ path: ["fog"], message: "an underworld map has a fog bank" });
+  }
+  return issues;
+}
+
+/**
  * What is wrong with a zone's timing (#3029): a strike kind needs a
  * schedule or a path, not both; a standing kind may have neither. A
  * schedule leaves room for its telegraph, and starts within its period.
@@ -412,6 +459,9 @@ export const MAX_FOG_BANKS = 8;
 /** The most smoke or steam plumes on a map (#3032). */
 export const MAX_PLUMES = 12;
 
+/** The most light shafts on a map (#3589). */
+export const MAX_SHAFTS = 6;
+
 /**
  * A map's atmosphere (#3032): fog banks, plumes and weather. Only the
  * renderer reads it, never the simulation, and it changes nothing in play.
@@ -430,9 +480,29 @@ const atmosphereSchema = z.object({
       }),
     )
     .max(MAX_PLUMES),
-  /** Rain or snow over the whole view, or none. */
+  /**
+   * Soft beams slanting from the sun onto a point (#3589). Required, may be
+   * empty: only a heavenly map has them.
+   */
+  shafts: z
+    .array(
+      z.object({
+        id: z.string().min(1),
+        layer: layerSchema,
+        position: vec2Schema,
+        radius: z.number().positive(),
+      }),
+    )
+    .max(MAX_SHAFTS),
+  /**
+   * Over the whole view, or none: rain or snow, or an Ascent act's own
+   * particles (#3589), rising embers or drifting gold motes.
+   */
   weather: z
-    .object({ kind: z.enum(["rain", "snow"]), intensity: z.number().min(0).max(1) })
+    .object({
+      kind: z.enum(["rain", "snow", "embers", "motes"]),
+      intensity: z.number().min(0).max(1),
+    })
     .nullable(),
 });
 
@@ -806,16 +876,6 @@ function shapeOnGround(bounds: MapBounds, shape: Shape): boolean {
   );
 }
 
-/** Whether two segments cross, touching at an end not counted: a ramp may run along the edge. */
-function segmentsCross(first: Segment, second: Segment): boolean {
-  const side = (point: Vec2Data, { a, b }: Segment): number =>
-    Math.sign((b.x - a.x) * (point.y - a.y) - (b.y - a.y) * (point.x - a.x));
-  return (
-    side(first.a, second) * side(first.b, second) < 0 &&
-    side(second.a, first) * side(second.b, first) < 0
-  );
-}
-
 /** Whether an outline is simple (#3066): no side crosses or touches another but its neighbours at a corner. */
 function outlineSimple(outline: readonly Vec2Data[]): boolean {
   const sides = wallToSegments({ kind: "polygon", points: outline });
@@ -961,6 +1021,8 @@ export const mapDataSchema = z
     layers: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]),
     /** What its ground, walls, decks and ramps are made of (#3172). There is no default. */
     biome: z.enum(BIOMES),
+    /** Its act of the Ascent's look (#3589), `null` off the Ascent. Only the renderer reads it. */
+    ascentAct: z.enum(ASCENT_ACTS).nullable(),
     /** Which layer is the ground (#2973): 1 only on a map with a pit, the layer under it. */
     groundLayer: z.union([z.literal(0), z.literal(1)]),
     /** Required, may be empty, as `gates`: holes in the ground, on `groundLayer - 1` (#2973). */
@@ -1469,6 +1531,39 @@ export const mapDataSchema = z
         });
       }
     });
+    // A body keeps its layer until well up or down a ramp, so it walks through
+    // a wall inside one that pathing routes round (#3665). Along an edge is fine.
+    const blockers = [
+      ...map.walls.map((wall, index) => ({
+        wall,
+        path: ["walls", index],
+        name: `wall ${String(index)}`,
+      })),
+      ...map.gates.map(({ wall, id }, index) => ({
+        wall,
+        path: ["gates", index, "wall"],
+        name: `gate ${id}`,
+      })),
+      ...(map.breakables ?? []).map(({ wall, id }, index) => ({
+        wall,
+        path: ["breakables", index, "wall"],
+        name: `breakable ${id}`,
+      })),
+    ];
+    for (const transition of map.transitions) {
+      for (const { wall, path, name } of blockers) {
+        if (
+          (wall.layer === transition.from || wall.layer === transition.to) &&
+          shapesOverlapInterior(wall, transition.area)
+        ) {
+          context.addIssue({
+            code: "custom",
+            path,
+            message: `${map.id}: ${name} stands inside transition ${transition.id} on its layer ${String(wall.layer)}, so bodies walk through it while pathing goes round`,
+          });
+        }
+      }
+    }
     for (let layer = map.groundLayer + 1; layer < map.layers; layer += 1) {
       if (!map.decks.some((deck) => deck.layer === layer)) {
         context.addIssue({
@@ -1968,6 +2063,26 @@ export const mapDataSchema = z
         }
         plumeIds.add(plume.id);
       });
+      const shaftIds = new Set<string>();
+      atmosphere.shafts.forEach((shaft, index) => {
+        layerInRange(shaft.layer, ["atmosphere", "shafts", index, "layer"]);
+        const onMap =
+          shaft.position.x >= 0 &&
+          shaft.position.y >= 0 &&
+          shaft.position.x <= map.width &&
+          shaft.position.y <= map.height;
+        if (!onMap || shaftIds.has(shaft.id)) {
+          context.addIssue({
+            code: "custom",
+            path: ["atmosphere", "shafts", index],
+            message: `shaft ${String(index)} must have its own id and be on the map`,
+          });
+        }
+        shaftIds.add(shaft.id);
+      });
+      for (const { path, message } of actIssues(map.ascentAct, atmosphere)) {
+        context.addIssue({ code: "custom", path: ["atmosphere", ...path], message });
+      }
     }
 
     const pavingIds = new Set<string>();

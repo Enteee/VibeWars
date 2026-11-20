@@ -6,6 +6,10 @@ match. Pas de compte, rien à installer : le jeu tourne dans cet onglet du
 navigateur. VibeWars requiert un clavier et une souris. Ça ne marche pas sur
 téléphone ni sur tablette tactile : ouvre-le sur un ordinateur.
 
+## Le tutoriel
+
+La première fois que tu ouvres VibeWars, il te propose un court tutoriel : une marche dans un canyon qui t'apprend à te déplacer et à combattre. Il continue ensuite dans le menu, une étape à la fois : change la spécialisation de ton personnage, monte une équipe de deux, découvre à quoi sert chaque mode, puis inscris cette équipe dans la file pour un premier match 2v2 en Arène d'équipe. Tant qu'une étape désigne un contrôle, le reste du menu est assombri. Tu peux passer le tutoriel à tout moment avec **Passer le tutoriel**.
+
 ## La colonne des modes
 
 La colonne à gauche de l'écran principal contient les
@@ -84,6 +88,16 @@ aussitôt de la file.
 
 Quand le match se termine, tu peux **Relancer la file**, ou **Rester ensemble**
 avec l'équipe avec laquelle tu viens de jouer.
+
+À côté des scores, deux graphiques racontent le match dans le temps. **Vous**
+trace tes dégâts infligés, tes dégâts subis, tes soins et ton Énergie ;
+**Équipes** trace la réserve de santé de chaque équipe au-dessus de ses dégâts
+totaux. Des repères sous l'axe du temps montrent les éliminations, les morts,
+les interruptions, les captures et les résurrections : pointe sur l'un d'eux,
+ou atteins-le avec Tab, pour lire ce qui s'est passé. Appuie sur une entrée de
+la légende pour masquer ou afficher sa courbe. Sur téléphone, les graphiques se
+placent sous les scores, qui te montrent avec deux autres joueurs jusqu'à
+**Tout afficher**.
 
 ## Héberger ou rejoindre un match
 
@@ -170,8 +184,8 @@ Arène d'équipe combien d'équipes cherchent, la tienne comprise :
 de l'hôte retire aussitôt le groupe de la file. Quand une autre équipe en file
 du même mode arrive, vous jouez sur l'une des cartes du mode, chaque camp avec
 ses propres builds, puis vous revenez à votre salon. L'hôte peut quitter la file depuis la fenêtre de l'anneau à tout moment ; un invité qui part retire tout le groupe de
-la file. Sans autre équipe au bout d'une minute, l'hôte peut aussi appuyer sur
-**Jouer contre des bots** : un match dans ton propre salon contre une équipe
+la file. Après 10 s dans la file, l'hôte peut aussi appuyer sur
+**Jouer contre des bots** depuis la fenêtre de l'anneau : un match dans ton propre salon contre une équipe
 préréglée de bots au hasard, sauf en
 [Ascension des héros](modes.md#ascension-des-héros), qui attend une équipe de
 ta manche.
@@ -184,13 +198,14 @@ première visite, comme `AshenWolf` ; écris par-dessus pour le changer. Vide, t
 joues sous le nom `Joueur`. Tape un **Tag de guilde** de 2 à 4 lettres ou
 chiffres à côté, et tout le monde le voit après ton nom, comme `Ente [VIBE]`.
 Avec un tag, le créateur de **Cape de guilde** apparaît en dessous : choisis la
-couleur de la cape, celle de la bordure et un emblème, et ton corps porte la
+couleur de cape et de bordure que tu veux, dessine un emblème, et ton corps porte la
 cape dans chaque match : elle se replie en une fine bande sur ton bord quand tu
 es immobile et flotte derrière toi quand tu bouges. Tes personnages dans le
-menu la montrent aussi. **Sans cape** la retire.
+menu la montrent aussi. **Sans cape** la retire. Une figurine montre la cape telle qu'elle apparaît en jeu. Une couleur trop proche du bleu de ton équipe ou du rouge de tes adversaires en est un peu écartée quand elle est dessinée, pour qu'aucune cape ne ressemble à une équipe ; la figurine la montre telle que tout le monde la verra.
 
-Un changement s'applique à partir du prochain salon que tu rejoins, ou de ton
-prochain nouveau salon : celui où tu es déjà garde ce avec quoi tu es entré.
+Un changement s'applique tout de suite au salon où tu es.
+
+**Dessine ton emblème.** La grille d'emblème de 16×16 est toujours sous les couleurs de la cape et de la bordure. Choisis une couleur ou **Vide**, puis dessine au **Crayon**, efface à la **Gomme** ou colore une zone avec **Remplir**. **Ajouter une couleur** donne une couleur de plus à l'emblème, jusqu'à 15, et le sélecteur de couleur à côté change celle choisie, avec tout ce qui est dessiné dans cette couleur. **Partir de** pose une des huit formes sur la grille dans la couleur choisie. **Miroir** peint les moitiés gauche et droite à la fois. **Tout effacer** vide la grille et **Défaire** revient d'un pas. La petite vue à côté de la grille montre l'emblème à sa taille en match. Chaque trait est gardé dès que tu le termines. Les flèches et Espace dessinent aussi au clavier.
 
 **Copier le lien de guilde**, sous le créateur de cape, copie un lien qui porte ton tag et ta cape. Qui l'ouvre voit **Rejoindre la guilde [VIBE] ?** : **Rejoindre** lui donne ton tag et ta cape, **Non** ne change rien. N'importe qui peut envoyer un tel lien et personne ne possède un tag, donc le jeu demande toujours d'abord.
 

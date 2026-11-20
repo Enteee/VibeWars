@@ -6,6 +6,10 @@ potrzebujesz konta ani instalacji: gra działa w tej karcie przeglądarki. VibeW
 wymaga klawiatury i myszy. Nie działa na telefonie ani na tablecie obsługiwanym
 wyłącznie dotykiem: otwórz grę na komputerze.
 
+## Samouczek
+
+Gdy pierwszy raz otworzysz VibeWars, gra zaproponuje krótki samouczek: spacer przez kanion, który uczy poruszania się i walki. Potem samouczek trwa dalej w menu, krok po kroku: zmień specjalizację swojej postaci, zbuduj drużynę dwuosobową, zobacz, do czego służy każdy tryb, i wstaw tę drużynę do kolejki na pierwszy mecz 2v2 na Arenie drużynowej. Gdy krok wskazuje jakiś element, reszta menu jest przyciemniona. Samouczek możesz w każdej chwili pominąć przyciskiem **Pomiń samouczek**.
+
 ## Pasek trybów
 
 Pasek po lewej stronie ekranu głównego zawiera [tryby](modes.md), od góry do dołu:
@@ -73,6 +77,15 @@ usuwa cię z kolejki.
 
 Po zakończeniu meczu możesz wybrać **Szukaj ponownie** albo **Zostańmy razem**
 z drużyną, z którą właśnie grałeś.
+
+Obok wyników dwa wykresy opowiadają przebieg meczu w czasie. **Ty** rysuje
+zadane obrażenia, otrzymane obrażenia, leczenie i Energię; **Drużyny** rysuje
+pulę zdrowia każdej drużyny nad jej łącznymi obrażeniami. Znaczniki pod osią
+czasu pokazują zabójstwa, śmierci, przerwania, przejęcia i wskrzeszenia: wskaż
+jeden lub przejdź do niego klawiszem Tab, aby przeczytać, co się stało.
+Naciśnij pozycję legendy, aby ukryć lub pokazać jej linię. Na telefonie wykresy
+są pod wynikami, które pokazują ciebie i dwie inne osoby, dopóki nie wybierzesz
+**Pokaż wszystko**.
 
 ## Hostuj mecz lub dołącz
 
@@ -150,7 +163,7 @@ szukających drużyn, wliczając twoją: `2 drużyny szukają`. Tylko host ma ta
 **Opuść kolejkę**. Zamknięcie karty hosta natychmiast usuwa grupę z kolejki. Gdy
 pojawi się inna drużyna w kolejce tego samego trybu, gracie przeciw niej na jednej
 z map trybu, każda strona ze swoimi buildami, a potem wracacie do lobby. Host może opuścić kolejkę w oknie pierścienia w dowolnej chwili; gość, który wychodzi, zabiera z niej
-całą grupę. Jeśli po minucie nie ma innej drużyny, host może też nacisnąć **Graj z
+całą grupę. Po 10 s w kolejce host może też nacisnąć w oknie pierścienia **Graj z
 botami**: mecz we własnym lobby przeciw losowej gotowej drużynie botów,
 oprócz [Szczytu Bohaterów](modes.md#szczyt-bohaterów), który czeka na drużynę na twojej
 rundzie.
@@ -162,13 +175,14 @@ twoje niezależnie od tego, czym grasz. Gra nadaje ci **Nazwę** przy pierwszej 
 na przykład `AshenWolf`; wpisz nową, aby ją zmienić. Puste pole oznacza grę jako
 `Gracz`. Wpisz obok **Tag gildii** z 2 do 4 liter lub cyfr, a każdy zobaczy go po
 twojej nazwie, jak `Ente [VIBE]`. Gdy masz tag, pod nim pojawia się projektant
-**Peleryna gildii**: wybierz kolor peleryny, kolor obszycia i emblemat, a twoje ciało
+**Peleryna gildii**: wybierz dowolny kolor peleryny i obszycia, narysuj emblemat, a twoje ciało
 nosi pelerynę w każdym meczu: składa się w cienki pas przy krawędzi, gdy stoisz, i
 powiewa za tobą, gdy się ruszasz. Pokazują ją też twoje postacie w menu. **Bez
-peleryny** ją zdejmuje.
+peleryny** ją zdejmuje. Postać pokazuje pelerynę tak, jak wygląda w grze. Kolor zbyt bliski niebieskiemu twojej drużyny lub czerwonemu twoich wrogów jest przy rysowaniu nieco od niego odsuwany, żeby żadna peleryna nie wyglądała jak drużyna; postać pokazuje ją tak, jak zobaczą ją wszyscy.
 
-Zmiana działa od następnego lobby, do którego dołączysz, lub twojego następnego
-nowego: lobby, w którym już jesteś, zachowuje to, z czym dołączyłeś.
+Zmiana działa od razu w lobby, w którym jesteś.
+
+**Narysuj swój emblemat.** Siatka emblematu 16×16 jest zawsze pod kolorami peleryny i obszycia. Wybierz kolor lub **Puste**, a potem rysuj narzędziem **Ołówek**, ścieraj narzędziem **Gumka** albo zalej obszar narzędziem **Wypełnij**. **Dodaj kolor** daje emblematowi kolejny kolor, do 15, a selektor koloru obok zmienia wybrany kolor razem ze wszystkim, co nim narysowano. **Zacznij od** kładzie na siatce jeden z ośmiu kształtów w wybranym kolorze. **Lustro** maluje jednocześnie lewą i prawą połowę. **Wyczyść** opróżnia siatkę, a **Cofnij** wraca o krok. Mały podgląd obok siatki pokazuje emblemat tak duży jak w meczu. Każde pociągnięcie zostaje zapisane, gdy je skończysz. Strzałki i spacja rysują też z klawiatury.
 
 **Kopiuj link gildii**, pod projektantem peleryny, kopiuje link z twoim tagiem i peleryną. Kto go otworzy, zobaczy pytanie **Dołączyć do gildii [VIBE]?**: **Dołącz** daje mu twój tag i pelerynę, **Nie** niczego nie zmienia. Każdy może wysłać taki link i nikt nie jest właścicielem tagu, więc gra zawsze najpierw pyta.
 

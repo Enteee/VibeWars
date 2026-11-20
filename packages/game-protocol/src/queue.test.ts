@@ -13,7 +13,12 @@ import {
   teamSizeOf,
   lobbyModeOfQueue,
   type QueueTicket,
+  UNLISTED_CLAIM,
 } from "./queue.js";
+
+/** Every key of `members` claiming an unlisted rating (ADR-0055). */
+const claimsOf = (members: readonly string[]): Record<string, number> =>
+  Object.fromEntries(members.map((member) => [member, UNLISTED_CLAIM]));
 
 const TICKET: QueueTicket = {
   ticketId: "a".repeat(64),
@@ -27,18 +32,26 @@ const TICKET: QueueTicket = {
   ascentRound: null,
   hardNat: false,
   holdsHallSince: null,
+  claims: claimsOf(["a".repeat(64)]),
+  leaderboardAsOf: 0,
 };
 
 /** A whole 4v4 team, sorted, led by `TICKET`'s id. */
-const PARTY = ["a", "b", "c", "d"].map((digit) => digit.repeat(64));
+const PARTY = ["a", "b", "c", "d"].map((digit) => digit.repeat(64)) as [
+  string,
+  string,
+  string,
+  string,
+];
 /** Its proof, in shape: parsing checks no signature. */
 const PROOF = { groupId: "f".repeat(64), consents: PARTY.map(() => "e".repeat(128)) };
-const TEAM: QueueTicket = { ...TICKET, members: PARTY, party: PROOF };
+const TEAM: QueueTicket = { ...TICKET, members: PARTY, party: PROOF, claims: claimsOf(PARTY) };
 /** A Team Arena side of three humans and a bot (ADR-0042). */
 const ARENA_SIDE: QueueTicket = {
   ...TICKET,
   mode: "team-arena-4v4",
   members: PARTY.slice(0, 3),
+  claims: claimsOf(PARTY.slice(0, 3)),
   bots: 1,
   party: { ...PROOF, consents: PROOF.consents.slice(1) },
 };
@@ -66,7 +79,8 @@ describe("parseQueueTicket (#869, #882, #1078)", () => {
   });
 
   it("keeps a side led by its party host, the rest sorted (#1766)", () => {
-    const led = { ...ARENA_SIDE, ticketId: PARTY[3], members: [PARTY[3], PARTY[0], PARTY[1]] };
+    const members = [PARTY[3], PARTY[0], PARTY[1]];
+    const led = { ...ARENA_SIDE, ticketId: PARTY[3], members, claims: claimsOf(members) };
     expect(parseQueueTicket(led)).toEqual(led);
   });
 
@@ -88,6 +102,29 @@ describe("parseQueueTicket (#869, #882, #1078)", () => {
     ["a Random Arena ticket with a round", { ...TICKET, ascentRound: 1 }],
     ["a ticket with no round field", (({ ascentRound: _, ...rest }) => rest)(TICKET)],
   ])("refuses %s", (_, raw) => {
+    expect(parseQueueTicket(raw)).toBeUndefined();
+  });
+
+  it("keeps each member's claim and the leaderboard it was read from (ADR-0055)", () => {
+    const claimed = {
+      ...TEAM,
+      claims: { ...claimsOf(PARTY), [PARTY[2]]: -40 },
+      leaderboardAsOf: 9,
+    };
+    expect(parseQueueTicket(claimed)).toEqual(claimed);
+  });
+
+  it.each<[string, unknown]>([
+    ["a member with no claim", { ...TEAM, claims: claimsOf(PARTY.slice(0, 3)) }],
+    ["a claim of a key not a member", { ...TICKET, claims: claimsOf(["b".repeat(64)]) }],
+    ["a claim too many", { ...TICKET, claims: claimsOf(["a".repeat(64), "b".repeat(64)]) }],
+    ["a fractional claim", { ...TICKET, claims: { ["a".repeat(64)]: 800.5 } }],
+    ["a claim as text", { ...TICKET, claims: { ["a".repeat(64)]: "800" } }],
+    ["claims that are a list", { ...TICKET, claims: [800] }],
+    ["no claims", { ...TICKET, claims: null }],
+    ["a negative leaderboardAsOf", { ...TICKET, leaderboardAsOf: -1 }],
+    ["a fractional leaderboardAsOf", { ...TICKET, leaderboardAsOf: 0.5 }],
+  ])("refuses %s (ADR-0055)", (_, raw) => {
     expect(parseQueueTicket(raw)).toBeUndefined();
   });
 

@@ -2,7 +2,7 @@ import { isGloballyMuted, onGlobalMute, setGlobalMute } from "../audio/global-mu
 import { t } from "../i18n/index.js";
 import { readPastedLobbyLink } from "../net/fragment.js";
 import { attachFullscreenButton, fullscreenTarget } from "./fullscreen.js";
-import { closeHelpOverlay, isHelpOverlayOpen } from "./help-screen.js";
+import { attachHelpWindow } from "./help-screen.js";
 import { paintMuteButton } from "./hud.js";
 import { helpIcon, LOBBY_ICON, lobbyIcon, settingsIcon } from "./icons.js";
 import { attachJukeboxPopover } from "./jukebox.js";
@@ -21,7 +21,7 @@ import { lobbyWindowBody, type RailParty } from "./lobby-window.js";
 import { loadPlayerName } from "./player-section.js";
 import { attachOptionsWindow } from "./options-screen.js";
 import { queueButton, type QueueStatusInput } from "./queue-popover.js";
-import { attachTopbarPopover, closeTopbarPopover } from "./topbar-popover.js";
+import { attachTopbarPopover } from "./topbar-popover.js";
 
 /**
  * The top bar on the menu screens (#454, #1272): the shown screen's
@@ -51,8 +51,6 @@ export function paintStatus(status: StatusElement, text: string, state: StatusSt
 }
 
 export interface TopbarCallbacks {
-  /** [?]: the player docs, Help, over whatever screen shows (#1257). */
-  readonly onHelp: () => void;
   /** ⚙'s Options window, over whatever screen shows, closed (#2386). */
   readonly onOptionsClosed: () => void;
   /**
@@ -68,6 +66,8 @@ export interface TopbarCallbacks {
   readonly onRemoveMember: (id: string) => void;
   /** The queue flyout's Leave Queue (#2743): out of whichever queue this tab is in. */
   readonly onLeaveQueue: () => void;
+  /** The queue flyout's Play against bots (#3547): the host's party fights bots instead. */
+  readonly onPlayBots: () => void;
 }
 
 /** The lobby the bar names (#1526): this tab's own, or the one it joined. */
@@ -328,17 +328,8 @@ export function joinControls(
   };
 }
 
-/**
- * The global icons for the bar's own screen (#1272): Help keeps its [?],
- * shown open, so a second press closes it (#2724); the beat editor hides
- * its ♪.
- */
-export function paintOwnIcons(
-  help: Pick<HTMLElement, "setAttribute">,
-  music: Pick<HTMLElement, "hidden">,
-  own: OwnIcon | undefined,
-): void {
-  help.setAttribute("aria-expanded", String(own === "help"));
+/** The global icons for the bar's own screen (#1272): the beat editor hides its ♪. */
+export function paintOwnIcons(music: Pick<HTMLElement, "hidden">, own: OwnIcon | undefined): void {
   music.hidden = own === "music";
 }
 
@@ -503,20 +494,11 @@ export function mountTopbar(bar: HTMLElement, callbacks: TopbarCallbacks, signet
   const queueAction = part(bar, ".topbar-queue-action");
 
   const help = iconButton("topbar-help", t("topbar.help"), helpIcon());
-  help.setAttribute("aria-haspopup", "dialog");
-  help.setAttribute("aria-expanded", "false");
-  // A second press closes Help, as one on ⚙ closes Options (#2724).
-  help.addEventListener("click", () => {
-    if (isHelpOverlayOpen()) {
-      closeHelpOverlay();
-      return;
-    }
-    closeTopbarPopover();
-    callbacks.onHelp();
-  });
+  // The player docs, over whatever screen shows (#1257, #3552).
+  attachHelpWindow(help);
 
   // Left of Help while in any queue (#2743).
-  const queue = queueButton(bar, callbacks.onLeaveQueue);
+  const queue = queueButton(bar, callbacks.onLeaveQueue, callbacks.onPlayBots);
 
   const options = iconButton("topbar-options", t("topbar.options"), settingsIcon());
   attachOptionsWindow(options, bar, signet, callbacks.onOptionsClosed);
@@ -615,10 +597,7 @@ export function mountTopbar(bar: HTMLElement, callbacks: TopbarCallbacks, signet
     actions: screenActions,
     queueAction,
     onShow: (shown) => {
-      paintOwnIcons(help, music, shown.own);
-      if (shown.own === "help") {
-        closeTopbarPopover();
-      }
+      paintOwnIcons(music, shown.own);
       showJoin(join, shown.join);
       if (shown.join && !joinShown) {
         joinShown = true;

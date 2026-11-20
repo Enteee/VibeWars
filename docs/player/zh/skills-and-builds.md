@@ -4,41 +4,41 @@
 
 ## 职业
 
-共有十个：Warrior、Ranger、Monk、Necromancer、Mesmer、Elementalist、Assassin、Ritualist、Paragon 和 Dervish。你的 **主** 职业就是你本身：它的技能，以及它的 **主属性**（标记为 ★），只有主职业才能获得。你的 **副** 职业会把技能借给你，但不包括它的主属性。
+共有十个：![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior**、![Ranger](../../../apps/web/public/icons/profession/ranger.svg) **Ranger**、![Monk](../../../apps/web/public/icons/profession/monk.svg) **Monk**、![Necromancer](../../../apps/web/public/icons/profession/necromancer.svg) **Necromancer**、![Mesmer](../../../apps/web/public/icons/profession/mesmer.svg) **Mesmer**、![Elementalist](../../../apps/web/public/icons/profession/elementalist.svg) **Elementalist**、![Assassin](../../../apps/web/public/icons/profession/assassin.svg) **Assassin**、![Ritualist](../../../apps/web/public/icons/profession/ritualist.svg) **Ritualist**、![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** 和 ![Dervish](../../../apps/web/public/icons/profession/dervish.svg) **Dervish**。你的 **主** 职业就是你本身：它的技能，以及它的 **主属性**（标记为 ★），只有主职业才能获得。你的 **副** 职业会把技能借给你，但不包括它的主属性。
 
 ## 技能栏
 
 技能栏有 **八个栏位**。一个技能栏只能放一个 **精英** 技能（金色边框）：装备第二个会替换第一个。在栏位上按 **×** 将其清空。
 
-**闪现附魔**（Dervish）是瞬发的：使用时不会打断你的挥击和步伐，所以你可以在攻击之间穿插使用。每次使用都会让你的其他闪现附魔失效 1 秒。
+![附魔](../../../apps/web/public/icons/skill-type/enchantment.svg) **闪现附魔**（![Dervish](../../../apps/web/public/icons/profession/dervish.svg) **Dervish**）是瞬发的：使用时不会打断你的挥击和步伐，所以你可以在攻击之间穿插使用。每次使用都会让你的其他闪现附魔失效 1 秒。
 
-**形态**（五种 Dervish 化身：Balthazar、Dwayna、Grenth、Lyssa 和 Melandru）会改变你一分钟以上。形态不是附魔，所以没有人能移除它，并且你同一时间只能处于一种形态。使用后该形态会被禁用 45 秒。形态结束时，你会停下正在做的事：你的攻击、你的行走以及你正在发动的任何技能。再按一次移动键即可继续行走。
+![形态](../../../apps/web/public/icons/skill-type/form.svg) **形态**（五种 Dervish 化身：Balthazar、Dwayna、Grenth、Lyssa 和 Melandru）会改变你一分钟以上。形态不是附魔，所以没有人能移除它，并且你同一时间只能处于一种形态。使用后该形态会被禁用 45 秒。形态结束时，你会停下正在做的事：你的攻击、你的行走以及你正在发动的任何技能。再按一次移动键即可继续行走。
 
-**有些射击会禁用你的其他攻击。** Focused Shot 和 Needling Shot 飞得比普通箭矢更快，但每次命中都会让你的其他攻击技能失效几秒。法术不受影响。
+**有些射击会禁用你的其他攻击。** Focused Shot 和 Needling Shot 飞得比普通箭矢更快，但每次命中都会让你的其他 ![攻击技能](../../../apps/web/public/icons/skill-type/attack.svg) **攻击技能** 失效几秒。![法术](../../../apps/web/public/icons/skill-type/spell.svg) **法术** 不受影响。
 
 ## 属性
 
 你有 **200 点** 可以分配。属性的每一级都比上一级更贵，最高到 12 级；该行会显示下一级的花费。十二、十二和三会用完全部点数。符文和头饰最多可以再额外增加四级；参见[装备](equipment.md)。提高技能所用的属性会让它更强：随属性增长的数字以绿色粗体显示，按你当前的等级计算，包括符文和头饰。
 
-在战斗中，你的等级可能会暂时改变。Weakness 会让每项属性降低一级。有些咒术会把敌人的属性设为 0，而 Master of Magic 会把你的元素属性设为 13：以这种方式设定的等级会同时覆盖符文和 Weakness。Signet of Illusions 让你接下来的其他属性的法术使用你的 Illusion Magic 等级。有些技能会在一段时间内或为你接下来的法术提升你的属性，例如 Glyph of Elemental Power 和 Ritual Lord，即使是你保留为 0 的属性也可以；设定的等级，例如 Master of Magic 的，会胜过这类提升。
+在战斗中，你的等级可能会暂时改变。![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness** 会让每项属性降低一级。有些 ![咒术](../../../apps/web/public/icons/skill-type/hex.svg) **咒术** 会把敌人的属性设为 0，而 Master of Magic 会把你的元素属性设为 13：以这种方式设定的等级会同时覆盖符文和 Weakness。Signet of Illusions 让你接下来的其他属性的 ![法术](../../../apps/web/public/icons/skill-type/spell.svg) **法术** 使用你的 Illusion Magic 等级。有些技能会在一段时间内或为你接下来的法术提升你的属性，例如 Glyph of Elemental Power 和 Ritual Lord，即使是你保留为 0 的属性也可以；设定的等级，例如 Master of Magic 的，会胜过这类提升。
 
 ## 回响
 
-Paragon 的 **回响** 是施加在一名队友身上的长时间增益。每当一个战歌或呐喊在该队友身上结束时，**叠句** 会刷新至其完整持续时间，**终曲** 则会生效。在结束前重新施加的战歌或呐喊并未结束。没有任何东西能移除回响：它会在时间耗尽或其持有者死亡时结束。大多数回响无法以灵体为目标。
+![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** 的 ![回响](../../../apps/web/public/icons/skill-type/echo.svg) **回响** 是施加在一名队友身上的长时间增益。每当一个 ![战歌](../../../apps/web/public/icons/skill-type/chant.svg) **战歌** 或 ![呐喊](../../../apps/web/public/icons/skill-type/shout.svg) **呐喊** 在该队友身上结束时，**叠句** 会刷新至其完整持续时间，**终曲** 则会生效。在结束前重新施加的战歌或呐喊并未结束。没有任何东西能移除回响：它会在时间耗尽或其持有者死亡时结束。大多数回响无法以灵体为目标。
 
 ## 变成另一个技能的技能
 
-有些 Mesmer 技能会在一段时间内把另一个技能放进自己的栏位。Arcane Echo 和 Echo 会复制你使用的下一个技能。**Inspired Enchantment** 和 **Inspired Hex** 会变成施放了它们所移除的附魔或咒术的那个技能，持续 20 秒。**Arcane Thievery** 会变成它在敌人身上禁用的那个法术，持续时间与禁用相同。复制品有自己的冷却。它结束时，原技能会回来并开始自己的冷却，而仍在进行中的复制品施放会失败。由灵体或由另一个状态施加的状态无法被复制，不过移除它仍会给你能量。
+有些 ![Mesmer](../../../apps/web/public/icons/profession/mesmer.svg) **Mesmer** 技能会在一段时间内把另一个技能放进自己的栏位。![Arcane Echo](../../../apps/web/public/icons/status/arcane-echo.svg) **Arcane Echo** 和 ![Echo](../../../apps/web/public/icons/status/echo.svg) **Echo** 会复制你使用的下一个技能。**Inspired Enchantment** 和 **Inspired Hex** 会变成施放了它们所移除的 ![附魔](../../../apps/web/public/icons/skill-type/enchantment.svg) **附魔** 或 ![咒术](../../../apps/web/public/icons/skill-type/hex.svg) **咒术** 的那个技能，持续 20 秒。**Arcane Thievery** 会变成它在敌人身上禁用的那个 ![法术](../../../apps/web/public/icons/skill-type/spell.svg) **法术**，持续时间与禁用相同。复制品有自己的冷却。它结束时，原技能会回来并开始自己的冷却，而仍在进行中的复制品施放会失败。由灵体或由另一个状态施加的状态无法被复制，不过移除它仍会给你能量。
 
 ## 魔井和符印
 
-Necromancer 的 **魔井** 会利用最近的尸体。附近没有尸体时，魔井会改为牺牲你 66% 的生命，并出现在你所站的位置。
+![Necromancer](../../../apps/web/public/icons/profession/necromancer.svg) **Necromancer** 的 ![魔井](../../../apps/web/public/icons/skill-type/well.svg) **魔井** 会利用最近的尸体。附近没有尸体时，魔井会改为牺牲你 66% 的生命，并出现在你所站的位置。
 
-Elementalist 的 **符印** 会改变你的下一个法术：使其无法被打断、瞬间施放、立即冷却完毕或消耗更少。新的符印会替换你原有的符印。
+![Elementalist](../../../apps/web/public/icons/profession/elementalist.svg) **Elementalist** 的 ![符印](../../../apps/web/public/icons/skill-type/glyph.svg) **符印** 会改变你的下一个 ![法术](../../../apps/web/public/icons/skill-type/spell.svg) **法术**：使其无法被打断、瞬间施放、立即冷却完毕或消耗更少。新的符印会替换你原有的符印。
 
 ## 干预
 
-回应"下一次伤害使生命降到 N% 以下时"的技能，会对任何让你存活但处于该线以下的攻击或生命窃取作出回应，即使你在受击前就已经低于该线，但绝不会回应你牺牲的生命或因衰减而损失的生命。致命伤害保护，例如 Judge's Intervention，会抵消整个致命一击：没有伤害，没有死亡。Faithful Intervention 和 Illusion of Weakness 没有持续时间：它们会一直持续，直到伤害、移除或死亡将其结束，并在此过程中治疗你。
+回应"下一次伤害使生命降到 N% 以下时"的技能，会对任何让你存活但处于该线以下的攻击或生命窃取作出回应，即使你在受击前就已经低于该线，但绝不会回应你牺牲的生命或因衰减而损失的生命。致命伤害保护，例如 ![Judge's Intervention](../../../apps/web/public/icons/status/judges-intervention.svg) **Judge's Intervention**，会抵消整个致命一击：没有伤害，没有死亡。![Faithful Intervention](../../../apps/web/public/icons/status/faithful-intervention.svg) **Faithful Intervention** 和 ![Illusion of Weakness](../../../apps/web/public/icons/status/illusion-of-weakness.svg) **Illusion of Weakness** 没有持续时间：它们会一直持续，直到伤害、移除或死亡将其结束，并在此过程中治疗你。
 
 ## 技能库
 
@@ -50,11 +50,11 @@ Elementalist 的 **符印** 会改变你的下一个法术：使其无法被打�
 
 ## 物品法术
 
-Ritualist 的 **物品法术** 会把灵体的 **骨灰** 放到你手中：持有时提供加成，掉落时产生 **掉落效果**。它们会在以下情况下掉落：耗尽时、你死亡时、你按下生命条上方的 **丢下骨灰** 时、施放另一个物品法术、暗影步、切换武器或拿起旗帜或圣物时。持有它们时你的双手是满的：不能攻击也不能使用攻击技能，但你以全速行走并仍能施放法术。没有任何东西能移除骨灰；每种结束方式都是掉落。
+![Ritualist](../../../apps/web/public/icons/profession/ritualist.svg) **Ritualist** 的 ![物品法术](../../../apps/web/public/icons/skill-type/item-spell.svg) **物品法术** 会把灵体的 **骨灰** 放到你手中：持有时提供加成，掉落时产生 **掉落效果**。它们会在以下情况下掉落：耗尽时、你死亡时、你按下生命条上方的 **丢下骨灰** 时、施放另一个物品法术、暗影步、切换武器或拿起旗帜或圣物时。持有它们时你的双手是满的：不能攻击也不能使用 ![攻击技能](../../../apps/web/public/icons/skill-type/attack.svg) **攻击技能**，但你以全速行走并仍能施放 ![法术](../../../apps/web/public/icons/skill-type/spell.svg) **法术**。没有任何东西能移除骨灰；每种结束方式都是掉落。
 
 ## 暗影步
 
-**暗影步** 会让你瞬间移动，中间无需行走。大多数暗影步会把你移到目标处；有些会在结束时把你带回施放的位置，例如 Shadow of Haste 和 Shadow Walk。**Recall** 只会在结束时把你移到其队友处，并禁用你所有技能 3 秒。**Swap** 会与你一方的某个灵体或仆从交换位置。
+**暗影步** 会让你瞬间移动，中间无需行走。大多数暗影步会把你移到目标处；有些会在结束时把你带回施放的位置，例如 Shadow of Haste 和 Shadow Walk。![Recall](../../../apps/web/public/icons/status/recall.svg) **Recall** 只会在结束时把你移到其队友处，并禁用你所有技能 3 秒。**Swap** 会与你一方的某个灵体或仆从交换位置。
 
 ## 分享配置
 
@@ -64,11 +64,11 @@ Ritualist 的 **物品法术** 会把灵体的 **骨灰** 放到你手中：持�
 
 **保存** 会保留你的配置并带你回到你来的地方。**Esc** 会不保存就离开，如果你更改了任何内容会先询问。**分享**、**载入 GW1 代码**、**复制** 和 **删除** 都在 **⋯** 下。
 
-队伍代码则在 **队伍配置** 中载入：按 **载入队伍**，粘贴代码并按 **载入**，或者在队伍配置中的任何地方粘贴它。
+队伍代码则在 **队伍配置** 中载入：在那里的任何地方粘贴它，或者打开一个队伍配置并使用它的 **⋯** → **载入队伍**。
 
 ## 队伍配置
 
-**队伍配置** 是一支由其自有角色组成的队伍，在 **队伍配置** 中创建，并与你自己的角色分开保存。每个队伍配置都是那里的一张卡片，且只在那里：**新建队伍配置** 会创建一个，**载入队伍** 会载入别人分享给你的队伍配置，点击卡片或它的 **编辑** 会打开它。你在[队伍大厅](modes.md#队伍大厅)中提议队伍配置。
+**队伍配置** 是一支由其自有角色组成的队伍，在 **队伍配置** 中创建，并与你自己的角色分开保存。每个队伍配置都是那里的一张卡片，且只在那里：**新建队伍配置** 会创建一个，在那里粘贴的队伍代码会载入别人分享给你的队伍配置，点击卡片或它的 **编辑** 会打开它。你在[队伍大厅](modes.md#队伍大厅)中提议队伍配置。
 
 每个队伍配置都有一个人数，2v2、4v4 或 8v8（没有 1v1 的队伍配置）：即侧栏中的 **队伍人数**。队伍配置会列出那里所选人数的队伍配置，**新建队伍配置** 会创建该人数的队伍配置。队伍配置的人数是固定的：它的编辑器会将其显示为锁定，要玩其他人数，你需要创建另一个队伍配置。粘贴的队伍会保留它的人数，侧栏也会切换到该人数。
 

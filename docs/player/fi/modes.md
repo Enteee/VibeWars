@@ -130,7 +130,7 @@ nimeää jokaisen lipun kantajan. Moraalinnousu ponnahtaa esiin tekstinä
 "Moraalinnousu! +10%" tai "Vihollisen moraalinnousu". Kompassissa ♛
 merkitsee kumpaakin killanherraa, ⚑ kumpaakin lippua ja ◎ telinettä.
 
-Sitä pelaa Guild Hall Isle.
+Sitä pelaa Guild Hall Isle (8v8, 6000x2600): saari meressä. Kukin Guild Lord seisoo salin päällä vallin takana; ulos pääsee porttitornin läpi, vallin yli tai laituria pitkin. Porttitornin oven avaa vipu vihollisen vallilla. Lipputeline on korokkeella keskellä.
 
 ## Reliikkijuoksu
 
@@ -184,6 +184,8 @@ tasatilanteessa voittaa tiimi, joka teki pisteen viimeisenä. Jokainen
 tukikohta herättää kuolleensa ja aaveensa joka 2. minuutti. Botit
 lähtevät yhdessä vihollisen reliikin perään ja tuovat sen kotiin.
 
+Cinder Sanctum (8v8, 5600x2800) pelaa sitä: temppeli tulivuoren rinteellä kahden laavavirran välissä. Ylitä ne sillalla tai pengertiellä esipihalla seisovaan pyhäkköön; esipihan vipu avaa pyhäkön alla kulkevan salakäytävän, ja tuhkaseinät voi rikkoa. Laava polttaa.
+
 ## Kukkulan kuningas
 
 **Johda aavesankarisi alttarille ja pidä se.** Jokaisella tiimillä on
@@ -191,8 +193,7 @@ lähtevät yhdessä vihollisen reliikin perään ja tuovat sen kotiin.
 kukaan ei pelaa. **Alttari** on keskellä, yhtä pitkän kävelyn päässä
 kummastakin tukikohdasta. **Threefold Keepissä** kolme tiimiä (kaksi, jos
 kolmatta ei ole vapaana) taistelee siitä muurien ympäröimän linnakkeen
-sisällä. Sen ovet aukeavat vain sisältä, sisäpuolella olevasta laatasta:
-kävele ympäri avoimeen kulmaan päästäksesi sisään. Enintään 12 pistettä
+tornilla. Enintään 12 pistettä
 tiimiä kohden, ja jos jokaisen vihollisen moraali on -60 %, voitat heti.
 **Sankarien sali**, Kukkulan kuningas -kartta, joka päättää Sankarien
 nousun, nostaa sen korokkeelle, jota muurit rajaavat lännessä ja
@@ -255,7 +256,7 @@ alttaria, jokainen botti tappaa ensin toisen tiimin aavesankarin, kun
 se seisoo alttarilla niiden kantaman sisällä: se on se yksi vihollinen,
 joka estää aavettasi valtaamasta sitä.
 
-Sitä pelaa Threefold Keep.
+Sitä pelaa Threefold Keep (4v4 ja 8v8, 5000x4400): linnake kukkulalla ylängöllä, kolmelle tiimille. Nouse muurikäytävälle porttisi vieressä olevia portaita ja ylitä pengertie kukkulalle, kiipeä sitten alttarille tornin huipulle. Vipu jokaisella pihalla avaa kaikki neljä porttia: porttikäytäväsi muurin alla sekä holvikellarin, pitkän tien kukkulan alta.
 
 ## Valtauspisteet
 
@@ -295,8 +296,9 @@ seisovat niillä, kunnes ne on vallattu. Loitsukantaman sisällä oleva
 vihollinen ei houkuttele niitä pois: ne astuvat ulottuvilla olevalle
 pyhäkölle ja taistelevat siltä.
 
-Sitä pelaa Scarred Earth: jokainen pyhäkkö seisoo rikkinäisen muurikehän
-sisällä, joka on avoin lännessä ja idässä.
+Sitä pelaa Scarred Earth (4v4 ja 8v8, 5400x2800): kraatterien täplittämä taistelukenttä hämärässä. Pyhäköt seisovat tuhoutuneilla piiritystorneilla, keskimmäinen suuren tornin kannella, kukin kraatterin vieressä; tornien vivut avaavat kaksi juoksuhautaa kentän alla, ja tuhoutuneet paalutukset voi murskata.
+
+Sankarien nousussa sitä pelaa The Warden's Gallery (8v8, 5200x2500): aurinkoinen veistosgalleria kattoikkunoiden alla. Keskimmäinen pyhäkkö seisoo suuren jalustan huipulla, ja kullakin joukkueella on kolme eteishallinsa lähellä, yksi jalustalla; suuren jalustan vivut avaavat kaksi holvikellaria lattian alla, ja kaatuneet patsaat voi murskata.
 
 ## Tiimiaula
 
@@ -395,7 +397,7 @@ Sali arpoo jokaiseen otteluun yhden kolmesta pelitilasta: Kukkulan kuningas, Rel
 
 **Holvi.** Sali muodostuu vain joka 12. minuutti UTC-kellon mukaan, kello :00, :12, :24, :36 ja :48. Siihen asti ryhmäsi odottaa Holvissa: jonokuvake näyttää ajan seuraavaan avautumiseen ja sen, kuka hallitsee Salia. Jokaisessa avautumisessa hallitsija kohtaa enintään kaksi haastajaa, tai enintään kolme haastajaa kohtaa toisensa, jos kukaan ei hallitse sitä. Vain ennen avautumista odottaneet ryhmät osallistuvat, ja paikkojen ulkopuolelle jäävät odottavat seuraavaa. Hallitsija, jolla ei ole ketään vastustajaa, pitää Salin ja odottaa ilman laskettua voittoa, ja yksinäinen haastaja odottaa myös. Kun ryhmä voittaa Salin, jokainen avoin peli kertoo, kuka sitä nyt hallitsee: sen johtaja tai sen kiltatunnus, kun yli puolella ryhmästä on sama.
 
-Jokainen nousu alkaa **Elite Zaishen Battlella** ilman jonoa: ryhmäsi kuutta bottien pelaamaa Zaishenia vastaan (2 Monkia, Elementalist ja 3 muuta). Kello käynnistyy, kun joku teistä ylittää lähtöviivan tai ensimmäinen Zaishen kuolee, kumpi tahansa tapahtuu ensin. Tapa kaikki kuusi alle 30 sekunnissa, niin ryhmä aloittaa nousun +10 %:n moraalilla; alle 60, +8 %; alle 80, +6 %; alle 100, +4 %; alle 120, +2 %; hitaammin ei mitään. Voita, niin ryhmäsi jonottaa itsestään ensimmäiselle kartalleen. Jos teidät pyyhitään tai jokin Zaishen on yhä elossa 8 minuutin rajan täyttyessä, nousu on ohi.
+Jokainen nousu alkaa **Elite Zaishen Battlella** ilman jonoa: ryhmäsi kuutta bottien pelaamaa Zaishenia vastaan (2 Monkia, Elementalist ja 3 muuta). Se käydään seremoniallisella areenalla (8v8, 5400x2400): porrastetut katsomot pohjoisessa ja etelässä, patsaita jalustoilla upotetulla pohjalla ja jokaisen katsomon alla holvi, jonka laskuristikon avaa vipu vastakkaisella katsomolla. Kello käynnistyy, kun joku teistä ylittää lähtöviivan areenan keskellä tai ensimmäinen Zaishen kuolee, kumpi tahansa tapahtuu ensin. Tapa kaikki kuusi alle 30 sekunnissa, niin ryhmä aloittaa nousun +10 %:n moraalilla; alle 60, +8 %; alle 80, +6 %; alle 100, +4 %; alle 120, +2 %; hitaammin ei mitään. Voita, niin ryhmäsi jonottaa itsestään ensimmäiselle kartalleen. Jos teidät pyyhitään tai jokin Zaishen on yhä elossa 8 minuutin rajan täyttyessä, nousu on ohi.
 
 Jokainen voitto nousussa ansaitsee **mainetta**: 1, 2, 3, 4, 6, 8, 12, 16, 20, 24, 28, 32, 36 ensimmäisestä kolmestatoista, sitten 40 kustakin, enintään 300 päivässä (päivä vaihtuu klo 15:00 UTC). Elite Zaishen Battle ei ansaitse mitään. Kokonaismaineesi määrää **sankariarvosi**, 1:stä 25 maineella 15:een 100 000 maineella, ja se näkyy merkkinä ★ ja numerona nimesi vieressä. Asetukset > pelaaja näyttää molemmat. Molemmat säilytetään laitteellasi.
 
@@ -427,14 +429,12 @@ kuuloetäisyydellä olevaan viholliseen 50 salamavahinkoa 2,5 sekunnin välein,
 kunnes toinen tiimi pystyttää lippunsa sinne. Jokainen isku on salama
 majakasta osumakohteeseen, ja se näkyy molemmille tiimeille.
 
-Kolme Nousun areenaa on myös Isännöidyn pelin valintoja: **The Hollow Deep** (8v8-Tuho, kolme
-mutkittelevaa tunnelia keskeisen kallion ympärillä),
+Kolme Nousun areenaa on myös Isännöidyn pelin valintoja: **The Hollow Deep** (8v8-Tuho, 6200x2400, pimeässä luolassa: ylitä köysisilta rotkon yli, kiipeä keskimmäisen kielekkeen yli tai kulje sen alla olevan holvikäytävän läpi, kun kalliohyllyn vipu avaa sen portin),
 **Blackwater Ford** (8v8, 5200x2800, Pappituho
 tummalla joen kahlaamolla: yli pääsee kahlaamalla matalan kahlaamon, myllyn yllä pilareillaan seisovaa
 rikkinäistä siltaa pitkin tai sillan alla olevan rummun kautta, kun myllyn vipu avaa sen portin; pappi herättää
 kuolleensa joka 2. minuutti) ja
-**Mosslit Cairns** (8v8-Valtauspisteet, viisi kiviröykkiötä matalassa siksakissa
-tukikohtien välillä). Neljäs on **The Brazen Causeway** (8v8, 5600x2800, Pappituho kohotetulla kivipengertiellä suon yllä hämärässä: pengertietä voi marssia pitkin, kun kaukaisen porttitornin vipu avaa sen pronssiportin, suon yli voi kulkea pengertien keskellä oleville portaille tai livahtaa sen alla olevan rummun kautta; pappi herättää kuolleensa joka 2. minuutti).
+**Mosslit Cairns** (8v8, 5400x3000, Valtauspisteet viidellä kiviröykkiökukkulalla, jotka hehkuvat sammalesta hämärässä: röykkiölle voi kiivetä sen portaita, suuren keskiröykkiön voi pitää hallussaan tai eteläisten kukkuloiden alla olevan juuritunnelin voi ottaa, kun pohjoisen röykkiön vipu avaa sen portit; juurimuurit voi rikkoa). Neljäs on **The Brazen Causeway** (8v8, 5600x2800, Pappituho kohotetulla kivipengertiellä suon yllä hämärässä: pengertietä voi marssia pitkin, kun kaukaisen porttitornin vipu avaa sen pronssiportin, suon yli voi kulkea pengertien keskellä oleville portaille tai livahtaa sen alla olevan rummun kautta; pappi herättää kuolleensa joka 2. minuutti).
 
 Kartalla voi olla **portteja**: muureja, jotka pysäyttävät vartalot,
 ammukset ja näkyvyyden suljettuina. Seiso portin painelaatalla avataksesi
@@ -494,3 +494,7 @@ kokoon. Sirut pysyvät sellaisina kuin jätit ne, kunnes sivu ladataan
 uudelleen.
 
 Sirujen yläpuolella **Sankarien sali** -nauha luettelee viimeiset 20 hallintakautta, uusin ensin: hallitsija (kiltatunnus tai johtajan nimi), voittaneen tiimin pelaajat, milloin uusin voitto päättyi ja, kahdesta voitosta alkaen, montako peräkkäin. Hallintakausi on yhden hallitsijan katkeamaton Salin voittojen sarja. Nauha lukee tämän sivun kirjaukset, ei välitä siruista, ja on piilossa, kun mikään niistä ei ole Salin voitto. Kuten jokainen kirjaus, se on sitä, mitä kunkin ottelun isäntä ilmoitti, eikä mikään tarkista sitä.
+
+## Rankatut
+
+Jonosta tuleva ottelu ilman botteja on rankattu. Jononäkymä ja joukkueaula kertovat sen ennen kuin jonotat; yksikin botti pitää ottelun rankkaamattomana. Kun rankattu ottelu löytyy, jokainen pelaaja allekirjoittaa sen alun, ja näytössä lukee enintään 15 sekunnin ajan **Vahvistetaan rankattua ottelua…**. Jos joku ei vahvista, ottelu perutaan ja kaikki palaavat jonoon. Lopuksi jokainen pelaaja allekirjoittaa tuloksen, ja ottelun kuitti julkaistaan Nostr-välittimille jokaisen pelaajan julkisen avaimen ja hahmon nimen kanssa; pelaaja ilman hahmoa merkitään nimellä starter. Luokituksesi muuttuu tunnin sisällä. Rankatusta ottelusta poistuminen lasketaan tappioksi, ja poistumispainike kertoo sen.

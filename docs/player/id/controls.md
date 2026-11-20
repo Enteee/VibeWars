@@ -19,7 +19,7 @@ Preset bawaan adalah **Klasik**, untuk tangan yang terbiasa GW1. **VibeWars** me
 | Musuh berikutnya (Shift: sebelumnya) | Tab                        | Tab              |
 | Musuh terdekat                       | C                          | C                |
 | Musuh yang diumumkan timmu           | T                          | T                |
-| Diri sendiri                         | G                          | G                |
+| Diri sendiri                         | F atau G                   | G                |
 | Tampilkan nama (tahan)               | Shift                      | Shift            |
 | Bisu                                 | M                          | M                |
 | Jatuhkan bendera, relik, atau abu    | tidak ada                  | tidak ada        |
@@ -37,7 +37,7 @@ Tombol-tombol ini tetap:
 ## Mouse
 
 - **Klik kiri** tanah untuk berjalan ke sana. Tanpa Shift, tombol kiri hanya untuk berjalan.
-- Di peta dengan panggung yang ditinggikan, klik kiri menuju permukaan yang kamu lihat, dan **Alt + klik kiri** ke tanah di bawahnya. Cincin di bawah kursor menandai panggung, cincin putus-putus menandai tanah. Di atas terowongan, klik kiri menuju tingkat tempatmu berada, dan **Alt + klik kiri** ke tingkat yang lain.
+- Di peta dengan panggung yang ditinggikan, klik kiri menuju permukaan yang kamu lihat, dan **Alt + klik kiri** ke tanah di bawahnya. Cincin di bawah kursor menandai panggung, cincin putus-putus menandai tanah. Di atas terowongan, klik kiri menuju tingkat tempatmu berada. **Alt + klik kiri** tidak pernah menuju ke atas tingkat tempatmu berdiri: dari tanah ia menuju ke dalam terowongan, dan di dalam terowongan ia tetap di sana.
 - **Klik kanan** musuh atau sekutu untuk menjadikannya target. Klik kanan musuh yang sama
   lagi, dengan cepat, untuk menyerangnya.
 - **Klik kanan** bendera atau tiang bendera, di Perang Guild atau di Barrow Field, untuk menjadikannya
@@ -69,7 +69,8 @@ Di luar laga, bilah atas berisi **[?]** (Bantuan ini), **⚙** (Opsi),
 kecuali Lobi, ada di kanan atas layar. Di jendela yang sempit, ikon-ikon ini dan
 tombol-tombol lain di layar terlipat ke dalam **⋯**; hanya tombol utamanya yang tetap di luar.
 ⚙ membuka Opsi sebagai jendela di bawah bilah, dengan layar tetap di belakangnya; Esc, × atau klik di luarnya menutupnya. Di bagian **tampilan**, **Pencahayaan** menyalakan atau mematikan cahaya dan bayangan peta yang diterangi, seketika, bahkan di dalam laga.
-Bantuan ditutup dengan × di kanan atasnya, Esc, atau menekan [?] sekali lagi.
+[?] membuka Bantuan dengan cara yang sama, sebagai jendela di bawahnya dengan pemilih halaman di atas; laga tetap berjalan di belakangnya.
+Bantuan ditutup dengan ×-nya, Esc, klik di luarnya, atau menekan [?] sekali lagi.
 
 **Bagikan beat ke lobimu.** Di editor beat (♪, lalu **Edit**),
 **Bagikan ke lobi** mengirim apa yang sudah kamu ketik, tersimpan atau belum, ke semua orang

@@ -101,7 +101,10 @@ test("(2) taking a key from another action empties its cell and says so", async 
   await expect(cell(page, "skill-3")).toHaveText(label("skill-3"));
   await expect(page.locator(".keys-screen")).toBeVisible();
 
-  await page.getByRole("button", { name: "reset to VibeWars" }).click();
+  // The Preset list is the way back to a preset; there is no reset button (#3631).
+  await expect(page.locator(".keys-preset")).toHaveValue("custom");
+  await expect(page.getByRole("button", { name: /reset/i })).toHaveCount(0);
+  await page.locator(".keys-preset").selectOption("vibewars");
   await expect(cell(page, "skill-1")).toHaveText("Q");
   await expect(page.locator(".keys-preset")).toHaveValue("vibewars");
 });
@@ -116,6 +119,33 @@ test("(3) Space binds and stays bound: its keyup does not click the cell again",
   await expect(cell(page, "mute")).toHaveText("Space");
   await expect(page.locator(".key-cell.is-capturing")).toHaveCount(0);
   await expect(cell(page, "attack")).toHaveText("-");
+});
+
+test("Previous target sits under Next target as Shift + its key, in Next target's columns (#3630)", async ({
+  page,
+}) => {
+  await page.setViewportSize(WIDE);
+  await page.goto("./");
+  await openKeys(page);
+  const next = page.locator('tr:has(.key-cell[data-action="target-next"])');
+  const previous = next.locator("xpath=following-sibling::tr[1]");
+  await expect(previous.locator(".keys-action")).toHaveText("Previous target");
+  await expect(previous.locator(".key-cell").first()).toHaveText(`Shift + ${label("target-next")}`);
+  // One key on Next target: the second cell is blank, not an empty box.
+  await expect(previous.locator(".key-cell").nth(1)).toBeHidden();
+
+  await cell(page, "target-next", 1).click();
+  await page.keyboard.press("x");
+  await expect(previous.locator(".key-cell").nth(1)).toHaveText("Shift + X");
+  // Each under its own Next target cell, and the row no taller than its neighbour.
+  for (const index of [0, 1]) {
+    const above = await cell(page, "target-next", index).boundingBox();
+    const below = await previous.locator(".key-cell").nth(index).boundingBox();
+    expect(Math.abs((below?.x ?? 0) - (above?.x ?? -100))).toBeLessThan(2);
+  }
+  const nextBox = await next.boundingBox();
+  const previousBox = await previous.boundingBox();
+  expect(previousBox?.height ?? 0).toBeLessThanOrEqual((nextBox?.height ?? 0) + 1);
 });
 
 test("(4) Back leaves Options for the menu; on a narrow screen the sections sit above", async ({
@@ -307,3 +337,44 @@ test("Options and the Lobby window shut each other: one top-bar window at a time
   await expect(options).toBeVisible();
   await expect(lobby).toHaveCount(0);
 });
+
+for (const width of [320, 360]) {
+  test(`the emblem editor fits a ${String(width)} px phone: no sideways scroll, preview, Mirror, the colours and Start from in the pane (#3555, #3628)`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 800 });
+    await page.goto("./");
+    await page.locator("#topbar .topbar-more").click();
+    await page.locator("#topbar .topbar-options").click();
+    await expect(page.locator(".options-screen")).toBeVisible();
+    // The cape designer, its emblem editor always open (#3628), shows once there is a guild tag.
+    await page.getByRole("textbox", { name: "Guild tag", exact: true }).fill("VW");
+    const pane = page.locator(".options-pane");
+    await expect(page.locator(".emblem-editor-grid")).toBeVisible();
+
+    const overflow = await pane.evaluate((element) => element.scrollWidth - element.clientWidth);
+    expect(overflow).toBeLessThanOrEqual(0);
+    const paneBox = await pane.boundingBox();
+    expect(paneBox).not.toBeNull();
+    for (const part of [
+      page.locator(".emblem-editor-grid"),
+      page.locator(".emblem-editor-preview"),
+      page.getByRole("button", { name: "Mirror", exact: true }),
+      page.getByRole("button", { name: "Add colour", exact: true }),
+      page.locator(".emblem-editor-recolour"),
+      page.getByRole("button", { name: "half-disc", exact: true }),
+    ]) {
+      const box = await part.boundingBox();
+      expect(box).not.toBeNull();
+      if (box !== null && paneBox !== null) {
+        expect(box.x).toBeGreaterThanOrEqual(paneBox.x);
+        expect(box.x + box.width).toBeLessThanOrEqual(paneBox.x + paneBox.width + 0.5);
+      }
+    }
+    // The cells stay square as they shrink.
+    const grid = await page.locator(".emblem-editor-grid").boundingBox();
+    if (grid !== null) {
+      expect(Math.abs(grid.width - grid.height)).toBeLessThanOrEqual(1);
+    }
+  });
+}

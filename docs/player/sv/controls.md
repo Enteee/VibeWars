@@ -19,7 +19,7 @@ Standardförvalet är **Klassisk**, för GW1-händer. **VibeWars** kastar med v�
 | Nästa fiende (Shift: föregående)  | Tab                         | Tab              |
 | Närmaste fiende                   | C                           | C                |
 | Ditt lags utpekade fiende         | T                           | T                |
-| Dig själv                         | G                           | G                |
+| Dig själv                         | F eller G                   | G                |
 | Visa namn (håll in)               | Shift                       | Shift            |
 | Ljud av                           | M                           | M                |
 | Släpp flagga, relik eller aska    | ingen                       | ingen            |
@@ -38,7 +38,7 @@ Dessa tangenter är fasta:
 ## Mus
 
 - **Vänsterklicka** på marken för att gå dit. Utan Shift går vänsterknappen bara.
-- På kartor med upphöjda plattformar går ett vänsterklick till ytan du ser, och **Alt + vänsterklick** till marken under den. En ring under markören markerar en plattform, en streckad ring marken. Över en tunnel går ett vänsterklick till den nivå du är på, och **Alt + vänsterklick** till den andra.
+- På kartor med upphöjda plattformar går ett vänsterklick till ytan du ser, och **Alt + vänsterklick** till marken under den. En ring under markören markerar en plattform, en streckad ring marken. Över en tunnel går ett vänsterklick till den nivå du är på. **Alt + vänsterklick** går aldrig ovanför den nivå du står på: från marken går det ner i tunneln, och i en tunnel stannar det där.
 - **Högerklicka** på en fiende eller en allierad för att välja den som mål.
   Högerklicka på samma fiende igen, snabbt, för att attackera den.
 - **Högerklicka** på en flagga eller flaggstället, i en gillestrid eller på Barrow Field, för att
@@ -72,7 +72,8 @@ Utanför en match innehåller den övre raden **[?]** (den här Hjälpen), **⚙
 utom Lobby, uppe till höger på skärmen. I ett smalt fönster viks de här ikonerna och
 skärmens andra knappar in i **⋯**; bara dess huvudknapp står kvar utanför.
 ⚙ öppnar Alternativ som ett fönster under raden, med skärmen kvar bakom; Esc, × eller ett klick utanför stänger det. Under **Visning** slår **Belysning** på eller av ljus och skugga på en upplyst karta, direkt, även i en match.
-Hjälp stängs med × uppe till höger, Esc, eller ett nytt tryck på [?].
+[?] öppnar Hjälp på samma sätt, som ett fönster under den med en sidväljare överst; en match fortsätter bakom.
+Hjälp stängs med fönstrets ×, Esc, ett klick utanför, eller ett nytt tryck på [?].
 
 **Dela en beat med din lobby.** I beat-redigeraren (♪, sedan **Ändra**)
 skickar **Dela med lobbyn** det du har skrivit, sparat eller inte, till

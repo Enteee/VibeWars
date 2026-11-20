@@ -109,7 +109,7 @@ den Schaden jedes Teams am gegnerischen Lord. Darunter nennt eine Zeile, wer ein
 Schub erscheint als „Moralschub! +10%“ oder „Moralschub beim Gegner“. Auf dem Kompass markiert ♛ jeden
 Gildenlord, ⚑ jede Flagge und ◎ den Stand.
 
-Guild Hall Isle spielt es.
+Guild Hall Isle (8v8, 6000x2600) spielt es: eine Insel im Meer. Jeder Guild Lord steht oben auf einer Halle, hinter einem Wall; hinaus geht es durch das Torhaus, über den Wall oder einen Steg entlang. Eine Torhaustür öffnet ein Hebel auf dem Wall des Gegners. Der Fahnenständer steht auf einem Podest in der Mitte.
 
 ## Reliktlauf
 
@@ -144,11 +144,13 @@ Broken Tower (4v4 und 8v8, 5400x2800) spielt es: ein gestürzter Turm auf einem 
 
 Hier läuft der Reliktlauf des Aufstiegs der Helden andersherum. Jede Basis hat das Relikt ihres Teams und ihren Geisterhelden, einen Altar gibt es nicht. **Hol das gegnerische Relikt aus dessen Basis und bring es zu deinem eigenen Geisterhelden**, das gibt einen Punkt. Der Geist muss leben und bleibt auf seinem Posten. Dein eigenes Relikt kannst du nicht tragen: Hebst du es dort auf, wo es gefallen ist, geht es nach Hause. Ein Team mit **3 Punkten Vorsprung gewinnt sofort**. Nach 8 Minuten gewinnt das Team mit mehr Punkten, bei Gleichstand das Team, das zuletzt gepunktet hat. Jede Basis belebt alle 2 Minuten ihre Toten und ihren Geist wieder. Bots holen das gegnerische Relikt gemeinsam und bringen es heim.
 
+Cinder Sanctum (8v8, 5600x2800) spielt es: ein Tempel an der Flanke eines Vulkans zwischen zwei Lavaströmen. Überquere sie über eine Brücke oder den Damm zum Heiligtum auf seinem Vorhof; ein Hebel auf dem Vorhof öffnet den verborgenen Gang unter dem Heiligtum, und Aschewände lassen sich zerschlagen. Lava verbrennt.
+
 ## King of the Hill
 
 **Führe deinen Geisterhelden auf den Altar und halte ihn.** Jedes Team hat einen **Geisterhelden** in
 seiner Basis, einen Geist, der mit einer Axt kämpft und den niemand spielt. Der **Altar** ist in der
-Mitte, von beiden Basen gleich weit. In **Threefold Keep** kämpfen drei Teams (zwei, wenn kein drittes frei ist) in einer ummauerten Feste um ihn. Ihre Tore öffnen sich nur von innen, über eine Platte: Der Weg hinein führt um die Feste zu einer offenen Ecke. Höchstens 12 Punkte pro Team, und stehen alle Gegner bei -60 % Moral, gewinnst du sofort. Die **Hall of Heroes**, die King-of-the-Hill-Karte
+Mitte, von beiden Basen gleich weit. In **Threefold Keep** kämpfen drei Teams (zwei, wenn kein drittes frei ist) auf dem Turm einer ummauerten Feste um ihn. Höchstens 12 Punkte pro Team, und stehen alle Gegner bei -60 % Moral, gewinnst du sofort. Die **Hall of Heroes**, die King-of-the-Hill-Karte
 am Ende des Aufstiegs der Helden, hebt ihn auf ein Podest mit Mauern im Westen und Osten, über einen von
 Säulen gesäumten Aufgang im Norden oder Süden. Visiere deinen Geist mit **Rechtsklick** an und drück
 **Space**, damit er dir folgt: Er läuft mit dir und kämpft gegen das, was du bekämpfst. Drück noch einmal
@@ -193,7 +195,7 @@ Zauberreichweite zu kämpfen. Solange dein Team den Altar nicht hält, tötet je
 anderen Teams, sobald er auf dem Altar in ihrer Reichweite steht: Er ist der einzige Gegner, der deinen Geist am
 Einnehmen hindert.
 
-Threefold Keep spielt es.
+Threefold Keep (4v4 und 8v8, 5000x4400) spielt es: eine Feste auf einem Hügel im Hochland, für drei Teams. Steig über die Treppe neben deinem Tor auf den Wehrgang und überquere einen Damm zum Hügel, dann steig zum Altar auf dem Turm. Ein Hebel in jedem Hof öffnet alle vier Tore: deinen Torgang unter der Mauer und das Gewölbe, den langen Weg unter dem Hügel.
 
 ## Punkte erobern
 
@@ -222,7 +224,9 @@ die Uhr.
 Bots verteilen sich auf die Schreine, die dein Team noch nicht besitzt, und stehen darauf, bis sie eingenommen sind.
 Ein Gegner in Zauberreichweite lockt sie nicht weg: Sie gehen auf einen Schrein in Reichweite und kämpfen von dort.
 
-Scarred Earth spielt es: Jeder Schrein steht in einem zerbrochenen Mauerring, offen nach Westen und Osten.
+Scarred Earth (4v4 und 8v8, 5400x2800) spielt es: ein von Kratern zerfurchtes Schlachtfeld in der Dämmerung. Die Schreine stehen auf zerstörten Belagerungstürmen, der mittlere auf dem Deck des großen Turms, jeder neben einem Krater; Hebel auf den Türmen öffnen zwei Gräben unter dem Feld, und zerstörte Palisaden lassen sich zerschlagen.
+
+Im Aufstieg der Helden spielt es The Warden's Gallery (8v8, 5200x2500): eine sonnige Skulpturengalerie unter Oberlichtern. Der mittlere Schrein steht oben auf dem großen Sockel, und jedes Team hat drei nahe seinem Vestibül, einen davon auf einem Sockel; Hebel auf dem großen Sockel öffnen zwei Gewölbe unter dem Boden, und umgestürzte Statuen lassen sich zerschlagen.
 
 ## Team-Lobby
 
@@ -292,7 +296,7 @@ Die Hall lost für jedes Match einen von drei Modi aus: King of the Hill, Relikt
 
 **Das Gewölbe.** Die Hall bildet sich nur alle 12 Minuten nach UTC, zu :00, :12, :24, :36 und :48. Bis dahin wartet deine Gruppe im Gewölbe: Das Warteschlangen-Symbol zeigt die Zeit bis zur nächsten Öffnung und wer die Hall hält. Bei jeder Öffnung trifft der Halter auf bis zu zwei Herausforderer, oder bis zu drei Herausforderer treffen aufeinander, wenn niemand sie hält. Nur Gruppen, die schon vor der Öffnung warten, sind dabei, und wer keinen Platz bekommt, wartet auf die nächste. Ein Halter ohne Gegner behält die Hall und wartet, ohne dass ein Sieg zählt; ein einzelner Herausforderer wartet ebenfalls. Gewinnt eine Gruppe die Hall, sagt jedes geöffnete Spiel, wer sie nun hält: ihr Anführer oder ihr Gildenkürzel, wenn mehr als die Hälfte der Gruppe es teilt.
 
-Jeder Lauf beginnt mit der **Elite-Zaishen-Schlacht**, ohne Warteschlange: Deine Gruppe gegen sechs von Bots gespielte Zaishen (2 Mönche, ein Elementarmagier und 3 weitere). Die Uhr startet, sobald jemand von euch die Startlinie überquert oder der erste Zaishen stirbt, je nachdem, was zuerst geschieht. Tötet ihr alle sechs in unter 30 Sekunden, startet die Gruppe mit +10 % Moral; unter 60 mit +8 %, unter 80 mit +6 %, unter 100 mit +4 %, unter 120 mit +2 %; langsamer gibt es nichts. Nach einem Sieg stellt sich die Gruppe von selbst für die erste Karte an. Fällt die ganze Gruppe oder lebt nach Ablauf der 8 Minuten noch ein Zaishen, ist der Lauf vorbei.
+Jeder Lauf beginnt mit der **Elite-Zaishen-Schlacht**, ohne Warteschlange: Deine Gruppe gegen sechs von Bots gespielte Zaishen (2 Mönche, ein Elementarmagier und 3 weitere). Sie wird in einer zeremoniellen Arena ausgetragen (8v8, 5400x2400): gestufte Tribünen im Norden und Süden, Statuen auf Sockeln auf dem abgesenkten Boden und unter jeder Tribüne ein Gewölbe, dessen Fallgitter ein Hebel auf der gegenüberliegenden Tribüne öffnet. Die Uhr startet, sobald jemand von euch die Startlinie in der Mitte der Arena überquert oder der erste Zaishen stirbt, je nachdem, was zuerst geschieht. Tötet ihr alle sechs in unter 30 Sekunden, startet die Gruppe mit +10 % Moral; unter 60 mit +8 %, unter 80 mit +6 %, unter 100 mit +4 %, unter 120 mit +2 %; langsamer gibt es nichts. Nach einem Sieg stellt sich die Gruppe von selbst für die erste Karte an. Fällt die ganze Gruppe oder lebt nach Ablauf der 8 Minuten noch ein Zaishen, ist der Lauf vorbei.
 
 Jeder Sieg in einem Lauf bringt **Ruhm**: 1, 2, 3, 4, 6, 8, 12, 16, 20, 24, 28, 32, 36 für die ersten dreizehn, danach je 40, höchstens 300 pro Tag (der Tag wechselt um 15:00 UTC). Die Elite-Zaishen-Schlacht bringt keinen. Dein Gesamtruhm ergibt deinen **Heldenrang**, von 1 bei 25 Ruhm bis 15 bei 100.000, angezeigt als ★ und Zahl neben deinem Namen. Unter Optionen > Spieler siehst du beides. Beides wird auf deinem Gerät gespeichert.
 
@@ -303,7 +307,7 @@ beginnt bei 0. Dein eigener Tab merkt sie sich, bis du ihn schließt.
 Das Team wählt einmal, in der Team-Lobby seiner ersten Karte, und behält seinen Team-Build und seine Plätze für den Rest
 des Laufs: Nach einem Sieg meldet es sich ohne Abstimmung und ohne Nehmen wieder an. Wer mitten im Lauf geht, gibt seinen
 Platz frei, aber nicht dessen Build. Wer zwischen den Karten neu zur Gruppe stößt, kann nur die freien Plätze nehmen
-(**Frei: Monk-Build**) und spielt den Build dieses Platzes; einen freien Platz, den niemand nimmt, spielt ein Bot. Eine
+(**Frei: Mönch-Build**) und spielt den Build dieses Platzes; einen freien Platz, den niemand nimmt, spielt ein Bot. Eine
 Niederlage beginnt von vorn: Der nächste Lauf stimmt neu ab. Das Gleiche gilt, wenn du deinem Host in eine andere Gruppe
 folgst, deren Host für den alten Lauf nicht bürgen kann. Die Runde merkt sich der Host deiner Gruppe, und nur, bis du den
 Tab schließt. Eine Lobby des Aufstiegs der Helden, der per Code beigetreten wurde, spielt die Karte von Runde 1.
@@ -312,10 +316,10 @@ Eine Gruppe mit weniger als 8 Spielern geht mit Bots auf den freien Plätzen in 
 
 **Barrow Field** (8v8, 5400x2600) ist eine Arena des Aufstiegs, die du auch in einem Gehosteten Spiel wählen kannst: Priestervernichtung auf einem Moor voller Hügelgräber in der Abenddämmerung, und der Priester erweckt alle 2 Minuten seine Toten. Steig auf ein Hügelgrab, um die Anhöhe zu halten, oder geh den Gräberweg darunter, sobald ein Hebel auf dem fernen Hügelgrab sein Tor öffnet. Trage deine Flagge auf das **Storm Beacon** in der Mitte, und es trifft alle 2,5 Sekunden einen zufälligen Gegner in Hörweite mit 50 Blitzschaden, bis das andere Team dort seine Flagge pflanzt. Jeder Einschlag ist ein Blitz vom Beacon zum Getroffenen, für beide Teams sichtbar.
 
-Drei Aufstiegs-Arenen kannst du auch in einem Gehosteten Spiel wählen: **The Hollow Deep** (8v8 Vernichtung, drei gewundene Tunnel um einen zentralen Felsen), **Blackwater
+Drei Aufstiegs-Arenen kannst du auch in einem Gehosteten Spiel wählen: **The Hollow Deep** (8v8, 6200x2400, Vernichtung in einer dunklen Höhle: Man überquert eine Hängebrücke über einer Schlucht, klettert über einen mittleren Felsabsatz oder nimmt die Gruft darunter, sobald ein Hebel auf einem Felsband ihr Tor öffnet), **Blackwater
 Ford** (8v8, 5200x2800, Priestervernichtung an einer dunklen Flussfurt: Man watet durch eine seichte Furt, überquert die zerbrochene
 Brücke auf ihren Pfeilern über der Mühle oder nimmt einen Durchlass unter der Brücke, sobald ein Hebel an der Mühle
-sein Tor öffnet; der Priester holt alle 2 Minuten seine Toten zurück) und **Mosslit Cairns** (8v8 Punkte erobern, fünf Steinhügel in einem flachen Zickzack zwischen den Basen). Dazu kommt als vierte **The Brazen Causeway** (8v8, 5600x2800, Priestervernichtung auf einem erhöhten Steindamm über einem Sumpf in der Abenddämmerung: Man marschiert über den Damm, sobald ein Hebel im fernen Torhaus sein Bronzetor öffnet, durchquert den Sumpf bis zur Treppe in seiner Mitte oder schlüpft durch einen Durchlass darunter; der Priester holt alle 2 Minuten seine Toten zurück).
+sein Tor öffnet; der Priester holt alle 2 Minuten seine Toten zurück) und **Mosslit Cairns** (8v8, 5400x3000, Punkte erobern auf fünf Steinhügeln, die in der Abenddämmerung vor Moos leuchten: Man erklimmt einen Steinhügel über seine Treppen, hält den großen Steinhügel in der Mitte oder nimmt den Wurzeltunnel unter den südlichen Hügeln, sobald ein Hebel auf einem nördlichen Steinhügel seine Tore öffnet; Wurzelwände lassen sich zerschlagen). Dazu kommt als vierte **The Brazen Causeway** (8v8, 5600x2800, Priestervernichtung auf einem erhöhten Steindamm über einem Sumpf in der Abenddämmerung: Man marschiert über den Damm, sobald ein Hebel im fernen Torhaus sein Bronzetor öffnet, durchquert den Sumpf bis zur Treppe in seiner Mitte oder schlüpft durch einen Durchlass darunter; der Priester holt alle 2 Minuten seine Toten zurück).
 
 Eine Karte kann **Tore** haben: Mauern, die im geschlossenen Zustand Körper, Schüsse und Sicht aufhalten. Stell dich auf die
 Druckplatte eines Tors, um es zu öffnen. Es schließt, wenn niemand mehr auf der Platte steht, schiebt jeden im Durchgang auf
@@ -356,3 +360,19 @@ passt; eine Gruppe ohne gedrückten Chip lässt alles durch. Die Größe ist das
 passt also zu keiner Größe. Die Chips bleiben, wie du sie gelassen hast, bis die Seite neu lädt.
 
 Über den Chips listet der Streifen **Halle der Helden** die letzten 20 Haltephasen auf, die neueste zuerst: den Halter (ein Gildenkürzel oder den Namen des Anführers), die Spieler des Siegerteams, wann der neueste Sieg endete und ab zwei Siegen, wie viele in Folge. Eine Haltephase ist eine ununterbrochene Reihe von Hallen-Siegen desselben Halters. Der Streifen liest die Berichte auf dieser Seite, ignoriert die Chips und bleibt verborgen, wenn keiner davon ein Hallen-Sieg ist. Wie jeder Bericht zeigt er, was der Host des jeweiligen Matches gemeldet hat, und nichts überprüft das.
+
+## Gewertet
+
+Ein Match aus der Warteschlange ohne Bots ist gewertet. Der
+Warteschlangen-Bildschirm und die Team-Lobby sagen es, bevor du dich
+anstellst; ein einziger Bot hält ein Match ungewertet. Wird ein
+gewertetes Match gefunden, unterschreibt jeder Spieler seinen Start,
+und der Bildschirm zeigt bis zu 15 Sekunden **Gewertetes Match wird
+bestätigt…**. Bestätigt jemand nicht, wird das Match abgebrochen und
+alle sind zurück in der Warteschlange. Am Ende unterschreibt jeder
+Spieler das Ergebnis, und die Quittung des Matches wird auf den
+Nostr-Relays veröffentlicht, mit dem öffentlichen Schlüssel und dem
+Charakternamen jedes Spielers; ein Spieler ohne Charakter heißt dort
+Starter. Deine Wertung ändert sich innerhalb einer Stunde. Ein
+gewertetes Match zu verlassen zählt als Niederlage, und der
+Verlassen-Knopf sagt das.

@@ -83,8 +83,10 @@ import {
   type NavDropOff,
   type NavGraph,
   type RouteWaypoint,
+  type Avoid,
   HARMFUL_ZONE_COST,
   shallowWaterZones,
+  walkCost,
   walkIsClear,
 } from "../pathing.js";
 import {
@@ -294,6 +296,7 @@ import {
   idleAt,
 } from "./behaviour.js";
 import { LEVER_WORTH_UNITS } from "./bot/rules/levers.js";
+import { botRoll } from "./bot/rules/shared.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { freshCorpsesWithin, nearestFreshCorpse } from "./corpses.js";
 import { companionSkills, PET_DEATH_GRACE_SECONDS } from "./companions.js";
@@ -1067,6 +1070,14 @@ interface ParticipantRecord extends Participant {
    * `goal`; `undefined` until one is asked for, and once its order ends.
    */
   route: { goal: Vec2; layer: number; waypoints: RouteWaypoint[] } | undefined;
+  /** How a body holds up its follow (#3702); `undefined` while it makes headway. */
+  jam: Jam | undefined;
+  /** The side its last step passed a body on (#3707), kept while bodies stay in its way; `undefined` with none. */
+  passRight: boolean | undefined;
+  /** The body its follow's routes keep clear of after a jam (#3702), until `until`. */
+  avoid: { readonly body: Avoid; readonly until: number } | undefined;
+  /** A goal it gave up, boxed in on the way (#3702): its behaviour picks another until `until`. */
+  jammedGoal: { readonly at: Vec2; readonly layer: number; readonly until: number } | undefined;
   /**
    * Maximum health and energy before morale (#843): the participant's,
    * or its loadout's since the last `rearm`.
@@ -1235,6 +1246,54 @@ function penetration(position: Vec2, other: Vec2, reach: number): number {
  */
 const STALL_FRACTION = 0.1;
 
+/**
+ * A follow held up by a body (#3702): how long it has been, and what it
+ * does about it. Stage 1 sidesteps the body, stage 2 plans round it, and
+ * stage 3 gave the goal up.
+ */
+interface Jam {
+  /** The goal it was held up on the way to. */
+  readonly goal: Vec2;
+  /** When the window of headway being measured began, and how far its way to `goal` was then. */
+  since: number;
+  left: number;
+  stage: 0 | 1 | 2 | 3;
+  /** When it first did something about it. */
+  actedAt: number;
+  /** Where it walks first, in turn, beside the body or back from it, until `detourUntil`. */
+  detour: Vec2[];
+  detourUntil: number;
+  /** Whether `detour` backs off a narrow way, to wait there (#3702). */
+  yielding: boolean;
+  /** Until when it stands, yielding. */
+  holdUntil: number;
+}
+
+/** How long a follower makes no headway against a body before it is jammed (#3702). */
+export const JAM_SECONDS = 0.6;
+
+/** How long a sidestep round a body is kept before it is given up (#3702), so it never flip-flops. */
+const DETOUR_SECONDS = 1.5;
+
+/** How long a re-plan keeps clear of the body that jammed it (#3702). */
+export const AVOID_SECONDS = 2;
+
+/** How long after its first sidestep a still-jammed follower gives up its goal (#3702). */
+export const JAM_GIVE_UP = 3;
+
+/** How long a given-up goal stays given up (#3702). */
+export const JAMMED_GOAL_SECONDS = 5;
+
+/** How long a follower that backs out of a narrow way waits for the other (#3702). */
+const YIELD_SECONDS = 1;
+
+/** How far, in its radii, a follower backs out of a narrow way looking for room to stand aside (#3702). */
+const YIELD_BACK_RADII = 12;
+
+/** A body this far past touching, its centre within 60° of the way on, blocks a follower (#3702). */
+const BLOCK_REACH_UNITS = 4;
+const BLOCK_AHEAD_COS = Math.cos(Math.PI / 3);
+
 /** A walk this close to its goal has arrived (#310). */
 const ARRIVE_UNITS = 1;
 
@@ -1392,6 +1451,22 @@ function walkLength(from: Vec2, route: readonly RouteWaypoint[]): number {
   return total;
 }
 
+/** What walking `route` from `from` costs (#3521): `walkLength`, with each leg priced by its layer's cost zones as the path finder prices it. */
+function walkCostOf(
+  from: Vec2,
+  route: readonly RouteWaypoint[],
+  graphs: readonly NavGraph[],
+): number {
+  let total = 0;
+  let at: RouteWaypoint | undefined;
+  for (const next of route) {
+    total +=
+      at?.teleport === true ? 0 : walkCost(graphs[next.layer]?.zones ?? [], at ?? from, next);
+    at = next;
+  }
+  return total;
+}
+
 /** Turn to face `point`; one exactly underfoot has no direction, so facing stays. */
 function faceToward(record: Participant, point: Vec2): void {
   const dx = point.x - record.position.x;
@@ -1403,6 +1478,40 @@ function faceToward(record: Participant, point: Vec2): void {
 
 /** What an approach, a reach or a sight line measures to: a body, or a breakable wall's nearest point (#3031). */
 type Aim = Pick<ParticipantRecord, "id" | "position" | "layer" | "floors">;
+
+/** One end of a team's way to the foes (#3138): where a body stood, on its layer. */
+interface WayEnd {
+  readonly position: Vec2;
+  readonly layer: number;
+}
+
+/** A team's way to the foes (#3138), as it stood when a pricing began. */
+interface Way {
+  readonly from: WayEnd;
+  readonly to: WayEnd;
+}
+
+/**
+ * A pricing of the levers and breakable walls for bots under way (#3599):
+ * one lever, pair of levers or wall a tick, so no tick pays for them all.
+ */
+interface BotWaysPricing {
+  readonly ways: readonly (Way | undefined)[];
+  /** Each team's way length as the walls stand. */
+  readonly before: readonly number[];
+  /** Per lever priced so far: whether each team can walk to it now. */
+  readonly reached: (readonly boolean[])[];
+  /** Per lever priced so far: what throwing it wins each team. */
+  readonly best: number[][];
+  /** The lever pairs still to price (#3513); `undefined` until every lever is. */
+  pairs: (readonly [number, number])[] | undefined;
+  /** The teams no lever alone is worth the walk for. */
+  short: readonly number[];
+  /** The standing walls still to price, by index. */
+  readonly walls: number[];
+  /** What felling each priced wall wins each team, by index. */
+  readonly wallGains: Map<number, readonly number[]>;
+}
 
 /** The walls of one combination of gates, and the paths round them (#2691). */
 interface WallSet {
@@ -1621,8 +1730,12 @@ export class MatchSimulation {
   readonly #botLevers: BotLever[] = [];
   /** What bots read of the standing breakable walls (#3140): refilled with `#botLevers`. */
   readonly #botBreakables: BotBreakable[] = [];
-  /** The match second `#botLevers` and `#botBreakables` were last filled; -Infinity to refill on the next think. */
+  /** The match second the latest pricing of `#botLevers` and `#botBreakables` began; -Infinity to begin one on the next think. */
   #botWaysAt = Number.NEGATIVE_INFINITY;
+  /** The pricing under way (#3599), if any. */
+  #botWaysPricing: BotWaysPricing | undefined;
+  /** The tick the pricing last took a step on: one a tick. */
+  #botWaysTick = -1;
   /** Shrine scorings gone by (#1378): the next is at `POINT_TICK_SECONDS` times one more. */
   #pointTicks = 0;
   /** When each team last led every other alone on shrine points (#2690), match clock. */
@@ -2065,6 +2178,10 @@ export class MatchSimulation {
       walkSettled: false,
       followGoal: undefined,
       route: undefined,
+      jam: undefined,
+      passRight: undefined,
+      avoid: undefined,
+      jammedGoal: undefined,
       teleportReadyAt: 0,
       resolvedMaxHealth: spec.maxHealth ?? this.#ruleset.combat.baseHealth,
       resolvedMaxEnergy: spec.maxEnergy ?? this.#ruleset.combat.baseEnergy,
@@ -2093,7 +2210,7 @@ export class MatchSimulation {
     // order and the ids are the same every run.
     if (spec.creature === undefined) {
       for (const skill of companionSkills(spec.skillBar)) {
-        this.#summon(record, skill.id, skill.companion, 1, record.position, true);
+        this.#summon(record, skill.id, skill.companion, 1, this.#companionSpawn(record), true);
       }
     }
     return record;
@@ -2221,6 +2338,20 @@ export class MatchSimulation {
         this.#logFired(fireCreationTriggers(owner.combatant, id, this.#triggerContext()));
       }
     }
+  }
+
+  /**
+   * Where `owner`'s companion arrives (#3649): one body's width behind
+   * it, on the side away from the map's centre, where its team came
+   * from; south when it stands on the centre. Not on its feet, where the
+   * push-out would always shove the pet due east.
+   */
+  #companionSpawn(owner: ParticipantRecord): Vec2 {
+    const bounds = this.#bounds;
+    const centre = bounds === undefined ? ZERO : vec2(bounds.width / 2, bounds.height / 2);
+    const away = normalize(sub(owner.position, centre));
+    const gap = this.#ruleset.collision.playerRadius + this.#ruleset.collision.creatureRadius;
+    return add(owner.position, scale(away === ZERO ? vec2(0, 1) : away, gap));
   }
 
   /**
@@ -3248,7 +3379,7 @@ export class MatchSimulation {
     }
     for (const skill of wanted) {
       if (this.#companionOf(record, skill.id) === undefined) {
-        this.#summon(record, skill.id, skill.companion, 1, record.position, true);
+        this.#summon(record, skill.id, skill.companion, 1, this.#companionSpawn(record), true);
       }
     }
   }
@@ -4869,67 +5000,165 @@ export class MatchSimulation {
   /**
    * Each lever (#3138) and standing breakable wall (#3140) as bots read
    * it, and what throwing the lever or felling the wall now would win
-   * each team: how much shorter its way to the foes gets. A team's way
+   * each team: how much cheaper its way to the foes gets to walk. A team's way
    * runs from its living player nearest its centroid to the foe nearest
    * the foes' centroid, each on its own layer, so both ends stand on
-   * ground. At most once a match second, and again after any flip or fall.
+   * ground. A pricing begins at most once a match second, and again after
+   * any flip or fall, and takes one step a tick (#3599): the ways, then
+   * each lever, each pair of levers, each wall. Bots read the last whole
+   * pricing until the next is done.
    */
   #refreshBotWays(): void {
     if (
       (this.#switches.length === 0 && this.#breakables.length === 0) ||
-      this.#elapsedSeconds - this.#botWaysAt < 1
+      this.#botWaysTick === this.#tick
     ) {
       return;
     }
-    this.#botWaysAt = this.#elapsedSeconds;
+    const pricing = this.#botWaysPricing;
+    if (pricing === undefined) {
+      if (this.#elapsedSeconds - this.#botWaysAt >= 1) {
+        this.#botWaysTick = this.#tick;
+        this.#botWaysAt = this.#elapsedSeconds;
+        this.#botWaysPricing = this.#beginBotWays();
+      }
+      return;
+    }
+    this.#botWaysTick = this.#tick;
+    this.#priceBotWays(pricing);
+    if (
+      pricing.reached.length === this.#switches.length &&
+      pricing.pairs?.length === 0 &&
+      pricing.walls.length === 0
+    ) {
+      this.#publishBotWays(pricing.best, pricing.wallGains);
+      this.#botWaysPricing = undefined;
+    }
+  }
+
+  /** A pricing's first step: each team's way, as the walls stand and as they are walked now. */
+  #beginBotWays(): BotWaysPricing {
     const teams = Math.max(-1, ...this.#teams) + 1;
-    const ways = Array.from({ length: teams }, (_, team) => this.#wayToFoes(team));
+    const ways = Array.from({ length: teams }, (_, team): Way | undefined => {
+      const way = this.#wayToFoes(team);
+      return way === undefined
+        ? undefined
+        : {
+            from: { position: { ...way.from.position }, layer: way.from.layer },
+            to: { position: { ...way.to.position }, layer: way.to.layer },
+          };
+    });
     const now = this.#currentWallSet();
-    const before = ways.map((way) =>
-      way === undefined ? Number.POSITIVE_INFINITY : this.#wayLength(now, way),
-    );
-    // What `after` wins each team, if it can walk to `reach` on `layer` now.
-    const gains = (after: WallSet, reach: (from: Vec2) => Vec2, layer: number): number[] =>
+    return {
+      ways,
+      before: ways.map((way) =>
+        way === undefined ? Number.POSITIVE_INFINITY : this.#wayCost(now, way),
+      ),
+      reached: [],
+      best: [],
+      pairs: undefined,
+      short: [],
+      walls: this.#breakables.flatMap((wall, at) => (standing(wall) ? [at] : [])),
+      wallGains: new Map(),
+    };
+  }
+
+  /** One step of `pricing`: the next lever, else the next pair of levers, else the next wall. */
+  #priceBotWays(pricing: BotWaysPricing): void {
+    const { ways, before, reached, best } = pricing;
+    const now = this.#currentWallSet();
+    // How much cheaper `after` makes the way of each team `asked` names:
+    // 0 for the rest, and with no way either way.
+    const shorter = (after: WallSet, asked: readonly boolean[]): number[] =>
       ways.map((way, team) => {
-        if (
-          way === undefined ||
-          now.paths.find(way.from.position, way.from.layer, reach(way.from.position), layer) ===
-            undefined
-        ) {
+        if (way === undefined || asked[team] !== true) {
           return 0;
         }
-        const gain = (before[team] ?? Number.POSITIVE_INFINITY) - this.#wayLength(after, way);
-        // No way to the foes either way: nothing won.
+        const gain = (before[team] ?? Number.POSITIVE_INFINITY) - this.#wayCost(after, way);
         return Number.isNaN(gain) ? 0 : gain;
       });
-    const best = this.#switches.map((lever) =>
-      gains(this.#currentWallSet([lever]), () => lever.position, lever.layer),
-    );
-    // Two gates in series (#3513): neither lever alone opens the way, so a
-    // lever also counts what it wins thrown with any one other, and both
-    // carry that pair's gain. Pairs only, never three; and only for a team
-    // no lever alone is already worth the walk for.
-    const short = ways
-      .map((_, team) => team)
-      .filter((team) => best.every((gain) => (gain[team] ?? 0) < LEVER_WORTH_UNITS));
-    const pairs = short.length === 0 ? [] : this.#switches;
-    pairs.forEach((first, a) => {
-      pairs.slice(a + 1).forEach((second, offset) => {
-        const after = this.#currentWallSet([first, second]);
-        for (const [lever, gain] of [
-          [first, best[a]],
-          [second, best[a + 1 + offset]],
-        ] as const) {
-          const paired = gains(after, () => lever.position, lever.layer);
-          for (const team of short) {
-            const won = paired[team] ?? 0;
-            if (gain !== undefined && won > 0 && won > (gain[team] ?? 0)) {
-              gain[team] = won;
-            }
+    // Whether each team can walk to `reach` on `layer` now: one search per
+    // lever or wall and team, however many combinations it is priced in.
+    const reaches = (reach: (from: Vec2) => Vec2, layer: number): boolean[] =>
+      ways.map(
+        (way) =>
+          way !== undefined &&
+          now.paths.find(way.from.position, way.from.layer, reach(way.from.position), layer) !==
+            undefined,
+      );
+    const lever = this.#switches[reached.length];
+    if (lever !== undefined) {
+      const reachable = reaches(() => lever.position, lever.layer);
+      reached.push(reachable);
+      best.push(shorter(this.#currentWallSet([lever]), reachable));
+      return;
+    }
+    if (pricing.pairs === undefined) {
+      // Two gates in series (#3513): neither lever alone opens the way, so a
+      // lever also counts what it wins thrown with any one other, and both
+      // carry that pair's gain. Pairs only, never three; and only for a team
+      // no lever alone is already worth the walk for.
+      pricing.short = ways
+        .map((_, team) => team)
+        .filter((team) => best.every((gain) => (gain[team] ?? 0) < LEVER_WORTH_UNITS));
+      pricing.pairs =
+        pricing.short.length === 0
+          ? []
+          : this.#switches.flatMap((_, a) =>
+              this.#switches.slice(a + 1).map((_, offset) => [a, a + 1 + offset] as const),
+            );
+    }
+    const pair = pricing.pairs.shift();
+    if (pair !== undefined) {
+      const [a, b] = pair;
+      const first = this.#switches[a];
+      const second = this.#switches[b];
+      if (first === undefined || second === undefined) {
+        return;
+      }
+      const { short } = pricing;
+      // One search per team for the pair, whichever of its levers the team reaches.
+      const won = shorter(
+        this.#currentWallSet([first, second]),
+        ways.map(
+          (_, team) =>
+            short.includes(team) && (reached[a]?.[team] === true || reached[b]?.[team] === true),
+        ),
+      );
+      for (const at of pair) {
+        const gain = best[at];
+        for (const team of short) {
+          const more = reached[at]?.[team] === true ? (won[team] ?? 0) : 0;
+          if (gain !== undefined && more > 0 && more > (gain[team] ?? 0)) {
+            gain[team] = more;
           }
         }
-      });
-    });
+      }
+      return;
+    }
+    const at = pricing.walls.shift();
+    const wall = at === undefined ? undefined : this.#breakables[at];
+    if (at === undefined || wall === undefined) {
+      return;
+    }
+    const standoff = this.#ruleset.collision.playerRadius + 1;
+    pricing.wallGains.set(
+      at,
+      shorter(
+        this.#currentWallSet([], at),
+        reaches((from) => strikePointOf(wall, from, standoff), wall.layer),
+      ),
+    );
+  }
+
+  /**
+   * Fill `#botLevers` and `#botBreakables` from how the levers and walls
+   * stand now, with what a pricing found each wins: nothing where none did.
+   */
+  #publishBotWays(
+    best: readonly (readonly number[])[],
+    wallGains: ReadonlyMap<number, readonly number[]>,
+  ): void {
     this.#botLevers.length = 0;
     this.#switches.forEach((lever, at) => {
       this.#botLevers.push({
@@ -4943,7 +5172,6 @@ export class MatchSimulation {
       });
     });
     this.#botBreakables.length = 0;
-    const standoff = this.#ruleset.collision.playerRadius + 1;
     this.#breakables.forEach((wall, at) => {
       if (!standing(wall)) {
         return;
@@ -4952,13 +5180,20 @@ export class MatchSimulation {
         targetId: breakableTargetId(wall.id),
         field: wall,
         layer: wall.layer,
-        gain: gains(
-          this.#currentWallSet([], at),
-          (from) => strikePointOf(wall, from, standoff),
-          wall.layer,
-        ),
+        gain: wallGains.get(at) ?? [],
       });
     });
+  }
+
+  /**
+   * A lever flipped or a wall fell (#3138, #3140): what bots read is
+   * stale, so until a new pricing is done every lever and wall wins
+   * nothing, and one begins on the next think.
+   */
+  #botWaysChanged(): void {
+    this.#botWaysAt = Number.NEGATIVE_INFINITY;
+    this.#botWaysPricing = undefined;
+    this.#publishBotWays([], new Map());
   }
 
   /** `team`'s two ends of its way to the foes (#3138); `undefined` when either side has nobody living. */
@@ -4993,13 +5228,12 @@ export class MatchSimulation {
     return from === undefined || to === undefined ? undefined : { from, to };
   }
 
-  /** How far `way` walks under `walls` (#3138): Infinity with no route. */
-  #wayLength(
-    walls: WallSet,
-    { from, to }: { readonly from: Participant; readonly to: Participant },
-  ): number {
+  /** What `way` costs to walk under `walls` (#3138, #3521): Infinity with no route. */
+  #wayCost(walls: WallSet, { from, to }: Way): number {
     const route = walls.paths.find(from.position, from.layer, to.position, to.layer);
-    return route === undefined ? Number.POSITIVE_INFINITY : walkLength(from.position, route);
+    return route === undefined
+      ? Number.POSITIVE_INFINITY
+      : walkCostOf(from.position, route, walls.graphs);
   }
 
   /** Put a behaviour's intent through the same calls a player's messages make. */
@@ -5016,6 +5250,7 @@ export class MatchSimulation {
       // The same slowed speed advanceMovement will move it at, so a
       // crippled dummy plans with the step it will really take.
       stepUnits: this.#stepUnits(record, dt),
+      touchUnits: (other) => this.#radiusOf(record) + this.#radiusOf(other),
       check: (skillId, targetId) => {
         const skill = getSkill(skillId);
         return skill === undefined
@@ -5033,6 +5268,10 @@ export class MatchSimulation {
         );
       },
       calledTargetId: this.#calledTargets.get(record.combatant.team),
+      jammedGoal:
+        record.jammedGoal !== undefined && this.#elapsedSeconds < record.jammedGoal.until
+          ? record.jammedGoal
+          : undefined,
       sees: (point, layer = record.layer) =>
         this.#seesAcross(record.position, record.layer, point, layer),
       seesBetween: (from, to, fromLayer, toLayer) => this.#seesAcross(from, fromLayer, to, toLayer),
@@ -5050,6 +5289,20 @@ export class MatchSimulation {
         const route = this.#paths.find(record.position, record.layer, to, layer);
         return route === undefined ? Number.POSITIVE_INFINITY : walkLength(record.position, route);
       },
+      leverHolder: (targetId) => {
+        for (const other of this.#participants.values()) {
+          if (
+            other.combatant.team === record.combatant.team &&
+            !other.combatant.dead &&
+            other.behaviour?.kind === "play-build" &&
+            other.cursor.lever?.targetId === targetId &&
+            other.cursor.lever.until > this.#elapsedSeconds
+          ) {
+            return other.id;
+          }
+        }
+        return undefined;
+      },
     });
     this.setInputDirection(record.id, intent.moveDirection);
     const following = record.followGoal !== undefined;
@@ -5063,6 +5316,7 @@ export class MatchSimulation {
           };
     if (following && record.followGoal === undefined) {
       record.route = undefined;
+      record.jam = undefined;
     }
     // A move, as a held direction is: it ends the attack and the cast.
     if (record.followGoal !== undefined) {
@@ -6295,6 +6549,200 @@ export class MatchSimulation {
   }
 
   /**
+   * Whether a body holds up `record`'s follow to `goal`, its next
+   * waypoint `next`, and what it does about it (#3702). Every
+   * `JAM_SECONDS` its headway is measured: under `STALL_FRACTION` of
+   * what its speed allows, with a body it cannot walk through just ahead,
+   * it is jammed, and each such window takes it a stage on. Any other
+   * window ends the jam. A body that moves off in time is never acted on.
+   */
+  #watchJam(
+    record: ParticipantRecord,
+    goal: Vec2,
+    next: Vec2,
+    left: number,
+    passing: string | undefined,
+  ): void {
+    const now = this.#elapsedSeconds;
+    const jam = (record.jam ??= {
+      goal,
+      since: now,
+      left,
+      stage: 0,
+      actedAt: now,
+      detour: [],
+      detourUntil: now,
+      yielding: false,
+      holdUntil: now,
+    });
+    const seconds = now - jam.since;
+    if (seconds < JAM_SECONDS) {
+      return;
+    }
+    const allowed = this.#ruleset.movement.maxSpeedUnitsPerSecond * this.#speedOf(record) * seconds;
+    const headway = jam.left - left >= STALL_FRACTION * allowed;
+    jam.since = now;
+    jam.left = left;
+    if (headway) {
+      record.jam = undefined;
+      return;
+    }
+    // Held up by a wall, or shuffling beside a body: not jammed, nor free of it yet.
+    const blocker = this.#blockerAhead(record, next, passing);
+    if (blocker === undefined) {
+      return;
+    }
+    const radii = this.#radiusOf(record) + this.#radiusOf(blocker);
+    if (jam.stage === 0) {
+      jam.actedAt = now;
+      const way = normalize(sub(next, record.position));
+      const beside = this.#sidestep(record, blocker, way, radii);
+      if (beside !== undefined) {
+        jam.stage = 1;
+        jam.detour = [beside];
+        jam.detourUntil = now + DETOUR_SECONDS;
+        return;
+      }
+      // No room either side. Two followers face to face in a narrow way: one
+      // yields. A follower always has a jam, so this asks only that both follow.
+      if (blocker.jam !== undefined && this.#yields(record, blocker)) {
+        jam.stage = 1;
+        jam.detour = this.#standAside(record, way, radii);
+        jam.detourUntil = now + 2 * DETOUR_SECONDS;
+        jam.yielding = true;
+        if (jam.detour.length === 0) {
+          jam.holdUntil = now + YIELD_SECONDS;
+        }
+        return;
+      }
+    }
+    if (jam.stage <= 1) {
+      // Plan round the body: it costs, but a way past it still goes.
+      jam.stage = 2;
+      record.avoid = {
+        body: { at: blocker.position, layer: blocker.layer, radius: radii },
+        until: now + AVOID_SECONDS,
+      };
+      record.route = undefined;
+      return;
+    }
+    if (jam.stage === 2 && now - jam.actedAt >= JAM_GIVE_UP) {
+      jam.stage = 3;
+      record.jammedGoal = {
+        at: jam.goal,
+        layer: record.followGoal?.layer ?? record.layer,
+        until: now + JAMMED_GOAL_SECONDS,
+      };
+    }
+  }
+
+  /** The nearest body `record` cannot walk through just ahead of it, on its way `next` (#3702). */
+  #blockerAhead(
+    record: ParticipantRecord,
+    next: Vec2,
+    passing: string | undefined,
+  ): ParticipantRecord | undefined {
+    const way = normalize(sub(next, record.position));
+    const radius = this.#radiusOf(record);
+    let nearest: ParticipantRecord | undefined;
+    let nearestGap = Number.POSITIVE_INFINITY;
+    for (const [otherId, other] of this.#participants) {
+      if (
+        otherId === record.id ||
+        otherId === passing ||
+        other.layer !== record.layer ||
+        other.combatant.dead ||
+        this.#walksThrough(record, other)
+      ) {
+        continue;
+      }
+      const to = sub(other.position, record.position);
+      const gap = distance(other.position, record.position);
+      if (
+        gap <= radius + this.#radiusOf(other) + BLOCK_REACH_UNITS &&
+        gap < nearestGap &&
+        (gap === 0 || dot(to, way) >= BLOCK_AHEAD_COS * gap)
+      ) {
+        nearest = other;
+        nearestGap = gap;
+      }
+    }
+    return nearest;
+  }
+
+  /**
+   * A point beside `blocker` and a step past it, for `record` walking
+   * `way` (#3702): on the side whose point it can stand on and walk to,
+   * the right if both, as `steerAround` passes. Wide first, then
+   * shoulder to shoulder; `undefined` when neither side has room.
+   */
+  #sidestep(
+    record: ParticipantRecord,
+    blocker: ParticipantRecord,
+    way: Vec2,
+    radii: number,
+  ): Vec2 | undefined {
+    // Right of travel, y growing downward.
+    const right = vec2(-way.y, way.x);
+    const past = scale(way, radii);
+    for (const wide of [2, 1]) {
+      for (const side of [1, -1]) {
+        const point = add(add(blocker.position, scale(right, side * wide * radii)), past);
+        if (this.#clearStep(record, point)) {
+          return point;
+        }
+      }
+    }
+    return undefined;
+  }
+
+  /**
+   * Where `record`, backing out of a narrow way it walks `way` along, can
+   * stand aside for a body coming through (#3702): back along it a radius
+   * at a time, up to `YIELD_BACK_RADII`, to the first spot with room for
+   * `radii` beside its line, the right first. The way back, then that
+   * spot; with no such spot, as far back as it can stand.
+   */
+  #standAside(record: ParticipantRecord, way: Vec2, radii: number): Vec2[] {
+    const graph = this.#graphOn(record.layer);
+    const radius = this.#radiusOf(record);
+    const right = vec2(-way.y, way.x);
+    let last: Vec2 | undefined;
+    for (let back = 1; back <= YIELD_BACK_RADII; back += 1) {
+      const behind = nearestStandable(graph, add(record.position, scale(way, -back * radius)));
+      if (!isStandable(graph, behind)) {
+        continue;
+      }
+      for (const side of [1, -1]) {
+        const aside = add(behind, scale(right, side * radii));
+        if (isStandable(graph, aside) && walkIsClear(graph, behind, aside)) {
+          return [behind, aside];
+        }
+      }
+      last = behind;
+    }
+    return last === undefined ? [] : [last];
+  }
+
+  /** Whether `record` can walk straight to `point` on its layer and stand there, as `#route` asks. */
+  #clearStep(record: ParticipantRecord, point: Vec2): boolean {
+    const graph = this.#graphOn(record.layer);
+    return isStandable(graph, point) && walkIsClear(graph, record.position, point);
+  }
+
+  /**
+   * Whether `record` is the one of it and `other` that backs out of a
+   * narrow way (#3702): the lower of two rolls on a hash of the pair, so
+   * neither team nor id order decides.
+   */
+  #yields(record: ParticipantRecord, other: ParticipantRecord): boolean {
+    const pair = record.id < other.id ? `${record.id}:${other.id}` : `${other.id}:${record.id}`;
+    const mine = botRoll(this.#seed, 0, `yield:${pair}:${record.id}`);
+    const theirs = botRoll(this.#seed, 0, `yield:${pair}:${other.id}`);
+    return mine < theirs;
+  }
+
+  /**
    * The way from `record` to `goal` round walls, as `find` gives it,
    * but planned again only when it must (#1157): with no route yet, once
    * `goal` is `REPLAN_GOAL_UNITS` from the goal it was planned to, or
@@ -6308,6 +6756,7 @@ export class MatchSimulation {
     record: ParticipantRecord,
     goal: Vec2,
     layer: number,
+    avoid?: readonly Avoid[],
   ): readonly RouteWaypoint[] | undefined {
     const route = record.route;
     if (route?.layer === layer && distance(goal, route.goal) <= REPLAN_GOAL_UNITS) {
@@ -6344,7 +6793,13 @@ export class MatchSimulation {
         }
       }
     }
-    const waypoints = this.#paths.find(record.position, record.layer, goal, layer);
+    const waypoints = this.#paths.find(
+      record.position,
+      record.layer,
+      goal,
+      layer,
+      avoid === undefined ? undefined : { avoid },
+    );
     record.route = waypoints === undefined ? undefined : { goal, layer, waypoints };
     return waypoints;
   }
@@ -6404,11 +6859,31 @@ export class MatchSimulation {
       record.route = undefined;
       return "arrived";
     }
-    const next = this.#route(
-      record,
-      this.#chaseGoal(target.position, target.layer),
-      target.layer,
-    )?.[0];
+    const goal = this.#chaseGoal(target.position, target.layer);
+    // As near the target as the spot nearest it the graph has room for, or
+    // within a step of that, and still short of it: the target stands by a
+    // wall where the graph says no body fits, but one does. Walking on to
+    // that spot, it would step past it and back every tick, or off the
+    // graph and back, and never arrive (#3707); so it walks on at the
+    // target, which a wall stops if one is in the way.
+    const walkOn =
+      target.layer === record.layer &&
+      distance(record.position, target.position) <=
+        distance(goal, target.position) + this.#stepUnits(record, dt);
+    // Walking on, it may stand off the graph, where `#route` would plan
+    // afresh every tick; the one-leg route it walked on by is kept instead.
+    const kept = record.route;
+    const path =
+      walkOn &&
+      kept?.layer === target.layer &&
+      kept.waypoints.length === 1 &&
+      distance(goal, kept.goal) <= REPLAN_GOAL_UNITS
+        ? kept.waypoints
+        : this.#route(record, goal, target.layer);
+    let next: Vec2 | undefined = path?.[0];
+    if (next !== undefined && path?.length === 1 && walkOn) {
+      next = target.position;
+    }
     if (next === undefined) {
       // No way there, this tick. It has to last before the approach ends
       // (#218); meanwhile, on its own layer, steer straight at the target,
@@ -6425,11 +6900,15 @@ export class MatchSimulation {
     // A path that leads nowhere counts as none: an approach that cannot
     // move, boxed in or with a body in a doorway, ends as unreachable
     // too. One held is neither lost nor progress.
-    const step = this.#stepToward(record, next, target.id, false, dt);
+    const step = this.#stepToward(record, next, target.id, next === target.position, dt);
     if (step === "stalled") {
       if (this.#stalledFor(progress, dt)) {
         record.route = undefined;
         return "unreachable";
+      }
+      if (next === target.position) {
+        // A wall stops the walk on: the next tick plans round it.
+        record.route = undefined;
       }
       return "walking";
     }
@@ -6487,11 +6966,31 @@ export class MatchSimulation {
     // The same speed for less of the tick: on the goal, never past it.
     const asked = land ? Math.min(full, left) : full;
     const seconds = asked < full ? (dt * asked) / full : dt;
-    this.advanceMovement(record, steerAround(before, next, radius, this.#bodies), seconds);
+    let steer = steerAround(before, next, radius, this.#bodies, record.passRight);
+    // A side picked afresh that takes it out of sight of `next`, round a
+    // corner, is the other side's if that one keeps it in sight (#3707):
+    // the route would only send it back, and steering out again, it would
+    // never get on.
+    if (steer.passRight !== undefined && record.passRight === undefined) {
+      const graph = this.#graphOn(record.layer);
+      const sees = (direction: Vec2) =>
+        walkIsClear(graph, add(before, scale(normalize(direction), full)), next);
+      if (!sees(steer.direction)) {
+        const other = steerAround(before, next, radius, this.#bodies, !steer.passRight);
+        if (sees(other.direction)) {
+          steer = other;
+        }
+      }
+    }
+    this.advanceMovement(record, steer.direction, seconds);
     if (!(asked > 0)) {
+      record.passRight = steer.passRight;
       return "held";
     }
-    return distance(before, record.position) < STALL_FRACTION * asked ? "stalled" : "moved";
+    const stalled = distance(before, record.position) < STALL_FRACTION * asked;
+    // A side kept into a wall is let go: the next step picks again.
+    record.passRight = stalled ? undefined : steer.passRight;
+    return stalled ? "stalled" : "moved";
   }
 
   /** How far `record` walks in `dt` at its speed now, slowed or not. */
@@ -6638,27 +7137,68 @@ export class MatchSimulation {
    * click-to-walk takes it, bent round bodies but `passing`'s. With no
    * way there it stands still, and asks again next tick; but a body
    * squeezed where it cannot stand steers straight at the point, which
-   * is what shoves it back out (#211). No stall rule: the behaviour
-   * re-decides every tick.
+   * is what shoves it back out (#211). A body that holds it up jams it
+   * (#3702): see `#watchJam`.
    */
   #advanceFollow(record: ParticipantRecord, dt: number): void {
     const goal = record.followGoal;
     if (goal === undefined || record.combatant.attack !== undefined) {
       return;
     }
+    const point = nearestStandable(this.#graphOn(goal.layer), goal.point);
+    const now = this.#elapsedSeconds;
+    if (record.jam !== undefined && distance(record.jam.goal, point) > REPLAN_GOAL_UNITS) {
+      record.jam = undefined;
+    }
+    const jam = record.jam;
+    if (jam !== undefined && now < jam.holdUntil) {
+      return;
+    }
+    if (jam !== undefined && jam.detour.length > 0) {
+      const at = jam.detour[0];
+      if (at !== undefined && distance(record.position, at) <= this.#radiusOf(record) / 2) {
+        jam.detour.shift();
+      }
+      const on = jam.detour[0];
+      if (on !== undefined && now < jam.detourUntil) {
+        this.#stepToward(record, on, goal.passing, true, dt);
+        return;
+      }
+      // At its end, or out of time: headway is still measured from where
+      // the jam began, so a sidestep and back is none.
+      jam.detour = [];
+      jam.since = now;
+      if (jam.yielding) {
+        jam.yielding = false;
+        jam.holdUntil = now + YIELD_SECONDS;
+        return;
+      }
+    }
+    if (record.avoid !== undefined && now >= record.avoid.until) {
+      record.avoid = undefined;
+    }
     const path = this.#route(
       record,
-      nearestStandable(this.#graphOn(goal.layer), goal.point),
+      point,
       goal.layer,
+      record.avoid === undefined ? undefined : [record.avoid.body],
     );
     const next = path?.[0];
     if (next !== undefined) {
       this.#stepToward(record, next, goal.passing, path?.length === 1, dt);
+      this.#watchJam(record, point, next, walkLength(record.position, path ?? []), goal.passing);
     } else if (
       goal.layer === record.layer &&
       !isStandable(this.#graphOn(record.layer), record.position)
     ) {
       this.advanceMovement(record, sub(goal.point, record.position), dt);
+      this.#watchJam(
+        record,
+        point,
+        goal.point,
+        distance(record.position, goal.point),
+        goal.passing,
+      );
     }
   }
 
@@ -6897,7 +7437,7 @@ export class MatchSimulation {
         continue;
       }
       this.#switches[at] = next;
-      this.#botWaysAt = Number.NEGATIVE_INFINITY;
+      this.#botWaysChanged();
       for (const kind of ["gates", "teleports", "decks", "lifts"] as const) {
         for (const target of next[kind]) {
           toggles[kind].set(target, (toggles[kind].get(target) ?? 0) + 1);
@@ -7658,7 +8198,7 @@ export class MatchSimulation {
       critical: false,
     });
     if (!standing(next)) {
-      this.#botWaysAt = Number.NEGATIVE_INFINITY;
+      this.#botWaysChanged();
       this.#refreshWalls([], []);
     }
   }
@@ -9760,6 +10300,9 @@ export class MatchSimulation {
     this.#refreshFloors(record);
     record.walkGoal = undefined;
     record.route = undefined;
+    record.jam = undefined;
+    record.avoid = undefined;
+    record.passRight = undefined;
     record.history.clear();
     this.#stepStart.set(record.id, position);
   }
@@ -10538,7 +11081,8 @@ export class MatchSimulation {
     );
     // Off a drop-off, it is on the layer below from this step (#3069),
     // where it stepped: pushed out there, not held at the edge above.
-    if (this.#dropsOff(start, position, record.layer)) {
+    const dropped = this.#dropsOff(start, position, record.layer);
+    if (dropped) {
       record.layer -= 1;
       this.#refreshFloors(record);
     }
@@ -10570,6 +11114,12 @@ export class MatchSimulation {
       }
     }
 
+    // A step off pushed back over the deck it left never left it (#3700).
+    if (dropped && this.#isOnLayer(position, record.layer + 1)) {
+      this.#undrop(record, dropped);
+      return;
+    }
+
     // A doorway a body stands in stays held (#291): a move that ends any
     // deeper inside a living body than it started is refused, so hugging
     // the wall never squeezes past. Per body and against the start, so two
@@ -10588,6 +11138,7 @@ export class MatchSimulation {
         penetration(position, other.position, reach) >
         penetration(start, other.position, reach) + 1e-6
       ) {
+        this.#undrop(record, dropped);
         return;
       }
     }
@@ -10597,6 +11148,18 @@ export class MatchSimulation {
     if (moved) {
       this.#refreshFloors(record);
       this.#climb(record, direction);
+    }
+  }
+
+  /**
+   * `record` back on the deck it stepped off this step, when the step is
+   * refused (#3700): left below at its start, it would stand inside the
+   * wall under the edge, for good.
+   */
+  #undrop(record: ParticipantRecord, dropped: boolean): void {
+    if (dropped) {
+      record.layer += 1;
+      this.#refreshFloors(record);
     }
   }
 
@@ -10611,7 +11174,8 @@ export class MatchSimulation {
   /**
    * Whether `mover` walks through `other` rather than round it: its own
    * team's spirit, or any of its own team while it carries a relic
-   * (#2581), so an escort on its route never holds the run up.
+   * (#2581), so an escort on its route never holds the run up. An owner
+   * and its pet block each other, as in GW1 PvP (#3666).
    */
   #walksThrough(mover: ParticipantRecord, other: ParticipantRecord): boolean {
     return (
@@ -10623,7 +11187,7 @@ export class MatchSimulation {
 
   /**
    * One pass of push-outs for `mover`, a body of `radius` at `position`:
-   * bodies, bar its own team's spirits and those in `passing`, then
+   * bodies, bar those it walks through and those in `passing`, then
    * walls, then the edge.
    */
   #pushOut(
@@ -10723,6 +11287,9 @@ export class MatchSimulation {
     record.inputDirection = ZERO;
     record.walkGoal = undefined;
     record.route = undefined;
+    record.jam = undefined;
+    record.avoid = undefined;
+    record.passRight = undefined;
     record.interact = undefined;
     record.respawnInSeconds = 0;
     record.combatant.cast.cancelCast();

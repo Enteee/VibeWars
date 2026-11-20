@@ -6,6 +6,10 @@ Nepotrebuješ účet a nič neinštaluješ: hra beží v tejto karte prehliadač
 VibeWars potrebuje klávesnicu a myš. Na telefóne ani na čisto dotykovom
 tablete nefunguje: otvor ju na počítači.
 
+## Výučba
+
+Keď VibeWars otvoríš prvýkrát, ponúkne ti krátku výučbu: prechádzku kaňonom, ktorá ťa naučí pohybovať sa a bojovať. Potom pokračuje v menu, krok za krokom: zmeň zameranie svojej postavy, zostav tím pre dvoch, pozri sa, na čo slúži každý režim, a zaraď ten tím do radu na prvý zápas 2v2 v Tímovej aréne. Kým krok ukazuje na ovládací prvok, zvyšok menu je stmavený. Výučbu môžeš kedykoľvek preskočiť tlačidlom **Preskočiť výučbu**.
+
 ## Lišta režimov
 
 Lišta na ľavej strane hlavnej obrazovky obsahuje
@@ -79,6 +83,14 @@ Zatvorením karty počas čakania okamžite opustíš frontu.
 
 Keď sa zápas skončí, môžeš zvoliť **Znova do fronty** alebo **Zostať spolu**
 s tímom, s ktorým si práve hral.
+
+Vedľa skóre rozprávajú dva grafy priebeh zápasu v čase. **Ty** kreslí tvoje
+spôsobené poškodenie, prijaté poškodenie, liečenie a Energiu; **Tímy** kreslí
+zásobu zdravia každého tímu nad jeho celkovým poškodením. Značky pod časovou
+osou ukazujú zabitia, smrti, prerušenia, obsadenia a oživenia: ukáž na jednu
+alebo na ňu prejdi klávesom Tab a prečítaš si, čo sa stalo. Stlačením položky
+legendy skryješ alebo zobrazíš jej čiaru. Na telefóne sú grafy pod skóre, ktoré
+ukazuje teba a dvoch ďalších, kým nestlačíš **Zobraziť všetko**.
 
 ## Hostiť zápas alebo sa pripojiť
 
@@ -160,8 +172,8 @@ Tímovej aréne aj počtom hľadajúcich tímov vrátane tvojho: `2 tímy hľada
 **Opustiť frontu** tam má len hostiteľ. Zatvorením karty hostiteľa družina
 okamžite opustí frontu. Keď sa objaví iný tím vo fronte toho istého režimu,
 hráte proti nemu na jednej z máp režimu, každá strana so svojimi buildmi, a
-potom sa vrátite do svojho lobby. Hostiteľ môže kedykoľvek opustiť frontu v okne krúžku; hosť, ktorý odíde, vyradí z fronty celú družinu. Ak sa
-do minúty neobjaví žiadny iný tím, hostiteľ môže stlačiť aj
+potom sa vrátite do svojho lobby. Hostiteľ môže kedykoľvek opustiť frontu v okne krúžku; hosť, ktorý odíde, vyradí z fronty celú družinu. Po
+10 s vo fronte môže hostiteľ v okne krúžku stlačiť aj
 **Hrať proti botom**: zápas vo vlastnom lobby proti náhodnému
 prednastavenému tímu botov,
 okrem [Výstupu hrdinov](modes.md#výstup-hrdinov), ktorý čaká na tím
@@ -175,12 +187,13 @@ je tvoje bez ohľadu na to, čo hráš. Hra ti pri prvej návšteve dá
 prázdne, hráš ako `Hráč`. Vedľa zadaj **Značku cechu** s 2 až 4 písmenami
 alebo číslicami a každý ju uvidí za tvojím menom, napríklad
 `Ente [VIBE]`. So zadanou značkou sa pod ňou objaví návrhár **Cechový plášť**:
-vyber farbu plášťa, farbu lemu a znak a tvoje telo bude plášť nosiť v každom
+vyber ľubovoľnú farbu plášťa a lemu, nakresli znak a tvoje telo bude plášť nosiť v každom
 zápase: keď stojíš, zloží sa do tenkého pásu na okraji, a keď sa pohybuješ,
-veje za tebou. Ukazujú ho aj tvoje postavy v menu. **Bez plášťa** ho zloží.
+veje za tebou. Ukazujú ho aj tvoje postavy v menu. **Bez plášťa** ho zloží. Postava ukazuje plášť tak, ako vyzerá v hre. Farba príliš blízka modrej tvojho tímu alebo červenej tvojich nepriateľov sa pri kreslení trochu odkloní, aby žiadny plášť nevyzeral ako tím; postava ho ukazuje tak, ako ho uvidia všetci.
 
-Zmena platí od ďalšieho lobby, ku ktorému sa pripojíš, alebo od ďalšieho
-nového: to, v ktorom už si, si ponechá to, s čím si sa pripojil.
+Zmena platí okamžite pre lobby, v ktorom si.
+
+**Nakresli si znak.** Mriežka znaku 16×16 je vždy pod farbami plášťa a lemu. Vyber farbu alebo **Prázdne** a kresli nástrojom **Ceruzka**, gumuj nástrojom **Guma** alebo vyfarbi plochu nástrojom **Výplň**. **Pridať farbu** dá znaku ďalšiu farbu, až 15, a výber farby vedľa nich zmení zvolenú farbu aj so všetkým, čo je ňou nakreslené. **Začať od** položí na mriežku jeden z ôsmich tvarov vo zvolenej farbe. **Zrkadliť** maľuje ľavú a pravú polovicu naraz. **Vymazať** mriežku vyprázdni a **Späť** vráti krok. Malý náhľad vedľa mriežky ukazuje znak taký veľký ako v zápase. Každý ťah sa uloží, hneď ako ho dokončíš. Šípky a medzerník kreslia aj z klávesnice.
 
 **Kopírovať odkaz na cech** pod návrhárom plášťa skopíruje odkaz s tvojou značkou a plášťom. Kto ho otvorí, dostane otázku **Pridať sa do cechu [VIBE]?**: **Pridať sa** mu dá tvoju značku a plášť, **Nie** nič nezmení. Taký odkaz môže poslať ktokoľvek a značku nikto nevlastní, preto sa hra vždy najprv opýta.
 

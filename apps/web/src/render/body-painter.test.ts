@@ -1,3 +1,4 @@
+import { packEmblem } from "@vibewars/game-protocol";
 import { describe, expect, it } from "vitest";
 
 import { REST_FRAME } from "./attack-clock.js";
@@ -13,7 +14,7 @@ import {
   type StandingBody,
 } from "./body-painter.js";
 import { newCapeMotion, stepCapeMotion } from "./cape-motion.js";
-import type { CapeLook } from "./cape-shape.js";
+import { capeLook, presetEmblem, type CapeLook } from "./cape-shape.js";
 
 /** A painter that writes down every call, rounded so the record is stable. */
 function recorder(): { readonly painter: Painter; readonly calls: string[] } {
@@ -55,7 +56,12 @@ const BODY: StandingBody = {
   cape: undefined,
 };
 
-const LOOK: CapeLook = { main: 0xa078e0, trim: 0xf2f2f2, emblem: "diamond" };
+const LOOK: CapeLook = capeLook({
+  main: "a078e0",
+  trim: "f2f2f2",
+  emblemColours: ["f2f2f2"],
+  emblem: packEmblem(presetEmblem("diamond")),
+});
 
 function paint(body: StandingBody): string[] {
   const { painter, calls } = recorder();
@@ -150,7 +156,7 @@ describe("a body in a form (#3229)", () => {
     }
   });
 
-  it("tones a cape's colours to ash and keeps its emblem", () => {
+  it("tones a cape's colours to ash, its emblem's too, and keeps its emblem's grid (#3554)", () => {
     const ash = ashCape(LOOK);
     expect(ash.emblem).toBe(LOOK.emblem);
     const distance = (a: number, b: number): number =>
@@ -158,6 +164,10 @@ describe("a body in a form (#3229)", () => {
         ...[16, 8, 0].map((shift) => Math.abs(((a >> shift) & 0xff) - ((b >> shift) & 0xff))),
       );
     expect(distance(ash.main, ASH)).toBeLessThan(distance(LOOK.main, ASH) / 2);
+    expect(ash.palette).toHaveLength(LOOK.palette.length);
+    for (const [index, colour] of LOOK.palette.entries()) {
+      expect(distance(ash.palette[index] ?? 0, ASH)).toBeLessThan(distance(colour, ASH) / 2);
+    }
     expect(distance(ash.trim, ASH)).toBeLessThan(distance(LOOK.trim, ASH) / 2);
     expect(ash.main).not.toBe(ash.trim);
   });

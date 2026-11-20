@@ -1,6 +1,7 @@
-import { CAPE_COLOURS, CAPE_EMBLEMS } from "@vibewars/game-protocol";
+import { EMBLEM_GRID, packEmblem } from "@vibewars/game-protocol";
 import { describe, expect, it } from "vitest";
 
+import { EMBLEM_PRESET_NAMES, presetEmblem } from "../render/cape-shape.js";
 import { guildLink } from "../ui/player-section.js";
 import {
   MAX_PASTED_LINK_LENGTH,
@@ -118,17 +119,43 @@ describe("parseGuildFragment (#3167)", () => {
   const here = { origin: "https://vibewars.example", pathname: "/play/" };
   const hashOf = (url: string): string => new URL(url).hash;
 
-  it("reads back every colour and emblem guildLink writes", () => {
-    for (const colour of CAPE_COLOURS) {
-      for (const emblem of CAPE_EMBLEMS) {
-        const cape = { main: colour, trim: "black", emblem } as const;
-        expect(parseGuildFragment(hashOf(guildLink("Vw", cape, here)))).toEqual({
-          kind: "guild",
-          tag: "Vw",
-          cape,
-          rest: "",
-        });
-      }
+  /** 15 emblem colours (#3628), each its own. */
+  const COLOURS = Array.from({ length: 15 }, (_, index) =>
+    (index * 0x111111).toString(16).padStart(6, "0"),
+  );
+  /** An emblem grid of every pixel value (#3554), each colour in order of first use. */
+  const GRID = packEmblem(Array.from({ length: EMBLEM_GRID * EMBLEM_GRID }, (_, i) => i % 16));
+  /** `GRID`'s colours as a link runs them together. */
+  const RUN = COLOURS.join("");
+
+  it("reads back every starting emblem guildLink writes", () => {
+    for (const name of EMBLEM_PRESET_NAMES) {
+      const cape = {
+        main: "e6c04a",
+        trim: "23272e",
+        emblemColours: ["a078e0"],
+        emblem: packEmblem(presetEmblem(name)),
+      };
+      expect(parseGuildFragment(hashOf(guildLink("Vw", cape, here)))).toEqual({
+        kind: "guild",
+        tag: "Vw",
+        cape,
+        rest: "",
+      });
+    }
+  });
+
+  it("reads back a grid of every pixel value in 15 colours, and a blank one (#3554, #3628)", () => {
+    for (const cape of [
+      { main: "2fb8a0", trim: "e86fb4", emblemColours: COLOURS, emblem: GRID },
+      { main: "2fb8a0", trim: "e86fb4", emblemColours: [], emblem: packEmblem([]) },
+    ]) {
+      expect(parseGuildFragment(hashOf(guildLink("VIBE", cape, here)))).toEqual({
+        kind: "guild",
+        tag: "VIBE",
+        cape,
+        rest: "",
+      });
     }
   });
 
@@ -153,13 +180,20 @@ describe("parseGuildFragment (#3167)", () => {
       "V!B",
       "VIBES",
       "",
-      "VW.gold",
-      "VW.gold.black",
-      "VW.gold.black.cross.disc",
-      "VW.mauve.black.cross",
-      "VW.gold.mauve.cross",
-      "VW.gold.black.star",
-      "VW.Gold.black.cross",
+      "VW.e6c04a",
+      "VW.e6c04a.23272e",
+      `VW.e6c04a.23272e.${GRID}`,
+      `VW.e6c04a.23272e.${GRID}.${RUN}.${RUN}`,
+      `VW.gold.23272e.${GRID}.${RUN}`,
+      `VW.e6c04a.black.${GRID}.${RUN}`,
+      `VW.E6C04A.23272e.${GRID}.${RUN}`,
+      `VW.e6c04a.23272e.${GRID}.${RUN.toUpperCase()}`,
+      `VW.e6c04a.23272e.${GRID}.${RUN.slice(1)}`,
+      `VW.e6c04a.23272e.${GRID}.${RUN.slice(6)}`,
+      `VW.e6c04a.23272e.${GRID}.${RUN}ffffff`,
+      `VW.#e6c04a.23272e.${GRID}.${RUN}`,
+      "VW.e6c04a.23272e.cross.",
+      `VW.e6c04a.23272e.${GRID.slice(1)}.${RUN}`,
     ]) {
       expect(parseGuildFragment(`#guild=${value}`), value).toEqual({ kind: "invalid", rest: "" });
     }
@@ -171,17 +205,17 @@ describe("parseGuildFragment (#3167)", () => {
   });
 
   it("consumes every guild= part, the first valid one winning", () => {
-    expect(parseGuildFragment("#guild=V!&guild=AB.gold.black.cross&guild=CD")).toEqual({
+    expect(parseGuildFragment(`#guild=V!&guild=AB.e6c04a.23272e.${GRID}.${RUN}&guild=CD`)).toEqual({
       kind: "guild",
       tag: "AB",
-      cape: { main: "gold", trim: "black", emblem: "cross" },
+      cape: { main: "e6c04a", trim: "23272e", emblemColours: COLOURS, emblem: GRID },
       rest: "",
     });
   });
 
   it("leaves lobby= and turn= to their own readers", () => {
     const turn = "turn=abc";
-    const read = parseGuildFragment(`#lobby=${KEY}&guild=VW.gold.black.cross&${turn}`);
+    const read = parseGuildFragment(`#lobby=${KEY}&guild=VW.e6c04a.23272e.${GRID}.${RUN}&${turn}`);
     expect(read.kind === "none" ? undefined : read.rest).toBe(`lobby=${KEY}&${turn}`);
     expect(parseLobbyFragment(read.kind === "none" ? "" : read.rest)).toEqual({
       kind: "invite",

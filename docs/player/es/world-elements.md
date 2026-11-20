@@ -10,11 +10,11 @@ reconocerla en el suelo.
 Si te quedas en una de estas zonas, actúa sobre ti; su efecto dura un rato
 corto después de salir. Enemigos y aliados se ven afectados igual que tú.
 
-- **El suelo calcinado** te prende fuego (Burning). Tierra carbonizada con
+- **El suelo calcinado** te prende fuego (Quemadura). Tierra carbonizada con
   brasas encendidas y un borde naranja.
-- **La lava** te quema y te deja Crippled. Una costra oscura partida por
+- **La lava** te quema y te deja Lisiado. Una costra oscura partida por
   grietas brillantes que fluyen y parpadean.
-- **La niebla tóxica** te envenena (Poison). Nubes de un verde ácido que
+- **La niebla tóxica** te envenena (Veneno). Nubes de un verde ácido que
   flotan y a través de las que se ve. El verde en el suelo siempre significa
   veneno.
 - **El fango** te frena, y cada ataque o habilidad que uses allí te cuesta
@@ -38,7 +38,7 @@ momento.
 - **Una grieta de fuego** lanza una columna de llamas que te quema. Entre un
   golpe y otro es un collar de piedra humeante.
 - **Un surtidor de gas** suelta bocanadas de gas verde que te envenenan.
-- **Un desprendimiento** deja caer rocas que te dejan Crippled. Algunas caen
+- **Un desprendimiento** deja caer rocas que te dejan Lisiado. Algunas caen
   en un sitio; otras ruedan por un camino, de ida y vuelta.
 
 Cada uno te avisa justo antes de golpear: el anillo de su borde se hincha en

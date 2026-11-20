@@ -3,21 +3,30 @@ import {
   MatchSimulation,
   MINIMAL_GW_INSPIRED_PVP_V1,
   STARTER_BUILDS,
+  costZone,
+  distancePointToSegment,
   loadoutOf,
   loadoutSpec,
+  pointInPolygon,
   resolveLoadout,
   segment,
   segmentsIntersect,
+  shallowWaterZones,
   spawnFacing,
+  walkCost,
   type LayeredPathFinder,
   type ParticipantSpec,
+  type RouteWaypoint,
+  type Segment,
   type PlayerBuild,
   type Vec2,
 } from "@vibewars/game-core";
 
 import { pointInShape, wallToSegments } from "../geometry.js";
+import { matchLayers } from "../layers.js";
 import { layeredFinder } from "../layered-finder.test-support.js";
 import { mapMatchRules, mapSimulationFields } from "../match-fields.js";
+import { mapNavGraphs } from "../nav-graphs.js";
 import type { MapData, Shape, SpawnPoint, Transition } from "../schema.js";
 import { StuckMeter, topStuckCells, type StuckCell, type StuckTotals } from "./stuck-meter.js";
 
@@ -50,6 +59,11 @@ export interface MapBalanceOptions {
   readonly size: number;
   /** Seeds; each is played twice, the second time with the builds rotated. */
   readonly seeds: number;
+  /**
+   * Each team on the next team's spawns (#3596): what a side wins apart
+   * from what a team does.
+   */
+  readonly swapSides?: boolean;
 }
 
 export interface MapBalanceResult {
@@ -74,7 +88,12 @@ export type BalanceVerdict =
   { readonly pass: true } | { readonly pass: false; readonly reason: string };
 
 /** `seeds` seeds of mirror matches on `map`, `size` a team, each played twice. */
-export function runMapBalance({ map, size, seeds }: MapBalanceOptions): MapBalanceResult {
+export function runMapBalance({
+  map,
+  size,
+  seeds,
+  swapSides = false,
+}: MapBalanceOptions): MapBalanceResult {
   const wins: number[] = Array.from({ length: map.teams }, () => 0);
   let draws = 0;
   let seconds = 0;
@@ -82,7 +101,11 @@ export function runMapBalance({ map, size, seeds }: MapBalanceOptions): MapBalan
   for (let seed = 0; seed < seeds; seed += 1) {
     // Rotated by one, so no build keeps one spawn, and a 1v1 plays a second build.
     for (const rotation of [0, 1]) {
-      const { winningTeam, elapsedSeconds, stuck: totals } = playMatch(map, size, seed, rotation);
+      const {
+        winningTeam,
+        elapsedSeconds,
+        stuck: totals,
+      } = playMatch(map, size, seed, rotation, swapSides);
       stuck.push(totals);
       if (winningTeam === undefined) {
         draws += 1;
@@ -159,17 +182,22 @@ export function playBuildBot(
   };
 }
 
-/** The mirror match `playMatch` plays on `map`, `size` a team, ready to step. */
+/**
+ * The mirror match `playMatch` plays on `map`, `size` a team, ready to
+ * step; `swapSides`, each team on the next team's spawns.
+ */
 function mirrorMatch(
   map: MapData,
   size: number,
   seed: number,
   rotation: number,
+  swapSides: boolean,
 ): { readonly sim: MatchSimulation; readonly timeLimitSeconds: number } {
   const rules = mapMatchRules(map, map.mode);
   const participants = Array.from({ length: map.teams }, (_, team) => {
-    const spawns = map.spawnPoints.filter((spawn) => spawn.team === team);
-    const others = map.spawnPoints.filter((spawn) => spawn.team !== team);
+    const side = swapSides ? (team + 1) % map.teams : team;
+    const spawns = map.spawnPoints.filter((spawn) => spawn.team === side);
+    const others = map.spawnPoints.filter((spawn) => spawn.team !== side);
     return Array.from({ length: size }, (_, k) => {
       // As the host seats them: each teammate on the team's next spawn.
       const spawn = spawns[k % spawns.length];
@@ -202,12 +230,13 @@ function playMatch(
   size: number,
   seed: number,
   rotation: number,
+  swapSides: boolean,
 ): {
   readonly winningTeam: number | undefined;
   readonly elapsedSeconds: number;
   readonly stuck: StuckTotals;
 } {
-  const { sim, timeLimitSeconds } = mirrorMatch(map, size, seed, rotation);
+  const { sim, timeLimitSeconds } = mirrorMatch(map, size, seed, rotation, swapSides);
   const meter = new StuckMeter(RULESET.tickRateHz);
   // The time limit ends every match; the margin only guards against a mode that would not.
   while (sim.phase === "active" && sim.elapsedSeconds < timeLimitSeconds + 1) {
@@ -269,7 +298,7 @@ export function timeMatchTicks(
   ticks: number,
   now: () => number,
 ): number[] {
-  const { sim } = mirrorMatch(map, size, 0, 0);
+  const { sim } = mirrorMatch(map, size, 0, 0, false);
   const tickMs: number[] = [];
   while (tickMs.length < ticks && sim.phase === "active") {
     const start = now();
@@ -346,34 +375,180 @@ export function walksByRoute(
   layer: number,
   route: Route | ((team: number) => Route),
 ): number[] {
+  return Array.from({ length: map.teams }, (_, team) =>
+    pathLength(pathByRoute(map, team, to, layer, route, false)),
+  );
+}
+
+/**
+ * Each team's walk time in seconds along `route`, as `walksByRoute` walks
+ * it but round harmful zones as a bot goes, counting shallow water at
+ * `SHALLOW_WATER_PACE` (#3521): the marsh is slower than its length says.
+ */
+export function walkSecondsByRoute(
+  map: MapData,
+  to: Vec2,
+  layer: number,
+  route: Route | ((team: number) => Route),
+): number[] {
+  const zones = shallowWaterZones(matchLayers(map).shallowWater);
   return Array.from({ length: map.teams }, (_, team) => {
-    const { through, shut = [], broken = [] } = typeof route === "function" ? route(team) : route;
-    const by = ` by the route through ${through.join(", ")}`;
-    const transition = (id: string): Transition | undefined =>
-      map.transitions.find((each) => each.id === id);
-    const unknown = [
-      ...[...through, ...shut].filter((id) => transition(id) === undefined),
-      ...broken.filter((id) => !(map.breakables ?? []).some((each) => each.id === id)),
-    ];
-    if (unknown.length > 0) throw new Error(`${map.id}: no ${unknown.join(", ")} on the map${by}`);
-    const walked: MapData = {
-      ...map,
-      transitions: map.transitions.filter(({ id }) => !shut.includes(id)),
-      walls: [
-        ...map.walls,
-        ...(map.breakables ?? []).filter(({ id }) => !broken.includes(id)).map(({ wall }) => wall),
-      ],
-    };
-    const finder = layeredFinder(walked, RULESET.collision.playerRadius);
-    const path = pathTo(walked, finder, team, to, layer, by);
-    const missed = through.filter((id) => {
-      const area = transition(id)?.area;
-      return area === undefined || !crosses(path, area);
-    });
-    if (missed.length > 0)
-      throw new Error(`${map.id}: team ${String(team)} did not pass ${missed.join(", ")}${by}`);
-    return pathLength(path);
+    const path = pathByRoute(map, team, to, layer, route, true);
+    const units = path.reduce((walked, point, index) => {
+      const from = path[index - 1] ?? point;
+      const wet = zones.filter((zone) => zone.layer === point.layer).map(costZone);
+      return walked + walkCost(wet, from, point);
+    }, 0);
+    return units / RULESET.movement.maxSpeedUnitsPerSecond;
   });
+}
+
+/** `team`'s path along `route`, as `walksByRoute` describes it, the spawn first; round harmful zones if `harmful`. */
+function pathByRoute(
+  map: MapData,
+  team: number,
+  to: Vec2,
+  layer: number,
+  route: Route | ((team: number) => Route),
+  harmful: boolean,
+): RouteWaypoint[] {
+  const { through, shut = [], broken = [] } = typeof route === "function" ? route(team) : route;
+  const by = ` by the route through ${through.join(", ")}`;
+  const transition = (id: string): Transition | undefined =>
+    map.transitions.find((each) => each.id === id);
+  const unknown = [
+    ...[...through, ...shut].filter((id) => transition(id) === undefined),
+    ...broken.filter((id) => !(map.breakables ?? []).some((each) => each.id === id)),
+  ];
+  if (unknown.length > 0) throw new Error(`${map.id}: no ${unknown.join(", ")} on the map${by}`);
+  const walked: MapData = {
+    ...map,
+    transitions: map.transitions.filter(({ id }) => !shut.includes(id)),
+    walls: [
+      ...map.walls,
+      ...(map.breakables ?? []).filter(({ id }) => !broken.includes(id)).map(({ wall }) => wall),
+    ],
+  };
+  const finder = layeredFinder(walked, RULESET.collision.playerRadius, { harmful });
+  const path = pathTo(walked, finder, team, to, layer, by);
+  const missed = through.filter((id) => {
+    const area = transition(id)?.area;
+    return area === undefined || !crosses(path, area);
+  });
+  if (missed.length > 0)
+    throw new Error(`${map.id}: team ${String(team)} did not pass ${missed.join(", ")}${by}`);
+  return path;
+}
+
+/**
+ * The ids of the transitions each team's shortest walk from its home spawn
+ * to its own `to[team]` on `layer` passes, by team (#3549).
+ */
+export function transitionsWalked(map: MapData, to: readonly Vec2[], layer: number): string[][] {
+  const finder = layeredFinder(map, RULESET.collision.playerRadius);
+  return Array.from({ length: map.teams }, (_, team) => {
+    const point = to[team];
+    if (point === undefined) throw new Error(`${map.id}: no point for team ${String(team)}`);
+    const path = pathTo(map, finder, team, point, layer, "");
+    return map.transitions.filter(({ area }) => crosses(path, area)).map(({ id }) => id);
+  });
+}
+
+/** How far apart the points are that `narrowestWalks` measures a walk's width at. */
+const WIDTH_STEP = 16;
+
+/** The narrowest place on a team's walk (#3688): how wide the way is there, and where. */
+export interface Narrowest {
+  readonly width: number;
+  readonly at: RouteWaypoint;
+}
+
+/**
+ * The narrowest place on each team's shortest walk from its home spawn to
+ * `to` on `layer` (#3688), by team, along `route` if given, as
+ * `walksByRoute` walks it. Every `WIDTH_STEP` along the walk the
+ * way is measured across it, wall to wall on the walk's layer: the walk
+ * hugs every corner it turns, so its distance to the nearest wall says
+ * how close it cuts, not how wide the way is. On a leg from one layer
+ * onto another, the wider of the two counts. A stair or ramp is as wide
+ * as it was built, the same for every team, so the walk on it, and a
+ * body's width either side of it, is not measured: the ground between
+ * them is.
+ */
+export function narrowestWalks(
+  map: MapData,
+  to: Vec2,
+  layer: number,
+  route?: Route | ((team: number) => Route),
+): Narrowest[] {
+  const radius = RULESET.collision.playerRadius;
+  const finder = layeredFinder(map, radius);
+  const graphs = mapNavGraphs(map, radius);
+  const corners = [
+    { x: 0, y: 0 },
+    { x: map.width, y: 0 },
+    { x: map.width, y: map.height },
+    { x: 0, y: map.height },
+  ];
+  const edges = corners.map((corner, at) => segment(corner, corners[(at + 1) % 4] ?? corner));
+  const across = (point: Vec2, direction: Vec2, on: number): number => {
+    const graph = graphs[on];
+    if (graph === undefined) return 0;
+    if (graph.walkable.length > 0 && !graph.walkable.some((area) => pointInPolygon(point, area)))
+      return 0;
+    const side = { x: -direction.y, y: direction.x };
+    const reach = (sign: number): number =>
+      Math.min(...[...graph.walls, ...edges].map((wall) => rayToSegment(point, side, sign, wall)));
+    return reach(1) + reach(-1);
+  };
+  const stairs = map.transitions.map(({ area }) => ({ area, sides: wallToSegments(area) }));
+  const onStair = (point: Vec2): boolean =>
+    stairs.some(
+      ({ area, sides }) =>
+        pointInShape(point, area) ||
+        sides.some((side) => distancePointToSegment(point, side) < 2 * radius),
+    );
+  return Array.from({ length: map.teams }, (_, team) => {
+    const path =
+      route === undefined
+        ? pathTo(map, finder, team, to, layer, "")
+        : pathByRoute(map, team, to, layer, route, false);
+    let narrowest: Narrowest | undefined;
+    path.forEach((point, index) => {
+      const from = path[index - 1];
+      if (from === undefined) return;
+      const length = Math.hypot(point.x - from.x, point.y - from.y);
+      if (length === 0) return;
+      const direction = { x: (point.x - from.x) / length, y: (point.y - from.y) / length };
+      for (let walked = 0; walked < length; walked += WIDTH_STEP) {
+        const at = { x: from.x + direction.x * walked, y: from.y + direction.y * walked };
+        if (onStair(at)) continue;
+        const width = Math.max(
+          across(at, direction, from.layer),
+          across(at, direction, point.layer),
+        );
+        if (narrowest === undefined || width < narrowest.width)
+          narrowest = {
+            width,
+            at: { ...at, layer: walked < length / 2 ? from.layer : point.layer },
+          };
+      }
+    });
+    if (narrowest === undefined) throw new Error(`${map.id}: team ${String(team)} walks nowhere`);
+    return narrowest;
+  });
+}
+
+/** How far from `point` along `direction` × `sign` the ray meets `wall`; `Infinity` if it never does. */
+function rayToSegment(point: Vec2, direction: Vec2, sign: number, wall: Segment): number {
+  const ray = { x: direction.x * sign, y: direction.y * sign };
+  const along = { x: wall.b.x - wall.a.x, y: wall.b.y - wall.a.y };
+  const denominator = ray.x * along.y - ray.y * along.x;
+  if (denominator === 0) return Infinity;
+  const offset = { x: wall.a.x - point.x, y: wall.a.y - point.y };
+  const distance = (offset.x * along.y - offset.y * along.x) / denominator;
+  const share = (offset.x * ray.y - offset.y * ray.x) / denominator;
+  return distance >= 0 && share >= 0 && share <= 1 ? distance : Infinity;
 }
 
 /** `team`'s path from its home spawn to `to` on `layer`, the spawn first; throws if there is none. */
@@ -384,14 +559,14 @@ function pathTo(
   to: Vec2,
   layer: number,
   by: string,
-): Vec2[] {
+): RouteWaypoint[] {
   const start = homeSpawn(map, team);
   const route = finder.find(start.position, start.layer, to, layer);
   if (route === undefined)
     throw new Error(
       `${map.id}: team ${String(team)} cannot reach (${String(to.x)},${String(to.y)})${by}`,
     );
-  return [start.position, ...route];
+  return [{ ...start.position, layer: start.layer }, ...route];
 }
 
 function pathLength(path: readonly Vec2[]): number {

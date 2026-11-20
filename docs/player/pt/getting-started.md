@@ -6,6 +6,10 @@ partida. Você não precisa de conta nem de instalar nada: o jogo roda
 nesta aba do navegador. O VibeWars precisa de teclado e mouse. Ele não
 funciona em celular nem em tablet só com toque: abra em um computador.
 
+## O tutorial
+
+Na primeira vez que você abre o VibeWars, ele oferece um tutorial curto: uma caminhada por um cânion que ensina a se mover e a lutar. Depois ele continua no menu, um passo de cada vez: mude a especialização do seu personagem, monte uma equipe de dois, veja para que serve cada modo e coloque essa equipe na fila para uma primeira partida 2v2 na Arena de Equipes. Enquanto um passo aponta para um controle, o resto do menu fica escurecido. Você pode pular o tutorial a qualquer momento com **Saltar tutorial**.
+
 ## A barra de modos
 
 A barra à esquerda da tela principal tem os [modos](modes.md), de cima
@@ -82,6 +86,15 @@ espera tira você da fila na hora.
 
 Quando a partida acaba, você pode usar **Entrar de novo** ou **Ficar
 juntos** com a equipe com que acabou de jogar.
+
+Ao lado das pontuações, dois gráficos contam a partida ao longo do tempo.
+**Tu** mostra seu dano causado, dano recebido, cura e Energia; **Equipas**
+mostra a reserva de vida de cada equipe acima do seu dano total. Marcas abaixo
+do eixo do tempo indicam abates, mortes, interrupções, capturas e
+ressurreições: aponte para uma, ou chegue a ela com Tab, para ler o que
+aconteceu. Pressione um item da legenda para ocultar ou mostrar sua linha. No
+celular, os gráficos ficam abaixo das pontuações, que mostram você e mais dois
+até **Mostrar tudo**.
 
 ## Hospedar ou entrar em uma partida
 
@@ -169,9 +182,9 @@ incluindo a sua: `2 equipes
 buscando`. Só o host tem **Sair da fila** ali. Fechar a aba do host tira
 o grupo da fila na hora. Quando aparece outra equipe na fila do mesmo
 modo, vocês jogam em um dos mapas do modo, cada lado com suas builds, e
-voltam à sua sala depois. O host pode sair da fila pela janela do anel a qualquer momento; um convidado que sai tira todo o grupo dela. Se depois
-de um minuto não houver outra equipe, o host também pode pressionar
-**Jogar contra bots**: uma partida na sua própria sala contra uma equipe
+voltam à sua sala depois. O host pode sair da fila pela janela do anel a qualquer momento; um convidado que sai tira todo o grupo dela. Depois
+de 10 s na fila, o host também pode pressionar
+**Jogar contra bots** na janela do anel: uma partida na sua própria sala contra uma equipe
 predefinida aleatória de bots, exceto em
 [Ascensão dos Heróis](modes.md#ascensão-dos-heróis), que espera uma
 equipe da sua rodada.
@@ -184,14 +197,14 @@ visita, como `AshenWolf`; digite por cima para mudar. Se ficar vazio, você
 joga como `Jogador`. Digite ao lado uma **Tag da guilda** de 2 a 4 letras
 ou dígitos, e todos a veem depois do seu nome, como `Ente [VIBE]`. Com
 uma tag definida, o criador de **Capa da guilda** aparece embaixo: escolha
-a cor da capa, a cor da barra e um emblema, e seu corpo usa a capa em toda
+a cor que quiser para a capa e a barra, desenhe um emblema, e seu corpo usa a capa em toda
 partida: ela se dobra em uma faixa fina na borda quando você para e
 esvoaça atrás de você quando anda. Seus personagens no menu também a
-mostram. **Sem capa** a remove.
+mostram. **Sem capa** a remove. Uma figura mostra a capa como ela aparece no jogo. Uma cor perto demais do azul do seu time ou do vermelho dos seus inimigos é desviada um pouco dele ao ser desenhada, para que nenhuma capa pareça um time; a figura a mostra como todos vão vê-la.
 
-Uma mudança vale a partir da próxima sala em que você entrar, ou da
-próxima sala nova: uma em que você já está mantém o que você tinha ao
-entrar.
+Uma mudança vale na hora para a sala em que você está.
+
+**Desenhe seu emblema.** A grade de 16×16 do emblema fica sempre abaixo das cores da capa e da barra. Escolha uma cor ou **Vazio**, depois desenhe com o **Lápis**, apague com a **Borracha** ou pinte uma área com **Preencher**. **Adicionar cor** dá ao emblema mais uma cor, até 15, e o seletor de cor ao lado muda a escolhida, junto com tudo o que foi desenhado nela. **Começar de** coloca uma de oito formas na grade com a cor escolhida. **Espelhar** pinta as metades esquerda e direita ao mesmo tempo. **Limpar** esvazia a grade e **Desfazer** volta um passo. A pequena vista ao lado da grade mostra o emblema do tamanho que ele tem numa partida. Cada traço é guardado assim que você o termina. As setas e o Espaço também desenham pelo teclado.
 
 **Copiar link da guilda**, abaixo do designer de capa, copia um link com sua tag e sua capa. Quem abrir verá **Entrar na guilda [VIBE]?**: **Entrar** dá a essa pessoa sua tag e sua capa, **Não** não muda nada. Qualquer pessoa pode enviar um link assim e ninguém é dono de uma tag, por isso o jogo sempre pergunta antes.
 

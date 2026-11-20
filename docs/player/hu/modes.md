@@ -132,7 +132,7 @@ megnevezi, ki visz zászlót. A növelés „Morálnövelés! +10%” vagy
 „Ellenséges morálnövelés” felirattal ugrik fel. Az iránytűn ♛ jelöl
 minden Céhurat, ⚑ minden zászlót és ◎ a tartót.
 
-A Guild Hall Isle játssza.
+A Guild Hall Isle (8v8, 6000x2600) játssza: egy sziget a tengerben. Minden Guild Lord egy csarnok tetején áll, sánc mögött; kifelé a kaputornyon át, a sáncon át vagy egy móló mentén vezet az út. A kapu ajtaját az ellenfél sáncán lévő kar nyitja. A zászlótartó egy emelvényen áll középen.
 
 ## Ereklyefutam
 
@@ -186,6 +186,8 @@ pont nyer, egyenlőségnél pedig az a csapat, amelyik utoljára szerzett
 pontot. Minden bázis 2 percenként feltámasztja a halottait és a
 kísértetét. A botok együtt mennek az ellenség ereklyéjéért, és hazahozzák.
 
+A Cinder Sanctum (8v8, 5600x2800) ezt játssza: templom egy vulkán oldalán, két lávafolyó között. Kelj át egy hídon vagy a töltésen az előudvarán álló szentélyhez; az előudvar egyik karja megnyitja a szentély alatti rejtett átjárót, a hamufalak pedig szétverhetők. A láva éget.
+
 ## A domb ura
 
 **Vezesd a Kísértethősödet az oltárra, és tartsd meg.** Minden
@@ -193,8 +195,7 @@ csapatnak van egy **Kísértethőse** a bázisán, egy baltával harcoló
 kísértet, akit senki sem irányít. Az **oltár** középen van, mindkét
 bázistól ugyanakkora sétára. A **Threefold Keep** pályán három csapat
 (kettő, ha nincs szabad harmadik) harcol érte egy fallal körülvett
-várban. Az ajtói csak belülről nyílnak, egy belső lappal: sétálj körbe
-egy nyitott sarokig, hogy bejuss. Csapatonként legfeljebb 12 pont, és
+vár tornyán. Csapatonként legfeljebb 12 pont, és
 ha minden ellenség -60% morálon áll, azonnal nyersz. A **Hősök
 Csarnoka**, A domb ura pálya, amely a Hősök Útját zárja, egy nyugatról
 és keletről fallal határolt emelvényre emeli, amelyre egy északi vagy
@@ -258,7 +259,7 @@ először a másik csapat Kísértethősét öli meg, amint az az oltáron áll 
 hatótávjukon belül: ez az egyetlen ellenség, amely megakadályozza, hogy
 a kísértetetek elfoglalja.
 
-A Threefold Keep játssza.
+A Threefold Keep játssza (4v4 és 8v8, 5000x4400): egy vár egy dombon a hegyvidéken, három csapatnak. Menj fel a kapud melletti lépcsőn a gyilokjáróra, és kelj át egy töltésúton a dombra, aztán mássz fel a torony tetején álló oltárhoz. Minden udvarban egy kar mind a négy kaput kinyitja: a saját kapuátjáródat a fal alatt, és az altemplomot, a hosszú utat a domb alatt.
 
 ## Pontfoglalás
 
@@ -304,8 +305,9 @@ A botok szétszóródnak azokon a szentélyeken, amelyek még nem a csapatodéi,
 belüli ellenség nem csalja el őket: fellépnek egy elérhető szentélyre,
 és onnan harcolnak.
 
-A Scarred Earth játssza: minden szentély egy törött falgyűrűben áll,
-amely nyugat és kelet felé nyitott.
+A Scarred Earth (4v4 és 8v8, 5400x2800) játssza: kráterekkel szabdalt csatatér alkonyatkor. A szentélyek összetört ostromtornyokon állnak, a középső a nagy torony fedélzetén, mindegyik egy kráter mellett; a tornyokon lévő karok két lövészárkot nyitnak a mező alatt, a rommá lett cölöpkerítések pedig szétverhetők.
+
+A Hősök Útján a The Warden's Gallery (8v8, 5200x2500) játssza: napfényes szoborcsarnok tetőablakok alatt. A középső szentély a nagy talapzat tetején áll, és minden csapatnak három van az előcsarnoka közelében, egy közülük talapzaton; a nagy talapzaton lévő karok két kriptát nyitnak a padló alatt, a ledőlt szobrok pedig szétverhetők.
 
 ## Csapatlobbi
 
@@ -440,13 +442,16 @@ vezetője, vagy a céhjele, ha az osztag több mint felének ugyanaz.
 
 Minden út az **Elite Zaishen Battle**-lel kezdődik, sor nélkül: az
 osztagod hat, botok által játszott Zaishen ellen (2 Monk, egy
-Elementalist és 3 másik). Az óra akkor indul, amikor valamelyikőtök
-átlépi a rajtvonalat, vagy meghal az első Zaishen, amelyik előbb
-történik. Öld meg mind a hatot 30 másodpercen belül, és az osztag +10%
-morállal kezdi az utat; 60 alatt +8%; 80 alatt +6%; 100 alatt +4%; 120
-alatt +2%; lassabban semmi. Ha nyersz, az osztagod magától sorba áll az
-első pályájára. Ha elsöpörnek, vagy a 8 perces korlát elérésekor még él
-egy Zaishen, az útnak vége.
+Elementalist és 3 másik). Egy ünnepélyes arénában zajlik (8v8,
+5400x2400): lépcsőzetes lelátók északon és délen, szobrok talapzaton a
+süllyesztett küzdőtéren, és minden lelátó alatt egy pince, amelynek
+csapórácsát a túlsó lelátón lévő kar nyitja ki. Az óra akkor indul,
+amikor valamelyikőtök átlépi a rajtvonalat az aréna közepén, vagy meghal
+az első Zaishen, amelyik előbb történik. Öld meg mind a hatot 30
+másodpercen belül, és az osztag +10% morállal kezdi az utat; 60 alatt
++8%; 80 alatt +6%; 100 alatt +4%; 120 alatt +2%; lassabban semmi. Ha
+nyersz, az osztagod magától sorba áll az első pályájára. Ha elsöpörnek,
+vagy a 8 perces korlát elérésekor még él egy Zaishen, az útnak vége.
 
 Az út minden győzelme **hírnevet** hoz: 1, 2, 3, 4, 6, 8, 12, 16, 20,
 24, 28, 32, 36 az első tizenháromért, aztán 40-et mindegyik, naponta
@@ -490,12 +495,10 @@ másik csapat le nem szúrja ott a zászlaját. Minden csapás egy villám a
 jelzőtűztől ahhoz, akit eltalált, és mindkét csapat látja.
 
 Három további aréna a Hősök Útjából a Saját játékban is választható:
-a **The Hollow Deep** (8v8 Megsemmisítés, három kanyargós alagút egy
-központi szikla körül), a **Blackwater Ford** (8v8, 5200x2800, Papirtás egy sötét
+a **The Hollow Deep** (8v8 Megsemmisítés, 6200x2400, egy sötét barlangban: kelj át egy kötélhídon egy szakadék felett, mássz át a középső párkányon, vagy menj át alatta a kriptán, miután egy sziklapárkányon lévő kar kinyitja a kapuját), a **Blackwater Ford** (8v8, 5200x2800, Papirtás egy sötét
 folyami gázlónál: át lehet gázolni egy sekély gázlón, át lehet kelni a malom fölött a pillérein álló romos hídon,
 vagy a híd alatti áteresszel, miután a malmon lévő kar kinyitja a kapuját; a pap 2 percenként
-feltámasztja a halottait) és a **Mosslit Cairns** (8v8 Pontfoglalás, öt
-kőhalom sekély cikcakkban a bázisok között). A negyedik a **The Brazen
+feltámasztja a halottait) és a **Mosslit Cairns** (8v8, 5400x3000, Pontfoglalás öt kőhalmos dombon, amelyek alkonyatkor mohától izzanak: fel lehet mászni egy kőhalomra a lépcsőin, meg lehet tartani a középső nagy kőhalmot, vagy át lehet jutni a déli dombok alatti gyökéralagúton, miután egy északi kőhalmon lévő kar kinyitja a kapuit; a gyökérfalak összetörhetők). A negyedik a **The Brazen
 Causeway** (8v8, 5600x2800, Papirtás egy mocsár fölé emelt kőtöltésen alkonyatkor: lehet menetelni a töltésen, miután a túlsó kapuház karja kinyitja a bronzkapuját, át lehet kelni a mocsáron a közepén lévő lépcsőhöz, vagy át lehet osonni az alatta lévő áteresszel; a pap 2 percenként feltámasztja a halottait).
 
 Egy pályán lehetnek **kapuk**: falak, amelyek zárva megállítják a
@@ -568,3 +571,7 @@ győzelemsorozata. A csík az ezen az oldalon lévő jegyzőkönyveket
 olvassa, figyelmen kívül hagyja a chipeket, és rejtve marad, ha egyik
 sem Csarnok-győzelem. Mint minden jegyzőkönyv, ez is az, amit az egyes
 meccsek házigazdája jelentett, és semmi sem ellenőrzi.
+
+## Rangsorolt
+
+A sorból jövő, botok nélküli meccs rangsorolt. A sorképernyő és a csapat-lobby ezt jelzi, mielőtt sorba állsz; egyetlen bot rangsorolatlanul hagyja a meccset. Ha rangsorolt meccs akad, minden játékos aláírja a kezdetét, és a képernyő legfeljebb 15 másodpercig ezt mutatja: **Rangsorolt meccs megerősítése…**. Ha valaki nem erősít meg, a meccs elmarad, és mindenki visszakerül a sorba. A végén minden játékos aláírja az eredményt, és a meccs nyugtája megjelenik a Nostr reléken minden játékos nyilvános kulcsával és karakternevével; a karakter nélküli játékos starterként szerepel. A pontszámod egy órán belül változik. Rangsorolt meccs elhagyása vereségnek számít, és a kilépés gomb ezt jelzi.

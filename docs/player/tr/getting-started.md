@@ -6,6 +6,10 @@ kazanır. Hesap açman ya da bir şey kurman gerekmez: oyun bu tarayıcı
 sekmesinde çalışır. VibeWars için klavye ve fare gerekir. Telefonda ya
 da yalnızca dokunmatik bir tablette çalışmaz: bir bilgisayarda aç.
 
+## Öğretici
+
+VibeWars'ı ilk açtığında sana kısa bir öğretici önerir: hareket etmeyi ve dövüşmeyi öğreten bir kanyon yürüyüşü. Ardından menüde adım adım devam eder: karakterinin uzmanlığını değiştir, iki kişilik bir takım kur, her modun ne işe yaradığını gör ve o takımı Takım Arenası'nda ilk 2v2 maçı için sıraya koy. Bir adım bir kontrolü gösterirken menünün geri kalanı karartılır. Öğreticiyi istediğin an **Öğreticiyi atla** ile atlayabilirsin.
+
 ## Mod şeridi
 
 Ana ekranın solundaki şerit, yukarıdan aşağıya [modları](modes.md)
@@ -80,6 +84,15 @@ götürülürsün. Beklerken sekmeyi kapatmak seni hemen sıradan çıkarır.
 
 Maç bitince **Yeniden sıraya gir** diyebilir ya da az önce oynadığın
 takımla **Birlikte kal** diyebilirsin.
+
+Skorların yanında iki grafik maçı zaman içinde anlatır. **Sen** verdiğin
+hasarı, aldığın hasarı, iyileştirmeyi ve Enerjiyi çizer; **Takımlar** her
+takımın can havuzunu toplam hasarının üstünde çizer. Zaman ekseninin altındaki
+işaretler öldürmeleri, ölümleri, kesintileri, ele geçirmeleri ve dirilişleri
+gösterir: ne olduğunu okumak için birinin üzerine gel ya da Tab ile ona git.
+Çizgisini gizlemek ya da göstermek için bir gösterge girdisine bas. Telefonda
+grafikler skorların altında durur; skorlar **Tümünü göster** basılana kadar
+seni ve iki kişiyi daha gösterir.
 
 ## Maç kur ya da katıl
 
@@ -168,8 +181,8 @@ sekmesini kapatmak grubu hemen sıradan çıkarır. Aynı modda sıradaki
 başka bir takım çıkınca, onlarla modun haritalarından birinde, her taraf
 kendi dizilimleriyle oynarsın ve ardından lobine dönersin. Kurucu
 halkanın penceresinden istediği an çıkabilir; çıkan bir misafir bütün
-grubu sıradan çıkarır. Bir dakika sonra başka takım yoksa kurucu
-**Botlara karşı oyna**'ya da basabilir: kendi lobinde rastgele hazır bir
+grubu sıradan çıkarır. Sırada 10 sn geçtikten sonra kurucu halkanın
+penceresinde **Botlara karşı oyna**'ya da basabilir: kendi lobinde rastgele hazır bir
 bot takımına karşı bir maç; ancak senin turundaki bir takımı bekleyen
 [Kahramanların Yükselişi](modes.md#kahramanların-yükselişi) hariç.
 
@@ -181,14 +194,14 @@ bir **Ad** verir; değiştirmek için üzerine yaz. Boş bırakırsan `Player`
 olarak oynarsın. Yanına 2 ila 4 harf ya da rakamdan oluşan bir **Lonca
 etiketi** yaz; herkes onu adından sonra görür, `Ente [VIBE]` gibi.
 Etiket ayarlıyken altında **Lonca pelerini** tasarımcısı belirir:
-pelerin rengini, kenar rengini ve bir amblemi seç; bedenin her maçta
+istediğin pelerin ve kenar rengini seç, bir amblem çiz; bedenin her maçta
 pelerini giyer: dururken kenarında ince bir şeride katlanır, hareket
 ederken arkanda dalgalanır. Menüdeki karakterlerin de onu gösterir.
-**Pelerin yok** onu çıkarır.
+**Pelerin yok** onu çıkarır. Bir figür pelerini oyunda göründüğü gibi gösterir. Takımının mavisine ya da rakiplerinin kırmızısına fazla yakın bir renk, çizilirken ondan biraz uzaklaştırılır, böylece hiçbir pelerin bir takıma benzemez; figür onu herkesin göreceği gibi gösterir.
 
-Bir değişiklik katıldığın bir sonraki lobiden ya da bir sonraki yeni
-lobinden itibaren geçerli olur: zaten içinde olduğun lobi, katıldığın
-haliyle kalır.
+Bir değişiklik, içinde olduğun lobide hemen geçerli olur.
+
+**Amblemini çiz.** 16×16'lık amblem ızgarası her zaman pelerin ve kenar renklerinin altındadır. Bir renk ya da **Boş** seç, sonra **Kalem** ile çiz, **Silgi** ile sil ya da **Doldur** ile bir alanı boya. **Renk ekle** ambleme bir renk daha verir, en fazla 15, yanlarındaki renk seçici de seçili rengi, onunla çizilen her şeyle birlikte değiştirir. **Şununla başla** seçili renkte sekiz şekilden birini ızgaraya koyar. **Ayna** sol ve sağ yarıyı aynı anda boyar. **Temizle** ızgarayı boşaltır, **Geri al** bir adım geri gider. Izgaranın yanındaki küçük görünüm amblemi bir maçtaki boyutunda gösterir. Her çizgi, bitirdiğin anda saklanır. Ok tuşları ve Boşluk klavyeyle de çizer.
 
 Pelerin tasarımcısının altındaki **Lonca bağlantısını kopyala**, etiketini ve pelerinini taşıyan bir bağlantı kopyalar. Bağlantıyı açan kişiye **[VIBE] loncasına katılınsın mı?** diye sorulur: **Katıl** ona etiketini ve pelerinini verir, **Hayır** hiçbir şeyi değiştirmez. Böyle bir bağlantıyı herkes gönderebilir ve hiç kimse bir etiketin sahibi değildir, bu yüzden oyun her zaman önce sorar.
 

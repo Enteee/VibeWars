@@ -96,6 +96,7 @@ import {
   renderMute,
   refreshSkillBar,
   objectiveScoreToast,
+  placeEnd,
   ghostLeaderToast,
   ghostNameplate,
   renderSkillBar,
@@ -118,14 +119,15 @@ import {
 import { compassReach, createCompass } from "./ui/compass.js";
 import { noWebGlNotice, watchingNotice } from "./ui/arena-notice.js";
 import { attachFullscreenButton, fullscreenTarget } from "./ui/fullscreen.js";
-import { closeHelpOverlay, isHelpOverlayOpen, openHelpOverlay } from "./ui/help-screen.js";
+import { attachHelpWindow, isHelpOpen } from "./ui/help-screen.js";
 import { attachJukeboxPopover } from "./ui/jukebox.js";
 import { attachOptionsWindow, isOptionsWindowOpen } from "./ui/options-screen.js";
 import { createPartyWindow } from "./ui/party-window.js";
 import { attachReconnectCountdown, mountReconnectOverlay } from "./ui/reconnect-overlay.js";
 import { renderSummary, summaryTables, type SummaryTable } from "./ui/match-summary.js";
 import { flashSlot, slotFlashes } from "./ui/skill-slot-state.js";
-import { button, setToastHost, toast } from "./ui/kit.js";
+import { mountEndLine, type EndLineElements } from "./ui/end-line.js";
+import { setToastHost, toast } from "./ui/kit.js";
 import { signedText } from "./ui/player-label.js";
 
 /**
@@ -177,6 +179,8 @@ export type MatchViewOptions =
   | {
       readonly kind: "play";
       readonly connect: () => Promise<MatchConnection>;
+      /** A ranked match (#3680), whose leave question says it counts as a loss. */
+      readonly ranked: boolean;
       readonly tutorial?: {
         readonly party: readonly string[];
         readonly goals: () => readonly GoalMark[];
@@ -465,6 +469,7 @@ export function toArenaSnapshot(
     hoverId: undefined,
     showAllNames: false,
     nameBoxes: new Map(),
+    drawn: [],
     // Your team's calls are the caller's (`withCalls`, #443).
     calledId: undefined,
     pings: [],
@@ -736,6 +741,7 @@ export async function startMatchView(
     } else {
       parent.style.removeProperty("--chat-room");
     }
+    placeEnd(hud);
     const keepOut = [compass.element, partyWindow.element]
       .map((element) => element.getBoundingClientRect())
       .filter((rect) => rect.width > 0 && rect.height > 0)
@@ -816,25 +822,12 @@ export async function startMatchView(
   hud.mute.addEventListener("click", toggleMute);
   const jukebox = attachJukeboxPopover(hud.music, parent, true);
   // Esc cancels an attack now, so leaving is a button that asks first (#160).
-  const leave = renderLeave(hud, callbacks.onLeave);
+  const leave = renderLeave(hud, callbacks.onLeave, options.kind === "play" && options.ranked);
   // Options over the match (#454), a window like the music's (#2386): the
   // match goes on underneath.
   const optionsWindow = attachOptionsWindow(hud.options, parent, signet);
   // Help over the match too (#1257), the same way.
-  const openHelp = (): void => {
-    // A press while Help is open closes it (#2724).
-    if (isHelpOverlayOpen()) {
-      closeHelpOverlay();
-      return;
-    }
-    openHelpOverlay(parent, () => {
-      hud.help.setAttribute("aria-expanded", "false");
-      hud.help.focus();
-    });
-    hud.help.setAttribute("aria-expanded", "true");
-  };
-  hud.help.setAttribute("aria-expanded", "false");
-  hud.help.addEventListener("click", openHelp);
+  const helpWindow = attachHelpWindow(hud.help);
   const detachFullscreen = attachFullscreenButton(hud.fullscreen, fullscreenTarget());
 
   const detachMovement =
@@ -893,7 +886,7 @@ export async function startMatchView(
       event.stopPropagation();
       // Not under Options (#454) or Help (#1257): their keys are their
       // own, so no question opens beneath them.
-      if (!event.repeat && !isOptionsWindowOpen() && !isHelpOverlayOpen()) {
+      if (!event.repeat && !isOptionsWindowOpen() && !isHelpOpen()) {
         if (leave.isOpen()) {
           leave.close();
         } else {
@@ -926,7 +919,7 @@ export async function startMatchView(
     // keys still move.
     if (
       isOptionsWindowOpen() ||
-      isHelpOverlayOpen() ||
+      isHelpOpen() ||
       (event.key === "Escape" && event.defaultPrevented)
     ) {
       return;
@@ -1171,7 +1164,7 @@ export async function startMatchView(
         match.winningTeam,
         bots,
       );
-      const panel = renderSummary(parent, tables);
+      const panel = renderSummary(hud.end, tables);
       panel.classList.add("hud-summary");
       summary = { tables, panel };
     }
@@ -1199,6 +1192,7 @@ export async function startMatchView(
       viewport?.pointerWorld(),
       nameReveal.held(),
       viewport?.scene.nameTagBoxes() ?? EMPTY_SNAPSHOT.nameBoxes,
+      viewport?.scene.drawnClickables() ?? EMPTY_SNAPSHOT.drawn,
     );
     // A watcher has no team, so nobody's calls.
     latestArena = seat === undefined ? arena : withCalls(arena, seat.getCalls());
@@ -1326,9 +1320,7 @@ export async function startMatchView(
   });
 
   /** The end line (#1997), made the first time it is set. */
-  let endLine:
-    | { readonly root: HTMLElement; readonly text: HTMLElement; readonly press: HTMLElement }
-    | undefined;
+  let endLine: EndLineElements | undefined;
   let onEndPress: (() => void) | undefined;
 
   return {
@@ -1341,18 +1333,9 @@ export async function startMatchView(
         endLine = undefined;
         return;
       }
-      if (endLine === undefined) {
-        const root = document.createElement("div");
-        root.className = "hud-end-line";
-        const text = root.appendChild(document.createElement("span"));
-        const press = root.appendChild(
-          button("", "", () => {
-            onEndPress?.();
-          }),
-        );
-        parent.appendChild(root);
-        endLine = { root, text, press };
-      }
+      endLine ??= mountEndLine(hud.end, () => {
+        onEndPress?.();
+      });
       onEndPress = line.onPress;
       endLine.text.textContent = line.text;
       endLine.press.textContent = line.button;
@@ -1381,23 +1364,21 @@ export async function startMatchView(
       matchMusic.dispose();
       reconnectCountdown.dispose();
       reconnectOverlay.destroy();
-      // The scoreboard and target frame, result and mute button sit beside
-      // the HUD root, in the shared viewport, so they go one by one or pile
-      // up per match.
+      // The scoreboard and target frame, the end-of-match column (result,
+      // end line, summary) and mute button sit beside the HUD root, in the
+      // shared viewport, so they go one by one or pile up per match.
       hud.root.remove();
       hud.slotTips.dispose();
       hud.effects.dispose();
       hud.targetEffects.dispose();
       setToastHost(null);
       hud.top.remove();
-      hud.result.remove();
-      summary?.panel.remove();
-      endLine?.root.remove();
+      hud.end.remove();
       waiting?.remove();
       offMute();
       jukebox.dispose();
       optionsWindow.dispose();
-      closeHelpOverlay();
+      helpWindow.dispose();
       detachFullscreen();
       hud.controls.remove();
       void viewport?.destroy();

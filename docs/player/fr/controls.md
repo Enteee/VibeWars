@@ -20,7 +20,7 @@ Le profil par défaut est **Classique**, fait pour les mains habituées à GW1.
 | Ennemi suivant (Shift : précédent) | Tab                 | Tab              |
 | Ennemi le plus proche              | C                   | C                |
 | Ennemi annoncé par ton équipe      | T                   | T                |
-| Toi-même                           | G                   | G                |
+| Toi-même                           | F ou G              | G                |
 | Noms (maintenir)                   | Shift               | Shift            |
 | Muet                               | M                   | M                |
 | Lâcher drapeau, relique ou cendres | aucune              | aucune           |
@@ -41,7 +41,7 @@ Ces touches sont fixes :
 
 - **Clic gauche** au sol pour y marcher. Sans Shift, le bouton gauche ne fait
   que marcher.
-- Sur les cartes à plateformes surélevées, un clic gauche mène à la surface visible, et **Alt + clic gauche** au sol en dessous. Un anneau sous le curseur indique une plateforme, un anneau en pointillés le sol. Au-dessus d'un tunnel, un clic gauche mène au niveau où vous êtes, et **Alt + clic gauche** à l'autre.
+- Sur les cartes à plateformes surélevées, un clic gauche mène à la surface visible, et **Alt + clic gauche** au sol en dessous. Un anneau sous le curseur indique une plateforme, un anneau en pointillés le sol. Au-dessus d'un tunnel, un clic gauche mène au niveau où vous êtes. **Alt + clic gauche** ne mène jamais au-dessus du niveau où vous vous tenez : depuis le sol, il mène dans le tunnel, et dans un tunnel, il y reste.
 - **Clic droit** sur un ennemi ou un allié pour le cibler. Clic droit sur le
   même ennemi à nouveau, rapidement, pour l'attaquer.
 - **Clic droit** sur un drapeau ou le Socle du drapeau, en Bataille de guilde ou sur Barrow Field,
@@ -76,7 +76,8 @@ sauf Salon, sont en haut à droite de l'écran. Dans une fenêtre étroite, ces
 icônes et les autres boutons de l'écran se replient dans **⋯** ; seul son
 bouton principal reste visible. ⚙ ouvre les Options dans une fenêtre sous la
 barre, l'écran restant derrière ; Esc, × ou un clic à l'extérieur la ferme. Sous **Affichage**, **Éclairage** active ou coupe la lumière et l'ombre d'une carte éclairée, aussitôt, même en match.
-L'Aide se ferme avec le × en haut à droite, Esc, ou un nouvel appui sur [?].
+[?] ouvre l'Aide de la même façon, dans une fenêtre sous lui avec un sélecteur de page en haut ; un match continue derrière.
+L'Aide se ferme avec son ×, Esc, un clic à l'extérieur, ou un nouvel appui sur [?].
 
 **Partage un beat avec ton salon.** Dans l'éditeur de beat (♪, puis
 **Éditer**), **Partager au salon** envoie ce que tu as tapé, enregistré ou

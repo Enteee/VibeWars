@@ -19,7 +19,7 @@ Predvolená predvoľba je **Klasické**, pre ruky zvyknuté na GW1. **VibeWars**
 | Ďalší nepriateľ (Shift: predošlý)    | Tab                 | Tab              |
 | Najbližší nepriateľ                  | C                   | C                |
 | Nepriateľ určený tvojím tímom        | T                   | T                |
-| Ty sám                               | G                   | G                |
+| Ty sám                               | F alebo G           | G                |
 | Zobraziť mená (podržať)              | Shift               | Shift            |
 | Stlmiť                               | M                   | M                |
 | Položiť vlajku, relikviu alebo popol | žiadny              | žiadny           |
@@ -38,7 +38,7 @@ Tieto klávesy sú pevné:
 ## Myš
 
 - **Ľavým kliknutím** na zem tam dôjdeš. Bez Shiftu ľavé tlačidlo len chodí.
-- Na mapách s vyvýšenými plošinami ide ľavé kliknutie na povrch, ktorý vidíš, a **Alt + ľavé kliknutie** na zem pod ním. Krúžok pod kurzorom označuje plošinu, čiarkovaný krúžok zem. Nad tunelom ide ľavé kliknutie na úroveň, na ktorej si, a **Alt + ľavé kliknutie** na tú druhú.
+- Na mapách s vyvýšenými plošinami ide ľavé kliknutie na povrch, ktorý vidíš, a **Alt + ľavé kliknutie** na zem pod ním. Krúžok pod kurzorom označuje plošinu, čiarkovaný krúžok zem. Nad tunelom ide ľavé kliknutie na úroveň, na ktorej si. **Alt + ľavé kliknutie** nikdy nejde nad úroveň, na ktorej stojíš: zo zeme ide do tunela a v tuneli v ňom zostane.
 - **Pravým kliknutím** na nepriateľa alebo spojenca ho zameriaš. Ďalším
   rýchlym pravým kliknutím na toho istého nepriateľa naňho zaútočíš.
 - **Pravým kliknutím** na vlajku alebo na stojan na vlajku, v Cechovej bitke
@@ -71,7 +71,8 @@ Mimo zápasu sú na hornej lište **[?]** (táto Pomoc), **⚙** (Nastavenia),
 okrem Lobby, vpravo hore na obrazovke. V úzkom okne sa tieto ikony a
 ostatné tlačidlá obrazovky zbalia do **⋯**; vonku zostane len jej hlavné tlačidlo.
 ⚙ otvorí Nastavenia ako okno pod lištou, obrazovka zostáva za ním; Esc, × alebo kliknutie mimo ho zatvorí. V časti **Zobrazenie** zapne alebo vypne **Osvetlenie** svetlo a tieň osvetlenej mapy, hneď, aj počas zápasu.
-Pomoc sa zatvára krížikom × vpravo hore, klávesom Esc alebo ďalším stlačením [?].
+[?] otvorí Pomoc rovnako, ako okno pod ním s výberom stránky hore; zápas za ním beží ďalej.
+Pomoc sa zatvára svojím krížikom ×, klávesom Esc, kliknutím mimo alebo ďalším stlačením [?].
 
 **Zdieľaj beat so svojím lobby.** V editore beatov (♪, potom **Upraviť**)
 **Zdieľať v lobby** pošle to, čo si napísal, uložené aj neuložené, všetkým

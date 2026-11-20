@@ -6,6 +6,10 @@ ottelun. Et tarvitse tiliä etkä asenna mitään: peli toimii tässä
 selaimen välilehdessä. VibeWars vaatii näppäimistön ja hiiren. Se ei toimi
 puhelimella eikä pelkällä kosketustabletilla: avaa se tietokoneella.
 
+## Opetus
+
+Kun avaat VibeWarsin ensimmäistä kertaa, se tarjoaa lyhyen opetuksen: kävelyn kanjonin läpi, joka opettaa liikkumaan ja taistelemaan. Sen jälkeen opetus jatkuu valikossa askel kerrallaan: vaihda hahmosi erikoistumista, kokoa kahden hengen tiimi, katso mihin kukin pelitila on tarkoitettu ja laita tiimi jonoon ensimmäiseen 2v2-otteluun Tiimiareenalla. Kun askel osoittaa jotain säädintä, muu valikko on himmennetty. Voit ohittaa opetuksen milloin tahansa painikkeella **Ohita opetus**.
+
 ## Pelitilapalkki
 
 Päänäkymän vasemmassa reunassa kulkeva palkki sisältää
@@ -81,6 +85,15 @@ oletkin. Välilehden sulkeminen odottaessa poistaa sinut jonosta heti.
 
 Kun ottelu päättyy, voit valita **Jonota uudelleen** tai **Pysykää yhdessä**
 juuri kanssasi pelanneen tiimin kanssa.
+
+Pisteiden vieressä kaksi kaaviota kertoo ottelun kulun ajan mittaan. **Sinä**
+piirtää tekemäsi vahingon, saamasi vahingon, parannuksen ja Energian;
+**Joukkueet** piirtää kunkin joukkueen terveysvarannon sen kokonaisvahingon
+yläpuolelle. Aika-akselin alla olevat merkit näyttävät tapot, kuolemat,
+keskeytykset, valtaukset ja herätykset: osoita merkkiä tai siirry siihen
+Tabilla lukeaksesi, mitä tapahtui. Paina selitteen kohtaa piilottaaksesi tai
+näyttääksesi sen viivan. Puhelimessa kaaviot ovat pisteiden alla, ja pisteet
+näyttävät sinut ja kaksi muuta, kunnes painat **Näytä kaikki**.
 
 ## Isännöi ottelu tai liity siihen
 
@@ -167,8 +180,8 @@ omasi mukaan lukien: `2 tiimiä etsii`. Vain isännällä on siellä
 heti. Kun toinen saman pelitilan jonottava tiimi ilmaantuu, pelaatte sitä
 vastaan yhdellä pelitilan kartoista, kumpikin puoli omilla
 buildeillaan, ja palaatte sen jälkeen aulaasi. Isäntä voi poistua renkaan ikkunasta milloin tahansa; vieras, joka poistuu, vie koko
-ryhmän pois jonosta. Jos muuta tiimiä ei löydy minuutissa, isäntä voi
-myös painaa **Pelaa botteja vastaan**: ottelu omassa aulassasi
+ryhmän pois jonosta. Kun jonossa on oltu 10 s, isäntä voi myös painaa
+renkaan ikkunasta **Pelaa botteja vastaan**: ottelu omassa aulassasi
 satunnaista valmista bottitiimiä vastaan,
 paitsi [Sankarien nousussa](modes.md#sankarien-nousu), joka odottaa
 tiimiä sinun kierrokseltasi.
@@ -181,14 +194,14 @@ ensimmäisellä käynnillä **Nimen**, kuten `AshenWolf`; kirjoita sen päälle
 vaihtaaksesi sen. Tyhjänä pelaat nimellä `Player`. Kirjoita viereen
 **Kiltatunnus**, 2–4 kirjainta tai numeroa, ja kaikki näkevät sen nimesi
 perässä, kuten `Ente [VIBE]`. Kun tunnus on asetettu, sen alle ilmestyy
-**Kiltaviitta**-suunnittelija: valitse viitan väri, reunuksen väri ja
-tunnus, ja hahmosi kantaa viittaa jokaisessa ottelussa: se taittuu
+**Kiltaviitta**-suunnittelija: valitse mikä tahansa viitan ja reunuksen väri,
+piirrä tunnus, ja hahmosi kantaa viittaa jokaisessa ottelussa: se taittuu
 ohueksi nauhaksi reunallesi, kun seisot, ja liehuu perässäsi, kun
-liikut. Myös valikon hahmosi näyttävät sen. **Ei viittaa** riisuu sen.
+liikut. Myös valikon hahmosi näyttävät sen. **Ei viittaa** riisuu sen. Hahmo näyttää viitan sellaisena kuin se näkyy pelissä. Väriä, joka on liian lähellä joukkueesi sinistä tai vastustajiesi punaista, käännetään piirrettäessä hieman siitä poispäin, jotta mikään viitta ei näytä joukkueelta; hahmo näyttää sen sellaisena kuin kaikki sen näkevät.
 
-Muutos tulee voimaan seuraavasta aulasta, johon liityt, tai seuraavasta
-uudesta omasta aulastasi: aula, jossa jo olet, säilyttää sen, millä
-liityit.
+Muutos tulee voimaan heti siinä aulassa, jossa olet.
+
+**Piirrä tunnuksesi.** Tunnuksen 16×16-ruudukko on aina viitan ja reunuksen värien alla. Valitse väri tai **Tyhjä**, ja piirrä työkalulla **Kynä**, pyyhi työkalulla **Pyyhekumi** tai täytä alue työkalulla **Täyttö**. **Lisää väri** antaa tunnukselle uuden värin, enintään 15, ja niiden vieressä oleva värinvalitsin muuttaa valitun värin ja kaiken sillä piirretyn. **Aloita mallista** asettaa ruudukolle yhden kahdeksasta muodosta valitulla värillä. **Peilaus** maalaa vasemman ja oikean puolen yhtä aikaa. **Tyhjennä** tyhjentää ruudukon ja **Kumoa** palaa askeleen taaksepäin. Pieni näkymä ruudukon vieressä näyttää tunnuksen yhtä suurena kuin ottelussa. Jokainen veto tallentuu, kun lopetat sen. Nuolinäppäimet ja välilyönti piirtävät myös näppäimistöllä.
 
 Viittasuunnittelijan alla oleva **Kopioi kiltalinkki** kopioi linkin, jossa on tunnuksesi ja viittasi. Sen avaajalta kysytään **Liitytäänkö kiltaan [VIBE]?**: **Liity** antaa hänelle tunnuksesi ja viittasi, **Ei** ei muuta mitään. Kuka tahansa voi lähettää tällaisen linkin, eikä kukaan omista tunnusta, joten peli kysyy aina ensin.
 

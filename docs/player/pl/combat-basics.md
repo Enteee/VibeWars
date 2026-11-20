@@ -3,18 +3,18 @@
 ## Zdrowie i energia
 
 Zaczynasz z 500 **Zdrowia** i 50 **Energii**; runy i morale zmieniają obie
-wartości. Umiejętności kosztują Energię, a ta wraca sama, powoli. Warrior
-i Paragon odzyskują ją najwolniej, Ranger trochę szybciej, a wszyscy pozostali
+wartości. Umiejętności kosztują Energię, a ta wraca sama, powoli. ![Wojownik](../../../apps/web/public/icons/profession/warrior.svg) **Wojownik**
+i ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** odzyskują ją najwolniej, ![Łowca](../../../apps/web/public/icons/profession/ranger.svg) **Łowca** trochę szybciej, a wszyscy pozostali
 najszybciej.
 
 Strzałki na twoich paskach to **pipy**: każda oznacza Zdrowie lub Energię, które
-co sekundę trochę wracają albo ubywają. Bleeding, Burning i Poison odbierają
+co sekundę trochę wracają albo ubywają. ![Krwawienie](../../../apps/web/public/icons/status/bleeding.svg) **Krwawienie**, ![Podpalenie](../../../apps/web/public/icons/status/burning.svg) **Podpalenie** i ![Zatrucie](../../../apps/web/public/icons/status/poison.svg) **Zatrucie** odbierają
 Zdrowie; Regeneracja i czary leczące je dodają. Po 5 sekundach poza walką Zdrowie
 zaczyna wracać samo, tym szybciej, im dłużej pozostajesz poza walką.
 
 ## Adrenalina
 
-Warrior, Paragon i inne profesje mają umiejętności, które zamiast Energii
+![Wojownik](../../../apps/web/public/icons/profession/warrior.svg) **Wojownik**, ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** i inne profesje mają umiejętności, które zamiast Energii
 kosztują **adrenalinę**. Każda taka umiejętność ładuje się osobno: każde
 trafienie bronią daje każdej z nich jedno uderzenie, tak samo jak przyjęcie
 mocnego ciosu. Użycie jednej opróżnia ją i zabiera uderzenie pozostałym. Po 25
@@ -26,14 +26,14 @@ Umiejętność może wymagać chwili na **rzucanie**, a potem potrzebuje czasu n
 **odnowienie**, zanim użyjesz jej ponownie. Jeśli cel jest poza zasięgiem, najpierw
 do niego podchodzisz. Ruch lub Esc anuluje rzucanie: Energia przepada, ale
 umiejętność się nie odnawia. Po każdej umiejętności z czasem rzucania, poza
-umiejętnością ataku, następuje krótka przerwa, w której nie możesz działać.
+![Umiejętność ataku](../../../apps/web/public/icons/skill-type/attack.svg) **umiejętnością ataku**, następuje krótka przerwa, w której nie możesz działać.
 
 Umiejętność wciśnięta, gdy używasz innej, lub w tej przerwie, trafia do
 **kolejki**: idzie następna, a jej pole pulsuje, dopóki to nie nastąpi. Czekać
 może tylko jedna; wciśnięcie innej ją zastępuje. Ruch, Esc, przerwanie lub
 powalenie ją usuwa.
 
-**Okrzyki i postawy** nigdy nie trafiają do kolejki: działają od razu, nawet gdy
+![Okrzyk](../../../apps/web/public/icons/skill-type/shout.svg) **Okrzyki** i ![Postawa](../../../apps/web/public/icons/skill-type/stance.svg) **postawy** nigdy nie trafiają do kolejki: działają od razu, nawet gdy
 rzucasz inną umiejętność, w tej przerwie lub po powaleniu. Rzucanie trwa dalej.
 Użyte w ten sposób nie podprowadzają cię do celu: poza zasięgiem zostają odrzucone.
 
@@ -50,30 +50,30 @@ trafia, a zamach zaczyna się od nowa. Wróg, który wciąż idzie do celu, nie 
 czego przerywać. Przerwanie, którego karta mówi „umiejętność” lub „czar”, nie
 dotyka zwykłego ataku.
 
-Niektóre postawy, jak Mantra of Concentration, zatrzymują przerwanie wymierzone
+Niektóre ![Postawa](../../../apps/web/public/icons/skill-type/stance.svg) **postawy**, jak Mantra of Concentration, zatrzymują przerwanie wymierzone
 w ciebie. Żadna z nich nie zatrzymuje powalenia.
 
 **Powalony** przez chwilę nie możesz się ruszać, atakować ani użyć umiejętności,
-poza okrzykiem lub postawą, a trwające rzucanie kończy się niepowodzeniem.
+poza ![Okrzyk](../../../apps/web/public/icons/skill-type/shout.svg) **okrzykiem** lub postawą, a trwające rzucanie kończy się niepowodzeniem.
 
 ## Dolegliwości, klątwy i zaczarowania
 
 **Dolegliwości** szkodzą ci, dopóki nie miną lub nie zostaną usunięte:
 
-| Dolegliwość   | Działanie                                             |
-| ------------- | ----------------------------------------------------- |
-| Bleeding      | odbiera Zdrowie                                       |
-| Burning       | szybko odbiera Zdrowie                                |
-| Poison        | odbiera Zdrowie                                       |
-| Disease       | odbiera Zdrowie i przenosi się na każdego obok ciebie |
-| Crippled      | poruszasz się z połową prędkości                      |
-| Blind         | większość twoich ataków chybia                        |
-| Weakness      | twoja broń trafia znacznie słabiej                    |
-| Cracked Armor | mniej pancerza                                        |
-| Deep Wound    | mniej maksymalnego Zdrowia i słabsze leczenie         |
-| Dazed         | czary rzucane są wolno; każdy atak je przerywa        |
+| Dolegliwość                                                                                       | Działanie                                             |
+| ------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| ![Krwawienie](../../../apps/web/public/icons/status/bleeding.svg) **Krwawienie**                  | odbiera Zdrowie                                       |
+| ![Podpalenie](../../../apps/web/public/icons/status/burning.svg) **Podpalenie**                   | szybko odbiera Zdrowie                                |
+| ![Zatrucie](../../../apps/web/public/icons/status/poison.svg) **Zatrucie**                        | odbiera Zdrowie                                       |
+| ![Choroba](../../../apps/web/public/icons/status/disease.svg) **Choroba**                         | odbiera Zdrowie i przenosi się na każdego obok ciebie |
+| ![Okaleczenie](../../../apps/web/public/icons/status/crippled.svg) **Okaleczenie**                | poruszasz się z połową prędkości                      |
+| ![Oślepienie](../../../apps/web/public/icons/status/blind.svg) **Oślepienie**                     | większość twoich ataków chybia                        |
+| ![Słabość](../../../apps/web/public/icons/status/weakness.svg) **Słabość**                        | twoja broń trafia znacznie słabiej                    |
+| ![Pęknięty Pancerz](../../../apps/web/public/icons/status/cracked-armor.svg) **Pęknięty Pancerz** | mniej pancerza                                        |
+| ![Głęboka Rana](../../../apps/web/public/icons/status/deep-wound.svg) **Głęboka Rana**            | mniej maksymalnego Zdrowia i słabsze leczenie         |
+| ![Oszołomienie](../../../apps/web/public/icons/status/dazed.svg) **Oszołomienie**                 | czary rzucane są wolno; każdy atak je przerywa        |
 
-**Klątwy** rzucają na ciebie wrogowie; **zaczarowania** ty sam lub twoi
+![Klątwa](../../../apps/web/public/icons/skill-type/hex.svg) **Klątwy** rzucają na ciebie wrogowie; ![Zaczarowanie](../../../apps/web/public/icons/skill-type/enchantment.svg) **zaczarowania** ty sam lub twoi
 sojusznicy. Każde z nich usuwa własny rodzaj umiejętności. Niektóre zaczarowania
 są **podtrzymywane**: trwają, dopóki ich nie zakończysz, i kosztują pip Energii,
 gdy działają. Kliknij dwukrotnie ikonę, aby je zakończyć.
@@ -85,7 +85,7 @@ trafienie.
 
 ## Pancerz i obrażenia
 
-Warrior i Paragon noszą najwięcej pancerza; Ranger, Assassin i Dervish mniej;
+![Wojownik](../../../apps/web/public/icons/profession/warrior.svg) **Wojownik** i ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** noszą najwięcej pancerza; ![Łowca](../../../apps/web/public/icons/profession/ranger.svg) **Łowca**, ![Skrytobójca](../../../apps/web/public/icons/profession/assassin.svg) **Skrytobójca** i ![Derwisz](../../../apps/web/public/icons/profession/dervish.svg) **Derwisz** mniej;
 rzucający czary najmniej. Pancerz zmniejsza obrażenia od broni, żywiołów, chaosu
 i mroku. Obrażenia święte, cienia i bez typu, odbieranie Zdrowia oraz kradzież
 życia go ignorują. Tylko trafienia bronią mogą być krytyczne.

@@ -19,7 +19,7 @@ El preajuste por defecto es **Clásico**, para manos de GW1. **VibeWars** lanza 
 | Siguiente enemigo (Shift: anterior) | Tab                | Tab              |
 | Enemigo más cercano                 | C                  | C                |
 | Enemigo marcado por tu equipo       | T                  | T                |
-| Tú mismo                            | G                  | G                |
+| Tú mismo                            | F o G              | G                |
 | Ver nombres (mantener)              | Shift              | Shift            |
 | Silenciar                           | M                  | M                |
 | Soltar bandera, reliquia o cenizas  | ninguna            | ninguna          |
@@ -39,7 +39,7 @@ Estas teclas son fijas:
 ## Ratón
 
 - **Clic izquierdo** en el suelo para caminar hasta allí. Sin Shift, el botón izquierdo solo camina.
-- En los mapas con plataformas elevadas, el clic izquierdo va a la superficie que ves, y **Alt + clic izquierdo** al suelo que hay debajo. Un anillo bajo el cursor indica una plataforma; uno discontinuo, el suelo. Sobre un túnel, un clic izquierdo va al nivel en el que estás, y **Alt + clic izquierdo** al otro.
+- En los mapas con plataformas elevadas, el clic izquierdo va a la superficie que ves, y **Alt + clic izquierdo** al suelo que hay debajo. Un anillo bajo el cursor indica una plataforma; uno discontinuo, el suelo. Sobre un túnel, un clic izquierdo va al nivel en el que estás. **Alt + clic izquierdo** nunca va por encima del nivel en el que estás: desde el suelo va al túnel, y dentro de un túnel se queda en él.
 - **Clic derecho** en un enemigo o un aliado para seleccionarlo. Otro clic
   derecho rápido en el mismo enemigo lo ataca.
 - **Clic derecho** en una bandera o en la base de bandera, en una Batalla
@@ -76,8 +76,9 @@ botones, menos Sala, están arriba a la derecha de la pantalla. En una ventana
 estrecha, estos iconos y los demás botones de la pantalla se pliegan en
 **⋯**; solo su botón principal se queda fuera. ⚙ abre Opciones como una
 ventana bajo la barra, con la pantalla aún detrás; Esc, × o un clic fuera la
-cierran. En **Pantalla**, **Iluminación** enciende o apaga la luz y la sombra de un mapa iluminado, al instante, incluso en una partida. La Ayuda se cierra con la × de arriba a la derecha, Esc u otra
-pulsación de [?].
+cierran. En **Pantalla**, **Iluminación** enciende o apaga la luz y la sombra de un mapa iluminado, al instante, incluso en una partida. [?] abre la Ayuda igual, como una
+ventana bajo él con un selector de página arriba; la partida sigue detrás. La
+Ayuda se cierra con su ×, Esc, un clic fuera u otra pulsación de [?].
 
 **Comparte un ritmo con tu sala.** En el editor de ritmos (♪, luego
 **Editar**), **Compartir en la sala** envía lo que has escrito, guardado o

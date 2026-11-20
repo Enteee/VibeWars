@@ -1,14 +1,20 @@
 import { defaultBuildEquipment } from "@vibewars/game-core";
-import { describe, expect, it } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { t } from "../i18n/index.js";
+import { exportBuild } from "../storage/build-transfer.js";
 import {
   CHARACTER_SCHEMA_VERSION,
   TEAM_BUILD_SIZES,
   type StoredCharacter,
+  type StoredTeam,
   type TeamCharacter,
 } from "../storage/schema.js";
+import { exportTeam } from "../storage/team-transfer.js";
 import { setProfessions, setRank } from "./build-editor.js";
+import type * as Figure from "./character-figure.js";
+import { FakeElement } from "./fake-dom.test-support.js";
+import type * as Kit from "./kit.js";
 import { summariseGear } from "./gear-editor.js";
 import {
   moveMember,
@@ -24,11 +30,34 @@ import {
   memberSkillCells,
   memberStats,
   memberToggle,
+  mountTeamEditor,
+  openedTeam,
   pastedTeam,
   saveTitle,
   teamEditorProblems,
   topAttributes,
 } from "./team-editor.js";
+
+// The fake DOM has no canvas: a member dot is a bare element.
+vi.mock("./character-figure.js", async (original) => ({
+  ...(await original<typeof Figure>()),
+  createCharacterDot: () => document.createElement("span"),
+}));
+
+// The top bar is outside the editor's root: its actions, ⋯ among them, land here.
+const bar: { actions: FakeElement[] } = { actions: [] };
+vi.mock("./kit.js", async (original) => ({
+  ...(await original<typeof Kit>()),
+  screenBar: (options: { readonly actions?: readonly FakeElement[] }) => {
+    bar.actions = [...(options.actions ?? [])];
+    return { back: undefined, release: () => undefined };
+  },
+}));
+
+/** `node` and everything under it. */
+function treeOf(node: FakeElement): FakeElement[] {
+  return [node, ...node.children.flatMap(treeOf)];
+}
 
 function character(id: string): TeamCharacter {
   return {
@@ -309,5 +338,85 @@ describe("memberToggle (#2536)", () => {
   it("flips the first member back to ▼ when another opens", () => {
     expect(memberToggle(a, "b").glyph).toBe("▼");
     expect(memberToggle(b, "b").glyph).toBe("▲");
+  });
+});
+
+describe("⋯ → Load team (#3181, #3638)", () => {
+  const duo: StoredTeam = { ...membersTeam([character("Ann"), character("Bo")]), name: "Duo" };
+  let imported: StoredTeam[] = [];
+  const mount = (): FakeElement => {
+    const page = new FakeElement();
+    mountTeamEditor(page as unknown as HTMLElement, openedTeam(teamOf("a", "b"), true), [], {
+      onSave: () => Promise.resolve(),
+      onDuplicate: () => undefined,
+      onDelete: () => undefined,
+      onClose: () => undefined,
+      onOpenMember: () => undefined,
+      onDraft: undefined,
+      onImportTeam: (team) => {
+        imported.push(team);
+      },
+    });
+    // The top bar's actions, ⋯ with its Share and Load lines among them.
+    const root = new FakeElement();
+    root.append(...bar.actions);
+    return root;
+  };
+  /** Load team opened, `text` in its line, and Load pressed: what it says is wrong. */
+  const loadText = (root: FakeElement, text: string): string[] => {
+    treeOf(root)
+      .find((node) => node.textContent === t("teamEditor.loadTeam"))
+      ?.click();
+    const [line] = root.all("editor-load");
+    expect(line?.hidden).toBe(false);
+    const input = line?.all("editor-share-line")[0];
+    if (input !== undefined) {
+      input.value = text;
+    }
+    line?.children.find((node) => node.textContent === t("kit.load"))?.click();
+    return root.all("editor-load-problems")[0]?.children.map((li) => li.textContent) ?? [];
+  };
+
+  beforeEach(() => {
+    imported = [];
+    vi.stubGlobal("HTMLElement", FakeElement);
+    vi.stubGlobal("HTMLButtonElement", FakeElement);
+    vi.stubGlobal("window", { addEventListener: () => undefined, innerWidth: 1000 });
+    vi.stubGlobal("document", {
+      addEventListener: () => undefined,
+      removeEventListener: () => undefined,
+      body: new FakeElement(),
+      createElement: () => new FakeElement(),
+      createTextNode: (text: string) => Object.assign(new FakeElement(), { textContent: text }),
+    });
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("opens a shared team line, whitespace and all, and puts the line away", () => {
+    const root = mount();
+    expect(root.all("editor-load")[0]?.hidden).toBe(true);
+    expect(loadText(root, `  ${exportTeam(duo)}\n`)).toEqual([]);
+    expect(imported.map((one) => one.name)).toEqual(["Duo"]);
+    expect(imported[0]?.members.map((member) => member.character.name)).toEqual(["Ann", "Bo"]);
+    expect(root.all("editor-load")[0]?.hidden).toBe(true);
+  });
+
+  it("says what is wrong with an empty line, a single build, a broken or an illegal team", () => {
+    const root = mount();
+    const build = exportBuild({
+      ...character("Ann"),
+      schemaVersion: CHARACTER_SCHEMA_VERSION,
+      updatedAt: 1,
+    });
+    const short = exportTeam({ ...duo, members: duo.members.slice(0, 1) });
+    expect(loadText(root, " ")).toEqual([t("buildEditor.pasteFirst")]);
+    expect(loadText(root, build)).toEqual([t("teamPlay.buildCodeLoad")]);
+    expect(loadText(root, "{not json")).toEqual([t("storage.teamNotJson")]);
+    expect(loadText(root, short)).toEqual([t("storage.teamMemberCount", { size: 2, found: 1 })]);
+    expect(imported).toEqual([]);
+    expect(root.all("editor-load")[0]?.hidden).toBe(false);
   });
 });

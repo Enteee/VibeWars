@@ -93,6 +93,7 @@ import {
   toast,
   type ChipProblem,
   type InlineConfirm,
+  wordmark,
 } from "./kit.js";
 import { mountPaperDoll, type PaperDoll } from "./paper-doll.js";
 import { createTrainingPanel, type TrainingPanel } from "./training-panel.js";
@@ -107,6 +108,8 @@ import { describeNames, describeWords } from "../i18n/describe-words.js";
 export interface BuildEditorCallbacks {
   /** Store it; the editor then says so and leaves through `onClose` (#1902). */
   readonly onSave: (character: StoredCharacter) => Promise<void>;
+  /** Every edit to the draft, before it and after, for the menu quest (#3541); absent for a Team Build member. */
+  readonly onDraft: ((before: StoredCharacter, draft: StoredCharacter) => void) | undefined;
   /** Absent for a Team Build's member (#2225), which is replaced, never taken off or copied. */
   readonly onDelete: ((id: string) => void) | undefined;
   readonly onDuplicate: ((character: StoredCharacter) => void) | undefined;
@@ -868,9 +871,11 @@ export function mountBuildEditor(
     ) {
       selected = undefined;
     }
+    const before = character;
     character = next;
     notice = said;
     update();
+    callbacks.onDraft?.(before, next);
     training?.refocus();
   };
 
@@ -953,8 +958,10 @@ export function mountBuildEditor(
   // Under the arena, or with none at the top of the middle column (#571).
   const stats = mountStats();
   (training?.statsSlot ?? panel).appendChild(stats.element);
-  // After the editor: the right column.
+  // After the editor: the right column, the library the skills, the
+  // weapons and the gear are all picked from.
   layout.appendChild(picker.element);
+  picker.element.setAttribute("data-tutorial", "skills weapons gear");
   regions.push(
     bar,
     stats,
@@ -1094,6 +1101,7 @@ function mountCommandBar(
       },
     );
   });
+  save.setAttribute("data-tutorial", "save");
 
   // Share (#572): the build as one line, selected, with Copy. Load
   // (#2004) opens in its place: one of the two at a time.
@@ -1187,7 +1195,7 @@ function mountCommandBar(
   };
   // The name is the last crumb: the place is the character (#1272).
   screenBar({
-    crumbs: ["VibeWars", nameInput],
+    crumbs: [wordmark("topbar-wordmark"), nameInput],
     escape: () => {
       leave(callbacks.onClose);
     },
@@ -1265,6 +1273,7 @@ export function mountProfessions(
 ): Region & { readonly element: HTMLElement } {
   const element = h("div", "editor-row editor-professions");
   element.dataset.cause = "professions";
+  element.setAttribute("data-tutorial", "professions");
   const primary = professionPicker(
     "primary",
     () => professionChoices(host.current(), "primary"),
@@ -1451,6 +1460,8 @@ export function mountAttributes(panel: HTMLElement, context: BuildHost): Region 
   points.append(pointsText, bar);
   const list = h("div", "editor-attributes");
   list.dataset.cause = "attributes";
+  points.setAttribute("data-tutorial", "attributes");
+  list.setAttribute("data-tutorial", "attributes");
   const costHeading = h("div", "editor-attributes-cost-heading", t("buildEditor.nextCostHeading"));
   panel.append(points, costHeading, list);
 
@@ -1668,6 +1679,7 @@ export function mountSkillBar(panel: HTMLElement, context: SkillBarHost): Region
   // it by picking from eight identical `<select>`s never matched how
   // players think about it.
   const section = h("div", "editor-skills");
+  section.setAttribute("data-tutorial", "skills");
   section.appendChild(h("div", "editor-label", t("buildEditor.skillBar")));
   const grid = h("div", "skill-bar-grid");
   grid.dataset.cause = "bar";
@@ -1965,6 +1977,7 @@ export function mountGear(panel: HTMLElement, context: GearHost, doll: PaperDoll
   // below show and edit the selected one.
   const tabRow = h("div", "gear-set-tabs");
   tabRow.setAttribute("role", "tablist");
+  tabRow.setAttribute("data-tutorial", "weapons");
   tabRow.setAttribute("aria-label", t("buildEditor.weaponSets"));
   const tabs = WEAPON_SET_INDICES.map((set) => {
     const tab = h("button", "gear-set-tab");
@@ -2032,6 +2045,7 @@ export function mountGear(panel: HTMLElement, context: GearHost, doll: PaperDoll
     },
   );
   handsGrid.append(weaponSlot.element, offhandSlot.element);
+  handsGrid.setAttribute("data-tutorial", "weapons");
   section.appendChild(handsGrid);
 
   // The headgear's attribute (#1140); the weapon's and the off-hand's,
@@ -2048,12 +2062,14 @@ export function mountGear(panel: HTMLElement, context: GearHost, doll: PaperDoll
       commit(clearArmorUpgrades(current()));
     }),
   );
+  armorHeader.setAttribute("data-tutorial", "gear");
   section.appendChild(armorHeader);
 
   // The figure, a piece clicked picks its insignia and rune (#2059). The
   // headgear's attribute sits on the headgear's row.
   headgearLink.element.classList.add("editor-headgear");
   doll.headgearSlot.appendChild(headgearLink.element);
+  doll.element.setAttribute("data-tutorial", "gear");
   section.appendChild(doll.element);
 
   // --- the summary ------------------------------------------------------

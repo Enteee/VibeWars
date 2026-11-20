@@ -19,7 +19,7 @@ Die Standardvorlage heißt **Klassisch**, für GW1-Hände. **VibeWars** wirkt Sk
 | Nächstes Ziel (Shift: vorheriges)       | Tab                      | Tab              |
 | Nächsten Gegner anvisieren              | C                        | C                |
 | Angesagten Gegner anvisieren            | T                        | T                |
-| Dich anvisieren                         | G                        | G                |
+| Dich anvisieren                         | F oder G                 | G                |
 | Namen zeigen (halten)                   | Shift                    | Shift            |
 | Stumm                                   | M                        | M                |
 | Flagge, Relikt oder Asche fallen lassen | keine Taste              | keine Taste      |
@@ -37,7 +37,7 @@ Diese Tasten sind fest:
 ## Maus
 
 - **Linksklick** auf den Boden: Du läufst dorthin. Ohne Shift läuft die linke Taste nur.
-- Auf Karten mit erhöhten Plattformen führt ein Linksklick auf die sichtbare Fläche, **Alt + Linksklick** auf den Boden darunter. Ein Ring am Mauszeiger zeigt eine Plattform an, ein gestrichelter Ring den Boden. Über einem Tunnel führt ein Linksklick auf die Ebene, auf der du bist, **Alt + Linksklick** auf die andere.
+- Auf Karten mit erhöhten Plattformen führt ein Linksklick auf die sichtbare Fläche, **Alt + Linksklick** auf den Boden darunter. Ein Ring am Mauszeiger zeigt eine Plattform an, ein gestrichelter Ring den Boden. Über einem Tunnel führt ein Linksklick auf die Ebene, auf der du bist. **Alt + Linksklick** führt nie über die Ebene, auf der du stehst: vom Boden geht es in den Tunnel, und im Tunnel bleibt es dort.
 - **Rechtsklick** auf einen Gegner oder Verbündeten visiert ihn an. Klicke denselben
   Gegner kurz danach noch einmal rechts, um ihn anzugreifen.
 - **Rechtsklick** auf eine Flagge oder den Flaggenstand in einer Gildenschlacht oder auf dem Barrow Field
@@ -70,7 +70,8 @@ Außerhalb eines Matches liegen oben **[?]** (diese Hilfe), **⚙** (Optionen),
 außer Lobby, oben rechts am Bildschirm. In einem schmalen Fenster klappen diese Symbole und die
 übrigen Knöpfe des Bildschirms unter **⋯** ein; nur sein Hauptknopf bleibt draußen.
 ⚙ öffnet die Optionen als Fenster unter der Leiste, mit dem Bildschirm dahinter; Esc, × oder ein Klick daneben schließt es. Unter **Anzeige** schaltet **Beleuchtung** Licht und Schatten einer beleuchteten Karte ein oder aus, sofort, auch im Match.
-Die Hilfe schließt mit dem × oben rechts, Esc oder einem weiteren Druck auf [?].
+[?] öffnet die Hilfe genauso, als Fenster darunter mit einer Seitenauswahl oben; ein Match läuft dahinter weiter.
+Die Hilfe schließt mit ihrem ×, Esc, einem Klick daneben oder einem weiteren Druck auf [?].
 
 **Teile einen Beat mit deiner Lobby.** Im Beat-Editor (♪, dann **Ändern**) sendet
 **Mit Lobby teilen** das, was du getippt hast, gespeichert oder nicht, an alle

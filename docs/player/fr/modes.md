@@ -129,7 +129,7 @@ drapeau. Un bonus s'affiche « Bonus de moral ! +10% », ou « Bonus de moral
 ennemi ». Sur la boussole, ♛ marque chaque Seigneur de guilde, ⚑ chaque drapeau
 et ◎ le socle.
 
-Guild Hall Isle le joue.
+Guild Hall Isle (8v8, 6000x2600) le joue : une île en mer. Chaque Guild Lord se tient au sommet d'une salle, derrière un rempart ; on sort par la porterie, par-dessus le rempart ou le long d'un ponton. Une porte de porterie s'ouvre par un levier sur le rempart ennemi. Le support du drapeau est sur une estrade au centre.
 
 ## Course aux reliques
 
@@ -171,14 +171,15 @@ Broken Tower le joue (4v4 et 8v8, 5400x2800) : une tour effondrée sur une colli
 
 Ici, la Course aux reliques de l'Ascension des Héros se joue à l'envers. Chaque base abrite la relique de son équipe et son Héros fantomatique, et il n'y a pas d'autel. **Prenez la relique adverse dans sa base et apportez-la à votre propre Héros fantomatique** pour marquer un point. Le fantôme doit être vivant, et il reste à son poste. Vous ne pouvez pas porter votre propre relique : la ramasser là où elle est tombée la renvoie chez vous. Une équipe qui mène de **3 points gagne aussitôt**. Après 8 minutes, le plus de points l'emporte, et une égalité revient à la dernière équipe à avoir marqué. Chaque base relève ses morts, et son fantôme, toutes les 2 minutes. Les bots vont ensemble chercher la relique adverse et la ramènent.
 
+Cinder Sanctum (8v8, 5600x2800) le joue : un temple au flanc d'un volcan entre deux rivières de lave. Traversez par un pont ou par la chaussée jusqu'au sanctuaire sur son parvis ; un levier sur le parvis ouvre le passage caché sous le sanctuaire, et les murs de cendre peuvent être brisés. La lave brûle.
+
 ## Roi de la colline
 
 **Mène ton Héros fantomatique sur l'autel, et tiens-le.** Chaque équipe a un
 **Héros fantomatique** dans sa base, un fantôme qui se bat à la hache et que
 personne ne joue. L'**autel** est au centre, à la même distance des deux bases.
 Sur **Threefold Keep**, trois équipes (deux si aucune troisième n'est libre) se le
-disputent dans un donjon muré. Ses portes ne s'ouvrent que de l'intérieur, par
-une plaque : pour entrer, contourne-le jusqu'à un coin ouvert. Au plus 12 points
+disputent sur la tour d'un donjon muré. Au plus 12 points
 par équipe, et si tous les adversaires sont à -60 % de moral, tu gagnes aussitôt. Le **Hall of Heroes**, la
 carte de Roi de la colline qui clôt l'Ascension des héros, le dresse sur une
 estrade murée à l'ouest et à l'est, par une approche nord ou sud bordée de
@@ -236,7 +237,7 @@ qui arrive à portée de sort. Tant que ton équipe ne tient pas l'autel, chaque
 tue d'abord le Héros fantomatique adverse dès qu'il se tient sur l'autel à sa
 portée : c'est le seul ennemi qui empêche ton fantôme de le prendre.
 
-Threefold Keep le joue.
+Threefold Keep le joue (4v4 et 8v8, 5000x4400) : un donjon sur une colline des hauteurs, pour trois équipes. Monte sur le chemin de ronde par l'escalier à côté de ta porte et traverse une chaussée jusqu'à la colline, puis grimpe jusqu'à l'autel sur la tour. Un levier dans chaque cour ouvre les quatre portes : le passage de ta porte sous le rempart, et la crypte, le long chemin sous la colline.
 
 ## Points de capture
 
@@ -277,8 +278,9 @@ Les bots se répartissent sur les sanctuaires que ton équipe n'a pas encore et
 s'y tiennent jusqu'à leur prise. Un ennemi à portée de sort ne les attire pas :
 ils montent sur un sanctuaire à portée et combattent depuis celui-ci.
 
-Scarred Earth le joue : chaque sanctuaire se trouve dans un anneau de murs brisés,
-ouvert à l'ouest et à l'est.
+Scarred Earth (4v4 et 8v8, 5400x2800) le joue : un champ de bataille criblé de cratères au crépuscule. Les sanctuaires se dressent sur des tours de siège détruites, celui du centre sur la plate-forme de la grande tour, chacun près d'un cratère ; des leviers sur les tours ouvrent deux tranchées sous le champ, et les palissades détruites peuvent être brisées.
+
+Dans l'Ascension des héros, The Warden's Gallery (8v8, 5200x2500) le joue : une galerie de sculptures ensoleillée sous des verrières. Le sanctuaire du centre se dresse au sommet du grand socle, et chaque équipe en a trois près de son vestibule, dont un sur un socle ; des leviers sur le grand socle ouvrent deux cryptes sous le sol, et les statues renversées peuvent être brisées.
 
 ## Salon d'équipe
 
@@ -379,7 +381,7 @@ L'équipe choisit une fois, dans le Salon d'équipe de sa première carte, et ga
 son Build d'équipe et ses places pour le reste de la course : après une victoire,
 elle repart en file sans vote ni choix de places. Celui qui part en pleine course
 libère sa place mais pas son build. Un nouveau venu dans le groupe entre deux
-cartes ne choisit que parmi les places vacantes (**Libre : build Monk**), et joue
+cartes ne choisit que parmi les places vacantes (**Libre : build Moine**), et joue
 le build de cette place ; une place vacante que personne ne prend revient à un
 bot. Une défaite fait tout recommencer : la course suivante revote. Pareil si tu
 suis ton hôte dans un autre groupe, dont l'hôte ne peut pas répondre de l'ancienne
@@ -391,12 +393,10 @@ Un groupe de moins de 8 entre en file avec des bots aux places vides, selon son 
 
 **Barrow Field** (8v8, 5400x2600) est une arène de l'Ascension que tu peux aussi choisir en Partie hébergée. C'est une Annihilation de prêtre sur une lande de tertres funéraires au crépuscule, où le prêtre relève ses morts toutes les 2 minutes. Grimpe sur un tertre pour tenir les hauteurs, ou prends le passage des tertres en dessous une fois qu'un levier sur le tertre lointain en ouvre la grille. Porte ton drapeau sur le **Storm Beacon** au centre : il frappe un ennemi au hasard à portée d'oreille pour 50 dégâts de foudre toutes les 2,5 secondes, jusqu'à ce que l'autre équipe y plante son drapeau. Chaque frappe est un éclair du phare vers sa victime, visible par les deux équipes.
 
-Trois arènes d'Ascension se choisissent aussi en Partie hébergée : **The Hollow Deep** (Annihilation
-8v8, trois tunnels sinueux autour d'un rocher central), **Blackwater Ford**
+Trois arènes d'Ascension se choisissent aussi en Partie hébergée : **The Hollow Deep** (Annihilation 8v8, 6200x2400, dans une caverne obscure : on franchit un pont de corde au-dessus d'un gouffre, on passe par une corniche centrale, ou on prend la crypte en dessous une fois qu'un levier sur une saillie en ouvre la grille), **Blackwater Ford**
 (Annihilation de prêtre 8v8, 5200x2800, à un sombre gué de rivière : on traverse un haut-fond à gué, on franchit
 le pont brisé sur ses piles au-dessus du moulin, ou on prend un ponceau sous le pont une fois qu'un levier sur le
-moulin en ouvre la herse ; le prêtre relève ses morts toutes les 2 minutes) et **Mosslit Cairns** (Points de
-capture 8v8, cinq cairns en léger zigzag entre les bases). La quatrième est **The Brazen Causeway** (Annihilation de prêtre 8v8, 5600x2800, sur une chaussée de pierre surélevée au-dessus d'un marais au crépuscule : on marche le long de la chaussée une fois qu'un levier dans le châtelet du fond en ouvre la porte de bronze, on traverse le marais jusqu'aux escaliers en son milieu, ou on se glisse par un ponceau en dessous ; le prêtre relève ses morts toutes les 2 minutes).
+moulin en ouvre la herse ; le prêtre relève ses morts toutes les 2 minutes) et **Mosslit Cairns** (Points de capture 8v8, 5400x3000, sur cinq collines à cairns luisantes de mousse au crépuscule : on gravit un cairn par ses escaliers, on tient le grand cairn du milieu, ou on prend le tunnel de racines sous les collines du sud une fois qu'un levier sur un cairn du nord en ouvre les portes ; les murs de racines peuvent être brisés). La quatrième est **The Brazen Causeway** (Annihilation de prêtre 8v8, 5600x2800, sur une chaussée de pierre surélevée au-dessus d'un marais au crépuscule : on marche le long de la chaussée une fois qu'un levier dans le châtelet du fond en ouvre la porte de bronze, on traverse le marais jusqu'aux escaliers en son milieu, ou on se glisse par un ponceau en dessous ; le prêtre relève ses morts toutes les 2 minutes).
 
 Une carte peut avoir des **portes** : des murs qui arrêtent les corps, les tirs et
 la vue quand ils sont fermés. Tiens-toi sur la plaque de pression d'une porte pour
@@ -406,7 +406,7 @@ encore en route, et ne peut plus être ouverte pendant une demi-seconde. Une pla
 couleur d'une équipe ne répond qu'à cette équipe. Les bots se tiennent sur la
 plaque de leur équipe quand aucun ennemi n'est proche.
 
-Chaque parcours commence par la **Bataille des Zaishen d'élite**, sans file d'attente : votre groupe contre six Zaishen joués par des bots (2 Moines, un Élémentaliste et 3 autres). Le chrono démarre quand l'un de vous franchit la ligne de départ ou quand le premier Zaishen meurt, selon ce qui arrive en premier. Tuez les six en moins de 30 secondes et le groupe commence le parcours à +10 % de moral ; en moins de 60, +8 % ; en moins de 80, +6 % ; en moins de 100, +4 % ; en moins de 120, +2 % ; plus lentement, rien. En cas de victoire, le groupe rejoint seul la file de sa première carte. Si tout le groupe tombe, ou si un Zaishen est encore en vie à la limite de 8 minutes, le parcours est terminé.
+Chaque parcours commence par la **Bataille des Zaishen d'élite**, sans file d'attente : votre groupe contre six Zaishen joués par des bots (2 Moines, un Élémentaliste et 3 autres). Elle se livre dans une arène cérémonielle (8v8, 5400x2400) : des gradins étagés au nord et au sud, des statues sur des socles sur le sol en contrebas, et sous chaque tribune une crypte dont la herse s'ouvre avec un levier sur la tribune d'en face. Le chrono démarre quand l'un de vous franchit la ligne de départ au milieu de l'arène ou quand le premier Zaishen meurt, selon ce qui arrive en premier. Tuez les six en moins de 30 secondes et le groupe commence le parcours à +10 % de moral ; en moins de 60, +8 % ; en moins de 80, +6 % ; en moins de 100, +4 % ; en moins de 120, +2 % ; plus lentement, rien. En cas de victoire, le groupe rejoint seul la file de sa première carte. Si tout le groupe tombe, ou si un Zaishen est encore en vie à la limite de 8 minutes, le parcours est terminé.
 
 Chaque victoire d'un parcours rapporte de la **renommée** : 1, 2, 3, 4, 6, 8, 12, 16, 20, 24, 28, 32, 36 pour les treize premières, puis 40 chacune, au plus 300 par jour (le jour change à 15:00 UTC). La Bataille des Zaishen d'élite n'en rapporte pas. Votre renommée totale fixe votre **rang de héros**, de 1 à 25 de renommée à 15 à 100 000, affiché par ★ et un nombre à côté de votre nom. Options > Joueur montre les deux. Les deux sont conservés sur votre appareil.
 
@@ -456,3 +456,7 @@ correspond donc à aucune taille. Les pastilles restent comme tu les as laissée
 jusqu'au rechargement de la page.
 
 Au-dessus des filtres, le bandeau **Hall des héros** liste les 20 dernières tenues, de la plus récente à la plus ancienne : le détenteur (un tag de guilde ou le nom du chef), les personnes de l'équipe gagnante, la fin de la victoire la plus récente et, à partir de deux victoires, le nombre d'affilée. Une tenue est une suite ininterrompue de victoires au Hall par le même détenteur. Le bandeau lit les enregistrements de cette page, ignore les filtres et reste masqué si aucun n'est une victoire au Hall. Comme tout enregistrement, c'est ce qu'a signalé l'hôte de chaque match, et rien ne le vérifie.
+
+## Classé
+
+Un match de la file sans bot est classé. L’écran de la file et le lobby d’équipe le disent avant que tu ne rejoignes la file ; un seul bot laisse le match non classé. Quand un match classé est trouvé, chaque joueur signe son début, et l’écran affiche **Confirmation du match classé…** jusqu’à 15 secondes. Si quelqu’un ne confirme pas, le match est annulé et tout le monde retourne dans la file. À la fin, chaque joueur signe le résultat, et le reçu du match est publié sur les relais Nostr avec la clé publique et le nom de personnage de chaque joueur ; un joueur sans personnage y figure comme starter. Ton classement change dans l’heure. Quitter un match classé compte comme une défaite, et le bouton quitter le dit.

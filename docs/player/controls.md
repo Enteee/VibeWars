@@ -20,7 +20,7 @@ the left hand and moves on the arrow keys.
 | Next foe (Shift: previous) | Tab                    | Tab              |
 | Closest foe                | C                      | C                |
 | Your team's called foe     | T                      | T                |
-| Yourself                   | G                      | G                |
+| Yourself                   | F or G                 | G                |
 | Show names (hold)          | Shift                  | Shift            |
 | Mute                       | M                      | M                |
 | Drop flag, relic or ashes  | none                   | none             |
@@ -38,7 +38,7 @@ These keys are fixed:
 ## Mouse
 
 - **Left click** the ground to walk there. Without Shift, the left button only walks.
-- On maps with raised platforms, a left click goes to the surface you see, and **Alt + left click** to the ground below it. A ring under the cursor marks a platform, a dashed ring the ground. Over a tunnel, a left click goes to the level you are on, and **Alt + left click** to the other one.
+- On maps with raised platforms, a left click goes to the surface you see, and **Alt + left click** to the ground below it. A ring under the cursor marks a platform, a dashed ring the ground. Over a tunnel, a left click goes to the level you are on. **Alt + left click** never goes above the level you stand on: from the ground it goes into the tunnel, and in a tunnel it stays there.
 - **Right click** a foe or an ally to target it. Right click the same foe
   again, quickly, to attack it.
 - **Right click** a flag or the flag stand, in a Guild Battle or on Barrow Field, to target
@@ -71,7 +71,8 @@ Outside a match, the top bar holds **[?]** (this Help), **⚙** (Options),
 but Lobby, sit at the top right of the screen. In a narrow window, these icons and
 the screen's other buttons fold into **⋯**; only its main button stays out.
 ⚙ opens Options as a window under the bar, the screen still behind it; Esc, × or a click outside closes it. Under **Display**, **Lighting** turns a lit map's light and shade on or off, at once, even in a match.
-Help closes with the × at its top right, Esc, or another press of [?].
+[?] opens Help the same way, as a window under it with a page picker on top; a match keeps running behind it.
+Help closes with its ×, Esc, a click outside, or another press of [?].
 
 **Share a beat with your lobby.** In the beat editor (♪, then **Edit**),
 **Share with lobby** sends what you have typed, saved or not, to everyone

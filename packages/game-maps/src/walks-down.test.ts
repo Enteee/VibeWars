@@ -151,6 +151,9 @@ describe("walking down from a deck (#3177)", () => {
           seed: `walks-down:${map.id}`,
           ruleset: RULESET,
           ...mapSimulationFields(map, map.teams),
+          teamCount: map.teams,
+          // The walk is under test, not a fight: a foe's guards (#3445) would hold the walker at their hall's stair.
+          guards: [],
           participants: [body("walker", start, layer, 0), body("foe", foe, map.groundLayer, 1)],
         });
         sim.walkTo("walker", goal, map.groundLayer);

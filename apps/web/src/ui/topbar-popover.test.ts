@@ -160,10 +160,10 @@ afterEach(() => {
 function popover(
   parent: FakeElement,
   holdsOpen?: () => boolean,
-): { trigger: FakeElement; disposed: number[] } {
+): { trigger: FakeElement; disposed: number[]; open: () => void } {
   const trigger = new FakeElement("button");
   const disposed: number[] = [];
-  attachTopbarPopover(
+  const { open } = attachTopbarPopover(
     trigger as unknown as HTMLButtonElement,
     parent as unknown as HTMLElement,
     () => {
@@ -176,7 +176,7 @@ function popover(
       };
     },
   );
-  return { trigger, disposed };
+  return { trigger, disposed, open };
 }
 
 describe("a top-bar popover (#2385)", () => {
@@ -251,6 +251,17 @@ describe("a top-bar popover (#2385)", () => {
     expect(isTopbarPopoverOpen()).toBe(true);
     trigger.fire("click");
     expect(isTopbarPopoverOpen()).toBe(false);
+  });
+
+  it("opens from code as from its button, and stays open if it is (#3552)", () => {
+    const parent = new FakeElement("div");
+    const { trigger, disposed, open } = popover(parent);
+    open();
+    expect(parent.children).toHaveLength(1);
+    expect(trigger.getAttribute("aria-expanded")).toBe("true");
+    open();
+    expect(parent.children).toHaveLength(1);
+    expect(disposed).toHaveLength(0);
   });
 
   it("shuts for Help or a match without taking the focus they want", () => {
@@ -405,9 +416,15 @@ describe("the top bar's queue icon (#2743)", () => {
   const mount = () => {
     const parent = new FakeElement("div");
     const left: string[] = [];
-    const queue = queueButton(parent as unknown as HTMLElement, () => {
-      left.push("left");
-    });
+    const queue = queueButton(
+      parent as unknown as HTMLElement,
+      () => {
+        left.push("left");
+      },
+      () => {
+        left.push("bots");
+      },
+    );
     return { ...queue, parent, button: queue.element as unknown as FakeElement, left };
   };
   /** What the open flyout shows: its hidden parts left out. */
@@ -445,7 +462,9 @@ describe("the top bar's queue icon (#2743)", () => {
       "3 searching · 4 needed",
       "Leave Queue",
     ]);
-    const leave = parent.children[0]?.children.find((child) => child.tagName === "button");
+    const leave = parent.children[0]?.children.find(
+      (child) => child.tagName === "button" && !child.hidden,
+    );
     leave?.fire("click");
     expect(left).toEqual(["left"]);
     expect(isTopbarPopoverOpen()).toBe(false);
@@ -461,6 +480,7 @@ describe("the top bar's queue icon (#2743)", () => {
       since: Date.now(),
       teams: undefined,
       isHost: false,
+      playBots: false,
       hallHolder: undefined,
     });
     button.fire("click");
@@ -472,6 +492,37 @@ describe("the top bar's queue icon (#2743)", () => {
     setQueue(undefined);
     expect(isTopbarPopoverOpen()).toBe(false);
     expect(parent.children).toEqual([]);
+  });
+
+  it("gives the host Play against bots, counting down 10 s greyed, then plays them (#3547)", () => {
+    const { parent, button, setQueue, left } = mount();
+    const queue = (since: number) => {
+      setQueue({
+        kind: "team",
+        mode: "team-arena",
+        teamSize: 2,
+        ascentRound: null,
+        since,
+        teams: undefined,
+        isHost: true,
+        playBots: true,
+        hallHolder: undefined,
+      });
+    };
+    queue(Date.now() - 9_200);
+    button.fire("click");
+    const bots = parent.children[0]?.children.find((child) =>
+      child.className.split(" ").includes("queue-play-bots"),
+    ) as (FakeElement & { disabled?: boolean }) | undefined;
+    expect(bots?.hidden).toBe(false);
+    expect(bots?.textContent).toBe("Play against bots (1 s)");
+    expect(bots?.disabled).toBe(true);
+    queue(Date.now() - 10_000);
+    expect(bots?.textContent).toBe("Play against bots");
+    expect(bots?.disabled).toBe(false);
+    bots?.fire("click");
+    expect(left).toEqual(["bots"]);
+    expect(isTopbarPopoverOpen()).toBe(false);
   });
 });
 

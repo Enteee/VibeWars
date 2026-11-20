@@ -115,7 +115,7 @@ musuh. Di bawahnya, sebaris teks menyebut siapa pun yang membawa bendera. Dorong
 "Dorongan Moral! +10%", atau "Dorongan Moral musuh". Di kompas, ♛ menandai
 setiap Penguasa Guild, ⚑ setiap bendera dan ◎ tiangnya.
 
-Guild Hall Isle memainkannya.
+Guild Hall Isle (8v8, 6000x2600) memainkannya: sebuah pulau di laut. Setiap Guild Lord berdiri di atas aula, di balik benteng; jalan keluar lewat gerbang, melewati atas benteng, atau menyusuri dermaga. Pintu gerbang dibuka oleh tuas di benteng lawan. Tiang bendera ada di panggung di tengah.
 
 ## Lari Relik
 
@@ -164,14 +164,15 @@ seri dimenangkan tim yang terakhir mencetak poin. Setiap markas menghidupkan kem
 hantunya, setiap 2 menit. Bot mengejar relik musuh bersama-sama lalu membawanya
 pulang.
 
+Cinder Sanctum (8v8, 5600x2800) memainkannya: sebuah kuil di lereng gunung berapi di antara dua sungai lava. Seberangi lewat jembatan atau jalan tanggul menuju tempat suci di pelatarannya; tuas di pelataran membuka lorong tersembunyi di bawah tempat suci, dan dinding abu bisa dihancurkan. Lava membakar.
+
 ## Raja Bukit
 
 **Pimpin Pahlawan Hantu-mu ke altar, lalu kuasai.** Setiap tim punya
 **Pahlawan Hantu** di markasnya, hantu yang bertarung dengan kapak dan yang
 tidak dimainkan siapa pun. **Altar** ada di tengah, sama jauhnya dari kedua
 markas. Di **Threefold Keep**, tiga tim (dua kalau tak ada tim ketiga yang tersedia) memperebutkannya
-di dalam sebuah keep bertembok. Pintu-pintunya hanya bisa dibuka dari dalam, lewat sebuah pelat di dalamnya: jalan
-memutar ke sudut yang terbuka untuk masuk. Paling banyak 12 poin per tim, dan kalau setiap musuh
+di atas menara sebuah keep bertembok. Paling banyak 12 poin per tim, dan kalau setiap musuh
 berada di moral -60% kamu langsung menang. **Aula
 Pahlawan**, peta Raja Bukit yang mengakhiri Pendakian Pahlawan, meninggikan
 altar di atas panggung bertembok di barat dan timur, naik lewat jalan utara atau selatan
@@ -227,7 +228,7 @@ jangkauan mantra. Selama timmu tidak menguasai altar, setiap bot membunuh Pahlaw
 tim lawan lebih dulu begitu hantu itu berdiri di altar dalam jangkauan mereka:
 dialah satu-satunya musuh yang mencegah hantumu merebutnya.
 
-Threefold Keep memainkannya.
+Threefold Keep memainkannya (4v4 dan 8v8, 5000x4400): sebuah keep di atas bukit di dataran tinggi, untuk tiga tim. Naiki jalan di atas tembok lewat tangga di samping gerbangmu lalu seberangi jalan lintas ke bukit, kemudian naik ke altar di atas menara. Sebuah tuas di tiap pelataran membuka keempat gerbang: lorong gerbangmu di bawah tembok, dan ruang bawah tanah, jalan panjang di bawah bukit.
 
 ## Rebut Titik
 
@@ -263,8 +264,9 @@ Bot menyebar ke kuil-kuil yang belum dimiliki timmu dan berdiri
 di sana sampai kuil itu direbut. Musuh dalam jangkauan mantra tidak memancing mereka
 pergi: mereka naik ke kuil yang terjangkau dan bertarung dari sana.
 
-Scarred Earth memainkannya: setiap kuil berdiri di dalam lingkaran tembok yang runtuh,
-terbuka ke barat dan timur.
+Scarred Earth (4v4 dan 8v8, 5400x2800) memainkannya: medan perang penuh kawah saat senja. Kuil-kuilnya berdiri di atas menara pengepungan yang hancur, yang di tengah di geladak menara besar, masing-masing di samping kawah; tuas di menara membuka dua parit di bawah medan, dan pagar kayu yang hancur bisa dirobohkan.
+
+Di Pendakian Pahlawan, The Warden's Gallery (8v8, 5200x2500) memainkannya: galeri patung bermandikan cahaya matahari di bawah jendela atap. Kuil tengah berdiri di puncak alas besar, dan tiap tim punya tiga di dekat serambinya, satu di atas alas; tuas di alas besar membuka dua ruang bawah tanah di bawah lantai, dan patung yang roboh bisa dihancurkan.
 
 ## Lobi Tim
 
@@ -357,7 +359,7 @@ Aula mengundi satu dari tiga mode untuk setiap laga: Raja Bukit, Lari Relik atau
 
 **Ruang Besi.** Aula hanya terbentuk setiap 12 menit menurut jam UTC, pada :00, :12, :24, :36 dan :48. Sampai saat itu party-mu menunggu di Ruang Besi: ikon antrean menampilkan waktu sampai pembukaan berikutnya dan siapa yang menguasai Aula. Pada setiap pembukaan, penguasa Aula bertemu sampai dua penantang, atau sampai tiga penantang bertemu kalau tak ada yang menguasainya. Hanya party yang sudah menunggu sebelum pembukaan yang ikut, dan sisanya di luar kursi itu menunggu pembukaan berikutnya. Penguasa yang tak punya lawan tetap menguasai Aula dan menunggu, tanpa kemenangan yang dihitung, dan penantang tunggal juga menunggu. Saat sebuah party memenangkan Aula, setiap game yang terbuka menyebutkan siapa yang kini menguasainya: pemimpinnya, atau tag guild-nya kalau lebih dari separuh party memakai tag yang sama.
 
-Setiap perjalanan dimulai dengan **Elite Zaishen Battle**, tanpa antrean: party-mu melawan enam Zaishen yang dimainkan bot (2 Monk, seorang Elementalist dan 3 lainnya). Waktu mulai berjalan saat salah satu dari kalian melewati garis start atau Zaishen pertama mati, mana yang lebih dulu. Bunuh keenamnya dalam waktu kurang dari 30 detik dan party memulai perjalanan dengan moral +10%; kurang dari 60, +8%; kurang dari 80, +6%; kurang dari 100, +4%; kurang dari 120, +2%; lebih lambat, tidak dapat apa-apa. Menang dan party-mu otomatis mengantre untuk peta pertamanya. Kalau timmu habis, atau masih ada Zaishen yang hidup saat batas 8 menit tercapai, perjalanan berakhir.
+Setiap perjalanan dimulai dengan **Elite Zaishen Battle**, tanpa antrean: party-mu melawan enam Zaishen yang dimainkan bot (2 Monk, seorang Elementalist dan 3 lainnya). Pertarungan ini berlangsung di arena upacara (8v8, 5400x2400): tribun bertingkat di utara dan selatan, patung di atas alas di lantai yang cekung, dan ruang bawah tanah di bawah setiap tribun, yang jeruji gerbangnya dibuka oleh tuas di tribun seberang. Waktu mulai berjalan saat salah satu dari kalian melewati garis start di tengah arena atau Zaishen pertama mati, mana yang lebih dulu. Bunuh keenamnya dalam waktu kurang dari 30 detik dan party memulai perjalanan dengan moral +10%; kurang dari 60, +8%; kurang dari 80, +6%; kurang dari 100, +4%; kurang dari 120, +2%; lebih lambat, tidak dapat apa-apa. Menang dan party-mu otomatis mengantre untuk peta pertamanya. Kalau timmu habis, atau masih ada Zaishen yang hidup saat batas 8 menit tercapai, perjalanan berakhir.
 
 Setiap kemenangan dalam perjalanan memberi **ketenaran**: 1, 2, 3, 4, 6, 8, 12, 16, 20, 24, 28, 32, 36 untuk tiga belas yang pertama, lalu masing-masing 40, paling banyak 300 sehari (hari berganti pukul 15:00 UTC). Elite Zaishen Battle tidak memberi apa-apa. Total ketenaranmu menentukan **peringkat pahlawan**-mu, dari 1 pada 25 ketenaran sampai 15 pada 100.000, ditampilkan sebagai ★ dan angka di samping namamu. Opsi > pemain menampilkan keduanya. Keduanya disimpan di perangkatmu.
 
@@ -388,14 +390,12 @@ jangkauannya dengan 50 damage lightning setiap 2,5 detik, sampai tim lawan
 menancapkan benderanya di sana. Setiap sambaran adalah petir dari suar ke siapa pun yang terkena,
 terlihat oleh kedua tim.
 
-Tiga arena Pendakian juga bisa dipilih di Game Host: **The Hollow Deep** (Pemusnahan 8v8, tiga
-terowongan berkelok di sekeliling batu di tengah),
+Tiga arena Pendakian juga bisa dipilih di Game Host: **The Hollow Deep** (Pemusnahan 8v8, 6200x2400, di gua gelap: seberangi jembatan tali di atas jurang, panjat langkan tengah, atau lewati ruang bawah tanah di bawahnya setelah tuas di sebuah teras batu membuka gerbangnya),
 **Blackwater Ford** (Pemusnahan
 Pendeta 8v8, 5200x2800, di sebuah arungan sungai yang gelap: arungi arungan yang dangkal, seberangi jembatan rusak di atas
 kincir yang bertumpu pada pilar-pilarnya, atau lewati gorong-gorong di bawah jembatan setelah tuas di kincir membuka
 gerbangnya; pendeta menghidupkan kembali yang mati setiap 2 menit) dan
-**Mosslit Cairns** (Rebut Titik 8v8, lima tumpukan batu dalam zig-zag dangkal
-di antara markas-markas). Yang keempat adalah **The Brazen Causeway** (Pemusnahan Pendeta 8v8, 5600x2800, di jalan lintas batu yang ditinggikan di atas rawa saat senja: berbaris menyusuri jalan lintas itu setelah tuas di rumah gerbang di ujung sana membuka gerbang perunggunya, seberangi rawa menuju tangga di tengahnya, atau menyelinap lewat gorong-gorong di bawahnya; pendeta menghidupkan kembali yang mati setiap 2 menit).
+**Mosslit Cairns** (Rebut Titik 8v8, 5400x3000, di lima bukit tumpukan batu yang berpendar oleh lumut saat senja: panjat tumpukan batu lewat tangganya, kuasai tumpukan batu besar di tengah, atau ambil terowongan akar di bawah bukit-bukit selatan setelah tuas di tumpukan batu utara membuka gerbangnya; dinding akar bisa dihancurkan). Yang keempat adalah **The Brazen Causeway** (Pemusnahan Pendeta 8v8, 5600x2800, di jalan lintas batu yang ditinggikan di atas rawa saat senja: berbaris menyusuri jalan lintas itu setelah tuas di rumah gerbang di ujung sana membuka gerbang perunggunya, seberangi rawa menuju tangga di tengahnya, atau menyelinap lewat gorong-gorong di bawahnya; pendeta menghidupkan kembali yang mati setiap 2 menit).
 
 Sebuah peta bisa punya **gerbang**: tembok yang menghentikan tubuh, tembakan dan pandangan selagi
 tertutup. Berdirilah di pelat penekan sebuah gerbang untuk membukanya. Gerbang menutup saat
@@ -448,3 +448,7 @@ tim terbesar, termasuk bot, jadi Game Host 3v2 tidak cocok dengan ukuran mana pu
 Chip tetap seperti yang kamu tinggalkan sampai halaman dimuat ulang.
 
 Di atas chip, strip **Aula Pahlawan** menampilkan 20 penguasaan terakhir, yang terbaru di depan: penguasa (tag guild atau nama pemimpinnya), orang-orang tim pemenang, kapan kemenangan terbarunya berakhir dan, mulai dua kemenangan, berapa kali berturut-turut. Satu penguasaan adalah rangkaian kemenangan Aula tanpa putus oleh satu penguasa. Strip ini membaca catatan di halaman ini, mengabaikan chip, dan disembunyikan kalau tak satu pun catatan itu kemenangan Aula. Seperti setiap catatan, isinya adalah apa yang dilaporkan host setiap laga, dan tak ada yang memeriksanya.
+
+## Peringkat
+
+Pertandingan dari antrean tanpa bot adalah pertandingan peringkat. Layar antrean dan lobi tim mengatakannya sebelum kamu mengantre; satu bot membuat pertandingan tanpa peringkat. Saat pertandingan peringkat ditemukan, setiap pemain menandatangani awalnya, dan layar menampilkan **Mengonfirmasi pertandingan peringkat…** hingga 15 detik. Jika ada yang tidak mengonfirmasi, pertandingan dibatalkan dan semua kembali ke antrean. Di akhir, setiap pemain menandatangani hasilnya, dan tanda terima pertandingan dipublikasikan di relay Nostr bersama kunci publik dan nama karakter setiap pemain; pemain tanpa karakter dicatat sebagai starter. Peringkatmu berubah dalam satu jam. Keluar dari pertandingan peringkat dihitung kalah, dan tombol keluar mengatakannya.

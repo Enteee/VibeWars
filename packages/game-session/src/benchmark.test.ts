@@ -114,13 +114,20 @@ async function runScenario(scenario: Scenario): Promise<Result> {
     publishRecord: () => undefined,
     nowSeconds: () => 0,
     signetOf: testSignet,
+    recordReplay: false,
   });
   const connections: PeerMatchConnection[] = [];
   for (const peerId of seats.keys()) {
     const peer = network.join(peerId);
     await settle();
     connections.push(
-      await connectMatch({ transport: peer, hostId: "host", hello: hello(), timeoutMs: 1000 }),
+      await connectMatch({
+        transport: peer,
+        hostId: "host",
+        hello: hello(),
+        timeoutMs: 1000,
+        replays: null,
+      }),
     );
   }
 

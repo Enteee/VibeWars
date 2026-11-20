@@ -6,6 +6,10 @@ Bạn không cần tài khoản và không cần cài gì: game chạy ngay tron
 duyệt này. VibeWars cần bàn phím và chuột. Game không chạy trên điện thoại
 hay máy tính bảng chỉ có cảm ứng: hãy mở nó trên máy tính.
 
+## Hướng dẫn
+
+Lần đầu bạn mở VibeWars, trò chơi sẽ mời bạn một hướng dẫn ngắn: đi qua một hẻm núi để học di chuyển và chiến đấu. Sau đó hướng dẫn tiếp tục trong menu, từng bước một: đổi hướng đi của nhân vật, lập một đội hai người, xem mỗi chế độ để làm gì, rồi đưa đội đó vào hàng chờ cho trận 2v2 đầu tiên ở Đấu trường đội. Khi một bước chỉ vào một nút, phần còn lại của menu bị làm tối. Bạn có thể bỏ qua hướng dẫn bất cứ lúc nào bằng **Bỏ qua hướng dẫn**.
+
 ## Thanh chế độ
 
 Thanh dọc bên trái màn hình chính chứa các [chế độ](modes.md), từ trên
@@ -76,6 +80,15 @@ Khi tìm thấy trận, bạn được đưa tới màn hình đối đầu củ
 
 Khi trận kết thúc, bạn có thể **Xếp lại**, hoặc **Ở cùng nhau** với đội bạn
 vừa chơi cùng.
+
+Bên cạnh điểm số, hai biểu đồ kể lại trận đấu theo thời gian. **Bạn** vẽ sát
+thương bạn gây ra, sát thương bạn nhận, lượng hồi máu và Năng lượng;
+**Các đội** vẽ tổng máu của mỗi đội phía trên tổng sát thương của đội đó. Các
+dấu dưới trục thời gian cho thấy hạ gục, cái chết, ngắt chiêu, chiếm giữ và hồi
+sinh: trỏ vào một dấu, hoặc dùng Tab để đến nó, để đọc chuyện gì đã xảy ra.
+Nhấn một mục chú giải để ẩn hoặc hiện đường của nó. Trên điện thoại, biểu đồ
+nằm dưới điểm số, nơi hiện bạn và hai người khác cho đến khi bạn nhấn
+**Hiện tất cả**.
 
 ## Tạo hoặc vào trận
 
@@ -157,8 +170,8 @@ phòng sẽ đưa tổ đội ra khỏi hàng chờ ngay lập tức. Khi một 
 độ đang xếp hàng xuất hiện, các bạn đấu với họ trên một bản đồ của chế độ đó,
 mỗi bên với build riêng, rồi quay về sảnh của mình sau đó. Chủ phòng có thể
 rời hàng chờ từ cửa sổ của vòng xoay bất cứ lúc nào; khách rời đi sẽ kéo cả
-tổ đội ra khỏi hàng chờ. Nếu sau một phút không có đội nào khác, chủ phòng
-cũng có thể nhấn **Đấu với bot**: một trận trong chính sảnh của bạn với một
+tổ đội ra khỏi hàng chờ. Sau 10 giây trong hàng chờ, chủ phòng
+cũng có thể nhấn **Đấu với bot** trong cửa sổ của vòng xoay: một trận trong chính sảnh của bạn với một
 đội bot có sẵn ngẫu nhiên, trừ ở [Đỉnh Anh Hùng](modes.md#đỉnh-anh-hùng),
 nơi bạn chờ một đội ở cùng vòng với bạn.
 
@@ -169,14 +182,15 @@ chứa những gì thuộc về bạn dù bạn chơi gì. Game đặt cho bạn
 lần ghé đầu tiên, như `AshenWolf`; gõ đè lên để đổi. Nếu để trống, bạn chơi
 với tên `Người chơi`. Gõ một **Tag Bang** gồm 2 đến 4 chữ cái hoặc số bên
 cạnh, và mọi người sẽ thấy nó sau tên bạn, như `Ente [VIBE]`. Khi đã có tag,
-công cụ thiết kế **Áo choàng Bang** xuất hiện bên dưới: chọn màu áo choàng,
-màu viền và một biểu tượng, và cơ thể bạn sẽ khoác áo choàng trong mọi trận:
+công cụ thiết kế **Áo choàng Bang** xuất hiện bên dưới: chọn màu áo choàng
+và màu viền tùy ý, vẽ một biểu tượng, và cơ thể bạn sẽ khoác áo choàng trong mọi trận:
 nó gấp lại thành một dải mỏng trên vành của bạn khi bạn đứng yên và tung bay
 phía sau khi bạn di chuyển. Nhân vật của bạn trong menu cũng hiển thị nó.
-**Không áo choàng** cởi nó ra.
+**Không áo choàng** cởi nó ra. Một hình nhân cho thấy áo choàng đúng như trong trò chơi. Màu quá gần màu xanh của đội bạn hoặc màu đỏ của đối thủ sẽ bị đẩy lệch đi một chút khi vẽ, để không áo choàng nào trông giống một đội; hình nhân cho thấy nó đúng như mọi người sẽ thấy.
 
-Thay đổi được áp dụng từ sảnh tiếp theo bạn vào, hoặc sảnh mới tiếp theo của
-bạn: sảnh bạn đang ở vẫn giữ những gì bạn có khi vào.
+Thay đổi được áp dụng ngay cho sảnh bạn đang ở.
+
+**Tự vẽ biểu tượng.** Lưới biểu tượng 16×16 luôn nằm dưới màu áo choàng và màu viền. Chọn một màu hoặc **Trống**, rồi vẽ bằng **Bút chì**, xóa bằng **Tẩy**, hoặc tô cả một vùng bằng **Tô màu**. **Thêm màu** cho biểu tượng thêm một màu, tối đa 15, và bộ chọn màu bên cạnh đổi màu đang chọn, cùng mọi thứ đã vẽ bằng màu đó. **Bắt đầu từ** đặt một trong tám hình lên lưới bằng màu đang chọn. **Đối xứng** tô cùng lúc nửa trái và nửa phải. **Xóa hết** làm trống lưới và **Hoàn tác** lùi lại một bước. Khung nhỏ cạnh lưới cho thấy biểu tượng to đúng như trong trận. Mỗi nét được giữ lại ngay khi bạn vẽ xong. Phím mũi tên và Space cũng vẽ được bằng bàn phím.
 
 **Chép link Bang**, dưới trình thiết kế áo choàng, chép một link mang tag và áo choàng của bạn. Ai mở link sẽ được hỏi **Gia nhập Bang [VIBE]?**: **Gia nhập** cho họ tag và áo choàng của bạn, **Không** không thay đổi gì. Ai cũng có thể gửi link như vậy và không ai sở hữu một tag, nên trò chơi luôn hỏi trước.
 

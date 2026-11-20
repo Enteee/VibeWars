@@ -19,7 +19,7 @@ Zadani predložak je **Klasično**, za ruke naviknute na GW1. **VibeWars** baca 
 | Sljedeći neprijatelj (Shift: prethodni) | Tab                  | Tab              |
 | Najbliži neprijatelj                    | C                    | C                |
 | Označeni neprijatelj tvog tima          | T                    | T                |
-| Ti sam                                  | G                    | G                |
+| Ti sam                                  | F ili G              | G                |
 | Prikaži imena (drži)                    | Shift                | Shift            |
 | Utišaj                                  | M                    | M                |
 | Ispusti zastavu, relikviju ili pepeo    | bez tipke            | bez tipke        |
@@ -37,7 +37,7 @@ Ove su tipke fiksne:
 ## Miš
 
 - **Lijevi klik** na tlo za hodanje onamo. Bez Shifta, lijeva tipka samo hoda.
-- Na kartama s povišenim platformama lijevi klik ide na površinu koju vidiš, a **Alt + lijevi klik** na tlo ispod nje. Prsten pod pokazivačem označava platformu, a isprekidani prsten tlo. Iznad tunela lijevi klik vodi na razinu na kojoj si, a **Alt + lijevi klik** na drugu.
+- Na kartama s povišenim platformama lijevi klik ide na površinu koju vidiš, a **Alt + lijevi klik** na tlo ispod nje. Prsten pod pokazivačem označava platformu, a isprekidani prsten tlo. Iznad tunela lijevi klik vodi na razinu na kojoj si. **Alt + lijevi klik** nikad ne vodi iznad razine na kojoj stojiš: sa tla vodi u tunel, a u tunelu ostaje u njemu.
 - **Desni klik** na neprijatelja ili saveznika da ga ciljaš. Brzi ponovni
   desni klik na istog neprijatelja da ga napadneš.
 - **Desni klik** na zastavu ili stalak za zastavu, u Bitki cehova ili na Barrow Fieldu, da
@@ -69,7 +69,8 @@ Izvan meča gornja traka sadrži **[?]** (ova Pomoć), **⚙** (Opcije),
 osim Sobe, gore desno na zaslonu. U uskom prozoru te se ikone i
 ostali gumbi zaslona sklapaju u **⋯**; vani ostaje samo glavni gumb.
 ⚙ otvara Opcije kao prozor ispod trake, a zaslon ostaje iza njega; zatvaraju ga Esc, × ili klik izvan njega. Pod **Prikaz**, **Osvjetljenje** uključuje ili isključuje svjetlo i sjenu osvijetljene mape, odmah, i usred meča.
-Pomoć se zatvara s × gore desno, s Esc ili ponovnim pritiskom na [?].
+[?] otvara Pomoć na isti način, kao prozor ispod njega s biračem stranica na vrhu; meč se iza njega nastavlja.
+Pomoć se zatvara svojim ×, s Esc, klikom izvan nje ili ponovnim pritiskom na [?].
 
 **Podijeli ritam sa sobom.** U uređivaču ritma (♪, zatim **Uredi**),
 **Podijeli sa sobom** šalje ono što si upisao, spremljeno ili ne, svima

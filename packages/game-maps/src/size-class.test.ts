@@ -14,28 +14,28 @@ describe("sizeClass (#444, #2547)", () => {
     expect(sizeClass({ width: 4801, height: 100 })).toBe("large");
   });
 
-  it("calls every arena today small, but Crossroads and Long Hall (#3071) medium, Shiverpeak Pass and Elonian Plateau (#2609), Moss Vale (#3288), Ashen Courtyard (#3413), Barrow Field (#3433), Blackwater Ford (#3434), Jungle Ruins (#3436) and Broken Tower (#3437) large", () => {
+  it("calls every arena today small, but Crossroads and Long Hall (#3071) medium, Shiverpeak Pass and Elonian Plateau (#2609), Moss Vale (#3288), Ashen Courtyard (#3413), Barrow Field (#3433), Blackwater Ford (#3434), Jungle Ruins (#3436), Broken Tower (#3437), Cinder Sanctum (#3438), Mosslit Cairns (#3439), Scarred Earth (#3440), Guild Hall Isle (#3445), The Elite Zaishen Battle (#3446) and The Hollow Deep (#3444) large", () => {
     expect(Object.fromEntries(loadAllMaps().map((map) => [map.id, sizeClass(map)]))).toEqual({
       "ember-pits": "small",
       "jungle-ruins": "large",
       "arena-crossroads": "medium",
       "arena-canyon": "small",
       "arena-long-hall": "medium",
-      "guild-hall-isle": "small",
+      "guild-hall-isle": "large",
       "broken-tower": "large",
-      "cinder-sanctum": "small",
-      "threefold-keep": "small",
+      "cinder-sanctum": "large",
+      "threefold-keep": "large",
       "hall-of-heroes-king": "small",
       "hall-of-heroes-relic": "small",
       "hall-of-heroes-capture": "small",
       "barrow-field": "large",
-      "elite-zaishen-battle": "small",
-      "hollow-deep": "medium",
+      "elite-zaishen-battle": "large",
+      "hollow-deep": "large",
       "blackwater-ford": "large",
-      "mosslit-cairns": "small",
-      "wardens-gallery": "small",
+      "mosslit-cairns": "large",
+      "wardens-gallery": "large",
       "brazen-causeway": "large",
-      "scarred-earth": "small",
+      "scarred-earth": "large",
       "sandstone-steps": "small",
       "frozen-crossing": "small",
       "ashen-courtyard": "large",

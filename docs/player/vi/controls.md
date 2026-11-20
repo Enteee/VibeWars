@@ -19,7 +19,7 @@ Mẫu mặc định là **Classic**, dành cho tay chơi GW1. **VibeWars** dùng
 | Địch kế tiếp (Shift: trước đó) | Tab                        | Tab              |
 | Địch gần nhất                  | C                          | C                |
 | Địch được đội bạn gọi          | T                          | T                |
-| Bản thân                       | G                          | G                |
+| Bản thân                       | F hoặc G                   | G                |
 | Hiện tên (giữ)                 | Shift                      | Shift            |
 | Tắt tiếng                      | M                          | M                |
 | Thả cờ, thánh tích hoặc tro    | không có                   | không có         |
@@ -40,8 +40,11 @@ Các phím sau là cố định:
 - **Chuột trái** xuống đất để đi tới đó. Không có Shift, nút trái chỉ dùng
   để đi.
 - Trên bản đồ có bệ nâng cao, chuột trái đưa bạn tới bề mặt bạn nhìn thấy,
-  còn **Alt + chuột trái** tới mặt đất bên dưới. Một vòng tròn dưới con trỏ Phía trên một đường hầm, nhấp chuột trái sẽ đi đến tầng bạn đang đứng, còn **Alt + nhấp chuột trái** đến tầng còn lại.
-  đánh dấu bệ, vòng tròn nét đứt đánh dấu mặt đất.
+  còn **Alt + chuột trái** tới mặt đất bên dưới. Một vòng tròn dưới con trỏ
+  đánh dấu bệ, vòng tròn nét đứt đánh dấu mặt đất. Phía trên một đường hầm,
+  chuột trái đưa bạn tới tầng bạn đang đứng. **Alt + chuột trái** không bao giờ
+  đi lên trên tầng bạn đang đứng: từ mặt đất nó đi vào đường hầm, còn khi ở
+  trong đường hầm thì nó ở lại đó.
 - **Chuột phải** vào một địch hoặc đồng minh để nhắm nó. Nhấn chuột phải vào
   cùng địch đó lần nữa, thật nhanh, để tấn công nó.
 - **Chuột phải** vào một lá cờ hoặc bệ cờ, trong Chiến Bang hoặc trên Barrow
@@ -76,8 +79,10 @@ biểu tượng này và các nút khác của màn hình được gộp vào **
 của nó còn ở ngoài. ⚙ mở Tùy chọn thành một cửa sổ dưới thanh, màn hình vẫn
 ở phía sau; Esc, × hoặc nhấn ra ngoài sẽ đóng nó. Trong **Hiển thị**, **Ánh
 sáng** bật hoặc tắt ánh sáng và bóng đổ của bản đồ có chiếu sáng, ngay lập
-tức, kể cả trong trận. Hỗ trợ đóng bằng dấu × ở góc trên bên phải, Esc, hoặc
-nhấn [?] lần nữa.
+tức, kể cả trong trận. [?] mở Hỗ trợ theo cùng
+cách, thành một cửa sổ dưới nó với bộ chọn trang ở trên cùng; trận vẫn tiếp
+diễn phía sau. Hỗ trợ đóng bằng dấu × của nó, Esc, nhấn ra ngoài, hoặc nhấn
+[?] lần nữa.
 
 **Chia sẻ beat với sảnh.** Trong trình sửa beat (♪, rồi **Sửa**), **Chia sẻ
 với sảnh** gửi những gì bạn đã gõ, đã lưu hay chưa, tới mọi người khác trong

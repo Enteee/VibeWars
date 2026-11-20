@@ -1,5 +1,9 @@
 import type { QueueMode, WireMatchChart } from "@vibewars/game-protocol";
-import type { LobbyPlayerSnapshot, LobbySnapshot } from "@vibewars/game-session";
+import {
+  RANKED_START_TIMEOUT_MS,
+  type LobbyPlayerSnapshot,
+  type LobbySnapshot,
+} from "@vibewars/game-session";
 
 import { mapName } from "../i18n/game-names.js";
 import { t } from "../i18n/index.js";
@@ -7,8 +11,9 @@ import { ASCENT_PROGRESSION, ascentMapId } from "../net/maps.js";
 import { teamColour } from "../render/arena-snapshot.js";
 import { cssColour } from "./character-preview.js";
 import { RANDOM_ARENA_MODES } from "./menu.js";
-import { button, h, screenBar } from "./kit.js";
+import { button, h, screenBar, wordmark } from "./kit.js";
 import { SIGNET_ROW_PX, playerLabelElement, signetElement, signetOf } from "./player-label.js";
+import { chartRoster, renderMatchCharts } from "./match-charts.js";
 import { renderSummary, type SummaryTable } from "./match-summary.js";
 
 /**
@@ -187,6 +192,14 @@ export interface QueueScreenCallbacks {
 
 export interface QueueScreen {
   show(view: QueueView): void;
+  /**
+   * "Confirming ranked match…" over the screen (#3680), from this player's
+   * start signature until the match starts, the host cancels it, or
+   * `RANKED_START_TIMEOUT_MS` is up; `false` takes it down.
+   */
+  confirming(on: boolean): void;
+  /** Its ranked result went out (#3680): said under the outcome, with when the rating moves. */
+  published(): void;
   /** Stops the title flashing; the next screen replaces the DOM. */
   dispose(): void;
 }
@@ -400,6 +413,37 @@ export function flashTitle(doc: Document): () => void {
   return stop;
 }
 
+/** How many rows a phone shows besides yours until *Show all* (#3565). */
+const COLLAPSED_OTHERS = 2;
+
+/**
+ * The summary tables in a `.queue-scores` column. On a phone only your
+ * row and two more show, with *Show all* to open the rest (#3565): every
+ * other row and table is marked `is-extra`, which the CSS hides there.
+ */
+export function renderScores(parent: HTMLElement, tables: readonly SummaryTable[]): HTMLElement {
+  const scores = parent.appendChild(h("div", "queue-scores is-collapsed"));
+  const summary = renderSummary(scores, tables);
+  let others = 0;
+  for (const row of summary.querySelectorAll("tbody tr")) {
+    const kept = row.classList.contains("is-self") || (others += 1) <= COLLAPSED_OTHERS;
+    row.classList.toggle("is-extra", !kept);
+  }
+  for (const panel of summary.querySelectorAll(".match-summary-panel")) {
+    panel.classList.toggle("is-extra", panel.querySelector("tbody tr:not(.is-extra)") === null);
+  }
+  if (summary.querySelector(".is-extra") !== null) {
+    const toggle = button(t("summary.showAll"), "queue-scores-toggle", () => {
+      const collapsed = scores.classList.toggle("is-collapsed");
+      toggle.textContent = t(collapsed ? "summary.showAll" : "summary.showFewer");
+      toggle.setAttribute("aria-expanded", String(!collapsed));
+    });
+    toggle.setAttribute("aria-expanded", "false");
+    scores.appendChild(toggle);
+  }
+  return scores;
+}
+
 export function mountQueueScreen(
   root: HTMLElement,
   options: QueueScreenOptions,
@@ -408,16 +452,18 @@ export function mountQueueScreen(
   root.replaceChildren();
   const panel = h("div", "screen screen-queue");
   screenBar({
-    crumbs: ["VibeWars", queueTitle(options.mode, options.characterName)],
+    crumbs: [wordmark("topbar-wordmark"), queueTitle(options.mode, options.characterName)],
     actions: [],
   });
   const status = h("div", "queue-status");
   status.setAttribute("role", "status");
   const problem = h("div", "screen-problem queue-problem");
   const streak = h("div", "queue-streak");
-  const summaryHost = h("div", "queue-summary");
+  const ranked = h("div", "queue-ranked");
+  ranked.hidden = true;
+  const summaryHost = h("div", "queue-results");
   const body = h("div", "queue-body");
-  body.append(status, problem, streak, summaryHost);
+  body.append(status, problem, streak, ranked, summaryHost);
   const splashHost = h("div", "queue-splash");
   const stay = button(t("queue.stayTogether"), "primary", callbacks.onStayTogether);
   const again = button(t("queue.queueAgain"), "primary", callbacks.onQueueAgain);
@@ -425,10 +471,45 @@ export function mountQueueScreen(
   const actions = h("div", "menu-row queue-actions");
   actions.append(stay, again, back);
   panel.append(body, splashHost, actions);
+  const confirm = h("div", "ranked-confirm");
+  confirm.setAttribute("role", "status");
+  confirm.hidden = true;
+  confirm.appendChild(h("div", "ranked-confirm-box", t("queue.rankedConfirming")));
+  panel.appendChild(confirm);
+  let confirmTimer: number | undefined;
+  const confirming = (on: boolean): void => {
+    window.clearTimeout(confirmTimer);
+    confirm.hidden = !on;
+    if (on) {
+      confirmTimer = window.setTimeout(() => {
+        confirm.hidden = true;
+      }, RANKED_START_TIMEOUT_MS);
+    }
+  };
   root.appendChild(panel);
 
   let stopFlash: (() => void) | undefined;
   let found = false;
+  // What the results show: kept across repaints, so the tabs, toggles, *Show all*
+  // and focus survive the stay countdown's ticks (#3565).
+  let results: { summary: readonly SummaryTable[]; chart: WireMatchChart | undefined } | undefined;
+
+  /** The scores and charts of `summary`, built again only when they change; none for `undefined`. */
+  const showResults = (
+    summary: readonly SummaryTable[] | undefined,
+    chart: WireMatchChart | undefined,
+  ): void => {
+    if (summary === results?.summary && chart === results?.chart) {
+      return;
+    }
+    results = summary === undefined ? undefined : { summary, chart };
+    summaryHost.replaceChildren();
+    panel.classList.toggle("has-results", summary !== undefined);
+    if (summary !== undefined) {
+      renderScores(summaryHost, summary);
+      renderMatchCharts(summaryHost, chart, chartRoster(summary));
+    }
+  };
 
   const set = (lines: QueueLines, splash?: HTMLElement): void => {
     status.textContent = lines.status;
@@ -436,7 +517,6 @@ export function mountQueueScreen(
     problem.hidden = lines.problem === undefined;
     streak.textContent = lines.streak ?? "";
     streak.hidden = lines.streak === undefined;
-    summaryHost.replaceChildren();
     if (splash === undefined) {
       splashHost.replaceChildren();
     } else {
@@ -463,28 +543,35 @@ export function mountQueueScreen(
   };
 
   return {
+    confirming,
+    published: () => {
+      confirming(false);
+      ranked.textContent = `${t("queue.rankedPublished")} ${t("queue.rankedPending")}`;
+      ranked.hidden = false;
+    },
     show: (view) => {
       switch (view.kind) {
         case "splash":
           matchFound();
+          showResults(undefined, undefined);
           set(
             { status: t("queue.matchFound"), action: "none" },
             renderVersusSplash(view.snapshot, options.mapName),
           );
           return;
         case "refused":
+          showResults(undefined, undefined);
           set({ status: t("queue.couldNotJoin"), problem: view.notice, action: "back" });
           return;
         case "ended":
           set(endedLines(view.outcome, view.streak, view.stay));
-          // Under the outcome line, as it was under the result banner.
-          if (view.summary !== undefined) {
-            renderSummary(summaryHost, view.summary);
-          }
+          // Under the outcome line: the scores, and the charts beside them (#3565).
+          showResults(view.summary, view.chart);
           return;
       }
     },
     dispose: () => {
+      window.clearTimeout(confirmTimer);
       stopFlash?.();
       stopFlash = undefined;
     },

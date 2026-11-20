@@ -6,6 +6,10 @@ de cont și nu trebuie să instalezi nimic: jocul rulează în această filă de
 browser. VibeWars are nevoie de tastatură și mouse. Nu funcționează pe telefon
 sau pe o tabletă doar cu ecran tactil: deschide-l pe un computer.
 
+## Tutorialul
+
+Prima dată când deschizi VibeWars, îți oferă un tutorial scurt: o plimbare printr-un canion care te învață să te miști și să lupți. Apoi continuă în meniu, pas cu pas: schimbă specializarea personajului tău, fă o echipă de doi, vezi la ce e bun fiecare mod și pune echipa la coadă pentru un prim meci 2v2 în Arena de echipe. Cât timp un pas arată spre un control, restul meniului e întunecat. Poți sări peste tutorial oricând cu **Sari peste tutorial**.
+
 ## Bara modurilor
 
 Bara din stânga ecranului principal conține [modurile](modes.md), de sus în jos:
@@ -78,6 +82,15 @@ din coadă.
 
 Când se termină meciul, poți alege **Din nou în coadă** sau **Rămâneți împreună**
 cu echipa cu care tocmai ai jucat.
+
+Lângă scoruri, două grafice spun povestea meciului în timp. **Tu** desenează
+daunele tale provocate, daunele primite, vindecarea și Energia; **Echipe**
+desenează rezerva de viață a fiecărei echipe deasupra daunelor ei totale.
+Marcajele de sub axa timpului arată eliminări, morți, întreruperi, capturi și
+învieri: indică unul sau ajungi la el cu Tab ca să citești ce s-a întâmplat.
+Apasă o intrare din legendă ca să ascunzi sau să arăți linia ei. Pe telefon
+graficele stau sub scoruri, care te arată pe tine și pe încă doi până la
+**Arată tot**.
 
 ## Găzduiește un meci sau intră într-unul
 
@@ -156,8 +169,8 @@ a ta: `2 echipe caută`. Doar gazda are acolo **Ieși din coadă**. Dacă închi
 fila, grupul iese imediat din coadă. Când apare altă echipă la coada aceluiași mod,
 joci cu ea pe una dintre hărțile modului, fiecare parte cu buildurile ei, și te
 întorci apoi în lobby. Gazda poate ieși oricând din coadă, din fereastra cercului; un invitat care
-pleacă scoate tot grupul din ea. Dacă după un minut nu apare altă echipă, gazda poate
-apăsa și **Joacă contra boților**: un meci în propriul lobby contra unei echipe
+pleacă scoate tot grupul din ea. După 10 s în coadă, gazda poate
+apăsa și **Joacă contra boților** în fereastra cercului: un meci în propriul lobby contra unei echipe
 presetate aleatorii de boți, cu excepția [Ascensiunii Eroilor](modes.md#ascensiunea-eroilor),
 care așteaptă o echipă de la runda ta.
 
@@ -168,13 +181,14 @@ indiferent cu ce joci. Jocul îți dă un **Nume** la prima vizită, de exemplu
 `AshenWolf`; scrie peste el ca să-l schimbi. Dacă îl lași gol, joci ca `Jucător`.
 Scrie lângă el un **Tag de breaslă** de 2 până la 4 litere sau cifre și toată lumea
 îl vede după numele tău, de exemplu `Ente [VIBE]`. Cu un tag setat, sub el apare
-creatorul de **Pelerină de breaslă**: alege culoarea pelerinei, culoarea marginii și
-o emblemă, iar corpul tău poartă pelerina în fiecare meci: se strânge într-o bandă
+creatorul de **Pelerină de breaslă**: alege orice culoare pentru pelerină și margine,
+desenează o emblemă, iar corpul tău poartă pelerina în fiecare meci: se strânge într-o bandă
 subțire pe margine când stai și flutură în spatele tău când te miști. O arată și
-personajele tale din meniu. **Fără pelerină** o scoate.
+personajele tale din meniu. **Fără pelerină** o scoate. O figurină arată pelerina așa cum apare în joc. O culoare prea apropiată de albastrul echipei tale sau de roșul adversarilor e abătută puțin de la el când e desenată, ca nicio pelerină să nu semene cu o echipă; figurina o arată așa cum o vor vedea toți.
 
-O schimbare se aplică de la următorul lobby în care intri sau de la următorul nou:
-cel în care ești deja păstrează ce aveai când ai intrat.
+O schimbare se aplică imediat lobby-ului în care ești.
+
+**Desenează-ți emblema.** Grila de 16×16 a emblemei e mereu sub culorile pelerinei și marginii. Alege o culoare sau **Gol**, apoi desenează cu **Creion**, șterge cu **Radieră** sau umple o zonă cu **Umplere**. **Adaugă culoare** îi dă emblemei încă o culoare, până la 15, iar selectorul de culoare de lângă ele schimbă culoarea aleasă, împreună cu tot ce e desenat cu ea. **Pornește de la** pune pe grilă una din opt forme în culoarea aleasă. **Oglindă** pictează deodată jumătatea stângă și cea dreaptă. **Golește** golește grila, iar **Înapoi** revine cu un pas. Vederea mică de lângă grilă arată emblema la fel de mare ca într-un meci. Fiecare trăsătură e păstrată imediat ce o termini. Săgețile și Spațiu desenează și de la tastatură.
 
 **Copiază linkul breslei**, sub designerul de pelerină, copiază un link cu tagul și pelerina ta. Cine îl deschide e întrebat **Te alături breslei [VIBE]?**: **Alătură-te** îi dă tagul și pelerina ta, **Nu** nu schimbă nimic. Oricine poate trimite un astfel de link și nimeni nu deține un tag, așa că jocul întreabă mereu întâi.
 

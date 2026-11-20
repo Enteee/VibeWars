@@ -120,7 +120,7 @@ vijandelijke heer. Daaronder noemt een regel wie een vlag draagt. Een boost
 verschijnt als "Moraalboost! +10%", of "Moraalboost vijand". Op het kompas markeert
 ♛ elke Gildeheer, ⚑ elke vlag en ◎ de standaard.
 
-Guild Hall Isle speelt het.
+Guild Hall Isle (8v8, 6000x2600) speelt het: een eiland in zee. Elke Guild Lord staat boven op een hal, achter een wal; naar buiten gaat door het poortgebouw, over de wal of langs een steiger. Een poortdeur gaat open met een hendel op de wal van de vijand. De vlaggenstandaard staat op een podium in het midden.
 
 ## Relic Run
 
@@ -168,14 +168,15 @@ voorsprong wint meteen**. Op 8 minuten wint de meeste punten, en bij gelijke sta
 het team dat het laatst scoorde. Elke basis reanimeert zijn doden, en zijn geest,
 elke 2 minuten. Bots gaan samen op het vijandelijke relikwie af en brengen het thuis.
 
+Cinder Sanctum (8v8, 5600x2800) speelt het: een tempel op de flank van een vulkaan tussen twee lavarivieren. Steek over via een brug of de dam naar het heiligdom op zijn voorplein; een hendel op het voorplein opent de verborgen gang onder het heiligdom, en aswanden kun je kapotslaan. Lava brandt.
+
 ## King of the Hill
 
 **Leid je Spookheld op het altaar, en houd het vast.** Elk team heeft een
 **Spookheld** in zijn basis, een geest die met een bijl vecht en die niemand speelt.
 Het **altaar** staat in het midden, even ver van beide basissen. Op **Threefold
-Keep** vechten drie teams (twee als er geen derde vrij is) erom binnen een ommuurde
-burcht. De deuren gaan alleen van binnenuit open, met een plaat aan de binnenkant:
-loop om naar een open hoek om binnen te komen. Maximaal 12 punten per team, en als
+Keep** vechten drie teams (twee als er geen derde vrij is) erom op de toren van een
+ommuurde burcht. Maximaal 12 punten per team, en als
 elke vijand op -60% moraal staat, win je meteen. De **Hall of Heroes**, de King of
 the Hill-map die de Heroes' Ascent afsluit, tilt het op een podium met muren aan
 west- en oostkant, via een noordelijke of zuidelijke toegang met pilaren. Kies je
@@ -229,7 +230,7 @@ houdt, doodt elke bot eerst de Spookheld van het andere team zodra die binnen hu
 bereik op het altaar staat: dat is de enige vijand die je geest ervan weerhoudt het
 te claimen.
 
-Threefold Keep speelt het.
+Threefold Keep speelt het (4v4 en 8v8, 5000x4400): een burcht op een heuvel in het hoogland, voor drie teams. Klim via de trap naast je poort de weergang op en steek over een dam naar de heuvel over, en klim dan naar het altaar op de toren. Een hendel op elk binnenhof opent alle vier de poorten: je poortgang onder de muur, en de crypte, de lange weg onder de heuvel.
 
 ## Capture Points
 
@@ -260,8 +261,9 @@ Bots verspreiden zich over de schrijnen die je team nog niet heeft en blijven er
 staan tot ze zijn ingenomen. Een vijand binnen spreukbereik trekt ze er niet vanaf:
 ze stappen op een schrijn binnen bereik en vechten van daaruit.
 
-Scarred Earth speelt het: elk schrijn staat in een gebroken ring van muren, open aan
-west- en oostkant.
+Scarred Earth (4v4 en 8v8, 5400x2800) speelt het: een met kraters bezaaid slagveld in de schemering. De schrijnen staan op verwoeste belegeringstorens, het middelste op het dek van de grote toren, elk naast een krater; hendels op de torens openen twee loopgraven onder het veld, en verwoeste palissaden kun je kapotslaan.
+
+In de Heroes' Ascent speelt The Warden's Gallery (8v8, 5200x2500) het: een zonnige beeldengalerij onder daklichten. Het middelste schrijn staat boven op de grote sokkel, en elk team heeft er drie bij zijn vestibule, één op een sokkel; hendels op de grote sokkel openen twee crypten onder de vloer, en omgevallen beelden kun je kapotslaan.
 
 ## Teamlobby
 
@@ -288,19 +290,19 @@ De Hall trekt voor elke match een van drie modi: King of the Hill, Relic Run of 
 
 **The Vault.** De Hall vormt zich alleen om de 12 minuten op de UTC-klok, om :00, :12, :24, :36 en :48. Tot dan wacht je groep in de Vault: het wachtrijpictogram toont de tijd tot de volgende opening en wie de Hall houdt. Bij elke opening ontmoet de houder maximaal twee uitdagers, of ontmoeten maximaal drie uitdagers elkaar als niemand hem houdt. Alleen groepen die voor de opening wachten doen mee, en wie er buiten die plekken valt, wacht op de volgende. Een houder zonder tegenstander houdt de Hall en wacht, zonder dat er een winst geteld wordt, en een eenzame uitdager wacht ook. Als een groep de Hall wint, zegt elk open spel wie hem nu houdt: de leider, of de gildetag als meer dan de helft van de groep er een deelt.
 
-Elke tocht begint met de **Elite Zaishen Battle**, zonder wachtrij: je groep tegen zes Zaishen gespeeld door bots (2 Monks, een Elementalist en 3 anderen). De klok start als een van jullie de startlijn oversteekt of de eerste Zaishen sterft, wat het eerst gebeurt. Dood alle zes in minder dan 30 seconden en de groep begint de tocht op +10% moraal; onder 60, +8%; onder 80, +6%; onder 100, +4%; onder 120, +2%; langzamer, niets. Win en je groep gaat vanzelf in de wachtrij voor zijn eerste map. Veeg je weg, of leeft er nog een Zaishen als de limiet van 8 minuten bereikt is, dan is de tocht voorbij.
+Elke tocht begint met de **Elite Zaishen Battle**, zonder wachtrij: je groep tegen zes Zaishen gespeeld door bots (2 Monniken, een Elementalist en 3 anderen). Het gevecht vindt plaats in een ceremoniële arena (8v8, 5400x2400): getrapte tribunes in het noorden en zuiden, beelden op sokkels op de verzonken vloer en onder elke tribune een gewelf, waarvan het valhek wordt geopend met een hendel op de tribune aan de overkant. De klok start als een van jullie de startlijn in het midden van de arena oversteekt of de eerste Zaishen sterft, wat het eerst gebeurt. Dood alle zes in minder dan 30 seconden en de groep begint de tocht op +10% moraal; onder 60, +8%; onder 80, +6%; onder 100, +4%; onder 120, +2%; langzamer, niets. Win en je groep gaat vanzelf in de wachtrij voor zijn eerste map. Veeg je weg, of leeft er nog een Zaishen als de limiet van 8 minuten bereikt is, dan is de tocht voorbij.
 
 Elke overwinning in een tocht levert **roem** op: 1, 2, 3, 4, 6, 8, 12, 16, 20, 24, 28, 32, 36 voor de eerste dertien, daarna 40 per stuk, maximaal 300 per dag (de dag draait om 15:00 UTC). De Elite Zaishen Battle levert niets op. Je totale roem bepaalt je **heldenrang**, van 1 bij 25 roem tot 15 bij 100.000, getoond als ★ en een getal naast je naam. Opties > speler toont beide. Beide worden op je apparaat bewaard.
 
 Je moraal gaat mee door de tocht: de doodstraf of boost waarmee je een gewonnen map eindigt, is waarmee je de volgende begint, van −60% tot +10%. Een tocht die eindigt, of een speler die halverwege instapt, begint op 0. Je eigen tabblad onthoudt het, tot je het sluit.
 
-Het team kiest één keer, in de Teamlobby van zijn eerste map, en houdt zijn Teambuild en stoelen voor de rest van de tocht: na een overwinning gaat het zonder stemming en zonder claim weer in de wachtrij. Wie halverwege vertrekt, maakt zijn stoel vrij maar niet zijn build. Een nieuwkomer in de groep tussen de maps krijgt alleen een claim van de vrije stoelen (**Vrij: Monk-build**), en speelt de build van die stoel; een vrije stoel die niemand claimt, is voor een bot. Een nederlaag begint opnieuw: de volgende tocht stemt weer. Dat geldt ook als je je host volgt naar een andere groep, waarvan de host niet kan instaan voor de oude tocht. De ronde wordt onthouden door de host van je groep, en alleen tot je het tabblad sluit. Een Heroes' Ascent-lobby die je met een code binnengaat, speelt de map van ronde 1.
+Het team kiest één keer, in de Teamlobby van zijn eerste map, en houdt zijn Teambuild en stoelen voor de rest van de tocht: na een overwinning gaat het zonder stemming en zonder claim weer in de wachtrij. Wie halverwege vertrekt, maakt zijn stoel vrij maar niet zijn build. Een nieuwkomer in de groep tussen de maps krijgt alleen een claim van de vrije stoelen (**Vrij: Monnik-build**), en speelt de build van die stoel; een vrije stoel die niemand claimt, is voor een bot. Een nederlaag begint opnieuw: de volgende tocht stemt weer. Dat geldt ook als je je host volgt naar een andere groep, waarvan de host niet kan instaan voor de oude tocht. De ronde wordt onthouden door de host van je groep, en alleen tot je het tabblad sluit. Een Heroes' Ascent-lobby die je met een code binnengaat, speelt de map van ronde 1.
 
 Een groep met minder dan 8 spelers gaat in de wachtrij met bots op de lege stoelen, met zijn Teambuild, maar een kant heeft altijd minstens één mens, en een team van bots is nooit een tegenstander. Als de laatste mens van een kant een match verlaat, geeft die kant op en eindigt zijn tocht.
 
 **Barrow Field** (8v8, 5400x2600) is een Ascent-arena, en ook een keuze bij een Gehost spel: Priest Annihilation op een heide vol grafheuvels in de schemering, met de priester die zijn doden elke 2 minuten reanimeert. Klim op een grafheuvel voor de hoogte, of loop de grafgang eronder zodra een hendel op de verre grafheuvel zijn poort opent. Draag je vlag op de **Storm Beacon** in het midden en hij treft elke 2,5 seconden een willekeurige vijand binnen gehoorsafstand met 50 bliksemschade, tot het andere team er zijn vlag plant. Elke inslag is een bliksemschicht van het baken naar wie geraakt is, zichtbaar voor beide teams.
 
-Drie Ascent-arena's zijn ook een keuze bij een Gehost spel: **The Hollow Deep** (8v8 Annihilation, drie kronkelende tunnels rond een centrale rots), **Blackwater Ford** (8v8, 5200x2800, Priest Annihilation bij een donkere doorwaadbare plek in de rivier: je waadt door het ondiepe water, steekt de kapotte brug op haar pijlers boven de molen over, of neemt een duiker onder de brug zodra een hendel op de molen het hek ervan opent; de priester reanimeert zijn doden elke 2 minuten) en **Mosslit Cairns** (8v8 Capture Points, vijf cairns in een ondiepe zigzag tussen de basissen). Een vierde is **The Brazen Causeway** (8v8, 5600x2800, Priest Annihilation op een verhoogde stenen dam boven een moeras in de schemering: je marcheert over de dam zodra een hendel in het verre poortgebouw de bronzen poort ervan opent, steekt het moeras over naar de trappen in het midden, of glipt door een duiker eronder; de priester reanimeert zijn doden elke 2 minuten).
+Drie Ascent-arena's zijn ook een keuze bij een Gehost spel: **The Hollow Deep** (8v8, 6200x2400, Annihilation in een donkere grot: steek een touwbrug over een kloof over, klim over een middelste richel, of neem de crypte eronder zodra een hendel op een rotsrichel het hek ervan opent), **Blackwater Ford** (8v8, 5200x2800, Priest Annihilation bij een donkere doorwaadbare plek in de rivier: je waadt door het ondiepe water, steekt de kapotte brug op haar pijlers boven de molen over, of neemt een duiker onder de brug zodra een hendel op de molen het hek ervan opent; de priester reanimeert zijn doden elke 2 minuten) en **Mosslit Cairns** (8v8, 5400x3000, Capture Points op vijf cairnheuvels die in de schemering gloeien van het mos: je beklimt een cairn via de trappen, houdt de grote cairn in het midden, of neemt de wortelgang onder de zuidelijke heuvels zodra een hendel op een noordelijke cairn de poorten ervan opent; wortelmuren kunnen worden gebroken). Een vierde is **The Brazen Causeway** (8v8, 5600x2800, Priest Annihilation op een verhoogde stenen dam boven een moeras in de schemering: je marcheert over de dam zodra een hendel in het verre poortgebouw de bronzen poort ervan opent, steekt het moeras over naar de trappen in het midden, of glipt door een duiker eronder; de priester reanimeert zijn doden elke 2 minuten).
 
 Een map kan **poorten** hebben: muren die lichamen, schoten en zicht tegenhouden als ze dicht zijn. Ga op de drukplaat van een poort staan om die te openen. Hij sluit als er niemand meer op de plaat staat, duwt iedereen in de deuropening naar de dichtstbijzijnde kant en stopt schoten die nog onderweg zijn, en kan een halve seconde niet opnieuw geopend worden. Een plaat in de kleur van een team reageert alleen op dat team. Bots staan op de plaat van hun eigen team als er geen vijand in de buurt is.
 
@@ -317,3 +319,7 @@ Bekijk ze op de pagina **Matches**, onder Teambouwer: de 50 meest recente van de
 Elke rij begint met het pictogram van zijn modus, en het pictogram en de linkerrand van de rij hebben de kleur van de modus: oranje Random, blauw Team, goud Ascent, violet GvG, groen Gehost. Boven de lijst filteren chips op **Soort** (Random, Team, Ascent, GvG, Gehost) en **Grootte** (1v1, 2v2, 4v4, 8v8): druk op zoveel als je wilt, en een match verschijnt als hij past bij één ingedrukte soort en één ingedrukte grootte; een groep zonder ingedrukte chips laat alles door. Grootte is het grootste team, bots meegeteld, dus een Gehost spel 3v2 past bij geen enkele grootte. De chips blijven zoals je ze achterliet tot de pagina herlaadt.
 
 Boven de filters toont de strook **Hal der Helden** de laatste 20 reeksen, de nieuwste eerst: de houder (een gildetag of de naam van de leider), de mensen van het winnende team, wanneer de nieuwste zege eindigde en, vanaf twee zeges, hoeveel op rij. Een reeks is een ononderbroken rij Hal-zeges van één houder. De strook leest de records op deze pagina, negeert de filters en is verborgen als geen ervan een Hal-zege is. Zoals elk record is het wat de host van elke match heeft gemeld, en niets controleert dat.
+
+## Gerankt
+
+Een wedstrijd uit de wachtrij zonder bots is gerankt. Het wachtrijscherm en de teamlobby zeggen het voordat je in de rij gaat; één bot houdt een wedstrijd ongerankt. Wordt een gerankte wedstrijd gevonden, dan ondertekent elke speler de start, en het scherm toont tot 15 seconden **Gerankte wedstrijd bevestigen…**. Bevestigt iemand niet, dan wordt de wedstrijd geannuleerd en staat iedereen weer in de rij. Aan het eind ondertekent elke speler de uitslag, en het bewijs van de wedstrijd wordt op de Nostr-relays gepubliceerd met de publieke sleutel en personagenaam van elke speler; een speler zonder personage staat erin als starter. Je rating verandert binnen het uur. Een gerankte wedstrijd verlaten telt als verlies, en de verlaatknop zegt dat.

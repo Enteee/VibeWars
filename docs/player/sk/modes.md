@@ -119,7 +119,7 @@ posledných 3 minútach poškodenie každého tímu voči nepriateľskému páno
 „Posila morálky! +10 %“ alebo „Nepriateľská posila morálky“. Na kompase ♛
 označuje každého Pána cechu, ⚑ každú vlajku a ◎ stojan.
 
-Hrá sa na Guild Hall Isle.
+Hrá sa na Guild Hall Isle (8v8, 6000x2600): ostrov v mori. Každý Guild Lord stojí na vrchole siene za valom; von sa ide bránou, cez val alebo po móle. Dvere brány otvára páka na nepriateľskom vale. Stojan na vlajku je na pódiu v strede.
 
 ## Beh s relikviou
 
@@ -168,14 +168,15 @@ a pri rovnosti tím, ktorý bodoval naposledy. Každá základňa oživuje svoji
 mŕtvych a svoj prízrak každé 2 minúty. Boti idú po nepriateľskú relikviu spolu
 a prinesú ju domov.
 
+Cinder Sanctum (8v8, 5600x2800) ho hrá: chrám na úbočí sopky medzi dvoma lávovými riekami. Prejdi po moste alebo po hrádzi k svätyni na jej nádvorí; páka na nádvorí otvorí skrytú chodbu pod svätyňou a popolové steny sa dajú rozbiť. Láva páli.
+
 ## Kráľ kopca
 
 **Doveď svojho Prízračného hrdinu na oltár a drž ho.** Každý tím má vo
 svojej základni **Prízračného hrdinu**, prízrak, ktorý bojuje sekerou a ktorého
 nikto nehrá. **Oltár** je v strede, rovnako ďaleko od oboch
 základní. Na **Threefold Keep** oň bojujú tri tímy (dva, keď tretí nie je voľný)
-vo vnútri opevnenej pevnosti. Jej dvere sa otvárajú len zvnútra, doskou vo
-vnútri: obíď ju k otvorenému rohu, aby si sa dostal dnu. Najviac 12 bodov na
+na veži opevnenej pevnosti. Najviac 12 bodov na
 tím, a ak každý nepriateľ stojí na -60 % morálky, vyhrávaš okamžite. **Hall of
 Heroes**, mapa Kráľa kopca, ktorá končí Výstup hrdinov, ho vyvyšuje
 na pódiu obohnanom múrmi na západe a východe, so severným alebo južným prístupom
@@ -232,7 +233,7 @@ dostrel kúzla. Kým tvoj tím nedrží oltár, každý bot zabije Prízračnéh
 druhého tímu ako prvého, keď stojí na oltári v ich dosahu:
 je to ten jediný nepriateľ, ktorý tvojmu prízraku bráni si ho nárokovať.
 
-Hrá sa na Threefold Keep.
+Hrá sa na Threefold Keep (4v4 a 8v8, 5000x4400): pevnosť na kopci vo vysočine, pre tri tímy. Vystúp po schodoch vedľa svojej brány na ochodzu hradieb a prejdi po hrádzi na kopec, potom vyšplhaj k oltáru na veži. Páka na každom nádvorí otvorí všetky štyri brány: priechod tvojou bránou pod hradbou a podzemie, dlhú cestu pod kopcom.
 
 ## Dobývanie bodov
 
@@ -269,8 +270,9 @@ Boti sa rozídu po svätyniach, ktoré tvoj tím ešte nevlastní, a stoja
 na nich, kým nie sú obsadené. Nepriateľ na dostrel kúzla ich
 neodláka: vstúpia na svätyňu v dosahu a bojujú z nej.
 
-Hrá sa na Scarred Earth: každá svätyňa stojí v rozbitom kruhu múrov,
-otvorenom na západ a východ.
+Hrá sa na Scarred Earth (4v4 a 8v8, 5400x2800): bojisko posiate krátermi za súmraku. Svätyne stoja na rozbitých obliehacích vežiach, prostredná na plošine veľkej veže, každá vedľa krátera; páky na vežiach otvárajú dva zákopy pod bojiskom a rozbité palisády sa dajú zbúrať.
+
+Vo Výstupe hrdinov sa hrá na The Warden's Gallery (8v8, 5200x2500): slnečná galéria sôch pod svetlíkmi. Prostredná svätyňa stojí na vrchole veľkého podstavca a každý tím má tri pri svojom vestibule, jednu na podstavci; páky na veľkom podstavci otvárajú dve krypty pod podlahou a prevrátené sochy sa dajú rozbiť.
 
 ## Tímové lobby
 
@@ -363,7 +365,7 @@ Hall of Heroes losuje pre každý zápas jeden z troch režimov: Kráľ kopca, B
 
 **The Vault.** Hall of Heroes sa formuje len každých 12 minút podľa času UTC, o :00, :12, :24, :36 a :48. Dovtedy tvoja družina čaká v The Vault: ikona fronty ukazuje čas do ďalšieho otvorenia a kto drží Hall of Heroes. Pri každom otvorení sa držiteľ stretne s najviac dvoma vyzývateľmi alebo sa stretnú najviac traja vyzývatelia, ak ho nikto nedrží. Zúčastnia sa len družiny čakajúce pred otvorením a tie nad počet miest čakajú na ďalšie. Držiteľ, ktorý nemá s kým bojovať, si Hall of Heroes ponechá a čaká, bez započítaného víťazstva, a osamotený vyzývateľ čaká tiež. Keď družina vyhrá Hall of Heroes, každá otvorená hra povie, kto ho teraz drží: jej vodca alebo jej značka cechu, keď ju zdieľa viac než polovica družiny.
 
-Každá cesta začína **Elite Zaishen Battle**, bez fronty: tvoja družina proti šiestim Zaishenom, ktorých hrajú boti (2 Monkovia, Elementalist a 3 ďalší). Čas začína plynúť, keď jeden z vás prekročí štartovaciu čiaru alebo keď zomrie prvý Zaishen, podľa toho, čo nastane skôr. Zabi všetkých šiestich za menej než 30 sekúnd a družina začne cestu s morálkou +10 %; za menej než 60, +8 %; za menej než 80, +6 %; za menej než 100, +4 %; za menej než 120, +2 %; pomalšie nič. Vyhraj a tvoja družina sa sama zaradí do fronty na svoju prvú mapu. Ak ťa vyhladia alebo Zaishen ešte žije, keď uplynie limit 8 minút, cesta sa končí.
+Každá cesta začína **Elite Zaishen Battle**, bez fronty: tvoja družina proti šiestim Zaishenom, ktorých hrajú boti (2 Mnísi, Elementalista a 3 ďalší). Bojuje sa v slávnostnej aréne (8v8, 5400x2400): stupňovité tribúny na severe a na juhu, sochy na podstavcoch na zapustenej ploche a pod každou tribúnou podzemie, ktorého mrežu otvára páka na protiľahlej tribúne. Čas začína plynúť, keď jeden z vás prekročí štartovaciu čiaru uprostred arény alebo keď zomrie prvý Zaishen, podľa toho, čo nastane skôr. Zabi všetkých šiestich za menej než 30 sekúnd a družina začne cestu s morálkou +10 %; za menej než 60, +8 %; za menej než 80, +6 %; za menej než 100, +4 %; za menej než 120, +2 %; pomalšie nič. Vyhraj a tvoja družina sa sama zaradí do fronty na svoju prvú mapu. Ak ťa vyhladia alebo Zaishen ešte žije, keď uplynie limit 8 minút, cesta sa končí.
 
 Každé víťazstvo na ceste prináša **slávu**: 1, 2, 3, 4, 6, 8, 12, 16, 20, 24, 28, 32, 36 za prvých trinásť, potom po 40, najviac 300 za deň (deň sa mení o 15:00 UTC). Elite Zaishen Battle nedáva nič. Tvoja celková sláva určuje tvoju **hrdinskú hodnosť**, od 1 pri 25 slávy po 15 pri 100 000, zobrazenú ako ★ a číslo vedľa tvojho mena. Nastavenia > hráč ukazuje obe. Obe sa uchovávajú na tvojom zariadení.
 
@@ -376,7 +378,7 @@ Tím vyberá raz, v tímovom lobby svojej prvej mapy, a ponecháva si svoj
 tímový build a miesta do konca cesty: po víťazstve sa znova zaradí do fronty
 bez hlasovania a bez zaberania. Kto odíde uprostred cesty, uvoľní svoje
 miesto, ale nie jeho build. Nováčik v družine medzi mapami dostane
-zabratie len voľných miest (**Voľné: build Monk**) a hrá build toho
+zabratie len voľných miest (**Voľné: build Mních**) a hrá build toho
 miesta; voľné miesto, ktoré nikto nezaberie, patrí botovi. Prehra začína
 odznova: ďalšia cesta hlasuje znova. Rovnako aj nasledovanie hostiteľa do inej
 družiny, ktorej hostiteľ sa za starú cestu nemôže zaručiť. Kolo si pamätá
@@ -394,14 +396,12 @@ nepriateľa v jeho dosahu za 50 bleskového poškodenia, kým druhý tím
 nezapichne svoju vlajku tam. Každý zásah je blesk z majáka do toho, koho zasiahol,
 viditeľný pre oba tímy.
 
-Tri arény Výstupu sa dajú vybrať aj vo Vlastnej hre: **The Hollow Deep** (8v8 Anihilácia, tri
-kľukaté tunely okolo centrálnej skaly),
+Tri arény Výstupu sa dajú vybrať aj vo Vlastnej hre: **The Hollow Deep** (8v8 Anihilácia, 6200x2400, v temnej jaskyni: prejdi lanový most nad priepasťou, vylez cez strednú rímsu alebo prejdi podzemnou chodbou pod ňou, keď páka na skalnej polici otvorí jej bránu),
 **Blackwater Ford** (8v8, 5200x2800, Anihilácia
 kňaza pri tmavom riečnom brode: dá sa prebrodiť plytký brod, prejsť po rozbitom moste na pilieroch nad mlynom
 alebo priepustom pod mostom, keď páka na mlyne otvorí jeho mrežu; kňaz oživuje
 svojich mŕtvych každé 2 minúty) a
-**Mosslit Cairns** (8v8 Dobývanie bodov, päť mohýl v plytkom cik-caku
-medzi základňami). Štvrtá je **The Brazen Causeway** (8v8, 5600x2800, Anihilácia kňaza na vyvýšenej kamennej hrádzi nad močiarom za súmraku: dá sa pochodovať po hrádzi, keď páka vo vzdialenej vrátnici otvorí jej bronzovú bránu, prejsť močiar k schodom v jej strede alebo prekĺznuť priepustom pod ňou; kňaz oživuje svojich mŕtvych každé 2 minúty).
+**Mosslit Cairns** (8v8, 5400x3000, Dobývanie bodov na piatich mohylových kopcoch žiariacich za súmraku machom: dá sa vystúpiť na mohylu po jej schodoch, držať veľkú mohylu v strede alebo prejsť koreňovým tunelom pod južnými kopcami, keď páka na severnej mohyle otvorí jeho brány; koreňové múry sa dajú rozbiť). Štvrtá je **The Brazen Causeway** (8v8, 5600x2800, Anihilácia kňaza na vyvýšenej kamennej hrádzi nad močiarom za súmraku: dá sa pochodovať po hrádzi, keď páka vo vzdialenej vrátnici otvorí jej bronzovú bránu, prejsť močiar k schodom v jej strede alebo prekĺznuť priepustom pod ňou; kňaz oživuje svojich mŕtvych každé 2 minúty).
 
 Mapa môže mať **brány**: múry, ktoré zastavujú telá, strely a výhľad, kým sú
 zatvorené. Stoj na tlakovej doske brány, aby si ju otvoril. Zatvorí sa, keď na
@@ -454,3 +454,7 @@ najväčší tím vrátane botov, takže Vlastná hra 3v2 nesedí na žiadnu ve�
 Čipy zostávajú tak, ako si ich nechal, kým sa stránka znova nenačíta.
 
 Nad filtrami ukazuje pás **Sieň hrdinov** posledných 20 sérií, od najnovšej: držiteľa (cechová značka alebo meno vodcu), ľudí z víťazného tímu, kedy sa skončila najnovšia výhra a od dvoch výhier, koľko ich bolo v rade. Séria je neprerušený rad výhier v Sieni jedného držiteľa. Pás číta záznamy na tejto stránke, neberie ohľad na filtre a je skrytý, keď žiadny z nich nie je výhrou v Sieni. Ako každý záznam ukazuje to, čo nahlásil hostiteľ každého zápasu, a nič to neoveruje.
+
+## Hodnotené
+
+Zápas z frontu bez botov je hodnotený. Obrazovka frontu aj tímová lobby to povedia, skôr než sa zaradíš; jediný bot nechá zápas nehodnotený. Keď sa nájde hodnotený zápas, každý hráč podpíše jeho začiatok a obrazovka ukazuje až 15 sekúnd **Potvrdzovanie hodnoteného zápasu…**. Ak niekto nepotvrdí, zápas sa zruší a všetci sú späť vo fronte. Na konci každý hráč podpíše výsledok a potvrdenka zápasu sa zverejní na Nostr relayoch s verejným kľúčom a menom postavy každého hráča; hráč bez postavy je uvedený ako starter. Tvoje hodnotenie sa zmení do hodiny. Odchod z hodnoteného zápasu sa počíta ako prehra a tlačidlo odchodu to hovorí.

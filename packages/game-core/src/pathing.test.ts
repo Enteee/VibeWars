@@ -4,6 +4,7 @@ import {
   closestPointOnSegment,
   distancePointToSegment,
   distanceSegmentToSegment,
+  resolveCircleSegmentCollision,
   lengthInPolygon,
   segment,
   type Polygon,
@@ -14,6 +15,7 @@ import {
   buildNavGraph,
   createPathFinder,
   HARMFUL_ZONE_COST,
+  isStandable,
   navGraphFor,
   minRampLength,
   nearestStandable,
@@ -912,6 +914,23 @@ describe("harmful zones (#3026)", () => {
     expect(length(path)).toBeLessThan(400 + 200);
   });
 
+  it("puts no node in a zone's notch, only off its convex corners (#3521)", () => {
+    // An L: five convex corners, and a concave one at (350, 400).
+    const zone = [
+      vec2(250, 300),
+      vec2(450, 300),
+      vec2(450, 400),
+      vec2(350, 400),
+      vec2(350, 600),
+      vec2(250, 600),
+    ];
+    const { nodes } = buildNavGraph([], FIELD, 14, [harmful(zone)]);
+    expect(nodes).toHaveLength(5);
+    for (const node of nodes) {
+      expect(distance(node, vec2(350, 400))).toBeGreaterThan(30);
+    }
+  });
+
   it("crosses a strip when the way round is far longer, at its cost", () => {
     const zone = strip(100, 900);
     const path = createPathFinder(buildNavGraph([], FIELD, 14, [harmful(zone)])).find(from, to);
@@ -997,5 +1016,82 @@ describe("harmful zones (#3026)", () => {
     // The pool's north-west off-corner (295, 545) lies in the harmful strip
     // and goes; the strip's (365, 615) lies in the cheaper pool and stays.
     expect(offCorners([zone, ...inside])).toBe(offCorners([]) + 4 + 3);
+  });
+});
+
+describe("mirror images (#3596)", () => {
+  const width = 960;
+  const mirror = (point: Vec2): Vec2 => vec2(width - point.x, point.y);
+  const mirrorWall = (wall: Segment): Segment => segment(mirror(wall.a), mirror(wall.b));
+  // Slanted sides, so a push-out lands off the grid of round numbers.
+  const quad = [vec2(300, 180), vec2(390, 250), vec2(330, 340), vec2(250, 270)];
+  const shapes = [
+    { centre: vec2(170, 320), sides: rect(140, 280, 60, 80) },
+    {
+      centre: vec2(317.5, 260),
+      sides: quad.map((corner, index) =>
+        segment(corner, quad[(index + 1) % quad.length] ?? corner),
+      ),
+    },
+  ];
+  // A bar straight across a walk: round either end costs the same.
+  const bar = rect(200, 470, 120, 20);
+  const west = [...shapes.flatMap(({ sides }) => sides), ...bar];
+  const walls = [...west, ...west.map(mirrorWall)];
+  const graph = buildNavGraph(walls, ARENA_BOUNDS, CLEARANCE, []);
+
+  it("lets a body a wall pushed out stand there, as its mirror image does", () => {
+    const rng = createRng(3596);
+    for (const [shape, wall] of shapes.flatMap((shape) =>
+      shape.sides.flatMap((wall) => Array.from({ length: 500 }, () => [shape, wall] as const)),
+    )) {
+      const along = rng.nextFloat();
+      const angle = rng.nextFloat() * 2 * Math.PI;
+      const depth = rng.nextFloat() * CLEARANCE;
+      const touch = add(
+        add(wall.a, scale(sub(wall.b, wall.a), along)),
+        vec2(depth * Math.cos(angle), depth * Math.sin(angle)),
+      );
+      const pushed = resolveCircleSegmentCollision(touch, CLEARANCE, wall);
+      const image = resolveCircleSegmentCollision(mirror(touch), CLEARANCE, mirrorWall(wall));
+      const foot = closestPointOnSegment(touch, wall);
+      if (
+        // Pushed inwards, from inside the wall.
+        dot(sub(pushed, foot), sub(foot, shape.centre)) <= 0 ||
+        // Pushed into another side's clearance, at a corner.
+        walls.some((other) => other !== wall && distancePointToSegment(pushed, other) < CLEARANCE)
+      ) {
+        continue;
+      }
+      expect(isStandable(graph, pushed)).toBe(true);
+      expect(isStandable(graph, image)).toBe(true);
+    }
+  });
+
+  it("goes round a wall either way alike the way its mirror image does", () => {
+    const finder = createPathFinder(graph);
+    const from = vec2(260, 420);
+    const to = vec2(260, 560);
+    const path = finder.find(from, to) ?? [];
+    // The end nearer the map's centre.
+    expect(path).toEqual([vec2(335, 455), vec2(335, 505), to]);
+    expect(finder.find(mirror(from), mirror(to))).toEqual(path.map(mirror));
+  });
+
+  it("walks the mirror image of a path from and to the mirror images", () => {
+    const finder = createPathFinder(graph);
+    const rng = createRng(3597);
+    for (let i = 0; i < 200; i += 1) {
+      const from = nearestStandable(graph, vec2(rng.nextFloat() * width, rng.nextFloat() * 640));
+      const to = nearestStandable(graph, vec2(rng.nextFloat() * width, rng.nextFloat() * 640));
+      const path = finder.find(from, to);
+      const image = finder.find(mirror(from), mirror(to));
+      expect(image?.length).toBe(path?.length);
+      (path ?? []).forEach((waypoint, index) => {
+        const reflected = mirror(waypoint);
+        expect(image?.[index]?.x).toBeCloseTo(reflected.x, 6);
+        expect(image?.[index]?.y).toBeCloseTo(reflected.y, 6);
+      });
+    }
   });
 });

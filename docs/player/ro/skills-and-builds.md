@@ -6,8 +6,8 @@ principal sau cu **Personaj nou**.
 
 ## Clase
 
-Sunt zece: Warrior, Ranger, Monk, Necromancer, Mesmer, Elementalist, Assassin,
-Ritualist, Paragon și Dervish. Clasa ta **principală** este ceea ce ești:
+Sunt zece: ![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior**, ![Ranger](../../../apps/web/public/icons/profession/ranger.svg) **Ranger**, ![Monk](../../../apps/web/public/icons/profession/monk.svg) **Monk**, ![Necromancer](../../../apps/web/public/icons/profession/necromancer.svg) **Necromancer**, ![Mesmer](../../../apps/web/public/icons/profession/mesmer.svg) **Mesmer**, ![Elementalist](../../../apps/web/public/icons/profession/elementalist.svg) **Elementalist**, ![Assassin](../../../apps/web/public/icons/profession/assassin.svg) **Assassin**,
+![Ritualist](../../../apps/web/public/icons/profession/ritualist.svg) **Ritualist**, ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** și ![Dervish](../../../apps/web/public/icons/profession/dervish.svg) **Dervish**. Clasa ta **principală** este ceea ce ești:
 abilitățile ei și **atributul ei principal** (marcat cu ★), pe care îl primește
 doar o clasă principală. Clasa **secundară** îți împrumută abilitățile ei, dar nu
 și atributul principal.
@@ -18,11 +18,11 @@ Bara are **opt locuri**. Pe o bară încape o singură abilitate de **elită** (
 auriu): dacă echipezi a doua, o înlocuiește pe prima. Apasă **×** pe un loc ca
 să-l golești.
 
-**Farmecele fulger** (Dervish) sunt instantanee: folosirea unuia îți păstrează
+![Farmec](../../../apps/web/public/icons/skill-type/enchantment.svg) **Farmecele fulger** (![Dervish](../../../apps/web/public/icons/profession/dervish.svg) **Dervish**) sunt instantanee: folosirea unuia îți păstrează
 lovitura și pasul, așa că le poți strecura între lovituri. Fiecare oprește
 celelalte farmece fulger pentru 1 secundă.
 
-**Formele** (cei cinci Avatari Dervish: Balthazar, Dwayna, Grenth, Lyssa și
+![Formă](../../../apps/web/public/icons/skill-type/form.svg) **Formele** (cei cinci Avatari Dervish: Balthazar, Dwayna, Grenth, Lyssa și
 Melandru) te schimbă pentru mai mult de un minut. O formă nu este un farmec, așa
 că nimeni nu ți-o poate elimina, și poți fi într-o singură formă odată. Folosirea
 uneia o dezactivează pentru 45 de secunde. Când se termină o formă, te oprești
@@ -31,7 +31,7 @@ o tastă de mișcare ca să mergi mai departe.
 
 **Unele trageri îți dezactivează celelalte atacuri.** Focused Shot și Needling
 Shot zboară mai repede decât ar trebui o săgeată, dar fiecare care nimerește îți
-oprește celelalte abilități de atac pentru câteva secunde. Vrăjile nu sunt
+oprește celelalte ![Abilitate de atac](../../../apps/web/public/icons/skill-type/attack.svg) **abilități de atac** pentru câteva secunde. ![Vrajă](../../../apps/web/public/icons/skill-type/spell.svg) **Vrăjile** nu sunt
 afectate.
 
 ## Atribute
@@ -44,30 +44,30 @@ Creșterea atributului folosit de o abilitate o face mai puternică: numerele ca
 cresc odată cu atributul apar cu verde și îngroșat, la rangurile tale actuale,
 inclusiv rune și coif.
 
-Într-o luptă, rangurile tale se pot schimba o vreme. Weakness scade câte unul din
-fiecare. Unele blesteme setează atributele unui inamic la 0, iar Master of Magic
+Într-o luptă, rangurile tale se pot schimba o vreme. ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness** scade câte unul din
+fiecare. Unele ![Blestem](../../../apps/web/public/icons/skill-type/hex.svg) **blesteme** setează atributele unui inamic la 0, iar Master of Magic
 le setează pe ale tale elementale la 13: un rang setat astfel are prioritate și
 față de rune, și față de Weakness. Signet of Illusions permite următoarelor tale
-vrăji de alte atribute să-ți folosească rangul de Illusion Magic. Unele abilități
+![Vrajă](../../../apps/web/public/icons/skill-type/spell.svg) **vrăji** de alte atribute să-ți folosească rangul de Illusion Magic. Unele abilități
 îți cresc atributele pentru un timp sau pentru următoarele vrăji, cum fac Glyph
 of Elemental Power și Ritual Lord, chiar și pe unul lăsat la 0; un rang setat,
 ca al lui Master of Magic, depășește o astfel de creștere.
 
 ## Ecouri
 
-**Ecourile** unui Paragon sunt efecte benefice lungi asupra unui aliat. Un
+![Ecou](../../../apps/web/public/icons/skill-type/echo.svg) **Ecourile** unui ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** sunt efecte benefice lungi asupra unui aliat. Un
 **refren** se reînnoiește la toată durata, iar un **final** își face efectul, de
-fiecare dată când o incantație sau un strigăt se termină pe acel aliat. O
+fiecare dată când o ![Incantație](../../../apps/web/public/icons/skill-type/chant.svg) **incantație** sau un ![Strigăt](../../../apps/web/public/icons/skill-type/shout.svg) **strigăt** se termină pe acel aliat. O
 incantație sau un strigăt reaplicat înainte să se termine nu s-a terminat. Nimic
 nu elimină un ecou: se termină când expiră sau când moare purtătorul. Majoritatea
 nu pot ținti un spirit.
 
 ## Abilități care devin altă abilitate
 
-Unele abilități Mesmer pun altă abilitate pe locul lor pentru o vreme. Arcane
-Echo și Echo copiază următoarea abilitate pe care o folosești. **Inspired
-Enchantment** și **Inspired Hex** devin abilitatea care a lansat farmecul sau
-blestemul eliminat, pentru 20 de secunde. **Arcane Thievery** devine vraja pe care
+Unele abilități ![Mesmer](../../../apps/web/public/icons/profession/mesmer.svg) **Mesmer** pun altă abilitate pe locul lor pentru o vreme.
+![Arcane Echo](../../../apps/web/public/icons/status/arcane-echo.svg) **Arcane Echo** și ![Echo](../../../apps/web/public/icons/status/echo.svg) **Echo** copiază următoarea abilitate pe care o folosești. **Inspired
+Enchantment** și **Inspired Hex** devin abilitatea care a lansat ![Farmec](../../../apps/web/public/icons/skill-type/enchantment.svg) **farmecul** sau
+![Blestem](../../../apps/web/public/icons/skill-type/hex.svg) **blestemul** eliminat, pentru 20 de secunde. **Arcane Thievery** devine ![Vrajă](../../../apps/web/public/icons/skill-type/spell.svg) **vraja** pe care
 a dezactivat-o la inamic, cât timp durează dezactivarea. Copia are reîncărcarea ei.
 Când se termină, abilitatea originală revine și își începe reîncărcarea, iar o
 lansare a copiei aflată încă în curs eșuează. Un efect pus de un spirit sau de alt
@@ -75,11 +75,11 @@ efect nu poate fi copiat, deși eliminarea lui îți dă în continuare Energia.
 
 ## Fântâni și glife
 
-**Fântânile** unui Necromancer exploatează cel mai apropiat cadavru. Dacă nu e
+![Fântână](../../../apps/web/public/icons/skill-type/well.svg) **Fântânile** unui ![Necromancer](../../../apps/web/public/icons/profession/necromancer.svg) **Necromancer** exploatează cel mai apropiat cadavru. Dacă nu e
 niciunul aproape, o fântână sacrifică în schimb 66% din Viața ta și apare unde
 stai.
 
-**Glifele** unui Elementalist îți schimbă următoarea vrajă: nu poate fi
+![Glifă](../../../apps/web/public/icons/skill-type/glyph.svg) **Glifele** unui ![Elementalist](../../../apps/web/public/icons/profession/elementalist.svg) **Elementalist** îți schimbă următoarea ![Vrajă](../../../apps/web/public/icons/skill-type/spell.svg) **vrajă**: nu poate fi
 întreruptă, se lansează instantaneu, se reîncarcă imediat sau costă mai puțin. O
 glifă nouă o înlocuiește pe cea pe care o aveai.
 
@@ -89,8 +89,8 @@ O abilitate care răspunde „data viitoare când daunele îți scad Viața sub 
 răspunde la orice lovitură sau furt de viață care te lasă în viață și sub limită,
 chiar dacă erai deja sub ea înainte de lovitură, și niciodată la viața pe care o
 sacrifici sau o pierzi prin degenerare. Protecția contra daunelor fatale, ca
-Judge's Intervention, anulează toată lovitura mortală: nicio daună, nicio moarte.
-Faithful Intervention și Illusion of Weakness nu au durată: țin până când daunele,
+![Judge's Intervention](../../../apps/web/public/icons/status/judges-intervention.svg) **Judge's Intervention**, anulează toată lovitura mortală: nicio daună, nicio moarte.
+![Faithful Intervention](../../../apps/web/public/icons/status/faithful-intervention.svg) **Faithful Intervention** și ![Illusion of Weakness](../../../apps/web/public/icons/status/illusion-of-weakness.svg) **Illusion of Weakness** nu au durată: țin până când daunele,
 o eliminare sau moartea le pun capăt și te vindecă pe parcurs.
 
 ## Biblioteca
@@ -115,19 +115,19 @@ vindecările spiritelor, slujitorilor și animalului tău ca fiind ale tale.
 
 ## Vrăji de obiect
 
-**Vrăjile de obiect** ale unui Ritualist îți pun în mâini **cenușa** unui spirit:
+![Vrajă de obiect](../../../apps/web/public/icons/skill-type/item-spell.svg) **Vrăjile de obiect** ale unui ![Ritualist](../../../apps/web/public/icons/profession/ritualist.svg) **Ritualist** îți pun în mâini **cenușa** unui spirit:
 un bonus cât timp o ții și un **efect de cădere** când se scapă. Cade când expiră,
 când mori, când apeși **Lasă cenușa** deasupra barei de Viață, lansezi altă vrajă
 de obiect, faci un shadow step, schimbi armele sau ridici un steag ori o relicvă.
-Cât timp o ții, ai mâinile ocupate: fără atacuri și fără abilități de atac, dar
-mergi cu viteză deplină și poți lansa vrăji. Nimic nu elimină cenușa; orice sfârșit
+Cât timp o ții, ai mâinile ocupate: fără atacuri și fără ![Abilitate de atac](../../../apps/web/public/icons/skill-type/attack.svg) **abilități de atac**, dar
+mergi cu viteză deplină și poți lansa ![Vrajă](../../../apps/web/public/icons/skill-type/spell.svg) **vrăji**. Nimic nu elimină cenușa; orice sfârșit
 înseamnă o cădere.
 
 ## Shadow step
 
 Un **shadow step** te mută imediat, fără să mergi între. Majoritatea te duc la
 țintă; unele te readuc când se termină în locul din care le-ai lansat, cum fac
-Shadow of Haste și Shadow Walk. **Recall** te duce la aliatul lui doar când se
+Shadow of Haste și Shadow Walk. ![Recall](../../../apps/web/public/icons/status/recall.svg) **Recall** te duce la aliatul lui doar când se
 termină și îți dezactivează toate abilitățile pentru 3 secunde. **Swap** te face
 să schimbi locul cu un spirit sau un slujitor din tabăra ta.
 
@@ -146,15 +146,15 @@ de cod funcționează în ambele feluri. O abilitate GW1 pe care VibeWars nu o a
 iese fără să salveze și întreabă mai întâi dacă ai schimbat ceva. **Trimite**,
 **Încarcă cod GW1**, **Duplică** și **Șterge** sunt în **⋯**.
 
-Un cod de echipă se încarcă în schimb în **Constructor de echipe**: apasă
-**Încarcă echipa**, lipește codul și apasă **Încarcă**, sau lipește-l oriunde în
-Constructor de echipe.
+Un cod de echipă se încarcă în schimb în **Constructor de echipe**: lipește-l
+oriunde acolo, sau deschide un build de echipă și folosește **⋯** →
+**Încarcă echipa** al lui.
 
 ## Builduri de echipă
 
 Un **build de echipă** este o echipă cu personaje proprii, făcută în **Constructor
 de echipe** și ținută separat de personajele tale. Fiecare este o carte acolo și
-numai acolo: **Build de echipă nou** creează unul, **Încarcă echipa** încarcă unul
+numai acolo: **Build de echipă nou** creează unul, un cod de echipă lipit acolo încarcă unul
 partajat cu tine, iar un clic pe o carte sau pe **Editează** o deschide. Propui unul în
 [Lobby-ul de echipă](modes.md#lobby-de-echipă).
 

@@ -19,7 +19,7 @@ Presetarea implicită este **Clasic**, pentru mâinile obișnuite cu GW1. **Vibe
 | Ținta următoare (Shift: anterioara) | Tab                | Tab              |
 | Cel mai apropiat inamic             | C                  | C                |
 | Inamicul anunțat de echipa ta       | T                  | T                |
-| Tu însuți                           | G                  | G                |
+| Tu însuți                           | F sau G            | G                |
 | Arată nume (ține)                   | Shift              | Shift            |
 | Fără sunet                          | M                  | M                |
 | Lasă steagul, relicva sau cenușa    | fără tastă         | fără tastă       |
@@ -38,7 +38,7 @@ Aceste taste sunt fixe:
 ## Mouse
 
 - **Clic stânga** pe sol ca să mergi acolo. Fără Shift, butonul stâng doar te face să mergi.
-- Pe hărțile cu platforme înălțate, un clic stânga te duce pe suprafața pe care o vezi, iar **Alt + clic stânga** pe solul de dedesubt. Un cerc sub cursor marchează o platformă, un cerc punctat marchează solul. Deasupra unui tunel, un clic stânga duce la nivelul pe care ești, iar **Alt + clic stânga** la celălalt.
+- Pe hărțile cu platforme înălțate, un clic stânga te duce pe suprafața pe care o vezi, iar **Alt + clic stânga** pe solul de dedesubt. Un cerc sub cursor marchează o platformă, un cerc punctat marchează solul. Deasupra unui tunel, un clic stânga duce la nivelul pe care ești. **Alt + clic stânga** nu duce niciodată deasupra nivelului pe care stai: de pe sol duce în tunel, iar într-un tunel rămâne acolo.
 - **Clic dreapta** pe un inamic sau pe un aliat ca să-l țintești. Clic dreapta din
   nou, rapid, pe același inamic ca să-l ataci.
 - **Clic dreapta** pe un steag sau pe suportul de steag, într-o Bătălie de bresle sau pe Barrow Field, ca să-l
@@ -71,7 +71,8 @@ Aceste taste sunt fixe:
 în afară de Lobby, stau în dreapta sus pe ecran. Într-o fereastră îngustă, aceste pictograme și
 celelalte butoane ale ecranului se strâng în **⋯**; doar butonul principal rămâne afară.
 ⚙ deschide Opțiunile ca fereastră sub bară, cu ecranul încă în spate; Esc, × sau un clic în afară o închide. La **Afișare**, **Iluminare** pornește sau oprește lumina și umbra unei hărți luminate, imediat, chiar și în meci.
-Ajutorul se închide cu × din dreapta sus, cu Esc sau apăsând din nou [?].
+[?] deschide Ajutorul la fel, ca fereastră sub el cu un selector de pagină sus; meciul continuă în spate.
+Ajutorul se închide cu propriul ×, cu Esc, cu un clic în afară sau apăsând din nou [?].
 
 **Trimite un beat lobby-ului tău.** În editorul de beaturi (♪, apoi **Editează**),
 **Trimite lobby-ului** trimite ce ai scris, salvat sau nu, tuturor celorlalți

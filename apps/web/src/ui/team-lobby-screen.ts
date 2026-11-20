@@ -18,7 +18,7 @@ import {
   type TeamFigureMember,
 } from "./character-card.js";
 import { professionLabel } from "./character-preview.js";
-import { button, h, playCard, screenBar } from "./kit.js";
+import { button, h, playCard, screenBar, wordmark } from "./kit.js";
 import { SIGNET_ROW_PX, signetElement, signetOf } from "./player-label.js";
 import { memberCount, validateTeam } from "./team-builder.js";
 
@@ -378,6 +378,7 @@ export function renderTeamLobbyScreen(
   const onTab = active?.classList.contains("team-lobby-drawer-tab") === true;
   root.replaceChildren();
   const panel = h("div", "screen screen-team-lobby");
+  panel.setAttribute("data-tutorial", "team-lobby");
   const self = snapshot.players.find((p) => p.sessionId === snapshot.selfSessionId);
   const team = self?.team ?? null;
   const side = team === null || team === 2 ? null : lobby.sides[team];
@@ -388,7 +389,7 @@ export function renderTeamLobbyScreen(
   const actions: HTMLElement[] = [];
   screenBar({
     crumbs: [
-      "VibeWars",
+      wordmark("topbar-wordmark"),
       team === null ? t("teamLobby.crumb") : t("teamLobby.crumbTeam", { team: team + 1 }),
     ],
     back: { label: t("teamLobby.leave"), onBack: callbacks.onLeave },
@@ -566,6 +567,9 @@ function buildsDrawer(
     }
   });
   tab.setAttribute("aria-label", drawerName);
+  // The menu quest's arena step points at both (#3544).
+  tab.setAttribute("data-tutorial", "team-builds");
+  drawer.setAttribute("data-tutorial", "team-builds");
   const close = button(t("teamLobby.escClose"), "team-lobby-drawer-close", () => {
     closeDrawer?.();
   });

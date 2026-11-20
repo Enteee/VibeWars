@@ -6,6 +6,10 @@ konto og intet at installere: spillet kører i denne browserfane. VibeWars
 kræver tastatur og mus. Det virker ikke på en telefon eller en tablet
 kun med berøring: åbn det på en computer.
 
+## Vejledningen
+
+Første gang du åbner VibeWars, tilbyder spillet en kort vejledning: en tur gennem en kløft, der lærer dig at bevæge dig og kæmpe. Derefter fortsætter den i menuen, et trin ad gangen: skift din karakters spec, byg et hold på to, se hvad hver spiltilstand er til, og sæt holdet i kø til en første 2v2-kamp i Holdarena. Mens et trin peger på en knap, er resten af menuen dæmpet. Du kan springe vejledningen over når som helst med **Spring vejledningen over**.
+
 ## Skinnen med spiltilstande
 
 Skinnen ned langs venstre side af hovedskærmen rummer
@@ -79,6 +83,14 @@ Lukker du fanen, mens du venter, forlader du køen med det samme.
 
 Når kampen slutter, kan du vælge **I kø igen** eller **Bliv sammen** med
 det hold, du lige har spillet med.
+
+Ved siden af resultaterne fortæller to diagrammer kampen over tid. **Dig**
+tegner din uddelte skade, modtagne skade, heling og Energi; **Hold** tegner
+hvert holds helbredspulje over dets samlede skade. Mærker under tidsaksen viser
+drab, dødsfald, afbrydelser, erobringer og genoplivninger: peg på et, eller gå
+til det med Tab, for at læse, hvad der skete. Tryk på et punkt i
+signaturforklaringen for at skjule eller vise dets linje. På en telefon står
+diagrammerne under resultaterne, som viser dig og to andre indtil **Vis alle**.
 
 ## Vær vært for eller deltag i en kamp
 
@@ -165,8 +177,8 @@ samme. Når et andet hold i kø i samme spiltilstand dukker op, spiller I
 mod dem på en af spiltilstandens baner, hver side med sine egne builds,
 og vender tilbage til jeres lobby bagefter. Værten kan til enhver tid
 forlade køen fra ringens vindue; en gæst, der forlader den, tager hele
-gruppen ud af den. Er der intet andet hold efter et minut, kan værten
-også trykke på **Spil mod bots**: en kamp i jeres egen lobby mod et
+gruppen ud af den. Efter 10 s i køen kan værten også trykke på
+**Spil mod bots** i ringens vindue: en kamp i jeres egen lobby mod et
 tilfældigt forudindstillet hold af bots, undtagen i
 [Heltenes opstigning](modes.md#heltenes-opstigning), som venter på et hold
 i jeres runde.
@@ -179,13 +191,14 @@ første besøg, som `AshenWolf`; skriv oven i det for at ændre det. Lader
 du det stå tomt, spiller du som `Spiller`. Skriv et **Laugsmærke** på 2 til
 4 bogstaver eller cifre ved siden af, så ser alle det efter dit navn,
 som `Ente [VIBE]`. Med et mærke sat dukker **Laugskappe**-designeren op
-under det: vælg kappens farve, kantens farve og et emblem, så bærer din
+under det: vælg en hvilken som helst farve til kappe og kant, tegn et emblem, så bærer din
 krop kappen i hver kamp: den foldes til et tyndt bånd på din kant, når du
 står stille, og flagrer bag dig, når du bevæger dig. Dine figurer i
-menuen viser den også. **Ingen kappe** tager den af.
+menuen viser den også. **Ingen kappe** tager den af. En figur viser kappen, som den ser ud i spillet. En farve for tæt på dit holds blå eller dine fjenders røde drejes lidt væk fra den, når den tegnes, så ingen kappe ligner et hold; figuren viser den, som alle vil se den.
 
-En ændring gælder fra den næste lobby, du deltager i, eller din næste
-friske: en, du allerede er i, beholder det, du deltog med.
+En ændring gælder med det samme for den lobby, du er i.
+
+**Tegn dit emblem.** Emblemets gitter på 16×16 står altid under kappens og kantens farver. Vælg en farve eller **Tom**, og tegn med **Blyant**, visk ud med **Viskelæder** eller farv et område med **Udfyld**. **Tilføj farve** giver emblemet en farve mere, op til 15, og farvevælgeren ved siden af dem ændrer den valgte farve sammen med alt, der er tegnet i den. **Start fra** lægger en af otte former på gitteret i den valgte farve. **Spejl** maler venstre og højre halvdel på én gang. **Ryd** tømmer gitteret, og **Fortryd** går et skridt tilbage. Den lille visning ved siden af gitteret viser emblemet så stort som i en kamp. Hvert strøg gemmes, når du afslutter det. Piletaster og mellemrum tegner også med tastaturet.
 
 **Kopiér laugslink** under kappedesigneren kopierer et link med dit mærke og din kappe. Den, der åbner det, bliver spurgt **Bliv medlem af lauget [VIBE]?**: **Bliv medlem** giver vedkommende dit mærke og din kappe, **Nej** ændrer intet. Alle kan sende sådan et link, og ingen ejer et mærke, så spillet spørger altid først.
 

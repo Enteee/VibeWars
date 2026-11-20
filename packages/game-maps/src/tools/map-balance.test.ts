@@ -5,6 +5,7 @@ import {
   MatchSimulation,
   STARTER_BUILDS,
   createLayeredPathFinder,
+  switchTargetId,
   vec2,
   type Vec2,
 } from "@vibewars/game-core";
@@ -17,8 +18,10 @@ import type { MapData } from "../schema.js";
 import {
   balanceVerdict,
   highGround,
+  narrowestWalks,
   playBuildBot,
   runMapBalance,
+  walkSecondsByRoute,
   walksByRoute,
   walksTo,
   walksToCentre,
@@ -35,6 +38,9 @@ import {
  */
 
 const BENCH = process.env.BENCH_BALANCE !== undefined;
+
+/** Seeds of Scarred Earth 8v8 played from each side (#3596): 4 × SIDE_SEEDS matches. */
+const SIDE_SEEDS = 10;
 
 const percent = (share: number): string => (share * 100).toFixed(1);
 
@@ -722,6 +728,8 @@ describe("walks and high ground (#3070)", () => {
       "centre-south-stair",
       "east-end-north-stair",
       "east-end-south-stair",
+      "west-lever-stair",
+      "east-lever-stair",
     ];
     /** A route through `through`, every other stair onto the causeway shut. */
     const only = (through: readonly string[]): Route => ({
@@ -757,6 +765,19 @@ describe("walks and high ground (#3070)", () => {
       within(
         toCentre(map, (team) =>
           only([team === 0 ? "west-end-south-stair" : "east-end-north-stair"]),
+        ),
+        0.1,
+      );
+    });
+
+    it("walks each team by its own lever stair to its gatehouse lever, gates shut, within 10 % of the other (#3549)", () => {
+      const levers = [
+        { x: 2150, y: 1230 },
+        { x: 3480, y: 1570 },
+      ];
+      within(
+        toOwn(shut, levers, 3, (team) =>
+          only([team === 0 ? "west-lever-stair" : "east-lever-stair"]),
         ),
         0.1,
       );
@@ -812,6 +833,67 @@ describe("walks and high ground (#3070)", () => {
         ),
         0.1,
       );
+    });
+
+    // #3521: reed flats across each marsh and mire banked against the causeway make the marsh
+    // the slow way, so a lever is worth throwing. Walk time counts the water at 75 % pace.
+    describe("walk time (#3521)", () => {
+      const spawns = [
+        { x: 500, y: 1765 },
+        { x: 5124, y: 1019 },
+      ];
+      const foeSpawns = [spawns[1] ?? centre, spawns[0] ?? centre];
+      /** Each team's own walk time to `to[team]` by `route(team)`. */
+      const seconds = (
+        on: MapData,
+        to: readonly Vec2[],
+        layer: number,
+        route: (team: number) => Route,
+      ): number[] =>
+        [0, 1].map(
+          (team) =>
+            walkSecondsByRoute(on, to[team] ?? centre, layer, (each) =>
+              each === team ? route(team) : { through: [] },
+            )[team] ?? 0,
+        );
+      // Up the causeway's near end, down its far end on the side of `to`.
+      const causeway = (down: readonly string[]) => (team: number) =>
+        only([team === 0 ? "west-end-south-stair" : "east-end-north-stair", down[team] ?? ""]);
+      const marsh = () => only([]);
+
+      it.each([
+        ["foe's spawn", foeSpawns, ["east-end-north-stair", "west-end-south-stair"]],
+        ["foe's shrine", foes, ["east-end-south-stair", "west-end-north-stair"]],
+      ] as const)(
+        "makes the marsh to the %s at least 2.5 s slower than the causeway, gates open, each within 10 %",
+        (_, to, down) => {
+          const along = seconds(map, to, 1, causeway(down));
+          const across = seconds(map, to, 1, marsh);
+          within(along, 0.1);
+          within(across, 0.1);
+          for (const team of [0, 1]) {
+            expect((across[team] ?? 0) - (along[team] ?? 0)).toBeGreaterThanOrEqual(2.5);
+          }
+        },
+      );
+
+      it("keeps the causeway the fastest way to the centre, and every marsh way there under 25 s", () => {
+        const along = seconds(map, [centre, centre], 2, (team) =>
+          only([team === 0 ? "west-end-south-stair" : "east-end-north-stair"]),
+        );
+        const near = seconds(shut, [centre, centre], 2, (team) =>
+          only([team === 0 ? "centre-south-stair" : "centre-north-stair"]),
+        );
+        const far = seconds({ ...shut, tunnels: [], pits: [] }, [centre, centre], 2, (team) =>
+          only([team === 0 ? "centre-north-stair" : "centre-south-stair"]),
+        );
+        for (const team of [0, 1]) {
+          for (const marshWay of [near, far]) {
+            expect(along[team] ?? 0).toBeLessThan(marshWay[team] ?? 0);
+            expect(marshWay[team] ?? 0).toBeLessThan(25);
+          }
+        }
+      });
     });
 
     it("walks each priest from its shrine to the centre within 10 % of the other", () => {
@@ -1084,10 +1166,1159 @@ describe("walks and high ground (#3070)", () => {
       within(highGround(map), 0.25);
     }, 60_000);
   });
+  // Mosslit Cairns (#3439): five capture points on cairn hills, the map mirrored west to east. Each
+  // team's walk to a point is matched with the other team's walk to the mirrored point. A route is a
+  // walk up one stair with the hill's other stairs shut; the root tunnel is shut until a lever opens
+  // its gates, so it is walked with the gates open.
+  describe("Mosslit Cairns", () => {
+    const map = loadMap("mosslit-cairns");
+    const shut: MapData = { ...map, walls: [...map.walls, ...map.gates.map(({ wall }) => wall)] };
+    const points = map.objectives.flatMap((objective) =>
+      objective.kind === "capture-point" ? [objective] : [],
+    );
+    const [northWest, northEast, centre, southWest, southEast] = points;
+    const sides = [
+      { side: "west", north: "north-west", south: "south-west" },
+      { side: "east", north: "north-east", south: "south-east" },
+    ];
+    const within = ([walk0 = 0, walk1 = 0]: readonly number[], share: number): void => {
+      expect(walk0).toBeGreaterThan(0);
+      expect(Math.abs(walk0 - walk1) / Math.max(walk0, walk1)).toBeLessThanOrEqual(share);
+    };
+    type Point = NonNullable<typeof centre>;
+    /** Each team's walk to its own point of `to`, along its own route. */
+    const toOwn = (
+      on: MapData,
+      to: readonly (Point | undefined)[],
+      route: (team: number) => Route,
+    ): number[] =>
+      [0, 1].map((team) => {
+        const point = to[team];
+        if (!point) throw new Error("missing capture point");
+        return (
+          walksByRoute(on, point.position, point.layer, (each) =>
+            each === team ? route(team) : { through: [] },
+          )[team] ?? 0
+        );
+      });
+    /** Up the stairs `pick` names for a team, every other stair onto that hill shut. */
+    const by =
+      (hill: (team: number) => readonly string[], pick: (team: number) => string) =>
+      (team: number): Route => ({
+        through: [pick(team)],
+        shut: hill(team).filter((each) => each !== pick(team)),
+      });
+    const great = (team: number): string[] => [
+      `great-cairn-${sides[team]?.side ?? ""}-stair`,
+      `great-cairn-${sides[1 - team]?.side ?? ""}-stair`,
+      "great-cairn-north-stair",
+      "great-cairn-south-stair",
+    ];
+    const cairn =
+      (end: "north" | "south") =>
+      (team: number): string[] =>
+        ["outer", "inner", "lane"].map((face) => `${sides[team]?.[end] ?? ""}-cairn-${face}-stair`);
+    const seconds = MINIMAL_GW_INSPIRED_PVP_V1.movement.maxSpeedUnitsPerSecond;
+
+    it.each([
+      ["its own stair", (team: number) => `great-cairn-${sides[team]?.side ?? ""}-stair`],
+      ["the north lane stair", () => "great-cairn-north-stair"],
+      ["the south lane stair", () => "great-cairn-south-stair"],
+    ])(
+      "walks each team onto the great cairn by %s within 5 % of the other, in under 25 s",
+      (_, stair) => {
+        const walks = toOwn(shut, [centre, centre], by(great, stair));
+        within(walks, 0.05);
+        for (const walk of walks) expect(walk / seconds).toBeLessThan(25);
+      },
+    );
+
+    it.each([
+      ["outer", "north"],
+      ["lane", "north"],
+      ["inner", "north"],
+      ["outer", "south"],
+      ["lane", "south"],
+    ] as const)(
+      "walks each team onto its own %s %s point within 10 % of the other",
+      (face, end) => {
+        const own = end === "north" ? [northWest, northEast] : [southWest, southEast];
+        const stair = (team: number): string => `${sides[team]?.[end] ?? ""}-cairn-${face}-stair`;
+        const walks = toOwn(shut, own, by(cairn(end), stair));
+        within(walks, 0.1);
+        for (const walk of walks) expect(walk / seconds).toBeLessThan(25);
+      },
+    );
+
+    it.each([
+      ["north", [northEast, northWest]],
+      ["south", [southEast, southWest]],
+    ] as const)("walks each team onto the far %s point within 10 % of the other", (_, far) => {
+      const walks = toOwn(shut, far, () => ({ through: [] }));
+      within(walks, 0.1);
+      for (const walk of walks) expect(walk / seconds).toBeLessThan(25);
+    });
+
+    it("walks each team into the root tunnel by its own steps within 10 % once a lever opens the gates", () => {
+      const steps = ["root-tunnel-west-steps", "root-tunnel-east-steps"];
+      const middle = { x: map.width / 2, y: 2150 };
+      const own = (team: number): Route => ({
+        through: [steps[team] ?? ""],
+        shut: [steps[1 - team] ?? ""],
+      });
+      within(walksByRoute(map, middle, 0, own), 0.1);
+      expect(() => walksByRoute(shut, middle, 0, own)).toThrow(/cannot reach/);
+    });
+
+    it("keeps the walks within 10 % with the gates open and the root walls broken", () => {
+      const open = (): Route => ({ through: [], broken: ["west-root-wall", "east-root-wall"] });
+      within(toOwn(map, [centre, centre], open), 0.05);
+      for (const pair of [
+        [northWest, northEast],
+        [northEast, northWest],
+        [southWest, southEast],
+        [southEast, southWest],
+      ])
+        within(toOwn(map, pair, open), 0.1);
+    }, 60_000);
+
+    it("gives the teams high ground within 25 % of each other", () => {
+      within(highGround(map), 0.25);
+    }, 60_000);
+
+    it("stands the south points a layer above the north ones, so the outer cairns are not four equal plinths", () => {
+      expect([northWest, northEast].map((point) => point?.layer)).toEqual([2, 2]);
+      expect([southWest, southEast].map((point) => point?.layer)).toEqual([3, 3]);
+    });
+  });
+
+  describe("Cinder Sanctum", () => {
+    const loaded = loadMap("cinder-sanctum");
+    // The walks here read no zone costs, but a bot wades lava at three times the cost
+    // (HARMFUL_ZONE_COST) and takes a bridge: a route is a bridge, so the rivers are walls.
+    const map: MapData = {
+      ...loaded,
+      walls: [
+        ...loaded.walls,
+        ...(loaded.zones ?? [])
+          .filter((zone) => zone.kind === "molten")
+          .map(({ area, layer }) => ({ ...area, layer })),
+      ],
+    };
+    const shut: MapData = { ...map, walls: [...map.walls, ...map.gates.map(({ wall }) => wall)] };
+    const sanctum = { x: 2812, y: 1400 };
+    const relics = [
+      { x: 900, y: 1400 },
+      { x: 4724, y: 1400 },
+    ];
+    const ghosts = [
+      { x: 700, y: 860 },
+      { x: 4924, y: 1940 },
+    ];
+    /** The map with each team's seats moved onto the foe's relic spawn: the carrier's walk. */
+    const carrier = (on: MapData): MapData => ({
+      ...on,
+      spawnPoints: relics.map((_, team) => ({
+        team,
+        layer: 1,
+        position: relics[1 - team] ?? sanctum,
+      })),
+    });
+    const within = ([walk0 = 0, walk1 = 0]: readonly number[], share: number): void => {
+      expect(walk0).toBeGreaterThan(0);
+      expect(Math.abs(walk0 - walk1) / Math.max(walk0, walk1)).toBeLessThanOrEqual(share);
+    };
+    /** Each team's walk to its own `to` on `layer`, by a route of its own. */
+    const walks = (
+      on: MapData,
+      to: readonly Vec2[],
+      layer: number,
+      route: (team: number) => Route,
+    ): number[] =>
+      [0, 1].map(
+        (team) =>
+          walksByRoute(on, to[team] ?? sanctum, layer, (other) =>
+            other === team ? route(team) : { through: [] },
+          )[team] ?? 0,
+      );
+    // Every bank stair of both rivers, and the passage: a route opens only its own.
+    const banks = {
+      north: ["north-bridge-west-bank", "north-bridge-east-bank"],
+      causeway: ["causeway-west-bank", "causeway-east-bank"],
+      south: ["south-bridge-west-bank", "south-bridge-east-bank"],
+    };
+    const passage = ["passage-north-steps", "passage-south-steps"];
+    const allBanks = Object.values(banks).flat();
+    /**
+     * Team 1's route over `bridge`, and team 2's turned: the study's north bridge is team 1's
+     * north and, turned half round, team 2's south.
+     */
+    const over = (
+      bridge: keyof typeof banks,
+      extra: (team: number) => readonly string[] = () => [],
+    ) => {
+      const turned = { north: "south", causeway: "causeway", south: "north" } as const;
+      return (team: number): Route => {
+        const through = [...banks[team === 0 ? bridge : turned[bridge]], ...extra(team)];
+        return { through, shut: [...allBanks.filter((id) => !through.includes(id)), ...passage] };
+      };
+    };
+    const routes = [
+      ["the causeway", over("causeway")],
+      ["the north bridge", over("north")],
+      ["the south bridge", over("south")],
+    ] as const;
+    const seconds = MINIMAL_GW_INSPIRED_PVP_V1.movement.maxSpeedUnitsPerSecond;
+
+    it.each(routes)(
+      "walks each team to the sanctum by %s within 10 % of the other, in under 25 s",
+      (_, route) => {
+        // To the sanctum a team crosses its own river only.
+        const own = (team: number): Route => {
+          const { through, shut: closed = [] } = route(team);
+          const mine = through.filter((id) => id.includes(team === 0 ? "west" : "east"));
+          return { through: mine, shut: closed };
+        };
+        const walked = walks(map, [sanctum, sanctum], 3, own);
+        within(walked, 0.1);
+        for (const walk of walked) expect(walk / seconds).toBeLessThan(25);
+      },
+    );
+
+    it.each(routes)(
+      "walks each thief to the foe's relic by %s within 10 % of the other",
+      (_, route) => {
+        within(walks(map, [relics[1] ?? sanctum, relics[0] ?? sanctum], 1, route), 0.1);
+      },
+    );
+
+    it.each(routes)(
+      "walks each carrier from the foe's relic to its own ghost by %s within 10 % of the other",
+      (_, route) => {
+        within(walks(carrier(map), ghosts, 1, route), 0.1);
+      },
+    );
+
+    it("walks each team to its own relic spawn within 10 % of the other", () => {
+      within(
+        [0, 1].map((team) => walksTo(map, relics[team] ?? sanctum, 1)[team] ?? 0),
+        0.1,
+      );
+    });
+
+    it("keeps all three bridges for every thief and carrier with the passage doors shut, and the passage shut with them", () => {
+      for (const [, route] of routes) {
+        within(walks(shut, [relics[1] ?? sanctum, relics[0] ?? sanctum], 1, route), 0.1);
+        within(walks(carrier(shut), ghosts, 1, route), 0.1);
+      }
+      // From the north mouth's landing to the south one's: under the sanctum while the doors are open.
+      const atMouth = (on: MapData): MapData => ({
+        ...on,
+        spawnPoints: [0, 1].map((team) => ({ team, layer: 1, position: { x: 2812, y: 680 } })),
+      });
+      const south = { x: 2812, y: 2120 };
+      expect(walksByRoute(atMouth(map), south, 1, { through: passage })[0]).toBeGreaterThan(0);
+      expect(() => walksByRoute(atMouth(shut), south, 1, { through: passage })).toThrow();
+    });
+
+    it("keeps the walks within 10 % with the doors open and the ash walls broken", () => {
+      const broken = ["south-west-ash-wall", "north-east-ash-wall"];
+      within(walksByRoute(map, sanctum, 3, { through: [], broken }), 0.1);
+      within(
+        walks(carrier(map), ghosts, 1, () => ({ through: [], broken })),
+        0.1,
+      );
+    });
+
+    it("gives the teams high ground within 25 % of each other", () => {
+      within(highGround(map), 0.25);
+    }, 60_000);
+  });
+
+  // Scarred Earth (#3440): mirrored east to west, so every walk below is the same both ways. The
+  // centre is on the great deck (layer 3), up the great hulk's own-side stair, then the deck's.
+  describe("Scarred Earth", () => {
+    const map = loadMap("scarred-earth");
+    const seconds = MINIMAL_GW_INSPIRED_PVP_V1.movement.maxSpeedUnitsPerSecond;
+    const centre = { x: 2700, y: 1400 };
+    const own = ["west", "east"];
+    /** A team's own side, and the far one. */
+    const side = (team: number, far = false): string => own[far ? 1 - team : team] ?? "";
+    const within = ([walk0 = 0, walk1 = 0]: readonly number[], share: number): void => {
+      expect(walk0).toBeGreaterThan(0);
+      expect(Math.abs(walk0 - walk1) / Math.max(walk0, walk1)).toBeLessThanOrEqual(share);
+    };
+    /** Up the great hulk's stair on `face` and the deck's on the same face, the other face shut. */
+    const up = (face: (team: number) => string) => (team: number) => {
+      const other = face(team) === "west" ? "east" : "west";
+      return {
+        through: [`great-hulk-${face(team)}-stair`, `great-deck-${face(team)}-stair`],
+        shut: [`great-hulk-${other}-stair`, `great-deck-${other}-stair`],
+      };
+    };
+    /**
+     * A cut across each half of the field, on the ground and the crater floors under it, from the
+     * north or south edge to the middle of the field: the walk to the great hulk goes round its
+     * open end, along the other lane.
+     */
+    const cut = (north: boolean): MapData => ({
+      ...map,
+      walls: [
+        ...map.walls,
+        ...[1700, map.width - 1720].flatMap((x) =>
+          [0, 1].map((layer) => ({
+            kind: "rect" as const,
+            x,
+            y: north ? 1100 : 0,
+            width: 20,
+            height: north ? map.height - 1100 : 1700,
+            layer,
+          })),
+        ),
+      ],
+    });
+    /** A hulk point's walk by the stair on `face` of `hulk`, its other stair shut. */
+    const byLane =
+      (hulk: (team: number) => string, face: "north" | "south") =>
+      (team: number): Route => ({
+        through: [`${hulk(team)}-${face}-stair`],
+        shut: [`${hulk(team)}-${face === "north" ? "south" : "north"}-stair`],
+      });
+    const points = [
+      ["own north", (team: number) => `north-${side(team)}-hulk`, { x: 1750, y: 640 }],
+      ["own south", (team: number) => `south-${side(team)}-hulk`, { x: 1750, y: 2160 }],
+      ["far north", (team: number) => `north-${side(team, true)}-hulk`, { x: 1750, y: 640 }],
+      ["far south", (team: number) => `south-${side(team, true)}-hulk`, { x: 1750, y: 2160 }],
+    ] as const;
+    /** Where team `team` finds a point given by its west image: its own, or the far team's. */
+    const at = (team: number, point: { x: number; y: number }, far: boolean) => {
+      const west = team === 0 ? !far : far;
+      return west ? point : { x: map.width - point.x, y: point.y };
+    };
+    /** Each team's walk to its own image of `point` by `route`. */
+    const toPoint = (
+      on: MapData,
+      point: { x: number; y: number },
+      far: boolean,
+      route: (team: number) => Route,
+    ): number[] =>
+      [0, 1].map(
+        (team) =>
+          walksByRoute(on, at(team, point, far), 2, (other) =>
+            other === team ? route(team) : { through: [] },
+          )[team] ?? 0,
+      );
+
+    it.each([
+      ["the west approach", map],
+      ["the north lane", cut(false)],
+      ["the south lane", cut(true)],
+    ])("walks each team to the centre by %s within 10 % of the other, in under 25 s", (_, on) => {
+      const walks = walksByRoute(
+        on,
+        centre,
+        3,
+        up((team) => side(team)),
+      );
+      within(walks, 0.1);
+      for (const walk of walks) expect(walk / seconds).toBeLessThan(25);
+    });
+
+    it("walks each team to the centre round by the far stair within 10 % of the other", () => {
+      within(
+        walksByRoute(
+          map,
+          centre,
+          3,
+          up((team) => side(team, true)),
+        ),
+        0.1,
+      );
+    });
+
+    it.each(
+      points.flatMap(([name, hulk, point]) =>
+        (["north", "south"] as const).map((face) => {
+          const outer = name.endsWith("north") === (face === "north");
+          return [name, outer ? "outer" : "inner", hulk, point, face] as const;
+        }),
+      ),
+    )(
+      "walks each team to the %s point by the %s lane within 10 % of the other",
+      (name, _, hulk, point, face) => {
+        within(toPoint(map, point, name.startsWith("far"), byLane(hulk, face)), 0.1);
+      },
+    );
+
+    it("walks each team to the centre and every point within 10 % of the other", () => {
+      within(walksTo(map, centre, 3), 0.1);
+      for (const [name, , point] of points) {
+        const far = name.startsWith("far");
+        within(
+          [0, 1].map((team) => walksTo(map, at(team, point, far), 2)[team] ?? 0),
+          0.1,
+        );
+      }
+    });
+
+    it("keeps every walk within 10 % as loaded, the trench gates shut and the palisades standing", () => {
+      const shut: MapData = {
+        ...map,
+        walls: [...map.walls, ...map.gates.map(({ wall }) => wall)],
+      };
+      within(
+        walksByRoute(
+          shut,
+          centre,
+          3,
+          up((team) => side(team)),
+        ),
+        0.1,
+      );
+      for (const [name, hulk, point] of points) {
+        for (const face of ["north", "south"] as const) {
+          within(toPoint(shut, point, name.startsWith("far"), byLane(hulk, face)), 0.1);
+        }
+      }
+    });
+
+    it("keeps the walks within 10 % with the gates open and the palisades broken", () => {
+      const broken = ["west-palisade", "east-palisade"];
+      within(walksByRoute(map, centre, 3, { through: [], broken }), 0.1);
+    });
+
+    it("gives the teams high ground within 25 % of each other", () => {
+      within(highGround(map), 0.25);
+    }, 60_000);
+  });
+
+  describe("The Warden's Gallery", () => {
+    const map = loadMap("wardens-gallery");
+    const seconds = MINIMAL_GW_INSPIRED_PVP_V1.movement.maxSpeedUnitsPerSecond;
+    const centre = { x: 2600, y: 1250 };
+    const own = ["west", "east"];
+    const faces = ["north", "south", "west", "east"] as const;
+    /** A team's own side, and the far one. */
+    const side = (team: number, far = false): string => own[far ? 1 - team : team] ?? "";
+    const within = ([walk0 = 0, walk1 = 0]: readonly number[], share: number): void => {
+      expect(walk0).toBeGreaterThan(0);
+      expect(Math.abs(walk0 - walk1) / Math.max(walk0, walk1)).toBeLessThanOrEqual(share);
+    };
+    /** Onto `deck` by its stair on `face`, its other stairs shut. */
+    const by = (deck: string, face: string): Route => ({
+      through: [`${deck}-${face}-stair`],
+      shut: faces.filter((other) => other !== face).map((other) => `${deck}-${other}-stair`),
+    });
+    /**
+     * The routes of the study to the great plinth: the nave climbs its base on the team's own
+     * face, the north and south halls on the north and south faces.
+     */
+    const routes = [
+      ["the nave", (team: number) => by("great-plinth-base", side(team))],
+      ["the north hall", () => by("great-plinth-base", "north")],
+      ["the south hall", () => by("great-plinth-base", "south")],
+    ] as const;
+    /** A point by name, its west image, its layer, and whether it is the far team's. */
+    type Point = readonly [string, { x: number; y: number }, number, boolean];
+    const points: readonly Point[] = [
+      ["own north", { x: 1700, y: 500 }, 1, false],
+      ["own plinth", { x: 1700, y: 1250 }, 2, false],
+      ["own south", { x: 1700, y: 2000 }, 1, false],
+      ["far north", { x: 1700, y: 500 }, 1, true],
+      ["far plinth", { x: 1700, y: 1250 }, 2, true],
+      ["far south", { x: 1700, y: 2000 }, 1, true],
+    ];
+    /** Where team `team` finds a point given by its west image: its own, or the far team's. */
+    const at = (team: number, point: { x: number; y: number }, far: boolean) => {
+      const west = team === 0 ? !far : far;
+      return west ? point : { x: map.width - point.x, y: point.y };
+    };
+    /** Each team's walk to its image of `point`, by `route` or the best way. */
+    const toPoint = (
+      on: MapData,
+      [, point, layer, far]: Point,
+      route?: (team: number) => Route,
+    ): number[] =>
+      [0, 1].map(
+        (team) =>
+          (route === undefined
+            ? walksTo(on, at(team, point, far), layer)
+            : walksByRoute(on, at(team, point, far), layer, (other) =>
+                other === team ? route(team) : { through: [] },
+              ))[team] ?? 0,
+      );
+    /** The plinth face a team climbs: its own west is the far team's east. */
+    const mirroredFace = (team: number, face: string): string =>
+      team === 1 && (face === "west" || face === "east")
+        ? face === "west"
+          ? "east"
+          : "west"
+        : face;
+    /** As loaded: every undercroft gate shut, every statue standing. */
+    const shut: MapData = {
+      ...map,
+      walls: [
+        ...map.walls,
+        ...map.gates.map(({ wall }) => wall),
+        ...(map.breakables ?? []).map(({ wall }) => wall),
+      ],
+    };
+
+    it.each(routes)(
+      "walks each team to the centre by %s within 10 % of the other, in under 25 s",
+      (_, route) => {
+        for (const on of [map, shut]) {
+          const walks = walksByRoute(on, centre, 3, route);
+          within(walks, 0.1);
+          for (const walk of walks) expect(walk / seconds).toBeLessThan(25);
+        }
+      },
+    );
+
+    it.each(points)(
+      "walks each team to the %s point within 10 % of the other, as loaded and opened",
+      (...point) => {
+        within(toPoint(map, point), 0.1);
+        within(toPoint(shut, point), 0.1);
+      },
+    );
+
+    it.each(points.filter(([, , layer]) => layer === 2))(
+      "walks each team onto the %s point by each of its four stairs within 10 % of the other",
+      (...point) => {
+        const far = point[3];
+        for (const face of faces) {
+          within(
+            toPoint(map, point, (team) =>
+              by(`${side(team, far)}-plinth`, mirroredFace(team, face)),
+            ),
+            0.1,
+          );
+        }
+      },
+    );
+
+    it("keeps the centre walk within 10 % with the gates open and the statues broken", () => {
+      const broken = ["west-statue", "east-statue"];
+      within(walksByRoute(map, centre, 3, { through: [], broken }), 0.1);
+    });
+
+    it("gives the teams high ground within 25 % of each other", () => {
+      within(highGround(map), 0.25);
+    }, 60_000);
+  });
+
+  // Guild Hall Isle (#3445): team 1's half is team 0's turned 180° about the flag dais, so every
+  // walk below is the same both ways. Out of a base three ways: under the rampart by the
+  // gatehouse, over it by its stairs, or round its end, dry along a pier or wading the inlet.
+  describe("Guild Hall Isle", () => {
+    const map = loadMap("guild-hall-isle");
+    const seconds = MINIMAL_GW_INSPIRED_PVP_V1.movement.maxSpeedUnitsPerSecond;
+    const stand = { x: 3000, y: 1300 };
+    /** Team `team`'s own `id`, named as team 0's: team 1's is its turn, west for east, north for south. */
+    const own = (team: number, id: string): string =>
+      team === 0
+        ? id
+        : id
+            .replace(/west/g, "@")
+            .replace(/east/g, "west")
+            .replace(/@/g, "east")
+            .replace(/north/g, "@")
+            .replace(/south/g, "north")
+            .replace(/@/g, "south");
+    const gatehouse = ["west-gatehouse-west-steps", "west-gatehouse-east-steps"];
+    const rampart = ["west-rampart-west-stair", "west-rampart-east-stair"];
+    const northPier = ["north-west-pier-west-stair", "north-west-pier-east-stair"];
+    const southPier = ["south-west-pier-west-stair", "south-west-pier-east-stair"];
+    const ways = [gatehouse, rampart, northPier, southPier];
+    /** The inlet a pier crosses, team 0's: wading it is the wet way round that end. */
+    const inlets = new Map<readonly string[], string>([
+      [northPier, "north-west-pier-inlet"],
+      [southPier, "south-west-pier-inlet"],
+    ]);
+    /**
+     * Through `way`, every other way out of the team's base shut. Round an end, the walk may
+     * take the pier or wade the inlet under it, so it need pass none of the pier's stairs.
+     */
+    const by =
+      (way: readonly string[]) =>
+      (team: number): Route => ({
+        through: way === northPier || way === southPier ? [] : way.map((id) => own(team, id)),
+        shut: ways
+          .filter((each) => each !== way)
+          .flatMap((each) => each.map((id) => own(team, id))),
+      });
+    /**
+     * Each team's walk to the stand by `way` on `on`. Round an end, the other end's inlet is
+     * made deep, so the walk goes round this end, by its pier or its wade.
+     */
+    const walksBy = (on: MapData, way: readonly string[]): number[] =>
+      [0, 1].map((team) => {
+        const other = [...inlets].filter(([end]) => end !== way).map(([, id]) => own(team, id));
+        const walled: MapData = {
+          ...on,
+          water: (on.water ?? []).map((each) =>
+            inlets.has(way) && other.includes(each.id) ? { ...each, depth: "deep" as const } : each,
+          ),
+        };
+        return walksByRoute(walled, stand, 2, by(way))[team] ?? 0;
+      });
+    const within = ([walk0 = 0, walk1 = 0]: readonly number[], share: number): void => {
+      expect(walk0).toBeGreaterThan(0);
+      expect(Math.abs(walk0 - walk1) / Math.max(walk0, walk1)).toBeLessThanOrEqual(share);
+    };
+    const lords = map.objectives.flatMap((objective) =>
+      objective.kind === "guild-lord" ? [objective] : [],
+    );
+    const flags = map.objectives.flatMap((objective) =>
+      objective.kind === "flag-spawn" ? [objective] : [],
+    );
+
+    it.each([
+      ["the gatehouse", gatehouse],
+      ["the rampart", rampart],
+      ["the north end", northPier],
+      ["the south end", southPier],
+    ])(
+      "walks each team to the flag stand by %s within 10 % of the other, in under 30 s",
+      (_, way) => {
+        const walks = walksBy(map, way);
+        within(walks, 0.1);
+        for (const walk of walks) expect(walk / seconds).toBeLessThan(30);
+      },
+    );
+
+    it("walks each team to the enemy Guild Lord within 10 % of the other", () => {
+      within(
+        [0, 1].map((team) => {
+          const lord = lords.find((each) => each.team !== team);
+          if (lord === undefined) throw new Error("no enemy lord");
+          return walksTo(map, lord.position, lord.layer)[team] ?? 0;
+        }),
+        0.1,
+      );
+    });
+
+    it("walks each team to its own flag within 10 % of the other", () => {
+      within(
+        [0, 1].map((team) => {
+          const flag = flags.find((each) => each.team === team);
+          if (flag === undefined) throw new Error("no flag");
+          return walksTo(map, flag.position, flag.layer)[team] ?? 0;
+        }),
+        0.1,
+      );
+    });
+
+    it("keeps the rampart and the ends open with the gatehouse doors shut", () => {
+      const shut: MapData = { ...map, walls: [...map.walls, ...map.gates.map(({ wall }) => wall)] };
+      within(walksBy(shut, rampart), 0.1);
+      within(walksBy(shut, northPier), 0.1);
+      within(walksBy(shut, southPier), 0.1);
+      // The shut doors turn the walk away from the gatehouse: it wades round an end instead.
+      expect(() => walksByRoute(shut, stand, 2, by(gatehouse))).toThrow(
+        /did not pass west-gatehouse-west-steps, west-gatehouse-east-steps/,
+      );
+    });
+
+    it("gives the teams high ground within 25 % of each other", () => {
+      within(highGround(map), 0.25);
+    }, 60_000);
+  });
+
+  // The Elite Zaishen Battle (#3446): team 1's half is team 0's turned 180° about the start line.
+  // To the start line three ways: across the sunken floor, over the team's own stand (up its west
+  // stair, down its middle one), or through the undercroft under it, its portcullis open.
+  describe("The Elite Zaishen Battle", () => {
+    const map = loadMap("elite-zaishen-battle");
+    const seconds = MINIMAL_GW_INSPIRED_PVP_V1.movement.maxSpeedUnitsPerSecond;
+    const line = { x: 2700, y: 1200 };
+    /** Team `team`'s own `id`, named as team 0's: team 1's is its turn, west for east, north for south. */
+    const own = (team: number, id: string): string =>
+      team === 0
+        ? id
+        : id
+            .replace(/west/g, "@")
+            .replace(/east/g, "west")
+            .replace(/@/g, "east")
+            .replace(/north/g, "@")
+            .replace(/south/g, "north")
+            .replace(/@/g, "south");
+    /** Team 0's point, or its turn for team 1. */
+    const at = (team: number, point: Vec2): Vec2 =>
+      team === 0 ? point : { x: map.width - point.x, y: map.height - point.y };
+    const within = ([walk0 = 0, walk1 = 0]: readonly number[], share: number): void => {
+      expect(walk0).toBeGreaterThan(0);
+      expect(Math.abs(walk0 - walk1) / Math.max(walk0, walk1)).toBeLessThanOrEqual(share);
+    };
+    /** Through the team's own `ids`, every other transition shut. */
+    const only =
+      (ids: readonly string[]) =>
+      (team: number): Route => {
+        const through = ids.map((id) => own(team, id));
+        return {
+          through,
+          shut: map.transitions.map(({ id }) => id).filter((id) => !through.includes(id)),
+        };
+      };
+    /** `on` with each team's one spawn at its own `point` on `layer`. */
+    const from = (on: MapData, point: Vec2, layer: number): MapData => ({
+      ...on,
+      spawnPoints: [0, 1].map((team) => ({ team, layer, position: at(team, point) })),
+    });
+    /** Each team's walk to its own `point`, by `route`. */
+    const toOwn = (on: MapData, point: Vec2, layer: number, route: (team: number) => Route) =>
+      [0, 1].map(
+        (team) =>
+          walksByRoute(on, at(team, point), layer, (each) =>
+            each === team ? route(team) : { through: [] },
+          )[team] ?? 0,
+      );
+    /** As loaded: both portcullises shut, both statue screens standing. */
+    const shut: MapData = {
+      ...map,
+      walls: [
+        ...map.walls,
+        ...map.gates.map(({ wall }) => wall),
+        ...(map.breakables ?? []).map(({ wall }) => wall),
+      ],
+    };
+    const onStand = { x: 1500, y: 620 };
+    const inUndercroft = { x: 1900, y: 640 };
+    const sum = (a: readonly number[], b: readonly number[]): number[] =>
+      [0, 1].map((team) => (a[team] ?? 0) + (b[team] ?? 0));
+    const routes = [
+      ["the floor", () => walksByRoute(shut, line, 1, only([]))],
+      [
+        "the stand",
+        () =>
+          sum(
+            toOwn(shut, onStand, 2, only(["north-tier-1-west-stair"])),
+            walksByRoute(from(shut, onStand, 2), line, 1, only(["north-tier-1-middle-stair"])),
+          ),
+      ],
+      [
+        "the undercroft",
+        () =>
+          sum(
+            toOwn(map, inUndercroft, 0, only(["north-undercroft-west-steps"])),
+            walksByRoute(
+              from(map, inUndercroft, 0),
+              line,
+              1,
+              only(["north-undercroft-east-steps"]),
+            ),
+          ),
+      ],
+    ] as const;
+
+    it.each(routes)(
+      "walks each team to the start line by %s within 10 % of the other, in under 25 s",
+      (_, walks) => {
+        const both = walks();
+        within(both, 0.1);
+        for (const walk of both) expect(walk / seconds).toBeLessThan(25);
+      },
+    );
+
+    it("walks each team to the foe's spawn across the floor, as loaded, within 10 % of the other", () => {
+      const spawn = { x: 5050, y: 1200 };
+      within(
+        toOwn(shut, spawn, 1, () => ({ through: [] })),
+        0.1,
+      );
+    });
+
+    it("keeps the walk to the start line within 10 % with the portcullises open and the screens broken", () => {
+      const broken = (map.breakables ?? []).map(({ id }) => id);
+      within(walksByRoute(map, line, 1, { through: [], broken }), 0.1);
+    });
+
+    it("gives the teams high ground within 25 % of each other", () => {
+      within(highGround(map), 0.25);
+    }, 60_000);
+
+    // A body on a ramp collides only with its own layer's walls, so a portcullis on the stair would
+    // let a keyboard walk through it shut; pathing cannot catch that (#3446).
+    describe("by keyboard up each undercroft's west steps", () => {
+      const build = STARTER_BUILDS[0];
+      if (build === undefined) {
+        throw new Error("no built-in builds");
+      }
+      /** Each team's walker at the foot of its own steps, and a puller on each lever. */
+      const sim = (pull: boolean): MatchSimulation => {
+        const body = (id: string, team: number, position: Vec2, layer: number) => ({
+          ...playBuildBot(build, id, team, { position, layer }, 0),
+          behaviour: undefined,
+        });
+        const levers = map.switches ?? [];
+        const match = new MatchSimulation({
+          seed: "portcullis",
+          matchRules: mapMatchRules(map, map.mode),
+          teamCount: map.teams,
+          ...mapSimulationFields(map, map.teams),
+          participants: [
+            ...[0, 1].map((team) =>
+              body(`walker-${String(team)}`, team, at(team, vec2(1600, 680)), 0),
+            ),
+            ...levers.map(({ id, position, layer }, team) => body(id, team, position, layer)),
+          ],
+        });
+        if (pull) {
+          for (const { id } of levers) match.requestAttack(id, switchTargetId(id));
+          for (let t = 0; t < 2; t += 0.05) match.step(0.05);
+          expect(match.gates.every(({ open }) => open)).toBe(true);
+        }
+        match.setInputDirection("walker-0", vec2(0, 1));
+        match.setInputDirection("walker-1", vec2(0, -1));
+        for (let t = 0; t < 4; t += 0.05) match.step(0.05);
+        return match;
+      };
+      /** How far past its portcullis's near edge each walker got: north y 810, south y 1590. */
+      const past = (match: MatchSimulation): number[] => [
+        (match.get("walker-0")?.position.y ?? 0) - 810,
+        1590 - (match.get("walker-1")?.position.y ?? map.height),
+      ];
+
+      it("stops each team at its shut portcullis", () => {
+        for (const beyond of past(sim(false))) expect(beyond).toBeLessThan(0);
+      });
+
+      it("lets each team through once the levers open them", () => {
+        const open = sim(true);
+        for (const beyond of past(open)) expect(beyond).toBeGreaterThan(100);
+        expect([open.get("walker-0")?.layer, open.get("walker-1")?.layer]).toEqual([1, 1]);
+      });
+    });
+  });
+
+  // The Hollow Deep (#3444): a cavern turned half round its centre, team 0 in the west lobe and
+  // team 1 in the east. A lobe reaches the centre chamber only over its mid ledge or a shelf, or
+  // under the ledge through the undercroft once a lever on a shelf opens its gate; the crown on the
+  // dais is the centre. A shelf route drops off the shelf's inner edge, so it is walked in two legs.
+  // Each team's shelves are named from the map: the one with its lever first, then the other.
+  describe("The Hollow Deep", () => {
+    const map = loadMap("hollow-deep");
+    const RADIUS = MINIMAL_GW_INSPIRED_PVP_V1.collision.playerRadius;
+    const seconds = MINIMAL_GW_INSPIRED_PVP_V1.movement.maxSpeedUnitsPerSecond;
+    const shut: MapData = { ...map, walls: [...map.walls, ...map.gates.map(({ wall }) => wall)] };
+    const crown = { x: 3100, y: 1200 };
+    const ghosts = map.objectives.flatMap((objective) =>
+      objective.kind === "ghost-spawn" ? [objective.position] : [],
+    );
+    const foes = [ghosts[1] ?? crown, ghosts[0] ?? crown];
+    const sides = ["west", "east"];
+    const shelves = [
+      ["north-west", "south-west"],
+      ["south-east", "north-east"],
+    ];
+    const shelfStair = (team: number, which: number): string =>
+      `${shelves[team]?.[which] ?? ""}-shelf-stair`;
+    const ledge = (team: number): string[] =>
+      ["outer", "inner"].map((end) => `${sides[team] ?? ""}-mid-ledge-${end}-stair`);
+    const undercroft = (team: number): string[] =>
+      ["outer", "inner"].map((end) => `${sides[team] ?? ""}-undercroft-${end}-steps`);
+    // Every way between a lobe and the chamber; the dais and crown stairs stay open.
+    const ways = map.transitions
+      .map(({ id }) => id)
+      .filter((id) => !id.startsWith("dais-") && !id.startsWith("crown-"));
+    const only = (...through: string[]): Route => ({
+      through,
+      shut: ways.filter((id) => !through.includes(id)),
+    });
+    const within = ([walk0 = 0, walk1 = 0]: readonly number[], share: number): void => {
+      expect(walk0).toBeGreaterThan(0);
+      expect(Math.abs(walk0 - walk1) / Math.max(walk0, walk1)).toBeLessThanOrEqual(share);
+    };
+    const under = (walks: readonly number[], cap: number): void => {
+      for (const walk of walks) expect(walk / seconds).toBeLessThan(cap);
+    };
+    /** `on` with each team's one spawn at `points[team]` on `layer`. */
+    const from = (on: MapData, points: readonly Vec2[], layer = 1): MapData => ({
+      ...on,
+      spawnPoints: points.map((position, team) => ({ team, layer, position })),
+    });
+    /** Each team's walk to its own point of `to`, along its own route. */
+    const toOwn = (
+      on: MapData,
+      to: readonly Vec2[],
+      layer: number,
+      route: (team: number) => Route,
+    ): number[] =>
+      [0, 1].map(
+        (team) =>
+          walksByRoute(on, to[team] ?? crown, layer, (each) =>
+            each === team ? route(team) : { through: [] },
+          )[team] ?? 0,
+      );
+    const sum = (...legs: readonly (readonly number[])[]): number[] =>
+      [0, 1].map((team) => legs.reduce((total, leg) => total + (leg[team] ?? 0), 0));
+    // The shelves' inner-edge drop-offs, in map order: team 0's two shelves, then team 1's.
+    const drops = matchLayers(map).dropOffs.map(({ edge, outward }) => {
+      const middle = { x: (edge.a.x + edge.b.x) / 2, y: (edge.a.y + edge.b.y) / 2 };
+      const by = 2 * RADIUS;
+      return {
+        top: { x: middle.x - outward.x * by, y: middle.y - outward.y * by },
+        landing: { x: middle.x + outward.x * by, y: middle.y + outward.y * by },
+      };
+    });
+    const drop = (team: number, which: number): (typeof drops)[number] => {
+      const each = drops[2 * team + which];
+      if (each === undefined) throw new Error("missing drop-off");
+      return each;
+    };
+    /** Up a shelf's outer stair, along it, off its inner edge, and on to the crown. */
+    const overShelf = (which: number): number[] =>
+      sum(
+        toOwn(
+          shut,
+          [0, 1].map((team) => drop(team, which).top),
+          2,
+          (team) => only(shelfStair(team, which)),
+        ),
+        [4 * RADIUS, 4 * RADIUS],
+        walksByRoute(
+          from(
+            shut,
+            [0, 1].map((team) => drop(team, which).landing),
+          ),
+          crown,
+          3,
+          only(),
+        ),
+      );
+
+    it("draws four drop-offs, one off each shelf's inner edge", () => {
+      expect(drops).toHaveLength(4);
+    });
+
+    it("walks each team through its own undercroft to the crown within 10 % of the other, in under 25 s, once the lever opens the gate", () => {
+      const walks = toOwn(map, [crown, crown], 3, (team) => only(...undercroft(team)));
+      within(walks, 0.1);
+      under(walks, 25);
+      expect(() => toOwn(shut, [crown, crown], 3, (team) => only(...undercroft(team)))).toThrow(
+        /cannot reach/,
+      );
+    });
+
+    it("walks each team over its own mid ledge to the crown, gates shut, within 10 % of the other, in under 25 s", () => {
+      const walks = toOwn(shut, [crown, crown], 3, (team) => only(...ledge(team)));
+      within(walks, 0.1);
+      under(walks, 25);
+    });
+
+    it.each([
+      ["the shelf with its lever", 0],
+      ["its other shelf", 1],
+    ])(
+      "walks each team over %s and off its inner edge to the crown, gates shut, within 10 % of the other, in under 25 s",
+      (_, which) => {
+        const walks = overShelf(which);
+        within(walks, 0.1);
+        under(walks, 25);
+      },
+    );
+
+    it("keeps each team's four routes to the crown within 15 % of each other", () => {
+      const routes = [
+        toOwn(map, [crown, crown], 3, (team) => only(...undercroft(team))),
+        toOwn(shut, [crown, crown], 3, (team) => only(...ledge(team))),
+        overShelf(0),
+        overShelf(1),
+      ];
+      for (const team of [0, 1]) {
+        const walks = routes.map((walk) => walk[team] ?? 0);
+        expect((Math.max(...walks) - Math.min(...walks)) / Math.max(...walks)).toBeLessThanOrEqual(
+          0.15,
+        );
+      }
+    });
+
+    it.each([
+      [
+        "the near rope bridge",
+        (team: number) => only(shelfStair(team, 1), shelfStair(1 - team, 0)),
+      ],
+      ["the far rope bridge", (team: number) => only(shelfStair(team, 0), shelfStair(1 - team, 1))],
+      [
+        "the middle, over both mid ledges",
+        (team: number) => only(...ledge(team), ...ledge(1 - team)),
+      ],
+    ])(
+      "walks each team to the foe's ghost-spawn by %s, gates shut, within 10 % of the other",
+      (_, route) => {
+        const walks = toOwn(shut, foes, 1, route);
+        within(walks, 0.1);
+        under(walks, 40);
+      },
+    );
+
+    it("walks each team from its ghost-spawn to the crown, and from its spawn to its ghost-spawn, within 10 % of the other", () => {
+      const fromGhost = toOwn(from(map, ghosts), [crown, crown], 3, () => ({ through: [] }));
+      within(fromGhost, 0.1);
+      under(fromGhost, 25);
+      within(
+        walksTo(map, ghosts[0] ?? crown, 1)
+          .slice(0, 1)
+          .concat(walksTo(map, ghosts[1] ?? crown, 1).slice(1)),
+        0.1,
+      );
+    });
+
+    it("gives the teams high ground within 25 % of each other, the crown the highest deck", () => {
+      within(highGround(map), 0.25);
+      const top = Math.max(...map.decks.map(({ layer }) => layer));
+      expect(map.decks.filter(({ layer }) => layer === top).map(({ id }) => id)).toEqual(["crown"]);
+    }, 60_000);
+  });
+
+  // Threefold Keep (#3443): one piece turned by 120° for three teams, its stairs fitted anew to each
+  // team's axis, so proven by numbers for all three. Every route ends on the altar, up on the tower.
+  describe("Threefold Keep", () => {
+    const map = loadMap("threefold-keep");
+    const shut: MapData = { ...map, walls: [...map.walls, ...map.gates.map(({ wall }) => wall)] };
+    const altar = { x: 2500, y: 2200 };
+    const teams = ["north", "south-east", "south-west"];
+    const wallWalks = teams.flatMap((team) => [
+      `${team}-wall-walk-left-stair`,
+      `${team}-wall-walk-right-stair`,
+    ]);
+    const gateSteps = teams.map((team) => `${team}-gate-outer-steps`);
+    const within = (walks: readonly number[], share: number): void => {
+      expect(Math.min(...walks)).toBeGreaterThan(0);
+      expect((Math.max(...walks) - Math.min(...walks)) / Math.max(...walks)).toBeLessThanOrEqual(
+        share,
+      );
+    };
+    /** Up one of its wall-walk's stairs, every other way onto the wall-walk shut. */
+    const wallWalk = (side: string) => (team: number) => {
+      const stair = `${teams[team] ?? ""}-wall-walk-${side}-stair`;
+      return { through: [stair], shut: wallWalks.filter((each) => each !== stair) };
+    };
+    const gate = (team: number): Route => ({
+      through: [gateSteps[team] ?? ""],
+      shut: [...wallWalks, "undercroft-stair"],
+    });
+    const undercroft = (): Route => ({
+      through: ["undercroft-stair"],
+      shut: [...wallWalks, ...gateSteps],
+    });
+    const seconds = MINIMAL_GW_INSPIRED_PVP_V1.movement.maxSpeedUnitsPerSecond;
+
+    it.each([
+      ["its gate", map, gate],
+      ["its wall-walk's left stair", shut, wallWalk("left")],
+      ["its wall-walk's right stair", shut, wallWalk("right")],
+      ["the undercroft", map, undercroft],
+    ] as const)(
+      "walks each team to the altar by %s within 10 % of the others, in under 25 s",
+      (_, on, route) => {
+        const walks = walksByRoute(on, altar, 3, route);
+        within(walks, 0.1);
+        for (const walk of walks) expect(walk / seconds).toBeLessThan(25);
+      },
+    );
+
+    it("keeps both wall-walk routes with every gate shut, the gates and the undercroft shut with them", () => {
+      expect(() => walksByRoute(shut, altar, 3, gate)).toThrow(/cannot reach/);
+      expect(() => walksByRoute(shut, altar, 3, undercroft)).toThrow(/cannot reach/);
+    });
+
+    it("keeps the walks within 10 % as loaded, and with the gates open and the palisades broken", () => {
+      within(walksTo(shut, altar, 3), 0.1);
+      const broken = (map.breakables ?? []).map(({ id }) => id);
+      within(walksByRoute(map, altar, 3, { through: [], broken }), 0.1);
+    });
+
+    it("brings each team to the tower's rim on its side within 25 % of the others", () => {
+      const rim = (team: number) => {
+        const angle = ((-90 + 120 * team) * Math.PI) / 180;
+        return { x: altar.x + 420 * Math.cos(angle), y: altar.y + 420 * Math.sin(angle) };
+      };
+      within(
+        [0, 1, 2].map((team) => walksTo(shut, rim(team), 2)[team] ?? 0),
+        0.25,
+      );
+    }, 60_000);
+
+    // #3688: the undercroft's bay cut into the hill's east side left team 1 a 66 px strip
+    // beside the tower on its way to the east stair, where team 2's way to the west was open.
+    it.each(["east", "south", "west"])(
+      "brings each team up its ward stair and over the hill to the tower's %s stair, two bodies abreast all the way",
+      (tower) => {
+        const towers = ["east", "south", "west"];
+        const wards = teams.map((team) => `${team}-ward-stair`);
+        const route = (team: number): Route => ({
+          through: [wards[team] ?? "", `tower-${tower}-stair`],
+          shut: [
+            ...wallWalks,
+            "undercroft-stair",
+            ...wards.filter((_, other) => other !== team),
+            ...towers.filter((other) => other !== tower).map((other) => `tower-${other}-stair`),
+          ],
+        });
+        for (const { width } of narrowestWalks(map, altar, 3, route))
+          expect(width).toBeGreaterThanOrEqual(160);
+      },
+      60_000,
+    );
+  });
 
   it("counts no high ground on a map without decks", () => {
     expect(highGround({ ...loadMap("arena-canyon"), decks: [] })).toEqual([0, 0]);
   });
+});
+
+describe("the width of each team's way in (#3688)", () => {
+  /** Where a map without a shared objective is fought over: the point its walk tests walk to. */
+  const FOUGHT_OVER: Readonly<Record<string, { readonly at: Vec2; readonly layer: number }>> = {
+    "ashen-courtyard": { at: { x: 2320, y: 2000 }, layer: 0 },
+    "canthan-terraces": { at: { x: 1200, y: 1050 }, layer: 1 },
+    "cinder-sanctum": { at: { x: 2812, y: 1400 }, layer: 3 },
+    "elonian-plateau": { at: { x: 2270, y: 820 }, layer: 2 },
+    "hollow-deep": { at: { x: 3100, y: 1200 }, layer: 3 },
+    "moss-vale": { at: { x: 2500, y: 1300 }, layer: 2 },
+    "shiverpeak-pass": { at: { x: 2635, y: 1260 }, layer: 2 },
+    "sunken-bastion": { at: { x: 1350, y: 905 }, layer: 2 },
+  };
+  /**
+   * The maps whose teams' narrowest ways in were uneven when #3688 measured
+   * them, each with the card that fixes it. One that is fixed leaves this list.
+   */
+  const UNEVEN: Readonly<Record<string, number>> = {
+    "hall-of-heroes-capture": 3442,
+    "hall-of-heroes-king": 3442,
+    "hall-of-heroes-relic": 3442,
+  };
+
+  /** Where `map` is fought over: its own point, else its shared objective nearest the centre, else its centre. */
+  const foughtOver = (map: MapData): { readonly at: Vec2; readonly layer: number } => {
+    const own = FOUGHT_OVER[map.id];
+    if (own !== undefined) return own;
+    const centre = vec2(map.width / 2, map.height / 2);
+    const away = (point: Vec2): number => Math.hypot(point.x - centre.x, point.y - centre.y);
+    const [shared] = map.objectives
+      .flatMap((objective) =>
+        "team" in objective || !("position" in objective)
+          ? []
+          : [{ at: objective.position, layer: objective.layer }],
+      )
+      .sort((a, b) => away(a.at) - away(b.at));
+    return shared ?? { at: centre, layer: map.groundLayer };
+  };
+
+  it.each(loadAllMaps().map((map) => [map.id, map] as const))(
+    "%s: the teams' narrowest ways to where the map is fought over are within 25 % of each other",
+    (id, map) => {
+      const { at, layer } = foughtOver(map);
+      const widths = narrowestWalks(map, at, layer).map(({ width }) => width);
+      const spread = (Math.max(...widths) - Math.min(...widths)) / Math.max(...widths);
+      // A way two bodies wide is no choke, however much wider another team's is.
+      const even = spread <= 0.25 || Math.min(...widths) >= 160;
+      expect(even).toBe(UNEVEN[id] === undefined);
+    },
+    60_000,
+  );
 });
 
 describe("walks by route (#3415)", () => {
@@ -1228,5 +2459,26 @@ describe.runIf(BENCH)("the map balance bench (#3065)", () => {
     },
     // Every map at every size: hours, not minutes.
     24 * 3_600_000,
+  );
+
+  it(
+    "wins Scarred Earth 8v8 as often from the east as from the west (#3596)",
+    () => {
+      const map = loadMap("scarred-earth");
+      const seeds = SIDE_SEEDS;
+      const asSeated = runMapBalance({ map, size: 8, seeds });
+      const swapped = runMapBalance({ map, size: 8, seeds, swapSides: true });
+      // Team 0 is seated west, then east: the same teams, so only the side differs.
+      const west = (asSeated.wins[0] ?? 0) + (swapped.wins[1] ?? 0);
+      const east = (asSeated.wins[1] ?? 0) + (swapped.wins[0] ?? 0);
+      const bySide = {
+        ...asSeated,
+        wins: [west, east],
+        draws: asSeated.draws + swapped.draws,
+      };
+      console.log(`scarred-earth 8v8 by side, west / east: ${String(west)} / ${String(east)}`);
+      expect(balanceVerdict(bySide)).toEqual({ pass: true });
+    },
+    3 * 3_600_000,
   );
 });

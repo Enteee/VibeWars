@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { loadMap } from "./loader.js";
-import type { MapData, Wall } from "./schema.js";
+import type { MapData } from "./schema.js";
 
 /**
  * The bigger maps (#2544) are point-symmetric: rotated 180° about its
@@ -10,15 +10,10 @@ import type { MapData, Wall } from "./schema.js";
  * this list.
  */
 const SYMMETRIC = [
-  "cinder-sanctum",
-  "scarred-earth",
-  "threefold-keep",
   "hall-of-heroes-king",
   "hall-of-heroes-relic",
   "hall-of-heroes-capture",
-  "hollow-deep",
-  "mosslit-cairns",
-  "wardens-gallery",
+  "elite-zaishen-battle",
 ];
 
 /** How far apart a thing and its twin's rotation may be. */
@@ -32,8 +27,19 @@ interface Point {
 const near = (a: Point, b: Point): boolean =>
   Math.abs(a.x - b.x) <= TOLERANCE && Math.abs(a.y - b.y) <= TOLERANCE;
 
+/** A wall's or a fog bank's outline. */
+type Area =
+  | {
+      readonly kind: "rect";
+      readonly x: number;
+      readonly y: number;
+      readonly width: number;
+      readonly height: number;
+    }
+  | { readonly kind: "polygon"; readonly points: readonly Point[] };
+
 /** Every corner of `wall`, as a polygon's points. */
-function corners(wall: Wall): readonly Point[] {
+function corners(wall: Area): readonly Point[] {
   if (wall.kind === "polygon") {
     return wall.points;
   }
@@ -99,6 +105,58 @@ describe.each(SYMMETRIC)("%s (#2544)", (id) => {
         ),
         JSON.stringify(objective),
       ).toBe(true);
+    }
+  });
+});
+
+/**
+ * Ascent maps relit for their act (#3590): their layout is only roughly
+ * point-symmetric, so their lights stay where they light it, but neither
+ * team gets the brighter side. Each fog bank and light shaft has its 180°
+ * twin about the map's centre, and each light colour is as strong on one
+ * half of the map as on the other.
+ */
+const RELIT = ["barrow-field", "blackwater-ford", "brazen-causeway"];
+
+describe.each(RELIT)("%s lit for its act (#3590)", (id) => {
+  const map: MapData = loadMap(id);
+  const { lighting, atmosphere } = map;
+  if (lighting === undefined || atmosphere === undefined) {
+    throw new Error(`${id} has no lighting or atmosphere`);
+  }
+  const turn = (p: Point): Point => ({ x: map.width - p.x, y: map.height - p.y });
+
+  it("has every fog bank's 180° twin", () => {
+    for (const bank of atmosphere.fog) {
+      const points = corners(bank.area);
+      const twinned = atmosphere.fog.some(
+        (other) => other.layer === bank.layer && twins(points, corners(other.area), turn),
+      );
+      expect(twinned, JSON.stringify(points[0])).toBe(true);
+    }
+  });
+
+  it("has every light shaft's 180° twin", () => {
+    for (const shaft of atmosphere.shafts) {
+      const twinned = atmosphere.shafts.some(
+        (other) =>
+          other.layer === shaft.layer &&
+          other.radius === shaft.radius &&
+          near(turn(shaft.position), other.position),
+      );
+      expect(twinned, shaft.id).toBe(true);
+    }
+  });
+
+  it("lights both halves of the map alike, colour by colour", () => {
+    const half = new Map<number, number>();
+    for (const light of lighting.lights) {
+      const side = Math.sign(light.position.x - map.width / 2);
+      const strength = light.intensity * light.radius ** 2;
+      half.set(light.colour, (half.get(light.colour) ?? 0) + side * strength);
+    }
+    for (const [colour, imbalance] of half) {
+      expect(Math.abs(imbalance), colour.toString(16)).toBeLessThan(1e-6);
     }
   });
 });

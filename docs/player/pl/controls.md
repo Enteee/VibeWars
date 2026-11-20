@@ -19,7 +19,7 @@ Domyślny układ to **Klasyczny**, dla rąk przyzwyczajonych do GW1. **VibeWars*
 | Następny wróg (Shift: poprzedni) | Tab                  | Tab              |
 | Najbliższy wróg                  | C                    | C                |
 | Wróg wskazany przez drużynę      | T                    | T                |
-| Ty                               | G                    | G                |
+| Ty                               | F lub G              | G                |
 | Pokaż nazwy (przytrzymaj)        | Shift                | Shift            |
 | Wycisz                           | M                    | M                |
 | Upuść flagę, relikwię lub prochy | brak                 | brak             |
@@ -38,7 +38,7 @@ Te klawisze są stałe:
 ## Mysz
 
 - **Kliknięcie lewym przyciskiem** na ziemi to marsz w to miejsce. Bez Shift lewy przycisk służy tylko do chodzenia.
-- Na mapach z podwyższonymi platformami kliknięcie lewym przyciskiem prowadzi na widoczną powierzchnię, a **Alt + kliknięcie lewym przyciskiem** na ziemię pod nią. Pierścień pod kursorem oznacza platformę, a przerywany pierścień ziemię. Nad tunelem lewe kliknięcie prowadzi na poziom, na którym jesteś, a **Alt + lewe kliknięcie** na drugi.
+- Na mapach z podwyższonymi platformami kliknięcie lewym przyciskiem prowadzi na widoczną powierzchnię, a **Alt + kliknięcie lewym przyciskiem** na ziemię pod nią. Pierścień pod kursorem oznacza platformę, a przerywany pierścień ziemię. Nad tunelem lewe kliknięcie prowadzi na poziom, na którym jesteś. **Alt + lewe kliknięcie** nigdy nie prowadzi wyżej niż poziom, na którym stoisz: z ziemi prowadzi do tunelu, a w tunelu w nim zostaje.
 - **Kliknięcie prawym przyciskiem** wroga lub sojusznika obiera go na cel. Szybkie
   ponowne kliknięcie prawym przyciskiem tego samego wroga go atakuje.
 - **Kliknięcie prawym przyciskiem** flagi lub stojaka flagi, w Bitwie gildii albo
@@ -72,7 +72,8 @@ Poza meczem górny pasek zawiera **[?]** (tę Pomoc), **⚙** (Opcje),
 poza Lobby, są w prawym górnym rogu ekranu. W wąskim oknie te ikony oraz
 pozostałe przyciski ekranu chowają się pod **⋯**; na wierzchu zostaje tylko główny przycisk.
 ⚙ otwiera Opcje jako okno pod paskiem, z ekranem wciąż widocznym za nim; zamyka je Esc, × lub kliknięcie poza oknem. W sekcji **Wyświetlanie** przełącznik **Oświetlenie** włącza lub wyłącza światło i cień oświetlonej mapy, od razu, także w meczu.
-Pomoc zamyka × w jej prawym górnym rogu, Esc lub ponowne naciśnięcie [?].
+[?] otwiera Pomoc tak samo, jako okno pod nim z wyborem strony u góry; mecz toczy się za nim dalej.
+Pomoc zamyka jej ×, Esc, kliknięcie poza oknem lub ponowne naciśnięcie [?].
 
 **Podziel się bitem ze swoim lobby.** W edytorze bitów (♪, potem **Edytuj**)
 **Udostępnij w lobby** wysyła to, co wpisano, zapisane lub nie, wszystkim innym

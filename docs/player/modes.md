@@ -116,7 +116,7 @@ lord. Under it, a line names whoever carries a flag. A boost pops up as
 "Morale boost! +10%", or "Enemy morale boost". On the compass, ♛ marks
 each Guild Lord, ⚑ each flag and ◎ the stand.
 
-Guild Hall Isle plays it.
+Guild Hall Isle (8v8, 6000x2600) plays it: an island in the sea. Each Guild Lord stands on top of a hall, behind a rampart; the way out is through the gatehouse, over the rampart or along a pier. A gatehouse door opens from a lever on the enemy's rampart. The flag stand is on a dais in the middle.
 
 ## Relic Run
 
@@ -168,14 +168,15 @@ tie goes to the last team to score. Each base raises its dead, and its
 ghost, every 2 minutes. Bots go for the foe's relic together and bring it
 home.
 
+Cinder Sanctum (8v8, 5600x2800) plays it: a temple on a volcano flank between two lava rivers. Cross by a bridge or the causeway to the sanctum on its forecourt; a lever on the forecourt opens the hidden passage under the sanctum, and ash walls can be broken. Lava burns.
+
 ## King of the Hill
 
 **Lead your Ghostly Hero onto the altar, and hold it.** Each team has a
 **Ghostly Hero** in its base, a ghost that fights with an axe and that
 nobody plays. The **altar** is in the centre, the same walk from both
 bases. On **Threefold Keep**, three teams (two when no third is free) fight for it
-inside a walled keep. Its doors open only from within, by a plate inside: walk
-round to an open corner to get in. At most 12 points a team, and if every foe
+on the tower of a walled keep. At most 12 points a team, and if every foe
 stands at -60% morale you win at once. The **Hall of
 Heroes**, the King of the Hill map that ends the Heroes' Ascent, raises
 it on a dais walled to the west and east, up a north or a south approach
@@ -231,7 +232,7 @@ spell range. While your team does not hold the altar, every bot kills the other
 team's Ghostly Hero first once it stands on the altar in their range:
 it is the one foe that keeps your ghost from claiming it.
 
-Threefold Keep plays it.
+Threefold Keep (4v4 and 8v8, 5000x4400) plays it: a keep on a hill in the heights, for three teams. Climb the wall-walk by the stairs beside your gate and cross a causeway to the hill, then climb to the altar on the tower. A lever in each court opens all four gates: your gate passage under the wall, and the undercroft, the long way under the hill.
 
 ## Capture Points
 
@@ -267,8 +268,9 @@ Bots spread out over the shrines your team does not own yet and stand
 on them until they are taken. A foe in spell range does not draw them
 off: they step onto a shrine in reach and fight from it.
 
-Scarred Earth plays it: each shrine stands in a broken ring of walls,
-open to the west and east.
+Scarred Earth (4v4 and 8v8, 5400x2800) plays it: a cratered battlefield at dusk. The shrines stand on wrecked siege towers, the centre one on the great tower's deck, each beside a crater; levers on the towers open two trenches under the field, and wrecked palisades can be broken.
+
+In the Heroes' Ascent, The Warden's Gallery (8v8, 5200x2500) plays it: a sunlit sculpture gallery under skylights. The centre shrine stands on the great plinth's top, and each team has three near its vestibule, one on a plinth; levers on the great plinth open two undercrofts under the floor, and toppled statues can be broken.
 
 ## Team Lobby
 
@@ -361,7 +363,7 @@ The Hall draws one of three modes for each match: King of the Hill, Relic Run or
 
 **The Vault.** The Hall forms only every 12 minutes on the UTC clock, at :00, :12, :24, :36 and :48. Until then your party waits in the Vault: the queue icon shows the time to the next opening and who holds the Hall. At each opening the holder meets up to two challengers, or up to three challengers meet if nobody holds it. Only parties waiting before the opening take part, and any beyond those seats wait for the next one. A holder with nobody to fight keeps the Hall and waits, with no win counted, and a lone challenger waits too. When a party wins the Hall, every open game says who holds it now: its leader, or its guild tag when more than half the party shares one.
 
-Every run starts with the **Elite Zaishen Battle**, with no queue: your party against six Zaishen played by bots (2 Monks, an Elementalist and 3 others). The clock starts when one of you crosses the start line or the first Zaishen dies, whichever comes first. Kill all six in under 30 seconds and the party starts the run at +10% morale; under 60, +8%; under 80, +6%; under 100, +4%; under 120, +2%; slower, nothing. Win and your party queues for its first map on its own. Wipe, or still have a Zaishen alive when the 8-minute limit is reached, and the run is over.
+Every run starts with the **Elite Zaishen Battle**, with no queue: your party against six Zaishen played by bots (2 Monks, an Elementalist and 3 others). It is fought in a ceremonial arena (8v8, 5400x2400): tiered stands to the north and south, statues on plinths on the sunken floor, and an undercroft under each stand, its portcullis opened by a lever on the far stand. The clock starts when one of you crosses the start line in the middle of the arena or the first Zaishen dies, whichever comes first. Kill all six in under 30 seconds and the party starts the run at +10% morale; under 60, +8%; under 80, +6%; under 100, +4%; under 120, +2%; slower, nothing. Win and your party queues for its first map on its own. Wipe, or still have a Zaishen alive when the 8-minute limit is reached, and the run is over.
 
 Every win in a run earns **fame**: 1, 2, 3, 4, 6, 8, 12, 16, 20, 24, 28, 32, 36 for the first thirteen, then 40 each, at most 300 a day (the day turns at 15:00 UTC). The Elite Zaishen Battle earns none. Your total fame sets your **hero rank**, from 1 at 25 fame to 15 at 100,000, shown as ★ and a number beside your name. Options > Player shows both. Both are kept on your device.
 
@@ -392,14 +394,15 @@ earshot of it for 50 lightning damage every 2.5 seconds, until the other team
 plants its flag there. Each strike is a bolt from the beacon to whoever it hit,
 visible to both teams.
 
-Three Ascent arenas are a Hosted Game's pick too: **The Hollow Deep** (8v8 Annihilation, three
-winding tunnels round a central rock),
+Three Ascent arenas are a Hosted Game's pick too: **The Hollow Deep** (8v8, 6200x2400, Annihilation in a dark cavern: cross a rope bridge over a chasm, climb over a mid ledge, or take the undercroft beneath it once a lever on a shelf opens its gate),
 **Blackwater Ford** (8v8, 5200x2800, Priest Annihilation at a dark river
 ford: wade a shallow ford, cross the broken bridge over the mill on its piers,
 or take a culvert under the bridge once a lever on the mill opens its gate;
 the priest raises its dead every 2 minutes) and
-**Mosslit Cairns** (8v8 Capture Points, five cairns in a shallow zig-zag
-between the bases). A fourth is **The Brazen Causeway** (8v8, 5600x2800, Priest Annihilation on a raised stone causeway over a marsh at dusk: march along the causeway once a lever in the far gatehouse opens its bronze gate, cross the marsh to the stairs at its middle, or slip through a culvert under it; the priest raises its dead every 2 minutes).
+**Mosslit Cairns** (8v8, 5400x3000, Capture Points on five cairn hills
+glowing with moss at dusk: climb a cairn by its stairs, hold the great cairn
+in the middle, or take the root tunnel under the south hills once a lever on
+a north cairn opens its gates; root walls can be broken). A fourth is **The Brazen Causeway** (8v8, 5600x2800, Priest Annihilation on a raised stone causeway over a marsh at dusk: march along the causeway once a lever in the far gatehouse opens its bronze gate, cross the marsh to the stairs at its middle, or slip through a culvert under it; the priest raises its dead every 2 minutes).
 
 A map may have **gates**: walls that stop bodies, shots and sight while
 closed. Stand on a gate's pressure plate to open it. It closes when
@@ -452,3 +455,16 @@ largest team, bots included, so a 3v2 Hosted Game fits no size. The
 chips stay as you left them until the page reloads.
 
 Above the chips, the **Hall of Heroes** strip lists the last 20 holds, newest first: the holder (a guild tag or the leader's name), the winning team's people, when the newest win ended and, from two wins on, how many in a row. A hold is an unbroken run of Hall wins by one holder. The strip reads the records on this page, ignores the chips, and is hidden when none of them is a Hall win. Like every record, it is what each match's host reported, and nothing checks it.
+
+## Ranked
+
+A queued match with no bots in it is ranked. The queue screen and the
+Team Lobby say so before you queue; one bot keeps a match unranked.
+When a ranked match is found, every player signs its start, and the
+screen says **Confirming ranked match…** for up to 15 seconds. If
+someone does not confirm, the match is cancelled and everyone is back
+in the queue. At the end every player signs the result, and the match's
+receipt is published on the Nostr relays with each player's public key
+and character name; a player with no character is named as a starter.
+Your rating moves within the hour. Leaving a ranked match counts as a
+loss, and the leave button says so.

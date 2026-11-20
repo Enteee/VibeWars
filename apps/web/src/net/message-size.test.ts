@@ -2,6 +2,7 @@ import {
   ALL_INSIGNIAS,
   ALL_OFFHANDS,
   ALL_WEAPONS,
+  EVENT_CAPS,
   IMPLEMENTED_SKILLS,
   MOD_SLOTS,
   PROFESSIONS,
@@ -16,6 +17,10 @@ import {
 } from "@vibewars/game-core";
 import {
   MAX_CHART_EVENTS,
+  EMBLEM_GRID,
+  MAX_EMBLEM_COLOURS,
+  packEmblem,
+  type WireCapes,
   MAX_CHART_PARTS,
   MAX_CHART_SAMPLES,
   MAX_LOBBY_PLAYERS,
@@ -100,8 +105,18 @@ const PEER_ID = "abcdefghijklmnopqrst/local";
 const NAME = sanitizeName("👩‍🚀".repeat(40), "player");
 /** A guild tag as long as `sanitizeGuildTag` lets through (#1406). */
 const GUILD_TAG = sanitizeGuildTag("WWWW");
-/** A cape of the longest colour and emblem names (#1422). */
-const CAPE: WireCape = { main: "violet", trim: "orange", emblem: "half-disc" };
+/**
+ * The largest cape (#1422, #3628): 15 emblem colours, each used, in order
+ * of first use; every emblem is as long (#3554).
+ */
+const CAPE: WireCape = {
+  main: "a078e0",
+  trim: "f0963c",
+  emblemColours: Array.from({ length: MAX_EMBLEM_COLOURS }, (_, index) =>
+    (index + 1).toString(16).padStart(6, "0"),
+  ),
+  emblem: packEmblem(Array.from({ length: EMBLEM_GRID * EMBLEM_GRID }, (_, index) => index % 16)),
+};
 
 const SKILL_IDS = IMPLEMENTED_SKILLS.map((skill) => skill.id);
 const STATUS_IDS = Object.keys(STATUS_DEFINITIONS);
@@ -150,7 +165,6 @@ function player(index: number): WirePlayer {
     name: NAME,
     guildTag: GUILD_TAG,
     heroRank: 0,
-    guildCape: CAPE,
     team: index % 2 === 0 ? 0 : 1,
     x: FLOAT + index,
     y: FLOAT + index,
@@ -483,6 +497,16 @@ describe("every message fits in one Trystero chunk (#403)", () => {
     expect(messageBytes(bar)).toBeLessThanOrEqual(MAX_MESSAGE_BYTES);
   });
 
+  it("every seat's cape: a full lobby's, longest ids (#3554)", () => {
+    const capes: WireCapes = {
+      capes: Array.from({ length: MAX_LOBBY_PLAYERS }, (_, index) => ({
+        id: `${PEER_ID}${String(index)}`,
+        cape: CAPE,
+      })),
+    };
+    expect(messageBytes(capes)).toBeLessThanOrEqual(MAX_MESSAGE_BYTES);
+  });
+
   it("a hello with a full build", () => {
     const build = fullBuild();
     const hello: PeerHello = {
@@ -534,7 +558,6 @@ describe("every message fits in one Trystero chunk (#403)", () => {
         name: NAME,
         guildTag: GUILD_TAG,
         heroRank: 0,
-        guildCape: CAPE,
         team: i % 3 === 0 ? null : i % 3 === 1 ? 0 : 1,
         ready: true,
         isHost: i === 0,
@@ -604,7 +627,6 @@ describe("every message fits in one Trystero chunk (#403)", () => {
         name: NAME,
         guildTag: GUILD_TAG,
         heroRank: 0,
-        guildCape: CAPE,
         team: i % 2 === 0 ? 0 : 1,
         ready: true,
         isHost: i === 0,
@@ -714,5 +736,10 @@ describe("every message fits in one Trystero chunk (#403)", () => {
       expect(messageBytes(part)).toBeLessThanOrEqual(MAX_MESSAGE_BYTES);
     }
     expect(joinMatchChart(parts)).toEqual(whole);
+  });
+
+  it("match charts: the host's per-kind event caps fill the wire's MAX_CHART_EVENTS exactly (#3565)", () => {
+    const total = Object.values(EVENT_CAPS).reduce((sum, cap) => sum + cap, 0);
+    expect(total).toBe(MAX_CHART_EVENTS);
   });
 });

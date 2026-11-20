@@ -37,6 +37,8 @@ with nobody negotiating.**
    stakes: no rating, ladder, title or reward that outlives a visit (#481
    keeps those). A session streak, kept in memory, is all a player takes
    away.
+   _Amended by [ADR-0055](0055-ranked-receipts.md): a queued match with no
+   bots is ranked, by receipts every player signs._
 2. **The queue lives on public Nostr relays**, the ones `relays.ts`
    already lists. Nothing new is hosted.
 3. **Tickets are ephemeral Nostr events**, of a kind in 20000–29999, which

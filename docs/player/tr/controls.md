@@ -20,7 +20,7 @@ becerileri sol elle kullanır ve ok tuşlarıyla hareket eder.
 | Sonraki düşman (Shift: önceki)         | Tab                      | Tab              |
 | En yakın düşman                        | C                        | C                |
 | Takımının bildirdiği düşman            | T                        | T                |
-| Kendin                                 | G                        | G                |
+| Kendin                                 | F ya da G                | G                |
 | Adları göster (basılı tut)             | Shift                    | Shift            |
 | Sesi kapat                             | M                        | M                |
 | Bayrağı, kalıntıyı ya da külleri bırak | yok                      | yok              |
@@ -40,7 +40,7 @@ Bu tuşlar sabittir:
 ## Fare
 
 - Oraya yürümek için yere **sol tıkla**. Shift olmadan sol düğme yalnızca yürütür.
-- Yükseltilmiş platformları olan haritalarda sol tık gördüğün yüzeye, **Alt + sol tık** ise onun altındaki zemine gider. İmlecin altındaki bir halka platformu, kesikli bir halka zemini gösterir. Bir tünelin üzerinde sol tık bulunduğun seviyeye, **Alt + sol tık** ise diğerine gider.
+- Yükseltilmiş platformları olan haritalarda sol tık gördüğün yüzeye, **Alt + sol tık** ise onun altındaki zemine gider. İmlecin altındaki bir halka platformu, kesikli bir halka zemini gösterir. Bir tünelin üzerinde sol tık bulunduğun seviyeye gider. **Alt + sol tık** asla durduğun seviyenin üstüne gitmez: zemindeyken tünele iner, tüneldeyken orada kalır.
 - Hedef almak için bir düşmana ya da müttefike **sağ tıkla**. Saldırmak
   için aynı düşmana hızlıca tekrar sağ tıkla.
 - Lonca Savaşı'nda ya da Barrow Field'da bir bayrağı ya da bayrak
@@ -77,8 +77,10 @@ ekranın diğer düğmeleri **⋯** içine katlanır; yalnızca ana düğmesi
 dışarıda kalır. ⚙, Ayarlar'ı çubuğun altında bir pencere olarak açar,
 ekran arkasında kalır; Esc, × ya da dışarıya bir tık onu kapatır.
 **görüntü** altında **Aydınlatma**, ışıklı bir haritanın ışığını ve
-gölgesini hemen, maçta bile açar ya da kapatır. Yardım, sağ üstündeki
-× ile, Esc ile ya da [?]'e yeniden basarak kapanır.
+gölgesini hemen, maçta bile açar ya da kapatır. [?] da Yardım'ı aynı
+şekilde, altında, en üstte sayfa seçicisi olan bir pencere olarak açar; maç
+arkasında sürer. Yardım kendi × düğmesiyle, Esc ile, dışarıya bir tıkla ya
+da [?]'e yeniden basarak kapanır.
 
 **Lobinle bir beat paylaş.** Beat editöründe (♪, sonra **Düzenle**),
 **Lobiyle paylaş**, yazdığını, kaydedilmiş olsun ya da olmasın, kurduğun

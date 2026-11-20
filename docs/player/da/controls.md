@@ -19,7 +19,7 @@ Standardforvalget er **Klassisk**, til GW1-hænder. **VibeWars** kaster med vens
 | Næste fjende (Shift: forrige)  | Tab                      | Tab              |
 | Nærmeste fjende                | C                        | C                |
 | Dit holds udpegede fjende      | T                        | T                |
-| Dig selv                       | G                        | G                |
+| Dig selv                       | F eller G                | G                |
 | Vis navne (hold)               | Shift                    | Shift            |
 | Lyd fra                        | M                        | M                |
 | Slip flag, relikvie eller aske | ingen                    | ingen            |
@@ -38,7 +38,7 @@ Disse taster er faste:
 ## Mus
 
 - **Venstreklik** på jorden for at gå derhen. Uden Shift går du kun med venstre knap.
-- På baner med hævede platforme går et venstreklik til den overflade, du ser, og **Alt + venstreklik** til jorden under den. En ring under markøren markerer en platform, en stiplet ring jorden. Over en tunnel går et venstreklik til det niveau, du er på, og **Alt + venstreklik** til det andet.
+- På baner med hævede platforme går et venstreklik til den overflade, du ser, og **Alt + venstreklik** til jorden under den. En ring under markøren markerer en platform, en stiplet ring jorden. Over en tunnel går et venstreklik til det niveau, du er på. **Alt + venstreklik** går aldrig over det niveau, du står på: fra jorden går det ned i tunnelen, og i en tunnel bliver det der.
 - **Højreklik** på en fjende eller en allieret for at vælge den som mål.
   Højreklik hurtigt på den samme fjende igen for at angribe den.
 - **Højreklik** på et flag eller flagstanden, i en Laugskamp eller på Barrow Field, for at
@@ -71,7 +71,8 @@ Uden for en kamp rummer topbjælken **[?]** (denne Hjælp), **⚙** (Valg),
 undtagen Lobby, øverst til højre på skærmen. I et smalt vindue foldes disse ikoner og
 skærmens andre knapper ind i **⋯**; kun dens hovedknap bliver ude.
 ⚙ åbner Valg som et vindue under bjælken, med skærmen stadig bagved; Esc, × eller et klik udenfor lukker det. Under **Visning** slår **Belysning** en oplyst banes lys og skygge til eller fra, med det samme, også i en kamp.
-Hjælp lukkes med × øverst til højre, Esc eller endnu et tryk på [?].
+[?] åbner Hjælp på samme måde, som et vindue under den med en sidevælger øverst; en kamp kører videre bagved.
+Hjælp lukkes med vinduets ×, Esc, et klik udenfor eller endnu et tryk på [?].
 
 **Del et beat med din lobby.** I beat-editoren (♪, derefter **Ret**)
 sender **Del med lobby** det, du har skrevet, gemt eller ej, til alle

@@ -1,3 +1,4 @@
+import { packEmblem } from "@vibewars/game-protocol";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -12,6 +13,7 @@ import {
 } from "@vibewars/game-core";
 
 import { REST_FRAME } from "../render/attack-clock.js";
+import { capeLook, presetEmblem } from "../render/cape-shape.js";
 import { fromPlayerBuild, toPlayerBuild } from "../storage/build-validation.js";
 import type { StoredCharacter } from "../storage/schema.js";
 import { newCharacter } from "./build-editor.js";
@@ -128,7 +130,12 @@ describe("figureBody (#1250)", () => {
   });
 
   it("wears a cape folded, and fits its band and the weapon's tip inside its box (#1422, #1699)", () => {
-    const cape = { main: 0xa078e0, trim: 0xf2f2f2, emblem: "diamond" } as const;
+    const cape = capeLook({
+      main: "a078e0",
+      trim: "f2f2f2",
+      emblemColours: ["f2f2f2"],
+      emblem: packEmblem(presetEmblem("diamond")),
+    });
     const body = figureBody({ weaponId: "sword", offhandId: "shield" }, cape);
     const xs: number[] = [];
     const ys: number[] = [];

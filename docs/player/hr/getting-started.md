@@ -6,6 +6,10 @@ meču. Ne trebaš račun ni instalaciju: igra radi u
 ovoj kartici preglednika. VibeWarsu trebaju tipkovnica i miš. Ne radi
 na mobitelu ni na tabletu samo s dodirom: otvori ga na računalu.
 
+## Vodič
+
+Kad prvi put otvoriš VibeWars, ponudi ti kratak vodič: šetnju kroz kanjon koja te uči kretati se i boriti. Zatim se nastavlja u izborniku, korak po korak: promijeni specijalizaciju svog lika, složi tim od dvoje, pogledaj čemu služi koji način igre i stavi taj tim u red čekanja za prvi meč 2v2 u Timskoj areni. Dok korak pokazuje na neku kontrolu, ostatak izbornika je zatamnjen. Vodič možeš preskočiti bilo kad gumbom **Preskoči vodič**.
+
 ## Traka načina
 
 Traka uz lijevi rub glavnog zaslona sadrži
@@ -78,6 +82,14 @@ zaslon sučeljavanja s bilo kojeg mjesta. Zatvaranje kartice dok
 
 Kad meč završi, možeš **Opet u red** ili **Ostanite zajedno** s
 timom s kojim si upravo igrao.
+
+Uz rezultate dva grafikona pričaju tijek meča kroz vrijeme. **Ti** crta tvoju
+nanesenu štetu, primljenu štetu, liječenje i Energiju; **Timovi** crta zalihu
+zdravlja svakog tima iznad njegove ukupne štete. Oznake ispod vremenske osi
+prikazuju ubojstva, smrti, prekide, osvajanja i uskrsnuća: pokaži na jednu ili
+dođi do nje tipkom Tab da pročitaš što se dogodilo. Pritisni stavku legende da
+sakriješ ili prikažeš njezinu liniju. Na mobitelu su grafikoni ispod rezultata,
+koji prikazuju tebe i još dvoje dok ne pritisneš **Prikaži sve**.
 
 ## Budi domaćin ili se pridruži meču
 
@@ -160,7 +172,7 @@ kartice domaćina odmah izbacuje grupu iz reda. Kad se pojavi drugi
 tim istog načina u redu, igraš protiv njega na jednoj od
 karata tog načina, svaka strana sa svojim sastavima, a poslije se vraćaš u svoju
 sobu. Domaćin može napustiti red iz prozora prstena u bilo kojem trenutku; gost koji ode izvodi cijelu
-grupu iz njega. Ako nakon minute nema drugog tima, domaćin može
+grupu iz njega. Nakon 10 s u redu domaćin može u prozoru prstena
 pritisnuti i **Igraj protiv botova**: meč u tvojoj vlastitoj sobi protiv
 nasumičnog unaprijed zadanog tima botova,
 osim u [Usponu heroja](modes.md#uspon-heroja), koji čeka
@@ -174,13 +186,14 @@ sadrži ono što je tvoje što god igrao. Igra ti daje
 promijeniš. Ostane li prazno, igraš kao `Igrač`. Upiši **Oznaku ceha** od 2 do 4 slova
 ili znamenke pokraj njega i svi je vide iza tvog imena, poput
 `Ente [VIBE]`. S postavljenom oznakom ispod se pojavljuje dizajner **Plašta ceha**:
-odaberi boju plašta, boju ruba i amblem, i tvoje tijelo
+odaberi bilo koju boju plašta i ruba, nacrtaj amblem, i tvoje tijelo
 nosi plašt u svakom meču: skuplja se u tanku traku na tvom rubu dok
 stojiš i vijori se iza tebe dok se krećeš. Prikazuju ga i tvoji likovi u
-izborniku. **Bez plašta** ga skida.
+izborniku. **Bez plašta** ga skida. Lik prikazuje plašt onako kako izgleda u igri. Boja preblizu plavoj boji tvog tima ili crvenoj boji tvojih protivnika pri crtanju se malo odmakne od nje, da nijedan plašt ne izgleda kao tim; lik ga prikazuje onako kako će ga svi vidjeti.
 
-Promjena vrijedi od sljedeće sobe u koju uđeš ili sljedeće nove:
-ona u kojoj već jesi zadržava ono s čime si ušao.
+Promjena odmah vrijedi za sobu u kojoj si.
+
+**Nacrtaj svoj amblem.** Mreža amblema 16×16 uvijek je ispod boja plašta i ruba. Odaberi boju ili **Prazno**, pa crtaj alatom **Olovka**, briši alatom **Gumica** ili oboji područje alatom **Ispuna**. **Dodaj boju** daje amblemu još jednu boju, do 15, a birač boje pokraj njih mijenja odabranu boju zajedno sa svime što je njome nacrtano. **Započni od** stavlja jedan od osam oblika na mrežu u odabranoj boji. **Zrcaljenje** boji lijevu i desnu polovicu odjednom. **Očisti** prazni mrežu, a **Poništi** vraća korak. Mali prikaz pokraj mreže pokazuje amblem velik kao u meču. Svaki potez sprema se čim ga završiš. Strelice i razmaknica crtaju i tipkovnicom.
 
 **Kopiraj poveznicu ceha**, ispod dizajnera plašta, kopira poveznicu s tvojom oznakom i plaštom. Tko je otvori, dobije pitanje **Pridružiti se cehu [VIBE]?**: **Pridruži se** daje mu tvoju oznaku i plašt, **Ne** ne mijenja ništa. Takvu poveznicu može poslati bilo tko i nitko nije vlasnik oznake, pa igra uvijek prvo pita.
 

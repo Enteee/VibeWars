@@ -6,6 +6,10 @@ No necesitas cuenta ni instalar nada: el juego funciona en esta pestaña del
 navegador. VibeWars necesita teclado y ratón. No funciona en un teléfono ni
 en una tableta solo táctil: ábrelo en un ordenador.
 
+## El tutorial
+
+La primera vez que abres VibeWars, te ofrece un tutorial corto: un paseo por un cañón que te enseña a moverte y a luchar. Después sigue en el menú, paso a paso: cambia la especialización de tu personaje, crea un equipo de dos, mira para qué sirve cada modo y pon ese equipo en la cola para una primera partida 2v2 de Arena por equipos. Mientras un paso señala un control, el resto del menú queda atenuado. Puedes saltarte el tutorial en cualquier momento con **Saltar tutorial**.
+
 ## La barra de modos
 
 La barra a la izquierda de la pantalla principal tiene los
@@ -81,6 +85,15 @@ instante.
 
 Cuando termina la partida puedes pulsar **Otra vez** o **Seguir juntos** con
 el equipo con el que acabas de jugar.
+
+Junto a las puntuaciones, dos gráficos cuentan la partida a lo largo del
+tiempo. **Tú** traza tu daño infligido, daño recibido, curación y Energía;
+**Equipos** traza la reserva de salud de cada equipo sobre su daño total. Las
+marcas bajo el eje del tiempo muestran bajas, muertes, interrupciones, capturas
+y resurrecciones: señala una, o llega a ella con Tab, para leer qué pasó. Pulsa
+una entrada de la leyenda para ocultar o mostrar su línea. En el móvil los
+gráficos quedan bajo las puntuaciones, que te muestran a ti y a otros dos hasta
+que pulses **Mostrar todo**.
 
 ## Alojar o unirse a una partida
 
@@ -164,8 +177,8 @@ buscando`. Ahí solo el anfitrión tiene **Salir de la cola**. Si se cierra la
 pestaña del anfitrión, el grupo sale de la cola al instante. Cuando aparece
 otro equipo en cola del mismo modo, jugáis contra él en uno de los mapas del
 modo, cada bando con sus builds, y luego volvéis a tu sala. El anfitrión puede salir desde la ventana del anillo en cualquier momento; un invitado que se va saca
-de la cola a todo el grupo. Si tras un minuto no hay otro equipo, el anfitrión
-también puede pulsar **Jugar contra bots**: una partida en tu propia sala
+de la cola a todo el grupo. Tras 10 s en la cola, el anfitrión también puede
+pulsar **Jugar contra bots** en la ventana del anillo: una partida en tu propia sala
 contra un equipo predefinido de bots al azar, excepto en
 [Ascenso de los Héroes](modes.md#ascenso-de-los-héroes), que espera a un
 equipo de tu ronda.
@@ -178,13 +191,14 @@ primera visita, como `AshenWolf`; escribe encima para cambiarlo. Si lo dejas
 vacío, juegas como `Jugador`. Escribe una **Etiqueta de gremio** de 2 a 4 letras
 o dígitos al lado, y todos la verán tras tu nombre, como `Ente [VIBE]`. Con una
 etiqueta puesta, aparece debajo el diseñador de **Capa de gremio**: elige el
-color de la capa, el del ribete y un emblema, y tu cuerpo llevará la capa en
+color que quieras para la capa y el ribete, dibuja un emblema, y tu cuerpo llevará la capa en
 cada partida: se pliega en una banda fina en tu borde cuando estás quieto y
 ondea detrás de ti cuando te mueves. Tus personajes del menú también la
-muestran. **Sin capa** te la quita.
+muestran. **Sin capa** te la quita. Una figura muestra la capa tal como se ve en el juego. Un color demasiado cercano al azul de tu equipo o al rojo de tus rivales se aparta un poco de él al dibujarse, para que ninguna capa parezca un equipo; la figura la muestra tal como la verán todos.
 
-Un cambio se aplica desde la próxima sala a la que entres, o la próxima nueva:
-en la que ya estás se mantiene lo que tenías al entrar.
+Un cambio se aplica al instante a la sala en la que estás.
+
+**Dibuja tu emblema.** La cuadrícula de 16×16 del emblema está siempre bajo los colores de la capa y del ribete. Elige un color o **Vacío**, y dibuja con el **Lápiz**, borra con el **Borrador** o rellena una zona con **Rellenar**. **Añadir color** da al emblema otro color, hasta 15, y el selector de color junto a ellos cambia el elegido, junto con todo lo dibujado en él. **Empezar desde** pone una de ocho formas en la cuadrícula con el color elegido. **Espejo** pinta a la vez la mitad izquierda y la derecha. **Borrar todo** vacía la cuadrícula y **Deshacer** retrocede un paso. La vista pequeña junto a la cuadrícula muestra el emblema tan grande como en una partida. Cada trazo se guarda al terminarlo. Las flechas y Espacio también dibujan con el teclado.
 
 **Copiar enlace del gremio**, bajo el diseñador de capa, copia un enlace con tu etiqueta y tu capa. Quien lo abra verá **¿Unirte al gremio [VIBE]?**: **Unirme** le da tu etiqueta y tu capa, **No** no cambia nada. Cualquiera puede enviar un enlace así y nadie es dueño de una etiqueta, por eso el juego siempre pregunta antes.
 

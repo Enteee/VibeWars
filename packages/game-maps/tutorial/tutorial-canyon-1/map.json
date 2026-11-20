@@ -70,6 +70,7 @@
   },
   "layers": 2,
   "biome": "volcanic",
+  "ascentAct": null,
   "groundLayer": 1,
   "pits": [
     {
@@ -1222,6 +1223,7 @@
         "kind": "smoke"
       }
     ],
+    "shafts": [],
     "weather": null
   }
 }

@@ -7,6 +7,7 @@ import {
   type ArenaSnapshot,
   type RenderableActor,
 } from "../render/arena-snapshot.js";
+import { atRest } from "../render/pick.test-support.js";
 import { ELEVATION_STEP } from "../render/render-order.js";
 import { createDoubleClick } from "./double-click.js";
 import {
@@ -136,10 +137,10 @@ function body(id: string, x: number, team: RenderableActor["team"]): RenderableA
   };
 }
 
-const ARENA: ArenaSnapshot = {
+const ARENA: ArenaSnapshot = atRest({
   ...EMPTY_SNAPSHOT,
   actors: [body("me", 0, "self"), body("ally", 100, "ally"), body("foe", 200, "enemy")],
-};
+});
 
 describe("secondaryClickIntents", () => {
   it("targets the enemy under the pointer", () => {
@@ -166,13 +167,20 @@ describe("secondaryClickIntents", () => {
   });
 
   it("targets a flag lying on the ground, and walks to it on a double (#1225)", () => {
-    const arena: ArenaSnapshot = {
+    const arena: ArenaSnapshot = atRest({
       ...ARENA,
       flags: [
-        { id: "flag/0", side: "ally", position: vec2(0, 300), carried: false, onStand: false },
+        {
+          id: "flag/0",
+          side: "ally",
+          position: vec2(0, 300),
+          layer: 0,
+          carried: false,
+          onStand: false,
+        },
       ],
-      stand: { id: "flag-stand", position: vec2(500, 300), holder: undefined },
-    };
+      stand: { id: "flag-stand", position: vec2(500, 300), layer: 0, holder: undefined },
+    });
     const double = createDoubleClick();
     expect(secondaryClickIntents(MATCH, arena, vec2(5, 290), double, 0, false)).toEqual([
       { kind: "target", targetSessionId: "flag/0" },
@@ -187,19 +195,28 @@ describe("secondaryClickIntents", () => {
   });
 
   it("targets the stand or a flag under your own body, not yourself (#1299)", () => {
-    const arena: ArenaSnapshot = {
+    const arena: ArenaSnapshot = atRest({
       ...ARENA,
-      flags: [{ id: "flag/0", side: "ally", position: vec2(0, 0), carried: false, onStand: false }],
-      stand: { id: "flag-stand", position: vec2(200, 0), holder: undefined },
-    };
+      flags: [
+        {
+          id: "flag/0",
+          side: "ally",
+          position: vec2(0, 0),
+          layer: 0,
+          carried: false,
+          onStand: false,
+        },
+      ],
+      stand: { id: "flag-stand", position: vec2(200, 0), layer: 0, holder: undefined },
+    });
     expect(secondaryClickIntents(MATCH, arena, vec2(0, 0), createDoubleClick(), 0, false)).toEqual([
       { kind: "target", targetSessionId: "flag/0" },
     ]);
-    const onStand: ArenaSnapshot = {
+    const onStand: ArenaSnapshot = atRest({
       ...arena,
       flags: [],
-      stand: { id: "flag-stand", position: vec2(0, 0), holder: undefined },
-    };
+      stand: { id: "flag-stand", position: vec2(0, 0), layer: 0, holder: undefined },
+    });
     const double = createDoubleClick();
     expect(secondaryClickIntents(MATCH, onStand, vec2(0, 0), double, 0, false)).toEqual([
       { kind: "target", targetSessionId: "flag-stand" },
@@ -211,10 +228,10 @@ describe("secondaryClickIntents", () => {
   });
 
   it("targets a foe standing on the stand, not the stand (#1299)", () => {
-    const arena: ArenaSnapshot = {
+    const arena: ArenaSnapshot = atRest({
       ...ARENA,
-      stand: { id: "flag-stand", position: vec2(200, 0), holder: undefined },
-    };
+      stand: { id: "flag-stand", position: vec2(200, 0), layer: 0, holder: undefined },
+    });
     expect(
       secondaryClickIntents(MATCH, arena, vec2(200, 0), createDoubleClick(), 0, false),
     ).toEqual([{ kind: "target", targetSessionId: "foe" }]);
@@ -231,6 +248,60 @@ describe("secondaryClickIntents", () => {
     secondaryClickIntents(MATCH, ARENA, vec2(200, 0), double, 0, false);
     expect(secondaryClickIntents(MATCH, ARENA, vec2(150, 80), double, 100, false)).toEqual([]);
     expect(secondaryClickIntents(MATCH, ARENA, vec2(200, 0), double, 200, false)).toEqual([
+      { kind: "target", targetSessionId: "foe" },
+    ]);
+  });
+});
+
+describe("the one drawn on top wins a right click (#3634)", () => {
+  // A deck over 100..200: what stands on it draws one step up.
+  const structure = {
+    ...EMPTY_SNAPSHOT.structure,
+    layerCount: 2,
+    decks: [
+      {
+        layer: 1,
+        footprint: { kind: "rect", x: 100, y: 100, width: 100, height: 100 } as const,
+        look: "platform" as const,
+        switched: null,
+      },
+    ],
+  };
+  const lever = (layer: number, y: number) => ({
+    id: "switch-west",
+    mark: "west",
+    position: vec2(150, y),
+    layer,
+    up: true,
+    targets: [],
+  });
+  const foe = (layer: number, y: number): RenderableActor => ({
+    ...body("foe", 150, "enemy"),
+    layer,
+    position: vec2(150, y),
+  });
+  const drawnAt = vec2(150, 120);
+
+  it("a lever on the deck, drawn over a foe below it", () => {
+    const arena = atRest({
+      ...ARENA,
+      structure,
+      actors: [foe(0, 120)],
+      switches: [lever(1, 120 + ELEVATION_STEP)],
+    });
+    expect(secondaryClickIntents(MATCH, arena, drawnAt, createDoubleClick(), 0, false)).toEqual([
+      { kind: "target", targetSessionId: "switch-west" },
+    ]);
+  });
+
+  it("a foe on the deck, drawn over a lever below it", () => {
+    const arena = atRest({
+      ...ARENA,
+      structure,
+      actors: [foe(1, 120 + ELEVATION_STEP)],
+      switches: [lever(0, 120)],
+    });
+    expect(secondaryClickIntents(MATCH, arena, drawnAt, createDoubleClick(), 0, false)).toEqual([
       { kind: "target", targetSessionId: "foe" },
     ]);
   });
@@ -266,10 +337,10 @@ describe("middleClickAction (#443)", () => {
 
 describe("clicks with Show names held (#2738)", () => {
   // The foe's name tag, 40 wide, above its body at (200, 0).
-  const NAMED: ArenaSnapshot = {
+  const NAMED: ArenaSnapshot = atRest({
     ...ARENA,
     nameBoxes: new Map([["foe", { left: 180, top: -40, right: 220, bottom: -24 }]]),
-  };
+  });
   const onFoeName = vec2(215, -30);
 
   it("targets on a double right click, and never attacks", () => {
@@ -319,6 +390,7 @@ describe("clicks with Show names held (#2738)", () => {
     const structure = {
       layerCount: 2,
       biome: "hall" as const,
+      ascentAct: null,
       bounds: { kind: "rect" as const },
       ground: 0,
       pits: [],
@@ -340,34 +412,46 @@ describe("clicks with Show names held (#2738)", () => {
     ).toEqual([{ kind: "walk-to", layer: 0, x: 150, y: 150 - ELEVATION_STEP }]);
   });
 
+  const CULVERT = {
+    layerCount: 3,
+    biome: "hall" as const,
+    ascentAct: null,
+    bounds: { kind: "rect" as const },
+    ground: 1,
+    pits: [],
+    tunnels: [{ footprint: { kind: "rect" as const, x: 100, y: 0, width: 100, height: 400 } }],
+    dropOffs: [],
+    downDecks: [],
+    overhangs: [],
+    decks: [
+      {
+        layer: 2,
+        footprint: { kind: "rect" as const, x: 0, y: 100, width: 300, height: 100 },
+        look: "platform" as const,
+        switched: null,
+      },
+    ],
+    transitions: [],
+    water: [],
+    zones: [],
+  };
+
   it("walks into the tunnel under a deck's support with Alt (#3487)", () => {
-    const structure = {
-      layerCount: 3,
-      biome: "hall" as const,
-      bounds: { kind: "rect" as const },
-      ground: 1,
-      pits: [],
-      tunnels: [{ footprint: { kind: "rect" as const, x: 100, y: 0, width: 100, height: 400 } }],
-      dropOffs: [],
-      downDecks: [],
-      overhangs: [],
-      decks: [
-        {
-          layer: 2,
-          footprint: { kind: "rect" as const, x: 0, y: 100, width: 300, height: 100 },
-          look: "platform" as const,
-          switched: null,
-        },
-      ],
-      transitions: [],
-      water: [],
-      zones: [],
-    };
+    const structure = CULVERT;
     const walls = [{ kind: "rect" as const, x: 0, y: 50, width: 300, height: 150, layer: 1 }];
     const layered = { ...NAMED, actors: [], structure, walls };
     expect(
       primaryClickIntents(MATCH, layered, vec2(150, 150 - ELEVATION_STEP), false, true),
     ).toEqual([{ kind: "walk-to", layer: 0, x: 150, y: 150 - 2 * ELEVATION_STEP }]);
+  });
+
+  it("stays in the tunnel with Alt from in it (#3546)", () => {
+    const me = { ...body("me", 150, "self"), position: vec2(150, 300), layer: 0 };
+    const layered = { ...NAMED, actors: [me], structure: CULVERT };
+    const world = vec2(150, 300 + ELEVATION_STEP);
+    const inTunnel = [{ kind: "walk-to", layer: 0, x: 150, y: 300 }];
+    expect(primaryClickIntents(MATCH, layered, world, false, false)).toEqual(inTunnel);
+    expect(primaryClickIntents(MATCH, layered, world, false, true)).toEqual(inTunnel);
   });
 
   it("calls a foe on a wheel click on its name", () => {
