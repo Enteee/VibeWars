@@ -13,15 +13,15 @@ La première fois que tu ouvres VibeWars, il te propose un court tutoriel : une 
 ## La colonne des modes
 
 La colonne à gauche de l'écran principal contient les
-[modes](modes.md), de haut en bas : **Arène aléatoire**, **Arène d'équipe**,
-**Ascension des héros**, **GvG** et **Partie hébergée**. Sous les modes se
+[modes](modes.md), de haut en bas : ![Arène aléatoire](../../../apps/web/public/icons/mode/random-arena.svg) **Arène aléatoire**, ![Arène d'équipe](../../../apps/web/public/icons/mode/team-arena.svg) **Arène d'équipe**,
+![Ascension des héros](../../../apps/web/public/icons/mode/heroes-ascent.svg) **Ascension des héros**, ![GvG](../../../apps/web/public/icons/mode/gvg.svg) **GvG** et ![Partie hébergée](../../../apps/web/public/icons/mode/hosted-game.svg) **Partie hébergée**. Sous les modes se
 trouve la **Taille d'équipe**, `‹ 4v4 ›` : les flèches passent à la taille
 immédiatement inférieure ou supérieure que l'écran propose. Chaque écran
 retient la sienne, et s'ouvre sur une taille qu'il propose (GvG en 8v8).
-En dessous se trouvent l'**Atelier de personnages**, où tu crées tes
-personnages, et l'**Atelier d'équipes**, où tu crées tes
+En dessous se trouvent l'![Atelier de personnages](../../../apps/web/public/icons/mode/characters.svg) **Atelier de personnages**, où tu crées tes
+personnages, et l'![Atelier d'équipes](../../../apps/web/public/icons/mode/teams.svg) **Atelier d'équipes**, où tu crées tes
 [Builds d'équipe](skills-and-builds.md#builds-déquipe), puis
-**Matchs**, l'[historique des matchs](modes.md#historique-des-matchs) terminés
+![Matchs](../../../apps/web/public/icons/mode/matches.svg) **Matchs**, l'[historique des matchs](modes.md#historique-des-matchs) terminés
 tels que leurs hôtes les déclarent. Le jeu s'ouvre sur le dernier que tu as
 utilisé.
 
@@ -189,6 +189,8 @@ la file. Après 10 s dans la file, l'hôte peut aussi appuyer sur
 préréglée de bots au hasard, sauf en
 [Ascension des héros](modes.md#ascension-des-héros), qui attend une équipe de
 ta manche.
+
+![Arène par équipes : les flèches de taille d'équipe au bas du rail, et l'équipe de ton salon à rejoindre](../img/team-arena-1.png)
 
 ## Ton nom, ton tag de guilde et ta cape
 

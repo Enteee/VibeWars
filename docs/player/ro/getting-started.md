@@ -13,13 +13,13 @@ Prima dată când deschizi VibeWars, îți oferă un tutorial scurt: o plimbare 
 ## Bara modurilor
 
 Bara din stânga ecranului principal conține [modurile](modes.md), de sus în jos:
-**Arenă aleatorie**, **Arenă de echipe**, **Ascensiunea Eroilor**, **GvG** și
-**Joc găzduit**. Sub moduri se află **Mărime echipă**, `‹ 4v4 ›`: săgețile trec la
+![Arenă aleatorie](../../../apps/web/public/icons/mode/random-arena.svg) **Arenă aleatorie**, ![Arenă de echipe](../../../apps/web/public/icons/mode/team-arena.svg) **Arenă de echipe**, ![Ascensiunea Eroilor](../../../apps/web/public/icons/mode/heroes-ascent.svg) **Ascensiunea Eroilor**, ![GvG](../../../apps/web/public/icons/mode/gvg.svg) **GvG** și
+![Joc găzduit](../../../apps/web/public/icons/mode/hosted-game.svg) **Joc găzduit**. Sub moduri se află **Mărime echipă**, `‹ 4v4 ›`: săgețile trec la
 mărimea următoare, mai mică sau mai mare, pe care o joacă ecranul. Fiecare ecran
 o ține minte pe a lui și se deschide la o mărime pe care o joacă (GvG la 8v8). Mai
-jos sunt **Constructor de personaje**, unde îți faci personajele, și **Constructor
+jos sunt ![Constructor de personaje](../../../apps/web/public/icons/mode/characters.svg) **Constructor de personaje**, unde îți faci personajele, și ![Constructor de echipe](../../../apps/web/public/icons/mode/teams.svg) **Constructor
 de echipe**, unde îți faci [Buildurile de echipă](skills-and-builds.md#builduri-de-echipă),
-apoi **Meciuri**, [meciurile terminate](modes.md#înregistrări-de-meciuri) așa cum
+apoi ![Meciuri](../../../apps/web/public/icons/mode/matches.svg) **Meciuri**, [meciurile terminate](modes.md#înregistrări-de-meciuri) așa cum
 le raportează gazdele lor. Jocul se deschide pe cel folosit ultima dată.
 
 ## Creează un personaj
@@ -173,6 +173,8 @@ pleacă scoate tot grupul din ea. După 10 s în coadă, gazda poate
 apăsa și **Joacă contra boților** în fereastra cercului: un meci în propriul lobby contra unei echipe
 presetate aleatorii de boți, cu excepția [Ascensiunii Eroilor](modes.md#ascensiunea-eroilor),
 care așteaptă o echipă de la runda ta.
+
+![Arenă de echipe: săgețile pentru mărimea echipei la baza barei și echipa lobby-ului tău, căreia i te alături](../img/team-arena-1.png)
 
 ## Numele, tagul de breaslă și pelerina ta
 

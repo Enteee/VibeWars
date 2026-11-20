@@ -13,14 +13,14 @@ Kad prvi put otvoriš VibeWars, ponudi ti kratak vodič: šetnju kroz kanjon koj
 ## Traka načina
 
 Traka uz lijevi rub glavnog zaslona sadrži
-[načine](modes.md), odozgo prema dolje: **Nasumična arena**, **Timska arena**,
-**Uspon heroja**, **GvG** i **Igra s domaćinom**. Na dnu
+[načine](modes.md), odozgo prema dolje: ![Nasumična arena](../../../apps/web/public/icons/mode/random-arena.svg) **Nasumična arena**, ![Timska arena](../../../apps/web/public/icons/mode/team-arena.svg) **Timska arena**,
+![Uspon heroja](../../../apps/web/public/icons/mode/heroes-ascent.svg) **Uspon heroja**, ![GvG](../../../apps/web/public/icons/mode/gvg.svg) **GvG** i ![Igra s domaćinom](../../../apps/web/public/icons/mode/hosted-game.svg) **Igra s domaćinom**. Na dnu
 načina je **Veličina tima**, `‹ 4v4 ›`: strelice prelaze na sljedeću
 manju ili veću veličinu koju taj zaslon igra. Svaki zaslon pamti svoju
-i otvara se na veličini koju igra (GvG na 8v8). Ispod su **Uređivač likova**, gdje
-stvaraš svoje likove, i **Uređivač timova**, gdje stvaraš svoje
+i otvara se na veličini koju igra (GvG na 8v8). Ispod su ![Uređivač likova](../../../apps/web/public/icons/mode/characters.svg) **Uređivač likova**, gdje
+stvaraš svoje likove, i ![Uređivač timova](../../../apps/web/public/icons/mode/teams.svg) **Uređivač timova**, gdje stvaraš svoje
 [timske sastave](skills-and-builds.md#timski-sastavi), a zatim
-**Mečevi**, [završeni mečevi](modes.md#zapisi-mečeva) kako ih
+![Mečevi](../../../apps/web/public/icons/mode/matches.svg) **Mečevi**, [završeni mečevi](modes.md#zapisi-mečeva) kako ih
 prijavljuju domaćini. Igra se otvara na
 onom koji si zadnji koristio.
 
@@ -177,6 +177,8 @@ pritisnuti i **Igraj protiv botova**: meč u tvojoj vlastitoj sobi protiv
 nasumičnog unaprijed zadanog tima botova,
 osim u [Usponu heroja](modes.md#uspon-heroja), koji čeka
 tim u tvojoj rundi.
+
+![Timska arena: strelice veličine tima na dnu trake i tim tvoje sobe kojem se pridružuješ](../img/team-arena-1.png)
 
 ## Tvoje ime, oznaka ceha i plašt
 

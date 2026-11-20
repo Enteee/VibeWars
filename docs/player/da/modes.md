@@ -4,9 +4,9 @@ Hver bane spiller én spiltilstand, og lobbyen siger hvilken under banens
 navn. Spiltilstandene er punkterne i skinnen til venstre på
 hovedskærmen. Ingen vælger en banes spiltilstand, men det punkt i
 skinnen, du er vært fra, vælger de spiltilstande, dens lobbys baner
-spiller: **Holdarena** Udslettelse, Drabstælling og Præsteudslettelse,
-**Heltenes opstigning** Relikvieløb, Kongen af bakken og Erobring, og
-**GvG** Laugskampen. **Værtsspil** tilbyder alle baner. En **Tilfældig
+spiller: ![Holdarena](../../../apps/web/public/icons/mode/team-arena.svg) **Holdarena** Udslettelse, Drabstælling og Præsteudslettelse,
+![Heltenes opstigning](../../../apps/web/public/icons/mode/heroes-ascent.svg) **Heltenes opstigning** Relikvieløb, Kongen af bakken og Erobring, og
+![GvG](../../../apps/web/public/icons/mode/gvg.svg) **GvG** Laugskampen. ![Værtsspil](../../../apps/web/public/icons/mode/hosted-game.svg) **Værtsspil** tilbyder alle baner. En ![Tilfældig arena](../../../apps/web/public/icons/mode/random-arena.svg) **Tilfældig
 arena** vælger en bane for dig, og dermed spiltilstanden, men aldrig en
 Laugskamp, et Relikvieløb, Kongen af bakken eller Erobring. Holdarena
 trækker en af sine baner til hver kamp, Heltenes opstigning starter på
@@ -323,6 +323,10 @@ Mens den står i kø, kan du kigge på de andre spiltilstande: gruppen
 beholder sin spiltilstand og størrelse, indtil den forlader køen.
 Hvert trin varer 30 sekunder og slutter tidligt, så snart alle i
 Holdlobbyen er klar. At stemme og at tage en plads markerer dig som klar.
+
+![Holdarena: pilene for holdstørrelse nederst på skinnen og din lobbys hold, som du kan slutte dig til](../img/team-arena-1.png)
+
+![Efter Deltag: du er på dit hold som vært, endnu ikke klar](../img/team-arena-2.png)
 
 **Stem.** Alle på en side kan foreslå et Holdbuild af præcis sidens
 størrelse, ét forslag hver. Dine Holdbuilds åbnes fra fanen **Dine

@@ -4,10 +4,10 @@ Minden pálya egy módot játszik, és a lobbi a pálya neve alatt kiírja,
 melyiket. A módok a főképernyő bal oldalán lévő sáv bejegyzései. Egy
 pálya módját senki sem választja, de az a sávbejegyzés, ahonnan
 létrehozod a lobbit, eldönti, milyen módokat játszanak a lobbi pályái:
-a **Csapataréna** a Megsemmisítést, az Ölésversenyt és a Papirtást, a
-**Hősök Útja** az Ereklyefutamot, A domb urát és a Pontfoglalást, a
-**GvG** pedig a Céhcsatát. A **Saját játék** minden pályát kínál. A
-**Véletlen Aréna** választ neked egy pályát, és vele a módot, de sosem
+a ![Csapataréna](../../../apps/web/public/icons/mode/team-arena.svg) **Csapataréna** a Megsemmisítést, az Ölésversenyt és a Papirtást, a
+![Hősök Útja](../../../apps/web/public/icons/mode/heroes-ascent.svg) **Hősök Útja** az Ereklyefutamot, A domb urát és a Pontfoglalást, a
+![GvG](../../../apps/web/public/icons/mode/gvg.svg) **GvG** pedig a Céhcsatát. A ![Saját játék](../../../apps/web/public/icons/mode/hosted-game.svg) **Saját játék** minden pályát kínál. A
+![Véletlen Aréna](../../../apps/web/public/icons/mode/random-arena.svg) **Véletlen Aréna** választ neked egy pályát, és vele a módot, de sosem
 Céhcsatát, Ereklyefutamot, A domb urát vagy Pontfoglalást. A
 Csapataréna minden meccsre kisorsolja egy pályáját, a Hősök Útja az
 első pályáján kezdődik, és csak a Saját játékban választhat a
@@ -345,6 +345,10 @@ módját és a méretét, amíg el nem hagyja a sort.
 Minden szakasz 30 másodpercig tart, és korábban véget ér, ha a
 Csapatlobbiban mindenki kész. A szavazás és a hely elfoglalása késznek
 jelöl.
+
+![Csapataréna: a csapatméret nyilai a sáv alján, és a lobbid csapata, amelyhez csatlakozhatsz](../img/team-arena-1.png)
+
+![Csatlakozás után: házigazdaként a csapatodban vagy, még nem állsz készen](../img/team-arena-2.png)
 
 **Szavazás.** Egy oldalon bárki javasolhat egy pontosan akkora
 Csapatbuildet, amekkora az oldal, mindenki egyet. A Csapatbuildjeid a

@@ -13,14 +13,14 @@ Na primeira vez que você abre o VibeWars, ele oferece um tutorial curto: uma ca
 ## A barra de modos
 
 A barra à esquerda da tela principal tem os [modos](modes.md), de cima
-para baixo: **Arena Aleatória**, **Arena de Equipes**,
-**Ascensão dos Heróis**, **GvG** e **Partida Hospedada**. Abaixo dos
+para baixo: ![Arena Aleatória](../../../apps/web/public/icons/mode/random-arena.svg) **Arena Aleatória**, ![Arena de Equipes](../../../apps/web/public/icons/mode/team-arena.svg) **Arena de Equipes**,
+![Ascensão dos Heróis](../../../apps/web/public/icons/mode/heroes-ascent.svg) **Ascensão dos Heróis**, ![GvG](../../../apps/web/public/icons/mode/gvg.svg) **GvG** e ![Partida Hospedada](../../../apps/web/public/icons/mode/hosted-game.svg) **Partida Hospedada**. Abaixo dos
 modos fica o **Tamanho**, `‹ 4v4 ›`: as setas passam para o próximo
 tamanho menor ou maior que a tela joga. Cada tela lembra o seu e abre em
-um tamanho que ela joga (GvG em 8v8). Mais abaixo ficam **Criador de
-Personagem**, onde você faz seus personagens, e **Criador de Equipes**,
+um tamanho que ela joga (GvG em 8v8). Mais abaixo ficam ![Criador de Personagem](../../../apps/web/public/icons/mode/characters.svg) **Criador de
+Personagem**, onde você faz seus personagens, e ![Criador de Equipes](../../../apps/web/public/icons/mode/teams.svg) **Criador de Equipes**,
 onde você faz suas [Builds de Equipe](skills-and-builds.md#builds-de-equipe),
-e depois **Partidas**, as [partidas terminadas](modes.md#registros-de-partidas),
+e depois ![Partidas](../../../apps/web/public/icons/mode/matches.svg) **Partidas**, as [partidas terminadas](modes.md#registros-de-partidas),
 como os hosts as informam. O jogo abre na última que você usou.
 
 ## Crie um personagem
@@ -188,6 +188,8 @@ de 10 s na fila, o host também pode pressionar
 predefinida aleatória de bots, exceto em
 [Ascensão dos Heróis](modes.md#ascensão-dos-heróis), que espera uma
 equipe da sua rodada.
+
+![Arena de Equipes: as setas de tamanho da equipe no pé da barra e a equipe da sua sala para entrar](../img/team-arena-1.png)
 
 ## Seu nome, tag de guilda e capa
 

@@ -13,12 +13,12 @@ Lần đầu bạn mở VibeWars, trò chơi sẽ mời bạn một hướng d�
 ## Thanh chế độ
 
 Thanh dọc bên trái màn hình chính chứa các [chế độ](modes.md), từ trên
-xuống: **Đấu trường ngẫu nhiên**, **Đấu trường đội**, **Đỉnh Anh Hùng**,
-**GvG** và **Trận tự tạo**. Bên dưới các chế độ là **Cỡ đội**, `‹ 4v4 ›`:
+xuống: ![Đấu trường ngẫu nhiên](../../../apps/web/public/icons/mode/random-arena.svg) **Đấu trường ngẫu nhiên**, ![Đấu trường đội](../../../apps/web/public/icons/mode/team-arena.svg) **Đấu trường đội**, ![Đỉnh Anh Hùng](../../../apps/web/public/icons/mode/heroes-ascent.svg) **Đỉnh Anh Hùng**,
+![GvG](../../../apps/web/public/icons/mode/gvg.svg) **GvG** và ![Trận tự tạo](../../../apps/web/public/icons/mode/hosted-game.svg) **Trận tự tạo**. Bên dưới các chế độ là **Cỡ đội**, `‹ 4v4 ›`:
 các mũi tên chuyển sang cỡ nhỏ hơn hoặc lớn hơn kế tiếp mà màn hình đó chơi.
 Mỗi màn hình nhớ cỡ riêng của mình, và mở ở một cỡ mà nó chơi (GvG ở 8v8).
-Dưới đó là **Tạo Nhân Vật**, nơi bạn tạo nhân vật, và **Tạo Đội**, nơi bạn
-tạo [Build đội](skills-and-builds.md#build-đội), rồi đến **Trận đấu**, các
+Dưới đó là ![Tạo Nhân Vật](../../../apps/web/public/icons/mode/characters.svg) **Tạo Nhân Vật**, nơi bạn tạo nhân vật, và ![Tạo Đội](../../../apps/web/public/icons/mode/teams.svg) **Tạo Đội**, nơi bạn
+tạo [Build đội](skills-and-builds.md#build-đội), rồi đến ![Trận đấu](../../../apps/web/public/icons/mode/matches.svg) **Trận đấu**, các
 [trận đã kết thúc](modes.md#bản-ghi-trận-đấu) như chủ phòng của chúng báo
 lại. Game mở ở mục bạn dùng lần cuối.
 
@@ -174,6 +174,8 @@ tổ đội ra khỏi hàng chờ. Sau 10 giây trong hàng chờ, chủ phòng
 cũng có thể nhấn **Đấu với bot** trong cửa sổ của vòng xoay: một trận trong chính sảnh của bạn với một
 đội bot có sẵn ngẫu nhiên, trừ ở [Đỉnh Anh Hùng](modes.md#đỉnh-anh-hùng),
 nơi bạn chờ một đội ở cùng vòng với bạn.
+
+![Đấu trường đội: các mũi tên cỡ đội ở cuối thanh, và đội trong sảnh của bạn để tham gia](../img/team-arena-1.png)
 
 ## Tên, tag Bang và áo choàng của bạn
 
