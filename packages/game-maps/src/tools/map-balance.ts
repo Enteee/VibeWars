@@ -4,6 +4,7 @@ import {
   MINIMAL_GW_INSPIRED_PVP_V1,
   STARTER_BUILDS,
   costZone,
+  isStandable,
   loadoutOf,
   loadoutSpec,
   resolveLoadout,
@@ -13,6 +14,7 @@ import {
   spawnFacing,
   walkCost,
   type LayeredPathFinder,
+  type NavGraph,
   type ParticipantSpec,
   type RouteWaypoint,
   type PlayerBuild,
@@ -23,6 +25,7 @@ import { pointInShape, wallToSegments } from "../geometry.js";
 import { matchLayers } from "../layers.js";
 import { layeredFinder } from "../layered-finder.test-support.js";
 import { mapMatchRules, mapSimulationFields } from "../match-fields.js";
+import { mapNavGraphs } from "../nav-graphs.js";
 import type { MapData, Shape, SpawnPoint, Transition } from "../schema.js";
 import { StuckMeter, topStuckCells, type StuckCell, type StuckTotals } from "./stuck-meter.js";
 
@@ -484,6 +487,75 @@ function crosses(path: readonly Vec2[], area: Shape): boolean {
       (index > 0 &&
         sides.some((side) => segmentsIntersect(segment(path[index - 1] ?? point, point), side))),
   );
+}
+
+/** How far apart the points are that `narrowestWalks` measures a walk's width at (#3688). */
+const WIDTH_STEP = 16;
+/** How finely a cross-section is felt for its floor's end. */
+const WIDTH_PROBE = 2;
+/** How far a cross-section looks either way: wider than this is open ground. */
+const WIDTH_REACH = 400;
+
+/**
+ * The narrowest ground on each team's walk from its home spawn to `to` on
+ * `layer` (by `route`, if given), by team (#3688): every `WIDTH_STEP` along
+ * the walk, the floor across it, square to the way it goes, from wall,
+ * edge or deep water to the other. A shortest walk hugs every corner it
+ * rounds, so the nearest wall says nothing; the floor across it is what
+ * two bodies abreast need. A stair or ramp is the transition's own width,
+ * not measured.
+ */
+export function narrowestWalks(
+  map: MapData,
+  to: Vec2,
+  layer: number,
+  route?: Route | ((team: number) => Route),
+): number[] {
+  const graphs = mapNavGraphs(map, 0);
+  const finder = layeredFinder(map, RULESET.collision.playerRadius);
+  return Array.from({ length: map.teams }, (_, team) => {
+    const path =
+      route === undefined
+        ? pathTo(map, finder, team, to, layer, "")
+        : pathByRoute(map, team, to, layer, route, false);
+    return Math.min(...walkWidths(map, graphs, path).map(({ width }) => width));
+  });
+}
+
+/** The floor across `path` every `WIDTH_STEP` on a layer, off its transitions, as `narrowestWalks` measures it. */
+export function walkWidths(
+  map: MapData,
+  graphs: readonly NavGraph[],
+  path: readonly RouteWaypoint[],
+): { readonly at: Vec2; readonly layer: number; readonly width: number }[] {
+  return path.flatMap((to, index) => {
+    const from = path[index - 1];
+    if (from?.layer !== to.layer) return [];
+    const graph = graphs[to.layer];
+    const length = Math.hypot(to.x - from.x, to.y - from.y);
+    if (graph === undefined || length === 0) return [];
+    const along = { x: (to.x - from.x) / length, y: (to.y - from.y) / length };
+    const across = { x: -along.y, y: along.x };
+    const reach = (at: Vec2, way: number): number => {
+      let by = 0;
+      while (
+        by < WIDTH_REACH &&
+        isStandable(graph, {
+          x: at.x + across.x * way * (by + WIDTH_PROBE),
+          y: at.y + across.y * way * (by + WIDTH_PROBE),
+        })
+      ) {
+        by += WIDTH_PROBE;
+      }
+      return by;
+    };
+    return Array.from({ length: Math.floor(length / WIDTH_STEP) }, (_, k) => ({
+      x: from.x + along.x * k * WIDTH_STEP,
+      y: from.y + along.y * k * WIDTH_STEP,
+    }))
+      .filter((at) => !map.transitions.some(({ area }) => pointInShape(at, area)))
+      .map((at) => ({ at, layer: to.layer, width: reach(at, 1) + reach(at, -1) }));
+  });
 }
 
 /**
