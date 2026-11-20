@@ -6,6 +6,9 @@ import { ARENA_ATLAS_JSON, ARENA_ATLAS_SVG } from "./arena-atlas.js";
 vi.mock("phaser", () => ({ default: { Scene: Object } }));
 
 const { ArenaScene } = await import("./arena-scene.js");
+// Loaded once here, not in the tunnel tests: the first import is most of
+// their time (#3672).
+const { mapStructure } = await import("../net/maps.js");
 
 describe("ArenaScene preload (#1671)", () => {
   it("queues the icon sheet and its map, and nothing else, whatever the catalog", () => {
@@ -33,8 +36,7 @@ describe("ArenaScene shutdown (#3087)", () => {
 });
 
 describe("ArenaScene tunnel cutaway (#3272)", () => {
-  it("fades the paving over the viewer's tunnel with its cover, and back once they leave", async () => {
-    const { mapStructure } = await import("../net/maps.js");
+  it("fades the paving over the viewer's tunnel with its cover, and back once they leave", () => {
     const { structure } = mapStructure("arena-long-hall");
     const fading = (): { alpha: number; setAlpha(alpha: number): unknown } => ({
       alpha: 1,
@@ -72,8 +74,7 @@ describe("ArenaScene tunnel cutaway (#3272)", () => {
     expect(over.alpha).toBe(1);
   });
 
-  it("fades the water over the viewer's tunnel with its cover, and no other water (#3350)", async () => {
-    const { mapStructure } = await import("../net/maps.js");
+  it("fades the water over the viewer's tunnel with its cover, and no other water (#3350)", () => {
     const { structure } = mapStructure("arena-long-hall");
     const fading = (): { alpha: number; setAlpha(alpha: number): unknown } => ({
       alpha: 1,
@@ -115,8 +116,7 @@ describe("ArenaScene tunnel cutaway (#3272)", () => {
     expect(over.surface.alpha).toBe(1);
   });
 
-  it("fades the decks over the viewer's tunnel with its cover, and no other deck (#3352)", async () => {
-    const { mapStructure } = await import("../net/maps.js");
+  it("fades the decks over the viewer's tunnel with its cover, and no other deck (#3352)", () => {
     const { structure } = mapStructure("arena-long-hall");
     const fading = (): { alpha: number; setAlpha(alpha: number): unknown } => ({
       alpha: 1,
@@ -158,8 +158,7 @@ describe("ArenaScene tunnel cutaway (#3272)", () => {
     expect(side.alpha).toBe(1);
   });
 
-  it("fades a wall and a breakable over the viewer's tunnel with its cover, and nothing else (#3418)", async () => {
-    const { mapStructure } = await import("../net/maps.js");
+  it("fades a wall and a breakable over the viewer's tunnel with its cover, and nothing else (#3418)", () => {
     const { structure } = mapStructure("arena-long-hall");
     const fading = (): { alpha: number; setAlpha(alpha: number): unknown } => ({
       alpha: 1,
@@ -205,7 +204,6 @@ describe("ArenaScene tunnel cutaway (#3272)", () => {
   });
 
   it("gives a walked-under top over the viewer's tunnel the lower of its two fades (#3352)", async () => {
-    const { mapStructure } = await import("../net/maps.js");
     const { OVERHANG_FADED_ALPHA } = await import("./overhang-art.js");
     const { structure } = mapStructure("arena-long-hall");
     const fading = (): { alpha: number; setAlpha(alpha: number): unknown } => ({
