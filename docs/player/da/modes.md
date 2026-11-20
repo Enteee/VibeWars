@@ -486,3 +486,7 @@ Værtsspil passer ikke til nogen størrelse. Chipsene bliver, som du
 efterlod dem, indtil siden genindlæses.
 
 Over chipsene viser **Heltenes Hal**-striben de seneste 20 besiddelser, nyeste først: holderen (et laugsmærke eller lederens navn), det vindende holds folk, hvornår den nyeste sejr sluttede og, fra to sejre og op, hvor mange i træk. En besiddelse er en ubrudt række af sejre i Hallen af én holder. Striben læser registreringerne på denne side, ignorerer chipsene og er skjult, når ingen af dem er en sejr i Hallen. Som enhver registrering er den, hvad hver kamps vært rapporterede, og intet tjekker den.
+
+## Rangeret
+
+En kamp fra køen uden bots er rangeret. Køskærmen og hold-lobbyen siger det, før du stiller dig i kø; én bot holder en kamp urangeret. Når en rangeret kamp er fundet, underskriver hver spiller dens start, og skærmen viser **Bekræfter rangeret kamp…** i op til 15 sekunder. Hvis nogen ikke bekræfter, aflyses kampen, og alle er tilbage i køen. Til sidst underskriver hver spiller resultatet, og kampens kvittering offentliggøres på Nostr-relæerne med hver spillers offentlige nøgle og figurnavn; en spiller uden figur står som starter. Din rating ændres inden for en time. At forlade en rangeret kamp tæller som et nederlag, og forlad-knappen siger det.

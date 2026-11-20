@@ -476,3 +476,7 @@ inclusiv boții, așa că un Joc găzduit 3v2 nu se potrivește niciunei mărimi
 rămân cum le-ai lăsat până se reîncarcă pagina.
 
 Deasupra butoanelor, banda **Sala Eroilor** arată ultimele 20 de dețineri, cele mai noi primele: deținătorul (un tag de breaslă sau numele liderului), jucătorii echipei câștigătoare, când s-a încheiat cea mai nouă victorie și, de la două victorii în sus, câte la rând. O deținere este un șir neîntrerupt de victorii în Sală ale aceluiași deținător. Banda citește înregistrările de pe această pagină, ignoră butoanele și este ascunsă când niciuna dintre ele nu este o victorie în Sală. Ca orice înregistrare, arată ce a raportat gazda fiecărui meci, și nimic nu verifică asta.
+
+## Clasate
+
+Un meci din coadă fără boți este clasat. Ecranul cozii și lobby-ul echipei spun asta înainte să intri în coadă; un singur bot lasă meciul neclasat. Când se găsește un meci clasat, fiecare jucător îi semnează începutul, iar ecranul arată **Se confirmă meciul clasat…** până la 15 secunde. Dacă cineva nu confirmă, meciul e anulat și toți revin în coadă. La final fiecare jucător semnează rezultatul, iar chitanța meciului e publicată pe releele Nostr cu cheia publică și numele personajului fiecărui jucător; un jucător fără personaj apare ca starter. Ratingul tău se schimbă în decurs de o oră. Părăsirea unui meci clasat contează ca înfrângere, iar butonul de ieșire spune asta.

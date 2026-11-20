@@ -531,3 +531,7 @@ tutanın kesintisiz Salon galibiyetleri dizisidir. Şerit bu sayfadaki
 kayıtları okur, çipleri yok sayar ve hiçbiri bir Salon galibiyeti
 değilse gizlenir. Her kayıt gibi, her maçın kurucusunun bildirdiğidir ve
 hiçbir şey onu denetlemez.
+
+## Dereceli
+
+Kuyruktan gelen ve içinde bot olmayan bir maç derecelidir. Kuyruk ekranı ve takım lobisi bunu sen kuyruğa girmeden söyler; tek bir bot maçı derecesiz bırakır. Dereceli bir maç bulunduğunda her oyuncu başlangıcını imzalar ve ekran 15 saniyeye kadar **Dereceli maç onaylanıyor…** gösterir. Biri onaylamazsa maç iptal edilir ve herkes kuyruğa döner. Sonunda her oyuncu sonucu imzalar ve maçın makbuzu her oyuncunun açık anahtarı ve karakter adıyla Nostr rölelerinde yayımlanır; karakteri olmayan oyuncu starter olarak geçer. Puanın bir saat içinde değişir. Dereceli bir maçtan ayrılmak yenilgi sayılır ve ayrıl düğmesi bunu söyler.

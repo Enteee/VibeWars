@@ -459,3 +459,7 @@ nenhum tamanho. Os chips ficam como você os deixou até a página
 recarregar.
 
 Acima dos filtros, a faixa **Salão dos Heróis** lista os últimos 20 domínios, do mais recente ao mais antigo: quem domina (uma tag de guilda ou o nome do líder), as pessoas da equipe vencedora, quando a vitória mais recente terminou e, a partir de duas vitórias, quantas seguidas. Um domínio é uma sequência ininterrupta de vitórias no Salão de quem domina. A faixa lê os registros desta página, ignora os filtros e fica oculta se nenhum for uma vitória no Salão. Como todo registro, é o que o host de cada partida informou, e nada o verifica.
+
+## Ranqueadas
+
+Uma partida da fila sem bots é ranqueada. O ecrã da fila e o lobby de equipa dizem-no antes de entrares na fila; um só bot deixa a partida sem ranking. Quando é encontrada uma partida ranqueada, cada jogador assina o seu início, e o ecrã mostra **Confirmando partida ranqueada…** até 15 segundos. Se alguém não confirmar, a partida é cancelada e todos voltam à fila. No fim, cada jogador assina o resultado, e o recibo da partida é publicado nos relays Nostr com a chave pública e o nome da personagem de cada jogador; um jogador sem personagem aparece como starter. A tua classificação muda dentro de uma hora. Sair de uma partida ranqueada conta como derrota, e o botão de sair di-lo.

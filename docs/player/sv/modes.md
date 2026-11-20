@@ -472,3 +472,7 @@ bottar inräknade, så ett eget spel med 3v2 passar ingen storlek.
 Chipsen står kvar som du lämnade dem tills sidan laddas om.
 
 Ovanför chipsen listar remsan **Hjältarnas sal** de senaste 20 innehaven, nyaste först: innehavaren (en gilletagg eller ledarens namn), det vinnande lagets spelare, när den senaste vinsten slutade och, från två vinster och uppåt, hur många i rad. Ett innehav är en obruten följd av vinster i Salen av en innehavare. Remsan läser protokollen på den här sidan, bryr sig inte om chipsen, och döljs när inget av dem är en vinst i Salen. Som varje protokoll är den vad varje matchs värd rapporterade, och inget kontrollerar den.
+
+## Rankat
+
+En match från kön utan botar är rankad. Köskärmen och lagets lobby säger det innan du ställer dig i kö; en enda bot håller matchen orankad. När en rankad match hittas signerar varje spelare dess start, och skärmen visar **Bekräftar rankad match…** i upp till 15 sekunder. Om någon inte bekräftar avbryts matchen och alla är tillbaka i kön. I slutet signerar varje spelare resultatet, och matchens kvitto publiceras på Nostr-reläerna med varje spelares publika nyckel och figurnamn; en spelare utan figur står som starter. Din rating ändras inom en timme. Att lämna en rankad match räknas som förlust, och lämna-knappen säger det.

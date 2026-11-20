@@ -454,3 +454,7 @@ najväčší tím vrátane botov, takže Vlastná hra 3v2 nesedí na žiadnu ve�
 Čipy zostávajú tak, ako si ich nechal, kým sa stránka znova nenačíta.
 
 Nad filtrami ukazuje pás **Sieň hrdinov** posledných 20 sérií, od najnovšej: držiteľa (cechová značka alebo meno vodcu), ľudí z víťazného tímu, kedy sa skončila najnovšia výhra a od dvoch výhier, koľko ich bolo v rade. Séria je neprerušený rad výhier v Sieni jedného držiteľa. Pás číta záznamy na tejto stránke, neberie ohľad na filtre a je skrytý, keď žiadny z nich nie je výhrou v Sieni. Ako každý záznam ukazuje to, čo nahlásil hostiteľ každého zápasu, a nič to neoveruje.
+
+## Hodnotené
+
+Zápas z frontu bez botov je hodnotený. Obrazovka frontu aj tímová lobby to povedia, skôr než sa zaradíš; jediný bot nechá zápas nehodnotený. Keď sa nájde hodnotený zápas, každý hráč podpíše jeho začiatok a obrazovka ukazuje až 15 sekúnd **Potvrdzovanie hodnoteného zápasu…**. Ak niekto nepotvrdí, zápas sa zruší a všetci sú späť vo fronte. Na konci každý hráč podpíše výsledok a potvrdenka zápasu sa zverejní na Nostr relayoch s verejným kľúčom a menom postavy každého hráča; hráč bez postavy je uvedený ako starter. Tvoje hodnotenie sa zmení do hodiny. Odchod z hodnoteného zápasu sa počíta ako prehra a tlačidlo odchodu to hovorí.

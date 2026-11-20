@@ -577,10 +577,7 @@ export interface RandomArenaEvents {
 export function rankedPlayOf(
   playerKey: PlayerKey,
   characterId: string,
-  events: Pick<
-    RandomArenaEvents,
-    "onRankedConfirming" | "onRankedCancelled" | "onRankedPublished"
-  >,
+  events: Pick<RandomArenaEvents, "onRankedConfirming" | "onRankedCancelled" | "onRankedPublished">,
   storage: Storage,
 ): RankedPlay {
   // A host hands its receipt on twice: as the lobby's host, and to its own player.
@@ -764,34 +761,51 @@ export function enterQueue(
   ): Promise<void> => {
     queueClient.enteredLobby();
     // Every ticket brought no bot: this player signs the match, and it is published (#3680).
-    const ranked = group.ranked ? rankedPlayOf(playerKey, characterId, events, localStorage) : undefined;
+    const ranked = group.ranked
+      ? rankedPlayOf(playerKey, characterId, events, localStorage)
+      : undefined;
     let lobby: LobbyConnection;
     let hosted: HostedLobby | undefined;
     try {
       if (group.hostTicketId === key.ticketId) {
         // A queued lobby plays its group's size, never a Hosted Game's.
-        hosted = await hostLobby(name, guild, playerKey, false, 4, {
-          group,
-          key,
-          verifyTicketSig,
-          ascentMorale,
-          countdownSeconds: QUEUED_COUNTDOWN_SECONDS,
-          timeoutSeconds: FORMATION_TIMEOUT_MS / 1000,
-          stayTogetherSeconds: STAY_TOGETHER_WINDOW_SECONDS,
-          onFellThrough: (noShows) => {
-            if (!done) {
-              queueClient.fellThrough(noShows);
-            }
+        hosted = await hostLobby(
+          name,
+          guild,
+          playerKey,
+          false,
+          4,
+          {
+            group,
+            key,
+            verifyTicketSig,
+            ascentMorale,
+            countdownSeconds: QUEUED_COUNTDOWN_SECONDS,
+            timeoutSeconds: FORMATION_TIMEOUT_MS / 1000,
+            stayTogetherSeconds: STAY_TOGETHER_WINDOW_SECONDS,
+            onFellThrough: (noShows) => {
+              if (!done) {
+                queueClient.fellThrough(noShows);
+              }
+            },
           },
-        }, ranked);
+          ranked,
+        );
         lobby = hosted.lobby;
       } else {
-        lobby = await joinLobbyByCode(group.groupId, name, guild, playerKey, {
-          group,
-          key,
-          verifyTicketSig,
-          ascentMorale,
-        }, ranked);
+        lobby = await joinLobbyByCode(
+          group.groupId,
+          name,
+          guild,
+          playerKey,
+          {
+            group,
+            key,
+            verifyTicketSig,
+            ascentMorale,
+          },
+          ranked,
+        );
       }
     } catch (error) {
       if (done) {

@@ -259,6 +259,8 @@ interface RankedLobby {
 interface RankedLobbyOptions {
   /** Seats that join without a ranked play: they sign nothing. */
   readonly unranked?: readonly number[];
+  /** Seats with no character, playing a host starter: they sign as `"starter"` (#3680). */
+  readonly starters?: readonly number[];
   /** Each seat's room, wrapped as the test likes. */
   readonly wrap?: (n: number, transport: Transport) => Transport;
   /** The host's room, wrapped: a lying host's, to its guests. */
@@ -270,13 +272,14 @@ async function joinSeat(
   n: number,
   transport: Transport,
   ranked: boolean,
+  characterId = `char-${String(n)}`,
 ): Promise<Seat> {
   const key = testPlayerKey();
   const receipts: Seat["receipts"] = [];
   const signed: RankedReceipt[] = [];
   const rounds: number[] = [];
   const play: RankedPlay = {
-    characterId: `char-${String(n)}`,
+    characterId,
     prev: ZERO_HASH,
     buildHash: BUILD,
     crypto: testReceiptCrypto,
@@ -306,7 +309,16 @@ async function joinSeat(
     queued: { group, key: keyOf(seatKey(n)), verifyTicketSig, ascentMorale: 0 },
     ...(ranked ? { ranked: play } : {}),
   });
-  const seat: Seat = { key, connection, transport, receipts, signed, rounds, startsSigned: 0, cancelled: 0 };
+  const seat: Seat = {
+    key,
+    connection,
+    transport,
+    receipts,
+    signed,
+    rounds,
+    startsSigned: 0,
+    cancelled: 0,
+  };
   return seat;
 }
 
@@ -354,11 +366,20 @@ async function openRanked(mode: QueueMode, options: RankedLobbyOptions = {}): Pr
   });
   const wrap = options.wrap ?? ((_n: number, transport: Transport) => transport);
   const unranked = new Set(options.unranked ?? []);
+  const starters = new Set(options.starters ?? []);
   const seats: Seat[] = [];
   const count = group.teams.flat().length;
   for (let n = 0; n < count; n += 1) {
     const room = n === 0 ? lobby.local : network.join();
-    seats.push(await joinSeat(group, n, wrap(n, room), !unranked.has(n)));
+    seats.push(
+      await joinSeat(
+        group,
+        n,
+        wrap(n, room),
+        !unranked.has(n),
+        starters.has(n) ? "starter" : undefined,
+      ),
+    );
   }
   await settle();
   lyingSeats = seats;
@@ -527,6 +548,21 @@ describe("a ranked queued match (ADR-0055, #3573)", () => {
     expect(validateReceipt(receipt, testReceiptCrypto)).toEqual({ ok: true, void: false });
     // It is handed the receipt it lost, as everyone.
     expect(ranked.seats[2]?.receipts).toEqual([{ receipt, partial: false }]);
+  });
+
+  it("confirms a 1v1 in which one seat has no character and signs as a starter (#3680)", async () => {
+    const ranked = await openRanked("random-arena-1v1", { starters: [1] });
+    await startRanked(ranked);
+    expect(ranked.fellThrough).toEqual([]);
+    ranked.match.finish(0);
+    await ranked.step(1);
+    await until(() => ranked.seats.every((seat) => seat.receipts.length === 1));
+    const receipt = receiptOf(ranked);
+    expect(validateReceipt(receipt, testReceiptCrypto)).toEqual({ ok: true, void: false });
+    expect(receipt.start.teams.flat().map((seat) => seat.characterId)).toEqual([
+      "char-0",
+      "starter",
+    ]);
   });
 
   it("cancels at once a match with a seat that brought no ranked seat", async () => {

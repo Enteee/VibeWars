@@ -455,3 +455,16 @@ largest team, bots included, so a 3v2 Hosted Game fits no size. The
 chips stay as you left them until the page reloads.
 
 Above the chips, the **Hall of Heroes** strip lists the last 20 holds, newest first: the holder (a guild tag or the leader's name), the winning team's people, when the newest win ended and, from two wins on, how many in a row. A hold is an unbroken run of Hall wins by one holder. The strip reads the records on this page, ignores the chips, and is hidden when none of them is a Hall win. Like every record, it is what each match's host reported, and nothing checks it.
+
+## Ranked
+
+A queued match with no bots in it is ranked. The queue screen and the
+Team Lobby say so before you queue; one bot keeps a match unranked.
+When a ranked match is found, every player signs its start, and the
+screen says **Confirming ranked match…** for up to 15 seconds. If
+someone does not confirm, the match is cancelled and everyone is back
+in the queue. At the end every player signs the result, and the match's
+receipt is published on the Nostr relays with each player's public key
+and character name; a player with no character is named as a starter.
+Your rating moves within the hour. Leaving a ranked match counts as a
+loss, and the leave button says so.

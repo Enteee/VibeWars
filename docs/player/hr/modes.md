@@ -450,3 +450,7 @@ najveći tim, s botovima, pa Igra s domaćinom 3v2 ne odgovara nijednoj veličin
 Oznake ostaju kako si ih ostavio dok se stranica ponovno ne učita.
 
 Iznad filtara traka **Dvorana junaka** prikazuje zadnjih 20 nizova, od najnovijeg: držatelja (oznaka ceha ili ime vođe), ljude iz pobjedničkog tima, kada je završila najnovija pobjeda i, od dvije pobjede, koliko ih je zaredom. Niz je neprekinuti slijed pobjeda u Dvorani jednog držatelja. Traka čita zapise s ove stranice, zanemaruje filtre i skrivena je kada nijedan od njih nije pobjeda u Dvorani. Kao i svaki zapis, to je ono što je prijavio domaćin svakog meča, i ništa to ne provjerava.
+
+## Rangirani
+
+Meč iz reda bez botova je rangiran. Zaslon reda i timski predvorje to kažu prije nego što uđeš u red; jedan bot ostavlja meč nerangiranim. Kad se pronađe rangirani meč, svaki igrač potpisuje njegov početak, a zaslon do 15 sekundi prikazuje **Potvrđivanje rangiranog meča…**. Ako netko ne potvrdi, meč se otkazuje i svi se vraćaju u red. Na kraju svaki igrač potpisuje rezultat, a potvrda meča objavljuje se na Nostr relejima s javnim ključem i imenom lika svakog igrača; igrač bez lika naveden je kao starter. Tvoj rejting mijenja se unutar sat vremena. Napuštanje rangiranog meča računa se kao poraz, i gumb za napuštanje to kaže.

@@ -26,6 +26,12 @@ import { newTicketKey } from "./ticket-key.js";
 /** The tag every ranked receipt carries, for the leaderboard job (#3574) to ask for. */
 export const RANKED_TOPIC = "vibewars-ranked";
 
+/**
+ * The character id a ranked receipt names for a player with no character,
+ * who plays a host starter. Rating is per player key: the id only labels it.
+ */
+export const RANKED_STARTER_ID = "starter";
+
 /** Where the hash of this browser's last receipt is kept, beside its player key. */
 const RANKED_PREV_KEY = `${STORAGE_NAMESPACE}.rankedPrev`;
 
@@ -113,7 +119,7 @@ export function publishRankedReceipt(receipt: RankedReceipt, address: string): v
  * key, or for anything malformed.
  */
 export function loadRankedPrev(storage: Storage, pubkey: string): string {
-  let stored: string | null = null;
+  let stored: string | null;
   try {
     stored = storage.getItem(RANKED_PREV_KEY);
   } catch {

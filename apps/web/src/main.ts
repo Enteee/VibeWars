@@ -21,6 +21,7 @@ import {
   ascentRoundOf,
   modeMapIds,
 } from "./net/maps.js";
+import { RANKED_STARTER_ID } from "./net/transport/ranked-receipts.js";
 import {
   connectMatchFor,
   observeMatchFor,
@@ -2222,7 +2223,8 @@ async function main(): Promise<void> {
       name,
       entrant.guild,
       playerKey,
-      entrant.characterId,
+      // A member with no character plays a host starter, and signs as one (#3680).
+      entrant.characterId ?? RANKED_STARTER_ID,
       {
         // The queue line says the wait and how many teams it last heard
         // searching (#1881), none while the relays are down; the queue's
@@ -3187,6 +3189,8 @@ async function main(): Promise<void> {
         ownSignet,
       );
       hallWatch.pause();
+      // Said by the match about to begin, never by the next one.
+      rankedSigned = false;
       // In the match, the status has nothing to say until it is lost.
       setStatus("", "online");
       // Said once, on the match screen: the lobby's went with it.

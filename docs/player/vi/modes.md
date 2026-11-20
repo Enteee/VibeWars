@@ -452,3 +452,7 @@ bot, nên Trận tự tạo 3v2 không khớp cỡ nào. Các nút chọn giữ 
 cho đến khi trang được tải lại.
 
 Phía trên các nút chọn, dải **Đại sảnh Anh hùng** liệt kê 20 lần giữ gần nhất, mới nhất trước: đội giữ (một tag Bang hoặc tên trưởng tổ đội), những người trong đội thắng, thời điểm trận thắng mới nhất kết thúc và, từ hai trận thắng trở lên, bao nhiêu trận liên tiếp. Một lần giữ là chuỗi thắng Đại sảnh không gián đoạn của một đội giữ. Dải này đọc các bản ghi trên trang này, bỏ qua các nút chọn, và bị ẩn khi không có bản ghi nào là trận thắng Đại sảnh. Như mọi bản ghi, nó là những gì chủ phòng của mỗi trận báo lại, và không có gì kiểm tra nó.
+
+## Xếp hạng
+
+Một trận từ hàng chờ không có bot là trận xếp hạng. Màn hình hàng chờ và sảnh đội cho biết điều đó trước khi bạn xếp hàng; chỉ một bot cũng khiến trận không xếp hạng. Khi tìm được trận xếp hạng, mọi người chơi ký vào lúc bắt đầu, và màn hình hiện **Đang xác nhận trận xếp hạng…** tối đa 15 giây. Nếu ai đó không xác nhận, trận bị hủy và mọi người trở lại hàng chờ. Khi kết thúc, mọi người chơi ký vào kết quả, và biên nhận của trận được công bố trên các relay Nostr cùng khóa công khai và tên nhân vật của từng người chơi; người chơi không có nhân vật được ghi là starter. Điểm của bạn thay đổi trong vòng một giờ. Rời trận xếp hạng tính là thua, và nút rời trận cho biết điều đó.

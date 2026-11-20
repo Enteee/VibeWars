@@ -1630,11 +1630,7 @@ export interface LeaveControl {
  * match.
  * In a `ranked` match (#3680) the question says leaving counts as a loss.
  */
-export function renderLeave(
-  hud: HudElements,
-  onLeave: () => void,
-  ranked: boolean,
-): LeaveControl {
+export function renderLeave(hud: HudElements, onLeave: () => void, ranked: boolean): LeaveControl {
   let answers: readonly HTMLButtonElement[] = [];
   let left = false;
   const button = (label: string, onClick: () => void): HTMLButtonElement => {

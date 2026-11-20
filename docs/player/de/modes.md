@@ -360,3 +360,19 @@ passt; eine Gruppe ohne gedrückten Chip lässt alles durch. Die Größe ist das
 passt also zu keiner Größe. Die Chips bleiben, wie du sie gelassen hast, bis die Seite neu lädt.
 
 Über den Chips listet der Streifen **Halle der Helden** die letzten 20 Haltephasen auf, die neueste zuerst: den Halter (ein Gildenkürzel oder den Namen des Anführers), die Spieler des Siegerteams, wann der neueste Sieg endete und ab zwei Siegen, wie viele in Folge. Eine Haltephase ist eine ununterbrochene Reihe von Hallen-Siegen desselben Halters. Der Streifen liest die Berichte auf dieser Seite, ignoriert die Chips und bleibt verborgen, wenn keiner davon ein Hallen-Sieg ist. Wie jeder Bericht zeigt er, was der Host des jeweiligen Matches gemeldet hat, und nichts überprüft das.
+
+## Gewertet
+
+Ein Match aus der Warteschlange ohne Bots ist gewertet. Der
+Warteschlangen-Bildschirm und die Team-Lobby sagen es, bevor du dich
+anstellst; ein einziger Bot hält ein Match ungewertet. Wird ein
+gewertetes Match gefunden, unterschreibt jeder Spieler seinen Start,
+und der Bildschirm zeigt bis zu 15 Sekunden **Gewertetes Match wird
+bestätigt…**. Bestätigt jemand nicht, wird das Match abgebrochen und
+alle sind zurück in der Warteschlange. Am Ende unterschreibt jeder
+Spieler das Ergebnis, und die Quittung des Matches wird auf den
+Nostr-Relays veröffentlicht, mit dem öffentlichen Schlüssel und dem
+Charakternamen jedes Spielers; ein Spieler ohne Charakter heißt dort
+Starter. Deine Wertung ändert sich innerhalb einer Stunde. Ein
+gewertetes Match zu verlassen zählt als Niederlage, und der
+Verlassen-Knopf sagt das.

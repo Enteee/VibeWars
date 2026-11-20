@@ -571,3 +571,7 @@ győzelemsorozata. A csík az ezen az oldalon lévő jegyzőkönyveket
 olvassa, figyelmen kívül hagyja a chipeket, és rejtve marad, ha egyik
 sem Csarnok-győzelem. Mint minden jegyzőkönyv, ez is az, amit az egyes
 meccsek házigazdája jelentett, és semmi sem ellenőrzi.
+
+## Rangsorolt
+
+A sorból jövő, botok nélküli meccs rangsorolt. A sorképernyő és a csapat-lobby ezt jelzi, mielőtt sorba állsz; egyetlen bot rangsorolatlanul hagyja a meccset. Ha rangsorolt meccs akad, minden játékos aláírja a kezdetét, és a képernyő legfeljebb 15 másodpercig ezt mutatja: **Rangsorolt meccs megerősítése…**. Ha valaki nem erősít meg, a meccs elmarad, és mindenki visszakerül a sorba. A végén minden játékos aláírja az eredményt, és a meccs nyugtája megjelenik a Nostr reléken minden játékos nyilvános kulcsával és karakternevével; a karakter nélküli játékos starterként szerepel. A pontszámod egy órán belül változik. Rangsorolt meccs elhagyása vereségnek számít, és a kilépés gomb ezt jelzi.

@@ -456,3 +456,7 @@ correspond donc à aucune taille. Les pastilles restent comme tu les as laissée
 jusqu'au rechargement de la page.
 
 Au-dessus des filtres, le bandeau **Hall des héros** liste les 20 dernières tenues, de la plus récente à la plus ancienne : le détenteur (un tag de guilde ou le nom du chef), les personnes de l'équipe gagnante, la fin de la victoire la plus récente et, à partir de deux victoires, le nombre d'affilée. Une tenue est une suite ininterrompue de victoires au Hall par le même détenteur. Le bandeau lit les enregistrements de cette page, ignore les filtres et reste masqué si aucun n'est une victoire au Hall. Comme tout enregistrement, c'est ce qu'a signalé l'hôte de chaque match, et rien ne le vérifie.
+
+## Classé
+
+Un match de la file sans bot est classé. L’écran de la file et le lobby d’équipe le disent avant que tu ne rejoignes la file ; un seul bot laisse le match non classé. Quand un match classé est trouvé, chaque joueur signe son début, et l’écran affiche **Confirmation du match classé…** jusqu’à 15 secondes. Si quelqu’un ne confirme pas, le match est annulé et tout le monde retourne dans la file. À la fin, chaque joueur signe le résultat, et le reçu du match est publié sur les relais Nostr avec la clé publique et le nom de personnage de chaque joueur ; un joueur sans personnage y figure comme starter. Ton classement change dans l’heure. Quitter un match classé compte comme une défaite, et le bouton quitter le dit.
