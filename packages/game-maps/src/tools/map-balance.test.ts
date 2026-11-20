@@ -16,11 +16,13 @@ import { mapNavGraphs } from "../nav-graphs.js";
 import { mapMatchRules, mapSimulationFields } from "../match-fields.js";
 import type { MapData } from "../schema.js";
 import {
+  balanceSeeds,
   balanceVerdict,
   highGround,
   narrowestWalks,
   playBuildBot,
   runMapBalance,
+  seedsLabel,
   walkSecondsByRoute,
   walksByRoute,
   walksTo,
@@ -76,6 +78,29 @@ describe("the balance verdict (#3065)", () => {
 
   it("fails all draws as no contact", () => {
     expect(balanceVerdict(result([0, 0], 100))).toEqual({ pass: false, reason: "no contact" });
+  });
+});
+
+describe("the seeds a balance run plays (#3694)", () => {
+  it("spreads 20 seeds over 0..99 at a stride of 5", () => {
+    expect(balanceSeeds(20)).toEqual(Array.from({ length: 20 }, (_, i) => i * 5));
+    expect(seedsLabel(20)).toBe("20 seeds, stride 5");
+  });
+
+  it("plays 0..99 for 100 seeds", () => {
+    expect(balanceSeeds(100)).toEqual(Array.from({ length: 100 }, (_, i) => i));
+    expect(seedsLabel(100)).toBe("100 seeds, stride 1");
+  });
+
+  it("keeps an uneven count distinct and ascending", () => {
+    const seeds = balanceSeeds(7);
+    expect(seeds).toEqual([0, 14, 28, 42, 57, 71, 85]);
+    expect(seedsLabel(7)).toBe("7 seeds, stride 14.29");
+  });
+
+  it("plays each seed once past 100", () => {
+    expect(balanceSeeds(120)).toEqual(Array.from({ length: 120 }, (_, i) => i));
+    expect(seedsLabel(120)).toBe("120 seeds, stride 1");
   });
 });
 
@@ -2433,7 +2458,7 @@ describe.runIf(BENCH)("the map balance bench (#3065)", () => {
       const header = [
         "map",
         "size",
-        "matches",
+        `matches (${seedsLabel(seeds)})`,
         "wins by team",
         "draws",
         "mean s",

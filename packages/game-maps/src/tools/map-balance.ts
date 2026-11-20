@@ -57,7 +57,7 @@ export interface MapBalanceOptions {
   readonly map: MapData;
   /** Players a team. */
   readonly size: number;
-  /** Seeds; each is played twice, the second time with the builds rotated. */
+  /** Seeds, spread by `balanceSeeds`; each is played twice, the second time with the builds rotated. */
   readonly seeds: number;
   /**
    * Each team on the next team's spawns (#3596): what a side wins apart
@@ -87,6 +87,26 @@ const STUCK_CELLS = 5;
 export type BalanceVerdict =
   { readonly pass: true } | { readonly pass: false; readonly reason: string };
 
+/** The seed space a full balance run plays (#3694). */
+const SEED_SPACE = 100;
+
+/**
+ * The seeds a run of `count` plays: spread evenly over 0..99, so a short run
+ * samples the same build mix a full one does (#3694); seeds 0-24 alone are a
+ * fast regime. Past 100 seeds, each is played once.
+ */
+export function balanceSeeds(count: number): number[] {
+  return Array.from({ length: count }, (_, i) =>
+    count > SEED_SPACE ? i : Math.floor((i * SEED_SPACE) / count),
+  );
+}
+
+/** The table's name for `balanceSeeds(count)`, e.g. `20 seeds, stride 5`. */
+export function seedsLabel(count: number): string {
+  const stride = count > SEED_SPACE ? 1 : SEED_SPACE / count;
+  return `${String(count)} seeds, stride ${String(Number(stride.toFixed(2)))}`;
+}
+
 /** `seeds` seeds of mirror matches on `map`, `size` a team, each played twice. */
 export function runMapBalance({
   map,
@@ -98,7 +118,7 @@ export function runMapBalance({
   let draws = 0;
   let seconds = 0;
   const stuck: StuckTotals[] = [];
-  for (let seed = 0; seed < seeds; seed += 1) {
+  for (const seed of balanceSeeds(seeds)) {
     // Rotated by one, so no build keeps one spawn, and a 1v1 plays a second build.
     for (const rotation of [0, 1]) {
       const {
