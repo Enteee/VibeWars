@@ -33,9 +33,26 @@ jobs:
         run: |
           mkdir -p ranking-out
           remote="https://github.com/$GITHUB_REPOSITORY.git"
-          if git ls-remote --exit-code --heads "$remote" gh-pages >/dev/null; then
+          # ls-remote exits 2 for "no such branch" and 128 for a network
+          # error. Only the first may start from an empty archive: the
+          # deploy would otherwise replace the receipts with what the relays
+          # hold now.
+          set -o pipefail
+          rc=0
+          git ls-remote --exit-code --heads "$remote" gh-pages >/dev/null || rc=$?
+          if [ "$rc" = 0 ]; then
             git fetch -q --depth 1 "$remote" gh-pages
-            git archive FETCH_HEAD ranking 2>/dev/null | tar -x --strip-components=1 -C ranking-out || echo "gh-pages holds no ranking/ yet."
+            if [ -n "$(git ls-tree --name-only FETCH_HEAD ranking)" ]; then
+              git archive FETCH_HEAD ranking | tar -x --strip-components=1 -C ranking-out
+              test -e ranking-out/receipts.ndjson
+            else
+              echo "gh-pages holds no ranking/ yet."
+            fi
+          elif [ "$rc" = 2 ]; then
+            echo "no gh-pages branch yet."
+          else
+            echo "::error::could not read gh-pages (ls-remote exit $rc)"
+            exit 1
           fi
           ls -l ranking-out
 
