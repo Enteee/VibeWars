@@ -214,6 +214,27 @@ function repeatingHost(times: number): (transport: Transport) => Transport {
   });
 }
 
+/** A host that follows every ranked result with `times` more, each naming one more made-up leaver. */
+function fakeLeaversHost(times: number): (transport: Transport) => Transport {
+  return (transport) => ({
+    ...transport,
+    selfId: transport.selfId,
+    send(channel, data, to) {
+      transport.send(channel, data, to);
+      const said = channel === "ranked-result" ? parseWireRankedResult(data) : undefined;
+      if (said === undefined) {
+        return;
+      }
+      const leavers = [...said.result.leavers];
+      for (let fake = 0; fake < times; fake += 1) {
+        leavers.push(fake.toString(16).padStart(64, "f"));
+        const result = { ...said.result, leavers: [...leavers] };
+        transport.send(channel, { result } satisfies WireRankedResult, to);
+      }
+    },
+  });
+}
+
 /** The seats a lying host's lie names, set once they have joined. */
 let lyingSeats: readonly Seat[] = [];
 
@@ -775,5 +796,16 @@ describe("a ranked queued match (ADR-0055, #3573)", () => {
     const receipt = receiptOf(ranked);
     expect(receipt.result.leavers).toEqual([]);
     expect(validateReceipt(receipt, testReceiptCrypto)).toEqual({ ok: true, void: false });
+  });
+  it("signs no re-round naming a leaver who holds no seat of the start", async () => {
+    const ranked = await openRanked("random-arena-2v2", { host: fakeLeaversHost(5) });
+    await startRanked(ranked);
+    ranked.match.finish(1);
+    await ranked.step(1);
+    await until(() => ranked.receipts.length === 1);
+    for (const seat of ranked.seats) {
+      expect(seat.rounds).toEqual([0]);
+    }
+    expect(receiptOf(ranked).result.leavers).toEqual([]);
   });
 });

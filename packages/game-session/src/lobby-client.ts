@@ -451,8 +451,9 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
    * Whether `result`'s leavers are ones this player may sign for
    * (ADR-0055, "What a host decides"). Before it signed any, each must be
    * one it saw go. After, only a re-round of the result it signed: that
-   * result with strictly more leavers, which the host says did not sign it,
-   * and nothing else changed, so a host gets at most a round per seat. Refusing to sign is leaving, and nobody else can
+   * result with strictly more leavers, each a seat of the start, which the
+   * host says did not sign it, and nothing else changed, so a host gets at
+   * most a round per seat. Refusing to sign is leaving, and nobody else can
    * see a refusal, so the new ones are taken on the host's word. A host
    * that names a seat that did sign is caught by that seat's published
    * signature of the earlier round (`onResultSigned`); a result this
@@ -463,7 +464,9 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
       return result.leavers.every((pubkey) => seenGone.has(pubkey));
     }
     const leavers = new Set(result.leavers);
+    const seated = new Set(ranked?.start.teams.flat().map((seat) => seat.pubkey));
     return (
+      result.leavers.every((pubkey) => seated.has(pubkey)) &&
       leavers.size > new Set(signedResult.leavers).size &&
       signedResult.leavers.every((pubkey) => leavers.has(pubkey)) &&
       result.winningTeam === signedResult.winningTeam &&
