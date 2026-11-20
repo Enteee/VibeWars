@@ -13,14 +13,14 @@ VibeWars'ı ilk açtığında sana kısa bir öğretici önerir: hareket etmeyi 
 ## Mod şeridi
 
 Ana ekranın solundaki şerit, yukarıdan aşağıya [modları](modes.md)
-içerir: **Rastgele Arena**, **Takım Arenası**, **Kahramanların Yükselişi**,
-**GvG** ve **Özel Oyun**. Modların en altında **Takım boyutu** vardır,
+içerir: ![Rastgele Arena](../../../apps/web/public/icons/mode/random-arena.svg) **Rastgele Arena**, ![Takım Arenası](../../../apps/web/public/icons/mode/team-arena.svg) **Takım Arenası**, ![Kahramanların Yükselişi](../../../apps/web/public/icons/mode/heroes-ascent.svg) **Kahramanların Yükselişi**,
+![GvG](../../../apps/web/public/icons/mode/gvg.svg) **GvG** ve ![Özel Oyun](../../../apps/web/public/icons/mode/hosted-game.svg) **Özel Oyun**. Modların en altında **Takım boyutu** vardır,
 `‹ 4v4 ›`: oklar, ekranın oynadığı bir sonraki daha küçük ya da daha
 büyük boyuta geçer. Her ekran kendi boyutunu hatırlar ve oynadığı bir
 boyutla açılır (GvG 8v8 ile). Onun altında karakterlerini yaptığın
-**Karakter Oluşturucu** ve [Takım Dizilimlerini](skills-and-builds.md#takım-dizilimleri)
-yaptığın **Takım Oluşturucu**, ardından da kurucularının bildirdiği
-şekliyle [biten maçları](modes.md#maç-kayıtları) gösteren **Maçlar**
+![Karakter Oluşturucu](../../../apps/web/public/icons/mode/characters.svg) **Karakter Oluşturucu** ve [Takım Dizilimlerini](skills-and-builds.md#takım-dizilimleri)
+yaptığın ![Takım Oluşturucu](../../../apps/web/public/icons/mode/teams.svg) **Takım Oluşturucu**, ardından da kurucularının bildirdiği
+şekliyle [biten maçları](modes.md#maç-kayıtları) gösteren ![Maçlar](../../../apps/web/public/icons/mode/matches.svg) **Maçlar**
 yer alır. Oyun en son kullandığın ekranda açılır.
 
 ## Karakter oluştur
@@ -185,6 +185,8 @@ grubu sıradan çıkarır. Sırada 10 sn geçtikten sonra kurucu halkanın
 penceresinde **Botlara karşı oyna**'ya da basabilir: kendi lobinde rastgele hazır bir
 bot takımına karşı bir maç; ancak senin turundaki bir takımı bekleyen
 [Kahramanların Yükselişi](modes.md#kahramanların-yükselişi) hariç.
+
+![Takım Arenası: rayın altındaki takım boyutu okları ve katılacağın lobinin takımı](../img/team-arena-1.png)
 
 ## Adın, lonca etiketin ve pelerinin
 

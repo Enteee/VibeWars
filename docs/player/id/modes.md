@@ -3,10 +3,10 @@
 Setiap peta memainkan satu mode, dan lobi menyebutkan mode itu di bawah nama peta.
 Mode-mode adalah entri rel di kiri layar utama.
 Tak ada yang memilih mode sebuah peta, tapi entri rel tempat kamu menjadi host menentukan
-mode yang dimainkan peta-peta lobinya: **Arena Tim** Pemusnahan, Hitung Kill dan
-Pemusnahan Pendeta, **Pendakian Pahlawan** Lari Relik, Raja Bukit dan
-Rebut Titik, dan **GvG** Perang Guild. **Game Host** menawarkan
-semua peta. **Arena Acak** memilihkan peta untukmu, dan sekaligus modenya,
+mode yang dimainkan peta-peta lobinya: ![Arena Tim](../../../apps/web/public/icons/mode/team-arena.svg) **Arena Tim** Pemusnahan, Hitung Kill dan
+Pemusnahan Pendeta, ![Pendakian Pahlawan](../../../apps/web/public/icons/mode/heroes-ascent.svg) **Pendakian Pahlawan** Lari Relik, Raja Bukit dan
+Rebut Titik, dan ![GvG](../../../apps/web/public/icons/mode/gvg.svg) **GvG** Perang Guild. ![Game Host](../../../apps/web/public/icons/mode/hosted-game.svg) **Game Host** menawarkan
+semua peta. ![Arena Acak](../../../apps/web/public/icons/mode/random-arena.svg) **Arena Acak** memilihkan peta untukmu, dan sekaligus modenya,
 tapi tidak pernah Perang Guild, Lari Relik, Raja Bukit atau Rebut
 Titik. Arena Tim mengundi salah satu petanya untuk setiap laga, Pendakian Pahlawan
 dimulai di peta pertamanya, dan hanya Game Host yang membiarkan host memilih.
@@ -297,6 +297,10 @@ Selama mengantre kamu boleh melihat-lihat mode lain: party mempertahankan
 mode dan ukurannya sampai keluar dari antrean.
 Setiap tahap berlangsung 30 detik dan berakhir lebih cepat begitu semua orang di Lobi
 Tim siap. Memberi suara dan mengambil kursi menandaimu siap.
+
+![Arena Tim: panah ukuran tim di bagian bawah rel, dan tim lobimu untuk bergabung](../img/team-arena-1.png)
+
+![Setelah bergabung: kamu ada di timmu sebagai host, belum siap](../img/team-arena-2.png)
 
 **Voting.** Siapa pun di sebuah sisi boleh mengusulkan Build Tim yang ukurannya persis sama dengan
 ukuran sisinya, satu usulan per orang. Build Tim-mu terbuka dari tab **Build

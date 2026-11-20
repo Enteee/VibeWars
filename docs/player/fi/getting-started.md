@@ -13,14 +13,14 @@ Kun avaat VibeWarsin ensimmäistä kertaa, se tarjoaa lyhyen opetuksen: kävelyn
 ## Pelitilapalkki
 
 Päänäkymän vasemmassa reunassa kulkeva palkki sisältää
-[pelitilat](modes.md) ylhäältä alas: **Satunnaisareena**, **Tiimiareena**,
-**Sankarien nousu**, **GvG** ja **Isännöity peli**. Pelitilojen alimpana on
+[pelitilat](modes.md) ylhäältä alas: ![Satunnaisareena](../../../apps/web/public/icons/mode/random-arena.svg) **Satunnaisareena**, ![Tiimiareena](../../../apps/web/public/icons/mode/team-arena.svg) **Tiimiareena**,
+![Sankarien nousu](../../../apps/web/public/icons/mode/heroes-ascent.svg) **Sankarien nousu**, ![GvG](../../../apps/web/public/icons/mode/gvg.svg) **GvG** ja ![Isännöity peli](../../../apps/web/public/icons/mode/hosted-game.svg) **Isännöity peli**. Pelitilojen alimpana on
 **Tiimin koko**, `‹ 4v4 ›`: nuolet siirtyvät seuraavaan pienempään tai
 suurempaan kokoon, jota näkymä pelaa. Jokainen näkymä muistaa oman
-kokonsa ja avautuu koossa, jota se pelaa (GvG koossa 8v8). Sen alla ovat **Hahmoeditori**, jossa
-teet hahmosi, ja **Tiimieditori**, jossa teet
+kokonsa ja avautuu koossa, jota se pelaa (GvG koossa 8v8). Sen alla ovat ![Hahmoeditori](../../../apps/web/public/icons/mode/characters.svg) **Hahmoeditori**, jossa
+teet hahmosi, ja ![Tiimieditori](../../../apps/web/public/icons/mode/teams.svg) **Tiimieditori**, jossa teet
 [tiimibuildisi](skills-and-builds.md#tiimibuildit), sitten
-**Ottelut**, [päättyneet ottelut](modes.md#ottelukirjaukset) sellaisina kuin
+![Ottelut](../../../apps/web/public/icons/mode/matches.svg) **Ottelut**, [päättyneet ottelut](modes.md#ottelukirjaukset) sellaisina kuin
 niiden isännät ne ilmoittavat. Peli avautuu siinä näkymässä, jota
 käytit viimeksi.
 
@@ -185,6 +185,8 @@ renkaan ikkunasta **Pelaa botteja vastaan**: ottelu omassa aulassasi
 satunnaista valmista bottitiimiä vastaan,
 paitsi [Sankarien nousussa](modes.md#sankarien-nousu), joka odottaa
 tiimiä sinun kierrokseltasi.
+
+![Tiimiareena: tiimin koon nuolet palkin alaosassa ja aulasi tiimi, johon liittyä](../img/team-arena-1.png)
 
 ## Nimesi, kiltatunnuksesi ja viittasi
 

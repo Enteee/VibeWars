@@ -13,14 +13,14 @@ Första gången du öppnar VibeWars erbjuder spelet en kort guide: en promenad g
 ## Lägesraden
 
 Raden längs huvudskärmens vänsterkant innehåller
-[lägena](modes.md), uppifrån och ned: **Slumparena**, **Lagarena**,
-**Heroes' Ascent**, **GvG** och **Eget spel**. Längst ned bland lägena
+[lägena](modes.md), uppifrån och ned: ![Slumparena](../../../apps/web/public/icons/mode/random-arena.svg) **Slumparena**, ![Lagarena](../../../apps/web/public/icons/mode/team-arena.svg) **Lagarena**,
+![Heroes' Ascent](../../../apps/web/public/icons/mode/heroes-ascent.svg) **Heroes' Ascent**, ![GvG](../../../apps/web/public/icons/mode/gvg.svg) **GvG** och ![Eget spel](../../../apps/web/public/icons/mode/hosted-game.svg) **Eget spel**. Längst ned bland lägena
 finns **Lagstorlek**, `‹ 4v4 ›`: pilarna stegar till nästa mindre eller
 större storlek som skärmen spelar. Varje skärm minns sin egen och öppnas
-med en storlek den spelar (GvG med 8v8). Under den finns **Karaktärsbyggare**, där du
-skapar dina karaktärer, och **Lagbyggare**, där du skapar dina
+med en storlek den spelar (GvG med 8v8). Under den finns ![Karaktärsbyggare](../../../apps/web/public/icons/mode/characters.svg) **Karaktärsbyggare**, där du
+skapar dina karaktärer, och ![Lagbyggare](../../../apps/web/public/icons/mode/teams.svg) **Lagbyggare**, där du skapar dina
 [lagbuilds](skills-and-builds.md#lagbuilds), och sedan
-**Matcher**, de [avslutade matcherna](modes.md#matchprotokoll) så som
+![Matcher](../../../apps/web/public/icons/mode/matches.svg) **Matcher**, de [avslutade matcherna](modes.md#matchprotokoll) så som
 deras värdar rapporterar dem. Spelet öppnas på den
 du använde senast.
 
@@ -180,6 +180,8 @@ också trycka på **Spela mot bottar** i ringens fönster: en match i er
 egen lobby mot ett slumpat förvalt lag av bottar,
 utom i [Heroes' Ascent](modes.md#heroes-ascent), som väntar på ett
 lag i er runda.
+
+![Lagarena: pilarna för lagstorlek längst ner i listen och din lobbys lag att gå med i](../img/team-arena-1.png)
 
 ## Ditt namn, din gilletagg och din mantel
 

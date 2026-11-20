@@ -13,14 +13,14 @@ La primera vez que abres VibeWars, te ofrece un tutorial corto: un paseo por un 
 ## La barra de modos
 
 La barra a la izquierda de la pantalla principal tiene los
-[modos](modes.md), de arriba abajo: **Arena aleatoria**, **Arena por
-equipos**, **Ascenso de los Héroes**, **GvG** y **Partida alojada**. Bajo los
+[modos](modes.md), de arriba abajo: ![Arena aleatoria](../../../apps/web/public/icons/mode/random-arena.svg) **Arena aleatoria**, ![Arena por equipos](../../../apps/web/public/icons/mode/team-arena.svg) **Arena por
+equipos**, ![Ascenso de los Héroes](../../../apps/web/public/icons/mode/heroes-ascent.svg) **Ascenso de los Héroes**, ![GvG](../../../apps/web/public/icons/mode/gvg.svg) **GvG** y ![Partida alojada](../../../apps/web/public/icons/mode/hosted-game.svg) **Partida alojada**. Bajo los
 modos está el **Tamaño del equipo**, `‹ 4v4 ›`: las flechas pasan al tamaño
 inmediatamente menor o mayor que juega la pantalla. Cada pantalla recuerda el
-suyo, y se abre con un tamaño que juega (GvG en 8v8). Debajo están **Creador
-de personajes**, donde haces tus personajes, y **Creador de equipos**, donde
+suyo, y se abre con un tamaño que juega (GvG en 8v8). Debajo están ![Creador de personajes](../../../apps/web/public/icons/mode/characters.svg) **Creador
+de personajes**, donde haces tus personajes, y ![Creador de equipos](../../../apps/web/public/icons/mode/teams.svg) **Creador de equipos**, donde
 haces tus [builds de equipo](skills-and-builds.md#builds-de-equipo), y luego
-**Partidas**, las [partidas terminadas](modes.md#registros-de-partidas) tal
+![Partidas](../../../apps/web/public/icons/mode/matches.svg) **Partidas**, las [partidas terminadas](modes.md#registros-de-partidas) tal
 como las informan sus anfitriones. El juego se abre en la última que usaste.
 
 ## Crea un personaje
@@ -182,6 +182,8 @@ pulsar **Jugar contra bots** en la ventana del anillo: una partida en tu propia 
 contra un equipo predefinido de bots al azar, excepto en
 [Ascenso de los Héroes](modes.md#ascenso-de-los-héroes), que espera a un
 equipo de tu ronda.
+
+![Arena por equipos: las flechas del tamaño del equipo al pie de la barra y el equipo de tu sala para unirte](../img/team-arena-1.png)
 
 ## Tu nombre, etiqueta de gremio y capa
 

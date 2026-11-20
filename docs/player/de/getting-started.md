@@ -13,13 +13,13 @@ Beim ersten Öffnen bietet dir VibeWars ein kurzes Tutorial an: einen Gang durch
 ## Die Modus-Leiste
 
 Die Leiste links im Hauptbildschirm enthält die [Modi](modes.md), von oben nach
-unten: **Zufallsarena**, **Teamarena**, **Aufstieg der Helden**, **GvG** und
-**Gehostetes Spiel**. Unter den Modi steht die **Teamgröße**, `‹ 4v4 ›`: Die Pfeile
+unten: ![Zufallsarena](../../../apps/web/public/icons/mode/random-arena.svg) **Zufallsarena**, ![Teamarena](../../../apps/web/public/icons/mode/team-arena.svg) **Teamarena**, ![Aufstieg der Helden](../../../apps/web/public/icons/mode/heroes-ascent.svg) **Aufstieg der Helden**, ![GvG](../../../apps/web/public/icons/mode/gvg.svg) **GvG** und
+![Gehostetes Spiel](../../../apps/web/public/icons/mode/hosted-game.svg) **Gehostetes Spiel**. Unter den Modi steht die **Teamgröße**, `‹ 4v4 ›`: Die Pfeile
 springen zur nächstkleineren oder nächstgrößeren Größe, die der Bildschirm spielt.
 Jeder Bildschirm merkt sich seine eigene und öffnet mit einer Größe, die er spielt
-(GvG mit 8v8). Darunter liegen der **Charakter-Editor**, in dem du deine Charaktere
-baust, und der **Team-Editor**, in dem du deine
-[Team-Builds](skills-and-builds.md#team-builds) baust, dann **Matches**, die
+(GvG mit 8v8). Darunter liegen der ![Charakter-Editor](../../../apps/web/public/icons/mode/characters.svg) **Charakter-Editor**, in dem du deine Charaktere
+baust, und der ![Team-Editor](../../../apps/web/public/icons/mode/teams.svg) **Team-Editor**, in dem du deine
+[Team-Builds](skills-and-builds.md#team-builds) baust, dann ![Matches](../../../apps/web/public/icons/mode/matches.svg) **Matches**, die
 [beendeten Matches](modes.md#match-berichte), wie ihre Hosts sie melden. Das Spiel
 öffnet mit dem, den du zuletzt genutzt hast.
 
@@ -170,6 +170,8 @@ Warteschlange. Nach 10 s in der Warteschlange kann der Host auch im Fenster des 
 spielen** drücken: ein Match in deiner eigenen Lobby gegen ein zufälliges vorgefertigtes
 Team aus Bots, außer im [Aufstieg der Helden](modes.md#aufstieg-der-helden), der auf ein Team
 in deiner Runde wartet.
+
+![Teamarena: die Pfeile der Teamgröße unten in der Leiste und das Team deiner Lobby zum Beitreten](../img/team-arena-1.png)
 
 ## Dein Name, Gildenkürzel und Umhang
 

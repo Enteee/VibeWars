@@ -13,14 +13,14 @@ Første gang du åbner VibeWars, tilbyder spillet en kort vejledning: en tur gen
 ## Skinnen med spiltilstande
 
 Skinnen ned langs venstre side af hovedskærmen rummer
-[spiltilstandene](modes.md), oppefra og ned: **Tilfældig arena**,
-**Holdarena**, **Heltenes opstigning**, **GvG** og **Værtsspil**. Nederst
+[spiltilstandene](modes.md), oppefra og ned: ![Tilfældig arena](../../../apps/web/public/icons/mode/random-arena.svg) **Tilfældig arena**,
+![Holdarena](../../../apps/web/public/icons/mode/team-arena.svg) **Holdarena**, ![Heltenes opstigning](../../../apps/web/public/icons/mode/heroes-ascent.svg) **Heltenes opstigning**, ![GvG](../../../apps/web/public/icons/mode/gvg.svg) **GvG** og ![Værtsspil](../../../apps/web/public/icons/mode/hosted-game.svg) **Værtsspil**. Nederst
 under spiltilstandene står **Holdstørrelse**, `‹ 4v4 ›`: pilene går til
 den næste mindre eller større størrelse, skærmen spiller. Hver skærm
 husker sin egen og åbner på en størrelse, den spiller (GvG på 8v8).
-Derunder er **Figureditor**, hvor du laver dine figurer, og
-**Holdeditor**, hvor du laver dine
-[Holdbuilds](skills-and-builds.md#holdbuilds), og derefter **Kampe**, de
+Derunder er ![Figureditor](../../../apps/web/public/icons/mode/characters.svg) **Figureditor**, hvor du laver dine figurer, og
+![Holdeditor](../../../apps/web/public/icons/mode/teams.svg) **Holdeditor**, hvor du laver dine
+[Holdbuilds](skills-and-builds.md#holdbuilds), og derefter ![Kampe](../../../apps/web/public/icons/mode/matches.svg) **Kampe**, de
 [afsluttede kampe](modes.md#kampregistreringer), som deres værter
 rapporterer dem. Spillet åbner på den, du brugte sidst.
 
@@ -182,6 +182,8 @@ gruppen ud af den. Efter 10 s i køen kan værten også trykke på
 tilfældigt forudindstillet hold af bots, undtagen i
 [Heltenes opstigning](modes.md#heltenes-opstigning), som venter på et hold
 i jeres runde.
+
+![Holdarena: pilene for holdstørrelse nederst på skinnen og din lobbys hold, som du kan slutte dig til](../img/team-arena-1.png)
 
 ## Dit navn, laugsmærke og kappe
 

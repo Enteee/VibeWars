@@ -13,14 +13,14 @@ The first time you open VibeWars, it offers a short tutorial: a walk through a c
 ## The mode rail
 
 The rail down the left of the main screen holds the
-[modes](modes.md), top to bottom: **Random Arena**, **Team Arena**,
-**Heroes' Ascent**, **GvG** and **Hosted Game**. At the bottom of the
+[modes](modes.md), top to bottom: ![Random Arena](../../apps/web/public/icons/mode/random-arena.svg) **Random Arena**, ![Team Arena](../../apps/web/public/icons/mode/team-arena.svg) **Team Arena**,
+![Heroes' Ascent](../../apps/web/public/icons/mode/heroes-ascent.svg) **Heroes' Ascent**, ![GvG](../../apps/web/public/icons/mode/gvg.svg) **GvG** and ![Hosted Game](../../apps/web/public/icons/mode/hosted-game.svg) **Hosted Game**. At the bottom of the
 modes is the **Team size**, `‹ 4v4 ›`: the arrows step to the next
 smaller or larger size the screen plays. Each screen remembers its own,
-and opens at a size it plays (GvG at 8v8). Below that are **Character Builder**, where you
-make your characters, and **Team Builder**, where you make your
+and opens at a size it plays (GvG at 8v8). Below that are ![Character Builder](../../apps/web/public/icons/mode/characters.svg) **Character Builder**, where you
+make your characters, and ![Team Builder](../../apps/web/public/icons/mode/teams.svg) **Team Builder**, where you make your
 [Team Builds](skills-and-builds.md#team-builds), then
-**Matches**, the [finished matches](modes.md#match-records) as their
+![Matches](../../apps/web/public/icons/mode/matches.svg) **Matches**, the [finished matches](modes.md#match-records) as their
 hosts report them. The game opens on the
 one you used last.
 
@@ -179,6 +179,8 @@ party out of it. After 10 s in the queue, the host can also press
 random preset team of bots,
 except in [Heroes' Ascent](modes.md#heroes-ascent), which waits for a
 team at your round.
+
+![Team Arena: the Team size arrows at the foot of the rail, and your lobby's team to join](img/team-arena-1.png)
 
 ## Your name, guild tag and cape
 

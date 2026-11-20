@@ -13,13 +13,13 @@ De eerste keer dat je VibeWars opent, biedt het een korte tutorial aan: een wand
 ## De modusbalk
 
 De balk links op het hoofdscherm bevat de [modi](modes.md), van boven naar
-beneden: **Random Arena**, **Team Arena**, **Heroes' Ascent**, **GvG** en
-**Gehost spel**. Onder de modi staat de **Teamgrootte**, `‹ 4v4 ›`: de pijlen
+beneden: ![Random Arena](../../../apps/web/public/icons/mode/random-arena.svg) **Random Arena**, ![Team Arena](../../../apps/web/public/icons/mode/team-arena.svg) **Team Arena**, ![Heroes' Ascent](../../../apps/web/public/icons/mode/heroes-ascent.svg) **Heroes' Ascent**, ![GvG](../../../apps/web/public/icons/mode/gvg.svg) **GvG** en
+![Gehost spel](../../../apps/web/public/icons/mode/hosted-game.svg) **Gehost spel**. Onder de modi staat de **Teamgrootte**, `‹ 4v4 ›`: de pijlen
 gaan naar de eerstvolgende kleinere of grotere grootte die het scherm speelt.
 Elk scherm onthoudt zijn eigen grootte, en opent op een grootte die het speelt
-(GvG op 8v8). Daaronder staan **Personagebouwer**, waar je je personages maakt,
-en **Teambouwer**, waar je je [Teambuilds](skills-and-builds.md#teambuilds)
-maakt, en dan **Matches**, de [afgelopen matches](modes.md#matchrecords) zoals
+(GvG op 8v8). Daaronder staan ![Personagebouwer](../../../apps/web/public/icons/mode/characters.svg) **Personagebouwer**, waar je je personages maakt,
+en ![Teambouwer](../../../apps/web/public/icons/mode/teams.svg) **Teambouwer**, waar je je [Teambuilds](skills-and-builds.md#teambuilds)
+maakt, en dan ![Matches](../../../apps/web/public/icons/mode/matches.svg) **Matches**, de [afgelopen matches](modes.md#matchrecords) zoals
 hun hosts ze melden. Het spel opent op het scherm dat je het laatst gebruikte.
 
 ## Maak een personage
@@ -180,6 +180,8 @@ vertrekt, haalt de hele groep eruit. Na 10 s in de wachtrij kan de host ook
 in het venster van de ring op **Tegen bots spelen** drukken: een match in je eigen lobby
 tegen een willekeurig kant-en-klaar team van bots, behalve in
 [Heroes' Ascent](modes.md#heroes-ascent), dat wacht op een team van jouw ronde.
+
+![Teamarena: de pijlen voor teamgrootte onder aan de balk, en het team van je lobby om bij aan te sluiten](../img/team-arena-1.png)
 
 ## Je naam, gildetag en cape
 

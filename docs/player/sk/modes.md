@@ -3,10 +3,10 @@
 Každá mapa hrá jeden režim a lobby ho uvádza pod názvom mapy.
 Režimy sú položky lišty na ľavej strane hlavnej obrazovky.
 Nikto nevyberá režim mapy, ale položka lišty, z ktorej hostíš, určuje
-režimy, ktoré hrajú mapy jej lobby: **Tímová aréna** Anihiláciu, Počet zabití a
-Anihiláciu kňaza, **Výstup hrdinov** Beh s relikviou, Kráľa kopca a
-Dobývanie bodov a **GvG** Cechovú bitku. **Vlastná hra** ponúka
-každú mapu. **Náhodná aréna** vyberie mapu za teba a s ňou aj režim,
+režimy, ktoré hrajú mapy jej lobby: ![Tímová aréna](../../../apps/web/public/icons/mode/team-arena.svg) **Tímová aréna** Anihiláciu, Počet zabití a
+Anihiláciu kňaza, ![Výstup hrdinov](../../../apps/web/public/icons/mode/heroes-ascent.svg) **Výstup hrdinov** Beh s relikviou, Kráľa kopca a
+Dobývanie bodov a ![GvG](../../../apps/web/public/icons/mode/gvg.svg) **GvG** Cechovú bitku. ![Vlastná hra](../../../apps/web/public/icons/mode/hosted-game.svg) **Vlastná hra** ponúka
+každú mapu. ![Náhodná aréna](../../../apps/web/public/icons/mode/random-arena.svg) **Náhodná aréna** vyberie mapu za teba a s ňou aj režim,
 ale nikdy Cechovú bitku, Beh s relikviou, Kráľa kopca ani Dobývanie
 bodov. Tímová aréna vylosuje jednu zo svojich máp pre každý zápas, Výstup hrdinov
 začína na svojej prvej mape a len vo Vlastnej hre vyberá hostiteľ.
@@ -303,6 +303,10 @@ Kým je vo fronte, môžeš si prezerať ostatné režimy: družina si ponecháv
 režim a veľkosť, kým neopustí frontu.
 Každá fáza trvá 30 sekúnd a skončí skôr, len čo sú všetci v tímovom
 lobby pripravení. Hlasovanie a zabratie miesta ťa označia ako pripraveného.
+
+![Tímová aréna: šípky veľkosti tímu dole na lište a tím tvojho lobby, ku ktorému sa pridáš](../img/team-arena-1.png)
+
+![Po pridaní: si vo svojom tíme ako hostiteľ, zatiaľ nepripravený](../img/team-arena-2.png)
 
 **Hlasovanie.** Ktokoľvek zo strany môže navrhnúť tímový build presne takej
 veľkosti, akú má strana, po jednom návrhu. Tvoje tímové buildy sa otvoria zo
