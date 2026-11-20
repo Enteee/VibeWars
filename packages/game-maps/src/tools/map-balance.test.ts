@@ -97,7 +97,7 @@ describe("walks and high ground (#3070)", () => {
       expect(Math.abs(walk0 - walk1) / Math.max(walk0, walk1)).toBeLessThanOrEqual(0.1);
     });
 
-    it("gives the teams high ground within 25 % of each other, or all two bodies wide", () => {
+    it("gives the teams high ground within 25 % of each other", () => {
       const [ground0 = 0, ground1 = 0] = highGround(map);
       expect(ground0).toBeGreaterThan(0);
       expect(Math.abs(ground0 - ground1) / Math.max(ground0, ground1)).toBeLessThanOrEqual(0.25);
