@@ -221,25 +221,28 @@ describe("the leaderboard job", () => {
     expect(entriesOf(second.leaderboard).asOf).toBe(match.start.startedAt);
   });
 
-  it("voids a re-round that names a signer a leaver, and rates one that names a true non-signer", async () => {
-    const [, , x, y] = KEYS.map((key) => key.pubkey);
-    if (x === undefined || y === undefined) {
+  it("voids a re-round that names a signer a leaver, and rates one no winner backs", async () => {
+    const [w, , x, y] = KEYS.map((key) => key.pubkey);
+    if (w === undefined || x === undefined || y === undefined) {
       throw new Error("four keys");
     }
     const reRounded = archiveDir();
     const final = receipt({ matchId: "m1", leavers: [x] });
-    const signedByX = receipt({ matchId: "m1", only: x });
+    /** @param {string} key */
+    const partial = (key) => event(receipt({ matchId: "m1", only: key }), `/r1/${key}`);
     const voided = entriesOf(
-      (await runOn(reRounded, [[event(final), event(signedByX, `/r1/${x}`)], []])).leaderboard,
+      (await runOn(reRounded, [[event(final), partial(x)], [partial(w)]])).leaderboard,
     );
     expect(voided.entries.every((entry) => entry.matches === 0)).toBe(true);
 
-    const refused = archiveDir();
-    const signedByY = receipt({ matchId: "m1", only: y });
-    const rated = entriesOf(
-      (await runOn(refused, [[event(final), event(signedByY, `/r1/${y}`)], []])).leaderboard,
-    );
-    // Rated, not void: which way it moves each key is rate.test.ts's to show.
-    expect(rated.entries.every((entry) => entry.matches === 1)).toBe(true);
+    // x's own partial, alone or beside a loser's, is no evidence; nor is a
+    // partial from y, who really refused.
+    for (const partials of [[partial(x)], [partial(x), partial(y)], [partial(y)]]) {
+      const rated = entriesOf(
+        (await runOn(archiveDir(), [[event(final), ...partials], []])).leaderboard,
+      );
+      // Rated, not void: which way it moves each key is rate.test.ts's to show.
+      expect(rated.entries.every((entry) => entry.matches === 1)).toBe(true);
+    }
   });
 });
