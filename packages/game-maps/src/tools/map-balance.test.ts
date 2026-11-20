@@ -18,6 +18,7 @@ import type { MapData } from "../schema.js";
 import {
   balanceVerdict,
   benchSeeds,
+  failingRows,
   highGround,
   narrowestWalks,
   playBuildBot,
@@ -36,7 +37,9 @@ import {
  * set (`pnpm run bench:balance`), a smoke run, then the bench on
  * `BENCH_MAP` (an id, or `all`, the default) at `BENCH_SIZE` (every size
  * the map seats if unset), `BENCH_SEEDS` seeds each (100 by default), and
- * a table printed to paste into the map's PR.
+ * a table printed to paste into the map's PR. With `BENCH_GATE` set too
+ * (pull requests, #3711), the bench fails naming every row whose verdict
+ * is FAIL.
  */
 
 const BENCH = process.env.BENCH_BALANCE !== undefined;
@@ -78,6 +81,27 @@ describe("the balance verdict (#3065)", () => {
 
   it("fails all draws as no contact", () => {
     expect(balanceVerdict(result([0, 0], 100))).toEqual({ pass: false, reason: "no contact" });
+  });
+});
+
+describe("the rows the PR gate fails (#3711)", () => {
+  it("names each failing row with its reason, in table order", () => {
+    expect(
+      failingRows([
+        { mapId: "arena-canyon", size: 2, balance: result([22, 16], 2) },
+        { mapId: "hall-of-heroes", size: 8, balance: result([5, 35]) },
+        { mapId: "threefold-keep", size: 8, balance: result([30, 30, 30], 40) },
+      ]),
+    ).toEqual([
+      "hall-of-heroes 8v8: team 1 favoured (88 % of decided)",
+      "threefold-keep 8v8: 31 % draws",
+    ]);
+  });
+
+  it("lists nothing when every row passes", () => {
+    expect(
+      failingRows([{ mapId: "arena-crossroads", size: 2, balance: result([18, 18], 4) }]),
+    ).toEqual([]);
   });
 });
 
@@ -2472,6 +2496,14 @@ describe.runIf(BENCH)("the map balance bench (#3065)", () => {
           .map((row) => `| ${row.join(" | ")} |`)
           .join("\n"),
       );
+      if (process.env.BENCH_GATE !== undefined) {
+        // Printed first, so the gate fails with every FAIL row named (#3711).
+        expect(
+          failingRows(
+            runs.map(({ map, perTeam, balance }) => ({ mapId: map.id, size: perTeam, balance })),
+          ),
+        ).toEqual([]);
+      }
     },
     // Every map at every size: hours, not minutes.
     24 * 3_600_000,

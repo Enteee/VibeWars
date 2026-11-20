@@ -150,12 +150,18 @@ are 0, 5, …, 95), so a short run samples what a full one plays; the
 table's `matches` header names the count and the stride (#3694).
 
 Pull requests that touch a map, the bot rules or the bench run it on
-GitHub-hosted runners (`balance-bench.yml`, #3356): 20 seeds, at most 12
-rows, each touched map at every size it seats, or `arena-canyon` and
-`arena-crossroads` 2v2 for a rule change. Read the table in the run's job
-summary, or copy it from `hub run view <id> --log` between
-`--- balance table ---` and `--- end ---`. It is information, never a
-gate. Run it locally only after asking on Telegram: it loads the host.
+GitHub-hosted runners (`balance-bench.yml`, #3356): 70 seeds (`SEEDS` in
+`scripts/ci/balance-plan.mjs`), at most 12 rows, each touched map at
+every size it seats, or `arena-canyon` and `arena-crossroads` 2v2 for a
+rule change. 70 seeds are enough that a fair map misses the ±10 % band by
+chance under 5 % of the time; at 20 it was one run in five (#3711). Read
+the table in the run's job summary, or copy it from `hub run view <id>
+--log` between `--- balance table ---` and `--- end ---`. With
+`BENCH_GATE` set, as the pull-request run sets it (#3717), the bench
+fails naming every row whose verdict is FAIL (#3711). The check is not
+required, so red blocks no merge, but it no longer ticks a failing map. A
+survey run (`workflow_dispatch`) never fails on a verdict. Run it locally
+only after asking on Telegram: it loads the host.
 
 A row gives the matches run, the wins of each team (by spawn side), the
 draws, the mean match length in simulated seconds, the share of

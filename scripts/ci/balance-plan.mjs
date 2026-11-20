@@ -6,14 +6,20 @@
  * the hosted runners for hours; the dropped rows are listed, never an error.
  *
  * Usage:
- *   node scripts/ci/balance-plan.mjs <base> [head]   (base...head) prints {"rows":[...],"dropped":[...]}
+ *   node scripts/ci/balance-plan.mjs <base> [head]   (base...head) prints {"rows":[...],"dropped":[...],"seeds":70}
  */
 
 import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-export const SEEDS = 20;
+/**
+ * Seeds a row plays on a pull request (#3711): 140 matches, so a fair map
+ * misses the verdict's ±10 % band under 5 % of the time, 3 teams and 10 %
+ * draws included (20 seeds missed it 16-36 %). Scarred Earth 8v8, the
+ * slowest row, took 30-43 min at 100 seeds on a hosted runner.
+ */
+export const SEEDS = 70;
 export const MAX_ROWS = 12;
 
 /** Plays on a rule change, next to every touched map. */
@@ -66,5 +72,5 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   })
     .split("\n")
     .filter((line) => line !== "");
-  console.log(JSON.stringify(planBalance(files, sizesFromDisk)));
+  console.log(JSON.stringify({ ...planBalance(files, sizesFromDisk), seeds: SEEDS }));
 }

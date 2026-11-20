@@ -171,6 +171,22 @@ export function balanceVerdict({ wins, draws }: MapBalanceResult): BalanceVerdic
     : { pass: true };
 }
 
+/** One row of the bench's table: a map at one team size. */
+export interface BalanceRow {
+  readonly mapId: string;
+  /** Players a team. */
+  readonly size: number;
+  readonly balance: MapBalanceResult;
+}
+
+/** Each failing row as `map NvN: reason`, in table order: what the PR gate names (#3711). */
+export function failingRows(rows: readonly BalanceRow[]): string[] {
+  return rows.flatMap(({ mapId, size, balance }) => {
+    const verdict = balanceVerdict(balance);
+    return verdict.pass ? [] : [`${mapId} ${String(size)}v${String(size)}: ${verdict.reason}`];
+  });
+}
+
 /** A bot playing `build` (#1189): what a seated bot is, without a lobby. */
 export function playBuildBot(
   build: PlayerBuild,
