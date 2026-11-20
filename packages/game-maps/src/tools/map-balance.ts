@@ -7,6 +7,8 @@ import {
   distancePointToSegment,
   loadoutOf,
   loadoutSpec,
+  onCapturePoint,
+  onHill,
   pointInPolygon,
   resolveLoadout,
   segment,
@@ -14,7 +16,9 @@ import {
   shallowWaterZones,
   spawnFacing,
   walkCost,
+  type GhostField,
   type LayeredPathFinder,
+  type Participant,
   type ParticipantSpec,
   type RouteWaypoint,
   type Segment,
@@ -243,6 +247,27 @@ function mirrorMatch(
   return { sim, timeLimitSeconds: rules.timeLimitSeconds };
 }
 
+/**
+ * Whether `body` holds an objective, standing still on purpose (#3689):
+ * on a capture point its team does not fully own, as the `shrines` bot
+ * rule keeps it, or on the altar its team holds.
+ */
+function holding(
+  sim: MatchSimulation,
+  ghostField: GhostField | undefined,
+  body: Participant,
+): boolean {
+  const team = body.combatant.team;
+  return (
+    sim.capturePoints.some(
+      (point) => onCapturePoint(point, body) && (point.owner !== team || point.progress < 1),
+    ) ||
+    (ghostField?.altar !== undefined &&
+      sim.altarState.holder === team &&
+      onHill(ghostField.altar, ghostField.altarLayer, body))
+  );
+}
+
 /** One match to its end, or its time limit's. */
 function playMatch(
   map: MapData,
@@ -257,6 +282,7 @@ function playMatch(
 } {
   const { sim, timeLimitSeconds } = mirrorMatch(map, size, seed, rotation, swapSides);
   const meter = new StuckMeter(RULESET.tickRateHz);
+  const { ghostField } = mapSimulationFields(map, map.teams);
   // The time limit ends every match; the margin only guards against a mode that would not.
   while (sim.phase === "active" && sim.elapsedSeconds < timeLimitSeconds + 1) {
     const { log } = sim.step(DT);
@@ -294,6 +320,7 @@ function playMatch(
             layer: body.layer,
             counts: !body.combatant.dead && nearest !== undefined,
             active: active.has(body.id),
+            holding: holding(sim, ghostField, body),
             nearestFoeLayer: nearest?.layer,
           };
         }),
