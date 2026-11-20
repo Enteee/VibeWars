@@ -135,6 +135,7 @@ export function contextFor(
     isBot: () => true,
     isIdle: () => false,
     calledTargetId: undefined,
+    jammedGoal: undefined,
     sees: () => true,
     seesBetween: () => true,
     walkable: () => true,

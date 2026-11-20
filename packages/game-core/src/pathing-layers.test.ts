@@ -6,7 +6,9 @@ import {
   buildNavGraph,
   createLayeredPathFinder,
   createPathFinder,
+  AVOID_COST,
   HARMFUL_ZONE_COST,
+  lengthInCircle,
   isStandable,
   navGraphFor,
   walkIsClear,
@@ -489,5 +491,53 @@ describe("drop-offs and climbing pace (#3069)", () => {
     const route = far.find(vec2(1320, 400), 0, vec2(1000, 400), 1);
     expect(route).toBeDefined();
     expect((route ?? []).some(({ x }) => x < 520)).toBe(false);
+  });
+});
+
+describe("a route that avoids bodies (#3702)", () => {
+  /** Open ground with walls `walls` alone. */
+  const flat = (walls: readonly Segment[]) =>
+    createLayeredPathFinder(
+      buildLayeredNavGraph([{ walls, walkable: [], open: [] }], [], BOUNDS, RADIUS, []).map(
+        (gated) => navGraphFor(gated, 0),
+      ),
+      [],
+    );
+  const from = vec2(300, 400);
+  const to = vec2(900, 400);
+
+  it("measures a segment's length inside a circle", () => {
+    expect(lengthInCircle(vec2(0, 0), vec2(10, 0), vec2(5, 0), 2)).toBeCloseTo(4);
+    expect(lengthInCircle(vec2(0, 0), vec2(10, 0), vec2(0, 0), 2)).toBeCloseTo(2);
+    expect(lengthInCircle(vec2(0, 0), vec2(10, 0), vec2(5, 5), 2)).toBe(0);
+  });
+
+  it("goes round a pillar the other way when a body stands on the shorter one", () => {
+    // A pillar a touch below the line: the way over it is the shorter.
+    const finder = flat(wall(rect(560, 330, 80, 160)));
+    const over = finder.find(from, 0, to, 0);
+    expect(over?.some((point) => point.y < 330)).toBe(true);
+    const body = { at: vec2(600, 300), layer: 0, radius: 40 };
+    const under = finder.find(from, 0, to, 0, { avoid: [body] });
+    expect(under?.every((point) => point.y > 330)).toBe(true);
+    // A body on another layer is not in the way.
+    expect(finder.find(from, 0, to, 0, { avoid: [{ ...body, layer: 1 }] })).toEqual(over);
+  });
+
+  it("raises a lone corridor's cost but keeps it walkable", () => {
+    // A wall from top to bottom but for one gap.
+    const finder = flat([
+      { a: vec2(600, 0), b: vec2(600, 360) },
+      { a: vec2(600, 440), b: vec2(600, 800) },
+    ]);
+    const plain = finder.find(from, 0, to, 0);
+    const avoided = finder.find(from, 0, to, 0, {
+      avoid: [{ at: vec2(600, 400), layer: 0, radius: 40 }],
+    });
+    expect(plain).toEqual([{ ...to, layer: 0 }]);
+    // Still through the gap, the only way: hugging its sides, past less of the body.
+    expect(avoided?.at(-1)).toEqual({ ...to, layer: 0 });
+    expect(avoided?.every((point) => point.x === 900 || Math.abs(point.y - 400) < 60)).toBe(true);
+    expect(AVOID_COST).toBeGreaterThan(1);
   });
 });

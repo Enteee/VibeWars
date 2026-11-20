@@ -2286,7 +2286,6 @@ describe("the width of each team's way in (#3688)", () => {
    * them, each with the card that fixes it. One that is fixed leaves this list.
    */
   const UNEVEN: Readonly<Record<string, number>> = {
-    "barrow-field": 3691,
     "hall-of-heroes-capture": 3442,
     "hall-of-heroes-king": 3442,
     "hall-of-heroes-relic": 3442,

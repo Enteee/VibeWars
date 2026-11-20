@@ -4,7 +4,7 @@ import type { BehaviourCursor, BehaviourIntent, HighGroundSpot } from "../../beh
 import type { Participant } from "../../simulation.js";
 import { harmfulZonesHolding } from "../../zones.js";
 import { botUses, type BotUse } from "../skill-intent.js";
-import { NOTHING, POSITION_SLACK, healthFraction } from "./shared.js";
+import { NOTHING, POSITION_SLACK, healthFraction, nearJammedGoal } from "./shared.js";
 import type { BotRule, RuleContext } from "./types.js";
 
 /** A bot this many foes target is focused (#3369). */
@@ -199,7 +199,8 @@ function cover(
         distance(spot.point, self.position) <= DUCK_REACH &&
         (toFoes === undefined ||
           dot(sub(spot.point, self.position), toFoes) <= dot(toFoes, toFoes)) &&
-        harmfulZonesHolding(context.objectives.harmfulZones, spot.point, spot.layer).length === 0,
+        harmfulZonesHolding(context.objectives.harmfulZones, spot.point, spot.layer).length === 0 &&
+        !nearJammedGoal(context, spot.point, spot.layer),
     )
     .sort((a, b) => distance(a.point, self.position) - distance(b.point, self.position))
     .slice(0, DUCK_CANDIDATES);
