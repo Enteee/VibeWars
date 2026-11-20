@@ -31,6 +31,14 @@ const HEIGHT = 450;
 const MAX_BYTES = 150 * 1024;
 /** Smaller than any drawn scene: a blank canvas compresses to almost nothing. */
 const MIN_BYTES = 8 * 1024;
+/**
+ * The player in the UI shots. Left to the game, the name is random per
+ * browser, so two frames of one flow would show two players and every
+ * re-run would change the images. Dev serves at `/`, so the key is the
+ * plain `vibewars` namespace (storage/namespace.ts).
+ */
+const PLAYER_NAME_KEY = "vibewars.playerName";
+const PLAYER_NAME = "SwiftComet";
 
 /** The dev client, up and answering; resolves its url and a way to stop it. */
 async function serve() {
@@ -130,6 +138,12 @@ async function uiScenes(browser, url, wanted) {
     reducedMotion: "reduce",
   });
   try {
+    await page.addInitScript(
+      ([key, name]) => {
+        localStorage.setItem(key, name);
+      },
+      [PLAYER_NAME_KEY, PLAYER_NAME],
+    );
     await page.goto(url);
     await page
       .locator(".mode-rail")
