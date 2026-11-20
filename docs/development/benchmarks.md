@@ -143,8 +143,11 @@ teams field the same built-in builds, so the only difference between
 them is their spawn side. Each seed is played twice, the second time
 with the builds rotated by one, so no build keeps one spawn.
 `BENCH_MAP=all` (the default) runs every map, and without `BENCH_SIZE`
-every size a map seats is its own row. `BENCH_SEEDS` sets the seeds,
-100 by default; a 4v4 row of 100 seeds takes about twenty minutes.
+every size a map seats is its own row. `BENCH_SEEDS` sets how many
+seeds, 100 by default; a 4v4 row of 100 seeds takes about twenty
+minutes. Fewer than 100 are spread evenly over seeds 0 to 99 (20 seeds
+are 0, 5, …, 95), so a short run samples what a full one plays; the
+table's `matches` header names the count and the stride (#3694).
 
 Pull requests that touch a map, the bot rules or the bench run it on
 GitHub-hosted runners (`balance-bench.yml`, #3356): 20 seeds, at most 12
