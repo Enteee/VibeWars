@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { FOE_COLOUR, FRIEND_COLOUR, HAND, nudgeFromTeams, wheelDistance } from "./colour-wheel.js";
 
@@ -43,6 +43,17 @@ describe("nudgeFromTeams (#3628)", () => {
       const nudged = nudgeFromTeams(colour);
       expect(nudgeFromTeams(nudged)).toBe(nudged);
       expect(clear(nudged)).toBe(true);
+    }
+  });
+
+  it("turns a colour once: drawing it again every frame costs no trigonometry", () => {
+    const first = nudgeFromTeams(0xfe7a71);
+    const cos = vi.spyOn(Math, "cos");
+    try {
+      expect(nudgeFromTeams(0xfe7a71)).toBe(first);
+      expect(cos).not.toHaveBeenCalled();
+    } finally {
+      cos.mockRestore();
     }
   });
 

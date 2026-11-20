@@ -83,9 +83,28 @@ function clearOfTeams(colour: number): boolean {
  * hue turns away from the nearer one, a degree at a time, chroma and
  * lightness kept, until it is a hand clear of both. Equally near both, it
  * turns away from friend blue. Pure, so every peer draws the same, and
- * idempotent: what it returns is clear already.
+ * idempotent: what it returns is clear already. Remembered per colour,
+ * since every cape is drawn every frame and a near-team colour costs up to
+ * 360 turns.
  */
 export function nudgeFromTeams(colour: number): number {
+  let drawn = nudged.get(colour);
+  if (drawn === undefined) {
+    if (nudged.size >= MAX_NUDGED) {
+      nudged.clear();
+    }
+    drawn = turnFromTeams(colour);
+    nudged.set(colour, drawn);
+  }
+  return drawn;
+}
+
+/** Colours `nudgeFromTeams` has already turned, each to what it draws as. */
+const nudged = new Map<number, number>();
+/** Far more than a match's capes hold (16 players, 17 colours each). */
+const MAX_NUDGED = 4096;
+
+function turnFromTeams(colour: number): number {
   if (clearOfTeams(colour)) {
     return colour;
   }
