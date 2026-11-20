@@ -133,6 +133,8 @@ jobs:
           # A failing verdict keeps its table; only a crash leaves it empty.
           sed 's/\x1b\[[0-9;]*m//g' bench.log | grep '^|' > row.md || true
           [ -s row.md ] || { echo "the bench printed no table" >&2; status=1; }
+          # One annotation per failing row, so the verdict shows on the PR (#3711).
+          awk -F' *[|] *' '$10 ~ /^FAIL/ { print "::error title=balance verdict::" $2 " " $3 ": " substr($10, 7) }' row.md
           exit "$status"
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
