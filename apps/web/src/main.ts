@@ -21,6 +21,7 @@ import {
   ascentRoundOf,
   modeMapIds,
 } from "./net/maps.js";
+import { RANKED_STARTER_ID } from "./net/transport/ranked-receipts.js";
 import {
   connectMatchFor,
   observeMatchFor,
@@ -710,6 +711,8 @@ async function main(): Promise<void> {
   /** The queued match's result line once it finished, whether this side won, and the timer to its ended view. */
   let queuedEnd:
     { readonly outcome: string; readonly won: boolean; readonly timer: number } | undefined;
+  /** This player signed the start of the match about to begin, so it is ranked (#3680). */
+  let rankedSigned = false;
   /**
    * A team match's end (#1997), once it finished: what comes next, when
    * by `Date.now`, the party a win queues again, and the countdown's tick.
@@ -1862,6 +1865,7 @@ async function main(): Promise<void> {
       name,
       entrant.guild,
       playerKey,
+      id,
       {
         onState,
         onLobby: (joined, host) => {
@@ -1900,6 +1904,7 @@ async function main(): Promise<void> {
         onPartyGone: () => {
           requeue(mode, name, { note: t("session.teamSplit") });
         },
+        ...rankedEvents,
       },
       from.party,
     );
@@ -1921,6 +1926,33 @@ async function main(): Promise<void> {
     redrawRail();
     music().menu("queue");
     return true;
+  };
+
+  /**
+   * A ranked match's moments (#3680), on the queue screen when there is
+   * one, else, for a party's team match, as toasts.
+   */
+  const rankedEvents = {
+    onRankedConfirming: () => {
+      rankedSigned = true;
+      if (queue?.screen === undefined) {
+        toast(t("queue.rankedConfirming"));
+        return;
+      }
+      queue.screen.confirming(true);
+    },
+    onRankedCancelled: () => {
+      rankedSigned = false;
+      queue?.screen?.confirming(false);
+      toast(t("queue.rankedCancelled"));
+    },
+    onRankedPublished: () => {
+      if (queue?.screen === undefined) {
+        toast(`${t("queue.rankedPublished")} ${t("queue.rankedPending")}`);
+        return;
+      }
+      queue.screen.published();
+    },
   };
 
   /**
@@ -2198,6 +2230,8 @@ async function main(): Promise<void> {
       name,
       entrant.guild,
       playerKey,
+      // A member with no character plays a host starter, and signs as one (#3680).
+      entrant.characterId ?? RANKED_STARTER_ID,
       {
         // The queue line says the wait and how many teams it last heard
         // searching (#1881), none while the relays are down; the queue's
@@ -2261,6 +2295,7 @@ async function main(): Promise<void> {
             endTeamQueue();
           }
         },
+        ...rankedEvents,
       },
       party,
       own === undefined ? undefined : (selfKey) => own.teamPlan(selfKey),
@@ -3172,10 +3207,13 @@ async function main(): Promise<void> {
           kind: "play",
           connect: () =>
             connectMatchFor(from, start, name, entrant.guild, entrant.build, keepReplay),
+          ranked: rankedSigned,
         },
         ownSignet,
       );
       hallWatch.pause();
+      // Said by the match about to begin, never by the next one.
+      rankedSigned = false;
       // In the match, the status has nothing to say until it is lost.
       setStatus("", "online");
       // Said once, on the match screen: the lobby's went with it.

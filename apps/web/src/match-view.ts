@@ -179,6 +179,8 @@ export type MatchViewOptions =
   | {
       readonly kind: "play";
       readonly connect: () => Promise<MatchConnection>;
+      /** A ranked match (#3680), whose leave question says it counts as a loss. */
+      readonly ranked: boolean;
       readonly tutorial?: {
         readonly party: readonly string[];
         readonly goals: () => readonly GoalMark[];
@@ -820,7 +822,7 @@ export async function startMatchView(
   hud.mute.addEventListener("click", toggleMute);
   const jukebox = attachJukeboxPopover(hud.music, parent, true);
   // Esc cancels an attack now, so leaving is a button that asks first (#160).
-  const leave = renderLeave(hud, callbacks.onLeave);
+  const leave = renderLeave(hud, callbacks.onLeave, options.kind === "play" && options.ranked);
   // Options over the match (#454), a window like the music's (#2386): the
   // match goes on underneath.
   const optionsWindow = attachOptionsWindow(hud.options, parent, signet);

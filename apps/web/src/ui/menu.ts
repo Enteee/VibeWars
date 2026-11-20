@@ -305,6 +305,8 @@ export function renderRandomArena(
   // Only alone (#1526): queueing closes the lobby, and a party does not queue yet.
   const alone = isAlone(railParty());
   body.appendChild(hint);
+  // Said before the first queue (ADR-0055): a match of strangers is ranked, and public.
+  body.appendChild(h("p", "queue-ranked-note", t("queue.rankedNote")));
   const problem = randomArenaProblem(activeExists, alone);
   if (find !== undefined) {
     find.disabled = problem !== undefined;

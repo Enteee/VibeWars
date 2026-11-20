@@ -8135,6 +8135,52 @@ body:has(#screens[style*="none"]) .now-playing {
   color: var(--accent);
 }
 
+/* Under the outcome of a ranked match (#3680): its result is out, the rating to follow. */
+.queue-ranked {
+  color: var(--ink-dim);
+  font-size: 0.9rem;
+}
+
+.queue-ranked[hidden] {
+  display: none;
+}
+
+/* Over the versus splash while every seat signs a ranked start (#3680). */
+.screen-queue {
+  position: relative;
+}
+
+.ranked-confirm {
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgb(14 17 22 / 50%);
+}
+
+.ranked-confirm[hidden] {
+  display: none;
+}
+
+.ranked-confirm-box {
+  padding: 0.9rem 1.6rem;
+  background: rgb(14 17 22 / 92%);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  font-size: 1.3rem;
+  letter-spacing: 0.04em;
+  text-align: center;
+}
+
+/* Under Find a match (#3680): what a queued match without bots publishes. */
+.queue-ranked-note {
+  margin: 0;
+  color: var(--ink-dim);
+  font-size: 0.8rem;
+}
+
 .queue-actions {
   position: sticky;
   bottom: 0;

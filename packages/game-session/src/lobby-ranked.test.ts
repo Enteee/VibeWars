@@ -200,6 +200,41 @@ function lyingHost(
   });
 }
 
+/** A host that sends every ranked result `times` times over: a hostile one's flood. */
+function repeatingHost(times: number): (transport: Transport) => Transport {
+  return (transport) => ({
+    ...transport,
+    selfId: transport.selfId,
+    send(channel, data, to) {
+      const copies = channel === "ranked-result" ? times : 1;
+      for (let copy = 0; copy < copies; copy += 1) {
+        transport.send(channel, data, to);
+      }
+    },
+  });
+}
+
+/** A host that follows every ranked result with `times` more, each naming one more made-up leaver. */
+function fakeLeaversHost(times: number): (transport: Transport) => Transport {
+  return (transport) => ({
+    ...transport,
+    selfId: transport.selfId,
+    send(channel, data, to) {
+      transport.send(channel, data, to);
+      const said = channel === "ranked-result" ? parseWireRankedResult(data) : undefined;
+      if (said === undefined) {
+        return;
+      }
+      const leavers = [...said.result.leavers];
+      for (let fake = 0; fake < times; fake += 1) {
+        leavers.push(fake.toString(16).padStart(64, "f"));
+        const result = { ...said.result, leavers: [...leavers] };
+        transport.send(channel, { result } satisfies WireRankedResult, to);
+      }
+    },
+  });
+}
+
 /** The seats a lying host's lie names, set once they have joined. */
 let lyingSeats: readonly Seat[] = [];
 
@@ -237,6 +272,8 @@ interface Seat {
   readonly signed: RankedReceipt[];
   /** The round each of `signed` was handed on with. */
   readonly rounds: number[];
+  /** How many times it signed the host's start. */
+  startsSigned: number;
   cancelled: number;
 }
 
@@ -257,6 +294,8 @@ interface RankedLobby {
 interface RankedLobbyOptions {
   /** Seats that join without a ranked play: they sign nothing. */
   readonly unranked?: readonly number[];
+  /** Seats with no character, playing a host starter: they sign as `"starter"` (#3680). */
+  readonly starters?: readonly number[];
   /** Each seat's room, wrapped as the test likes. */
   readonly wrap?: (n: number, transport: Transport) => Transport;
   /** The host's room, wrapped: a lying host's, to its guests. */
@@ -268,13 +307,14 @@ async function joinSeat(
   n: number,
   transport: Transport,
   ranked: boolean,
+  characterId = `char-${String(n)}`,
 ): Promise<Seat> {
   const key = testPlayerKey();
   const receipts: Seat["receipts"] = [];
   const signed: RankedReceipt[] = [];
   const rounds: number[] = [];
   const play: RankedPlay = {
-    characterId: `char-${String(n)}`,
+    characterId,
     prev: ZERO_HASH,
     buildHash: BUILD,
     crypto: testReceiptCrypto,
@@ -282,6 +322,9 @@ async function joinSeat(
     onResultSigned: (partial, round) => {
       signed.push(partial);
       rounds.push(round);
+    },
+    onStartSigned: () => {
+      seat.startsSigned += 1;
     },
     onCancel: () => {
       seat.cancelled += 1;
@@ -301,7 +344,16 @@ async function joinSeat(
     queued: { group, key: keyOf(seatKey(n)), verifyTicketSig, ascentMorale: 0 },
     ...(ranked ? { ranked: play } : {}),
   });
-  const seat: Seat = { key, connection, transport, receipts, signed, rounds, cancelled: 0 };
+  const seat: Seat = {
+    key,
+    connection,
+    transport,
+    receipts,
+    signed,
+    rounds,
+    startsSigned: 0,
+    cancelled: 0,
+  };
   return seat;
 }
 
@@ -349,11 +401,20 @@ async function openRanked(mode: QueueMode, options: RankedLobbyOptions = {}): Pr
   });
   const wrap = options.wrap ?? ((_n: number, transport: Transport) => transport);
   const unranked = new Set(options.unranked ?? []);
+  const starters = new Set(options.starters ?? []);
   const seats: Seat[] = [];
   const count = group.teams.flat().length;
   for (let n = 0; n < count; n += 1) {
     const room = n === 0 ? lobby.local : network.join();
-    seats.push(await joinSeat(group, n, wrap(n, room), !unranked.has(n)));
+    seats.push(
+      await joinSeat(
+        group,
+        n,
+        wrap(n, room),
+        !unranked.has(n),
+        starters.has(n) ? "starter" : undefined,
+      ),
+    );
   }
   await settle();
   lyingSeats = seats;
@@ -434,6 +495,7 @@ describe("a ranked queued match (ADR-0055, #3573)", () => {
       expect(Object.keys(receipt.resultSigs).sort()).toEqual([...pubkeys(ranked)].sort());
       for (const seat of ranked.seats) {
         expect(seat.receipts).toEqual([{ receipt, partial: false }]);
+        expect(seat.startsSigned).toBe(1);
       }
     },
   );
@@ -521,6 +583,21 @@ describe("a ranked queued match (ADR-0055, #3573)", () => {
     expect(validateReceipt(receipt, testReceiptCrypto)).toEqual({ ok: true, void: false });
     // It is handed the receipt it lost, as everyone.
     expect(ranked.seats[2]?.receipts).toEqual([{ receipt, partial: false }]);
+  });
+
+  it("confirms a 1v1 in which one seat has no character and signs as a starter (#3680)", async () => {
+    const ranked = await openRanked("random-arena-1v1", { starters: [1] });
+    await startRanked(ranked);
+    expect(ranked.fellThrough).toEqual([]);
+    ranked.match.finish(0);
+    await ranked.step(1);
+    await until(() => ranked.seats.every((seat) => seat.receipts.length === 1));
+    const receipt = receiptOf(ranked);
+    expect(validateReceipt(receipt, testReceiptCrypto)).toEqual({ ok: true, void: false });
+    expect(receipt.start.teams.flat().map((seat) => seat.characterId)).toEqual([
+      "char-0",
+      "starter",
+    ]);
   });
 
   it("cancels at once a match with a seat that brought no ranked seat", async () => {
@@ -699,5 +776,36 @@ describe("a ranked queued match (ADR-0055, #3573)", () => {
         expect(receipt.resultSigs[seat.key.pubkey]).toBe(last.resultSigs[seat.key.pubkey]);
       }
     }
+  });
+  it("signs a result the host sends again only once: no new round, nothing more to publish", async () => {
+    const sigs = countingSigs();
+    const ranked = await openRanked("random-arena-2v2", {
+      wrap: sigs.wrap,
+      host: repeatingHost(5),
+    });
+    await startRanked(ranked);
+    ranked.match.finish(1);
+    await ranked.step(1);
+    await until(() => ranked.receipts.length === 1);
+    for (const seat of ranked.seats) {
+      expect(seat.rounds).toEqual([0]);
+    }
+    // Each copy is answered with the signature it has, never a new one;
+    // the host's own seat is sent it once.
+    expect(sigs.sent()).toEqual([1, 5, 5, 5]);
+    const receipt = receiptOf(ranked);
+    expect(receipt.result.leavers).toEqual([]);
+    expect(validateReceipt(receipt, testReceiptCrypto)).toEqual({ ok: true, void: false });
+  });
+  it("signs no re-round naming a leaver who holds no seat of the start", async () => {
+    const ranked = await openRanked("random-arena-2v2", { host: fakeLeaversHost(5) });
+    await startRanked(ranked);
+    ranked.match.finish(1);
+    await ranked.step(1);
+    await until(() => ranked.receipts.length === 1);
+    for (const seat of ranked.seats) {
+      expect(seat.rounds).toEqual([0]);
+    }
+    expect(receiptOf(ranked).result.leavers).toEqual([]);
   });
 });

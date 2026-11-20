@@ -433,3 +433,7 @@ bots incluidos, así que una Partida alojada de 3v2 no encaja con ningún tamañ
 chips se quedan como los dejaste hasta que se recarga la página.
 
 Encima de los filtros, la franja **Salón de los héroes** muestra los últimos 20 dominios, del más reciente al más antiguo: quien domina (una etiqueta de gremio o el nombre del líder), las personas del equipo ganador, cuándo terminó la victoria más reciente y, desde dos victorias, cuántas seguidas. Un dominio es una racha ininterrumpida de victorias en el Salón de quien domina. La franja lee los registros de esta página, ignora los filtros y se oculta si ninguno es una victoria en el Salón. Como todo registro, es lo que informó el anfitrión de cada partida, y nada lo comprueba.
+
+## Clasificatorias
+
+Una partida de la cola sin bots es clasificatoria. La pantalla de la cola y el lobby de equipo lo dicen antes de que entres en cola; un solo bot la deja sin clasificar. Al encontrarse una partida clasificatoria, cada jugador firma su inicio y la pantalla muestra **Confirmando partida clasificatoria…** hasta 15 segundos. Si alguien no confirma, la partida se cancela y todos vuelven a la cola. Al final cada jugador firma el resultado y el recibo de la partida se publica en los relés de Nostr con la clave pública y el nombre del personaje de cada jugador; un jugador sin personaje figura como starter. Tu puntuación cambia en menos de una hora. Salir de una partida clasificatoria cuenta como derrota, y el botón de salir lo dice.

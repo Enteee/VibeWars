@@ -448,3 +448,7 @@ tim terbesar, termasuk bot, jadi Game Host 3v2 tidak cocok dengan ukuran mana pu
 Chip tetap seperti yang kamu tinggalkan sampai halaman dimuat ulang.
 
 Di atas chip, strip **Aula Pahlawan** menampilkan 20 penguasaan terakhir, yang terbaru di depan: penguasa (tag guild atau nama pemimpinnya), orang-orang tim pemenang, kapan kemenangan terbarunya berakhir dan, mulai dua kemenangan, berapa kali berturut-turut. Satu penguasaan adalah rangkaian kemenangan Aula tanpa putus oleh satu penguasa. Strip ini membaca catatan di halaman ini, mengabaikan chip, dan disembunyikan kalau tak satu pun catatan itu kemenangan Aula. Seperti setiap catatan, isinya adalah apa yang dilaporkan host setiap laga, dan tak ada yang memeriksanya.
+
+## Peringkat
+
+Pertandingan dari antrean tanpa bot adalah pertandingan peringkat. Layar antrean dan lobi tim mengatakannya sebelum kamu mengantre; satu bot membuat pertandingan tanpa peringkat. Saat pertandingan peringkat ditemukan, setiap pemain menandatangani awalnya, dan layar menampilkan **Mengonfirmasi pertandingan peringkat…** hingga 15 detik. Jika ada yang tidak mengonfirmasi, pertandingan dibatalkan dan semua kembali ke antrean. Di akhir, setiap pemain menandatangani hasilnya, dan tanda terima pertandingan dipublikasikan di relay Nostr bersama kunci publik dan nama karakter setiap pemain; pemain tanpa karakter dicatat sebagai starter. Peringkatmu berubah dalam satu jam. Keluar dari pertandingan peringkat dihitung kalah, dan tombol keluar mengatakannya.

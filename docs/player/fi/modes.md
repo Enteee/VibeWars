@@ -494,3 +494,7 @@ kokoon. Sirut pysyvät sellaisina kuin jätit ne, kunnes sivu ladataan
 uudelleen.
 
 Sirujen yläpuolella **Sankarien sali** -nauha luettelee viimeiset 20 hallintakautta, uusin ensin: hallitsija (kiltatunnus tai johtajan nimi), voittaneen tiimin pelaajat, milloin uusin voitto päättyi ja, kahdesta voitosta alkaen, montako peräkkäin. Hallintakausi on yhden hallitsijan katkeamaton Salin voittojen sarja. Nauha lukee tämän sivun kirjaukset, ei välitä siruista, ja on piilossa, kun mikään niistä ei ole Salin voitto. Kuten jokainen kirjaus, se on sitä, mitä kunkin ottelun isäntä ilmoitti, eikä mikään tarkista sitä.
+
+## Rankatut
+
+Jonosta tuleva ottelu ilman botteja on rankattu. Jononäkymä ja joukkueaula kertovat sen ennen kuin jonotat; yksikin botti pitää ottelun rankkaamattomana. Kun rankattu ottelu löytyy, jokainen pelaaja allekirjoittaa sen alun, ja näytössä lukee enintään 15 sekunnin ajan **Vahvistetaan rankattua ottelua…**. Jos joku ei vahvista, ottelu perutaan ja kaikki palaavat jonoon. Lopuksi jokainen pelaaja allekirjoittaa tuloksen, ja ottelun kuitti julkaistaan Nostr-välittimille jokaisen pelaajan julkisen avaimen ja hahmon nimen kanssa; pelaaja ilman hahmoa merkitään nimellä starter. Luokituksesi muuttuu tunnin sisällä. Rankatusta ottelusta poistuminen lasketaan tappioksi, ja poistumispainike kertoo sen.

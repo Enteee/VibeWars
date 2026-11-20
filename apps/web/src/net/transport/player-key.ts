@@ -10,7 +10,7 @@ import { sha256 } from "@noble/hashes/sha2.js";
 import { bytesToHex, concatBytes, hexToBytes, utf8ToBytes } from "@noble/hashes/utils.js";
 import { hashes, schnorr, utils } from "@noble/secp256k1";
 import type { LobbyProofFields, PlayerKey } from "@vibewars/game-session";
-import { resultDigest, startDigest } from "@vibewars/ranking";
+import { resultDigest, startDigest, type ReceiptCrypto } from "@vibewars/ranking";
 
 import { STORAGE_NAMESPACE } from "../../storage/namespace.js";
 
@@ -94,6 +94,25 @@ export function loadPlayerKey(storage: Storage): PlayerKey {
   }
   return keyOf(secretKey);
 }
+
+/**
+ * The curve code ranked receipts are checked with (ADR-0055, #3680): the
+ * hash player keys sign with, and BIP-340's check. Total, as
+ * `verifyPlayerProof` is.
+ */
+export const receiptCrypto: ReceiptCrypto = {
+  sha256,
+  verify: (pubkey, digest, sig) => {
+    if (!HEX_32.test(pubkey) || !HEX_64.test(sig)) {
+      return false;
+    }
+    try {
+      return schnorr.verify(hexToBytes(sig), digest, hexToBytes(pubkey));
+    } catch {
+      return false;
+    }
+  },
+};
 
 /**
  * Whether `sig` is `pubkey`'s lobby proof of `fields`. Total: anything
