@@ -15,16 +15,15 @@ import { STORAGE_NAMESPACE } from "../../storage/namespace.js";
 import { MATCH_RECORD_EVENT_KIND } from "./match-records.js";
 import { wellFormedEvent } from "./nostr-relays.js";
 import { loadPlayerKey, receiptCrypto } from "./player-key.js";
+import { loadRankedPrev, saveRankedPrev } from "./ranked-prev.js";
 import {
   RANKED_STARTER_ID,
   RANKED_TOPIC,
   hostLeftAddress,
-  loadRankedPrev,
   parseRankedReceiptEvent,
   partialAddress,
   rankedReceiptEvent,
   receiptAddress,
-  saveRankedPrev,
 } from "./ranked-receipts.js";
 
 /** A `Storage` of a plain map, as a fresh browser's localStorage. */

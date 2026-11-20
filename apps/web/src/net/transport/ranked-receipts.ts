@@ -9,16 +9,8 @@
  * checks with `validateReceipt`.
  */
 
-import {
-  MAX_RECEIPT_BYTES,
-  ZERO_HASH,
-  parseReceipt,
-  receiptHash,
-  type RankedReceipt,
-  type Sha256,
-} from "@vibewars/ranking";
+import { MAX_RECEIPT_BYTES, parseReceipt, type RankedReceipt } from "@vibewars/ranking";
 
-import { STORAGE_NAMESPACE } from "../../storage/namespace.js";
 import { MATCH_RECORD_EVENT_KIND, publishEvent } from "./match-records.js";
 import { byteLength, signEvent, type NostrEvent } from "./nostr-relays.js";
 import { newTicketKey } from "./ticket-key.js";
@@ -31,11 +23,6 @@ export const RANKED_TOPIC = "vibewars-ranked";
  * who plays a host starter. Rating is per player key: the id only labels it.
  */
 export const RANKED_STARTER_ID = "starter";
-
-/** Where the hash of this browser's last receipt is kept, beside its player key. */
-const RANKED_PREV_KEY = `${STORAGE_NAMESPACE}.rankedPrev`;
-
-const HEX_32 = /^[0-9a-f]{64}$/;
 
 /** The `d` of match `matchId`'s receipt: one per match, every copy of it the same. */
 export function receiptAddress(matchId: string): string {
@@ -110,50 +97,5 @@ export function publishRankedReceipt(receipt: RankedReceipt, address: string): v
   const event = rankedReceiptEvent(receipt, address, Date.now());
   if (event !== undefined) {
     publishEvent(event);
-  }
-}
-
-/**
- * `receiptHash` of the last receipt `pubkey` published from this browser,
- * the next start's `prev`; `ZERO_HASH` for none, for one kept for another
- * key, or for anything malformed.
- */
-export function loadRankedPrev(storage: Storage, pubkey: string): string {
-  let stored: string | null;
-  try {
-    stored = storage.getItem(RANKED_PREV_KEY);
-  } catch {
-    return ZERO_HASH;
-  }
-  if (stored === null) {
-    return ZERO_HASH;
-  }
-  let value: unknown;
-  try {
-    value = JSON.parse(stored);
-  } catch {
-    return ZERO_HASH;
-  }
-  if (typeof value !== "object" || value === null) {
-    return ZERO_HASH;
-  }
-  const { pubkey: kept, prev } = value as Record<string, unknown>;
-  return kept === pubkey && typeof prev === "string" && HEX_32.test(prev) ? prev : ZERO_HASH;
-}
-
-/** Keep `receipt`'s hash as `pubkey`'s next `prev`. Storage that cannot be written forgets it. */
-export function saveRankedPrev(
-  storage: Storage,
-  pubkey: string,
-  receipt: RankedReceipt,
-  sha256: Sha256,
-): void {
-  try {
-    storage.setItem(
-      RANKED_PREV_KEY,
-      JSON.stringify({ pubkey, prev: receiptHash(receipt, sha256) }),
-    );
-  } catch {
-    // Private browsing can throw: the chain starts again from zero.
   }
 }

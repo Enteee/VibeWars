@@ -87,13 +87,8 @@ import type { NostrQueue } from "./transport/nostr-queue.js";
 import { relayRoomsSwitch } from "./relay-room.js";
 import type { RelayHold } from "./transport/relay-offer.js";
 import { receiptCrypto, verifyPlayerProof } from "./transport/player-key.js";
-import {
-  loadRankedPrev,
-  hostLeftAddress,
-  partialAddress,
-  receiptAddress,
-  saveRankedPrev,
-} from "./transport/ranked-receipts.js";
+import { loadRankedPrev, saveRankedPrev } from "./transport/ranked-prev.js";
+import { hostLeftAddress, partialAddress, receiptAddress } from "./transport/ranked-receipts.js";
 import { verifyTicketSig } from "./transport/ticket-key.js";
 import { loadRelay } from "./transport/turn-config.js";
 
