@@ -45,6 +45,9 @@ Các phím sau là cố định:
   chuột trái đưa bạn tới tầng bạn đang đứng. **Alt + chuột trái** không bao giờ
   đi lên trên tầng bạn đang đứng: từ mặt đất nó đi vào đường hầm, còn khi ở
   trong đường hầm thì nó ở lại đó.
+
+![Vòng liền đánh dấu cú nhấp lên sàn, vòng nét đứt đánh dấu cú nhấp xuống mặt đất bên dưới](../img/alt-click.png)
+
 - **Chuột phải** vào một địch hoặc đồng minh để nhắm nó. Nhấn chuột phải vào
   cùng địch đó lần nữa, thật nhanh, để tấn công nó.
 - **Chuột phải** vào một lá cờ hoặc bệ cờ, trong Chiến Bang hoặc trên Barrow

@@ -3,9 +3,9 @@
 Jede Karte spielt einen Modus, und die Lobby nennt ihn unter dem Namen der Karte. Die Modi
 sind die Einträge in der Leiste links im Hauptbildschirm. Niemand wählt den Modus einer Karte,
 aber der Leisteneintrag, von dem aus du hostest, bestimmt, welche Modi die Karten seiner Lobby
-spielen: **Teamarena** Vernichtung, Kill-Zähler und Priestervernichtung, **Aufstieg der Helden**
-Reliktlauf, King of the Hill und Punkte erobern, und **GvG** die Gildenschlacht. **Gehostetes
-Spiel** bietet jede Karte. Eine **Zufallsarena** wählt eine Karte für dich und damit den Modus,
+spielen: ![Teamarena](../../../apps/web/public/icons/mode/team-arena.svg) **Teamarena** Vernichtung, Kill-Zähler und Priestervernichtung, ![Aufstieg der Helden](../../../apps/web/public/icons/mode/heroes-ascent.svg) **Aufstieg der Helden**
+Reliktlauf, King of the Hill und Punkte erobern, und ![GvG](../../../apps/web/public/icons/mode/gvg.svg) **GvG** die Gildenschlacht. ![Gehostetes Spiel](../../../apps/web/public/icons/mode/hosted-game.svg) **Gehostetes
+Spiel** bietet jede Karte. Eine ![Zufallsarena](../../../apps/web/public/icons/mode/random-arena.svg) **Zufallsarena** wählt eine Karte für dich und damit den Modus,
 aber nie eine Gildenschlacht, einen Reliktlauf, King of the Hill oder Punkte erobern. Die
 Teamarena lost für jedes Match eine ihrer Karten aus, der Aufstieg der Helden beginnt auf seiner
 ersten Karte, und nur in einem Gehosteten Spiel wählt der Host.
@@ -254,6 +254,10 @@ niemand nimmt.
 Während sie wartet, kannst du die anderen Modi ansehen: Die Gruppe behält ihren Modus und ihre Größe, bis sie die
 Warteschlange verlässt.
 Jede Phase dauert 30 Sekunden und endet früher, sobald alle in der Team-Lobby bereit sind. Abstimmen und einen Platz nehmen macht dich bereit.
+
+![Teamarena: die Pfeile der Teamgröße unten in der Leiste und das Team deiner Lobby zum Beitreten](../img/team-arena-1.png)
+
+![Nach dem Beitreten: Du bist als Host in deinem Team, noch nicht bereit](../img/team-arena-2.png)
 
 **Abstimmen.** Jeder auf einer Seite darf einen Team-Build genau in der Größe dieser Seite vorschlagen, ein Vorschlag pro
 Spieler. Deine Team-Builds öffnen sich über den Tab **Deine Team-Builds** rechts: Suche sie nach Namen, klick auf einen,

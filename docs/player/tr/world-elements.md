@@ -51,6 +51,8 @@ görürsün. Bunu görünce oradan çık.
 
 ## Kollar ve kapılar
 
+![Güvertedeki kol, altındaki kapalı kapıyı çalıştırır](../img/world-lever-gate.png)
+
 Bir **kapı**, demir kuşaklı bir meşe kapıdır. Kapalıyken yolu keser;
 açıkken kanatları karanlık bir geçide doğru yana açılır. Bir **kol**
 bağlı olduğu kapıları açar ya da kapatır: taş bir taban ve tahta bir
@@ -81,6 +83,8 @@ geri sekemezsin; başka herkes yine de geçebilir.
 
 ## Parıldayan kapılar ve çatlak duvarlar
 
+![Bir bataklık parçasının yanında çatlak bir duvar](../img/world-wall-mire.png)
+
 **Parıldayan bir kapı** bedenleri, okları ve diğer mermileri durdurur ama
 görüşü durdurmaz: doğrudan bir hedefe yapılan büyü içinden geçer. Akuamarin
 fenerli iki taş direk arasında parıldayan akuamarin bir perdedir. Açıkken
@@ -93,6 +97,8 @@ aldığında can çubuğu görünür; zayıfladıkça çatlaklar yayılır ve so
 yıkılıp moloza döner.
 
 ## Yükseklikler
+
+![Zemine merdivenle inen yükseltilmiş bir güverte: bir oyuncu güvertenin üstünde, biri aşağıda zeminde](../img/layers-deck.png)
 
 Bazı zeminler yükseltilmiştir ve oraya yalnızca rampalarından,
 merdivenlerinden, kaba basamaklarından ya da seyyar merdivenlerinden
@@ -111,6 +117,8 @@ aşağıdaki oyuncular altından yürüyebilir. Daha yüksekte olmak menzilini y
 da hasarını değiştirmez.
 
 ## Tüneller
+
+![Yukarıdan bakınca ızgara yarıklı bir derz tüneli belli eder; kesikli halka içindeki bir oyuncudur](../img/layers-tunnel.png)
 
 Bazı geçitler yerin altından geçer. Yukarıdan bakınca ızgara yarıklı,
 gömme bir derz bir geçidin nereden geçtiğini gösterir ve iki ucundaki

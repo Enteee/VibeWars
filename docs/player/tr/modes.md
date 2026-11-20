@@ -4,10 +4,10 @@ Her harita tek bir mod oynatır ve lobi hangisi olduğunu haritanın
 adının altında söyler. Modlar, ana ekranın solundaki şeridin
 girdileridir. Bir haritanın modunu kimse seçmez, ama lobiyi kurduğun
 şerit girdisi, lobisinin haritalarının hangi modları oynatacağını
-seçer: **Takım Arenası** İmha, Leş Sayısı ve Rahip İmhası;
-**Kahramanların Yükselişi** Kalıntı Koşusu, Tepenin Kralı ve Nokta Ele
-Geçirme; **GvG** ise Lonca Savaşı. **Özel Oyun** her haritayı sunar.
-**Rastgele Arena** senin için bir harita ve onunla birlikte modu seçer,
+seçer: ![Takım Arenası](../../../apps/web/public/icons/mode/team-arena.svg) **Takım Arenası** İmha, Leş Sayısı ve Rahip İmhası;
+![Kahramanların Yükselişi](../../../apps/web/public/icons/mode/heroes-ascent.svg) **Kahramanların Yükselişi** Kalıntı Koşusu, Tepenin Kralı ve Nokta Ele
+Geçirme; ![GvG](../../../apps/web/public/icons/mode/gvg.svg) **GvG** ise Lonca Savaşı. ![Özel Oyun](../../../apps/web/public/icons/mode/hosted-game.svg) **Özel Oyun** her haritayı sunar.
+![Rastgele Arena](../../../apps/web/public/icons/mode/random-arena.svg) **Rastgele Arena** senin için bir harita ve onunla birlikte modu seçer,
 ama asla Lonca Savaşı, Kalıntı Koşusu, Tepenin Kralı ya da Nokta Ele
 Geçirme seçmez. Takım Arenası her maç için haritalarından birini çeker,
 Kahramanların Yükselişi ilk haritasında başlar ve kurucunun seçmesine
@@ -318,6 +318,10 @@ kimsenin almadığı yerleri botlar oynar. Sıradayken diğer modlara göz
 atabilirsin: grup sıradan çıkana kadar modunu ve boyutunu korur.
 Her aşama 30 saniye sürer ve Takım Lobisi'ndeki herkes hazır olunca
 erken biter. Oy vermek ve bir yer almak seni hazır işaretler.
+
+![Takım Arenası: rayın altındaki takım boyutu okları ve katılacağın lobinin takımı](../img/team-arena-1.png)
+
+![Katıldıktan sonra: takımında ev sahibi olarak varsın, henüz hazır değilsin](../img/team-arena-2.png)
 
 **Oy ver.** Bir taraftaki herkes, tam o tarafın boyutunda bir Takım
 Dizilimi önerebilir, kişi başına bir öneri. Takım Dizilimlerin sağdaki

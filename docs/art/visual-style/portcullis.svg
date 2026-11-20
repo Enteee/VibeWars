@@ -1,13 +1,16 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="360" height="220" viewBox="0 0 360 220"><rect width="360" height="220" fill="#26303f"/>
-<rect x="30" y="50" width="140" height="100" fill="#10151c" fill-opacity="0.4"/>
-<rect x="30" y="56" width="140" height="8" fill="#4b5a70" stroke="#a9bbd0" stroke-width="2"/>
-<path d="M44,64 v66" stroke="#3b4759" stroke-width="4"/><path d="M44,130 l-3,8 h6z" fill="#a9bbd0"/><path d="M60,64 v66" stroke="#3b4759" stroke-width="4"/><path d="M60,130 l-3,8 h6z" fill="#a9bbd0"/><path d="M76,64 v66" stroke="#3b4759" stroke-width="4"/><path d="M76,130 l-3,8 h6z" fill="#a9bbd0"/><path d="M92,64 v66" stroke="#3b4759" stroke-width="4"/><path d="M92,130 l-3,8 h6z" fill="#a9bbd0"/><path d="M108,64 v66" stroke="#3b4759" stroke-width="4"/><path d="M108,130 l-3,8 h6z" fill="#a9bbd0"/><path d="M124,64 v66" stroke="#3b4759" stroke-width="4"/><path d="M124,130 l-3,8 h6z" fill="#a9bbd0"/><path d="M140,64 v66" stroke="#3b4759" stroke-width="4"/><path d="M140,130 l-3,8 h6z" fill="#a9bbd0"/><path d="M156,64 v66" stroke="#3b4759" stroke-width="4"/><path d="M156,130 l-3,8 h6z" fill="#a9bbd0"/>
-<rect x="34" y="60" width="132" height="76" fill="none" stroke="#a9bbd0" stroke-width="2.5"/>
-<rect x="190" y="50" width="140" height="100" fill="#10151c" fill-opacity="0.4"/>
-<rect x="190" y="56" width="140" height="8" fill="#4b5a70" stroke="#a9bbd0" stroke-width="2"/>
-<rect x="194" y="64" width="132" height="76" fill="#0b0f14"/>
-<rect x="190" y="60" width="10" height="84" fill="#4b5a70" stroke="#a9bbd0" stroke-width="2"/>
-<rect x="320" y="60" width="10" height="84" fill="#4b5a70" stroke="#a9bbd0" stroke-width="2"/>
-<rect x="194" y="140" width="132" height="6" fill="#6a6560"/>
-<g stroke="#3b4759" stroke-width="4"><path d="M206,64 v19 M222,64 v19 M238,64 v19 M254,64 v19 M270,64 v19 M286,64 v19 M302,64 v19"/></g>
-<g font-family="DejaVu Sans, sans-serif" font-size="11" fill="#d7dee8"><text x="40" y="36">shut: iron grid fills the gap</text><text x="200" y="36">open: dark gap, bars up</text></g></svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="360" height="220" viewBox="0 0 360 220"><defs></defs><rect width="360" height="220" fill="#26303f"/><rect x="0" width="1" height="220" fill="#34415a"/><rect x="100" width="1" height="220" fill="#34415a"/><rect x="200" width="1" height="220" fill="#34415a"/><rect x="300" width="1" height="220" fill="#34415a"/><rect y="0" width="360" height="1" fill="#34415a"/><rect y="100" width="360" height="1" fill="#34415a"/><rect y="200" width="360" height="1" fill="#34415a"/>
+<rect x="30" y="80" width="140" height="100" fill="#10151c" fill-opacity="0.4"/>
+<rect x="34" y="90" width="132" height="76" fill="#0b0f14"/>
+<path d="M44,90 v76" stroke="#3b4759" stroke-width="4"/><path d="M60,90 v76" stroke="#3b4759" stroke-width="4"/><path d="M76,90 v76" stroke="#3b4759" stroke-width="4"/><path d="M92,90 v76" stroke="#3b4759" stroke-width="4"/><path d="M108,90 v76" stroke="#3b4759" stroke-width="4"/><path d="M124,90 v76" stroke="#3b4759" stroke-width="4"/><path d="M140,90 v76" stroke="#3b4759" stroke-width="4"/><path d="M156,90 v76" stroke="#3b4759" stroke-width="4"/><path d="M36,112.8 h128" stroke="#3b4759" stroke-width="3"/><path d="M36,143.2 h128" stroke="#3b4759" stroke-width="3"/>
+<path d="M44,166 l-3,8 h6z" fill="#a9bbd0"/><path d="M60,166 l-3,8 h6z" fill="#a9bbd0"/><path d="M76,166 l-3,8 h6z" fill="#a9bbd0"/><path d="M92,166 l-3,8 h6z" fill="#a9bbd0"/><path d="M108,166 l-3,8 h6z" fill="#a9bbd0"/><path d="M124,166 l-3,8 h6z" fill="#a9bbd0"/><path d="M140,166 l-3,8 h6z" fill="#a9bbd0"/><path d="M156,166 l-3,8 h6z" fill="#a9bbd0"/>
+<rect x="34" y="90" width="132" height="76" fill="none" stroke="#3b4759" stroke-width="3"/>
+<path d="M34,166 H166" stroke="#a9bbd0" stroke-width="3"/>
+<rect x="190" y="80" width="140" height="100" fill="#10151c" fill-opacity="0.4"/>
+<rect x="194" y="90" width="132" height="76" fill="#0b0f14"/>
+<rect x="190" y="86" width="10" height="84" fill="#4b5a70" stroke="#a9bbd0" stroke-width="2"/>
+<rect x="320" y="86" width="10" height="84" fill="#4b5a70" stroke="#a9bbd0" stroke-width="2"/>
+<rect x="194" y="166" width="132" height="6" fill="#6a6560"/>
+<rect x="190" y="80" width="140" height="8" fill="#4b5a70" stroke="#a9bbd0" stroke-width="2"/>
+<path d="M206,90 v19 M222,90 v19 M238,90 v19 M254,90 v19 M270,90 v19 M286,90 v19 M302,90 v19" stroke="#3b4759" stroke-width="4"/>
+<path d="M200,20 v54" stroke="#3b4759" stroke-width="4"/><path d="M216,20 v54" stroke="#3b4759" stroke-width="4"/><path d="M232,20 v54" stroke="#3b4759" stroke-width="4"/><path d="M248,20 v54" stroke="#3b4759" stroke-width="4"/><path d="M264,20 v54" stroke="#3b4759" stroke-width="4"/><path d="M280,20 v54" stroke="#3b4759" stroke-width="4"/><path d="M296,20 v54" stroke="#3b4759" stroke-width="4"/><path d="M312,20 v54" stroke="#3b4759" stroke-width="4"/><path d="M192,36.2 h128" stroke="#3b4759" stroke-width="3"/><path d="M192,57.8 h128" stroke="#3b4759" stroke-width="3"/>
+<g font-family="DejaVu Sans, sans-serif" font-size="11" fill="#d7dee8"><text x="40" y="72">shut: grid, two rails, spiked</text><text x="200" y="12">open: grid above the lintel</text></g></svg>

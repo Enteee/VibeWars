@@ -57,7 +57,7 @@ export interface MapBalanceOptions {
   readonly map: MapData;
   /** Players a team. */
   readonly size: number;
-  /** Seeds; each is played twice, the second time with the builds rotated. */
+  /** How many seeds (`benchSeeds`); each is played twice, the second time with the builds rotated. */
   readonly seeds: number;
   /**
    * Each team on the next team's spawns (#3596): what a side wins apart
@@ -87,7 +87,26 @@ const STUCK_CELLS = 5;
 export type BalanceVerdict =
   { readonly pass: true } | { readonly pass: false; readonly reason: string };
 
-/** `seeds` seeds of mirror matches on `map`, `size` a team, each played twice. */
+/** The seed space a full run covers: the manual run's 100 seeds. */
+const SEED_SPACE = 100;
+
+/**
+ * The `count` seeds a run plays, spread evenly over 0..99 (#3694): a short
+ * run samples the whole space a full one plays, not only its first seeds,
+ * which are a fast build-mix regime. More than 100 are 0..count-1.
+ */
+export function benchSeeds(count: number): number[] {
+  return Array.from({ length: count }, (_, i) =>
+    count > SEED_SPACE ? i : Math.floor((i * SEED_SPACE) / count),
+  );
+}
+
+/** The gap between `benchSeeds(count)`'s seeds, for a table to name its set. */
+export function seedStride(count: number): number {
+  return count > SEED_SPACE ? 1 : Number((SEED_SPACE / count).toFixed(2));
+}
+
+/** `benchSeeds(seeds)` of mirror matches on `map`, `size` a team, each played twice. */
 export function runMapBalance({
   map,
   size,
@@ -98,7 +117,7 @@ export function runMapBalance({
   let draws = 0;
   let seconds = 0;
   const stuck: StuckTotals[] = [];
-  for (let seed = 0; seed < seeds; seed += 1) {
+  for (const seed of benchSeeds(seeds)) {
     // Rotated by one, so no build keeps one spawn, and a 1v1 plays a second build.
     for (const rotation of [0, 1]) {
       const {
@@ -150,6 +169,20 @@ export function balanceVerdict({ wins, draws }: MapBalanceResult): BalanceVerdic
   return drawShare > MAX_DRAW_SHARE
     ? { pass: false, reason: `${percent(drawShare)} draws` }
     : { pass: true };
+}
+
+/** One played row: what `failingRows` needs to name it. */
+export interface BalanceRow {
+  readonly map: string;
+  readonly size: number;
+  readonly verdict: BalanceVerdict;
+}
+
+/** The failing rows as `map size: reason` lines (#3711): empty when every row passes. */
+export function failingRows(rows: readonly BalanceRow[]): string[] {
+  return rows.flatMap(({ map, size, verdict }) =>
+    verdict.pass ? [] : [`${map} ${String(size)}v${String(size)}: ${verdict.reason}`],
+  );
 }
 
 /** A bot playing `build` (#1189): what a seated bot is, without a lobby. */

@@ -14,14 +14,14 @@ Amikor először nyitod meg a VibeWarst, rövid oktatást ajánl: egy sétát eg
 ## A módsáv
 
 A főképernyő bal oldalán lefutó sáv tartalmazza a
-[módokat](modes.md), fentről lefelé: **Véletlen Aréna**, **Csapataréna**,
-**Hősök Útja**, **GvG** és **Saját játék**. A módok alján van a
+[módokat](modes.md), fentről lefelé: ![Véletlen Aréna](../../../apps/web/public/icons/mode/random-arena.svg) **Véletlen Aréna**, ![Csapataréna](../../../apps/web/public/icons/mode/team-arena.svg) **Csapataréna**,
+![Hősök Útja](../../../apps/web/public/icons/mode/heroes-ascent.svg) **Hősök Útja**, ![GvG](../../../apps/web/public/icons/mode/gvg.svg) **GvG** és ![Saját játék](../../../apps/web/public/icons/mode/hosted-game.svg) **Saját játék**. A módok alján van a
 **Csapatméret**, `‹ 4v4 ›`: a nyilak a következő kisebb vagy nagyobb
 méretre lépnek, amelyet a képernyő játszik. Minden képernyő a sajátját
 jegyzi meg, és olyan méreten nyílik meg, amelyet játszik (a GvG 8v8-on).
-Alatta van a **Karakterszerkesztő**, ahol a karaktereidet készíted, és a
-**Csapatszerkesztő**, ahol a [Csapatbuildjeidet](skills-and-builds.md#csapatbuildek)
-készíted, aztán a **Meccsek**, a [befejezett meccsek](modes.md#meccsjegyzőkönyvek),
+Alatta van a ![Karakterszerkesztő](../../../apps/web/public/icons/mode/characters.svg) **Karakterszerkesztő**, ahol a karaktereidet készíted, és a
+![Csapatszerkesztő](../../../apps/web/public/icons/mode/teams.svg) **Csapatszerkesztő**, ahol a [Csapatbuildjeidet](skills-and-builds.md#csapatbuildek)
+készíted, aztán a ![Meccsek](../../../apps/web/public/icons/mode/matches.svg) **Meccsek**, a [befejezett meccsek](modes.md#meccsjegyzőkönyvek),
 ahogy a házigazdáik jelentik őket. A játék azon nyílik meg, amelyiket
 utoljára használtad.
 
@@ -200,6 +200,8 @@ sorból. 10 mp sorban állás után a házigazda a gyűrű ablakában megnyomhat
 véletlen előre beállított botcsapat ellen, kivéve a
 [Hősök Útját](modes.md#hősök-útja), amely egy, a te körödben lévő
 csapatra vár.
+
+![Csapataréna: a csapatméret nyilai a sáv alján, és a lobbid csapata, amelyhez csatlakozhatsz](../img/team-arena-1.png)
 
 ## A neved, céhjeled és köpenyed
 

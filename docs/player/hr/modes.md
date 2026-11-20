@@ -3,10 +3,10 @@
 Svaka karta igra jedan način, a soba kaže koji ispod imena karte.
 Načini su stavke trake s lijeve strane glavnog zaslona.
 Nitko ne bira način karte, ali stavka trake iz koje vodiš sobu bira
-načine koje igraju karte te sobe: **Timska arena** Uništenje, Broj ubojstava i
-Uništenje sa svećenikom, **Uspon heroja** Utrku za relikvijom, Kralja brda i
-Zauzimanje točaka, a **GvG** Bitku cehova. **Igra s domaćinom** nudi
-svaku kartu. **Nasumična arena** bira kartu umjesto tebe, a s njom i način,
+načine koje igraju karte te sobe: ![Timska arena](../../../apps/web/public/icons/mode/team-arena.svg) **Timska arena** Uništenje, Broj ubojstava i
+Uništenje sa svećenikom, ![Uspon heroja](../../../apps/web/public/icons/mode/heroes-ascent.svg) **Uspon heroja** Utrku za relikvijom, Kralja brda i
+Zauzimanje točaka, a ![GvG](../../../apps/web/public/icons/mode/gvg.svg) **GvG** Bitku cehova. ![Igra s domaćinom](../../../apps/web/public/icons/mode/hosted-game.svg) **Igra s domaćinom** nudi
+svaku kartu. ![Nasumična arena](../../../apps/web/public/icons/mode/random-arena.svg) **Nasumična arena** bira kartu umjesto tebe, a s njom i način,
 ali nikad Bitku cehova, Utrku za relikvijom, Kralja brda ili Zauzimanje
 točaka. Timska arena za svaki meč izvlači jednu od svojih karata, Uspon heroja
 počinje na svojoj prvoj karti, a samo Igra s domaćinom dopušta domaćinu da bira.
@@ -300,6 +300,10 @@ Dok je u redu, možeš pregledavati druge načine: grupa zadržava svoj
 način i veličinu dok ne napusti red.
 Svaka faza traje 30 sekundi i završava ranije kad su svi u Timskoj
 sobi spremni. Glasanje i uzimanje mjesta označavaju te kao spremnog.
+
+![Timska arena: strelice veličine tima na dnu trake i tim tvoje sobe kojem se pridružuješ](../img/team-arena-1.png)
+
+![Nakon pridruživanja: u svom si timu kao domaćin, još nisi spreman](../img/team-arena-2.png)
 
 **Glasaj.** Svatko na strani može predložiti timski sastav točno te
 veličine strane, po jedan prijedlog. Tvoji se timski sastavi otvaraju s kartice **Tvoji

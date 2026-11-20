@@ -40,6 +40,9 @@ Estas teclas son fijas:
 
 - **Clic izquierdo** en el suelo para caminar hasta allí. Sin Shift, el botón izquierdo solo camina.
 - En los mapas con plataformas elevadas, el clic izquierdo va a la superficie que ves, y **Alt + clic izquierdo** al suelo que hay debajo. Un anillo bajo el cursor indica una plataforma; uno discontinuo, el suelo. Sobre un túnel, un clic izquierdo va al nivel en el que estás. **Alt + clic izquierdo** nunca va por encima del nivel en el que estás: desde el suelo va al túnel, y dentro de un túnel se queda en él.
+
+![Un anillo continuo marca un clic en la plataforma; uno discontinuo, un clic en el suelo de debajo](../img/alt-click.png)
+
 - **Clic derecho** en un enemigo o un aliado para seleccionarlo. Otro clic
   derecho rápido en el mismo enemigo lo ataca.
 - **Clic derecho** en una bandera o en la base de bandera, en una Batalla

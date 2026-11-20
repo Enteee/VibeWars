@@ -13,14 +13,14 @@ Keď VibeWars otvoríš prvýkrát, ponúkne ti krátku výučbu: prechádzku ka
 ## Lišta režimov
 
 Lišta na ľavej strane hlavnej obrazovky obsahuje
-[režimy](modes.md), zhora nadol: **Náhodná aréna**, **Tímová aréna**,
-**Výstup hrdinov**, **GvG** a **Vlastná hra**. Pod režimami je
+[režimy](modes.md), zhora nadol: ![Náhodná aréna](../../../apps/web/public/icons/mode/random-arena.svg) **Náhodná aréna**, ![Tímová aréna](../../../apps/web/public/icons/mode/team-arena.svg) **Tímová aréna**,
+![Výstup hrdinov](../../../apps/web/public/icons/mode/heroes-ascent.svg) **Výstup hrdinov**, ![GvG](../../../apps/web/public/icons/mode/gvg.svg) **GvG** a ![Vlastná hra](../../../apps/web/public/icons/mode/hosted-game.svg) **Vlastná hra**. Pod režimami je
 **Veľkosť tímu**, `‹ 4v4 ›`: šípky prepínajú na najbližšiu menšiu alebo
 väčšiu veľkosť, ktorú obrazovka hrá. Každá obrazovka si pamätá svoju
-a otvorí sa vo veľkosti, ktorú hrá (GvG v 8v8). Pod tým je **Tvorba postáv**,
-kde si vytváraš postavy, a **Tvorba tímov**, kde si vytváraš
+a otvorí sa vo veľkosti, ktorú hrá (GvG v 8v8). Pod tým je ![Tvorba postáv](../../../apps/web/public/icons/mode/characters.svg) **Tvorba postáv**,
+kde si vytváraš postavy, a ![Tvorba tímov](../../../apps/web/public/icons/mode/teams.svg) **Tvorba tímov**, kde si vytváraš
 [tímové buildy](skills-and-builds.md#tímové-buildy), a potom
-**Zápasy**, [odohrané zápasy](modes.md#záznamy-zápasov) tak, ako ich
+![Zápasy](../../../apps/web/public/icons/mode/matches.svg) **Zápasy**, [odohrané zápasy](modes.md#záznamy-zápasov) tak, ako ich
 nahlásili ich hostitelia. Hra sa otvorí na tej
 položke, ktorú si použil naposledy.
 
@@ -178,6 +178,8 @@ potom sa vrátite do svojho lobby. Hostiteľ môže kedykoľvek opustiť frontu 
 prednastavenému tímu botov,
 okrem [Výstupu hrdinov](modes.md#výstup-hrdinov), ktorý čaká na tím
 vo vašom kole.
+
+![Tímová aréna: šípky veľkosti tímu dole na lište a tím tvojho lobby, ku ktorému sa pridáš](../img/team-arena-1.png)
 
 ## Tvoje meno, značka cechu a plášť
 

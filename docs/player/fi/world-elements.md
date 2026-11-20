@@ -47,6 +47,8 @@ tummuvan varjon kivivyöryn alla. Astu pois, kun näet sen.
 
 ## Vivut ja portit
 
+![Tasolla oleva vipu käyttää sen alla olevaa suljettua porttia](../img/world-lever-gate.png)
+
 **Portti** on raudoitettu tammiovi. Suljettuna se tukkii tien; auki ollessaan
 sen ovet kääntyvät sivuun pimeän käytävän tieltä. **Vipu** avaa tai sulkee
 portit, joita se ohjaa: kivijalusta ja puinen varsi, jonka messinkinuppi hehkuu
@@ -76,6 +78,8 @@ tahansa muu pääsee silti läpi.
 
 ## Hohtavat portit ja halkeilleet muurit
 
+![Halkeillut muuri suon vieressä](../img/world-wall-mire.png)
+
 **Hohtava portti** pysäyttää ruumiit, nuolet ja muut ammukset, mutta ei
 näkyvyyttä: suoraan kohteeseen loitsittu loitsu menee sen läpi. Se on hohtava
 vedenvihreä verho kahden kivipylvään välissä, joissa on vedenvihreät lyhdyt.
@@ -88,6 +92,8 @@ kun osoitat sitä tai se on kohteenasi; halkeamat leviävät sen heiketessä, ja
 sortuu raunioiksi.
 
 ## Korkeudet
+
+![Korotettu taso, jolta portaat johtavat maahan: yksi pelaaja ylhäällä tasolla, toinen maassa sen alla](../img/layers-deck.png)
 
 Osa maasta on korotettua, ja pääset ylös vain sen luiskia, portaita,
 karkeita askelmia tai tikkaita pitkin: korotetun tasanteen reuna pysäyttää
@@ -105,6 +111,8 @@ alapuolella olevat pelaajat voivat kulkea sen ali. Korkeammalla oleminen ei
 muuta kantamaasi eikä vahinkoasi.
 
 ## Tunnelit
+
+![Ylhäältä tunnelin paljastaa sauma, jossa on ritiläaukkoja; katkoviivarengas on pelaaja sen sisällä](../img/layers-tunnel.png)
 
 Jotkin käytävät kulkevat maan alla. Ylhäältä upotettu sauma
 ritiläaukkoineen näyttää, missä sellainen kulkee, ja sen kummankin pään

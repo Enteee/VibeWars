@@ -3,10 +3,10 @@
 Each map plays one mode, and the lobby says which under the map's name.
 The modes are the entries of the rail on the left of the main screen.
 Nobody picks a map's mode, but the rail entry you host from picks the
-modes its lobby's maps play: **Team Arena** Annihilation, Kill Count and
-Priest Annihilation, **Heroes' Ascent** Relic Run, King of the Hill and
-Capture Points, and **GvG** the Guild Battle. **Hosted Game** offers
-every map. A **Random Arena** picks a map for you, and with it the mode,
+modes its lobby's maps play: ![Team Arena](../../apps/web/public/icons/mode/team-arena.svg) **Team Arena** Annihilation, Kill Count and
+Priest Annihilation, ![Heroes' Ascent](../../apps/web/public/icons/mode/heroes-ascent.svg) **Heroes' Ascent** Relic Run, King of the Hill and
+Capture Points, and ![GvG](../../apps/web/public/icons/mode/gvg.svg) **GvG** the Guild Battle. ![Hosted Game](../../apps/web/public/icons/mode/hosted-game.svg) **Hosted Game** offers
+every map. A ![Random Arena](../../apps/web/public/icons/mode/random-arena.svg) **Random Arena** picks a map for you, and with it the mode,
 but never a Guild Battle, a Relic Run, King of the Hill or Capture
 Points. Team Arena draws one of its maps for each match, Heroes' Ascent
 starts on its first map, and only a Hosted Game lets the host pick.
@@ -303,6 +303,10 @@ While it is queued you may browse the other modes: the party keeps its
 mode and size until it leaves the queue.
 Each stage lasts 30 seconds and ends early once everyone in the Team
 Lobby is ready. Voting and taking a seat mark you ready.
+
+![Team Arena: the Team size arrows at the foot of the rail, and your lobby's team to join](img/team-arena-1.png)
+
+![After Join: you are on your team as its host, not ready yet](img/team-arena-2.png)
 
 **Vote.** Anyone on a side may propose a Team Build of exactly that
 side's size, one proposal each. Your Team Builds open from the **Your

@@ -3,11 +3,11 @@
 Cada mapa joga um modo, e a sala diz qual embaixo do nome do mapa. Os
 modos são as entradas da barra à esquerda da tela principal. Ninguém
 escolhe o modo de um mapa, mas a entrada da barra de onde você hospeda
-escolhe os modos que os mapas da sala jogam: **Arena de Equipes**
-Aniquilação, Contagem de Abates e Aniquilação de Sacerdotes, **Ascensão
+escolhe os modos que os mapas da sala jogam: ![Arena de Equipes](../../../apps/web/public/icons/mode/team-arena.svg) **Arena de Equipes**
+Aniquilação, Contagem de Abates e Aniquilação de Sacerdotes, ![Ascensão dos Heróis](../../../apps/web/public/icons/mode/heroes-ascent.svg) **Ascensão
 dos Heróis** Corrida da Relíquia, Rei da Colina e Captura de Pontos, e
-**GvG** a Batalha de Guildas. **Partida Hospedada** oferece todos os
-mapas. Uma **Arena Aleatória** escolhe um mapa para você e, com ele, o
+![GvG](../../../apps/web/public/icons/mode/gvg.svg) **GvG** a Batalha de Guildas. ![Partida Hospedada](../../../apps/web/public/icons/mode/hosted-game.svg) **Partida Hospedada** oferece todos os
+mapas. Uma ![Arena Aleatória](../../../apps/web/public/icons/mode/random-arena.svg) **Arena Aleatória** escolhe um mapa para você e, com ele, o
 modo, mas nunca uma Batalha de Guildas, uma Corrida da Relíquia, Rei da
 Colina ou Captura de Pontos. A Arena de Equipes sorteia um dos seus mapas
 a cada partida, a Ascensão dos Heróis começa no primeiro mapa dela, e só
@@ -315,6 +315,10 @@ Enquanto está na fila, você pode ver os outros modos: o grupo mantém o
 modo e o tamanho até sair da fila.
 Cada etapa dura 30 segundos e termina antes quando todos na Sala de
 Equipe estiverem prontos. Votar e pegar um assento marcam você como pronto.
+
+![Arena de Equipes: as setas de tamanho da equipe no pé da barra e a equipe da sua sala para entrar](../img/team-arena-1.png)
+
+![Depois de entrar: você está na sua equipe como anfitrião, ainda não pronto](../img/team-arena-2.png)
 
 **Votação.** Qualquer pessoa de um lado pode propor uma Build de Equipe
 exatamente do tamanho desse lado, uma proposta cada. Suas Builds de

@@ -3,10 +3,10 @@
 Cada mapa juega un modo, y la sala indica cuál bajo el nombre del mapa. Los
 modos son las entradas de la barra a la izquierda de la pantalla principal.
 Nadie elige el modo de un mapa, pero la entrada de la barra desde la que alojas
-elige los modos de los mapas de su sala: **Arena por equipos**, Aniquilación,
-Recuento de bajas y Aniquilación de sacerdote; **Ascenso de los Héroes**,
-Carrera de reliquias, Rey de la colina y Puntos de captura; y **GvG**, la
-Batalla de gremios. **Partida alojada** ofrece todos los mapas. Una **Arena
+elige los modos de los mapas de su sala: ![Arena por equipos](../../../apps/web/public/icons/mode/team-arena.svg) **Arena por equipos**, Aniquilación,
+Recuento de bajas y Aniquilación de sacerdote; ![Ascenso de los Héroes](../../../apps/web/public/icons/mode/heroes-ascent.svg) **Ascenso de los Héroes**,
+Carrera de reliquias, Rey de la colina y Puntos de captura; y ![GvG](../../../apps/web/public/icons/mode/gvg.svg) **GvG**, la
+Batalla de gremios. ![Partida alojada](../../../apps/web/public/icons/mode/hosted-game.svg) **Partida alojada** ofrece todos los mapas. Una ![Arena aleatoria](../../../apps/web/public/icons/mode/random-arena.svg) **Arena
 aleatoria** elige un mapa por ti, y con él el modo, pero nunca una Batalla de
 gremios, una Carrera de reliquias, Rey de la colina ni Puntos de captura. Arena
 por equipos sortea uno de sus mapas en cada partida, Ascenso de los Héroes
@@ -303,6 +303,10 @@ equipos, 8 en los demás) aunque el grupo sea menor; los bots juegan los asiento
 que nadie reclama. Mientras está en cola puedes ver los otros modos: el grupo
 conserva su modo y tamaño hasta salir de la cola. Cada etapa dura 30 segundos y
 termina antes si todos en la Sala de equipo están listos. Votar y tomar un asiento te marcan como listo.
+
+![Arena por equipos: las flechas del tamaño del equipo al pie de la barra y el equipo de tu sala para unirte](../img/team-arena-1.png)
+
+![Tras unirte: estás en tu equipo como anfitrión, aún sin estar listo](../img/team-arena-2.png)
 
 **Votar.** Cualquiera de un bando puede proponer una build de equipo de exactamente
 el tamaño de ese bando, una propuesta cada uno. Tus builds de equipo se abren desde

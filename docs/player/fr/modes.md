@@ -3,10 +3,10 @@
 Chaque carte joue un mode, et le salon l'indique sous le nom de la carte.
 Les modes sont les entrées de la colonne à gauche de l'écran principal.
 Personne ne choisit le mode d'une carte, mais l'entrée d'où tu héberges choisit
-les modes que jouent les cartes de son salon : **Arène d'équipe** Annihilation,
-Décompte et Annihilation de prêtre, **Ascension des héros** Course aux reliques,
-Roi de la colline et Points de capture, et **GvG** la Bataille de guilde.
-**Partie hébergée** propose toutes les cartes. Une **Arène aléatoire** choisit
+les modes que jouent les cartes de son salon : ![Arène d'équipe](../../../apps/web/public/icons/mode/team-arena.svg) **Arène d'équipe** Annihilation,
+Décompte et Annihilation de prêtre, ![Ascension des héros](../../../apps/web/public/icons/mode/heroes-ascent.svg) **Ascension des héros** Course aux reliques,
+Roi de la colline et Points de capture, et ![GvG](../../../apps/web/public/icons/mode/gvg.svg) **GvG** la Bataille de guilde.
+![Partie hébergée](../../../apps/web/public/icons/mode/hosted-game.svg) **Partie hébergée** propose toutes les cartes. Une ![Arène aléatoire](../../../apps/web/public/icons/mode/random-arena.svg) **Arène aléatoire** choisit
 une carte pour toi, et avec elle le mode, mais jamais une Bataille de guilde,
 une Course aux reliques, un Roi de la colline ou des Points de capture. L'Arène
 d'équipe tire une de ses cartes à chaque match, l'Ascension des héros commence
@@ -316,6 +316,10 @@ les places que personne ne prend. En file, tu peux parcourir les autres modes :
 le groupe garde son mode et sa taille jusqu'à ce qu'il quitte la file.
 Chaque étape dure 30 secondes et se termine plus tôt quand tout le monde dans le
 Salon d'équipe est prêt. Voter et prendre une place te marquent comme prêt.
+
+![Arène par équipes : les flèches de taille d'équipe au bas du rail, et l'équipe de ton salon à rejoindre](../img/team-arena-1.png)
+
+![Après avoir rejoint : tu es dans ton équipe en tant qu'hôte, pas encore prêt](../img/team-arena-2.png)
 
 **Vote.** Toute personne d'un camp peut proposer un Build d'équipe d'exactement
 la taille de ce camp, une proposition chacun. Tes Builds d'équipe s'ouvrent depuis

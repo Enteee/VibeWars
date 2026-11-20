@@ -19,10 +19,13 @@ import { mapMatchRules, mapSimulationFields } from "../match-fields.js";
 import type { MapData } from "../schema.js";
 import {
   balanceVerdict,
+  benchSeeds,
+  failingRows,
   highGround,
   narrowestWalks,
   playBuildBot,
   runMapBalance,
+  seedStride,
   walkSecondsByRoute,
   walksByRoute,
   walksTo,
@@ -49,6 +52,26 @@ const percent = (share: number): string => (share * 100).toFixed(1);
 function result(wins: readonly number[], draws = 0): MapBalanceResult {
   return { wins, draws, meanSeconds: 60, stuckShare: 0, apartShare: 0, stuckCells: [] };
 }
+
+describe("the failing rows (#3711)", () => {
+  it("names each failing row and its reason, in order", () => {
+    expect(
+      failingRows([
+        { map: "a", size: 2, verdict: { pass: true } },
+        {
+          map: "b",
+          size: 4,
+          verdict: { pass: false, reason: "team 0 favoured (61 % of decided)" },
+        },
+        { map: "c", size: 8, verdict: { pass: false, reason: "no contact" } },
+      ]),
+    ).toEqual(["b 4v4: team 0 favoured (61 % of decided)", "c 8v8: no contact"]);
+  });
+
+  it("is empty when every row passes", () => {
+    expect(failingRows([{ map: "a", size: 2, verdict: { pass: true } }])).toEqual([]);
+  });
+});
 
 describe("the balance verdict (#3065)", () => {
   it("passes an even split", () => {
@@ -2571,6 +2594,20 @@ describe("a seated bot (#3344)", () => {
   });
 });
 
+describe("the balance bench's seeds (#3694)", () => {
+  it("spreads a short run over 0..99, plays 0..99 at 100, and repeats none past it", () => {
+    expect(benchSeeds(20)).toEqual(Array.from({ length: 20 }, (_, i) => i * 5));
+    expect(seedStride(20)).toBe(5);
+    expect(benchSeeds(100)).toEqual(Array.from({ length: 100 }, (_, i) => i));
+    expect(seedStride(100)).toBe(1);
+    const seven = benchSeeds(7);
+    expect(seven).toHaveLength(7);
+    expect(seven).toEqual([...new Set(seven)].sort((a, b) => a - b));
+    expect(seven.every((seed) => seed >= 0 && seed <= 99)).toBe(true);
+    expect(benchSeeds(120)).toEqual(Array.from({ length: 120 }, (_, i) => i));
+  });
+});
+
 describe.runIf(BENCH)("the map balance bench (#3065)", () => {
   it("plays every match of a smoke run", () => {
     const seeds = 4;
@@ -2617,7 +2654,7 @@ describe.runIf(BENCH)("the map balance bench (#3065)", () => {
       const header = [
         "map",
         "size",
-        "matches",
+        `matches (${String(seeds)} seeds, stride ${String(seedStride(seeds))})`,
         "wins by team",
         "draws",
         "mean s",
@@ -2640,6 +2677,17 @@ describe.runIf(BENCH)("the map balance bench (#3065)", () => {
           .map((row) => `| ${row.join(" | ")} |`)
           .join("\n"),
       );
+      // The CI gate on pull requests (#3711); the table above is printed either way.
+      if (process.env.BENCH_GATE !== undefined) {
+        const failing = failingRows(
+          runs.map(({ map, perTeam, balance }) => ({
+            map: map.id,
+            size: perTeam,
+            verdict: balanceVerdict(balance),
+          })),
+        );
+        expect(failing).toEqual([]);
+      }
     },
     // Every map at every size: hours, not minutes.
     24 * 3_600_000,

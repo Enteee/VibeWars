@@ -13,14 +13,14 @@ Saat pertama kali kamu membuka VibeWars, game ini menawarkan tutorial singkat: b
 ## Rel mode
 
 Rel di sisi kiri layar utama berisi
-[mode](modes.md), dari atas ke bawah: **Arena Acak**, **Arena Tim**,
-**Pendakian Pahlawan**, **GvG** dan **Game Host**. Di bawah daftar mode
+[mode](modes.md), dari atas ke bawah: ![Arena Acak](../../../apps/web/public/icons/mode/random-arena.svg) **Arena Acak**, ![Arena Tim](../../../apps/web/public/icons/mode/team-arena.svg) **Arena Tim**,
+![Pendakian Pahlawan](../../../apps/web/public/icons/mode/heroes-ascent.svg) **Pendakian Pahlawan**, ![GvG](../../../apps/web/public/icons/mode/gvg.svg) **GvG** dan ![Game Host](../../../apps/web/public/icons/mode/hosted-game.svg) **Game Host**. Di bawah daftar mode
 ada **Ukuran tim**, `‹ 4v4 ›`: panah-panahnya pindah ke ukuran berikutnya yang
 lebih kecil atau lebih besar yang dimainkan layar itu. Setiap layar mengingat
-ukurannya sendiri, dan terbuka pada ukuran yang dimainkannya (GvG pada 8v8). Di bawahnya ada **Pembuat Karakter**, tempat kamu
-membuat karakter, dan **Pembuat Tim**, tempat kamu membuat
+ukurannya sendiri, dan terbuka pada ukuran yang dimainkannya (GvG pada 8v8). Di bawahnya ada ![Pembuat Karakter](../../../apps/web/public/icons/mode/characters.svg) **Pembuat Karakter**, tempat kamu
+membuat karakter, dan ![Pembuat Tim](../../../apps/web/public/icons/mode/teams.svg) **Pembuat Tim**, tempat kamu membuat
 [Build Tim](skills-and-builds.md#build-tim), lalu
-**Laga**, yaitu [laga yang sudah selesai](modes.md#catatan-laga) seperti yang
+![Laga](../../../apps/web/public/icons/mode/matches.svg) **Laga**, yaitu [laga yang sudah selesai](modes.md#catatan-laga) seperti yang
 dilaporkan host-nya. Game terbuka di
 layar yang terakhir kamu pakai.
 
@@ -180,6 +180,8 @@ menekan **Lawan bot** di jendela cincin: laga di lobimu sendiri melawan
 tim bot preset acak,
 kecuali di [Pendakian Pahlawan](modes.md#pendakian-pahlawan), yang menunggu
 tim di ronde yang sama denganmu.
+
+![Arena Tim: panah ukuran tim di bagian bawah rel, dan tim lobimu untuk bergabung](../img/team-arena-1.png)
 
 ## Nama, tag guild dan jubahmu
 

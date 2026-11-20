@@ -13,13 +13,13 @@ Gdy pierwszy raz otworzysz VibeWars, gra zaproponuje krótki samouczek: spacer p
 ## Pasek trybów
 
 Pasek po lewej stronie ekranu głównego zawiera [tryby](modes.md), od góry do dołu:
-**Arena losowa**, **Arena drużynowa**, **Szczyt Bohaterów**, **GvG** i **Gra
+![Arena losowa](../../../apps/web/public/icons/mode/random-arena.svg) **Arena losowa**, ![Arena drużynowa](../../../apps/web/public/icons/mode/team-arena.svg) **Arena drużynowa**, ![Szczyt Bohaterów](../../../apps/web/public/icons/mode/heroes-ascent.svg) **Szczyt Bohaterów**, ![GvG](../../../apps/web/public/icons/mode/gvg.svg) **GvG** i ![Gra prywatna](../../../apps/web/public/icons/mode/hosted-game.svg) **Gra
 prywatna**. Pod trybami jest **Rozmiar drużyny**, `‹ 4v4 ›`: strzałki przechodzą do
 następnego mniejszego lub większego rozmiaru, którym gra dany ekran. Każdy ekran
-pamięta swój i otwiera się na rozmiarze, którym gra (GvG na 8v8). Niżej są **Kreator postaci**, gdzie
-tworzysz swoje postacie, i **Kreator drużyn**, gdzie tworzysz swoje
+pamięta swój i otwiera się na rozmiarze, którym gra (GvG na 8v8). Niżej są ![Kreator postaci](../../../apps/web/public/icons/mode/characters.svg) **Kreator postaci**, gdzie
+tworzysz swoje postacie, i ![Kreator drużyn](../../../apps/web/public/icons/mode/teams.svg) **Kreator drużyn**, gdzie tworzysz swoje
 [Buildy drużyn](skills-and-builds.md#buildy-drużyn), a następnie
-**Mecze**, [ukończone mecze](modes.md#zapisy-meczów) w takiej postaci, w jakiej
+![Mecze](../../../apps/web/public/icons/mode/matches.svg) **Mecze**, [ukończone mecze](modes.md#zapisy-meczów) w takiej postaci, w jakiej
 zgłaszają je hosty. Gra otwiera się na
 tym, którego używałeś ostatnio.
 
@@ -167,6 +167,8 @@ całą grupę. Po 10 s w kolejce host może też nacisnąć w oknie pierścienia
 botami**: mecz we własnym lobby przeciw losowej gotowej drużynie botów,
 oprócz [Szczytu Bohaterów](modes.md#szczyt-bohaterów), który czeka na drużynę na twojej
 rundzie.
+
+![Arena drużynowa: strzałki rozmiaru drużyny u dołu paska i drużyna twojego lobby, do której dołączasz](../img/team-arena-1.png)
 
 ## Twoja nazwa, tag gildii i peleryna
 

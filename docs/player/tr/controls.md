@@ -41,6 +41,9 @@ Bu tuşlar sabittir:
 
 - Oraya yürümek için yere **sol tıkla**. Shift olmadan sol düğme yalnızca yürütür.
 - Yükseltilmiş platformları olan haritalarda sol tık gördüğün yüzeye, **Alt + sol tık** ise onun altındaki zemine gider. İmlecin altındaki bir halka platformu, kesikli bir halka zemini gösterir. Bir tünelin üzerinde sol tık bulunduğun seviyeye gider. **Alt + sol tık** asla durduğun seviyenin üstüne gitmez: zemindeyken tünele iner, tüneldeyken orada kalır.
+
+![Düz halka güverteye, kesikli halka altındaki zemine yapılan tıklamayı gösterir](../img/alt-click.png)
+
 - Hedef almak için bir düşmana ya da müttefike **sağ tıkla**. Saldırmak
   için aynı düşmana hızlıca tekrar sağ tıkla.
 - Lonca Savaşı'nda ya da Barrow Field'da bir bayrağı ya da bayrak

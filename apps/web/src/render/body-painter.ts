@@ -5,7 +5,14 @@ import {
   teamColour,
   type RenderableActor,
 } from "./arena-snapshot.js";
-import { capeMotionShape, type CapeBand, type CapeMotion, type CapeShape } from "./cape-motion.js";
+import {
+  CAPE_BAND_CASING,
+  CAPE_BAND_WIDTH,
+  capeMotionShape,
+  type CapeBand,
+  type CapeMotion,
+  type CapeShape,
+} from "./cape-motion.js";
 import type { CapeLook, EmblemPart } from "./cape-shape.js";
 import { multiplyColour } from "./lighting-model.js";
 import { weaponMarkLayout } from "./weapon-mark.js";
@@ -66,9 +73,6 @@ export interface WornCape {
 /** The cape's outline, as wide as the study draws it, and its trim's. */
 export const CAPE_EDGE_WIDTH = 1.6;
 export const CAPE_TRIM_WIDTH = 1.4;
-/** The band on the rim and its casing, as the motion study draws them (#1699). */
-export const CAPE_BAND_WIDTH = 1.5;
-export const CAPE_BAND_CASING = 3;
 
 /**
  * The cape, the disc, its edge, the self rim on your own, then the

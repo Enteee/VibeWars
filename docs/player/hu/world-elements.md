@@ -48,6 +48,8 @@ alatt. Ha ezt látod, lépj ki.
 
 ## Karok és kapuk
 
+![A teraszon álló kar mozgatja az alatta lévő zárt kaput](../img/world-lever-gate.png)
+
 A **kapu** vasalt tölgyfa ajtó. Zárva elállja az utat; nyitva a szárnyai
 félrelendülnek egy sötét átjáró előtt. A **kar** kinyitja vagy bezárja a
 kapukat, amelyeket működtet: kőtalapzat fakarral, amelynek
@@ -77,6 +79,8 @@ pillanatot. Ugrás után néhány másodpercig egyik portál sem visz újra,
 
 ## Csillámló kapuk és repedt falak
 
+![Repedt fal egy darab ingovány mellett](../img/world-wall-mire.png)
+
 A **csillámló kapu** megállítja a testeket, a nyilakat és más
 lövedékeket, de a látást nem: a közvetlenül célpontra mondott varázslat
 átjut rajta. Csillámló akvamarinszínű függöny két kőoszlop között,
@@ -90,6 +94,8 @@ amíg rámutatsz vagy célba veszed; ahogy gyengül, terjednek rajta a
 repedések, végül törmelékké omlik.
 
 ## Magaslatok
+
+![Emelt terasz lépcsővel a talajig: egy játékos fent a teraszon, egy lent a talajon](../img/layers-deck.png)
 
 Némely talaj megemelt, és csak a rámpáin, lépcsőin, durva fokain vagy
 létráin juthatsz fel: egy megemelt terasz pereme falként állít meg. Ahol
@@ -106,6 +112,8 @@ Attól, hogy magasabban vagy, nem változik sem a hatótávod, sem a
 sebzésed.
 
 ## Alagutak
+
+![Felülről egy rácsos résekkel tagolt varrat jelzi az alagutat; a szaggatott kör egy játékos benne](../img/layers-tunnel.png)
 
 Néhány átjáró a föld alatt fut. Felülről egy rácsrésekkel tagolt,
 besüllyesztett fuga jelzi, merre fut egy ilyen, és a két végén lévő

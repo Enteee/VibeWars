@@ -4,10 +4,10 @@ Jokainen kartta pelaa yhtä pelitilaa, ja aula kertoo sen kartan nimen
 alla. Pelitilat ovat päänäkymän vasemmassa reunassa olevan palkin
 kohdat. Kukaan ei valitse kartan pelitilaa, mutta palkin kohta, josta
 isännöit, valitsee pelitilat, joita sen aulan kartat pelaavat:
-**Tiimiareena** Tuho, Tappolaskenta ja Pappituho, **Sankarien nousu**
-Reliikkijuoksu, Kukkulan kuningas ja Valtauspisteet, ja **GvG**
-Kiltataistelu. **Isännöity peli** tarjoaa kaikki kartat.
-**Satunnaisareena** valitsee sinulle kartan ja sen mukana pelitilan,
+![Tiimiareena](../../../apps/web/public/icons/mode/team-arena.svg) **Tiimiareena** Tuho, Tappolaskenta ja Pappituho, ![Sankarien nousu](../../../apps/web/public/icons/mode/heroes-ascent.svg) **Sankarien nousu**
+Reliikkijuoksu, Kukkulan kuningas ja Valtauspisteet, ja ![GvG](../../../apps/web/public/icons/mode/gvg.svg) **GvG**
+Kiltataistelu. ![Isännöity peli](../../../apps/web/public/icons/mode/hosted-game.svg) **Isännöity peli** tarjoaa kaikki kartat.
+![Satunnaisareena](../../../apps/web/public/icons/mode/random-arena.svg) **Satunnaisareena** valitsee sinulle kartan ja sen mukana pelitilan,
 mutta ei koskaan Kiltataistelua, Reliikkijuoksua, Kukkulan kuningasta
 eikä Valtauspisteitä. Tiimiareena arpoo jokaiseen otteluun yhden
 kartoistaan, Sankarien nousu alkaa ensimmäiseltä kartaltaan, ja vain
@@ -333,6 +333,10 @@ pelitilansa ja kokonsa, kunnes se poistuu jonosta.
 Jokainen vaihe kestää 30 sekuntia ja päättyy aikaisemmin, kun kaikki
 tiimiaulassa ovat valmiita. Äänestäminen ja paikan ottaminen merkitsevät
 sinut valmiiksi.
+
+![Tiimiareena: tiimin koon nuolet palkin alaosassa ja aulasi tiimi, johon liittyä](../img/team-arena-1.png)
+
+![Liittymisen jälkeen: olet tiimissäsi isäntänä, et vielä valmis](../img/team-arena-2.png)
 
 **Äänestä.** Kuka tahansa puolella voi ehdottaa tiimibuildia, joka on
 täsmälleen puolen kokoinen, yhden ehdotuksen kukin. Tiimibuildisi

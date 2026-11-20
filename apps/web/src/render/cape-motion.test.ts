@@ -1,7 +1,9 @@
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "@vibewars/game-core";
+import { EMBLEM_GRID, packEmblem } from "@vibewars/game-protocol";
 import { describe, expect, it } from "vitest";
 
 import {
+  CAPE_BAND_REACH,
   CAPE_LENGTH,
   capeJumped,
   capeMotionShape,
@@ -10,6 +12,7 @@ import {
   stepCapeMotion,
   type CapeMotion,
 } from "./cape-motion.js";
+import type { Point } from "./weapon-mark-geometry.js";
 
 const R = 14;
 const RUN = MINIMAL_GW_INSPIRED_PVP_V1.movement.maxSpeedUnitsPerSecond;
@@ -114,5 +117,80 @@ describe("cape motion (#1699)", () => {
     stepCapeMotion(state, FRAME, { x: 0, y: 0, r: R, vx: 0, vy: 0 });
     expect(state.unfold).toBe(0);
     expect(Math.hypot(state.nodeX, state.nodeY)).toBeCloseTo(R - 1);
+  });
+});
+
+describe("the cape's emblem (#3627)", () => {
+  /** Every pixel drawn: one part as wide as the emblem itself. */
+  const FULL = packEmblem(Array.from({ length: EMBLEM_GRID * EMBLEM_GRID }, () => 1));
+
+  /** Whether `point` lies in `polygon`, by the even-odd rule. */
+  function inside(point: Point, polygon: readonly Point[]): boolean {
+    let within = false;
+    for (let i = 0, j = polygon.length - 1; i < polygon.length; j = i++) {
+      const a = polygon[i] ?? point;
+      const b = polygon[j] ?? point;
+      if (a.y > point.y !== b.y > point.y) {
+        const crossX = a.x + ((point.y - a.y) * (b.x - a.x)) / (b.y - a.y);
+        if (point.x < crossX) {
+          within = !within;
+        }
+      }
+    }
+    return within;
+  }
+
+  /** A cape `unfold` open, its node at rest on the trail to -x. */
+  function rested(unfold: number): CapeMotion {
+    const reach = R - 1 + CAPE_LENGTH * unfold;
+    return { ...newCapeMotion(), unfold, nodeX: -reach, primed: true };
+  }
+
+  /** How far the segment from `a` to `b` comes to the origin. */
+  function reach(a: Point, b: Point): number {
+    const dx = b.x - a.x;
+    const dy = b.y - a.y;
+    const length = dx * dx + dy * dy;
+    const t = length === 0 ? 0 : Math.max(0, Math.min(1, -(a.x * dx + a.y * dy) / length));
+    return Math.hypot(a.x + t * dx, a.y + t * dy);
+  }
+
+  function expectOnCloth(state: CapeMotion): void {
+    const { cloth, emblem } = capeMotionShape(state, { x: 0, y: 0, r: R }, FULL);
+    for (const { points } of emblem) {
+      // The cloth is convex where the emblem lies, so its corners suffice; the
+      // disc is not, so every edge, whose nearest point may be its middle.
+      for (const [i, point] of points.entries()) {
+        expect(inside(point, cloth)).toBe(true);
+        const next = points[(i + 1) % points.length] ?? point;
+        expect(reach(point, next)).toBeGreaterThanOrEqual(R + CAPE_BAND_REACH - 1e-9);
+      }
+    }
+  }
+
+  it("lies wholly on the cloth, past the disc and its band, however far it has unfolded", () => {
+    for (const unfold of [0.25, 0.5, 1]) {
+      expectOnCloth(rested(unfold));
+    }
+  });
+
+  it("stays on the cloth through a walk and a turn", () => {
+    const state = newCapeMotion();
+    for (const [vx, vy] of [
+      [RUN, 0],
+      [0, -RUN],
+      [-RUN, RUN],
+    ] as const) {
+      for (let i = 0; i < 30; i++) {
+        stepCapeMotion(state, FRAME, { x: 0, y: 0, r: R, vx, vy });
+        expectOnCloth(state);
+      }
+    }
+  });
+
+  it("is at least 1.5 times the old 5.5 across, unfolded", () => {
+    const [part] = capeMotionShape(rested(1), { x: 0, y: 0, r: R }, FULL).emblem;
+    const [a, b] = part?.points ?? [];
+    expect(Math.hypot((b?.x ?? 0) - (a?.x ?? 0), (b?.y ?? 0) - (a?.y ?? 0))).toBeCloseTo(8.5);
   });
 });

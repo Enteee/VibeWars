@@ -2,10 +2,10 @@
 
 Każda mapa gra w jednym trybie, a lobby podaje go pod nazwą mapy. Tryby to pozycje
 paska po lewej stronie ekranu głównego. Nikt nie wybiera trybu mapy, ale pozycja
-paska, z której hostujesz, decyduje, w jakich trybach grają mapy jej lobby: **Arena
-drużynowa** Anihilacja, Licznik zabójstw i Anihilacja kapłana, **Szczyt Bohaterów**
-Wyścig relikwii, Król wzgórza i Punkty kontrolne, a **GvG** Bitwa gildii. **Gra
-prywatna** oferuje każdą mapę. **Arena losowa** wybiera mapę za ciebie, a z nią tryb,
+paska, z której hostujesz, decyduje, w jakich trybach grają mapy jej lobby: ![Arena drużynowa](../../../apps/web/public/icons/mode/team-arena.svg) **Arena
+drużynowa** Anihilacja, Licznik zabójstw i Anihilacja kapłana, ![Szczyt Bohaterów](../../../apps/web/public/icons/mode/heroes-ascent.svg) **Szczyt Bohaterów**
+Wyścig relikwii, Król wzgórza i Punkty kontrolne, a ![GvG](../../../apps/web/public/icons/mode/gvg.svg) **GvG** Bitwa gildii. ![Gra prywatna](../../../apps/web/public/icons/mode/hosted-game.svg) **Gra
+prywatna** oferuje każdą mapę. ![Arena losowa](../../../apps/web/public/icons/mode/random-arena.svg) **Arena losowa** wybiera mapę za ciebie, a z nią tryb,
 ale nigdy Bitwę gildii, Wyścig relikwii, Króla wzgórza ani Punkty kontrolne. Arena
 drużynowa losuje jedną ze swoich map na każdy mecz, Szczyt Bohaterów zaczyna od
 pierwszej mapy, a tylko Gra prywatna pozwala hostowi wybierać.
@@ -264,6 +264,10 @@ na Arenie drużynowej, Szczycie Bohaterów lub w GvG) dostaje Lobby drużyny tyl
 o rozmiarze drużyny trybu (wybrany rozmiar Areny drużynowej, 8 dla pozostałych), niezależnie od liczby osób w grupie; miejsca, których nikt nie zajmie, grają boty.
 W kolejce możesz przeglądać inne tryby: grupa zachowuje swój tryb i rozmiar, dopóki nie opuści kolejki.
 Każdy etap trwa 30 sekund i kończy się wcześniej, gdy wszyscy w Lobby drużyny są gotowi. Głosowanie i zajęcie miejsca oznaczają gotowość.
+
+![Arena drużynowa: strzałki rozmiaru drużyny u dołu paska i drużyna twojego lobby, do której dołączasz](../img/team-arena-1.png)
+
+![Po dołączeniu: jesteś w swojej drużynie jako gospodarz, jeszcze niegotowy](../img/team-arena-2.png)
 
 **Głosowanie.** Każdy po danej stronie może zaproponować build drużyny dokładnie rozmiaru tej strony, po jednej propozycji. Twoje buildy drużyn otwierasz z karty **Twoje buildy drużyn** po prawej: szukaj po nazwie, kliknij jeden, aby zobaczyć członków, a potem **Zaproponuj ten build**; na swoim **Wycofaj propozycję**. Esc zamyka. Na liście są tylko twoje buildy drużyn tego rozmiaru i bez problemów; szuflada mówi, ile innych rozmiarów pomija. Każdy może zagłosować na propozycję swojej strony, także własną. Każda propozycja to karta pokazująca każdego członka trzymającego broń, z jego umiejętnościami, oraz inicjały głosujących: kliknij kartę, aby zagłosować, albo inną, aby zmienić głos; głosu nie można cofnąć. Nic nie jest proponowane za ciebie: menu służy tylko do tworzenia i edycji buildów drużyn. Nowa propozycja zastępuje twoją poprzednią, a głosy na nią wracają do zera. Wygrywa najwięcej głosów. Przy remisie decyduje głos kapitana: hosta po stronie hosta, a po drugiej tego, kto dołączył najwcześniej. Gdy są propozycje, ale nie ma głosów, jedna jest wybierana losowo. Bez propozycji strona gra losową gotową drużyną swojego rozmiaru, taką jaką zaczynasz w Kreatorze drużyn; strona jednoosobowa gra losowym buildem startowym. Grupa w kolejce, której plan drużyny nie zostanie przyjęty (brakujące miejsce, niedozwolony build), również gra losową gotową drużyną i dowiaduje się o tym na początku meczu. Każda strona losuje własną, więc obie mogą grać tą samą. Żadna strona nie widzi propozycji, głosów ani wyboru drugiej.
 

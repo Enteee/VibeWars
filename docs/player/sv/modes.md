@@ -3,10 +3,10 @@
 Varje karta spelar ett läge, och lobbyn säger vilket under kartans namn.
 Lägena är posterna på raden till vänster på huvudskärmen. Ingen väljer
 en kartas läge, men raden du är värd från väljer vilka lägen lobbyns
-kartor spelar: **Lagarena** Förintelse, Dödsräkning och
-Prästförintelse, **Heroes' Ascent** Reliklöpning, King of the Hill och
-Erövringspunkter, och **GvG** gillestriden. **Eget spel** erbjuder alla
-kartor. En **Slumparena** väljer en karta åt dig, och med den läget,
+kartor spelar: ![Lagarena](../../../apps/web/public/icons/mode/team-arena.svg) **Lagarena** Förintelse, Dödsräkning och
+Prästförintelse, ![Heroes' Ascent](../../../apps/web/public/icons/mode/heroes-ascent.svg) **Heroes' Ascent** Reliklöpning, King of the Hill och
+Erövringspunkter, och ![GvG](../../../apps/web/public/icons/mode/gvg.svg) **GvG** gillestriden. ![Eget spel](../../../apps/web/public/icons/mode/hosted-game.svg) **Eget spel** erbjuder alla
+kartor. En ![Slumparena](../../../apps/web/public/icons/mode/random-arena.svg) **Slumparena** väljer en karta åt dig, och med den läget,
 men aldrig en gillestrid, en reliklöpning, King of the Hill eller
 Erövringspunkter. Lagarena drar en av sina kartor för varje match,
 Heroes' Ascent börjar på sin första karta, och bara i ett eget spel får
@@ -317,6 +317,10 @@ Medan den står i kö får du bläddra bland de andra lägena: gruppen behåller
 sitt läge och sin storlek tills den lämnar kön.
 Varje steg varar 30 sekunder och slutar tidigt när alla i laglobbyn är
 redo. Att rösta och ta en plats gör dig redo.
+
+![Lagarena: pilarna för lagstorlek längst ner i listen och din lobbys lag att gå med i](../img/team-arena-1.png)
+
+![Efter Gå med: du är i ditt lag som värd, inte redo än](../img/team-arena-2.png)
 
 **Rösta.** Vem som helst på en sida får föreslå en lagbuild av exakt den
 sidans storlek, ett förslag var. Dina lagbuilds öppnas från fliken

@@ -3,9 +3,9 @@
 Fiecare hartă joacă un singur mod, iar lobby-ul îți spune care, sub numele hărții.
 Modurile sunt intrările de pe bara din stânga ecranului principal. Nimeni nu alege
 modul unei hărți, dar intrarea de pe bară din care găzduiești alege modurile jucate
-de hărțile lobby-ului: **Arenă de echipe** Anihilare, Număr de ucideri și Anihilare
-cu preot, **Ascensiunea Eroilor** Cursa relicvelor, Regele dealului și Capturare de
-puncte, iar **GvG** Bătălia de bresle. **Joc găzduit** oferă toate hărțile. O **Arenă
+de hărțile lobby-ului: ![Arenă de echipe](../../../apps/web/public/icons/mode/team-arena.svg) **Arenă de echipe** Anihilare, Număr de ucideri și Anihilare
+cu preot, ![Ascensiunea Eroilor](../../../apps/web/public/icons/mode/heroes-ascent.svg) **Ascensiunea Eroilor** Cursa relicvelor, Regele dealului și Capturare de
+puncte, iar ![GvG](../../../apps/web/public/icons/mode/gvg.svg) **GvG** Bătălia de bresle. ![Joc găzduit](../../../apps/web/public/icons/mode/hosted-game.svg) **Joc găzduit** oferă toate hărțile. O ![Arenă aleatorie](../../../apps/web/public/icons/mode/random-arena.svg) **Arenă
 aleatorie** alege o hartă pentru tine și, odată cu ea, modul, dar niciodată o Bătălie
 de bresle, o Cursă a relicvelor, Regele dealului sau Capturare de puncte. Arena de
 echipe trage la sorți una dintre hărțile ei pentru fiecare meci, Ascensiunea Eroilor
@@ -296,6 +296,10 @@ câți sunt în grup; boții ocupă locurile pe care nu le revendică nimeni. C�
 coadă, poți răsfoi celelalte moduri: grupul își păstrează modul și mărimea până iese din
 coadă. Fiecare etapă durează 30 de secunde și se încheie mai devreme când toți cei din
 Lobby-ul de echipă sunt gata. Votul și ocuparea unui loc te marchează ca fiind gata.
+
+![Arenă de echipe: săgețile pentru mărimea echipei la baza barei și echipa lobby-ului tău, căreia i te alături](../img/team-arena-1.png)
+
+![După alăturare: ești în echipa ta ca gazdă, încă nepregătit](../img/team-arena-2.png)
 
 **Vot.** Oricine dintr-o parte poate propune un Build de echipă de exact mărimea acelei
 părți, câte o propunere de persoană. Buildurile tale se deschid din fila **Buildurile

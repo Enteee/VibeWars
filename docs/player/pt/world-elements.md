@@ -46,6 +46,8 @@ uma sombra que escurece sob o desmoronamento. Saia quando vir isso.
 
 ## Alavancas e portões
 
+![Uma alavanca na plataforma move o portão fechado por baixo dela](../img/world-lever-gate.png)
+
 Um **portão** é uma porta de carvalho reforçada com ferro. Fechado, ele
 bloqueia o caminho; aberto, as portas se afastam para os lados, mostrando
 uma passagem escura. Uma **alavanca** abre ou fecha os portões que controla:
@@ -77,6 +79,8 @@ hora; qualquer outra pessoa ainda pode passar.
 
 ## Portões cintilantes e paredes rachadas
 
+![Uma parede rachada ao lado de uma mancha de lamaçal](../img/world-wall-mire.png)
+
 Um **portão cintilante** trava corpos, flechas e outros projéteis, mas não a
 visão: um feitiço lançado diretamente sobre um alvo passa por ele. É uma
 cortina azul-piscina cintilante entre dois pilares de pedra com lâmpadas
@@ -90,6 +94,8 @@ barra de vida dela aparece enquanto você aponta para ela ou a tem como alvo;
 as rachaduras se espalham à medida que ela enfraquece, até virar entulho.
 
 ## Alturas
+
+![Uma plataforma elevada com escadas até ao chão: um jogador em cima da plataforma, outro no chão por baixo](../img/layers-deck.png)
 
 Parte do terreno é elevada, e você só consegue subir pelas rampas,
 escadas, degraus rústicos ou escadas de mão: a borda de um deque elevado
@@ -108,6 +114,8 @@ podem passar por baixo dela. Estar mais alto não muda seu alcance nem
 seu dano.
 
 ## Túneis
+
+![Vista de cima, uma junta com fendas em grelha marca um túnel; o anel tracejado é um jogador lá dentro](../img/layers-tunnel.png)
 
 Algumas passagens correm por baixo da terra. Visto de cima, um rejunte
 rebaixado com fendas de grade marca por onde uma delas passa, e as luzes

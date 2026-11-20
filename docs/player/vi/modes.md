@@ -3,9 +3,9 @@
 Mỗi bản đồ chơi một chế độ, và sảnh ghi chế độ đó dưới tên bản đồ. Các chế
 độ là các mục trên thanh bên trái màn hình chính. Không ai chọn chế độ của
 một bản đồ, nhưng mục trên thanh mà bạn làm chủ phòng từ đó sẽ chọn các chế
-độ mà bản đồ của sảnh chơi: **Đấu trường đội** Hủy diệt, Đếm hạ gục và Diệt
-tư tế, **Đỉnh Anh Hùng** Vận chuyển thánh tích, Vua đồi và Chiếm điểm, và
-**GvG** Chiến Bang. **Trận tự tạo** cung cấp mọi bản đồ. **Đấu trường ngẫu
+độ mà bản đồ của sảnh chơi: ![Đấu trường đội](../../../apps/web/public/icons/mode/team-arena.svg) **Đấu trường đội** Hủy diệt, Đếm hạ gục và Diệt
+tư tế, ![Đỉnh Anh Hùng](../../../apps/web/public/icons/mode/heroes-ascent.svg) **Đỉnh Anh Hùng** Vận chuyển thánh tích, Vua đồi và Chiếm điểm, và
+![GvG](../../../apps/web/public/icons/mode/gvg.svg) **GvG** Chiến Bang. ![Trận tự tạo](../../../apps/web/public/icons/mode/hosted-game.svg) **Trận tự tạo** cung cấp mọi bản đồ. ![Đấu trường ngẫu nhiên](../../../apps/web/public/icons/mode/random-arena.svg) **Đấu trường ngẫu
 nhiên** chọn bản đồ cho bạn, và kèm theo đó là chế độ, nhưng không bao giờ là
 Chiến Bang, Vận chuyển thánh tích, Vua đồi hay Chiếm điểm. Đấu trường đội
 bốc một bản đồ của nó cho mỗi trận, Đỉnh Anh Hùng bắt đầu ở bản đồ đầu tiên
@@ -299,6 +299,10 @@ xếp hàng, bạn có thể xem các chế độ khác: tổ đội giữ chế
 cho đến khi rời hàng chờ. Mỗi giai đoạn kéo dài 30 giây và kết thúc sớm khi
 mọi người trong Sảnh Đội đã sẵn sàng. Bỏ phiếu và nhận chỗ sẽ đánh dấu bạn
 sẵn sàng.
+
+![Đấu trường đội: các mũi tên cỡ đội ở cuối thanh, và đội trong sảnh của bạn để tham gia](../img/team-arena-1.png)
+
+![Sau khi tham gia: bạn ở trong đội mình với vai trò chủ phòng, chưa sẵn sàng](../img/team-arena-2.png)
 
 **Bỏ phiếu.** Bất kỳ ai ở một bên đều có thể đề xuất một Build đội đúng cỡ
 của bên đó, mỗi người một đề xuất. Build đội của bạn mở từ thẻ **Build đội

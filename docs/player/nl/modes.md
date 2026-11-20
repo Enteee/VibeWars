@@ -3,9 +3,9 @@
 Elke map speelt één modus, en de lobby zegt welke onder de naam van de map. De
 modi zijn de items van de balk links op het hoofdscherm. Niemand kiest de modus
 van een map, maar het balkitem waarvandaan je host, kiest de modi die de maps van
-zijn lobby spelen: **Team Arena** Annihilation, Kill Count en Priest
-Annihilation, **Heroes' Ascent** Relic Run, King of the Hill en Capture Points,
-en **GvG** de Guild Battle. **Gehost spel** biedt elke map. Een **Random Arena**
+zijn lobby spelen: ![Team Arena](../../../apps/web/public/icons/mode/team-arena.svg) **Team Arena** Annihilation, Kill Count en Priest
+Annihilation, ![Heroes' Ascent](../../../apps/web/public/icons/mode/heroes-ascent.svg) **Heroes' Ascent** Relic Run, King of the Hill en Capture Points,
+en ![GvG](../../../apps/web/public/icons/mode/gvg.svg) **GvG** de Guild Battle. ![Gehost spel](../../../apps/web/public/icons/mode/hosted-game.svg) **Gehost spel** biedt elke map. Een ![Random Arena](../../../apps/web/public/icons/mode/random-arena.svg) **Random Arena**
 kiest een map voor je, en daarmee de modus, maar nooit een Guild Battle, een
 Relic Run, King of the Hill of Capture Points. Team Arena trekt voor elke match
 een van zijn maps, Heroes' Ascent begint op zijn eerste map, en alleen bij een
@@ -275,6 +275,10 @@ Een gehoste lobby start de match niet zodra iedereen klaar is. Hij opent eerst d
 Een groep in de wachtrij ([Match zoeken](getting-started.md#een-match-hosten-of-meedoen) op Team Arena, Heroes' Ascent of GvG) krijgt een Teamlobby van alleen zijn eigen kant, zo groot als het team van de modus (de gekozen grootte in Team Arena, 8 voor de andere), ongeacht hoeveel er in de groep zitten; bots spelen de stoelen die niemand claimt.
 Zolang hij in de wachtrij staat, mag je de andere modi bekijken: de groep houdt zijn modus en grootte tot hij de wachtrij verlaat.
 Elke fase duurt 30 seconden en eindigt eerder zodra iedereen in de Teamlobby klaar is. Stemmen en een stoel nemen zet je op klaar.
+
+![Teamarena: de pijlen voor teamgrootte onder aan de balk, en het team van je lobby om bij aan te sluiten](../img/team-arena-1.png)
+
+![Na Deelnemen: je zit als host in je team, nog niet klaar](../img/team-arena-2.png)
 
 **Stemmen.** Iedereen aan een kant mag een Teambuild van precies de grootte van die kant voorstellen, één voorstel per persoon. Je Teambuilds openen via de tab **Jouw Teambuilds** rechts: zoek ze op naam, klik er een aan om de leden te zien, en dan **Deze build voorstellen**; op die van jou, **Voorstel intrekken**. Esc sluit het. Alleen je Teambuilds van die grootte en zonder problemen worden getoond; de lade zegt hoeveel van andere groottes hij weglaat. Iedereen mag stemmen op een van de voorstellen van zijn kant, ook op zijn eigen. Elk voorstel is een kaart die elk lid toont met zijn wapens, met zijn skills, en de initialen van wie erop stemde: klik op een kaart om te stemmen, of op een andere om je stem te wijzigen; een stem kan niet teruggenomen worden. Er wordt niets voor je voorgesteld: het menu maakt en bewerkt alleen Teambuilds. Een nieuw voorstel vervangt je oude, en de stemmen daarop gaan terug naar nul. De meeste stemmen wint. Bij gelijke stand beslist de stem van de aanvoerder: de host aan de kant van de host, de eerste die binnenkwam aan de andere. Met voorstellen en zonder stemmen wordt er willekeurig een gekozen. Zonder voorstel speelt de kant een willekeurig kant-en-klaar team van zijn grootte, het soort waarmee Teambouwer je laat beginnen; een kant van één speelt een willekeurige startbuild. Een groep in de wachtrij waarvan het teamplan niet geaccepteerd wordt (een ontbrekende stoel, een illegale build) speelt ook een willekeurig kant-en-klaar team, en hoort dat als de match begint. Elke kant rolt zijn eigen, dus beide kunnen hetzelfde spelen. Geen van beide kanten ziet de voorstellen, stemmen of keuze van de ander.
 

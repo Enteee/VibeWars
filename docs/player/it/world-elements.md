@@ -49,6 +49,8 @@ vedi, spostati.
 
 ## Leve e cancelli
 
+![Una leva sulla piattaforma aziona il cancello chiuso sottostante](../img/world-lever-gate.png)
+
 Un **cancello** è una porta di quercia rinforzata con il ferro. Chiuso,
 blocca la strada; aperto, i battenti si spostano di lato su un passaggio
 buio. Una **leva** apre o chiude i cancelli che comanda: una base di pietra
@@ -80,6 +82,8 @@ subito indietro; chiunque altro può comunque passare.
 
 ## Cancelli scintillanti e muri crepati
 
+![Un muro crepato accanto a una chiazza di pantano](../img/world-wall-mire.png)
+
 Un **cancello scintillante** ferma corpi, frecce e altri proiettili, ma non
 la vista: un incantesimo lanciato direttamente su un bersaglio lo
 attraversa. È una tenda scintillante color acqua tra due pilastri di pietra
@@ -93,6 +97,8 @@ sua barra della salute si vede mentre lo indichi o lo bersagli; le crepe si
 allargano man mano che cede, e alla fine crolla in macerie.
 
 ## Altezze
+
+![Una piattaforma rialzata con scale fino al suolo: un giocatore sopra, uno a terra sotto](../img/layers-deck.png)
 
 Alcuni terreni sono rialzati, e puoi salire solo per le loro rampe, scale,
 gradini grezzi o scale a pioli: il bordo di una piattaforma rialzata ti
@@ -110,6 +116,8 @@ vuoto, e i giocatori sotto possono camminarci al di sotto. Stare più in
 alto non cambia la tua gittata né i tuoi danni.
 
 ## Tunnel
+
+![Dall'alto, una giuntura con fessure a grata segna un tunnel; l'anello tratteggiato è un giocatore al suo interno](../img/layers-tunnel.png)
 
 Alcuni passaggi corrono sottoterra. Dall'alto, una fuga incassata con
 fessure a griglia segna dove ne corre uno, e le luci ai suoi due capi si
