@@ -1560,6 +1560,25 @@ export default {
   "tutorial.ground.praise": "Dall'altra parte! Ora sai cosa fa il terreno.",
   "tutorial.front.end": "Ora conosci le basi. Ci vediamo là fuori!",
   "tutorial.front.menu": "Torna al menu",
+  "tutorial.menu.arena.farewell": "Sei in coda. Buona fortuna.",
+  "tutorial.menu.arena.find":
+    "Trova partita. Il tuo gruppo riceve prima una Lobby squadra tutta sua per il suo lato, per scegliere la build con cui gioca.",
+  "tutorial.menu.arena.findDone": "Trova partita",
+  "tutorial.menu.arena.open": "Apri l'Arena a squadre sul lato.",
+  "tutorial.menu.arena.openDone": "Apri l'Arena a squadre",
+  "tutorial.menu.arena.propose":
+    "Iscrivi la tua squadra: apri Le tue Build di squadra e proponi quella che hai salvato. Deve essere una squadra da due, la dimensione con cui sei in coda. Un amico che entra con il tuo link d'invito prende uno dei suoi posti; i bot giocano il resto.",
+  "tutorial.menu.arena.proposeDone": "Proponi la tua squadra",
+  "tutorial.menu.arena.seat": "Siediti: il personaggio che giochi. La coda parte appena ti siedi.",
+  "tutorial.menu.arena.seatDone": "Siediti",
+  "tutorial.menu.arena.size":
+    "Imposta la dimensione della squadra su 2v2. La dimensione decide chi incontri: solo squadre della stessa dimensione.",
+  "tutorial.menu.arena.sizeDone": "Scegli 2v2",
+  "tutorial.menu.arena.title":
+    "Metti alla prova la tua squadra in una partita 2v2 dell'Arena a squadre.",
+  "tutorial.menu.arena.vote":
+    "Vota la tua squadra: clicca la sua scheda. Ciò che ha più voti è ciò che gioca il tuo lato.",
+  "tutorial.menu.arena.voteDone": "Vota la tua squadra",
   "tutorial.menu.gotIt": "Capito",
   "tutorial.menu.menu.characters":
     "In Personaggi crei e modifichi chi giochi: professione, abilità ed equipaggiamento.",

@@ -1569,6 +1569,26 @@ export default {
   "tutorial.ground.praise": "¡Al otro lado! Ya sabes lo que hace el suelo.",
   "tutorial.front.end": "Ya sabes lo básico. ¡Nos vemos ahí fuera!",
   "tutorial.front.menu": "Volver al menú",
+  "tutorial.menu.arena.farewell": "Estás en la cola. Buena suerte.",
+  "tutorial.menu.arena.find":
+    "Busca partida. Tu grupo recibe primero una Sala de equipo propia para su lado, para elegir la build con la que juega.",
+  "tutorial.menu.arena.findDone": "Buscar partida",
+  "tutorial.menu.arena.open": "Abre Arena por equipos en el lateral.",
+  "tutorial.menu.arena.openDone": "Abrir Arena por equipos",
+  "tutorial.menu.arena.propose":
+    "Inscribe a tu equipo: abre Tus builds de equipo y propón la que guardaste. Debe ser un equipo de dos, el tamaño con el que entras en cola. Un amigo que entre con tu enlace de invitación ocupa uno de sus puestos; los bots juegan el resto.",
+  "tutorial.menu.arena.proposeDone": "Propón tu equipo",
+  "tutorial.menu.arena.seat":
+    "Elige un puesto: el personaje que juegas. La cola empieza en cuanto te sientas.",
+  "tutorial.menu.arena.seatDone": "Elegir puesto",
+  "tutorial.menu.arena.size":
+    "Pon el tamaño del equipo en 2v2. El tamaño decide contra quién juegas: solo equipos del mismo tamaño.",
+  "tutorial.menu.arena.sizeDone": "Elige 2v2",
+  "tutorial.menu.arena.title":
+    "Demuestra lo que vale tu equipo en una partida 2v2 de Arena por equipos.",
+  "tutorial.menu.arena.vote":
+    "Vota por tu equipo: haz clic en su tarjeta. Lo más votado es lo que juega tu lado.",
+  "tutorial.menu.arena.voteDone": "Vota por tu equipo",
   "tutorial.menu.gotIt": "Entendido",
   "tutorial.menu.menu.characters":
     "En Personajes creas y cambias con quién juegas: profesión, habilidades y equipo.",

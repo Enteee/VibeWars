@@ -1501,6 +1501,25 @@ export default {
   "tutorial.ground.praise": "Drüben! Jetzt weißt du, was der Boden kann.",
   "tutorial.front.end": "Jetzt kennst du dich aus. Wir sehen uns da draußen!",
   "tutorial.front.menu": "Zum Menü",
+  "tutorial.menu.arena.farewell": "Du bist in der Warteschlange. Viel Glück.",
+  "tutorial.menu.arena.find":
+    "Such ein Match. Deine Gruppe bekommt zuerst eine eigene Team-Lobby für ihre Seite, um den Build zu wählen, den sie spielt.",
+  "tutorial.menu.arena.findDone": "Match suchen",
+  "tutorial.menu.arena.open": "Öffne an der Seite die Teamarena.",
+  "tutorial.menu.arena.openDone": "Teamarena öffnen",
+  "tutorial.menu.arena.propose":
+    "Melde dein Team an: Öffne Deine Team-Builds und schlag den vor, den du gespeichert hast. Es muss ein Team zu zweit sein, die Größe, mit der du dich anstellst. Ein Freund, der über deinen Einladungslink kommt, nimmt einen seiner Plätze; Bots spielen den Rest.",
+  "tutorial.menu.arena.proposeDone": "Schlag dein Team vor",
+  "tutorial.menu.arena.seat":
+    "Setz dich: der Charakter, den du spielst. Die Warteschlange startet, sobald du sitzt.",
+  "tutorial.menu.arena.seatDone": "Hier setzen",
+  "tutorial.menu.arena.size":
+    "Stell die Teamgröße auf 2v2. Die Größe entscheidet, wen du triffst: nur Teams derselben Größe.",
+  "tutorial.menu.arena.sizeDone": "Wähle 2v2",
+  "tutorial.menu.arena.title": "Beweise dein Team in einem 2v2-Match der Teamarena.",
+  "tutorial.menu.arena.vote":
+    "Stimm für dein Team: Klick auf seine Karte. Was die meisten Stimmen hat, spielt deine Seite.",
+  "tutorial.menu.arena.voteDone": "Stimm für dein Team",
   "tutorial.menu.gotIt": "Verstanden",
   "tutorial.menu.menu.characters":
     "Unter Charaktere erstellst und änderst du, wen du spielst: Beruf, Fertigkeiten und Ausrüstung.",

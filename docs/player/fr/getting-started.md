@@ -6,6 +6,17 @@ match. Pas de compte, rien à installer : le jeu tourne dans cet onglet du
 navigateur. VibeWars requiert un clavier et une souris. Ça ne marche pas sur
 téléphone ni sur tablette tactile : ouvre-le sur un ordinateur.
 
+## Le tutoriel
+
+La première fois que tu ouvres VibeWars, il te propose un tutoriel. Tu
+apprends à te déplacer et à combattre dans un canyon, puis tu passes le
+portail vers le menu. Là, il continue étape par étape : tu changes ton
+personnage, tu formes une équipe de deux, tu vois ce qu'est chaque mode
+et tu mets ton équipe en file pour un premier match 2v2 en Arène
+d'équipe. Pendant une étape, seul le contrôle qu'elle désigne accepte
+les clics. Tu peux passer le tutoriel à tout moment avec **Passer le
+tutoriel**.
+
 ## La colonne des modes
 
 La colonne à gauche de l'écran principal contient les

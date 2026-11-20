@@ -1389,6 +1389,24 @@ export default {
   "tutorial.ground.praise": "ข้ามมาได้! ตอนนี้รู้แล้วว่าพื้นทำอะไรได้",
   "tutorial.front.end": "ตอนนี้คุณรู้พื้นฐานแล้ว แล้วพบกันข้างนอก!",
   "tutorial.front.menu": "กลับเมนู",
+  "tutorial.menu.arena.farewell": "คุณอยู่ในคิวแล้ว ขอให้โชคดี",
+  "tutorial.menu.arena.find":
+    "หาแมตช์ ปาร์ตี้ของคุณจะได้ล็อบบี้ทีมของฝั่งตัวเองก่อน เพื่อเลือกบิลด์ที่จะเล่น",
+  "tutorial.menu.arena.findDone": "หาแมตช์",
+  "tutorial.menu.arena.open": "เปิดอารีนาทีมที่ด้านข้าง",
+  "tutorial.menu.arena.openDone": "เปิดอารีนาทีม",
+  "tutorial.menu.arena.propose":
+    "ลงทะเบียนทีมของคุณ: เปิดทีมบิลด์ของคุณ แล้วเสนอทีมที่คุณบันทึกไว้ ต้องเป็นทีมสองคน ตามขนาดที่คุณเข้าคิว เพื่อนที่เข้าร่วมผ่านลิงก์เชิญของคุณจะได้ที่นั่งหนึ่งที่ ที่เหลือบอตเล่น",
+  "tutorial.menu.arena.proposeDone": "เสนอทีมของคุณ",
+  "tutorial.menu.arena.seat": "นั่งที่นั่ง: ตัวละครที่คุณเล่น คิวจะเริ่มทันทีที่คุณนั่ง",
+  "tutorial.menu.arena.seatDone": "นั่งที่นี่",
+  "tutorial.menu.arena.size":
+    "ตั้งขนาดทีมเป็น 2v2 ขนาดเป็นตัวกำหนดว่าคุณจะเจอใคร: เฉพาะทีมขนาดเดียวกันเท่านั้น",
+  "tutorial.menu.arena.sizeDone": "เลือก 2v2",
+  "tutorial.menu.arena.title": "พิสูจน์ทีมของคุณในแมตช์อารีนาทีม 2v2",
+  "tutorial.menu.arena.vote":
+    "โหวตให้ทีมของคุณ: คลิกการ์ดของทีม อันที่ได้โหวตมากที่สุดคือสิ่งที่ฝั่งคุณเล่น",
+  "tutorial.menu.arena.voteDone": "โหวตให้ทีมของคุณ",
   "tutorial.menu.gotIt": "เข้าใจแล้ว",
   "tutorial.menu.menu.characters":
     "ในตัวละคร คุณสร้างและเปลี่ยนตัวที่จะเล่น: อาชีพ สกิล และอุปกรณ์",

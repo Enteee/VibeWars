@@ -7,6 +7,16 @@ böngészőlapban fut. A VibeWarshoz billentyűzet és egér kell. Telefonon
 vagy csak érintéssel működő táblagépen nem működik: nyisd meg
 számítógépen.
 
+## Az oktatás
+
+Amikor először nyitod meg a VibeWarst, oktatást ajánl fel. Egy kanyonban
+megtanulsz mozogni és harcolni, aztán a portálon át a menübe sétálsz.
+Ott lépésről lépésre folytatódik: megváltoztatod a karakteredet,
+összeállítasz egy kétfős csapatot, megnézed, mi az egyes módok lényege,
+és sorba állítod a csapatodat egy első 2v2 meccsre a Csapatarénában.
+Amíg egy lépés tart, csak az a vezérlő fogad kattintást, amelyre mutat.
+Az oktatást bármikor kihagyhatod az **Oktatás kihagyása** gombbal.
+
 ## A módsáv
 
 A főképernyő bal oldalán lefutó sáv tartalmazza a

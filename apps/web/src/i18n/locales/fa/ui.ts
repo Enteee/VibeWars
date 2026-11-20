@@ -1478,6 +1478,24 @@ export default {
   "tutorial.ground.praise": "رد شدی! حالا می‌دانی زمین چه می‌کند.",
   "tutorial.front.end": "حالا اصول کار را بلدی. آن بیرون می‌بینمت!",
   "tutorial.front.menu": "بازگشت به منو",
+  "tutorial.menu.arena.farewell": "در صف هستی. موفق باشی.",
+  "tutorial.menu.arena.find":
+    "یافتن مسابقه. گروهت اول یک لابی تیم ویژهٔ طرف خودش می‌گیرد تا بیلدی را که بازی می‌کند انتخاب کند.",
+  "tutorial.menu.arena.findDone": "یافتن مسابقه",
+  "tutorial.menu.arena.open": "آرنای تیمی را در کنار باز کن.",
+  "tutorial.menu.arena.openDone": "آرنای تیمی را باز کن",
+  "tutorial.menu.arena.propose":
+    "تیمت را ثبت‌نام کن: بیلدهای تیمی تو را باز کن و بیلدی را که ذخیره کردی پیشنهاد بده. باید تیمی دونفره باشد، همان اندازه‌ای که با آن در صف می‌روی. دوستی که با لینک دعوتت بپیوندد یکی از جایگاه‌هایش را می‌گیرد؛ بات‌ها بقیه را بازی می‌کنند.",
+  "tutorial.menu.arena.proposeDone": "تیمت را پیشنهاد بده",
+  "tutorial.menu.arena.seat": "بنشین: شخصیتی که بازی می‌کنی. صف همین که بنشینی شروع می‌شود.",
+  "tutorial.menu.arena.seatDone": "اینجا بنشین",
+  "tutorial.menu.arena.size":
+    "اندازهٔ تیم را روی 2v2 بگذار. اندازه تعیین می‌کند با چه کسانی روبه‌رو شوی: فقط تیم‌های هم‌اندازه.",
+  "tutorial.menu.arena.sizeDone": "2v2 را انتخاب کن",
+  "tutorial.menu.arena.title": "تیمت را در یک مسابقهٔ 2v2 آرنای تیمی ثابت کن.",
+  "tutorial.menu.arena.vote":
+    "به تیمت رأی بده: روی کارتش کلیک کن. هرچه بیشترین رأی را بگیرد، همان را طرف تو بازی می‌کند.",
+  "tutorial.menu.arena.voteDone": "به تیمت رأی بده",
   "tutorial.menu.gotIt": "فهمیدم",
   "tutorial.menu.menu.characters":
     "در «شخصیت‌ها» کسی را که با او بازی می‌کنی می‌سازی و تغییر می‌دهی: حرفه، مهارت‌ها و تجهیزات.",

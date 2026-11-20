@@ -337,6 +337,7 @@ export function matchmakingButtons(
   }
   const find = findMatchButton(matchmaking.onFindMatch);
   find.disabled = controls.mapDisabled;
+  find.setAttribute("data-tutorial", "find-match");
   return { queueAction: find };
 }
 

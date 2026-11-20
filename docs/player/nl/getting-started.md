@@ -6,6 +6,17 @@ Je hebt geen account nodig en hoeft niets te installeren: het spel draait in
 dit browsertabblad. VibeWars heeft een toetsenbord en muis nodig. Het werkt
 niet op een telefoon of een tablet met alleen touch: open het op een computer.
 
+## De tutorial
+
+De eerste keer dat je VibeWars opent, biedt het een tutorial aan. Je
+leert bewegen en vechten in een kloof en loopt dan door het portaal naar
+het menu. Daar gaat het stap voor stap verder: je verandert je
+personage, bouwt een team van twee, ziet wat elke modus is en zet je
+team in de wachtrij voor een eerste 2v2-match in Team Arena. Zolang een
+stap loopt, neemt alleen het bedieningselement waar hij naar wijst
+klikken aan. Je kunt de tutorial altijd overslaan met **Tutorial
+overslaan**.
+
 ## De modusbalk
 
 De balk links op het hoofdscherm bevat de [modi](modes.md), van boven naar

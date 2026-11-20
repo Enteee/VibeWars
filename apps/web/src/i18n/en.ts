@@ -1481,6 +1481,24 @@ export const en = {
   "tutorial.ground.praise": "Across! Now you know what the ground can do.",
   "tutorial.front.end": "You know the ropes now. See you out there!",
   "tutorial.front.menu": "Back to menu",
+  "tutorial.menu.arena.farewell": "You're in the queue. Good luck.",
+  "tutorial.menu.arena.find":
+    "Find a match. Your party gets a Team Lobby of its own side first, to choose the build it plays.",
+  "tutorial.menu.arena.findDone": "Find a match",
+  "tutorial.menu.arena.open": "Open Team Arena on the rail.",
+  "tutorial.menu.arena.openDone": "Open Team Arena",
+  "tutorial.menu.arena.propose":
+    "Sign up your team: open Your Team Builds and propose the one you saved. It must be a team of two, the size you queue at. A friend who joins by your invite link takes one of its seats; bots play the rest.",
+  "tutorial.menu.arena.proposeDone": "Propose your team",
+  "tutorial.menu.arena.seat": "Take a seat: the character you play. The queue starts once you sit.",
+  "tutorial.menu.arena.seatDone": "Take a seat",
+  "tutorial.menu.arena.size":
+    "Set the team size to 2v2. The size decides who you meet: only teams of the same size.",
+  "tutorial.menu.arena.sizeDone": "Pick 2v2",
+  "tutorial.menu.arena.title": "Prove your team in a 2v2 team arena match.",
+  "tutorial.menu.arena.vote":
+    "Vote for your team: click its card. The most votes is what your side plays.",
+  "tutorial.menu.arena.voteDone": "Vote for your team",
   "tutorial.menu.gotIt": "Got it",
   "tutorial.menu.menu.characters":
     "Characters is where you make and change who you play: profession, skills and gear.",

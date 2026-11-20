@@ -57,6 +57,11 @@ export interface CoachView {
 
 export interface CoachOverlay {
   show(view: CoachView): void;
+  /**
+   * The lock lifted and the dim gone (#3544): only the panel stays,
+   * saying `line`, until `ms` pass or it is clicked.
+   */
+  farewell(line: string, ms: number): void;
   remove(): void;
 }
 
@@ -246,7 +251,8 @@ export function mountCoachOverlay(
   const skip = button(t("tutorial.skipTutorial"), "coach-skip", () => {
     inlineConfirm(skip, t("tutorial.menu.skipAsk"), t("tutorial.skip"), options.onSkip);
   });
-  panel.appendChild(h("div", "coach-panel-actions")).append(skip);
+  const actions = panel.appendChild(h("div", "coach-panel-actions"));
+  actions.append(skip);
   root.appendChild(coach);
 
   let view: CoachView | undefined;
@@ -256,6 +262,7 @@ export function mountCoachOverlay(
   let stale = true;
   let frame = 0;
   let removed = false;
+  let farewellTimer = 0;
 
   const open = (): HTMLElement[] => [...targets, ...(bubble.hidden ? [] : [bubble]), panel];
   const above = (node: EventTarget | null): boolean =>
@@ -362,6 +369,24 @@ export function mountCoachOverlay(
     frame = requestAnimationFrame(follow);
   };
 
+  const unlock = (): void => {
+    cancelAnimationFrame(frame);
+    for (const type of POINTER_EVENTS) {
+      doc.removeEventListener(type, swallow, true);
+    }
+    doc.removeEventListener("keydown", trapTab, true);
+    doc.removeEventListener("focusin", keepFocus, true);
+    for (const target of targets) {
+      target.classList.remove(PULSE_CLASS);
+    }
+  };
+  const remove = (): void => {
+    removed = true;
+    window.clearTimeout(farewellTimer);
+    unlock();
+    coach.remove();
+  };
+
   for (const type of POINTER_EVENTS) {
     doc.addEventListener(type, swallow, true);
   }
@@ -390,18 +415,19 @@ export function mountCoachOverlay(
       follow();
       (next.gotIt === undefined ? open().flatMap(focusables)[0] : gotIt)?.focus();
     },
-    remove: () => {
-      removed = true;
-      cancelAnimationFrame(frame);
-      for (const type of POINTER_EVENTS) {
-        doc.removeEventListener(type, swallow, true);
-      }
-      doc.removeEventListener("keydown", trapTab, true);
-      doc.removeEventListener("focusin", keepFocus, true);
-      for (const target of targets) {
-        target.classList.remove(PULSE_CLASS);
-      }
-      coach.remove();
+    farewell: (line, ms) => {
+      unlock();
+      dim.hidden = true;
+      hole.hidden = true;
+      bubble.hidden = true;
+      checklist.hidden = true;
+      actions.hidden = true;
+      panelLine.hidden = false;
+      panelLine.textContent = line;
+      panel.classList.add("is-farewell");
+      panel.addEventListener("click", remove);
+      farewellTimer = window.setTimeout(remove, ms);
     },
+    remove,
   };
 }

@@ -1543,6 +1543,24 @@ export default {
   "tutorial.ground.praise": "עברת! עכשיו אתה יודע מה הקרקע עושה.",
   "tutorial.front.end": "עכשיו אתה מכיר את הבסיס. נתראה שם!",
   "tutorial.front.menu": "חזרה לתפריט",
+  "tutorial.menu.arena.farewell": "אתם בתור. בהצלחה.",
+  "tutorial.menu.arena.find":
+    "מצאו משחק. הקבוצה שלכם מקבלת קודם לובי קבוצתי משלה לצד שלה, כדי לבחור את המבנה שהיא משחקת.",
+  "tutorial.menu.arena.findDone": "מצא משחק",
+  "tutorial.menu.arena.open": "פתחו את זירת קבוצות בצד.",
+  "tutorial.menu.arena.openDone": "פתחו את זירת קבוצות",
+  "tutorial.menu.arena.propose":
+    "רשמו את הקבוצה שלכם: פתחו את מבני הקבוצה שלך והציעו את זה ששמרתם. זו חייבת להיות קבוצה של שניים, הגודל שבו אתם בתור. חבר שמצטרף דרך קישור ההזמנה שלכם תופס אחד ממושביה; בוטים משחקים את השאר.",
+  "tutorial.menu.arena.proposeDone": "הציעו את הקבוצה שלכם",
+  "tutorial.menu.arena.seat": "שבו במושב: הדמות שאתם משחקים. התור מתחיל ברגע שאתם יושבים.",
+  "tutorial.menu.arena.seatDone": "שב כאן",
+  "tutorial.menu.arena.size":
+    "קבעו את גודל הקבוצה ל-2v2. הגודל קובע מול מי תשחקו: רק קבוצות באותו גודל.",
+  "tutorial.menu.arena.sizeDone": "בחרו 2v2",
+  "tutorial.menu.arena.title": "הוכיחו את הקבוצה שלכם במשחק 2v2 בזירת קבוצות.",
+  "tutorial.menu.arena.vote":
+    "הצביעו לקבוצה שלכם: לחצו על הכרטיס שלה. מה שמקבל הכי הרבה קולות הוא מה שהצד שלכם משחק.",
+  "tutorial.menu.arena.voteDone": "הצביעו לקבוצה שלכם",
   "tutorial.menu.gotIt": "הבנתי",
   "tutorial.menu.menu.characters": "בדמויות יוצרים ומשנים את מי שמשחקים: מקצוע, מיומנויות וציוד.",
   "tutorial.menu.menu.rail": "זה התפריט הראשי. בצד נמצאות דרכי המשחק: בחר אחת כדי לפתוח אותה.",

@@ -1609,6 +1609,25 @@ export default {
   "tutorial.ground.praise": "Po drugiej stronie! Teraz wiesz, co potrafi grunt.",
   "tutorial.front.end": "Znasz już podstawy. Do zobaczenia na polu bitwy!",
   "tutorial.front.menu": "Wróć do menu",
+  "tutorial.menu.arena.farewell": "Jesteś w kolejce. Powodzenia.",
+  "tutorial.menu.arena.find":
+    "Znajdź mecz. Twoja grupa najpierw dostaje własne Lobby drużyny swojej strony, by wybrać build, którym gra.",
+  "tutorial.menu.arena.findDone": "Znajdź mecz",
+  "tutorial.menu.arena.open": "Otwórz Arenę drużynową z boku.",
+  "tutorial.menu.arena.openDone": "Otwórz Arenę drużynową",
+  "tutorial.menu.arena.propose":
+    "Zgłoś swoją drużynę: otwórz Twoje buildy drużyn i zaproponuj ten, który zapisałeś. Musi to być drużyna dwuosobowa, w rozmiarze, w jakim czekasz w kolejce. Znajomy, który dołączy przez twoje zaproszenie, zajmuje jedno z jej miejsc; resztę grają boty.",
+  "tutorial.menu.arena.proposeDone": "Zaproponuj swoją drużynę",
+  "tutorial.menu.arena.seat":
+    "Usiądź na miejscu: to postać, którą grasz. Kolejka rusza, gdy tylko usiądziesz.",
+  "tutorial.menu.arena.seatDone": "Usiądź tu",
+  "tutorial.menu.arena.size":
+    "Ustaw rozmiar drużyny na 2v2. Rozmiar decyduje, kogo spotkasz: tylko drużyny tego samego rozmiaru.",
+  "tutorial.menu.arena.sizeDone": "Wybierz 2v2",
+  "tutorial.menu.arena.title": "Udowodnij wartość swojej drużyny w meczu 2v2 na Arenie drużynowej.",
+  "tutorial.menu.arena.vote":
+    "Zagłosuj na swoją drużynę: kliknij jej kartę. To, co dostanie najwięcej głosów, gra twoja strona.",
+  "tutorial.menu.arena.voteDone": "Zagłosuj na swoją drużynę",
   "tutorial.menu.gotIt": "Rozumiem",
   "tutorial.menu.menu.characters":
     "W Postaciach tworzysz i zmieniasz, kim grasz: profesję, umiejętności i ekwipunek.",

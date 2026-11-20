@@ -14,10 +14,12 @@ const KEY = `${STORAGE_NAMESPACE}.tutorial`;
 function fakeCoach(): {
   coach: Parameters<typeof startMenuQuest>[0]["coach"];
   shown: CoachView[];
+  farewells: { line: string; ms: number }[];
   removed: () => boolean;
   skip: () => void;
 } {
   const shown: CoachView[] = [];
+  const farewells: { line: string; ms: number }[] = [];
   let removed = false;
   let onSkip = (): void => undefined;
   return {
@@ -25,12 +27,14 @@ function fakeCoach(): {
       onSkip = callbacks.onSkip;
       return {
         show: (view) => shown.push(view),
+        farewell: (line, ms) => farewells.push({ line, ms }),
         remove: () => {
           removed = true;
         },
       };
     },
     shown,
+    farewells,
     removed: () => removed,
     skip: () => {
       onSkip();
@@ -175,7 +179,7 @@ describe("the menu quest session", () => {
     expect(onEnd).not.toHaveBeenCalled();
   });
 
-  it("opens and explains each mode, ticking its list, then saves done and goes (#3543)", () => {
+  it("opens and explains each mode, ticking its list, then saves the arena step (#3543)", () => {
     const { coach, shown, removed } = fakeCoach();
     const onEnd = vi.fn();
     const quest = startMenuQuest({ from: "modes", coach, onEnd });
@@ -209,9 +213,48 @@ describe("the menu quest session", () => {
       expect(removed()).toBe(false);
       gotIt(shown.at(-1));
     }
+    // On to the arena step (#3544), from Team Arena on the rail.
+    expect(items.get(KEY)).toBe("menu:arena");
+    expect(shown.at(-1)?.target).toBe("rail-team-arena");
+    expect(removed()).toBe(false);
+    expect(onEnd).not.toHaveBeenCalled();
+  });
+
+  it("queues the quest's team in Team Arena 2v2, then saves done and says goodbye (#3544)", () => {
+    const { coach, shown, farewells, removed } = fakeCoach();
+    const onEnd = vi.fn();
+    const quest = startMenuQuest({ from: "arena", coach, onEnd });
+    expect(items.get(KEY)).toBe("menu:arena");
+    quest.event({ kind: "screen-shown", screen: "random-arena" });
+    expect(shown.at(-1)?.target).toBe("rail-team-arena");
+    quest.event({ kind: "screen-shown", screen: "team-arena" });
+    quest.event({ kind: "team-size", size: 4 });
+    expect(shown.at(-1)?.target).toBe("team-size");
+    quest.event({ kind: "team-size", size: 2 });
+    expect(shown.at(-1)?.target).toBe("find-match");
+    quest.event({ kind: "team-lobby", stage: "vote" });
+    expect(shown.at(-1)?.target).toBe("team-propose");
+    const built: StoredCharacter = {
+      ...newCharacter("c1"),
+      secondaryProfession: "monk",
+      attributes: [{ attributeId: "warrior.tactics", rank: 8 }],
+      skillBar: ["warrior.sprint", "monk.orison-of-healing", null, null, null, null, null, null],
+    };
+    // Resumed here, the quest saw no team saved: any playable team of two signs up.
+    const duo = teamOf("t1", 2, [teamCharacter(built, "m1"), teamCharacter(built, "m2")]);
+    quest.event({ kind: "team-picked", team: duo, saved: [duo] });
+    expect(shown.at(-1)?.target).toBe("team-vote");
+    quest.event({ kind: "team-lobby", stage: "claim" });
+    expect(shown.at(-1)?.target).toBe("team-seat");
+    expect(farewells).toEqual([]);
+    quest.event({ kind: "queue-joined", mode: "team-arena-2v2" });
     expect(items.get(KEY)).toBe("done");
-    expect(removed()).toBe(true);
     expect(onEnd).toHaveBeenCalledWith("done");
+    // The overlay lifts, the closing line stays its while, until a match takes it.
+    expect(farewells).toEqual([{ line: "You're in the queue. Good luck.", ms: 5000 }]);
+    expect(removed()).toBe(false);
+    quest.stop();
+    expect(removed()).toBe(true);
   });
 
   it("is not moved on by the menu's events while it explains", () => {

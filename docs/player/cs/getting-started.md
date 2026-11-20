@@ -2,6 +2,10 @@
 
 VibeWars je týmový souboj v malé aréně. Každý hráč si přinese jednu postavu s osmi dovednostmi. Tým, který vyhraje boj, vyhrává zápas. Nepotřebuješ účet ani nic instalovat: hra běží v této kartě prohlížeče. VibeWars vyžaduje klávesnici a myš. Na telefonu ani na tabletu ovládaném jen dotykem nefunguje: otevři ji na počítači.
 
+## Výuka
+
+Když VibeWars otevřeš poprvé, nabídne ti výuku. Naučíš se pohybovat a bojovat v kaňonu a pak projdeš portálem do menu. Tam výuka pokračuje krok za krokem: změníš svou postavu, sestavíš tým o dvou, uvidíš, co je který režim, a zařadíš svůj tým do fronty na první zápas 2v2 v Týmové aréně. Během kroku přijímá kliknutí jen ten ovládací prvek, na který krok ukazuje. Výuku můžeš kdykoli přeskočit tlačítkem **Přeskočit výuku**.
+
 ## Lišta režimů
 
 Lišta na levé straně hlavní obrazovky obsahuje [režimy](modes.md), shora dolů: **Náhodná aréna**, **Týmová aréna**, **Výstup hrdinů**, **GvG** a **Vlastní hra**. Pod režimy je **Velikost týmu**, `‹ 4v4 ›`: šipky přepínají na nejbližší menší nebo větší velikost, kterou daná obrazovka hraje. Každá obrazovka si pamatuje svou vlastní a otevře se na velikosti, kterou hraje (GvG na 8v8). Pod ní je **Tvůrce postav**, kde si vytváříš postavy, a **Tvůrce týmů**, kde si vytváříš [Týmové buildy](skills-and-builds.md#týmové-buildy), a pak **Zápasy**, [dohrané zápasy](modes.md#záznamy-zápasů), jak je nahlásili jejich hostitelé. Hra se otevře na té položce, kterou jsi použil naposledy.

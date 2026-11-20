@@ -2,6 +2,10 @@
 
 VibeWars è uno scontro a squadre in una piccola arena. Ogni giocatore porta un personaggio con otto abilità. La squadra che vince lo scontro vince la partita. Non servono account né installazioni: il gioco funziona in questa scheda del browser. VibeWars richiede tastiera e mouse. Non funziona su un telefono o su un tablet solo touch: aprilo su un computer.
 
+## Il tutorial
+
+La prima volta che apri VibeWars, ti propone un tutorial. Impari a muoverti e a combattere in un canyon, poi attraversi il portale verso il menu. Lì prosegue passo dopo passo: cambi il tuo personaggio, formi una squadra di due, vedi cos'è ogni modalità e metti in coda la tua squadra per una prima partita 2v2 in Arena a squadre. Mentre un passo è in corso, solo il controllo che indica accetta clic. Puoi saltare il tutorial in qualsiasi momento con **Salta tutorial**.
+
 ## La barra delle modalità
 
 La barra sul lato sinistro della schermata principale contiene le [modalità](modes.md), dall'alto in basso: **Arena casuale**, **Arena a squadre**, **Ascesa degli Eroi**, **GvG** e **Partita ospitata**. In fondo alle modalità c'è **Dim. squadra**, `‹ 4v4 ›`: le frecce passano alla dimensione più piccola o più grande che la schermata può giocare. Ogni schermata ricorda la sua e si apre su una dimensione che può giocare (GvG su 8v8). Più in basso ci sono **Editor personaggi**, dove crei i tuoi personaggi, e **Editor squadre**, dove crei le tue [Build di squadra](skills-and-builds.md#build-di-squadra), poi **Partite**, le [partite concluse](modes.md#registri-delle-partite) come le riportano i loro host. Il gioco si apre sull'ultima che hai usato.

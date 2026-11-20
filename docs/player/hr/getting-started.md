@@ -6,6 +6,16 @@ meču. Ne trebaš račun ni instalaciju: igra radi u
 ovoj kartici preglednika. VibeWarsu trebaju tipkovnica i miš. Ne radi
 na mobitelu ni na tabletu samo s dodirom: otvori ga na računalu.
 
+## Vodič
+
+Kad prvi put otvoriš VibeWars, ponudi ti vodič. Naučiš se kretati i
+boriti u kanjonu, a onda prođeš kroz portal do izbornika. Tamo se
+nastavlja korak po korak: promijeniš svog lika, složiš tim od dvoje,
+vidiš što je koji način i staviš svoj tim u red za prvu 2v2 utakmicu u
+Timskoj areni. Dok korak traje, klikove prima samo kontrola na koju
+pokazuje. Vodič možeš preskočiti u bilo kojem trenutku gumbom **Preskoči
+vodič**.
+
 ## Traka načina
 
 Traka uz lijevi rub glavnog zaslona sadrži

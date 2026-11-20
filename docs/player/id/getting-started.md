@@ -6,6 +6,17 @@ laga. Kamu tidak perlu akun dan tidak perlu memasang apa pun: game berjalan di
 tab browser ini. VibeWars butuh keyboard dan mouse. Game ini tidak bisa
 dimainkan di ponsel atau tablet yang hanya layar sentuh: bukalah di komputer.
 
+## Tutorial
+
+Saat pertama kali kamu membuka VibeWars, game ini menawarkan tutorial.
+Kamu belajar bergerak dan bertarung di sebuah ngarai, lalu berjalan
+melewati portal ke menu. Di sana tutorial berlanjut langkah demi
+langkah: kamu mengubah karaktermu, membangun tim berdua, melihat apa itu
+setiap mode, dan memasukkan timmu ke antrean untuk pertandingan 2v2
+pertama di Arena Tim. Selama satu langkah berjalan, hanya kontrol yang
+ditunjuknya yang menerima klik. Kamu bisa melewati tutorial kapan saja
+dengan **Lewati tutorial**.
+
 ## Rel mode
 
 Rel di sisi kiri layar utama berisi

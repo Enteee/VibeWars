@@ -6,6 +6,16 @@ konto og intet at installere: spillet kører i denne browserfane. VibeWars
 kræver tastatur og mus. Det virker ikke på en telefon eller en tablet
 kun med berøring: åbn det på en computer.
 
+## Vejledningen
+
+Første gang du åbner VibeWars, tilbyder spillet en vejledning. Du lærer
+at bevæge dig og kæmpe i en kløft og går så gennem portalen til menuen.
+Der fortsætter den trin for trin: du skifter din figur, bygger et hold
+på to, ser hvad hver spiltilstand er, og sætter dit hold i kø til en
+første 2v2-kamp i Holdarena. Mens et trin kører, tager kun den kontrol,
+det peger på, imod klik. Du kan altid springe vejledningen over med
+**Spring vejledningen over**.
+
 ## Skinnen med spiltilstande
 
 Skinnen ned langs venstre side af hovedskærmen rummer

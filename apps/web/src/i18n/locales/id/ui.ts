@@ -1409,6 +1409,25 @@ export default {
   "tutorial.ground.praise": "Sampai! Sekarang kamu tahu ulah tanah ini.",
   "tutorial.front.end": "Sekarang kamu tahu dasarnya. Sampai jumpa di luar sana!",
   "tutorial.front.menu": "Ke menu",
+  "tutorial.menu.arena.farewell": "Kamu sudah dalam antrean. Semoga beruntung.",
+  "tutorial.menu.arena.find":
+    "Cari lawan. Rombonganmu lebih dulu mendapat Lobi Tim sendiri untuk sisinya, untuk memilih build yang dimainkan.",
+  "tutorial.menu.arena.findDone": "Cari lawan",
+  "tutorial.menu.arena.open": "Buka Arena Tim di samping.",
+  "tutorial.menu.arena.openDone": "Buka Arena Tim",
+  "tutorial.menu.arena.propose":
+    "Daftarkan timmu: buka Build Timmu dan usulkan yang sudah kamu simpan. Harus tim berdua, ukuran yang kamu antrekan. Teman yang bergabung lewat link undanganmu mengambil salah satu kursinya; bot memainkan sisanya.",
+  "tutorial.menu.arena.proposeDone": "Usulkan timmu",
+  "tutorial.menu.arena.seat":
+    "Ambil kursi: karakter yang kamu mainkan. Antrean dimulai begitu kamu duduk.",
+  "tutorial.menu.arena.seatDone": "Duduk",
+  "tutorial.menu.arena.size":
+    "Atur ukuran tim ke 2v2. Ukuran menentukan siapa lawanmu: hanya tim dengan ukuran yang sama.",
+  "tutorial.menu.arena.sizeDone": "Pilih 2v2",
+  "tutorial.menu.arena.title": "Buktikan timmu dalam laga Arena Tim 2v2.",
+  "tutorial.menu.arena.vote":
+    "Pilih timmu: klik kartunya. Yang mendapat suara terbanyak itulah yang dimainkan sisimu.",
+  "tutorial.menu.arena.voteDone": "Pilih timmu",
   "tutorial.menu.gotIt": "Mengerti",
   "tutorial.menu.menu.characters":
     "Di Karakter kamu membuat dan mengubah siapa yang kamu mainkan: profesi, skill, dan perlengkapan.",

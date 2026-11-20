@@ -1572,6 +1572,26 @@ export default {
   "tutorial.ground.praise": "De l'autre côté ! Tu sais ce que fait le sol.",
   "tutorial.front.end": "Tu connais les bases maintenant. À tout à l'heure là-bas !",
   "tutorial.front.menu": "Retour au menu",
+  "tutorial.menu.arena.farewell": "Tu es dans la file. Bonne chance.",
+  "tutorial.menu.arena.find":
+    "Trouve un match. Ton groupe a d'abord un Salon d'équipe à lui pour son camp, pour choisir le build qu'il joue.",
+  "tutorial.menu.arena.findDone": "Trouver un match",
+  "tutorial.menu.arena.open": "Ouvre l'Arène d'équipe sur le côté.",
+  "tutorial.menu.arena.openDone": "Ouvrir l'Arène d'équipe",
+  "tutorial.menu.arena.propose":
+    "Inscris ton équipe : ouvre Tes Builds d'équipe et propose celui que tu as sauvé. Ce doit être une équipe de deux, la taille avec laquelle tu fais la file. Un ami qui rejoint par ton lien d'invitation prend une de ses places ; des bots jouent le reste.",
+  "tutorial.menu.arena.proposeDone": "Propose ton équipe",
+  "tutorial.menu.arena.seat":
+    "Assieds-toi : le personnage que tu joues. La file démarre dès que tu es assis.",
+  "tutorial.menu.arena.seatDone": "S'asseoir",
+  "tutorial.menu.arena.size":
+    "Règle la taille d'équipe sur 2v2. La taille décide qui tu affrontes : seulement des équipes de même taille.",
+  "tutorial.menu.arena.sizeDone": "Choisis 2v2",
+  "tutorial.menu.arena.title":
+    "Fais tes preuves avec ton équipe dans un match 2v2 de l'Arène d'équipe.",
+  "tutorial.menu.arena.vote":
+    "Vote pour ton équipe : clique sur sa carte. Ce qui a le plus de votes est ce que joue ton camp.",
+  "tutorial.menu.arena.voteDone": "Vote pour ton équipe",
   "tutorial.menu.gotIt": "Compris",
   "tutorial.menu.menu.characters":
     "Dans Personnages, tu crées et modifies qui tu joues : profession, compétences et équipement.",

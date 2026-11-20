@@ -6,6 +6,16 @@ ottelun. Et tarvitse tiliä etkä asenna mitään: peli toimii tässä
 selaimen välilehdessä. VibeWars vaatii näppäimistön ja hiiren. Se ei toimi
 puhelimella eikä pelkällä kosketustabletilla: avaa se tietokoneella.
 
+## Opetus
+
+Kun avaat VibeWarsin ensimmäistä kertaa, se tarjoaa opetusta. Opit
+liikkumaan ja taistelemaan kanjonissa ja kävelet sitten portaalin läpi
+valikkoon. Siellä opetus jatkuu askel kerrallaan: vaihdat hahmoasi,
+kokoat kahden hengen tiimin, näet mikä kukin pelitila on ja asetat
+tiimisi jonoon ensimmäiseen 2v2-otteluun Tiimiareenalla. Askeleen aikana
+vain se ohjain, johon askel osoittaa, ottaa vastaan napsautuksia. Voit
+ohittaa opetuksen milloin tahansa painikkeella **Ohita opetus**.
+
 ## Pelitilapalkki
 
 Päänäkymän vasemmassa reunassa kulkeva palkki sisältää

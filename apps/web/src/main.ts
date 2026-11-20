@@ -871,6 +871,25 @@ async function main(): Promise<void> {
   let idleScreen = false;
   /** The menu quest (#3540) while it runs: told about every screen the rail shows. */
   let menuQuest: MenuQuestSession | undefined;
+  /** The Team Arena lobby's size and stage the menu quest was last told (#3544). */
+  let questLobbyTold: string | undefined;
+  /**
+   * The menu quest told a Team Arena lobby's size and Team Lobby stage
+   * (#3544), once each time they change: a lobby changes often.
+   */
+  const tellQuestLobby = (snapshot: LobbySnapshot): void => {
+    if (snapshot.mode !== "team-arena") {
+      return;
+    }
+    const stage = snapshot.phase === "team-lobby" ? snapshot.teamLobby?.stage : undefined;
+    const told = `${String(snapshot.teamSize)}:${stage ?? ""}`;
+    if (told === questLobbyTold) {
+      return;
+    }
+    questLobbyTold = told;
+    menuQuest?.event({ kind: "team-size", size: snapshot.teamSize });
+    menuQuest?.event({ kind: "team-lobby", stage });
+  };
   /** The cape the menu was last drawn with (#1513), to redraw it only for a new one (#2386). */
   let menuCape = "";
 
@@ -1067,6 +1086,11 @@ async function main(): Promise<void> {
     const entry = railEntry();
     drawnEntry = entry;
     menuQuest?.event({ kind: "screen-shown", screen: entry });
+    // A quest that comes to Team Arena hears its lobby as it is (#3544).
+    questLobbyTold = undefined;
+    if (lobby !== undefined) {
+      tellQuestLobby(lobby.getSnapshot());
+    }
     if (entry === "matches") {
       matchesScreen?.close();
       matchesScreen = renderMatchesScreen(screenRoot, {
@@ -2198,6 +2222,8 @@ async function main(): Promise<void> {
         onState: (state) => {
           if (state.kind === "searching") {
             current.teams = state.teams;
+            // The queue took the party: the menu quest's last beat (#3544).
+            menuQuest?.event({ kind: "queue-joined", mode });
           } else if (state.kind === "unreachable") {
             current.teams = undefined;
           } else if (state.kind === "fell-through") {
@@ -2384,6 +2410,7 @@ async function main(): Promise<void> {
       return;
     }
     syncParty(snapshot);
+    tellQuestLobby(snapshot);
     if (snapshot.phase === "team-lobby") {
       // An open editor keeps its edits; its way out comes back here.
       if (editor !== undefined || teamEditor !== undefined) {
@@ -2449,6 +2476,9 @@ async function main(): Promise<void> {
       team === undefined ? null : team.members.map((member) => toPlayerBuild(member.character)),
     );
     teamPicks.proposed = team?.id;
+    if (team !== undefined) {
+      menuQuest?.event({ kind: "team-picked", team, saved: teamPicks.teams });
+    }
     lobbyChanged();
   };
 
@@ -3010,6 +3040,9 @@ async function main(): Promise<void> {
     }
     enteringMatch = true;
     matchFinished = false;
+    // The menu quest's closing line goes as the match comes (#3544).
+    menuQuest?.stop();
+    menuQuest = undefined;
     stopShare();
     lobbyNotice = undefined;
     showViewport(true);
@@ -3296,8 +3329,9 @@ async function main(): Promise<void> {
     const quest = startMenuQuest({
       from,
       coach: (callbacks) => mountCoachOverlay(document.body, callbacks),
-      onEnd: () => {
-        if (menuQuest === quest) {
+      // Done, it keeps its closing line until a match takes it (#3544).
+      onEnd: (end) => {
+        if (end === "skipped" && menuQuest === quest) {
           menuQuest = undefined;
         }
       },

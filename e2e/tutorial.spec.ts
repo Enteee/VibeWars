@@ -1,7 +1,15 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
+import { BUILD_FORMAT_VERSION } from "../apps/web/src/storage/build-transfer.js";
+import { STORAGE_NAMESPACE } from "../apps/web/src/storage/namespace.js";
+import { TEAM_FORMAT_VERSION } from "../apps/web/src/storage/team-transfer.js";
+import { STARTER_BUILDS } from "../packages/game-core/src/starter-builds.js";
+
 import { projection } from "./camera.js";
 import { openLibraryGroup } from "./helpers/library.js";
+import { openRail } from "./helpers/menu.js";
+import { proposeTeam, setTeamSize } from "./helpers/peers.js";
+import { namePlayer } from "./helpers/player.js";
 import { professionField } from "./helpers/professions.js";
 
 /**
@@ -959,8 +967,77 @@ test.describe("the menu quest (#3540)", () => {
       }
       await bubble.getByRole("button", { name: "Got it" }).click();
     }
-    // The last step so far: the quest is done.
+    // On to the arena step (#3544).
+    await expect(panel).toContainText("Prove your team in a 2v2 team arena match.");
+  });
+
+  test("queues a team of two for Team Arena 2v2, then lifts and says goodbye (#3544)", async ({
+    page,
+  }) => {
+    test.setTimeout(90_000);
+    // A playable team of two, saved before the quest resumes at its last step.
+    await page.goto(`./?menu-background=${FLAT_MAP}`);
+    await namePlayer(page, "Ann");
+    await openRail(page, "Team Builder");
+    const duo = JSON.stringify({
+      format: "vibewars.team",
+      formatVersion: TEAM_FORMAT_VERSION,
+      name: "Duo",
+      size: 2,
+      members: STARTER_BUILDS.slice(1, 3).map((build) => ({
+        format: "vibewars.character",
+        formatVersion: BUILD_FORMAT_VERSION,
+        ...build,
+        secondaryProfession: build.secondaryProfession ?? null,
+      })),
+    });
+    await page.locator(".screen").evaluate((element, pasted) => {
+      const data = new DataTransfer();
+      data.setData("text/plain", pasted);
+      element.dispatchEvent(
+        new ClipboardEvent("paste", { clipboardData: data, bubbles: true, cancelable: true }),
+      );
+    }, duo);
+    await page.getByRole("button", { name: "Save", exact: true }).click();
+    await expect(page.locator(".team-grid")).toHaveCount(0);
+
+    await page.goto(`./?menu-background=${FLAT_MAP}&tutorial-menu=arena`);
+    const panel = page.locator(".coach-panel");
+    const bubble = page.locator(".coach-bubble");
+    const target = (id: string): Locator => page.locator(`[data-tutorial~="${id}"]`);
+    await expect(panel).toContainText("Prove your team in a 2v2 team arena match.");
+
+    await expect(target("rail-team-arena")).toHaveClass(/tutorial-pulse/);
+    await target("rail-team-arena").click();
+    await expect(target("team-size")).toHaveClass(/tutorial-pulse/);
+    await expect(bubble).toContainText("The size decides who you meet");
+    await setTeamSize(page, 2);
+    await expect(target("find-match")).toHaveClass(/tutorial-pulse/);
+    await target("find-match").click();
+
+    await expect(target("team-propose").first()).toHaveClass(/tutorial-pulse/);
+    await expect(bubble).toContainText("Sign up your team");
+    await proposeTeam(page, "Duo");
+    await expect(target("team-vote")).toHaveClass(/tutorial-pulse/);
+    await page.locator(".team-lobby-proposals .play-card-open").first().click();
+    // Its one voter voted: the claim follows at once.
+    await expect(target("team-seat")).toHaveClass(/tutorial-pulse/);
+    await page.locator(".team-lobby-seat").first().click();
+
+    // Searching: the dim is gone, the closing line stays, the record is done.
+    await expect(panel).toContainText("You're in the queue. Good luck.");
+    await expect(page.locator(".coach-dim")).toBeHidden();
+    await expect(page.locator(".coach-hole")).toBeHidden();
+    await expect(panel.getByRole("button", { name: "Skip tutorial" })).toBeHidden();
+    expect(
+      await page.evaluate((key) => localStorage.getItem(key), `${STORAGE_NAMESPACE}.tutorial`),
+    ).toBe("done");
+    await page.locator("#topbar .topbar-queue").click();
+    await expect(page.locator("#topbar .queue-window")).toContainText("Team Arena 2v2");
+    // The tutorial never leaves the queue; the line goes on a click.
+    await panel.click();
     await expect(page.locator(".coach")).toHaveCount(0);
+    await expect(page.locator("#topbar .topbar-queue")).toBeVisible();
   });
 
   test("Skip tutorial, confirmed, ends it for good", async ({ page }) => {

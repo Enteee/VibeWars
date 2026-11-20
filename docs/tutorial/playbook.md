@@ -209,9 +209,22 @@ It teaches the menu one step at a time, and the record is `done` only once its l
   resumes at the start of that step, after the splash; a link takes the quest down and keeps
   the record. A step id the quest no longer has is deleted, and the tutorial is offered
   again.
-- **The main menu** (first step): three explanations, on the mode rail, Characters and
-  Teams, under the quest title "To go on, you must change your spec." The steps after it are
-  their own cards.
+- **The steps**, each saved as `menu:<id>`:
+  1. **The main menu** (`menu`): three explanations, on the mode rail, Characters and
+     Teams, under the quest title "To go on, you must change your spec."
+  2. **Spec** (`spec`, #3541): open your character in the builder, then change its
+     professions, attributes, skills, weapons and gear, and save it valid.
+  3. **Team** (`team`, #3542): in Teams, start a team of two, put your character in it, give
+     every member a build until it has no problems, and save it.
+  4. **Modes** (`modes`, #3543): open each mode the rail shows, in its order, and read what it
+     is beside its heading; the panel ticks each.
+  5. **Arena** (`arena`, #3544), "Prove your team in a 2v2 team arena match.": open Team
+     Arena, set the size to 2v2, Find a match, propose the team saved in step 3 (any playable
+     team of two if it is gone) from Your Team Builds, vote for it, and take a seat. A vote
+     the clock ends counts all the same. Once the queue is searching, the dim lifts, the
+     panel says "You're in the queue. Good luck." for 5 s or until clicked, and the record is
+     `done`. The player stays queued; a match found takes the line away. A queue refused
+     brings back Find a match, lit.
 
 ## Cross-cutting rules for the build cards
 

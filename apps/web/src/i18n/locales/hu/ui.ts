@@ -1488,6 +1488,25 @@ export default {
   "tutorial.ground.praise": "Átértél! Most már tudod, mire képes a talaj.",
   "tutorial.front.end": "Most már tudod az alapokat. Odakint találkozunk!",
   "tutorial.front.menu": "Vissza a menübe",
+  "tutorial.menu.arena.farewell": "Sorban állsz. Sok szerencsét.",
+  "tutorial.menu.arena.find":
+    "Keress meccset. A csapatod előbb saját Csapatlobbit kap a saját oldalának, hogy kiválassza a buildet, amivel játszik.",
+  "tutorial.menu.arena.findDone": "Meccskeresés",
+  "tutorial.menu.arena.open": "Nyisd meg oldalt a Csapataréna menüt.",
+  "tutorial.menu.arena.openDone": "Csapataréna megnyitása",
+  "tutorial.menu.arena.propose":
+    "Nevezd be a csapatod: nyisd meg a Csapatbuildjeid részt, és javasold azt, amelyiket elmentetted. Kétfős csapatnak kell lennie, akkora, amekkorával sorba állsz. Egy barát, aki a meghívódon át csatlakozik, elfoglalja az egyik helyét; a többit botok játsszák.",
+  "tutorial.menu.arena.proposeDone": "Javasold a csapatod",
+  "tutorial.menu.arena.seat":
+    "Ülj le: az a karakter, akivel játszol. A sor azonnal indul, amint leülsz.",
+  "tutorial.menu.arena.seatDone": "Ide ülök",
+  "tutorial.menu.arena.size":
+    "Állítsd a csapatméretet 2v2-re. A méret dönti el, kivel találkozol: csak azonos méretű csapatokkal.",
+  "tutorial.menu.arena.sizeDone": "Válaszd a 2v2-t",
+  "tutorial.menu.arena.title": "Bizonyítsd a csapatod egy 2v2-es Csapataréna-meccsen.",
+  "tutorial.menu.arena.vote":
+    "Szavazz a csapatodra: kattints a kártyájára. Ami a legtöbb szavazatot kapja, azt játssza az oldalad.",
+  "tutorial.menu.arena.voteDone": "Szavazz a csapatodra",
   "tutorial.menu.gotIt": "Értem",
   "tutorial.menu.menu.characters":
     "A Karakterekben hozod létre és módosítod, kivel játszol: szakma, képességek és felszerelés.",

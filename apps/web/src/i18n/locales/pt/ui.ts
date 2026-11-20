@@ -1553,6 +1553,25 @@ export default {
   "tutorial.ground.praise": "Atravessou! Agora você sabe o que o chão faz.",
   "tutorial.front.end": "Já sabes o básico. Até lá fora!",
   "tutorial.front.menu": "Voltar ao menu",
+  "tutorial.menu.arena.farewell": "Você está na fila. Boa sorte.",
+  "tutorial.menu.arena.find":
+    "Busque partida. Seu grupo ganha primeiro uma Sala de Equipe própria do seu lado, para escolher a build que vai jogar.",
+  "tutorial.menu.arena.findDone": "Buscar partida",
+  "tutorial.menu.arena.open": "Abra a Arena de Equipes na lateral.",
+  "tutorial.menu.arena.openDone": "Abrir Arena de Equipes",
+  "tutorial.menu.arena.propose":
+    "Inscreva sua equipe: abra Suas Builds de Equipe e proponha a que você salvou. Precisa ser uma equipe de dois, o tamanho com que você entra na fila. Um amigo que entrar pelo seu link de convite ocupa uma das vagas; bots jogam o resto.",
+  "tutorial.menu.arena.proposeDone": "Proponha sua equipe",
+  "tutorial.menu.arena.seat":
+    "Ocupe uma vaga: o personagem que você joga. A fila começa assim que você ocupa.",
+  "tutorial.menu.arena.seatDone": "Ocupar",
+  "tutorial.menu.arena.size":
+    "Defina o tamanho da equipe como 2v2. O tamanho decide quem você enfrenta: só equipes do mesmo tamanho.",
+  "tutorial.menu.arena.sizeDone": "Escolha 2v2",
+  "tutorial.menu.arena.title": "Prove sua equipe numa partida 2v2 da Arena de Equipes.",
+  "tutorial.menu.arena.vote":
+    "Vote na sua equipe: clique no card dela. O mais votado é o que o seu lado joga.",
+  "tutorial.menu.arena.voteDone": "Vote na sua equipe",
   "tutorial.menu.gotIt": "Entendi",
   "tutorial.menu.menu.characters":
     "Em Personagens você cria e muda com quem joga: profissão, habilidades e equipamento.",

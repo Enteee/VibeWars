@@ -19,11 +19,15 @@ import { saveTutorialRecord } from "./tutorial-preference.js";
 /**
  * The menu quest being played (#3540): the menu's events in, the coach
  * kept on the current beat, and the record saved at the start of every
- * step, so a launch resumes there. `done` is saved after the last step.
+ * step, so a launch resumes there. `done` is saved after the last step,
+ * and the closing line shows for `FAREWELL_MS` (#3544).
  */
 export interface MenuQuestSession {
   event(event: MenuQuestEvent): void;
-  /** Gone without a word, as for a link: the record keeps its step. */
+  /**
+   * Gone without a word, as for a link: the record keeps its step. After
+   * the end, the closing line goes, as for a match found (#3544).
+   */
   stop(): void;
 }
 
@@ -34,13 +38,20 @@ export interface MenuQuestOptions {
   readonly onEnd: (end: "done" | "skipped") => void;
 }
 
+/** How long the closing line stays, unless clicked (#3544). */
+export const FAREWELL_MS = 5000;
+
 export function startMenuQuest(options: MenuQuestOptions): MenuQuestSession {
   let state = NO_MENU_QUEST_EVENTS;
   let cursor: MenuQuestCursor = resumeMenuQuest(options.from);
   let over = false;
   const finish = (end: "done" | "skipped"): void => {
     over = true;
-    coach.remove();
+    if (end === "done") {
+      coach.farewell(t("tutorial.menu.arena.farewell"), FAREWELL_MS);
+    } else {
+      coach.remove();
+    }
     saveTutorialRecord(end);
     options.onEnd(end);
   };
@@ -94,10 +105,8 @@ export function startMenuQuest(options: MenuQuestOptions): MenuQuestSession {
       advance(false);
     },
     stop: () => {
-      if (!over) {
-        over = true;
-        coach.remove();
-      }
+      over = true;
+      coach.remove();
     },
   };
 }

@@ -675,9 +675,14 @@ function voteStage(
     return [soloChooser(solo.entries, solo.picked, callbacks.onPickSolo)];
   }
   const shown = buildsDrawer(teams, side.size, proposedTeamId, callbacks.onPropose);
+  // The menu quest (#3544) points at the drawer, then the proposals, or both.
+  for (const node of shown) {
+    node.setAttribute("data-tutorial", "team-propose team-vote-stage");
+  }
   shown.push(h("h3", "menu-column-title", t("teamLobby.proposals")));
 
   const cards = h("div", "play-cards team-lobby-proposals");
+  cards.setAttribute("data-tutorial", "team-vote team-vote-stage");
   if (side.proposals.length === 0) {
     cards.appendChild(h("div", "team-lobby-empty", t("teamLobby.noProposals")));
   }
@@ -751,6 +756,7 @@ function claimStage(
     return [];
   }
   const seats = h("div", "team-lobby-seats");
+  seats.setAttribute("data-tutorial", "team-seat");
   for (let slot = 0; slot < choice.members.length; slot += 1) {
     seats.appendChild(seat(slot, choice, side, snapshot, callbacks.onClaim));
   }

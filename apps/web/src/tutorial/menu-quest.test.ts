@@ -37,9 +37,9 @@ const PICK_AND_QUEUE: MenuQuestStep = {
       line: "tutorial.menu.menu.rail",
       objectives: [
         {
-          id: "picked",
+          id: "queued",
           label: "tutorial.menu.menu.teams",
-          done: (s) => s.teamPicked !== undefined,
+          done: (s) => s.queueJoined !== undefined,
         },
         { id: "sized", label: "tutorial.menu.menu.teams", done: (s) => s.teamSize === 4 },
       ],
@@ -54,19 +54,26 @@ describe("the menu quest", () => {
     state = foldMenuQuestEvent(state, { kind: "screen-shown", screen: "teams" });
     state = foldMenuQuestEvent(state, { kind: "team-saved", team: TEAM, isNew: true });
     state = foldMenuQuestEvent(state, { kind: "team-size", size: 2 });
-    state = foldMenuQuestEvent(state, { kind: "queue-joined", mode: "random-arena-2v2", size: 2 });
+    state = foldMenuQuestEvent(state, { kind: "team-lobby", stage: "vote" });
+    state = foldMenuQuestEvent(state, { kind: "team-lobby", stage: undefined });
+    state = foldMenuQuestEvent(state, { kind: "queue-joined", mode: "random-arena-2v2" });
     expect(state.screen).toBe("teams");
     expect(state.screensShown).toEqual(["teams", "characters"]);
     expect(state.teamsSaved).toEqual([{ team: TEAM, isNew: true }]);
     expect(state.teamSize).toBe(2);
-    expect(state.queueJoined).toEqual({ mode: "random-arena-2v2", size: 2 });
+    expect(state.teamLobby).toBeUndefined();
+    expect(state.teamLobbyStages).toEqual(["vote"]);
+    expect(state.queueJoined).toBe("random-arena-2v2");
   });
 
   it("ticks an objective once its event came, and completes a step only when all hold", () => {
-    const [picked, sized] =
+    const [queued, sized] =
       PICK_AND_QUEUE.beats[0]?.kind === "do" ? PICK_AND_QUEUE.beats[0].objectives : [];
-    let state = foldMenuQuestEvent(NO_MENU_QUEST_EVENTS, { kind: "team-picked", teamId: "t1" });
-    expect(picked?.done(state)).toBe(true);
+    let state = foldMenuQuestEvent(NO_MENU_QUEST_EVENTS, {
+      kind: "queue-joined",
+      mode: "team-arena-4v4",
+    });
+    expect(queued?.done(state)).toBe(true);
     expect(sized?.done(state)).toBe(false);
     expect(stepComplete(PICK_AND_QUEUE, state)).toBe(false);
     state = foldMenuQuestEvent(state, { kind: "team-size", size: 4 });
@@ -254,7 +261,13 @@ describe("the team step (#3542)", () => {
   });
 
   it("follows the spec step", () => {
-    expect(MENU_QUEST_STEPS.map(({ id }) => id)).toEqual(["menu", "spec", "team", "modes"]);
+    expect(MENU_QUEST_STEPS.map(({ id }) => id)).toEqual([
+      "menu",
+      "spec",
+      "team",
+      "modes",
+      "arena",
+    ]);
   });
 
   it("opens Teams, then a new team of two", () => {
@@ -318,7 +331,6 @@ describe("the modes step (#3543)", () => {
 
   it("follows the team step, and opens then explains the rail's five modes, in its order", () => {
     const step = menuQuestStep("modes");
-    expect(MENU_QUEST_STEPS.at(-1)?.id).toBe("modes");
     expect(step.beats.map((beat) => [beat.kind, beatTarget(beat, NO_MENU_QUEST_EVENTS)])).toEqual(
       MODES.flatMap((mode) => [
         ["do", `rail-${mode}`],
@@ -327,7 +339,7 @@ describe("the modes step (#3543)", () => {
     );
   });
 
-  it("waits for each mode's screen, then its Got it, and is done after the fifth", () => {
+  it("waits for each mode's screen, then its Got it, and goes to the arena after the fifth", () => {
     let cursor: MenuQuestCursor | "done" = resumeMenuQuest("modes");
     let state = fold([shown("teams")]);
     for (const [at, mode] of MODES.entries()) {
@@ -340,7 +352,8 @@ describe("the modes step (#3543)", () => {
       expect(read).toEqual({ step: "modes", beat: 2 * at + 1 });
       cursor = read === "done" ? read : advanceMenuQuest(read, state, true);
     }
-    expect(cursor).toBe("done");
+    // Still on Hosted Game, not Team Arena: the arena step waits on its entry.
+    expect(cursor).toEqual({ step: "arena", beat: 0 });
   });
 
   it("counts the mode already shown: its entry does nothing when clicked", () => {
@@ -377,5 +390,126 @@ describe("the modes step (#3543)", () => {
       { label: "rail.randomArena", beat: 0 },
       { label: "rail.gvg", beat: 2 },
     ]);
+  });
+});
+
+describe("the arena step (#3544)", () => {
+  const filled = (id: string, size: 2 | 4): StoredTeam =>
+    teamOf(
+      id,
+      size,
+      Array.from({ length: size }, (_, at) => teamCharacter(START, `${id}-${String(at)}`)),
+    );
+  const quest = filled("quest", 2);
+  const other = filled("other", 2);
+  const saved: MenuQuestEvent = { kind: "team-saved", team: quest, isNew: true };
+  const at = (state: MenuQuestState): MenuQuestCursor | "done" =>
+    advanceMenuQuest(resumeMenuQuest("arena"), state, false);
+  const picked = (team: StoredTeam, teams: readonly StoredTeam[]): MenuQuestEvent => ({
+    kind: "team-picked",
+    team,
+    saved: teams,
+  });
+
+  it("is the last step: Team Arena, size, Find a match, propose, vote, seat", () => {
+    expect(MENU_QUEST_STEPS.at(-1)?.id).toBe("arena");
+    const step = menuQuestStep("arena");
+    expect(step.beats.map((beat) => [beat.kind, beatTarget(beat, NO_MENU_QUEST_EVENTS)])).toEqual([
+      ["do", "rail-team-arena"],
+      ["do", "team-size"],
+      ["do", "find-match"],
+      ["do", "team-propose"],
+      ["do", "team-vote"],
+      ["do", "find-match"],
+    ]);
+  });
+
+  it("moves on one beat per event, and is done once queued for Team Arena 2v2", () => {
+    const events: MenuQuestEvent[] = [
+      saved,
+      { kind: "screen-shown", screen: "team-arena" },
+      { kind: "team-size", size: 2 },
+      { kind: "team-lobby", stage: "vote" },
+      picked(quest, [quest, other]),
+      { kind: "team-lobby", stage: "claim" },
+      { kind: "queue-joined", mode: "team-arena-2v2" },
+    ];
+    const cursors = events.map((_, upTo) => at(fold(events.slice(0, upTo + 1))));
+    expect(cursors).toEqual([
+      { step: "arena", beat: 0 },
+      { step: "arena", beat: 1 },
+      { step: "arena", beat: 2 },
+      { step: "arena", beat: 3 },
+      { step: "arena", beat: 4 },
+      { step: "arena", beat: 5 },
+      "done",
+    ]);
+  });
+
+  it("points at the seats in the claim, and at the vote or Find a match again after a refusal", () => {
+    const seat = menuQuestStep("arena").beats[5];
+    if (seat === undefined) {
+      throw new Error("no seat beat");
+    }
+    expect(beatTarget(seat, fold([{ kind: "team-lobby", stage: "claim" }]))).toBe("team-seat");
+    expect(
+      beatTarget(
+        seat,
+        fold([
+          { kind: "team-lobby", stage: "claim" },
+          { kind: "team-lobby", stage: undefined },
+        ]),
+      ),
+    ).toBe("find-match");
+    expect(beatTarget(seat, fold([{ kind: "team-lobby", stage: "vote" }]))).toBe("team-vote-stage");
+  });
+
+  it("takes only a step past 2 and back to 2", () => {
+    expect(
+      at(
+        fold([
+          { kind: "screen-shown", screen: "team-arena" },
+          { kind: "team-size", size: 4 },
+        ]),
+      ),
+    ).toEqual({ step: "arena", beat: 1 });
+  });
+
+  it("signs up the quest's team, not another, while it is saved", () => {
+    const lobby: MenuQuestEvent = { kind: "team-lobby", stage: "vote" };
+    const ready: MenuQuestEvent[] = [
+      saved,
+      { kind: "screen-shown", screen: "team-arena" },
+      { kind: "team-size", size: 2 },
+      lobby,
+    ];
+    expect(at(fold([...ready, picked(other, [quest, other])]))).toEqual({ step: "arena", beat: 3 });
+    expect(at(fold([...ready, picked(quest, [quest, other])]))).toEqual({ step: "arena", beat: 4 });
+    // The quest's team deleted: any playable team of two will do.
+    expect(at(fold([...ready, picked(other, [other])]))).toEqual({ step: "arena", beat: 4 });
+  });
+
+  it("counts a vote the clock ended: the claim follows all the same", () => {
+    const state = fold([
+      { kind: "screen-shown", screen: "team-arena" },
+      { kind: "team-size", size: 2 },
+      { kind: "team-lobby", stage: "vote" },
+      { kind: "team-lobby", stage: "claim" },
+    ]);
+    expect(at(state)).toEqual({ step: "arena", beat: 5 });
+  });
+
+  it("is not done by a queue of another size or mode", () => {
+    const seated: MenuQuestEvent[] = [
+      { kind: "screen-shown", screen: "team-arena" },
+      { kind: "team-size", size: 2 },
+      { kind: "team-lobby", stage: "claim" },
+    ];
+    for (const mode of ["team-arena-4v4", "random-arena-2v2"] as const) {
+      expect(at(fold([...seated, { kind: "queue-joined", mode }]))).toEqual({
+        step: "arena",
+        beat: 5,
+      });
+    }
   });
 });

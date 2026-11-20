@@ -1487,6 +1487,25 @@ export default {
   "tutorial.ground.praise": "Overgestoken! Nu weet je wat de grond kan.",
   "tutorial.front.end": "Nu ken je de basis. Tot daarbuiten!",
   "tutorial.front.menu": "Naar menu",
+  "tutorial.menu.arena.farewell": "Je staat in de wachtrij. Succes.",
+  "tutorial.menu.arena.find":
+    "Zoek een match. Je groep krijgt eerst een eigen Teamlobby voor zijn kant, om de build te kiezen die hij speelt.",
+  "tutorial.menu.arena.findDone": "Match zoeken",
+  "tutorial.menu.arena.open": "Open Team Arena aan de zijkant.",
+  "tutorial.menu.arena.openDone": "Team Arena openen",
+  "tutorial.menu.arena.propose":
+    "Schrijf je team in: open Jouw Teambuilds en stel de build voor die je hebt opgeslagen. Het moet een team van twee zijn, de grootte waarmee je in de wachtrij staat. Een vriend die via je uitnodigingslink binnenkomt, neemt een van de plekken; bots spelen de rest.",
+  "tutorial.menu.arena.proposeDone": "Stel je team voor",
+  "tutorial.menu.arena.seat":
+    "Neem een plek: het personage dat je speelt. De wachtrij start zodra je zit.",
+  "tutorial.menu.arena.seatDone": "Hier zitten",
+  "tutorial.menu.arena.size":
+    "Zet de teamgrootte op 2v2. De grootte bepaalt wie je tegenkomt: alleen teams van dezelfde grootte.",
+  "tutorial.menu.arena.sizeDone": "Kies 2v2",
+  "tutorial.menu.arena.title": "Bewijs je team in een 2v2-match in Team Arena.",
+  "tutorial.menu.arena.vote":
+    "Stem op je team: klik op zijn kaart. Wat de meeste stemmen krijgt, speelt jouw kant.",
+  "tutorial.menu.arena.voteDone": "Stem op je team",
   "tutorial.menu.gotIt": "Begrepen",
   "tutorial.menu.menu.characters":
     "Bij Personages maak en wijzig je met wie je speelt: beroep, vaardigheden en uitrusting.",

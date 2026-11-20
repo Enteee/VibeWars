@@ -41,9 +41,21 @@ export type MenuQuestEvent =
       readonly characters: readonly StoredCharacter[];
     }
   | { readonly kind: "team-saved"; readonly team: StoredTeam; readonly isNew: boolean }
+  /** The Team Arena lobby's size (#3544), as it is and on every change. */
   | { readonly kind: "team-size"; readonly size: number }
-  | { readonly kind: "team-picked"; readonly teamId: string }
-  | { readonly kind: "queue-joined"; readonly mode: QueueMode; readonly size: number };
+  /** The Team Lobby's stage (#3544), none once it is over. */
+  | { readonly kind: "team-lobby"; readonly stage: TeamLobbyStage | undefined }
+  /** A Team Build proposed in the Team Lobby (#3544), and every one saved. */
+  | {
+      readonly kind: "team-picked";
+      readonly team: StoredTeam;
+      readonly saved: readonly StoredTeam[];
+    }
+  /** The queue took the party (#3544): it is searching. */
+  | { readonly kind: "queue-joined"; readonly mode: QueueMode };
+
+/** What a Team Lobby asks for: a Team Build voted, then seats claimed. */
+export type TeamLobbyStage = "vote" | "claim";
 
 /**
  * What the player has changed in the build editor (#3541), each once
@@ -76,8 +88,12 @@ export interface MenuQuestState {
   /** The team the quest had saved (#3542), for the modes step to pick. */
   readonly questTeamId: string | undefined;
   readonly teamSize: number | undefined;
-  readonly teamPicked: string | undefined;
-  readonly queueJoined: { readonly mode: QueueMode; readonly size: number } | undefined;
+  readonly teamLobby: TeamLobbyStage | undefined;
+  /** Every Team Lobby stage shown, so a stage the clock ended still counts. */
+  readonly teamLobbyStages: readonly TeamLobbyStage[];
+  /** Whether the quest's team, or with it gone any team of two, was proposed. */
+  readonly questTeamPicked: boolean;
+  readonly queueJoined: QueueMode | undefined;
 }
 
 /** Something the player must have done, ticked live in the quest panel. */
@@ -347,6 +363,97 @@ export const MENU_QUEST_STEPS = [
     ],
   },
   modesStep(RAIL_MODES),
+  {
+    id: "arena",
+    title: "tutorial.menu.arena.title",
+    beats: [
+      {
+        kind: "do",
+        target: "rail-team-arena",
+        line: "tutorial.menu.arena.open",
+        objectives: [
+          {
+            id: "open",
+            label: "tutorial.menu.arena.openDone",
+            // Already there counts: a click on the shown entry does nothing.
+            done: (state) => state.screen === "team-arena",
+          },
+        ],
+      },
+      {
+        kind: "do",
+        target: "team-size",
+        line: "tutorial.menu.arena.size",
+        objectives: [
+          {
+            id: "size",
+            label: "tutorial.menu.arena.sizeDone",
+            done: (state) => state.teamSize === 2,
+          },
+        ],
+      },
+      {
+        kind: "do",
+        target: "find-match",
+        line: "tutorial.menu.arena.find",
+        objectives: [
+          {
+            id: "find",
+            label: "tutorial.menu.arena.findDone",
+            done: (state) => state.teamLobbyStages.length > 0 || state.queueJoined !== undefined,
+          },
+        ],
+      },
+      {
+        kind: "do",
+        target: "team-propose",
+        line: "tutorial.menu.arena.propose",
+        objectives: [
+          {
+            id: "propose",
+            label: "tutorial.menu.arena.proposeDone",
+            // A vote the clock ended played some team: on, all the same.
+            done: (state) =>
+              state.questTeamPicked ||
+              state.teamLobbyStages.includes("claim") ||
+              state.queueJoined !== undefined,
+          },
+        ],
+      },
+      {
+        kind: "do",
+        target: "team-vote",
+        line: "tutorial.menu.arena.vote",
+        objectives: [
+          {
+            id: "vote",
+            label: "tutorial.menu.arena.voteDone",
+            done: (state) =>
+              state.teamLobbyStages.includes("claim") || state.queueJoined !== undefined,
+          },
+        ],
+      },
+      {
+        kind: "do",
+        // A Team Lobby the queue refused is over: Find a match again, and
+        // in the vote, the drawer and the proposals.
+        target: (state) =>
+          state.teamLobby === "claim"
+            ? "team-seat"
+            : state.teamLobby === "vote"
+              ? "team-vote-stage"
+              : "find-match",
+        line: "tutorial.menu.arena.seat",
+        objectives: [
+          {
+            id: "seat",
+            label: "tutorial.menu.arena.seatDone",
+            done: (state) => state.queueJoined === "team-arena-2v2",
+          },
+        ],
+      },
+    ],
+  },
 ] as const satisfies readonly MenuQuestStep[];
 
 export type MenuQuestStepId = (typeof MENU_QUEST_STEPS)[number]["id"];
@@ -382,7 +489,9 @@ export const NO_MENU_QUEST_EVENTS: MenuQuestState = {
   teamsSaved: [],
   questTeamId: undefined,
   teamSize: undefined,
-  teamPicked: undefined,
+  teamLobby: undefined,
+  teamLobbyStages: [],
+  questTeamPicked: false,
   queueJoined: undefined,
 };
 
@@ -456,6 +565,20 @@ function holdsCharacter(
   return team.members.some(({ character }) => sources.some((source) => copies(character, source)));
 }
 
+/**
+ * Whether proposing `team` signs up the quest's team (#3544): the one the
+ * team step saved, or, with that one gone or never seen, as on a resume,
+ * any playable team of two.
+ */
+function picksQuestTeam(
+  state: MenuQuestState,
+  team: StoredTeam,
+  saved: readonly StoredTeam[],
+): boolean {
+  const questTeam = saved.find(({ id }) => id === state.questTeamId);
+  return questTeam === undefined ? team.size === 2 && teamFilled(team) : team.id === questTeam.id;
+}
+
 export function foldMenuQuestEvent(state: MenuQuestState, event: MenuQuestEvent): MenuQuestState {
   switch (event.kind) {
     case "screen-shown":
@@ -496,10 +619,22 @@ export function foldMenuQuestEvent(state: MenuQuestState, event: MenuQuestEvent)
       };
     case "team-size":
       return { ...state, teamSize: event.size };
+    case "team-lobby":
+      return {
+        ...state,
+        teamLobby: event.stage,
+        teamLobbyStages:
+          event.stage === undefined || state.teamLobbyStages.includes(event.stage)
+            ? state.teamLobbyStages
+            : [...state.teamLobbyStages, event.stage],
+      };
     case "team-picked":
-      return { ...state, teamPicked: event.teamId };
+      return {
+        ...state,
+        questTeamPicked: state.questTeamPicked || picksQuestTeam(state, event.team, event.saved),
+      };
     case "queue-joined":
-      return { ...state, queueJoined: { mode: event.mode, size: event.size } };
+      return { ...state, queueJoined: event.mode };
   }
 }
 

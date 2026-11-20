@@ -1410,6 +1410,24 @@ export default {
   "tutorial.ground.praise": "渡れた！これで地面のことがわかったね。",
   "tutorial.front.end": "これで基本は身についた。戦場で会おう!",
   "tutorial.front.menu": "メニューへ戻る",
+  "tutorial.menu.arena.farewell": "キューに入った。健闘を祈る。",
+  "tutorial.menu.arena.find":
+    "マッチを探そう。まずパーティに自陣専用のチームロビーが開き、プレイするビルドを選ぶ。",
+  "tutorial.menu.arena.findDone": "マッチを探す",
+  "tutorial.menu.arena.open": "横のチームアリーナを開こう。",
+  "tutorial.menu.arena.openDone": "チームアリーナを開く",
+  "tutorial.menu.arena.propose":
+    "チームを登録しよう。チームビルドを開き、保存したビルドを提案する。キューに入る人数と同じ2人チームであること。招待リンクで参加した友達が枠を1つ取り、残りはボットがプレイする。",
+  "tutorial.menu.arena.proposeDone": "チームを提案する",
+  "tutorial.menu.arena.seat": "席に座ろう。それがプレイするキャラクターだ。座ればキューが始まる。",
+  "tutorial.menu.arena.seatDone": "ここに座る",
+  "tutorial.menu.arena.size":
+    "チーム人数を2v2にしよう。人数で対戦相手が決まる。同じ人数のチームとだけ当たる。",
+  "tutorial.menu.arena.sizeDone": "2v2を選ぶ",
+  "tutorial.menu.arena.title": "2v2のチームアリーナでチームの実力を証明しよう。",
+  "tutorial.menu.arena.vote":
+    "自分のチームに投票しよう。カードをクリックする。最多票のビルドで自陣が戦う。",
+  "tutorial.menu.arena.voteDone": "自分のチームに投票する",
   "tutorial.menu.gotIt": "わかった",
   "tutorial.menu.menu.characters":
     "「キャラクター」では、使うキャラクターを作ったり変えたりできる。職業、スキル、装備だ。",

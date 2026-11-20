@@ -8698,7 +8698,8 @@ body:has(#screens[style*="none"]) .now-playing {
 
 .coach-dim[hidden],
 .coach-hole[hidden],
-.coach-bubble[hidden] {
+.coach-bubble[hidden],
+.coach-panel-actions[hidden] {
   display: none;
 }
 
@@ -8775,6 +8776,11 @@ body:has(#screens[style*="none"]) .now-playing {
   flex-wrap: wrap;
   gap: 0.4rem;
   justify-content: flex-end;
+}
+
+/* The closing line (#3544): a click on it puts it away. */
+.coach-panel.is-farewell {
+  cursor: pointer;
 }
 
 /* A narrow window docks the panel to its bottom edge, or its top one. */

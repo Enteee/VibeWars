@@ -6,6 +6,16 @@ kazanır. Hesap açman ya da bir şey kurman gerekmez: oyun bu tarayıcı
 sekmesinde çalışır. VibeWars için klavye ve fare gerekir. Telefonda ya
 da yalnızca dokunmatik bir tablette çalışmaz: bir bilgisayarda aç.
 
+## Öğretici
+
+VibeWars'ı ilk açtığında oyun sana bir öğretici sunar. Bir kanyonda
+hareket etmeyi ve dövüşmeyi öğrenir, sonra portaldan geçip menüye
+yürürsün. Orada öğretici adım adım sürer: karakterini değiştirirsin, iki
+kişilik bir takım kurarsın, her modun ne olduğunu görürsün ve takımını
+Takım Arenası'nda ilk 2v2 maçı için sıraya sokarsın. Bir adım sürerken
+yalnızca onun gösterdiği kontrol tıklama alır. Öğreticiyi istediğin an
+**Öğreticiyi atla** ile atlayabilirsin.
+
 ## Mod şeridi
 
 Ana ekranın solundaki şerit, yukarıdan aşağıya [modları](modes.md)

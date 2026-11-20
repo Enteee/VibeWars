@@ -1553,6 +1553,24 @@ export default {
   "tutorial.ground.praise": "Prešao si! Sad znaš što tlo može.",
   "tutorial.front.end": "Sad znaš osnove. Vidimo se vani!",
   "tutorial.front.menu": "U izbornik",
+  "tutorial.menu.arena.farewell": "U redu si za čekanje. Sretno.",
+  "tutorial.menu.arena.find":
+    "Pronađi meč. Tvoja družina najprije dobiva vlastitu Timsku sobu za svoju stranu, da odabere sastav s kojim igra.",
+  "tutorial.menu.arena.findDone": "Pronađi meč",
+  "tutorial.menu.arena.open": "Otvori Timsku arenu sa strane.",
+  "tutorial.menu.arena.openDone": "Otvori Timsku arenu",
+  "tutorial.menu.arena.propose":
+    "Prijavi svoj tim: otvori Tvoji timski sastavi i predloži onaj koji si spremio. Mora biti tim od dvoje, veličina s kojom čekaš u redu. Prijatelj koji uđe preko tvoje pozivnice zauzima jedno od njegovih mjesta; botovi igraju ostalo.",
+  "tutorial.menu.arena.proposeDone": "Predloži svoj tim",
+  "tutorial.menu.arena.seat": "Sjedni na mjesto: lik kojeg igraš. Red počinje čim sjedneš.",
+  "tutorial.menu.arena.seatDone": "Sjedni",
+  "tutorial.menu.arena.size":
+    "Postavi veličinu tima na 2v2. Veličina određuje koga srećeš: samo timove iste veličine.",
+  "tutorial.menu.arena.sizeDone": "Odaberi 2v2",
+  "tutorial.menu.arena.title": "Dokaži svoj tim u meču 2v2 u Timskoj areni.",
+  "tutorial.menu.arena.vote":
+    "Glasaj za svoj tim: klikni njegovu karticu. Ono s najviše glasova igra tvoja strana.",
+  "tutorial.menu.arena.voteDone": "Glasaj za svoj tim",
   "tutorial.menu.gotIt": "Razumijem",
   "tutorial.menu.menu.characters":
     "U Likovima stvaraš i mijenjaš s kim igraš: zanimanje, vještine i opremu.",

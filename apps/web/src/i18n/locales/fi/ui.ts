@@ -1495,6 +1495,24 @@ export default {
   "tutorial.ground.praise": "Perillä! Nyt tiedät, mitä maa voi tehdä.",
   "tutorial.front.end": "Nyt osaat perusteet. Nähdään siellä!",
   "tutorial.front.menu": "Takaisin valikkoon",
+  "tutorial.menu.arena.farewell": "Olet jonossa. Onnea matkaan.",
+  "tutorial.menu.arena.find":
+    "Etsi ottelu. Porukkasi saa ensin oman Tiimiaulan omalle puolelleen, jotta se voi valita buildin, jolla se pelaa.",
+  "tutorial.menu.arena.findDone": "Etsi ottelu",
+  "tutorial.menu.arena.open": "Avaa sivussa Tiimiareena.",
+  "tutorial.menu.arena.openDone": "Avaa Tiimiareena",
+  "tutorial.menu.arena.propose":
+    "Ilmoita tiimisi: avaa Omat tiimibuildit ja ehdota sitä, jonka tallensit. Sen on oltava kahden hengen tiimi, sama koko, jolla jonotat. Kutsulinkilläsi liittyvä ystävä ottaa yhden sen paikoista; botit pelaavat loput.",
+  "tutorial.menu.arena.proposeDone": "Ehdota tiimiäsi",
+  "tutorial.menu.arena.seat": "Istu paikalle: hahmo, jolla pelaat. Jono alkaa heti, kun istut.",
+  "tutorial.menu.arena.seatDone": "Istu tähän",
+  "tutorial.menu.arena.size":
+    "Aseta tiimin kooksi 2v2. Koko ratkaisee, ketä vastaan pelaat: vain samankokoisia tiimejä.",
+  "tutorial.menu.arena.sizeDone": "Valitse 2v2",
+  "tutorial.menu.arena.title": "Näytä tiimisi taidot 2v2-ottelussa Tiimiareenalla.",
+  "tutorial.menu.arena.vote":
+    "Äänestä tiimiäsi: napsauta sen korttia. Eniten ääniä saanut on se, mitä puolesi pelaa.",
+  "tutorial.menu.arena.voteDone": "Äänestä tiimiäsi",
   "tutorial.menu.gotIt": "Selvä",
   "tutorial.menu.menu.characters":
     "Hahmoissa luot ja muutat, kenellä pelaat: ammatin, taidot ja varusteet.",

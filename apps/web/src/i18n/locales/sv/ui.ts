@@ -1478,6 +1478,24 @@ export default {
   "tutorial.ground.praise": "Över! Nu vet du vad marken kan göra.",
   "tutorial.front.end": "Nu kan du grunderna. Vi ses där ute!",
   "tutorial.front.menu": "Till menyn",
+  "tutorial.menu.arena.farewell": "Du står i kön. Lycka till.",
+  "tutorial.menu.arena.find":
+    "Hitta match. Din grupp får först en egen Laglobby för sin sida, för att välja den build den spelar.",
+  "tutorial.menu.arena.findDone": "Hitta match",
+  "tutorial.menu.arena.open": "Öppna Lagarena längs sidan.",
+  "tutorial.menu.arena.openDone": "Öppna Lagarena",
+  "tutorial.menu.arena.propose":
+    "Anmäl ditt lag: öppna Dina lagbuilds och föreslå den du sparade. Det måste vara ett lag på två, storleken du köar med. En vän som går med via din inbjudningslänk tar en av dess platser; bottar spelar resten.",
+  "tutorial.menu.arena.proposeDone": "Föreslå ditt lag",
+  "tutorial.menu.arena.seat": "Sätt dig: karaktären du spelar. Kön startar så fort du sitter.",
+  "tutorial.menu.arena.seatDone": "Sitt här",
+  "tutorial.menu.arena.size":
+    "Sätt lagstorleken till 2v2. Storleken avgör vilka du möter: bara lag av samma storlek.",
+  "tutorial.menu.arena.sizeDone": "Välj 2v2",
+  "tutorial.menu.arena.title": "Bevisa ditt lag i en 2v2-match i Lagarena.",
+  "tutorial.menu.arena.vote":
+    "Rösta på ditt lag: klicka på dess kort. Det som får flest röster är det din sida spelar.",
+  "tutorial.menu.arena.voteDone": "Rösta på ditt lag",
   "tutorial.menu.gotIt": "Uppfattat",
   "tutorial.menu.menu.characters":
     "I Karaktärer skapar och ändrar du vem du spelar: yrke, färdigheter och utrustning.",

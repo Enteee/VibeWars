@@ -1600,6 +1600,24 @@ export default {
   "tutorial.ground.praise": "Si na druhej strane! Teraz vieš, čo dokáže zem.",
   "tutorial.front.end": "Teraz už vieš, ako na to. Uvidíme sa vonku!",
   "tutorial.front.menu": "Späť do menu",
+  "tutorial.menu.arena.farewell": "Si vo fronte. Veľa šťastia.",
+  "tutorial.menu.arena.find":
+    "Nájdi zápas. Tvoja skupina najprv dostane vlastné Tímové lobby svojej strany, aby vybrala build, s ktorým hrá.",
+  "tutorial.menu.arena.findDone": "Nájsť zápas",
+  "tutorial.menu.arena.open": "Otvor Tímovú arénu na boku.",
+  "tutorial.menu.arena.openDone": "Otvor Tímovú arénu",
+  "tutorial.menu.arena.propose":
+    "Prihlás svoj tím: otvor Tvoje tímové buildy a navrhni ten, ktorý si uložil. Musí to byť tím pre dvoch, veľkosť, s ktorou čakáš vo fronte. Priateľ, ktorý sa pripojí cez tvoj pozývací odkaz, obsadí jedno z jeho miest; zvyšok hrajú boti.",
+  "tutorial.menu.arena.proposeDone": "Navrhni svoj tím",
+  "tutorial.menu.arena.seat": "Sadni si: postava, ktorú hráš. Front sa spustí, hneď ako si sadneš.",
+  "tutorial.menu.arena.seatDone": "Sadnúť si",
+  "tutorial.menu.arena.size":
+    "Nastav veľkosť tímu na 2v2. Veľkosť rozhoduje, koho stretneš: len tímy rovnakej veľkosti.",
+  "tutorial.menu.arena.sizeDone": "Zvoľ 2v2",
+  "tutorial.menu.arena.title": "Dokáž svoj tím v zápase 2v2 v Tímovej aréne.",
+  "tutorial.menu.arena.vote":
+    "Hlasuj za svoj tím: klikni na jeho kartu. Čo dostane najviac hlasov, to hrá tvoja strana.",
+  "tutorial.menu.arena.voteDone": "Hlasuj za svoj tím",
   "tutorial.menu.gotIt": "Rozumiem",
   "tutorial.menu.menu.characters":
     "V Postavách vytváraš a meníš, za koho hráš: profesiu, schopnosti a výstroj.",

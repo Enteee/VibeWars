@@ -1670,6 +1670,23 @@ export default {
   "tutorial.ground.praise": "عبرت! الآن تعرف ما تفعله الأرض.",
   "tutorial.front.end": "أنت تعرف الأساسيات الآن. نراك هناك!",
   "tutorial.front.menu": "العودة إلى القائمة",
+  "tutorial.menu.arena.farewell": "أنت في الطابور. حظًا موفقًا.",
+  "tutorial.menu.arena.find":
+    "ابحث عن مباراة. يحصل فريقك أولًا على ردهة فريق خاصة بجانبه، ليختار البنية التي يلعب بها.",
+  "tutorial.menu.arena.findDone": "ابحث عن مباراة",
+  "tutorial.menu.arena.open": "افتح ساحة الفرق على الجانب.",
+  "tutorial.menu.arena.openDone": "افتح ساحة الفرق",
+  "tutorial.menu.arena.propose":
+    "سجّل فريقك: افتح بنى فرقك واقترح البنية التي حفظتها. يجب أن يكون فريقًا من اثنين، بالحجم الذي تنتظر به. الصديق الذي ينضم عبر رابط دعوتك يأخذ أحد مقاعده، والبوتات تلعب الباقي.",
+  "tutorial.menu.arena.proposeDone": "اقترح فريقك",
+  "tutorial.menu.arena.seat": "اجلس في مقعد: الشخصية التي تلعب بها. يبدأ الطابور حين تجلس.",
+  "tutorial.menu.arena.seatDone": "اجلس هنا",
+  "tutorial.menu.arena.size":
+    "اضبط حجم الفريق على 2v2. الحجم يحدد من تواجه: فرقًا من الحجم نفسه فقط.",
+  "tutorial.menu.arena.sizeDone": "اختر 2v2",
+  "tutorial.menu.arena.title": "أثبت جدارة فريقك في مباراة ساحة فرق 2v2.",
+  "tutorial.menu.arena.vote": "صوّت لفريقك: انقر بطاقته. ما ينال أكثر الأصوات هو ما يلعبه جانبك.",
+  "tutorial.menu.arena.voteDone": "صوّت لفريقك",
   "tutorial.menu.gotIt": "فهمت",
   "tutorial.menu.menu.characters":
     "في «الشخصيات» تصنع من تلعب به وتغيّره: المهنة والمهارات والعتاد.",

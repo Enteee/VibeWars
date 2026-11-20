@@ -1399,6 +1399,25 @@ export default {
   "tutorial.ground.praise": "건넜다! 이제 땅이 뭘 하는지 알겠지.",
   "tutorial.front.end": "이제 기본은 다 알았어. 전장에서 만나요!",
   "tutorial.front.menu": "메뉴로",
+  "tutorial.menu.arena.farewell": "대기열에 들어갔습니다. 행운을 빌어요.",
+  "tutorial.menu.arena.find":
+    "매치를 찾으세요. 먼저 파티가 자기 진영만의 팀 로비를 받아, 플레이할 빌드를 고릅니다.",
+  "tutorial.menu.arena.findDone": "매치 찾기",
+  "tutorial.menu.arena.open": "옆의 팀 아레나를 여세요.",
+  "tutorial.menu.arena.openDone": "팀 아레나 열기",
+  "tutorial.menu.arena.propose":
+    "팀을 등록하세요. 내 팀 빌드를 열고 저장한 빌드를 제안합니다. 대기열에 들어가는 규모인 2인 팀이어야 합니다. 초대 링크로 들어온 친구가 자리 하나를 맡고, 나머지는 봇이 플레이합니다.",
+  "tutorial.menu.arena.proposeDone": "팀 제안하기",
+  "tutorial.menu.arena.seat":
+    "자리에 앉으세요. 플레이할 캐릭터입니다. 앉는 순간 대기열이 시작됩니다.",
+  "tutorial.menu.arena.seatDone": "여기 앉기",
+  "tutorial.menu.arena.size":
+    "팀 규모를 2v2로 정하세요. 규모가 상대를 정합니다. 같은 규모의 팀하고만 만납니다.",
+  "tutorial.menu.arena.sizeDone": "2v2 고르기",
+  "tutorial.menu.arena.title": "2v2 팀 아레나 매치에서 팀의 실력을 증명하세요.",
+  "tutorial.menu.arena.vote":
+    "내 팀에 투표하세요. 카드를 클릭합니다. 가장 많은 표를 받은 빌드로 내 진영이 싸웁니다.",
+  "tutorial.menu.arena.voteDone": "내 팀에 투표하기",
   "tutorial.menu.gotIt": "알겠어요",
   "tutorial.menu.menu.characters":
     "캐릭터에서는 플레이할 캐릭터를 만들고 바꿉니다: 직업, 스킬, 장비.",

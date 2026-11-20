@@ -1485,6 +1485,25 @@ export default {
   "tutorial.ground.praise": "Премина! Вече знаеш какво може земята.",
   "tutorial.front.end": "Вече знаеш основното. До скоро на бойното поле!",
   "tutorial.front.menu": "Към менюто",
+  "tutorial.menu.arena.farewell": "Ти си в опашката. Успех.",
+  "tutorial.menu.arena.find":
+    "Намери мач. Първо групата ти получава собствено Отборно лоби за своята страна, за да избере билда, с който играе.",
+  "tutorial.menu.arena.findDone": "Намери мач",
+  "tutorial.menu.arena.open": "Отвори Отборна арена отстрани.",
+  "tutorial.menu.arena.openDone": "Отвори Отборна арена",
+  "tutorial.menu.arena.propose":
+    "Запиши отбора си: отвори Твоите отборни билдове и предложи този, който запази. Трябва да е отбор от двама, размерът, с който чакаш. Приятел, който влезе с линка ти за покана, заема едно от местата; ботове играят останалите.",
+  "tutorial.menu.arena.proposeDone": "Предложи отбора си",
+  "tutorial.menu.arena.seat":
+    "Седни на място: героят, с когото играеш. Опашката тръгва, щом седнеш.",
+  "tutorial.menu.arena.seatDone": "Седни тук",
+  "tutorial.menu.arena.size":
+    "Задай размер на отбора 2v2. Размерът решава кого срещаш: само отбори със същия размер.",
+  "tutorial.menu.arena.sizeDone": "Избери 2v2",
+  "tutorial.menu.arena.title": "Докажи отбора си в мач 2v2 в Отборна арена.",
+  "tutorial.menu.arena.vote":
+    "Гласувай за отбора си: кликни картата му. Каквото събере най-много гласове, това играе твоята страна.",
+  "tutorial.menu.arena.voteDone": "Гласувай за отбора си",
   "tutorial.menu.gotIt": "Разбрах",
   "tutorial.menu.menu.characters":
     "В „Герои“ създаваш и променяш с кого играеш: професия, умения и екипировка.",
