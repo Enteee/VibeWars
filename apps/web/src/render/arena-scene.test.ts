@@ -33,6 +33,15 @@ describe("ArenaScene shutdown (#3087)", () => {
 });
 
 describe("ArenaScene tunnel cutaway (#3272)", () => {
+  /** A tunnel's floor under its cover, drawn only while that is cut away (#3686). */
+  const shown = (): { visible: boolean; setVisible(visible: boolean): unknown } => ({
+    visible: false,
+    setVisible(visible: boolean) {
+      this.visible = visible;
+      return this;
+    },
+  });
+
   it("fades the paving over the viewer's tunnel with its cover, and back once they leave", async () => {
     const { mapStructure } = await import("../net/maps.js");
     const { structure } = mapStructure("arena-long-hall");
@@ -43,7 +52,13 @@ describe("ArenaScene tunnel cutaway (#3272)", () => {
         return this;
       },
     });
-    const cover = { ground: fading(), seam: fading(), lines: fading(), grain: [fading()] };
+    const cover = {
+      ground: fading(),
+      seam: fading(),
+      lines: fading(),
+      grain: [fading()],
+      floor: shown(),
+    };
     const over = fading();
     const elsewhere = fading();
     const self = { team: "self", position: { x: 1620, y: 1450 }, layer: structure.ground - 1 };
@@ -66,10 +81,13 @@ describe("ArenaScene tunnel cutaway (#3272)", () => {
     // Its grain and grid go with it (#3484).
     expect(cover.grain[0]?.alpha).toBe(cover.ground.alpha);
     expect(cover.lines.alpha).toBe(cover.ground.alpha);
+    // The floor under it shows only while it is cut away (#3686).
+    expect(cover.floor.visible).toBe(true);
 
     self.layer = structure.ground;
     scene.cutAwayTunnels(0.016);
     expect(over.alpha).toBe(1);
+    expect(cover.floor.visible).toBe(false);
   });
 
   it("fades the water over the viewer's tunnel with its cover, and no other water (#3350)", async () => {
@@ -82,8 +100,20 @@ describe("ArenaScene tunnel cutaway (#3272)", () => {
         return this;
       },
     });
-    const cover = { ground: fading(), seam: fading(), lines: fading(), grain: [fading()] };
-    const otherCover = { ground: fading(), seam: fading(), lines: fading(), grain: [fading()] };
+    const cover = {
+      ground: fading(),
+      seam: fading(),
+      lines: fading(),
+      grain: [fading()],
+      floor: shown(),
+    };
+    const otherCover = {
+      ground: fading(),
+      seam: fading(),
+      lines: fading(),
+      grain: [fading()],
+      floor: shown(),
+    };
     const over = { surface: fading(), ripples: fading() };
     const overOther = { surface: fading(), ripples: fading() };
     const outside = fading();
@@ -125,8 +155,20 @@ describe("ArenaScene tunnel cutaway (#3272)", () => {
         return this;
       },
     });
-    const cover = { ground: fading(), seam: fading(), lines: fading(), grain: [fading()] };
-    const otherCover = { ground: fading(), seam: fading(), lines: fading(), grain: [fading()] };
+    const cover = {
+      ground: fading(),
+      seam: fading(),
+      lines: fading(),
+      grain: [fading()],
+      floor: shown(),
+    };
+    const otherCover = {
+      ground: fading(),
+      seam: fading(),
+      lines: fading(),
+      grain: [fading()],
+      floor: shown(),
+    };
     const [top, side] = [fading(), fading()];
     const overOther = fading();
     const solid = fading();
@@ -168,7 +210,13 @@ describe("ArenaScene tunnel cutaway (#3272)", () => {
         return this;
       },
     });
-    const cover = { ground: fading(), seam: fading(), lines: fading(), grain: [fading()] };
+    const cover = {
+      ground: fading(),
+      seam: fading(),
+      lines: fading(),
+      grain: [fading()],
+      floor: shown(),
+    };
     const [wallOver, tunnelWall] = [fading(), fading()];
     const [iceOver, iceElsewhere] = [fading(), fading()];
     const style = (tunnels: readonly number[]) => ({ tunnels });
@@ -215,7 +263,13 @@ describe("ArenaScene tunnel cutaway (#3272)", () => {
         return this;
       },
     });
-    const cover = { ground: fading(), seam: fading(), lines: fading(), grain: [fading()] };
+    const cover = {
+      ground: fading(),
+      seam: fading(),
+      lines: fading(),
+      grain: [fading()],
+      floor: shown(),
+    };
     const arch = fading();
     const self = {
       id: "me",
