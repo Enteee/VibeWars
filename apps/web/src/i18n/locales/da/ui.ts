@@ -1477,6 +1477,21 @@ export default {
   "tutorial.ground.praise": "Ovre! Nu ved du, hvad jorden kan.",
   "tutorial.front.end": "Nu kender du det grundlæggende. Vi ses derude!",
   "tutorial.front.menu": "Til menuen",
+  "tutorial.menu.arena.farewell": "Du står i køen. Held og lykke.",
+  "tutorial.menu.arena.find":
+    "Tryk Find kamp for at tilmelde dig. Din gruppe er den ene side: en holdkammerat, der kommer ind via dit invitationslink, tager en plads, og bots spiller resten.",
+  "tutorial.menu.arena.findDone": "Find kamp",
+  "tutorial.menu.arena.open": "Åbn Holdarena i menulinjen.",
+  "tutorial.menu.arena.openDone": "Åbn Holdarena",
+  "tutorial.menu.arena.queue":
+    "Stem på dit hold, og tag så en karakter. Når begge dele er gjort, står din gruppe i køen.",
+  "tutorial.menu.arena.queueDone": "Gå i køen",
+  "tutorial.menu.arena.signup": "Åbn Dine Holdbuilds, vælg det hold, du lavede, og foreslå det.",
+  "tutorial.menu.arena.signupDone": "Foreslå dit hold",
+  "tutorial.menu.arena.size":
+    "Sæt holdstørrelsen til 2v2. Kun hold af samme størrelse møder hinanden.",
+  "tutorial.menu.arena.sizeDone": "Vælg 2v2",
+  "tutorial.menu.arena.title": "Bevis dit hold i en 2v2-kamp i Holdarena.",
   "tutorial.menu.gotIt": "Forstået",
   "tutorial.menu.menu.characters":
     "I Figurer laver og ændrer du, hvem du spiller: profession, færdigheder og udstyr.",

@@ -1553,6 +1553,21 @@ export default {
   "tutorial.ground.praise": "Prešao si! Sad znaš što tlo može.",
   "tutorial.front.end": "Sad znaš osnove. Vidimo se vani!",
   "tutorial.front.menu": "U izbornik",
+  "tutorial.menu.arena.farewell": "U redu si čekanja. Sretno.",
+  "tutorial.menu.arena.find":
+    "Pritisni Pronađi meč za prijavu. Tvoja družina je jedna strana: suigrač koji se pridruži preko tvoje poveznice za poziv zauzima mjesto, a botovi igraju ostalo.",
+  "tutorial.menu.arena.findDone": "Pronađi meč",
+  "tutorial.menu.arena.open": "Otvori Timsku arenu na traci.",
+  "tutorial.menu.arena.openDone": "Otvori Timsku arenu",
+  "tutorial.menu.arena.queue":
+    "Glasaj za svoj tim, zatim uzmi lik. Kad obaviš oboje, tvoja družina je u redu čekanja.",
+  "tutorial.menu.arena.queueDone": "Uđi u red čekanja",
+  "tutorial.menu.arena.signup":
+    "Otvori Tvoji timski sastavi, odaberi tim koji si napravio i predloži ga.",
+  "tutorial.menu.arena.signupDone": "Predloži svoj tim",
+  "tutorial.menu.arena.size": "Postavi veličinu tima na 2v2. Sastaju se samo timovi iste veličine.",
+  "tutorial.menu.arena.sizeDone": "Odaberi 2v2",
+  "tutorial.menu.arena.title": "Dokaži svoj tim u meču 2v2 u Timskoj areni.",
   "tutorial.menu.gotIt": "Razumijem",
   "tutorial.menu.menu.characters":
     "U Likovima stvaraš i mijenjaš s kim igraš: zanimanje, vještine i opremu.",

@@ -1478,6 +1478,22 @@ export default {
   "tutorial.ground.praise": "رد شدی! حالا می‌دانی زمین چه می‌کند.",
   "tutorial.front.end": "حالا اصول کار را بلدی. آن بیرون می‌بینمت!",
   "tutorial.front.menu": "بازگشت به منو",
+  "tutorial.menu.arena.farewell": "در صف هستی. موفق باشی.",
+  "tutorial.menu.arena.find":
+    "برای ثبت‌نام، یافتن مسابقه را بزن. گروه تو یک طرف است: هم‌تیمی‌ای که با لینک دعوت تو بیاید یک جایگاه می‌گیرد و بات‌ها بقیه را بازی می‌کنند.",
+  "tutorial.menu.arena.findDone": "یافتن مسابقه",
+  "tutorial.menu.arena.open": "آرنای تیمی را از نوار باز کن.",
+  "tutorial.menu.arena.openDone": "آرنای تیمی را باز کن",
+  "tutorial.menu.arena.queue":
+    "به تیمت رأی بده، بعد یک شخصیت بردار. وقتی هر دو انجام شد، گروهت در صف قرار می‌گیرد.",
+  "tutorial.menu.arena.queueDone": "وارد صف شو",
+  "tutorial.menu.arena.signup":
+    "بیلدهای تیمی تو را باز کن، تیمی را که ساختی انتخاب کن و پیشنهادش بده.",
+  "tutorial.menu.arena.signupDone": "تیمت را پیشنهاد بده",
+  "tutorial.menu.arena.size":
+    "اندازهٔ تیم را روی 2v2 بگذار. فقط تیم‌های هم‌اندازه با هم روبه‌رو می‌شوند.",
+  "tutorial.menu.arena.sizeDone": "2v2 را انتخاب کن",
+  "tutorial.menu.arena.title": "تیمت را در یک مسابقهٔ 2v2 آرنای تیمی ثابت کن.",
   "tutorial.menu.gotIt": "فهمیدم",
   "tutorial.menu.menu.characters":
     "در «شخصیت‌ها» کسی را که با او بازی می‌کنی می‌سازی و تغییر می‌دهی: حرفه، مهارت‌ها و تجهیزات.",

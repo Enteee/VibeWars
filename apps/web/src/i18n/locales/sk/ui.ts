@@ -1600,6 +1600,22 @@ export default {
   "tutorial.ground.praise": "Si na druhej strane! Teraz vieš, čo dokáže zem.",
   "tutorial.front.end": "Teraz už vieš, ako na to. Uvidíme sa vonku!",
   "tutorial.front.menu": "Späť do menu",
+  "tutorial.menu.arena.farewell": "Si v rade. Veľa šťastia.",
+  "tutorial.menu.arena.find":
+    "Stlač Nájsť zápas a prihlás sa. Tvoja partia je jedna strana: spoluhráč, ktorý sa pripojí cez tvoj pozývací odkaz, obsadí miesto a zvyšok hrajú boti.",
+  "tutorial.menu.arena.findDone": "Nájsť zápas",
+  "tutorial.menu.arena.open": "Otvor Tímovú arénu na lište.",
+  "tutorial.menu.arena.openDone": "Otvor Tímovú arénu",
+  "tutorial.menu.arena.queue":
+    "Hlasuj za svoj tím a potom si vezmi postavu. Keď urobíš oboje, tvoja partia je v rade.",
+  "tutorial.menu.arena.queueDone": "Postav sa do radu",
+  "tutorial.menu.arena.signup":
+    "Otvor Tvoje tímové buildy, vyber tím, ktorý si vytvoril, a navrhni ho.",
+  "tutorial.menu.arena.signupDone": "Navrhni svoj tím",
+  "tutorial.menu.arena.size":
+    "Nastav veľkosť tímu na 2v2. Proti sebe sa stretávajú len tímy rovnakej veľkosti.",
+  "tutorial.menu.arena.sizeDone": "Vyber 2v2",
+  "tutorial.menu.arena.title": "Preukáž svoj tím v zápase 2v2 v Tímovej aréne.",
   "tutorial.menu.gotIt": "Rozumiem",
   "tutorial.menu.menu.characters":
     "V Postavách vytváraš a meníš, za koho hráš: profesiu, schopnosti a výstroj.",

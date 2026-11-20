@@ -1,7 +1,11 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
+import { BUILD_FORMAT_VERSION } from "../apps/web/src/storage/build-transfer.js";
+import { TEAM_FORMAT_VERSION } from "../apps/web/src/storage/team-transfer.js";
+import { STARTER_BUILDS } from "../packages/game-core/src/starter-builds.js";
 import { projection } from "./camera.js";
 import { openLibraryGroup } from "./helpers/library.js";
+import { openRail } from "./helpers/menu.js";
 import { professionField } from "./helpers/professions.js";
 
 /**
@@ -10,6 +14,22 @@ import { professionField } from "./helpers/professions.js";
  * one is the bench's frozen flat map, which the e2e build offers.
  */
 const FLAT_MAP = "bench-flat";
+
+/** A team code of two starter builds, each with a skill (#3544): a playable team of two. */
+function duoCode(): string {
+  return JSON.stringify({
+    format: "vibewars.team",
+    formatVersion: TEAM_FORMAT_VERSION,
+    name: "Duo",
+    size: 2,
+    members: STARTER_BUILDS.slice(1, 3).map((build) => ({
+      format: "vibewars.character",
+      formatVersion: BUILD_FORMAT_VERSION,
+      ...build,
+      secondaryProfession: build.secondaryProfession ?? null,
+    })),
+  });
+}
 const RAISED_MAP = "arena-crossroads";
 /** Where the pair arrives in the canyon (#3247), its first map's arrival pad. */
 const CANYON_ARRIVAL = { x: 1000, y: 1800 };
@@ -959,8 +979,79 @@ test.describe("the menu quest (#3540)", () => {
       }
       await bubble.getByRole("button", { name: "Got it" }).click();
     }
-    // The last step so far: the quest is done.
+    // On to the arena step (#3544).
+    await expect(panel).toContainText("Prove your team in a 2v2 Team Arena match.");
+    await expect(target("rail-team-arena")).toHaveClass(/tutorial-pulse/);
+  });
+
+  test("queues a team of two for Team Arena, then lifts and is done (#3544)", async ({ page }) => {
+    test.setTimeout(120_000);
+    // A saved, playable team of two, as the team step leaves one.
+    await page.goto("./");
+    await openRail(page, "Team Builder");
+    await expect(page.getByRole("button", { name: "New team build", exact: true })).toBeVisible();
+    await page.locator(".screen").evaluate((element, pasted) => {
+      const data = new DataTransfer();
+      data.setData("text/plain", pasted);
+      element.dispatchEvent(
+        new ClipboardEvent("paste", { clipboardData: data, bubbles: true, cancelable: true }),
+      );
+    }, duoCode());
+    await page.getByRole("button", { name: "Save", exact: true }).click();
+    await expect(page.locator(".toast")).toHaveText("Saved");
+
+    await page.goto(`./?menu-background=${FLAT_MAP}&tutorial-menu=arena`);
+    const panel = page.locator(".coach-panel");
+    const bubble = page.locator(".coach-bubble");
+    const target = (id: string): Locator => page.locator(`[data-tutorial~="${id}"]`);
+    await expect(panel).toContainText("Prove your team in a 2v2 Team Arena match.");
+
+    await target("rail-team-arena").click();
+    const stepper = page.locator('.mode-rail-stepper[data-tutorial~="team-size"]');
+    await expect(stepper).toHaveClass(/tutorial-pulse/);
+    await expect(bubble).toContainText("Only teams of the same size are matched");
+    const smaller = stepper.getByRole("button", { name: "Smaller team" });
+    while (!(await smaller.isDisabled())) {
+      await smaller.click();
+    }
+    await expect(stepper).toContainText("2v2");
+
+    const find = page.locator("#topbar .lobby-find");
+    await expect(find).toHaveClass(/tutorial-pulse/);
+    await expect(bubble).toContainText("a teammate who joins by your invite link");
+    await find.click();
+    await expect(page.locator(".team-lobby-stage")).toHaveText("Choose a team build");
+
+    // The Team Lobby's builds drawer: the duo is the one it offers at 2v2.
+    const tab = page.getByRole("button", { name: "Your Team Builds", exact: true });
+    await expect(tab).toHaveClass(/tutorial-pulse/);
+    await tab.click();
+    const drawer = page.getByRole("complementary", { name: "Your Team Builds" });
+    await drawer.getByRole("button", { name: "Duo", exact: true }).click();
+    await drawer.getByRole("button", { name: "Propose this build", exact: true }).click();
+
+    await expect(target("team-lobby")).toHaveClass(/tutorial-pulse/);
+    // The only vote ends the stage, the only seat taken the next.
+    await page.locator(".team-lobby-proposals .play-card-open").first().click();
+    await expect(page.locator(".team-lobby-stage")).toHaveText("Take a character");
+    await page.locator(".team-lobby-seat").first().click();
+
+    // Queued: the dim is gone, the closing line shows, and the record is done.
+    await expect(panel).toHaveText(/You're in the queue\. Good luck\./);
+    await expect(page.locator(".coach-dim")).toBeHidden();
+    await expect(page.locator(".coach-hole")).toBeHidden();
+    await expect(page.locator("#topbar .topbar-queue")).toBeVisible();
+    expect(
+      await page.evaluate(() =>
+        Object.keys(localStorage)
+          .filter((key) => key.endsWith(".tutorial"))
+          .map((key) => localStorage.getItem(key)),
+      ),
+    ).toEqual(["done"]);
+    // A click takes the line away; the party stays queued.
+    await panel.click();
     await expect(page.locator(".coach")).toHaveCount(0);
+    await expect(page.locator("#topbar .topbar-queue")).toBeVisible();
   });
 
   test("Skip tutorial, confirmed, ends it for good", async ({ page }) => {

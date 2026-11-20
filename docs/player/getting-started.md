@@ -6,6 +6,10 @@ match. You need no account and nothing to install: the game runs in
 this browser tab. VibeWars needs a keyboard and mouse. It does not work
 on a phone or a touch-only tablet: open it on a computer.
 
+## The tutorial
+
+The first time you open VibeWars, it offers a short tutorial: a walk through a canyon that teaches you to move and fight. It then carries on in the menu, one step at a time: change your character's spec, build a team of two, see what each mode is for, and queue that team for a first 2v2 Team Arena match. While a step points at a control, the rest of the menu is dimmed. You can skip the tutorial at any time with **Skip tutorial**.
+
 ## The mode rail
 
 The rail down the left of the main screen holds the

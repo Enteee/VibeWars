@@ -6,6 +6,10 @@ potrzebujesz konta ani instalacji: gra działa w tej karcie przeglądarki. VibeW
 wymaga klawiatury i myszy. Nie działa na telefonie ani na tablecie obsługiwanym
 wyłącznie dotykiem: otwórz grę na komputerze.
 
+## Samouczek
+
+Gdy pierwszy raz otworzysz VibeWars, gra zaproponuje krótki samouczek: spacer przez kanion, który uczy poruszania się i walki. Potem samouczek trwa dalej w menu, krok po kroku: zmień specjalizację swojej postaci, zbuduj drużynę dwuosobową, zobacz, do czego służy każdy tryb, i wstaw tę drużynę do kolejki na pierwszy mecz 2v2 na Arenie drużynowej. Gdy krok wskazuje jakiś element, reszta menu jest przyciemniona. Samouczek możesz w każdej chwili pominąć przyciskiem **Pomiń samouczek**.
+
 ## Pasek trybów
 
 Pasek po lewej stronie ekranu głównego zawiera [tryby](modes.md), od góry do dołu:

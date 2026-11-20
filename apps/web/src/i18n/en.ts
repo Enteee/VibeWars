@@ -1481,6 +1481,21 @@ export const en = {
   "tutorial.ground.praise": "Across! Now you know what the ground can do.",
   "tutorial.front.end": "You know the ropes now. See you out there!",
   "tutorial.front.menu": "Back to menu",
+  "tutorial.menu.arena.farewell": "You're in the queue. Good luck.",
+  "tutorial.menu.arena.find":
+    "Press Find a match to sign up. Your party is one side: a teammate who joins by your invite link takes a seat, and bots play the rest.",
+  "tutorial.menu.arena.findDone": "Find a match",
+  "tutorial.menu.arena.open": "Open Team Arena on the rail.",
+  "tutorial.menu.arena.openDone": "Open Team Arena",
+  "tutorial.menu.arena.queue":
+    "Vote for your team, then take a character. Once both are done, your party is queued.",
+  "tutorial.menu.arena.queueDone": "Join the queue",
+  "tutorial.menu.arena.signup": "Open Your Team Builds, pick the team you made, and propose it.",
+  "tutorial.menu.arena.signupDone": "Propose your team",
+  "tutorial.menu.arena.size":
+    "Set the team size to 2v2. Only teams of the same size are matched against each other.",
+  "tutorial.menu.arena.sizeDone": "Pick 2v2",
+  "tutorial.menu.arena.title": "Prove your team in a 2v2 Team Arena match.",
   "tutorial.menu.gotIt": "Got it",
   "tutorial.menu.menu.characters":
     "Characters is where you make and change who you play: profession, skills and gear.",

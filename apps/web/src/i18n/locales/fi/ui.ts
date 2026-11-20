@@ -1495,6 +1495,21 @@ export default {
   "tutorial.ground.praise": "Perillä! Nyt tiedät, mitä maa voi tehdä.",
   "tutorial.front.end": "Nyt osaat perusteet. Nähdään siellä!",
   "tutorial.front.menu": "Takaisin valikkoon",
+  "tutorial.menu.arena.farewell": "Olet jonossa. Onnea matkaan.",
+  "tutorial.menu.arena.find":
+    "Ilmoittaudu painamalla Etsi ottelu. Porukkasi on yksi puoli: kutsulinkilläsi liittyvä tiimikaveri ottaa paikan, ja botit pelaavat loput.",
+  "tutorial.menu.arena.findDone": "Etsi ottelu",
+  "tutorial.menu.arena.open": "Avaa Tiimiareena palkista.",
+  "tutorial.menu.arena.openDone": "Avaa Tiimiareena",
+  "tutorial.menu.arena.queue":
+    "Äänestä tiimiäsi ja ota sitten hahmo. Kun molemmat on tehty, porukkasi on jonossa.",
+  "tutorial.menu.arena.queueDone": "Liity jonoon",
+  "tutorial.menu.arena.signup": "Avaa Omat tiimibuildit, valitse tekemäsi tiimi ja ehdota sitä.",
+  "tutorial.menu.arena.signupDone": "Ehdota tiimiäsi",
+  "tutorial.menu.arena.size":
+    "Aseta tiimin kooksi 2v2. Vastakkain joutuvat vain samankokoiset tiimit.",
+  "tutorial.menu.arena.sizeDone": "Valitse 2v2",
+  "tutorial.menu.arena.title": "Todista tiimisi 2v2-ottelussa Tiimiareenalla.",
   "tutorial.menu.gotIt": "Selvä",
   "tutorial.menu.menu.characters":
     "Hahmoissa luot ja muutat, kenellä pelaat: ammatin, taidot ja varusteet.",

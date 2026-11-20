@@ -1488,6 +1488,22 @@ export default {
   "tutorial.ground.praise": "Átértél! Most már tudod, mire képes a talaj.",
   "tutorial.front.end": "Most már tudod az alapokat. Odakint találkozunk!",
   "tutorial.front.menu": "Vissza a menübe",
+  "tutorial.menu.arena.farewell": "Sorban állsz. Sok sikert!",
+  "tutorial.menu.arena.find":
+    "Nyomd meg a Meccskeresés gombot a jelentkezéshez. A csapatod az egyik oldal: a meghívólinkeden csatlakozó társ elfoglal egy helyet, a többit botok játsszák.",
+  "tutorial.menu.arena.findDone": "Meccskeresés",
+  "tutorial.menu.arena.open": "Nyisd meg a Csapatarénát a sávon.",
+  "tutorial.menu.arena.openDone": "Nyisd meg a Csapatarénát",
+  "tutorial.menu.arena.queue":
+    "Szavazz a csapatodra, majd válassz egy karaktert. Ha mindkettő megvan, a csapatod sorba áll.",
+  "tutorial.menu.arena.queueDone": "Állj sorba",
+  "tutorial.menu.arena.signup":
+    "Nyisd meg a Csapatbuildjeid fület, válaszd az általad készített csapatot, és javasold.",
+  "tutorial.menu.arena.signupDone": "Javasold a csapatod",
+  "tutorial.menu.arena.size":
+    "Állítsd a csapatméretet 2v2-re. Csak azonos méretű csapatok kerülnek össze.",
+  "tutorial.menu.arena.sizeDone": "Válaszd a 2v2-t",
+  "tutorial.menu.arena.title": "Bizonyítsd a csapatod egy 2v2-es Csapataréna-meccsen.",
   "tutorial.menu.gotIt": "Értem",
   "tutorial.menu.menu.characters":
     "A Karakterekben hozod létre és módosítod, kivel játszol: szakma, képességek és felszerelés.",

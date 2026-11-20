@@ -6,6 +6,10 @@ Du brauchst kein Konto und musst nichts installieren: Das Spiel läuft in diesem
 Browser-Tab. VibeWars braucht Tastatur und Maus. Auf dem Handy oder einem reinen
 Touch-Tablet läuft es nicht: Öffne es am Computer.
 
+## Das Tutorial
+
+Beim ersten Öffnen bietet dir VibeWars ein kurzes Tutorial an: einen Gang durch eine Schlucht, der dir Bewegen und Kämpfen beibringt. Danach geht es im Menü weiter, Schritt für Schritt: Ändere die Ausrichtung deines Charakters, bau ein Team aus zwei, sieh dir an, wofür jeder Modus da ist, und stell dieses Team für ein erstes 2v2-Match in der Teamarena in die Warteschlange. Solange ein Schritt auf ein Bedienelement zeigt, ist der Rest des Menüs abgedunkelt. Mit **Tutorial überspringen** kannst du jederzeit aussteigen.
+
 ## Die Modus-Leiste
 
 Die Leiste links im Hauptbildschirm enthält die [Modi](modes.md), von oben nach

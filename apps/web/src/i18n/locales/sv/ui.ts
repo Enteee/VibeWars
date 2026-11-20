@@ -1478,6 +1478,20 @@ export default {
   "tutorial.ground.praise": "Över! Nu vet du vad marken kan göra.",
   "tutorial.front.end": "Nu kan du grunderna. Vi ses där ute!",
   "tutorial.front.menu": "Till menyn",
+  "tutorial.menu.arena.farewell": "Du står i kön. Lycka till.",
+  "tutorial.menu.arena.find":
+    "Tryck på Hitta match för att anmäla dig. Din grupp är ena sidan: en lagkamrat som går med via din inbjudningslänk tar en plats, och bottar spelar resten.",
+  "tutorial.menu.arena.findDone": "Hitta match",
+  "tutorial.menu.arena.open": "Öppna Lagarena i listen.",
+  "tutorial.menu.arena.openDone": "Öppna Lagarena",
+  "tutorial.menu.arena.queue":
+    "Rösta på ditt lag och ta sedan en karaktär. När båda är gjorda står din grupp i kön.",
+  "tutorial.menu.arena.queueDone": "Ställ dig i kön",
+  "tutorial.menu.arena.signup": "Öppna Dina lagbuilds, välj laget du gjorde och föreslå det.",
+  "tutorial.menu.arena.signupDone": "Föreslå ditt lag",
+  "tutorial.menu.arena.size": "Sätt lagstorleken till 2v2. Bara lag av samma storlek möts.",
+  "tutorial.menu.arena.sizeDone": "Välj 2v2",
+  "tutorial.menu.arena.title": "Visa vad ditt lag går för i en 2v2-match på Lagarena.",
   "tutorial.menu.gotIt": "Uppfattat",
   "tutorial.menu.menu.characters":
     "I Karaktärer skapar och ändrar du vem du spelar: yrke, färdigheter och utrustning.",

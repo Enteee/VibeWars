@@ -1,4 +1,4 @@
-import type { LobbyMode, QueueMode } from "@vibewars/game-protocol";
+import type { LobbyMode } from "@vibewars/game-protocol";
 
 import type { MessageKey } from "../i18n/index.js";
 import { validateBuild } from "../storage/build-validation.js";
@@ -13,8 +13,8 @@ import { validateTeam } from "../ui/team-builder.js";
  * menu did, and asks it where the player is.
  */
 
-/** A screen the quest can point into: a rail screen, or the build editor. */
-export type MenuQuestScreen = RailEntry | "character-builder";
+/** A screen the quest can point into: a rail screen, the build editor, or a Team Lobby. */
+export type MenuQuestScreen = RailEntry | "character-builder" | "team-lobby";
 
 /** Something the menu did that an objective may be waiting for. */
 export type MenuQuestEvent =
@@ -42,8 +42,13 @@ export type MenuQuestEvent =
     }
   | { readonly kind: "team-saved"; readonly team: StoredTeam; readonly isNew: boolean }
   | { readonly kind: "team-size"; readonly size: number }
-  | { readonly kind: "team-picked"; readonly teamId: string }
-  | { readonly kind: "queue-joined"; readonly mode: QueueMode; readonly size: number };
+  | {
+      readonly kind: "team-picked";
+      readonly teamId: string;
+      /** The Team Builds the Team Lobby offered: the ones the player could pick. */
+      readonly offered: readonly string[];
+    }
+  | { readonly kind: "queue-joined"; readonly mode: LobbyMode; readonly size: number };
 
 /**
  * What the player has changed in the build editor (#3541), each once
@@ -76,8 +81,8 @@ export interface MenuQuestState {
   /** The team the quest had saved (#3542), for the modes step to pick. */
   readonly questTeamId: string | undefined;
   readonly teamSize: number | undefined;
-  readonly teamPicked: string | undefined;
-  readonly queueJoined: { readonly mode: QueueMode; readonly size: number } | undefined;
+  readonly teamPicked: { readonly teamId: string; readonly offered: readonly string[] } | undefined;
+  readonly queueJoined: { readonly mode: LobbyMode; readonly size: number } | undefined;
 }
 
 /** Something the player must have done, ticked live in the quest panel. */
@@ -167,6 +172,20 @@ function railItemLabel(entry: RailEntry): MessageKey {
     throw new Error(`no rail entry ${entry}`);
   }
   return item.label;
+}
+
+/**
+ * Whether the team picked is the quest's (#3544): the team step's, or,
+ * when that is not one the Team Lobby offered (deleted, or a quest resumed
+ * here), any it did: it offers only playable teams of the side's size.
+ */
+function questTeamPicked(state: MenuQuestState): boolean {
+  const picked = state.teamPicked;
+  if (picked === undefined) {
+    return false;
+  }
+  const quest = state.questTeamId;
+  return quest === undefined || !picked.offered.includes(quest) || picked.teamId === quest;
 }
 
 /** The modes the rail shows, in its order: the ones the modes step explains. */
@@ -347,6 +366,71 @@ export const MENU_QUEST_STEPS = [
     ],
   },
   modesStep(RAIL_MODES),
+  {
+    // Team Arena's team is picked in the Team Lobby Find a match opens,
+    // and the party queues once that ends (#3544).
+    id: "arena",
+    title: "tutorial.menu.arena.title",
+    beats: [
+      {
+        kind: "do",
+        target: "rail-team-arena",
+        line: "tutorial.menu.arena.open",
+        objectives: [
+          {
+            id: "open",
+            label: "tutorial.menu.arena.openDone",
+            done: (state) => state.screen === "team-arena",
+          },
+        ],
+      },
+      {
+        kind: "do",
+        target: "team-size",
+        line: "tutorial.menu.arena.size",
+        objectives: [
+          {
+            id: "size",
+            label: "tutorial.menu.arena.sizeDone",
+            done: (state) => state.teamSize === 2,
+          },
+        ],
+      },
+      {
+        kind: "do",
+        target: "find-match",
+        line: "tutorial.menu.arena.find",
+        objectives: [
+          {
+            id: "find",
+            label: "tutorial.menu.arena.findDone",
+            done: (state) => state.screensShown.includes("team-lobby"),
+          },
+        ],
+      },
+      {
+        kind: "do",
+        target: "team-builds",
+        line: "tutorial.menu.arena.signup",
+        objectives: [
+          { id: "pick", label: "tutorial.menu.arena.signupDone", done: questTeamPicked },
+        ],
+      },
+      {
+        kind: "do",
+        target: "team-lobby",
+        line: "tutorial.menu.arena.queue",
+        objectives: [
+          {
+            id: "queue",
+            label: "tutorial.menu.arena.queueDone",
+            done: (state) =>
+              state.queueJoined?.mode === "team-arena" && state.queueJoined.size === 2,
+          },
+        ],
+      },
+    ],
+  },
 ] as const satisfies readonly MenuQuestStep[];
 
 export type MenuQuestStepId = (typeof MENU_QUEST_STEPS)[number]["id"];
@@ -497,7 +581,7 @@ export function foldMenuQuestEvent(state: MenuQuestState, event: MenuQuestEvent)
     case "team-size":
       return { ...state, teamSize: event.size };
     case "team-picked":
-      return { ...state, teamPicked: event.teamId };
+      return { ...state, teamPicked: { teamId: event.teamId, offered: event.offered } };
     case "queue-joined":
       return { ...state, queueJoined: { mode: event.mode, size: event.size } };
   }

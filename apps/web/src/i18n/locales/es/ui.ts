@@ -1569,6 +1569,23 @@ export default {
   "tutorial.ground.praise": "¡Al otro lado! Ya sabes lo que hace el suelo.",
   "tutorial.front.end": "Ya sabes lo básico. ¡Nos vemos ahí fuera!",
   "tutorial.front.menu": "Volver al menú",
+  "tutorial.menu.arena.farewell": "Estás en la cola. Buena suerte.",
+  "tutorial.menu.arena.find":
+    "Pulsa Buscar partida para apuntarte. Tu grupo es un bando: un compañero que entre con tu enlace de invitación ocupa un puesto, y los bots juegan el resto.",
+  "tutorial.menu.arena.findDone": "Buscar partida",
+  "tutorial.menu.arena.open": "Abre Arena por equipos en la barra.",
+  "tutorial.menu.arena.openDone": "Abre Arena por equipos",
+  "tutorial.menu.arena.queue":
+    "Vota por tu equipo y luego toma un personaje. Cuando hayas hecho ambas cosas, tu grupo entra en la cola.",
+  "tutorial.menu.arena.queueDone": "Entra en la cola",
+  "tutorial.menu.arena.signup":
+    "Abre Tus builds de equipo, elige el equipo que creaste y propónlo.",
+  "tutorial.menu.arena.signupDone": "Propón tu equipo",
+  "tutorial.menu.arena.size":
+    "Pon el tamaño del equipo en 2v2. Solo se enfrentan equipos del mismo tamaño.",
+  "tutorial.menu.arena.sizeDone": "Elige 2v2",
+  "tutorial.menu.arena.title":
+    "Demuestra lo que vale tu equipo en una partida 2v2 de Arena por equipos.",
   "tutorial.menu.gotIt": "Entendido",
   "tutorial.menu.menu.characters":
     "En Personajes creas y cambias con quién juegas: profesión, habilidades y equipo.",

@@ -19,11 +19,18 @@ import { saveTutorialRecord } from "./tutorial-preference.js";
 /**
  * The menu quest being played (#3540): the menu's events in, the coach
  * kept on the current beat, and the record saved at the start of every
- * step, so a launch resumes there. `done` is saved after the last step.
+ * step, so a launch resumes there. `done` is saved after the last step,
+ * and the quest ends once its closing line has gone (#3544).
  */
+/** How long the closing line shows, unless clicked first (#3544). */
+export const FAREWELL_MS = 5000;
+
 export interface MenuQuestSession {
   event(event: MenuQuestEvent): void;
-  /** Gone without a word, as for a link: the record keeps its step. */
+  /**
+   * Gone without a word, as for a link: the record keeps its step. Once
+   * done, the closing line goes, as for a match found.
+   */
   stop(): void;
 }
 
@@ -40,9 +47,15 @@ export function startMenuQuest(options: MenuQuestOptions): MenuQuestSession {
   let over = false;
   const finish = (end: "done" | "skipped"): void => {
     over = true;
-    coach.remove();
     saveTutorialRecord(end);
-    options.onEnd(end);
+    if (end === "skipped") {
+      coach.remove();
+      options.onEnd(end);
+      return;
+    }
+    coach.farewell(t("tutorial.menu.arena.farewell"), FAREWELL_MS, () => {
+      options.onEnd(end);
+    });
   };
   const coach = options.coach({
     onSkip: () => {
@@ -51,14 +64,23 @@ export function startMenuQuest(options: MenuQuestOptions): MenuQuestSession {
       }
     },
   });
+  /** What the coach shows now: an event that changes none of it shows nothing anew. */
+  let shown = "";
   const show = (): void => {
     const step = menuQuestStep(cursor.step);
     const beat = currentBeat(cursor);
+    const objectives = menuQuestChecklist(cursor, state);
+    const target = beatTarget(beat, state);
+    const view = JSON.stringify([cursor, target, objectives]);
+    if (view === shown) {
+      return;
+    }
+    shown = view;
     coach.show({
       title: t(step.title),
       line: t(beat.line),
-      target: beatTarget(beat, state),
-      objectives: menuQuestChecklist(cursor, state).map(({ label, done }) => ({
+      target,
+      objectives: objectives.map(({ label, done }) => ({
         label: t(label),
         done,
       })),
@@ -94,10 +116,8 @@ export function startMenuQuest(options: MenuQuestOptions): MenuQuestSession {
       advance(false);
     },
     stop: () => {
-      if (!over) {
-        over = true;
-        coach.remove();
-      }
+      over = true;
+      coach.remove();
     },
   };
 }

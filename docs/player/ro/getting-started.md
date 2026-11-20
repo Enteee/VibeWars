@@ -6,6 +6,10 @@ de cont și nu trebuie să instalezi nimic: jocul rulează în această filă de
 browser. VibeWars are nevoie de tastatură și mouse. Nu funcționează pe telefon
 sau pe o tabletă doar cu ecran tactil: deschide-l pe un computer.
 
+## Tutorialul
+
+Prima dată când deschizi VibeWars, îți oferă un tutorial scurt: o plimbare printr-un canion care te învață să te miști și să lupți. Apoi continuă în meniu, pas cu pas: schimbă specializarea personajului tău, fă o echipă de doi, vezi la ce e bun fiecare mod și pune echipa la coadă pentru un prim meci 2v2 în Arena de echipe. Cât timp un pas arată spre un control, restul meniului e întunecat. Poți sări peste tutorial oricând cu **Sari peste tutorial**.
+
 ## Bara modurilor
 
 Bara din stânga ecranului principal conține [modurile](modes.md), de sus în jos:

@@ -6,6 +6,10 @@ Nepotrebuješ účet a nič neinštaluješ: hra beží v tejto karte prehliadač
 VibeWars potrebuje klávesnicu a myš. Na telefóne ani na čisto dotykovom
 tablete nefunguje: otvor ju na počítači.
 
+## Výučba
+
+Keď VibeWars otvoríš prvýkrát, ponúkne ti krátku výučbu: prechádzku kaňonom, ktorá ťa naučí pohybovať sa a bojovať. Potom pokračuje v menu, krok za krokom: zmeň zameranie svojej postavy, zostav tím pre dvoch, pozri sa, na čo slúži každý režim, a zaraď ten tím do radu na prvý zápas 2v2 v Tímovej aréne. Kým krok ukazuje na ovládací prvok, zvyšok menu je stmavený. Výučbu môžeš kedykoľvek preskočiť tlačidlom **Preskočiť výučbu**.
+
 ## Lišta režimov
 
 Lišta na ľavej strane hlavnej obrazovky obsahuje

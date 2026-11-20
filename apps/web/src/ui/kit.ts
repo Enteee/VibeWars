@@ -70,7 +70,10 @@ export function readyButton(ready: boolean, onClick: () => void): HTMLButtonElem
 
 /** What puts you in a queue, in every mode (#2980): `ScreenBarOptions.queueAction`. */
 export function findMatchButton(onClick: () => void): HTMLButtonElement {
-  return button(t("lobby.findMatch"), "primary lobby-find", onClick);
+  const find = button(t("lobby.findMatch"), "primary lobby-find", onClick);
+  // The menu quest's arena step points at it (#3544).
+  find.setAttribute("data-tutorial", "find-match");
+  return find;
 }
 
 /**

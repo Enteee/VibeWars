@@ -1485,6 +1485,21 @@ export default {
   "tutorial.ground.praise": "Премина! Вече знаеш какво може земята.",
   "tutorial.front.end": "Вече знаеш основното. До скоро на бойното поле!",
   "tutorial.front.menu": "Към менюто",
+  "tutorial.menu.arena.farewell": "В опашката си. Успех!",
+  "tutorial.menu.arena.find":
+    "Натисни Намери мач, за да се запишеш. Групата ти е едната страна: съотборник, влязъл чрез твоя линк за покана, заема място, а ботове играят останалите.",
+  "tutorial.menu.arena.findDone": "Намери мач",
+  "tutorial.menu.arena.open": "Отвори Отборна арена от лентата.",
+  "tutorial.menu.arena.openDone": "Отвори Отборна арена",
+  "tutorial.menu.arena.queue":
+    "Гласувай за отбора си, после вземи герой. Щом направиш и двете, групата ти влиза в опашката.",
+  "tutorial.menu.arena.queueDone": "Влез в опашката",
+  "tutorial.menu.arena.signup":
+    "Отвори Твоите отборни билдове, избери отбора, който направи, и го предложи.",
+  "tutorial.menu.arena.signupDone": "Предложи отбора си",
+  "tutorial.menu.arena.size": "Задай размер на отбора 2v2. Срещат се само отбори с еднакъв размер.",
+  "tutorial.menu.arena.sizeDone": "Избери 2v2",
+  "tutorial.menu.arena.title": "Докажи отбора си в мач 2v2 на Отборна арена.",
   "tutorial.menu.gotIt": "Разбрах",
   "tutorial.menu.menu.characters":
     "В „Герои“ създаваш и променяш с кого играеш: професия, умения и екипировка.",

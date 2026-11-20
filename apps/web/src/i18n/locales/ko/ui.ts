@@ -1399,6 +1399,20 @@ export default {
   "tutorial.ground.praise": "건넜다! 이제 땅이 뭘 하는지 알겠지.",
   "tutorial.front.end": "이제 기본은 다 알았어. 전장에서 만나요!",
   "tutorial.front.menu": "메뉴로",
+  "tutorial.menu.arena.farewell": "대기열에 들어갔습니다. 행운을 빌어요.",
+  "tutorial.menu.arena.find":
+    "매치 찾기를 눌러 참가 신청하세요. 파티가 한쪽 편입니다. 초대 링크로 들어온 팀원이 자리를 맡고, 나머지는 봇이 합니다.",
+  "tutorial.menu.arena.findDone": "매치 찾기",
+  "tutorial.menu.arena.open": "레일에서 팀 아레나를 여세요.",
+  "tutorial.menu.arena.openDone": "팀 아레나 열기",
+  "tutorial.menu.arena.queue":
+    "팀에 투표한 뒤 캐릭터를 고르세요. 둘 다 마치면 파티가 대기열에 들어갑니다.",
+  "tutorial.menu.arena.queueDone": "대기열 참가",
+  "tutorial.menu.arena.signup": "내 팀 빌드를 열고, 만든 팀을 골라 제안하세요.",
+  "tutorial.menu.arena.signupDone": "팀 제안하기",
+  "tutorial.menu.arena.size": "팀 규모를 2v2로 정하세요. 같은 규모의 팀끼리만 만납니다.",
+  "tutorial.menu.arena.sizeDone": "2v2 선택",
+  "tutorial.menu.arena.title": "팀 아레나 2v2 매치에서 팀의 실력을 증명하세요.",
   "tutorial.menu.gotIt": "알겠어요",
   "tutorial.menu.menu.characters":
     "캐릭터에서는 플레이할 캐릭터를 만들고 바꿉니다: 직업, 스킬, 장비.",

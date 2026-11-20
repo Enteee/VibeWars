@@ -1609,6 +1609,22 @@ export default {
   "tutorial.ground.praise": "Po drugiej stronie! Teraz wiesz, co potrafi grunt.",
   "tutorial.front.end": "Znasz już podstawy. Do zobaczenia na polu bitwy!",
   "tutorial.front.menu": "Wróć do menu",
+  "tutorial.menu.arena.farewell": "Jesteś w kolejce. Powodzenia.",
+  "tutorial.menu.arena.find":
+    "Naciśnij Znajdź mecz, aby się zapisać. Twoja grupa to jedna strona: kompan, który dołączy przez twój link z zaproszeniem, zajmie miejsce, a resztę zagrają boty.",
+  "tutorial.menu.arena.findDone": "Znajdź mecz",
+  "tutorial.menu.arena.open": "Otwórz Arenę drużynową na pasku.",
+  "tutorial.menu.arena.openDone": "Otwórz Arenę drużynową",
+  "tutorial.menu.arena.queue":
+    "Zagłosuj na swoją drużynę, potem weź postać. Gdy zrobisz jedno i drugie, twoja grupa trafi do kolejki.",
+  "tutorial.menu.arena.queueDone": "Dołącz do kolejki",
+  "tutorial.menu.arena.signup":
+    "Otwórz Twoje buildy drużyn, wybierz utworzoną drużynę i zaproponuj ją.",
+  "tutorial.menu.arena.signupDone": "Zaproponuj drużynę",
+  "tutorial.menu.arena.size":
+    "Ustaw rozmiar drużyny na 2v2. Spotykają się tylko drużyny tego samego rozmiaru.",
+  "tutorial.menu.arena.sizeDone": "Wybierz 2v2",
+  "tutorial.menu.arena.title": "Sprawdź swoją drużynę w meczu 2v2 na Arenie drużynowej.",
   "tutorial.menu.gotIt": "Rozumiem",
   "tutorial.menu.menu.characters":
     "W Postaciach tworzysz i zmieniasz, kim grasz: profesję, umiejętności i ekwipunek.",
