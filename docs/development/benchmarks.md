@@ -150,14 +150,14 @@ are 0, 5, …, 95), so a short run samples what a full one plays; the
 table's `matches` header names the count and the stride (#3694).
 
 Pull requests that touch a map, the bot rules or the bench run it on
-GitHub-hosted runners (`balance-bench.yml`, #3356): 70 seeds, at most 12
+GitHub-hosted runners (`balance-bench.yml`, #3356): 48 seeds, at most 12
 rows, each touched map at every size it seats, or `arena-canyon` and
 `arena-crossroads` 2v2 for a rule change. Read the table in the run's job
 summary, or copy it from `hub run view <id> --log` between
 `--- balance table ---` and `--- end ---`. On a pull request it is a gate
 (#3711): the job goes red when a row's verdict is FAIL, and the table is
-still in the summary. 70 seeds (140 matches) keep a fair two-team map from
-failing by chance more than about 5 % of the time, three teams and draws included. A run you dispatch is a
+still in the summary. 48 seeds (96 matches) keep a fair two-team map from
+failing by chance more than about 5 % of the time. A run you dispatch is a
 survey and never fails on a verdict. Run it locally only after asking on Telegram: it loads the host.
 
 A row gives the matches run, the wins of each team (by spawn side), the
