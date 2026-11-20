@@ -1,4 +1,5 @@
-import { validateMapData, type MapData } from "@vibewars/game-maps/schema";
+import type { MapData } from "@vibewars/game-maps/schema";
+import { bundledMaps } from "../net/bundled-maps.js";
 import trainingField from "@vibewars/game-maps/training/training-field/map.json" with { type: "json" };
 import trainingHall from "@vibewars/game-maps/training/training-hall/map.json" with { type: "json" };
 import trainingHeights from "@vibewars/game-maps/training/training-heights/map.json" with { type: "json" };
@@ -8,13 +9,10 @@ import trainingWilds from "@vibewars/game-maps/training/training-wilds/map.json"
 /**
  * The training arenas (#2 §4.4), as real map geometry in the browser.
  *
- * Vite inlines the JSON; it is validated here, at module load, so a
- * malformed map fails loudly in the browser exactly as it would on the
- * server, rather than drawing something the simulation disagrees with.
+ * Vite inlines the JSON; CI validates it, not the page (`bundledMaps`, #3679).
  */
 export const TRAINING_MAPS: ReadonlyMap<string, MapData> = new Map(
-  [trainingHall, trainingPillars, trainingField, trainingHeights, trainingWilds].map((raw) => {
-    const map = validateMapData(raw);
-    return [map.id, map];
-  }),
+  bundledMaps([trainingHall, trainingPillars, trainingField, trainingHeights, trainingWilds]).map(
+    (map) => [map.id, map],
+  ),
 );

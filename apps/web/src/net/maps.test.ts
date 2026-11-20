@@ -4,6 +4,7 @@ import {
   MAX_BREAKABLES,
   MAX_CAPTURE_POINTS,
   MAX_TOGGLES,
+  validateMapData,
 } from "@vibewars/game-maps/schema";
 import {
   ASCENT_ROUNDS,
@@ -17,6 +18,7 @@ import { describe, expect, it } from "vitest";
 
 import { mapName } from "../i18n/game-names.js";
 import { TRAINING_MAPS } from "../training/maps.js";
+import { TUTORIAL_CANYON } from "../tutorial/canyon-map.js";
 import {
   ARENA_MAPS,
   arenaIds,
@@ -48,6 +50,34 @@ function sizesOf(id: string): readonly number[] {
   }
   return map.teamSizes;
 }
+
+/** Every map JSON the client can bundle: arenas, training, tutorial and the bench's. */
+const BUNDLED: Readonly<Record<string, unknown>> = import.meta.glob<unknown>(
+  [
+    "../../../../packages/game-maps/maps/*/map.json",
+    "../../../../packages/game-maps/training/*/map.json",
+    "../../../../packages/game-maps/tutorial/*/map.json",
+    "../../../../packages/game-maps/bench/*.json",
+  ],
+  { eager: true, import: "default" },
+);
+
+describe("the bundled maps, which the page does not validate (#3679)", () => {
+  const named = Object.entries(BUNDLED).map(([path, raw]) => [
+    path.replace(/^.*game-maps\//, ""),
+    raw,
+  ]);
+  it.each(named)("%s validates, unchanged by the schema", (_, raw) => {
+    expect(validateMapData(raw)).toEqual(raw);
+  });
+
+  it("covers every map the client ships with", () => {
+    const covered = new Set(Object.values(BUNDLED));
+    for (const map of [...ARENA_MAPS, ...TRAINING_MAPS.values(), ...TUTORIAL_CANYON]) {
+      expect(covered.has(map), map.id).toBe(true);
+    }
+  });
+});
 
 describe("the render bench's maps (#3255, #3444)", () => {
   it.each(["bench-reference", "bench-flat"])(
