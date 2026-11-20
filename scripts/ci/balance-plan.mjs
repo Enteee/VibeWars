@@ -13,7 +13,7 @@ import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-export const SEEDS = 20;
+export const SEEDS = 48;
 export const MAX_ROWS = 12;
 
 /** Plays on a rule change, next to every touched map. */

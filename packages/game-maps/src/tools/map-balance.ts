@@ -171,6 +171,20 @@ export function balanceVerdict({ wins, draws }: MapBalanceResult): BalanceVerdic
     : { pass: true };
 }
 
+/** One `map size: reason` line per row whose verdict is FAIL (#3711). */
+export function failingRows(
+  rows: readonly {
+    readonly map: string;
+    readonly size: number;
+    readonly balance: MapBalanceResult;
+  }[],
+): string[] {
+  return rows.flatMap(({ map, size, balance }) => {
+    const verdict = balanceVerdict(balance);
+    return verdict.pass ? [] : [`${map} ${String(size)}v${String(size)}: ${verdict.reason}`];
+  });
+}
+
 /** A bot playing `build` (#1189): what a seated bot is, without a lobby. */
 export function playBuildBot(
   build: PlayerBuild,

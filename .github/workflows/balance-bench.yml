@@ -2,8 +2,10 @@ name: balance bench
 
 # The map balance bench on GitHub-hosted runners (#3356, #3065): all-bot
 # matches on real maps, so a map or bot PR carries its table without loading
-# the company host. Information, never a gate: it fails only if the bench
-# crashes, never because a verdict says FAIL. Not an expected check.
+# the company host. A gate on pull requests since #3711: the job goes red when
+# a row's verdict is FAIL (one ::error:: per row), so a tick is never read on a
+# lopsided map. Still not an expected check (#3356): red blocks nothing. A
+# workflow_dispatch survey never fails on a verdict.
 # Read the table: the run's job summary, or `hub run view <id> --log`
 # between the lines `--- balance table ---` and `--- end ---`.
 
@@ -64,7 +66,7 @@ jobs:
         run: |
           if [ "$EVENT" = pull_request ]; then
             plan=$(node scripts/ci/balance-plan.mjs "$BASE" "$HEAD")
-            seeds=20
+            seeds=$(node -e 'import("./scripts/ci/balance-plan.mjs").then((m) => console.log(m.SEEDS))')
           else
             seeds=$SEEDS_INPUT
             case "$seeds" in '' | *[!0-9]*) echo "seeds must be a number" >&2; exit 1 ;; esac
@@ -123,17 +125,23 @@ jobs:
           set -o pipefail
           # The bench tests for the variable being set, so it is set only to ask.
           if [ "$EVENT" = pull_request ] || [ "$STUCK" = true ]; then export BENCH_STUCK=1; fi
-          devenv shell -- pnpm bench:balance -t "prints each map" | tee bench.log
-          sed 's/\x1b\[[0-9;]*m//g' bench.log | grep '^|' > row.md
+          if [ "$EVENT" = pull_request ]; then export BENCH_GATE=1; fi
+          status=0
+          devenv shell -- pnpm bench:balance -t "prints each map" | tee bench.log || status=$?
+          sed 's/\x1b\[[0-9;]*m//g' bench.log | grep '^|' > row.md || true
+          # The verdict is the last cell; name each failing row on the PR.
+          awk -F' *\\| *' '$10 ~ /^FAIL: / { sub(/^FAIL: /, "", $10); print "::error::" $2 " " $3 ": " $10 }' row.md
+          exit "$status"
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
         with:
           name: balance-row-${{ matrix.row.map }}-${{ matrix.row.size }}
           path: row.md
 
   report:
     needs: [plan, bench]
-    if: ${{ !cancelled() && needs.bench.result == 'success' }}
+    if: ${{ !cancelled() && needs.plan.result == 'success' && needs.plan.outputs.rows != '[]' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:

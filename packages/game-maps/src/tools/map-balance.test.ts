@@ -17,6 +17,7 @@ import { mapMatchRules, mapSimulationFields } from "../match-fields.js";
 import type { MapData } from "../schema.js";
 import {
   balanceVerdict,
+  failingRows,
   benchSeeds,
   highGround,
   narrowestWalks,
@@ -60,6 +61,16 @@ describe("the balance verdict (#3065)", () => {
       pass: false,
       reason: "team 0 favoured (61 % of decided)",
     });
+  });
+
+  it("lists each failing row as `map size: reason` and no passing one (#3711)", () => {
+    expect(
+      failingRows([
+        { map: "a", size: 2, balance: result([50, 50]) },
+        { map: "b", size: 4, balance: result([61, 39]) },
+        { map: "c", size: 1, balance: result([0, 0]) },
+      ]),
+    ).toEqual(["b 4v4: team 0 favoured (61 % of decided)", "c 1v1: no contact"]);
   });
 
   it("holds three teams to 23-43 %", () => {
@@ -2472,6 +2483,15 @@ describe.runIf(BENCH)("the map balance bench (#3065)", () => {
           .map((row) => `| ${row.join(" | ")} |`)
           .join("\n"),
       );
+      // Set on pull requests only (#3711); a local run or a survey just prints.
+      if (process.env.BENCH_GATE !== undefined) {
+        const results = runs.map(({ map, perTeam, balance }) => ({
+          map: map.id,
+          size: perTeam,
+          balance,
+        }));
+        expect(failingRows(results)).toEqual([]);
+      }
     },
     // Every map at every size: hours, not minutes.
     24 * 3_600_000,
