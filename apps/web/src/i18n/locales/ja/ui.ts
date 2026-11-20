@@ -1410,6 +1410,20 @@ export default {
   "tutorial.ground.praise": "渡れた！これで地面のことがわかったね。",
   "tutorial.front.end": "これで基本は身についた。戦場で会おう!",
   "tutorial.front.menu": "メニューへ戻る",
+  "tutorial.menu.arena.farewell": "キューに入った。健闘を祈る。",
+  "tutorial.menu.arena.find":
+    "マッチを探すを押してエントリーしよう。パーティーが片方の陣営になる。招待リンクで参加した仲間が席に着き、残りはボットが戦う。",
+  "tutorial.menu.arena.findDone": "マッチを探す",
+  "tutorial.menu.arena.open": "レールからチームアリーナを開こう。",
+  "tutorial.menu.arena.openDone": "チームアリーナを開く",
+  "tutorial.menu.arena.queue":
+    "自分のチームに投票し、キャラクターを選ぼう。両方終わると、パーティーがキューに入る。",
+  "tutorial.menu.arena.queueDone": "キューに入る",
+  "tutorial.menu.arena.signup": "チームビルドを開き、作ったチームを選んで提案しよう。",
+  "tutorial.menu.arena.signupDone": "チームを提案する",
+  "tutorial.menu.arena.size": "チーム人数を2v2にしよう。同じ人数のチーム同士だけが対戦する。",
+  "tutorial.menu.arena.sizeDone": "2v2を選ぶ",
+  "tutorial.menu.arena.title": "チームアリーナの2v2マッチでチームの力を示そう。",
   "tutorial.menu.gotIt": "わかった",
   "tutorial.menu.menu.characters":
     "「キャラクター」では、使うキャラクターを作ったり変えたりできる。職業、スキル、装備だ。",

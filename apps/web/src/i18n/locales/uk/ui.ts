@@ -1604,6 +1604,22 @@ export default {
   "tutorial.ground.praise": "Перейшов! Тепер ти знаєш, що може земля.",
   "tutorial.front.end": "Тепер ти знаєш основи. Побачимось на полі бою!",
   "tutorial.front.menu": "До меню",
+  "tutorial.menu.arena.farewell": "Ти в черзі. Щасти!",
+  "tutorial.menu.arena.find":
+    "Натисни Знайти матч, щоб записатися. Твоя група — одна сторона: товариш, що приєднався за твоїм посиланням-запрошенням, займе місце, а решту зіграють боти.",
+  "tutorial.menu.arena.findDone": "Знайти матч",
+  "tutorial.menu.arena.open": "Відкрий Командну арену на панелі.",
+  "tutorial.menu.arena.openDone": "Відкрий Командну арену",
+  "tutorial.menu.arena.queue":
+    "Проголосуй за свою команду, потім візьми персонажа. Коли зробиш і те, і те, група стане в чергу.",
+  "tutorial.menu.arena.queueDone": "Стань у чергу",
+  "tutorial.menu.arena.signup":
+    "Відкрий Твої командні білди, вибери створену команду й запропонуй її.",
+  "tutorial.menu.arena.signupDone": "Запропонуй свою команду",
+  "tutorial.menu.arena.size":
+    "Встанови розмір команди 2v2. Зустрічаються лише команди однакового розміру.",
+  "tutorial.menu.arena.sizeDone": "Вибери 2v2",
+  "tutorial.menu.arena.title": "Доведи силу своєї команди в матчі 2v2 на Командній арені.",
   "tutorial.menu.gotIt": "Зрозуміло",
   "tutorial.menu.menu.characters":
     "У «Персонажах» ти створюєш і змінюєш того, ким граєш: професію, навички та спорядження.",

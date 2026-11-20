@@ -6,25 +6,33 @@ import { newCharacter } from "../ui/build-editor.js";
 import { teamCharacter, teamOf } from "../ui/team-builder.js";
 
 import type { CoachView } from "./coach-overlay.js";
-import { startMenuQuest } from "./menu-quest-session.js";
+import { FAREWELL_MS, startMenuQuest } from "./menu-quest-session.js";
 
 const KEY = `${STORAGE_NAMESPACE}.tutorial`;
 
-/** A coach that keeps what it was shown, with Skip and Got it to press. */
+/** A coach that keeps what it was shown, with Skip and Got it to press, and its closing line to let go. */
 function fakeCoach(): {
   coach: Parameters<typeof startMenuQuest>[0]["coach"];
   shown: CoachView[];
   removed: () => boolean;
   skip: () => void;
+  farewell: () => { readonly line: string; readonly ms: number } | undefined;
+  farewellGone: () => void;
 } {
   const shown: CoachView[] = [];
   let removed = false;
   let onSkip = (): void => undefined;
+  let farewell: { readonly line: string; readonly ms: number } | undefined;
+  let onGone = (): void => undefined;
   return {
     coach: (callbacks) => {
       onSkip = callbacks.onSkip;
       return {
         show: (view) => shown.push(view),
+        farewell: (line, ms, gone) => {
+          farewell = { line, ms };
+          onGone = gone;
+        },
         remove: () => {
           removed = true;
         },
@@ -34,6 +42,10 @@ function fakeCoach(): {
     removed: () => removed,
     skip: () => {
       onSkip();
+    },
+    farewell: () => farewell,
+    farewellGone: () => {
+      onGone();
     },
   };
 }
@@ -175,7 +187,7 @@ describe("the menu quest session", () => {
     expect(onEnd).not.toHaveBeenCalled();
   });
 
-  it("opens and explains each mode, ticking its list, then saves done and goes (#3543)", () => {
+  it("opens and explains each mode, ticking its list, then goes on to the arena (#3543)", () => {
     const { coach, shown, removed } = fakeCoach();
     const onEnd = vi.fn();
     const quest = startMenuQuest({ from: "modes", coach, onEnd });
@@ -209,9 +221,38 @@ describe("the menu quest session", () => {
       expect(removed()).toBe(false);
       gotIt(shown.at(-1));
     }
+    expect(items.get(KEY)).toBe("menu:arena");
+    expect(shown.at(-1)?.target).toBe("rail-team-arena");
+    expect(onEnd).not.toHaveBeenCalled();
+  });
+
+  it("queues a team of two for Team Arena, then saves done and says goodbye (#3544)", () => {
+    const { coach, shown, removed, farewell, farewellGone } = fakeCoach();
+    const onEnd = vi.fn();
+    const quest = startMenuQuest({ from: "arena", coach, onEnd });
+    expect(items.get(KEY)).toBe("menu:arena");
+    quest.event({ kind: "screen-shown", screen: "team-arena" });
+    expect(shown.at(-1)?.target).toBe("team-size");
+    quest.event({ kind: "team-size", size: 4 });
+    const views = shown.length;
+    // The lobby redrawn, nothing changed: the coach is not shown anew.
+    quest.event({ kind: "team-size", size: 4 });
+    expect(shown).toHaveLength(views);
+    quest.event({ kind: "team-size", size: 2 });
+    expect(shown.at(-1)?.target).toBe("find-match");
+    quest.event({ kind: "screen-shown", screen: "team-lobby" });
+    expect(shown.at(-1)?.target).toBe("team-builds");
+    quest.event({ kind: "team-picked", teamId: "duo", offered: ["duo"] });
+    expect(shown.at(-1)?.target).toBe("team-lobby");
+    quest.event({ kind: "queue-joined", mode: "team-arena", size: 2 });
     expect(items.get(KEY)).toBe("done");
-    expect(removed()).toBe(true);
+    expect(farewell()).toEqual({ line: "You're in the queue. Good luck.", ms: FAREWELL_MS });
+    expect(onEnd).not.toHaveBeenCalled();
+    farewellGone();
     expect(onEnd).toHaveBeenCalledWith("done");
+    // Stopped now, as for a match found, nothing is left on screen.
+    quest.stop();
+    expect(removed()).toBe(true);
   });
 
   it("is not moved on by the menu's events while it explains", () => {

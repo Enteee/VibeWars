@@ -1409,6 +1409,21 @@ export default {
   "tutorial.ground.praise": "Sampai! Sekarang kamu tahu ulah tanah ini.",
   "tutorial.front.end": "Sekarang kamu tahu dasarnya. Sampai jumpa di luar sana!",
   "tutorial.front.menu": "Ke menu",
+  "tutorial.menu.arena.farewell": "Kamu sudah di antrean. Semoga beruntung.",
+  "tutorial.menu.arena.find":
+    "Tekan Cari lawan untuk mendaftar. Rombonganmu adalah satu sisi: rekan yang bergabung lewat tautan undanganmu mengambil satu kursi, dan bot memainkan sisanya.",
+  "tutorial.menu.arena.findDone": "Cari lawan",
+  "tutorial.menu.arena.open": "Buka Arena Tim di bilah.",
+  "tutorial.menu.arena.openDone": "Buka Arena Tim",
+  "tutorial.menu.arena.queue":
+    "Pilih timmu, lalu ambil satu karakter. Setelah keduanya selesai, rombonganmu masuk antrean.",
+  "tutorial.menu.arena.queueDone": "Masuk antrean",
+  "tutorial.menu.arena.signup": "Buka Build Timmu, pilih tim yang kamu buat, lalu usulkan.",
+  "tutorial.menu.arena.signupDone": "Usulkan timmu",
+  "tutorial.menu.arena.size":
+    "Atur ukuran tim ke 2v2. Hanya tim dengan ukuran sama yang dipertemukan.",
+  "tutorial.menu.arena.sizeDone": "Pilih 2v2",
+  "tutorial.menu.arena.title": "Buktikan timmu dalam pertandingan 2v2 di Arena Tim.",
   "tutorial.menu.gotIt": "Mengerti",
   "tutorial.menu.menu.characters":
     "Di Karakter kamu membuat dan mengubah siapa yang kamu mainkan: profesi, skill, dan perlengkapan.",

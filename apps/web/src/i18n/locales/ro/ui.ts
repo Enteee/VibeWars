@@ -1560,6 +1560,22 @@ export default {
   "tutorial.ground.praise": "Ai trecut! Acum știi ce poate solul.",
   "tutorial.front.end": "Acum știi elementele de bază. Ne vedem acolo!",
   "tutorial.front.menu": "Înapoi la meniu",
+  "tutorial.menu.arena.farewell": "Ești în coadă. Baftă!",
+  "tutorial.menu.arena.find":
+    "Apasă Caută meci ca să te înscrii. Grupul tău e o tabără: un coechipier care intră prin linkul tău de invitație ia un loc, iar boții joacă restul.",
+  "tutorial.menu.arena.findDone": "Caută meci",
+  "tutorial.menu.arena.open": "Deschide Arena de echipe din bară.",
+  "tutorial.menu.arena.openDone": "Deschide Arena de echipe",
+  "tutorial.menu.arena.queue":
+    "Votează-ți echipa, apoi ia un personaj. După ce le faci pe amândouă, grupul tău intră în coadă.",
+  "tutorial.menu.arena.queueDone": "Intră în coadă",
+  "tutorial.menu.arena.signup":
+    "Deschide Buildurile tale de echipă, alege echipa pe care ai făcut-o și propune-o.",
+  "tutorial.menu.arena.signupDone": "Propune-ți echipa",
+  "tutorial.menu.arena.size":
+    "Setează mărimea echipei la 2v2. Se întâlnesc doar echipe de aceeași mărime.",
+  "tutorial.menu.arena.sizeDone": "Alege 2v2",
+  "tutorial.menu.arena.title": "Pune-ți echipa la încercare într-un meci 2v2 în Arenă de echipe.",
   "tutorial.menu.gotIt": "Am înțeles",
   "tutorial.menu.menu.characters":
     "La Personaje creezi și schimbi cu cine joci: profesie, abilități și echipament.",

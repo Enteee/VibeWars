@@ -8777,6 +8777,15 @@ body:has(#screens[style*="none"]) .now-playing {
   justify-content: flex-end;
 }
 
+.coach-panel-actions[hidden] {
+  display: none;
+}
+
+/* The closing line (#3544): a click takes it away. */
+.coach-farewell {
+  cursor: pointer;
+}
+
 /* A narrow window docks the panel to its bottom edge, or its top one. */
 @media (max-width: 899px) {
   .coach-panel,

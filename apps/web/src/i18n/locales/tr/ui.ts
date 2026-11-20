@@ -1482,6 +1482,21 @@ export default {
   "tutorial.ground.praise": "Geçtin! Artık zeminin neler yaptığını biliyorsun.",
   "tutorial.front.end": "Artık temelleri biliyorsun. Orada görüşürüz!",
   "tutorial.front.menu": "Menüye dön",
+  "tutorial.menu.arena.farewell": "Sıradasın. Bol şans.",
+  "tutorial.menu.arena.find":
+    "Kaydolmak için Maç bul'a bas. Grubun bir taraftır: davet bağlantınla katılan bir takım arkadaşı bir koltuk alır, gerisini botlar oynar.",
+  "tutorial.menu.arena.findDone": "Maç bul",
+  "tutorial.menu.arena.open": "Çubuktan Takım Arenası'nı aç.",
+  "tutorial.menu.arena.openDone": "Takım Arenası'nı aç",
+  "tutorial.menu.arena.queue":
+    "Takımına oy ver, sonra bir karakter al. İkisi de bitince grubun sıraya girer.",
+  "tutorial.menu.arena.queueDone": "Sıraya gir",
+  "tutorial.menu.arena.signup": "Takım Dizilimlerin'i aç, yaptığın takımı seç ve öner.",
+  "tutorial.menu.arena.signupDone": "Takımını öner",
+  "tutorial.menu.arena.size":
+    "Takım boyutunu 2v2 yap. Yalnızca aynı boyuttaki takımlar karşılaşır.",
+  "tutorial.menu.arena.sizeDone": "2v2 seç",
+  "tutorial.menu.arena.title": "Takımını Takım Arenası'nda bir 2v2 maçında kanıtla.",
   "tutorial.menu.gotIt": "Anladım",
   "tutorial.menu.menu.characters":
     "Karakterler'de kiminle oynadığını oluşturur ve değiştirirsin: meslek, beceriler ve teçhizat.",

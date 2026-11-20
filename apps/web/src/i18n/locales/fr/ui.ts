@@ -1572,6 +1572,23 @@ export default {
   "tutorial.ground.praise": "De l'autre côté ! Tu sais ce que fait le sol.",
   "tutorial.front.end": "Tu connais les bases maintenant. À tout à l'heure là-bas !",
   "tutorial.front.menu": "Retour au menu",
+  "tutorial.menu.arena.farewell": "Tu es dans la file. Bonne chance.",
+  "tutorial.menu.arena.find":
+    "Appuie sur Trouver un match pour t'inscrire. Ton groupe est un camp : un coéquipier qui rejoint par ton lien d'invitation prend une place, et des bots jouent le reste.",
+  "tutorial.menu.arena.findDone": "Trouver un match",
+  "tutorial.menu.arena.open": "Ouvre l'Arène d'équipe dans la barre.",
+  "tutorial.menu.arena.openDone": "Ouvre l'Arène d'équipe",
+  "tutorial.menu.arena.queue":
+    "Vote pour ton équipe, puis prends un personnage. Une fois les deux faits, ton groupe est dans la file.",
+  "tutorial.menu.arena.queueDone": "Rejoins la file",
+  "tutorial.menu.arena.signup":
+    "Ouvre Tes Builds d'équipe, choisis l'équipe que tu as créée et propose-la.",
+  "tutorial.menu.arena.signupDone": "Propose ton équipe",
+  "tutorial.menu.arena.size":
+    "Règle la taille d'équipe sur 2v2. Seules des équipes de même taille s'affrontent.",
+  "tutorial.menu.arena.sizeDone": "Choisis 2v2",
+  "tutorial.menu.arena.title":
+    "Fais tes preuves avec ton équipe dans un match 2v2 en Arène d'équipe.",
   "tutorial.menu.gotIt": "Compris",
   "tutorial.menu.menu.characters":
     "Dans Personnages, tu crées et modifies qui tu joues : profession, compétences et équipement.",

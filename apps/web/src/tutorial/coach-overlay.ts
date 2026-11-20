@@ -57,6 +57,11 @@ export interface CoachView {
 
 export interface CoachOverlay {
   show(view: CoachView): void;
+  /**
+   * The lock lifted and the dim gone, the panel says `line` alone (#3544),
+   * until clicked or `ms` have passed: then the overlay goes, and `onGone`.
+   */
+  farewell(line: string, ms: number, onGone: () => void): void;
   remove(): void;
 }
 
@@ -246,7 +251,8 @@ export function mountCoachOverlay(
   const skip = button(t("tutorial.skipTutorial"), "coach-skip", () => {
     inlineConfirm(skip, t("tutorial.menu.skipAsk"), t("tutorial.skip"), options.onSkip);
   });
-  panel.appendChild(h("div", "coach-panel-actions")).append(skip);
+  const actions = panel.appendChild(h("div", "coach-panel-actions"));
+  actions.append(skip);
   root.appendChild(coach);
 
   let view: CoachView | undefined;
@@ -369,6 +375,25 @@ export function mountCoachOverlay(
   doc.addEventListener("focusin", keepFocus, true);
   follow();
 
+  let farewellTimer = 0;
+  const unlock = (): void => {
+    cancelAnimationFrame(frame);
+    for (const type of POINTER_EVENTS) {
+      doc.removeEventListener(type, swallow, true);
+    }
+    doc.removeEventListener("keydown", trapTab, true);
+    doc.removeEventListener("focusin", keepFocus, true);
+    for (const target of targets) {
+      target.classList.remove(PULSE_CLASS);
+    }
+  };
+  const remove = (): void => {
+    removed = true;
+    clearTimeout(farewellTimer);
+    unlock();
+    coach.remove();
+  };
+
   return {
     show: (next) => {
       view = next;
@@ -390,18 +415,25 @@ export function mountCoachOverlay(
       follow();
       (next.gotIt === undefined ? open().flatMap(focusables)[0] : gotIt)?.focus();
     },
-    remove: () => {
-      removed = true;
-      cancelAnimationFrame(frame);
-      for (const type of POINTER_EVENTS) {
-        doc.removeEventListener(type, swallow, true);
-      }
-      doc.removeEventListener("keydown", trapTab, true);
-      doc.removeEventListener("focusin", keepFocus, true);
-      for (const target of targets) {
-        target.classList.remove(PULSE_CLASS);
-      }
-      coach.remove();
+    farewell: (line, ms, onGone) => {
+      unlock();
+      dim.hidden = true;
+      hole.hidden = true;
+      bubble.hidden = true;
+      checklist.replaceChildren();
+      actions.hidden = true;
+      panelLine.textContent = line;
+      panelLine.hidden = false;
+      panel.classList.add("coach-farewell");
+      const gone = (): void => {
+        if (!removed) {
+          remove();
+          onGone();
+        }
+      };
+      panel.addEventListener("click", gone);
+      farewellTimer = window.setTimeout(gone, ms);
     },
+    remove,
   };
 }

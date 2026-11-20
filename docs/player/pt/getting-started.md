@@ -6,6 +6,10 @@ partida. Você não precisa de conta nem de instalar nada: o jogo roda
 nesta aba do navegador. O VibeWars precisa de teclado e mouse. Ele não
 funciona em celular nem em tablet só com toque: abra em um computador.
 
+## O tutorial
+
+Na primeira vez que você abre o VibeWars, ele oferece um tutorial curto: uma caminhada por um cânion que ensina a se mover e a lutar. Depois ele continua no menu, um passo de cada vez: mude a especialização do seu personagem, monte uma equipe de dois, veja para que serve cada modo e coloque essa equipe na fila para uma primeira partida 2v2 na Arena de Equipes. Enquanto um passo aponta para um controle, o resto do menu fica escurecido. Você pode pular o tutorial a qualquer momento com **Saltar tutorial**.
+
 ## A barra de modos
 
 A barra à esquerda da tela principal tem os [modos](modes.md), de cima

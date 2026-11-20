@@ -1394,6 +1394,20 @@ export default {
   "tutorial.ground.praise": "Qua rồi! Giờ bạn biết mặt đất làm được gì.",
   "tutorial.front.end": "Giờ bạn đã nắm được cơ bản. Hẹn gặp ngoài kia!",
   "tutorial.front.menu": "Về menu",
+  "tutorial.menu.arena.farewell": "Bạn đã vào hàng chờ. Chúc may mắn.",
+  "tutorial.menu.arena.find":
+    "Bấm Tìm trận để đăng ký. Nhóm của bạn là một phe: đồng đội vào qua liên kết mời của bạn sẽ nhận một chỗ, còn lại do bot chơi.",
+  "tutorial.menu.arena.findDone": "Tìm trận",
+  "tutorial.menu.arena.open": "Mở Đấu trường đội trên thanh bên.",
+  "tutorial.menu.arena.openDone": "Mở Đấu trường đội",
+  "tutorial.menu.arena.queue":
+    "Bỏ phiếu cho đội của bạn, rồi nhận một nhân vật. Khi xong cả hai, nhóm của bạn vào hàng chờ.",
+  "tutorial.menu.arena.queueDone": "Vào hàng chờ",
+  "tutorial.menu.arena.signup": "Mở Build đội của bạn, chọn đội bạn đã tạo rồi đề xuất nó.",
+  "tutorial.menu.arena.signupDone": "Đề xuất đội của bạn",
+  "tutorial.menu.arena.size": "Đặt cỡ đội là 2v2. Chỉ những đội cùng cỡ mới gặp nhau.",
+  "tutorial.menu.arena.sizeDone": "Chọn 2v2",
+  "tutorial.menu.arena.title": "Chứng tỏ đội của bạn trong một trận 2v2 ở Đấu trường đội.",
   "tutorial.menu.gotIt": "Đã hiểu",
   "tutorial.menu.menu.characters":
     "Ở Nhân vật, bạn tạo và thay đổi nhân vật mình chơi: nghề, kỹ năng và trang bị.",

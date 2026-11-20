@@ -155,6 +155,7 @@ import {
 } from "./ui/lobby-screen.js";
 import { setRelayStatus } from "./ui/relay-status.js";
 import {
+  proposableTeams,
   renderTeamLobbyScreen,
   soloCharacterKey,
   soloEntries,
@@ -242,6 +243,7 @@ import {
 import { startTutorialSession, type TutorialSession } from "./tutorial/tutorial-session.js";
 import { drawTutorProfession } from "./tutorial/tutorial-world.js";
 import {
+  lobbyModeOfQueue,
   teamQueueModeOf,
   teamSizeOf,
   type LobbyMode,
@@ -1636,6 +1638,11 @@ async function main(): Promise<void> {
           lobby?.selectTeamSize(size);
         });
       }
+      // The menu quest waits for a Team Arena of two (#3544): the size shown counts.
+      const shown = lobby?.getSnapshot();
+      if (entry === "team-arena" && shown?.mode === entry) {
+        menuQuest?.event({ kind: "team-size", size: shown.teamSize });
+      }
     } else {
       renderTeamBuilder(screenRoot, teamList.teams, problems, menuNotice, callbacks);
     }
@@ -2258,6 +2265,11 @@ async function main(): Promise<void> {
       party,
       own === undefined ? undefined : (selfKey) => own.teamPlan(selfKey),
     );
+    menuQuest?.event({
+      kind: "queue-joined",
+      mode: lobbyModeOfQueue(mode),
+      size: teamSizeOf(mode),
+    });
   };
 
   /** The party lobby back in sight (#1766), its match's lobby left; or the menu, if it closed. */
@@ -2449,6 +2461,13 @@ async function main(): Promise<void> {
       team === undefined ? null : team.members.map((member) => toPlayerBuild(member.character)),
     );
     teamPicks.proposed = team?.id;
+    if (team !== undefined) {
+      menuQuest?.event({
+        kind: "team-picked",
+        teamId: team.id,
+        offered: proposableTeams(teamPicks.teams, team.size).map(({ id }) => id),
+      });
+    }
     lobbyChanged();
   };
 
@@ -2518,6 +2537,7 @@ async function main(): Promise<void> {
         soloClaimed: false,
       };
       teamPicks = picks;
+      menuQuest?.event({ kind: "screen-shown", screen: "team-lobby" });
       void Promise.all([teams.list(), characters.list()]).then(
         ([{ teams: saved }, { characters: roster }]) => {
           if (teamPicks !== picks || lobby !== joined) {
@@ -3061,6 +3081,9 @@ async function main(): Promise<void> {
     }
     enteringMatch = true;
     matchFinished = false;
+    // The menu quest's closing line goes as its match is found (#3544).
+    menuQuest?.stop();
+    menuQuest = undefined;
     stopShare();
     menuNotice = undefined;
     lobbyNotice = undefined;

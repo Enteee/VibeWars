@@ -6,6 +6,10 @@ Bạn không cần tài khoản và không cần cài gì: game chạy ngay tron
 duyệt này. VibeWars cần bàn phím và chuột. Game không chạy trên điện thoại
 hay máy tính bảng chỉ có cảm ứng: hãy mở nó trên máy tính.
 
+## Hướng dẫn
+
+Lần đầu bạn mở VibeWars, trò chơi sẽ mời bạn một hướng dẫn ngắn: đi qua một hẻm núi để học di chuyển và chiến đấu. Sau đó hướng dẫn tiếp tục trong menu, từng bước một: đổi hướng đi của nhân vật, lập một đội hai người, xem mỗi chế độ để làm gì, rồi đưa đội đó vào hàng chờ cho trận 2v2 đầu tiên ở Đấu trường đội. Khi một bước chỉ vào một nút, phần còn lại của menu bị làm tối. Bạn có thể bỏ qua hướng dẫn bất cứ lúc nào bằng **Bỏ qua hướng dẫn**.
+
 ## Thanh chế độ
 
 Thanh dọc bên trái màn hình chính chứa các [chế độ](modes.md), từ trên

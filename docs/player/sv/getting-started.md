@@ -6,6 +6,10 @@ behöver inget konto och inget att installera: spelet körs i den här
 webbläsarfliken. VibeWars kräver tangentbord och mus. Det fungerar inte
 på en telefon eller en surfplatta med bara pekskärm: öppna det på en dator.
 
+## Guiden
+
+Första gången du öppnar VibeWars erbjuder spelet en kort guide: en promenad genom en kanjon som lär dig att röra dig och slåss. Sedan fortsätter den i menyn, ett steg i taget: byt din karaktärs inriktning, bygg ett lag på två, se vad varje läge är till för och ställ laget i kö till en första 2v2-match på Lagarena. Medan ett steg pekar på en kontroll är resten av menyn nedtonad. Du kan hoppa över guiden när som helst med **Hoppa över guiden**.
+
 ## Lägesraden
 
 Raden längs huvudskärmens vänsterkant innehåller

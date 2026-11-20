@@ -1502,6 +1502,22 @@ export default {
   "tutorial.ground.praise": "Πέρασες! Τώρα ξέρεις τι κάνει το έδαφος.",
   "tutorial.front.end": "Τώρα ξέρεις τα βασικά. Τα λέμε εκεί έξω!",
   "tutorial.front.menu": "Πίσω στο μενού",
+  "tutorial.menu.arena.farewell": "Είσαι στην ουρά. Καλή τύχη.",
+  "tutorial.menu.arena.find":
+    "Πάτα Βρες αγώνα για να δηλώσεις συμμετοχή. Η παρέα σου είναι η μία πλευρά: ένας συμπαίκτης που μπαίνει με τον σύνδεσμο πρόσκλησής σου παίρνει μια θέση, και τα bots παίζουν τις υπόλοιπες.",
+  "tutorial.menu.arena.findDone": "Βρες αγώνα",
+  "tutorial.menu.arena.open": "Άνοιξε την Αρένα Ομάδων από τη μπάρα.",
+  "tutorial.menu.arena.openDone": "Άνοιξε την Αρένα Ομάδων",
+  "tutorial.menu.arena.queue":
+    "Ψήφισε την ομάδα σου και μετά πάρε έναν χαρακτήρα. Μόλις γίνουν και τα δύο, η παρέα σου μπαίνει στην ουρά.",
+  "tutorial.menu.arena.queueDone": "Μπες στην ουρά",
+  "tutorial.menu.arena.signup":
+    "Άνοιξε τις Συνθέσεις ομάδας σου, διάλεξε την ομάδα που έφτιαξες και πρότεινέ την.",
+  "tutorial.menu.arena.signupDone": "Πρότεινε την ομάδα σου",
+  "tutorial.menu.arena.size":
+    "Όρισε το μέγεθος ομάδας σε 2v2. Αντιμέτωπες βρίσκονται μόνο ομάδες ίδιου μεγέθους.",
+  "tutorial.menu.arena.sizeDone": "Διάλεξε 2v2",
+  "tutorial.menu.arena.title": "Απόδειξε την ομάδα σου σε αγώνα 2v2 στην Αρένα Ομάδων.",
   "tutorial.menu.gotIt": "Το κατάλαβα",
   "tutorial.menu.menu.characters":
     "Στους Χαρακτήρες φτιάχνεις και αλλάζεις με ποιον παίζεις: επάγγελμα, δεξιότητες και εξοπλισμό.",

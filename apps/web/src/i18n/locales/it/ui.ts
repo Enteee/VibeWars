@@ -1560,6 +1560,23 @@ export default {
   "tutorial.ground.praise": "Dall'altra parte! Ora sai cosa fa il terreno.",
   "tutorial.front.end": "Ora conosci le basi. Ci vediamo là fuori!",
   "tutorial.front.menu": "Torna al menu",
+  "tutorial.menu.arena.farewell": "Sei in coda. Buona fortuna.",
+  "tutorial.menu.arena.find":
+    "Premi Trova partita per iscriverti. Il tuo gruppo è uno schieramento: un compagno che entra con il tuo link d'invito prende un posto, e i bot giocano il resto.",
+  "tutorial.menu.arena.findDone": "Trova partita",
+  "tutorial.menu.arena.open": "Apri l'Arena a squadre nella barra.",
+  "tutorial.menu.arena.openDone": "Apri l'Arena a squadre",
+  "tutorial.menu.arena.queue":
+    "Vota la tua squadra, poi prendi un personaggio. Fatte entrambe le cose, il tuo gruppo è in coda.",
+  "tutorial.menu.arena.queueDone": "Entra in coda",
+  "tutorial.menu.arena.signup":
+    "Apri Le tue Build di squadra, scegli la squadra che hai creato e proponila.",
+  "tutorial.menu.arena.signupDone": "Proponi la tua squadra",
+  "tutorial.menu.arena.size":
+    "Imposta la dimensione della squadra su 2v2. Si affrontano solo squadre della stessa dimensione.",
+  "tutorial.menu.arena.sizeDone": "Scegli 2v2",
+  "tutorial.menu.arena.title":
+    "Metti alla prova la tua squadra in una partita 2v2 dell'Arena a squadre.",
   "tutorial.menu.gotIt": "Capito",
   "tutorial.menu.menu.characters":
     "In Personaggi crei e modifichi chi giochi: professione, abilità ed equipaggiamento.",

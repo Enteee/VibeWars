@@ -1487,6 +1487,22 @@ export default {
   "tutorial.ground.praise": "Overgestoken! Nu weet je wat de grond kan.",
   "tutorial.front.end": "Nu ken je de basis. Tot daarbuiten!",
   "tutorial.front.menu": "Naar menu",
+  "tutorial.menu.arena.farewell": "Je staat in de wachtrij. Veel succes.",
+  "tutorial.menu.arena.find":
+    "Druk op Match zoeken om je in te schrijven. Je groep is één kant: een teamgenoot die via je uitnodigingslink meedoet neemt een plek, en bots spelen de rest.",
+  "tutorial.menu.arena.findDone": "Match zoeken",
+  "tutorial.menu.arena.open": "Open de Team Arena in de balk.",
+  "tutorial.menu.arena.openDone": "Open de Team Arena",
+  "tutorial.menu.arena.queue":
+    "Stem op je team en neem dan een personage. Zodra beide gedaan zijn, staat je groep in de wachtrij.",
+  "tutorial.menu.arena.queueDone": "Ga in de wachtrij",
+  "tutorial.menu.arena.signup":
+    "Open Jouw Teambuilds, kies het team dat je maakte en stel het voor.",
+  "tutorial.menu.arena.signupDone": "Stel je team voor",
+  "tutorial.menu.arena.size":
+    "Zet de teamgrootte op 2v2. Alleen teams van dezelfde grootte treffen elkaar.",
+  "tutorial.menu.arena.sizeDone": "Kies 2v2",
+  "tutorial.menu.arena.title": "Bewijs je team in een 2v2-match in de Team Arena.",
   "tutorial.menu.gotIt": "Begrepen",
   "tutorial.menu.menu.characters":
     "Bij Personages maak en wijzig je met wie je speelt: beroep, vaardigheden en uitrusting.",

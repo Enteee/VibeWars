@@ -1501,6 +1501,22 @@ export default {
   "tutorial.ground.praise": "Drüben! Jetzt weißt du, was der Boden kann.",
   "tutorial.front.end": "Jetzt kennst du dich aus. Wir sehen uns da draußen!",
   "tutorial.front.menu": "Zum Menü",
+  "tutorial.menu.arena.farewell": "Du bist in der Warteschlange. Viel Glück.",
+  "tutorial.menu.arena.find":
+    "Drück Match suchen, um dich anzumelden. Deine Gruppe ist eine Seite: Wer über deinen Einladungslink beitritt, nimmt einen Platz, Bots spielen den Rest.",
+  "tutorial.menu.arena.findDone": "Match suchen",
+  "tutorial.menu.arena.open": "Öffne die Teamarena in der Leiste.",
+  "tutorial.menu.arena.openDone": "Öffne die Teamarena",
+  "tutorial.menu.arena.queue":
+    "Stimm für dein Team, dann nimm einen Charakter. Sobald beides erledigt ist, steht deine Gruppe in der Warteschlange.",
+  "tutorial.menu.arena.queueDone": "Tritt der Warteschlange bei",
+  "tutorial.menu.arena.signup":
+    "Öffne Deine Team-Builds, wähle das Team, das du gebaut hast, und schlag es vor.",
+  "tutorial.menu.arena.signupDone": "Schlag dein Team vor",
+  "tutorial.menu.arena.size":
+    "Stell die Teamgröße auf 2v2. Nur Teams gleicher Größe treffen aufeinander.",
+  "tutorial.menu.arena.sizeDone": "Wähle 2v2",
+  "tutorial.menu.arena.title": "Beweise dein Team in einem 2v2-Match der Teamarena.",
   "tutorial.menu.gotIt": "Verstanden",
   "tutorial.menu.menu.characters":
     "Unter Charaktere erstellst und änderst du, wen du spielst: Beruf, Fertigkeiten und Ausrüstung.",

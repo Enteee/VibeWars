@@ -1599,6 +1599,22 @@ export default {
   "tutorial.ground.praise": "Перешёл! Теперь ты знаешь, на что способна земля.",
   "tutorial.front.end": "Теперь ты знаешь основы. Увидимся на поле боя!",
   "tutorial.front.menu": "В меню",
+  "tutorial.menu.arena.farewell": "Ты в очереди. Удачи!",
+  "tutorial.menu.arena.find":
+    "Нажми Найти матч, чтобы записаться. Твоя группа — одна сторона: товарищ, зашедший по твоей ссылке-приглашению, займёт место, а остальных сыграют боты.",
+  "tutorial.menu.arena.findDone": "Найти матч",
+  "tutorial.menu.arena.open": "Открой Командную арену на панели.",
+  "tutorial.menu.arena.openDone": "Открой Командную арену",
+  "tutorial.menu.arena.queue":
+    "Проголосуй за свою команду, затем возьми персонажа. Когда сделаешь и то и другое, группа встанет в очередь.",
+  "tutorial.menu.arena.queueDone": "Встань в очередь",
+  "tutorial.menu.arena.signup":
+    "Открой Твои командные билды, выбери созданную команду и предложи её.",
+  "tutorial.menu.arena.signupDone": "Предложи свою команду",
+  "tutorial.menu.arena.size":
+    "Поставь размер команды 2v2. Встречаются только команды одного размера.",
+  "tutorial.menu.arena.sizeDone": "Выбери 2v2",
+  "tutorial.menu.arena.title": "Покажи свою команду в матче 2v2 на Командной арене.",
   "tutorial.menu.gotIt": "Понятно",
   "tutorial.menu.menu.characters":
     "В «Персонажах» ты создаёшь и меняешь того, кем играешь: профессию, навыки и снаряжение.",
