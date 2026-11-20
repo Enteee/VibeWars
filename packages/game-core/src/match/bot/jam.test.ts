@@ -146,6 +146,32 @@ describe("a follower a body holds up (#3702)", () => {
     expect(first(true)).toBe(plain);
   });
 
+  it("put back mid-yield, walks on from where it is put, holding for nothing", () => {
+    const sim = headOn(corridor(32, 440, 560));
+    const at = (id: string) => sim.get(id)?.position ?? vec2(0, 0);
+    /** How far each of `ids` moves in one step. */
+    const moved = (ids: readonly string[]) => {
+      const before = ids.map(at);
+      sim.step(DT);
+      return ids.map((id, index) => distance(before[index] ?? vec2(0, 0), at(id)));
+    };
+    // The pet that yields stands a quarter second on end while the other
+    // walks past: pressed together, both stand.
+    const still = { a: 0, b: 0 };
+    let yielder: "a" | "b" | undefined;
+    for (let t = 0; t < 4 && yielder === undefined; t += DT) {
+      const [a, b] = moved(["a", "b"]);
+      still.a = a === 0 && b !== 0 ? still.a + DT : 0;
+      still.b = b === 0 && a !== 0 ? still.b + DT : 0;
+      yielder = still.a >= 0.25 ? "a" : still.b >= 0.25 ? "b" : undefined;
+    }
+    if (yielder === undefined) throw new Error("no pet yielded");
+    sim.resetParticipant(yielder);
+    let walked = 0;
+    for (let t = 0; t < 0.3; t += DT) walked += moved([yielder])[0] ?? 0;
+    expect(walked).toBeGreaterThan(10);
+  });
+
   it("plans round a body standing in a narrow gap, through a wider one, and arrives", () => {
     // A wall across the field with a gap one body wide, a still body in
     // it, and a wide gap 200 lower.

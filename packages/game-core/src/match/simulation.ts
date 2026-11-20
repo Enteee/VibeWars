@@ -6600,7 +6600,8 @@ export class MatchSimulation {
         jam.detourUntil = now + DETOUR_SECONDS;
         return;
       }
-      // No room either side. Two followers face to face in a narrow way: one yields.
+      // No room either side. Two followers face to face in a narrow way: one
+      // yields. A follower always has a jam, so this asks only that both follow.
       if (blocker.jam !== undefined && this.#yields(record, blocker)) {
         jam.stage = 1;
         jam.detour = this.#standAside(record, way, radii);
@@ -10252,6 +10253,8 @@ export class MatchSimulation {
     this.#refreshFloors(record);
     record.walkGoal = undefined;
     record.route = undefined;
+    record.jam = undefined;
+    record.avoid = undefined;
     record.history.clear();
     this.#stepStart.set(record.id, position);
   }
@@ -11216,6 +11219,8 @@ export class MatchSimulation {
     record.inputDirection = ZERO;
     record.walkGoal = undefined;
     record.route = undefined;
+    record.jam = undefined;
+    record.avoid = undefined;
     record.interact = undefined;
     record.respawnInSeconds = 0;
     record.combatant.cast.cancelCast();
