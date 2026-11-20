@@ -42,7 +42,9 @@ jobs:
           ls -la ranking-out
 
       - name: Build the leaderboard
-        run: devenv shell -- pnpm ranking:build --archive ranking-out
+        run: |
+          devenv shell -- pnpm --filter @vibewars/ranking build
+          devenv shell -- pnpm ranking:build --archive ranking-out
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
