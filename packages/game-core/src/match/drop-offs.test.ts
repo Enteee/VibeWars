@@ -135,6 +135,17 @@ describe("a drop-off (#3069)", () => {
     run(sim, 3);
     expect(get(sim, "foe").combatant.health).toBeLessThan(health);
   });
+
+  it("keeps a body on the deck when a body below refuses its step off, and drops it once clear (#3700)", () => {
+    const sim = arena([spec("a", 0, vec2(800, 305), 1), spec("b", 0, vec2(800, 285), 0)]);
+    sim.setInputDirection("a", vec2(0, -1));
+    sim.step(DT);
+    expect(get(sim, "a")).toMatchObject({ layer: 1, position: { x: 800, y: 305 } });
+    sim.setInputDirection("b", vec2(-1, 0));
+    run(sim, 1);
+    expect(get(sim, "a").layer).toBe(0);
+    expect(get(sim, "a").position.y).toBeLessThan(300);
+  });
 });
 
 describe("climbing pace (#3069)", () => {
