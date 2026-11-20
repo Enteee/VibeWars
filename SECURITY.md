@@ -348,6 +348,15 @@ What a receipt defends against:
   is marked `forked`. The later receipt still counts for every other seat
   and is a loss for the forker, so a backdated match against one's own alt
   key cannot erase a result (#3571).
+- **A host making a peer sign leavers it did not see go, or sign
+  without end (#3680).** Before its first result signature a peer signs
+  only leavers it saw leave. After it, it signs only a re-round of that
+  result: nothing else changed, strictly more leavers, each a seat of the
+  signed start. So a host gets at most one round, and one relay publish,
+  per seat. The same result sent again only gets back the signature it
+  already has (`rankedLeaversHold` in `game-session/src/lobby-client.ts`).
+  A receipt over `MAX_RECEIPT_BYTES` (24 KB) is neither parsed nor
+  published.
 - **Farming with alt keys.** Repeats against one opposing set weigh 1/k
   (none after 3), only 20 matches a day count, and every game is weighted
   by the opponents' trust, min(1, D/min(12, P−1))³. On a ladder of at least
