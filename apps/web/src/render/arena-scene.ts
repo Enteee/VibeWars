@@ -630,6 +630,27 @@ const OWNER_PIP_RADIUS = 1.5;
 const HEALTH_BAR_WIDTH = 34;
 const HEALTH_BAR_HEIGHT = 4;
 
+/** A hover ring fixed on the map (#3557): dashed on the ground, solid off it. */
+export interface SceneMarker {
+  readonly x: number;
+  readonly y: number;
+  readonly dashed: boolean;
+}
+
+function drawRing(g: Phaser.GameObjects.Graphics, x: number, y: number, dashed: boolean): void {
+  g.lineStyle(1.5, HOVER_RING, 0.8);
+  if (!dashed) {
+    g.strokeCircle(x, y, HOVER_RADIUS);
+    return;
+  }
+  const dash = Math.PI / HOVER_DASHES;
+  for (let k = 0; k < HOVER_DASHES; k += 1) {
+    g.beginPath();
+    g.arc(x, y, HOVER_RADIUS, 2 * k * dash, (2 * k + 1) * dash);
+    g.strokePath();
+  }
+}
+
 export class ArenaScene extends Phaser.Scene {
   public static readonly KEY = "arena";
 
@@ -4078,11 +4099,22 @@ export class ArenaScene extends Phaser.Scene {
     }
   }
 
+  /** Rings fixed on the map, for the docs' diagrams (#3557); unset in a match, and set, it is the only ring. */
+  private fixedMarkers: readonly SceneMarker[] | undefined;
+
+  /** Draws `markers` with the hover ring's own drawing, instead of waiting on a pointer. */
+  setFixedMarkers(markers: readonly SceneMarker[]): void {
+    this.fixedMarkers = markers;
+  }
+
   /** Where a click would go, before it does (#2831): a ring off the ground (#2973), dashed on it. */
   private drawHoverMarker(g: Phaser.GameObjects.Graphics): void {
+    for (const marker of this.fixedMarkers ?? []) {
+      drawRing(g, marker.x, marker.y, marker.dashed);
+    }
     const { structure, walls } = this.snapshot;
     const pointer = this.input.activePointer;
-    if (structure.layerCount === 1 || !this.input.isOver) {
+    if (structure.layerCount === 1 || !this.input.isOver || this.fixedMarkers !== undefined) {
       return;
     }
     const world = this.cameras.main.getWorldPoint(pointer.x, pointer.y);
@@ -4093,17 +4125,7 @@ export class ArenaScene extends Phaser.Scene {
       this.alt?.held() === true,
       selfLayer(this.snapshot),
     );
-    g.lineStyle(1.5, HOVER_RING, 0.8);
-    if (layer !== structure.ground) {
-      g.strokeCircle(world.x, world.y, HOVER_RADIUS);
-      return;
-    }
-    const dash = Math.PI / HOVER_DASHES;
-    for (let k = 0; k < HOVER_DASHES; k += 1) {
-      g.beginPath();
-      g.arc(world.x, world.y, HOVER_RADIUS, 2 * k * dash, (2 * k + 1) * dash);
-      g.strokePath();
-    }
+    drawRing(g, world.x, world.y, layer === structure.ground);
   }
 
   /** Each lift's platform where the snapshot has it now (#3079), drawn afresh every frame. */
