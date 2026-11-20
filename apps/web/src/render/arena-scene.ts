@@ -687,6 +687,8 @@ export class ArenaScene extends Phaser.Scene {
     {
       readonly ground: Phaser.GameObjects.Graphics;
       readonly seam: Phaser.GameObjects.Graphics;
+      /** The tunnel's floor under it (#3686): drawn only while it is cut away. */
+      readonly floor: Phaser.GameObjects.Graphics;
       /** The ground grain over its cover's pieces (#3484), faded with it, and the grid over that. */
       grain: Phaser.GameObjects.TileSprite[];
       readonly lines: Phaser.GameObjects.Graphics;
@@ -3818,10 +3820,11 @@ export class ArenaScene extends Phaser.Scene {
       ...(this.floorLines === undefined ? [] : [this.floorLines]),
       g,
       ...this.structureGraphics.values(),
-      ...[...this.tunnelCovers.values()].flatMap(({ ground, lines, seam }) => [
+      ...[...this.tunnelCovers.values()].flatMap(({ ground, lines, seam, floor }) => [
         ground,
         lines,
         seam,
+        floor,
       ]),
       ...[...this.waterOverTunnels.values()].map(({ surface }) => surface),
       ...[...this.decksOverTunnels.values()].flat(),
@@ -3981,7 +3984,7 @@ export class ArenaScene extends Phaser.Scene {
       this.occluders = seenFrom(this.mapOccluders, inside);
     }
     const step = this.reducedMotion ? 1 : (dt * (1 - TUNNEL_CUTAWAY_ALPHA)) / TUNNEL_CUTAWAY_FADE;
-    for (const [at, { ground, seam, grain, lines }] of this.tunnelCovers) {
+    for (const [at, { ground, seam, floor, grain, lines }] of this.tunnelCovers) {
       const target = inside.has(at) ? TUNNEL_CUTAWAY_ALPHA : 1;
       const alpha = ground.alpha;
       if (alpha !== target) {
@@ -3991,6 +3994,8 @@ export class ArenaScene extends Phaser.Scene {
         seam.setAlpha(next);
         lines.setAlpha(next);
         grain.forEach((piece) => piece.setAlpha(next));
+        // Under it while it is opaque, the floor is not drawn (#3686).
+        floor.setVisible(next < 1);
       }
       for (const piece of this.pavingDrawn?.overTunnels.get(at) ?? []) {
         piece.setAlpha(ground.alpha);
@@ -4409,10 +4414,11 @@ export class ArenaScene extends Phaser.Scene {
    * so it covers them, each tunnel's seam over its paving (#3236).
    */
   private drawPits(structure: MapStructure, line: number, palette: ArenaPalette): void {
-    for (const [at, { ground, seam, grain, lines }] of this.tunnelCovers) {
+    for (const [at, { ground, seam, floor, grain, lines }] of this.tunnelCovers) {
       if (at >= structure.tunnels.length) {
         ground.destroy();
         seam.destroy();
+        floor.destroy();
         lines.destroy();
         grain.forEach((piece) => {
           piece.destroy();
@@ -4434,12 +4440,15 @@ export class ArenaScene extends Phaser.Scene {
       deckLayer: structure.ground,
       part: "lines",
     });
-    // Under its cover, seen only while that is cut away (#3234); a pit draws over it.
-    // A tunnel's floor is the ground's: its roof, and the light under it, make it dark (#3329).
+    // Where a shaft opens it; under its cover, only while that is cut away (#3234, #3686).
+    // A pit draws over it. A tunnel's floor is the ground's: its roof, and the light under
+    // it, make it dark (#3329).
     const tunnelGround = palette.floor ?? ARENA_BACKGROUND;
     pit.fillStyle(tunnelGround, 1);
     for (const tunnel of structure.tunnels) {
-      this.fillFan(pit, tunnelFloor(structure, tunnel));
+      for (const piece of tunnelFloor(structure, tunnel).open) {
+        this.fillFan(pit, piece);
+      }
     }
     const floor = pitFloor(palette);
     for (const each of structure.pits) {
@@ -4472,6 +4481,7 @@ export class ArenaScene extends Phaser.Scene {
         drawn = {
           ground: this.add.graphics().setDepth(renderOrder({ kind: "tunnel-cover", deckLayer })),
           seam: this.add.graphics().setDepth(renderOrder({ kind: "tunnel-seam", deckLayer })),
+          floor: this.add.graphics().setDepth(renderOrder({ kind: "tunnel-floor" })),
           grain: [],
           lines: this.add
             .graphics()
@@ -4481,6 +4491,12 @@ export class ArenaScene extends Phaser.Scene {
       }
       drawn.ground.clear();
       drawn.seam.clear();
+      drawn.floor.clear();
+      drawn.floor.fillStyle(tunnelGround, 1);
+      for (const piece of tunnelFloor(structure, tunnel).covered) {
+        this.fillFan(drawn.floor, piece);
+      }
+      drawn.floor.setVisible(drawn.ground.alpha < 1);
       drawn.lines.clear();
       drawn.grain.forEach((piece) => {
         piece.destroy();

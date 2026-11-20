@@ -983,17 +983,36 @@ export function tunnelSeam(
   };
 }
 
+/** `tunnel`'s floor, split by the ground over it (#3686). */
+export interface TunnelFloor {
+  /** Under the holes its shafts go down by, open to the sky: always seen. */
+  readonly open: readonly (readonly Vec2[])[];
+  /** Under its cover: seen only while that is cut away, so not drawn while it is not. */
+  readonly covered: readonly (readonly Vec2[])[];
+}
+
 /**
- * The floor of `tunnel`, sunk a step (#3234): only seen through its cover
- * while that is cut away for whoever is in it.
+ * The floor of `tunnel`, sunk a step (#3234): seen where a shaft opens
+ * it, and through its cover only while that is cut away for whoever is
+ * in it.
  */
 export function tunnelFloor(
   structure: MapStructure,
   tunnel: MapStructure["tunnels"][number],
-): readonly Vec2[] {
+): TunnelFloor {
   const step = -liftOf(structure, structure.ground - 1);
   const box = boxOf(tunnel.footprint);
-  return boxOutline(box.left, box.top + step, box.right, box.bottom + step);
+  const floor = { ...box, top: box.top + step, bottom: box.bottom + step };
+  const openings = openingBoxes(structure, tunnel);
+  const outline = (piece: Box): readonly Vec2[] =>
+    boxOutline(piece.left, piece.top, piece.right, piece.bottom);
+  return {
+    open: openings
+      .map((opening) => boxAnd(opening, floor))
+      .filter((piece) => !boxEmpty(piece))
+      .map(outline),
+    covered: boxWithout(floor, openings).map(outline),
+  };
 }
 
 /** `outline` cut to `box` (Sutherland-Hodgman): empty if they do not meet. */

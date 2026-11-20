@@ -32,6 +32,7 @@ export type RenderItem =
   | { readonly kind: "floor" }
   | { readonly kind: "ground-grain"; readonly part: GrainPart }
   | { readonly kind: "pit" }
+  | { readonly kind: "tunnel-floor" }
   | { readonly kind: "paving"; readonly layer: number }
   | { readonly kind: "water"; readonly layer: number; readonly part: WaterPart }
   | { readonly kind: "zone"; readonly layer: number; readonly part: ZonePart }
@@ -72,6 +73,11 @@ const OUTSIDE = -3;
  * water, wards and bodies in it, and under the ground's lip in front of it.
  */
 const PIT = -1.8;
+/**
+ * A tunnel's floor under its cover (#3686), drawn only while that is cut
+ * away: over the ground's grid, as the pit's, and under a pit it runs into.
+ */
+const TUNNEL_FLOOR = -1.85;
 /**
  * The ground's grain and dressing (#3484): over the floor, kept inside
  * the ground's outline by a stencil, its grid over it, all under the
@@ -187,6 +193,8 @@ export function renderOrder(item: RenderItem): number {
       return -2;
     case "ground-grain":
       return GROUND_GRAIN[item.part];
+    case "tunnel-floor":
+      return TUNNEL_FLOOR;
     case "pit":
       return PIT;
     case "paving":

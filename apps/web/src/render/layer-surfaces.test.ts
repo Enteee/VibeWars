@@ -34,6 +34,7 @@ import {
   pitDrawing,
   TUNNEL_GRATING_STEP,
   tunnelCover,
+  tunnelFloor,
   tunnelOpenings,
   tunnelSeam,
   rampDrawing,
@@ -989,6 +990,35 @@ describe("a level under the ground (#2973)", () => {
       expect(covered(750, 570)).toBe(true);
       expect(covered(900, 570)).toBe(true);
       expect(covered(830, 620 + STEP - 1)).toBe(true);
+    });
+
+    it("draws the floor under the cover apart from the floor a shaft opens (#3686)", () => {
+      const deep = { ...SUNK, transitions: [{ ...stair(800), area: rect(800, 500, 60, 400) }] };
+      const { open, covered } = tunnelFloor(deep, tunnel);
+      const area = (pieces: readonly (readonly Vec2[])[]): number =>
+        pieces.reduce(
+          (sum, [a, , c]) => sum + ((c?.x ?? 0) - (a?.x ?? 0)) * ((c?.y ?? 0) - (a?.y ?? 0)),
+          0,
+        );
+      expect(area(open) + area(covered)).toBe(280 * 70);
+      const under = (x: number, y: number, pieces: readonly (readonly Vec2[])[]): boolean =>
+        pieces.some((piece) => pointInPolygon({ x, y }, piece));
+      expect(under(830, 600 + STEP, open)).toBe(true);
+      expect(under(830, 600 + STEP, covered)).toBe(false);
+      expect(under(750, 600 + STEP, covered)).toBe(true);
+      expect(under(750, 600 + STEP, open)).toBe(false);
+      // No shaft: it is all under the cover, and drawn only while that is cut away.
+      expect(tunnelFloor(SUNK, tunnel)).toEqual({
+        open: [],
+        covered: [
+          [
+            { x: 700, y: 550 + STEP },
+            { x: 980, y: 550 + STEP },
+            { x: 980, y: 620 + STEP },
+            { x: 700, y: 620 + STEP },
+          ],
+        ],
+      });
     });
 
     it("shows a body on the stair through the hole, and still hides one under the roof", () => {
