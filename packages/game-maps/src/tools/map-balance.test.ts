@@ -97,7 +97,7 @@ describe("walks and high ground (#3070)", () => {
       expect(Math.abs(walk0 - walk1) / Math.max(walk0, walk1)).toBeLessThanOrEqual(0.1);
     });
 
-    it("gives the teams high ground within 25 % of each other", () => {
+    it("gives the teams high ground within 25 % of each other, or all two bodies wide", () => {
       const [ground0 = 0, ground1 = 0] = highGround(map);
       expect(ground0).toBeGreaterThan(0);
       expect(Math.abs(ground0 - ground1) / Math.max(ground0, ground1)).toBeLessThanOrEqual(0.25);
@@ -2282,19 +2282,15 @@ describe("the width of each team's way in (#3688)", () => {
     "sunken-bastion": { at: { x: 1350, y: 905 }, layer: 2 },
   };
   /**
-   * The maps whose teams' narrowest ways in were further apart than 25 % when
-   * #3688 measured them, each to be fixed on a card of its own. One that is
-   * fixed leaves this list.
+   * The maps whose teams' narrowest ways in were uneven when #3688 measured
+   * them, each with the card that fixes it. One that is fixed leaves this list.
    */
-  const UNEVEN: readonly string[] = [
-    "arena-canyon",
-    "barrow-field",
-    "ember-pits",
-    "frozen-crossing",
-    "hall-of-heroes-capture",
-    "hall-of-heroes-king",
-    "hall-of-heroes-relic",
-  ];
+  const UNEVEN: Readonly<Record<string, number>> = {
+    "barrow-field": 3691,
+    "hall-of-heroes-capture": 3442,
+    "hall-of-heroes-king": 3442,
+    "hall-of-heroes-relic": 3442,
+  };
 
   /** Where `map` is fought over: its own point, else its shared objective nearest the centre, else its centre. */
   const foughtOver = (map: MapData): { readonly at: Vec2; readonly layer: number } => {
@@ -2318,8 +2314,9 @@ describe("the width of each team's way in (#3688)", () => {
       const { at, layer } = foughtOver(map);
       const widths = narrowestWalks(map, at, layer).map(({ width }) => width);
       const spread = (Math.max(...widths) - Math.min(...widths)) / Math.max(...widths);
-      if (UNEVEN.includes(id)) expect(spread).toBeGreaterThan(0.25);
-      else expect(spread).toBeLessThanOrEqual(0.25);
+      // A way two bodies wide is no choke, however much wider another team's is.
+      const even = spread <= 0.25 || Math.min(...widths) >= 160;
+      expect(even).toBe(UNEVEN[id] === undefined);
     },
     60_000,
   );
