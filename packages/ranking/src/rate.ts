@@ -3,6 +3,7 @@ import {
   type RankedReceipt,
   type ReceiptCrypto,
   receiptHash,
+  resultDigest,
   startHash,
   validateReceipt,
   ZERO_HASH,
@@ -185,11 +186,47 @@ interface Match {
 const byKey = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0);
 
 /**
+ * Whether `final` names as a leaver a key that signed an earlier round of
+ * it among `copies` (#3573): the same result with fewer leavers, none of
+ * them that key. A host that re-rounds an honest signer into a leaver
+ * voids the match; a key that really refused has no such signature.
+ */
+function reRoundedSigner(
+  final: RankedReceipt,
+  copies: readonly RankedReceipt[],
+  crypto: ReceiptCrypto,
+): boolean {
+  const { result } = final;
+  const named = new Set(result.leavers);
+  return copies.some(({ result: earlier, resultSigs }) => {
+    if (
+      earlier.startHash !== result.startHash ||
+      earlier.winningTeam !== result.winningTeam ||
+      earlier.endReason !== result.endReason ||
+      earlier.durationSeconds !== result.durationSeconds ||
+      earlier.replayHash !== result.replayHash ||
+      earlier.leavers.length >= named.size ||
+      !earlier.leavers.every((pubkey) => named.has(pubkey))
+    ) {
+      return false;
+    }
+    const digest = resultDigest(earlier, crypto.sha256);
+    return result.leavers.some((pubkey) => {
+      const sig = resultSigs[pubkey];
+      return (
+        !earlier.leavers.includes(pubkey) && sig !== undefined && crypto.verify(pubkey, digest, sig)
+      );
+    });
+  });
+}
+
+/**
  * Step 1: one receipt per match. Copies of one start are grouped; copies
  * with the same result are merged, so partial `host-left` receipts make
  * one whole one, and only then validated. A void or invalid copy is
  * dropped there, so a forgery can neither fork nor void anything. Two
- * different valid results for one start void the match for everyone.
+ * different valid results for one start void the match for everyone, and
+ * so does a re-round that names an earlier round's signer a leaver.
  */
 function matchesOf(
   receipts: readonly RankedReceipt[],
@@ -226,7 +263,7 @@ function matchesOf(
       return validity.ok && !validity.void;
     });
     const [receipt] = rated;
-    if (receipt && rated.length === 1) {
+    if (receipt && rated.length === 1 && !reRoundedSigner(receipt, results, crypto)) {
       matches.push({
         receipt,
         hash: receiptHash(receipt, crypto.sha256),

@@ -383,6 +383,58 @@ describe("rate", () => {
     expect(of(ratings, x).rating).toBeLessThan(of(day0, x).rating);
   });
 
+  it("voids a re-round that names a signer of an earlier round a leaver", () => {
+    const ledger = new Ledger();
+    const pool = trustedPool(ledger);
+    const [host, mate, x, y] = pool;
+    const day0 = rate(ledger.receipts, 1, crypto);
+    const final = ledger.play(
+      1,
+      [
+        [host, mate],
+        [x, y],
+      ],
+      { winningTeam: 1, leavers: [mate] },
+    );
+    // The mate's partial of round 1, which named nobody a leaver.
+    const earlier = { ...final.result, leavers: [] };
+    const partial: RankedReceipt = {
+      ...final,
+      result: earlier,
+      resultSigs: { [mate]: sigOf(mate, resultDigest(earlier, sha256)) },
+    };
+    const ratings = rate([...ledger.receipts, partial], 1, crypto);
+    for (const pubkey of [host, mate, x, y]) {
+      expect(of(ratings, pubkey)).toEqual(of(day0, pubkey));
+    }
+  });
+
+  it("rates a re-round whose leaver signed no earlier round, as a loss for it alone", () => {
+    const ledger = new Ledger();
+    const pool = trustedPool(ledger);
+    const [host, mate, x, y] = pool;
+    const day0 = rate(ledger.receipts, 1, crypto);
+    const final = ledger.play(
+      1,
+      [
+        [host, mate],
+        [x, y],
+      ],
+      { winningTeam: 0, leavers: [mate] },
+    );
+    // Round 1 named nobody; the host's partial of it is all there is.
+    const earlier = { ...final.result, leavers: [] };
+    const partial: RankedReceipt = {
+      ...final,
+      result: earlier,
+      resultSigs: { [host]: sigOf(host, resultDigest(earlier, sha256)) },
+    };
+    const ratings = rate([...ledger.receipts, partial], 1, crypto);
+    expect(of(ratings, mate).rating).toBeLessThan(of(day0, mate).rating);
+    expect(of(ratings, host).rating).toBeGreaterThan(of(day0, host).rating);
+    expect(of(ratings, x).rating).toBeLessThan(of(day0, x).rating);
+  });
+
   it("rates only the host when the host left", () => {
     const ledger = new Ledger();
     const pool = trustedPool(ledger);
