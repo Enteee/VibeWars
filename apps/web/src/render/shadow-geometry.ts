@@ -171,19 +171,27 @@ export interface DeckShadowPainter {
   restore(): void;
   translateCanvas(x: number, y: number): void;
   fillStyle(colour: number, alpha: number): void;
-  fillShape(shape: RenderableShape): void;
+  /** `shape` filled but where `hidden`, in the coordinates it is drawn in. */
+  fillShape(shape: RenderableShape, hidden: readonly Outline[]): void;
+}
+
+/** `outlines` moved by `-by` each way: what they cover, under a canvas translated by `by`. */
+function backBy(outlines: readonly Outline[], by: number): readonly Outline[] {
+  return outlines.map((outline) => outline.map(({ x, y }) => ({ x: x - by, y: y - by })));
 }
 
 /**
  * What each bridge throws on the ground: a hard shadow, and the ground
  * under it a step darker. Where the light maps cast shadows (#2988) they
  * replace the fixed one; the step darker stays. An overhang (#3293) throws
- * a soft shade.
+ * a soft shade. None of it is drawn where `hidden`: what the decks that
+ * are up draw over opaque (#3686), most of the ground under a deck.
  */
 export function paintDeckShadows(
   painter: DeckShadowPainter,
   structure: MapStructure,
   lightShadows: boolean,
+  hidden: readonly Outline[],
 ): void {
   for (const deck of structure.decks) {
     if (deck.layer !== structure.ground + 1) {
@@ -193,11 +201,11 @@ export function paintDeckShadows(
       painter.save();
       painter.translateCanvas(DECK_SHADOW.offset, DECK_SHADOW.offset);
       painter.fillStyle(DECK_SHADOW.colour, DECK_SHADOW.alpha);
-      painter.fillShape(deck.footprint);
+      painter.fillShape(deck.footprint, backBy(hidden, DECK_SHADOW.offset));
       painter.restore();
     }
     painter.fillStyle(DECK_TINT.colour, DECK_TINT.alpha);
-    painter.fillShape(deck.footprint);
+    painter.fillShape(deck.footprint, hidden);
   }
   // An overhang's soft shade on the ground under it (#3293); the light maps do not know it.
   for (const overhang of structure.overhangs) {
@@ -208,7 +216,7 @@ export function paintDeckShadows(
       painter.save();
       painter.translateCanvas(offset, offset);
       painter.fillStyle(OVERHANG_SHADE.colour, OVERHANG_SHADE.alpha);
-      painter.fillShape(overhang.footprint);
+      painter.fillShape(overhang.footprint, backBy(hidden, offset));
       painter.restore();
     }
   }

@@ -212,6 +212,7 @@ describe("the fixed deck shadow (#2988)", () => {
       },
       structure,
       lightShadows,
+      [],
     );
     return calls;
   }
@@ -247,5 +248,25 @@ describe("the fixed deck shadow (#2988)", () => {
     ]);
     expect(paint(true, shaded)).toEqual(shade);
     expect(paint(false, shaded)).toEqual(shade);
+  });
+
+  it("leaves out what the decks hide, where each shade lands (#3686)", () => {
+    const hidden: Outline[] = [SQUARE];
+    const fills: (readonly Outline[])[] = [];
+    paintDeckShadows(
+      {
+        save: () => undefined,
+        restore: () => undefined,
+        translateCanvas: () => undefined,
+        fillStyle: () => undefined,
+        fillShape: (_, under) => fills.push(under),
+      },
+      STRUCTURE,
+      false,
+      hidden,
+    );
+    const back = DECK_SHADOW.offset;
+    // The shadow is drawn moved by its offset, so what hides it is moved back.
+    expect(fills).toEqual([[SQUARE.map(({ x, y }) => ({ x: x - back, y: y - back }))], hidden]);
   });
 });

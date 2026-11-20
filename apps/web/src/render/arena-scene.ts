@@ -323,6 +323,7 @@ import {
   coverPieces,
   liftedCovers,
   outlineArea,
+  opaqueDeckCovers,
   wallPieces,
   type CoverPiece,
   type TunnelCoverBox,
@@ -3619,12 +3620,13 @@ export class ArenaScene extends Phaser.Scene {
         restore: () => g.restore(),
         translateCanvas: (x, y) => g.translateCanvas(x, y),
         fillStyle: (colour, alpha) => g.fillStyle(colour, alpha),
-        fillShape: (shape) => {
-          this.fillShape(g, shape);
+        fillShape: (shape, hidden) => {
+          this.fillShapeShown(g, shape, hidden);
         },
       },
       next.structure,
       next.lightShadows,
+      opaqueDeckCovers(next.structure, next.walls, MAP_DEPTH),
     );
     for (const graphics of this.structureGraphics.values()) {
       graphics.clear();

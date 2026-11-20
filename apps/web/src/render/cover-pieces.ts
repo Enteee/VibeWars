@@ -1,7 +1,15 @@
 import { distancePointToSegment, type Vec2 } from "@vibewars/game-core";
 
-import { boxWithout, segmentInBox, type Box } from "./layer-surfaces.js";
-import type { StructurePainter } from "./structure-art.js";
+import type { MapStructure, RenderableWall } from "./arena-snapshot.js";
+import {
+  boxWithout,
+  deckCovers,
+  segmentInBox,
+  tunnelCoverBox,
+  type Box,
+} from "./layer-surfaces.js";
+import { elevationOf } from "./render-order.js";
+import { FADING_TOP_LOOKS, type StructurePainter } from "./structure-art.js";
 
 /**
  * What lies over a tunnel, split by the tunnel covers under it, so the
@@ -254,4 +262,36 @@ function edges(outline: readonly Vec2[]): readonly (readonly [Vec2, Vec2])[] {
   return outline.map(
     (corner, at) => [corner, outline[(at + 1) % outline.length] ?? corner] as const,
   );
+}
+
+/**
+ * What the decks that are up hide of something drawn at `depth`, as
+ * `deckCovers`, but only where they are drawn opaque whatever the
+ * bodies do (#3686): not an arch's top, which fades over a body under it
+ * (#3312), nor where a deck may be cut away with a tunnel's cover
+ * (#3352), whose box reaches as far north and south as the deck is
+ * lifted: its top drawn up, and its side down to the foot of the rows
+ * `liftedCovers` gives the cover. What is left is hidden for as long as
+ * the decks stay where they are.
+ */
+export function opaqueDeckCovers(
+  structure: MapStructure,
+  walls: readonly RenderableWall[],
+  depth: number,
+): readonly (readonly Vec2[])[] {
+  const covers = structure.tunnels.map((tunnel) => tunnelCoverBox(structure, tunnel));
+  return structure.decks
+    .filter(({ look }) => !FADING_TOP_LOOKS.has(look))
+    .flatMap((deck) => {
+      const lift = elevationOf(deck.layer, structure.ground);
+      const fading = covers.map((box, tunnel) => ({
+        tunnel,
+        box: { ...box, top: box.top - lift, bottom: box.bottom + lift },
+      }));
+      return deckCovers({ ...structure, decks: [deck] }, walls, depth).flatMap((outline) =>
+        coverPieces(outline, EVERYWHERE, fading)
+          .filter(({ tunnel, outline: piece }) => tunnel === undefined && piece.length >= 3)
+          .map(({ outline: piece }) => piece),
+      );
+    });
 }

@@ -1,13 +1,18 @@
+import { pointInPolygon, type Vec2 } from "@vibewars/game-core";
 import { describe, expect, it } from "vitest";
 
+import type { MapStructure } from "./arena-snapshot.js";
 import {
   EVERYWHERE,
   clipToBox,
   coverPieces,
   liftedCovers,
+  opaqueDeckCovers,
   outlineArea,
   wallPieces,
 } from "./cover-pieces.js";
+import { deckCovers } from "./layer-surfaces.js";
+import { ELEVATION_STEP } from "./render-order.js";
 
 describe("clipToBox (#3350)", () => {
   const BOX = { left: 0, top: 0, right: 100, bottom: 100 };
@@ -207,5 +212,76 @@ describe("wallPieces (#3418)", () => {
     expect(at(1200, 420 - TOP + 1)?.tunnel).toBe(0);
     expect(at(1200, 460 - BASE - 1)?.tunnel).toBe(0);
     expect(at(900, 420 - TOP + 1)?.tunnel).toBeUndefined();
+  });
+});
+
+describe("opaqueDeckCovers (#3686)", () => {
+  /** A deck a step over the ground, 600 wide, from (200, 200); the ground over a pit. */
+  const DECK = {
+    layer: 2,
+    footprint: { kind: "rect", x: 200, y: 200, width: 600, height: 200 },
+    look: "platform",
+    switched: null,
+  } as const;
+  const STRUCTURE: MapStructure = {
+    layerCount: 3,
+    biome: "hall",
+    ascentAct: null,
+    bounds: { kind: "rect" },
+    ground: 1,
+    pits: [],
+    tunnels: [],
+    dropOffs: [],
+    downDecks: [],
+    overhangs: [],
+    decks: [DECK],
+    transitions: [],
+    water: [],
+    zones: [],
+  };
+  // The ground, drawn under every deck.
+  const DEPTH = 0;
+  const hidden = (structure: MapStructure, point: Vec2): boolean =>
+    opaqueDeckCovers(structure, [], DEPTH).some((outline) => pointInPolygon(point, outline));
+  // Under the deck's top, drawn a step up.
+  const under = (x: number): Vec2 => ({ x, y: 300 - ELEVATION_STEP });
+
+  it("hides what a deck that is up hides", () => {
+    expect(opaqueDeckCovers(STRUCTURE, [], DEPTH)).toEqual(deckCovers(STRUCTURE, [], DEPTH));
+    expect(hidden(STRUCTURE, under(500))).toBe(true);
+  });
+
+  it("hides nothing under an arch, whose top fades over a body under it", () => {
+    const arch = { ...STRUCTURE, decks: [{ ...DECK, look: "arch" } as const] };
+    expect(opaqueDeckCovers(arch, [], DEPTH)).toEqual([]);
+  });
+
+  it("hides nothing under a deck gone down", () => {
+    const down: MapStructure = {
+      ...STRUCTURE,
+      decks: [
+        {
+          ...DECK,
+          switched: {
+            at: 0,
+            up: false,
+            whenDown: "fall",
+            hinge: null,
+            afterCrossings: null,
+            cracks: 0,
+          },
+        },
+      ],
+    };
+    expect(opaqueDeckCovers(down, [], DEPTH)).toEqual([]);
+  });
+
+  it("hides nothing where the deck is cut away with a tunnel's cover, the rest still", () => {
+    const tunnel = { footprint: { kind: "rect", x: 450, y: 0, width: 100, height: 600 } } as const;
+    const tunnelled = { ...STRUCTURE, tunnels: [tunnel] };
+    expect(hidden(tunnelled, under(500))).toBe(false);
+    // Up to as far east and west as the cover reaches, and no further.
+    expect(hidden(tunnelled, under(440))).toBe(true);
+    expect(hidden(tunnelled, under(560))).toBe(true);
   });
 });
