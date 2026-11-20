@@ -1581,6 +1581,18 @@ export default {
     "Dans Équipes, tu réunis des personnages en une équipe pour les combats en équipe.",
   "tutorial.menu.menu.title": "Pour continuer, tu dois changer ta spécialisation.",
   "tutorial.menu.skipAsk": "Passer le reste du tutoriel ?",
+  "tutorial.menu.modes.gvg":
+    "Le GvG, c'est guilde contre guilde, 8 contre 8, sur l'Île du hall de guilde. Tue le Seigneur de guilde ennemi pour gagner, et garde le tien en vie.",
+  "tutorial.menu.modes.heroesAscent":
+    "L'Ascension des héros est une suite de cartes, 8 contre 8, contre des équipes de ton tour. Gagne et tu passes à la carte suivante, jusqu'au Hall des héros ; perds et tu recommences.",
+  "tutorial.menu.modes.hostedGame":
+    "Une Partie hébergée est ton propre salon : envoie le lien d'invitation à tes amis, et choisis la carte et la taille d'équipe. Des bots jouent chaque place que personne ne prend.",
+  "tutorial.menu.modes.open": "Ouvre le mode allumé sur le côté.",
+  "tutorial.menu.modes.randomArena":
+    "L'Arène aléatoire est le combat le plus rapide : ton propre personnage, dans une équipe d'inconnus, en 1v1, 2v2 ou 4v4. La carte est tirée pour toi, et chaque place est un vrai joueur.",
+  "tutorial.menu.modes.teamArena":
+    "L'Arène d'équipe, c'est ton groupe et un build contre une autre équipe, en 2v2, 4v4 ou 8v8, à la taille de ton choix. Des bots prennent chaque place libre, et chaque match tire sa carte.",
+  "tutorial.menu.modes.title": "Sache où combattre.",
   "tutorial.menu.spec.attributes":
     "Dépense tes points d'attribut. Chaque rang renforce les compétences de cet attribut.",
   "tutorial.menu.spec.attributesDone": "Change un attribut",

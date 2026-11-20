@@ -1490,6 +1490,18 @@ export default {
     "Takımlar'da karakterleri takım dövüşleri için bir takımda toplarsın.",
   "tutorial.menu.menu.title": "Devam etmek için uzmanlığını değiştirmelisin.",
   "tutorial.menu.skipAsk": "Eğitimin geri kalanı atlansın mı?",
+  "tutorial.menu.modes.gvg":
+    "GvG, 8'e 8 lonca loncaya karşı oynanır ve Guild Hall Isle'da geçer. Kazanmak için düşman Lonca Lordu'nu öldür, kendininkini hayatta tut.",
+  "tutorial.menu.modes.heroesAscent":
+    "Kahramanların Yükselişi, kendi turundaki takımlara karşı 8'e 8 oynanan bir harita dizisidir. Kazanırsan sıradaki haritaya, ta Kahramanlar Salonu'na kadar ilerlersin; kaybedersen baştan başlarsın.",
+  "tutorial.menu.modes.hostedGame":
+    "Özel Oyun kendi lobindir: arkadaşlarına davet bağlantısını gönder, haritayı ve takım boyutunu seç. Kimsenin almadığı her yerde botlar oynar.",
+  "tutorial.menu.modes.open": "Yandaki ışıklı modu aç.",
+  "tutorial.menu.modes.randomArena":
+    "Rastgele Arena en hızlı dövüştür: kendi karakterinle, yabancılardan oluşan bir takımda, 1v1, 2v2 ya da 4v4. Harita senin için çekilir ve her yerde gerçek bir oyuncu vardır.",
+  "tutorial.menu.modes.teamArena":
+    "Takım Arenası, grubunla ve bir takım dizilimiyle başka bir takıma karşı oynanır; 2v2, 4v4 ya da 8v8, boyutu sen seçersin. Boş her yeri botlar alır ve her maç kendi haritasını çeker.",
+  "tutorial.menu.modes.title": "Nerede savaşacağını bil.",
   "tutorial.menu.spec.attributes":
     "Nitelik puanlarını harca. Her kademe o niteliğin becerilerini güçlendirir.",
   "tutorial.menu.spec.attributesDone": "Bir niteliği değiştir",

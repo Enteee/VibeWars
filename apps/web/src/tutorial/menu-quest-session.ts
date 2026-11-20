@@ -7,6 +7,7 @@ import {
   beatTarget,
   currentBeat,
   foldMenuQuestEvent,
+  menuQuestChecklist,
   menuQuestStep,
   resumeMenuQuest,
   type MenuQuestCursor,
@@ -57,10 +58,10 @@ export function startMenuQuest(options: MenuQuestOptions): MenuQuestSession {
       title: t(step.title),
       line: t(beat.line),
       target: beatTarget(beat, state),
-      objectives:
-        beat.kind === "do"
-          ? beat.objectives.map(({ label, done }) => ({ label: t(label), done: done(state) }))
-          : [],
+      objectives: menuQuestChecklist(cursor, state).map(({ label, done }) => ({
+        label: t(label),
+        done,
+      })),
       gotIt:
         beat.kind === "explain"
           ? () => {

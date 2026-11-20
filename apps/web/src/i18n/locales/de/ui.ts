@@ -1510,6 +1510,18 @@ export default {
     "Unter Teams stellst du Charaktere zu einem Team für die Teamkämpfe zusammen.",
   "tutorial.menu.menu.title": "Um weiterzukommen, musst du deine Spezialisierung ändern.",
   "tutorial.menu.skipAsk": "Den Rest des Tutorials überspringen?",
+  "tutorial.menu.modes.gvg":
+    "GvG ist Gilde gegen Gilde, 8 gegen 8, auf der Gildenhallen-Insel. Töte den gegnerischen Gildenlord, um zu gewinnen, und halte deinen am Leben.",
+  "tutorial.menu.modes.heroesAscent":
+    "Aufstieg der Helden ist eine Folge von Karten, 8 gegen 8, gegen Teams in deiner Runde. Gewinnst du, geht es weiter zur nächsten Karte, bis hinauf zur Halle der Helden; verlierst du, fängst du von vorn an.",
+  "tutorial.menu.modes.hostedGame":
+    "Ein Gehostetes Spiel ist deine eigene Lobby: Schick Freunden den Einladungslink und wähle Karte und Teamgröße. Bots spielen jeden Platz, den niemand nimmt.",
+  "tutorial.menu.modes.open": "Öffne an der Seite die leuchtende Spielart.",
+  "tutorial.menu.modes.randomArena":
+    "Die Zufallsarena ist der schnellste Kampf: dein eigener Charakter in einem Team aus Fremden, 1v1, 2v2 oder 4v4. Die Karte wird für dich ausgelost, und jeder Platz ist ein echter Spieler.",
+  "tutorial.menu.modes.teamArena":
+    "Die Teamarena ist deine Gruppe mit einem Team-Build gegen ein anderes Team, 2v2, 4v4 oder 8v8, in der Größe deiner Wahl. Bots übernehmen jeden freien Platz, und jedes Match lost seine Karte aus.",
+  "tutorial.menu.modes.title": "Wisse, wo du kämpfst.",
   "tutorial.menu.spec.attributes":
     "Verteile deine Attributpunkte. Jeder Rang stärkt die Fertigkeiten dieses Attributs.",
   "tutorial.menu.spec.attributesDone": "Ändere ein Attribut",

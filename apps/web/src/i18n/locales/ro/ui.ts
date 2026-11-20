@@ -1569,6 +1569,18 @@ export default {
     "La Echipe pui personaje laolaltă într-o echipă pentru luptele pe echipe.",
   "tutorial.menu.menu.title": "Ca să mergi mai departe, trebuie să-ți schimbi specializarea.",
   "tutorial.menu.skipAsk": "Sari peste restul tutorialului?",
+  "tutorial.menu.modes.gvg":
+    "GvG înseamnă breaslă contra breaslă, 8 contra 8, pe Guild Hall Isle. Ucide Lordul breslei inamice ca să câștigi și ține-l pe al tău în viață.",
+  "tutorial.menu.modes.heroesAscent":
+    "Ascensiunea Eroilor e un șir de hărți, 8 contra 8, contra echipelor din runda ta. Dacă câștigi, treci la harta următoare, până la Sala Eroilor; dacă pierzi, o iei de la capăt.",
+  "tutorial.menu.modes.hostedGame":
+    "Un Joc găzduit e propriul tău lobby: trimite prietenilor linkul de invitație și alege harta și mărimea echipei. Boții joacă fiecare loc pe care nu-l ia nimeni.",
+  "tutorial.menu.modes.open": "Deschide modul luminat de pe margine.",
+  "tutorial.menu.modes.randomArena":
+    "Arena aleatorie e cea mai rapidă luptă: propriul tău personaj, într-o echipă de străini, 1v1, 2v2 sau 4v4. Harta se trage la sorți pentru tine, și fiecare loc e un jucător real.",
+  "tutorial.menu.modes.teamArena":
+    "Arena de echipe înseamnă grupul tău și un build de echipă contra altei echipe, 2v2, 4v4 sau 8v8, la mărimea aleasă de tine. Boții ocupă fiecare loc liber, iar fiecare meci își trage harta la sorți.",
+  "tutorial.menu.modes.title": "Află unde să lupți.",
   "tutorial.menu.spec.attributes":
     "Împarte punctele de atribut. Fiecare rang face mai puternice abilitățile acelui atribut.",
   "tutorial.menu.spec.attributesDone": "Schimbă un atribut",

@@ -1496,6 +1496,18 @@ export default {
     "Bij Teams zet je personages samen in een team voor de teamgevechten.",
   "tutorial.menu.menu.title": "Om verder te gaan, moet je je specialisatie veranderen.",
   "tutorial.menu.skipAsk": "De rest van de tutorial overslaan?",
+  "tutorial.menu.modes.gvg":
+    "GvG is gilde tegen gilde, 8 tegen 8, op Gildehalleiland. Dood de vijandelijke Gildeheer om te winnen, en houd die van jou in leven.",
+  "tutorial.menu.modes.heroesAscent":
+    "Heroes' Ascent is een reeks maps, 8 tegen 8, tegen teams in jouw ronde. Win en je gaat door naar de volgende map, tot aan de Hal der Helden; verlies en je begint opnieuw.",
+  "tutorial.menu.modes.hostedGame":
+    "Een Gehost spel is je eigen lobby: stuur vrienden de uitnodigingslink en kies de map en de teamgrootte. Bots spelen elke plek die niemand inneemt.",
+  "tutorial.menu.modes.open": "Open de verlichte modus aan de zijkant.",
+  "tutorial.menu.modes.randomArena":
+    "Random Arena is het snelste gevecht: je eigen personage, in een team van vreemden, 1v1, 2v2 of 4v4. De map wordt voor je geloot, en elke plek is een echte speler.",
+  "tutorial.menu.modes.teamArena":
+    "Team Arena is je groep met een teambuild tegen een ander team, 2v2, 4v4 of 8v8, in de grootte die je kiest. Bots nemen elke vrije plek in, en elke match loot zijn eigen map.",
+  "tutorial.menu.modes.title": "Weet waar je vecht.",
   "tutorial.menu.spec.attributes":
     "Besteed je attribuutpunten. Elke rang maakt de vaardigheden van dat attribuut sterker.",
   "tutorial.menu.spec.attributesDone": "Wijzig een attribuut",

@@ -1490,6 +1490,18 @@ export const en = {
     "Teams is where you put characters together into a team for the team fights.",
   "tutorial.menu.menu.title": "To go on, you must change your spec.",
   "tutorial.menu.skipAsk": "Skip the rest of the tutorial?",
+  "tutorial.menu.modes.gvg":
+    "GvG is guild against guild, 8 a side, on Guild Hall Isle. Kill the enemy Guild Lord to win, and keep yours alive.",
+  "tutorial.menu.modes.heroesAscent":
+    "Heroes' Ascent is a run of maps, 8 a side, against teams at your round. Win and you move on to the next map, up to the Hall of Heroes; lose and you start again.",
+  "tutorial.menu.modes.hostedGame":
+    "A Hosted Game is your own lobby: send friends the invite link, and pick the map and the team size. Bots play every place nobody takes.",
+  "tutorial.menu.modes.open": "Open the lit mode on the rail.",
+  "tutorial.menu.modes.randomArena":
+    "Random Arena is the quickest fight: your own character, in a team of strangers, 1v1, 2v2 or 4v4. The map is drawn for you, and every place is a real player.",
+  "tutorial.menu.modes.teamArena":
+    "Team Arena is your party and a team build against another team, 2v2, 4v4 or 8v8, the size you choose. Bots take every seat nobody claims, and each match draws its map.",
+  "tutorial.menu.modes.title": "Know where to fight.",
   "tutorial.menu.spec.attributes":
     "Spend your attribute points. Each rank makes that attribute's skills stronger.",
   "tutorial.menu.spec.attributesDone": "Change an attribute",

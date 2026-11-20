@@ -1,5 +1,6 @@
 import type { Vec2 } from "@vibewars/game-core";
-import { validateMapData, type MapData } from "@vibewars/game-maps/schema";
+import type { MapData } from "@vibewars/game-maps/schema";
+import { bundledMaps } from "../net/bundled-maps.js";
 import tutorialCanyon1 from "@vibewars/game-maps/tutorial/tutorial-canyon-1/map.json" with { type: "json" };
 import tutorialCanyon2 from "@vibewars/game-maps/tutorial/tutorial-canyon-2/map.json" with { type: "json" };
 
@@ -8,13 +9,13 @@ import tutorialCanyon2 from "@vibewars/game-maps/tutorial/tutorial-canyon-2/map.
  * from the arrival pad past station sites 4 to 14 to the mist gate, in two
  * maps, cut as the study says to keep each in the render budget: stations
  * 4 to 7, then 8 to 14. Each has its own arrival and exit. They are in no
- * queue, list or picker; only the tutorial loads them. Validated at module
- * load, as the training arenas are.
+ * queue, list or picker; only the tutorial loads them. CI validates them,
+ * not the page (`bundledMaps`, #3679).
  */
-export const TUTORIAL_CANYON: readonly [MapData, MapData] = [
-  validateMapData(tutorialCanyon1),
-  validateMapData(tutorialCanyon2),
-];
+export const TUTORIAL_CANYON: readonly [MapData, MapData] = bundledMaps([
+  tutorialCanyon1,
+  tutorialCanyon2,
+]);
 
 /** A point on the trail, on its map and layer: site 11 is in the tunnel, under the ground. */
 export interface CanyonPoint {

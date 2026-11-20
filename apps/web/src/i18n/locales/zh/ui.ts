@@ -1377,6 +1377,18 @@ export default {
   "tutorial.menu.menu.teams": "在「队伍」里，你把角色组成一支队伍，用于团队战斗。",
   "tutorial.menu.menu.title": "要继续，你必须更改你的专精。",
   "tutorial.menu.skipAsk": "跳过剩余的教程吗？",
+  "tutorial.menu.modes.gvg":
+    "GvG 是公会对公会，8对8，在 Guild Hall Isle 进行。击杀敌方公会领主即可获胜，同时保住你自己的公会领主。",
+  "tutorial.menu.modes.heroesAscent":
+    "英雄之路是一连串地图，8对8，对手是与你同一轮的队伍。赢了就进入下一张地图，一路打到英雄大厅；输了就从头再来。",
+  "tutorial.menu.modes.hostedGame":
+    "自建游戏是你自己的大厅：把邀请链接发给好友，再选好地图和队伍人数。没人占的位置都由机器人来玩。",
+  "tutorial.menu.modes.open": "打开侧边亮起的模式。",
+  "tutorial.menu.modes.randomArena":
+    "随机竞技场是最快的战斗：用你自己的角色，和陌生人组队，1v1、2v2或4v4。地图随机抽取，每个位置都是真人玩家。",
+  "tutorial.menu.modes.teamArena":
+    "团队竞技场是你的小队带着队伍配置对战另一支队伍，2v2、4v4或8v8，人数由你选择。空位由机器人补上，每场比赛随机抽取地图。",
+  "tutorial.menu.modes.title": "知道去哪里战斗。",
   "tutorial.menu.spec.attributes": "分配你的属性点。每提升一级，该属性的技能就更强。",
   "tutorial.menu.spec.attributesDone": "更改一项属性",
   "tutorial.menu.spec.gear": "护甲、符文和徽记：在人偶上选一个部位，再选要装上的东西。",
