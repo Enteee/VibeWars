@@ -6860,21 +6860,28 @@ export class MatchSimulation {
       return "arrived";
     }
     const goal = this.#chaseGoal(target.position, target.layer);
-    const path = this.#route(record, goal, target.layer);
-    let next: Vec2 | undefined = path?.[0];
     // As near the target as the spot nearest it the graph has room for, or
     // within a step of that, and still short of it: the target stands by a
     // wall where the graph says no body fits, but one does. Walking on to
     // that spot, it would step past it and back every tick, or off the
     // graph and back, and never arrive (#3707); so it walks on at the
     // target, which a wall stops if one is in the way.
-    if (
-      next !== undefined &&
-      path?.length === 1 &&
+    const walkOn =
       target.layer === record.layer &&
       distance(record.position, target.position) <=
-        distance(goal, target.position) + this.#stepUnits(record, dt)
-    ) {
+        distance(goal, target.position) + this.#stepUnits(record, dt);
+    // Walking on, it may stand off the graph, where `#route` would plan
+    // afresh every tick; the one-leg route it walked on by is kept instead.
+    const kept = record.route;
+    const path =
+      walkOn &&
+      kept?.layer === target.layer &&
+      kept.waypoints.length === 1 &&
+      distance(goal, kept.goal) <= REPLAN_GOAL_UNITS
+        ? kept.waypoints
+        : this.#route(record, goal, target.layer);
+    let next: Vec2 | undefined = path?.[0];
+    if (next !== undefined && path?.length === 1 && walkOn) {
       next = target.position;
     }
     if (next === undefined) {
@@ -6898,6 +6905,10 @@ export class MatchSimulation {
       if (this.#stalledFor(progress, dt)) {
         record.route = undefined;
         return "unreachable";
+      }
+      if (next === target.position) {
+        // A wall stops the walk on: the next tick plans round it.
+        record.route = undefined;
       }
       return "walking";
     }
