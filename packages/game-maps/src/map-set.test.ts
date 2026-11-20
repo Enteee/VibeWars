@@ -7,6 +7,7 @@ import {
   createPathFinder,
   Vec,
   distancePointToSegment,
+  dropOffEnds,
   hasLineOfSight,
   loadoutOf,
   nearestStandable,
@@ -41,6 +42,8 @@ import { MAX_OUTLINE_POINTS, OUTSIDE_KINDS, mapDataSchema, type MapData } from "
  */
 
 const RADIUS = MINIMAL_GW_INSPIRED_PVP_V1.collision.playerRadius;
+/** How far a body landing off a drop-off stands from any wall but the cliff under it (#3688). */
+const LANDING_CLEARANCE = 24;
 /** The arenas #444 added: the spawn-distance rule is theirs (the two small mode arenas are small by design). */
 const NEW_ARENAS = new Set(["arena-crossroads", "arena-long-hall", "arena-canyon"]);
 /**
@@ -163,6 +166,23 @@ describe.each(MAPS.map((map) => [map.id, map] as const))("%s (#444)", (_, map) =
             `${JSON.stringify(from.position)} to ${JSON.stringify(to.position)}`,
           ).toBeDefined();
         }
+      }
+    }
+  });
+
+  it("lands a body off every drop-off clear of every wall below but the cliff it drops down (#3688)", () => {
+    const graphs = mapNavGraphs(map, RADIUS);
+    for (const dropOff of matchLayers(map).dropOffs) {
+      const below = graphs[dropOff.layer - 1];
+      if (below === undefined) throw new Error(`no layer under ${String(dropOff.layer)}`);
+      const { landing } = dropOffEnds(dropOff, RADIUS);
+      for (const wall of below.walls.flatMap((each) =>
+        pastEdge(each, dropOff.edge, dropOff.outward),
+      )) {
+        expect(
+          distancePointToSegment(landing, wall),
+          JSON.stringify(dropOff.edge),
+        ).toBeGreaterThanOrEqual(LANDING_CLEARANCE);
       }
     }
   });
@@ -1059,3 +1079,25 @@ describe("matchLayers: the land outside an outline", () => {
     expect(layers.outline?.blocksSight).toBe(outside !== "cliff" && outside !== "deep-water");
   });
 });
+
+/** How far out past a drop-off's edge a wall must reach to stand beside its landing, not under its edge. */
+const PAST_EDGE = 0.5;
+
+/**
+ * The part of `wall` out past `edge` the way `outward` points: none of the
+ * cliff under a drop-off's edge, which a landing stands a body's
+ * clearance off by design (#3688).
+ */
+function pastEdge(wall: Segment, edge: Segment, outward: Vec2): Segment[] {
+  const out = (point: Vec2): number =>
+    (point.x - edge.a.x) * outward.x + (point.y - edge.a.y) * outward.y - PAST_EDGE;
+  const [a, b] = [out(wall.a), out(wall.b)];
+  if (a < 0 && b < 0) return [];
+  if (a >= 0 && b >= 0) return [wall];
+  const share = a / (a - b);
+  const cut = {
+    x: wall.a.x + (wall.b.x - wall.a.x) * share,
+    y: wall.a.y + (wall.b.y - wall.a.y) * share,
+  };
+  return [a >= 0 ? { a: wall.a, b: cut } : { a: cut, b: wall.b }];
+}
