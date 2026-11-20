@@ -208,6 +208,23 @@ export interface RankedPlay {
   readonly onCancel: () => void;
 }
 
+/** Whether `a` is `b`, its leavers in any order. */
+function sameRankedResult(a: RankedResult, b: RankedResult | undefined): boolean {
+  if (b === undefined) {
+    return false;
+  }
+  const leavers = new Set(a.leavers);
+  return (
+    a.startHash === b.startHash &&
+    a.winningTeam === b.winningTeam &&
+    a.endReason === b.endReason &&
+    a.durationSeconds === b.durationSeconds &&
+    a.replayHash === b.replayHash &&
+    leavers.size === new Set(b.leavers).size &&
+    b.leavers.every((pubkey) => leavers.has(pubkey))
+  );
+}
+
 /**
  * `start`'s problem as `seat` of `group` sees it, signing with `pubkey`
  * (ADR-0055): `undefined` when it names this lobby's group, its seed,
@@ -410,6 +427,8 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
   let endedWinner: WireTeam | null | undefined;
   /** The last ranked result this player signed: a re-round's is compared with it. */
   let signedResult: RankedResult | undefined;
+  /** This player's signature of `signedResult`, sent again if the host asks again. */
+  let signedSig: string | undefined;
   /** How many results this player signed: the next partial's round. */
   let resultsSigned = 0;
 
@@ -432,8 +451,8 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
    * Whether `result`'s leavers are ones this player may sign for
    * (ADR-0055, "What a host decides"). Before it signed any, each must be
    * one it saw go. After, only a re-round of the result it signed: that
-   * result with more leavers, which the host says did not sign it, and
-   * nothing else changed. Refusing to sign is leaving, and nobody else can
+   * result with strictly more leavers, which the host says did not sign it,
+   * and nothing else changed, so a host gets at most a round per seat. Refusing to sign is leaving, and nobody else can
    * see a refusal, so the new ones are taken on the host's word. A host
    * that names a seat that did sign is caught by that seat's published
    * signature of the earlier round (`onResultSigned`); a result this
@@ -445,6 +464,7 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
     }
     const leavers = new Set(result.leavers);
     return (
+      leavers.size > new Set(signedResult.leavers).size &&
       signedResult.leavers.every((pubkey) => leavers.has(pubkey)) &&
       result.winningTeam === signedResult.winningTeam &&
       result.endReason === signedResult.endReason &&
@@ -1206,6 +1226,13 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
         ) {
           return;
         }
+        if (signedSig !== undefined && sameRankedResult(said.result, signedResult)) {
+          // The host lost this player's signature: the one it has, again,
+          // with nothing new signed or handed on to publish.
+          const again: PeerRankedResultSig = { startHash: signed.hash, sig: signedSig };
+          transport.send("ranked-result-sig", again, from);
+          return;
+        }
         const holds =
           !said.result.leavers.includes(options.playerKey.pubkey) &&
           said.result.winningTeam === endedWinner &&
@@ -1218,6 +1245,7 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
           startHash: signed.hash,
           sig: options.playerKey.signRankedResult(said.result),
         };
+        signedSig = reply.sig;
         transport.send("ranked-result-sig", reply, from);
         rankedPlay?.onResultSigned(
           {

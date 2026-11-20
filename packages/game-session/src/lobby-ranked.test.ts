@@ -200,6 +200,20 @@ function lyingHost(
   });
 }
 
+/** A host that sends every ranked result `times` times over: a hostile one's flood. */
+function repeatingHost(times: number): (transport: Transport) => Transport {
+  return (transport) => ({
+    ...transport,
+    selfId: transport.selfId,
+    send(channel, data, to) {
+      const copies = channel === "ranked-result" ? times : 1;
+      for (let copy = 0; copy < copies; copy += 1) {
+        transport.send(channel, data, to);
+      }
+    },
+  });
+}
+
 /** The seats a lying host's lie names, set once they have joined. */
 let lyingSeats: readonly Seat[] = [];
 
@@ -741,5 +755,25 @@ describe("a ranked queued match (ADR-0055, #3573)", () => {
         expect(receipt.resultSigs[seat.key.pubkey]).toBe(last.resultSigs[seat.key.pubkey]);
       }
     }
+  });
+  it("signs a result the host sends again only once: no new round, nothing more to publish", async () => {
+    const sigs = countingSigs();
+    const ranked = await openRanked("random-arena-2v2", {
+      wrap: sigs.wrap,
+      host: repeatingHost(5),
+    });
+    await startRanked(ranked);
+    ranked.match.finish(1);
+    await ranked.step(1);
+    await until(() => ranked.receipts.length === 1);
+    for (const seat of ranked.seats) {
+      expect(seat.rounds).toEqual([0]);
+    }
+    // Each copy is answered with the signature it has, never a new one;
+    // the host's own seat is sent it once.
+    expect(sigs.sent()).toEqual([1, 5, 5, 5]);
+    const receipt = receiptOf(ranked);
+    expect(receipt.result.leavers).toEqual([]);
+    expect(validateReceipt(receipt, testReceiptCrypto)).toEqual({ ok: true, void: false });
   });
 });
