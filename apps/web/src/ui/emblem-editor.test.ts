@@ -1,4 +1,10 @@
-import { CAPE_COLOURS, EMBLEM_GRID, unpackEmblem, type WireCape } from "@vibewars/game-protocol";
+import {
+  EMBLEM_GRID,
+  MAX_EMBLEM_COLOURS,
+  packEmblem,
+  unpackEmblem,
+  type WireCape,
+} from "@vibewars/game-protocol";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { presetEmblem } from "../render/cape-shape.js";
@@ -12,11 +18,12 @@ import {
   pushStep,
   useTool,
   type EmblemGrid,
+  type EmblemPick,
 } from "./emblem-editor.js";
 
 const at = (row: number, column: number): number => row * EMBLEM_GRID + column;
-const WHITE = CAPE_COLOURS.indexOf("white") + 1;
-const GOLD = CAPE_COLOURS.indexOf("gold") + 1;
+const WHITE = 1;
+const GOLD = 2;
 
 describe("the emblem editor's model (#3555)", () => {
   it("paints one pixel, and with the eraser paints it empty", () => {
@@ -100,6 +107,7 @@ class FakeContext {
   fillStyle = "";
   clears = 0;
   readonly setTransform = (): void => undefined;
+  readonly scale = (): void => undefined;
   readonly clearRect = (): void => {
     this.clears += 1;
   };
@@ -119,6 +127,9 @@ class FakeElement {
   type = "";
   tabIndex = -1;
   disabled = false;
+  value = "";
+  src = "";
+  alt = "";
   hidden = false;
   width = 0;
   height = 0;
@@ -166,6 +177,7 @@ class FakeElement {
   };
 
   readonly getContext = (): FakeContext => this.context;
+  readonly toDataURL = (): string => "data:,";
   readonly getBoundingClientRect = () => ({ left: 0, top: 0, width: 256, height: 256 });
   readonly setPointerCapture = (): void => undefined;
   readonly focus = (): void => undefined;
@@ -180,6 +192,11 @@ class FakeElement {
     for (const child of children) {
       this.appendChild(child);
     }
+  }
+
+  replaceChildren(...children: FakeElement[]): void {
+    this.children.splice(0);
+    this.append(...children);
   }
 
   remove(): void {
@@ -209,7 +226,7 @@ class FakeElement {
   }
 }
 
-describe("the emblem editor (#3555)", () => {
+describe("the emblem editor (#3555, #3628)", () => {
   beforeEach(() => {
     vi.stubGlobal("window", { devicePixelRatio: 1 });
     vi.stubGlobal("document", { createElement: (tag: string) => new FakeElement(tag) });
@@ -220,29 +237,31 @@ describe("the emblem editor (#3555)", () => {
   });
 
   const cape: WireCape = {
-    main: "violet",
-    trim: "white",
-    emblem: presetEmblem("diamond", "white"),
+    main: "a078e0",
+    trim: "f2f2f2",
+    emblemColours: ["f2f2f2"],
+    emblem: packEmblem(presetEmblem("diamond")),
   };
 
   function open(from: WireCape = cape) {
-    const closed: (string | null)[] = [];
-    const root = emblemEditor(from, (emblem) => closed.push(emblem)) as unknown as FakeElement;
-    const shown = root.all();
-    const board = shown.find((node) => node.className === "emblem-editor-grid");
-    const preview = shown.find((node) => node.tagName === "canvas");
-    if (board === undefined || preview === undefined) {
-      throw new Error("no grid or preview");
-    }
-    const byText = (text: string): FakeElement => {
-      const found = shown.find((node) => node.textContent === text);
+    const changes: EmblemPick[] = [];
+    const editor = emblemEditor(from, (emblem) => changes.push(emblem));
+    const root = editor.root as unknown as FakeElement;
+    const find = (test: (node: FakeElement) => boolean): FakeElement => {
+      const found = root.all().find(test);
       if (found === undefined) {
-        throw new Error(`no ${text}`);
+        throw new Error("no such element");
       }
       return found;
     };
+    const board = find((node) => node.className === "emblem-editor-grid");
+    const preview = find((node) => node.tagName === "canvas");
+    const recolour = find((node) => node.className === "emblem-editor-recolour");
+    const byText = (text: string): FakeElement => find((node) => node.textContent === text);
     const swatch = (pixel: number): FakeElement | undefined =>
-      shown.find((node) => node.dataset.pixel === String(pixel));
+      root.all().find((node) => node.dataset.pixel === String(pixel));
+    const swatchCount = (): number =>
+      root.all().filter((node) => Number(node.dataset.pixel ?? 0) > 0).length;
     /** One stroke through `cells`, pointer down on the first to up on the last. */
     const stroke = (...cells: [number, number][]): void => {
       cells.forEach(([row, column], index) => {
@@ -255,51 +274,123 @@ describe("the emblem editor (#3555)", () => {
       });
       board.fire("pointerup", { pointerId: 1 });
     };
-    const done = (): EmblemGrid => {
-      byText("Done").click();
-      const last = closed.at(-1);
-      const grid = last === null || last === undefined ? undefined : unpackEmblem(last);
-      if (grid === undefined) {
-        throw new Error("Done gave no emblem");
+    /** The emblem last applied, its pixels and colours. */
+    const applied = (): { grid: EmblemGrid; colours: readonly string[] } => {
+      const last = changes.at(-1);
+      const grid = last === undefined ? undefined : unpackEmblem(last.emblem, MAX_EMBLEM_COLOURS);
+      if (last === undefined || grid === undefined) {
+        throw new Error("nothing applied");
       }
-      return grid;
+      return { grid, colours: last.emblemColours };
     };
-    return { root, board, preview, byText, swatch, stroke, done, closed };
+    /** Pick `hex` in the colour input, as a player drags it and lets go. */
+    const pickColour = (hex: string): void => {
+      recolour.value = hex;
+      recolour.fire("input", {});
+      recolour.fire("change", {});
+    };
+    return {
+      editor,
+      board,
+      preview,
+      byText,
+      swatch,
+      swatchCount,
+      stroke,
+      applied,
+      changes,
+      pickColour,
+    };
   }
 
-  it("picks the trim first, and Done gives the grid it opened with", () => {
-    const { swatch, done } = open();
-    expect(swatch(WHITE)?.attributes.get("aria-pressed")).toBe("true");
+  it("opens on the emblem's own colours, Empty first, and applies nothing until a change", () => {
+    const { swatch, swatchCount, changes } = open();
+    expect(swatch(1)?.attributes.get("aria-pressed")).toBe("true");
+    expect(swatch(1)?.styles.get("--swatch")).toBe("#f2f2f2");
     expect(swatch(0)?.attributes.get("aria-label")).toBe("Empty");
-    expect(swatch(GOLD)?.attributes.get("aria-label")).toBe("gold");
-    expect(done()).toEqual(unpackEmblem(cape.emblem));
+    expect(swatchCount()).toBe(1);
+    expect(changes).toEqual([]);
   });
 
-  it("paints a stroke in the picked colour, mirrored, and Done keeps it", () => {
-    const { swatch, byText, stroke, done } = open({
-      ...cape,
-      emblem: presetEmblem("disc", "white"),
-    });
+  it("applies a stroke as it ends, in the picked colour, mirrored, with no Done", () => {
+    const { byText, stroke, applied, changes } = open();
     byText("Clear").click();
-    swatch(GOLD)?.click();
+    expect(changes).toHaveLength(1);
     byText("Mirror").click();
     stroke([0, 0], [0, 1], [1, 1]);
-    const grid = done();
+    expect(changes).toHaveLength(2);
+    const { grid, colours } = applied();
     for (const index of [at(0, 0), at(0, 1), at(1, 1), at(0, 15), at(0, 14), at(1, 14)]) {
-      expect(grid[index]).toBe(GOLD);
+      expect(grid[index]).toBe(1);
     }
     expect(grid.filter((pixel) => pixel !== 0)).toHaveLength(6);
+    expect(colours).toEqual(["f2f2f2"]);
   });
 
-  it("Cancel gives nothing, so the cape stays as it was", () => {
-    const { byText, stroke, closed } = open();
+  it("adds colours up to 15, and a colour no pixel uses is not applied", () => {
+    const { byText, swatchCount, stroke, applied } = open();
+    const add = byText("Add colour");
+    for (let colour = 1; colour < MAX_EMBLEM_COLOURS; colour += 1) {
+      expect(add.disabled).toBe(false);
+      add.click();
+    }
+    expect(swatchCount()).toBe(MAX_EMBLEM_COLOURS);
+    expect(add.disabled).toBe(true);
     stroke([0, 0]);
-    byText("Cancel").click();
-    expect(closed).toEqual([null]);
+    // Each new colour copies the picked one: the stroke is in the 15th, the
+    // diamond in the 1st, and the 13 between, unused, are dropped.
+    expect(applied().colours).toEqual(["f2f2f2", "f2f2f2"]);
+    expect(applied().grid[at(0, 0)]).toBe(1);
+  });
+
+  it("recolours the picked swatch and every pixel drawn in it, as one undo step", () => {
+    const { byText, pickColour, applied, swatch } = open();
+    pickColour("#E6C04A");
+    expect(swatch(1)?.styles.get("--swatch")).toBe("#e6c04a");
+    expect(applied().colours).toEqual(["e6c04a"]);
+    expect(applied().grid).toEqual(presetEmblem("diamond"));
+    byText("Undo").click();
+    expect(applied().colours).toEqual(["f2f2f2"]);
+  });
+
+  it("draws a second colour beside the first", () => {
+    const { byText, pickColour, stroke, applied } = open();
+    byText("Add colour").click();
+    pickColour("#23272e");
+    stroke([0, 0]);
+    const { grid, colours } = applied();
+    expect(colours).toEqual(["23272e", "f2f2f2"]);
+    expect(grid[at(0, 0)]).toBe(1);
+    expect(grid[at(1, 7)]).toBe(2);
+  });
+
+  it("starts from a preset in the drawing colour, and Undo puts the grid back", () => {
+    const { byText, stroke, applied, editor } = open();
+    byText("Clear").click();
+    stroke([0, 0]);
+    const drawn = applied().grid;
+    const ring = (editor.root as unknown as FakeElement)
+      .all()
+      .find((node) => node.dataset.emblem === "ring");
+    ring?.click();
+    expect(applied().grid).toEqual(presetEmblem("ring"));
+    byText("Undo").click();
+    expect(applied().grid).toEqual(drawn);
+  });
+
+  it("starts from a preset in the trim with Empty picked", () => {
+    const { swatch, applied, editor, pickColour } = open();
+    pickColour("#e6c04a");
+    swatch(0)?.click();
+    (editor.root as unknown as FakeElement)
+      .all()
+      .find((node) => node.dataset.emblem === "bar")
+      ?.click();
+    expect(applied()).toEqual({ grid: presetEmblem("bar"), colours: ["f2f2f2"] });
   });
 
   it("undoes a whole stroke as one step, and at most UNDO_LIMIT steps", () => {
-    const { byText, stroke, done } = open();
+    const { byText, stroke, applied } = open();
     byText("Clear").click();
     for (let step = 0; step < UNDO_LIMIT + 3; step += 1) {
       const row = step % EMBLEM_GRID;
@@ -313,33 +404,49 @@ describe("the emblem editor (#3555)", () => {
     }
     expect(undo.disabled).toBe(true);
     // The three oldest strokes, and the Clear before them, are past the limit.
-    const grid = done();
-    expect(grid.filter((pixel) => pixel !== 0)).toHaveLength(6);
+    expect(applied().grid.filter((pixel) => pixel !== 0)).toHaveLength(6);
   });
 
   it("adds no step for a fill on a pixel already in the picked index", () => {
-    const { byText, stroke, done } = open();
+    const { byText, stroke, applied } = open();
     byText("Clear").click();
     byText("Fill").click();
     stroke([3, 3]);
     stroke([5, 5]);
-    expect(done().every((pixel) => pixel === WHITE)).toBe(true);
+    expect(applied().grid.every((pixel) => pixel === 1)).toBe(true);
     byText("Undo").click();
-    expect(done().every((pixel) => pixel === 0)).toBe(true);
+    expect(applied().grid.every((pixel) => pixel === 0)).toBe(true);
   });
 
-  it("redraws the game-size preview on every change", () => {
-    const { preview, stroke, byText } = open();
+  it("redraws the game-size preview on every change, and on a new cloth", () => {
+    const { preview, stroke, byText, editor } = open();
     const before = preview.context.clears;
     stroke([0, 0]);
     expect(preview.context.clears).toBeGreaterThan(before);
     const after = preview.context.clears;
     byText("Clear").click();
     expect(preview.context.clears).toBeGreaterThan(after);
+    const cleared = preview.context.clears;
+    editor.show({ ...cape, main: "23272e" });
+    expect(preview.context.clears).toBeGreaterThan(cleared);
+  });
+
+  it("shows another cape's emblem, and keeps its own when shown what it applied", () => {
+    const { stroke, byText, applied, editor, changes } = open();
+    byText("Clear").click();
+    stroke([0, 0]);
+    const mine = changes.at(-1);
+    if (mine === undefined) throw new Error("nothing applied");
+    editor.show({ ...cape, ...mine, main: "23272e" });
+    expect(byText("Undo").disabled).toBe(false);
+    editor.show({ ...cape, emblem: packEmblem(presetEmblem("ring")) });
+    expect(byText("Undo").disabled).toBe(true);
+    stroke([15, 15]);
+    expect(applied().grid[at(4, 4)]).toBe(presetEmblem("ring")[at(4, 4)]);
   });
 
   it("paints from the keyboard: arrows move the cursor, Space paints, letters pick tools", () => {
-    const { board, byText, done } = open();
+    const { board, byText, applied } = open();
     byText("Clear").click();
     const press = (key: string, extra: { ctrlKey?: boolean } = {}): void => {
       board.fire("keydown", { key, ...extra });
@@ -348,18 +455,18 @@ describe("the emblem editor (#3555)", () => {
     press("ArrowUp");
     press("ArrowLeft");
     press(" ");
-    expect(done()[at(7, 7)]).toBe(WHITE);
+    expect(applied().grid[at(7, 7)]).toBe(1);
     press("m");
     expect(byText("Mirror").attributes.get("aria-pressed")).toBe("true");
     press("ArrowDown");
     press(" ");
-    expect(done()[at(8, 8)]).toBe(WHITE);
+    expect(applied().grid[at(8, 8)]).toBe(1);
     press("e");
     expect(byText("Eraser").attributes.get("aria-pressed")).toBe("true");
     press(" ");
-    expect(done()[at(8, 7)]).toBe(0);
+    expect(applied().grid[at(8, 7)]).toBe(0);
     press("z", { ctrlKey: true });
-    expect(done()[at(8, 7)]).toBe(WHITE);
+    expect(applied().grid[at(8, 7)]).toBe(1);
     press("f");
     press("p");
     expect(byText("Pencil").attributes.get("aria-pressed")).toBe("true");

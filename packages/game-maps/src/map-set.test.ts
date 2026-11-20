@@ -7,8 +7,7 @@ import {
   createPathFinder,
   Vec,
   distancePointToSegment,
-  firstHit,
-  GATE_PLATE_REACH_UNITS,
+  dropOffEnds,
   hasLineOfSight,
   loadoutOf,
   nearestStandable,
@@ -34,14 +33,7 @@ import layerTest from "../test-maps/layer-test/map.json" with { type: "json" };
 import outlineTest from "../test-maps/outline-test/map.json" with { type: "json" };
 import structuresData from "../test-maps/structures/map.json" with { type: "json" };
 import heightsData from "../training/training-heights/map.json" with { type: "json" };
-import {
-  MAX_OUTLINE_POINTS,
-  OUTSIDE_KINDS,
-  mapDataSchema,
-  type Gate,
-  type GateOpener,
-  type MapData,
-} from "./schema.js";
+import { MAX_OUTLINE_POINTS, OUTSIDE_KINDS, mapDataSchema, type MapData } from "./schema.js";
 
 /**
  * Every arena, old and new (#444): valid, fair by a half turn about its
@@ -50,6 +42,8 @@ import {
  */
 
 const RADIUS = MINIMAL_GW_INSPIRED_PVP_V1.collision.playerRadius;
+/** How far a body landing off a drop-off stands from any wall but the cliff under it (#3688). */
+const LANDING_CLEARANCE = 24;
 /** The arenas #444 added: the spawn-distance rule is theirs (the two small mode arenas are small by design). */
 const NEW_ARENAS = new Set(["arena-crossroads", "arena-long-hall", "arena-canyon"]);
 /**
@@ -74,9 +68,12 @@ const REBUILT = new Set([
   "brazen-causeway",
   "cinder-sanctum",
   "broken-tower",
+  "hollow-deep",
+  "mosslit-cairns",
   "scarred-earth",
   "wardens-gallery",
   "guild-hall-isle",
+  "threefold-keep",
 ]);
 // A start line (#2692) is an area, where every test here wants a point.
 const MAPS = loadAllMaps().map((map) => ({
@@ -96,14 +93,6 @@ const ofThirdBase = (objective: MapData["objectives"][number]): boolean =>
 
 const near = (a: Vec2, b: Vec2): boolean => Vec.distance(a, b) <= TOLERANCE;
 
-/** `gate`'s plate opener (#3025): every gate on the arena maps has one. */
-function plated(gate: Gate): Extract<GateOpener, { kind: "plate" }> {
-  if (gate.opener.kind !== "plate") {
-    throw new Error(`gate ${gate.id} opens by switch`);
-  }
-  return gate.opener;
-}
-
 const sameSegment = (a: Segment, b: Segment): boolean =>
   (near(a.a, b.a) && near(a.b, b.b)) || (near(a.a, b.b) && near(a.b, b.a));
 
@@ -111,8 +100,7 @@ describe.each(MAPS.map((map) => [map.id, map] as const))("%s (#444)", (_, map) =
   const walls = allWallSegments(map.walls);
   const bounds = { width: map.width, height: map.height };
 
-  // The Elite Zaishen Battle (#2692) is a party's run at six NPCs, not a fair fight.
-  it.skipIf(map.id === "elite-zaishen-battle" || REBUILT.has(map.id))(
+  it.skipIf(REBUILT.has(map.id))(
     "is the same map turned half round its centre: walls, spawns and shrines, the teams swapped",
     () => {
       for (const wall of walls) {
@@ -178,6 +166,23 @@ describe.each(MAPS.map((map) => [map.id, map] as const))("%s (#444)", (_, map) =
             `${JSON.stringify(from.position)} to ${JSON.stringify(to.position)}`,
           ).toBeDefined();
         }
+      }
+    }
+  });
+
+  it("lands a body off every drop-off clear of every wall below but the cliff it drops down (#3688)", () => {
+    const graphs = mapNavGraphs(map, RADIUS);
+    for (const dropOff of matchLayers(map).dropOffs) {
+      const below = graphs[dropOff.layer - 1];
+      if (below === undefined) throw new Error(`no layer under ${String(dropOff.layer)}`);
+      const { landing } = dropOffEnds(dropOff, RADIUS);
+      for (const wall of below.walls.flatMap((each) =>
+        pastEdge(each, dropOff.edge, dropOff.outward),
+      )) {
+        expect(
+          distancePointToSegment(landing, wall),
+          JSON.stringify(dropOff.edge),
+        ).toBeGreaterThanOrEqual(LANDING_CLEARANCE);
       }
     }
   });
@@ -645,12 +650,6 @@ const CARDINALS = [
   [0, 1],
   [0, -1],
 ] as const;
-const DIAGONALS = [
-  [1, 1],
-  [1, -1],
-  [-1, 1],
-  [-1, -1],
-] as const;
 
 /** The checks every King of the Hill map of #2552 passes. */
 function holdsTheHill(id: string, seats: readonly number[]): void {
@@ -724,31 +723,48 @@ function holdsTheHill(id: string, seats: readonly number[]): void {
   });
 }
 
-describe("Threefold Keep (#2699)", () => {
-  holdsTheHill("threefold-keep", [4, 8]);
-  const { map, altar, walls } = hill("threefold-keep");
+describe("Threefold Keep (#2699, #3443)", () => {
+  const keep = MAPS.find((map) => map.id === "threefold-keep");
+  if (keep === undefined) throw new Error("no threefold-keep");
+  const altar = keep.objectives.find((objective) => objective.kind === "altar");
+  if (altar === undefined) throw new Error("no altar on threefold-keep");
+  const gates = keep.gates.map((gate) => gate.id).sort();
 
-  it("seats three teams, each with a ghost, and plays the Keep's rules", () => {
-    expect(map).toMatchObject({ teams: 3, keep: true });
-    expect(map.spawnPoints.filter((spawn) => spawn.team === 2)).toHaveLength(8);
-  });
-
-  it("opens every door only from inside: its plate is out of reach from the far side", () => {
-    expect(map.gates).toHaveLength(4);
-    for (const gate of map.gates) {
-      const opener = plated(gate);
-      expect(opener.oneWay, gate.id).toBe(true);
-      expect(opener.team, gate.id).toBeNull();
-      expect(firstHit(opener.plate, altar, wallToSegments(gate.wall)), gate.id).toBeUndefined();
-      const nearest = Math.min(
-        ...wallToSegments(gate.wall).map((side) => distancePointToSegment(opener.plate, side)),
-      );
-      expect(nearest, gate.id).toBeGreaterThan(GATE_PLATE_REACH_UNITS);
+  it("seats three teams of eight, each with a ghost, and plays the Keep's rules", () => {
+    expect(keep).toMatchObject({ teams: 3, keep: true, teamSizes: [4, 8] });
+    for (const team of [0, 1, 2]) {
+      expect(keep.spawnPoints.filter((spawn) => spawn.team === team)).toHaveLength(8);
+      expect(
+        keep.objectives.filter(
+          (objective) => objective.kind === "ghost-spawn" && objective.team === team,
+        ),
+      ).toHaveLength(1);
     }
   });
 
-  it("leaves the keep's four corners open: with every door shut the altar is reachable", () => {
-    expect(sightLines(altar, DIAGONALS, walls)).toEqual([true, true, true, true]);
+  it("raises the altar on the tower over the hill, at the centre", () => {
+    expect(altar).toMatchObject({ layer: 3, position: { x: keep.width / 2, y: keep.height / 2 } });
+    expect(keep.decks.find((deck) => deck.id === "tower")?.layer).toBe(3);
+    expect(keep.decks.find((deck) => deck.id === "hill")?.layer).toBe(2);
+  });
+
+  it("shuts the three approaches' gates and the keep gate, and any one lever opens all four", () => {
+    expect(gates).toEqual(["keep-gate", "north-gate", "south-east-gate", "south-west-gate"]);
+    for (const gate of keep.gates) expect(gate.opener, gate.id).toEqual({ kind: "switch" });
+    expect(keep.switches).toHaveLength(3);
+    for (const lever of keep.switches ?? [])
+      expect([...lever.targets].sort(), lever.id).toEqual(gates);
+  });
+
+  it("lets every spawn walk up to the altar with every gate shut", () => {
+    const shut = { ...keep, walls: [...keep.walls, ...keep.gates.map((gate) => gate.wall)] };
+    const finder = layeredFinder(shut, RADIUS);
+    for (const spawn of keep.spawnPoints) {
+      expect(
+        finder.find(spawn.position, spawn.layer, altar.position, altar.layer),
+        JSON.stringify(spawn),
+      ).toBeDefined();
+    }
   });
 });
 
@@ -1063,3 +1079,25 @@ describe("matchLayers: the land outside an outline", () => {
     expect(layers.outline?.blocksSight).toBe(outside !== "cliff" && outside !== "deep-water");
   });
 });
+
+/** How far out past a drop-off's edge a wall must reach to stand beside its landing, not under its edge. */
+const PAST_EDGE = 0.5;
+
+/**
+ * The part of `wall` out past `edge` the way `outward` points: none of the
+ * cliff under a drop-off's edge, which a landing stands a body's
+ * clearance off by design (#3688).
+ */
+function pastEdge(wall: Segment, edge: Segment, outward: Vec2): Segment[] {
+  const out = (point: Vec2): number =>
+    (point.x - edge.a.x) * outward.x + (point.y - edge.a.y) * outward.y - PAST_EDGE;
+  const [a, b] = [out(wall.a), out(wall.b)];
+  if (a < 0 && b < 0) return [];
+  if (a >= 0 && b >= 0) return [wall];
+  const share = a / (a - b);
+  const cut = {
+    x: wall.a.x + (wall.b.x - wall.a.x) * share,
+    y: wall.a.y + (wall.b.y - wall.a.y) * share,
+  };
+  return [a >= 0 ? { a: wall.a, b: cut } : { a: cut, b: wall.b }];
+}

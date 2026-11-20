@@ -2,12 +2,24 @@ import { describe, expect, it } from "vitest";
 
 import type { Polygon, Segment } from "../../../geometry.js";
 import { vec2, type Vec2 } from "../../../vec2.js";
-import { createCursor, decide, NO_OBJECTIVES, type BotLever } from "../../behaviour.js";
+import {
+  createCursor,
+  decide,
+  NO_OBJECTIVES,
+  type BehaviourContext,
+  type BehaviourCursor,
+  type BotLever,
+} from "../../behaviour.js";
 import type { GateField } from "../../gates.js";
-import { MatchSimulation, type ParticipantSpec } from "../../simulation.js";
+import { MatchSimulation, type MatchLayers, type ParticipantSpec } from "../../simulation.js";
 import { switchTargetId, type SwitchField } from "../../switches.js";
 import type { TeleportField } from "../../teleports.js";
-import levers, { LEVER_SETTLE_SECONDS, LEVER_WORTH_UNITS } from "./levers.js";
+import keepLever, { LEVER_REROUTE_SECONDS } from "./keep-lever.js";
+import levers, {
+  LEVER_GIVE_UP_SECONDS,
+  LEVER_SETTLE_SECONDS,
+  LEVER_WORTH_UNITS,
+} from "./levers.js";
 import {
   BOT,
   BOUNDS,
@@ -70,6 +82,12 @@ describe("levers (#3138)", () => {
   it("takes the lever worth most", () => {
     const other = switchTargetId("other");
     const list = [lever(400), lever(Number.POSITIVE_INFINITY, vec2(320, 400), other)];
+    expect(think(sim, "near", list)?.attackTargetId).toBe(other);
+  });
+
+  it("takes the nearer of two levers worth the same, though the farther comes first (#3532)", () => {
+    const other = switchTargetId("other");
+    const list = [lever(400, vec2(900, 400)), lever(400, vec2(320, 400), other)];
     expect(think(sim, "near", list)?.attackTargetId).toBe(other);
   });
 
@@ -236,6 +254,49 @@ describe("a lever's gain (#3138)", () => {
     // Team 1 has no teleport back: its way is the same.
     expect(sim.botLevers[0]?.gain[1]).toBeCloseTo(0);
   });
+
+  it("counts walk cost: a gate opening a longer, dry way past a shorter one through shallow water wins (#3521)", () => {
+    // Over the top is ~1210 long, ~700 of it wading; through the gate is
+    // ~1280 long and dry: ~70 longer, but ~160 cheaper to walk.
+    const layers: MatchLayers = {
+      count: 1,
+      ground: 0,
+      pits: [],
+      walls: [[...wall(800, 60, 300), ...wall(800, 500, 810)]],
+      decks: [],
+      transitions: [],
+      outline: undefined,
+      deepWater: [[]],
+      shallowWater: [[[vec2(450, -10), vec2(1150, -10), vec2(1150, 190), vec2(450, 190)]]],
+      dropOffs: [],
+    };
+    const sim = new MatchSimulation({
+      seed: "levers",
+      ruleset: RULESET,
+      bounds: BOUNDS,
+      participants: [
+        fighter("a", 0, WARRIOR, vec2(200, 100)),
+        fighter("b", 1, WARRIOR, vec2(1400, 100)),
+      ],
+      layers,
+      walls: [...wall(800, 60, 300), ...wall(800, 500, 810)],
+      gates: [{ segments: wall(800, 300, 500), opener: { kind: "switch" }, blocks: "all" }],
+      switches: [
+        {
+          id: "lever",
+          layer: 0,
+          position: vec2(600, 650),
+          gates: [0],
+          teleports: [],
+          decks: [],
+          lifts: [],
+        },
+      ],
+    });
+    priced(sim);
+    expect(sim.botLevers[0]?.gain[0]).toBeGreaterThan(100);
+    expect(sim.botLevers[0]?.gain[1]).toBeGreaterThan(100);
+  });
 });
 
 describe("bots and a lever gate (#3138)", () => {
@@ -341,5 +402,86 @@ describe("levers, shot at from afar (#3150)", () => {
     if (foe === undefined) throw new Error("no foe");
     foe.targetId = "near";
     expect(levers.decide(shot())).toBeUndefined();
+  });
+});
+
+describe("levers and keep-lever, a bot set on one (#3532)", () => {
+  const sim = match([
+    fighter("near", 0, WARRIOR, vec2(200, 400)),
+    fighter("far", 0, RANGER, vec2(100, 200)),
+    fighter("foe", 1, WARRIOR, vec2(1500, 400)),
+  ]);
+  // From (200, 400) to the lever at (300, 400), at the test's one unit a tick.
+  const walk = 100 * DT;
+  /**
+   * `near`'s think at `now` with `list` as the levers, its memory in
+   * `cursor`, out of combat for `calm` seconds: `keep-lever`, then
+   * `levers`, in rule order.
+   */
+  const set = (
+    cursor: BehaviourCursor,
+    list: readonly BotLever[],
+    now: number,
+    context: Partial<BehaviourContext> = {},
+    calm = now,
+  ) => {
+    const rule = ruleFor(
+      sim,
+      "near",
+      { cursor },
+      { objectives: { ...NO_OBJECTIVES, levers: list }, now, ...context },
+    );
+    const self = { ...rule.self, outOfCombatSeconds: calm };
+    const view = {
+      ...rule,
+      self,
+      allies: rule.allies.map((ally) => (ally === rule.self ? self : ally)),
+    };
+    return keepLever.decide(view) ?? levers.decide(view);
+  };
+
+  it("keeps walking to its lever when the gain scores 0 on the way", () => {
+    const cursor = createCursor();
+    expect(set(cursor, [lever(LEVER_WORTH_UNITS)], 10)?.attackTargetId).toBe(LEVER_ID);
+    expect(set(cursor, [lever(0)], 11)?.attackTargetId).toBe(LEVER_ID);
+    // Without the commitment the same think walks nowhere.
+    expect(set(createCursor(), [lever(0)], 11)).toBeUndefined();
+  });
+
+  it("drops it once anyone throws it", () => {
+    const cursor = createCursor();
+    set(cursor, [lever(LEVER_WORTH_UNITS)], 10);
+    expect(set(cursor, [{ ...lever(0), flippedAt: 10.5, readyAt: 12 }], 11)).toBeUndefined();
+    expect(cursor.lever).toBeUndefined();
+  });
+
+  it("drops it when its walk there plus the give-up time runs out", () => {
+    const cursor = createCursor();
+    set(cursor, [lever(LEVER_WORTH_UNITS)], 10);
+    const end = 10 + walk + LEVER_GIVE_UP_SECONDS;
+    expect(set(cursor, [lever(0)], end - 0.01)?.attackTargetId).toBe(LEVER_ID);
+    expect(set(cursor, [lever(0)], end)).toBeUndefined();
+    expect(cursor.lever).toBeUndefined();
+  });
+
+  it("drops it when no route leads there any more", () => {
+    const cursor = createCursor();
+    set(cursor, [lever(LEVER_WORTH_UNITS)], 10);
+    const walled = { routeLength: () => Number.POSITIVE_INFINITY };
+    expect(set(cursor, [lever(0)], 10 + LEVER_REROUTE_SECONDS, walled)).toBeUndefined();
+    expect(cursor.lever).toBeUndefined();
+  });
+
+  it("drops it when it is hit on the way", () => {
+    const cursor = createCursor();
+    set(cursor, [lever(LEVER_WORTH_UNITS)], 10);
+    // Hit half a second ago, after it set out at 10.
+    expect(set(cursor, [lever(0)], 11, {}, 0.5)).toBeUndefined();
+    expect(cursor.lever).toBeUndefined();
+  });
+
+  it("leaves a lever a teammate is set on to that teammate", () => {
+    const held = { leverHolder: () => "far" };
+    expect(set(createCursor(), [lever(LEVER_WORTH_UNITS)], 10, held)).toBeUndefined();
   });
 });

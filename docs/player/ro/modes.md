@@ -169,9 +169,8 @@ Cinder Sanctum (8v8, 5600x2800) îl joacă: un templu pe coasta unui vulcan, în
 **Condu-ți Eroul Fantomatic pe altar și ține-l.** Fiecare echipă are un **Erou
 Fantomatic** în bază, o fantomă care luptă cu un topor și pe care nu o joacă nimeni.
 **Altarul** se află în centru, la același drum de ambele baze. Pe **Threefold Keep**,
-trei echipe (două când nu e liberă a treia) luptă pentru el într-o fortăreață
-împrejmuită. Ușile ei se deschid doar din interior, printr-o placă dinăuntru: ocolește
-până la un colț deschis ca să intri. Cel mult 12 puncte pe echipă, iar dacă fiecare
+trei echipe (două când nu e liberă a treia) luptă pentru el pe turnul unei
+fortărețe împrejmuite. Cel mult 12 puncte pe echipă, iar dacă fiecare
 inamic e la -60% moral, câștigi imediat. **Sala Eroilor**, harta de Regele dealului
 care încheie Ascensiunea Eroilor, îl ridică pe un podium împrejmuit la vest și est,
 la capătul unei urcări dinspre nord sau sud mărginită de coloane. Țintește-ți fantoma
@@ -224,7 +223,7 @@ inamic care ajunge la distanță de vrajă. Cât timp echipa ta nu deține altar
 bot ucide mai întâi Eroul Fantomatic al celeilalte echipe după ce ajunge pe altar în
 raza lor: este singurul inamic care îți împiedică fantoma să-l revendice.
 
-Se joacă pe Threefold Keep.
+Se joacă pe Threefold Keep (4v4 și 8v8, 5000x4400): o fortăreață pe un deal din ținuturile înalte, pentru trei echipe. Urcă pe drumul de strajă al zidului pe scările de lângă poarta ta și traversează un dig până la deal, apoi urcă la altarul de pe turn. O pârghie din fiecare curte deschide toate cele patru porți: pasajul porții tale pe sub zid, și cripta, drumul lung pe sub deal.
 
 ## Capturare de puncte
 
@@ -374,12 +373,15 @@ așteaptă și el. Când un grup câștigă Sala, fiecare joc deschis spune cine
 liderul lui sau tagul de breaslă, când îl au mai mult de jumătate din grup.
 
 Fiecare cursă începe cu **Elite Zaishen Battle**, fără coadă: grupul tău contra a șase
-Zaishen jucați de boți (2 Monk, un Elementalist și alți 3). Ceasul pornește când unul
-dintre voi trece linia de start sau când moare primul Zaishen, oricare vine primul.
-Ucide-i pe toți șase în mai puțin de 30 de secunde și grupul începe cursa cu +10% moral;
-sub 60, +8%; sub 80, +6%; sub 100, +4%; sub 120, +2%; mai lent, nimic. Dacă ai câștigat,
-grupul tău intră singur la coadă pentru prima hartă. Dacă sunteți eliminați sau mai e un
-Zaishen viu când se atinge limita de 8 minute, cursa s-a încheiat.
+Zaishen jucați de boți (2 Monk, un Elementalist și alți 3). Se dă într-o arenă
+ceremonială (8v8, 5400x2400): tribune în trepte la nord și la sud, statui pe socluri pe
+podeaua coborâtă și o criptă sub fiecare tribună, al cărei grilaj se deschide cu o
+manetă din tribuna opusă. Ceasul pornește când unul dintre voi trece linia de start din
+mijlocul arenei sau când moare primul Zaishen, oricare vine primul. Ucide-i pe toți șase
+în mai puțin de 30 de secunde și grupul începe cursa cu +10% moral; sub 60, +8%; sub 80,
++6%; sub 100, +4%; sub 120, +2%; mai lent, nimic. Dacă ai câștigat, grupul tău intră
+singur la coadă pentru prima hartă. Dacă sunteți eliminați sau mai e un Zaishen viu când
+se atinge limita de 8 minute, cursa s-a încheiat.
 
 Fiecare victorie dintr-o cursă aduce **faimă**: 1, 2, 3, 4, 6, 8, 12, 16, 20, 24, 28, 32,
 36 pentru primele treisprezece, apoi câte 40, cel mult 300 pe zi (ziua se schimbă la
@@ -417,12 +419,10 @@ aleatoriu aflat în raza lui auditivă cu 50 de daune de fulger la fiecare 2,5 s
 până când cealaltă echipă își plantează steagul acolo. Fiecare lovitură este un fulger
 de la far până la cel lovit, vizibil pentru ambele echipe.
 
-Trei arene ale Ascensiunii pot fi alese și la un Joc găzduit: **The Hollow Deep** (8v8
-Anihilare, trei tuneluri întortocheate în jurul unei stânci centrale), **Blackwater Ford**
+Trei arene ale Ascensiunii pot fi alese și la un Joc găzduit: **The Hollow Deep** (8v8 Anihilare, 6200x2400, într-o peșteră întunecată: treci pe un pod de frânghie peste o prăpastie, urci peste o cornișă din mijloc sau iei cripta de sub ea după ce o manetă de pe o terasă de stâncă îi deschide poarta), **Blackwater Ford**
 (8v8, 5200x2800, Anihilare cu preot la un vad întunecat de râu: treci prin apa mică a vadului, pe podul rupt
 sprijinit pe pilonii săi deasupra morii sau printr-un podeț de sub pod, după ce o pârghie de pe moară îi deschide
-poarta; preotul își ridică morții la fiecare 2 minute) și **Mosslit Cairns** (8v8 Capturare de puncte,
-cinci movile de pietre într-un zig-zag ușor între baze). A patra este **The Brazen
+poarta; preotul își ridică morții la fiecare 2 minute) și **Mosslit Cairns** (8v8, 5400x3000, Capturare de puncte pe cinci dealuri cu movile de pietre ce strălucesc de mușchi în amurg: urci pe o movilă pe scările ei, ții movila mare din mijloc sau iei tunelul de rădăcini de sub dealurile din sud după ce o pârghie de pe o movilă din nord îi deschide porțile; zidurile de rădăcini pot fi sparte). A patra este **The Brazen
 Causeway** (8v8, 5600x2800, Anihilare cu preot pe un drum de piatră înălțat deasupra unei mlaștini, în amurg: mărșăluiești pe drum după ce o pârghie din turnul porții de departe îi deschide poarta de bronz, traversezi mlaștina până la scările de la mijlocul lui sau te strecori printr-un podeț de sub el; preotul își ridică morții la fiecare 2 minute).
 
 O hartă poate avea **porți**: ziduri care opresc corpurile, proiectilele și vederea cât
@@ -476,3 +476,7 @@ inclusiv boții, așa că un Joc găzduit 3v2 nu se potrivește niciunei mărimi
 rămân cum le-ai lăsat până se reîncarcă pagina.
 
 Deasupra butoanelor, banda **Sala Eroilor** arată ultimele 20 de dețineri, cele mai noi primele: deținătorul (un tag de breaslă sau numele liderului), jucătorii echipei câștigătoare, când s-a încheiat cea mai nouă victorie și, de la două victorii în sus, câte la rând. O deținere este un șir neîntrerupt de victorii în Sală ale aceluiași deținător. Banda citește înregistrările de pe această pagină, ignoră butoanele și este ascunsă când niciuna dintre ele nu este o victorie în Sală. Ca orice înregistrare, arată ce a raportat gazda fiecărui meci, și nimic nu verifică asta.
+
+## Clasate
+
+Un meci din coadă fără boți este clasat. Ecranul cozii și lobby-ul echipei spun asta înainte să intri în coadă; un singur bot lasă meciul neclasat. Când se găsește un meci clasat, fiecare jucător îi semnează începutul, iar ecranul arată **Se confirmă meciul clasat…** până la 15 secunde. Dacă cineva nu confirmă, meciul e anulat și toți revin în coadă. La final fiecare jucător semnează rezultatul, iar chitanța meciului e publicată pe releele Nostr cu cheia publică și numele personajului fiecărui jucător; un jucător fără personaj apare ca starter. Ratingul tău se schimbă în decurs de o oră. Părăsirea unui meci clasat contează ca înfrângere, iar butonul de ieșire spune asta.

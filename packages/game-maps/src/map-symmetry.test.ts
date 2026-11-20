@@ -10,12 +10,10 @@ import type { MapData } from "./schema.js";
  * this list.
  */
 const SYMMETRIC = [
-  "threefold-keep",
   "hall-of-heroes-king",
   "hall-of-heroes-relic",
   "hall-of-heroes-capture",
-  "hollow-deep",
-  "mosslit-cairns",
+  "elite-zaishen-battle",
 ];
 
 /** How far apart a thing and its twin's rotation may be. */

@@ -99,7 +99,11 @@ export type GuildFragment =
       readonly rest: string;
     };
 
-/** One `guild=` value, `<TAG>` or `<TAG>.<main>.<trim>.<emblem>`, exactly; else `undefined`. */
+/**
+ * One `guild=` value, `<TAG>` or `<TAG>.<main>.<trim>.<emblem>.<colours>`,
+ * the emblem's colours six hex digits each, run together (#3628),
+ * exactly; else `undefined`.
+ */
 function readGuild(value: string): { tag: string; cape: WireCape | null } | undefined {
   const [tag, ...cape] = value.split(".");
   if (tag === undefined || sanitizeGuildTag(tag) !== tag) {
@@ -108,8 +112,11 @@ function readGuild(value: string): { tag: string; cape: WireCape | null } | unde
   if (cape.length === 0) {
     return { tag, cape: null };
   }
-  const [main, trim, emblem] = cape;
-  const parsed = cape.length === 3 ? parseWireCape({ main, trim, emblem }) : undefined;
+  const [main, trim, emblem, colours = ""] = cape;
+  const parsed =
+    cape.length === 4 && colours.length % 6 === 0
+      ? parseWireCape({ main, trim, emblem, emblemColours: colours.match(/.{6}/g) ?? [] })
+      : undefined;
   return parsed === undefined ? undefined : { tag, cape: parsed };
 }
 

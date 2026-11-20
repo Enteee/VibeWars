@@ -70,7 +70,10 @@ export function readyButton(ready: boolean, onClick: () => void): HTMLButtonElem
 
 /** What puts you in a queue, in every mode (#2980): `ScreenBarOptions.queueAction`. */
 export function findMatchButton(onClick: () => void): HTMLButtonElement {
-  return button(t("lobby.findMatch"), "primary lobby-find", onClick);
+  const find = button(t("lobby.findMatch"), "primary lobby-find", onClick);
+  // The menu quest's arena step points at it (#3544).
+  find.setAttribute("data-tutorial", "find-match");
+  return find;
 }
 
 /**
@@ -152,11 +155,8 @@ export interface ScreenBarBack {
   readonly onBack: () => void;
 }
 
-/**
- * The global icon that is a screen itself (#1272): the beat editor hides its
- * ♪, Help shows its [?] open (#2724).
- */
-export type OwnIcon = "help" | "music";
+/** The global icon that is a screen itself (#1272): the beat editor hides its ♪. */
+export type OwnIcon = "music";
 
 /** What a screen puts in the top bar (#1272), left to right. */
 export interface ScreenBarOptions {

@@ -183,8 +183,7 @@ Cinder Sanctum (8v8, 5600x2800) bunu oynatır: iki lav nehri arasında, bir yana
 bir **Hayalet Kahraman** vardır: baltayla dövüşen ve kimsenin oynamadığı
 bir hayalet. **Sunak** merkezdedir, iki üsten de aynı yürüme
 mesafesinde. **Threefold Keep**'te üç takım (üçüncüsü boşta değilse iki)
-duvarlı bir kalenin içinde onun için dövüşür. Kapıları yalnızca içeriden,
-içerideki bir plakayla açılır: içeri girmek için açık bir köşeye dolan.
+duvarlı bir kalenin kulesinde onun için dövüşür.
 Takım başına en fazla 12 puan; her düşman -%60 moraldeyse hemen
 kazanırsın. Kahramanların Yükselişi'ni bitiren Tepenin Kralı haritası
 **Kahramanlar Salonu**, sunağı batıda ve doğuda duvarlı, sütunlarla
@@ -241,7 +240,7 @@ Takımın sunağı tutmuyorken, her bot diğer takımın Hayalet Kahramanını,
 menzillerinde sunağa çıktığı an ilk olarak öldürür: hayaletinin onu ele
 geçirmesini engelleyen tek düşman odur.
 
-Threefold Keep bunu oynatır.
+Threefold Keep bunu oynatır (4v4 ve 8v8, 5000x4400): yaylalarda bir tepenin üstünde, üç takım için bir kale. Kapının yanındaki merdivenlerden sur yoluna çık ve bir geçit yolundan tepeye geç, sonra kulenin üstündeki sunağa tırman. Her avludaki bir kol dört kapının hepsini açar: surun altındaki kendi kapı geçidin ve tepenin altından uzun yol olan mahzen.
 
 ## Nokta Ele Geçirme
 
@@ -408,13 +407,16 @@ paylaşıyorsa o etiketi.
 
 Her tırmanış sırasız bir **Elite Zaishen Battle** ile başlar: grubun,
 botların oynadığı altı Zaishen'e karşı (2 Monk, bir Elementalist ve 3
-diğer). Saat, biriniz başlangıç çizgisini geçtiğinde ya da ilk Zaishen
-öldüğünde, hangisi önce olursa, başlar. Altısını 30 saniyenin altında
-öldürürsen grup tırmanışa +%10 moralle başlar; 60'ın altında +%8; 80'in
-altında +%6; 100'ün altında +%4; 120'nin altında +%2; daha yavaşsa
-hiçbir şey. Kazanırsan grubun ilk haritası için kendiliğinden sıraya
-girer. Silinirsen ya da 8 dakikalık sınıra ulaşıldığında hâlâ yaşayan bir
-Zaishen varsa tırmanış biter.
+diğer). Savaş bir tören arenasında geçer (8v8, 5400x2400): kuzeyde ve
+güneyde basamaklı tribünler, çukur zeminde kaideler üzerinde heykeller
+ve her tribünün altında, parmaklıklı kapısı karşı tribündeki bir kolla
+açılan bir mahzen. Saat, biriniz arenanın ortasındaki başlangıç
+çizgisini geçtiğinde ya da ilk Zaishen öldüğünde, hangisi önce olursa,
+başlar. Altısını 30 saniyenin altında öldürürsen grup tırmanışa +%10
+moralle başlar; 60'ın altında +%8; 80'in altında +%6; 100'ün altında
++%4; 120'nin altında +%2; daha yavaşsa hiçbir şey. Kazanırsan grubun ilk
+haritası için kendiliğinden sıraya girer. Silinirsen ya da 8 dakikalık
+sınıra ulaşıldığında hâlâ yaşayan bir Zaishen varsa tırmanış biter.
 
 Bir tırmanıştaki her galibiyet **Şöhret** kazandırır: ilk on üç için 1,
 2, 3, 4, 6, 8, 12, 16, 20, 24, 28, 32, 36, sonra her biri 40, günde en
@@ -457,12 +459,11 @@ yıldırım hasarıyla çarpar. Her çarpma, işaretten vurduğu kişiye uzanan,
 iki takımın da gördüğü bir şimşektir.
 
 Üç Yükseliş arenası da Özel Oyun'da seçilebilir: **The Hollow Deep**
-(8v8 İmha, merkezi bir kayanın çevresinde üç kıvrımlı tünel),
+(8v8 İmha, 6200x2400, karanlık bir mağarada: bir uçurumun üstündeki halat köprüden geç, ortadaki çıkıntının üstünden tırman ya da bir kaya rafındaki kol kapısını açınca altındaki mahzenden geç),
 **Blackwater Ford** (8v8, 5200x2800, karanlık bir nehir sığlığında Rahip İmhası: sığ geçitten yürüyerek,
 değirmenin üstünde ayakları üzerinde duran yıkık köprüden ya da değirmendeki bir kol kapısını açınca
 köprünün altındaki menfezden geçilir; rahip ölülerini her 2 dakikada bir diriltir) ve
-**Mosslit Cairns** (8v8 Nokta Ele Geçirme, üsler arasında sığ bir
-zikzak çizen beş taş yığını). Dördüncüsü **The Brazen Causeway**'dir
+**Mosslit Cairns** (8v8, 5400x3000, alacakaranlıkta yosunla parlayan beş taş yığını tepesinde Nokta Ele Geçirme: bir taş yığınına merdivenlerinden çıkılır, ortadaki büyük taş yığını tutulur ya da kuzeydeki bir taş yığınının üstündeki kol kapılarını açınca güney tepelerin altındaki kök tüneline girilir; kök duvarları kırılabilir). Dördüncüsü **The Brazen Causeway**'dir
 (8v8, 5600x2800, alacakaranlıkta bir bataklığın üzerinde yükseltilmiş taş bir set yolunda Rahip İmhası: uzaktaki kapı kulesindeki bir kol tunç kapısını açınca set yolu boyunca yürünür, bataklık geçilerek ortasındaki merdivenlere varılır ya da altındaki menfezden sızılır; rahip ölülerini her 2 dakikada bir diriltir).
 
 Bir haritada **kapılar** olabilir: kapalıyken bedenleri, atışları ve
@@ -530,3 +531,7 @@ tutanın kesintisiz Salon galibiyetleri dizisidir. Şerit bu sayfadaki
 kayıtları okur, çipleri yok sayar ve hiçbiri bir Salon galibiyeti
 değilse gizlenir. Her kayıt gibi, her maçın kurucusunun bildirdiğidir ve
 hiçbir şey onu denetlemez.
+
+## Dereceli
+
+Kuyruktan gelen ve içinde bot olmayan bir maç derecelidir. Kuyruk ekranı ve takım lobisi bunu sen kuyruğa girmeden söyler; tek bir bot maçı derecesiz bırakır. Dereceli bir maç bulunduğunda her oyuncu başlangıcını imzalar ve ekran 15 saniyeye kadar **Dereceli maç onaylanıyor…** gösterir. Biri onaylamazsa maç iptal edilir ve herkes kuyruğa döner. Sonunda her oyuncu sonucu imzalar ve maçın makbuzu her oyuncunun açık anahtarı ve karakter adıyla Nostr rölelerinde yayımlanır; karakteri olmayan oyuncu starter olarak geçer. Puanın bir saat içinde değişir. Dereceli bir maçtan ayrılmak yenilgi sayılır ve ayrıl düğmesi bunu söyler.

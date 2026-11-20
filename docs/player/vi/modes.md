@@ -172,9 +172,8 @@ Cinder Sanctum (8v8, 5600x2800) chơi chế độ này: một ngôi đền trên
 **Dẫn Anh hùng Ma của bạn lên tế đàn, và giữ nó.** Mỗi đội có một **Anh hùng
 Ma** trong căn cứ, một con ma chiến đấu bằng rìu mà không ai điều khiển.
 **Tế đàn** ở trung tâm, quãng đường từ hai căn cứ như nhau. Trên **Threefold
-Keep**, ba đội (hai đội khi không có đội thứ ba rảnh) tranh giành nó bên
-trong một pháo đài có tường bao. Cửa của nó chỉ mở từ bên trong, bằng một tấm
-nén bên trong: đi vòng tới một góc mở để vào. Tối đa 12 điểm mỗi đội, và nếu
+Keep**, ba đội (hai đội khi không có đội thứ ba rảnh) tranh giành nó trên
+tháp của một pháo đài có tường bao. Tối đa 12 điểm mỗi đội, và nếu
 mọi địch đều ở mức -60% sĩ khí thì bạn thắng ngay lập tức. **Đại sảnh Anh
 hùng**, bản đồ Vua đồi kết thúc Đỉnh Anh Hùng, đặt tế đàn trên một bục có
 tường ở phía tây và phía đông, lên bằng lối phía bắc hoặc phía nam có hàng
@@ -226,7 +225,7 @@ Phép. Khi đội bạn không giữ tế đàn, mọi bot hạ Anh hùng Ma c�
 tiên một khi nó đứng trên tế đàn trong tầm của chúng: đó là kẻ địch duy nhất
 ngăn con ma của bạn chiếm tế đàn.
 
-Threefold Keep chơi chế độ này.
+Threefold Keep chơi chế độ này (4v4 và 8v8, 5000x4400): một pháo đài trên ngọn đồi ở vùng cao, cho ba đội. Leo lên lối đi trên tường thành bằng cầu thang cạnh cổng của bạn và băng qua một con đê tới ngọn đồi, rồi leo lên tế đàn trên tháp. Một cần gạt ở mỗi sân mở cả bốn cổng: lối qua cổng của bạn dưới tường thành, và hầm mộ, đường vòng dài dưới ngọn đồi.
 
 ## Chiếm điểm
 
@@ -363,7 +362,7 @@ của bạn.
 
 **Hầm chờ.** Đại sảnh chỉ hình thành mỗi 12 phút theo giờ UTC, vào :00, :12, :24, :36 và :48. Cho đến lúc đó tổ đội của bạn chờ trong Hầm chờ: biểu tượng hàng chờ hiển thị thời gian tới lần mở kế tiếp và ai đang giữ Đại sảnh. Ở mỗi lần mở, đội giữ gặp tối đa hai đội thách đấu, hoặc tối đa ba đội thách đấu gặp nhau nếu không ai giữ. Chỉ các tổ đội chờ trước lần mở mới tham gia, và những tổ đội vượt quá số chỗ đó chờ lần kế tiếp. Đội giữ không có ai để đấu thì giữ Đại sảnh và chờ, không được tính trận thắng, và một đội thách đấu đơn độc cũng chờ. Khi một tổ đội thắng Đại sảnh, mọi game đang mở đều cho biết ai đang giữ nó: trưởng tổ đội, hoặc tag Bang khi hơn một nửa tổ đội dùng chung một tag.
 
-Mỗi hành trình bắt đầu bằng **Elite Zaishen Battle**, không có hàng chờ: tổ đội của bạn đấu với sáu Zaishen do bot điều khiển (2 Monk, một Elementalist và 3 lớp khác). Đồng hồ bắt đầu khi một người trong các bạn vượt qua vạch xuất phát hoặc Zaishen đầu tiên chết, tùy cái nào đến trước. Hạ cả sáu trong dưới 30 giây và tổ đội bắt đầu hành trình với +10% sĩ khí; dưới 60, +8%; dưới 80, +6%; dưới 100, +4%; dưới 120, +2%; chậm hơn, không có gì. Thắng thì tổ đội của bạn tự xếp hàng cho bản đồ đầu tiên. Bị quét sạch, hoặc vẫn còn một Zaishen sống khi đạt giới hạn 8 phút, và hành trình kết thúc.
+Mỗi hành trình bắt đầu bằng **Elite Zaishen Battle**, không có hàng chờ: tổ đội của bạn đấu với sáu Zaishen do bot điều khiển (2 Monk, một Elementalist và 3 lớp khác). Trận đấu diễn ra trong một đấu trường nghi lễ (8v8, 5400x2400): khán đài bậc thang ở phía bắc và phía nam, tượng trên bệ ở nền trũng, và một hầm ngầm dưới mỗi khán đài, có cửa song sắt được mở bằng một cần gạt trên khán đài phía đối diện. Đồng hồ bắt đầu khi một người trong các bạn vượt qua vạch xuất phát ở giữa đấu trường hoặc Zaishen đầu tiên chết, tùy cái nào đến trước. Hạ cả sáu trong dưới 30 giây và tổ đội bắt đầu hành trình với +10% sĩ khí; dưới 60, +8%; dưới 80, +6%; dưới 100, +4%; dưới 120, +2%; chậm hơn, không có gì. Thắng thì tổ đội của bạn tự xếp hàng cho bản đồ đầu tiên. Bị quét sạch, hoặc vẫn còn một Zaishen sống khi đạt giới hạn 8 phút, và hành trình kết thúc.
 
 Mỗi trận thắng trong hành trình mang lại **danh vọng**: 1, 2, 3, 4, 6, 8, 12, 16, 20, 24, 28, 32, 36 cho mười ba trận đầu, sau đó mỗi trận 40, tối đa 300 mỗi ngày (ngày mới bắt đầu lúc 15:00 UTC). Elite Zaishen Battle không mang lại gì. Tổng danh vọng quyết định **cấp anh hùng** của bạn, từ 1 ở 25 danh vọng tới 15 ở 100.000, hiển thị là ★ và một con số cạnh tên bạn. Tùy chọn > Người chơi hiển thị cả hai. Cả hai được lưu trên thiết bị của bạn.
 
@@ -395,12 +394,11 @@ giây, cho đến khi đội kia cắm cờ của mình lên đó. Mỗi cú đ�
 từ đèn hiệu tới người bị trúng, cả hai đội đều thấy.
 
 Ba đấu trường của Đỉnh cũng là lựa chọn của Trận tự tạo: **The Hollow Deep**
-(Hủy diệt 8v8, ba đường hầm uốn lượn quanh một khối đá trung tâm),
+(Hủy diệt 8v8, 6200x2400, trong một hang tối: đi qua cầu dây trên vực sâu, trèo qua gờ đá giữa, hoặc đi đường hầm bên dưới nó khi cần gạt trên một gờ đá mở cổng),
 **Blackwater Ford** (Diệt tư tế 8v8, 5200x2800, tại một khúc sông cạn tối tăm: lội qua chỗ nước nông, băng qua cây cầu gãy
 đứng trên các trụ phía trên cối xay, hoặc đi qua cống dưới cầu khi cần gạt trên cối xay mở cổng của nó;
 tư tế hồi sinh người chết của đội mỗi 2 phút) và
-**Mosslit Cairns** (Chiếm điểm 8v8, năm ụ đá xếp zig-zag nông giữa hai căn
-cứ). Đấu trường thứ tư là **The Brazen Causeway** (Diệt tư tế 8v8, 5600x2800, trên một con đường đắp bằng đá nhô cao giữa đầm lầy lúc hoàng hôn: hành quân dọc con đường khi cần gạt trong tháp cổng phía xa mở cổng đồng thau của nó, băng qua đầm lầy tới bậc thang ở giữa đường, hoặc lẻn qua cống bên dưới; tư tế hồi sinh người chết của đội mỗi 2 phút).
+**Mosslit Cairns** (Chiếm điểm 8v8, 5400x3000, trên năm đồi ụ đá phát sáng nhờ rêu lúc hoàng hôn: leo lên một ụ đá bằng bậc thang của nó, giữ ụ đá lớn ở giữa, hoặc đi đường hầm rễ cây dưới các đồi phía nam khi cần gạt trên một ụ đá phía bắc mở cổng của nó; tường rễ cây có thể bị phá vỡ). Đấu trường thứ tư là **The Brazen Causeway** (Diệt tư tế 8v8, 5600x2800, trên một con đường đắp bằng đá nhô cao giữa đầm lầy lúc hoàng hôn: hành quân dọc con đường khi cần gạt trong tháp cổng phía xa mở cổng đồng thau của nó, băng qua đầm lầy tới bậc thang ở giữa đường, hoặc lẻn qua cống bên dưới; tư tế hồi sinh người chết của đội mỗi 2 phút).
 
 Bản đồ có thể có **cổng**: những bức tường chặn cơ thể, đạn và tầm nhìn khi
 đóng. Đứng trên tấm nén của cổng để mở nó. Cổng đóng lại khi không còn ai trên
@@ -454,3 +452,7 @@ bot, nên Trận tự tạo 3v2 không khớp cỡ nào. Các nút chọn giữ 
 cho đến khi trang được tải lại.
 
 Phía trên các nút chọn, dải **Đại sảnh Anh hùng** liệt kê 20 lần giữ gần nhất, mới nhất trước: đội giữ (một tag Bang hoặc tên trưởng tổ đội), những người trong đội thắng, thời điểm trận thắng mới nhất kết thúc và, từ hai trận thắng trở lên, bao nhiêu trận liên tiếp. Một lần giữ là chuỗi thắng Đại sảnh không gián đoạn của một đội giữ. Dải này đọc các bản ghi trên trang này, bỏ qua các nút chọn, và bị ẩn khi không có bản ghi nào là trận thắng Đại sảnh. Như mọi bản ghi, nó là những gì chủ phòng của mỗi trận báo lại, và không có gì kiểm tra nó.
+
+## Xếp hạng
+
+Một trận từ hàng chờ không có bot là trận xếp hạng. Màn hình hàng chờ và sảnh đội cho biết điều đó trước khi bạn xếp hàng; chỉ một bot cũng khiến trận không xếp hạng. Khi tìm được trận xếp hạng, mọi người chơi ký vào lúc bắt đầu, và màn hình hiện **Đang xác nhận trận xếp hạng…** tối đa 15 giây. Nếu ai đó không xác nhận, trận bị hủy và mọi người trở lại hàng chờ. Khi kết thúc, mọi người chơi ký vào kết quả, và biên nhận của trận được công bố trên các relay Nostr cùng khóa công khai và tên nhân vật của từng người chơi; người chơi không có nhân vật được ghi là starter. Điểm của bạn thay đổi trong vòng một giờ. Rời trận xếp hạng tính là thua, và nút rời trận cho biết điều đó.

@@ -47,6 +47,17 @@ export interface FormedGroup {
    * ticket's humans, and the side's bots make up `teamSizeOf(mode)`.
    */
   readonly mode: QueueMode;
+  /** Whether it is ranked (ADR-0055): `isRankedGroup` of its tickets. */
+  readonly ranked: boolean;
+  /**
+   * Its match's seed, a u32 drawn from `groupId`, so every member derives
+   * the same one: what a ranked start carries, and each player checks.
+   */
+  readonly seed: number;
+  /** Every seat key's claimed rating, from the ticket that brings it (ADR-0055). */
+  readonly claims: Readonly<Record<string, number>>;
+  /** The newest `leaderboardAsOf` of its tickets: the one a ranked start states. */
+  readonly leaderboardAsOf: number;
 }
 
 /** How a queue's round is played; every client answers the same for every round. */
@@ -481,6 +492,17 @@ function sides(group: readonly QueueTicket[], mode: QueueMode, groupId: string):
 }
 
 /**
+ * Whether a group of `tickets` plays ranked (ADR-0055, #3573): every
+ * ticket brings no bot, so every side is all human. A group with any bot
+ * ticket plays as before, unranked; there is no ranked queue of its own.
+ */
+export function isRankedGroup(tickets: readonly QueueTicket[]): boolean {
+  return (
+    tickets.length > 0 && tickets.every((ticket) => ticket.bots === 0 && ticket.members.length > 0)
+  );
+}
+
+/**
  * Every group the live tickets make for `input.mode`, earliest queued
  * first, never sharing a ticket: `[]` when there are not enough. Each
  * fills two sides of `teamSizeOf(mode)`, or three (#2683); a party ticket, or in a team
@@ -512,6 +534,10 @@ export async function formGroups(input: FormGroupsInput): Promise<FormedGroup[]>
         .sort((a, b) => compare(a.join(), b.join())),
       mapId,
       mode: input.mode,
+      ranked: isRankedGroup(group),
+      seed: seedFromString(`${groupId}:seed`),
+      claims: Object.fromEntries(group.flatMap((ticket) => Object.entries(ticket.claims))),
+      leaderboardAsOf: Math.max(...group.map((ticket) => ticket.leaderboardAsOf)),
     });
   }
   return groups;

@@ -359,7 +359,7 @@ export async function startTutorialSession(
             });
           },
         },
-        { kind: "play", connect: () => Promise.resolve(connection) },
+        { kind: "play", connect: () => Promise.resolve(connection), ranked: false },
         options.signet,
       );
     }
@@ -373,6 +373,7 @@ export async function startTutorialSession(
       {
         kind: "play",
         connect: () => Promise.resolve(connection),
+        ranked: false,
         tutorial: {
           party: [SELF_ID, TUTOR_ID],
           goals,

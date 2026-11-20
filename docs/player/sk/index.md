@@ -1,6 +1,6 @@
 # Pomoc
 
-Stránky obrazovky Pomoc v hre, v poradí, v akom ich zobrazuje. Každá
+Stránky okna Pomoc v hre, v poradí, v akom ich zobrazuje výber stránky. Každá
 stránka v tomto priečinku je tu uvedená práve raz.
 
 - [Začíname](getting-started.md)

@@ -6,9 +6,9 @@ Některé mapy jsou víc než zdi a otevřený terén. Samotná zem tě může p
 
 Když stojíš na jedné z těchto ploch, působí na tebe; její účinek chvíli trvá i poté, co z ní vystoupíš. Nepřátelé i spojenci jsou zasaženi stejně jako ty.
 
-- **Spálená zem** tě zapálí (Burning). Ohořelá hlína se žhnoucími uhlíky a oranžovým okrajem.
-- **Láva** tě pálí a způsobí ti Crippled. Tmavá krusta rozpraskaná tekoucími, žhnoucími puklinami, které blikají.
-- **Jedovatá mlha** tě otráví (Poison). Plující kyselě zelené obláčky, kterými je vidět. Zelená na zemi vždy znamená jed.
+- **Spálená zem** tě zapálí (Hoření). Ohořelá hlína se žhnoucími uhlíky a oranžovým okrajem.
+- **Láva** tě pálí a způsobí ti Ochromení. Tmavá krusta rozpraskaná tekoucími, žhnoucími puklinami, které blikají.
+- **Jedovatá mlha** tě otráví (Otrava). Plující kyselě zelené obláčky, kterými je vidět. Zelená na zemi vždy znamená jed.
 - **Bažina** tě zpomalí a každý útok nebo dovednost, kterou tam použiješ, tě stojí energii. Hnědé bahno s kalužemi a pomalými bublinami.
 - **Zkažená voda** snižuje tvoji regeneraci zdraví. Kalná tmavá modrozelená voda s cákanci špíny.
 - **Otrávená voda** tě stojí zdraví za každou dovednost, kterou v ní použiješ. Tmavá olivová voda s jantarovým, mastným leskem.
@@ -23,7 +23,7 @@ Ta udeří znovu a znovu na svém místě a zasáhnou každého, kdo tam v tu ch
 
 - **Průduch** vyšlehne sloup plamene, který tě pálí. Mezi výšlehy je to doutnající kamenný límec.
 - **Plynový chrlič** vypouští obláčky zeleného plynu, který tě otráví.
-- **Padající kamení** shazuje kameny, které ti způsobí Crippled. Některé padají na jednom místě, jiné se kutálejí po trase tam a zpět.
+- **Padající kamení** shazuje kameny, které ti způsobí Ochromení. Některé padají na jednom místě, jiné se kutálejí po trase tam a zpět.
 
 Každé tě varuje těsně předtím, než udeří: jeho okrajový kruh se nafoukne v jeho barvě a navíc uvidíš jiskry nad průduchem, chomáčky nad plynovým chrličem nebo tmavnoucí stín pod padajícím kamením. Jakmile to uvidíš, ustup.
 

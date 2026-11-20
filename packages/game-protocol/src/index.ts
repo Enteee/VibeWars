@@ -80,8 +80,10 @@ export {
   MAX_WIRE_ACTORS,
   CREATURE_KINDS,
   CREATURE_LOOKS,
-  CAPE_COLOURS,
+  canonicalEmblem,
   EMBLEM_GRID,
+  isCapeColour,
+  MAX_EMBLEM_COLOURS,
   packEmblem,
   unpackEmblem,
   MAX_WIRE_STATUS_INDEX,
@@ -183,6 +185,13 @@ export {
   parseWireMatchStart,
   parseWireCape,
   isTicketId,
+  parseWireRankedStart,
+  parsePeerRankedStartSig,
+  parseWireRankedStartSigs,
+  parseWireRankedResult,
+  parsePeerRankedResultSig,
+  parseWireRankedReceipt,
+  parseWireRankedCancel,
 } from "./p2p.js";
 
 export type {
@@ -279,6 +288,14 @@ export type {
   WireAdmission,
   LobbyRefusal,
   WireMatchStart,
+  WireRankedJoin,
+  WireRankedStart,
+  PeerRankedStartSig,
+  WireRankedStartSigs,
+  WireRankedResult,
+  PeerRankedResultSig,
+  WireRankedReceipt,
+  WireRankedCancel,
 } from "./p2p.js";
 
 export {
@@ -296,6 +313,7 @@ export {
   inPartyOrder,
   parseQueueTicket,
   soloQueueTicket,
+  UNLISTED_CLAIM,
   teamQueueModeOf,
   lobbyModeOfQueue,
   teamSizeOf,

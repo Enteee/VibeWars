@@ -105,7 +105,11 @@ describe("the player key (#2706)", () => {
   });
 
   it("exposes its key and purpose-named signers, never a raw sign or the secret", () => {
-    expect(Object.keys(playerKeyModule).sort()).toEqual(["loadPlayerKey", "verifyPlayerProof"]);
+    expect(Object.keys(playerKeyModule).sort()).toEqual([
+      "loadPlayerKey",
+      "receiptCrypto",
+      "verifyPlayerProof",
+    ]);
     const key = loadPlayerKey(memoryStorage());
     expect(Object.keys(key).sort()).toEqual([
       "pubkey",

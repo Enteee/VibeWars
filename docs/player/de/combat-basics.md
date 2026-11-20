@@ -3,19 +3,19 @@
 ## Leben und Energie
 
 Du startest mit 500 **Leben** und 50 **Energie**; Runen und Moral verändern
-beides. Skills kosten Energie, und sie kommt langsam von selbst zurück. Warrior
-und Paragon regenerieren sie am langsamsten, Ranger etwas schneller, alle anderen
+beides. Skills kosten Energie, und sie kommt langsam von selbst zurück. ![Krieger](../../../apps/web/public/icons/profession/warrior.svg) **Krieger**
+und ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** regenerieren sie am langsamsten, ![Waldläufer](../../../apps/web/public/icons/profession/ranger.svg) **Waldläufer** etwas schneller, alle anderen
 am schnellsten.
 
 Die Pfeile auf deinen Leisten sind **Pips**: Jeder steht für Leben oder Energie,
-die jede Sekunde ein wenig zurückkommen oder abfließen. Bleeding, Burning und
-Poison ziehen Leben ab; Regeneration und Heilzauber geben es dir. Bist du
+die jede Sekunde ein wenig zurückkommen oder abfließen. ![Blutung](../../../apps/web/public/icons/status/bleeding.svg) **Blutung**, ![Brennen](../../../apps/web/public/icons/status/burning.svg) **Brennen** und
+![Vergiftung](../../../apps/web/public/icons/status/poison.svg) **Vergiftung** ziehen Leben ab; Regeneration und Heilzauber geben es dir. Bist du
 5 Sekunden aus dem Kampf, kommt dein Leben von selbst zurück, und zwar umso
 schneller, je länger du draußen bleibst.
 
 ## Adrenalin
 
-Warrior, Paragon und andere haben Skills, die **Adrenalin** statt Energie kosten.
+![Krieger](../../../apps/web/public/icons/profession/warrior.svg) **Krieger**, ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** und andere haben Skills, die **Adrenalin** statt Energie kosten.
 Jeder dieser Skills lädt sich einzeln auf: Jeder Waffentreffer, den du landest,
 gibt jedem von ihnen einen Schlag, und ein großer Treffer, den du einsteckst,
 ebenso. Benutzt du einen, leert er sich und nimmt den anderen einen Schlag. Bist
@@ -27,14 +27,14 @@ Ein Skill braucht manchmal einen Moment zum **Wirken** und danach Zeit zur
 **Aufladung**, bevor du ihn wieder nutzen kannst. Ist dein Ziel außer Reichweite,
 läufst du zuerst hin. Laufen oder Esc bricht das Wirken ab: Die Energie ist weg,
 aber der Skill lädt sich nicht auf. Nach jedem Skill mit Wirkzeit, außer einem
-Angriffs-Skill, gibt es eine kurze Pause, in der du nichts tun kannst.
+![Angriffs-Skill](../../../apps/web/public/icons/skill-type/attack.svg) **Angriffs-Skill**, gibt es eine kurze Pause, in der du nichts tun kannst.
 
 Ein Skill, den du drückst, während du einen anderen nutzt oder in dieser Pause,
 wird **vorgemerkt**: Er kommt als Nächstes, und sein Feld pulsiert bis dahin. Nur
 einer kann warten; drückst du einen anderen, ersetzt er ihn. Laufen, Esc, eine
 Unterbrechung oder ein Niederwurf verwirft ihn.
 
-**Schreie und Haltungen** werden nie vorgemerkt: Sie wirken sofort, auch während
+![Schrei](../../../apps/web/public/icons/skill-type/shout.svg) **Schreie** und ![Haltung](../../../apps/web/public/icons/skill-type/stance.svg) **Haltungen** werden nie vorgemerkt: Sie wirken sofort, auch während
 du einen anderen Skill wirkst, in dieser Pause oder am Boden. Das Wirken läuft
 weiter. So genutzt, lassen sie dich nicht hinlaufen: Außer Reichweite werden sie
 abgelehnt.
@@ -52,30 +52,30 @@ Der Treffer kommt nie an und der Schlag beginnt von vorn. Ein Gegner, der noch z
 seinem Ziel läuft, hat nichts zu unterbrechen. Eine Unterbrechung, auf deren Karte
 „einen Skill“ oder „einen Zauber“ steht, lässt einen normalen Angriff in Ruhe.
 
-Manche Haltungen, etwa Mantra of Concentration, stoppen eine Unterbrechung gegen
+Manche ![Haltung](../../../apps/web/public/icons/skill-type/stance.svg) **Haltungen**, etwa Mantra of Concentration, stoppen eine Unterbrechung gegen
 dich. Keine davon stoppt einen Niederwurf.
 
 **Am Boden** kannst du kurz weder laufen noch angreifen noch einen Skill nutzen,
-außer einem Schrei oder einer Haltung, und ein laufendes Wirken schlägt fehl.
+außer einem ![Schrei](../../../apps/web/public/icons/skill-type/shout.svg) **Schrei** oder einer Haltung, und ein laufendes Wirken schlägt fehl.
 
 ## Zustände, Verhexungen und Verzauberungen
 
 **Zustände** schaden dir, bis sie auslaufen oder entfernt werden:
 
-| Zustand       | Was er tut                                           |
-| ------------- | ---------------------------------------------------- |
-| Bleeding      | zieht Leben ab                                       |
-| Burning       | zieht schnell Leben ab                               |
-| Poison        | zieht Leben ab                                       |
-| Disease       | zieht Leben ab und steckt jeden neben dir an         |
-| Crippled      | du läufst halb so schnell                            |
-| Blind         | die meisten deiner Angriffe verfehlen                |
-| Weakness      | deine Waffentreffer sind viel schwächer              |
-| Cracked Armor | weniger Rüstung                                      |
-| Deep Wound    | weniger maximales Leben, und Heilung wirkt schwächer |
-| Dazed         | Zauber wirken langsam; jeder Angriff unterbricht sie |
+| Zustand                                                                                         | Was er tut                                           |
+| ----------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| ![Blutung](../../../apps/web/public/icons/status/bleeding.svg) **Blutung**                      | zieht Leben ab                                       |
+| ![Brennen](../../../apps/web/public/icons/status/burning.svg) **Brennen**                       | zieht schnell Leben ab                               |
+| ![Vergiftung](../../../apps/web/public/icons/status/poison.svg) **Vergiftung**                  | zieht Leben ab                                       |
+| ![Krankheit](../../../apps/web/public/icons/status/disease.svg) **Krankheit**                   | zieht Leben ab und steckt jeden neben dir an         |
+| ![Verkrüppelt](../../../apps/web/public/icons/status/crippled.svg) **Verkrüppelt**              | du läufst halb so schnell                            |
+| ![Blindheit](../../../apps/web/public/icons/status/blind.svg) **Blindheit**                     | die meisten deiner Angriffe verfehlen                |
+| ![Schwäche](../../../apps/web/public/icons/status/weakness.svg) **Schwäche**                    | deine Waffentreffer sind viel schwächer              |
+| ![Rissige Rüstung](../../../apps/web/public/icons/status/cracked-armor.svg) **Rissige Rüstung** | weniger Rüstung                                      |
+| ![Tiefe Wunde](../../../apps/web/public/icons/status/deep-wound.svg) **Tiefe Wunde**            | weniger maximales Leben, und Heilung wirkt schwächer |
+| ![Benommen](../../../apps/web/public/icons/status/dazed.svg) **Benommen**                       | Zauber wirken langsam; jeder Angriff unterbricht sie |
 
-**Verhexungen** wirken Gegner auf dich, **Verzauberungen** du selbst oder deine
+![Verhexung](../../../apps/web/public/icons/skill-type/hex.svg) **Verhexungen** wirken Gegner auf dich, ![Verzauberung](../../../apps/web/public/icons/skill-type/enchantment.svg) **Verzauberungen** du selbst oder deine
 Verbündeten. Jede wird durch ihre eigene Art von Skill entfernt. Manche
 Verzauberungen werden **aufrechterhalten**: Sie halten, bis du sie beendest, und
 kosten solange einen Energie-Pip. Doppelklicke auf ihr Symbol, um eine zu beenden.
@@ -87,7 +87,7 @@ Treffer.
 
 ## Rüstung und Schaden
 
-Warrior und Paragon tragen die meiste Rüstung, Ranger, Assassin und Dervish
+![Krieger](../../../apps/web/public/icons/profession/warrior.svg) **Krieger** und ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** tragen die meiste Rüstung, ![Waldläufer](../../../apps/web/public/icons/profession/ranger.svg) **Waldläufer**, ![Assassine](../../../apps/web/public/icons/profession/assassin.svg) **Assassine** und ![Derwisch](../../../apps/web/public/icons/profession/dervish.svg) **Derwisch**
 weniger, Zauberwirker am wenigsten. Rüstung verringert Waffen-, Element-, Chaos-
 und Dunkelschaden. Heiliger Schaden, Schattenschaden und typloser Schaden,
 Lebensentzug und Lebensraub ignorieren sie. Nur Waffentreffer können kritisch

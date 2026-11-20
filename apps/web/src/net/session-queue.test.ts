@@ -49,12 +49,25 @@ describe("entering the Random Arena queue (#2090)", () => {
   it("says searching at once, before the NAT check is in", () => {
     vi.stubGlobal("window", new EventTarget());
     const states: QueueState[] = [];
-    const place = enterQueue("random-arena-2v2", null, 0, null, "Pyro", NO_GUILD, PLAYER_KEY, {
-      onState: (state) => states.push(state),
-      onLobby: () => undefined,
-      onRefused: () => undefined,
-      onPartyGone: () => undefined,
-    });
+    const place = enterQueue(
+      "random-arena-2v2",
+      null,
+      0,
+      null,
+      "Pyro",
+      NO_GUILD,
+      PLAYER_KEY,
+      "char-1",
+      {
+        onState: (state) => states.push(state),
+        onLobby: () => undefined,
+        onRefused: () => undefined,
+        onPartyGone: () => undefined,
+        onRankedConfirming: () => undefined,
+        onRankedCancelled: () => undefined,
+        onRankedPublished: () => undefined,
+      },
+    );
 
     expect(states).toEqual([{ kind: "searching", searching: 0, teams: 0, needed: 4, waitedMs: 0 }]);
     place.leave();

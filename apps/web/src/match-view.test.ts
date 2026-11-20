@@ -12,6 +12,7 @@ import {
   isDoor,
   type MapDeck,
 } from "./render/arena-snapshot.js";
+import { atRest } from "./render/pick.test-support.js";
 
 function player(sessionId: string, knockdownRemaining: number): PlayerSnapshot {
   return {
@@ -190,10 +191,13 @@ describe("toArenaSnapshot", () => {
       },
     });
     const pick = (look: "beast" | "guild-lord"): string | undefined =>
-      actorAtPoint(toArenaSnapshot(match([creature("it", look)]), [], [], undefined, undefined), {
-        x: 13,
-        y: 0,
-      })?.id;
+      actorAtPoint(
+        atRest(toArenaSnapshot(match([creature("it", look)]), [], [], undefined, undefined)),
+        {
+          x: 13,
+          y: 0,
+        },
+      )?.id;
     expect(pick("guild-lord")).toBe("it");
     expect(pick("beast")).toBeUndefined();
   });
@@ -264,7 +268,12 @@ describe("toArenaSnapshot", () => {
       durationSeconds: 10,
       casterId: "me",
     };
-    const cape = { main: "violet", trim: "white", emblem: packEmblem([0, 1, 2]) } as const;
+    const cape = {
+      main: "a078e0",
+      trim: "f2f2f2",
+      emblemColours: ["f2f2f2", "e6c04a"],
+      emblem: packEmblem([0, 1, 2]),
+    } as const;
     const formed = {
       ...player("formed", 0),
       x: 0,
@@ -285,7 +294,7 @@ describe("toArenaSnapshot", () => {
     // Targeted by the body it collides as, not the bigger one drawn.
     const inside = { x: ACTOR_RADIUS - 1, y: 0 };
     const drawnOnly = { x: ACTOR_RADIUS * 1.2, y: 0 };
-    const solo = toArenaSnapshot(match([formed]), [], [], undefined, undefined);
+    const solo = atRest(toArenaSnapshot(match([formed]), [], [], undefined, undefined));
     expect(actorAtPoint(solo, inside)?.id).toBe("formed");
     expect(actorAtPoint(solo, drawnOnly)).toBeUndefined();
     // Its name-and-body column ends at the same body, not the drawn one.

@@ -84,30 +84,21 @@ test("keys typed into chat never cast or move (#479)", async ({ page }) => {
 test("in a match a click under the panel walks, and the box shows only while open (#479)", async ({
   page,
 }) => {
+  // A bar with no pet: a random starter can bring one, and it arrives just
+  // east of the hero, where a held east key then never gets past it (#3632).
+  await bringStarter(page, "Warrior/Monk");
   await page.goto("./");
   await startSoloMatch(page);
-  const box = page.getByRole("textbox", { name: "chat message" });
-  await expect(box).toBeHidden();
-  await say(page, "rush mid");
-  await expect(box).toBeHidden();
-  const log = page.getByRole("log");
-  await expect(log).toContainText("rush mid");
-
-  // The middle of the panel's lines, where a click used to stop.
-  const panel = await log.boundingBox();
-  if (panel === null) {
-    throw new Error("the chat log has no box");
-  }
-  const at = { x: panel.x + panel.width / 2, y: panel.y + panel.height / 2 };
-  expect(await page.evaluate(({ x, y }) => document.elementFromPoint(x, y)?.tagName, at)).toBe(
-    "CANVAS",
-  );
   // The follow camera (#721) moves only when the hero does. Ember Pits'
   // first spawn sits near the west edge, so the ground under the panel is
   // outside the arena: walk east along the open spawn row first, far enough
   // that it is open ash west of the ember pit, not the basalt rim, and settle.
   // By a held key, not a click: the house foe can stand where a click east
   // would land, and a click on it targets it instead of walking (#3270).
+  // And at once, before the chat: the foe starts at (2820, 740) and comes
+  // for the hero at (270, 1150) (packages/game-maps/maps/ember-pits/map.json).
+  // Given the seconds a slow page spends on the chat first, it stands on
+  // the spawn row in the hero's path and blocks the walk (#3632).
   const stage = page.locator("#viewport");
   // The camera may still be gliding onto the spawn: a click before it
   // settles lands somewhere else on the ground.
@@ -137,6 +128,23 @@ test("in a match a click under the panel walks, and the box shows only while ope
     .toBeGreaterThanOrEqual(spawnX + EAST_WALK);
   await page.keyboard.up(key("move-right"));
   await settle("the hero should stop where the key let go");
+
+  const box = page.getByRole("textbox", { name: "chat message" });
+  await expect(box).toBeHidden();
+  await say(page, "rush mid");
+  await expect(box).toBeHidden();
+  const log = page.getByRole("log");
+  await expect(log).toContainText("rush mid");
+
+  // The middle of the panel's lines, where a click used to stop.
+  const panel = await log.boundingBox();
+  if (panel === null) {
+    throw new Error("the chat log has no box");
+  }
+  const at = { x: panel.x + panel.width / 2, y: panel.y + panel.height / 2 };
+  expect(await page.evaluate(({ x, y }) => document.elementFromPoint(x, y)?.tagName, at)).toBe(
+    "CANVAS",
+  );
   const before = await stage.getAttribute("data-camera");
   await page.mouse.click(at.x, at.y);
   await expect(stage).not.toHaveAttribute("data-camera", before ?? "");

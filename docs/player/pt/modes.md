@@ -183,8 +183,7 @@ Cinder Sanctum (8v8, 5600x2800) o joga: um templo na encosta de um vulcão entre
 tem um **Herói Fantasmagórico** na base, um fantasma que luta com um
 machado e que ninguém joga. O **altar** fica no centro, a mesma caminhada
 das duas bases. Em **Threefold Keep**, três equipes (duas se não houver uma terceira livre) o
-disputam dentro de uma fortaleza murada. As portas só abrem por dentro, com uma
-placa: para entrar, contorne até um canto aberto. No máximo 12 pontos por
+disputam na torre de uma fortaleza murada. No máximo 12 pontos por
 equipe, e se todos os rivais estiverem a -60% de moral, você vence na hora. O **Hall of
 Heroes**, o mapa de Rei da Colina que encerra a Ascensão dos Heróis, o
 ergue em um estrado murado a oeste e a leste, com subida ao norte ou ao
@@ -243,7 +242,7 @@ altar, todo bot mata primeiro o Herói Fantasmagórico da outra equipe assim
 que ele estiver no altar ao alcance deles: é o único inimigo que impede
 seu fantasma de tomá-lo.
 
-Threefold Keep joga esse modo.
+Threefold Keep joga esse modo (4v4 e 8v8, 5000x4400): uma fortaleza numa colina das terras altas, para três equipes. Suba ao adarve pela escada ao lado do seu portão e atravesse uma calçada até a colina, depois suba até o altar na torre. Uma alavanca em cada pátio abre os quatro portões: a passagem do seu portão sob a muralha, e a cripta, o caminho longo sob a colina.
 
 ## Captura de Pontos
 
@@ -381,7 +380,7 @@ A equipe escolhe uma vez, na Sala de Equipe do primeiro mapa, e mantém sua
 Build de Equipe e seus assentos no resto da campanha: depois de uma
 vitória, volta à fila sem votação nem escolha. Quem sai no meio da
 campanha libera o assento, mas não a build dele. Quem entra no grupo entre
-mapas só escolhe entre os assentos vagos (**Livre: build de Monk**) e joga
+mapas só escolhe entre os assentos vagos (**Livre: build de Monge**) e joga
 a build desse assento; um assento vago que ninguém pegar é de um bot. Uma
 derrota recomeça do zero: a próxima campanha vota de novo. O mesmo vale
 para seguir seu host até outro grupo, cujo host não pode garantir a
@@ -393,14 +392,12 @@ Um grupo com menos de 8 entra na fila com bots nos lugares vazios, usando sua Bu
 
 **Barrow Field** (8v8, 5400x2600) é uma arena da Ascensão que você também pode escolher em uma Partida Hospedada: Aniquilação de Sacerdotes em um charco de túmulos ao entardecer, com o sacerdote ressuscitando seus mortos a cada 2 minutos. Suba em um túmulo para ter o terreno alto, ou siga a passagem dos túmulos por baixo dele quando uma alavanca no túmulo distante abrir o portão. Leve sua bandeira ao **Storm Beacon** no centro e ele atinge um inimigo aleatório ao alcance da voz com 50 de dano de raio a cada 2,5 segundos, até a outra equipe plantar a bandeira dela lá. Cada golpe é um raio do farol até quem ele atingiu, visível para as duas equipes.
 
-Três arenas da Ascensão também podem ser escolhidas em uma Partida Hospedada: **The Hollow Deep** (8v8 de Aniquilação, três túneis sinuosos
-em volta de uma rocha central),
+Três arenas da Ascensão também podem ser escolhidas em uma Partida Hospedada: **The Hollow Deep** (8v8 de Aniquilação, 6200x2400, numa caverna escura: atravesse uma ponte de cordas sobre um abismo, suba por uma saliência central ou pegue a cripta por baixo dela quando uma alavanca numa plataforma de rocha abrir seu portão),
 **Blackwater Ford** (8v8, 5200x2800, de Aniquilação de Sacerdotes em um vau escuro de rio:
 dá para atravessar a pé um vau raso, cruzar a ponte quebrada sobre o moinho, apoiada em seus pilares,
 ou pegar um bueiro sob a ponte assim que uma alavanca no moinho abre o portão dele; o sacerdote traz os mortos a cada 2
 minutos) e
-**Mosslit Cairns** (8v8 de Captura de Pontos, cinco montes de pedras em um
-leve zigue-zague entre as bases). A quarta é **The Brazen Causeway** (8v8, 5600x2800, de Aniquilação de Sacerdotes em uma calçada de pedra elevada sobre um pântano ao entardecer: dá para marchar pela calçada assim que uma alavanca na casa da guarda do outro lado abre o portão de bronze dela, atravessar o pântano até as escadas no meio dela, ou escapulir por um bueiro sob ela; o sacerdote traz os mortos a cada 2 minutos).
+**Mosslit Cairns** (8v8, 5400x3000, de Captura de Pontos em cinco colinas de montes de pedras que brilham com musgo ao entardecer: dá para subir num monte pelas escadas dele, segurar o grande monte do meio, ou pegar o túnel de raízes sob as colinas do sul assim que uma alavanca num monte do norte abre os portões dele; os muros de raízes podem ser quebrados). A quarta é **The Brazen Causeway** (8v8, 5600x2800, de Aniquilação de Sacerdotes em uma calçada de pedra elevada sobre um pântano ao entardecer: dá para marchar pela calçada assim que uma alavanca na casa da guarda do outro lado abre o portão de bronze dela, atravessar o pântano até as escadas no meio dela, ou escapulir por um bueiro sob ela; o sacerdote traz os mortos a cada 2 minutos).
 
 Um mapa pode ter **portões**: muros que param corpos, disparos e visão
 enquanto fechados. Fique sobre a placa de pressão de um portão para
@@ -410,7 +407,7 @@ a atravessam, e não pode ser aberto de novo por meio segundo. Uma placa na
 cor de uma equipe só responde a essa equipe. Os bots ficam na placa da
 própria equipe quando não há inimigo por perto.
 
-Cada percurso começa com a **Batalha dos Zaishen de Elite**, sem fila: seu grupo contra seis Zaishen controlados por bots (2 Monges, um Elementalista e mais 3). O relógio começa quando um de vocês cruza a linha de partida ou o primeiro Zaishen morre, o que acontecer primeiro. Matem os seis em menos de 30 segundos e o grupo começa o percurso com +10% de moral; em menos de 60, +8%; em menos de 80, +6%; em menos de 100, +4%; em menos de 120, +2%; mais devagar, nada. Se vencerem, o grupo entra sozinho na fila do primeiro mapa. Se o grupo inteiro cair, ou se algum Zaishen ainda estiver vivo ao fim do limite de 8 minutos, o percurso acaba.
+Cada percurso começa com a **Batalha dos Zaishen de Elite**, sem fila: seu grupo contra seis Zaishen controlados por bots (2 Monges, um Elementalista e mais 3). Ela é travada numa arena cerimonial (8v8, 5400x2400): arquibancadas em degraus ao norte e ao sul, estátuas sobre pedestais no piso rebaixado e uma cripta sob cada arquibancada, cuja grade levadiça é aberta por uma alavanca na arquibancada oposta. O relógio começa quando um de vocês cruza a linha de partida no meio da arena ou o primeiro Zaishen morre, o que acontecer primeiro. Matem os seis em menos de 30 segundos e o grupo começa o percurso com +10% de moral; em menos de 60, +8%; em menos de 80, +6%; em menos de 100, +4%; em menos de 120, +2%; mais devagar, nada. Se vencerem, o grupo entra sozinho na fila do primeiro mapa. Se o grupo inteiro cair, ou se algum Zaishen ainda estiver vivo ao fim do limite de 8 minutos, o percurso acaba.
 
 Cada vitória de um percurso dá **fama**: 1, 2, 3, 4, 6, 8, 12, 16, 20, 24, 28, 32, 36 nas treze primeiras e depois 40 cada, no máximo 300 por dia (o dia vira às 15:00 UTC). A Batalha dos Zaishen de Elite não dá fama. Sua fama total define sua **patente de herói**, de 1 com 25 de fama a 15 com 100.000, mostrada como ★ e um número ao lado do seu nome. Opções > Jogador mostra as duas. As duas ficam no seu dispositivo.
 
@@ -462,3 +459,7 @@ nenhum tamanho. Os chips ficam como você os deixou até a página
 recarregar.
 
 Acima dos filtros, a faixa **Salão dos Heróis** lista os últimos 20 domínios, do mais recente ao mais antigo: quem domina (uma tag de guilda ou o nome do líder), as pessoas da equipe vencedora, quando a vitória mais recente terminou e, a partir de duas vitórias, quantas seguidas. Um domínio é uma sequência ininterrupta de vitórias no Salão de quem domina. A faixa lê os registros desta página, ignora os filtros e fica oculta se nenhum for uma vitória no Salão. Como todo registro, é o que o host de cada partida informou, e nada o verifica.
+
+## Ranqueadas
+
+Uma partida da fila sem bots é ranqueada. O ecrã da fila e o lobby de equipa dizem-no antes de entrares na fila; um só bot deixa a partida sem ranking. Quando é encontrada uma partida ranqueada, cada jogador assina o seu início, e o ecrã mostra **Confirmando partida ranqueada…** até 15 segundos. Se alguém não confirmar, a partida é cancelada e todos voltam à fila. No fim, cada jogador assina o resultado, e o recibo da partida é publicado nos relays Nostr com a chave pública e o nome da personagem de cada jogador; um jogador sem personagem aparece como starter. A tua classificação muda dentro de uma hora. Sair de uma partida ranqueada conta como derrota, e o botão de sair di-lo.

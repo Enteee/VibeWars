@@ -3,17 +3,17 @@
 ## 체력과 에너지
 
 **체력** 500, **에너지** 50으로 시작해요. 룬과 사기가 둘 다 바꿔요. 스킬은
-에너지를 소모하고, 에너지는 저절로 천천히 차올라요. Warrior와 Paragon이 가장
-느리게, Ranger가 조금 더 빠르게, 나머지는 모두 가장 빠르게 회복해요.
+에너지를 소모하고, 에너지는 저절로 천천히 차올라요. ![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior**와 ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon**이 가장
+느리게, ![Ranger](../../../apps/web/public/icons/profession/ranger.svg) **Ranger**가 조금 더 빠르게, 나머지는 모두 가장 빠르게 회복해요.
 
 바 위의 화살표는 **핍**이에요. 핍 하나하나가 매초 조금씩 차오르거나 빠져나가는
-체력이나 에너지예요. Bleeding, Burning, Poison은 체력을 빼앗고, Regeneration과
+체력이나 에너지예요. ![Bleeding](../../../apps/web/public/icons/status/bleeding.svg) **Bleeding**, ![Burning](../../../apps/web/public/icons/status/burning.svg) **Burning**, ![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison**은 체력을 빼앗고, Regeneration과
 치유 주문은 체력을 더해요. 5초 동안 전투에서 벗어나 있으면 체력이 저절로
 차오르기 시작하고, 오래 벗어나 있을수록 빨라져요.
 
 ## 아드레날린
 
-Warrior, Paragon 등은 에너지 대신 **아드레날린**을 소모하는 스킬을 가지고
+![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior**, ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** 등은 에너지 대신 **아드레날린**을 소모하는 스킬을 가지고
 있어요. 그런 스킬은 각자 따로 충전돼요. 무기 공격을 적중시킬 때마다 각 스킬이
 한 칸씩 충전되고, 큰 타격을 받아도 마찬가지예요. 하나를 쓰면 그 스킬은 비고
 다른 스킬에서도 한 칸씩 빠져요. 25초 동안 전투에서 벗어나 있으면 모두 비워져요.
@@ -23,13 +23,13 @@ Warrior, Paragon 등은 에너지 대신 **아드레날린**을 소모하는 스
 스킬은 **시전**하는 데 잠깐 걸릴 수 있고, 다시 쓰려면 **재충전** 시간이
 필요해요. 대상이 사거리 밖이면 먼저 대상에게 걸어가요. 이동하거나 Esc를 누르면
 시전이 취소돼요. 에너지는 사라지지만 스킬은 재충전되지 않아요. 시전 시간이 있는
-스킬을 쓴 뒤에는, 공격 스킬을 빼고, 아무것도 할 수 없는 짧은 멈춤이 있어요.
+스킬을 쓴 뒤에는, ![공격 스킬](../../../apps/web/public/icons/skill-type/attack.svg) **공격 스킬**을 빼고, 아무것도 할 수 없는 짧은 멈춤이 있어요.
 
 다른 스킬을 쓰는 동안이나 그 멈춤 동안 누른 스킬은 **대기**해요. 다음 차례로
 나가고, 나갈 때까지 슬롯이 깜박여요. 하나만 대기할 수 있고, 다른 스킬을 누르면
 그 스킬로 바뀌어요. 이동, Esc, 차단, 넉다운이 대기를 없애요.
 
-**외침과 태세**는 절대 대기하지 않아요. 다른 스킬을 시전하는 중에도, 그 멈춤
+![외침](../../../apps/web/public/icons/skill-type/shout.svg) **외침**과 ![태세](../../../apps/web/public/icons/skill-type/stance.svg) **태세**는 절대 대기하지 않아요. 다른 스킬을 시전하는 중에도, 그 멈춤
 중에도, 넉다운 상태에서도 바로 발동해요. 시전은 계속 이어져요. 이렇게 쓸 때는
 대상에게 걸어가지 않아요. 사거리 밖이면 거부돼요.
 
@@ -45,30 +45,30 @@ Warrior, Paragon 등은 에너지 대신 **아드레날린**을 소모하는 스
 처음부터 다시 시작돼요. 아직 대상에게 걸어가는 중인 적에게는 차단할 것이 없어요.
 카드에 "a skill"이나 "a spell"이라고 적힌 차단은 일반 공격을 건드리지 않아요.
 
-Mantra of Concentration 같은 일부 태세는 나를 노린 차단을 막아요. 넉다운을 막는
+Mantra of Concentration 같은 일부 ![태세](../../../apps/web/public/icons/skill-type/stance.svg) **태세**는 나를 노린 차단을 막아요. 넉다운을 막는
 태세는 없어요.
 
-**넉다운**되면 잠깐 동안 이동, 공격, 스킬 사용을 할 수 없어요. 외침과 태세는
+**넉다운**되면 잠깐 동안 이동, 공격, 스킬 사용을 할 수 없어요. ![외침](../../../apps/web/public/icons/skill-type/shout.svg) **외침**과 태세는
 예외예요. 진행 중이던 시전은 실패해요.
 
 ## 상태이상, 저주, 인챈트
 
 **상태이상**은 시간이 다 되거나 제거될 때까지 피해를 줘요.
 
-| 상태이상      | 효과                                         |
-| ------------- | -------------------------------------------- |
-| Bleeding      | 체력을 빼앗아요                              |
-| Burning       | 체력을 빠르게 빼앗아요                       |
-| Poison        | 체력을 빼앗아요                              |
-| Disease       | 체력을 빼앗고, 옆에 있는 누구에게나 퍼져요   |
-| Crippled      | 이동 속도가 절반이 돼요                      |
-| Blind         | 공격이 대부분 빗나가요                       |
-| Weakness      | 무기 공격이 훨씬 약해져요                    |
-| Cracked Armor | 방어력이 줄어요                              |
-| Deep Wound    | 최대 체력이 줄고, 치유 효과가 줄어요         |
-| Dazed         | 주문 시전이 느려지고, 어떤 공격에도 차단돼요 |
+| 상태이상                                                                                    | 효과                                         |
+| ------------------------------------------------------------------------------------------- | -------------------------------------------- |
+| ![Bleeding](../../../apps/web/public/icons/status/bleeding.svg) **Bleeding**                | 체력을 빼앗아요                              |
+| ![Burning](../../../apps/web/public/icons/status/burning.svg) **Burning**                   | 체력을 빠르게 빼앗아요                       |
+| ![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison**                      | 체력을 빼앗아요                              |
+| ![Disease](../../../apps/web/public/icons/status/disease.svg) **Disease**                   | 체력을 빼앗고, 옆에 있는 누구에게나 퍼져요   |
+| ![Crippled](../../../apps/web/public/icons/status/crippled.svg) **Crippled**                | 이동 속도가 절반이 돼요                      |
+| ![Blind](../../../apps/web/public/icons/status/blind.svg) **Blind**                         | 공격이 대부분 빗나가요                       |
+| ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness**                | 무기 공격이 훨씬 약해져요                    |
+| ![Cracked Armor](../../../apps/web/public/icons/status/cracked-armor.svg) **Cracked Armor** | 방어력이 줄어요                              |
+| ![Deep Wound](../../../apps/web/public/icons/status/deep-wound.svg) **Deep Wound**          | 최대 체력이 줄고, 치유 효과가 줄어요         |
+| ![Dazed](../../../apps/web/public/icons/status/dazed.svg) **Dazed**                         | 주문 시전이 느려지고, 어떤 공격에도 차단돼요 |
 
-**저주**는 적이 나에게 걸고, **인챈트**는 나 자신이나 아군이 걸어요. 각각 그에
+![저주](../../../apps/web/public/icons/skill-type/hex.svg) **저주**는 적이 나에게 걸고, ![인챈트](../../../apps/web/public/icons/skill-type/enchantment.svg) **인챈트**는 나 자신이나 아군이 걸어요. 각각 그에
 맞는 종류의 스킬로 제거돼요. 일부 인챈트는 **유지형**이에요. 직접 끝낼 때까지
 지속되고, 그동안 에너지 핍 하나를 소모해요. 끝내려면 아이콘을 더블클릭하세요.
 
@@ -78,7 +78,7 @@ Mantra of Concentration 같은 일부 태세는 나를 노린 차단을 막아�
 
 ## 방어력과 피해
 
-Warrior와 Paragon이 방어력이 가장 높고, Ranger, Assassin, Dervish가 그보다
+![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior**와 ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon**이 방어력이 가장 높고, ![Ranger](../../../apps/web/public/icons/profession/ranger.svg) **Ranger**, ![Assassin](../../../apps/web/public/icons/profession/assassin.svg) **Assassin**, ![Dervish](../../../apps/web/public/icons/profession/dervish.svg) **Dervish**가 그보다
 낮고, 주문 시전자가 가장 낮아요. 방어력은 무기, 원소, 혼돈, 암흑 피해를
 줄여요. 신성, 그림자, 무속성 피해와 체력 흡수, 생명력 강탈은 방어력을
 무시해요. 무기 공격만 치명타가 될 수 있어요. 일부 인챈트는 지닌 사람을 치명타에

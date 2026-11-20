@@ -4,18 +4,18 @@
 
 Você começa com 500 de **vida** e 50 de **energia**; runas e moral mudam
 as duas. Habilidades custam energia, e ela volta sozinha, devagar.
-Warriors e Paragons recuperam mais devagar, Rangers um pouco mais rápido,
+![Guerreiro](../../../apps/web/public/icons/profession/warrior.svg) **Guerreiros** e ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragons** recuperam mais devagar, ![Patrulheiro](../../../apps/web/public/icons/profession/ranger.svg) **Patrulheiros** um pouco mais rápido,
 e todos os outros mais rápido ainda.
 
 As setas nas suas barras são **pips**: cada uma é vida ou energia
-voltando, ou sendo drenada, um pouco a cada segundo. Bleeding, Burning e
-Poison drenam vida; Regeneration e feitiços de cura adicionam. Fora da
+voltando, ou sendo drenada, um pouco a cada segundo. ![Sangramento](../../../apps/web/public/icons/status/bleeding.svg) **Sangramento**, ![Queimadura](../../../apps/web/public/icons/status/burning.svg) **Queimadura** e
+![Veneno](../../../apps/web/public/icons/status/poison.svg) **Veneno** drenam vida; Regeneration e feitiços de cura adicionam. Fora da
 luta por 5 segundos, sua vida começa a voltar sozinha, mais rápido
 quanto mais tempo você ficar fora.
 
 ## Adrenalina
 
-Warriors, Paragons e outros têm habilidades que custam **adrenalina** em
+![Guerreiro](../../../apps/web/public/icons/profession/warrior.svg) **Guerreiros**, ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragons** e outros têm habilidades que custam **adrenalina** em
 vez de energia. Cada uma dessas habilidades carrega por conta própria:
 cada golpe de arma que você acerta dá um impulso a cada uma delas, e
 levar um golpe forte também. Usar uma a esvazia e tira um impulso das
@@ -27,15 +27,15 @@ Uma habilidade pode levar um instante de **conjuração** e depois precisa
 de tempo de **recarga** antes de ser usada de novo. Se o alvo estiver
 fora de alcance, você anda até ele primeiro. Andar, ou Esc, cancela uma
 conjuração: a energia é gasta, mas a habilidade não recarrega. Depois de
-qualquer habilidade com tempo de conjuração, exceto uma habilidade de
-ataque, há uma pausa curta em que você não pode agir.
+qualquer habilidade com tempo de conjuração, exceto uma ![Habilidade de ataque](../../../apps/web/public/icons/skill-type/attack.svg) **habilidade de
+ataque**, há uma pausa curta em que você não pode agir.
 
 Uma habilidade que você pressiona enquanto usa outra, ou nessa pausa, fica
 **na fila**: ela sai em seguida, e o espaço dela pulsa até isso acontecer.
 Só uma espera; pressionar outra a substitui. Andar, Esc, uma interrupção
 ou uma derrubada a descartam.
 
-**Gritos e posturas** nunca ficam na fila: saem na hora, mesmo enquanto
+![Grito](../../../apps/web/public/icons/skill-type/shout.svg) **Gritos** e ![Postura](../../../apps/web/public/icons/skill-type/stance.svg) **posturas** nunca ficam na fila: saem na hora, mesmo enquanto
 você conjura outra habilidade, nessa pausa ou derrubado. A conjuração
 continua. Usados assim, não fazem você andar até o alvo: fora de alcance,
 são recusados.
@@ -54,31 +54,31 @@ golpe: esse golpe nunca acerta e o movimento recomeça. Um inimigo que
 ainda está andando até o alvo não tem o que interromper. Uma interrupção
 cujo cartão diz "a skill" ou "a spell" não afeta um ataque simples.
 
-Algumas posturas, como Mantra of Concentration, impedem uma interrupção
+Algumas ![Postura](../../../apps/web/public/icons/skill-type/stance.svg) **posturas**, como Mantra of Concentration, impedem uma interrupção
 mirada em você. Nenhuma delas impede uma derrubada.
 
 **Derrubado**, você não pode andar, atacar nem usar habilidades por um
-instante, exceto um grito ou uma postura, e uma conjuração em andamento
+instante, exceto um ![Grito](../../../apps/web/public/icons/skill-type/shout.svg) **grito** ou uma postura, e uma conjuração em andamento
 falha.
 
 ## Condições, maldições e encantamentos
 
 **Condições** machucam você até acabarem ou serem removidas:
 
-| Condição      | O que faz                                            |
-| ------------- | ---------------------------------------------------- |
-| Bleeding      | drena vida                                           |
-| Burning       | drena vida rápido                                    |
-| Poison        | drena vida                                           |
-| Disease       | drena vida e passa para quem estiver ao seu lado     |
-| Crippled      | você anda na metade da velocidade                    |
-| Blind         | a maioria dos seus ataques erra                      |
-| Weakness      | seus golpes de arma ficam bem mais fracos            |
-| Cracked Armor | menos armadura                                       |
-| Deep Wound    | menos vida máxima, e as curas funcionam menos        |
-| Dazed         | feitiços saem devagar; qualquer ataque os interrompe |
+| Condição                                                                                          | O que faz                                            |
+| ------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
+| ![Sangramento](../../../apps/web/public/icons/status/bleeding.svg) **Sangramento**                | drena vida                                           |
+| ![Queimadura](../../../apps/web/public/icons/status/burning.svg) **Queimadura**                   | drena vida rápido                                    |
+| ![Veneno](../../../apps/web/public/icons/status/poison.svg) **Veneno**                            | drena vida                                           |
+| ![Doença](../../../apps/web/public/icons/status/disease.svg) **Doença**                           | drena vida e passa para quem estiver ao seu lado     |
+| ![Aleijado](../../../apps/web/public/icons/status/crippled.svg) **Aleijado**                      | você anda na metade da velocidade                    |
+| ![Cegueira](../../../apps/web/public/icons/status/blind.svg) **Cegueira**                         | a maioria dos seus ataques erra                      |
+| ![Fraqueza](../../../apps/web/public/icons/status/weakness.svg) **Fraqueza**                      | seus golpes de arma ficam bem mais fracos            |
+| ![Armadura Rachada](../../../apps/web/public/icons/status/cracked-armor.svg) **Armadura Rachada** | menos armadura                                       |
+| ![Ferida Profunda](../../../apps/web/public/icons/status/deep-wound.svg) **Ferida Profunda**      | menos vida máxima, e as curas funcionam menos        |
+| ![Atordoado](../../../apps/web/public/icons/status/dazed.svg) **Atordoado**                       | feitiços saem devagar; qualquer ataque os interrompe |
 
-**Maldições** são conjuradas em você por inimigos; **encantamentos**, por
+![Maldição](../../../apps/web/public/icons/skill-type/hex.svg) **Maldições** são conjuradas em você por inimigos; ![Encantamento](../../../apps/web/public/icons/skill-type/enchantment.svg) **encantamentos**, por
 você ou por aliados. Cada um é removido pelo seu próprio tipo de
 habilidade. Alguns encantamentos são **mantidos**: duram até você
 encerrá-los e custam um pip de energia enquanto duram. Clique duas vezes
@@ -91,7 +91,7 @@ quanto um acerto.
 
 ## Armadura e dano
 
-Warriors e Paragons usam mais armadura; Rangers, Assassins e Dervishes,
+![Guerreiro](../../../apps/web/public/icons/profession/warrior.svg) **Guerreiros** e ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragons** usam mais armadura; ![Patrulheiro](../../../apps/web/public/icons/profession/ranger.svg) **Patrulheiros**, ![Assassino](../../../apps/web/public/icons/profession/assassin.svg) **Assassinos** e ![Dervixe](../../../apps/web/public/icons/profession/dervish.svg) **Dervixes**,
 menos; conjuradores, menos ainda. A armadura reduz dano de arma,
 elemental, de caos e sombrio. Dano sagrado, de sombra e sem tipo, drenos
 de vida e roubo de vida a ignoram. Só golpes de arma podem ser críticos.

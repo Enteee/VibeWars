@@ -174,8 +174,7 @@ Cinder Sanctum (8v8, 5600x2800) ga igra: hram na obronku vulkana između dviju r
 **Sablasnog heroja** u svojoj bazi, sablast koja se bori sjekirom i koju
 nitko ne igra. **Oltar** je u središtu, jednako udaljen od obje
 baze. Na **Threefold Keepu** tri tima (dva kad treći nije slobodan) bore se za njega
-unutar ograđene utvrde. Njezina se vrata otvaraju samo iznutra, pločom unutra: obiđi
-do otvorenog ugla da uđeš. Najviše 12 bodova po timu, a ako svi neprijatelji
+na kuli ograđene utvrde. Najviše 12 bodova po timu, a ako svi neprijatelji
 stoje na -60% morala, odmah pobjeđuješ. **Hall of
 Heroes**, karta Kralja brda koja završava Uspon heroja, diže
 ga na podij ograđen sa zapada i istoka, do kojeg se stiže sjevernim ili južnim prilazom
@@ -231,7 +230,7 @@ domet čarolije. Dok tvoj tim ne drži oltar, svaki bot prvo ubija Sablasnog her
 drugog tima kad stoji na oltaru u njihovu dometu:
 on je jedini neprijatelj koji sprečava tvoju sablast da ga zauzme.
 
-Threefold Keep ga igra.
+Threefold Keep ga igra (4v4 i 8v8, 5000x4400): utvrda na brdu u visoravni, za tri tima. Popni se na bedemsku stazu stubama pokraj svojih vrata i prijeđi nasip do brda, zatim se popni do oltara na kuli. Poluga u svakom dvorištu otvara sva četiri vrata: prolaz tvojih vrata ispod zida, i podrum, dugi put ispod brda.
 
 ## Zauzimanje točaka
 
@@ -362,7 +361,7 @@ Hall of Heroes za svaki meč izvlači jedan od tri načina: Kralj brda, Utrka za
 
 **Trezor.** Hall of Heroes otvara se samo svakih 12 minuta po UTC satu, u :00, :12, :24, :36 i :48. Do tada tvoja grupa čeka u Trezoru: ikona reda prikazuje vrijeme do sljedećeg otvaranja i tko drži Hall of Heroes. Pri svakom otvaranju držač se susreće s najviše dva izazivača, a ako ga nitko ne drži, susreću se najviše tri izazivača. Sudjeluju samo grupe koje su čekale prije otvaranja, a sve izvan tih mjesta čekaju sljedeće. Držač bez protivnika zadržava Hall of Heroes i čeka, bez računanja pobjede, a čeka i usamljeni izazivač. Kad grupa osvoji Hall of Heroes, svaka otvorena igra kaže tko ga sad drži: njezin vođa ili oznaka ceha kad je dijeli više od pola grupe.
 
-Svaki uspon počinje s **Elite Zaishen Battle**, bez reda: tvoja grupa protiv šest Zaishena koje igraju botovi (2 Monka, Elementalist i 3 druga). Sat kreće kad netko od vas prijeđe početnu crtu ili kad prvi Zaishen umre, što god bude prije. Ubij svih šest za manje od 30 sekundi i grupa počinje uspon s +10% morala; ispod 60, +8%; ispod 80, +6%; ispod 100, +4%; ispod 120, +2%; sporije, ništa. Pobijedi i tvoja grupa sama ulazi u red za svoju prvu kartu. Zbrisani ste ili je Zaishen još živ kad istekne ograničenje od 8 minuta, i uspon je gotov.
+Svaki uspon počinje s **Elite Zaishen Battle**, bez reda: tvoja grupa protiv šest Zaishena koje igraju botovi (2 Monka, Elementalist i 3 druga). Bori se u svečanoj areni (8v8, 5400x2400): stepenaste tribine na sjeveru i jugu, kipovi na postoljima na udubljenom tlu i podzemlje ispod svake tribine, čiju rešetku otvara poluga na suprotnoj tribini. Sat kreće kad netko od vas prijeđe početnu crtu u sredini arene ili kad prvi Zaishen umre, što god bude prije. Ubij svih šest za manje od 30 sekundi i grupa počinje uspon s +10% morala; ispod 60, +8%; ispod 80, +6%; ispod 100, +4%; ispod 120, +2%; sporije, ništa. Pobijedi i tvoja grupa sama ulazi u red za svoju prvu kartu. Zbrisani ste ili je Zaishen još živ kad istekne ograničenje od 8 minuta, i uspon je gotov.
 
 Svaka pobjeda u usponu donosi **slavu**: 1, 2, 3, 4, 6, 8, 12, 16, 20, 24, 28, 32, 36 za prvih trinaest, zatim po 40, najviše 300 dnevno (dan se mijenja u 15:00 UTC). Elite Zaishen Battle ne donosi slavu. Tvoja ukupna slava određuje tvoj **herojski čin**, od 1 pri 25 slave do 15 pri 100.000, prikazan kao ★ i broj pokraj tvog imena. Opcije > igrač prikazuje oboje. Oboje se čuva na tvom uređaju.
 
@@ -375,7 +374,7 @@ Tim bira jednom, u Timskoj sobi svoje prve karte, i zadržava svoj
 timski sastav i mjesta do kraja uspona: nakon pobjede ponovno ulazi u
 red bez glasanja i uzimanja. Tko ode usred uspona oslobađa svoje
 mjesto, ali ne i njegov sastav. Pridošlica u grupu između karata dobiva
-uzimanje samo praznih mjesta (**Slobodno: sastav Monk**) i igra sastav tog
+uzimanje samo praznih mjesta (**Slobodno: sastav Redovnik**) i igra sastav tog
 mjesta; prazno mjesto koje nitko ne uzme pripada botu. Poraz počinje
 iznova: sljedeći uspon opet glasa. Isto vrijedi za slijeđenje domaćina u drugu
 grupu, čiji domaćin ne može jamčiti za stari uspon. Rundu pamti
@@ -393,14 +392,12 @@ dosegu s 50 štete od munje, dok drugi tim ne
 postavi svoju zastavu tamo. Svaki udarac je munja od svjetionika do onoga koga je pogodila,
 vidljiva obama timovima.
 
-Tri arene Uspona može odabrati i Igra s domaćinom: **The Hollow Deep** (8v8 Uništenje, tri
-vijugava tunela oko središnje stijene),
+Tri arene Uspona može odabrati i Igra s domaćinom: **The Hollow Deep** (8v8 Uništenje, 6200x2400, u mračnoj špilji: prijeđi viseći most preko ponora, popni se preko srednje izbočine ili prođi podzemnim hodnikom ispod nje kad poluga na stjenovitoj polici otvori njegova vrata),
 **Blackwater Ford** (8v8, 5200x2800, Uništenje sa
 svećenikom na tamnom riječnom gazu: prelazi se gazeći plitki gaz, slomljenim mostom na stupovima iznad mlina
 ili kroz propust ispod mosta kad poluga na mlinu otvori njegovu rešetku; svećenik diže
 svoje mrtve svake 2 minute) i
-**Mosslit Cairns** (8v8 Zauzimanje točaka, pet kamenih gomila u plitkom cik-caku
-između baza). Četvrta je **The Brazen Causeway** (8v8, 5600x2800, Uništenje sa svećenikom na uzdignutom kamenom nasipu iznad močvare u sumrak: maršira se nasipom kad poluga u dalekoj ulaznoj kuli otvori njegova brončana vrata, prelazi se močvara do stepenica na njegovoj sredini ili se provlači kroz propust ispod njega; svećenik diže svoje mrtve svake 2 minute).
+**Mosslit Cairns** (8v8, 5400x3000, Zauzimanje točaka na pet brežuljaka s kamenim gomilama koje u sumrak svijetle od mahovine: na gomilu se penje njezinim stepenicama, drži se velika gomila u sredini ili se ide tunelom od korijenja ispod južnih brežuljaka kad poluga na sjevernoj gomili otvori njegova vrata; zidovi od korijenja mogu se razbiti). Četvrta je **The Brazen Causeway** (8v8, 5600x2800, Uništenje sa svećenikom na uzdignutom kamenom nasipu iznad močvare u sumrak: maršira se nasipom kad poluga u dalekoj ulaznoj kuli otvori njegova brončana vrata, prelazi se močvara do stepenica na njegovoj sredini ili se provlači kroz propust ispod njega; svećenik diže svoje mrtve svake 2 minute).
 
 Karta može imati **vrata**: zidove koji zaustavljaju tijela, hice i pogled dok su
 zatvoreni. Stani na ploču vrata da ih otvoriš. Zatvaraju se kad
@@ -453,3 +450,7 @@ najveći tim, s botovima, pa Igra s domaćinom 3v2 ne odgovara nijednoj veličin
 Oznake ostaju kako si ih ostavio dok se stranica ponovno ne učita.
 
 Iznad filtara traka **Dvorana junaka** prikazuje zadnjih 20 nizova, od najnovijeg: držatelja (oznaka ceha ili ime vođe), ljude iz pobjedničkog tima, kada je završila najnovija pobjeda i, od dvije pobjede, koliko ih je zaredom. Niz je neprekinuti slijed pobjeda u Dvorani jednog držatelja. Traka čita zapise s ove stranice, zanemaruje filtre i skrivena je kada nijedan od njih nije pobjeda u Dvorani. Kao i svaki zapis, to je ono što je prijavio domaćin svakog meča, i ništa to ne provjerava.
+
+## Rangirani
+
+Meč iz reda bez botova je rangiran. Zaslon reda i timski predvorje to kažu prije nego što uđeš u red; jedan bot ostavlja meč nerangiranim. Kad se pronađe rangirani meč, svaki igrač potpisuje njegov početak, a zaslon do 15 sekundi prikazuje **Potvrđivanje rangiranog meča…**. Ako netko ne potvrdi, meč se otkazuje i svi se vraćaju u red. Na kraju svaki igrač potpisuje rezultat, a potvrda meča objavljuje se na Nostr relejima s javnim ključem i imenom lika svakog igrača; igrač bez lika naveden je kao starter. Tvoj rejting mijenja se unutar sat vremena. Napuštanje rangiranog meča računa se kao poraz, i gumb za napuštanje to kaže.

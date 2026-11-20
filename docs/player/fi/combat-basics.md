@@ -4,18 +4,18 @@
 
 Aloitat 500 **terveydellä** ja 50 **energialla**; riimut ja moraali
 muuttavat molempia. Taidot maksavat energiaa, ja se palautuu itsestään,
-hitaasti. Warriorit ja Paragonit saavat sitä takaisin hitaimmin, Rangerit
+hitaasti. ![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warriorit** ja ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragonit** saavat sitä takaisin hitaimmin, ![Ranger](../../../apps/web/public/icons/profession/ranger.svg) **Rangerit**
 hieman nopeammin, kaikki muut nopeimmin.
 
 Palkkiesi nuolet ovat **pippejä**: jokainen niistä on terveyttä tai
-energiaa, joka palautuu tai valuu pois vähän joka sekunti. Bleeding,
-Burning ja Poison valuttavat terveyttä; Regeneration ja parannusloitsut
+energiaa, joka palautuu tai valuu pois vähän joka sekunti. ![Bleeding](../../../apps/web/public/icons/status/bleeding.svg) **Bleeding**,
+![Burning](../../../apps/web/public/icons/status/burning.svg) **Burning** ja ![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison** valuttavat terveyttä; Regeneration ja parannusloitsut
 lisäävät sitä. Kun olet ollut 5 sekuntia poissa taistelusta, terveytesi
 alkaa palautua itsestään, sitä nopeammin, mitä kauemmin pysyt poissa.
 
 ## Adrenaliini
 
-Warrioreilla, Paragoneilla ja muilla on taitoja, jotka maksavat
+![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrioreilla**, ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragoneilla** ja muilla on taitoja, jotka maksavat
 **adrenaliinia** energian sijaan. Jokainen tällainen taito latautuu
 erikseen: jokainen osumasi aseella antaa niille kullekin iskun, samoin
 kuin ison osuman ottaminen. Yhden käyttäminen tyhjentää sen ja vie
@@ -28,7 +28,7 @@ Taidon **käyttäminen** voi viedä hetken, ja sen jälkeen se tarvitsee aikaa
 **latautuakseen**, ennen kuin voit käyttää sitä uudelleen. Jos kohteesi on
 kantaman ulkopuolella, kävelet ensin sen luo. Liikkuminen tai Esc peruu
 käytön: energia on mennyt, mutta taito ei lataudu. Jokaisen
-käyttöajallisen taidon jälkeen, paitsi hyökkäystaidon, on lyhyt tauko,
+käyttöajallisen taidon jälkeen, paitsi ![Hyökkäystaito](../../../apps/web/public/icons/skill-type/attack.svg) **hyökkäystaidon**, on lyhyt tauko,
 jonka aikana et voi toimia.
 
 Taito, jota painat toista käyttäessäsi tai tuon tauon aikana, menee
@@ -36,7 +36,7 @@ Taito, jota painat toista käyttäessäsi tai tuon tauon aikana, menee
 Vain yksi voi odottaa; toisen painaminen korvaa sen. Liikkuminen, Esc,
 keskeytys tai kaato pudottaa sen.
 
-**Huudot ja asennot** eivät koskaan mene jonoon: ne laukeavat heti, vaikka
+![Huuto](../../../apps/web/public/icons/skill-type/shout.svg) **Huudot** ja ![Asento](../../../apps/web/public/icons/skill-type/stance.svg) **asennot** eivät koskaan mene jonoon: ne laukeavat heti, vaikka
 käyttäisit toista taitoa, olisit tuossa tauossa tai kaadettuna. Käyttö
 jatkuu. Näin käytettyinä ne eivät kävelytä sinua lähemmäs: kantaman
 ulkopuolella ne hylätään.
@@ -56,30 +56,30 @@ joka vielä kävelee kohdettaan kohti, ei ole mitään keskeytettävää.
 Keskeytys, jonka kortissa lukee "taito" tai "loitsu", jättää tavallisen
 hyökkäyksen rauhaan.
 
-Jotkin asennot, kuten Mantra of Concentration, pysäyttävät sinuun
+Jotkin ![Asento](../../../apps/web/public/icons/skill-type/stance.svg) **asennot**, kuten Mantra of Concentration, pysäyttävät sinuun
 kohdistetun keskeytyksen. Mikään niistä ei pysäytä kaatoa.
 
 **Kaadettuna** et voi hetkeen liikkua, hyökätä etkä käyttää taitoa,
-huutoa tai asentoa lukuun ottamatta, ja kesken oleva käyttö epäonnistuu.
+![Huuto](../../../apps/web/public/icons/skill-type/shout.svg) **huutoa** tai asentoa lukuun ottamatta, ja kesken oleva käyttö epäonnistuu.
 
 ## Vaivat, kiroukset ja lumoukset
 
 **Vaivat** vahingoittavat sinua, kunnes ne loppuvat tai poistetaan:
 
-| Vaiva         | Mitä se tekee                                                   |
-| ------------- | --------------------------------------------------------------- |
-| Bleeding      | valuttaa terveyttä                                              |
-| Burning       | valuttaa terveyttä nopeasti                                     |
-| Poison        | valuttaa terveyttä                                              |
-| Disease       | valuttaa terveyttä ja leviää jokaiseen vieressäsi               |
-| Crippled      | liikut puolella nopeudella                                      |
-| Blind         | useimmat hyökkäyksistäsi menevät ohi                            |
-| Weakness      | aseesi osuu paljon heikommin                                    |
-| Cracked Armor | vähemmän panssaria                                              |
-| Deep Wound    | vähemmän enimmäisterveyttä, ja parannus tehoaa heikommin        |
-| Dazed         | loitsut käytetään hitaasti; mikä tahansa hyökkäys keskeyttää ne |
+| Vaiva                                                                                       | Mitä se tekee                                                   |
+| ------------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| ![Bleeding](../../../apps/web/public/icons/status/bleeding.svg) **Bleeding**                | valuttaa terveyttä                                              |
+| ![Burning](../../../apps/web/public/icons/status/burning.svg) **Burning**                   | valuttaa terveyttä nopeasti                                     |
+| ![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison**                      | valuttaa terveyttä                                              |
+| ![Disease](../../../apps/web/public/icons/status/disease.svg) **Disease**                   | valuttaa terveyttä ja leviää jokaiseen vieressäsi               |
+| ![Crippled](../../../apps/web/public/icons/status/crippled.svg) **Crippled**                | liikut puolella nopeudella                                      |
+| ![Blind](../../../apps/web/public/icons/status/blind.svg) **Blind**                         | useimmat hyökkäyksistäsi menevät ohi                            |
+| ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness**                | aseesi osuu paljon heikommin                                    |
+| ![Cracked Armor](../../../apps/web/public/icons/status/cracked-armor.svg) **Cracked Armor** | vähemmän panssaria                                              |
+| ![Deep Wound](../../../apps/web/public/icons/status/deep-wound.svg) **Deep Wound**          | vähemmän enimmäisterveyttä, ja parannus tehoaa heikommin        |
+| ![Dazed](../../../apps/web/public/icons/status/dazed.svg) **Dazed**                         | loitsut käytetään hitaasti; mikä tahansa hyökkäys keskeyttää ne |
 
-**Kirouksia** loitsivat sinuun viholliset; **lumouksia** sinä itse tai
+![Kirous](../../../apps/web/public/icons/skill-type/hex.svg) **Kirouksia** loitsivat sinuun viholliset; ![Lumous](../../../apps/web/public/icons/skill-type/enchantment.svg) **lumouksia** sinä itse tai
 liittolaisesi. Kumpikin poistetaan omanlaisellaan taidolla. Jotkin
 lumoukset ovat **ylläpidettyjä**: ne kestävät, kunnes lopetat ne, ja
 maksavat energiapipin niin kauan kuin ne ovat päällä. Lopeta sellainen
@@ -92,8 +92,8 @@ varmasti kuin osuma.
 
 ## Panssari ja vahinko
 
-Warriorit ja Paragonit kantavat eniten panssaria; Rangerit, Assassinit ja
-Dervishit vähemmän; loitsijat vähiten. Panssari pienentää ase-, elementti-,
+![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warriorit** ja ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragonit** kantavat eniten panssaria; ![Ranger](../../../apps/web/public/icons/profession/ranger.svg) **Rangerit**, ![Assassin](../../../apps/web/public/icons/profession/assassin.svg) **Assassinit** ja
+![Dervish](../../../apps/web/public/icons/profession/dervish.svg) **Dervishit** vähemmän; loitsijat vähiten. Panssari pienentää ase-, elementti-,
 kaaos- ja pimeysvahinkoa. Pyhä vahinko, varjovahinko ja tyypitön vahinko,
 terveyden valutus ja elämän varastaminen ohittavat sen. Vain aseosumat
 voivat olla kriittisiä. Jotkin lumoukset tekevät kantajastaan

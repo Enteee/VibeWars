@@ -7,7 +7,7 @@ equip it. Armor is picked on the figure, below.
 ## Weapon sets
 
 You carry up to **four weapon sets**, each a weapon and, if the weapon
-leaves a hand free, an off-hand such as a shield or a focus. Set 1 is the
+leaves a hand free, an off-hand such as a ![Shield](../../apps/web/public/icons/offhand/shield.svg) **shield** or a ![Focus](../../apps/web/public/icons/offhand/focus.svg) **focus**. Set 1 is the
 one you start with; the others may stay empty.
 
 In a match, swap sets with **1 to 4** (**F1 to F4** in the Classic keys).
@@ -16,8 +16,8 @@ swaps at once. There is no cooldown. Your attacks, the skills that need a
 certain weapon, and your maximum Energy all follow the set in hand.
 
 A weapon needs rank 9 in its attribute: below that it hits for a third of
-its damage, and the editor says so in red. A sword is always
-Swordsmanship, but a staff, a wand, a shield or a focus is made for an
+its damage, and the editor says so in red. A ![Sword](../../apps/web/public/icons/weapon/sword.svg) **sword** is always
+Swordsmanship, but a ![Staff](../../apps/web/public/icons/weapon/staff.svg) **staff**, a ![Wand](../../apps/web/public/icons/weapon/wand.svg) **wand**, a shield or a focus is made for an
 attribute you choose: click its hand on the figure (**6** for the weapon,
 **7** for the off-hand) and pick one.
 
@@ -25,40 +25,40 @@ attribute you choose: click its hand on the figure (**6** for the weapon,
 
 Every weapon and off-hand has slots for mods: a **prefix**, a **suffix**
 and an **inscription**. Click the hand on the figure, or its row beside
-it, to pick them; each says what it does. A wand, a shield
-and a focus take no prefix; bare hands take none. A mod is always at its
+it, to pick them; each says what it does. A ![Wand](../../apps/web/public/icons/weapon/wand.svg) **wand**, a ![Shield](../../apps/web/public/icons/offhand/shield.svg) **shield**
+and a ![Focus](../../apps/web/public/icons/offhand/focus.svg) **focus** take no prefix; bare hands take none. A mod is always at its
 best value, and each weapon set wears its own, so swapping sets swaps
 their mods too: maximum Health and Energy move with the set in hand.
 Changing a weapon keeps the mods that still fit it and tells you which it
 dropped.
 
-| Mod                       | Slot        | Fits                                     | Effect                                    |
-| ------------------------- | ----------- | ---------------------------------------- | ----------------------------------------- |
-| Defensive                 | Prefix      | Staff                                    | Armor +5                                  |
-| Hale                      | Prefix      | Staff                                    | +30 Health                                |
-| Insightful                | Prefix      | Staff                                    | Energy +5                                 |
-| of Defense                | Suffix      | any martial weapon, Staff                | Armor +5                                  |
-| of Fortitude              | Suffix      | any martial weapon, Staff, Shield, Focus | +30 Health                                |
-| of Shelter                | Suffix      | any martial weapon, Staff                | Armor +7 (vs. physical damage)            |
-| of Warding                | Suffix      | any martial weapon, Staff                | Armor +7 (vs. elemental damage)           |
-| "Cast Out the Unclean"    | Inscription | Shield, Focus                            | Reduces Disease duration on you by 20%    |
-| "Fear Cuts Deeper"        | Inscription | Shield, Focus                            | Reduces Bleeding duration on you by 20%   |
-| "I Can See Clearly Now"   | Inscription | Shield, Focus                            | Reduces Blinded duration on you by 20%    |
-| "I have the power!"       | Inscription | any martial weapon                       | Energy +5                                 |
-| "Leaf on the Wind"        | Inscription | Shield, Focus                            | Armor +10 (vs. cold damage)               |
-| "Like a Rolling Stone"    | Inscription | Shield, Focus                            | Armor +10 (vs. earth damage)              |
-| "Live for Today"          | Inscription | Focus                                    | Energy +15, Energy regeneration -1        |
-| "Not the face!"           | Inscription | Shield, Focus                            | Armor +10 (vs. blunt damage)              |
-| "Only the Strong Survive" | Inscription | Shield, Focus                            | Reduces Weakness duration on you by 20%   |
-| "Pure of Heart"           | Inscription | Shield, Focus                            | Reduces Poison duration on you by 20%     |
-| "Riders on the Storm"     | Inscription | Shield, Focus                            | Armor +10 (vs. lightning damage)          |
-| "Seize the Day"           | Inscription | Staff, Wand                              | Energy +15, Energy regeneration -1        |
-| "Sleep Now in the Fire"   | Inscription | Shield, Focus                            | Armor +10 (vs. fire damage)               |
-| "Soundness of Mind"       | Inscription | Shield, Focus                            | Reduces Dazed duration on you by 20%      |
-| "Strength of Body"        | Inscription | Shield, Focus                            | Reduces Deep Wound duration on you by 20% |
-| "Swift as the Wind"       | Inscription | Shield, Focus                            | Reduces Crippled duration on you by 20%   |
-| "The Riddle of Steel"     | Inscription | Shield, Focus                            | Armor +10 (vs. slashing damage)           |
-| "Through Thick and Thin"  | Inscription | Shield, Focus                            | Armor +10 (vs. piercing damage)           |
+| Mod                       | Slot        | Fits                                                             | Effect                                                                                                         |
+| ------------------------- | ----------- | ---------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
+| Defensive                 | Prefix      | ![Staff](../../apps/web/public/icons/weapon/staff.svg) **Staff** | Armor +5                                                                                                       |
+| Hale                      | Prefix      | Staff                                                            | +30 Health                                                                                                     |
+| Insightful                | Prefix      | Staff                                                            | Energy +5                                                                                                      |
+| of Defense                | Suffix      | any martial weapon, Staff                                        | Armor +5                                                                                                       |
+| of Fortitude              | Suffix      | any martial weapon, Staff, Shield, Focus                         | +30 Health                                                                                                     |
+| of Shelter                | Suffix      | any martial weapon, Staff                                        | Armor +7 (vs. physical damage)                                                                                 |
+| of Warding                | Suffix      | any martial weapon, Staff                                        | Armor +7 (vs. elemental damage)                                                                                |
+| "Cast Out the Unclean"    | Inscription | Shield, Focus                                                    | Reduces ![Disease](../../apps/web/public/icons/status/disease.svg) **Disease** duration on you by 20%          |
+| "Fear Cuts Deeper"        | Inscription | Shield, Focus                                                    | Reduces ![Bleeding](../../apps/web/public/icons/status/bleeding.svg) **Bleeding** duration on you by 20%       |
+| "I Can See Clearly Now"   | Inscription | Shield, Focus                                                    | Reduces ![Blinded](../../apps/web/public/icons/status/blind.svg) **Blinded** duration on you by 20%            |
+| "I have the power!"       | Inscription | any martial weapon                                               | Energy +5                                                                                                      |
+| "Leaf on the Wind"        | Inscription | Shield, Focus                                                    | Armor +10 (vs. cold damage)                                                                                    |
+| "Like a Rolling Stone"    | Inscription | Shield, Focus                                                    | Armor +10 (vs. earth damage)                                                                                   |
+| "Live for Today"          | Inscription | Focus                                                            | Energy +15, Energy regeneration -1                                                                             |
+| "Not the face!"           | Inscription | Shield, Focus                                                    | Armor +10 (vs. blunt damage)                                                                                   |
+| "Only the Strong Survive" | Inscription | Shield, Focus                                                    | Reduces ![Weakness](../../apps/web/public/icons/status/weakness.svg) **Weakness** duration on you by 20%       |
+| "Pure of Heart"           | Inscription | Shield, Focus                                                    | Reduces ![Poison](../../apps/web/public/icons/status/poison.svg) **Poison** duration on you by 20%             |
+| "Riders on the Storm"     | Inscription | Shield, Focus                                                    | Armor +10 (vs. lightning damage)                                                                               |
+| "Seize the Day"           | Inscription | Staff, Wand                                                      | Energy +15, Energy regeneration -1                                                                             |
+| "Sleep Now in the Fire"   | Inscription | Shield, Focus                                                    | Armor +10 (vs. fire damage)                                                                                    |
+| "Soundness of Mind"       | Inscription | Shield, Focus                                                    | Reduces ![Dazed](../../apps/web/public/icons/status/dazed.svg) **Dazed** duration on you by 20%                |
+| "Strength of Body"        | Inscription | Shield, Focus                                                    | Reduces ![Deep Wound](../../apps/web/public/icons/status/deep-wound.svg) **Deep Wound** duration on you by 20% |
+| "Swift as the Wind"       | Inscription | Shield, Focus                                                    | Reduces ![Crippled](../../apps/web/public/icons/status/crippled.svg) **Crippled** duration on you by 20%       |
+| "The Riddle of Steel"     | Inscription | Shield, Focus                                                    | Armor +10 (vs. slashing damage)                                                                                |
+| "Through Thick and Thin"  | Inscription | Shield, Focus                                                    | Armor +10 (vs. piercing damage)                                                                                |
 
 ### Martial prefixes on a hit
 
@@ -151,16 +151,16 @@ holds the weapons of the set you are looking at, with their mods.
 
 ## Runes
 
-| Rune                                   | What it gives                           |
-| -------------------------------------- | --------------------------------------- |
-| Minor attribute rune                   | +1 to an attribute                      |
-| Major attribute rune                   | +2 to an attribute, -35 Health          |
-| Superior attribute rune                | +3 to an attribute, -75 Health          |
-| Vigor                                  | more Health (+30, +41 or +50)           |
-| Vitae                                  | +10 Health                              |
-| Attunement                             | more Energy (+3, +6 or +9)              |
-| Clarity, Purity, Recovery, Restoration | two conditions each wear off 20% sooner |
-| Absorption (Warrior)                   | less physical damage from each hit      |
+| Rune                                                                                                                                                                                                                                                                                               | What it gives                           |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------- |
+| Minor attribute rune                                                                                                                                                                                                                                                                               | +1 to an attribute                      |
+| Major attribute rune                                                                                                                                                                                                                                                                               | +2 to an attribute, -35 Health          |
+| Superior attribute rune                                                                                                                                                                                                                                                                            | +3 to an attribute, -75 Health          |
+| ![Vigor](../../apps/web/public/icons/rune/vigor.svg) **Vigor**                                                                                                                                                                                                                                     | more Health (+30, +41 or +50)           |
+| ![Vitae](../../apps/web/public/icons/rune/vitae.svg) **Vitae**                                                                                                                                                                                                                                     | +10 Health                              |
+| ![Attunement](../../apps/web/public/icons/rune/attunement.svg) **Attunement**                                                                                                                                                                                                                      | more Energy (+3, +6 or +9)              |
+| ![Clarity](../../apps/web/public/icons/rune/clarity.svg) **Clarity**, ![Purity](../../apps/web/public/icons/rune/purity.svg) **Purity**, ![Recovery](../../apps/web/public/icons/rune/recovery.svg) **Recovery**, ![Restoration](../../apps/web/public/icons/rune/restoration.svg) **Restoration** | two conditions each wear off 20% sooner |
+| ![Absorption](../../apps/web/public/icons/rune/absorption.svg) **Absorption** (![Warrior](../../apps/web/public/icons/profession/warrior.svg) **Warrior**)                                                                                                                                         | less physical damage from each hit      |
 
 You pick a piece's rune in the same place as its insignia: click the piece
 on the figure.

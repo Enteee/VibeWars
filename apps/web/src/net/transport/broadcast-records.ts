@@ -9,6 +9,7 @@
  * Matches page is open, and none from before.
  */
 import type { MatchRecord } from "@vibewars/game-session";
+import type { RankedReceipt } from "@vibewars/ranking";
 
 import {
   publishableEvent,
@@ -18,6 +19,7 @@ import {
   type MatchRecordWatchHandlers,
 } from "./match-records.js";
 import type { NostrEvent } from "./nostr-relays.js";
+import { RANKED_TOPIC, rankedReceiptEvent } from "./ranked-receipts.js";
 import { APP_ID } from "./relays.js";
 import { verifyTicketSig } from "./ticket-key.js";
 
@@ -51,4 +53,21 @@ export function watchBroadcastRecords(on: MatchRecordWatchHandlers): MatchRecord
       channel.close();
     },
   };
+}
+
+/** Where the broadcast build posts ranked receipts (#3680), for e2e to read. */
+export const RANKED_CHANNEL = `${APP_ID}:ranked`;
+
+/**
+ * Post `receipt` under `address` on the channel, once, as the event a
+ * relay would deliver to a `t=vibewars-ranked` subscription.
+ */
+export function publishBroadcastReceipt(receipt: RankedReceipt, address: string): void {
+  const event = rankedReceiptEvent(receipt, address, Date.now());
+  if (event === undefined) {
+    return;
+  }
+  const channel = new BroadcastChannel(RANKED_CHANNEL);
+  channel.postMessage(JSON.stringify(["EVENT", RANKED_TOPIC, event]));
+  channel.close();
 }

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { boxMeets, coverBoxes, insideRuns } from "./cell-cover.js";
+import { boxMeets, coverBoxes, insideRuns, shownBoxes } from "./cell-cover.js";
 
 describe("insideRuns", () => {
   /** An L: the square 0..200 without its south-east quarter. */
@@ -80,5 +80,40 @@ describe("boxMeets (#3162)", () => {
     expect(boxMeets(diamond, box(0, 0), 0)).toBe(false);
     expect(boxMeets(diamond, box(10, 10), 0)).toBe(false);
     expect(boxMeets(diamond, box(10, 10), 8)).toBe(true);
+  });
+});
+
+describe("shownBoxes (#3671)", () => {
+  // A deck over the middle of a 40 × 40 picture in cells of 10.
+  const deck = [
+    { x: 5, y: 5 },
+    { x: 35, y: 5 },
+    { x: 35, y: 35 },
+    { x: 5, y: 35 },
+  ];
+
+  it("leaves out the cells a cover wholly hides, past its edge by the margin", () => {
+    expect(shownBoxes(40, 40, 10, [deck], 2)).toEqual([
+      { x: 0, y: 0, width: 40, height: 10 },
+      { x: 0, y: 10, width: 10, height: 20 },
+      { x: 30, y: 10, width: 10, height: 20 },
+      { x: 0, y: 30, width: 40, height: 10 },
+    ]);
+  });
+
+  it("shows a cell the margin takes past the cover's edge", () => {
+    // Its edge 1 past the middle cells': under them, but not by the margin of 2.
+    const tight = [
+      { x: 9, y: 9 },
+      { x: 31, y: 9 },
+      { x: 31, y: 31 },
+      { x: 9, y: 31 },
+    ];
+    expect(shownBoxes(40, 40, 10, [tight], 0)).toHaveLength(4);
+    expect(shownBoxes(40, 40, 10, [tight], 2)).toEqual([{ x: 0, y: 0, width: 40, height: 40 }]);
+  });
+
+  it("is the whole picture with nothing hidden", () => {
+    expect(shownBoxes(40, 40, 10, [], 2)).toEqual([{ x: 0, y: 0, width: 40, height: 40 }]);
   });
 });

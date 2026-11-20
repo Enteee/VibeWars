@@ -45,6 +45,15 @@ import {
   type WireChainMark,
 } from "./protocol.js";
 import { ASCENT_ROUNDS, inPartyOrder, isQueueMode, type QueueMode } from "./queue.js";
+import {
+  MAX_RANKED_SEATS,
+  parseRankedReceipt,
+  parseRankedResult,
+  parseRankedStart,
+  type RankedReceipt,
+  type RankedResult,
+  type RankedStart,
+} from "@vibewars/ranking";
 
 /**
  * The channels a lobby and its match use. Trystero caps an action name at
@@ -106,6 +115,13 @@ export const CHANNELS = [
   "chat",
   "chat-line",
   "shared-track",
+  "ranked-start",
+  "ranked-start-sig",
+  "ranked-start-sigs",
+  "ranked-result",
+  "ranked-result-sig",
+  "ranked-receipt",
+  "ranked-cancel",
 ] as const;
 
 export type Channel = (typeof CHANNELS)[number];
@@ -193,35 +209,31 @@ export const CREATURE_LOOKS = [
   "rat",
 ] as const;
 
-/**
- * A guild cape's colours (#1422): the palette of the cape study (#1410,
- * `docs/art/art-direction.md`), apart from both team colours.
- */
-export const CAPE_COLOURS = [
-  "gold",
-  "violet",
-  "white",
-  "black",
-  "lime",
-  "orange",
-  "teal",
-  "pink",
-] as const;
-
 /** A guild emblem's side in pixels (#3554): it is a square grid of `EMBLEM_GRID`². */
 export const EMBLEM_GRID = 16;
+
+/** The most colours one emblem carries (#3628): what a 4-bit pixel names past empty. */
+export const MAX_EMBLEM_COLOURS = 15;
 
 /** An emblem's length on the wire: 128 bytes as base64url without padding. */
 const EMBLEM_TEXT_LENGTH = 171;
 
 const BASE64URL = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
 
+/** A cape colour (#3628): six lowercase hex digits, no `#`. */
+const CAPE_HEX = /^[0-9a-f]{6}$/;
+
+/** Whether `value` is a cape colour (#3628): six lowercase hex digits, no `#`. */
+export function isCapeColour(value: unknown): value is string {
+  return typeof value === "string" && CAPE_HEX.test(value);
+}
+
 /**
  * An emblem grid (#3554) as the wire carries it: `EMBLEM_GRID`² pixels,
- * row-major, each 0 for empty or `i` for `CAPE_COLOURS[i - 1]`, packed
- * two to a byte, high nibble first, as base64url without padding, the
- * convention of the public keys. Pure, so this package needs neither
- * `Buffer` nor `atob`.
+ * row-major, each 0 for empty or `i` for its cape's `emblemColours[i - 1]`
+ * (#3628), packed two to a byte, high nibble first, as base64url without
+ * padding, the convention of the public keys. Pure, so this package needs
+ * neither `Buffer` nor `atob`.
  */
 export function packEmblem(pixels: readonly number[]): string {
   const bytes: number[] = [];
@@ -243,9 +255,9 @@ export function packEmblem(pixels: readonly number[]): string {
 /**
  * The pixels of a packed emblem, or `undefined` for a string of the wrong
  * length, a character outside base64url, trailing bits that are not 0
- * (so each grid has one spelling), or a pixel past `CAPE_COLOURS`.
+ * (so each grid has one spelling), or a pixel past `colourCount` (#3628).
  */
-export function unpackEmblem(text: string): number[] | undefined {
+export function unpackEmblem(text: string, colourCount: number): number[] | undefined {
   if (text.length !== EMBLEM_TEXT_LENGTH) {
     return undefined;
   }
@@ -271,13 +283,46 @@ export function unpackEmblem(text: string): number[] | undefined {
   for (const byte of bytes) {
     pixels.push(byte >> 4, byte & 15);
   }
-  return pixels.every((pixel) => pixel <= CAPE_COLOURS.length) ? pixels : undefined;
+  return pixels.every((pixel) => pixel <= colourCount) ? pixels : undefined;
 }
 
-/** A guild cape (#1422): its cloth, its trim, and its emblem grid as `packEmblem` packs it (#3554). */
+/**
+ * `pixels` and `colours` in their one spelling (#3628): the colours no
+ * pixel uses dropped, the rest listed in order of first use, row-major,
+ * and the pixels renumbered to match. Pure; a pixel naming no colour is
+ * empty.
+ */
+export function canonicalEmblem(
+  pixels: readonly number[],
+  colours: readonly string[],
+): { pixels: number[]; colours: string[] } {
+  const renumbered = new Map<number, number>();
+  const used: string[] = [];
+  const canonical = pixels.map((pixel) => {
+    const colour = colours[pixel - 1];
+    if (pixel === 0 || colour === undefined) {
+      return 0;
+    }
+    let index = renumbered.get(pixel);
+    if (index === undefined) {
+      used.push(colour);
+      index = used.length;
+      renumbered.set(pixel, index);
+    }
+    return index;
+  });
+  return { pixels: canonical, colours: used };
+}
+
+/**
+ * A guild cape (#1422): its cloth, its trim, and its emblem grid as
+ * `packEmblem` packs it (#3554), each pixel naming one of `emblemColours`
+ * (#3628). Every colour is six lowercase hex digits, any the player picked.
+ */
 export interface WireCape {
-  readonly main: (typeof CAPE_COLOURS)[number];
-  readonly trim: (typeof CAPE_COLOURS)[number];
+  readonly main: string;
+  readonly trim: string;
+  readonly emblemColours: readonly string[];
   readonly emblem: string;
 }
 
@@ -1246,6 +1291,20 @@ export interface PeerLobbyJoin {
    * clamps it, and seats it only in a queued Heroes' Ascent.
    */
   readonly ascentMorale: number;
+  /**
+   * What its seat of a ranked match says of it (ADR-0055, #3573): the
+   * character it plays and `prev`, the hash of its own last receipt, or
+   * 64 zeros for its first. `null` from a page that plays no ranked match.
+   */
+  readonly ranked: WireRankedJoin | null;
+}
+
+/** A joiner's part of its ranked seat (#3573): see `PeerLobbyJoin.ranked`. */
+export interface WireRankedJoin {
+  /** 1 to `MAX_WIRE_STRING` characters. */
+  readonly characterId: string;
+  /** 64 lowercase hex digits. */
+  readonly prev: string;
 }
 
 /**
@@ -1893,16 +1952,36 @@ function parseRawGuildTag(value: unknown): string | null | undefined {
   return typeof value === "string" ? value.slice(0, MAX_WIRE_TEXT) : undefined;
 }
 
-/** `value` as a cape (#1422) if it is exactly one, else `undefined`. */
+/**
+ * `value` as a cape (#1422) if it is exactly one, else `undefined`: in
+ * its one spelling (#3628), every listed colour used, in order of first
+ * use, as `canonicalEmblem` leaves it.
+ */
 export function parseWireCape(value: unknown): WireCape | undefined {
   const raw = fields(value);
-  return raw !== undefined &&
-    Object.keys(raw).length === 3 &&
-    isOneOf(raw.main, CAPE_COLOURS) &&
-    isOneOf(raw.trim, CAPE_COLOURS) &&
-    typeof raw.emblem === "string" &&
-    unpackEmblem(raw.emblem) !== undefined
-    ? { main: raw.main, trim: raw.trim, emblem: raw.emblem }
+  if (
+    raw === undefined ||
+    Object.keys(raw).length !== 4 ||
+    !isCapeColour(raw.main) ||
+    !isCapeColour(raw.trim) ||
+    !Array.isArray(raw.emblemColours) ||
+    raw.emblemColours.length > MAX_EMBLEM_COLOURS ||
+    typeof raw.emblem !== "string"
+  ) {
+    return undefined;
+  }
+  const colours: unknown[] = raw.emblemColours;
+  if (!colours.every(isCapeColour)) {
+    return undefined;
+  }
+  const pixels = unpackEmblem(raw.emblem, colours.length);
+  if (pixels === undefined) {
+    return undefined;
+  }
+  const canonical = canonicalEmblem(pixels, colours);
+  return canonical.colours.length === colours.length &&
+    canonical.pixels.every((pixel, index) => pixel === pixels[index])
+    ? { main: raw.main, trim: raw.trim, emblemColours: canonical.colours, emblem: raw.emblem }
     : undefined;
 }
 
@@ -3302,11 +3381,26 @@ function parseAdmission(value: unknown): WireAdmission | null | undefined {
     : undefined;
 }
 
+/** A join's ranked seat; `null` is none, a malformed one is `undefined`. */
+function parseRankedJoin(value: unknown): WireRankedJoin | null | undefined {
+  if (value === null) {
+    return null;
+  }
+  const raw = fields(value);
+  return raw !== undefined &&
+    isString(raw.characterId) &&
+    raw.characterId.length > 0 &&
+    isTicketId(raw.prev)
+    ? { characterId: raw.characterId, prev: raw.prev }
+    : undefined;
+}
+
 /** The `"lobby-join"` channel. */
 export function parsePeerLobbyJoin(value: unknown): PeerLobbyJoin | undefined {
   const raw = fields(value);
   const guildTag = parseRawGuildTag(raw?.guildTag);
   const admission = parseAdmission(raw?.admission);
+  const ranked = parseRankedJoin(raw?.ranked);
   if (
     raw === undefined ||
     !isString(raw.protocolVersion) ||
@@ -3317,7 +3411,8 @@ export function parsePeerLobbyJoin(value: unknown): PeerLobbyJoin | undefined {
     (raw.rejoinToken !== null && !isRejoinToken(raw.rejoinToken)) ||
     (raw.relayPub !== null && !isRelayPub(raw.relayPub)) ||
     !isTicketId(raw.playerPubkey) ||
-    typeof raw.ascentMorale !== "number"
+    typeof raw.ascentMorale !== "number" ||
+    ranked === undefined
   ) {
     return undefined;
   }
@@ -3333,6 +3428,7 @@ export function parsePeerLobbyJoin(value: unknown): PeerLobbyJoin | undefined {
     relayPub: raw.relayPub,
     playerPubkey: raw.playerPubkey,
     ascentMorale: raw.ascentMorale,
+    ranked,
   };
 }
 
@@ -3872,5 +3968,128 @@ export function parseWireMatchReplayPart(value: unknown): WireMatchReplayPart | 
     raw.text.length > 0 &&
     raw.text.length <= 16 * 1024
     ? { hash: raw.hash, part: raw.part, of: raw.of, text: raw.text }
+    : undefined;
+}
+
+/**
+ * Host to every seat of a ranked match (ADR-0055, #3573), before its
+ * first tick: sign this. Each player checks it against the group it
+ * formed and its own seat first.
+ */
+export interface WireRankedStart {
+  readonly start: RankedStart;
+}
+
+/** A seat to its host (#3573): its BIP-340 signature of the start's digest. */
+export interface PeerRankedStartSig {
+  /** The start's `matchId`. */
+  readonly matchId: string;
+  /** 128 lowercase hex digits. */
+  readonly sig: string;
+}
+
+/** Host to every seat (#3573): every seat's start signature, the match on. */
+export interface WireRankedStartSigs {
+  readonly matchId: string;
+  /** By pubkey, 128 lowercase hex digits each. */
+  readonly sigs: Readonly<Record<string, string>>;
+}
+
+/** Host to every seat (#3573), after the match: sign this, unless you left. */
+export interface WireRankedResult {
+  readonly result: RankedResult;
+}
+
+/** A seat to its host (#3573): its BIP-340 signature of the result's digest. */
+export interface PeerRankedResultSig {
+  /** The result's `startHash`. */
+  readonly startHash: string;
+  /** 128 lowercase hex digits. */
+  readonly sig: string;
+}
+
+/** Host to every seat (#3573): the whole receipt, every signature in. */
+export interface WireRankedReceipt {
+  readonly receipt: RankedReceipt;
+}
+
+/**
+ * Host to every seat (#3573): a start signature never came, or did not
+ * verify, so the match is not played, and everybody queues again.
+ */
+export interface WireRankedCancel {
+  readonly matchId: string;
+}
+
+const RANKED_HASH = /^[0-9a-f]{64}$/;
+
+/** The `"ranked-start"` channel. */
+export function parseWireRankedStart(value: unknown): WireRankedStart | undefined {
+  const start = parseRankedStart(fields(value)?.start);
+  return start === undefined ? undefined : { start };
+}
+
+/** The `"ranked-start-sig"` channel. */
+export function parsePeerRankedStartSig(value: unknown): PeerRankedStartSig | undefined {
+  const raw = fields(value);
+  return raw !== undefined &&
+    isString(raw.matchId) &&
+    raw.matchId.length > 0 &&
+    isTicketSig(raw.sig)
+    ? { matchId: raw.matchId, sig: raw.sig }
+    : undefined;
+}
+
+/** The `"ranked-start-sigs"` channel: one signature a seat at most. */
+export function parseWireRankedStartSigs(value: unknown): WireRankedStartSigs | undefined {
+  const raw = fields(value);
+  const sigs = fields(raw?.sigs);
+  if (
+    raw === undefined ||
+    !isString(raw.matchId) ||
+    raw.matchId.length === 0 ||
+    sigs === undefined ||
+    Object.keys(sigs).length > MAX_RANKED_SEATS
+  ) {
+    return undefined;
+  }
+  const parsed: Record<string, string> = {};
+  for (const [pubkey, sig] of Object.entries(sigs)) {
+    if (!RANKED_HASH.test(pubkey) || !isTicketSig(sig)) {
+      return undefined;
+    }
+    parsed[pubkey] = sig;
+  }
+  return { matchId: raw.matchId, sigs: parsed };
+}
+
+/** The `"ranked-result"` channel. */
+export function parseWireRankedResult(value: unknown): WireRankedResult | undefined {
+  const result = parseRankedResult(fields(value)?.result);
+  return result === undefined ? undefined : { result };
+}
+
+/** The `"ranked-result-sig"` channel. */
+export function parsePeerRankedResultSig(value: unknown): PeerRankedResultSig | undefined {
+  const raw = fields(value);
+  return raw !== undefined &&
+    typeof raw.startHash === "string" &&
+    RANKED_HASH.test(raw.startHash) &&
+    isTicketSig(raw.sig)
+    ? { startHash: raw.startHash, sig: raw.sig }
+    : undefined;
+}
+
+/** The `"ranked-receipt"` channel: shape only; `validateReceipt` says whether it holds. */
+export function parseWireRankedReceipt(value: unknown): WireRankedReceipt | undefined {
+  const receipt = parseRankedReceipt(fields(value)?.receipt);
+  return receipt === undefined ? undefined : { receipt };
+}
+
+/** The `"ranked-cancel"` channel. */
+export function parseWireRankedCancel(value: unknown): WireRankedCancel | undefined {
+  const raw = fields(value);
+  return raw !== undefined && isString(raw.matchId) && raw.matchId.length > 0
+    ? { matchId: raw.matchId }
     : undefined;
 }

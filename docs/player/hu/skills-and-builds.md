@@ -6,8 +6,8 @@ főmenüben a **Szerk.** gombbal, vagy az **Új karakter** gombbal.
 
 ## Kasztok
 
-Tíz van: Warrior, Ranger, Monk, Necromancer, Mesmer, Elementalist,
-Assassin, Ritualist, Paragon és Dervish. Az **elsődleges** kasztod az,
+Tíz van: ![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior**, ![Ranger](../../../apps/web/public/icons/profession/ranger.svg) **Ranger**, ![Monk](../../../apps/web/public/icons/profession/monk.svg) **Monk**, ![Necromancer](../../../apps/web/public/icons/profession/necromancer.svg) **Necromancer**, ![Mesmer](../../../apps/web/public/icons/profession/mesmer.svg) **Mesmer**, ![Elementalist](../../../apps/web/public/icons/profession/elementalist.svg) **Elementalist**,
+![Assassin](../../../apps/web/public/icons/profession/assassin.svg) **Assassin**, ![Ritualist](../../../apps/web/public/icons/profession/ritualist.svg) **Ritualist**, ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** és ![Dervish](../../../apps/web/public/icons/profession/dervish.svg) **Dervish**. Az **elsődleges** kasztod az,
 ami vagy: annak készségei, és annak **elsődleges tulajdonsága** (★
 jelöli), amelyet csak az elsődleges kaszt kap. A **másodlagos** kasztod
 kölcsönadja a készségeit, de az elsődleges tulajdonságát nem.
@@ -18,11 +18,11 @@ A sávon **nyolc hely** van. Egy sávra csak egy **elit** készség (arany
 keret) fér: ha felveszel egy másodikat, az lecseréli az elsőt. Nyomd meg
 egy helyen a **×** gombot, hogy kiürítsd.
 
-A **villám-bűbájok** (Dervish) azonnaliak: használatuk megtartja a
+A ![Bűbáj](../../../apps/web/public/icons/skill-type/enchantment.svg) **villám-bűbájok** (![Dervish](../../../apps/web/public/icons/profession/dervish.svg) **Dervish**) azonnaliak: használatuk megtartja a
 suhintásodat és a lépteidet, így az ütések közé szőheted őket. Mindegyik
 1 másodpercre kikapcsolja a többi villám-bűbájodat.
 
-Az **alakok** (az öt Dervish Avatar: Balthazar, Dwayna, Grenth, Lyssa
+Az ![Alak](../../../apps/web/public/icons/skill-type/form.svg) **alakok** (az öt Dervish Avatar: Balthazar, Dwayna, Grenth, Lyssa
 és Melandru) több mint egy percre átváltoztatnak. Az alak nem bűbáj,
 így senki sem tudja eltávolítani, és egyszerre egy alakban lehetsz.
 Használata 45 másodpercre letiltja. Amikor egy alak véget ér, abbahagyod,
@@ -32,8 +32,8 @@ sétálj.
 
 **Egyes lövések letiltják a többi támadásodat.** A Focused Shot és a
 Needling Shot gyorsabban repül, mint egy nyílnak kellene, de mindegyik
-találat néhány másodpercre kikapcsolja a többi támadókészségedet. A
-varázslatokat ez nem érinti.
+találat néhány másodpercre kikapcsolja a többi ![Támadókészség](../../../apps/web/public/icons/skill-type/attack.svg) **támadókészségedet**. A
+![Varázslat](../../../apps/web/public/icons/skill-type/spell.svg) **varázslatokat** ez nem érinti.
 
 ## Tulajdonságok
 
@@ -46,11 +46,11 @@ egy készség használ, erősebbé teszi a készséget: a tulajdonsággal
 növekvő számok zöld, félkövér betűvel látszanak, a jelenlegi
 szintjeiden, a rúnákat és a fejfedőt is beleértve.
 
-Harcban a szintjeid egy időre megváltozhatnak. A Weakness mindegyikből
-levesz egyet. Egyes átkok egy ellenség tulajdonságait 0-ra állítják, a
+Harcban a szintjeid egy időre megváltozhatnak. A ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness** mindegyikből
+levesz egyet. Egyes ![Átok](../../../apps/web/public/icons/skill-type/hex.svg) **átkok** egy ellenség tulajdonságait 0-ra állítják, a
 Master of Magic pedig az elemi tulajdonságaidat 13-ra: az így beállított
 szint felülírja a rúnákat és a Weaknesst is. A Signet of Illusions
-lehetővé teszi, hogy a következő, más tulajdonságú varázslataid az
+lehetővé teszi, hogy a következő, más tulajdonságú ![Varázslat](../../../apps/web/public/icons/skill-type/spell.svg) **varázslataid** az
 Illusion Magic szintedet használják. Egyes készségek egy időre vagy a
 következő varázslataidra megemelik a tulajdonságaidat, ahogy a Glyph of
 Elemental Power és a Ritual Lord teszi, akár olyat is, amelyet 0-n
@@ -59,21 +59,21 @@ emelést.
 
 ## Visszhangok
 
-A Paragon **visszhangjai** hosszú erősítések egy szövetségesen. A
+A ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** ![Visszhang](../../../apps/web/public/icons/skill-type/echo.svg) **visszhangjai** hosszú erősítések egy szövetségesen. A
 **refrén** teljes hosszára megújul, a **finálé** pedig életbe lép,
-valahányszor egy kántálás vagy kiáltás véget ér azon a szövetségesen. Az
+valahányszor egy ![Kántálás](../../../apps/web/public/icons/skill-type/chant.svg) **kántálás** vagy ![Kiáltás](../../../apps/web/public/icons/skill-type/shout.svg) **kiáltás** véget ér azon a szövetségesen. Az
 a kántálás vagy kiáltás, amelyet a vége előtt újra felraknak, nem ért
 véget. Semmi sem távolít el visszhangot: akkor ér véget, amikor lejár,
 vagy a viselője meghal. A legtöbb nem célozhat szellemet.
 
 ## Másik készséggé váló készségek
 
-Egyes Mesmer készségek egy időre egy másik készséget tesznek a saját
-helyükre. Az Arcane Echo és az Echo lemásolja a következő készséget,
+Egyes ![Mesmer](../../../apps/web/public/icons/profession/mesmer.svg) **Mesmer** készségek egy időre egy másik készséget tesznek a saját
+helyükre. Az ![Arcane Echo](../../../apps/web/public/icons/status/arcane-echo.svg) **Arcane Echo** és az ![Echo](../../../apps/web/public/icons/status/echo.svg) **Echo** lemásolja a következő készséget,
 amelyet használsz. Az **Inspired Enchantment** és az **Inspired Hex**
 20 másodpercre azzá a készséggé válik, amely az általuk eltávolított
-bűbájt vagy átkot varázsolta. Az **Arcane Thievery** azzá a
-varázslattá válik, amelyet letiltott az ellenségednél, amíg a letiltás
+![Bűbáj](../../../apps/web/public/icons/skill-type/enchantment.svg) **bűbájt** vagy ![Átok](../../../apps/web/public/icons/skill-type/hex.svg) **átkot** varázsolta. Az **Arcane Thievery** azzá a
+![Varázslat](../../../apps/web/public/icons/skill-type/spell.svg) **varázslattá** válik, amelyet letiltott az ellenségednél, amíg a letiltás
 tart. A másolatnak saját újratöltése van. Amikor véget ér, az eredeti
 készség visszatér, és elkezdi a saját újratöltését, a másolat még
 folyamatban lévő varázslása pedig meghiúsul. Egy szellem vagy egy másik
@@ -82,11 +82,11 @@ eltávolítása így is megadja az Energiát.
 
 ## Kutak és glifák
 
-A Necromancer **kútjai** a legközelebbi holttestet használják ki. Ha
+A ![Necromancer](../../../apps/web/public/icons/profession/necromancer.svg) **Necromancer** ![Kút](../../../apps/web/public/icons/skill-type/well.svg) **kútjai** a legközelebbi holttestet használják ki. Ha
 nincs a közelben, a kút helyette az Életerőd 66%-át áldozza fel, és ott
 jelenik meg, ahol állsz.
 
-Az Elementalist **glifái** megváltoztatják a következő varázslatodat:
+Az ![Elementalist](../../../apps/web/public/icons/profession/elementalist.svg) **Elementalist** ![Glifa](../../../apps/web/public/icons/skill-type/glyph.svg) **glifái** megváltoztatják a következő ![Varázslat](../../../apps/web/public/icons/skill-type/spell.svg) **varázslatodat**:
 nem lehet megszakítani, azonnal megy, azonnal újratöltődik, vagy
 kevesebbe kerül. Egy új glifa lecseréli azt, amelyik nálad volt.
 
@@ -97,8 +97,8 @@ viszi az Életerőt”, bármely ütésre vagy életlopásra felel, amely életb
 hagy, és a vonal alatt, akkor is, ha már a találat előtt is alatta
 voltál, és soha nem arra az életerőre, amelyet feláldozol, vagy amelyet
 degeneráció miatt veszítesz el. A halálos sebzés elleni védelem, mint a
-Judge's Intervention, az egész halálos ütést elnyeli: nincs sebzés,
-nincs halál. A Faithful Intervention és az Illusion of Weakness nem
+![Judge's Intervention](../../../apps/web/public/icons/status/judges-intervention.svg) **Judge's Intervention**, az egész halálos ütést elnyeli: nincs sebzés,
+nincs halál. A ![Faithful Intervention](../../../apps/web/public/icons/status/faithful-intervention.svg) **Faithful Intervention** és az ![Illusion of Weakness](../../../apps/web/public/icons/status/illusion-of-weakness.svg) **Illusion of Weakness** nem
 rendelkezik időtartammal: addig tartanak, amíg sebzés, eltávolítás vagy
 halál véget nem vet nekik, és közben gyógyítanak.
 
@@ -130,13 +130,13 @@ tiédnek számolja.
 
 ## Tárgyvarázslatok
 
-A Ritualist **tárgyvarázslatai** egy szellem **hamvait** adják a
+A ![Ritualist](../../../apps/web/public/icons/profession/ritualist.svg) **Ritualist** ![Tárgyvarázslat](../../../apps/web/public/icons/skill-type/item-spell.svg) **tárgyvarázslatai** egy szellem **hamvait** adják a
 kezedbe: bónusz, amíg tartod őket, és egy **ejtési hatás**, amikor
 leesnek. Akkor esnek le, amikor lejárnak, amikor meghalsz, amikor
 megnyomod az Életerő-sávod fölötti **Hamvak le** gombot, egy másik
 tárgyvarázslatot varázsolsz, árnyéklépést teszel, fegyvert váltasz,
 vagy felveszel egy zászlót vagy ereklyét. Amíg tartod őket, tele van a
-kezed: nincs támadás és nincs támadókészség, de teljes sebességgel
+kezed: nincs támadás és nincs ![Támadókészség](../../../apps/web/public/icons/skill-type/attack.svg) **támadókészség**, de teljes sebességgel
 sétálsz, és továbbra is varázsolhatsz. Semmi sem távolítja el a
 hamvakat; minden befejeződés egy ejtés.
 
@@ -145,7 +145,7 @@ hamvakat; minden befejeződés egy ejtés.
 Az **árnyéklépés** azonnal áthelyez, séta nélkül. A legtöbb a
 célpontodhoz léptet; egyesek, amikor véget érnek, visszavisznek oda,
 ahol varázsoltad őket, ahogy a Shadow of Haste és a Shadow Walk teszi.
-A **Recall** csak akkor léptet a szövetségeséhez, amikor véget ér, és 3
+A ![Recall](../../../apps/web/public/icons/status/recall.svg) **Recall** csak akkor léptet a szövetségeséhez, amikor véget ér, és 3
 másodpercre letiltja minden készségedet. A **Swap** helyet cserél az
 oldalad egyik szellemével vagy szolgájával.
 
@@ -168,16 +168,16 @@ Az **Esc** mentés nélkül lép ki, és előbb rákérdez, ha bármit
 módosítottál. A **Megoszt**, a **GW1-kód betöltése**, a **Másolat** és a
 **Törlés** a **⋯** alatt van.
 
-A csapatkódot ehelyett a **Csapatszerkesztőben** kell betölteni: nyomd meg a
-**Csapat betöltése** gombot, illeszd be a kódot, és nyomd meg a **Betölt**
-gombot, vagy illeszd be bárhová a Csapatszerkesztőben.
+A csapatkódot ehelyett a **Csapatszerkesztőben** kell betölteni: illeszd be bárhová
+ott, vagy nyiss meg egy csapatbuildet, és használd a **⋯** → **Csapat betöltése**
+lehetőségét.
 
 ## Csapatbuildek
 
 A **csapatbuild** egy csapat a saját karaktereiből, amelyet a
 **Csapatszerkesztőben** készítesz, és a saját karaktereidtől elkülönítve
 tárolódik. Mindegyik egy kártya ott, és csak ott: az **Új csapatbuild**
-készít egyet, a **Csapat betöltése** betölt egy veled megosztottat, egy kártyára kattintás vagy a **Szerk.** gombja pedig
+készít egyet, az oda beillesztett csapatkód betölt egy veled megosztottat, egy kártyára kattintás vagy a **Szerk.** gombja pedig
 megnyitja. Egyet a [Csapatlobbiban](modes.md#csapatlobbi) javasolhatsz.
 
 Minden csapatbuildnek van mérete, 2v2, 4v4 vagy 8v8 (1v1-es csapatbuild nincs): az oldalsáv

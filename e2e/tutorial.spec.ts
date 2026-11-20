@@ -1,12 +1,35 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
+import { BUILD_FORMAT_VERSION } from "../apps/web/src/storage/build-transfer.js";
+import { TEAM_FORMAT_VERSION } from "../apps/web/src/storage/team-transfer.js";
+import { STARTER_BUILDS } from "../packages/game-core/src/starter-builds.js";
 import { projection } from "./camera.js";
+import { openLibraryGroup } from "./helpers/library.js";
+import { openRail } from "./helpers/menu.js";
+import { professionField } from "./helpers/professions.js";
 
 /**
  * A map whose ground is layer 0, and one whose ground is layer 1 (#3248):
- * the tutorial walks on either.
+ * the tutorial walks on either. No player map is flat (#3444), so the flat
+ * one is the bench's frozen flat map, which the e2e build offers.
  */
-const FLAT_MAP = "hollow-deep";
+const FLAT_MAP = "bench-flat";
+
+/** A team code of two starter builds, each with a skill (#3544): a playable team of two. */
+function duoCode(): string {
+  return JSON.stringify({
+    format: "vibewars.team",
+    formatVersion: TEAM_FORMAT_VERSION,
+    name: "Duo",
+    size: 2,
+    members: STARTER_BUILDS.slice(1, 3).map((build) => ({
+      format: "vibewars.character",
+      formatVersion: BUILD_FORMAT_VERSION,
+      ...build,
+      secondaryProfession: build.secondaryProfession ?? null,
+    })),
+  });
+}
 const RAISED_MAP = "arena-crossroads";
 /** Where the pair arrives in the canyon (#3247), its first map's arrival pad. */
 const CANYON_ARRIVAL = { x: 1000, y: 1800 };
@@ -744,7 +767,7 @@ test.describe("the first-time tutorial (#3218)", () => {
   }
 
   test("a guild link, even through a forced splash, is never offered it", async ({ page }) => {
-    await pastTheSplash(page, FLAT_MAP, `#guild=VW.gold.black.${"A".repeat(171)}`);
+    await pastTheSplash(page, FLAT_MAP, `#guild=VW.e6c04a.23272e.${"A".repeat(171)}.`);
     await expect(page.locator(".screen-rail")).toBeVisible();
     await expect(page.locator(".tutorial-offer")).toHaveCount(0);
   });
@@ -774,8 +797,11 @@ test.describe("the menu quest (#3540)", () => {
     await bubble.getByRole("button", { name: "Got it" }).click();
     await expect(teams).toHaveClass(/tutorial-pulse/);
     await bubble.getByRole("button", { name: "Got it" }).click();
-    await expect(page.locator(".coach")).toHaveCount(0);
+    // On to the spec step (#3541): a thing to do, with no Got it.
+    await expect(panel).toContainText("Change your spec.");
     await expect(teams).not.toHaveClass(/tutorial-pulse/);
+    await expect(characters).toHaveClass(/tutorial-pulse/);
+    await expect(bubble.getByRole("button", { name: "Got it" })).toBeHidden();
   });
 
   test("at 800x600 the docked panel never covers the bubble or the cut-out", async ({ page }) => {
@@ -804,7 +830,228 @@ test.describe("the menu quest (#3540)", () => {
       // A real click, not forced: nothing may sit on top of Got it.
       await bubble.getByRole("button", { name: "Got it" }).click();
     }
+    await expect(panel).toContainText("Change your spec.");
+  });
+
+  test("changes the spec in the builder, one locked target at a time (#3541)", async ({ page }) => {
+    // A walk through the whole builder: ~50 s on a loaded runner, past the default.
+    test.setTimeout(180_000);
+    await page.goto(`./?menu-background=${FLAT_MAP}&tutorial-menu=spec`);
+    const panel = page.locator(".coach-panel");
+    await expect(panel).toContainText("Change your spec.");
+    const target = (id: string): Locator => page.locator(`[data-tutorial~="${id}"]`);
+
+    await expect(target("rail-characters")).toHaveClass(/tutorial-pulse/);
+    await target("rail-characters").click();
+    const card = target("character-open");
+    await expect(card).toHaveClass(/tutorial-pulse/);
+    // Teams is dimmed: a click on it never reaches the menu.
+    await target("rail-teams").click({ force: true });
+    await expect(page.locator(".screen-teams")).toHaveCount(0);
+    // The starter is cloned to be changed; any other is edited.
+    await card.locator(".roster-clone, .roster-edit").first().click();
+
+    await expect(target("professions")).toHaveClass(/tutorial-pulse/);
+    await expect(panel).toContainText("Switch a profession");
+    // Save is dimmed until its beat: a click on it saves nothing.
+    await target("save").click({ force: true });
+    await expect(page.locator(".editor-professions")).toBeVisible();
+    // The starter is random: one with a secondary drops it, one without takes one.
+    await professionField(page, "secondary").click();
+    const cells = target("professions").locator(".profession-grid .profession-cell");
+    const none = cells.and(page.locator('[data-profession="none"]'));
+    const hasSecondary = (await professionField(page, "secondary").textContent()) !== "(none)";
+    await (
+      hasSecondary ? none : cells.and(page.locator(':not([data-profession="none"])')).first()
+    ).click();
+
+    await expect(target("attributes").first()).toHaveClass(/tutorial-pulse/);
+    // Points may all be spent: a refund always goes through. The last lit pip
+    // is some attribute's own rank, and clicking it lowers that rank by one.
+    await page.locator(".editor-attribute .attribute-pip.is-on").last().click();
+
+    await expect(target("skills").first()).toHaveClass(/tutorial-pulse/);
+    await openLibraryGroup(page);
+    const slot = page.locator(".skill-slot").last();
+    await page.locator(".skill-library .skill-box").first().dragTo(slot);
+
+    await expect(target("weapons").first()).toHaveClass(/tutorial-pulse/);
+    const weapon = page.locator(".gear-slot").first();
+    const held = (await weapon.textContent()) ?? "";
+    await weapon.click();
+    await page
+      .locator(".gear-box")
+      .filter({ hasText: held.includes("Hammer") ? "Axe" : "Hammer" })
+      .first()
+      .click();
+
+    await expect(target("gear").first()).toHaveClass(/tutorial-pulse/);
+    await page.locator('.paper-doll-hotspot[data-slot="head"]').click();
+    const popover = page.locator(".paper-doll-popover");
+    await popover.locator('.paper-doll-choice[aria-selected="false"]').first().click();
+    await page.keyboard.press("Escape");
+
+    await expect(target("save")).toHaveClass(/tutorial-pulse/);
+    await target("save").click();
+    // The builder is left, and the quest goes on to the team step (#3542).
+    await expect(page.locator(".editor-professions")).toHaveCount(0);
+    await expect(panel).toContainText("Build a team to be successful.");
+    await expect(target("rail-teams")).toHaveClass(/tutorial-pulse/);
+  });
+
+  test("builds and saves a team of two in the team editor (#3542)", async ({ page }) => {
+    // A walk through the team editor, drags included: past the default on a loaded runner.
+    test.setTimeout(180_000);
+    await page.goto(`./?menu-background=${FLAT_MAP}&tutorial-menu=team`);
+    const panel = page.locator(".coach-panel");
+    const bubble = page.locator(".coach-bubble");
+    await expect(panel).toContainText("Build a team to be successful.");
+    const target = (id: string): Locator => page.locator(`[data-tutorial~="${id}"]`);
+
+    await expect(target("rail-teams")).toHaveClass(/tutorial-pulse/);
+    await target("rail-teams").click();
+
+    // The sidebar's size and New team build; the starter team is dimmed.
+    const stepper = page.locator('.mode-rail-stepper[data-tutorial~="team-new"]');
+    await expect(stepper).toHaveClass(/tutorial-pulse/);
+    const smaller = stepper.getByRole("button", { name: "Smaller team" });
+    while (!(await smaller.isDisabled())) {
+      await smaller.click();
+    }
+    await expect(stepper).toContainText("2v2");
+    await page.locator(".play-card-new").click();
+
+    await expect(target("team-members")).toHaveClass(/tutorial-pulse/);
+    await bubble.getByRole("button", { name: "Got it" }).click();
+    await expect(target("team-member-build").first()).toHaveClass(/tutorial-pulse/);
+    await bubble.getByRole("button", { name: "Got it" }).click();
+    await expect(target("team-problems").first()).toHaveClass(/tutorial-pulse/);
+    await bubble.getByRole("button", { name: "Got it" }).click();
+
+    // Save is dimmed until its beat: a click on it stores nothing.
+    const save = page.locator('#topbar [data-tutorial~="team-save"]');
+    await save.click({ force: true });
+    await expect(page.locator(".team-grid")).toBeVisible();
+
+    await expect(panel).toContainText("Put your character in the team");
+    const rows = page.locator(".team-grid .team-row");
+    const pick = page.locator(".team-pick").first();
+    await pick.dragTo(rows.nth(0));
+    await expect(panel).toContainText("Fill the team");
+    await pick.dragTo(rows.nth(1));
+
+    await expect(save).toHaveClass(/tutorial-pulse/);
+    await save.click();
+    // The editor is left, and on to the modes step (#3543).
+    await expect(page.locator(".team-grid")).toHaveCount(0);
+    await expect(panel).toContainText("Know where to fight.");
+  });
+
+  test("opens and explains the five modes from the rail, locked (#3543)", async ({ page }) => {
+    await page.goto(`./?menu-background=${FLAT_MAP}&tutorial-menu=modes`);
+    const panel = page.locator(".coach-panel");
+    const bubble = page.locator(".coach-bubble");
+    await expect(panel).toContainText("Know where to fight.");
+    const target = (id: string): Locator => page.locator(`[data-tutorial~="${id}"]`);
+    const ticked = panel.locator(`li[aria-checked="true"]`);
+
+    const modes = [
+      ["random-arena", "Random Arena is the quickest fight"],
+      ["team-arena", "Team Arena is your party"],
+      ["heroes-ascent", "Heroes' Ascent is a run of maps"],
+      ["gvg", "GvG is guild against guild"],
+      ["hosted-game", "A Hosted Game is your own lobby"],
+    ] as const;
+    for (const [at, [mode, line]] of modes.entries()) {
+      // Already on Random Arena, the first beat is past: its entry does nothing.
+      if (at > 0) {
+        await expect(target(`rail-${mode}`)).toHaveClass(/tutorial-pulse/);
+        await target(`rail-${mode}`).click();
+      }
+      await expect(target(`mode-${mode}`)).toHaveClass(/tutorial-pulse/);
+      await expect(bubble).toContainText(line);
+      await expect(ticked).toHaveCount(at + 1);
+      if (mode === "team-arena") {
+        // Find a match is dimmed: a click on it queues nothing.
+        await page.locator("#topbar .lobby-find").click({ force: true });
+        await expect(page.locator(".team-lobby-stage")).toHaveCount(0);
+        await expect(page.locator("#topbar .topbar-queue")).toBeHidden();
+      }
+      await bubble.getByRole("button", { name: "Got it" }).click();
+    }
+    // On to the arena step (#3544).
+    await expect(panel).toContainText("Prove your team in a 2v2 Team Arena match.");
+    await expect(target("rail-team-arena")).toHaveClass(/tutorial-pulse/);
+  });
+
+  test("queues a team of two for Team Arena, then lifts and is done (#3544)", async ({ page }) => {
+    test.setTimeout(120_000);
+    // A saved, playable team of two, as the team step leaves one.
+    await page.goto("./");
+    await openRail(page, "Team Builder");
+    await expect(page.getByRole("button", { name: "New team build", exact: true })).toBeVisible();
+    await page.locator(".screen").evaluate((element, pasted) => {
+      const data = new DataTransfer();
+      data.setData("text/plain", pasted);
+      element.dispatchEvent(
+        new ClipboardEvent("paste", { clipboardData: data, bubbles: true, cancelable: true }),
+      );
+    }, duoCode());
+    await page.getByRole("button", { name: "Save", exact: true }).click();
+    await expect(page.locator(".toast")).toHaveText("Saved");
+
+    await page.goto(`./?menu-background=${FLAT_MAP}&tutorial-menu=arena`);
+    const panel = page.locator(".coach-panel");
+    const bubble = page.locator(".coach-bubble");
+    const target = (id: string): Locator => page.locator(`[data-tutorial~="${id}"]`);
+    await expect(panel).toContainText("Prove your team in a 2v2 Team Arena match.");
+
+    await target("rail-team-arena").click();
+    const stepper = page.locator('.mode-rail-stepper[data-tutorial~="team-size"]');
+    await expect(stepper).toHaveClass(/tutorial-pulse/);
+    await expect(bubble).toContainText("Only teams of the same size are matched");
+    const smaller = stepper.getByRole("button", { name: "Smaller team" });
+    while (!(await smaller.isDisabled())) {
+      await smaller.click();
+    }
+    await expect(stepper).toContainText("2v2");
+
+    const find = page.locator("#topbar .lobby-find");
+    await expect(find).toHaveClass(/tutorial-pulse/);
+    await expect(bubble).toContainText("a teammate who joins by your invite link");
+    await find.click();
+    await expect(page.locator(".team-lobby-stage")).toHaveText("Choose a team build");
+
+    // The Team Lobby's builds drawer: the duo is the one it offers at 2v2.
+    const tab = page.getByRole("button", { name: "Your Team Builds", exact: true });
+    await expect(tab).toHaveClass(/tutorial-pulse/);
+    await tab.click();
+    const drawer = page.getByRole("complementary", { name: "Your Team Builds" });
+    await drawer.getByRole("button", { name: "Duo", exact: true }).click();
+    await drawer.getByRole("button", { name: "Propose this build", exact: true }).click();
+
+    await expect(target("team-lobby")).toHaveClass(/tutorial-pulse/);
+    // The only vote ends the stage, the only seat taken the next.
+    await page.locator(".team-lobby-proposals .play-card-open").first().click();
+    await expect(page.locator(".team-lobby-stage")).toHaveText("Take a character");
+    await page.locator(".team-lobby-seat").first().click();
+
+    // Queued: the dim is gone, the closing line shows, and the record is done.
+    await expect(panel).toHaveText(/You're in the queue\. Good luck\./);
+    await expect(page.locator(".coach-dim")).toBeHidden();
+    await expect(page.locator(".coach-hole")).toBeHidden();
+    await expect(page.locator("#topbar .topbar-queue")).toBeVisible();
+    expect(
+      await page.evaluate(() =>
+        Object.keys(localStorage)
+          .filter((key) => key.endsWith(".tutorial"))
+          .map((key) => localStorage.getItem(key)),
+      ),
+    ).toEqual(["done"]);
+    // A click takes the line away; the party stays queued.
+    await panel.click();
     await expect(page.locator(".coach")).toHaveCount(0);
+    await expect(page.locator("#topbar .topbar-queue")).toBeVisible();
   });
 
   test("Skip tutorial, confirmed, ends it for good", async ({ page }) => {

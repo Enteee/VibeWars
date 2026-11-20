@@ -87,6 +87,15 @@ export function publishMatchRecord(record: MatchRecord, deps: MatchRecordDeps = 
   if (event === undefined) {
     return;
   }
+  publishEvent(event, deps);
+}
+
+/**
+ * Send `event` to the relays, once, and let go: the pool closes when
+ * every relay has answered, when none is reachable, or after
+ * `MATCH_RECORD_PUBLISH_MS`. A ranked receipt goes out the same way (#3680).
+ */
+export function publishEvent(event: NostrEvent, deps: MatchRecordDeps = BROWSER): void {
   let answers = 0;
   // A microtask later: every relay may be down before the pool is even
   // returned. Closing twice is harmless.

@@ -22,7 +22,9 @@ const runRelic: BotRule = {
     const team = self.combatant.team;
     const relic = relics.find((candidate) => carriesRelic(relicCarry, candidate.team, team));
     const lying = relic === undefined ? undefined : lyingPosition(relicSpawns, relic);
-    return relic !== undefined && lying !== undefined && sentTo(context, lying, true, true)
+    return relic !== undefined &&
+      lying !== undefined &&
+      sentTo(context, lying, relicId(relic.team), true, true)
       ? { ...NOTHING, attackTargetId: relicId(relic.team) }
       : undefined;
   },

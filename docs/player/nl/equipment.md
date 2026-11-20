@@ -7,7 +7,7 @@ te rusten. Pantser kies je op de figuur, hieronder.
 ## Wapensets
 
 Je draagt tot **vier wapensets**, elk een wapen en, als het wapen een hand vrij
-laat, een nevenhand zoals een Shield of een Focus. Set 1 is die waarmee je
+laat, een nevenhand zoals een ![Shield](../../../apps/web/public/icons/offhand/shield.svg) **Shield** of een ![Focus](../../../apps/web/public/icons/offhand/focus.svg) **Focus**. Set 1 is die waarmee je
 begint; de andere mogen leeg blijven.
 
 Wissel in een match van set met **1 tot 4** (**F1 tot F4** bij de Klassiek-toetsen).
@@ -16,8 +16,8 @@ wisselt meteen. Er is geen cooldown. Je aanvallen, de skills die een bepaald
 wapen nodig hebben en je maximale Energie volgen allemaal de set in je hand.
 
 Een wapen heeft rang 9 in zijn attribuut nodig: daaronder doet het een derde van
-zijn schade, en de editor zegt dat in rood. Een Sword is altijd Swordsmanship,
-maar een Staff, een Wand, een Shield of een Focus wordt gemaakt voor een
+zijn schade, en de editor zegt dat in rood. Een ![Sword](../../../apps/web/public/icons/weapon/sword.svg) **Sword** is altijd Swordsmanship,
+maar een ![Staff](../../../apps/web/public/icons/weapon/staff.svg) **Staff**, een ![Wand](../../../apps/web/public/icons/weapon/wand.svg) **Wand**, een Shield of een Focus wordt gemaakt voor een
 attribuut dat jij kiest: klik op de hand op de figuur (**6** voor het wapen,
 **7** voor de nevenhand) en kies er een.
 
@@ -25,40 +25,40 @@ attribuut dat jij kiest: klik op de hand op de figuur (**6** voor het wapen,
 
 Elk wapen en elke nevenhand heeft vakken voor mods: een **voorvoegsel**, een
 **achtervoegsel** en een **inscriptie**. Klik op de hand op de figuur, of op de
-rij ernaast, om ze te kiezen; elke mod zegt wat hij doet. Een Wand, een Shield en
-een Focus nemen geen voorvoegsel; blote handen ook niet. Een mod staat altijd op
+rij ernaast, om ze te kiezen; elke mod zegt wat hij doet. Een ![Wand](../../../apps/web/public/icons/weapon/wand.svg) **Wand**, een ![Shield](../../../apps/web/public/icons/offhand/shield.svg) **Shield** en
+een ![Focus](../../../apps/web/public/icons/offhand/focus.svg) **Focus** nemen geen voorvoegsel; blote handen ook niet. Een mod staat altijd op
 zijn beste waarde, en elke wapenset heeft zijn eigen mods, dus van set wisselen
 wisselt ook hun mods: maximale Gezondheid en Energie veranderen mee met de set in
 je hand. Een wapen wisselen behoudt de mods die er nog op passen en zegt welke
 het liet vallen.
 
-| Mod                       | Vak           | Past op                                 | Effect                                |
-| ------------------------- | ------------- | --------------------------------------- | ------------------------------------- |
-| Defensive                 | Voorvoegsel   | Staff                                   | Pantser +5                            |
-| Hale                      | Voorvoegsel   | Staff                                   | +30 Gezondheid                        |
-| Insightful                | Voorvoegsel   | Staff                                   | Energie +5                            |
-| of Defense                | Achtervoegsel | elk martial wapen, Staff                | Pantser +5                            |
-| of Fortitude              | Achtervoegsel | elk martial wapen, Staff, Shield, Focus | +30 Gezondheid                        |
-| of Shelter                | Achtervoegsel | elk martial wapen, Staff                | Pantser +7 (tegen fysieke schade)     |
-| of Warding                | Achtervoegsel | elk martial wapen, Staff                | Pantser +7 (tegen elementaire schade) |
-| "Cast Out the Unclean"    | Inscriptie    | Shield, Focus                           | Verkort Disease op jou met 20%        |
-| "Fear Cuts Deeper"        | Inscriptie    | Shield, Focus                           | Verkort Bleeding op jou met 20%       |
-| "I Can See Clearly Now"   | Inscriptie    | Shield, Focus                           | Verkort Blinded op jou met 20%        |
-| "I have the power!"       | Inscriptie    | elk martial wapen                       | Energie +5                            |
-| "Leaf on the Wind"        | Inscriptie    | Shield, Focus                           | Pantser +10 (tegen kouschade)         |
-| "Like a Rolling Stone"    | Inscriptie    | Shield, Focus                           | Pantser +10 (tegen aardeschade)       |
-| "Live for Today"          | Inscriptie    | Focus                                   | Energie +15, energieregeneratie -1    |
-| "Not the face!"           | Inscriptie    | Shield, Focus                           | Pantser +10 (tegen stompe schade)     |
-| "Only the Strong Survive" | Inscriptie    | Shield, Focus                           | Verkort Weakness op jou met 20%       |
-| "Pure of Heart"           | Inscriptie    | Shield, Focus                           | Verkort Poison op jou met 20%         |
-| "Riders on the Storm"     | Inscriptie    | Shield, Focus                           | Pantser +10 (tegen bliksemschade)     |
-| "Seize the Day"           | Inscriptie    | Staff, Wand                             | Energie +15, energieregeneratie -1    |
-| "Sleep Now in the Fire"   | Inscriptie    | Shield, Focus                           | Pantser +10 (tegen vuurschade)        |
-| "Soundness of Mind"       | Inscriptie    | Shield, Focus                           | Verkort Dazed op jou met 20%          |
-| "Strength of Body"        | Inscriptie    | Shield, Focus                           | Verkort Deep Wound op jou met 20%     |
-| "Swift as the Wind"       | Inscriptie    | Shield, Focus                           | Verkort Crippled op jou met 20%       |
-| "The Riddle of Steel"     | Inscriptie    | Shield, Focus                           | Pantser +10 (tegen hakschade)         |
-| "Through Thick and Thin"  | Inscriptie    | Shield, Focus                           | Pantser +10 (tegen steekschade)       |
+| Mod                       | Vak           | Past op                                                             | Effect                                                                                                    |
+| ------------------------- | ------------- | ------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| Defensive                 | Voorvoegsel   | ![Staff](../../../apps/web/public/icons/weapon/staff.svg) **Staff** | Pantser +5                                                                                                |
+| Hale                      | Voorvoegsel   | Staff                                                               | +30 Gezondheid                                                                                            |
+| Insightful                | Voorvoegsel   | Staff                                                               | Energie +5                                                                                                |
+| of Defense                | Achtervoegsel | elk martial wapen, Staff                                            | Pantser +5                                                                                                |
+| of Fortitude              | Achtervoegsel | elk martial wapen, Staff, Shield, Focus                             | +30 Gezondheid                                                                                            |
+| of Shelter                | Achtervoegsel | elk martial wapen, Staff                                            | Pantser +7 (tegen fysieke schade)                                                                         |
+| of Warding                | Achtervoegsel | elk martial wapen, Staff                                            | Pantser +7 (tegen elementaire schade)                                                                     |
+| "Cast Out the Unclean"    | Inscriptie    | Shield, Focus                                                       | Verkort ![Ziekte](../../../apps/web/public/icons/status/disease.svg) **Ziekte** op jou met 20%            |
+| "Fear Cuts Deeper"        | Inscriptie    | Shield, Focus                                                       | Verkort ![Bloeding](../../../apps/web/public/icons/status/bleeding.svg) **Bloeding** op jou met 20%       |
+| "I Can See Clearly Now"   | Inscriptie    | Shield, Focus                                                       | Verkort ![Blind](../../../apps/web/public/icons/status/blind.svg) **Blind** op jou met 20%                |
+| "I have the power!"       | Inscriptie    | elk martial wapen                                                   | Energie +5                                                                                                |
+| "Leaf on the Wind"        | Inscriptie    | Shield, Focus                                                       | Pantser +10 (tegen kouschade)                                                                             |
+| "Like a Rolling Stone"    | Inscriptie    | Shield, Focus                                                       | Pantser +10 (tegen aardeschade)                                                                           |
+| "Live for Today"          | Inscriptie    | Focus                                                               | Energie +15, energieregeneratie -1                                                                        |
+| "Not the face!"           | Inscriptie    | Shield, Focus                                                       | Pantser +10 (tegen stompe schade)                                                                         |
+| "Only the Strong Survive" | Inscriptie    | Shield, Focus                                                       | Verkort ![Zwakte](../../../apps/web/public/icons/status/weakness.svg) **Zwakte** op jou met 20%           |
+| "Pure of Heart"           | Inscriptie    | Shield, Focus                                                       | Verkort ![Vergif](../../../apps/web/public/icons/status/poison.svg) **Vergif** op jou met 20%             |
+| "Riders on the Storm"     | Inscriptie    | Shield, Focus                                                       | Pantser +10 (tegen bliksemschade)                                                                         |
+| "Seize the Day"           | Inscriptie    | Staff, Wand                                                         | Energie +15, energieregeneratie -1                                                                        |
+| "Sleep Now in the Fire"   | Inscriptie    | Shield, Focus                                                       | Pantser +10 (tegen vuurschade)                                                                            |
+| "Soundness of Mind"       | Inscriptie    | Shield, Focus                                                       | Verkort ![Versuft](../../../apps/web/public/icons/status/dazed.svg) **Versuft** op jou met 20%            |
+| "Strength of Body"        | Inscriptie    | Shield, Focus                                                       | Verkort ![Diepe wond](../../../apps/web/public/icons/status/deep-wound.svg) **Diepe wond** op jou met 20% |
+| "Swift as the Wind"       | Inscriptie    | Shield, Focus                                                       | Verkort ![Verlamd](../../../apps/web/public/icons/status/crippled.svg) **Verlamd** op jou met 20%         |
+| "The Riddle of Steel"     | Inscriptie    | Shield, Focus                                                       | Pantser +10 (tegen hakschade)                                                                             |
+| "Through Thick and Thin"  | Inscriptie    | Shield, Focus                                                       | Pantser +10 (tegen steekschade)                                                                           |
 
 ### Martial voorvoegsels bij een treffer
 
@@ -68,10 +68,10 @@ het liet vallen.
 | Zealous                      | elk martial wapen          | geeft 1 Energie; -1 energieregeneratie                                     |
 | Sundering                    | elk martial wapen          | 20% kans op +20% pantserpenetratie                                         |
 | Furious                      | martial, geen Bows         | 10% kans op dubbele adrenaline                                             |
-| Barbed, Crippling, Poisonous | martial, geen Hammer       | Bleeding, Crippled, Poison die jij veroorzaakt, duren 33% langer           |
-| Cruel                        | martial, geen Bows         | Deep Wound die jij veroorzaakt, duurt 33% langer                           |
-| Heavy                        | Axe, Hammer, Scythe, Spear | Weakness die jij veroorzaakt, duurt 33% langer                             |
-| Silencing                    | Daggers, Spear, Bows       | Dazed die jij veroorzaakt, duurt 33% langer                                |
+| Barbed, Crippling, Poisonous | martial, geen Hammer       | Bloeding, Verlamd, Vergif die jij veroorzaakt, duren 33% langer            |
+| Cruel                        | martial, geen Bows         | Diepe wond die jij veroorzaakt, duurt 33% langer                           |
+| Heavy                        | Axe, Hammer, Scythe, Spear | Zwakte die jij veroorzaakt, duurt 33% langer                               |
+| Silencing                    | Daggers, Spear, Bows       | Versuft die jij veroorzaakt, duurt 33% langer                              |
 | Ebon, Fiery, Icy, Shocking   | elk martial wapen          | de schade wordt aarde, vuur, kou of bliksem                                |
 
 "Bij een treffer" betekent een geplaatste treffer van een aanval of een
@@ -153,16 +153,16 @@ set die je bekijkt, met hun mods.
 
 ## Runen
 
-| Rune                                   | Wat het geeft                             |
-| -------------------------------------- | ----------------------------------------- |
-| Minor attribuutrune                    | +1 op een attribuut                       |
-| Major attribuutrune                    | +2 op een attribuut, -35 Gezondheid       |
-| Superior attribuutrune                 | +3 op een attribuut, -75 Gezondheid       |
-| Vigor                                  | meer Gezondheid (+30, +41 of +50)         |
-| Vitae                                  | +10 Gezondheid                            |
-| Attunement                             | meer Energie (+3, +6 of +9)               |
-| Clarity, Purity, Recovery, Restoration | twee condities slijten elk 20% sneller af |
-| Absorption (Warrior)                   | minder fysieke schade van elke treffer    |
+| Rune                                                                                                                                                                                                                                                                                                           | Wat het geeft                             |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------- |
+| Minor attribuutrune                                                                                                                                                                                                                                                                                            | +1 op een attribuut                       |
+| Major attribuutrune                                                                                                                                                                                                                                                                                            | +2 op een attribuut, -35 Gezondheid       |
+| Superior attribuutrune                                                                                                                                                                                                                                                                                         | +3 op een attribuut, -75 Gezondheid       |
+| ![Vigor](../../../apps/web/public/icons/rune/vigor.svg) **Vigor**                                                                                                                                                                                                                                              | meer Gezondheid (+30, +41 of +50)         |
+| ![Vitae](../../../apps/web/public/icons/rune/vitae.svg) **Vitae**                                                                                                                                                                                                                                              | +10 Gezondheid                            |
+| ![Attunement](../../../apps/web/public/icons/rune/attunement.svg) **Attunement**                                                                                                                                                                                                                               | meer Energie (+3, +6 of +9)               |
+| ![Clarity](../../../apps/web/public/icons/rune/clarity.svg) **Clarity**, ![Purity](../../../apps/web/public/icons/rune/purity.svg) **Purity**, ![Recovery](../../../apps/web/public/icons/rune/recovery.svg) **Recovery**, ![Restoration](../../../apps/web/public/icons/rune/restoration.svg) **Restoration** | twee condities slijten elk 20% sneller af |
+| ![Absorption](../../../apps/web/public/icons/rune/absorption.svg) **Absorption** (![Krijger](../../../apps/web/public/icons/profession/warrior.svg) **Krijger**)                                                                                                                                               | minder fysieke schade van elke treffer    |
 
 Je kiest de rune van een stuk op dezelfde plek als het insigne: klik op het stuk
 op de figuur.

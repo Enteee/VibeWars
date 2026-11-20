@@ -11,12 +11,12 @@ Sta je in een van deze plekken, dan werkt die op je in; het effect blijft nog
 even hangen nadat je eruit stapt. Vijanden en bondgenoten worden op dezelfde
 manier geraakt als jij.
 
-- **Verschroeide grond** geeft je Burning. Verkoolde aarde met gloeiende
+- **Verschroeide grond** geeft je Brandend. Verkoolde aarde met gloeiende
   sintels en een oranje rand.
-- **Lava** geeft je Burning en Crippled. Een donkere korst vol stromende,
+- **Lava** geeft je Brandend en Verlamd. Een donkere korst vol stromende,
   gloeiende scheuren die flakkeren.
-- **Giftige mist** geeft je Poison. Zwevende zuurgroene wolkjes waar je
-  doorheen kunt kijken. Groen op de grond betekent altijd Poison.
+- **Giftige mist** geeft je Vergif. Zwevende zuurgroene wolkjes waar je
+  doorheen kunt kijken. Groen op de grond betekent altijd Vergif.
 - **Moeras** vertraagt je, en elke aanval of skill die je daar gebruikt kost
   je Energie. Bruine modder met plassen en trage bellen.
 - **Vuil water** verlaagt je Gezondheidsregeneratie. Troebel, donker
@@ -35,10 +35,10 @@ manier geraakt als jij.
 Deze slaan steeds opnieuw toe op hun plek, en raken wie daar op dat moment
 staat.
 
-- **Een spleet** spuwt een vlammenzuil uit die je Burning geeft. Tussen de
+- **Een spleet** spuwt een vlammenzuil uit die je Brandend geeft. Tussen de
   uitbarstingen is het een smeulende stenen kraag.
-- **Een gasbron** blaast groen gas uit dat je Poison geeft.
-- **Steenslag** laat stenen vallen die je Crippled maken. Sommige vallen op
+- **Een gasbron** blaast groen gas uit dat je Vergif geeft.
+- **Steenslag** laat stenen vallen die je verlamd maken. Sommige vallen op
   één plek, andere rollen langs een pad heen en terug.
 
 Elk ervan waarschuwt je vlak voordat het toeslaat: de rand zwelt op in zijn

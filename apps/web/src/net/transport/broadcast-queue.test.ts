@@ -24,6 +24,8 @@ function ticket(ticketId: string, mode: QueueTicket["mode"] = "random-arena-1v1"
     ascentRound: null,
     hardNat: false,
     holdsHallSince: null,
+    claims: { [ticketId]: 800 },
+    leaderboardAsOf: 0,
   };
 }
 

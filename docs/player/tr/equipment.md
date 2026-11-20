@@ -7,7 +7,7 @@ için birine tıkla. Zırh, aşağıda anlatıldığı gibi figür üzerinde se�
 ## Silah setleri
 
 En fazla **dört silah seti** taşırsın; her biri bir silah ve, silah bir
-eli boş bırakıyorsa, kalkan ya da odak gibi bir yan el eşyasıdır. 1.
+eli boş bırakıyorsa, ![Kalkan](../../../apps/web/public/icons/offhand/shield.svg) **kalkan** ya da ![Odak](../../../apps/web/public/icons/offhand/focus.svg) **odak** gibi bir yan el eşyasıdır. 1.
 set başladığın settir; diğerleri boş kalabilir.
 
 Maçta setleri **1'den 4'e** ile değiştir (Klasik tuşlarda **F1'den
@@ -17,8 +17,8 @@ Saldırıların, belirli bir silah gerektiren becerilerin ve en yüksek
 Enerjin elindeki seti izler.
 
 Bir silah, niteliğinde 9. seviye ister: altında hasarının üçte biriyle
-vurur ve editör bunu kırmızıyla söyler. Kılıç her zaman
-Swordsmanship'tir, ama asa, değnek, kalkan ya da odak seçtiğin bir
+vurur ve editör bunu kırmızıyla söyler. ![Kılıç](../../../apps/web/public/icons/weapon/sword.svg) **Kılıç** her zaman
+Swordsmanship'tir, ama ![Asa](../../../apps/web/public/icons/weapon/staff.svg) **asa**, ![Değnek](../../../apps/web/public/icons/weapon/wand.svg) **değnek**, kalkan ya da odak seçtiğin bir
 nitelik için yapılır: figür üzerinde elini tıkla (silah için **6**, yan
 el için **7**) ve birini seç.
 
@@ -26,41 +26,41 @@ el için **7**) ve birini seç.
 
 Her silahın ve yan el eşyasının geliştirmeler için yuvaları vardır: bir
 **önek**, bir **sonek** ve bir **yazıt**. Seçmek için figür üzerindeki
-ele ya da yanındaki satırına tıkla; her biri ne yaptığını söyler. Değnek,
-kalkan ve odak önek almaz; çıplak eller hiçbirini almaz. Bir
+ele ya da yanındaki satırına tıkla; her biri ne yaptığını söyler. ![Değnek](../../../apps/web/public/icons/weapon/wand.svg) **Değnek**,
+![Kalkan](../../../apps/web/public/icons/offhand/shield.svg) **kalkan** ve ![Odak](../../../apps/web/public/icons/offhand/focus.svg) **odak** önek almaz; çıplak eller hiçbirini almaz. Bir
 geliştirme her zaman en iyi değerindedir ve her silah seti kendininkini
 taşır, bu yüzden set değiştirmek geliştirmelerini de değiştirir: en
 yüksek Can ve Enerji elindeki setle birlikte değişir. Bir silahı
 değiştirmek ona hâlâ uyan geliştirmeleri korur ve hangilerini
 düşürdüğünü söyler.
 
-| Geliştirme                | Yuva  | Uyduğu                              | Etki                                       |
-| ------------------------- | ----- | ----------------------------------- | ------------------------------------------ |
-| Defensive                 | Önek  | Asa                                 | Zırh +5                                    |
-| Hale                      | Önek  | Asa                                 | +30 Can                                    |
-| Insightful                | Önek  | Asa                                 | Enerji +5                                  |
-| of Defense                | Sonek | her dövüş silahı, Asa               | Zırh +5                                    |
-| of Fortitude              | Sonek | her dövüş silahı, Asa, Kalkan, Odak | +30 Can                                    |
-| of Shelter                | Sonek | her dövüş silahı, Asa               | Zırh +7 (fiziksel hasara karşı)            |
-| of Warding                | Sonek | her dövüş silahı, Asa               | Zırh +7 (elementel hasara karşı)           |
-| "Cast Out the Unclean"    | Yazıt | Kalkan, Odak                        | Üzerindeki Disease süresini %20 azaltır    |
-| "Fear Cuts Deeper"        | Yazıt | Kalkan, Odak                        | Üzerindeki Bleeding süresini %20 azaltır   |
-| "I Can See Clearly Now"   | Yazıt | Kalkan, Odak                        | Üzerindeki Blinded süresini %20 azaltır    |
-| "I have the power!"       | Yazıt | her dövüş silahı                    | Enerji +5                                  |
-| "Leaf on the Wind"        | Yazıt | Kalkan, Odak                        | Zırh +10 (soğuk hasara karşı)              |
-| "Like a Rolling Stone"    | Yazıt | Kalkan, Odak                        | Zırh +10 (toprak hasarına karşı)           |
-| "Live for Today"          | Yazıt | Odak                                | Enerji +15, Enerji yenilenmesi -1          |
-| "Not the face!"           | Yazıt | Kalkan, Odak                        | Zırh +10 (künt hasara karşı)               |
-| "Only the Strong Survive" | Yazıt | Kalkan, Odak                        | Üzerindeki Weakness süresini %20 azaltır   |
-| "Pure of Heart"           | Yazıt | Kalkan, Odak                        | Üzerindeki Poison süresini %20 azaltır     |
-| "Riders on the Storm"     | Yazıt | Kalkan, Odak                        | Zırh +10 (yıldırım hasarına karşı)         |
-| "Seize the Day"           | Yazıt | Asa, Değnek                         | Enerji +15, Enerji yenilenmesi -1          |
-| "Sleep Now in the Fire"   | Yazıt | Kalkan, Odak                        | Zırh +10 (ateş hasarına karşı)             |
-| "Soundness of Mind"       | Yazıt | Kalkan, Odak                        | Üzerindeki Dazed süresini %20 azaltır      |
-| "Strength of Body"        | Yazıt | Kalkan, Odak                        | Üzerindeki Deep Wound süresini %20 azaltır |
-| "Swift as the Wind"       | Yazıt | Kalkan, Odak                        | Üzerindeki Crippled süresini %20 azaltır   |
-| "The Riddle of Steel"     | Yazıt | Kalkan, Odak                        | Zırh +10 (kesici hasara karşı)             |
-| "Through Thick and Thin"  | Yazıt | Kalkan, Odak                        | Zırh +10 (delici hasara karşı)             |
+| Geliştirme                | Yuva  | Uyduğu                                                          | Etki                                                                                                               |
+| ------------------------- | ----- | --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------ |
+| Defensive                 | Önek  | ![Asa](../../../apps/web/public/icons/weapon/staff.svg) **Asa** | Zırh +5                                                                                                            |
+| Hale                      | Önek  | Asa                                                             | +30 Can                                                                                                            |
+| Insightful                | Önek  | Asa                                                             | Enerji +5                                                                                                          |
+| of Defense                | Sonek | her dövüş silahı, Asa                                           | Zırh +5                                                                                                            |
+| of Fortitude              | Sonek | her dövüş silahı, Asa, Kalkan, Odak                             | +30 Can                                                                                                            |
+| of Shelter                | Sonek | her dövüş silahı, Asa                                           | Zırh +7 (fiziksel hasara karşı)                                                                                    |
+| of Warding                | Sonek | her dövüş silahı, Asa                                           | Zırh +7 (elementel hasara karşı)                                                                                   |
+| "Cast Out the Unclean"    | Yazıt | Kalkan, Odak                                                    | Üzerindeki ![Disease](../../../apps/web/public/icons/status/disease.svg) **Disease** süresini %20 azaltır          |
+| "Fear Cuts Deeper"        | Yazıt | Kalkan, Odak                                                    | Üzerindeki ![Bleeding](../../../apps/web/public/icons/status/bleeding.svg) **Bleeding** süresini %20 azaltır       |
+| "I Can See Clearly Now"   | Yazıt | Kalkan, Odak                                                    | Üzerindeki ![Blinded](../../../apps/web/public/icons/status/blind.svg) **Blinded** süresini %20 azaltır            |
+| "I have the power!"       | Yazıt | her dövüş silahı                                                | Enerji +5                                                                                                          |
+| "Leaf on the Wind"        | Yazıt | Kalkan, Odak                                                    | Zırh +10 (soğuk hasara karşı)                                                                                      |
+| "Like a Rolling Stone"    | Yazıt | Kalkan, Odak                                                    | Zırh +10 (toprak hasarına karşı)                                                                                   |
+| "Live for Today"          | Yazıt | Odak                                                            | Enerji +15, Enerji yenilenmesi -1                                                                                  |
+| "Not the face!"           | Yazıt | Kalkan, Odak                                                    | Zırh +10 (künt hasara karşı)                                                                                       |
+| "Only the Strong Survive" | Yazıt | Kalkan, Odak                                                    | Üzerindeki ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness** süresini %20 azaltır       |
+| "Pure of Heart"           | Yazıt | Kalkan, Odak                                                    | Üzerindeki ![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison** süresini %20 azaltır             |
+| "Riders on the Storm"     | Yazıt | Kalkan, Odak                                                    | Zırh +10 (yıldırım hasarına karşı)                                                                                 |
+| "Seize the Day"           | Yazıt | Asa, Değnek                                                     | Enerji +15, Enerji yenilenmesi -1                                                                                  |
+| "Sleep Now in the Fire"   | Yazıt | Kalkan, Odak                                                    | Zırh +10 (ateş hasarına karşı)                                                                                     |
+| "Soundness of Mind"       | Yazıt | Kalkan, Odak                                                    | Üzerindeki ![Dazed](../../../apps/web/public/icons/status/dazed.svg) **Dazed** süresini %20 azaltır                |
+| "Strength of Body"        | Yazıt | Kalkan, Odak                                                    | Üzerindeki ![Deep Wound](../../../apps/web/public/icons/status/deep-wound.svg) **Deep Wound** süresini %20 azaltır |
+| "Swift as the Wind"       | Yazıt | Kalkan, Odak                                                    | Üzerindeki ![Crippled](../../../apps/web/public/icons/status/crippled.svg) **Crippled** süresini %20 azaltır       |
+| "The Riddle of Steel"     | Yazıt | Kalkan, Odak                                                    | Zırh +10 (kesici hasara karşı)                                                                                     |
+| "Through Thick and Thin"  | Yazıt | Kalkan, Odak                                                    | Zırh +10 (delici hasara karşı)                                                                                     |
 
 ### İsabette çalışan dövüş önekleri
 
@@ -155,16 +155,16 @@ gösterir ve baktığın setin silahlarını geliştirmeleriyle birlikte tutar.
 
 ## Rünler
 
-| Rün                                    | Ne verir                                         |
-| -------------------------------------- | ------------------------------------------------ |
-| Minor nitelik rünü                     | bir niteliğe +1                                  |
-| Major nitelik rünü                     | bir niteliğe +2, -35 Can                         |
-| Superior nitelik rünü                  | bir niteliğe +3, -75 Can                         |
-| Vigor                                  | daha fazla Can (+30, +41 ya da +50)              |
-| Vitae                                  | +10 Can                                          |
-| Attunement                             | daha fazla Enerji (+3, +6 ya da +9)              |
-| Clarity, Purity, Recovery, Restoration | her biri iki rahatsızlığı %20 daha erken geçirir |
-| Absorption (Warrior)                   | her vuruştan daha az fiziksel hasar              |
+| Rün                                                                                                                                                                                                                                                                                                            | Ne verir                                         |
+| -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
+| Minor nitelik rünü                                                                                                                                                                                                                                                                                             | bir niteliğe +1                                  |
+| Major nitelik rünü                                                                                                                                                                                                                                                                                             | bir niteliğe +2, -35 Can                         |
+| Superior nitelik rünü                                                                                                                                                                                                                                                                                          | bir niteliğe +3, -75 Can                         |
+| ![Vigor](../../../apps/web/public/icons/rune/vigor.svg) **Vigor**                                                                                                                                                                                                                                              | daha fazla Can (+30, +41 ya da +50)              |
+| ![Vitae](../../../apps/web/public/icons/rune/vitae.svg) **Vitae**                                                                                                                                                                                                                                              | +10 Can                                          |
+| ![Attunement](../../../apps/web/public/icons/rune/attunement.svg) **Attunement**                                                                                                                                                                                                                               | daha fazla Enerji (+3, +6 ya da +9)              |
+| ![Clarity](../../../apps/web/public/icons/rune/clarity.svg) **Clarity**, ![Purity](../../../apps/web/public/icons/rune/purity.svg) **Purity**, ![Recovery](../../../apps/web/public/icons/rune/recovery.svg) **Recovery**, ![Restoration](../../../apps/web/public/icons/rune/restoration.svg) **Restoration** | her biri iki rahatsızlığı %20 daha erken geçirir |
+| ![Absorption](../../../apps/web/public/icons/rune/absorption.svg) **Absorption** (![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior**)                                                                                                                                               | her vuruştan daha az fiziksel hasar              |
 
 Bir parçanın rününü nişanıyla aynı yerde seçersin: figür üzerinde
 parçaya tıkla.

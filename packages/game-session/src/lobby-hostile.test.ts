@@ -74,6 +74,7 @@ const joinAs = (name: string, rejoinToken: string | null) => ({
   relayPub: null,
   playerPubkey: WIRE_PLAYER_KEY.pubkey,
   ascentMorale: 0,
+  ranked: null,
 });
 
 /**

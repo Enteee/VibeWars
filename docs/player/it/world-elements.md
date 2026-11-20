@@ -10,11 +10,11 @@ fa ognuna e come riconoscerla sul terreno.
 Fermati in una di queste zone e agisce su di te; il suo effetto dura ancora
 per poco dopo che ne esci. Nemici e alleati ne subiscono l'effetto come te.
 
-- Il **terreno bruciato** ti dà Burning. Terra carbonizzata con braci
+- Il **terreno bruciato** ti infligge Bruciatura. Terra carbonizzata con braci
   ardenti e un bordo arancione.
-- La **lava** ti dà Burning e Crippled. Una crosta scura spaccata da crepe
+- La **lava** ti infligge Bruciatura e Azzoppato. Una crosta scura spaccata da crepe
   che scorrono, ardono e tremolano.
-- La **nebbia tossica** ti dà Poison. Sbuffi verde acido che fluttuano e
+- La **nebbia tossica** ti infligge Veleno. Sbuffi verde acido che fluttuano e
   attraverso cui si vede. Il verde sul terreno vuol dire sempre veleno.
 - Il **pantano** ti rallenta, e ogni attacco o abilità che usi lì ti costa
   Energia. Fango marrone con pozzanghere e bolle lente.
@@ -36,10 +36,10 @@ per poco dopo che ne esci. Nemici e alleati ne subiscono l'effetto come te.
 Colpiscono ancora e ancora nel loro punto, e prendono chiunque ci si trovi
 in quel momento.
 
-- Una **bocca di fuoco** sputa una colonna di fiamme che ti dà Burning. Tra
+- Una **bocca di fuoco** sputa una colonna di fiamme che ti infligge Bruciatura. Tra
   un colpo e l'altro è un collare di pietra che fuma.
-- Un **getto di gas** sbuffa un gas verde che ti dà Poison.
-- Una **frana** fa cadere rocce che ti danno Crippled. Alcune cadono in un
+- Un **getto di gas** sbuffa un gas verde che ti infligge Veleno.
+- Una **frana** fa cadere rocce che ti infliggono Azzoppato. Alcune cadono in un
   punto solo, altre rotolano lungo un percorso, avanti e indietro.
 
 Ognuno ti avverte appena prima di colpire: l'anello sul suo bordo si gonfia
