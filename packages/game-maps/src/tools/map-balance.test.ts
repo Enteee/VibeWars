@@ -2051,18 +2051,30 @@ describe("walks and high ground (#3070)", () => {
       );
     });
 
-    // A shrine 2 % nearer the dais won team 0 60 % of decided captures (#3442), so it is held to 1 %.
-    it("walks each team from its resurrection shrine to the dais within 1 %", () => {
+    // Each outer point is held by the team beside it against the neighbour from the far side. With
+    // its shrine nearer everything, team 0 held its own point by 692 and took team 1's, held by
+    // 514, and won 52 % of decided captures (#3442). So every shrine is as far from its own point,
+    // the neighbour's point and the dais, within 2 %.
+    it("walks each team from its resurrection shrine to its point, its neighbour's and the dais within 2 %", () => {
       const finder = layeredFinder(capture, MINIMAL_GW_INSPIRED_PVP_V1.collision.playerRadius);
+      const fromShrine = (team: number, to: Vec2, layer: number): number => {
+        const shrine = capture.objectives
+          .flatMap((each) => (each.kind === "resurrection-shrine" ? [each] : []))
+          .find((each) => each.team === team);
+        if (shrine === undefined) throw new Error(`no shrine for team ${String(team)}`);
+        return walkedFrom(shrine.position, finder.find(shrine.position, shrine.layer, to, layer));
+      };
       within(
-        TEAMS.map((team) => {
-          const shrine = capture.objectives
-            .flatMap((each) => (each.kind === "resurrection-shrine" ? [each] : []))
-            .find((each) => each.team === team);
-          if (shrine === undefined) throw new Error(`no shrine for team ${String(team)}`);
-          return walkedFrom(shrine.position, finder.find(shrine.position, shrine.layer, altar, 3));
-        }),
-        0.01,
+        TEAMS.map((team) => fromShrine(team, galleryMid(GALLERIES[(team + 2) % 3] ?? 0), 2)),
+        0.02,
+      );
+      within(
+        TEAMS.map((team) => fromShrine(team, galleryMid(GALLERIES[team] ?? 0), 2)),
+        0.02,
+      );
+      within(
+        TEAMS.map((team) => fromShrine(team, altar, 3)),
+        0.02,
       );
     });
 

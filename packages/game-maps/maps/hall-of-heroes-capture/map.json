@@ -632,7 +632,7 @@
     { "kind": "capture-point", "layer": 2, "base": 2, "position": { "x": 2500, "y": 3350 } },
     { "kind": "capture-point", "layer": 2, "base": 2, "position": { "x": 1504.1, "y": 1625 } },
     { "kind": "capture-point", "layer": 3, "position": { "x": 2500, "y": 2200 } },
-    { "kind": "resurrection-shrine", "layer": 1, "team": 0, "position": { "x": 2200, "y": 640 } },
+    { "kind": "resurrection-shrine", "layer": 1, "team": 0, "position": { "x": 2125, "y": 500 } },
     {
       "kind": "resurrection-shrine",
       "layer": 1,
@@ -643,7 +643,7 @@
       "kind": "resurrection-shrine",
       "layer": 1,
       "team": 2,
-      "position": { "x": 1385.6, "y": 3189.8 }
+      "position": { "x": 1500, "y": 3110 }
     }
   ],
   "gates": [
@@ -838,7 +838,7 @@
       },
       {
         "id": "north-resurrection-shrine-ring",
-        "position": { "x": 2200, "y": 640 },
+        "position": { "x": 2125, "y": 500 },
         "layer": 1,
         "radius": 220,
         "colour": 16767370,
@@ -856,7 +856,7 @@
       },
       {
         "id": "south-west-resurrection-shrine-ring",
-        "position": { "x": 1385.6, "y": 3189.8 },
+        "position": { "x": 1500, "y": 3110 },
         "layer": 1,
         "radius": 220,
         "colour": 16767370,
