@@ -289,7 +289,8 @@ async function host(page, map) {
   step = "start the match";
   await page.getByRole("button", { name: "Ready", exact: true }).click();
   await page.getByRole("button", { name: "start match" }).click();
-  await page.locator(".hud-bar-health").waitFor();
+  // An 8v8 opens a team lobby first; its countdown plays a random preset team.
+  await page.locator(".hud-bar-health").waitFor({ timeout: 90_000 });
 }
 
 /**
