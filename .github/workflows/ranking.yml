@@ -119,9 +119,9 @@ jobs:
           fi
 
           mkdir -p ranking
-          rm -rf ranking/receipts
-          cp -r "$out/receipts" ranking/receipts
-          cp "$out/leaderboard.json" "$out/log.txt" ranking/
+          rm -rf ranking
+          mkdir ranking
+          cp -r "$out/." ranking/
           touch .nojekyll
 
           git add -A
