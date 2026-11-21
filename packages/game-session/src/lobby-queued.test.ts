@@ -102,6 +102,7 @@ const GROUP: FormedGroup = {
   ranked: false,
   seed: 1,
   claims: {},
+  claimsAsOf: {},
   leaderboardAsOf: 0,
 };
 

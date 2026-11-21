@@ -17,6 +17,7 @@ import { describe, expect, it } from "vitest";
 
 import { joinLobby, type RankedPlay } from "./lobby-client.js";
 import type { LobbyConnection } from "./lobby-connection.js";
+import type { LeaderboardSource } from "./ranked-claims.js";
 import { MAP_IDS, MAP_TEAM_SIZES, MODE_MAPS, TRACK_IDS } from "./lobby-harness.test-support.js";
 import {
   RANKED_RESULT_TIMEOUT_MS,
@@ -83,6 +84,7 @@ function rankedGroup(mode: QueueMode): FormedGroup {
     ranked: true,
     seed: 4_123_456_789,
     claims: Object.fromEntries(teams.flat().map((key, n) => [key, 800 + n])),
+    claimsAsOf: Object.fromEntries(teams.flat().map((key) => [key, 0])),
     leaderboardAsOf: 0,
   };
 }
@@ -300,7 +302,14 @@ interface RankedLobbyOptions {
   readonly wrap?: (n: number, transport: Transport) => Transport;
   /** The host's room, wrapped: a lying host's, to its guests. */
   readonly host?: (transport: Transport) => Transport;
+  /** Each seat's leaderboard (#3575): by default none, and none fetched, so every claim holds. */
+  readonly board?: (n: number) => LeaderboardSource;
 }
+
+const NO_BOARD: LeaderboardSource = {
+  copy: () => undefined,
+  refetch: () => Promise.resolve(undefined),
+};
 
 async function joinSeat(
   group: FormedGroup,
@@ -308,6 +317,7 @@ async function joinSeat(
   transport: Transport,
   ranked: boolean,
   characterId = `char-${String(n)}`,
+  leaderboard: LeaderboardSource = NO_BOARD,
 ): Promise<Seat> {
   const key = testPlayerKey();
   const receipts: Seat["receipts"] = [];
@@ -318,6 +328,7 @@ async function joinSeat(
     prev: ZERO_HASH,
     buildHash: BUILD,
     crypto: testReceiptCrypto,
+    leaderboard,
     onReceipt: (receipt, partial) => receipts.push({ receipt, partial }),
     onResultSigned: (partial, round) => {
       signed.push(partial);
@@ -413,6 +424,7 @@ async function openRanked(mode: QueueMode, options: RankedLobbyOptions = {}): Pr
         wrap(n, room),
         !unranked.has(n),
         starters.has(n) ? "starter" : undefined,
+        options.board?.(n),
       ),
     );
   }
@@ -530,6 +542,20 @@ describe("a ranked queued match (ADR-0055, #3573)", () => {
     for (const n of [0, 1, 3]) {
       expect(ranked.seats[n]?.cancelled).toBe(1);
     }
+    expect(ranked.receipts).toEqual([]);
+  });
+
+  it("signs no start whose claims the seat's own board, of the same asOf, does not hold (#3575)", async () => {
+    // Seat 2's board, as of the claims' own, rates everyone 1000.
+    const ranked = await openRanked("random-arena-2v2", {
+      board: (n) =>
+        n === 2
+          ? { copy: () => ({ asOf: 0, claimOf: () => 1000 }), refetch: NO_BOARD.refetch }
+          : NO_BOARD,
+    });
+    await ranked.step(COUNTDOWN_SECONDS + RANKED_START_TIMEOUT_MS / 1000 + TICK_SECONDS);
+    expect(ranked.seats[2]?.startsSigned).toBe(0);
+    expect(ranked.fellThrough).toEqual([[seatKey(2)]]);
     expect(ranked.receipts).toEqual([]);
   });
 
