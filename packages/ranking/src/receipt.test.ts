@@ -578,15 +578,23 @@ describe("proof of work (#3746)", () => {
 
   it("finds in slices the nonce one long search finds", () => {
     const pubkey = testSigner().pubkey;
-    const once = findWork("group-1", pubkey, crypto.sha256, {
-      from: 0,
-      budgetMs: Number.POSITIVE_INFINITY,
-      now: () => 0,
-      bits: 12,
-    });
+    const searchOnce = (start: string) =>
+      findWork(start, pubkey, crypto.sha256, {
+        from: 0,
+        budgetMs: Number.POSITIVE_INFINITY,
+        now: () => 0,
+        bits: 12,
+      });
+    // A start whose stamp lies past the first 256-hash block, so it takes slices.
+    let started = "group-0";
+    let once = searchOnce(started);
+    for (let i = 1; "work" in once && Number.parseInt(once.work, 16) < 256; i += 1) {
+      started = `group-${String(i)}`;
+      once = searchOnce(started);
+    }
     // A clock that runs out after every check: one 256-hash block a slice.
     let clock = 0;
-    let search = findWork("group-1", pubkey, crypto.sha256, {
+    let search = findWork(started, pubkey, crypto.sha256, {
       from: 0,
       budgetMs: 1,
       now: () => (clock += 1),
@@ -594,7 +602,7 @@ describe("proof of work (#3746)", () => {
     });
     let slices = 1;
     while ("next" in search) {
-      search = findWork("group-1", pubkey, crypto.sha256, {
+      search = findWork(started, pubkey, crypto.sha256, {
         from: search.next,
         budgetMs: 1,
         now: () => (clock += 1),
@@ -604,7 +612,7 @@ describe("proof of work (#3746)", () => {
     }
     expect(search).toEqual(once);
     expect(slices).toBeGreaterThan(1);
-    expect("work" in search && validWork("group-1", pubkey, search.work, crypto.sha256, 12)).toBe(
+    expect("work" in search && validWork(started, pubkey, search.work, crypto.sha256, 12)).toBe(
       true,
     );
   });
