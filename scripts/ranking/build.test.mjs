@@ -9,7 +9,16 @@ import os from "node:os";
 import path from "node:path";
 
 import { schnorr } from "@noble/secp256k1";
-import { parseReceipt, resultDigest, startDigest, startHash, ZERO_HASH } from "@vibewars/ranking";
+import {
+  findWork,
+  parseReceipt,
+  resultDigest,
+  startDigest,
+  startHash,
+  validWork,
+  workNonce,
+  ZERO_HASH,
+} from "@vibewars/ranking";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { BOARD_KEPT_SECONDS, fetchRelay, run } from "./build.mjs";
@@ -20,6 +29,27 @@ import { BOARD_KEPT_SECONDS, fetchRelay, run } from "./build.mjs";
 /** @param {Uint8Array} bytes */
 const sha256 = (bytes) => new Uint8Array(createHash("sha256").update(bytes).digest());
 const hex = (/** @type {Uint8Array} */ bytes) => Buffer.from(bytes).toString("hex");
+
+/** The stamp bits these runs ask for, so a test signs in microseconds, not seconds. */
+const WORK_BITS = 4;
+
+/**
+ * `pubkey`'s stamp under start `started`, of `WORK_BITS`.
+ * @param {string} started
+ * @param {string} pubkey
+ */
+function stamp(started, pubkey) {
+  const found = findWork(started, pubkey, sha256, {
+    from: 0,
+    budgetMs: Number.POSITIVE_INFINITY,
+    now: () => 0,
+    bits: WORK_BITS,
+  });
+  if (!("work" in found)) {
+    throw new Error("an unbounded search always ends in a stamp");
+  }
+  return found.work;
+}
 
 /** Eight keys, each a real BIP-340 key; a receipt seats the first four unless told otherwise. */
 const KEYS = Array.from({ length: 8 }, () => {
@@ -76,7 +106,12 @@ function receipt({ matchId, leavers = [], only, at = 0, keys = KEYS.slice(0, 4) 
     start,
     startSigs: Object.fromEntries(keys.map((key) => [key.pubkey, key.sign(startOf)])),
     result,
-    resultSigs: Object.fromEntries(signers.map((key) => [key.pubkey, key.sign(resultOf)])),
+    resultSigs: Object.fromEntries(
+      signers.map((key) => [
+        key.pubkey,
+        { sig: key.sign(resultOf), work: stamp(result.startHash, key.pubkey) },
+      ]),
+    ),
   };
 }
 
@@ -122,6 +157,7 @@ async function runOn(dir, held, asOfDay = DAY) {
   const asked = [];
   const out = await run({
     dir,
+    workBits: WORK_BITS,
     asOfDay,
     relays: RELAYS,
     fetch: (relay, since) => {
@@ -251,6 +287,16 @@ describe("the leaderboard job", () => {
       ...match,
       startSigs: { ...match.startSigs, [KEYS[0]?.pubkey ?? ""]: "00".repeat(64) },
     };
+    const payer = KEYS[1]?.pubkey ?? "";
+    const paid = match.resultSigs[payer];
+    // The first nonce that is no stamp for this seat in this match.
+    const weak = Array.from({ length: 64 }, (_, n) => workNonce(n)).find(
+      (work) => !validWork(match.result.startHash, payer, work, sha256, WORK_BITS),
+    );
+    const unpaid = {
+      ...match,
+      resultSigs: { ...match.resultSigs, [payer]: { sig: paid?.sig ?? "", work: weak ?? "" } },
+    };
     const elsewhere = {
       ...event(match),
       tags: [
@@ -259,11 +305,12 @@ describe("the leaderboard job", () => {
       ],
     };
     const first = await runOn(dir, [
-      [event(match), event("{not json"), event(forged), elsewhere],
+      [event(match), event("{not json"), event(forged), event(unpaid, "/r0"), elsewhere],
       [],
     ]);
     expect(first.log).toMatch(/malformed: 2\n/);
     expect(first.log).toMatch(/start-signature: 1\n/);
+    expect(first.log).toMatch(/no-work: 1\n/);
 
     const down = await runOn(dir, [undefined, undefined]);
     expect(down.shards).toEqual(first.shards);
@@ -337,6 +384,7 @@ describe("the leaderboard job", () => {
         relays: RELAYS,
         fetch: () => Promise.resolve([event(match)]),
         maxShardBytes: 100,
+        workBits: WORK_BITS,
       }),
     ).rejects.toThrow(/over 100: GitHub refuses/);
     expect(fs.readdirSync(dir)).toEqual([]);

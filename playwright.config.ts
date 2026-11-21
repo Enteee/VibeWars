@@ -103,6 +103,7 @@ export default defineConfig({
       VIBEWARS_BASE: BASE,
       VITE_VIBEWARS_TRANSPORT: "broadcast",
       VITE_VIBEWARS_LOBBY_SEED: "4404",
+      VITE_VIBEWARS_WORK_BITS: "8",
       VITE_VIBEWARS_SPLASH: "off",
       VITE_VIBEWARS_MENU_BACKGROUND: "off",
       VITE_VIBEWARS_TUTORIAL_STATION: "on",

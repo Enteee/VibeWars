@@ -10,6 +10,8 @@
 export const RANKED_START_TAG = "vibewars/ranked-start";
 /** BIP-340 tag of the result digest every non-leaver signs. */
 export const RANKED_RESULT_TAG = "vibewars/ranked-result";
+/** BIP-340 tag of a proof-of-work stamp: one match, one signer (#3746). */
+export const RANKED_WORK_TAG = "vibewars/ranked-work";
 /** BIP-340 tag of a receipt's hash: the match it records, whoever's copy. */
 export const RANKED_RECEIPT_TAG = "vibewars/ranked-receipt";
 /** A `prev` with no receipt before it, and a `host-left` result's `replayHash`. */
@@ -21,9 +23,9 @@ export const MAX_RANKED_SEATS = 16;
 export const MAX_SEAT_NAME_LENGTH = 40;
 /**
  * The largest receipt `parseReceipt` reads, in UTF-8 bytes: the canonical
- * encoding of the largest there can be is 22.8 KB. That is 16 seats with
+ * encoding of the largest there can be is 23.3 KB. That is 16 seats with
  * every id, name and integer at its bound in `\uXXXX` escapes, 16 leavers,
- * and both signature maps full, at about 200 bytes an entry. A common 8v8
+ * and both signature maps full, a result one with its stamp. A common 8v8
  * one is about 11 KB.
  */
 export const MAX_RECEIPT_BYTES = 24 * 1024;
@@ -93,12 +95,27 @@ export interface RankedResult {
   readonly replayHash: string;
 }
 
-/** A ranked match, signed: signatures are keyed by pubkey, 128 lowercase hex digits each. */
+/**
+ * A seat's signature of a result, and the stamp that pays for it: `work`
+ * is a nonce, 16 lowercase hex digits, whose `workDigest` for the match
+ * and the signer has `RANKED_WORK_BITS` leading zero bits (#3746).
+ */
+export interface ResultSignature {
+  /** 128 lowercase hex digits. */
+  readonly sig: string;
+  readonly work: string;
+}
+
+/**
+ * A ranked match, signed, its signatures keyed by pubkey: a start
+ * signature is 128 lowercase hex digits, a result one also carries its
+ * stamp.
+ */
 export interface RankedReceipt {
   readonly start: RankedStart;
   readonly startSigs: Readonly<Record<string, string>>;
   readonly result: RankedResult;
-  readonly resultSigs: Readonly<Record<string, string>>;
+  readonly resultSigs: Readonly<Record<string, ResultSignature>>;
 }
 
 /** SHA-256 of `bytes`. */
@@ -114,6 +131,8 @@ export type VerifySchnorr = (pubkey: string, digest: Uint8Array, sig: string) =>
 export interface ReceiptCrypto {
   readonly sha256: Sha256;
   readonly verify: VerifySchnorr;
+  /** The zero bits a result signature's stamp needs: `RANKED_WORK_BITS`, but in tests. */
+  readonly workBits: number;
 }
 
 /** Why a receipt is not valid. */
@@ -124,7 +143,8 @@ export type ReceiptFault =
   | "winning-team"
   | "leavers"
   | "host-left"
-  | "result-signature";
+  | "result-signature"
+  | "no-work";
 
 /**
  * Whether a receipt is valid, and if so whether it is void: valid, but
@@ -138,6 +158,7 @@ export type ReceiptValidity =
 
 const HEX_32 = /^[0-9a-f]{64}$/;
 const HEX_64 = /^[0-9a-f]{128}$/;
+const HEX_8 = /^[0-9a-f]{16}$/;
 
 function canonicalJson(value: unknown): string {
   if (value === null || typeof value === "boolean" || typeof value === "string") {
@@ -207,6 +228,118 @@ export function resultDigest(result: RankedResult, sha256: Sha256): Uint8Array {
 export function receiptHash(receipt: RankedReceipt, sha256: Sha256): string {
   const { start, result } = receipt;
   return toHex(taggedHash(sha256, RANKED_RECEIPT_TAG, canonicalBytes({ start, result })));
+}
+
+/**
+ * The leading zero bits a result signature's stamp needs (#3746): about
+ * 5 s of one desktop core, so minting a fake receipt costs a key that
+ * much CPU, and an honest player pays it once a match, in a worker,
+ * while the match is played.
+ */
+export const RANKED_WORK_BITS = 22;
+
+/**
+ * How much longer than its own timeout a result round waits for a seat's
+ * signature (#3746): the p99 stamp time on a mid-range phone at the
+ * worker's half-core throttle. The stamp starts once the start is
+ * signed, so only a match over within this long ever spends it.
+ */
+export const RANKED_WORK_GRACE_MS = 60_000;
+
+/** The bytes a stamp hashes: tag hash twice, then `{startHash, pubkey, work}` canonically. */
+function workMessage(started: string, pubkey: string, work: string, sha256: Sha256): Uint8Array {
+  const tagHash = sha256(new TextEncoder().encode(RANKED_WORK_TAG));
+  const message = canonicalBytes({ startHash: started, pubkey, work });
+  const joined = new Uint8Array(tagHash.length * 2 + message.length);
+  joined.set(tagHash, 0);
+  joined.set(tagHash, tagHash.length);
+  joined.set(message, tagHash.length * 2);
+  return joined;
+}
+
+/**
+ * The digest of stamp `work` for `pubkey`'s result signature in the match
+ * whose `startHash` is `started`: `{startHash, pubkey, work}`'s canonical
+ * bytes under `vibewars/ranked-work`. It binds the start, not the round,
+ * so a seat that signs a result again needs no new work; and not the
+ * `matchId`, which a flooder could replay under another start.
+ */
+export function workDigest(
+  started: string,
+  pubkey: string,
+  work: string,
+  sha256: Sha256,
+): Uint8Array {
+  return sha256(workMessage(started, pubkey, work, sha256));
+}
+
+/** Whether `digest` starts with at least `bits` zero bits. */
+export function hasWork(digest: Uint8Array, bits: number): boolean {
+  const whole = Math.floor(bits / 8);
+  for (let i = 0; i < whole; i += 1) {
+    if (digest[i] !== 0) {
+      return false;
+    }
+  }
+  const rest = bits % 8;
+  return rest === 0 || (digest[whole] ?? 0xff) >> (8 - rest) === 0;
+}
+
+/** Whether `work` is a well-formed stamp for `pubkey` under start `started`, of `bits` zero bits. */
+export function validWork(
+  started: string,
+  pubkey: string,
+  work: string,
+  sha256: Sha256,
+  bits: number,
+): boolean {
+  return HEX_8.test(work) && hasWork(workDigest(started, pubkey, work, sha256), bits);
+}
+
+/** Nonce `n` as a stamp: 16 lowercase hex digits. */
+export const workNonce = (n: number): string => n.toString(16).padStart(16, "0");
+
+/** Where `findWork` got to: the stamp, or the nonce to go on from. */
+export type WorkSearch = { readonly work: string } | { readonly next: number };
+
+/**
+ * One slice of the search for `pubkey`'s stamp under start `started`: nonces from
+ * `from` on, until one has `bits` zero bits or `budgetMs` of `now` is
+ * spent. A worker calls it again from `next` after yielding, so the
+ * search never holds a core; the slices find the nonce one long search
+ * would.
+ */
+export function findWork(
+  started: string,
+  pubkey: string,
+  sha256: Sha256,
+  search: {
+    readonly from: number;
+    readonly budgetMs: number;
+    readonly now: () => number;
+    readonly bits: number;
+  },
+): WorkSearch {
+  const bytes = workMessage(started, pubkey, workNonce(0), sha256);
+  // The nonce is the last string of the canonical encoding: `…"work":"<16>"}`.
+  const at = bytes.length - 18;
+  const deadline = search.now() + search.budgetMs;
+  let n = search.from;
+  for (;;) {
+    // Check the clock every 256 hashes: reading it costs more than one.
+    for (const end = n + 256; n < end; n += 1) {
+      const hex = workNonce(n);
+      for (let i = 0; i < 16; i += 1) {
+        bytes[at + i] = hex.charCodeAt(i);
+      }
+      if (hasWork(sha256(bytes), search.bits)) {
+        return { work: hex };
+      }
+    }
+    if (search.now() >= deadline) {
+      return { next: n };
+    }
+  }
 }
 
 type Json = Readonly<Record<string, unknown>>;
@@ -335,6 +468,35 @@ function parseSigs(
   return sigs;
 }
 
+/** The result signatures in `value` of the keys in `seated`, each with its stamp. */
+function parseResultSigs(
+  value: unknown,
+  seated: ReadonlySet<string>,
+): Record<string, ResultSignature> | undefined {
+  if (!isRecord(value)) {
+    return undefined;
+  }
+  const sigs: Record<string, ResultSignature> = {};
+  for (const [pubkey, entry] of Object.entries(value)) {
+    if (!HEX_32.test(pubkey) || !isRecord(entry)) {
+      return undefined;
+    }
+    const { sig, work } = entry;
+    if (
+      typeof sig !== "string" ||
+      !HEX_64.test(sig) ||
+      typeof work !== "string" ||
+      !HEX_8.test(work)
+    ) {
+      return undefined;
+    }
+    if (seated.has(pubkey)) {
+      sigs[pubkey] = { sig, work };
+    }
+  }
+  return sigs;
+}
+
 /**
  * The receipt `json` encodes, or `undefined` for anything that is not
  * one: too large, not JSON, a field missing, out of bounds or of an
@@ -374,7 +536,7 @@ export function parseRankedReceipt(value: unknown): RankedReceipt | undefined {
   const seated = new Set(start.teams.flat().map((seat) => seat.pubkey));
   const startSigs = parseSigs(value.startSigs, seated);
   const result = parseRankedResult(value.result);
-  const resultSigs = parseSigs(value.resultSigs, seated);
+  const resultSigs = parseResultSigs(value.resultSigs, seated);
   if (startSigs === undefined || result === undefined || resultSigs === undefined) {
     return undefined;
   }
@@ -397,7 +559,9 @@ const signed = (
  * signature from a key that is not seated is ignored. It is void unless
  * more than half of the seats signed the result (consent, Q109 B): the
  * host's team cannot win alone by naming every opponent a leaver. A
- * departed host counts among the seats and does not sign.
+ * departed host counts among the seats and does not sign. Every result
+ * signature carries a stamp of `crypto.workBits` zero bits for its signer and
+ * this match, or the receipt is `no-work` (#3746).
  */
 export function validateReceipt(receipt: RankedReceipt, crypto: ReceiptCrypto): ReceiptValidity {
   const { start, startSigs, result, resultSigs } = receipt;
@@ -436,8 +600,20 @@ export function validateReceipt(receipt: RankedReceipt, crypto: ReceiptCrypto): 
     return { ok: false, reason: "host-left" };
   }
   const digestOfResult = resultDigest(result, crypto.sha256);
-  const signedResult = (pubkey: string): boolean =>
-    signed(resultSigs, pubkey, digestOfResult, crypto.verify);
+  const signedResult = (pubkey: string): boolean => {
+    const entry = resultSigs[pubkey];
+    return entry !== undefined && crypto.verify(pubkey, digestOfResult, entry.sig);
+  };
+  // A signature is paid for, partials' included (#3746).
+  const unpaid = Object.entries(resultSigs).some(
+    ([pubkey, { work }]) =>
+      seated.has(pubkey) &&
+      signedResult(pubkey) &&
+      !validWork(result.startHash, pubkey, work, crypto.sha256, crypto.workBits),
+  );
+  if (unpaid) {
+    return { ok: false, reason: "no-work" };
+  }
   if (!seats.every((pubkey) => leavers.has(pubkey) || signedResult(pubkey))) {
     return { ok: false, reason: "result-signature" };
   }
@@ -447,17 +623,17 @@ export function validateReceipt(receipt: RankedReceipt, crypto: ReceiptCrypto): 
   return { ok: true, void: 2 * signers <= seats.length };
 }
 
-function mergeSigs(
+/** Of `a`'s and `b`'s signature for each seat, the first that is `good`; `a`'s wins. */
+function mergeSigs<Sig>(
   seats: readonly string[],
-  a: Readonly<Record<string, string>>,
-  b: Readonly<Record<string, string>>,
-  digest: Uint8Array,
-  verify: VerifySchnorr,
-): Record<string, string> {
-  const merged: Record<string, string> = {};
+  a: Readonly<Record<string, Sig>>,
+  b: Readonly<Record<string, Sig>>,
+  good: (pubkey: string, sig: Sig) => boolean,
+): Record<string, Sig> {
+  const merged: Record<string, Sig> = {};
   for (const pubkey of seats) {
     const sig = [a[pubkey], b[pubkey]].find(
-      (candidate) => candidate !== undefined && verify(pubkey, digest, candidate),
+      (candidate) => candidate !== undefined && good(pubkey, candidate),
     );
     if (sig !== undefined) {
       merged[pubkey] = sig;
@@ -471,8 +647,9 @@ function mergeSigs(
  * each signed a `host-left` result alone publish them: the union of
  * their signatures when start and result are byte for byte the same,
  * otherwise `undefined`. A signature is kept only if it is a seat's and
- * verifies, so a forged one published beside a good one cannot displace
- * it; `a`'s wins where both do.
+ * verifies, and a result one only with its stamp, so a forged one
+ * published beside a good one cannot displace it; `a`'s wins where both
+ * do.
  */
 export function mergeReceipts(
   a: RankedReceipt,
@@ -486,22 +663,22 @@ export function mergeReceipts(
     return undefined;
   }
   const seats = a.start.teams.flat().map((seat) => seat.pubkey);
+  const { startHash: started } = a.result;
+  const ofStart = startDigest(a.start, crypto.sha256);
+  const ofResult = resultDigest(a.result, crypto.sha256);
   return {
     start: a.start,
-    startSigs: mergeSigs(
-      seats,
-      a.startSigs,
-      b.startSigs,
-      startDigest(a.start, crypto.sha256),
-      crypto.verify,
+    startSigs: mergeSigs(seats, a.startSigs, b.startSigs, (pubkey, sig) =>
+      crypto.verify(pubkey, ofStart, sig),
     ),
     result: a.result,
     resultSigs: mergeSigs(
       seats,
       a.resultSigs,
       b.resultSigs,
-      resultDigest(a.result, crypto.sha256),
-      crypto.verify,
+      (pubkey, { sig, work }) =>
+        crypto.verify(pubkey, ofResult, sig) &&
+        validWork(started, pubkey, work, crypto.sha256, crypto.workBits),
     ),
   };
 }

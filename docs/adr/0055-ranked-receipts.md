@@ -43,7 +43,7 @@ The new package `packages/ranking` holds the types, the canonical encoding and t
    - `leavers`: the pubkeys whose seat was freed after `RECONNECT_WINDOW_SECONDS`.
    - `replayHash`.
 
-   Every player who is not a leaver signs it. A player still seated who has not signed within `RANKED_RESULT_TIMEOUT_MS` (30 s) is added to `leavers` and the others sign again. **Refusing to sign is leaving.**
+   Every player who is not a leaver signs it, with its stamp (below). A player still seated who has not signed within `RANKED_RESULT_TIMEOUT_MS` (30 s) plus `RANKED_WORK_GRACE_MS` is added to `leavers` and the others sign again. **Refusing to sign is leaving.**
 
    A player publishes its own partial receipt, the start and its signature over that round's result, the moment it signs, in every round. That is the evidence against a host that re-rounds an honest signer into a leaver: the job voids a match when a key named a leaver in the final receipt has a valid signature on an earlier round's result that (1) carries the same fully signed start (the same `startHash`, not merely the same `matchId`) and (2) is also validly signed, in any copy, by a key on the final receipt's winning team (on a draw, by a key on any team but the leaver's). A player who really refused has no such signature, so it loses. A leaver-only partial is not evidence: a leaver could sign a round, or a whole start of their own under the same `matchId`, alone. A winner gains nothing by voiding their own win, so their signature is what makes the round believable.
 
@@ -63,6 +63,7 @@ It is valid when:
 
 - every start signature verifies;
 - every non-leaver's result signature verifies;
+- every result signature, a partial's included, carries a valid stamp for its signer and this start (`no-work` otherwise);
 - result signatures from more than half of the seats in the start (Q109, answer B); without them the match is void (unrated for every seat), whatever the leavers list says. A departed host counts among the seats and does not sign.
 
 A receipt nobody but its host signed cannot exist, because the start round needs every player. So nobody can fabricate a match against a key that never agreed to play it.

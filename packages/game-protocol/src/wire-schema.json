@@ -6621,7 +6621,8 @@
     "PeerRankedResultSig": {
       "properties": [
         { "name": "sig", "optional": false, "type": "string" },
-        { "name": "startHash", "optional": false, "type": "string" }
+        { "name": "startHash", "optional": false, "type": "string" },
+        { "name": "work", "optional": false, "type": "string" }
       ]
     },
     "PeerRankedStartSig": {
@@ -8960,7 +8961,20 @@
               {
                 "name": "resultSigs",
                 "optional": false,
-                "type": { "properties": [], "index": [{ "key": "string", "value": "string" }] }
+                "type": {
+                  "properties": [],
+                  "index": [
+                    {
+                      "key": "string",
+                      "value": {
+                        "properties": [
+                          { "name": "sig", "optional": false, "type": "string" },
+                          { "name": "work", "optional": false, "type": "string" }
+                        ]
+                      }
+                    }
+                  ]
+                }
               },
               {
                 "name": "start",

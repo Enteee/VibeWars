@@ -7,6 +7,7 @@ import {
   type WireRankedResult,
 } from "@vibewars/game-protocol";
 import {
+  RANKED_WORK_GRACE_MS,
   ZERO_HASH,
   mergeReceipts,
   startHash,
@@ -30,7 +31,12 @@ import { TICK_SECONDS, settle, until } from "./match-harness.test-support.js";
 import type { MatchEnding, MatchHost } from "./match-host.js";
 import { createMemoryNetwork, type MemoryNetwork } from "./memory-transport.js";
 import type { PlayerKey } from "./player-key.js";
-import { testPlayerKey, testReceiptCrypto, verifyTestProof } from "./player-key.test-support.js";
+import {
+  testPlayerKey,
+  testReceiptCrypto,
+  testWork,
+  verifyTestProof,
+} from "./player-key.test-support.js";
 import type { VerifyTicketSig } from "./queue-admission.js";
 import type { TicketKey } from "./queue-client.js";
 import type { FormedGroup } from "./queue-formation.js";
@@ -59,6 +65,8 @@ const verifyTicketSig: VerifyTicketSig = (ticketId, digest, sig) =>
 
 const BUILD = "test-build";
 const COUNTDOWN_SECONDS = 5;
+/** How long a result round waits for a seat's signature, its stamp's grace in (#3746). */
+const RESULT_WAIT_SECONDS = (RANKED_RESULT_TIMEOUT_MS + RANKED_WORK_GRACE_MS) / 1000;
 const STARTED_AT = 1_795_000_000;
 const REPLAY_HASH = "ab".repeat(32);
 
@@ -274,6 +282,8 @@ interface Seat {
   readonly signed: RankedReceipt[];
   /** The round each of `signed` was handed on with. */
   readonly rounds: number[];
+  /** Make its stamp ready: at once, unless the seat is in `heldWork`. */
+  readonly releaseWork: () => void;
   /** How many times it signed the host's start. */
   startsSigned: number;
   cancelled: number;
@@ -304,6 +314,8 @@ interface RankedLobbyOptions {
   readonly host?: (transport: Transport) => Transport;
   /** Each seat's leaderboards (#3575): by default `PUBLISHED`, so every claim holds. */
   readonly board?: (n: number) => LeaderboardSource;
+  /** Seats whose stamp (#3746) is not ready until the test calls their `releaseWork`. */
+  readonly heldWork?: readonly number[];
 }
 
 /** What every seat's claim names: the one board `PUBLISHED` holds. */
@@ -328,6 +340,7 @@ async function joinSeat(
   ranked: boolean,
   characterId = `char-${String(n)}`,
   leaderboard: LeaderboardSource = PUBLISHED,
+  heldWork = false,
 ): Promise<Seat> {
   const key = testPlayerKey();
   const claim = group.claims[seatKey(n)];
@@ -337,12 +350,20 @@ async function joinSeat(
   const receipts: Seat["receipts"] = [];
   const signed: RankedReceipt[] = [];
   const rounds: number[] = [];
+  let releaseWork = (): void => undefined;
+  const workReady = new Promise<void>((resolve) => {
+    releaseWork = resolve;
+  });
+  if (!heldWork) {
+    releaseWork();
+  }
   const play: RankedPlay = {
     characterId,
     prev: ZERO_HASH,
     buildHash: BUILD,
     crypto: testReceiptCrypto,
     leaderboard,
+    work: (startHash) => workReady.then(() => testWork(startHash, key.pubkey)),
     onReceipt: (receipt, partial) => receipts.push({ receipt, partial }),
     onResultSigned: (partial, round) => {
       signed.push(partial);
@@ -377,6 +398,7 @@ async function joinSeat(
     receipts,
     signed,
     rounds,
+    releaseWork,
     startsSigned: 0,
     cancelled: 0,
   };
@@ -428,6 +450,7 @@ async function openRanked(mode: QueueMode, options: RankedLobbyOptions = {}): Pr
   const wrap = options.wrap ?? ((_n: number, transport: Transport) => transport);
   const unranked = new Set(options.unranked ?? []);
   const starters = new Set(options.starters ?? []);
+  const heldWork = new Set(options.heldWork ?? []);
   const seats: Seat[] = [];
   const count = group.teams.flat().length;
   for (let n = 0; n < count; n += 1) {
@@ -440,6 +463,7 @@ async function openRanked(mode: QueueMode, options: RankedLobbyOptions = {}): Pr
         !unranked.has(n),
         starters.has(n) ? "starter" : undefined,
         options.board?.(n),
+        heldWork.has(n),
       ),
     );
   }
@@ -636,6 +660,36 @@ describe("a ranked queued match (ADR-0055, #3573)", () => {
     expect(validateReceipt(receipt, testReceiptCrypto)).toEqual({ ok: true, void: false });
   });
 
+  it("waits past the result timeout for a seat whose stamp is late, within its grace (#3746)", async () => {
+    const ranked = await openRanked("random-arena-2v2", { heldWork: [2] });
+    await startRanked(ranked);
+    // Over at 0:10: the stamp is still running.
+    ranked.match.finish(1);
+    await ranked.step(1);
+    await ranked.step(RANKED_RESULT_TIMEOUT_MS / 1000);
+    expect(ranked.receipts).toEqual([]);
+    expect(ranked.seats[2]?.signed).toEqual([]);
+    ranked.seats[2]?.releaseWork();
+    await ranked.step(1);
+    await until(() => ranked.receipts.length === 1);
+    const receipt = receiptOf(ranked);
+    expect(receipt.result.leavers).toEqual([]);
+    expect(Object.keys(receipt.resultSigs)).toHaveLength(4);
+    expect(validateReceipt(receipt, testReceiptCrypto)).toEqual({ ok: true, void: false });
+  });
+
+  it("makes a seat whose stamp never comes a leaver once its grace runs out (#3746)", async () => {
+    const ranked = await openRanked("random-arena-2v2", { heldWork: [2] });
+    await startRanked(ranked);
+    ranked.match.finish(1);
+    await ranked.step(1);
+    await ranked.step(RESULT_WAIT_SECONDS);
+    await until(() => ranked.receipts.length === 1);
+    const receipt = receiptOf(ranked);
+    expect(receipt.result.leavers).toEqual([pubkeys(ranked)[2]]);
+    expect(validateReceipt(receipt, testReceiptCrypto)).toEqual({ ok: true, void: false });
+  });
+
   it("makes a seat that will not sign the result a leaver, and the rest sign again", async () => {
     const ranked = await openRanked("random-arena-2v2", {
       wrap: (n, transport) =>
@@ -645,7 +699,7 @@ describe("a ranked queued match (ADR-0055, #3573)", () => {
     ranked.match.finish(1);
     await ranked.step(1);
     expect(ranked.receipts).toEqual([]);
-    await ranked.step(RANKED_RESULT_TIMEOUT_MS / 1000);
+    await ranked.step(RESULT_WAIT_SECONDS);
     await until(() => ranked.receipts.length === 1);
     const receipt = receiptOf(ranked);
     const refuser = pubkeys(ranked)[2] ?? "";
@@ -757,7 +811,7 @@ describe("a ranked queued match (ADR-0055, #3573)", () => {
     // No guest signed the lie: seat 3 is named, and seats 1 and 2 never saw
     // it go. The host's own player heard the truth, and signed that.
     expect(sigs.sent()).toEqual([1, 0, 0, 0]);
-    await ranked.step(RANKED_RESULT_TIMEOUT_MS / 1000);
+    await ranked.step(RESULT_WAIT_SECONDS);
     await until(() => ranked.receipts.length === 1);
     const receipt = receiptOf(ranked);
     expect(receipt.result.leavers).toEqual(pubkeys(ranked).slice(1));
@@ -776,7 +830,7 @@ describe("a ranked queued match (ADR-0055, #3573)", () => {
     ranked.match.finish(1);
     await ranked.step(1);
     expect(sigs.sent()).toEqual([1, 0, 0, 0]);
-    await ranked.step(RANKED_RESULT_TIMEOUT_MS / 1000);
+    await ranked.step(RESULT_WAIT_SECONDS);
     await until(() => ranked.receipts.length === 1);
     const receipt = receiptOf(ranked);
     expect(receipt.result.leavers).toEqual(pubkeys(ranked).slice(1));
@@ -800,7 +854,7 @@ describe("a ranked queued match (ADR-0055, #3573)", () => {
     ranked.match.finish(1);
     await ranked.step(1);
     expect(sigs.sent()).toEqual([1, 0, 0, 0]);
-    await ranked.step(RANKED_RESULT_TIMEOUT_MS / 1000);
+    await ranked.step(RESULT_WAIT_SECONDS);
     await until(() => ranked.receipts.length === 1);
     // Seat 3 never saw itself named, and seats 1 and 2 never saw it go.
     expect(sigs.sent()).toEqual([2, 0, 0, 0]);
@@ -823,7 +877,7 @@ describe("a ranked queued match (ADR-0055, #3573)", () => {
       expect(Object.keys(seat.signed[0]?.resultSigs ?? {})).toEqual([seat.key.pubkey]);
       expect(seat.signed[0]?.result.leavers).toEqual([]);
     }
-    await ranked.step(RANKED_RESULT_TIMEOUT_MS / 1000);
+    await ranked.step(RESULT_WAIT_SECONDS);
     await until(() => ranked.receipts.length === 1);
     const receipt = receiptOf(ranked);
     // Seat 2's signature never reached the host: it alone is added.
@@ -844,7 +898,7 @@ describe("a ranked queued match (ADR-0055, #3573)", () => {
       });
       // Its one signature merges into the full receipt unchanged.
       if (n !== 2) {
-        expect(receipt.resultSigs[seat.key.pubkey]).toBe(last.resultSigs[seat.key.pubkey]);
+        expect(receipt.resultSigs[seat.key.pubkey]).toEqual(last.resultSigs[seat.key.pubkey]);
       }
     }
   });

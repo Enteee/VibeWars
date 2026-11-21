@@ -1,5 +1,5 @@
 import { sha256 } from "@noble/hashes/sha2.js";
-import { resultDigest, startDigest, type ReceiptCrypto } from "@vibewars/ranking";
+import { findWork, resultDigest, startDigest, type ReceiptCrypto } from "@vibewars/ranking";
 
 import type { LobbyProofFields, PlayerKey, VerifyPlayerProof } from "./player-key.js";
 
@@ -46,6 +46,23 @@ export function testPlayerKey(pubkey: string = randomHex(32)): PlayerKey {
   };
 }
 
+/** The stamp bits tests ask for (#3746): 16 hashes or so, not millions. */
+export const TEST_WORK_BITS = 4;
+
+/** `pubkey`'s stamp of `TEST_WORK_BITS` for the start `startHash`: one long search. */
+export function testWork(startHash: string, pubkey: string): string {
+  const found = findWork(startHash, pubkey, sha256, {
+    from: 0,
+    budgetMs: Number.POSITIVE_INFINITY,
+    now: () => 0,
+    bits: TEST_WORK_BITS,
+  });
+  if (!("work" in found)) {
+    throw new Error("an unbounded search always ends in a stamp");
+  }
+  return found.work;
+}
+
 export const verifyTestProof: VerifyPlayerProof = (pubkey, fields, sig) =>
   made.get(sig) === proofOf(pubkey, fields);
 
@@ -54,6 +71,7 @@ export const verifyTestProof: VerifyPlayerProof = (pubkey, fields, sig) =>
  * so digests and hashes are the client's, and the test keys' signatures.
  */
 export const testReceiptCrypto: ReceiptCrypto = {
+  workBits: TEST_WORK_BITS,
   sha256,
   verify: (pubkey, digest, sig) => made.get(sig) === digestOf(pubkey, digest),
 };

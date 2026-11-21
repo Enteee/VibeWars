@@ -14,6 +14,8 @@ import { resultDigest, startDigest, type ReceiptCrypto } from "@vibewars/ranking
 
 import { STORAGE_NAMESPACE } from "../../storage/namespace.js";
 
+import { WORK_BITS } from "./ranked-work.js";
+
 // `PlayerKey`'s signing is synchronous, and secp256k1 signs synchronously
 // only with a sha256 of the same kind: WebCrypto's is async only.
 hashes.sha256 = sha256;
@@ -98,9 +100,10 @@ export function loadPlayerKey(storage: Storage): PlayerKey {
 /**
  * The curve code ranked receipts are checked with (ADR-0055, #3680): the
  * hash player keys sign with, and BIP-340's check. Total, as
- * `verifyPlayerProof` is.
+ * `verifyPlayerProof` is. A stamp needs `WORK_BITS` (#3746).
  */
 export const receiptCrypto: ReceiptCrypto = {
+  workBits: WORK_BITS,
   sha256,
   verify: (pubkey, digest, sig) => {
     if (!HEX_32.test(pubkey) || !HEX_64.test(sig)) {

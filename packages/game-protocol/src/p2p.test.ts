@@ -3494,7 +3494,7 @@ describe("the ranked rounds' messages (#3573)", () => {
     start,
     startSigs: { ["1".repeat(64)]: sig },
     result,
-    resultSigs: { ["2".repeat(64)]: sig },
+    resultSigs: { ["2".repeat(64)]: { sig, work: "0".repeat(16) } },
   };
 
   it.each<[string, (value: unknown) => unknown, unknown]>([
@@ -3507,7 +3507,11 @@ describe("the ranked rounds' messages (#3573)", () => {
     ],
     ["ranked-result", parseWireRankedResult, { result }],
     ["a draw's ranked-result", parseWireRankedResult, { result: { ...result, winningTeam: null } }],
-    ["ranked-result-sig", parsePeerRankedResultSig, { startHash: result.startHash, sig }],
+    [
+      "ranked-result-sig",
+      parsePeerRankedResultSig,
+      { startHash: result.startHash, sig, work: "0".repeat(16) },
+    ],
     ["ranked-receipt", parseWireRankedReceipt, { receipt }],
     ["ranked-cancel", parseWireRankedCancel, { matchId: start.matchId }],
   ])("accept a %s that survives a JSON round trip unchanged", (_, parse, fixture) => {
@@ -3558,7 +3562,16 @@ describe("the ranked rounds' messages (#3573)", () => {
       parseWireRankedResult,
       { result: { ...result, endReason: "boredom" } },
     ],
-    ["a ranked-result-sig with no start hash", parsePeerRankedResultSig, { startHash: "", sig }],
+    [
+      "a ranked-result-sig with no start hash",
+      parsePeerRankedResultSig,
+      { startHash: "", sig, work: "0".repeat(16) },
+    ],
+    [
+      "a ranked-result-sig with no stamp",
+      parsePeerRankedResultSig,
+      { startHash: "ab".repeat(32), sig },
+    ],
     [
       "a ranked-receipt with no result",
       parseWireRankedReceipt,
