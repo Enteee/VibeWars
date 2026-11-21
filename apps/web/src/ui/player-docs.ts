@@ -48,11 +48,12 @@ export type DocTag =
   | "a"
   | "img"
   | "span"
+  | "div"
   | "figure"
   | "figcaption";
 
 /** The only classes a page can produce; none comes from the Markdown. */
-export type DocClass = "doc-icon" | "doc-chip" | "doc-figure";
+export type DocClass = "doc-icon" | "doc-chip" | "doc-figure" | "doc-table";
 
 export type DocNode =
   | { readonly kind: "text"; readonly text: string }
@@ -267,14 +268,23 @@ function block(token: Token, targets: DocTargets): DocNode[] {
           "tr",
           cells.map((cell) => element(tag, inline(cell.tokens, targets))),
         );
+      // A table too wide for a narrow pane scrolls in its own box, and the
+      // page stays put (#3733).
       return [
-        element("table", [
-          element("thead", [row(table.header, "th")]),
-          element(
-            "tbody",
-            table.rows.map((cells) => row(cells, "td")),
-          ),
-        ]),
+        element(
+          "div",
+          [
+            element("table", [
+              element("thead", [row(table.header, "th")]),
+              element(
+                "tbody",
+                table.rows.map((cells) => row(cells, "td")),
+              ),
+            ]),
+          ],
+          {},
+          "doc-table",
+        ),
       ];
     }
     case "code":

@@ -3819,6 +3819,10 @@ body:has(> .splash) #menu-background::after {
   min-width: 0;
   overflow-x: auto;
   line-height: 1.5;
+  /* A word longer than the pane, a German heading at 360 px, breaks rather
+     than pushing the page sideways (#3733). */
+  overflow-wrap: break-word;
+  hyphens: auto;
 }
 
 .help-page > :first-child {
@@ -3845,6 +3849,12 @@ body:has(> .splash) #menu-background::after {
   padding: 0.6rem;
   overflow-x: auto;
   background: rgb(255 255 255 / 6%);
+}
+
+/* A table wider than the pane scrolls in this box, not the page (#3733). */
+.help-page .doc-table {
+  max-width: 100%;
+  overflow-x: auto;
 }
 
 .help-page table {
