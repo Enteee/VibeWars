@@ -11,6 +11,8 @@ Chiến Bang, Vận chuyển thánh tích, Vua đồi hay Chiếm điểm. Đấ
 bốc một bản đồ của nó cho mỗi trận, Đỉnh Anh Hùng bắt đầu ở bản đồ đầu tiên
 của nó, và chỉ Trận tự tạo cho chủ phòng chọn.
 
+Hai người chơi sau mạng nghiêm ngặt không thể được ghép với nhau trong hàng chờ, nên hàng chờ chỉ đếm những người chơi có thể ghép với bạn, và cho bạn biết. Một relay trong **Tùy chọn → Relay (TURN)** sẽ giúp ích.
+
 Mỗi bản đồ được làm cho một số cỡ đội, và một chế độ chỉ chơi bản đồ được
 làm cho cỡ của nó: một trận 8v8 không bao giờ chen chúc trong đấu trường xây
 cho 1v1. **Cỡ đội** trên thanh chỉ chuyển qua các cỡ mà chế độ đang hiển thị

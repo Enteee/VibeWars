@@ -12,6 +12,8 @@ Erövringspunkter. Lagarena drar en av sina kartor för varje match,
 Heroes' Ascent börjar på sin första karta, och bara i ett eget spel får
 värden välja.
 
+Två spelare bakom strikta nätverk kan inte matchas mot varandra i en kö, så kön räknar bara spelare som kan matchas med dig, och säger det. Ett relä under **Alternativ → Relä (TURN)** hjälper.
+
 Varje karta är gjord för vissa lagstorlekar, och ett läge spelar bara en
 karta gjord för dess storlek: ett 8v8 trängs aldrig ihop på en arena
 byggd för ett 1v1. Radens **Lagstorlek** stegar bara genom storlekarna

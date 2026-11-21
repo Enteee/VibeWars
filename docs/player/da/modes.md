@@ -12,6 +12,8 @@ Laugskamp, et Relikvieløb, Kongen af bakken eller Erobring. Holdarena
 trækker en af sine baner til hver kamp, Heltenes opstigning starter på
 sin første bane, og kun et Værtsspil lader værten vælge.
 
+To spillere bag strenge netværk kan ikke sættes sammen i en kø, så køen tæller kun de spillere, du kan sættes sammen med, og siger det. Et relay under **Valg → Relay (TURN)** hjælper.
+
 Hver bane er lavet til bestemte holdstørrelser, og en spiltilstand
 spiller kun en bane, der er lavet til dens størrelse: en 8v8 bliver aldrig
 klemt ind på en arena bygget til 1v1. Skinnens **Holdstørrelse** går kun

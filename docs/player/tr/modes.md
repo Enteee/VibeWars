@@ -13,6 +13,8 @@ Geçirme seçmez. Takım Arenası her maç için haritalarından birini çeker,
 Kahramanların Yükselişi ilk haritasında başlar ve kurucunun seçmesine
 yalnızca Özel Oyun izin verir.
 
+Katı ağların arkasındaki iki oyuncu bir kuyrukta birbiriyle eşleşemez, bu yüzden kuyruk yalnızca seninle eşleşebilecek oyuncuları sayar ve bunu söyler. **Ayarlar → relay (TURN)** altındaki bir relay yardımcı olur.
+
 Her harita belirli takım boyutları için yapılmıştır ve bir mod
 yalnızca kendi boyutu için yapılmış bir haritayı oynatır: bir 8v8 asla
 1v1 için yapılmış bir arenaya tıkışmaz. Şeridin **Takım boyutu**

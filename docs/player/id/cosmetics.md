@@ -14,9 +14,13 @@ melihat apa yang kamu dapatkan.
 | Aura lumut, Jejak lumut                       | 5 kemenangan peringkat                |
 | Bingkai mawar dan gelar Veteran               | 25 kemenangan peringkat               |
 | Aura bara, Jejak bara                         | 25 kemenangan peringkat               |
+| Cahaya naik, Larut jadi abu                   | 25 kemenangan peringkat               |
 | Aura embun beku, Jejak embun beku             | 75 kemenangan peringkat               |
+| Pusaran daun, Larut jadi kabut                | 75 kemenangan peringkat               |
 | Bingkai hijau toska dan gelar Panglima perang | 200 kemenangan peringkat              |
+| Hujan kelopak, Larut jadi serpihan            | 200 kemenangan peringkat              |
 | Aura cahaya bintang, Jejak cahaya bintang     | 500 kemenangan peringkat              |
+| Hujan bintang, Larut jadi debu bintang        | 500 kemenangan peringkat              |
 | Bingkai anggrek dan gelar Juara               | Tempat di Top 100                     |
 | Api kemenangan beruntun                       | 3 kemenangan peringkat berturut-turut |
 
@@ -27,6 +31,10 @@ lagi. Pilihanmu tetap terpilih.
 ## Di tanah
 
 Aura tanah adalah cincin samar di kakimu. Jejak langkah meninggalkan butiran kecil di tempat kamu berjalan, yang memudar dalam sekejap. Keduanya digambar di bawah setiap cincin, tanda, dan peringatan, dan tidak pernah memakai warna tim. Jika sistemmu menyalakan gerakan yang dikurangi, aura diam di tempat dan tidak ada jejak yang digambar.
+
+## Kembali dan tumbang
+
+Gaya kemunculan mengumpulkan butiran kecil di kakimu saat kamu muncul atau dihidupkan kembali. Pelarutan kematian menyebarkannya saat kamu tumbang. Masing-masing berlangsung persis selama kembali dan tumbang biasa, digambar di bawah tubuhmu, dan membuat garis tubuhmu, cincin timmu, dan jasadmu tetap mudah dibaca seperti biasa. Jika sistemmu menyalakan gerakan yang dikurangi, hanya pudar biasa yang digambar.
 
 ## Memakainya
 

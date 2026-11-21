@@ -11,6 +11,8 @@ Relic Run, King of the Hill of Capture Points. Team Arena trekt voor elke match
 een van zijn maps, Heroes' Ascent begint op zijn eerste map, en alleen bij een
 Gehost spel kiest de host.
 
+Twee spelers achter strikte netwerken kunnen in een wachtrij niet met elkaar gekoppeld worden, dus de wachtrij telt alleen spelers met wie je gekoppeld kunt worden, en zegt dat. Een relay in **Opties → relay (TURN)** helpt.
+
 Elke map is gemaakt voor bepaalde teamgroottes, en een modus speelt alleen een
 map die voor zijn grootte gemaakt is: een 8v8 propt zich nooit in een arena die
 voor een 1v1 is gebouwd. De **Teamgrootte** op de balk stapt alleen door de

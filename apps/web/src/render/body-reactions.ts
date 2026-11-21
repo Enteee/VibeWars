@@ -81,9 +81,12 @@ export function slideAway(at: Vec2, from: Vec2 | undefined, pixels: number): Vec
   return length === 0 ? { x: 0, y: 0 } : { x: (dx / length) * pixels, y: (dy / length) * pixels };
 }
 
-/** 0 at the moment of death, 1 once the fall is over. */
-export function deathProgress(ageSeconds: number): number {
-  return clamp01(ageSeconds / DEATH_SECONDS);
+/**
+ * 0 at the moment of death, 1 once a fall of `seconds` is over: the
+ * default fall's `DEATH_SECONDS`, which every death style keeps (#3580).
+ */
+export function deathProgress(ageSeconds: number, seconds: number): number {
+  return clamp01(ageSeconds / seconds);
 }
 
 /** Each channel of `from` moved `t` of the way to `to`. */
@@ -113,17 +116,24 @@ export function dustSpeck(
   };
 }
 
-/** The returning body's size, as a share of its own: it rises into place. */
-export function respawnScale(ageSeconds: number): number {
-  const t = clamp01(ageSeconds / RESPAWN_SECONDS);
+/**
+ * The returning body's size, as a share of its own, over a return of
+ * `seconds`: the default's `RESPAWN_SECONDS`, which every spawn style keeps (#3580).
+ */
+export function respawnScale(ageSeconds: number, seconds: number): number {
+  const t = clamp01(ageSeconds / seconds);
   return RESPAWN_RISE_FROM + (1 - RESPAWN_RISE_FROM) * t;
 }
 
-export function respawnRing(ageSeconds: number): {
+/** The team ring that stands where a body came back, over a return of `seconds`. */
+export function respawnRing(
+  ageSeconds: number,
+  seconds: number,
+): {
   readonly radius: number;
   readonly alpha: number;
 } {
-  const t = clamp01(ageSeconds / RESPAWN_SECONDS);
+  const t = clamp01(ageSeconds / seconds);
   return {
     radius: RESPAWN_RING_FROM + (RESPAWN_RING_TO - RESPAWN_RING_FROM) * t,
     alpha: RESPAWN_RING_ALPHA * (1 - t),

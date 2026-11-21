@@ -2,6 +2,8 @@
 
 Ogni mappa gioca una modalità, e la lobby dice quale sotto il nome della mappa. Le modalità sono le voci della barra a sinistra della schermata principale. Nessuno sceglie la modalità di una mappa, ma la voce della barra da cui ospiti decide le modalità delle mappe della lobby: ![Arena a squadre](../../../apps/web/public/icons/mode/team-arena.svg) **Arena a squadre** Annientamento, Conta uccisioni e Annientamento del sacerdote, ![Ascesa degli Eroi](../../../apps/web/public/icons/mode/heroes-ascent.svg) **Ascesa degli Eroi** Corsa alla reliquia, Re della collina e Conquista, e ![GvG](../../../apps/web/public/icons/mode/gvg.svg) **GvG** la Battaglia di gilda. ![Partita ospitata](../../../apps/web/public/icons/mode/hosted-game.svg) **Partita ospitata** offre ogni mappa. Un'![Arena casuale](../../../apps/web/public/icons/mode/random-arena.svg) **Arena casuale** sceglie la mappa per te, e con essa la modalità, ma mai una Battaglia di gilda, una Corsa alla reliquia, Re della collina o Conquista. Arena a squadre estrae una delle sue mappe per ogni partita, Ascesa degli Eroi parte dalla sua prima mappa, e solo in una Partita ospitata sceglie l'host.
 
+Due giocatori dietro reti restrittive non possono essere abbinati tra loro in una coda, quindi la coda conta solo i giocatori che possono essere abbinati a te, e lo dice. Aiuta un relay in **Opzioni → relay (TURN)**.
+
 Ogni mappa è fatta per alcune dimensioni di squadra, e una modalità gioca solo mappe adatte alla sua dimensione: un 8v8 non si ammassa mai in un'arena costruita per un 1v1. La **Dim. squadra** della barra scorre solo tra le dimensioni che la modalità mostrata può giocare.
 
 | Modalità          | Dimensioni    | Mappa                                             |

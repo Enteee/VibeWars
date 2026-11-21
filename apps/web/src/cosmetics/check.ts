@@ -6,6 +6,13 @@
 
 import { BUBBLE_COLOUR, DROP_COLOUR, FLAME_COLOUR } from "../render/body-conditions.js";
 import { ENCHANTMENT_COLOUR, HEX_COLOUR, STANCE_COLOUR } from "../render/body-rings.js";
+import {
+  DEATH_SECONDS,
+  RESPAWN_SECONDS,
+  deathProgress,
+  respawnRing,
+} from "../render/body-reactions.js";
+import { STYLE_MOTES } from "../render/cosmetic-reactions.js";
 import { SKILL_ARC_COLOUR, teamColour } from "../render/arena-snapshot.js";
 import { HAND, wheelDistance } from "../render/colour-wheel.js";
 import { ZONE_LOOK } from "../render/zone-look.js";
@@ -45,10 +52,53 @@ function coloursOf(look: CosmeticLook): readonly number[] {
     case "flame":
     case "trail":
     case "aura":
+    case "spawn":
+    case "dissolve":
       return [look.colour];
     case "title":
       return [look.colour, look.glow];
   }
+}
+
+/** How many instants of a spawn or a fall the readability check samples. */
+const READABLE_SAMPLES = 50;
+
+/**
+ * What a spawn or death style breaks of the default timing (#3580): it
+ * runs the default's time, and at no instant is the returning body's
+ * team ring or the falling body fainter than by default.
+ */
+function timingProblems(entry: CosmeticEntry): readonly string[] {
+  const { look } = entry;
+  if (look.kind !== "spawn" && look.kind !== "dissolve") {
+    return [];
+  }
+  const plainSeconds = look.kind === "spawn" ? RESPAWN_SECONDS : DEATH_SECONDS;
+  const problems: string[] = [];
+  if (look.motes < 1 || look.motes > STYLE_MOTES) {
+    problems.push(`${entry.id}: ${String(look.motes)} motes, not 1 to ${String(STYLE_MOTES)}`);
+  }
+  if (look.seconds !== plainSeconds) {
+    problems.push(
+      `${entry.id}: ${String(look.seconds)} s, not the default ${String(plainSeconds)} s`,
+    );
+  }
+  for (let i = 0; i <= READABLE_SAMPLES; i += 1) {
+    const age = (plainSeconds * i) / READABLE_SAMPLES;
+    const alpha =
+      look.kind === "spawn"
+        ? respawnRing(age, look.seconds).alpha
+        : 1 - deathProgress(age, look.seconds);
+    const plain =
+      look.kind === "spawn"
+        ? respawnRing(age, plainSeconds).alpha
+        : 1 - deathProgress(age, plainSeconds);
+    if (alpha < plain) {
+      problems.push(`${entry.id}: the body fainter than by default at ${age.toFixed(2)} s`);
+      break;
+    }
+  }
+  return problems;
 }
 
 const hex = (colour: number): string => `#${colour.toString(16).padStart(6, "0")}`;
@@ -82,5 +132,6 @@ export function checkCosmetic(entry: CosmeticEntry): readonly string[] {
       problems.push(`${entry.id}: alpha ${String(look.ground.alpha)}`);
     }
   }
+  problems.push(...timingProblems(entry));
   return problems;
 }

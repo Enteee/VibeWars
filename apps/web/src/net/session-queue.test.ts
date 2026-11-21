@@ -72,7 +72,9 @@ describe("entering the Random Arena queue (#2090)", () => {
       },
     );
 
-    expect(states).toEqual([{ kind: "searching", searching: 0, teams: 0, needed: 4, waitedMs: 0 }]);
+    expect(states).toEqual([
+      { kind: "searching", searching: 0, teams: 0, needed: 4, waitedMs: 0, hardNat: false },
+    ]);
     place.leave();
   });
 });
