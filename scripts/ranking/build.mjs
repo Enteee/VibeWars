@@ -248,7 +248,9 @@ export function build({ archived, events, relaysReached, relays, asOfDay }) {
         (a.line < b.line ? -1 : a.line > b.line ? 1 : 0),
     );
   // The cap is applied to the whole set in canonical order every run, so
-  // the order receipts arrived in never changes what is kept (#3738).
+  // the order receipts arrived in never changes what is kept (#3738). A
+  // partial counts too, or a flooder would sign every receipt as one; it
+  // merges with its whole receipt into one entry, so a match counts once.
   /** Receipts per seat key per UTC day, keyed `<day> <pubkey>`. */
   /** @type {Map<string, number>} */
   const perKeyDay = new Map();
@@ -256,10 +258,6 @@ export function build({ archived, events, relaysReached, relays, asOfDay }) {
   /** @type {Map<string, number>} */
   const overCap = new Map();
   const receipts = sorted.filter(({ receipt }) => {
-    // A partial is void evidence only, and merges into its whole receipt.
-    if (!validateReceipt(receipt, crypto).ok) {
-      return true;
-    }
     const day = String(utcDay(receipt.start.startedAt));
     const seats = receipt.start.teams.flat().map(({ pubkey }) => pubkey);
     const full = seats.filter(

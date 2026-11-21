@@ -272,9 +272,10 @@ describe("the leaderboard job", () => {
       keys: [...KEYS.slice(0, 2), ...others.slice(2)],
     });
     const honest = receipt({ matchId: "h", at: 300, keys: others });
-    // A partial is void evidence, not counted, and kept.
-    const partial = receipt({ matchId: "p", at: 400, only: KEYS[0]?.pubkey ?? "" });
-    const all = [...flood, mixed, honest, partial].map((r) => event(r));
+    // A partial counts like any receipt: a flooder's is dropped, an honest one kept.
+    const floodPartial = receipt({ matchId: "p", at: 400, only: KEYS[0]?.pubkey ?? "" });
+    const partial = receipt({ matchId: "q", at: 500, keys: others, only: others[0]?.pubkey ?? "" });
+    const all = [...flood, mixed, honest, floodPartial, partial].map((r) => event(r));
 
     const forward = await runOn(archiveDir(), [all, []]);
     const backward = await runOn(archiveDir(), [[...all].reverse(), []]);
@@ -282,13 +283,13 @@ describe("the leaderboard job", () => {
     expect(backward.leaderboard).toBe(forward.leaderboard);
 
     const ids = linesOf(forward).map((line) => parseReceipt(line)?.start.matchId);
-    expect(ids).toEqual([...flood.slice(0, 30).map((r) => r.start.matchId), "h", "p"]);
+    expect(ids).toEqual([...flood.slice(0, 30).map((r) => r.start.matchId), "h", "q"]);
     const matches = new Map(
       entriesOf(forward.leaderboard).entries.map((entry) => [entry.pubkey, entry.matches]),
     );
     expect(KEYS.map((key) => matches.get(key.pubkey))).toEqual([30, 30, 30, 30, 1, 1, 1, 1]);
-    expect(forward.log).toContain("over-cap: 11\n");
-    expect(forward.log).toContain(`  ${KEYS[0]?.pubkey ?? ""}: 11\n`);
+    expect(forward.log).toContain("over-cap: 12\n");
+    expect(forward.log).toContain(`  ${KEYS[0]?.pubkey ?? ""}: 12\n`);
     expect(forward.log).not.toContain(`  ${others[2]?.pubkey ?? ""}:`);
   });
 
