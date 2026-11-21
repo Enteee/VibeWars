@@ -12,16 +12,20 @@ tu as obtenu.
 | ------------------------------------------------------- | ------------------------------ |
 | Cadre jade et le titre Prétendant                       | 5 victoires classées           |
 | Aura de mousse, Traînée de mousse                       | 5 victoires classées           |
+| Cadre d’emblème couleur liseré                          | 5 victoires classées           |
 | Cadre rose et le titre Vétéran                          | 25 victoires classées          |
 | Aura de braise, Traînée de braise                       | 25 victoires classées          |
 | Lumière ascendante, Dissolution en cendres              | 25 victoires classées          |
 | Aura de givre, Traînée de givre                         | 75 victoires classées          |
 | Tourbillon de feuilles, Dissolution en brume            | 75 victoires classées          |
+| Cadre d’emblème en fer                                  | 75 victoires classées          |
 | Cadre sarcelle et le titre Seigneur de guerre           | 200 victoires classées         |
 | Pluie de pétales, Dissolution en éclats                 | 200 victoires classées         |
+| Cadre d’emblème en argent                               | 200 victoires classées         |
 | Aura de lumière stellaire, Traînée de lumière stellaire | 500 victoires classées         |
 | Pluie d’étoiles, Dissolution en poussière d’étoiles     | 500 victoires classées         |
 | Cadre orchidée et le titre Champion                     | Une place dans le Top 100      |
+| Cadre d’emblème doré                                    | Une place dans le Top 100      |
 | Flamme de série                                         | 3 victoires classées d’affilée |
 
 Les objets du Top 100 et la flamme ne durent que tant que tu les détiens. Sors du Top 100, ou perds
@@ -35,6 +39,10 @@ Une aura au sol est un anneau léger à tes pieds. Une traînée de pas laisse d
 ## Revenir et tomber
 
 Un style d’apparition rassemble de petites particules à tes pieds quand tu apparais ou es ressuscité. Une dissolution à la mort les disperse quand tu tombes. Chacun dure exactement aussi longtemps que le retour et la chute ordinaires, se dessine sous ton corps et laisse ta silhouette, ton anneau d’équipe et ton cadavre aussi lisibles que jamais. Si ton système demande des animations réduites, seul le fondu ordinaire est dessiné.
+
+## Sur ta cape
+
+Un cadre d’emblème est une fine bordure autour de l’emblème de ta cape de guilde. Il ne couvre, ne déplace ni ne modifie jamais l’emblème, et se dessine dans la couleur du liseré de ta cape ou dans un métal sobre, jamais dans une couleur d’équipe. Il te faut une cape de guilde pour en porter un : l’emplacement apparaît dans Options dès que tu portes une cape de guilde.
 
 ## Les porter
 

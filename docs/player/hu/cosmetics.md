@@ -11,16 +11,20 @@ Kozmetikumokat ellenőrzött rangsorolt győzelmekkel szerzel, ahogy a nyilváno
 | ----------------------------------- | --------------------------------------- |
 | Jádekeret és a Kihívó cím           | 5 rangsorolt győzelemmel                |
 | Moha aura, Moha nyom                | 5 rangsorolt győzelemmel                |
+| Címerkeret a szegély színében       | 5 rangsorolt győzelemmel                |
 | Rózsakeret és a Veterán cím         | 25 rangsorolt győzelemmel               |
 | Parázs aura, Parázs nyom            | 25 rangsorolt győzelemmel               |
 | Felszálló fény, Hamuvá foszlás      | 25 rangsorolt győzelemmel               |
 | Dér aura, Dér nyom                  | 75 rangsorolt győzelemmel               |
 | Levélörvény, Köddé foszlás          | 75 rangsorolt győzelemmel               |
+| Vas címerkeret                      | 75 rangsorolt győzelemmel               |
 | Kékeszöld keret és a Hadúr cím      | 200 rangsorolt győzelemmel              |
 | Szirmok hullása, Szilánkokra hullás | 200 rangsorolt győzelemmel              |
+| Ezüst címerkeret                    | 200 rangsorolt győzelemmel              |
 | Csillagfény aura, Csillagfény nyom  | 500 rangsorolt győzelemmel              |
 | Csillaghullás, Csillagporrá foszlás | 500 rangsorolt győzelemmel              |
 | Orchideakeret és a Bajnok cím       | Egy hellyel a Top 100-ban               |
+| Aranyozott címerkeret               | Egy hellyel a Top 100-ban               |
 | Győzelmi sorozat lángja             | 3 egymást követő rangsorolt győzelemmel |
 
 A Top 100 tárgyai és a láng csak addig maradnak, amíg tartod őket. Ha kiesel a Top 100-ból, vagy
@@ -34,6 +38,10 @@ A talajaura halvány gyűrű a lábad körül. A lábnyomok apró szemcséket ha
 ## Visszatérés és elesés
 
 A megjelenési stílus apró szemcséket gyűjt a lábad köré, amikor megjelensz vagy feltámasztanak. A halálkori szertefoszlás szétszórja őket, amikor elesel. Mindkettő pontosan ugyanannyi ideig tart, mint a sima visszatérés és elesés, a tested alá kerül, és a körvonaladat, a csapatgyűrűdet és a holttestedet ugyanolyan jól olvashatónak hagyja, mint mindig. Ha a rendszeredben be van kapcsolva a csökkentett mozgás, csak a sima elhalványulás rajzolódik ki.
+
+## A köpenyeden
+
+A címerkeret vékony szegély a céhköpenyed címere körül. Soha nem takarja el, nem mozdítja el és nem változtatja meg a címert, és a köpenyed saját szegélyszínével vagy egyszerű fémmel rajzolódik, soha nem csapatszínnel. Viseléséhez céhköpeny kell: a hely akkor jelenik meg a Beállításokban, amikor céhköpenyt viselsz.
 
 ## Viselésük
 

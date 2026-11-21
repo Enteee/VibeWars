@@ -57,7 +57,25 @@ function coloursOf(look: CosmeticLook): readonly number[] {
       return [look.colour];
     case "title":
       return [look.colour, look.glow];
+    case "emblemFrame":
+      // Neither hues: the cape's own trim, or a metal `metalProblems` holds near grey.
+      return [];
   }
+}
+
+/**
+ * What an emblem frame breaks (#3581): its metal is a neutral tone, a
+ * hand's width or less from grey on the colour wheel, so it reads as no
+ * hue, never as a team's or a cue's.
+ */
+function metalProblems(entry: CosmeticEntry): readonly string[] {
+  const { look } = entry;
+  if (look.kind !== "emblemFrame" || look.colour === "trim") {
+    return [];
+  }
+  return wheelDistance(look.colour, 0) > HAND
+    ? [`${entry.id}: ${hex(look.colour)} is no neutral metal`]
+    : [];
 }
 
 /** How many instants of a spawn or a fall the readability check samples. */
@@ -117,9 +135,9 @@ export function checkCosmetic(entry: CosmeticEntry): readonly string[] {
       }
     }
   }
-  // Under the body, rings and marks draw over it; on the plate, it is no ground effect.
-  if (look.layer === "nameplate" && look.ground !== null) {
-    problems.push(`${entry.id}: a ground effect on the name plate`);
+  // Under the body, rings and marks draw over it; anywhere else, it is no ground effect.
+  if (look.layer !== "under-body" && look.ground !== null) {
+    problems.push(`${entry.id}: a ground effect on the ${look.layer}`);
   }
   if (look.layer === "under-body" && look.ground === null) {
     problems.push(`${entry.id}: on the ground with no fixed size`);
@@ -132,6 +150,6 @@ export function checkCosmetic(entry: CosmeticEntry): readonly string[] {
       problems.push(`${entry.id}: alpha ${String(look.ground.alpha)}`);
     }
   }
-  problems.push(...timingProblems(entry));
+  problems.push(...timingProblems(entry), ...metalProblems(entry));
   return problems;
 }

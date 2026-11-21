@@ -11,16 +11,20 @@ kazanırsın. Kimse onları dağıtmaz: herkes lider tablosuna bakıp ne kazand�
 | --------------------------------------- | ----------------------------- |
 | Yeşim çerçeve ve Rakip unvanı           | 5 dereceli galibiyet          |
 | Yosun aurası, Yosun izi                 | 5 dereceli galibiyet          |
+| Kenar renginde amblem çerçevesi         | 5 dereceli galibiyet          |
 | Gül çerçeve ve Kıdemli unvanı           | 25 dereceli galibiyet         |
 | Kor aurası, Kor izi                     | 25 dereceli galibiyet         |
 | Yükselen ışık, Küle dönüşme             | 25 dereceli galibiyet         |
 | Ayaz aurası, Ayaz izi                   | 75 dereceli galibiyet         |
 | Yaprak girdabı, Sise dönüşme            | 75 dereceli galibiyet         |
+| Demir amblem çerçevesi                  | 75 dereceli galibiyet         |
 | Camgöbeği çerçeve ve Savaş lordu unvanı | 200 dereceli galibiyet        |
 | Taç yaprağı yağmuru, Kırıklara dönüşme  | 200 dereceli galibiyet        |
+| Gümüş amblem çerçevesi                  | 200 dereceli galibiyet        |
 | Yıldız ışığı aurası, Yıldız ışığı izi   | 500 dereceli galibiyet        |
 | Yıldız yağmuru, Yıldız tozuna dönüşme   | 500 dereceli galibiyet        |
 | Orkide çerçeve ve Şampiyon unvanı       | İlk 100'de bir yer            |
+| Yaldızlı amblem çerçevesi               | İlk 100'de bir yer            |
 | Galibiyet serisi alevi                  | Üst üste 3 dereceli galibiyet |
 
 İlk 100 öğeleri ve alev yalnızca onları elinde tuttuğun sürece kalır. İlk 100'ün dışına düşersen ya
@@ -34,6 +38,10 @@ Zemin aurası ayaklarının dibinde soluk bir halkadır. Ayak izi yürüdüğün
 ## Geri dönmek ve düşmek
 
 Belirme stili, belirdiğinde ya da diriltildiğinde ayaklarının dibinde küçük parçacıklar toplar. Ölüm çözülmesi, düştüğünde onları dağıtır. Her biri sade dönüş ve düşüş kadar sürer, vücudunun altında çizilir ve dış hatlarını, takım halkanı ve cesedini her zamanki kadar kolay okunur bırakır. Sisteminde azaltılmış hareket açıksa yalnızca sade solma çizilir.
+
+## Pelerininde
+
+Amblem çerçevesi, lonca pelerinindeki amblemin çevresinde ince bir kenardır. Amblemi asla örtmez, kaydırmaz ya da değiştirmez; pelerininin kendi kenar renginde ya da sade bir metal renginde çizilir, asla bir takım renginde değil. Takmak için bir lonca pelerini gerekir: yuva, lonca pelerini giydiğin anda Seçenekler'de görünür.
 
 ## Nasıl kullanılır
 

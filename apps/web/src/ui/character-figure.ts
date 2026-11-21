@@ -101,7 +101,11 @@ export function figureBody(
     weaponId: appearance.weaponId,
     offhandId: appearance.offhandId,
     frame: REST_FRAME,
-    cape: cape === undefined ? undefined : { look: cape, motion: newCapeMotion() },
+    // Folded, the cape shows no emblem, so no emblem frame either (#3581).
+    cape:
+      cape === undefined
+        ? undefined
+        : { look: cape, motion: newCapeMotion(), emblemFrame: undefined },
   };
 }
 

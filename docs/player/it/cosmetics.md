@@ -11,16 +11,20 @@ pubblica. Nessuno li regala: chiunque può controllare la classifica e vedere co
 | ---------------------------------------------------- | ------------------------------- |
 | Cornice giada e il titolo Sfidante                   | 5 vittorie classificate         |
 | Aura di muschio, Scia di muschio                     | 5 vittorie classificate         |
+| Cornice dell’emblema color bordo                     | 5 vittorie classificate         |
 | Cornice rosa e il titolo Veterano                    | 25 vittorie classificate        |
 | Aura di brace, Scia di brace                         | 25 vittorie classificate        |
 | Luce ascendente, Dissolvenza in cenere               | 25 vittorie classificate        |
 | Aura di brina, Scia di brina                         | 75 vittorie classificate        |
 | Vortice di foglie, Dissolvenza in nebbia             | 75 vittorie classificate        |
+| Cornice dell’emblema in ferro                        | 75 vittorie classificate        |
 | Cornice verde acqua e il titolo Signore della guerra | 200 vittorie classificate       |
 | Pioggia di petali, Dissolvenza in schegge            | 200 vittorie classificate       |
+| Cornice dell’emblema in argento                      | 200 vittorie classificate       |
 | Aura di luce stellare, Scia di luce stellare         | 500 vittorie classificate       |
 | Pioggia di stelle, Dissolvenza in polvere di stelle  | 500 vittorie classificate       |
 | Cornice orchidea e il titolo Campione                | Un posto nella Top 100          |
+| Cornice dell’emblema dorata                          | Un posto nella Top 100          |
 | Fiamma della serie                                   | 3 vittorie classificate di fila |
 
 Gli oggetti della Top 100 e la fiamma durano solo finché li mantieni. Esci dalla Top 100, o perdi
@@ -34,6 +38,10 @@ Un’aura al suolo è un anello tenue ai tuoi piedi. Una scia di passi lascia pi
 ## Tornare e cadere
 
 Uno stile di comparsa raccoglie piccole particelle ai tuoi piedi quando compari o vieni resuscitato. Una dissolvenza alla morte le disperde quando cadi. Ognuno dura esattamente quanto il ritorno e la caduta normali, è disegnato sotto il tuo corpo e lascia la tua sagoma, il tuo anello di squadra e il tuo cadavere leggibili come sempre. Se il tuo sistema chiede movimenti ridotti, viene disegnata solo la dissolvenza normale.
+
+## Sul tuo mantello
+
+Una cornice dell’emblema è un bordo sottile attorno all’emblema del tuo mantello di gilda. Non copre, non sposta e non cambia mai l’emblema, ed è disegnata nel colore del bordo del tuo mantello o in un metallo semplice, mai in un colore di squadra. Ti serve un mantello di gilda per indossarne una: lo spazio compare in Opzioni appena indossi un mantello di gilda.
 
 ## Come indossarli
 

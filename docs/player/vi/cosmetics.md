@@ -11,16 +11,20 @@ Bạn nhận trang trí bằng các trận thắng xếp hạng đã được x�
 | ------------------------------------------ | ------------------------------- |
 | Khung ngọc bích và danh hiệu Kẻ thách đấu  | 5 trận thắng xếp hạng           |
 | Hào quang rêu, Vệt rêu                     | 5 trận thắng xếp hạng           |
+| Khung huy hiệu màu viền                    | 5 trận thắng xếp hạng           |
 | Khung hồng và danh hiệu Lão binh           | 25 trận thắng xếp hạng          |
 | Hào quang than hồng, Vệt than hồng         | 25 trận thắng xếp hạng          |
 | Ánh sáng dâng lên, Tan thành tro           | 25 trận thắng xếp hạng          |
 | Hào quang sương giá, Vệt sương giá         | 75 trận thắng xếp hạng          |
 | Lốc lá, Tan thành sương                    | 75 trận thắng xếp hạng          |
+| Khung huy hiệu sắt                         | 75 trận thắng xếp hạng          |
 | Khung xanh mòng két và danh hiệu Lãnh chúa | 200 trận thắng xếp hạng         |
 | Mưa cánh hoa, Tan thành mảnh vỡ            | 200 trận thắng xếp hạng         |
+| Khung huy hiệu bạc                         | 200 trận thắng xếp hạng         |
 | Hào quang ánh sao, Vệt ánh sao             | 500 trận thắng xếp hạng         |
 | Mưa sao, Tan thành bụi sao                 | 500 trận thắng xếp hạng         |
 | Khung lan tím và danh hiệu Nhà vô địch     | Một vị trí trong Top 100        |
+| Khung huy hiệu mạ vàng                     | Một vị trí trong Top 100        |
 | Ngọn lửa chuỗi thắng                       | 3 trận thắng xếp hạng liên tiếp |
 
 Vật phẩm Top 100 và ngọn lửa chỉ tồn tại khi bạn còn giữ được chúng. Rớt khỏi Top 100, hoặc thua
@@ -34,6 +38,10 @@ Hào quang mặt đất là một vòng mờ dưới chân bạn. Vệt bước 
 ## Trở lại và gục ngã
 
 Kiểu xuất hiện tụ những hạt nhỏ dưới chân bạn khi bạn xuất hiện hoặc được hồi sinh. Tan biến khi chết làm chúng tản ra khi bạn gục ngã. Mỗi hiệu ứng kéo dài đúng bằng lúc trở lại và gục ngã thông thường, được vẽ bên dưới cơ thể bạn, và giữ cho đường viền, vòng đội và thi thể của bạn vẫn dễ nhận ra như mọi khi. Nếu hệ thống của bạn bật giảm chuyển động, chỉ có hiệu ứng mờ dần thông thường được vẽ.
+
+## Trên áo choàng của bạn
+
+Khung huy hiệu là một viền mảnh quanh huy hiệu trên áo choàng hội của bạn. Nó không bao giờ che, dời hay thay đổi huy hiệu, và được vẽ bằng màu viền của chính áo choàng hoặc một kim loại trơn, không bao giờ bằng màu đội. Bạn cần áo choàng hội để đeo nó: ô này hiện trong Tùy chọn ngay khi bạn mặc áo choàng hội.
 
 ## Cách trang bị
 

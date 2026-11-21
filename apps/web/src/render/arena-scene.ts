@@ -1459,12 +1459,21 @@ export class ArenaScene extends Phaser.Scene {
     }
   }
 
-  /** The cape `actor` wears, with its motion; `undefined` for none. */
+  /**
+   * The cape `actor` wears, with its motion and its emblem frame (#3581),
+   * none on a form's ash cape; `undefined` for none.
+   */
   private wornCape(actor: RenderableActor): WornCape | undefined {
     const motion = this.capes.get(actor.id)?.motion;
-    return actor.cape === undefined || motion === undefined
-      ? undefined
-      : { look: actor.cape, motion };
+    if (actor.cape === undefined || motion === undefined) {
+      return undefined;
+    }
+    const frame = actor.cosmetics.emblemFrame?.look;
+    return {
+      look: actor.cape,
+      motion,
+      emblemFrame: frame?.kind === "emblemFrame" && !actor.formed ? frame : undefined,
+    };
   }
 
   /**

@@ -9,6 +9,7 @@ import { isUnlocked } from "../cosmetics/unlocks.js";
 import { t, type MessageKey } from "../i18n/index.js";
 import { h } from "./kit.js";
 import type { OptionsSection } from "./options-sections.js";
+import { playerGuild } from "./player-section.js";
 
 /**
  * Options > Cosmetics (ADR-0056, #3577): one picker per slot, each item
@@ -25,6 +26,7 @@ const SLOT_LABEL: Record<CosmeticSlot, MessageKey> = {
   trail: "cosmetics.slot.trail",
   spawn: "cosmetics.slot.spawn",
   dissolve: "cosmetics.slot.dissolve",
+  emblemFrame: "cosmetics.slot.emblemFrame",
 };
 
 /** What earns `entry`, as the picker says it. */
@@ -83,8 +85,15 @@ function slotPicker(store: CosmeticsStore, slot: CosmeticSlot): HTMLElement {
   return group;
 }
 
-/** The section over `store`: the page's own by default, a test's own in a test. */
-export function cosmeticsSection(store: CosmeticsStore = cosmeticsStore): OptionsSection {
+/**
+ * The section over `store`: the page's own by default, a test's own in a
+ * test. The emblem frame's picker (#3581) shows only while `wearsCape`
+ * says you have a guild cape for it to frame.
+ */
+export function cosmeticsSection(
+  store: CosmeticsStore = cosmeticsStore,
+  wearsCape: () => boolean = () => playerGuild().guildCape !== null,
+): OptionsSection {
   return {
     id: "cosmetics",
     get title() {
@@ -103,7 +112,9 @@ export function cosmeticsSection(store: CosmeticsStore = cosmeticsStore): Option
         container.replaceChildren(
           h("p", "cosmetics-note", t("cosmetics.note")),
           field,
-          ...COSMETIC_SLOTS.map((slot) => slotPicker(store, slot)),
+          ...COSMETIC_SLOTS.filter((slot) => slot !== "emblemFrame" || wearsCape()).map((slot) =>
+            slotPicker(store, slot),
+          ),
         );
       };
       draw();

@@ -11,16 +11,20 @@ dem. Ingen deler det ud: alle kan tjekke ranglisten og se, hvad du har optjent.
 | ---------------------------------- | ------------------------ |
 | Jadegrøn ramme og titlen Udfordrer | 5 rangerede sejre        |
 | Mosaura, Mosspor                   | 5 rangerede sejre        |
+| Emblemramme i kantfarven           | 5 rangerede sejre        |
 | Rosa ramme og titlen Veteran       | 25 rangerede sejre       |
 | Glødeaura, Glødespor               | 25 rangerede sejre       |
 | Stigende lys, Askeopløsning        | 25 rangerede sejre       |
 | Frostaura, Frostspor               | 75 rangerede sejre       |
 | Bladhvirvel, Tågeopløsning         | 75 rangerede sejre       |
+| Emblemramme af jern                | 75 rangerede sejre       |
 | Blågrøn ramme og titlen Krigsherre | 200 rangerede sejre      |
 | Faldende kronblade, Skåropløsning  | 200 rangerede sejre      |
+| Emblemramme af sølv                | 200 rangerede sejre      |
 | Stjernelysaura, Stjernelysspor     | 500 rangerede sejre      |
 | Stjerneskud, Stjernestøvsopløsning | 500 rangerede sejre      |
 | Orkidéramme og titlen Mester       | En plads i Top 100       |
+| Forgyldt emblemramme               | En plads i Top 100       |
 | Sejrsstimens flamme                | 3 rangerede sejre i træk |
 
 Top 100-genstandene og flammen varer kun, så længe du holder dem. Falder du ud af Top 100, eller
@@ -34,6 +38,10 @@ En jordaura er en svag ring ved dine fødder. Et fodspor efterlader små gnister
 ## At komme tilbage og falde
 
 En ankomststil samler små gnister ved dine fødder, når du dukker op eller bliver genoplivet. En dødsopløsning spreder dem, når du falder. Hver varer præcis lige så længe som den almindelige tilbagekomst og det almindelige fald, tegnes under din krop og lader dit omrids, din holdring og dit lig være lige så lette at aflæse som altid. Har du slået reduceret bevægelse til i dit system, tegnes kun den almindelige udtoning.
+
+## På din kappe
+
+En emblemramme er en tynd kant rundt om emblemet på din laugskappe. Den dækker, flytter eller ændrer aldrig emblemet og tegnes i din kappes egen kantfarve eller et enkelt metal, aldrig i en holdfarve. Du skal have en laugskappe for at bære en: pladsen vises i Indstillinger, så snart du bærer en laugskappe.
 
 ## Sådan bærer du det
 

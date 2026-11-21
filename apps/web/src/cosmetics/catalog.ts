@@ -11,7 +11,7 @@ import { DEATH_SECONDS, RESPAWN_SECONDS } from "../render/body-reactions.js";
 
 import { FLAME_STREAK, TIERS, TOP_RANK } from "./unlocks.js";
 
-/** The slots so far (#3577, #3578, #3580); the others come with #3579 and #3581. */
+/** The slots so far (#3577, #3578, #3580, #3581); the others come with #3579. */
 export const COSMETIC_SLOTS = [
   "frame",
   "title",
@@ -20,6 +20,7 @@ export const COSMETIC_SLOTS = [
   "trail",
   "spawn",
   "dissolve",
+  "emblemFrame",
 ] as const;
 
 export type CosmeticSlot = (typeof COSMETIC_SLOTS)[number];
@@ -33,10 +34,11 @@ export type CosmeticRequirement =
 
 /**
  * Where a look is drawn (ADR-0056 §4): on the name plate, beside the
- * name, never over a body; or on the ground under the body, under its
- * rings, conditions, telegraphs and call marks.
+ * name, never over a body; on the ground under the body, under its
+ * rings, conditions, telegraphs and call marks; or on the guild cape's
+ * cloth, never over its emblem (#3581).
  */
-export const COSMETIC_LAYERS = ["nameplate", "under-body"] as const;
+export const COSMETIC_LAYERS = ["nameplate", "under-body", "cape"] as const;
 
 export type CosmeticLayer = (typeof COSMETIC_LAYERS)[number];
 
@@ -45,7 +47,7 @@ interface LookBase {
   /** Whether it moves; under reduced motion it is drawn still. */
   readonly motion: "still" | "flicker";
   /**
-   * A ground or trail effect's size and strength; `null` for a name-plate
+   * A ground or trail effect's size and strength; `null` for any other
    * look. An aura's `radiusOfBody` is how far it reaches past the body's
    * rim, a trail's how big each mote is, both as a share of the body's radius.
    */
@@ -115,6 +117,16 @@ export type CosmeticLook = LookBase &
         readonly motes: number;
         readonly seconds: number;
       }
+    | {
+        /**
+         * A thin border round the guild cape's emblem (#3581), outside its
+         * grid: in the cape's own trim, or a metal (`checkCosmetic` holds
+         * it neutral). With `studs`, a square off each corner.
+         */
+        readonly kind: "emblemFrame";
+        readonly colour: "trim" | number;
+        readonly studs: boolean;
+      }
   );
 
 export interface CosmeticEntry {
@@ -164,6 +176,14 @@ const SPAWN = {
   seconds: RESPAWN_SECONDS,
 } as const;
 const DISSOLVE = { ...SPAWN, kind: "dissolve", seconds: DEATH_SECONDS } as const;
+/** An emblem frame (#3581): on the cape, moving with the cloth. */
+const EMBLEM_FRAME = {
+  layer: "cape",
+  motion: "still",
+  ground: null,
+  sound: null,
+  kind: "emblemFrame",
+} as const;
 
 /**
  * Four tiers, four hues: jade, rose, teal and orchid. Each is a hand's
@@ -202,6 +222,13 @@ const ROSE_ASH = 0xffadc9;
 const PERIWINKLE = 0x7a90ff;
 const AQUAMARINE = 0x7fffd4;
 const PALE_ORCHID = 0xff8fff;
+/**
+ * The emblem frames' metals (#3581): iron, silver and a pale gilt, each
+ * near enough grey to read as no hue at all, so never as a cue.
+ */
+const IRON = 0x8a9096;
+const SILVER = 0xd5dade;
+const GILT = 0xd8c79a;
 
 export const COSMETIC_CATALOG: readonly CosmeticEntry[] = [
   {
@@ -383,6 +410,34 @@ export const COSMETIC_CATALOG: readonly CosmeticEntry[] = [
     requires: TIER_5,
     look: { ...DISSOLVE, colour: PALE_ORCHID, motif: "stars", motes: 24 },
     name: "cosmetics.item.dissolveStars",
+  },
+  {
+    id: "emblem-frame-trim",
+    slot: "emblemFrame",
+    requires: TIER_1,
+    look: { ...EMBLEM_FRAME, colour: "trim", studs: false },
+    name: "cosmetics.item.emblemFrameTrim",
+  },
+  {
+    id: "emblem-frame-iron",
+    slot: "emblemFrame",
+    requires: TIER_3,
+    look: { ...EMBLEM_FRAME, colour: IRON, studs: false },
+    name: "cosmetics.item.emblemFrameIron",
+  },
+  {
+    id: "emblem-frame-silver",
+    slot: "emblemFrame",
+    requires: TIER_4,
+    look: { ...EMBLEM_FRAME, colour: SILVER, studs: true },
+    name: "cosmetics.item.emblemFrameSilver",
+  },
+  {
+    id: "emblem-frame-gilt",
+    slot: "emblemFrame",
+    requires: TOP,
+    look: { ...EMBLEM_FRAME, colour: GILT, studs: true },
+    name: "cosmetics.item.emblemFrameGilt",
   },
   {
     id: "flame-streak",

@@ -143,6 +143,22 @@ describe("checkCosmetic (ADR-0056 §4)", () => {
     }
   });
 
+  it("has four emblem frames, at tiers 1, 3, 4 and Top, each the trim or a neutral metal (#3581)", () => {
+    const frames = COSMETIC_CATALOG.filter((each) => each.slot === "emblemFrame");
+    expect(frames.map((each) => each.requires)).toEqual([
+      { wins: TIERS[1] },
+      { wins: TIERS[3] },
+      { wins: TIERS[4] },
+      { rankAtMost: TOP_RANK },
+    ]);
+    const gilt = entry("emblem-frame-gilt");
+    if (gilt.look.kind !== "emblemFrame") {
+      throw new Error("emblem-frame-gilt is an emblem frame");
+    }
+    const gold = { ...gilt, look: { ...gilt.look, colour: 0xffcc00 } };
+    expect(checkCosmetic(gold)).toEqual(["emblem-frame-gilt: #ffcc00 is no neutral metal"]);
+  });
+
   it("has unique ids that fit the wire", () => {
     const ids = COSMETIC_CATALOG.map((each) => each.id);
     expect(new Set(ids).size).toBe(ids.length);

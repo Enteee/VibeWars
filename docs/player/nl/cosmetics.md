@@ -11,16 +11,20 @@ telt. Niemand deelt ze uit: iedereen kan de ranglijst bekijken en zien wat je ve
 | --------------------------------------- | ------------------------------- |
 | Jaden rand en de titel Uitdager         | 5 gerankte overwinningen        |
 | Mosaura, Mosspoor                       | 5 gerankte overwinningen        |
+| Embleemlijst in de boordkleur           | 5 gerankte overwinningen        |
 | Rozen rand en de titel Veteraan         | 25 gerankte overwinningen       |
 | Sintelaura, Sintelspoor                 | 25 gerankte overwinningen       |
 | Rijzend licht, Asoplossing              | 25 gerankte overwinningen       |
 | Vorstaura, Vorstspoor                   | 75 gerankte overwinningen       |
 | Bladerwerveling, Neveloplossing         | 75 gerankte overwinningen       |
+| IJzeren embleemlijst                    | 75 gerankte overwinningen       |
 | Blauwgroene rand en de titel Krijgsheer | 200 gerankte overwinningen      |
 | Bloemblaadjesregen, Scherfoplossing     | 200 gerankte overwinningen      |
+| Zilveren embleemlijst                   | 200 gerankte overwinningen      |
 | Sterrenlichtaura, Sterrenlichtspoor     | 500 gerankte overwinningen      |
 | Sterrenregen, Sterrenstofoplossing      | 500 gerankte overwinningen      |
 | Orchideeën rand en de titel Kampioen    | Een plek in de Top 100          |
+| Vergulde embleemlijst                   | Een plek in de Top 100          |
 | Zegereeksvlam                           | 3 gerankte overwinningen op rij |
 
 De items van de Top 100 en de vlam blijven alleen zolang je ze vasthoudt. Val je uit de Top 100,
@@ -34,6 +38,10 @@ Een grondaura is een vage ring aan je voeten. Voetsporen laten kleine deeltjes a
 ## Terugkomen en vallen
 
 Een verschijningsstijl verzamelt kleine deeltjes aan je voeten als je verschijnt of tot leven wordt gewekt. Een doodsoplossing verstrooit ze als je valt. Elk duurt precies zo lang als het gewone terugkomen en vallen, ligt onder je lichaam en laat je omtrek, je teamring en je lijk even goed leesbaar als altijd. Staat verminderde beweging aan in je systeem, dan wordt alleen de gewone vervaging getekend.
+
+## Op je mantel
+
+Een embleemlijst is een dunne rand rond het embleem op je gildemantel. Hij bedekt, verschuift of verandert het embleem nooit en wordt getekend in de boordkleur van je eigen mantel of in eenvoudig metaal, nooit in een teamkleur. Je hebt een gildemantel nodig om er een te dragen: het vak verschijnt in Opties zodra je een gildemantel draagt.
 
 ## Ze dragen
 

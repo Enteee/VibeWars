@@ -12,16 +12,20 @@ melihat apa yang kamu dapatkan.
 | --------------------------------------------- | ------------------------------------- |
 | Bingkai giok dan gelar Penantang              | 5 kemenangan peringkat                |
 | Aura lumut, Jejak lumut                       | 5 kemenangan peringkat                |
+| Bingkai lambang warna pinggiran               | 5 kemenangan peringkat                |
 | Bingkai mawar dan gelar Veteran               | 25 kemenangan peringkat               |
 | Aura bara, Jejak bara                         | 25 kemenangan peringkat               |
 | Cahaya naik, Larut jadi abu                   | 25 kemenangan peringkat               |
 | Aura embun beku, Jejak embun beku             | 75 kemenangan peringkat               |
 | Pusaran daun, Larut jadi kabut                | 75 kemenangan peringkat               |
+| Bingkai lambang besi                          | 75 kemenangan peringkat               |
 | Bingkai hijau toska dan gelar Panglima perang | 200 kemenangan peringkat              |
 | Hujan kelopak, Larut jadi serpihan            | 200 kemenangan peringkat              |
+| Bingkai lambang perak                         | 200 kemenangan peringkat              |
 | Aura cahaya bintang, Jejak cahaya bintang     | 500 kemenangan peringkat              |
 | Hujan bintang, Larut jadi debu bintang        | 500 kemenangan peringkat              |
 | Bingkai anggrek dan gelar Juara               | Tempat di Top 100                     |
+| Bingkai lambang bersepuh emas                 | Tempat di Top 100                     |
 | Api kemenangan beruntun                       | 3 kemenangan peringkat berturut-turut |
 
 Item Top 100 dan api hanya bertahan selama kamu mempertahankannya. Keluar dari Top 100, atau kalah
@@ -35,6 +39,10 @@ Aura tanah adalah cincin samar di kakimu. Jejak langkah meninggalkan butiran kec
 ## Kembali dan tumbang
 
 Gaya kemunculan mengumpulkan butiran kecil di kakimu saat kamu muncul atau dihidupkan kembali. Pelarutan kematian menyebarkannya saat kamu tumbang. Masing-masing berlangsung persis selama kembali dan tumbang biasa, digambar di bawah tubuhmu, dan membuat garis tubuhmu, cincin timmu, dan jasadmu tetap mudah dibaca seperti biasa. Jika sistemmu menyalakan gerakan yang dikurangi, hanya pudar biasa yang digambar.
+
+## Di jubahmu
+
+Bingkai lambang adalah garis tipis di sekeliling lambang pada jubah guild-mu. Bingkai ini tidak pernah menutupi, memindahkan, atau mengubah lambang, dan digambar dengan warna pinggiran jubahmu sendiri atau logam polos, tidak pernah dengan warna tim. Kamu perlu jubah guild untuk memakainya: slotnya muncul di Opsi begitu kamu memakai jubah guild.
 
 ## Memakainya
 

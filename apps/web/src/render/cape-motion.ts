@@ -1,6 +1,6 @@
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "@vibewars/game-core";
 
-import { emblemShape, EMBLEM_SIZE, type EmblemPart } from "./cape-shape.js";
+import { emblemShape, EMBLEM_SIZE, type EmblemGrid, type EmblemPart } from "./cape-shape.js";
 import type { Point } from "./weapon-mark-geometry.js";
 
 /**
@@ -153,6 +153,8 @@ export interface CapeShape {
   /** The hem, point to notch to point: the trim. */
   readonly trim: readonly Point[];
   readonly emblem: readonly EmblemPart[];
+  /** Where the emblem's grid lies, set pixels or not; `undefined` while it has no room. */
+  readonly emblemGrid: EmblemGrid | undefined;
 }
 
 /** How far out of the rim the band's centre line runs. */
@@ -209,19 +211,23 @@ export function capeMotionShape(
   const span = BAND_SPAN - BAND_SPAN_TAKEN * u;
   const emblemSize = emblemFit(notchAlong, r + CAPE_BAND_REACH);
   const emblemAlong = notchAlong - EMBLEM_NOTCH_GAP - emblemSize / 2;
+  // Its up is the tab's left side, as the study turns it.
+  const emblemGrid =
+    emblemSize > 0
+      ? {
+          centre: { x: x + dx * emblemAlong, y: y + dy * emblemAlong },
+          turn: angle + Math.PI / 2,
+          size: emblemSize,
+        }
+      : undefined;
   return {
     band: { x, y, radius: r + BAND_OUT, from: angle - span, to: angle + span },
     cloth: [at(r - 3, -rootHalf), hemLeft, notch, hemRight, at(r - 3, rootHalf)],
     trim: [hemLeft, notch, hemRight],
-    // Its up is the tab's left side, as the study turns it.
     emblem:
-      emblemSize > 0
-        ? emblemShape(
-            emblem,
-            { x: x + dx * emblemAlong, y: y + dy * emblemAlong },
-            angle + Math.PI / 2,
-            emblemSize,
-          )
-        : [],
+      emblemGrid === undefined
+        ? []
+        : emblemShape(emblem, emblemGrid.centre, emblemGrid.turn, emblemGrid.size),
+    emblemGrid,
   };
 }
