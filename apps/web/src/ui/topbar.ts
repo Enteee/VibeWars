@@ -558,7 +558,7 @@ export function mountTopbar(
   const fullscreen = iconButton("topbar-fullscreen", t("fullscreen.enter"));
   attachFullscreenButton(fullscreen, fullscreenTarget());
 
-  actions.append(leaderboard, queue.element, help, options, lobby.element, music, mute, fullscreen);
+  actions.append(queue.element, help, leaderboard, options, lobby.element, music, mute, fullscreen);
   queueAction.before(join.element);
   // An invite link the page opened with (#2100) waits for the first
   // screen with the bar's lobby on it: until then nothing could join.

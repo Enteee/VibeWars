@@ -297,7 +297,7 @@ test("#579: Random Arena's cards are buttons: Enter or Space chooses; Edit is on
   await expect(page.locator("#topbar .topbar-screen-actions").getByRole("button")).toHaveCount(0);
   await expect(page.locator("#topbar .topbar-options")).toBeVisible();
   await expect(page.locator("#topbar .topbar-music")).toBeVisible();
-  // The Leaderboard leads (#3575); Lobby sits between Options and Music (#2385); the queue icon, before
+  // The Leaderboard follows Help (#3575); Lobby sits between Options and Music (#2385); the queue icon, before
   // Help, hides while nothing is queued (#2743).
   await expect(page.locator("#topbar .topbar-queue")).toBeHidden();
   expect(
@@ -305,9 +305,9 @@ test("#579: Random Arena's cards are buttons: Enter or Space chooses; Edit is on
       .locator("#topbar .topbar-actions > button")
       .evaluateAll((buttons) => buttons.map((node) => node.getAttribute("class") ?? "")),
   ).toEqual([
-    "topbar-leaderboard",
     "topbar-queue",
     "topbar-help",
+    "topbar-leaderboard",
     "topbar-options",
     "topbar-lobby-button",
     "topbar-music",
