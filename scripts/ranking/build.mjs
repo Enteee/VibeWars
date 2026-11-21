@@ -64,14 +64,14 @@ const SHARD_NAME = /^\d{4}-\d{2}\.ndjson$/;
 const MAX_SHARD_BYTES = 90 * 1024 * 1024;
 /**
  * A new receipt whose every seat key is already in this many for its UTC
- * day of `startedAt` is not taken in: about five hours of ten-minute
+ * day of `startedAt` is not taken in: about eight hours of ten-minute
  * matches, more than a player plays. Anyone can sign receipts between keys
  * they hold, so without it one key could fill a month shard past
  * `MAX_SHARD_BYTES` and stop every run. Every seat, not any, so one key's
  * flood cannot veto a match it lost with keys under the cap; fresh keys
  * are not stopped (#3738).
  */
-const MAX_RECEIPTS_PER_KEY_DAY = 30;
+const MAX_RECEIPTS_PER_KEY_DAY = 50;
 
 /**
  * The first second after `day`. A receipt from then on is in the future:
