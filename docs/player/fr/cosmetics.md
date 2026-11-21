@@ -1,9 +1,6 @@
 # Cosmétiques
 
-Les cosmétiques changent l’apparence de ton nom pour les autres joueurs. Ils sont purement
-esthétiques : aucun cosmétique ne change la façon dont quoi que ce soit se joue, et aucun ne masque
-jamais un signal que tu lis en combat. Ils appartiennent à ta clé de joueur, donc tous tes
-personnages les partagent.
+Les cosmétiques changent l’apparence de ton nom, et du sol sous tes pieds, pour les autres joueurs. Ils sont purement esthétiques : aucun cosmétique ne change la façon dont quoi que ce soit se joue, et aucun ne masque jamais un signal que tu lis en combat. Ils appartiennent à ta clé de joueur, donc tous tes personnages les partagent.
 
 ## Les obtenir
 
@@ -11,17 +8,25 @@ Tu obtiens des cosmétiques avec des victoires classées vérifiées, telles que
 les compte. Personne ne les distribue : n’importe qui peut consulter le classement et voir ce que
 tu as obtenu.
 
-| Objet                                         | Obtenu avec                    |
-| --------------------------------------------- | ------------------------------ |
-| Cadre jade et le titre Prétendant             | 5 victoires classées           |
-| Cadre rose et le titre Vétéran                | 25 victoires classées          |
-| Cadre sarcelle et le titre Seigneur de guerre | 200 victoires classées         |
-| Cadre orchidée et le titre Champion           | Une place dans le Top 100      |
-| Flamme de série                               | 3 victoires classées d’affilée |
+| Objet                                                   | Obtenu avec                    |
+| ------------------------------------------------------- | ------------------------------ |
+| Cadre jade et le titre Prétendant                       | 5 victoires classées           |
+| Aura de mousse, Traînée de mousse                       | 5 victoires classées           |
+| Cadre rose et le titre Vétéran                          | 25 victoires classées          |
+| Aura de braise, Traînée de braise                       | 25 victoires classées          |
+| Aura de givre, Traînée de givre                         | 75 victoires classées          |
+| Cadre sarcelle et le titre Seigneur de guerre           | 200 victoires classées         |
+| Aura de lumière stellaire, Traînée de lumière stellaire | 500 victoires classées         |
+| Cadre orchidée et le titre Champion                     | Une place dans le Top 100      |
+| Flamme de série                                         | 3 victoires classées d’affilée |
 
 Les objets du Top 100 et la flamme ne durent que tant que tu les détiens. Sors du Top 100, ou perds
 un match classé, et ils reviennent à l’apparence par défaut jusqu’à ce que tu les obtiennes de
 nouveau. Ce que tu as choisi reste choisi.
+
+## Au sol
+
+Une aura au sol est un anneau léger à tes pieds. Une traînée de pas laisse de petites particules là où tu marches, qui s’effacent en un instant. Les deux se dessinent sous chaque anneau, marque et avertissement, et n’utilisent jamais une couleur d’équipe. Si ton système demande des animations réduites, l’aura reste immobile et aucune traînée n’est dessinée.
 
 ## Les porter
 

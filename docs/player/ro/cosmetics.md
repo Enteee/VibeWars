@@ -1,25 +1,30 @@
 # Cosmetice
 
-Elementele cosmetice schimbă felul în care numele tău arată pentru ceilalți jucători. Sunt doar de
-aspect: niciun element cosmetic nu schimbă felul în care se joacă ceva și niciunul nu acoperă
-vreodată un semnal pe care îl citești într-o luptă. Aparțin cheii tale de jucător, așa că toate
-personajele tale le au în comun.
+Elementele cosmetice schimbă felul în care numele tău și pământul de sub tine arată pentru ceilalți jucători. Sunt doar de aspect: niciun element cosmetic nu schimbă felul în care se joacă ceva și niciunul nu acoperă vreodată un semnal pe care îl citești într-o luptă. Aparțin cheii tale de jucător, așa că toate personajele tale le au în comun.
 
 ## Cum le obții
 
 Obții elemente cosmetice cu victorii clasate verificate, așa cum le numără clasamentul public.
 Nimeni nu le împarte: oricine poate verifica clasamentul și vedea ce ai obținut.
 
-| Element                                     | Se obține cu               |
-| ------------------------------------------- | -------------------------- |
-| Ramă de jad și titlul Pretendent            | 5 victorii clasate         |
-| Ramă roz și titlul Veteran                  | 25 de victorii clasate     |
-| Ramă turcoaz și titlul Senior al războiului | 200 de victorii clasate    |
-| Ramă orhidee și titlul Campion              | Un loc în Top 100          |
-| Flacăra seriei de victorii                  | 3 victorii clasate la rând |
+| Element                                          | Se obține cu               |
+| ------------------------------------------------ | -------------------------- |
+| Ramă de jad și titlul Pretendent                 | 5 victorii clasate         |
+| Aură de mușchi, Urmă de mușchi                   | 5 victorii clasate         |
+| Ramă roz și titlul Veteran                       | 25 de victorii clasate     |
+| Aură de jar, Urmă de jar                         | 25 de victorii clasate     |
+| Aură de brumă, Urmă de brumă                     | 75 de victorii clasate     |
+| Ramă turcoaz și titlul Senior al războiului      | 200 de victorii clasate    |
+| Aură de lumina stelelor, Urmă de lumina stelelor | 500 de victorii clasate    |
+| Ramă orhidee și titlul Campion                   | Un loc în Top 100          |
+| Flacăra seriei de victorii                       | 3 victorii clasate la rând |
 
 Elementele din Top 100 și flacăra durează doar cât timp le păstrezi. Dacă ieși din Top 100 sau
 pierzi un meci clasat, revin la aspectul implicit până le obții din nou. Ce ai ales rămâne ales.
+
+## Pe pământ
+
+O aură la sol este un inel slab la picioarele tale. O urmă de pași lasă particule mici pe unde mergi, care se sting într-o clipă. Amândouă se desenează sub fiecare inel, semn și avertizare și nu folosesc niciodată o culoare de echipă. Dacă sistemul tău cere mișcare redusă, aura stă nemișcată și nu se desenează nicio urmă.
 
 ## Cum le porți
 

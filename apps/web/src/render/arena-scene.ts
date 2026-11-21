@@ -333,6 +333,7 @@ import { liftFrame, liftPlatform, liftShaft, type LiftFrame } from "./lift-art.j
 import { paintDeckShadows, sunShadowOffset } from "./shadow-geometry.js";
 import { lightingOn } from "./lighting-preference.js";
 import { passEnd, passStart } from "./pass-timing.js";
+import { FootstepTrails, auraOf, paintAura, paintMotes } from "./cosmetic-ground.js";
 import { LIGHT_MARK_ART, lightMarkKey } from "./light-mark.js";
 import { SWITCH_MARK_ART, leverThrown, switchMarkKey } from "./switch-mark.js";
 import { paintArrival, paintTeleportEntry, paintTeleportExit } from "./teleport-mark.js";
@@ -821,6 +822,12 @@ export class ArenaScene extends Phaser.Scene {
     string,
     { readonly readyAt: number; readonly at: Vec2; readonly layer: number }
   >();
+  /** Each layer's ground auras and footstep trails (ADR-0056 §4, #3578). */
+  private readonly cosmeticGraphics = new Map<
+    number,
+    { readonly graphics: Phaser.GameObjects.Graphics; readonly painter: Painter }
+  >();
+  private readonly footsteps = new FootstepTrails();
   /** Each layer's effect zones (ADR-0053), drawn every frame as they breathe. */
   private readonly zoneGraphics = new Map<number, Phaser.GameObjects.Graphics>();
   /** Fog banks and vents by layer, plumes by band, and the weather over all (#3032). */
@@ -1226,6 +1233,7 @@ export class ArenaScene extends Phaser.Scene {
     for (const graphics of this.zoneGraphics.values()) {
       cullToView(graphics, view);
     }
+    this.drawGroundCosmetics(dt, view);
     // Over the grid and walls, under the actors: a flash never hides a
     // health bar, a status or the target ring.
     this.areaFlashes = decayAreaFlashes(this.areaFlashes, dt);
@@ -5135,6 +5143,54 @@ export class ArenaScene extends Phaser.Scene {
     }
   }
 
+  /**
+   * Every standing body's ground aura and every footstep trail (ADR-0056
+   * §4, #3578), each on its own layer under the wards, zones and bodies
+   * there: a body under a deck has its aura covered with it.
+   */
+  private drawGroundCosmetics(dt: number, view: Box): void {
+    for (const { graphics } of this.cosmeticGraphics.values()) {
+      graphics.clear();
+    }
+    this.footsteps.step(this.drawnActors, dt, this.reducedMotion);
+    for (const mote of this.footsteps.motes()) {
+      paintMotes(this.cosmeticPainterOf(mote.layer), [mote]);
+    }
+    for (const actor of this.drawnActors) {
+      const look = auraOf(actor);
+      if (look !== undefined) {
+        const { x, y } = actor.position;
+        const painter = this.cosmeticPainterOf(actor.layer);
+        paintAura(
+          painter,
+          x,
+          y,
+          actor.radius,
+          look,
+          this.now,
+          cuePhase(actor.id),
+          this.reducedMotion,
+        );
+      }
+    }
+    for (const { graphics } of this.cosmeticGraphics.values()) {
+      cullToView(graphics, view);
+    }
+  }
+
+  /** What paints `layer`'s ground cosmetics, made the first time one is drawn there. */
+  private cosmeticPainterOf(layer: number): Painter {
+    let drawn = this.cosmeticGraphics.get(layer);
+    if (drawn === undefined) {
+      const graphics = this.add
+        .graphics()
+        .setDepth(renderOrder({ kind: "cosmetic-ground", layer }));
+      drawn = { graphics, painter: phaserPainter(graphics) };
+      this.cosmeticGraphics.set(layer, drawn);
+    }
+    return drawn.painter;
+  }
+
   /** The map's effect zones, lighting on or off: they are on the ground, as its water is. */
   private drawZones(): void {
     for (const graphics of this.zoneGraphics.values()) {
@@ -5362,6 +5418,7 @@ export class ArenaScene extends Phaser.Scene {
     this.dropZoneGrounds();
     this.dropPaving();
     this.leverFlips.clear();
+    this.footsteps.clear();
     this.alt?.dispose();
     this.alt = undefined;
   }

@@ -1,25 +1,31 @@
 # Kosmetyki
 
-Kosmetyki zmieniają to, jak twoje imię wygląda dla innych graczy. Służą wyłącznie wyglądowi: żaden
-kosmetyk nie zmienia tego, jak cokolwiek działa w grze, i żaden nigdy nie zasłania sygnału, który
-odczytujesz w walce. Należą do twojego klucza gracza, więc dzielą je wszystkie twoje postacie.
+Kosmetyki zmieniają to, jak twoje imię i ziemia pod tobą wyglądają dla innych graczy. Służą wyłącznie wyglądowi: żaden kosmetyk nie zmienia tego, jak cokolwiek działa w grze, i żaden nigdy nie zasłania sygnału, który odczytujesz w walce. Należą do twojego klucza gracza, więc dzielą je wszystkie twoje postacie.
 
 ## Jak je zdobyć
 
 Kosmetyki zdobywasz zweryfikowanymi zwycięstwami rankingowymi, tak jak liczy je publiczna tabela
 wyników. Nikt ich nie rozdaje: każdy może sprawdzić tabelę wyników i zobaczyć, co zdobyłeś.
 
-| Przedmiot                          | Zdobywany za                    |
-| ---------------------------------- | ------------------------------- |
-| Nefrytowa ramka i tytuł Pretendent | 5 zwycięstw rankingowych        |
-| Różana ramka i tytuł Weteran       | 25 zwycięstw rankingowych       |
-| Morska ramka i tytuł Watażka       | 200 zwycięstw rankingowych      |
-| Storczykowa ramka i tytuł Czempion | Miejsce w Top 100               |
-| Płomień serii zwycięstw            | 3 zwycięstwa rankingowe z rzędu |
+| Przedmiot                              | Zdobywany za                    |
+| -------------------------------------- | ------------------------------- |
+| Nefrytowa ramka i tytuł Pretendent     | 5 zwycięstw rankingowych        |
+| Aura mchu, Ślad mchu                   | 5 zwycięstw rankingowych        |
+| Różana ramka i tytuł Weteran           | 25 zwycięstw rankingowych       |
+| Aura żaru, Ślad żaru                   | 25 zwycięstw rankingowych       |
+| Aura szronu, Ślad szronu               | 75 zwycięstw rankingowych       |
+| Morska ramka i tytuł Watażka           | 200 zwycięstw rankingowych      |
+| Aura blasku gwiazd, Ślad blasku gwiazd | 500 zwycięstw rankingowych      |
+| Storczykowa ramka i tytuł Czempion     | Miejsce w Top 100               |
+| Płomień serii zwycięstw                | 3 zwycięstwa rankingowe z rzędu |
 
 Przedmioty z Top 100 i płomień trwają tylko, dopóki je utrzymujesz. Wypadnij z Top 100 albo
 przegraj mecz rankingowy, a wrócą do domyślnego wyglądu, dopóki znów ich nie zdobędziesz. To, co
 wybrałeś, pozostaje wybrane.
+
+## Na ziemi
+
+Aura na ziemi to blady pierścień u twoich stóp. Ślad kroków zostawia drobne drobinki tam, gdzie idziesz, które znikają w mgnieniu oka. Oba rysują się pod każdym pierścieniem, znakiem i ostrzeżeniem i nigdy nie mają koloru drużyny. Jeśli w systemie masz włączone ograniczenie ruchu, aura stoi w miejscu, a ślad się nie rysuje.
 
 ## Jak je nosić
 

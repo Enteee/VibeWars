@@ -31,7 +31,10 @@ export const CUE_COLOURS: readonly number[] = [
   ...Object.values(ZONE_LOOK).flatMap((look) => [look.fill, look.edge]),
 ];
 
-/** A ground or trail effect's largest radius, as a share of the body's, and its strongest alpha. */
+/**
+ * How far a ground effect reaches, as a share of the body's radius: an
+ * aura past the body's rim, a trail mote from its centre. And its strongest alpha.
+ */
 export const GROUND_RADIUS_OF_BODY = 0.6;
 export const GROUND_ALPHA = 0.35;
 
@@ -40,6 +43,8 @@ function coloursOf(look: CosmeticLook): readonly number[] {
   switch (look.kind) {
     case "frame":
     case "flame":
+    case "trail":
+    case "aura":
       return [look.colour];
     case "title":
       return [look.colour, look.glow];

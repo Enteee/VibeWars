@@ -348,6 +348,39 @@ describe("an effect zone's place in the order (ADR-0053, #3024)", () => {
   });
 });
 
+describe("a ground cosmetic's place in the order (ADR-0056 §4, #3578)", () => {
+  it("draws a ground aura on the ground's water, under its wards, light, zones and bodies", () => {
+    const items: readonly RenderItem[] = [
+      { kind: "water", layer: 0, part: "ripples" },
+      { kind: "cosmetic-ground", layer: 0 },
+      { kind: "ground-effect", layer: 0 },
+      { kind: "lighting", layer: 0 },
+      { kind: "zone", layer: 0, part: "ground" },
+      { kind: "light-mark", layer: 0 },
+      { kind: "character", band: characterBand(0, 1), part: "body" },
+    ];
+    const orders = items.map(renderOrder);
+    expect(orders).toEqual([...orders].sort((a, b) => a - b));
+    expect(new Set(orders).size).toBe(items.length);
+  });
+
+  it("draws a deck's aura on its water, under its light, zones, wards and bodies, and over the stack below", () => {
+    const items: readonly RenderItem[] = [
+      { kind: "character", band: characterBand(0, 2), part: "bar" },
+      { kind: "deck", deckLayer: 1 },
+      { kind: "water", layer: 1, part: "ripples" },
+      { kind: "cosmetic-ground", layer: 1 },
+      { kind: "lighting", layer: 1 },
+      { kind: "zone", layer: 1, part: "ground" },
+      { kind: "ground-effect", layer: 1 },
+      { kind: "character", band: characterBand(1, 2), part: "body" },
+    ];
+    const orders = items.map(renderOrder);
+    expect(orders).toEqual([...orders].sort((a, b) => a - b));
+    expect(new Set(orders).size).toBe(items.length);
+  });
+});
+
 describe("atmosphere's place in the order (#3032)", () => {
   it("draws a ground fog bank over its zones, under its wards, torches and bodies", () => {
     const items: readonly RenderItem[] = [
