@@ -158,7 +158,7 @@ async function editorAndTraining(page, dir) {
   step = "cast Fireball";
   let hit = false;
   for (let tries = 0; tries < 12 && !hit; tries += 1) {
-    await page.getByRole("button", { name: "Fireball" }).click();
+    await page.locator(".training-skill").first().click();
     for (let poll = 0; poll < 15 && !hit; poll += 1) {
       await sleep(100);
       hit = /damage\s*[1-9]/.test(await page.locator("body").innerText());
