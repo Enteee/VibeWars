@@ -1,5 +1,5 @@
-relays reached: 4 of 8
-  down wss://cdn.satellite.earth
+relays reached: 5 of 8
+  ok   wss://cdn.satellite.earth
   ok   wss://relay.degmods.com
   ok   wss://nostr.stakey.net
   ok   wss://nostr.rblb.it
@@ -12,4 +12,4 @@ receipts: 0 archived, 0 new, 0 kept
 over-cap: 0
 rejected:
 identities: 0, ranked: 0
-leaderboard.json sha256: d2632760ec536b3820da795b39a2fb55037c8f19edd48c1c731014ab163735f9
+leaderboard.json sha256: 22da82cbb8af69051eff0f26f7f2dccfe0efa1732806546e2ff5673dc850dd74
