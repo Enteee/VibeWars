@@ -7,8 +7,8 @@
  * Writes into the archive directory:
  * - `receipts/<YYYY-MM>.ndjson`: every kept receipt, one canonical JSON
  *   per line, sorted, in the shard of its `startedAt`'s UTC month, since
- *   relays forget. A receipt is never dropped from it, except past
- *   `MAX_RECEIPTS_PER_KEY_DAY` (#3738), and only shards whose bytes
+ *   relays forget. A receipt is never dropped from it, a new one past
+ *   `MAX_RECEIPTS_PER_KEY_DAY` is not taken in (#3738), and only shards whose bytes
  *   changed are written (#3730);
  * - `leaderboard.json`: `{asOf, engine, count, entries}`;
  * - `log.txt`: counts by reject reason, the relays reached, and the
@@ -221,6 +221,7 @@ export function build({ archived, events, relaysReached, relays, asOfDay }) {
     }
   }
   const archivedCount = kept.size;
+  const archivedHashes = new Set(kept.keys());
 
   /** @type {Map<string, number>} */
   const rejected = new Map();
@@ -240,39 +241,56 @@ export function build({ archived, events, relaysReached, relays, asOfDay }) {
     }
   }
 
-  const sorted = [...kept.values()]
-    .map((receipt) => ({ receipt, line: canonical(receipt) }))
+  const sorted = [...kept]
+    .map(([hash, receipt]) => ({ hash, receipt, line: canonical(receipt) }))
     .sort(
       (a, b) =>
         a.receipt.start.startedAt - b.receipt.start.startedAt ||
         (a.line < b.line ? -1 : a.line > b.line ? 1 : 0),
     );
-  // The cap is applied to the whole set in canonical order every run, so
-  // the order receipts arrived in never changes what is kept (#3738). A
-  // partial counts too, or a flooder would sign every receipt as one; it
-  // merges with its whole receipt into one entry, so a match counts once.
-  /** Receipts per seat key per UTC day, keyed `<day> <pubkey>`. */
+  // The cap admits new receipts only: signers pick `startedAt`, so a cap
+  // over the whole set would let a backdated flood evict an archived loss
+  // (#3738). Counting starts from what the archive holds, and new receipts
+  // are admitted in canonical order, so the arrival order within a run
+  // changes nothing. A partial counts too, or a flooder would sign every
+  // receipt as one; it merges with its whole receipt into one entry.
+  /** @param {RankedReceipt} receipt @returns {string[]} its `<day> <pubkey>` per seat */
+  const slotsOf = (receipt) => {
+    const day = String(utcDay(receipt.start.startedAt));
+    return receipt.start.teams.flat().map(({ pubkey }) => `${day} ${pubkey}`);
+  };
+  /** Receipts per seat key per UTC day. */
   /** @type {Map<string, number>} */
   const perKeyDay = new Map();
+  /** @param {RankedReceipt} receipt */
+  const count = (receipt) => {
+    for (const slot of slotsOf(receipt)) {
+      perKeyDay.set(slot, (perKeyDay.get(slot) ?? 0) + 1);
+    }
+  };
+  for (const { hash, receipt } of sorted) {
+    if (archivedHashes.has(hash)) {
+      count(receipt);
+    }
+  }
   /** Over-cap receipts per seat key that was at the cap. */
   /** @type {Map<string, number>} */
   const overCap = new Map();
-  const receipts = sorted.filter(({ receipt }) => {
-    const day = String(utcDay(receipt.start.startedAt));
-    const seats = receipt.start.teams.flat().map(({ pubkey }) => pubkey);
-    const full = seats.filter(
-      (pubkey) => (perKeyDay.get(`${day} ${pubkey}`) ?? 0) >= MAX_RECEIPTS_PER_KEY_DAY,
+  const receipts = sorted.filter(({ hash, receipt }) => {
+    if (archivedHashes.has(hash)) {
+      return true;
+    }
+    const full = slotsOf(receipt).filter(
+      (slot) => (perKeyDay.get(slot) ?? 0) >= MAX_RECEIPTS_PER_KEY_DAY,
     );
-    if (full.length > 0) {
-      for (const pubkey of full) {
-        overCap.set(pubkey, (overCap.get(pubkey) ?? 0) + 1);
-      }
-      return false;
+    for (const slot of full) {
+      const pubkey = slot.slice(slot.indexOf(" ") + 1);
+      overCap.set(pubkey, (overCap.get(pubkey) ?? 0) + 1);
     }
-    for (const key of seats.map((pubkey) => `${day} ${pubkey}`)) {
-      perKeyDay.set(key, (perKeyDay.get(key) ?? 0) + 1);
+    if (full.length === 0) {
+      count(receipt);
     }
-    return true;
+    return full.length === 0;
   });
   const dropped = sorted.length - receipts.length;
   const ratings = rate(
@@ -299,7 +317,7 @@ export function build({ archived, events, relaysReached, relays, asOfDay }) {
     ...relays.map((relay) => `  ${relaysReached.includes(relay) ? "ok  " : "down"} ${relay}`),
     ...(relaysReached.length === 0 ? ["no relay reached: the archive is unchanged"] : []),
     `events: ${String(events.length)}`,
-    `receipts: ${String(archivedCount)} archived, ${String(added)} new, ${String(receipts.length)} kept`,
+    `receipts: ${String(archivedCount)} archived, ${String(added - dropped)} new, ${String(receipts.length)} kept`,
     `over-cap: ${String(dropped)}`,
     ...[...overCap]
       .sort(([a, m], [b, n]) => n - m || (a < b ? -1 : 1))

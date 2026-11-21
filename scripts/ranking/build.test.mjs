@@ -260,7 +260,7 @@ describe("the leaderboard job", () => {
     expect(fs.readdirSync(dir)).toEqual([]);
   });
 
-  it("archives and rates a key in at most 30 receipts a UTC day, whatever order they came in", async () => {
+  it("archives and rates a key in at most 30 receipts a UTC day, whatever order a run takes them in", async () => {
     const flood = Array.from({ length: 40 }, (_, i) =>
       receipt({ matchId: `f${String(i)}`, at: i }),
     );
@@ -299,6 +299,28 @@ describe("the leaderboard job", () => {
     const out = await runOn(archiveDir(), [[...day, before].map((r) => event(r)), []]);
     expect(linesOf(out)).toHaveLength(31);
     expect(out.log).toContain("over-cap: 0\n");
+  });
+
+  it("never evicts an archived loss for 30 backdated partials on its day (perf-sec-qa)", async () => {
+    const dir = archiveDir();
+    const loser = KEYS[2];
+    if (loser === undefined) {
+      throw new Error("four keys");
+    }
+    const real = receipt({ matchId: "real", at: 36_000 });
+    await runOn(dir, [[event(real)], []]);
+    const sybils = [KEYS[4], KEYS[5], loser, KEYS[6]].filter((key) => key !== undefined);
+    const flood = Array.from({ length: 30 }, (_, i) =>
+      receipt({ matchId: `s${String(i)}`, at: i, keys: sybils, only: loser.pubkey }),
+    );
+    const out = await runOn(dir, [flood.map((r) => event(r)), []]);
+    const ids = linesOf(out).map((line) => parseReceipt(line)?.start.matchId);
+    expect(ids).toContain("real");
+    expect(ids).toHaveLength(30);
+    expect(out.log).toContain("over-cap: 1\n");
+    expect(entriesOf(out.leaderboard).entries.find((e) => e.pubkey === loser.pubkey)?.matches).toBe(
+      1,
+    );
   });
 
   it("voids a re-round that names a signer a leaver, and rates one no winner backs", async () => {
