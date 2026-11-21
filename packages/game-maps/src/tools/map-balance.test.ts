@@ -2051,6 +2051,35 @@ describe("walks and high ground (#3070)", () => {
       );
     });
 
+    // Team 1's relic 408 from its seats against 438 and 548 won it the first carry and 54 % of
+    // decided relic runs (#3442). Measured from every seat, the nearest and on average: team 0's
+    // seats are a grid, so its home seat is one of four as near its middle.
+    it("walks each team's seats to its own relic within 10 %, the nearest and on average", () => {
+      const finder = layeredFinder(relic, MINIMAL_GW_INSPIRED_PVP_V1.collision.playerRadius);
+      const walks = TEAMS.map((team) => {
+        const spawn = relic.objectives
+          .flatMap((each) => (each.kind === "relic-spawn" ? [each] : []))
+          .find((each) => each.team === team);
+        if (spawn === undefined) throw new Error(`no relic for team ${String(team)}`);
+        return relic.spawnPoints
+          .filter((seat) => seat.team === team)
+          .map((seat) =>
+            walkedFrom(
+              seat.position,
+              finder.find(seat.position, seat.layer, spawn.position, spawn.layer),
+            ),
+          );
+      });
+      within(
+        walks.map((seats) => Math.min(...seats)),
+        0.1,
+      );
+      within(
+        walks.map((seats) => seats.reduce((sum, walk) => sum + walk, 0) / seats.length),
+        0.1,
+      );
+    });
+
     // Each outer point is held by the team beside it against the neighbour from the far side. With
     // its shrine nearer everything, team 0 held its own point by 692 and took team 1's, held by
     // 514, and won 52 % of decided captures (#3442). So every shrine is as far from its own point,
