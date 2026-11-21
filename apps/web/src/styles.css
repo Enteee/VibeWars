@@ -1925,6 +1925,78 @@ body:has(> .splash) #menu-background::after {
   display: none;
 }
 
+/* What a player wears (ADR-0056): a rim, a glowing title line and the streak flame. */
+.cosmetic-frame {
+  outline: var(--cosmetic-frame-width, 1px) solid var(--cosmetic-frame);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.cosmetic-title {
+  display: block;
+  font-size: 0.75em;
+  color: var(--cosmetic-title);
+  text-shadow: 0 0 4px var(--cosmetic-glow);
+}
+
+.cosmetic-flame {
+  display: inline-block;
+  width: 0.55em;
+  height: 0.8em;
+  vertical-align: baseline;
+  background: var(--cosmetic-flame);
+  border-radius: 50% 50% 50% 50% / 70% 70% 30% 30%;
+  animation: cosmetic-flicker 0.7s ease-in-out infinite alternate;
+}
+
+@keyframes cosmetic-flicker {
+  to {
+    transform: scaleY(1.12);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cosmetic-flame {
+    animation: none;
+  }
+}
+
+/* Options > Cosmetics (#3577): one picker per slot. */
+.cosmetics-slot {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0.8rem 0 0;
+  border: 0;
+  padding: 0;
+}
+
+.cosmetics-slot legend {
+  margin-bottom: 0.3rem;
+  color: var(--ink-dim);
+}
+
+.cosmetics-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.1rem;
+}
+
+.cosmetics-item[aria-pressed="true"] {
+  outline: 2px solid var(--ink);
+}
+
+.cosmetics-item-detail,
+.cosmetics-item-locked {
+  font-size: 0.8em;
+  color: var(--ink-dim);
+}
+
+.cosmetics-note {
+  color: var(--ink-dim);
+}
+
 /* A player's hero rank beside their name (#2702). */
 .hero-rank {
   color: var(--ink-dim);

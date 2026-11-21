@@ -19,6 +19,7 @@ import { MatchRefusedError, connectMatch } from "./match-client.js";
 import { OBSERVER_DELAY_SECONDS, RECONNECT_WINDOW_SECONDS } from "./match-host.js";
 import type { RecordedReplay, Sha256 } from "./replay.js";
 import { connectObserver } from "./match-observer.js";
+import { testCosmetics, testPlayerKey } from "./player-key.test-support.js";
 import { scopeTransport } from "./scoped-transport.js";
 import { hello, playerIn, self, settle, toJson, until } from "./match-harness.test-support.js";
 
@@ -74,6 +75,30 @@ describe("a lobby's own match", () => {
     await lobby.step(0.05);
     expect(self(mine)?.name).toBe("Host");
     expect(playerIn(mine.getSnapshot(), theirs.selfSessionId)?.name).toBe("Guest 1");
+  });
+
+  it("carries each member's signed cosmetics from the lobby into its match, unchanged (ADR-0056)", async () => {
+    const lobby = await openLobby();
+    const worn = {
+      ids: ["frame-bronze", "title-veteran"],
+      at: 1_700_000_000_000,
+      sig: "5c".repeat(64),
+    };
+    const key = testPlayerKey();
+    const guest = await lobby.join("Guest 1", null, null, null, key, worn);
+    await seat([lobby.host, guest], [0, 1]);
+    const listed = lobby.host.connection
+      .getSnapshot()
+      .players.find((player) => player.name === "Guest 1");
+    expect(listed?.cosmetics).toEqual(worn);
+    await start(lobby);
+    const [mine, theirs] = [await play(lobby.host), await play(guest)];
+    await lobby.step(0.05);
+    expect(playerIn(mine.getSnapshot(), theirs.selfSessionId)?.worn).toEqual({
+      playerPubkey: key.pubkey,
+      cosmetics: worn,
+    });
+    expect(self(mine)?.worn?.cosmetics).toEqual(testCosmetics);
   });
 
   it("plays each member with the build they bring to the lobby's match", async () => {

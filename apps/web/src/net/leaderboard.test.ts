@@ -22,6 +22,8 @@ const BOARD: Leaderboard = {
       conservative: 1601.6,
       matches: 24,
       provisional: false,
+      wins: 0,
+      streak: 0,
     },
     {
       pubkey: "bb",
@@ -31,6 +33,8 @@ const BOARD: Leaderboard = {
       conservative: 900,
       matches: 3,
       provisional: true,
+      wins: 0,
+      streak: 0,
     },
   ],
 };

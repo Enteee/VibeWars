@@ -18,6 +18,7 @@ import {
   type Vec2,
 } from "@vibewars/game-core";
 
+import { t } from "../i18n/index.js";
 import { taggedName } from "../ui/bot-tag.js";
 import { nameplateName, playerLabelText, signetUrl } from "../ui/player-label.js";
 import { prefersReducedMotion } from "../ui/recharge-overlay.js";
@@ -577,6 +578,10 @@ const DEAD_INK_TINT = 0x4a5464;
  */
 const HOVER_INK = "#ffd866";
 const HOVER_INK_TINT = TARGET_RING;
+/** A worn frame's gap round the plate, a flame's height, screen px, and their strength (ADR-0056). */
+const NAME_FRAME_PAD = 2;
+const NAME_FLAME_SIZE = 9;
+const NAME_COSMETIC_ALPHA = 0.9;
 
 /** An off-screen marker's length, tip to base, and width, screen px (#440). */
 const EDGE_MARKER_LENGTH = 12;
@@ -961,6 +966,10 @@ export class ArenaScene extends Phaser.Scene {
   private nameLabels = new Map<string, Phaser.GameObjects.Text>();
   /** Each shown name tag's box, from the last frame (#2738). */
   private readonly nameBoxes = new Map<string, Rect>();
+  /** Each name's title line (ADR-0056), made the first time one is worn. */
+  private readonly nameTitles = new Map<string, Phaser.GameObjects.Text>();
+  /** Name plate frames and streak flames (ADR-0056), redrawn each frame. */
+  private nameCosmetics: Phaser.GameObjects.Graphics | undefined;
   /** The primary profession's glyph before each name, one pooled image per actor (#281). */
   private nameGlyphs = new Map<string, Phaser.GameObjects.Image>();
   /** One signet image per actor with one (#2805), beside its name. */
@@ -1152,6 +1161,7 @@ export class ArenaScene extends Phaser.Scene {
     this.markGraphics = this.add.graphics().setDepth(EFFECT_DEPTH);
     this.markerGraphics = this.add.graphics().setDepth(EDGE_MARKER_DEPTH);
     this.nameUnderline = this.add.graphics().setDepth(OVERLAY_DEPTH);
+    this.nameCosmetics = this.add.graphics().setDepth(OVERLAY_DEPTH);
     // Made before any shot's sprite, so under every one at their depth.
     this.shotTrails = this.add.graphics().setDepth(OVERLAY_DEPTH);
     this.shotCores = this.add.graphics().setDepth(OVERLAY_DEPTH + 1);
@@ -3021,6 +3031,7 @@ export class ArenaScene extends Phaser.Scene {
     const zoom = this.cameras.main.zoom;
     const seen = new Set<string>();
     let underlined: { x: number; y: number; width: number } | undefined;
+    this.nameCosmetics?.clear();
     for (const actor of this.drawnActors) {
       seen.add(actor.id);
       let label = this.nameLabels.get(actor.id);
@@ -3058,13 +3069,13 @@ export class ArenaScene extends Phaser.Scene {
       this.updateNameGlyph(actor, layout, shown, hovered);
       this.updateNameSignet(actor, layout, shown);
       if (shown) {
-        this.nameBoxes.set(
-          actor.id,
-          nameTagBox(actor, label.width, label.height, zoom, signetDrawn, leadWidth),
-        );
+        const box = nameTagBox(actor, label.width, label.height, zoom, signetDrawn, leadWidth);
+        this.nameBoxes.set(actor.id, box);
+        this.drawNameCosmetics(actor, box, layout.textX, zoom);
       } else {
         this.nameBoxes.delete(actor.id);
       }
+      this.nameTitles.get(actor.id)?.setVisible(shown && actor.cosmetics.title !== undefined);
       if (shown && hovered) {
         underlined = { x: layout.textX, y: layout.bottom, width: screenPx(label.width, zoom) };
       }
@@ -3094,8 +3105,65 @@ export class ArenaScene extends Phaser.Scene {
         this.nameSignets.delete(id);
         this.nameLeads.get(id)?.destroy();
         this.nameLeads.delete(id);
+        this.nameTitles.get(id)?.destroy();
+        this.nameTitles.delete(id);
       }
     }
+  }
+
+  /**
+   * What `actor` wears on its plate (ADR-0056), round `box`, the shown
+   * plate: a frame as a rim, a title on a line above, centred on `textX`,
+   * and the streak flame after it. All on the overlay, never on the body,
+   * so no ring, condition, telegraph or call mark is covered.
+   */
+  private drawNameCosmetics(actor: RenderableActor, box: Rect, textX: number, zoom: number): void {
+    const { frame, title, flame } = actor.cosmetics;
+    const graphics = this.nameCosmetics;
+    const pad = screenPx(NAME_FRAME_PAD, zoom);
+    if (graphics !== undefined && frame?.look.kind === "frame") {
+      graphics.lineStyle(screenPx(frame.look.width, zoom), frame.look.colour, NAME_COSMETIC_ALPHA);
+      graphics.strokeRect(
+        box.left - pad,
+        box.top - pad,
+        box.right - box.left + 2 * pad,
+        box.bottom - box.top + 2 * pad,
+      );
+    }
+    if (graphics !== undefined && flame?.look.kind === "flame") {
+      // A small teardrop after the plate; it flickers, unless motion is reduced.
+      const flicker =
+        flame.look.motion === "flicker" && !this.reducedMotion
+          ? 1 + 0.12 * Math.sin(this.now * 9 + cuePhase(actor.id))
+          : 1;
+      const size = screenPx(NAME_FLAME_SIZE, zoom);
+      const x = box.right + pad + size / 2;
+      const base = box.bottom - size * 0.35;
+      graphics.fillStyle(flame.look.colour, NAME_COSMETIC_ALPHA);
+      graphics.fillCircle(x, base, size * 0.35);
+      graphics.fillTriangle(x - size * 0.35, base, x + size * 0.35, base, x, base - size * flicker);
+    }
+    let line = this.nameTitles.get(actor.id);
+    if (title?.look.kind !== "title") {
+      line?.destroy();
+      this.nameTitles.delete(actor.id);
+      return;
+    }
+    if (line === undefined) {
+      line = this.add
+        .text(0, 0, "", { fontSize: "9px", fontFamily: "ui-monospace, monospace" })
+        .setOrigin(0.5, 1)
+        .setDepth(OVERLAY_DEPTH);
+      this.nameTitles.set(actor.id, line);
+    }
+    const colour = `#${title.look.colour.toString(16).padStart(6, "0")}`;
+    if (line.style.color !== colour) {
+      line.setColor(colour);
+      line.setShadow(0, 0, `#${title.look.glow.toString(16).padStart(6, "0")}`, 4, false, true);
+    }
+    line.setText(t(title.look.label));
+    screenSized(line, zoom);
+    line.setPosition(textX, box.top - pad);
   }
 
   /**

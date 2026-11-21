@@ -68,6 +68,7 @@ import {
   type WireTeam,
   type WireTeamSide,
   type WireRankedCancel,
+  type WireCosmetics,
   type WireRankedJoin,
   type WireRankedReceipt,
   type WireRankedResult,
@@ -481,6 +482,7 @@ type Member = MemberBase &
          */
         bot: PlayerBuild;
         readonly playerPubkey: null;
+        readonly cosmetics: null;
       }
     | {
         bot: null;
@@ -490,6 +492,8 @@ type Member = MemberBase &
         readonly ascentMorale: number;
         /** Its join's part of a ranked seat (#3573); `null` for none. */
         readonly ranked: WireRankedJoin | null;
+        /** Its join's cosmetics (ADR-0056), relayed unread. */
+        readonly cosmetics: WireCosmetics;
       }
   );
 
@@ -929,6 +933,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       bot: member.bot !== null,
       away: away.has(member.id),
       playerPubkey: member.playerPubkey,
+      cosmetics: member.cosmetics,
     })),
     countdownSeconds: countdownEndsAt === undefined ? null : countdownLeft(countdownEndsAt),
     queueNonce: queueing?.nonce ?? null,
@@ -1044,6 +1049,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
             bot: false,
             build,
             playerPubkey: member.playerPubkey,
+            cosmetics: member.cosmetics,
             startMorale: queued?.group.mode === "heroes-ascent" ? member.ascentMorale : 0,
           }
         : { ...seat, bot: true, build: build ?? member.bot };
@@ -2004,6 +2010,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       relayPub: null,
       bot: build,
       playerPubkey: null,
+      cosmetics: null,
     });
     return id;
   };
@@ -2065,6 +2072,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       playerPubkey: join.playerPubkey,
       ascentMorale: carriedMorale(join.ascentMorale),
       ranked: join.ranked,
+      cosmetics: join.cosmetics,
     });
     relayAdmission.seated(from);
     forgetForwards(from, false);

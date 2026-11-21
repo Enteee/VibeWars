@@ -356,6 +356,33 @@ export default {
   "controls.weaponSet4": "Asesarja 4",
   "controls.weaponSets": "Asesarjat",
   "controls.withShift": "Shift + {key}",
+
+  "cosmetics.item.flame": "Voittoputken liekki",
+  "cosmetics.item.frameJade": "Jadekehys",
+  "cosmetics.item.frameOrchid": "Orkideakehys",
+  "cosmetics.item.frameRose": "Ruusukehys",
+  "cosmetics.item.frameTeal": "Sinivihreä kehys",
+  "cosmetics.locked": "Lukittu",
+  "cosmetics.none": "Ei mitään",
+  "cosmetics.note":
+    "Pelkkää ulkonäköä: mikään kosmetiikka ei muuta pelaamista. Ansaitaan rankatuilla voitoilla julkisella tulostaululla, ja ne ovat kaikkien hahmojesi yhteisiä.",
+  "cosmetics.requires.streak": {
+    one: "{count} rankattu voitto putkeen",
+    other: "{count} rankattua voittoa putkeen",
+  },
+  "cosmetics.requires.top": "Top {rank}",
+  "cosmetics.requires.wins": {
+    one: "{count} rankattu voitto",
+    other: "{count} rankattua voittoa",
+  },
+  "cosmetics.showOthers": "Näytä muiden pelaajien kosmetiikka",
+  "cosmetics.slot.flame": "Voittoputken liekki",
+  "cosmetics.slot.frame": "Nimikilven kehys",
+  "cosmetics.slot.title": "Titteli",
+  "cosmetics.title.champion": "Mestari",
+  "cosmetics.title.contender": "Haastaja",
+  "cosmetics.title.veteran": "Veteraani",
+  "cosmetics.title.warlord": "Sotaherra",
   "creature.rat": "Rotta",
 
   "echo.secondsLeft": {
@@ -823,6 +850,7 @@ export default {
   "music.trackWithMood": "{track} ({mood})",
 
   "options.controls": "ohjaus",
+  "options.cosmetics": "kosmetiikka",
   "options.display": "näyttö",
   "options.label": "Asetukset",
   "options.language": "kieli",

@@ -119,6 +119,7 @@ export const CHANNELS = [
   "traps",
   "respawns",
   "capes",
+  "cosmetics",
   "chat",
   "chat-line",
   "shared-track",
@@ -1131,6 +1132,39 @@ export interface WireCapes {
   readonly capes: readonly WireSeatCape[];
 }
 
+/** The most ids a cosmetic selection holds, and the longest an id is (ADR-0056). */
+export const MAX_COSMETIC_IDS = 12;
+export const MAX_COSMETIC_ID_LENGTH = 32;
+
+/**
+ * What a player wears (ADR-0056): catalog ids its key signed at `at`, ms
+ * since the epoch, `sig` the `vibewars/cosmetics` signature. No host and
+ * no simulation reads it: hosts relay it untouched, and each viewer
+ * checks it against its own leaderboard. An empty list is a selection
+ * too, signed the same.
+ */
+export interface WireCosmetics {
+  readonly ids: readonly string[];
+  readonly at: number;
+  readonly sig: string;
+}
+
+/** One seated player's cosmetics (ADR-0056), with the key that signed them. */
+export interface WireSeatCosmetics {
+  readonly id: string;
+  readonly playerPubkey: string;
+  readonly cosmetics: WireCosmetics;
+}
+
+/**
+ * Host to its players and its observers (ADR-0056): every keyed seat's
+ * cosmetics, a full replacement list, sent as `"capes"` is. A seat not in
+ * it is drawn default.
+ */
+export interface WireCosmeticRoster {
+  readonly seats: readonly WireSeatCosmetics[];
+}
+
 /** Who a chat line reaches (#479): everyone in the lobby, or your team. */
 export const CHAT_CHANNELS = ["all", "team"] as const;
 
@@ -1304,6 +1338,8 @@ export interface PeerLobbyJoin {
    * 64 zeros for its first. `null` from a page that plays no ranked match.
    */
   readonly ranked: WireRankedJoin | null;
+  /** What it wears (ADR-0056), signed by `playerPubkey`. The host relays it unread. */
+  readonly cosmetics: WireCosmetics;
 }
 
 /** A joiner's part of its ranked seat (#3573): see `PeerLobbyJoin.ranked`. */
@@ -1541,6 +1577,8 @@ export interface WireLobbyPlayer {
    * bot. The host's word: only the host checked it.
    */
   readonly playerPubkey: string | null;
+  /** Its join's cosmetics (ADR-0056), as sent; `null` exactly for a bot. */
+  readonly cosmetics: WireCosmetics | null;
 }
 
 /** Lobby host to every peer, on every change: the whole lobby, not a delta. */
@@ -2263,6 +2301,43 @@ export function parseWireCapes(value: unknown): WireCapes | undefined {
   const capes =
     raw === undefined ? undefined : parseArray(raw.capes, MAX_LOBBY_PLAYERS, parseSeatCape);
   return capes === undefined ? undefined : { capes };
+}
+
+const parseCosmeticId = (value: unknown): string | undefined =>
+  isString(value, MAX_COSMETIC_ID_LENGTH) ? value : undefined;
+
+/** A selection's shape (ADR-0056); whether its signature holds is each viewer's to check. */
+export function parseWireCosmetics(value: unknown): WireCosmetics | undefined {
+  const raw = fields(value);
+  const ids =
+    raw === undefined ? undefined : parseArray(raw.ids, MAX_COSMETIC_IDS, parseCosmeticId);
+  return raw !== undefined &&
+    ids !== undefined &&
+    typeof raw.at === "number" &&
+    Number.isSafeInteger(raw.at) &&
+    raw.at >= 0 &&
+    isTicketSig(raw.sig)
+    ? { ids, at: raw.at, sig: raw.sig }
+    : undefined;
+}
+
+function parseSeatCosmetics(value: unknown): WireSeatCosmetics | undefined {
+  const raw = fields(value);
+  const cosmetics = raw === undefined ? undefined : parseWireCosmetics(raw.cosmetics);
+  return raw !== undefined &&
+    isString(raw.id) &&
+    isTicketId(raw.playerPubkey) &&
+    cosmetics !== undefined
+    ? { id: raw.id, playerPubkey: raw.playerPubkey, cosmetics }
+    : undefined;
+}
+
+/** The `"cosmetics"` channel. */
+export function parseWireCosmeticRoster(value: unknown): WireCosmeticRoster | undefined {
+  const raw = fields(value);
+  const seats =
+    raw === undefined ? undefined : parseArray(raw.seats, MAX_LOBBY_PLAYERS, parseSeatCosmetics);
+  return seats === undefined ? undefined : { seats };
 }
 
 export function parsePeerChat(value: unknown): PeerChat | undefined {
@@ -3412,6 +3487,7 @@ export function parsePeerLobbyJoin(value: unknown): PeerLobbyJoin | undefined {
   const guildTag = parseRawGuildTag(raw?.guildTag);
   const admission = parseAdmission(raw?.admission);
   const ranked = parseRankedJoin(raw?.ranked);
+  const cosmetics = parseWireCosmetics(raw?.cosmetics);
   if (
     raw === undefined ||
     !isString(raw.protocolVersion) ||
@@ -3423,7 +3499,8 @@ export function parsePeerLobbyJoin(value: unknown): PeerLobbyJoin | undefined {
     (raw.relayPub !== null && !isRelayPub(raw.relayPub)) ||
     !isTicketId(raw.playerPubkey) ||
     typeof raw.ascentMorale !== "number" ||
-    ranked === undefined
+    ranked === undefined ||
+    cosmetics === undefined
   ) {
     return undefined;
   }
@@ -3440,6 +3517,7 @@ export function parsePeerLobbyJoin(value: unknown): PeerLobbyJoin | undefined {
     playerPubkey: raw.playerPubkey,
     ascentMorale: raw.ascentMorale,
     ranked,
+    cosmetics,
   };
 }
 
@@ -3669,6 +3747,12 @@ function parseLobbyPlayer(value: unknown): WireLobbyPlayer | undefined {
       : isTicketId(raw?.playerPubkey)
         ? raw.playerPubkey
         : undefined;
+  const cosmetics =
+    raw?.bot === true
+      ? raw.cosmetics === null
+        ? null
+        : undefined
+      : parseWireCosmetics(raw?.cosmetics);
   return raw !== undefined &&
     isString(raw.id) &&
     isString(raw.name) &&
@@ -3679,7 +3763,8 @@ function parseLobbyPlayer(value: unknown): WireLobbyPlayer | undefined {
     typeof raw.isHost === "boolean" &&
     typeof raw.bot === "boolean" &&
     typeof raw.away === "boolean" &&
-    playerPubkey !== undefined
+    playerPubkey !== undefined &&
+    cosmetics !== undefined
     ? {
         id: raw.id,
         name: raw.name,
@@ -3691,6 +3776,7 @@ function parseLobbyPlayer(value: unknown): WireLobbyPlayer | undefined {
         bot: raw.bot,
         away: raw.away,
         playerPubkey,
+        cosmetics,
       }
     : undefined;
 }

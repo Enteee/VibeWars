@@ -69,6 +69,9 @@ import {
   isStaleChunkError,
   type BuildWatch,
 } from "./build-check.js";
+import { factsOf } from "./cosmetics/selection.js";
+import { cosmeticsStore } from "./cosmetics/store.js";
+import { setOwnPubkey } from "./cosmetics/view.js";
 import { keySignet } from "./identity/key-signet.js";
 import { createProfilePacer } from "./profile-pacer.js";
 import { mapName } from "./i18n/game-names.js";
@@ -387,6 +390,11 @@ function takeGuildLink(): GuildFragment {
 const playerKey = loadPlayerKey(localStorage);
 /** Its signet (#3235), for Options: derived here, so nothing else reads the key. */
 const ownSignet = keySignet(playerKey.pubkey);
+setOwnPubkey(playerKey.pubkey);
+// Cosmetics unlock from the key's own entry (ADR-0056): kept, so a failed fetch still draws yours.
+leaderboard.onChange((board) => {
+  cosmeticsStore.rememberFacts(factsOf(board, playerKey.pubkey));
+});
 
 const RELOADED_FOR_KEY = `${STORAGE_NAMESPACE}.reloaded-for`;
 

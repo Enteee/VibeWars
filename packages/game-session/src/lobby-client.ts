@@ -37,6 +37,7 @@ import {
   type PeerLobbyLeave,
   type PeerLobbyJoin,
   type WireCape,
+  type WireCosmetics,
   type WireLobbyCommand,
   type WireLobbyState,
   type WireProposalBuild,
@@ -165,6 +166,8 @@ export interface JoinLobbyOptions {
   readonly relayPub: string | null;
   /** This browser's player key (#2706): every join proves it to the host. */
   readonly playerKey: PlayerKey;
+  /** What this player wears (ADR-0056), signed by `playerKey`: every join carries it. */
+  readonly cosmetics: WireCosmetics;
   /**
    * This player's claim from its own copy of the leaderboard (#3575),
    * read when it consents to a party: the party's ticket carries it.
@@ -325,6 +328,7 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
     guildCape: options.guildCape,
     relayPub: options.relayPub,
     playerPubkey: options.playerKey.pubkey,
+    cosmetics: options.cosmetics,
   };
   /** A coded lobby's join; a queued one's is made with its proof. */
   const codedJoin: Omit<PeerLobbyJoin, "rejoinToken"> = {
@@ -646,6 +650,7 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
       bot: player.bot,
       away: player.away,
       playerPubkey: player.playerPubkey,
+      cosmetics: player.cosmetics,
     })),
     isHost: state.players.some((player) => player.id === selfId && player.isHost),
     countdownSeconds: state.countdownSeconds,

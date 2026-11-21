@@ -164,6 +164,7 @@ function actor(
     guildTag: undefined,
     heroRank: 0,
     signet: undefined,
+    cosmetics: {},
     cape: undefined,
     bot: false,
     position: vec2(x, y),

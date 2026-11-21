@@ -35,6 +35,10 @@ export interface LeaderboardEntry {
   /** Rated matches played. */
   readonly matches: number;
   readonly provisional: boolean;
+  /** Verified ranked wins (ADR-0056): what cosmetics unlock from. */
+  readonly wins: number;
+  /** Ranked wins in a row, up to its last match; 0 after a loss. */
+  readonly streak: number;
 }
 
 /** One `leaderboard.json`. */
@@ -45,24 +49,25 @@ export interface Leaderboard {
   readonly entries: readonly LeaderboardEntry[];
 }
 
+/** Whether `value` is a whole count, 0 or more. */
+const isCount = (value: unknown): value is number =>
+  typeof value === "number" && Number.isSafeInteger(value) && value >= 0;
 function isEntry(value: unknown): value is LeaderboardEntry {
   if (typeof value !== "object" || value === null) {
     return false;
   }
-  const { pubkey, rank, name, rating, conservative, matches, provisional } = value as Record<
-    string,
-    unknown
-  >;
+  const { pubkey, rank, name, rating, conservative, matches, provisional, wins, streak } =
+    value as Record<string, unknown>;
   return (
     typeof pubkey === "string" &&
     (rank === null || (typeof rank === "number" && Number.isSafeInteger(rank) && rank > 0)) &&
     typeof name === "string" &&
     Number.isFinite(rating) &&
     Number.isFinite(conservative) &&
-    typeof matches === "number" &&
-    Number.isSafeInteger(matches) &&
-    matches >= 0 &&
-    typeof provisional === "boolean"
+    isCount(matches) &&
+    typeof provisional === "boolean" &&
+    isCount(wins) &&
+    isCount(streak)
   );
 }
 
@@ -83,15 +88,19 @@ export function parseLeaderboard(raw: unknown): Leaderboard | undefined {
   }
   return {
     asOf,
-    entries: entries.map(({ pubkey, rank, name, rating, conservative, matches, provisional }) => ({
-      pubkey,
-      rank,
-      name,
-      rating,
-      conservative,
-      matches,
-      provisional,
-    })),
+    entries: entries.map(
+      ({ pubkey, rank, name, rating, conservative, matches, provisional, wins, streak }) => ({
+        pubkey,
+        rank,
+        name,
+        rating,
+        conservative,
+        matches,
+        provisional,
+        wins,
+        streak,
+      }),
+    ),
   };
 }
 

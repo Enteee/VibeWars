@@ -9,7 +9,7 @@
 import { sha256 } from "@noble/hashes/sha2.js";
 import { bytesToHex, concatBytes, hexToBytes, utf8ToBytes } from "@noble/hashes/utils.js";
 import { hashes, schnorr, utils } from "@noble/secp256k1";
-import type { LobbyProofFields, PlayerKey } from "@vibewars/game-session";
+import type { CosmeticSelection, LobbyProofFields, PlayerKey } from "@vibewars/game-session";
 import { resultDigest, startDigest, type ReceiptCrypto } from "@vibewars/ranking";
 
 import { STORAGE_NAMESPACE } from "../../storage/namespace.js";
@@ -20,6 +20,7 @@ hashes.sha256 = sha256;
 
 const PLAYER_KEY = `${STORAGE_NAMESPACE}.playerKey`;
 const LOBBY_PROOF_TAG = "vibewars/lobby-proof";
+const COSMETICS_TAG = "vibewars/cosmetics";
 const HEX_32 = /^[0-9a-f]{64}$/;
 const HEX_64 = /^[0-9a-f]{128}$/;
 
@@ -52,6 +53,39 @@ function lobbyProofDigest(pubkey: string, fields: LobbyProofFields): Uint8Array 
   );
 }
 
+/** The most ids a selection holds, and the longest an id is (ADR-0056). */
+export const MAX_COSMETIC_IDS = 12;
+export const MAX_COSMETIC_ID_LENGTH = 32;
+
+/**
+ * A cosmetic selection's digest (ADR-0056): the key, `at` as eight bytes,
+ * then each id after its one-byte length; `undefined` for a selection no
+ * key can sign, too many or too long ids, or an `at` that is not a
+ * whole, non-negative ms count.
+ */
+function cosmeticsDigest(selection: CosmeticSelection): Uint8Array | undefined {
+  const { pubkey, ids, at } = selection;
+  if (
+    !HEX_32.test(pubkey) ||
+    ids.length > MAX_COSMETIC_IDS ||
+    !Number.isSafeInteger(at) ||
+    at < 0
+  ) {
+    return undefined;
+  }
+  const parts: Uint8Array[] = [Uint8Array.of(ids.length)];
+  for (const id of ids) {
+    const bytes = utf8ToBytes(id);
+    if (id.length > MAX_COSMETIC_ID_LENGTH || bytes.length > 255) {
+      return undefined;
+    }
+    parts.push(Uint8Array.of(bytes.length), bytes);
+  }
+  const time = new Uint8Array(8);
+  new DataView(time.buffer).setBigUint64(0, BigInt(at));
+  return taggedHash(COSMETICS_TAG, concatBytes(hexToBytes(pubkey), time, ...parts));
+}
+
 function keyOf(secretKey: Uint8Array): PlayerKey {
   const pubkey = bytesToHex(schnorr.getPublicKey(secretKey));
   return {
@@ -65,6 +99,13 @@ function keyOf(secretKey: Uint8Array): PlayerKey {
     },
     signRankedStart: (start) => bytesToHex(schnorr.sign(startDigest(start, sha256), secretKey)),
     signRankedResult: (result) => bytesToHex(schnorr.sign(resultDigest(result, sha256), secretKey)),
+    signCosmetics: (selection) => {
+      const digest = selection.pubkey === pubkey ? cosmeticsDigest(selection) : undefined;
+      if (digest === undefined) {
+        throw new Error("a cosmetic selection no key of this one can sign");
+      }
+      return bytesToHex(schnorr.sign(digest, secretKey));
+    },
   };
 }
 
@@ -125,6 +166,22 @@ export function verifyPlayerProof(pubkey: string, fields: LobbyProofFields, sig:
   }
   try {
     return schnorr.verify(hexToBytes(sig), digest, hexToBytes(pubkey));
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Whether `sig` is `selection.pubkey`'s signature of `selection`
+ * (ADR-0056). Total, as `verifyPlayerProof` is.
+ */
+export function verifyCosmetics(selection: CosmeticSelection, sig: string): boolean {
+  const digest = cosmeticsDigest(selection);
+  if (digest === undefined || !HEX_64.test(sig)) {
+    return false;
+  }
+  try {
+    return schnorr.verify(hexToBytes(sig), digest, hexToBytes(selection.pubkey));
   } catch {
     return false;
   }

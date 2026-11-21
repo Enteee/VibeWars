@@ -21,9 +21,13 @@ import {
   MAX_EMBLEM_COLOURS,
   packEmblem,
   type WireCapes,
+  type WireCosmeticRoster,
+  type WireCosmetics,
   MAX_CHART_PARTS,
   MAX_CHART_SAMPLES,
   MAX_LOBBY_PLAYERS,
+  MAX_COSMETIC_IDS,
+  MAX_COSMETIC_ID_LENGTH,
   MAX_TEAM_LOBBY_SIDE,
   MAX_WIRE_CHAT_TEXT,
   MAX_SHARED_SOURCE_BYTES,
@@ -105,6 +109,12 @@ const PEER_ID = "abcdefghijklmnopqrst/local";
 const NAME = sanitizeName("👩‍🚀".repeat(40), "player");
 /** A guild tag as long as `sanitizeGuildTag` lets through (#1406). */
 const GUILD_TAG = sanitizeGuildTag("WWWW");
+/** The most a selection carries (ADR-0056): every id the longest, signed. */
+const FULL_COSMETICS: WireCosmetics = {
+  ids: Array.from({ length: MAX_COSMETIC_IDS }, () => "w".repeat(MAX_COSMETIC_ID_LENGTH)),
+  at: Number.MAX_SAFE_INTEGER,
+  sig: "ab".repeat(64),
+};
 /**
  * The largest cape (#1422, #3628): 15 emblem colours, each used, in order
  * of first use; every emblem is as long (#3554).
@@ -507,6 +517,17 @@ describe("every message fits in one Trystero chunk (#403)", () => {
     expect(messageBytes(capes)).toBeLessThanOrEqual(MAX_MESSAGE_BYTES);
   });
 
+  it("every seat's cosmetics: a full lobby's, every id the longest (ADR-0056)", () => {
+    const roster: WireCosmeticRoster = {
+      seats: Array.from({ length: MAX_LOBBY_PLAYERS }, (_, index) => ({
+        id: `${PEER_ID}${String(index)}`,
+        playerPubkey: "ab".repeat(32),
+        cosmetics: FULL_COSMETICS,
+      })),
+    };
+    expect(messageBytes(roster)).toBeLessThanOrEqual(MAX_MESSAGE_BYTES);
+  });
+
   it("a hello with a full build", () => {
     const build = fullBuild();
     const hello: PeerHello = {
@@ -564,6 +585,7 @@ describe("every message fits in one Trystero chunk (#403)", () => {
         bot: false,
         away: false,
         playerPubkey: "ab".repeat(32),
+        cosmetics: FULL_COSMETICS,
       })),
       countdownSeconds: 5,
       teamLobby: null,
@@ -633,6 +655,7 @@ describe("every message fits in one Trystero chunk (#403)", () => {
         bot: false,
         away: false,
         playerPubkey: "ab".repeat(32),
+        cosmetics: FULL_COSMETICS,
       })),
       countdownSeconds: null,
       teamLobby: null,

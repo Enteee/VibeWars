@@ -30,7 +30,12 @@ import { TICK_SECONDS, settle, until } from "./match-harness.test-support.js";
 import type { MatchEnding, MatchHost } from "./match-host.js";
 import { createMemoryNetwork, type MemoryNetwork } from "./memory-transport.js";
 import type { PlayerKey } from "./player-key.js";
-import { testPlayerKey, testReceiptCrypto, verifyTestProof } from "./player-key.test-support.js";
+import {
+  testCosmetics,
+  testPlayerKey,
+  testReceiptCrypto,
+  verifyTestProof,
+} from "./player-key.test-support.js";
 import type { VerifyTicketSig } from "./queue-admission.js";
 import type { TicketKey } from "./queue-client.js";
 import type { FormedGroup } from "./queue-formation.js";
@@ -366,6 +371,7 @@ async function joinSeat(
     timeoutMs: 1000,
     relayPub: null,
     playerKey: key,
+    cosmetics: testCosmetics,
     claim: () => ({ rating: 800, asOf: 0 }),
     queued: { group, key: keyOf(seatKey(n)), verifyTicketSig, ascentMorale: 0 },
     ...(ranked ? { ranked: play } : {}),

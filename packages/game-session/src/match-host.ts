@@ -73,6 +73,8 @@ import {
   type WireSnapshotPart,
   type WireRespawns,
   type WireCapes,
+  type WireCosmeticRoster,
+  type WireCosmetics,
   type WireStrokes,
   type WireTraps,
   type WireCape,
@@ -269,6 +271,8 @@ export type PlannedSeat = {
       readonly build: PlayerBuild | null;
       /** The player key its lobby host saw it prove (#2706). */
       readonly playerPubkey: string;
+      /** What it wears (ADR-0056), from its lobby join; relayed unread. */
+      readonly cosmetics: WireCosmetics;
       /** The morale it starts at (#2686): a Heroes' Ascent run's, carried; else 0. */
       readonly startMorale: number;
     }
@@ -353,6 +357,8 @@ interface Seat {
   readonly bot: boolean;
   /** Its player key's signet bits (#2805), from the lobby's plan; `null` for a bot or no lobby. */
   readonly signet: number | null;
+  /** Its key and what it wears (ADR-0056), from the lobby's plan; `null` for a bot or no lobby. */
+  readonly worn: { readonly playerPubkey: string; readonly cosmetics: WireCosmetics } | null;
   /**
    * The adrenaline the peer was last sent, and the combat it counted its
    * loss from, so only a change goes (#463, #828).
@@ -811,6 +817,13 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     ),
   });
 
+  /** Every keyed seat's cosmetics (ADR-0056): told as the capes are. */
+  const cosmetics = (): WireCosmeticRoster => ({
+    seats: [...seats.values()].flatMap((seat) =>
+      seat.worn === null ? [] : [{ id: seat.playerId, ...seat.worn }],
+    ),
+  });
+
   /**
    * `team`'s dead and when each comes back (#3367): a foe's respawn is
    * hidden information, so this is all a peer ever hears of them.
@@ -925,6 +938,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     transport.send("traps", trapsOf(seat.team), peerId);
     transport.send("respawns", respawnsOf(seat.team), peerId);
     transport.send("capes", capes(), peerId);
+    transport.send("cosmetics", cosmetics(), peerId);
   };
 
   /** What the next seat on `team` playing `build` is set up as. */
@@ -946,7 +960,8 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
 
   /**
    * A new seat on `team` playing `loadout`, named by `nameOf` its player
-   * id and of `guild`, marked with `signet`, at `startMorale`; a bot's if `bot`.
+   * id and of `guild`, wearing `worn` and marked with its key's signet, at
+   * `startMorale`; a bot's if `bot`.
    */
   const seatNew = (
     build: PlayerBuild,
@@ -954,11 +969,12 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     nameOf: (playerId: string) => string,
     guild: Guild,
     bot: boolean,
-    pubkey: string | null,
+    worn: Seat["worn"],
     startMorale: number,
   ): Seat => {
     const setup = nextSetup(build, team, bot, startMorale);
     seated += 1;
+    const pubkey = worn?.playerPubkey ?? null;
     const signet = pubkey === null ? null : options.signetOf(pubkey);
     // Back in its seat: it did not leave after all.
     if (pubkey !== null) {
@@ -979,6 +995,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       secondaryProfession: loadout.secondaryProfession,
       bot,
       signet,
+      worn,
       peerId: undefined,
       token: "",
       droppedAt: undefined,
@@ -991,6 +1008,9 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     seats.set(playerId, seat);
     if (seat.guildCape !== null) {
       transport.send("capes", capes(), [...players(), ...observers]);
+    }
+    if (worn !== null) {
+      transport.send("cosmetics", cosmetics(), [...players(), ...observers]);
     }
     everSeated.set(playerId, {
       name: seat.name,
@@ -1091,6 +1111,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     };
     transport.send("observing", message, from);
     transport.send("capes", capes(), from);
+    transport.send("cosmetics", cosmetics(), from);
   });
 
   /** Whether `peerId` may take `seat`: no bot plays it, and it plays no other seat. */
@@ -1148,7 +1169,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       (playerId) => plan?.name ?? sanitizeName(hello.name, playerId),
       plan ?? sanitizeGuild(hello),
       false,
-      plan?.playerPubkey ?? null,
+      plan === undefined ? null : { playerPubkey: plan.playerPubkey, cosmetics: plan.cosmetics },
       startMorale,
     );
     slotOf.set(seat.playerId, slot);

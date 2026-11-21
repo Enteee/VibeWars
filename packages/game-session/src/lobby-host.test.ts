@@ -50,7 +50,7 @@ import { canStart, PROFILE_INTERVAL_MS, type MatchPlan } from "./lobby-host.js";
 import { cryptoTurns, settle, starterBuild, until } from "./match-harness.test-support.js";
 import { RECONNECT_WINDOW_SECONDS, type MatchHost } from "./match-host.js";
 import { createMemoryNetwork } from "./memory-transport.js";
-import { testPlayerKey } from "./player-key.test-support.js";
+import { testCosmetics, testPlayerKey } from "./player-key.test-support.js";
 import { sanitizeCharacterName } from "./names.js";
 import type { Transport, TransportTrouble } from "./transport.js";
 
@@ -486,6 +486,7 @@ describe("lobby host", () => {
         timeoutMs: 1000,
         relayPub: null,
         playerKey: testPlayerKey(),
+        cosmetics: testCosmetics,
         claim: () => ({ rating: 800, asOf: 0 }),
       }),
     ).rejects.toEqual(new LobbyRefusedError("lobby-full"));
@@ -586,6 +587,7 @@ describe("an open or closed lobby (#1682)", () => {
       timeoutMs: 1000,
       relayPub: null,
       playerKey: testPlayerKey(),
+      cosmetics: testCosmetics,
       claim: () => ({ rating: 800, asOf: 0 }),
     }).catch((error: unknown) => error);
 
@@ -886,6 +888,7 @@ describe("joining by code", () => {
         timeoutMs: 50,
         relayPub: null,
         playerKey: testPlayerKey(),
+        cosmetics: testCosmetics,
         claim: () => ({ rating: 800, asOf: 0 }),
       }),
       // Its player-key proof names the code it dialled (#2706).
@@ -907,6 +910,7 @@ describe("joining by code", () => {
         timeoutMs: 50,
         relayPub: null,
         playerKey: testPlayerKey(),
+        cosmetics: testCosmetics,
         claim: () => ({ rating: 800, asOf: 0 }),
       });
       for (const trouble of troubles) {
@@ -936,6 +940,7 @@ describe("joining by code", () => {
         timeoutMs: 50,
         relayPub: null,
         playerKey: testPlayerKey(),
+        cosmetics: testCosmetics,
         claim: () => ({ rating: 800, asOf: 0 }),
       }),
     ).rejects.toBeInstanceOf(LobbyNoAnswerError);
@@ -1255,6 +1260,7 @@ describe("a Team Lobby (#1458)", () => {
         timeoutMs: 1000,
         relayPub: null,
         playerKey: testPlayerKey(),
+        cosmetics: testCosmetics,
         claim: () => ({ rating: 800, asOf: 0 }),
       }),
     ).rejects.toEqual(new LobbyRefusedError("party-full"));
@@ -2498,6 +2504,7 @@ describe("the key gate (#1681, ADR-0043)", () => {
       timeoutMs: 50,
       relayPub: null,
       playerKey: testPlayerKey(),
+      cosmetics: testCosmetics,
       claim: () => ({ rating: 800, asOf: 0 }),
     });
     await expect(joining).rejects.toEqual(new LobbyNoAnswerError(50, null));

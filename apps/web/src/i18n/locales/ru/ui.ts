@@ -378,6 +378,37 @@ export default {
   "controls.weaponSet4": "Набор оружия 4",
   "controls.weaponSets": "Наборы оружия",
   "controls.withShift": "Shift + {key}",
+
+  "cosmetics.item.flame": "Пламя серии побед",
+  "cosmetics.item.frameJade": "Нефритовая рамка",
+  "cosmetics.item.frameOrchid": "Орхидейная рамка",
+  "cosmetics.item.frameRose": "Розовая рамка",
+  "cosmetics.item.frameTeal": "Бирюзовая рамка",
+  "cosmetics.locked": "Закрыто",
+  "cosmetics.none": "Нет",
+  "cosmetics.note":
+    "Только для вида: никакая косметика не влияет на игру. Зарабатывается рейтинговыми победами в публичной таблице лидеров и общая для всех твоих персонажей.",
+  "cosmetics.requires.streak": {
+    one: "{count} рейтинговая победа подряд",
+    few: "{count} рейтинговые победы подряд",
+    many: "{count} рейтинговых побед подряд",
+    other: "{count} рейтинговой победы подряд",
+  },
+  "cosmetics.requires.top": "Топ {rank}",
+  "cosmetics.requires.wins": {
+    one: "{count} рейтинговая победа",
+    few: "{count} рейтинговые победы",
+    many: "{count} рейтинговых побед",
+    other: "{count} рейтинговой победы",
+  },
+  "cosmetics.showOthers": "Показывать косметику других игроков",
+  "cosmetics.slot.flame": "Пламя серии побед",
+  "cosmetics.slot.frame": "Рамка таблички с именем",
+  "cosmetics.slot.title": "Титул",
+  "cosmetics.title.champion": "Чемпион",
+  "cosmetics.title.contender": "Претендент",
+  "cosmetics.title.veteran": "Ветеран",
+  "cosmetics.title.warlord": "Полководец",
   "creature.rat": "Крыса",
 
   "echo.secondsLeft": {
@@ -891,6 +922,7 @@ export default {
   "music.trackWithMood": "{track} ({mood})",
 
   "options.controls": "управление",
+  "options.cosmetics": "косметика",
   "options.display": "экран",
   "options.label": "Настройки",
   "options.language": "язык",

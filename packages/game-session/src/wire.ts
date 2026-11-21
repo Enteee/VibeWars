@@ -51,6 +51,7 @@ import type {
   ObservedSnapshot,
   ArmedAttackSnapshot,
   PlayerSnapshot,
+  SeatWorn,
   ProjectileSnapshot,
   StatusSnapshot,
 } from "./match-connection.js";
@@ -740,7 +741,8 @@ export function wireIdentity(
 
 /**
  * Each `PlayerSnapshot` field from its `WirePlayer` field, and its cape
- * from `capes`, the host's last `"capes"` by id (#3554). Typed both ways,
+ * from `capes`, the host's last `"capes"` by id (#3554), and its cosmetics
+ * from `worn`, the last `"cosmetics"` (ADR-0056). Typed both ways,
  * so a field added to either type without the other does not compile.
  * `undefined` for a status index past the table's end, or an armed
  * attack that is not a pet attack this build knows (#1167): malformed.
@@ -748,6 +750,7 @@ export function wireIdentity(
 export function playerSnapshot(
   player: WirePlayer,
   capes: ReadonlyMap<string, WireCape>,
+  worn: ReadonlyMap<string, SeatWorn>,
 ): PlayerSnapshot | undefined {
   const armed = player.creature?.armedAttack ?? null;
   if (armed !== null && getSkill(armed.skillId)?.type !== "pet-attack") {
@@ -767,6 +770,7 @@ export function playerSnapshot(
     guildTag: absent(player.guildTag),
     heroRank: player.heroRank,
     guildCape: capes.get(player.id),
+    worn: worn.get(player.id),
     x: player.x,
     y: player.y,
     facing: player.facing,
@@ -816,14 +820,15 @@ function projectileSnapshot(shot: WireProjectile): ProjectileSnapshot {
   return { ...shot, skillId: absent(shot.skillId) };
 }
 
-/** Every player in `snapshot`, wearing `capes`, or `undefined` if any is malformed. */
+/** Every player in `snapshot`, wearing `capes` and `worn`, or `undefined` if any is malformed. */
 export function playerSnapshots(
   snapshot: WireSnapshot,
   capes: ReadonlyMap<string, WireCape>,
+  worn: ReadonlyMap<string, SeatWorn>,
 ): PlayerSnapshot[] | undefined {
   const players: PlayerSnapshot[] = [];
   for (const wire of snapshot.players) {
-    const player = playerSnapshot(wire, capes);
+    const player = playerSnapshot(wire, capes, worn);
     if (player === undefined) {
       return undefined;
     }

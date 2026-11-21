@@ -53,6 +53,7 @@ import { LYING_WIDTH } from "./lying-pose.js";
 import { pickAt, type ClickableKind, type DrawnClickable } from "./pick.js";
 import type { RenderableProjectile } from "./projectiles.js";
 import { screenPx } from "./screen-text.js";
+import type { WornCosmetics } from "../cosmetics/selection.js";
 
 /**
  * The renderer's own data shape and its pure helpers (team colour lookup,
@@ -84,6 +85,8 @@ export interface RenderableActor {
    * wherever the name shows; `undefined` for none, as for a bot.
    */
   readonly signet: number | undefined;
+  /** What it wears (ADR-0056), as this page checked it: `{}`, the default, for most. */
+  readonly cosmetics: WornCosmetics;
   /** The player's guild cape (#1422), drawn behind a standing body; `undefined` for none. */
   readonly cape: CapeLook | undefined;
   /** A lobby's bot (#1194): its name plate wears the BOT tag. */

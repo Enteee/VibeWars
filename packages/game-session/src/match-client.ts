@@ -14,6 +14,7 @@ import {
   parseWireTraps,
   parseWireRespawns,
   parseWireCapes,
+  parseWireCosmeticRoster,
   parseWireCombatBatch,
   parseWireEnded,
   parseWireMatchChartPart,
@@ -56,6 +57,7 @@ import {
   type MatchConnection,
   type MatchSnapshot,
   type PlayerSnapshot,
+  type SeatWorn,
   type SlotRecharge,
 } from "./match-connection.js";
 import { RECONNECT_WINDOW_SECONDS } from "./match-host.js";
@@ -276,6 +278,7 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
   let respawns = new Map<string, number | null>();
   /** Each seat's cape as last sent (#3554), by id. */
   let capes = new Map<string, WireCape>();
+  let worn = new Map<string, SeatWorn>();
   let lost = false;
   /** When the host's peer went, by `Date.now`, while waiting for it back. */
   let droppedAt: number | undefined;
@@ -366,7 +369,7 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
         return;
       }
       // One naming a status this build has no index for is malformed (#632).
-      const players = playerSnapshots(snapshot, capes);
+      const players = playerSnapshots(snapshot, capes, worn);
       if (players !== undefined) {
         latest = { wire: snapshot, players };
       }
@@ -416,6 +419,9 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
   });
   fromHost("respawns", parseWireRespawns, (message) => {
     respawns = new Map(message.respawns.map(({ id, respawnIn }) => [id, respawnIn]));
+  });
+  fromHost("cosmetics", parseWireCosmeticRoster, (message) => {
+    worn = new Map(message.seats.map(({ id, ...seat }) => [id, seat]));
   });
   fromHost("capes", parseWireCapes, (message) => {
     capes = new Map(message.capes.map(({ id, cape }) => [id, cape]));

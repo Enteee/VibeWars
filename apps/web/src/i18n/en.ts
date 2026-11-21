@@ -351,6 +351,33 @@ export const en = {
   "controls.weaponSet4": "Weapon set 4",
   "controls.weaponSets": "Weapon sets",
   "controls.withShift": "Shift + {key}",
+
+  "cosmetics.item.flame": "Win-streak flame",
+  "cosmetics.item.frameJade": "Jade frame",
+  "cosmetics.item.frameOrchid": "Orchid frame",
+  "cosmetics.item.frameRose": "Rose frame",
+  "cosmetics.item.frameTeal": "Teal frame",
+  "cosmetics.locked": "Locked",
+  "cosmetics.none": "None",
+  "cosmetics.note":
+    "Purely for looks: no cosmetic changes how anything plays. Earned with ranked wins on the public leaderboard, shared by all your characters.",
+  "cosmetics.requires.streak": {
+    one: "{count} ranked win in a row",
+    other: "{count} ranked wins in a row",
+  },
+  "cosmetics.requires.top": "Top {rank}",
+  "cosmetics.requires.wins": {
+    one: "{count} ranked win",
+    other: "{count} ranked wins",
+  },
+  "cosmetics.showOthers": "Show other players' cosmetics",
+  "cosmetics.slot.flame": "Win-streak flame",
+  "cosmetics.slot.frame": "Name plate frame",
+  "cosmetics.slot.title": "Title",
+  "cosmetics.title.champion": "Champion",
+  "cosmetics.title.contender": "Contender",
+  "cosmetics.title.veteran": "Veteran",
+  "cosmetics.title.warlord": "Warlord",
   "creature.rat": "Rat",
 
   "echo.secondsLeft": { one: "Echoed: {count} s left", other: "Echoed: {count} s left" },
@@ -814,6 +841,7 @@ export const en = {
   "music.trackWithMood": "{track} ({mood})",
 
   "options.controls": "controls",
+  "options.cosmetics": "cosmetics",
   "options.display": "display",
   "options.label": "Options",
   "options.language": "language",

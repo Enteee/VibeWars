@@ -53,6 +53,10 @@ import {
   parseWireTraps,
   parseWireRespawns,
   parseWireCapes,
+  parseWireCosmetics,
+  parseWireCosmeticRoster,
+  MAX_COSMETIC_IDS,
+  MAX_COSMETIC_ID_LENGTH,
   packEmblem,
   unpackEmblem,
   canonicalEmblem,
@@ -534,6 +538,13 @@ const recharge: RechargeMessage = {
   queued: 1,
 };
 
+/** A selection (ADR-0056): its shape is all a parser checks. */
+const COSMETICS = {
+  ids: ["frame-bronze", "title-veteran"],
+  at: 1_700_000_000_000,
+  sig: "c0".repeat(64),
+};
+
 /** Each parser, with the one fixture it must round-trip. */
 const lobbyJoin: PeerLobbyJoin = {
   protocolVersion: PROTOCOL_VERSION,
@@ -547,6 +558,7 @@ const lobbyJoin: PeerLobbyJoin = {
   playerPubkey: "9a".repeat(32),
   ascentMorale: 0,
   ranked: null,
+  cosmetics: COSMETICS,
 };
 
 /** A queued join's proof (#871): a ticket id and a signature, as hex. */
@@ -595,6 +607,7 @@ const lobbyState: WireLobbyState = {
       bot: false,
       away: false,
       playerPubkey: "1f".repeat(32),
+      cosmetics: COSMETICS,
     },
     {
       id: "peer-3",
@@ -607,6 +620,7 @@ const lobbyState: WireLobbyState = {
       bot: false,
       away: false,
       playerPubkey: "3e".repeat(32),
+      cosmetics: COSMETICS,
     },
     {
       id: "bot-1",
@@ -619,6 +633,7 @@ const lobbyState: WireLobbyState = {
       bot: true,
       away: false,
       playerPubkey: null,
+      cosmetics: null,
     },
   ],
   countdownSeconds: null,
@@ -1105,6 +1120,16 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["no respawns (#3367)", parseWireRespawns, { respawns: [] }],
   ["capes (#3554)", parseWireCapes, { capes: [{ id: "p1", cape: CAPE }] }],
   ["no capes (#3554)", parseWireCapes, { capes: [] }],
+  [
+    "cosmetics (ADR-0056)",
+    parseWireCosmeticRoster,
+    { seats: [{ id: "p1", playerPubkey: "9a".repeat(32), cosmetics: COSMETICS }] },
+  ],
+  [
+    "an empty selection, signed (ADR-0056)",
+    parseWireCosmeticRoster,
+    { seats: [{ id: "p1", playerPubkey: "9a".repeat(32), cosmetics: { ...COSMETICS, ids: [] } }] },
+  ],
   ["chat (#479)", parsePeerChat, { channel: "team", text: "spike the monk" }],
   ["shared-track (#2745)", parseWireSharedTrack, sharedTrack],
   [
@@ -1554,6 +1579,31 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     { capes: [{ id: "p1", cape: { ...CAPE, main: "red" } }] },
   ],
   ["capes of a seat in no cape (#3554)", parseWireCapes, { capes: [{ id: "p1", cape: null }] }],
+  [
+    "a selection of 13 ids (ADR-0056)",
+    parseWireCosmetics,
+    {
+      ...COSMETICS,
+      ids: Array.from({ length: MAX_COSMETIC_IDS + 1 }, (_, i) => `id-${String(i)}`),
+    },
+  ],
+  [
+    "a cosmetic id of 33 characters (ADR-0056)",
+    parseWireCosmetics,
+    { ...COSMETICS, ids: ["x".repeat(MAX_COSMETIC_ID_LENGTH + 1)] },
+  ],
+  ["an unsigned selection (ADR-0056)", parseWireCosmetics, { ids: [], at: 0 }],
+  ["a selection at a fraction of a ms (ADR-0056)", parseWireCosmetics, { ...COSMETICS, at: 0.5 }],
+  [
+    "cosmetics of a seat with no key (ADR-0056)",
+    parseWireCosmeticRoster,
+    { seats: [{ id: "p1", playerPubkey: null, cosmetics: COSMETICS }] },
+  ],
+  [
+    "a lobby join with no cosmetics (ADR-0056)",
+    parsePeerLobbyJoin,
+    { ...lobbyJoin, cosmetics: undefined },
+  ],
   [
     "summary row without a guild tag (#1406)",
     parseWireEnded,

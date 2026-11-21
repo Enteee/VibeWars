@@ -369,6 +369,35 @@ export default {
   "controls.weaponSet4": "Komplet oružja 4",
   "controls.weaponSets": "Kompleti oružja",
   "controls.withShift": "Shift + {key}",
+
+  "cosmetics.item.flame": "Plamen niza pobjeda",
+  "cosmetics.item.frameJade": "Okvir od žada",
+  "cosmetics.item.frameOrchid": "Okvir orhideje",
+  "cosmetics.item.frameRose": "Ružičasti okvir",
+  "cosmetics.item.frameTeal": "Tirkizni okvir",
+  "cosmetics.locked": "Zaključano",
+  "cosmetics.none": "Ništa",
+  "cosmetics.note":
+    "Samo za izgled: nijedna kozmetika ne mijenja igru. Osvaja se rangiranim pobjedama na javnoj ljestvici i dijele je svi tvoji likovi.",
+  "cosmetics.requires.streak": {
+    one: "{count} rangirana pobjeda zaredom",
+    few: "{count} rangirane pobjede zaredom",
+    other: "{count} rangiranih pobjeda zaredom",
+  },
+  "cosmetics.requires.top": "Top {rank}",
+  "cosmetics.requires.wins": {
+    one: "{count} rangirana pobjeda",
+    few: "{count} rangirane pobjede",
+    other: "{count} rangiranih pobjeda",
+  },
+  "cosmetics.showOthers": "Prikaži kozmetiku drugih igrača",
+  "cosmetics.slot.flame": "Plamen niza pobjeda",
+  "cosmetics.slot.frame": "Okvir pločice s imenom",
+  "cosmetics.slot.title": "Titula",
+  "cosmetics.title.champion": "Prvak",
+  "cosmetics.title.contender": "Izazivač",
+  "cosmetics.title.veteran": "Veteran",
+  "cosmetics.title.warlord": "Vojskovođa",
   "creature.rat": "Štakor",
 
   "echo.secondsLeft": {
@@ -862,6 +891,7 @@ export default {
   "music.trackWithMood": "{track} ({mood})",
 
   "options.controls": "kontrole",
+  "options.cosmetics": "kozmetika",
   "options.display": "prikaz",
   "options.label": "Opcije",
   "options.language": "jezik",
