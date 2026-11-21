@@ -174,11 +174,14 @@ counted. `BENCH_STUCK=1` also prints, per row,
 the cells (64 units, with their layer) where bots were stuck longest. A
 match the mode does not decide by its time limit is a draw; a mode
 without a wipe is won by whoever its own outcome names. The verdict is
-PASS when every team's share of the decided matches is within 10 points
-of fair (40-60 % with two teams, 23-43 % with three; ±10 points is about
-the 95 % interval at 100 matches) and draws are at most a quarter of the
-matches. Otherwise it is FAIL, naming the favoured team, or the share of
-draws, or "no contact" when no match was decided at all.
+PASS when every team's share of the decided matches is within
+max(10 points, 3σ) of fair, σ = √(fair·(1−fair)/decided), and draws are
+at most a quarter of the matches. At 96 decided matches the band is
+±15 points with two teams and ±14 with three; fewer decided matches widen
+it, more narrow it to the 10-point floor. A fair map strays out of 3σ
+about 0.3 % of the time, so a FAIL is a lopsided map, not bad luck
+(#3739). Otherwise it is FAIL, naming the favoured team and the band, or
+the share of draws, or "no contact" when no match was decided at all.
 
 PASS is necessary, not sufficient. Bots take high ground only with a bow
 or a spear (#3141), and duck behind walls, decks and tunnels only once

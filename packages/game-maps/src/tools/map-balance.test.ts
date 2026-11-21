@@ -61,11 +61,11 @@ describe("the failing rows (#3711)", () => {
         {
           map: "b",
           size: 4,
-          verdict: { pass: false, reason: "team 0 favoured (61 % of decided)" },
+          verdict: { pass: false, reason: "team 0 favoured (61 % of decided, band ±15 pts)" },
         },
         { map: "c", size: 8, verdict: { pass: false, reason: "no contact" } },
       ]),
-    ).toEqual(["b 4v4: team 0 favoured (61 % of decided)", "c 8v8: no contact"]);
+    ).toEqual(["b 4v4: team 0 favoured (61 % of decided, band ±15 pts)", "c 8v8: no contact"]);
   });
 
   it("is empty when every row passes", () => {
@@ -78,20 +78,36 @@ describe("the balance verdict (#3065)", () => {
     expect(balanceVerdict(result([50, 50]))).toEqual({ pass: true });
   });
 
-  it("fails 61/39, naming team 0", () => {
-    expect(balanceVerdict(result([61, 39]))).toEqual({
+  it("holds two teams to 3σ at 96 decided: 60/36 passes, 66/30 fails (#3739)", () => {
+    expect(balanceVerdict(result([60, 36]))).toEqual({ pass: true });
+    expect(balanceVerdict(result([66, 30]))).toEqual({
       pass: false,
-      reason: "team 0 favoured (61 % of decided)",
+      reason: "team 0 favoured (69 % of decided, band ±15 pts)",
     });
   });
 
-  it("holds three teams to 23-43 %", () => {
-    expect(balanceVerdict(result([43, 33, 24])).pass).toBe(true);
-    expect(balanceVerdict(result([44, 34, 22]))).toMatchObject({ pass: false });
-    expect(balanceVerdict(result([30, 50, 20]))).toEqual({
+  it("holds three teams to 3σ at 96 decided: 40/30/26 passes, 47/24/25 fails (#3739)", () => {
+    expect(balanceVerdict(result([40, 30, 26]))).toEqual({ pass: true });
+    expect(balanceVerdict(result([47, 24, 25]))).toEqual({
       pass: false,
-      reason: "team 1 favoured (50 % of decided)",
+      reason: "team 0 favoured (49 % of decided, band ±14 pts)",
     });
+    expect(balanceVerdict(result([24, 50, 22]))).toMatchObject({
+      reason: "team 1 favoured (52 % of decided, band ±14 pts)",
+    });
+  });
+
+  it("narrows to the 10-point floor with many decided matches (#3739)", () => {
+    expect(balanceVerdict(result([232, 168]))).toEqual({ pass: true });
+    expect(balanceVerdict(result([248, 152]))).toEqual({
+      pass: false,
+      reason: "team 0 favoured (62 % of decided, band ±10 pts)",
+    });
+  });
+
+  it("widens with few decided matches (#3739)", () => {
+    expect(balanceVerdict(result([14, 6]))).toEqual({ pass: true });
+    expect(balanceVerdict(result([17, 3]))).toMatchObject({ pass: false });
   });
 
   it("fails on more than a quarter draws", () => {

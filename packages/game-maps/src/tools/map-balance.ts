@@ -46,11 +46,19 @@ const RULESET = MINIMAL_GW_INSPIRED_PVP_V1;
 const DT = 1 / RULESET.tickRateHz;
 
 /**
- * How far a team's share of the decided matches may stray from fair, in
- * points: ±10 points is about the 95 % interval of a fair coin's share
- * over 100 matches, so a map outside it is lopsided, not unlucky.
+ * The least a team's share of the decided matches may stray from fair:
+ * however many matches are played, ±10 points off fair is lopsided.
  */
-const FAIR_BAND = 0.1;
+const FAIR_FLOOR = 0.1;
+/**
+ * How many standard deviations of a fair share the band spans above the
+ * floor. A fair map's share is binomial, σ = √(fair·(1−fair)/decided): at
+ * 96 decided matches that is about 5 points, so a fixed ±10 band was only
+ * 2σ, checked on every team of up to three mode rows, and a fair map failed
+ * about a third of runs by chance (#3739). At 3σ a fair share strays out
+ * about 0.3 % of the time, and a really lopsided one still fails.
+ */
+const FAIR_SIGMAS = 3;
 /**
  * The most matches that may end undecided: beyond a quarter, the map is
  * mostly not fought on, and a share of the rest says little.
@@ -154,19 +162,23 @@ export function runMapBalance({
   };
 }
 
-/** PASS when every team wins a fair share of the decided matches and few are draws. */
+/**
+ * PASS when every team's share of the decided matches is within
+ * max(`FAIR_FLOOR`, `FAIR_SIGMAS`·σ) of fair and few are draws.
+ */
 export function balanceVerdict({ wins, draws }: MapBalanceResult): BalanceVerdict {
   const decided = wins.reduce((sum, count) => sum + count, 0);
   if (decided === 0) {
     return { pass: false, reason: "no contact" };
   }
   const fair = 1 / wins.length;
+  const band = Math.max(FAIR_FLOOR, FAIR_SIGMAS * Math.sqrt((fair * (1 - fair)) / decided));
   const shares = wins.map((count) => count / decided);
-  if (shares.some((share) => Math.abs(share - fair) > FAIR_BAND)) {
+  if (shares.some((share) => Math.abs(share - fair) > band)) {
     const favoured = shares.indexOf(Math.max(...shares));
     return {
       pass: false,
-      reason: `team ${String(favoured)} favoured (${percent(shares[favoured] ?? 0)} of decided)`,
+      reason: `team ${String(favoured)} favoured (${percent(shares[favoured] ?? 0)} of decided, band ±${String(Math.round(band * 100))} pts)`,
     };
   }
   const drawShare = draws / (decided + draws);
