@@ -154,58 +154,527 @@ function inWindow(group: readonly Queued[], at: number): boolean {
 }
 
 /**
- * The group `counts[i]` tickets from each of `pools` make at `at`:
+ * The group `counts[i]` tickets from each of `search.pools` make at `at`:
  * the front of each when that is `inWindow`; else, when the front is
  * ranked, the earliest queued bot-free ticket whose window holds enough
- * later bot-free ones, front first. `undefined` when none does.
+ * later bot-free ones, front first, as `search` finds it. `undefined`
+ * when none does.
  */
-function pick(
-  pools: readonly (readonly Queued[])[],
-  counts: readonly number[],
-  at: number,
-): Queued[] | undefined {
-  if (pools.some((pool, i) => pool.length < (counts[i] ?? 0))) {
+function pick(search: Search, at: number): Queued[] | undefined {
+  const { pools, counts } = search;
+  if (pools.some((pool, i) => pool.size < (counts[i] ?? 0))) {
     return undefined;
   }
-  const front = pools.flatMap((pool, i) => pool.slice(0, counts[i]));
-  if (inWindow(front, at)) {
-    return front;
+  const front = pools.flatMap((pool, i) => pool.first(counts[i] ?? 0));
+  return inWindow(front, at) ? front : search.first(at);
+}
+
+/**
+ * The tickets and windows formation visited, counted so a test can
+ * bound its cost without a clock (#3747). Each visit is at most a log²
+ * of the queue in the trees below; what must not grow is their number.
+ */
+export interface FormationCost {
+  visits: number;
+}
+
+/**
+ * A queue's bot-free tickets by claim (#3747): `rank[place]` is a
+ * ticket's index in `byClaim`, -1 for one with bots, which no rating
+ * window takes. Ranked once a pass, so a window is two binary searches.
+ */
+interface Claims {
+  readonly byClaim: readonly { readonly claim: number; readonly place: number }[];
+  readonly claim: readonly number[];
+  readonly rank: readonly number[];
+}
+
+function claimsOf(queued: readonly Queued[]): Claims {
+  const claim = queued.map((each) => claimOf(each.ticket));
+  const byClaim = queued
+    .filter((each) => each.ticket.bots === 0)
+    .map((each) => ({ claim: claim[each.place] ?? 0, place: each.place }))
+    .sort((a, b) => a.claim - b.claim || a.place - b.place);
+  const rank = queued.map(() => -1);
+  byClaim.forEach((each, i) => {
+    rank[each.place] = i;
+  });
+  return { byClaim, claim, rank };
+}
+
+/** A binary min-heap by `less`. */
+class Heap<T> {
+  private readonly items: T[] = [];
+  private readonly less: (a: T, b: T) => boolean;
+
+  constructor(less: (a: T, b: T) => boolean) {
+    this.less = less;
   }
-  // Bot-free tickets by claim, so each anchor's window is two binary
-  // searches, not a pass over the queue: formation runs on every queued
-  // client every queue tick, and a flood of spread claims must not
-  // freeze it (#3575).
-  const rated = pools
-    .flatMap((pool, i) =>
-      pool
-        .filter((queued) => queued.ticket.bots === 0)
-        .map((queued) => ({ queued, pool: i, claim: claimOf(queued.ticket) })),
-    )
-    .sort((a, b) => a.claim - b.claim || a.queued.place - b.queued.place);
-  const total = counts.reduce((sum, count) => sum + count, 0);
-  for (const anchor of [...rated].sort((a, b) => a.queued.place - b.queued.place)) {
-    const window = ratingWindow(at - anchor.queued.ticket.enteredAt);
-    const from = firstAbove(rated, anchor.claim - window, false);
-    const to = firstAbove(rated, anchor.claim + window, true);
-    if (to - from < total) {
-      continue;
-    }
-    const group = pools.flatMap((_, i) =>
-      rated
-        .slice(from, to)
-        .filter(
-          ({ queued, pool }) =>
-            pool === i && (queued === anchor.queued || queued.place > anchor.queued.place),
-        )
-        .map(({ queued }) => queued)
-        .sort((a, b) => a.place - b.place)
-        .slice(0, counts[i]),
-    );
-    if (group.length === front.length && inWindow(group, at)) {
-      return group;
+
+  peek(): T | undefined {
+    return this.items[0];
+  }
+
+  push(item: T): void {
+    for (let i = this.items.push(item) - 1; i > 0;) {
+      const parent = (i - 1) >> 1;
+      const above = this.items[parent];
+      if (above === undefined || !this.less(item, above)) {
+        return;
+      }
+      [this.items[i], this.items[parent]] = [above, item];
+      i = parent;
     }
   }
-  return undefined;
+
+  pop(): T | undefined {
+    const top = this.items[0];
+    const last = this.items.pop();
+    if (last === undefined || this.items.length === 0) {
+      return top;
+    }
+    this.items[0] = last;
+    for (let i = 0; ;) {
+      let least = i;
+      for (const child of [2 * i + 1, 2 * i + 2]) {
+        const [a, b] = [this.items[child], this.items[least]];
+        if (a !== undefined && b !== undefined && this.less(a, b)) {
+          least = child;
+        }
+      }
+      const below = this.items[least];
+      if (least === i || below === undefined) {
+        return top;
+      }
+      [this.items[i], this.items[least]] = [below, last];
+      i = least;
+    }
+  }
+}
+
+/** The index of the first of `sorted` at or above `value`; `sorted.length` when none is. */
+function lowerBound(sorted: readonly number[], value: number): number {
+  let [low, high] = [0, sorted.length];
+  while (low < high) {
+    const mid = (low + high) >>> 1;
+    if ((sorted[mid] ?? Number.POSITIVE_INFINITY) < value) {
+      low = mid + 1;
+    } else {
+      high = mid;
+    }
+  }
+  return low;
+}
+
+/**
+ * Which of a pool's bot-free tickets wait, by place and claim rank
+ * (#3747): a Fenwick tree over places, each node of it one over the
+ * ranks of its places' tickets. A window's later tickets are counted,
+ * and its nth found, in log² of the queue rather than walked.
+ */
+class Windows {
+  /** Per node, 1-based: its tickets' ranks, sorted, and how many of each wait. */
+  private readonly ranks: number[][];
+  private readonly counts: Int32Array[];
+
+  constructor(
+    places: number,
+    tickets: readonly { readonly place: number; readonly rank: number }[],
+  ) {
+    this.ranks = Array.from({ length: places + 1 }, (): number[] => []);
+    for (const { place, rank } of tickets) {
+      for (let node = place + 1; node <= places; node += node & -node) {
+        this.ranks[node]?.push(rank);
+      }
+    }
+    this.counts = this.ranks.map((ranks) => {
+      ranks.sort((a, b) => a - b);
+      return new Int32Array(ranks.length + 1);
+    });
+  }
+
+  /** Counts the ticket at `place` of claim `rank` in, `delta` 1, or out, -1. */
+  add(place: number, rank: number, delta: number): void {
+    for (let node = place + 1; node < this.ranks.length; node += node & -node) {
+      const counts = this.counts[node] ?? new Int32Array(0);
+      for (let i = lowerBound(this.ranks[node] ?? [], rank) + 1; i < counts.length; i += i & -i) {
+        counts[i] = (counts[i] ?? 0) + delta;
+      }
+    }
+  }
+
+  /** How many wait at or after `place` with a rank in [`from`, `to`). */
+  countFrom(place: number, from: number, to: number): number {
+    return this.before(this.ranks.length - 1, from, to) - this.before(place, from, to);
+  }
+
+  /** The place of the `nth`, from 1, of those `countFrom` counts, by place; -1 when there are fewer. */
+  nth(place: number, from: number, to: number, nth: number): number {
+    let wanted = this.before(place, from, to) + nth;
+    let below = 0;
+    for (let step = 2 ** Math.floor(Math.log2(this.ranks.length)); step >= 1; step /= 2) {
+      const node = below + step;
+      const count = node < this.ranks.length ? this.inNode(node, from, to) : wanted;
+      if (count < wanted) {
+        below = node;
+        wanted -= count;
+      }
+    }
+    return below < this.ranks.length - 1 ? below : -1;
+  }
+
+  /** How many wait before `place` with a rank in [`from`, `to`). */
+  private before(place: number, from: number, to: number): number {
+    let count = 0;
+    for (let node = place; node > 0; node -= node & -node) {
+      count += this.inNode(node, from, to);
+    }
+    return count;
+  }
+
+  private inNode(node: number, from: number, to: number): number {
+    const ranks = this.ranks[node] ?? [];
+    return this.prefix(node, lowerBound(ranks, to)) - this.prefix(node, lowerBound(ranks, from));
+  }
+
+  private prefix(node: number, length: number): number {
+    const counts = this.counts[node] ?? new Int32Array(0);
+    let count = 0;
+    for (let i = length; i > 0; i -= i & -i) {
+      count += counts[i] ?? 0;
+    }
+    return count;
+  }
+}
+
+/** What `reachable` asks of a pool. */
+interface Reachable {
+  has(queued: Queued): boolean;
+  /** Its earliest queued not `hardNat`. */
+  firstOpen(): Queued | undefined;
+}
+
+/**
+ * A queue's tickets waiting as one kind, solos or parties, first queued
+ * first (#3747): linked by place, so a group leaves at its own size and
+ * not the queue's, and its bot-free ones counted in `Windows`.
+ */
+class Pool implements Reachable {
+  size = 0;
+  private head = -1;
+  private tail = -1;
+  private readonly next: Int32Array;
+  private readonly previous: Int32Array;
+  private readonly waiting: Uint8Array;
+  /** The places of the open tickets added, in order, and the first that may still wait. */
+  private readonly open: number[] = [];
+  private openFrom = 0;
+  private readonly windows: Windows;
+  private readonly queued: readonly Queued[];
+  private readonly claims: Claims;
+  private readonly cost: FormationCost;
+
+  constructor(
+    queued: readonly Queued[],
+    claims: Claims,
+    holds: (queued: Queued) => boolean,
+    cost: FormationCost,
+  ) {
+    this.queued = queued;
+    this.claims = claims;
+    this.cost = cost;
+    this.next = new Int32Array(queued.length).fill(-1);
+    this.previous = new Int32Array(queued.length).fill(-1);
+    this.waiting = new Uint8Array(queued.length);
+    const rated = queued
+      .filter((each) => holds(each) && (claims.rank[each.place] ?? -1) >= 0)
+      .map((each) => ({ place: each.place, rank: claims.rank[each.place] ?? -1 }));
+    this.windows = new Windows(queued.length, rated);
+  }
+
+  has(queued: Queued): boolean {
+    return this.waiting[queued.place] === 1;
+  }
+
+  add(queued: Queued): void {
+    const { place } = queued;
+    this.waiting[place] = 1;
+    this.previous[place] = this.tail;
+    if (this.tail < 0) {
+      this.head = place;
+    } else {
+      this.next[this.tail] = place;
+    }
+    this.tail = place;
+    this.size += 1;
+    if (!queued.ticket.hardNat) {
+      this.open.push(place);
+    }
+    this.count(place, 1);
+  }
+
+  remove(queued: Queued): void {
+    const { place } = queued;
+    const [before, after] = [this.previous[place] ?? -1, this.next[place] ?? -1];
+    if (before < 0) {
+      this.head = after;
+    } else {
+      this.next[before] = after;
+    }
+    if (after < 0) {
+      this.tail = before;
+    } else {
+      this.previous[after] = before;
+    }
+    this.waiting[place] = 0;
+    this.size -= 1;
+    this.count(place, -1);
+  }
+
+  /** The first `count` waiting. */
+  first(count: number): Queued[] {
+    const first: Queued[] = [];
+    for (
+      let place = this.head;
+      place >= 0 && first.length < count;
+      place = this.next[place] ?? -1
+    ) {
+      this.cost.visits += 1;
+      const queued = this.queued[place];
+      if (queued !== undefined) {
+        first.push(queued);
+      }
+    }
+    return first;
+  }
+
+  firstOpen(): Queued | undefined {
+    while (this.openFrom < this.open.length && this.waiting[this.open[this.openFrom] ?? 0] !== 1) {
+      this.cost.visits += 1;
+      this.openFrom += 1;
+    }
+    return this.queued[this.open[this.openFrom] ?? -1];
+  }
+
+  /** How many bot-free tickets wait at or after `place` with a claim rank in [`from`, `to`). */
+  countFrom(place: number, from: number, to: number): number {
+    this.cost.visits += 1;
+    return this.windows.countFrom(place, from, to);
+  }
+
+  /** The `count` earliest of those `countFrom` counts. */
+  firstFrom(place: number, from: number, to: number, count: number): Queued[] {
+    this.cost.visits += count;
+    return Array.from(
+      { length: count },
+      (_, i) => this.queued[this.windows.nth(place, from, to, i + 1)],
+    ).filter((queued): queued is Queued => queued !== undefined);
+  }
+
+  private count(place: number, delta: number): void {
+    const rank = this.claims.rank[place] ?? -1;
+    if (rank >= 0) {
+      this.windows.add(place, rank, delta);
+    }
+  }
+}
+
+/** An anchor set aside, as of its `stamp`th change. */
+interface SetAside {
+  readonly place: number;
+  readonly stamp: number;
+}
+
+/**
+ * The anchors set aside whose windows hold a claim rank (#3747): a
+ * segment tree over ranks, each window kept in the nodes that cover it.
+ * Every window on a rank's path holds that rank, so a stab takes the
+ * whole path, and each window is given up once.
+ */
+class Stabs {
+  private readonly nodes: (SetAside[] | undefined)[];
+  private readonly leaves: number;
+  private readonly cost: FormationCost;
+
+  constructor(ranks: number, cost: FormationCost) {
+    this.cost = cost;
+    this.leaves = 2 ** Math.ceil(Math.log2(Math.max(1, ranks)));
+    this.nodes = Array.from({ length: 2 * this.leaves }, () => undefined);
+  }
+
+  /** Keeps `aside` for the ranks [`from`, `to`). */
+  insert(from: number, to: number, aside: SetAside): void {
+    this.cost.visits += 1;
+    for (let [low, high] = [from + this.leaves, to + this.leaves]; low < high;) {
+      if (low % 2 === 1) {
+        this.keep(low, aside);
+        low += 1;
+      }
+      if (high % 2 === 1) {
+        high -= 1;
+        this.keep(high, aside);
+      }
+      [low, high] = [low >> 1, high >> 1];
+    }
+  }
+
+  /** Every anchor kept for `rank`, each given up. */
+  stab(rank: number): SetAside[] {
+    const stabbed: SetAside[] = [];
+    for (let node = rank + this.leaves; node >= 1; node >>= 1) {
+      const kept = this.nodes[node] ?? [];
+      this.cost.visits += kept.length;
+      stabbed.push(...kept);
+      this.nodes[node] = undefined;
+    }
+    return stabbed;
+  }
+
+  private keep(node: number, aside: SetAside): void {
+    const kept = this.nodes[node];
+    if (kept === undefined) {
+      this.nodes[node] = [aside];
+    } else {
+      kept.push(aside);
+    }
+  }
+}
+
+/**
+ * `pick`'s ranked search for `counts[i]` tickets from each of `pools`,
+ * kept for a whole pass (#3747). Each bot-free ticket is an anchor, and
+ * the first by place whose window holds enough later ones forms. One
+ * that fails is set aside and tried again only once it may pass: when
+ * its window widens, once a second and at most fifty times
+ * (`ratingWindow`), or when a ticket queues into it in a pool it was
+ * short of. A ticket leaving only ever thins a window, and an earlier
+ * `at` only ever narrows one, so what is set aside still fails.
+ */
+class Search {
+  readonly pools: readonly Pool[];
+  readonly counts: readonly number[];
+  private readonly queued: readonly Queued[];
+  private readonly claims: Claims;
+  private readonly cost: FormationCost;
+  /** Per place: how often its anchor changed, and whether it is set aside. */
+  private readonly stamps: Int32Array;
+  private readonly aside: Uint8Array;
+  /** The anchors to try, by place. */
+  private readonly pending: Heap<number>;
+  /** The anchors set aside, by when their window next widens. */
+  private readonly widens: Heap<SetAside & { readonly at: number }>;
+  /** Per pool: the anchors set aside short of its tickets. */
+  private readonly short: readonly Stabs[];
+
+  constructor(
+    queued: readonly Queued[],
+    claims: Claims,
+    pools: readonly Pool[],
+    counts: readonly number[],
+    cost: FormationCost,
+  ) {
+    this.queued = queued;
+    this.claims = claims;
+    this.pools = pools;
+    this.counts = counts;
+    this.cost = cost;
+    this.stamps = new Int32Array(queued.length);
+    this.aside = new Uint8Array(queued.length);
+    this.pending = new Heap((a, b) => a < b);
+    this.widens = new Heap((a, b) => a.at < b.at);
+    this.short = pools.map(() => new Stabs(claims.byClaim.length, cost));
+  }
+
+  /** `queued` just joined its pool: it is an anchor, and fills the windows it is in. */
+  arrive(queued: Queued): void {
+    const rank = this.claims.rank[queued.place] ?? -1;
+    const pool = this.pools.findIndex((each) => each.has(queued));
+    if (rank < 0 || pool < 0) {
+      return;
+    }
+    this.pending.push(queued.place);
+    for (const aside of this.short[pool]?.stab(rank) ?? []) {
+      this.retry(aside);
+    }
+  }
+
+  /** The first anchor's group at `at`, by place; `undefined` when none forms. */
+  first(at: number): Queued[] | undefined {
+    for (
+      let due = this.widens.peek();
+      due !== undefined && due.at <= at;
+      due = this.widens.peek()
+    ) {
+      this.widens.pop();
+      this.retry(due);
+    }
+    const passed: number[] = [];
+    let group: Queued[] | undefined;
+    for (let place = this.pending.peek(); place !== undefined; place = this.pending.peek()) {
+      this.cost.visits += 1;
+      const anchor = this.queued[place];
+      if (
+        anchor === undefined ||
+        this.aside[place] === 1 ||
+        !this.pools.some((pool) => pool.has(anchor))
+      ) {
+        this.pending.pop();
+        continue;
+      }
+      const window = ratingWindow(at - anchor.ticket.enteredAt);
+      const claim = this.claims.claim[place] ?? 0;
+      const from = firstAbove(this.claims.byClaim, claim - window, false);
+      const to = firstAbove(this.claims.byClaim, claim + window, true);
+      const short = this.pools.map(
+        (pool, i) => pool.countFrom(place, from, to) < (this.counts[i] ?? 0),
+      );
+      this.pending.pop();
+      if (!short.includes(true)) {
+        const found = this.pools.flatMap((pool, i) =>
+          pool.firstFrom(place, from, to, this.counts[i] ?? 0),
+        );
+        if (inWindow(found, at)) {
+          group = found;
+          this.pending.push(place);
+          break;
+        }
+        // Full, yet not `inWindow` by a rounding of its bounds: a ticket
+        // leaving may change that, so it is not set aside.
+        passed.push(place);
+        continue;
+      }
+      const stamp = this.stamp(place, 1);
+      short.forEach((isShort, i) => {
+        if (isShort) {
+          this.short[i]?.insert(from, to, { place, stamp });
+        }
+      });
+      if (Number.isFinite(window)) {
+        const seconds = Math.floor(Math.max(0, at - anchor.ticket.enteredAt) / 1000);
+        this.widens.push({ place, stamp, at: anchor.ticket.enteredAt + 1000 * (seconds + 1) });
+      }
+    }
+    for (const place of passed) {
+      this.pending.push(place);
+    }
+    return group;
+  }
+
+  /** Tries `aside` again, unless its anchor changed since. */
+  private retry(aside: SetAside): void {
+    if (this.aside[aside.place] === 1 && this.stamps[aside.place] === aside.stamp) {
+      this.stamp(aside.place, 0);
+      this.pending.push(aside.place);
+    }
+  }
+
+  /** Sets the anchor at `place` aside, 1, or not, 0; its new stamp. */
+  private stamp(place: number, aside: number): number {
+    const stamp = (this.stamps[place] ?? 0) + 1;
+    this.stamps[place] = stamp;
+    this.aside[place] = aside;
+    return stamp;
+  }
 }
 
 /**
@@ -353,25 +822,35 @@ function takeGroups(
   mode: QueueMode,
   teamCount: TeamCount,
   now: number,
+  cost: FormationCost,
 ): QueueTicket[][] {
   const teamSize = teamSizeOf(mode);
   const groups: QueueTicket[][] = [];
-  let solos: Queued[] = [];
-  let parties: Queued[] = [];
+  const queued = queue.map((ticket, place) => ({ ticket, place }));
+  const claims = claimsOf(queued);
+  const solos = new Pool(queued, claims, (each) => !isSide(each.ticket, mode), cost);
+  const parties = new Pool(queued, claims, (each) => isSide(each.ticket, mode), cost);
+  const search = (pools: readonly Pool[], counts: readonly number[]): Search =>
+    new Search(queued, claims, pools, counts, cost);
+  const ofParties = search([parties], [teamCount]);
+  const ofBoth = search([parties, solos], [1, teamSize]);
+  const ofSolos = search([solos], [2 * teamSize]);
+  const pairs = teamCount === 3 ? search([parties], [2]) : undefined;
+  const searches = [ofParties, ofBoth, ofSolos, ...(pairs === undefined ? [] : [pairs])];
   const take = (group: readonly Queued[]): void => {
-    const taken = new Set(group);
-    solos = solos.filter((queued) => !taken.has(queued));
-    parties = parties.filter((queued) => !taken.has(queued));
-    groups.push(group.map((queued) => queued.ticket));
+    for (const each of group) {
+      (parties.has(each) ? parties : solos).remove(each);
+    }
+    groups.push(group.map((each) => each.ticket));
   };
   // Two sides that waited long enough for a third by `at` play each
   // other. The earliest two waited longest: if they have not, no later
   // two have.
   const settlePairs = (at: number): void => {
     for (;;) {
-      const front = teamCount === 3 ? pick([parties], [2], at) : undefined;
+      const front = pairs === undefined ? undefined : pick(pairs, at);
       const [pair] = front === undefined ? [] : fitting(reachable(front, [parties]), at);
-      const queuedLast = Math.max(...(pair ?? []).map((queued) => queued.ticket.enteredAt));
+      const queuedLast = Math.max(...(pair ?? []).map((each) => each.ticket.enteredAt));
       if (pair === undefined || at - queuedLast < THIRD_TEAM_WAIT_SECONDS * 1000) {
         return;
       }
@@ -381,11 +860,7 @@ function takeGroups(
   // The one group, of those that can form at `at`, that takes the
   // earliest queued; `false` when none can.
   const formOne = (at: number): boolean => {
-    const fronts = [
-      pick([parties], [teamCount], at),
-      pick([parties, solos], [1, teamSize], at),
-      pick([solos], [2 * teamSize], at),
-    ];
+    const fronts = [pick(ofParties, at), pick(ofBoth, at), pick(ofSolos, at)];
     const pools = [[parties], [parties, solos], [solos]];
     const candidates = fronts.flatMap((front, i) =>
       front === undefined ? [] : fitting(reachable(front, pools[i] ?? []), at),
@@ -402,16 +877,20 @@ function takeGroups(
     }
     return best !== undefined;
   };
-  queue.forEach((ticket, place) => {
+  for (const each of queued) {
+    cost.visits += 1;
     // A pair that had stopped waiting before this one queued already
     // formed as two (#2683): a late third does not take it back.
-    settlePairs(ticket.enteredAt);
+    settlePairs(each.ticket.enteredAt);
     // At a team size of 1, every Random Arena ticket is a solo.
-    (isSide(ticket, mode) ? parties : solos).push({ ticket, place });
-    while (formOne(ticket.enteredAt)) {
+    (isSide(each.ticket, mode) ? parties : solos).add(each);
+    for (const kept of searches) {
+      kept.arrive(each);
+    }
+    while (formOne(each.ticket.enteredAt)) {
       // Ranked windows that widened while nobody queued can fill more than one.
     }
-  });
+  }
   settlePairs(now);
   while (formOne(now)) {
     // As above: a window wide enough by now forms its group.
@@ -433,14 +912,14 @@ function fitting(candidates: readonly Queued[][], at: number): Queued[][] {
  * block the queue's head for good: in [A hard, B hard, C open] the solos
  * candidate stays [A, B]. The hard tickets left over keep their place.
  */
-function reachable(front: readonly Queued[], pools: readonly (readonly Queued[])[]): Queued[][] {
+function reachable(front: readonly Queued[], pools: readonly Reachable[]): Queued[][] {
   if (front.some((queued) => !queued.ticket.hardNat)) {
     return [[...front]];
   }
   return pools.flatMap((pool) => {
-    const open = pool.find((queued) => !queued.ticket.hardNat);
+    const open = pool.firstOpen();
     const latest = front
-      .filter((queued) => pool.includes(queued))
+      .filter((queued) => pool.has(queued))
       .reduce<Queued | undefined>(
         (last, queued) => (last === undefined || queued.place > last.place ? queued : last),
         undefined,
@@ -449,11 +928,6 @@ function reachable(front: readonly Queued[], pools: readonly (readonly Queued[])
       ? []
       : [front.map((queued) => (queued === latest ? open : queued))];
   });
-}
-
-/** Whether `a` stands at a later Heroes' Ascent round than `b`. */
-function isLater(a: QueueTicket, b: QueueTicket): boolean {
-  return a.ascentRound !== null && b.ascentRound !== null && a.ascentRound > b.ascentRound;
 }
 
 /**
@@ -468,31 +942,85 @@ function skipPairs(
   waiting: readonly QueueTicket[],
   round: FormGroupsInput["round"],
   now: number,
+  cost: FormationCost,
 ): (readonly [QueueTicket, QueueTicket])[] {
-  const reaches = (a: QueueTicket, b: QueueTicket): boolean => !a.hardNat || !b.hardNat;
-  const alone = waiting.filter(
-    (ticket) =>
+  // Per round, how many wait and how many of them are open: an open
+  // ticket reaches any other, a hard one only an open one.
+  const atRound = new Map<number | null, { readonly all: number; readonly open: number }>();
+  for (const ticket of waiting) {
+    const seen = atRound.get(ticket.ascentRound) ?? { all: 0, open: 0 };
+    atRound.set(ticket.ascentRound, {
+      all: seen.all + 1,
+      open: seen.open + (ticket.hardNat ? 0 : 1),
+    });
+  }
+  const alone = waiting.filter((ticket) => {
+    const seen = atRound.get(ticket.ascentRound) ?? { all: 1, open: 0 };
+    return (
       round(ticket.ascentRound)?.skipping === true &&
-      !waiting.some(
-        (other) =>
-          other !== ticket && other.ascentRound === ticket.ascentRound && reaches(ticket, other),
-      ),
-  );
+      (ticket.hardNat ? seen.open === 0 : seen.all === 1)
+    );
+  });
+  // Per later round, those alone there, and the open ones, first queued
+  // first, each with the first not yet taken: a pointer that only moves
+  // on, so the search is the queue times its rounds, not its square (#3747).
+  const place = new Map(alone.map((ticket, i) => [ticket, i]));
+  const lines = new Map<number, { readonly all: Line; readonly open: Line }>();
+  for (const ticket of alone) {
+    if (ticket.ascentRound === null) {
+      continue;
+    }
+    const line = lines.get(ticket.ascentRound) ?? {
+      all: { tickets: [], next: 0 },
+      open: { tickets: [], next: 0 },
+    };
+    line.all.tickets.push(ticket);
+    if (!ticket.hardNat) {
+      line.open.tickets.push(ticket);
+    }
+    lines.set(ticket.ascentRound, line);
+  }
   const pairs: (readonly [QueueTicket, QueueTicket])[] = [];
   const taken = new Set<QueueTicket>();
+  const firstUntaken = (line: Line): QueueTicket | undefined => {
+    for (let first = line.tickets[line.next]; first !== undefined && taken.has(first);) {
+      cost.visits += 1;
+      line.next += 1;
+      first = line.tickets[line.next];
+    }
+    return line.tickets[line.next];
+  };
   for (const ticket of alone) {
+    cost.visits += 1;
     if (taken.has(ticket) || now - ticket.enteredAt < ASCENT_SKIP_WAIT_SECONDS * 1000) {
       continue;
     }
-    const later = alone.find(
-      (other) => !taken.has(other) && isLater(other, ticket) && reaches(ticket, other),
-    );
+    let later: QueueTicket | undefined;
+    for (const [ascentRound, line] of lines) {
+      cost.visits += 1;
+      const first =
+        ticket.ascentRound !== null && ascentRound > ticket.ascentRound
+          ? firstUntaken(ticket.hardNat ? line.open : line.all)
+          : undefined;
+      if (
+        first !== undefined &&
+        (later === undefined || (place.get(first) ?? 0) < (place.get(later) ?? 0))
+      ) {
+        later = first;
+      }
+    }
     if (later !== undefined) {
       taken.add(ticket).add(later);
       pairs.push([ticket, later]);
     }
   }
   return pairs;
+}
+
+/** Those alone at a round, first queued first, and the first of them not yet taken. */
+interface Line {
+  readonly tickets: QueueTicket[];
+  next: number;
 }
 
 /**
@@ -523,7 +1051,12 @@ function hallGroup(
   if (seated.length < 2) {
     return [];
   }
-  const [group] = reachable(seated.slice(0, teamCount), [seated]);
+  // Every one of the front is seated.
+  const line = {
+    has: () => true,
+    firstOpen: () => seated.find((queued) => !queued.ticket.hardNat),
+  };
+  const [group] = reachable(seated.slice(0, teamCount), [line]);
   return group === undefined ? [] : [group.map((queued) => queued.ticket)];
 }
 
@@ -537,24 +1070,33 @@ function roundGroups(
   mode: QueueMode,
   round: FormGroupsInput["round"],
   now: number,
+  cost: FormationCost,
 ): { readonly group: readonly QueueTicket[]; readonly ascentRound: number | null }[] {
-  const rounds = [...new Set(queue.map((ticket) => ticket.ascentRound))].sort(
-    (a, b) => (a ?? 0) - (b ?? 0),
-  );
+  // Bucketed once, so a round's formation never walks another's tickets (#3747).
+  const byRound = new Map<number | null, QueueTicket[]>();
+  for (const ticket of queue) {
+    const atRound = byRound.get(ticket.ascentRound);
+    if (atRound === undefined) {
+      byRound.set(ticket.ascentRound, [ticket]);
+    } else {
+      atRound.push(ticket);
+    }
+  }
+  const rounds = [...byRound.keys()].sort((a, b) => (a ?? 0) - (b ?? 0));
   const groups = rounds.flatMap((ascentRound) => {
-    const atRound = queue.filter((ticket) => ticket.ascentRound === ascentRound);
+    const atRound = byRound.get(ascentRound) ?? [];
     const teamCount = round(ascentRound)?.teamCount ?? 2;
     return (
       round(ascentRound)?.slotted === true
         ? hallGroup(atRound, teamCount, now)
-        : takeGroups(atRound, mode, teamCount, now)
+        : takeGroups(atRound, mode, teamCount, now, cost)
     ).map((group) => ({ group, ascentRound }));
   });
   const grouped = new Set(groups.flatMap(({ group }) => group));
   const waiting = queue.filter((ticket) => !grouped.has(ticket));
   return [
     ...groups,
-    ...skipPairs(waiting, round, now).map((group) => ({
+    ...skipPairs(waiting, round, now, cost).map((group) => ({
       group,
       ascentRound: group[1].ascentRound,
     })),
@@ -652,9 +1194,12 @@ export function isRankedGroup(tickets: readonly QueueTicket[]): boolean {
  * caller is at: every client has to agree who skips ahead. Throws on an
  * empty `mapPool` once a group forms.
  */
-export async function formGroups(input: FormGroupsInput): Promise<FormedGroup[]> {
+export async function formGroups(
+  input: FormGroupsInput,
+  cost: FormationCost = { visits: 0 },
+): Promise<FormedGroup[]> {
   const groups: FormedGroup[] = [];
-  const formed = roundGroups(liveQueue(input), input.mode, input.round, input.now);
+  const formed = roundGroups(liveQueue(input), input.mode, input.round, input.now, cost);
   for (const { group, ascentRound } of formed) {
     const ids = group.map((ticket) => ticket.ticketId).sort(compare);
     const groupId = await sha256Hex(ids.join("\n"));
