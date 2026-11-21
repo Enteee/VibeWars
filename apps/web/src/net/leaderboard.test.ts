@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { UNLISTED_CLAIM } from "@vibewars/game-protocol";
 
 import {
+  BOARDS_KEPT,
   claimFrom,
   createLeaderboardStore,
   LEADERBOARD_CACHE_MS,
@@ -117,6 +118,18 @@ describe("createLeaderboardStore (#3575)", () => {
       "/vibewars/ranking/leaderboard.json",
       `/vibewars/ranking/boards/${String(past.asOf)}.json`,
     ]);
+  });
+
+  it("keeps only the BOARDS_KEPT past boards it fetched last", async () => {
+    const past = Array.from({ length: BOARDS_KEPT + 1 }, (_, n) => ({ ...BOARD, asOf: n + 1 }));
+    const { store, urls } = storeOver([...past, past[0]]);
+    for (const board of past) {
+      await store.board(board.asOf);
+    }
+    await store.board(2);
+    expect(urls).toHaveLength(BOARDS_KEPT + 1);
+    await store.board(1);
+    expect(urls).toHaveLength(BOARDS_KEPT + 2);
   });
 
   it("has no board for an asOf not published, or published under another, and asks again", async () => {

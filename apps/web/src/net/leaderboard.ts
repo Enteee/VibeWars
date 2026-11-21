@@ -11,6 +11,12 @@
 import { UNLISTED_CLAIM, type TicketClaim } from "@vibewars/game-protocol";
 import type { LeaderboardCopy, LeaderboardSource } from "@vibewars/game-session";
 
+/**
+ * How many past boards a page keeps: a party's claims name a few, and
+ * the hourly job publishes one more an hour, so the oldest is let go.
+ */
+export const BOARDS_KEPT = 8;
+
 /** How long a fetched copy is fresh enough to read without fetching again. */
 export const LEADERBOARD_CACHE_MS = 10 * 60 * 1000;
 
@@ -130,7 +136,7 @@ export function createLeaderboardStore(deps: LeaderboardDeps): LeaderboardStore 
   const handlers = new Set<(board: Leaderboard) => void>();
   let held: { readonly board: Leaderboard; readonly at: number } | undefined;
   let inFlight: Promise<Leaderboard | undefined> | undefined;
-  /** Each past board fetched, by its asOf: a published one never changes. */
+  /** The `BOARDS_KEPT` past boards last fetched, by asOf: a published one never changes. */
   const boards = new Map<number, Promise<LeaderboardCopy | undefined>>();
 
   /** Fetch it now, past the cache; one fetch at a time. */
@@ -184,6 +190,10 @@ export function createLeaderboardStore(deps: LeaderboardDeps): LeaderboardStore 
             return copyOf(board);
           });
         boards.set(asOf, named);
+        const [oldest] = boards.keys();
+        if (boards.size > BOARDS_KEPT && oldest !== undefined) {
+          boards.delete(oldest);
+        }
       }
       return named;
     },

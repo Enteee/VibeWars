@@ -22,6 +22,9 @@ import {
   type FormedGroup,
 } from "./queue-formation.js";
 
+// Real time, which no test here fakes: globals.d.ts does not declare it.
+declare const performance: { now(): number };
+
 /** Queue formation (#869, #854 C4): the same tickets make the same groups everywhere. */
 
 const NOW = 1_700_000_100_000;
@@ -911,6 +914,20 @@ describe("rating pairing (ADR-0055, #3575)", () => {
   it("forms a group with a bot ticket as before, however far apart the claims", async () => {
     const sides = [ratedSide(0, 800), ratedSide(1, 2400, 1)];
     expect((await formAt(sides, 2, "team-arena-2v2")).map(members)).toEqual([ids(sides)]);
+  });
+
+  it("passes over 400 tickets none of which is in another's window within a queue tick", async () => {
+    // Claims 1000 apart, all queued within the last second: nobody pairs.
+    const spread = Array.from({ length: 400 }, (_, n) => ({
+      ...rated(n, 1000 * (n + 1), "random-arena-4v4"),
+      enteredAt: START + n,
+    }));
+    expect(await formAt(spread, 1, "random-arena-4v4")).toEqual([]);
+    // Timed warm, as a client forms every tick: the first pass pays the JIT.
+    const begun = performance.now();
+    await formAt(spread, 1, "random-arena-4v4");
+    // Every queued client forms every 250 ms (session.ts' QUEUE_TICK_SECONDS).
+    expect(performance.now() - begun).toBeLessThan(250);
   });
 
   it("forms the same groups whatever order the tickets come in", async () => {

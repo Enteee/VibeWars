@@ -171,20 +171,34 @@ function pick(
   if (inWindow(front, at)) {
     return front;
   }
-  const anchors = pools
-    .flat()
-    .filter((queued) => queued.ticket.bots === 0)
-    .sort((a, b) => a.place - b.place);
-  for (const anchor of anchors) {
-    const group = pools.flatMap((pool, i) =>
+  // Bot-free tickets by claim, so each anchor's window is two binary
+  // searches, not a pass over the queue: formation runs on every queued
+  // client every queue tick, and a flood of spread claims must not
+  // freeze it (#3575).
+  const rated = pools
+    .flatMap((pool, i) =>
       pool
+        .filter((queued) => queued.ticket.bots === 0)
+        .map((queued) => ({ queued, pool: i, claim: claimOf(queued.ticket) })),
+    )
+    .sort((a, b) => a.claim - b.claim || a.queued.place - b.queued.place);
+  const total = counts.reduce((sum, count) => sum + count, 0);
+  for (const anchor of [...rated].sort((a, b) => a.queued.place - b.queued.place)) {
+    const window = ratingWindow(at - anchor.queued.ticket.enteredAt);
+    const from = firstAbove(rated, anchor.claim - window, false);
+    const to = firstAbove(rated, anchor.claim + window, true);
+    if (to - from < total) {
+      continue;
+    }
+    const group = pools.flatMap((_, i) =>
+      rated
+        .slice(from, to)
         .filter(
-          (queued) =>
-            queued === anchor ||
-            (queued.place > anchor.place &&
-              queued.ticket.bots === 0 &&
-              inWindow([anchor, queued], at)),
+          ({ queued, pool }) =>
+            pool === i && (queued === anchor.queued || queued.place > anchor.queued.place),
         )
+        .map(({ queued }) => queued)
+        .sort((a, b) => a.place - b.place)
         .slice(0, counts[i]),
     );
     if (group.length === front.length && inWindow(group, at)) {
@@ -192,6 +206,28 @@ function pick(
     }
   }
   return undefined;
+}
+
+/**
+ * The index of the first of `sorted` whose claim is over `bound`, or at
+ * least `bound` when `!strict`; `sorted.length` when none is.
+ */
+function firstAbove(
+  sorted: readonly { readonly claim: number }[],
+  bound: number,
+  strict: boolean,
+): number {
+  let [low, high] = [0, sorted.length];
+  while (low < high) {
+    const mid = (low + high) >>> 1;
+    const claim = sorted[mid]?.claim ?? Number.POSITIVE_INFINITY;
+    if (claim > bound || (!strict && claim === bound)) {
+      high = mid;
+    } else {
+      low = mid + 1;
+    }
+  }
+  return low;
 }
 
 /** Which of two tickets queued first; a total order, so input order never matters. */
