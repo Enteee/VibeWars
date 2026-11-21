@@ -83,13 +83,13 @@ class Ledger {
       map: "isle",
       seed: this.seq,
       startedAt: day * RATING.secondsPerDay + (this.seq % 80_000),
-      leaderboardAsOf: 0,
       teams: teams.map((team) =>
         team.map((pubkey) => ({
           pubkey,
           characterId: `char-${pubkey.slice(0, 6)}`,
           name: `Name ${pubkey.slice(0, 6)}`,
           claimedRating: 0,
+          leaderboardAsOf: 0,
           prev: play.prev?.[pubkey] ?? this.last.get(pubkey) ?? ZERO_HASH,
         })),
       ),
@@ -482,6 +482,7 @@ describe("rate", () => {
       characterId: "puppet",
       name: "Puppet",
       claimedRating: 0,
+      leaderboardAsOf: 0,
       prev: ZERO_HASH,
     });
     const start = { ...final.start, teams: [[seat(x)], [seat(sock)]] };

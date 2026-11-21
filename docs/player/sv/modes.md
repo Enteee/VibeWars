@@ -480,3 +480,9 @@ Ovanför chipsen listar remsan **Hjältarnas sal** de senaste 20 innehaven, nyas
 ## Rankat
 
 En match från kön utan botar är rankad. Köskärmen och lagets lobby säger det innan du ställer dig i kö; en enda bot håller matchen orankad. När en rankad match hittas signerar varje spelare dess start, och skärmen visar **Bekräftar rankad match…** i upp till 15 sekunder. Om någon inte bekräftar avbryts matchen och alla är tillbaka i kön. I slutet signerar varje spelare resultatet, och matchens kvitto publiceras på Nostr-reläerna med varje spelares publika nyckel och figurnamn; en spelare utan figur står som starter. Din rating ändras inom en timme. Att lämna en rankad match räknas som förlust, och lämna-knappen säger det.
+
+Rankade köer parar ihop spelare med liknande rating och delar in dem i lag med liknande genomsnittlig rating. Sökningen börjar inom 100 poäng från din rating och vidgas med 10 poäng för varje sekund du väntar, upp till 600, så ingen väntar för evigt. Medan du väntar visar kön din rating.
+
+Dina första 10 ratade matcher är preliminära: kön säger **Preliminär (3/10 matcher)** och du har ingen placering än. Därefter visar huvudmenyn din placering. Ratingar förfaller: varje dag utan ratad match gör din mindre säker, och topplistan sorterar efter ett försiktigt värde, så om du slutar spela sjunker din placering inom några veckor.
+
+Knappen **Topplista** i toppfältet listar topp 100 efter placering, namn och rating, med din egen rad markerad. Den uppdateras varje timme.

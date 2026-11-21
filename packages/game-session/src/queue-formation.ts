@@ -22,6 +22,7 @@ import {
   teamSizeOf,
   type QueueMode,
   type QueueTicket,
+  type TicketClaim,
 } from "@vibewars/game-protocol";
 
 /** One match the queue formed. */
@@ -54,10 +55,11 @@ export interface FormedGroup {
    * the same one: what a ranked start carries, and each player checks.
    */
   readonly seed: number;
-  /** Every seat key's claimed rating, from the ticket that brings it (ADR-0055). */
-  readonly claims: Readonly<Record<string, number>>;
-  /** The newest `leaderboardAsOf` of its tickets: the one a ranked start states. */
-  readonly leaderboardAsOf: number;
+  /**
+   * Every seat key's claim, from the ticket that brings it (ADR-0055):
+   * each is checked against the leaderboard it was read from (#3575).
+   */
+  readonly claims: Readonly<Record<string, TicketClaim>>;
 }
 
 /** How a queue's round is played; every client answers the same for every round. */
@@ -114,6 +116,119 @@ export const THIRD_TEAM_WAIT_SECONDS = 30;
  * before it may meet one at a later round (#2687), from when it queued.
  */
 export const ASCENT_SKIP_WAIT_SECONDS = 60;
+
+/**
+ * The rating window of a ranked group (ADR-0055, #3575): how far a
+ * ticket's claim may stand from the claim of the group's first queued,
+ * after it has waited `waitedMs`. ±100 at once, 10 wider for every
+ * whole second waited, and no limit once that reaches ±600, so nobody
+ * waits forever.
+ */
+export function ratingWindow(waitedMs: number): number {
+  const window = 100 + 10 * Math.floor(Math.max(0, waitedMs) / 1000);
+  return window >= 600 ? Number.POSITIVE_INFINITY : window;
+}
+
+/** A ticket's claimed rating: its members' mean, so a party is paired by its average. */
+function claimOf(ticket: QueueTicket): number {
+  const claims = ticket.members.map((member) => ticket.claims[member]?.rating ?? 0);
+  return claims.reduce((sum, claim) => sum + claim, 0) / claims.length;
+}
+
+/**
+ * Whether `group` may form at `at`: always when it is not ranked, which
+ * forms as it did before ratings; else when every ticket's claim is in
+ * the `ratingWindow` of its first queued's.
+ */
+function inWindow(group: readonly Queued[], at: number): boolean {
+  const first = group.reduce<Queued | undefined>(
+    (min, queued) => (min === undefined || queued.place < min.place ? queued : min),
+    undefined,
+  );
+  if (first === undefined || !isRankedGroup(group.map((queued) => queued.ticket))) {
+    return true;
+  }
+  const window = ratingWindow(at - first.ticket.enteredAt);
+  const claim = claimOf(first.ticket);
+  return group.every((queued) => Math.abs(claimOf(queued.ticket) - claim) <= window);
+}
+
+/**
+ * The group `counts[i]` tickets from each of `pools` make at `at`:
+ * the front of each when that is `inWindow`; else, when the front is
+ * ranked, the earliest queued bot-free ticket whose window holds enough
+ * later bot-free ones, front first. `undefined` when none does.
+ */
+function pick(
+  pools: readonly (readonly Queued[])[],
+  counts: readonly number[],
+  at: number,
+): Queued[] | undefined {
+  if (pools.some((pool, i) => pool.length < (counts[i] ?? 0))) {
+    return undefined;
+  }
+  const front = pools.flatMap((pool, i) => pool.slice(0, counts[i]));
+  if (inWindow(front, at)) {
+    return front;
+  }
+  // Bot-free tickets by claim, so each anchor's window is two binary
+  // searches, not a pass over the queue: formation runs on every queued
+  // client every queue tick, and a flood of spread claims must not
+  // freeze it (#3575).
+  const rated = pools
+    .flatMap((pool, i) =>
+      pool
+        .filter((queued) => queued.ticket.bots === 0)
+        .map((queued) => ({ queued, pool: i, claim: claimOf(queued.ticket) })),
+    )
+    .sort((a, b) => a.claim - b.claim || a.queued.place - b.queued.place);
+  const total = counts.reduce((sum, count) => sum + count, 0);
+  for (const anchor of [...rated].sort((a, b) => a.queued.place - b.queued.place)) {
+    const window = ratingWindow(at - anchor.queued.ticket.enteredAt);
+    const from = firstAbove(rated, anchor.claim - window, false);
+    const to = firstAbove(rated, anchor.claim + window, true);
+    if (to - from < total) {
+      continue;
+    }
+    const group = pools.flatMap((_, i) =>
+      rated
+        .slice(from, to)
+        .filter(
+          ({ queued, pool }) =>
+            pool === i && (queued === anchor.queued || queued.place > anchor.queued.place),
+        )
+        .map(({ queued }) => queued)
+        .sort((a, b) => a.place - b.place)
+        .slice(0, counts[i]),
+    );
+    if (group.length === front.length && inWindow(group, at)) {
+      return group;
+    }
+  }
+  return undefined;
+}
+
+/**
+ * The index of the first of `sorted` whose claim is over `bound`, or at
+ * least `bound` when `!strict`; `sorted.length` when none is.
+ */
+function firstAbove(
+  sorted: readonly { readonly claim: number }[],
+  bound: number,
+  strict: boolean,
+): number {
+  let [low, high] = [0, sorted.length];
+  while (low < high) {
+    const mid = (low + high) >>> 1;
+    const claim = sorted[mid]?.claim ?? Number.POSITIVE_INFINITY;
+    if (claim > bound || (!strict && claim === bound)) {
+      high = mid;
+    } else {
+      low = mid + 1;
+    }
+  }
+  return low;
+}
 
 /** Which of two tickets queued first; a total order, so input order never matters. */
 function queueOrder(a: QueueTicket, b: QueueTicket): number {
@@ -229,7 +344,9 @@ function isSide(ticket: QueueTicket, mode: QueueMode): boolean {
  * the next. A party is never split, and one that cannot be matched yet
  * keeps its place. In a team mode there are no solos: the `teamCount`
  * earliest tickets form; of three, two left waiting form after
- * `THIRD_TEAM_WAIT_SECONDS` (#2683).
+ * `THIRD_TEAM_WAIT_SECONDS` (#2683). A ranked group forms only
+ * `inWindow` (#3575): its tickets are `pick`ed, and as windows widen
+ * with time, the queue is tried again at `now`.
  */
 function takeGroups(
   queue: readonly QueueTicket[],
@@ -252,8 +369,8 @@ function takeGroups(
   // two have.
   const settlePairs = (at: number): void => {
     for (;;) {
-      const [pair] =
-        teamCount === 3 && parties.length >= 2 ? reachable(parties.slice(0, 2), [parties]) : [];
+      const front = teamCount === 3 ? pick([parties], [2], at) : undefined;
+      const [pair] = front === undefined ? [] : fitting(reachable(front, [parties]), at);
       const queuedLast = Math.max(...(pair ?? []).map((queued) => queued.ticket.enteredAt));
       if (pair === undefined || at - queuedLast < THIRD_TEAM_WAIT_SECONDS * 1000) {
         return;
@@ -261,24 +378,18 @@ function takeGroups(
       take(pair);
     }
   };
-  queue.forEach((ticket, place) => {
-    // A pair that had stopped waiting before this one queued already
-    // formed as two (#2683): a late third does not take it back.
-    settlePairs(ticket.enteredAt);
-    // At a team size of 1, every Random Arena ticket is a solo.
-    (isSide(ticket, mode) ? parties : solos).push({ ticket, place });
-    const candidates: Queued[][] = [];
-    if (parties.length >= teamCount) {
-      candidates.push(...reachable(parties.slice(0, teamCount), [parties]));
-    }
-    if (parties.length >= 1 && solos.length >= teamSize) {
-      candidates.push(
-        ...reachable([...parties.slice(0, 1), ...solos.slice(0, teamSize)], [parties, solos]),
-      );
-    }
-    if (solos.length >= 2 * teamSize) {
-      candidates.push(...reachable(solos.slice(0, 2 * teamSize), [solos]));
-    }
+  // The one group, of those that can form at `at`, that takes the
+  // earliest queued; `false` when none can.
+  const formOne = (at: number): boolean => {
+    const fronts = [
+      pick([parties], [teamCount], at),
+      pick([parties, solos], [1, teamSize], at),
+      pick([solos], [2 * teamSize], at),
+    ];
+    const pools = [[parties], [parties, solos], [solos]];
+    const candidates = fronts.flatMap((front, i) =>
+      front === undefined ? [] : fitting(reachable(front, pools[i] ?? []), at),
+    );
     const best = candidates
       .map((candidate) => [...candidate].sort((a, b) => a.place - b.place))
       .reduce<Queued[] | undefined>(
@@ -289,9 +400,28 @@ function takeGroups(
     if (best !== undefined) {
       take(best);
     }
+    return best !== undefined;
+  };
+  queue.forEach((ticket, place) => {
+    // A pair that had stopped waiting before this one queued already
+    // formed as two (#2683): a late third does not take it back.
+    settlePairs(ticket.enteredAt);
+    // At a team size of 1, every Random Arena ticket is a solo.
+    (isSide(ticket, mode) ? parties : solos).push({ ticket, place });
+    while (formOne(ticket.enteredAt)) {
+      // Ranked windows that widened while nobody queued can fill more than one.
+    }
   });
   settlePairs(now);
+  while (formOne(now)) {
+    // As above: a window wide enough by now forms its group.
+  }
   return groups;
+}
+
+/** Those of `candidates` `inWindow` at `at`: `reachable` may have swapped a ticket in. */
+function fitting(candidates: readonly Queued[][], at: number): Queued[][] {
+  return candidates.filter((candidate) => inWindow(candidate, at));
 }
 
 /**
@@ -464,6 +594,8 @@ async function hostOf(groupId: string, group: readonly QueueTicket[]): Promise<s
  * Split `group` into its sides of `teamSize`, shuffled by `groupId`: each
  * party's member keys are a side of their own, the solo players fill the
  * rest. Two sides, or in a team mode one a ticket: three of three (#2683).
+ * Two ranked sides of solos are a snake draft on claim (#3575), highest
+ * first, so their averages land close; equal claims keep the drawn order.
  */
 function sides(group: readonly QueueTicket[], mode: QueueMode, groupId: string): string[][] {
   const rng = createRng(seedFromString(groupId));
@@ -480,6 +612,15 @@ function sides(group: readonly QueueTicket[], mode: QueueMode, groupId: string):
     .sort((a, b) => a.key - b.key || compare(a.ticketId, b.ticketId))
     .map(({ ticketId }) => ticketId);
   const filled = parties.map((members) => [...members]);
+  if (filled.length === 0 && isRankedGroup(group)) {
+    const claims = new Map(group.map((ticket) => [ticket.ticketId, claimOf(ticket)]));
+    const drafted = [...solos].sort((a, b) => (claims.get(b) ?? 0) - (claims.get(a) ?? 0));
+    // A B B A A B …: each pick goes to the side that picked second last time.
+    filled.push(
+      drafted.filter((_, i) => i % 2 === Math.floor(i / 2) % 2),
+      drafted.filter((_, i) => i % 2 !== Math.floor(i / 2) % 2),
+    );
+  }
   while (filled.length < 2) {
     filled.push(solos.splice(0, teamSizeOf(mode)));
   }
@@ -537,7 +678,6 @@ export async function formGroups(input: FormGroupsInput): Promise<FormedGroup[]>
       ranked: isRankedGroup(group),
       seed: seedFromString(`${groupId}:seed`),
       claims: Object.fromEntries(group.flatMap((ticket) => Object.entries(ticket.claims))),
-      leaderboardAsOf: Math.max(...group.map((ticket) => ticket.leaderboardAsOf)),
     });
   }
   return groups;

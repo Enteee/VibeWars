@@ -13,12 +13,13 @@ import {
   teamSizeOf,
   lobbyModeOfQueue,
   type QueueTicket,
+  type TicketClaim,
   UNLISTED_CLAIM,
 } from "./queue.js";
 
 /** Every key of `members` claiming an unlisted rating (ADR-0055). */
-const claimsOf = (members: readonly string[]): Record<string, number> =>
-  Object.fromEntries(members.map((member) => [member, UNLISTED_CLAIM]));
+const claimsOf = (members: readonly string[]): Record<string, TicketClaim> =>
+  Object.fromEntries(members.map((member) => [member, { rating: UNLISTED_CLAIM, asOf: 0 }]));
 
 const TICKET: QueueTicket = {
   ticketId: "a".repeat(64),
@@ -33,7 +34,6 @@ const TICKET: QueueTicket = {
   hardNat: false,
   holdsHallSince: null,
   claims: claimsOf(["a".repeat(64)]),
-  leaderboardAsOf: 0,
 };
 
 /** A whole 4v4 team, sorted, led by `TICKET`'s id. */
@@ -108,8 +108,7 @@ describe("parseQueueTicket (#869, #882, #1078)", () => {
   it("keeps each member's claim and the leaderboard it was read from (ADR-0055)", () => {
     const claimed = {
       ...TEAM,
-      claims: { ...claimsOf(PARTY), [PARTY[2]]: -40 },
-      leaderboardAsOf: 9,
+      claims: { ...claimsOf(PARTY), [PARTY[2]]: { rating: -40, asOf: 9 } },
     };
     expect(parseQueueTicket(claimed)).toEqual(claimed);
   });
@@ -118,12 +117,19 @@ describe("parseQueueTicket (#869, #882, #1078)", () => {
     ["a member with no claim", { ...TEAM, claims: claimsOf(PARTY.slice(0, 3)) }],
     ["a claim of a key not a member", { ...TICKET, claims: claimsOf(["b".repeat(64)]) }],
     ["a claim too many", { ...TICKET, claims: claimsOf(["a".repeat(64), "b".repeat(64)]) }],
-    ["a fractional claim", { ...TICKET, claims: { ["a".repeat(64)]: 800.5 } }],
-    ["a claim as text", { ...TICKET, claims: { ["a".repeat(64)]: "800" } }],
+    ["a fractional claim", { ...TICKET, claims: { ["a".repeat(64)]: { rating: 800.5, asOf: 0 } } }],
+    ["a claim as text", { ...TICKET, claims: { ["a".repeat(64)]: { rating: "800", asOf: 0 } } }],
+    ["a bare number for a claim", { ...TICKET, claims: { ["a".repeat(64)]: 800 } }],
+    ["a claim with no asOf", { ...TICKET, claims: { ["a".repeat(64)]: { rating: 800 } } }],
+    [
+      "a claim with a field too many",
+      { ...TICKET, claims: { ["a".repeat(64)]: { rating: 800, asOf: 0, x: 1 } } },
+    ],
     ["claims that are a list", { ...TICKET, claims: [800] }],
     ["no claims", { ...TICKET, claims: null }],
-    ["a negative leaderboardAsOf", { ...TICKET, leaderboardAsOf: -1 }],
-    ["a fractional leaderboardAsOf", { ...TICKET, leaderboardAsOf: 0.5 }],
+    ["a negative asOf", { ...TICKET, claims: { ["a".repeat(64)]: { rating: 800, asOf: -1 } } }],
+    ["a fractional asOf", { ...TICKET, claims: { ["a".repeat(64)]: { rating: 800, asOf: 0.5 } } }],
+    ["a ticket-wide leaderboardAsOf", { ...TICKET, leaderboardAsOf: 0 }],
   ])("refuses %s (ADR-0055)", (_, raw) => {
     expect(parseQueueTicket(raw)).toBeUndefined();
   });

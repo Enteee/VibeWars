@@ -579,3 +579,9 @@ meccsek házigazdája jelentett, és semmi sem ellenőrzi.
 ## Rangsorolt
 
 A sorból jövő, botok nélküli meccs rangsorolt. A sorképernyő és a csapat-lobby ezt jelzi, mielőtt sorba állsz; egyetlen bot rangsorolatlanul hagyja a meccset. Ha rangsorolt meccs akad, minden játékos aláírja a kezdetét, és a képernyő legfeljebb 15 másodpercig ezt mutatja: **Rangsorolt meccs megerősítése…**. Ha valaki nem erősít meg, a meccs elmarad, és mindenki visszakerül a sorba. A végén minden játékos aláírja az eredményt, és a meccs nyugtája megjelenik a Nostr reléken minden játékos nyilvános kulcsával és karakternevével; a karakter nélküli játékos starterként szerepel. A pontszámod egy órán belül változik. Rangsorolt meccs elhagyása vereségnek számít, és a kilépés gomb ezt jelzi.
+
+A rangsorolt sorok hasonló pontszámú játékosokat párosítanak, és hasonló átlagpontszámú csapatokra osztják őket. A keresés a pontszámod 100 pontos környezetében kezd, és minden várakozással töltött másodperccel 10 ponttal bővül, legfeljebb 600-ig, így senki sem vár örökké. Várakozás közben a sor mutatja a pontszámodat.
+
+Az első 10 pontozott meccsed ideiglenes: a sor azt írja, **Ideiglenes (3/10 meccs)**, és még nincs helyezésed. Ezután a főmenü mutatja a helyezésedet. A pontszám kopik: minden nap pontozott meccs nélkül bizonytalanabbá teszi, és a ranglista egy óvatos érték szerint rendez, így ha abbahagyod a játékot, a helyezésed heteken belül süllyed.
+
+A felső sáv **Ranglista** gombja a legjobb 100-at mutatja helyezés, név és pontszám szerint, a saját sorodat kiemelve. Óránként frissül.

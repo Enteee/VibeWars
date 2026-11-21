@@ -49,7 +49,14 @@ const FIELDS = {
 
 /** A ranked 1v1 of `pubkey` (ADR-0055). */
 function rankedStart(pubkey: string): RankedStart {
-  const seat = { pubkey, characterId: "char-1", name: "Seat", claimedRating: 800, prev: ZERO_HASH };
+  const seat = {
+    pubkey,
+    characterId: "char-1",
+    name: "Seat",
+    claimedRating: 800,
+    leaderboardAsOf: 1_794_999_000,
+    prev: ZERO_HASH,
+  };
   return {
     matchId: "group-1",
     buildHash: "build-abc",
@@ -57,7 +64,6 @@ function rankedStart(pubkey: string): RankedStart {
     map: "isle-of-the-nameless",
     seed: 7,
     startedAt: 1_795_000_000,
-    leaderboardAsOf: 1_794_999_000,
     teams: [[seat], [{ ...seat, pubkey: "ab".repeat(32) }]],
   };
 }

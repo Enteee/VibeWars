@@ -11,7 +11,14 @@
  *   every seat is at `MAX_RECEIPTS_PER_KEY_DAY`, or that started over
  *   `MAX_RECEIPT_AGE_DAYS` before the day, is not taken in (#3738),
  *   and only shards whose bytes changed are written (#3730);
- * - `leaderboard.json`: `{asOf, engine, count, entries}`;
+ * - `leaderboard.json`: `{asOf, engine, count, entries}`. When the
+ *   entries are those of the previous run's, it is that run's bytes;
+ *   otherwise its `asOf` moves past the previous one, so one `asOf`
+ *   never names two boards;
+ * - `boards/<asOf>.json`: the same bytes under its own `asOf`, so a
+ *   ranked claim is checked against the very board it was read from
+ *   (#3575). Boards more than `BOARD_KEPT_SECONDS` older than this
+ *   run's are deleted. The run fails rather than rewrite one;
  * - `log.txt`: counts by reject reason, the relays reached, and the
  *   sha256 of `leaderboard.json`.
  *
@@ -61,6 +68,14 @@ const PAGE_LIMIT = 500;
 /** The archive's shards, one per UTC month, under the archive directory. */
 const SHARDS_DIR = "receipts";
 const SHARD_NAME = /^\d{4}-\d{2}\.ndjson$/;
+/** Past boards, each under its `asOf`, under the archive directory. */
+const BOARDS_DIR = "boards";
+const BOARD_NAME = /^(\d+)\.json$/;
+/**
+ * How much older than the newest a past board is kept: a ranked claim
+ * from an older one is refused, as no board is found for it (#3575).
+ */
+export const BOARD_KEPT_SECONDS = 3 * 60 * 60;
 /** Over this a shard fails the run: GitHub refuses a file over 100 MB. */
 const MAX_SHARD_BYTES = 90 * 1024 * 1024;
 /**
@@ -205,11 +220,12 @@ function rejection(receipt, crypto) {
 
 /**
  * The leaderboard and the archive `archived` and the relays' `events`
- * make, as of `asOfDay`.
- * @param {{ archived: string, events: unknown[], relaysReached: readonly string[], relays: readonly string[], asOfDay: number }} input
+ * make, as of `asOfDay`, after the `previous` run's `leaderboard.json`
+ * (`undefined` on the first run).
+ * @param {{ archived: string, events: unknown[], relaysReached: readonly string[], relays: readonly string[], asOfDay: number, previous?: string }} input
  * @returns {{ shards: Record<string, string>, leaderboard: string, log: string }}
  */
-export function build({ archived, events, relaysReached, relays, asOfDay }) {
+export function build({ archived, events, relaysReached, relays, asOfDay, previous }) {
   const { crypto, trust } = receiptCrypto();
   /** @type {Map<string, RankedReceipt>} */
   const kept = new Map();
@@ -318,13 +334,25 @@ export function build({ archived, events, relaysReached, relays, asOfDay }) {
     (pubkey) => ({ pubkey, rank: rankOf.get(pubkey) ?? null, ...ratings.get(pubkey) }),
   );
   const newest = receipts.findLast(({ receipt }) => receipt.start.startedAt < endOf(asOfDay));
-  const leaderboard = `${JSON.stringify({
-    // The as-of day's midnight, or the newest match if later (architect, #3574).
-    asOf: Math.max(asOfDay * RATING.secondsPerDay, newest?.receipt.start.startedAt ?? 0),
-    engine: process.version,
-    count: entries.length,
-    entries,
-  })}\n`;
+  /** @type {unknown} */
+  const parsed = previous === undefined ? undefined : JSON.parse(previous);
+  const before = /** @type {{ asOf: number, entries: unknown[] } | undefined} */ (parsed);
+  const leaderboard =
+    previous !== undefined && JSON.stringify(before?.entries) === JSON.stringify(entries)
+      ? previous
+      : `${JSON.stringify({
+          // The as-of day's midnight, or the newest match if later (architect,
+          // #3574), and past the previous board's: a late receipt with an older
+          // startedAt changes the entries, never what an asOf names (#3575).
+          asOf: Math.max(
+            asOfDay * RATING.secondsPerDay,
+            newest?.receipt.start.startedAt ?? 0,
+            (before?.asOf ?? -1) + 1,
+          ),
+          engine: process.version,
+          count: entries.length,
+          entries,
+        })}\n`;
 
   const log = [
     `relays reached: ${String(relaysReached.length)} of ${String(relays.length)}`,
@@ -500,6 +528,8 @@ export async function run({
       undefined,
     );
   const since = newest === undefined ? undefined : newest - SINCE_SLACK_SECONDS;
+  const boardFile = path.join(dir, "leaderboard.json");
+  const previous = fs.existsSync(boardFile) ? fs.readFileSync(boardFile, "utf8") : undefined;
   const answers = await Promise.all(relays.map((relay) => fetch(relay, since)));
   const out = build({
     archived,
@@ -507,6 +537,7 @@ export async function run({
     relaysReached: relays.filter((_, i) => answers[i] !== undefined),
     relays,
     asOfDay,
+    previous,
   });
   for (const [month, bytes] of Object.entries(out.shards)) {
     const size = Buffer.byteLength(bytes);
@@ -516,6 +547,16 @@ export async function run({
       );
     }
   }
+  const boardsDir = path.join(dir, BOARDS_DIR);
+  /** @type {unknown} */
+  const written = JSON.parse(out.leaderboard);
+  const { asOf } = /** @type {{ asOf: number }} */ (written);
+  const board = path.join(boardsDir, `${String(asOf)}.json`);
+  if (fs.existsSync(board) && fs.readFileSync(board, "utf8") !== out.leaderboard) {
+    throw new Error(
+      `${BOARDS_DIR}/${String(asOf)}.json is published with other bytes: a published board never changes`,
+    );
+  }
   fs.mkdirSync(shardsDir, { recursive: true });
   for (const [month, bytes] of Object.entries(out.shards)) {
     const file = path.join(shardsDir, `${month}.ndjson`);
@@ -523,7 +564,15 @@ export async function run({
       fs.writeFileSync(file, bytes);
     }
   }
-  fs.writeFileSync(path.join(dir, "leaderboard.json"), out.leaderboard);
+  fs.writeFileSync(boardFile, out.leaderboard);
+  fs.mkdirSync(boardsDir, { recursive: true });
+  fs.writeFileSync(board, out.leaderboard);
+  for (const name of fs.readdirSync(boardsDir)) {
+    const at = BOARD_NAME.exec(name)?.[1];
+    if (at !== undefined && Number(at) < asOf - BOARD_KEPT_SECONDS) {
+      fs.rmSync(path.join(boardsDir, name));
+    }
+  }
   fs.writeFileSync(path.join(dir, "log.txt"), out.log);
   return out;
 }

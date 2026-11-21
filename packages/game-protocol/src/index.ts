@@ -312,10 +312,11 @@ export {
   isTeamQueueMode,
   inPartyOrder,
   parseQueueTicket,
+  parseTicketClaim,
   soloQueueTicket,
   UNLISTED_CLAIM,
   teamQueueModeOf,
   lobbyModeOfQueue,
   teamSizeOf,
 } from "./queue.js";
-export type { QueueMode, QueueTicket, TeamArenaSize, TicketParty } from "./queue.js";
+export type { QueueMode, QueueTicket, TeamArenaSize, TicketClaim, TicketParty } from "./queue.js";

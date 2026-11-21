@@ -186,6 +186,7 @@ export async function openLobby(
         timeoutMs: 1000,
         relayPub,
         playerKey,
+        claim: () => ({ rating: 800, asOf: 0 }),
         ...(options.matchmaking === undefined ? {} : { roomId: options.matchmaking.roomId }),
       }),
       transport,

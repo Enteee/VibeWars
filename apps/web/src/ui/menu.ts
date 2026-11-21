@@ -227,6 +227,8 @@ export function renderRandomArena(
   connectionNotice?: string,
   /** In a queue (#2743): its character stays, and the spinner stands for Find a match (#2980). */
   queued = false,
+  /** This player's rank (#3575), shown while they have one. */
+  rank?: HTMLElement,
 ): void {
   // No way back from here, so Esc has nothing to do but cancel (#578).
   // Options is the top bar's ⚙ (#1272), Music its ♪ (#1453).
@@ -305,6 +307,9 @@ export function renderRandomArena(
   // Only alone (#1526): queueing closes the lobby, and a party does not queue yet.
   const alone = isAlone(railParty());
   body.appendChild(hint);
+  if (rank !== undefined) {
+    body.appendChild(rank);
+  }
   // Said before the first queue (ADR-0055): a match of strangers is ranked, and public.
   body.appendChild(h("p", "queue-ranked-note", t("queue.rankedNote")));
   const problem = randomArenaProblem(activeExists, alone);

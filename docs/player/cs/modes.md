@@ -157,3 +157,9 @@ Nad filtry ukazuje pruh **Síň hrdinů** posledních 20 sérií, od nejnovějš
 ## Hodnocené
 
 Zápas z fronty bez botů je hodnocený. Obrazovka fronty i týmová lobby to řeknou, než se zařadíš; jediný bot nechá zápas nehodnocený. Když se najde hodnocený zápas, každý hráč podepíše jeho začátek a obrazovka ukazuje **Potvrzování hodnoceného zápasu…** až 15 sekund. Když někdo nepotvrdí, zápas se zruší a všichni jsou zpět ve frontě. Na konci každý hráč podepíše výsledek a stvrzenka zápasu se zveřejní na Nostr relayích s veřejným klíčem a jménem postavy každého hráče; hráč bez postavy je uveden jako starter. Tvé hodnocení se změní do hodiny. Odchod z hodnoceného zápasu se počítá jako prohra a tlačítko odchodu to říká.
+
+Hodnocené fronty spojují hráče s podobným hodnocením a dělí je do týmů s podobným průměrným hodnocením. Hledání začíná v rozmezí 100 bodů od tvého hodnocení a za každou sekundu čekání se rozšíří o 10 bodů, až na 600, takže nikdo nečeká věčně. Během čekání fronta ukazuje tvé hodnocení.
+
+Tvých prvních 10 hodnocených zápasů je předběžných: fronta píše **Předběžné (3/10 zápasů)** a zatím nemáš pořadí. Potom hlavní nabídka ukazuje tvé pořadí. Hodnocení chátrá: každý den bez hodnoceného zápasu ho činí méně jistým a žebříček řadí podle opatrné hodnoty, takže když přestaneš hrát, tvé pořadí během týdnů klesne.
+
+Tlačítko **Žebříček** v horní liště ukazuje nejlepších 100 podle pořadí, jména a hodnocení, s tvým řádkem zvýrazněným. Aktualizuje se každou hodinu.

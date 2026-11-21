@@ -6604,6 +6604,16 @@
     },
     "PeerPartyConsent": {
       "properties": [
+        {
+          "name": "claim",
+          "optional": false,
+          "type": {
+            "properties": [
+              { "name": "asOf", "optional": false, "type": "number" },
+              { "name": "rating", "optional": false, "type": "number" }
+            ]
+          }
+        },
         { "name": "consent", "optional": false, "type": "string" },
         { "name": "memberKey", "optional": false, "type": "string" }
       ]
@@ -7080,13 +7090,25 @@
         {
           "name": "claims",
           "optional": false,
-          "type": { "properties": [], "index": [{ "key": "string", "value": "number" }] }
+          "type": {
+            "properties": [],
+            "index": [
+              {
+                "key": "string",
+                "value": {
+                  "properties": [
+                    { "name": "asOf", "optional": false, "type": "number" },
+                    { "name": "rating", "optional": false, "type": "number" }
+                  ]
+                }
+              }
+            ]
+          }
         },
         { "name": "enteredAt", "optional": false, "type": "number" },
         { "name": "hardNat", "optional": false, "type": "boolean" },
         { "name": "heartbeatAt", "optional": false, "type": "number" },
         { "name": "holdsHallSince", "optional": false, "type": { "union": ["null", "number"] } },
-        { "name": "leaderboardAsOf", "optional": false, "type": "number" },
         { "name": "members", "optional": false, "type": { "array": "string" } },
         {
           "name": "mode",
@@ -7247,6 +7269,12 @@
             ]
           }
         }
+      ]
+    },
+    "TicketClaim": {
+      "properties": [
+        { "name": "asOf", "optional": false, "type": "number" },
+        { "name": "rating", "optional": false, "type": "number" }
       ]
     },
     "TicketParty": {
@@ -8631,6 +8659,18 @@
     },
     "WirePartyFormed": {
       "properties": [
+        {
+          "name": "claims",
+          "optional": false,
+          "type": {
+            "array": {
+              "properties": [
+                { "name": "asOf", "optional": false, "type": "number" },
+                { "name": "rating", "optional": false, "type": "number" }
+              ]
+            }
+          }
+        },
         { "name": "consents", "optional": false, "type": { "array": "string" } },
         { "name": "groupId", "optional": false, "type": "string" },
         { "name": "members", "optional": false, "type": { "array": "string" } }
@@ -8928,7 +8968,6 @@
                 "type": {
                   "properties": [
                     { "name": "buildHash", "optional": false, "type": "string" },
-                    { "name": "leaderboardAsOf", "optional": false, "type": "number" },
                     { "name": "map", "optional": false, "type": "string" },
                     { "name": "matchId", "optional": false, "type": "string" },
                     { "name": "mode", "optional": false, "type": "string" },
@@ -8943,6 +8982,7 @@
                             "properties": [
                               { "name": "characterId", "optional": false, "type": "string" },
                               { "name": "claimedRating", "optional": false, "type": "number" },
+                              { "name": "leaderboardAsOf", "optional": false, "type": "number" },
                               { "name": "name", "optional": false, "type": "string" },
                               { "name": "prev", "optional": false, "type": "string" },
                               { "name": "pubkey", "optional": false, "type": "string" }
@@ -9004,7 +9044,6 @@
           "type": {
             "properties": [
               { "name": "buildHash", "optional": false, "type": "string" },
-              { "name": "leaderboardAsOf", "optional": false, "type": "number" },
               { "name": "map", "optional": false, "type": "string" },
               { "name": "matchId", "optional": false, "type": "string" },
               { "name": "mode", "optional": false, "type": "string" },
@@ -9019,6 +9058,7 @@
                       "properties": [
                         { "name": "characterId", "optional": false, "type": "string" },
                         { "name": "claimedRating", "optional": false, "type": "number" },
+                        { "name": "leaderboardAsOf", "optional": false, "type": "number" },
                         { "name": "name", "optional": false, "type": "string" },
                         { "name": "prev", "optional": false, "type": "string" },
                         { "name": "pubkey", "optional": false, "type": "string" }

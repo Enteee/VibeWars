@@ -17,14 +17,20 @@ import {
   formGroups,
   groupOf,
   isRankedGroup,
+  ratingWindow,
   ticketsOf,
   type FormedGroup,
 } from "./queue-formation.js";
+
+// Real time, which no test here fakes: globals.d.ts does not declare it.
+declare const performance: { now(): number };
 
 /** Queue formation (#869, #854 C4): the same tickets make the same groups everywhere. */
 
 const NOW = 1_700_000_100_000;
 const MAPS = ["arena-a", "arena-b", "arena-c"];
+/** The claim of a key no leaderboard lists, read from no leaderboard. */
+const UNLISTED = { rating: UNLISTED_CLAIM, asOf: 0 };
 
 /** A ticket of `mode`'s round: Heroes' Ascent's first (#1996), none in other modes. */
 function roundOf(mode: QueueMode): number | null {
@@ -46,8 +52,7 @@ function ticket(n: number, fields: Partial<QueueTicket> = {}): QueueTicket {
     ascentRound: roundOf(fields.mode ?? "random-arena-4v4"),
     hardNat: false,
     holdsHallSince: null,
-    claims: { [ticketId]: UNLISTED_CLAIM },
-    leaderboardAsOf: 0,
+    claims: { [ticketId]: UNLISTED },
     ...fields,
   };
 }
@@ -66,7 +71,7 @@ function party(n: number, mode: QueueMode = "random-arena-4v4"): QueueTicket {
   );
   const members = [leader.ticketId, ...others];
   const consents = members.map(() => "e".repeat(128));
-  const claims = Object.fromEntries(members.map((member) => [member, UNLISTED_CLAIM]));
+  const claims = Object.fromEntries(members.map((member) => [member, UNLISTED]));
   return { ...leader, members, claims, party: { groupId: "f".repeat(64), consents } };
 }
 
@@ -350,7 +355,7 @@ describe("team modes (ADR-0042)", () => {
     return {
       ...whole,
       members,
-      claims: Object.fromEntries(members.map((member) => [member, UNLISTED_CLAIM])),
+      claims: Object.fromEntries(members.map((member) => [member, UNLISTED])),
       bots: teamSizeOf(mode) - humans,
       party:
         humans === 1
@@ -785,7 +790,7 @@ describe("ranked groups (ADR-0055, #3573)", () => {
     return {
       ...whole,
       members,
-      claims: Object.fromEntries(members.map((member) => [member, UNLISTED_CLAIM])),
+      claims: Object.fromEntries(members.map((member) => [member, UNLISTED])),
       bots: 2 - humans,
       party: humans === 1 ? null : whole.party,
     };
@@ -819,16 +824,124 @@ describe("ranked groups (ADR-0055, #3573)", () => {
     expect(other?.seed).not.toBe(group?.seed);
   });
 
-  it("carries every seat key's claim and the newest leaderboard its tickets read", async () => {
+  it("carries every seat key's claim, each with the leaderboard it was read from", async () => {
     const tickets = solos(1, 8).map((each, n) => ({
       ...each,
-      claims: { [each.ticketId]: 700 + n },
-      leaderboardAsOf: n * 10,
+      claims: { [each.ticketId]: { rating: 700 + n, asOf: n * 10 } },
     }));
     const [group] = await form(tickets);
     expect(group?.claims).toEqual(
       Object.fromEntries(tickets.flatMap((each) => Object.entries(each.claims))),
     );
-    expect(group?.leaderboardAsOf).toBe(70);
+  });
+});
+
+describe("rating pairing (ADR-0055, #3575)", () => {
+  const START = 1_700_000_000_000;
+
+  /** Solo `n` of `mode`, queued `n` seconds after `START`, claiming `claim`. */
+  function rated(n: number, claim: number, mode: QueueMode = "random-arena-1v1"): QueueTicket {
+    const solo = ticket(n, { mode });
+    return { ...solo, claims: { [solo.ticketId]: { rating: claim, asOf: 0 } } };
+  }
+
+  /** `mode`'s party `n`, every member claiming `claim`, `bots` of its seats bots. */
+  function ratedSide(n: number, claim: number, bots = 0): QueueTicket {
+    const whole = party(n, "team-arena-2v2");
+    const members = whole.members.slice(0, 2 - bots);
+    return {
+      ...whole,
+      members,
+      bots,
+      party: members.length === 1 ? null : whole.party,
+      claims: Object.fromEntries(members.map((member) => [member, { rating: claim, asOf: 0 }])),
+    };
+  }
+
+  /** The groups `tickets` form `seconds` after `START`, every ticket heard just now. */
+  function formAt(
+    tickets: readonly QueueTicket[],
+    seconds: number,
+    mode: QueueMode = "random-arena-1v1",
+  ): Promise<FormedGroup[]> {
+    const now = START + seconds * 1_000;
+    return formGroups({
+      tickets: tickets.map((each) => ({ ...each, heartbeatAt: now })),
+      now,
+      mode,
+      ignored: new Set(),
+      round: () => ({ mapPool: MAPS, teamCount: 2, skipping: false, slotted: false }),
+    });
+  }
+
+  it("opens the window at ±100 and widens it by 10 a second the first queued waits", async () => {
+    const pair = [rated(0, 1000), rated(1, 1250)];
+    expect(await formAt(pair, 1)).toEqual([]);
+    expect(await formAt(pair, 14)).toEqual([]);
+    expect((await formAt(pair, 15)).map(members)).toEqual([ids(pair)]);
+    expect(ratingWindow(0)).toBe(100);
+    expect(ratingWindow(14_999)).toBe(240);
+  });
+
+  it("matches two players 1200 apart once the first has waited 50 s, and not before", async () => {
+    const pair = [rated(0, 800), rated(1, 2000)];
+    expect(await formAt(pair, 49)).toEqual([]);
+    expect((await formAt(pair, 50)).map(members)).toEqual([ids(pair)]);
+  });
+
+  it("passes over a ticket out of range: the next in range plays, and it keeps waiting", async () => {
+    const [low, high, near] = [rated(0, 800), rated(1, 2000), rated(2, 850)];
+    const groups = await formAt([low, high, near], 3);
+    expect(groups.map(members)).toEqual([ids([low, near])]);
+  });
+
+  it("splits ranked solos by a snake draft on claim, so the two sides' averages land close", async () => {
+    const eight = [1000, 1100, 1200, 1300, 1400, 1500, 1600, 1700].map((claim, n) =>
+      rated(n, claim, "random-arena-4v4"),
+    );
+    const [group] = await formAt(eight, 60, "random-arena-4v4");
+    const claim = (key: string): number => group?.claims[key]?.rating ?? 0;
+    const sums = (group?.teams ?? []).map((team) => team.reduce((sum, key) => sum + claim(key), 0));
+    expect(sums).toEqual([5400, 5400]);
+  });
+
+  it("pairs whole teams by their mean claim", async () => {
+    const sides = [ratedSide(0, 1000), ratedSide(1, 2000), ratedSide(2, 1050)];
+    const groups = await formAt(sides, 3, "team-arena-2v2");
+    expect(groups.map(members)).toEqual([ids(sides.filter((_, i) => i !== 1))]);
+  });
+
+  it("forms a group with a bot ticket as before, however far apart the claims", async () => {
+    const sides = [ratedSide(0, 800), ratedSide(1, 2400, 1)];
+    expect((await formAt(sides, 2, "team-arena-2v2")).map(members)).toEqual([ids(sides)]);
+  });
+
+  it("passes over 400 tickets none of which is in another's window within a queue tick", async () => {
+    // Claims 1000 apart, all queued within the last second: nobody pairs.
+    const spread = Array.from({ length: 400 }, (_, n) => ({
+      ...rated(n, 1000 * (n + 1), "random-arena-4v4"),
+      enteredAt: START + n,
+    }));
+    expect(await formAt(spread, 1, "random-arena-4v4")).toEqual([]);
+    // Timed warm, as a client forms every tick: the first pass pays the JIT.
+    const begun = performance.now();
+    await formAt(spread, 1, "random-arena-4v4");
+    // Every queued client forms every 250 ms (session.ts' QUEUE_TICK_SECONDS).
+    expect(performance.now() - begun).toBeLessThan(250);
+  });
+
+  it("forms the same groups whatever order the tickets come in", async () => {
+    const queue = [800, 2000, 850, 1990, 1400, 1300].map((claim, n) => rated(n, claim));
+    const groups = await formAt(queue, 8);
+    expect(groups.map(members)).toEqual(
+      [
+        [0, 2],
+        [1, 3],
+        [4, 5],
+      ].map((pair) => ids(pair.map((n) => queue[n] ?? ticket(-1)))),
+    );
+    for (const step of [5, 7]) {
+      expect(await formAt(reordered(queue, step), 8)).toEqual(groups);
+    }
   });
 });

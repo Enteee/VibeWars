@@ -6,6 +6,7 @@ import {
   PROTOCOL_VERSION,
   isLobbyCode,
   isTeamQueueMode,
+  teamSizeOf,
   type JsonValue,
   type LobbyRefusal,
   type LobbyTeamSize,
@@ -56,6 +57,7 @@ import { keySignet } from "../identity/key-signet.js";
 import { TRACKS } from "../music/tracks/index.js";
 import { frameTiming } from "../render/frame-timing.js";
 import { t, type MessageKey } from "../i18n/index.js";
+import { leaderboard } from "./leaderboard.js";
 import { linkLobbyRoom, needsRoom } from "./lobby-room.js";
 import {
   arenaIds,
@@ -427,6 +429,7 @@ export async function hostLobby(
       // The host reaches itself without a relay.
       relayPub: null,
       playerKey,
+      claim: () => leaderboard.claim(playerKey.pubkey),
       ...guild,
       timeoutMs: JOIN_TIMEOUT_MS,
       // The host is one of its own group: it proves its ticket like the rest.
@@ -488,6 +491,7 @@ export async function joinLobbyByCode(
       name,
       relayPub,
       playerKey,
+      claim: () => leaderboard.claim(playerKey.pubkey),
       ...guild,
       timeoutMs: JOIN_TIMEOUT_MS,
       ...(queued === undefined ? { roomId: lobbyRoom.roomId } : { queued }),
@@ -544,6 +548,13 @@ export const PARTY_ANSWER_MS = PARTY_CONSENT_MS + STAY_TOGETHER_GRACE_SECONDS * 
  */
 const QUEUE_TICK_SECONDS = 0.25;
 
+/** How long entering a bot-free queue waits for the leaderboard (#3575). */
+const LEADERBOARD_QUEUE_WAIT_MS = 3_000;
+
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 /** What the shell hears from a Random Arena queue. */
 export interface RandomArenaEvents {
   /** The queue moved on: every state, `searching` again after a group fell through. */
@@ -590,6 +601,7 @@ export function rankedPlayOf(
     prev: loadRankedPrev(storage, playerKey.pubkey),
     buildHash: __VIBEWARS_BUILD__,
     crypto: receiptCrypto,
+    leaderboard,
     onStartSigned: events.onRankedConfirming,
     onCancel: events.onRankedCancelled,
     onResultSigned: (partial, round) => {
@@ -849,8 +861,17 @@ export function enterQueue(
     events.onLobby(lobby, hosted);
   };
 
+  /** A side with no empty seat brings no bot, so its match is ranked (ADR-0055). */
+  const botFree = !isTeamQueueMode(mode) || (party?.party.members.length ?? 1) === teamSizeOf(mode);
+
   const start = async (): Promise<void> => {
-    const hardNat = await natHint();
+    // A bot-free ticket claims from a board as fresh as can be (#3575),
+    // so the other seats' copies mostly agree; a slow fetch is not waited
+    // for past `LEADERBOARD_QUEUE_WAIT_MS`, as every heartbeat reads it again.
+    const [hardNat] = await Promise.all([
+      natHint(),
+      botFree ? Promise.race([leaderboard.refetch(), delay(LEADERBOARD_QUEUE_WAIT_MS)]) : undefined,
+    ]);
     if (done) {
       return;
     }
@@ -860,6 +881,7 @@ export function enterQueue(
       ascentRound,
       holdsHallSince,
       ...(party === undefined ? {} : { party: party.party }),
+      claim: () => leaderboard.claim(playerKey.pubkey),
       now: () => Date.now(),
       newTicketKey: () => queue.newTicketKey(),
       round: (round) =>
