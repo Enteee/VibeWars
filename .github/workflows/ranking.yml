@@ -1,6 +1,6 @@
 name: Ranking
 
-# Refreshes the site's ranking/ (receipts.ndjson, leaderboard.json,
+# Refreshes the site's ranking/ (receipts/<YYYY-MM>.ndjson, leaderboard.json,
 # log.txt) on gh-pages every hour from the receipts on the relays (#3574,
 # ADR-0055). Same two-job split as pages.yml: `build` runs repository code
 # with a read-only token and the network, `deploy` holds contents: write
@@ -44,7 +44,7 @@ jobs:
             git fetch -q --depth 1 "$remote" gh-pages
             if [ -n "$(git ls-tree --name-only FETCH_HEAD ranking)" ]; then
               git archive FETCH_HEAD ranking | tar -x --strip-components=1 -C ranking-out
-              test -e ranking-out/receipts.ndjson
+              test -e ranking-out/leaderboard.json
             else
               echo "gh-pages holds no ranking/ yet."
             fi
@@ -66,7 +66,7 @@ jobs:
         with:
           name: ranking
           path: |
-            ranking-out/receipts.ndjson
+            ranking-out/receipts/
             ranking-out/leaderboard.json
             ranking-out/log.txt
           if-no-files-found: error
@@ -118,8 +118,9 @@ jobs:
             git checkout -q --orphan gh-pages
           fi
 
-          mkdir -p ranking
-          cp "$out/receipts.ndjson" "$out/leaderboard.json" "$out/log.txt" ranking/
+          rm -rf ranking
+          mkdir ranking
+          cp -r "$out/." ranking/
           touch .nojekyll
 
           git add -A
