@@ -380,6 +380,16 @@ What it does not defend against:
 - **A large, well-connected sybil ring.** Trust rises only with distinct,
   connected opponents, so enough keys that play each other widely look
   like a real community. Clique detection is a later card.
+- **The launch gate can be captured.** Before honest players hold 20
+  established keys, one person can make 20 keys and have them play each
+  other to 10 rated matches each: about 100 1v1 receipts, inside the
+  per-key cap, in a day, and free until the stamp (#3746). The next run
+  turns `gated` for good, and from then on a receipt between two
+  newcomers is refused as `no-established-seat`: a newcomer is rated only
+  by playing one of the ring's keys, with its owner's consent. Recovery
+  is a code change, since dropping `leaderboard.json` re-gates from the
+  archive on the next run. Accepted with Q143 A: the gate is a speed
+  bump, and the stamp is what makes a ring cost something.
 - **Who played whom is public**, by key and character name, for good.
 - **Flooding the relays delays the leaderboard.** The job pages back
   through each relay with `until`; a full page of spam in one second is

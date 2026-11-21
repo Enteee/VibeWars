@@ -9,11 +9,12 @@
  *   per line, sorted, in the shard of its `startedAt`'s UTC month, since
  *   relays forget. A receipt is never dropped from it, a new one whose
  *   every seat is at `MAX_RECEIPTS_PER_KEY_DAY`, or that started over
- *   `MAX_RECEIPT_AGE_DAYS` before the day, is not taken in (#3738),
- *   and only shards whose bytes changed are written (#3730);
- * - `leaderboard.json`: `{asOf, engine, count, entries}`. When the
- *   entries are those of the previous run's, it is that run's bytes;
- *   otherwise its `asOf` moves past the previous one, so one `asOf`
+ *   `MAX_RECEIPT_AGE_DAYS` before the day, is not taken in (#3738), nor
+ *   on a `gated` board one with no established seat under the cap
+ *   (#3745), and only shards whose bytes changed are written (#3730);
+ * - `leaderboard.json`: `{asOf, engine, gated, count, entries}`. When
+ *   the entries and `gated` are the previous run's, it is that run's
+ *   bytes; otherwise its `asOf` moves past the previous one, so one `asOf`
  *   never names two boards;
  * - `boards/<asOf>.json`: the same bytes under its own `asOf`, so a
  *   ranked claim is checked against the very board it was read from
@@ -22,7 +23,8 @@
  * - `log.txt`: counts by reject reason, the relays reached, and the
  *   sha256 of `leaderboard.json`.
  *
- * Anyone with the same archive and relay content gets the same bytes.
+ * Anyone with the same archive, previous `leaderboard.json` and relay
+ * content gets the same bytes.
  */
 
 import { createHash } from "node:crypto";
@@ -89,6 +91,40 @@ const MAX_SHARD_BYTES = 90 * 1024 * 1024;
  * are not stopped (#3738).
  */
 const MAX_RECEIPTS_PER_KEY_DAY = 50;
+
+/**
+ * Once the previous board lists this many established keys (not
+ * provisional, not forked), the board is `gated` for good: a new receipt
+ * is taken in only when one of its seats is established and under
+ * `MAX_RECEIPTS_PER_KEY_DAY` (Q143 A, #3745). Below it a ladder could
+ * never start, so the gate is off at launch. It is a speed bump, not a
+ * bound: one established key can seed sybils that become established in
+ * turn. The cap and the stamp (#3746) are the real cost per receipt.
+ */
+const MIN_ESTABLISHED_KEYS = 20;
+
+/**
+ * The previous board's established keys and whether it was gated. A
+ * board this job did not write is wrong data: no key is established.
+ * @param {unknown} board
+ * @returns {{ established: Set<string>, gated: boolean }}
+ */
+function gateOf(board) {
+  const { entries, gated } = /** @type {{ entries?: unknown, gated?: unknown }} */ (
+    typeof board === "object" && board !== null ? board : {}
+  );
+  const established = new Set(
+    /** @type {unknown[]} */ (Array.isArray(entries) ? entries : []).flatMap((entry) => {
+      const { pubkey, provisional, forked } = /** @type {Record<string, unknown>} */ (
+        typeof entry === "object" && entry !== null ? entry : {}
+      );
+      return typeof pubkey === "string" && provisional === false && forked === false
+        ? [pubkey]
+        : [];
+    }),
+  );
+  return { established, gated: gated === true || established.size >= MIN_ESTABLISHED_KEYS };
+}
 
 /**
  * The first second after `day`. A receipt from then on is in the future:
@@ -262,7 +298,6 @@ export function build({
 
   /** @type {Map<string, number>} */
   const rejected = new Map();
-  let added = 0;
   for (const event of events) {
     const receipt = receiptOf(event);
     const reason =
@@ -275,8 +310,8 @@ export function build({
             : rejection(receipt, crypto);
     if (reason !== undefined) {
       rejected.set(reason, (rejected.get(reason) ?? 0) + 1);
-    } else if (receipt && keep(receipt)) {
-      added += 1;
+    } else if (receipt) {
+      keep(receipt);
     }
   }
 
@@ -312,27 +347,41 @@ export function build({
       count(receipt);
     }
   }
+  /** @type {unknown} */
+  const parsed = previous === undefined ? undefined : JSON.parse(previous);
+  const before = /** @type {{ asOf: number, entries: unknown[], gated: boolean } | undefined} */ (
+    parsed
+  );
+  const { established, gated } = gateOf(parsed);
   /** Over-cap receipts per seat key. */
   /** @type {Map<string, number>} */
   const overCap = new Map();
+  let dropped = 0;
   const receipts = sorted.filter(({ hash, receipt }) => {
     if (archivedHashes.has(hash)) {
       return true;
     }
     const slots = slotsOf(receipt);
-    // Refused only when every seat is at its cap: one key's flood must not
-    // veto a match it played with keys that are not.
-    if (slots.every((slot) => (perKeyDay.get(slot) ?? 0) >= MAX_RECEIPTS_PER_KEY_DAY)) {
-      for (const slot of slots) {
-        const pubkey = slot.slice(slot.indexOf(" ") + 1);
-        overCap.set(pubkey, (overCap.get(pubkey) ?? 0) + 1);
+    /** @param {string} slot */
+    const pubkeyOf = (slot) => slot.slice(slot.indexOf(" ") + 1);
+    // Gated, only established seats can carry a receipt in. Ungated, any
+    // seat can: refused only when every seat is at its cap, so one key's
+    // flood cannot veto a match it played with keys that are not.
+    const carriers = gated ? slots.filter((slot) => established.has(pubkeyOf(slot))) : slots;
+    if (carriers.length === 0) {
+      rejected.set("no-established-seat", (rejected.get("no-established-seat") ?? 0) + 1);
+      return false;
+    }
+    if (carriers.every((slot) => (perKeyDay.get(slot) ?? 0) >= MAX_RECEIPTS_PER_KEY_DAY)) {
+      for (const slot of carriers) {
+        overCap.set(pubkeyOf(slot), (overCap.get(pubkeyOf(slot)) ?? 0) + 1);
       }
+      dropped += 1;
       return false;
     }
     count(receipt);
     return true;
   });
-  const dropped = sorted.length - receipts.length;
   const ratings = rate(
     receipts.map(({ receipt }) => receipt),
     asOfDay,
@@ -344,11 +393,10 @@ export function build({
     (pubkey) => ({ pubkey, rank: rankOf.get(pubkey) ?? null, ...ratings.get(pubkey) }),
   );
   const newest = receipts.findLast(({ receipt }) => receipt.start.startedAt < endOf(asOfDay));
-  /** @type {unknown} */
-  const parsed = previous === undefined ? undefined : JSON.parse(previous);
-  const before = /** @type {{ asOf: number, entries: unknown[] } | undefined} */ (parsed);
   const leaderboard =
-    previous !== undefined && JSON.stringify(before?.entries) === JSON.stringify(entries)
+    previous !== undefined &&
+    before?.gated === gated &&
+    JSON.stringify(before.entries) === JSON.stringify(entries)
       ? previous
       : `${JSON.stringify({
           // The as-of day's midnight, or the newest match if later (architect,
@@ -360,6 +408,7 @@ export function build({
             (before?.asOf ?? -1) + 1,
           ),
           engine: process.version,
+          gated,
           count: entries.length,
           entries,
         })}\n`;
@@ -369,7 +418,7 @@ export function build({
     ...relays.map((relay) => `  ${relaysReached.includes(relay) ? "ok  " : "down"} ${relay}`),
     ...(relaysReached.length === 0 ? ["no relay reached: the archive is unchanged"] : []),
     `events: ${String(events.length)}`,
-    `receipts: ${String(archivedCount)} archived, ${String(added - dropped)} new, ${String(receipts.length)} kept`,
+    `receipts: ${String(archivedCount)} archived, ${String(receipts.length - archivedCount)} new, ${String(receipts.length)} kept`,
     `over-cap: ${String(dropped)}`,
     ...[...overCap]
       .sort(([a, m], [b, n]) => n - m || (a < b ? -1 : 1))

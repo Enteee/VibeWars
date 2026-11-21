@@ -584,4 +584,6 @@ A rangsorolt sorok hasonló pontszámú játékosokat párosítanak, és hasonl�
 
 Az első 10 pontozott meccsed ideiglenes: a sor azt írja, **Ideiglenes (3/10 meccs)**, és még nincs helyezésed. Ezután a főmenü mutatja a helyezésedet. A pontszám kopik: minden nap pontozott meccs nélkül bizonytalanabbá teszi, és a ranglista egy óvatos érték szerint rendez, így ha abbahagyod a játékot, a helyezésed heteken belül süllyed.
 
+Amint a ranglistán 20 megalapozott játékos van, egy rangsorolt meccs csak akkor számít, ha legalább egy játékosa megalapozott (10 vagy több pontozott meccs): a csak új játékosok közötti meccs nem pontozott. Játssz valakivel, aki már megalapozott, és a meccseid számítanak.
+
 A felső sáv **Ranglista** gombja a legjobb 100-at mutatja helyezés, név és pontszám szerint, a saját sorodat kiemelve. Óránként frissül.

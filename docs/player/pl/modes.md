@@ -322,4 +322,6 @@ Kolejki rankingowe łączą graczy o podobnym rankingu i dzielą ich na drużyny
 
 Twoich pierwszych 10 meczów rankingowych jest tymczasowych: kolejka mówi **Tymczasowy (3/10 meczów)** i nie masz jeszcze miejsca. Potem menu główne pokazuje twoje miejsce. Ranking się starzeje: każdy dzień bez meczu rankingowego czyni twój mniej pewnym, a tabela wyników sortuje według ostrożnej wartości, więc jeśli przestaniesz grać, twoje miejsce spadnie w ciągu tygodni.
 
+Gdy w tabeli wyników jest 20 ustabilizowanych graczy, mecz rankingowy liczy się tylko wtedy, gdy co najmniej jeden gracz w nim jest ustabilizowany (10 lub więcej meczów rankingowych): mecz wyłącznie między nowymi graczami nie jest rankingowy. Zagraj z kimś ustabilizowanym, a twoje mecze się liczą.
+
 Przycisk **Tabela wyników** na górnym pasku pokazuje 100 najlepszych według miejsca, nazwy i rankingu, z wyróżnionym twoim wierszem. Aktualizuje się co godzinę.
