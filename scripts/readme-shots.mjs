@@ -151,9 +151,15 @@ async function editorAndTraining(page, dir) {
   await page.mouse.wheel(0, -120);
   await sleep(500);
   await page.keyboard.press("KeyC");
+  await sleep(400);
   await page.keyboard.press("KeyQ");
-  // Fireball's cast and flight, and its burst on the dummy.
-  await sleep(1200);
+  // The cast, the flight, and the burst: the readout counts the first hit.
+  for (let poll = 0; poll < 60; poll += 1) {
+    if (/damage\s*[1-9]/.test(await page.locator("body").innerText())) {
+      break;
+    }
+    await sleep(100);
+  }
   await page.screenshot({ path: path.join(dir, "readme-training.png") });
 
   step = "save the character";
