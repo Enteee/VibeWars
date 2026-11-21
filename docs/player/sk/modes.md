@@ -178,9 +178,11 @@ nikto nehrá. **Oltár** je v strede, rovnako ďaleko od oboch
 základní. Na **Threefold Keep** oň bojujú tri tímy (dva, keď tretí nie je voľný)
 na veži opevnenej pevnosti. Najviac 12 bodov na
 tím, a ak každý nepriateľ stojí na -60 % morálky, vyhrávaš okamžite. **Hall of
-Heroes**, mapa Kráľa kopca, ktorá končí Výstup hrdinov, ho vyvyšuje
-na pódiu obohnanom múrmi na západe a východe, so severným alebo južným prístupom
-lemovaným stĺpmi. Zameraj svoj prízrak
+Heroes** (8v8, 5000x4400), mapa, ktorá končí Výstup hrdinov, je zlatá sieň
+pre tri tímy: oltár stojí na pódiu so stĺpmi a šiestimi schodiskami, na podstavci
+s galériou medzi každými dvoma základňami, a z každej základne vedie pod podlahou
+krypta hore do podstavca. Dvere krýpt sú na začiatku zatvorené a páka
+ktoréhokoľvek tímu otvorí všetky tri. Zameraj svoj prízrak
 **pravým kliknutím** a stlačením **Space** mu povedz, aby ťa nasledoval: kráča
 s tebou a bojuje s tým, s čím bojuješ ty. Ďalším stlačením Space na ňom
 zostane stáť tam, kde je, a bojuje s každým nepriateľom, ktorý príde blízko. Ak
@@ -365,7 +367,7 @@ sekundách sama na ďalšiu mapu; vyhraj v Hall of Heroes a zostaneš ju bráni�
 začne znova od kola 1; rovnako aj opustenie fronty alebo družiny. Zápas
 prehraný kvôli odchodu hostiteľa si tvoje kolo ponechá.
 
-Hall of Heroes losuje pre každý zápas jeden z troch režimov: Kráľ kopca, Beh s relikviou alebo Dobývanie bodov, pre dva alebo tri tímy. Pri dvoch zostáva tretia základňa zatvorená a s ňou aj jej bod na dobývanie. Zápas v Hall of Heroes trvá 11 minút a vyhráva najviac bodov; Dobývanie bodov sa skončí aj skôr pri náskoku 20. Smrť nestojí morálku. Mŕtvi sa vracajú spoločne do svojej základne každú celú minútu času zápasu, takže vyhladený tím nie je porazený, ale tím, ktorého hráči všetci odišli, vypadáva. V Kráľovi kopca tím držiaci oltár boduje aj po smrti svojho prízraku, kým si ho nenárokuje iný tím, a jeho mŕtvi sa vracajú na oltár. Pri rovnosti vyhráva tím, ktorý bodoval naposledy, alebo v Dobývaní bodov tím s najnovším zabitím.
+Hall of Heroes losuje pre každý zápas jeden z troch režimov: Kráľ kopca, Beh s relikviou alebo Dobývanie bodov, pre dva alebo tri tímy. Pri dvoch zostáva tretia základňa zatvorená a s ňou aj body na dobývanie na jej dvoch galériách. Zápas v Hall of Heroes trvá 11 minút a vyhráva najviac bodov; Dobývanie bodov sa skončí aj skôr pri náskoku 20. Smrť nestojí morálku. Mŕtvi sa vracajú spoločne do svojej základne každú celú minútu času zápasu, takže vyhladený tím nie je porazený, ale tím, ktorého hráči všetci odišli, vypadáva. V Kráľovi kopca tím držiaci oltár boduje aj po smrti svojho prízraku, kým si ho nenárokuje iný tím, a jeho mŕtvi sa vracajú na oltár. Pri rovnosti vyhráva tím, ktorý bodoval naposledy, alebo v Dobývaní bodov tím s najnovším zabitím.
 
 **The Vault.** Hall of Heroes sa formuje len každých 12 minút podľa času UTC, o :00, :12, :24, :36 a :48. Dovtedy tvoja družina čaká v The Vault: ikona fronty ukazuje čas do ďalšieho otvorenia a kto drží Hall of Heroes. Pri každom otvorení sa držiteľ stretne s najviac dvoma vyzývateľmi alebo sa stretnú najviac traja vyzývatelia, ak ho nikto nedrží. Zúčastnia sa len družiny čakajúce pred otvorením a tie nad počet miest čakajú na ďalšie. Držiteľ, ktorý nemá s kým bojovať, si Hall of Heroes ponechá a čaká, bez započítaného víťazstva, a osamotený vyzývateľ čaká tiež. Keď družina vyhrá Hall of Heroes, každá otvorená hra povie, kto ho teraz drží: jej vodca alebo jej značka cechu, keď ju zdieľa viac než polovica družiny.
 

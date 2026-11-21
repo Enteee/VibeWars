@@ -111,8 +111,8 @@ describe("every drop-off is one a body walks off (#3481)", () => {
         const sim = new MatchSimulation({
           seed: `drop-offs-used:${id}`,
           ruleset: RULESET,
-          ...mapSimulationFields(map, map.teams),
           teamCount: map.teams,
+          ...mapSimulationFields(map, map.teams),
           participants: [
             body("walker", start, layer, 0),
             body("foe", foe?.position ?? start, foe?.layer ?? layer, 1),

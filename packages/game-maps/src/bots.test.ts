@@ -6,7 +6,6 @@ import {
   MatchSimulation,
   MINIMAL_GW_INSPIRED_PVP_V1,
   THREEFOLD_KEEP_MATCH_RULES,
-  PRIEST_WAVE_SECONDS,
   RELIC_RUN_MATCH_RULES,
   STARTER_BUILDS,
   deckBlocksSight,
@@ -250,7 +249,9 @@ describe("King of the Hill bots (#2582)", () => {
     expect(play("hill")).toEqual(first);
   });
 
-  it("takes the Hall's altar with one player idle, its ghosts' mutual kill costing a priest wave (#2700)", () => {
+  // The rule that a mutual ghost kill costs a priest wave is game-core's (king-of-the-hill.test.ts);
+  // on the rebuilt Hall (#3442) the first ghost up the dais claims before the other arrives.
+  it("takes the Hall's altar in a two-team match with one player idle (#2700, #3442)", () => {
     const hall = loadAllMaps().find((candidate) => candidate.id === "hall-of-heroes-king");
     if (hall === undefined) throw new Error("no map hall-of-heroes-king");
     const twoTeams = {
@@ -259,7 +260,6 @@ describe("King of the Hill bots (#2582)", () => {
         (objective) => objective.kind !== "ghost-spawn" || objective.team < 2,
       ),
     };
-    // This seed's ghosts die together on the altar before either claim ends.
     const sim = hill(
       twoTeams,
       "h",
@@ -272,7 +272,7 @@ describe("King of the Hill bots (#2582)", () => {
       sim.step(DT);
       if (sim.altarState.holder !== null) heldAt = t;
     }
-    expect(heldAt).toBeGreaterThan(PRIEST_WAVE_SECONDS);
+    expect(heldAt).toBeDefined();
   }, 60_000);
 
   /**

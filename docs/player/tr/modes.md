@@ -185,10 +185,12 @@ bir hayalet. **Sunak** merkezdedir, iki üsten de aynı yürüme
 mesafesinde. **Threefold Keep**'te üç takım (üçüncüsü boşta değilse iki)
 duvarlı bir kalenin kulesinde onun için dövüşür.
 Takım başına en fazla 12 puan; her düşman -%60 moraldeyse hemen
-kazanırsın. Kahramanların Yükselişi'ni bitiren Tepenin Kralı haritası
-**Kahramanlar Salonu**, sunağı batıda ve doğuda duvarlı, sütunlarla
-çevrili bir kuzey ya da güney yaklaşımından çıkılan bir kürsüde
-yükseltir. Hayaletini **sağ tıkla** hedef al ve seni izlemesini söylemek
+kazanırsın. Kahramanların Yükselişi'ni bitiren harita
+**Kahramanlar Salonu** (8v8, 5000x4400), üç takım için altın bir salondur:
+sunak, altı merdivenli, sütunlu bir kürsünün üstünde durur; kürsü, her iki
+üs arasına bir galeri uzanan bir kaidenin üstündedir ve her üsten zeminin
+altından kaideye çıkan bir mahzen geçer. Mahzen kapıları kapalı başlar ve
+herhangi bir takımın kolu üçünü birden açar. Hayaletini **sağ tıkla** hedef al ve seni izlemesini söylemek
 için **Space**'e bas: seninle yürür ve senin dövüştüğünle dövüşür. Ona
 tekrar Space'e basarsan durduğu yerde kalır ve yaklaşan her düşmanla
 dövüşür. Ölür ya da ayrılırsan yerinde kalır. Hayaletin hedefliyken
@@ -387,7 +389,7 @@ turunu korur.
 
 Salon her maç için üç moddan birini çeker: iki ya da üç takım için
 Tepenin Kralı, Kalıntı Koşusu ya da Nokta Ele Geçirme. İki takımla
-üçüncü üs ve onunla birlikte ele geçirme noktası kapalı kalır. Bir Salon
+üçüncü üs ve onunla birlikte iki galerisindeki ele geçirme noktaları kapalı kalır. Bir Salon
 maçı 11 dakika sürer ve en çok puan kazanır; Nokta Ele Geçirme ayrıca
 20'lik bir farkla erken biter. Ölüm moral kaybettirmez. Ölüler maç
 saatinin her tam dakikasında üslerinde birlikte geri döner, yani

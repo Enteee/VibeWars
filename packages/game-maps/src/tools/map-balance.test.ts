@@ -7,9 +7,11 @@ import {
   createLayeredPathFinder,
   switchTargetId,
   vec2,
+  type LayeredPathFinder,
   type Vec2,
 } from "@vibewars/game-core";
 
+import { layeredFinder } from "../layered-finder.test-support.js";
 import { matchLayers } from "../layers.js";
 import { loadAllMaps, loadMap } from "../loader.js";
 import { mapNavGraphs } from "../nav-graphs.js";
@@ -1865,6 +1867,258 @@ describe("walks and high ground (#3070)", () => {
     }, 60_000);
   });
 
+  // Hall of Heroes (#3442): three teams round a dais, the study's 120° turn with every stair and
+  // crypt snapped to an axis (the schema has axis-aligned rects only), so the turn is not exact and
+  // the half-turn checks do not apply. Fairness is these walks, each within 10 % across the three
+  // teams. Team 0 is north, team 1 south-east, team 2 south-west; a team's clockwise gallery is the
+  // one between it and the next team round (0: east, 1: south, 2: west), its anticlockwise one the
+  // gallery it shares with the team before. The three files share their geometry.
+  describe("Hall of Heroes", () => {
+    const king = loadMap("hall-of-heroes-king");
+    const relic = loadMap("hall-of-heroes-relic");
+    const capture = loadMap("hall-of-heroes-capture");
+    const seconds = MINIMAL_GW_INSPIRED_PVP_V1.movement.maxSpeedUnitsPerSecond;
+    const altar = { x: 2500, y: 2200 };
+    const TEAMS = [0, 1, 2];
+    /** `map` as loaded: every crypt door shut. */
+    const shut = (map: MapData): MapData => ({
+      ...map,
+      walls: [...map.walls, ...map.gates.map(({ wall }) => wall)],
+    });
+    const galleryStairs = [
+      "east-gallery-stair",
+      "east-gallery-north-stair",
+      "south-gallery-east-stair",
+      "south-gallery-west-stair",
+      "west-gallery-stair",
+      "west-gallery-north-stair",
+    ];
+    const crypts = ["north-east-crypt", "south-east-crypt", "west-crypt"];
+    const plinthStairs = crypts.map((crypt) => `${crypt}-plinth-stair`);
+    /** Each team's own stair up its clockwise and anticlockwise gallery, by team. */
+    const clockwise = [
+      "east-gallery-north-stair",
+      "south-gallery-east-stair",
+      "west-gallery-stair",
+    ];
+    const anticlockwise = [
+      "west-gallery-north-stair",
+      "east-gallery-stair",
+      "south-gallery-west-stair",
+    ];
+    const byGallery =
+      (stairs: readonly string[]) =>
+      (team: number): Route => {
+        const keep = stairs[team] ?? "";
+        return {
+          through: [keep],
+          shut: [...galleryStairs, ...plinthStairs].filter((id) => id !== keep),
+        };
+      };
+    const byCrypt = (team: number): Route => ({
+      through: [`${crypts[team] ?? ""}-mouth-stair`, plinthStairs[team] ?? ""],
+      shut: [...galleryStairs, ...plinthStairs.filter((_, each) => each !== team)],
+    });
+    /** A gallery's mid at angle `angle`, where the capture point stands: r 1150, layer 2. */
+    const galleryMid = (angle: number): Vec2 => ({
+      x: 2500 + 1150 * Math.cos((angle * Math.PI) / 180),
+      y: 2200 + 1150 * Math.sin((angle * Math.PI) / 180),
+    });
+    const GALLERIES = [-30, 90, 210];
+    /** Just beyond the top step of team `team`'s crypt mouth, on the floor. */
+    const mouthTop = (team: number): Vec2 => {
+      const stair = king.transitions.find(({ id }) => id === `${crypts[team] ?? ""}-mouth-stair`);
+      if (stair?.area.kind !== "rect") throw new Error(`no mouth for team ${String(team)}`);
+      const { x, y, width, height } = stair.area;
+      const offsets = {
+        e: { x: x + width + 40, y: y + height / 2 },
+        w: { x: x - 40, y: y + height / 2 },
+        n: { x: x + width / 2, y: y - 40 },
+        s: { x: x + width / 2, y: y + height + 40 },
+      };
+      return offsets[stair.uphill];
+    };
+    /** How far a body walks from `from` along `path`; throws when there is no path. */
+    const walkedFrom = (from: Vec2, path: readonly Vec2[] | undefined): number => {
+      if (path === undefined) throw new Error(`no way from (${String(from.x)},${String(from.y)})`);
+      const walk = [from, ...path];
+      return walk.reduce((walked, point, index) => {
+        const last = walk[index - 1] ?? point;
+        return walked + Math.hypot(point.x - last.x, point.y - last.y);
+      }, 0);
+    };
+    const within = (walks: readonly number[], share: number): void => {
+      expect(walks.length).toBeGreaterThanOrEqual(2);
+      for (const walk of walks) expect(walk).toBeGreaterThan(0);
+      const most = Math.max(...walks);
+      expect((most - Math.min(...walks)) / most).toBeLessThanOrEqual(share);
+    };
+
+    it.each([
+      ["clockwise", clockwise],
+      ["anticlockwise", anticlockwise],
+    ])(
+      "walks each team to the altar by its %s gallery, the crypts shut, within 10 %, in under 25 s",
+      (_, stairs) => {
+        const walks = walksByRoute(shut(king), altar, 3, byGallery(stairs));
+        within(walks, 0.1);
+        for (const walk of walks) expect(walk / seconds).toBeLessThan(25);
+      },
+    );
+
+    // Lead-dev's review: a team whose spawns split between two galleries splits its band and is
+    // crushed. Every spawn's own way to the altar is up its team's anticlockwise gallery.
+    it("walks every spawn to the altar up its team's anticlockwise gallery, the crypts shut", () => {
+      const doorsShut = shut(king);
+      const finder = layeredFinder(doorsShut, MINIMAL_GW_INSPIRED_PVP_V1.collision.playerRadius);
+      const only = (stair: string): LayeredPathFinder =>
+        layeredFinder(
+          {
+            ...doorsShut,
+            transitions: doorsShut.transitions.filter(
+              ({ id }) => id === stair || !galleryStairs.includes(id),
+            ),
+          },
+          MINIMAL_GW_INSPIRED_PVP_V1.collision.playerRadius,
+        );
+      const finders = TEAMS.map((team) => ({
+        own: only(anticlockwise[team] ?? ""),
+        other: only(clockwise[team] ?? ""),
+      }));
+      for (const spawn of king.spawnPoints) {
+        const by = finders[spawn.team];
+        if (by === undefined) throw new Error(`no team ${String(spawn.team)}`);
+        const { own, other } = by;
+        const walk = (by: LayeredPathFinder): number =>
+          walkedFrom(spawn.position, by.find(spawn.position, spawn.layer, altar, 3));
+        expect(walk(finder)).toBeCloseTo(walk(own), 0);
+        expect(walk(own)).toBeLessThan(walk(other));
+      }
+    }, 60_000);
+
+    it("walks each team to the altar through its own crypt, its door open, within 10 %, in under 25 s", () => {
+      const walks = walksByRoute(king, altar, 3, byCrypt);
+      within(walks, 0.1);
+      for (const walk of walks) expect(walk / seconds).toBeLessThan(25);
+    });
+
+    it("walks each team to its own crypt mouth within 10 %", () => {
+      within(
+        TEAMS.map((team) => walksTo(king, mouthTop(team), 1)[team] ?? 0),
+        0.1,
+      );
+    });
+
+    it("walks each team to each neighbour gallery's mid, its high ground, within 10 %", () => {
+      within(
+        TEAMS.map((team) => walksTo(king, galleryMid(GALLERIES[team] ?? 0), 2)[team] ?? 0),
+        0.1,
+      );
+      within(
+        TEAMS.map(
+          (team) => walksTo(king, galleryMid(GALLERIES[(team + 2) % 3] ?? 0), 2)[team] ?? 0,
+        ),
+        0.1,
+      );
+    });
+
+    it("leads each ghost from its court to the altar within 10 %", () => {
+      const finder = layeredFinder(king, MINIMAL_GW_INSPIRED_PVP_V1.collision.playerRadius);
+      within(
+        TEAMS.map((team) => {
+          const ghost = king.objectives
+            .flatMap((each) => (each.kind === "ghost-spawn" ? [each] : []))
+            .find((each) => each.team === team);
+          if (ghost === undefined) throw new Error(`no ghost for team ${String(team)}`);
+          return walkedFrom(ghost.position, finder.find(ghost.position, ghost.layer, altar, 3));
+        }),
+        0.1,
+      );
+    });
+
+    // A 3 % shorter carry won team 1 58 % of decided relic runs, so the carry is held to 1 %.
+    it("walks each carrier from its relic to the altar within 1 %", () => {
+      const finder = layeredFinder(relic, MINIMAL_GW_INSPIRED_PVP_V1.collision.playerRadius);
+      within(
+        TEAMS.map((team) => {
+          const spawn = relic.objectives
+            .flatMap((each) => (each.kind === "relic-spawn" ? [each] : []))
+            .find((each) => each.team === team);
+          if (spawn === undefined) throw new Error(`no relic for team ${String(team)}`);
+          return walkedFrom(spawn.position, finder.find(spawn.position, spawn.layer, altar, 3));
+        }),
+        0.01,
+      );
+    });
+
+    // Team 1's relic 408 from its seats against 438 and 548 won it the first carry and 54 % of
+    // decided relic runs (#3442). Measured from every seat, the nearest and on average: team 0's
+    // seats are a grid, so its home seat is one of four as near its middle.
+    it("walks each team's seats to its own relic within 10 %, the nearest and on average", () => {
+      const finder = layeredFinder(relic, MINIMAL_GW_INSPIRED_PVP_V1.collision.playerRadius);
+      const walks = TEAMS.map((team) => {
+        const spawn = relic.objectives
+          .flatMap((each) => (each.kind === "relic-spawn" ? [each] : []))
+          .find((each) => each.team === team);
+        if (spawn === undefined) throw new Error(`no relic for team ${String(team)}`);
+        return relic.spawnPoints
+          .filter((seat) => seat.team === team)
+          .map((seat) =>
+            walkedFrom(
+              seat.position,
+              finder.find(seat.position, seat.layer, spawn.position, spawn.layer),
+            ),
+          );
+      });
+      within(
+        walks.map((seats) => Math.min(...seats)),
+        0.1,
+      );
+      within(
+        walks.map((seats) => seats.reduce((sum, walk) => sum + walk, 0) / seats.length),
+        0.1,
+      );
+    });
+
+    // Each outer point is held by the team beside it against the neighbour from the far side. With
+    // its shrine nearer everything, team 0 held its own point by 692 and took team 1's, held by
+    // 514, and won 52 % of decided captures (#3442). So every shrine is as far from its own point,
+    // the neighbour's point and the dais, within 2 %.
+    it("walks each team from its resurrection shrine to its point, its neighbour's and the dais within 2 %", () => {
+      const finder = layeredFinder(capture, MINIMAL_GW_INSPIRED_PVP_V1.collision.playerRadius);
+      const fromShrine = (team: number, to: Vec2, layer: number): number => {
+        const shrine = capture.objectives
+          .flatMap((each) => (each.kind === "resurrection-shrine" ? [each] : []))
+          .find((each) => each.team === team);
+        if (shrine === undefined) throw new Error(`no shrine for team ${String(team)}`);
+        return walkedFrom(shrine.position, finder.find(shrine.position, shrine.layer, to, layer));
+      };
+      within(
+        TEAMS.map((team) => fromShrine(team, galleryMid(GALLERIES[(team + 2) % 3] ?? 0), 2)),
+        0.02,
+      );
+      within(
+        TEAMS.map((team) => fromShrine(team, galleryMid(GALLERIES[team] ?? 0), 2)),
+        0.02,
+      );
+      within(
+        TEAMS.map((team) => fromShrine(team, altar, 3)),
+        0.02,
+      );
+    });
+
+    it("plays a two-team capture on the dais and the gallery teams 0 and 1 share, as far for both", () => {
+      const points = capture.objectives.flatMap((each) =>
+        each.kind === "capture-point" && each.base !== 2 ? [each] : [],
+      );
+      expect(points).toHaveLength(2);
+      for (const point of points) {
+        const [walk0 = 0, walk1 = 0] = walksTo(capture, point.position, point.layer);
+        within([walk0, walk1], 0.1);
+      }
+    });
+  });
+
   // The Elite Zaishen Battle (#3446): team 1's half is team 0's turned 180° about the start line.
   // To the start line three ways: across the sunken floor, over the team's own stand (up its west
   // stair, down its middle one), or through the undercroft under it, its portcullis open.
@@ -2324,11 +2578,7 @@ describe("the width of each team's way in (#3688)", () => {
    * The maps whose teams' narrowest ways in were uneven when #3688 measured
    * them, each with the card that fixes it. One that is fixed leaves this list.
    */
-  const UNEVEN: Readonly<Record<string, number>> = {
-    "hall-of-heroes-capture": 3442,
-    "hall-of-heroes-king": 3442,
-    "hall-of-heroes-relic": 3442,
-  };
+  const UNEVEN: Readonly<Record<string, number>> = {};
 
   /** Where `map` is fought over: its own point, else its shared objective nearest the centre, else its centre. */
   const foughtOver = (map: MapData): { readonly at: Vec2; readonly layer: number } => {
