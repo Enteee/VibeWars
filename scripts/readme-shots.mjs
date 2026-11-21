@@ -152,13 +152,20 @@ async function editorAndTraining(page, dir) {
   await sleep(500);
   await page.keyboard.press("KeyC");
   await sleep(400);
-  await page.keyboard.press("KeyQ");
-  // The cast, the flight, and the burst: the readout counts the first hit.
-  for (let poll = 0; poll < 60; poll += 1) {
-    if (/damage\s*[1-9]/.test(await page.locator("body").innerText())) {
-      break;
+  await page.keyboard.press("Tab");
+  // Fireball on Q, tried until the readout counts its first hit; the shot
+  // is taken on that frame, the burst still on the dummy.
+  step = "cast Fireball";
+  let hit = false;
+  for (let tries = 0; tries < 12 && !hit; tries += 1) {
+    await page.keyboard.press("KeyQ");
+    for (let poll = 0; poll < 15 && !hit; poll += 1) {
+      await sleep(100);
+      hit = /damage\s*[1-9]/.test(await page.locator("body").innerText());
     }
-    await sleep(100);
+  }
+  if (!hit) {
+    throw new Error("Fireball never landed");
   }
   await page.screenshot({ path: path.join(dir, "readme-training.png") });
 
