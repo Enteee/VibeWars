@@ -17,13 +17,13 @@ import { weaponTipAt } from "./weapon-mark.js";
 import type { Point } from "./weapon-mark-geometry.js";
 
 /** The longest a ribbon shows, seconds: the longest strike, then its fade. */
-export const SWING_TRAIL_SECONDS = 0.35;
+export const SWING_TRAIL_SECONDS = 0.25;
 /**
- * How long a ribbon fades out after the hit, seconds: long enough to be
- * seen at a swing's rhythm, short enough to end within every melee
- * weapon's hold and recovery, so it never cuts off.
+ * How long a ribbon fades out after the hit, seconds: eased, so it is
+ * seen at a swing's rhythm, and short enough that the slowest strike
+ * and its fade stay within `SWING_TRAIL_SECONDS`.
  */
-export const SWING_FADE_SECONDS = 0.18;
+export const SWING_FADE_SECONDS = 0.11;
 /** A ribbon's strongest alpha, at the weapon: ADR-0056 §4's ground budget. */
 export const SWING_TRAIL_ALPHA = 0.35;
 /** The ribbon's width at the weapon, a share of the body's radius, inside ADR-0056 §4's 0.6. */
