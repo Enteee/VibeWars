@@ -720,10 +720,23 @@ the whole game: online play is peer to peer from the page itself.
 
 `osv-scanner` and `trivy` run over `pnpm-lock.yaml` on review, and
 `semgrep` (`p/javascript`, `p/typescript`, `p/nodejsscan`, `p/secrets`)
-runs over the source. The last full run was at `1cfd5b5` (2026-10-24).
-semgrep found nothing real there. Currently reported:
+runs over the source. The last full run was at `15533402a` (2026-11-22),
+with `pnpm audit`, `osv-scanner`, `trivy` and `gitleaks` clean and the
+open CodeQL alerts all triaged below. semgrep found nothing real there.
+What it reports, and why each is not a finding:
 
-None.
+- `wildcard-postmessage-configuration` in `music/host/engine.ts` and
+  `music/music-player.ts`: the music host has an opaque origin, which
+  cannot be named as a target; both sides check `event.source` instead
+  (see the music host above).
+- `react-unsanitized-method` (`insertAdjacentHTML`) in
+  `skill-library-view.ts`, `skill-tooltip.ts`, `team-editor.ts` and
+  `training-panel.ts`: the markup comes from `ui/icons.ts`,
+  `echo-strip.ts` and `skill-slot-state.ts`, built from catalog ids and
+  numbers only. An id the client does not know maps to the `unknown` icon,
+  and the badge name is passed through `escapeAttribute`.
+
+Currently reported as real: none.
 
 Accepted advisories, which `pnpm audit` ignores:
 
