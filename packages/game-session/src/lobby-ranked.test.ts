@@ -545,8 +545,8 @@ describe("a ranked queued match (ADR-0055, #3573)", () => {
     expect(ranked.receipts).toEqual([]);
   });
 
-  it("signs no start whose claims the seat's own board, of the same asOf, does not hold (#3575)", async () => {
-    // Seat 2's board, as of the claims' own, rates everyone 1000.
+  it("signs no start whose claims the seat's own board does not hold (#3575)", async () => {
+    // Seat 2's board lists everyone at 1000: no claim of 800 from no board holds.
     const ranked = await openRanked("random-arena-2v2", {
       board: (n) =>
         n === 2
@@ -556,6 +556,29 @@ describe("a ranked queued match (ADR-0055, #3573)", () => {
     await ranked.step(COUNTDOWN_SECONDS + RANKED_START_TIMEOUT_MS / 1000 + TICK_SECONDS);
     expect(ranked.seats[2]?.startsSigned).toBe(0);
     expect(ranked.fellThrough).toEqual([[seatKey(2)]]);
+    expect(ranked.receipts).toEqual([]);
+  });
+
+  it("signs no start once it left while the leaderboard was fetched (#3575)", async () => {
+    let fetched: ((copy: undefined) => void) | undefined;
+    const ranked = await openRanked("random-arena-2v2", {
+      board: (n) =>
+        n === 2
+          ? {
+              copy: () => undefined,
+              refetch: () =>
+                new Promise((resolve) => {
+                  fetched = resolve;
+                }),
+            }
+          : NO_BOARD,
+    });
+    await ranked.step(COUNTDOWN_SECONDS);
+    await until(() => fetched !== undefined);
+    await ranked.seats[2]?.connection.disconnect();
+    fetched?.(undefined);
+    await ranked.step(RANKED_START_TIMEOUT_MS / 1000 + TICK_SECONDS);
+    expect(ranked.seats[2]?.startsSigned).toBe(0);
     expect(ranked.receipts).toEqual([]);
   });
 

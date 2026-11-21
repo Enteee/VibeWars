@@ -33,6 +33,16 @@ describe("claimVerdict", () => {
     ).toBe("accept");
   });
 
+  it("takes a claim from no board, asOf 0, only as an unlisted key's 800 (#3575)", () => {
+    const unlisted = { pubkey: "b".repeat(64), rating: 800, asOf: 0 };
+    expect(claimVerdict(unlisted, board(AS_OF), NOW, false)).toBe("accept");
+    expect(claimVerdict({ ...unlisted, rating: 1500 }, board(AS_OF), NOW, false)).toBe("refuse");
+    // ALICE is listed: hiding her 1234 behind no board is refused.
+    expect(claimVerdict({ pubkey: ALICE, rating: 800, asOf: 0 }, board(AS_OF), NOW, false)).toBe(
+      "refuse",
+    );
+  });
+
   it("trusts a claim from a board an hour older, and refuses one more than two hours older", () => {
     const copy = board(AS_OF);
     expect(

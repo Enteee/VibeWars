@@ -5,6 +5,7 @@
  * player holds that one, and trusted a little where it cannot be.
  */
 
+import { UNLISTED_CLAIM } from "@vibewars/game-protocol";
 import type { RankedStart } from "@vibewars/ranking";
 
 /** A copy of the leaderboard as this player holds it. */
@@ -45,6 +46,8 @@ export interface SeatClaim {
 
 /**
  * What this player makes of `claim` with `copy`, at `nowSeconds`:
+ * - read from no board, `asOf` 0, against a copy: it holds only as an
+ *   unlisted claim from a key that copy does not list either;
  * - read from the same board: it holds only if it is that board's;
  * - from an older one by at most `STALE_CLAIM_SECONDS`: trusted, since
  *   an old board cannot be rebuilt;
@@ -58,6 +61,10 @@ export function claimVerdict(
   nowSeconds: number,
   refetched: boolean,
 ): "accept" | "refuse" | "refetch" {
+  if (claim.asOf === 0 && copy !== undefined) {
+    const unlisted = copy.claimOf(claim.pubkey) === UNLISTED_CLAIM;
+    return unlisted && claim.rating === UNLISTED_CLAIM ? "accept" : "refuse";
+  }
   if (claim.asOf === copy?.asOf) {
     return claim.rating === copy.claimOf(claim.pubkey) ? "accept" : "refuse";
   }

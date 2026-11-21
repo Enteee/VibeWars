@@ -1191,8 +1191,9 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
         void claimsHold(said.start, rankedPlay.leaderboard, Math.floor(Date.now() / 1000)).then(
           (hold) => {
             checkingStart = false;
-            // The lobby may have moved on while the leaderboard was fetched.
-            if (!hold || ranked !== undefined || rankedOver) {
+            // The lobby may have closed or moved on while the leaderboard was
+            // fetched; `queued` is this client's for its life, so its group holds.
+            if (!hold || closed || ranked !== undefined || rankedOver) {
               return;
             }
             const hostSeat = queued.group.teams.flatMap((team, t) =>
