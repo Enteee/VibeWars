@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { REST_FRAME, type AttackFrame, type CastBeat } from "./attack-clock.js";
-import { paintBodyMarks, type Painter, type StandingBody } from "./body-painter.js";
+import { paintStandingBody, type Painter, type StandingBody } from "./body-painter.js";
 import {
   SWING_FADE_SECONDS,
   SWING_TRAIL_ALPHA,
@@ -110,7 +110,7 @@ describe("swingRibbon (#3579)", () => {
   });
 });
 
-describe("paintBodyMarks with a swing trail (#3579)", () => {
+describe("paintStandingBody with a swing trail (#3579)", () => {
   /** A painter that writes down every call. */
   function recorder(): { readonly painter: Painter; readonly calls: string[] } {
     const calls: string[] = [];
@@ -146,20 +146,29 @@ describe("paintBodyMarks with a swing trail (#3579)", () => {
     cape: undefined,
   };
 
-  it("draws the ribbon under the weapon mark, and the mark as without it", () => {
+  it("draws the ribbon last on the body layer, under the rings and every mark (ADR-0056 §4)", () => {
     const ribbon = swingRibbon(AT, "sword", BODY.frame, undefined, false);
     expect(ribbon).not.toBe(undefined);
     if (ribbon === undefined) {
       return;
     }
-    const plain = recorder();
-    paintBodyMarks(plain.painter, BODY);
-    const worn = recorder();
-    paintBodyMarks(worn.painter, { ...BODY, swingTrail: { ribbon, colour: 0x66ff33 } });
+    const plain = { body: recorder(), marks: recorder() };
+    paintStandingBody(plain.body.painter, BODY, plain.marks.painter);
+    const worn = { body: recorder(), marks: recorder() };
+    paintStandingBody(
+      worn.body.painter,
+      { ...BODY, swingTrail: { ribbon, colour: 0x66ff33 } },
+      worn.marks.painter,
+    );
     const pieces = ribbon.points.length - 1;
-    // Each piece: its style, then one stroked segment.
-    expect(worn.calls.length).toBe(plain.calls.length + pieces * 5);
-    expect(worn.calls[0]).toMatch(new RegExp(`^lineStyle\\(.*, ${String(0x66ff33)}\\.00, `));
-    expect(worn.calls.slice(pieces * 5)).toEqual(plain.calls);
+    // Each piece: its style, then one stroked segment, after the whole disc,
+    // so the rings and cues the scene paints next on that layer lie over it.
+    expect(worn.body.calls.length).toBe(plain.body.calls.length + pieces * 5);
+    expect(worn.body.calls.slice(0, plain.body.calls.length)).toEqual(plain.body.calls);
+    expect(worn.body.calls[plain.body.calls.length]).toMatch(
+      new RegExp(`^lineStyle\\(.*, ${String(0x66ff33)}\\.00, `),
+    );
+    // Nothing on the marks layer, which lies over the rings.
+    expect(worn.marks.calls).toEqual(plain.marks.calls);
   });
 });

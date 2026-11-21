@@ -94,8 +94,8 @@ export function paintStandingBody(painter: Painter, body: StandingBody, marks = 
 }
 
 /**
- * The cape, the disc, its edge, the self rim on your own, then the cape's
- * band on the rim: what lies under the body glyph.
+ * The cape, the disc, its edge, the self rim on your own, the cape's band
+ * on the rim, then a swing's ribbon (#3579): what lies under the body glyph.
  */
 export function paintBodyDisc(painter: Painter, body: StandingBody): void {
   const { x, y, r, cape } = body;
@@ -118,6 +118,11 @@ export function paintBodyDisc(painter: Painter, body: StandingBody): void {
   }
   if (cape !== undefined && shape !== undefined) {
     paintCapeBand(painter, shape.band, cape.look);
+  }
+  // Last on the body layer, so the rings and condition cues the scene
+  // draws next, and every mark, lie over it (ADR-0056 §4).
+  if (body.swingTrail !== undefined) {
+    paintSwingRibbon(painter, body.swingTrail.ribbon, body.swingTrail.colour);
   }
 }
 
@@ -262,12 +267,9 @@ function towardsAsh(colour: number): number {
   return out;
 }
 
-/** The off-hand, a swing's ribbon (#3579), then the weapon mark: what lies over the body glyph. */
+/** The off-hand, then the weapon mark: what lies over the body glyph. */
 export function paintBodyMarks(painter: Painter, body: StandingBody): void {
   paintOffhandMark(painter, body);
-  if (body.swingTrail !== undefined) {
-    paintSwingRibbon(painter, body.swingTrail.ribbon, body.swingTrail.colour);
-  }
   paintWeaponMark(painter, body, body.weaponId, body.frame);
 }
 
