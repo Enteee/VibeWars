@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * `pnpm run readme:shots` — retake the README's four pictures (#1347).
+ * `pnpm run readme:shots` — retake the README's five pictures (#1347, #3635).
  * Not part of CI: it is a docs tool, run whenever the UI has moved.
  *
  * Builds the static client with the BroadcastChannel transport, serves it,
@@ -14,9 +14,13 @@
  *                        seconds into the fight, a step in, with the HUD
  *   readme-map.png       the same match a few seconds later, out at Wide,
  *                        on a frame with no refusal text over the arena
+ *   readme-heights.png   a second 4v4 on another map, at Default, the hero
+ *                        walked to a place with two layers on screen
  *
+ * Both match maps are 2.5D: `MAP` shows a raised structure and a lit
+ * element round the fight, `HEIGHTS` a path under a bridge or wall-walk.
  * The shots are taken into a temporary directory and only moved into
- * docs/media/ once all four exist: a failed run leaves the old set. A step
+ * docs/media/ once all five exist: a failed run leaves the old set. A step
  * that cannot find what it looks for fails the run and says which step.
  * The bots fight at random, so the match pictures change between runs.
  *
@@ -50,6 +54,13 @@ const NAME = "Aria Stormveil";
 const BOTS = { 1: 3, 2: 4 };
 /** The arena both match shots are on; it fills the frame at Wide. */
 const MAP = "arena-canyon";
+/**
+ * The second map, and the world point the hero walks to on it: where two
+ * layers are on screen at once at Default.
+ */
+const HEIGHTS = { map: "threefold-keep", at: { x: 0, y: 0 } };
+/** How close to `HEIGHTS.at` the camera must be for the shot, world units. */
+const CLOSE_ENOUGH = 60;
 
 /** What the run is doing, for the error a failed step throws. */
 let step = "start";
@@ -240,18 +251,18 @@ async function yellowPixels(page, png) {
 }
 
 /**
- * Host a lobby, fill it with bots, play the match and shoot it twice.
+ * Host a 4v4 lobby on `map`, fill it with bots and start the match.
  *
  * @param {import("@playwright/test").Page} page
- * @param {string} dir
+ * @param {string} map
  */
-async function match(page, dir) {
+async function host(page, map) {
   step = "host a lobby";
   await page.locator(".screen-menu input.field-input").first().fill(NAME);
   await page.getByRole("button", { name: "host a lobby" }).click();
   await page.locator(".lobby-code").waitFor();
   step = "pick the map";
-  await page.locator(".lobby-map select").selectOption(MAP);
+  await page.locator(".lobby-map select").selectOption(map);
   step = "join team 1";
   await page.getByRole("button", { name: "join team 1" }).click();
   for (const [team, count] of Object.entries(BOTS)) {
@@ -270,6 +281,38 @@ async function match(page, dir) {
   await page.getByRole("button", { name: "Ready", exact: true }).click();
   await page.getByRole("button", { name: "start match" }).click();
   await page.locator(".hud-bar-health").waitFor();
+}
+
+/**
+ * Wait for a frame with no refusal text over the arena: the bots refuse
+ * now and then ("can't reach"). No target, so its ring is not counted as
+ * one. Esc cancels a cast first, then drops the target.
+ *
+ * @param {import("@playwright/test").Page} page
+ * @returns {Promise<Buffer>}
+ */
+async function quietShot(page) {
+  const target = page.locator(".hud-target-text");
+  for (let press = 0; press < 3 && (await target.textContent()) !== "no target"; press += 1) {
+    await page.keyboard.press("Escape");
+    await sleep(200);
+  }
+  let shot = await page.screenshot();
+  for (let retry = 0; retry < 20 && (await yellowPixels(page, shot)) > 10; retry += 1) {
+    await sleep(500);
+    shot = await page.screenshot();
+  }
+  return shot;
+}
+
+/**
+ * Play the match on `MAP` and shoot it twice.
+ *
+ * @param {import("@playwright/test").Page} page
+ * @param {string} dir
+ */
+async function match(page, dir) {
+  await host(page, MAP);
 
   step = "zoom in";
   // A step in, so the hero shows the fight rather than the floor round it.
@@ -293,19 +336,62 @@ async function match(page, dir) {
 
   step = "zoom out";
   await zoomTo(page, "Wide", 120);
-  // The bots refuse now and then ("can't reach"); wait for a frame with
-  // none over the arena. No target, so its ring is not counted as one.
-  // Esc cancels a cast first, then drops the target.
-  for (let press = 0; press < 3 && (await target.textContent()) !== "no target"; press += 1) {
-    await page.keyboard.press("Escape");
-    await sleep(200);
+  fs.writeFileSync(path.join(dir, "readme-map.png"), await quietShot(page));
+}
+
+/**
+ * The world point at the canvas centre, from the stage's `data-camera`.
+ *
+ * @param {import("@playwright/test").Page} page
+ * @returns {Promise<{ x: number, y: number }>}
+ */
+async function camera(page) {
+  const [x = 0, y = 0] = String(await page.locator("#viewport").getAttribute("data-camera"))
+    .split(",")
+    .map(Number);
+  return { x, y };
+}
+
+/**
+ * Play a match on `HEIGHTS.map`, walk the hero to `HEIGHTS.at` by left
+ * clicks toward it, and shoot it at Default. The follow camera centres on
+ * the hero, so the camera standing there means the hero does.
+ *
+ * @param {import("@playwright/test").Page} page
+ * @param {string} dir
+ */
+async function heights(page, dir) {
+  await host(page, HEIGHTS.map);
+  step = "zoom to Default";
+  await zoomTo(page, "Default", 120);
+  step = `walk to ${String(HEIGHTS.at.x)},${String(HEIGHTS.at.y)}`;
+  const canvas = page.locator("#viewport canvas:not(.compass)");
+  const box = await canvas.boundingBox();
+  if (box === null) {
+    throw new Error("the arena canvas has no box");
   }
-  let shot = await page.screenshot();
-  for (let retry = 0; retry < 20 && (await yellowPixels(page, shot)) > 10; retry += 1) {
-    await sleep(500);
-    shot = await page.screenshot();
+  for (let click = 0; click < 60; click += 1) {
+    const now = await camera(page);
+    const away = Math.hypot(HEIGHTS.at.x - now.x, HEIGHTS.at.y - now.y);
+    if (away < CLOSE_ENOUGH) {
+      break;
+    }
+    // At most 200 px from the centre, so the click lands on the canvas.
+    const zoom = Number(await page.locator("#viewport").getAttribute("data-zoom"));
+    const reach = Math.min(away * zoom, 200) / away;
+    await page.mouse.click(
+      box.x + box.width / 2 + (HEIGHTS.at.x - now.x) * reach,
+      box.y + box.height / 2 + (HEIGHTS.at.y - now.y) * reach,
+    );
+    await sleep(700);
   }
-  fs.writeFileSync(path.join(dir, "readme-map.png"), shot);
+  const at = await camera(page);
+  if (Math.hypot(HEIGHTS.at.x - at.x, HEIGHTS.at.y - at.y) >= CLOSE_ENOUGH) {
+    throw new Error(`the hero stopped at ${String(at.x)},${String(at.y)}`);
+  }
+  // Let the camera ease onto the hero before the shot.
+  await sleep(1000);
+  fs.writeFileSync(path.join(dir, "readme-heights.png"), await quietShot(page));
 }
 
 const served = options.url === undefined ? await serve() : undefined;
@@ -321,10 +407,11 @@ try {
     ...(executablePath === undefined ? {} : { executablePath }),
     args: ["--no-sandbox"],
   });
-  const page = await browser.newPage({
+  const context = await browser.newContext({
     viewport: { width: 1280, height: 720 },
     deviceScaleFactor: 1,
   });
+  const page = await context.newPage();
   // A missing selector fails the step in seconds, not minutes.
   page.setDefaultTimeout(20_000);
   step = "open the client";
@@ -332,7 +419,20 @@ try {
   await page.locator(".roster").waitFor();
   await editorAndTraining(page, dir);
   await match(page, dir);
-  const shots = ["readme-editor.png", "readme-training.png", "readme-match.png", "readme-map.png"];
+  // A fresh tab for the second match, the character kept in its storage.
+  await page.close();
+  const second = await context.newPage();
+  second.setDefaultTimeout(20_000);
+  await second.goto(url);
+  await second.locator(".roster").waitFor();
+  await heights(second, dir);
+  const shots = [
+    "readme-editor.png",
+    "readme-training.png",
+    "readme-match.png",
+    "readme-map.png",
+    "readme-heights.png",
+  ];
   for (const shot of shots) {
     fs.copyFileSync(path.join(dir, shot), path.join(MEDIA, shot));
     const kb = Math.round(fs.statSync(path.join(MEDIA, shot)).size / 1024);
