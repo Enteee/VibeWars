@@ -35,7 +35,7 @@ There is no server to say who earned what. ADR-0055's leaderboard is public, rep
 
    The tiers are constants in `apps/web/src/cosmetics/unlocks.ts` and are tuned there.
 
-2. **The selection is signed.** `CosmeticSelection {pubkey, ids, at}` holds at most one id per slot, at most 12 ids. The key signs it under `vibewars/cosmetics` with `PlayerKey.signCosmetics`, a purpose-named method like `signLobbyProof`. The selection rides in the lobby roster and is passed on in the match roster. Hosts pass it through untouched; they never check it, and neither does the simulation.
+2. **The selection is signed.** `CosmeticSelection {pubkey, ids, at}` holds at most one id per slot, so at most 3 ids: 24 seats of them fit one message. The key signs it under `vibewars/cosmetics` with `PlayerKey.signCosmetics`, a purpose-named method like `signLobbyProof`. The selection rides in a `"cosmetics"` roster the lobby host sends apart from `lobby-state`, which 24 signed selections would overflow (#2683), and the match host passes it on in its own. Hosts pass it through untouched; they never check it, and neither does the simulation.
 3. **The viewer decides.** A client draws another player's item only when all of these hold:
    - the signature verifies for that seat's key;
    - the item is in this build's catalog;

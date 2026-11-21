@@ -2167,6 +2167,7 @@ describe("the key gate (#1681, ADR-0043)", () => {
     playerPubkey: WIRE_PLAYER_KEY.pubkey,
     ascentMorale: 0,
     ranked: null,
+    cosmetics: testCosmetics,
   });
 
   /** The nonce `got` was challenged with. */

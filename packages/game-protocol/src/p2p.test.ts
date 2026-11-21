@@ -607,7 +607,6 @@ const lobbyState: WireLobbyState = {
       bot: false,
       away: false,
       playerPubkey: "1f".repeat(32),
-      cosmetics: COSMETICS,
     },
     {
       id: "peer-3",
@@ -620,7 +619,6 @@ const lobbyState: WireLobbyState = {
       bot: false,
       away: false,
       playerPubkey: "3e".repeat(32),
-      cosmetics: COSMETICS,
     },
     {
       id: "bot-1",
@@ -633,7 +631,6 @@ const lobbyState: WireLobbyState = {
       bot: true,
       away: false,
       playerPubkey: null,
-      cosmetics: null,
     },
   ],
   countdownSeconds: null,
@@ -1580,7 +1577,7 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
   ],
   ["capes of a seat in no cape (#3554)", parseWireCapes, { capes: [{ id: "p1", cape: null }] }],
   [
-    "a selection of 13 ids (ADR-0056)",
+    "a selection of 4 ids (ADR-0056)",
     parseWireCosmetics,
     {
       ...COSMETICS,

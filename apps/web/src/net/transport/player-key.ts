@@ -9,6 +9,7 @@
 import { sha256 } from "@noble/hashes/sha2.js";
 import { bytesToHex, concatBytes, hexToBytes, utf8ToBytes } from "@noble/hashes/utils.js";
 import { hashes, schnorr, utils } from "@noble/secp256k1";
+import { MAX_COSMETIC_IDS, MAX_COSMETIC_ID_LENGTH } from "@vibewars/game-protocol";
 import type { CosmeticSelection, LobbyProofFields, PlayerKey } from "@vibewars/game-session";
 import { resultDigest, startDigest, type ReceiptCrypto } from "@vibewars/ranking";
 
@@ -52,10 +53,6 @@ function lobbyProofDigest(pubkey: string, fields: LobbyProofFields): Uint8Array 
     concatBytes(...parts, hexToBytes(pubkey), hexToBytes(fields.nonce)),
   );
 }
-
-/** The most ids a selection holds, and the longest an id is (ADR-0056). */
-export const MAX_COSMETIC_IDS = 12;
-export const MAX_COSMETIC_ID_LENGTH = 32;
 
 /**
  * A cosmetic selection's digest (ADR-0056): the key, `at` as eight bytes,

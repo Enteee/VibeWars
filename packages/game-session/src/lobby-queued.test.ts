@@ -436,6 +436,7 @@ describe("a queued lobby", () => {
         playerPubkey: WIRE_PLAYER_KEY.pubkey,
         ascentMorale: 0,
         ranked: null,
+        cosmetics: testCosmetics,
       },
       "host",
     );
@@ -572,7 +573,6 @@ describe("a queued lobby", () => {
               bot: false,
               away: false,
               playerPubkey: "ab".repeat(32),
-              cosmetics: testCosmetics,
             },
           ],
           countdownSeconds: null,

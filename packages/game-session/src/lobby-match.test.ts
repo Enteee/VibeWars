@@ -91,6 +91,9 @@ describe("a lobby's own match", () => {
       .getSnapshot()
       .players.find((player) => player.name === "Guest 1");
     expect(listed?.cosmetics).toEqual(worn);
+    // Told apart from `lobby-state`, a guest hears it too (#2683).
+    const host = guest.connection.getSnapshot().players.find((player) => player.isHost);
+    expect(host?.cosmetics).toEqual(testCosmetics);
     await start(lobby);
     const [mine, theirs] = [await play(lobby.host), await play(guest)];
     await lobby.step(0.05);

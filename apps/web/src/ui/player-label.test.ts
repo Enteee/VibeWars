@@ -1,9 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { t } from "../i18n/index.js";
-import { signSelection, visibleCosmetics } from "../cosmetics/selection.js";
-import type { Leaderboard } from "../net/leaderboard.js";
-import { loadPlayerKey } from "../net/transport/player-key.js";
+import { cosmeticById, type CosmeticEntry } from "../cosmetics/catalog.js";
+import { DEFAULT_LOOK, type WornCosmetics } from "../cosmetics/selection.js";
 import { FakeElement } from "./fake-dom.test-support.js";
 import {
   bodyName,
@@ -150,50 +149,28 @@ describe("wearCosmetics (ADR-0056)", () => {
     vi.unstubAllGlobals();
   });
 
-  const stored = new Map<string, string>();
-  const key = loadPlayerKey({
-    getItem: (name: string) => stored.get(name) ?? null,
-    setItem: (name: string, value: string) => {
-      stored.set(name, value);
-    },
-  } as unknown as Storage);
-  const board: Leaderboard = {
-    asOf: 1_700_000_000,
-    entries: [
-      {
-        pubkey: key.pubkey,
-        rank: 40,
-        name: "Ana",
-        rating: 1700,
-        conservative: 1600,
-        matches: 60,
-        provisional: false,
-        wins: 30,
-        streak: 0,
-      },
-    ],
-  };
-  const cosmetics = signSelection(key, { frame: "frame-rose", title: "title-veteran" }, 1);
-  const labelOf = (seat: Parameters<typeof visibleCosmetics>[0], showOthers: boolean) =>
+  const labelOf = (worn: WornCosmetics) =>
     wearCosmetics(
       playerLabelElement("lobby-player", "Ana", null, 0),
-      visibleCosmetics(seat, board, showOthers),
+      worn,
     ) as unknown as FakeElement;
+  const entry = (id: string): CosmeticEntry => {
+    const found = cosmeticById(id);
+    if (found === undefined) {
+      throw new Error(id);
+    }
+    return found;
+  };
 
-  it("shows a verified frame and title", () => {
-    const label = labelOf({ playerPubkey: key.pubkey, cosmetics }, true);
+  it("shows a worn frame and title", () => {
+    const label = labelOf({ frame: entry("frame-rose"), title: entry("title-veteran") });
     expect(label.dataset.frame).toBe("frame-rose");
     expect(label.querySelector(".cosmetic-title")?.textContent).toBe(t("cosmetics.title.veteran"));
   });
 
-  it("draws the default for an unverified selection, or with others' cosmetics off", () => {
-    const forged = { ...cosmetics, sig: "00".repeat(64) };
-    for (const label of [
-      labelOf({ playerPubkey: key.pubkey, cosmetics: forged }, true),
-      labelOf({ playerPubkey: key.pubkey, cosmetics }, false),
-    ]) {
-      expect(label.dataset.frame).toBeUndefined();
-      expect(label.querySelector(".cosmetic-title")).toBeNull();
-    }
+  it("draws the default when nothing is worn", () => {
+    const label = labelOf(DEFAULT_LOOK);
+    expect(label.dataset.frame).toBeUndefined();
+    expect(label.querySelector(".cosmetic-title")).toBeNull();
   });
 });

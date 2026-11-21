@@ -69,6 +69,7 @@ import {
   type WireTeamSide,
   type WireRankedCancel,
   type WireCosmetics,
+  type WireCosmeticRoster,
   type WireRankedJoin,
   type WireRankedReceipt,
   type WireRankedResult,
@@ -933,7 +934,6 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       bot: member.bot !== null,
       away: away.has(member.id),
       playerPubkey: member.playerPubkey,
-      cosmetics: member.cosmetics,
     })),
     countdownSeconds: countdownEndsAt === undefined ? null : countdownLeft(countdownEndsAt),
     queueNonce: queueing?.nonce ?? null,
@@ -965,18 +965,59 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     }
   };
 
+  /**
+   * Every member's cosmetics (ADR-0056), apart from `lobby-state`: 24
+   * signed selections would cost it its one message (#2683).
+   */
+  const cosmetics = (): WireCosmeticRoster => ({
+    seats: [...members.values()].flatMap((member) =>
+      member.bot === null
+        ? [{ id: member.id, playerPubkey: member.playerPubkey, cosmetics: member.cosmetics }]
+        : [],
+    ),
+  });
+  /** The roster last told, and who has it: each is told it once, again only when it changes. */
+  let toldCosmetics = "";
+  const haveCosmetics = new Set<string>();
+
+  const tellCosmetics = (): void => {
+    const roster = cosmetics();
+    const told = JSON.stringify(roster);
+    if (told !== toldCosmetics) {
+      toldCosmetics = told;
+      haveCosmetics.clear();
+    }
+    const here = [...members.values()].filter(
+      (member) => member.bot === null && !away.has(member.id),
+    );
+    // One who left or dropped may come back under the same id, with nothing.
+    for (const id of [...haveCosmetics]) {
+      if (!here.some((member) => member.id === id)) {
+        haveCosmetics.delete(id);
+      }
+    }
+    const to = here.filter((member) => !haveCosmetics.has(member.id)).map(({ id }) => id);
+    if (to.length > 0) {
+      transport.send("cosmetics", roster, to);
+      for (const id of to) {
+        haveCosmetics.add(id);
+      }
+    }
+  };
+
   const broadcast = (): void => {
     tellReach();
     if (teamLobby === undefined) {
       transport.send("lobby-state", state(undefined));
-      return;
-    }
-    // Each member its own: a side's vote is its own (#1458).
-    for (const member of members.values()) {
-      if (member.bot === null && !away.has(member.id)) {
-        transport.send("lobby-state", state(member), member.id);
+    } else {
+      // Each member its own: a side's vote is its own (#1458).
+      for (const member of members.values()) {
+        if (member.bot === null && !away.has(member.id)) {
+          transport.send("lobby-state", state(member), member.id);
+        }
       }
     }
+    tellCosmetics();
   };
 
   const note = (kind: WireLobbyNote["kind"], reason: string, to?: string): void => {

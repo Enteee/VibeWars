@@ -8,6 +8,7 @@ import {
   type WireSharedTrack,
   parseWireLobbyNote,
   parseWireTeamProposalBuilds,
+  parseWireCosmeticRoster,
   parseWireLobbyState,
   parseWireLobbyWelcome,
   parsePeerLobbyChallenge,
@@ -38,6 +39,7 @@ import {
   type PeerLobbyJoin,
   type WireCape,
   type WireCosmetics,
+  type WireSeatCosmetics,
   type WireLobbyCommand,
   type WireLobbyState,
   type WireProposalBuild,
@@ -369,6 +371,8 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
   let latest: WireLobbyState | undefined;
   /** What the host sent of each proposal on this side (#1811), by proposer. */
   const proposalBuilds = new Map<string, readonly WireProposalBuild[]>();
+  /** What the host last said each keyed seat wears (ADR-0056), by peer id. */
+  let worn = new Map<string, WireSeatCosmetics>();
   /** The match whose start was already handed on, so a repeat is not. */
   let startedMatch: string | null = null;
   let closed = false;
@@ -624,6 +628,12 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
   /** Whether lobby messages from `from` count before the host is known. */
   const mayHost = (from: string): boolean => queued === undefined || provenHosts.has(from);
 
+  /** What `id` wears, if the host's roster says so for the key it seated it with. */
+  const wornBy = (id: string, playerPubkey: string | null): WireCosmetics | null => {
+    const seat = worn.get(id);
+    return seat?.playerPubkey === playerPubkey ? seat.cosmetics : null;
+  };
+
   const send = (command: WireLobbyCommand): void => {
     if (hostId !== undefined && !closed) {
       transport.send("lobby-cmd", command, hostId);
@@ -650,7 +660,7 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
       bot: player.bot,
       away: player.away,
       playerPubkey: player.playerPubkey,
-      cosmetics: player.cosmetics,
+      cosmetics: wornBy(player.id, player.playerPubkey),
     })),
     isHost: state.players.some((player) => player.id === selfId && player.isHost),
     countdownSeconds: state.countdownSeconds,
@@ -1058,6 +1068,19 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
               handler(note.reason);
             }
           }
+        }
+      }),
+      transport.on("cosmetics", (data, from) => {
+        if (hostId === undefined || from !== hostId) {
+          return;
+        }
+        const roster = parseWireCosmeticRoster(data);
+        if (roster === undefined) {
+          return;
+        }
+        worn = new Map(roster.seats.map((seat) => [seat.id, seat]));
+        for (const handler of [...changeHandlers]) {
+          handler();
         }
       }),
       transport.on("team-proposal-builds", (data, from) => {

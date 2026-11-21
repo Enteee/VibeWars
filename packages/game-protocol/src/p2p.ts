@@ -1132,8 +1132,11 @@ export interface WireCapes {
   readonly capes: readonly WireSeatCape[];
 }
 
-/** The most ids a cosmetic selection holds, and the longest an id is (ADR-0056). */
-export const MAX_COSMETIC_IDS = 12;
+/**
+ * The most ids a cosmetic selection holds, one a slot, and the longest an
+ * id is (ADR-0056): 24 seats' of them fit one `"cosmetics"` message.
+ */
+export const MAX_COSMETIC_IDS = 3;
 export const MAX_COSMETIC_ID_LENGTH = 32;
 
 /**
@@ -1157,9 +1160,9 @@ export interface WireSeatCosmetics {
 }
 
 /**
- * Host to its players and its observers (ADR-0056): every keyed seat's
- * cosmetics, a full replacement list, sent as `"capes"` is. A seat not in
- * it is drawn default.
+ * A lobby or match host to its players and its observers (ADR-0056):
+ * every keyed seat's cosmetics, a full replacement list, sent as
+ * `"capes"` is. A seat not in it is drawn default.
  */
 export interface WireCosmeticRoster {
   readonly seats: readonly WireSeatCosmetics[];
@@ -1577,8 +1580,6 @@ export interface WireLobbyPlayer {
    * bot. The host's word: only the host checked it.
    */
   readonly playerPubkey: string | null;
-  /** Its join's cosmetics (ADR-0056), as sent; `null` exactly for a bot. */
-  readonly cosmetics: WireCosmetics | null;
 }
 
 /** Lobby host to every peer, on every change: the whole lobby, not a delta. */
@@ -3747,12 +3748,6 @@ function parseLobbyPlayer(value: unknown): WireLobbyPlayer | undefined {
       : isTicketId(raw?.playerPubkey)
         ? raw.playerPubkey
         : undefined;
-  const cosmetics =
-    raw?.bot === true
-      ? raw.cosmetics === null
-        ? null
-        : undefined
-      : parseWireCosmetics(raw?.cosmetics);
   return raw !== undefined &&
     isString(raw.id) &&
     isString(raw.name) &&
@@ -3763,8 +3758,7 @@ function parseLobbyPlayer(value: unknown): WireLobbyPlayer | undefined {
     typeof raw.isHost === "boolean" &&
     typeof raw.bot === "boolean" &&
     typeof raw.away === "boolean" &&
-    playerPubkey !== undefined &&
-    cosmetics !== undefined
+    playerPubkey !== undefined
     ? {
         id: raw.id,
         name: raw.name,
@@ -3776,7 +3770,6 @@ function parseLobbyPlayer(value: unknown): WireLobbyPlayer | undefined {
         bot: raw.bot,
         away: raw.away,
         playerPubkey,
-        cosmetics,
       }
     : undefined;
 }
