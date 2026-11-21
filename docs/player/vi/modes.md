@@ -465,4 +465,6 @@ Hàng chờ xếp hạng ghép những người chơi có điểm gần nhau và
 
 10 trận tính điểm đầu tiên của bạn là tạm thời: hàng chờ ghi **Tạm thời (3/10 trận)** và bạn chưa có hạng. Sau đó menu chính hiển thị hạng của bạn. Điểm sẽ phai dần: mỗi ngày không có trận tính điểm khiến điểm của bạn kém chắc chắn hơn, và bảng xếp hạng sắp theo một giá trị thận trọng, nên nếu bạn ngừng chơi, hạng của bạn sẽ tụt trong vài tuần.
 
+Khi bảng xếp hạng có 20 người chơi đã ổn định, một trận xếp hạng chỉ được tính khi trong trận có ít nhất 1 người chơi đã ổn định (10 trận tính điểm trở lên): trận chỉ giữa những người chơi mới thì không tính điểm. Hãy chơi với người đã ổn định và các trận của bạn sẽ được tính.
+
 Nút **Bảng xếp hạng** trên thanh trên cùng liệt kê 100 người đứng đầu theo hạng, tên và điểm, với hàng của bạn được làm nổi bật. Nó được cập nhật mỗi giờ.

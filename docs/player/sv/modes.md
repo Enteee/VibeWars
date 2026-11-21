@@ -485,4 +485,6 @@ Rankade köer parar ihop spelare med liknande rating och delar in dem i lag med 
 
 Dina första 10 ratade matcher är preliminära: kön säger **Preliminär (3/10 matcher)** och du har ingen placering än. Därefter visar huvudmenyn din placering. Ratingar förfaller: varje dag utan ratad match gör din mindre säker, och topplistan sorterar efter ett försiktigt värde, så om du slutar spela sjunker din placering inom några veckor.
 
+När topplistan har 20 etablerade spelare räknas en rankad match bara om minst en spelare i den är etablerad (10 eller fler ratade matcher): en match enbart mellan nya spelare är inte ratad. Spela mot någon etablerad så räknas dina matcher.
+
 Knappen **Topplista** i toppfältet listar topp 100 efter placering, namn och rating, med din egen rad markerad. Den uppdateras varje timme.
