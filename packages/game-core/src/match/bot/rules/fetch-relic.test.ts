@@ -196,6 +196,25 @@ describe("fetch-relic: Relic Run bots fetch their relic and return the foe's (#2
       );
       expect(askBot(scene(), "other", carrying).moveTo).not.toEqual(ALTAR);
     });
+
+    it("fights one ahead of it, toward the altar", () => {
+      const sim = match([
+        body("near", 0, vec2(150, 400), { behaviour: BOT }),
+        body("other", 0, vec2(500, 400), { behaviour: BOT }),
+        body("foe", 1, vec2(650, 400)),
+      ]);
+      expect(askBot(sim, "other", BOTH_HOME).attackTargetId).toBe("foe");
+    });
+
+    it("still fights when one is behind and another ahead", () => {
+      const sim = match([
+        body("near", 0, vec2(150, 400), { behaviour: BOT }),
+        body("other", 0, vec2(500, 400), { behaviour: BOT }),
+        body("foe", 1, vec2(250, 400)),
+        body("ahead", 1, vec2(650, 400)),
+      ]);
+      expect(askBot(sim, "other", BOTH_HOME).attackTargetId).toBeDefined();
+    });
   });
 
   it("does nothing outside Relic Run", () => {
