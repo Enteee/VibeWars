@@ -112,16 +112,17 @@ const archiveDir = () => {
 };
 
 /**
- * One run on `dir` against relays that hold `held` (`undefined`: down).
+ * One run on `dir`, as of `asOfDay`, against relays that hold `held` (`undefined`: down).
  * @param {string} dir
  * @param {(RelayEvent[] | undefined)[]} held
+ * @param {number} [asOfDay]
  */
-async function runOn(dir, held) {
+async function runOn(dir, held, asOfDay = DAY) {
   /** @type {(number | undefined)[]} */
   const asked = [];
   const out = await run({
     dir,
-    asOfDay: DAY,
+    asOfDay,
     relays: RELAYS,
     fetch: (relay, since) => {
       asked.push(since);
@@ -225,11 +226,31 @@ describe("the leaderboard job", () => {
     expect(entriesOf(second.leaderboard).asOf).toBe(match.start.startedAt);
   });
 
+  it("takes in no receipt or partial that started before the as-of day's day before yesterday", async () => {
+    const dir = archiveDir();
+    const twoDaysBack = -2 * 86_400 - 3_600;
+    const oldest = receipt({ matchId: "m1", at: twoDaysBack });
+    const stale = receipt({ matchId: "m2", at: twoDaysBack - 1 });
+    const stalePartial = receipt({
+      matchId: "m3",
+      at: twoDaysBack - 1,
+      only: KEYS[0]?.pubkey ?? "",
+    });
+    const first = await runOn(dir, [[event(oldest), event(stale), event(stalePartial)], []]);
+    expect(first.log).toMatch(/stale: 2\n/);
+    expect(linesOf(first).map((line) => parseReceipt(line)?.start.matchId)).toEqual(["m1"]);
+
+    // Archived, a receipt is not judged again a day later.
+    const later = await runOn(dir, [[], []], DAY + 1);
+    expect(linesOf(later)).toHaveLength(1);
+  });
+
   it("keeps a shard per month, and rewrites only the month a late receipt lands in", async () => {
     const dir = archiveDir();
     const october = receipt({ matchId: "m1", at: -30 * 86_400 });
     const november = receipt({ matchId: "m2" });
-    await runOn(dir, [[event(october), event(november)], []]);
+    await runOn(dir, [[event(october)], []], DAY - 30);
+    await runOn(dir, [[event(november)], []]);
     const shards = path.join(dir, "receipts");
     const names = [shardOf(october.start.startedAt), shardOf(november.start.startedAt)];
     expect(fs.readdirSync(shards).sort()).toEqual(names);
@@ -238,7 +259,7 @@ describe("the leaderboard job", () => {
     const before = fs.readFileSync(novemberShard);
 
     const late = receipt({ matchId: "m3", at: -30 * 86_400 + 60 });
-    const out = await runOn(dir, [[event(late)], []]);
+    const out = await runOn(dir, [[event(late)], []], DAY - 29);
     expect(linesOf(out)).toHaveLength(3);
     expect(fs.readFileSync(octoberShard, "utf8").split("\n").filter(Boolean)).toHaveLength(2);
     expect(fs.readFileSync(novemberShard)).toEqual(before);

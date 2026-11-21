@@ -8,7 +8,8 @@
  * - `receipts/<YYYY-MM>.ndjson`: every kept receipt, one canonical JSON
  *   per line, sorted, in the shard of its `startedAt`'s UTC month, since
  *   relays forget. A receipt is never dropped from it, a new one whose
- *   every seat is at `MAX_RECEIPTS_PER_KEY_DAY` is not taken in (#3738),
+ *   every seat is at `MAX_RECEIPTS_PER_KEY_DAY`, or that started over
+ *   `MAX_RECEIPT_AGE_DAYS` before the day, is not taken in (#3738),
  *   and only shards whose bytes changed are written (#3730);
  * - `leaderboard.json`: `{asOf, engine, count, entries}`;
  * - `log.txt`: counts by reject reason, the relays reached, and the
@@ -80,6 +81,15 @@ const MAX_RECEIPTS_PER_KEY_DAY = 50;
  * @param {number} day
  */
 const endOf = (day) => (day + 1) * RATING.secondsPerDay;
+
+/**
+ * UTC days before `asOfDay` a new receipt may start on. Signers choose
+ * `startedAt`, so without it one key could spread a flood over every past
+ * day and get `MAX_RECEIPTS_PER_KEY_DAY` on each; with it, one day opens
+ * per day. The relays are asked from as far back (`SINCE_SLACK_SECONDS`).
+ * Archived receipts are not judged again (#3738).
+ */
+const MAX_RECEIPT_AGE_DAYS = 2;
 
 /** @param {Uint8Array} bytes */
 const sha256 = (bytes) => new Uint8Array(createHash("sha256").update(bytes).digest());
@@ -234,7 +244,9 @@ export function build({ archived, events, relaysReached, relays, asOfDay }) {
         ? "malformed"
         : receipt.start.startedAt >= endOf(asOfDay)
           ? "future"
-          : rejection(receipt, crypto);
+          : receipt.start.startedAt < (asOfDay - MAX_RECEIPT_AGE_DAYS) * RATING.secondsPerDay
+            ? "stale"
+            : rejection(receipt, crypto);
     if (reason !== undefined) {
       rejected.set(reason, (rejected.get(reason) ?? 0) + 1);
     } else if (receipt && keep(receipt)) {
