@@ -35,6 +35,7 @@ export type RenderItem =
   | { readonly kind: "paving"; readonly layer: number }
   | { readonly kind: "water"; readonly layer: number; readonly part: WaterPart }
   | { readonly kind: "zone"; readonly layer: number; readonly part: ZonePart }
+  | { readonly kind: "cosmetic-ground"; readonly layer: number }
   | { readonly kind: "ground-effect"; readonly layer: number }
   | { readonly kind: "fog"; readonly layer: number }
   | { readonly kind: "plume"; readonly band: number }
@@ -126,6 +127,13 @@ const TUNNEL_SEAM = 5.57;
 const GROUND_WATER: Record<WaterPart, number> = { surface: -1.6, ripples: -1.5 };
 const DECK_WATER: Record<WaterPart, number> = { surface: 5.6, ripples: 5.7 };
 /**
+ * A ground aura or footstep trail (ADR-0056 §4, #3578): on its layer's
+ * floor and water, lit as they are, under every ward, trap, zone, torch
+ * and body there, so it never covers a cue.
+ */
+const GROUND_COSMETIC = -1.05;
+const DECK_COSMETIC = 5.75;
+/**
  * An effect zone (ADR-0053): over its layer's water and lighting, which
  * never darkens it (ADR-0052: what matters to the fight is drawn unlit),
  * and under its torches and whoever stands in it.
@@ -205,6 +213,8 @@ export function renderOrder(item: RenderItem): number {
       return item.band * LAYER_STACK + PLUME;
     case "weather":
       return WEATHER;
+    case "cosmetic-ground":
+      return item.layer === 0 ? GROUND_COSMETIC : (item.layer - 1) * LAYER_STACK + DECK_COSMETIC;
     case "ground-effect":
       return item.layer === 0 ? -1 : item.layer * LAYER_STACK + DECK_GROUND_EFFECT;
     case "lighting":

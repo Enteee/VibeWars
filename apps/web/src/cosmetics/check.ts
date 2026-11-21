@@ -40,6 +40,8 @@ function coloursOf(look: CosmeticLook): readonly number[] {
   switch (look.kind) {
     case "frame":
     case "flame":
+    case "trail":
+    case "aura":
       return [look.colour];
     case "title":
       return [look.colour, look.glow];

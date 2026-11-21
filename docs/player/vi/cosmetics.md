@@ -1,9 +1,6 @@
 # Trang trí
 
-Trang trí thay đổi cách tên của bạn hiện ra với người chơi khác. Chúng thuần túy để làm đẹp: không
-món trang trí nào thay đổi cách chơi của bất cứ thứ gì, và không món nào che mất một tín hiệu mà
-bạn cần đọc trong trận đấu. Chúng thuộc về khóa người chơi của bạn, nên mọi nhân vật của bạn đều
-dùng chung.
+Trang trí thay đổi cách tên của bạn và mặt đất dưới chân bạn hiện ra với người chơi khác. Chúng thuần túy để làm đẹp: không món trang trí nào thay đổi cách chơi của bất cứ thứ gì, và không món nào che mất một tín hiệu mà bạn cần đọc trong trận đấu. Chúng thuộc về khóa người chơi của bạn, nên mọi nhân vật của bạn đều dùng chung.
 
 ## Cách nhận
 
@@ -13,14 +10,22 @@ Bạn nhận trang trí bằng các trận thắng xếp hạng đã được x�
 | Vật phẩm                                   | Nhận được khi                   |
 | ------------------------------------------ | ------------------------------- |
 | Khung ngọc bích và danh hiệu Kẻ thách đấu  | 5 trận thắng xếp hạng           |
+| Hào quang rêu, Vệt rêu                     | 5 trận thắng xếp hạng           |
 | Khung hồng và danh hiệu Lão binh           | 25 trận thắng xếp hạng          |
+| Hào quang than hồng, Vệt than hồng         | 25 trận thắng xếp hạng          |
+| Hào quang sương giá, Vệt sương giá         | 75 trận thắng xếp hạng          |
 | Khung xanh mòng két và danh hiệu Lãnh chúa | 200 trận thắng xếp hạng         |
+| Hào quang ánh sao, Vệt ánh sao             | 500 trận thắng xếp hạng         |
 | Khung lan tím và danh hiệu Nhà vô địch     | Một vị trí trong Top 100        |
 | Ngọn lửa chuỗi thắng                       | 3 trận thắng xếp hạng liên tiếp |
 
 Vật phẩm Top 100 và ngọn lửa chỉ tồn tại khi bạn còn giữ được chúng. Rớt khỏi Top 100, hoặc thua
 một trận xếp hạng, và chúng trở về giao diện mặc định cho đến khi bạn nhận lại. Thứ bạn đã chọn vẫn
 được giữ nguyên.
+
+## Trên mặt đất
+
+Hào quang mặt đất là một vòng mờ dưới chân bạn. Vệt bước chân để lại những hạt nhỏ nơi bạn đi qua, rồi mờ dần trong chốc lát. Cả hai được vẽ bên dưới mọi vòng, dấu và cảnh báo, và không bao giờ dùng màu của đội. Nếu hệ thống của bạn bật giảm chuyển động, hào quang đứng yên và không có vệt nào được vẽ.
 
 ## Cách trang bị
 

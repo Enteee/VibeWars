@@ -9,8 +9,8 @@ import type { MessageKey } from "../i18n/index.js";
 
 import { FLAME_STREAK, TIERS, TOP_RANK } from "./unlocks.js";
 
-/** The slots of the first cut (#3577); the others come with #3578–#3581. */
-export const COSMETIC_SLOTS = ["frame", "title", "flame"] as const;
+/** The slots so far (#3577, #3578); the others come with #3579–#3581. */
+export const COSMETIC_SLOTS = ["frame", "title", "flame", "aura", "trail"] as const;
 
 export type CosmeticSlot = (typeof COSMETIC_SLOTS)[number];
 
@@ -34,7 +34,11 @@ interface LookBase {
   readonly layer: CosmeticLayer;
   /** Whether it moves; under reduced motion it is drawn still. */
   readonly motion: "still" | "flicker";
-  /** A ground or trail effect's size and strength; `null` for a name-plate look. */
+  /**
+   * A ground or trail effect's size and strength; `null` for a name-plate
+   * look. An aura's `radiusOfBody` is how far it reaches past the body's
+   * rim, a trail's how big each mote is, both as a share of the body's radius.
+   */
   readonly ground: { readonly radiusOfBody: number; readonly alpha: number } | null;
   /** No cosmetic makes a sound (ADR-0056 §4). */
   readonly sound: null;
@@ -60,6 +64,17 @@ export type CosmeticLook = LookBase &
         readonly kind: "flame";
         readonly colour: number;
       }
+    | {
+        /** A soft ring at the feet (#3578), `sparks` sparks turning on it. */
+        readonly kind: "aura";
+        readonly colour: number;
+        readonly sparks: number;
+      }
+    | {
+        /** Motes left where the body walks (#3578), fading in `TRAIL_SECONDS`. */
+        readonly kind: "trail";
+        readonly colour: number;
+      }
   );
 
 export interface CosmeticEntry {
@@ -74,11 +89,27 @@ export interface CosmeticEntry {
 
 const TIER_1 = { wins: TIERS[1] } as const;
 const TIER_2 = { wins: TIERS[2] } as const;
+const TIER_3 = { wins: TIERS[3] } as const;
 const TIER_4 = { wins: TIERS[4] } as const;
+const TIER_5 = { wins: TIERS[5] } as const;
 const TOP = { rankAtMost: TOP_RANK } as const;
 /** The streak the flame is lit by (ADR-0056 §5). */
 const STREAK = { streakAtLeast: FLAME_STREAK } as const;
 const PLATE = { layer: "nameplate", motion: "still", ground: null, sound: null } as const;
+/** A ground aura's reach past the rim, and its strength (#3578): inside ADR-0056 §4. */
+const AURA = {
+  layer: "under-body",
+  motion: "flicker",
+  ground: { radiusOfBody: 0.5, alpha: 0.3 },
+  sound: null,
+} as const;
+/** A trail mote's size and strength (#3578). */
+const TRAIL = {
+  layer: "under-body",
+  motion: "flicker",
+  ground: { radiusOfBody: 0.25, alpha: 0.3 },
+  sound: null,
+} as const;
 
 /**
  * Four tiers, four hues: jade, rose, teal and orchid. Each is a hand's
@@ -94,6 +125,15 @@ const ORCHID = 0xe038e0;
  * the burning condition's orange and every other cue (`check.ts`).
  */
 const STREAK_GOLD = 0xffea00;
+/**
+ * The ground looks (#3578): moss, ember, frost and starlight. Vivid, each
+ * a hand's width from every cue (`check.ts`): a dull dust or a pale
+ * spark sits too near the zones' earth and stone to pass.
+ */
+const MOSS = 0x66ff33;
+const EMBER = 0xff1f5a;
+const FROST = 0x00ccff;
+const STARLIGHT = 0x8000ff;
 
 export const COSMETIC_CATALOG: readonly CosmeticEntry[] = [
   {
@@ -163,6 +203,62 @@ export const COSMETIC_CATALOG: readonly CosmeticEntry[] = [
       glow: ORCHID,
     },
     name: "cosmetics.title.champion",
+  },
+  {
+    id: "aura-moss",
+    slot: "aura",
+    requires: TIER_1,
+    look: { ...AURA, kind: "aura", colour: MOSS, sparks: 0 },
+    name: "cosmetics.item.auraMoss",
+  },
+  {
+    id: "aura-ember",
+    slot: "aura",
+    requires: TIER_2,
+    look: { ...AURA, kind: "aura", colour: EMBER, sparks: 3 },
+    name: "cosmetics.item.auraEmber",
+  },
+  {
+    id: "aura-frost",
+    slot: "aura",
+    requires: TIER_3,
+    look: { ...AURA, kind: "aura", colour: FROST, sparks: 4 },
+    name: "cosmetics.item.auraFrost",
+  },
+  {
+    id: "aura-starlight",
+    slot: "aura",
+    requires: TIER_5,
+    look: { ...AURA, kind: "aura", colour: STARLIGHT, sparks: 6 },
+    name: "cosmetics.item.auraStarlight",
+  },
+  {
+    id: "trail-moss",
+    slot: "trail",
+    requires: TIER_1,
+    look: { ...TRAIL, kind: "trail", colour: MOSS },
+    name: "cosmetics.item.trailMoss",
+  },
+  {
+    id: "trail-ember",
+    slot: "trail",
+    requires: TIER_2,
+    look: { ...TRAIL, kind: "trail", colour: EMBER },
+    name: "cosmetics.item.trailEmber",
+  },
+  {
+    id: "trail-frost",
+    slot: "trail",
+    requires: TIER_3,
+    look: { ...TRAIL, kind: "trail", colour: FROST },
+    name: "cosmetics.item.trailFrost",
+  },
+  {
+    id: "trail-starlight",
+    slot: "trail",
+    requires: TIER_5,
+    look: { ...TRAIL, kind: "trail", colour: STARLIGHT },
+    name: "cosmetics.item.trailStarlight",
   },
   {
     id: "flame-streak",
