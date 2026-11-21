@@ -1167,6 +1167,10 @@ describe("Stay together, on a queued lobby's host (#882, #1078)", () => {
         groupId: GROUP_ID,
         members: PARTY,
         consents: [await consentOf(KEY_A), await consentOf(KEY_H)],
+        claims: [
+          { rating: 800, asOf: 0 },
+          { rating: 800, asOf: 0 },
+        ],
       },
     ]);
     expect(answers.get("foe")).toEqual([]);
@@ -1308,7 +1312,11 @@ describe("Stay together, on a queued lobby's host (#882, #1078)", () => {
     const elsewhere = [KEY_A.ticketId, "f".repeat(64)];
     for (const consent of [await consentOf(KEY_A, elsewhere), await consentOf(KEY_H)]) {
       const checked = verifications;
-      allyRoom.send("party-consent", { memberKey: KEY_A.ticketId, consent }, "host");
+      allyRoom.send(
+        "party-consent",
+        { memberKey: KEY_A.ticketId, consent, claim: { rating: 800, asOf: 0 } },
+        "host",
+      );
       await until(() => verifications > checked);
     }
     // The host's own consent too: three checks, and still no party.

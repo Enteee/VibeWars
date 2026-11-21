@@ -229,7 +229,12 @@ describe("a party lobby's matchmaking (#1766)", () => {
       members.join(""),
       "team-arena-4v4",
     );
-    const formed = { groupId, members, consents: members.map((key) => `${hex(digest)}${key}`) };
+    const formed = {
+      groupId,
+      members,
+      consents: members.map((key) => `${hex(digest)}${key}`),
+      claims: members.map(() => ({ rating: 800, asOf: 0 })),
+    };
     expect(toHost).toEqual([formed]);
     expect(toAnn).toEqual([formed]);
     expect(lobby.lobby.teamPlan(HOST_KEY)?.map((seat) => seat.memberKey)).toEqual([
