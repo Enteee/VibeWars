@@ -11,6 +11,7 @@ import type {
 
 import type { NostrQueue } from "./net/transport/nostr-queue.js";
 import { watchRecords } from "./net/transport/index.js";
+import { leaderboard } from "./net/leaderboard.js";
 import { loadPlayerKey } from "./net/transport/player-key.js";
 
 import {
@@ -211,6 +212,7 @@ import {
 import { mountTopbar, paintStatus, type StatusState } from "./ui/topbar.js";
 import { closeTopbarPopover, isTopbarPopoverOpen } from "./ui/topbar-popover.js";
 import type { QueueStatusInput } from "./ui/queue-popover.js";
+import { rankLineElement, standingOf, type Standing } from "./ui/leaderboard-window.js";
 import { duplicateTeam, newTeam, replaceMember, teamCharacter } from "./ui/team-builder.js";
 import {
   mountTeamEditor,
@@ -828,10 +830,20 @@ async function main(): Promise<void> {
    * waits in the background, or the team's while its party lobby is queued;
    * none once a match is found.
    */
+  /** Where this player stands on the leaderboard held now (#3575). */
+  const ownStanding = (): Standing => standingOf(leaderboard.current(), playerKey.pubkey);
+
   const queueInput = (): QueueStatusInput | undefined => {
     if (queue !== undefined) {
       return queue.screen === undefined
-        ? { kind: "random", mode: queue.mode, since: queue.since, state: queue.state }
+        ? {
+            kind: "random",
+            mode: queue.mode,
+            since: queue.since,
+            state: queue.state,
+            // Random Arena fills every seat with a player: always ranked.
+            standing: ownStanding(),
+          }
         : undefined;
     }
     const team = teamQueue;
@@ -850,6 +862,8 @@ async function main(): Promise<void> {
       // Heroes' Ascent waits for a side at its round, never for bots (#1996).
       playBots: snapshot.isHost && snapshot.mode !== "heroes-ascent",
       hallHolder: hallWatch.holder(),
+      // A side with an empty seat brings a bot, and is unranked (ADR-0055).
+      standing: snapshot.players.length === snapshot.teamSize ? ownStanding() : undefined,
     };
   };
 
@@ -957,7 +971,13 @@ async function main(): Promise<void> {
       },
     },
     ownSignet,
+    playerKey.pubkey,
   );
+  // Once a visit (#3575): the menu's rank and a queue's rating read it.
+  leaderboard.onChange(() => {
+    paintQueue();
+  });
+  void leaderboard.load();
 
   const showViewport = (visible: boolean): void => {
     if (visible) {
@@ -1207,7 +1227,15 @@ async function main(): Promise<void> {
       },
     };
     if (entry === "random-arena") {
-      renderRandomArena(screenRoot, callbacks, list, problems, menuNotice, inAnyQueue());
+      renderRandomArena(
+        screenRoot,
+        callbacks,
+        list,
+        problems,
+        menuNotice,
+        inAnyQueue(),
+        rankLineElement(leaderboard, playerKey.pubkey),
+      );
     } else {
       renderCharacterBuilder(screenRoot, callbacks, list, problems, menuNotice);
     }
@@ -2121,8 +2149,8 @@ async function main(): Promise<void> {
       const { board, key } = offered.pressed;
       const { mode, name } = queue;
       closeStay(board);
-      const { groupId, members, consents } = formed;
-      requeue(mode, name, { party: { party: { members, key, groupId, consents }, board } });
+      const { groupId, members, consents, claims } = formed;
+      requeue(mode, name, { party: { party: { members, key, groupId, consents, claims }, board } });
     });
     through.onClosed(() => {
       if (stay !== offered) {
@@ -2788,8 +2816,8 @@ async function main(): Promise<void> {
         board.close();
         return;
       }
-      const { groupId, members, consents } = formed;
-      queueTeam(current, mode, { party: { members, key, groupId, consents }, board });
+      const { groupId, members, consents, claims } = formed;
+      queueTeam(current, mode, { party: { members, key, groupId, consents, claims }, board });
     });
     joined.onStartRejected((reason) => {
       if (lobby === joined) {

@@ -215,6 +215,11 @@ const ui = {
   // The same corners pointing in: leave fullscreen (#454).
   "fullscreen-exit": () =>
     `<path d="M4 9h5V4M15 4v5h5M20 15h-5v5M9 20v-5H4" ${stroke(C.ink, 2.2)}/>`,
+  // A cup with two handles on a stem and a foot: the leaderboard (#3575).
+  leaderboard: () =>
+    `<path d="M7 3.5h10v5.5a5 5 0 0 1-10 0z" fill="${C.ink}"/>` +
+    `<path d="M7 5.5H4.2v1.8a3.6 3.6 0 0 0 3.4 3.6M17 5.5h2.8v1.8a3.6 3.6 0 0 1-3.4 3.6" ${stroke(C.ink, 1.8)}/>` +
+    `<path d="M12 14v4" ${stroke(C.ink, 2.2)}/><path d="M7.5 20.5h9" ${stroke(C.ink, 2.4)}/>`,
   // Two crossed swords, tips up, guards and grips low: you are auto-attacking
   // (#160). Two blades, so it never reads as the one-sword attack skill type.
   attacking: () =>

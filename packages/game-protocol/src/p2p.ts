@@ -44,7 +44,14 @@ import {
   type LobbyPhase,
   type WireChainMark,
 } from "./protocol.js";
-import { ASCENT_ROUNDS, inPartyOrder, isQueueMode, type QueueMode } from "./queue.js";
+import {
+  ASCENT_ROUNDS,
+  inPartyOrder,
+  isQueueMode,
+  parseTicketClaim,
+  type QueueMode,
+  type TicketClaim,
+} from "./queue.js";
 import {
   MAX_RANKED_SEATS,
   parseRankedReceipt,
@@ -1464,22 +1471,26 @@ export interface WirePartyProposal {
  * groupId, members.join(""), mode)` for the proposal it answers: a
  * consent to one mode's party is none to another's (#1766). The
  * party's ticket publishes every consent, so nobody can name a member who
- * did not agree to that very party.
+ * did not agree to that very party. `claim` is the member's own, read
+ * from its own copy of the leaderboard (#3575): the ticket carries it.
  */
 export interface PeerPartyConsent {
   readonly memberKey: string;
   readonly consent: string;
+  readonly claim: TicketClaim;
 }
 
 /**
  * The host to each winner who said yes, and only to it (#882): every
  * winner consented, and these are their keys in party order, with each one's
- * consent, `consents[i]` by `members[i]` (#1078). They queue as one party.
+ * consent, `consents[i]` by `members[i]` (#1078), and its claim,
+ * `claims[i]` (#3575). They queue as one party.
  */
 export interface WirePartyFormed {
   readonly groupId: string;
   readonly members: readonly string[];
   readonly consents: readonly string[];
+  readonly claims: readonly TicketClaim[];
 }
 
 /** The host to each winner who said yes (#882): someone did not; queue alone. */
@@ -3574,25 +3585,32 @@ export function parseWirePartyProposal(value: unknown): WirePartyProposal | unde
 /** The `"party-consent"` channel. */
 export function parsePeerPartyConsent(value: unknown): PeerPartyConsent | undefined {
   const raw = fields(value);
-  return raw !== undefined && isTicketId(raw.memberKey) && isTicketSig(raw.consent)
-    ? { memberKey: raw.memberKey, consent: raw.consent }
+  const claim = parseTicketClaim(raw?.claim);
+  return raw !== undefined &&
+    isTicketId(raw.memberKey) &&
+    isTicketSig(raw.consent) &&
+    claim !== undefined
+    ? { memberKey: raw.memberKey, consent: raw.consent, claim }
     : undefined;
 }
 
 /**
  * The `"party-formed"` channel: a group id, the party's members, and one
- * consent a member.
+ * consent and one claim a member.
  */
 export function parseWirePartyFormed(value: unknown): WirePartyFormed | undefined {
   const raw = fields(value);
   const groupId: unknown = raw?.groupId;
   const members = parsePartyMembers(raw?.members);
   const consents: unknown = raw?.consents;
+  const claims: unknown = raw?.claims;
   if (
     !isTicketId(groupId) ||
     members === undefined ||
     !Array.isArray(consents) ||
-    consents.length !== members.length
+    consents.length !== members.length ||
+    !Array.isArray(claims) ||
+    claims.length !== members.length
   ) {
     return undefined;
   }
@@ -3603,7 +3621,15 @@ export function parseWirePartyFormed(value: unknown): WirePartyFormed | undefine
     }
     signed.push(consent);
   }
-  return { groupId, members, consents: signed };
+  const claimed: TicketClaim[] = [];
+  for (const claim of claims as readonly unknown[]) {
+    const parsed = parseTicketClaim(claim);
+    if (parsed === undefined) {
+      return undefined;
+    }
+    claimed.push(parsed);
+  }
+  return { groupId, members, consents: signed, claims: claimed };
 }
 
 /** The `"party-split"` channel. */

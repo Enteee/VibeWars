@@ -27,6 +27,7 @@ import {
   teamSizeOf,
   type QueueMode,
   type QueueTicket,
+  type TicketClaim,
 } from "@vibewars/game-protocol";
 
 import type { QueueBoard, QueueBoardEvent } from "./queue-board.js";
@@ -86,6 +87,8 @@ export interface QueueParty {
   readonly groupId: string;
   /** `consents[i]` by `members[i]`, as the leader publishes them. */
   readonly consents: readonly string[];
+  /** `claims[i]` by `members[i]`, each read from that member's leaderboard (#3575). */
+  readonly claims: readonly TicketClaim[];
 }
 
 export interface QueueClientOptions {
@@ -101,6 +104,11 @@ export interface QueueClientOptions {
   readonly holdsHallSince: number | null;
   /** A party that stayed together, as this member of it; alone without. */
   readonly party?: QueueParty;
+  /**
+   * Alone, this player's claim from its copy of the leaderboard (#3575),
+   * read at each publish; a party's members brought theirs.
+   */
+  readonly claim: () => TicketClaim;
   /** ms since the epoch. */
   readonly now: () => number;
   /**
@@ -149,8 +157,18 @@ export function startingQueueState(mode: QueueMode): QueueState {
 }
 
 export function createQueueClient(options: QueueClientOptions): QueueClient {
-  const { board, mode, ascentRound, holdsHallSince, party, now, newTicketKey, round, hardNat } =
-    options;
+  const {
+    board,
+    mode,
+    ascentRound,
+    holdsHallSince,
+    party,
+    claim,
+    now,
+    newTicketKey,
+    round,
+    hardNat,
+  } = options;
   const needed = 2 * teamSizeOf(mode);
   // A requeue after a fell-through lobby keeps this, and so its place (#854 C7).
   const enteredAt = now();
@@ -215,9 +233,15 @@ export function createQueueClient(options: QueueClientOptions): QueueClient {
       ascentRound,
       hardNat,
       holdsHallSince,
-      // Every key unlisted until rating pairing reads the leaderboard (#3575).
-      claims: Object.fromEntries(seated.map((member) => [member, UNLISTED_CLAIM])),
-      leaderboardAsOf: 0,
+      claims:
+        party === undefined
+          ? { [key.ticketId]: claim() }
+          : Object.fromEntries(
+              party.members.map((member, i) => [
+                member,
+                party.claims[i] ?? { rating: UNLISTED_CLAIM, asOf: 0 },
+              ]),
+            ),
     };
     publishedAt = ticket.heartbeatAt;
     // Counted at once, not when the board echoes it back.

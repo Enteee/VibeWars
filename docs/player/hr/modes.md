@@ -458,3 +458,9 @@ Iznad filtara traka **Dvorana junaka** prikazuje zadnjih 20 nizova, od najnovije
 ## Rangirani
 
 Meč iz reda bez botova je rangiran. Zaslon reda i timski predvorje to kažu prije nego što uđeš u red; jedan bot ostavlja meč nerangiranim. Kad se pronađe rangirani meč, svaki igrač potpisuje njegov početak, a zaslon do 15 sekundi prikazuje **Potvrđivanje rangiranog meča…**. Ako netko ne potvrdi, meč se otkazuje i svi se vraćaju u red. Na kraju svaki igrač potpisuje rezultat, a potvrda meča objavljuje se na Nostr relejima s javnim ključem i imenom lika svakog igrača; igrač bez lika naveden je kao starter. Tvoj rejting mijenja se unutar sat vremena. Napuštanje rangiranog meča računa se kao poraz, i gumb za napuštanje to kaže.
+
+Rangirani redovi spajaju igrače sličnog rejtinga i dijele ih u timove sličnog prosječnog rejtinga. Potraga počinje unutar 100 bodova od tvog rejtinga i širi se za 10 bodova za svaku sekundu čekanja, do 600, pa nitko ne čeka zauvijek. Dok čekaš, red prikazuje tvoj rejting.
+
+Tvojih prvih 10 rangiranih mečeva je privremeno: red kaže **Privremeno (3/10 mečeva)** i još nemaš mjesto. Nakon toga glavni izbornik prikazuje tvoje mjesto. Rejting slabi: svaki dan bez rangiranog meča čini tvoj manje sigurnim, a ljestvica poreda po opreznoj vrijednosti, pa ako prestaneš igrati, tvoje mjesto padne unutar nekoliko tjedana.
+
+Gumb **Ljestvica** na gornjoj traci prikazuje najboljih 100 po mjestu, imenu i rejtingu, s tvojim retkom istaknutim. Ažurira se svaki sat.

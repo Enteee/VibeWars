@@ -553,7 +553,11 @@ const lobbyJoin: PeerLobbyJoin = {
 const admission = { seatKey: "ab".repeat(32), admissionSig: "cd".repeat(64) };
 
 /** A party's consent to its proposal (#1078). */
-const partyConsent = { memberKey: "ab".repeat(32), consent: "ef".repeat(64) };
+const partyConsent = {
+  memberKey: "ab".repeat(32),
+  consent: "ef".repeat(64),
+  claim: { rating: 1234, asOf: 1_795_000_000 },
+};
 
 /** A party-proposal of `members`, as given (#1078), for a 2v2 (#1766). */
 function proposalOf(members: readonly string[]) {
@@ -562,7 +566,12 @@ function proposalOf(members: readonly string[]) {
 
 /** A party-formed of `members`, as given, each with a consent. */
 function partyOf(members: readonly string[]) {
-  return { groupId: "12".repeat(32), members, consents: members.map(() => "ef".repeat(64)) };
+  return {
+    groupId: "12".repeat(32),
+    members,
+    consents: members.map(() => "ef".repeat(64)),
+    claims: members.map((_, i) => ({ rating: 800 + i, asOf: i })),
+  };
 }
 
 const lobbyState: WireLobbyState = {
@@ -2635,6 +2644,16 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
   ],
   ["party-consent with no consent (#1078)", parsePeerPartyConsent, { memberKey: "ab".repeat(32) }],
   [
+    "party-consent with no claim (#3575)",
+    parsePeerPartyConsent,
+    { memberKey: partyConsent.memberKey, consent: partyConsent.consent },
+  ],
+  [
+    "party-consent with a fractional claim (#3575)",
+    parsePeerPartyConsent,
+    { ...partyConsent, claim: { rating: 800.5, asOf: 0 } },
+  ],
+  [
     "party-consent with a short consent (#1078)",
     parsePeerPartyConsent,
     { ...partyConsent, consent: "ef".repeat(63) },
@@ -2676,6 +2695,19 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     {
       ...partyOf(["ab".repeat(32), "cd".repeat(32)]),
       consents: ["ef".repeat(64), "zz".repeat(64)],
+    },
+  ],
+  [
+    "party-formed with a claim too few (#3575)",
+    parseWirePartyFormed,
+    { ...partyOf(["ab".repeat(32), "cd".repeat(32)]), claims: [{ rating: 800, asOf: 0 }] },
+  ],
+  [
+    "party-formed with a claim of no asOf (#3575)",
+    parseWirePartyFormed,
+    {
+      ...partyOf(["ab".repeat(32), "cd".repeat(32)]),
+      claims: [{ rating: 800, asOf: 0 }, { rating: 800 }],
     },
   ],
   [
@@ -3434,6 +3466,7 @@ describe("the ranked rounds' messages (#3573)", () => {
     characterId: `char-${digit}`,
     name: `Seat ${digit}`,
     claimedRating: 800,
+    leaderboardAsOf: 0,
     prev: "0".repeat(64),
   });
   const start = {
@@ -3443,7 +3476,6 @@ describe("the ranked rounds' messages (#3573)", () => {
     map: "test-arena",
     seed: 4_000_000_000,
     startedAt: 1_795_000_000,
-    leaderboardAsOf: 0,
     teams: [
       [seat("1"), seat("2")],
       [seat("3"), seat("4")],

@@ -57,6 +57,7 @@ import {
   type WireLobbyState,
   type WireLobbyWelcome,
   type WireMatchStart,
+  type TicketClaim,
   type WirePartyFormed,
   type WirePartyProposal,
   type WireLobbyMove,
@@ -175,8 +176,8 @@ interface PartyProposal {
   readonly keys: ReadonlyMap<string, string>;
   /** What each consent signs: the group won and exactly these members. */
   readonly digest: Promise<Uint8Array>;
-  /** Each verified consent, by member key. */
-  readonly consents: Map<string, string>;
+  /** Each verified consent, and the claim it came with (#3575), by member key. */
+  readonly consents: Map<string, { readonly consent: string; readonly claim: TicketClaim }>;
   /** Peers whose consent is being checked: one each, still. */
   readonly checking: Set<string>;
   /** On the lobby's clock. */
@@ -1487,7 +1488,12 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     });
     if (consents.length === proposal.members.length) {
       proposal.settled = true;
-      const formed: WirePartyFormed = { groupId, members: proposal.members, consents };
+      const formed: WirePartyFormed = {
+        groupId,
+        members: proposal.members,
+        consents: consents.map(({ consent }) => consent),
+        claims: consents.map(({ claim }) => claim),
+      };
       for (const to of proposal.keys.keys()) {
         transport.send("party-formed", formed, to);
       }
@@ -2799,8 +2805,8 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       const seats: RankedSeat[] = [];
       for (const seatKey of team) {
         const member = humans.find((human) => human.seatKey === seatKey);
-        const claimedRating = plan.group.claims[seatKey];
-        if (member === undefined || member.ranked === null || claimedRating === undefined) {
+        const claim = plan.group.claims[seatKey];
+        if (member === undefined || member.ranked === null || claim === undefined) {
           unready.push(seatKey);
           continue;
         }
@@ -2808,7 +2814,8 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
           pubkey: member.playerPubkey,
           characterId: member.ranked.characterId,
           name: seatName(member.name),
-          claimedRating,
+          claimedRating: claim.rating,
+          leaderboardAsOf: claim.asOf,
           prev: member.ranked.prev,
         });
       }
@@ -2824,7 +2831,6 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       map: plan.group.mapId,
       seed: plan.group.seed,
       startedAt,
-      leaderboardAsOf: plan.group.leaderboardAsOf,
       teams,
     } satisfies RankedStart);
   };
@@ -3109,7 +3115,8 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
         const formed: WirePartyFormed = {
           groupId: plan.group.groupId,
           members: proposal.members,
-          consents,
+          consents: consents.map(({ consent }) => consent),
+          claims: consents.map(({ claim }) => claim),
         };
         for (const to of told) {
           transport.send("party-formed", formed, to);
@@ -3194,7 +3201,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       if (closed || proposal.settled || !verify(memberKey, digest, said.consent)) {
         return;
       }
-      proposal.consents.set(memberKey, said.consent);
+      proposal.consents.set(memberKey, { consent: said.consent, claim: said.claim });
       if (queued === undefined) {
         gatherParty();
       } else {

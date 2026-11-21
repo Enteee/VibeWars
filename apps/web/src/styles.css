@@ -690,6 +690,74 @@ body {
   color: var(--ink-dim);
 }
 
+.queue-window-rating {
+  font-variant-numeric: tabular-nums;
+}
+
+/* The Leaderboard flyout (#3575): the top 100, scrolling, as the queue's. */
+#topbar .leaderboard-window {
+  position: absolute;
+  top: calc(100% + 0.3rem);
+  inset-inline-end: 0.5rem;
+  z-index: 20;
+  width: min(340px, calc(100vw - 1rem));
+  max-height: min(70vh, 32rem);
+  padding: 0.7rem;
+  gap: 0.5rem;
+  background: rgb(14 17 22 / 96%);
+  border: 1px solid var(--line);
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.leaderboard-window-title,
+.leaderboard-standing,
+.leaderboard-note {
+  margin: 0;
+}
+
+.leaderboard-standing,
+.leaderboard-note {
+  color: var(--ink-dim);
+}
+
+.leaderboard-list {
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.leaderboard-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-variant-numeric: tabular-nums;
+}
+
+.leaderboard-table th,
+.leaderboard-table td {
+  padding: 0.2rem 0.35rem;
+  text-align: start;
+}
+
+.leaderboard-table th {
+  color: var(--ink-dim);
+  font-weight: normal;
+}
+
+.leaderboard-table .leaderboard-rank,
+.leaderboard-table .leaderboard-rating {
+  width: 1%;
+  white-space: nowrap;
+}
+
+.leaderboard-table .leaderboard-rating {
+  text-align: end;
+}
+
+.leaderboard-table tr.is-self td {
+  background: rgb(89 194 255 / 14%);
+  color: var(--accent);
+}
+
 /* The jukebox from the bar's ♪, just under the bar. */
 #topbar .hud-jukebox {
   top: calc(100% + 0.3rem);
@@ -8182,6 +8250,12 @@ body:has(#screens[style*="none"]) .now-playing {
   font-size: 1.3rem;
   letter-spacing: 0.04em;
   text-align: center;
+}
+
+/* Over the ranked note (#3575): this player's rank, while they have one. */
+.menu-rank {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
 }
 
 /* Under Find a match (#3680): what a queued match without bots publishes. */

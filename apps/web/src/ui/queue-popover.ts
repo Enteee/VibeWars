@@ -3,6 +3,7 @@ import type { QueueState } from "@vibewars/game-session";
 
 import { t } from "../i18n/index.js";
 import { button, h } from "./kit.js";
+import { ratingLine, type Standing } from "./leaderboard-window.js";
 import { signedText, type SignedLine, type SignedName } from "./player-label.js";
 import { modeLabel, waitedLabel } from "./queue-screen.js";
 import { attachTopbarPopover, closeTopbarPopover } from "./topbar-popover.js";
@@ -26,6 +27,8 @@ export type QueueStatusInput =
       readonly since: number;
       /** `undefined` until the queue first says where it is. */
       readonly state: QueueState | undefined;
+      /** Where this player stands (#3575); `undefined` for a queue that is not ranked. */
+      readonly standing: Standing | undefined;
     }
   | {
       readonly kind: "team";
@@ -42,6 +45,8 @@ export type QueueStatusInput =
       readonly playBots: boolean;
       /** Who holds the Hall of Heroes (#2701), as the Vault says; `undefined` for nobody. */
       readonly hallHolder: SignedName | undefined;
+      /** Where this player stands (#3575); `undefined` for a side a bot fills. */
+      readonly standing: Standing | undefined;
     };
 
 /** What the flyout says. */
@@ -50,6 +55,8 @@ export interface QueueStatus {
   readonly title: string;
   /** m:ss, or in the Vault how long until the Hall opens. */
   readonly waited: string;
+  /** A ranked queue's "Your rating: 1623", or why there is none (#3575). */
+  readonly rating?: string;
   /** In the Vault, the holder named with their signet (#3232). */
   readonly detail?: string | SignedLine;
   /** Leave Queue, or a guest's word that only the host can. */
@@ -66,6 +73,12 @@ export function queueStatus(
   if (input === undefined) {
     return undefined;
   }
+  const status = unratedStatus(input, now);
+  return input.standing === undefined ? status : { ...status, rating: ratingLine(input.standing) };
+}
+
+/** The flyout for `input` at `now`, but for the rating line. */
+function unratedStatus(input: QueueStatusInput, now: number): QueueStatus {
   const waited = waitedLabel(now - input.since);
   if (input.kind === "random") {
     const detail = randomDetail(input.state);
@@ -168,6 +181,7 @@ export function queueButton(
     panel.tabIndex = -1;
     const title = h("h3", "queue-window-title");
     const waited = h("div", "queue-window-waited");
+    const rating = h("div", "queue-window-rating");
     const detail = h("div", "queue-window-detail");
     const playBots = button(t("lobby.playBots"), "primary queue-play-bots", () => {
       close();
@@ -178,7 +192,7 @@ export function queueButton(
       close();
       onLeave();
     });
-    panel.append(title, waited, playBots, detail, hostOnly, leave);
+    panel.append(title, waited, rating, playBots, detail, hostOnly, leave);
     paint = () => {
       const status = queueStatus(input, Date.now());
       if (status === undefined) {
@@ -186,6 +200,8 @@ export function queueButton(
       }
       title.textContent = status.title;
       waited.textContent = status.waited;
+      rating.textContent = status.rating ?? "";
+      rating.hidden = status.rating === undefined;
       paintDetail(detail, status.detail);
       detail.hidden = status.detail === undefined;
       playBots.hidden = status.playBots === undefined;

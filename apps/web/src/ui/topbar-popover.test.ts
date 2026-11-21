@@ -441,7 +441,13 @@ describe("the top bar's queue icon (#2743)", () => {
     expect(button.hidden).toBe(true);
     expect(button.getAttribute("aria-label")).toBe("In queue");
     expect(button.title).toBe("In queue");
-    setQueue({ kind: "random", mode: "random-arena-4v4", since: Date.now(), state: undefined });
+    setQueue({
+      kind: "random",
+      mode: "random-arena-4v4",
+      since: Date.now(),
+      state: undefined,
+      standing: undefined,
+    });
     expect(button.hidden).toBe(false);
     setQueue(undefined);
     expect(button.hidden).toBe(true);
@@ -454,6 +460,7 @@ describe("the top bar's queue icon (#2743)", () => {
       mode: "random-arena-2v2",
       since: Date.now(),
       state: { kind: "searching", searching: 3, teams: 3, needed: 4, waitedMs: 0 },
+      standing: undefined,
     });
     button.fire("click");
     expect(shown(parent.children[0])).toEqual([
@@ -482,6 +489,7 @@ describe("the top bar's queue icon (#2743)", () => {
       isHost: false,
       playBots: false,
       hallHolder: undefined,
+      standing: undefined,
     });
     button.fire("click");
     expect(shown(parent.children[0])).toEqual([
@@ -507,6 +515,7 @@ describe("the top bar's queue icon (#2743)", () => {
         isHost: true,
         playBots: true,
         hallHolder: undefined,
+        standing: undefined,
       });
     };
     queue(Date.now() - 9_200);

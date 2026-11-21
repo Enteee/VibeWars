@@ -539,3 +539,9 @@ hiçbir şey onu denetlemez.
 ## Dereceli
 
 Kuyruktan gelen ve içinde bot olmayan bir maç derecelidir. Kuyruk ekranı ve takım lobisi bunu sen kuyruğa girmeden söyler; tek bir bot maçı derecesiz bırakır. Dereceli bir maç bulunduğunda her oyuncu başlangıcını imzalar ve ekran 15 saniyeye kadar **Dereceli maç onaylanıyor…** gösterir. Biri onaylamazsa maç iptal edilir ve herkes kuyruğa döner. Sonunda her oyuncu sonucu imzalar ve maçın makbuzu her oyuncunun açık anahtarı ve karakter adıyla Nostr rölelerinde yayımlanır; karakteri olmayan oyuncu starter olarak geçer. Puanın bir saat içinde değişir. Dereceli bir maçtan ayrılmak yenilgi sayılır ve ayrıl düğmesi bunu söyler.
+
+Dereceli kuyruklar benzer puandaki oyuncuları eşleştirir ve onları ortalama puanı benzer takımlara böler. Arama puanının 100 puan yakınında başlar ve beklediğin her saniye için 10 puan genişler, 600'e kadar, böylece kimse sonsuza dek beklemez. Beklerken kuyruk puanını gösterir.
+
+İlk 10 puanlı maçın geçicidir: kuyruk **Geçici (3/10 maç)** der ve henüz sıran yoktur. Ondan sonra ana menü sıranı gösterir. Puanlar aşınır: puanlı maçsız geçen her gün seninkini daha belirsiz yapar ve lider tablosu temkinli bir değere göre sıralar, bu yüzden oynamayı bırakırsan sıran haftalar içinde düşer.
+
+Üst çubuktaki **Lider tablosu** düğmesi ilk 100'ü sıra, ad ve puana göre listeler, kendi satırın vurgulanır. Saatte bir güncellenir.
