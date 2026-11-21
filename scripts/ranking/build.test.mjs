@@ -131,6 +131,21 @@ async function runOn(dir, held) {
   return { ...out, asked };
 }
 
+/**
+ * The shard a receipt started at `startedAt` goes in: its UTC month.
+ * @param {number} startedAt
+ */
+const monthOf = (startedAt) => new Date(startedAt * 1000).toISOString().slice(0, 7);
+
+/**
+ * Every archived receipt line, shards in name order.
+ * @param {{ shards: Record<string, string> }} out
+ */
+const linesOf = ({ shards }) =>
+  Object.keys(shards)
+    .sort()
+    .flatMap((month) => (shards[month] ?? "").split("\n").filter(Boolean));
+
 /** @typedef {{ asOf: number, count: number, entries: { pubkey: string, matches: number }[] }} Board */
 /** @param {string} leaderboard */
 const entriesOf = (leaderboard) => {
@@ -148,11 +163,11 @@ describe("the leaderboard job", () => {
     expect(board.count).toBe(4);
     expect(board.entries.every((entry) => entry.matches === 1)).toBe(true);
     expect(board.asOf).toBe(match.start.startedAt);
-    expect(first.receipts.split("\n").filter(Boolean)).toHaveLength(1);
+    expect(linesOf(first)).toHaveLength(1);
     expect(first.asked).toEqual([undefined, undefined]);
 
     const second = await runOn(dir, [[event(match)], [event(match)]]);
-    expect(second.receipts).toBe(first.receipts);
+    expect(second.shards).toEqual(first.shards);
     expect(second.leaderboard).toBe(first.leaderboard);
     const third = await runOn(dir, [[event(match)], [event(match)]]);
     expect(third).toEqual(second);
@@ -169,11 +184,9 @@ describe("the leaderboard job", () => {
     const [a, b, c, d] = KEYS.map((key) => key.pubkey);
     const partials = [a, b, c, d].map((only) => receipt({ matchId: "m1", only }));
     await runOn(dir, [partials.slice(0, 2).map((p) => event(p, "/r1/x")), undefined]);
-    const { receipts, leaderboard } = await runOn(dir, [
-      undefined,
-      partials.slice(2).map((p) => event(p, "/r1/y")),
-    ]);
-    const lines = receipts.split("\n").filter(Boolean);
+    const out = await runOn(dir, [undefined, partials.slice(2).map((p) => event(p, "/r1/y"))]);
+    const { leaderboard } = out;
+    const lines = linesOf(out);
     expect(lines).toHaveLength(1);
     expect(Object.keys(parseReceipt(lines[0] ?? "")?.resultSigs ?? {})).toHaveLength(4);
     expect(entriesOf(leaderboard).entries.every((entry) => entry.matches === 1)).toBe(true);
@@ -201,7 +214,7 @@ describe("the leaderboard job", () => {
     expect(first.log).toMatch(/start-signature: 1\n/);
 
     const down = await runOn(dir, [undefined, undefined]);
-    expect(down.receipts).toBe(first.receipts);
+    expect(down.shards).toEqual(first.shards);
     expect(down.leaderboard).toBe(first.leaderboard);
     expect(down.log).toContain("no relay reached: the archive is unchanged");
   });
@@ -212,10 +225,11 @@ describe("the leaderboard job", () => {
     const future = receipt({ matchId: "m2", at: 80 * 365 * 86_400 });
     const first = await runOn(dir, [[event(match), event(future)], []]);
     expect(first.log).toMatch(/future: 1\n/);
-    expect(first.receipts.split("\n").filter(Boolean)).toHaveLength(1);
+    expect(linesOf(first)).toHaveLength(1);
 
     // An archive built as of a later day holds it: it still pins nothing.
-    fs.appendFileSync(path.join(dir, "receipts.ndjson"), `${JSON.stringify(future)}\n`);
+    const shard = path.join(dir, "receipts", `${monthOf(future.start.startedAt)}.ndjson`);
+    fs.writeFileSync(shard, `${JSON.stringify(future)}\n`);
     const second = await runOn(dir, [[], []]);
     expect(second.asked).toEqual(RELAYS.map(() => match.start.startedAt - 2 * 86_400));
     expect(entriesOf(second.leaderboard).asOf).toBe(match.start.startedAt);
@@ -302,6 +316,51 @@ function fakeRelay(store, cap) {
     }
   };
 }
+
+describe("the archive's month shards (#3730)", () => {
+  const lastMonth = -31 * 86_400;
+
+  it("puts receipts of two months in two shards, and rewrites only the one that changed", async () => {
+    const dir = archiveDir();
+    const old = receipt({ matchId: "m1", at: lastMonth });
+    const now = receipt({ matchId: "m2" });
+    const first = await runOn(dir, [[event(old), event(now)], []]);
+    const oldMonth = monthOf(old.start.startedAt);
+    const nowMonth = monthOf(now.start.startedAt);
+    expect(oldMonth).not.toBe(nowMonth);
+    expect(Object.keys(first.shards).sort()).toEqual([oldMonth, nowMonth]);
+    const files = fs.readdirSync(path.join(dir, "receipts")).sort();
+    expect(files).toEqual([`${oldMonth}.ndjson`, `${nowMonth}.ndjson`]);
+
+    const oldFile = path.join(dir, "receipts", `${oldMonth}.ndjson`);
+    const nowFile = path.join(dir, "receipts", `${nowMonth}.ndjson`);
+    /** @param {string} file */
+    const written = (file) => fs.statSync(file).mtimeMs;
+    const past = new Date(0);
+    fs.utimesSync(oldFile, past, past);
+    fs.utimesSync(nowFile, past, past);
+    const second = await runOn(dir, [[event(receipt({ matchId: "m3", at: 60 }))], []]);
+    expect(linesOf(second)).toHaveLength(3);
+    expect(written(oldFile)).toBe(0);
+    expect(written(nowFile)).not.toBe(0);
+    expect(fs.readFileSync(oldFile, "utf8")).toBe(first.shards[oldMonth]);
+  });
+
+  it("fails before writing anything when a shard would be too big", async () => {
+    const dir = archiveDir();
+    const match = receipt({ matchId: "m1" });
+    await expect(
+      run({
+        dir,
+        asOfDay: DAY,
+        relays: RELAYS,
+        fetch: () => Promise.resolve([event(match)]),
+        shardLimit: 100,
+      }),
+    ).rejects.toThrow(/over 100 bytes.*\d{4}-\d{2}\.ndjson/);
+    expect(fs.readdirSync(dir)).toEqual([]);
+  });
+});
 
 describe("fetchRelay", () => {
   afterEach(() => {

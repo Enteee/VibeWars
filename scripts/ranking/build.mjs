@@ -5,8 +5,10 @@
  * new ones, and rates them all from scratch.
  *
  * Writes into the archive directory:
- * - `receipts.ndjson`: every kept receipt, one canonical JSON per line,
- *   sorted, since relays forget. A receipt is never dropped from it;
+ * - `receipts/YYYY-MM.ndjson`: every kept receipt, one canonical JSON
+ *   per line, sorted, since relays forget, one shard per UTC month of
+ *   `startedAt` so no file nears GitHub's 100 MB limit (#3730). A
+ *   receipt is never dropped from them;
  * - `leaderboard.json`: `{asOf, engine, count, entries}`;
  * - `log.txt`: counts by reject reason, the relays reached, and the
  *   sha256 of `leaderboard.json`.
@@ -62,6 +64,15 @@ const PAGE_LIMIT = 500;
  * @param {number} day
  */
 const endOf = (day) => (day + 1) * RATING.secondsPerDay;
+
+/** The largest shard a run writes: GitHub refuses files over 100 MiB. */
+const SHARD_LIMIT_BYTES = 90 * 1024 * 1024;
+
+/**
+ * The shard `startedAt` belongs in: its UTC month, `YYYY-MM`.
+ * @param {number} startedAt
+ */
+const monthOf = (startedAt) => new Date(startedAt * 1000).toISOString().slice(0, 7);
 
 /** @param {Uint8Array} bytes */
 const sha256 = (bytes) => new Uint8Array(createHash("sha256").update(bytes).digest());
@@ -179,7 +190,7 @@ function rejection(receipt, crypto) {
  * The leaderboard and the archive `archived` and the relays' `events`
  * make, as of `asOfDay`.
  * @param {{ archived: string, events: unknown[], relaysReached: readonly string[], relays: readonly string[], asOfDay: number }} input
- * @returns {{ receipts: string, leaderboard: string, log: string }}
+ * @returns {{ shards: Record<string, string>, leaderboard: string, log: string }}
  */
 export function build({ archived, events, relaysReached, relays, asOfDay }) {
   const { crypto, trust } = receiptCrypto();
@@ -264,8 +275,15 @@ export function build({ archived, events, relaysReached, relays, asOfDay }) {
     "",
   ].join("\n");
 
+  /** @type {Record<string, string>} */
+  const shards = {};
+  for (const { receipt, line } of receipts) {
+    const month = monthOf(receipt.start.startedAt);
+    shards[month] = `${shards[month] ?? ""}${line}\n`;
+  }
+
   return {
-    receipts: receipts.map(({ line }) => `${line}\n`).join(""),
+    shards,
     leaderboard,
     log,
   };
@@ -381,12 +399,30 @@ export function fetchRelay(relay, since) {
 
 /**
  * Reads the archive in `dir`, fetches from `relays` with `fetch`, and
- * writes the three files back. A relay that is down only adds nothing.
- * @param {{ dir: string, asOfDay: number, relays?: readonly string[], fetch?: FetchRelay }} options
+ * writes it back: only the shards whose bytes changed, and the
+ * leaderboard and log. A relay that is down only adds nothing. A shard
+ * over `shardLimit` bytes fails the run before anything is written.
+ * @param {{ dir: string, asOfDay: number, relays?: readonly string[], fetch?: FetchRelay, shardLimit?: number }} options
  */
-export async function run({ dir, asOfDay, relays = RELAYS, fetch = fetchRelay }) {
-  const file = path.join(dir, "receipts.ndjson");
-  const archived = fs.existsSync(file) ? fs.readFileSync(file, "utf8") : "";
+export async function run({
+  dir,
+  asOfDay,
+  relays = RELAYS,
+  fetch = fetchRelay,
+  shardLimit = SHARD_LIMIT_BYTES,
+}) {
+  const shardDir = path.join(dir, "receipts");
+  const names = fs.existsSync(shardDir)
+    ? fs
+        .readdirSync(shardDir)
+        .filter((name) => name.endsWith(".ndjson"))
+        .sort()
+    : [];
+  /** @type {Map<string, string>} */
+  const onDisk = new Map(
+    names.map((name) => [name, fs.readFileSync(path.join(shardDir, name), "utf8")]),
+  );
+  const archived = [...onDisk.values()].join("");
   const newest = archived
     .split("\n")
     .map((line) => (line === "" ? undefined : parseReceipt(line)?.start.startedAt))
@@ -404,8 +440,23 @@ export async function run({ dir, asOfDay, relays = RELAYS, fetch = fetchRelay })
     relays,
     asOfDay,
   });
-  fs.mkdirSync(dir, { recursive: true });
-  fs.writeFileSync(file, out.receipts);
+  const shards = Object.entries(out.shards).map(([month, text]) => [`${month}.ndjson`, text]);
+  const over = shards.filter(([, text]) => Buffer.byteLength(text) > shardLimit);
+  if (over.length > 0) {
+    throw new Error(
+      `receipt shards over ${String(shardLimit)} bytes, GitHub would refuse them: ${over.map(([name]) => name).join(", ")}`,
+    );
+  }
+  fs.mkdirSync(shardDir, { recursive: true });
+  for (const [name, text] of shards) {
+    if (onDisk.get(name) !== text) {
+      fs.writeFileSync(path.join(shardDir, name), text);
+    }
+  }
+  const written = new Set(shards.map(([name]) => name));
+  for (const name of names.filter((name) => !written.has(name))) {
+    fs.rmSync(path.join(shardDir, name));
+  }
   fs.writeFileSync(path.join(dir, "leaderboard.json"), out.leaderboard);
   fs.writeFileSync(path.join(dir, "log.txt"), out.log);
   return out;
