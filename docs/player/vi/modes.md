@@ -175,9 +175,11 @@ Ma** trong căn cứ, một con ma chiến đấu bằng rìu mà không ai đi�
 Keep**, ba đội (hai đội khi không có đội thứ ba rảnh) tranh giành nó trên
 tháp của một pháo đài có tường bao. Tối đa 12 điểm mỗi đội, và nếu
 mọi địch đều ở mức -60% sĩ khí thì bạn thắng ngay lập tức. **Đại sảnh Anh
-hùng**, bản đồ Vua đồi kết thúc Đỉnh Anh Hùng, đặt tế đàn trên một bục có
-tường ở phía tây và phía đông, lên bằng lối phía bắc hoặc phía nam có hàng
-cột hai bên. Nhắm con ma của bạn bằng **chuột phải** và nhấn **Space** để bảo
+hùng** (8v8, 5000x4400), bản đồ kết thúc Đỉnh Anh Hùng, là một đại sảnh vàng
+cho ba đội: tế đàn đứng trên một bục có hàng cột với sáu cầu thang, trên một bệ
+có một hành lang vươn ra giữa mỗi cặp căn cứ, và một hầm mộ chạy dưới sàn từ
+mỗi căn cứ lên vào trong bệ. Cửa hầm mộ ban đầu đóng, và cần gạt của bất kỳ
+đội nào cũng mở cả ba. Nhắm con ma của bạn bằng **chuột phải** và nhấn **Space** để bảo
 nó theo bạn: nó đi cùng bạn và đánh những gì bạn đánh. Nhấn Space lên nó lần
 nữa thì nó đứng yên tại chỗ, đánh bất kỳ địch nào tới gần. Nếu bạn chết hoặc
 rời đi, nó đứng yên. Khi đang nhắm con ma, khung của nó cho biết nó theo ai,
@@ -362,7 +364,7 @@ kết thúc, và lần leo Đỉnh kế tiếp của bạn bắt đầu lại t�
 hoặc rời tổ đội cũng vậy. Trận thua vì chủ phòng rời đi thì giữ nguyên vòng
 của bạn.
 
-Đại sảnh bốc một trong ba chế độ cho mỗi trận: Vua đồi, Vận chuyển thánh tích hoặc Chiếm điểm, cho hai hoặc ba đội. Với hai đội, căn cứ thứ ba vẫn đóng, và điểm chiếm của nó cũng vậy. Một trận ở Đại sảnh kéo dài 11 phút và nhiều điểm nhất sẽ thắng; Chiếm điểm cũng kết thúc sớm khi dẫn trước 20 điểm. Chết không tốn sĩ khí. Người chết cùng trở lại căn cứ của mình mỗi phút tròn theo đồng hồ trận, nên đội bị quét sạch chưa thua, nhưng đội có mọi người chơi đều đã rời đi sẽ bị loại. Trong Vua đồi, đội giữ tế đàn tiếp tục ghi điểm sau khi con ma của đội chết, cho đến khi đội khác chiếm nó, và người chết của đội trở lại trên tế đàn. Hòa thì thuộc về đội ghi điểm sau cùng, hoặc trong Chiếm điểm là đội có lượt hạ gần nhất.
+Đại sảnh bốc một trong ba chế độ cho mỗi trận: Vua đồi, Vận chuyển thánh tích hoặc Chiếm điểm, cho hai hoặc ba đội. Với hai đội, căn cứ thứ ba vẫn đóng, và các điểm chiếm trên hai hành lang của nó cũng vậy. Một trận ở Đại sảnh kéo dài 11 phút và nhiều điểm nhất sẽ thắng; Chiếm điểm cũng kết thúc sớm khi dẫn trước 20 điểm. Chết không tốn sĩ khí. Người chết cùng trở lại căn cứ của mình mỗi phút tròn theo đồng hồ trận, nên đội bị quét sạch chưa thua, nhưng đội có mọi người chơi đều đã rời đi sẽ bị loại. Trong Vua đồi, đội giữ tế đàn tiếp tục ghi điểm sau khi con ma của đội chết, cho đến khi đội khác chiếm nó, và người chết của đội trở lại trên tế đàn. Hòa thì thuộc về đội ghi điểm sau cùng, hoặc trong Chiếm điểm là đội có lượt hạ gần nhất.
 
 **Hầm chờ.** Đại sảnh chỉ hình thành mỗi 12 phút theo giờ UTC, vào :00, :12, :24, :36 và :48. Cho đến lúc đó tổ đội của bạn chờ trong Hầm chờ: biểu tượng hàng chờ hiển thị thời gian tới lần mở kế tiếp và ai đang giữ Đại sảnh. Ở mỗi lần mở, đội giữ gặp tối đa hai đội thách đấu, hoặc tối đa ba đội thách đấu gặp nhau nếu không ai giữ. Chỉ các tổ đội chờ trước lần mở mới tham gia, và những tổ đội vượt quá số chỗ đó chờ lần kế tiếp. Đội giữ không có ai để đấu thì giữ Đại sảnh và chờ, không được tính trận thắng, và một đội thách đấu đơn độc cũng chờ. Khi một tổ đội thắng Đại sảnh, mọi game đang mở đều cho biết ai đang giữ nó: trưởng tổ đội, hoặc tag Bang khi hơn một nửa tổ đội dùng chung một tag.
 

@@ -175,9 +175,12 @@ Fantasmal** en su base, un fantasma que lucha con un hacha y que nadie juega. El
 **altar** está en el centro, a la misma distancia de ambas bases. En **Threefold
 Keep**, tres equipos (dos si no hay un tercero libre) luchan por él en la torre de
 un recinto amurallado. Como máximo 12 puntos por equipo, y si
-todos los rivales están a -60 % de moral, ganas al instante. **Hall of Heroes**, el mapa de Rey de la colina
-que cierra el Ascenso de los Héroes, lo eleva sobre un estrado amurallado al
-oeste y al este, con una subida norte y otra sur flanqueadas de pilares.
+todos los rivales están a -60 % de moral, ganas al instante. **Hall of Heroes** (8v8, 5000x4400), el mapa
+que cierra el Ascenso de los Héroes, es un salón dorado para tres equipos: el
+altar se alza sobre un estrado con pilares y seis escalinatas, en un zócalo con
+una galería entre cada par de bases, y una cripta corre bajo el suelo desde cada
+base hasta el interior del zócalo. Las puertas de las criptas empiezan cerradas,
+y la palanca de cualquier equipo abre las tres.
 Selecciona a tu fantasma con un **clic derecho** y pulsa **Space** para decirle
 que te siga: camina contigo y lucha contra lo mismo que tú. Pulsa Space sobre
 él otra vez y se queda donde está, luchando contra cualquier enemigo que se
@@ -353,7 +356,7 @@ de que termine, tu próximo Ascenso empieza otra vez en la ronda 1; también si 
 de la cola o del grupo. Una partida perdida porque se fue su anfitrión conserva tu
 ronda.
 
-El Hall sortea uno de tres modos en cada partida: Rey de la colina, Carrera de reliquias o Puntos de captura, para dos o tres equipos. Con dos, la tercera base queda cerrada, y con ella su punto de captura. Una partida en el Hall dura 11 minutos y ganan los puntos; Puntos de captura también termina antes con una ventaja de 20. Morir no cuesta moral. Los muertos vuelven juntos a su base en cada minuto completo del reloj de la partida, así que un equipo aniquilado no está vencido, pero un equipo cuyos jugadores se han ido todos queda fuera. En Rey de la colina, el equipo que tiene el altar sigue puntuando tras morir su fantasma, hasta que otro equipo lo reclame, y sus muertos vuelven en el altar. Un empate es para el equipo que puntuó por última vez o, en Puntos de captura, para el que logró la última baja.
+El Hall sortea uno de tres modos en cada partida: Rey de la colina, Carrera de reliquias o Puntos de captura, para dos o tres equipos. Con dos, la tercera base queda cerrada, y con ella los puntos de captura de sus dos galerías. Una partida en el Hall dura 11 minutos y ganan los puntos; Puntos de captura también termina antes con una ventaja de 20. Morir no cuesta moral. Los muertos vuelven juntos a su base en cada minuto completo del reloj de la partida, así que un equipo aniquilado no está vencido, pero un equipo cuyos jugadores se han ido todos queda fuera. En Rey de la colina, el equipo que tiene el altar sigue puntuando tras morir su fantasma, hasta que otro equipo lo reclame, y sus muertos vuelven en el altar. Un empate es para el equipo que puntuó por última vez o, en Puntos de captura, para el que logró la última baja.
 
 **La Cámara.** El Hall solo se forma cada 12 minutos según la hora UTC, a las :00, :12, :24, :36 y :48. Hasta entonces tu grupo espera en la Cámara: el icono de la cola muestra el tiempo hasta la próxima apertura y quién controla el Hall. En cada apertura, quien lo controla se enfrenta a un máximo de dos aspirantes, o se enfrentan hasta tres aspirantes si nadie lo controla. Solo participan los grupos que esperaban antes de la apertura, y los que no tengan plaza esperan a la siguiente. Quien lo controla sin rival conserva el Hall y espera, sin que cuente ninguna victoria, y un aspirante solo también espera. Cuando un grupo gana el Hall, todas las partidas abiertas dicen quién lo controla: su líder, o su etiqueta de hermandad si la comparte más de la mitad del grupo.
 

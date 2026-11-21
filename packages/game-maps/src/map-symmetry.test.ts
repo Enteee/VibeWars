@@ -9,12 +9,7 @@ import type { MapData } from "./schema.js";
  * on team 1, so neither side is favoured. Each new map of the epic joins
  * this list.
  */
-const SYMMETRIC = [
-  "hall-of-heroes-king",
-  "hall-of-heroes-relic",
-  "hall-of-heroes-capture",
-  "elite-zaishen-battle",
-];
+const SYMMETRIC = ["elite-zaishen-battle"];
 
 /** How far apart a thing and its twin's rotation may be. */
 const TOLERANCE = 1;

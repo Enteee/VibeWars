@@ -185,9 +185,11 @@ spelar. **Altaret** står i mitten, lika långt från båda baserna. På
 **Threefold Keep** slåss tre lag (två när inget tredje är ledigt) om det
 på tornet i en muromgärdad borg. Högst 12 poäng
 per lag, och om varje fiende står på -60 % moral vinner du direkt.
-**Hjältarnas sal**, King of the Hill-kartan som avslutar Heroes' Ascent,
-höjer det på en estrad med murar i väster och öster, uppför en norra
-eller en södra uppfart kantad av pelare. Välj ditt spöke som mål med ett
+**Hjältarnas sal** (8v8, 5000x4400), kartan som avslutar Heroes' Ascent,
+är en gyllene sal för tre lag: altaret står på en estrad med pelare och sex
+trappor, på en sockel med ett galleri ut mellan varje par baser, och en krypta
+löper under golvet från varje bas upp i sockeln. Kryptdörrarna börjar stängda,
+och vilket lags spak som helst öppnar alla tre. Välj ditt spöke som mål med ett
 **högerklick** och tryck på **Space** för att säga åt det att följa dig:
 det går med dig och slåss mot det du slåss mot. Tryck på Space på det
 igen så stannar det där det står och slåss mot varje fiende som kommer
@@ -379,7 +381,7 @@ stannar ni för att försvara den. Förlora, eller lämna en match innan den
 du lämnar kön eller gruppen. En match som förloras för att värden lämnade
 behåller din runda.
 
-Salen drar ett av tre lägen för varje match: King of the Hill, Reliklöpning eller Erövringspunkter, för två eller tre lag. Med två förblir den tredje basen stängd, och med den dess erövringspunkt. En match i Salen varar 11 minuter och flest poäng vinner; Erövringspunkter slutar också tidigt vid en ledning på 20. Döden kostar ingen moral. De döda återvänder tillsammans till sin bas vid varje hel minut på matchklockan, så ett utplånat lag är inte slaget, men ett lag vars spelare alla har lämnat är ute. I King of the Hill fortsätter laget som håller altaret att få poäng efter att dess spöke dött, tills ett annat lag tar det, och dess döda återvänder på altaret. Vid lika går segern till laget som fick poäng sist, eller i Erövringspunkter till laget med det senaste dödandet.
+Salen drar ett av tre lägen för varje match: King of the Hill, Reliklöpning eller Erövringspunkter, för två eller tre lag. Med två förblir den tredje basen stängd, och med den erövringspunkterna på dess två gallerier. En match i Salen varar 11 minuter och flest poäng vinner; Erövringspunkter slutar också tidigt vid en ledning på 20. Döden kostar ingen moral. De döda återvänder tillsammans till sin bas vid varje hel minut på matchklockan, så ett utplånat lag är inte slaget, men ett lag vars spelare alla har lämnat är ute. I King of the Hill fortsätter laget som håller altaret att få poäng efter att dess spöke dött, tills ett annat lag tar det, och dess döda återvänder på altaret. Vid lika går segern till laget som fick poäng sist, eller i Erövringspunkter till laget med det senaste dödandet.
 
 **Valvet.** Salen bildas bara var 12:e minut enligt UTC-klockan, vid :00, :12, :24, :36 och :48. Fram till dess väntar din grupp i Valvet: köikonen visar tiden till nästa öppning och vem som håller Salen. Vid varje öppning möter innehavaren upp till två utmanare, eller så möts upp till tre utmanare om ingen håller den. Bara grupper som väntar före öppningen deltar, och de som inte får plats väntar till nästa. En innehavare utan någon att slåss mot behåller Salen och väntar, utan att någon vinst räknas, och en ensam utmanare väntar också. När en grupp vinner Salen säger varje öppet spel vem som håller den nu: dess ledare, eller dess gilletagg när mer än halva gruppen delar en.
 

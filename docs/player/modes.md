@@ -178,9 +178,11 @@ nobody plays. The **altar** is in the centre, the same walk from both
 bases. On **Threefold Keep**, three teams (two when no third is free) fight for it
 on the tower of a walled keep. At most 12 points a team, and if every foe
 stands at -60% morale you win at once. The **Hall of
-Heroes**, the King of the Hill map that ends the Heroes' Ascent, raises
-it on a dais walled to the west and east, up a north or a south approach
-lined with pillars. Target your ghost with a
+Heroes** (8v8, 5000x4400), the map that ends the Heroes' Ascent, is a
+golden hall for three teams: the altar stands on a pillared dais of six
+stairs, on a plinth with a gallery out between each pair of bases, and a
+crypt runs under the floor from each base up into the plinth. The crypt
+doors start shut, and any team's lever opens all three. Target your ghost with a
 **right-click** and press **Space** to tell it to follow you: it walks
 with you and fights what you fight. Press Space on it again and it
 stays where it stands, fighting any foe who comes near. If you die or
@@ -363,7 +365,7 @@ seconds; win in the Hall, and you stay to defend it. Lose, or leave a match befo
 starts again at round 1; so does leaving the queue or the party. A match
 lost to its host leaving keeps your round.
 
-The Hall draws one of three modes for each match: King of the Hill, Relic Run or Capture Points, for two or three teams. With two, the third base stays closed, and with it its capture point. A Hall match runs 11 minutes and the most points win; Capture Points also ends early on a lead of 20. Death costs no morale. The dead return together at their base on every full minute of the match clock, so a wiped team is not beaten, but a team whose players have all left is out. In King of the Hill, the team holding the altar keeps scoring after its ghost dies, until another team claims it, and its dead return on the altar. A tie goes to the team that scored last, or in Capture Points to the team with the most recent kill.
+The Hall draws one of three modes for each match: King of the Hill, Relic Run or Capture Points, for two or three teams. With two, the third base stays closed, and with it the capture points on its two galleries. A Hall match runs 11 minutes and the most points win; Capture Points also ends early on a lead of 20. Death costs no morale. The dead return together at their base on every full minute of the match clock, so a wiped team is not beaten, but a team whose players have all left is out. In King of the Hill, the team holding the altar keeps scoring after its ghost dies, until another team claims it, and its dead return on the altar. A tie goes to the team that scored last, or in Capture Points to the team with the most recent kill.
 
 **The Vault.** The Hall forms only every 12 minutes on the UTC clock, at :00, :12, :24, :36 and :48. Until then your party waits in the Vault: the queue icon shows the time to the next opening and who holds the Hall. At each opening the holder meets up to two challengers, or up to three challengers meet if nobody holds it. Only parties waiting before the opening take part, and any beyond those seats wait for the next one. A holder with nobody to fight keeps the Hall and waits, with no win counted, and a lone challenger waits too. When a party wins the Hall, every open game says who holds it now: its leader, or its guild tag when more than half the party shares one.
 
