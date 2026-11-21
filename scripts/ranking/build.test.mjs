@@ -197,6 +197,39 @@ describe("the leaderboard job", () => {
     expect(fs.readdirSync(boards)).toHaveLength(3);
   });
 
+  it("moves asOf past the previous board when a late receipt with an older startedAt changes it (#3575)", async () => {
+    const dir = archiveDir();
+    const older = receipt({ matchId: "m1" });
+    const newer = receipt({ matchId: "m2", at: 300 });
+    const first = await runOn(dir, [[event(newer)], []]);
+    expect(entriesOf(first.leaderboard).asOf).toBe(newer.start.startedAt);
+    const second = await runOn(dir, [[event(older), event(newer)], []]);
+    expect(entriesOf(second.leaderboard).asOf).toBe(newer.start.startedAt + 1);
+    const boards = path.join(dir, "boards");
+    expect(
+      fs.readFileSync(path.join(boards, `${String(newer.start.startedAt)}.json`), "utf8"),
+    ).toBe(first.leaderboard);
+    // Nothing new: the same asOf and the same bytes.
+    const third = await runOn(dir, [[event(older), event(newer)], []]);
+    expect(third.leaderboard).toBe(second.leaderboard);
+  });
+
+  it("fails, writing nothing, rather than rewrite a published board (#3575)", async () => {
+    const dir = archiveDir();
+    const early = receipt({ matchId: "m1" });
+    const late = receipt({ matchId: "m2", at: 300 });
+    const first = await runOn(dir, [[event(early)], []]);
+    const planted = path.join(dir, "boards", `${String(late.start.startedAt)}.json`);
+    fs.writeFileSync(planted, "{}");
+    await expect(runOn(dir, [[event(early), event(late)], []])).rejects.toThrow(
+      /published with other bytes/,
+    );
+    expect(fs.readFileSync(planted, "utf8")).toBe("{}");
+    expect(fs.readFileSync(path.join(dir, "leaderboard.json"), "utf8")).toBe(first.leaderboard);
+    const shard = path.join(dir, "receipts", shardOf(early.start.startedAt));
+    expect(fs.readFileSync(shard, "utf8")).toBe(`${linesOf(first)[0] ?? ""}\n`);
+  });
+
   it("merges partial copies of one result into one receipt", async () => {
     const dir = archiveDir();
     const [a, b, c, d] = KEYS.map((key) => key.pubkey);
