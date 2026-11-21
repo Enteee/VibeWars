@@ -469,4 +469,6 @@ Les files classées réunissent des joueurs de cote proche et les répartissent 
 
 Tes 10 premiers matchs cotés sont provisoires : la file indique **Provisoire (3/10 matchs)** et tu n’as pas encore de rang. Ensuite, le menu principal affiche ton rang. Les cotes s’érodent : chaque jour sans match coté rend la tienne moins sûre, et le classement trie selon une valeur prudente, donc si tu arrêtes de jouer ton rang baisse en quelques semaines.
 
+Dès que le classement compte 20 joueurs confirmés, un match classé ne compte que si au moins un de ses joueurs est confirmé (10 matchs cotés ou plus) : un match entre nouveaux joueurs uniquement n’est pas coté. Joue contre quelqu’un de confirmé et tes matchs comptent.
+
 Le bouton **Classement** de la barre du haut liste les 100 meilleurs par rang, nom et cote, ta ligne mise en évidence. Il est mis à jour toutes les heures.

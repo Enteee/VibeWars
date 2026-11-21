@@ -162,4 +162,6 @@ Hodnocené fronty spojují hráče s podobným hodnocením a dělí je do týmů
 
 Tvých prvních 10 hodnocených zápasů je předběžných: fronta píše **Předběžné (3/10 zápasů)** a zatím nemáš pořadí. Potom hlavní nabídka ukazuje tvé pořadí. Hodnocení chátrá: každý den bez hodnoceného zápasu ho činí méně jistým a žebříček řadí podle opatrné hodnoty, takže když přestaneš hrát, tvé pořadí během týdnů klesne.
 
+Jakmile má žebříček 20 zavedených hráčů, hodnocený zápas se počítá jen tehdy, když je v něm aspoň jeden zavedený hráč (10 nebo více hodnocených zápasů): zápas jen mezi novými hráči je nehodnocený. Zahraj si se zavedeným hráčem a tvé zápasy se počítají.
+
 Tlačítko **Žebříček** v horní liště ukazuje nejlepších 100 podle pořadí, jména a hodnocení, s tvým řádkem zvýrazněným. Aktualizuje se každou hodinu.
