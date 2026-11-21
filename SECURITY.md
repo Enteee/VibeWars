@@ -395,8 +395,8 @@ What it does not defend against:
   signature carries a `RANKED_WORK_BITS` (17) proof of work, about 131 k
   SHA-256 on average. It is sized for a phone in a browser worker; native
   or GPU code does one in milliseconds. It prices out a careless script,
-  not a ring. What bounds a ring is the 20-a-day per-key cap (#3738) and
-  the established-seat rule (#3745).
+  not a ring. What bounds a ring is the per-key cap of 50 receipts a day
+  (#3738), of which 20 rate, and the established-seat rule (#3745).
 - **Who played whom is public**, by key and character name, for good.
 - **Flooding the relays delays the leaderboard.** The job pages back
   through each relay with `until`; a full page of spam in one second is
