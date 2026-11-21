@@ -355,6 +355,33 @@ export default {
   "controls.weaponSet4": "Σετ όπλων 4",
   "controls.weaponSets": "Σετ όπλων",
   "controls.withShift": "Shift + {key}",
+
+  "cosmetics.item.flame": "Φλόγα σερί νικών",
+  "cosmetics.item.frameJade": "Πλαίσιο νεφρίτη",
+  "cosmetics.item.frameOrchid": "Πλαίσιο ορχιδέας",
+  "cosmetics.item.frameRose": "Ροζ πλαίσιο",
+  "cosmetics.item.frameTeal": "Γαλαζοπράσινο πλαίσιο",
+  "cosmetics.locked": "Κλειδωμένο",
+  "cosmetics.none": "Κανένα",
+  "cosmetics.note":
+    "Καθαρά για την εμφάνιση: κανένα διακοσμητικό δεν αλλάζει το παιχνίδι. Κερδίζονται με βαθμολογημένες νίκες στον δημόσιο πίνακα κατάταξης και ισχύουν για όλους τους χαρακτήρες σου.",
+  "cosmetics.requires.streak": {
+    one: "{count} βαθμολογημένη νίκη στη σειρά",
+    other: "{count} βαθμολογημένες νίκες στη σειρά",
+  },
+  "cosmetics.requires.top": "Top {rank}",
+  "cosmetics.requires.wins": {
+    one: "{count} βαθμολογημένη νίκη",
+    other: "{count} βαθμολογημένες νίκες",
+  },
+  "cosmetics.showOthers": "Εμφάνιση διακοσμητικών άλλων παικτών",
+  "cosmetics.slot.flame": "Φλόγα σερί νικών",
+  "cosmetics.slot.frame": "Πλαίσιο ονόματος",
+  "cosmetics.slot.title": "Τίτλος",
+  "cosmetics.title.champion": "Πρωταθλητής",
+  "cosmetics.title.contender": "Διεκδικητής",
+  "cosmetics.title.veteran": "Βετεράνος",
+  "cosmetics.title.warlord": "Πολέμαρχος",
   "creature.rat": "Αρουραίος",
 
   "echo.secondsLeft": { one: "Ηχώ: απομένει {count} δ", other: "Ηχώ: απομένουν {count} δ" },
@@ -821,6 +848,7 @@ export default {
   "music.trackWithMood": "{track} ({mood})",
 
   "options.controls": "χειρισμός",
+  "options.cosmetics": "διακοσμητικά",
   "options.display": "οθόνη",
   "options.label": "Επιλογές",
   "options.language": "γλώσσα",

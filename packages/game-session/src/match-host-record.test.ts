@@ -15,6 +15,7 @@ import {
   validateMatchRecord,
   type MatchRecord,
 } from "./match-record.js";
+import { testCosmetics } from "./player-key.test-support.js";
 
 /** The finished match's record (#2528): what the host hands its publisher. */
 
@@ -62,6 +63,7 @@ describe("a finished match's record (#2528)", () => {
             bot: false,
             playerPubkey: "ab".repeat(32),
             startMorale: 0,
+            cosmetics: testCosmetics,
             build: null,
           },
         ],

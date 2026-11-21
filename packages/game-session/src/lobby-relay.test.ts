@@ -16,6 +16,7 @@ import {
 } from "./lobby-harness.test-support.js";
 import { RELAY_CRED_EVERY_MS } from "./lobby-host.js";
 import { settle } from "./match-harness.test-support.js";
+import { testCosmetics } from "./player-key.test-support.js";
 import { RELAY_ADMIT_MS, RELAY_ROOMS_LINGER_MS } from "./relay-admission.js";
 import type { Transport } from "./transport.js";
 
@@ -61,6 +62,7 @@ const joinAs = (name: string, rejoinToken: string | null, relayPub: string | nul
   playerPubkey: WIRE_PLAYER_KEY.pubkey,
   ascentMorale: 0,
   ranked: null,
+  cosmetics: testCosmetics,
 });
 
 describe("a lobby host's relay holders (#2529)", () => {

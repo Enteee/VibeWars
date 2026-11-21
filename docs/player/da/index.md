@@ -9,6 +9,7 @@ side i denne mappe står her præcis én gang.
 - [Evner og builds](skills-and-builds.md)
 - [Udstyr](equipment.md)
 - [Spiltilstande](modes.md)
+- [Kosmetik](cosmetics.md)
 - [Verdenselementer](world-elements.md)
 - [Bots](bots.md)
 - [Ordliste](glossary.md)

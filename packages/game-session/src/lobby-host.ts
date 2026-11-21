@@ -68,6 +68,8 @@ import {
   type WireTeam,
   type WireTeamSide,
   type WireRankedCancel,
+  type WireCosmetics,
+  type WireSeatCosmetics,
   type WireRankedJoin,
   type WireRankedReceipt,
   type WireRankedResult,
@@ -481,6 +483,7 @@ type Member = MemberBase &
          */
         bot: PlayerBuild;
         readonly playerPubkey: null;
+        readonly cosmetics: null;
       }
     | {
         bot: null;
@@ -490,6 +493,8 @@ type Member = MemberBase &
         readonly ascentMorale: number;
         /** Its join's part of a ranked seat (#3573); `null` for none. */
         readonly ranked: WireRankedJoin | null;
+        /** Its cosmetics (ADR-0056), from its join or its last set-profile; relayed unread. */
+        cosmetics: WireCosmetics;
       }
   );
 
@@ -960,18 +965,72 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     }
   };
 
+  /**
+   * Each keyed seat's cosmetics (ADR-0056), apart from `lobby-state` and
+   * a message a seat: 24 signed selections would not fit one (#2683).
+   * By seat, the selection last told and who has it: each is told it
+   * once, again only when it changes.
+   */
+  const toldCosmetics = new Map<
+    string,
+    { readonly seat: WireSeatCosmetics; readonly to: Set<string> }
+  >();
+
+  const tellCosmetics = (): void => {
+    const here = [...members.values()].filter(
+      (member) => member.bot === null && !away.has(member.id),
+    );
+    for (const id of [...toldCosmetics.keys()]) {
+      if (members.get(id)?.bot !== null) {
+        toldCosmetics.delete(id);
+      }
+    }
+    for (const member of members.values()) {
+      if (member.bot !== null) {
+        continue;
+      }
+      const last = toldCosmetics.get(member.id);
+      const told =
+        last?.seat.playerPubkey === member.playerPubkey && last.seat.cosmetics === member.cosmetics
+          ? last
+          : {
+              seat: {
+                id: member.id,
+                playerPubkey: member.playerPubkey,
+                cosmetics: member.cosmetics,
+              },
+              to: new Set<string>(),
+            };
+      toldCosmetics.set(member.id, told);
+      // One who left or dropped may come back under the same id, with nothing.
+      for (const id of [...told.to]) {
+        if (!here.some((other) => other.id === id)) {
+          told.to.delete(id);
+        }
+      }
+      const to = here.filter(({ id }) => !told.to.has(id)).map(({ id }) => id);
+      if (to.length > 0) {
+        transport.send("cosmetics", told.seat, to);
+        for (const id of to) {
+          told.to.add(id);
+        }
+      }
+    }
+  };
+
   const broadcast = (): void => {
     tellReach();
     if (teamLobby === undefined) {
       transport.send("lobby-state", state(undefined));
-      return;
-    }
-    // Each member its own: a side's vote is its own (#1458).
-    for (const member of members.values()) {
-      if (member.bot === null && !away.has(member.id)) {
-        transport.send("lobby-state", state(member), member.id);
+    } else {
+      // Each member its own: a side's vote is its own (#1458).
+      for (const member of members.values()) {
+        if (member.bot === null && !away.has(member.id)) {
+          transport.send("lobby-state", state(member), member.id);
+        }
       }
     }
+    tellCosmetics();
   };
 
   const note = (kind: WireLobbyNote["kind"], reason: string, to?: string): void => {
@@ -1044,6 +1103,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
             bot: false,
             build,
             playerPubkey: member.playerPubkey,
+            cosmetics: member.cosmetics,
             startMorale: queued?.group.mode === "heroes-ascent" ? member.ascentMorale : 0,
           }
         : { ...seat, bot: true, build: build ?? member.bot };
@@ -2004,6 +2064,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       relayPub: null,
       bot: build,
       playerPubkey: null,
+      cosmetics: null,
     });
     return id;
   };
@@ -2065,6 +2126,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       playerPubkey: join.playerPubkey,
       ascentMorale: carriedMorale(join.ascentMorale),
       ranked: join.ranked,
+      cosmetics: join.cosmetics,
     });
     relayAdmission.seated(from);
     forgetForwards(from, false);
@@ -2558,9 +2620,9 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
   });
 
   /**
-   * `member`'s new name and guild (#3548), sanitised as at its join; an
-   * empty name keeps the one it had. Its planned seat, if any, keeps the
-   * name the match was planned with.
+   * `member`'s new name, guild and cosmetics (#3548, ADR-0056), the name and
+   * guild sanitised as at its join; an empty name keeps the one it had. Its
+   * planned seat, if any, keeps what the match was planned with.
    */
   const setProfile = (
     member: Member,
@@ -2571,6 +2633,9 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     member.guildTag = guild.guildTag;
     member.heroRank = guild.heroRank;
     member.guildCape = guild.guildCape;
+    if (member.bot === null) {
+      member.cosmetics = profile.cosmetics;
+    }
     broadcast();
   };
 

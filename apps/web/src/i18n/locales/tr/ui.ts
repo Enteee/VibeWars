@@ -347,6 +347,33 @@ export default {
   "controls.weaponSet4": "Silah seti 4",
   "controls.weaponSets": "Silah setleri",
   "controls.withShift": "Shift + {key}",
+
+  "cosmetics.item.flame": "Galibiyet serisi alevi",
+  "cosmetics.item.frameJade": "Yeşim çerçeve",
+  "cosmetics.item.frameOrchid": "Orkide çerçeve",
+  "cosmetics.item.frameRose": "Gül çerçeve",
+  "cosmetics.item.frameTeal": "Camgöbeği çerçeve",
+  "cosmetics.locked": "Kilitli",
+  "cosmetics.none": "Yok",
+  "cosmetics.note":
+    "Yalnızca görünüş için: hiçbir kozmetik oynanışı değiştirmez. Herkese açık lider tablosunda dereceli galibiyetlerle kazanılır ve tüm karakterlerin tarafından paylaşılır.",
+  "cosmetics.requires.streak": {
+    one: "Üst üste {count} dereceli galibiyet",
+    other: "Üst üste {count} dereceli galibiyet",
+  },
+  "cosmetics.requires.top": "İlk {rank}",
+  "cosmetics.requires.wins": {
+    one: "{count} dereceli galibiyet",
+    other: "{count} dereceli galibiyet",
+  },
+  "cosmetics.showOthers": "Diğer oyuncuların kozmetiklerini göster",
+  "cosmetics.slot.flame": "Galibiyet serisi alevi",
+  "cosmetics.slot.frame": "İsim plakası çerçevesi",
+  "cosmetics.slot.title": "Unvan",
+  "cosmetics.title.champion": "Şampiyon",
+  "cosmetics.title.contender": "Rakip",
+  "cosmetics.title.veteran": "Kıdemli",
+  "cosmetics.title.warlord": "Savaş lordu",
   "creature.rat": "Sıçan",
 
   "echo.secondsLeft": {
@@ -813,6 +840,7 @@ export default {
   "music.trackWithMood": "{track} ({mood})",
 
   "options.controls": "kontroller",
+  "options.cosmetics": "kozmetikler",
   "options.display": "görüntü",
   "options.label": "Ayarlar",
   "options.language": "dil",

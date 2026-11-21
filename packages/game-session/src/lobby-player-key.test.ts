@@ -17,7 +17,7 @@ import {
 import { LOBBY_PROOF_MS } from "./lobby-host.js";
 import { settle } from "./match-harness.test-support.js";
 import type { PlayerKey, VerifyPlayerProof } from "./player-key.js";
-import { testPlayerKey, verifyTestProof } from "./player-key.test-support.js";
+import { testCosmetics, testPlayerKey, verifyTestProof } from "./player-key.test-support.js";
 import type { Transport } from "./transport.js";
 
 /**
@@ -39,6 +39,7 @@ const joinOf = (name: string, key: PlayerKey, rejoinToken: string | null = null)
   playerPubkey: key.pubkey,
   ascentMorale: 0,
   ranked: null,
+  cosmetics: testCosmetics,
 });
 
 interface HandPeer {

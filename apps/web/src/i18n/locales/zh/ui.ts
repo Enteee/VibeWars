@@ -316,6 +316,31 @@ export default {
   "controls.weaponSet4": "武器组 4",
   "controls.weaponSets": "武器组",
   "controls.withShift": "Shift + {key}",
+
+  "cosmetics.item.flame": "连胜火焰",
+  "cosmetics.item.frameJade": "翡翠边框",
+  "cosmetics.item.frameOrchid": "兰紫边框",
+  "cosmetics.item.frameRose": "玫瑰边框",
+  "cosmetics.item.frameTeal": "青绿边框",
+  "cosmetics.locked": "未解锁",
+  "cosmetics.none": "无",
+  "cosmetics.note":
+    "纯外观：任何装扮都不会影响玩法。通过公开排行榜上的排位胜场获得，你的所有角色共享。",
+  "cosmetics.requires.streak": {
+    other: "排位 {count} 连胜",
+  },
+  "cosmetics.requires.top": "前 {rank} 名",
+  "cosmetics.requires.wins": {
+    other: "排位 {count} 胜",
+  },
+  "cosmetics.showOthers": "显示其他玩家的装扮",
+  "cosmetics.slot.flame": "连胜火焰",
+  "cosmetics.slot.frame": "名牌边框",
+  "cosmetics.slot.title": "称号",
+  "cosmetics.title.champion": "冠军",
+  "cosmetics.title.contender": "挑战者",
+  "cosmetics.title.veteran": "老兵",
+  "cosmetics.title.warlord": "军阀",
   "creature.rat": "老鼠",
 
   "echo.secondsLeft": { other: "回响：剩余 {count} 秒" },
@@ -763,6 +788,7 @@ export default {
   "music.trackWithMood": "{track}（{mood}）",
 
   "options.controls": "操作",
+  "options.cosmetics": "装扮",
   "options.display": "显示",
   "options.label": "选项",
   "options.language": "语言",

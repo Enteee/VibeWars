@@ -47,6 +47,7 @@ import {
 } from "./match-harness.test-support.js";
 import type { MatchSnapshot } from "./match-connection.js";
 import { MAX_MESSAGE_BYTES, messageBytes } from "./transport.js";
+import { testCosmetics } from "./player-key.test-support.js";
 
 /** A guild cape (#1422), as the designer makes one. */
 const CAPE: WireCape = {
@@ -465,6 +466,7 @@ describe("a Team Lobby's seats (#1458)", () => {
             bot: false,
             playerPubkey: "ab".repeat(32),
             startMorale: 0,
+            cosmetics: testCosmetics,
             build: assigned,
           },
         ],
@@ -505,6 +507,7 @@ describe("a lobby's bots (#1193)", () => {
         bot: false,
         playerPubkey: "ab".repeat(32),
         startMorale: 0,
+        cosmetics: testCosmetics,
         build: null,
       },
     ] as const;

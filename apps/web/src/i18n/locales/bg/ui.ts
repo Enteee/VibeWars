@@ -352,6 +352,33 @@ export default {
   "controls.weaponSet4": "Оръжеен комплект 4",
   "controls.weaponSets": "Оръжейни комплекти",
   "controls.withShift": "Shift + {key}",
+
+  "cosmetics.item.flame": "Пламък на победна серия",
+  "cosmetics.item.frameJade": "Нефритена рамка",
+  "cosmetics.item.frameOrchid": "Орхидеена рамка",
+  "cosmetics.item.frameRose": "Розова рамка",
+  "cosmetics.item.frameTeal": "Тюркоазена рамка",
+  "cosmetics.locked": "Заключено",
+  "cosmetics.none": "Няма",
+  "cosmetics.note":
+    "Само за външния вид: никоя козметика не променя играта. Печелят се с класирани победи в публичната класация и са общи за всичките ти герои.",
+  "cosmetics.requires.streak": {
+    one: "{count} класирана победа подред",
+    other: "{count} класирани победи подред",
+  },
+  "cosmetics.requires.top": "Топ {rank}",
+  "cosmetics.requires.wins": {
+    one: "{count} класирана победа",
+    other: "{count} класирани победи",
+  },
+  "cosmetics.showOthers": "Показвай козметиката на другите играчи",
+  "cosmetics.slot.flame": "Пламък на победна серия",
+  "cosmetics.slot.frame": "Рамка на табелката с име",
+  "cosmetics.slot.title": "Титла",
+  "cosmetics.title.champion": "Шампион",
+  "cosmetics.title.contender": "Претендент",
+  "cosmetics.title.veteran": "Ветеран",
+  "cosmetics.title.warlord": "Военачалник",
   "creature.rat": "Плъх",
 
   "echo.secondsLeft": { one: "Ехо: остава {count} с", other: "Ехо: остават {count} с" },
@@ -815,6 +842,7 @@ export default {
   "music.trackWithMood": "{track} ({mood})",
 
   "options.controls": "управление",
+  "options.cosmetics": "козметика",
   "options.display": "дисплей",
   "options.label": "Настройки",
   "options.language": "език",

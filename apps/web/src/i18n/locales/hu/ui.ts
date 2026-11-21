@@ -348,6 +348,33 @@ export default {
   "controls.weaponSet4": "4. fegyverkészlet",
   "controls.weaponSets": "Fegyverkészletek",
   "controls.withShift": "Shift + {key}",
+
+  "cosmetics.item.flame": "Győzelmi sorozat lángja",
+  "cosmetics.item.frameJade": "Jádekeret",
+  "cosmetics.item.frameOrchid": "Orchideakeret",
+  "cosmetics.item.frameRose": "Rózsakeret",
+  "cosmetics.item.frameTeal": "Kékeszöld keret",
+  "cosmetics.locked": "Zárolva",
+  "cosmetics.none": "Nincs",
+  "cosmetics.note":
+    "Csak a külső miatt: egyik kozmetikum sem változtat a játékon. Rangsorolt győzelmekkel szerezhetők a nyilvános ranglistán, és minden karaktered osztozik rajtuk.",
+  "cosmetics.requires.streak": {
+    one: "{count} rangsorolt győzelem zsinórban",
+    other: "{count} rangsorolt győzelem zsinórban",
+  },
+  "cosmetics.requires.top": "Top {rank}",
+  "cosmetics.requires.wins": {
+    one: "{count} rangsorolt győzelem",
+    other: "{count} rangsorolt győzelem",
+  },
+  "cosmetics.showOthers": "Más játékosok kozmetikumainak megjelenítése",
+  "cosmetics.slot.flame": "Győzelmi sorozat lángja",
+  "cosmetics.slot.frame": "Névtábla kerete",
+  "cosmetics.slot.title": "Cím",
+  "cosmetics.title.champion": "Bajnok",
+  "cosmetics.title.contender": "Kihívó",
+  "cosmetics.title.veteran": "Veterán",
+  "cosmetics.title.warlord": "Hadúr",
   "creature.rat": "Patkány",
 
   "echo.secondsLeft": {
@@ -814,6 +841,7 @@ export default {
   "music.trackWithMood": "{track} ({mood})",
 
   "options.controls": "irányítás",
+  "options.cosmetics": "kozmetikumok",
   "options.display": "megjelenítés",
   "options.label": "Opciók",
   "options.language": "nyelv",

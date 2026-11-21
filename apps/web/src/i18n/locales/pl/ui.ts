@@ -381,6 +381,37 @@ export default {
   "controls.weaponSet4": "Zestaw broni 4",
   "controls.weaponSets": "Zestawy broni",
   "controls.withShift": "Shift + {key}",
+
+  "cosmetics.item.flame": "Płomień serii zwycięstw",
+  "cosmetics.item.frameJade": "Nefrytowa ramka",
+  "cosmetics.item.frameOrchid": "Storczykowa ramka",
+  "cosmetics.item.frameRose": "Różana ramka",
+  "cosmetics.item.frameTeal": "Morska ramka",
+  "cosmetics.locked": "Zablokowane",
+  "cosmetics.none": "Brak",
+  "cosmetics.note":
+    "Tylko dla wyglądu: żaden kosmetyk nie zmienia rozgrywki. Zdobywa się je rankingowymi zwycięstwami w publicznej tabeli wyników i są wspólne dla wszystkich twoich postaci.",
+  "cosmetics.requires.streak": {
+    one: "{count} rankingowa wygrana z rzędu",
+    few: "{count} rankingowe wygrane z rzędu",
+    many: "{count} rankingowych wygranych z rzędu",
+    other: "{count} rankingowej wygranej z rzędu",
+  },
+  "cosmetics.requires.top": "Top {rank}",
+  "cosmetics.requires.wins": {
+    one: "{count} rankingowa wygrana",
+    few: "{count} rankingowe wygrane",
+    many: "{count} rankingowych wygranych",
+    other: "{count} rankingowej wygranej",
+  },
+  "cosmetics.showOthers": "Pokazuj kosmetyki innych graczy",
+  "cosmetics.slot.flame": "Płomień serii zwycięstw",
+  "cosmetics.slot.frame": "Ramka tabliczki z imieniem",
+  "cosmetics.slot.title": "Tytuł",
+  "cosmetics.title.champion": "Czempion",
+  "cosmetics.title.contender": "Pretendent",
+  "cosmetics.title.veteran": "Weteran",
+  "cosmetics.title.warlord": "Watażka",
   "creature.rat": "Szczur",
 
   "echo.secondsLeft": {
@@ -896,6 +927,7 @@ export default {
   "music.trackWithMood": "{track} ({mood})",
 
   "options.controls": "sterowanie",
+  "options.cosmetics": "kosmetyki",
   "options.display": "wyświetlanie",
   "options.label": "Opcje",
   "options.language": "język",

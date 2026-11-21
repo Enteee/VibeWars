@@ -21,9 +21,13 @@ import {
   MAX_EMBLEM_COLOURS,
   packEmblem,
   type WireCapes,
+  type WireSeatCosmetics,
+  type WireCosmetics,
   MAX_CHART_PARTS,
   MAX_CHART_SAMPLES,
   MAX_LOBBY_PLAYERS,
+  MAX_COSMETIC_IDS,
+  MAX_COSMETIC_ID_LENGTH,
   MAX_TEAM_LOBBY_SIDE,
   MAX_WIRE_CHAT_TEXT,
   MAX_SHARED_SOURCE_BYTES,
@@ -105,6 +109,12 @@ const PEER_ID = "abcdefghijklmnopqrst/local";
 const NAME = sanitizeName("👩‍🚀".repeat(40), "player");
 /** A guild tag as long as `sanitizeGuildTag` lets through (#1406). */
 const GUILD_TAG = sanitizeGuildTag("WWWW");
+/** The most a selection carries (ADR-0056): every id the longest, signed. */
+const FULL_COSMETICS: WireCosmetics = {
+  ids: Array.from({ length: MAX_COSMETIC_IDS }, () => "w".repeat(MAX_COSMETIC_ID_LENGTH)),
+  at: Number.MAX_SAFE_INTEGER,
+  sig: "ab".repeat(64),
+};
 /**
  * The largest cape (#1422, #3628): 15 emblem colours, each used, in order
  * of first use; every emblem is as long (#3554).
@@ -505,6 +515,15 @@ describe("every message fits in one Trystero chunk (#403)", () => {
       })),
     };
     expect(messageBytes(capes)).toBeLessThanOrEqual(MAX_MESSAGE_BYTES);
+  });
+
+  it("a seat's cosmetics, every id the longest (ADR-0056)", () => {
+    const seat: WireSeatCosmetics = {
+      id: `${PEER_ID}0`,
+      playerPubkey: "ab".repeat(32),
+      cosmetics: FULL_COSMETICS,
+    };
+    expect(messageBytes(seat)).toBeLessThanOrEqual(MAX_MESSAGE_BYTES);
   });
 
   it("a hello with a full build", () => {

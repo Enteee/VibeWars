@@ -39,6 +39,7 @@ function snapshot(phase: LobbySnapshot["phase"]): LobbySnapshot {
         bot: false,
         away: false,
         playerPubkey: "ab".repeat(32),
+        cosmetics: null,
       },
       {
         sessionId: "guest",
@@ -51,6 +52,7 @@ function snapshot(phase: LobbySnapshot["phase"]): LobbySnapshot {
         bot: false,
         away: false,
         playerPubkey: "ab".repeat(32),
+        cosmetics: null,
       },
     ],
     isHost: true,
@@ -117,6 +119,7 @@ describe("lobbyControls", () => {
           bot: false,
           away: false,
           playerPubkey: "ab".repeat(32),
+          cosmetics: null,
         },
         {
           sessionId: "guest",
@@ -129,6 +132,7 @@ describe("lobbyControls", () => {
           bot: false,
           away: false,
           playerPubkey: "ab".repeat(32),
+          cosmetics: null,
         },
       ],
     });
@@ -161,6 +165,7 @@ describe("lobbyControls", () => {
             bot: false,
             away: false,
             playerPubkey: "ab".repeat(32),
+            cosmetics: null,
           },
         ],
       };
@@ -271,6 +276,7 @@ describe("waitingFor (#580)", () => {
     bot: false,
     away: false,
     playerPubkey: "ab".repeat(32),
+    cosmetics: null,
   });
 
   it("names everyone on a team who is not ready, in lobby order", () => {
@@ -403,6 +409,7 @@ describe("teamColumn: names only (#2029)", () => {
     bot: true,
     away: false,
     playerPubkey: null,
+    cosmetics: null,
   };
   const lobby: LobbySnapshot = {
     ...snapshot("waiting"),

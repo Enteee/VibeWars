@@ -1,6 +1,7 @@
 import { t, type MessageKey } from "../i18n/index.js";
 import { keySignet } from "../identity/key-signet.js";
 import { signetParams, signetSvg } from "../identity/signet.js";
+import type { WornCosmetics } from "../cosmetics/selection.js";
 import { setHidden } from "./dom-write.js";
 import { h } from "./kit.js";
 
@@ -285,6 +286,39 @@ export function playerLabelElement(
     const rank = heroRankElement();
     setHeroRank(rank, heroRank);
     label.append(" ", rank);
+  }
+  return label;
+}
+
+const cssColour = (colour: number): string => `#${colour.toString(16).padStart(6, "0")}`;
+
+/**
+ * `label`, a `playerLabelElement`, wearing `worn` (ADR-0056): a frame as
+ * its rim, a title on a line of its own above it, as in a match, and the
+ * streak flame after the name. Default (`{}`) adds nothing. The flame's
+ * flicker is CSS, and stills under reduced motion.
+ */
+export function wearCosmetics(label: HTMLElement, worn: WornCosmetics): HTMLElement {
+  const { frame, title, flame } = worn;
+  if (frame?.look.kind === "frame") {
+    label.classList.add("cosmetic-frame");
+    label.dataset.frame = frame.id;
+    label.style.setProperty("--cosmetic-frame", cssColour(frame.look.colour));
+    label.style.setProperty("--cosmetic-frame-width", `${String(frame.look.width)}px`);
+  }
+  if (flame?.look.kind === "flame") {
+    const mark = h("span", "cosmetic-flame");
+    mark.dataset.flame = flame.id;
+    mark.setAttribute("aria-label", t("cosmetics.item.flame"));
+    mark.style.setProperty("--cosmetic-flame", cssColour(flame.look.colour));
+    label.append(" ", mark);
+  }
+  if (title?.look.kind === "title") {
+    const line = h("span", "cosmetic-title", t(title.look.label));
+    line.dataset.title = title.id;
+    line.style.setProperty("--cosmetic-title", cssColour(title.look.colour));
+    line.style.setProperty("--cosmetic-glow", cssColour(title.look.glow));
+    label.prepend(line);
   }
   return label;
 }

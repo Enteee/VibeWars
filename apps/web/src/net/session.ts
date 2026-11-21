@@ -52,6 +52,8 @@ import {
 } from "@vibewars/game-session";
 import type { RankedReceipt } from "@vibewars/ranking";
 
+import { signSelection } from "../cosmetics/selection.js";
+import { cosmeticsStore } from "../cosmetics/store.js";
 import { isStaleChunkError } from "../build-check.js";
 import { keySignet } from "../identity/key-signet.js";
 import { TRACKS } from "../music/tracks/index.js";
@@ -430,6 +432,7 @@ export async function hostLobby(
       relayPub: null,
       playerKey,
       claim: () => leaderboard.claim(playerKey.pubkey),
+      cosmetics: signSelection(playerKey, cosmeticsStore.choice(), Date.now()),
       ...guild,
       timeoutMs: JOIN_TIMEOUT_MS,
       // The host is one of its own group: it proves its ticket like the rest.
@@ -492,6 +495,7 @@ export async function joinLobbyByCode(
       relayPub,
       playerKey,
       claim: () => leaderboard.claim(playerKey.pubkey),
+      cosmetics: signSelection(playerKey, cosmeticsStore.choice(), Date.now()),
       ...guild,
       timeoutMs: JOIN_TIMEOUT_MS,
       ...(queued === undefined ? { roomId: lobbyRoom.roomId } : { queued }),

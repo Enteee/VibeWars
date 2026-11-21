@@ -1,6 +1,8 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { t } from "../i18n/index.js";
+import { cosmeticById, type CosmeticEntry } from "../cosmetics/catalog.js";
+import { DEFAULT_LOOK, type WornCosmetics } from "../cosmetics/selection.js";
 import { FakeElement } from "./fake-dom.test-support.js";
 import {
   bodyName,
@@ -8,7 +10,9 @@ import {
   nameplateName,
   playerLabel,
   playerLabelText,
+  playerLabelElement,
   signedText,
+  wearCosmetics,
 } from "./player-label.js";
 
 describe("bodyName (#3315)", () => {
@@ -131,5 +135,42 @@ describe("signedText (#3232)", () => {
     const line = signed(signedText("chat.muted", { name: { name: "ab", signet: 3 } }));
     expect(signedNames(line)).toBe(1);
     expect(read(line)).toContain("ab");
+  });
+});
+
+describe("wearCosmetics (ADR-0056)", () => {
+  beforeEach(() => {
+    vi.stubGlobal("document", {
+      createElement: () => new FakeElement(),
+      createDocumentFragment: () => new FakeElement(),
+    });
+  });
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  const labelOf = (worn: WornCosmetics) =>
+    wearCosmetics(
+      playerLabelElement("lobby-player", "Ana", null, 0),
+      worn,
+    ) as unknown as FakeElement;
+  const entry = (id: string): CosmeticEntry => {
+    const found = cosmeticById(id);
+    if (found === undefined) {
+      throw new Error(id);
+    }
+    return found;
+  };
+
+  it("shows a worn frame and title", () => {
+    const label = labelOf({ frame: entry("frame-rose"), title: entry("title-veteran") });
+    expect(label.dataset.frame).toBe("frame-rose");
+    expect(label.querySelector(".cosmetic-title")?.textContent).toBe(t("cosmetics.title.veteran"));
+  });
+
+  it("draws the default when nothing is worn", () => {
+    const label = labelOf(DEFAULT_LOOK);
+    expect(label.dataset.frame).toBeUndefined();
+    expect(label.querySelector(".cosmetic-title")).toBeNull();
   });
 });

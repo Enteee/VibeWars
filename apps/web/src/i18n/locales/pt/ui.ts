@@ -368,6 +368,35 @@ export default {
   "controls.weaponSet4": "Conjunto de armas 4",
   "controls.weaponSets": "Conjuntos de armas",
   "controls.withShift": "Shift + {key}",
+
+  "cosmetics.item.flame": "Chama de sequência",
+  "cosmetics.item.frameJade": "Moldura jade",
+  "cosmetics.item.frameOrchid": "Moldura orquídea",
+  "cosmetics.item.frameRose": "Moldura rosa",
+  "cosmetics.item.frameTeal": "Moldura azul-petróleo",
+  "cosmetics.locked": "Bloqueado",
+  "cosmetics.none": "Nenhum",
+  "cosmetics.note":
+    "Puramente estético: nenhum cosmético muda a forma de jogar. Ganham-se com vitórias ranqueadas na tabela de líderes pública e são partilhados por todas as tuas personagens.",
+  "cosmetics.requires.streak": {
+    one: "{count} vitória ranqueada seguida",
+    many: "{count} vitórias ranqueadas seguidas",
+    other: "{count} vitórias ranqueadas seguidas",
+  },
+  "cosmetics.requires.top": "Top {rank}",
+  "cosmetics.requires.wins": {
+    one: "{count} vitória ranqueada",
+    many: "{count} vitórias ranqueadas",
+    other: "{count} vitórias ranqueadas",
+  },
+  "cosmetics.showOthers": "Mostrar cosméticos de outros jogadores",
+  "cosmetics.slot.flame": "Chama de sequência",
+  "cosmetics.slot.frame": "Moldura da placa de nome",
+  "cosmetics.slot.title": "Título",
+  "cosmetics.title.champion": "Campeão",
+  "cosmetics.title.contender": "Desafiante",
+  "cosmetics.title.veteran": "Veterano",
+  "cosmetics.title.warlord": "Senhor da guerra",
   "creature.rat": "Rato",
 
   "echo.secondsLeft": {
@@ -853,6 +882,7 @@ export default {
   "music.trackWithMood": "{track} ({mood})",
 
   "options.controls": "controles",
+  "options.cosmetics": "cosméticos",
   "options.display": "tela",
   "options.label": "Opções",
   "options.language": "idioma",

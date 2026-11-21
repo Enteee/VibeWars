@@ -23,6 +23,7 @@ import type {
   SkillBarSlot,
   WireCalls,
   WireCape,
+  WireCosmetics,
   WireDeck,
   WireLift,
   WirePing,
@@ -51,6 +52,12 @@ export interface PlayerSnapshot {
   readonly heroRank: number;
   /** Worn behind the body (#1422); `undefined` for none. */
   readonly guildCape: WireCape | undefined;
+  /**
+   * What its key says it wears (ADR-0056), from the host's last
+   * `"cosmetics"`; `undefined` for a bot or no key. Unchecked: the viewer
+   * draws only what it verifies.
+   */
+  readonly worn: SeatWorn | undefined;
   readonly x: number;
   readonly y: number;
   /** Where the player faces, radians, `atan2` convention, 0 = +x (#187). */
@@ -386,4 +393,10 @@ export interface MatchConnection {
   /** Your team's calls right now; nobody else's ever reach you. */
   getCalls(): CallsSnapshot;
   disconnect(): Promise<void>;
+}
+
+/** A seat's signed cosmetics (ADR-0056) and the key that signed them. */
+export interface SeatWorn {
+  readonly playerPubkey: string;
+  readonly cosmetics: WireCosmetics;
 }

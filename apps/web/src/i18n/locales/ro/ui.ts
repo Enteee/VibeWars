@@ -369,6 +369,35 @@ export default {
   "controls.weaponSet4": "Set de arme 4",
   "controls.weaponSets": "Seturi de arme",
   "controls.withShift": "Shift + {key}",
+
+  "cosmetics.item.flame": "Flacăra seriei de victorii",
+  "cosmetics.item.frameJade": "Ramă de jad",
+  "cosmetics.item.frameOrchid": "Ramă orhidee",
+  "cosmetics.item.frameRose": "Ramă roz",
+  "cosmetics.item.frameTeal": "Ramă turcoaz",
+  "cosmetics.locked": "Blocat",
+  "cosmetics.none": "Niciunul",
+  "cosmetics.note":
+    "Doar de aspect: niciun element cosmetic nu schimbă jocul. Se câștigă cu victorii clasate în clasamentul public și sunt comune tuturor personajelor tale.",
+  "cosmetics.requires.streak": {
+    one: "{count} victorie clasată la rând",
+    few: "{count} victorii clasate la rând",
+    other: "{count} de victorii clasate la rând",
+  },
+  "cosmetics.requires.top": "Top {rank}",
+  "cosmetics.requires.wins": {
+    one: "{count} victorie clasată",
+    few: "{count} victorii clasate",
+    other: "{count} de victorii clasate",
+  },
+  "cosmetics.showOthers": "Arată elementele cosmetice ale altor jucători",
+  "cosmetics.slot.flame": "Flacăra seriei de victorii",
+  "cosmetics.slot.frame": "Rama plăcuței cu nume",
+  "cosmetics.slot.title": "Titlu",
+  "cosmetics.title.champion": "Campion",
+  "cosmetics.title.contender": "Pretendent",
+  "cosmetics.title.veteran": "Veteran",
+  "cosmetics.title.warlord": "Senior al războiului",
   "creature.rat": "Șobolan",
 
   "echo.secondsLeft": {
@@ -862,6 +891,7 @@ export default {
   "music.trackWithMood": "{track} ({mood})",
 
   "options.controls": "comenzi",
+  "options.cosmetics": "cosmetice",
   "options.display": "afișare",
   "options.label": "Opțiuni",
   "options.language": "limbă",

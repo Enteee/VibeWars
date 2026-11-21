@@ -365,6 +365,35 @@ export default {
   "controls.weaponSet4": "סט נשק 4",
   "controls.weaponSets": "סטים של נשק",
   "controls.withShift": "Shift + {key}",
+
+  "cosmetics.item.flame": "להבת רצף ניצחונות",
+  "cosmetics.item.frameJade": "מסגרת ירקן",
+  "cosmetics.item.frameOrchid": "מסגרת סחלב",
+  "cosmetics.item.frameRose": "מסגרת ורודה",
+  "cosmetics.item.frameTeal": "מסגרת טורקיז",
+  "cosmetics.locked": "נעול",
+  "cosmetics.none": "ללא",
+  "cosmetics.note":
+    "למראה בלבד: שום פריט קוסמטי לא משנה את המשחק. מושגים בניצחונות מדורגים בטבלת המובילים הציבורית, ומשותפים לכל הדמויות שלך.",
+  "cosmetics.requires.streak": {
+    one: "ניצחון מדורג {count} ברצף",
+    two: "{count} ניצחונות מדורגים ברצף",
+    other: "{count} ניצחונות מדורגים ברצף",
+  },
+  "cosmetics.requires.top": "{rank} המובילים",
+  "cosmetics.requires.wins": {
+    one: "ניצחון מדורג {count}",
+    two: "{count} ניצחונות מדורגים",
+    other: "{count} ניצחונות מדורגים",
+  },
+  "cosmetics.showOthers": "הצגת פריטים קוסמטיים של שחקנים אחרים",
+  "cosmetics.slot.flame": "להבת רצף ניצחונות",
+  "cosmetics.slot.frame": "מסגרת תג השם",
+  "cosmetics.slot.title": "תואר",
+  "cosmetics.title.champion": "אלוף",
+  "cosmetics.title.contender": "מתמודד",
+  "cosmetics.title.veteran": "ותיק",
+  "cosmetics.title.warlord": "מצביא",
   "creature.rat": "חולדה",
 
   "echo.secondsLeft": {
@@ -865,6 +894,7 @@ export default {
   "music.trackWithMood": "{track} ({mood})",
 
   "options.controls": "שליטה",
+  "options.cosmetics": "קוסמטיקה",
   "options.display": "תצוגה",
   "options.label": "אפשרויות",
   "options.language": "שפה",

@@ -29,6 +29,7 @@ import {
 } from "@vibewars/game-core";
 import {
   MASTERLESS_WIRE_TEAM,
+  MAX_LOBBY_PLAYERS,
   MAX_WIRE_STATUSES,
   type SkillBarSlot,
   type WireCombat,
@@ -51,6 +52,7 @@ import type {
   ObservedSnapshot,
   ArmedAttackSnapshot,
   PlayerSnapshot,
+  SeatWorn,
   ProjectileSnapshot,
   StatusSnapshot,
 } from "./match-connection.js";
@@ -740,7 +742,8 @@ export function wireIdentity(
 
 /**
  * Each `PlayerSnapshot` field from its `WirePlayer` field, and its cape
- * from `capes`, the host's last `"capes"` by id (#3554). Typed both ways,
+ * from `capes`, the host's last `"capes"` by id (#3554), and its cosmetics
+ * from `worn`, the last `"cosmetics"` (ADR-0056). Typed both ways,
  * so a field added to either type without the other does not compile.
  * `undefined` for a status index past the table's end, or an armed
  * attack that is not a pet attack this build knows (#1167): malformed.
@@ -748,6 +751,7 @@ export function wireIdentity(
 export function playerSnapshot(
   player: WirePlayer,
   capes: ReadonlyMap<string, WireCape>,
+  worn: ReadonlyMap<string, SeatWorn>,
 ): PlayerSnapshot | undefined {
   const armed = player.creature?.armedAttack ?? null;
   if (armed !== null && getSkill(armed.skillId)?.type !== "pet-attack") {
@@ -767,6 +771,7 @@ export function playerSnapshot(
     guildTag: absent(player.guildTag),
     heroRank: player.heroRank,
     guildCape: capes.get(player.id),
+    worn: worn.get(player.id),
     x: player.x,
     y: player.y,
     facing: player.facing,
@@ -816,14 +821,45 @@ function projectileSnapshot(shot: WireProjectile): ProjectileSnapshot {
   return { ...shot, skillId: absent(shot.skillId) };
 }
 
-/** Every player in `snapshot`, wearing `capes`, or `undefined` if any is malformed. */
+/** The most seats' cosmetics a viewer keeps (ADR-0056): two full lobbies' worth. */
+const MAX_WORN = 2 * MAX_LOBBY_PLAYERS;
+
+/**
+ * `worn` told one seat's `"cosmetics"` (ADR-0056): the latest for an id
+ * replaces the one before. Past `MAX_WORN`, ids no longer `here` are
+ * forgotten, then the oldest, so a host naming ids nobody sits in cannot
+ * grow it.
+ */
+export function wear<T>(
+  worn: Map<string, T>,
+  id: string,
+  seat: T,
+  here: (id: string) => boolean,
+): void {
+  worn.delete(id);
+  worn.set(id, seat);
+  if (worn.size <= MAX_WORN) {
+    return;
+  }
+  for (const kept of [...worn.keys()]) {
+    if (kept !== id && !here(kept)) {
+      worn.delete(kept);
+    }
+  }
+  for (const kept of [...worn.keys()].slice(0, Math.max(0, worn.size - MAX_WORN))) {
+    worn.delete(kept);
+  }
+}
+
+/** Every player in `snapshot`, wearing `capes` and `worn`, or `undefined` if any is malformed. */
 export function playerSnapshots(
   snapshot: WireSnapshot,
   capes: ReadonlyMap<string, WireCape>,
+  worn: ReadonlyMap<string, SeatWorn>,
 ): PlayerSnapshot[] | undefined {
   const players: PlayerSnapshot[] = [];
   for (const wire of snapshot.players) {
-    const player = playerSnapshot(wire, capes);
+    const player = playerSnapshot(wire, capes, worn);
     if (player === undefined) {
       return undefined;
     }

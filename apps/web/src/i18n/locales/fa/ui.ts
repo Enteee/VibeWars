@@ -349,6 +349,33 @@ export default {
   "controls.weaponSet4": "ست سلاح 4",
   "controls.weaponSets": "ست‌های سلاح",
   "controls.withShift": "Shift + {key}",
+
+  "cosmetics.item.flame": "شعلهٔ برد پیاپی",
+  "cosmetics.item.frameJade": "قاب یشمی",
+  "cosmetics.item.frameOrchid": "قاب ارکیده‌ای",
+  "cosmetics.item.frameRose": "قاب صورتی",
+  "cosmetics.item.frameTeal": "قاب فیروزه‌ای",
+  "cosmetics.locked": "قفل",
+  "cosmetics.none": "هیچ",
+  "cosmetics.note":
+    "فقط برای ظاهر: هیچ آرایه‌ای روی روند بازی اثر ندارد. با بردهای رتبه‌بندی در جدول رده‌بندی عمومی به دست می‌آید و بین همهٔ شخصیت‌هایت مشترک است.",
+  "cosmetics.requires.streak": {
+    one: "{count} برد رتبه‌بندی پیاپی",
+    other: "{count} برد رتبه‌بندی پیاپی",
+  },
+  "cosmetics.requires.top": "برترین {rank}",
+  "cosmetics.requires.wins": {
+    one: "{count} برد رتبه‌بندی",
+    other: "{count} برد رتبه‌بندی",
+  },
+  "cosmetics.showOthers": "نمایش آرایه‌های بازیکنان دیگر",
+  "cosmetics.slot.flame": "شعلهٔ برد پیاپی",
+  "cosmetics.slot.frame": "قاب نام",
+  "cosmetics.slot.title": "عنوان",
+  "cosmetics.title.champion": "قهرمان",
+  "cosmetics.title.contender": "مدعی",
+  "cosmetics.title.veteran": "کهنه‌کار",
+  "cosmetics.title.warlord": "سردار",
   "creature.rat": "موش",
 
   "echo.secondsLeft": { one: "پژواک: {count} ثانیه مانده", other: "پژواک: {count} ثانیه مانده" },
@@ -815,6 +842,7 @@ export default {
   "music.trackWithMood": "{track} ({mood})",
 
   "options.controls": "کنترل‌ها",
+  "options.cosmetics": "آرایه‌ها",
   "options.display": "نمایش",
   "options.label": "تنظیمات",
   "options.language": "زبان",
