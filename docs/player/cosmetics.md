@@ -37,7 +37,7 @@ A ground aura is a faint ring at your feet. A footstep trail leaves small motes 
 
 ## On your weapon and cape
 
-A weapon trail is a thin ribbon behind your weapon as a melee attack strikes, gone within a quarter of a second. Bows, spears, wands and staves get none, and no spell or cast ever shows one. A cape pattern lays stripes, chevrons, quarters or stars on your guild cape in its own trim colour, and your emblem always stays on top, as clear as on a plain cape. The cape designer in Options shows your cape unfurled, with your pattern on it. With reduced motion turned on in your system, no weapon trail is drawn.
+A weapon trail is a ribbon behind your weapon as a melee attack strikes, fading within a fifth of a second of the hit. Bows, spears, wands and staves get none, and no spell or cast ever shows one. A cape pattern lays stripes, chevrons, quarters or stars on your guild cape in its own trim colour, and your emblem always stays on top, as clear as on a plain cape. With reduced motion turned on in your system, no weapon trail is drawn.
 
 ## Coming back and falling
 

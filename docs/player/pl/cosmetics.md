@@ -37,7 +37,7 @@ Aura na ziemi to blady pierścień u twoich stóp. Ślad kroków zostawia drobne
 
 ## Na broni i pelerynie
 
-Ślad broni to cienka wstęga za twoją bronią, gdy trafia atak wręcz, znikająca w ćwierć sekundy. Łuki, włócznie, różdżki i kostury go nie mają, a żadne zaklęcie ani rzucanie nigdy go nie pokazuje. Wzór peleryny kładzie na twojej pelerynie gildii pasy, krokwie, ćwiartki lub gwiazdy w jej własnym kolorze obszycia, a twój herb zawsze zostaje na wierzchu, tak wyraźny jak na gładkiej pelerynie. Projektant peleryny w Opcjach pokazuje twoją pelerynę rozwiniętą, z twoim wzorem. Jeśli w systemie masz włączone ograniczenie ruchu, ślad broni się nie rysuje.
+Ślad broni to wstęga za twoją bronią, gdy trafia atak wręcz, blaknąca w ciągu jednej piątej sekundy od trafienia. Łuki, włócznie, różdżki i kostury go nie mają, a żadne zaklęcie ani rzucanie nigdy go nie pokazuje. Wzór peleryny kładzie na twojej pelerynie gildii pasy, krokwie, ćwiartki lub gwiazdy w jej własnym kolorze obszycia, a twój herb zawsze zostaje na wierzchu, tak wyraźny jak na gładkiej pelerynie. Jeśli w systemie masz włączone ograniczenie ruchu, ślad broni się nie rysuje.
 
 ## Powrót i upadek
 

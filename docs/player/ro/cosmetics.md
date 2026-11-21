@@ -36,7 +36,7 @@ O aură la sol este un inel slab la picioarele tale. O urmă de pași lasă part
 
 ## Pe armă și pelerină
 
-O urmă de armă este o panglică subțire în spatele armei tale când lovește un atac corp la corp și dispare într-un sfert de secundă. Arcurile, sulițele, baghetele și toiegele nu au niciuna, iar nicio vrajă sau incantație nu arată vreodată una. Un model de pelerină așază dungi, căpriori, sferturi sau stele pe pelerina ta de breaslă, în propria ei culoare de tiv, iar emblema ta rămâne mereu deasupra, la fel de clară ca pe o pelerină simplă. Designerul de pelerină din Opțiuni îți arată pelerina desfășurată, cu modelul tău pe ea. Dacă sistemul tău cere mișcare redusă, nu se desenează nicio urmă de armă.
+O urmă de armă este o panglică în spatele armei tale când lovește un atac corp la corp și se estompează într-o cincime de secundă de la lovitură. Arcurile, sulițele, baghetele și toiegele nu au niciuna, iar nicio vrajă sau incantație nu arată vreodată una. Un model de pelerină așază dungi, căpriori, sferturi sau stele pe pelerina ta de breaslă, în propria ei culoare de tiv, iar emblema ta rămâne mereu deasupra, la fel de clară ca pe o pelerină simplă. Dacă sistemul tău cere mișcare redusă, nu se desenează nicio urmă de armă.
 
 ## Revenire și cădere
 

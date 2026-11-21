@@ -6,6 +6,7 @@ import {
   SWING_FADE_SECONDS,
   SWING_TRAIL_ALPHA,
   SWING_TRAIL_SECONDS,
+  SWING_WIDTH_OF_BODY,
   isMeleeWeapon,
   swingRibbon,
 } from "./cosmetic-trail.js";
@@ -59,7 +60,8 @@ describe("swingRibbon (#3579)", () => {
       undefined,
       false,
     );
-    expect(fading?.alpha).toBeCloseTo(SWING_TRAIL_ALPHA / 2);
+    // Eased: three quarters strong halfway through, so it is still seen.
+    expect(fading?.alpha).toBeCloseTo(SWING_TRAIL_ALPHA * 0.75);
     expect(swingRibbon(AT, "sword", after("recover", SWING_FADE_SECONDS), undefined, false)).toBe(
       undefined,
     );
@@ -70,6 +72,30 @@ describe("swingRibbon (#3579)", () => {
       expect(WEAPON_MOTION[id].strike + SWING_FADE_SECONDS, id).toBeLessThanOrEqual(
         SWING_TRAIL_SECONDS,
       );
+    }
+  });
+
+  it("fades out within every melee weapon's hold and recovery, so it never cuts off", () => {
+    for (const id of MELEE) {
+      expect(WEAPON_MOTION[id].hold + WEAPON_MOTION[id].recover, id).toBeGreaterThanOrEqual(
+        SWING_FADE_SECONDS,
+      );
+    }
+  });
+
+  it("is as wide as ADR-0056 §4 lets it be seen, and lies wholly past the body's rim", () => {
+    expect(SWING_WIDTH_OF_BODY).toBeGreaterThanOrEqual(0.4);
+    expect(SWING_WIDTH_OF_BODY).toBeLessThanOrEqual(0.6);
+    for (const id of MELEE) {
+      for (const progress of [0.25, 0.5, 1]) {
+        const ribbon = swingRibbon(AT, id, strike(progress), undefined, false);
+        expect(ribbon, id).not.toBe(undefined);
+        for (const point of ribbon?.points ?? []) {
+          expect(Math.hypot(point.x - AT.x, point.y - AT.y), id).toBeGreaterThanOrEqual(
+            AT.r + (ribbon?.width ?? 0) / 2 - 1e-9,
+          );
+        }
+      }
     }
   });
 
@@ -168,6 +194,17 @@ describe("paintStandingBody with a swing trail (#3579)", () => {
     expect(worn.body.calls[plain.body.calls.length]).toMatch(
       new RegExp(`^lineStyle\\(.*, ${String(0x66ff33)}\\.00, `),
     );
+    // Its tail is thinner and fainter than its head, but never gone.
+    const styles = worn.body.calls
+      .slice(plain.body.calls.length)
+      .filter((call) => call.startsWith("lineStyle"))
+      .map((call) => call.slice("lineStyle(".length, -1).split(", ").map(Number));
+    const tail = styles[0];
+    const head = styles.at(-1);
+    expect(head?.[0]).toBeCloseTo(ribbon.width, 1);
+    expect(head?.[2]).toBeCloseTo(ribbon.alpha, 1);
+    expect(tail?.[0]).toBeGreaterThanOrEqual(ribbon.width * 0.4 - 0.01);
+    expect(tail?.[2]).toBeGreaterThanOrEqual(ribbon.alpha * 0.5 - 0.01);
     // Nothing on the marks layer, which lies over the rings.
     expect(worn.marks.calls).toEqual(plain.marks.calls);
   });

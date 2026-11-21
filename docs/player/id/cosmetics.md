@@ -38,7 +38,7 @@ Aura tanah adalah cincin samar di kakimu. Jejak langkah meninggalkan butiran kec
 
 ## Di senjata dan jubahmu
 
-Jejak senjata adalah pita tipis di belakang senjatamu saat serangan jarak dekat mengenai sasaran, dan hilang dalam seperempat detik. Busur, tombak, tongkat sihir, dan tongkat tidak mendapatkannya, dan tidak ada mantra atau rapalan yang pernah menampilkannya. Corak jubah menaruh garis, chevron, perempat, atau bintang di jubah guild-mu dengan warna pinggirannya sendiri, dan lambangmu selalu tetap di atas, sejelas pada jubah polos. Perancang jubah di Opsi menampilkan jubahmu terbentang, dengan corakmu di atasnya. Jika sistemmu menyalakan gerakan yang dikurangi, tidak ada jejak senjata yang digambar.
+Jejak senjata adalah pita di belakang senjatamu saat serangan jarak dekat mengenai sasaran, dan memudar dalam seperlima detik sejak pukulan mengena. Busur, tombak, tongkat sihir, dan tongkat tidak mendapatkannya, dan tidak ada mantra atau rapalan yang pernah menampilkannya. Corak jubah menaruh garis, chevron, perempat, atau bintang di jubah guild-mu dengan warna pinggirannya sendiri, dan lambangmu selalu tetap di atas, sejelas pada jubah polos. Jika sistemmu menyalakan gerakan yang dikurangi, tidak ada jejak senjata yang digambar.
 
 ## Kembali dan tumbang
 

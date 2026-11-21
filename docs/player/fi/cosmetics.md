@@ -38,7 +38,7 @@ Maa-aura on himmeä rengas jalkojesi juuressa. Askeljälki jättää kulkemaasi 
 
 ## Aseessa ja viitassa
 
-Asejälki on ohut nauha aseesi perässä lähitaisteluhyökkäyksen osuessa, ja se katoaa neljännessekunnissa. Jouset, keihäät, taikasauvat ja sauvat eivät saa sitä, eikä mikään loitsu tai loitsiminen koskaan näytä sitä. Viitan kuvio lisää kiltaviittaasi raitoja, kulmaraitoja, neljänneksiä tai tähtiä viitan omalla reunusvärillä, ja tunnuksesi pysyy aina päällimmäisenä, yhtä selvänä kuin tavallisessa viitassa. Viittasuunnittelija Asetuksissa näyttää viittasi levitettynä, kuviosi päällä. Jos järjestelmässäsi on vähennetty liike päällä, asejälkeä ei piirretä.
+Asejälki on nauha aseesi perässä lähitaisteluhyökkäyksen osuessa, ja se haalistuu viidesosasekunnissa osumasta. Jouset, keihäät, taikasauvat ja sauvat eivät saa sitä, eikä mikään loitsu tai loitsiminen koskaan näytä sitä. Viitan kuvio lisää kiltaviittaasi raitoja, kulmaraitoja, neljänneksiä tai tähtiä viitan omalla reunusvärillä, ja tunnuksesi pysyy aina päällimmäisenä, yhtä selvänä kuin tavallisessa viitassa. Jos järjestelmässäsi on vähennetty liike päällä, asejälkeä ei piirretä.
 
 ## Palaaminen ja kaatuminen
 

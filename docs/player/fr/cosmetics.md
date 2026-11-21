@@ -38,7 +38,7 @@ Une aura au sol est un anneau léger à tes pieds. Une traînée de pas laisse d
 
 ## Sur ton arme et ta cape
 
-Une traînée d’arme est un mince ruban derrière ton arme quand une attaque au corps à corps frappe, disparu en moins d’un quart de seconde. Les arcs, les lances, les baguettes et les bâtons n’en ont pas, et aucun sort ni aucune incantation n’en montre jamais. Un motif de cape pose des bandes, des chevrons, des quartiers ou des étoiles sur ta cape de guilde dans sa propre couleur de bordure, et ton emblème reste toujours au-dessus, aussi net que sur une cape unie. Le créateur de cape dans Options montre ta cape déployée, avec ton motif dessus. Si ton système demande des animations réduites, aucune traînée d’arme n’est dessinée.
+Une traînée d’arme est un ruban derrière ton arme quand une attaque au corps à corps frappe, qui s’efface en moins d’un cinquième de seconde après le coup. Les arcs, les lances, les baguettes et les bâtons n’en ont pas, et aucun sort ni aucune incantation n’en montre jamais. Un motif de cape pose des bandes, des chevrons, des quartiers ou des étoiles sur ta cape de guilde dans sa propre couleur de bordure, et ton emblème reste toujours au-dessus, aussi net que sur une cape unie. Si ton système demande des animations réduites, aucune traînée d’arme n’est dessinée.
 
 ## Revenir et tomber
 

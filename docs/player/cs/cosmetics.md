@@ -9,7 +9,6 @@ nerozdává: kdokoli si může žebříček ověřit a vidět, co jsi získal.
 
 | Předmět                                   | Získáš za                |
 | ----------------------------------------- | ------------------------ |
-| ---------------------------------------   | ------------------------ |
 | Nefritový rámeček a titul Vyzyvatel       | 5 hodnocených výher      |
 | Mechová aura, Mechová stopa, Mechový švih | 5 hodnocených výher      |
 | Pruhovaný plášť                           | 5 hodnocených výher      |
@@ -37,7 +36,7 @@ Aura na zemi je slabý kruh u tvých nohou. Stopa kroků zanechává tam, kudy j
 
 ## Na zbrani a plášti
 
-Stopa zbraně je tenká stuha za tvou zbraní, když zasáhne útok na blízko, a zmizí do čtvrt sekundy. Luky, kopí, hůlky a hole žádnou nemají a žádné kouzlo ani sesílání ji nikdy neukáže. Vzor pláště nanese na tvůj plášť cechu pruhy, krokve, čtvrtiny nebo hvězdy v jeho vlastní barvě lemu a tvůj znak vždy zůstane navrchu, stejně zřetelný jako na hladkém plášti. Návrhář pláště v Možnostech ukazuje tvůj plášť rozvinutý, s tvým vzorem. Když máš v systému zapnutý omezený pohyb, žádná stopa zbraně se nekreslí.
+Stopa zbraně je stuha za tvou zbraní, když zasáhne útok na blízko, a vybledne do pětiny sekundy od zásahu. Luky, kopí, hůlky a hole žádnou nemají a žádné kouzlo ani sesílání ji nikdy neukáže. Vzor pláště nanese na tvůj plášť cechu pruhy, krokve, čtvrtiny nebo hvězdy v jeho vlastní barvě lemu a tvůj znak vždy zůstane navrchu, stejně zřetelný jako na hladkém plášti. Když máš v systému zapnutý omezený pohyb, žádná stopa zbraně se nekreslí.
 
 ## Návrat a pád
 

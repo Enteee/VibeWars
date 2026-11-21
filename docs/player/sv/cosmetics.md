@@ -9,7 +9,6 @@ Ingen delar ut den: vem som helst kan kolla topplistan och se vad du har tjänat
 
 | Föremål                                         | Tjänas in med           |
 | ----------------------------------------------- | ----------------------- |
-| ----------------------------------              | ----------------------- |
 | Jaderam och titeln Utmanare                     | 5 rankade vinster       |
 | Mossaura, Mosspår, Mossving                     | 5 rankade vinster       |
 | Randig mantel                                   | 5 rankade vinster       |
@@ -38,7 +37,7 @@ En markaura är en svag ring vid dina fötter. Fotspår lämnar små korn där d
 
 ## På ditt vapen och din mantel
 
-Ett vapenspår är ett tunt band bakom ditt vapen när en närstridsattack träffar, borta inom en kvarts sekund. Pilbågar, spjut, trollspön och stavar får inget, och ingen besvärjelse eller kastning visar någonsin ett. Ett mantelmönster lägger ränder, sparrar, kvarter eller stjärnor på din gillesmantel i dess egen kantfärg, och ditt emblem ligger alltid överst, lika tydligt som på en slät mantel. Manteldesignern i Alternativ visar din mantel utbredd, med ditt mönster på. Har du slagit på minskad rörelse i ditt system ritas inget vapenspår.
+Ett vapenspår är ett band bakom ditt vapen när en närstridsattack träffar, bleknat inom en femtedels sekund efter träffen. Pilbågar, spjut, trollspön och stavar får inget, och ingen besvärjelse eller kastning visar någonsin ett. Ett mantelmönster lägger ränder, sparrar, kvarter eller stjärnor på din gillesmantel i dess egen kantfärg, och ditt emblem ligger alltid överst, lika tydligt som på en slät mantel. Har du slagit på minskad rörelse i ditt system ritas inget vapenspår.
 
 ## Att komma tillbaka och falla
 

@@ -36,7 +36,7 @@ Aura na tlu je blagi prsten oko tvojih stopala. Trag koraka ostavlja sitne čest
 
 ## Na oružju i plaštu
 
-Trag oružja je tanka vrpca iza tvog oružja dok napad izbliza pogađa, a nestaje unutar četvrt sekunde. Lukovi, koplja, štapići i palice ga nemaju, i nijedna čarolija ni bacanje ga nikad ne pokazuje. Uzorak plašta stavlja pruge, ševrone, četvrtine ili zvijezde na tvoj plašt ceha u njegovoj vlastitoj boji obruba, a tvoj amblem uvijek ostaje na vrhu, jasan kao na običnom plaštu. Dizajner plašta u Opcijama prikazuje tvoj plašt razvijen, s tvojim uzorkom na njemu. Ako je u tvom sustavu uključeno smanjeno kretanje, trag oružja se ne crta.
+Trag oružja je vrpca iza tvog oružja dok napad izbliza pogađa, a blijedi unutar petine sekunde od pogotka. Lukovi, koplja, štapići i palice ga nemaju, i nijedna čarolija ni bacanje ga nikad ne pokazuje. Uzorak plašta stavlja pruge, ševrone, četvrtine ili zvijezde na tvoj plašt ceha u njegovoj vlastitoj boji obruba, a tvoj amblem uvijek ostaje na vrhu, jasan kao na običnom plaštu. Ako je u tvom sustavu uključeno smanjeno kretanje, trag oružja se ne crta.
 
 ## Povratak i pad
 

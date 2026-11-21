@@ -37,7 +37,7 @@ Hào quang mặt đất là một vòng mờ dưới chân bạn. Vệt bước 
 
 ## Trên vũ khí và áo choàng
 
-Vệt vũ khí là một dải lụa mảnh phía sau vũ khí của bạn khi một đòn cận chiến trúng đích, và biến mất trong vòng một phần tư giây. Cung, giáo, đũa phép và gậy phép không có vệt này, và không phép hay lần thi triển nào hiện ra vệt này. Họa tiết áo choàng đặt sọc, chữ V, ô chia tư hoặc ngôi sao lên áo choàng Bang của bạn bằng chính màu viền của nó, và huy hiệu của bạn luôn nằm trên cùng, rõ như trên một áo choàng trơn. Trình thiết kế áo choàng trong Tùy chọn cho thấy áo choàng của bạn trải ra, với họa tiết của bạn trên đó. Nếu hệ thống của bạn bật giảm chuyển động, không có vệt vũ khí nào được vẽ.
+Vệt vũ khí là một dải lụa phía sau vũ khí của bạn khi một đòn cận chiến trúng đích, và mờ dần trong vòng một phần năm giây kể từ cú đánh. Cung, giáo, đũa phép và gậy phép không có vệt này, và không phép hay lần thi triển nào hiện ra vệt này. Họa tiết áo choàng đặt sọc, chữ V, ô chia tư hoặc ngôi sao lên áo choàng Bang của bạn bằng chính màu viền của nó, và huy hiệu của bạn luôn nằm trên cùng, rõ như trên một áo choàng trơn. Nếu hệ thống của bạn bật giảm chuyển động, không có vệt vũ khí nào được vẽ.
 
 ## Trở lại và gục ngã
 

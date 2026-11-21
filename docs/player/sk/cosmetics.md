@@ -9,7 +9,6 @@ nerozdáva: ktokoľvek si môže rebríček skontrolovať a vidieť, čo si zís
 
 | Predmet                                      | Získaš za                  |
 | -------------------------------------------- | -------------------------- |
-| ------------------------------------------   | -------------------------- |
 | Nefritový rámik a titul Vyzývateľ            | 5 hodnotených výhier       |
 | Machová aura, Machová stopa, Machový švih    | 5 hodnotených výhier       |
 | Pásikavý plášť                               | 5 hodnotených výhier       |
@@ -38,7 +37,7 @@ Aura na zemi je slabý kruh pri tvojich nohách. Stopa krokov zanecháva tam, ka
 
 ## Na zbrani a plášti
 
-Stopa zbrane je tenká stuha za tvojou zbraňou, keď zasiahne útok na blízko, a zmizne do štvrť sekundy. Luky, oštepy, prútiky a palice žiadnu nemajú a žiadne kúzlo ani zosielanie ju nikdy neukáže. Vzor plášťa nanesie na tvoj cechový plášť pruhy, krokvy, štvrtiny alebo hviezdy v jeho vlastnej farbe lemu a tvoj znak vždy zostane navrchu, rovnako zreteľný ako na hladkom plášti. Návrhár plášťa v Nastaveniach ukazuje tvoj plášť rozvinutý, s tvojím vzorom. Ak máš v systéme zapnutý obmedzený pohyb, žiadna stopa zbrane sa nekreslí.
+Stopa zbrane je stuha za tvojou zbraňou, keď zasiahne útok na blízko, a vybledne do pätiny sekundy od zásahu. Luky, oštepy, prútiky a palice žiadnu nemajú a žiadne kúzlo ani zosielanie ju nikdy neukáže. Vzor plášťa nanesie na tvoj cechový plášť pruhy, krokvy, štvrtiny alebo hviezdy v jeho vlastnej farbe lemu a tvoj znak vždy zostane navrchu, rovnako zreteľný ako na hladkom plášti. Ak máš v systéme zapnutý obmedzený pohyb, žiadna stopa zbrane sa nekreslí.
 
 ## Návrat a pád
 

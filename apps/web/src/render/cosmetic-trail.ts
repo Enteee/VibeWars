@@ -16,14 +16,21 @@ import type { Painter } from "./body-painter.js";
 import { weaponTipAt } from "./weapon-mark.js";
 import type { Point } from "./weapon-mark-geometry.js";
 
-/** The longest a ribbon shows, seconds: its strike, then its fade. */
-export const SWING_TRAIL_SECONDS = 0.25;
-/** How long a ribbon fades out after the hit, seconds. */
-export const SWING_FADE_SECONDS = 0.1;
+/** The longest a ribbon shows, seconds: the longest strike, then its fade. */
+export const SWING_TRAIL_SECONDS = 0.35;
+/**
+ * How long a ribbon fades out after the hit, seconds: long enough to be
+ * seen at a swing's rhythm, short enough to end within every melee
+ * weapon's hold and recovery, so it never cuts off.
+ */
+export const SWING_FADE_SECONDS = 0.18;
 /** A ribbon's strongest alpha, at the weapon: ADR-0056 §4's ground budget. */
 export const SWING_TRAIL_ALPHA = 0.35;
-/** The ribbon's width at the weapon, a share of the body's radius; it tapers to nothing behind. */
-export const SWING_WIDTH_OF_BODY = 0.2;
+/** The ribbon's width at the weapon, a share of the body's radius, inside ADR-0056 §4's 0.6. */
+export const SWING_WIDTH_OF_BODY = 0.5;
+/** How wide and how strong the ribbon's tail is, a share of its head: it never thins to nothing. */
+const SWING_TAIL_WIDTH = 0.4;
+const SWING_TAIL_ALPHA = 0.5;
 /** How many pieces the arc is drawn in. */
 const SWING_SAMPLES = 8;
 
@@ -70,7 +77,8 @@ export function swingRibbon(
     case "hold":
     case "recover":
       upTo = 1;
-      alpha = SWING_TRAIL_ALPHA * (1 - clip.sinceHit / SWING_FADE_SECONDS);
+      // Eased: it stays strong past the hit, then goes.
+      alpha = SWING_TRAIL_ALPHA * (1 - (clip.sinceHit / SWING_FADE_SECONDS) ** 2);
       break;
     case "rest":
     case "wind-up":
@@ -81,6 +89,7 @@ export function swingRibbon(
   if (upTo <= 0 || alpha <= 0) {
     return undefined;
   }
+  const width = at.r * SWING_WIDTH_OF_BODY;
   const points: Point[] = [];
   for (let k = 0; k <= SWING_SAMPLES; k += 1) {
     const tip = weaponTipAt(at.x, at.y, at.r, at.facing, weaponId, {
@@ -88,10 +97,30 @@ export function swingRibbon(
       hit: frame.hit,
     });
     if (tip !== undefined) {
-      points.push(tip);
+      points.push(clearOfBody(tip, at, width));
     }
   }
-  return points.length < 2 ? undefined : { points, alpha, width: at.r * SWING_WIDTH_OF_BODY };
+  return points.length < 2 ? undefined : { points, alpha, width };
+}
+
+/**
+ * `tip` pushed out from the body at `at` until a ribbon `width` wide
+ * along it lies wholly past the body's rim, where the light rim cannot
+ * swallow it.
+ */
+function clearOfBody(
+  tip: Point,
+  at: { readonly x: number; readonly y: number; readonly r: number },
+  width: number,
+): Point {
+  const dx = tip.x - at.x;
+  const dy = tip.y - at.y;
+  const away = Math.hypot(dx, dy);
+  const least = at.r + width / 2;
+  if (away >= least || away === 0) {
+    return tip;
+  }
+  return { x: at.x + (dx * least) / away, y: at.y + (dy * least) / away };
 }
 
 /** Paint `ribbon` in `colour`: each piece wider and stronger toward the weapon. */
@@ -105,7 +134,11 @@ export function paintSwingRibbon(painter: Painter, ribbon: SwingRibbon, colour: 
       continue;
     }
     const share = i / pieces;
-    painter.lineStyle(ribbon.width * share, colour, ribbon.alpha * share);
+    painter.lineStyle(
+      ribbon.width * (SWING_TAIL_WIDTH + (1 - SWING_TAIL_WIDTH) * share),
+      colour,
+      ribbon.alpha * (SWING_TAIL_ALPHA + (1 - SWING_TAIL_ALPHA) * share),
+    );
     painter.beginPath();
     painter.moveTo(from.x, from.y);
     painter.lineTo(to.x, to.y);

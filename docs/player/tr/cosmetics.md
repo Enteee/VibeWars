@@ -37,7 +37,7 @@ Zemin aurası ayaklarının dibinde soluk bir halkadır. Ayak izi yürüdüğün
 
 ## Silahında ve pelerininde
 
-Silah izi, bir yakın dövüş saldırısı isabet ederken silahının arkasında kalan ince bir şerittir ve saniyenin dörtte biri içinde kaybolur. Yaylar, mızraklar, asalar ve değnekler iz almaz ve hiçbir büyü ya da okuma asla iz göstermez. Pelerin deseni lonca pelerinine kendi kenar renginde çizgiler, şevronlar, çeyrekler ya da yıldızlar koyar ve amblemin her zaman üstte kalır, düz bir pelerindeki kadar net. Ayarlar'daki pelerin tasarımcısı pelerinini deseninle birlikte açılmış hâlde gösterir. Sisteminde azaltılmış hareket açıksa silah izi çizilmez.
+Silah izi, bir yakın dövüş saldırısı isabet ederken silahının arkasında kalan bir şerittir ve isabetten sonra saniyenin beşte biri içinde solar. Yaylar, mızraklar, asalar ve değnekler iz almaz ve hiçbir büyü ya da okuma asla iz göstermez. Pelerin deseni lonca pelerinine kendi kenar renginde çizgiler, şevronlar, çeyrekler ya da yıldızlar koyar ve amblemin her zaman üstte kalır, düz bir pelerindeki kadar net. Sisteminde azaltılmış hareket açıksa silah izi çizilmez.
 
 ## Geri dönmek ve düşmek
 

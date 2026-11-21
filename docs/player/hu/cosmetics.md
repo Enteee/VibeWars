@@ -9,7 +9,6 @@ Kozmetikumokat ellenőrzött rangsorolt győzelmekkel szerzel, ahogy a nyilváno
 
 | Tárgy                                                    | Megszerezhető                           |
 | -------------------------------------------------------- | --------------------------------------- |
-| -----------------------------------                      | --------------------------------------- |
 | Jádekeret és a Kihívó cím                                | 5 rangsorolt győzelemmel                |
 | Moha aura, Moha nyom, Moha suhintás                      | 5 rangsorolt győzelemmel                |
 | Csíkos köpeny                                            | 5 rangsorolt győzelemmel                |
@@ -38,7 +37,7 @@ A talajaura halvány gyűrű a lábad körül. A lábnyomok apró szemcséket ha
 
 ## A fegyvereden és a köpenyeden
 
-A fegyvernyom vékony szalag a fegyvered mögött, amikor egy közelharci támadás betalál, és negyed másodpercen belül eltűnik. Az íjak, lándzsák, pálcák és botok nem kapnak ilyet, és egyetlen varázslat vagy varázslás sem mutat soha ilyet. A köpenyminta csíkokat, szarufákat, negyedeket vagy csillagokat tesz a céhköpenyedre a köpeny saját szegélyszínében, és a címered mindig felül marad, ugyanolyan tisztán, mint egy sima köpenyen. Az Opciókban lévő köpenytervező kiterítve mutatja a köpenyedet, rajta a mintáddal. Ha a rendszeredben be van kapcsolva a csökkentett mozgás, nem rajzolódik fegyvernyom.
+A fegyvernyom szalag a fegyvered mögött, amikor egy közelharci támadás betalál, és a találattól számított ötöd másodpercen belül elhalványul. Az íjak, lándzsák, pálcák és botok nem kapnak ilyet, és egyetlen varázslat vagy varázslás sem mutat soha ilyet. A köpenyminta csíkokat, szarufákat, negyedeket vagy csillagokat tesz a céhköpenyedre a köpeny saját szegélyszínében, és a címered mindig felül marad, ugyanolyan tisztán, mint egy sima köpenyen. Ha a rendszeredben be van kapcsolva a csökkentett mozgás, nem rajzolódik fegyvernyom.
 
 ## Visszatérés és elesés
 

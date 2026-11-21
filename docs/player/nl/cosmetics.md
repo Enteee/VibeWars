@@ -37,7 +37,7 @@ Een grondaura is een vage ring aan je voeten. Voetsporen laten kleine deeltjes a
 
 ## Op je wapen en cape
 
-Een wapenspoor is een dun lint achter je wapen terwijl een melee-aanval raakt, binnen een kwart seconde weer weg. Bogen, speren, toverstokken en staven krijgen er geen, en geen enkele spreuk of cast toont er ooit een. Een capepatroon legt strepen, kepers, kwartieren of sterren op je gildecape in zijn eigen randkleur, en je embleem blijft altijd bovenop, even duidelijk als op een effen cape. De capeontwerper in Opties toont je cape ontvouwd, met je patroon erop. Staat verminderde beweging aan in je systeem, dan wordt er geen wapenspoor getekend.
+Een wapenspoor is een lint achter je wapen terwijl een melee-aanval raakt, binnen een vijfde seconde na de treffer vervaagd. Bogen, speren, toverstokken en staven krijgen er geen, en geen enkele spreuk of cast toont er ooit een. Een capepatroon legt strepen, kepers, kwartieren of sterren op je gildecape in zijn eigen randkleur, en je embleem blijft altijd bovenop, even duidelijk als op een effen cape. Staat verminderde beweging aan in je systeem, dan wordt er geen wapenspoor getekend.
 
 ## Terugkomen en vallen
 

@@ -10,7 +10,6 @@ has conseguido.
 
 | Objeto                                                          | Se consigue con                      |
 | --------------------------------------------------------------- | ------------------------------------ |
-| ------------------------------------------------                | ------------------------------------ |
 | Marco jade y el título Aspirante                                | 5 victorias clasificatorias          |
 | Aura de musgo, Rastro de musgo, Tajo de musgo                   | 5 victorias clasificatorias          |
 | Capa a rayas                                                    | 5 victorias clasificatorias          |
@@ -39,7 +38,7 @@ Un aura de suelo es un anillo tenue a tus pies. Un rastro de pasos deja pequeña
 
 ## En tu arma y tu capa
 
-Un rastro del arma es una cinta fina tras tu arma cuando golpea un ataque cuerpo a cuerpo, y desaparece en menos de un cuarto de segundo. Los arcos, las lanzas, las varitas y los bastones no tienen ninguno, y ningún hechizo ni lanzamiento muestra uno jamás. Un diseño de capa pone franjas, galones, cuarteles o estrellas sobre tu capa de gremio en su propio color de ribete, y tu emblema queda siempre encima, tan claro como en una capa lisa. El diseñador de capa en Opciones muestra tu capa desplegada, con tu diseño encima. Si tu sistema tiene activado el movimiento reducido, no se dibuja ningún rastro del arma.
+Un rastro del arma es una cinta tras tu arma cuando golpea un ataque cuerpo a cuerpo, y se desvanece en menos de un quinto de segundo desde el impacto. Los arcos, las lanzas, las varitas y los bastones no tienen ninguno, y ningún hechizo ni lanzamiento muestra uno jamás. Un diseño de capa pone franjas, galones, cuarteles o estrellas sobre tu capa de gremio en su propio color de ribete, y tu emblema queda siempre encima, tan claro como en una capa lisa. Si tu sistema tiene activado el movimiento reducido, no se dibuja ningún rastro del arma.
 
 ## Volver y caer
 

@@ -37,7 +37,7 @@ Eine Bodenaura ist ein schwacher Ring zu deinen Füßen. Eine Fußspur hinterlä
 
 ## An Waffe und Umhang
 
-Eine Waffenspur ist ein dünnes Band hinter deiner Waffe, während ein Nahkampfangriff trifft, und nach einer Viertelsekunde verschwunden. Bögen, Speere, Zauberstäbe und Stäbe bekommen keine, und kein Zauber und kein Wirken zeigt je eine. Ein Umhangmuster legt Streifen, Sparren, Viertel oder Sterne in seiner eigenen Saumfarbe auf deinen Gildenumhang, und dein Emblem bleibt immer obenauf, so klar wie auf einem schlichten Umhang. Der Umhang-Designer in Optionen zeigt deinen Umhang entfaltet, mit deinem Muster darauf. Ist in deinem System reduzierte Bewegung eingeschaltet, wird keine Waffenspur gezeichnet.
+Eine Waffenspur ist ein Band hinter deiner Waffe, während ein Nahkampfangriff trifft, und verblasst binnen einer Fünftelsekunde nach dem Treffer. Bögen, Speere, Zauberstäbe und Stäbe bekommen keine, und kein Zauber und kein Wirken zeigt je eine. Ein Umhangmuster legt Streifen, Sparren, Viertel oder Sterne in seiner eigenen Saumfarbe auf deinen Gildenumhang, und dein Emblem bleibt immer obenauf, so klar wie auf einem schlichten Umhang. Ist in deinem System reduzierte Bewegung eingeschaltet, wird keine Waffenspur gezeichnet.
 
 ## Zurückkehren und fallen
 

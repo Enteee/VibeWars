@@ -37,7 +37,7 @@ Un’aura al suolo è un anello tenue ai tuoi piedi. Una scia di passi lascia pi
 
 ## Sull’arma e sul mantello
 
-Una scia dell’arma è un nastro sottile dietro la tua arma quando un attacco in mischia colpisce, e sparisce entro un quarto di secondo. Archi, lance, bacchette e bastoni non ne hanno, e nessun incantesimo o lancio ne mostra mai una. Un motivo del mantello mette strisce, scaglioni, quarti o stelle sul tuo mantello gilda nel suo colore di bordo, e il tuo emblema resta sempre sopra, nitido come su un mantello semplice. Il designer del mantello in Opzioni mostra il tuo mantello spiegato, con sopra il tuo motivo. Se il tuo sistema chiede movimenti ridotti, nessuna scia dell’arma viene disegnata.
+Una scia dell’arma è un nastro dietro la tua arma quando un attacco in mischia colpisce, e svanisce entro un quinto di secondo dal colpo. Archi, lance, bacchette e bastoni non ne hanno, e nessun incantesimo o lancio ne mostra mai una. Un motivo del mantello mette strisce, scaglioni, quarti o stelle sul tuo mantello gilda nel suo colore di bordo, e il tuo emblema resta sempre sopra, nitido come su un mantello semplice. Se il tuo sistema chiede movimenti ridotti, nessuna scia dell’arma viene disegnata.
 
 ## Tornare e cadere
 

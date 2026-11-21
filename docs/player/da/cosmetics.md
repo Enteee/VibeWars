@@ -37,7 +37,7 @@ En jordaura er en svag ring ved dine fødder. Et fodspor efterlader små gnister
 
 ## På dit våben og din kappe
 
-Et våbenspor er et tyndt bånd bag dit våben, når et nærkampsangreb rammer, og det er væk inden for et kvart sekund. Buer, spyd, tryllestave og stave får intet, og ingen besværgelse eller kastning viser nogensinde et. Et kappemønster lægger striber, chevroner, kvarterer eller stjerner på din laugskappe i dens egen kantfarve, og dit emblem ligger altid øverst, lige så tydeligt som på en ensfarvet kappe. Kappedesigneren i Valg viser din kappe foldet ud, med dit mønster på. Har du slået reduceret bevægelse til i dit system, tegnes intet våbenspor.
+Et våbenspor er et bånd bag dit våben, når et nærkampsangreb rammer, og det falmer inden for en femtedel af et sekund efter træffet. Buer, spyd, tryllestave og stave får intet, og ingen besværgelse eller kastning viser nogensinde et. Et kappemønster lægger striber, chevroner, kvarterer eller stjerner på din laugskappe i dens egen kantfarve, og dit emblem ligger altid øverst, lige så tydeligt som på en ensfarvet kappe. Har du slået reduceret bevægelse til i dit system, tegnes intet våbenspor.
 
 ## At komme tilbage og falde
 

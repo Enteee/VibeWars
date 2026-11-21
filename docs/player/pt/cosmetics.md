@@ -38,7 +38,7 @@ Uma aura no chão é um anel ténue aos teus pés. Um rastro de passos deixa peq
 
 ## Na tua arma e capa
 
-Um rastro da arma é uma fita fina atrás da tua arma quando um ataque corpo a corpo acerta, e desaparece em menos de um quarto de segundo. Arcos, lanças, varinhas e cajados não têm nenhum, e nenhum feitiço ou conjuração mostra alguma vez um. Um padrão da capa põe riscas, divisas, quartos ou estrelas na tua capa da guilda na sua própria cor de debrum, e o teu emblema fica sempre por cima, tão nítido como numa capa lisa. O criador de capa em Opções mostra a tua capa desfraldada, com o teu padrão. Se o teu sistema pedir movimento reduzido, nenhum rastro da arma é desenhado.
+Um rastro da arma é uma fita atrás da tua arma quando um ataque corpo a corpo acerta, e desvanece-se em menos de um quinto de segundo após o golpe. Arcos, lanças, varinhas e cajados não têm nenhum, e nenhum feitiço ou conjuração mostra alguma vez um. Um padrão da capa põe riscas, divisas, quartos ou estrelas na tua capa da guilda na sua própria cor de debrum, e o teu emblema fica sempre por cima, tão nítido como numa capa lisa. Se o teu sistema pedir movimento reduzido, nenhum rastro da arma é desenhado.
 
 ## Voltar e cair
 
