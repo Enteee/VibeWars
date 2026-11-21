@@ -6,6 +6,7 @@ import { ARENA, TICK_SECONDS, hello, settle, testSignet } from "./match-harness.
 import { createMatchHost, type MatchHost, type PlannedSeats } from "./match-host.js";
 import { createMemoryNetwork } from "./memory-transport.js";
 import { messageBytes, type Transport } from "./transport.js";
+import { testCosmetics } from "./player-key.test-support.js";
 
 /**
  * The load benchmark (brief §26), run as a test so it cannot rot: a change
@@ -93,6 +94,7 @@ async function runScenario(scenario: Scenario): Promise<Result> {
         bot: false,
         playerPubkey: "ab".repeat(32),
         startMorale: 0,
+        cosmetics: testCosmetics,
         build: null,
       } as const,
     ]),

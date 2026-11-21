@@ -53,6 +53,10 @@ import {
   parseWireTraps,
   parseWireRespawns,
   parseWireCapes,
+  parseWireCosmetics,
+  parseWireSeatCosmetics,
+  MAX_COSMETIC_IDS,
+  MAX_COSMETIC_ID_LENGTH,
   packEmblem,
   unpackEmblem,
   canonicalEmblem,
@@ -534,6 +538,13 @@ const recharge: RechargeMessage = {
   queued: 1,
 };
 
+/** A selection (ADR-0056): its shape is all a parser checks. */
+const COSMETICS = {
+  ids: ["frame-bronze", "title-veteran"],
+  at: 1_700_000_000_000,
+  sig: "c0".repeat(64),
+};
+
 /** Each parser, with the one fixture it must round-trip. */
 const lobbyJoin: PeerLobbyJoin = {
   protocolVersion: PROTOCOL_VERSION,
@@ -547,6 +558,7 @@ const lobbyJoin: PeerLobbyJoin = {
   playerPubkey: "9a".repeat(32),
   ascentMorale: 0,
   ranked: null,
+  cosmetics: COSMETICS,
 };
 
 /** A queued join's proof (#871): a ticket id and a signature, as hex. */
@@ -1105,6 +1117,16 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["no respawns (#3367)", parseWireRespawns, { respawns: [] }],
   ["capes (#3554)", parseWireCapes, { capes: [{ id: "p1", cape: CAPE }] }],
   ["no capes (#3554)", parseWireCapes, { capes: [] }],
+  [
+    "cosmetics (ADR-0056)",
+    parseWireSeatCosmetics,
+    { id: "p1", playerPubkey: "9a".repeat(32), cosmetics: COSMETICS },
+  ],
+  [
+    "an empty selection, signed (ADR-0056)",
+    parseWireSeatCosmetics,
+    { id: "p1", playerPubkey: "9a".repeat(32), cosmetics: { ...COSMETICS, ids: [] } },
+  ],
   ["chat (#479)", parsePeerChat, { channel: "team", text: "spike the monk" }],
   ["shared-track (#2745)", parseWireSharedTrack, sharedTrack],
   [
@@ -1278,12 +1300,26 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   [
     "set-profile (#3548)",
     parseWireLobbyCommand,
-    { kind: "set-profile", name: "Mhenlo", guildTag: "vb", heroRank: 3, guildCape: CAPE },
+    {
+      kind: "set-profile",
+      name: "Mhenlo",
+      guildTag: "vb",
+      heroRank: 3,
+      guildCape: CAPE,
+      cosmetics: COSMETICS,
+    },
   ],
   [
     "set-profile with no guild (#3548)",
     parseWireLobbyCommand,
-    { kind: "set-profile", name: "Mhenlo", guildTag: null, heroRank: 0, guildCape: null },
+    {
+      kind: "set-profile",
+      name: "Mhenlo",
+      guildTag: null,
+      heroRank: 0,
+      guildCape: null,
+      cosmetics: COSMETICS,
+    },
   ],
   [
     "a team plan's human seat (ADR-0042)",
@@ -1344,17 +1380,36 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
   [
     "a set-profile with no name (#3548)",
     parseWireLobbyCommand,
-    { kind: "set-profile", guildTag: null, heroRank: 0, guildCape: null },
+    { kind: "set-profile", guildTag: null, heroRank: 0, guildCape: null, cosmetics: COSMETICS },
   ],
   [
     "a set-profile past the top hero rank (#3548)",
     parseWireLobbyCommand,
-    { kind: "set-profile", name: "Mhenlo", guildTag: null, heroRank: 16, guildCape: null },
+    {
+      kind: "set-profile",
+      name: "Mhenlo",
+      guildTag: null,
+      heroRank: 16,
+      guildCape: null,
+      cosmetics: COSMETICS,
+    },
   ],
   [
     "a set-profile with a numeric guild tag (#3548)",
     parseWireLobbyCommand,
-    { kind: "set-profile", name: "Mhenlo", guildTag: 7, heroRank: 0, guildCape: null },
+    {
+      kind: "set-profile",
+      name: "Mhenlo",
+      guildTag: 7,
+      heroRank: 0,
+      guildCape: null,
+      cosmetics: COSMETICS,
+    },
+  ],
+  [
+    "a set-profile with no cosmetics (ADR-0056)",
+    parseWireLobbyCommand,
+    { kind: "set-profile", name: "Mhenlo", guildTag: null, heroRank: 0, guildCape: null },
   ],
   [
     "a remove-member with an id past the wire's (#2746)",
@@ -1554,6 +1609,31 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     { capes: [{ id: "p1", cape: { ...CAPE, main: "red" } }] },
   ],
   ["capes of a seat in no cape (#3554)", parseWireCapes, { capes: [{ id: "p1", cape: null }] }],
+  [
+    "a selection of 13 ids (ADR-0056)",
+    parseWireCosmetics,
+    {
+      ...COSMETICS,
+      ids: Array.from({ length: MAX_COSMETIC_IDS + 1 }, (_, i) => `id-${String(i)}`),
+    },
+  ],
+  [
+    "a cosmetic id of 33 characters (ADR-0056)",
+    parseWireCosmetics,
+    { ...COSMETICS, ids: ["x".repeat(MAX_COSMETIC_ID_LENGTH + 1)] },
+  ],
+  ["an unsigned selection (ADR-0056)", parseWireCosmetics, { ids: [], at: 0 }],
+  ["a selection at a fraction of a ms (ADR-0056)", parseWireCosmetics, { ...COSMETICS, at: 0.5 }],
+  [
+    "cosmetics of a seat with no key (ADR-0056)",
+    parseWireSeatCosmetics,
+    { id: "p1", playerPubkey: null, cosmetics: COSMETICS },
+  ],
+  [
+    "a lobby join with no cosmetics (ADR-0056)",
+    parsePeerLobbyJoin,
+    { ...lobbyJoin, cosmetics: undefined },
+  ],
   [
     "summary row without a guild tag (#1406)",
     parseWireEnded,

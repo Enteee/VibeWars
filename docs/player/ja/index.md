@@ -8,6 +8,7 @@
 - [スキルとビルド](skills-and-builds.md)
 - [装備](equipment.md)
 - [モード](modes.md)
+- [コスメティック](cosmetics.md)
 - [ワールドの要素](world-elements.md)
 - [ボット](bots.md)
 - [用語集](glossary.md)

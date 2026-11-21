@@ -21,6 +21,7 @@ function player(sessionId: string, knockdownRemaining: number): PlayerSnapshot {
     guildTag: undefined,
     heroRank: 0,
     guildCape: undefined,
+    worn: undefined,
     x: 100,
     y: 100,
     facing: 0,

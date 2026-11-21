@@ -23,6 +23,7 @@ import {
   type ReplayInput,
   type Sha256,
 } from "./replay.js";
+import { testCosmetics } from "./player-key.test-support.js";
 
 const sha256: Sha256 = async (bytes) =>
   new Uint8Array(await crypto.subtle.digest("SHA-256", bytes));
@@ -144,6 +145,7 @@ describe("a match's replay (#3572)", () => {
             bot: false,
             playerPubkey: "ab".repeat(32),
             startMorale: 0,
+            cosmetics: testCosmetics,
             build: starterBuild("Warrior/Monk"),
           },
         ],
@@ -210,6 +212,7 @@ describe("a match's replay (#3572)", () => {
             bot: false,
             playerPubkey: "ab".repeat(32),
             startMorale: 0,
+            cosmetics: testCosmetics,
             build: starterBuild("Warrior/Monk"),
           },
         ],

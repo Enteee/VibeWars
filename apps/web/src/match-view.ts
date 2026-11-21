@@ -23,6 +23,7 @@ import { attachMatchSounds } from "./audio/match-sounds.js";
 import { worldPlacesOf } from "./audio/world-places.js";
 import { onGlobalMute, setGlobalMute } from "./audio/global-mute.js";
 import { soundPlayer } from "./audio/sound-player.js";
+import { ownLook, seenCosmetics } from "./cosmetics/view.js";
 import { t } from "./i18n/index.js";
 import { attackKeyIntents, escapeIntent } from "./input/attack-key.js";
 import { createDoubleClick } from "./input/double-click.js";
@@ -488,6 +489,8 @@ export function toArenaSnapshot(
         name: plate.name,
         nameLead: plate.lead,
         signet: plate.signet,
+        // What it wears (ADR-0056): yours as you picked it, anyone else's as checked.
+        cosmetics: player.sessionId === self?.sessionId ? ownLook() : seenCosmetics(player.worn),
         guildTag: player.guildTag,
         heroRank: player.heroRank,
         cape:

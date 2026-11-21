@@ -12,6 +12,7 @@ import {
   type TestLobby,
 } from "./lobby-harness.test-support.js";
 import { settle } from "./match-harness.test-support.js";
+import { testCosmetics } from "./player-key.test-support.js";
 import type { Transport } from "./transport.js";
 
 /**
@@ -75,6 +76,7 @@ const joinAs = (name: string, rejoinToken: string | null) => ({
   playerPubkey: WIRE_PLAYER_KEY.pubkey,
   ascentMorale: 0,
   ranked: null,
+  cosmetics: testCosmetics,
 });
 
 /**

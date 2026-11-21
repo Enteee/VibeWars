@@ -10,7 +10,11 @@ import {
   type StatusCategory,
   type StatusId,
 } from "@vibewars/game-core";
-import { MASTERLESS_WIRE_TEAM, MAX_WIRE_STATUSES } from "@vibewars/game-protocol";
+import {
+  MASTERLESS_WIRE_TEAM,
+  MAX_LOBBY_PLAYERS,
+  MAX_WIRE_STATUSES,
+} from "@vibewars/game-protocol";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -19,6 +23,7 @@ import {
   sameSkillBar,
   skillBarSlots,
   statusSnapshot,
+  wear,
   wireStatuses,
   wireIdentity,
   type SeatIdentity,
@@ -542,5 +547,36 @@ describe("wireIdentity (#1052)", () => {
       team: MASTERLESS_WIRE_TEAM,
       creature: { ownerId: null, kind: "minion" },
     });
+  });
+});
+
+describe("wear (ADR-0056)", () => {
+  const ids = (count: number, from = 0): string[] =>
+    Array.from({ length: count }, (_, index) => `p${String(from + index)}`);
+
+  it("replaces a seat's selection with its latest", () => {
+    const worn = new Map<string, number>();
+    wear(worn, "p1", 1, () => true);
+    wear(worn, "p1", 2, () => true);
+    expect([...worn]).toEqual([["p1", 2]]);
+  });
+
+  it("forgets seats no longer here before any still seated, past two lobbies' worth", () => {
+    const worn = new Map<string, number>();
+    const seated = new Set(ids(MAX_LOBBY_PLAYERS));
+    for (const id of ids(2 * MAX_LOBBY_PLAYERS)) {
+      wear(worn, id, 0, (kept) => seated.has(kept));
+    }
+    wear(worn, "late", 0, (kept) => seated.has(kept));
+    expect([...worn.keys()]).toEqual([...ids(MAX_LOBBY_PLAYERS), "late"]);
+  });
+
+  it("stays bounded when a host names ids nobody sits in", () => {
+    const worn = new Map<string, number>();
+    for (const id of ids(10 * MAX_LOBBY_PLAYERS)) {
+      wear(worn, id, 0, () => true);
+    }
+    expect(worn.size).toBe(2 * MAX_LOBBY_PLAYERS);
+    expect(worn.has(`p${String(10 * MAX_LOBBY_PLAYERS - 1)}`)).toBe(true);
   });
 });

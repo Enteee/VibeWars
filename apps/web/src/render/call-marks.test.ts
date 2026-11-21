@@ -14,6 +14,7 @@ const CALLED: RenderableActor = {
   guildTag: undefined,
   heroRank: 0,
   signet: undefined,
+  cosmetics: {},
   cape: undefined,
   bot: false,
   position: CENTRE,

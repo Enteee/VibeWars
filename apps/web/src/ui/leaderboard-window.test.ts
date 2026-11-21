@@ -12,6 +12,8 @@ function entry(pubkey: string, rank: number | null, overrides: Partial<Leaderboa
     conservative: 1500,
     matches: 12,
     provisional: rank === null,
+    wins: 0,
+    streak: 0,
     ...overrides,
   };
 }

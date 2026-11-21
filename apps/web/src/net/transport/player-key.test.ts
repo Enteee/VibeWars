@@ -114,11 +114,13 @@ describe("the player key (#2706)", () => {
     expect(Object.keys(playerKeyModule).sort()).toEqual([
       "loadPlayerKey",
       "receiptCrypto",
+      "verifyCosmetics",
       "verifyPlayerProof",
     ]);
     const key = loadPlayerKey(memoryStorage());
     expect(Object.keys(key).sort()).toEqual([
       "pubkey",
+      "signCosmetics",
       "signLobbyProof",
       "signRankedResult",
       "signRankedStart",

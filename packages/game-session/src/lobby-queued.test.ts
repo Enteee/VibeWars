@@ -36,7 +36,7 @@ import { PARTY_CONSENT_MS, createLobbyHost, type LobbyHost, type MatchPlan } fro
 import { ARENA, TICK_SECONDS, settle, testSignet, until } from "./match-harness.test-support.js";
 import { createMatchHost, type MatchHost } from "./match-host.js";
 import { createMemoryNetwork, type MemoryNetwork } from "./memory-transport.js";
-import { testPlayerKey, verifyTestProof } from "./player-key.test-support.js";
+import { testCosmetics, testPlayerKey, verifyTestProof } from "./player-key.test-support.js";
 import {
   admissionBytes,
   admissionDigest,
@@ -228,6 +228,7 @@ function joinQueued(
     timeoutMs,
     relayPub: null,
     playerKey: testPlayerKey(),
+    cosmetics: testCosmetics,
     claim: () => ({ rating: 800, asOf: 0 }),
     queued: { group, key: keyOf(ticketId), verifyTicketSig, ascentMorale },
   });
@@ -363,6 +364,7 @@ async function forgedJoin(
     playerPubkey: WIRE_PLAYER_KEY.pubkey,
     ascentMorale: 0,
     ranked: null,
+    cosmetics: testCosmetics,
   };
 }
 
@@ -434,6 +436,7 @@ describe("a queued lobby", () => {
         playerPubkey: WIRE_PLAYER_KEY.pubkey,
         ascentMorale: 0,
         ranked: null,
+        cosmetics: testCosmetics,
       },
       "host",
     );

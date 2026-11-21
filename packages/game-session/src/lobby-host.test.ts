@@ -50,7 +50,7 @@ import { canStart, PROFILE_INTERVAL_MS, type MatchPlan } from "./lobby-host.js";
 import { cryptoTurns, settle, starterBuild, until } from "./match-harness.test-support.js";
 import { RECONNECT_WINDOW_SECONDS, type MatchHost } from "./match-host.js";
 import { createMemoryNetwork } from "./memory-transport.js";
-import { testPlayerKey } from "./player-key.test-support.js";
+import { testCosmetics, testPlayerKey } from "./player-key.test-support.js";
 import { sanitizeCharacterName } from "./names.js";
 import type { Transport, TransportTrouble } from "./transport.js";
 
@@ -486,6 +486,7 @@ describe("lobby host", () => {
         timeoutMs: 1000,
         relayPub: null,
         playerKey: testPlayerKey(),
+        cosmetics: testCosmetics,
         claim: () => ({ rating: 800, asOf: 0 }),
       }),
     ).rejects.toEqual(new LobbyRefusedError("lobby-full"));
@@ -586,6 +587,7 @@ describe("an open or closed lobby (#1682)", () => {
       timeoutMs: 1000,
       relayPub: null,
       playerKey: testPlayerKey(),
+      cosmetics: testCosmetics,
       claim: () => ({ rating: 800, asOf: 0 }),
     }).catch((error: unknown) => error);
 
@@ -886,6 +888,7 @@ describe("joining by code", () => {
         timeoutMs: 50,
         relayPub: null,
         playerKey: testPlayerKey(),
+        cosmetics: testCosmetics,
         claim: () => ({ rating: 800, asOf: 0 }),
       }),
       // Its player-key proof names the code it dialled (#2706).
@@ -907,6 +910,7 @@ describe("joining by code", () => {
         timeoutMs: 50,
         relayPub: null,
         playerKey: testPlayerKey(),
+        cosmetics: testCosmetics,
         claim: () => ({ rating: 800, asOf: 0 }),
       });
       for (const trouble of troubles) {
@@ -936,6 +940,7 @@ describe("joining by code", () => {
         timeoutMs: 50,
         relayPub: null,
         playerKey: testPlayerKey(),
+        cosmetics: testCosmetics,
         claim: () => ({ rating: 800, asOf: 0 }),
       }),
     ).rejects.toBeInstanceOf(LobbyNoAnswerError);
@@ -1255,6 +1260,7 @@ describe("a Team Lobby (#1458)", () => {
         timeoutMs: 1000,
         relayPub: null,
         playerKey: testPlayerKey(),
+        cosmetics: testCosmetics,
         claim: () => ({ rating: 800, asOf: 0 }),
       }),
     ).rejects.toEqual(new LobbyRefusedError("party-full"));
@@ -2161,6 +2167,7 @@ describe("the key gate (#1681, ADR-0043)", () => {
     playerPubkey: WIRE_PLAYER_KEY.pubkey,
     ascentMorale: 0,
     ranked: null,
+    cosmetics: testCosmetics,
   });
 
   /** The nonce `got` was challenged with. */
@@ -2498,6 +2505,7 @@ describe("the key gate (#1681, ADR-0043)", () => {
       timeoutMs: 50,
       relayPub: null,
       playerKey: testPlayerKey(),
+      cosmetics: testCosmetics,
       claim: () => ({ rating: 800, asOf: 0 }),
     });
     await expect(joining).rejects.toEqual(new LobbyNoAnswerError(50, null));
@@ -2556,7 +2564,13 @@ describe("the host removes a member (#2746)", () => {
 });
 
 describe("a member's profile changed in Options (#3548)", () => {
-  const PROFILE = { name: "Ann", guildTag: "Vb", heroRank: 3, guildCape: null } as const;
+  const PROFILE = {
+    name: "Ann",
+    guildTag: "Vb",
+    heroRank: 3,
+    guildCape: null,
+    cosmetics: testCosmetics,
+  } as const;
 
   /** What `who`'s roster says of each member: name and tag. */
   const rosterOf = (who: Member) =>
@@ -2607,16 +2621,32 @@ describe("a member's profile changed in Options (#3548)", () => {
     expect(playersOf(lobby.host)[1]?.name).toBe("Bo");
   });
 
-  it("leaves a running match's seat with the name it started with", async () => {
+  it("shows a guest's new cosmetics to every member at once (ADR-0056)", async () => {
+    const { lobby, guest } = await hostAndGuest();
+    const picked = { ids: ["frame-rose"], at: 1, sig: "11".repeat(64) };
+    guest.connection.setProfile({ ...PROFILE, cosmetics: picked });
+    await settle();
+    for (const who of [lobby.host, guest]) {
+      expect(who.connection.getSnapshot().players[1]?.cosmetics).toEqual(picked);
+    }
+  });
+
+  it("leaves a running match's seat with the name and cosmetics it started with", async () => {
     const lobby = await openLobby();
     const guest = await lobby.join("Ann", "Vb");
     await seat([lobby.host, guest], [0, 1]);
     await start(lobby);
-    guest.connection.setProfile({ ...PROFILE, name: "Bo", guildTag: null });
+    guest.connection.setProfile({
+      ...PROFILE,
+      name: "Bo",
+      guildTag: null,
+      cosmetics: { ...testCosmetics, at: 1 },
+    });
     await settle();
     const seated = lobby.matches[0]?.plan.seats.get(guest.transport.selfId);
     expect(seated?.name).toBe("Ann");
     expect(seated?.guildTag).toBe("Vb");
+    expect(seated?.bot === false ? seated.cosmetics : undefined).toEqual(testCosmetics);
     expect(playersOf(lobby.host)[1]?.name).toBe("Bo");
   });
 });

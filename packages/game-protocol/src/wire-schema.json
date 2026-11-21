@@ -53,6 +53,7 @@
     "traps",
     "respawns",
     "capes",
+    "cosmetics",
     "chat",
     "chat-line",
     "shared-track",
@@ -752,6 +753,8 @@
     "MAX_CHART_PARTS": { "literal": 16 },
     "MAX_CHART_SAMPLES": { "literal": 120 },
     "MAX_CHAT_GRAPHEMES": { "literal": 200 },
+    "MAX_COSMETIC_IDS": { "literal": 12 },
+    "MAX_COSMETIC_ID_LENGTH": { "literal": 32 },
     "MAX_EMBLEM_COLOURS": { "literal": 15 },
     "MAX_HERO_RANK": { "literal": 15 },
     "MAX_LOBBY_PLAYERS": { "literal": 24 },
@@ -910,6 +913,7 @@
         { "literal": "chat" },
         { "literal": "chat-line" },
         { "literal": "combat" },
+        { "literal": "cosmetics" },
         { "literal": "ended" },
         { "literal": "hello" },
         { "literal": "intent" },
@@ -6199,6 +6203,17 @@
         },
         { "name": "ascentMorale", "optional": false, "type": "number" },
         {
+          "name": "cosmetics",
+          "optional": false,
+          "type": {
+            "properties": [
+              { "name": "at", "optional": false, "type": "number" },
+              { "name": "ids", "optional": false, "type": { "array": "string" } },
+              { "name": "sig", "optional": false, "type": "string" }
+            ]
+          }
+        },
+        {
           "name": "guildCape",
           "optional": false,
           "type": {
@@ -7712,6 +7727,13 @@
         { "name": "targetId", "optional": false, "type": { "union": ["null", "string"] } }
       ]
     },
+    "WireCosmetics": {
+      "properties": [
+        { "name": "at", "optional": false, "type": "number" },
+        { "name": "ids", "optional": false, "type": { "array": "string" } },
+        { "name": "sig", "optional": false, "type": "string" }
+      ]
+    },
     "WireCreature": {
       "properties": [
         {
@@ -7973,6 +7995,17 @@
         },
         {
           "properties": [
+            {
+              "name": "cosmetics",
+              "optional": false,
+              "type": {
+                "properties": [
+                  { "name": "at", "optional": false, "type": "number" },
+                  { "name": "ids", "optional": false, "type": { "array": "string" } },
+                  { "name": "sig", "optional": false, "type": "string" }
+                ]
+              }
+            },
             {
               "name": "guildCape",
               "optional": false,
@@ -9145,6 +9178,23 @@
           }
         },
         { "name": "id", "optional": false, "type": "string" }
+      ]
+    },
+    "WireSeatCosmetics": {
+      "properties": [
+        {
+          "name": "cosmetics",
+          "optional": false,
+          "type": {
+            "properties": [
+              { "name": "at", "optional": false, "type": "number" },
+              { "name": "ids", "optional": false, "type": { "array": "string" } },
+              { "name": "sig", "optional": false, "type": "string" }
+            ]
+          }
+        },
+        { "name": "id", "optional": false, "type": "string" },
+        { "name": "playerPubkey", "optional": false, "type": "string" }
       ]
     },
     "WireSharedTrack": {

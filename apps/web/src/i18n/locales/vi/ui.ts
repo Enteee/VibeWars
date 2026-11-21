@@ -318,6 +318,31 @@ export default {
   "controls.weaponSet4": "Bộ vũ khí 4",
   "controls.weaponSets": "Bộ vũ khí",
   "controls.withShift": "Shift + {key}",
+
+  "cosmetics.item.flame": "Ngọn lửa chuỗi thắng",
+  "cosmetics.item.frameJade": "Khung ngọc bích",
+  "cosmetics.item.frameOrchid": "Khung lan tím",
+  "cosmetics.item.frameRose": "Khung hồng",
+  "cosmetics.item.frameTeal": "Khung xanh mòng két",
+  "cosmetics.locked": "Đã khóa",
+  "cosmetics.none": "Không",
+  "cosmetics.note":
+    "Chỉ để làm đẹp: không vật phẩm trang trí nào thay đổi lối chơi. Nhận được nhờ thắng trận xếp hạng trên bảng xếp hạng công khai, dùng chung cho mọi nhân vật của bạn.",
+  "cosmetics.requires.streak": {
+    other: "{count} trận thắng xếp hạng liên tiếp",
+  },
+  "cosmetics.requires.top": "Top {rank}",
+  "cosmetics.requires.wins": {
+    other: "{count} trận thắng xếp hạng",
+  },
+  "cosmetics.showOthers": "Hiện trang trí của người chơi khác",
+  "cosmetics.slot.flame": "Ngọn lửa chuỗi thắng",
+  "cosmetics.slot.frame": "Khung bảng tên",
+  "cosmetics.slot.title": "Danh hiệu",
+  "cosmetics.title.champion": "Nhà vô địch",
+  "cosmetics.title.contender": "Kẻ thách đấu",
+  "cosmetics.title.veteran": "Lão binh",
+  "cosmetics.title.warlord": "Lãnh chúa",
   "creature.rat": "Chuột",
 
   "echo.secondsLeft": { other: "Vang vọng: còn {count} s" },
@@ -766,6 +791,7 @@ export default {
   "music.trackWithMood": "{track} ({mood})",
 
   "options.controls": "điều khiển",
+  "options.cosmetics": "trang trí",
   "options.display": "hiển thị",
   "options.label": "Tùy chọn",
   "options.language": "ngôn ngữ",

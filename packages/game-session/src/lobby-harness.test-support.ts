@@ -14,6 +14,7 @@ import {
   type LobbyMode,
   type LobbyTeamSize,
   type WireCape,
+  type WireCosmetics,
 } from "@vibewars/game-protocol";
 
 import { keyGated } from "./key-gate.js";
@@ -30,7 +31,7 @@ import { ARENA, TICK_SECONDS, hello, settle, testSignet } from "./match-harness.
 import { createMatchHost, type MatchHost, type ReplayRecording } from "./match-host.js";
 import { createMemoryNetwork, type MemoryNetwork } from "./memory-transport.js";
 import type { PlayerKey, VerifyPlayerProof } from "./player-key.js";
-import { testPlayerKey, verifyTestProof } from "./player-key.test-support.js";
+import { testCosmetics, testPlayerKey, verifyTestProof } from "./player-key.test-support.js";
 import type { Transport } from "./transport.js";
 
 export const CODE = "aBcDeFgHiJkLmNoPqRsTuVwXyZ0123456789-_aBcDE"; // pragma: allowlist secret
@@ -89,6 +90,8 @@ export interface TestLobby {
     relayPub?: string | null,
     /** Its player key (#2706): a fresh one by default. */
     playerKey?: PlayerKey,
+    /** What it wears (ADR-0056): nothing by default. */
+    cosmetics?: WireCosmetics,
   ): Promise<Member>;
   /** Run `seconds` of the lobby's match, a tick at a time, letting messages land between. */
   step(seconds: number): Promise<void>;
@@ -173,6 +176,7 @@ export async function openLobby(
     guildCape: WireCape | null,
     relayPub: string | null,
     playerKey: PlayerKey,
+    cosmetics: WireCosmetics,
   ): Promise<Member> =>
     member(
       await joinLobby({
@@ -186,12 +190,22 @@ export async function openLobby(
         timeoutMs: 1000,
         relayPub,
         playerKey,
+        cosmetics,
         claim: () => ({ rating: 800, asOf: 0 }),
         ...(options.matchmaking === undefined ? {} : { roomId: options.matchmaking.roomId }),
       }),
       transport,
     );
-  const host = await join(lobby.local, null, "Host", null, null, null, testPlayerKey());
+  const host = await join(
+    lobby.local,
+    null,
+    "Host",
+    null,
+    null,
+    null,
+    testPlayerKey(),
+    testCosmetics,
+  );
   lobby.setOpen(options.open ?? true);
   return {
     network,
@@ -205,7 +219,8 @@ export async function openLobby(
       guildCape = null,
       relayPub = null,
       playerKey = testPlayerKey(),
-    ) => join(network.join(), PROOF_KEY, name, guildTag, guildCape, relayPub, playerKey),
+      cosmetics = testCosmetics,
+    ) => join(network.join(), PROOF_KEY, name, guildTag, guildCape, relayPub, playerKey, cosmetics),
     async step(seconds) {
       const ticks = Math.round(seconds / TICK_SECONDS);
       for (let i = 0; i < ticks; i += 1) {
