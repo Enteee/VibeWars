@@ -20,20 +20,22 @@ export type DissolveLook = Extract<CosmeticLook, { readonly kind: "dissolve" }>;
 type StyleLook = SpawnLook | DissolveLook;
 
 /** How many motes a style draws. */
-export const STYLE_MOTES = 8;
+export const STYLE_MOTES = 12;
+/** How quickly a style swells to full strength, and how late it fades: held, not passing. */
+const SWELL = 4;
 /** How many turns round the body the leaves swirl while it gathers. */
 const SWIRL_TURNS = 1.25;
 /** How far, in radians, petals and ash sway off their line as they go. */
 const SWAY = { petals: 0.5, ash: 0.25 } as const;
 /** A mote's size, as a share of the body's radius: mist is soft and wide, the rest are specks. */
 const MOTE_OF_BODY: Readonly<Record<SpawnMotif | DissolveMotif, number>> = {
-  light: 0.14,
-  leaves: 0.14,
-  petals: 0.18,
-  stars: 0.18,
-  ash: 0.12,
-  mist: 0.3,
-  shards: 0.2,
+  light: 0.22,
+  leaves: 0.25,
+  petals: 0.28,
+  stars: 0.3,
+  ash: 0.2,
+  mist: 0.4,
+  shards: 0.3,
 };
 
 /** One mote of a style: where, how big, how strong, and its turn in radians. */
@@ -73,7 +75,7 @@ export function fallSeconds(body: GroundBody): number {
  * Mote `index` of `look`, `ageSeconds` into it, round a body at `x, y` of
  * `radius`; `phase` turns the ring so two bodies do not match. A spawn's
  * motes close in from the far reach to the rim, a dissolve's leave the
- * rim for it. Strength swells and fades within the look's alpha; past the
+ * rim for it. Strength swells quickly, holds and fades within the look's alpha; past the
  * look's `seconds`, there is none.
  */
 export function styleMote(
@@ -107,7 +109,7 @@ export function styleMote(
   const size = radius * MOTE_OF_BODY[look.motif];
   // A mote's far edge stops at the reach: never past the look's ground share.
   const distance = radius + Math.max(0, reach - size) * out;
-  const strength = (look.ground?.alpha ?? 0) * Math.sin(Math.PI * t);
+  const strength = (look.ground?.alpha ?? 0) * Math.min(1, SWELL * Math.sin(Math.PI * t));
   return {
     x: x + Math.cos(angle) * distance,
     y: y + Math.sin(angle) * distance,
