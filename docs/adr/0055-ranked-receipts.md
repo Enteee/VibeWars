@@ -43,7 +43,7 @@ The new package `packages/ranking` holds the types, the canonical encoding and t
    - `leavers`: the pubkeys whose seat was freed after `RECONNECT_WINDOW_SECONDS`.
    - `replayHash`.
 
-   Every player who is not a leaver signs it. A player still seated who has not signed within `RANKED_RESULT_TIMEOUT_MS` (30 s) is added to `leavers` and the others sign again. **Refusing to sign is leaving.**
+   Every player who is not a leaver signs it, with its stamp (below). A player still seated who has not signed within `RANKED_RESULT_TIMEOUT_MS` (30 s) plus `RANKED_WORK_GRACE_MS` is added to `leavers` and the others sign again. **Refusing to sign is leaving.**
 
    A player publishes its own partial receipt, the start and its signature over that round's result, the moment it signs, in every round. That is the evidence against a host that re-rounds an honest signer into a leaver: the job voids a match when a key named a leaver in the final receipt has a valid signature on an earlier round's result that (1) carries the same fully signed start (the same `startHash`, not merely the same `matchId`) and (2) is also validly signed, in any copy, by a key on the final receipt's winning team (on a draw, by a key on any team but the leaver's). A player who really refused has no such signature, so it loses. A leaver-only partial is not evidence: a leaver could sign a round, or a whole start of their own under the same `matchId`, alone. A winner gains nothing by voiding their own win, so their signature is what makes the round believable.
 
@@ -63,11 +63,28 @@ It is valid when:
 
 - every start signature verifies;
 - every non-leaver's result signature verifies;
+- every result signature, a partial's included, carries a valid stamp for its signer and this start (`no-work` otherwise);
 - result signatures from more than half of the seats in the start (Q109, answer B); without them the match is void (unrated for every seat), whatever the leavers list says. A departed host counts among the seats and does not sign.
 
 A receipt nobody but its host signed cannot exist, because the start round needs every player. So nobody can fabricate a match against a key that never agreed to play it.
 
 **Leavers lose.** A leaver's result is a loss, whatever `winningTeam` says. The players who stayed get the match's result. The one reconnect window, `RECONNECT_WINDOW_SECONDS`, decides who left. The operator said about 60 s; the codebase has one window of 30 s. Ranked play uses that same constant, and if 30 s proves short we raise it for every mode, not just ranked.
+
+**Every result signature is paid for** (#3746). It carries `work`, a 16-hex-digit nonce whose digest under `vibewars/ranked-work` over `{ startHash, pubkey, work }` has `RANKED_WORK_BITS` leading zero bits. The stamp binds the start, not the round, so signing a re-round costs nothing new. It binds the start and not the `matchId`: the archive keys receipts by their hash, and `rate` takes a reused `matchId` under another start for another match, so a stamp bound to `matchId` could be replayed under as many starts as a flooder liked. A receipt or a partial with an unpaid signature is rejected (`no-work`), which costs one hash per signer to check.
+
+Each client searches for its stamp in a Worker, at most half a core (8 ms slices, 8 ms rests), from the moment the start round completes, using `@noble/hashes`' synchronous sha256 (WebCrypto's digest is async only, and an await per nonce costs more than the hash). The job checks with the same function. In a match of a few minutes the stamp is ready long before the result. In one that ends sooner, the client signs as soon as its stamp is ready, and every seat, host included, waits `RANKED_RESULT_TIMEOUT_MS + RANKED_WORK_GRACE_MS` for any seat's signature. Nobody has to know anyone else's progress. The grace is the measured p99 stamp time on a mid-range phone at the half-core throttle, so a slow phone is not turned into a leaver.
+
+**Calibration** (2026-11-21, `findWork` with `@noble/hashes`). A search takes on average 2^bits hashes and is geometric, so its p99 is about 4.6 times its mean. Measured rates for one full core: Node 24 on the CI-class dev box 102k hashes/s; Chromium 155 desktop 80k; Chromium at a 4× CPU throttle, standing in for a mid-range phone, 26.5k (taken as 20k, a strict quarter of desktop, to be safe). At the worker's half core a phone gets about 10k/s, so at `RANKED_WORK_BITS` = 17:
+
+| Tier (half core) | mean  | p99  |
+| ---------------- | ----- | ---- |
+| Mid-range phone  | 13 s  | 60 s |
+| Desktop Chromium | 3.3 s | 15 s |
+| Node (CI box)    | 2.6 s | 12 s |
+
+`RANKED_WORK_GRACE_MS` is that phone p99, 60 s. 18 bits would double it past the 60 s the issue allows.
+
+**What it is worth.** A stamp costs a script seconds to tens of seconds of JavaScript, and native or GPU sha256 next to nothing. It is a speed bump against casual floods from a page or a Node script, not a bound on a determined attacker: the per-key cap (#3738) and established keys (#3745) are the real per-key bounds. Do not raise `RANKED_WORK_BITS` as a fix for flooding; it only hurts phones.
 
 ### Publishing
 

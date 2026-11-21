@@ -5,6 +5,12 @@ import {
   type RankedResult,
   type RankedStart,
   canonicalBytes,
+  findWork,
+  hasWork,
+  RANKED_WORK_BITS,
+  validWork,
+  workDigest,
+  workNonce,
   MAX_RECEIPT_BYTES,
   mergeReceipts,
   parseRankedReceipt,
@@ -20,6 +26,8 @@ import {
 } from "./receipt.js";
 import {
   nobleReceiptCrypto as crypto,
+  TEST_WORK_BITS,
+  testResultSig,
   type TestSigner,
   testSigner,
 } from "./receipt.test-support.js";
@@ -92,7 +100,9 @@ function receipt(
     start,
     startSigs: Object.fromEntries(startSigners.map((s) => [s.pubkey, s.sign(startOf)])),
     result,
-    resultSigs: Object.fromEntries(resultSigners.map((s) => [s.pubkey, s.sign(resultOf_)])),
+    resultSigs: Object.fromEntries(
+      resultSigners.map((s) => [s.pubkey, testResultSig(s, result.startHash, resultOf_)]),
+    ),
   };
 }
 
@@ -139,6 +149,8 @@ describe("parseReceipt", () => {
   it("refuses what is not a receipt", () => {
     const { receipt: good } = fullReceipt();
     const json = (value: unknown) => JSON.stringify(value);
+    const firstKey = good.start.teams[0]?.[0]?.pubkey ?? "";
+    const firstSig = good.resultSigs[firstKey]?.sig;
     const withSeat = (patch: object) =>
       json({
         ...good,
@@ -156,6 +168,9 @@ describe("parseReceipt", () => {
       json({ ...good, result: { ...good.result, durationSeconds: 1.5 } }),
       json({ ...good, result: { ...good.result, replayHash: "AB".repeat(32) } }),
       json({ ...good, startSigs: { [good.start.teams[0]?.[0]?.pubkey ?? ""]: "00" } }),
+      json({ ...good, resultSigs: { [firstKey]: { sig: firstSig } } }),
+      json({ ...good, resultSigs: { [firstKey]: { sig: firstSig, work: "abc" } } }),
+      json({ ...good, resultSigs: { [firstKey]: firstSig } }),
       json({ ...good, start: { ...good.start, teams: [good.start.teams[0]] } }),
       withSeat({ pubkey: "12".repeat(31) }),
       withSeat({ name: "x".repeat(41) }),
@@ -198,7 +213,9 @@ describe("parseReceipt", () => {
         durationSeconds: Number.MAX_SAFE_INTEGER,
         replayHash: "f".repeat(64),
       },
-      resultSigs: sigs,
+      resultSigs: Object.fromEntries(
+        seats.map((seat) => [seat.pubkey, { sig: "f".repeat(128), work: "f".repeat(16) }]),
+      ),
     };
     const json = text(canonicalBytes(largest));
     expect(json.length).toBeGreaterThan(20_000);
@@ -298,7 +315,7 @@ describe("validateReceipt", () => {
     const pubkey = red[0].pubkey;
     const wrong = {
       ...good,
-      startSigs: { ...good.startSigs, [pubkey]: good.resultSigs[pubkey] ?? "" },
+      startSigs: { ...good.startSigs, [pubkey]: good.resultSigs[pubkey]?.sig ?? "" },
     };
     expect(validateReceipt(wrong, crypto)).toEqual({ ok: false, reason: "start-signature" });
   });
@@ -478,6 +495,133 @@ describe("validateReceipt", () => {
   });
 });
 
+/** The first stamp for `pubkey` under start `started` that `paid` does not take. */
+function unpaidStamp(started: string, pubkey: string, paid: (work: string) => boolean): string {
+  let from = 0;
+  for (;;) {
+    const found = findWork(started, pubkey, crypto.sha256, {
+      from,
+      budgetMs: Number.POSITIVE_INFINITY,
+      now: () => 0,
+      bits: TEST_WORK_BITS,
+    });
+    if (!("work" in found)) {
+      throw new Error("an unbounded search always ends in a stamp");
+    }
+    if (!paid(found.work)) {
+      return found.work;
+    }
+    from = Number.parseInt(found.work, 16) + 1;
+  }
+}
+
+describe("proof of work (#3746)", () => {
+  it("passes a stamp of enough bits, and fails one of too few as no-work", () => {
+    const { blue, receipt: good } = fullReceipt();
+    expect(validateReceipt(good, crypto)).toEqual({ ok: true, void: false });
+    const pubkey = blue[0].pubkey;
+    const entry = good.resultSigs[pubkey];
+    // A nonce whose digest misses the first of TEST_WORK_BITS zero bits.
+    const weak = Array.from({ length: 64 }, (_, n) => workNonce(n)).find(
+      (work) => !hasWork(workDigest(good.result.startHash, pubkey, work, crypto.sha256), 1),
+    );
+    expect(entry && weak).toBeDefined();
+    const unpaid = {
+      ...good,
+      resultSigs: { ...good.resultSigs, [pubkey]: { sig: entry?.sig ?? "", work: weak ?? "" } },
+    };
+    expect(validateReceipt(unpaid, crypto)).toEqual({ ok: false, reason: "no-work" });
+  });
+
+  it("fails a stamp found for another start or another key", () => {
+    const { red, blue, receipt: good } = fullReceipt();
+    const { startHash: started } = good.result;
+    const pubkey = blue[0].pubkey;
+    const sig = good.resultSigs[pubkey]?.sig ?? "";
+    const paid = (work: string) => validWork(started, pubkey, work, crypto.sha256, TEST_WORK_BITS);
+    const stamped = (work: string) => ({
+      ...good,
+      resultSigs: { ...good.resultSigs, [pubkey]: { sig, work } },
+    });
+    // The first stamp of each other (start, key) that does not pay for this one by chance.
+    for (const [otherStart, otherKey] of [
+      ["cd".repeat(32), pubkey],
+      [started, red[0].pubkey],
+    ] as const) {
+      const work = unpaidStamp(otherStart, otherKey, paid);
+      expect(validWork(otherStart, otherKey, work, crypto.sha256, TEST_WORK_BITS)).toBe(true);
+      expect(validateReceipt(stamped(work), crypto)).toEqual({ ok: false, reason: "no-work" });
+    }
+  });
+
+  it("fails a partial whose one signature is unpaid, not only a whole receipt", () => {
+    const { red, all, start } = fullReceipt();
+    const partial = receipt(start, resultOf(start), all, [red[0]]);
+    expect(validateReceipt(partial, crypto)).toEqual({ ok: false, reason: "result-signature" });
+    const pubkey = red[0].pubkey;
+    const weak = Array.from({ length: 64 }, (_, n) => workNonce(n)).find(
+      (work) => !validWork(partial.result.startHash, pubkey, work, crypto.sha256, TEST_WORK_BITS),
+    );
+    const unpaid = {
+      ...partial,
+      resultSigs: { [pubkey]: { sig: partial.resultSigs[pubkey]?.sig ?? "", work: weak ?? "" } },
+    };
+    expect(validateReceipt(unpaid, crypto)).toEqual({ ok: false, reason: "no-work" });
+  });
+
+  it("counts leading zero bits across bytes", () => {
+    expect(hasWork(Uint8Array.of(0, 0, 0x3f), 18)).toBe(true);
+    expect(hasWork(Uint8Array.of(0, 0, 0x40), 18)).toBe(false);
+    expect(hasWork(Uint8Array.of(0, 0x80), 8)).toBe(true);
+    expect(hasWork(Uint8Array.of(0x01), 0)).toBe(true);
+  });
+
+  it("finds in slices the nonce one long search finds", () => {
+    const pubkey = testSigner().pubkey;
+    const searchOnce = (start: string) =>
+      findWork(start, pubkey, crypto.sha256, {
+        from: 0,
+        budgetMs: Number.POSITIVE_INFINITY,
+        now: () => 0,
+        bits: 12,
+      });
+    // A start whose stamp lies past the first 256-hash block, so it takes slices.
+    let started = "group-0";
+    let once = searchOnce(started);
+    for (let i = 1; "work" in once && Number.parseInt(once.work, 16) < 256; i += 1) {
+      started = `group-${String(i)}`;
+      once = searchOnce(started);
+    }
+    // A clock that runs out after every check: one 256-hash block a slice.
+    let clock = 0;
+    let search = findWork(started, pubkey, crypto.sha256, {
+      from: 0,
+      budgetMs: 1,
+      now: () => (clock += 1),
+      bits: 12,
+    });
+    let slices = 1;
+    while ("next" in search) {
+      search = findWork(started, pubkey, crypto.sha256, {
+        from: search.next,
+        budgetMs: 1,
+        now: () => (clock += 1),
+        bits: 12,
+      });
+      slices += 1;
+    }
+    expect(search).toEqual(once);
+    expect(slices).toBeGreaterThan(1);
+    expect("work" in search && validWork(started, pubkey, search.work, crypto.sha256, 12)).toBe(
+      true,
+    );
+  });
+
+  it("keeps a mid-range phone's p99 stamp within the grace", () => {
+    expect(RANKED_WORK_BITS).toBe(17);
+  });
+});
+
 describe("mergeReceipts", () => {
   it("unites two partial host-left receipts into a valid one", () => {
     const { red, blue, all, start } = fullReceipt();
@@ -502,7 +646,10 @@ describe("mergeReceipts", () => {
     const draw = receipt(start, resultOf(start, { winningTeam: null }), all, all);
     expect(mergeReceipts(good, draw, crypto)).toBeUndefined();
     const pubkey = blue[0].pubkey;
-    const forged = { ...good, resultSigs: { ...good.resultSigs, [pubkey]: "00".repeat(64) } };
+    const forged = {
+      ...good,
+      resultSigs: { ...good.resultSigs, [pubkey]: { sig: "00".repeat(64), work: "0".repeat(16) } },
+    };
     expect(mergeReceipts(forged, good, crypto)?.resultSigs[pubkey]).toBe(good.resultSigs[pubkey]);
   });
 

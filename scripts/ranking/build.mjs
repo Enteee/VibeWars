@@ -39,6 +39,7 @@ import {
   mergeReceipts,
   parseReceipt,
   rankOrder,
+  RANKED_WORK_BITS,
   rate,
   RATING,
   receiptHash,
@@ -152,9 +153,10 @@ hashes.sha256 = sha256;
  * marks the archive's signatures good without the curve: only ones that
  * verified were ever written to it, and checking 100k receipts again
  * every hour would not finish in time.
+ * @param {number} workBits
  * @returns {{ crypto: ReceiptCrypto, trust: (receipt: RankedReceipt) => void }}
  */
-function receiptCrypto() {
+function receiptCrypto(workBits) {
   /** Per signature, the key and digest it is good or bad for. */
   /** @type {Map<string, { pubkey: string, digest: string, ok: boolean }>} */
   const checked = new Map();
@@ -162,6 +164,7 @@ function receiptCrypto() {
   const hexOf = (digest) => Buffer.from(digest).toString("hex");
   /** @type {ReceiptCrypto} */
   const crypto = {
+    workBits,
     sha256,
     verify: (pubkey, digest, sig) => {
       const known = checked.get(sig);
@@ -182,14 +185,13 @@ function receiptCrypto() {
   return {
     crypto,
     trust: (receipt) => {
-      const signed = [
-        { sigs: receipt.startSigs, digest: hexOf(startDigest(receipt.start, sha256)) },
-        { sigs: receipt.resultSigs, digest: hexOf(resultDigest(receipt.result, sha256)) },
-      ];
-      for (const { sigs, digest } of signed) {
-        for (const [pubkey, sig] of Object.entries(sigs)) {
-          checked.set(sig, { pubkey, digest, ok: true });
-        }
+      const ofStart = hexOf(startDigest(receipt.start, sha256));
+      const ofResult = hexOf(resultDigest(receipt.result, sha256));
+      for (const [pubkey, sig] of Object.entries(receipt.startSigs)) {
+        checked.set(sig, { pubkey, digest: ofStart, ok: true });
+      }
+      for (const [pubkey, { sig }] of Object.entries(receipt.resultSigs)) {
+        checked.set(sig, { pubkey, digest: ofResult, ok: true });
       }
     },
   };
@@ -258,11 +260,19 @@ function rejection(receipt, crypto) {
  * The leaderboard and the archive `archived` and the relays' `events`
  * make, as of `asOfDay`, after the `previous` run's `leaderboard.json`
  * (`undefined` on the first run).
- * @param {{ archived: string, events: unknown[], relaysReached: readonly string[], relays: readonly string[], asOfDay: number, previous?: string }} input
+ * @param {{ archived: string, events: unknown[], relaysReached: readonly string[], relays: readonly string[], asOfDay: number, previous?: string, workBits?: number }} input
  * @returns {{ shards: Record<string, string>, leaderboard: string, log: string }}
  */
-export function build({ archived, events, relaysReached, relays, asOfDay, previous }) {
-  const { crypto, trust } = receiptCrypto();
+export function build({
+  archived,
+  events,
+  relaysReached,
+  relays,
+  asOfDay,
+  previous,
+  workBits = RANKED_WORK_BITS,
+}) {
+  const { crypto, trust } = receiptCrypto(workBits);
   /** @type {Map<string, RankedReceipt>} */
   const kept = new Map();
   /** @param {RankedReceipt} receipt */
@@ -549,7 +559,7 @@ export function fetchRelay(relay, since) {
  * writes it back: the shards that changed, the leaderboard and the log. A
  * relay that is down only adds nothing. A shard over `maxShardBytes`
  * fails the run before anything is written.
- * @param {{ dir: string, asOfDay: number, relays?: readonly string[], fetch?: FetchRelay, maxShardBytes?: number }} options
+ * @param {{ dir: string, asOfDay: number, relays?: readonly string[], fetch?: FetchRelay, maxShardBytes?: number, workBits?: number }} options
  */
 export async function run({
   dir,
@@ -557,6 +567,7 @@ export async function run({
   relays = RELAYS,
   fetch = fetchRelay,
   maxShardBytes = MAX_SHARD_BYTES,
+  workBits = RANKED_WORK_BITS,
 }) {
   const shardsDir = path.join(dir, SHARDS_DIR);
   const names = fs.existsSync(shardsDir)
@@ -587,6 +598,7 @@ export async function run({
     relays,
     asOfDay,
     previous,
+    workBits,
   });
   for (const [month, bytes] of Object.entries(out.shards)) {
     const size = Buffer.byteLength(bytes);

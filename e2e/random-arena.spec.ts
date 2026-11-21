@@ -309,7 +309,9 @@ test("a ranked 1v1 ends in a receipt both players published, which holds (#3680)
     expect(whole(bobReceipts)).toEqual(whole(aliceReceipts));
     const [receipt] = whole(aliceReceipts);
     if (receipt === undefined) throw new Error("no receipt");
-    expect(validateReceipt(receipt, nobleReceiptCrypto)).toEqual({ ok: true, void: false });
+    // The e2e build's stamps are of `VITE_VIBEWARS_WORK_BITS` (#3746), in `playwright.config.ts`.
+    const e2eCrypto = { ...nobleReceiptCrypto, workBits: 8 };
+    expect(validateReceipt(receipt, e2eCrypto)).toEqual({ ok: true, void: false });
     // The host orders the teams; Alice's is the one that won.
     const teams = receipt.start.teams.map((team) => team.map((seat) => seat.name));
     expect(teams.flat().sort()).toEqual(["Alice", "Bob"]);

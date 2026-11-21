@@ -83,6 +83,8 @@ import {
   resultDigest,
   startDigest,
   startHash,
+  validWork,
+  RANKED_WORK_GRACE_MS,
   type RankedReceipt,
   type RankedResult,
   type RankedSeat,
@@ -166,7 +168,8 @@ export const RANKED_START_TIMEOUT_MS = 15_000;
 /**
  * From a ranked result, on the lobby's clock, until every seat that did
  * not leave must have signed it (ADR-0055): one that has not is a leaver,
- * and the rest sign again.
+ * and the rest sign again. `RANKED_WORK_GRACE_MS` is added for a stamp
+ * still being computed (#3746).
  */
 export const RANKED_RESULT_TIMEOUT_MS = 30_000;
 
@@ -262,6 +265,8 @@ interface RankedRound {
   /** What the round on signs, and the signatures it has, by pubkey. */
   digest: Uint8Array;
   sigs: Map<string, string>;
+  /** In the result round, each signer's stamp (#3746), by pubkey. */
+  work: Map<string, string>;
   /** When the round on runs out, on the lobby's clock. */
   endsAt: number;
   /** Every seat's start signature, once the start round is over. */
@@ -2941,6 +2946,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       stage: "start",
       digest: startDigest(start, ranked.crypto.sha256),
       sigs: new Map(),
+      work: new Map(),
       endsAt: clockMs() + RANKED_START_TIMEOUT_MS,
       startSigs: {},
       result: undefined,
@@ -2968,7 +2974,8 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     round.result = result;
     round.digest = resultDigest(result, ranked.crypto.sha256);
     round.sigs = new Map();
-    round.endsAt = clockMs() + RANKED_RESULT_TIMEOUT_MS;
+    // Every seat's stamp may still be running (#3746): the grace is its worst case.
+    round.endsAt = clockMs() + RANKED_RESULT_TIMEOUT_MS + RANKED_WORK_GRACE_MS;
     toHumans("ranked-result", { result } satisfies WireRankedResult);
     settleRankedResult(round, ranked);
   };
@@ -2988,7 +2995,12 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       start: round.start,
       startSigs: round.startSigs,
       result,
-      resultSigs: Object.fromEntries(round.sigs),
+      resultSigs: Object.fromEntries(
+        [...round.sigs].flatMap(([pubkey, sig]) => {
+          const work = round.work.get(pubkey);
+          return work === undefined ? [] : [[pubkey, { sig, work }] as const];
+        }),
+      ),
     };
     toHumans("ranked-receipt", { receipt } satisfies WireRankedReceipt);
     ranked.onReceipt(receipt);
@@ -3493,8 +3505,8 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     round.play();
   });
 
-  // A seat's result signature (#3573): one that does not verify is none,
-  // and its seat leaves if no good one comes in time.
+  // A seat's result signature (#3573) and stamp (#3746): one that does not
+  // verify, or is unpaid, is none, and its seat leaves if no good one comes in time.
   transport.on("ranked-result-sig", (data, from) => {
     const seat = rankedSeatOf(from);
     const said = parsePeerRankedResultSig(data);
@@ -3505,11 +3517,19 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       said?.startHash !== result.startHash ||
       result.leavers.includes(seat.pubkey) ||
       seat.round.sigs.has(seat.pubkey) ||
-      !seat.ranked.crypto.verify(seat.pubkey, seat.round.digest, said.sig)
+      !seat.ranked.crypto.verify(seat.pubkey, seat.round.digest, said.sig) ||
+      !validWork(
+        result.startHash,
+        seat.pubkey,
+        said.work,
+        seat.ranked.crypto.sha256,
+        seat.ranked.crypto.workBits,
+      )
     ) {
       return;
     }
     seat.round.sigs.set(seat.pubkey, said.sig);
+    seat.round.work.set(seat.pubkey, said.work);
     settleRankedResult(seat.round, seat.ranked);
   });
 
