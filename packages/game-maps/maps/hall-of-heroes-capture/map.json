@@ -194,7 +194,7 @@
       "id": "west-gallery-stair",
       "from": 1,
       "to": 2,
-      "area": { "kind": "rect", "x": 1089, "y": 1310, "width": 112, "height": 170 },
+      "area": { "kind": "rect", "x": 1089, "y": 1399.7, "width": 112, "height": 170 },
       "uphill": "e",
       "look": "stairs",
       "lift": null
@@ -643,7 +643,7 @@
       "kind": "resurrection-shrine",
       "layer": 1,
       "team": 2,
-      "position": { "x": 1500, "y": 3110 }
+      "position": { "x": 1370, "y": 3280 }
     }
   ],
   "gates": [
@@ -856,7 +856,7 @@
       },
       {
         "id": "south-west-resurrection-shrine-ring",
-        "position": { "x": 1500, "y": 3110 },
+        "position": { "x": 1370, "y": 3280 },
         "layer": 1,
         "radius": 220,
         "colour": 16767370,

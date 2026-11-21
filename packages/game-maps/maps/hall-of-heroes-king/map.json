@@ -194,7 +194,7 @@
       "id": "west-gallery-stair",
       "from": 1,
       "to": 2,
-      "area": { "kind": "rect", "x": 1089, "y": 1310, "width": 112, "height": 170 },
+      "area": { "kind": "rect", "x": 1089, "y": 1399.7, "width": 112, "height": 170 },
       "uphill": "e",
       "look": "stairs",
       "lift": null

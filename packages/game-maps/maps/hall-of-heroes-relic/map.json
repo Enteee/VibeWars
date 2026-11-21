@@ -196,7 +196,7 @@
       "id": "west-gallery-stair",
       "from": 1,
       "to": 2,
-      "area": { "kind": "rect", "x": 1089, "y": 1310, "width": 112, "height": 170 },
+      "area": { "kind": "rect", "x": 1089, "y": 1399.7, "width": 112, "height": 170 },
       "uphill": "e",
       "look": "stairs",
       "lift": null
@@ -632,7 +632,7 @@
   "objectives": [
     { "kind": "relic-spawn", "layer": 1, "team": 0, "position": { "x": 2890, "y": 320 } },
     { "kind": "relic-spawn", "layer": 1, "team": 1, "position": { "x": 3860, "y": 3450 } },
-    { "kind": "relic-spawn", "layer": 1, "team": 2, "position": { "x": 1140, "y": 2640 } },
+    { "kind": "relic-spawn", "layer": 1, "team": 2, "position": { "x": 830, "y": 2745 } },
     { "kind": "altar", "layer": 3, "position": { "x": 2500, "y": 2200 } }
   ],
   "gates": [
@@ -845,7 +845,7 @@
       },
       {
         "id": "south-west-relic-spawn-ring",
-        "position": { "x": 1140, "y": 2640 },
+        "position": { "x": 830, "y": 2745 },
         "layer": 1,
         "radius": 220,
         "colour": 16767370,
