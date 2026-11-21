@@ -1050,6 +1050,8 @@ export default {
   "queue.guildVsGuild": "Gildia kontra gildia",
   "queue.hallHeldBy": "{holder} utrzymuje Salę Bohaterów",
   "queue.hallUnheld": "Nikt nie utrzymuje Sali Bohaterów",
+  "queue.hardNatHint":
+    "Twoja sieć może blokować bezpośrednie mecze. Pomoże {relay} w Opcjach lub przekierowanie portów.",
   "queue.heroesAscent": "Szczyt Bohaterów · runda {round}",
   "queue.hostLeft": "Host wyszedł",
   "queue.hostOnly": "Tylko host może opuścić kolejkę.",

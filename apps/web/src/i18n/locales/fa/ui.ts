@@ -958,6 +958,8 @@ export default {
   "queue.guildVsGuild": "انجمن علیه انجمن",
   "queue.hallHeldBy": "تالار قهرمانان در دست {holder} است",
   "queue.hallUnheld": "تالار قهرمانان در دست هیچ‌کس نیست",
+  "queue.hardNatHint":
+    "ممکن است شبکهٔ شما مسابقه‌های مستقیم را مسدود کند. {relay} در تنظیمات یا ارسال پورت کمک می‌کند.",
   "queue.heroesAscent": "عروج قهرمانان · دور {round}",
   "queue.hostLeft": "میزبان رفت",
   "queue.hostOnly": "فقط میزبان می‌تواند از صف خارج شود.",

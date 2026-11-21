@@ -965,6 +965,8 @@ export default {
   "queue.guildVsGuild": "Gilde gegen Gilde",
   "queue.hallHeldBy": "{holder} hält die Halle der Helden",
   "queue.hallUnheld": "Niemand hält die Halle der Helden",
+  "queue.hardNatHint":
+    "Dein Netzwerk blockiert womöglich direkte Matches. Ein {relay} in den Optionen oder Portweiterleitung hilft.",
   "queue.heroesAscent": "Aufstieg der Helden · Runde {round}",
   "queue.hostLeft": "Der Host ist gegangen",
   "queue.hostOnly": "Nur der Host kann die Warteschlange verlassen.",

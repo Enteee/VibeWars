@@ -954,6 +954,8 @@ export default {
   "queue.guildVsGuild": "Gille mot gille",
   "queue.hallHeldBy": "{holder} håller Hjältarnas sal",
   "queue.hallUnheld": "Ingen håller Hjältarnas sal",
+  "queue.hardNatHint":
+    "Ditt nätverk kan blockera direkta matcher. Ett {relay} under Alternativ eller portvidarebefordran hjälper.",
   "queue.heroesAscent": "Heroes' Ascent · runda {round}",
   "queue.hostLeft": "Värden lämnade",
   "queue.hostOnly": "Bara värden kan lämna kön.",

@@ -966,6 +966,8 @@ export default {
   "queue.guildVsGuild": "Kilta vastaan kilta",
   "queue.hallHeldBy": "{holder} hallitsee Sankarien salia",
   "queue.hallUnheld": "Kukaan ei hallitse Sankarien salia",
+  "queue.hardNatHint":
+    "Verkkosi voi estää suorat ottelut. {relay} asetuksissa tai porttien uudelleenohjaus auttaa.",
   "queue.heroesAscent": "Sankarien nousu · kierros {round}",
   "queue.hostLeft": "Isäntä poistui",
   "queue.hostOnly": "Vain isäntä voi poistua jonosta.",

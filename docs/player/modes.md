@@ -11,6 +11,8 @@ but never a Guild Battle, a Relic Run, King of the Hill or Capture
 Points. Team Arena draws one of its maps for each match, Heroes' Ascent
 starts on its first map, and only a Hosted Game lets the host pick.
 
+Two players behind strict networks cannot be matched with each other in a queue, so the queue counts only players who can match you, and says so. A relay in **Options → Relay (TURN)** helps.
+
 Every map is made for some team sizes, and a mode only plays a map made
 for its size: an 8v8 never crowds onto an arena built for a 1v1. The
 rail's **Team size** steps only through the sizes the shown mode plays.

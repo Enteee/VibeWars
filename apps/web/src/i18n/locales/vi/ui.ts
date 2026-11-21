@@ -903,6 +903,8 @@ export default {
   "queue.guildVsGuild": "Bang đấu Bang",
   "queue.hallHeldBy": "{holder} đang giữ Đại sảnh Anh hùng",
   "queue.hallUnheld": "Chưa ai giữ Đại sảnh Anh hùng",
+  "queue.hardNatHint":
+    "Mạng của bạn có thể chặn trận đấu trực tiếp. {relay} trong Tùy chọn hoặc chuyển tiếp cổng sẽ giúp ích.",
   "queue.heroesAscent": "Đỉnh Anh Hùng · vòng {round}",
   "queue.hostLeft": "Chủ phòng đã rời",
   "queue.hostOnly": "Chỉ chủ phòng mới được rời hàng chờ.",

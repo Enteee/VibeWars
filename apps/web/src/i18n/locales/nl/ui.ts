@@ -956,6 +956,8 @@ export default {
   "queue.guildVsGuild": "Guild vs Guild",
   "queue.hallHeldBy": "{holder} houdt de Hal der Helden",
   "queue.hallUnheld": "Niemand houdt de Hal der Helden",
+  "queue.hardNatHint":
+    "Je netwerk blokkeert mogelijk directe wedstrijden. Een {relay} in Opties of port forwarding helpt.",
   "queue.heroesAscent": "Heroes' Ascent · ronde {round}",
   "queue.hostLeft": "De host is vertrokken",
   "queue.hostOnly": "Alleen de host kan de wachtrij verlaten.",
