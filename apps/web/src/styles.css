@@ -3819,6 +3819,10 @@ body:has(> .splash) #menu-background::after {
   min-width: 0;
   overflow-x: auto;
   line-height: 1.5;
+  /* A word longer than the pane, a German heading at 360 px, breaks rather
+     than pushing the page sideways (#3733). */
+  overflow-wrap: break-word;
+  hyphens: auto;
 }
 
 .help-page > :first-child {
@@ -3861,7 +3865,6 @@ body:has(> .splash) #menu-background::after {
 .help-page td {
   padding: 0.3rem 0.6rem;
   text-align: start;
-  overflow-wrap: break-word;
   border: 1px solid var(--line);
 }
 

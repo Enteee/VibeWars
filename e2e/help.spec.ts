@@ -1,6 +1,6 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
-import { LANGUAGES } from "../apps/web/src/i18n/languages.js";
+import type { LanguageCode } from "../apps/web/src/i18n/languages.js";
 import { lobbyWindow, openRail } from "./helpers/menu.js";
 import { OVERLAY_VIEWPORTS, clickTopbarIcon, expectCloseAtTopRight } from "./helpers/overlay.js";
 import { startSoloMatch } from "./helpers/peers.js";
@@ -186,13 +186,15 @@ test("Help's foot names the release and the build (#2798)", async ({ page }) => 
   await expect(page.locator(".help-version")).toHaveText(/^VibeWars dev · build [\w.-]{1,8}$/);
 });
 
-for (const { code } of LANGUAGES) {
+// The longest words (de, hu, fi, ru), right to left (ar), and the source.
+// All 30 pass, but take 2.4 min on one worker (#3733).
+for (const code of ["en", "de", "ar", "ru", "hu", "fi"] satisfies LanguageCode[]) {
   test.describe(`Help in ${code} at 360 px (#3733)`, () => {
     test.use({ locale: code, viewport: { width: 360, height: 740 } });
 
     test("no page scrolls sideways", async ({ page }) => {
       await page.goto("./");
-      await page.locator(".topbar-help").click();
+      await clickTopbarIcon(page, ".topbar-help");
       const help = page.getByRole("dialog");
       const pane = help.locator(".help-page");
       const picker = help.locator(".help-picker");
