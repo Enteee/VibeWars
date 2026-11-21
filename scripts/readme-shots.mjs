@@ -10,7 +10,7 @@
  *                        its attributes spent and a skill's tooltip open
  *   readme-training.png  the Training Ground, a Fireball just landed on
  *                        a dummy of the Armor ladder
- *   readme-match.png     a hosted 8v8 lobby filled with bots, about ten
+ *   readme-match.png     a hosted 8v8 lobby, bots in every other slot, about ten
  *                        seconds into the fight, a step in, with the HUD
  *   readme-map.png       the same match a few seconds later, out at Wide,
  *                        on a frame with no refusal text over the arena
@@ -50,8 +50,6 @@ const { values: options } = parseArgs({ options: { url: { type: "string" } } });
  */
 const BUILD_CODE = "OgVFoMm8lmMgufXOyleRGFB";
 const NAME = "Aria Stormveil";
-/** The other fifteen: seven beside you, eight against; the host picks what they play (#1454). */
-const BOTS = { 1: 7, 2: 8 };
 /** The arena both match shots are on; it fills the frame at Wide. */
 const MAP = "wardens-gallery";
 /**
@@ -268,7 +266,7 @@ async function yellowPixels(page, png) {
 }
 
 /**
- * Host a 8v8 lobby on `map`, fill it with bots and start the match.
+ * Host an 8v8 lobby on `map` (the host fills the other slots with bots) and start the match.
  *
  * @param {import("@playwright/test").Page} page
  * @param {string} map
@@ -288,18 +286,6 @@ async function host(page, map) {
   await page.locator(".lobby-map select").selectOption(map);
   step = "join team 1";
   await page.getByRole("button", { name: "join team 1" }).click();
-  for (const [team, count] of Object.entries(BOTS)) {
-    const shown = page
-      .locator(".lobby-team")
-      .nth(Number(team) - 1)
-      .locator(".lobby-bot-count");
-    for (let bots = 1; bots <= count; bots += 1) {
-      step = `bot ${String(bots)} on team ${team}`;
-      await page.getByRole("button", { name: `one bot more on team ${team}` }).click();
-      // Each + asks for one more than the count shown: wait for it to land.
-      await shown.filter({ hasText: String(bots) }).waitFor();
-    }
-  }
   step = "start the match";
   await page.getByRole("button", { name: "Ready", exact: true }).click();
   await page.getByRole("button", { name: "start match" }).click();
