@@ -208,3 +208,31 @@ describe("fetch-relic: the foe's relic, to your ghost (#2695)", () => {
     expect(askBot(sim, "bot", lying).attackTargetId).toBe(relicId(0));
   });
 });
+
+describe("fetch-relic: an escort on its way does not turn back for a foe behind it (#3749)", () => {
+  // `other` escorts to the altar, 300 off; the foe, in spell range, is farther from it.
+  const walking = () =>
+    match([
+      body("near", 0, vec2(300, 400), { behaviour: BOT }),
+      body("other", 0, vec2(500, 400), { behaviour: BOT }),
+      body("foe", 1, vec2(200, 600)),
+    ]);
+
+  it("walks on to the altar past a foe behind it, at none of its team", () => {
+    expect(askBot(walking(), "other", BOTH_HOME).moveTo).toEqual(ALTAR);
+  });
+
+  it("turns on that foe once it targets a teammate", () => {
+    const sim = walking();
+    sim.setTarget("foe", "near");
+    expect(askBot(sim, "other", BOTH_HOME).moveTo).not.toEqual(ALTAR);
+  });
+
+  it("turns on a foe behind it carrying a relic", () => {
+    const carried = running(
+      { team: 0, place: { kind: "carried", carrierId: "foe" } },
+      { team: 1, place: AT_SPAWN },
+    );
+    expect(askBot(walking(), "other", carried).moveTo).not.toEqual(ALTAR);
+  });
+});

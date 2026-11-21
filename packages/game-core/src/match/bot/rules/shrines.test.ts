@@ -109,9 +109,10 @@ describe("shrines: Capture Points bots take and hold shrines (#2580)", () => {
   });
 
   it("leaves shrines to the fight when a foe is within spell range", () => {
+    // Toward the shrine: a foe left behind does not hold it back (#3749).
     const sim = match([
       body("bot", 0, vec2(100, 100), { behaviour: BOT }),
-      body("foe", 1, vec2(400, 100)),
+      body("foe", 1, vec2(400, 300)),
     ]);
     // The fight has it: it never walks off to the shrine.
     const intent = askBot(sim, "bot", playing(shrine(vec2(100, 600))));
@@ -178,6 +179,31 @@ describe("shrines: Capture Points bots take and hold shrines (#2580)", () => {
     };
     expect(heading(CAPTURE_POINTS_MATCH_RULES)).toBeLessThan(350);
     expect(heading(ANNIHILATION_MATCH_RULES)).toBeGreaterThan(400);
+  });
+});
+
+describe("shrines: a bot on its way does not turn back for a foe behind it (#3749)", () => {
+  const goal = shrine(vec2(100, 1000));
+  const walking = (foe: Vec2) =>
+    match([
+      body("bot", 0, vec2(100, 400), { behaviour: BOT }),
+      body("mate", 0, vec2(1500, 400)),
+      body("foe", 1, foe),
+    ]);
+
+  it("walks on past a foe in spell range behind it, at none of its team", () => {
+    expect(askBot(walking(vec2(100, 100)), "bot", playing(goal)).moveTo).toEqual(goal.position);
+  });
+
+  it("turns on that foe once it targets a teammate", () => {
+    const sim = walking(vec2(100, 100));
+    sim.setTarget("foe", "mate");
+    expect(askBot(sim, "bot", playing(goal)).moveTo).not.toEqual(goal.position);
+  });
+
+  it("fights a foe in spell range ahead of it, nearer the shrine", () => {
+    const sim = walking(vec2(100, 700));
+    expect(askBot(sim, "bot", playing(goal)).moveTo).not.toEqual(goal.position);
   });
 });
 

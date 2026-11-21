@@ -215,10 +215,12 @@ const FRONT_SWITCH_MARGIN = 2;
  * With foes of two or more teams (#2685), the team to fight: the one
  * engaging ours, the most of its living members targeting one of us; else
  * the weakest by health of those with a member within `FOCUS_REACH` past
- * spell range; else the weakest of all. Ties to the lower team. So a team
- * does not charge a fresh one while another is attacking it. Only players
- * count: a team's ghost, guards or priest neither rank it nor engage for
- * it. The `kept` front stays while one of its players engages ours or is
+ * spell range; else the weakest of all. Ties go to the team with a player
+ * nearest it, then to the next after its own in turn order (#3749): never
+ * to a team for its number, which on a turned map is every first contact.
+ * So a team does not charge a fresh one while another is attacking it.
+ * Only players count: a team's ghost, guards or priest neither rank it nor
+ * engage for it. The `kept` front stays while one of its players engages ours or is
  * in reach, until another team engages ours with `FRONT_SWITCH_MARGIN`
  * more, or with every living player it has and more than the front: engaging
  * counts flicker as foes retarget, and a bot that followed them would run
@@ -239,24 +241,34 @@ function foeFront(
   );
   const teams = new Map<
     number,
-    { engaging: number; health: number; count: number; near: boolean }
+    { engaging: number; health: number; count: number; near: boolean; nearest: number }
   >();
   for (const foe of foes) {
     if (foe.creature !== undefined) {
       continue;
     }
-    const team = teams.get(foe.combatant.team) ?? { engaging: 0, health: 0, count: 0, near: false };
+    const team = teams.get(foe.combatant.team) ?? {
+      engaging: 0,
+      health: 0,
+      count: 0,
+      near: false,
+      nearest: Infinity,
+    };
     teams.set(foe.combatant.team, team);
     if (foe.targetId !== undefined && ours.has(foe.targetId)) {
       team.engaging += 1;
     }
     team.health += healthFraction(foe);
     team.count += 1;
-    team.near ||= distance(foe.position, self.position) <= RANGE_SPELL + FOCUS_REACH;
+    const away = distance(foe.position, self.position);
+    team.near ||= away <= RANGE_SPELL + FOCUS_REACH;
+    team.nearest = Math.min(team.nearest, away);
   }
   if (teams.size < 2) {
     return undefined;
   }
+  const own = self.combatant.team;
+  const count = Math.max(...context.participants.map((other) => other.combatant.team)) + 1;
   const current = kept === undefined ? undefined : teams.get(kept);
   if (
     current !== undefined &&
@@ -274,9 +286,19 @@ function foeFront(
       other.engaging - one.engaging ||
       Number(other.near) - Number(one.near) ||
       one.health / one.count - other.health / other.count ||
-      a - b,
+      one.nearest - other.nearest ||
+      turnsAfter(a, own, count) - turnsAfter(b, own, count),
   );
   return ranked[0]?.[0];
+}
+
+/**
+ * How many turns after `own` `team` comes among `count` teams (#3749):
+ * each team counts on from its own, so every team ranks its foes alike on
+ * a turned map.
+ */
+function turnsAfter(team: number, own: number, count: number): number {
+  return (team - own + count) % count;
 }
 
 /** Where the living players of `team` among `foes` stand on average; `foeFront` names only a team with one. */

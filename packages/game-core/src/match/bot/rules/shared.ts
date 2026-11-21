@@ -11,7 +11,8 @@ import { distance, ZERO, type Vec2 } from "../../../vec2.js";
 import type { BehaviourIntent, Reaction } from "../../behaviour.js";
 import type { BehaviourContext } from "../../behaviour.js";
 import { FLAG_REACH_UNITS } from "../../flags.js";
-import { ghostId } from "../../ghost.js";
+import { ghostId, onHill } from "../../ghost.js";
+import { atObjective } from "../../layer-rules.js";
 import { carriedRelic } from "../../relics.js";
 import type { Participant } from "../../simulation.js";
 import { roleOf } from "../role.js";
@@ -273,12 +274,53 @@ export function foeNear(rule: RuleContext): boolean {
   return foes.some((foe) => distance(foe.position, self.position) <= RANGE_SPELL);
 }
 
+/** Where a bot's errand takes it (#3749): a spot, its layer, and how near counts as there. */
+export interface Errand {
+  readonly position: Vec2;
+  readonly layer: number;
+  readonly reach: number;
+}
+
 /**
  * Whether the bot is pressed (#3150): a foe within `RANGE_SPELL`, or one
  * shooting at it from further. A pressed bot drops its errand and fights.
+ * On its way to `errand` (#3749), it does not turn back for a foe it has
+ * left behind: see `leftBehind`.
  */
-export function pressed(rule: RuleContext): boolean {
-  return foeNear(rule) || shotAt(rule, rule.self);
+export function pressed(rule: RuleContext, errand?: Errand): boolean {
+  const { context, self } = rule;
+  if (errand === undefined || atObjective(errand.position, errand.layer, self, errand.reach)) {
+    return foeNear(rule) || shotAt(rule, self);
+  }
+  const ahead = rule.foes.filter((foe) => !leftBehind(context, self, errand, foe));
+  return foeNear({ ...rule, foes: ahead }) || shotAt(rule, self);
+}
+
+/**
+ * Whether `foe` is behind `self` on its way to `errand` (#3749): farther
+ * from it than `self` by more than `POSITION_SLACK`, at nobody on its
+ * team, carrying no relic, no Ghostly Hero on the altar, and not there.
+ */
+function leftBehind(
+  context: BehaviourContext,
+  self: Participant,
+  errand: Errand,
+  foe: Participant,
+): boolean {
+  const { altar, altarLayer, relics } = context.objectives;
+  const target = context.participants.find((other) => other.id === foe.targetId);
+  return (
+    distance(foe.position, errand.position) >
+      distance(self.position, errand.position) + POSITION_SLACK &&
+    target?.combatant.team !== self.combatant.team &&
+    carriedRelic(relics, foe.id) === undefined &&
+    !(
+      altar !== undefined &&
+      foe.id === ghostId(foe.combatant.team) &&
+      onHill(altar, altarLayer, foe)
+    ) &&
+    !atObjective(errand.position, errand.layer, foe, errand.reach)
+  );
 }
 
 /** A ranged bot or healer with a melee foe this close stands and fights it (#2545). */
