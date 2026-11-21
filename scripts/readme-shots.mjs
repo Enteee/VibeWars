@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * `pnpm run readme:shots` — retake the README's five pictures (#1347, #3635).
+ * `pnpm run readme:shots` — retake the README's three pictures (#1347, #3635).
  * Not part of CI: it is a docs tool, run whenever the UI has moved.
  *
  * Builds the static client with the BroadcastChannel transport, serves it,
@@ -10,16 +10,12 @@
  *                        its attributes spent and a skill's tooltip open
  *   readme-training.png  the Training Ground, a Fireball just landed on
  *                        a dummy of the Armor ladder
- *   readme-match.png     a Random Arena match against bots, about ten seconds
- *                        into the fight, a step in, with the HUD
- *   readme-map.png       the same match a few seconds later, out at Wide,
- *                        on a frame with no refusal text over the arena
+ *   readme-menu.png      Random Arena with the character chosen, over the
+ *                        menu's live arena background
  *
- * The map is the queue's pick, so the caption in the README names what the
- * run showed. The shots are taken into a temporary directory and only moved into
- * docs/media/ once all four exist: a failed run leaves the old set. A step
+ * The background map is a random pick, so the README names no map. The shots are taken into a temporary directory and only moved into
+ * docs/media/ once all three exist: a failed run leaves the old set. A step
  * that cannot find what it looks for fails the run and says which step.
- * The bots fight at random, so the match pictures change between runs.
  *
  *   --url <url>   shoot a client already served there, built or run with
  *                 VITE_VIBEWARS_TRANSPORT=broadcast and VITE_VIBEWARS_SPLASH=off
@@ -171,6 +167,11 @@ async function editorAndTraining(page, dir) {
     .first()
     .locator(".play-card-open")
     .click();
+  step = "menu";
+  // The live background settles on its arena.
+  await sleep(2500);
+  await page.mouse.move(0, 0);
+  await page.screenshot({ path: path.join(dir, "readme-menu.png") });
 }
 
 /**
@@ -183,148 +184,6 @@ async function openRail(page, label) {
   const entry = page.locator(".mode-rail").getByRole("button", { name: label, exact: true });
   await entry.click();
   await entry.and(page.locator('[aria-pressed="true"]')).waitFor();
-}
-
-/**
- * Wheel a notch at a time until the stage names `name`, then wait until
- * the camera, which eases there, holds still.
- *
- * @param {import("@playwright/test").Page} page
- * @param {string} name a `data-zoom-step`: Close, Near, Default or Wide
- * @param {number} deltaY per notch: negative in, positive out
- */
-async function zoomTo(page, name, deltaY) {
-  const stage = page.locator("#viewport");
-  await page.locator("#viewport canvas:not(.compass)").hover();
-  for (let notch = 0; notch < 4; notch += 1) {
-    if ((await stage.getAttribute("data-zoom-step")) === name) {
-      break;
-    }
-    await page.mouse.wheel(0, deltaY);
-    await sleep(400);
-  }
-  if ((await stage.getAttribute("data-zoom-step")) !== name) {
-    throw new Error(`the camera did not step to ${name}`);
-  }
-  let last = "";
-  for (let poll = 0; poll < 40; poll += 1) {
-    const now = `${String(await stage.getAttribute("data-zoom"))} ${String(await stage.getAttribute("data-camera"))}`;
-    if (now === last) {
-      return;
-    }
-    last = now;
-    await sleep(250);
-  }
-}
-
-/**
- * How many pixels of the arena, the HUD's corners left out, are in the
- * neutral floating-text yellow, #ffd866 at any fade over the dark floor:
- * "can't reach", "interrupted!" and the like. The target ring shares it,
- * so shoot this with no target. Status icons are an orange yellow, less
- * blue for their green, and stay out.
- *
- * @param {import("@playwright/test").Page} page
- * @param {Buffer} png
- * @returns {Promise<number>}
- */
-async function yellowPixels(page, png) {
-  return page.evaluate(async (base64) => {
-    const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
-    const bitmap = await globalThis.createImageBitmap(new Blob([bytes], { type: "image/png" }));
-    const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
-    const context = canvas.getContext("2d");
-    if (context === null) {
-      return 0;
-    }
-    context.drawImage(bitmap, 0, 0);
-    // Below the target panel, left of the compass and the party, above the bar.
-    const { data } = context.getImageData(0, 150, 1060, 400);
-    let count = 0;
-    for (let i = 0; i < data.length; i += 4) {
-      const [red = 0, green = 0, blue = 0] = data.subarray(i, i + 3);
-      const hue =
-        green > 0.8 * red && green < 0.92 * red && blue > 0.43 * green && blue < 0.65 * green;
-      if (red > 60 && red - blue > 30 && hue) {
-        count += 1;
-      }
-    }
-    return count;
-  }, png.toString("base64"));
-}
-
-/**
- * Queue for Random Arena with the saved character and, once the queue
- * offers it, play against bots. The card was chosen in `editorAndTraining`.
- *
- * @param {import("@playwright/test").Page} page
- */
-async function play(page) {
-  step = "queue for Random Arena";
-  await page.getByRole("button", { name: "Find a match" }).click();
-  // The queue opens as a chip; its panel holds the button.
-  await page.getByRole("button", { name: "In queue" }).click();
-  const bots = page.getByRole("button", { name: /Play against bots/ });
-  step = "play against bots";
-  // The button appears after a few minutes of queue, then counts down.
-  await bots.click({ timeout: 300_000 });
-  await page.locator(".hud-bar-health").waitFor({ timeout: 90_000 });
-}
-
-/**
- * Wait for a frame with no refusal text over the arena: the bots refuse
- * now and then ("can't reach"). No target, so its ring is not counted as
- * one. Esc cancels a cast first, then drops the target.
- *
- * @param {import("@playwright/test").Page} page
- * @returns {Promise<Buffer>}
- */
-async function quietShot(page) {
-  const target = page.locator(".hud-target-text");
-  for (let press = 0; press < 3 && (await target.textContent()) !== "no target"; press += 1) {
-    await page.keyboard.press("Escape");
-    await sleep(200);
-  }
-  let shot = await page.screenshot();
-  for (let retry = 0; retry < 20 && (await yellowPixels(page, shot)) > 10; retry += 1) {
-    await sleep(500);
-    shot = await page.screenshot();
-  }
-  return shot;
-}
-
-/**
- * Play a Random Arena match and shoot it twice.
- *
- * @param {import("@playwright/test").Page} page
- * @param {string} dir
- */
-async function match(page, dir) {
-  await play(page);
-
-  step = "zoom in";
-  // A step in, so the hero shows the fight rather than the floor round it.
-  await zoomTo(page, "Near", -120);
-
-  step = "fight";
-  // Into the fight with the bots: a foe targeted, the wand and the bar on it.
-  const target = page.locator(".hud-target-text");
-  const keys = ["KeyQ", "KeyW", "KeyE", "KeyA"];
-  for (let second = 0; second < 12; second += 1) {
-    if ((await target.textContent()) === "no target") {
-      await page.keyboard.press("Tab");
-    }
-    // None in the last seconds, so no "That skill is recharging." in the shot.
-    if (second < 9) {
-      await page.keyboard.press(keys[second % keys.length] ?? "KeyQ");
-    }
-    await sleep(1000);
-  }
-  await page.screenshot({ path: path.join(dir, "readme-match.png") });
-
-  step = "zoom out";
-  await zoomTo(page, "Wide", 120);
-  fs.writeFileSync(path.join(dir, "readme-map.png"), await quietShot(page));
 }
 
 const served = options.url === undefined ? await serve() : undefined;
@@ -351,8 +210,7 @@ try {
   await page.goto(url);
   await page.locator(".mode-rail").waitFor();
   await editorAndTraining(page, dir);
-  await match(page, dir);
-  const shots = ["readme-editor.png", "readme-training.png", "readme-match.png", "readme-map.png"];
+  const shots = ["readme-editor.png", "readme-training.png", "readme-menu.png"];
   for (const shot of shots) {
     fs.copyFileSync(path.join(dir, shot), path.join(MEDIA, shot));
     const kb = Math.round(fs.statSync(path.join(MEDIA, shot)).size / 1024);
