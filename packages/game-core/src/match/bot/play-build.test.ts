@@ -433,6 +433,36 @@ describe("play-build with three teams (#2685)", () => {
     expect(cursor.front).toBe(2);
   });
 
+  it("ties fresh teams to the nearer, then to the next in turn order, not the lower (#3749)", () => {
+    /** A fresh bot of team `own`, a full-health foe of each other team `at` its distance. */
+    const frontOf = (own: number, away: Readonly<Record<number, number>>): number | undefined => {
+      const sim = new MatchSimulation({
+        seed: "three-way",
+        ruleset: RULESET,
+        bounds: BOUNDS,
+        matchRules: ANNIHILATION_MATCH_RULES,
+        teamCount: 3,
+        participants: [
+          fighter("bot", own, ELEMENTALIST, vec2(600, 400)),
+          ...Object.entries(away).map(([team, x], n) =>
+            fighter(`foe${team}`, Number(team), WARRIOR, vec2(600 + x * (n === 0 ? 1 : -1), 400), {
+              behaviour: undefined,
+            }),
+          ),
+        ],
+      });
+      const cursor = createCursor();
+      decide(BOT, cursor, contextFor(sim, "bot"));
+      return cursor.front;
+    };
+    expect(frontOf(0, { 1: 100, 2: 100 })).toBe(1);
+    expect(frontOf(1, { 0: 100, 2: 100 })).toBe(2);
+    expect(frontOf(2, { 0: 100, 1: 100 })).toBe(0);
+    expect(frontOf(0, { 1: 150, 2: 100 })).toBe(2);
+    expect(frontOf(2, { 0: 100, 1: 150 })).toBe(0);
+    expect(frontOf(2, { 0: 150, 1: 100 })).toBe(1);
+  });
+
   it("keeps a target its team called, of either team", () => {
     const sim = threeWay(vec2(700, 400), 1, vec2(700, 300), 1);
     sim.setTarget("p", "bot");

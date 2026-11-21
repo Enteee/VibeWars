@@ -1,10 +1,17 @@
 import { describe, expect, it } from "vitest";
 
-import type { TeamCount } from "@vibewars/game-core";
+import {
+  HALL_SLOT_SECONDS,
+  createRng,
+  hallSlotOpen,
+  nextHallSlotMs,
+  type TeamCount,
+} from "@vibewars/game-core";
 import {
   PROTOCOL_VERSION,
   TICKET_TTL_MS,
   UNLISTED_CLAIM,
+  isTeamQueueMode,
   teamSizeOf,
   type QueueMode,
   type QueueTicket,
@@ -17,14 +24,21 @@ import {
   formGroups,
   groupOf,
   isRankedGroup,
+  ratingWindow,
   ticketsOf,
+  type FormGroupsInput,
   type FormedGroup,
 } from "./queue-formation.js";
+
+// Real time, which no test here fakes: globals.d.ts does not declare it.
+declare const performance: { now(): number };
 
 /** Queue formation (#869, #854 C4): the same tickets make the same groups everywhere. */
 
 const NOW = 1_700_000_100_000;
 const MAPS = ["arena-a", "arena-b", "arena-c"];
+/** The claim of a key no leaderboard lists, read from no leaderboard. */
+const UNLISTED = { rating: UNLISTED_CLAIM, asOf: 0 };
 
 /** A ticket of `mode`'s round: Heroes' Ascent's first (#1996), none in other modes. */
 function roundOf(mode: QueueMode): number | null {
@@ -46,8 +60,7 @@ function ticket(n: number, fields: Partial<QueueTicket> = {}): QueueTicket {
     ascentRound: roundOf(fields.mode ?? "random-arena-4v4"),
     hardNat: false,
     holdsHallSince: null,
-    claims: { [ticketId]: UNLISTED_CLAIM },
-    leaderboardAsOf: 0,
+    claims: { [ticketId]: UNLISTED },
     ...fields,
   };
 }
@@ -66,7 +79,7 @@ function party(n: number, mode: QueueMode = "random-arena-4v4"): QueueTicket {
   );
   const members = [leader.ticketId, ...others];
   const consents = members.map(() => "e".repeat(128));
-  const claims = Object.fromEntries(members.map((member) => [member, UNLISTED_CLAIM]));
+  const claims = Object.fromEntries(members.map((member) => [member, UNLISTED]));
   return { ...leader, members, claims, party: { groupId: "f".repeat(64), consents } };
 }
 
@@ -350,7 +363,7 @@ describe("team modes (ADR-0042)", () => {
     return {
       ...whole,
       members,
-      claims: Object.fromEntries(members.map((member) => [member, UNLISTED_CLAIM])),
+      claims: Object.fromEntries(members.map((member) => [member, UNLISTED])),
       bots: teamSizeOf(mode) - humans,
       party:
         humans === 1
@@ -785,7 +798,7 @@ describe("ranked groups (ADR-0055, #3573)", () => {
     return {
       ...whole,
       members,
-      claims: Object.fromEntries(members.map((member) => [member, UNLISTED_CLAIM])),
+      claims: Object.fromEntries(members.map((member) => [member, UNLISTED])),
       bots: 2 - humans,
       party: humans === 1 ? null : whole.party,
     };
@@ -819,16 +832,606 @@ describe("ranked groups (ADR-0055, #3573)", () => {
     expect(other?.seed).not.toBe(group?.seed);
   });
 
-  it("carries every seat key's claim and the newest leaderboard its tickets read", async () => {
+  it("carries every seat key's claim, each with the leaderboard it was read from", async () => {
     const tickets = solos(1, 8).map((each, n) => ({
       ...each,
-      claims: { [each.ticketId]: 700 + n },
-      leaderboardAsOf: n * 10,
+      claims: { [each.ticketId]: { rating: 700 + n, asOf: n * 10 } },
     }));
     const [group] = await form(tickets);
     expect(group?.claims).toEqual(
       Object.fromEntries(tickets.flatMap((each) => Object.entries(each.claims))),
     );
-    expect(group?.leaderboardAsOf).toBe(70);
   });
 });
+
+describe("rating pairing (ADR-0055, #3575)", () => {
+  const START = 1_700_000_000_000;
+
+  /** Solo `n` of `mode`, queued `n` seconds after `START`, claiming `claim`. */
+  function rated(n: number, claim: number, mode: QueueMode = "random-arena-1v1"): QueueTicket {
+    const solo = ticket(n, { mode });
+    return { ...solo, claims: { [solo.ticketId]: { rating: claim, asOf: 0 } } };
+  }
+
+  /** `mode`'s party `n`, every member claiming `claim`, `bots` of its seats bots. */
+  function ratedSide(n: number, claim: number, bots = 0): QueueTicket {
+    const whole = party(n, "team-arena-2v2");
+    const members = whole.members.slice(0, 2 - bots);
+    return {
+      ...whole,
+      members,
+      bots,
+      party: members.length === 1 ? null : whole.party,
+      claims: Object.fromEntries(members.map((member) => [member, { rating: claim, asOf: 0 }])),
+    };
+  }
+
+  /** The groups `tickets` form `seconds` after `START`, every ticket heard just now. */
+  function formAt(
+    tickets: readonly QueueTicket[],
+    seconds: number,
+    mode: QueueMode = "random-arena-1v1",
+  ): Promise<FormedGroup[]> {
+    const now = START + seconds * 1_000;
+    return formGroups({
+      tickets: tickets.map((each) => ({ ...each, heartbeatAt: now })),
+      now,
+      mode,
+      ignored: new Set(),
+      round: () => ({ mapPool: MAPS, teamCount: 2, skipping: false, slotted: false }),
+    });
+  }
+
+  it("opens the window at ±100 and widens it by 10 a second the first queued waits", async () => {
+    const pair = [rated(0, 1000), rated(1, 1250)];
+    expect(await formAt(pair, 1)).toEqual([]);
+    expect(await formAt(pair, 14)).toEqual([]);
+    expect((await formAt(pair, 15)).map(members)).toEqual([ids(pair)]);
+    expect(ratingWindow(0)).toBe(100);
+    expect(ratingWindow(14_999)).toBe(240);
+  });
+
+  it("matches two players 1200 apart once the first has waited 50 s, and not before", async () => {
+    const pair = [rated(0, 800), rated(1, 2000)];
+    expect(await formAt(pair, 49)).toEqual([]);
+    expect((await formAt(pair, 50)).map(members)).toEqual([ids(pair)]);
+  });
+
+  it("passes over a ticket out of range: the next in range plays, and it keeps waiting", async () => {
+    const [low, high, near] = [rated(0, 800), rated(1, 2000), rated(2, 850)];
+    const groups = await formAt([low, high, near], 3);
+    expect(groups.map(members)).toEqual([ids([low, near])]);
+  });
+
+  it("splits ranked solos by a snake draft on claim, so the two sides' averages land close", async () => {
+    const eight = [1000, 1100, 1200, 1300, 1400, 1500, 1600, 1700].map((claim, n) =>
+      rated(n, claim, "random-arena-4v4"),
+    );
+    const [group] = await formAt(eight, 60, "random-arena-4v4");
+    const claim = (key: string): number => group?.claims[key]?.rating ?? 0;
+    const sums = (group?.teams ?? []).map((team) => team.reduce((sum, key) => sum + claim(key), 0));
+    expect(sums).toEqual([5400, 5400]);
+  });
+
+  it("pairs whole teams by their mean claim", async () => {
+    const sides = [ratedSide(0, 1000), ratedSide(1, 2000), ratedSide(2, 1050)];
+    const groups = await formAt(sides, 3, "team-arena-2v2");
+    expect(groups.map(members)).toEqual([ids(sides.filter((_, i) => i !== 1))]);
+  });
+
+  it("forms a group with a bot ticket as before, however far apart the claims", async () => {
+    const sides = [ratedSide(0, 800), ratedSide(1, 2400, 1)];
+    expect((await formAt(sides, 2, "team-arena-2v2")).map(members)).toEqual([ids(sides)]);
+  });
+
+  it("passes over 400 tickets none of which is in another's window within a queue tick", async () => {
+    // Claims 1000 apart, all queued within the last second: nobody pairs.
+    const spread = Array.from({ length: 400 }, (_, n) => ({
+      ...rated(n, 1000 * (n + 1), "random-arena-4v4"),
+      enteredAt: START + n,
+    }));
+    expect(await formAt(spread, 1, "random-arena-4v4")).toEqual([]);
+    // Timed warm, as a client forms every tick: the first pass pays the JIT.
+    const begun = performance.now();
+    await formAt(spread, 1, "random-arena-4v4");
+    // Every queued client forms every 250 ms (session.ts' QUEUE_TICK_SECONDS).
+    expect(performance.now() - begun).toBeLessThan(250);
+  });
+
+  it("forms the same groups whatever order the tickets come in", async () => {
+    const queue = [800, 2000, 850, 1990, 1400, 1300].map((claim, n) => rated(n, claim));
+    const groups = await formAt(queue, 8);
+    expect(groups.map(members)).toEqual(
+      [
+        [0, 2],
+        [1, 3],
+        [4, 5],
+      ].map((pair) => ids(pair.map((n) => queue[n] ?? ticket(-1)))),
+    );
+    for (const step of [5, 7]) {
+      expect(await formAt(reordered(queue, step), 8)).toEqual(groups);
+    }
+  });
+});
+
+describe("formation cost (#3747)", () => {
+  const START = 1_700_000_000_000;
+  const AT = START + 2_000;
+
+  /** Ticket `n` of Random Arena 1v1, queued at `enteredAt` claiming `claim`, heard at `AT`. */
+  function rated(n: number, claim: number, enteredAt: number, hardNat = false): QueueTicket {
+    const solo = ticket(n, { mode: "random-arena-1v1" });
+    return {
+      ...solo,
+      enteredAt,
+      heartbeatAt: AT,
+      hardNat,
+      claims: { [solo.ticketId]: { rating: claim, asOf: 0 } },
+    };
+  }
+
+  /**
+   * `count` hostile tickets claiming to have queued first, all within a
+   * second: claims 1000 apart, so none is in another's window, or all
+   * `hardNat` at one claim, so none can connect to another.
+   */
+  function flood(count: number, hardNat: boolean): QueueTicket[] {
+    return Array.from({ length: count }, (_, n) =>
+      rated(
+        1_000_000 + n,
+        hardNat ? 1500 : 1000 * (n + 1),
+        START + Math.floor((n * 1000) / count),
+        hardNat,
+      ),
+    );
+  }
+
+  /** The honest pair behind a flood, 50 apart. */
+  const honest = [rated(1, 1500, START + 1_500), rated(2, 1550, START + 1_600)];
+
+  function inputOf(tickets: readonly QueueTicket[]): FormGroupsInput {
+    return {
+      tickets,
+      now: AT,
+      mode: "random-arena-1v1",
+      ignored: new Set(),
+      round: () => ({ mapPool: MAPS, teamCount: 2, skipping: false, slotted: false }),
+    };
+  }
+
+  /**
+   * A queue drawn from `seed`: any mode, 0 to 300 tickets, solos and
+   * parties, bots, `hardNat`, Heroes' Ascent rounds of two and three
+   * sides, skipping and slotted, waits either side of every threshold,
+   * claims tight or spread, stale, ignored and repeated tickets.
+   */
+  function mixedQueue(seed: number): FormGroupsInput {
+    const rng = createRng(seed + 1);
+    const modes: QueueMode[] = [
+      "random-arena-4v4",
+      "random-arena-1v1",
+      "team-arena-2v2",
+      "heroes-ascent",
+    ];
+    const mode = modes[rng.nextInt(0, modes.length)] ?? "random-arena-4v4";
+    const spread = [60, 150, 600, 3000][rng.nextInt(0, 4)] ?? 600;
+    const tickets = Array.from({ length: rng.nextInt(0, 301) }, (_, i) => {
+      const n = seed * 1_000 + i;
+      const whole = mode === "random-arena-4v4" && rng.nextInt(0, 6) === 0;
+      const base = whole ? party(n, mode) : ticket(n, { mode });
+      return {
+        ...base,
+        bots: isTeamQueueMode(mode) ? rng.nextInt(0, 2) : 0,
+        enteredAt: NOW - rng.nextInt(-2_000, 90_000),
+        heartbeatAt: rng.nextInt(0, 20) === 0 ? NOW - TICKET_TTL_MS - 1 : NOW,
+        hardNat: rng.nextInt(0, 3) === 0,
+        ascentRound: mode === "heroes-ascent" ? rng.nextInt(0, 5) : null,
+        claims: Object.fromEntries(
+          base.members.map((member) => [
+            member,
+            { rating: 1500 + rng.nextInt(-spread, spread + 1), asOf: 0 },
+          ]),
+        ),
+      };
+    });
+    const again = tickets[rng.nextInt(0, Math.max(1, tickets.length))];
+    return {
+      tickets: again === undefined ? tickets : [...tickets, { ...again, heartbeatAt: NOW - 1 }],
+      now: NOW,
+      mode,
+      ignored: new Set(tickets.filter(() => rng.nextInt(0, 25) === 0).map((t) => t.ticketId)),
+      round: (at) => ({
+        mapPool: MAPS,
+        teamCount: at === 2 ? 3 : 2,
+        skipping: at !== 0 && at !== 4,
+        slotted: at === 4,
+      }),
+    };
+  }
+
+  it("forms exactly the groups the quadratic formation did, for 240 drawn queues", async () => {
+    let formed = 0;
+    for (let seed = 0; seed < 240; seed += 1) {
+      const input = mixedQueue(seed);
+      const groups = (await formGroups(input)).map((group) => group.groupId);
+      expect(groups, `seed ${String(seed)}`).toEqual(await referenceGroupIds(input));
+      formed += groups.length;
+    }
+    // The draw is no use if nothing forms.
+    expect(formed).toBeGreaterThan(1_000);
+  });
+
+  it("2000 tickets in nobody's window queued first: the honest pair behind them forms", async () => {
+    const groups = await formGroups(inputOf([...flood(2_000, false), ...honest]));
+    expect(groups.map(members)).toEqual([ids(honest)]);
+  });
+
+  it("2000 hard-NAT solos queued first: each of the honest pair is seated", async () => {
+    const groups = await formGroups(inputOf([...flood(2_000, true), ...honest]));
+    expect(groups.flatMap(members)).toEqual(expect.arrayContaining(ids(honest)));
+  });
+
+  it("visits under 6× as much for 4000 flooding tickets as for 1000: no pass is quadratic", async () => {
+    for (const hardNat of [false, true]) {
+      const visits = async (count: number): Promise<number> => {
+        const cost = { visits: 0 };
+        await formGroups(inputOf([...flood(count, hardNat), ...honest]), cost);
+        return cost.visits;
+      };
+      const [small, large] = [await visits(1_000), await visits(4_000)];
+      expect(large, `hardNat ${String(hardNat)}`).toBeLessThan(6 * small);
+    }
+  });
+});
+
+/**
+ * The formation before #3747, quadratic in the queue, kept only as the
+ * oracle the one above must match: the groups it forms, by id, first
+ * formed first.
+ */
+async function referenceGroupIds(input: FormGroupsInput): Promise<string[]> {
+  const formed = roundGroups(liveQueue(input), input.mode, input.round, input.now);
+  return Promise.all(
+    formed.map(({ group }) =>
+      sha256Hex(
+        group
+          .map((each) => each.ticketId)
+          .sort(compare)
+          .join("\n"),
+      ),
+    ),
+  );
+}
+
+function claimOf(ticket: QueueTicket): number {
+  const claims = ticket.members.map((member) => ticket.claims[member]?.rating ?? 0);
+  return claims.reduce((sum, claim) => sum + claim, 0) / claims.length;
+}
+
+function inWindow(group: readonly Queued[], at: number): boolean {
+  const first = group.reduce<Queued | undefined>(
+    (min, queued) => (min === undefined || queued.place < min.place ? queued : min),
+    undefined,
+  );
+  if (first === undefined || !isRankedGroup(group.map((queued) => queued.ticket))) {
+    return true;
+  }
+  const window = ratingWindow(at - first.ticket.enteredAt);
+  const claim = claimOf(first.ticket);
+  return group.every((queued) => Math.abs(claimOf(queued.ticket) - claim) <= window);
+}
+
+function pick(
+  pools: readonly (readonly Queued[])[],
+  counts: readonly number[],
+  at: number,
+): Queued[] | undefined {
+  if (pools.some((pool, i) => pool.length < (counts[i] ?? 0))) {
+    return undefined;
+  }
+  const front = pools.flatMap((pool, i) => pool.slice(0, counts[i]));
+  if (inWindow(front, at)) {
+    return front;
+  }
+  const rated = pools
+    .flatMap((pool, i) =>
+      pool
+        .filter((queued) => queued.ticket.bots === 0)
+        .map((queued) => ({ queued, pool: i, claim: claimOf(queued.ticket) })),
+    )
+    .sort((a, b) => a.claim - b.claim || a.queued.place - b.queued.place);
+  const total = counts.reduce((sum, count) => sum + count, 0);
+  for (const anchor of [...rated].sort((a, b) => a.queued.place - b.queued.place)) {
+    const window = ratingWindow(at - anchor.queued.ticket.enteredAt);
+    const from = firstAbove(rated, anchor.claim - window, false);
+    const to = firstAbove(rated, anchor.claim + window, true);
+    if (to - from < total) {
+      continue;
+    }
+    const group = pools.flatMap((_, i) =>
+      rated
+        .slice(from, to)
+        .filter(
+          ({ queued, pool }) =>
+            pool === i && (queued === anchor.queued || queued.place > anchor.queued.place),
+        )
+        .map(({ queued }) => queued)
+        .sort((a, b) => a.place - b.place)
+        .slice(0, counts[i]),
+    );
+    if (group.length === front.length && inWindow(group, at)) {
+      return group;
+    }
+  }
+  return undefined;
+}
+
+function firstAbove(
+  sorted: readonly { readonly claim: number }[],
+  bound: number,
+  strict: boolean,
+): number {
+  let [low, high] = [0, sorted.length];
+  while (low < high) {
+    const mid = (low + high) >>> 1;
+    const claim = sorted[mid]?.claim ?? Number.POSITIVE_INFINITY;
+    if (claim > bound || (!strict && claim === bound)) {
+      high = mid;
+    } else {
+      low = mid + 1;
+    }
+  }
+  return low;
+}
+
+function queueOrder(a: QueueTicket, b: QueueTicket): number {
+  return (
+    a.enteredAt - b.enteredAt ||
+    compare(a.ticketId, b.ticketId) ||
+    b.heartbeatAt - a.heartbeatAt ||
+    a.members.length - b.members.length ||
+    compare(a.members.join(), b.members.join())
+  );
+}
+
+function compare(a: string, b: string): number {
+  return a < b ? -1 : a > b ? 1 : 0;
+}
+
+function isLive(ticket: QueueTicket, now: number): boolean {
+  return Math.abs(now - ticket.heartbeatAt) <= TICKET_TTL_MS;
+}
+
+function liveTickets(input: Pick<FormGroupsInput, "tickets" | "now" | "mode">): QueueTicket[] {
+  const live = input.tickets
+    .filter(
+      (ticket) =>
+        ticket.protocol === PROTOCOL_VERSION &&
+        ticket.mode === input.mode &&
+        isLive(ticket, input.now),
+    )
+    .sort(queueOrder);
+  const ids = new Set<string>();
+  return live.filter((ticket) => {
+    if (ids.has(ticket.ticketId)) {
+      return false;
+    }
+    ids.add(ticket.ticketId);
+    return true;
+  });
+}
+
+function unclaimed(live: readonly QueueTicket[]): (ticket: QueueTicket) => boolean {
+  const ids = new Set(live.map((ticket) => ticket.ticketId));
+  const claims = new Map<string, number>();
+  for (const ticket of live) {
+    for (const member of ticket.members.slice(1)) {
+      claims.set(member, (claims.get(member) ?? 0) + 1);
+    }
+  }
+  return (ticket) =>
+    ticket.members.slice(1).every((member) => !ids.has(member) && claims.get(member) === 1);
+}
+
+function liveQueue(input: FormGroupsInput): QueueTicket[] {
+  const live = liveTickets(input);
+  const own = unclaimed(live);
+  return live.filter(
+    (ticket) =>
+      !input.ignored.has(ticket.ticketId) &&
+      own(ticket) &&
+      input.round(ticket.ascentRound) !== undefined,
+  );
+}
+
+interface Queued {
+  readonly ticket: QueueTicket;
+  readonly place: number;
+}
+
+function earlier(a: readonly Queued[], b: readonly Queued[]): boolean {
+  for (let i = 0; i < Math.min(a.length, b.length); i += 1) {
+    const difference = (a[i]?.place ?? 0) - (b[i]?.place ?? 0);
+    if (difference !== 0) {
+      return difference < 0;
+    }
+  }
+  return a.length <= b.length;
+}
+
+function isSide(ticket: QueueTicket, mode: QueueMode): boolean {
+  return isTeamQueueMode(mode) || ticket.members.length > 1;
+}
+
+function takeGroups(
+  queue: readonly QueueTicket[],
+  mode: QueueMode,
+  teamCount: TeamCount,
+  now: number,
+): QueueTicket[][] {
+  const teamSize = teamSizeOf(mode);
+  const groups: QueueTicket[][] = [];
+  let solos: Queued[] = [];
+  let parties: Queued[] = [];
+  const take = (group: readonly Queued[]): void => {
+    const taken = new Set(group);
+    solos = solos.filter((queued) => !taken.has(queued));
+    parties = parties.filter((queued) => !taken.has(queued));
+    groups.push(group.map((queued) => queued.ticket));
+  };
+  const settlePairs = (at: number): void => {
+    for (;;) {
+      const front = teamCount === 3 ? pick([parties], [2], at) : undefined;
+      const [pair] = front === undefined ? [] : fitting(reachable(front, [parties]), at);
+      const queuedLast = Math.max(...(pair ?? []).map((queued) => queued.ticket.enteredAt));
+      if (pair === undefined || at - queuedLast < THIRD_TEAM_WAIT_SECONDS * 1000) {
+        return;
+      }
+      take(pair);
+    }
+  };
+  const formOne = (at: number): boolean => {
+    const fronts = [
+      pick([parties], [teamCount], at),
+      pick([parties, solos], [1, teamSize], at),
+      pick([solos], [2 * teamSize], at),
+    ];
+    const pools = [[parties], [parties, solos], [solos]];
+    const candidates = fronts.flatMap((front, i) =>
+      front === undefined ? [] : fitting(reachable(front, pools[i] ?? []), at),
+    );
+    const best = candidates
+      .map((candidate) => [...candidate].sort((a, b) => a.place - b.place))
+      .reduce<Queued[] | undefined>(
+        (chosen, candidate) =>
+          chosen === undefined || earlier(candidate, chosen) ? candidate : chosen,
+        undefined,
+      );
+    if (best !== undefined) {
+      take(best);
+    }
+    return best !== undefined;
+  };
+  queue.forEach((ticket, place) => {
+    settlePairs(ticket.enteredAt);
+    (isSide(ticket, mode) ? parties : solos).push({ ticket, place });
+    while (formOne(ticket.enteredAt)) {
+      // Ranked windows that widened while nobody queued can fill more than one.
+    }
+  });
+  settlePairs(now);
+  while (formOne(now)) {
+    // As above: a window wide enough by now forms its group.
+  }
+  return groups;
+}
+
+function fitting(candidates: readonly Queued[][], at: number): Queued[][] {
+  return candidates.filter((candidate) => inWindow(candidate, at));
+}
+
+function reachable(front: readonly Queued[], pools: readonly (readonly Queued[])[]): Queued[][] {
+  if (front.some((queued) => !queued.ticket.hardNat)) {
+    return [[...front]];
+  }
+  return pools.flatMap((pool) => {
+    const open = pool.find((queued) => !queued.ticket.hardNat);
+    const latest = front
+      .filter((queued) => pool.includes(queued))
+      .reduce<Queued | undefined>(
+        (last, queued) => (last === undefined || queued.place > last.place ? queued : last),
+        undefined,
+      );
+    return open === undefined || latest === undefined
+      ? []
+      : [front.map((queued) => (queued === latest ? open : queued))];
+  });
+}
+
+function isLater(a: QueueTicket, b: QueueTicket): boolean {
+  return a.ascentRound !== null && b.ascentRound !== null && a.ascentRound > b.ascentRound;
+}
+
+function skipPairs(
+  waiting: readonly QueueTicket[],
+  round: FormGroupsInput["round"],
+  now: number,
+): (readonly [QueueTicket, QueueTicket])[] {
+  const reaches = (a: QueueTicket, b: QueueTicket): boolean => !a.hardNat || !b.hardNat;
+  const alone = waiting.filter(
+    (ticket) =>
+      round(ticket.ascentRound)?.skipping === true &&
+      !waiting.some(
+        (other) =>
+          other !== ticket && other.ascentRound === ticket.ascentRound && reaches(ticket, other),
+      ),
+  );
+  const pairs: (readonly [QueueTicket, QueueTicket])[] = [];
+  const taken = new Set<QueueTicket>();
+  for (const ticket of alone) {
+    if (taken.has(ticket) || now - ticket.enteredAt < ASCENT_SKIP_WAIT_SECONDS * 1000) {
+      continue;
+    }
+    const later = alone.find(
+      (other) => !taken.has(other) && isLater(other, ticket) && reaches(ticket, other),
+    );
+    if (later !== undefined) {
+      taken.add(ticket).add(later);
+      pairs.push([ticket, later]);
+    }
+  }
+  return pairs;
+}
+
+function hallGroup(
+  queue: readonly QueueTicket[],
+  teamCount: TeamCount,
+  now: number,
+): QueueTicket[][] {
+  if (!hallSlotOpen(now)) {
+    return [];
+  }
+  const slotStart = nextHallSlotMs(now) - HALL_SLOT_SECONDS * 1000;
+  const waiting = queue.filter((ticket) => ticket.enteredAt < slotStart);
+  const [holder] = waiting
+    .filter((ticket) => ticket.holdsHallSince !== null)
+    .sort((a, b) => (b.holdsHallSince ?? 0) - (a.holdsHallSince ?? 0));
+  const seated = [
+    ...(holder === undefined ? [] : [holder]),
+    ...waiting.filter((ticket) => ticket !== holder),
+  ].map((ticket, place) => ({ ticket, place }));
+  if (seated.length < 2) {
+    return [];
+  }
+  const [group] = reachable(seated.slice(0, teamCount), [seated]);
+  return group === undefined ? [] : [group.map((queued) => queued.ticket)];
+}
+
+function roundGroups(
+  queue: readonly QueueTicket[],
+  mode: QueueMode,
+  round: FormGroupsInput["round"],
+  now: number,
+): { readonly group: readonly QueueTicket[]; readonly ascentRound: number | null }[] {
+  const rounds = [...new Set(queue.map((ticket) => ticket.ascentRound))].sort(
+    (a, b) => (a ?? 0) - (b ?? 0),
+  );
+  const groups = rounds.flatMap((ascentRound) => {
+    const atRound = queue.filter((ticket) => ticket.ascentRound === ascentRound);
+    const teamCount = round(ascentRound)?.teamCount ?? 2;
+    return (
+      round(ascentRound)?.slotted === true
+        ? hallGroup(atRound, teamCount, now)
+        : takeGroups(atRound, mode, teamCount, now)
+    ).map((group) => ({ group, ascentRound }));
+  });
+  const grouped = new Set(groups.flatMap(({ group }) => group));
+  const waiting = queue.filter((ticket) => !grouped.has(ticket));
+  return [
+    ...groups,
+    ...skipPairs(waiting, round, now).map((group) => ({
+      group,
+      ascentRound: group[1].ascentRound,
+    })),
+  ];
+}

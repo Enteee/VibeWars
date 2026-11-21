@@ -12,7 +12,7 @@ import { schnorr } from "@noble/secp256k1";
 import { parseReceipt, resultDigest, startDigest, startHash, ZERO_HASH } from "@vibewars/ranking";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { fetchRelay, run } from "./build.mjs";
+import { BOARD_KEPT_SECONDS, fetchRelay, run } from "./build.mjs";
 
 /** @typedef {import("@vibewars/ranking").RankedReceipt} RankedReceipt */
 /** @typedef {{ kind: number, tags: string[][], content: string }} RelayEvent */
@@ -21,8 +21,8 @@ import { fetchRelay, run } from "./build.mjs";
 const sha256 = (bytes) => new Uint8Array(createHash("sha256").update(bytes).digest());
 const hex = (/** @type {Uint8Array} */ bytes) => Buffer.from(bytes).toString("hex");
 
-/** Four seats, each a real BIP-340 key. */
-const KEYS = Array.from({ length: 4 }, () => {
+/** Eight keys, each a real BIP-340 key; a receipt seats the first four unless told otherwise. */
+const KEYS = Array.from({ length: 8 }, () => {
   const { secretKey, publicKey } = schnorr.keygen();
   return {
     pubkey: hex(publicKey),
@@ -34,13 +34,13 @@ const KEYS = Array.from({ length: 4 }, () => {
 const DAY = 20_412;
 
 /**
- * A 2v2 receipt, team 0 winning, signed by every seat but `leavers`
+ * A 2v2 receipt of `keys` (the first four), team 0 winning, signed by every seat but `leavers`
  * and `unsigned`, and by `only` alone when given (a partial).
- * @param {{ matchId: string, leavers?: string[], only?: string, at?: number }} play
+ * @param {{ matchId: string, leavers?: string[], only?: string, at?: number, keys?: typeof KEYS }} play
  * @returns {RankedReceipt}
  */
-function receipt({ matchId, leavers = [], only, at = 0 }) {
-  const seats = KEYS.map((key) => key.pubkey);
+function receipt({ matchId, leavers = [], only, at = 0, keys = KEYS.slice(0, 4) }) {
+  const seats = keys.map((key) => key.pubkey);
   const start = {
     matchId,
     buildHash: "build",
@@ -48,13 +48,13 @@ function receipt({ matchId, leavers = [], only, at = 0 }) {
     map: "isle",
     seed: 1,
     startedAt: DAY * 86_400 + 3_600 + at,
-    leaderboardAsOf: 0,
     teams: [seats.slice(0, 2), seats.slice(2)].map((team) =>
       team.map((pubkey) => ({
         pubkey,
         characterId: "starter",
         name: `N${pubkey.slice(0, 4)}`,
         claimedRating: 800,
+        leaderboardAsOf: 0,
         prev: ZERO_HASH,
       })),
     ),
@@ -69,12 +69,12 @@ function receipt({ matchId, leavers = [], only, at = 0 }) {
   };
   const startOf = startDigest(start, sha256);
   const resultOf = resultDigest(result, sha256);
-  const signers = KEYS.filter(
+  const signers = keys.filter(
     (key) => !leavers.includes(key.pubkey) && (only === undefined || key.pubkey === only),
   );
   return {
     start,
-    startSigs: Object.fromEntries(KEYS.map((key) => [key.pubkey, key.sign(startOf)])),
+    startSigs: Object.fromEntries(keys.map((key) => [key.pubkey, key.sign(startOf)])),
     result,
     resultSigs: Object.fromEntries(signers.map((key) => [key.pubkey, key.sign(resultOf)])),
   };
@@ -112,16 +112,17 @@ const archiveDir = () => {
 };
 
 /**
- * One run on `dir` against relays that hold `held` (`undefined`: down).
+ * One run on `dir`, as of `asOfDay`, against relays that hold `held` (`undefined`: down).
  * @param {string} dir
  * @param {(RelayEvent[] | undefined)[]} held
+ * @param {number} [asOfDay]
  */
-async function runOn(dir, held) {
+async function runOn(dir, held, asOfDay = DAY) {
   /** @type {(number | undefined)[]} */
   const asked = [];
   const out = await run({
     dir,
-    asOfDay: DAY,
+    asOfDay,
     relays: RELAYS,
     fetch: (relay, since) => {
       asked.push(since);
@@ -167,6 +168,67 @@ describe("the leaderboard job", () => {
     ]);
     const hash = createHash("sha256").update(first.leaderboard).digest("hex");
     expect(first.log).toContain(`leaderboard.json sha256: ${hash}`);
+  });
+
+  it("keeps each board under its asOf, and deletes those more than three hours older (#3575)", async () => {
+    const dir = archiveDir();
+    const boards = path.join(dir, "boards");
+    const early = receipt({ matchId: "m1" });
+    const late = receipt({ matchId: "m2", at: 3_600 });
+    const first = await runOn(dir, [[event(early)], []]);
+    const at = early.start.startedAt;
+    expect(fs.readFileSync(path.join(boards, `${String(at)}.json`), "utf8")).toBe(
+      first.leaderboard,
+    );
+    // Past boards a previous run left: one just inside the window, one just out.
+    const kept = `${String(at + 3_600 - BOARD_KEPT_SECONDS)}.json`;
+    const gone = `${String(at + 3_600 - BOARD_KEPT_SECONDS - 1)}.json`;
+    fs.writeFileSync(path.join(boards, kept), "{}");
+    fs.writeFileSync(path.join(boards, gone), "{}");
+    const second = await runOn(dir, [[event(early), event(late)], []]);
+    const newest = `${String(late.start.startedAt)}.json`;
+    expect(fs.readdirSync(boards).sort()).toEqual([kept, `${String(at)}.json`, newest].sort());
+    expect(fs.readFileSync(path.join(boards, newest), "utf8")).toBe(second.leaderboard);
+    // The earlier board stays the bytes it was published as.
+    expect(fs.readFileSync(path.join(boards, `${String(at)}.json`), "utf8")).toBe(
+      first.leaderboard,
+    );
+    const third = await runOn(dir, [[event(early), event(late)], []]);
+    expect(third.leaderboard).toBe(second.leaderboard);
+    expect(fs.readdirSync(boards)).toHaveLength(3);
+  });
+
+  it("moves asOf past the previous board when a late receipt with an older startedAt changes it (#3575)", async () => {
+    const dir = archiveDir();
+    const older = receipt({ matchId: "m1" });
+    const newer = receipt({ matchId: "m2", at: 300 });
+    const first = await runOn(dir, [[event(newer)], []]);
+    expect(entriesOf(first.leaderboard).asOf).toBe(newer.start.startedAt);
+    const second = await runOn(dir, [[event(older), event(newer)], []]);
+    expect(entriesOf(second.leaderboard).asOf).toBe(newer.start.startedAt + 1);
+    const boards = path.join(dir, "boards");
+    expect(
+      fs.readFileSync(path.join(boards, `${String(newer.start.startedAt)}.json`), "utf8"),
+    ).toBe(first.leaderboard);
+    // Nothing new: the same asOf and the same bytes.
+    const third = await runOn(dir, [[event(older), event(newer)], []]);
+    expect(third.leaderboard).toBe(second.leaderboard);
+  });
+
+  it("fails, writing nothing, rather than rewrite a published board (#3575)", async () => {
+    const dir = archiveDir();
+    const early = receipt({ matchId: "m1" });
+    const late = receipt({ matchId: "m2", at: 300 });
+    const first = await runOn(dir, [[event(early)], []]);
+    const planted = path.join(dir, "boards", `${String(late.start.startedAt)}.json`);
+    fs.writeFileSync(planted, "{}");
+    await expect(runOn(dir, [[event(early), event(late)], []])).rejects.toThrow(
+      /published with other bytes/,
+    );
+    expect(fs.readFileSync(planted, "utf8")).toBe("{}");
+    expect(fs.readFileSync(path.join(dir, "leaderboard.json"), "utf8")).toBe(first.leaderboard);
+    const shard = path.join(dir, "receipts", shardOf(early.start.startedAt));
+    expect(fs.readFileSync(shard, "utf8")).toBe(`${linesOf(first)[0] ?? ""}\n`);
   });
 
   it("merges partial copies of one result into one receipt", async () => {
@@ -225,11 +287,31 @@ describe("the leaderboard job", () => {
     expect(entriesOf(second.leaderboard).asOf).toBe(match.start.startedAt);
   });
 
+  it("takes in no receipt or partial that started before the as-of day's day before yesterday", async () => {
+    const dir = archiveDir();
+    const twoDaysBack = -2 * 86_400 - 3_600;
+    const oldest = receipt({ matchId: "m1", at: twoDaysBack });
+    const stale = receipt({ matchId: "m2", at: twoDaysBack - 1 });
+    const stalePartial = receipt({
+      matchId: "m3",
+      at: twoDaysBack - 1,
+      only: KEYS[0]?.pubkey ?? "",
+    });
+    const first = await runOn(dir, [[event(oldest), event(stale), event(stalePartial)], []]);
+    expect(first.log).toMatch(/stale: 2\n/);
+    expect(linesOf(first).map((line) => parseReceipt(line)?.start.matchId)).toEqual(["m1"]);
+
+    // Archived, a receipt is not judged again a day later.
+    const later = await runOn(dir, [[], []], DAY + 1);
+    expect(linesOf(later)).toHaveLength(1);
+  });
+
   it("keeps a shard per month, and rewrites only the month a late receipt lands in", async () => {
     const dir = archiveDir();
     const october = receipt({ matchId: "m1", at: -30 * 86_400 });
     const november = receipt({ matchId: "m2" });
-    await runOn(dir, [[event(october), event(november)], []]);
+    await runOn(dir, [[event(october)], []], DAY - 30);
+    await runOn(dir, [[event(november)], []]);
     const shards = path.join(dir, "receipts");
     const names = [shardOf(october.start.startedAt), shardOf(november.start.startedAt)];
     expect(fs.readdirSync(shards).sort()).toEqual(names);
@@ -238,7 +320,7 @@ describe("the leaderboard job", () => {
     const before = fs.readFileSync(novemberShard);
 
     const late = receipt({ matchId: "m3", at: -30 * 86_400 + 60 });
-    const out = await runOn(dir, [[event(late)], []]);
+    const out = await runOn(dir, [[event(late)], []], DAY - 29);
     expect(linesOf(out)).toHaveLength(3);
     expect(fs.readFileSync(octoberShard, "utf8").split("\n").filter(Boolean)).toHaveLength(2);
     expect(fs.readFileSync(novemberShard)).toEqual(before);
@@ -258,6 +340,94 @@ describe("the leaderboard job", () => {
       }),
     ).rejects.toThrow(/over 100: GitHub refuses/);
     expect(fs.readdirSync(dir)).toEqual([]);
+  });
+
+  it("archives and rates a key in at most 50 receipts a UTC day, whatever order a run takes them in", async () => {
+    const flood = Array.from({ length: 60 }, (_, i) =>
+      receipt({ matchId: `f${String(i)}`, at: i }),
+    );
+    const others = KEYS.slice(4);
+    // Seats two flooders at the cap and two keys under it: admitted.
+    const mixed = receipt({
+      matchId: "x",
+      at: 200,
+      keys: [...KEYS.slice(0, 2), ...others.slice(2)],
+    });
+    const honest = receipt({ matchId: "h", at: 300, keys: others });
+    // A partial counts like any receipt: a flooder's is dropped, an honest one kept.
+    const floodPartial = receipt({ matchId: "p", at: 400, only: KEYS[0]?.pubkey ?? "" });
+    const partial = receipt({ matchId: "q", at: 500, keys: others, only: others[0]?.pubkey ?? "" });
+    const all = [...flood, mixed, honest, floodPartial, partial].map((r) => event(r));
+
+    const forward = await runOn(archiveDir(), [all, []]);
+    const backward = await runOn(archiveDir(), [[...all].reverse(), []]);
+    expect(backward.shards).toEqual(forward.shards);
+    expect(backward.leaderboard).toBe(forward.leaderboard);
+
+    const ids = linesOf(forward).map((line) => parseReceipt(line)?.start.matchId);
+    expect(ids).toEqual([...flood.slice(0, 50).map((r) => r.start.matchId), "x", "h", "q"]);
+    const matches = new Map(
+      entriesOf(forward.leaderboard).entries.map((entry) => [entry.pubkey, entry.matches]),
+    );
+    expect(KEYS.map((key) => matches.get(key.pubkey))).toEqual([51, 51, 50, 50, 1, 1, 2, 2]);
+    expect(forward.log).toContain("over-cap: 11\n");
+    expect(forward.log).toContain(`  ${KEYS[0]?.pubkey ?? ""}: 11\n`);
+    expect(forward.log).not.toContain(`  ${others[2]?.pubkey ?? ""}:`);
+  });
+
+  it("keeps all 50 of a key's receipts in a day, and the day before's", async () => {
+    const day = Array.from({ length: 50 }, (_, i) => receipt({ matchId: `d${String(i)}`, at: i }));
+    const before = receipt({ matchId: "b", at: -86_400 });
+    const out = await runOn(archiveDir(), [[...day, before].map((r) => event(r)), []]);
+    expect(linesOf(out)).toHaveLength(51);
+    expect(out.log).toContain("over-cap: 0\n");
+  });
+
+  /**
+   * 51 receipts backdated to `real`'s day, each between `loser` and three
+   * sybils: the 51st finds every seat at the cap.
+   * @param {(typeof KEYS)[number]} loser
+   */
+  const backdatedFlood = (loser) => {
+    const sybils = [KEYS[4], KEYS[5], loser, KEYS[6]].filter((key) => key !== undefined);
+    return Array.from({ length: 51 }, (_, i) =>
+      receipt({ matchId: `s${String(i)}`, at: i, keys: sybils }),
+    );
+  };
+
+  it("never evicts an archived loss for a backdated flood on its day (perf-sec-qa)", async () => {
+    const dir = archiveDir();
+    const loser = KEYS[2];
+    if (loser === undefined) {
+      throw new Error("four keys");
+    }
+    const real = receipt({ matchId: "real", at: 36_000 });
+    await runOn(dir, [[event(real)], []]);
+    const out = await runOn(dir, [backdatedFlood(loser).map((r) => event(r)), []]);
+    const ids = linesOf(out).map((line) => parseReceipt(line)?.start.matchId);
+    expect(ids).toContain("real");
+    expect(ids).not.toContain("s50");
+    expect(out.log).toContain("over-cap: 1\n");
+  });
+
+  it("admits a lost match whose loser flooded the same run, since its other seats are under the cap (lead-dev)", async () => {
+    const loser = KEYS[2];
+    if (loser === undefined) {
+      throw new Error("four keys");
+    }
+    const real = receipt({ matchId: "real", at: 36_000 });
+    const out = await runOn(archiveDir(), [
+      [...backdatedFlood(loser), real].map((r) => event(r)),
+      [],
+    ]);
+    const ids = linesOf(out).map((line) => parseReceipt(line)?.start.matchId);
+    expect(ids).toContain("real");
+    expect(ids).not.toContain("s50");
+    const matches = new Map(
+      entriesOf(out.leaderboard).entries.map((entry) => [entry.pubkey, entry.matches]),
+    );
+    expect(matches.get(KEYS[0]?.pubkey ?? "")).toBe(1);
+    expect(matches.get(loser.pubkey)).toBe(51);
   });
 
   it("voids a re-round that names a signer a leaver, and rates one no winner backs", async () => {

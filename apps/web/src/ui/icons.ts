@@ -272,6 +272,11 @@ export function helpIcon(): string {
   return iconUrl("ui", "help");
 }
 
+/** The bar's Leaderboard (#3575): a cup. */
+export function leaderboardIcon(): string {
+  return iconUrl("ui", "leaderboard");
+}
+
 /** The fullscreen toggle (#454): what the window is now, not what a click does. */
 export function fullscreenIcon(fullscreen: boolean): string {
   return iconUrl("ui", fullscreen ? "fullscreen-exit" : "fullscreen");

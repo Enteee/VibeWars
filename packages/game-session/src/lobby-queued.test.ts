@@ -102,7 +102,6 @@ const GROUP: FormedGroup = {
   ranked: false,
   seed: 1,
   claims: {},
-  leaderboardAsOf: 0,
 };
 
 /** The same seats, as a party of HOST and ALLY against two solos (#882). */
@@ -229,6 +228,7 @@ function joinQueued(
     timeoutMs,
     relayPub: null,
     playerKey: testPlayerKey(),
+    claim: () => ({ rating: 800, asOf: 0 }),
     queued: { group, key: keyOf(ticketId), verifyTicketSig, ascentMorale },
   });
 }
@@ -1167,6 +1167,10 @@ describe("Stay together, on a queued lobby's host (#882, #1078)", () => {
         groupId: GROUP_ID,
         members: PARTY,
         consents: [await consentOf(KEY_A), await consentOf(KEY_H)],
+        claims: [
+          { rating: 800, asOf: 0 },
+          { rating: 800, asOf: 0 },
+        ],
       },
     ]);
     expect(answers.get("foe")).toEqual([]);
@@ -1193,7 +1197,7 @@ describe("Stay together, on a queued lobby's host (#882, #1078)", () => {
     if (formed === undefined || formed === null) {
       throw new Error("no party formed");
     }
-    const { members, groupId, consents } = formed;
+    const { members, groupId, consents, claims } = formed;
 
     // The next queue: the two members as one party, two strangers alone.
     const board = createMemoryBoard();
@@ -1210,10 +1214,11 @@ describe("Stay together, on a queued lobby's host (#882, #1078)", () => {
         round: () => ({ mapPool: ["other-arena"], teamCount: 2, skipping: false, slotted: false }),
         hardNat: false,
         holdsHallSince: null,
+        claim: () => ({ rating: 800, asOf: 0 }),
       });
     const clients = [
-      client({ members, key: KEY_H, groupId, consents }),
-      client({ members, key: KEY_A, groupId, consents }),
+      client({ members, key: KEY_H, groupId, consents, claims }),
+      client({ members, key: KEY_A, groupId, consents, claims }),
       client(),
       client(),
     ];
@@ -1307,7 +1312,11 @@ describe("Stay together, on a queued lobby's host (#882, #1078)", () => {
     const elsewhere = [KEY_A.ticketId, "f".repeat(64)];
     for (const consent of [await consentOf(KEY_A, elsewhere), await consentOf(KEY_H)]) {
       const checked = verifications;
-      allyRoom.send("party-consent", { memberKey: KEY_A.ticketId, consent }, "host");
+      allyRoom.send(
+        "party-consent",
+        { memberKey: KEY_A.ticketId, consent, claim: { rating: 800, asOf: 0 } },
+        "host",
+      );
       await until(() => verifications > checked);
     }
     // The host's own consent too: three checks, and still no party.

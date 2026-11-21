@@ -17,6 +17,7 @@ import { describe, expect, it } from "vitest";
 
 import { joinLobby, type RankedPlay } from "./lobby-client.js";
 import type { LobbyConnection } from "./lobby-connection.js";
+import type { LeaderboardSource } from "./ranked-claims.js";
 import { MAP_IDS, MAP_TEAM_SIZES, MODE_MAPS, TRACK_IDS } from "./lobby-harness.test-support.js";
 import {
   RANKED_RESULT_TIMEOUT_MS,
@@ -82,8 +83,9 @@ function rankedGroup(mode: QueueMode): FormedGroup {
     mode,
     ranked: true,
     seed: 4_123_456_789,
-    claims: Object.fromEntries(teams.flat().map((key, n) => [key, 800 + n])),
-    leaderboardAsOf: 0,
+    claims: Object.fromEntries(
+      teams.flat().map((key, n) => [key, { rating: 800 + n, asOf: BOARD_AS_OF }]),
+    ),
   };
 }
 
@@ -300,7 +302,24 @@ interface RankedLobbyOptions {
   readonly wrap?: (n: number, transport: Transport) => Transport;
   /** The host's room, wrapped: a lying host's, to its guests. */
   readonly host?: (transport: Transport) => Transport;
+  /** Each seat's leaderboards (#3575): by default `PUBLISHED`, so every claim holds. */
+  readonly board?: (n: number) => LeaderboardSource;
 }
+
+/** What every seat's claim names: the one board `PUBLISHED` holds. */
+const BOARD_AS_OF = 1_795_000_000;
+
+/** Each seat's player key, and its group's claim for it: what `PUBLISHED` rates. */
+const RATED = new Map<string, number>();
+
+/** No copy held, and one board published, as of `BOARD_AS_OF`, rating each seat as its claim. */
+const PUBLISHED: LeaderboardSource = {
+  copy: () => undefined,
+  board: (asOf) =>
+    Promise.resolve(
+      asOf === BOARD_AS_OF ? { asOf, claimOf: (pubkey) => RATED.get(pubkey) ?? 800 } : undefined,
+    ),
+};
 
 async function joinSeat(
   group: FormedGroup,
@@ -308,8 +327,13 @@ async function joinSeat(
   transport: Transport,
   ranked: boolean,
   characterId = `char-${String(n)}`,
+  leaderboard: LeaderboardSource = PUBLISHED,
 ): Promise<Seat> {
   const key = testPlayerKey();
+  const claim = group.claims[seatKey(n)];
+  if (claim !== undefined) {
+    RATED.set(key.pubkey, claim.rating);
+  }
   const receipts: Seat["receipts"] = [];
   const signed: RankedReceipt[] = [];
   const rounds: number[] = [];
@@ -318,6 +342,7 @@ async function joinSeat(
     prev: ZERO_HASH,
     buildHash: BUILD,
     crypto: testReceiptCrypto,
+    leaderboard,
     onReceipt: (receipt, partial) => receipts.push({ receipt, partial }),
     onResultSigned: (partial, round) => {
       signed.push(partial);
@@ -341,6 +366,7 @@ async function joinSeat(
     timeoutMs: 1000,
     relayPub: null,
     playerKey: key,
+    claim: () => ({ rating: 800, asOf: 0 }),
     queued: { group, key: keyOf(seatKey(n)), verifyTicketSig, ascentMorale: 0 },
     ...(ranked ? { ranked: play } : {}),
   });
@@ -413,6 +439,7 @@ async function openRanked(mode: QueueMode, options: RankedLobbyOptions = {}): Pr
         wrap(n, room),
         !unranked.has(n),
         starters.has(n) ? "starter" : undefined,
+        options.board?.(n),
       ),
     );
   }
@@ -478,12 +505,13 @@ describe("a ranked queued match (ADR-0055, #3573)", () => {
         map: "other-arena",
         seed: ranked.group.seed,
         startedAt: STARTED_AT,
-        leaderboardAsOf: 0,
       });
       expect(receipt.start.teams.flat().map((seat) => seat.pubkey)).toEqual(pubkeys(ranked));
-      expect(receipt.start.teams.flat().map((seat) => seat.claimedRating)).toEqual(
-        ranked.group.teams.flat().map((key) => ranked.group.claims[key]),
-      );
+      expect(
+        receipt.start.teams
+          .flat()
+          .map((seat) => ({ rating: seat.claimedRating, asOf: seat.leaderboardAsOf })),
+      ).toEqual(ranked.group.teams.flat().map((key) => ranked.group.claims[key]));
       expect(receipt.result).toEqual({
         startHash: startHash(receipt.start, testReceiptCrypto.sha256),
         winningTeam: 1,
@@ -530,6 +558,49 @@ describe("a ranked queued match (ADR-0055, #3573)", () => {
     for (const n of [0, 1, 3]) {
       expect(ranked.seats[n]?.cancelled).toBe(1);
     }
+    expect(ranked.receipts).toEqual([]);
+  });
+
+  it("signs no start whose claims the seat's own board does not hold (#3575)", async () => {
+    // The board the claims name lists everyone at 1000, as seat 2 fetches it.
+    const ranked = await openRanked("random-arena-2v2", {
+      board: (n) =>
+        n === 2
+          ? {
+              copy: () => undefined,
+              board: (asOf) => Promise.resolve({ asOf, claimOf: () => 1000 }),
+            }
+          : PUBLISHED,
+    });
+    await ranked.step(COUNTDOWN_SECONDS + RANKED_START_TIMEOUT_MS / 1000 + TICK_SECONDS);
+    expect(ranked.seats[2]?.startsSigned).toBe(0);
+    expect(ranked.fellThrough).toEqual([[seatKey(2)]]);
+    expect(ranked.receipts).toEqual([]);
+  });
+
+  it("signs no start once it left while the leaderboard was fetched (#3575)", async () => {
+    // Seat 2's fetch answers once it has left, with a board that holds every claim.
+    let fetched: (() => void) | undefined;
+    const ranked = await openRanked("random-arena-2v2", {
+      board: (n) =>
+        n === 2
+          ? {
+              copy: () => undefined,
+              board: (asOf) =>
+                new Promise((resolve) => {
+                  fetched = () => {
+                    void PUBLISHED.board(asOf).then(resolve);
+                  };
+                }),
+            }
+          : PUBLISHED,
+    });
+    await ranked.step(COUNTDOWN_SECONDS);
+    await until(() => fetched !== undefined);
+    await ranked.seats[2]?.connection.disconnect();
+    fetched?.();
+    await ranked.step(RANKED_START_TIMEOUT_MS / 1000 + TICK_SECONDS);
+    expect(ranked.seats[2]?.startsSigned).toBe(0);
     expect(ranked.receipts).toEqual([]);
   });
 

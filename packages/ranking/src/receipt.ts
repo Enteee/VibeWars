@@ -55,6 +55,11 @@ export interface RankedSeat {
   readonly name: string;
   /** The player's conservative rating at `leaderboardAsOf`, rounded to an integer. */
   readonly claimedRating: number;
+  /**
+   * The `asOf` of the leaderboard `claimedRating` was read from, unix
+   * seconds: each player reads its own copy, so seats may differ (#3575).
+   */
+  readonly leaderboardAsOf: number;
   /** `receiptHash` of the player's own last receipt, or `ZERO_HASH` for the first. */
   readonly prev: string;
 }
@@ -70,8 +75,6 @@ export interface RankedStart {
   readonly seed: number;
   /** Unix seconds. */
   readonly startedAt: number;
-  /** The `asOf` of the leaderboard every `claimedRating` was read from, unix seconds. */
-  readonly leaderboardAsOf: number;
   /** Seats by team: `teams[t]` is team `t`. */
   readonly teams: readonly (readonly RankedSeat[])[];
 }
@@ -226,7 +229,7 @@ function parseSeat(value: unknown): RankedSeat | undefined {
   if (!isRecord(value)) {
     return undefined;
   }
-  const { pubkey, characterId, name, claimedRating, prev } = value;
+  const { pubkey, characterId, name, claimedRating, leaderboardAsOf, prev } = value;
   if (
     !isHash(pubkey) ||
     !isId(characterId) ||
@@ -235,11 +238,12 @@ function parseSeat(value: unknown): RankedSeat | undefined {
     name.length > MAX_SEAT_NAME_LENGTH ||
     typeof claimedRating !== "number" ||
     !Number.isSafeInteger(claimedRating) ||
+    !isCount(leaderboardAsOf) ||
     !isHash(prev)
   ) {
     return undefined;
   }
-  return { pubkey, characterId, name, claimedRating, prev };
+  return { pubkey, characterId, name, claimedRating, leaderboardAsOf, prev };
 }
 
 function parseTeams(value: unknown): RankedSeat[][] | undefined {
@@ -274,7 +278,7 @@ export function parseRankedStart(value: unknown): RankedStart | undefined {
   if (!isRecord(value)) {
     return undefined;
   }
-  const { matchId, buildHash, mode, map, seed, startedAt, leaderboardAsOf } = value;
+  const { matchId, buildHash, mode, map, seed, startedAt } = value;
   const teams = parseTeams(value.teams);
   if (
     !isId(matchId) ||
@@ -283,12 +287,11 @@ export function parseRankedStart(value: unknown): RankedStart | undefined {
     !isId(map) ||
     !isCount(seed) ||
     !isCount(startedAt) ||
-    !isCount(leaderboardAsOf) ||
     teams === undefined
   ) {
     return undefined;
   }
-  return { matchId, buildHash, mode, map, seed, startedAt, leaderboardAsOf, teams };
+  return { matchId, buildHash, mode, map, seed, startedAt, teams };
 }
 
 /** The result `value` encodes, or `undefined`: the shape `parseReceipt` checks it for (#3573). */

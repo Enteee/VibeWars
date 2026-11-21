@@ -382,3 +382,9 @@ Charakternamen jedes Spielers; ein Spieler ohne Charakter heißt dort
 Starter. Deine Wertung ändert sich innerhalb einer Stunde. Ein
 gewertetes Match zu verlassen zählt als Niederlage, und der
 Verlassen-Knopf sagt das.
+
+Gewertete Warteschlangen bringen Spieler mit ähnlicher Wertung zusammen und teilen sie in Teams mit ähnlicher Durchschnittswertung. Die Suche beginnt innerhalb von 100 Punkten um deine Wertung und weitet sich mit jeder Sekunde Wartezeit um 10 Punkte, bis 600, sodass niemand ewig wartet. Während du wartest, zeigt die Warteschlange deine Wertung.
+
+Deine ersten 10 gewerteten Matches sind vorläufig: Die Warteschlange sagt **Vorläufig (3/10 Matches)**, und du hast noch keinen Rang. Danach zeigt das Hauptmenü deinen Rang. Wertungen verfallen: Jeder Tag ohne gewertetes Match macht deine unsicherer, und die Rangliste ordnet nach einem vorsichtigen Wert, sodass dein Rang innerhalb von Wochen sinkt, wenn du aufhörst zu spielen.
+
+Der Knopf **Rangliste** in der oberen Leiste listet die besten 100 mit Rang, Name und Wertung, deine eigene Zeile hervorgehoben. Sie wird stündlich aktualisiert.

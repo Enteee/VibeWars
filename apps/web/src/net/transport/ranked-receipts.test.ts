@@ -56,6 +56,7 @@ function receiptOf(red: PlayerKey, blue: PlayerKey, prev = ZERO_HASH): RankedRec
     characterId,
     name,
     claimedRating: 800,
+    leaderboardAsOf: 0,
     prev: key === red ? prev : ZERO_HASH,
   });
   const start: RankedStart = {
@@ -65,7 +66,6 @@ function receiptOf(red: PlayerKey, blue: PlayerKey, prev = ZERO_HASH): RankedRec
     map: "isle-of-the-nameless",
     seed: 1234,
     startedAt: NOW / 1000,
-    leaderboardAsOf: 0,
     teams: [[seat(red, "char-red", "Red")], [seat(blue, RANKED_STARTER_ID, "Blue")]],
   };
   const result: RankedResult = {

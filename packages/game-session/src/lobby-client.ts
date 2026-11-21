@@ -30,6 +30,7 @@ import {
   type JsonValue,
   type LobbyRefusal,
   type PeerPartyConsent,
+  type TicketClaim,
   type PeerStayTogether,
   type PeerLobbyHello,
   type PeerLobbyProof,
@@ -71,6 +72,7 @@ import type {
 } from "./lobby-connection.js";
 import { RECONNECT_WINDOW_SECONDS } from "./match-host.js";
 import type { PlayerKey } from "./player-key.js";
+import { claimsHold, type LeaderboardSource } from "./ranked-claims.js";
 import { sanitizeChatText, sanitizeName } from "./names.js";
 import { admissionDigest, partyGroupId, type QueuedSeat } from "./queue-admission.js";
 import type { TicketKey } from "./queue-client.js";
@@ -164,6 +166,11 @@ export interface JoinLobbyOptions {
   /** This browser's player key (#2706): every join proves it to the host. */
   readonly playerKey: PlayerKey;
   /**
+   * This player's claim from its own copy of the leaderboard (#3575),
+   * read when it consents to a party: the party's ticket carries it.
+   */
+  readonly claim: () => TicketClaim;
+  /**
    * How this player plays a ranked match (ADR-0055, #3573): only a queued
    * group that is `ranked` uses it. Without it, this player signs nothing,
    * and the host cancels a ranked match it is seated in.
@@ -181,6 +188,8 @@ export interface RankedPlay {
   readonly buildHash: string;
   /** What the host's and the other seats' signatures are checked with. */
   readonly crypto: ReceiptCrypto;
+  /** The leaderboard every seat's claim is checked against (#3575): see `claimsHold`. */
+  readonly leaderboard: LeaderboardSource;
   /**
    * The match's receipt, `partial` false: the host's, every signature in
    * and valid. Or, `partial` true, the `host-left` one this player built
@@ -228,10 +237,10 @@ function sameRankedResult(a: RankedResult, b: RankedResult | undefined): boolean
 /**
  * `start`'s problem as `seat` of `group` sees it, signing with `pubkey`
  * (ADR-0055): `undefined` when it names this lobby's group, its seed,
- * map, mode and leaderboard, `play`'s build, the formed teams seat for
+ * map and mode, `play`'s build, the formed teams seat for
  * seat with each seat key's claim, and this player in its own seat as it
- * joined. Claims are only compared with the tickets' until #3575 checks
- * them against the leaderboard.
+ * joined. Its claims are checked against the leaderboard apart, by
+ * `claimsHold` (#3575), which fetches the boards they name.
  */
 function rankedStartFault(
   start: RankedStart,
@@ -246,7 +255,6 @@ function rankedStartFault(
     start.seed !== group.seed ||
     start.mode !== group.mode ||
     start.map !== group.mapId ||
-    start.leaderboardAsOf !== group.leaderboardAsOf ||
     start.teams.length !== group.teams.length
   ) {
     return "not this group's match";
@@ -259,7 +267,12 @@ function rankedStartFault(
     }
     for (const [i, seatKey] of team.entries()) {
       const ranked = seats[i];
-      if (ranked === undefined || ranked.claimedRating !== group.claims[seatKey]) {
+      const claim = group.claims[seatKey];
+      if (
+        ranked === undefined ||
+        ranked.claimedRating !== claim?.rating ||
+        ranked.leaderboardAsOf !== claim.asOf
+      ) {
         return "a claim not its ticket's";
       }
       const own = seatKey === seat.key.ticketId;
@@ -415,6 +428,8 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
     | undefined;
   /** This player's ranked match is over for it: a receipt was handed on, or the match cancelled. */
   let rankedOver = false;
+  /** A ranked start's claims are being checked (#3575): a second start waits for no fetch. */
+  let checkingStart = false;
   /**
    * The seats of the ranked match this player saw go once it signed the
    * start (ADR-0055), by pubkey: a peer that left the room, a member the
@@ -1102,7 +1117,11 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
           }
           void admissionDigest("vibewars-party", groupId, members.join(""), mode).then((digest) => {
             if (hostId !== undefined && !closed) {
-              const said: PeerPartyConsent = { memberKey: key.ticketId, consent: key.sign(digest) };
+              const said: PeerPartyConsent = {
+                memberKey: key.ticketId,
+                consent: key.sign(digest),
+                claim: options.claim(),
+              };
               transport.send("party-consent", said, hostId);
             }
           });
@@ -1152,7 +1171,8 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
         }
       }),
       // A ranked start (#3573): signed only once checked against this
-      // player's own group and seat, and only the first.
+      // player's own group and seat, and its claims against the
+      // leaderboard (#3575), and only the first.
       transport.on("ranked-start", (data, from) => {
         const said = parseWireRankedStart(data);
         if (
@@ -1162,30 +1182,40 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
           queued === undefined ||
           ranked !== undefined ||
           rankedOver ||
+          checkingStart ||
           rankedStartFault(said.start, queued, rankedPlay, options.playerKey.pubkey) !== undefined
         ) {
           return;
         }
-        const hostSeat = queued.group.teams.flatMap((team, t) =>
-          team.flatMap((seatKey, i) =>
-            seatKey === queued.group.hostTicketId ? (said.start.teams[t]?.[i] ?? []) : [],
-          ),
-        )[0];
-        if (hostSeat === undefined) {
-          return;
-        }
-        ranked = {
-          start: said.start,
-          hash: startHash(said.start, rankedPlay.crypto.sha256),
-          hostPubkey: hostSeat.pubkey,
-          startSigs: undefined,
-        };
-        const signed: PeerRankedStartSig = {
-          matchId: said.start.matchId,
-          sig: options.playerKey.signRankedStart(said.start),
-        };
-        transport.send("ranked-start-sig", signed, from);
-        rankedPlay.onStartSigned();
+        checkingStart = true;
+        void claimsHold(said.start, rankedPlay.leaderboard).then((hold) => {
+          checkingStart = false;
+          // The lobby may have closed or moved on while the leaderboard was
+          // fetched; `queued` is this client's for its life, so its group holds.
+          if (!hold || closed || ranked !== undefined || rankedOver) {
+            return;
+          }
+          const hostSeat = queued.group.teams.flatMap((team, t) =>
+            team.flatMap((seatKey, i) =>
+              seatKey === queued.group.hostTicketId ? (said.start.teams[t]?.[i] ?? []) : [],
+            ),
+          )[0];
+          if (hostSeat === undefined) {
+            return;
+          }
+          ranked = {
+            start: said.start,
+            hash: startHash(said.start, rankedPlay.crypto.sha256),
+            hostPubkey: hostSeat.pubkey,
+            startSigs: undefined,
+          };
+          const signed: PeerRankedStartSig = {
+            matchId: said.start.matchId,
+            sig: options.playerKey.signRankedStart(said.start),
+          };
+          transport.send("ranked-start-sig", signed, from);
+          rankedPlay.onStartSigned();
+        });
       }),
       // Every seat's start signature: kept only if each verifies.
       transport.on("ranked-start-sigs", (data, from) => {

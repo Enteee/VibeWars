@@ -319,3 +319,9 @@ Nad filtrami pasek **Sala Bohaterów** pokazuje ostatnie 20 serii, od najnowszej
 ## Rankingowe
 
 Mecz z kolejki bez botów jest rankingowy. Ekran kolejki i lobby drużyny mówią o tym, zanim staniesz w kolejce; jeden bot sprawia, że mecz nie jest rankingowy. Gdy mecz rankingowy zostanie znaleziony, każdy gracz podpisuje jego start, a ekran do 15 sekund pokazuje **Potwierdzanie meczu rankingowego…**. Jeśli ktoś nie potwierdzi, mecz jest anulowany i wszyscy wracają do kolejki. Na koniec każdy gracz podpisuje wynik, a pokwitowanie meczu jest publikowane na przekaźnikach Nostr z kluczem publicznym i imieniem postaci każdego gracza; gracz bez postaci figuruje jako starter. Twój ranking zmienia się w ciągu godziny. Wyjście z meczu rankingowego liczy się jako porażka, i przycisk wyjścia to mówi.
+
+Kolejki rankingowe łączą graczy o podobnym rankingu i dzielą ich na drużyny o podobnym średnim rankingu. Wyszukiwanie zaczyna się w zakresie 100 punktów od twojego rankingu i poszerza się o 10 punktów za każdą sekundę czekania, do 600, więc nikt nie czeka w nieskończoność. Podczas czekania kolejka pokazuje twój ranking.
+
+Twoich pierwszych 10 meczów rankingowych jest tymczasowych: kolejka mówi **Tymczasowy (3/10 meczów)** i nie masz jeszcze miejsca. Potem menu główne pokazuje twoje miejsce. Ranking się starzeje: każdy dzień bez meczu rankingowego czyni twój mniej pewnym, a tabela wyników sortuje według ostrożnej wartości, więc jeśli przestaniesz grać, twoje miejsce spadnie w ciągu tygodni.
+
+Przycisk **Tabela wyników** na górnym pasku pokazuje 100 najlepszych według miejsca, nazwy i rankingu, z wyróżnionym twoim wierszem. Aktualizuje się co godzinę.

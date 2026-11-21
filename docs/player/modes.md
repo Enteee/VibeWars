@@ -474,3 +474,9 @@ receipt is published on the Nostr relays with each player's public key
 and character name; a player with no character is named as a starter.
 Your rating moves within the hour. Leaving a ranked match counts as a
 loss, and the leave button says so.
+
+Ranked queues pair players of similar rating, and split them into teams with similar average ratings. The search starts within 100 points of your rating and widens by 10 points for every second you wait, up to 600, so nobody waits forever. While you wait, the queue shows your rating.
+
+Your first 10 rated matches are provisional: the queue says **Provisional (3/10 matches)** and you have no rank yet. After that the main menu shows your rank. Ratings decay: each day without a rated match makes yours less certain, and the leaderboard ranks by a cautious value, so if you stop playing your rank sinks within weeks.
+
+The **Leaderboard** button in the top bar lists the top 100 by rank, name and rating, your own row highlighted. It is updated every hour.

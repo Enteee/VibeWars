@@ -464,3 +464,9 @@ Nad filtrami ukazuje pás **Sieň hrdinov** posledných 20 sérií, od najnovše
 ## Hodnotené
 
 Zápas z frontu bez botov je hodnotený. Obrazovka frontu aj tímová lobby to povedia, skôr než sa zaradíš; jediný bot nechá zápas nehodnotený. Keď sa nájde hodnotený zápas, každý hráč podpíše jeho začiatok a obrazovka ukazuje až 15 sekúnd **Potvrdzovanie hodnoteného zápasu…**. Ak niekto nepotvrdí, zápas sa zruší a všetci sú späť vo fronte. Na konci každý hráč podpíše výsledok a potvrdenka zápasu sa zverejní na Nostr relayoch s verejným kľúčom a menom postavy každého hráča; hráč bez postavy je uvedený ako starter. Tvoje hodnotenie sa zmení do hodiny. Odchod z hodnoteného zápasu sa počíta ako prehra a tlačidlo odchodu to hovorí.
+
+Hodnotené fronty spájajú hráčov s podobným hodnotením a delia ich do tímov s podobným priemerným hodnotením. Hľadanie začína v rozmedzí 100 bodov od tvojho hodnotenia a za každú sekundu čakania sa rozšíri o 10 bodov, až na 600, takže nikto nečaká večne. Počas čakania front ukazuje tvoje hodnotenie.
+
+Tvojich prvých 10 hodnotených zápasov je predbežných: front píše **Predbežné (3/10 zápasov)** a zatiaľ nemáš poradie. Potom hlavná ponuka ukazuje tvoje poradie. Hodnotenie chátra: každý deň bez hodnoteného zápasu ho robí menej istým a rebríček zoraďuje podľa opatrnej hodnoty, takže keď prestaneš hrať, tvoje poradie počas týždňov klesne.
+
+Tlačidlo **Rebríček** v hornej lište ukazuje najlepších 100 podľa poradia, mena a hodnotenia, s tvojím riadkom zvýrazneným. Aktualizuje sa každú hodinu.

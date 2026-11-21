@@ -215,7 +215,10 @@ const FRONT_SWITCH_MARGIN = 2;
  * With foes of two or more teams (#2685), the team to fight: the one
  * engaging ours, the most of its living members targeting one of us; else
  * the weakest by health of those with a member within `FOCUS_REACH` past
- * spell range; else the weakest of all. Ties to the lower team. So a team
+ * spell range; else the weakest of all. Ties to the team with a player
+ * nearest the bot, then to the next after its own in turn order (#3749):
+ * never to a team for its number, so a map turned for each team stays
+ * fair. So a team
  * does not charge a fresh one while another is attacking it. Only players
  * count: a team's ghost, guards or priest neither rank it nor engage for
  * it. The `kept` front stays while one of its players engages ours or is
@@ -239,24 +242,37 @@ function foeFront(
   );
   const teams = new Map<
     number,
-    { engaging: number; health: number; count: number; near: boolean }
+    { engaging: number; health: number; count: number; near: boolean; nearest: number }
   >();
   for (const foe of foes) {
     if (foe.creature !== undefined) {
       continue;
     }
-    const team = teams.get(foe.combatant.team) ?? { engaging: 0, health: 0, count: 0, near: false };
+    const team = teams.get(foe.combatant.team) ?? {
+      engaging: 0,
+      health: 0,
+      count: 0,
+      near: false,
+      nearest: Number.POSITIVE_INFINITY,
+    };
     teams.set(foe.combatant.team, team);
     if (foe.targetId !== undefined && ours.has(foe.targetId)) {
       team.engaging += 1;
     }
     team.health += healthFraction(foe);
     team.count += 1;
-    team.near ||= distance(foe.position, self.position) <= RANGE_SPELL + FOCUS_REACH;
+    const away = distance(foe.position, self.position);
+    team.near ||= away <= RANGE_SPELL + FOCUS_REACH;
+    team.nearest = Math.min(team.nearest, away);
   }
   if (teams.size < 2) {
     return undefined;
   }
+  // How many turns after ours `team` comes: (team - own) mod any count of
+  // teams, since every team's number is below it.
+  const own = self.combatant.team;
+  const turnsAfter = (team: number): number =>
+    team > own ? team - own : team - own + Number.MAX_SAFE_INTEGER;
   const current = kept === undefined ? undefined : teams.get(kept);
   if (
     current !== undefined &&
@@ -274,7 +290,8 @@ function foeFront(
       other.engaging - one.engaging ||
       Number(other.near) - Number(one.near) ||
       one.health / one.count - other.health / other.count ||
-      a - b,
+      one.nearest - other.nearest ||
+      turnsAfter(a) - turnsAfter(b),
   );
   return ranked[0]?.[0];
 }
