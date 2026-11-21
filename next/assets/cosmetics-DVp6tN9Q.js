@@ -1,0 +1,41 @@
+var e=`# Kozmetika
+
+Kozmetika mijenja kako tvoje ime i tlo pod tobom izgledaju drugim igračima. Služi samo za izgled: nijedna kozmetika ne mijenja kako se išta igra, i nijedna nikad ne prekriva znak koji čitaš u borbi. Pripada tvom ključu igrača, pa je dijele svi tvoji likovi.
+
+## Kako je zaraditi
+
+Kozmetiku zarađuješ provjerenim rangiranim pobjedama, onako kako ih broji javna ljestvica. Nitko je
+ne dijeli: svatko može provjeriti ljestvicu i vidjeti što si zaradio.
+
+| Predmet                                              | Kako se zarađuje            |
+| ---------------------------------------------------- | --------------------------- |
+| Okvir od žada i titula Izazivač                      | 5 rangiranih pobjeda        |
+| Aura mahovine, Trag mahovine                         | 5 rangiranih pobjeda        |
+| Ružičasti okvir i titula Veteran                     | 25 rangiranih pobjeda       |
+| Aura žeravice, Trag žeravice                         | 25 rangiranih pobjeda       |
+| Aura mraza, Trag mraza                               | 75 rangiranih pobjeda       |
+| Tirkizni okvir i titula Vojskovođa                   | 200 rangiranih pobjeda      |
+| Aura zvjezdane svjetlosti, Trag zvjezdane svjetlosti | 500 rangiranih pobjeda      |
+| Okvir orhideje i titula Prvak                        | Mjesto u Top 100            |
+| Plamen niza pobjeda                                  | 3 rangirane pobjede zaredom |
+
+Predmeti iz Top 100 i plamen traju samo dok ih držiš. Ispadneš li iz Top 100 ili izgubiš rangirani
+meč, vraćaju se na zadani izgled dok ih ponovno ne zaradiš. Ono što si odabrao ostaje odabrano.
+
+## Na tlu
+
+Aura na tlu je blagi prsten oko tvojih stopala. Trag koraka ostavlja sitne čestice ondje gdje hodaš, koje nestanu u trenu. Oboje se crta ispod svakog prstena, oznake i upozorenja i nikad nije u boji tima. Ako je u tvom sustavu uključeno smanjeno kretanje, aura miruje i trag se ne crta.
+
+## Kako je nositi
+
+Otvori Opcije i odaberi **Kozmetika**. Svako mjesto navodi svoje predmete, svaki označen kao
+dostupan ili zaključan, uz ono čime se zarađuje. Tvoj izbor vrijedi odmah. Drugi igrači ga vide od
+sljedećeg predvorja kojem se pridružiš.
+
+## Kozmetika drugih igrača
+
+Drugi igrači vide tvoju kozmetiku samo ako njihova kopija ljestvice pokazuje da si je zaradio. Da
+vidiš sve u zadanom izgledu, isključi **Prikaži kozmetiku drugih igrača** u Opcijama pod
+**Kozmetika**.
+`;export{e as default};
+//# sourceMappingURL=cosmetics-DVp6tN9Q.js.map
