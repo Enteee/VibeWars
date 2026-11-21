@@ -262,6 +262,8 @@ async function yellowPixels(page, png) {
 async function play(page) {
   step = "queue for Random Arena";
   await page.getByRole("button", { name: "Find a match" }).click();
+  // The queue opens as a chip; its panel holds the button.
+  await page.getByRole("button", { name: "In queue" }).click();
   const bots = page.getByRole("button", { name: /Play against bots/ });
   step = "play against bots";
   // Click waits for the button to be enabled: it counts down first.
