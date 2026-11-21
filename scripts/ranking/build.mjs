@@ -7,8 +7,9 @@
  * Writes into the archive directory:
  * - `receipts/<YYYY-MM>.ndjson`: every kept receipt, one canonical JSON
  *   per line, sorted, in the shard of its `startedAt`'s UTC month, since
- *   relays forget. A receipt is never dropped from it, and only shards
- *   whose bytes changed are written (#3730);
+ *   relays forget. A receipt is never dropped from it, except past
+ *   `MAX_RECEIPTS_PER_KEY_DAY` (#3738), and only shards whose bytes
+ *   changed are written (#3730);
  * - `leaderboard.json`: `{asOf, engine, count, entries}`;
  * - `log.txt`: counts by reject reason, the relays reached, and the
  *   sha256 of `leaderboard.json`.
@@ -61,6 +62,15 @@ const SHARDS_DIR = "receipts";
 const SHARD_NAME = /^\d{4}-\d{2}\.ndjson$/;
 /** Over this a shard fails the run: GitHub refuses a file over 100 MB. */
 const MAX_SHARD_BYTES = 90 * 1024 * 1024;
+/**
+ * The most receipts a key is archived and rated in per UTC day of
+ * `startedAt`: about five hours of ten-minute matches, more than a player
+ * plays. Anyone can sign receipts between keys they hold, so without it one
+ * key could fill a month shard past `MAX_SHARD_BYTES` and stop every run.
+ * Per key, since that is what a flood repeats; fresh keys are not stopped
+ * (#3738).
+ */
+const MAX_RECEIPTS_PER_KEY_DAY = 30;
 
 /**
  * The first second after `day`. A receipt from then on is in the future:
@@ -230,13 +240,43 @@ export function build({ archived, events, relaysReached, relays, asOfDay }) {
     }
   }
 
-  const receipts = [...kept.values()]
+  const sorted = [...kept.values()]
     .map((receipt) => ({ receipt, line: canonical(receipt) }))
     .sort(
       (a, b) =>
         a.receipt.start.startedAt - b.receipt.start.startedAt ||
         (a.line < b.line ? -1 : a.line > b.line ? 1 : 0),
     );
+  // The cap is applied to the whole set in canonical order every run, so
+  // the order receipts arrived in never changes what is kept (#3738).
+  /** Receipts per seat key per UTC day, keyed `<day> <pubkey>`. */
+  /** @type {Map<string, number>} */
+  const perKeyDay = new Map();
+  /** Over-cap receipts per seat key that was at the cap. */
+  /** @type {Map<string, number>} */
+  const overCap = new Map();
+  const receipts = sorted.filter(({ receipt }) => {
+    // A partial is void evidence only, and merges into its whole receipt.
+    if (!validateReceipt(receipt, crypto).ok) {
+      return true;
+    }
+    const day = String(utcDay(receipt.start.startedAt));
+    const seats = receipt.start.teams.flat().map(({ pubkey }) => pubkey);
+    const full = seats.filter(
+      (pubkey) => (perKeyDay.get(`${day} ${pubkey}`) ?? 0) >= MAX_RECEIPTS_PER_KEY_DAY,
+    );
+    if (full.length > 0) {
+      for (const pubkey of full) {
+        overCap.set(pubkey, (overCap.get(pubkey) ?? 0) + 1);
+      }
+      return false;
+    }
+    for (const key of seats.map((pubkey) => `${day} ${pubkey}`)) {
+      perKeyDay.set(key, (perKeyDay.get(key) ?? 0) + 1);
+    }
+    return true;
+  });
+  const dropped = sorted.length - receipts.length;
   const ratings = rate(
     receipts.map(({ receipt }) => receipt),
     asOfDay,
@@ -261,7 +301,12 @@ export function build({ archived, events, relaysReached, relays, asOfDay }) {
     ...relays.map((relay) => `  ${relaysReached.includes(relay) ? "ok  " : "down"} ${relay}`),
     ...(relaysReached.length === 0 ? ["no relay reached: the archive is unchanged"] : []),
     `events: ${String(events.length)}`,
-    `receipts: ${String(archivedCount)} archived, ${String(added)} new, ${String(kept.size)} kept`,
+    `receipts: ${String(archivedCount)} archived, ${String(added)} new, ${String(receipts.length)} kept`,
+    `over-cap: ${String(dropped)}`,
+    ...[...overCap]
+      .sort(([a, m], [b, n]) => n - m || (a < b ? -1 : 1))
+      .slice(0, 5)
+      .map(([pubkey, n]) => `  ${pubkey}: ${String(n)}`),
     "rejected:",
     ...[...rejected]
       .sort(([a], [b]) => (a < b ? -1 : 1))

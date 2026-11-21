@@ -21,8 +21,8 @@ import { fetchRelay, run } from "./build.mjs";
 const sha256 = (bytes) => new Uint8Array(createHash("sha256").update(bytes).digest());
 const hex = (/** @type {Uint8Array} */ bytes) => Buffer.from(bytes).toString("hex");
 
-/** Four seats, each a real BIP-340 key. */
-const KEYS = Array.from({ length: 4 }, () => {
+/** Eight keys, each a real BIP-340 key; a receipt seats the first four unless told otherwise. */
+const KEYS = Array.from({ length: 8 }, () => {
   const { secretKey, publicKey } = schnorr.keygen();
   return {
     pubkey: hex(publicKey),
@@ -34,13 +34,13 @@ const KEYS = Array.from({ length: 4 }, () => {
 const DAY = 20_412;
 
 /**
- * A 2v2 receipt, team 0 winning, signed by every seat but `leavers`
+ * A 2v2 receipt of `keys` (the first four), team 0 winning, signed by every seat but `leavers`
  * and `unsigned`, and by `only` alone when given (a partial).
- * @param {{ matchId: string, leavers?: string[], only?: string, at?: number }} play
+ * @param {{ matchId: string, leavers?: string[], only?: string, at?: number, keys?: typeof KEYS }} play
  * @returns {RankedReceipt}
  */
-function receipt({ matchId, leavers = [], only, at = 0 }) {
-  const seats = KEYS.map((key) => key.pubkey);
+function receipt({ matchId, leavers = [], only, at = 0, keys = KEYS.slice(0, 4) }) {
+  const seats = keys.map((key) => key.pubkey);
   const start = {
     matchId,
     buildHash: "build",
@@ -69,12 +69,12 @@ function receipt({ matchId, leavers = [], only, at = 0 }) {
   };
   const startOf = startDigest(start, sha256);
   const resultOf = resultDigest(result, sha256);
-  const signers = KEYS.filter(
+  const signers = keys.filter(
     (key) => !leavers.includes(key.pubkey) && (only === undefined || key.pubkey === only),
   );
   return {
     start,
-    startSigs: Object.fromEntries(KEYS.map((key) => [key.pubkey, key.sign(startOf)])),
+    startSigs: Object.fromEntries(keys.map((key) => [key.pubkey, key.sign(startOf)])),
     result,
     resultSigs: Object.fromEntries(signers.map((key) => [key.pubkey, key.sign(resultOf)])),
   };
@@ -258,6 +258,46 @@ describe("the leaderboard job", () => {
       }),
     ).rejects.toThrow(/over 100: GitHub refuses/);
     expect(fs.readdirSync(dir)).toEqual([]);
+  });
+
+  it("archives and rates a key in at most 30 receipts a UTC day, whatever order they came in", async () => {
+    const flood = Array.from({ length: 40 }, (_, i) =>
+      receipt({ matchId: `f${String(i)}`, at: i }),
+    );
+    const others = KEYS.slice(4);
+    // Seats two flooders: dropped, and blamed on them alone.
+    const mixed = receipt({
+      matchId: "x",
+      at: 200,
+      keys: [...KEYS.slice(0, 2), ...others.slice(2)],
+    });
+    const honest = receipt({ matchId: "h", at: 300, keys: others });
+    // A partial is void evidence, not counted, and kept.
+    const partial = receipt({ matchId: "p", at: 400, only: KEYS[0]?.pubkey ?? "" });
+    const all = [...flood, mixed, honest, partial].map((r) => event(r));
+
+    const forward = await runOn(archiveDir(), [all, []]);
+    const backward = await runOn(archiveDir(), [[...all].reverse(), []]);
+    expect(backward.shards).toEqual(forward.shards);
+    expect(backward.leaderboard).toBe(forward.leaderboard);
+
+    const ids = linesOf(forward).map((line) => parseReceipt(line)?.start.matchId);
+    expect(ids).toEqual([...flood.slice(0, 30).map((r) => r.start.matchId), "h", "p"]);
+    const matches = new Map(
+      entriesOf(forward.leaderboard).entries.map((entry) => [entry.pubkey, entry.matches]),
+    );
+    expect(KEYS.map((key) => matches.get(key.pubkey))).toEqual([30, 30, 30, 30, 1, 1, 1, 1]);
+    expect(forward.log).toContain("over-cap: 11\n");
+    expect(forward.log).toContain(`  ${KEYS[0]?.pubkey ?? ""}: 11\n`);
+    expect(forward.log).not.toContain(`  ${others[2]?.pubkey ?? ""}:`);
+  });
+
+  it("keeps all 30 of a key's receipts in a day, and the day before's", async () => {
+    const day = Array.from({ length: 30 }, (_, i) => receipt({ matchId: `d${String(i)}`, at: i }));
+    const before = receipt({ matchId: "b", at: -86_400 });
+    const out = await runOn(archiveDir(), [[...day, before].map((r) => event(r)), []]);
+    expect(linesOf(out)).toHaveLength(31);
+    expect(out.log).toContain("over-cap: 0\n");
   });
 
   it("voids a re-round that names a signer a leaver, and rates one no winner backs", async () => {
