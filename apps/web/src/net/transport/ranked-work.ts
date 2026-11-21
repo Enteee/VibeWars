@@ -37,24 +37,25 @@ function workOf(data: unknown): string | undefined {
 }
 
 /**
- * `pubkey`'s stamp for the start `startHash`, of `WORK_BITS`: settles once
+ * `pubkey`'s stamp for the start `startHash`, of `bits` zero bits: settles once
  * the Worker posts one that holds, and the Worker goes.
  */
 export function rankedWork(
   startHash: string,
   pubkey: string,
+  bits: number = WORK_BITS,
   deps: { createWorker(): WorkWorker } = { createWorker: createWorkWorker },
 ): Promise<string> {
   return new Promise((resolve) => {
     const worker = deps.createWorker();
     worker.onmessage = (event) => {
       const work = workOf(event.data);
-      if (work === undefined || !validWork(startHash, pubkey, work, sha256, WORK_BITS)) {
+      if (work === undefined || !validWork(startHash, pubkey, work, sha256, bits)) {
         return;
       }
       worker.terminate();
       resolve(work);
     };
-    worker.postMessage({ startHash, pubkey, bits: WORK_BITS });
+    worker.postMessage({ startHash, pubkey, bits });
   });
 }
