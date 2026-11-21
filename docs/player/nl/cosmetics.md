@@ -15,10 +15,14 @@ telt. Niemand deelt ze uit: iedereen kan de ranglijst bekijken en zien wat je ve
 | Rozen rand en de titel Veteraan                        | 25 gerankte overwinningen       |
 | Sintelaura, Sintelspoor, Sintelzwaai                   | 25 gerankte overwinningen       |
 | Kepercape                                              | 25 gerankte overwinningen       |
+| Rijzend licht, Asoplossing                             | 25 gerankte overwinningen       |
 | Vorstaura, Vorstspoor, Vorstzwaai                      | 75 gerankte overwinningen       |
+| Bladerwerveling, Neveloplossing                        | 75 gerankte overwinningen       |
 | Blauwgroene rand en de titel Krijgsheer                | 200 gerankte overwinningen      |
 | Gevierendeelde cape                                    | 200 gerankte overwinningen      |
+| Bloemblaadjesregen, Scherfoplossing                    | 200 gerankte overwinningen      |
 | Sterrenlichtaura, Sterrenlichtspoor, Sterrenlichtzwaai | 500 gerankte overwinningen      |
+| Sterrenregen, Sterrenstofoplossing                     | 500 gerankte overwinningen      |
 | Orchideeën rand en de titel Kampioen                   | Een plek in de Top 100          |
 | Sterrencape                                            | Een plek in de Top 100          |
 | Zegereeksvlam                                          | 3 gerankte overwinningen op rij |
@@ -34,6 +38,10 @@ Een grondaura is een vage ring aan je voeten. Voetsporen laten kleine deeltjes a
 ## Op je wapen en cape
 
 Een wapenspoor is een dun lint achter je wapen terwijl een melee-aanval raakt, binnen een kwart seconde weer weg. Bogen, speren, toverstokken en staven krijgen er geen, en geen enkele spreuk of cast toont er ooit een. Een capepatroon legt strepen, kepers, kwartieren of sterren op je gildecape in zijn eigen randkleur, en je embleem blijft altijd bovenop, even duidelijk als op een effen cape. De capeontwerper in Opties toont je cape ontvouwd, met je patroon erop. Staat verminderde beweging aan in je systeem, dan wordt er geen wapenspoor getekend.
+
+## Terugkomen en vallen
+
+Een verschijningsstijl verzamelt kleine deeltjes aan je voeten als je verschijnt of tot leven wordt gewekt. Een doodsoplossing verstrooit ze als je valt. Elk duurt precies zo lang als het gewone terugkomen en vallen, ligt onder je lichaam en laat je omtrek, je teamring en je lijk even goed leesbaar als altijd. Staat verminderde beweging aan in je systeem, dan wordt alleen de gewone vervaging getekend.
 
 ## Ze dragen
 

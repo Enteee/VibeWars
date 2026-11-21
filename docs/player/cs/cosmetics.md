@@ -9,16 +9,21 @@ nerozdává: kdokoli si může žebříček ověřit a vidět, co jsi získal.
 
 | Předmět                                   | Získáš za                |
 | ----------------------------------------- | ------------------------ |
+| ---------------------------------------   | ------------------------ |
 | Nefritový rámeček a titul Vyzyvatel       | 5 hodnocených výher      |
 | Mechová aura, Mechová stopa, Mechový švih | 5 hodnocených výher      |
 | Pruhovaný plášť                           | 5 hodnocených výher      |
 | Růžový rámeček a titul Veterán            | 25 hodnocených výher     |
 | Žhavá aura, Žhavá stopa, Žhavý švih       | 25 hodnocených výher     |
 | Krokvicový plášť                          | 25 hodnocených výher     |
+| Stoupající světlo, Rozpad v popel         | 25 hodnocených výher     |
 | Mrazivá aura, Mrazivá stopa, Mrazivý švih | 75 hodnocených výher     |
+| Vír listí, Rozpad v mlhu                  | 75 hodnocených výher     |
 | Tyrkysový rámeček a titul Vojevůdce       | 200 hodnocených výher    |
 | Čtvrcený plášť                            | 200 hodnocených výher    |
+| Padající okvětí, Rozpad na střepy         | 200 hodnocených výher    |
 | Hvězdná aura, Hvězdná stopa, Hvězdný švih | 500 hodnocených výher    |
+| Padající hvězdy, Rozpad v hvězdný prach   | 500 hodnocených výher    |
 | Orchidejový rámeček a titul Šampion       | Místo v Top 100          |
 | Hvězdný plášť                             | Místo v Top 100          |
 | Plamen vítězné série                      | 3 hodnocené výhry v řadě |
@@ -33,6 +38,10 @@ Aura na zemi je slabý kruh u tvých nohou. Stopa kroků zanechává tam, kudy j
 ## Na zbrani a plášti
 
 Stopa zbraně je tenká stuha za tvou zbraní, když zasáhne útok na blízko, a zmizí do čtvrt sekundy. Luky, kopí, hůlky a hole žádnou nemají a žádné kouzlo ani sesílání ji nikdy neukáže. Vzor pláště nanese na tvůj plášť cechu pruhy, krokve, čtvrtiny nebo hvězdy v jeho vlastní barvě lemu a tvůj znak vždy zůstane navrchu, stejně zřetelný jako na hladkém plášti. Návrhář pláště v Možnostech ukazuje tvůj plášť rozvinutý, s tvým vzorem. Když máš v systému zapnutý omezený pohyb, žádná stopa zbraně se nekreslí.
+
+## Návrat a pád
+
+Styl příchodu shromáždí u tvých nohou drobné částečky, když se objevíš nebo jsi oživen. Rozplynutí při smrti je rozptýlí, když padneš. Obojí trvá přesně tak dlouho jako obyčejný návrat a pád, kreslí se pod tvé tělo a tvůj obrys, kruh týmu i mrtvola zůstávají stejně dobře čitelné jako vždy. Když máš v systému zapnutý omezený pohyb, kreslí se jen obyčejné vyblednutí.
 
 ## Jak ji nosit
 

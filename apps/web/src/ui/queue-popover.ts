@@ -59,6 +59,8 @@ export interface QueueStatus {
   readonly rating?: string;
   /** In the Vault, the holder named with their signet (#3232). */
   readonly detail?: string | SignedLine;
+  /** Under the count, while this player's ticket is `hardNat`: why a match may not come (#3758). */
+  readonly notice?: string;
   /** Leave Queue, or a guest's word that only the host can. */
   readonly leave: "button" | "host-only";
   /** Play against bots, for a host who may: seconds until it is enabled, 0 once it is. */
@@ -82,10 +84,12 @@ function unratedStatus(input: QueueStatusInput, now: number): QueueStatus {
   const waited = waitedLabel(now - input.since);
   if (input.kind === "random") {
     const detail = randomDetail(input.state);
+    const hardNat = input.state?.kind === "searching" && input.state.hardNat;
     return {
       title: t("queue.randomArena", { size: modeLabel(input.mode) }),
       waited,
       ...(detail === undefined ? {} : { detail }),
+      ...(hardNat ? { notice: t("queue.hardNatHint", { relay: t("options.relay") }) } : {}),
       leave: "button",
     };
   }
@@ -183,6 +187,7 @@ export function queueButton(
     const waited = h("div", "queue-window-waited");
     const rating = h("div", "queue-window-rating");
     const detail = h("div", "queue-window-detail");
+    const notice = h("p", "queue-window-notice");
     const playBots = button(t("lobby.playBots"), "primary queue-play-bots", () => {
       close();
       onPlayBots();
@@ -192,7 +197,7 @@ export function queueButton(
       close();
       onLeave();
     });
-    panel.append(title, waited, rating, playBots, detail, hostOnly, leave);
+    panel.append(title, waited, rating, playBots, detail, notice, hostOnly, leave);
     paint = () => {
       const status = queueStatus(input, Date.now());
       if (status === undefined) {
@@ -204,6 +209,8 @@ export function queueButton(
       rating.hidden = status.rating === undefined;
       paintDetail(detail, status.detail);
       detail.hidden = status.detail === undefined;
+      notice.textContent = status.notice ?? "";
+      notice.hidden = status.notice === undefined;
       playBots.hidden = status.playBots === undefined;
       if (status.playBots !== undefined) {
         const { inSeconds } = status.playBots;

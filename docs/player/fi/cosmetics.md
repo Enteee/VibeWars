@@ -16,10 +16,14 @@ ansainnut.
 | Ruusukehys ja arvonimi Veteraani             | 25 rankattua voittoa          |
 | Hiillosaura, Hiillosjälki, Hiillosisku       | 25 rankattua voittoa          |
 | Kulmaraitaviitta                             | 25 rankattua voittoa          |
+| Nouseva valo, Tuhkahaihtuminen               | 25 rankattua voittoa          |
 | Huurreaura, Huurrejälki, Huurreisku          | 75 rankattua voittoa          |
+| Lehtipyörre, Usvahaihtuminen                 | 75 rankattua voittoa          |
 | Sinivihreä kehys ja arvonimi Sotaherra       | 200 rankattua voittoa         |
 | Neljännesviitta                              | 200 rankattua voittoa         |
+| Terälehtisade, Sirpalehaihtuminen            | 200 rankattua voittoa         |
 | Tähtivaloaura, Tähtivalojälki, Tähtivaloisku | 500 rankattua voittoa         |
+| Tähtisade, Tähtipölyhaihtuminen              | 500 rankattua voittoa         |
 | Orkideakehys ja arvonimi Mestari             | Sija Top 100:ssa              |
 | Tähtiviitta                                  | Sija Top 100:ssa              |
 | Voittoputken liekki                          | 3 rankattua voittoa peräkkäin |
@@ -35,6 +39,10 @@ Maa-aura on himmeä rengas jalkojesi juuressa. Askeljälki jättää kulkemaasi 
 ## Aseessa ja viitassa
 
 Asejälki on ohut nauha aseesi perässä lähitaisteluhyökkäyksen osuessa, ja se katoaa neljännessekunnissa. Jouset, keihäät, taikasauvat ja sauvat eivät saa sitä, eikä mikään loitsu tai loitsiminen koskaan näytä sitä. Viitan kuvio lisää kiltaviittaasi raitoja, kulmaraitoja, neljänneksiä tai tähtiä viitan omalla reunusvärillä, ja tunnuksesi pysyy aina päällimmäisenä, yhtä selvänä kuin tavallisessa viitassa. Viittasuunnittelija Asetuksissa näyttää viittasi levitettynä, kuviosi päällä. Jos järjestelmässäsi on vähennetty liike päällä, asejälkeä ei piirretä.
+
+## Palaaminen ja kaatuminen
+
+Ilmestymistyyli kokoaa pieniä hiukkasia jalkojesi juureen, kun ilmestyt tai sinut herätetään henkiin. Kuoleman haihtuminen hajottaa ne, kun kaadut. Kumpikin kestää täsmälleen yhtä kauan kuin tavallinen paluu ja kaatuminen, piirretään vartalosi alle ja jättää ääriviivasi, joukkueen renkaasi ja ruumiisi yhtä helposti luettaviksi kuin aina. Jos järjestelmässäsi on vähennetty liike päällä, vain tavallinen häivytys piirretään.
 
 ## Käyttäminen
 

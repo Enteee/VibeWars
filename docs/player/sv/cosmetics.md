@@ -9,16 +9,21 @@ Ingen delar ut den: vem som helst kan kolla topplistan och se vad du har tjänat
 
 | Föremål                                         | Tjänas in med           |
 | ----------------------------------------------- | ----------------------- |
+| ----------------------------------              | ----------------------- |
 | Jaderam och titeln Utmanare                     | 5 rankade vinster       |
 | Mossaura, Mosspår, Mossving                     | 5 rankade vinster       |
 | Randig mantel                                   | 5 rankade vinster       |
 | Rosenram och titeln Veteran                     | 25 rankade vinster      |
 | Glödaura, Glödspår, Glödsving                   | 25 rankade vinster      |
 | Sparremantel                                    | 25 rankade vinster      |
+| Stigande ljus, Askupplösning                    | 25 rankade vinster      |
 | Frostaura, Frostspår, Frostsving                | 75 rankade vinster      |
+| Lövvirvel, Dimupplösning                        | 75 rankade vinster      |
 | Blågrön ram och titeln Krigsherre               | 200 rankade vinster     |
 | Kvadrerad mantel                                | 200 rankade vinster     |
+| Fallande kronblad, Skärvupplösning              | 200 rankade vinster     |
 | Stjärnljusaura, Stjärnljusspår, Stjärnljussving | 500 rankade vinster     |
+| Stjärnfall, Stjärnstoftsupplösning              | 500 rankade vinster     |
 | Orkidéram och titeln Mästare                    | En plats på Topp 100    |
 | Stjärnmantel                                    | En plats på Topp 100    |
 | Segersvitens låga                               | 3 rankade vinster i rad |
@@ -34,6 +39,10 @@ En markaura är en svag ring vid dina fötter. Fotspår lämnar små korn där d
 ## På ditt vapen och din mantel
 
 Ett vapenspår är ett tunt band bakom ditt vapen när en närstridsattack träffar, borta inom en kvarts sekund. Pilbågar, spjut, trollspön och stavar får inget, och ingen besvärjelse eller kastning visar någonsin ett. Ett mantelmönster lägger ränder, sparrar, kvarter eller stjärnor på din gillesmantel i dess egen kantfärg, och ditt emblem ligger alltid överst, lika tydligt som på en slät mantel. Manteldesignern i Alternativ visar din mantel utbredd, med ditt mönster på. Har du slagit på minskad rörelse i ditt system ritas inget vapenspår.
+
+## Att komma tillbaka och falla
+
+En ankomststil samlar små korn vid dina fötter när du dyker upp eller återupplivas. En dödsupplösning sprider dem när du faller. Var och en tar exakt lika lång tid som den vanliga återkomsten och det vanliga fallet, ritas under din kropp och lämnar din kontur, din lagring och din kropp på marken lika lätta att läsa som alltid. Har du slagit på minskad rörelse i ditt system ritas bara den vanliga uttoningen.
 
 ## Så bär du den
 

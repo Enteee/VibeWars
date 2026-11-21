@@ -199,7 +199,7 @@ Etiket ayarlıyken altında **Lonca pelerini** tasarımcısı belirir:
 istediğin pelerin ve kenar rengini seç, bir amblem çiz; bedenin her maçta
 pelerini giyer: dururken kenarında ince bir şeride katlanır, hareket
 ederken arkanda dalgalanır. Menüdeki karakterlerin de onu gösterir.
-**Pelerin yok** onu çıkarır. Bir figür pelerini oyunda göründüğü gibi gösterir. Takımının mavisine ya da rakiplerinin kırmızısına fazla yakın bir renk, çizilirken ondan biraz uzaklaştırılır, böylece hiçbir pelerin bir takıma benzemez; figür onu herkesin göreceği gibi gösterir.
+**Pelerin yok** onu çıkarır. Takımının mavisine ya da rakiplerinin kırmızısına fazla yakın bir renk, çizilirken ondan biraz uzaklaştırılır, böylece hiçbir pelerin bir takıma benzemez.
 
 Bir değişiklik, içinde olduğun lobide hemen geçerli olur.
 

@@ -15,10 +15,14 @@ dem. Ingen deler det ud: alle kan tjekke ranglisten og se, hvad du har optjent.
 | Rosa ramme og titlen Veteran                    | 25 rangerede sejre       |
 | Glødeaura, Glødespor, Glødesving                | 25 rangerede sejre       |
 | Chevronkappe                                    | 25 rangerede sejre       |
+| Stigende lys, Askeopløsning                     | 25 rangerede sejre       |
 | Frostaura, Frostspor, Frostsving                | 75 rangerede sejre       |
+| Bladhvirvel, Tågeopløsning                      | 75 rangerede sejre       |
 | Blågrøn ramme og titlen Krigsherre              | 200 rangerede sejre      |
 | Kvadreret kappe                                 | 200 rangerede sejre      |
+| Faldende kronblade, Skåropløsning               | 200 rangerede sejre      |
 | Stjernelysaura, Stjernelysspor, Stjernelyssving | 500 rangerede sejre      |
+| Stjerneskud, Stjernestøvsopløsning              | 500 rangerede sejre      |
 | Orkidéramme og titlen Mester                    | En plads i Top 100       |
 | Stjernekappe                                    | En plads i Top 100       |
 | Sejrsstimens flamme                             | 3 rangerede sejre i træk |
@@ -34,6 +38,10 @@ En jordaura er en svag ring ved dine fødder. Et fodspor efterlader små gnister
 ## På dit våben og din kappe
 
 Et våbenspor er et tyndt bånd bag dit våben, når et nærkampsangreb rammer, og det er væk inden for et kvart sekund. Buer, spyd, tryllestave og stave får intet, og ingen besværgelse eller kastning viser nogensinde et. Et kappemønster lægger striber, chevroner, kvarterer eller stjerner på din laugskappe i dens egen kantfarve, og dit emblem ligger altid øverst, lige så tydeligt som på en ensfarvet kappe. Kappedesigneren i Valg viser din kappe foldet ud, med dit mønster på. Har du slået reduceret bevægelse til i dit system, tegnes intet våbenspor.
+
+## At komme tilbage og falde
+
+En ankomststil samler små gnister ved dine fødder, når du dukker op eller bliver genoplivet. En dødsopløsning spreder dem, når du falder. Hver varer præcis lige så længe som den almindelige tilbagekomst og det almindelige fald, tegnes under din krop og lader dit omrids, din holdring og dit lig være lige så lette at aflæse som altid. Har du slået reduceret bevægelse til i dit system, tegnes kun den almindelige udtoning.
 
 ## Sådan bærer du det
 

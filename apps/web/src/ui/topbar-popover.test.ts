@@ -459,7 +459,7 @@ describe("the top bar's queue icon (#2743)", () => {
       kind: "random",
       mode: "random-arena-2v2",
       since: Date.now(),
-      state: { kind: "searching", searching: 3, teams: 3, needed: 4, waitedMs: 0 },
+      state: { kind: "searching", searching: 3, teams: 3, needed: 4, waitedMs: 0, hardNat: false },
       standing: undefined,
     });
     button.fire("click");

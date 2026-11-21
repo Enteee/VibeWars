@@ -16,10 +16,14 @@ tu as obtenu.
 | Cadre rose et le titre Vétéran                                                       | 25 victoires classées          |
 | Aura de braise, Traînée de braise, Frappe de braise                                  | 25 victoires classées          |
 | Cape à chevrons                                                                      | 25 victoires classées          |
+| Lumière ascendante, Dissolution en cendres                                           | 25 victoires classées          |
 | Aura de givre, Traînée de givre, Frappe de givre                                     | 75 victoires classées          |
+| Tourbillon de feuilles, Dissolution en brume                                         | 75 victoires classées          |
 | Cadre sarcelle et le titre Seigneur de guerre                                        | 200 victoires classées         |
 | Cape écartelée                                                                       | 200 victoires classées         |
+| Pluie de pétales, Dissolution en éclats                                              | 200 victoires classées         |
 | Aura de lumière stellaire, Traînée de lumière stellaire, Frappe de lumière stellaire | 500 victoires classées         |
+| Pluie d’étoiles, Dissolution en poussière d’étoiles                                  | 500 victoires classées         |
 | Cadre orchidée et le titre Champion                                                  | Une place dans le Top 100      |
 | Cape étoilée                                                                         | Une place dans le Top 100      |
 | Flamme de série                                                                      | 3 victoires classées d’affilée |
@@ -35,6 +39,10 @@ Une aura au sol est un anneau léger à tes pieds. Une traînée de pas laisse d
 ## Sur ton arme et ta cape
 
 Une traînée d’arme est un mince ruban derrière ton arme quand une attaque au corps à corps frappe, disparu en moins d’un quart de seconde. Les arcs, les lances, les baguettes et les bâtons n’en ont pas, et aucun sort ni aucune incantation n’en montre jamais. Un motif de cape pose des bandes, des chevrons, des quartiers ou des étoiles sur ta cape de guilde dans sa propre couleur de bordure, et ton emblème reste toujours au-dessus, aussi net que sur une cape unie. Le créateur de cape dans Options montre ta cape déployée, avec ton motif dessus. Si ton système demande des animations réduites, aucune traînée d’arme n’est dessinée.
+
+## Revenir et tomber
+
+Un style d’apparition rassemble de petites particules à tes pieds quand tu apparais ou es ressuscité. Une dissolution à la mort les disperse quand tu tombes. Chacun dure exactement aussi longtemps que le retour et la chute ordinaires, se dessine sous ton corps et laisse ta silhouette, ton anneau d’équipe et ton cadavre aussi lisibles que jamais. Si ton système demande des animations réduites, seul le fondu ordinaire est dessiné.
 
 ## Les porter
 

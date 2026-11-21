@@ -7,9 +7,11 @@
 
 import type { MessageKey } from "../i18n/index.js";
 
+import { DEATH_SECONDS, RESPAWN_SECONDS } from "../render/body-reactions.js";
+
 import { FLAME_STREAK, TIERS, TOP_RANK } from "./unlocks.js";
 
-/** The slots so far (#3577–#3579); the others come with #3580 and #3581. */
+/** The slots so far (#3577–#3580); the last comes with #3581. */
 export const COSMETIC_SLOTS = [
   "frame",
   "title",
@@ -18,6 +20,8 @@ export const COSMETIC_SLOTS = [
   "trail",
   "swing",
   "cape",
+  "spawn",
+  "dissolve",
 ] as const;
 
 export type CosmeticSlot = (typeof COSMETIC_SLOTS)[number];
@@ -53,6 +57,16 @@ interface LookBase {
   /** No cosmetic makes a sound (ADR-0056 §4). */
   readonly sound: null;
 }
+
+/** How a spawn-in style gathers at the body (#3580). */
+export const SPAWN_MOTIFS = ["light", "leaves", "petals", "stars"] as const;
+
+export type SpawnMotif = (typeof SPAWN_MOTIFS)[number];
+
+/** How a death dissolve leaves the body (#3580). */
+export const DISSOLVE_MOTIFS = ["ash", "mist", "shards", "stars"] as const;
+
+export type DissolveMotif = (typeof DISSOLVE_MOTIFS)[number];
 
 export type CosmeticLook = LookBase &
   (
@@ -95,6 +109,26 @@ export type CosmeticLook = LookBase &
         readonly kind: "cape";
         readonly pattern: CapePattern;
       }
+    | {
+        /**
+         * Motes gathering at a body as it spawns or is resurrected (#3580),
+         * over `seconds`: the default return's, which `checkCosmetic` holds it to.
+         */
+        readonly kind: "spawn";
+        readonly colour: number;
+        readonly motif: SpawnMotif;
+        /** How many motes: a higher tier is busier, not only another colour. */
+        readonly motes: number;
+        readonly seconds: number;
+      }
+    | {
+        /** Motes leaving a body as it falls (#3580), over the default fall's `seconds`. */
+        readonly kind: "dissolve";
+        readonly colour: number;
+        readonly motif: DissolveMotif;
+        readonly motes: number;
+        readonly seconds: number;
+      }
   );
 
 /** The cape patterns (#3579). */
@@ -135,6 +169,20 @@ const TRAIL = {
   ground: { radiusOfBody: 0.25, alpha: 0.35 },
   sound: null,
 } as const;
+/**
+ * A spawn-in or death style's motes (#3580): on the ground under the body,
+ * reaching at most the ground share past its rim, so its outline, team
+ * ring and death state read as they always do.
+ */
+const SPAWN = {
+  layer: "under-body",
+  motion: "flicker",
+  ground: { radiusOfBody: 0.6, alpha: 0.35 },
+  sound: null,
+  kind: "spawn",
+  seconds: RESPAWN_SECONDS,
+} as const;
+const DISSOLVE = { ...SPAWN, kind: "dissolve", seconds: DEATH_SECONDS } as const;
 
 /** A swing's ribbon (#3579): behind the weapon mark, its strength set by `cosmetic-trail.ts`. */
 const SWING = { layer: "weapon", motion: "flicker", ground: null, sound: null } as const;
@@ -164,6 +212,20 @@ const MOSS = 0x66ff33;
 const EMBER = 0xff1f5a;
 const FROST = 0x00ccff;
 const STARLIGHT = 0xf080ff;
+/**
+ * The spawn and death styles' (#3580): as light as each hue gets a hand's
+ * width from every cue, since their alpha is capped and lightness is what
+ * shows on dark ground and lava. No pale gold or ember passes: they sit on
+ * the flame's and the burning condition's hues.
+ */
+const PALE_LIGHT = 0x7fffea;
+const PALE_LEAF = 0x77ff5c;
+const BLOSSOM = 0xffb8e7;
+const LILAC = 0xe97aff;
+const ROSE_ASH = 0xffadc9;
+const PERIWINKLE = 0x7a90ff;
+const AQUAMARINE = 0x7fffd4;
+const PALE_ORCHID = 0xff8fff;
 
 export const COSMETIC_CATALOG: readonly CosmeticEntry[] = [
   {
@@ -345,6 +407,62 @@ export const COSMETIC_CATALOG: readonly CosmeticEntry[] = [
     requires: TOP,
     look: { ...CAPE, kind: "cape", pattern: "stars" },
     name: "cosmetics.item.capeStars",
+  },
+  {
+    id: "spawn-light",
+    slot: "spawn",
+    requires: TIER_2,
+    look: { ...SPAWN, colour: PALE_LIGHT, motif: "light", motes: 10 },
+    name: "cosmetics.item.spawnLight",
+  },
+  {
+    id: "spawn-leaves",
+    slot: "spawn",
+    requires: TIER_3,
+    look: { ...SPAWN, colour: PALE_LEAF, motif: "leaves", motes: 14 },
+    name: "cosmetics.item.spawnLeaves",
+  },
+  {
+    id: "spawn-petals",
+    slot: "spawn",
+    requires: TIER_4,
+    look: { ...SPAWN, colour: BLOSSOM, motif: "petals", motes: 18 },
+    name: "cosmetics.item.spawnPetals",
+  },
+  {
+    id: "spawn-stars",
+    slot: "spawn",
+    requires: TIER_5,
+    look: { ...SPAWN, colour: LILAC, motif: "stars", motes: 24 },
+    name: "cosmetics.item.spawnStars",
+  },
+  {
+    id: "dissolve-ash",
+    slot: "dissolve",
+    requires: TIER_2,
+    look: { ...DISSOLVE, colour: ROSE_ASH, motif: "ash", motes: 10 },
+    name: "cosmetics.item.dissolveAsh",
+  },
+  {
+    id: "dissolve-mist",
+    slot: "dissolve",
+    requires: TIER_3,
+    look: { ...DISSOLVE, colour: PERIWINKLE, motif: "mist", motes: 14 },
+    name: "cosmetics.item.dissolveMist",
+  },
+  {
+    id: "dissolve-shards",
+    slot: "dissolve",
+    requires: TIER_4,
+    look: { ...DISSOLVE, colour: AQUAMARINE, motif: "shards", motes: 18 },
+    name: "cosmetics.item.dissolveShards",
+  },
+  {
+    id: "dissolve-stars",
+    slot: "dissolve",
+    requires: TIER_5,
+    look: { ...DISSOLVE, colour: PALE_ORCHID, motif: "stars", motes: 24 },
+    name: "cosmetics.item.dissolveStars",
   },
   {
     id: "flame-streak",

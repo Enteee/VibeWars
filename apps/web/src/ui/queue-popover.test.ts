@@ -39,7 +39,14 @@ describe("queueStatus (#2743)", () => {
         NOW,
       );
     expect(
-      random({ kind: "searching", searching: 3, teams: 3, needed: 8, waitedMs: 65_000 }),
+      random({
+        kind: "searching",
+        searching: 3,
+        teams: 3,
+        needed: 8,
+        waitedMs: 65_000,
+        hardNat: false,
+      }),
     ).toEqual({
       title: "Random Arena 4v4",
       waited: "1:05",
@@ -53,8 +60,33 @@ describe("queueStatus (#2743)", () => {
     });
     expect(random({ kind: "forming", group: GROUP })?.detail).toBe("Match found");
     expect(random({ kind: "fell-through" })?.detail).toBe("Match fell through, searching again");
-    const first = random({ kind: "searching", searching: 0, teams: 0, needed: 2, waitedMs: 0 });
+    const first = random({
+      kind: "searching",
+      searching: 0,
+      teams: 0,
+      needed: 2,
+      waitedMs: 0,
+      hardNat: false,
+    });
     expect(first?.detail).toBeUndefined();
+  });
+
+  it("says once, under the count, that a hard NAT may block matches, iff the ticket is hard (#3758)", () => {
+    const searching = (hardNat: boolean) =>
+      queueStatus(
+        {
+          kind: "random",
+          mode: "random-arena-1v1",
+          since: NOW,
+          state: { kind: "searching", searching: 1, teams: 1, needed: 2, waitedMs: 0, hardNat },
+          standing: undefined,
+        },
+        NOW,
+      );
+    expect(searching(true)?.notice).toBe(
+      "Your network may block direct matches. A relay (TURN) in Options, or port forwarding, helps.",
+    );
+    expect(searching(false)).not.toHaveProperty("notice");
   });
 
   it("names a Team Arena's size and how many teams search, the host's to leave", () => {

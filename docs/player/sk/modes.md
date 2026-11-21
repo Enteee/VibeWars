@@ -11,6 +11,8 @@ ale nikdy Cechovú bitku, Beh s relikviou, Kráľa kopca ani Dobývanie
 bodov. Tímová aréna vylosuje jednu zo svojich máp pre každý zápas, Výstup hrdinov
 začína na svojej prvej mape a len vo Vlastnej hre vyberá hostiteľ.
 
+Dvaja hráči za prísnymi sieťami sa vo fronte nemôžu spárovať navzájom, preto front počíta len hráčov, s ktorými sa spárovať môžete, a povie vám to. Pomôže relé v **Nastavenia → relé (TURN)**.
+
 Každá mapa je určená pre niektoré veľkosti tímov a režim hrá len mapu určenú
 pre svoju veľkosť: 8v8 sa nikdy nenatlačí do arény postavenej pre 1v1.
 **Veľkosť tímu** v lište prepína len veľkosti, ktoré zobrazený režim hrá.

@@ -355,6 +355,52 @@ describe("createQueueClient", () => {
     expect(a.state).toMatchObject({ kind: "searching", searching: 2, teams: 2 });
   });
 
+  describe("behind a hard NAT, counts only who could match it (#3758)", () => {
+    const OPEN = "0".repeat(63) + "2";
+
+    it("counts itself alone while every live ticket is hard", async () => {
+      const queue = new Queue("random-arena-4v4");
+      const a = queue.join(undefined, true);
+      await queue.publish({ ticketId: EARLY, hardNat: true });
+      await queue.advance();
+
+      expect(a.state).toMatchObject({ kind: "searching", searching: 1, teams: 1, hardNat: true });
+    });
+
+    it("counts a hard ticket with an open one, and both hard ones with it", async () => {
+      const queue = new Queue("random-arena-4v4");
+      const a = queue.join(undefined, true);
+      await queue.publish({ ticketId: OPEN });
+      await queue.advance();
+      expect(a.state).toMatchObject({ kind: "searching", searching: 2, teams: 2, hardNat: true });
+
+      await queue.publish({ ticketId: EARLY, hardNat: true });
+      await queue.advance();
+      expect(a.state).toMatchObject({ kind: "searching", searching: 3, teams: 3 });
+    });
+
+    it("falls back to itself when the open ticket leaves", async () => {
+      const queue = new Queue("random-arena-4v4");
+      const a = queue.join(undefined, true);
+      await queue.publish({ ticketId: EARLY, hardNat: true });
+      await queue.publish({ ticketId: OPEN, heartbeatAt: queue.now - TICKET_TTL_MS + 2 * STEP_MS });
+      await queue.advance();
+      expect(a.state).toMatchObject({ kind: "searching", searching: 3, teams: 3 });
+
+      await queue.advance(2 * STEP_MS);
+      expect(a.state).toMatchObject({ kind: "searching", searching: 1, teams: 1 });
+    });
+
+    it("counts a hard ticket as today when its own is open", async () => {
+      const queue = new Queue("random-arena-4v4");
+      const a = queue.join();
+      await queue.publish({ ticketId: EARLY, hardNat: true });
+      await queue.advance();
+
+      expect(a.state).toMatchObject({ kind: "searching", searching: 2, teams: 2, hardNat: false });
+    });
+  });
+
   it("counts and meets only Heroes' Ascent sides at its own round (#1996)", async () => {
     const queue = new Queue("heroes-ascent", 1);
     const a = queue.join();

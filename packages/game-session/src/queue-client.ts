@@ -54,7 +54,10 @@ export interface TicketKey {
 export type QueueState =
   /**
    * `searching` players are queued, own included, of the `needed` a match
-   * takes, in `teams` tickets: a party is one (#1881).
+   * takes, in `teams` tickets: a party is one (#1881). Only players who
+   * could play with this one count: a ticket that is `hardNat` while no
+   * live one is open counts itself alone (#3758). `hardNat` is whether
+   * this player's ticket is.
    */
   | {
       readonly kind: "searching";
@@ -62,6 +65,7 @@ export type QueueState =
       readonly teams: number;
       readonly needed: number;
       readonly waitedMs: number;
+      readonly hardNat: boolean;
     }
   /** A group holds this client; it is waiting out `FORMATION_SETTLE_MS`. */
   | { readonly kind: "forming"; readonly group: FormedGroup }
@@ -153,7 +157,14 @@ function same(a: QueueState, b: QueueState): boolean {
  * queue screen shows while the client is still being made (#2090).
  */
 export function startingQueueState(mode: QueueMode): QueueState {
-  return { kind: "searching", searching: 0, teams: 0, needed: 2 * teamSizeOf(mode), waitedMs: 0 };
+  return {
+    kind: "searching",
+    searching: 0,
+    teams: 0,
+    needed: 2 * teamSizeOf(mode),
+    waitedMs: 0,
+    hardNat: false,
+  };
 }
 
 export function createQueueClient(options: QueueClientOptions): QueueClient {
@@ -259,23 +270,36 @@ export function createQueueClient(options: QueueClientOptions): QueueClient {
     return new Set(ignored.keys());
   }
 
-  /** Players and tickets live in this mode and round at `at`, own included. */
+  /**
+   * Players and tickets live in this mode and round at `at`, own included.
+   * A `hardNat` ticket only ever groups with an open one (#2090), so while
+   * this player's ticket is hard and none live is open, only its own counts.
+   */
   function searching(at: number): QueueState {
     const skip = stillIgnored(at);
-    let players = 0;
-    let teams = 0;
-    for (const ticket of tickets.values()) {
-      if (
+    const live = [...tickets.values()].filter(
+      (ticket) =>
         ticket.protocol === PROTOCOL_VERSION &&
         ticket.ascentRound === ascentRound &&
         isLive(ticket, at) &&
-        !skip.has(ticket.ticketId)
-      ) {
-        players += ticket.members.length;
-        teams += 1;
-      }
-    }
-    return { kind: "searching", searching: players, teams, needed, waitedMs: at - enteredAt };
+        !skip.has(ticket.ticketId),
+    );
+    // A follower's ticket is its leader's, and hard if the leader's is.
+    const ownId = leader ?? key.ticketId;
+    const own = live.find((ticket) => ticket.ticketId === ownId);
+    const ownHard = own?.hardNat ?? hardNat;
+    const matchable =
+      ownHard && live.every((ticket) => ticket.hardNat)
+        ? live.filter((ticket) => ticket === own)
+        : live;
+    return {
+      kind: "searching",
+      searching: matchable.reduce((players, ticket) => players + ticket.members.length, 0),
+      teams: matchable.length,
+      needed,
+      waitedMs: at - enteredAt,
+      hardNat: ownHard,
+    };
   }
 
   /** Where `groups`, formed at `at`, leave this client. */

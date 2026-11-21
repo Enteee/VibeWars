@@ -15,10 +15,14 @@ kazanırsın. Kimse onları dağıtmaz: herkes lider tablosuna bakıp ne kazand�
 | Gül çerçeve ve Kıdemli unvanı                                | 25 dereceli galibiyet         |
 | Kor aurası, Kor izi, Kor savuruşu                            | 25 dereceli galibiyet         |
 | Şevronlu pelerin                                             | 25 dereceli galibiyet         |
+| Yükselen ışık, Küle dönüşme                                  | 25 dereceli galibiyet         |
 | Ayaz aurası, Ayaz izi, Ayaz savuruşu                         | 75 dereceli galibiyet         |
+| Yaprak girdabı, Sise dönüşme                                 | 75 dereceli galibiyet         |
 | Camgöbeği çerçeve ve Savaş lordu unvanı                      | 200 dereceli galibiyet        |
 | Dörde bölünmüş pelerin                                       | 200 dereceli galibiyet        |
+| Taç yaprağı yağmuru, Kırıklara dönüşme                       | 200 dereceli galibiyet        |
 | Yıldız ışığı aurası, Yıldız ışığı izi, Yıldız ışığı savuruşu | 500 dereceli galibiyet        |
+| Yıldız yağmuru, Yıldız tozuna dönüşme                        | 500 dereceli galibiyet        |
 | Orkide çerçeve ve Şampiyon unvanı                            | İlk 100'de bir yer            |
 | Yıldızlı pelerin                                             | İlk 100'de bir yer            |
 | Galibiyet serisi alevi                                       | Üst üste 3 dereceli galibiyet |
@@ -34,6 +38,10 @@ Zemin aurası ayaklarının dibinde soluk bir halkadır. Ayak izi yürüdüğün
 ## Silahında ve pelerininde
 
 Silah izi, bir yakın dövüş saldırısı isabet ederken silahının arkasında kalan ince bir şerittir ve saniyenin dörtte biri içinde kaybolur. Yaylar, mızraklar, asalar ve değnekler iz almaz ve hiçbir büyü ya da okuma asla iz göstermez. Pelerin deseni lonca pelerinine kendi kenar renginde çizgiler, şevronlar, çeyrekler ya da yıldızlar koyar ve amblemin her zaman üstte kalır, düz bir pelerindeki kadar net. Ayarlar'daki pelerin tasarımcısı pelerinini deseninle birlikte açılmış hâlde gösterir. Sisteminde azaltılmış hareket açıksa silah izi çizilmez.
+
+## Geri dönmek ve düşmek
+
+Belirme stili, belirdiğinde ya da diriltildiğinde ayaklarının dibinde küçük parçacıklar toplar. Ölüm çözülmesi, düştüğünde onları dağıtır. Her biri sade dönüş ve düşüş kadar sürer, vücudunun altında çizilir ve dış hatlarını, takım halkanı ve cesedini her zamanki kadar kolay okunur bırakır. Sisteminde azaltılmış hareket açıksa yalnızca sade solma çizilir.
 
 ## Nasıl kullanılır
 

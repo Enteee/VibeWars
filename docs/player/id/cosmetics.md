@@ -16,10 +16,14 @@ melihat apa yang kamu dapatkan.
 | Bingkai mawar dan gelar Veteran                                  | 25 kemenangan peringkat               |
 | Aura bara, Jejak bara, Ayunan bara                               | 25 kemenangan peringkat               |
 | Jubah chevron                                                    | 25 kemenangan peringkat               |
+| Cahaya naik, Larut jadi abu                                      | 25 kemenangan peringkat               |
 | Aura embun beku, Jejak embun beku, Ayunan embun beku             | 75 kemenangan peringkat               |
+| Pusaran daun, Larut jadi kabut                                   | 75 kemenangan peringkat               |
 | Bingkai hijau toska dan gelar Panglima perang                    | 200 kemenangan peringkat              |
 | Jubah perempat                                                   | 200 kemenangan peringkat              |
+| Hujan kelopak, Larut jadi serpihan                               | 200 kemenangan peringkat              |
 | Aura cahaya bintang, Jejak cahaya bintang, Ayunan cahaya bintang | 500 kemenangan peringkat              |
+| Hujan bintang, Larut jadi debu bintang                           | 500 kemenangan peringkat              |
 | Bingkai anggrek dan gelar Juara                                  | Tempat di Top 100                     |
 | Jubah bintang                                                    | Tempat di Top 100                     |
 | Api kemenangan beruntun                                          | 3 kemenangan peringkat berturut-turut |
@@ -35,6 +39,10 @@ Aura tanah adalah cincin samar di kakimu. Jejak langkah meninggalkan butiran kec
 ## Di senjata dan jubahmu
 
 Jejak senjata adalah pita tipis di belakang senjatamu saat serangan jarak dekat mengenai sasaran, dan hilang dalam seperempat detik. Busur, tombak, tongkat sihir, dan tongkat tidak mendapatkannya, dan tidak ada mantra atau rapalan yang pernah menampilkannya. Corak jubah menaruh garis, chevron, perempat, atau bintang di jubah guild-mu dengan warna pinggirannya sendiri, dan lambangmu selalu tetap di atas, sejelas pada jubah polos. Perancang jubah di Opsi menampilkan jubahmu terbentang, dengan corakmu di atasnya. Jika sistemmu menyalakan gerakan yang dikurangi, tidak ada jejak senjata yang digambar.
+
+## Kembali dan tumbang
+
+Gaya kemunculan mengumpulkan butiran kecil di kakimu saat kamu muncul atau dihidupkan kembali. Pelarutan kematian menyebarkannya saat kamu tumbang. Masing-masing berlangsung persis selama kembali dan tumbang biasa, digambar di bawah tubuhmu, dan membuat garis tubuhmu, cincin timmu, dan jasadmu tetap mudah dibaca seperti biasa. Jika sistemmu menyalakan gerakan yang dikurangi, hanya pudar biasa yang digambar.
 
 ## Memakainya
 

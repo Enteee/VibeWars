@@ -196,7 +196,7 @@ som `Ente [VIBE]`. Med et mærke sat dukker **Laugskappe**-designeren op
 under det: vælg en hvilken som helst farve til kappe og kant, tegn et emblem, så bærer din
 krop kappen i hver kamp: den foldes til et tyndt bånd på din kant, når du
 står stille, og flagrer bag dig, når du bevæger dig. Dine figurer i
-menuen viser den også. **Ingen kappe** tager den af. En figur viser kappen, som den ser ud i spillet. En farve for tæt på dit holds blå eller dine fjenders røde drejes lidt væk fra den, når den tegnes, så ingen kappe ligner et hold; figuren viser den, som alle vil se den.
+menuen viser den også. **Ingen kappe** tager den af. En farve for tæt på dit holds blå eller dine fjenders røde drejes lidt væk fra den, når den tegnes, så ingen kappe ligner et hold.
 
 En ændring gælder med det samme for den lobby, du er i.
 

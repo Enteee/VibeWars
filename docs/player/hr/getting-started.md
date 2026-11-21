@@ -191,7 +191,7 @@ ili znamenke pokraj njega i svi je vide iza tvog imena, poput
 odaberi bilo koju boju plašta i ruba, nacrtaj amblem, i tvoje tijelo
 nosi plašt u svakom meču: skuplja se u tanku traku na tvom rubu dok
 stojiš i vijori se iza tebe dok se krećeš. Prikazuju ga i tvoji likovi u
-izborniku. **Bez plašta** ga skida. Lik prikazuje plašt onako kako izgleda u igri. Boja preblizu plavoj boji tvog tima ili crvenoj boji tvojih protivnika pri crtanju se malo odmakne od nje, da nijedan plašt ne izgleda kao tim; lik ga prikazuje onako kako će ga svi vidjeti.
+izborniku. **Bez plašta** ga skida. Boja preblizu plavoj boji tvog tima ili crvenoj boji tvojih protivnika pri crtanju se malo odmakne od nje, da nijedan plašt ne izgleda kao tim.
 
 Promjena odmah vrijedi za sobu u kojoj si.
 

@@ -15,10 +15,14 @@ Bạn nhận trang trí bằng các trận thắng xếp hạng đã được x�
 | Khung hồng và danh hiệu Lão binh                         | 25 trận thắng xếp hạng          |
 | Hào quang than hồng, Vệt than hồng, Đường chém than hồng | 25 trận thắng xếp hạng          |
 | Áo choàng chữ V                                          | 25 trận thắng xếp hạng          |
+| Ánh sáng dâng lên, Tan thành tro                         | 25 trận thắng xếp hạng          |
 | Hào quang sương giá, Vệt sương giá, Đường chém sương giá | 75 trận thắng xếp hạng          |
+| Lốc lá, Tan thành sương                                  | 75 trận thắng xếp hạng          |
 | Khung xanh mòng két và danh hiệu Lãnh chúa               | 200 trận thắng xếp hạng         |
 | Áo choàng chia tư                                        | 200 trận thắng xếp hạng         |
+| Mưa cánh hoa, Tan thành mảnh vỡ                          | 200 trận thắng xếp hạng         |
 | Hào quang ánh sao, Vệt ánh sao, Đường chém ánh sao       | 500 trận thắng xếp hạng         |
+| Mưa sao, Tan thành bụi sao                               | 500 trận thắng xếp hạng         |
 | Khung lan tím và danh hiệu Nhà vô địch                   | Một vị trí trong Top 100        |
 | Áo choàng sao                                            | Một vị trí trong Top 100        |
 | Ngọn lửa chuỗi thắng                                     | 3 trận thắng xếp hạng liên tiếp |
@@ -34,6 +38,10 @@ Hào quang mặt đất là một vòng mờ dưới chân bạn. Vệt bước 
 ## Trên vũ khí và áo choàng
 
 Vệt vũ khí là một dải lụa mảnh phía sau vũ khí của bạn khi một đòn cận chiến trúng đích, và biến mất trong vòng một phần tư giây. Cung, giáo, đũa phép và gậy phép không có vệt này, và không phép hay lần thi triển nào hiện ra vệt này. Họa tiết áo choàng đặt sọc, chữ V, ô chia tư hoặc ngôi sao lên áo choàng Bang của bạn bằng chính màu viền của nó, và huy hiệu của bạn luôn nằm trên cùng, rõ như trên một áo choàng trơn. Trình thiết kế áo choàng trong Tùy chọn cho thấy áo choàng của bạn trải ra, với họa tiết của bạn trên đó. Nếu hệ thống của bạn bật giảm chuyển động, không có vệt vũ khí nào được vẽ.
+
+## Trở lại và gục ngã
+
+Kiểu xuất hiện tụ những hạt nhỏ dưới chân bạn khi bạn xuất hiện hoặc được hồi sinh. Tan biến khi chết làm chúng tản ra khi bạn gục ngã. Mỗi hiệu ứng kéo dài đúng bằng lúc trở lại và gục ngã thông thường, được vẽ bên dưới cơ thể bạn, và giữ cho đường viền, vòng đội và thi thể của bạn vẫn dễ nhận ra như mọi khi. Nếu hệ thống của bạn bật giảm chuyển động, chỉ có hiệu ứng mờ dần thông thường được vẽ.
 
 ## Cách trang bị
 

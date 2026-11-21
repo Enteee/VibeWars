@@ -15,10 +15,14 @@ pubblica. Nessuno li regala: chiunque può controllare la classifica e vedere co
 | Cornice rosa e il titolo Veterano                                       | 25 vittorie classificate        |
 | Aura di brace, Scia di brace, Fendente di brace                         | 25 vittorie classificate        |
 | Mantello a scaglioni                                                    | 25 vittorie classificate        |
+| Luce ascendente, Dissolvenza in cenere                                  | 25 vittorie classificate        |
 | Aura di brina, Scia di brina, Fendente di brina                         | 75 vittorie classificate        |
+| Vortice di foglie, Dissolvenza in nebbia                                | 75 vittorie classificate        |
 | Cornice verde acqua e il titolo Signore della guerra                    | 200 vittorie classificate       |
 | Mantello inquartato                                                     | 200 vittorie classificate       |
+| Pioggia di petali, Dissolvenza in schegge                               | 200 vittorie classificate       |
 | Aura di luce stellare, Scia di luce stellare, Fendente di luce stellare | 500 vittorie classificate       |
+| Pioggia di stelle, Dissolvenza in polvere di stelle                     | 500 vittorie classificate       |
 | Cornice orchidea e il titolo Campione                                   | Un posto nella Top 100          |
 | Mantello stellato                                                       | Un posto nella Top 100          |
 | Fiamma della serie                                                      | 3 vittorie classificate di fila |
@@ -34,6 +38,10 @@ Un’aura al suolo è un anello tenue ai tuoi piedi. Una scia di passi lascia pi
 ## Sull’arma e sul mantello
 
 Una scia dell’arma è un nastro sottile dietro la tua arma quando un attacco in mischia colpisce, e sparisce entro un quarto di secondo. Archi, lance, bacchette e bastoni non ne hanno, e nessun incantesimo o lancio ne mostra mai una. Un motivo del mantello mette strisce, scaglioni, quarti o stelle sul tuo mantello gilda nel suo colore di bordo, e il tuo emblema resta sempre sopra, nitido come su un mantello semplice. Il designer del mantello in Opzioni mostra il tuo mantello spiegato, con sopra il tuo motivo. Se il tuo sistema chiede movimenti ridotti, nessuna scia dell’arma viene disegnata.
+
+## Tornare e cadere
+
+Uno stile di comparsa raccoglie piccole particelle ai tuoi piedi quando compari o vieni resuscitato. Una dissolvenza alla morte le disperde quando cadi. Ognuno dura esattamente quanto il ritorno e la caduta normali, è disegnato sotto il tuo corpo e lascia la tua sagoma, il tuo anello di squadra e il tuo cadavere leggibili come sempre. Se il tuo sistema chiede movimenti ridotti, viene disegnata solo la dissolvenza normale.
 
 ## Come indossarli
 

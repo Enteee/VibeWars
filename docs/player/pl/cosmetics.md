@@ -15,10 +15,14 @@ wyników. Nikt ich nie rozdaje: każdy może sprawdzić tabelę wyników i zobac
 | Różana ramka i tytuł Weteran                                 | 25 zwycięstw rankingowych       |
 | Aura żaru, Ślad żaru, Cięcie żaru                            | 25 zwycięstw rankingowych       |
 | Peleryna w krokwie                                           | 25 zwycięstw rankingowych       |
+| Wznoszące się światło, Rozpad w popiół                       | 25 zwycięstw rankingowych       |
 | Aura szronu, Ślad szronu, Cięcie szronu                      | 75 zwycięstw rankingowych       |
+| Wir liści, Rozpad w mgłę                                     | 75 zwycięstw rankingowych       |
 | Morska ramka i tytuł Watażka                                 | 200 zwycięstw rankingowych      |
 | Peleryna w ćwiartki                                          | 200 zwycięstw rankingowych      |
+| Deszcz płatków, Rozpad w odłamki                             | 200 zwycięstw rankingowych      |
 | Aura blasku gwiazd, Ślad blasku gwiazd, Cięcie blasku gwiazd | 500 zwycięstw rankingowych      |
+| Deszcz gwiazd, Rozpad w gwiezdny pył                         | 500 zwycięstw rankingowych      |
 | Storczykowa ramka i tytuł Czempion                           | Miejsce w Top 100               |
 | Peleryna w gwiazdy                                           | Miejsce w Top 100               |
 | Płomień serii zwycięstw                                      | 3 zwycięstwa rankingowe z rzędu |
@@ -34,6 +38,10 @@ Aura na ziemi to blady pierścień u twoich stóp. Ślad kroków zostawia drobne
 ## Na broni i pelerynie
 
 Ślad broni to cienka wstęga za twoją bronią, gdy trafia atak wręcz, znikająca w ćwierć sekundy. Łuki, włócznie, różdżki i kostury go nie mają, a żadne zaklęcie ani rzucanie nigdy go nie pokazuje. Wzór peleryny kładzie na twojej pelerynie gildii pasy, krokwie, ćwiartki lub gwiazdy w jej własnym kolorze obszycia, a twój herb zawsze zostaje na wierzchu, tak wyraźny jak na gładkiej pelerynie. Projektant peleryny w Opcjach pokazuje twoją pelerynę rozwiniętą, z twoim wzorem. Jeśli w systemie masz włączone ograniczenie ruchu, ślad broni się nie rysuje.
+
+## Powrót i upadek
+
+Styl pojawienia się zbiera drobne drobinki u twoich stóp, gdy się pojawiasz lub zostajesz wskrzeszony. Rozpad po śmierci rozprasza je, gdy padasz. Każdy trwa dokładnie tyle co zwykły powrót i upadek, rysuje się pod twoim ciałem i zostawia twój zarys, pierścień drużyny i zwłoki tak samo czytelne jak zawsze. Jeśli w systemie masz włączone ograniczenie ruchu, rysuje się tylko zwykłe zanikanie.
 
 ## Jak je nosić
 

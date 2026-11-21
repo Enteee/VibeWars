@@ -15,10 +15,14 @@ zählt. Niemand verteilt sie: Jeder kann die Rangliste prüfen und sehen, was du
 | Rosenrahmen und der Titel Veteran                       | 25 gewertete Siege         |
 | Glutaura, Glutspur, Glutschwung                         | 25 gewertete Siege         |
 | Sparrenumhang                                           | 25 gewertete Siege         |
+| Aufsteigendes Licht, Ascheauflösung                     | 25 gewertete Siege         |
 | Frostaura, Frostspur, Frostschwung                      | 75 gewertete Siege         |
+| Blätterwirbel, Nebelauflösung                           | 75 gewertete Siege         |
 | Petrolrahmen und der Titel Kriegsherr                   | 200 gewertete Siege        |
 | Geviertelter Umhang                                     | 200 gewertete Siege        |
+| Blütenregen, Splitterauflösung                          | 200 gewertete Siege        |
 | Sternenlichtaura, Sternenlichtspur, Sternenlichtschwung | 500 gewertete Siege        |
+| Sternenfall, Sternenstaubauflösung                      | 500 gewertete Siege        |
 | Orchideenrahmen und der Titel Champion                  | Ein Platz in den Top 100   |
 | Sternenumhang                                           | Ein Platz in den Top 100   |
 | Siegesserien-Flamme                                     | 3 gewertete Siege in Folge |
@@ -34,6 +38,10 @@ Eine Bodenaura ist ein schwacher Ring zu deinen Füßen. Eine Fußspur hinterlä
 ## An Waffe und Umhang
 
 Eine Waffenspur ist ein dünnes Band hinter deiner Waffe, während ein Nahkampfangriff trifft, und nach einer Viertelsekunde verschwunden. Bögen, Speere, Zauberstäbe und Stäbe bekommen keine, und kein Zauber und kein Wirken zeigt je eine. Ein Umhangmuster legt Streifen, Sparren, Viertel oder Sterne in seiner eigenen Saumfarbe auf deinen Gildenumhang, und dein Emblem bleibt immer obenauf, so klar wie auf einem schlichten Umhang. Der Umhang-Designer in Optionen zeigt deinen Umhang entfaltet, mit deinem Muster darauf. Ist in deinem System reduzierte Bewegung eingeschaltet, wird keine Waffenspur gezeichnet.
+
+## Zurückkehren und fallen
+
+Ein Erscheinungsstil sammelt kleine Funken zu deinen Füßen, wenn du erscheinst oder wiederbelebt wirst. Eine Todesauflösung verstreut sie, wenn du fällst. Beide dauern genau so lange wie die schlichte Rückkehr und der schlichte Fall, liegen unter deinem Körper und lassen deinen Umriss, deinen Teamring und deine Leiche so gut lesbar wie immer. Ist in deinem System reduzierte Bewegung eingeschaltet, wird nur das schlichte Ausblenden gezeichnet.
 
 ## Wie du sie trägst
 

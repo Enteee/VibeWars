@@ -15,10 +15,14 @@ ne dijeli: svatko može provjeriti ljestvicu i vidjeti što si zaradio.
 | Ružičasti okvir i titula Veteran                                                 | 25 rangiranih pobjeda       |
 | Aura žeravice, Trag žeravice, Zamah žeravice                                     | 25 rangiranih pobjeda       |
 | Plašt sa ševronima                                                               | 25 rangiranih pobjeda       |
+| Uzlazna svjetlost, Rasplinuće u pepeo                                            | 25 rangiranih pobjeda       |
 | Aura mraza, Trag mraza, Zamah mraza                                              | 75 rangiranih pobjeda       |
+| Vrtlog lišća, Rasplinuće u maglu                                                 | 75 rangiranih pobjeda       |
 | Tirkizni okvir i titula Vojskovođa                                               | 200 rangiranih pobjeda      |
 | Plašt na četvrtine                                                               | 200 rangiranih pobjeda      |
+| Kiša latica, Rasplinuće u krhotine                                               | 200 rangiranih pobjeda      |
 | Aura zvjezdane svjetlosti, Trag zvjezdane svjetlosti, Zamah zvjezdane svjetlosti | 500 rangiranih pobjeda      |
+| Kiša zvijezda, Rasplinuće u zvjezdanu prašinu                                    | 500 rangiranih pobjeda      |
 | Okvir orhideje i titula Prvak                                                    | Mjesto u Top 100            |
 | Plašt sa zvijezdama                                                              | Mjesto u Top 100            |
 | Plamen niza pobjeda                                                              | 3 rangirane pobjede zaredom |
@@ -33,6 +37,10 @@ Aura na tlu je blagi prsten oko tvojih stopala. Trag koraka ostavlja sitne čest
 ## Na oružju i plaštu
 
 Trag oružja je tanka vrpca iza tvog oružja dok napad izbliza pogađa, a nestaje unutar četvrt sekunde. Lukovi, koplja, štapići i palice ga nemaju, i nijedna čarolija ni bacanje ga nikad ne pokazuje. Uzorak plašta stavlja pruge, ševrone, četvrtine ili zvijezde na tvoj plašt ceha u njegovoj vlastitoj boji obruba, a tvoj amblem uvijek ostaje na vrhu, jasan kao na običnom plaštu. Dizajner plašta u Opcijama prikazuje tvoj plašt razvijen, s tvojim uzorkom na njemu. Ako je u tvom sustavu uključeno smanjeno kretanje, trag oružja se ne crta.
+
+## Povratak i pad
+
+Stil pojavljivanja skuplja sitne čestice oko tvojih stopala kad se pojaviš ili budeš uskrsnut. Rasplinuće pri smrti raspršuje ih kad padneš. Svako traje točno onoliko koliko i običan povratak i pad, crta se ispod tvog tijela i ostavlja tvoj obris, prsten tima i leš jednako lakima za čitanje kao i uvijek. Ako je u tvom sustavu uključeno smanjeno kretanje, crta se samo obično blijeđenje.
 
 ## Kako je nositi
 

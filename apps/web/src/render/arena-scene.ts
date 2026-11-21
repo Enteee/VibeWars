@@ -335,6 +335,13 @@ import { lightingOn } from "./lighting-preference.js";
 import { passEnd, passStart } from "./pass-timing.js";
 import { FootstepTrails, auraOf, paintAura, paintMotes } from "./cosmetic-ground.js";
 import { swingRibbon } from "./cosmetic-trail.js";
+import {
+  dissolveStyleOf,
+  fallSeconds,
+  paintStyle,
+  returnSeconds,
+  spawnStyleOf,
+} from "./cosmetic-reactions.js";
 import { LIGHT_MARK_ART, lightMarkKey } from "./light-mark.js";
 import { SWITCH_MARK_ART, leverThrown, switchMarkKey } from "./switch-mark.js";
 import { paintArrival, paintTeleportEntry, paintTeleportExit } from "./teleport-mark.js";
@@ -2629,7 +2636,7 @@ export class ArenaScene extends Phaser.Scene {
         radius:
           back === undefined || this.reducedMotion
             ? actor.radius
-            : actor.radius * respawnScale(back.ageSeconds),
+            : actor.radius * respawnScale(back.ageSeconds, returnSeconds(actor)),
       };
     });
   }
@@ -2650,10 +2657,15 @@ export class ArenaScene extends Phaser.Scene {
       const back = this.bodyRespawns.find((r) => r.id === actor.id);
       if (back !== undefined) {
         const colour = teamColour(actor.team);
-        const ring = respawnRing(back.ageSeconds);
+        const ring = respawnRing(back.ageSeconds, returnSeconds(actor));
         band.marks.lineStyle(2, colour, ring.alpha);
         band.marks.strokeCircle(x, y, ring.radius);
-        if (!this.reducedMotion && back.ageSeconds < RESPAWN_COLUMN_SECONDS) {
+        // The column is the default style: a spawn style draws its own motes instead (#3580).
+        if (
+          !this.reducedMotion &&
+          spawnStyleOf(actor) === undefined &&
+          back.ageSeconds < RESPAWN_COLUMN_SECONDS
+        ) {
           band.marks.lineStyle(3, colour, respawnColumnAlpha(back.ageSeconds));
           band.marks.lineBetween(x, y, x, y - RESPAWN_COLUMN_HEIGHT);
         }
@@ -2673,7 +2685,7 @@ export class ArenaScene extends Phaser.Scene {
   ): void {
     const { body: g, marks } = band;
     const { x, y } = actor.position;
-    const p = deathProgress(death.ageSeconds);
+    const p = deathProgress(death.ageSeconds, fallSeconds(actor));
     const drained = mixColour(this.lit(teamColour(actor.team), actor), DEAD_COLOUR, p);
     if (actor.creatureLook === undefined) {
       g.fillStyle(drained, 1 - p);
@@ -2684,7 +2696,8 @@ export class ArenaScene extends Phaser.Scene {
     }
     const ground = arenaPalette(this.snapshot.structure).floor ?? 0x6b6f76;
     const dust = mixColour(ground, 0xffffff, 0.35);
-    if (death.ageSeconds >= DEATH_DUST_SECONDS) {
+    // The dust is the default style: a death dissolve draws its own motes instead (#3580).
+    if (death.ageSeconds >= DEATH_DUST_SECONDS || dissolveStyleOf(actor) !== undefined) {
       return;
     }
     for (let i = 0; i < DUST_SPECKS; i += 1) {
@@ -2710,7 +2723,7 @@ export class ArenaScene extends Phaser.Scene {
         this.drawFalling(band, actor, death);
       }
       // The corpse ring comes up as the fall ends.
-      const settled = death === undefined ? 1 : deathProgress(death.ageSeconds);
+      const settled = death === undefined ? 1 : deathProgress(death.ageSeconds, fallSeconds(actor));
       // A corpse stays visible but obviously inert: hollow, grey, no bars;
       // darker once a skill has exploited it (#466).
       const colour = actor.exploited ? EXPLOITED_CORPSE_COLOUR : DEAD_COLOUR;
@@ -5179,6 +5192,7 @@ export class ArenaScene extends Phaser.Scene {
       paintMotes(this.cosmeticPainterOf(mote.layer), [mote]);
     }
     for (const actor of this.drawnActors) {
+      this.drawReactionStyle(actor);
       const look = auraOf(actor);
       if (look !== undefined) {
         const { x, y } = actor.position;
@@ -5198,6 +5212,31 @@ export class ArenaScene extends Phaser.Scene {
     for (const { graphics } of this.cosmeticGraphics.values()) {
       cullToView(graphics, view);
     }
+  }
+
+  /** `actor`'s spawn-in style while it comes back, or its death dissolve while it falls (#3580). */
+  private drawReactionStyle(actor: RenderableActor): void {
+    const style = actor.dead ? dissolveStyleOf(actor) : spawnStyleOf(actor);
+    if (style === undefined) {
+      return;
+    }
+    const reaction = (actor.dead ? this.bodyDeaths : this.bodyRespawns).find(
+      (each) => each.id === actor.id,
+    );
+    if (reaction === undefined) {
+      return;
+    }
+    const { x, y } = actor.position;
+    paintStyle(
+      this.cosmeticPainterOf(actor.layer),
+      style,
+      x,
+      y,
+      actor.radius,
+      reaction.ageSeconds,
+      cuePhase(actor.id),
+      this.reducedMotion,
+    );
   }
 
   /** What paints `layer`'s ground cosmetics, made the first time one is drawn there. */

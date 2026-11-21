@@ -202,7 +202,7 @@ uma tag definida, o criador de **Capa da guilda** aparece embaixo: escolha
 a cor que quiser para a capa e a barra, desenhe um emblema, e seu corpo usa a capa em toda
 partida: ela se dobra em uma faixa fina na borda quando você para e
 esvoaça atrás de você quando anda. Seus personagens no menu também a
-mostram. **Sem capa** a remove. Uma figura mostra a capa como ela aparece no jogo. Uma cor perto demais do azul do seu time ou do vermelho dos seus inimigos é desviada um pouco dele ao ser desenhada, para que nenhuma capa pareça um time; a figura a mostra como todos vão vê-la.
+mostram. **Sem capa** a remove. Uma cor perto demais do azul do seu time ou do vermelho dos seus inimigos é desviada um pouco dele ao ser desenhada, para que nenhuma capa pareça um time.
 
 Uma mudança vale na hora para a sala em que você está.
 

@@ -15,10 +15,14 @@ Nobody hands them out: anyone can check the leaderboard and see what you earned.
 | Rose frame and the Veteran title                    | 25 ranked wins         |
 | Ember aura, Ember trail and Ember swing             | 25 ranked wins         |
 | Chevron cape                                        | 25 ranked wins         |
+| Rising light and Ash dissolve                       | 25 ranked wins         |
 | Frost aura, Frost trail and Frost swing             | 75 ranked wins         |
+| Leaf swirl and Mist dissolve                        | 75 ranked wins         |
 | Teal frame and the Warlord title                    | 200 ranked wins        |
 | Quartered cape                                      | 200 ranked wins        |
+| Petal fall and Shard dissolve                       | 200 ranked wins        |
 | Starlight aura, Starlight trail and Starlight swing | 500 ranked wins        |
+| Starfall and Stardust dissolve                      | 500 ranked wins        |
 | Orchid frame and the Champion title                 | A place in the Top 100 |
 | Starred cape                                        | A place in the Top 100 |
 | Win-streak flame                                    | 3 ranked wins in a row |
@@ -34,6 +38,10 @@ A ground aura is a faint ring at your feet. A footstep trail leaves small motes 
 ## On your weapon and cape
 
 A weapon trail is a thin ribbon behind your weapon as a melee attack strikes, gone within a quarter of a second. Bows, spears, wands and staves get none, and no spell or cast ever shows one. A cape pattern lays stripes, chevrons, quarters or stars on your guild cape in its own trim colour, and your emblem always stays on top, as clear as on a plain cape. The cape designer in Options shows your cape unfurled, with your pattern on it. With reduced motion turned on in your system, no weapon trail is drawn.
+
+## Coming back and falling
+
+A spawn-in style gathers small motes at your feet as you spawn or are resurrected. A death dissolve scatters them as you fall. Each takes exactly as long as the plain return and fall, lies under your body, and leaves your outline, team ring and corpse as easy to read as ever. With reduced motion turned on in your system, only the plain fade is drawn.
 
 ## Wearing them
 
