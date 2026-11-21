@@ -266,8 +266,8 @@ async function play(page) {
   await page.getByRole("button", { name: "In queue" }).click();
   const bots = page.getByRole("button", { name: /Play against bots/ });
   step = "play against bots";
-  // Click waits for the button to be enabled: it counts down first.
-  await bots.click({ timeout: 120_000 });
+  // The button appears after a few minutes of queue, then counts down.
+  await bots.click({ timeout: 300_000 });
   await page.locator(".hud-bar-health").waitFor({ timeout: 90_000 });
 }
 
