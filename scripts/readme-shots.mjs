@@ -10,11 +10,11 @@
  *                        its attributes spent and a skill's tooltip open
  *   readme-training.png  the Training Ground, a Fireball just landed on
  *                        a dummy of the Armor ladder
- *   readme-match.png     a hosted 4v4 lobby filled with bots, about ten
+ *   readme-match.png     a hosted 8v8 lobby filled with bots, about ten
  *                        seconds into the fight, a step in, with the HUD
  *   readme-map.png       the same match a few seconds later, out at Wide,
  *                        on a frame with no refusal text over the arena
- *   readme-heights.png   a second 4v4 on another map, at Default, the hero
+ *   readme-heights.png   a second 8v8 on another map, at Default, the hero
  *                        walked to a place with two layers on screen
  *
  * Both match maps are 2.5D: `MAP` shows a raised structure and a lit
@@ -50,8 +50,8 @@ const { values: options } = parseArgs({ options: { url: { type: "string" } } });
  */
 const BUILD_CODE = "OgVFoMm8lmMgufXOyleRGFB";
 const NAME = "Aria Stormveil";
-/** The other seven: three beside you, four against; the host picks what they play (#1454). */
-const BOTS = { 1: 3, 2: 4 };
+/** The other fifteen: seven beside you, eight against; the host picks what they play (#1454). */
+const BOTS = { 1: 7, 2: 8 };
 /** The arena both match shots are on; it fills the frame at Wide. */
 const MAP = "wardens-gallery";
 /**
@@ -148,11 +148,7 @@ async function editorAndTraining(page, dir) {
   await page.keyboard.press("Escape");
 
   step = "editor tooltip";
-  await page
-    .locator(".build-bar, .editor-bar, main")
-    .getByText("Fireball", { exact: true })
-    .first()
-    .hover();
+  await page.getByText("Fireball", { exact: true }).locator("visible=true").first().hover();
   await page.locator(".skill-tip").first().waitFor();
   await sleep(500);
   await page.screenshot({ path: path.join(dir, "readme-editor.png") });
@@ -272,7 +268,7 @@ async function yellowPixels(page, png) {
 }
 
 /**
- * Host a 4v4 lobby on `map`, fill it with bots and start the match.
+ * Host a 8v8 lobby on `map`, fill it with bots and start the match.
  *
  * @param {import("@playwright/test").Page} page
  * @param {string} map
@@ -281,12 +277,11 @@ async function host(page, map) {
   step = "host a lobby";
   await openRail(page, "Hosted Game");
   await page.locator(".lobby-panel").waitFor();
-  step = "pick 4v4";
+  step = "pick 8v8";
   const stepper = page.locator(".mode-rail").getByRole("group", { name: "Team size" });
   const size = stepper.locator(".mode-rail-size-value");
-  for (let press = 0; press < 3 && (await size.textContent()) !== "4v4"; press += 1) {
-    const now = Number.parseInt((await size.textContent()) ?? "", 10);
-    await stepper.getByRole("button", { name: now > 4 ? "Smaller team" : "Larger team" }).click();
+  for (let press = 0; press < 8 && (await size.textContent()) !== "8v8"; press += 1) {
+    await stepper.getByRole("button", { name: "Larger team" }).click();
     await sleep(300);
   }
   step = "pick the map";
