@@ -48,10 +48,8 @@ function slotPicker(store: CosmeticsStore, slot: CosmeticSlot): HTMLElement {
     detail: string | undefined,
     locked: boolean,
   ) => {
-    const button = h("button", "cosmetics-item");
-    if (!(button instanceof HTMLButtonElement)) {
-      return button;
-    }
+    const button = document.createElement("button");
+    button.className = "cosmetics-item";
     button.type = "button";
     button.dataset.item = id ?? "none";
     button.setAttribute("aria-pressed", String(id === picked));
