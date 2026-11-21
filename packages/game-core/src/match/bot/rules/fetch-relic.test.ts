@@ -170,6 +170,53 @@ describe("fetch-relic: Relic Run bots fetch their relic and return the foe's (#2
     }
   });
 
+  describe("a foe behind it on the way (#3749)", () => {
+    // "other" escorts right to the altar; the foe 250 behind it, in spell range.
+    const scene = () =>
+      match([
+        body("near", 0, vec2(150, 400), { behaviour: BOT }),
+        body("other", 0, vec2(500, 400), { behaviour: BOT }),
+        body("foe", 1, vec2(250, 400)),
+      ]);
+
+    it("keeps escorting past one that leaves its team be", () => {
+      expect(askBot(scene(), "other", BOTH_HOME).moveTo).toEqual(ALTAR);
+    });
+
+    it("fights one that targets a teammate", () => {
+      const sim = scene();
+      sim.setTarget("foe", "near");
+      expect(askBot(sim, "other", BOTH_HOME).moveTo).not.toEqual(ALTAR);
+    });
+
+    it("fights one carrying a relic", () => {
+      const carrying = running(
+        { team: 0, place: AT_SPAWN },
+        { team: 1, place: { kind: "carried", carrierId: "foe" } },
+      );
+      expect(askBot(scene(), "other", carrying).moveTo).not.toEqual(ALTAR);
+    });
+
+    it("fights one ahead of it, toward the altar", () => {
+      const sim = match([
+        body("near", 0, vec2(150, 400), { behaviour: BOT }),
+        body("other", 0, vec2(500, 400), { behaviour: BOT }),
+        body("foe", 1, vec2(650, 400)),
+      ]);
+      expect(askBot(sim, "other", BOTH_HOME).attackTargetId).toBe("foe");
+    });
+
+    it("still fights when one is behind and another ahead", () => {
+      const sim = match([
+        body("near", 0, vec2(150, 400), { behaviour: BOT }),
+        body("other", 0, vec2(500, 400), { behaviour: BOT }),
+        body("foe", 1, vec2(250, 400)),
+        body("ahead", 1, vec2(650, 400)),
+      ]);
+      expect(askBot(sim, "other", BOTH_HOME).attackTargetId).toBeDefined();
+    });
+  });
+
   it("does nothing outside Relic Run", () => {
     const sim = match([body("bot", 0, vec2(300, 400), { behaviour: BOT }), far()]);
     const intent = askBot(sim, "bot", NO_OBJECTIVES);
