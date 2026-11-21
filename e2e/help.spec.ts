@@ -1,5 +1,6 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
+import { LANGUAGES } from "../apps/web/src/i18n/languages.js";
 import { lobbyWindow, openRail } from "./helpers/menu.js";
 import { OVERLAY_VIEWPORTS, clickTopbarIcon, expectCloseAtTopRight } from "./helpers/overlay.js";
 import { startSoloMatch } from "./helpers/peers.js";
@@ -184,3 +185,31 @@ test("Help's foot names the release and the build (#2798)", async ({ page }) => 
   await clickTopbarIcon(page, ".topbar-help");
   await expect(page.locator(".help-version")).toHaveText(/^VibeWars dev · build [\w.-]{1,8}$/);
 });
+
+for (const { code } of LANGUAGES) {
+  test.describe(`Help in ${code} at 360 px (#3733)`, () => {
+    test.use({ locale: code, viewport: { width: 360, height: 740 } });
+
+    test("no page scrolls sideways", async ({ page }) => {
+      await page.goto("./");
+      await page.locator(".topbar-help").click();
+      const help = page.getByRole("dialog");
+      const pane = help.locator(".help-page");
+      const picker = help.locator(".help-picker");
+      for (const id of await picker
+        .locator("option")
+        .evaluateAll((options) => options.map((option) => (option as HTMLOptionElement).value))) {
+        await picker.selectOption(id);
+        await expect(pane).toHaveAttribute("data-page", id);
+        const { scrollWidth, clientWidth } = await pane.evaluate((node) => ({
+          scrollWidth: node.scrollWidth,
+          clientWidth: node.clientWidth,
+        }));
+        expect(
+          scrollWidth,
+          `${id} is ${String(scrollWidth)} px in ${String(clientWidth)}`,
+        ).toBeLessThanOrEqual(clientWidth + 1);
+      }
+    });
+  });
+}

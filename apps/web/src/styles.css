@@ -3847,6 +3847,12 @@ body:has(> .splash) #menu-background::after {
   background: rgb(255 255 255 / 6%);
 }
 
+/* A table wider than the pane scrolls in this box, not the page (#3733). */
+.help-page .doc-table {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
 .help-page table {
   border-collapse: collapse;
 }
@@ -3855,6 +3861,7 @@ body:has(> .splash) #menu-background::after {
 .help-page td {
   padding: 0.3rem 0.6rem;
   text-align: start;
+  overflow-wrap: break-word;
   border: 1px solid var(--line);
 }
 

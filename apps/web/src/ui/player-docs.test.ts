@@ -186,6 +186,7 @@ describe("renderPlayerDoc (#1257)", () => {
       "ol",
       "li",
       "li",
+      "div",
       "table",
       "thead",
       "tr",
@@ -199,6 +200,16 @@ describe("renderPlayerDoc (#1257)", () => {
       "code",
     ]);
     expect(textOf(nodes)).toContain("x < y");
+  });
+
+  it("puts a table in its own scroll box (#3733)", () => {
+    const [box] = renderPlayerDoc("| a | b |\n|---|---|\n| 1 | 2 |\n", TARGETS);
+    expect(box).toMatchObject({ tag: "div", attrs: { class: "doc-table" } });
+    expect(
+      box?.kind === "element"
+        ? box.children.map((node) => node.kind === "element" && node.tag)
+        : [],
+    ).toEqual(["table"]);
   });
 
   it("shows inline code and entities literally, never escaped twice", () => {
@@ -324,7 +335,9 @@ describe("renderPlayerDoc (#1257)", () => {
     );
     const classes = new Set(elements(nodes).flatMap((node) => node.attrs.class ?? []));
     expect(
-      [...classes].every((name) => ["doc-icon", "doc-chip", "doc-figure"].includes(name)),
+      [...classes].every((name) =>
+        ["doc-icon", "doc-chip", "doc-figure", "doc-table"].includes(name),
+      ),
     ).toBe(true);
     expect(
       elements(nodes).filter((node) => node.tag === "span" && node.attrs.class !== "doc-chip"),
