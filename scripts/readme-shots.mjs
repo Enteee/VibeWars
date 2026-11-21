@@ -10,17 +10,14 @@
  *                        its attributes spent and a skill's tooltip open
  *   readme-training.png  the Training Ground, a Fireball just landed on
  *                        a dummy of the Armor ladder
- *   readme-match.png     a hosted 4v4 lobby, bots in every other slot, about ten
- *                        seconds into the fight, a step in, with the HUD
+ *   readme-match.png     a Random Arena match against bots, about ten seconds
+ *                        into the fight, a step in, with the HUD
  *   readme-map.png       the same match a few seconds later, out at Wide,
  *                        on a frame with no refusal text over the arena
- *   readme-heights.png   a second 4v4 on another map, at Default, the hero
- *                        walked to a place with two layers on screen
  *
- * Both match maps are 2.5D: `MAP` shows a raised structure and a lit
- * element round the fight, `HEIGHTS` a path under a bridge or wall-walk.
- * The shots are taken into a temporary directory and only moved into
- * docs/media/ once all five exist: a failed run leaves the old set. A step
+ * The map is the queue's pick, so the caption in the README names what the
+ * run showed. The shots are taken into a temporary directory and only moved into
+ * docs/media/ once all four exist: a failed run leaves the old set. A step
  * that cannot find what it looks for fails the run and says which step.
  * The bots fight at random, so the match pictures change between runs.
  *
@@ -50,15 +47,6 @@ const { values: options } = parseArgs({ options: { url: { type: "string" } } });
  */
 const BUILD_CODE = "OgVFoMm8lmMgufXOyleRGFB";
 const NAME = "Aria Stormveil";
-/** The arena both match shots are on; it fills the frame at Wide. */
-const MAP = "ashen-courtyard";
-/**
- * The second map, and the world point the hero walks to on it: where two
- * layers are on screen at once at Default.
- */
-const HEIGHTS = { map: "broken-tower", at: { x: 2370, y: 1900 } };
-/** How close to `HEIGHTS.at` the camera must be for the shot, world units. */
-const CLOSE_ENOUGH = 60;
 
 /** What the run is doing, for the error a failed step throws. */
 let step = "start";
@@ -169,7 +157,7 @@ async function editorAndTraining(page, dir) {
   await page.keyboard.press("KeyC");
   await page.keyboard.press("KeyQ");
   // Fireball's cast and flight, and its burst on the dummy.
-  await sleep(2000);
+  await sleep(1200);
   await page.screenshot({ path: path.join(dir, "readme-training.png") });
 
   step = "save the character";
@@ -266,31 +254,17 @@ async function yellowPixels(page, png) {
 }
 
 /**
- * Host a 4v4 lobby on `map` (the host fills the other slots with bots) and start the match.
+ * Queue for Random Arena with the saved character and, once the queue
+ * offers it, play against bots. The card was chosen in `editorAndTraining`.
  *
  * @param {import("@playwright/test").Page} page
- * @param {string} map
  */
-async function host(page, map) {
-  step = "host a lobby";
-  await openRail(page, "Hosted Game");
-  await page.locator(".lobby-panel").waitFor();
-  step = "pick 4v4";
-  const stepper = page.locator(".mode-rail").getByRole("group", { name: "Team size" });
-  const size = stepper.locator(".mode-rail-size-value");
-  for (let press = 0; press < 3 && (await size.textContent()) !== "4v4"; press += 1) {
-    const now = Number.parseInt((await size.textContent()) ?? "", 10);
-    await stepper.getByRole("button", { name: now > 4 ? "Smaller team" : "Larger team" }).click();
-    await sleep(300);
-  }
-  step = "pick the map";
-  await page.locator(".lobby-map select").selectOption(map);
-  step = "join team 1";
-  await page.getByRole("button", { name: "join team 1" }).click();
-  step = "start the match";
-  await page.getByRole("button", { name: "Ready", exact: true }).click();
-  await page.getByRole("button", { name: "start match" }).click();
-  // A 4v4 starts straight from the lobby; the long wait covers the build.
+async function play(page) {
+  step = "queue for Random Arena";
+  const bots = page.getByRole("button", { name: /Play against bots/ });
+  step = "play against bots";
+  // Click waits for the button to be enabled: it counts down first.
+  await bots.click({ timeout: 120_000 });
   await page.locator(".hud-bar-health").waitFor({ timeout: 90_000 });
 }
 
@@ -317,13 +291,13 @@ async function quietShot(page) {
 }
 
 /**
- * Play the match on `MAP` and shoot it twice.
+ * Play a Random Arena match and shoot it twice.
  *
  * @param {import("@playwright/test").Page} page
  * @param {string} dir
  */
 async function match(page, dir) {
-  await host(page, MAP);
+  await play(page);
 
   step = "zoom in";
   // A step in, so the hero shows the fight rather than the floor round it.
@@ -348,61 +322,6 @@ async function match(page, dir) {
   step = "zoom out";
   await zoomTo(page, "Wide", 120);
   fs.writeFileSync(path.join(dir, "readme-map.png"), await quietShot(page));
-}
-
-/**
- * The world point at the canvas centre, from the stage's `data-camera`.
- *
- * @param {import("@playwright/test").Page} page
- * @returns {Promise<{ x: number, y: number }>}
- */
-async function camera(page) {
-  const [x = 0, y = 0] = String(await page.locator("#viewport").getAttribute("data-camera"))
-    .split(",")
-    .map(Number);
-  return { x, y };
-}
-
-/**
- * Play a match on `HEIGHTS.map`, walk the hero to `HEIGHTS.at` by left
- * clicks toward it, and shoot it at Default. The follow camera centres on
- * the hero, so the camera standing there means the hero does.
- *
- * @param {import("@playwright/test").Page} page
- * @param {string} dir
- */
-async function heights(page, dir) {
-  await host(page, HEIGHTS.map);
-  step = "zoom to Default";
-  await zoomTo(page, "Default", 120);
-  step = `walk to ${String(HEIGHTS.at.x)},${String(HEIGHTS.at.y)}`;
-  const canvas = page.locator("#viewport canvas:not(.compass)");
-  const box = await canvas.boundingBox();
-  if (box === null) {
-    throw new Error("the arena canvas has no box");
-  }
-  for (let click = 0; click < 60; click += 1) {
-    const now = await camera(page);
-    const away = Math.hypot(HEIGHTS.at.x - now.x, HEIGHTS.at.y - now.y);
-    if (away < CLOSE_ENOUGH) {
-      break;
-    }
-    // At most 200 px from the centre, so the click lands on the canvas.
-    const zoom = Number(await page.locator("#viewport").getAttribute("data-zoom"));
-    const reach = Math.min(away * zoom, 200) / away;
-    await page.mouse.click(
-      box.x + box.width / 2 + (HEIGHTS.at.x - now.x) * reach,
-      box.y + box.height / 2 + (HEIGHTS.at.y - now.y) * reach,
-    );
-    await sleep(700);
-  }
-  const at = await camera(page);
-  if (Math.hypot(HEIGHTS.at.x - at.x, HEIGHTS.at.y - at.y) >= CLOSE_ENOUGH) {
-    throw new Error(`the hero stopped at ${String(at.x)},${String(at.y)}`);
-  }
-  // Let the camera ease onto the hero before the shot.
-  await sleep(1000);
-  fs.writeFileSync(path.join(dir, "readme-heights.png"), await quietShot(page));
 }
 
 const served = options.url === undefined ? await serve() : undefined;
@@ -430,20 +349,7 @@ try {
   await page.locator(".mode-rail").waitFor();
   await editorAndTraining(page, dir);
   await match(page, dir);
-  // A fresh tab for the second match, the character kept in its storage.
-  await page.close();
-  const second = await context.newPage();
-  second.setDefaultTimeout(20_000);
-  await second.goto(url);
-  await second.locator(".mode-rail").waitFor();
-  await heights(second, dir);
-  const shots = [
-    "readme-editor.png",
-    "readme-training.png",
-    "readme-match.png",
-    "readme-map.png",
-    "readme-heights.png",
-  ];
+  const shots = ["readme-editor.png", "readme-training.png", "readme-match.png", "readme-map.png"];
   for (const shot of shots) {
     fs.copyFileSync(path.join(dir, shot), path.join(MEDIA, shot));
     const kb = Math.round(fs.statSync(path.join(MEDIA, shot)).size / 1024);
