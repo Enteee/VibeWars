@@ -334,6 +334,7 @@ import { paintDeckShadows, sunShadowOffset } from "./shadow-geometry.js";
 import { lightingOn } from "./lighting-preference.js";
 import { passEnd, passStart } from "./pass-timing.js";
 import { FootstepTrails, auraOf, paintAura, paintMotes } from "./cosmetic-ground.js";
+import { swingRibbon } from "./cosmetic-trail.js";
 import { LIGHT_MARK_ART, lightMarkKey } from "./light-mark.js";
 import { SWITCH_MARK_ART, leverThrown, switchMarkKey } from "./switch-mark.js";
 import { paintArrival, paintTeleportEntry, paintTeleportExit } from "./teleport-mark.js";
@@ -434,6 +435,7 @@ import {
   paintStandingBody,
   paintWeaponMark,
   type Painter,
+  type StandingBody,
   type WornCape,
 } from "./body-painter.js";
 import type { Point } from "./weapon-mark-geometry.js";
@@ -1455,9 +1457,31 @@ export class ArenaScene extends Phaser.Scene {
   /** The cape `actor` wears, with its motion; `undefined` for none. */
   private wornCape(actor: RenderableActor): WornCape | undefined {
     const motion = this.capes.get(actor.id)?.motion;
-    return actor.cape === undefined || motion === undefined
-      ? undefined
-      : { look: actor.cape, motion };
+    if (actor.cape === undefined || motion === undefined) {
+      return undefined;
+    }
+    const look = actor.cosmetics.cape?.look;
+    return { look: actor.cape, motion, pattern: look?.kind === "cape" ? look.pattern : undefined };
+  }
+
+  /** The weapon trail cosmetic behind `actor`'s swing at `frame` (#3579); `undefined` for none. */
+  private swingTrail(
+    actor: RenderableActor,
+    frame: AttackFrame,
+  ): StandingBody["swingTrail"] {
+    const look = actor.cosmetics.swing?.look;
+    if (look?.kind !== "swing") {
+      return undefined;
+    }
+    const { x, y } = actor.position;
+    const ribbon = swingRibbon(
+      { x, y, r: actor.radius, facing: actor.facing },
+      actor.weaponId,
+      frame,
+      this.attackClocks.get(actor.id)?.castBeat(this.clock.read(this.now)),
+      this.reducedMotion,
+    );
+    return ribbon === undefined ? undefined : { ribbon, colour: look.colour };
   }
 
   /**
@@ -2726,6 +2750,7 @@ export class ArenaScene extends Phaser.Scene {
           frame,
           cape: this.wornCape(actor),
           tint: this.bodyTint(actor),
+          swingTrail: this.swingTrail(actor, frame),
         },
         phaserPainter(marks),
       );

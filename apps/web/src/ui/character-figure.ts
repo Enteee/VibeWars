@@ -9,7 +9,8 @@ import {
 
 import { BODY_EDGE, BODY_GLYPH_ALPHA, BODY_GLYPH_SIZE } from "../render/arena-snapshot.js";
 import { REST_FRAME } from "../render/attack-clock.js";
-import { newCapeMotion } from "../render/cape-motion.js";
+import type { CapePattern } from "../cosmetics/catalog.js";
+import { CAPE_LENGTH, newCapeMotion, type CapeMotion } from "../render/cape-motion.js";
 import type { CapeLook } from "../render/cape-shape.js";
 import {
   paintBodyDisc,
@@ -85,15 +86,42 @@ export const FIGURE_SIZE = {
 } as const;
 
 /**
- * The figure's body: your own, standing still, wearing `cape` folded,
- * its marks clear of the box's edges.
+ * How a figure wears its cape (#3579): folded, as everywhere but the cape
+ * designer; or unfurled behind it as at a run, so its pattern shows.
+ */
+export interface FigureCape {
+  readonly pattern: CapePattern | undefined;
+  readonly unfurled: boolean;
+}
+
+export const FOLDED_CAPE: FigureCape = { pattern: undefined, unfurled: false };
+
+/** The room an unfurled cape takes behind the body, past `MARK_ROOM`: its reach and its outline. */
+const UNFURLED_ROOM = Math.ceil(CAPE_LENGTH + 1 - MARK_ROOM);
+
+/** The figure's box, wider behind the body for an unfurled cape. */
+export function figureSize(dress: FigureCape): { readonly width: number; readonly height: number } {
+  return dress.unfurled
+    ? { width: FIGURE_SIZE.width + UNFURLED_ROOM, height: FIGURE_SIZE.height }
+    : FIGURE_SIZE;
+}
+
+/** A cape at full unfold, trailing straight behind a body of radius `r` facing +x. */
+function unfurledMotion(r: number): CapeMotion {
+  return { ...newCapeMotion(), unfold: 1, nodeX: -(r - 1 + CAPE_LENGTH), primed: true };
+}
+
+/**
+ * The figure's body: your own, standing still, wearing `cape` as
+ * `dress` says, its marks clear of the box's edges.
  */
 export function figureBody(
   appearance: CharacterAppearance,
   cape: CapeLook | undefined,
+  dress: FigureCape = FOLDED_CAPE,
 ): StandingBody {
   return {
-    x: BODY_RADIUS + MARK_ROOM,
+    x: BODY_RADIUS + MARK_ROOM + (dress.unfurled ? UNFURLED_ROOM : 0),
     y: BODY_RADIUS + MARK_ROOM,
     r: BODY_RADIUS,
     facing: FIGURE_FACING,
@@ -101,7 +129,14 @@ export function figureBody(
     weaponId: appearance.weaponId,
     offhandId: appearance.offhandId,
     frame: REST_FRAME,
-    cape: cape === undefined ? undefined : { look: cape, motion: newCapeMotion() },
+    cape:
+      cape === undefined
+        ? undefined
+        : {
+            look: cape,
+            motion: dress.unfurled ? unfurledMotion(BODY_RADIUS) : newCapeMotion(),
+            pattern: dress.pattern,
+          },
   };
 }
 
@@ -202,8 +237,9 @@ function paintBodyGlyph(
 }
 
 /**
- * The figure `look` describes, `scale` times `FIGURE_SIZE`, as a
- * canvas sharp at the device's pixel ratio: drawn at once without its
+ * The figure `look` describes, its cape worn as `dress` says, `scale`
+ * times `figureSize(dress)`, as a canvas sharp at the device's pixel
+ * ratio: drawn at once without its
  * glyph, then again with it once the profession icon has loaded, with
  * `data-glyph` naming it, and `data-weapon-id` naming what it holds.
  * The bare body keeps its glyph: its profession is known. A browser
@@ -212,8 +248,9 @@ function paintBodyGlyph(
 export function createCharacterFigure(
   look: Pick<FigureLook, "primary" | "secondary" | "appearance" | "cape">,
   scale = 1,
+  dress: FigureCape = FOLDED_CAPE,
 ): HTMLCanvasElement {
-  const { width, height } = FIGURE_SIZE;
+  const { width, height } = figureSize(dress);
   const ratio = window.devicePixelRatio * scale;
   const canvas = document.createElement("canvas");
   canvas.className = "character-figure";
@@ -237,7 +274,7 @@ export function createCharacterFigure(
   // Phaser joins its strokes round; a canvas's default miter would
   // spike the weapon casing's points past the mark.
   context.lineJoin = "round";
-  const body = figureBody(appearance, look.cape);
+  const body = figureBody(appearance, look.cape, dress);
   const painter = canvasPainter(context);
   const paint = (glyph: HTMLImageElement | undefined): void => {
     context.clearRect(0, 0, width, height);

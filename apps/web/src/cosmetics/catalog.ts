@@ -9,8 +9,8 @@ import type { MessageKey } from "../i18n/index.js";
 
 import { FLAME_STREAK, TIERS, TOP_RANK } from "./unlocks.js";
 
-/** The slots so far (#3577, #3578); the others come with #3579–#3581. */
-export const COSMETIC_SLOTS = ["frame", "title", "flame", "aura", "trail"] as const;
+/** The slots so far (#3577–#3579); the others come with #3580 and #3581. */
+export const COSMETIC_SLOTS = ["frame", "title", "flame", "aura", "trail", "swing", "cape"] as const;
 
 export type CosmeticSlot = (typeof COSMETIC_SLOTS)[number];
 
@@ -23,10 +23,12 @@ export type CosmeticRequirement =
 
 /**
  * Where a look is drawn (ADR-0056 §4): on the name plate, beside the
- * name, never over a body; or on the ground under the body, under its
- * rings, conditions, telegraphs and call marks.
+ * name, never over a body; on the ground under the body, under its
+ * rings, conditions, telegraphs and call marks; behind the weapon mark,
+ * while a melee swing strikes (#3579); or on the guild cape's cloth,
+ * under its emblem (#3579).
  */
-export const COSMETIC_LAYERS = ["nameplate", "under-body"] as const;
+export const COSMETIC_LAYERS = ["nameplate", "under-body", "weapon", "cape"] as const;
 
 export type CosmeticLayer = (typeof COSMETIC_LAYERS)[number];
 
@@ -35,7 +37,7 @@ interface LookBase {
   /** Whether it moves; under reduced motion it is drawn still. */
   readonly motion: "still" | "flicker";
   /**
-   * A ground or trail effect's size and strength; `null` for a name-plate
+   * A ground or trail effect's size and strength; `null` for any other
    * look. An aura's `radiusOfBody` is how far it reaches past the body's
    * rim, a trail's how big each mote is, both as a share of the body's radius.
    */
@@ -75,7 +77,22 @@ export type CosmeticLook = LookBase &
         readonly kind: "trail";
         readonly colour: number;
       }
+    | {
+        /** A thin ribbon behind a melee swing's arc (#3579), gone in `SWING_TRAIL_SECONDS`. */
+        readonly kind: "swing";
+        readonly colour: number;
+      }
+    | {
+        /** A pattern on the guild cape (#3579), in the cape's own colours. */
+        readonly kind: "cape";
+        readonly pattern: CapePattern;
+      }
   );
+
+/** The cape patterns (#3579). */
+export const CAPE_PATTERNS = ["stripes", "chevrons", "quarters", "stars"] as const;
+
+export type CapePattern = (typeof CAPE_PATTERNS)[number];
 
 export interface CosmeticEntry {
   /** Stable, at most `MAX_COSMETIC_ID_LENGTH`: it is signed and sent. */
@@ -110,6 +127,11 @@ const TRAIL = {
   ground: { radiusOfBody: 0.25, alpha: 0.35 },
   sound: null,
 } as const;
+
+/** A swing's ribbon (#3579): behind the weapon mark, its strength set by `cosmetic-trail.ts`. */
+const SWING = { layer: "weapon", motion: "flicker", ground: null, sound: null } as const;
+/** A cape pattern (#3579): it moves with the cloth, in the cape's own colours. */
+const CAPE = { layer: "cape", motion: "still", ground: null, sound: null } as const;
 
 /**
  * Four tiers, four hues: jade, rose, teal and orchid. Each is a hand's
@@ -259,6 +281,62 @@ export const COSMETIC_CATALOG: readonly CosmeticEntry[] = [
     requires: TIER_5,
     look: { ...TRAIL, kind: "trail", colour: STARLIGHT },
     name: "cosmetics.item.trailStarlight",
+  },
+  {
+    id: "swing-moss",
+    slot: "swing",
+    requires: TIER_1,
+    look: { ...SWING, kind: "swing", colour: MOSS },
+    name: "cosmetics.item.swingMoss",
+  },
+  {
+    id: "swing-ember",
+    slot: "swing",
+    requires: TIER_2,
+    look: { ...SWING, kind: "swing", colour: EMBER },
+    name: "cosmetics.item.swingEmber",
+  },
+  {
+    id: "swing-frost",
+    slot: "swing",
+    requires: TIER_3,
+    look: { ...SWING, kind: "swing", colour: FROST },
+    name: "cosmetics.item.swingFrost",
+  },
+  {
+    id: "swing-starlight",
+    slot: "swing",
+    requires: TIER_5,
+    look: { ...SWING, kind: "swing", colour: STARLIGHT },
+    name: "cosmetics.item.swingStarlight",
+  },
+  {
+    id: "cape-stripes",
+    slot: "cape",
+    requires: TIER_1,
+    look: { ...CAPE, kind: "cape", pattern: "stripes" },
+    name: "cosmetics.item.capeStripes",
+  },
+  {
+    id: "cape-chevrons",
+    slot: "cape",
+    requires: TIER_2,
+    look: { ...CAPE, kind: "cape", pattern: "chevrons" },
+    name: "cosmetics.item.capeChevrons",
+  },
+  {
+    id: "cape-quarters",
+    slot: "cape",
+    requires: TIER_4,
+    look: { ...CAPE, kind: "cape", pattern: "quarters" },
+    name: "cosmetics.item.capeQuarters",
+  },
+  {
+    id: "cape-stars",
+    slot: "cape",
+    requires: TOP,
+    look: { ...CAPE, kind: "cape", pattern: "stars" },
+    name: "cosmetics.item.capeStars",
   },
   {
     id: "flame-streak",

@@ -7,6 +7,7 @@ import {
   type Guild,
 } from "@vibewars/game-session";
 
+import { ownLook } from "../cosmetics/view.js";
 import { t } from "../i18n/index.js";
 import { GUILD_FRAGMENT_KEY } from "../net/fragment.js";
 import { EMBLEM_PRESET_NAMES, capeLook, presetEmblem } from "../render/cape-shape.js";
@@ -353,14 +354,19 @@ const BARE_LOOK = {
 } as const;
 
 /**
- * `wearer` in `cape`, drawn as a match draws them (#3551); with no
- * wearer, the bare body. `data-cape` names the cape, for tests and tooling.
+ * `wearer` in `cape`, drawn as a match draws them (#3551), unfurled as
+ * at a run with your cape pattern on it (#3579); with no wearer, the
+ * bare body. `data-cape` names the cape, for tests and tooling.
  */
 function capeFigure(wearer: StoredCharacter | undefined, cape: WireCape | null): HTMLCanvasElement {
   const worn = cape === null ? undefined : capeLook(cape);
   const look = wearer === undefined ? { ...BARE_LOOK, cape: worn } : lookOfCharacter(wearer, worn);
   const scale = window.matchMedia(NARROW_QUERY).matches ? NARROW_FIGURE_SCALE : FIGURE_SCALE;
-  const figure = createCharacterFigure(look, scale);
+  const pattern = ownLook().cape?.look;
+  const figure = createCharacterFigure(look, scale, {
+    pattern: pattern?.kind === "cape" ? pattern.pattern : undefined,
+    unfurled: true,
+  });
   if (cape !== null) {
     figure.dataset.cape = `${cape.main}.${cape.trim}.${cape.emblem}`;
   }

@@ -45,7 +45,11 @@ function coloursOf(look: CosmeticLook): readonly number[] {
     case "flame":
     case "trail":
     case "aura":
+    case "swing":
       return [look.colour];
+    case "cape":
+      // The cape's own colours, which `capeLook` already keeps clear of the teams'.
+      return [];
     case "title":
       return [look.colour, look.glow];
   }
@@ -67,9 +71,9 @@ export function checkCosmetic(entry: CosmeticEntry): readonly string[] {
       }
     }
   }
-  // Under the body, rings and marks draw over it; on the plate, it is no ground effect.
-  if (look.layer === "nameplate" && look.ground !== null) {
-    problems.push(`${entry.id}: a ground effect on the name plate`);
+  // Under the body, rings and marks draw over it; anywhere else, it is no ground effect.
+  if (look.layer !== "under-body" && look.ground !== null) {
+    problems.push(`${entry.id}: a ground effect on the ${look.layer}`);
   }
   if (look.layer === "under-body" && look.ground === null) {
     problems.push(`${entry.id}: on the ground with no fixed size`);
