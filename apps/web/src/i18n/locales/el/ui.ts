@@ -914,7 +914,6 @@ export default {
   "pips.title": { one: "{sign}{count} ένδειξη", other: "{sign}{count} ενδείξεις" },
 
   "player.cape": "Κάπα",
-  "player.capePreview": "Προεπισκόπηση",
   "player.emblem": "Έμβλημα",
   "player.emblemBar": "ράβδος",
   "player.emblemChevron": "σιρίτι",

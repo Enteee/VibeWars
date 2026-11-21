@@ -961,7 +961,6 @@ export default {
   },
 
   "player.cape": "Pelerină",
-  "player.capePreview": "Previzualizare",
   "player.emblem": "Emblemă",
   "player.emblemBar": "bară",
   "player.emblemChevron": "șevron",

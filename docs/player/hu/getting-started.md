@@ -214,7 +214,7 @@ neved után, például `Ente [VIBE]`. Ha van céhjeled, alatta megjelenik a
 **Céhköpeny** tervező: válassz bármilyen köpeny- és szegélyszínt,
 rajzolj egy címert, és a tested minden meccsen viseli a köpenyt: álló helyzetben
 vékony csíkká hajtódik a peremeden, mozgás közben pedig mögötted lobog.
-A menüben a karaktereid is mutatják. A **Nincs köpeny** leveszi. Egy alak mutatja a köpenyt úgy, ahogy a játékban kinéz. A csapatod kékjéhez vagy az ellenfeleid pirosához túl közeli szín rajzoláskor kicsit eltolódik tőle, hogy egyik köpeny se hasonlítson egy csapatra; az alak úgy mutatja, ahogy mindenki látni fogja.
+A menüben a karaktereid is mutatják. A **Nincs köpeny** leveszi. A csapatod kékjéhez vagy az ellenfeleid pirosához túl közeli szín rajzoláskor kicsit eltolódik tőle, hogy egyik köpeny se hasonlítson egy csapatra.
 
 A módosítás azonnal érvényes abban a lobbiban, amelyikben vagy.
 

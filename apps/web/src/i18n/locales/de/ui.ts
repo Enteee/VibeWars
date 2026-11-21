@@ -913,7 +913,6 @@ export default {
   "pips.title": { one: "{sign}{count} Pip", other: "{sign}{count} Pips" },
 
   "player.cape": "Umhang",
-  "player.capePreview": "Vorschau",
   "player.emblem": "Emblem",
   "player.emblemBar": "Balken",
   "player.emblemChevron": "Sparren",

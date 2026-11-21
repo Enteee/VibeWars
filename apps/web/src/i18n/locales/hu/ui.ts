@@ -907,7 +907,6 @@ export default {
   "pips.title": { one: "{sign}{count} csík", other: "{sign}{count} csík" },
 
   "player.cape": "Köpeny",
-  "player.capePreview": "Előnézet",
   "player.emblem": "Embléma",
   "player.emblemBar": "sáv",
   "player.emblemChevron": "ék",

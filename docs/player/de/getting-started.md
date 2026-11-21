@@ -183,7 +183,7 @@ es hinter deinem Namen, etwa `Ente [VIBE]`. Mit Kürzel erscheint darunter der D
 den **Gildenumhang**: Wähle eine beliebige Umhang- und Saumfarbe, zeichne ein Emblem, und dein Körper trägt den
 Umhang in jedem Match: Er faltet sich an deinem Rand zu einem schmalen Band, wenn du stehst,
 und weht hinter dir, wenn du läufst. Deine Charaktere im Menü zeigen ihn auch. **Kein Umhang**
-nimmt ihn ab. Eine Figur zeigt den Umhang so, wie er im Spiel aussieht. Eine Farbe, die dem Blau deines Teams oder dem Rot deiner Gegner zu nahe ist, wird beim Zeichnen ein wenig davon weggerückt, damit kein Umhang wie ein Team aussieht; die Figur zeigt ihn so, wie alle ihn sehen werden.
+nimmt ihn ab. Eine Farbe, die dem Blau deines Teams oder dem Rot deiner Gegner zu nahe ist, wird beim Zeichnen ein wenig davon weggerückt, damit kein Umhang wie ein Team aussieht.
 
 Eine Änderung gilt sofort für die Lobby, in der du bist.
 

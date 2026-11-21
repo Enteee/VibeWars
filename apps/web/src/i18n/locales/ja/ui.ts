@@ -861,7 +861,6 @@ export default {
   "pips.title": { other: "{sign}{count}ピップ" },
 
   "player.cape": "ケープ",
-  "player.capePreview": "プレビュー",
   "player.emblem": "紋章",
   "player.emblemBar": "横帯",
   "player.emblemChevron": "山形",

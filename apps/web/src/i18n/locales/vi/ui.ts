@@ -853,7 +853,6 @@ export default {
   "pips.title": { other: "{sign}{count} vạch" },
 
   "player.cape": "Áo choàng",
-  "player.capePreview": "Xem trước",
   "player.emblem": "Biểu tượng",
   "player.emblemBar": "thanh",
   "player.emblemChevron": "chữ V",

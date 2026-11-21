@@ -1,15 +1,11 @@
-import { defaultBuildEquipment } from "@vibewars/game-core";
 import { packEmblem } from "@vibewars/game-protocol";
 import { sanitizeName } from "@vibewars/game-session";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { EMBLEM_PRESET_NAMES, presetEmblem } from "../render/cape-shape.js";
 import { STORAGE_NAMESPACE } from "../storage/namespace.js";
-import { CHARACTER_SCHEMA_VERSION, type StoredCharacter } from "../storage/schema.js";
-import { saveActiveCharacterId, saveStarterCharacterId } from "./menu.js";
 import {
   FIRST_CAPE,
-  capeWearer,
   isInvalidGuildTag,
   loadGuildCape,
   loadGuildTag,
@@ -21,7 +17,6 @@ import {
   playerSection,
   saveGuildCape,
   saveGuildTag,
-  setCapeWearers,
   showsCapeDesigner,
 } from "./player-section.js";
 import { SIGNET_HEADING_PX, signetUrl } from "./player-label.js";
@@ -230,9 +225,8 @@ describe("the Player section of Options (#1513)", () => {
       setItem: (key: string, value: string) => stored.set(key, value),
       removeItem: (key: string) => stored.delete(key),
     });
-    vi.stubGlobal("window", { devicePixelRatio: 1, matchMedia: () => ({ matches: false }) });
+    vi.stubGlobal("window", { devicePixelRatio: 1 });
     vi.stubGlobal("document", { createElement: (tag: string) => new FakeElement(tag) });
-    setCapeWearers(() => Promise.resolve([]));
   });
 
   afterEach(() => {
@@ -342,41 +336,13 @@ describe("the Player section of Options (#1513)", () => {
     });
   });
 
-  /** The cape designer's figure, the one shown now. */
-  function figureIn(cape: FakeElement): FakeElement | undefined {
-    return cape.all().find((node) => node.className === "character-figure");
-  }
-
-  it("dresses a figure in the cape being designed, redrawn on every pick (#3551)", () => {
+  it("shows no figure beside the picks (#3760)", () => {
     stored.set(`${STORAGE_NAMESPACE}.guildTag`, "VIBE");
     const { cape, shown } = mount();
-    const first = figureIn(cape);
-    expect(first?.tagName).toBe("canvas");
-    // Nothing saved yet: no cape.
-    expect(first?.dataset.cape).toBeUndefined();
     colourInput(shown, "main").typeIn("#e6c04a");
-    const second = figureIn(cape);
-    expect(second).not.toBe(first);
-    expect(second?.dataset.cape).toBe(`e6c04a.${FIRST_CAPE.trim}.${FIRST_CAPE.emblem}`);
-    shown.find((node) => node.textContent === "No cape")?.click();
-    expect(figureIn(cape)?.dataset.cape).toBeUndefined();
-    expect(cape.all().filter((node) => node.className === "character-figure")).toHaveLength(1);
-  });
-
-  it("shows no figure without a valid tag (#3551)", () => {
-    const { cape } = mount();
-    expect(cape.hidden).toBe(true);
-  });
-
-  it("dresses the menu's character once the roster is read, else the bare body (#3551)", async () => {
-    stored.set(`${STORAGE_NAMESPACE}.guildTag`, "VIBE");
-    setCapeWearers(() => Promise.resolve([pyro()]));
-    saveActiveCharacterId("a");
-    const { cape } = mount();
-    expect(figureIn(cape)?.attributes.get("aria-label")).toContain("Warrior");
-    await Promise.resolve();
-    await Promise.resolve();
-    expect(figureIn(cape)?.attributes.get("aria-label")).toContain("Elementalist");
+    expect(
+      cape.all().some((node) => node.tagName === "canvas" && node.className === "character-figure"),
+    ).toBe(false);
   });
 
   it("starts from each preset in the drawing colour (#3554, #3628)", () => {
@@ -409,53 +375,6 @@ describe("the Player section of Options (#1513)", () => {
     });
     tag.typeIn("V!");
     expect(copy?.hidden).toBe(true);
-  });
-});
-
-/** A playable character, as saved. */
-function pyro(overrides: Partial<StoredCharacter> = {}): StoredCharacter {
-  return {
-    schemaVersion: CHARACTER_SCHEMA_VERSION,
-    id: "a",
-    name: "Pyro",
-    primaryProfession: "elementalist",
-    secondaryProfession: "monk",
-    attributes: [],
-    skillBar: ["elementalist.fireball", null, null, null, null, null, null, null],
-    equipment: defaultBuildEquipment("elementalist"),
-    updatedAt: 1,
-    ...overrides,
-  };
-}
-
-describe("capeWearer (#3551)", () => {
-  beforeEach(() => {
-    const stored = new Map<string, string>();
-    vi.stubGlobal("localStorage", {
-      getItem: (key: string) => stored.get(key) ?? null,
-      setItem: (key: string, value: string) => stored.set(key, value),
-      removeItem: (key: string) => stored.delete(key),
-    });
-  });
-
-  afterEach(() => {
-    vi.unstubAllGlobals();
-  });
-
-  const illegal = pyro({
-    id: "b",
-    skillBar: ["no.such-skill", null, null, null, null, null, null, null],
-  });
-  const starter = pyro({ id: "c" });
-
-  it("is the active character when it is playable, else the starter, else none", () => {
-    expect(capeWearer([pyro(), starter])).toBeUndefined();
-    saveStarterCharacterId("c");
-    expect(capeWearer([pyro(), starter])?.id).toBe("c");
-    saveActiveCharacterId("a");
-    expect(capeWearer([pyro(), starter])?.id).toBe("a");
-    saveActiveCharacterId("b");
-    expect(capeWearer([illegal, starter])?.id).toBe("c");
   });
 });
 

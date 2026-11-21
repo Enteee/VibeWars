@@ -908,7 +908,6 @@ export default {
   "pips.title": { one: "{sign}{count} نقطه", other: "{sign}{count} نقطه" },
 
   "player.cape": "شنل",
-  "player.capePreview": "پیش‌نمایش",
   "player.emblem": "نماد",
   "player.emblemBar": "نوار",
   "player.emblemChevron": "هشت",

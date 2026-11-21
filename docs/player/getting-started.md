@@ -193,10 +193,9 @@ or digits beside it, and everyone sees it after your name, like
 it: pick any cape colour and trim colour, draw an emblem, and your body
 wears the cape in every match: it folds to a thin band on your rim when
 you stand and streams out behind you when you move. Your characters in
-the menu show it too. **No cape** takes it off. A figure shows the cape as
-it looks in the game. A colour too close to the blue of your team or the
-red of your foes is turned a little away from it when it is drawn, so no
-cape looks like a team; the figure shows it as everyone will see it.
+the menu show it too. **No cape** takes it off. A colour too close to the
+blue of your team or the red of your foes is turned a little away from it
+when it is drawn, so no cape looks like a team.
 
 A change applies at once to the lobby you are in.
 

@@ -953,7 +953,6 @@ export default {
   },
 
   "player.cape": "Capa",
-  "player.capePreview": "Pré-visualização",
   "player.emblem": "Emblema",
   "player.emblemBar": "barra",
   "player.emblemChevron": "divisa",

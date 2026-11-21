@@ -194,7 +194,7 @@ atau angka di sebelahnya, dan semua orang melihatnya setelah namamu, misalnya
 bawahnya: pilih warna jubah dan pinggiran apa saja, gambar sebuah lambang, dan tubuhmu
 memakai jubah itu di setiap laga: jubah terlipat menjadi pita tipis di tepi tubuhmu saat
 kamu berdiri dan berkibar di belakangmu saat kamu bergerak. Karakter-karaktermu di
-menu juga menampilkannya. **Tanpa jubah** melepasnya. Sebuah figur menampilkan jubah seperti tampilannya di dalam game. Warna yang terlalu dekat dengan biru timmu atau merah lawanmu digeser sedikit menjauh darinya saat digambar, supaya tidak ada jubah yang mirip sebuah tim; figur menampilkannya seperti yang akan dilihat semua orang.
+menu juga menampilkannya. **Tanpa jubah** melepasnya. Warna yang terlalu dekat dengan biru timmu atau merah lawanmu digeser sedikit menjauh darinya saat digambar, supaya tidak ada jubah yang mirip sebuah tim.
 
 Perubahan langsung berlaku di lobi tempat kamu berada.
 

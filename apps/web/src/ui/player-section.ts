@@ -12,9 +12,6 @@ import { GUILD_FRAGMENT_KEY } from "../net/fragment.js";
 import { EMBLEM_PRESET_NAMES, capeLook, presetEmblem } from "../render/cape-shape.js";
 import { heroRankOf, loadFame } from "../storage/fame.js";
 import { STORAGE_NAMESPACE } from "../storage/namespace.js";
-import type { StoredCharacter } from "../storage/schema.js";
-import { lookOfCharacter } from "./character-card.js";
-import { createCharacterFigure } from "./character-figure.js";
 import { cssColour } from "./character-preview.js";
 import {
   EMBLEM_NAMES,
@@ -24,7 +21,6 @@ import {
   type EmblemPick,
 } from "./emblem-editor.js";
 import { button, h, shareLine, toast, type ShareLine } from "./kit.js";
-import { isPlayable, loadActiveCharacterId, loadStarterCharacterId } from "./menu.js";
 import type { OptionsSection } from "./options-sections.js";
 import { SIGNET_HEADING_PX, signetElement } from "./player-label.js";
 
@@ -318,55 +314,6 @@ function mountPlayer(container: HTMLElement, signet: number): () => void {
   };
 }
 
-/** Every saved character, for the cape designer's figure (#3551); none until main sets it. */
-let listCharacters: () => Promise<readonly StoredCharacter[]> = () => Promise.resolve([]);
-
-/** Where Options finds the roster (#3551): set once by main, read as the designer opens. */
-export function setCapeWearers(list: () => Promise<readonly StoredCharacter[]>): void {
-  listCharacters = list;
-}
-
-/**
- * Who wears the cape being designed (#3551): the character the menu
- * highlights, the active one when it is playable, else the starter;
- * `undefined` with neither, and the figure is the bare body.
- */
-export function capeWearer(characters: readonly StoredCharacter[]): StoredCharacter | undefined {
-  const active = loadActiveCharacterId();
-  const starter = loadStarterCharacterId();
-  return (
-    characters.find((each) => each.id === active && isPlayable(each)) ??
-    characters.find((each) => each.id === starter)
-  );
-}
-
-/** The cape figure's scale (#3551), and on a narrow screen, where it goes above the swatches. */
-const FIGURE_SCALE = 2;
-const NARROW_FIGURE_SCALE = 1.5;
-const NARROW_QUERY = "(max-width: 479px)";
-
-/** The figure without a character (#3551): a Warrior holding nothing. */
-const BARE_LOOK = {
-  primary: "warrior",
-  secondary: undefined,
-  appearance: { weaponId: undefined, offhandId: undefined },
-} as const;
-
-/**
- * `wearer` in `cape`, drawn as a match draws them (#3551); with no
- * wearer, the bare body. `data-cape` names the cape, for tests and tooling.
- */
-function capeFigure(wearer: StoredCharacter | undefined, cape: WireCape | null): HTMLCanvasElement {
-  const worn = cape === null ? undefined : capeLook(cape);
-  const look = wearer === undefined ? { ...BARE_LOOK, cape: worn } : lookOfCharacter(wearer, worn);
-  const scale = window.matchMedia(NARROW_QUERY).matches ? NARROW_FIGURE_SCALE : FIGURE_SCALE;
-  const figure = createCharacterFigure(look, scale);
-  if (cape !== null) {
-    figure.dataset.cape = `${cape.main}.${cape.trim}.${cape.emblem}`;
-  }
-  return figure;
-}
-
 /** The guild link banner's emblem size, CSS px. */
 const BANNER_EMBLEM_PX = 20;
 
@@ -374,8 +321,8 @@ const BANNER_EMBLEM_PX = 20;
  * The cape designer (#1422, #3628): a colour picker each for the cape's
  * cloth and its trim, any colour, the emblem editor always under them,
  * and *No cape*. Each pick, and each finished stroke or tool action in
- * the editor, is a pick. `show` puts `cape` in the pickers and on the
- * figure; with none, only *No cape* is pressed.
+ * the editor, is a pick. `show` puts `cape` in the pickers; with none,
+ * only *No cape* is pressed.
  */
 function capeDesigner(onPick: (pick: CapePick) => void): {
   readonly root: HTMLElement;
@@ -383,24 +330,8 @@ function capeDesigner(onPick: (pick: CapePick) => void): {
 } {
   const root = h("div", "player-cape");
   root.appendChild(h("span", "field-label", t("player.guildCape")));
-  const body = h("div", "player-cape-body");
-  root.appendChild(body);
   const picks = h("div", "player-cape-picks");
-  // Beside the picks, the cape on a figure (#3551), redrawn on every pick.
-  const preview = h("div", "player-cape-preview");
-  preview.appendChild(h("span", "player-cape-row-label", t("player.capePreview")));
-  const stage = h("div", "player-cape-stage");
-  preview.appendChild(stage);
-  body.append(picks, preview);
-  let shown: WireCape | null = null;
-  let wearer: StoredCharacter | undefined;
-  const redraw = (): void => {
-    stage.replaceChildren(capeFigure(wearer, shown));
-  };
-  void listCharacters().then((characters) => {
-    wearer = capeWearer(characters);
-    redraw();
-  });
+  root.appendChild(picks);
   const colourRow = (part: "main" | "trim", label: string, name: string): HTMLInputElement => {
     const row = h("label", "player-cape-row");
     row.appendChild(h("span", "player-cape-row-label", label));
@@ -430,13 +361,11 @@ function capeDesigner(onPick: (pick: CapePick) => void): {
   return {
     root,
     show: (cape) => {
-      shown = cape;
       const worn = cape ?? FIRST_CAPE;
       main.value = `#${worn.main}`;
       trim.value = `#${worn.trim}`;
       editor.show(worn);
       none.setAttribute("aria-pressed", String(cape === null));
-      redraw();
     },
   };
 }

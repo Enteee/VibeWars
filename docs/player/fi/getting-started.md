@@ -199,7 +199,7 @@ perässä, kuten `Ente [VIBE]`. Kun tunnus on asetettu, sen alle ilmestyy
 **Kiltaviitta**-suunnittelija: valitse mikä tahansa viitan ja reunuksen väri,
 piirrä tunnus, ja hahmosi kantaa viittaa jokaisessa ottelussa: se taittuu
 ohueksi nauhaksi reunallesi, kun seisot, ja liehuu perässäsi, kun
-liikut. Myös valikon hahmosi näyttävät sen. **Ei viittaa** riisuu sen. Hahmo näyttää viitan sellaisena kuin se näkyy pelissä. Väriä, joka on liian lähellä joukkueesi sinistä tai vastustajiesi punaista, käännetään piirrettäessä hieman siitä poispäin, jotta mikään viitta ei näytä joukkueelta; hahmo näyttää sen sellaisena kuin kaikki sen näkevät.
+liikut. Myös valikon hahmosi näyttävät sen. **Ei viittaa** riisuu sen. Väriä, joka on liian lähellä joukkueesi sinistä tai vastustajiesi punaista, käännetään piirrettäessä hieman siitä poispäin, jotta mikään viitta ei näytä joukkueelta.
 
 Muutos tulee voimaan heti siinä aulassa, jossa olet.
 

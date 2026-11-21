@@ -961,7 +961,6 @@ export default {
   },
 
   "player.cape": "Plašt",
-  "player.capePreview": "Pregled",
   "player.emblem": "Amblem",
   "player.emblemBar": "greda",
   "player.emblemChevron": "ševron",

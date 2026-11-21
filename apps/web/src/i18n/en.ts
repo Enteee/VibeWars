@@ -906,7 +906,6 @@ export const en = {
   "pips.title": { one: "{sign}{count} pips", other: "{sign}{count} pips" },
 
   "player.cape": "Cape",
-  "player.capePreview": "Preview",
   "player.emblem": "Emblem",
   "player.emblemBar": "bar",
   "player.emblemChevron": "chevron",

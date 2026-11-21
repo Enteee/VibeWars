@@ -859,7 +859,6 @@ export default {
   "pips.title": { other: "{sign}{count} pip" },
 
   "player.cape": "Jubah",
-  "player.capePreview": "Pratinjau",
   "player.emblem": "Lambang",
   "player.emblemBar": "palang",
   "player.emblemChevron": "chevron",
