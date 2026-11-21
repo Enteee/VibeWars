@@ -1872,15 +1872,24 @@ describe("walks and high ground (#3070)", () => {
     const galleryStairs = [
       "east-gallery-stair",
       "east-gallery-north-stair",
-      "south-gallery-stair",
+      "south-gallery-east-stair",
+      "south-gallery-west-stair",
       "west-gallery-stair",
       "west-gallery-north-stair",
     ];
     const crypts = ["north-east-crypt", "south-east-crypt", "west-crypt"];
     const plinthStairs = crypts.map((crypt) => `${crypt}-plinth-stair`);
     /** Each team's own stair up its clockwise and anticlockwise gallery, by team. */
-    const clockwise = ["east-gallery-north-stair", "south-gallery-stair", "west-gallery-stair"];
-    const anticlockwise = ["west-gallery-north-stair", "east-gallery-stair", "south-gallery-stair"];
+    const clockwise = [
+      "east-gallery-north-stair",
+      "south-gallery-east-stair",
+      "west-gallery-stair",
+    ];
+    const anticlockwise = [
+      "west-gallery-north-stair",
+      "east-gallery-stair",
+      "south-gallery-west-stair",
+    ];
     const byGallery =
       (stairs: readonly string[]) =>
       (team: number): Route => {

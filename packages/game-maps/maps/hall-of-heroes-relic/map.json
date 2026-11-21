@@ -175,10 +175,19 @@
       "lift": null
     },
     {
-      "id": "south-gallery-stair",
+      "id": "south-gallery-east-stair",
       "from": 1,
       "to": 2,
-      "area": { "kind": "rect", "x": 2392, "y": 3700, "width": 170, "height": 112 },
+      "area": { "kind": "rect", "x": 2510, "y": 3700, "width": 160, "height": 112 },
+      "uphill": "n",
+      "look": "stairs",
+      "lift": null
+    },
+    {
+      "id": "south-gallery-west-stair",
+      "from": 1,
+      "to": 2,
+      "area": { "kind": "rect", "x": 2330, "y": 3700, "width": 160, "height": 112 },
       "uphill": "n",
       "look": "stairs",
       "lift": null
