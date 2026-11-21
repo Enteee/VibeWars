@@ -324,6 +324,31 @@ export default {
   "controls.weaponSet4": "武器セット4",
   "controls.weaponSets": "武器セット",
   "controls.withShift": "Shift + {key}",
+
+  "cosmetics.item.flame": "連勝の炎",
+  "cosmetics.item.frameJade": "翡翠のフレーム",
+  "cosmetics.item.frameOrchid": "蘭のフレーム",
+  "cosmetics.item.frameRose": "薔薇のフレーム",
+  "cosmetics.item.frameTeal": "青緑のフレーム",
+  "cosmetics.locked": "ロック中",
+  "cosmetics.none": "なし",
+  "cosmetics.note":
+    "見た目だけの要素です。どのコスメティックもプレイには影響しません。公開ランキングのランク戦勝利で獲得でき、すべてのキャラクターで共有されます。",
+  "cosmetics.requires.streak": {
+    other: "ランク戦{count}連勝",
+  },
+  "cosmetics.requires.top": "上位{rank}位",
+  "cosmetics.requires.wins": {
+    other: "ランク戦{count}勝",
+  },
+  "cosmetics.showOthers": "他のプレイヤーのコスメティックを表示",
+  "cosmetics.slot.flame": "連勝の炎",
+  "cosmetics.slot.frame": "ネームプレートのフレーム",
+  "cosmetics.slot.title": "称号",
+  "cosmetics.title.champion": "チャンピオン",
+  "cosmetics.title.contender": "挑戦者",
+  "cosmetics.title.veteran": "ベテラン",
+  "cosmetics.title.warlord": "将軍",
   "creature.rat": "ネズミ",
 
   "echo.secondsLeft": { other: "エコー: 残り{count}秒" },
@@ -773,6 +798,7 @@ export default {
   "music.trackWithMood": "{track} ({mood})",
 
   "options.controls": "操作",
+  "options.cosmetics": "コスメティック",
   "options.display": "表示",
   "options.label": "オプション",
   "options.language": "言語",

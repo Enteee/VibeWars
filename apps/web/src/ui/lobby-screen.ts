@@ -3,6 +3,7 @@ import { isHallsMap } from "@vibewars/game-maps/match-fields";
 import type { SizeClass } from "@vibewars/game-maps/size-class";
 import type { LobbyPlayerSnapshot, LobbySnapshot } from "@vibewars/game-session";
 
+import { seenCosmetics } from "../cosmetics/view.js";
 import { mapName } from "../i18n/game-names.js";
 import { t, type MessageKey } from "../i18n/index.js";
 import { keySignet } from "../identity/key-signet.js";
@@ -14,6 +15,7 @@ import {
   playerLabelElement,
   signedNamesLine,
   signetElement,
+  wearCosmetics,
 } from "./player-label.js";
 
 /**
@@ -396,6 +398,15 @@ function playerRow(member: LobbyPlayerSnapshot): HTMLElement {
   if (member.playerPubkey !== null) {
     player.prepend(signetElement(keySignet(member.playerPubkey), SIGNET_ROW_PX));
   }
+  // What it wears (ADR-0056), as this page checks it: a bot wears nothing.
+  wearCosmetics(
+    player,
+    seenCosmetics(
+      member.playerPubkey === null || member.cosmetics === null
+        ? undefined
+        : { playerPubkey: member.playerPubkey, cosmetics: member.cosmetics },
+    ),
+  );
   if (member.isHost) {
     player.appendChild(h("span", "lobby-host", ` ${t("lobby.host")}`));
   }

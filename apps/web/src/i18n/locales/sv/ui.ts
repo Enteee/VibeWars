@@ -349,6 +349,33 @@ export default {
   "controls.weaponSet4": "Vapenset 4",
   "controls.weaponSets": "Vapenset",
   "controls.withShift": "Shift + {key}",
+
+  "cosmetics.item.flame": "Segersvitens låga",
+  "cosmetics.item.frameJade": "Jaderam",
+  "cosmetics.item.frameOrchid": "Orkidéram",
+  "cosmetics.item.frameRose": "Rosenram",
+  "cosmetics.item.frameTeal": "Blågrön ram",
+  "cosmetics.locked": "Låst",
+  "cosmetics.none": "Ingen",
+  "cosmetics.note":
+    "Bara för utseendet: ingen kosmetik ändrar hur något spelar. Tjänas in med rankade vinster på den offentliga topplistan och delas av alla dina karaktärer.",
+  "cosmetics.requires.streak": {
+    one: "{count} rankad vinst i rad",
+    other: "{count} rankade vinster i rad",
+  },
+  "cosmetics.requires.top": "Topp {rank}",
+  "cosmetics.requires.wins": {
+    one: "{count} rankad vinst",
+    other: "{count} rankade vinster",
+  },
+  "cosmetics.showOthers": "Visa andra spelares kosmetik",
+  "cosmetics.slot.flame": "Segersvitens låga",
+  "cosmetics.slot.frame": "Namnskyltens ram",
+  "cosmetics.slot.title": "Titel",
+  "cosmetics.title.champion": "Mästare",
+  "cosmetics.title.contender": "Utmanare",
+  "cosmetics.title.veteran": "Veteran",
+  "cosmetics.title.warlord": "Krigsherre",
   "creature.rat": "Råtta",
 
   "echo.secondsLeft": { one: "Ekad: {count} s kvar", other: "Ekad: {count} s kvar" },
@@ -812,6 +839,7 @@ export default {
   "music.trackWithMood": "{track} ({mood})",
 
   "options.controls": "kontroller",
+  "options.cosmetics": "kosmetik",
   "options.display": "visning",
   "options.label": "Alternativ",
   "options.language": "språk",

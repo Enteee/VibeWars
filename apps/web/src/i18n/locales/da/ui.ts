@@ -348,6 +348,33 @@ export default {
   "controls.weaponSet4": "Våbensæt 4",
   "controls.weaponSets": "Våbensæt",
   "controls.withShift": "Shift + {key}",
+
+  "cosmetics.item.flame": "Sejrsstimens flamme",
+  "cosmetics.item.frameJade": "Jadegrøn ramme",
+  "cosmetics.item.frameOrchid": "Orkidéramme",
+  "cosmetics.item.frameRose": "Rosa ramme",
+  "cosmetics.item.frameTeal": "Blågrøn ramme",
+  "cosmetics.locked": "Låst",
+  "cosmetics.none": "Ingen",
+  "cosmetics.note":
+    "Kun for udseendet: ingen kosmetik ændrer, hvordan noget spiller. Optjenes med rangerede sejre på den offentlige rangliste og deles af alle dine figurer.",
+  "cosmetics.requires.streak": {
+    one: "{count} rangeret sejr i træk",
+    other: "{count} rangerede sejre i træk",
+  },
+  "cosmetics.requires.top": "Top {rank}",
+  "cosmetics.requires.wins": {
+    one: "{count} rangeret sejr",
+    other: "{count} rangerede sejre",
+  },
+  "cosmetics.showOthers": "Vis andre spilleres kosmetik",
+  "cosmetics.slot.flame": "Sejrsstimens flamme",
+  "cosmetics.slot.frame": "Navneskiltets ramme",
+  "cosmetics.slot.title": "Titel",
+  "cosmetics.title.champion": "Mester",
+  "cosmetics.title.contender": "Udfordrer",
+  "cosmetics.title.veteran": "Veteran",
+  "cosmetics.title.warlord": "Krigsherre",
   "creature.rat": "Rotte",
 
   "echo.secondsLeft": { one: "Ekko: {count} s tilbage", other: "Ekko: {count} s tilbage" },
@@ -811,6 +838,7 @@ export default {
   "music.trackWithMood": "{track} ({mood})",
 
   "options.controls": "styring",
+  "options.cosmetics": "kosmetik",
   "options.display": "visning",
   "options.label": "Valg",
   "options.language": "sprog",

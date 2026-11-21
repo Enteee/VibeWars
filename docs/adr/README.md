@@ -61,3 +61,4 @@ rewriting history.
 | [0053](0053-map-effect-zones.md)              | Map effect zones name a kind; game-core holds what it does      |
 | [0054](0054-no-baked-band-chunks.md)          | Static map art stays live; it is not baked into chunk images    |
 | [0055](0055-ranked-receipts.md)               | Ranked play: a public ledger of receipts every player signs     |
+| [0056](0056-cosmetics.md)                     | Cosmetics are earned on the public ledger, never in the sim     |

@@ -368,6 +368,35 @@ export default {
   "controls.weaponSet4": "Set de armas 4",
   "controls.weaponSets": "Sets de armas",
   "controls.withShift": "Mayús + {key}",
+
+  "cosmetics.item.flame": "Llama de racha",
+  "cosmetics.item.frameJade": "Marco jade",
+  "cosmetics.item.frameOrchid": "Marco orquídea",
+  "cosmetics.item.frameRose": "Marco rosa",
+  "cosmetics.item.frameTeal": "Marco turquesa",
+  "cosmetics.locked": "Bloqueado",
+  "cosmetics.none": "Ninguno",
+  "cosmetics.note":
+    "Solo estético: ningún cosmético cambia cómo se juega. Se ganan con victorias clasificatorias en la clasificación pública y los comparten todos tus personajes.",
+  "cosmetics.requires.streak": {
+    one: "{count} victoria clasificatoria seguida",
+    many: "{count} victorias clasificatorias seguidas",
+    other: "{count} victorias clasificatorias seguidas",
+  },
+  "cosmetics.requires.top": "Top {rank}",
+  "cosmetics.requires.wins": {
+    one: "{count} victoria clasificatoria",
+    many: "{count} victorias clasificatorias",
+    other: "{count} victorias clasificatorias",
+  },
+  "cosmetics.showOthers": "Mostrar los cosméticos de otros jugadores",
+  "cosmetics.slot.flame": "Llama de racha",
+  "cosmetics.slot.frame": "Marco de la placa de nombre",
+  "cosmetics.slot.title": "Título",
+  "cosmetics.title.champion": "Campeón",
+  "cosmetics.title.contender": "Aspirante",
+  "cosmetics.title.veteran": "Veterano",
+  "cosmetics.title.warlord": "Señor de la guerra",
   "creature.rat": "Rata",
 
   "echo.secondsLeft": {
@@ -869,6 +898,7 @@ export default {
   "music.trackWithMood": "{track} ({mood})",
 
   "options.controls": "controles",
+  "options.cosmetics": "cosméticos",
   "options.display": "pantalla",
   "options.label": "Opciones",
   "options.language": "idioma",

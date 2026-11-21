@@ -139,6 +139,7 @@ async function joinWith(playerKey: PlayerKey): Promise<string[]> {
     timeoutMs: 1000,
     relayPub: null,
     claim: () => ({ rating: 800, asOf: 0 }),
+    cosmetics: { ids: [], at: 0, sig: "00".repeat(64) },
   };
   await joinLobby({
     ...options,

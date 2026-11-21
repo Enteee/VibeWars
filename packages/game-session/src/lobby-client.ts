@@ -8,6 +8,7 @@ import {
   type WireSharedTrack,
   parseWireLobbyNote,
   parseWireTeamProposalBuilds,
+  parseWireSeatCosmetics,
   parseWireLobbyState,
   parseWireLobbyWelcome,
   parsePeerLobbyChallenge,
@@ -37,6 +38,8 @@ import {
   type PeerLobbyLeave,
   type PeerLobbyJoin,
   type WireCape,
+  type WireCosmetics,
+  type WireSeatCosmetics,
   type WireLobbyCommand,
   type WireLobbyState,
   type WireProposalBuild,
@@ -70,6 +73,7 @@ import type {
   LobbySnapshot,
   MatchStarting,
 } from "./lobby-connection.js";
+import { wear } from "./wire.js";
 import { RECONNECT_WINDOW_SECONDS } from "./match-host.js";
 import type { PlayerKey } from "./player-key.js";
 import { claimsHold, type LeaderboardSource } from "./ranked-claims.js";
@@ -165,6 +169,8 @@ export interface JoinLobbyOptions {
   readonly relayPub: string | null;
   /** This browser's player key (#2706): every join proves it to the host. */
   readonly playerKey: PlayerKey;
+  /** What this player wears (ADR-0056), signed by `playerKey`: every join carries it. */
+  readonly cosmetics: WireCosmetics;
   /**
    * This player's claim from its own copy of the leaderboard (#3575),
    * read when it consents to a party: the party's ticket carries it.
@@ -331,6 +337,7 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
     guildCape: options.guildCape,
     relayPub: options.relayPub,
     playerPubkey: options.playerKey.pubkey,
+    cosmetics: options.cosmetics,
   };
   /** A coded lobby's join; a queued one's is made with its proof. */
   const codedJoin: Omit<PeerLobbyJoin, "rejoinToken"> = {
@@ -371,6 +378,8 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
   let latest: WireLobbyState | undefined;
   /** What the host sent of each proposal on this side (#1811), by proposer. */
   const proposalBuilds = new Map<string, readonly WireProposalBuild[]>();
+  /** What the host last said each keyed seat wears (ADR-0056), by peer id. */
+  const worn = new Map<string, WireSeatCosmetics>();
   /** The match whose start was already handed on, so a repeat is not. */
   let startedMatch: string | null = null;
   let closed = false;
@@ -699,6 +708,12 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
   /** Whether lobby messages from `from` count before the host is known. */
   const mayHost = (from: string): boolean => queued === undefined || provenHosts.has(from);
 
+  /** What `id` wears, if the host's roster says so for the key it seated it with. */
+  const wornBy = (id: string, playerPubkey: string | null): WireCosmetics | null => {
+    const seat = worn.get(id);
+    return seat?.playerPubkey === playerPubkey ? seat.cosmetics : null;
+  };
+
   const send = (command: WireLobbyCommand): void => {
     if (hostId !== undefined && !closed) {
       transport.send("lobby-cmd", command, hostId);
@@ -725,6 +740,7 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
       bot: player.bot,
       away: player.away,
       playerPubkey: player.playerPubkey,
+      cosmetics: wornBy(player.id, player.playerPubkey),
     })),
     isHost: state.players.some((player) => player.id === selfId && player.isHost),
     countdownSeconds: state.countdownSeconds,
@@ -1132,6 +1148,24 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
               handler(note.reason);
             }
           }
+        }
+      }),
+      transport.on("cosmetics", (data, from) => {
+        if (hostId === undefined || from !== hostId) {
+          return;
+        }
+        const seat = parseWireSeatCosmetics(data);
+        if (seat === undefined) {
+          return;
+        }
+        wear(
+          worn,
+          seat.id,
+          seat,
+          (kept) => latest?.players.some((player) => player.id === kept) ?? false,
+        );
+        for (const handler of [...changeHandlers]) {
+          handler();
         }
       }),
       transport.on("team-proposal-builds", (data, from) => {

@@ -379,6 +379,37 @@ export default {
   "controls.weaponSet4": "Sada zbraní 4",
   "controls.weaponSets": "Sady zbraní",
   "controls.withShift": "Shift + {key}",
+
+  "cosmetics.item.flame": "Plameň víťaznej série",
+  "cosmetics.item.frameJade": "Nefritový rámik",
+  "cosmetics.item.frameOrchid": "Orchideový rámik",
+  "cosmetics.item.frameRose": "Ružový rámik",
+  "cosmetics.item.frameTeal": "Tyrkysový rámik",
+  "cosmetics.locked": "Zamknuté",
+  "cosmetics.none": "Žiadne",
+  "cosmetics.note":
+    "Čisto na ozdobu: žiadna kozmetika nemení, ako sa hrá. Získava sa hodnotenými výhrami v rebríčku a zdieľajú ju všetky tvoje postavy.",
+  "cosmetics.requires.streak": {
+    one: "{count} hodnotená výhra v rade",
+    few: "{count} hodnotené výhry v rade",
+    many: "{count} hodnotené výhry v rade",
+    other: "{count} hodnotených výhier v rade",
+  },
+  "cosmetics.requires.top": "Top {rank}",
+  "cosmetics.requires.wins": {
+    one: "{count} hodnotená výhra",
+    few: "{count} hodnotené výhry",
+    many: "{count} hodnotené výhry",
+    other: "{count} hodnotených výhier",
+  },
+  "cosmetics.showOthers": "Zobrazovať kozmetiku ostatných hráčov",
+  "cosmetics.slot.flame": "Plameň víťaznej série",
+  "cosmetics.slot.frame": "Rámik menovky",
+  "cosmetics.slot.title": "Titul",
+  "cosmetics.title.champion": "Šampión",
+  "cosmetics.title.contender": "Vyzývateľ",
+  "cosmetics.title.veteran": "Veterán",
+  "cosmetics.title.warlord": "Vojvodca",
   "creature.rat": "Potkan",
 
   "echo.secondsLeft": {
@@ -893,6 +924,7 @@ export default {
   "music.trackWithMood": "{track} ({mood})",
 
   "options.controls": "ovládanie",
+  "options.cosmetics": "kozmetika",
   "options.display": "zobrazenie",
   "options.label": "Nastavenia",
   "options.language": "jazyk",

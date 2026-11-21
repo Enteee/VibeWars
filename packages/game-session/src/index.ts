@@ -22,6 +22,7 @@ export type {
   ObservedSnapshot,
   MatchSummaryRow,
   PlayerSnapshot,
+  SeatWorn,
   ProjectileSnapshot,
   GroundEffectSnapshot,
   SkillSlot,
@@ -135,7 +136,12 @@ export type {
   QueueState,
   TicketKey,
 } from "./queue-client.js";
-export type { LobbyProofFields, PlayerKey, VerifyPlayerProof } from "./player-key.js";
+export type {
+  CosmeticSelection,
+  LobbyProofFields,
+  PlayerKey,
+  VerifyPlayerProof,
+} from "./player-key.js";
 export { decideStayTogether } from "./stay-together.js";
 export type { StayTogetherDecision, StayTogetherInput } from "./stay-together.js";
 export { admissionBytes, admissionDigest, partyGroupId } from "./queue-admission.js";

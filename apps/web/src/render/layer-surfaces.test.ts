@@ -531,6 +531,7 @@ describe("clicking a character on a layered map (#2831)", () => {
     guildTag: undefined,
     heroRank: 0,
     signet: undefined,
+    cosmetics: {},
     cape: undefined,
     bot: false,
     facing: 0,

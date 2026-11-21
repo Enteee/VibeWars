@@ -1,5 +1,6 @@
 import type { LanguageCode } from "../i18n/languages.js";
 import { controlsSection } from "./controls-section.js";
+import { cosmeticsSection } from "./cosmetics-section.js";
 import { displaySection } from "./display-section.js";
 import { languageSection } from "./language-section.js";
 import { playerSection } from "./player-section.js";
@@ -33,6 +34,7 @@ export function optionsSections(
     ...(languages.length > 1 ? [languageSection(languages)] : []),
     controlsSection,
     displaySection,
+    cosmeticsSection(),
     relaySection,
   ];
 }

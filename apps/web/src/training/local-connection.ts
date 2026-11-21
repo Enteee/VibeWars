@@ -96,6 +96,8 @@ function toPlayerSnapshot(
     guildTag: (participant.creature === undefined ? guild.guildTag : null) ?? undefined,
     heroRank: participant.creature === undefined ? guild.heroRank : 0,
     guildCape: (participant.creature === undefined ? guild.guildCape : null) ?? undefined,
+    // Training has no other player key to wear anything (ADR-0056).
+    worn: undefined,
     x: participant.position.x,
     y: participant.position.y,
     facing: participant.facing,

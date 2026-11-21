@@ -370,6 +370,35 @@ export default {
   "controls.weaponSet4": "Set di armi 4",
   "controls.weaponSets": "Set di armi",
   "controls.withShift": "Maiusc + {key}",
+
+  "cosmetics.item.flame": "Fiamma della serie",
+  "cosmetics.item.frameJade": "Cornice giada",
+  "cosmetics.item.frameOrchid": "Cornice orchidea",
+  "cosmetics.item.frameRose": "Cornice rosa",
+  "cosmetics.item.frameTeal": "Cornice verde acqua",
+  "cosmetics.locked": "Bloccato",
+  "cosmetics.none": "Nessuno",
+  "cosmetics.note":
+    "Solo estetica: nessun cosmetico cambia il modo di giocare. Si ottengono con vittorie classificate nella classifica pubblica e sono condivisi da tutti i tuoi personaggi.",
+  "cosmetics.requires.streak": {
+    one: "{count} vittoria classificata di fila",
+    many: "{count} vittorie classificate di fila",
+    other: "{count} vittorie classificate di fila",
+  },
+  "cosmetics.requires.top": "Top {rank}",
+  "cosmetics.requires.wins": {
+    one: "{count} vittoria classificata",
+    many: "{count} vittorie classificate",
+    other: "{count} vittorie classificate",
+  },
+  "cosmetics.showOthers": "Mostra i cosmetici degli altri giocatori",
+  "cosmetics.slot.flame": "Fiamma della serie",
+  "cosmetics.slot.frame": "Cornice della targhetta",
+  "cosmetics.slot.title": "Titolo",
+  "cosmetics.title.champion": "Campione",
+  "cosmetics.title.contender": "Sfidante",
+  "cosmetics.title.veteran": "Veterano",
+  "cosmetics.title.warlord": "Signore della guerra",
   "creature.rat": "Ratto",
 
   "echo.secondsLeft": {
@@ -859,6 +888,7 @@ export default {
   "music.trackWithMood": "{track} ({mood})",
 
   "options.controls": "comandi",
+  "options.cosmetics": "cosmetici",
   "options.display": "schermo",
   "options.label": "Opzioni",
   "options.language": "lingua",

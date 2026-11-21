@@ -1,4 +1,5 @@
 import { sha256 } from "@noble/hashes/sha2.js";
+import type { WireCosmetics } from "@vibewars/game-protocol";
 import { findWork, resultDigest, startDigest, type ReceiptCrypto } from "@vibewars/ranking";
 
 import type { LobbyProofFields, PlayerKey, VerifyPlayerProof } from "./player-key.js";
@@ -43,6 +44,8 @@ export function testPlayerKey(pubkey: string = randomHex(32)): PlayerKey {
     },
     signRankedStart: (start) => signDigest(pubkey, startDigest(start, sha256)),
     signRankedResult: (result) => signDigest(pubkey, resultDigest(result, sha256)),
+    // Nothing in game-session checks a selection (ADR-0056): hosts relay it.
+    signCosmetics: () => randomHex(64),
   };
 }
 
@@ -75,3 +78,6 @@ export const testReceiptCrypto: ReceiptCrypto = {
   sha256,
   verify: (pubkey, digest, sig) => made.get(sig) === digestOf(pubkey, digest),
 };
+
+/** An empty selection (ADR-0056), as a page that wears nothing sends it. */
+export const testCosmetics: WireCosmetics = { ids: [], at: 0, sig: "00".repeat(64) };

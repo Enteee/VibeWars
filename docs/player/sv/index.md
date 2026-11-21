@@ -9,6 +9,7 @@ i den här katalogen listas här exakt en gång.
 - [Förmågor och builds](skills-and-builds.md)
 - [Utrustning](equipment.md)
 - [Lägen](modes.md)
+- [Kosmetik](cosmetics.md)
 - [Världselement](world-elements.md)
 - [Bottar](bots.md)
 - [Ordlista](glossary.md)

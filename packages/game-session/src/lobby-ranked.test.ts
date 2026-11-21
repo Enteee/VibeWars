@@ -32,6 +32,7 @@ import type { MatchEnding, MatchHost } from "./match-host.js";
 import { createMemoryNetwork, type MemoryNetwork } from "./memory-transport.js";
 import type { PlayerKey } from "./player-key.js";
 import {
+  testCosmetics,
   testPlayerKey,
   testReceiptCrypto,
   testWork,
@@ -387,6 +388,7 @@ async function joinSeat(
     timeoutMs: 1000,
     relayPub: null,
     playerKey: key,
+    cosmetics: testCosmetics,
     claim: () => ({ rating: 800, asOf: 0 }),
     queued: { group, key: keyOf(seatKey(n)), verifyTicketSig, ascentMorale: 0 },
     ...(ranked ? { ranked: play } : {}),
