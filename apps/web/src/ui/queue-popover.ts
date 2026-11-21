@@ -40,6 +40,8 @@ export type QueueStatusInput =
       readonly since: number;
       /** Teams the queue last heard searching; `undefined` until it says. */
       readonly teams: number | undefined;
+      /** The side's ticket is `hardNat`, as the queue last said searching (#3758). */
+      readonly hardNat: boolean;
       readonly isHost: boolean;
       /** Whether this host may play bots in this mode instead of waiting. */
       readonly playBots: boolean;
@@ -63,6 +65,8 @@ export interface QueueStatus {
   readonly leave: "button" | "host-only";
   /** Play against bots, for a host who may: seconds until it is enabled, 0 once it is. */
   readonly playBots?: { readonly inSeconds: number };
+  /** Its ticket is `hardNat`: why it may wait, and what helps (#3758). */
+  readonly network?: string;
 }
 
 /** The flyout for `input` at `now`; none without a queue. */
@@ -73,8 +77,18 @@ export function queueStatus(
   if (input === undefined) {
     return undefined;
   }
-  const status = unratedStatus(input, now);
+  const status = {
+    ...unratedStatus(input, now),
+    ...(hardNatOf(input) ? { network: t("queue.hardNatHint", { relay: t("options.relay") }) } : {}),
+  };
   return input.standing === undefined ? status : { ...status, rating: ratingLine(input.standing) };
+}
+
+/** Whether the queue last said this side's ticket is `hardNat`. */
+function hardNatOf(input: QueueStatusInput): boolean {
+  return input.kind === "team"
+    ? input.hardNat
+    : input.state?.kind === "searching" && input.state.hardNat;
 }
 
 /** The flyout for `input` at `now`, but for the rating line. */
@@ -183,6 +197,7 @@ export function queueButton(
     const waited = h("div", "queue-window-waited");
     const rating = h("div", "queue-window-rating");
     const detail = h("div", "queue-window-detail");
+    const network = h("p", "queue-window-network");
     const playBots = button(t("lobby.playBots"), "primary queue-play-bots", () => {
       close();
       onPlayBots();
@@ -192,7 +207,7 @@ export function queueButton(
       close();
       onLeave();
     });
-    panel.append(title, waited, rating, playBots, detail, hostOnly, leave);
+    panel.append(title, waited, rating, playBots, detail, network, hostOnly, leave);
     paint = () => {
       const status = queueStatus(input, Date.now());
       if (status === undefined) {
@@ -204,6 +219,8 @@ export function queueButton(
       rating.hidden = status.rating === undefined;
       paintDetail(detail, status.detail);
       detail.hidden = status.detail === undefined;
+      network.textContent = status.network ?? "";
+      network.hidden = status.network === undefined;
       playBots.hidden = status.playBots === undefined;
       if (status.playBots !== undefined) {
         const { inSeconds } = status.playBots;

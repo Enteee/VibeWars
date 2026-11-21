@@ -1046,6 +1046,8 @@ export default {
   "queue.guildVsGuild": "Cech proti cechu",
   "queue.hallHeldBy": "{holder} drží Sieň hrdinov",
   "queue.hallUnheld": "Sieň hrdinov nikto nedrží",
+  "queue.hardNatHint":
+    "Tvoja sieť môže blokovať priame zápasy. Pomôže nastaviť {relay} v Nastaveniach alebo presmerovať port.",
   "queue.heroesAscent": "Výstup hrdinov · kolo {round}",
   "queue.hostLeft": "Hostiteľ odišiel",
   "queue.hostOnly": "Frontu môže opustiť len hostiteľ.",

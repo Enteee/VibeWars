@@ -906,6 +906,8 @@ export default {
   "queue.guildVsGuild": "길드 대 길드",
   "queue.hallHeldBy": "{holder}이(가) 영웅의 전당을 차지함",
   "queue.hallUnheld": "영웅의 전당을 차지한 팀 없음",
+  "queue.hardNatHint":
+    "네트워크가 직접 매치를 막고 있을 수 있습니다. 옵션에서 {relay}를 설정하거나 포트를 포워딩하면 도움이 됩니다.",
   "queue.heroesAscent": "영웅의 승천 · {round}라운드",
   "queue.hostLeft": "호스트가 나갔어요",
   "queue.hostOnly": "호스트만 대기열에서 나갈 수 있어요.",

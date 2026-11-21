@@ -10,6 +10,8 @@ aber nie eine Gildenschlacht, einen Reliktlauf, King of the Hill oder Punkte ero
 Teamarena lost für jedes Match eine ihrer Karten aus, der Aufstieg der Helden beginnt auf seiner
 ersten Karte, und nur in einem Gehosteten Spiel wählt der Host.
 
+In einer Warteschlange können zwei Spieler, deren Netzwerke beide direkte Verbindungen blockieren, nicht zusammengebracht werden, darum zählt die Warteschlange nur die Spieler, mit denen du spielen könntest. Ist deins so ein Netzwerk, sagt die Warteschlange es dir: Ein Relay unter **Optionen → Relay (TURN)** oder eine Portweiterleitung hilft.
+
 Jede Karte ist für bestimmte Teamgrößen gemacht, und ein Modus spielt nur eine Karte für seine
 Größe: Ein 8v8 quetscht sich nie in eine Arena für 1v1. Die **Teamgröße** in der Leiste springt
 nur durch die Größen, die der angezeigte Modus spielt.

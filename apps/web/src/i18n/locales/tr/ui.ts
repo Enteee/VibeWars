@@ -955,6 +955,8 @@ export default {
   "queue.guildVsGuild": "Lonca vs Lonca",
   "queue.hallHeldBy": "{holder} Kahramanlar Salonu'nu elinde tutuyor",
   "queue.hallUnheld": "Kahramanlar Salonu kimsenin elinde değil",
+  "queue.hardNatHint":
+    "Ağın doğrudan maçları engelliyor olabilir. Ayarlar'da bir {relay} kurmak ya da bir port yönlendirmek yardımcı olur.",
   "queue.heroesAscent": "Kahramanların Yükselişi · {round}. tur",
   "queue.hostLeft": "Kurucu ayrıldı",
   "queue.hostOnly": "Sıradan yalnızca kurucu çıkabilir.",

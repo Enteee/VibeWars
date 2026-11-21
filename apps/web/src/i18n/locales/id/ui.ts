@@ -909,6 +909,8 @@ export default {
   "queue.guildVsGuild": "Guild vs Guild",
   "queue.hallHeldBy": "{holder} menguasai Aula Pahlawan",
   "queue.hallUnheld": "Tak ada yang menguasai Aula Pahlawan",
+  "queue.hardNatHint":
+    "Jaringanmu mungkin memblokir pertandingan langsung. Mengatur {relay} di Opsi, atau meneruskan port, membantu.",
   "queue.heroesAscent": "Pendakian Pahlawan · ronde {round}",
   "queue.hostLeft": "Host keluar",
   "queue.hostOnly": "Hanya host yang bisa keluar dari antrean.",

@@ -39,7 +39,14 @@ describe("queueStatus (#2743)", () => {
         NOW,
       );
     expect(
-      random({ kind: "searching", searching: 3, teams: 3, needed: 8, waitedMs: 65_000 }),
+      random({
+        kind: "searching",
+        searching: 3,
+        teams: 3,
+        needed: 8,
+        waitedMs: 65_000,
+        hardNat: false,
+      }),
     ).toEqual({
       title: "Random Arena 4v4",
       waited: "1:05",
@@ -53,8 +60,52 @@ describe("queueStatus (#2743)", () => {
     });
     expect(random({ kind: "forming", group: GROUP })?.detail).toBe("Match found");
     expect(random({ kind: "fell-through" })?.detail).toBe("Match fell through, searching again");
-    const first = random({ kind: "searching", searching: 0, teams: 0, needed: 2, waitedMs: 0 });
+    const first = random({
+      kind: "searching",
+      searching: 0,
+      teams: 0,
+      needed: 2,
+      waitedMs: 0,
+      hardNat: false,
+    });
     expect(first?.detail).toBeUndefined();
+  });
+
+  it("says why a hardNat ticket may wait, and only for one (#3758)", () => {
+    const hint =
+      "Your network may block direct matches. Setting a relay (TURN) in Options, or forwarding a port, helps.";
+    const random = (hardNat: boolean) =>
+      queueStatus(
+        {
+          kind: "random",
+          mode: "random-arena-1v1",
+          since: NOW,
+          state: { kind: "searching", searching: 1, teams: 1, needed: 2, waitedMs: 0, hardNat },
+          standing: undefined,
+        },
+        NOW,
+      );
+    expect(random(true)?.network).toBe(hint);
+    expect(random(false)?.network).toBeUndefined();
+    const team = (hardNat: boolean) =>
+      queueStatus(
+        {
+          kind: "team",
+          mode: "team-arena",
+          teamSize: 2,
+          ascentRound: null,
+          since: NOW,
+          teams: 1,
+          hardNat,
+          isHost: true,
+          playBots: false,
+          hallHolder: undefined,
+          standing: undefined,
+        },
+        NOW,
+      );
+    expect(team(true)?.network).toBe(hint);
+    expect(team(false)?.network).toBeUndefined();
   });
 
   it("names a Team Arena's size and how many teams search, the host's to leave", () => {
@@ -67,6 +118,7 @@ describe("queueStatus (#2743)", () => {
           ascentRound: null,
           since: NOW - 9_999,
           teams,
+          hardNat: false,
           isHost,
           playBots: false,
           hallHolder: undefined,
@@ -94,6 +146,7 @@ describe("queueStatus (#2743)", () => {
         ascentRound: ASCENT_PROGRESSION.length - 1,
         since: 0,
         teams: 1,
+        hardNat: false,
         isHost: false,
         playBots: false,
         hallHolder: { name: "Ana", signet: 5 },
@@ -115,6 +168,7 @@ describe("queueStatus (#2743)", () => {
       teamSize: 4,
       since: NOW,
       teams: 3,
+      hardNat: false,
       isHost: true,
       playBots: false,
       hallHolder: undefined,
@@ -145,6 +199,7 @@ describe("queueStatus (#2743)", () => {
           ascentRound: null,
           since: NOW - waitedMs,
           teams: undefined,
+          hardNat: false,
           isHost: true,
           playBots: true,
           hallHolder: undefined,

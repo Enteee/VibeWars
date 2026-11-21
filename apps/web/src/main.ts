@@ -692,6 +692,8 @@ async function main(): Promise<void> {
         partyClosed: string | undefined;
         /** Teams its queue last heard searching (#1881); `undefined` until it says, or while it can't. */
         teams: number | undefined;
+        /** Its ticket is `hardNat`, as its queue last said searching (#3758). */
+        hardNat: boolean;
         /** Its match is over: whoever leaves it first is no news. */
         finished: boolean;
         /** The Heroes' Ascent round its lobby queued at (#1996); `null` in other modes. */
@@ -869,6 +871,7 @@ async function main(): Promise<void> {
       ascentRound: team.ascentRound,
       since: team.since,
       teams: team.teams,
+      hardNat: team.hardNat,
       isHost: snapshot.isHost,
       // Heroes' Ascent waits for a side at its round, never for bots (#1996).
       playBots: snapshot.isHost && snapshot.mode !== "heroes-ascent",
@@ -2261,6 +2264,7 @@ async function main(): Promise<void> {
       parked: undefined,
       partyClosed: undefined,
       teams: undefined,
+      hardNat: false,
       finished: false,
       ascentRound: snapshot.ascentRound,
       playedRound: snapshot.ascentRound,
@@ -2314,6 +2318,7 @@ async function main(): Promise<void> {
         onState: (state) => {
           if (state.kind === "searching") {
             current.teams = state.teams;
+            current.hardNat = state.hardNat;
           } else if (state.kind === "unreachable") {
             current.teams = undefined;
           } else if (state.kind === "fell-through") {

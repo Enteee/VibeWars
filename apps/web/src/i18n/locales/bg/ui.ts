@@ -957,6 +957,8 @@ export default {
   "queue.guildVsGuild": "Гилдия срещу гилдия",
   "queue.hallHeldBy": "{holder} държи Залата на героите",
   "queue.hallUnheld": "Никой не държи Залата на героите",
+  "queue.hardNatHint":
+    "Мрежата ти може да блокира преките мачове. Помага {relay} в Настройки или пренасочване на порт.",
   "queue.heroesAscent": "Възход на героите · рунд {round}",
   "queue.hostLeft": "Домакинът напусна",
   "queue.hostOnly": "Само домакинът може да напусне опашката.",

@@ -54,7 +54,9 @@ export interface TicketKey {
 export type QueueState =
   /**
    * `searching` players are queued, own included, of the `needed` a match
-   * takes, in `teams` tickets: a party is one (#1881).
+   * takes, in `teams` tickets: a party is one (#1881). Only players who
+   * could play with this client count: a `hardNat` own ticket meets no
+   * one until an open ticket is live, so then it counts alone (#3758).
    */
   | {
       readonly kind: "searching";
@@ -62,6 +64,8 @@ export type QueueState =
       readonly teams: number;
       readonly needed: number;
       readonly waitedMs: number;
+      /** The own ticket is `hardNat`: it needs an open one to be matched. */
+      readonly hardNat: boolean;
     }
   /** A group holds this client; it is waiting out `FORMATION_SETTLE_MS`. */
   | { readonly kind: "forming"; readonly group: FormedGroup }
@@ -153,7 +157,14 @@ function same(a: QueueState, b: QueueState): boolean {
  * queue screen shows while the client is still being made (#2090).
  */
 export function startingQueueState(mode: QueueMode): QueueState {
-  return { kind: "searching", searching: 0, teams: 0, needed: 2 * teamSizeOf(mode), waitedMs: 0 };
+  return {
+    kind: "searching",
+    searching: 0,
+    teams: 0,
+    needed: 2 * teamSizeOf(mode),
+    waitedMs: 0,
+    hardNat: false,
+  };
 }
 
 export function createQueueClient(options: QueueClientOptions): QueueClient {
@@ -259,23 +270,34 @@ export function createQueueClient(options: QueueClientOptions): QueueClient {
     return new Set(ignored.keys());
   }
 
-  /** Players and tickets live in this mode and round at `at`, own included. */
+  /**
+   * Players and tickets live in this mode and round at `at`, own included.
+   * A group needs an open ticket to host (#2090), so a `hardNat` own
+   * ticket counts only itself while every live ticket is `hardNat`.
+   */
   function searching(at: number): QueueState {
     const skip = stillIgnored(at);
-    let players = 0;
-    let teams = 0;
-    for (const ticket of tickets.values()) {
-      if (
+    // A follower's own ticket is its leader's.
+    const ownId = follower ? (leader ?? key.ticketId) : key.ticketId;
+    const live = [...tickets.values()].filter(
+      (ticket) =>
         ticket.protocol === PROTOCOL_VERSION &&
         ticket.ascentRound === ascentRound &&
         isLive(ticket, at) &&
-        !skip.has(ticket.ticketId)
-      ) {
-        players += ticket.members.length;
-        teams += 1;
-      }
-    }
-    return { kind: "searching", searching: players, teams, needed, waitedMs: at - enteredAt };
+        !skip.has(ticket.ticketId),
+    );
+    // Before the board echoes it, a follower knows only its own network.
+    const ownHardNat = tickets.get(ownId)?.hardNat ?? hardNat;
+    const alone = ownHardNat && live.every((ticket) => ticket.hardNat);
+    const counted = alone ? live.filter((ticket) => ticket.ticketId === ownId) : live;
+    return {
+      kind: "searching",
+      searching: counted.reduce((players, ticket) => players + ticket.members.length, 0),
+      teams: counted.length,
+      needed,
+      waitedMs: at - enteredAt,
+      hardNat: ownHardNat,
+    };
   }
 
   /** Where `groups`, formed at `at`, leave this client. */

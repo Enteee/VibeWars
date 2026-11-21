@@ -13,6 +13,8 @@ Csapataréna minden meccsre kisorsolja egy pályáját, a Hősök Útja az
 első pályáján kezdődik, és csak a Saját játékban választhat a
 házigazda.
 
+A sorban két játékost, akiknek a hálózata egyaránt blokkolja a közvetlen kapcsolatokat, nem lehet egymással párosítani, ezért a sor csak azokat a játékosokat számolja, akikkel játszhatnál. Ha a te hálózatod ilyen, a sor szól: segít egy relay az **Opciók → relay (TURN)** alatt, vagy egy port továbbítása.
+
 Minden pálya bizonyos csapatméretekre készült, és egy mód csak olyan
 pályán játszik, amely az ő méretére készült: egy 8v8 sosem zsúfolódik
 össze egy 1v1-re épített arénában. A sáv **Csapatméret** nyilai csak

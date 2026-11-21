@@ -13,6 +13,8 @@ Colina ou Captura de Pontos. A Arena de Equipes sorteia um dos seus mapas
 a cada partida, a Ascensão dos Heróis começa no primeiro mapa dela, e só
 uma Partida Hospedada deixa o host escolher.
 
+Numa fila, dois jogadores cujas redes bloqueiam ambas as ligações diretas não podem ser emparelhados, por isso a fila conta só os jogadores com quem poderias jogar. Se a tua rede for assim, a fila diz-to: ajuda um relay em **Opções → relay (TURN)** ou redirecionar uma porta.
+
 Todo mapa é feito para alguns tamanhos de equipe, e um modo só joga um
 mapa feito para o seu tamanho: um 8v8 nunca se espreme em uma arena feita
 para 1v1. O **Tamanho** da barra só passa pelos tamanhos que o modo

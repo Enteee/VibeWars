@@ -1018,6 +1018,8 @@ export default {
   "queue.guildVsGuild": "Guilde contre guilde",
   "queue.hallHeldBy": "{holder} tient le Hall des héros",
   "queue.hallUnheld": "Personne ne tient le Hall des héros",
+  "queue.hardNatHint":
+    "Ton réseau peut bloquer les matchs directs. Un {relay} dans Options, ou une redirection de port, aide.",
   "queue.heroesAscent": "Ascension des héros · manche {round}",
   "queue.hostLeft": "L'hôte est parti",
   "queue.hostOnly": "Seul l'hôte peut quitter la file.",

@@ -957,6 +957,8 @@ export default {
   "queue.guildVsGuild": "Céh a céh ellen",
   "queue.hallHeldBy": "{holder} tartja a Hősök Csarnokát",
   "queue.hallUnheld": "Senki sem tartja a Hősök Csarnokát",
+  "queue.hardNatHint":
+    "A hálózatod blokkolhatja a közvetlen meccseket. Segít egy {relay} beállítása az Opciókban vagy egy port továbbítása.",
   "queue.heroesAscent": "Hősök Útja · {round}. kör",
   "queue.hostLeft": "A házigazda kilépett",
   "queue.hostOnly": "Csak a házigazda hagyhatja el a sort.",

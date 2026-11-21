@@ -13,6 +13,8 @@ eikä Valtauspisteitä. Tiimiareena arpoo jokaiseen otteluun yhden
 kartoistaan, Sankarien nousu alkaa ensimmäiseltä kartaltaan, ja vain
 Isännöity peli antaa isännän valita.
 
+Jonossa kahta pelaajaa, joiden verkot molemmat estävät suorat yhteydet, ei voi yhdistää toisiinsa, joten jono laskee vain pelaajat, joiden kanssa voisit pelata. Jos verkkosi on sellainen, jono kertoo sen: välityspalvelin kohdassa **Asetukset → relay (TURN)** tai portin uudelleenohjaus auttaa.
+
 Jokainen kartta on tehty tietyille tiimikoille, ja pelitila pelaa vain
 sen koolle tehtyä karttaa: 8v8 ei koskaan ahtaudu 1v1:lle rakennetulle
 areenalle. Palkin **Tiimin koko** käy läpi vain ne koot, joita näytetty

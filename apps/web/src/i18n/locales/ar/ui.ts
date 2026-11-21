@@ -1101,6 +1101,8 @@ export default {
   "queue.guildVsGuild": "نقابة ضد نقابة",
   "queue.hallHeldBy": "قاعة الأبطال بيد {holder}",
   "queue.hallUnheld": "قاعة الأبطال ليست بيد أحد",
+  "queue.hardNatHint":
+    "قد تمنع شبكتك المباريات المباشرة. يساعد ضبط {relay} في الخيارات أو إعادة توجيه منفذ.",
   "queue.heroesAscent": "صعود الأبطال · الجولة {round}",
   "queue.hostLeft": "غادر المضيف",
   "queue.hostOnly": "وحده المضيف يستطيع مغادرة الطابور.",

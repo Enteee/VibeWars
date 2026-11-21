@@ -11,6 +11,8 @@ ali nikad Bitku cehova, Utrku za relikvijom, Kralja brda ili Zauzimanje
 točaka. Timska arena za svaki meč izvlači jednu od svojih karata, Uspon heroja
 počinje na svojoj prvoj karti, a samo Igra s domaćinom dopušta domaćinu da bira.
 
+U redu čekanja dva igrača čije mreže obje blokiraju izravne veze ne mogu se spojiti jedan s drugim, pa red broji samo igrače s kojima bi mogao igrati. Ako je tvoja mreža takva, red ti to kaže: pomaže relej u **Opcije → relej (TURN)** ili prosljeđivanje porta.
+
 Svaka je karta napravljena za neke veličine timova, a način igra samo kartu napravljenu
 za svoju veličinu: 8v8 se nikad ne gura u arenu izrađenu za 1v1. **Veličina
 tima** na traci prolazi samo kroz veličine koje prikazani način igra.

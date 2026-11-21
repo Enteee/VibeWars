@@ -10,6 +10,8 @@ ale nigdy Bitwę gildii, Wyścig relikwii, Króla wzgórza ani Punkty kontrolne.
 drużynowa losuje jedną ze swoich map na każdy mecz, Szczyt Bohaterów zaczyna od
 pierwszej mapy, a tylko Gra prywatna pozwala hostowi wybierać.
 
+W kolejce dwóch graczy, których sieci obie blokują połączenia bezpośrednie, nie może zostać ze sobą sparowanych, więc kolejka liczy tylko graczy, z którymi możesz zagrać. Jeśli twoja sieć jest taka, kolejka to mówi: pomoże przekaźnik w **Opcje → przekaźnik (TURN)** lub przekierowanie portu.
+
 Każda mapa powstała dla określonych rozmiarów drużyn, a tryb gra tylko na mapie
 stworzonej dla swojego rozmiaru: 8v8 nigdy nie stłoczy się na arenie zbudowanej dla
 1v1. **Rozmiar drużyny** na pasku przechodzi tylko przez rozmiary, którymi gra

@@ -1011,6 +1011,8 @@ export default {
   "queue.guildVsGuild": "Ceh protiv ceha",
   "queue.hallHeldBy": "{holder} drži Dvoranu junaka",
   "queue.hallUnheld": "Nitko ne drži Dvoranu junaka",
+  "queue.hardNatHint":
+    "Tvoja mreža možda blokira izravne mečeve. Pomaže {relay} u Opcijama ili prosljeđivanje porta.",
   "queue.heroesAscent": "Uspon heroja · runda {round}",
   "queue.hostLeft": "Domaćin je otišao",
   "queue.hostOnly": "Samo domaćin može napustiti red.",

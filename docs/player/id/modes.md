@@ -11,6 +11,8 @@ tapi tidak pernah Perang Guild, Lari Relik, Raja Bukit atau Rebut
 Titik. Arena Tim mengundi salah satu petanya untuk setiap laga, Pendakian Pahlawan
 dimulai di peta pertamanya, dan hanya Game Host yang membiarkan host memilih.
 
+Dalam antrean, dua pemain yang jaringannya sama-sama memblokir koneksi langsung tidak bisa dipertemukan, jadi antrean hanya menghitung pemain yang bisa bermain denganmu. Jika jaringanmu seperti itu, antrean memberitahumu: relay di **Opsi → relay (TURN)**, atau meneruskan port, membantu.
+
 Setiap peta dibuat untuk ukuran tim tertentu, dan sebuah mode hanya memainkan peta yang dibuat
 untuk ukurannya: 8v8 tidak akan pernah berdesakan di arena yang dibangun untuk 1v1.
 **Ukuran tim** di rel hanya berpindah di antara ukuran yang dimainkan mode yang tampil.

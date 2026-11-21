@@ -904,6 +904,8 @@ export default {
   "queue.guildVsGuild": "กิลด์ปะทะกิลด์",
   "queue.hallHeldBy": "{holder} ครองโถงวีรบุรุษ",
   "queue.hallUnheld": "ยังไม่มีผู้ครองโถงวีรบุรุษ",
+  "queue.hardNatHint":
+    "เครือข่ายของคุณอาจบล็อกการแข่งแบบตรง การตั้ง {relay} ในการตั้งค่า หรือการส่งต่อพอร์ตช่วยได้",
   "queue.heroesAscent": "สู่ยอดวีรชน · รอบ {round}",
   "queue.hostLeft": "โฮสต์ออกไปแล้ว",
   "queue.hostOnly": "มีแค่โฮสต์ที่ออกจากคิวได้",

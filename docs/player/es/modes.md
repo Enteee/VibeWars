@@ -12,6 +12,8 @@ gremios, una Carrera de reliquias, Rey de la colina ni Puntos de captura. Arena
 por equipos sortea uno de sus mapas en cada partida, Ascenso de los Héroes
 empieza en su primer mapa, y solo una Partida alojada deja elegir al anfitrión.
 
+En una cola, dos jugadores cuyas redes bloquean las conexiones directas no pueden emparejarse entre sí, así que la cola solo cuenta a los jugadores con los que podrías jugar. Si tu red es así, la cola te lo dice: ayuda un relay en **Opciones → relay (TURN)** o redirigir un puerto.
+
 Cada mapa está hecho para ciertos tamaños de equipo, y un modo solo juega un
 mapa hecho para su tamaño: un 8v8 nunca se amontona en una arena construida
 para un 1v1. El **Tamaño del equipo** de la barra solo pasa por los tamaños que

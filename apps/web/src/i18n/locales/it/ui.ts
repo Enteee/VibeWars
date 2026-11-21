@@ -1010,6 +1010,8 @@ export default {
   "queue.guildVsGuild": "Gilda contro Gilda",
   "queue.hallHeldBy": "{holder} detiene la Sala degli eroi",
   "queue.hallUnheld": "Nessuno detiene la Sala degli eroi",
+  "queue.hardNatHint":
+    "La tua rete potrebbe bloccare le partite dirette. Aiuta impostare un {relay} nelle Opzioni o inoltrare una porta.",
   "queue.heroesAscent": "Ascesa degli Eroi · turno {round}",
   "queue.hostLeft": "L'host è uscito",
   "queue.hostOnly": "Solo l'host può uscire dalla coda.",

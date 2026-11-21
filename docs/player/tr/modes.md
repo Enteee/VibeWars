@@ -13,6 +13,8 @@ Geçirme seçmez. Takım Arenası her maç için haritalarından birini çeker,
 Kahramanların Yükselişi ilk haritasında başlar ve kurucunun seçmesine
 yalnızca Özel Oyun izin verir.
 
+Bir sırada, ağlarının ikisi de doğrudan bağlantıları engelleyen iki oyuncu birbiriyle eşleşemez; bu yüzden sıra yalnızca oynayabileceğin oyuncuları sayar. Ağın böyleyse sıra bunu söyler: **Ayarlar → relay (TURN)** içindeki bir röle ya da bir port yönlendirme yardımcı olur.
+
 Her harita belirli takım boyutları için yapılmıştır ve bir mod
 yalnızca kendi boyutu için yapılmış bir haritayı oynatır: bir 8v8 asla
 1v1 için yapılmış bir arenaya tıkışmaz. Şeridin **Takım boyutu**

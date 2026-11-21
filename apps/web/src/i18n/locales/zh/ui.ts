@@ -900,6 +900,7 @@ export default {
   "queue.guildVsGuild": "公会战",
   "queue.hallHeldBy": "{holder} 占据英雄大厅",
   "queue.hallUnheld": "无人占据英雄大厅",
+  "queue.hardNatHint": "你的网络可能阻止直接对战。在选项中设置{relay}或转发端口会有帮助。",
   "queue.heroesAscent": "英雄之路 · 第 {round} 轮",
   "queue.hostLeft": "房主已离开",
   "queue.hostOnly": "只有房主可以退出队列。",
