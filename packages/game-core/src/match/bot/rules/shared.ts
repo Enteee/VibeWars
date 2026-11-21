@@ -11,7 +11,8 @@ import { distance, ZERO, type Vec2 } from "../../../vec2.js";
 import type { BehaviourIntent, Reaction } from "../../behaviour.js";
 import type { BehaviourContext } from "../../behaviour.js";
 import { FLAG_REACH_UNITS } from "../../flags.js";
-import { ghostId } from "../../ghost.js";
+import { ghostId, isGhostId, onHill } from "../../ghost.js";
+import { atObjective } from "../../layer-rules.js";
 import { carriedRelic } from "../../relics.js";
 import type { Participant } from "../../simulation.js";
 import { roleOf } from "../role.js";
@@ -279,6 +280,42 @@ export function foeNear(rule: RuleContext): boolean {
  */
 export function pressed(rule: RuleContext): boolean {
   return foeNear(rule) || shotAt(rule, rule.self);
+}
+
+/** An objective errand: what the bot does, and the point it goes to. */
+export interface Errand {
+  readonly intent: BehaviourIntent;
+  readonly at: { readonly position: Vec2; readonly layer: number };
+}
+
+/**
+ * `rule` for a bot on its way to an objective `goal` (#3749): without
+ * the foes behind it that leave it be, so a band does not turn back
+ * from its errand for a passing scout. A foe is behind when it is
+ * farther from `goal` than the bot by more than `POSITION_SLACK`, and
+ * leaves it be when it targets nobody of the bot's team, carries no
+ * relic, is no ghost on the altar and stands off `goal`. One that
+ * targets one of the bot's team, or comes nearer the goal, counts again.
+ */
+export function onErrand(
+  rule: RuleContext,
+  goal: { readonly position: Vec2; readonly layer: number },
+): RuleContext {
+  const { context, self } = rule;
+  const team = self.combatant.team;
+  const ours = new Set(
+    context.participants.filter((other) => other.combatant.team === team).map((other) => other.id),
+  );
+  const { altar, altarLayer, relics } = context.objectives;
+  const own = distance(self.position, goal.position);
+  const behind = (foe: Participant): boolean =>
+    distance(foe.position, goal.position) > own + POSITION_SLACK &&
+    (foe.targetId === undefined || !ours.has(foe.targetId)) &&
+    (foe.combatant.attack?.targetId === undefined || !ours.has(foe.combatant.attack.targetId)) &&
+    carriedRelic(relics, foe.id) === undefined &&
+    !(isGhostId(foe.id) && altar !== undefined && onHill(altar, altarLayer, foe)) &&
+    !atObjective(goal.position, goal.layer, foe, FLAG_REACH_UNITS);
+  return { ...rule, foes: rule.foes.filter((foe) => !behind(foe)) };
 }
 
 /** A ranged bot or healer with a melee foe this close stands and fights it (#2545). */

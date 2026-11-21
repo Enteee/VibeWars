@@ -50,6 +50,7 @@ describe("BOT_RULES (#2042)", () => {
       "shrines",
       "break-wall",
       "keep-lever",
+      "keep-errand",
       "fight",
       "gates",
       "levers",
