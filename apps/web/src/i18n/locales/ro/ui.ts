@@ -1011,6 +1011,8 @@ export default {
   "queue.guildVsGuild": "Breaslă vs breaslă",
   "queue.hallHeldBy": "{holder} deține Sala Eroilor",
   "queue.hallUnheld": "Nimeni nu deține Sala Eroilor",
+  "queue.hardNatHint":
+    "Rețeaua ta poate bloca meciurile directe. Ajută un {relay} în Opțiuni sau redirecționarea porturilor.",
   "queue.heroesAscent": "Ascensiunea Eroilor · runda {round}",
   "queue.hostLeft": "Gazda a ieșit",
   "queue.hostOnly": "Doar gazda poate părăsi coada.",

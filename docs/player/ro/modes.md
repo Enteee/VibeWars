@@ -11,6 +11,8 @@ de bresle, o Cursă a relicvelor, Regele dealului sau Capturare de puncte. Arena
 echipe trage la sorți una dintre hărțile ei pentru fiecare meci, Ascensiunea Eroilor
 începe de la prima ei hartă și doar un Joc găzduit îi permite gazdei să aleagă.
 
+Doi jucători din spatele unor rețele stricte nu pot fi potriviți unul cu altul într-o coadă, așa că coada numără doar jucătorii cu care poți fi potrivit și îți spune asta. Ajută un releu în **Opțiuni → Releu (TURN)**.
+
 Fiecare hartă este făcută pentru anumite mărimi de echipă, iar un mod joacă doar o
 hartă făcută pentru mărimea lui: un 8v8 nu se înghesuie niciodată într-o arenă
 construită pentru 1v1. **Mărime echipă** de pe bară trece doar prin mărimile pe care

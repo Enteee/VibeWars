@@ -912,6 +912,8 @@ export default {
   "queue.guildVsGuild": "ギルド対ギルド",
   "queue.hallHeldBy": "{holder} が英雄の間を保持中",
   "queue.hallUnheld": "英雄の間の保持者なし",
+  "queue.hardNatHint":
+    "ネットワークが直接のマッチを妨げている可能性があります。オプションの{relay}かポート転送が役立ちます。",
   "queue.heroesAscent": "ヒーローズアセント · ラウンド{round}",
   "queue.hostLeft": "ホストが退出しました",
   "queue.hostOnly": "キューを離れられるのはホストだけです。",

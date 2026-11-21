@@ -1019,6 +1019,8 @@ export default {
   "queue.guildVsGuild": "Gremio contra gremio",
   "queue.hallHeldBy": "{holder} controla el Salón de los héroes",
   "queue.hallUnheld": "Nadie controla el Salón de los héroes",
+  "queue.hardNatHint":
+    "Tu red puede bloquear las partidas directas. Ayuda un {relay} en Opciones o redirigir puertos.",
   "queue.heroesAscent": "Ascenso de los Héroes · ronda {round}",
   "queue.hostLeft": "El anfitrión se fue",
   "queue.hostOnly": "Solo el anfitrión puede salir de la cola.",

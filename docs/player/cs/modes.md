@@ -2,6 +2,8 @@
 
 Každá mapa hraje jeden režim a lobby ho uvádí pod názvem mapy. Režimy jsou položky lišty na levé straně hlavní obrazovky. Režim mapy nikdo nevybírá, ale položka lišty, ze které hostuješ, určuje režimy, které mapy její lobby hrají: ![Týmová aréna](../../../apps/web/public/icons/mode/team-arena.svg) **Týmová aréna** Vyhlazení, Počet zabití a Vyhlazení s knězem, ![Výstup hrdinů](../../../apps/web/public/icons/mode/heroes-ascent.svg) **Výstup hrdinů** Běh s relikvií, Krále kopce a Dobývání bodů a ![GvG](../../../apps/web/public/icons/mode/gvg.svg) **GvG** Bitvu cechů. ![Vlastní hra](../../../apps/web/public/icons/mode/hosted-game.svg) **Vlastní hra** nabízí všechny mapy. ![Náhodná aréna](../../../apps/web/public/icons/mode/random-arena.svg) **Náhodná aréna** vybere mapu za tebe a s ní i režim, ale nikdy Bitvu cechů, Běh s relikvií, Krále kopce ani Dobývání bodů. Týmová aréna losuje pro každý zápas jednu ze svých map, Výstup hrdinů začíná na své první mapě a jen ve Vlastní hře vybírá hostitel.
 
+Dva hráči za přísnými sítěmi se ve frontě nemohou spárovat spolu, proto fronta počítá jen hráče, se kterými se spárovat můžete, a řekne vám to. Pomůže relay v **Možnosti → relay (TURN)**.
+
 Každá mapa je dělaná pro určité velikosti týmů a režim hraje jen mapu dělanou pro jeho velikost: 8v8 se nikdy nenatlačí do arény postavené pro 1v1. **Velikost týmu** na liště přepíná jen velikosti, které zobrazený režim hraje.
 
 | Režim         | Velikosti týmů | Mapa                                          |

@@ -1044,6 +1044,8 @@ export default {
   "queue.guildVsGuild": "Гильдия на гильдию",
   "queue.hallHeldBy": "{holder} удерживает Зал героев",
   "queue.hallUnheld": "Никто не удерживает Зал героев",
+  "queue.hardNatHint":
+    "Ваша сеть может блокировать прямые матчи. Поможет {relay} в настройках или проброс портов.",
   "queue.heroesAscent": "Путь героев · раунд {round}",
   "queue.hostLeft": "Хост вышел",
   "queue.hostOnly": "Выйти из очереди может только хост.",

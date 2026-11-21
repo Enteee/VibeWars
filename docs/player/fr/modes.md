@@ -12,6 +12,8 @@ une Course aux reliques, un Roi de la colline ou des Points de capture. L'Arène
 d'équipe tire une de ses cartes à chaque match, l'Ascension des héros commence
 sur sa première carte, et seule une Partie hébergée laisse l'hôte choisir.
 
+Deux joueurs derrière des réseaux stricts ne peuvent pas être appariés entre eux dans une file, alors la file ne compte que les joueurs qui peuvent jouer avec vous, et le dit. Un relais dans **Options → relais (TURN)** aide.
+
 Chaque carte est faite pour certaines tailles d'équipe, et un mode ne joue
 qu'une carte faite pour sa taille : un 8v8 ne s'entasse jamais dans une arène
 construite pour un 1v1. La **Taille d'équipe** de la colonne ne passe que par

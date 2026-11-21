@@ -953,6 +953,8 @@ export default {
   "queue.guildVsGuild": "Laug mod laug",
   "queue.hallHeldBy": "{holder} holder Heltenes Hal",
   "queue.hallUnheld": "Ingen holder Heltenes Hal",
+  "queue.hardNatHint":
+    "Dit netværk kan blokere direkte kampe. Et {relay} under Indstillinger eller port forwarding hjælper.",
   "queue.heroesAscent": "Heltenes opstigning · runde {round}",
   "queue.hostLeft": "Værten er gået",
   "queue.hostOnly": "Kun værten kan forlade køen.",

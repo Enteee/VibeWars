@@ -1004,6 +1004,8 @@ export default {
   "queue.guildVsGuild": "Guilda contra Guilda",
   "queue.hallHeldBy": "{holder} domina o Salão dos Heróis",
   "queue.hallUnheld": "Ninguém domina o Salão dos Heróis",
+  "queue.hardNatHint":
+    "Sua rede pode bloquear partidas diretas. Um {relay} nas Opções ou o redirecionamento de portas ajuda.",
   "queue.heroesAscent": "Ascensão dos Heróis · rodada {round}",
   "queue.hostLeft": "O host saiu",
   "queue.hostOnly": "Só o host pode sair da fila.",

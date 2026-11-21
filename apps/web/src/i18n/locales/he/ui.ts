@@ -1014,6 +1014,8 @@ export default {
   "queue.guildVsGuild": "גילדה מול גילדה",
   "queue.hallHeldBy": "היכל הגיבורים בידי {holder}",
   "queue.hallUnheld": "היכל הגיבורים אינו בידי איש",
+  "queue.hardNatHint":
+    "ייתכן שהרשת שלך חוסמת משחקים ישירים. {relay} באפשרויות או העברת פורטים יעזרו.",
   "queue.heroesAscent": "עליית הגיבורים · סיבוב {round}",
   "queue.hostLeft": "המארח עזב",
   "queue.hostOnly": "רק המארח יכול לעזוב את התור.",

@@ -956,6 +956,8 @@ export const en = {
   "queue.guildVsGuild": "Guild vs Guild",
   "queue.hallHeldBy": "{holder} holds the Hall of Heroes",
   "queue.hallUnheld": "Nobody holds the Hall of Heroes",
+  "queue.hardNatHint":
+    "Your network may block direct matches. A {relay} in Options, or port forwarding, helps.",
   "queue.heroesAscent": "Heroes' Ascent · round {round}",
   "queue.hostLeft": "The host left",
   "queue.hostOnly": "Only the host can leave the queue.",
