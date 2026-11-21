@@ -381,6 +381,12 @@ What it does not defend against:
   connected opponents, so enough keys that play each other widely look
   like a real community. Clique detection is a later card.
 - **Who played whom is public**, by key and character name, for good.
+- **Flooding the relays delays the leaderboard.** The job pages back
+  through each relay with `until`; a full page of spam in one second is
+  skipped, not stopped at (#3574). A pure volume flood can still use up a
+  relay's 20 s before the job reaches older receipts, and that relay then
+  adds only what it reached that hour. We accept that: the archive is
+  kept, and the next hour asks again.
 
 ## How the host and its peers check each other
 

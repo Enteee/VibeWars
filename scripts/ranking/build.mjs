@@ -1,0 +1,435 @@
+/**
+ * `pnpm ranking:build [--archive <dir>] [--as-of <YYYY-MM-DD>]`: the
+ * leaderboard cache (ADR-0055, #3574). Reads the archive of ranked
+ * receipts, asks every relay for the ones published since, keeps the
+ * new ones, and rates them all from scratch.
+ *
+ * Writes into the archive directory:
+ * - `receipts.ndjson`: every kept receipt, one canonical JSON per line,
+ *   sorted, since relays forget. A receipt is never dropped from it;
+ * - `leaderboard.json`: `{asOf, engine, count, entries}`;
+ * - `log.txt`: counts by reject reason, the relays reached, and the
+ *   sha256 of `leaderboard.json`.
+ *
+ * Anyone with the same archive and relay content gets the same bytes.
+ */
+
+import { createHash } from "node:crypto";
+import fs from "node:fs";
+import path from "node:path";
+import process from "node:process";
+import { fileURLToPath } from "node:url";
+
+import { hashes, schnorr } from "@noble/secp256k1";
+import {
+  canonicalBytes,
+  mergeReceipts,
+  parseReceipt,
+  rankOrder,
+  rate,
+  RATING,
+  receiptHash,
+  resultDigest,
+  startDigest,
+  utcDay,
+  validateReceipt,
+} from "@vibewars/ranking";
+
+import RELAYS from "../../apps/web/src/net/transport/relays.json" with { type: "json" };
+
+/** @typedef {import("@vibewars/ranking").RankedReceipt} RankedReceipt */
+/** @typedef {import("@vibewars/ranking").ReceiptCrypto} ReceiptCrypto */
+/**
+ * Every event `relay` holds for the ranked topic since `since` (unix
+ * seconds; none for everything), or `undefined` when it could not be reached.
+ * @typedef {(relay: string, since: number | undefined) => Promise<unknown[] | undefined>} FetchRelay
+ */
+
+/** NIP-78 application data, as `ranked-receipts.ts` publishes it. */
+const RECEIPT_KIND = 30078;
+/** The `t` and the `d` prefix of every ranked receipt (`ranked-receipts.ts`). */
+const RANKED_TOPIC = "vibewars-ranked";
+/** How far before the newest archived match the relays are asked from: late publishers. */
+const SINCE_SLACK_SECONDS = 2 * RATING.secondsPerDay;
+const RELAY_TIMEOUT_MS = 20_000;
+/** Events asked for per page: relays cap a `REQ`, so older ones are paged with `until`. */
+const PAGE_LIMIT = 500;
+
+/**
+ * The first second after `day`. A receipt from then on is in the future:
+ * taken in, it would pin the relays' `since` and the leaderboard's `asOf`
+ * there for good, so nothing past it is taken in or counted.
+ * @param {number} day
+ */
+const endOf = (day) => (day + 1) * RATING.secondsPerDay;
+
+/** @param {Uint8Array} bytes */
+const sha256 = (bytes) => new Uint8Array(createHash("sha256").update(bytes).digest());
+hashes.sha256 = sha256;
+
+/**
+ * BIP-340 with Node's sha256. A check is pure, and `rate` repeats the
+ * same ones as it merges copies, so each is computed once. `trust`
+ * marks the archive's signatures good without the curve: only ones that
+ * verified were ever written to it, and checking 100k receipts again
+ * every hour would not finish in time.
+ * @returns {{ crypto: ReceiptCrypto, trust: (receipt: RankedReceipt) => void }}
+ */
+function receiptCrypto() {
+  /** Per signature, the key and digest it is good or bad for. */
+  /** @type {Map<string, { pubkey: string, digest: string, ok: boolean }>} */
+  const checked = new Map();
+  /** @param {Uint8Array} digest */
+  const hexOf = (digest) => Buffer.from(digest).toString("hex");
+  /** @type {ReceiptCrypto} */
+  const crypto = {
+    sha256,
+    verify: (pubkey, digest, sig) => {
+      const known = checked.get(sig);
+      const digestHex = hexOf(digest);
+      if (known?.pubkey === pubkey && known.digest === digestHex) {
+        return known.ok;
+      }
+      let ok;
+      try {
+        ok = schnorr.verify(Buffer.from(sig, "hex"), digest, Buffer.from(pubkey, "hex"));
+      } catch {
+        ok = false;
+      }
+      checked.set(sig, { pubkey, digest: digestHex, ok });
+      return ok;
+    },
+  };
+  return {
+    crypto,
+    trust: (receipt) => {
+      const signed = [
+        { sigs: receipt.startSigs, digest: hexOf(startDigest(receipt.start, sha256)) },
+        { sigs: receipt.resultSigs, digest: hexOf(resultDigest(receipt.result, sha256)) },
+      ];
+      for (const { sigs, digest } of signed) {
+        for (const [pubkey, sig] of Object.entries(sigs)) {
+          checked.set(sig, { pubkey, digest, ok: true });
+        }
+      }
+    },
+  };
+}
+
+const decoder = new TextDecoder();
+/** @param {unknown} value */
+const canonical = (value) => decoder.decode(canonicalBytes(value));
+
+/**
+ * The receipt `event` carries: the ranked topic, and a `d` that is its
+ * match's address or one under it (`parseRankedReceiptEvent`).
+ * @param {unknown} event
+ * @returns {RankedReceipt | undefined}
+ */
+function receiptOf(event) {
+  if (
+    typeof event !== "object" ||
+    event === null ||
+    !("kind" in event && "tags" in event && "content" in event) ||
+    event.kind !== RECEIPT_KIND ||
+    !Array.isArray(event.tags) ||
+    typeof event.content !== "string"
+  ) {
+    return undefined;
+  }
+  /** @type {unknown[]} */
+  const tags = event.tags;
+  /** @param {string} name */
+  const tag = (name) => {
+    const found = tags.find((parts) => Array.isArray(parts) && parts[0] === name);
+    return Array.isArray(found) && typeof found[1] === "string" ? found[1] : undefined;
+  };
+  const receipt = tag("t") === RANKED_TOPIC ? parseReceipt(event.content) : undefined;
+  const address = tag("d");
+  if (receipt === undefined || address === undefined) {
+    return undefined;
+  }
+  const own = `${RANKED_TOPIC}/${receipt.start.matchId}`;
+  return address === own || address.startsWith(`${own}/`) ? receipt : undefined;
+}
+
+/**
+ * Why `receipt` is not kept, or `undefined` to keep it. A valid one is
+ * kept, void or not; so is one short only of result signatures, as a
+ * player's partial is, if a seat signed it: a partial merges into a whole
+ * receipt, and is the evidence a re-round is voided with (#3573).
+ * @param {RankedReceipt} receipt
+ * @param {ReceiptCrypto} crypto
+ * @returns {string | undefined}
+ */
+function rejection(receipt, crypto) {
+  const validity = validateReceipt(receipt, crypto);
+  if (validity.ok) {
+    return undefined;
+  }
+  if (validity.reason !== "result-signature") {
+    return validity.reason;
+  }
+  // Copied with only the signatures that verify, so a forged one never counts.
+  const own = mergeReceipts(receipt, receipt, crypto);
+  return own && Object.keys(own.resultSigs).length > 0 ? undefined : "result-signature";
+}
+
+/**
+ * The leaderboard and the archive `archived` and the relays' `events`
+ * make, as of `asOfDay`.
+ * @param {{ archived: string, events: unknown[], relaysReached: readonly string[], relays: readonly string[], asOfDay: number }} input
+ * @returns {{ receipts: string, leaderboard: string, log: string }}
+ */
+export function build({ archived, events, relaysReached, relays, asOfDay }) {
+  const { crypto, trust } = receiptCrypto();
+  /** @type {Map<string, RankedReceipt>} */
+  const kept = new Map();
+  /** @param {RankedReceipt} receipt */
+  const keep = (receipt) => {
+    const hash = receiptHash(receipt, crypto.sha256);
+    const before = kept.get(hash);
+    const merged = mergeReceipts(before ?? receipt, receipt, crypto);
+    const isNew = before === undefined;
+    if (merged) {
+      kept.set(hash, merged);
+    }
+    return isNew;
+  };
+  for (const line of archived.split("\n")) {
+    const receipt = line === "" ? undefined : parseReceipt(line);
+    if (receipt) {
+      trust(receipt);
+      keep(receipt);
+    }
+  }
+  const archivedCount = kept.size;
+
+  /** @type {Map<string, number>} */
+  const rejected = new Map();
+  let added = 0;
+  for (const event of events) {
+    const receipt = receiptOf(event);
+    const reason =
+      receipt === undefined
+        ? "malformed"
+        : receipt.start.startedAt >= endOf(asOfDay)
+          ? "future"
+          : rejection(receipt, crypto);
+    if (reason !== undefined) {
+      rejected.set(reason, (rejected.get(reason) ?? 0) + 1);
+    } else if (receipt && keep(receipt)) {
+      added += 1;
+    }
+  }
+
+  const receipts = [...kept.values()]
+    .map((receipt) => ({ receipt, line: canonical(receipt) }))
+    .sort(
+      (a, b) =>
+        a.receipt.start.startedAt - b.receipt.start.startedAt ||
+        (a.line < b.line ? -1 : a.line > b.line ? 1 : 0),
+    );
+  const ratings = rate(
+    receipts.map(({ receipt }) => receipt),
+    asOfDay,
+    crypto,
+  );
+  const order = rankOrder(ratings);
+  const rankOf = new Map(order.map((pubkey, i) => [pubkey, i + 1]));
+  const entries = [...order, ...[...ratings.keys()].filter((pubkey) => !rankOf.has(pubkey))].map(
+    (pubkey) => ({ pubkey, rank: rankOf.get(pubkey) ?? null, ...ratings.get(pubkey) }),
+  );
+  const newest = receipts.findLast(({ receipt }) => receipt.start.startedAt < endOf(asOfDay));
+  const leaderboard = `${JSON.stringify({
+    // The as-of day's midnight, or the newest match if later (architect, #3574).
+    asOf: Math.max(asOfDay * RATING.secondsPerDay, newest?.receipt.start.startedAt ?? 0),
+    engine: process.version,
+    count: entries.length,
+    entries,
+  })}\n`;
+
+  const log = [
+    `relays reached: ${String(relaysReached.length)} of ${String(relays.length)}`,
+    ...relays.map((relay) => `  ${relaysReached.includes(relay) ? "ok  " : "down"} ${relay}`),
+    ...(relaysReached.length === 0 ? ["no relay reached: the archive is unchanged"] : []),
+    `events: ${String(events.length)}`,
+    `receipts: ${String(archivedCount)} archived, ${String(added)} new, ${String(kept.size)} kept`,
+    "rejected:",
+    ...[...rejected]
+      .sort(([a], [b]) => (a < b ? -1 : 1))
+      .map(([reason, n]) => `  ${reason}: ${String(n)}`),
+    `identities: ${String(entries.length)}, ranked: ${String(order.length)}`,
+    `leaderboard.json sha256: ${createHash("sha256").update(leaderboard).digest("hex")}`,
+    "",
+  ].join("\n");
+
+  return {
+    receipts: receipts.map(({ line }) => `${line}\n`).join(""),
+    leaderboard,
+    log,
+  };
+}
+
+/**
+ * The relay's stored ranked events since `since`, paged back with
+ * `until`, or `undefined` if it never answered. It gives up after
+ * `RELAY_TIMEOUT_MS` with what it has.
+ * @type {FetchRelay}
+ */
+export function fetchRelay(relay, since) {
+  return new Promise((resolve) => {
+    /** @type {unknown[]} */
+    const events = [];
+    /** @type {Set<unknown>} */
+    const seen = new Set();
+    let answered = false;
+    let finished = false;
+    let page = 0;
+    let fresh = 0;
+    let received = 0;
+    let oldest = Infinity;
+    /** The last page's `until`. */
+    let until = Infinity;
+    /** @type {WebSocket | undefined} */
+    let socket;
+    const done = () => {
+      if (!finished) {
+        finished = true;
+        clearTimeout(timer);
+        socket?.close();
+        resolve(answered ? events : undefined);
+      }
+    };
+    const timer = setTimeout(done, RELAY_TIMEOUT_MS);
+    /** @param {unknown[]} message */
+    const send = (message) => {
+      socket?.send(JSON.stringify(message));
+    };
+    /** @param {number | undefined} before */
+    const ask = (before) => {
+      page += 1;
+      fresh = 0;
+      received = 0;
+      until = before ?? Infinity;
+      send([
+        "REQ",
+        `ranked-${String(page)}`,
+        {
+          kinds: [RECEIPT_KIND],
+          "#t": [RANKED_TOPIC],
+          limit: PAGE_LIMIT,
+          ...(since === undefined ? {} : { since }),
+          ...(before === undefined ? {} : { until: before }),
+        },
+      ]);
+    };
+    try {
+      socket = new WebSocket(relay);
+    } catch {
+      done();
+      return;
+    }
+    socket.addEventListener("open", () => {
+      ask(undefined);
+    });
+    socket.addEventListener("error", done);
+    socket.addEventListener("close", done);
+    socket.addEventListener("message", ({ data }) => {
+      /** @type {unknown} */
+      let message;
+      try {
+        message = JSON.parse(String(data));
+      } catch {
+        return;
+      }
+      if (!Array.isArray(message) || message[1] !== `ranked-${String(page)}`) {
+        return;
+      }
+      answered = true;
+      /** @type {unknown} */
+      const event = message[2];
+      if (message[0] === "EVENT" && typeof event === "object" && event !== null) {
+        const id = "id" in event ? event.id : undefined;
+        received += 1;
+        if (!seen.has(id)) {
+          seen.add(id);
+          events.push(event);
+          fresh += 1;
+          const at = "created_at" in event ? Number(event.created_at) : NaN;
+          oldest = Number.isFinite(at) ? Math.min(oldest, at) : oldest;
+        }
+      } else if (message[0] === "EOSE" || message[0] === "CLOSED") {
+        send(["CLOSE", message[1]]);
+        // A page with nothing new is the end, unless it held old ones: then
+        // one second holds a relay's whole page, maybe a flood, and only that
+        // second is skipped, each time one further back. Otherwise ask for
+        // older ones; `until` is inclusive.
+        if (message[0] !== "EOSE" || !Number.isFinite(oldest)) {
+          done();
+        } else if (fresh > 0) {
+          ask(oldest);
+        } else if (received > 0) {
+          ask(Math.min(oldest, until) - 1);
+        } else {
+          done();
+        }
+      }
+    });
+  });
+}
+
+/**
+ * Reads the archive in `dir`, fetches from `relays` with `fetch`, and
+ * writes the three files back. A relay that is down only adds nothing.
+ * @param {{ dir: string, asOfDay: number, relays?: readonly string[], fetch?: FetchRelay }} options
+ */
+export async function run({ dir, asOfDay, relays = RELAYS, fetch = fetchRelay }) {
+  const file = path.join(dir, "receipts.ndjson");
+  const archived = fs.existsSync(file) ? fs.readFileSync(file, "utf8") : "";
+  const newest = archived
+    .split("\n")
+    .map((line) => (line === "" ? undefined : parseReceipt(line)?.start.startedAt))
+    .reduce(
+      (max, at) =>
+        at === undefined || at >= endOf(asOfDay) || (max !== undefined && max >= at) ? max : at,
+      undefined,
+    );
+  const since = newest === undefined ? undefined : newest - SINCE_SLACK_SECONDS;
+  const answers = await Promise.all(relays.map((relay) => fetch(relay, since)));
+  const out = build({
+    archived,
+    events: answers.flatMap((events) => events ?? []),
+    relaysReached: relays.filter((_, i) => answers[i] !== undefined),
+    relays,
+    asOfDay,
+  });
+  fs.mkdirSync(dir, { recursive: true });
+  fs.writeFileSync(file, out.receipts);
+  fs.writeFileSync(path.join(dir, "leaderboard.json"), out.leaderboard);
+  fs.writeFileSync(path.join(dir, "log.txt"), out.log);
+  return out;
+}
+
+/** @param {readonly string[]} argv */
+function options(argv) {
+  /** @param {string} name */
+  const arg = (name) => {
+    const i = argv.indexOf(name);
+    return i < 0 ? undefined : argv[i + 1];
+  };
+  const asOf = arg("--as-of");
+  const asOfDay =
+    asOf === undefined
+      ? utcDay(Math.floor(Date.now() / 1000))
+      : utcDay(Date.parse(`${asOf}T00:00:00Z`) / 1000);
+  if (!Number.isInteger(asOfDay)) {
+    throw new Error(`--as-of wants a day, YYYY-MM-DD: ${String(asOf)}`);
+  }
+  return { dir: arg("--archive") ?? "ranking-out", asOfDay };
+}
+
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  const { log } = await run(options(process.argv.slice(2)));
+  process.stdout.write(log);
+}

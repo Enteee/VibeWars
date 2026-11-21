@@ -3,6 +3,7 @@ import {
   type RankedReceipt,
   type ReceiptCrypto,
   receiptHash,
+  resultDigest,
   startHash,
   validateReceipt,
   ZERO_HASH,
@@ -189,7 +190,12 @@ const byKey = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0);
  * with the same result are merged, so partial `host-left` receipts make
  * one whole one, and only then validated. A void or invalid copy is
  * dropped there, so a forgery can neither fork nor void anything. Two
- * different valid results for one start void the match for everyone.
+ * different valid results for one start void the match for everyone, and
+ * so does a leaver's own signature on another round's result of that
+ * start, co-signed by a winner: the per-round partials (#3573) that prove
+ * the host re-rounded a player who signed into a leaver (`reRounded`).
+ * Only the same signed start counts, so a leaver cannot void their loss
+ * with a receipt of their own that merely reuses the `matchId`.
  */
 function matchesOf(
   receipts: readonly RankedReceipt[],
@@ -226,7 +232,7 @@ function matchesOf(
       return validity.ok && !validity.void;
     });
     const [receipt] = rated;
-    if (receipt && rated.length === 1) {
+    if (receipt && rated.length === 1 && !reRounded(receipt, copies, crypto)) {
       matches.push({
         receipt,
         hash: receiptHash(receipt, crypto.sha256),
@@ -237,6 +243,60 @@ function matchesOf(
   return matches.sort(
     (a, b) => a.receipt.start.startedAt - b.receipt.start.startedAt || byKey(a.hash, b.hash),
   );
+}
+
+const hexOf = (bytes: Uint8Array): string =>
+  Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("");
+
+/**
+ * Whether a key `receipt` names a leaver signed another round's result
+ * among `copies`, every receipt published for its start: the host
+ * re-rounded a player who signed into one who would not. A key that
+ * really refused signed none. The round counts only if a key on
+ * `receipt`'s winning team (on a draw, on any team but the leaver's)
+ * signed it too: a winner gains nothing by voiding their own win, so a
+ * leaver cannot make the evidence alone.
+ */
+function reRounded(
+  receipt: RankedReceipt,
+  copies: readonly RankedReceipt[],
+  crypto: ReceiptCrypto,
+): boolean {
+  const { leavers, winningTeam } = receipt.result;
+  if (leavers.length === 0) {
+    return false;
+  }
+  const start = startHash(receipt.start, crypto.sha256);
+  const final = hexOf(resultDigest(receipt.result, crypto.sha256));
+  /** Each other round's result, by digest: the keys whose signature on it verifies. */
+  const rounds = new Map<string, Set<string>>();
+  for (const copy of copies) {
+    const digest = resultDigest(copy.result, crypto.sha256);
+    const round = hexOf(digest);
+    if (copy.result.startHash !== start || round === final) {
+      continue;
+    }
+    const signers = rounds.get(round) ?? new Set<string>();
+    rounds.set(round, signers);
+    for (const [pubkey, sig] of Object.entries(copy.resultSigs)) {
+      if (crypto.verify(pubkey, digest, sig)) {
+        signers.add(pubkey);
+      }
+    }
+  }
+  const teams = receipt.start.teams.map((team) => team.map((seat) => seat.pubkey));
+  return leavers.some((leaver) => {
+    const witnesses = (
+      winningTeam === null
+        ? teams.filter((team) => !team.includes(leaver))
+        : [teams[winningTeam] ?? []]
+    )
+      .flat()
+      .filter((pubkey) => pubkey !== leaver);
+    return [...rounds.values()].some(
+      (signers) => signers.has(leaver) && witnesses.some((pubkey) => signers.has(pubkey)),
+    );
+  });
 }
 
 /** A match, and the keys that forked their chain to play it. */

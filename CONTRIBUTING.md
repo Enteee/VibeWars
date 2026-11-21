@@ -29,6 +29,7 @@ pnpm run bench:ticks   # time MatchSimulation.step on a dense field: p50/p95/max
                        # BENCH_CROWD=casters: 16 bodies using their bars; BENCH_SKILLS=id,... fills them (#1588)
 pnpm run readme:shots  # retake the README's four screenshots in docs/media/ (#1347)
 pnpm docs:diagrams  # redraw the diagrams in docs/player/img/ with the game's renderer (#3557); rerun after a map changes
+pnpm ranking:build  # the hourly leaderboard job (#3574): --archive <dir> (ranking-out/), --as-of <YYYY-MM-DD>; needs the ranking package built
 ```
 
 `devenv test` runs the same sequence as `pnpm run ci` via `enterTest` in
