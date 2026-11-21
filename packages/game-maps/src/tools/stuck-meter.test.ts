@@ -11,6 +11,7 @@ const sample = (over: Partial<StuckSample> = {}): StuckSample => ({
   layer: 0,
   counts: true,
   active: false,
+  holding: false,
   nearestFoeLayer: 0,
   ...over,
 });
@@ -42,6 +43,17 @@ describe("the stuck meter (#3354)", () => {
     run(meter, 6, (t) => sample({ active: t === 3 }));
     // The activity at 3 s keeps the window busy until 8 s: nothing in 6 s.
     expect(meter.totals().stuckSeconds).toBe(0);
+  });
+
+  it("counts nothing for a bot idle 10 s holding an objective, as before for one not (#3689)", () => {
+    const holding = new StuckMeter(HZ);
+    run(holding, 10, () => sample({ holding: true }));
+    expect(holding.totals().stuckSeconds).toBe(0);
+    expect(holding.totals().cells.size).toBe(0);
+    const idle = new StuckMeter(HZ);
+    run(idle, 10, () => sample({ holding: false }));
+    expect(idle.totals().stuckSeconds).toBeCloseTo(5, 0);
+    expect([...idle.totals().cells.keys()]).toEqual(["1,1@0"]);
   });
 
   it("counts nothing for a dead bot, or one with no foe alive", () => {
