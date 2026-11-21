@@ -45,7 +45,7 @@ The new package `packages/ranking` holds the types, the canonical encoding and t
 
    Every player who is not a leaver signs it. A player still seated who has not signed within `RANKED_RESULT_TIMEOUT_MS` (30 s) is added to `leavers` and the others sign again. **Refusing to sign is leaving.**
 
-   A player publishes its own partial receipt, the start and its signature over that round's result, the moment it signs, in every round. That is the evidence against a host that re-rounds an honest signer into a leaver: the job voids a match when a key named a leaver in the final receipt has a valid signature on an earlier round's result for the same `matchId`. A player who really refused has no such signature, so it loses.
+   A player publishes its own partial receipt, the start and its signature over that round's result, the moment it signs, in every round. That is the evidence against a host that re-rounds an honest signer into a leaver: the job voids a match when a key named a leaver in the final receipt has a valid signature on an earlier round's result that (1) carries the same fully signed start (the same `startHash`, not merely the same `matchId`) and (2) is also validly signed, in any copy, by a key on the final receipt's winning team (on a draw, by a key on any team but the leaver's). A player who really refused has no such signature, so it loses. A leaver-only partial is not evidence: a leaver could sign a round, or a whole start of their own under the same `matchId`, alone. A winner gains nothing by voiding their own win, so their signature is what makes the round believable.
 
 **A host that leaves loses.** Without the host, the match is over. Each remaining player builds the same `RankedResult` without talking to anyone else:
 
@@ -98,7 +98,7 @@ Floats are evaluated in a single engine: the job runs on Node, and players run t
   3. Verifies the new receipts.
   4. Appends the valid ones to the archive.
   5. Recomputes everything with `rate` from scratch.
-  6. Writes `ranking/receipts.ndjson` (the archive, since relays forget), `ranking/leaderboard.json`, and `ranking/log.txt` (counts, rejected receipts with reasons, and the sha256 of `leaderboard.json`).
+  6. Writes `ranking/receipts/<YYYY-MM>.ndjson` (the archive, since relays forget: one shard per UTC month of `startedAt`, rewritten only when it changed, and the run fails rather than write one over 90 MB, which GitHub would refuse), `ranking/leaderboard.json`, and `ranking/log.txt` (counts, rejected receipts with reasons, and the sha256 of `leaderboard.json`).
 - **The workflow.** `.github/workflows/ranking.yml` runs the script hourly and on dispatch. It commits `ranking/` to `gh-pages` in the same concurrency group as `pages.yml`, so the two never race. Anyone can run the script and compare hashes.
 - **`leaderboard.json`** holds `asOf`, `engine`, and per identity: rating, RD, conservative value, rank or provisional, matches, last played, the last receipt hash, and the forked flag.
 
@@ -121,7 +121,7 @@ Floats are evaluated in a single engine: the job runs on Node, and players run t
 ## Consequences
 
 - **What a host decides.** The host proposes who left, but its team cannot win alone: a result counts only if more than half of the seats signed it (Q109, answer B, replacing the every-team rule of #3594), so a host team listing all opponents as leavers voids the match instead of winning it. In a 2v2v2, two teams signing rate the match even when the third signed nothing. A host can still name some opponents as leavers while one of their teammates signs; that teammate's client signs only a result whose leavers it has itself seen drop from the snapshot. A re-round is the result it signed with more leavers and nothing else changed; it takes the host's word for the new leavers, since nobody else can see a refusal. A result it refused is never an earlier round. A team that leaves whole, exactly half the seats or more, escapes a loss: the price of majority consent.
-- **A hostile host can make a player who stayed look like a leaver**, by withholding a result round or by cutting their connection. Clients can't tell the difference, and this design accepts it. Per-round partials void only a re-round that names a player who signed an earlier round.
+- **A hostile host can make a player who stayed look like a leaver**, by withholding a result round or by cutting their connection. Clients can't tell the difference, and this design accepts it. Per-round partials void only a re-round that names a player who signed an earlier round of the same start, and only when a key on the winning team (on a draw, on another team) signed that round too. A leaver-only partial is not evidence, since a leaver can make one alone; a hostile host whose whole team stays silent on the earlier round still gets its re-round.
 - **A host can still forge its peers' inputs.** Players sign the replay hash without re-simulating it. The host is chosen by hash, not by itself (ADR-0032), which limits this. Replay disputes (re-simulating and penalising a lying host) are a later card, and so is offline clique detection.
 - **Ranked play publishes who played whom**, by key and character name. The queue screen says so before the first queue.
 - **The leaderboard lags** by up to an hour. Matchmaking tolerates this because claims are checked against a stated `asOf`.

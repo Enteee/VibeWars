@@ -134,6 +134,20 @@ function prevOf(receipt: RankedReceipt, pubkey: string): string {
   return seat.prev;
 }
 
+/** `signer`'s partial receipt for an earlier round of `receipt`, with `leavers` instead. */
+function roundOf(
+  receipt: RankedReceipt,
+  leavers: readonly string[],
+  signer: string,
+): RankedReceipt {
+  const result = { ...receipt.result, leavers };
+  return {
+    ...receipt,
+    result,
+    resultSigs: { [signer]: sigOf(signer, resultDigest(result, sha256)) },
+  };
+}
+
 /** `receipt`'s start with another result, signed by every seat. */
 function resultSwapped(receipt: RankedReceipt, winningTeam: number | null): RankedReceipt {
   const result = { ...receipt.result, winningTeam };
@@ -381,6 +395,127 @@ describe("rate", () => {
     expect(of(ratings, leaver).streak).toBe(0);
     expect(of(ratings, stayer).rating).toBeGreaterThan(of(day0, stayer).rating);
     expect(of(ratings, x).rating).toBeLessThan(of(day0, x).rating);
+  });
+
+  it("voids a match whose host re-rounded a signer into a leaver", () => {
+    const ledger = new Ledger();
+    const pool = trustedPool(ledger);
+    const [host, mate, x, y] = pool;
+    const day0 = rate(ledger.receipts, 1, crypto);
+    const final = ledger.play(
+      1,
+      [
+        [host, mate],
+        [x, y],
+      ],
+      { leavers: [x] },
+    );
+    const round = [roundOf(final, [], x), roundOf(final, [], mate)];
+    const ratings = rate([...ledger.receipts, ...round], 1, crypto);
+    for (const pubkey of [host, mate, x, y]) {
+      expect(of(ratings, pubkey)).toEqual(of(day0, pubkey));
+    }
+  });
+
+  it("loses for a leaver whose round no winner signed", () => {
+    const ledger = new Ledger();
+    const pool = trustedPool(ledger);
+    const [host, mate, x, y] = pool;
+    const day0 = rate(ledger.receipts, 1, crypto);
+    const final = ledger.play(
+      1,
+      [
+        [host, mate],
+        [x, y],
+      ],
+      { leavers: [x] },
+    );
+    for (const round of [[roundOf(final, [], x)], [roundOf(final, [], x), roundOf(final, [], y)]]) {
+      const ratings = rate([...ledger.receipts, ...round], 1, crypto);
+      expect(of(ratings, x).rating).toBeLessThan(of(day0, x).rating);
+      expect(of(ratings, host).rating).toBeGreaterThan(of(day0, host).rating);
+    }
+  });
+
+  it("voids a drawn re-round only on a signature from another team", () => {
+    const ledger = new Ledger();
+    const pool = trustedPool(ledger);
+    const [host, mate, x, y] = pool;
+    const day0 = rate(ledger.receipts, 1, crypto);
+    const final = ledger.play(
+      1,
+      [
+        [host, mate],
+        [x, y],
+      ],
+      { leavers: [x], winningTeam: null },
+    );
+    const own = rate([...ledger.receipts, roundOf(final, [], x), roundOf(final, [], y)], 1, crypto);
+    expect(of(own, x).matches).toBe(of(day0, x).matches + 1);
+    const other = rate(
+      [...ledger.receipts, roundOf(final, [], x), roundOf(final, [], host)],
+      1,
+      crypto,
+    );
+    for (const pubkey of [host, mate, x, y]) {
+      expect(of(other, pubkey)).toEqual(of(day0, pubkey));
+    }
+  });
+
+  it("loses for a leaver whose own receipt only reuses the matchId", () => {
+    const ledger = new Ledger();
+    const pool = trustedPool(ledger);
+    const [host, mate, x, y] = pool;
+    const day0 = rate(ledger.receipts, 1, crypto);
+    const final = ledger.play(
+      1,
+      [
+        [host, mate],
+        [x, y],
+      ],
+      { leavers: [x] },
+    );
+    // x alone holds both keys of a start of their own under final's matchId.
+    const sock = key("x's sock puppet");
+    const seat = (pubkey: string) => ({
+      pubkey,
+      characterId: "puppet",
+      name: "Puppet",
+      claimedRating: 0,
+      prev: ZERO_HASH,
+    });
+    const start = { ...final.start, teams: [[seat(x)], [seat(sock)]] };
+    const result = { ...final.result, startHash: startHash(start, sha256), leavers: [] };
+    const signed = (digest: Uint8Array) =>
+      Object.fromEntries([x, sock].map((pubkey) => [pubkey, sigOf(pubkey, digest)]));
+    const own: RankedReceipt = {
+      start,
+      startSigs: signed(startDigest(start, sha256)),
+      result,
+      resultSigs: signed(resultDigest(result, sha256)),
+    };
+    const ratings = rate([...ledger.receipts, own], 1, crypto);
+    expect(of(ratings, x).rating).toBeLessThan(of(day0, x).rating);
+    expect(of(ratings, host).rating).toBeGreaterThan(of(day0, host).rating);
+  });
+
+  it("loses for a leaver that signed no round, beside another seat's partial", () => {
+    const ledger = new Ledger();
+    const pool = trustedPool(ledger);
+    const [host, mate, x, y] = pool;
+    const day0 = rate(ledger.receipts, 1, crypto);
+    const final = ledger.play(
+      1,
+      [
+        [host, mate],
+        [x, y],
+      ],
+      { leavers: [x] },
+    );
+    const ratings = rate([...ledger.receipts, roundOf(final, [], y)], 1, crypto);
+    expect(of(ratings, x).rating).toBeLessThan(of(day0, x).rating);
+    expect(of(ratings, host).rating).toBeGreaterThan(of(day0, host).rating);
+    expect(of(ratings, y).matches).toBe(of(day0, y).matches + 1);
   });
 
   it("rates only the host when the host left", () => {

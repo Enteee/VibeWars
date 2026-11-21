@@ -873,7 +873,11 @@ test.describe("the menu quest (#3540)", () => {
     await expect(target("skills").first()).toHaveClass(/tutorial-pulse/);
     await openLibraryGroup(page);
     const slot = page.locator(".skill-slot").last();
-    await page.locator(".skill-library .skill-box").first().dragTo(slot);
+    // The starter bar is random: a skill it already holds, or a second
+    // elite, could leave the bar as it was, and the beat rightly waits.
+    const fresh = page.locator(".skill-library .skill-box:not(.is-equipped):not(.is-elite)");
+    expect(await fresh.count()).toBeGreaterThan(0);
+    await fresh.first().dragTo(slot);
 
     await expect(target("weapons").first()).toHaveClass(/tutorial-pulse/);
     const weapon = page.locator(".gear-slot").first();

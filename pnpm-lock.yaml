@@ -14,6 +14,9 @@ importers:
       '@eslint/js':
         specifier: ^10.0.1
         version: 10.0.1(eslint@10.13.0)
+      '@noble/secp256k1':
+        specifier: 3.2.0
+        version: 3.2.0
       '@playwright/test':
         specifier: 1.63.0
         version: 1.63.0
@@ -23,6 +26,9 @@ importers:
       '@types/node':
         specifier: 26.6.5
         version: 26.6.5
+      '@vibewars/ranking':
+        specifier: workspace:*
+        version: link:packages/ranking
       '@vitest/coverage-v8':
         specifier: 5.0.5
         version: 5.0.5(vitest@5.0.5)

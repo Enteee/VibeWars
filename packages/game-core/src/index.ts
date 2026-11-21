@@ -309,11 +309,12 @@ export {
   CAPTURE_SECONDS,
   GHOST_PIPS,
   MAX_PIPS,
+  onCapturePoint,
 } from "./match/capture-points.js";
 export { ALTAR_REACH_UNITS, relicId, relicTeamOf } from "./match/relics.js";
 export type { AltarState } from "./match/altar.js";
 export type { GhostField, GhostLevel, GhostSpawn } from "./match/ghost.js";
-export { CLAIM_SKILL_ID, ghostId, isGhostId } from "./match/ghost.js";
+export { CLAIM_SKILL_ID, ghostId, isGhostId, onHill } from "./match/ghost.js";
 export { GUILD_LORD_HEALTH, guildLordId, guildLordLossCap } from "./match/guild-lord.js";
 export type { CritterTemplate } from "./match/critters.js";
 export { RAT, critterSpec } from "./match/critters.js";

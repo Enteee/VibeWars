@@ -2,7 +2,8 @@
  * The stuck measure of the balance bench (#3354): how long bots stand still
  * in reach of nothing, and where. A bot is stuck when, over a sliding window,
  * it moved little, took part in no damage or heal, and started no skill, while
- * a foe was alive. Pure: it is fed one sample per bot per tick.
+ * a foe was alive. A bot holding an objective (#3689) stands still on purpose
+ * and is never stuck. Pure: it is fed one sample per bot per tick.
  */
 
 /** Seconds of standing still that make a bot stuck. */
@@ -21,6 +22,11 @@ export interface StuckSample {
   readonly counts: boolean;
   /** Source or target of a damage or heal, or the source of any log entry, this tick. */
   readonly active: boolean;
+  /**
+   * Holding an objective: on a capture point its team does not fully own, or
+   * on the altar its team holds (#3689). Counts as activity, as `active` does.
+   */
+  readonly holding: boolean;
   /** The layer of the nearest living foe, in a straight line; `undefined` if none. */
   readonly nearestFoeLayer: number | undefined;
 }
@@ -44,7 +50,7 @@ export interface StuckTotals {
 interface Window {
   readonly xs: number[];
   readonly ys: number[];
-  /** Ticks in the window with activity. */
+  /** Ticks in the window with activity, or holding an objective. */
   active: number;
   readonly activity: boolean[];
 }
@@ -78,8 +84,9 @@ export class StuckMeter {
       }
       window.xs.push(sample.x);
       window.ys.push(sample.y);
-      window.activity.push(sample.active);
-      if (sample.active) window.active += 1;
+      const busy = sample.active || sample.holding;
+      window.activity.push(busy);
+      if (busy) window.active += 1;
       if (window.xs.length > this.#windowTicks) {
         window.xs.shift();
         window.ys.shift();

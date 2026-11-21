@@ -1,0 +1,139 @@
+name: Ranking
+
+# Refreshes the site's ranking/ (receipts/<YYYY-MM>.ndjson, leaderboard.json,
+# log.txt) on gh-pages every hour from the receipts on the relays (#3574,
+# ADR-0055). Same two-job split as pages.yml: `build` runs repository code
+# with a read-only token and the network, `deploy` holds contents: write
+# and runs nothing but this file's shell over the built artifact.
+
+on:
+  schedule:
+    - cron: "17 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          persist-credentials: false
+
+      - uses: ./.github/actions/devenv
+
+      # The archive is whatever gh-pages holds under ranking/; the first
+      # run starts from an empty one. The script never deletes receipts, so
+      # a relay outage leaves it as it was.
+      - name: Fetch the archive
+        run: |
+          mkdir -p ranking-out
+          remote="https://github.com/$GITHUB_REPOSITORY.git"
+          # ls-remote exits 2 for "no such branch" and 128 for a network
+          # error. Only the first may start from an empty archive: the
+          # deploy would otherwise replace the receipts with what the relays
+          # hold now.
+          set -o pipefail
+          rc=0
+          git ls-remote --exit-code --heads "$remote" gh-pages >/dev/null || rc=$?
+          if [ "$rc" = 0 ]; then
+            git fetch -q --depth 1 "$remote" gh-pages
+            if [ -n "$(git ls-tree --name-only FETCH_HEAD ranking)" ]; then
+              git archive FETCH_HEAD ranking | tar -x --strip-components=1 -C ranking-out
+              test -e ranking-out/leaderboard.json
+            else
+              echo "gh-pages holds no ranking/ yet."
+            fi
+          elif [ "$rc" = 2 ]; then
+            echo "no gh-pages branch yet."
+          else
+            echo "::error::could not read gh-pages (ls-remote exit $rc)"
+            exit 1
+          fi
+          ls -l ranking-out
+
+      - name: Build the leaderboard
+        run: devenv shell -- bash -c 'pnpm --filter @vibewars/ranking build && pnpm ranking:build --archive ranking-out'
+
+      - name: Log
+        run: cat ranking-out/log.txt
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: ranking
+          path: |
+            ranking-out/receipts/
+            ranking-out/leaderboard.json
+            ranking-out/log.txt
+          if-no-files-found: error
+          retention-days: 1
+
+  deploy:
+    name: deploy
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    # Pushes the gh-pages branch; runs no repository code.
+    permissions:
+      contents: write
+    # The group pages.yml uses, so the two never write gh-pages at once.
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: ranking
+          path: ${{ runner.temp }}/ranking
+
+      - name: Publish to gh-pages
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          auth=$(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)
+          echo "::add-mask::$auth"
+          export GIT_CONFIG_COUNT=1
+          export GIT_CONFIG_KEY_0=http.https://github.com/.extraheader
+          export GIT_CONFIG_VALUE_0="AUTHORIZATION: basic $auth"
+
+          out="$RUNNER_TEMP/ranking"
+          remote="https://github.com/$GITHUB_REPOSITORY.git"
+          site="$RUNNER_TEMP/site"
+
+          # An rc deploy runs in another group, so gh-pages can move between
+          # the fetch and the push: start over then.
+          for attempt in 1 2 3; do # body unindented, as in pages.yml
+          cd "$RUNNER_TEMP"
+          rm -rf "$site"
+          git init -q "$site"
+          cd "$site"
+          if git ls-remote --exit-code --heads "$remote" gh-pages >/dev/null; then
+            git fetch -q --depth 1 "$remote" gh-pages
+            git checkout -q -B gh-pages FETCH_HEAD
+          else
+            git checkout -q --orphan gh-pages
+          fi
+
+          rm -rf ranking
+          mkdir ranking
+          cp -r "$out/." ranking/
+          touch .nojekyll
+
+          git add -A
+          if git diff --cached --quiet; then
+            echo "gh-pages already holds this ranking."
+            exit 0
+          fi
+          git -c user.name="github-actions[bot]" \
+            -c user.email="41898282+github-actions[bot]@users.noreply.github.com" \
+            commit -q -m "ranking $(date -u +%Y-%m-%dT%H:%MZ)"
+          if git push -q "$remote" HEAD:gh-pages; then
+            exit 0
+          fi
+          echo "::warning::push attempt $attempt was refused; retrying"
+          done # attempts
+          exit 1

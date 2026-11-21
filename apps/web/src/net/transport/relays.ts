@@ -5,6 +5,8 @@
  */
 import { PROTOCOL_VERSION } from "@vibewars/game-protocol";
 
+import relays from "./relays.json" with { type: "json" };
+
 /** Builds of different protocols never meet: their rooms differ (#15). */
 export const APP_ID = `vibewars-p${PROTOCOL_VERSION}`;
 
@@ -16,17 +18,11 @@ export const APP_ID = `vibewars-p${PROTOCOL_VERSION}`;
  * are gone. The 2026-11-13 probe also dropped nos.lol (no `OK` to a publish
  * in 3 runs) and added relay.grigic.org, relay.hackshed.dev and
  * nostr.chaima.info (delivered and answered `OK true` in 2 runs).
+ *
+ * The list is `relays.json`, so the leaderboard job (#3574) reads the
+ * same one.
  */
-export const NOSTR_RELAYS: readonly string[] = [
-  "wss://cdn.satellite.earth",
-  "wss://relay.degmods.com",
-  "wss://nostr.stakey.net",
-  "wss://nostr.rblb.it",
-  "wss://relay.agentry.com",
-  "wss://relay.grigic.org",
-  "wss://relay.hackshed.dev",
-  "wss://nostr.chaima.info",
-];
+export const NOSTR_RELAYS: readonly string[] = relays;
 
 /** How many of `NOSTR_RELAYS` a peer connects to at once. */
 export const RELAY_REDUNDANCY = 4;
