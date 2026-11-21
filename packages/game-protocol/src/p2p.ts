@@ -1134,9 +1134,10 @@ export interface WireCapes {
 
 /**
  * The most ids a cosmetic selection holds, one a slot, and the longest an
- * id is (ADR-0056): 24 seats' of them fit one `"cosmetics"` message.
+ * id is (ADR-0056). Each seat's selection is a `"cosmetics"` message of
+ * its own, so this is the catalog's cap, not the roster's.
  */
-export const MAX_COSMETIC_IDS = 3;
+export const MAX_COSMETIC_IDS = 12;
 export const MAX_COSMETIC_ID_LENGTH = 32;
 
 /**
@@ -1152,20 +1153,16 @@ export interface WireCosmetics {
   readonly sig: string;
 }
 
-/** One seated player's cosmetics (ADR-0056), with the key that signed them. */
+/**
+ * A lobby or match host to its players and its observers (ADR-0056): one
+ * seated player's cosmetics, with the key that signed them, a message a
+ * seat. The latest for an id replaces the one before; a seat never told
+ * is drawn default.
+ */
 export interface WireSeatCosmetics {
   readonly id: string;
   readonly playerPubkey: string;
   readonly cosmetics: WireCosmetics;
-}
-
-/**
- * A lobby or match host to its players and its observers (ADR-0056):
- * every keyed seat's cosmetics, a full replacement list, sent as
- * `"capes"` is. A seat not in it is drawn default.
- */
-export interface WireCosmeticRoster {
-  readonly seats: readonly WireSeatCosmetics[];
 }
 
 /** Who a chat line reaches (#479): everyone in the lobby, or your team. */
@@ -2322,7 +2319,8 @@ export function parseWireCosmetics(value: unknown): WireCosmetics | undefined {
     : undefined;
 }
 
-function parseSeatCosmetics(value: unknown): WireSeatCosmetics | undefined {
+/** The `"cosmetics"` channel. */
+export function parseWireSeatCosmetics(value: unknown): WireSeatCosmetics | undefined {
   const raw = fields(value);
   const cosmetics = raw === undefined ? undefined : parseWireCosmetics(raw.cosmetics);
   return raw !== undefined &&
@@ -2331,14 +2329,6 @@ function parseSeatCosmetics(value: unknown): WireSeatCosmetics | undefined {
     cosmetics !== undefined
     ? { id: raw.id, playerPubkey: raw.playerPubkey, cosmetics }
     : undefined;
-}
-
-/** The `"cosmetics"` channel. */
-export function parseWireCosmeticRoster(value: unknown): WireCosmeticRoster | undefined {
-  const raw = fields(value);
-  const seats =
-    raw === undefined ? undefined : parseArray(raw.seats, MAX_LOBBY_PLAYERS, parseSeatCosmetics);
-  return seats === undefined ? undefined : { seats };
 }
 
 export function parsePeerChat(value: unknown): PeerChat | undefined {

@@ -3,7 +3,7 @@ import {
   parsePeerObserving,
   parsePeerRefuse,
   parseWireCapes,
-  parseWireCosmeticRoster,
+  parseWireSeatCosmetics,
   parseWireCombatBatch,
   parseWireEnded,
   parseWireSnapshotPart,
@@ -33,7 +33,7 @@ import {
 } from "./match-client.js";
 import { snapshotAssembler } from "./snapshot-parts.js";
 import type { Transport } from "./transport.js";
-import { combatMessage, observedSnapshot, playerSnapshots } from "./wire.js";
+import { combatMessage, observedSnapshot, playerSnapshots, wear } from "./wire.js";
 
 /**
  * A lobby spectator watching the lobby's match (#480): the same snapshots,
@@ -73,7 +73,7 @@ export function connectObserver(options: ConnectObserverOptions): Promise<Observ
   let ended: WireEnded | undefined;
   /** Each seat's cape as last sent (#3554), by id. */
   let capes = new Map<string, WireCape>();
-  let worn = new Map<string, SeatWorn>();
+  const worn = new Map<string, SeatWorn>();
   let lost = false;
   /** Set once `connectObserver` has resolved or rejected. */
   let settled = false;
@@ -133,8 +133,13 @@ export function connectObserver(options: ConnectObserverOptions): Promise<Observ
       }
     },
   );
-  fromHost("cosmetics", parseWireCosmeticRoster, (message) => {
-    worn = new Map(message.seats.map(({ id, ...seat }) => [id, seat]));
+  fromHost("cosmetics", parseWireSeatCosmetics, ({ id, ...seat }) => {
+    wear(
+      worn,
+      id,
+      seat,
+      (kept) => latest?.wire.players.some((player) => player.id === kept) ?? false,
+    );
   });
   fromHost("capes", parseWireCapes, (message) => {
     capes = new Map(message.capes.map(({ id, cape }) => [id, cape]));

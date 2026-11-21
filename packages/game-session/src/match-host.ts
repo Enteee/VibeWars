@@ -73,7 +73,7 @@ import {
   type WireSnapshotPart,
   type WireRespawns,
   type WireCapes,
-  type WireCosmeticRoster,
+  type WireSeatCosmetics,
   type WireCosmetics,
   type WireStrokes,
   type WireTraps,
@@ -816,13 +816,15 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       seat.guildCape === null ? [] : [{ id: seat.playerId, cape: seat.guildCape }],
     ),
   });
-
-  /** Every keyed seat's cosmetics (ADR-0056): told as the capes are. */
-  const cosmetics = (): WireCosmeticRoster => ({
-    seats: [...seats.values()].flatMap((seat) =>
-      seat.worn === null ? [] : [{ id: seat.playerId, ...seat.worn }],
-    ),
-  });
+  /** Every keyed seat's cosmetics to `to` (ADR-0056), a message a seat: all of them do not fit one. */
+  const tellCosmetics = (to: string): void => {
+    for (const seat of seats.values()) {
+      if (seat.worn !== null) {
+        const told: WireSeatCosmetics = { id: seat.playerId, ...seat.worn };
+        transport.send("cosmetics", told, to);
+      }
+    }
+  };
 
   /**
    * `team`'s dead and when each comes back (#3367): a foe's respawn is
@@ -938,7 +940,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     transport.send("traps", trapsOf(seat.team), peerId);
     transport.send("respawns", respawnsOf(seat.team), peerId);
     transport.send("capes", capes(), peerId);
-    transport.send("cosmetics", cosmetics(), peerId);
+    tellCosmetics(peerId);
   };
 
   /** What the next seat on `team` playing `build` is set up as. */
@@ -1010,7 +1012,8 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       transport.send("capes", capes(), [...players(), ...observers]);
     }
     if (worn !== null) {
-      transport.send("cosmetics", cosmetics(), [...players(), ...observers]);
+      const told: WireSeatCosmetics = { id: playerId, ...worn };
+      transport.send("cosmetics", told, [...players(), ...observers]);
     }
     everSeated.set(playerId, {
       name: seat.name,
@@ -1111,7 +1114,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     };
     transport.send("observing", message, from);
     transport.send("capes", capes(), from);
-    transport.send("cosmetics", cosmetics(), from);
+    tellCosmetics(from);
   });
 
   /** Whether `peerId` may take `seat`: no bot plays it, and it plays no other seat. */

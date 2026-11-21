@@ -35,7 +35,7 @@ There is no server to say who earned what. ADR-0055's leaderboard is public, rep
 
    The tiers are constants in `apps/web/src/cosmetics/unlocks.ts` and are tuned there.
 
-2. **The selection is signed.** `CosmeticSelection {pubkey, ids, at}` holds at most one id per slot, so at most 3 ids: 24 seats of them fit one message. The key signs it under `vibewars/cosmetics` with `PlayerKey.signCosmetics`, a purpose-named method like `signLobbyProof`. The selection rides in a `"cosmetics"` roster the lobby host sends apart from `lobby-state`, which 24 signed selections would overflow (#2683), and the match host passes it on in its own. Hosts pass it through untouched; they never check it, and neither does the simulation.
+2. **The selection is signed.** `CosmeticSelection {pubkey, ids, at}` holds at most one id per slot and at most 12 ids, room for every slot planned (#3578–#3581); a slot card past 12 raises the cap. The key signs it under `vibewars/cosmetics` with `PlayerKey.signCosmetics`, a purpose-named method like `signLobbyProof`. The selection rides in `"cosmetics"`, one message a seat, which the lobby host sends apart from `lobby-state` (24 signed selections would overflow one message, #2683) and the match host passes on the same way. A viewer keeps the latest per seat id. Hosts pass it through untouched; they never check it, and neither does the simulation.
 3. **The viewer decides.** A client draws another player's item only when all of these hold:
    - the signature verifies for that seat's key;
    - the item is in this build's catalog;
@@ -78,3 +78,4 @@ There is no server to say who earned what. ADR-0055's leaderboard is public, rep
 - A viewer with a stale or missing leaderboard sees defaults on others. This errs toward default, which is never unfair.
 - `leaderboard.json` gains `wins` and `streak` (#3571/#3574).
 - A new slot is a catalog entry plus a renderer hook, and passes `checkCosmetic`.
+- The signature binds a selection to a key, not to a seat. A lying host can pair any seat with another key's real signed selection, since a `"cosmetics"` message's `playerPubkey` is the host's word; it gains nothing a lying host could not already do (see Rejected: hosts check cosmetics), so this is accepted.

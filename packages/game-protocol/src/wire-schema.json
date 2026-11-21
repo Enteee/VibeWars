@@ -753,7 +753,7 @@
     "MAX_CHART_PARTS": { "literal": 16 },
     "MAX_CHART_SAMPLES": { "literal": 120 },
     "MAX_CHAT_GRAPHEMES": { "literal": 200 },
-    "MAX_COSMETIC_IDS": { "literal": 3 },
+    "MAX_COSMETIC_IDS": { "literal": 12 },
     "MAX_COSMETIC_ID_LENGTH": { "literal": 32 },
     "MAX_EMBLEM_COLOURS": { "literal": 15 },
     "MAX_HERO_RANK": { "literal": 15 },
@@ -7725,33 +7725,6 @@
         { "name": "skillId", "optional": false, "type": { "union": ["null", "string"] } },
         { "name": "statusId", "optional": false, "type": { "union": ["null", "string"] } },
         { "name": "targetId", "optional": false, "type": { "union": ["null", "string"] } }
-      ]
-    },
-    "WireCosmeticRoster": {
-      "properties": [
-        {
-          "name": "seats",
-          "optional": false,
-          "type": {
-            "array": {
-              "properties": [
-                {
-                  "name": "cosmetics",
-                  "optional": false,
-                  "type": {
-                    "properties": [
-                      { "name": "at", "optional": false, "type": "number" },
-                      { "name": "ids", "optional": false, "type": { "array": "string" } },
-                      { "name": "sig", "optional": false, "type": "string" }
-                    ]
-                  }
-                },
-                { "name": "id", "optional": false, "type": "string" },
-                { "name": "playerPubkey", "optional": false, "type": "string" }
-              ]
-            }
-          }
-        }
       ]
     },
     "WireCosmetics": {

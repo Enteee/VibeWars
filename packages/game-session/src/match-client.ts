@@ -14,7 +14,7 @@ import {
   parseWireTraps,
   parseWireRespawns,
   parseWireCapes,
-  parseWireCosmeticRoster,
+  parseWireSeatCosmetics,
   parseWireCombatBatch,
   parseWireEnded,
   parseWireMatchChartPart,
@@ -65,7 +65,7 @@ import { rejoinProof } from "./rejoin-proof.js";
 import { joinReplay, MAX_REPLAY_CHARS, type RecordedReplay, type Sha256 } from "./replay.js";
 import { snapshotAssembler } from "./snapshot-parts.js";
 import type { Transport } from "./transport.js";
-import { combatMessage, matchSnapshot, playerSnapshots } from "./wire.js";
+import { combatMessage, matchSnapshot, playerSnapshots, wear } from "./wire.js";
 
 /**
  * A match on another peer's browser, as the match view sees every match:
@@ -278,7 +278,7 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
   let respawns = new Map<string, number | null>();
   /** Each seat's cape as last sent (#3554), by id. */
   let capes = new Map<string, WireCape>();
-  let worn = new Map<string, SeatWorn>();
+  const worn = new Map<string, SeatWorn>();
   let lost = false;
   /** When the host's peer went, by `Date.now`, while waiting for it back. */
   let droppedAt: number | undefined;
@@ -420,8 +420,13 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
   fromHost("respawns", parseWireRespawns, (message) => {
     respawns = new Map(message.respawns.map(({ id, respawnIn }) => [id, respawnIn]));
   });
-  fromHost("cosmetics", parseWireCosmeticRoster, (message) => {
-    worn = new Map(message.seats.map(({ id, ...seat }) => [id, seat]));
+  fromHost("cosmetics", parseWireSeatCosmetics, ({ id, ...seat }) => {
+    wear(
+      worn,
+      id,
+      seat,
+      (kept) => latest?.wire.players.some((player) => player.id === kept) ?? false,
+    );
   });
   fromHost("capes", parseWireCapes, (message) => {
     capes = new Map(message.capes.map(({ id, cape }) => [id, cape]));

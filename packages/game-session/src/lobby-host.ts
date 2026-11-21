@@ -69,7 +69,7 @@ import {
   type WireTeamSide,
   type WireRankedCancel,
   type WireCosmetics,
-  type WireCosmeticRoster,
+  type WireSeatCosmetics,
   type WireRankedJoin,
   type WireRankedReceipt,
   type WireRankedResult,
@@ -966,41 +966,54 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
   };
 
   /**
-   * Every member's cosmetics (ADR-0056), apart from `lobby-state`: 24
-   * signed selections would cost it its one message (#2683).
+   * Each keyed seat's cosmetics (ADR-0056), apart from `lobby-state` and
+   * a message a seat: 24 signed selections would not fit one (#2683).
+   * By seat, the selection last told and who has it: each is told it
+   * once, again only when it changes.
    */
-  const cosmetics = (): WireCosmeticRoster => ({
-    seats: [...members.values()].flatMap((member) =>
-      member.bot === null
-        ? [{ id: member.id, playerPubkey: member.playerPubkey, cosmetics: member.cosmetics }]
-        : [],
-    ),
-  });
-  /** The roster last told, and who has it: each is told it once, again only when it changes. */
-  let toldCosmetics = "";
-  const haveCosmetics = new Set<string>();
+  const toldCosmetics = new Map<
+    string,
+    { readonly seat: WireSeatCosmetics; readonly to: Set<string> }
+  >();
 
   const tellCosmetics = (): void => {
-    const roster = cosmetics();
-    const told = JSON.stringify(roster);
-    if (told !== toldCosmetics) {
-      toldCosmetics = told;
-      haveCosmetics.clear();
-    }
     const here = [...members.values()].filter(
       (member) => member.bot === null && !away.has(member.id),
     );
-    // One who left or dropped may come back under the same id, with nothing.
-    for (const id of [...haveCosmetics]) {
-      if (!here.some((member) => member.id === id)) {
-        haveCosmetics.delete(id);
+    for (const id of [...toldCosmetics.keys()]) {
+      if (members.get(id)?.bot !== null) {
+        toldCosmetics.delete(id);
       }
     }
-    const to = here.filter((member) => !haveCosmetics.has(member.id)).map(({ id }) => id);
-    if (to.length > 0) {
-      transport.send("cosmetics", roster, to);
-      for (const id of to) {
-        haveCosmetics.add(id);
+    for (const member of members.values()) {
+      if (member.bot !== null) {
+        continue;
+      }
+      const last = toldCosmetics.get(member.id);
+      const told =
+        last?.seat.playerPubkey === member.playerPubkey && last.seat.cosmetics === member.cosmetics
+          ? last
+          : {
+              seat: {
+                id: member.id,
+                playerPubkey: member.playerPubkey,
+                cosmetics: member.cosmetics,
+              },
+              to: new Set<string>(),
+            };
+      toldCosmetics.set(member.id, told);
+      // One who left or dropped may come back under the same id, with nothing.
+      for (const id of [...told.to]) {
+        if (!here.some((other) => other.id === id)) {
+          told.to.delete(id);
+        }
+      }
+      const to = here.filter(({ id }) => !told.to.has(id)).map(({ id }) => id);
+      if (to.length > 0) {
+        transport.send("cosmetics", told.seat, to);
+        for (const id of to) {
+          told.to.add(id);
+        }
       }
     }
   };

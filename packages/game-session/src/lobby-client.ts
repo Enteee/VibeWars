@@ -8,7 +8,7 @@ import {
   type WireSharedTrack,
   parseWireLobbyNote,
   parseWireTeamProposalBuilds,
-  parseWireCosmeticRoster,
+  parseWireSeatCosmetics,
   parseWireLobbyState,
   parseWireLobbyWelcome,
   parsePeerLobbyChallenge,
@@ -73,6 +73,7 @@ import type {
   LobbySnapshot,
   MatchStarting,
 } from "./lobby-connection.js";
+import { wear } from "./wire.js";
 import { RECONNECT_WINDOW_SECONDS } from "./match-host.js";
 import type { PlayerKey } from "./player-key.js";
 import { claimsHold, type LeaderboardSource } from "./ranked-claims.js";
@@ -372,7 +373,7 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
   /** What the host sent of each proposal on this side (#1811), by proposer. */
   const proposalBuilds = new Map<string, readonly WireProposalBuild[]>();
   /** What the host last said each keyed seat wears (ADR-0056), by peer id. */
-  let worn = new Map<string, WireSeatCosmetics>();
+  const worn = new Map<string, WireSeatCosmetics>();
   /** The match whose start was already handed on, so a repeat is not. */
   let startedMatch: string | null = null;
   let closed = false;
@@ -1074,11 +1075,16 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
         if (hostId === undefined || from !== hostId) {
           return;
         }
-        const roster = parseWireCosmeticRoster(data);
-        if (roster === undefined) {
+        const seat = parseWireSeatCosmetics(data);
+        if (seat === undefined) {
           return;
         }
-        worn = new Map(roster.seats.map((seat) => [seat.id, seat]));
+        wear(
+          worn,
+          seat.id,
+          seat,
+          (kept) => latest?.players.some((player) => player.id === kept) ?? false,
+        );
         for (const handler of [...changeHandlers]) {
           handler();
         }

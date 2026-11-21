@@ -9,7 +9,7 @@
 import type { WireCosmetics } from "@vibewars/game-protocol";
 import type { CosmeticSelection, PlayerKey } from "@vibewars/game-session";
 
-import type { Leaderboard } from "../net/leaderboard.js";
+import type { Leaderboard, LeaderboardEntry } from "../net/leaderboard.js";
 import { verifyCosmetics } from "../net/transport/player-key.js";
 
 import { COSMETIC_SLOTS, cosmeticById, type CosmeticEntry, type CosmeticSlot } from "./catalog.js";
@@ -46,21 +46,17 @@ export function signSelection(key: PlayerKey, choice: CosmeticChoice, at: number
   return { ids: selection.ids, at: selection.at, sig: key.signCosmetics(selection) };
 }
 
-/** Checks already made, as a viewer asks every frame; let go of when full. */
-const verified = new Map<string, boolean>();
-const MAX_VERIFIED = 256;
+/** Checks already made, by selection object, as a viewer asks every frame. */
+const verified = new WeakMap<WireCosmetics, { readonly pubkey: string; readonly holds: boolean }>();
 
 /** Whether `cosmetics` is `pubkey`'s own signed selection. */
 export function verifySelection(pubkey: string, cosmetics: WireCosmetics): boolean {
-  const memo = JSON.stringify([pubkey, cosmetics.ids, cosmetics.at, cosmetics.sig]);
-  let holds = verified.get(memo);
-  if (holds === undefined) {
-    holds = verifyCosmetics({ pubkey, ids: cosmetics.ids, at: cosmetics.at }, cosmetics.sig);
-    if (verified.size >= MAX_VERIFIED) {
-      verified.clear();
-    }
-    verified.set(memo, holds);
+  const memo = verified.get(cosmetics);
+  if (memo?.pubkey === pubkey) {
+    return memo.holds;
   }
+  const holds = verifyCosmetics({ pubkey, ids: cosmetics.ids, at: cosmetics.at }, cosmetics.sig);
+  verified.set(cosmetics, { pubkey, holds });
   return holds;
 }
 
@@ -80,25 +76,58 @@ export function wornOf(ids: readonly string[], facts: UnlockFacts | undefined): 
   return worn;
 }
 
+/** Each board's entries by key, indexed once a fetched board. */
+const indexed = new WeakMap<Leaderboard, ReadonlyMap<string, LeaderboardEntry>>();
+
 /** `pubkey`'s entry in `board`, if it lists it. */
 export function factsOf(board: Leaderboard | undefined, pubkey: string): UnlockFacts | undefined {
-  return board?.entries.find((entry) => entry.pubkey === pubkey);
+  if (board === undefined) {
+    return undefined;
+  }
+  let byKey = indexed.get(board);
+  if (byKey === undefined) {
+    byKey = new Map(board.entries.map((entry) => [entry.pubkey, entry]));
+    indexed.set(board, byKey);
+  }
+  return byKey.get(pubkey);
 }
+
+/** What was last drawn of each selection object, and for what. */
+const drawn = new WeakMap<
+  WireCosmetics,
+  {
+    readonly pubkey: string;
+    readonly board: Leaderboard | undefined;
+    readonly showOthers: boolean;
+    readonly worn: WornCosmetics;
+  }
+>();
 
 /**
  * What a viewer draws of another seat (ADR-0056 §3): its selection only
  * if `showOthers`, its signature holds for its key, and the viewer's
  * `board` shows the key earned each item. Anything else is the default.
+ * Asked every frame, it works it out again only when one of them changes.
  */
 export function visibleCosmetics(
   seat: { readonly playerPubkey: string; readonly cosmetics: WireCosmetics } | undefined,
   board: Leaderboard | undefined,
   showOthers: boolean,
 ): WornCosmetics {
-  if (!showOthers || seat === undefined || !verifySelection(seat.playerPubkey, seat.cosmetics)) {
+  if (seat === undefined) {
     return DEFAULT_LOOK;
   }
-  return wornOf(seat.cosmetics.ids, factsOf(board, seat.playerPubkey));
+  const { playerPubkey: pubkey, cosmetics } = seat;
+  const last = drawn.get(cosmetics);
+  if (last?.pubkey === pubkey && last.board === board && last.showOthers === showOthers) {
+    return last.worn;
+  }
+  const worn =
+    showOthers && verifySelection(pubkey, cosmetics)
+      ? wornOf(cosmetics.ids, factsOf(board, pubkey))
+      : DEFAULT_LOOK;
+  drawn.set(cosmetics, { pubkey, board, showOthers, worn });
+  return worn;
 }
 
 /**

@@ -21,7 +21,7 @@ import {
   MAX_EMBLEM_COLOURS,
   packEmblem,
   type WireCapes,
-  type WireCosmeticRoster,
+  type WireSeatCosmetics,
   type WireCosmetics,
   MAX_CHART_PARTS,
   MAX_CHART_SAMPLES,
@@ -517,15 +517,13 @@ describe("every message fits in one Trystero chunk (#403)", () => {
     expect(messageBytes(capes)).toBeLessThanOrEqual(MAX_MESSAGE_BYTES);
   });
 
-  it("every seat's cosmetics: a full lobby's, every id the longest (ADR-0056)", () => {
-    const roster: WireCosmeticRoster = {
-      seats: Array.from({ length: MAX_LOBBY_PLAYERS }, (_, index) => ({
-        id: `${PEER_ID}${String(index)}`,
-        playerPubkey: "ab".repeat(32),
-        cosmetics: FULL_COSMETICS,
-      })),
+  it("a seat's cosmetics, every id the longest (ADR-0056)", () => {
+    const seat: WireSeatCosmetics = {
+      id: `${PEER_ID}0`,
+      playerPubkey: "ab".repeat(32),
+      cosmetics: FULL_COSMETICS,
     };
-    expect(messageBytes(roster)).toBeLessThanOrEqual(MAX_MESSAGE_BYTES);
+    expect(messageBytes(seat)).toBeLessThanOrEqual(MAX_MESSAGE_BYTES);
   });
 
   it("a hello with a full build", () => {

@@ -6,6 +6,7 @@ import { COSMETIC_CATALOG, cosmeticById, type CosmeticEntry } from "./catalog.js
 import { checkCosmetic } from "./check.js";
 import {
   buildSelection,
+  factsOf,
   ownCosmetics,
   signSelection,
   verifySelection,
@@ -163,6 +164,29 @@ describe("a cosmetic selection (ADR-0056)", () => {
     expect(visibleCosmetics({ playerPubkey: key.pubkey, cosmetics: signed }, board, false)).toEqual(
       {},
     );
+  });
+
+  it("works a seat out once a board, not once a frame", () => {
+    const seat = { playerPubkey: key.pubkey, cosmetics: signed };
+    const board = boardWith(key.pubkey, TIERS[2]);
+    const worn = visibleCosmetics(seat, board, true);
+    expect(visibleCosmetics({ ...seat }, board, true)).toBe(worn);
+    expect(visibleCosmetics(seat, boardWith(key.pubkey, TIERS[1]), true)).not.toBe(worn);
+    expect(visibleCosmetics(seat, board, false)).toEqual({});
+  });
+
+  it("finds a key in a board of thousands", () => {
+    const [listed] = boardWith(key.pubkey, TIERS[2]).entries;
+    if (listed === undefined) {
+      throw new Error("boardWith lists its key");
+    }
+    const others = Array.from({ length: 5000 }, (_, index) => ({
+      ...listed,
+      pubkey: index.toString(16).padStart(64, "0"),
+    }));
+    const board: Leaderboard = { asOf: 0, entries: [...others, listed] };
+    expect(factsOf(board, key.pubkey)).toBe(listed);
+    expect(factsOf(board, other.pubkey)).toBeUndefined();
   });
 
   it("passes over an id from a newer build, and a second id for a slot", () => {
