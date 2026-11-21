@@ -98,7 +98,7 @@ Floats are evaluated in a single engine: the job runs on Node, and players run t
   3. Verifies the new receipts.
   4. Appends the valid ones to the archive.
   5. Recomputes everything with `rate` from scratch.
-  6. Writes `ranking/receipts.ndjson` (the archive, since relays forget), `ranking/leaderboard.json`, and `ranking/log.txt` (counts, rejected receipts with reasons, and the sha256 of `leaderboard.json`).
+  6. Writes `ranking/receipts/<YYYY-MM>.ndjson` (the archive, since relays forget: one shard per UTC month of `startedAt`, rewritten only when it changed, and the run fails rather than write one over 90 MB, which GitHub would refuse), `ranking/leaderboard.json`, and `ranking/log.txt` (counts, rejected receipts with reasons, and the sha256 of `leaderboard.json`).
 - **The workflow.** `.github/workflows/ranking.yml` runs the script hourly and on dispatch. It commits `ranking/` to `gh-pages` in the same concurrency group as `pages.yml`, so the two never race. Anyone can run the script and compare hashes.
 - **`leaderboard.json`** holds `asOf`, `engine`, and per identity: rating, RD, conservative value, rank or provisional, matches, last played, the last receipt hash, and the forked flag.
 
