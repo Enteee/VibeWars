@@ -52,6 +52,8 @@ import {
 } from "@vibewars/game-session";
 import type { RankedReceipt } from "@vibewars/ranking";
 
+import { signSelection } from "../cosmetics/selection.js";
+import { cosmeticsStore } from "../cosmetics/store.js";
 import { isStaleChunkError } from "../build-check.js";
 import { keySignet } from "../identity/key-signet.js";
 import { TRACKS } from "../music/tracks/index.js";
@@ -89,6 +91,7 @@ import type { NostrQueue } from "./transport/nostr-queue.js";
 import { relayRoomsSwitch } from "./relay-room.js";
 import type { RelayHold } from "./transport/relay-offer.js";
 import { receiptCrypto, verifyPlayerProof } from "./transport/player-key.js";
+import { rankedWork } from "./transport/ranked-work.js";
 import { loadRankedPrev, saveRankedPrev } from "./transport/ranked-prev.js";
 import { hostLeftAddress, partialAddress, receiptAddress } from "./transport/ranked-receipts.js";
 import { verifyTicketSig } from "./transport/ticket-key.js";
@@ -430,6 +433,7 @@ export async function hostLobby(
       relayPub: null,
       playerKey,
       claim: () => leaderboard.claim(playerKey.pubkey),
+      cosmetics: signSelection(playerKey, cosmeticsStore.choice(), Date.now()),
       ...guild,
       timeoutMs: JOIN_TIMEOUT_MS,
       // The host is one of its own group: it proves its ticket like the rest.
@@ -492,6 +496,7 @@ export async function joinLobbyByCode(
       relayPub,
       playerKey,
       claim: () => leaderboard.claim(playerKey.pubkey),
+      cosmetics: signSelection(playerKey, cosmeticsStore.choice(), Date.now()),
       ...guild,
       timeoutMs: JOIN_TIMEOUT_MS,
       ...(queued === undefined ? { roomId: lobbyRoom.roomId } : { queued }),
@@ -601,6 +606,7 @@ export function rankedPlayOf(
     prev: loadRankedPrev(storage, playerKey.pubkey),
     buildHash: __VIBEWARS_BUILD__,
     crypto: receiptCrypto,
+    work: (startHash) => rankedWork(startHash, playerKey.pubkey),
     leaderboard,
     onStartSigned: events.onRankedConfirming,
     onCancel: events.onRankedCancelled,

@@ -380,6 +380,16 @@ What it does not defend against:
 - **A large, well-connected sybil ring.** Trust rises only with distinct,
   connected opponents, so enough keys that play each other widely look
   like a real community. Clique detection is a later card.
+- **The launch gate can be captured.** Before honest players hold 20
+  established keys, one person can make 20 keys and have them play each
+  other to 10 rated matches each: about 100 1v1 receipts, inside the
+  per-key cap, in a day, and free until the stamp (#3746). The next run
+  turns `gated` for good, and from then on a receipt between two
+  newcomers is refused as `no-established-seat`: a newcomer is rated only
+  by playing one of the ring's keys, with its owner's consent. Recovery
+  is a code change, since dropping `leaderboard.json` re-gates from the
+  archive on the next run. Accepted with Q143 A: the gate is a speed
+  bump, and the stamp is what makes a ring cost something.
 - **Who played whom is public**, by key and character name, for good.
 - **Flooding the relays delays the leaderboard.** The job pages back
   through each relay with `until`; a full page of spam in one second is
@@ -426,6 +436,21 @@ What it does not defend against:
   proof itself and passes on the key, not the proof. A hostile host can
   name any key for any seat. Nothing may treat a key it did not challenge
   itself as proven.
+- **What a seat wears is only the host's word too** (ADR-0056). A
+  `"cosmetics"` message carries a selection signed by a key, but the
+  host chooses which seat it goes with. So a lying host can show any seat
+  in another key's real selection, though never one that key has not
+  earned on the viewer's own leaderboard. Hosts relay selections
+  unchecked, and the simulation never reads them, so this changes how a
+  seat looks and nothing else. Accepted. Comparing the selection's key
+  with the seat's signet would not help, since the host names that key
+  as well.
+- **A checked selection costs a viewer one signature check**, about 8 ms
+  on a desktop. Each selection object is checked once, and the lobby
+  host takes at most one `set-profile` per member every 2 s
+  (`PROFILE_INTERVAL_MS`). A hostile member therefore costs each viewer
+  about 4 ms a second. Rejoin churn falls under the general message
+  budget and under volumetric DoS (above).
 - A lobby seat held for a dropped guest (#1764) goes back only to a
   `lobby-join` carrying that seat's lobby rejoin token (#2157): 128 random
   bits the host sends the guest alone in `lobby-seat` when it admits it,

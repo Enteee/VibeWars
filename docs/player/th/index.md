@@ -9,6 +9,7 @@
 - [สกิลและบิลด์](skills-and-builds.md)
 - [อุปกรณ์](equipment.md)
 - [โหมด](modes.md)
+- [ของตกแต่ง](cosmetics.md)
 - [องค์ประกอบในโลก](world-elements.md)
 - [บอต](bots.md)
 - [อภิธานศัพท์](glossary.md)

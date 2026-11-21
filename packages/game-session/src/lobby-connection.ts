@@ -14,6 +14,7 @@ import type {
   PeerRelayOffers,
   WireCape,
   WireTeamLobby,
+  WireCosmetics,
 } from "@vibewars/game-protocol";
 
 import type { TicketKey } from "./queue-client.js";
@@ -50,6 +51,8 @@ export interface LobbyPlayerSnapshot {
   readonly away: boolean;
   /** The player key its host saw it prove (#2706), `null` for a bot: the host's word, no proof. */
   readonly playerPubkey: string | null;
+  /** What it says it wears (ADR-0056), `null` for a bot. Unchecked: the viewer draws only what it verifies. */
+  readonly cosmetics: WireCosmetics | null;
 }
 
 export interface LobbySnapshot {
@@ -177,14 +180,16 @@ export interface LobbyConnection {
    */
   shareTrack(trackId: string, source: string): void;
   /**
-   * This player's name and guild, changed in Options (#3548): the lobby
-   * shows them at once. A match on keeps the ones it started with.
+   * This player's name, guild and signed cosmetics, changed in Options
+   * (#3548, ADR-0056): the lobby shows them at once. A match on keeps the
+   * ones it started with.
    */
   setProfile(profile: {
     readonly name: string;
     readonly guildTag: string | null;
     readonly heroRank: number;
     readonly guildCape: WireCape | null;
+    readonly cosmetics: WireCosmetics;
   }): void;
   onChange(handler: () => void): void;
   onMatchStarting(handler: (start: MatchStarting) => void): void;

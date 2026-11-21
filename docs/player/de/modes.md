@@ -387,4 +387,6 @@ Gewertete Warteschlangen bringen Spieler mit ähnlicher Wertung zusammen und tei
 
 Deine ersten 10 gewerteten Matches sind vorläufig: Die Warteschlange sagt **Vorläufig (3/10 Matches)**, und du hast noch keinen Rang. Danach zeigt das Hauptmenü deinen Rang. Wertungen verfallen: Jeder Tag ohne gewertetes Match macht deine unsicherer, und die Rangliste ordnet nach einem vorsichtigen Wert, sodass dein Rang innerhalb von Wochen sinkt, wenn du aufhörst zu spielen.
 
+Sobald die Rangliste 20 etablierte Spieler hat, zählt ein gewertetes Match nur, wenn mindestens ein Spieler darin etabliert ist (10 oder mehr gewertete Matches): Ein Match nur zwischen neuen Spielern ist ungewertet. Spiel gegen jemand Etablierten, und deine Matches zählen.
+
 Der Knopf **Rangliste** in der oberen Leiste listet die besten 100 mit Rang, Name und Wertung, deine eigene Zeile hervorgehoben. Sie wird stündlich aktualisiert.

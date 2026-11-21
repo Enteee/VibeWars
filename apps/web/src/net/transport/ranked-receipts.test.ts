@@ -2,6 +2,7 @@ import type { PlayerKey } from "@vibewars/game-session";
 import {
   MAX_RECEIPT_BYTES,
   ZERO_HASH,
+  findWork,
   receiptHash,
   startHash,
   validateReceipt,
@@ -25,6 +26,23 @@ import {
   rankedReceiptEvent,
   receiptAddress,
 } from "./ranked-receipts.js";
+
+/** The client's checks, but for a stamp of 4 bits, not `RANKED_WORK_BITS` (#3746). */
+const testCrypto = { ...receiptCrypto, workBits: 4 };
+
+/** `pubkey`'s stamp of `testCrypto.workBits` for the start `started`. */
+function stampOf(started: string, pubkey: string): string {
+  const found = findWork(started, pubkey, receiptCrypto.sha256, {
+    from: 0,
+    budgetMs: Number.POSITIVE_INFINITY,
+    now: () => 0,
+    bits: testCrypto.workBits,
+  });
+  if (!("work" in found)) {
+    throw new Error("an unbounded search always ends in a stamp");
+  }
+  return found.work;
+}
 
 /** A `Storage` of a plain map, as a fresh browser's localStorage. */
 function memoryStorage(entries: Record<string, string> = {}): Storage {
@@ -81,7 +99,12 @@ function receiptOf(red: PlayerKey, blue: PlayerKey, prev = ZERO_HASH): RankedRec
     start,
     startSigs: Object.fromEntries(both.map((key) => [key.pubkey, key.signRankedStart(start)])),
     result,
-    resultSigs: Object.fromEntries(both.map((key) => [key.pubkey, key.signRankedResult(result)])),
+    resultSigs: Object.fromEntries(
+      both.map((key) => [
+        key.pubkey,
+        { sig: key.signRankedResult(result), work: stampOf(result.startHash, key.pubkey) },
+      ]),
+    ),
   };
 }
 
@@ -106,7 +129,7 @@ describe("ranked receipts on Nostr (#3680)", () => {
     ).toBeDefined();
     const parsed = parseRankedReceiptEvent(event);
     expect(parsed).toEqual(receipt);
-    expect(parsed && validateReceipt(parsed, receiptCrypto)).toEqual({ ok: true, void: false });
+    expect(parsed && validateReceipt(parsed, testCrypto)).toEqual({ ok: true, void: false });
   });
 
   it("gives each round and each signer a partial receipt of its own address", () => {
@@ -159,7 +182,7 @@ describe("ranked receipts on Nostr (#3680)", () => {
     expect(loadRankedPrev(storage, blue.pubkey)).toBe(ZERO_HASH);
     const second = receiptOf(red, blue, prev);
     expect(second.start.teams[0]?.[0]?.prev).toBe(prev);
-    expect(validateReceipt(second, receiptCrypto)).toEqual({ ok: true, void: false });
+    expect(validateReceipt(second, testCrypto)).toEqual({ ok: true, void: false });
   });
 
   it.each(["not json", "null", '{"pubkey":1}', JSON.stringify({ prev: "zz" })])(
@@ -173,6 +196,6 @@ describe("ranked receipts on Nostr (#3680)", () => {
   it("labels a player with no character a starter, and the receipt still holds", () => {
     const receipt = receiptOf(red, blue);
     expect(receipt.start.teams[1]?.[0]?.characterId).toBe("starter");
-    expect(validateReceipt(receipt, receiptCrypto).ok).toBe(true);
+    expect(validateReceipt(receipt, testCrypto).ok).toBe(true);
   });
 });

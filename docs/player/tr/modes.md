@@ -546,4 +546,6 @@ Dereceli kuyruklar benzer puandaki oyuncuları eşleştirir ve onları ortalama 
 
 İlk 10 puanlı maçın geçicidir: kuyruk **Geçici (3/10 maç)** der ve henüz sıran yoktur. Ondan sonra ana menü sıranı gösterir. Puanlar aşınır: puanlı maçsız geçen her gün seninkini daha belirsiz yapar ve lider tablosu temkinli bir değere göre sıralar, bu yüzden oynamayı bırakırsan sıran haftalar içinde düşer.
 
+Lider tablosunda 20 yerleşik oyuncu olduğunda, dereceli bir maç ancak içindeki en az bir oyuncu yerleşikse sayılır (10 veya daha fazla puanlı maç): yalnızca yeni oyuncular arasındaki bir maç puansızdır. Yerleşik biriyle oyna, maçların sayılsın.
+
 Üst çubuktaki **Lider tablosu** düğmesi ilk 100'ü sıra, ad ve puana göre listeler, kendi satırın vurgulanır. Saatte bir güncellenir.

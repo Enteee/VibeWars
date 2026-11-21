@@ -9,7 +9,16 @@ import os from "node:os";
 import path from "node:path";
 
 import { schnorr } from "@noble/secp256k1";
-import { parseReceipt, resultDigest, startDigest, startHash, ZERO_HASH } from "@vibewars/ranking";
+import {
+  findWork,
+  parseReceipt,
+  resultDigest,
+  startDigest,
+  startHash,
+  validWork,
+  workNonce,
+  ZERO_HASH,
+} from "@vibewars/ranking";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { BOARD_KEPT_SECONDS, fetchRelay, run } from "./build.mjs";
@@ -20,6 +29,27 @@ import { BOARD_KEPT_SECONDS, fetchRelay, run } from "./build.mjs";
 /** @param {Uint8Array} bytes */
 const sha256 = (bytes) => new Uint8Array(createHash("sha256").update(bytes).digest());
 const hex = (/** @type {Uint8Array} */ bytes) => Buffer.from(bytes).toString("hex");
+
+/** The stamp bits these runs ask for, so a test signs in microseconds, not seconds. */
+const WORK_BITS = 4;
+
+/**
+ * `pubkey`'s stamp under start `started`, of `WORK_BITS`.
+ * @param {string} started
+ * @param {string} pubkey
+ */
+function stamp(started, pubkey) {
+  const found = findWork(started, pubkey, sha256, {
+    from: 0,
+    budgetMs: Number.POSITIVE_INFINITY,
+    now: () => 0,
+    bits: WORK_BITS,
+  });
+  if (!("work" in found)) {
+    throw new Error("an unbounded search always ends in a stamp");
+  }
+  return found.work;
+}
 
 /** Eight keys, each a real BIP-340 key; a receipt seats the first four unless told otherwise. */
 const KEYS = Array.from({ length: 8 }, () => {
@@ -76,7 +106,12 @@ function receipt({ matchId, leavers = [], only, at = 0, keys = KEYS.slice(0, 4) 
     start,
     startSigs: Object.fromEntries(keys.map((key) => [key.pubkey, key.sign(startOf)])),
     result,
-    resultSigs: Object.fromEntries(signers.map((key) => [key.pubkey, key.sign(resultOf)])),
+    resultSigs: Object.fromEntries(
+      signers.map((key) => [
+        key.pubkey,
+        { sig: key.sign(resultOf), work: stamp(result.startHash, key.pubkey) },
+      ]),
+    ),
   };
 }
 
@@ -122,6 +157,7 @@ async function runOn(dir, held, asOfDay = DAY) {
   const asked = [];
   const out = await run({
     dir,
+    workBits: WORK_BITS,
     asOfDay,
     relays: RELAYS,
     fetch: (relay, since) => {
@@ -132,7 +168,7 @@ async function runOn(dir, held, asOfDay = DAY) {
   return { ...out, asked };
 }
 
-/** @typedef {{ asOf: number, count: number, entries: { pubkey: string, matches: number }[] }} Board */
+/** @typedef {{ asOf: number, gated: boolean, count: number, entries: { pubkey: string, matches: number }[] }} Board */
 /** @param {string} leaderboard */
 const entriesOf = (leaderboard) => {
   /** @type {unknown} */
@@ -251,6 +287,16 @@ describe("the leaderboard job", () => {
       ...match,
       startSigs: { ...match.startSigs, [KEYS[0]?.pubkey ?? ""]: "00".repeat(64) },
     };
+    const payer = KEYS[1]?.pubkey ?? "";
+    const paid = match.resultSigs[payer];
+    // The first nonce that is no stamp for this seat in this match.
+    const weak = Array.from({ length: 64 }, (_, n) => workNonce(n)).find(
+      (work) => !validWork(match.result.startHash, payer, work, sha256, WORK_BITS),
+    );
+    const unpaid = {
+      ...match,
+      resultSigs: { ...match.resultSigs, [payer]: { sig: paid?.sig ?? "", work: weak ?? "" } },
+    };
     const elsewhere = {
       ...event(match),
       tags: [
@@ -259,11 +305,12 @@ describe("the leaderboard job", () => {
       ],
     };
     const first = await runOn(dir, [
-      [event(match), event("{not json"), event(forged), elsewhere],
+      [event(match), event("{not json"), event(forged), event(unpaid, "/r0"), elsewhere],
       [],
     ]);
     expect(first.log).toMatch(/malformed: 2\n/);
     expect(first.log).toMatch(/start-signature: 1\n/);
+    expect(first.log).toMatch(/no-work: 1\n/);
 
     const down = await runOn(dir, [undefined, undefined]);
     expect(down.shards).toEqual(first.shards);
@@ -337,6 +384,7 @@ describe("the leaderboard job", () => {
         relays: RELAYS,
         fetch: () => Promise.resolve([event(match)]),
         maxShardBytes: 100,
+        workBits: WORK_BITS,
       }),
     ).rejects.toThrow(/over 100: GitHub refuses/);
     expect(fs.readdirSync(dir)).toEqual([]);
@@ -453,6 +501,91 @@ describe("the leaderboard job", () => {
       // Rated, not void: which way it moves each key is rate.test.ts's to show.
       expect(rated.entries.every((entry) => entry.matches === 1)).toBe(true);
     }
+  });
+
+  /**
+   * A previous board in a new archive: `keys` established, padded with
+   * made-up established keys up to `established`, then `others` as given.
+   * @param {{ keys?: (string | undefined)[], established?: number, others?: object[], gated?: boolean }} board
+   */
+  const boardDir = ({ keys = [], established = 0, others = [], gated = false }) => {
+    const dir = archiveDir();
+    const pad = Array.from({ length: Math.max(0, established - keys.length) }, (_, i) =>
+      String(i).padStart(64, "f"),
+    );
+    const entries = [
+      ...[...keys, ...pad].map((pubkey) => ({ pubkey, provisional: false, forked: false })),
+      ...others,
+    ];
+    fs.writeFileSync(
+      path.join(dir, "leaderboard.json"),
+      `${JSON.stringify({ asOf: 1, gated, entries })}\n`,
+    );
+    return dir;
+  };
+  const [established, provisional, forked] = KEYS.map((key) => key.pubkey);
+  const fresh = KEYS.slice(4);
+  /** @param {string} matchId @param {(typeof KEYS)[number] | undefined} seat beside three fresh keys */
+  const withFresh = (matchId, seat, at = 0) =>
+    receipt({ matchId, at, keys: [seat, ...fresh.slice(1)].filter((key) => key !== undefined) });
+  /** @param {{ leaderboard: string }} out */
+  const gatedOf = (out) => entriesOf(out.leaderboard).gated;
+  /** @param {{ shards: Record<string, string> }} out */
+  const idsOf = (out) => linesOf(out).map((line) => parseReceipt(line)?.start.matchId);
+
+  it("takes in, once 20 keys are established, only a receipt with an established seat (#3745)", async () => {
+    const dir = boardDir({
+      keys: [established],
+      established: 20,
+      others: [
+        { pubkey: provisional, provisional: true, forked: false },
+        { pubkey: forked, provisional: false, forked: true },
+      ],
+    });
+    const out = await runOn(dir, [
+      [
+        event(receipt({ matchId: "fresh", keys: fresh })),
+        event(withFresh("provisional", KEYS[1])),
+        event(withFresh("forked", KEYS[2])),
+        event(withFresh("established", KEYS[0])),
+        event(receipt({ matchId: "partial", keys: fresh, only: fresh[0]?.pubkey ?? "" })),
+      ],
+      [],
+    ]);
+    expect(idsOf(out)).toEqual(["established"]);
+    expect(out.log).toContain("  no-established-seat: 4\n");
+    expect(gatedOf(out)).toBe(true);
+  });
+
+  it("is ungated below 20 established keys, and stays gated once it was (#3745)", async () => {
+    const below = await runOn(boardDir({ keys: [established], established: 19 }), [
+      [event(receipt({ matchId: "fresh", keys: fresh }))],
+      [],
+    ]);
+    expect(idsOf(below)).toEqual(["fresh"]);
+    expect(gatedOf(below)).toBe(false);
+
+    const fell = await runOn(boardDir({ keys: [established], established: 19, gated: true }), [
+      [event(receipt({ matchId: "fresh", keys: fresh })), event(withFresh("established", KEYS[0]))],
+      [],
+    ]);
+    expect(idsOf(fell)).toEqual(["established"]);
+    expect(gatedOf(fell)).toBe(true);
+  });
+
+  it("refuses as over-cap a receipt whose established seat is at the cap, the same in any order (#3745)", async () => {
+    const flood = Array.from({ length: 51 }, (_, i) => withFresh(`e${String(i)}`, KEYS[0], i));
+    const all = [...flood, receipt({ matchId: "fresh", keys: fresh })].map((r) => event(r));
+    const board = { keys: [established], established: 20 };
+    const forward = await runOn(boardDir(board), [all, []]);
+    const backward = await runOn(boardDir(board), [[...all].reverse(), []]);
+    expect(backward.shards).toEqual(forward.shards);
+    expect(backward.leaderboard).toBe(forward.leaderboard);
+    expect(idsOf(forward)).toEqual(flood.slice(0, 50).map((r) => r.start.matchId));
+    expect(forward.log).toContain("over-cap: 1\n");
+    expect(forward.log).toContain(`  ${established ?? ""}: 1\n`);
+    expect(forward.log).not.toContain(`  ${fresh[1]?.pubkey ?? ""}:`);
+    expect(forward.log).toContain("  no-established-seat: 1\n");
   });
 });
 

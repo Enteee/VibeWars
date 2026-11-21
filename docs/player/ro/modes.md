@@ -491,4 +491,6 @@ Cozile clasate împerechează jucători cu rating apropiat și îi împart în e
 
 Primele tale 10 meciuri cu rating sunt provizorii: coada spune **Provizoriu (3/10 meciuri)** și încă nu ai loc în clasament. După aceea, meniul principal îți arată locul. Ratingurile se erodează: fiecare zi fără meci cu rating îl face pe al tău mai nesigur, iar clasamentul ordonează după o valoare prudentă, așa că dacă nu mai joci locul tău coboară în câteva săptămâni.
 
+Odată ce clasamentul are 20 de jucători consacrați, un meci clasat contează doar dacă cel puțin un jucător din el este consacrat (10 sau mai multe meciuri cu rating): un meci doar între jucători noi nu are rating. Joacă cu cineva consacrat și meciurile tale contează.
+
 Butonul **Clasament** din bara de sus arată primii 100 după loc, nume și rating, cu rândul tău evidențiat. Se actualizează în fiecare oră.

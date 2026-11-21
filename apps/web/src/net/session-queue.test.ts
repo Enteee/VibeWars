@@ -43,6 +43,9 @@ const PLAYER_KEY: PlayerKey = {
   signRankedResult: () => {
     throw new Error("no match is played");
   },
+  signCosmetics: () => {
+    throw new Error("no lobby is met");
+  },
 };
 
 describe("entering the Random Arena queue (#2090)", () => {

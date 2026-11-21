@@ -8,6 +8,7 @@ import {
   type WireSharedTrack,
   parseWireLobbyNote,
   parseWireTeamProposalBuilds,
+  parseWireSeatCosmetics,
   parseWireLobbyState,
   parseWireLobbyWelcome,
   parsePeerLobbyChallenge,
@@ -37,6 +38,8 @@ import {
   type PeerLobbyLeave,
   type PeerLobbyJoin,
   type WireCape,
+  type WireCosmetics,
+  type WireSeatCosmetics,
   type WireLobbyCommand,
   type WireLobbyState,
   type WireProposalBuild,
@@ -70,6 +73,7 @@ import type {
   LobbySnapshot,
   MatchStarting,
 } from "./lobby-connection.js";
+import { wear } from "./wire.js";
 import { RECONNECT_WINDOW_SECONDS } from "./match-host.js";
 import type { PlayerKey } from "./player-key.js";
 import { claimsHold, type LeaderboardSource } from "./ranked-claims.js";
@@ -165,6 +169,8 @@ export interface JoinLobbyOptions {
   readonly relayPub: string | null;
   /** This browser's player key (#2706): every join proves it to the host. */
   readonly playerKey: PlayerKey;
+  /** What this player wears (ADR-0056), signed by `playerKey`: every join carries it. */
+  readonly cosmetics: WireCosmetics;
   /**
    * This player's claim from its own copy of the leaderboard (#3575),
    * read when it consents to a party: the party's ticket carries it.
@@ -190,6 +196,12 @@ export interface RankedPlay {
   readonly crypto: ReceiptCrypto;
   /** The leaderboard every seat's claim is checked against (#3575): see `claimsHold`. */
   readonly leaderboard: LeaderboardSource;
+  /**
+   * This player's proof-of-work stamp for the start whose hash is
+   * `startHash` (#3746), asked once, when every seat signed it: the app
+   * computes it off the main thread. Its result signatures wait for it.
+   */
+  readonly work: (startHash: string) => Promise<string>;
   /**
    * The match's receipt, `partial` false: the host's, every signature in
    * and valid. Or, `partial` true, the `host-left` one this player built
@@ -325,6 +337,7 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
     guildCape: options.guildCape,
     relayPub: options.relayPub,
     playerPubkey: options.playerKey.pubkey,
+    cosmetics: options.cosmetics,
   };
   /** A coded lobby's join; a queued one's is made with its proof. */
   const codedJoin: Omit<PeerLobbyJoin, "rejoinToken"> = {
@@ -365,6 +378,8 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
   let latest: WireLobbyState | undefined;
   /** What the host sent of each proposal on this side (#1811), by proposer. */
   const proposalBuilds = new Map<string, readonly WireProposalBuild[]>();
+  /** What the host last said each keyed seat wears (ADR-0056), by peer id. */
+  const worn = new Map<string, WireSeatCosmetics>();
   /** The match whose start was already handed on, so a repeat is not. */
   let startedMatch: string | null = null;
   let closed = false;
@@ -424,8 +439,12 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
         readonly hash: string;
         readonly hostPubkey: string;
         startSigs: Readonly<Record<string, string>> | undefined;
+        /** This player's stamp for the start (#3746), once its worker found it. */
+        work: string | undefined;
       }
     | undefined;
+  /** What signs, once this player's stamp is ready (#3746): the latest result, or `host-left`. */
+  let rankedWaiting: (() => void) | undefined;
   /** This player's ranked match is over for it: a receipt was handed on, or the match cancelled. */
   let rankedOver = false;
   /** A ranked start's claims are being checked (#3575): a second start waits for no fetch. */
@@ -508,6 +527,12 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
     ) {
       return;
     }
+    const { work } = signed;
+    if (work === undefined) {
+      // Signed once this player's stamp is ready (#3746).
+      rankedWaiting = rankedHostLeft;
+      return;
+    }
     rankedOver = true;
     const result: RankedResult = {
       startHash: signed.hash,
@@ -522,14 +547,77 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
         start: signed.start,
         startSigs: signed.startSigs,
         result,
-        resultSigs: { [options.playerKey.pubkey]: options.playerKey.signRankedResult(result) },
+        resultSigs: {
+          [options.playerKey.pubkey]: { sig: options.playerKey.signRankedResult(result), work },
+        },
       },
       true,
     );
   };
 
+  /**
+   * The result to sign (#3573): of this start, and not one naming this
+   * player a leaver, whose signature nobody needs. A host never writes
+   * `host-left`. Signed once this player's stamp is ready (#3746): until
+   * then the latest result waits, and is checked again when it is.
+   */
+  const onRankedResult = (data: unknown, from: string): void => {
+    const said = parseWireRankedResult(data);
+    const signed = ranked;
+    if (
+      from !== hostId ||
+      said === undefined ||
+      signed?.startSigs === undefined ||
+      rankedOver ||
+      said.result.startHash !== signed.hash ||
+      said.result.endReason === "host-left"
+    ) {
+      return;
+    }
+    const { work } = signed;
+    if (work === undefined) {
+      rankedWaiting = () => {
+        onRankedResult(data, from);
+      };
+      return;
+    }
+    if (signedSig !== undefined && sameRankedResult(said.result, signedResult)) {
+      // The host lost this player's signature: the one it has, again,
+      // with nothing new signed or handed on to publish.
+      const again: PeerRankedResultSig = { startHash: signed.hash, sig: signedSig, work };
+      transport.send("ranked-result-sig", again, from);
+      return;
+    }
+    const holds =
+      !said.result.leavers.includes(options.playerKey.pubkey) &&
+      said.result.winningTeam === endedWinner &&
+      rankedLeaversHold(said.result);
+    if (!holds) {
+      return;
+    }
+    signedResult = said.result;
+    const reply: PeerRankedResultSig = {
+      startHash: signed.hash,
+      sig: options.playerKey.signRankedResult(said.result),
+      work,
+    };
+    signedSig = reply.sig;
+    transport.send("ranked-result-sig", reply, from);
+    rankedPlay?.onResultSigned(
+      {
+        start: signed.start,
+        startSigs: signed.startSigs,
+        result: said.result,
+        resultSigs: { [options.playerKey.pubkey]: { sig: reply.sig, work } },
+      },
+      resultsSigned,
+    );
+    resultsSigned += 1;
+  };
+
   const stop = (): void => {
     stopped = true;
+    rankedWaiting = undefined;
     clearTimeout(closeTimer);
     for (const off of unsubscribe.splice(0)) {
       off();
@@ -620,6 +708,12 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
   /** Whether lobby messages from `from` count before the host is known. */
   const mayHost = (from: string): boolean => queued === undefined || provenHosts.has(from);
 
+  /** What `id` wears, if the host's roster says so for the key it seated it with. */
+  const wornBy = (id: string, playerPubkey: string | null): WireCosmetics | null => {
+    const seat = worn.get(id);
+    return seat?.playerPubkey === playerPubkey ? seat.cosmetics : null;
+  };
+
   const send = (command: WireLobbyCommand): void => {
     if (hostId !== undefined && !closed) {
       transport.send("lobby-cmd", command, hostId);
@@ -646,6 +740,7 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
       bot: player.bot,
       away: player.away,
       playerPubkey: player.playerPubkey,
+      cosmetics: wornBy(player.id, player.playerPubkey),
     })),
     isHost: state.players.some((player) => player.id === selfId && player.isHost),
     countdownSeconds: state.countdownSeconds,
@@ -1055,6 +1150,24 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
           }
         }
       }),
+      transport.on("cosmetics", (data, from) => {
+        if (hostId === undefined || from !== hostId) {
+          return;
+        }
+        const seat = parseWireSeatCosmetics(data);
+        if (seat === undefined) {
+          return;
+        }
+        wear(
+          worn,
+          seat.id,
+          seat,
+          (kept) => latest?.players.some((player) => player.id === kept) ?? false,
+        );
+        for (const handler of [...changeHandlers]) {
+          handler();
+        }
+      }),
       transport.on("team-proposal-builds", (data, from) => {
         if (hostId === undefined || from !== hostId) {
           return;
@@ -1208,6 +1321,7 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
             hash: startHash(said.start, rankedPlay.crypto.sha256),
             hostPubkey: hostSeat.pubkey,
             startSigs: undefined,
+            work: undefined,
           };
           const signed: PeerRankedStartSig = {
             matchId: said.start.matchId,
@@ -1243,53 +1357,17 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
           return;
         }
         signed.startSigs = said.sigs;
+        // The start is fixed: this player's stamp runs from now, through
+        // the match, so it is ready long before the result (#3746).
+        void rankedPlay.work(signed.hash).then((work) => {
+          signed.work = work;
+          const waiting = rankedWaiting;
+          rankedWaiting = undefined;
+          waiting?.();
+        });
       }),
-      // The result to sign: of this start, and not one naming this player a
-      // leaver, whose signature nobody needs. A host never writes `host-left`.
       transport.on("ranked-result", (data, from) => {
-        const said = parseWireRankedResult(data);
-        const signed = ranked;
-        if (
-          from !== hostId ||
-          said === undefined ||
-          signed?.startSigs === undefined ||
-          rankedOver ||
-          said.result.startHash !== signed.hash ||
-          said.result.endReason === "host-left"
-        ) {
-          return;
-        }
-        if (signedSig !== undefined && sameRankedResult(said.result, signedResult)) {
-          // The host lost this player's signature: the one it has, again,
-          // with nothing new signed or handed on to publish.
-          const again: PeerRankedResultSig = { startHash: signed.hash, sig: signedSig };
-          transport.send("ranked-result-sig", again, from);
-          return;
-        }
-        const holds =
-          !said.result.leavers.includes(options.playerKey.pubkey) &&
-          said.result.winningTeam === endedWinner &&
-          rankedLeaversHold(said.result);
-        if (!holds) {
-          return;
-        }
-        signedResult = said.result;
-        const reply: PeerRankedResultSig = {
-          startHash: signed.hash,
-          sig: options.playerKey.signRankedResult(said.result),
-        };
-        signedSig = reply.sig;
-        transport.send("ranked-result-sig", reply, from);
-        rankedPlay?.onResultSigned(
-          {
-            start: signed.start,
-            startSigs: signed.startSigs,
-            result: said.result,
-            resultSigs: { [options.playerKey.pubkey]: reply.sig },
-          },
-          resultsSigned,
-        );
-        resultsSigned += 1;
+        onRankedResult(data, from);
       }),
       // How the ranked match ended, as the host told this player: a result
       // naming another winner is not signed.

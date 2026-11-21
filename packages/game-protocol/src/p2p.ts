@@ -119,6 +119,7 @@ export const CHANNELS = [
   "traps",
   "respawns",
   "capes",
+  "cosmetics",
   "chat",
   "chat-line",
   "shared-track",
@@ -1131,6 +1132,39 @@ export interface WireCapes {
   readonly capes: readonly WireSeatCape[];
 }
 
+/**
+ * The most ids a cosmetic selection holds, one a slot, and the longest an
+ * id is (ADR-0056). Each seat's selection is a `"cosmetics"` message of
+ * its own, so this is the catalog's cap, not the roster's.
+ */
+export const MAX_COSMETIC_IDS = 12;
+export const MAX_COSMETIC_ID_LENGTH = 32;
+
+/**
+ * What a player wears (ADR-0056): catalog ids its key signed at `at`, ms
+ * since the epoch, `sig` the `vibewars/cosmetics` signature. No host and
+ * no simulation reads it: hosts relay it untouched, and each viewer
+ * checks it against its own leaderboard. An empty list is a selection
+ * too, signed the same.
+ */
+export interface WireCosmetics {
+  readonly ids: readonly string[];
+  readonly at: number;
+  readonly sig: string;
+}
+
+/**
+ * A lobby or match host to its players and its observers (ADR-0056): one
+ * seated player's cosmetics, with the key that signed them, a message a
+ * seat. The latest for an id replaces the one before; a seat never told
+ * is drawn default.
+ */
+export interface WireSeatCosmetics {
+  readonly id: string;
+  readonly playerPubkey: string;
+  readonly cosmetics: WireCosmetics;
+}
+
 /** Who a chat line reaches (#479): everyone in the lobby, or your team. */
 export const CHAT_CHANNELS = ["all", "team"] as const;
 
@@ -1304,6 +1338,8 @@ export interface PeerLobbyJoin {
    * 64 zeros for its first. `null` from a page that plays no ranked match.
    */
   readonly ranked: WireRankedJoin | null;
+  /** What it wears (ADR-0056), signed by `playerPubkey`. The host relays it unread. */
+  readonly cosmetics: WireCosmetics;
 }
 
 /** A joiner's part of its ranked seat (#3573): see `PeerLobbyJoin.ranked`. */
@@ -1729,8 +1765,9 @@ export type WireLobbyCommand =
       readonly build: JsonValue;
     }
   /**
-   * The member's own name and guild, changed in Options (#3548): as its
-   * `PeerLobbyJoin` carried them, sanitised by the host as at a join.
+   * The member's own name, guild and cosmetics, changed in Options
+   * (#3548, ADR-0056): as its `PeerLobbyJoin` carried them, the name and
+   * guild sanitised by the host as at a join, the cosmetics relayed unread.
    */
   | {
       readonly kind: "set-profile";
@@ -1738,6 +1775,7 @@ export type WireLobbyCommand =
       readonly guildTag: string | null;
       readonly heroRank: number;
       readonly guildCape: WireCape | null;
+      readonly cosmetics: WireCosmetics;
     };
 
 /**
@@ -2263,6 +2301,36 @@ export function parseWireCapes(value: unknown): WireCapes | undefined {
   const capes =
     raw === undefined ? undefined : parseArray(raw.capes, MAX_LOBBY_PLAYERS, parseSeatCape);
   return capes === undefined ? undefined : { capes };
+}
+
+const parseCosmeticId = (value: unknown): string | undefined =>
+  isString(value, MAX_COSMETIC_ID_LENGTH) ? value : undefined;
+
+/** A selection's shape (ADR-0056); whether its signature holds is each viewer's to check. */
+export function parseWireCosmetics(value: unknown): WireCosmetics | undefined {
+  const raw = fields(value);
+  const ids =
+    raw === undefined ? undefined : parseArray(raw.ids, MAX_COSMETIC_IDS, parseCosmeticId);
+  return raw !== undefined &&
+    ids !== undefined &&
+    typeof raw.at === "number" &&
+    Number.isSafeInteger(raw.at) &&
+    raw.at >= 0 &&
+    isTicketSig(raw.sig)
+    ? { ids, at: raw.at, sig: raw.sig }
+    : undefined;
+}
+
+/** The `"cosmetics"` channel. */
+export function parseWireSeatCosmetics(value: unknown): WireSeatCosmetics | undefined {
+  const raw = fields(value);
+  const cosmetics = raw === undefined ? undefined : parseWireCosmetics(raw.cosmetics);
+  return raw !== undefined &&
+    isString(raw.id) &&
+    isTicketId(raw.playerPubkey) &&
+    cosmetics !== undefined
+    ? { id: raw.id, playerPubkey: raw.playerPubkey, cosmetics }
+    : undefined;
 }
 
 export function parsePeerChat(value: unknown): PeerChat | undefined {
@@ -3412,6 +3480,7 @@ export function parsePeerLobbyJoin(value: unknown): PeerLobbyJoin | undefined {
   const guildTag = parseRawGuildTag(raw?.guildTag);
   const admission = parseAdmission(raw?.admission);
   const ranked = parseRankedJoin(raw?.ranked);
+  const cosmetics = parseWireCosmetics(raw?.cosmetics);
   if (
     raw === undefined ||
     !isString(raw.protocolVersion) ||
@@ -3423,7 +3492,8 @@ export function parsePeerLobbyJoin(value: unknown): PeerLobbyJoin | undefined {
     (raw.relayPub !== null && !isRelayPub(raw.relayPub)) ||
     !isTicketId(raw.playerPubkey) ||
     typeof raw.ascentMorale !== "number" ||
-    ranked === undefined
+    ranked === undefined ||
+    cosmetics === undefined
   ) {
     return undefined;
   }
@@ -3440,6 +3510,7 @@ export function parsePeerLobbyJoin(value: unknown): PeerLobbyJoin | undefined {
     playerPubkey: raw.playerPubkey,
     ascentMorale: raw.ascentMorale,
     ranked,
+    cosmetics,
   };
 }
 
@@ -3898,15 +3969,20 @@ export function parseWireLobbyCommand(value: unknown): WireLobbyCommand | undefi
         : undefined;
     }
     case "set-profile": {
-      // As `parsePeerLobbyJoin` reads the same four fields.
+      // As `parsePeerLobbyJoin` reads the same five fields.
       const guildTag = parseRawGuildTag(raw.guildTag);
-      return typeof raw.name === "string" && guildTag !== undefined && isHeroRank(raw.heroRank)
+      const cosmetics = parseWireCosmetics(raw.cosmetics);
+      return typeof raw.name === "string" &&
+        guildTag !== undefined &&
+        isHeroRank(raw.heroRank) &&
+        cosmetics !== undefined
         ? {
             kind: "set-profile",
             name: raw.name.slice(0, MAX_WIRE_TEXT),
             guildTag,
             heroRank: raw.heroRank,
             guildCape: parseWireCape(raw.guildCape) ?? null,
+            cosmetics,
           }
         : undefined;
     }
@@ -4026,12 +4102,14 @@ export interface WireRankedResult {
   readonly result: RankedResult;
 }
 
-/** A seat to its host (#3573): its BIP-340 signature of the result's digest. */
+/** A seat to its host (#3573): its BIP-340 signature of the result's digest, and its stamp (#3746). */
 export interface PeerRankedResultSig {
   /** The result's `startHash`. */
   readonly startHash: string;
   /** 128 lowercase hex digits. */
   readonly sig: string;
+  /** The proof-of-work stamp of `validWork`: 16 lowercase hex digits. */
+  readonly work: string;
 }
 
 /** Host to every seat (#3573): the whole receipt, every signature in. */
@@ -4048,6 +4126,7 @@ export interface WireRankedCancel {
 }
 
 const RANKED_HASH = /^[0-9a-f]{64}$/;
+const RANKED_WORK = /^[0-9a-f]{16}$/;
 
 /** The `"ranked-start"` channel. */
 export function parseWireRankedStart(value: unknown): WireRankedStart | undefined {
@@ -4101,8 +4180,10 @@ export function parsePeerRankedResultSig(value: unknown): PeerRankedResultSig | 
   return raw !== undefined &&
     typeof raw.startHash === "string" &&
     RANKED_HASH.test(raw.startHash) &&
-    isTicketSig(raw.sig)
-    ? { startHash: raw.startHash, sig: raw.sig }
+    isTicketSig(raw.sig) &&
+    typeof raw.work === "string" &&
+    RANKED_WORK.test(raw.work)
+    ? { startHash: raw.startHash, sig: raw.sig, work: raw.work }
     : undefined;
 }
 

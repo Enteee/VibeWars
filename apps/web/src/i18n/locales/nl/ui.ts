@@ -348,6 +348,33 @@ export default {
   "controls.weaponSet4": "Wapenset 4",
   "controls.weaponSets": "Wapensets",
   "controls.withShift": "Shift + {key}",
+
+  "cosmetics.item.flame": "Zegereeksvlam",
+  "cosmetics.item.frameJade": "Jaden rand",
+  "cosmetics.item.frameOrchid": "Orchideeën rand",
+  "cosmetics.item.frameRose": "Rozen rand",
+  "cosmetics.item.frameTeal": "Blauwgroene rand",
+  "cosmetics.locked": "Vergrendeld",
+  "cosmetics.none": "Geen",
+  "cosmetics.note":
+    "Puur voor het uiterlijk: geen enkele cosmetic verandert hoe iets speelt. Verdiend met gerankte zeges op de openbare ranglijst en gedeeld door al je personages.",
+  "cosmetics.requires.streak": {
+    one: "{count} gerankte zege op rij",
+    other: "{count} gerankte zeges op rij",
+  },
+  "cosmetics.requires.top": "Top {rank}",
+  "cosmetics.requires.wins": {
+    one: "{count} gerankte zege",
+    other: "{count} gerankte zeges",
+  },
+  "cosmetics.showOthers": "Cosmetics van andere spelers tonen",
+  "cosmetics.slot.flame": "Zegereeksvlam",
+  "cosmetics.slot.frame": "Naambordrand",
+  "cosmetics.slot.title": "Titel",
+  "cosmetics.title.champion": "Kampioen",
+  "cosmetics.title.contender": "Uitdager",
+  "cosmetics.title.veteran": "Veteraan",
+  "cosmetics.title.warlord": "Krijgsheer",
   "creature.rat": "Rat",
 
   "echo.secondsLeft": { one: "Geëchood: nog {count} s", other: "Geëchood: nog {count} s" },
@@ -813,6 +840,7 @@ export default {
   "music.trackWithMood": "{track} ({mood})",
 
   "options.controls": "besturing",
+  "options.cosmetics": "cosmetics",
   "options.display": "weergave",
   "options.label": "Opties",
   "options.language": "taal",

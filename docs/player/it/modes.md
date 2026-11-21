@@ -162,4 +162,6 @@ Le code classificate abbinano giocatori di punteggio simile e li dividono in squ
 
 Le tue prime 10 partite valutate sono provvisorie: la coda dice **Provvisorio (3/10 partite)** e non hai ancora una posizione. Dopo, il menu principale mostra la tua posizione. I punteggi decadono: ogni giorno senza una partita valutata rende il tuo meno certo, e la classifica ordina per un valore prudente, quindi se smetti di giocare la tua posizione scende nel giro di settimane.
 
+Quando la classifica ha 20 giocatori affermati, una partita classificata conta solo se almeno un giocatore al suo interno è affermato (10 o più partite valutate): una partita solo tra giocatori nuovi non è valutata. Gioca con qualcuno di affermato e le tue partite contano.
+
 Il pulsante **Classifica** nella barra in alto elenca i primi 100 per posizione, nome e punteggio, con la tua riga evidenziata. Si aggiorna ogni ora.

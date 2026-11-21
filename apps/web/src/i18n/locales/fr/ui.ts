@@ -370,6 +370,35 @@ export default {
   "controls.weaponSet4": "Set d'armes 4",
   "controls.weaponSets": "Sets d'armes",
   "controls.withShift": "Maj + {key}",
+
+  "cosmetics.item.flame": "Flamme de série",
+  "cosmetics.item.frameJade": "Cadre jade",
+  "cosmetics.item.frameOrchid": "Cadre orchidée",
+  "cosmetics.item.frameRose": "Cadre rose",
+  "cosmetics.item.frameTeal": "Cadre sarcelle",
+  "cosmetics.locked": "Verrouillé",
+  "cosmetics.none": "Aucun",
+  "cosmetics.note":
+    "Purement esthétique : aucun cosmétique ne change la façon de jouer. Ils s'obtiennent par des victoires classées au classement public et sont partagés par tous tes personnages.",
+  "cosmetics.requires.streak": {
+    one: "{count} victoire classée d'affilée",
+    many: "{count} victoires classées d'affilée",
+    other: "{count} victoires classées d'affilée",
+  },
+  "cosmetics.requires.top": "Top {rank}",
+  "cosmetics.requires.wins": {
+    one: "{count} victoire classée",
+    many: "{count} victoires classées",
+    other: "{count} victoires classées",
+  },
+  "cosmetics.showOthers": "Afficher les cosmétiques des autres joueurs",
+  "cosmetics.slot.flame": "Flamme de série",
+  "cosmetics.slot.frame": "Cadre de la plaque de nom",
+  "cosmetics.slot.title": "Titre",
+  "cosmetics.title.champion": "Champion",
+  "cosmetics.title.contender": "Prétendant",
+  "cosmetics.title.veteran": "Vétéran",
+  "cosmetics.title.warlord": "Seigneur de guerre",
   "creature.rat": "Rat",
 
   "echo.secondsLeft": {
@@ -867,6 +896,7 @@ export default {
   "music.trackWithMood": "{track} ({mood})",
 
   "options.controls": "commandes",
+  "options.cosmetics": "cosmétiques",
   "options.display": "affichage",
   "options.label": "Options",
   "options.language": "langue",

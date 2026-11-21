@@ -352,6 +352,33 @@ export default {
   "controls.weaponSet4": "Waffenset 4",
   "controls.weaponSets": "Waffensets",
   "controls.withShift": "Umschalt + {key}",
+
+  "cosmetics.item.flame": "Siegesserien-Flamme",
+  "cosmetics.item.frameJade": "Jaderahmen",
+  "cosmetics.item.frameOrchid": "Orchideenrahmen",
+  "cosmetics.item.frameRose": "Rosenrahmen",
+  "cosmetics.item.frameTeal": "Petrolrahmen",
+  "cosmetics.locked": "Gesperrt",
+  "cosmetics.none": "Keine",
+  "cosmetics.note":
+    "Rein optisch: Keine Kosmetik verändert, wie sich etwas spielt. Verdient mit gewerteten Siegen in der öffentlichen Rangliste, gilt für alle deine Charaktere.",
+  "cosmetics.requires.streak": {
+    one: "{count} gewerteter Sieg in Folge",
+    other: "{count} gewertete Siege in Folge",
+  },
+  "cosmetics.requires.top": "Top {rank}",
+  "cosmetics.requires.wins": {
+    one: "{count} gewerteter Sieg",
+    other: "{count} gewertete Siege",
+  },
+  "cosmetics.showOthers": "Kosmetik anderer Spieler anzeigen",
+  "cosmetics.slot.flame": "Siegesserien-Flamme",
+  "cosmetics.slot.frame": "Namensschild-Rahmen",
+  "cosmetics.slot.title": "Titel",
+  "cosmetics.title.champion": "Champion",
+  "cosmetics.title.contender": "Herausforderer",
+  "cosmetics.title.veteran": "Veteran",
+  "cosmetics.title.warlord": "Kriegsherr",
   "creature.rat": "Ratte",
 
   "echo.secondsLeft": { one: "Echo: noch {count} s", other: "Echo: noch {count} s" },
@@ -820,6 +847,7 @@ export default {
   "music.trackWithMood": "{track} ({mood})",
 
   "options.controls": "Steuerung",
+  "options.cosmetics": "Kosmetik",
   "options.display": "Anzeige",
   "options.label": "Optionen",
   "options.language": "Sprache",

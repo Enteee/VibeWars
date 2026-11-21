@@ -321,6 +321,31 @@ export default {
   "controls.weaponSet4": "무기 세트 4",
   "controls.weaponSets": "무기 세트",
   "controls.withShift": "Shift + {key}",
+
+  "cosmetics.item.flame": "연승 불꽃",
+  "cosmetics.item.frameJade": "비취 테두리",
+  "cosmetics.item.frameOrchid": "난초 테두리",
+  "cosmetics.item.frameRose": "장미 테두리",
+  "cosmetics.item.frameTeal": "청록 테두리",
+  "cosmetics.locked": "잠김",
+  "cosmetics.none": "없음",
+  "cosmetics.note":
+    "순수하게 외형용입니다. 어떤 치장 아이템도 플레이에 영향을 주지 않습니다. 공개 리더보드의 랭크 승리로 얻으며, 모든 캐릭터가 함께 씁니다.",
+  "cosmetics.requires.streak": {
+    other: "랭크 {count}연승",
+  },
+  "cosmetics.requires.top": "상위 {rank}위",
+  "cosmetics.requires.wins": {
+    other: "랭크 {count}승",
+  },
+  "cosmetics.showOthers": "다른 플레이어의 치장 표시",
+  "cosmetics.slot.flame": "연승 불꽃",
+  "cosmetics.slot.frame": "이름표 테두리",
+  "cosmetics.slot.title": "칭호",
+  "cosmetics.title.champion": "챔피언",
+  "cosmetics.title.contender": "도전자",
+  "cosmetics.title.veteran": "베테랑",
+  "cosmetics.title.warlord": "군주",
   "creature.rat": "쥐",
 
   "echo.secondsLeft": { other: "메아리: {count}초 남음" },
@@ -769,6 +794,7 @@ export default {
   "music.trackWithMood": "{track} ({mood})",
 
   "options.controls": "조작",
+  "options.cosmetics": "치장",
   "options.display": "화면",
   "options.label": "옵션",
   "options.language": "언어",

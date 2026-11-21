@@ -449,4 +449,6 @@ Las colas clasificatorias emparejan a jugadores de puntuación parecida y los re
 
 Tus primeras 10 partidas puntuadas son provisionales: la cola dice **Provisional (3/10 partidas)** y aún no tienes puesto. Después, el menú principal muestra tu puesto. Las puntuaciones decaen: cada día sin una partida puntuada hace la tuya menos segura, y la clasificación ordena por un valor prudente, así que si dejas de jugar tu puesto baja en semanas.
 
+En cuanto la clasificación tiene 20 jugadores asentados, una partida clasificatoria solo cuenta si al menos un jugador en ella está asentado (10 o más partidas puntuadas): una partida solo entre jugadores nuevos no se puntúa. Juega con alguien asentado y tus partidas cuentan.
+
 El botón **Clasificación** de la barra superior muestra los 100 mejores por puesto, nombre y puntuación, con tu fila resaltada. Se actualiza cada hora.

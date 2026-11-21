@@ -474,4 +474,6 @@ As filas ranqueadas juntam jogadores de classificação parecida e dividem-nos e
 
 As tuas primeiras 10 partidas classificadas são provisórias: a fila diz **Provisória (3/10 partidas)** e ainda não tens posição. Depois disso, o menu principal mostra a tua posição. As classificações decaem: cada dia sem partida classificada torna a tua menos certa, e a tabela de líderes ordena por um valor prudente, por isso, se deixares de jogar, a tua posição desce em semanas.
 
+Assim que a tabela de líderes tiver 20 jogadores estabelecidos, uma partida ranqueada só conta se pelo menos um jogador nela estiver estabelecido (10 ou mais partidas classificadas): uma partida só entre jogadores novos não é classificada. Joga com alguém estabelecido e as tuas partidas contam.
+
 O botão **Tabela de líderes** na barra superior lista os 100 primeiros por posição, nome e classificação, com a tua linha destacada. É atualizada a cada hora.

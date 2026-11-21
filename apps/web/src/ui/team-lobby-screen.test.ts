@@ -165,6 +165,7 @@ function player(
     bot,
     away: false,
     playerPubkey: bot ? null : "ab".repeat(32),
+    cosmetics: null,
   };
 }
 

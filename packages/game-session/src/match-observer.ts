@@ -3,6 +3,7 @@ import {
   parsePeerObserving,
   parsePeerRefuse,
   parseWireCapes,
+  parseWireSeatCosmetics,
   parseWireCombatBatch,
   parseWireEnded,
   parseWireSnapshotPart,
@@ -17,7 +18,12 @@ import {
   type WireTeamCount,
 } from "@vibewars/game-protocol";
 
-import type { CombatMessage, ObservedSnapshot, PlayerSnapshot } from "./match-connection.js";
+import type {
+  CombatMessage,
+  ObservedSnapshot,
+  PlayerSnapshot,
+  SeatWorn,
+} from "./match-connection.js";
 import {
   HELLO_RESEND_MS,
   HostLeftError,
@@ -27,7 +33,7 @@ import {
 } from "./match-client.js";
 import { snapshotAssembler } from "./snapshot-parts.js";
 import type { Transport } from "./transport.js";
-import { combatMessage, observedSnapshot, playerSnapshots } from "./wire.js";
+import { combatMessage, observedSnapshot, playerSnapshots, wear } from "./wire.js";
 
 /**
  * A lobby spectator watching the lobby's match (#480): the same snapshots,
@@ -67,6 +73,7 @@ export function connectObserver(options: ConnectObserverOptions): Promise<Observ
   let ended: WireEnded | undefined;
   /** Each seat's cape as last sent (#3554), by id. */
   let capes = new Map<string, WireCape>();
+  const worn = new Map<string, SeatWorn>();
   let lost = false;
   /** Set once `connectObserver` has resolved or rejected. */
   let settled = false;
@@ -120,12 +127,20 @@ export function connectObserver(options: ConnectObserverOptions): Promise<Observ
         return;
       }
       // One naming a status this build has no index for is malformed (#632).
-      const players = playerSnapshots(snapshot, capes);
+      const players = playerSnapshots(snapshot, capes, worn);
       if (players !== undefined) {
         latest = { wire: snapshot, players };
       }
     },
   );
+  fromHost("cosmetics", parseWireSeatCosmetics, ({ id, ...seat }) => {
+    wear(
+      worn,
+      id,
+      seat,
+      (kept) => latest?.wire.players.some((player) => player.id === kept) ?? false,
+    );
+  });
   fromHost("capes", parseWireCapes, (message) => {
     capes = new Map(message.capes.map(({ id, cape }) => [id, cape]));
   });

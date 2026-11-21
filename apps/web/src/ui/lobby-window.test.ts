@@ -83,6 +83,7 @@ function player(
     bot: false,
     away: false,
     playerPubkey: "ab".repeat(32),
+    cosmetics: null,
     ...overrides,
   };
 }

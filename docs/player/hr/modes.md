@@ -464,4 +464,6 @@ Rangirani redovi spajaju igrače sličnog rejtinga i dijele ih u timove sličnog
 
 Tvojih prvih 10 rangiranih mečeva je privremeno: red kaže **Privremeno (3/10 mečeva)** i još nemaš mjesto. Nakon toga glavni izbornik prikazuje tvoje mjesto. Rejting slabi: svaki dan bez rangiranog meča čini tvoj manje sigurnim, a ljestvica poreda po opreznoj vrijednosti, pa ako prestaneš igrati, tvoje mjesto padne unutar nekoliko tjedana.
 
+Čim ljestvica ima 20 etabliranih igrača, rangirani meč se računa samo ako je barem jedan igrač u njemu etabliran (10 ili više rangiranih mečeva): meč samo između novih igrača nije rangiran. Igraj protiv nekoga etabliranog i tvoji mečevi se računaju.
+
 Gumb **Ljestvica** na gornjoj traci prikazuje najboljih 100 po mjestu, imenu i rejtingu, s tvojim retkom istaknutim. Ažurira se svaki sat.

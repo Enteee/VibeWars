@@ -501,4 +501,6 @@ Rangerede køer parrer spillere med lignende rating og deler dem i hold med lign
 
 Dine første 10 ratede kampe er foreløbige: køen siger **Foreløbig (3/10 kampe)**, og du har endnu ingen placering. Derefter viser hovedmenuen din placering. Ratings forfalder: hver dag uden en rated kamp gør din mindre sikker, og ranglisten sorterer efter en forsigtig værdi, så hvis du holder op med at spille, synker din placering inden for uger.
 
+Når ranglisten har 20 etablerede spillere, tæller en rangeret kamp kun, hvis mindst én spiller i den er etableret (10 eller flere ratede kampe): en kamp kun mellem nye spillere er ikke ratet. Spil mod en etableret spiller, så tæller dine kampe.
+
 Knappen **Rangliste** i topbjælken viser top 100 med placering, navn og rating, med din egen række fremhævet. Den opdateres hver time.

@@ -335,4 +335,6 @@ Gerankte wachtrijen koppelen spelers met een vergelijkbare rating en verdelen ze
 
 Je eerste 10 gewaardeerde wedstrijden zijn voorlopig: de wachtrij zegt **Voorlopig (3/10 wedstrijden)** en je hebt nog geen plaats. Daarna toont het hoofdmenu je plaats. Ratings vervallen: elke dag zonder gewaardeerde wedstrijd maakt die van jou onzekerder, en de ranglijst sorteert op een voorzichtige waarde, dus als je stopt met spelen zakt je plaats binnen weken.
 
+Zodra de ranglijst 20 gevestigde spelers heeft, telt een gerankte wedstrijd alleen als minstens één speler erin gevestigd is (10 of meer gewaardeerde wedstrijden): een wedstrijd tussen alleen nieuwe spelers wordt niet gewaardeerd. Speel tegen iemand die gevestigd is en je wedstrijden tellen.
+
 De knop **Ranglijst** in de bovenbalk toont de top 100 met plaats, naam en rating, met je eigen rij gemarkeerd. Hij wordt elk uur bijgewerkt.

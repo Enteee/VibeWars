@@ -380,6 +380,37 @@ export default {
   "controls.weaponSet4": "Набір зброї 4",
   "controls.weaponSets": "Набори зброї",
   "controls.withShift": "Shift + {key}",
+
+  "cosmetics.item.flame": "Полум’я серії перемог",
+  "cosmetics.item.frameJade": "Нефритова рамка",
+  "cosmetics.item.frameOrchid": "Орхідейна рамка",
+  "cosmetics.item.frameRose": "Рожева рамка",
+  "cosmetics.item.frameTeal": "Бірюзова рамка",
+  "cosmetics.locked": "Закрито",
+  "cosmetics.none": "Немає",
+  "cosmetics.note":
+    "Лише для вигляду: жодна косметика не впливає на гру. Заробляється рейтинговими перемогами в публічній таблиці лідерів і спільна для всіх твоїх персонажів.",
+  "cosmetics.requires.streak": {
+    one: "{count} рейтингова перемога поспіль",
+    few: "{count} рейтингові перемоги поспіль",
+    many: "{count} рейтингових перемог поспіль",
+    other: "{count} рейтингової перемоги поспіль",
+  },
+  "cosmetics.requires.top": "Топ {rank}",
+  "cosmetics.requires.wins": {
+    one: "{count} рейтингова перемога",
+    few: "{count} рейтингові перемоги",
+    many: "{count} рейтингових перемог",
+    other: "{count} рейтингової перемоги",
+  },
+  "cosmetics.showOthers": "Показувати косметику інших гравців",
+  "cosmetics.slot.flame": "Полум’я серії перемог",
+  "cosmetics.slot.frame": "Рамка таблички з ім’ям",
+  "cosmetics.slot.title": "Титул",
+  "cosmetics.title.champion": "Чемпіон",
+  "cosmetics.title.contender": "Претендент",
+  "cosmetics.title.veteran": "Ветеран",
+  "cosmetics.title.warlord": "Полководець",
   "creature.rat": "Щур",
 
   "echo.secondsLeft": {
@@ -894,6 +925,7 @@ export default {
   "music.trackWithMood": "{track} ({mood})",
 
   "options.controls": "керування",
+  "options.cosmetics": "косметика",
   "options.display": "екран",
   "options.label": "Опції",
   "options.language": "мова",

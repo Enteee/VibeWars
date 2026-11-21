@@ -23,6 +23,17 @@ export interface LobbyProofFields {
 }
 
 /**
+ * What a player wears (ADR-0056): at most one catalog id per slot, as
+ * `pubkey` chose them at `at`, ms since the epoch. Only `apps/web` reads
+ * the ids; everything between relays them untouched.
+ */
+export interface CosmeticSelection {
+  readonly pubkey: string;
+  readonly ids: readonly string[];
+  readonly at: number;
+}
+
+/**
  * A player key, the secret half shut inside: it signs only what one of
  * its purpose-named methods builds, under that purpose's own tag, so no
  * caller can have it sign arbitrary bytes.
@@ -36,6 +47,11 @@ export interface PlayerKey {
   signRankedStart(start: RankedStart): string;
   /** A BIP-340 signature of `result`'s `vibewars/ranked-result` digest (ADR-0055), as 128 lowercase hex digits. */
   signRankedResult(result: RankedResult): string;
+  /**
+   * A BIP-340 signature of `selection`'s `vibewars/cosmetics` digest
+   * (ADR-0056), as 128 lowercase hex digits. `selection.pubkey` is this key's.
+   */
+  signCosmetics(selection: CosmeticSelection): string;
 }
 
 /**

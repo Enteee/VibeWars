@@ -322,6 +322,31 @@ export default {
   "controls.weaponSet4": "Set senjata 4",
   "controls.weaponSets": "Set senjata",
   "controls.withShift": "Shift + {key}",
+
+  "cosmetics.item.flame": "Api kemenangan beruntun",
+  "cosmetics.item.frameJade": "Bingkai giok",
+  "cosmetics.item.frameOrchid": "Bingkai anggrek",
+  "cosmetics.item.frameRose": "Bingkai mawar",
+  "cosmetics.item.frameTeal": "Bingkai hijau toska",
+  "cosmetics.locked": "Terkunci",
+  "cosmetics.none": "Tidak ada",
+  "cosmetics.note":
+    "Murni tampilan: tidak ada kosmetik yang mengubah cara bermain. Didapat dari kemenangan peringkat di papan peringkat publik, dan dipakai bersama oleh semua karaktermu.",
+  "cosmetics.requires.streak": {
+    other: "{count} kemenangan peringkat beruntun",
+  },
+  "cosmetics.requires.top": "Top {rank}",
+  "cosmetics.requires.wins": {
+    other: "{count} kemenangan peringkat",
+  },
+  "cosmetics.showOthers": "Tampilkan kosmetik pemain lain",
+  "cosmetics.slot.flame": "Api kemenangan beruntun",
+  "cosmetics.slot.frame": "Bingkai papan nama",
+  "cosmetics.slot.title": "Gelar",
+  "cosmetics.title.champion": "Juara",
+  "cosmetics.title.contender": "Penantang",
+  "cosmetics.title.veteran": "Veteran",
+  "cosmetics.title.warlord": "Panglima perang",
   "creature.rat": "Tikus",
 
   "echo.secondsLeft": { other: "Gema: sisa {count} s" },
@@ -771,6 +796,7 @@ export default {
   "music.trackWithMood": "{track} ({mood})",
 
   "options.controls": "kontrol",
+  "options.cosmetics": "kosmetik",
   "options.display": "tampilan",
   "options.label": "Opsi",
   "options.language": "bahasa",

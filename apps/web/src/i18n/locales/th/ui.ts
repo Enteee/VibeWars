@@ -319,6 +319,31 @@ export default {
   "controls.weaponSet4": "ชุดอาวุธ 4",
   "controls.weaponSets": "ชุดอาวุธ",
   "controls.withShift": "Shift + {key}",
+
+  "cosmetics.item.flame": "เปลวไฟชนะติดกัน",
+  "cosmetics.item.frameJade": "กรอบหยก",
+  "cosmetics.item.frameOrchid": "กรอบกล้วยไม้",
+  "cosmetics.item.frameRose": "กรอบกุหลาบ",
+  "cosmetics.item.frameTeal": "กรอบเขียวน้ำทะเล",
+  "cosmetics.locked": "ล็อกอยู่",
+  "cosmetics.none": "ไม่มี",
+  "cosmetics.note":
+    "เพื่อความสวยงามเท่านั้น: ไอเทมตกแต่งไม่เปลี่ยนการเล่นใด ๆ ได้มาจากการชนะแมตช์จัดอันดับบนกระดานผู้นำสาธารณะ และใช้ร่วมกันทุกตัวละครของคุณ",
+  "cosmetics.requires.streak": {
+    other: "ชนะจัดอันดับติดกัน {count} ครั้ง",
+  },
+  "cosmetics.requires.top": "อันดับ {rank} แรก",
+  "cosmetics.requires.wins": {
+    other: "ชนะจัดอันดับ {count} ครั้ง",
+  },
+  "cosmetics.showOthers": "แสดงของตกแต่งของผู้เล่นอื่น",
+  "cosmetics.slot.flame": "เปลวไฟชนะติดกัน",
+  "cosmetics.slot.frame": "กรอบป้ายชื่อ",
+  "cosmetics.slot.title": "ฉายา",
+  "cosmetics.title.champion": "แชมเปี้ยน",
+  "cosmetics.title.contender": "ผู้ท้าชิง",
+  "cosmetics.title.veteran": "ทหารผ่านศึก",
+  "cosmetics.title.warlord": "ขุนศึก",
   "creature.rat": "หนู",
 
   "echo.secondsLeft": { other: "เอคโค: เหลือ {count} วิ" },
@@ -767,6 +792,7 @@ export default {
   "music.trackWithMood": "{track} ({mood})",
 
   "options.controls": "การควบคุม",
+  "options.cosmetics": "ของตกแต่ง",
   "options.display": "การแสดงผล",
   "options.label": "ตั้งค่า",
   "options.language": "ภาษา",

@@ -379,6 +379,37 @@ export default {
   "controls.weaponSet4": "Sada zbraní 4",
   "controls.weaponSets": "Sady zbraní",
   "controls.withShift": "Shift + {key}",
+
+  "cosmetics.item.flame": "Plamen vítězné série",
+  "cosmetics.item.frameJade": "Nefritový rámeček",
+  "cosmetics.item.frameOrchid": "Orchidejový rámeček",
+  "cosmetics.item.frameRose": "Růžový rámeček",
+  "cosmetics.item.frameTeal": "Tyrkysový rámeček",
+  "cosmetics.locked": "Zamčeno",
+  "cosmetics.none": "Žádné",
+  "cosmetics.note":
+    "Čistě na ozdobu: žádná kosmetika nemění, jak se hraje. Získává se hodnocenými výhrami ve veřejném žebříčku a sdílí ji všechny tvé postavy.",
+  "cosmetics.requires.streak": {
+    one: "{count} hodnocená výhra v řadě",
+    few: "{count} hodnocené výhry v řadě",
+    many: "{count} hodnocené výhry v řadě",
+    other: "{count} hodnocených výher v řadě",
+  },
+  "cosmetics.requires.top": "Top {rank}",
+  "cosmetics.requires.wins": {
+    one: "{count} hodnocená výhra",
+    few: "{count} hodnocené výhry",
+    many: "{count} hodnocené výhry",
+    other: "{count} hodnocených výher",
+  },
+  "cosmetics.showOthers": "Zobrazovat kosmetiku ostatních hráčů",
+  "cosmetics.slot.flame": "Plamen vítězné série",
+  "cosmetics.slot.frame": "Rámeček jmenovky",
+  "cosmetics.slot.title": "Titul",
+  "cosmetics.title.champion": "Šampion",
+  "cosmetics.title.contender": "Vyzyvatel",
+  "cosmetics.title.veteran": "Veterán",
+  "cosmetics.title.warlord": "Vojevůdce",
   "creature.rat": "Krysa",
 
   "echo.secondsLeft": {
@@ -892,6 +923,7 @@ export default {
   "music.trackWithMood": "{track} ({mood})",
 
   "options.controls": "ovládání",
+  "options.cosmetics": "kosmetika",
   "options.display": "zobrazení",
   "options.label": "Možnosti",
   "options.language": "jazyk",

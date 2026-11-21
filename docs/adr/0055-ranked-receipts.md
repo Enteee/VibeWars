@@ -43,7 +43,7 @@ The new package `packages/ranking` holds the types, the canonical encoding and t
    - `leavers`: the pubkeys whose seat was freed after `RECONNECT_WINDOW_SECONDS`.
    - `replayHash`.
 
-   Every player who is not a leaver signs it. A player still seated who has not signed within `RANKED_RESULT_TIMEOUT_MS` (30 s) is added to `leavers` and the others sign again. **Refusing to sign is leaving.**
+   Every player who is not a leaver signs it, with its stamp (below). A player still seated who has not signed within `RANKED_RESULT_TIMEOUT_MS` (30 s) plus `RANKED_WORK_GRACE_MS` is added to `leavers` and the others sign again. **Refusing to sign is leaving.**
 
    A player publishes its own partial receipt, the start and its signature over that round's result, the moment it signs, in every round. That is the evidence against a host that re-rounds an honest signer into a leaver: the job voids a match when a key named a leaver in the final receipt has a valid signature on an earlier round's result that (1) carries the same fully signed start (the same `startHash`, not merely the same `matchId`) and (2) is also validly signed, in any copy, by a key on the final receipt's winning team (on a draw, by a key on any team but the leaver's). A player who really refused has no such signature, so it loses. A leaver-only partial is not evidence: a leaver could sign a round, or a whole start of their own under the same `matchId`, alone. A winner gains nothing by voiding their own win, so their signature is what makes the round believable.
 
@@ -63,11 +63,28 @@ It is valid when:
 
 - every start signature verifies;
 - every non-leaver's result signature verifies;
+- every result signature, a partial's included, carries a valid stamp for its signer and this start (`no-work` otherwise);
 - result signatures from more than half of the seats in the start (Q109, answer B); without them the match is void (unrated for every seat), whatever the leavers list says. A departed host counts among the seats and does not sign.
 
 A receipt nobody but its host signed cannot exist, because the start round needs every player. So nobody can fabricate a match against a key that never agreed to play it.
 
 **Leavers lose.** A leaver's result is a loss, whatever `winningTeam` says. The players who stayed get the match's result. The one reconnect window, `RECONNECT_WINDOW_SECONDS`, decides who left. The operator said about 60 s; the codebase has one window of 30 s. Ranked play uses that same constant, and if 30 s proves short we raise it for every mode, not just ranked.
+
+**Every result signature is paid for** (#3746). It carries `work`, a 16-hex-digit nonce whose digest under `vibewars/ranked-work` over `{ startHash, pubkey, work }` has `RANKED_WORK_BITS` leading zero bits. The stamp binds the start, not the round, so signing a re-round costs nothing new. It binds the start and not the `matchId`: the archive keys receipts by their hash, and `rate` takes a reused `matchId` under another start for another match, so a stamp bound to `matchId` could be replayed under as many starts as a flooder liked. A receipt or a partial with an unpaid signature is rejected (`no-work`), which costs one hash per signer to check.
+
+Each client searches for its stamp in a Worker, at most half a core (8 ms slices, 8 ms rests), from the moment the start round completes, using `@noble/hashes`' synchronous sha256 (WebCrypto's digest is async only, and an await per nonce costs more than the hash). The job checks with the same function. In a match of a few minutes the stamp is ready long before the result. In one that ends sooner, the client signs as soon as its stamp is ready, and every seat, host included, waits `RANKED_RESULT_TIMEOUT_MS + RANKED_WORK_GRACE_MS` for any seat's signature. Nobody has to know anyone else's progress. The grace is the measured p99 stamp time on a mid-range phone at the half-core throttle, so a slow phone is not turned into a leaver.
+
+**Calibration** (2026-11-21, `findWork` with `@noble/hashes`). A search takes on average 2^bits hashes and is geometric, so its p99 is about 4.6 times its mean. Measured rates for one full core: Node 24 on the CI-class dev box 102k hashes/s; Chromium 155 desktop 80k; Chromium at a 4× CPU throttle, standing in for a mid-range phone, 26.5k (taken as 20k, a strict quarter of desktop, to be safe). At the worker's half core a phone gets about 10k/s, so at `RANKED_WORK_BITS` = 17:
+
+| Tier (half core) | mean  | p99  |
+| ---------------- | ----- | ---- |
+| Mid-range phone  | 13 s  | 60 s |
+| Desktop Chromium | 3.3 s | 15 s |
+| Node (CI box)    | 2.6 s | 12 s |
+
+`RANKED_WORK_GRACE_MS` is that phone p99, 60 s. 18 bits would double it past the 60 s the issue allows.
+
+**What it is worth.** A stamp costs a script seconds to tens of seconds of JavaScript, and native or GPU sha256 next to nothing. It is a speed bump against casual floods from a page or a Node script, not a bound on a determined attacker: the per-key cap (#3738) and established keys (#3745) are the real per-key bounds. Do not raise `RANKED_WORK_BITS` as a fix for flooding; it only hurts phones.
 
 ### Publishing
 
@@ -96,10 +113,10 @@ Floats are evaluated in a single engine: the job runs on Node, and players run t
   1. Reads the archive.
   2. Fetches `t=vibewars-ranked` events since the last checkpoint from every listed relay, with Node's built-in WebSocket.
   3. Verifies the new receipts.
-  4. Appends the valid ones to the archive, except a new receipt whose every seat key is already in 50 for its UTC day of `startedAt`, counting what the archive holds. Every seat, not any, so a loser cannot veto a match by flooding their own key. The archive is never evicted from, since signers choose `startedAt` and a backdated flood must not erase a match (#3738). A new receipt that started before 00:00 UTC two days before the as-of day is refused as `stale`, so a key cannot spread a flood over every past day: one capped day opens per day. Archived receipts are not judged again. The cap bounds what one key can flood into a shard; it is not a sybil defence, since fresh keys pass it.
+  4. Appends the valid ones to the archive, except a new receipt whose every seat key is already in 50 for its UTC day of `startedAt`, counting what the archive holds. Every seat, not any, so a loser cannot veto a match by flooding their own key. The archive is never evicted from, since signers choose `startedAt` and a backdated flood must not erase a match (#3738). A new receipt that started before 00:00 UTC two days before the as-of day is refused as `stale`, so a key cannot spread a flood over every past day: one capped day opens per day. Archived receipts are not judged again. The cap bounds what one key can flood into a shard; it is not a sybil defence, since fresh keys pass it. Once the previous board lists 20 established keys (10 or more rated matches, not forked), `leaderboard.json` turns `gated` for good: a new receipt or partial is then taken in only when one of its seats is established and under that cap, else it is refused as `no-established-seat` or `over-cap`, in canonical order (`startedAt`, then the line), never relay order (Q143 A, #3745). It is off at launch, while fewer than 20 keys are established, and it is a speed bump, not a bound: one established key can seed sybils that become established in turn. Before honest players reach 20, one person's ring of 20 keys can trip it and shut out newcomers who do not play the ring; that residual and its recovery are in SECURITY.md. The cap and the stamp (#3746) are the real cost per receipt. A lone established loser among newcomers can cap themselves to get a match refused; that only removes a match the newcomers would not be rated in without them.
   5. Recomputes everything with `rate` from scratch.
   6. Writes `ranking/receipts/<YYYY-MM>.ndjson` (the archive, since relays forget: one shard per UTC month of `startedAt`, rewritten only when it changed, and the run fails rather than write one over 90 MB, which GitHub would refuse), `ranking/leaderboard.json`, the same bytes as `ranking/boards/<asOf>.json` (deleting boards more than 3 h older than it: published boards never change, so a client caches them by `asOf`). `asOf` is the as-of day's midnight or the newest archived `startedAt`, whichever is later, and past the previous run's `asOf` whenever the entries differ from its; when they do not, the previous `leaderboard.json` is kept byte for byte. So a late receipt with an older `startedAt` gets a new `asOf`, and the run fails rather than rewrite a published board, and `ranking/log.txt` (counts, rejected receipts with reasons, and the sha256 of `leaderboard.json`).
-- **The workflow.** `.github/workflows/ranking.yml` runs the script hourly and on dispatch. It commits `ranking/` to `gh-pages` in the same concurrency group as `pages.yml`, so the two never race. Anyone can run the script and compare hashes.
+- **The workflow.** `.github/workflows/ranking.yml` runs the script hourly and on dispatch. It commits `ranking/` to `gh-pages` in the same concurrency group as `pages.yml`, so the two never race. Anyone can run the script on the same archive, previous `leaderboard.json` and relays, and compare hashes.
 - **`leaderboard.json`** holds `asOf`, `engine`, and per identity: rating, RD, conservative value, rank or provisional, matches, last played, the last receipt hash, and the forked flag.
 
 ### Rank-aware matchmaking
