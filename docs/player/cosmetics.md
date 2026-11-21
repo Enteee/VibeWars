@@ -13,9 +13,13 @@ Nobody hands them out: anyone can check the leaderboard and see what you earned.
 | Moss aura and Moss trail            | 5 ranked wins          |
 | Rose frame and the Veteran title    | 25 ranked wins         |
 | Ember aura and Ember trail          | 25 ranked wins         |
+| Rising light and Ash dissolve       | 25 ranked wins         |
 | Frost aura and Frost trail          | 75 ranked wins         |
+| Leaf swirl and Mist dissolve        | 75 ranked wins         |
 | Teal frame and the Warlord title    | 200 ranked wins        |
+| Petal fall and Shard dissolve       | 200 ranked wins        |
 | Starlight aura and Starlight trail  | 500 ranked wins        |
+| Starfall and Stardust dissolve      | 500 ranked wins        |
 | Orchid frame and the Champion title | A place in the Top 100 |
 | Win-streak flame                    | 3 ranked wins in a row |
 
@@ -26,6 +30,10 @@ them again. What you picked stays picked.
 ## On the ground
 
 A ground aura is a faint ring at your feet. A footstep trail leaves small motes where you walk, which fade within a moment. Both lie under every ring, mark and telegraph, and never use a team colour. With reduced motion turned on in your system, the aura holds still and no trail is drawn.
+
+## Coming back and falling
+
+A spawn-in style gathers small motes at your feet as you spawn or are resurrected. A death dissolve scatters them as you fall. Each takes exactly as long as the plain return and fall, lies under your body, and leaves your outline, team ring and corpse as easy to read as ever. With reduced motion turned on in your system, only the plain fade is drawn.
 
 ## Wearing them
 

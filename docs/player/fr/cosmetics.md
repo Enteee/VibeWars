@@ -14,9 +14,13 @@ tu as obtenu.
 | Aura de mousse, Traînée de mousse                       | 5 victoires classées           |
 | Cadre rose et le titre Vétéran                          | 25 victoires classées          |
 | Aura de braise, Traînée de braise                       | 25 victoires classées          |
+| Lumière ascendante, Dissolution en cendres              | 25 victoires classées          |
 | Aura de givre, Traînée de givre                         | 75 victoires classées          |
+| Tourbillon de feuilles, Dissolution en brume            | 75 victoires classées          |
 | Cadre sarcelle et le titre Seigneur de guerre           | 200 victoires classées         |
+| Pluie de pétales, Dissolution en éclats                 | 200 victoires classées         |
 | Aura de lumière stellaire, Traînée de lumière stellaire | 500 victoires classées         |
+| Pluie d’étoiles, Dissolution en poussière d’étoiles     | 500 victoires classées         |
 | Cadre orchidée et le titre Champion                     | Une place dans le Top 100      |
 | Flamme de série                                         | 3 victoires classées d’affilée |
 
@@ -27,6 +31,10 @@ nouveau. Ce que tu as choisi reste choisi.
 ## Au sol
 
 Une aura au sol est un anneau léger à tes pieds. Une traînée de pas laisse de petites particules là où tu marches, qui s’effacent en un instant. Les deux se dessinent sous chaque anneau, marque et avertissement, et n’utilisent jamais une couleur d’équipe. Si ton système demande des animations réduites, l’aura reste immobile et aucune traînée n’est dessinée.
+
+## Revenir et tomber
+
+Un style d’apparition rassemble de petites particules à tes pieds quand tu apparais ou es ressuscité. Une dissolution à la mort les disperse quand tu tombes. Chacun dure exactement aussi longtemps que le retour et la chute ordinaires, se dessine sous ton corps et laisse ta silhouette, ton anneau d’équipe et ton cadavre aussi lisibles que jamais. Si ton système demande des animations réduites, seul le fondu ordinaire est dessiné.
 
 ## Les porter
 

@@ -13,9 +13,13 @@ zählt. Niemand verteilt sie: Jeder kann die Rangliste prüfen und sehen, was du
 | Moosaura, Moosspur                      | 5 gewertete Siege          |
 | Rosenrahmen und der Titel Veteran       | 25 gewertete Siege         |
 | Glutaura, Glutspur                      | 25 gewertete Siege         |
+| Aufsteigendes Licht, Ascheauflösung     | 25 gewertete Siege         |
 | Frostaura, Frostspur                    | 75 gewertete Siege         |
+| Blätterwirbel, Nebelauflösung           | 75 gewertete Siege         |
 | Petrolrahmen und der Titel Kriegsherr   | 200 gewertete Siege        |
+| Blütenregen, Splitterauflösung          | 200 gewertete Siege        |
 | Sternenlichtaura, Sternenlichtspur      | 500 gewertete Siege        |
+| Sternenfall, Sternenstaubauflösung      | 500 gewertete Siege        |
 | Orchideenrahmen und der Titel Champion  | Ein Platz in den Top 100   |
 | Siegesserien-Flamme                     | 3 gewertete Siege in Folge |
 
@@ -26,6 +30,10 @@ wieder verdienst. Was du gewählt hast, bleibt gewählt.
 ## Am Boden
 
 Eine Bodenaura ist ein schwacher Ring zu deinen Füßen. Eine Fußspur hinterlässt kleine Funken, wo du gehst, die in einem Augenblick verblassen. Beide liegen unter jedem Ring, jeder Markierung und jeder Warnung und haben nie eine Teamfarbe. Ist in deinem System reduzierte Bewegung eingeschaltet, steht die Aura still und es wird keine Spur gezeichnet.
+
+## Zurückkehren und fallen
+
+Ein Erscheinungsstil sammelt kleine Funken zu deinen Füßen, wenn du erscheinst oder wiederbelebt wirst. Eine Todesauflösung verstreut sie, wenn du fällst. Beide dauern genau so lange wie die schlichte Rückkehr und der schlichte Fall, liegen unter deinem Körper und lassen deinen Umriss, deinen Teamring und deine Leiche so gut lesbar wie immer. Ist in deinem System reduzierte Bewegung eingeschaltet, wird nur das schlichte Ausblenden gezeichnet.
 
 ## Wie du sie trägst
 

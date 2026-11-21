@@ -52,9 +52,9 @@ describe("hit flash", () => {
 
 describe("death", () => {
   it("drains fully at 0.45 s", () => {
-    expect(deathProgress(0)).toBe(0);
-    expect(deathProgress(DEATH_SECONDS)).toBe(1);
-    expect(deathProgress(10)).toBe(1);
+    expect(deathProgress(0, DEATH_SECONDS)).toBe(0);
+    expect(deathProgress(DEATH_SECONDS, DEATH_SECONDS)).toBe(1);
+    expect(deathProgress(10, DEATH_SECONDS)).toBe(1);
   });
 
   it("mixes a colour toward another", () => {
@@ -72,13 +72,13 @@ describe("death", () => {
 
 describe("respawn", () => {
   it("rises from a small body to its own size", () => {
-    expect(respawnScale(0)).toBeLessThan(1);
-    expect(respawnScale(RESPAWN_SECONDS)).toBe(1);
+    expect(respawnScale(0, RESPAWN_SECONDS)).toBeLessThan(1);
+    expect(respawnScale(RESPAWN_SECONDS, RESPAWN_SECONDS)).toBe(1);
   });
 
   it("widens the ring from 18 to 34 and fades it", () => {
-    expect(respawnRing(0)).toEqual({ radius: 18, alpha: 0.7 });
-    expect(respawnRing(RESPAWN_SECONDS)).toEqual({ radius: 34, alpha: 0 });
+    expect(respawnRing(0, RESPAWN_SECONDS)).toEqual({ radius: 18, alpha: 0.7 });
+    expect(respawnRing(RESPAWN_SECONDS, RESPAWN_SECONDS)).toEqual({ radius: 34, alpha: 0 });
   });
 
   it("fades the light column out by 0.4 s", () => {

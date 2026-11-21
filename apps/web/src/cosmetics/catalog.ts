@@ -7,10 +7,20 @@
 
 import type { MessageKey } from "../i18n/index.js";
 
+import { DEATH_SECONDS, RESPAWN_SECONDS } from "../render/body-reactions.js";
+
 import { FLAME_STREAK, TIERS, TOP_RANK } from "./unlocks.js";
 
-/** The slots so far (#3577, #3578); the others come with #3579–#3581. */
-export const COSMETIC_SLOTS = ["frame", "title", "flame", "aura", "trail"] as const;
+/** The slots so far (#3577, #3578, #3580); the others come with #3579 and #3581. */
+export const COSMETIC_SLOTS = [
+  "frame",
+  "title",
+  "flame",
+  "aura",
+  "trail",
+  "spawn",
+  "dissolve",
+] as const;
 
 export type CosmeticSlot = (typeof COSMETIC_SLOTS)[number];
 
@@ -44,6 +54,16 @@ interface LookBase {
   readonly sound: null;
 }
 
+/** How a spawn-in style gathers at the body (#3580). */
+export const SPAWN_MOTIFS = ["light", "leaves", "petals", "stars"] as const;
+
+export type SpawnMotif = (typeof SPAWN_MOTIFS)[number];
+
+/** How a death dissolve leaves the body (#3580). */
+export const DISSOLVE_MOTIFS = ["ash", "mist", "shards", "stars"] as const;
+
+export type DissolveMotif = (typeof DISSOLVE_MOTIFS)[number];
+
 export type CosmeticLook = LookBase &
   (
     | {
@@ -74,6 +94,23 @@ export type CosmeticLook = LookBase &
         /** Motes left where the body walks (#3578), fading in `TRAIL_SECONDS`. */
         readonly kind: "trail";
         readonly colour: number;
+      }
+    | {
+        /**
+         * Motes gathering at a body as it spawns or is resurrected (#3580),
+         * over `seconds`: the default return's, which `checkCosmetic` holds it to.
+         */
+        readonly kind: "spawn";
+        readonly colour: number;
+        readonly motif: SpawnMotif;
+        readonly seconds: number;
+      }
+    | {
+        /** Motes leaving a body as it falls (#3580), over the default fall's `seconds`. */
+        readonly kind: "dissolve";
+        readonly colour: number;
+        readonly motif: DissolveMotif;
+        readonly seconds: number;
       }
   );
 
@@ -110,6 +147,20 @@ const TRAIL = {
   ground: { radiusOfBody: 0.25, alpha: 0.35 },
   sound: null,
 } as const;
+/**
+ * A spawn-in or death style's motes (#3580): on the ground under the body,
+ * reaching at most the ground share past its rim, so its outline, team
+ * ring and death state read as they always do.
+ */
+const SPAWN = {
+  layer: "under-body",
+  motion: "flicker",
+  ground: { radiusOfBody: 0.6, alpha: 0.35 },
+  sound: null,
+  kind: "spawn",
+  seconds: RESPAWN_SECONDS,
+} as const;
+const DISSOLVE = { ...SPAWN, kind: "dissolve", seconds: DEATH_SECONDS } as const;
 
 /**
  * Four tiers, four hues: jade, rose, teal and orchid. Each is a hand's
@@ -259,6 +310,62 @@ export const COSMETIC_CATALOG: readonly CosmeticEntry[] = [
     requires: TIER_5,
     look: { ...TRAIL, kind: "trail", colour: STARLIGHT },
     name: "cosmetics.item.trailStarlight",
+  },
+  {
+    id: "spawn-light",
+    slot: "spawn",
+    requires: TIER_2,
+    look: { ...SPAWN, colour: STREAK_GOLD, motif: "light" },
+    name: "cosmetics.item.spawnLight",
+  },
+  {
+    id: "spawn-leaves",
+    slot: "spawn",
+    requires: TIER_3,
+    look: { ...SPAWN, colour: MOSS, motif: "leaves" },
+    name: "cosmetics.item.spawnLeaves",
+  },
+  {
+    id: "spawn-petals",
+    slot: "spawn",
+    requires: TIER_4,
+    look: { ...SPAWN, colour: ROSE, motif: "petals" },
+    name: "cosmetics.item.spawnPetals",
+  },
+  {
+    id: "spawn-stars",
+    slot: "spawn",
+    requires: TIER_5,
+    look: { ...SPAWN, colour: STARLIGHT, motif: "stars" },
+    name: "cosmetics.item.spawnStars",
+  },
+  {
+    id: "dissolve-ash",
+    slot: "dissolve",
+    requires: TIER_2,
+    look: { ...DISSOLVE, colour: EMBER, motif: "ash" },
+    name: "cosmetics.item.dissolveAsh",
+  },
+  {
+    id: "dissolve-mist",
+    slot: "dissolve",
+    requires: TIER_3,
+    look: { ...DISSOLVE, colour: FROST, motif: "mist" },
+    name: "cosmetics.item.dissolveMist",
+  },
+  {
+    id: "dissolve-shards",
+    slot: "dissolve",
+    requires: TIER_4,
+    look: { ...DISSOLVE, colour: JADE, motif: "shards" },
+    name: "cosmetics.item.dissolveShards",
+  },
+  {
+    id: "dissolve-stars",
+    slot: "dissolve",
+    requires: TIER_5,
+    look: { ...DISSOLVE, colour: STARLIGHT, motif: "stars" },
+    name: "cosmetics.item.dissolveStars",
   },
   {
     id: "flame-streak",

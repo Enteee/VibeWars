@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import type { Leaderboard, LeaderboardEntry } from "../net/leaderboard.js";
 import { loadPlayerKey } from "../net/transport/player-key.js";
+import { DEATH_SECONDS, RESPAWN_SECONDS } from "../render/body-reactions.js";
 import { COSMETIC_CATALOG, cosmeticById, type CosmeticEntry } from "./catalog.js";
 import { checkCosmetic } from "./check.js";
 import {
@@ -110,6 +111,36 @@ describe("checkCosmetic (ADR-0056 §4)", () => {
     expect(checkCosmetic(ground)).toHaveLength(2);
     const bare = { ...frame, look: { ...frame.look, layer: "under-body" as const } };
     expect(checkCosmetic(bare)).toHaveLength(1);
+  });
+
+  it("holds a spawn or death style to the default time, the body never fainter (#3580)", () => {
+    const spawn = entry("spawn-light");
+    const dissolve = entry("dissolve-ash");
+    if (spawn.look.kind !== "spawn" || dissolve.look.kind !== "dissolve") {
+      throw new Error("spawn-light spawns and dissolve-ash dissolves");
+    }
+    expect(spawn.look.seconds).toBe(RESPAWN_SECONDS);
+    expect(dissolve.look.seconds).toBe(DEATH_SECONDS);
+    // Quicker: the team ring or the falling body is fainter than by default.
+    const quick = { ...spawn, look: { ...spawn.look, seconds: RESPAWN_SECONDS / 2 } };
+    expect(checkCosmetic(quick)).toEqual([
+      "spawn-light: 0.25 s, not the default 0.5 s",
+      "spawn-light: the body fainter than by default at 0.01 s",
+    ]);
+    const quickFall = { ...dissolve, look: { ...dissolve.look, seconds: 0.3 } };
+    expect(checkCosmetic(quickFall)).toHaveLength(2);
+    // Slower holds the body longer, but it is still not the default time.
+    const slow = { ...dissolve, look: { ...dissolve.look, seconds: 1 } };
+    expect(checkCosmetic(slow)).toEqual(["dissolve-ash: 1 s, not the default 0.45 s"]);
+  });
+
+  it("has four spawn styles and four death dissolves, at tiers 2 to 5 (#3580)", () => {
+    for (const slot of ["spawn", "dissolve"] as const) {
+      const wins = COSMETIC_CATALOG.filter((each) => each.slot === slot).map((each) =>
+        "wins" in each.requires ? each.requires.wins : undefined,
+      );
+      expect(wins).toEqual([TIERS[2], TIERS[3], TIERS[4], TIERS[5]]);
+    }
   });
 
   it("has unique ids that fit the wire", () => {
