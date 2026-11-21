@@ -100,14 +100,14 @@ const PLATE = { layer: "nameplate", motion: "still", ground: null, sound: null }
 const AURA = {
   layer: "under-body",
   motion: "flicker",
-  ground: { radiusOfBody: 0.5, alpha: 0.3 },
+  ground: { radiusOfBody: 0.5, alpha: 0.35 },
   sound: null,
 } as const;
 /** A trail mote's size and strength (#3578). */
 const TRAIL = {
   layer: "under-body",
   motion: "flicker",
-  ground: { radiusOfBody: 0.25, alpha: 0.3 },
+  ground: { radiusOfBody: 0.25, alpha: 0.35 },
   sound: null,
 } as const;
 
@@ -133,7 +133,7 @@ const STREAK_GOLD = 0xffea00;
 const MOSS = 0x66ff33;
 const EMBER = 0xff1f5a;
 const FROST = 0x00ccff;
-const STARLIGHT = 0x8000ff;
+const STARLIGHT = 0xf080ff;
 
 export const COSMETIC_CATALOG: readonly CosmeticEntry[] = [
   {
