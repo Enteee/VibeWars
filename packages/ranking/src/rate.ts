@@ -278,7 +278,7 @@ function reRounded(
     }
     const signers = rounds.get(round) ?? new Set<string>();
     rounds.set(round, signers);
-    for (const [pubkey, sig] of Object.entries(copy.resultSigs)) {
+    for (const [pubkey, { sig }] of Object.entries(copy.resultSigs)) {
       if (crypto.verify(pubkey, digest, sig)) {
         signers.add(pubkey);
       }

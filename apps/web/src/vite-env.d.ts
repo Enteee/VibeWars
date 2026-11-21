@@ -27,6 +27,13 @@ interface ImportMetaEnv {
    * `vite.config.ts` refuses anything else.
    */
   readonly VITE_VIBEWARS_LOBBY_SEED?: string;
+  /**
+   * The zero bits a ranked stamp needs (#3746), in place of
+   * `RANKED_WORK_BITS`: e2e only, so its ranked matches do not wait on a
+   * search. Read only by `net/transport/ranked-work.ts`; `vite.config.ts`
+   * refuses anything but a count up to 32.
+   */
+  readonly VITE_VIBEWARS_WORK_BITS?: string;
   /** `off` skips the splash screen (#2884) unless the URL has `?splash`: e2e only. */
   readonly VITE_VIBEWARS_SPLASH?: string;
   /** `off` draws no menu background fight (#3156) unless the URL has `?menu-background`: e2e only. */

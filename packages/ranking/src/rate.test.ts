@@ -8,6 +8,7 @@ import {
   type RankedReceipt,
   type RankedStart,
   type ReceiptCrypto,
+  type ResultSignature,
   receiptHash,
   resultDigest,
   startDigest,
@@ -28,7 +29,13 @@ const sigOf = (pubkey: string, digest: Uint8Array): string => {
   const half = bytesToHex(sha256(new TextEncoder().encode(pubkey + bytesToHex(digest))));
   return half + half;
 };
+/** A result signature, its stamp of zero bits: `crypto` asks for none. */
+const resultSigOf = (pubkey: string, digest: Uint8Array): ResultSignature => ({
+  sig: sigOf(pubkey, digest),
+  work: "0".repeat(16),
+});
 const crypto: ReceiptCrypto = {
+  workBits: 0,
   sha256,
   verify: (pubkey, digest, sig) => sig === sigOf(pubkey, digest),
 };
@@ -114,7 +121,9 @@ class Ledger {
       start,
       startSigs: Object.fromEntries(seats.map((pubkey) => [pubkey, sigOf(pubkey, startOf)])),
       result,
-      resultSigs: Object.fromEntries(signers.map((pubkey) => [pubkey, sigOf(pubkey, resultOf)])),
+      resultSigs: Object.fromEntries(
+        signers.map((pubkey) => [pubkey, resultSigOf(pubkey, resultOf)]),
+      ),
     };
     const hash = receiptHash(receipt, sha256);
     for (const pubkey of play.offChain ? [] : seats) {
@@ -144,7 +153,7 @@ function roundOf(
   return {
     ...receipt,
     result,
-    resultSigs: { [signer]: sigOf(signer, resultDigest(result, sha256)) },
+    resultSigs: { [signer]: resultSigOf(signer, resultDigest(result, sha256)) },
   };
 }
 
@@ -156,7 +165,7 @@ function resultSwapped(receipt: RankedReceipt, winningTeam: number | null): Rank
   return {
     ...receipt,
     result,
-    resultSigs: Object.fromEntries(seats.map((pubkey) => [pubkey, sigOf(pubkey, digest)])),
+    resultSigs: Object.fromEntries(seats.map((pubkey) => [pubkey, resultSigOf(pubkey, digest)])),
   };
 }
 
@@ -493,7 +502,9 @@ describe("rate", () => {
       start,
       startSigs: signed(startDigest(start, sha256)),
       result,
-      resultSigs: signed(resultDigest(result, sha256)),
+      resultSigs: Object.fromEntries(
+        [x, sock].map((pubkey) => [pubkey, resultSigOf(pubkey, resultDigest(result, sha256))]),
+      ),
     };
     const ratings = rate([...ledger.receipts, own], 1, crypto);
     expect(of(ratings, x).rating).toBeLessThan(of(day0, x).rating);

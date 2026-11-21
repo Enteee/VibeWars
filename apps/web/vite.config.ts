@@ -24,6 +24,14 @@ if (LOBBY_SEED !== undefined && !/^\d+$/.test(LOBBY_SEED)) {
   );
 }
 
+// The e2e build's stamp bits (#3746): see `src/net/transport/ranked-work.ts`.
+const WORK_BITS = process.env.VITE_VIBEWARS_WORK_BITS;
+if (WORK_BITS !== undefined && !(/^\d+$/.test(WORK_BITS) && Number(WORK_BITS) <= 32)) {
+  throw new Error(
+    `VITE_VIBEWARS_WORK_BITS must be a count of bits up to 32, got ${JSON.stringify(WORK_BITS)}`,
+  );
+}
+
 // This build's id (#1268): `pages.yml` passes the commit it builds, e2e its
 // own. Without one it is `dev`, which never checks for a newer build.
 const BUILD = process.env.VIBEWARS_BUILD ?? "dev";

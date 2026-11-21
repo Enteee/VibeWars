@@ -4102,12 +4102,14 @@ export interface WireRankedResult {
   readonly result: RankedResult;
 }
 
-/** A seat to its host (#3573): its BIP-340 signature of the result's digest. */
+/** A seat to its host (#3573): its BIP-340 signature of the result's digest, and its stamp (#3746). */
 export interface PeerRankedResultSig {
   /** The result's `startHash`. */
   readonly startHash: string;
   /** 128 lowercase hex digits. */
   readonly sig: string;
+  /** The proof-of-work stamp of `validWork`: 16 lowercase hex digits. */
+  readonly work: string;
 }
 
 /** Host to every seat (#3573): the whole receipt, every signature in. */
@@ -4124,6 +4126,7 @@ export interface WireRankedCancel {
 }
 
 const RANKED_HASH = /^[0-9a-f]{64}$/;
+const RANKED_WORK = /^[0-9a-f]{16}$/;
 
 /** The `"ranked-start"` channel. */
 export function parseWireRankedStart(value: unknown): WireRankedStart | undefined {
@@ -4177,8 +4180,10 @@ export function parsePeerRankedResultSig(value: unknown): PeerRankedResultSig | 
   return raw !== undefined &&
     typeof raw.startHash === "string" &&
     RANKED_HASH.test(raw.startHash) &&
-    isTicketSig(raw.sig)
-    ? { startHash: raw.startHash, sig: raw.sig }
+    isTicketSig(raw.sig) &&
+    typeof raw.work === "string" &&
+    RANKED_WORK.test(raw.work)
+    ? { startHash: raw.startHash, sig: raw.sig, work: raw.work }
     : undefined;
 }
 
