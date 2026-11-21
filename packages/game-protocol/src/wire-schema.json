@@ -753,7 +753,7 @@
     "MAX_CHART_PARTS": { "literal": 16 },
     "MAX_CHART_SAMPLES": { "literal": 120 },
     "MAX_CHAT_GRAPHEMES": { "literal": 200 },
-    "MAX_COSMETIC_IDS": { "literal": 12 },
+    "MAX_COSMETIC_IDS": { "literal": 3 },
     "MAX_COSMETIC_ID_LENGTH": { "literal": 32 },
     "MAX_EMBLEM_COLOURS": { "literal": 15 },
     "MAX_HERO_RANK": { "literal": 15 },
@@ -8162,22 +8162,6 @@
       "properties": [
         { "name": "away", "optional": false, "type": "boolean" },
         { "name": "bot", "optional": false, "type": "boolean" },
-        {
-          "name": "cosmetics",
-          "optional": false,
-          "type": {
-            "union": [
-              "null",
-              {
-                "properties": [
-                  { "name": "at", "optional": false, "type": "number" },
-                  { "name": "ids", "optional": false, "type": { "array": "string" } },
-                  { "name": "sig", "optional": false, "type": "string" }
-                ]
-              }
-            ]
-          }
-        },
         { "name": "guildTag", "optional": false, "type": { "union": ["null", "string"] } },
         { "name": "heroRank", "optional": false, "type": "number" },
         { "name": "id", "optional": false, "type": "string" },
@@ -8264,22 +8248,6 @@
               "properties": [
                 { "name": "away", "optional": false, "type": "boolean" },
                 { "name": "bot", "optional": false, "type": "boolean" },
-                {
-                  "name": "cosmetics",
-                  "optional": false,
-                  "type": {
-                    "union": [
-                      "null",
-                      {
-                        "properties": [
-                          { "name": "at", "optional": false, "type": "number" },
-                          { "name": "ids", "optional": false, "type": { "array": "string" } },
-                          { "name": "sig", "optional": false, "type": "string" }
-                        ]
-                      }
-                    ]
-                  }
-                },
                 { "name": "guildTag", "optional": false, "type": { "union": ["null", "string"] } },
                 { "name": "heroRank", "optional": false, "type": "number" },
                 { "name": "id", "optional": false, "type": "string" },
