@@ -13,6 +13,7 @@ import {
 import {
   ASCENT_SKIP_WAIT_SECONDS,
   ROOM_PREFIX,
+  MAX_FORMING_TICKETS,
   THIRD_TEAM_WAIT_SECONDS,
   formGroups,
   groupOf,
@@ -315,19 +316,29 @@ describe("formGroups (#869)", () => {
     expect(all).not.toContain(ticket(41).ticketId);
   });
 
-  it("forms 20,000 tickets in one pass, every one of them", async () => {
+  it("forms the first MAX_FORMING_TICKETS of 20,000 in one pass, the rest after (#3747)", async () => {
     const queued = solos(1, 20_000);
     const groups = await form(reordered(queued, 7));
-    expect(groups).toHaveLength(20_000 / 8);
-    expect(new Set(groups.flatMap(members)).size).toBe(20_000);
+    expect(groups).toHaveLength(MAX_FORMING_TICKETS / 8);
+    expect(new Set(groups.flatMap(members))).toEqual(
+      new Set(ids(queued.slice(0, MAX_FORMING_TICKETS))),
+    );
   });
 
   it("a flood of tickets claiming to have queued first does not keep later players from meeting", async () => {
     const flood = solos(1_000_000, 1_024).map((t, i) => ({ ...t, enteredAt: i }));
     const real = solos(1, 8);
-    const groups = await form([...flood, ...real]);
-    expect(groups).toHaveLength(129);
-    expect(groups.some((group) => members(group).join() === ids(real).join())).toBe(true);
+    // The flood forms first; its groups never start, and its no-shows are
+    // ignored (#3747).
+    const first = await form([...flood, ...real]);
+    expect(first).toHaveLength(MAX_FORMING_TICKETS / 8);
+    expect(first.flatMap(members)).not.toContain(real[0]?.ticketId);
+    const groups = await form(
+      [...flood, ...real],
+      "random-arena-4v4",
+      new Set(flood.map((t) => t.ticketId)),
+    );
+    expect(groups.map(members)).toEqual([ids(real)]);
   });
 
   it("throws on an empty map pool only when a group forms", async () => {
@@ -863,13 +874,14 @@ describe("rating pairing (ADR-0055, #3575)", () => {
     tickets: readonly QueueTicket[],
     seconds: number,
     mode: QueueMode = "random-arena-1v1",
+    ignored: ReadonlySet<string> = new Set(),
   ): Promise<FormedGroup[]> {
     const now = START + seconds * 1_000;
     return formGroups({
       tickets: tickets.map((each) => ({ ...each, heartbeatAt: now })),
       now,
       mode,
-      ignored: new Set(),
+      ignored,
       round: () => ({ mapPool: MAPS, teamCount: 2, skipping: false, slotted: false }),
     });
   }
@@ -943,5 +955,63 @@ describe("rating pairing (ADR-0055, #3575)", () => {
     for (const step of [5, 7]) {
       expect(await formAt(reordered(queue, step), 8)).toEqual(groups);
     }
+  });
+
+  describe("a flood of tickets (#3747)", () => {
+    /** `count` solos from `from`, claims 1000 apart, queued within the last second: none pairs. */
+    function flood(from: number, count: number): QueueTicket[] {
+      return Array.from({ length: count }, (_, i) => ({
+        ...rated(from + i, 1000 * (i + 1)),
+        enteredAt: START + from + i,
+      }));
+    }
+
+    /** Two solos that pair, queued after the flood. */
+    function honest(from: number): QueueTicket[] {
+      return [0, 1].map((i) => ({ ...rated(from + i, 1500), enteredAt: START + from + i }));
+    }
+
+    it("forms within 50 ms over 2000 tickets, two honest ones at the back", async () => {
+      const queue = [...flood(0, 2000), ...honest(2000)];
+      // Warm, as a client forms every tick: the first pass pays the JIT.
+      await formAt(queue, 1);
+      const times: number[] = [];
+      for (let run = 0; run < 5; run += 1) {
+        const begun = performance.now();
+        await formAt(queue, 1);
+        times.push(performance.now() - begun);
+      }
+      // 15–27 ms on a dev machine; uncapped, these 2000 take seconds.
+      expect(times.sort((a, b) => a - b)[2]).toBeLessThan(50);
+    });
+
+    it("leaves the ticket after the first MAX_FORMING_TICKETS waiting until they go", async () => {
+      const ahead = flood(0, MAX_FORMING_TICKETS - 1);
+      const pair = honest(MAX_FORMING_TICKETS - 1);
+      // The pair's first is the 200th, its second the 201st: not yet.
+      expect(await formAt([...ahead, ...pair], 1)).toEqual([]);
+      const gone = new Set(ahead.slice(0, 1).map((each) => each.ticketId));
+      expect((await formAt([...ahead, ...pair], 1, "random-arena-1v1", gone)).map(members)).toEqual(
+        [ids(pair)],
+      );
+    });
+
+    it("cuts at the same tickets whatever order they come in", async () => {
+      // The pair queued among the flood's first 200, so it forms.
+      const pair = honest(5000).map((each, i) => ({ ...each, enteredAt: START + 150 + i / 2 }));
+      const queue = [...flood(0, 300), ...pair];
+      const groups = (await formAt(queue, 1)).map(members);
+      expect(groups).toEqual([ids(pair)]);
+      expect((await formAt(reordered(queue, 7), 1)).map(members)).toEqual(groups);
+      expect((await formAt([...queue].reverse(), 1)).map(members)).toEqual(groups);
+    });
+
+    it("forms an honest 4v4 queue of 16 as two groups, first queued first", async () => {
+      const queue = solos(0, 16);
+      expect((await form(queue)).map(members)).toEqual([
+        ids(queue.slice(0, 8)),
+        ids(queue.slice(8)),
+      ]);
+    });
   });
 });
