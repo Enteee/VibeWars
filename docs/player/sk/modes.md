@@ -467,4 +467,6 @@ Hodnotené fronty spájajú hráčov s podobným hodnotením a delia ich do tím
 
 Tvojich prvých 10 hodnotených zápasov je predbežných: front píše **Predbežné (3/10 zápasov)** a zatiaľ nemáš poradie. Potom hlavná ponuka ukazuje tvoje poradie. Hodnotenie chátra: každý deň bez hodnoteného zápasu ho robí menej istým a rebríček zoraďuje podľa opatrnej hodnoty, takže keď prestaneš hrať, tvoje poradie počas týždňov klesne.
 
+Keď má rebríček 20 zavedených hráčov, hodnotený zápas sa počíta, len ak je v ňom aspoň jeden zavedený hráč (10 alebo viac hodnotených zápasov): zápas len medzi novými hráčmi je nehodnotený. Zahraj si so zavedeným hráčom a tvoje zápasy sa počítajú.
+
 Tlačidlo **Rebríček** v hornej lište ukazuje najlepších 100 podľa poradia, mena a hodnotenia, s tvojím riadkom zvýrazneným. Aktualizuje sa každú hodinu.

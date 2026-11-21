@@ -461,4 +461,6 @@ Antrean peringkat memasangkan pemain dengan rating serupa, dan membaginya ke dal
 
 10 pertandingan berating pertamamu bersifat sementara: antrean menampilkan **Sementara (3/10 pertandingan)** dan kamu belum punya peringkat. Setelah itu menu utama menampilkan peringkatmu. Rating meluruh: setiap hari tanpa pertandingan berating membuat ratingmu kurang pasti, dan papan peringkat mengurutkan menurut nilai yang hati-hati, jadi jika kamu berhenti bermain, peringkatmu turun dalam hitungan minggu.
 
+Begitu papan peringkat punya 20 pemain mapan, pertandingan peringkat hanya dihitung jika setidaknya satu pemain di dalamnya sudah mapan (10 pertandingan berating atau lebih): pertandingan antara pemain baru saja tidak berating. Bermainlah melawan pemain mapan dan pertandinganmu dihitung.
+
 Tombol **Papan peringkat** di bilah atas menampilkan 100 teratas menurut peringkat, nama, dan rating, dengan barismu disorot. Diperbarui setiap jam.

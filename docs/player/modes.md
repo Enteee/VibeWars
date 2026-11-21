@@ -477,4 +477,6 @@ Ranked queues pair players of similar rating, and split them into teams with sim
 
 Your first 10 rated matches are provisional: the queue says **Provisional (3/10 matches)** and you have no rank yet. After that the main menu shows your rank. Ratings decay: each day without a rated match makes yours less certain, and the leaderboard ranks by a cautious value, so if you stop playing your rank sinks within weeks.
 
+Once the ladder has 20 established players, a ranked match counts only when at least one player in it is established (10 or more rated matches): a match between new players alone is unrated. Play someone established and your matches count.
+
 The **Leaderboard** button in the top bar lists the top 100 by rank, name and rating, your own row highlighted. It is updated every hour.

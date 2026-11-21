@@ -507,4 +507,6 @@ Rankatut jonot yhdistävät pelaajia, joiden luokitus on lähellä toisiaan, ja 
 
 Ensimmäiset 10 luokiteltua otteluasi ovat alustavia: jono sanoo **Alustava (3/10 ottelua)**, eikä sinulla ole vielä sijaa. Sen jälkeen päävalikko näyttää sijasi. Luokitus rapautuu: jokainen päivä ilman luokiteltua ottelua tekee siitä epävarmemman, ja tulostaulu järjestää varovaisen arvon mukaan, joten jos lopetat pelaamisen, sijasi laskee viikoissa.
 
+Kun tulostaululla on 20 vakiintunutta pelaajaa, rankattu ottelu lasketaan vain, jos ainakin yksi sen pelaajista on vakiintunut (10 tai enemmän luokiteltua ottelua): pelkästään uusien pelaajien välinen ottelu on luokittelematon. Pelaa vakiintunutta pelaajaa vastaan, niin otteluusi lasketaan.
+
 Yläpalkin **Tulostaulu**-painike näyttää 100 parasta sijan, nimen ja luokituksen mukaan, oma rivisi korostettuna. Se päivittyy tunneittain.
