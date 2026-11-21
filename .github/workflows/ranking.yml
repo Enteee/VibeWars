@@ -1,6 +1,6 @@
 name: Ranking
 
-# Refreshes the site's ranking/ (receipts/<YYYY-MM>.ndjson, leaderboard.json,
+# Refreshes the site's ranking/ (receipts/<YYYY-MM>.ndjson, boards/<asOf>.json, leaderboard.json,
 # log.txt) on gh-pages every hour from the receipts on the relays (#3574,
 # ADR-0055). Same two-job split as pages.yml: `build` runs repository code
 # with a read-only token and the network, `deploy` holds contents: write
@@ -67,6 +67,7 @@ jobs:
           name: ranking
           path: |
             ranking-out/receipts/
+            ranking-out/boards/
             ranking-out/leaderboard.json
             ranking-out/log.txt
           if-no-files-found: error
