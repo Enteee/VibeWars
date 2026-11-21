@@ -118,7 +118,6 @@ jobs:
             git checkout -q --orphan gh-pages
           fi
 
-          mkdir -p ranking
           rm -rf ranking
           mkdir ranking
           cp -r "$out/." ranking/
