@@ -12,6 +12,7 @@ import {
   deathProgress,
   respawnRing,
 } from "../render/body-reactions.js";
+import { STYLE_MOTES } from "../render/cosmetic-reactions.js";
 import { SKILL_ARC_COLOUR, teamColour } from "../render/arena-snapshot.js";
 import { HAND, wheelDistance } from "../render/colour-wheel.js";
 import { ZONE_LOOK } from "../render/zone-look.js";
@@ -74,6 +75,9 @@ function timingProblems(entry: CosmeticEntry): readonly string[] {
   }
   const plainSeconds = look.kind === "spawn" ? RESPAWN_SECONDS : DEATH_SECONDS;
   const problems: string[] = [];
+  if (look.motes < 1 || look.motes > STYLE_MOTES) {
+    problems.push(`${entry.id}: ${String(look.motes)} motes, not 1 to ${String(STYLE_MOTES)}`);
+  }
   if (look.seconds !== plainSeconds) {
     problems.push(
       `${entry.id}: ${String(look.seconds)} s, not the default ${String(plainSeconds)} s`,

@@ -19,23 +19,33 @@ export type SpawnLook = Extract<CosmeticLook, { readonly kind: "spawn" }>;
 export type DissolveLook = Extract<CosmeticLook, { readonly kind: "dissolve" }>;
 type StyleLook = SpawnLook | DissolveLook;
 
-/** How many motes a style draws. */
-export const STYLE_MOTES = 12;
-/** How quickly a style swells to full strength, and how late it fades: held, not passing. */
+/** The most motes a style may draw: the busiest tier's. */
+export const STYLE_MOTES = 24;
+/** How quickly a mote swells to full strength, and how late it fades: held, not passing. */
 const SWELL = 4;
-/** How many turns round the body the leaves swirl while it gathers. */
-const SWIRL_TURNS = 1.25;
-/** How far, in radians, petals and ash sway off their line as they go. */
-const SWAY = { petals: 0.5, ash: 0.25 } as const;
+/** The share of a style's time each mote is on the move; the rest staggers their starts. */
+const MOTE_SPAN = 0.55;
+/** How many turns round the body the leaves swirl while they gather. */
+const SWIRL_TURNS = 1.5;
+/** How many directions shards fly out in, and how far, in radians, each burst fans. */
+const SHARD_BURSTS = 4;
+const SHARD_FAN = 0.9;
+/** How many turns a shard spins as it flies. */
+const SHARD_SPIN = 2;
+/** How far, in radians, petals sway as they drift down. */
+const PETAL_SWAY = 0.2;
+/** When stars flare, as a share of the style's time, and by how much they grow. */
+const TWINKLE_AT = 0.8;
+const TWINKLE = 1.6;
 /** A mote's size, as a share of the body's radius: mist is soft and wide, the rest are specks. */
 const MOTE_OF_BODY: Readonly<Record<SpawnMotif | DissolveMotif, number>> = {
-  light: 0.22,
-  leaves: 0.25,
-  petals: 0.28,
-  stars: 0.3,
-  ash: 0.2,
-  mist: 0.4,
-  shards: 0.3,
+  light: 0.16,
+  leaves: 0.22,
+  petals: 0.2,
+  stars: 0.14,
+  ash: 0.13,
+  mist: 0.26,
+  shards: 0.24,
 };
 
 /** One mote of a style: where, how big, how strong, and its turn in radians. */
@@ -48,6 +58,11 @@ export interface StyleMote {
 }
 
 const clamp01 = (value: number): number => Math.min(1, Math.max(0, value));
+const lerp = (from: number, to: number, share: number): number => from + (to - from) * share;
+/** Up the screen, as an angle round the body. */
+const UP = -Math.PI / 2;
+/** The golden ratio's fraction: steps that never line up. */
+const GOLDEN = 0.618034;
 
 /** `body`'s spawn-in style, if it wears one. */
 export function spawnStyleOf(body: GroundBody): SpawnLook | undefined {
@@ -73,9 +88,15 @@ export function fallSeconds(body: GroundBody): number {
 
 /**
  * Mote `index` of `look`, `ageSeconds` into it, round a body at `x, y` of
- * `radius`; `phase` turns the ring so two bodies do not match. A spawn's
- * motes close in from the far reach to the rim, a dissolve's leave the
- * rim for it. Strength swells quickly, holds and fades within the look's alpha; past the
+ * `radius`; `phase` turns the style so two bodies do not match. Each mote
+ * starts in turn and moves for `MOTE_SPAN` of the time, so a busier tier
+ * comes in waves. It stays in the band between the body's rim and the
+ * look's reach, outside the body so the body never hides it, and each
+ * motif moves its own way round it: light rises up both sides, petals
+ * and stars drift down from above, leaves swirl in, ash drifts up and
+ * away, mist puffs out as one ring, and shards fly out in bursts, spinning.
+ * A spawn's motes end at the rim, a dissolve's at the reach. Strength
+ * swells quickly, holds and fades within the look's alpha; past the
  * look's `seconds`, there is none.
  */
 export function styleMote(
@@ -88,34 +109,75 @@ export function styleMote(
   phase: number,
 ): StyleMote {
   const t = clamp01(ageSeconds / look.seconds);
-  const reach = radius * (look.ground?.radiusOfBody ?? 0);
-  // The share of the way out, past the rim: a spawn gathers, a dissolve leaves.
-  const out = look.kind === "spawn" ? 1 - t : t;
-  let angle = phase + (index / STYLE_MOTES) * Math.PI * 2;
+  const share = index / look.motes;
+  // Mist and leaves move as one ring over the whole time; the rest start in turn.
+  const span = look.motif === "mist" || look.motif === "leaves" ? 1 : MOTE_SPAN;
+  // Where on its side a mote flies, scattered so motes in flight together do not clump.
+  const scatter = (index * GOLDEN) % 1;
+  const start = share * (1 - span);
+  const u = clamp01((t - start) / span);
+  const side = index % 2 === 0 ? 1 : -1;
+  const twinkle =
+    look.motif === "stars" ? 1 + (TWINKLE - 1) * Math.max(0, 1 - Math.abs(t - TWINKLE_AT) * 10) : 1;
+  const size = radius * MOTE_OF_BODY[look.motif] * twinkle;
+  // The band a mote's centre keeps to: its near edge clear of the rim, its far edge within reach.
+  const largest = radius * MOTE_OF_BODY[look.motif] * (look.motif === "stars" ? TWINKLE : 1);
+  const near = radius + largest * 0.5;
+  const far = radius + Math.max(largest * 0.5, radius * (look.ground?.radiusOfBody ?? 0) - largest);
+  // The share of the way out across the band: a spawn gathers, a dissolve leaves.
+  const out = look.kind === "spawn" ? 1 - u : u;
+  let angle = phase + share * Math.PI * 2;
+  let spin = angle;
   switch (look.motif) {
-    case "leaves":
-      angle += SWIRL_TURNS * Math.PI * 2 * t;
+    case "light":
+      // Up the side, from below the body to above it.
+      angle = -UP + side * Math.PI * u + (scatter - 0.5) * 0.8;
+      spin = angle;
       break;
     case "petals":
-    case "ash":
-      angle += SWAY[look.motif] * Math.sin(Math.PI * t);
+      // Down from above, swaying, onto the rim at the sides.
+      angle = UP + side * (0.15 + 0.75 * scatter + 0.6 * u) * (Math.PI / 2);
+      angle += PETAL_SWAY * Math.sin(Math.PI * 3 * u);
+      spin = angle + Math.PI * 2 * u * side;
       break;
-    case "light":
     case "stars":
-    case "mist":
-    case "shards":
+      if (look.kind === "spawn") {
+        // Falling stars: down from above onto the rim.
+        angle = UP + side * (0.1 + 0.8 * scatter + 0.5 * u) * (Math.PI / 2);
+      } else {
+        // Shooting up and out, both sides.
+        angle = -UP - side * (0.3 + 0.6 * scatter + 0.8 * u) * (Math.PI / 2);
+      }
+      spin = phase + Math.PI * u;
       break;
+    case "leaves":
+      angle += SWIRL_TURNS * Math.PI * 2 * u;
+      spin = angle + Math.PI / 2;
+      break;
+    case "ash":
+      // Up from round the rim and off to one side, like embers.
+      angle = lerp(angle, UP + side * 0.6, u * u);
+      spin = angle;
+      break;
+    case "mist":
+      angle += 0.4 * u;
+      break;
+    case "shards": {
+      const burst = Math.floor(share * SHARD_BURSTS);
+      const within = share * SHARD_BURSTS - burst - 0.5;
+      angle = phase + (burst / SHARD_BURSTS) * Math.PI * 2 + within * SHARD_FAN * (0.4 + u);
+      spin = angle + SHARD_SPIN * Math.PI * 2 * u * side;
+      break;
+    }
   }
-  const size = radius * MOTE_OF_BODY[look.motif];
-  // A mote's far edge stops at the reach: never past the look's ground share.
-  const distance = radius + Math.max(0, reach - size) * out;
-  const strength = (look.ground?.alpha ?? 0) * Math.min(1, SWELL * Math.sin(Math.PI * t));
+  const distance = lerp(near, far, out);
+  const strength = (look.ground?.alpha ?? 0) * Math.min(1, SWELL * Math.sin(Math.PI * u));
   return {
     x: x + Math.cos(angle) * distance,
     y: y + Math.sin(angle) * distance,
     size,
-    alpha: t >= 1 ? 0 : strength,
-    spin: angle + Math.PI * 2 * t,
+    alpha: t >= 1 || u <= 0 || u >= 1 ? 0 : strength,
+    spin,
   };
 }
 
@@ -130,11 +192,11 @@ function starPoints(mote: StyleMote): { x: number; y: number }[] {
   return points;
 }
 
-/** A leaf, a petal or a shard at `mote`: a lens, or a sliver of a triangle, along its spin. */
+/** A leaf, a petal or a shard at `mote`: a lens, or a triangle, along its spin. */
 function bladePoints(mote: StyleMote, shard: boolean): { x: number; y: number }[] {
   const along = { x: Math.cos(mote.spin), y: Math.sin(mote.spin) };
   const across = { x: -along.y, y: along.x };
-  const width = mote.size * (shard ? 0.35 : 0.5);
+  const width = mote.size * 0.5;
   const tip = { x: mote.x + along.x * mote.size, y: mote.y + along.y * mote.size };
   const tail = { x: mote.x - along.x * mote.size, y: mote.y - along.y * mote.size };
   const left = { x: mote.x + across.x * width, y: mote.y + across.y * width };
@@ -159,8 +221,11 @@ export function paintStyle(
   if (reducedMotion || ageSeconds >= look.seconds) {
     return;
   }
-  for (let i = 0; i < STYLE_MOTES; i += 1) {
+  for (let i = 0; i < Math.min(look.motes, STYLE_MOTES); i += 1) {
     const mote = styleMote(look, i, x, y, radius, ageSeconds, phase);
+    if (mote.alpha <= 0) {
+      continue;
+    }
     painter.fillStyle(look.colour, mote.alpha);
     switch (look.motif) {
       case "stars":
@@ -172,7 +237,7 @@ export function paintStyle(
         painter.fillPoints(bladePoints(mote, look.motif === "shards"));
         break;
       case "mist":
-        // Soft: a wide faint puff round a smaller core, both within the look's alpha.
+        // Soft: a wide faint puff round a smaller core, together within the look's alpha.
         painter.fillStyle(look.colour, mote.alpha * 0.5);
         painter.fillCircle(mote.x, mote.y, mote.size);
         painter.fillCircle(mote.x, mote.y, mote.size * 0.5);

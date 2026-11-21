@@ -103,6 +103,8 @@ export type CosmeticLook = LookBase &
         readonly kind: "spawn";
         readonly colour: number;
         readonly motif: SpawnMotif;
+        /** How many motes: a higher tier is busier, not only another colour. */
+        readonly motes: number;
         readonly seconds: number;
       }
     | {
@@ -110,6 +112,7 @@ export type CosmeticLook = LookBase &
         readonly kind: "dissolve";
         readonly colour: number;
         readonly motif: DissolveMotif;
+        readonly motes: number;
         readonly seconds: number;
       }
   );
@@ -185,6 +188,20 @@ const MOSS = 0x66ff33;
 const EMBER = 0xff1f5a;
 const FROST = 0x00ccff;
 const STARLIGHT = 0xf080ff;
+/**
+ * The spawn and death styles' (#3580): as light as each hue gets a hand's
+ * width from every cue, since their alpha is capped and lightness is what
+ * shows on dark ground and lava. No pale gold or ember passes: they sit on
+ * the flame's and the burning condition's hues.
+ */
+const PALE_LIGHT = 0x7fffea;
+const PALE_LEAF = 0x77ff5c;
+const BLOSSOM = 0xffb8e7;
+const LILAC = 0xe97aff;
+const ROSE_ASH = 0xffadc9;
+const PERIWINKLE = 0x7a90ff;
+const AQUAMARINE = 0x7fffd4;
+const PALE_ORCHID = 0xff8fff;
 
 export const COSMETIC_CATALOG: readonly CosmeticEntry[] = [
   {
@@ -315,56 +332,56 @@ export const COSMETIC_CATALOG: readonly CosmeticEntry[] = [
     id: "spawn-light",
     slot: "spawn",
     requires: TIER_2,
-    look: { ...SPAWN, colour: STREAK_GOLD, motif: "light" },
+    look: { ...SPAWN, colour: PALE_LIGHT, motif: "light", motes: 10 },
     name: "cosmetics.item.spawnLight",
   },
   {
     id: "spawn-leaves",
     slot: "spawn",
     requires: TIER_3,
-    look: { ...SPAWN, colour: MOSS, motif: "leaves" },
+    look: { ...SPAWN, colour: PALE_LEAF, motif: "leaves", motes: 14 },
     name: "cosmetics.item.spawnLeaves",
   },
   {
     id: "spawn-petals",
     slot: "spawn",
     requires: TIER_4,
-    look: { ...SPAWN, colour: ROSE, motif: "petals" },
+    look: { ...SPAWN, colour: BLOSSOM, motif: "petals", motes: 18 },
     name: "cosmetics.item.spawnPetals",
   },
   {
     id: "spawn-stars",
     slot: "spawn",
     requires: TIER_5,
-    look: { ...SPAWN, colour: STARLIGHT, motif: "stars" },
+    look: { ...SPAWN, colour: LILAC, motif: "stars", motes: 24 },
     name: "cosmetics.item.spawnStars",
   },
   {
     id: "dissolve-ash",
     slot: "dissolve",
     requires: TIER_2,
-    look: { ...DISSOLVE, colour: EMBER, motif: "ash" },
+    look: { ...DISSOLVE, colour: ROSE_ASH, motif: "ash", motes: 10 },
     name: "cosmetics.item.dissolveAsh",
   },
   {
     id: "dissolve-mist",
     slot: "dissolve",
     requires: TIER_3,
-    look: { ...DISSOLVE, colour: FROST, motif: "mist" },
+    look: { ...DISSOLVE, colour: PERIWINKLE, motif: "mist", motes: 14 },
     name: "cosmetics.item.dissolveMist",
   },
   {
     id: "dissolve-shards",
     slot: "dissolve",
     requires: TIER_4,
-    look: { ...DISSOLVE, colour: JADE, motif: "shards" },
+    look: { ...DISSOLVE, colour: AQUAMARINE, motif: "shards", motes: 18 },
     name: "cosmetics.item.dissolveShards",
   },
   {
     id: "dissolve-stars",
     slot: "dissolve",
     requires: TIER_5,
-    look: { ...DISSOLVE, colour: STARLIGHT, motif: "stars" },
+    look: { ...DISSOLVE, colour: PALE_ORCHID, motif: "stars", motes: 24 },
     name: "cosmetics.item.dissolveStars",
   },
   {

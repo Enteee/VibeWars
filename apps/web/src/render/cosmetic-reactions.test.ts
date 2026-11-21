@@ -104,7 +104,7 @@ describe("spawn-in and death dissolve styles (#3580)", () => {
           expect(point.alpha).toBeLessThanOrEqual(GROUND_ALPHA);
         }
         if (step > 0 && step < 20) {
-          expect(points.length).toBeGreaterThanOrEqual(STYLE_MOTES);
+          expect(points.length).toBeGreaterThan(0);
         } else if (step === 20) {
           expect(points).toEqual([]);
         }
@@ -113,14 +113,79 @@ describe("spawn-in and death dissolve styles (#3580)", () => {
   );
 
   it.each(STYLES.map((look) => [`${look.kind} ${look.motif}`, look] as const))(
-    "%s gathers in for a spawn, leaves for a death",
+    "%s gathers in for a spawn, leaves for a death, outside the body",
     (_name, look: SpawnLook | DissolveLook) => {
-      const early = styleMote(look, 0, 0, 0, R, look.seconds * 0.2, 0);
-      const late = styleMote(look, 0, 0, 0, R, look.seconds * 0.8, 0);
-      const inward = Math.hypot(late.x, late.y) < Math.hypot(early.x, early.y);
-      expect(inward).toBe(look.kind === "spawn");
+      for (let i = 0; i < look.motes; i += 1) {
+        const path = [0.1, 0.3, 0.5, 0.7, 0.9]
+          .map((share) => styleMote(look, i, 0, 0, R, look.seconds * share, 0))
+          .filter((mote) => mote.alpha > 0);
+        for (const mote of path) {
+          expect(Math.hypot(mote.x, mote.y) - mote.size / 2).toBeGreaterThanOrEqual(R - 1e-9);
+        }
+        const first = path[0];
+        const last = path[path.length - 1];
+        if (first === undefined || last === undefined || first === last) {
+          continue;
+        }
+        const inward = Math.hypot(last.x, last.y) < Math.hypot(first.x, first.y);
+        expect(inward).toBe(look.kind === "spawn");
+      }
     },
   );
+
+  /** Where mote `index` of style `id` sits, `share` of the way through its own flight. */
+  function along(id: string, index: number, share: number): { x: number; y: number } {
+    const { look } = entry(id);
+    if (look.kind !== "spawn" && look.kind !== "dissolve") {
+      throw new Error(`${id} is no style`);
+    }
+    const start = (index / look.motes) * 0.45;
+    return styleMote(look, index, 0, 0, R, look.seconds * (start + 0.55 * share), 0.3);
+  }
+
+  it("moves each motif its own way: light rises, petals and stars fall, ash drifts up", () => {
+    // Screen y grows downward: rising is y falling.
+    expect(along("spawn-light", 0, 0.9).y).toBeLessThan(along("spawn-light", 0, 0.1).y);
+    expect(along("spawn-light", 0, 0.1).y).toBeGreaterThan(0);
+    expect(along("spawn-petals", 0, 0.1).y).toBeLessThan(0);
+    expect(along("spawn-petals", 0, 0.9).y).toBeGreaterThan(along("spawn-petals", 0, 0.1).y);
+    expect(along("spawn-stars", 0, 0.9).y).toBeGreaterThan(along("spawn-stars", 0, 0.1).y);
+    expect(along("dissolve-ash", 4, 0.9).y).toBeLessThan(along("dissolve-ash", 4, 0.1).y);
+    expect(along("dissolve-stars", 0, 0.9).y).toBeLessThan(along("dissolve-stars", 0, 0.1).y);
+  });
+
+  it("swirls the leaves a full turn and more", () => {
+    const { look } = entry("spawn-leaves");
+    if (look.kind !== "spawn") {
+      throw new Error("no spawn");
+    }
+    // The leaves swirl as one ring, over the whole time.
+    const at = (share: number) => styleMote(look, 0, 0, 0, R, look.seconds * share, 0);
+    let turned = 0;
+    let last = Math.atan2(at(0).y, at(0).x);
+    for (let step = 1; step <= 40; step += 1) {
+      const { x, y } = at(step / 40);
+      const angle = Math.atan2(y, x);
+      turned += Math.atan2(Math.sin(angle - last), Math.cos(angle - last));
+      last = angle;
+    }
+    expect(Math.abs(turned)).toBeGreaterThan(Math.PI * 2);
+  });
+
+  it("makes a higher tier busier, not only another colour", () => {
+    for (const ids of [
+      ["spawn-light", "spawn-leaves", "spawn-petals", "spawn-stars"],
+      ["dissolve-ash", "dissolve-mist", "dissolve-shards", "dissolve-stars"],
+    ]) {
+      const motes = ids.map((id) => {
+        const { look } = entry(id);
+        return look.kind === "spawn" || look.kind === "dissolve" ? look.motes : 0;
+      });
+      expect([...motes].sort((a, b) => a - b)).toEqual(motes);
+      expect(new Set(motes).size).toBe(motes.length);
+      expect(Math.max(...motes)).toBeLessThanOrEqual(STYLE_MOTES);
+    }
+  });
 
   it("draws nothing under reduced motion: the body's own fade is the effect", () => {
     for (const look of STYLES) {
