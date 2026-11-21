@@ -7,9 +7,9 @@
  * Writes into the archive directory:
  * - `receipts/<YYYY-MM>.ndjson`: every kept receipt, one canonical JSON
  *   per line, sorted, in the shard of its `startedAt`'s UTC month, since
- *   relays forget. A receipt is never dropped from it, a new one past
- *   `MAX_RECEIPTS_PER_KEY_DAY` is not taken in (#3738), and only shards whose bytes
- *   changed are written (#3730);
+ *   relays forget. A receipt is never dropped from it, a new one whose
+ *   every seat is at `MAX_RECEIPTS_PER_KEY_DAY` is not taken in (#3738),
+ *   and only shards whose bytes changed are written (#3730);
  * - `leaderboard.json`: `{asOf, engine, count, entries}`;
  * - `log.txt`: counts by reject reason, the relays reached, and the
  *   sha256 of `leaderboard.json`.
@@ -63,12 +63,13 @@ const SHARD_NAME = /^\d{4}-\d{2}\.ndjson$/;
 /** Over this a shard fails the run: GitHub refuses a file over 100 MB. */
 const MAX_SHARD_BYTES = 90 * 1024 * 1024;
 /**
- * The most receipts a key is archived and rated in per UTC day of
- * `startedAt`: about five hours of ten-minute matches, more than a player
- * plays. Anyone can sign receipts between keys they hold, so without it one
- * key could fill a month shard past `MAX_SHARD_BYTES` and stop every run.
- * Per key, since that is what a flood repeats; fresh keys are not stopped
- * (#3738).
+ * A new receipt whose every seat key is already in this many for its UTC
+ * day of `startedAt` is not taken in: about five hours of ten-minute
+ * matches, more than a player plays. Anyone can sign receipts between keys
+ * they hold, so without it one key could fill a month shard past
+ * `MAX_SHARD_BYTES` and stop every run. Every seat, not any, so one key's
+ * flood cannot veto a match it lost with keys under the cap; fresh keys
+ * are not stopped (#3738).
  */
 const MAX_RECEIPTS_PER_KEY_DAY = 30;
 
@@ -273,24 +274,25 @@ export function build({ archived, events, relaysReached, relays, asOfDay }) {
       count(receipt);
     }
   }
-  /** Over-cap receipts per seat key that was at the cap. */
+  /** Over-cap receipts per seat key. */
   /** @type {Map<string, number>} */
   const overCap = new Map();
   const receipts = sorted.filter(({ hash, receipt }) => {
     if (archivedHashes.has(hash)) {
       return true;
     }
-    const full = slotsOf(receipt).filter(
-      (slot) => (perKeyDay.get(slot) ?? 0) >= MAX_RECEIPTS_PER_KEY_DAY,
-    );
-    for (const slot of full) {
-      const pubkey = slot.slice(slot.indexOf(" ") + 1);
-      overCap.set(pubkey, (overCap.get(pubkey) ?? 0) + 1);
+    const slots = slotsOf(receipt);
+    // Refused only when every seat is at its cap: one key's flood must not
+    // veto a match it played with keys that are not.
+    if (slots.every((slot) => (perKeyDay.get(slot) ?? 0) >= MAX_RECEIPTS_PER_KEY_DAY)) {
+      for (const slot of slots) {
+        const pubkey = slot.slice(slot.indexOf(" ") + 1);
+        overCap.set(pubkey, (overCap.get(pubkey) ?? 0) + 1);
+      }
+      return false;
     }
-    if (full.length === 0) {
-      count(receipt);
-    }
-    return full.length === 0;
+    count(receipt);
+    return true;
   });
   const dropped = sorted.length - receipts.length;
   const ratings = rate(

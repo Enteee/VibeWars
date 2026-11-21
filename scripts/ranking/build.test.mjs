@@ -265,7 +265,7 @@ describe("the leaderboard job", () => {
       receipt({ matchId: `f${String(i)}`, at: i }),
     );
     const others = KEYS.slice(4);
-    // Seats two flooders: dropped, and blamed on them alone.
+    // Seats two flooders at the cap and two keys under it: admitted.
     const mixed = receipt({
       matchId: "x",
       at: 200,
@@ -283,13 +283,13 @@ describe("the leaderboard job", () => {
     expect(backward.leaderboard).toBe(forward.leaderboard);
 
     const ids = linesOf(forward).map((line) => parseReceipt(line)?.start.matchId);
-    expect(ids).toEqual([...flood.slice(0, 30).map((r) => r.start.matchId), "h", "q"]);
+    expect(ids).toEqual([...flood.slice(0, 30).map((r) => r.start.matchId), "x", "h", "q"]);
     const matches = new Map(
       entriesOf(forward.leaderboard).entries.map((entry) => [entry.pubkey, entry.matches]),
     );
-    expect(KEYS.map((key) => matches.get(key.pubkey))).toEqual([30, 30, 30, 30, 1, 1, 1, 1]);
-    expect(forward.log).toContain("over-cap: 12\n");
-    expect(forward.log).toContain(`  ${KEYS[0]?.pubkey ?? ""}: 12\n`);
+    expect(KEYS.map((key) => matches.get(key.pubkey))).toEqual([31, 31, 30, 30, 1, 1, 2, 2]);
+    expect(forward.log).toContain("over-cap: 11\n");
+    expect(forward.log).toContain(`  ${KEYS[0]?.pubkey ?? ""}: 11\n`);
     expect(forward.log).not.toContain(`  ${others[2]?.pubkey ?? ""}:`);
   });
 
@@ -301,7 +301,19 @@ describe("the leaderboard job", () => {
     expect(out.log).toContain("over-cap: 0\n");
   });
 
-  it("never evicts an archived loss for 30 backdated partials on its day (perf-sec-qa)", async () => {
+  /**
+   * 31 receipts backdated to `real`'s day, each between `loser` and three
+   * sybils: the 31st finds every seat at the cap.
+   * @param {(typeof KEYS)[number]} loser
+   */
+  const backdatedFlood = (loser) => {
+    const sybils = [KEYS[4], KEYS[5], loser, KEYS[6]].filter((key) => key !== undefined);
+    return Array.from({ length: 31 }, (_, i) =>
+      receipt({ matchId: `s${String(i)}`, at: i, keys: sybils }),
+    );
+  };
+
+  it("never evicts an archived loss for a backdated flood on its day (perf-sec-qa)", async () => {
     const dir = archiveDir();
     const loser = KEYS[2];
     if (loser === undefined) {
@@ -309,18 +321,31 @@ describe("the leaderboard job", () => {
     }
     const real = receipt({ matchId: "real", at: 36_000 });
     await runOn(dir, [[event(real)], []]);
-    const sybils = [KEYS[4], KEYS[5], loser, KEYS[6]].filter((key) => key !== undefined);
-    const flood = Array.from({ length: 30 }, (_, i) =>
-      receipt({ matchId: `s${String(i)}`, at: i, keys: sybils, only: loser.pubkey }),
-    );
-    const out = await runOn(dir, [flood.map((r) => event(r)), []]);
+    const out = await runOn(dir, [backdatedFlood(loser).map((r) => event(r)), []]);
     const ids = linesOf(out).map((line) => parseReceipt(line)?.start.matchId);
     expect(ids).toContain("real");
-    expect(ids).toHaveLength(30);
+    expect(ids).not.toContain("s30");
     expect(out.log).toContain("over-cap: 1\n");
-    expect(entriesOf(out.leaderboard).entries.find((e) => e.pubkey === loser.pubkey)?.matches).toBe(
-      1,
+  });
+
+  it("admits a lost match whose loser flooded the same run, since its other seats are under the cap (lead-dev)", async () => {
+    const loser = KEYS[2];
+    if (loser === undefined) {
+      throw new Error("four keys");
+    }
+    const real = receipt({ matchId: "real", at: 36_000 });
+    const out = await runOn(archiveDir(), [
+      [...backdatedFlood(loser), real].map((r) => event(r)),
+      [],
+    ]);
+    const ids = linesOf(out).map((line) => parseReceipt(line)?.start.matchId);
+    expect(ids).toContain("real");
+    expect(ids).not.toContain("s30");
+    const matches = new Map(
+      entriesOf(out.leaderboard).entries.map((entry) => [entry.pubkey, entry.matches]),
     );
+    expect(matches.get(KEYS[0]?.pubkey ?? "")).toBe(1);
+    expect(matches.get(loser.pubkey)).toBe(31);
   });
 
   it("voids a re-round that names a signer a leaver, and rates one no winner backs", async () => {
