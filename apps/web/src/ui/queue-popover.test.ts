@@ -17,8 +17,7 @@ const GROUP: FormedGroup = {
   mode: "random-arena-1v1",
   ranked: true,
   seed: 0,
-  claims: { a: 800, b: 800 },
-  leaderboardAsOf: 0,
+  claims: { a: { rating: 800, asOf: 0 }, b: { rating: 800, asOf: 0 } },
 };
 
 describe("queueStatus (#2743)", () => {

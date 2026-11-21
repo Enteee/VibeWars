@@ -76,8 +76,7 @@ function ticketOf(key: TicketKey, extra: Partial<QueueTicket> = {}): QueueTicket
     ascentRound: null,
     hardNat: false,
     holdsHallSince: null,
-    claims: { [key.ticketId]: 800 },
-    leaderboardAsOf: 0,
+    claims: { [key.ticketId]: { rating: 800, asOf: 0 } },
     ...extra,
   };
 }
@@ -396,7 +395,7 @@ describe("party consents on the Nostr queue board (#1078)", () => {
     }
     return ticketOf(leader, {
       members: members.map((key) => key.ticketId),
-      claims: Object.fromEntries(members.map((key) => [key.ticketId, 800])),
+      claims: Object.fromEntries(members.map((key) => [key.ticketId, { rating: 800, asOf: 0 }])),
       party: { groupId: GROUP_WON, consents },
       ...extra,
     });

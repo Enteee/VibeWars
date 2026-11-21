@@ -138,6 +138,7 @@ async function joinWith(playerKey: PlayerKey): Promise<string[]> {
     guildCape: null,
     timeoutMs: 1000,
     relayPub: null,
+    claim: () => ({ rating: 800, asOf: 0 }),
   };
   await joinLobby({
     ...options,

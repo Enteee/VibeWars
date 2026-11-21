@@ -2121,8 +2121,8 @@ async function main(): Promise<void> {
       const { board, key } = offered.pressed;
       const { mode, name } = queue;
       closeStay(board);
-      const { groupId, members, consents } = formed;
-      requeue(mode, name, { party: { party: { members, key, groupId, consents }, board } });
+      const { groupId, members, consents, claims } = formed;
+      requeue(mode, name, { party: { party: { members, key, groupId, consents, claims }, board } });
     });
     through.onClosed(() => {
       if (stay !== offered) {
@@ -2788,8 +2788,8 @@ async function main(): Promise<void> {
         board.close();
         return;
       }
-      const { groupId, members, consents } = formed;
-      queueTeam(current, mode, { party: { members, key, groupId, consents }, board });
+      const { groupId, members, consents, claims } = formed;
+      queueTeam(current, mode, { party: { members, key, groupId, consents, claims }, board });
     });
     joined.onStartRejected((reason) => {
       if (lobby === joined) {

@@ -22,6 +22,7 @@ import {
   teamSizeOf,
   type QueueMode,
   type QueueTicket,
+  type TicketClaim,
 } from "@vibewars/game-protocol";
 
 /** One match the queue formed. */
@@ -54,15 +55,11 @@ export interface FormedGroup {
    * the same one: what a ranked start carries, and each player checks.
    */
   readonly seed: number;
-  /** Every seat key's claimed rating, from the ticket that brings it (ADR-0055). */
-  readonly claims: Readonly<Record<string, number>>;
   /**
-   * Every seat key's claim's `leaderboardAsOf`, from the same ticket:
-   * each claim is checked against the leaderboard it was read from (#3575).
+   * Every seat key's claim, from the ticket that brings it (ADR-0055):
+   * each is checked against the leaderboard it was read from (#3575).
    */
-  readonly claimsAsOf: Readonly<Record<string, number>>;
-  /** The newest `leaderboardAsOf` of its tickets: the one a ranked start states. */
-  readonly leaderboardAsOf: number;
+  readonly claims: Readonly<Record<string, TicketClaim>>;
 }
 
 /** How a queue's round is played; every client answers the same for every round. */
@@ -134,7 +131,7 @@ export function ratingWindow(waitedMs: number): number {
 
 /** A ticket's claimed rating: its members' mean, so a party is paired by its average. */
 function claimOf(ticket: QueueTicket): number {
-  const claims = ticket.members.map((member) => ticket.claims[member] ?? 0);
+  const claims = ticket.members.map((member) => ticket.claims[member]?.rating ?? 0);
   return claims.reduce((sum, claim) => sum + claim, 0) / claims.length;
 }
 
@@ -645,10 +642,6 @@ export async function formGroups(input: FormGroupsInput): Promise<FormedGroup[]>
       ranked: isRankedGroup(group),
       seed: seedFromString(`${groupId}:seed`),
       claims: Object.fromEntries(group.flatMap((ticket) => Object.entries(ticket.claims))),
-      claimsAsOf: Object.fromEntries(
-        group.flatMap((ticket) => ticket.members.map((member) => [member, ticket.leaderboardAsOf])),
-      ),
-      leaderboardAsOf: Math.max(...group.map((ticket) => ticket.leaderboardAsOf)),
     });
   }
   return groups;

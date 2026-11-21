@@ -8,6 +8,7 @@ import {
   UNLISTED_CLAIM,
   type QueueMode,
   type QueueTicket,
+  type TicketClaim,
 } from "@vibewars/game-protocol";
 
 import { createMemoryBoard, type MemoryBoard, type QueueBoardEvent } from "./queue-board.js";
@@ -51,6 +52,8 @@ class Queue {
   public keys = 0;
   /** Whether its rounds skip ahead (#2687). */
   public skipping = false;
+  /** What every solo client claims (#3575). */
+  public claim: TicketClaim = { rating: UNLISTED_CLAIM, asOf: 0 };
 
   public readonly mode: QueueMode;
   public readonly round: number | null;
@@ -82,6 +85,7 @@ class Queue {
         slotted: this.slotted,
       }),
       hardNat,
+      claim: () => this.claim,
     });
     this.clients.push(client);
     return client;
@@ -100,8 +104,7 @@ class Queue {
       ascentRound: this.round,
       hardNat: false,
       holdsHallSince: null,
-      claims: { [ticket.ticketId]: UNLISTED_CLAIM },
-      leaderboardAsOf: 0,
+      claims: { [ticket.ticketId]: { rating: UNLISTED_CLAIM, asOf: 0 } },
       ...ticket,
     });
     await deliver();
@@ -158,7 +161,14 @@ function partyOf(queue: Queue): { leader: QueueParty; follower: QueueParty } {
   const [first, second] = keys as [TicketKey, TicketKey];
   const members = [first.ticketId, second.ticketId];
   // The board checks consents, not the client: these are only shaped like some.
-  const proof = { groupId: GROUP_WON, consents: members.map(() => "e".repeat(128)) };
+  const proof = {
+    groupId: GROUP_WON,
+    consents: members.map(() => "e".repeat(128)),
+    claims: [
+      { rating: 810, asOf: 1_800_000_000 },
+      { rating: 790, asOf: 1_800_003_600 },
+    ],
+  };
   return {
     leader: { members, key: first, ...proof },
     follower: { members, key: second, ...proof },
@@ -290,6 +300,22 @@ describe("createQueueClient", () => {
 
     expect(queue.heard.flatMap((e) => (e.kind === "ticket" ? [e.ticket.hardNat] : []))).toEqual([
       true,
+    ]);
+  });
+
+  it("puts its own claim on its ticket, read at every publish (#3575)", async () => {
+    const queue = new Queue("random-arena-4v4");
+    queue.claim = { rating: 1234, asOf: 1_800_000_000 };
+    queue.join();
+    await deliver();
+    queue.claim = { rating: 1240, asOf: 1_800_003_600 };
+    await queue.advance(TICKET_HEARTBEAT_MS);
+
+    expect(
+      queue.heard.flatMap((e) => (e.kind === "ticket" ? Object.values(e.ticket.claims) : [])),
+    ).toEqual([
+      { rating: 1234, asOf: 1_800_000_000 },
+      { rating: 1240, asOf: 1_800_003_600 },
     ]);
   });
 
@@ -454,6 +480,11 @@ describe("createQueueClient", () => {
       const [ticket] = queue.published(new Set([leader.members[0] ?? ""]));
       expect(ticket?.members).toEqual(leader.members);
       expect(ticket?.party).toEqual({ groupId: GROUP_WON, consents: leader.consents });
+      // Each member's own claim, from its own board.
+      expect(ticket?.claims).toEqual({
+        [leader.members[0] ?? ""]: leader.claims[0],
+        [leader.members[1] ?? ""]: leader.claims[1],
+      });
       for (const solo of clients.slice(2)) {
         expect(queue.published(new Set([ticketIdOf(solo)]))[0]?.party, "a solo's").toBeNull();
       }

@@ -83,9 +83,7 @@ function rankedGroup(mode: QueueMode): FormedGroup {
     mode,
     ranked: true,
     seed: 4_123_456_789,
-    claims: Object.fromEntries(teams.flat().map((key, n) => [key, 800 + n])),
-    claimsAsOf: Object.fromEntries(teams.flat().map((key) => [key, 0])),
-    leaderboardAsOf: 0,
+    claims: Object.fromEntries(teams.flat().map((key, n) => [key, { rating: 800 + n, asOf: 0 }])),
   };
 }
 
@@ -352,6 +350,7 @@ async function joinSeat(
     timeoutMs: 1000,
     relayPub: null,
     playerKey: key,
+    claim: () => ({ rating: 800, asOf: 0 }),
     queued: { group, key: keyOf(seatKey(n)), verifyTicketSig, ascentMorale: 0 },
     ...(ranked ? { ranked: play } : {}),
   });
@@ -490,12 +489,13 @@ describe("a ranked queued match (ADR-0055, #3573)", () => {
         map: "other-arena",
         seed: ranked.group.seed,
         startedAt: STARTED_AT,
-        leaderboardAsOf: 0,
       });
       expect(receipt.start.teams.flat().map((seat) => seat.pubkey)).toEqual(pubkeys(ranked));
-      expect(receipt.start.teams.flat().map((seat) => seat.claimedRating)).toEqual(
-        ranked.group.teams.flat().map((key) => ranked.group.claims[key]),
-      );
+      expect(
+        receipt.start.teams
+          .flat()
+          .map((seat) => ({ rating: seat.claimedRating, asOf: seat.leaderboardAsOf })),
+      ).toEqual(ranked.group.teams.flat().map((key) => ranked.group.claims[key]));
       expect(receipt.result).toEqual({
         startHash: startHash(receipt.start, testReceiptCrypto.sha256),
         winningTeam: 1,

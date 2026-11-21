@@ -26,6 +26,8 @@ import {
 
 const NOW = 1_700_000_100_000;
 const MAPS = ["arena-a", "arena-b", "arena-c"];
+/** The claim of a key no leaderboard lists, read from no leaderboard. */
+const UNLISTED = { rating: UNLISTED_CLAIM, asOf: 0 };
 
 /** A ticket of `mode`'s round: Heroes' Ascent's first (#1996), none in other modes. */
 function roundOf(mode: QueueMode): number | null {
@@ -47,8 +49,7 @@ function ticket(n: number, fields: Partial<QueueTicket> = {}): QueueTicket {
     ascentRound: roundOf(fields.mode ?? "random-arena-4v4"),
     hardNat: false,
     holdsHallSince: null,
-    claims: { [ticketId]: UNLISTED_CLAIM },
-    leaderboardAsOf: 0,
+    claims: { [ticketId]: UNLISTED },
     ...fields,
   };
 }
@@ -67,7 +68,7 @@ function party(n: number, mode: QueueMode = "random-arena-4v4"): QueueTicket {
   );
   const members = [leader.ticketId, ...others];
   const consents = members.map(() => "e".repeat(128));
-  const claims = Object.fromEntries(members.map((member) => [member, UNLISTED_CLAIM]));
+  const claims = Object.fromEntries(members.map((member) => [member, UNLISTED]));
   return { ...leader, members, claims, party: { groupId: "f".repeat(64), consents } };
 }
 
@@ -351,7 +352,7 @@ describe("team modes (ADR-0042)", () => {
     return {
       ...whole,
       members,
-      claims: Object.fromEntries(members.map((member) => [member, UNLISTED_CLAIM])),
+      claims: Object.fromEntries(members.map((member) => [member, UNLISTED])),
       bots: teamSizeOf(mode) - humans,
       party:
         humans === 1
@@ -786,7 +787,7 @@ describe("ranked groups (ADR-0055, #3573)", () => {
     return {
       ...whole,
       members,
-      claims: Object.fromEntries(members.map((member) => [member, UNLISTED_CLAIM])),
+      claims: Object.fromEntries(members.map((member) => [member, UNLISTED])),
       bots: 2 - humans,
       party: humans === 1 ? null : whole.party,
     };
@@ -820,17 +821,15 @@ describe("ranked groups (ADR-0055, #3573)", () => {
     expect(other?.seed).not.toBe(group?.seed);
   });
 
-  it("carries every seat key's claim and the newest leaderboard its tickets read", async () => {
+  it("carries every seat key's claim, each with the leaderboard it was read from", async () => {
     const tickets = solos(1, 8).map((each, n) => ({
       ...each,
-      claims: { [each.ticketId]: 700 + n },
-      leaderboardAsOf: n * 10,
+      claims: { [each.ticketId]: { rating: 700 + n, asOf: n * 10 } },
     }));
     const [group] = await form(tickets);
     expect(group?.claims).toEqual(
       Object.fromEntries(tickets.flatMap((each) => Object.entries(each.claims))),
     );
-    expect(group?.leaderboardAsOf).toBe(70);
   });
 });
 
@@ -840,7 +839,7 @@ describe("rating pairing (ADR-0055, #3575)", () => {
   /** Solo `n` of `mode`, queued `n` seconds after `START`, claiming `claim`. */
   function rated(n: number, claim: number, mode: QueueMode = "random-arena-1v1"): QueueTicket {
     const solo = ticket(n, { mode });
-    return { ...solo, claims: { [solo.ticketId]: claim } };
+    return { ...solo, claims: { [solo.ticketId]: { rating: claim, asOf: 0 } } };
   }
 
   /** `mode`'s party `n`, every member claiming `claim`, `bots` of its seats bots. */
@@ -852,7 +851,7 @@ describe("rating pairing (ADR-0055, #3575)", () => {
       members,
       bots,
       party: members.length === 1 ? null : whole.party,
-      claims: Object.fromEntries(members.map((member) => [member, claim])),
+      claims: Object.fromEntries(members.map((member) => [member, { rating: claim, asOf: 0 }])),
     };
   }
 
@@ -898,7 +897,7 @@ describe("rating pairing (ADR-0055, #3575)", () => {
       rated(n, claim, "random-arena-4v4"),
     );
     const [group] = await formAt(eight, 60, "random-arena-4v4");
-    const claim = (key: string): number => group?.claims[key] ?? 0;
+    const claim = (key: string): number => group?.claims[key]?.rating ?? 0;
     const sums = (group?.teams ?? []).map((team) => team.reduce((sum, key) => sum + claim(key), 0));
     expect(sums).toEqual([5400, 5400]);
   });

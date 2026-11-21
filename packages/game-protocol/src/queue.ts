@@ -196,15 +196,24 @@ export interface QueueTicket {
    */
   readonly holdsHallSince: number | null;
   /**
-   * Each member's claimed rating (ADR-0055), by member key, every one of
-   * `members` and no other, an integer: the conservative value of the
-   * leaderboard at `leaderboardAsOf`. Each seat's ranked start carries it,
-   * and every player checks it there. `UNLISTED_CLAIM` for a key the
-   * leaderboard does not list, and until rating pairing (#3575), for every key.
+   * Each member's claim (ADR-0055), by member key, every one of `members`
+   * and no other: what bot-free formation pairs by, and what each seat's
+   * ranked start carries for every player to check. Each member reads its
+   * own from its own copy of the leaderboard, so two in one party may
+   * name two boards (#3575).
    */
-  readonly claims: Readonly<Record<string, number>>;
-  /** The `asOf` of the leaderboard `claims` were read from, unix seconds; 0 until #3575. */
-  readonly leaderboardAsOf: number;
+  readonly claims: Readonly<Record<string, TicketClaim>>;
+}
+
+/** One member's claimed rating, and the leaderboard it read it from (ADR-0055). */
+export interface TicketClaim {
+  /**
+   * The conservative value the leaderboard gives the member's player key,
+   * rounded to an integer; `UNLISTED_CLAIM` for a key it does not list.
+   */
+  readonly rating: number;
+  /** That leaderboard's `asOf`, unix seconds; 0 for no leaderboard at all. */
+  readonly asOf: number;
 }
 
 /**
@@ -232,7 +241,7 @@ const TICKET_ID = /^[0-9a-f]{64}$/;
 /** A group id is a sha256, as hex. */
 const GROUP_ID = TICKET_ID;
 const CONSENT = /^[0-9a-f]{128}$/;
-const TICKET_FIELDS = 13;
+const TICKET_FIELDS = 12;
 const PARTY_FIELDS = 2;
 /** Longer than any `PROTOCOL_VERSION`, short enough to cost nothing. */
 const MAX_PROTOCOL_LENGTH = 64;
@@ -336,13 +345,30 @@ function parseParty(value: unknown, members: readonly string[]): TicketParty | n
 }
 
 /**
- * `value` as the claims of a ticket of `members`: one integer for each
+ * `value` as a member's claim, or `undefined` if it is not one: an
+ * integer rating, a whole `asOf`, and nothing else.
+ */
+export function parseTicketClaim(value: unknown): TicketClaim | undefined {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    return undefined;
+  }
+  const { rating, asOf } = value as Record<string, unknown>;
+  return Object.keys(value).length === 2 &&
+    typeof rating === "number" &&
+    Number.isSafeInteger(rating) &&
+    isTime(asOf)
+    ? { rating, asOf }
+    : undefined;
+}
+
+/**
+ * `value` as the claims of a ticket of `members`: one claim for each
  * member key and for no other key.
  */
 function parseClaims(
   value: unknown,
   members: readonly string[],
-): Readonly<Record<string, number>> | undefined {
+): Readonly<Record<string, TicketClaim>> | undefined {
   if (
     typeof value !== "object" ||
     value === null ||
@@ -352,10 +378,10 @@ function parseClaims(
     return undefined;
   }
   const raw = value as Record<string, unknown>;
-  const claims: Record<string, number> = {};
+  const claims: Record<string, TicketClaim> = {};
   for (const member of members) {
-    const claim = Object.hasOwn(raw, member) ? raw[member] : undefined;
-    if (typeof claim !== "number" || !Number.isSafeInteger(claim)) {
+    const claim = parseTicketClaim(Object.hasOwn(raw, member) ? raw[member] : undefined);
+    if (claim === undefined) {
       return undefined;
     }
     claims[member] = claim;
@@ -385,8 +411,7 @@ export function soloQueueTicket(
     ascentRound: null,
     hardNat,
     holdsHallSince: null,
-    claims: { [ticketId]: UNLISTED_CLAIM },
-    leaderboardAsOf: 0,
+    claims: { [ticketId]: { rating: UNLISTED_CLAIM, asOf: 0 } },
   };
 }
 
@@ -396,7 +421,7 @@ export function soloQueueTicket(
  * team in Random Arena or not a whole side in a team mode, members
  * out of party order or not led by its id, a party that does not match
  * them, an `ascentRound` that is not its mode's, a `hardNat` that is not
- * a boolean, claims that are not one integer a member, a time that is not
+ * a boolean, claims that are not one a member, a time that is not
  * a whole number of ms, or any field more than a
  * ticket has, so a flood of padded events costs a client nothing to
  * refuse.
@@ -421,7 +446,6 @@ export function parseQueueTicket(raw: unknown): QueueTicket | undefined {
     hardNat,
     holdsHallSince,
     claims,
-    leaderboardAsOf,
   } = raw as Record<string, unknown>;
   if (
     typeof ticketId !== "string" ||
@@ -437,8 +461,7 @@ export function parseQueueTicket(raw: unknown): QueueTicket | undefined {
     !isTime(heartbeatAt) ||
     !isAscentRoundOf(ascentRound, mode) ||
     typeof hardNat !== "boolean" ||
-    !(holdsHallSince === null || isTime(holdsHallSince)) ||
-    !isTime(leaderboardAsOf)
+    !(holdsHallSince === null || isTime(holdsHallSince))
   ) {
     return undefined;
   }
@@ -460,6 +483,5 @@ export function parseQueueTicket(raw: unknown): QueueTicket | undefined {
         hardNat,
         holdsHallSince,
         claims: claimed,
-        leaderboardAsOf,
       };
 }

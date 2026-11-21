@@ -252,6 +252,7 @@ describe("closing the tab while queued (#1881)", () => {
       round: () => ({ mapPool: ["arena-a"], teamCount: 2, skipping: false, slotted: false }),
       hardNat: false,
       holdsHallSince: null,
+      claim: () => ({ rating: 800, asOf: 0 }),
     });
     await client.tick();
     const page = new EventTarget();

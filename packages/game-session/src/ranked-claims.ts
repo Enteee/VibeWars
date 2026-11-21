@@ -7,8 +7,6 @@
 
 import type { RankedStart } from "@vibewars/ranking";
 
-import type { FormedGroup } from "./queue-formation.js";
-
 /** A copy of the leaderboard as this player holds it. */
 export interface LeaderboardCopy {
   /** Its `asOf`, unix seconds. */
@@ -24,7 +22,7 @@ export interface LeaderboardCopy {
 export interface LeaderboardSource {
   /** The copy held now, `undefined` while it has none. */
   readonly copy: () => LeaderboardCopy | undefined;
-  /** A fresh copy, past any cache; `undefined` when the fetch fails. */
+  /** A fresh copy, past any cache; when the fetch fails, the copy held, or `undefined`. */
   readonly refetch: () => Promise<LeaderboardCopy | undefined>;
 }
 
@@ -72,31 +70,21 @@ export function claimVerdict(
   return claim.asOf > nowSeconds + FUTURE_CLAIM_SECONDS ? "refuse" : "accept";
 }
 
-/** Every seat's claim in `start`, read from the ticket that seated it in `group`. */
-function seatClaims(start: RankedStart, group: FormedGroup): SeatClaim[] {
-  return group.teams.flatMap((team, t) =>
-    team.flatMap((seatKey, i) => {
-      const seat = start.teams[t]?.[i];
-      const asOf = group.claimsAsOf[seatKey];
-      return seat === undefined || asOf === undefined
-        ? []
-        : [{ pubkey: seat.pubkey, rating: seat.claimedRating, asOf }];
-    }),
-  );
-}
-
 /**
- * Whether every claim in `start`, a start already checked to seat
- * `group` as formed, holds against `source` at `nowSeconds`: the
+ * Whether every claim in `start`, a start already checked to carry each
+ * seat's ticket claim, holds against `source` at `nowSeconds`: the
  * leaderboard is fetched again at most once.
  */
 export async function claimsHold(
   start: RankedStart,
-  group: FormedGroup,
   source: LeaderboardSource,
   nowSeconds: number,
 ): Promise<boolean> {
-  const claims = seatClaims(start, group);
+  const claims = start.teams.flat().map((seat): SeatClaim => ({
+    pubkey: seat.pubkey,
+    rating: seat.claimedRating,
+    asOf: seat.leaderboardAsOf,
+  }));
   const verdicts = (copy: LeaderboardCopy | undefined, refetched: boolean) =>
     claims.map((claim) => claimVerdict(claim, copy, nowSeconds, refetched));
   let verdict = verdicts(source.copy(), false);

@@ -48,13 +48,13 @@ function receipt({ matchId, leavers = [], only, at = 0 }) {
     map: "isle",
     seed: 1,
     startedAt: DAY * 86_400 + 3_600 + at,
-    leaderboardAsOf: 0,
     teams: [seats.slice(0, 2), seats.slice(2)].map((team) =>
       team.map((pubkey) => ({
         pubkey,
         characterId: "starter",
         name: `N${pubkey.slice(0, 4)}`,
         claimedRating: 800,
+        leaderboardAsOf: 0,
         prev: ZERO_HASH,
       })),
     ),

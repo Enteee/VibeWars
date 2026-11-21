@@ -35,6 +35,7 @@ const seat = (signer: TestSigner, i: number) => ({
   characterId: `char-${String(i)}`,
   name: `Seat ${String(i)}`,
   claimedRating: 800 + i,
+  leaderboardAsOf: 1_794_999_000,
   prev: ZERO_HASH,
 });
 
@@ -48,7 +49,6 @@ function startFor(teams: readonly (readonly TestSigner[])[]): RankedStart {
     map: "isle-of-the-nameless",
     seed: 1234,
     startedAt: 1_795_000_000,
-    leaderboardAsOf: 1_794_999_000,
     teams: teams.map((team) => team.map((signer) => seat(signer, i++))),
   };
 }
@@ -175,6 +175,7 @@ describe("parseReceipt", () => {
       characterId: escaped(64),
       name: escaped(40),
       claimedRating: Number.MIN_SAFE_INTEGER,
+      leaderboardAsOf: Number.MAX_SAFE_INTEGER,
       prev: "f".repeat(64),
     }));
     const sigs = Object.fromEntries(seats.map((seat) => [seat.pubkey, "f".repeat(128)]));
@@ -186,7 +187,6 @@ describe("parseReceipt", () => {
         map: escaped(64),
         seed: Number.MAX_SAFE_INTEGER,
         startedAt: Number.MAX_SAFE_INTEGER,
-        leaderboardAsOf: Number.MAX_SAFE_INTEGER,
         teams: [seats.slice(0, 8), seats.slice(8)],
       },
       startSigs: sigs,

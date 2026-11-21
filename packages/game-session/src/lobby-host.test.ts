@@ -486,6 +486,7 @@ describe("lobby host", () => {
         timeoutMs: 1000,
         relayPub: null,
         playerKey: testPlayerKey(),
+        claim: () => ({ rating: 800, asOf: 0 }),
       }),
     ).rejects.toEqual(new LobbyRefusedError("lobby-full"));
     expect(playersOf(lobby.host)).toHaveLength(MAX_LOBBY_PLAYERS);
@@ -585,6 +586,7 @@ describe("an open or closed lobby (#1682)", () => {
       timeoutMs: 1000,
       relayPub: null,
       playerKey: testPlayerKey(),
+      claim: () => ({ rating: 800, asOf: 0 }),
     }).catch((error: unknown) => error);
 
   it("starts closed, and refuses a peer with the key as closed", async () => {
@@ -884,6 +886,7 @@ describe("joining by code", () => {
         timeoutMs: 50,
         relayPub: null,
         playerKey: testPlayerKey(),
+        claim: () => ({ rating: 800, asOf: 0 }),
       }),
       // Its player-key proof names the code it dialled (#2706).
     ).rejects.toEqual(new LobbyRefusedError("unproven"));
@@ -904,6 +907,7 @@ describe("joining by code", () => {
         timeoutMs: 50,
         relayPub: null,
         playerKey: testPlayerKey(),
+        claim: () => ({ rating: 800, asOf: 0 }),
       });
       for (const trouble of troubles) {
         network.trouble(peerId, trouble);
@@ -932,6 +936,7 @@ describe("joining by code", () => {
         timeoutMs: 50,
         relayPub: null,
         playerKey: testPlayerKey(),
+        claim: () => ({ rating: 800, asOf: 0 }),
       }),
     ).rejects.toBeInstanceOf(LobbyNoAnswerError);
   });
@@ -1250,6 +1255,7 @@ describe("a Team Lobby (#1458)", () => {
         timeoutMs: 1000,
         relayPub: null,
         playerKey: testPlayerKey(),
+        claim: () => ({ rating: 800, asOf: 0 }),
       }),
     ).rejects.toEqual(new LobbyRefusedError("party-full"));
     expect(playersOf(lobby.host)).toHaveLength(2);
@@ -2492,6 +2498,7 @@ describe("the key gate (#1681, ADR-0043)", () => {
       timeoutMs: 50,
       relayPub: null,
       playerKey: testPlayerKey(),
+      claim: () => ({ rating: 800, asOf: 0 }),
     });
     await expect(joining).rejects.toEqual(new LobbyNoAnswerError(50, null));
   });
