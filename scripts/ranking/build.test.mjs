@@ -250,10 +250,11 @@ describe("the leaderboard job", () => {
 /** @typedef {{ id: string, created_at: number }} Stored */
 /**
  * A NIP-01 relay holding `store`, as a `WebSocket`: newest first,
- * `since` and `until` inclusive, at most `limit` a page.
+ * `since` and `until` inclusive, at most `limit` and `cap` a page.
  * @param {Stored[]} store
+ * @param {number} cap
  */
-function fakeRelay(store) {
+function fakeRelay(store, cap) {
   return class {
     /** @type {Map<string, ((event: { data?: string }) => void)[]>} */
     listeners = new Map();
@@ -288,7 +289,7 @@ function fakeRelay(store) {
             at >= (filter.since ?? -Infinity) && at <= (filter.until ?? Infinity),
         )
         .sort((a, b) => b.created_at - a.created_at)
-        .slice(0, filter.limit);
+        .slice(0, Math.min(filter.limit, cap));
       setTimeout(() => {
         for (const event of page) {
           this.emit("message", { data: JSON.stringify(["EVENT", sub, event]) });
@@ -307,7 +308,7 @@ describe("fetchRelay", () => {
     vi.unstubAllGlobals();
   });
 
-  it("pages past a full second of spam to the receipts older than it", async () => {
+  it.each([500, 100])("pages past a page of spam in one second, %i a page", async (cap) => {
     const real = Array.from({ length: 30 }, (_, i) => ({
       id: `real-${String(i)}`,
       created_at: 1000 + i,
@@ -316,9 +317,8 @@ describe("fetchRelay", () => {
       id: `spam-${String(i)}`,
       created_at: 2000,
     }));
-    vi.stubGlobal("WebSocket", fakeRelay([...real, ...spam]));
+    vi.stubGlobal("WebSocket", fakeRelay([...real, ...spam], cap));
     const events = /** @type {Stored[]} */ ((await fetchRelay("wss://a.example", 0)) ?? []);
     expect(events.filter(({ id }) => id.startsWith("real-"))).toHaveLength(real.length);
-    expect(events).toHaveLength(real.length + spam.length);
   });
 });

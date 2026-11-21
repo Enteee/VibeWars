@@ -289,6 +289,8 @@ export function fetchRelay(relay, since) {
     let fresh = 0;
     let received = 0;
     let oldest = Infinity;
+    /** The last page's `until`. */
+    let until = Infinity;
     /** @type {WebSocket | undefined} */
     let socket;
     const done = () => {
@@ -304,11 +306,12 @@ export function fetchRelay(relay, since) {
     const send = (message) => {
       socket?.send(JSON.stringify(message));
     };
-    /** @param {number | undefined} until */
-    const ask = (until) => {
+    /** @param {number | undefined} before */
+    const ask = (before) => {
       page += 1;
       fresh = 0;
       received = 0;
+      until = before ?? Infinity;
       send([
         "REQ",
         `ranked-${String(page)}`,
@@ -317,7 +320,7 @@ export function fetchRelay(relay, since) {
           "#t": [RANKED_TOPIC],
           limit: PAGE_LIMIT,
           ...(since === undefined ? {} : { since }),
-          ...(until === undefined ? {} : { until }),
+          ...(before === undefined ? {} : { until: before }),
         },
       ]);
     };
@@ -358,15 +361,16 @@ export function fetchRelay(relay, since) {
         }
       } else if (message[0] === "EOSE" || message[0] === "CLOSED") {
         send(["CLOSE", message[1]]);
-        // A page with nothing new is the end, unless it was full: then one
-        // second holds a page of events, maybe a flood, and only that second
-        // is skipped. Otherwise ask for older ones; `until` is inclusive.
+        // A page with nothing new is the end, unless it held old ones: then
+        // one second holds a relay's whole page, maybe a flood, and only that
+        // second is skipped, each time one further back. Otherwise ask for
+        // older ones; `until` is inclusive.
         if (message[0] !== "EOSE" || !Number.isFinite(oldest)) {
           done();
         } else if (fresh > 0) {
           ask(oldest);
-        } else if (received >= PAGE_LIMIT) {
-          ask(oldest - 1);
+        } else if (received > 0) {
+          ask(Math.min(oldest, until) - 1);
         } else {
           done();
         }
