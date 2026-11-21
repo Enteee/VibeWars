@@ -39,7 +39,7 @@ const { values: options } = parseArgs({ options: { url: { type: "string" } } });
 /**
  * The Elementalist/Mesmer starter build as a GW1 template code (#494): the
  * editor takes it pasted, and the code does not change with our own build
- * format. Fireball is on Q.
+ * format. Fireball is in slot 1.
  */
 const BUILD_CODE = "OgVFoMm8lmMgufXOyleRGFB";
 const NAME = "Aria Stormveil";
@@ -153,12 +153,12 @@ async function editorAndTraining(page, dir) {
   await page.keyboard.press("KeyC");
   await sleep(400);
   await page.keyboard.press("Tab");
-  // Fireball on Q, tried until the readout counts its first hit; the shot
+  // Fireball in slot 1, tried until the readout counts its first hit; the shot
   // is taken on that frame, the burst still on the dummy.
   step = "cast Fireball";
   let hit = false;
   for (let tries = 0; tries < 12 && !hit; tries += 1) {
-    await page.keyboard.press("KeyQ");
+    await page.locator(".hud-skills button").first().click();
     for (let poll = 0; poll < 15 && !hit; poll += 1) {
       await sleep(100);
       hit = /damage\s*[1-9]/.test(await page.locator("body").innerText());
