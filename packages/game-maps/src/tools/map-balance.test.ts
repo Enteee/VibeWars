@@ -2036,7 +2036,8 @@ describe("walks and high ground (#3070)", () => {
       );
     });
 
-    it("walks each carrier from its relic to the altar within 10 %", () => {
+    // A 3 % shorter carry won team 1 58 % of decided relic runs, so the carry is held to 1 %.
+    it("walks each carrier from its relic to the altar within 1 %", () => {
       const finder = layeredFinder(relic, MINIMAL_GW_INSPIRED_PVP_V1.collision.playerRadius);
       within(
         TEAMS.map((team) => {
@@ -2046,7 +2047,22 @@ describe("walks and high ground (#3070)", () => {
           if (spawn === undefined) throw new Error(`no relic for team ${String(team)}`);
           return walkedFrom(spawn.position, finder.find(spawn.position, spawn.layer, altar, 3));
         }),
-        0.1,
+        0.01,
+      );
+    });
+
+    // A shrine 2 % nearer the dais won team 0 60 % of decided captures (#3442), so it is held to 1 %.
+    it("walks each team from its resurrection shrine to the dais within 1 %", () => {
+      const finder = layeredFinder(capture, MINIMAL_GW_INSPIRED_PVP_V1.collision.playerRadius);
+      within(
+        TEAMS.map((team) => {
+          const shrine = capture.objectives
+            .flatMap((each) => (each.kind === "resurrection-shrine" ? [each] : []))
+            .find((each) => each.team === team);
+          if (shrine === undefined) throw new Error(`no shrine for team ${String(team)}`);
+          return walkedFrom(shrine.position, finder.find(shrine.position, shrine.layer, altar, 3));
+        }),
+        0.01,
       );
     });
 

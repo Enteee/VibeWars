@@ -631,8 +631,8 @@
   ],
   "objectives": [
     { "kind": "relic-spawn", "layer": 1, "team": 0, "position": { "x": 2800, "y": 430 } },
-    { "kind": "relic-spawn", "layer": 1, "team": 1, "position": { "x": 3614.4, "y": 3189.8 } },
-    { "kind": "relic-spawn", "layer": 1, "team": 2, "position": { "x": 1066, "y": 2681.5 } },
+    { "kind": "relic-spawn", "layer": 1, "team": 1, "position": { "x": 3760, "y": 3260 } },
+    { "kind": "relic-spawn", "layer": 1, "team": 2, "position": { "x": 1125, "y": 2625 } },
     { "kind": "altar", "layer": 3, "position": { "x": 2500, "y": 2200 } }
   ],
   "gates": [
@@ -836,7 +836,7 @@
       },
       {
         "id": "south-east-relic-spawn-ring",
-        "position": { "x": 3614.4, "y": 3189.8 },
+        "position": { "x": 3760, "y": 3260 },
         "layer": 1,
         "radius": 220,
         "colour": 16767370,
@@ -845,7 +845,7 @@
       },
       {
         "id": "south-west-relic-spawn-ring",
-        "position": { "x": 1085.6, "y": 2670.2 },
+        "position": { "x": 1125, "y": 2625 },
         "layer": 1,
         "radius": 220,
         "colour": 16767370,
