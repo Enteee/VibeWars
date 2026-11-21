@@ -231,12 +231,14 @@ export function receiptHash(receipt: RankedReceipt, sha256: Sha256): string {
 }
 
 /**
- * The leading zero bits a result signature's stamp needs (#3746): about
- * 5 s of one desktop core, so minting a fake receipt costs a key that
- * much CPU, and an honest player pays it once a match, in a worker,
- * while the match is played.
+ * The leading zero bits a result signature's stamp needs (#3746): a
+ * mean of 2^17 hashes, about 1.6 s of one desktop core in JS, so minting
+ * a fake receipt costs a key that much CPU, and an honest player pays it
+ * once a match, in a worker, while the match is played. Sized so a
+ * mid-range phone's p99 at the worker's half-core throttle stays within
+ * `RANKED_WORK_GRACE_MS`; ADR-0055 has the measurements.
  */
-export const RANKED_WORK_BITS = 22;
+export const RANKED_WORK_BITS = 17;
 
 /**
  * How much longer than its own timeout a result round waits for a seat's

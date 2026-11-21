@@ -74,6 +74,16 @@ A receipt nobody but its host signed cannot exist, because the start round needs
 
 Each client searches for its stamp in a Worker, at most half a core (8 ms slices, 8 ms rests), from the moment the start round completes, using `@noble/hashes`' synchronous sha256 (WebCrypto's digest is async only, and an await per nonce costs more than the hash). The job checks with the same function. In a match of a few minutes the stamp is ready long before the result. In one that ends sooner, the client signs as soon as its stamp is ready, and every seat, host included, waits `RANKED_RESULT_TIMEOUT_MS + RANKED_WORK_GRACE_MS` for any seat's signature. Nobody has to know anyone else's progress. The grace is the measured p99 stamp time on a mid-range phone at the half-core throttle, so a slow phone is not turned into a leaver.
 
+**Calibration** (2026-11-21, `findWork` with `@noble/hashes`). A search takes on average 2^bits hashes and is geometric, so its p99 is about 4.6 times its mean. Measured rates for one full core: Node 24 on the CI-class dev box 102k hashes/s; Chromium 155 desktop 80k; Chromium at a 4× CPU throttle, standing in for a mid-range phone, 26.5k (taken as 20k, a strict quarter of desktop, to be safe). At the worker's half core a phone gets about 10k/s, so at `RANKED_WORK_BITS` = 17:
+
+| Tier (half core) | mean  | p99  |
+| ---------------- | ----- | ---- |
+| Mid-range phone  | 13 s  | 60 s |
+| Desktop Chromium | 3.3 s | 15 s |
+| Node (CI box)    | 2.6 s | 12 s |
+
+`RANKED_WORK_GRACE_MS` is that phone p99, 60 s. 18 bits would double it past the 60 s the issue allows.
+
 **What it is worth.** A stamp costs a script seconds to tens of seconds of JavaScript, and native or GPU sha256 next to nothing. It is a speed bump against casual floods from a page or a Node script, not a bound on a determined attacker: the per-key cap (#3738) and established keys (#3745) are the real per-key bounds. Do not raise `RANKED_WORK_BITS` as a fix for flooding; it only hurts phones.
 
 ### Publishing

@@ -609,8 +609,8 @@ describe("proof of work (#3746)", () => {
     );
   });
 
-  it("asks a desktop core about five seconds a stamp", () => {
-    expect(RANKED_WORK_BITS).toBe(22);
+  it("keeps a mid-range phone's p99 stamp within the grace", () => {
+    expect(RANKED_WORK_BITS).toBe(17);
   });
 });
 
