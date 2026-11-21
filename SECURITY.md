@@ -383,13 +383,20 @@ What it does not defend against:
 - **The launch gate can be captured.** Before honest players hold 20
   established keys, one person can make 20 keys and have them play each
   other to 10 rated matches each: about 100 1v1 receipts, inside the
-  per-key cap, in a day, and free until the stamp (#3746). The next run
+  per-key cap, in a day. The stamp (#3746) adds about 26 M SHA-256 over
+  those 200 signatures: seconds on one native core. The next run
   turns `gated` for good, and from then on a receipt between two
   newcomers is refused as `no-established-seat`: a newcomer is rated only
   by playing one of the ring's keys, with its owner's consent. Recovery
   is a code change, since dropping `leaderboard.json` re-gates from the
   archive on the next run. Accepted with Q143 A: the gate is a speed
-  bump, and the stamp is what makes a ring cost something.
+  bump, and so is the stamp.
+- **The result stamp is a speed bump, not a bound.** Every ranked result
+  signature carries a `RANKED_WORK_BITS` (17) proof of work, about 131 k
+  SHA-256 on average. It is sized for a phone in a browser worker; native
+  or GPU code does one in milliseconds. It prices out a careless script,
+  not a ring. What bounds a ring is the per-key cap of 50 receipts a day
+  (#3738), of which 20 rate, and the established-seat rule (#3745).
 - **Who played whom is public**, by key and character name, for good.
 - **Flooding the relays delays the leaderboard.** The job pages back
   through each relay with `until`; a full page of spam in one second is
