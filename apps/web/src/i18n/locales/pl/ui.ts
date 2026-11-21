@@ -999,7 +999,6 @@ export default {
   },
 
   "player.cape": "Peleryna",
-  "player.capePreview": "Podgląd",
   "player.emblem": "Emblemat",
   "player.emblemBar": "belka",
   "player.emblemChevron": "szewron",

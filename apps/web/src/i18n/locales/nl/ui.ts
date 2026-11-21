@@ -905,7 +905,6 @@ export default {
   "pips.title": { one: "{sign}{count} pips", other: "{sign}{count} pips" },
 
   "player.cape": "Cape",
-  "player.capePreview": "Voorbeeld",
   "player.emblem": "Embleem",
   "player.emblemBar": "balk",
   "player.emblemChevron": "chevron",

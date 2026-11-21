@@ -850,7 +850,6 @@ export default {
   "pips.title": { other: "{sign}{count} 格" },
 
   "player.cape": "披风",
-  "player.capePreview": "预览",
   "player.emblem": "纹饰",
   "player.emblemBar": "横条",
   "player.emblemChevron": "人字",

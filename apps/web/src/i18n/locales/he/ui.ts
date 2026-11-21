@@ -964,7 +964,6 @@ export default {
   },
 
   "player.cape": "גלימה",
-  "player.capePreview": "תצוגה מקדימה",
   "player.emblem": "סמלון",
   "player.emblemBar": "פס",
   "player.emblemChevron": "חץ",

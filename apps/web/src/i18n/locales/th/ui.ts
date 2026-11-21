@@ -854,7 +854,6 @@ export default {
   "pips.title": { other: "{sign}{count} pip" },
 
   "player.cape": "ผ้าคลุม",
-  "player.capePreview": "ตัวอย่าง",
   "player.emblem": "ตรา",
   "player.emblemBar": "แถบ",
   "player.emblemChevron": "บั้ง",

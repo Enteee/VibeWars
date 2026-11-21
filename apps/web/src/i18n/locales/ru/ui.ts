@@ -994,7 +994,6 @@ export default {
   },
 
   "player.cape": "Плащ",
-  "player.capePreview": "Предпросмотр",
   "player.emblem": "Эмблема",
   "player.emblemBar": "полоса",
   "player.emblemChevron": "шеврон",

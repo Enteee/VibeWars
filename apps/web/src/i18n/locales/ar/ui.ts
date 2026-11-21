@@ -1051,7 +1051,6 @@ export default {
   },
 
   "player.cape": "العباءة",
-  "player.capePreview": "معاينة",
   "player.emblem": "الشعار",
   "player.emblemBar": "شريط",
   "player.emblemChevron": "شارة V",

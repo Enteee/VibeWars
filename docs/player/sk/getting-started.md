@@ -191,7 +191,7 @@ alebo číslicami a každý ju uvidí za tvojím menom, napríklad
 `Ente [VIBE]`. So zadanou značkou sa pod ňou objaví návrhár **Cechový plášť**:
 vyber ľubovoľnú farbu plášťa a lemu, nakresli znak a tvoje telo bude plášť nosiť v každom
 zápase: keď stojíš, zloží sa do tenkého pásu na okraji, a keď sa pohybuješ,
-veje za tebou. Ukazujú ho aj tvoje postavy v menu. **Bez plášťa** ho zloží. Postava ukazuje plášť tak, ako vyzerá v hre. Farba príliš blízka modrej tvojho tímu alebo červenej tvojich nepriateľov sa pri kreslení trochu odkloní, aby žiadny plášť nevyzeral ako tím; postava ho ukazuje tak, ako ho uvidia všetci.
+veje za tebou. Ukazujú ho aj tvoje postavy v menu. **Bez plášťa** ho zloží. Farba príliš blízka modrej tvojho tímu alebo červenej tvojich nepriateľov sa pri kreslení trochu odkloní, aby žiadny plášť nevyzeral ako tím.
 
 Zmena platí okamžite pre lobby, v ktorom si.
 

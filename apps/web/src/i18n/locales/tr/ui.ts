@@ -905,7 +905,6 @@ export default {
   "pips.title": { one: "{sign}{count} birim", other: "{sign}{count} birim" },
 
   "player.cape": "Pelerin",
-  "player.capePreview": "Önizleme",
   "player.emblem": "Amblem",
   "player.emblemBar": "çubuk",
   "player.emblemChevron": "köşeli şerit",

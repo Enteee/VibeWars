@@ -967,7 +967,6 @@ export default {
   },
 
   "player.cape": "Cape",
-  "player.capePreview": "Aperçu",
   "player.emblem": "Emblème",
   "player.emblemBar": "barre",
   "player.emblemChevron": "chevron",

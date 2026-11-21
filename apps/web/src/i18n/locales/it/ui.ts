@@ -959,7 +959,6 @@ export default {
   },
 
   "player.cape": "Mantello",
-  "player.capePreview": "Anteprima",
   "player.emblem": "Emblema",
   "player.emblemBar": "barra",
   "player.emblemChevron": "gallone",

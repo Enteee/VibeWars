@@ -196,7 +196,7 @@ etiqueta puesta, aparece debajo el diseñador de **Capa de gremio**: elige el
 color que quieras para la capa y el ribete, dibuja un emblema, y tu cuerpo llevará la capa en
 cada partida: se pliega en una banda fina en tu borde cuando estás quieto y
 ondea detrás de ti cuando te mueves. Tus personajes del menú también la
-muestran. **Sin capa** te la quita. Una figura muestra la capa tal como se ve en el juego. Un color demasiado cercano al azul de tu equipo o al rojo de tus rivales se aparta un poco de él al dibujarse, para que ninguna capa parezca un equipo; la figura la muestra tal como la verán todos.
+muestran. **Sin capa** te la quita. Un color demasiado cercano al azul de tu equipo o al rojo de tus rivales se aparta un poco de él al dibujarse, para que ninguna capa parezca un equipo.
 
 Un cambio se aplica al instante a la sala en la que estás.
 

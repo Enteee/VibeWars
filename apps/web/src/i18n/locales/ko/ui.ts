@@ -856,7 +856,6 @@ export default {
   "pips.title": { other: "{sign}{count}핍" },
 
   "player.cape": "망토",
-  "player.capePreview": "미리 보기",
   "player.emblem": "문장",
   "player.emblemBar": "막대",
   "player.emblemChevron": "갈매기",

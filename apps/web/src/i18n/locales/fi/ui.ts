@@ -916,7 +916,6 @@ export default {
   "pips.title": { one: "{sign}{count} pykälä", other: "{sign}{count} pykälää" },
 
   "player.cape": "Viitta",
-  "player.capePreview": "Esikatselu",
   "player.emblem": "Tunnus",
   "player.emblemBar": "palkki",
   "player.emblemChevron": "kulmamerkki",

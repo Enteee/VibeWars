@@ -995,7 +995,6 @@ export default {
   },
 
   "player.cape": "Plášť",
-  "player.capePreview": "Náhled",
   "player.emblem": "Znak",
   "player.emblemBar": "pruh",
   "player.emblemChevron": "krokev",
