@@ -10,11 +10,11 @@
  *                        its attributes spent and a skill's tooltip open
  *   readme-training.png  the Training Ground, a Fireball just landed on
  *                        a dummy of the Armor ladder
- *   readme-match.png     a hosted 8v8 lobby, bots in every other slot, about ten
+ *   readme-match.png     a hosted 4v4 lobby, bots in every other slot, about ten
  *                        seconds into the fight, a step in, with the HUD
  *   readme-map.png       the same match a few seconds later, out at Wide,
  *                        on a frame with no refusal text over the arena
- *   readme-heights.png   a second 8v8 on another map, at Default, the hero
+ *   readme-heights.png   a second 4v4 on another map, at Default, the hero
  *                        walked to a place with two layers on screen
  *
  * Both match maps are 2.5D: `MAP` shows a raised structure and a lit
@@ -51,7 +51,7 @@ const { values: options } = parseArgs({ options: { url: { type: "string" } } });
 const BUILD_CODE = "OgVFoMm8lmMgufXOyleRGFB";
 const NAME = "Aria Stormveil";
 /** The arena both match shots are on; it fills the frame at Wide. */
-const MAP = "wardens-gallery";
+const MAP = "ashen-courtyard";
 /**
  * The second map, and the world point the hero walks to on it: where two
  * layers are on screen at once at Default.
@@ -266,7 +266,7 @@ async function yellowPixels(page, png) {
 }
 
 /**
- * Host an 8v8 lobby on `map` (the host fills the other slots with bots) and start the match.
+ * Host a 4v4 lobby on `map` (the host fills the other slots with bots) and start the match.
  *
  * @param {import("@playwright/test").Page} page
  * @param {string} map
@@ -275,11 +275,12 @@ async function host(page, map) {
   step = "host a lobby";
   await openRail(page, "Hosted Game");
   await page.locator(".lobby-panel").waitFor();
-  step = "pick 8v8";
+  step = "pick 4v4";
   const stepper = page.locator(".mode-rail").getByRole("group", { name: "Team size" });
   const size = stepper.locator(".mode-rail-size-value");
-  for (let press = 0; press < 8 && (await size.textContent()) !== "8v8"; press += 1) {
-    await stepper.getByRole("button", { name: "Larger team" }).click();
+  for (let press = 0; press < 3 && (await size.textContent()) !== "4v4"; press += 1) {
+    const now = Number.parseInt((await size.textContent()) ?? "", 10);
+    await stepper.getByRole("button", { name: now > 4 ? "Smaller team" : "Larger team" }).click();
     await sleep(300);
   }
   step = "pick the map";
@@ -289,7 +290,7 @@ async function host(page, map) {
   step = "start the match";
   await page.getByRole("button", { name: "Ready", exact: true }).click();
   await page.getByRole("button", { name: "start match" }).click();
-  // An 8v8 opens a team lobby first; its countdown plays a random preset team.
+  // A 4v4 starts straight from the lobby; the long wait covers the build.
   await page.locator(".hud-bar-health").waitFor({ timeout: 90_000 });
 }
 
