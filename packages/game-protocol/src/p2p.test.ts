@@ -1300,12 +1300,26 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   [
     "set-profile (#3548)",
     parseWireLobbyCommand,
-    { kind: "set-profile", name: "Mhenlo", guildTag: "vb", heroRank: 3, guildCape: CAPE },
+    {
+      kind: "set-profile",
+      name: "Mhenlo",
+      guildTag: "vb",
+      heroRank: 3,
+      guildCape: CAPE,
+      cosmetics: COSMETICS,
+    },
   ],
   [
     "set-profile with no guild (#3548)",
     parseWireLobbyCommand,
-    { kind: "set-profile", name: "Mhenlo", guildTag: null, heroRank: 0, guildCape: null },
+    {
+      kind: "set-profile",
+      name: "Mhenlo",
+      guildTag: null,
+      heroRank: 0,
+      guildCape: null,
+      cosmetics: COSMETICS,
+    },
   ],
   [
     "a team plan's human seat (ADR-0042)",
@@ -1366,17 +1380,36 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
   [
     "a set-profile with no name (#3548)",
     parseWireLobbyCommand,
-    { kind: "set-profile", guildTag: null, heroRank: 0, guildCape: null },
+    { kind: "set-profile", guildTag: null, heroRank: 0, guildCape: null, cosmetics: COSMETICS },
   ],
   [
     "a set-profile past the top hero rank (#3548)",
     parseWireLobbyCommand,
-    { kind: "set-profile", name: "Mhenlo", guildTag: null, heroRank: 16, guildCape: null },
+    {
+      kind: "set-profile",
+      name: "Mhenlo",
+      guildTag: null,
+      heroRank: 16,
+      guildCape: null,
+      cosmetics: COSMETICS,
+    },
   ],
   [
     "a set-profile with a numeric guild tag (#3548)",
     parseWireLobbyCommand,
-    { kind: "set-profile", name: "Mhenlo", guildTag: 7, heroRank: 0, guildCape: null },
+    {
+      kind: "set-profile",
+      name: "Mhenlo",
+      guildTag: 7,
+      heroRank: 0,
+      guildCape: null,
+      cosmetics: COSMETICS,
+    },
+  ],
+  [
+    "a set-profile with no cosmetics (ADR-0056)",
+    parseWireLobbyCommand,
+    { kind: "set-profile", name: "Mhenlo", guildTag: null, heroRank: 0, guildCape: null },
   ],
   [
     "a remove-member with an id past the wire's (#2746)",

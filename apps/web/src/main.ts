@@ -69,7 +69,7 @@ import {
   isStaleChunkError,
   type BuildWatch,
 } from "./build-check.js";
-import { factsOf } from "./cosmetics/selection.js";
+import { buildSelection, factsOf, signSelection } from "./cosmetics/selection.js";
 import { cosmeticsStore } from "./cosmetics/store.js";
 import { setOwnPubkey } from "./cosmetics/view.js";
 import { keySignet } from "./identity/key-signet.js";
@@ -599,6 +599,8 @@ async function main(): Promise<void> {
   let lobbyEntrant: Entrant | undefined;
   /** The name this player went into `lobby` under. */
   let lobbyName: string | undefined;
+  /** The cosmetic ids this player last signed into `lobby` (ADR-0056), as `currentLook` lists them. */
+  let lobbyLook: string | undefined;
   /** While this tab's own lobby is being opened. */
   let opening = false;
   /**
@@ -683,6 +685,7 @@ async function main(): Promise<void> {
               readonly hosted: HostedLobby | undefined;
               readonly entrant: Entrant;
               readonly name: string;
+              readonly look: string | undefined;
             }
           | undefined;
         /** The party lobby closed while out of sight: what to say back on the menu. */
@@ -984,8 +987,18 @@ async function main(): Promise<void> {
   // Once a visit (#3575): the menu's rank and a queue's rating read it.
   leaderboard.onChange(() => {
     paintQueue();
+    // What others wear is judged against it (ADR-0056).
+    if (lobby !== undefined) {
+      lobbyChanged();
+    }
   });
   void leaderboard.load();
+  // The Options toggle and picks redraw the lobby's plates at once (ADR-0056).
+  cosmeticsStore.onChange(() => {
+    if (lobby !== undefined) {
+      lobbyChanged();
+    }
+  });
 
   const showViewport = (visible: boolean): void => {
     if (visible) {
@@ -1347,25 +1360,37 @@ async function main(): Promise<void> {
       teamQueue !== undefined,
   );
 
+  /** The cosmetic ids picked in Options now (ADR-0056), as a selection lists them. */
+  const currentLook = (): string =>
+    JSON.stringify(buildSelection(playerKey.pubkey, cosmeticsStore.choice(), 0).ids);
+
   /**
-   * The name and guild just set in Options, to the lobby this tab is in
-   * (#3548), which shows them at once; nothing when they are the same. A
-   * match on keeps the ones it started with, and the next plays these.
+   * The name, guild and cosmetics just set in Options, to the lobby this
+   * tab is in (#3548, ADR-0056), which shows them at once; nothing when
+   * they are the same. A match on keeps the ones it started with, and the
+   * next plays these.
    */
   const sendProfile = (): boolean => {
     const name = loadPlayerName();
     const guild = playerGuild();
+    const look = currentLook();
     if (
       lobby === undefined ||
       lobbyEntrant === undefined ||
       (name === lobbyName &&
+        look === lobbyLook &&
         sameTypedGuild(lobbyEntrant.guild, guild) &&
         lobbyEntrant.guild.heroRank === guild.heroRank)
     ) {
       return false;
     }
-    lobby.setProfile({ name, ...guild });
+    lobby.setProfile({
+      name,
+      ...guild,
+      cosmetics: signSelection(playerKey, cosmeticsStore.choice(), Date.now()),
+    });
     lobbyName = name;
+    lobbyLook = look;
     lobbyEntrant = { ...lobbyEntrant, guild };
     return true;
   };
@@ -1392,6 +1417,7 @@ async function main(): Promise<void> {
     lobbyEntrant = undefined;
     profilePacer.reset();
     lobbyName = undefined;
+    lobbyLook = undefined;
     closeChat();
     syncParty(undefined);
     // The host first: its own player going would end it without the move.
@@ -2265,6 +2291,7 @@ async function main(): Promise<void> {
   ): void => {
     const entrant = lobbyEntrant;
     const name = lobbyName;
+    const look = lobbyLook;
     if (entrant === undefined || name === undefined) {
       party?.board.close();
       return;
@@ -2307,7 +2334,7 @@ async function main(): Promise<void> {
             void joined.disconnect();
             return;
           }
-          current.parked = { hosted, entrant, name };
+          current.parked = { hosted, entrant, name, look };
           lobby = undefined;
           publishRelayStatus();
           closeChat();
@@ -2378,6 +2405,7 @@ async function main(): Promise<void> {
       lobbyEntrant = undefined;
       profilePacer.reset();
       lobbyName = undefined;
+      lobbyLook = undefined;
       endTeamQueue();
       syncParty(undefined);
       return;
@@ -2388,6 +2416,7 @@ async function main(): Promise<void> {
     lobbyEntrant = parked.entrant;
     profilePacer.reset();
     lobbyName = parked.name;
+    lobbyLook = parked.look;
     mountLobbyChat(current.party);
     syncParty(current.party.getSnapshot());
   };
@@ -2747,6 +2776,7 @@ async function main(): Promise<void> {
     lobbyEntrant = entrant;
     profilePacer.reset();
     lobbyName = name;
+    lobbyLook = currentLook();
     lobbyNotice = undefined;
     if (matchmade) {
       matchmadeLobbies.add(joined);

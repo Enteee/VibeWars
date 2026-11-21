@@ -582,6 +582,26 @@ const HOVER_INK_TINT = TARGET_RING;
 const NAME_FRAME_PAD = 2;
 const NAME_FLAME_SIZE = 9;
 const NAME_COSMETIC_ALPHA = 0.9;
+/**
+ * The streak flame's outline (ADR-0056), as shares of its width and height
+ * from its top left: tongues of flame round a white-hot core, the same as
+ * `.cosmetic-flame` draws in the lobby.
+ */
+const NAME_FLAME_OUTLINE: readonly (readonly [number, number])[] = [
+  [0.5, 0],
+  [0.63, 0.3],
+  [0.8, 0.16],
+  [0.84, 0.48],
+  [1, 0.7],
+  [0.86, 0.94],
+  [0.5, 1],
+  [0.14, 0.94],
+  [0, 0.7],
+  [0.16, 0.44],
+  [0.3, 0.56],
+  [0.32, 0.22],
+];
+const NAME_FLAME_CORE = 0xffffff;
 
 /** An off-screen marker's length, tip to base, and width, screen px (#440). */
 const EDGE_MARKER_LENGTH = 12;
@@ -3131,17 +3151,24 @@ export class ArenaScene extends Phaser.Scene {
       );
     }
     if (graphics !== undefined && flame?.look.kind === "flame") {
-      // A small teardrop after the plate; it flickers, unless motion is reduced.
+      // A small flame after the plate; it flickers, unless motion is reduced.
       const flicker =
         flame.look.motion === "flicker" && !this.reducedMotion
           ? 1 + 0.12 * Math.sin(this.now * 9 + cuePhase(actor.id))
           : 1;
       const size = screenPx(NAME_FLAME_SIZE, zoom);
-      const x = box.right + pad + size / 2;
-      const base = box.bottom - size * 0.35;
+      const width = size * 0.7;
+      const left = box.right + pad;
+      const height = size * flicker;
       graphics.fillStyle(flame.look.colour, NAME_COSMETIC_ALPHA);
-      graphics.fillCircle(x, base, size * 0.35);
-      graphics.fillTriangle(x - size * 0.35, base, x + size * 0.35, base, x, base - size * flicker);
+      graphics.fillPoints(
+        NAME_FLAME_OUTLINE.map(
+          ([x, y]) => new Phaser.Math.Vector2(left + x * width, box.bottom - (1 - y) * height),
+        ),
+        true,
+      );
+      graphics.fillStyle(NAME_FLAME_CORE, NAME_COSMETIC_ALPHA);
+      graphics.fillEllipse(left + width / 2, box.bottom - size * 0.22, width * 0.4, size * 0.3);
     }
     let line = this.nameTitles.get(actor.id);
     if (title?.look.kind !== "title") {
@@ -3151,7 +3178,13 @@ export class ArenaScene extends Phaser.Scene {
     }
     if (line === undefined) {
       line = this.add
-        .text(0, 0, "", { fontSize: "9px", fontFamily: "ui-monospace, monospace" })
+        .text(0, 0, "", {
+          fontSize: "9px",
+          fontFamily: "ui-monospace, monospace",
+          // A dark edge, so it reads on any stone.
+          stroke: TEXT_EDGE,
+          strokeThickness: 3,
+        })
         .setOrigin(0.5, 1)
         .setDepth(OVERLAY_DEPTH);
       this.nameTitles.set(actor.id, line);

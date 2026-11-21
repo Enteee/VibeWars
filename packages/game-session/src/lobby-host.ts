@@ -493,8 +493,8 @@ type Member = MemberBase &
         readonly ascentMorale: number;
         /** Its join's part of a ranked seat (#3573); `null` for none. */
         readonly ranked: WireRankedJoin | null;
-        /** Its join's cosmetics (ADR-0056), relayed unread. */
-        readonly cosmetics: WireCosmetics;
+        /** Its cosmetics (ADR-0056), from its join or its last set-profile; relayed unread. */
+        cosmetics: WireCosmetics;
       }
   );
 
@@ -2620,9 +2620,9 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
   });
 
   /**
-   * `member`'s new name and guild (#3548), sanitised as at its join; an
-   * empty name keeps the one it had. Its planned seat, if any, keeps the
-   * name the match was planned with.
+   * `member`'s new name, guild and cosmetics (#3548, ADR-0056), the name and
+   * guild sanitised as at its join; an empty name keeps the one it had. Its
+   * planned seat, if any, keeps what the match was planned with.
    */
   const setProfile = (
     member: Member,
@@ -2633,6 +2633,9 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     member.guildTag = guild.guildTag;
     member.heroRank = guild.heroRank;
     member.guildCape = guild.guildCape;
+    if (member.bot === null) {
+      member.cosmetics = profile.cosmetics;
+    }
     broadcast();
   };
 

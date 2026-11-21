@@ -294,9 +294,9 @@ const cssColour = (colour: number): string => `#${colour.toString(16).padStart(6
 
 /**
  * `label`, a `playerLabelElement`, wearing `worn` (ADR-0056): a frame as
- * its rim, a title on a line of its own, glowing, and the streak flame
- * after the name. Default (`{}`) adds nothing. The flame's flicker is
- * CSS, and stills under reduced motion.
+ * its rim, a title on a line of its own above it, as in a match, and the
+ * streak flame after the name. Default (`{}`) adds nothing. The flame's
+ * flicker is CSS, and stills under reduced motion.
  */
 export function wearCosmetics(label: HTMLElement, worn: WornCosmetics): HTMLElement {
   const { frame, title, flame } = worn;
@@ -318,7 +318,7 @@ export function wearCosmetics(label: HTMLElement, worn: WornCosmetics): HTMLElem
     line.dataset.title = title.id;
     line.style.setProperty("--cosmetic-title", cssColour(title.look.colour));
     line.style.setProperty("--cosmetic-glow", cssColour(title.look.glow));
-    label.appendChild(line);
+    label.prepend(line);
   }
   return label;
 }

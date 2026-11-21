@@ -90,10 +90,10 @@ const ROSE = 0xe65ca1;
 const TEAL = 0x33ffff;
 const ORCHID = 0xe038e0;
 /**
- * The streak flame's mint, a spirit fire: every warm hue is taken by
- * burning, the hazards' zones or the third team, so it burns cool.
+ * The streak flame's gold: as warm as a flame gets a hand's width from
+ * the burning condition's orange and every other cue (`check.ts`).
  */
-const STREAK_MINT = 0x33ffbb;
+const STREAK_GOLD = 0xffea00;
 
 export const COSMETIC_CATALOG: readonly CosmeticEntry[] = [
   {
@@ -168,7 +168,7 @@ export const COSMETIC_CATALOG: readonly CosmeticEntry[] = [
     id: "flame-streak",
     slot: "flame",
     requires: STREAK,
-    look: { ...PLATE, motion: "flicker", kind: "flame", colour: STREAK_MINT },
+    look: { ...PLATE, motion: "flicker", kind: "flame", colour: STREAK_GOLD },
     name: "cosmetics.item.flame",
   },
 ];

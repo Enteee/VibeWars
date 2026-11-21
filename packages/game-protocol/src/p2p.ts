@@ -1765,8 +1765,9 @@ export type WireLobbyCommand =
       readonly build: JsonValue;
     }
   /**
-   * The member's own name and guild, changed in Options (#3548): as its
-   * `PeerLobbyJoin` carried them, sanitised by the host as at a join.
+   * The member's own name, guild and cosmetics, changed in Options
+   * (#3548, ADR-0056): as its `PeerLobbyJoin` carried them, the name and
+   * guild sanitised by the host as at a join, the cosmetics relayed unread.
    */
   | {
       readonly kind: "set-profile";
@@ -1774,6 +1775,7 @@ export type WireLobbyCommand =
       readonly guildTag: string | null;
       readonly heroRank: number;
       readonly guildCape: WireCape | null;
+      readonly cosmetics: WireCosmetics;
     };
 
 /**
@@ -3967,15 +3969,20 @@ export function parseWireLobbyCommand(value: unknown): WireLobbyCommand | undefi
         : undefined;
     }
     case "set-profile": {
-      // As `parsePeerLobbyJoin` reads the same four fields.
+      // As `parsePeerLobbyJoin` reads the same five fields.
       const guildTag = parseRawGuildTag(raw.guildTag);
-      return typeof raw.name === "string" && guildTag !== undefined && isHeroRank(raw.heroRank)
+      const cosmetics = parseWireCosmetics(raw.cosmetics);
+      return typeof raw.name === "string" &&
+        guildTag !== undefined &&
+        isHeroRank(raw.heroRank) &&
+        cosmetics !== undefined
         ? {
             kind: "set-profile",
             name: raw.name.slice(0, MAX_WIRE_TEXT),
             guildTag,
             heroRank: raw.heroRank,
             guildCape: parseWireCape(raw.guildCape) ?? null,
+            cosmetics,
           }
         : undefined;
     }

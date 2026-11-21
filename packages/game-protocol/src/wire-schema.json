@@ -7996,6 +7996,17 @@
         {
           "properties": [
             {
+              "name": "cosmetics",
+              "optional": false,
+              "type": {
+                "properties": [
+                  { "name": "at", "optional": false, "type": "number" },
+                  { "name": "ids", "optional": false, "type": { "array": "string" } },
+                  { "name": "sig", "optional": false, "type": "string" }
+                ]
+              }
+            },
+            {
               "name": "guildCape",
               "optional": false,
               "type": {
