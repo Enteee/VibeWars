@@ -13,7 +13,7 @@ fights at 20 Hz, hosted by one player's browser.
 character, then open your lobby (the lock in the title bar) and send its
 invite link to your friends. Nothing to install; see [Play it](#play-it).
 
-![A 4v4 match on Canyon: an Elementalist and three bots fight four bots, with the skill bar, the target frame, the party window and the compass on screen](docs/media/readme-match.png)
+![The Random Arena screen with an Elementalist chosen, over the menu's live arena: the mode rail on the left, the character cards, Find a match in the top bar](docs/media/readme-menu.png)
 
 A browser-based, minimalist, multiplayer PvP arena game mechanically
 inspired by Guild Wars 1 PvP — original implementation, original
@@ -120,8 +120,6 @@ Honest limits:
 ![The build editor: an Elementalist/Mesmer with all eight skills on the bar, its attribute points spent, and the tooltip of Fireball open](docs/media/readme-editor.png)
 
 ![The Training Ground, expanded: a Fireball has just hit one of the Armor ladder's six dummies, its damage floating above it](docs/media/readme-training.png)
-
-![The same match on Canyon a few seconds later, zoomed out to the widest view: the arena's walls and both teams in one frame](docs/media/readme-map.png)
 
 ## Repository layout
 
