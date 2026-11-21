@@ -52,7 +52,13 @@ describe("swingRibbon (#3579)", () => {
     expect(swingRibbon(AT, "sword", after("hold", 0), undefined, false)?.alpha).toBe(
       SWING_TRAIL_ALPHA,
     );
-    const fading = swingRibbon(AT, "sword", after("recover", SWING_FADE_SECONDS / 2), undefined, false);
+    const fading = swingRibbon(
+      AT,
+      "sword",
+      after("recover", SWING_FADE_SECONDS / 2),
+      undefined,
+      false,
+    );
     expect(fading?.alpha).toBeCloseTo(SWING_TRAIL_ALPHA / 2);
     expect(swingRibbon(AT, "sword", after("recover", SWING_FADE_SECONDS), undefined, false)).toBe(
       undefined,

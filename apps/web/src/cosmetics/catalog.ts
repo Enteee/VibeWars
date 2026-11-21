@@ -10,7 +10,15 @@ import type { MessageKey } from "../i18n/index.js";
 import { FLAME_STREAK, TIERS, TOP_RANK } from "./unlocks.js";
 
 /** The slots so far (#3577–#3579); the others come with #3580 and #3581. */
-export const COSMETIC_SLOTS = ["frame", "title", "flame", "aura", "trail", "swing", "cape"] as const;
+export const COSMETIC_SLOTS = [
+  "frame",
+  "title",
+  "flame",
+  "aura",
+  "trail",
+  "swing",
+  "cape",
+] as const;
 
 export type CosmeticSlot = (typeof COSMETIC_SLOTS)[number];
 

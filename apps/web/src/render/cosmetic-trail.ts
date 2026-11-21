@@ -91,9 +91,7 @@ export function swingRibbon(
       points.push(tip);
     }
   }
-  return points.length < 2
-    ? undefined
-    : { points, alpha, width: at.r * SWING_WIDTH_OF_BODY };
+  return points.length < 2 ? undefined : { points, alpha, width: at.r * SWING_WIDTH_OF_BODY };
 }
 
 /** Paint `ribbon` in `colour`: each piece wider and stronger toward the weapon. */

@@ -1465,10 +1465,7 @@ export class ArenaScene extends Phaser.Scene {
   }
 
   /** The weapon trail cosmetic behind `actor`'s swing at `frame` (#3579); `undefined` for none. */
-  private swingTrail(
-    actor: RenderableActor,
-    frame: AttackFrame,
-  ): StandingBody["swingTrail"] {
+  private swingTrail(actor: RenderableActor, frame: AttackFrame): StandingBody["swingTrail"] {
     const look = actor.cosmetics.swing?.look;
     if (look?.kind !== "swing") {
       return undefined;

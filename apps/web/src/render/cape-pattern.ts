@@ -46,7 +46,10 @@ export function capePatternShapes(pattern: CapePattern, tab: CapeTab): readonly 
   const place = ([s, a]: TabPoint): Point => {
     const along = tab.root + s * length;
     const aside = a * halfAt(s);
-    return { x: tab.x + tab.dx * along + tab.dy * aside, y: tab.y + tab.dy * along - tab.dx * aside };
+    return {
+      x: tab.x + tab.dx * along + tab.dy * aside,
+      y: tab.y + tab.dy * along - tab.dx * aside,
+    };
   };
   const shape = (points: readonly TabPoint[]): Point[] => points.map(place);
   switch (pattern) {

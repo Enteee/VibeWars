@@ -98,7 +98,10 @@ describe("paintStandingBody (#1250)", () => {
   });
 
   it("draws a cape's cloth first, under the disc, its band over the rim (#1422, #1699)", () => {
-    const calls = paint({ ...BODY, cape: { look: LOOK, motion: newCapeMotion(), pattern: undefined } });
+    const calls = paint({
+      ...BODY,
+      cape: { look: LOOK, motion: newCapeMotion(), pattern: undefined },
+    });
     expect(calls[0]).toBe(`fillStyle(${String(0xa078e0)}, 1)`);
     expect(calls[1]).toMatch(/^fillPoints\(/);
     const disc = calls.indexOf("fillStyle(5882623, 1)");
@@ -109,7 +112,9 @@ describe("paintStandingBody (#1250)", () => {
   });
 
   it("draws a folded cape as pinned", () => {
-    expect(paint({ ...BODY, cape: { look: LOOK, motion: newCapeMotion(), pattern: undefined } })).toMatchSnapshot();
+    expect(
+      paint({ ...BODY, cape: { look: LOOK, motion: newCapeMotion(), pattern: undefined } }),
+    ).toMatchSnapshot();
   });
 
   it("draws a cape unfolded by a walk to +x as pinned, trailing to -x", () => {
@@ -174,7 +179,11 @@ describe("a body in a form (#3229)", () => {
 
   it("paints a 1.35× body with its ash cape as pinned", () => {
     expect(
-      paint({ ...BODY, r: 14 * 1.35, cape: { look: ashCape(LOOK), motion: newCapeMotion(), pattern: undefined } }),
+      paint({
+        ...BODY,
+        r: 14 * 1.35,
+        cape: { look: ashCape(LOOK), motion: newCapeMotion(), pattern: undefined },
+      }),
     ).toMatchSnapshot();
   });
 });

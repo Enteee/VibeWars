@@ -1,12 +1,7 @@
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "@vibewars/game-core";
 import { EMBLEM_GRID } from "@vibewars/game-protocol";
 
-import {
-  emblemRects,
-  emblemShape,
-  EMBLEM_SIZE,
-  type EmblemPart,
-} from "./cape-shape.js";
+import { emblemRects, emblemShape, EMBLEM_SIZE, type EmblemPart } from "./cape-shape.js";
 import type { Point } from "./weapon-mark-geometry.js";
 
 /**
