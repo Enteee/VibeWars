@@ -14,9 +14,13 @@ ansainnut.
 | Sammalaura, Sammaljälki                | 5 rankattua voittoa           |
 | Ruusukehys ja arvonimi Veteraani       | 25 rankattua voittoa          |
 | Hiillosaura, Hiillosjälki              | 25 rankattua voittoa          |
+| Nouseva valo, Tuhkahaihtuminen         | 25 rankattua voittoa          |
 | Huurreaura, Huurrejälki                | 75 rankattua voittoa          |
+| Lehtipyörre, Usvahaihtuminen           | 75 rankattua voittoa          |
 | Sinivihreä kehys ja arvonimi Sotaherra | 200 rankattua voittoa         |
+| Terälehtisade, Sirpalehaihtuminen      | 200 rankattua voittoa         |
 | Tähtivaloaura, Tähtivalojälki          | 500 rankattua voittoa         |
+| Tähtisade, Tähtipölyhaihtuminen        | 500 rankattua voittoa         |
 | Orkideakehys ja arvonimi Mestari       | Sija Top 100:ssa              |
 | Voittoputken liekki                    | 3 rankattua voittoa peräkkäin |
 
@@ -27,6 +31,10 @@ pysyy valittuna.
 ## Maassa
 
 Maa-aura on himmeä rengas jalkojesi juuressa. Askeljälki jättää kulkemaasi kohtaan pieniä hiukkasia, jotka häviävät hetkessä. Molemmat piirretään jokaisen renkaan, merkin ja varoituksen alle, eikä kumpikaan ole koskaan joukkueen värinen. Jos järjestelmässäsi on vähennetty liike päällä, aura pysyy paikallaan eikä jälkeä piirretä.
+
+## Palaaminen ja kaatuminen
+
+Ilmestymistyyli kokoaa pieniä hiukkasia jalkojesi juureen, kun ilmestyt tai sinut herätetään henkiin. Kuoleman haihtuminen hajottaa ne, kun kaadut. Kumpikin kestää täsmälleen yhtä kauan kuin tavallinen paluu ja kaatuminen, piirretään vartalosi alle ja jättää ääriviivasi, joukkueen renkaasi ja ruumiisi yhtä helposti luettaviksi kuin aina. Jos järjestelmässäsi on vähennetty liike päällä, vain tavallinen häivytys piirretään.
 
 ## Käyttäminen
 

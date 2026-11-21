@@ -13,9 +13,13 @@ kazanırsın. Kimse onları dağıtmaz: herkes lider tablosuna bakıp ne kazand�
 | Yosun aurası, Yosun izi                 | 5 dereceli galibiyet          |
 | Gül çerçeve ve Kıdemli unvanı           | 25 dereceli galibiyet         |
 | Kor aurası, Kor izi                     | 25 dereceli galibiyet         |
+| Yükselen ışık, Küle dönüşme             | 25 dereceli galibiyet         |
 | Ayaz aurası, Ayaz izi                   | 75 dereceli galibiyet         |
+| Yaprak girdabı, Sise dönüşme            | 75 dereceli galibiyet         |
 | Camgöbeği çerçeve ve Savaş lordu unvanı | 200 dereceli galibiyet        |
+| Taç yaprağı yağmuru, Kırıklara dönüşme  | 200 dereceli galibiyet        |
 | Yıldız ışığı aurası, Yıldız ışığı izi   | 500 dereceli galibiyet        |
+| Yıldız yağmuru, Yıldız tozuna dönüşme   | 500 dereceli galibiyet        |
 | Orkide çerçeve ve Şampiyon unvanı       | İlk 100'de bir yer            |
 | Galibiyet serisi alevi                  | Üst üste 3 dereceli galibiyet |
 
@@ -26,6 +30,10 @@ seçili kalır.
 ## Zeminde
 
 Zemin aurası ayaklarının dibinde soluk bir halkadır. Ayak izi yürüdüğün yerde küçük parçacıklar bırakır ve bunlar bir anda solar. İkisi de her halkanın, işaretin ve uyarının altında çizilir ve asla bir takım rengi kullanmaz. Sisteminde azaltılmış hareket açıksa aura yerinde durur ve iz çizilmez.
+
+## Geri dönmek ve düşmek
+
+Belirme stili, belirdiğinde ya da diriltildiğinde ayaklarının dibinde küçük parçacıklar toplar. Ölüm çözülmesi, düştüğünde onları dağıtır. Her biri sade dönüş ve düşüş kadar sürer, vücudunun altında çizilir ve dış hatlarını, takım halkanı ve cesedini her zamanki kadar kolay okunur bırakır. Sisteminde azaltılmış hareket açıksa yalnızca sade solma çizilir.
 
 ## Nasıl kullanılır
 

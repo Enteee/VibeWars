@@ -13,9 +13,13 @@ dem. Ingen deler det ud: alle kan tjekke ranglisten og se, hvad du har optjent.
 | Mosaura, Mosspor                   | 5 rangerede sejre        |
 | Rosa ramme og titlen Veteran       | 25 rangerede sejre       |
 | Glødeaura, Glødespor               | 25 rangerede sejre       |
+| Stigende lys, Askeopløsning        | 25 rangerede sejre       |
 | Frostaura, Frostspor               | 75 rangerede sejre       |
+| Bladhvirvel, Tågeopløsning         | 75 rangerede sejre       |
 | Blågrøn ramme og titlen Krigsherre | 200 rangerede sejre      |
+| Faldende kronblade, Skåropløsning  | 200 rangerede sejre      |
 | Stjernelysaura, Stjernelysspor     | 500 rangerede sejre      |
+| Stjerneskud, Stjernestøvsopløsning | 500 rangerede sejre      |
 | Orkidéramme og titlen Mester       | En plads i Top 100       |
 | Sejrsstimens flamme                | 3 rangerede sejre i træk |
 
@@ -26,6 +30,10 @@ du har valgt, forbliver valgt.
 ## På jorden
 
 En jordaura er en svag ring ved dine fødder. Et fodspor efterlader små gnister, hvor du går, som forsvinder på et øjeblik. Begge tegnes under alle ringe, mærker og varsler og bruger aldrig en holdfarve. Har du slået reduceret bevægelse til i dit system, står auraen stille, og der tegnes intet spor.
+
+## At komme tilbage og falde
+
+En ankomststil samler små gnister ved dine fødder, når du dukker op eller bliver genoplivet. En dødsopløsning spreder dem, når du falder. Hver varer præcis lige så længe som den almindelige tilbagekomst og det almindelige fald, tegnes under din krop og lader dit omrids, din holdring og dit lig være lige så lette at aflæse som altid. Har du slået reduceret bevægelse til i dit system, tegnes kun den almindelige udtoning.
 
 ## Sådan bærer du det
 

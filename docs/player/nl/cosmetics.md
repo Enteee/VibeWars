@@ -13,9 +13,13 @@ telt. Niemand deelt ze uit: iedereen kan de ranglijst bekijken en zien wat je ve
 | Mosaura, Mosspoor                       | 5 gerankte overwinningen        |
 | Rozen rand en de titel Veteraan         | 25 gerankte overwinningen       |
 | Sintelaura, Sintelspoor                 | 25 gerankte overwinningen       |
+| Rijzend licht, Asoplossing              | 25 gerankte overwinningen       |
 | Vorstaura, Vorstspoor                   | 75 gerankte overwinningen       |
+| Bladerwerveling, Neveloplossing         | 75 gerankte overwinningen       |
 | Blauwgroene rand en de titel Krijgsheer | 200 gerankte overwinningen      |
+| Bloemblaadjesregen, Scherfoplossing     | 200 gerankte overwinningen      |
 | Sterrenlichtaura, Sterrenlichtspoor     | 500 gerankte overwinningen      |
+| Sterrenregen, Sterrenstofoplossing      | 500 gerankte overwinningen      |
 | Orchideeën rand en de titel Kampioen    | Een plek in de Top 100          |
 | Zegereeksvlam                           | 3 gerankte overwinningen op rij |
 
@@ -26,6 +30,10 @@ opnieuw verdient. Wat je gekozen hebt, blijft gekozen.
 ## Op de grond
 
 Een grondaura is een vage ring aan je voeten. Voetsporen laten kleine deeltjes achter waar je loopt, die binnen een ogenblik vervagen. Beide liggen onder elke ring, markering en waarschuwing en hebben nooit een teamkleur. Staat verminderde beweging aan in je systeem, dan staat de aura stil en wordt er geen spoor getekend.
+
+## Terugkomen en vallen
+
+Een verschijningsstijl verzamelt kleine deeltjes aan je voeten als je verschijnt of tot leven wordt gewekt. Een doodsoplossing verstrooit ze als je valt. Elk duurt precies zo lang als het gewone terugkomen en vallen, ligt onder je lichaam en laat je omtrek, je teamring en je lijk even goed leesbaar als altijd. Staat verminderde beweging aan in je systeem, dan wordt alleen de gewone vervaging getekend.
 
 ## Ze dragen
 

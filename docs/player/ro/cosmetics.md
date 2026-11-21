@@ -13,9 +13,13 @@ Nimeni nu le împarte: oricine poate verifica clasamentul și vedea ce ai obțin
 | Aură de mușchi, Urmă de mușchi                   | 5 victorii clasate         |
 | Ramă roz și titlul Veteran                       | 25 de victorii clasate     |
 | Aură de jar, Urmă de jar                         | 25 de victorii clasate     |
+| Lumină înălțătoare, Destrămare în cenușă         | 25 de victorii clasate     |
 | Aură de brumă, Urmă de brumă                     | 75 de victorii clasate     |
+| Vârtej de frunze, Destrămare în ceață            | 75 de victorii clasate     |
 | Ramă turcoaz și titlul Senior al războiului      | 200 de victorii clasate    |
+| Ploaie de petale, Destrămare în cioburi          | 200 de victorii clasate    |
 | Aură de lumina stelelor, Urmă de lumina stelelor | 500 de victorii clasate    |
+| Ploaie de stele, Destrămare în praf de stele     | 500 de victorii clasate    |
 | Ramă orhidee și titlul Campion                   | Un loc în Top 100          |
 | Flacăra seriei de victorii                       | 3 victorii clasate la rând |
 
@@ -25,6 +29,10 @@ pierzi un meci clasat, revin la aspectul implicit până le obții din nou. Ce a
 ## Pe pământ
 
 O aură la sol este un inel slab la picioarele tale. O urmă de pași lasă particule mici pe unde mergi, care se sting într-o clipă. Amândouă se desenează sub fiecare inel, semn și avertizare și nu folosesc niciodată o culoare de echipă. Dacă sistemul tău cere mișcare redusă, aura stă nemișcată și nu se desenează nicio urmă.
+
+## Revenire și cădere
+
+Un stil de apariție adună particule mici la picioarele tale când apari sau ești înviat. O destrămare la moarte le împrăștie când cazi. Fiecare durează exact cât revenirea și căderea obișnuite, se desenează sub corpul tău și îți lasă conturul, inelul de echipă și cadavrul la fel de ușor de citit ca întotdeauna. Dacă sistemul tău cere mișcare redusă, se desenează doar estomparea obișnuită.
 
 ## Cum le porți
 

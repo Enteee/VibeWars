@@ -23,6 +23,8 @@ const SLOT_LABEL: Record<CosmeticSlot, MessageKey> = {
   flame: "cosmetics.slot.flame",
   aura: "cosmetics.slot.aura",
   trail: "cosmetics.slot.trail",
+  spawn: "cosmetics.slot.spawn",
+  dissolve: "cosmetics.slot.dissolve",
 };
 
 /** What earns `entry`, as the picker says it. */

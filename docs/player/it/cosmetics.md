@@ -13,9 +13,13 @@ pubblica. Nessuno li regala: chiunque può controllare la classifica e vedere co
 | Aura di muschio, Scia di muschio                     | 5 vittorie classificate         |
 | Cornice rosa e il titolo Veterano                    | 25 vittorie classificate        |
 | Aura di brace, Scia di brace                         | 25 vittorie classificate        |
+| Luce ascendente, Dissolvenza in cenere               | 25 vittorie classificate        |
 | Aura di brina, Scia di brina                         | 75 vittorie classificate        |
+| Vortice di foglie, Dissolvenza in nebbia             | 75 vittorie classificate        |
 | Cornice verde acqua e il titolo Signore della guerra | 200 vittorie classificate       |
+| Pioggia di petali, Dissolvenza in schegge            | 200 vittorie classificate       |
 | Aura di luce stellare, Scia di luce stellare         | 500 vittorie classificate       |
+| Pioggia di stelle, Dissolvenza in polvere di stelle  | 500 vittorie classificate       |
 | Cornice orchidea e il titolo Campione                | Un posto nella Top 100          |
 | Fiamma della serie                                   | 3 vittorie classificate di fila |
 
@@ -26,6 +30,10 @@ hai scelto resta scelto.
 ## A terra
 
 Un’aura al suolo è un anello tenue ai tuoi piedi. Una scia di passi lascia piccole particelle dove cammini, che svaniscono in un attimo. Entrambe sono disegnate sotto ogni anello, segno e avviso, e non usano mai un colore di squadra. Se il tuo sistema chiede movimenti ridotti, l’aura resta ferma e nessuna scia viene disegnata.
+
+## Tornare e cadere
+
+Uno stile di comparsa raccoglie piccole particelle ai tuoi piedi quando compari o vieni resuscitato. Una dissolvenza alla morte le disperde quando cadi. Ognuno dura esattamente quanto il ritorno e la caduta normali, è disegnato sotto il tuo corpo e lascia la tua sagoma, il tuo anello di squadra e il tuo cadavere leggibili come sempre. Se il tuo sistema chiede movimenti ridotti, viene disegnata solo la dissolvenza normale.
 
 ## Come indossarli
 
