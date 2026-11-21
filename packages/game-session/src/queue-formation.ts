@@ -118,15 +118,6 @@ export const THIRD_TEAM_WAIT_SECONDS = 30;
 export const ASCENT_SKIP_WAIT_SECONDS = 60;
 
 /**
- * How many tickets one formation pass looks at (#3747): the first queued,
- * the rest waiting their turn as behind a long queue. Formation grows
- * faster than the queue, and a flood of 800 tickets that never pair cost
- * a client 215 ms of its 250 ms tick; 200 cost about 13 ms, and are more
- * players queued at once than we will see for a long time.
- */
-export const MAX_FORMING_TICKETS = 200;
-
-/**
  * The rating window of a ranked group (ADR-0055, #3575): how far a
  * ticket's claim may stand from the claim of the group's first queued,
  * after it has waited `waitedMs`. ±100 at once, 10 wider for every
@@ -308,21 +299,16 @@ function unclaimed(live: readonly QueueTicket[]): (ticket: QueueTicket) => boole
     ticket.members.slice(1).every((member) => !ids.has(member) && claims.get(member) === 1);
 }
 
-/**
- * The tickets formation takes: `liveTickets`, not ignored and `unclaimed`,
- * the first `MAX_FORMING_TICKETS` of them. A party is one ticket.
- */
+/** The tickets formation takes: `liveTickets`, not ignored and `unclaimed`. */
 function liveQueue(input: FormGroupsInput): QueueTicket[] {
   const live = liveTickets(input);
   const own = unclaimed(live);
-  return live
-    .filter(
-      (ticket) =>
-        !input.ignored.has(ticket.ticketId) &&
-        own(ticket) &&
-        input.round(ticket.ascentRound) !== undefined,
-    )
-    .slice(0, MAX_FORMING_TICKETS);
+  return live.filter(
+    (ticket) =>
+      !input.ignored.has(ticket.ticketId) &&
+      own(ticket) &&
+      input.round(ticket.ascentRound) !== undefined,
+  );
 }
 
 /** A ticket and where it stands in the queue. */
