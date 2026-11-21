@@ -484,3 +484,9 @@ Deasupra butoanelor, banda **Sala Eroilor** arată ultimele 20 de dețineri, cel
 ## Clasate
 
 Un meci din coadă fără boți este clasat. Ecranul cozii și lobby-ul echipei spun asta înainte să intri în coadă; un singur bot lasă meciul neclasat. Când se găsește un meci clasat, fiecare jucător îi semnează începutul, iar ecranul arată **Se confirmă meciul clasat…** până la 15 secunde. Dacă cineva nu confirmă, meciul e anulat și toți revin în coadă. La final fiecare jucător semnează rezultatul, iar chitanța meciului e publicată pe releele Nostr cu cheia publică și numele personajului fiecărui jucător; un jucător fără personaj apare ca starter. Ratingul tău se schimbă în decurs de o oră. Părăsirea unui meci clasat contează ca înfrângere, iar butonul de ieșire spune asta.
+
+Cozile clasate împerechează jucători cu rating apropiat și îi împart în echipe cu rating mediu apropiat. Căutarea începe în limita a 100 de puncte față de ratingul tău și se lărgește cu 10 puncte pentru fiecare secundă de așteptare, până la 600, așa că nimeni nu așteaptă la nesfârșit. Cât aștepți, coada îți arată ratingul.
+
+Primele tale 10 meciuri cu rating sunt provizorii: coada spune **Provizoriu (3/10 meciuri)** și încă nu ai loc în clasament. După aceea, meniul principal îți arată locul. Ratingurile se erodează: fiecare zi fără meci cu rating îl face pe al tău mai nesigur, iar clasamentul ordonează după o valoare prudentă, așa că dacă nu mai joci locul tău coboară în câteva săptămâni.
+
+Butonul **Clasament** din bara de sus arată primii 100 după loc, nume și rating, cu rândul tău evidențiat. Se actualizează în fiecare oră.

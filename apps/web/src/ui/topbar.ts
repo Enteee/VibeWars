@@ -6,7 +6,9 @@ import { attachHelpWindow } from "./help-screen.js";
 import { paintMuteButton } from "./hud.js";
 import { helpIcon, LOBBY_ICON, lobbyIcon, settingsIcon } from "./icons.js";
 import { attachJukeboxPopover } from "./jukebox.js";
+import { leaderboardButton } from "./leaderboard-window.js";
 import { sharedTracks } from "../music/shared-tracks.js";
+import { leaderboard as leaderboardStore } from "../net/leaderboard.js";
 import {
   button,
   h,
@@ -485,9 +487,15 @@ function part(bar: HTMLElement, selector: string): HTMLElement {
 
 /**
  * Fill the bar's global icons and hand its slots to `screenBar` (#1272);
- * they live as long as the page. `signet` is the player key's, for Options (#3235).
+ * they live as long as the page. `signet` is the player key's, for Options (#3235),
+ * and `pubkey` the key itself, for its row on the Leaderboard (#3575).
  */
-export function mountTopbar(bar: HTMLElement, callbacks: TopbarCallbacks, signet: number): Topbar {
+export function mountTopbar(
+  bar: HTMLElement,
+  callbacks: TopbarCallbacks,
+  signet: number,
+  pubkey: string,
+): Topbar {
   const actions = part(bar, ".topbar-actions");
   const tools = part(bar, ".topbar-tools");
   const screenActions = part(bar, ".topbar-screen-actions");
@@ -499,6 +507,9 @@ export function mountTopbar(bar: HTMLElement, callbacks: TopbarCallbacks, signet
 
   // Left of Help while in any queue (#2743).
   const queue = queueButton(bar, callbacks.onLeaveQueue, callbacks.onPlayBots);
+
+  // The top 100, and where this player stands (#3575).
+  const leaderboard = leaderboardButton(bar, leaderboardStore, pubkey);
 
   const options = iconButton("topbar-options", t("topbar.options"), settingsIcon());
   attachOptionsWindow(options, bar, signet, callbacks.onOptionsClosed);
@@ -547,7 +558,7 @@ export function mountTopbar(bar: HTMLElement, callbacks: TopbarCallbacks, signet
   const fullscreen = iconButton("topbar-fullscreen", t("fullscreen.enter"));
   attachFullscreenButton(fullscreen, fullscreenTarget());
 
-  actions.append(queue.element, help, options, lobby.element, music, mute, fullscreen);
+  actions.append(queue.element, leaderboard, help, options, lobby.element, music, mute, fullscreen);
   queueAction.before(join.element);
   // An invite link the page opened with (#2100) waits for the first
   // screen with the bar's lobby on it: until then nothing could join.

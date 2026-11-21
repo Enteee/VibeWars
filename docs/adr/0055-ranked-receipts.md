@@ -104,10 +104,10 @@ Floats are evaluated in a single engine: the job runs on Node, and players run t
 
 ### Rank-aware matchmaking
 
-- **Bot-free tickets** carry `claimedRating` for each member key (tickets already name member keys) and `leaderboardAsOf`. The claim is the conservative value from the `leaderboard.json` the client fetched. A key that is not listed claims 800 (1500 − 2·350), with no special case.
+- **Bot-free tickets** carry a claim for each member key (tickets already name member keys): `{rating, asOf}`, the rounded conservative value from the `leaderboard.json` that member fetched, and that copy's `asOf`. Each claim carries its own `asOf`, because a party's members fetched at different times: every member sends its claim with its queue consent, and the host's ticket carries them as they came. A key that is not listed claims 800 (1500 − 2·350), with no special case.
 - **Formation stays one pure function of live tickets**, as ADR-0032 requires. The rating window starts at ±100 and widens by 10 per second the oldest ticket in the candidate set has waited, up to ±600. Age is measured from ticket timestamps, exactly as the Ascent skip wait already does.
 - **Team balance.** Solo tickets forming teams are split by a snake draft on claimed rating, so the two team averages land close. In a whole-team mode the teams are fixed, and opposing teams are paired by average rating.
-- **A lie is caught at the start round.** Every player checks every claim against their own copy of the leaderboard at that `asOf`, or a newer copy. A false claim means no start signature, so the match never becomes ranked.
+- **A lie is caught at the start round.** Every player checks every claim against their own copy of the leaderboard. A claim from the same copy must equal its entry. A claim from an older copy is trusted if that copy is at most two hours older, since an old copy cannot be rebuilt, and refused if it is older still: an honest client fetches as it queues. A claim from a newer copy makes the checker refetch once, then trust it unless its `asOf` is in the future. A false claim means no start signature, so the match never becomes ranked.
 
 ## Considered
 

@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { FormedGroup } from "@vibewars/game-session";
 
 import { ASCENT_PROGRESSION } from "../net/maps.js";
+import type { Standing } from "./leaderboard-window.js";
 import { PLAY_BOTS_AFTER_MS, queueStatus, type QueueStatusInput } from "./queue-popover.js";
 
 const NOW = 1_000_000;
@@ -27,7 +28,16 @@ describe("queueStatus (#2743)", () => {
 
   it("says Random Arena's size, the wait, who searches, and offers Leave Queue", () => {
     const random = (state: Extract<QueueStatusInput, { kind: "random" }>["state"]) =>
-      queueStatus({ kind: "random", mode: "random-arena-4v4", since: NOW - 65_000, state }, NOW);
+      queueStatus(
+        {
+          kind: "random",
+          mode: "random-arena-4v4",
+          since: NOW - 65_000,
+          state,
+          standing: undefined,
+        },
+        NOW,
+      );
     expect(
       random({ kind: "searching", searching: 3, teams: 3, needed: 8, waitedMs: 65_000 }),
     ).toEqual({
@@ -60,6 +70,7 @@ describe("queueStatus (#2743)", () => {
           isHost,
           playBots: false,
           hallHolder: undefined,
+          standing: undefined,
         },
         NOW,
       );
@@ -86,6 +97,7 @@ describe("queueStatus (#2743)", () => {
         isHost: false,
         playBots: false,
         hallHolder: { name: "Ana", signet: 5 },
+        standing: undefined,
       },
       720_000 - 90_000,
     );
@@ -106,6 +118,7 @@ describe("queueStatus (#2743)", () => {
       isHost: true,
       playBots: false,
       hallHolder: undefined,
+      standing: undefined,
     } as const;
     expect(queueStatus({ ...base, mode: "heroes-ascent", ascentRound: 2 }, NOW)).toEqual({
       title: "Heroes' Ascent · round 3",
@@ -135,6 +148,7 @@ describe("queueStatus (#2743)", () => {
           isHost: true,
           playBots: true,
           hallHolder: undefined,
+          standing: undefined,
           ...overrides,
         },
         NOW,
@@ -160,9 +174,36 @@ describe("queueStatus (#2743)", () => {
         }),
       ).toBeUndefined();
       expect(
-        queueStatus({ kind: "random", mode: "random-arena-4v4", since: 0, state: undefined }, NOW)
-          ?.playBots,
+        queueStatus(
+          {
+            kind: "random",
+            mode: "random-arena-4v4",
+            since: 0,
+            state: undefined,
+            standing: undefined,
+          },
+          NOW,
+        )?.playBots,
       ).toBeUndefined();
     });
+  });
+});
+
+describe("the rating line (#3575)", () => {
+  const random = (standing: Standing | undefined) =>
+    queueStatus(
+      { kind: "random", mode: "random-arena-1v1", since: NOW, state: undefined, standing },
+      NOW,
+    )?.rating;
+
+  it("says the rating, or provisional with its matches, or that it is unknown", () => {
+    expect(random({ kind: "ranked", rank: 3, rating: 1623 })).toBe("Your rating: 1623");
+    expect(random({ kind: "rated", rating: 1490 })).toBe("Your rating: 1490");
+    expect(random({ kind: "provisional", matches: 3 })).toBe("Provisional (3/10 matches)");
+    expect(random({ kind: "unknown" })).toBe("Rating unknown");
+  });
+
+  it("is none in a queue that is not ranked", () => {
+    expect(random(undefined)).toBeUndefined();
   });
 });
