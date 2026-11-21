@@ -83,7 +83,9 @@ function rankedGroup(mode: QueueMode): FormedGroup {
     mode,
     ranked: true,
     seed: 4_123_456_789,
-    claims: Object.fromEntries(teams.flat().map((key, n) => [key, { rating: 800 + n, asOf: 0 }])),
+    claims: Object.fromEntries(
+      teams.flat().map((key, n) => [key, { rating: 800 + n, asOf: BOARD_AS_OF }]),
+    ),
   };
 }
 
@@ -300,13 +302,23 @@ interface RankedLobbyOptions {
   readonly wrap?: (n: number, transport: Transport) => Transport;
   /** The host's room, wrapped: a lying host's, to its guests. */
   readonly host?: (transport: Transport) => Transport;
-  /** Each seat's leaderboard (#3575): by default none, and none fetched, so every claim holds. */
+  /** Each seat's leaderboards (#3575): by default `PUBLISHED`, so every claim holds. */
   readonly board?: (n: number) => LeaderboardSource;
 }
 
-const NO_BOARD: LeaderboardSource = {
+/** What every seat's claim names: the one board `PUBLISHED` holds. */
+const BOARD_AS_OF = 1_795_000_000;
+
+/** Each seat's player key, and its group's claim for it: what `PUBLISHED` rates. */
+const RATED = new Map<string, number>();
+
+/** No copy held, and one board published, as of `BOARD_AS_OF`, rating each seat as its claim. */
+const PUBLISHED: LeaderboardSource = {
   copy: () => undefined,
-  refetch: () => Promise.resolve(undefined),
+  board: (asOf) =>
+    Promise.resolve(
+      asOf === BOARD_AS_OF ? { asOf, claimOf: (pubkey) => RATED.get(pubkey) ?? 800 } : undefined,
+    ),
 };
 
 async function joinSeat(
@@ -315,9 +327,13 @@ async function joinSeat(
   transport: Transport,
   ranked: boolean,
   characterId = `char-${String(n)}`,
-  leaderboard: LeaderboardSource = NO_BOARD,
+  leaderboard: LeaderboardSource = PUBLISHED,
 ): Promise<Seat> {
   const key = testPlayerKey();
+  const claim = group.claims[seatKey(n)];
+  if (claim !== undefined) {
+    RATED.set(key.pubkey, claim.rating);
+  }
   const receipts: Seat["receipts"] = [];
   const signed: RankedReceipt[] = [];
   const rounds: number[] = [];
@@ -546,12 +562,15 @@ describe("a ranked queued match (ADR-0055, #3573)", () => {
   });
 
   it("signs no start whose claims the seat's own board does not hold (#3575)", async () => {
-    // Seat 2's board lists everyone at 1000: no claim of 800 from no board holds.
+    // The board the claims name lists everyone at 1000, as seat 2 fetches it.
     const ranked = await openRanked("random-arena-2v2", {
       board: (n) =>
         n === 2
-          ? { copy: () => ({ asOf: 0, claimOf: () => 1000 }), refetch: NO_BOARD.refetch }
-          : NO_BOARD,
+          ? {
+              copy: () => undefined,
+              board: (asOf) => Promise.resolve({ asOf, claimOf: () => 1000 }),
+            }
+          : PUBLISHED,
     });
     await ranked.step(COUNTDOWN_SECONDS + RANKED_START_TIMEOUT_MS / 1000 + TICK_SECONDS);
     expect(ranked.seats[2]?.startsSigned).toBe(0);
@@ -560,23 +579,26 @@ describe("a ranked queued match (ADR-0055, #3573)", () => {
   });
 
   it("signs no start once it left while the leaderboard was fetched (#3575)", async () => {
-    let fetched: ((copy: undefined) => void) | undefined;
+    // Seat 2's fetch answers once it has left, with a board that holds every claim.
+    let fetched: (() => void) | undefined;
     const ranked = await openRanked("random-arena-2v2", {
       board: (n) =>
         n === 2
           ? {
               copy: () => undefined,
-              refetch: () =>
+              board: (asOf) =>
                 new Promise((resolve) => {
-                  fetched = resolve;
+                  fetched = () => {
+                    void PUBLISHED.board(asOf).then(resolve);
+                  };
                 }),
             }
-          : NO_BOARD,
+          : PUBLISHED,
     });
     await ranked.step(COUNTDOWN_SECONDS);
     await until(() => fetched !== undefined);
     await ranked.seats[2]?.connection.disconnect();
-    fetched?.(undefined);
+    fetched?.();
     await ranked.step(RANKED_START_TIMEOUT_MS / 1000 + TICK_SECONDS);
     expect(ranked.seats[2]?.startsSigned).toBe(0);
     expect(ranked.receipts).toEqual([]);

@@ -240,7 +240,7 @@ function sameRankedResult(a: RankedResult, b: RankedResult | undefined): boolean
  * map and mode, `play`'s build, the formed teams seat for
  * seat with each seat key's claim, and this player in its own seat as it
  * joined. Its claims are checked against the leaderboard apart, by
- * `claimsHold` (#3575), which may fetch it.
+ * `claimsHold` (#3575), which fetches the boards they name.
  */
 function rankedStartFault(
   start: RankedStart,
@@ -1188,36 +1188,34 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
           return;
         }
         checkingStart = true;
-        void claimsHold(said.start, rankedPlay.leaderboard, Math.floor(Date.now() / 1000)).then(
-          (hold) => {
-            checkingStart = false;
-            // The lobby may have closed or moved on while the leaderboard was
-            // fetched; `queued` is this client's for its life, so its group holds.
-            if (!hold || closed || ranked !== undefined || rankedOver) {
-              return;
-            }
-            const hostSeat = queued.group.teams.flatMap((team, t) =>
-              team.flatMap((seatKey, i) =>
-                seatKey === queued.group.hostTicketId ? (said.start.teams[t]?.[i] ?? []) : [],
-              ),
-            )[0];
-            if (hostSeat === undefined) {
-              return;
-            }
-            ranked = {
-              start: said.start,
-              hash: startHash(said.start, rankedPlay.crypto.sha256),
-              hostPubkey: hostSeat.pubkey,
-              startSigs: undefined,
-            };
-            const signed: PeerRankedStartSig = {
-              matchId: said.start.matchId,
-              sig: options.playerKey.signRankedStart(said.start),
-            };
-            transport.send("ranked-start-sig", signed, from);
-            rankedPlay.onStartSigned();
-          },
-        );
+        void claimsHold(said.start, rankedPlay.leaderboard).then((hold) => {
+          checkingStart = false;
+          // The lobby may have closed or moved on while the leaderboard was
+          // fetched; `queued` is this client's for its life, so its group holds.
+          if (!hold || closed || ranked !== undefined || rankedOver) {
+            return;
+          }
+          const hostSeat = queued.group.teams.flatMap((team, t) =>
+            team.flatMap((seatKey, i) =>
+              seatKey === queued.group.hostTicketId ? (said.start.teams[t]?.[i] ?? []) : [],
+            ),
+          )[0];
+          if (hostSeat === undefined) {
+            return;
+          }
+          ranked = {
+            start: said.start,
+            hash: startHash(said.start, rankedPlay.crypto.sha256),
+            hostPubkey: hostSeat.pubkey,
+            startSigs: undefined,
+          };
+          const signed: PeerRankedStartSig = {
+            matchId: said.start.matchId,
+            sig: options.playerKey.signRankedStart(said.start),
+          };
+          transport.send("ranked-start-sig", signed, from);
+          rankedPlay.onStartSigned();
+        });
       }),
       // Every seat's start signature: kept only if each verifies.
       transport.on("ranked-start-sigs", (data, from) => {

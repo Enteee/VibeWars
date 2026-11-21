@@ -104,4 +104,26 @@ describe("createLeaderboardStore (#3575)", () => {
     expect(await store.load()).toEqual(BOARD);
     expect(heard).toEqual([BOARD]);
   });
+
+  it("fetches the very board a claim names once, and reads the one held from memory", async () => {
+    const past = { ...BOARD, asOf: BOARD.asOf - 3600 };
+    const { store, urls } = storeOver([BOARD, past]);
+    await store.load();
+    expect((await store.board(BOARD.asOf))?.claimOf("aa")).toBe(1602);
+    expect(urls).toEqual(["/vibewars/ranking/leaderboard.json"]);
+    expect((await store.board(past.asOf))?.asOf).toBe(past.asOf);
+    expect((await store.board(past.asOf))?.claimOf("aa")).toBe(1602);
+    expect(urls).toEqual([
+      "/vibewars/ranking/leaderboard.json",
+      `/vibewars/ranking/boards/${String(past.asOf)}.json`,
+    ]);
+  });
+
+  it("has no board for an asOf not published, or published under another, and asks again", async () => {
+    const { store, urls } = storeOver([new Error("404"), BOARD, BOARD]);
+    expect(await store.board(BOARD.asOf + 60)).toBeUndefined();
+    expect(await store.board(BOARD.asOf + 60)).toBeUndefined();
+    expect((await store.board(BOARD.asOf))?.asOf).toBe(BOARD.asOf);
+    expect(urls).toHaveLength(3);
+  });
 });

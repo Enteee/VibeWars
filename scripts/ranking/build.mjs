@@ -10,6 +10,10 @@
  *   relays forget. A receipt is never dropped from it, and only shards
  *   whose bytes changed are written (#3730);
  * - `leaderboard.json`: `{asOf, engine, count, entries}`;
+ * - `boards/<asOf>.json`: the same bytes under its own `asOf`, so a
+ *   ranked claim is checked against the very board it was read from
+ *   (#3575). Boards more than `BOARD_KEPT_SECONDS` older than this
+ *   run's are deleted;
  * - `log.txt`: counts by reject reason, the relays reached, and the
  *   sha256 of `leaderboard.json`.
  *
@@ -59,6 +63,14 @@ const PAGE_LIMIT = 500;
 /** The archive's shards, one per UTC month, under the archive directory. */
 const SHARDS_DIR = "receipts";
 const SHARD_NAME = /^\d{4}-\d{2}\.ndjson$/;
+/** Past boards, each under its `asOf`, under the archive directory. */
+const BOARDS_DIR = "boards";
+const BOARD_NAME = /^(\d+)\.json$/;
+/**
+ * How much older than the newest a past board is kept: a ranked claim
+ * from an older one is refused, as no board is found for it (#3575).
+ */
+export const BOARD_KEPT_SECONDS = 3 * 60 * 60;
 /** Over this a shard fails the run: GitHub refuses a file over 100 MB. */
 const MAX_SHARD_BYTES = 90 * 1024 * 1024;
 
@@ -449,6 +461,18 @@ export async function run({
     }
   }
   fs.writeFileSync(path.join(dir, "leaderboard.json"), out.leaderboard);
+  const boardsDir = path.join(dir, BOARDS_DIR);
+  fs.mkdirSync(boardsDir, { recursive: true });
+  /** @type {unknown} */
+  const written = JSON.parse(out.leaderboard);
+  const { asOf } = /** @type {{ asOf: number }} */ (written);
+  fs.writeFileSync(path.join(boardsDir, `${String(asOf)}.json`), out.leaderboard);
+  for (const name of fs.readdirSync(boardsDir)) {
+    const at = BOARD_NAME.exec(name)?.[1];
+    if (at !== undefined && Number(at) < asOf - BOARD_KEPT_SECONDS) {
+      fs.rmSync(path.join(boardsDir, name));
+    }
+  }
   fs.writeFileSync(path.join(dir, "log.txt"), out.log);
   return out;
 }

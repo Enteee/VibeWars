@@ -12,7 +12,7 @@ import { schnorr } from "@noble/secp256k1";
 import { parseReceipt, resultDigest, startDigest, startHash, ZERO_HASH } from "@vibewars/ranking";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { fetchRelay, run } from "./build.mjs";
+import { BOARD_KEPT_SECONDS, fetchRelay, run } from "./build.mjs";
 
 /** @typedef {import("@vibewars/ranking").RankedReceipt} RankedReceipt */
 /** @typedef {{ kind: number, tags: string[][], content: string }} RelayEvent */
@@ -167,6 +167,34 @@ describe("the leaderboard job", () => {
     ]);
     const hash = createHash("sha256").update(first.leaderboard).digest("hex");
     expect(first.log).toContain(`leaderboard.json sha256: ${hash}`);
+  });
+
+  it("keeps each board under its asOf, and deletes those more than three hours older (#3575)", async () => {
+    const dir = archiveDir();
+    const boards = path.join(dir, "boards");
+    const early = receipt({ matchId: "m1" });
+    const late = receipt({ matchId: "m2", at: 3_600 });
+    const first = await runOn(dir, [[event(early)], []]);
+    const at = early.start.startedAt;
+    expect(fs.readFileSync(path.join(boards, `${String(at)}.json`), "utf8")).toBe(
+      first.leaderboard,
+    );
+    // Past boards a previous run left: one just inside the window, one just out.
+    const kept = `${String(at + 3_600 - BOARD_KEPT_SECONDS)}.json`;
+    const gone = `${String(at + 3_600 - BOARD_KEPT_SECONDS - 1)}.json`;
+    fs.writeFileSync(path.join(boards, kept), "{}");
+    fs.writeFileSync(path.join(boards, gone), "{}");
+    const second = await runOn(dir, [[event(early), event(late)], []]);
+    const newest = `${String(late.start.startedAt)}.json`;
+    expect(fs.readdirSync(boards).sort()).toEqual([kept, `${String(at)}.json`, newest].sort());
+    expect(fs.readFileSync(path.join(boards, newest), "utf8")).toBe(second.leaderboard);
+    // The earlier board stays the bytes it was published as.
+    expect(fs.readFileSync(path.join(boards, `${String(at)}.json`), "utf8")).toBe(
+      first.leaderboard,
+    );
+    const third = await runOn(dir, [[event(early), event(late)], []]);
+    expect(third.leaderboard).toBe(second.leaderboard);
+    expect(fs.readdirSync(boards)).toHaveLength(3);
   });
 
   it("merges partial copies of one result into one receipt", async () => {

@@ -3,7 +3,8 @@
  * `ranking/leaderboard.json` the hourly job publishes next to the site,
  * fetched once a visit and again on every bot-free queue entry, kept for
  * ten minutes. What it says steers matchmaking only: a player's claim is
- * read from it, and so is every other seat's check. A failed fetch is
+ * read from it, and every other seat checks that claim against the very
+ * board it names, `ranking/boards/<asOf>.json`. A failed fetch is
  * "rating unknown", never a reason not to queue.
  */
 
@@ -109,6 +110,8 @@ export interface LeaderboardStore extends LeaderboardSource {
   readonly claim: (pubkey: string) => TicketClaim;
   /** Fetch it unless the copy held is fresh: on a visit, or opening the flyout. */
   readonly load: () => Promise<Leaderboard | undefined>;
+  /** Fetch it past the cache: on a bot-free queue entry. A failed fetch is the copy held. */
+  readonly refetch: () => Promise<Leaderboard | undefined>;
   /** Called with every copy fetched; returns its unsubscribe. */
   readonly onChange: (handler: (board: Leaderboard) => void) => () => void;
 }
@@ -127,6 +130,8 @@ export function createLeaderboardStore(deps: LeaderboardDeps): LeaderboardStore 
   const handlers = new Set<(board: Leaderboard) => void>();
   let held: { readonly board: Leaderboard; readonly at: number } | undefined;
   let inFlight: Promise<Leaderboard | undefined> | undefined;
+  /** Each past board fetched, by its asOf: a published one never changes. */
+  const boards = new Map<number, Promise<LeaderboardCopy | undefined>>();
 
   /** Fetch it now, past the cache; one fetch at a time. */
   const fetchNow = (): Promise<Leaderboard | undefined> => {
@@ -160,7 +165,28 @@ export function createLeaderboardStore(deps: LeaderboardDeps): LeaderboardStore 
         ? Promise.resolve(held.board)
         : fetchNow(),
     copy: () => copyOf(held?.board),
-    refetch: async () => copyOf(await fetchNow()),
+    refetch: fetchNow,
+    board: (asOf) => {
+      if (held?.board.asOf === asOf) {
+        return Promise.resolve(copyOf(held.board));
+      }
+      let named = boards.get(asOf);
+      if (named === undefined) {
+        named = deps
+          .fetchJson(`${deps.baseUrl}ranking/boards/${String(asOf)}.json`)
+          .then(parseLeaderboard, () => undefined)
+          .then((board) => {
+            if (board?.asOf !== asOf) {
+              // Not published, or not reached: asked again next time.
+              boards.delete(asOf);
+              return undefined;
+            }
+            return copyOf(board);
+          });
+        boards.set(asOf, named);
+      }
+      return named;
+    },
     onChange: (handler) => {
       handlers.add(handler);
       return () => {

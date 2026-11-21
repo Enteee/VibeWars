@@ -1,8 +1,8 @@
 /**
  * Checking a ranked start's claims (ADR-0055, #3575): every player holds
  * its own copy of the leaderboard, and copies differ by up to an hour, so
- * each claim is checked against the copy it was read from where this
- * player holds that one, and trusted a little where it cannot be.
+ * each claim names the board it was read from and is checked against that
+ * very board, which the ranking job keeps published for three hours.
  */
 
 import { UNLISTED_CLAIM } from "@vibewars/game-protocol";
@@ -19,23 +19,16 @@ export interface LeaderboardCopy {
   readonly claimOf: (pubkey: string) => number;
 }
 
-/** Where a client's leaderboard comes from: the copy it holds, and a fresh one. */
+/** Where a client's leaderboards come from. */
 export interface LeaderboardSource {
   /** The copy held now, `undefined` while it has none. */
   readonly copy: () => LeaderboardCopy | undefined;
-  /** A fresh copy, past any cache; when the fetch fails, the copy held, or `undefined`. */
-  readonly refetch: () => Promise<LeaderboardCopy | undefined>;
+  /**
+   * The board published as of `asOf`, exactly: `undefined` when none
+   * is, or the fetch fails.
+   */
+  readonly board: (asOf: number) => Promise<LeaderboardCopy | undefined>;
 }
-
-/**
- * How much older than this player's copy a claim's may be and still be
- * trusted: an honest client fetches the board as it queues, and it is
- * rebuilt every hour.
- */
-export const STALE_CLAIM_SECONDS = 2 * 60 * 60;
-
-/** How far past this player's clock a claim's `asOf` may be: clocks differ. */
-export const FUTURE_CLAIM_SECONDS = 10 * 60;
 
 /** One seat's claim: whose, how much, and read from which leaderboard. */
 export interface SeatClaim {
@@ -45,58 +38,39 @@ export interface SeatClaim {
 }
 
 /**
- * What this player makes of `claim` with `copy`, at `nowSeconds`:
- * - read from no board, `asOf` 0, against a copy: it holds only as an
- *   unlisted claim from a key that copy does not list either;
- * - read from the same board: it holds only if it is that board's;
- * - from an older one by at most `STALE_CLAIM_SECONDS`: trusted, since
- *   an old board cannot be rebuilt;
- * - from an older one by more: refused, an honest client refetches;
- * - from a newer one, or with no copy held: `"refetch"`, once; after
- *   that, trusted unless its `asOf` is in the future.
+ * Whether `claim` holds against `board`: for a claim from no board,
+ * `asOf` 0, this player's current copy; for any other, the very board it
+ * names. A claim from no board holds only as 800 from a key the copy does
+ * not list, or when this player holds none either: otherwise a strong
+ * player fakes a failed fetch to pair low. Any other holds only as its
+ * board's own value, and not at all when that board is not published.
  */
-export function claimVerdict(
-  claim: SeatClaim,
-  copy: LeaderboardCopy | undefined,
-  nowSeconds: number,
-  refetched: boolean,
-): "accept" | "refuse" | "refetch" {
-  if (claim.asOf === 0 && copy !== undefined) {
-    const unlisted = copy.claimOf(claim.pubkey) === UNLISTED_CLAIM;
-    return unlisted && claim.rating === UNLISTED_CLAIM ? "accept" : "refuse";
+export function claimHolds(claim: SeatClaim, board: LeaderboardCopy | undefined): boolean {
+  if (claim.asOf === 0) {
+    return (
+      claim.rating === UNLISTED_CLAIM &&
+      (board === undefined || board.claimOf(claim.pubkey) === UNLISTED_CLAIM)
+    );
   }
-  if (claim.asOf === copy?.asOf) {
-    return claim.rating === copy.claimOf(claim.pubkey) ? "accept" : "refuse";
-  }
-  if (copy !== undefined && claim.asOf < copy.asOf) {
-    return copy.asOf - claim.asOf <= STALE_CLAIM_SECONDS ? "accept" : "refuse";
-  }
-  if (!refetched) {
-    return "refetch";
-  }
-  return claim.asOf > nowSeconds + FUTURE_CLAIM_SECONDS ? "refuse" : "accept";
+  return board?.asOf === claim.asOf && board.claimOf(claim.pubkey) === claim.rating;
 }
 
 /**
  * Whether every claim in `start`, a start already checked to carry each
- * seat's ticket claim, holds against `source` at `nowSeconds`: the
- * leaderboard is fetched again at most once.
+ * seat's ticket claim, holds against `source`: each board named is
+ * fetched once.
  */
-export async function claimsHold(
-  start: RankedStart,
-  source: LeaderboardSource,
-  nowSeconds: number,
-): Promise<boolean> {
+export async function claimsHold(start: RankedStart, source: LeaderboardSource): Promise<boolean> {
   const claims = start.teams.flat().map((seat): SeatClaim => ({
     pubkey: seat.pubkey,
     rating: seat.claimedRating,
     asOf: seat.leaderboardAsOf,
   }));
-  const verdicts = (copy: LeaderboardCopy | undefined, refetched: boolean) =>
-    claims.map((claim) => claimVerdict(claim, copy, nowSeconds, refetched));
-  let verdict = verdicts(source.copy(), false);
-  if (verdict.includes("refetch") && !verdict.includes("refuse")) {
-    verdict = verdicts(await source.refetch(), true);
-  }
-  return verdict.every((each) => each === "accept");
+  const named = [...new Set(claims.map(({ asOf }) => asOf).filter((asOf) => asOf !== 0))];
+  const boards = new Map(
+    await Promise.all(named.map(async (asOf) => [asOf, await source.board(asOf)] as const)),
+  );
+  return claims.every((claim) =>
+    claimHolds(claim, claim.asOf === 0 ? source.copy() : boards.get(claim.asOf)),
+  );
 }

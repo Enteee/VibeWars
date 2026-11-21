@@ -102,12 +102,7 @@ export { RELAY_ADMIT_MS, RELAY_ROOMS_LINGER_MS, createRelayAdmission } from "./r
 export type { RelayAdmission, RelayAdmissionLobby } from "./relay-admission.js";
 export { LobbyNoAnswerError, LobbyRefusedError, joinLobby } from "./lobby-client.js";
 export type { JoinLobbyOptions, RankedPlay } from "./lobby-client.js";
-export {
-  FUTURE_CLAIM_SECONDS,
-  STALE_CLAIM_SECONDS,
-  claimVerdict,
-  claimsHold,
-} from "./ranked-claims.js";
+export { claimHolds, claimsHold } from "./ranked-claims.js";
 export type { LeaderboardCopy, LeaderboardSource, SeatClaim } from "./ranked-claims.js";
 export { scopeTransport } from "./scoped-transport.js";
 export {
