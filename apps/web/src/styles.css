@@ -3347,6 +3347,24 @@ body:has(> .splash) #menu-background::after {
   display: none;
 }
 
+.editor-attribute-sources {
+  grid-column: 1 / -1;
+  justify-self: end;
+  color: var(--ink-dim);
+  font-size: 0.75rem;
+}
+
+.editor-attribute-sources:empty {
+  display: none;
+}
+
+/* A pointer that hovers reads the bonus's title instead. */
+@media (hover: hover) {
+  .editor-attribute-sources {
+    display: none;
+  }
+}
+
 .editor-attributes {
   container-type: inline-size;
 }

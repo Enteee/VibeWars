@@ -132,6 +132,8 @@ test("the build editor, its skills and its gear, fits the phone (#3777)", async 
   await page.locator(".library-tab", { hasText: "gear" }).tap();
   await expect(page.locator(".gear-box").first()).toBeVisible();
   await page.locator(".gear-box").first().tap();
+  // What a bonus comes from shows under its attribute, with no hover to ask.
+  await expect(page.locator(".editor-attribute-sources:visible").first()).not.toBeEmpty();
   await expectFitsPhone(page, "build editor, gear");
 });
 
