@@ -1,6 +1,6 @@
 // sfx shout: 0.25 s, peak -12 dBFS
 // A shout or chant reached you: a short, airy rising swell of filtered
-// noise over a soft voice-like tone. No ticks: that is cast-target's.
+// noise over a soft voice-like tone.
 setcpm(60);
 stack(
   s("pink").attack(0.12).decay(0.13).sustain(0).bpf(1200).bandq(2).gain(0.6),

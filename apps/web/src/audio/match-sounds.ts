@@ -10,7 +10,6 @@ import {
   soundsForCombat,
   soundsForRespawn,
   soundsForSkillGround,
-  soundsForSnapshot,
   soundsForWorld,
 } from "./combat-sounds.js";
 import type { CastListener, CastVoice, Cue } from "./combat-sounds.js";
@@ -90,7 +89,6 @@ export function attachMatchSounds(
       }
       camera = at;
       castAll(castVoices(prev, next, listener()));
-      playAll(soundsForSnapshot(prev, next));
       playAll(soundsForRespawn(prev, next, connection.selfSessionId));
       playAll(soundsForWorld(prev, next, connection.selfSessionId, places));
       playAll(soundsForSkillGround(prev, next, connection.selfSessionId));

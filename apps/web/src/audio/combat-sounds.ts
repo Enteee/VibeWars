@@ -299,33 +299,6 @@ function startedCasting(prev: MatchSnapshot, next: MatchSnapshot, id: string): b
   return playerById(prev, id)?.castingSkillId !== after.castingSkillId;
 }
 
-/**
- * The cast cue between two snapshots: `cast-target` when your target
- * starts a cast, which is the moment to interrupt. Your own cast and
- * everyone else's are voices (#3298), from `castVoices`.
- *
- * Only a cast that starts while the caster is already your target counts,
- * so switching onto someone mid-cast stays silent. Without a `prev`, on
- * the first snapshot or after a reconnect, every running cast is old news.
- */
-export function soundsForSnapshot(prev: MatchSnapshot | undefined, next: MatchSnapshot): SoundId[] {
-  if (prev === undefined) {
-    return [];
-  }
-  const selfId = next.selfSessionId;
-  const sounds: SoundId[] = [];
-  const targetId = playerById(next, selfId)?.targetSessionId;
-  if (
-    targetId !== undefined &&
-    targetId !== selfId &&
-    targetId === playerById(prev, selfId)?.targetSessionId &&
-    startedCasting(prev, next, targetId)
-  ) {
-    sounds.push("cast-target");
-  }
-  return sounds;
-}
-
 /** How far a gate or a falling wall is heard; a lever is a small thing, heard to `AREA_EARSHOT`. */
 const LOUD_EARSHOT = 2 * AREA_EARSHOT;
 

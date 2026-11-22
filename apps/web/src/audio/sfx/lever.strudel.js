@@ -1,7 +1,7 @@
 // sfx lever: 0.18 s, peak -12 dBFS
 // A lever near you was thrown (#3139): a dry wooden clack, then a short
-// metal ratchet, one rattled burst rather than ticks (cast-target keeps
-// those). Small and close, so it is quiet.
+// metal ratchet, one rattled burst rather than ticks. Small and close, so
+// it is quiet.
 setcpm(60);
 stack(
   s("triangle").freq(220).penv(-7).pattack(0.04).panchor(0).attack(0.001).decay(0.05).sustain(0),
