@@ -5,11 +5,11 @@ import {
   NO_MENU_QUEST_EVENTS,
   advanceMenuQuest,
   beatTarget,
-  currentBeat,
   foldMenuQuestEvent,
   menuQuestChecklist,
   menuQuestStep,
   resumeMenuQuest,
+  shownBeat,
   type MenuQuestCursor,
   type MenuQuestEvent,
   type MenuQuestStepId,
@@ -68,10 +68,11 @@ export function startMenuQuest(options: MenuQuestOptions): MenuQuestSession {
   let shown = "";
   const show = (): void => {
     const step = menuQuestStep(cursor.step);
-    const beat = currentBeat(cursor);
+    const beat = shownBeat(cursor, state);
+    const note = beat.kind === "do" ? beat.note?.(state) : undefined;
     const objectives = menuQuestChecklist(cursor, state);
     const target = beatTarget(beat, state);
-    const view = JSON.stringify([cursor, target, objectives]);
+    const view = JSON.stringify([cursor, beat.line, target, objectives, note]);
     if (view === shown) {
       return;
     }
@@ -80,6 +81,9 @@ export function startMenuQuest(options: MenuQuestOptions): MenuQuestSession {
       title: t(step.title),
       line: t(beat.line),
       target,
+      note: note === undefined ? undefined : t(note),
+      // A detour only points the way back: the screen it is on has no beat to lock to.
+      locked: beat !== step.detour?.beat,
       objectives: objectives.map(({ label, done }) => ({
         label: t(label),
         done,

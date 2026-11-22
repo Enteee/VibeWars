@@ -358,6 +358,8 @@ export function screenBar(options: ScreenBarOptions): {
     chevron.setAttribute("aria-hidden", "true");
     back.append(chevron, h("span", "topbar-back-label", options.back.label));
     back.setAttribute("aria-label", options.back.label);
+    // What the tutorial points at to lead out of a screen it has no beat on (#3785).
+    back.setAttribute("data-tutorial", "back");
   }
   const live: LiveBar = {
     options,

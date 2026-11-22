@@ -617,6 +617,8 @@ async function main(): Promise<void> {
   let followsLobby = false;
   /** Whether the Team Lobby screen is up (#1460). */
   let teamLobbyShown = false;
+  /** The Team Lobby stage the lobby was last seen in, to see its vote end (#3785). */
+  let teamLobbyStage: "vote" | "claim" | undefined;
   /** The party the rail was last drawn for: a builder's rail redraws only when its locks change. */
   let drawnParty = "";
   /** The rail entry last drawn: a guest's mode screen follows its host's (#1526). */
@@ -1764,6 +1766,7 @@ async function main(): Promise<void> {
         },
       },
     );
+    menuQuest?.event({ kind: "member-editor-shown" });
   };
 
   /** The open team editor; every way out of it passes through `showMenu`, to the menu. */
@@ -2481,6 +2484,7 @@ async function main(): Promise<void> {
       return;
     }
     if (lobby === undefined) {
+      teamLobbyStage = undefined;
       syncParty(undefined);
       redrawRail();
       return;
@@ -2491,6 +2495,12 @@ async function main(): Promise<void> {
       return;
     }
     const snapshot = lobby.getSnapshot();
+    // The vote is over, whoever or whatever picked: the timer too (#3785).
+    const stage = snapshot.phase === "team-lobby" ? snapshot.teamLobby?.stage : undefined;
+    if (teamLobbyStage === "vote" && stage !== "vote") {
+      menuQuest?.event({ kind: "vote-ended" });
+    }
+    teamLobbyStage = stage;
     // Only a Hosted lobby picks the background's map and size (#3131);
     // joiners see the host's. Every other lobby leaves it fighting on.
     const hosted = hostedChoice(snapshot);

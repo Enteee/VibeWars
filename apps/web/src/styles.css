@@ -8905,6 +8905,11 @@ body:has(#screens[style*="none"]) .now-playing {
   box-shadow: 0 0 0 100vmax var(--menu-scrim);
 }
 
+/* Unlocked (#3785): the target is pointed at, the rest not dimmed. */
+.coach.is-unlocked .coach-hole {
+  box-shadow: none;
+}
+
 .coach-dim[hidden],
 .coach-hole[hidden],
 .coach-bubble[hidden] {
@@ -8928,6 +8933,15 @@ body:has(#screens[style*="none"]) .now-playing {
 .coach-bubble-line,
 .coach-panel-line {
   margin: 0;
+}
+
+.coach-panel-note {
+  margin: 0;
+  font-style: italic;
+}
+
+.coach-panel-note[hidden] {
+  display: none;
 }
 
 .coach-panel {

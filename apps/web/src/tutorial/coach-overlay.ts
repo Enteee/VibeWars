@@ -25,6 +25,12 @@ const EDGE = 16;
 
 const PULSE_CLASS = "tutorial-pulse";
 
+/**
+ * How long a beat's target may be missing before the coach lets go
+ * (#3785): no dim and no lock, and the panel tells the player to go back.
+ */
+export const LOST_MS = 1500;
+
 const FOCUSABLE = "a[href], button:not([disabled]), input, select, textarea, [tabindex]";
 
 /**
@@ -51,6 +57,10 @@ export interface CoachView {
   /** The `data-tutorial` id of the control, or region, the beat points at: every element with it. */
   readonly target: string;
   readonly objectives: readonly { readonly label: string; readonly done: boolean }[];
+  /** A word on how the beat before was done (#3785), above the checklist. */
+  readonly note: string | undefined;
+  /** Whether the rest of the menu is dimmed and locked; else the target is only pointed at (#3785). */
+  readonly locked: boolean;
   /** Got it, on a pure explanation; a thing to do has no button. */
   readonly gotIt: (() => void) | undefined;
 }
@@ -247,6 +257,8 @@ export function mountCoachOverlay(
   panelTitle.id = "coach-panel-title";
   panel.setAttribute("aria-labelledby", panelTitle.id);
   const panelLine = panel.appendChild(h("p", "coach-panel-line"));
+  const panelNote = panel.appendChild(h("p", "coach-panel-note"));
+  panelNote.hidden = true;
   const checklist = panel.appendChild(h("ul", "coach-checklist"));
   const skip = button(t("tutorial.skipTutorial"), "coach-skip", () => {
     inlineConfirm(skip, t("tutorial.menu.skipAsk"), t("tutorial.skip"), options.onSkip);
@@ -262,12 +274,17 @@ export function mountCoachOverlay(
   let stale = true;
   let frame = 0;
   let removed = false;
+  /** Since when, `performance.now()`, the target has not been drawn. */
+  let missingSince: number | undefined;
+  let lost = false;
+  const locked = (): boolean => view?.locked !== false && !lost;
 
   const open = (): HTMLElement[] => [...targets, ...(bubble.hidden ? [] : [bubble]), panel];
   const above = (node: EventTarget | null): boolean =>
     node instanceof Element && node.closest(ABOVE_THE_LOCK) !== null;
   const swallow = (event: Event): void => {
     if (
+      !locked() ||
       above(event.target) ||
       lockLets(event.target instanceof Node ? event.target : null, open())
     ) {
@@ -277,7 +294,7 @@ export function mountCoachOverlay(
     event.stopPropagation();
   };
   const trapTab = (event: KeyboardEvent): void => {
-    if (event.key !== "Tab" || above(event.target)) {
+    if (event.key !== "Tab" || !locked() || above(event.target)) {
       return;
     }
     const list = open().flatMap(focusables);
@@ -287,6 +304,7 @@ export function mountCoachOverlay(
   };
   const keepFocus = (event: FocusEvent): void => {
     if (
+      !locked() ||
       above(event.target) ||
       lockLets(event.target instanceof Node ? event.target : null, open())
     ) {
@@ -295,7 +313,8 @@ export function mountCoachOverlay(
     open().flatMap(focusables)[0]?.focus();
   };
 
-  const place = (): void => {
+  /** Place what shows round the target; whether it is drawn. */
+  const place = (): boolean => {
     const viewport = { width: window.innerWidth, height: window.innerHeight };
     // A target's own popover, as the profession grid, may hang out of its
     // box: the cut-out takes it in, so the bubble never sits on it.
@@ -308,11 +327,12 @@ export function mountCoachOverlay(
     );
     const next = box === undefined ? undefined : cutOut(box);
     if (!stale && sameRect(next, shownHole) && !hole.hidden === (next !== undefined)) {
-      return;
+      return next !== undefined;
     }
     shownHole = next;
     stale = false;
-    dim.hidden = next !== undefined;
+    dim.hidden = next !== undefined || !locked();
+    coach.classList.toggle("is-unlocked", !locked());
     hole.hidden = next === undefined;
     bubble.hidden = next === undefined || view === undefined;
     // The bubble says the line; the panel says it only when there is none.
@@ -342,9 +362,11 @@ export function mountCoachOverlay(
     );
     panel.dataset.edge = spot.edge;
     panel.dataset.corner = spot.corner;
+    return next !== undefined;
   };
   // The target is looked up every frame, so the cut-out follows it as it
-  // moves or is drawn anew; one not drawn yet is the dim, without a hole.
+  // moves or is drawn anew; one not drawn yet is the dim, without a hole,
+  // and one still not drawn after `LOST_MS` lets the player go (#3785).
   const follow = (): void => {
     if (removed) {
       return;
@@ -364,7 +386,19 @@ export function mountCoachOverlay(
       shownHole = undefined;
       hole.hidden = true;
     }
-    place();
+    const now = performance.now();
+    if (place()) {
+      missingSince = undefined;
+    } else {
+      missingSince ??= now;
+    }
+    const nowLost = view !== undefined && missingSince !== undefined && now - missingSince >= LOST_MS;
+    if (nowLost !== lost) {
+      lost = nowLost;
+      panelLine.textContent = lost ? t("tutorial.coach.lost") : (view?.line ?? "");
+      stale = true;
+      place();
+    }
     frame = requestAnimationFrame(follow);
   };
 
@@ -400,6 +434,10 @@ export function mountCoachOverlay(
       panelTitle.textContent = next.title;
       panelLine.textContent = next.line;
       bubbleLine.textContent = next.line;
+      panelNote.textContent = next.note ?? "";
+      panelNote.hidden = next.note === undefined;
+      missingSince = undefined;
+      lost = false;
       checklist.replaceChildren(
         ...next.objectives.map(({ label, done }) => {
           const item = h("li", done ? "is-done" : "", label);
@@ -422,6 +460,7 @@ export function mountCoachOverlay(
       bubble.hidden = true;
       checklist.replaceChildren();
       actions.hidden = true;
+      panelNote.hidden = true;
       panelLine.textContent = line;
       panelLine.hidden = false;
       panel.classList.add("coach-farewell");
