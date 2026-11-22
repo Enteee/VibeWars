@@ -158,6 +158,8 @@ tyhjänä paikkana. Buildi on sinun, kun painat **Tallenna**.
 **Esc** poistuu tallentamatta ja kysyy ensin, jos muutit jotain.
 **Jaa**, **Lataa GW1-koodi**, **Kopioi** ja **Poista** ovat **⋯**-valikossa.
 
+Buildia, jossa on ongelma, ei voi tallentaa, eikä harjoitusalue käynnisty sillä. Jos sellainen build silti päätyy otteluun, pelaat siellä aloitusbuildilla, ja viesti kertoo miksi.
+
 Tiimikoodi ladataan sen sijaan **Tiimieditorissa**: liitä se mihin tahansa siellä,
 tai avaa tiimibuildi ja käytä sen **⋯** → **Lataa tiimi**.
 

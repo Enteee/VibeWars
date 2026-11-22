@@ -150,6 +150,8 @@ dán mã ở bất kỳ đâu trong trình sửa mà không phải ô nhập ch�
 không lưu, và hỏi trước nếu bạn đã thay đổi gì. **Chia sẻ**, **Nạp mã GW1**,
 **Nhân bản** và **Xóa** nằm dưới **⋯**.
 
+Build có vấn đề không thể lưu, và khu luyện tập không bắt đầu với nó. Nếu một build như vậy vẫn vào được trận, bạn chơi với build khởi đầu ở trận đó, và một thông báo cho biết lý do.
+
 Mã đội thì được tải ở **Tạo Đội**: dán nó ở bất kỳ đâu tại đó, hoặc mở
 một build đội và dùng **⋯** → **Tải đội** của nó.
 

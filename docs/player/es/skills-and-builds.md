@@ -153,6 +153,8 @@ es tuya cuando pulsas **Guardar**.
 guardar, y pregunta antes si has cambiado algo. **Compartir**, **Cargar código
 GW1**, **Duplicar** y **Eliminar** están en **⋯**.
 
+Una build con un problema no se puede guardar, y la zona de entrenamiento no empieza con ella. Si aun así llega a una partida, allí juegas con una build inicial, y un mensaje te dice por qué.
+
 Un código de equipo se carga en **Creador de equipos**: pégalo en cualquier parte
 ahí, o abre una build de equipo y usa su **⋯** → **Cargar equipo**.
 

@@ -83,6 +83,9 @@ export default {
   "buildEditor.discardChanges": "Elveted a módosításokat?",
   "buildEditor.duplicate": "Másolat",
   "buildEditor.duplicateSkill": "{skill} többször szerepel a sávon.",
+  "buildEditor.duplicateRune": "{rune}: egy másik darab már viseli ezt a rúnát. Csak egy számít.",
+  "buildEditor.duplicateAttributeRune":
+    "{rune}: egy másik darab már visel ilyen tulajdonságú rúnát. Csak a legerősebb bónusz számít, de minden életerő-büntetés igen.",
   "buildEditor.emptySetAction": "üres készlet: {set}",
   "buildEditor.emptySetNote": "Üres készlet",
   "buildEditor.emptySlot": "Üres",
@@ -455,6 +458,11 @@ export default {
   "gearEditor.bareHands": "puszta kéz",
   "gearEditor.bonusFromHeadgear": "fejfedő +{amount}",
   "gearEditor.bonusFromRune": "rúna +{amount}",
+  "gearEditor.healthBase": "alap {amount}",
+  "gearEditor.healthInsignia": "jelvények {amount}",
+  "gearEditor.healthMods": "módosítók {amount}",
+  "gearEditor.healthRunes": "rúnák {amount}",
+  "gearEditor.healthSources": "Max. életerő: {parts}",
   "gearEditor.itemA": "{item}",
   "gearEditor.itemAn": "{item}",
   "gearEditor.modRemoved": "Eltávolítva: {mod}. Nem illik ehhez: {item}.",
@@ -788,6 +796,8 @@ export default {
   "lobbyWindow.reconnecting": "Újracsatlakozás…",
   "lobbyWindow.removeMember": "Eltávolítás a lobbiból: {name}",
 
+  "match.buildReplaced":
+    "A buildod nem szabályos ({problem}): ezt a meccset kezdő builddel játszod.",
   "matchView.watching": "Nézed · {seconds} mp késés",
 
   "matches.bot": "{name} (bot)",

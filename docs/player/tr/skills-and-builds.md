@@ -158,6 +158,8 @@ Dizilim, **Kaydet**'e bastığında senin olur.
 **Esc** kaydetmeden çıkar, bir şey değiştirdiysen önce sorar.
 **Paylaş**, **GW1 kodu yükle**, **Çoğalt** ve **Sil** **⋯** altındadır.
 
+Sorunu olan bir yapı kaydedilemez ve antrenman alanı onunla başlamaz. Böyle bir yapı yine de bir maça ulaşırsa, orada başlangıç yapısıyla oynarsın ve bir mesaj nedenini söyler.
+
 Takım kodu ise **Takım Oluşturucu**'da yüklenir: kodu orada herhangi bir yere
 yapıştır ya da bir takım dizilimi aç ve onun **⋯** → **Takım yükle**'sini
 kullan.

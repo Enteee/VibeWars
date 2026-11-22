@@ -146,6 +146,8 @@ de cod funcționează în ambele feluri. O abilitate GW1 pe care VibeWars nu o a
 iese fără să salveze și întreabă mai întâi dacă ai schimbat ceva. **Trimite**,
 **Încarcă cod GW1**, **Duplică** și **Șterge** sunt în **⋯**.
 
+Un build cu o problemă nu poate fi salvat, iar zona de antrenament nu pornește cu el. Dacă un astfel de build ajunge totuși într-un meci, acolo joci cu un build de început, iar un mesaj spune de ce.
+
 Un cod de echipă se încarcă în schimb în **Constructor de echipe**: lipește-l
 oriunde acolo, sau deschide un build de echipă și folosește **⋯** →
 **Încarcă echipa** al lui.

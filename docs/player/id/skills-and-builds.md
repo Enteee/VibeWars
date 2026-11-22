@@ -147,6 +147,8 @@ menekan **Simpan**.
 **Esc** keluar tanpa menyimpan, dan bertanya dulu kalau kamu mengubah sesuatu.
 **Bagikan**, **Muat kode GW1**, **Duplikat** dan **Hapus** ada di bawah **⋯**.
 
+Build yang punya masalah tidak bisa disimpan, dan area latihan tidak dimulai dengannya. Jika build seperti itu tetap masuk ke pertandingan, kamu memakai build awal di sana, dan sebuah pesan menjelaskan alasannya.
+
 Kode tim dimuat di **Pembuat Tim** sebagai gantinya: tempel di mana saja di sana,
 atau buka sebuah build tim dan pakai **⋯** → **Muat tim**-nya.
 

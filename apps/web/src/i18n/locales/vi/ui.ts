@@ -78,6 +78,9 @@ export default {
   "buildEditor.discardChanges": "Bỏ thay đổi?",
   "buildEditor.duplicate": "Nhân bản",
   "buildEditor.duplicateSkill": "{skill} xuất hiện nhiều lần trên thanh.",
+  "buildEditor.duplicateRune": "{rune}: một món khác đã mang rune này. Chỉ một cái được tính.",
+  "buildEditor.duplicateAttributeRune":
+    "{rune}: một món khác đã mang rune của thuộc tính này. Chỉ phần thưởng mạnh nhất được tính, nhưng mọi hình phạt máu đều được tính.",
   "buildEditor.emptySetAction": "làm trống bộ {set}",
   "buildEditor.emptySetNote": "Bộ trống",
   "buildEditor.emptySlot": "Trống",
@@ -420,6 +423,11 @@ export default {
   "gearEditor.bareHands": "tay không",
   "gearEditor.bonusFromHeadgear": "mũ +{amount}",
   "gearEditor.bonusFromRune": "rune +{amount}",
+  "gearEditor.healthBase": "cơ bản {amount}",
+  "gearEditor.healthInsignia": "phù hiệu {amount}",
+  "gearEditor.healthMods": "nâng cấp {amount}",
+  "gearEditor.healthRunes": "rune {amount}",
+  "gearEditor.healthSources": "Máu tối đa: {parts}",
   "gearEditor.itemA": "{item}",
   "gearEditor.itemAn": "{item}",
   "gearEditor.modRemoved": "Đã gỡ {mod}: không hợp với {item}.",
@@ -738,6 +746,8 @@ export default {
   "lobbyWindow.reconnecting": "Đang kết nối lại…",
   "lobbyWindow.removeMember": "Mời {name} khỏi sảnh",
 
+  "match.buildReplaced":
+    "Build của bạn không hợp lệ ({problem}): trận này bạn chơi với build khởi đầu.",
   "matchView.watching": "Đang xem · trễ {seconds} s",
 
   "matches.bot": "{name} (bot)",

@@ -155,6 +155,8 @@ plats. Builden är din när du trycker på **Spara**.
 **Esc** lämnar utan att spara, och frågar först om du har ändrat något.
 **Dela**, **Ladda GW1-kod**, **Duplicera** och **Radera** finns under **⋯**.
 
+Ett build med ett problem kan inte sparas, och träningsområdet startar inte med det. Om ett sådant build ändå når en match spelar du ett startbuild där, och ett meddelande säger varför.
+
 En lagkod laddas i stället i **Lagbyggare**: klistra in den var som helst där,
 eller öppna en lagbuild och använd dess **⋯** → **Ladda lag**.
 

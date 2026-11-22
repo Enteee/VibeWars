@@ -153,6 +153,8 @@ Buildet er dit, når du trykker på **Gem**.
 går uden at gemme og spørger først, hvis du har ændret noget. **Del**,
 **Indlæs GW1-kode**, **Duplikér** og **Slet** ligger under **⋯**.
 
+Et build med et problem kan ikke gemmes, og træningsområdet starter ikke med det. Når sådan et build alligevel når en kamp, spiller du et startbuild der, og en besked fortæller hvorfor.
+
 En holdkode indlæses i stedet i **Holdeditor**: indsæt den hvor som helst der, eller
 åbn et holdbuild og brug dets **⋯** → **Indlæs hold**.
 

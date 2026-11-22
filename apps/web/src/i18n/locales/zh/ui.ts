@@ -78,6 +78,9 @@ export default {
   "buildEditor.discardChanges": "放弃更改？",
   "buildEditor.duplicate": "复制",
   "buildEditor.duplicateSkill": "{skill} 在技能栏上重复出现。",
+  "buildEditor.duplicateRune": "{rune}：另一件装备已镶有此符文。只有一个生效。",
+  "buildEditor.duplicateAttributeRune":
+    "{rune}：另一件装备已镶有该属性的符文。只有最强的加成生效，但每个生命惩罚都会生效。",
   "buildEditor.emptySetAction": "清空第 {set} 组",
   "buildEditor.emptySetNote": "空武器组",
   "buildEditor.emptySlot": "空",
@@ -418,6 +421,11 @@ export default {
   "gearEditor.bareHands": "徒手",
   "gearEditor.bonusFromHeadgear": "头饰 +{amount}",
   "gearEditor.bonusFromRune": "符文 +{amount}",
+  "gearEditor.healthBase": "基础 {amount}",
+  "gearEditor.healthInsignia": "徽记 {amount}",
+  "gearEditor.healthMods": "改造 {amount}",
+  "gearEditor.healthRunes": "符文 {amount}",
+  "gearEditor.healthSources": "最大生命：{parts}",
   "gearEditor.itemA": "{item}",
   "gearEditor.itemAn": "{item}",
   "gearEditor.modRemoved": "已移除 {mod}：不适用于 {item}。",
@@ -735,6 +743,7 @@ export default {
   "lobbyWindow.reconnecting": "正在重新连接…",
   "lobbyWindow.removeMember": "将 {name} 移出大厅",
 
+  "match.buildReplaced": "你的配置不合法（{problem}）：本场比赛你将使用初始配置。",
   "matchView.watching": "观战中 · 延迟 {seconds} 秒",
 
   "matches.bot": "{name}（机器人）",

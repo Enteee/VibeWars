@@ -79,6 +79,9 @@ export default {
   "buildEditor.discardChanges": "변경 내용을 버릴까요?",
   "buildEditor.duplicate": "복제",
   "buildEditor.duplicateSkill": "{skill}이(가) 스킬 바에 두 번 이상 있어요.",
+  "buildEditor.duplicateRune": "{rune}: 다른 부위에 이미 이 룬이 있습니다. 하나만 적용됩니다.",
+  "buildEditor.duplicateAttributeRune":
+    "{rune}: 다른 부위에 이미 이 속성의 룬이 있습니다. 가장 강한 보너스만 적용되지만 체력 페널티는 모두 적용됩니다.",
   "buildEditor.emptySetAction": "{set}번 세트 비우기",
   "buildEditor.emptySetNote": "빈 세트",
   "buildEditor.emptySlot": "비어 있음",
@@ -423,6 +426,11 @@ export default {
   "gearEditor.bareHands": "맨손",
   "gearEditor.bonusFromHeadgear": "머리 장비 +{amount}",
   "gearEditor.bonusFromRune": "룬 +{amount}",
+  "gearEditor.healthBase": "기본 {amount}",
+  "gearEditor.healthInsignia": "휘장 {amount}",
+  "gearEditor.healthMods": "개조 {amount}",
+  "gearEditor.healthRunes": "룬 {amount}",
+  "gearEditor.healthSources": "최대 체력: {parts}",
   "gearEditor.itemA": "{item}",
   "gearEditor.itemAn": "{item}",
   "gearEditor.modRemoved": "{mod} 제거됨: {item}에 맞지 않아요.",
@@ -741,6 +749,8 @@ export default {
   "lobbyWindow.reconnecting": "다시 연결 중…",
   "lobbyWindow.removeMember": "{name}을(를) 로비에서 내보내기",
 
+  "match.buildReplaced":
+    "빌드가 유효하지 않습니다({problem}): 이번 경기는 기본 빌드로 플레이합니다.",
   "matchView.watching": "관전 중 · {seconds}초 지연",
 
   "matches.bot": "{name} (봇)",

@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest";
 import { ARMOR_SLOTS, TRAINING_SCENARIOS, raisedMaxHealth } from "@vibewars/game-core";
 import { matchLayers } from "@vibewars/game-maps/layers";
 
+import { runeName } from "../i18n/game-names.js";
+import { t } from "../i18n/index.js";
 import type { StoredCharacter } from "../storage/schema.js";
 import { newCharacter, setProfessions, setSkill } from "../ui/build-editor.js";
 import { TRAINING_MAPS } from "./maps.js";
@@ -128,9 +130,8 @@ describe("two Superior Runes of Vigor in the test area (#3822)", () => {
     const armor = { ...character.equipment.armor };
     ARMOR_SLOTS.forEach((slot, index) => {
       armor[slot] = {
-        insigniaId: null,
+        ...armor[slot],
         rune: index < pieces ? { kind: "universal", runeId: "vigor", tier: "superior" } : null,
-        headgearAttributeId: null,
       };
     });
     return { ...character, equipment: { ...character.equipment, armor } };
@@ -148,5 +149,12 @@ describe("two Superior Runes of Vigor in the test area (#3822)", () => {
     const bare = maxHealthInTraining(newCharacter("c1"));
     expect(maxHealthInTraining(wearingVigor(1))).toBe(bare + 50);
     expect(maxHealthInTraining(wearingVigor(2))).toBe(bare + 50);
+  });
+
+  it("does not run the second one: the test area says the editor's Problem", () => {
+    const vigor = { kind: "universal", runeId: "vigor", tier: "superior" } as const;
+    const arming = playerArming(wearingVigor(2));
+    expect(arming.problem).toBe(t("buildEditor.duplicateRune", { rune: runeName(vigor) }));
+    expect(arming.skillBar).toEqual([]);
   });
 });

@@ -64,6 +64,8 @@ Per importarne una, scegli **Carica codice GW1** in **⋯**, incolla il codice e
 
 **Salva** tiene la build e ti riporta da dove sei venuto. **Esc** esce senza salvare e, se hai cambiato qualcosa, prima chiede. **Condividi**, **Carica codice GW1**, **Duplica** ed **Elimina** sono in **⋯**.
 
+Una build con un problema non si può salvare, e l'area di allenamento non parte con essa. Se una build così arriva comunque in una partita, lì giochi una build iniziale, e un messaggio dice perché.
+
 Un codice squadra si carica invece su **Editor squadre**: incollalo in qualsiasi punto lì, oppure apri una build di squadra e usa il suo **⋯** → **Carica squadra**.
 
 ## Build di squadra
