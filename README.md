@@ -13,11 +13,12 @@ fights at 20 Hz, hosted by one player's browser.
 character, then open your lobby (the lock in the title bar) and send its
 invite link to your friends. Nothing to install; see [Play it](#play-it).
 
-![A 4v4 match on Canyon: an Elementalist and three bots fight four bots, with the skill bar, the target frame, the party window and the compass on screen](docs/media/readme-match.png)
+![A match on The Warden's Gallery: a fight on the central plinth, its stairs and lit floor, a foe targeted, the skill bar below](docs/media/readme-match.png)
 
 A browser-based, minimalist, multiplayer PvP arena game mechanically
 inspired by Guild Wars 1 PvP — original implementation, original
-geometric visuals, no proprietary GW1 assets or code. Peer to peer: one
+2.5D maps with heights, bridges and their own lights, no proprietary GW1
+assets or code. Peer to peer: one
 player's browser tab hosts the lobby and runs the match, and friends
 open its invite link. No accounts, no database, no game server.
 Peers find each other through public Nostr relays (Trystero) and then
@@ -80,8 +81,14 @@ own development was verified that way; see
   [Equipment](docs/player/equipment.md)).
 - **Five ways to play**: Team Arena, Heroes' Ascent (the run through
   its maps, with three-team fights), GvG, Hosted Game and Random Arena,
-  which queues for a team size and a random map. Original maps; the
-  seven rule sets are in [Modes](docs/player/modes.md).
+  which queues for a team size and a random map. Original 2.5D maps,
+  some with ground that burns, heals or moves you
+  ([World elements](docs/player/world-elements.md)); the seven rule sets
+  are in [Modes](docs/player/modes.md).
+- **Ranked play**: a queued match with no bots is ranked, signed by
+  every player and counted on a public leaderboard; ranked wins earn
+  cosmetics ([Modes](docs/player/modes.md#ranked),
+  [Cosmetics](docs/player/cosmetics.md)).
 - **Matches**: records of finished matches
   ([Getting started](docs/player/getting-started.md)).
 - **Calling targets**: tell your team which foe to attack
@@ -110,11 +117,15 @@ Honest limits:
 
 ## Screenshots
 
+![The Warden's Gallery, wider: the raised plinths, the walls between them and the long walkway over the lower floor](docs/media/readme-map.png)
+
+![Broken Tower in play: a stair, torch light on the stone, and the dark lower path beside a raised wall-walk](docs/media/readme-heights.png)
+
+![The Random Arena screen with an Elementalist chosen, over the menu's live arena: the mode rail on the left, the character cards, Find a match in the top bar](docs/media/readme-menu.png)
+
 ![The build editor: an Elementalist/Mesmer with all eight skills on the bar, its attribute points spent, and the tooltip of Fireball open](docs/media/readme-editor.png)
 
 ![The Training Ground, expanded: a Fireball has just hit one of the Armor ladder's six dummies, its damage floating above it](docs/media/readme-training.png)
-
-![The same match on Canyon a few seconds later, zoomed out to the widest view: the arena's walls and both teams in one frame](docs/media/readme-map.png)
 
 ## Repository layout
 

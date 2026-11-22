@@ -1,31 +1,33 @@
 #!/usr/bin/env node
 /**
- * `pnpm run readme:shots` — retake the README's four pictures (#1347).
+ * `pnpm run readme:shots` — retake the README's six pictures (#1347, #3635).
  * Not part of CI: it is a docs tool, run whenever the UI has moved.
  *
  * Builds the static client with the BroadcastChannel transport, serves it,
  * and plays it in Chromium at 1280×720, as a player would:
  *
+ *   readme-match.png     a Hosted Game on The Warden's Gallery, 8 a side:
+ *                        the host proposes and votes a Team Build and
+ *                        takes a seat; the default zoom, in the skirmish after the raise
+ *   readme-map.png       the same match zoomed out
+ *   readme-heights.png   a Broken Tower match, its stairs and lights
  *   readme-editor.png    a character with both professions, a full bar,
  *                        its attributes spent and a skill's tooltip open
  *   readme-training.png  the Training Ground, a Fireball just landed on
  *                        a dummy of the Armor ladder
- *   readme-match.png     a hosted 4v4 lobby filled with bots, about ten
- *                        seconds into the fight, a step in, with the HUD
- *   readme-map.png       the same match a few seconds later, out at Wide,
- *                        on a frame with no refusal text over the arena
+ *   readme-menu.png      Random Arena with the character chosen, over the
+ *                        menu's live arena background
  *
- * The shots are taken into a temporary directory and only moved into
- * docs/media/ once all four exist: a failed run leaves the old set. A step
+ * The background map is a random pick, so the README names no map. The shots are taken into a temporary directory and only moved into
+ * docs/media/ once all six exist: a failed run leaves the old set. A step
  * that cannot find what it looks for fails the run and says which step.
- * The bots fight at random, so the match pictures change between runs.
  *
  *   --url <url>   shoot a client already served there, built or run with
- *                 VITE_VIBEWARS_TRANSPORT=broadcast
+ *                 VITE_VIBEWARS_TRANSPORT=broadcast and VITE_VIBEWARS_SPLASH=off
  *
  * Browser: VIBEWARS_CHROMIUM (as for e2e), else Playwright's own.
  */
-import { spawn } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -42,14 +44,10 @@ const { values: options } = parseArgs({ options: { url: { type: "string" } } });
 /**
  * The Elementalist/Mesmer starter build as a GW1 template code (#494): the
  * editor takes it pasted, and the code does not change with our own build
- * format. Fireball is on Q.
+ * format. Fireball is in slot 1.
  */
 const BUILD_CODE = "OgVFoMm8lmMgufXOyleRGFB";
 const NAME = "Aria Stormveil";
-/** The other seven: three beside you, four against; the host picks what they play (#1454). */
-const BOTS = { 1: 3, 2: 4 };
-/** The arena both match shots are on; it fills the frame at Wide. */
-const MAP = "arena-canyon";
 
 /** What the run is doing, for the error a failed step throws. */
 let step = "start";
@@ -70,7 +68,7 @@ async function serve() {
   const child = spawn("sh", ["-c", command], {
     stdio: ["ignore", "ignore", "inherit"],
     // Lobbies in one browser, with no relay, as e2e plays them.
-    env: { ...process.env, VITE_VIBEWARS_TRANSPORT: "broadcast" },
+    env: { ...process.env, VITE_VIBEWARS_TRANSPORT: "broadcast", VITE_VIBEWARS_SPLASH: "off" },
     detached: true,
   });
   // `exitCode` stays null while it runs, as a server should.
@@ -119,6 +117,7 @@ async function paste(page, text) {
  */
 async function editorAndTraining(page, dir) {
   step = "open the editor";
+  await openRail(page, "Character Builder");
   await page.getByRole("button", { name: "new character" }).click();
   await page.locator("input.editor-name").waitFor();
   step = "paste the build";
@@ -131,14 +130,12 @@ async function editorAndTraining(page, dir) {
   step = "wand on Fire Magic";
   // The template leaves the wand on Energy Storage, which the build has
   // at 7 of the 9 it needs; Fire Magic is at 12.
-  await page.locator("button", { hasText: /^gear$/i }).click();
-  await page
-    .getByRole("combobox", { name: "wand attribute" })
-    .selectOption({ label: "Fire Magic" });
-  await page.locator("button", { hasText: /^skills$/i }).click();
+  await page.getByRole("button", { name: "Main hand", exact: true }).click();
+  await page.getByRole("radio", { name: "Fire Magic" }).click();
+  await page.keyboard.press("Escape");
 
   step = "editor tooltip";
-  await page.locator(".skill-box", { hasText: "Fireball" }).first().hover();
+  await page.getByText("Fireball", { exact: true }).locator("visible=true").first().hover();
   await page.locator(".skill-tip").first().waitFor();
   await sleep(500);
   await page.screenshot({ path: path.join(dir, "readme-editor.png") });
@@ -159,16 +156,142 @@ async function editorAndTraining(page, dir) {
   await page.mouse.wheel(0, -120);
   await sleep(500);
   await page.keyboard.press("KeyC");
-  await page.keyboard.press("KeyQ");
-  // Fireball's cast and flight, and its burst on the dummy.
-  await sleep(2000);
+  await sleep(400);
+  await page.keyboard.press("Tab");
+  // Fireball in slot 1, tried until the readout counts its first hit; the shot
+  // is taken on that frame, the burst still on the dummy.
+  step = "cast Fireball";
+  let hit = false;
+  for (let tries = 0; tries < 12 && !hit; tries += 1) {
+    await page.locator(".training-skill").first().click();
+    for (let poll = 0; poll < 15 && !hit; poll += 1) {
+      await sleep(100);
+      hit = /damage\s*[1-9]/.test(await page.locator("body").innerText());
+    }
+  }
+  if (!hit) {
+    throw new Error("Fireball never landed");
+  }
   await page.screenshot({ path: path.join(dir, "readme-training.png") });
 
   step = "save the character";
   await page.keyboard.press("Escape");
   await page.getByRole("button", { name: "collapse training ground" }).click();
   await page.getByRole("button", { name: "Save", exact: true }).click();
-  await page.locator(".selectable-row", { hasText: NAME }).first().click();
+  // Saving returns to Character Builder; a card on Random Arena picks who plays.
+  await openRail(page, "Random Arena");
+  await page
+    .locator(".character-card", { hasText: NAME })
+    .first()
+    .locator(".play-card-open")
+    .click();
+  step = "menu";
+  // The live background settles on its arena.
+  await sleep(2500);
+  await page.mouse.move(0, 0);
+  await page.screenshot({ path: path.join(dir, "readme-menu.png") });
+}
+
+/**
+ * A Hosted Game on `mapId`, 8 a side: the host proposes a Team Build,
+ * votes for it and takes a seat, and the match starts with the host's
+ * hero in it and bots around.
+ *
+ * @param {import("@playwright/test").Page} page
+ * @param {string} mapId
+ */
+async function startMatch(page, mapId) {
+  step = "hosted game";
+  await openRail(page, "Hosted Game");
+  await page.getByRole("button", { name: "Larger team" }).click();
+  await page.getByRole("button", { name: /^Join/ }).first().click();
+  await page.locator("#topbar select").selectOption(mapId);
+  await page.getByRole("button", { name: "Ready", exact: true }).click();
+  await page.getByRole("button", { name: "Start match" }).click();
+  step = "team lobby";
+  // The lobby's clock runs: no waiting between these.
+  await page.getByRole("button", { name: /^Your Team Builds/ }).click();
+  await page.getByText("8 members").first().click();
+  await page.getByRole("button", { name: "Propose this build" }).click();
+  await page.mouse.click(470, 300);
+  step = "seat";
+  // The seat card has no handle of its own: the button just under its
+  // title. An Elementalist, when the build has one; else the first seat.
+  const seats = page.getByRole("button", { name: "Sit here" });
+  await seats.first().waitFor();
+  const title = await page
+    .getByText(/^Elementalist/)
+    .first()
+    .boundingBox({ timeout: 1000 })
+    .catch(() => null);
+  let seat = seats.first();
+  for (let at = 0; title !== null && at < (await seats.count()); at += 1) {
+    const box = await seats.nth(at).boundingBox();
+    if (
+      box !== null &&
+      Math.abs(box.x - title.x) < 120 &&
+      box.y > title.y &&
+      box.y - title.y < 90
+    ) {
+      seat = seats.nth(at);
+    }
+  }
+  await seat.click();
+  step = "match";
+  await page.locator("#viewport canvas:not(.compass)").waitFor({ timeout: 90_000 });
+  await sleep(3000);
+  await page.mouse.move(640, 300);
+}
+
+/**
+ * Hold `key` for `ms`.
+ *
+ * @param {import("@playwright/test").Page} page
+ * @param {string} key
+ * @param {number} ms
+ */
+async function walk(page, key, ms) {
+  await page.keyboard.down(key);
+  await sleep(ms);
+  await page.keyboard.up(key);
+}
+
+/**
+ * The match pictures: the Warden's Gallery close on its plinth and whole,
+ * then Broken Tower's heights.
+ *
+ * @param {import("@playwright/test").Page} page
+ * @param {string} dir
+ */
+async function matchShots(page, dir) {
+  await startMatch(page, "wardens-gallery");
+  // Heroes are held until the raise ends.
+  await sleep(20_000);
+  await page.keyboard.down("KeyW");
+  await walk(page, "KeyD", 8000);
+  await page.keyboard.up("KeyW");
+  step = "match shot";
+  // Space: the nearest foe is targeted and attacked.
+  await page.keyboard.press("Space");
+  await sleep(1500);
+  await zoomTo(page, "Default", -120);
+  await page.screenshot({ path: path.join(dir, "readme-match.png") });
+  await zoomTo(page, "Wide", 120);
+  await page.screenshot({ path: path.join(dir, "readme-map.png") });
+}
+
+/**
+ * Broken Tower's heights, in a client of its own: the lobby of the match
+ * before is still running in the first.
+ *
+ * @param {import("@playwright/test").Page} page
+ * @param {string} dir
+ */
+async function heightsShot(page, dir) {
+  await startMatch(page, "broken-tower");
+  await walk(page, "KeyD", 6000);
+  step = "heights shot";
+  await page.screenshot({ path: path.join(dir, "readme-heights.png") });
 }
 
 /**
@@ -204,108 +327,15 @@ async function zoomTo(page, name, deltaY) {
 }
 
 /**
- * How many pixels of the arena, the HUD's corners left out, are in the
- * neutral floating-text yellow, #ffd866 at any fade over the dark floor:
- * "can't reach", "interrupted!" and the like. The target ring shares it,
- * so shoot this with no target. Status icons are an orange yellow, less
- * blue for their green, and stay out.
+ * Open `label`'s screen from the menu's mode rail.
  *
  * @param {import("@playwright/test").Page} page
- * @param {Buffer} png
- * @returns {Promise<number>}
+ * @param {string} label
  */
-async function yellowPixels(page, png) {
-  return page.evaluate(async (base64) => {
-    const bytes = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
-    const bitmap = await globalThis.createImageBitmap(new Blob([bytes], { type: "image/png" }));
-    const canvas = new OffscreenCanvas(bitmap.width, bitmap.height);
-    const context = canvas.getContext("2d");
-    if (context === null) {
-      return 0;
-    }
-    context.drawImage(bitmap, 0, 0);
-    // Below the target panel, left of the compass and the party, above the bar.
-    const { data } = context.getImageData(0, 150, 1060, 400);
-    let count = 0;
-    for (let i = 0; i < data.length; i += 4) {
-      const [red = 0, green = 0, blue = 0] = data.subarray(i, i + 3);
-      const hue =
-        green > 0.8 * red && green < 0.92 * red && blue > 0.43 * green && blue < 0.65 * green;
-      if (red > 60 && red - blue > 30 && hue) {
-        count += 1;
-      }
-    }
-    return count;
-  }, png.toString("base64"));
-}
-
-/**
- * Host a lobby, fill it with bots, play the match and shoot it twice.
- *
- * @param {import("@playwright/test").Page} page
- * @param {string} dir
- */
-async function match(page, dir) {
-  step = "host a lobby";
-  await page.locator(".screen-menu input.field-input").first().fill(NAME);
-  await page.getByRole("button", { name: "host a lobby" }).click();
-  await page.locator(".lobby-code").waitFor();
-  step = "pick the map";
-  await page.locator(".lobby-map select").selectOption(MAP);
-  step = "join team 1";
-  await page.getByRole("button", { name: "join team 1" }).click();
-  for (const [team, count] of Object.entries(BOTS)) {
-    const shown = page
-      .locator(".lobby-team")
-      .nth(Number(team) - 1)
-      .locator(".lobby-bot-count");
-    for (let bots = 1; bots <= count; bots += 1) {
-      step = `bot ${String(bots)} on team ${team}`;
-      await page.getByRole("button", { name: `one bot more on team ${team}` }).click();
-      // Each + asks for one more than the count shown: wait for it to land.
-      await shown.filter({ hasText: String(bots) }).waitFor();
-    }
-  }
-  step = "start the match";
-  await page.getByRole("button", { name: "Ready", exact: true }).click();
-  await page.getByRole("button", { name: "start match" }).click();
-  await page.locator(".hud-bar-health").waitFor();
-
-  step = "zoom in";
-  // A step in, so the hero shows the fight rather than the floor round it.
-  await zoomTo(page, "Near", -120);
-
-  step = "fight";
-  // Into the fight with the bots: a foe targeted, the wand and the bar on it.
-  const target = page.locator(".hud-target-text");
-  const keys = ["KeyQ", "KeyW", "KeyE", "KeyA"];
-  for (let second = 0; second < 12; second += 1) {
-    if ((await target.textContent()) === "no target") {
-      await page.keyboard.press("Tab");
-    }
-    // None in the last seconds, so no "That skill is recharging." in the shot.
-    if (second < 9) {
-      await page.keyboard.press(keys[second % keys.length] ?? "KeyQ");
-    }
-    await sleep(1000);
-  }
-  await page.screenshot({ path: path.join(dir, "readme-match.png") });
-
-  step = "zoom out";
-  await zoomTo(page, "Wide", 120);
-  // The bots refuse now and then ("can't reach"); wait for a frame with
-  // none over the arena. No target, so its ring is not counted as one.
-  // Esc cancels a cast first, then drops the target.
-  for (let press = 0; press < 3 && (await target.textContent()) !== "no target"; press += 1) {
-    await page.keyboard.press("Escape");
-    await sleep(200);
-  }
-  let shot = await page.screenshot();
-  for (let retry = 0; retry < 20 && (await yellowPixels(page, shot)) > 10; retry += 1) {
-    await sleep(500);
-    shot = await page.screenshot();
-  }
-  fs.writeFileSync(path.join(dir, "readme-map.png"), shot);
+async function openRail(page, label) {
+  const entry = page.locator(".mode-rail").getByRole("button", { name: label, exact: true });
+  await entry.click();
+  await entry.and(page.locator('[aria-pressed="true"]')).waitFor();
 }
 
 const served = options.url === undefined ? await serve() : undefined;
@@ -321,26 +351,58 @@ try {
     ...(executablePath === undefined ? {} : { executablePath }),
     args: ["--no-sandbox"],
   });
-  const page = await browser.newPage({
+  const context = await browser.newContext({
     viewport: { width: 1280, height: 720 },
     deviceScaleFactor: 1,
   });
+  const page = await context.newPage();
   // A missing selector fails the step in seconds, not minutes.
   page.setDefaultTimeout(20_000);
   step = "open the client";
   await page.goto(url);
-  await page.locator(".roster").waitFor();
+  await page.locator(".mode-rail").waitFor();
   await editorAndTraining(page, dir);
-  await match(page, dir);
-  const shots = ["readme-editor.png", "readme-training.png", "readme-match.png", "readme-map.png"];
+  await matchShots(page, dir);
+  const second = await browser.newContext({
+    viewport: { width: 1280, height: 720 },
+    deviceScaleFactor: 1,
+  });
+  const page2 = await second.newPage();
+  page2.setDefaultTimeout(20_000);
+  await page2.goto(url);
+  await page2.locator(".mode-rail").waitFor();
+  await heightsShot(page2, dir);
+  const shots = [
+    "readme-match.png",
+    "readme-map.png",
+    "readme-heights.png",
+    "readme-editor.png",
+    "readme-training.png",
+    "readme-menu.png",
+  ];
   for (const shot of shots) {
     fs.copyFileSync(path.join(dir, shot), path.join(MEDIA, shot));
+    if (/match|map|heights/.test(shot)) {
+      // The sand and stone take 96 colours; a third of the bytes (ImageMagick).
+      const target = path.join(MEDIA, shot);
+      spawnSync("magick", [target, "-colors", "96", `PNG8:${target}`], { stdio: "inherit" });
+    }
     const kb = Math.round(fs.statSync(path.join(MEDIA, shot)).size / 1024);
     console.log(`docs/media/${shot}  ${String(kb)} KB`);
   }
 } catch (error) {
   console.error(`readme-shots failed at "${step}":`);
   console.error(error);
+  const shot = path.join(os.tmpdir(), "readme-shots-failure.png");
+  await browser
+    ?.contexts()[0]
+    ?.pages()
+    .at(-1)
+    ?.screenshot({ path: shot })
+    .catch((/** @type {unknown} */ reason) => {
+      console.error(reason);
+    });
+  console.error(`the page at the failure: ${shot}`);
   process.exitCode = 1;
 } finally {
   await browser?.close();
