@@ -30,8 +30,8 @@ import {
   type LoadedStructure,
 } from "../net/maps.js";
 
-import { validateBuild } from "../storage/build-validation.js";
 import type { StoredCharacter } from "../storage/schema.js";
+import { blockingProblems } from "../ui/editor-problems.js";
 import { resolveForDisplay } from "../ui/gear-editor.js";
 import { TRAINING_MAPS } from "./maps.js";
 
@@ -51,20 +51,22 @@ export interface PlayerArming {
   readonly loadout: ResolvedLoadout;
   readonly skillBar: SkillBar;
   /**
-   * Why the build cannot be tested, or `undefined` when it can. An
-   * illegal build gets an empty bar and stands still: the server swaps
-   * in a starter build instead, but here that would quietly test a
-   * build the player never wrote.
+   * Why the build cannot be tested, in the player's words, or
+   * `undefined` when it can. An illegal build does not run at all
+   * (#3822): the server swaps in a starter build instead, but here that
+   * would quietly test a build the player never wrote, and running its
+   * gear would play what no match allows, two Runes of Vigor and all.
    */
   readonly problem: string | undefined;
 }
 
 /**
- * What the character fights with. No path through the editor produces
- * an illegal build today, so the parked case is reachable from tests only.
+ * What the character fights with. The test area follows the editor's
+ * unsaved draft, so an illegal build reaches it whenever the editor
+ * shows a Problem: a second Rune of Vigor, say.
  */
 export function playerArming(character: StoredCharacter): PlayerArming {
-  const problem = validateBuild(character)[0]?.message;
+  const problem = blockingProblems(character)[0]?.text;
   return {
     loadout: resolveForDisplay(character),
     // Gaps and all, exactly as the server keeps a joining bar (#347).
