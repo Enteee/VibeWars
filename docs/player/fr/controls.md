@@ -69,6 +69,21 @@ Ces touches sont fixes :
   ; un clic molette annonce ou signale. Le nom qu'un clic toucherait est mis
   en évidence.
 
+## Tactile
+
+Sur un téléphone ou une tablette, en match et sur le terrain d'entraînement :
+
+- **Touche** le sol pour y marcher.
+- **Touche** un ennemi, un allié, un drapeau, le Socle du drapeau, un levier
+  ou un mur fissuré pour le cibler ; une touche sur un personnage ne fait
+  jamais marcher. Touche à nouveau le même ennemi, rapidement, pour
+  l'attaquer. Une touche juste à côté d'un personnage le trouve quand même.
+  Une touche sur toi-même fait marcher jusqu'à cet endroit, ou cible le
+  socle du drapeau ou le levier sur lequel tu te tiens.
+- **Fais glisser** un doigt pour regarder autour de toi ; relâche et la vue
+  revient vers toi en douceur. **Pince** pour zoomer.
+- **Touche** une compétence de la barre pour l'utiliser sur ta cible.
+
 ## La barre du haut
 
 Hors match, la barre du haut contient **[?]** (cette Aide), **⚙** (Options),

@@ -67,6 +67,20 @@ Te klawisze są stałe:
   kliknięcie kółkiem wskazuje wroga lub pinguje. Nazwa, którą trafi kliknięcie,
   jest podświetlona.
 
+## Dotyk
+
+Na telefonie lub tablecie, w meczu i na poligonie:
+
+- **Dotknij** ziemi, aby tam iść.
+- **Dotknij** wroga, sojusznika, flagi, stojaka flagi, dźwigni lub
+  popękanego muru, aby obrać go na cel; dotknięcie postaci nigdy nie każe
+  iść. Szybko dotknij ponownie tego samego wroga, aby go zaatakować.
+  Dotknięcie tuż obok postaci nadal ją znajduje. Dotknięcie siebie prowadzi
+  w to miejsce albo obiera na cel stojak flagi lub dźwignię, na której stoisz.
+- **Przeciągnij** jednym palcem, aby się rozejrzeć; puść, a widok powoli
+  wraca do ciebie. **Ściągnij palce**, aby przybliżać.
+- **Dotknij** umiejętności na pasku, aby użyć jej na swoim celu.
+
 ## Górny pasek
 
 Poza meczem górny pasek zawiera **[?]** (tę Pomoc), **⚙** (Opcje),

@@ -66,6 +66,21 @@ Aceste taste sunt fixe:
   dintr-odată; un clic pe rotiță anunță sau dă ping. Numele pe care l-ar nimeri
   clicul este evidențiat.
 
+## Atingere
+
+Pe un telefon sau o tabletă, într-un meci și pe terenul de antrenament:
+
+- **Atinge** solul ca să mergi acolo.
+- **Atinge** un inamic, un aliat, un steag, suportul de steag, o manetă sau
+  un zid crăpat ca să-l ții în țintă; o atingere pe un personaj nu merge
+  niciodată. Atinge din nou, rapid, același inamic ca să-l ataci. O atingere
+  chiar lângă un personaj îl găsește totuși. O atingere pe tine însuți merge
+  până în acel loc sau ține în țintă suportul de steag ori maneta pe care
+  stai.
+- **Trage** cu un deget ca să te uiți în jur; ridică degetul și vederea
+  alunecă înapoi la tine. **Ciupește** ca să dai zoom.
+- **Atinge** o abilitate de pe bară ca s-o folosești pe ținta ta.
+
 ## Bara de sus
 
 În afara unui meci, bara de sus conține **[?]** (acest Ajutor), **⚙** (Opțiuni),
