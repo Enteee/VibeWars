@@ -1,7 +1,7 @@
 import { distance } from "../../../vec2.js";
 import type { BehaviourIntent } from "../../behaviour.js";
-import { holdPoint } from "../plan.js";
-import { NOTHING, REGROUP_JOINED, nearJammedGoal, nearestToWalk } from "./shared.js";
+import { PLAN_SECONDS, holdPoint } from "../plan.js";
+import { NOTHING, POSITION_SLACK, nearJammedGoal, nearestToWalk } from "./shared.js";
 import type { BotRule, RuleContext } from "./types.js";
 
 /** How long close-in keeps a foe it priced walks to before pricing again (#3353). */
@@ -13,7 +13,7 @@ export const REPRICE_SECONDS = 0.5;
  * A choice that cost route searches is kept `REPRICE_SECONDS` while that
  * foe lives: a search per candidate per think is a tick's cost in 8v8.
  * While its team's plan is `hold` (#3831), it walks to its hold spot
- * instead, and stands once within `REGROUP_JOINED` of the hold point.
+ * instead, and stands once within `POSITION_SLACK` of it.
  */
 const closeIn: BotRule = {
   order: 120,
@@ -44,19 +44,22 @@ const closeIn: BotRule = {
 };
 
 /**
- * Where a holding bot goes (#3831): to its spot, and nowhere once near
- * the hold point. Its hold point is placed once per foe team it faces.
+ * Where a holding bot goes (#3831): to its spot, and nowhere once there.
+ * Its hold point is placed once per foe team it faces; where it cannot
+ * hold, once per plan phase, so one bad moment does not last the match.
  * `undefined`, so it pushes, where its team cannot hold.
  */
 function hold({ context, self, foes, cursor }: RuleContext): BehaviourIntent | undefined {
   const foeTeam = cursor.front ?? foes.find((foe) => foe.creature === undefined)?.combatant.team;
   if (foeTeam === undefined) return undefined;
-  if (cursor.holdPoint?.foeTeam !== foeTeam) {
-    cursor.holdPoint = { foeTeam, at: holdPoint(context, self, foeTeam) };
+  const phase = Math.floor(context.now / PLAN_SECONDS);
+  const kept = cursor.holdPoint;
+  if (kept?.foeTeam !== foeTeam || (kept.at === undefined && kept.phase !== phase)) {
+    cursor.holdPoint = { foeTeam, at: holdPoint(context, self, foeTeam), phase };
   }
-  const at = cursor.holdPoint.at;
+  const at = cursor.holdPoint?.at;
   if (at === undefined) return undefined;
-  return self.layer === at.layer && distance(self.position, at.centre) <= REGROUP_JOINED
+  return self.layer === at.layer && distance(self.position, at.spot) <= POSITION_SLACK
     ? { ...NOTHING, targetId: self.targetId }
     : { ...NOTHING, moveTo: at.spot, moveToLayer: at.layer };
 }

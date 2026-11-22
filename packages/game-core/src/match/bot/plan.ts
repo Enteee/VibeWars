@@ -46,8 +46,9 @@ export interface HoldPlace {
  * Where `self`'s team holds against team `foeTeam` (#3831):
  * `HOLD_FRACTION` of the way from its spawn to theirs, on a spot a body
  * fits on, on its spawn's layer. Only spawns, which every player knows,
- * never where a foe stands. Each bot keeps its own spot within a quarter
- * of `REGROUP_SPREAD` of it, so the team stands spread out. `undefined`,
+ * never where a foe stands. Each bot keeps its own spot a quarter of
+ * `REGROUP_SPREAD` from it, the team's spots evenly round it, so the team
+ * stands spread out. `undefined`,
  * so the bot pushes, on a team of one and where it has no route there.
  */
 export function holdPoint(
@@ -63,7 +64,17 @@ export function holdPoint(
     add(own.point, scale(sub(foe.point, own.point), HOLD_FRACTION)),
     layer,
   );
-  const angle = 2 * Math.PI * botRoll(context.seed, foeTeam, `hold:${self.id}`);
+  const mates = context.participants.filter(
+    (other) => other.combatant.team === self.combatant.team && other.creature === undefined,
+  );
+  const turn =
+    botRoll(context.seed, self.combatant.team, `hold:${String(foeTeam)}`) +
+    Math.max(
+      0,
+      mates.findIndex((mate) => mate.id === self.id),
+    ) /
+      mates.length;
+  const angle = 2 * Math.PI * turn;
   const spot = context.standableNear(
     add(centre, scale(vec2(Math.cos(angle), Math.sin(angle)), REGROUP_SPREAD / 4)),
     layer,

@@ -275,9 +275,12 @@ export interface BehaviourCursor {
   walkFoe: { readonly id: string; readonly pricedAt: number } | undefined;
   /**
    * `play-build`: its team's hold point against foe team `foeTeam` (#3831),
-   * placed once; `at` is `undefined` where it cannot hold there.
+   * placed once; `at` is `undefined` where it could not hold there in
+   * plan phase `phase`, and it tries again in the next.
    */
-  holdPoint: { readonly foeTeam: number; readonly at: HoldPlace | undefined } | undefined;
+  holdPoint:
+    | { readonly foeTeam: number; readonly at: HoldPlace | undefined; readonly phase: number }
+    | undefined;
   /** `play-build`: its health fraction at each think of the last `HEALTH_MARK_SECONDS` (#3369), oldest first. */
   readonly healthMarks: { readonly at: number; readonly health: number }[];
   /**
