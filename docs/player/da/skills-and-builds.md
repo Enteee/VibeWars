@@ -176,7 +176,10 @@ starter med en tom figur på hver plads. Du tilføjer eller fjerner aldrig
 et medlem, du erstatter et. Hver række viser medlemmets figur med de
 våben, den holder, en prik for hvert våbensæt, når den har mere end ét,
 dens maksimale liv og energi og dens otte evner; træk en række i dens ⠿
-for at ændre rækkefølgen. Panelet til højre er Figureditorens bibliotek,
+for at ændre rækkefølgen. Hold **Shift**, mens du slipper en række på et andet
+medlem, for i stedet at kopiere hele dens build over på det medlem; rækken,
+du trak, forbliver som den var.
+Panelet til højre er Figureditorens bibliotek,
 med en fane **Mine figurer** før **Evner** og **Udstyr**. På **Mine
 figurer** trækker du en af dine figurer hen på et medlem for at gøre det
 medlem til en kopi af den. En kopi er holdets egen: ændrer du den, eller

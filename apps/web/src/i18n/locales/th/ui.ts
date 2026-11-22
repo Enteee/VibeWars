@@ -1244,6 +1244,7 @@ export default {
   "teamEditor.professions": "อาชีพ",
   "teamEditor.professionsTitle": "อาชีพของทีม",
   "teamEditor.replaceMember": "แทนที่ {member} ด้วย {character}",
+  "teamEditor.copyMember": "Shift: คัดลอกบิลด์ของ {source} ไปยัง {target}",
   "teamEditor.save": "บันทึก",
   "teamEditor.saveTitle": "บันทึกทีมนี้",
   "teamEditor.saveTitleProblem": "บันทึกทีมนี้ (มีปัญหา: {problem})",

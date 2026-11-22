@@ -1254,6 +1254,7 @@ export default {
   "teamEditor.professions": "직업",
   "teamEditor.professionsTitle": "팀의 직업",
   "teamEditor.replaceMember": "{member}을(를) {character}(으)로 교체",
+  "teamEditor.copyMember": "Shift: {source}의 빌드를 {target}에 복사",
   "teamEditor.save": "저장",
   "teamEditor.saveTitle": "이 팀 저장",
   "teamEditor.saveTitleProblem": "이 팀 저장 (문제 있음: {problem})",

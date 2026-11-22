@@ -170,7 +170,9 @@ with a blank character in each place. You never add or remove a member,
 you replace one. Each row shows the member's character with the weapons
 it holds, a dot for each weapon set when it has more than one, its
 maximum Health and Energy, and its eight skills; drag a row by its ⠿ to
-reorder. The panel on the right is the Character Builder's library,
+reorder. Hold **Shift** as you drop a row on another member to copy
+its whole build onto that member instead; the row you dragged stays as it was.
+The panel on the right is the Character Builder's library,
 with a **My characters** tab before **Skills** and **Gear**. On **My characters**, drag
 one of your characters onto a member to make that member a copy of it. A
 copy is the team's own: changing it, or the character it came from,

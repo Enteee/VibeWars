@@ -169,7 +169,9 @@ Un build de echipă are mereu atâția membri câți spune mărimea: unul nou î
 un personaj gol pe fiecare loc. Nu adaugi și nu elimini niciodată un membru, ci
 înlocuiești unul. Fiecare rând arată personajul membrului cu armele pe care le
 ține, un punct pentru fiecare set de arme când are mai multe, Viața și Energia
-maximă și cele opt abilități; trage un rând de ⠿ ca să reordonezi. Panoul din
+maximă și cele opt abilități; trage un rând de ⠿ ca să reordonezi. Ține **Shift** când plasezi un rând pe alt membru
+ca să-i copiezi în schimb tot build-ul pe acel membru; rândul tras rămâne cum era.
+Panoul din
 dreapta este biblioteca din Constructor de personaje, cu o filă **Personajele
 mele** înainte de **Abilități** și **Echipament**. La **Personajele mele**, trage
 unul dintre personajele tale peste un membru ca să faci din acel membru o copie a

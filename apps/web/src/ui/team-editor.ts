@@ -902,14 +902,29 @@ export function mountTeamEditor(
       // Firefox starts no drag without data.
       event.dataTransfer?.setData("text/plain", characterId);
       if (event.dataTransfer !== null) {
-        event.dataTransfer.effectAllowed = "move";
+        // Plain drag reorders, Shift-drag copies the build (#3826).
+        event.dataTransfer.effectAllowed = "copyMove";
       }
       row.classList.add("is-dragging");
     });
     row.addEventListener("dragover", (event: DragEvent) => {
-      if (dragging?.kind === "member") {
+      const held = dragging;
+      if (held?.kind === "member") {
         event.preventDefault();
-        row.classList.toggle("is-drop-target", dragging.id !== characterId);
+        const other = held.id !== characterId;
+        row.classList.toggle("is-drop-target", other);
+        // Read on every dragover, so Shift pressed or let go mid-drag shows.
+        const source = memberOf(held.id);
+        const target = memberOf(characterId);
+        if (other && event.shiftKey && source !== undefined && target !== undefined) {
+          picker.showReason(
+            row,
+            t("teamEditor.copyMember", { source: source.name, target: target.name }),
+            false,
+          );
+        } else {
+          picker.hideReason();
+        }
         return;
       }
       const drag = dragging;
@@ -940,6 +955,16 @@ export function mountTeamEditor(
       event.preventDefault();
       endDrag();
       if (drag.kind === "member") {
+        if (drag.id === characterId) {
+          return;
+        }
+        // The drop's Shift decides, whatever was held at dragstart (#3826).
+        const source = memberOf(drag.id);
+        if (event.shiftKey && source !== undefined) {
+          focused = characterId;
+          commit(copyOntoMember(team, characterId, source));
+          return;
+        }
         commit(dragMember(team, indexOfMember(drag.id), indexOf()));
         return;
       }
