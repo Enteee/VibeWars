@@ -308,7 +308,7 @@ describe("ratsStation (#3316)", () => {
     expect(station.done(view({ ratsAlive: 0, skillsOnRats: two, extraRat: true }))).toBe(true);
   });
 
-  it("runs on the canyon's second map, and shows the targeting keys", () => {
+  it("runs in the canyon, and shows the targeting keys", () => {
     expect(station.world).toBe("canyon");
     expect(station.keys).toEqual(["target-next", "target-closest"]);
   });
@@ -637,7 +637,7 @@ describe("gateStation (#3334)", () => {
     expect(station.done(view({ self: GATE, selfLayer: LAYER + 1 }))).toBe(false);
   });
 
-  it("points at the gate, on the canyon's second map", () => {
+  it("points at the gate, in the canyon", () => {
     const station = gateStation(GATE, LAYER);
     expect(station.highlight).toEqual({ kind: "ground", at: GATE, layer: LAYER });
     expect(station.world).toBe("canyon");

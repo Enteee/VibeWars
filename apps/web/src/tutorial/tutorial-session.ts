@@ -176,9 +176,9 @@ interface Stage {
   readonly dodges: DodgeCounter | undefined;
   /** Station 6's watch on the canyon's combat (#3303); the battlefield has none. */
   readonly heals: HealWatch | undefined;
-  /** Station 8's watch on the rats (#3316), on the canyon's second map only. */
+  /** Station 8's watch on the rats (#3316), in the canyon only. */
   readonly rats: RatWatch | undefined;
-  /** Station 12's watch on its two rats (#3331), on the canyon's second map only. */
+  /** Station 12's watch on its two rats (#3331), in the canyon only. */
   readonly callRats: RatWatch | undefined;
   /** Its zones, as the simulation applies them: the battlefield's play no part. */
   readonly zones: readonly MatchZone[];

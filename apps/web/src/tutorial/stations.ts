@@ -452,7 +452,7 @@ function shapeCentre(shape: Shape): Vec2 {
 }
 
 /**
- * Station 9 (playbook §9), on the canyon's second map: up onto `ledge`,
+ * Station 9 (playbook §9), in the canyon: up onto `ledge`,
  * on `upper`, then down to the ground under it, on `lower`. The mark is
  * on the ledge until the player has stood on it, then under its middle;
  * the cursor's rings teach the rest. Any way down counts, but one that was
@@ -500,7 +500,7 @@ export function climbStation(ledge: Shape, stairs: Shape, upper: number, lower: 
 }
 
 /**
- * Station 11 (playbook §11), on the canyon's second map: through the
+ * Station 11 (playbook §11), in the canyon: through the
  * `tunnel` on `under`, beneath the guard asleep on top, to the mark at
  * `mark` on `above`. Each half of it, west and east of its middle, latches
  * once the player has stood in it underground, in either order. Done on

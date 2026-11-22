@@ -154,7 +154,7 @@ export interface CanyonStart {
 }
 
 /**
- * The canyon's first map entered at station 5 (#3383), which only an e2e
+ * The canyon entered at station 5 (#3383), which only an e2e
  * build's seeded start does: the pair on station 4's mark, where its
  * dodges leave them.
  */
@@ -427,7 +427,7 @@ export interface CanyonRat {
   readonly maxHealth: number | undefined;
 }
 
-/** Station 8's rat pocket (#3316), on the canyon's second map. */
+/** Station 8's rat pocket (#3316). */
 export interface CanyonRats {
   readonly layer: number;
   /** The pocket's middle, which the player is led to. */
@@ -621,7 +621,7 @@ export function ratPocket(
   };
 }
 
-/** Station 12's two rats (#3331), on the canyon's second map: they bite only once hit. */
+/** Station 12's two rats (#3331): they bite only once hit. */
 export interface CanyonCallRats {
   readonly layer: number;
   readonly rats: readonly [CanyonRat, CanyonRat];
@@ -710,7 +710,7 @@ const TUTOR_BESIDE_LEDGE = 90;
 /** How far past a stair's ends the tutor's way runs, on the layer there. */
 const PAST_THE_STAIRS = 60;
 
-/** Station 9's ledge (#3323), on the canyon's second map: a deck, and the stairs up to it. */
+/** Station 9's ledge (#3323): a deck, and the stairs up to it. */
 export interface CanyonLedge {
   /** The deck's footprint. */
   readonly footprint: Shape;
@@ -810,7 +810,7 @@ export function ledgeTutor(simulation: MatchSimulation): LedgeTutor {
 /** How far past the east stairs' top station 11's mark lies, and the tutor beside it. */
 const TUTOR_BESIDE_TUNNEL = 70;
 
-/** Station 11's tunnel (#3326), on the canyon's second map, under its sleeping guard. */
+/** Station 11's tunnel (#3326), under its sleeping guard. */
 export interface CanyonTunnel {
   /** The tunnel's footprint: on `under` inside it is in the tunnel, on `above` over it. */
   readonly footprint: Shape;
