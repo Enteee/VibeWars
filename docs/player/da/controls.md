@@ -66,6 +66,20 @@ Disse taster er faste:
   gang; et hjulklik udpeger eller pinger. Det navn, et klik ville ramme,
   fremhæves.
 
+## Touch
+
+På en telefon eller en tablet, i en kamp og på træningsbanen:
+
+- **Tryk** på jorden for at gå derhen.
+- **Tryk** på en fjende, en allieret, et flag, flagstanden, et håndtag eller
+  en revnet mur for at vælge det som mål; et tryk på en karakter går aldrig.
+  Tryk hurtigt på den samme fjende igen for at angribe den. Et tryk lige
+  ved siden af en karakter finder den stadig. Et tryk på dig selv går til
+  det sted eller vælger den flagstand eller det håndtag, du står på.
+- **Træk** med én finger for at se dig omkring; slip, og billedet glider
+  tilbage til dig. **Knib** for at zoome.
+- **Tryk** på en evne på bjælken for at bruge den på dit mål.
+
 ## Topbjælken
 
 Uden for en kamp rummer topbjælken **[?]** (denne Hjælp), **⚙** (Valg),

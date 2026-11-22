@@ -38,6 +38,7 @@ import {
   pingCall,
   primaryClickIntents,
   secondaryClickIntents,
+  tapIntents,
 } from "./input/mouse-intents.js";
 import { attachNameReveal } from "./input/name-reveal.js";
 import {
@@ -1319,6 +1320,28 @@ export async function startMatchView(
     );
     for (const intent of intents) {
       seat.sendIntent(intent);
+    }
+  });
+  // A finger taps the ground to walk, a body to pick it, twice to attack
+  // (#3781); a watcher's finger only pans and zooms.
+  camera?.onTap((world, slop) => {
+    if (seat === undefined || latestArena === undefined) {
+      return;
+    }
+    const intents = tapIntents(
+      seat.getSnapshot(),
+      latestArena,
+      world,
+      doubleClick,
+      performance.now(),
+      slop,
+    );
+    for (const intent of intents) {
+      seat.sendIntent(intent);
+      if (intent.kind === "walk-to") {
+        viewport?.scene.showWalkMarker(world);
+        tutorial?.onWalk(false);
+      }
     }
   });
 

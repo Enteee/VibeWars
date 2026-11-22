@@ -66,6 +66,20 @@ Tieto klávesy sú pevné:
   dvakrát; ľavé kliknutie naraz zameria a zaútočí; kliknutie kolieskom určí
   cieľ alebo označí signálom. Meno, ktoré by kliknutie zasiahlo, je zvýraznené.
 
+## Dotyk
+
+Na telefóne alebo tablete, v zápase aj na cvičisku:
+
+- **Ťuknutím** na zem tam dôjdeš.
+- **Ťuknutím** na nepriateľa, spojenca, vlajku, stojan na vlajku, páku alebo
+  popraskaný múr ho zameriaš; ťuknutie na postavu nikdy nechodí. Ďalším
+  rýchlym ťuknutím na toho istého nepriateľa naňho zaútočíš. Ťuknutie tesne
+  vedľa postavy ju stále nájde. Ťuknutie na seba ťa dovedie na to miesto
+  alebo zameria stojan na vlajku či páku, na ktorej stojíš.
+- **Ťahom** jedným prstom sa obzeráš; po pustení sa pohľad plynule vráti
+  k tebe. **Stiahnutím** prstov približuješ.
+- **Ťuknutím** na schopnosť na lište ju použiješ na svoj cieľ.
+
 ## Horná lišta
 
 Mimo zápasu sú na hornej lište **[?]** (táto Pomoc), **⚙** (Nastavenia),

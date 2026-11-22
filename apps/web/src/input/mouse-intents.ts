@@ -12,6 +12,9 @@ import { pickSurface } from "../render/layer-surfaces.js";
 import { attackClickIntents } from "./attack-key.js";
 import type { DoubleClick } from "./double-click.js";
 
+/** What a right click or a tap picks besides a body. */
+const PICKED_OBJECTS = ["flag", "stand", "switch", "breakable"] as const;
+
 /**
  * What a right click sends (#438), shared by the match and the Training
  * Ground so it means the same in both. The left button walks (unless
@@ -41,7 +44,7 @@ export function secondaryClickIntents(
   shift: boolean,
 ): ClientIntent[] {
   const hit = clickableAt(arena, world, {
-    objects: ["flag", "stand", "switch", "breakable"],
+    objects: PICKED_OBJECTS,
     under: snapshot.selfSessionId,
     tagBoxes: shift ? arena.nameBoxes : undefined,
   })?.id;
@@ -52,6 +55,39 @@ export function secondaryClickIntents(
   return [
     { kind: "target", targetSessionId: hit },
     ...(double && !shift ? attackClickIntents(snapshot, hit) : []),
+  ];
+}
+
+/**
+ * What a tap on a touch screen sends (#3781), shared by the match and the
+ * Training Ground: on a body, flag, stand, switch or breakable wall, what
+ * a right click there sends, a double tap included; anywhere else, a walk
+ * there, as a left click. A fingertip is wider than a cursor: a tap that
+ * hits nothing takes what is drawn within `slop` world units of it. Your
+ * own body is never what a tap hits (#1299): it falls through to what you
+ * stand on, else the ground.
+ */
+export function tapIntents(
+  snapshot: MatchSnapshot,
+  arena: ArenaSnapshot,
+  world: Vec2,
+  doubleClick: DoubleClick,
+  nowMs: number,
+  slop: number,
+): ClientIntent[] {
+  const picked = clickableAt(arena, world, {
+    objects: PICKED_OBJECTS,
+    under: snapshot.selfSessionId,
+    slop,
+  })?.id;
+  const hit = picked === snapshot.selfSessionId ? undefined : picked;
+  const double = doubleClick.press(hit, nowMs);
+  if (hit === undefined) {
+    return primaryClickIntents(snapshot, arena, world, false, false);
+  }
+  return [
+    { kind: "target", targetSessionId: hit },
+    ...(double ? attackClickIntents(snapshot, hit) : []),
   ];
 }
 

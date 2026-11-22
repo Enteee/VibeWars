@@ -17,6 +17,7 @@ function fakeViewport(): {
   const fake = {
     setArenaBounds: () => undefined,
     onWheelNotch: () => () => undefined,
+    onFinger: () => () => undefined,
     onButton: (handler: (event: ButtonEvent) => void) => {
       press = handler;
       return () => undefined;
