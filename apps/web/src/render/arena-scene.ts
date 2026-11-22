@@ -805,10 +805,9 @@ export class ArenaScene extends Phaser.Scene {
    * What of the decks over each tunnel draws on its own (#3352), by the
    * tunnel's index: tops and side faces, faded with its cover.
    */
-  private readonly decksOverTunnels = new Map<
-    number,
-    (Phaser.GameObjects.Graphics | Phaser.GameObjects.TileSprite)[]
-  >();
+  private readonly decksOverTunnels = new Map<number, Phaser.GameObjects.Graphics[]>();
+  /** The wall-top texture sprites over each tunnel (#3808), faded with its cover. */
+  private readonly wallTexturesOverTunnels = new Map<number, Phaser.GameObjects.TileSprite[]>();
   /** The outside land's texture on the wall tops (#3808): stencils, sprites, light and edges. */
   private wallTextures: Phaser.GameObjects.GameObject[] = [];
   /** The floor, map and structure graphics, cut to the camera every frame (#3240). */
@@ -3902,6 +3901,10 @@ export class ArenaScene extends Phaser.Scene {
       graphics.destroy();
     }
     this.decksOverTunnels.clear();
+    for (const sprite of [...this.wallTexturesOverTunnels.values()].flat()) {
+      sprite.destroy();
+    }
+    this.wallTexturesOverTunnels.clear();
     const covers = tunnelCoverBoxes(next.structure);
     // What each wall draws, by layer, for its top's texture (#3808).
     const textured = next.structure.bounds.kind === "outline";
@@ -4055,10 +4058,7 @@ export class ArenaScene extends Phaser.Scene {
         seam,
       ]),
       ...[...this.waterOverTunnels.values()].map(({ surface }) => surface),
-      // A wall top's texture over a tunnel is a sprite, not graphics (#3808).
-      ...[...this.decksOverTunnels.values()]
-        .flat()
-        .filter((piece) => piece instanceof Phaser.GameObjects.Graphics),
+      ...[...this.decksOverTunnels.values()].flat(),
       ...this.coversDrawn.map(({ graphics }) => graphics),
     ]);
   }
@@ -4231,6 +4231,9 @@ export class ArenaScene extends Phaser.Scene {
       }
       for (const piece of this.decksOverTunnels.get(at) ?? []) {
         piece.setAlpha(ground.alpha);
+      }
+      for (const sprite of this.wallTexturesOverTunnels.get(at) ?? []) {
+        sprite.setAlpha(ground.alpha);
       }
       const water = this.waterOverTunnels.get(at);
       water?.surface.setAlpha(ground.alpha);
@@ -5010,13 +5013,12 @@ export class ArenaScene extends Phaser.Scene {
             }
           });
         }
-        const faded: (Phaser.GameObjects.Graphics | Phaser.GameObjects.TileSprite)[] = [
-          this.add
-            .tileSprite(x, y, w, h, key)
-            .setOrigin(0, 0)
-            .setTilePosition(x, y)
-            .setDepth(depth),
-        ];
+        const sprite = this.add
+          .tileSprite(x, y, w, h, key)
+          .setOrigin(0, 0)
+          .setTilePosition(x, y)
+          .setDepth(depth);
+        const faded: Phaser.GameObjects.Graphics[] = [];
         if (lighting !== undefined) {
           const light = this.add
             .graphics()
@@ -5045,9 +5047,13 @@ export class ArenaScene extends Phaser.Scene {
         faded.push(edges);
         region(0, (g) => g.fillRect(x, y, w, h));
         if (group === undefined) {
-          this.wallTextures.push(...faded);
+          this.wallTextures.push(sprite, ...faded);
         } else {
           this.decksOverTunnels.set(group, [...(this.decksOverTunnels.get(group) ?? []), ...faded]);
+          this.wallTexturesOverTunnels.set(group, [
+            ...(this.wallTexturesOverTunnels.get(group) ?? []),
+            sprite,
+          ]);
         }
       }
     }
