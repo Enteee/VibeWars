@@ -9,6 +9,7 @@
 - [Вміння та білди](skills-and-builds.md)
 - [Спорядження](equipment.md)
 - [Режими](modes.md)
+- [Рейтинг](ranking.md)
 - [Косметика](cosmetics.md)
 - [Елементи світу](world-elements.md)
 - [Боти](bots.md)

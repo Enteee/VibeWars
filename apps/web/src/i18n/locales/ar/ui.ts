@@ -1141,8 +1141,6 @@ export default {
   "queue.randomArena": "الساحة العشوائية {size}",
   "queue.rankedCancelled": "أُلغيت المباراة المصنّفة: لاعب لم يؤكد.",
   "queue.rankedConfirming": "جارٍ تأكيد المباراة المصنّفة…",
-  "queue.rankedNote":
-    "بلا روبوتات تكون المباراة مصنّفة: تُنشر النتيجة مع مفتاحك واسم شخصيتك. وجود روبوت يبقيها غير مصنّفة.",
   "queue.rankedPending": "يُحدَّث تصنيفك خلال ساعة.",
   "queue.rankedPublished": "نُشرت النتيجة المصنّفة.",
   "queue.searchingCount": "{searching} يبحثون · المطلوب {needed}",

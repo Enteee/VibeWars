@@ -371,24 +371,4 @@ passt also zu keiner Größe. Die Chips bleiben, wie du sie gelassen hast, bis d
 
 ## Gewertet
 
-Ein Match aus der Warteschlange ohne Bots ist gewertet. Der
-Warteschlangen-Bildschirm und die Team-Lobby sagen es, bevor du dich
-anstellst; ein einziger Bot hält ein Match ungewertet. Wird ein
-gewertetes Match gefunden, unterschreibt jeder Spieler seinen Start,
-und der Bildschirm zeigt bis zu 15 Sekunden **Gewertetes Match wird
-bestätigt…**. Bestätigt jemand nicht, wird das Match abgebrochen und
-alle sind zurück in der Warteschlange. Am Ende unterschreibt jeder
-Spieler das Ergebnis, und die Quittung des Matches wird auf den
-Nostr-Relays veröffentlicht, mit dem öffentlichen Schlüssel und dem
-Charakternamen jedes Spielers; ein Spieler ohne Charakter heißt dort
-Starter. Deine Wertung ändert sich innerhalb einer Stunde. Ein
-gewertetes Match zu verlassen zählt als Niederlage, und der
-Verlassen-Knopf sagt das.
-
-Gewertete Warteschlangen bringen Spieler mit ähnlicher Wertung zusammen und teilen sie in Teams mit ähnlicher Durchschnittswertung. Die Suche beginnt innerhalb von 100 Punkten um deine Wertung und weitet sich mit jeder Sekunde Wartezeit um 10 Punkte, bis 600, sodass niemand ewig wartet. Während du wartest, zeigt die Warteschlange deine Wertung.
-
-Deine ersten 10 gewerteten Matches sind vorläufig: Die Warteschlange sagt **Vorläufig (3/10 Matches)**, und du hast noch keinen Rang. Danach zeigt das Hauptmenü deinen Rang. Wertungen verfallen: Jeder Tag ohne gewertetes Match macht deine unsicherer, und die Rangliste ordnet nach einem vorsichtigen Wert, sodass dein Rang innerhalb von Wochen sinkt, wenn du aufhörst zu spielen.
-
-Sobald die Rangliste 20 etablierte Spieler hat, zählt ein gewertetes Match nur, wenn mindestens ein Spieler darin etabliert ist (10 oder mehr gewertete Matches): Ein Match nur zwischen neuen Spielern ist ungewertet. Spiel gegen jemand Etablierten, und deine Matches zählen.
-
-Der Knopf **Rangliste** in der oberen Leiste listet die besten 100 mit Rang, Name und Wertung, deine eigene Zeile hervorgehoben. Sie wird stündlich aktualisiert.
+Ein Match aus der Warteschlange ohne Bots ist gewertet: siehe [Wertung](ranking.md).

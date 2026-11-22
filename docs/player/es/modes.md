@@ -445,12 +445,4 @@ Encima de los filtros, la franja **Salón de los héroes** muestra los últimos 
 
 ## Clasificatorias
 
-Una partida de la cola sin bots es clasificatoria. La pantalla de la cola y el lobby de equipo lo dicen antes de que entres en cola; un solo bot la deja sin clasificar. Al encontrarse una partida clasificatoria, cada jugador firma su inicio y la pantalla muestra **Confirmando partida clasificatoria…** hasta 15 segundos. Si alguien no confirma, la partida se cancela y todos vuelven a la cola. Al final cada jugador firma el resultado y el recibo de la partida se publica en los relés de Nostr con la clave pública y el nombre del personaje de cada jugador; un jugador sin personaje figura como starter. Tu puntuación cambia en menos de una hora. Salir de una partida clasificatoria cuenta como derrota, y el botón de salir lo dice.
-
-Las colas clasificatorias emparejan a jugadores de puntuación parecida y los reparten en equipos de puntuación media parecida. La búsqueda empieza a 100 puntos de tu puntuación y se amplía 10 puntos por cada segundo de espera, hasta 600, así que nadie espera para siempre. Mientras esperas, la cola muestra tu puntuación.
-
-Tus primeras 10 partidas puntuadas son provisionales: la cola dice **Provisional (3/10 partidas)** y aún no tienes puesto. Después, el menú principal muestra tu puesto. Las puntuaciones decaen: cada día sin una partida puntuada hace la tuya menos segura, y la clasificación ordena por un valor prudente, así que si dejas de jugar tu puesto baja en semanas.
-
-En cuanto la clasificación tiene 20 jugadores asentados, una partida clasificatoria solo cuenta si al menos un jugador en ella está asentado (10 o más partidas puntuadas): una partida solo entre jugadores nuevos no se puntúa. Juega con alguien asentado y tus partidas cuentan.
-
-El botón **Clasificación** de la barra superior muestra los 100 mejores por puesto, nombre y puntuación, con tu fila resaltada. Se actualiza cada hora.
+Una partida de la cola sin bots es clasificatoria: mira [Clasificación](ranking.md).

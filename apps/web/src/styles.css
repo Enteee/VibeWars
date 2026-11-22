@@ -8434,13 +8434,6 @@ body:has(#screens[style*="none"]) .now-playing {
   font-variant-numeric: tabular-nums;
 }
 
-/* Under Find a match (#3680): what a queued match without bots publishes. */
-.queue-ranked-note {
-  margin: 0;
-  color: var(--ink-dim);
-  font-size: 0.8rem;
-}
-
 .queue-actions {
   position: sticky;
   bottom: 0;

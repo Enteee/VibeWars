@@ -997,8 +997,6 @@ export default {
   "queue.randomArena": "Véletlen Aréna {size}",
   "queue.rankedCancelled": "Rangsorolt meccs törölve: egy játékos nem erősített meg.",
   "queue.rankedConfirming": "Rangsorolt meccs megerősítése…",
-  "queue.rankedNote":
-    "Botok nélkül a meccs rangsorolt: az eredmény a kulcsoddal és a karaktered nevével jelenik meg. Egy bot a meccsen rangsorolatlanul hagyja.",
   "queue.rankedPending": "A pontszámod egy órán belül frissül.",
   "queue.rankedPublished": "Rangsorolt eredmény közzétéve.",
   "queue.searchingCount": "{searching} keres · {needed} kell",

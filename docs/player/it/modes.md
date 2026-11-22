@@ -158,12 +158,4 @@ Sopra i filtri, la striscia **Sala degli eroi** elenca gli ultimi 20 domini, dal
 
 ## Classificate
 
-Una partita dalla coda senza bot è classificata. La schermata della coda e la lobby di squadra lo dicono prima che tu entri in coda; un solo bot la lascia non classificata. Quando si trova una partita classificata, ogni giocatore ne firma l’inizio e la schermata mostra **Conferma della partita classificata…** fino a 15 secondi. Se qualcuno non conferma, la partita è annullata e tutti tornano in coda. Alla fine ogni giocatore firma il risultato e la ricevuta della partita è pubblicata sui relay Nostr con la chiave pubblica e il nome del personaggio di ogni giocatore; un giocatore senza personaggio figura come starter. Il tuo punteggio cambia entro un’ora. Lasciare una partita classificata conta come sconfitta, e il pulsante per uscire lo dice.
-
-Le code classificate abbinano giocatori di punteggio simile e li dividono in squadre di punteggio medio simile. La ricerca parte entro 100 punti dal tuo punteggio e si allarga di 10 punti per ogni secondo di attesa, fino a 600, così nessuno aspetta per sempre. Mentre aspetti, la coda mostra il tuo punteggio.
-
-Le tue prime 10 partite valutate sono provvisorie: la coda dice **Provvisorio (3/10 partite)** e non hai ancora una posizione. Dopo, il menu principale mostra la tua posizione. I punteggi decadono: ogni giorno senza una partita valutata rende il tuo meno certo, e la classifica ordina per un valore prudente, quindi se smetti di giocare la tua posizione scende nel giro di settimane.
-
-Quando la classifica ha 20 giocatori affermati, una partita classificata conta solo se almeno un giocatore al suo interno è affermato (10 o più partite valutate): una partita solo tra giocatori nuovi non è valutata. Gioca con qualcuno di affermato e le tue partite contano.
-
-Il pulsante **Classifica** nella barra in alto elenca i primi 100 per posizione, nome e punteggio, con la tua riga evidenziata. Si aggiorna ogni ora.
+Una partita dalla coda senza bot è classificata: vedi [Classificazione](ranking.md).

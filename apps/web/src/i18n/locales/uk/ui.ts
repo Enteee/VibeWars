@@ -1088,8 +1088,6 @@ export default {
   "queue.randomArena": "Випадкова арена {size}",
   "queue.rankedCancelled": "Рейтинговий матч скасовано: гравець не підтвердив.",
   "queue.rankedConfirming": "Підтвердження рейтингового матчу…",
-  "queue.rankedNote":
-    "Без ботів матч рейтинговий: результат публікується з вашим ключем та ім’ям персонажа. Бот у матчі робить його нерейтинговим.",
   "queue.rankedPending": "Рейтинг оновиться протягом години.",
   "queue.rankedPublished": "Рейтинговий результат опубліковано.",
   "queue.searchingCount": "шукають: {searching} · потрібно: {needed}",

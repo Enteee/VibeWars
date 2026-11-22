@@ -1085,8 +1085,6 @@ export default {
   "queue.randomArena": "Náhodná aréna {size}",
   "queue.rankedCancelled": "Hodnocený zápas zrušen: hráč nepotvrdil.",
   "queue.rankedConfirming": "Potvrzování hodnoceného zápasu…",
-  "queue.rankedNote":
-    "Bez botů je zápas hodnocený: výsledek se zveřejní s tvým klíčem a jménem postavy. Bot v zápase ho nechá nehodnocený.",
   "queue.rankedPending": "Tvé hodnocení se aktualizuje do hodiny.",
   "queue.rankedPublished": "Hodnocený výsledek zveřejněn.",
   "queue.searchingCount": "hledá: {searching} · potřeba: {needed}",
