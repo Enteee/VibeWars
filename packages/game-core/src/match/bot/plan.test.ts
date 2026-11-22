@@ -1,9 +1,12 @@
 import { describe, expect, it } from "vitest";
 
 import { distance, vec2, type Vec2 } from "../../vec2.js";
+import { createCursor } from "../behaviour.js";
+import { MASTERLESS_TEAM } from "../minions.js";
 import type { MatchSimulation, Participant } from "../simulation.js";
 import {
   ESCORT_OFFSET,
+  ESCORT_ROUTE_SECONDS,
   PLAN_SECONDS,
   escortSpot,
   flankParty,
@@ -13,7 +16,7 @@ import {
 } from "./plan.js";
 import type { BotRole } from "./role.js";
 import { REGROUP_SPREAD } from "./rules/shared.js";
-import { MONK, RANGER, WARRIOR, contextFor, fighter, match } from "./rules/test-support.js";
+import { MONK, RANGER, WARRIOR, body, contextFor, fighter, match } from "./rules/test-support.js";
 
 const SEEDS = [1, 42, 0xdead_beef, 20_261_122];
 const PHASES = 1000;
@@ -214,7 +217,7 @@ describe("escortSpot (#3833)", () => {
     return one;
   }
   function spot(id: string, role: BotRole, extra: Parameters<typeof contextFor>[2] = {}) {
-    return escortSpot(contextFor(sim, id, { isBot, ...extra }), who(sim, id), role);
+    return escortSpot(contextFor(sim, id, { isBot, ...extra }), who(sim, id), role, createCursor());
   }
 
   it("puts a frontliner ahead, a caster beside and a healer behind the human", () => {
@@ -234,6 +237,83 @@ describe("escortSpot (#3833)", () => {
     expect(spot("w", "frontline", { foeCentroid: undefined })).toEqual(spot("w", "frontline"));
   });
 
+  it("points forward past a masterless creature's team with no foe in sight", () => {
+    const loose = body("loose", MASTERLESS_TEAM, vec2(700, 700), {
+      creature: {
+        ownerId: undefined,
+        kind: "minion",
+        look: "bone-minion",
+        name: "loose",
+        expiresInSeconds: Number.POSITIVE_INFINITY,
+        ageSeconds: 0,
+        summonedAtTick: 0,
+        skillId: undefined,
+        aura: undefined,
+        onDeath: "vanish",
+        ownerDisableSeconds: 0,
+        deathBurst: undefined,
+        onDeathInRange: undefined,
+        pulse: undefined,
+        replacedBy: undefined,
+        corpsesLeft: 0,
+        companionSkillId: undefined,
+        leaderId: undefined,
+        bondStatusId: undefined,
+        mode: "guard",
+      },
+    });
+    const wild = match([
+      fighter("you", 0, WARRIOR, vec2(400, 400)),
+      fighter("w", 0, WARRIOR, vec2(100, 300)),
+      fighter("r", 0, RANGER, vec2(100, 400)),
+      fighter("m", 0, MONK, vec2(100, 500)),
+      fighter("foe", 1, WARRIOR, vec2(1100, 400)),
+      loose,
+    ]);
+    const context = contextFor(wild, "w", { isBot, foeCentroid: undefined });
+    expect(escortSpot(context, who(wild, "w"), "frontline", createCursor())).toEqual(
+      spot("w", "frontline"),
+    );
+  });
+
+  it("spreads the bots along x with no foe at all, never onto the human", () => {
+    const alone = match([
+      fighter("you", 0, WARRIOR, vec2(400, 400)),
+      fighter("w", 0, WARRIOR, vec2(100, 300)),
+      fighter("m", 0, MONK, vec2(100, 500)),
+    ]);
+    const at = (id: string) =>
+      escortSpot(
+        contextFor(alone, id, { isBot, foeCentroid: undefined }),
+        who(alone, id),
+        "ranged",
+        createCursor(),
+      )?.point;
+    expect(at("w")).toEqual(vec2(400 - REGROUP_SPREAD / 2, 400));
+    expect(at("m")).toEqual(vec2(400 + REGROUP_SPREAD / 2, 400));
+  });
+
+  it("searches its route once per ESCORT_ROUTE_SECONDS", () => {
+    const cursor = createCursor();
+    let searches = 0;
+    const routeLength = (): number => {
+      searches += 1;
+      return 1;
+    };
+    const ask = (now: number) =>
+      escortSpot(
+        contextFor(sim, "w", { isBot, routeLength, now }),
+        who(sim, "w"),
+        "frontline",
+        cursor,
+      );
+    ask(0);
+    ask(ESCORT_ROUTE_SECONDS / 2);
+    expect(searches).toBe(1);
+    ask(ESCORT_ROUTE_SECONDS);
+    expect(searches).toBe(2);
+  });
+
   it("gives n bots distinct spots within REGROUP_SPREAD/2 of the line", () => {
     for (let n = 1; n <= 7; n += 1) {
       const many = match([
@@ -245,7 +325,8 @@ describe("escortSpot (#3833)", () => {
       ]);
       const spots = Array.from({ length: n }, (_, index) => {
         const id = `b${String(index)}`;
-        return escortSpot(contextFor(many, id, { isBot }), who(many, id), "ranged")?.point;
+        return escortSpot(contextFor(many, id, { isBot }), who(many, id), "ranged", createCursor())
+          ?.point;
       });
       expect(new Set(spots.map((at) => `${String(at?.x)},${String(at?.y)}`)).size).toBe(n);
       for (const at of spots) {
@@ -264,7 +345,7 @@ describe("escortSpot (#3833)", () => {
     ]);
     who(fallen, "you").combatant.dead = true;
     expect(
-      escortSpot(contextFor(fallen, "w", { isBot }), who(fallen, "w"), "frontline"),
+      escortSpot(contextFor(fallen, "w", { isBot }), who(fallen, "w"), "frontline", createCursor()),
     ).toBeUndefined();
   });
 });

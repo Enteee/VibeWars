@@ -75,11 +75,12 @@ const closeIn: BotRule = {
 function escort({
   context,
   self,
+  cursor,
   role,
   escort: escorts,
 }: RuleContext): BehaviourIntent | undefined {
   if (role === undefined || !escorts) return undefined;
-  const at = escortSpot(context, self, role);
+  const at = escortSpot(context, self, role, cursor);
   if (at === undefined) return undefined;
   return self.layer === at.layer && distance(self.position, at.point) <= REGROUP_JOINED / 2
     ? { ...NOTHING, targetId: self.targetId }

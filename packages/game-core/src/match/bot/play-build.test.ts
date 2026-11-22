@@ -591,7 +591,7 @@ describe("play-build's pull-in gate (#3832)", () => {
     const view = escortView();
     const intent = decide(BOT, createCursor(), view);
     expect(intent.targetId).toBeUndefined();
-    expect(intent.moveTo).toEqual(escortSpot(view, view.self, "frontline")?.point);
+    expect(intent.moveTo).toEqual(escortSpot(view, view.self, "frontline", createCursor())?.point);
   });
 
   it("takes a far teammate's target when told not to escort (#3833)", () => {

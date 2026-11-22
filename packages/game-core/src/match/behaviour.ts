@@ -294,6 +294,11 @@ export interface BehaviourCursor {
   flankPoint:
     | { readonly foeTeam: number; readonly at: FlankPlace | undefined; readonly phase: number }
     | undefined;
+  /**
+   * `play-build`: whether it had a route to its escort spot, and the
+   * match second it searched (#3833).
+   */
+  escortRoute: { readonly routed: boolean; readonly pricedAt: number } | undefined;
   /** `play-build`: the plan phase it reached its flank waypoint in (#3832); a respawn forgets it. */
   flankReached: number | undefined;
   /** `play-build`: its health fraction at each think of the last `HEALTH_MARK_SECONDS` (#3369), oldest first. */
@@ -514,6 +519,7 @@ export function createCursor(): BehaviourCursor {
     holdPoint: undefined,
     flankPoint: undefined,
     flankReached: undefined,
+    escortRoute: undefined,
     healthMarks: [],
     duck: undefined,
     duckReadyAt: 0,

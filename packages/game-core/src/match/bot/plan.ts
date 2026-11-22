@@ -41,6 +41,9 @@ export const ESCORT_OFFSET: Readonly<Record<BotRole, number>> = {
   healer: -150,
 };
 
+/** How long an escorting bot keeps whether it has a route to its spot (#3833). */
+export const ESCORT_ROUTE_SECONDS = 0.5;
+
 /** The plan phase match second `now` falls in (#3831, #3832). */
 export function planPhase(now: number): number {
   return Math.floor(now / PLAN_SECONDS);
@@ -210,14 +213,19 @@ export interface EscortPlace {
  * humans (#3833): `ESCORT_OFFSET` along forward from their centre, the
  * anchor, and spread across `REGROUP_SPREAD` by its index among its
  * team's bots, the dead too, so a death does not swap spots. Forward is
- * toward the foes' centre, else toward the first foe team's spawn. The
- * spot is on the layer of the human nearest the anchor. `undefined`, so
- * the bot plays its team's plan, with no active human or no route there.
+ * toward the foes' centre, else toward the first foe player team's
+ * spawn; with neither, the spread runs along x. The spot is on the layer
+ * of the human nearest the anchor. `undefined`, so the bot plays its
+ * team's plan, with no active human or no route there. Whether there is
+ * a route is kept in `cursor` `ESCORT_ROUTE_SECONDS`: a search per think
+ * is a tick's cost in 8v8, and the way to where the human stands changes
+ * slower than that.
  */
 export function escortSpot(
   context: BehaviourContext,
   self: Participant,
   role: BotRole,
+  cursor: BehaviourCursor,
 ): EscortPlace | undefined {
   const team = self.combatant.team;
   const humans = activeHumans(context, team);
@@ -236,6 +244,7 @@ export function escortSpot(
     }
   }
   const foeTeam = context.participants
+    .filter((other) => other.creature === undefined)
     .map((other) => other.combatant.team)
     .filter((other) => other !== team)
     .sort((one, other) => one - other)[0];
@@ -252,14 +261,19 @@ export function escortSpot(
     bots.findIndex((bot) => bot.id === self.id),
   );
   const across = bots.length < 2 ? 0 : REGROUP_SPREAD * (index / (bots.length - 1) - 0.5);
+  const lateral = length(forward) > 0 ? vec2(-forward.y, forward.x) : vec2(1, 0);
   const point = context.standableNear(
-    add(
-      add(anchor, scale(forward, ESCORT_OFFSET[role])),
-      scale(vec2(-forward.y, forward.x), across),
-    ),
+    add(add(anchor, scale(forward, ESCORT_OFFSET[role])), scale(lateral, across)),
     layer,
   );
-  return Number.isFinite(context.routeLength(point, layer)) ? { point, layer } : undefined;
+  const kept = cursor.escortRoute;
+  if (kept === undefined || context.now - kept.pricedAt >= ESCORT_ROUTE_SECONDS) {
+    cursor.escortRoute = {
+      routed: Number.isFinite(context.routeLength(point, layer)),
+      pricedAt: context.now,
+    };
+  }
+  return cursor.escortRoute?.routed === true ? { point, layer } : undefined;
 }
 
 /**
@@ -326,7 +340,9 @@ export function planPlaced(
   escorts: boolean,
 ): boolean {
   const role = roleOf(self);
-  if (escorts && role !== undefined && escortSpot(context, self, role) !== undefined) return true;
+  if (escorts && role !== undefined && escortSpot(context, self, role, cursor) !== undefined) {
+    return true;
+  }
   if (plan === "push") return false;
   const foeTeam = planFoeTeam(cursor, foes);
   if (foeTeam === undefined) return false;
