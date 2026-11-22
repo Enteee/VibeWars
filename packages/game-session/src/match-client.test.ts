@@ -777,6 +777,70 @@ describe("connectMatch, when the host's peer drops", () => {
     expect(self(connection)?.x).toBeGreaterThan(x);
   });
 
+  /**
+   * A guest whose page stalled past the transport's timeout (#3772): the
+   * host dropped its seat, the guest saw nothing, and is heard again
+   * `seconds` later.
+   */
+  async function stalled(seconds: number) {
+    const match = startMatch();
+    const watcher = await match.joinLocal();
+    const { connection, transport } = await match.join();
+    // Teammates on both sides, so the match outlives the dropped seat.
+    await match.join();
+    await match.join();
+    await match.step(0.05);
+    const states: string[] = [];
+    connection.onConnectionChange((state) => states.push(state));
+    const hellos: unknown[] = [];
+    match.hostTransport.on("hello", (data) => hellos.push(data));
+    match.network.stall("host", transport.selfId);
+    await match.step(seconds);
+    match.network.wake("host", transport.selfId);
+    await settle();
+    return { match, watcher, connection, states, hellos };
+  }
+
+  it("is told the host dropped it, and is back in its seat within the window (#3772)", async () => {
+    const { match, watcher, connection, states, hellos } = await stalled(10);
+    await until(() => states.length === 2);
+
+    expect(states).toEqual(["reconnecting", "online"]);
+    expect(hellos).toEqual([
+      expect.objectContaining({ rejoin: { playerId: connection.selfSessionId } }),
+    ]);
+    expect(watcher.getSnapshot().players.map(({ sessionId }) => sessionId)).toContain(
+      connection.selfSessionId,
+    );
+    const x = self(connection)?.x ?? 0;
+    connection.sendIntent({ kind: "move", dirX: 1, dirY: 0 });
+    await match.step(0.3);
+    expect(self(connection)?.x).toBeGreaterThan(x);
+  });
+
+  it("is lost, asking nothing, when the host dropped it and the window ran out (#3772)", async () => {
+    const { states, hellos } = await stalled(RECONNECT_WINDOW_SECONDS + 1);
+
+    expect(states).toEqual(["lost"]);
+    expect(hellos).toEqual([]);
+  });
+
+  it("hears nothing when the host never dropped it (#3772)", async () => {
+    const match = startMatch();
+    const { connection, transport } = await match.join();
+    await match.step(0.05);
+    const states: string[] = [];
+    connection.onConnectionChange((state) => states.push(state));
+    const told: unknown[] = [];
+    transport.on("seat-dropped", (data) => told.push(data));
+
+    match.network.wake("host", transport.selfId);
+    await match.step(0.3);
+
+    expect(told).toEqual([]);
+    expect(states).toEqual([]);
+  });
+
   it("is lost once the window runs out, and asks nothing when the host is back after it", async () => {
     const { match, states, hellos } = await dropped();
 

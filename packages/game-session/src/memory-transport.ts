@@ -6,8 +6,8 @@
  * Every message is copied with `structuredClone` per receiver, so no two
  * peers ever share an object. `partition` cuts two peers off from each
  * other, as a dropped connection does, and `heal` joins them again;
- * `blip` is a drop only one side notices, and `trouble` what a real
- * network would say was wrong (#707).
+ * `blip` is a drop only one side notices, `stall` and `wake` one that
+ * lasts, and `trouble` what a real network would say was wrong (#707).
  *
  * It keeps more order than the `Transport` contract asks: the others see
  * a peer leave before its `leave()` resolves, where a real network tells
@@ -35,6 +35,13 @@ export interface MemoryNetwork {
    * side notices a connection drop. Nothing is lost, and `peer` sees nothing.
    */
   blip(observer: string, peer: string): void;
+  /**
+   * `observer` alone sees `peer` leave, as when a page stalls past the
+   * transport's timeout (#3772). Nothing is lost, and `peer` sees nothing.
+   */
+  stall(observer: string, peer: string): void;
+  /** `observer` alone sees a `stall`ed `peer` join again. */
+  wake(observer: string, peer: string): void;
   /** `peer` is told `trouble`, as a real transport says it, a microtask from now. */
   trouble(peer: string, trouble: TransportTrouble): void;
 }
@@ -213,6 +220,22 @@ export function createMemoryNetwork(): MemoryNetwork {
         const one = peers.get(observer);
         if (one !== undefined && linked(observer, peer)) {
           fire(one.leaves, peer);
+          fire(one.joins, peer);
+        }
+      });
+    },
+    stall(observer, peer) {
+      queueMicrotask(() => {
+        const one = peers.get(observer);
+        if (one !== undefined && linked(observer, peer)) {
+          fire(one.leaves, peer);
+        }
+      });
+    },
+    wake(observer, peer) {
+      queueMicrotask(() => {
+        const one = peers.get(observer);
+        if (one !== undefined && linked(observer, peer)) {
           fire(one.joins, peer);
         }
       });
