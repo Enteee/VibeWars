@@ -29,6 +29,7 @@ import {
   RANGE_NATURE_RITUAL,
   RANGE_SPIRIT,
   SHADOW_STEP_AWAY_DISTANCE,
+  SPAWN_BUBBLE_RADIUS,
 } from "../distances.js";
 import {
   addPoint,
@@ -58,7 +59,12 @@ import {
   type TeamCount,
   type TeamStanding,
 } from "../match-rules.js";
-import { clampInputDirection, integrateMovement, SHALLOW_WATER_PACE } from "../movement.js";
+import {
+  clampInputDirection,
+  clampToCircle,
+  integrateMovement,
+  SHALLOW_WATER_PACE,
+} from "../movement.js";
 import {
   atObjective,
   deckBlocksSight,
@@ -1640,6 +1646,10 @@ export class MatchSimulation {
 
   #tick = 0;
   #elapsedSeconds = 0;
+  /** `stepHeld` has run and `step` not yet (#3817): skills and attacks are dropped. */
+  #held = false;
+  /** `step` has run once (#3817): the match is under way, and never held again. */
+  #started = false;
   readonly #teamCount: TeamCount;
   #score: MatchScore;
   #outcome: MatchOutcome = MATCH_IN_PROGRESS;
@@ -3652,6 +3662,7 @@ export class MatchSimulation {
     const creature = record?.creature;
     if (
       record === undefined ||
+      this.#held ||
       creature?.ownerId !== ownerId ||
       creature.companionSkillId === undefined
     ) {
@@ -3708,7 +3719,8 @@ export class MatchSimulation {
    */
   public requestAttack(id: string, targetId: string): ActivationCheck | undefined {
     const record = this.#participants.get(id);
-    if (record === undefined) {
+    // Held before the start, an attack or an Interact is dropped (#3817).
+    if (record === undefined || this.#held) {
       return undefined;
     }
     record.lastCommandAt = this.#elapsedSeconds;
@@ -3829,7 +3841,8 @@ export class MatchSimulation {
    */
   public requestSkill(id: string, slot: number): SkillRequest | undefined {
     const record = this.#participants.get(id);
-    if (record === undefined) {
+    // Held before the start, a skill is dropped, not kept for it (#3817).
+    if (record === undefined || this.#held) {
       return undefined;
     }
     record.lastCommandAt = this.#elapsedSeconds;
@@ -4368,12 +4381,38 @@ export class MatchSimulation {
     }
   }
 
+  /**
+   * One tick before the match starts (#3817): everyone may walk, by keys
+   * or a click, within `SPAWN_BUBBLE_RADIUS` of its spawn, and nothing
+   * else runs: no skill, attack, bot, regeneration or map element. The
+   * tick counts; the match clock does not. Once `step` has run, or the
+   * match is over, it does nothing.
+   */
+  public stepHeld(dt: number): StepResult {
+    if (this.phase !== "active" || this.#started) {
+      return this.#result([]);
+    }
+    this.#held = true;
+    this.#tick += 1;
+    for (const record of this.#participants.values()) {
+      this.#stepStart.set(record.id, record.position);
+      if (!record.combatant.dead) {
+        this.advanceMovement(record, record.inputDirection, dt);
+        this.#advanceWalk(record, dt);
+      }
+      this.#holdInBubble(record);
+    }
+    return this.#result([]);
+  }
+
   public step(dt: number): StepResult {
     // A finished match stops simulating, so everyone can read the result.
     if (this.phase !== "active") {
       return this.#result([]);
     }
 
+    this.#held = false;
+    this.#started = true;
     this.#tick += 1;
     this.#elapsedSeconds += dt;
     this.#refillLossCaps();
@@ -10278,6 +10317,36 @@ export class MatchSimulation {
     this.#placeAt(other, from);
     faceToward(record, other.position);
     faceToward(other, record.position);
+  }
+
+  /**
+   * Held before the start (#3817), `record` is back within
+   * `SPAWN_BUBBLE_RADIUS` of its spawn: at the nearest point on the edge
+   * if it can stand there, else at its spawn, on the spawn's layer: a
+   * ramp climbed or a drop-off stepped off in the bubble may have left it
+   * on another. A walk that met the edge ends there; a held key slides
+   * along it, as along a wall.
+   */
+  #holdInBubble(record: ParticipantRecord): void {
+    const inside = clampToCircle(record.position, record.spawn, SPAWN_BUBBLE_RADIUS);
+    if (inside === record.position) {
+      return;
+    }
+    if (!this.standable(inside, record.layer)) {
+      this.#placeAtSpawn(record);
+      return;
+    }
+    this.#placeAt(record, inside);
+    // Pushed back off a body, it may be a hair out again.
+    if (distance(record.position, record.spawn) > SPAWN_BUBBLE_RADIUS + ARRIVE_UNITS) {
+      this.#placeAtSpawn(record);
+    }
+  }
+
+  /** Back where `record` was added (#3817): its spawn, on the layer it spawned on. */
+  #placeAtSpawn(record: ParticipantRecord): void {
+    record.layer = record.spec.layer ?? this.#ground;
+    this.#placeAt(record, record.spawn);
   }
 
   /**

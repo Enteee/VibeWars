@@ -1,4 +1,4 @@
-import { ZERO, add, clampLength, normalize, scale, type Vec2 } from "./vec2.js";
+import { ZERO, add, clampLength, normalize, scale, sub, type Vec2 } from "./vec2.js";
 
 /**
  * Pure movement integration — no network, no clock, no I/O.
@@ -63,4 +63,14 @@ export type ClimbLook = keyof typeof CLIMB_PACE;
  */
 export function clampInputDirection(direction: Vec2): Vec2 {
   return clampLength(direction, 1);
+}
+
+/**
+ * `position`, or the nearest point to it within `radius` of `centre`
+ * (#3817). Inside the circle it is `position` itself, the same object.
+ */
+export function clampToCircle(position: Vec2, centre: Vec2, radius: number): Vec2 {
+  const offset = sub(position, centre);
+  const clamped = clampLength(offset, radius);
+  return clamped === offset ? position : add(centre, clamped);
 }
