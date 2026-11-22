@@ -9301,6 +9301,48 @@ body:has(> .splash) #app {
   }
 }
 
+/* The editors' × and paper-doll spots take a finger's 44 px too (#3777),
+   in room kept for them, so none covers what it sits beside: a skill
+   slot's number row is as tall as its ×, a gear slot and a set tab keep
+   their end free for theirs, and the figure grows until its spots, a
+   finger tall, no longer meet. */
+@media (pointer: coarse) {
+  .skill-slot-clear,
+  .gear-slot-clear,
+  .gear-set-tab-clear {
+    top: 0;
+    inset-inline-end: 0;
+    display: grid;
+    place-items: center;
+    min-block-size: 44px;
+    min-inline-size: 44px;
+  }
+
+  .skill-slot:has(> .skill-slot-clear) .skill-slot-index {
+    min-block-size: calc(44px - 0.4rem);
+  }
+
+  .gear-slot:has(> .gear-slot-clear),
+  .gear-set-tab-cell:has(> .gear-set-tab-clear) > .gear-set-tab {
+    padding-inline-end: 44px;
+  }
+
+  .paper-doll-stage {
+    max-width: 16rem;
+  }
+
+  .paper-doll-hotspot {
+    min-block-size: 44px;
+    min-inline-size: 44px;
+  }
+}
+
+@media (pointer: coarse) and (width > 700px) {
+  .paper-doll {
+    grid-template-columns: minmax(9rem, 16rem) 1fr;
+  }
+}
+
 /* In the top bar, the team size stays ‹ 4v4 › on one row (#3777): stacked
    as on the rail, it would make the bar two rows tall on a phone's side. */
 @media (pointer: coarse) {
