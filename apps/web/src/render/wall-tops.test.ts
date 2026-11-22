@@ -50,8 +50,9 @@ describe("paintWallTopTile", () => {
       fillTriangle: () => undefined,
       fillEllipse: () => undefined,
       lineStyle: () => undefined,
+      strokeEllipse: () => undefined,
       lineBetween: () => undefined,
-    } as OutsidePainter;
+    };
     paintWallTopTile(painter, "basalt", OUTSIDE_TILE);
     expect(fills[0]).toEqual([OUTSIDE_LOOK.basalt.base, 1]);
     expect(fills.at(-1)).toEqual([OUTSIDE_LOOK.basalt.ash, 0.32]);
