@@ -132,8 +132,8 @@ test("upright, the bar stays in view above the list while the page scrolls (#377
     // library scrolling under it.
     expect(Math.abs(box.y - scroll.top)).toBeLessThanOrEqual(1);
     const onTop = await page.evaluate(
-      ([x, y]) => document.elementFromPoint(x, y)?.closest(".editor-skills") !== null,
-      [box.x + box.width / 2, box.y + box.height / 2],
+      ({ x, y }) => document.elementFromPoint(x, y)?.closest(".editor-skills") !== null,
+      { x: box.x + box.width / 2, y: box.y + box.height / 2 },
     );
     expect(onTop).toBe(true);
   }
