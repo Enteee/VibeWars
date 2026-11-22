@@ -522,7 +522,13 @@ test.describe("the first-time tutorial (#3218)", () => {
         const [cx = 0, cy = 0] = ((await stage.getAttribute("data-camera")) ?? "")
           .split(",")
           .map(Number);
-        expect(Math.hypot(cx - pocketX, cy - pocketY)).toBeLessThan(250);
+        const d = Math.hypot(cx - pocketX, cy - pocketY);
+        // Each step logged, so a red run shows where the player stopped.
+        console.log(`rat pocket walk: camera ${String(cx)},${String(cy)} d ${String(d)}`);
+        expect(
+          d,
+          `camera ${String(cx)},${String(cy)}, pocket ${String(pocketX)},${String(pocketY)}`,
+        ).toBeLessThan(250);
       }).toPass({ timeout: 90_000 });
       const fought = "Well fought! Every skill has its job.";
       await expect(async () => {
