@@ -43,6 +43,12 @@ fs.appendFileSync(path.join(state, "calls.log"), argv.join(" ") + "\\n");
 fs.appendFileSync(path.join(state, "env.log"), (process.env.GH_CONFIG_DIR ?? "-") + " " + (process.env.GH_TOKEN ?? "-") + " " + (process.env.GITHUB_TOKEN ?? "-") + "\\n");
 const remaining = Number(fs.readFileSync(path.join(state, "remaining"), "utf8"));
 const [group, sub] = argv;
+// A call that never ends, as on a stalled network: its pid, then nothing (#3803).
+if (fs.existsSync(path.join(state, "hang"))) {
+  fs.appendFileSync(path.join(state, "hung-pids"), String(process.pid) + "\n");
+  setTimeout(() => process.exit(0), 30000);
+  return;
+}
 if (group === "api" && sub === "user") { console.log("vibewars-company"); process.exit(0); }
 // Open release tracking issues (#2707), as the test planted them.
 if (group === "api" && sub.startsWith("search/issues?")) {
@@ -465,6 +471,23 @@ async function startHubd(remaining, before, extra) {
     /** Start another hubd on the same root, and wait for it to give up. */
     secondHubd() {
       return spawnSync(process.execPath, [HUBD], { env, encoding: "utf8", timeout: 15_000 });
+    },
+    /** SIGTERM hubd, as its host does, and wait for it to exit. */
+    async stop() {
+      const exited = new Promise((resolve) => child.once("exit", resolve));
+      child.kill("SIGTERM");
+      await exited;
+    },
+    /** Every gh call from here on hangs until hubd ends it. */
+    hangGh() {
+      fs.writeFileSync(path.join(state, "hang"), "");
+    },
+    /** The pids of the gh calls that hung. */
+    hungPids() {
+      const file = path.join(state, "hung-pids");
+      return fs.existsSync(file)
+        ? fs.readFileSync(file, "utf8").split("\n").filter(Boolean).map(Number)
+        : [];
     },
     /** What hubd has logged so far. */
     stderr() {
@@ -1649,6 +1672,27 @@ describe("hubd running once, and saying how it is (#23)", () => {
 
     expect(second.status).toBe(1);
     expect(second.stderr).toContain("another hubd holds");
+  }, 30_000);
+
+  it("ends every child still running when it is stopped (#3803)", async () => {
+    const hubd = await startHubd(5000);
+    hubd.hangGh();
+    // Never answered: hubd stops first.
+    hubd.request("developer", "gh", ["issue", "view", "7"]).catch(() => undefined);
+    await until(() => hubd.hungPids().length > 0, "a gh call to hang");
+
+    await hubd.stop();
+
+    /** @param {number} pid */
+    const gone = (pid) => {
+      try {
+        process.kill(pid, 0);
+        return false;
+      } catch {
+        return true;
+      }
+    };
+    await until(() => hubd.hungPids().every(gone), "the hung gh calls to be gone");
   }, 30_000);
 
   it("writes a heartbeat with its pid, start, and what it served and refused", async () => {

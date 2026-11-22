@@ -448,6 +448,51 @@ function killGroup(child) {
 }
 
 /**
+ * Every child still running, so stopping hubd ends them too: a detached child
+ * outlives its parent, and one in flight would go on writing into hubd's
+ * directories after it is gone (#3803).
+ *
+ * @type {Set<import("node:child_process").ChildProcess>}
+ */
+const liveChildren = new Set();
+
+/**
+ * Counts `child` among `liveChildren` until it ends.
+ *
+ * @param {import("node:child_process").ChildProcess} child
+ * @returns {void}
+ */
+function track(child) {
+  liveChildren.add(child);
+  const forget = () => {
+    liveChildren.delete(child);
+  };
+  child.on("close", forget);
+  child.on("error", forget);
+}
+
+/**
+ * SIGKILLs every live child's group, at once: on stop there is no grace to
+ * give, and a killed process writes nothing more.
+ *
+ * @returns {void}
+ */
+function killLiveChildren() {
+  for (const child of liveChildren) {
+    const pid = child.pid;
+    if (pid === undefined) {
+      continue;
+    }
+    try {
+      process.kill(-pid, "SIGKILL");
+    } catch {
+      // The group is already gone.
+    }
+  }
+  liveChildren.clear();
+}
+
+/**
  * @param {string} file
  * @param {string[]} args
  * @param {string} cwd
@@ -462,6 +507,7 @@ function run(file, args, cwd, extraEnv = {}) {
       stdio: ["ignore", "pipe", "pipe"],
       detached: true,
     });
+    track(child);
     let timedOut = false;
     const deadline = setTimeout(() => {
       timedOut = true;
@@ -801,6 +847,7 @@ function gitBytes(args) {
       stdio: ["ignore", "pipe", "ignore"],
       detached: true,
     });
+    track(child);
     let timedOut = false;
     const deadline = setTimeout(() => {
       timedOut = true;
@@ -6146,6 +6193,7 @@ async function main() {
   /** @param {string} why */
   const stop = (why) => {
     console.error(`hubd: stopping on ${why}`);
+    killLiveChildren();
     webCache?.flush();
     fs.rmSync(ALIVE, { force: true });
     releaseLock(LOCK);
