@@ -187,9 +187,7 @@ test("#1766: two parties of two queue for Team Arena, meet, and play their own b
     await expectPlays(bea, QUAD[1]);
     await expectPlays(cid, QUAD[0]);
     await expectPlays(dot, QUAD[1]);
-    // Four a side: the party's two and two bots. Ann in front, or her
-    // party window is the frame before Bea joined (#2777).
-    await ann.bringToFront();
+    // Four a side: the party's two and two bots.
     await expect(ann.locator(".party-row-bot:visible")).toHaveCount(2);
     await expect(ann.locator(".party-row-name")).toContainText(["Bea"]);
 
