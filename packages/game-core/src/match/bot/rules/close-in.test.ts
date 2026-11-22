@@ -234,6 +234,12 @@ describe("close-in under a hold plan (#3831)", () => {
     );
   });
 
+  it("pushes on a team with a human, whom holding would leave alone (#3833)", () => {
+    const bot = (id: string): boolean => id !== "mate";
+    const intent = closeIn.decide(ruleFor(sim, "bot", { plan: "hold" }, { isBot: bot }));
+    expect(intent?.moveTo).toEqual(vec2(1100, 400));
+  });
+
   it("pushes where it has no route to the hold point", () => {
     const walk = (to: Vec2): number =>
       distance(to, centre) <= REGROUP_SPREAD ? Number.POSITIVE_INFINITY : 1;
