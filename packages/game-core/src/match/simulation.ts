@@ -298,6 +298,7 @@ import {
   type BotLever,
   type BotObjectives,
   type HighGroundSpot,
+  type TeamSpawn,
   type ResetPolicy,
   idleAt,
 } from "./behaviour.js";
@@ -5328,6 +5329,8 @@ export class MatchSimulation {
         const route = this.#paths.find(record.position, record.layer, to, layer);
         return route === undefined ? Number.POSITIVE_INFINITY : walkLength(record.position, route);
       },
+      teamSpawn: (team) => this.#teamSpawn(team),
+      standableNear: (point, layer) => nearestStandable(this.#graphOn(layer), point),
       leverHolder: (targetId) => {
         for (const other of this.#participants.values()) {
           if (
@@ -10619,6 +10622,35 @@ export class MatchSimulation {
       this.#altarState.holder === record.combatant.team
       ? { at: field.altar, layer: field.altarLayer }
       : this.#spawnPlace(record);
+  }
+
+  /**
+   * Where `team`'s players and bots start, on average, on the layer its
+   * first starts on (#3831): from their spawns, never where they stand.
+   * Neither a creature nor a guard or other NPC counts.
+   */
+  #teamSpawn(team: number): TeamSpawn | undefined {
+    let x = 0;
+    let y = 0;
+    let members = 0;
+    let layer: number | undefined;
+    for (const record of this.#participants.values()) {
+      if (
+        record.combatant.team !== team ||
+        !countsForTeam(record) ||
+        (record.behaviour !== undefined && record.behaviour.kind !== "play-build")
+      ) {
+        continue;
+      }
+      const place = this.#spawnPlace(record);
+      x += place.at.x;
+      y += place.at.y;
+      members += 1;
+      layer ??= place.layer;
+    }
+    return layer === undefined
+      ? undefined
+      : { point: vec2(x / members, y / members), layer, members };
   }
 
   /** Where `record` starts, and is reset to: its spawn, on its spec's layer or the ground. */
