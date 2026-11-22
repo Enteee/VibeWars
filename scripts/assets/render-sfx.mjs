@@ -12,7 +12,7 @@
  *
  * The header is the first line of the source:
  *
- *   // sfx cast-target: 0.14 s, peak -4 dBFS
+ *   // sfx heal: 0.32 s, peak -12 dBFS
  *
  * An id whose source hash matches `<id>.mp3.hash` beside its output is
  * skipped. A source that fails to evaluate, or renders silence or off its
