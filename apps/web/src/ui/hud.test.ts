@@ -751,6 +751,7 @@ describe("carriedBundle (#1225, #1374)", () => {
     score: [0, 0],
     elapsedSeconds: 0,
     phase: "active",
+    preMatch: null,
     winningTeam: undefined,
     endReason: undefined,
     projectiles: [],

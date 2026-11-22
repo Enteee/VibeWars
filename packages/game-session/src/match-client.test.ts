@@ -949,6 +949,7 @@ describe("connectMatch, before the host's match listens (#1805)", () => {
       nowSeconds: () => 0,
       signetOf: testSignet,
       recordReplay: false,
+      preMatch: null,
     });
   }
 

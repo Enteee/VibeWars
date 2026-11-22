@@ -602,6 +602,10 @@ export const en = {
   "hud.outcomeVictory": "Victory",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (dead)",
+  "hud.preMatchStartingAnyway":
+    "Waiting for players: {joined}/{expected}, starting anyway in {seconds} s",
+  "hud.preMatchStartsIn": "Match starts in {seconds}",
+  "hud.preMatchWaiting": "Waiting for players: {joined}/{expected}",
   "hud.priest": "priest",
   "hud.priestDead": "priest (dead)",
   "hud.raise": "raise {clock}",

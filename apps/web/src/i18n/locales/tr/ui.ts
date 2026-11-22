@@ -601,6 +601,10 @@ export default {
   "hud.outcomeVictory": "Zafer",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (ölü)",
+  "hud.preMatchStartingAnyway":
+    "Oyuncular bekleniyor: {joined}/{expected}, {seconds} sn içinde yine de başlıyor",
+  "hud.preMatchStartsIn": "Maç {seconds} içinde başlıyor",
+  "hud.preMatchWaiting": "Oyuncular bekleniyor: {joined}/{expected}",
   "hud.priest": "rahip",
   "hud.priestDead": "rahip (ölü)",
   "hud.raise": "diriliş {clock}",

@@ -654,6 +654,10 @@ export default {
   "hud.outcomeVictory": "Víťazstvo",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (mŕtvy)",
+  "hud.preMatchStartingAnyway":
+    "Čaká sa na hráčov: {joined}/{expected}, začne aj tak o {seconds} s",
+  "hud.preMatchStartsIn": "Zápas začne o {seconds}",
+  "hud.preMatchWaiting": "Čaká sa na hráčov: {joined}/{expected}",
   "hud.priest": "kňaz",
   "hud.priestDead": "kňaz (mŕtvy)",
   "hud.raise": "vzkriesenie {clock}",

@@ -552,6 +552,10 @@ export default {
   "hud.outcomeVictory": "Chiến thắng",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (đã chết)",
+  "hud.preMatchStartingAnyway":
+    "Đang chờ người chơi: {joined}/{expected}, vẫn bắt đầu sau {seconds} giây",
+  "hud.preMatchStartsIn": "Trận đấu bắt đầu sau {seconds}",
+  "hud.preMatchWaiting": "Đang chờ người chơi: {joined}/{expected}",
   "hud.priest": "tư tế",
   "hud.priestDead": "tư tế (đã chết)",
   "hud.raise": "hồi sinh {clock}",
