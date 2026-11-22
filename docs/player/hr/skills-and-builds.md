@@ -170,7 +170,10 @@ s praznim likom na svakom mjestu. Nikad ne dodaješ ni ne uklanjaš člana,
 nego ga zamjenjuješ. Svaki redak prikazuje lika člana s oružjem
 koje drži, točkom za svaki komplet oružja kad ih ima više, njegovim
 najvećim zdravljem i energijom te njegovih osam vještina; povuci redak za ⠿ da
-promijeniš redoslijed. Ploča desno je biblioteka Uređivača likova,
+promijeniš redoslijed. Drži **Shift** dok ispuštaš redak na drugog člana
+da umjesto toga kopiraš cijeli njegov sastav na tog člana; redak koji si povukao
+ostaje kakav je bio.
+Ploča desno je biblioteka Uređivača likova,
 s karticom **Moji likovi** ispred **Vještine** i **Oprema**. Na **Moji likovi** povuci
 jednog svog lika na člana da taj član postane njegova kopija.
 Kopija pripada timu: mijenjanje nje ili lika od kojeg je nastala

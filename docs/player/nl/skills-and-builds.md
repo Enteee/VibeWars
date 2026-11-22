@@ -170,7 +170,10 @@ een leeg personage op elke plek. Je voegt nooit een lid toe of verwijdert er een
 je vervangt er een. Elke rij toont het personage van het lid met de wapens die
 het vasthoudt, een stip voor elke wapenset als het er meer dan één heeft, zijn
 maximale Gezondheid en Energie, en zijn acht skills; sleep een rij aan zijn ⠿ om
-de volgorde te wijzigen. Het paneel rechts is de bibliotheek van de
+de volgorde te wijzigen. Houd **Shift** ingedrukt als je een rij op een ander
+lid laat vallen om in plaats daarvan zijn hele build naar dat lid te kopiëren; de
+rij die je sleepte blijft zoals hij was.
+Het paneel rechts is de bibliotheek van de
 Personagebouwer, met een tab **Mijn personages** voor **Skills** en **Uitrusting**.
 Sleep op **Mijn personages** een van je personages op een lid om van dat lid een
 kopie ervan te maken. Een kopie is van het team zelf: als je hem wijzigt, of het

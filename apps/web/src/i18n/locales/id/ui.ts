@@ -1259,6 +1259,7 @@ export default {
   "teamEditor.professions": "Profesi",
   "teamEditor.professionsTitle": "profesi tim",
   "teamEditor.replaceMember": "Ganti {member} dengan {character}",
+  "teamEditor.copyMember": "Shift: Salin build {source} ke {target}",
   "teamEditor.save": "Simpan",
   "teamEditor.saveTitle": "Simpan tim ini",
   "teamEditor.saveTitleProblem": "Simpan tim ini (ada masalah: {problem})",

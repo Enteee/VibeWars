@@ -1083,7 +1083,7 @@ test("a Team Build is made at the sidebar's size, which its editor shows locked 
   await expect(teamRows(page)).toHaveCount(0);
 });
 
-test("the team grid: a full team, eight cells and Health and Energy a member, drag to reorder (#574, #2225)", async ({
+test("the team grid: a full team, eight cells and Health and Energy a member, drag to reorder, Shift-drag to copy (#574, #2225, #3826)", async ({
   page,
 }) => {
   await saveCharacters(page, ["Alpha", "Bravo", "Charlie"]);
@@ -1121,6 +1121,33 @@ test("the team grid: a full team, eight cells and Health and Energy a member, dr
   await expect(memberNames(page)).toHaveText(["Bravo", "Charlie", "Alpha", "New Character"]);
   await memberRows(page).nth(2).dragTo(memberRows(page).first());
   await expect(memberNames(page)).toHaveText(["Alpha", "Bravo", "Charlie", "New Character"]);
+
+  // With Shift, Alpha dropped on the last member copies its build there (#3826):
+  // Alpha stays, nothing moves.
+  const skills = (row: number) =>
+    memberRows(page)
+      .nth(row)
+      .locator(".team-skill")
+      .evaluateAll((cells) => cells.map((c) => c.getAttribute("data-skill-id")));
+  const alphaSkills = await skills(0);
+  expect(alphaSkills.some((id) => id !== null)).toBe(true);
+  // Shift is pressed once the drag is under way: Chromium starts no drag on a
+  // Shift-press that is not over an image or a link.
+  const target = await memberRows(page).nth(3).boundingBox();
+  if (target === null) {
+    throw new Error("no last member row");
+  }
+  await memberRows(page).first().locator(".team-row-order").hover();
+  await page.mouse.down();
+  await page.mouse.move(target.x + target.width / 2, target.y + 4, { steps: 5 });
+  await page.keyboard.down("Shift");
+  await page.mouse.move(target.x + target.width / 2, target.y + target.height / 2, { steps: 5 });
+  await expect(page.locator(".drop-reason")).toContainText("Copy Alpha's build onto New Character");
+  await page.mouse.up();
+  await page.keyboard.up("Shift");
+  await expect(memberNames(page)).toHaveText(["Alpha", "Bravo", "Charlie", "Alpha"]);
+  expect(await skills(3)).toEqual(alphaSkills);
+  expect(await skills(0)).toEqual(alphaSkills);
 });
 
 test("a skill dragged from the Skills tab equips on a member's slot; a refused drop changes nothing (#2225)", async ({
