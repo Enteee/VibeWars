@@ -1,3 +1,5 @@
+import type { CapePattern } from "../cosmetics/catalog.js";
+
 import type { AttackFrame } from "./attack-clock.js";
 import {
   BODY_EDGE,
@@ -13,7 +15,9 @@ import {
   type CapeMotion,
   type CapeShape,
 } from "./cape-motion.js";
+import { capePatternShapes } from "./cape-pattern.js";
 import type { CapeLook, EmblemPart } from "./cape-shape.js";
+import { paintSwingRibbon, type SwingRibbon } from "./cosmetic-trail.js";
 import { multiplyColour } from "./lighting-model.js";
 import { weaponMarkLayout } from "./weapon-mark.js";
 import type { Point } from "./weapon-mark-geometry.js";
@@ -62,12 +66,16 @@ export interface StandingBody {
   readonly cape: WornCape | undefined;
   /** What the light where it stands multiplies its disc by (ADR-0052). */
   readonly tint?: number | undefined;
+  /** The weapon trail cosmetic behind a melee swing (#3579), in its colour; `undefined` for none. */
+  readonly swingTrail?: { readonly ribbon: SwingRibbon; readonly colour: number } | undefined;
 }
 
 /** A cape on a body: its look and its motion, which the caller steps. */
 export interface WornCape {
   readonly look: CapeLook;
   readonly motion: CapeMotion;
+  /** The cape pattern cosmetic on it (#3579); `undefined` for a plain cape. */
+  readonly pattern: CapePattern | undefined;
 }
 
 /** The cape's outline, as wide as the study draws it, and its trim's. */
@@ -86,15 +94,15 @@ export function paintStandingBody(painter: Painter, body: StandingBody, marks = 
 }
 
 /**
- * The cape, the disc, its edge, the self rim on your own, then the cape's
- * band on the rim: what lies under the body glyph.
+ * The cape, the disc, its edge, the self rim on your own, the cape's band
+ * on the rim, then a swing's ribbon (#3579): what lies under the body glyph.
  */
 export function paintBodyDisc(painter: Painter, body: StandingBody): void {
   const { x, y, r, cape } = body;
   const shape =
     cape === undefined ? undefined : capeMotionShape(cape.motion, body, cape.look.emblem);
   if (cape !== undefined && shape !== undefined) {
-    paintCape(painter, shape, cape.look);
+    paintCape(painter, shape, cape.look, cape.pattern);
   }
   const team = teamColour(body.team);
   painter.fillStyle(body.tint === undefined ? team : multiplyColour(team, body.tint), 1);
@@ -111,16 +119,37 @@ export function paintBodyDisc(painter: Painter, body: StandingBody): void {
   if (cape !== undefined && shape !== undefined) {
     paintCapeBand(painter, shape.band, cape.look);
   }
+  // Last on the body layer, so the rings and condition cues the scene
+  // draws next, and every mark, lie over it (ADR-0056 §4).
+  if (body.swingTrail !== undefined) {
+    paintSwingRibbon(painter, body.swingTrail.ribbon, body.swingTrail.colour);
+  }
 }
 
 /**
  * The cape (#1422, #1699) under the disc, which covers its root: the cloth, its
+ * pattern in the trim's colour and the emblem's field over it (#3579), its
  * `edge` outline, the trim along the hem, then the emblem grid in its own colours.
  * Folded, all of it hides under the disc but the emblem's edge.
  */
-function paintCape(painter: Painter, shape: CapeShape, cape: CapeLook): void {
+function paintCape(
+  painter: Painter,
+  shape: CapeShape,
+  cape: CapeLook,
+  pattern: CapePattern | undefined,
+): void {
   painter.fillStyle(cape.main, 1);
   painter.fillPoints(shape.cloth);
+  if (pattern !== undefined) {
+    painter.fillStyle(cape.trim, 1);
+    for (const piece of capePatternShapes(pattern, shape.tab)) {
+      painter.fillPoints(piece);
+    }
+    if (shape.emblemField.length > 0) {
+      painter.fillStyle(cape.main, 1);
+      painter.fillPoints(shape.emblemField);
+    }
+  }
   painter.lineStyle(CAPE_EDGE_WIDTH, BODY_EDGE, 1);
   tracePoints(painter, shape.cloth, true);
   painter.lineStyle(CAPE_TRIM_WIDTH, cape.trim, 1);

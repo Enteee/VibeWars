@@ -101,7 +101,8 @@ export function figureBody(
     weaponId: appearance.weaponId,
     offhandId: appearance.offhandId,
     frame: REST_FRAME,
-    cape: cape === undefined ? undefined : { look: cape, motion: newCapeMotion() },
+    cape:
+      cape === undefined ? undefined : { look: cape, motion: newCapeMotion(), pattern: undefined },
   };
 }
 

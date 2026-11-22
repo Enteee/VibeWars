@@ -1,27 +1,31 @@
 # Cosmetici
 
-I cosmetici cambiano l’aspetto del tuo nome, e del terreno sotto i tuoi piedi, agli occhi degli altri giocatori. Sono puramente estetici: nessun cosmetico cambia il modo in cui si gioca, e nessuno copre mai un segnale che leggi in combattimento. Appartengono alla tua chiave giocatore, quindi tutti i tuoi personaggi li condividono.
+I cosmetici cambiano l’aspetto del tuo nome, del terreno sotto i tuoi piedi, dei tuoi fendenti e del tuo mantello agli occhi degli altri giocatori. Sono puramente estetici: nessun cosmetico cambia il modo in cui si gioca, e nessuno copre mai un segnale che leggi in combattimento. Appartengono alla tua chiave giocatore, quindi tutti i tuoi personaggi li condividono.
 
 ## Come ottenerli
 
 Ottieni i cosmetici con vittorie classificate verificate, così come le conta la classifica
 pubblica. Nessuno li regala: chiunque può controllare la classifica e vedere cosa hai ottenuto.
 
-| Oggetto                                              | Si ottiene con                  |
-| ---------------------------------------------------- | ------------------------------- |
-| Cornice giada e il titolo Sfidante                   | 5 vittorie classificate         |
-| Aura di muschio, Scia di muschio                     | 5 vittorie classificate         |
-| Cornice rosa e il titolo Veterano                    | 25 vittorie classificate        |
-| Aura di brace, Scia di brace                         | 25 vittorie classificate        |
-| Luce ascendente, Dissolvenza in cenere               | 25 vittorie classificate        |
-| Aura di brina, Scia di brina                         | 75 vittorie classificate        |
-| Vortice di foglie, Dissolvenza in nebbia             | 75 vittorie classificate        |
-| Cornice verde acqua e il titolo Signore della guerra | 200 vittorie classificate       |
-| Pioggia di petali, Dissolvenza in schegge            | 200 vittorie classificate       |
-| Aura di luce stellare, Scia di luce stellare         | 500 vittorie classificate       |
-| Pioggia di stelle, Dissolvenza in polvere di stelle  | 500 vittorie classificate       |
-| Cornice orchidea e il titolo Campione                | Un posto nella Top 100          |
-| Fiamma della serie                                   | 3 vittorie classificate di fila |
+| Oggetto                                                                 | Si ottiene con                  |
+| ----------------------------------------------------------------------- | ------------------------------- |
+| Cornice giada e il titolo Sfidante                                      | 5 vittorie classificate         |
+| Aura di muschio, Scia di muschio, Fendente di muschio                   | 5 vittorie classificate         |
+| Mantello a strisce                                                      | 5 vittorie classificate         |
+| Cornice rosa e il titolo Veterano                                       | 25 vittorie classificate        |
+| Aura di brace, Scia di brace, Fendente di brace                         | 25 vittorie classificate        |
+| Mantello a scaglioni                                                    | 25 vittorie classificate        |
+| Luce ascendente, Dissolvenza in cenere                                  | 25 vittorie classificate        |
+| Aura di brina, Scia di brina, Fendente di brina                         | 75 vittorie classificate        |
+| Vortice di foglie, Dissolvenza in nebbia                                | 75 vittorie classificate        |
+| Cornice verde acqua e il titolo Signore della guerra                    | 200 vittorie classificate       |
+| Mantello inquartato                                                     | 200 vittorie classificate       |
+| Pioggia di petali, Dissolvenza in schegge                               | 200 vittorie classificate       |
+| Aura di luce stellare, Scia di luce stellare, Fendente di luce stellare | 500 vittorie classificate       |
+| Pioggia di stelle, Dissolvenza in polvere di stelle                     | 500 vittorie classificate       |
+| Cornice orchidea e il titolo Campione                                   | Un posto nella Top 100          |
+| Mantello stellato                                                       | Un posto nella Top 100          |
+| Fiamma della serie                                                      | 3 vittorie classificate di fila |
 
 Gli oggetti della Top 100 e la fiamma durano solo finché li mantieni. Esci dalla Top 100, o perdi
 una partita classificata, e tornano all’aspetto predefinito finché non li ottieni di nuovo. Ciò che
@@ -30,6 +34,10 @@ hai scelto resta scelto.
 ## A terra
 
 Un’aura al suolo è un anello tenue ai tuoi piedi. Una scia di passi lascia piccole particelle dove cammini, che svaniscono in un attimo. Entrambe sono disegnate sotto ogni anello, segno e avviso, e non usano mai un colore di squadra. Se il tuo sistema chiede movimenti ridotti, l’aura resta ferma e nessuna scia viene disegnata.
+
+## Sull’arma e sul mantello
+
+Una scia dell’arma è un nastro dietro la tua arma quando un attacco in mischia colpisce, e svanisce entro un quinto di secondo dal colpo. Archi, lance, bacchette e bastoni non ne hanno, e nessun incantesimo o lancio ne mostra mai una. Un motivo del mantello mette strisce, scaglioni, quarti o stelle sul tuo mantello gilda nel suo colore di bordo, e il tuo emblema resta sempre sopra, nitido come su un mantello semplice. Se il tuo sistema chiede movimenti ridotti, nessuna scia dell’arma viene disegnata.
 
 ## Tornare e cadere
 
