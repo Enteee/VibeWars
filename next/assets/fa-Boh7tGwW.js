@@ -1,0 +1,19 @@
+var e=`# راهنما
+
+صفحه‌های پنجرهٔ راهنمای درون بازی، به همان ترتیبی که انتخابگر صفحه فهرستشان می‌کند. هر
+صفحهٔ این پوشه دقیقاً یک بار اینجا آمده است.
+
+- [شروع کار](getting-started.md)
+- [کنترل‌ها](controls.md)
+- [اصول نبرد](combat-basics.md)
+- [مهارت‌ها و بیلدها](skills-and-builds.md)
+- [تجهیزات](equipment.md)
+- [حالت‌ها](modes.md)
+- [رتبه‌بندی](ranking.md)
+- [آرایه‌ها](cosmetics.md)
+- [عناصر جهان](world-elements.md)
+- [بات‌ها](bots.md)
+- [واژه‌نامه](glossary.md)
+- [حمایت از VibeWars](support.md)
+`;export{e as default};
+//# sourceMappingURL=fa-Boh7tGwW.js.map
