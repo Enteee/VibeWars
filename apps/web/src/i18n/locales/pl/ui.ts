@@ -1732,11 +1732,15 @@ export default {
   "tutorial.menu.spec.gear":
     "Pancerz, runy i insygnia: wybierz część na postaci, potem co na nią trafi.",
   "tutorial.menu.spec.gearDone": "Zmień część ekwipunku",
-  "tutorial.menu.spec.open": "Otwórz Postacie, a potem postać, by zmienić jej build.",
-  "tutorial.menu.spec.openDone": "Otwórz postać",
+  "tutorial.menu.spec.new": "Stwórz własną: naciśnij „{newCharacter}”.",
+  "tutorial.menu.spec.newDone": "Naciśnij „{newCharacter}”",
+  "tutorial.menu.spec.open": "Otwórz {characters}.",
+  "tutorial.menu.spec.openDone": "Otwórz {characters}",
   "tutorial.menu.spec.professions":
-    "Główna profesja daje ci atrybuty i umiejętności; druga pożycza ci też swoje umiejętności.",
+    "Główna profesja to to, kim jesteś: jej umiejętności i wszystkie jej atrybuty, łącznie z tym, który ma tylko ona ({warrior}: {strength}; {monk}: {divineFavor}). Druga dodaje swoje umiejętności i pozostałe atrybuty, nigdy ten szczególny: {warrior}/{monk} może leczyć atrybutem „{healingPrayers}”, ale nie ma „{divineFavor}”.",
   "tutorial.menu.spec.professionsDone": "Zmień profesję",
+  "tutorial.menu.spec.random":
+    "To twoja postać z etykietą „{random}”: gra wylosowała ją dla ciebie, gotową do gry. Nie możesz jej zmienić, ale „{reroll}” losuje nową, a „{clone}” daje ci kopię do edycji.",
   "tutorial.menu.spec.save": "Zapisz postać, by zachować nowy build.",
   "tutorial.menu.spec.saveDone": "Zapisz",
   "tutorial.menu.spec.skills":

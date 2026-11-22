@@ -1481,10 +1481,15 @@ export default {
   "tutorial.menu.spec.attributesDone": "更改一项属性",
   "tutorial.menu.spec.gear": "护甲、符文和徽记：在人偶上选一个部位，再选要装上的东西。",
   "tutorial.menu.spec.gearDone": "更换一件装备",
-  "tutorial.menu.spec.open": "打开「角色」，再打开一个角色来修改配置。",
-  "tutorial.menu.spec.openDone": "打开一个角色",
-  "tutorial.menu.spec.professions": "主职业决定你的属性和技能；副职业也会借给你它的技能。",
+  "tutorial.menu.spec.new": "创建你自己的角色:点击“{newCharacter}”。",
+  "tutorial.menu.spec.newDone": "点击“{newCharacter}”",
+  "tutorial.menu.spec.open": "打开{characters}。",
+  "tutorial.menu.spec.openDone": "打开{characters}",
+  "tutorial.menu.spec.professions":
+    "主职业就是你本身:它的技能和它的全部属性,包括只有它才有的那项({warrior}:{strength};{monk}:{divineFavor})。副职业加上它的技能和其他属性,但绝不包括那项特殊属性:{warrior}/{monk}可以用{healingPrayers}治疗,但没有{divineFavor}。",
   "tutorial.menu.spec.professionsDone": "切换职业",
+  "tutorial.menu.spec.random":
+    "这是你标着“{random}”的角色:游戏为你随机生成,随时可以上阵。你不能修改它,但“{reroll}”会重新随机一个,“{clone}”会给你一份可编辑的副本。",
   "tutorial.menu.spec.save": "保存角色，保留新的配置。",
   "tutorial.menu.spec.saveDone": "保存",
   "tutorial.menu.spec.skills": "在列表中展开一个分组，然后把技能拖到技能栏的格子里替换。",

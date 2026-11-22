@@ -1722,11 +1722,15 @@ export default {
   "tutorial.menu.spec.gear":
     "Броня, руны и инсигнии: выбери часть на фигуре, потом что на неё надеть.",
   "tutorial.menu.spec.gearDone": "Смени часть снаряжения",
-  "tutorial.menu.spec.open": "Открой «Персонажи», затем персонажа, чтобы изменить его билд.",
-  "tutorial.menu.spec.openDone": "Открой персонажа",
+  "tutorial.menu.spec.new": "Сделай своего: нажми «{newCharacter}».",
+  "tutorial.menu.spec.newDone": "Нажми «{newCharacter}»",
+  "tutorial.menu.spec.open": "Открой {characters}.",
+  "tutorial.menu.spec.openDone": "Открой {characters}",
   "tutorial.menu.spec.professions":
-    "Основная профессия даёт характеристики и навыки; вторая тоже одалживает свои навыки.",
+    "Основная профессия — это то, кто ты: её навыки и все её характеристики, включая ту, что есть только у неё ({warrior}: {strength}; {monk}: {divineFavor}). Вторая добавляет свои навыки и остальные характеристики, но никогда не ту особую: {warrior}/{monk} может лечить через «{healingPrayers}», но «{divineFavor}» у него нет.",
   "tutorial.menu.spec.professionsDone": "Смени профессию",
+  "tutorial.menu.spec.random":
+    "Это твой персонаж с меткой «{random}»: игра собрала его для тебя случайно, он готов к бою. Изменить его нельзя, но «{reroll}» соберёт нового, а «{clone}» даст копию для правки.",
   "tutorial.menu.spec.save": "Сохрани персонажа, чтобы новый билд остался.",
   "tutorial.menu.spec.saveDone": "Сохранить",
   "tutorial.menu.spec.skills":

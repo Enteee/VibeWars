@@ -1603,11 +1603,15 @@ export default {
   "tutorial.menu.spec.gear":
     "Броня, руни и инсигнии: избери част на фигурата, после какво да сложиш на нея.",
   "tutorial.menu.spec.gearDone": "Смени част от екипировката",
-  "tutorial.menu.spec.open": "Отвори „Герои“, после отвори герой, за да промениш билда му.",
-  "tutorial.menu.spec.openDone": "Отвори герой",
+  "tutorial.menu.spec.new": "Направи свой герой: натисни „{newCharacter}“.",
+  "tutorial.menu.spec.newDone": "Натисни „{newCharacter}“",
+  "tutorial.menu.spec.open": "Отвори {characters}.",
+  "tutorial.menu.spec.openDone": "Отвори {characters}",
   "tutorial.menu.spec.professions":
-    "Основната професия дава атрибутите и уменията ти; втората ти дава и своите умения.",
+    "Основната професия е това, което си: нейните умения и всичките ѝ атрибути, включително този, който има само тя ({warrior}: {strength}; {monk}: {divineFavor}). Втората добавя своите умения и другите си атрибути, но никога този специален: {warrior}/{monk} може да лекува с „{healingPrayers}“, но няма „{divineFavor}“.",
   "tutorial.menu.spec.professionsDone": "Смени професия",
+  "tutorial.menu.spec.random":
+    "Това е твоят герой с етикет „{random}“: играта го изтегли за теб, готов за игра. Не можеш да го променяш, но „{reroll}“ тегли нов, а „{clone}“ ти дава копие за редактиране.",
   "tutorial.menu.spec.save": "Запази героя си, за да остане новият билд.",
   "tutorial.menu.spec.saveDone": "Запази",
   "tutorial.menu.spec.skills":

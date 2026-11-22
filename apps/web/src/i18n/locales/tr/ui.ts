@@ -1600,11 +1600,15 @@ export default {
   "tutorial.menu.spec.gear":
     "Zırh, rünler ve nişanlar: figürde bir parça seç, sonra üstüne ne geleceğini.",
   "tutorial.menu.spec.gearDone": "Bir teçhizat parçasını değiştir",
-  "tutorial.menu.spec.open": "Karakterler'i aç, sonra yapısını değiştirmek için bir karakter aç.",
-  "tutorial.menu.spec.openDone": "Bir karakter aç",
+  "tutorial.menu.spec.new": 'Kendi karakterini yap: "{newCharacter}" düğmesine bas.',
+  "tutorial.menu.spec.newDone": '"{newCharacter}" düğmesine bas',
+  "tutorial.menu.spec.open": "{characters} ekranını aç.",
+  "tutorial.menu.spec.openDone": "{characters} ekranını aç",
   "tutorial.menu.spec.professions":
-    "Ana mesleğin niteliklerini ve becerilerini verir; ikincil mesleğin de becerilerini ödünç verir.",
+    'Ana mesleğin sensin: becerileri ve tüm nitelikleri, yalnızca onda olan nitelik de dahil ({warrior}: {strength}; {monk}: {divineFavor}). İkincil meslek becerilerini ve diğer niteliklerini ekler, o özel niteliği asla: bir {warrior}/{monk}, "{healingPrayers}" ile iyileştirebilir ama "{divineFavor}" niteliği yoktur.',
   "tutorial.menu.spec.professionsDone": "Bir meslek değiştir",
+  "tutorial.menu.spec.random":
+    'Bu, "{random}" etiketli karakterin: oyun onu senin için rastgele çıkardı, oynamaya hazır. Onu değiştiremezsin, ama "{reroll}" yenisini çıkarır, "{clone}" de sana düzenlemek için bir kopya verir.',
   "tutorial.menu.spec.save": "Yeni yapıyı korumak için karakterini kaydet.",
   "tutorial.menu.spec.saveDone": "Kaydet",
   "tutorial.menu.spec.skills":

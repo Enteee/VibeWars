@@ -1696,11 +1696,15 @@ export default {
   "tutorial.menu.spec.gear":
     "Armure, runes et insignes : choisis une pièce sur la figurine, puis ce qui va dessus.",
   "tutorial.menu.spec.gearDone": "Change une pièce d'équipement",
-  "tutorial.menu.spec.open": "Ouvre Personnages, puis un personnage pour changer son build.",
-  "tutorial.menu.spec.openDone": "Ouvre un personnage",
+  "tutorial.menu.spec.new": "Crée le tien : appuie sur {newCharacter}.",
+  "tutorial.menu.spec.newDone": "Appuie sur {newCharacter}",
+  "tutorial.menu.spec.open": "Ouvre {characters}.",
+  "tutorial.menu.spec.openDone": "Ouvre {characters}",
   "tutorial.menu.spec.professions":
-    "Ta profession principale donne tes attributs et compétences ; ta secondaire te prête aussi ses compétences.",
+    "Ta profession principale est ce que tu es : ses compétences et tous ses attributs, y compris celui qu'elle seule possède ({warrior} : {strength} ; {monk} : {divineFavor}). Ta secondaire ajoute ses compétences et ses autres attributs, jamais cet attribut spécial : un {warrior}/{monk} peut soigner avec {healingPrayers}, mais n'a pas {divineFavor}.",
   "tutorial.menu.spec.professionsDone": "Change de profession",
+  "tutorial.menu.spec.random":
+    "Voici ton personnage marqué {random} : le jeu l'a tiré au sort pour toi, prêt à jouer. Tu ne peux pas le modifier, mais {reroll} en tire un nouveau et {clone} te donne une copie à modifier.",
   "tutorial.menu.spec.save": "Sauve ton personnage pour garder le nouveau build.",
   "tutorial.menu.spec.saveDone": "Sauver",
   "tutorial.menu.spec.skills":

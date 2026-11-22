@@ -1658,11 +1658,15 @@ export default {
   "tutorial.menu.spec.attributesDone": "שנו תכונה",
   "tutorial.menu.spec.gear": "שריון, רונות וסמלים: בחרו פריט על הדמות, ואז מה ששמים עליו.",
   "tutorial.menu.spec.gearDone": "החליפו פריט ציוד",
-  "tutorial.menu.spec.open": "פתחו את דמויות, ואז פתחו דמות כדי לשנות את הבילד שלה.",
-  "tutorial.menu.spec.openDone": "פתחו דמות",
+  "tutorial.menu.spec.new": "צרו דמות משלכם: לחצו על „{newCharacter}”.",
+  "tutorial.menu.spec.newDone": "לחצו על „{newCharacter}”",
+  "tutorial.menu.spec.open": "פתחו את {characters}.",
+  "tutorial.menu.spec.openDone": "פתחו את {characters}",
   "tutorial.menu.spec.professions":
-    "המקצוע הראשי נותן את התכונות והמיומנויות; המקצוע המשני משאיל גם את המיומנויות שלו.",
+    "המקצוע הראשי הוא מה שאתם: המיומנויות שלו וכל התכונות שלו, כולל זו שרק לו יש ({warrior}: {strength}; {monk}: {divineFavor}). המקצוע המשני מוסיף את המיומנויות שלו ואת שאר התכונות שלו, אף פעם לא את התכונה המיוחדת: {warrior}/{monk} יכול לרפא עם „{healingPrayers}”, אבל אין לו „{divineFavor}”.",
   "tutorial.menu.spec.professionsDone": "החליפו מקצוע",
+  "tutorial.menu.spec.random":
+    "זו הדמות שלכם עם התווית „{random}”: המשחק הגריל אותה בשבילכם, מוכנה למשחק. אי אפשר לשנות אותה, אבל „{reroll}” מגריל חדשה ו„{clone}” נותן לכם עותק לעריכה.",
   "tutorial.menu.spec.save": "שמרו את הדמות כדי לשמור את הבילד החדש.",
   "tutorial.menu.spec.saveDone": "שמור",
   "tutorial.menu.spec.skills":

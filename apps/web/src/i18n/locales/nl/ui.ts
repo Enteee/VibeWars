@@ -1608,11 +1608,15 @@ export default {
   "tutorial.menu.spec.gear":
     "Pantser, runes en insignes: kies een stuk op de figuur, dan wat erop komt.",
   "tutorial.menu.spec.gearDone": "Wissel een uitrustingsstuk",
-  "tutorial.menu.spec.open": "Open Personages en dan een personage om de build te wijzigen.",
-  "tutorial.menu.spec.openDone": "Open een personage",
+  "tutorial.menu.spec.new": "Maak je eigen: druk op {newCharacter}.",
+  "tutorial.menu.spec.newDone": "Druk op {newCharacter}",
+  "tutorial.menu.spec.open": "Open {characters}.",
+  "tutorial.menu.spec.openDone": "Open {characters}",
   "tutorial.menu.spec.professions":
-    "Je primaire klasse geeft je attributen en vaardigheden; je secundaire leent je ook zijn vaardigheden.",
+    "Je primaire klasse is wat je bent: haar vaardigheden en al haar attributen, ook het attribuut dat alleen zij heeft ({warrior}: {strength}; {monk}: {divineFavor}). Je secundaire voegt haar vaardigheden en haar andere attributen toe, nooit dat speciale: een {warrior}/{monk} kan genezen met {healingPrayers}, maar heeft geen {divineFavor}.",
   "tutorial.menu.spec.professionsDone": "Wissel een klasse",
+  "tutorial.menu.spec.random":
+    "Dit is je personage met het label {random}: het spel heeft het voor je geloot, klaar om te spelen. Je kunt het niet veranderen, maar {reroll} loot een nieuw en {clone} geeft je een kopie om te bewerken.",
   "tutorial.menu.spec.save": "Sla je personage op om de nieuwe build te houden.",
   "tutorial.menu.spec.saveDone": "Opslaan",
   "tutorial.menu.spec.skills":

@@ -1,3 +1,4 @@
+import { attributeName, professionName } from "../i18n/game-names.js";
 import { t } from "../i18n/index.js";
 
 import type { CoachOverlay } from "./coach-overlay.js";
@@ -23,6 +24,25 @@ import { saveTutorialRecord } from "./tutorial-preference.js";
  * step, so a launch resumes there. `done` is saved after the last step,
  * and the quest ends once its closing line has gone (#3544).
  */
+/**
+ * What a beat's line may name (#3786), as the game and the menu name it in
+ * the player's language, so a line never disagrees with what it points at.
+ */
+function lineNames(): Readonly<Record<string, string>> {
+  return {
+    characters: t("rail.characters"),
+    random: t("menu.randomTag"),
+    reroll: t("menu.reroll"),
+    clone: t("menu.clone"),
+    newCharacter: t("menu.newCharacter"),
+    warrior: professionName("warrior"),
+    monk: professionName("monk"),
+    strength: attributeName("warrior.strength"),
+    divineFavor: attributeName("monk.divine-favor"),
+    healingPrayers: attributeName("monk.healing-prayers"),
+  };
+}
+
 /** How long the closing line shows, unless clicked first (#3544). */
 export const FAREWELL_MS = 5000;
 
@@ -80,12 +100,13 @@ export function startMenuQuest(options: MenuQuestOptions): MenuQuestSession {
     shown = view;
     coach.show({
       title: t(step.title),
-      line: lead === undefined ? t(beat.line) : `${t(lead)} ${t(beat.line)}`,
+      line:
+        lead === undefined ? t(beat.line, lineNames()) : `${t(lead)} ${t(beat.line, lineNames())}`,
       target,
       // The member's build is the player's to edit, Back only pointed at.
       locked: beat !== MEMBER_BACK_BEAT,
       objectives: objectives.map(({ label, done }) => ({
-        label: t(label),
+        label: t(label, lineNames()),
         done,
       })),
       gotIt:
