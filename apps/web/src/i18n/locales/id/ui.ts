@@ -1324,7 +1324,6 @@ export default {
   "teamPlay.noTeamBuilds": "Belum ada Build Tim {size}.",
   "teamPlay.notPlayable": "Tidak bisa dimainkan: {problem}",
   "teamPlay.openingLobby": "Membuka lobimu…",
-  "teamPlay.queuedMaps": "Peta di mode ini",
   "teamPlay.random": "Acak",
   "teamPlay.reroll": "Acak lagi",
   "teamPlay.unnamedTeam": "Tim tanpa nama",

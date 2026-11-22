@@ -68,7 +68,7 @@ z innymi graczami, przeciw innej drużynie, na losowej mapie. Kolejka działa w 
 zostajesz na Arenie losowej i możesz w tym czasie iść gdziekolwiek, do buildów,
 ekwipunku, Opcji, Pomocy czy edytora muzyki, ale nie możesz zmienić postaci,
 hostować lobby, dołączyć do lobby ani zmienić rozmiaru drużyny trybu. Arena drużynowa
-i inne ekrany lobby mówią, że jesteś w kolejce, i wymieniają swoje mapy; rozmiar drużyny pokazuje rozmiar, z którym
+i inne ekrany lobby mówią, że jesteś w kolejce; rozmiar drużyny pokazuje rozmiar, z którym
 stanąłeś w kolejce, w każdym trybie. Obracający się pierścień po lewej od **Pomoc** na górnym pasku
 pokazuje, że czekasz w kolejce; kliknij go, aby zobaczyć kolejkę, czas oczekiwania,
 liczbę szukających i **Opuść kolejkę**. Gdy mecz zostanie znaleziony, trafiasz na jego

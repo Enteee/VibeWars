@@ -1393,7 +1393,6 @@ export const en = {
   "teamPlay.noTeamBuilds": "No {size} Team Builds yet.",
   "teamPlay.notPlayable": "Not playable: {problem}",
   "teamPlay.openingLobby": "Opening your lobby…",
-  "teamPlay.queuedMaps": "Maps in this mode",
   "teamPlay.random": "Random",
   "teamPlay.reroll": "Reroll",
   "teamPlay.unnamedTeam": "Unnamed team",

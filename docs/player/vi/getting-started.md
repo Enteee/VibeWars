@@ -71,8 +71,8 @@ một đội khác, trên một bản đồ ngẫu nhiên. Hàng chờ chạy �
 lại Đấu trường ngẫu nhiên và có thể đi bất cứ đâu trong lúc đó, các build,
 trang bị, Tùy chọn, Hỗ trợ hay trình sửa nhạc, nhưng không thể đổi nhân vật,
 tạo hay vào một sảnh, hoặc đổi cỡ đội của một chế độ. Đấu trường đội và các
-màn hình sảnh khác báo rằng bạn đang trong hàng chờ và liệt kê bản đồ của
-chúng; cỡ đội hiển thị cỡ mà bạn đã xếp hàng, ở mọi chế độ. Một vòng xoay ở
+màn hình sảnh khác báo rằng bạn đang trong hàng chờ;
+cỡ đội hiển thị cỡ mà bạn đã xếp hàng, ở mọi chế độ. Một vòng xoay ở
 bên trái **Hỗ trợ** trên thanh trên cùng cho biết bạn đang xếp hàng; nhấn vào
 đó để xem hàng chờ, thời gian đã chờ, số người đang tìm và **Rời hàng chờ**.
 Khi tìm thấy trận, bạn được đưa tới màn hình đối đầu của trận đó từ bất cứ

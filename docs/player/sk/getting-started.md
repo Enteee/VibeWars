@@ -74,7 +74,7 @@ náhodnej mape. Fronta čaká na pozadí: zostávaš v Náhodnej aréne a medzit
 môžeš ísť kamkoľvek, k svojim buildom, výbave, do Nastavení, Pomoci alebo
 hudobného editora, ale nemôžeš zmeniť postavu, hostiť lobby ani sa k nejakému
 pripojiť, ani zmeniť veľkosť tímu režimu. Tímová aréna a ostatné obrazovky
-lobby povedia, že si vo fronte, a zobrazia svoje mapy; veľkosť tímu
+lobby povedia, že si vo fronte; veľkosť tímu
 ukazuje vo všetkých režimoch veľkosť, s ktorou si vo fronte. Točiaci sa
 krúžok vľavo od **Pomoc** v hornej lište ukazuje, že si vo fronte; kliknutím
 naň uvidíš frontu, čas čakania, koľko hráčov hľadá a **Opustiť frontu**.

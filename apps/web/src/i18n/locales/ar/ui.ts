@@ -1586,7 +1586,6 @@ export default {
   "teamPlay.noTeamBuilds": "لا بنى فرق بحجم {size} بعد.",
   "teamPlay.notPlayable": "غير قابلة للعب: {problem}",
   "teamPlay.openingLobby": "جارٍ فتح ردهتك…",
-  "teamPlay.queuedMaps": "خرائط هذا النمط",
   "teamPlay.random": "عشوائية",
   "teamPlay.reroll": "إعادة اختيار",
   "teamPlay.unnamedTeam": "فريق بلا اسم",

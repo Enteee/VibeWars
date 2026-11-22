@@ -1511,7 +1511,6 @@ export default {
   "teamPlay.noTeamBuilds": "Zatiaľ žiadne tímové buildy {size}.",
   "teamPlay.notPlayable": "Nedá sa hrať: {problem}",
   "teamPlay.openingLobby": "Otvára sa tvoje lobby…",
-  "teamPlay.queuedMaps": "Mapy v tomto režime",
   "teamPlay.random": "Náhodný",
   "teamPlay.reroll": "Znova",
   "teamPlay.unnamedTeam": "Tím bez názvu",

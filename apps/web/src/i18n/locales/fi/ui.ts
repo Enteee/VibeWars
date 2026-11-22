@@ -1406,7 +1406,6 @@ export default {
   "teamPlay.noTeamBuilds": "Ei vielä {size} pelaajan tiimibuildeja.",
   "teamPlay.notPlayable": "Ei pelattava: {problem}",
   "teamPlay.openingLobby": "Avataan aulaasi…",
-  "teamPlay.queuedMaps": "Tämän tilan kartat",
   "teamPlay.random": "Arvottu",
   "teamPlay.reroll": "Arvo uusi",
   "teamPlay.unnamedTeam": "Nimetön tiimi",

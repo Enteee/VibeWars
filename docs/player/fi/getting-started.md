@@ -76,7 +76,7 @@ Satunnaisareenalla ja voit sillä välin mennä minne tahansa, buildeihisi,
 varusteisiin, Asetuksiin, Ohjeeseen tai musiikkieditoriin, mutta et voi
 vaihtaa hahmoa, isännöidä aulaa tai liittyä aulaan etkä muuttaa
 pelitilan tiimin kokoa. Tiimiareena ja muut aulanäkymät kertovat, että
-olet jonossa, ja luettelevat karttansa; tiimin koko näyttää koon, jolla
+olet jonossa; tiimin koko näyttää koon, jolla
 jonotit, jokaisessa pelitilassa. Yläpalkissa **Ohjeen** vasemmalla puolella
 pyörivä rengas näyttää, että olet jonossa; napsauta sitä nähdäksesi
 jonon, odotusajan, montako hakee ja **Poistu jonosta**. Kun ottelu

@@ -1393,7 +1393,6 @@ export default {
   "teamPlay.noTeamBuilds": "Henüz {size} Takım Dizilimi yok.",
   "teamPlay.notPlayable": "Oynanamaz: {problem}",
   "teamPlay.openingLobby": "Lobin açılıyor…",
-  "teamPlay.queuedMaps": "Bu moddaki haritalar",
   "teamPlay.random": "Rastgele",
   "teamPlay.reroll": "Yenile",
   "teamPlay.unnamedTeam": "Adsız takım",

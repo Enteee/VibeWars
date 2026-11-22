@@ -73,7 +73,7 @@ drugog tima, na nasumičnoj karti. Red čeka u pozadini: ostaješ
 na Nasumičnoj areni i u međuvremenu možeš bilo kamo, na svoje sastave,
 opremu, Opcije, Pomoć ili uređivač glazbe, ali ne možeš promijeniti lika,
 voditi ili ući u sobu, ni promijeniti veličinu tima u nekom načinu. Timska arena i
-ostali zasloni soba kažu da si u redu i navode svoje karte; veličina tima prikazuje
+ostali zasloni soba kažu da si u redu; veličina tima prikazuje
 veličinu s kojom si ušao u red, u svakom načinu. Prsten koji se vrti lijevo od **Pomoć** na gornjoj traci
 pokazuje da si u redu; klikni ga za red, vrijeme čekanja, broj onih koji
 traže i **Napusti red**. Kad se meč pronađe, odvede te na njegov

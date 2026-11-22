@@ -78,7 +78,7 @@ carte aléatoire. La file attend en arrière-plan : tu restes sur Arène aléato
 et peux aller partout entre-temps, tes builds, ton équipement, les Options,
 l'Aide ou l'éditeur de musique, mais pas changer de personnage, héberger ou
 rejoindre un salon, ni changer la taille d'équipe d'un mode. Arène d'équipe et
-les autres écrans de salon indiquent que tu es dans une file et listent leurs cartes ;
+les autres écrans de salon indiquent que tu es dans une file ;
 la taille d'équipe affiche celle de ta file, sur chaque mode. Un anneau qui
 tourne à gauche d'**Aide** dans la barre du haut montre que tu es dans une
 file ; clique dessus pour voir la file, le temps d'attente, combien de joueurs

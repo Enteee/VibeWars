@@ -1465,7 +1465,6 @@ export default {
   "teamPlay.noTeamBuilds": "Još nema timskih sastava za {size}.",
   "teamPlay.notPlayable": "Nije igrivo: {problem}",
   "teamPlay.openingLobby": "Otvaranje tvoje sobe…",
-  "teamPlay.queuedMaps": "Karte u ovom načinu",
   "teamPlay.random": "Nasumično",
   "teamPlay.reroll": "Ponovi",
   "teamPlay.unnamedTeam": "Tim bez imena",

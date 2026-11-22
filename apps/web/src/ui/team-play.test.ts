@@ -11,7 +11,6 @@ import {
 } from "../storage/schema.js";
 import type { FigureLook } from "./character-card.js";
 import type * as Figure from "./character-figure.js";
-import { mapLabel, type LobbyMap } from "./lobby-screen.js";
 import {
   noTeamBuilds,
   renderHostScreen,
@@ -208,7 +207,7 @@ describe("the team screens' Team Builds (#1515, #1525, #2031)", () => {
     renderTeamBuilder(root as unknown as HTMLElement, teams, [], undefined, callbacks);
     return root;
   };
-  const host = (entry: HostEntry, queuedMaps?: readonly LobbyMap[]): FakeElement => {
+  const host = (entry: HostEntry, queued = false): FakeElement => {
     const root = new FakeElement();
     renderHostScreen(
       root as unknown as HTMLElement,
@@ -217,7 +216,7 @@ describe("the team screens' Team Builds (#1515, #1525, #2031)", () => {
       undefined,
       callbacks,
       undefined,
-      queuedMaps,
+      queued,
     );
     return root;
   };
@@ -346,25 +345,15 @@ describe("the team screens' Team Builds (#1515, #1525, #2031)", () => {
     }
   });
 
-  const maps: readonly LobbyMap[] = [
-    { id: "a", size: "small", mode: "annihilation", teamSizes: [1, 2] },
-    { id: "b", size: "large", mode: "kill-count", teamSizes: [8] },
-  ];
-
-  it("in the Random Arena queue, says so, with no Find a match and no way out but the flyout (#2781, #2980)", () => {
-    for (const entry of ["team-arena", "heroes-ascent", "gvg"] as const) {
-      const root = host(entry, maps);
+  it("in the Random Arena queue, says only so: no maps, no Find a match, no way out but the flyout (#2781, #2980, #3788)", () => {
+    for (const entry of ["team-arena", "heroes-ascent", "gvg", "hosted-game"] as const) {
+      const root = host(entry, true);
       expect(root.everything().some((node) => node.textContent === t("queue.busy"))).toBe(true);
+      expect(root.all("screen-queued-maps")).toEqual([]);
+      expect(root.all("lobby-map")).toEqual([]);
       expect(root.all("lobby-find")).toEqual([]);
       expect(root.all("lobby-leave-queue")).toEqual([]);
     }
-    const hosted = host("hosted-game", maps);
-    // The maps to look at, not to pick: a list.
-    expect(
-      hosted.all("lobby-map").flatMap((list) => list.children.map((item) => item.textContent)),
-    ).toEqual(maps.map(mapLabel));
-    expect(hosted.all("lobby-find")).toEqual([]);
-    expect(hosted.all("lobby-leave-queue")).toEqual([]);
   });
 
   it("names an unnamed team and says why a team is not playable (#2110)", () => {

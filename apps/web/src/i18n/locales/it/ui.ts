@@ -1470,7 +1470,6 @@ export default {
   "teamPlay.noTeamBuilds": "Ancora nessuna Build di squadra da {size}.",
   "teamPlay.notPlayable": "Non giocabile: {problem}",
   "teamPlay.openingLobby": "Apertura della lobby…",
-  "teamPlay.queuedMaps": "Mappe di questa modalità",
   "teamPlay.random": "Casuale",
   "teamPlay.reroll": "Rigenera",
   "teamPlay.unnamedTeam": "Squadra senza nome",
