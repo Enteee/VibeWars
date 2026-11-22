@@ -15,7 +15,11 @@ function twoVigor(): StoredCharacter {
     ...character,
     equipment: {
       ...character.equipment,
-      armor: { ...armor, head: { ...armor.head, rune: vigor }, chest: { ...armor.chest, rune: vigor } },
+      armor: {
+        ...armor,
+        head: { ...armor.head, rune: vigor },
+        chest: { ...armor.chest, rune: vigor },
+      },
     },
   };
 }
@@ -24,7 +28,7 @@ describe("buildReplacedNotice (#3822)", () => {
   it("names the first problem of an illegal build", () => {
     const illegal = twoVigor();
     const problem = blockingProblems(illegal)[0]?.text;
-    expect(problem).toBeDefined();
+    if (problem === undefined) throw new Error("no problem");
     expect(buildReplacedNotice(illegal, false)).toBe(t("match.buildReplaced", { problem }));
   });
 

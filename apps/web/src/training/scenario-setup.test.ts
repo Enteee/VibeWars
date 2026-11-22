@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { ARMOR_SLOTS, TRAINING_SCENARIOS, raisedMaxHealth } from "@vibewars/game-core";
+import {
+  ARMOR_SLOTS,
+  TRAINING_SCENARIOS,
+  raisedMaxHealth,
+  type ArmorSlot,
+} from "@vibewars/game-core";
 import { matchLayers } from "@vibewars/game-maps/layers";
 
 import { runeName } from "../i18n/game-names.js";
@@ -127,13 +132,16 @@ describe("matchLayers' water (#2983)", () => {
 describe("two Superior Runes of Vigor in the test area (#3822)", () => {
   function wearingVigor(pieces: number): StoredCharacter {
     const character = newCharacter("c1");
-    const armor = { ...character.equipment.armor };
-    ARMOR_SLOTS.forEach((slot, index) => {
-      armor[slot] = {
-        ...armor[slot],
-        rune: index < pieces ? { kind: "universal", runeId: "vigor", tier: "superior" } : null,
-      };
-    });
+    const vigor = { kind: "universal", runeId: "vigor", tier: "superior" } as const;
+    const rune = (slot: ArmorSlot) => (ARMOR_SLOTS.indexOf(slot) < pieces ? vigor : null);
+    const { head, chest, hands, legs, feet } = character.equipment.armor;
+    const armor = {
+      head: { ...head, rune: rune("head") },
+      chest: { ...chest, rune: rune("chest") },
+      hands: { ...hands, rune: rune("hands") },
+      legs: { ...legs, rune: rune("legs") },
+      feet: { ...feet, rune: rune("feet") },
+    };
     return { ...character, equipment: { ...character.equipment, armor } };
   }
 

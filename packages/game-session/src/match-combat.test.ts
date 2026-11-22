@@ -5,6 +5,7 @@ import {
   CHAIN_MARK_SECONDS,
   ANNIHILATION_MATCH_RULES,
   ARMOR_SLOTS,
+  type ArmorSlot,
   KILL_COUNT_MATCH_RULES,
   MINIMAL_GW_INSPIRED_PVP_V1,
   defaultBuildEquipment,
@@ -247,13 +248,16 @@ describe("networked combat (P2P)", () => {
   it("two Superior Runes of Vigor never make +100: the build is refused for a starter one (#3822)", async () => {
     const warrior = starterBuild("Warrior/Monk");
     const wearingVigor = (pieces: number): PlayerBuild => {
-      const armor = { ...warrior.equipment.armor };
-      ARMOR_SLOTS.forEach((slot, index) => {
-        armor[slot] = {
-          ...armor[slot],
-          rune: index < pieces ? { kind: "universal", runeId: "vigor", tier: "superior" } : null,
-        };
-      });
+      const vigor = { kind: "universal", runeId: "vigor", tier: "superior" } as const;
+      const rune = (slot: ArmorSlot) => (ARMOR_SLOTS.indexOf(slot) < pieces ? vigor : null);
+      const { head, chest, hands, legs, feet } = warrior.equipment.armor;
+      const armor = {
+        head: { ...head, rune: rune("head") },
+        chest: { ...chest, rune: rune("chest") },
+        hands: { ...hands, rune: rune("hands") },
+        legs: { ...legs, rune: rune("legs") },
+        feet: { ...feet, rune: rune("feet") },
+      };
       return { ...warrior, equipment: { ...warrior.equipment, armor } };
     };
     const joinWith = async (build: PlayerBuild) => {
