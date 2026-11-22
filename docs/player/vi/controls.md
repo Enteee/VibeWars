@@ -71,6 +71,20 @@ Các phím sau là cố định:
   chỉ nhắm, kể cả khi nhấn hai lần; chuột trái nhắm và tấn công cùng lúc; nhấn
   con lăn để gọi hoặc ping. Cái tên mà cú nhấn sẽ trúng được làm nổi bật.
 
+## Cảm ứng
+
+Trên điện thoại hoặc máy tính bảng, trong trận và ở sân tập:
+
+- **Chạm** vào mặt đất để đi tới đó.
+- **Chạm** vào một kẻ địch, đồng minh, lá cờ, bệ cờ, cần gạt hoặc bức tường nứt
+  để nhắm nó; chạm vào một nhân vật không bao giờ khiến bạn đi. Chạm lại vào
+  cùng kẻ địch đó, thật nhanh, để tấn công nó. Chạm ngay cạnh một nhân vật vẫn
+  tìm ra nhân vật đó. Chạm vào chính mình sẽ đi tới điểm đó, hoặc nhắm bệ cờ
+  hay cần gạt bạn đang đứng.
+- **Kéo** một ngón tay để nhìn quanh; thả ra và góc nhìn trượt về lại phía bạn.
+  **Chụm** hai ngón để thu phóng.
+- **Chạm** vào một kỹ năng trên thanh để dùng nó lên mục tiêu của bạn.
+
 ## Thanh trên cùng
 
 Ngoài trận, thanh trên cùng chứa **[?]** (trang Hỗ trợ này), **⚙** (Tùy

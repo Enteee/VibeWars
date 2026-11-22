@@ -66,6 +66,20 @@ These keys are fixed:
   once; a wheel click calls or pings. The name a click would hit is
   highlighted.
 
+## Touch
+
+On a phone or a tablet, in a match and in the Training Ground:
+
+- **Tap** the ground to walk there.
+- **Tap** a foe, an ally, a flag, the flag stand, a lever or a cracked
+  wall to target it; a tap on a character never walks. Tap the same foe
+  again, quickly, to attack it. A tap just beside a character still finds
+  it. A tap on yourself walks to that spot, or targets the flag stand or
+  lever you stand on.
+- **Drag** one finger to look around; let go and the view glides back to
+  you. **Pinch** to zoom.
+- **Tap** a skill on the bar to use it on your target.
+
 ## The top bar
 
 Outside a match, the top bar holds **[?]** (this Help), **⚙** (Options),

@@ -65,6 +65,20 @@ Deze toetsen liggen vast:
   en valt meteen aan; een wielklik wijst aan of pingt. De naam die een klik zou
   raken, licht op.
 
+## Aanraking
+
+Op een telefoon of tablet, in een match en op het trainingsveld:
+
+- **Tik** op de grond om erheen te lopen.
+- **Tik** op een vijand, bondgenoot, vlag, de vlaggenstandaard, een hendel of
+  een gebarsten muur om die te kiezen; een tik op een personage loopt nooit.
+  Tik snel nog eens op dezelfde vijand om hem aan te vallen. Een tik net
+  naast een personage vindt het toch. Een tik op jezelf loopt naar die plek,
+  of kiest de vlaggenstandaard of hendel waarop je staat.
+- **Sleep** met één vinger om rond te kijken; laat los en het beeld glijdt
+  terug naar jou. **Knijp** om te zoomen.
+- **Tik** op een skill op de balk om hem op je doel te gebruiken.
+
 ## De bovenste balk
 
 Buiten een match staan in de bovenste balk **[?]** (deze Help), **⚙** (Opties),

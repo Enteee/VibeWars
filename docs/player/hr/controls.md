@@ -64,6 +64,20 @@ Ove su tipke fiksne:
   klik kotačićem označava neprijatelja ili mjesto. Ime koje bi klik pogodio je
   istaknuto.
 
+## Dodir
+
+Na telefonu ili tabletu, u meču i na poligonu za vježbu:
+
+- **Dodirni** tlo da hodaš onamo.
+- **Dodirni** neprijatelja, saveznika, zastavu, stalak za zastavu, polugu ili
+  napukli zid da ga ciljaš; dodir na lik nikad ne hoda. Brzo ponovno dodirni
+  istog neprijatelja da ga napadneš. Dodir tik uz lik ga svejedno nalazi.
+  Dodir na sebe hoda do tog mjesta ili cilja stalak za zastavu ili polugu na
+  kojoj stojiš.
+- **Povuci** jednim prstom za razgledavanje; pusti i pogled klizi natrag
+  k tebi. **Stisni** prste za zumiranje.
+- **Dodirni** vještinu na traci da je upotrijebiš na svoju metu.
+
 ## Gornja traka
 
 Izvan meča gornja traka sadrži **[?]** (ova Pomoć), **⚙** (Opcije),

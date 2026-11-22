@@ -69,6 +69,20 @@ Bu tuşlar sabittir:
   olsa, yalnızca hedef alır; sol tık hedef alır ve hemen saldırır; teker
   tıkı bildirir ya da işaretler. Bir tıkın isabet edeceği ad vurgulanır.
 
+## Dokunmatik
+
+Telefonda veya tablette, maçta ve eğitim alanında:
+
+- Oraya yürümek için yere **dokun**.
+- Hedef almak için bir düşmana, müttefike, bayrağa, bayrak direğine, bir
+  kola ya da çatlak bir duvara **dokun**; bir karaktere dokunmak hiçbir zaman
+  yürütmez. Saldırmak için aynı düşmana hızlıca tekrar dokun. Bir karakterin
+  hemen yanına dokunmak da onu bulur. Kendine dokunmak o noktaya yürütür ya
+  da üzerinde durduğun bayrak direğini veya kolu hedef alır.
+- Etrafına bakmak için tek parmakla **sürükle**; bırakınca görünüm sana
+  doğru kayarak döner. Yakınlaştırmak için **parmaklarını sıkıştır**.
+- Hedefinde kullanmak için çubuktaki bir yeteneğe **dokun**.
+
 ## Üst çubuk
 
 Maç dışında üst çubukta **[?]** (bu Yardım), **⚙** (Ayarlar), **Lobi**
