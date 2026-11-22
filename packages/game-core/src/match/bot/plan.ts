@@ -1,7 +1,7 @@
-import { add, scale, sub, vec2, type Vec2 } from "../../vec2.js";
+import { add, distance, length, scale, sub, vec2, type Vec2 } from "../../vec2.js";
 import type { BehaviourContext } from "../behaviour.js";
 import type { Participant } from "../simulation.js";
-import { roleOf } from "./role.js";
+import { roleOf, type BotRole } from "./role.js";
 import { botRoll, REGROUP_SPREAD } from "./rules/shared.js";
 
 /**
@@ -29,6 +29,17 @@ export const FLANK_WIDTH = 0.35;
 
 /** How far a hold point lies from the team's spawn toward the foes' (#3831). */
 export const HOLD_FRACTION = 0.35;
+
+/**
+ * How far ahead of its team's active humans a bot stands while it escorts
+ * them (#3833), by role: frontliners a step ahead, casters beside them,
+ * healers behind.
+ */
+export const ESCORT_OFFSET: Readonly<Record<BotRole, number>> = {
+  frontline: 120,
+  ranged: 0,
+  healer: -150,
+};
 
 /** The plan phase match second `now` falls in (#3831, #3832). */
 export function planPhase(now: number): number {
@@ -75,8 +86,8 @@ export interface HoldPlace {
  * never where a foe stands. Each bot keeps its own spot a quarter of
  * `REGROUP_SPREAD` from it, the team's spots evenly round it, so the team
  * stands spread out. `undefined`, so the bot pushes, on a team of one,
- * on a team with a human, whom holding bots would leave to fight alone
- * until bots group with humans (#3833), and where it has no route there.
+ * on a team with an active human, whom its bots escort instead (#3833),
+ * and where it has no route there.
  */
 export function holdPoint(
   context: BehaviourContext,
@@ -89,7 +100,7 @@ export function holdPoint(
   const mates = context.participants.filter(
     (other) => other.combatant.team === self.combatant.team && other.creature === undefined,
   );
-  if (mates.some((mate) => !context.isBot(mate.id))) return undefined;
+  if (activeHumans(context, self.combatant.team).length > 0) return undefined;
   const layer = own.layer;
   const centre = context.standableNear(
     add(own.point, scale(sub(foe.point, own.point), HOLD_FRACTION)),
@@ -113,23 +124,24 @@ export function holdPoint(
 /**
  * Whether `self` swings wide in plan phase `phase` of a `flank` (#3832):
  * `max(1, floor(n/2))` of its team's n bots, in an order rolled per phase,
- * healers last. The whole team counts, the dead too, so a death does not
+ * healers last. Every bot counts, the dead too, so a death does not
  * swap who flanks mid-phase and a respawned flanker flanks again. Nobody
- * on a team of one, nor on a team with a human, whom flankers would leave
- * to fight alone until bots group with humans (#3833).
+ * with fewer than two bots, nor on a team with an active human, whom its
+ * bots escort instead (#3833).
  */
 export function flankParty(context: BehaviourContext, self: Participant, phase: number): boolean {
   const team = self.combatant.team;
   const mates = context.participants.filter(
     (other) => other.combatant.team === team && other.creature === undefined,
   );
-  if (mates.length < 2 || mates.some((mate) => !context.isBot(mate.id))) return false;
+  const bots = mates.filter((mate) => context.isBot(mate.id));
+  if (bots.length < 2 || activeHumans(context, team).length > 0) return false;
   const order = (mate: Participant): number =>
     (roleOf(mate) === "healer" ? 1 : 0) +
     botRoll(context.seed, team, `flank:${String(phase)}:${mate.id}`);
-  const party = [...mates]
+  const party = [...bots]
     .sort((one, other) => order(one) - order(other))
-    .slice(0, Math.max(1, Math.floor(mates.length / 2)));
+    .slice(0, Math.max(1, Math.floor(bots.length / 2)));
   return party.some((mate) => mate.id === self.id);
 }
 
@@ -170,4 +182,82 @@ export function flankWaypoint(
     if (Number.isFinite(context.routeLength(point, layer))) return { point, layer };
   }
   return undefined;
+}
+
+/**
+ * Team `team`'s living humans who gave a command lately (#3833): its bots
+ * escort them, and play the team's plan only while there are none.
+ */
+export function activeHumans(context: BehaviourContext, team: number): Participant[] {
+  return context.participants.filter(
+    (other) =>
+      other.combatant.team === team &&
+      other.creature === undefined &&
+      !other.combatant.dead &&
+      !context.isBot(other.id) &&
+      !context.isIdle(other.id),
+  );
+}
+
+/** Where an escorting bot stands (#3833), on its anchor human's layer. */
+export interface EscortPlace {
+  readonly point: Vec2;
+  readonly layer: number;
+}
+
+/**
+ * Where `self`, of role `role`, walks while it escorts its team's active
+ * humans (#3833): `ESCORT_OFFSET` along forward from their centre, the
+ * anchor, and spread across `REGROUP_SPREAD` by its index among its
+ * team's bots, the dead too, so a death does not swap spots. Forward is
+ * toward the foes' centre, else toward the first foe team's spawn. The
+ * spot is on the layer of the human nearest the anchor. `undefined`, so
+ * the bot plays its team's plan, with no active human or no route there.
+ */
+export function escortSpot(
+  context: BehaviourContext,
+  self: Participant,
+  role: BotRole,
+): EscortPlace | undefined {
+  const team = self.combatant.team;
+  const humans = activeHumans(context, team);
+  const first = humans[0];
+  if (first === undefined) return undefined;
+  const anchor = scale(
+    humans.reduce((sum, human) => add(sum, human.position), vec2(0, 0)),
+    1 / humans.length,
+  );
+  let layer = first.layer;
+  let nearest = distance(first.position, anchor);
+  for (const human of humans) {
+    if (distance(human.position, anchor) < nearest) {
+      nearest = distance(human.position, anchor);
+      layer = human.layer;
+    }
+  }
+  const foeTeam = context.participants
+    .map((other) => other.combatant.team)
+    .filter((other) => other !== team)
+    .sort((one, other) => one - other)[0];
+  const toward =
+    context.foeCentroid ?? (foeTeam === undefined ? undefined : context.teamSpawn(foeTeam)?.point);
+  const along = toward === undefined ? vec2(0, 0) : sub(toward, anchor);
+  const forward = length(along) > 0 ? scale(along, 1 / length(along)) : vec2(0, 0);
+  const bots = context.participants.filter(
+    (other) =>
+      other.combatant.team === team && other.creature === undefined && context.isBot(other.id),
+  );
+  const index = Math.max(
+    0,
+    bots.findIndex((bot) => bot.id === self.id),
+  );
+  const across = bots.length < 2 ? 0 : REGROUP_SPREAD * (index / (bots.length - 1) - 0.5);
+  const point = context.standableNear(
+    add(
+      add(anchor, scale(forward, ESCORT_OFFSET[role])),
+      scale(vec2(-forward.y, forward.x), across),
+    ),
+    layer,
+  );
+  return Number.isFinite(context.routeLength(point, layer)) ? { point, layer } : undefined;
 }

@@ -253,3 +253,31 @@ describe("regroup under a flank plan (#3832)", () => {
     expect(regroup.decide(view)).toEqual({ ...NOTHING, targetId: view.self.targetId });
   });
 });
+
+describe("regroup on a team with an active human (#3833)", () => {
+  const sim = match([
+    fighter("w", 0, WARRIOR, vec2(700, 400)),
+    fighter("you", 0, RANGER, vec2(100, 400)),
+    fighter("a", 0, RANGER, vec2(100, 400)),
+    fighter("foe", 1, WARRIOR, vec2(1550, 400)),
+  ]);
+  const isBot = (id: string): boolean => id !== "you";
+
+  it("does not wait: the bots escort the human instead", () => {
+    const view = ruleFor(sim, "w", { cursor: createCursor() }, { isBot });
+    expect(regroup.decide(view)).toBeUndefined();
+    expect(view.cursor.regrouping).toBe(false);
+  });
+
+  it("waits as ever once the human is idle", () => {
+    const idle = { isBot, isIdle: (id: string) => id === "you" };
+    const lone = match([
+      fighter("w", 0, WARRIOR, vec2(700, 400)),
+      fighter("you", 0, RANGER, vec2(100, 400)),
+      fighter("a", 0, RANGER, vec2(100, 400)),
+      fighter("b", 0, RANGER, vec2(100, 400)),
+      fighter("foe", 1, WARRIOR, vec2(1550, 400)),
+    ]);
+    expect(regroup.decide(ruleFor(lone, "w", { cursor: createCursor() }, idle))).toBeDefined();
+  });
+});

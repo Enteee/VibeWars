@@ -34,8 +34,11 @@ stappen naar plekken waar minder vijanden ze kunnen bereiken, en gebruiken
 pilaren als dekking. Een team keert zich tegen elke vijand binnen bereik die
 onder 60% gezondheid zakt, om hem af te maken. In King of the Hill gaat, zolang
 je team het altaar niet heeft, de Spookheld van het andere team op het altaar
-daar zelfs voor. Een bot die ver voor zijn team uit loopt, wacht op de rest
-voordat hij doorduwt, tenzij de rest spelers zijn die al een tijdje stilstaan.
+daar zelfs voor. In een team van bots wacht een bot die ver voor zijn team uit
+loopt op de rest voordat hij doorduwt. Bots in jouw team blijven in plaats
+daarvan bij je: frontlinie een stap voor je uit, ranged naast je, healers
+achter je, en ze volgen je waar je ook heen gaat. Zodra je een tijdje
+stilstaat, spelen ze verder zoals een team van bots dat zou doen.
 
 Boogschutters en speerwerpers nemen de hoge grond in als dat veilig is.
 Een bot waar twee vijanden zich op richten, of die onder de helft van zijn gezondheid zit en die snel verliest, duikt tot drie seconden uit hun zicht: achter een muur, onder een platform of op hoge grond.

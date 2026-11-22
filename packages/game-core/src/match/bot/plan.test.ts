@@ -2,8 +2,18 @@ import { describe, expect, it } from "vitest";
 
 import { distance, vec2, type Vec2 } from "../../vec2.js";
 import type { MatchSimulation, Participant } from "../simulation.js";
-import { PLAN_SECONDS, flankParty, flankWaypoint, teamPlan } from "./plan.js";
-import { MONK, WARRIOR, contextFor, fighter, match } from "./rules/test-support.js";
+import {
+  ESCORT_OFFSET,
+  PLAN_SECONDS,
+  escortSpot,
+  flankParty,
+  flankWaypoint,
+  holdPoint,
+  teamPlan,
+} from "./plan.js";
+import type { BotRole } from "./role.js";
+import { REGROUP_SPREAD } from "./rules/shared.js";
+import { MONK, RANGER, WARRIOR, contextFor, fighter, match } from "./rules/test-support.js";
 
 const SEEDS = [1, 42, 0xdead_beef, 20_261_122];
 const PHASES = 1000;
@@ -67,10 +77,15 @@ describe("teamPlan (#3831, #3832)", () => {
 });
 
 /** The ids of team 0 in `sim` that flank in `phase`. */
-function party(sim: MatchSimulation, phase: number, isBot = (_id: string): boolean => true) {
+function party(
+  sim: MatchSimulation,
+  phase: number,
+  isBot = (_id: string): boolean => true,
+  isIdle = (_id: string): boolean => false,
+) {
   return [...sim.participants()]
     .filter((one) => one.combatant.team === 0)
-    .filter((one) => flankParty(contextFor(sim, one.id, { isBot }), one, phase))
+    .filter((one) => flankParty(contextFor(sim, one.id, { isBot, isIdle }), one, phase))
     .map((one) => one.id);
 }
 
@@ -104,9 +119,19 @@ describe("flankParty (#3832)", () => {
     expect(party(team([WARRIOR]), 1)).toEqual([]);
   });
 
-  it("sends nobody on a team with a human (#3833)", () => {
+  it("sends nobody on a team with an active human (#3833)", () => {
     const sim = team([WARRIOR, WARRIOR, WARRIOR, WARRIOR]);
     expect(party(sim, 1, (id) => id !== "t2")).toEqual([]);
+  });
+
+  it("sends half the bots, never the human, on a team whose human is idle (#3833)", () => {
+    const sim = team([WARRIOR, WARRIOR, WARRIOR, WARRIOR, WARRIOR]);
+    const human = (id: string): boolean => id === "t2";
+    for (let phase = 1; phase < 20; phase += 1) {
+      const sent = party(sim, phase, (id) => !human(id), human);
+      expect(sent).toHaveLength(2);
+      expect(sent).not.toContain("t2");
+    }
   });
 
   it("rolls who flanks per phase", () => {
@@ -169,5 +194,97 @@ describe("flankWaypoint (#3832)", () => {
     const other = sides.find((side) => side.y !== rolled.y);
     expect(waypoint(50, rolled)?.point).toEqual(other);
     expect(waypoint(50, ...sides)).toBeUndefined();
+  });
+});
+
+describe("escortSpot (#3833)", () => {
+  // The human `you` at (400,400), the foe east at (1100,400): forward is
+  // +x, and the bots w, r, m spread -150, 0, +150 along y.
+  const sim = match([
+    fighter("you", 0, WARRIOR, vec2(400, 400)),
+    fighter("w", 0, WARRIOR, vec2(100, 300)),
+    fighter("r", 0, RANGER, vec2(100, 400)),
+    fighter("m", 0, MONK, vec2(100, 500)),
+    fighter("foe", 1, WARRIOR, vec2(1100, 400)),
+  ]);
+  const isBot = (id: string): boolean => id !== "you";
+  function who(of: MatchSimulation, id: string): Participant {
+    const one = of.get(id);
+    if (one === undefined) throw new Error(`no ${id}`);
+    return one;
+  }
+  function spot(id: string, role: BotRole, extra: Parameters<typeof contextFor>[2] = {}) {
+    return escortSpot(contextFor(sim, id, { isBot, ...extra }), who(sim, id), role);
+  }
+
+  it("puts a frontliner ahead, a caster beside and a healer behind the human", () => {
+    expect(spot("w", "frontline")).toEqual({
+      point: vec2(400 + ESCORT_OFFSET.frontline, 250),
+      layer: 0,
+    });
+    expect(spot("r", "ranged")).toEqual({ point: vec2(400, 400), layer: 0 });
+    expect(spot("m", "healer")).toEqual({ point: vec2(400 + ESCORT_OFFSET.healer, 550), layer: 0 });
+  });
+
+  it("gives the same spot every time", () => {
+    expect(spot("w", "frontline")).toEqual(spot("w", "frontline"));
+  });
+
+  it("points forward at the first foe team's spawn with no foe in sight", () => {
+    expect(spot("w", "frontline", { foeCentroid: undefined })).toEqual(spot("w", "frontline"));
+  });
+
+  it("gives n bots distinct spots within REGROUP_SPREAD/2 of the line", () => {
+    for (let n = 1; n <= 7; n += 1) {
+      const many = match([
+        fighter("you", 0, WARRIOR, vec2(400, 400)),
+        ...Array.from({ length: n }, (_, index) =>
+          fighter(`b${String(index)}`, 0, RANGER, vec2(100, 100 + index * 80)),
+        ),
+        fighter("foe", 1, WARRIOR, vec2(1100, 400)),
+      ]);
+      const spots = Array.from({ length: n }, (_, index) => {
+        const id = `b${String(index)}`;
+        return escortSpot(contextFor(many, id, { isBot }), who(many, id), "ranged")?.point;
+      });
+      expect(new Set(spots.map((at) => `${String(at?.x)},${String(at?.y)}`)).size).toBe(n);
+      for (const at of spots) {
+        expect(Math.abs((at?.y ?? Number.NaN) - 400)).toBeLessThanOrEqual(REGROUP_SPREAD / 2);
+      }
+    }
+  });
+
+  it("has no spot with the human idle or dead, or with no route there", () => {
+    expect(spot("w", "frontline", { isIdle: (id) => id === "you" })).toBeUndefined();
+    expect(spot("w", "frontline", { routeLength: () => Number.POSITIVE_INFINITY })).toBeUndefined();
+    const fallen = match([
+      fighter("you", 0, WARRIOR, vec2(400, 400)),
+      fighter("w", 0, WARRIOR, vec2(100, 300)),
+      fighter("foe", 1, WARRIOR, vec2(1100, 400)),
+    ]);
+    who(fallen, "you").combatant.dead = true;
+    expect(
+      escortSpot(contextFor(fallen, "w", { isBot }), who(fallen, "w"), "frontline"),
+    ).toBeUndefined();
+  });
+});
+
+describe("holdPoint with humans (#3833)", () => {
+  const sim = match([
+    fighter("you", 0, WARRIOR, vec2(100, 400)),
+    fighter("w", 0, WARRIOR, vec2(100, 600)),
+    fighter("foe", 1, WARRIOR, vec2(1100, 400)),
+  ]);
+  const self = sim.get("w");
+  if (self === undefined) throw new Error("no w");
+  const isBot = (id: string): boolean => id !== "you";
+
+  it("has a hold point on a team whose only human is idle", () => {
+    const idle = contextFor(sim, "w", { isBot, isIdle: (id) => id === "you" });
+    expect(holdPoint(idle, self, 1)).toBeDefined();
+  });
+
+  it("has none on a team with an active human", () => {
+    expect(holdPoint(contextFor(sim, "w", { isBot }), self, 1)).toBeUndefined();
   });
 });

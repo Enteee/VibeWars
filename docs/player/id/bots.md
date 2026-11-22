@@ -33,8 +33,11 @@ dan penyembuh bergeser ke tempat yang lebih sedikit dijangkau musuh, dan memakai
 sebagai perlindungan. Sebuah tim berbalik menyerang musuh mana pun dalam jangkauan yang Darah-nya turun di bawah 60%,
 untuk menghabisinya. Di Raja Bukit, selama timmu tidak menguasai
 altar, Ghostly Hero tim lawan di altar didahulukan bahkan dari itu.
-Bot yang terlalu jauh di depan timnya menunggu sisanya sebelum terus
-maju, kecuali sisanya adalah pemain yang sudah diam beberapa lama.
+Dalam tim yang seluruhnya bot, bot yang terlalu jauh di depan timnya menunggu
+sisanya sebelum terus maju. Bot di timmu justru tetap bersamamu: garis depan
+selangkah di depan, jarak jauh di sampingmu, penyembuh di belakang, dan mereka
+mengikuti ke mana pun kamu pergi. Begitu kamu sudah diam beberapa lama, mereka
+terus bermain seperti tim yang seluruhnya bot.
 
 Pemanah dan pelempar tombak mengambil tempat tinggi saat aman.
 Bot yang diincar dua lawan, atau yang nyawanya di bawah separuh dan cepat berkurang, bersembunyi dari pandangan mereka hingga tiga detik: di balik dinding, di bawah dek, atau di tempat tinggi.

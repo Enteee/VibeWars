@@ -3,11 +3,17 @@ import { describe, expect, it } from "vitest";
 import { add, distance, scale, sub, vec2, type Vec2 } from "../../../vec2.js";
 import { createCursor, type BehaviourCursor } from "../../behaviour.js";
 import type { Participant } from "../../simulation.js";
-import { flankParty, flankWaypoint } from "../plan.js";
+import { ESCORT_OFFSET, flankParty, flankWaypoint } from "../plan.js";
 import type { BotRole } from "../role.js";
 import closeIn, { REPRICE_SECONDS } from "./close-in.js";
-import { POSITION_SLACK, REGROUP_SPREAD, WALK_CANDIDATES } from "./shared.js";
-import { body, contextFor, match, ruleFor } from "./test-support.js";
+import {
+  NOTHING,
+  POSITION_SLACK,
+  REGROUP_JOINED,
+  REGROUP_SPREAD,
+  WALK_CANDIDATES,
+} from "./shared.js";
+import { MONK, WARRIOR, body, contextFor, fighter, match, ruleFor } from "./test-support.js";
 
 /** The bot at (100,400) on the ground, layer 1; foes far beyond reach to the east, each on its layer. */
 function closeInTo(
@@ -236,10 +242,13 @@ describe("close-in under a hold plan (#3831)", () => {
     );
   });
 
-  it("pushes on a team with a human, whom holding would leave alone (#3833)", () => {
-    const bot = (id: string): boolean => id !== "mate";
-    const intent = closeIn.decide(ruleFor(sim, "bot", { plan: "hold" }, { isBot: bot }));
-    expect(intent?.moveTo).toEqual(vec2(1100, 400));
+  it("holds on a team whose only human is idle (#3833)", () => {
+    const human = (id: string): boolean => id === "mate";
+    const context = { isBot: (id: string) => !human(id), isIdle: human };
+    const intent = closeIn.decide(ruleFor(sim, "bot", { plan: "hold" }, context));
+    expect(distance(intent?.moveTo ?? vec2(0, 0), centre)).toBeLessThanOrEqual(
+      REGROUP_SPREAD / 4 + 1,
+    );
   });
 
   it("pushes where it has no route to the hold point", () => {
@@ -323,5 +332,64 @@ describe("close-in under a flank plan (#3832)", () => {
       ruleFor(sim, flanker, { plan: "flank", roleOf }, { now: NOW, routeLength: none }),
     );
     expect(intent?.moveTo).toEqual(vec2(800, 500));
+  });
+});
+
+describe("close-in on a team with an active human (#3833)", () => {
+  // The human `you` at `at`, its bots w (frontline) and m (healer) at
+  // the spawn, the foe east at (1100,400): forward is +x, and the two
+  // bots spread -150 and +150 along y.
+  function team(at: Vec2) {
+    return match([
+      fighter("you", 0, WARRIOR, at),
+      fighter("w", 0, WARRIOR, vec2(100, 300)),
+      fighter("m", 0, MONK, vec2(100, 500)),
+      fighter("foe", 1, WARRIOR, vec2(1100, 400)),
+    ]);
+  }
+  const isBot = (id: string): boolean => id !== "you";
+
+  it("walks a frontliner a step ahead of the human and a healer behind", () => {
+    const sim = team(vec2(400, 400));
+    expect(closeIn.decide(ruleFor(sim, "w", {}, { isBot }))?.moveTo).toEqual(
+      vec2(400 + ESCORT_OFFSET.frontline, 250),
+    );
+    expect(closeIn.decide(ruleFor(sim, "m", {}, { isBot }))?.moveTo).toEqual(
+      vec2(400 + ESCORT_OFFSET.healer, 550),
+    );
+  });
+
+  it("follows the human where they walk", () => {
+    const sim = team(vec2(650, 400));
+    expect(closeIn.decide(ruleFor(sim, "w", {}, { isBot }))?.moveTo).toEqual(
+      vec2(650 + ESCORT_OFFSET.frontline, 250),
+    );
+  });
+
+  it("escorts under hold and flank too, instead of the team's plan", () => {
+    const sim = team(vec2(400, 400));
+    for (const plan of ["hold", "flank"] as const) {
+      expect(closeIn.decide(ruleFor(sim, "w", { plan }, { isBot }))?.moveTo).toEqual(
+        vec2(400 + ESCORT_OFFSET.frontline, 250),
+      );
+    }
+  });
+
+  it("stands once within REGROUP_JOINED/2 of its spot", () => {
+    const sim = match([
+      fighter("you", 0, WARRIOR, vec2(400, 400)),
+      fighter("w", 0, WARRIOR, vec2(400 + ESCORT_OFFSET.frontline + REGROUP_JOINED / 2 - 1, 400)),
+      fighter("foe", 1, WARRIOR, vec2(1100, 400)),
+    ]);
+    const view = ruleFor(sim, "w", {}, { isBot });
+    expect(closeIn.decide(view)).toEqual({ ...NOTHING, targetId: view.self.targetId });
+  });
+
+  it("plays the team's plan once the human is idle: pushes at the foe", () => {
+    const sim = team(vec2(400, 400));
+    const idle = { isBot, isIdle: (id: string) => id === "you" };
+    expect(closeIn.decide(ruleFor(sim, "w", { plan: "push" }, idle))?.moveTo).toEqual(
+      vec2(1100, 400),
+    );
   });
 });
