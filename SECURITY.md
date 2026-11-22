@@ -426,6 +426,13 @@ What it does not defend against:
   (`game-session/src/rejoin-proof.ts`). The host checks it against the
   `from` the proof arrives on. A nonce is good for one proof, and a new
   hello from the same peer kills the old one.
+- A host that dropped a seat tells that peer id so when it is heard again
+  (`seat-dropped`, #3772), since a page that stalled may never have seen
+  the host go. It goes only to the peer id that sat there, carries only
+  that seat's own player id and whether it is still held, and is accepted
+  only from `hostId`, for the guest's own seat. It grants nothing: the way
+  back is still the rejoin challenge above. The host's map of dropped peers
+  gains one entry per drop and lives as long as the match.
 - A joiner proves its player key before it is seated (#2706). The host
   answers each `lobby-join` with a `lobby-challenge` of 32 fresh random
   bytes, and the joiner signs, with BIP-340 Schnorr under the tag
