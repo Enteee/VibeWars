@@ -24,6 +24,8 @@ const SLOT_LABEL: Record<CosmeticSlot, MessageKey> = {
   flame: "cosmetics.slot.flame",
   aura: "cosmetics.slot.aura",
   trail: "cosmetics.slot.trail",
+  swing: "cosmetics.slot.swing",
+  cape: "cosmetics.slot.cape",
   spawn: "cosmetics.slot.spawn",
   dissolve: "cosmetics.slot.dissolve",
   emblemFrame: "cosmetics.slot.emblemFrame",

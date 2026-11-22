@@ -52,9 +52,13 @@ function coloursOf(look: CosmeticLook): readonly number[] {
     case "flame":
     case "trail":
     case "aura":
+    case "swing":
     case "spawn":
     case "dissolve":
       return [look.colour];
+    case "cape":
+      // The cape's own colours, which `capeLook` already keeps clear of the teams'.
+      return [];
     case "title":
       return [look.colour, look.glow];
     case "emblemFrame":

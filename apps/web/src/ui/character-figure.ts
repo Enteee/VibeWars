@@ -105,7 +105,7 @@ export function figureBody(
     cape:
       cape === undefined
         ? undefined
-        : { look: cape, motion: newCapeMotion(), emblemFrame: undefined },
+        : { look: cape, motion: newCapeMotion(), pattern: undefined, emblemFrame: undefined },
   };
 }
 
