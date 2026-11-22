@@ -189,8 +189,11 @@ a lit top edge, a darker front face, a shadow thrown south-east.
 ![rock wall](visual-style/rock-wall.svg)
 
 Recipe (now): the palette in `arena-palette.ts`: top `#4b5a70`, face that
-shaded 40 %, lit edge `#a9bbd0`, stroke `#3b4759`. **Target**: the noise fill
-(fractal, about 0.06 cycles per unit, 50 % opacity) and irregular outlines.
+shaded 40 %, lit edge `#a9bbd0`, stroke `#3b4759`. On a map with an outline,
+the top is the outside land's tile under a wash of its pale tone (rock 22 %,
+basalt 32 %; `wall-tops.ts`, [#3808](3808-wall-top-texture.md)), so an island
+reads as the same rock as the land round the map. **Target**: irregular
+outlines, and the noise fill on a map without one.
 
 ## 4. Outline and texture
 
@@ -198,7 +201,8 @@ shaded 40 %, lit edge `#a9bbd0`, stroke `#3b4759`. **Target**: the noise fill
   floor. **A wall** and a prop have a 2 px dark outline. **A zone** has a hard
   bright edge, 2 lines wide, never softer than its fill.
 - **No fill is flat** (a zone's is not: `zone-painter.ts`, #3052; nor a layered
-  map's floor: `ground-dressing.ts`, #3484; walls still are). Use noise: fractal noise, 3 octaves, at a scale of
+  map's floor: `ground-dressing.ts`, #3484; nor a wall top on a map with an
+  outline: `wall-tops.ts`, #3808; other walls still are). Use noise: fractal noise, 3 octaves, at a scale of
   about **one feature per body** (30 units): grain finer than that is lost at
   zoom 1, coarser reads as a blotch. Keep it at 50 to 80 % opacity over the
   base tone, so the base still names the material.
@@ -332,7 +336,8 @@ wash, and soft puffs that drift inside the edge, never over it.
 
 The scene sheets come first: they show the 2.5D look this page asks for, as a
 whole, before the single elements. Textures (noise, planks, blocks) are
-**target**: today the renderer fills walls flat, so a sheet shows
+**target**: today the renderer fills walls flat, except a wall top on a map
+with an outline, which carries the outside land's tile (#3808), so a sheet shows
 where #3052 and #3053 are heading, and a recipe line says "now" only where a
 developer can copy the value from main.
 
