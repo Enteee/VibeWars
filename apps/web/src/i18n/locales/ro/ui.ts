@@ -1051,8 +1051,6 @@ export default {
   "queue.randomArena": "Arenă aleatorie {size}",
   "queue.rankedCancelled": "Meci clasat anulat: un jucător nu a confirmat.",
   "queue.rankedConfirming": "Se confirmă meciul clasat…",
-  "queue.rankedNote":
-    "Fără boți meciul e clasat: rezultatul e publicat cu cheia ta și numele personajului. Un bot în meci îl lasă neclasat.",
   "queue.rankedPending": "Ratingul tău se actualizează în decurs de o oră.",
   "queue.rankedPublished": "Rezultatul clasat a fost publicat.",
   "queue.searchingCount": "{searching} caută · {needed} necesari",

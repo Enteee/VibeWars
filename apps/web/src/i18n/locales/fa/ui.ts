@@ -998,8 +998,6 @@ export default {
   "queue.randomArena": "آرنای تصادفی {size}",
   "queue.rankedCancelled": "مسابقه رتبه‌بندی لغو شد: یک بازیکن تأیید نکرد.",
   "queue.rankedConfirming": "در حال تأیید مسابقه رتبه‌بندی…",
-  "queue.rankedNote":
-    "بدون ربات، مسابقه رتبه‌بندی است: نتیجه با کلید و نام شخصیت تو منتشر می‌شود. یک ربات در مسابقه آن را بدون رتبه نگه می‌دارد.",
   "queue.rankedPending": "رتبه‌ات ظرف یک ساعت به‌روز می‌شود.",
   "queue.rankedPublished": "نتیجه رتبه‌بندی منتشر شد.",
   "queue.searchingCount": "{searching} در جستجو · {needed} لازم",

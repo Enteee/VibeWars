@@ -99,14 +99,38 @@ export async function phoneOffenders(
       // a card's corner buttons once sat on its skill bar. Only a picture
       // in the control's own positioned box counts, and only where the
       // control is on top: a window or overlay over the page may cover one.
-      const icons = [...document.querySelectorAll(within("img"))].filter(shown);
+      // Only the part of a picture its scrolling boxes show counts (#3777):
+      // a list scrolled under its own tabs hides it, it is not covered. A
+      // hand's art is not an icon: the paper doll draws its spot on it.
+      const icons = [...document.querySelectorAll(within("img:not(.paper-doll-held)"))].filter(
+        shown,
+      );
+      const seen = (icon: Element): DOMRect | undefined => {
+        const box = icon.getBoundingClientRect();
+        let left = box.left;
+        let top = box.top;
+        let right = box.right;
+        let bottom = box.bottom;
+        for (let clip = icon.parentElement; clip !== null; clip = clip.parentElement) {
+          if (getComputedStyle(clip).overflow === "visible") continue;
+          const edge = clip.getBoundingClientRect();
+          left = Math.max(left, edge.left);
+          top = Math.max(top, edge.top);
+          right = Math.min(right, edge.right);
+          bottom = Math.min(bottom, edge.bottom);
+        }
+        return right > left && bottom > top
+          ? new DOMRect(left, top, right - left, bottom - top)
+          : undefined;
+      };
       for (const node of measured) {
         const scope = node instanceof HTMLElement ? node.offsetParent : null;
         if (scope === null) continue;
         const box = node.getBoundingClientRect();
         for (const icon of icons) {
           if (node.contains(icon) || !scope.contains(icon)) continue;
-          const over = icon.getBoundingClientRect();
+          const over = seen(icon);
+          if (over === undefined) continue;
           const left = Math.max(box.left, over.left);
           const top = Math.max(box.top, over.top);
           const wide = Math.min(box.right, over.right) - left;

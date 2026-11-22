@@ -952,8 +952,6 @@ export default {
   "queue.randomArena": "ランダムアリーナ {size}",
   "queue.rankedCancelled": "ランク戦は中止されました: 確認しなかったプレイヤーがいます。",
   "queue.rankedConfirming": "ランク戦を確認中…",
-  "queue.rankedNote":
-    "ボットなしならランク戦: 結果はあなたの鍵とキャラクター名で公開されます。ボットがいる試合はランク外です。",
   "queue.rankedPending": "レートは1時間以内に更新されます。",
   "queue.rankedPublished": "ランク戦の結果を公開しました。",
   "queue.searchingCount": "{searching}人検索中 · {needed}人必要",

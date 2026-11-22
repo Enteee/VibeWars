@@ -996,8 +996,6 @@ export default {
   "queue.randomArena": "Random Arena {size}",
   "queue.rankedCancelled": "Gerankte wedstrijd geannuleerd: een speler bevestigde niet.",
   "queue.rankedConfirming": "Gerankte wedstrijd bevestigen…",
-  "queue.rankedNote":
-    "Zonder bots is het gerankt: de uitslag wordt gepubliceerd met je sleutel en personagenaam. Een bot in de wedstrijd houdt hem ongerankt.",
   "queue.rankedPending": "Je rating wordt binnen het uur bijgewerkt.",
   "queue.rankedPublished": "Gerankte uitslag gepubliceerd.",
   "queue.searchingCount": "{searching} zoeken · {needed} nodig",

@@ -1054,8 +1054,6 @@ export default {
   "queue.randomArena": "זירה אקראית {size}",
   "queue.rankedCancelled": "המשחק המדורג בוטל: שחקן לא אישר.",
   "queue.rankedConfirming": "מאשר משחק מדורג…",
-  "queue.rankedNote":
-    "בלי בוטים המשחק מדורג: התוצאה מתפרסמת עם המפתח שלך ושם הדמות שלך. בוט במשחק משאיר אותו לא מדורג.",
   "queue.rankedPending": "הדירוג שלך מתעדכן תוך שעה.",
   "queue.rankedPublished": "התוצאה המדורגת פורסמה.",
   "queue.searchingCount": "{searching} מחפשים · חסרים {needed}",

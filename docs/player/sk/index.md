@@ -9,6 +9,7 @@ stránka v tomto priečinku je tu uvedená práve raz.
 - [Schopnosti a buildy](skills-and-builds.md)
 - [Výbava](equipment.md)
 - [Režimy](modes.md)
+- [Hodnotenie](ranking.md)
 - [Kozmetika](cosmetics.md)
 - [Prvky sveta](world-elements.md)
 - [Boti](bots.md)

@@ -459,12 +459,4 @@ Di atas chip, strip **Aula Pahlawan** menampilkan 20 penguasaan terakhir, yang t
 
 ## Peringkat
 
-Pertandingan dari antrean tanpa bot adalah pertandingan peringkat. Layar antrean dan lobi tim mengatakannya sebelum kamu mengantre; satu bot membuat pertandingan tanpa peringkat. Saat pertandingan peringkat ditemukan, setiap pemain menandatangani awalnya, dan layar menampilkan **Mengonfirmasi pertandingan peringkat…** hingga 15 detik. Jika ada yang tidak mengonfirmasi, pertandingan dibatalkan dan semua kembali ke antrean. Di akhir, setiap pemain menandatangani hasilnya, dan tanda terima pertandingan dipublikasikan di relay Nostr bersama kunci publik dan nama karakter setiap pemain; pemain tanpa karakter dicatat sebagai starter. Peringkatmu berubah dalam satu jam. Keluar dari pertandingan peringkat dihitung kalah, dan tombol keluar mengatakannya.
-
-Antrean peringkat memasangkan pemain dengan rating serupa, dan membaginya ke dalam tim dengan rata-rata rating serupa. Pencarian dimulai dalam jarak 100 poin dari ratingmu dan melebar 10 poin untuk setiap detik kamu menunggu, hingga 600, jadi tak ada yang menunggu selamanya. Selama menunggu, antrean menampilkan ratingmu.
-
-10 pertandingan berating pertamamu bersifat sementara: antrean menampilkan **Sementara (3/10 pertandingan)** dan kamu belum punya peringkat. Setelah itu menu utama menampilkan peringkatmu. Rating meluruh: setiap hari tanpa pertandingan berating membuat ratingmu kurang pasti, dan papan peringkat mengurutkan menurut nilai yang hati-hati, jadi jika kamu berhenti bermain, peringkatmu turun dalam hitungan minggu.
-
-Begitu papan peringkat punya 20 pemain mapan, pertandingan peringkat hanya dihitung jika setidaknya satu pemain di dalamnya sudah mapan (10 pertandingan berating atau lebih): pertandingan antara pemain baru saja tidak berating. Bermainlah melawan pemain mapan dan pertandinganmu dihitung.
-
-Tombol **Papan peringkat** di bilah atas menampilkan 100 teratas menurut peringkat, nama, dan rating, dengan barismu disorot. Diperbarui setiap jam.
+Pertandingan dari antrean tanpa bot adalah pertandingan peringkat: lihat [Peringkat](ranking.md).

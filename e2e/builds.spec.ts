@@ -2571,8 +2571,9 @@ test("the arena survives the editor collapsing to one column", async ({ page }) 
 
   await page.setViewportSize({ width: 600, height: 900 });
   const training = await page.locator(".training").boundingBox();
-  const editor = await page.locator(".editor").boundingBox();
-  expect(training?.x).toBe(editor?.x);
+  // The editor's sections join the column (#3777): its bar lines up.
+  const bar = await page.locator(".editor-skills").boundingBox();
+  expect(training?.x).toBe(bar?.x);
 
   await expect(page.locator("canvas")).toHaveCount(1);
   expect(await original.evaluate((node) => node.isConnected)).toBe(true);

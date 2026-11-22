@@ -946,8 +946,6 @@ export default {
   "queue.randomArena": "랜덤 아레나 {size}",
   "queue.rankedCancelled": "랭크 경기 취소: 확인하지 않은 플레이어가 있습니다.",
   "queue.rankedConfirming": "랭크 경기 확인 중…",
-  "queue.rankedNote":
-    "봇이 없으면 랭크 경기입니다: 결과는 당신의 키와 캐릭터 이름으로 공개됩니다. 봇이 있으면 랭크 외 경기입니다.",
   "queue.rankedPending": "레이팅은 1시간 안에 갱신됩니다.",
   "queue.rankedPublished": "랭크 결과가 공개되었습니다.",
   "queue.searchingCount": "{searching}명 찾는 중 · {needed}명 필요",

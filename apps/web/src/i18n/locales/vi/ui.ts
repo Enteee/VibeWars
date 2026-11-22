@@ -943,8 +943,6 @@ export default {
   "queue.randomArena": "Đấu trường ngẫu nhiên {size}",
   "queue.rankedCancelled": "Trận xếp hạng bị hủy: một người chơi không xác nhận.",
   "queue.rankedConfirming": "Đang xác nhận trận xếp hạng…",
-  "queue.rankedNote":
-    "Không có bot là trận xếp hạng: kết quả được công bố kèm khóa và tên nhân vật của bạn. Có bot trong trận thì không xếp hạng.",
   "queue.rankedPending": "Điểm của bạn cập nhật trong vòng một giờ.",
   "queue.rankedPublished": "Đã công bố kết quả xếp hạng.",
   "queue.searchingCount": "{searching} đang tìm · cần {needed}",

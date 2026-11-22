@@ -9,6 +9,7 @@ les liste. Chaque page de ce dossier est listée ici une seule fois.
 - [Compétences et builds](skills-and-builds.md)
 - [Équipement](equipment.md)
 - [Modes](modes.md)
+- [Classement](ranking.md)
 - [Cosmétiques](cosmetics.md)
 - [Éléments du monde](world-elements.md)
 - [Bots](bots.md)

@@ -9,6 +9,7 @@ halaman di direktori ini tercantum di sini tepat satu kali.
 - [Skill dan build](skills-and-builds.md)
 - [Perlengkapan](equipment.md)
 - [Mode](modes.md)
+- [Peringkat](ranking.md)
 - [Kosmetik](cosmetics.md)
 - [Elemen dunia](world-elements.md)
 - [Bot](bots.md)

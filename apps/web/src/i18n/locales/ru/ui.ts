@@ -1084,8 +1084,6 @@ export default {
   "queue.randomArena": "Случайная арена {size}",
   "queue.rankedCancelled": "Рейтинговый матч отменён: игрок не подтвердил.",
   "queue.rankedConfirming": "Подтверждение рейтингового матча…",
-  "queue.rankedNote":
-    "Без ботов матч рейтинговый: результат публикуется с вашим ключом и именем персонажа. Бот в матче делает его нерейтинговым.",
   "queue.rankedPending": "Рейтинг обновится в течение часа.",
   "queue.rankedPublished": "Рейтинговый результат опубликован.",
   "queue.searchingCount": "В поиске: {searching} · нужно: {needed}",

@@ -280,8 +280,8 @@ test("a ranked 1v1 ends in a receipt both players published, which holds (#3680)
     await makeCharacter(alice);
     await bob.goto("./");
     await queue1v1(alice, "Alice");
-    // Said before the first queue: a match of strangers is ranked, and public.
-    await expect(alice.locator(".queue-ranked-note")).toContainText("ranked");
+    // The rules are Help's Ranking page (#3787): no note says them here.
+    await expect(alice.locator(".queue-ranked-note")).toHaveCount(0);
     await queue1v1(bob, "Bob");
     for (const page of [alice, bob]) {
       await expect(page.locator(".hud-bar-health .hud-bar-label")).toContainText("hp", {

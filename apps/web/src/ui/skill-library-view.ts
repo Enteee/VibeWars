@@ -327,6 +327,11 @@ export function mountSkillLibrary(context: SkillLibraryHost): SkillLibraryBody {
     // The hover tooltip stays beside the inline details (#549 Q3), as in
     // GW1's skill window.
     box.addEventListener("mouseenter", () => {
+      // A finger opens the card instead (#3777): a tip over the list it
+      // just tapped would hide it.
+      if (!matchMedia("(hover: hover)").matches) {
+        return;
+      }
       context.showTip(box, () =>
         describeSkill(skill, characterRanks(context.current()), describeWords(), describeNames()),
       );
@@ -368,6 +373,11 @@ export function mountSkillLibrary(context: SkillLibraryHost): SkillLibraryBody {
     details.hidden = true;
     box.appendChild(details);
     box.addEventListener("mouseenter", () => {
+      // A finger opens the card instead (#3777): a tip over the list it
+      // just tapped would hide it.
+      if (!matchMedia("(hover: hover)").matches) {
+        return;
+      }
       context.showTip(box, () =>
         describeSkill(skill, characterRanks(context.current()), describeWords(), describeNames()),
       );

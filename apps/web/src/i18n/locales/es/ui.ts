@@ -1059,8 +1059,6 @@ export default {
   "queue.randomArena": "Arena aleatoria {size}",
   "queue.rankedCancelled": "Partida clasificatoria cancelada: un jugador no confirmó.",
   "queue.rankedConfirming": "Confirmando partida clasificatoria…",
-  "queue.rankedNote":
-    "Sin bots es clasificatoria: el resultado se publica con tu clave y el nombre de tu personaje. Un bot en la partida la deja sin clasificar.",
   "queue.rankedPending": "Tu puntuación se actualiza en menos de una hora.",
   "queue.rankedPublished": "Resultado clasificatorio publicado.",
   "queue.searchingCount": "{searching} buscando · faltan {needed}",

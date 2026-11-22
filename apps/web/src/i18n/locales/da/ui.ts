@@ -993,8 +993,6 @@ export default {
   "queue.randomArena": "Tilfældig arena {size}",
   "queue.rankedCancelled": "Rangeret kamp aflyst: en spiller bekræftede ikke.",
   "queue.rankedConfirming": "Bekræfter rangeret kamp…",
-  "queue.rankedNote":
-    "Ingen bots betyder rangeret: resultatet offentliggøres med din nøgle og dit figurnavn. En bot i kampen holder den urangeret.",
   "queue.rankedPending": "Din rating opdateres inden for en time.",
   "queue.rankedPublished": "Rangeret resultat offentliggjort.",
   "queue.searchingCount": "{searching} søger · {needed} mangler",

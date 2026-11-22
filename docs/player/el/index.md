@@ -8,6 +8,7 @@
 - [Ικανότητες και συνθέσεις](skills-and-builds.md)
 - [Εξοπλισμός](equipment.md)
 - [Λειτουργίες](modes.md)
+- [Βαθμολόγηση](ranking.md)
 - [Διακοσμητικά](cosmetics.md)
 - [Στοιχεία του κόσμου](world-elements.md)
 - [Bots](bots.md)

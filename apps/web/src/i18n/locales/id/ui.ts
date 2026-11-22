@@ -949,8 +949,6 @@ export default {
   "queue.randomArena": "Arena Acak {size}",
   "queue.rankedCancelled": "Pertandingan peringkat dibatalkan: seorang pemain tidak mengonfirmasi.",
   "queue.rankedConfirming": "Mengonfirmasi pertandingan peringkat…",
-  "queue.rankedNote":
-    "Tanpa bot berarti peringkat: hasilnya dipublikasikan dengan kunci dan nama karaktermu. Bot dalam pertandingan membuatnya tanpa peringkat.",
   "queue.rankedPending": "Peringkatmu diperbarui dalam satu jam.",
   "queue.rankedPublished": "Hasil peringkat dipublikasikan.",
   "queue.searchingCount": "{searching} mencari · butuh {needed}",

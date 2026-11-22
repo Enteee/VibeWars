@@ -939,8 +939,6 @@ export default {
   "queue.randomArena": "随机竞技场 {size}",
   "queue.rankedCancelled": "排位赛已取消：有玩家未确认。",
   "queue.rankedConfirming": "正在确认排位赛…",
-  "queue.rankedNote":
-    "没有机器人即为排位赛：结果会以你的密钥和角色名公开。比赛中有机器人则不计排位。",
   "queue.rankedPending": "你的等级分将在一小时内更新。",
   "queue.rankedPublished": "排位结果已公开。",
   "queue.searchingCount": "{searching} 人搜索中 · 需要 {needed} 人",

@@ -116,6 +116,8 @@ test("a party's Team Lobby and its Team Arena queue fit the phone (#3776)", asyn
   await namePlayer(member, "Member");
   await joinFriend(member, invite);
   await expect(member.locator(".lobby-panel")).toContainText("Leader");
+  // The ranking rules are Help's Ranking page (#3787), not a note here.
+  await expect(leader.locator(".lobby-panel")).not.toContainText(/ranked/i);
 
   await press(leader, leader.getByRole("button", { name: "Find a match" }));
   for (const page of [leader, member]) {
