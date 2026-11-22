@@ -12,19 +12,23 @@ Nimeni nu le împarte: oricine poate verifica clasamentul și vedea ce ai obțin
 | Ramă de jad și titlul Pretendent                                              | 5 victorii clasate         |
 | Aură de mușchi, Urmă de mușchi, Lovitură de mușchi                            | 5 victorii clasate         |
 | Pelerină cu dungi                                                             | 5 victorii clasate         |
+| Ramă de emblemă în culoarea tivului                                           | 5 victorii clasate         |
 | Ramă roz și titlul Veteran                                                    | 25 de victorii clasate     |
 | Aură de jar, Urmă de jar, Lovitură de jar                                     | 25 de victorii clasate     |
 | Pelerină cu căpriori                                                          | 25 de victorii clasate     |
 | Lumină înălțătoare, Destrămare în cenușă                                      | 25 de victorii clasate     |
 | Aură de brumă, Urmă de brumă, Lovitură de brumă                               | 75 de victorii clasate     |
 | Vârtej de frunze, Destrămare în ceață                                         | 75 de victorii clasate     |
+| Ramă de emblemă din fier                                                      | 75 de victorii clasate     |
 | Ramă turcoaz și titlul Senior al războiului                                   | 200 de victorii clasate    |
 | Pelerină sfertuită                                                            | 200 de victorii clasate    |
 | Ploaie de petale, Destrămare în cioburi                                       | 200 de victorii clasate    |
+| Ramă de emblemă din argint                                                    | 200 de victorii clasate    |
 | Aură de lumina stelelor, Urmă de lumina stelelor, Lovitură de lumina stelelor | 500 de victorii clasate    |
 | Ploaie de stele, Destrămare în praf de stele                                  | 500 de victorii clasate    |
 | Ramă orhidee și titlul Campion                                                | Un loc în Top 100          |
 | Pelerină cu stele                                                             | Un loc în Top 100          |
+| Ramă de emblemă aurită                                                        | Un loc în Top 100          |
 | Flacăra seriei de victorii                                                    | 3 victorii clasate la rând |
 
 Elementele din Top 100 și flacăra durează doar cât timp le păstrezi. Dacă ieși din Top 100 sau
@@ -41,6 +45,10 @@ O urmă de armă este o panglică în spatele armei tale când lovește un atac 
 ## Revenire și cădere
 
 Un stil de apariție adună particule mici la picioarele tale când apari sau ești înviat. O destrămare la moarte le împrăștie când cazi. Fiecare durează exact cât revenirea și căderea obișnuite, se desenează sub corpul tău și îți lasă conturul, inelul de echipă și cadavrul la fel de ușor de citit ca întotdeauna. Dacă sistemul tău cere mișcare redusă, se desenează doar estomparea obișnuită.
+
+## Pe pelerina ta
+
+O ramă de emblemă este o margine subțire în jurul emblemei de pe pelerina breslei tale. Nu acoperă, nu mută și nu schimbă niciodată emblema și se desenează în culoarea tivului pelerinei tale sau într-un metal simplu, niciodată într-o culoare de echipă. Ai nevoie de o pelerină de breaslă ca s-o porți: locul apare în Opțiuni de îndată ce porți o pelerină de breaslă.
 
 ## Cum le porți
 

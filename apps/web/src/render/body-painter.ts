@@ -1,4 +1,4 @@
-import type { CapePattern } from "../cosmetics/catalog.js";
+import type { CapePattern, CosmeticLook } from "../cosmetics/catalog.js";
 
 import type { AttackFrame } from "./attack-clock.js";
 import {
@@ -16,7 +16,7 @@ import {
   type CapeShape,
 } from "./cape-motion.js";
 import { capePatternShapes } from "./cape-pattern.js";
-import type { CapeLook, EmblemPart } from "./cape-shape.js";
+import { emblemFrameShape, type CapeLook, type EmblemPart } from "./cape-shape.js";
 import { paintSwingRibbon, type SwingRibbon } from "./cosmetic-trail.js";
 import { multiplyColour } from "./lighting-model.js";
 import { weaponMarkLayout } from "./weapon-mark.js";
@@ -76,7 +76,12 @@ export interface WornCape {
   readonly motion: CapeMotion;
   /** The cape pattern cosmetic on it (#3579); `undefined` for a plain cape. */
   readonly pattern: CapePattern | undefined;
+  /** The emblem frame cosmetic round its emblem (#3581); `undefined` for none. */
+  readonly emblemFrame: EmblemFrameLook | undefined;
 }
+
+/** An emblem frame's look (#3581). */
+export type EmblemFrameLook = Extract<CosmeticLook, { readonly kind: "emblemFrame" }>;
 
 /** The cape's outline, as wide as the study draws it, and its trim's. */
 export const CAPE_EDGE_WIDTH = 1.6;
@@ -102,7 +107,7 @@ export function paintBodyDisc(painter: Painter, body: StandingBody): void {
   const shape =
     cape === undefined ? undefined : capeMotionShape(cape.motion, body, cape.look.emblem);
   if (cape !== undefined && shape !== undefined) {
-    paintCape(painter, shape, cape.look, cape.pattern);
+    paintCape(painter, shape, cape.look, cape.pattern, cape.emblemFrame);
   }
   const team = teamColour(body.team);
   painter.fillStyle(body.tint === undefined ? team : multiplyColour(team, body.tint), 1);
@@ -128,15 +133,17 @@ export function paintBodyDisc(painter: Painter, body: StandingBody): void {
 
 /**
  * The cape (#1422, #1699) under the disc, which covers its root: the cloth, its
- * pattern in the trim's colour and the emblem's field over it (#3579), its
- * `edge` outline, the trim along the hem, then the emblem grid in its own colours.
- * Folded, all of it hides under the disc but the emblem's edge.
+ * pattern in the trim's colour and the emblem's field over it (#3579), an
+ * emblem frame round the emblem's grid (#3581), its `edge` outline, the trim
+ * along the hem, then the emblem grid in its own colours. Folded, all of it
+ * hides under the disc but the emblem's edge.
  */
 function paintCape(
   painter: Painter,
   shape: CapeShape,
   cape: CapeLook,
   pattern: CapePattern | undefined,
+  frame: EmblemFrameLook | undefined,
 ): void {
   painter.fillStyle(cape.main, 1);
   painter.fillPoints(shape.cloth);
@@ -148,6 +155,12 @@ function paintCape(
     if (shape.emblemField.length > 0) {
       painter.fillStyle(cape.main, 1);
       painter.fillPoints(shape.emblemField);
+    }
+  }
+  if (frame !== undefined && shape.emblemGrid !== undefined) {
+    painter.fillStyle(frame.colour === "trim" ? cape.trim : frame.colour, 1);
+    for (const quad of emblemFrameShape(shape.emblemGrid, frame.studs)) {
+      painter.fillPoints(quad);
     }
   }
   painter.lineStyle(CAPE_EDGE_WIDTH, BODY_EDGE, 1);

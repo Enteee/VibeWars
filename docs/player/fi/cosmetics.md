@@ -13,19 +13,23 @@ ansainnut.
 | Jadekehys ja arvonimi Haastaja               | 5 rankattua voittoa           |
 | Sammalaura, Sammaljälki, Sammalisku          | 5 rankattua voittoa           |
 | Raitaviitta                                  | 5 rankattua voittoa           |
+| Tunnuksen kehys reunuksen värissä            | 5 rankattua voittoa           |
 | Ruusukehys ja arvonimi Veteraani             | 25 rankattua voittoa          |
 | Hiillosaura, Hiillosjälki, Hiillosisku       | 25 rankattua voittoa          |
 | Kulmaraitaviitta                             | 25 rankattua voittoa          |
 | Nouseva valo, Tuhkahaihtuminen               | 25 rankattua voittoa          |
 | Huurreaura, Huurrejälki, Huurreisku          | 75 rankattua voittoa          |
 | Lehtipyörre, Usvahaihtuminen                 | 75 rankattua voittoa          |
+| Rautainen tunnuksen kehys                    | 75 rankattua voittoa          |
 | Sinivihreä kehys ja arvonimi Sotaherra       | 200 rankattua voittoa         |
 | Neljännesviitta                              | 200 rankattua voittoa         |
 | Terälehtisade, Sirpalehaihtuminen            | 200 rankattua voittoa         |
+| Hopeinen tunnuksen kehys                     | 200 rankattua voittoa         |
 | Tähtivaloaura, Tähtivalojälki, Tähtivaloisku | 500 rankattua voittoa         |
 | Tähtisade, Tähtipölyhaihtuminen              | 500 rankattua voittoa         |
 | Orkideakehys ja arvonimi Mestari             | Sija Top 100:ssa              |
 | Tähtiviitta                                  | Sija Top 100:ssa              |
+| Kullattu tunnuksen kehys                     | Sija Top 100:ssa              |
 | Voittoputken liekki                          | 3 rankattua voittoa peräkkäin |
 
 Top 100:n esineet ja liekki säilyvät vain niin kauan kuin pidät ne. Jos putoat Top 100:sta tai
@@ -43,6 +47,10 @@ Asejälki on nauha aseesi perässä lähitaisteluhyökkäyksen osuessa, ja se ha
 ## Palaaminen ja kaatuminen
 
 Ilmestymistyyli kokoaa pieniä hiukkasia jalkojesi juureen, kun ilmestyt tai sinut herätetään henkiin. Kuoleman haihtuminen hajottaa ne, kun kaadut. Kumpikin kestää täsmälleen yhtä kauan kuin tavallinen paluu ja kaatuminen, piirretään vartalosi alle ja jättää ääriviivasi, joukkueen renkaasi ja ruumiisi yhtä helposti luettaviksi kuin aina. Jos järjestelmässäsi on vähennetty liike päällä, vain tavallinen häivytys piirretään.
+
+## Viitassasi
+
+Tunnuksen kehys on ohut reunus kiltaviittasi tunnuksen ympärillä. Se ei koskaan peitä, siirrä tai muuta tunnusta, ja se piirretään viittasi oman reunuksen värillä tai pelkällä metallilla, ei koskaan joukkueen värillä. Tarvitset kiltaviitan käyttääksesi sitä: paikka näkyy Asetuksissa heti, kun käytät kiltaviittaa.
 
 ## Käyttäminen
 

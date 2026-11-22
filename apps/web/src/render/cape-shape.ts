@@ -298,6 +298,27 @@ export interface EmblemPart {
   readonly points: readonly Point[];
 }
 
+/** Where an emblem's grid lies: centred on `centre`, `size` across, its up turned by `turn` radians from -y. */
+export interface EmblemGrid {
+  readonly centre: Point;
+  readonly turn: number;
+  readonly size: number;
+}
+
+/** A point given in `grid`'s cells, column and row from its top left, in the world. */
+function placer(grid: EmblemGrid): (column: number, row: number) => Point {
+  const { centre, turn, size } = grid;
+  const cos = Math.cos(turn);
+  const sin = Math.sin(turn);
+  const cell = size / EMBLEM_GRID;
+  const half = EMBLEM_GRID / 2;
+  return (column, row) => {
+    const x = (column - half) * cell;
+    const y = (row - half) * cell;
+    return { x: centre.x + x * cos - y * sin, y: centre.y + x * sin + y * cos };
+  };
+}
+
 /** `emblem` centred on `centre`, `size` across, its up turned by `turn` radians from -y. */
 export function emblemShape(
   emblem: string,
@@ -305,17 +326,48 @@ export function emblemShape(
   turn: number,
   size: number,
 ): readonly EmblemPart[] {
-  const cos = Math.cos(turn);
-  const sin = Math.sin(turn);
-  const cell = size / EMBLEM_GRID;
-  const half = EMBLEM_GRID / 2;
-  const place = (column: number, row: number): Point => {
-    const x = (column - half) * cell;
-    const y = (row - half) * cell;
-    return { x: centre.x + x * cos - y * sin, y: centre.y + x * sin + y * cos };
-  };
+  const place = placer({ centre, turn, size });
   return emblemRects(emblem).map(({ pixel, left, top, right, bottom }) => ({
     pixel,
     points: [place(left, top), place(right, top), place(right, bottom), place(left, bottom)],
   }));
+}
+
+/**
+ * How wide an emblem frame is, in the grid's cells: never more than one
+ * (#3581), and narrower than the gap the emblem keeps from the cape's
+ * notch on a full cape, so it stays on the cloth.
+ */
+export const EMBLEM_FRAME_CELLS = 0.9;
+
+/**
+ * An emblem frame (#3581) round `grid`: `EMBLEM_FRAME_CELLS` wide and all of it
+ * outside the grid, so no emblem pixel is ever covered, however few are
+ * set; with `studs`, a square twice as wide off each corner. Quads to fill.
+ */
+export function emblemFrameShape(grid: EmblemGrid, studs: boolean): readonly (readonly Point[])[] {
+  const place = placer(grid);
+  const quad = (left: number, top: number, right: number, bottom: number): readonly Point[] => [
+    place(left, top),
+    place(right, top),
+    place(right, bottom),
+    place(left, bottom),
+  ];
+  const end = EMBLEM_GRID;
+  const w = EMBLEM_FRAME_CELLS;
+  const sides = [
+    quad(-w, -w, end + w, 0),
+    quad(-w, end, end + w, end + w),
+    quad(-w, 0, 0, end),
+    quad(end, 0, end + w, end),
+  ];
+  return studs
+    ? [
+        ...sides,
+        quad(-2 * w, -2 * w, 0, 0),
+        quad(end, -2 * w, end + 2 * w, 0),
+        quad(end, end, end + 2 * w, end + 2 * w),
+        quad(-2 * w, end, 0, end + 2 * w),
+      ]
+    : sides;
 }

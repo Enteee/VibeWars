@@ -12,19 +12,23 @@ zählt. Niemand verteilt sie: Jeder kann die Rangliste prüfen und sehen, was du
 | Jaderahmen und der Titel Herausforderer                 | 5 gewertete Siege          |
 | Moosaura, Moosspur, Moosschwung                         | 5 gewertete Siege          |
 | Gestreifter Umhang                                      | 5 gewertete Siege          |
+| Wappenrahmen in Saumfarbe                               | 5 gewertete Siege          |
 | Rosenrahmen und der Titel Veteran                       | 25 gewertete Siege         |
 | Glutaura, Glutspur, Glutschwung                         | 25 gewertete Siege         |
 | Sparrenumhang                                           | 25 gewertete Siege         |
 | Aufsteigendes Licht, Ascheauflösung                     | 25 gewertete Siege         |
 | Frostaura, Frostspur, Frostschwung                      | 75 gewertete Siege         |
 | Blätterwirbel, Nebelauflösung                           | 75 gewertete Siege         |
+| Eiserner Wappenrahmen                                   | 75 gewertete Siege         |
 | Petrolrahmen und der Titel Kriegsherr                   | 200 gewertete Siege        |
 | Geviertelter Umhang                                     | 200 gewertete Siege        |
 | Blütenregen, Splitterauflösung                          | 200 gewertete Siege        |
+| Silberner Wappenrahmen                                  | 200 gewertete Siege        |
 | Sternenlichtaura, Sternenlichtspur, Sternenlichtschwung | 500 gewertete Siege        |
 | Sternenfall, Sternenstaubauflösung                      | 500 gewertete Siege        |
 | Orchideenrahmen und der Titel Champion                  | Ein Platz in den Top 100   |
 | Sternenumhang                                           | Ein Platz in den Top 100   |
+| Vergoldeter Wappenrahmen                                | Ein Platz in den Top 100   |
 | Siegesserien-Flamme                                     | 3 gewertete Siege in Folge |
 
 Die Gegenstände der Top 100 und die Flamme bleiben nur, solange du sie hältst. Fällst du aus den
@@ -42,6 +46,10 @@ Eine Waffenspur ist ein Band hinter deiner Waffe, während ein Nahkampfangriff t
 ## Zurückkehren und fallen
 
 Ein Erscheinungsstil sammelt kleine Funken zu deinen Füßen, wenn du erscheinst oder wiederbelebt wirst. Eine Todesauflösung verstreut sie, wenn du fällst. Beide dauern genau so lange wie die schlichte Rückkehr und der schlichte Fall, liegen unter deinem Körper und lassen deinen Umriss, deinen Teamring und deine Leiche so gut lesbar wie immer. Ist in deinem System reduzierte Bewegung eingeschaltet, wird nur das schlichte Ausblenden gezeichnet.
+
+## Auf deinem Umhang
+
+Ein Wappenrahmen ist ein dünner Rand um das Wappen auf deinem Gildenumhang. Er verdeckt, verschiebt oder verändert das Wappen nie und wird in der Saumfarbe deines Umhangs oder in schlichtem Metall gezeichnet, nie in einer Teamfarbe. Um einen zu tragen, brauchst du einen Gildenumhang: Der Platz erscheint in den Optionen, sobald du einen Gildenumhang trägst.
 
 ## Wie du sie trägst
 

@@ -12,19 +12,23 @@ wyników. Nikt ich nie rozdaje: każdy może sprawdzić tabelę wyników i zobac
 | Nefrytowa ramka i tytuł Pretendent                           | 5 zwycięstw rankingowych        |
 | Aura mchu, Ślad mchu, Cięcie mchu                            | 5 zwycięstw rankingowych        |
 | Peleryna w paski                                             | 5 zwycięstw rankingowych        |
+| Ramka herbu w kolorze lamówki                                | 5 zwycięstw rankingowych        |
 | Różana ramka i tytuł Weteran                                 | 25 zwycięstw rankingowych       |
 | Aura żaru, Ślad żaru, Cięcie żaru                            | 25 zwycięstw rankingowych       |
 | Peleryna w krokwie                                           | 25 zwycięstw rankingowych       |
 | Wznoszące się światło, Rozpad w popiół                       | 25 zwycięstw rankingowych       |
 | Aura szronu, Ślad szronu, Cięcie szronu                      | 75 zwycięstw rankingowych       |
 | Wir liści, Rozpad w mgłę                                     | 75 zwycięstw rankingowych       |
+| Żelazna ramka herbu                                          | 75 zwycięstw rankingowych       |
 | Morska ramka i tytuł Watażka                                 | 200 zwycięstw rankingowych      |
 | Peleryna w ćwiartki                                          | 200 zwycięstw rankingowych      |
 | Deszcz płatków, Rozpad w odłamki                             | 200 zwycięstw rankingowych      |
+| Srebrna ramka herbu                                          | 200 zwycięstw rankingowych      |
 | Aura blasku gwiazd, Ślad blasku gwiazd, Cięcie blasku gwiazd | 500 zwycięstw rankingowych      |
 | Deszcz gwiazd, Rozpad w gwiezdny pył                         | 500 zwycięstw rankingowych      |
 | Storczykowa ramka i tytuł Czempion                           | Miejsce w Top 100               |
 | Peleryna w gwiazdy                                           | Miejsce w Top 100               |
+| Złocona ramka herbu                                          | Miejsce w Top 100               |
 | Płomień serii zwycięstw                                      | 3 zwycięstwa rankingowe z rzędu |
 
 Przedmioty z Top 100 i płomień trwają tylko, dopóki je utrzymujesz. Wypadnij z Top 100 albo
@@ -42,6 +46,10 @@ Aura na ziemi to blady pierścień u twoich stóp. Ślad kroków zostawia drobne
 ## Powrót i upadek
 
 Styl pojawienia się zbiera drobne drobinki u twoich stóp, gdy się pojawiasz lub zostajesz wskrzeszony. Rozpad po śmierci rozprasza je, gdy padasz. Każdy trwa dokładnie tyle co zwykły powrót i upadek, rysuje się pod twoim ciałem i zostawia twój zarys, pierścień drużyny i zwłoki tak samo czytelne jak zawsze. Jeśli w systemie masz włączone ograniczenie ruchu, rysuje się tylko zwykłe zanikanie.
+
+## Na twoim płaszczu
+
+Ramka herbu to cienka obwódka wokół herbu na twoim płaszczu gildii. Nigdy nie zasłania, nie przesuwa ani nie zmienia herbu i jest rysowana w kolorze lamówki twojego płaszcza albo w zwykłym metalu, nigdy w kolorze drużyny. Aby ją nosić, potrzebujesz płaszcza gildii: miejsce pojawia się w Opcjach, gdy tylko nosisz płaszcz gildii.
 
 ## Jak je nosić
 

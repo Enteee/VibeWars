@@ -131,8 +131,14 @@ describe("a patterned cape keeps its emblem readable (#3579)", () => {
     "draws %s in the trim, then the field in the cape's colour, then all else as on a plain cape",
     (pattern) => {
       const motion = running();
-      const plain = record({ ...BODY, cape: { look: LOOK, motion, pattern: undefined } });
-      const worn = record({ ...BODY, cape: { look: LOOK, motion, pattern } });
+      const plain = record({
+        ...BODY,
+        cape: { look: LOOK, motion, pattern: undefined, emblemFrame: undefined },
+      });
+      const worn = record({
+        ...BODY,
+        cape: { look: LOOK, motion, pattern, emblemFrame: undefined },
+      });
       const pieces = capePatternShapes(pattern, capeMotionShape(motion, AT, LOOK.emblem).tab);
       // The cloth, then the pattern in the trim's colour, then the field in the cape's.
       expect(worn.slice(0, 2)).toEqual(plain.slice(0, 2));

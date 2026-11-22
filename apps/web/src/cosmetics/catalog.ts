@@ -11,7 +11,7 @@ import { DEATH_SECONDS, RESPAWN_SECONDS } from "../render/body-reactions.js";
 
 import { FLAME_STREAK, TIERS, TOP_RANK } from "./unlocks.js";
 
-/** The slots so far (#3577–#3580); the last comes with #3581. */
+/** Every slot (#3577–#3581). */
 export const COSMETIC_SLOTS = [
   "frame",
   "title",
@@ -22,6 +22,7 @@ export const COSMETIC_SLOTS = [
   "cape",
   "spawn",
   "dissolve",
+  "emblemFrame",
 ] as const;
 
 export type CosmeticSlot = (typeof COSMETIC_SLOTS)[number];
@@ -38,7 +39,7 @@ export type CosmeticRequirement =
  * name, never over a body; on the ground under the body, under its
  * rings, conditions, telegraphs and call marks; behind the weapon mark,
  * while a melee swing strikes (#3579); or on the guild cape's cloth,
- * under its emblem (#3579).
+ * under its emblem (#3579) and never over it (#3581).
  */
 export const COSMETIC_LAYERS = ["nameplate", "under-body", "weapon", "cape"] as const;
 
@@ -129,6 +130,16 @@ export type CosmeticLook = LookBase &
         readonly motes: number;
         readonly seconds: number;
       }
+    | {
+        /**
+         * A thin border round the guild cape's emblem (#3581), outside its
+         * grid: in the cape's own trim, or a metal (`checkCosmetic` holds
+         * it neutral). With `studs`, a square off each corner.
+         */
+        readonly kind: "emblemFrame";
+        readonly colour: "trim" | number;
+        readonly studs: boolean;
+      }
   );
 
 /** The cape patterns (#3579). */
@@ -183,6 +194,14 @@ const SPAWN = {
   seconds: RESPAWN_SECONDS,
 } as const;
 const DISSOLVE = { ...SPAWN, kind: "dissolve", seconds: DEATH_SECONDS } as const;
+/** An emblem frame (#3581): on the cape, moving with the cloth. */
+const EMBLEM_FRAME = {
+  layer: "cape",
+  motion: "still",
+  ground: null,
+  sound: null,
+  kind: "emblemFrame",
+} as const;
 
 /** A swing's ribbon (#3579): behind the weapon mark, its strength set by `cosmetic-trail.ts`. */
 const SWING = { layer: "weapon", motion: "flicker", ground: null, sound: null } as const;
@@ -226,6 +245,13 @@ const ROSE_ASH = 0xffadc9;
 const PERIWINKLE = 0x7a90ff;
 const AQUAMARINE = 0x7fffd4;
 const PALE_ORCHID = 0xff8fff;
+/**
+ * The emblem frames' metals (#3581): iron, silver and a pale gilt, each
+ * near enough grey to read as no hue at all, so never as a cue.
+ */
+const IRON = 0x8a9096;
+const SILVER = 0xd5dade;
+const GILT = 0xd8c79a;
 
 export const COSMETIC_CATALOG: readonly CosmeticEntry[] = [
   {
@@ -463,6 +489,34 @@ export const COSMETIC_CATALOG: readonly CosmeticEntry[] = [
     requires: TIER_5,
     look: { ...DISSOLVE, colour: PALE_ORCHID, motif: "stars", motes: 24 },
     name: "cosmetics.item.dissolveStars",
+  },
+  {
+    id: "emblem-frame-trim",
+    slot: "emblemFrame",
+    requires: TIER_1,
+    look: { ...EMBLEM_FRAME, colour: "trim", studs: false },
+    name: "cosmetics.item.emblemFrameTrim",
+  },
+  {
+    id: "emblem-frame-iron",
+    slot: "emblemFrame",
+    requires: TIER_3,
+    look: { ...EMBLEM_FRAME, colour: IRON, studs: false },
+    name: "cosmetics.item.emblemFrameIron",
+  },
+  {
+    id: "emblem-frame-silver",
+    slot: "emblemFrame",
+    requires: TIER_4,
+    look: { ...EMBLEM_FRAME, colour: SILVER, studs: true },
+    name: "cosmetics.item.emblemFrameSilver",
+  },
+  {
+    id: "emblem-frame-gilt",
+    slot: "emblemFrame",
+    requires: TOP,
+    look: { ...EMBLEM_FRAME, colour: GILT, studs: true },
+    name: "cosmetics.item.emblemFrameGilt",
   },
   {
     id: "flame-streak",
