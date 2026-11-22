@@ -1327,6 +1327,7 @@ export default {
   "teamEditor.professions": "Професии",
   "teamEditor.professionsTitle": "професиите в отбора",
   "teamEditor.replaceMember": "Замени {member} с {character}",
+  "teamEditor.copyMember": "Shift: Копирай билда на {source} върху {target}",
   "teamEditor.save": "Запази",
   "teamEditor.saveTitle": "Запази този отбор",
   "teamEditor.saveTitleProblem": "Запази този отбор (има проблеми: {problem})",

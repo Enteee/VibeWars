@@ -1517,6 +1517,7 @@ export default {
   "teamEditor.professions": "المهن",
   "teamEditor.professionsTitle": "مهن الفريق",
   "teamEditor.replaceMember": "استبدال {member} بـ {character}",
+  "teamEditor.copyMember": "Shift: نسخ بنية {source} إلى {target}",
   "teamEditor.save": "حفظ",
   "teamEditor.saveTitle": "احفظ هذا الفريق",
   "teamEditor.saveTitleProblem": "احفظ هذا الفريق (به مشكلات: {problem})",

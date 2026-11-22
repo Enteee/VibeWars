@@ -1329,6 +1329,7 @@ export default {
   "teamEditor.professions": "Klassen",
   "teamEditor.professionsTitle": "de klassen van het team",
   "teamEditor.replaceMember": "{member} vervangen door {character}",
+  "teamEditor.copyMember": "Shift: build van {source} kopiëren naar {target}",
   "teamEditor.save": "Opslaan",
   "teamEditor.saveTitle": "Dit team opslaan",
   "teamEditor.saveTitleProblem": "Dit team opslaan (er zijn problemen: {problem})",

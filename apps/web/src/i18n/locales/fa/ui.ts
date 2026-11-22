@@ -1324,6 +1324,7 @@ export default {
   "teamEditor.professions": "حرفه‌ها",
   "teamEditor.professionsTitle": "حرفه‌های تیم",
   "teamEditor.replaceMember": "جایگزینی {member} با {character}",
+  "teamEditor.copyMember": "Shift: کپی بیلد {source} روی {target}",
   "teamEditor.save": "ذخیره",
   "teamEditor.saveTitle": "ذخیرهٔ این تیم",
   "teamEditor.saveTitleProblem": "ذخیرهٔ این تیم (مشکل دارد: {problem})",

@@ -8,6 +8,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import {
   PLAYER_DOC_PAGES,
   PLAYER_DOC_SOURCES,
+  headingAnchors,
   helpDocPages,
   loadPlayerDocs,
   playerDocPages,
@@ -51,18 +52,10 @@ for (const [path, markdown] of Object.entries(
 
 /** The anchors a page's headings get, as GitHub writes them. */
 function anchors(markdown: string): Set<string> {
-  const seen = new Map<string, number>();
-  const found = new Set<string>();
-  for (const [, heading = ""] of markdown.matchAll(/^#{1,6}\s+(.+?)\s*$/gm)) {
-    const slug = heading
-      .toLowerCase()
-      .replace(/[^\p{L}\p{M}\p{N}\s_-]/gu, "")
-      .replace(/\s/g, "-");
-    const count = seen.get(slug) ?? 0;
-    seen.set(slug, count + 1);
-    found.add(count === 0 ? slug : `${slug}-${String(count)}`);
-  }
-  return found;
+  const anchor = headingAnchors();
+  return new Set(
+    [...markdown.matchAll(/^#{1,6}\s+(.+?)\s*$/gm)].map(([, heading = ""]) => anchor(heading)),
+  );
 }
 
 /** Each `[..](page.md#anchor)` in `sources` that no heading answers. */
@@ -99,6 +92,49 @@ describe("docs/player in other languages (#2665)", () => {
       ["b.md", "# Rüstung\n\n## Rustung\n\n## Rustung\n"],
     ]);
     expect(brokenAnchors(sources)).toEqual(["a.md -> b.md#armor"]);
+  });
+
+  it("a link to a section names it, and the page's headings carry their anchors (#3812)", () => {
+    const targets: DocTargets = { pages: new Set(["modes"]), images: new Map(), base: "/" };
+    const [link] = elements(renderPlayerDoc("[HA](modes.md#heroes-ascent)", targets)).filter(
+      (node) => node.tag === "a",
+    );
+    expect(link?.attrs).toEqual({
+      href: "#modes",
+      "data-page": "modes",
+      "data-anchor": "heroes-ascent",
+    });
+    const page = renderPlayerDoc(
+      "# Modes\n\n## Heroes' Ascent\n\n## Notes\n\n### Notes\n",
+      targets,
+    );
+    expect(
+      elements(page)
+        .filter((node) => node.tag === "h2")
+        .map((node) => node.attrs.id),
+    ).toEqual(["heroes-ascent", "notes"]);
+    expect(
+      elements(page)
+        .filter((node) => node.tag === "h3")
+        .map((node) => node.attrs.id),
+    ).toEqual(["notes-1"]);
+  });
+
+  it("an Arabic anchor, percent-encoded or not, links to its heading (#3812)", () => {
+    const targets: DocTargets = { pages: new Set(["modes"]), images: new Map(), base: "/" };
+    const heading = elements(renderPlayerDoc("## صعود الأبطال\n", targets)).find(
+      (node) => node.tag === "h2",
+    );
+    expect(heading?.attrs.id).toBe("صعود-الأبطال");
+    for (const href of [
+      "modes.md#صعود-الأبطال",
+      `modes.md#${encodeURIComponent("صعود-الأبطال")}`,
+    ]) {
+      const [link] = elements(renderPlayerDoc(`[x](${href})`, targets)).filter(
+        (node) => node.tag === "a",
+      );
+      expect(link?.attrs["data-anchor"]).toBe(heading?.attrs.id);
+    }
   });
 
   it("anchors keep a translated heading's letters", () => {
@@ -237,7 +273,7 @@ describe("renderPlayerDoc (#1257)", () => {
     );
     const links = elements(nodes).filter((node) => node.tag === "a");
     expect(links.map((node) => node.attrs)).toEqual([
-      { href: "#controls", "data-page": "controls" },
+      { href: "#controls", "data-page": "controls", "data-anchor": "move" },
       { href: "https://example.com/a", target: "_blank", rel: "noopener noreferrer" },
     ]);
     expect(textOf(nodes)).toBe("keys site bad gone rel");

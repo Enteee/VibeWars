@@ -192,7 +192,10 @@ A csapatbuildnek mindig annyi tagja van, amekkora a mérete: az új egy
 el, hanem lecserélsz. Minden sor a tag karakterét mutatja a nála lévő
 fegyverekkel, fegyverkészletenként egy ponttal, ha egynél több van neki,
 a maximális Életerejével és Energiájával, és a nyolc készségével; húzz
-egy sort a ⠿ jelénél fogva az átrendezéshez. A jobb oldali panel a
+egy sort a ⠿ jelénél fogva az átrendezéshez. Tartsd nyomva a **Shift** billentyűt, miközben
+egy sort egy másik tagra ejtesz, hogy inkább a teljes buildjét másold arra a
+tagra; a húzott sor olyan marad, amilyen volt.
+A jobb oldali panel a
 Karakterszerkesztő könyvtára, a **Készségek** és a **Tárgyak** előtt egy
 **Karaktereim** füllel. A **Karaktereim** fülön húzd az egyik
 karakteredet egy tagra, hogy az a tag annak másolata legyen. A másolat

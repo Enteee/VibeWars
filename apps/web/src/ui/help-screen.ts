@@ -124,7 +124,7 @@ function helpPanel(
   panel.append(picker, pane, footer);
 
   const targets = playerDocTargets();
-  const show = (id: string): void => {
+  const show = (id: string, anchor?: string): void => {
     if (id === LICENCES_PAGE.id) {
       pane.dataset.page = LICENCES_PAGE.id;
       pane.replaceChildren();
@@ -139,6 +139,12 @@ function helpPanel(
     }
     picker.value = id;
     pane.scrollTop = 0;
+    // A link to a section opens at its heading (#3812). Looked up in the
+    // pane: an id is not unique across the app.
+    if (anchor !== undefined) {
+      const section = [...pane.querySelectorAll("[id]")].find((node) => node.id === anchor);
+      section?.scrollIntoView({ block: "start" });
+    }
   };
   picker.addEventListener("change", () => {
     show(picker.value);
@@ -149,7 +155,7 @@ function helpPanel(
     const link = target instanceof Element ? target.closest<HTMLElement>("a[data-page]") : null;
     if (link?.dataset.page !== undefined) {
       event.preventDefault();
-      show(link.dataset.page);
+      show(link.dataset.page, link.dataset.anchor);
     }
   });
 

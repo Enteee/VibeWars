@@ -182,7 +182,10 @@ começa com um personagem em branco em cada lugar. Você nunca adiciona nem
 remove um membro, você substitui. Cada linha mostra o personagem do membro
 com as armas que ele segura, um ponto para cada conjunto de armas quando
 ele tem mais de um, sua vida e energia máximas e suas oito habilidades;
-arraste uma linha pelo ⠿ para reordenar. O painel à direita é a biblioteca
+arraste uma linha pelo ⠿ para reordenar. Segure **Shift** ao soltar uma linha em outro
+membro para copiar a build inteira dela para esse membro; a linha que você
+arrastou continua como estava.
+O painel à direita é a biblioteca
 do Criador de Personagem, com uma aba **Meus personagens** antes de
 **Habilidades** e **Equip.**. Em **Meus personagens**, arraste um dos seus
 personagens sobre um membro para torná-lo uma cópia dele. Uma cópia é da
