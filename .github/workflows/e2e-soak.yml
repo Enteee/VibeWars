@@ -32,8 +32,9 @@ jobs:
     # concluded cancelled every night. Fifteen shards by recorded duration, as
     # ci.yml's e2e-shard, each repeating its own tests five times (six shards
     # still overran the 45 min step timeout, #3820). SHARDS must equal the
-    # length of the matrix list: a mismatch skips or duplicates tests.
-    timeout-minutes: 60
+    # length of the matrix list: a mismatch skips or duplicates tests. Shard 1
+    # is the tutorial spec, one unsplittable group of ~10 min, x5 (about 48 min).
+    timeout-minutes: 75
     strategy:
       fail-fast: false
       matrix:
@@ -53,7 +54,7 @@ jobs:
       # run: the list reporter names each failing test, every time it fails.
       - name: Repeat the shard five times
         # A step timeout fails; a job timeout concludes cancelled, which reads as a skipped night.
-        timeout-minutes: 45
+        timeout-minutes: 60
         env:
           SHARD: ${{ matrix.shard }}
           SHARDS: 15
