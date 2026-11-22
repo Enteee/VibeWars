@@ -28,8 +28,14 @@ jobs:
   soak:
     name: e2e soak
     runs-on: ubuntu-latest
-    # Five suites at about 3 minutes each, with ample headroom.
-    timeout-minutes: 90
+    # The suite outgrew one job: five repeats in one took over 90 min and
+    # concluded cancelled every night. Six shards by recorded duration, as
+    # ci.yml's e2e-shard, each repeating its own tests five times.
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4, 5, 6]
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
         with:
@@ -43,10 +49,14 @@ jobs:
 
       # No maxFailures in playwright.config.ts, so a failure doesn't stop the
       # run: the list reporter names each failing test, every time it fails.
-      - name: Repeat the suite five times
+      - name: Repeat the shard five times
+        # A step timeout fails; a job timeout concludes cancelled, which reads as a skipped night.
+        timeout-minutes: 45
+        env:
+          SHARD: ${{ matrix.shard }}
         run: >-
           devenv shell --
-          pnpm exec playwright test
+          node scripts/ci/shard-e2e.mjs "$SHARD" 6
           --repeat-each=5 --retries=0 --workers=1
 
       - name: Print failed tests
@@ -61,7 +71,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
-          name: e2e-soak-output
+          name: e2e-soak-output-${{ matrix.shard }}
           path: |
             playwright-report/
             test-results/
