@@ -175,6 +175,12 @@ export type Behaviour =
        * is measured against. Unset: they hold.
        */
       readonly spikeHold?: boolean;
+      /**
+       * Whether it escorts its team's active humans (#3833). `false`: it
+       * plays its team's plan whoever is on its team, as the tutorial's
+       * scripted allies do. Unset: it escorts.
+       */
+      readonly escort?: boolean;
     }
   /**
    * A guard's (#1222): hold `post`, and play its bar as `play-build` does

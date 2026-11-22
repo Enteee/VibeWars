@@ -392,4 +392,11 @@ describe("close-in on a team with an active human (#3833)", () => {
       vec2(1100, 400),
     );
   });
+
+  it("plays the team's plan when told not to escort, as the tutorial's allies are", () => {
+    const sim = team(vec2(400, 400));
+    expect(
+      closeIn.decide(ruleFor(sim, "w", { plan: "push", escort: false }, { isBot }))?.moveTo,
+    ).toEqual(vec2(1100, 400));
+  });
 });

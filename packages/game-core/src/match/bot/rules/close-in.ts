@@ -62,11 +62,16 @@ const closeIn: BotRule = {
 /**
  * Where a bot escorting its team's active humans goes (#3833): to its
  * escort spot, which moves as they do, and nowhere once there. `undefined`,
- * so it plays its team's plan, with no active human, no route, or as a
- * guard, which has no role.
+ * so it plays its team's plan, with no active human, no route, as a
+ * guard, which has no role, or as a bot told not to escort.
  */
-function escort({ context, self, role }: RuleContext): BehaviourIntent | undefined {
-  if (role === undefined) return undefined;
+function escort({
+  context,
+  self,
+  role,
+  escort: escorts,
+}: RuleContext): BehaviourIntent | undefined {
+  if (role === undefined || !escorts) return undefined;
   const at = escortSpot(context, self, role);
   if (at === undefined) return undefined;
   return self.layer === at.layer && distance(self.position, at.point) <= REGROUP_JOINED / 2

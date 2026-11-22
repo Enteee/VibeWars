@@ -79,6 +79,7 @@ export function playBuild(
       teamTarget(context, cursor, foes, front),
       roleOf(context.self),
       behaviour.spikeHold !== false,
+      behaviour.escort !== false,
       front === undefined ? context.foeCentroid : centroid(foes, front),
     );
   });
@@ -139,6 +140,7 @@ export function guard(
         allies,
         weakest(self, foes)?.id,
         undefined,
+        false,
         false,
         context.foeCentroid,
       ),
@@ -320,6 +322,7 @@ function think(
   targetId: string | undefined,
   role: BotRole | undefined,
   spikeHold: boolean,
+  escort: boolean,
   foeCentroid: Vec2 | undefined,
 ): BehaviourIntent {
   const self = context.self;
@@ -357,6 +360,7 @@ function think(
     role,
     foeCentroid,
     spikeHold,
+    escort,
     roleOf,
     foeReach: (foe) => foeReach(cursor.foeReach, foe),
     plan: teamPlan(context.seed, self.combatant.team, context.now),

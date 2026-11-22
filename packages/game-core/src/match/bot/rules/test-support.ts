@@ -211,6 +211,7 @@ export function ruleFor(
     mayEndUpkeep: true,
     role: botRole(bar, self.combatant.equipment.mainHand.weapon.range),
     spikeHold: true,
+    escort: true,
     foeCentroid: view.foeCentroid,
     roleOf,
     cursor: createCursor(),
