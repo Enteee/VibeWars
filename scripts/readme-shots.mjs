@@ -271,6 +271,9 @@ async function matchShots(page, dir) {
   await walk(page, "KeyD", 8000);
   await page.keyboard.up("KeyW");
   step = "match shot";
+  // Space: the nearest foe is targeted and attacked.
+  await page.keyboard.press("Space");
+  await sleep(1500);
   await zoomTo(page, "Default", -120);
   await page.screenshot({ path: path.join(dir, "readme-match.png") });
   await zoomTo(page, "Wide", 120);
