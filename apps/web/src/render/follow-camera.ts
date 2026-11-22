@@ -1,6 +1,7 @@
 import type { Vec2 } from "@vibewars/game-core";
 
 import { createSecondaryPress } from "../input/secondary-press.js";
+import { FINGER_SLOP_PX } from "../input/touch-gesture.js";
 import { prefersReducedMotion } from "../ui/recharge-overlay.js";
 import type { ArenaViewport } from "./arena-viewport.js";
 import {
@@ -21,7 +22,8 @@ import {
  * The follow camera's per-frame wiring (#440), one helper the match view
  * and the Training Ground both call, so the two cameras cannot drift. It
  * owns the right button (#442): a drag pans, a click goes to
- * `onSecondaryClick`.
+ * `onSecondaryClick`. It owns fingers too (#3781): a drag pans, a pinch
+ * zooms as the wheel, and a tap goes to `onTap`.
  *
  * The stage carries `data-zoom-step`, `data-zoom` (CSS px per world
  * unit) and `data-camera="<x>,<y>"` for the e2e specs, written only when
@@ -54,6 +56,11 @@ export interface FollowCamera {
   /** An RMB click, not a drag, at the world point under the pointer on release (#438). */
   onSecondaryClick(handler: (world: Vec2) => void): void;
   /**
+   * A finger's tap, at the world point it pressed (#3781), with how many
+   * world units `FINGER_SLOP_PX` is at the zoom shown.
+   */
+  onTap(handler: (world: Vec2, slop: number) => void): void;
+  /**
    * A new session on `arena`, e.g. another training scenario: back to
    * `Default`, and the view snaps there with no glide.
    */
@@ -79,6 +86,24 @@ export function attachFollowCamera(
   viewport.setArenaBounds(arena.width, arena.height);
   const offWheel = viewport.onWheelNotch((direction) => {
     rig = wheelNotch(rig, direction);
+  });
+  let onFingerTap: (world: Vec2, slop: number) => void = () => undefined;
+  const offFinger = viewport.onFinger((event) => {
+    switch (event.kind) {
+      case "pan":
+        // The world follows the finger, so the view looks against it.
+        rig = panBy(rig, { x: -event.delta.x, y: -event.delta.y }, viewport.size(), scaleTo());
+        break;
+      case "pan-end":
+        rig = releasePan(rig);
+        break;
+      case "pinch":
+        rig = wheelNotch(rig, event.notch);
+        break;
+      case "tap":
+        onFingerTap(event.world, FINGER_SLOP_PX / (shown?.zoom ?? 1));
+        break;
+    }
   });
   const press = createSecondaryPress();
   let onClick: (world: Vec2) => void = () => undefined;
@@ -149,6 +174,9 @@ export function attachFollowCamera(
     onSecondaryClick(handler) {
       onClick = handler;
     },
+    onTap(handler) {
+      onFingerTap = handler;
+    },
     look() {
       return shown === undefined
         ? undefined
@@ -165,6 +193,7 @@ export function attachFollowCamera(
     dispose() {
       offWheel();
       offButton();
+      offFinger();
       delete stage.dataset.zoomStep;
       delete stage.dataset.zoom;
       delete stage.dataset.camera;

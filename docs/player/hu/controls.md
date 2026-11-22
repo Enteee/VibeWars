@@ -72,6 +72,20 @@ Ezek a billentyűk rögzítettek:
   támad; a görgőkattintás bemond vagy jelez. Az a név, amelyet a
   kattintás eltalálna, kiemelve látszik.
 
+## Érintés
+
+Telefonon vagy tableten, meccsen és a gyakorlótéren:
+
+- **Koppints** a talajra, hogy odasétálj.
+- **Koppints** egy ellenségre, szövetségesre, zászlóra, a zászlótartóra,
+  karra vagy repedt falra, hogy célba vedd; egy karakterre koppintva soha nem
+  sétálsz. Koppints gyorsan ugyanarra az ellenségre újra, hogy megtámadd.
+  A karakter mellé koppintva is megtalálod. Magadra koppintva arra a pontra
+  sétálsz, vagy célba veszed a zászlótartót vagy a kart, amelyen állsz.
+- **Húzd** egy ujjal, hogy körülnézz; engedd el, és a nézet visszacsúszik
+  hozzád. **Csíptess** a nagyításhoz.
+- **Koppints** egy képességre a sávon, hogy a célpontodon használd.
+
 ## A felső sáv
 
 Meccsen kívül a felső sávon van a **[?]** (ez a Súgó), a **⚙** (Opciók),

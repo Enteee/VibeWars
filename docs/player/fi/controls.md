@@ -71,6 +71,21 @@ Nämä näppäimet ovat kiinteitä:
   napsautus kohdistaa ja hyökkää heti; rullan napsautus ilmoittaa tai
   merkitsee. Nimi, johon napsautus osuisi, on korostettu.
 
+## Kosketus
+
+Puhelimella tai tabletilla, ottelussa ja harjoituskentällä:
+
+- **Napauta** maata kävelläksesi sinne.
+- **Napauta** vihollista, liittolaista, lippua, lipputelinettä, vipua tai
+  halkeillutta muuria kohdistaaksesi siihen; hahmon napautus ei koskaan
+  kävele. Napauta samaa vihollista uudelleen, nopeasti, hyökätäksesi sen
+  kimppuun. Napautus aivan hahmon vierestä löytää sen silti. Napautus itseesi
+  kävelee sille kohdalle tai kohdistaa lipputelineeseen tai vipuun, jonka
+  päällä seisot.
+- **Vedä** yhdellä sormella katsoaksesi ympärillesi; päästä irti, ja näkymä
+  liukuu takaisin luoksesi. **Nipistä** zoomataksesi.
+- **Napauta** palkin taitoa käyttääksesi sitä kohteeseesi.
+
 ## Yläpalkki
 
 Ottelun ulkopuolella yläpalkissa ovat **[?]** (tämä Ohje), **⚙** (Asetukset),
