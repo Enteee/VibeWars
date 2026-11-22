@@ -142,7 +142,7 @@ if (group === "api" && sub !== "graphql") {
   if (rel.startsWith("issues?")) { console.log(JSON.stringify([issue7, { ...pull9, pull_request: {} }])); process.exit(0); }
   console.log("rest ok"); process.exit(0);
 }
-if (group === "run" && argv.includes("--hang")) { setInterval(() => {}, 1000); return; }
+if (group === "run" && argv.includes("--hang")) { fs.writeFileSync(path.join(state, "hang.pid"), String(process.pid)); setInterval(() => {}, 1000); return; }
 // A grandchild that holds the pipes, as git's remote helper does.
 if (group === "run" && argv.includes("--grandchild")) {
   require("node:child_process").spawn("sleep", ["30"], { stdio: "inherit" });
@@ -389,6 +389,16 @@ async function startHubd(remaining, before, extra) {
     root,
     hub,
     state,
+    /**
+     * SIGTERMs hubd, as the host does, and waits for it to exit.
+     *
+     * @returns {Promise<void>}
+     */
+    async stop() {
+      const exited = new Promise((resolve) => child.once("exit", resolve));
+      child.kill("SIGTERM");
+      await exited;
+    },
     /**
      * Employs every role's first seat and these further employees.
      *
@@ -1358,6 +1368,27 @@ describe("hubd and the GraphQL budget", () => {
     expect(command).toBe("gh run list");
     await request;
   }, 30_000);
+
+  it("ends a child still running when it stops, so none outlives it (#3803)", async () => {
+    const hubd = await startHubd(5000);
+    const pidFile = path.join(hubd.state, "hang.pid");
+    // Never answered: hubd stops first.
+    void hubd.request("developer", "gh", ["run", "list", "--hang"]).catch(() => undefined);
+    await until(() => fs.existsSync(pidFile), "the child to start");
+    const pid = Number(fs.readFileSync(pidFile, "utf8"));
+
+    await hubd.stop();
+
+    // SIGKILL is delivered at once, but the zombie may take a moment to go.
+    await until(() => {
+      try {
+        process.kill(pid, 0);
+        return false;
+      } catch {
+        return true;
+      }
+    }, "the child to be gone");
+  }, 20_000);
 
   it("records the budget for the dashboard", async () => {
     const hubd = await startHubd(1234);
