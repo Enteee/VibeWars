@@ -1084,6 +1084,8 @@ export default {
   "queue.matchFound": "Znaleziono mecz",
   "queue.matchFoundTitle": "Znaleziono mecz!",
   "queue.nextMatchIn": "Następny mecz za {seconds} s",
+  "queue.sameTeamIn": "Wygrana: następny mecz z tą samą drużyną za {seconds} s",
+  "queue.newTeamIn": "Twoja grupa się zmieniła: wybierz drużynę ponownie za {seconds} s",
   "queue.now": "Teraz",
   "queue.playBotsIn": "Graj z botami ({seconds} s)",
   "queue.queueAgain": "Szukaj ponownie",

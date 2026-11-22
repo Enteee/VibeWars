@@ -943,6 +943,8 @@ export default {
   "queue.matchFound": "Lawan ditemukan",
   "queue.matchFoundTitle": "Lawan ditemukan!",
   "queue.nextMatchIn": "Pertandingan berikutnya dalam {seconds} s",
+  "queue.sameTeamIn": "Kamu menang: pertandingan berikutnya dengan tim yang sama dalam {seconds} s",
+  "queue.newTeamIn": "Rombonganmu berubah: pilih tim lagi dalam {seconds} s",
   "queue.now": "Kini",
   "queue.playBotsIn": "Lawan bot ({seconds} s)",
   "queue.queueAgain": "Antre lagi",

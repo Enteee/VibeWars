@@ -992,6 +992,8 @@ export default {
   "queue.matchFound": "مسابقه پیدا شد",
   "queue.matchFoundTitle": "مسابقه پیدا شد!",
   "queue.nextMatchIn": "مسابقهٔ بعد تا {seconds} ثانیه دیگر",
+  "queue.sameTeamIn": "بردید: مسابقهٔ بعد با همین تیم تا {seconds} ثانیه دیگر",
+  "queue.newTeamIn": "گروه شما تغییر کرد: تیم را دوباره انتخاب کنید تا {seconds} ثانیه دیگر",
   "queue.now": "الان",
   "queue.playBotsIn": "بازی با بات‌ها ({seconds} ثانیه)",
   "queue.queueAgain": "صف دوباره",

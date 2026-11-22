@@ -395,6 +395,7 @@ Egy sorban álló csapatmeccs után a győztesek 20 másodperc után maguktól
 menübe; a kóddal létrehozott lobbi meccse mindenkit visszavisz a
 lobbiba. Az eredmény alatti gomb átugorja a várakozást, a győzteseknek
 pedig sorba állás nélkül lép ki.
+A Csapataréna győztesei a következő meccsre megtartják a csapatbuildjüket és minden játékos helyét, csapatváró nélkül, hacsak a csoport azóta nem változott: valaki kilépett, távol van vagy csatlakozott. Ilyenkor újra választanak csapatot.
 
 ## Hősök Útja
 

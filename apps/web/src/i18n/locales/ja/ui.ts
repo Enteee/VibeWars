@@ -946,6 +946,8 @@ export default {
   "queue.matchFound": "マッチ成立",
   "queue.matchFoundTitle": "マッチ成立!",
   "queue.nextMatchIn": "{seconds}秒後に次のマッチ",
+  "queue.sameTeamIn": "勝利：{seconds}秒後に同じチームで次のマッチ",
+  "queue.newTeamIn": "パーティが変わりました：{seconds}秒後にチームを選び直します",
   "queue.now": "今すぐ",
   "queue.playBotsIn": "ボットと対戦（{seconds}秒）",
   "queue.queueAgain": "再度キュー",

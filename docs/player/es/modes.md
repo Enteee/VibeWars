@@ -343,6 +343,7 @@ Tras una partida en cola por equipos, los ganadores vuelven a la cola solos tras
 segundos, y los perdedores (también en empate) vuelven al menú; la partida de una
 sala con código devuelve a todos a la sala. Un botón bajo el resultado se salta la
 espera o, para los ganadores, sale sin volver a la cola.
+Los ganadores de la Arena por equipos conservan su build de equipo y el puesto de cada jugador para la siguiente partida, sin sala de equipo, salvo que el grupo haya cambiado desde entonces: alguien se fue, está ausente o se unió. Entonces vuelven a elegir su equipo.
 
 ## Ascenso de los Héroes
 

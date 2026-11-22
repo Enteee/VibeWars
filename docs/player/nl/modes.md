@@ -289,6 +289,7 @@ Elke fase duurt 30 seconden en eindigt eerder zodra iedereen in de Teamlobby kla
 Wie tijdens de Teamlobby vertrekt, laat zijn personage aan een bot over, zodat de kant zijn grootte houdt. Wie dan binnenkomt, kijkt alleen.
 
 Na een teammatch uit de wachtrij gaan de winnaars na 20 seconden vanzelf weer in de wachtrij, en gaan de verliezers (ook bij gelijkspel) terug naar het menu; de match van een lobby met code brengt iedereen terug naar de lobby. Een knop onder de uitslag slaat het wachten over, of laat winnaars vertrekken zonder in de rij te gaan.
+Winnaars in de Team Arena houden voor de volgende match hun teambuild en ieders plek, zonder teamlobby, tenzij de groep sindsdien veranderd is: iemand is vertrokken, afwezig of erbij gekomen. Dan kiezen ze hun team opnieuw.
 
 ## Heroes' Ascent
 

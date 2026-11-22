@@ -7947,6 +7947,7 @@
       "union": [
         {
           "properties": [
+            { "name": "again", "optional": false, "type": "boolean" },
             { "name": "ascentRound", "optional": false, "type": { "union": ["null", "number"] } },
             { "name": "kind", "optional": false, "type": { "literal": "find-match" } }
           ]
@@ -8264,6 +8265,11 @@
           }
         },
         { "name": "queueNonce", "optional": false, "type": { "union": ["null", "string"] } },
+        {
+          "name": "teamKept",
+          "optional": false,
+          "type": { "union": ["null", { "literal": false }, { "literal": true }] }
+        },
         {
           "name": "teamLobby",
           "optional": false,

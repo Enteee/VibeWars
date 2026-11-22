@@ -999,6 +999,8 @@ export default {
   "queue.matchFound": "Βρέθηκε αγώνας",
   "queue.matchFoundTitle": "Βρέθηκε αγώνας!",
   "queue.nextMatchIn": "Επόμενος αγώνας σε {seconds} δ",
+  "queue.sameTeamIn": "Νικήσατε: επόμενος αγώνας με την ίδια ομάδα σε {seconds} δ",
+  "queue.newTeamIn": "Η ομάδα σας άλλαξε: διαλέξτε ξανά ομάδα σε {seconds} δ",
   "queue.now": "Τώρα",
   "queue.playBotsIn": "Παίξε με bots ({seconds} δ)",
   "queue.queueAgain": "Ξανά στην ουρά",

@@ -988,6 +988,8 @@ export default {
   "queue.matchFound": "Match hittad",
   "queue.matchFoundTitle": "Match hittad!",
   "queue.nextMatchIn": "Nästa match om {seconds} s",
+  "queue.sameTeamIn": "Ni vann: nästa match med samma lag om {seconds} s",
+  "queue.newTeamIn": "Er grupp har ändrats: välj lag igen om {seconds} s",
   "queue.now": "Nu",
   "queue.playBotsIn": "Spela mot bottar ({seconds} s)",
   "queue.queueAgain": "Köa igen",

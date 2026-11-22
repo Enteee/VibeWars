@@ -44,6 +44,7 @@ describe("a guest in a room other key holders come into (#1682)", () => {
       queueNonce: null,
       ascentRound: null,
       ascentLock: null,
+      teamKept: null,
       teamLobby: null,
     };
     stranger.send("lobby-state", forged, guestId);

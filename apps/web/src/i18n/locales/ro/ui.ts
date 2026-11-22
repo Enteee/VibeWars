@@ -1045,6 +1045,8 @@ export default {
   "queue.matchFound": "Meci găsit",
   "queue.matchFoundTitle": "Meci găsit!",
   "queue.nextMatchIn": "Următorul meci în {seconds} s",
+  "queue.sameTeamIn": "Ați câștigat: următorul meci cu aceeași echipă în {seconds} s",
+  "queue.newTeamIn": "Grupul s-a schimbat: alegeți din nou echipa în {seconds} s",
   "queue.now": "Acum",
   "queue.playBotsIn": "Joacă contra boților ({seconds} s)",
   "queue.queueAgain": "Din nou în coadă",

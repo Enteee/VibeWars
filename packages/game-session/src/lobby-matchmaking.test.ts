@@ -111,14 +111,14 @@ async function ascentQueued(guests: readonly string[]): Promise<{
   await queue(run.lobby, 0);
   match.finish(0);
   await run.lobby.step(1);
-  run.lobby.host.connection.findMatch(0);
+  run.lobby.host.connection.findMatch(0, false);
   await landed();
   return run;
 }
 
 /** Find a match, at `ascentRound` in Heroes' Ascent, and run the Team Lobby's vote and claim out. */
 async function queue(lobby: TestLobby, ascentRound: number | null = null): Promise<void> {
-  lobby.host.connection.findMatch(ascentRound);
+  lobby.host.connection.findMatch(ascentRound, false);
   await settle();
   for (let stage = 0; stage < 2; stage += 1) {
     lobby.lobby.advance(TEAM_LOBBY_VOTE_SECONDS);
@@ -139,7 +139,7 @@ const phaseOf = (who: Member) => who.connection.getSnapshot().phase;
 describe("a party lobby's matchmaking (#1766)", () => {
   it("runs the Team Lobby for the party's one side of the mode's size, every human on it", async () => {
     const { lobby, party } = await partyLobby(["Ann"]);
-    lobby.host.connection.findMatch(null);
+    lobby.host.connection.findMatch(null, false);
     await settle();
 
     for (const who of party) {
@@ -160,7 +160,7 @@ describe("a party lobby's matchmaking (#1766)", () => {
     const [, ann] = party as [Member, Member];
     const refused: string[] = [];
     ann.connection.onRefused((reason) => refused.push(reason));
-    ann.connection.findMatch(null);
+    ann.connection.findMatch(null, false);
     await settle();
     expect(refused).toEqual(["not-host"]);
 
@@ -377,12 +377,12 @@ describe("a Heroes' Ascent party's round (#1996)", () => {
 
   it("finds no match in Heroes' Ascent without a round, nor with one in Team Arena", async () => {
     const ascent = await partyLobby(["Ann"], "heroes-ascent");
-    ascent.lobby.host.connection.findMatch(null);
+    ascent.lobby.host.connection.findMatch(null, false);
     await settle();
     expect(ascent.party.map(phaseOf)).toEqual(["waiting", "waiting"]);
 
     const arena = await partyLobby(["Ann"]);
-    arena.lobby.host.connection.findMatch(0);
+    arena.lobby.host.connection.findMatch(0, false);
     await settle();
     expect(arena.party.map(phaseOf)).toEqual(["waiting", "waiting"]);
   });
@@ -439,7 +439,7 @@ describe("a Heroes' Ascent run's Elite Zaishen Battle (#2692)", () => {
     const { lobby, party, match, plans } = await fought();
     match.finish(0);
     await lobby.step(1);
-    lobby.host.connection.findMatch(0);
+    lobby.host.connection.findMatch(0, false);
     await landed();
     expect(party.map(phaseOf)).toEqual(["queued", "queued"]);
     expect(plans).toHaveLength(1);
@@ -499,7 +499,7 @@ describe("a Heroes' Ascent run's locked Team Build (#2539)", () => {
     expect(party.map(lockOf)).toEqual([seats(...ids), seats(...ids)]);
 
     // No vote and no claim: queued as soon as the host finds a match.
-    lobby.host.connection.findMatch(1);
+    lobby.host.connection.findMatch(1, false);
     await landed();
     expect(party.map(phaseOf)).toEqual(["queued", "queued"]);
     expect(builds(lobby)).toEqual(first);
@@ -509,7 +509,7 @@ describe("a Heroes' Ascent run's locked Team Build (#2539)", () => {
 
   it("opens the first map's Team Lobby again at round 0, and on a new mode", async () => {
     const { lobby, party } = await won();
-    lobby.host.connection.findMatch(0);
+    lobby.host.connection.findMatch(0, false);
     await settle();
     expect(lobby.host.connection.getSnapshot().teamLobby?.stage).toBe("vote");
     expect(party.map(lockOf)).toEqual([null, null]);
@@ -519,7 +519,7 @@ describe("a Heroes' Ascent run's locked Team Build (#2539)", () => {
     other.lobby.host.connection.selectMode("heroes-ascent");
     await settle();
     expect(other.party.map(lockOf)).toEqual([null, null]);
-    other.lobby.host.connection.findMatch(1);
+    other.lobby.host.connection.findMatch(1, false);
     await settle();
     // Past round 0 with no run recorded: it picks again.
     expect(other.lobby.host.connection.getSnapshot().teamLobby?.stage).toBe("vote");
@@ -537,7 +537,7 @@ describe("a Heroes' Ascent run's locked Team Build (#2539)", () => {
         .getSnapshot()
         .players.map((player) => [player.name === "Bea", player.ready] as const);
 
-    lobby.host.connection.findMatch(1);
+    lobby.host.connection.findMatch(1, false);
     await settle();
     expect(host.connection.getSnapshot().teamLobby?.stage).toBe("claim");
     expect(readiness()).toEqual([
@@ -563,7 +563,7 @@ describe("a Heroes' Ascent run's locked Team Build (#2539)", () => {
     await settle();
     const [hostRefused, beaRefused, cidRefused] = [host, bea, cid].map(refusals);
 
-    lobby.host.connection.findMatch(1);
+    lobby.host.connection.findMatch(1, false);
     await settle();
     expect(host.connection.getSnapshot().teamLobby?.stage).toBe("claim");
     // The run's members keep their seats; a newcomer takes no held one.
@@ -592,5 +592,109 @@ describe("a Heroes' Ascent run's locked Team Build (#2539)", () => {
     expect(lockOf(host)).toEqual(
       seats(host.transport.selfId, bea.transport.selfId, cid.transport.selfId),
     );
+  });
+});
+
+describe("a Team Arena party after a win (#3815)", () => {
+  const plan = (lobby: TestLobby) =>
+    lobby.lobby.teamPlan(HOST_KEY)?.map(({ memberKey, build }) => [memberKey, build]);
+  const keptOf = (who: Member) => who.connection.getSnapshot().teamKept;
+
+  /**
+   * The host and Ann queued, the host in seat 2 and Ann in seat 0, both
+   * consented, then out of the queue again, as after their match.
+   */
+  async function played(): Promise<{
+    lobby: TestLobby;
+    party: Member[];
+    first: ReturnType<typeof plan>;
+  }> {
+    const run = await partyLobby(["Ann"]);
+    const [host, ann] = run.party as [Member, Member];
+    host.connection.findMatch(null, false);
+    await settle();
+    run.lobby.lobby.advance(TEAM_LOBBY_VOTE_SECONDS);
+    await settle();
+    host.connection.claim(2);
+    // Both seated: the claim is over.
+    ann.connection.claim(0);
+    await landed();
+    await consent(run.party);
+    const first = plan(run.lobby);
+    host.connection.leaveQueue();
+    await settle();
+    return { ...run, first };
+  }
+
+  async function consent(party: readonly Member[]): Promise<void> {
+    const [host, ann] = party as [Member, Member];
+    ann.connection.queueParty(keyOf(GUEST_KEY));
+    host.connection.queueParty(keyOf(HOST_KEY));
+    await landed();
+  }
+
+  it("queues again at once, with the same Team Build and each member in their seat", async () => {
+    const { lobby, party, first } = await played();
+    expect(first?.map(([key]) => key)).toEqual([GUEST_KEY, null, HOST_KEY, null]);
+    expect(party.map(keptOf)).toEqual([true, true]);
+
+    lobby.host.connection.findMatch(null, true);
+    await landed();
+    expect(party.map(phaseOf)).toEqual(["queued", "queued"]);
+    expect(party.map((who) => who.connection.getSnapshot().teamLobby)).toEqual([null, null]);
+    await consent(party);
+    expect(plan(lobby)).toEqual(first);
+
+    // And after the next win too.
+    lobby.host.connection.leaveQueue();
+    await settle();
+    lobby.host.connection.findMatch(null, true);
+    await landed();
+    expect(party.map(phaseOf)).toEqual(["queued", "queued"]);
+  });
+
+  it("opens the Team Lobby for a Find a match, and after it", async () => {
+    const { lobby, party } = await played();
+    lobby.host.connection.findMatch(null, false);
+    await settle();
+    expect(party.map(phaseOf)).toEqual(["team-lobby", "team-lobby"]);
+    expect(party.map(keptOf)).toEqual([null, null]);
+  });
+
+  it("opens the Team Lobby when a member left, or a newcomer joined", async () => {
+    const left = await played();
+    const [, ann] = left.party as [Member, Member];
+    await ann.connection.disconnect();
+    await settle();
+    expect(keptOf(left.lobby.host)).toBe(false);
+    left.lobby.host.connection.findMatch(null, true);
+    await settle();
+    expect(phaseOf(left.lobby.host)).toBe("team-lobby");
+
+    const joined = await played();
+    const cid = await joined.lobby.join("Cid");
+    await settle();
+    expect([...joined.party, cid].map(keptOf)).toEqual([false, false, false]);
+    joined.lobby.host.connection.findMatch(null, true);
+    await settle();
+    expect(phaseOf(joined.lobby.host)).toBe("team-lobby");
+  });
+
+  it("does not keep a party with a member away", async () => {
+    const { lobby, party } = await played();
+    const [, ann] = party as [Member, Member];
+    lobby.network.partition("host", ann.transport.selfId);
+    await settle();
+    expect(keptOf(lobby.host)).toBe(false);
+    lobby.host.connection.findMatch(null, true);
+    await settle();
+    expect(phaseOf(lobby.host)).toBe("team-lobby");
+  });
+
+  it("forgets the team on a new arena size", async () => {
+    const { lobby } = await played();
+    lobby.host.connection.selectTeamSize(2);
+    await settle();
+    expect(keptOf(lobby.host)).toBeNull();
   });
 });

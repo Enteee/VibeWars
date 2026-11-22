@@ -989,6 +989,8 @@ export default {
   "queue.matchFound": "Maç bulundu",
   "queue.matchFoundTitle": "Maç bulundu!",
   "queue.nextMatchIn": "{seconds} sn sonra sonraki maç",
+  "queue.sameTeamIn": "Kazandınız: aynı takımla sonraki maç {seconds} sn içinde",
+  "queue.newTeamIn": "Grubunuz değişti: {seconds} sn içinde takımınızı yeniden seçin",
   "queue.now": "Şimdi",
   "queue.playBotsIn": "Botlara karşı oyna ({seconds} sn)",
   "queue.queueAgain": "Yeniden sıraya gir",

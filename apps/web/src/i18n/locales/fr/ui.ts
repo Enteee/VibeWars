@@ -1052,6 +1052,8 @@ export default {
   "queue.matchFound": "Match trouvé",
   "queue.matchFoundTitle": "Match trouvé !",
   "queue.nextMatchIn": "Prochain match dans {seconds} s",
+  "queue.sameTeamIn": "Victoire : prochain match avec la même équipe dans {seconds} s",
+  "queue.newTeamIn": "Votre groupe a changé : choisissez à nouveau votre équipe dans {seconds} s",
   "queue.now": "Maintenant",
   "queue.playBotsIn": "Jouer contre des bots ({seconds} s)",
   "queue.queueAgain": "Relancer la file",

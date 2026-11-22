@@ -938,6 +938,8 @@ export default {
   "queue.matchFound": "พบแมตช์",
   "queue.matchFoundTitle": "พบแมตช์แล้ว!",
   "queue.nextMatchIn": "แมตช์ถัดไปใน {seconds} วิ",
+  "queue.sameTeamIn": "ชนะแล้ว: แมตช์ถัดไปด้วยทีมเดิมใน {seconds} วิ",
+  "queue.newTeamIn": "ปาร์ตี้ของคุณเปลี่ยนไป: เลือกทีมใหม่ใน {seconds} วิ",
   "queue.now": "ตอนนี้",
   "queue.playBotsIn": "เล่นกับบอต ({seconds} วิ)",
   "queue.queueAgain": "เข้าคิวอีกครั้ง",

@@ -345,6 +345,9 @@ After a queued team match, its winners queue again on their own after
 20 seconds, and its losers (a draw too) return to the menu; a coded
 lobby's match returns everyone to the lobby. A button under the result
 skips the wait, or, for winners, leaves without queueing.
+Team Arena winners keep their Team Build and each player's seat for
+that next match, with no Team Lobby, unless the party changed since:
+someone left, went away or joined. Then they pick their team again.
 
 ## Heroes' Ascent
 

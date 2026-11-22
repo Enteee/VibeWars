@@ -117,6 +117,7 @@ Hostovaná lobby nespustí zápas, když jsou všichni připraveni. Nejprve otev
 Kdo během Týmového lobby odejde, přenechá svou postavu botovi, takže si strana udrží velikost. Kdo se v té chvíli připojí, jen sleduje.
 
 Po týmovém zápase z fronty se jeho vítězové sami znovu zařadí do fronty po 20 sekundách a poražení (i při remíze) se vrátí do menu; zápas z lobby s kódem vrací všechny do lobby. Tlačítko pod výsledkem čekání přeskočí, nebo u vítězů odejde bez zařazení do fronty.
+Vítězové Týmové arény si pro další zápas ponechají svůj týmový build i místo každého hráče, bez týmové lobby, pokud se mezitím skupina nezměnila: někdo odešel, není přítomen nebo se připojil. Pak si tým zvolí znovu.
 
 ## Výstup hrdinů
 

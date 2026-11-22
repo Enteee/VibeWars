@@ -341,6 +341,7 @@ Sau một trận đội có xếp hàng, đội thắng tự xếp hàng lại s
 thua (cả khi hòa) trở về menu; trận của sảnh vào bằng mã đưa mọi người về
 sảnh. Một nút dưới kết quả cho phép bỏ qua thời gian chờ, hoặc, với đội
 thắng, rời đi mà không xếp hàng.
+Người thắng ở Đấu trường đội giữ nguyên build đội và chỗ của từng người chơi cho trận tiếp theo, không qua sảnh đội, trừ khi nhóm đã thay đổi từ đó: có người rời đi, vắng mặt hoặc tham gia. Khi đó họ chọn lại đội.
 
 ## Đỉnh Anh Hùng
 

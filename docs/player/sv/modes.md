@@ -359,6 +359,7 @@ Efter en köad lagmatch köar vinnarna igen av sig själva efter
 20 sekunder, och förlorarna (även vid oavgjort) återvänder till menyn;
 en kodlobbys match tar alla tillbaka till lobbyn. En knapp under
 resultatet hoppar över väntan, eller, för vinnare, lämnar utan att köa.
+Vinnare i Lagarenan behåller sitt lagbygge och varje spelares plats till nästa match, utan laglobby, om inte gruppen har ändrats sedan dess: någon har gått, är borta eller har anslutit. Då väljer de sitt lag igen.
 
 ## Heroes' Ascent
 

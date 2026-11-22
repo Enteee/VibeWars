@@ -1637,6 +1637,12 @@ export interface WireLobbyState {
    * the slots its Team Build keeps, and who holds each. `null` otherwise.
    */
   readonly ascentLock: WireAscentLock | null;
+  /**
+   * After a Team Arena win (#3815): whether the party is still the one
+   * that played, so it queues again with the same Team Build and slots.
+   * `null` with no win to keep.
+   */
+  readonly teamKept: boolean | null;
 }
 
 /**
@@ -1733,9 +1739,14 @@ export type WireLobbyCommand =
    * Host only, in a team mode (#1766): the party's Team Lobby, then the
    * queue; `leave-queue` takes it out again, `play-bots` plays against
    * bots instead, in this lobby. In Heroes' Ascent it queues at the
-   * host's `ascentRound` (#1996), `null` in every other mode.
+   * host's `ascentRound` (#1996), `null` in every other mode. `again` is
+   * the queue after a Team Arena win (#3815), which keeps the team.
    */
-  | { readonly kind: "find-match"; readonly ascentRound: number | null }
+  | {
+      readonly kind: "find-match";
+      readonly ascentRound: number | null;
+      readonly again: boolean;
+    }
   | { readonly kind: "leave-queue" }
   | { readonly kind: "play-bots" }
   /**
@@ -3891,6 +3902,7 @@ export function parseWireLobbyState(value: unknown): WireLobbyState | undefined 
     !isOneOf(raw.phase, ["waiting", "team-lobby", "queued", "starting", "in-match"] as const) ||
     !(raw.queueNonce === null || isTicketId(raw.queueNonce)) ||
     !isAscentRound(raw.ascentRound) ||
+    !(raw.teamKept === null || typeof raw.teamKept === "boolean") ||
     !isOneOf(raw.mode, LOBBY_MODES) ||
     !isString(raw.mapId) ||
     !isTeamSize(raw.teamSize) ||
@@ -3919,6 +3931,7 @@ export function parseWireLobbyState(value: unknown): WireLobbyState | undefined 
         queueNonce: raw.queueNonce,
         ascentRound: raw.ascentRound,
         ascentLock,
+        teamKept: raw.teamKept,
       };
 }
 
@@ -3939,8 +3952,8 @@ export function parseWireLobbyCommand(value: unknown): WireLobbyCommand | undefi
     case "select-mode":
       return isOneOf(raw.mode, LOBBY_MODES) ? { kind: "select-mode", mode: raw.mode } : undefined;
     case "find-match":
-      return isAscentRound(raw.ascentRound)
-        ? { kind: "find-match", ascentRound: raw.ascentRound }
+      return isAscentRound(raw.ascentRound) && typeof raw.again === "boolean"
+        ? { kind: "find-match", ascentRound: raw.ascentRound, again: raw.again }
         : undefined;
     case "remove-member":
       return isString(raw.id) ? { kind: "remove-member", id: raw.id } : undefined;

@@ -342,6 +342,7 @@ Nakon timskog meča iz reda pobjednici se sami vraćaju u red nakon
 20 sekundi, a poraženi (i neriješeno) vraćaju se na izbornik; meč
 sobe s kôdom vraća sve u sobu. Gumb ispod rezultata
 preskače čekanje ili, za pobjednike, izlazi bez ulaska u red.
+Pobjednici Timske arene zadržavaju svoj timski build i mjesto svakog igrača za sljedeći meč, bez timskog predvorja, osim ako se skupina u međuvremenu promijenila: netko je otišao, odsutan je ili se pridružio. Tada ponovno biraju tim.
 
 ## Uspon heroja
 

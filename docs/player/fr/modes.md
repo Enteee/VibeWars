@@ -359,6 +359,7 @@ Après un match d'équipe en file, ses gagnants repartent en file tout seuls apr
 20 secondes, et ses perdants (un match nul aussi) retournent au menu ; le match
 d'un salon à code ramène tout le monde au salon. Un bouton sous le résultat saute
 l'attente, ou, pour les gagnants, part sans repartir en file.
+Les gagnants de l'Arène d'équipe gardent leur build d'équipe et la place de chaque joueur pour le match suivant, sans salon d'équipe, sauf si le groupe a changé entre-temps : quelqu'un est parti, absent ou arrivé. Ils choisissent alors à nouveau leur équipe.
 
 ## Ascension des héros
 
