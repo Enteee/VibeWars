@@ -36,7 +36,8 @@ export async function passTouchNotice(page: Page): Promise<void> {
 /**
  * What on the page breaks the phone's rules (#3776), one line each: a
  * sideways scroll, a control in `#topbar` or `#screens` smaller than a
- * finger, visible text under `MIN_TEXT`. Empty when the page fits.
+ * finger, a control over an icon that is not its own, visible text
+ * under `MIN_TEXT`. Empty when the page fits.
  *
  * A checkbox or radio is measured by its label when it has one: the label
  * is what a finger presses.
@@ -87,6 +88,22 @@ export async function phoneOffenders(page: Page): Promise<string[]> {
           out.push(
             `small target ${String(Math.round(box.width))}x${String(Math.round(box.height))}: ${name(node)}`,
           );
+        }
+      }
+      // A control grown to a finger's size must not cover a picture (#3776):
+      // a card's corner buttons once sat on its skill bar.
+      const icons = [...document.querySelectorAll("#topbar img, #screens img")].filter(shown);
+      for (const node of measured) {
+        const box = node.getBoundingClientRect();
+        for (const icon of icons) {
+          if (node.contains(icon)) continue;
+          const over = icon.getBoundingClientRect();
+          const wide = Math.min(box.right, over.right) - Math.max(box.left, over.left);
+          const high = Math.min(box.bottom, over.bottom) - Math.max(box.top, over.top);
+          if (wide > 1 && high > 1) {
+            out.push(`covers an icon: ${name(node)} over ${name(icon)}`);
+            break;
+          }
         }
       }
       for (const node of document.querySelectorAll("#topbar *, #screens *")) {

@@ -9120,7 +9120,9 @@ body:has(> .splash) #app {
 }
 
 /* A finger (#3776): every control outside a match takes a 44 px box, and
-   no text is under 12 px. A match's own HUD is outside #screens. */
+   no text is under 12 px. A match's own HUD is outside #screens. The
+   editors' × and paper-doll spots sit on a slot's corner, where 44 px
+   would cover the slot: the editors' touch layout (#3777) sizes them. */
 @media (pointer: coarse) {
   :is(#topbar, #screens)
     :is(
@@ -9133,10 +9135,16 @@ body:has(> .splash) #app {
       [role="button"],
       [role="tab"],
       [role="switch"]
-    ),
+    ):not(.skill-slot-clear, .gear-slot-clear, .gear-set-tab-clear, .paper-doll-hotspot),
   :is(#topbar, #screens) label:has(> input:is([type="checkbox"], [type="radio"])) {
     min-block-size: 44px;
     min-inline-size: 44px;
+  }
+
+  /* A card's corner buttons are a finger tall now: the card keeps room
+     for them under its bar, which they would otherwise cover. */
+  .screen .play-card-open {
+    padding-block-end: calc(44px + 1rem);
   }
 
   /* The rail widens to hold its labels at 12 px, and the stepper puts the

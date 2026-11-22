@@ -36,6 +36,8 @@ for (const label of [
   "Heroes' Ascent",
   "GvG",
   "Hosted Game",
+  "Character Builder",
+  "Team Builder",
   "Matches",
 ] as const satisfies readonly RailLabel[]) {
   test(`the menu's ${label} fits the phone (#3776)`, async ({ page }) => {
