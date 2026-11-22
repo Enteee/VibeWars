@@ -61,6 +61,7 @@ export default {
 
   "buildEditor.addWeapon": "افزودن سلاح",
   "buildEditor.armor": "زره",
+  "buildEditor.back": "بازگشت",
   "buildEditor.bothHandsFull": "هر دو دست پر است",
   "buildEditor.budgetSegment": {
     one: "{attribute}: {count} امتیاز",
@@ -1538,6 +1539,7 @@ export default {
   "tutorial.climb.praise": "دو لایه، یک نقطه. حالا زمین را می‌خوانی.",
   "tutorial.climb.tip": "نکته: Alt+کلیک زمینِ زیر لبه را انتخاب می‌کند.",
   "tutorial.climb.under": "Alt را نگه دار و کلیک کن. حلقه‌ی خط‌چین زیر توست.",
+  "tutorial.coach.lost": "برگرد تا آموزش را ادامه دهی.",
   "tutorial.dodge.hint": "کنار یک حلقه منتظر سایه‌اش بمان، بعد کنار برو.",
   "tutorial.dodge.hit": "آخ! سایه‌ای که بزرگ می‌شود یعنی: حرکت کن.",
   "tutorial.dodge.how": "روی زمین کلیک چپ کن، یا با {keys} راه برو.",
@@ -1564,6 +1566,7 @@ export default {
   "tutorial.menu.arena.signup":
     "بیلدهای تیمی تو را باز کن، تیمی را که ساختی انتخاب کن و پیشنهادش بده.",
   "tutorial.menu.arena.signupDone": "تیمت را پیشنهاد بده",
+  "tutorial.menu.arena.signupTimeout": "زمان تمام شد، پس لابی برایت تیمی انتخاب کرد.",
   "tutorial.menu.arena.size":
     "اندازهٔ تیم را روی 2v2 بگذار. فقط تیم‌های هم‌اندازه با هم روبه‌رو می‌شوند.",
   "tutorial.menu.arena.sizeDone": "2v2 را انتخاب کن",
@@ -1617,6 +1620,7 @@ export default {
   "tutorial.menu.team.fillDone": "تیم را کامل کن",
   "tutorial.menu.team.members":
     "یک تیم همیشه به اندازهٔ خودش عضو دارد. هرگز عضوی اضافه نمی‌کنی: یکی را جایگزین می‌کنی.",
+  "tutorial.menu.team.memberBack": "این بیلد همان عضو است. بازگشت را بزن تا به تیمت برگردی.",
   "tutorial.menu.team.new": "اندازهٔ تیم را روی 2v2 بگذار، بعد یک بیلد تیمی جدید بساز.",
   "tutorial.menu.team.newDone": "یک تیم دونفره شروع کن",
   "tutorial.menu.team.open": "«تیم‌ها» را باز کن، جایی که بیلدهای تیمی‌ات هستند.",

@@ -8899,6 +8899,11 @@ body:has(#screens[style*="none"]) .now-playing {
   box-shadow: 0 0 0 100vmax var(--menu-scrim);
 }
 
+/* An unlocked beat (#3785) points at its target, and dims nothing. */
+.coach-free .coach-hole {
+  box-shadow: none;
+}
+
 .coach-dim[hidden],
 .coach-hole[hidden],
 .coach-bubble[hidden] {

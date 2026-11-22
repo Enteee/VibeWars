@@ -61,6 +61,7 @@ export default {
 
   "buildEditor.addWeapon": "أضف سلاحًا",
   "buildEditor.armor": "الدرع",
+  "buildEditor.back": "رجوع",
   "buildEditor.bothHandsFull": "كلتا اليدين مشغولتان",
   "buildEditor.budgetSegment": {
     zero: "{attribute}: {count} نقطة",
@@ -1738,6 +1739,7 @@ export default {
   "tutorial.climb.praise": "طبقتان، بقعة واحدة. صرت تقرأ الأرض الآن.",
   "tutorial.climb.tip": "نصيحة: Alt+نقرة تختار الأرض تحت الحافة.",
   "tutorial.climb.under": "اضغط Alt مع النقر. الحلقة المتقطعة تحتك.",
+  "tutorial.coach.lost": "ارجع لتكمل الدرس التعليمي.",
   "tutorial.dodge.hint": "انتظر قرب حلقة حتى يظهر ظلها، ثم ابتعد.",
   "tutorial.dodge.hit": "آه! الظل الذي يكبر يعني: تحرّك.",
   "tutorial.dodge.how": "انقر بالزر الأيسر على الأرض، أو امشِ بـ {keys}.",
@@ -1763,6 +1765,7 @@ export default {
   "tutorial.menu.arena.queueDone": "ادخل الطابور",
   "tutorial.menu.arena.signup": "افتح بنى فرقك، واختر الفريق الذي صنعته، واقترحه.",
   "tutorial.menu.arena.signupDone": "اقترح فريقك",
+  "tutorial.menu.arena.signupTimeout": "انتهى الوقت، فاختارت الردهة فريقًا لك.",
   "tutorial.menu.arena.size": "اضبط حجم الفريق على 2v2. لا تتقابل إلا الفرق ذات الحجم نفسه.",
   "tutorial.menu.arena.sizeDone": "اختر 2v2",
   "tutorial.menu.arena.title": "أثبت فريقك في مباراة 2v2 في ساحة الفرق.",
@@ -1809,6 +1812,7 @@ export default {
   "tutorial.menu.team.fillDone": "املأ الفريق",
   "tutorial.menu.team.members":
     "للفريق دائمًا عدد أعضاء يساوي حجمه. لا تضيف عضوًا أبدًا: بل تستبدل واحدًا.",
+  "tutorial.menu.team.memberBack": "هذه بنية ذلك العضو. اضغط رجوع لتعود إلى فريقك.",
   "tutorial.menu.team.new": "اضبط حجم الفريق على 2v2، ثم أنشئ بنية فريق جديدة.",
   "tutorial.menu.team.newDone": "ابدأ فريقًا من اثنين",
   "tutorial.menu.team.open": "افتح «الفرق»، حيث بنى فرقك.",

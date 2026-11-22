@@ -62,6 +62,7 @@ export default {
 
   "buildEditor.addWeapon": "Přidat zbraň",
   "buildEditor.armor": "Brnění",
+  "buildEditor.back": "Zpět",
   "buildEditor.bothHandsFull": "obě ruce plné",
   "buildEditor.budgetSegment": {
     one: "{attribute}: {count} bod",
@@ -1660,6 +1661,7 @@ export default {
   "tutorial.climb.praise": "Dvě vrstvy, jedno místo. Teď už terén umíš číst.",
   "tutorial.climb.tip": "Tip: Alt+klik vybere zem pod římsou.",
   "tutorial.climb.under": "Drž Alt a klikni. Čárkovaný kruh je pod tebou.",
+  "tutorial.coach.lost": "Vrať se zpět a pokračuj ve výuce.",
   "tutorial.dodge.hint": "Počkej u kruhu na jeho stín, pak uhni.",
   "tutorial.dodge.hit": "Au! Rostoucí stín znamená: uhni.",
   "tutorial.dodge.how": "Klikni levým tlačítkem na zem, nebo choď pomocí {keys}.",
@@ -1686,6 +1688,7 @@ export default {
   "tutorial.menu.arena.signup":
     "Otevři Tvoje Týmové buildy, vyber tým, který jsi vytvořil, a navrhni ho.",
   "tutorial.menu.arena.signupDone": "Navrhni svůj tým",
+  "tutorial.menu.arena.signupTimeout": "Čas vypršel, takže lobby vybrala tým za tebe.",
   "tutorial.menu.arena.size":
     "Nastav velikost týmu na 2v2. Proti sobě se losují jen týmy stejné velikosti.",
   "tutorial.menu.arena.sizeDone": "Vyber 2v2",
@@ -1737,6 +1740,8 @@ export default {
   "tutorial.menu.team.fillDone": "Doplň tým",
   "tutorial.menu.team.members":
     "Tým má vždy tolik členů, kolik je jeho velikost. Člena nikdy nepřidáváš: nahrazuješ ho.",
+  "tutorial.menu.team.memberBack":
+    "Tohle je build toho člena. Stiskni Zpět a vrátíš se ke svému týmu.",
   "tutorial.menu.team.new": "Nastav velikost týmu na 2v2 a pak vytvoř nový týmový build.",
   "tutorial.menu.team.newDone": "Založ tým pro 2",
   "tutorial.menu.team.open": "Otevři Týmy, kde jsou tvé týmové buildy.",
