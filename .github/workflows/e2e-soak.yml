@@ -31,7 +31,7 @@ jobs:
     # The suite outgrew one job: five repeats in one took over 90 min and
     # concluded cancelled every night. Six shards by recorded duration, as
     # ci.yml's e2e-shard, each repeating its own tests five times.
-    timeout-minutes: 90
+    timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
@@ -50,6 +50,8 @@ jobs:
       # No maxFailures in playwright.config.ts, so a failure doesn't stop the
       # run: the list reporter names each failing test, every time it fails.
       - name: Repeat the shard five times
+        # A step timeout fails; a job timeout concludes cancelled, which reads as a skipped night.
+        timeout-minutes: 45
         env:
           SHARD: ${{ matrix.shard }}
         run: >-
