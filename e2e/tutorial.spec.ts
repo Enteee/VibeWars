@@ -515,12 +515,14 @@ test.describe("the first-time tutorial (#3218)", () => {
       const [pocketX = 0, pocketY = 0] = ((await frame.getAttribute("data-mark")) ?? "")
         .split(",")
         .map(Number);
+      // Near enough to fight: the rats meet the player on the way in and
+      // can hold them some 150 short of the pocket's middle (#3792).
       await expect(async () => {
         await walkTo({ x: pocketX, y: pocketY });
         const [cx = 0, cy = 0] = ((await stage.getAttribute("data-camera")) ?? "")
           .split(",")
           .map(Number);
-        expect(Math.hypot(cx - pocketX, cy - pocketY)).toBeLessThan(150);
+        expect(Math.hypot(cx - pocketX, cy - pocketY)).toBeLessThan(250);
       }).toPass({ timeout: 90_000 });
       const fought = "Well fought! Every skill has its job.";
       await expect(async () => {
