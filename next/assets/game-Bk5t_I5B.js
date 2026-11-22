@@ -1,2 +1,0 @@
-import{G as e}from"./main-RVLv-NAz.js";var t=e;export{t as default};
-//# sourceMappingURL=game-Bk5t_I5B.js.map
