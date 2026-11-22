@@ -4,6 +4,9 @@ import { NO_RANKS, getTrainingScenario } from "@vibewars/game-core";
 import { packEmblem, type CastRefusedMessage, type WireCape } from "@vibewars/game-protocol";
 import { NO_GUILD, type CombatMessage } from "@vibewars/game-session";
 
+import { DEFAULT_LOOK } from "../cosmetics/selection.js";
+import { cosmeticsStore } from "../cosmetics/store.js";
+import { toArenaSnapshot } from "../match-view.js";
 import { AttackClock } from "../render/attack-clock.js";
 import { setProfessions, setRank, setSkill, newCharacter } from "../ui/build-editor.js";
 import { setWeapon } from "../ui/gear-editor.js";
@@ -504,5 +507,40 @@ describe("a pet's armed attack (#1167)", () => {
       connection.advance(TICK_SECONDS);
     }
     expect(armed()).toBeNull();
+  });
+});
+
+describe("your cosmetics in the Training Ground (#3765)", () => {
+  it("dresses you in your unlocked picks, and the dummy in the default look", () => {
+    cosmeticsStore.rememberFacts({ wins: 600, streak: 0, rank: null });
+    cosmeticsStore.pick("aura", "aura-starlight");
+    cosmeticsStore.pick("trail", "trail-moss");
+    try {
+      const { connection } = targetDummy();
+      const actors = toArenaSnapshot(connection.getSnapshot(), [], [], undefined, undefined).actors;
+      const self = actors.find((actor) => actor.id === SELF_ID);
+      expect(self?.cosmetics.aura?.id).toBe("aura-starlight");
+      expect(self?.cosmetics.trail?.id).toBe("trail-moss");
+      const others = actors.filter((actor) => actor.id !== SELF_ID);
+      expect(others.length).toBeGreaterThan(0);
+      for (const other of others) {
+        expect(other.cosmetics).toBe(DEFAULT_LOOK);
+      }
+    } finally {
+      cosmeticsStore.pick("aura", undefined);
+      cosmeticsStore.pick("trail", undefined);
+      cosmeticsStore.rememberFacts(undefined);
+    }
+  });
+
+  it("keeps a pick the facts do not unlock off you, as a match does", () => {
+    cosmeticsStore.pick("aura", "aura-starlight");
+    try {
+      const { connection } = targetDummy();
+      const actors = toArenaSnapshot(connection.getSnapshot(), [], [], undefined, undefined).actors;
+      expect(actors.find((actor) => actor.id === SELF_ID)?.cosmetics.aura).toBeUndefined();
+    } finally {
+      cosmeticsStore.pick("aura", undefined);
+    }
   });
 });
