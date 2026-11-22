@@ -41,6 +41,7 @@
     "match-start",
     "rejoin-challenge",
     "rejoin-proof",
+    "seat-dropped",
     "key-challenge",
     "key-proof",
     "key-proven",
@@ -958,6 +959,7 @@
         { "literal": "relay-holding" },
         { "literal": "relay-offers" },
         { "literal": "respawns" },
+        { "literal": "seat-dropped" },
         { "literal": "shared-track" },
         { "literal": "skill-bar" },
         { "literal": "snapshot" },
@@ -6709,6 +6711,12 @@
             }
           }
         }
+      ]
+    },
+    "PeerSeatDropped": {
+      "properties": [
+        { "name": "expired", "optional": false, "type": "boolean" },
+        { "name": "playerId", "optional": false, "type": "string" }
       ]
     },
     "PeerStayTogether": {

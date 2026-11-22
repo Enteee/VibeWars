@@ -107,6 +107,7 @@ export const CHANNELS = [
   "match-start",
   "rejoin-challenge",
   "rejoin-proof",
+  "seat-dropped",
   "key-challenge",
   "key-proof",
   "key-proven",
@@ -521,6 +522,16 @@ export interface PeerRejoinProof {
    * 64 lowercase hex digits.
    */
   readonly proof: string;
+}
+
+/**
+ * Host to a peer whose seat it dropped, heard from again (#3772). Only the
+ * host saw the drop, so the peer would not know to ask for its seat back.
+ */
+export interface PeerSeatDropped {
+  readonly playerId: string;
+  /** The seat is gone: the reconnect window ran out, or another page took it. */
+  readonly expired: boolean;
 }
 
 /**
@@ -2152,6 +2163,13 @@ export function parsePeerRejoinProof(value: unknown): PeerRejoinProof | undefine
     typeof raw.proof === "string" &&
     REJOIN_PROOF.test(raw.proof)
     ? { playerId: raw.playerId, proof: raw.proof }
+    : undefined;
+}
+
+export function parsePeerSeatDropped(value: unknown): PeerSeatDropped | undefined {
+  const raw = fields(value);
+  return raw !== undefined && isString(raw.playerId) && typeof raw.expired === "boolean"
+    ? { playerId: raw.playerId, expired: raw.expired }
     : undefined;
 }
 

@@ -60,6 +60,7 @@ import {
   type PeerObserving,
   type PeerRefuse,
   type PeerRejoinChallenge,
+  type PeerSeatDropped,
   type PeerWelcome,
   type RechargeMessage,
   type SkillBarSlot,
@@ -482,6 +483,13 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
    * and a team re-roll, as often as the budget allows.
    */
   const departed = new Set<string>();
+  /**
+   * The peers whose seat this host dropped, by the player that sat there,
+   * until the match ends (#3772). The drop may be the host's alone: a
+   * page that stalled past the transport's timeout never saw the host go,
+   * so when it is heard again it is told, or it would never ask back in.
+   */
+  const droppedPeers = new Map<string, string>();
   /**
    * The planned peers that have not said hello yet, while they are in the
    * room. A bot never says one: it is seated at once.
@@ -918,6 +926,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     seat.peerId = peerId;
     seat.droppedAt = undefined;
     seat.token = newToken();
+    droppedPeers.delete(peerId);
     seatOfPeer.set(peerId, seat);
     const message: PeerWelcome = {
       protocolVersion: PROTOCOL_VERSION,
@@ -1372,6 +1381,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     seatOfPeer.delete(peerId);
     seat.peerId = undefined;
     seat.droppedAt = sim.elapsedSeconds;
+    droppedPeers.set(peerId, seat.playerId);
     seat.recharges = undefined;
     seat.adrenaline = undefined;
     seat.chainMarks = undefined;
@@ -1381,6 +1391,21 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     sim.setInputDirection(seat.playerId, ZERO);
     sim.get(seat.playerId)?.combatant.cast.cancelCast();
     logInput([sim.tick, "drop", seat.playerId]);
+  });
+
+  // A dropped peer heard again is told its seat is held, or that it is
+  // gone (#3772); a peer the host never dropped hears nothing.
+  transport.onPeerJoin((peerId) => {
+    const playerId = droppedPeers.get(peerId);
+    if (playerId === undefined || finished || retired) {
+      return;
+    }
+    const held = seats.get(playerId);
+    const dropped: PeerSeatDropped = {
+      playerId,
+      expired: held?.droppedAt === undefined,
+    };
+    transport.send("seat-dropped", dropped, peerId);
   });
 
   const wirePlayer = (participant: Participant, who: WireIdentity): WirePlayer => {

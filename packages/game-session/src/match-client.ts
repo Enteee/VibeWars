@@ -4,6 +4,7 @@ import {
   parseCastRefused,
   parsePeerRefuse,
   parsePeerRejoinChallenge,
+  parsePeerSeatDropped,
   parsePeerWelcome,
   parseAdrenaline,
   parseChainMarks,
@@ -487,6 +488,14 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
       }
     },
   );
+  /**
+   * Ask the host for the held seat back. The host challenges, the token
+   * answers it; then a welcome, or a refusal once the match is over.
+   */
+  const rejoin = (seat: PeerWelcome): void => {
+    const message: PeerHello = { ...hello, rejoin: { playerId: seat.playerId } };
+    transport.send("hello", message, hostId);
+  };
   unsubscribe.push(
     transport.onPeerLeave((peerId) => {
       if (peerId === hostId) {
@@ -501,12 +510,27 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
         loseHost();
         return;
       }
-      // The host challenges, the token answers it; then a welcome, or a
-      // refusal once the match is over.
-      const rejoin: PeerHello = { ...hello, rejoin: { playerId: welcomed.playerId } };
-      transport.send("hello", rejoin, hostId);
+      rejoin(welcomed);
     }),
   );
+  // A drop only the host saw (#3772): this page stalled past the
+  // transport's timeout while the host carried on.
+  fromHost("seat-dropped", parsePeerSeatDropped, (dropped) => {
+    const seat = welcomed;
+    if (lost || !settled || dropped.playerId !== seat?.playerId) {
+      return;
+    }
+    if (dropped.expired) {
+      loseHost();
+      return;
+    }
+    // Already on the way back: one hello is enough.
+    if (droppedAt !== undefined) {
+      return;
+    }
+    dropHost();
+    rejoin(seat);
+  });
   fromHost("rejoin-challenge", parsePeerRejoinChallenge, (challenge) => {
     const seat = welcomed;
     if (droppedAt === undefined || lost || challenge.playerId !== seat?.playerId) {
