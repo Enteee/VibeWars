@@ -59,8 +59,10 @@ describe("plan-move (#3832)", () => {
     expect(moveOf(flanker, "flank", { foeAt: eastOf(flanker, 300) })?.moveTo).toEqual(waypoint);
   });
 
-  it("gives the swing up with a foe at its elbow", () => {
-    expect(moveOf(flanker, "flank", { foeAt: eastOf(flanker, PLAN_ELBOW - 20) })).toBeUndefined();
+  it("walks a flanker on past a foe at its elbow", () => {
+    expect(moveOf(flanker, "flank", { foeAt: eastOf(flanker, PLAN_ELBOW - 20) })?.moveTo).toEqual(
+      waypoint,
+    );
   });
 
   it("gives the swing up for the phase once hurt", () => {
@@ -88,6 +90,13 @@ describe("plan-move (#3832)", () => {
     const intent = moveOf("bot", "hold", { at, foeAt: vec2(at.x + 300, at.y) });
     expect(intent?.moveTo).toBeDefined();
     expect(distance(intent?.moveTo ?? at, vec2(397, 500))).toBeLessThan(HOLD_LEASH);
+  });
+
+  it("lets a holder past its leash fight a foe at its elbow", () => {
+    const at = vec2(397 + 500, 500);
+    expect(
+      moveOf("bot", "hold", { at, foeAt: vec2(at.x + PLAN_ELBOW - 20, at.y) }),
+    ).toBeUndefined();
   });
 
   it("lets a holder within its leash fight from there", () => {

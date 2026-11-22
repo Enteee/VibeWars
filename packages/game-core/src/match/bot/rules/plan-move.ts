@@ -10,7 +10,7 @@ export const HOLD_LEASH = REGROUP_SPREAD;
 /** Below this share of its health a bot gives its plan's move up (#3832). */
 export const PLAN_ABANDON_HEALTH = 0.5;
 
-/** A living foe this near makes a bot give its plan's move up this think (#3832). */
+/** A living foe this near makes a holding bot fight where it stands this think (#3832). */
 export const PLAN_ELBOW = 2 * RANGE_MELEE;
 
 /**
@@ -18,9 +18,10 @@ export const PLAN_ELBOW = 2 * RANGE_MELEE;
  * from the first fight on: a flank-party bot walks to its flank waypoint
  * past the foes in its reach, until within `REGROUP_JOINED` of it; a
  * holding bot further than `HOLD_LEASH` from its spot walks back, and
- * within it fights from there. With a foe within `PLAN_ELBOW` it gives the
- * move up for the think; below `PLAN_ABANDON_HEALTH`, a flanker gives the
- * swing up for the rest of the phase, so a hurt one does not run back out.
+ * within it fights from there. Below `PLAN_ABANDON_HEALTH` it gives the
+ * move up, a flanker for the rest of the phase, so a hurt one does not run
+ * back out; a holder also with a foe within `PLAN_ELBOW`. A flanker walks
+ * on past a foe at its elbow: one sticks to it most of a fight.
  */
 const planMove: BotRule = {
   order: 99.9,
@@ -40,10 +41,10 @@ const planMove: BotRule = {
       if (plan === "flank") cursor.planGaveUp = phase;
       return undefined;
     }
-    if (foes.some((foe) => distance(foe.position, self.position) <= PLAN_ELBOW)) return undefined;
     const foeTeam = planFoeTeam(cursor, foes);
     if (foeTeam === undefined) return undefined;
     if (plan === "hold") {
+      if (foes.some((foe) => distance(foe.position, self.position) <= PLAN_ELBOW)) return undefined;
       const at = placedHold(context, self, cursor, foeTeam);
       return at !== undefined &&
         (self.layer !== at.layer || distance(self.position, at.spot) > HOLD_LEASH)
