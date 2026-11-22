@@ -31,69 +31,46 @@ function duoCode(): string {
   });
 }
 const RAISED_MAP = "arena-crossroads";
-/** Where the pair arrives in the canyon (#3247), its first map's arrival pad. */
-const CANYON_ARRIVAL = { x: 1000, y: 1800 };
+/** Where the pair arrives in the canyon (#3247), its arrival pad. */
+const CANYON_ARRIVAL = { x: 1000, y: 3500 };
 /**
  * Beside the canyon's first rockfall, 200 south of its middle (#3247):
  * near enough for each of its strikes to count as a dodge, out of its reach.
  */
-const DODGE_SPOT = { x: 1860, y: 1920 };
+const DODGE_SPOT = { x: 1860, y: 3620 };
 /** The middle of the canyon's cracked wall (#3302), station 5's, east of its mark. */
-const WALL_MIDDLE = { x: 3600, y: 1800 };
+const WALL_MIDDLE = { x: 3600, y: 3500 };
 /**
  * West of the canyon's clearing (#3303), out of its rockfall's reach and
  * in a heal's range of the tutor waiting east of it.
  */
-const BY_CLEARING = { x: 4900, y: 1800 };
+const BY_CLEARING = { x: 4900, y: 3500 };
 /**
  * Station 7's way round the mire (#3310): up the north leg's east side and
  * through the bulge east of the mud, in no zone; then its mark, north of it.
  */
 const CLEAR_WAY = [
-  { x: 7000, y: 1450 },
-  { x: 7150, y: 1100 },
+  { x: 7000, y: 3150 },
+  { x: 7150, y: 2800 },
 ];
-const PAST_THE_MUD = { x: 6900, y: 720 };
+const PAST_THE_MUD = { x: 6900, y: 2420 };
 /**
  * On station 9's ledge (#3323), just west of its stairs' top and near its
  * north edge: a click here picks the deck, never the ground beside or
  * under it, so the walk up ends on the ledge (the ledge spans x 3290-3910,
- * y 1800-1980 on the canyon's second map).
+ * y 1800-1980).
  */
 const ON_THE_LEDGE = { x: 3850, y: 1830 };
 /**
- * Where station 10's mark (#3325), at the high deck's middle, is drawn:
- * the deck (x 1780-2180, y 1480-1740, layer 3) stands two layers over the
- * ground (layer 1), 112 world units up, so a click here picks the mark.
- */
-const OVER_THE_HIGH_DECK = { x: 1980, y: 1610 - 112 };
-/**
- * On the canyon floor south of station 10's first flight (#3325), clear of
- * the tutor waiting at its foot (x 2350, y 1850).
- */
-const SOUTH_OF_THE_FLIGHTS = { x: 2600, y: 2050 };
-/**
- * On the ground under station 10's high deck (#3325), in the notch of the
- * bounds that holds the deck and its landing: 210 world units below where
- * the deck is drawn, so from here a plain click on it is one stride.
- */
-const UNDER_THE_HIGH_DECK = { x: 1980, y: 1700 };
-/**
- * Where the middle of station 10's landing (#3325) is drawn: the landing
- * (x 2260-2440, y 1480-1640, layer 2) stands one layer, 56 world units,
- * over the ground.
- */
-const OVER_THE_LANDING = { x: 2350, y: 1560 - 56 };
-/**
- * Station 11's way off the high deck (#3326): down both flights, west along
- * the south leg, north up the west one, onto the top of the tunnel's west
- * steps, one long stride from the tunnel's west half. The west leg bends west
- * past its foot: a stride north from there can land where no path goes,
- * so one waypoint takes the bend. Each stride a long
- * one: a short first one from the deck falls on the rock round it.
+ * Station 11's way from the foot of station 9's ledge (#3326): south, clear
+ * of its stairs, west along the second row, north up the west leg, onto
+ * the top of the tunnel's west steps, one long stride from the tunnel's
+ * west half. The west leg bends west past its foot: a stride north from
+ * there can land where no path goes, so one waypoint takes the bend.
  */
 const TO_THE_TUNNEL = [
-  { x: 2350, y: 1950 },
+  { x: 4100, y: 2250 },
+  { x: 3000, y: 2250 },
   { x: 1300, y: 2100 },
   { x: 1030, y: 1650 },
   { x: 1200, y: 1300 },
@@ -119,13 +96,26 @@ const IN_THE_TUNNEL_WEST = { x: 2200, y: 700 + 56 };
 const IN_THE_TUNNEL_EAST = { x: 2700, y: 700 + 56 };
 /** Station 11's mark (#3326), just past the top of the tunnel's east steps. */
 const PAST_THE_TUNNEL = { x: 3240, y: 700 };
-/** Station 12's two rats (#3331), west of them: `site-12` on the canyon's second map. */
-const BY_THE_RATS = { x: 4000, y: 700 };
+/** Station 12's two rats (#3331), west of them: `site-12` is at x 3800. */
+const BY_THE_RATS = { x: 3600, y: 700 };
 /** Station 13's fork (#3332), `site-13`, where its mark is drawn. */
-const AT_THE_FORK = { x: 5800, y: 700 };
-/** Down station 13's east branch (#3332), well clear of the pocket to the south-east. */
-const DOWN_THE_EAST_BRANCH = { x: 6150, y: 700 };
-/** Station 14's mist gate (#3334), `CANYON_EXIT` at the east end of the canyon's second map. */
+const AT_THE_FORK = { x: 4900, y: 700 };
+/**
+ * Station 13's two arms round the rock island (#3792), each by its mark
+ * (`site-13n`, `site-13s`) to the rejoin (`site-13r`), where it is done.
+ */
+const NORTH_ARM = [
+  { x: 5150, y: 460 },
+  { x: 5450, y: 415 },
+  { x: 5750, y: 460 },
+];
+const SOUTH_ARM = [
+  { x: 5150, y: 940 },
+  { x: 5450, y: 985 },
+  { x: 5750, y: 940 },
+];
+const AT_THE_REJOIN = { x: 6150, y: 700 };
+/** Station 14's mist gate (#3334), `CANYON_EXIT` at the canyon's east end. */
 const IN_THE_MIST_GATE = { x: 7600, y: 700 };
 /** The tutor's id, as its party row names it. */
 const TUTOR_ID = "tutorial-tutor";
@@ -147,6 +137,46 @@ async function pastTheSplash(page: Page, mapId: string, fragment = ""): Promise<
   await expect(splash.locator(".splash-prompt")).toBeVisible({ timeout: 10_000 });
   await page.keyboard.press("Space");
   await expect(splash).toHaveCount(0);
+}
+
+/**
+ * Station 13's arm (#3792), from the fork: a wheel-click on its mark pings
+ * it, then the player walks it, waypoint by waypoint, round the island to
+ * the rejoin, where the praise is said.
+ */
+async function takeTheArm(
+  page: Page,
+  stage: Locator,
+  frame: Locator,
+  hasSaid: (line: string) => Promise<boolean>,
+  walkTo: (point: { x: number; y: number }, stride?: number) => Promise<void>,
+  arm: readonly { x: number; y: number }[],
+): Promise<void> {
+  const mark = arm[1] ?? AT_THE_REJOIN;
+  await expect(async () => {
+    const view = await projection(stage, page.locator("#viewport canvas:not(.compass)"));
+    const at = view.onPage(mark);
+    await page.mouse.click(at.x, at.y, { button: "middle" });
+    // Once an arm is called, the rejoin is marked.
+    await expect(frame).toHaveAttribute(
+      "data-mark",
+      `${String(AT_THE_REJOIN.x)},${String(AT_THE_REJOIN.y)}`,
+      { timeout: 3_000 },
+    );
+  }).toPass({ timeout: 30_000 });
+  for (const point of [...arm, AT_THE_REJOIN]) {
+    await expect(async () => {
+      if (await hasSaid("Good call. Onward.")) {
+        return;
+      }
+      await walkTo(point);
+      const [cx = 0, cy = 0] = ((await stage.getAttribute("data-camera")) ?? "")
+        .split(",")
+        .map(Number);
+      expect(Math.hypot(cx - point.x, cy - point.y)).toBeLessThan(60);
+    }).toPass({ timeout: 60_000 });
+  }
+  await expect.poll(() => hasSaid("Good call. Onward."), { timeout: 15_000 }).toBe(true);
 }
 
 /** What a stage of the tutorial reads and does (#3383). */
@@ -462,25 +492,24 @@ test.describe("the first-time tutorial (#3218)", () => {
       // Round the mud, no status: the effects monitor was never pointed at.
       expect(await hasSaid("See that icon? Mud. It wears off.")).toBe(false);
 
-      // On to station 8 (#3316), on the canyon's second map.
+      // On to station 8 (#3316), on the same map (#3792).
       await expect
         .poll(() => hasSaid("Rats! Different skills, different jobs."), { timeout: 15_000 })
         .toBe(true);
-      await expect(frame).toHaveAttribute("data-world", "canyon-2");
+      await expect(frame).toHaveAttribute("data-world", "canyon");
     });
 
     test(`Learn on ${mapId}, from the rat pocket`, async ({ page }) => {
-      // The rats some 60 s (#3316), the ledge some 30 s (#3323), the high
-      // deck some 30 s (#3325).
-      test.setTimeout(300_000);
+      // The rats some 60 s (#3316), the ledge some 30 s (#3323).
+      test.setTimeout(240_000);
       const { frame, stage, hasSaid, walkTo } = await learn(page, mapId, 8);
-      // Station 8 (#3316): on to the canyon's second map, its three rats at
-      // the pocket west of the arrival; the closest targeted again and
+      // Station 8 (#3316): from station 7's mark, its three rats at the
+      // pocket west along the second row; the closest targeted again and
       // again, two skills and the plain attack kill them all.
       await expect
         .poll(() => hasSaid("Rats! Different skills, different jobs."), { timeout: 15_000 })
         .toBe(true);
-      await expect(frame).toHaveAttribute("data-world", "canyon-2");
+      await expect(frame).toHaveAttribute("data-world", "canyon");
       await expect(frame).toHaveAttribute("data-rats", "3", { timeout: 10_000 });
       await expect(frame).toHaveAttribute("data-mark", /^-?\d+,-?\d+$/);
       const [pocketX = 0, pocketY = 0] = ((await frame.getAttribute("data-mark")) ?? "")
@@ -548,61 +577,20 @@ test.describe("the first-time tutorial (#3218)", () => {
       // Down by an Alt walk: no tip.
       expect(await hasSaid(tip), "no tip after an Alt walk down").toBe(false);
 
-      // Station 10 (#3325): a click on the high deck walks up both flights.
-      await expect
-        .poll(() => hasSaid("Steps join layers. Walk on, and they carry you up."), {
-          timeout: 15_000,
-        })
-        .toBe(true);
-      await expect(frame).toHaveAttribute("data-mark-layer", "3");
-      const high = "High ground. Foes below can't easily reach you.";
-      // Along the ground to under the deck, an Alt walk at every stride: a
-      // plain one would pick the ledge or the landing on the way, and from
-      // the ledge the next stride lies out of bounds. South of the tutor
-      // first, so no stride falls on it or north of the canyon floor.
-      for (const waypoint of [SOUTH_OF_THE_FLIGHTS, UNDER_THE_HIGH_DECK]) {
-        await expect(async () => {
-          await page.keyboard.down("Alt");
-          await walkTo(waypoint);
-          await page.keyboard.up("Alt");
-          const [cx = 0, cy = 0] = ((await stage.getAttribute("data-camera")) ?? "")
-            .split(",")
-            .map(Number);
-          expect(Math.hypot(cx - waypoint.x, cy - waypoint.y)).toBeLessThan(150);
-        }).toPass({ timeout: 90_000 });
-      }
-      // A click on the landing climbs the first flight, and the landing,
-      // stood on, gets its line; a click on the deck from there, the second.
-      // One click from the ground taking both is the unit test's.
-      await expect(async () => {
-        if (await hasSaid("One more flight.")) {
-          return;
-        }
-        await walkTo(OVER_THE_LANDING);
-        await expect.poll(() => hasSaid("One more flight."), { timeout: 10_000 }).toBe(true);
-      }).toPass({ timeout: 60_000 });
-      await expect(async () => {
-        if (await hasSaid(high)) {
-          return;
-        }
-        await walkTo(OVER_THE_HIGH_DECK);
-        await expect.poll(() => hasSaid(high), { timeout: 5_000 }).toBe(true);
-      }).toPass({ timeout: 60_000 });
-
-      // On to station 11 (#3326).
+      // On to station 11 (#3326), station 10's high deck gone (#3792).
       await expect
         .poll(() => hasSaid("Shh. Don't wake them. We go under."), { timeout: 15_000 })
         .toBe(true);
     });
 
     test(`Learn on ${mapId}, from the tunnel to the fork`, async ({ page }) => {
-      // Seeded on the high deck, where station 10 leaves the player (#3383).
-      // The tunnel some two minutes (#3326), the call some 40 s (#3331),
-      // the fork some 30 s (#3332).
+      // Seeded at the foot of station 9's ledge, where it leaves the player
+      // (#3383). The tunnel some two minutes (#3326), the call some 40 s
+      // (#3331), the junction some 40 s (#3332).
       test.setTimeout(420_000);
-      const { frame, stage, saidLog, hasSaid, walkTo } = await learn(page, mapId, 11);
+      const { frame, stage, saidLog, hasSaid, walkTo } = await learn(page, mapId, 10);
       const target = page.locator(".hud-target");
-      // Station 11 (#3326): down off the deck, round to the tunnel's west
+      // Station 11 (#3326): west along the second row, round to the tunnel's west
       // steps, an Alt walk down into its west half, on through its east half
       // under the sleeping guard, and up the far steps to the mark.
       await expect
@@ -705,8 +693,9 @@ test.describe("the first-time tutorial (#3218)", () => {
         .poll(() => hasSaid("Call it, and the team hits the same thing."), { timeout: 90_000 })
         .toBe(true);
 
-      // Station 13 (#3332): on east to the fork, the compass lit, and a
-      // wheel-click down the east branch sends the tutor along it.
+      // Station 13 (#3332, #3792): on east to the fork, the compass lit; a
+      // wheel-click on the north arm sends the tutor along it, and the
+      // player walks it too, round the island to the rejoin.
       await expect
         .poll(() => hasSaid("Left or right? You call it."), { timeout: 15_000 })
         .toBe(true);
@@ -715,14 +704,7 @@ test.describe("the first-time tutorial (#3218)", () => {
         await walkTo(AT_THE_FORK, LONG_STRIDE);
         await near(AT_THE_FORK, 100);
       }).toPass({ timeout: 90_000 });
-      await expect(async () => {
-        const view = await projection(stage, page.locator("#viewport canvas:not(.compass)"));
-        const at = view.onPage(DOWN_THE_EAST_BRANCH);
-        await page.mouse.click(at.x, at.y, { button: "middle" });
-        // The tutor walks the branch before the praise, which on a slow
-        // runner outlasts 15 s: the line stood a moment after a 45 s wait.
-        await expect.poll(() => hasSaid("Good call. Onward."), { timeout: 40_000 }).toBe(true);
-      }).toPass({ timeout: 90_000 });
+      await takeTheArm(page, stage, frame, hasSaid, walkTo, NORTH_ARM);
 
       // On to station 14 (#3334).
       await expect
@@ -730,11 +712,36 @@ test.describe("the first-time tutorial (#3218)", () => {
         .toBe(true);
     });
 
-    test(`Learn on ${mapId}, from the gate to the menu`, async ({ page }) => {
-      // Seeded down the east branch, where station 13 leaves the pair (#3334).
+    test(`Learn on ${mapId}, from the junction by its south arm to the gate`, async ({ page }) => {
+      // Seeded at the junction's fork (#3792), the arm some 40 s, the gate some 20 s.
       test.setTimeout(180_000);
-      const { frame, hasSaid, walkTo } = await learn(page, mapId, 14);
-      // Station 14 (#3334): east along the branch into the mist gate, the
+      const { frame, stage, hasSaid, walkTo } = await learn(page, mapId, 12);
+      // Station 13 (#3792): the south arm pinged, the tutor along it, the
+      // player after it round the island to the rejoin.
+      await expect
+        .poll(() => hasSaid("Left or right? You call it."), { timeout: 15_000 })
+        .toBe(true);
+      await takeTheArm(page, stage, frame, hasSaid, walkTo, SOUTH_ARM);
+      // Station 14 (#3334): on into the mist gate.
+      await expect
+        .poll(() => hasSaid("Our team fights beyond the mist. Follow me."), { timeout: 15_000 })
+        .toBe(true);
+      await expect(async () => {
+        if (await hasSaid("Now they're in front of us. Charge!")) {
+          return;
+        }
+        await walkTo(IN_THE_MIST_GATE, LONG_STRIDE);
+        await expect
+          .poll(() => hasSaid("Now they're in front of us. Charge!"), { timeout: 5_000 })
+          .toBe(true);
+      }).toPass({ timeout: 90_000 });
+    });
+
+    test(`Learn on ${mapId}, from the gate to the menu`, async ({ page }) => {
+      // Seeded at the junction's rejoin, where station 13 leaves the pair (#3334, #3792).
+      test.setTimeout(180_000);
+      const { frame, hasSaid, walkTo } = await learn(page, mapId, 13);
+      // Station 14 (#3334): east from the rejoin into the mist gate, the
       // tutor ahead, and out among its team.
       await expect
         .poll(() => hasSaid("Our team fights beyond the mist. Follow me."), { timeout: 15_000 })

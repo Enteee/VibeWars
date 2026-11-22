@@ -45,6 +45,7 @@ import {
   pingTutor,
   pocketStart,
   ratPocket,
+  forkStart,
   gateStart,
   tunnelStart,
   tunnelTutor,
@@ -52,6 +53,7 @@ import {
   wallTutor,
   type BadGroundTutor,
   type CallTutor,
+  type CanyonStart,
   type ClearingTutor,
   type LedgeTutor,
   type PingTutor,
@@ -117,6 +119,17 @@ const MIST_GATE: MistGateProp = {
   position: CANYON_EXIT.position,
   layer: CANYON_EXIT.layer,
 };
+/**
+ * Where an e2e build's seeded start (#3383) puts the pair in the canyon,
+ * by the station it starts at; any other starts on the arrival.
+ */
+const SEEDED_STARTS: ReadonlyMap<string, () => CanyonStart> = new Map([
+  ["break-wall", wallStart],
+  ["rats", pocketStart],
+  ["tunnel", tunnelStart],
+  ["ping", forkStart],
+  ["gate", gateStart],
+]);
 /** What a HUD element a station points at wears while it does (#3302). */
 const PULSE_CLASS = "tutorial-pulse";
 /** The fade back from white once the canyon stands (#3247), as `.tutorial-flash` animates it. */
@@ -457,18 +470,9 @@ export async function startTutorialSession(
   };
   /** Into the canyon (#3247), one map (#3792). */
   const canyonStage = (): Stage => {
-    const at = `${seed}-canyon`;
-    // Only a seeded start enters it at station 5, 8, 11 or 14 (#3383).
-    const canyon =
-      running === "break-wall"
-        ? canyonWorld(at, playerBuild, tutorBuild, wallStart())
-        : running === "rats"
-          ? canyonWorld(at, playerBuild, tutorBuild, pocketStart())
-          : running === "tunnel"
-            ? canyonWorld(at, playerBuild, tutorBuild, tunnelStart())
-            : running === "gate"
-              ? canyonWorld(at, playerBuild, tutorBuild, gateStart())
-              : canyonWorld(at, playerBuild, tutorBuild);
+    // Only a seeded start enters it at a later station (#3383).
+    const start = running === undefined ? undefined : SEEDED_STARTS.get(running)?.();
+    const canyon = canyonWorld(`${seed}-canyon`, playerBuild, tutorBuild, start);
     const heals = createHealWatch(SELF_ID, TUTOR_ID, TUTORIAL_HEAL);
     const rats = createRatWatch(
       SELF_ID,

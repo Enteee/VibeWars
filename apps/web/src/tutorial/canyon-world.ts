@@ -180,6 +180,15 @@ export function tunnelStart(): CanyonStart {
 }
 
 /**
+ * The canyon entered at station 13 (#3792), which only an e2e build's
+ * seeded start does: the pair at the junction's fork, where station 12
+ * leaves them, and station 8's rats slain.
+ */
+export function forkStart(): CanyonStart {
+  return { position: JUNCTION.fork, layer: JUNCTION.layer, ratsSlain: true };
+}
+
+/**
  * The canyon entered at station 14 (#3334), which only an e2e build's
  * seeded start does: the pair at the junction's rejoin, where station 13
  * leaves them, and station 8's rats slain.
