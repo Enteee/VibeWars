@@ -1653,13 +1653,8 @@ export default {
   "tutorial.ping.how":
     "Zemine tekerlekle tıkla, pusulaya tıkla ya da pusulada sürükleyip bir çizgi çiz.",
   "tutorial.ping.intro": "Sol mu sağ mı? Sen karar ver.",
-  "tutorial.ping.pocket": "Güzel manzara. Ama yanlış yol.",
   "tutorial.ping.praise": "İyi seçim. İleri.",
-  "tutorial.ramp.hint": "İki kat merdiveni çıkıp yüksek terastaki işarete git.",
-  "tutorial.ramp.how": "Yüksek terasa tıkla. Yolun basamakları senin için çıkar.",
-  "tutorial.ramp.intro": "Basamaklar katmanları birleştirir. Üstüne yürü, seni yukarı taşır.",
-  "tutorial.ramp.landing": "Bir kat daha.",
-  "tutorial.ramp.praise": "Yüksek zemin. Aşağıdaki düşmanlar sana zor ulaşır.",
+  "tutorial.ping.view": "Güzel manzara.",
   "tutorial.rats.again": "Bunda başka bir yetenek dene.",
   "tutorial.rats.big":
     "Büyük bir tane. {bash} yanana kadar vur, sonra onu yere ser ve {crush} kullan.",

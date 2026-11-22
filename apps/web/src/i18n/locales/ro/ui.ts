@@ -1735,13 +1735,8 @@ export default {
   "tutorial.ping.how":
     "Clic cu rotița pe sol, clic pe busolă sau trage pe busolă ca să desenezi o linie.",
   "tutorial.ping.intro": "Stânga sau dreapta? Tu decizi.",
-  "tutorial.ping.pocket": "Frumoasă priveliște. Dar e drumul greșit.",
   "tutorial.ping.praise": "Bună alegere. Înainte.",
-  "tutorial.ramp.hint": "Urcă ambele șiruri de trepte până la semnul de pe platforma înaltă.",
-  "tutorial.ramp.how": "Dă clic pe platforma înaltă. Drumul urcă treptele pentru tine.",
-  "tutorial.ramp.intro": "Treptele leagă straturile. Pășește și te urcă.",
-  "tutorial.ramp.landing": "Încă un șir de trepte.",
-  "tutorial.ramp.praise": "Teren înalt. Dușmanii de jos greu te ajung.",
+  "tutorial.ping.view": "Frumoasă priveliște.",
   "tutorial.rats.again": "Încearcă altă abilitate pe acesta.",
   "tutorial.rats.big":
     "Unul mare. Lovește-l până se aprinde {bash}, apoi doboară-l și folosește {crush}.",

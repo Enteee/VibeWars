@@ -1651,13 +1651,8 @@ export const en = {
   "tutorial.ping.how":
     "Wheel-click the ground, click the compass, or drag on the compass to draw a line.",
   "tutorial.ping.intro": "Left or right? You call it.",
-  "tutorial.ping.pocket": "Nice view. Wrong way, though.",
   "tutorial.ping.praise": "Good call. Onward.",
-  "tutorial.ramp.hint": "Up both flights of steps to the mark on the high deck.",
-  "tutorial.ramp.how": "Click the high deck. Your path takes the steps for you.",
-  "tutorial.ramp.intro": "Steps join layers. Walk on, and they carry you up.",
-  "tutorial.ramp.landing": "One more flight.",
-  "tutorial.ramp.praise": "High ground. Foes below can't easily reach you.",
+  "tutorial.ping.view": "Nice view.",
   "tutorial.rats.again": "Try a different skill on this one.",
   "tutorial.rats.big":
     "A big one. Hit it until {bash} lights up, then knock it down and use {crush}.",

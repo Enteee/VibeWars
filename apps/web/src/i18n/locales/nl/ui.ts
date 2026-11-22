@@ -1659,13 +1659,8 @@ export default {
   "tutorial.ping.how":
     "Klik met het wiel op de grond, klik op het kompas, of sleep over het kompas om een lijn te tekenen.",
   "tutorial.ping.intro": "Links of rechts? Jij beslist.",
-  "tutorial.ping.pocket": "Mooi uitzicht. Maar verkeerde kant.",
   "tutorial.ping.praise": "Goed gekozen. Verder.",
-  "tutorial.ramp.hint": "Beide trappen op naar de markering op het hoge platform.",
-  "tutorial.ramp.how": "Klik op het hoge platform. Je route neemt de treden voor je.",
-  "tutorial.ramp.intro": "Trappen verbinden lagen. Loop erop en ze dragen je omhoog.",
-  "tutorial.ramp.landing": "Nog één trap.",
-  "tutorial.ramp.praise": "Hoge grond. Vijanden beneden bereiken je moeilijk.",
+  "tutorial.ping.view": "Mooi uitzicht.",
   "tutorial.rats.again": "Probeer een andere vaardigheid op deze.",
   "tutorial.rats.big":
     "Een grote. Sla hem tot {bash} oplicht, sla hem dan neer en gebruik {crush}.",

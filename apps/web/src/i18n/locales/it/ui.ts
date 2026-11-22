@@ -1736,13 +1736,8 @@ export default {
   "tutorial.ping.how":
     "Clic con la rotellina sul terreno, clic sulla bussola o trascina sulla bussola per tracciare una linea.",
   "tutorial.ping.intro": "Sinistra o destra? Decidi tu.",
-  "tutorial.ping.pocket": "Bella vista. Ma è la strada sbagliata.",
   "tutorial.ping.praise": "Ottima scelta. Avanti.",
-  "tutorial.ramp.hint": "Su per entrambe le rampe fino al segno sulla piattaforma alta.",
-  "tutorial.ramp.how": "Clicca la piattaforma alta. Il percorso sale i gradini per te.",
-  "tutorial.ramp.intro": "I gradini uniscono i livelli. Salici e ti portano su.",
-  "tutorial.ramp.landing": "Ancora una rampa.",
-  "tutorial.ramp.praise": "Terreno alto. I nemici di sotto faticano a raggiungerti.",
+  "tutorial.ping.view": "Bella vista.",
   "tutorial.rats.again": "Prova un'altra abilità su questo.",
   "tutorial.rats.big":
     "Uno grosso. Colpiscilo finché {bash} si accende, poi atterralo e usa {crush}.",

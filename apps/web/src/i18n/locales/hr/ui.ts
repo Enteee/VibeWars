@@ -1724,13 +1724,8 @@ export default {
   "tutorial.ping.how":
     "Klikni kotačićem na tlo, klikni na kompas ili povuci po kompasu da nacrtaš crtu.",
   "tutorial.ping.intro": "Lijevo ili desno? Ti odlučuješ.",
-  "tutorial.ping.pocket": "Lijep pogled. Ali krivi put.",
   "tutorial.ping.praise": "Dobar izbor. Naprijed.",
-  "tutorial.ramp.hint": "Gore oba stubišta do oznake na visokoj platformi.",
-  "tutorial.ramp.how": "Klikni visoku platformu. Put sam ide stubama.",
-  "tutorial.ramp.intro": "Stube povezuju razine. Stani na njih i odnijet će te gore.",
-  "tutorial.ramp.landing": "Još jedno stubište.",
-  "tutorial.ramp.praise": "Visok teren. Neprijatelji dolje teško te dosegnu.",
+  "tutorial.ping.view": "Lijep pogled.",
   "tutorial.rats.again": "Probaj drugu vještinu na ovom.",
   "tutorial.rats.big":
     "Veliki. Udaraj ga dok {bash} ne zasvijetli, zatim ga obori i upotrijebi {crush}.",

@@ -32,9 +32,8 @@ import {
   CALL_RATS,
   CRACKED_WALL,
   DODGE_MARK,
-  FORK,
+  JUNCTION,
   LEDGE,
-  RAMP,
   RAT_POCKET,
   TUNNEL,
   allyHealSlot,
@@ -44,7 +43,7 @@ import {
   clearingTutor,
   ledgeTutor,
   pingTutor,
-  rampTutor,
+  pocketStart,
   ratPocket,
   gateStart,
   tunnelStart,
@@ -56,7 +55,6 @@ import {
   type ClearingTutor,
   type LedgeTutor,
   type PingTutor,
-  type RampTutor,
   type RatPocket,
   type TunnelTutor,
   type WallTutor,
@@ -76,7 +74,6 @@ import {
   lookStation,
   gateStation,
   pingStation,
-  rampStation,
   ratsStation,
   stepInStation,
   tunnelStation,
@@ -106,14 +103,14 @@ const SLEEPER: SleeperProp = {
   layer: TUNNEL.above,
   facing: 0,
 };
-/** Station 13's parasol and deck chair (#3332), in the pocket, the wrong way at the fork. */
+/** The parasol and deck chair (#3332), scenery in the bay off the junction's south arm (#3792). */
 const PARASOL: ParasolProp = {
   id: "tutorial-parasol",
   kind: "parasol",
-  position: FORK.pocket,
-  layer: FORK.layer,
+  position: JUNCTION.bay,
+  layer: JUNCTION.layer,
 };
-/** Station 14's mist gate (#3334), the canyon's way out, at the east end of its second map. */
+/** Station 14's mist gate (#3334), the canyon's way out, at its east end. */
 const MIST_GATE: MistGateProp = {
   id: "tutorial-mist-gate",
   kind: "mist-gate",
@@ -288,12 +285,11 @@ export async function startTutorialSession(
   let healthDropped = false;
   let healthBefore: number | undefined;
   let onBadGround: BadGroundTutor | undefined;
-  // Station 8's (#3316), on the canyon's second map.
+  // Station 8's (#3316).
   let atRats: RatPocket | undefined;
   // Station 9's (#3323): whether the last walk the player sent was an Alt walk.
   let belowClicked = false;
   let onLedge: LedgeTutor | undefined;
-  let onRamp: RampTutor | undefined;
   let inTunnel: TunnelTutor | undefined;
   // Station 12's (#3331): whether the player has targeted the call with its key.
   let calledTargeted = false;
@@ -378,11 +374,11 @@ export async function startTutorialSession(
           party: [SELF_ID, TUTOR_ID],
           goals,
           // The guard asleep over the tunnel (#3326), only while station 11
-          // runs; the parasol in the pocket (#3332), only while station 13 does;
-          // the mist gate (#3334) wherever the canyon's second map is.
+          // runs; the parasol in its bay (#3332) and the mist gate (#3334)
+          // wherever the canyon is.
           props: () => [
-            ...(stage.name === "canyon-2" ? [MIST_GATE] : []),
-            ...(running === "tunnel" ? [SLEEPER] : running === "ping" ? [PARASOL] : []),
+            ...(stage.name === "canyon" ? [MIST_GATE, PARASOL] : []),
+            ...(running === "tunnel" ? [SLEEPER] : []),
           ],
           onWalk: (below) => {
             belowClicked = below;
@@ -410,10 +406,9 @@ export async function startTutorialSession(
       playerBuild.skillBar,
     ),
     climbStation(LEDGE.footprint, LEDGE.stairs, LEDGE.upper, LEDGE.lower),
-    rampStation(RAMP.mark, RAMP.layer, RAMP.landingFootprint, RAMP.landing),
     tunnelStation(TUNNEL.footprint, TUNNEL.under, TUNNEL.above, TUNNEL.mark),
     callStation(),
-    pingStation(FORK.fork, FORK.east, FORK.pocket, FORK.eastSide),
+    pingStation(JUNCTION),
     gateStation(CANYON_EXIT.position, CANYON_EXIT.layer),
   ];
   // A seeded start past the last station starts at the last (#3383).
@@ -460,56 +455,52 @@ export async function startTutorialSession(
     last = undefined;
     swapping = false;
   };
-  /** Into the canyon (#3247), or on to its second map (#3316). */
-  const canyonStage = (to: "canyon" | "canyon-2"): Stage => {
-    const part = to === "canyon" ? 0 : 1;
-    // Only a seeded start enters a map at station 5, 11 or 14 (#3383).
+  /** Into the canyon (#3247), one map (#3792). */
+  const canyonStage = (): Stage => {
+    const at = `${seed}-canyon`;
+    // Only a seeded start enters it at station 5, 8, 11 or 14 (#3383).
     const canyon =
       running === "break-wall"
-        ? canyonWorld(`${seed}-${to}`, playerBuild, tutorBuild, part, wallStart())
-        : running === "tunnel"
-          ? canyonWorld(`${seed}-${to}`, playerBuild, tutorBuild, part, tunnelStart())
-          : running === "gate"
-            ? canyonWorld(`${seed}-${to}`, playerBuild, tutorBuild, part, gateStart())
-            : canyonWorld(`${seed}-${to}`, playerBuild, tutorBuild, part);
-    const heals = part === 0 ? createHealWatch(SELF_ID, TUTOR_ID, TUTORIAL_HEAL) : undefined;
-    const rats =
-      part === 1
-        ? createRatWatch(
-            SELF_ID,
-            TUTOR_ID,
-            RAT_POCKET.rats.map(({ id }) => id),
-            playerBuild.skillBar,
-          )
-        : undefined;
-    const callRats =
-      part === 1
-        ? createRatWatch(
-            SELF_ID,
-            TUTOR_ID,
-            CALL_RATS.rats.map(({ id }) => id),
-            playerBuild.skillBar,
-          )
-        : undefined;
+        ? canyonWorld(at, playerBuild, tutorBuild, wallStart())
+        : running === "rats"
+          ? canyonWorld(at, playerBuild, tutorBuild, pocketStart())
+          : running === "tunnel"
+            ? canyonWorld(at, playerBuild, tutorBuild, tunnelStart())
+            : running === "gate"
+              ? canyonWorld(at, playerBuild, tutorBuild, gateStart())
+              : canyonWorld(at, playerBuild, tutorBuild);
+    const heals = createHealWatch(SELF_ID, TUTOR_ID, TUTORIAL_HEAL);
+    const rats = createRatWatch(
+      SELF_ID,
+      TUTOR_ID,
+      RAT_POCKET.rats.map(({ id }) => id),
+      playerBuild.skillBar,
+    );
+    const callRats = createRatWatch(
+      SELF_ID,
+      TUTOR_ID,
+      CALL_RATS.rats.map(({ id }) => id),
+      playerBuild.skillBar,
+    );
     const connection = connect(canyon.simulation, canyon.map);
     // Only station 6's strikes and heals: the tutor may meet a boulder before.
     // Station 8's blows on the rats, whenever they land.
     connection.onCombat((message) => {
       if (running === "heal") {
-        heals?.observe(message);
+        heals.observe(message);
       }
-      rats?.observe(message);
-      callRats?.observe(message);
+      rats.observe(message);
+      callRats.observe(message);
     });
     // The tutor goes on ahead, to wait by the mark.
     canyon.simulation.walkTo(TUTOR_ID, canyon.besideMark, canyon.ground);
     return {
-      name: to,
+      name: "canyon",
       simulation: canyon.simulation,
       connection,
       ground: canyon.ground,
       fixed: [],
-      dodges: part === 0 ? createDodgeCounter(canyon.zones) : undefined,
+      dodges: createDodgeCounter(canyon.zones),
       heals,
       rats,
       callRats,
@@ -687,7 +678,7 @@ export async function startTutorialSession(
         onBadGround = badGroundTutor(world);
       }
       onBadGround?.step();
-      // Station 8 is next, on the second map: the tutor goes to the pocket,
+      // Station 8 is next: the tutor goes to the pocket,
       // and the rats are run.
       if (atRats === undefined && beat.station === "rats" && rats !== undefined) {
         atRats = ratPocket(world, rats, allyHealSlot(tutorBuild));
@@ -696,21 +687,16 @@ export async function startTutorialSession(
         atRats?.step(ratTally);
       }
       // Station 9 is next: the tutor keeps beside the player, by the stairs.
-      if (onLedge === undefined && beat.station === "climb" && stage.name === "canyon-2") {
+      if (onLedge === undefined && beat.station === "climb" && stage.name === "canyon") {
         onLedge = ledgeTutor(world);
       }
-      // Only while it is on: the landing at station 10 is on the ledge's layer.
+      // Only while it is on: it keeps beside the player wherever they go.
       if (beat.station === "climb") {
         onLedge?.step();
       }
-      // Station 10 is next: the tutor climbs behind the player to the high deck.
-      if (onRamp === undefined && beat.station === "ramp" && stage.name === "canyon-2") {
-        onRamp = rampTutor(world);
-      }
-      onRamp?.step();
       // Station 11 is next: the tutor waits at the tunnel's west steps, then
       // goes through it behind the player.
-      if (inTunnel === undefined && beat.station === "tunnel" && stage.name === "canyon-2") {
+      if (inTunnel === undefined && beat.station === "tunnel" && stage.name === "canyon") {
         inTunnel = tunnelTutor(world);
       }
       // Only while it is on: the tutor walks on to station 12 from wherever it is.
@@ -722,7 +708,7 @@ export async function startTutorialSession(
         atCall = callTutor(world, callRats);
       }
       // Station 13 is next: once the called rat is down, the tutor walks to
-      // the fork and follows the player's pings; until then it fights on.
+      // the junction and takes the arm the player pings; until then it fights on.
       const callDown = calledId === undefined || world.get(calledId)?.combatant.dead !== false;
       if (atFork === undefined && beat.station === "ping" && callDown) {
         atFork = pingTutor(world);
@@ -775,9 +761,8 @@ export async function startTutorialSession(
         // Through the mist gate, under its praise, and out at the pair's own spawn.
         void enter(frontStage);
       } else if (beat.world !== stage.name && beat.world !== "battlefield") {
-        // Into the teleporter together, or on to the next map, under its praise.
-        const to = beat.world;
-        void enter(() => canyonStage(to));
+        // Into the teleporter together, under its praise.
+        void enter(canyonStage);
       }
     }
     request = requestAnimationFrame(step);
@@ -794,8 +779,7 @@ export async function startTutorialSession(
     parent.append(frame);
   } else {
     running = first.id;
-    const to = first.world;
-    await enter(() => canyonStage(to));
+    await enter(canyonStage);
   }
   request = requestAnimationFrame(step);
   return { stop };

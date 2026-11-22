@@ -1675,13 +1675,8 @@ export default {
   "tutorial.ping.how":
     "Klick mit dem Mausrad auf den Boden, klick auf den Kompass oder zieh auf dem Kompass eine Linie.",
   "tutorial.ping.intro": "Links oder rechts? Du entscheidest.",
-  "tutorial.ping.pocket": "Schöne Aussicht. Aber falscher Weg.",
   "tutorial.ping.praise": "Gute Wahl. Weiter.",
-  "tutorial.ramp.hint": "Beide Treppen hinauf zur Markierung auf der hohen Plattform.",
-  "tutorial.ramp.how": "Klick auf die hohe Plattform. Dein Weg nimmt die Stufen für dich.",
-  "tutorial.ramp.intro": "Stufen verbinden Ebenen. Geh drauf, und sie tragen dich hinauf.",
-  "tutorial.ramp.landing": "Noch eine Treppe.",
-  "tutorial.ramp.praise": "Hoher Grund. Feinde unten erreichen dich nur schwer.",
+  "tutorial.ping.view": "Schöne Aussicht.",
   "tutorial.rats.again": "Versuch bei dieser eine andere Fertigkeit.",
   "tutorial.rats.big":
     "Ein großer. Schlag zu, bis {bash} aufleuchtet, dann wirf ihn um und nimm {crush}.",
