@@ -160,9 +160,15 @@ drží zbrane sady, na ktorú sa pozeráš, s ich vylepšeniami.
 | Superior attribute rune                                                                                                                                                                                                                                                                                        | +3 k atribútu, -75 zdravia                  |
 | ![Vigor](../../../apps/web/public/icons/rune/vigor.svg) **Vigor**                                                                                                                                                                                                                                              | viac zdravia (+30, +41 alebo +50)           |
 | ![Vitae](../../../apps/web/public/icons/rune/vitae.svg) **Vitae**                                                                                                                                                                                                                                              | +10 zdravia                                 |
-| ![Attunement](../../../apps/web/public/icons/rune/attunement.svg) **Attunement**                                                                                                                                                                                                                               | viac energie (+3, +6 alebo +9)              |
+| ![Attunement](../../../apps/web/public/icons/rune/attunement.svg) **Attunement**                                                                                                                                                                                                                               | viac energie (+2)                           |
 | ![Clarity](../../../apps/web/public/icons/rune/clarity.svg) **Clarity**, ![Purity](../../../apps/web/public/icons/rune/purity.svg) **Purity**, ![Recovery](../../../apps/web/public/icons/rune/recovery.svg) **Recovery**, ![Restoration](../../../apps/web/public/icons/rune/restoration.svg) **Restoration** | dva neduhy zmiznú o 20 % skôr               |
 | ![Absorption](../../../apps/web/public/icons/rune/absorption.svg) **Absorption** (![Bojovník](../../../apps/web/public/icons/profession/warrior.svg) **Bojovník**)                                                                                                                                             | menej fyzického poškodenia z každého zásahu |
+
+Vitae a Attunement sa sčítajú: päť rún Attunement dá +10 energie. Každá
+iná runa sa počíta raz, nech ich nosíš koľkokoľvek. Skrátenia neduhov z
+rôznych zdrojov sa tiež sčítajú, každé sa počíta z plného trvania a
+zaokrúhli sa na celé sekundy: Restoration a "Fear Cuts Deeper" skrátia
+8-sekundové Krvácanie na 4.
 
 Runu kusu vyberáš na tom istom mieste ako jeho insígniu: klikni na kus
 na figúre.

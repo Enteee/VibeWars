@@ -158,9 +158,15 @@ holds the weapons of the set you are looking at, with their mods.
 | Superior attribute rune                                                                                                                                                                                                                                                                            | +3 to an attribute, -75 Health          |
 | ![Vigor](../../apps/web/public/icons/rune/vigor.svg) **Vigor**                                                                                                                                                                                                                                     | more Health (+30, +41 or +50)           |
 | ![Vitae](../../apps/web/public/icons/rune/vitae.svg) **Vitae**                                                                                                                                                                                                                                     | +10 Health                              |
-| ![Attunement](../../apps/web/public/icons/rune/attunement.svg) **Attunement**                                                                                                                                                                                                                      | more Energy (+3, +6 or +9)              |
+| ![Attunement](../../apps/web/public/icons/rune/attunement.svg) **Attunement**                                                                                                                                                                                                                      | more Energy (+2)                        |
 | ![Clarity](../../apps/web/public/icons/rune/clarity.svg) **Clarity**, ![Purity](../../apps/web/public/icons/rune/purity.svg) **Purity**, ![Recovery](../../apps/web/public/icons/rune/recovery.svg) **Recovery**, ![Restoration](../../apps/web/public/icons/rune/restoration.svg) **Restoration** | two conditions each wear off 20% sooner |
 | ![Absorption](../../apps/web/public/icons/rune/absorption.svg) **Absorption** (![Warrior](../../apps/web/public/icons/profession/warrior.svg) **Warrior**)                                                                                                                                         | less physical damage from each hit      |
+
+Vitae and Attunement add up: five Runes of Attunement give +10 Energy.
+Any other rune counts once, however many you wear. Shorter conditions
+from different sources add up too, each taken off the full duration and
+rounded to a whole second: Restoration and "Fear Cuts Deeper" take an
+8 second Bleeding down to 4.
 
 You pick a piece's rune in the same place as its insignia: click the piece
 on the figure.

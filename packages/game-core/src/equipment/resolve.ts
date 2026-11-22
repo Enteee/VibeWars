@@ -151,8 +151,8 @@ export interface ResolvedEquipment {
   readonly conditionalMaxHealth: readonly ModOf<"conditional-max-health">[];
   /** The held set's maximum Energy while its condition holds (#2010): Hale and Hearty's. */
   readonly conditionalMaxEnergy: readonly ModOf<"conditional-max-energy">[];
-  /** Multiplier applied to an incoming condition's duration. Absent means 1. */
-  readonly statusDurationScale: ReadonlyMap<StatusId, number>;
+  /** Each share taken off an incoming condition's duration, one per source. */
+  readonly statusDurationReductions: ReadonlyMap<StatusId, readonly number[]>;
   /**
    * What runes and headgear add to each attribute, already in `attributeRanks`: what
    * tells an allocated rank from a boosted one, as weakness must (#762).
@@ -217,7 +217,7 @@ interface RuneTotals {
   readonly healthDelta: number;
   readonly energyDelta: number;
   readonly flatPhysicalReduction: number;
-  readonly statusDurationScale: ReadonlyMap<StatusId, number>;
+  readonly statusDurationReductions: ReadonlyMap<StatusId, readonly number[]>;
 }
 
 /**
@@ -235,7 +235,7 @@ interface RuneTotals {
  */
 function totalRunes(equipment: BuildEquipment, primaryProfession: ProfessionId): RuneTotals {
   const bestBonusPerAttribute = new Map<string, number>();
-  const statusDurationScale = new Map<StatusId, number>();
+  const statusDurationReductions = new Map<StatusId, readonly number[]>();
   let healthDelta = 0;
   let energyDelta = 0;
   let flatPhysicalReduction = 0;
@@ -303,11 +303,10 @@ function totalRunes(equipment: BuildEquipment, primaryProfession: ProfessionId):
         break;
       case "status-duration":
         for (const statusId of effect.statusIds) {
-          // Multiplicative across different runes, so two reductions
-          // never reach zero duration — the same reason miss chance
-          // multiplies. Two of the same rune count once, above.
-          const current = statusDurationScale.get(statusId) ?? 1;
-          statusDurationScale.set(statusId, current * (1 - effect.reduction));
+          // Different runes each take their own share off, as GW1 adds
+          // them. Two of the same rune count once, above.
+          const current = statusDurationReductions.get(statusId) ?? [];
+          statusDurationReductions.set(statusId, [...current, effect.reduction]);
         }
         break;
     }
@@ -318,7 +317,7 @@ function totalRunes(equipment: BuildEquipment, primaryProfession: ProfessionId):
     healthDelta,
     energyDelta,
     flatPhysicalReduction,
-    statusDurationScale,
+    statusDurationReductions,
   };
 }
 
@@ -419,7 +418,7 @@ export function resolveLoadout(input: LoadoutInput, rules: CombatRules): Resolve
     conditionalArmor: INHERENT_ARMOR_BY_PROFESSION[input.primaryProfession],
     ...pieceInsigniasOf(input.equipment, input.primaryProfession),
     flatPhysicalReduction: runes.flatPhysicalReduction,
-    statusDurationScale: runes.statusDurationScale,
+    statusDurationReductions: runes.statusDurationReductions,
     attributeBonuses,
   };
   const [set1, set2, set3, set4] = input.equipment.weaponSets;
@@ -451,7 +450,7 @@ interface SharedGear {
   readonly pieceArmor: PieceArmor;
   readonly pieceReduction: PieceReduction;
   readonly flatPhysicalReduction: number;
-  readonly statusDurationScale: ReadonlyMap<StatusId, number>;
+  readonly statusDurationReductions: ReadonlyMap<StatusId, readonly number[]>;
   readonly attributeBonuses: ReadonlyMap<string, number>;
 }
 
@@ -500,7 +499,7 @@ function resolveWeaponSet(
   let pipsDelta = 0;
   let healthPips = 0;
   let conditionalArmor = shared.conditionalArmor;
-  let statusDurationScale = shared.statusDurationScale;
+  let statusDurationReductions = shared.statusDurationReductions;
   let mainHand = resolvedWeapon;
   let hitMods = NO_HIT_MODS;
   const physicalReductions: ModOf<"physical-reduction">[] = [];
@@ -537,10 +536,13 @@ function resolveWeaponSet(
         conditionalArmor = [...conditionalArmor, modArmor(effect)];
         break;
       case "condition-duration": {
-        // Multiplies with a rune of the same condition, as two runes do.
-        const scale = new Map(statusDurationScale);
-        scale.set(effect.statusId, (scale.get(effect.statusId) ?? 1) * (1 - effect.reduction));
-        statusDurationScale = scale;
+        // Adds to a rune of the same condition, as two runes do.
+        const reductions = new Map(statusDurationReductions);
+        reductions.set(effect.statusId, [
+          ...(reductions.get(effect.statusId) ?? []),
+          effect.reduction,
+        ]);
+        statusDurationReductions = reductions;
         break;
       }
       case "life-steal-on-hit":
@@ -624,7 +626,7 @@ function resolveWeaponSet(
       physicalReductions,
       conditionalMaxHealth,
       conditionalMaxEnergy,
-      statusDurationScale,
+      statusDurationReductions,
       attributeBonuses: shared.attributeBonuses,
       offhandId,
     },
@@ -699,7 +701,7 @@ export function unarmedResolvedEquipment(baseArmor: number): ResolvedEquipment {
     physicalReductions: [],
     conditionalMaxHealth: [],
     conditionalMaxEnergy: [],
-    statusDurationScale: new Map(),
+    statusDurationReductions: new Map(),
     attributeBonuses: new Map(),
     offhandId: undefined,
   };
