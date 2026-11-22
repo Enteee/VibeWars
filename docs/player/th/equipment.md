@@ -163,9 +163,14 @@ Swordsmanship เสมอ แต่ ![ไม้เท้า](../../../apps/web/
 | รูนค่าสถานะ Superior | +3 ให้ค่าสถานะหนึ่ง, พลังชีวิต -75 |
 | ![Vigor](../../../apps/web/public/icons/rune/vigor.svg) **Vigor** | พลังชีวิตเพิ่มขึ้น (+30, +41 หรือ +50) |
 | ![Vitae](../../../apps/web/public/icons/rune/vitae.svg) **Vitae** | พลังชีวิต +10 |
-| ![Attunement](../../../apps/web/public/icons/rune/attunement.svg) **Attunement** | พลังงานเพิ่มขึ้น (+3, +6 หรือ +9) |
+| ![Attunement](../../../apps/web/public/icons/rune/attunement.svg) **Attunement** | พลังงานเพิ่มขึ้น (+2) |
 | ![Clarity](../../../apps/web/public/icons/rune/clarity.svg) **Clarity**, ![Purity](../../../apps/web/public/icons/rune/purity.svg) **Purity**, ![Recovery](../../../apps/web/public/icons/rune/recovery.svg) **Recovery**, ![Restoration](../../../apps/web/public/icons/rune/restoration.svg) **Restoration** | สภาวะผิดปกติสองอย่างหมดผลเร็วขึ้นอย่างละ 20% |
 | ![Absorption](../../../apps/web/public/icons/rune/absorption.svg) **Absorption** (![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior**) | ความเสียหายกายภาพจากการโจมตีแต่ละครั้งลดลง |
+
+Vitae และ Attunement ซ้อนกันได้: รูน Attunement ห้าชิ้นให้พลังงาน +10
+รูนอื่นนับครั้งเดียว ไม่ว่าคุณจะสวมกี่ชิ้น การลดระยะเวลาสภาวะผิดปกติ
+จากแหล่งต่างกันก็ซ้อนกันได้ แต่ละแหล่งคิดจากระยะเวลาเต็มและปัดเป็นวินาทีเต็ม:
+Restoration และ "Fear Cuts Deeper" ลด Bleeding 8 วินาทีเหลือ 4 วินาที
 
 คุณเลือกรูนของชิ้นเกราะได้ที่เดียวกับอินซิกเนีย: คลิกชิ้นนั้น
 บนหุ่น

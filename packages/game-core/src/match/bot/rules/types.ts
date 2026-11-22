@@ -2,6 +2,7 @@ import type { Skill } from "../../../skills/types.js";
 import type { Vec2 } from "../../../vec2.js";
 import type { BehaviourContext, BehaviourCursor, BehaviourIntent } from "../../behaviour.js";
 import type { Participant } from "../../simulation.js";
+import type { TeamPlan } from "../plan.js";
 import type { BotRole } from "../role.js";
 
 /** What every rule reads in one think, built once per think. */
@@ -35,6 +36,8 @@ export interface RuleContext {
   readonly cursor: BehaviourCursor;
   /** How far a foe can hit from, cached per match (#2598). */
   readonly foeReach: (foe: Participant) => number;
+  /** Its team's plan this phase (#3831). */
+  readonly plan: TeamPlan;
 }
 
 /** One step of `play-build`'s think: the first rule with an answer decides. */

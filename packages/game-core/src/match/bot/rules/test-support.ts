@@ -147,6 +147,22 @@ export function contextFor(
     highGround: [],
     cover: [],
     routeLength: (to) => distance(self.position, to),
+    teamSpawn: (of) => {
+      const members = participants.filter(
+        (other) => other.combatant.team === of && other.creature === undefined,
+      );
+      if (members.length === 0) return undefined;
+      const sum = members.reduce((at, { spawn }) => ({ x: at.x + spawn.x, y: at.y + spawn.y }), {
+        x: 0,
+        y: 0,
+      });
+      return {
+        point: { x: sum.x / members.length, y: sum.y / members.length },
+        layer: 0,
+        members: members.length,
+      };
+    },
+    standableNear: (point) => point,
     leverHolder: () => undefined,
     ...extra,
   };
@@ -199,6 +215,7 @@ export function ruleFor(
     roleOf,
     cursor: createCursor(),
     foeReach: (foe) => foeReach(reaches, foe),
+    plan: "push",
     ...extra,
   };
 }

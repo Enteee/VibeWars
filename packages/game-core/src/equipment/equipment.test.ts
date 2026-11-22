@@ -45,6 +45,7 @@ import {
   UNIVERSAL_RUNES,
   type EquippedRune,
   type RuneTier,
+  type UniversalRuneId,
 } from "./runes.js";
 import { ARMOR_SLOTS, type ArmorSlot } from "./types.js";
 
@@ -211,6 +212,68 @@ describe("the rune catalog", () => {
     }
   });
 
+  // The GW1 wiki's Rune page, audited 2026-11-22 (#3824). A rune drifting
+  // from it fails here.
+  it("matches the GW1 wiki, rune by rune", () => {
+    const duration = (...statusIds: string[]) => ({
+      kind: "status-duration",
+      statusIds,
+      reduction: 0.2,
+    });
+    const audit = {
+      vigor: {
+        tiered: true,
+        stacks: false,
+        requiresPrimary: undefined,
+        byTier: {
+          minor: { kind: "health", amount: 30 },
+          major: { kind: "health", amount: 41 },
+          superior: { kind: "health", amount: 50 },
+        },
+      },
+      vitae: { tiered: false, stacks: true, effect: { kind: "health", amount: 10 } },
+      attunement: { tiered: false, stacks: true, effect: { kind: "energy", amount: 2 } },
+      clarity: { tiered: false, stacks: false, effect: duration("blind", "weakness") },
+      purity: { tiered: false, stacks: false, effect: duration("poison", "disease") },
+      recovery: { tiered: false, stacks: false, effect: duration("dazed", "deep-wound") },
+      restoration: { tiered: false, stacks: false, effect: duration("bleeding", "crippled") },
+      absorption: {
+        tiered: true,
+        stacks: false,
+        requiresPrimary: "warrior",
+        byTier: {
+          minor: { kind: "flat-physical-reduction", amount: 1 },
+          major: { kind: "flat-physical-reduction", amount: 2 },
+          superior: { kind: "flat-physical-reduction", amount: 3 },
+        },
+      },
+    } as const;
+    expect(Object.keys(UNIVERSAL_RUNES).sort()).toEqual(Object.keys(audit).sort());
+    for (const [id, expected] of Object.entries(audit)) {
+      const rune = UNIVERSAL_RUNES[id as keyof typeof audit];
+      const byTier =
+        "byTier" in expected
+          ? expected.byTier
+          : { minor: expected.effect, major: expected.effect, superior: expected.effect };
+      expect(
+        {
+          tiered: rune.tiered,
+          stacks: rune.stacks,
+          requiresPrimary: rune.requiresPrimary,
+          byTier: rune.byTier,
+        },
+        id,
+      ).toEqual({
+        tiered: expected.tiered,
+        stacks: expected.stacks,
+        requiresPrimary: "requiresPrimary" in expected ? expected.requiresPrimary : undefined,
+        byTier,
+      });
+    }
+    expect(ATTRIBUTE_RUNE_TIERS.major.healthPenalty).toBe(35);
+    expect(ATTRIBUTE_RUNE_TIERS.superior.healthPenalty).toBe(75);
+  });
+
   it("gives a non-tiered rune the same effect at every tier", () => {
     expect(UNIVERSAL_RUNES.vitae.tiered).toBe(false);
     expect(UNIVERSAL_RUNES.vitae.byTier.minor).toEqual(UNIVERSAL_RUNES.vitae.byTier.superior);
@@ -218,7 +281,7 @@ describe("the rune catalog", () => {
 });
 
 describe("resolving universal runes", () => {
-  function maxHealthWearing(...runes: ["vigor" | "vitae", RuneTier][]): number {
+  function setWearing(...runes: [UniversalRuneId, RuneTier][]) {
     const armor = { ...bareArmorSet() };
     ARMOR_SLOTS.forEach((slot, index) => {
       const worn = runes[index];
@@ -250,7 +313,11 @@ describe("resolving universal runes", () => {
         },
       },
       MINIMAL_GW_INSPIRED_PVP_V1.combat,
-    ).weaponSets[0].maxHealth;
+    ).weaponSets[0];
+  }
+
+  function maxHealthWearing(...runes: [UniversalRuneId, RuneTier][]): number {
+    return setWearing(...runes).maxHealth;
   }
 
   it("counts a rune that does not stack once, at the best tier worn (GW1)", () => {
@@ -261,6 +328,14 @@ describe("resolving universal runes", () => {
 
   it("counts every Rune of Vitae, which stacks (GW1)", () => {
     expect(maxHealthWearing(["vitae", "minor"], ["vitae", "minor"])).toBe(maxHealthWearing() + 20);
+  });
+
+  it("counts every Rune of Attunement, which stacks: five give +10 Energy (GW1)", () => {
+    const five = Array.from({ length: 5 }, (): [UniversalRuneId, RuneTier] => [
+      "attunement",
+      "minor",
+    ]);
+    expect(setWearing(...five).maxEnergy).toBe(setWearing().maxEnergy + 10);
   });
 });
 
@@ -678,6 +753,22 @@ describe("validateEquipment", () => {
     expect(
       validateEquipment(withHeadRune("warrior.strength"), contextFor("monk", "warrior")),
     ).toHaveLength(1);
+  });
+
+  it("refuses a tier on a rune that has only one (Attunement major or superior)", () => {
+    const withChestRune = (tier: RuneTier): BuildEquipment => ({
+      ...defaultEquipmentFor("warrior"),
+      armor: {
+        ...defaultEquipmentFor("warrior").armor,
+        chest: { insigniaId: null, rune: { kind: "universal", runeId: "attunement", tier } },
+      },
+    });
+    expect(validateEquipment(withChestRune("minor"), contextFor("warrior"))).toEqual([]);
+    for (const tier of ["major", "superior"] as const) {
+      expect(validateEquipment(withChestRune(tier), contextFor("warrior"))).toEqual([
+        { field: "equipment.armor.chest", message: `Rune of Attunement has no ${tier} tier` },
+      ]);
+    }
   });
 
   it("refuses Absorption on anyone who is not a primary warrior", () => {
@@ -1426,8 +1517,8 @@ describe("Energy Storage (#532)", () => {
   });
 
   it("adds to Rune of Attunement, neither replacing the other", () => {
-    const attunement = { kind: "universal", runeId: "attunement", tier: "superior" } as const;
-    expect(maxEnergyAt(12, attunement)).toBe(base + 36 + 9);
+    const attunement = { kind: "universal", runeId: "attunement", tier: "minor" } as const;
+    expect(maxEnergyAt(12, attunement)).toBe(base + 36 + 2);
   });
 });
 
@@ -1719,13 +1810,12 @@ describe("weapon mods (#2007)", () => {
       ...base.armor,
       chest: { insigniaId: null, rune: { kind: "universal", runeId: "purity", tier: "minor" } },
     };
-    const scale = (set: WeaponSet): number | undefined =>
-      resolve({ ...withSets(set), armor }).weaponSets[0].equipment.statusDurationScale.get(
+    const reductions = (set: WeaponSet): readonly number[] | undefined =>
+      resolve({ ...withSets(set), armor }).weaponSets[0].equipment.statusDurationReductions.get(
         "poison",
       );
-    const rune = scale(shield(null));
-    expect(rune).toBeLessThan(1);
-    expect(scale(shield("pure-of-heart"))).toBeCloseTo(0.8 * (rune ?? 1));
+    expect(reductions(shield(null))).toEqual([0.2]);
+    expect(reductions(shield("pure-of-heart"))).toEqual([0.2, 0.2]);
   });
 
   it("counts an off-hand's mods only where the off-hand counts", () => {
