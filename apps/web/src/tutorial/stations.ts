@@ -634,7 +634,10 @@ export function pingStation(junction: Junction): Station {
       how: "tutorial.ping.how",
     },
     highlight: { kind: "hud", element: ".compass" },
-    mark: () => (called ? rejoin : fork),
+    mark: (view) => {
+      look(view);
+      return called ? rejoin : fork;
+    },
     asides: [
       {
         line: "tutorial.ping.view",
