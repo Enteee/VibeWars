@@ -28,7 +28,12 @@ const planMove: BotRule = {
   decide: ({ context, self, foes, cursor, plan }) => {
     if (plan === "push") return undefined;
     const phase = planPhase(context.now);
-    if (plan === "flank" && (cursor.flankReached === phase || cursor.planGaveUp === phase)) {
+    if (
+      plan === "flank" &&
+      (cursor.flankReached === phase ||
+        cursor.planGaveUp === phase ||
+        !flankParty(context, self, phase))
+    ) {
       return undefined;
     }
     if (healthFraction(self) < PLAN_ABANDON_HEALTH) {
@@ -45,7 +50,6 @@ const planMove: BotRule = {
         ? { ...NOTHING, moveTo: at.spot, moveToLayer: at.layer }
         : undefined;
     }
-    if (!flankParty(context, self, phase)) return undefined;
     const at = placedFlank(context, self, cursor, foeTeam);
     if (at === undefined) return undefined;
     if (self.layer === at.layer && distance(self.position, at.point) <= REGROUP_JOINED) {
