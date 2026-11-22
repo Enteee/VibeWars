@@ -29,13 +29,13 @@ jobs:
     name: e2e soak
     runs-on: ubuntu-latest
     # The suite outgrew one job: five repeats in one took over 90 min and
-    # concluded cancelled every night. Six shards by recorded duration, as
+    # concluded cancelled every night. Fifteen shards by recorded duration (six still hit the 45 min step timeout, #3820), as
     # ci.yml's e2e-shard, each repeating its own tests five times.
     timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
-        shard: [1, 2, 3, 4, 5, 6]
+        shard: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
         with:
@@ -56,7 +56,7 @@ jobs:
           SHARD: ${{ matrix.shard }}
         run: >-
           devenv shell --
-          node scripts/ci/shard-e2e.mjs "$SHARD" 6
+          node scripts/ci/shard-e2e.mjs "$SHARD" 15
           --repeat-each=5 --retries=0 --workers=1
 
       - name: Print failed tests
