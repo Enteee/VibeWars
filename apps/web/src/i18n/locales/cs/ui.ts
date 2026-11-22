@@ -1443,6 +1443,7 @@ export default {
   "teamEditor.professions": "Povolání",
   "teamEditor.professionsTitle": "povolání v týmu",
   "teamEditor.replaceMember": "Nahradit {member} postavou {character}",
+  "teamEditor.copyMember": "Shift: Kopírovat build postavy {source} na {target}",
   "teamEditor.save": "Uložit",
   "teamEditor.saveTitle": "Uložit tento tým",
   "teamEditor.saveTitleProblem": "Uložit tento tým (má problémy: {problem})",

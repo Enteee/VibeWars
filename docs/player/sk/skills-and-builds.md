@@ -172,7 +172,10 @@ s prázdnou postavou na každom mieste. Člena nikdy nepridávaš ani neodoberá
 nahrádzaš ho. Každý riadok ukazuje postavu člena so zbraňami, ktoré
 drží, bodku za každú sadu zbraní, ak ich má viac než jednu, jej
 maximálne zdravie a energiu a jej osem schopností; riadok môžeš presunúť
-ťahaním za jeho ⠿. Panel vpravo je knižnica Tvorby postáv,
+ťahaním za jeho ⠿. Ak pri položení riadka na iného člena podržíš
+**Shift**, namiesto toho skopíruješ celý jeho build na tohto člena; riadok, ktorý si
+potiahol, zostane taký, aký bol.
+Panel vpravo je knižnica Tvorby postáv,
 so záložkou **Moje postavy** pred **Schopnosti** a **Výbava**. Na záložke **Moje postavy** pretiahni
 jednu zo svojich postáv na člena, aby sa z neho stala jej kópia.
 Kópia patrí tímu: jej zmena ani zmena postavy, z ktorej vznikla,

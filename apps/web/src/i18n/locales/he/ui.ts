@@ -1397,6 +1397,7 @@ export default {
   "teamEditor.professions": "מקצועות",
   "teamEditor.professionsTitle": "המקצועות של הקבוצה",
   "teamEditor.replaceMember": "החלף את {member} ב-{character}",
+  "teamEditor.copyMember": "Shift: העתק את המבנה של {source} אל {target}",
   "teamEditor.save": "שמור",
   "teamEditor.saveTitle": "שמור את הקבוצה",
   "teamEditor.saveTitleProblem": "שמור את הקבוצה (יש בה בעיות: {problem})",

@@ -148,6 +148,23 @@ describe("copyOntoMember (#1452, #2225)", () => {
     const edited = replaceMember(once, { ...character("a"), name: "Edited" });
     expect(copyOntoMember(edited, "a", solo).members[0]?.character.name).toBe("Solo");
   });
+
+  it("copies one member's build onto another under the target's id, the source and order unchanged (#3826)", () => {
+    const team = replaceMember(teamOf("a", "b", "c", "d"), {
+      ...character("a"),
+      name: "Alpha",
+      skillBar: ["warrior.sever-artery", ...Array(7).fill(null)],
+    });
+    const source = team.members[0]?.character;
+    if (source === undefined) {
+      throw new Error("no member a");
+    }
+    const copied = copyOntoMember(team, "c", source);
+    expect(copied.members.map((m) => m.character.id)).toEqual(["a", "b", "c", "d"]);
+    expect(copied.members[0]?.character).toEqual(source);
+    expect(copied.members[1]?.character).toEqual(team.members[1]?.character);
+    expect(copied.members[2]?.character).toEqual({ ...source, id: "c" });
+  });
 });
 
 describe("memberStats (#2225)", () => {

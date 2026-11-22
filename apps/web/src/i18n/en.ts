@@ -1330,6 +1330,7 @@ export const en = {
   "teamEditor.professions": "Professions",
   "teamEditor.professionsTitle": "the team's professions",
   "teamEditor.replaceMember": "Replace {member} with {character}",
+  "teamEditor.copyMember": "Shift: Copy {source}'s build onto {target}",
   "teamEditor.save": "Save",
   "teamEditor.saveTitle": "Save this team",
   "teamEditor.saveTitleProblem": "Save this team (it has problems: {problem})",

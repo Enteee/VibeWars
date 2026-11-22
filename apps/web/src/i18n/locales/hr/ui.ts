@@ -1400,6 +1400,7 @@ export default {
   "teamEditor.professions": "Profesije",
   "teamEditor.professionsTitle": "profesije tima",
   "teamEditor.replaceMember": "Zamijeni: {member} → {character}",
+  "teamEditor.copyMember": "Shift: kopiraj build od {source} na {target}",
   "teamEditor.save": "Spremi",
   "teamEditor.saveTitle": "Spremi ovaj tim",
   "teamEditor.saveTitleProblem": "Spremi ovaj tim (ima problema: {problem})",

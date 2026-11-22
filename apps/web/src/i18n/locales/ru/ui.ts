@@ -1445,6 +1445,7 @@ export default {
   "teamEditor.professions": "Профессии",
   "teamEditor.professionsTitle": "профессии команды",
   "teamEditor.replaceMember": "Заменить {member} на {character}",
+  "teamEditor.copyMember": "Shift: копировать билд {source} на {target}",
   "teamEditor.save": "Сохранить",
   "teamEditor.saveTitle": "Сохранить эту команду",
   "teamEditor.saveTitleProblem": "Сохранить эту команду (есть проблемы: {problem})",

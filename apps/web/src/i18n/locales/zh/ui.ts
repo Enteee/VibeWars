@@ -1235,6 +1235,7 @@ export default {
   "teamEditor.professions": "职业",
   "teamEditor.professionsTitle": "队伍的职业",
   "teamEditor.replaceMember": "用 {character} 替换 {member}",
+  "teamEditor.copyMember": "Shift：将 {source} 的配置复制到 {target}",
   "teamEditor.save": "保存",
   "teamEditor.saveTitle": "保存此队伍",
   "teamEditor.saveTitleProblem": "保存此队伍（存在问题：{problem}）",

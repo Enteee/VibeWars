@@ -1404,6 +1404,7 @@ export default {
   "teamEditor.professions": "Professioni",
   "teamEditor.professionsTitle": "le professioni della squadra",
   "teamEditor.replaceMember": "Sostituisci {member} con {character}",
+  "teamEditor.copyMember": "Shift: copia la build di {source} su {target}",
   "teamEditor.save": "Salva",
   "teamEditor.saveTitle": "Salva questa squadra",
   "teamEditor.saveTitleProblem": "Salva questa squadra (ha dei problemi: {problem})",

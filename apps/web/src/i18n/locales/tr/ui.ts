@@ -1330,6 +1330,7 @@ export default {
   "teamEditor.professions": "Meslekler",
   "teamEditor.professionsTitle": "takımın meslekleri",
   "teamEditor.replaceMember": "{member} yerine {character} koy",
+  "teamEditor.copyMember": "Shift: {source} buildini {target} üzerine kopyala",
   "teamEditor.save": "Kaydet",
   "teamEditor.saveTitle": "Bu takımı kaydet",
   "teamEditor.saveTitleProblem": "Bu takımı kaydet (sorunlar var: {problem})",

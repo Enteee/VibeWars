@@ -1251,6 +1251,7 @@ export default {
   "teamEditor.professions": "Lớp",
   "teamEditor.professionsTitle": "các lớp của đội",
   "teamEditor.replaceMember": "Thay {member} bằng {character}",
+  "teamEditor.copyMember": "Shift: Chép build của {source} sang {target}",
   "teamEditor.save": "Lưu",
   "teamEditor.saveTitle": "Lưu đội này",
   "teamEditor.saveTitleProblem": "Lưu đội này (có vấn đề: {problem})",

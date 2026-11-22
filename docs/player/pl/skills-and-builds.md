@@ -163,7 +163,10 @@ Build drużyny ma zawsze tylu członków, ile wynosi jego rozmiar: nowy zaczyna 
 postacią na każdym miejscu. Nigdy nie dodajesz ani nie usuwasz członka, tylko go
 zastępujesz. Każdy wiersz pokazuje postać członka z bronią, którą trzyma, kropkę dla
 każdego zestawu broni, gdy ma ich więcej, maksymalne Zdrowie i Energię oraz osiem
-umiejętności; przeciągnij wiersz za ⠿, aby zmienić kolejność. Panel po prawej to
+umiejętności; przeciągnij wiersz za ⠿, aby zmienić kolejność. Przytrzymaj **Shift** podczas upuszczania wiersza na
+innego członka, aby zamiast tego skopiować cały jego build na tego członka; przeciągnięty
+wiersz zostaje bez zmian.
+Panel po prawej to
 biblioteka Kreatora postaci, z kartą **Moje postacie** przed **Umiejętności**
 i **Sprzęt**. Na **Moje postacie** przeciągnij jedną ze swoich postaci na członka, aby
 uczynić z niego jej kopię. Kopia należy do drużyny: zmiana jej lub postaci, z której

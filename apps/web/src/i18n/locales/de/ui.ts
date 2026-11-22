@@ -1346,6 +1346,7 @@ export default {
   "teamEditor.professions": "Klassen",
   "teamEditor.professionsTitle": "die Klassen des Teams",
   "teamEditor.replaceMember": "{member} durch {character} ersetzen",
+  "teamEditor.copyMember": "Shift: Build von {source} auf {target} kopieren",
   "teamEditor.save": "Speichern",
   "teamEditor.saveTitle": "Dieses Team speichern",
   "teamEditor.saveTitleProblem": "Dieses Team speichern (es hat Probleme: {problem})",

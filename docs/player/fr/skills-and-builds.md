@@ -182,7 +182,10 @@ commence avec un personnage vierge à chaque place. Tu n'ajoutes ni ne retires
 jamais de membre, tu en remplaces un. Chaque ligne montre le personnage du
 membre avec les armes qu'il tient, un point par set d'armes quand il en a
 plusieurs, sa santé et son énergie maximales, et ses huit compétences ; fais
-glisser une ligne par son ⠿ pour réordonner. Le panneau de droite est la
+glisser une ligne par son ⠿ pour réordonner. Maintiens **Shift** en déposant une ligne sur un
+autre membre pour copier tout son build sur ce membre à la place ; la ligne
+que tu as fait glisser reste telle quelle.
+Le panneau de droite est la
 bibliothèque de l'Atelier de personnages, avec un onglet **Mes personnages**
 avant **Compétences** et **Équipement**. Sur **Mes personnages**, fais glisser
 un de tes personnages sur un membre pour faire de ce membre une copie. Une

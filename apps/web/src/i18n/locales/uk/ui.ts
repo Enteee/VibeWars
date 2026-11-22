@@ -1449,6 +1449,7 @@ export default {
   "teamEditor.professions": "Професії",
   "teamEditor.professionsTitle": "професії команди",
   "teamEditor.replaceMember": "Замінити {member} на {character}",
+  "teamEditor.copyMember": "Shift: копіювати білд {source} на {target}",
   "teamEditor.save": "Зберегти",
   "teamEditor.saveTitle": "Зберегти цю команду",
   "teamEditor.saveTitleProblem": "Зберегти цю команду (є проблеми: {problem})",

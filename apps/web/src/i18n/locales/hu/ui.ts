@@ -1334,6 +1334,7 @@ export default {
   "teamEditor.professions": "Kasztok",
   "teamEditor.professionsTitle": "a csapat kasztjai",
   "teamEditor.replaceMember": "{member} cseréje erre: {character}",
+  "teamEditor.copyMember": "Shift: {source} buildjének másolása ide: {target}",
   "teamEditor.save": "Mentés",
   "teamEditor.saveTitle": "Csapat mentése",
   "teamEditor.saveTitleProblem": "Csapat mentése (problémák: {problem})",

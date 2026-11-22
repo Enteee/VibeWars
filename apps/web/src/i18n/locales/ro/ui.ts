@@ -1405,6 +1405,7 @@ export default {
   "teamEditor.professions": "Clase",
   "teamEditor.professionsTitle": "clasele echipei",
   "teamEditor.replaceMember": "Înlocuiește {member} cu {character}",
+  "teamEditor.copyMember": "Shift: copiază build-ul lui {source} pe {target}",
   "teamEditor.save": "Salvează",
   "teamEditor.saveTitle": "Salvează această echipă",
   "teamEditor.saveTitleProblem": "Salvează această echipă (are probleme: {problem})",

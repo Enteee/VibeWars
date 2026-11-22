@@ -1328,6 +1328,7 @@ export default {
   "teamEditor.professions": "Yrken",
   "teamEditor.professionsTitle": "lagets yrken",
   "teamEditor.replaceMember": "Ersätt {member} med {character}",
+  "teamEditor.copyMember": "Shift: Kopiera {source}s build till {target}",
   "teamEditor.save": "Spara",
   "teamEditor.saveTitle": "Spara laget",
   "teamEditor.saveTitleProblem": "Spara laget (det har problem: {problem})",

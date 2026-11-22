@@ -306,6 +306,7 @@ import {
   litOverhangColours,
   litStructurePalette,
   baseTint,
+  structureTint,
 } from "./lighting-pass.js";
 import { bodyUnder, overhangAlpha, paintOverhang, type OverhangCover } from "./overhang-art.js";
 import {
@@ -319,6 +320,7 @@ import {
 } from "./structure-art.js";
 import {
   EVERYWHERE,
+  clipToBox,
   clippedPainter,
   coverPieces,
   liftedCovers,
@@ -396,6 +398,14 @@ import {
   type OutsidePainter,
 } from "./outside-land.js";
 import { GROUND_TILE, grainPixels, groundTileKey, paintDressing } from "./ground-dressing.js";
+import {
+  boxOfPoints,
+  paintWallTopTile,
+  stencilSteps,
+  wallTopKind,
+  type DrawnWall,
+  type WallTopKind,
+} from "./wall-tops.js";
 import {
   isStonePaving,
   paintPaving,
@@ -796,6 +806,10 @@ export class ArenaScene extends Phaser.Scene {
    * tunnel's index: tops and side faces, faded with its cover.
    */
   private readonly decksOverTunnels = new Map<number, Phaser.GameObjects.Graphics[]>();
+  /** The wall-top texture sprites over each tunnel (#3808), faded with its cover. */
+  private readonly wallTexturesOverTunnels = new Map<number, Phaser.GameObjects.TileSprite[]>();
+  /** The outside land's texture on the wall tops (#3808): stencils, sprites, light and edges. */
+  private wallTextures: Phaser.GameObjects.GameObject[] = [];
   /** The floor, map and structure graphics, cut to the camera every frame (#3240). */
   private readonly staticCull = new StaticGraphicsCull();
   /** Each lift's platform graphics (#3079), by depth: cleared and drawn every frame. */
@@ -3887,7 +3901,17 @@ export class ArenaScene extends Phaser.Scene {
       graphics.destroy();
     }
     this.decksOverTunnels.clear();
+    for (const sprite of [...this.wallTexturesOverTunnels.values()].flat()) {
+      sprite.destroy();
+    }
+    this.wallTexturesOverTunnels.clear();
     const covers = tunnelCoverBoxes(next.structure);
+    // What each wall draws, by layer, for its top's texture (#3808).
+    const textured = next.structure.bounds.kind === "outline";
+    const drawnWalls = new Map<number, TexturedWall[]>();
+    const drawn = (layer: number, wall: TexturedWall): void => {
+      drawnWalls.set(layer, [...(drawnWalls.get(layer) ?? []), wall]);
+    };
     for (const wall of next.walls) {
       const held = deckHeldBy(wall, next.structure);
       const g = this.structureAt(
@@ -3926,11 +3950,21 @@ export class ArenaScene extends Phaser.Scene {
       const lit = litStructurePalette(palette, next.lighting, wall, wall.layer);
       if (next.structure.layerCount === 1) {
         this.drawFlatWall(g, wall, line, lit);
+        if (textured) {
+          drawn(wall.layer, texturedWall(wall, 0, 0, lit, undefined));
+        }
       } else if (held === undefined) {
+        const top = base + WALL_HEIGHT;
         if (over !== undefined) {
           this.drawWallBoxOverTunnels(g, wall, base, line, lit, pieces);
+          for (const piece of textured ? pieces : []) {
+            drawn(wall.layer, texturedWall(wall, base, top, lit, piece));
+          }
         } else {
           this.drawWallBox(g, wall, base, line, lit);
+          if (textured) {
+            drawn(wall.layer, texturedWall(wall, base, top, lit, undefined));
+          }
         }
       } else {
         const depth = renderOrder({ kind: "support", deckLayer: held.layer });
@@ -3939,6 +3973,7 @@ export class ArenaScene extends Phaser.Scene {
         this.drawColumn(g, wall, base, high, lit.support, false, hidden);
       }
     }
+    this.drawWallTextures(next.structure, drawnWalls, line, next.lighting);
     // Each breakable wall's material, cracks and fall, worked out once per
     // map drawn; `drawBreakables` draws it every frame it changes (#3370).
     const look = breakableLook(next.structure);
@@ -4196,6 +4231,9 @@ export class ArenaScene extends Phaser.Scene {
       }
       for (const piece of this.decksOverTunnels.get(at) ?? []) {
         piece.setAlpha(ground.alpha);
+      }
+      for (const sprite of this.wallTexturesOverTunnels.get(at) ?? []) {
+        sprite.setAlpha(ground.alpha);
       }
       const water = this.waterOverTunnels.get(at);
       water?.surface.setAlpha(ground.alpha);
@@ -4921,6 +4959,126 @@ export class ArenaScene extends Phaser.Scene {
     }
   }
 
+  /**
+   * The outside land's texture on the wall tops of an outlined map
+   * (#3808): per layer, its tops as they show into the stencil, one tiled
+   * sprite through it, each wall's light multiplied over, and the top's
+   * stroke and lit edge drawn again over the texture. A wall's pieces over
+   * a tunnel are a group of their own, faded with its cover.
+   */
+  private drawWallTextures(
+    structure: MapStructure,
+    layers: ReadonlyMap<number, readonly TexturedWall[]>,
+    line: number,
+    lighting: MapLighting | undefined,
+  ): void {
+    this.dropWallTextures();
+    if (structure.bounds.kind !== "outline") {
+      return;
+    }
+    const key = this.wallTopTile(wallTopKind(structure.bounds.outside));
+    for (const [layer, walls] of layers) {
+      // A piece over a tunnel draws after the whole layer, in graphics of its own.
+      const ordered = [
+        ...walls.filter(({ drawn }) => drawn.group === undefined),
+        ...walls.filter(({ drawn }) => drawn.group !== undefined),
+      ];
+      const depth = renderOrder({ kind: "wall-texture", layer });
+      for (const group of new Set(ordered.map(({ drawn }) => drawn.group))) {
+        const mine = ordered.filter(({ drawn }) => drawn.group === group);
+        const box = boxOfPoints(...mine.flatMap(({ drawn }) => drawn.top));
+        if (box === undefined) {
+          continue;
+        }
+        const [x, y] = [Math.floor(box.left) - 1, Math.floor(box.top) - 1];
+        const [w, h] = [Math.ceil(box.right) + 1 - x, Math.ceil(box.bottom) + 1 - y];
+        const region = (value: number, fill: (g: Phaser.GameObjects.Graphics) => void): void => {
+          const g = this.make.graphics({}, false);
+          g.fillStyle(0xffffff, 1);
+          fill(g);
+          this.wallTextures.push(
+            this.add
+              .stencil(0, 0, [g], { stencilLayerMode: "clearRegion", stencilClearValue: value })
+              .setDepth(depth),
+          );
+        };
+        region(1, (g) => g.fillRect(x, y, w, h));
+        for (const step of stencilSteps(
+          ordered.map(({ drawn }) => drawn),
+          group,
+        )) {
+          region(step.open ? 0 : 1, (g) => {
+            for (const polygon of step.polygons) {
+              fillConvex(g, polygon);
+            }
+          });
+        }
+        const sprite = this.add
+          .tileSprite(x, y, w, h, key)
+          .setOrigin(0, 0)
+          .setTilePosition(x, y)
+          .setDepth(depth);
+        const faded: Phaser.GameObjects.Graphics[] = [];
+        if (lighting !== undefined) {
+          const light = this.add
+            .graphics()
+            .setDepth(depth)
+            .setBlendMode(Phaser.BlendModes.MULTIPLY);
+          for (const { drawn, wall } of mine) {
+            light.fillStyle(structureTint(lighting, wall, layer), 1);
+            for (const polygon of drawn.top) {
+              fillConvex(light, polygon);
+            }
+          }
+          faded.push(light);
+        }
+        const edges = this.add.graphics().setDepth(depth);
+        for (const { wall, top, lit } of mine) {
+          edges.save();
+          edges.translateCanvas(0, -top);
+          edges.lineStyle(line, lit.wallStroke, 1);
+          this.strokeShape(edges, wall);
+          edges.lineStyle(line * WALL_LIT_WIDTH, lit.wallLit, 1);
+          for (const { from, to } of southFacingEdges(wall)) {
+            edges.lineBetween(from.x, from.y, to.x, to.y);
+          }
+          edges.restore();
+        }
+        faded.push(edges);
+        region(0, (g) => g.fillRect(x, y, w, h));
+        if (group === undefined) {
+          this.wallTextures.push(sprite, ...faded);
+        } else {
+          this.decksOverTunnels.set(group, [...(this.decksOverTunnels.get(group) ?? []), ...faded]);
+          this.wallTexturesOverTunnels.set(group, [
+            ...(this.wallTexturesOverTunnels.get(group) ?? []),
+            sprite,
+          ]);
+        }
+      }
+    }
+  }
+
+  /** Drops the wall tops' texture drawn last, if any. */
+  private dropWallTextures(): void {
+    for (const object of this.wallTextures) {
+      object.destroy();
+    }
+    this.wallTextures = [];
+  }
+
+  /** The wall-top tile of `kind` (#3808), painted once per game. */
+  private wallTopTile(kind: WallTopKind): string {
+    const key = `wall-top-${kind}`;
+    if (!this.textures.exists(key)) {
+      const painter = this.make.graphics({}, false);
+      paintWallTopTile(outsidePainter(painter), kind, OUTSIDE_TILE);
+      painter.generateTexture(key, OUTSIDE_TILE, OUTSIDE_TILE);
+      painter.destroy();
+    }
+    return key;
+  }
+
   private fillShape(g: Phaser.GameObjects.Graphics, wall: RenderableShape): void {
     if (wall.kind === "rect") {
       g.fillRect(wall.x, wall.y, wall.width, wall.height);
@@ -5476,6 +5634,7 @@ export class ArenaScene extends Phaser.Scene {
     this.dropOutside();
     this.dropGrain();
     this.dropZoneGrounds();
+    this.dropWallTextures();
     this.dropPaving();
     this.leverFlips.clear();
     this.footsteps.clear();
@@ -5751,6 +5910,57 @@ export class ArenaScene extends Phaser.Scene {
     g.lineStyle(line, WALL_STROKE, 1);
     g.strokeRect(0, 0, width, height);
   }
+}
+
+/** Fills convex `polygon` as a fan of triangles. */
+function fillConvex(g: Phaser.GameObjects.Graphics, polygon: readonly Vec2[]): void {
+  const [first, ...rest] = polygon;
+  if (first === undefined) {
+    return;
+  }
+  for (let at = 0; at + 1 < rest.length; at += 1) {
+    const [b, c] = [rest[at], rest[at + 1]];
+    if (b !== undefined && c !== undefined) {
+      g.fillTriangle(first.x, first.y, b.x, b.y, c.x, c.y);
+    }
+  }
+}
+
+/** A wall as its top's texture needs it (#3808): what it draws, where its top is, and its lit colours. */
+interface TexturedWall {
+  readonly drawn: DrawnWall;
+  readonly wall: RenderableWall;
+  readonly top: number;
+  readonly lit: ArenaPalette;
+}
+
+/**
+ * What a wall standing from lift `base` to `top` draws, through `piece`'s
+ * box when it is split over tunnels: its front faces, and its top.
+ */
+function texturedWall(
+  wall: RenderableWall,
+  base: number,
+  top: number,
+  lit: ArenaPalette,
+  piece: WallPiece | undefined,
+): TexturedWall {
+  const cut = (polygons: readonly (readonly Vec2[])[]): readonly (readonly Vec2[])[] =>
+    piece === undefined
+      ? polygons
+      : polygons.map((polygon) => clipToBox(polygon, piece.box)).filter((p) => p.length >= 3);
+  return {
+    drawn: {
+      group: piece?.tunnel,
+      faces: cut(top === base ? [] : sweptEdges(wall, base, top)),
+      top: cut(
+        shapeTriangles(wall).map((corners) => corners.map(({ x, y }) => ({ x, y: y - top }))),
+      ),
+    },
+    wall,
+    top,
+    lit,
+  };
 }
 
 /**
