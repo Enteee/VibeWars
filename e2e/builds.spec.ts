@@ -1129,6 +1129,13 @@ test("the team grid: a full team, eight cells and Health and Energy a member, dr
       .nth(row)
       .locator(".team-skill")
       .evaluateAll((cells) => cells.map((c) => c.getAttribute("data-skill-id")));
+  // Alpha gets a skill first, so the copy has a bar to carry.
+  await page.getByRole("tab", { name: "Skills", exact: true }).click();
+  await openLibraryGroup(page, "Strength");
+  await page
+    .locator(".team-picker .skill-box")
+    .first()
+    .dragTo(memberRows(page).first().locator(".team-skill").first());
   const alphaSkills = await skills(0);
   expect(alphaSkills.some((id) => id !== null)).toBe(true);
   // Shift is pressed once the drag is under way: Chromium starts no drag on a
