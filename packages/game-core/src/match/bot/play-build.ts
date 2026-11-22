@@ -11,7 +11,8 @@ import { isGhostId, onHill } from "../ghost.js";
 import type { Participant } from "../simulation.js";
 import { UPKEEP_DROP_SECONDS } from "./rules/drop-upkeep.js";
 import { markHealth } from "./rules/duck.js";
-import { teamPlan } from "./plan.js";
+import { backlineFoe } from "./rules/flank.js";
+import { planPhase, teamPlan } from "./plan.js";
 import { roleOf, type BotRole } from "./role.js";
 import { BOT_RULES } from "./rules/index.js";
 import regroup from "./rules/regroup.js";
@@ -387,7 +388,8 @@ function think(
  * (#2545), so the team commits to a kill and never drops one for
  * another; else the team's target, if one is alive within `FOCUS_REACH`
  * past spell range (#2573), or anywhere while no foe is in range; else
- * `focusPick` in spell range. With no foe in spell range, one shooting
+ * `focusPick` in spell range. A flanker round its flank takes the foes'
+ * healer (#3832). With no foe in spell range, one shooting
  * at the bot from further counts as in range (#3150). A creature only while no other foe is in
  * range. With shrines to hold or a relic to run, the team's target only
  * in range. With two foe teams, all but the call and the ghost come from
@@ -408,6 +410,13 @@ function teamTarget(
     return ghost.id;
   }
   const foes = front === undefined ? all : all.filter((foe) => foe.combatant.team === front);
+  // Round its flank, a flanker goes for their healer (#3832).
+  if (cursor.flankReached === planPhase(context.now)) {
+    const backline = backlineFoe(context.self, foes, roleOf);
+    if (backline !== undefined) {
+      return backline.id;
+    }
+  }
   const self = context.self;
   const near = foes.filter((foe) => distance(foe.position, self.position) <= RANGE_SPELL);
   // None in spell range: those shooting at it from further are (#3150).

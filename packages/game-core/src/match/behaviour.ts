@@ -290,6 +290,8 @@ export interface BehaviourCursor {
     | undefined;
   /** `play-build`: the plan phase it reached its flank waypoint in (#3832); a respawn forgets it. */
   flankReached: number | undefined;
+  /** `play-build`: the plan phase it gave its flank swing up in (#3832), hurt or caught; a respawn forgets it. */
+  flankAbandoned: number | undefined;
   /** `play-build`: its health fraction at each think of the last `HEALTH_MARK_SECONDS` (#3369), oldest first. */
   readonly healthMarks: { readonly at: number; readonly health: number }[];
   /**
@@ -508,6 +510,7 @@ export function createCursor(): BehaviourCursor {
     holdPoint: undefined,
     flankPoint: undefined,
     flankReached: undefined,
+    flankAbandoned: undefined,
     healthMarks: [],
     duck: undefined,
     duckReadyAt: 0,

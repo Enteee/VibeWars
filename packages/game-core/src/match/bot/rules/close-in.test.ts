@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { add, distance, scale, sub, vec2, type Vec2 } from "../../../vec2.js";
 import { createCursor, type BehaviourCursor } from "../../behaviour.js";
 import type { Participant } from "../../simulation.js";
-import { flankParty, flankWaypoint } from "../plan.js";
+import { flankParty } from "../plan.js";
 import type { BotRole } from "../role.js";
 import closeIn, { REPRICE_SECONDS } from "./close-in.js";
 import { POSITION_SLACK, REGROUP_SPREAD, WALK_CANDIDATES } from "./shared.js";
@@ -284,26 +284,16 @@ describe("close-in under a flank plan (#3832)", () => {
       Number(flankParty(contextFor(sim, other, { now: NOW }), member(other), 1)) -
       Number(flankParty(contextFor(sim, one, { now: NOW }), member(one), 1)),
   );
-  const waypoint =
-    flankWaypoint(contextFor(sim, flanker, { now: NOW }), member(flanker), 1)?.point ?? vec2(0, 0);
 
-  it("walks a flanker to its waypoint first", () => {
-    const intent = closeIn.decide(ruleFor(sim, flanker, { plan: "flank", roleOf }, { now: NOW }));
-    expect(intent?.moveTo).toEqual(waypoint);
-    expect(intent?.moveToLayer).toBe(0);
+  it("pushes a flanker until the flank rule has it round", () => {
+    const flanked = closeIn.decide(ruleFor(sim, flanker, { plan: "flank", roleOf }, { now: NOW }));
+    expect(flanked?.moveTo).toEqual(vec2(800, 500));
   });
 
   it("makes for the foe healer once round, though a frontliner is nearer", () => {
     const cursor = createCursor();
-    const base = ruleFor(sim, flanker, { plan: "flank", roleOf, cursor }, { now: NOW });
-    const there = { ...base.self, position: waypoint };
-    const at = closeIn.decide(
-      ruleFor(sim, flanker, { plan: "flank", roleOf, cursor, self: there }, { now: NOW }),
-    );
-    expect(at?.moveTo).toEqual(vec2(1100, 500));
-    expect(cursor.flankReached).toBe(1);
-    // Walked on from the waypoint, it keeps to the healer.
-    const on = { ...base.self, position: vec2(780, 500) };
+    cursor.flankReached = 1;
+    const on = { ...member(flanker), position: vec2(780, 500) };
     const later = closeIn.decide(
       ruleFor(sim, flanker, { plan: "flank", roleOf, cursor, self: on }, { now: NOW + 5 }),
     );
@@ -315,13 +305,5 @@ describe("close-in under a flank plan (#3832)", () => {
     const pushed = closeIn.decide(ruleFor(sim, pusher, { plan: "push", roleOf }, { now: NOW }));
     expect(flanked).toEqual(pushed);
     expect(flanked?.moveTo).toEqual(vec2(800, 500));
-  });
-
-  it("pushes where neither side has a route", () => {
-    const none = (): number => Number.POSITIVE_INFINITY;
-    const intent = closeIn.decide(
-      ruleFor(sim, flanker, { plan: "flank", roleOf }, { now: NOW, routeLength: none }),
-    );
-    expect(intent?.moveTo).toEqual(vec2(800, 500));
   });
 });
