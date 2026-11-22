@@ -1395,7 +1395,6 @@ export default {
   "teamPlay.noTeamBuilds": "Още няма отборни билдове за {size}.",
   "teamPlay.notPlayable": "Не може да се играе: {problem}",
   "teamPlay.openingLobby": "Отваряме лобито ти…",
-  "teamPlay.queuedMaps": "Карти в този режим",
   "teamPlay.random": "Случаен",
   "teamPlay.reroll": "Нов избор",
   "teamPlay.unnamedTeam": "Отбор без име",

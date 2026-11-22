@@ -1389,7 +1389,6 @@ export default {
   "teamPlay.noTeamBuilds": "Inga lagbuilds för {size} än.",
   "teamPlay.notPlayable": "Går inte att spela: {problem}",
   "teamPlay.openingLobby": "Öppnar din lobby…",
-  "teamPlay.queuedMaps": "Kartor i det här läget",
   "teamPlay.random": "Slump",
   "teamPlay.reroll": "Slumpa",
   "teamPlay.unnamedTeam": "Namnlöst lag",

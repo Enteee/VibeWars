@@ -1411,7 +1411,6 @@ export default {
   "teamPlay.noTeamBuilds": "Καμία Σύνθεση ομάδας {size} ακόμη.",
   "teamPlay.notPlayable": "Δεν παίζεται: {problem}",
   "teamPlay.openingLobby": "Άνοιγμα λόμπι…",
-  "teamPlay.queuedMaps": "Χάρτες λειτουργίας",
   "teamPlay.random": "Τυχαία",
   "teamPlay.reroll": "Νέα ζαριά",
   "teamPlay.unnamedTeam": "Ανώνυμη ομάδα",

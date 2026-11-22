@@ -73,7 +73,7 @@ pe o hartă aleatorie. Coada așteaptă în fundal: rămâi la Arenă aleatorie 
 merge oriunde între timp, la builduri, echipament, Opțiuni, Ajutor sau editorul
 de muzică, dar nu poți schimba personajul, găzdui sau intra într-un lobby și nici
 schimba mărimea echipei unui mod. Arenă de echipe și celelalte ecrane de lobby
-spun că ești la coadă și își listează hărțile; mărimea echipei arată mărimea cu care ai intrat la coadă, în
+spun că ești la coadă; mărimea echipei arată mărimea cu care ai intrat la coadă, în
 fiecare mod. Un cerc care se învârte în stânga lui **Ajutor** din bara de sus
 arată că ești la coadă; dă clic pe el pentru coadă, timpul de așteptare, câți
 caută și **Ieși din coadă**. Când se găsește un meci, ești dus la ecranul lui de

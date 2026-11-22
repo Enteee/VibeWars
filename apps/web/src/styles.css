@@ -1616,12 +1616,6 @@ body:has(> .splash) #menu-background::after {
   color: var(--ink);
 }
 
-/* What a lobby screen plays, to look at while in the Random Arena queue (#2781). */
-.screen-queued-maps ul {
-  margin: 0.3rem 0 0;
-  padding-inline-start: 1.2rem;
-}
-
 .field {
   display: flex;
   flex-direction: column;

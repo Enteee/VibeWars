@@ -1510,7 +1510,6 @@ export default {
   "teamPlay.noTeamBuilds": "Пока нет командных билдов на {size}.",
   "teamPlay.notPlayable": "Нельзя играть: {problem}",
   "teamPlay.openingLobby": "Открываем лобби…",
-  "teamPlay.queuedMaps": "Карты этого режима",
   "teamPlay.random": "Случайная",
   "teamPlay.reroll": "Заново",
   "teamPlay.unnamedTeam": "Без названия",

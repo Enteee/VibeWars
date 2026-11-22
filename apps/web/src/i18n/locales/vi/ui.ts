@@ -1310,7 +1310,6 @@ export default {
   "teamPlay.noTeamBuilds": "Chưa có Build đội {size}.",
   "teamPlay.notPlayable": "Không chơi được: {problem}",
   "teamPlay.openingLobby": "Đang mở sảnh của bạn…",
-  "teamPlay.queuedMaps": "Bản đồ của chế độ này",
   "teamPlay.random": "Random",
   "teamPlay.reroll": "Đổi khác",
   "teamPlay.unnamedTeam": "Đội chưa đặt tên",

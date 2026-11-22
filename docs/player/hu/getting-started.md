@@ -79,7 +79,7 @@ bárhová mehetsz, a buildjeidhez, a felszereléshez, az Opciókhoz, a
 Súgóhoz vagy a zeneszerkesztőhöz, de nem válthatsz karaktert, nem
 hozhatsz létre és nem léphetsz be lobbiba, és nem módosíthatod egy mód
 csapatméretét. A Csapataréna és a többi lobbiképernyő kiírja, hogy
-sorban vagy, és felsorolja a pályáit; a csapatméret minden módban azt a
+sorban vagy; a csapatméret minden módban azt a
 méretet mutatja, amellyel sorba álltál. Egy forgó gyűrű a felső sávon a
 **Súgó**tól balra mutatja, hogy sorban vagy; kattints rá a sorért, a
 várakozási időért, hogy hányan keresnek, és a **Sor elhagyása**

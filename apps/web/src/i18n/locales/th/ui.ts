@@ -1306,7 +1306,6 @@ export default {
   "teamPlay.noTeamBuilds": "ยังไม่มีทีมบิลด์ {size}",
   "teamPlay.notPlayable": "เล่นไม่ได้: {problem}",
   "teamPlay.openingLobby": "กำลังเปิดล็อบบี้ของคุณ…",
-  "teamPlay.queuedMaps": "แมปในโหมดนี้",
   "teamPlay.random": "สุ่ม",
   "teamPlay.reroll": "สุ่มใหม่",
   "teamPlay.unnamedTeam": "ทีมไม่มีชื่อ",
