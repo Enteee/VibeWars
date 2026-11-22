@@ -9469,9 +9469,11 @@ body:has(> .splash) #app {
     gap: 4px;
   }
 
+  /* A finger's size, unless the phone is narrower than eight of them
+     (396 px): then the slots shrink so the row still fits on screen. */
   .hud-skill {
-    width: 44px;
-    height: 44px;
+    width: min(44px, calc((100vw - 1rem - 7 * 4px) / 8));
+    height: min(44px, calc((100vw - 1rem - 7 * 4px) / 8));
   }
 
   /* No room left of the bar: the weapon sets stand over its left end,

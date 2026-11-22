@@ -243,16 +243,19 @@ function expectArenaFree(
   }
 }
 
-/** The skill bar (#3778): eight slots, each a finger's size, in one row along the bottom. */
-async function expectSkillRow(page: Page, phone: Phone): Promise<void> {
+/**
+ * The skill bar (#3778): eight slots, each a finger's size, in one row along
+ * the bottom. A phone narrower than eight fingers shrinks them to `slot`.
+ */
+async function expectSkillRow(page: Page, phone: Phone, slot = TOUCH_TARGET): Promise<void> {
   const slots = page.locator(".hud-skills > .hud-skill");
   await expect(slots).toHaveCount(8);
   const boxes = await slots.evaluateAll((nodes) =>
     nodes.map((node) => node.getBoundingClientRect().toJSON() as Box),
   );
   for (const [i, box] of boxes.entries()) {
-    expect(box.width, `slot ${String(i + 1)} width`).toBeGreaterThanOrEqual(TOUCH_TARGET);
-    expect(box.height, `slot ${String(i + 1)} height`).toBeGreaterThanOrEqual(TOUCH_TARGET);
+    expect(box.width, `slot ${String(i + 1)} width`).toBeGreaterThanOrEqual(slot);
+    expect(box.height, `slot ${String(i + 1)} height`).toBeGreaterThanOrEqual(slot);
     expect(box.y, `slot ${String(i + 1)} is in the first's row`).toBeCloseTo(boxes[0]?.y ?? -1, 0);
     expect(box.x + box.width, `slot ${String(i + 1)} is on screen`).toBeLessThanOrEqual(
       phone.width,
@@ -364,6 +367,16 @@ for (const [held, device, free] of [
     });
   });
 }
+
+test.describe("a 360 px touch phone (#3778)", () => {
+  test.use({ ...PIXEL_8A_PORTRAIT, viewport: { width: 360, height: 740 } });
+
+  test("the skill bar stays one row on screen, its slots shrunk to fit", async ({ page }) => {
+    await phoneMatch(page, { width: 360, height: 740 }, undefined, true);
+    // (360 - 1rem padding - 7 × 4 px gaps) / 8 = 39.5 px a slot.
+    await expectSkillRow(page, { width: 360, height: 740 }, 39);
+  });
+});
 
 test.describe("a Pixel 8a turned mid-match (#3778)", () => {
   test.use(PIXEL_8A_PORTRAIT);
