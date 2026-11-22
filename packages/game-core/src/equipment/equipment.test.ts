@@ -349,9 +349,9 @@ describe("runes that do not stack, and where max health comes from (#3822)", () 
     const armor = { ...bareArmorSet() };
     ARMOR_SLOTS.forEach((slot, index) => {
       armor[slot] = {
-        ...armor[slot],
         insigniaId: options.insigniaId ?? null,
         rune: runes[index] ?? null,
+        headgearAttributeId: null,
       };
     });
     return {
@@ -415,7 +415,8 @@ describe("runes that do not stack, and where max health comes from (#3822)", () 
       { insigniaId: "survivor", upgrades: { ...NO_UPGRADES, suffix: "of-fortitude" } },
     );
     const rules = MINIMAL_GW_INSPIRED_PVP_V1.combat;
-    const sources = healthSources(input, rules);
+    const sources = healthSources(input, rules, 0);
+    if (sources === undefined) throw new Error("no set 1");
     expect(sources.base).toBe(rules.baseHealth);
     expect(sources.runes).toBe(60);
     expect(sources.insignia).toBeGreaterThan(0);

@@ -25,7 +25,7 @@ import {
   type ArmorCondition,
   type Insignia,
 } from "./insignias.js";
-import type { BuildEquipment, WeaponSet } from "./loadout.js";
+import type { BuildEquipment, WeaponSet, WeaponSetIndex } from "./loadout.js";
 import { wornMods, type ModEffect, type ModSpells, type ModWhile, type WeaponMod } from "./mods.js";
 import { getOffhand, type OffhandId } from "./offhands.js";
 import {
@@ -449,18 +449,27 @@ export interface HealthSources {
 }
 
 /**
- * Where weapon set 1's `maxHealth` comes from, for the gear summary to
- * explain it (#3822). The parts add up to `maxHealth`: `mods` is the
- * rest, so the rules' floor, should it ever lift a build, shows there.
+ * Where `maxHealth` comes from holding weapon set `set`, for the gear
+ * summary to explain it (#3822); `undefined` for an empty set. The parts
+ * add up to `maxHealth`: `mods` is the rest, so the rules' floor,
+ * should it ever lift a build, shows there.
  */
-export function healthSources(input: LoadoutInput, rules: CombatRules): HealthSources {
+export function healthSources(
+  input: LoadoutInput,
+  rules: CombatRules,
+  set: WeaponSetIndex,
+): HealthSources | undefined {
+  const held = resolveLoadout(input, rules).weaponSets[set];
+  if (held === null) {
+    return undefined;
+  }
   const runes = totalRunes(input.equipment, input.primaryProfession);
   const shared = rules.baseHealth + runes.healthDelta + runes.insigniaHealth;
   return {
     base: rules.baseHealth,
     runes: runes.healthDelta,
     insignia: runes.insigniaHealth,
-    mods: resolveLoadout(input, rules).weaponSets[0].maxHealth - shared,
+    mods: held.maxHealth - shared,
   };
 }
 

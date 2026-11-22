@@ -126,12 +126,13 @@ describe("two Superior Runes of Vigor in the test area (#3822)", () => {
   function wearingVigor(pieces: number): StoredCharacter {
     const character = newCharacter("c1");
     const armor = { ...character.equipment.armor };
-    for (const slot of ARMOR_SLOTS.slice(0, pieces)) {
+    ARMOR_SLOTS.forEach((slot, index) => {
       armor[slot] = {
-        ...armor[slot],
-        rune: { kind: "universal", runeId: "vigor", tier: "superior" },
+        insigniaId: null,
+        rune: index < pieces ? { kind: "universal", runeId: "vigor", tier: "superior" } : null,
+        headgearAttributeId: null,
       };
-    }
+    });
     return { ...character, equipment: { ...character.equipment, armor } };
   }
 
