@@ -470,12 +470,4 @@ Acima dos filtros, a faixa **Salão dos Heróis** lista os últimos 20 domínios
 
 ## Ranqueadas
 
-Uma partida da fila sem bots é ranqueada. O ecrã da fila e o lobby de equipa dizem-no antes de entrares na fila; um só bot deixa a partida sem ranking. Quando é encontrada uma partida ranqueada, cada jogador assina o seu início, e o ecrã mostra **Confirmando partida ranqueada…** até 15 segundos. Se alguém não confirmar, a partida é cancelada e todos voltam à fila. No fim, cada jogador assina o resultado, e o recibo da partida é publicado nos relays Nostr com a chave pública e o nome da personagem de cada jogador; um jogador sem personagem aparece como starter. A tua classificação muda dentro de uma hora. Sair de uma partida ranqueada conta como derrota, e o botão de sair di-lo.
-
-As filas ranqueadas juntam jogadores de classificação parecida e dividem-nos em equipas de classificação média parecida. A procura começa a 100 pontos da tua classificação e alarga 10 pontos por cada segundo de espera, até 600, para que ninguém espere para sempre. Enquanto esperas, a fila mostra a tua classificação.
-
-As tuas primeiras 10 partidas classificadas são provisórias: a fila diz **Provisória (3/10 partidas)** e ainda não tens posição. Depois disso, o menu principal mostra a tua posição. As classificações decaem: cada dia sem partida classificada torna a tua menos certa, e a tabela de líderes ordena por um valor prudente, por isso, se deixares de jogar, a tua posição desce em semanas.
-
-Assim que a tabela de líderes tiver 20 jogadores estabelecidos, uma partida ranqueada só conta se pelo menos um jogador nela estiver estabelecido (10 ou mais partidas classificadas): uma partida só entre jogadores novos não é classificada. Joga com alguém estabelecido e as tuas partidas contam.
-
-O botão **Tabela de líderes** na barra superior lista os 100 primeiros por posição, nome e classificação, com a tua linha destacada. É atualizada a cada hora.
+Uma partida da fila sem bots é ranqueada: veja [Ranking](ranking.md).

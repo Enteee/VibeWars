@@ -63,6 +63,7 @@ export default {
 
   "buildEditor.addWeapon": "Wapen toevoegen",
   "buildEditor.armor": "Pantser",
+  "buildEditor.back": "Terug",
   "buildEditor.bothHandsFull": "beide handen vol",
   "buildEditor.budgetSegment": {
     one: "{attribute}: {count} punt",
@@ -876,12 +877,10 @@ export default {
 
   "options.controls": "besturing",
   "options.cosmetics": "cosmetics",
-  "options.display": "weergave",
   "options.label": "Opties",
   "options.language": "taal",
   "options.languageBusy": "Verlaat eerst de lobby of match: de taal wijzigen herlaadt de pagina.",
   "options.languageLabel": "Taal",
-  "options.lightingLabel": "Belichting",
   "options.player": "speler",
   "options.relay": "relay (TURN)",
   "options.sections": "optiesecties",
@@ -997,8 +996,6 @@ export default {
   "queue.randomArena": "Random Arena {size}",
   "queue.rankedCancelled": "Gerankte wedstrijd geannuleerd: een speler bevestigde niet.",
   "queue.rankedConfirming": "Gerankte wedstrijd bevestigen…",
-  "queue.rankedNote":
-    "Zonder bots is het gerankt: de uitslag wordt gepubliceerd met je sleutel en personagenaam. Een bot in de wedstrijd houdt hem ongerankt.",
   "queue.rankedPending": "Je rating wordt binnen het uur bijgewerkt.",
   "queue.rankedPublished": "Gerankte uitslag gepubliceerd.",
   "queue.searchingCount": "{searching} zoeken · {needed} nodig",
@@ -1396,7 +1393,6 @@ export default {
   "teamPlay.noTeamBuilds": "Nog geen Teambuilds voor {size}.",
   "teamPlay.notPlayable": "Niet speelbaar: {problem}",
   "teamPlay.openingLobby": "Je lobby openen…",
-  "teamPlay.queuedMaps": "Maps in deze modus",
   "teamPlay.random": "Random",
   "teamPlay.reroll": "Opnieuw",
   "teamPlay.unnamedTeam": "Naamloos team",
@@ -1550,6 +1546,7 @@ export default {
   "tutorial.climb.praise": "Twee lagen, één plek. Nu kun je het terrein lezen.",
   "tutorial.climb.tip": "Tip: Alt+klik kiest de grond onder een richel.",
   "tutorial.climb.under": "Houd Alt ingedrukt en klik. De gestippelde ring ligt onder je.",
+  "tutorial.coach.lost": "Ga terug om verder te gaan met de tutorial.",
   "tutorial.dodge.hint": "Wacht bij een ring op zijn schaduw en stap dan opzij.",
   "tutorial.dodge.hit": "Au! Een groeiende schaduw betekent: bewegen.",
   "tutorial.dodge.how": "Klik met links op de grond, of loop met {keys}.",
@@ -1576,6 +1573,8 @@ export default {
   "tutorial.menu.arena.signup":
     "Open Jouw Teambuilds, kies het team dat je maakte en stel het voor.",
   "tutorial.menu.arena.signupDone": "Stel je team voor",
+  "tutorial.menu.arena.signupTimeout":
+    "De tijd is om, dus de lobby heeft een team voor je gekozen.",
   "tutorial.menu.arena.size":
     "Zet de teamgrootte op 2v2. Alleen teams van dezelfde grootte treffen elkaar.",
   "tutorial.menu.arena.sizeDone": "Kies 2v2",
@@ -1629,6 +1628,8 @@ export default {
   "tutorial.menu.team.fillDone": "Vul het team",
   "tutorial.menu.team.members":
     "Een team heeft altijd zoveel leden als zijn grootte. Je voegt nooit een lid toe: je vervangt er een.",
+  "tutorial.menu.team.memberBack":
+    "Dit is de build van dat lid. Ga Terug om naar je team terug te keren.",
   "tutorial.menu.team.new": "Zet de teamgrootte op 2v2 en maak dan een nieuwe teambuild.",
   "tutorial.menu.team.newDone": "Begin een team van 2",
   "tutorial.menu.team.open": "Open Teams, waar je teambuilds staan.",

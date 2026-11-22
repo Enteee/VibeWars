@@ -64,6 +64,20 @@ Tombol-tombol ini tetap:
   dan menyerang sekaligus; klik roda mengumumkan atau memberi ping. Nama yang akan
   terkena klik disorot.
 
+## Sentuh
+
+Di ponsel atau tablet, di pertandingan dan di area latihan:
+
+- **Ketuk** tanah untuk berjalan ke sana.
+- **Ketuk** musuh, sekutu, bendera, tiang bendera, tuas, atau dinding retak
+  untuk menjadikannya target; ketukan pada karakter tidak pernah berjalan.
+  Ketuk musuh yang sama lagi, dengan cepat, untuk menyerangnya. Ketukan tepat
+  di samping karakter tetap menemukannya. Ketukan pada dirimu berjalan ke
+  titik itu, atau menargetkan tiang bendera atau tuas yang kamu pijak.
+- **Seret** satu jari untuk melihat sekeliling; lepaskan dan tampilan
+  meluncur kembali padamu. **Cubit** untuk zoom.
+- **Ketuk** skill di bar untuk menggunakannya pada targetmu.
+
 ## Bilah atas
 
 Di luar laga, bilah atas berisi **[?]** (Bantuan ini), **⚙** (Opsi),
@@ -71,7 +85,7 @@ Di luar laga, bilah atas berisi **[?]** (Bantuan ini), **⚙** (Opsi),
 **♪** (musik: apa yang diputar, dan seberapa keras), tombol bisu suara dan layar penuh. Di dalam laga tombol-tombol yang sama,
 kecuali Lobi, ada di kanan atas layar. Di jendela yang sempit, ikon-ikon ini dan
 tombol-tombol lain di layar terlipat ke dalam **⋯**; hanya tombol utamanya yang tetap di luar.
-⚙ membuka Opsi sebagai jendela di bawah bilah, dengan layar tetap di belakangnya; Esc, × atau klik di luarnya menutupnya. Di bagian **tampilan**, **Pencahayaan** menyalakan atau mematikan cahaya dan bayangan peta yang diterangi, seketika, bahkan di dalam laga.
+⚙ membuka Opsi sebagai jendela di bawah bilah, dengan layar tetap di belakangnya; Esc, × atau klik di luarnya menutupnya.
 [?] membuka Bantuan dengan cara yang sama, sebagai jendela di bawahnya dengan pemilih halaman di atas; laga tetap berjalan di belakangnya.
 Bantuan ditutup dengan ×-nya, Esc, klik di luarnya, atau menekan [?] sekali lagi.
 

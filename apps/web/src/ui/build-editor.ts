@@ -114,6 +114,8 @@ export interface BuildEditorCallbacks {
   readonly onDelete: ((id: string) => void) | undefined;
   readonly onDuplicate: ((character: StoredCharacter) => void) | undefined;
   readonly onClose: () => void;
+  /** A Back in the top bar, leaving as Esc does: only a Team Build's member has one (#3785), to its team. */
+  readonly onBack: (() => void) | undefined;
 }
 
 export function newCharacter(id: string): StoredCharacter {
@@ -1194,8 +1196,19 @@ function mountCommandBar(
     return false;
   };
   // The name is the last crumb: the place is the character (#1272).
+  const { onBack } = callbacks;
   screenBar({
     crumbs: [wordmark("topbar-wordmark"), nameInput],
+    ...(onBack === undefined
+      ? {}
+      : {
+          back: {
+            label: t("buildEditor.back"),
+            onBack: () => {
+              leave(onBack);
+            },
+          },
+        }),
     escape: () => {
       leave(callbacks.onClose);
     },
@@ -1542,6 +1555,7 @@ export function mountAttributes(panel: HTMLElement, context: BuildHost): Region 
       ...sizers,
       next,
       h("span", "editor-attribute-needs"),
+      h("span", "editor-attribute-sources"),
     );
     return row;
   };
@@ -1650,6 +1664,12 @@ export function mountAttributes(panel: HTMLElement, context: BuildHost): Region 
         if (next !== null) {
           const cost = nextRankCost(character, attributeId);
           next.textContent = cost === undefined ? t("buildEditor.rankMax") : `+${String(cost)}`;
+        }
+        // Where the bonus comes from: its title on hover, a line under the
+        // row where there is no hover to show it (#3777).
+        const sources = row.querySelector(".editor-attribute-sources");
+        if (sources !== null) {
+          sources.textContent = bonus?.sources ?? "";
         }
         const needs = row.querySelector(".editor-attribute-needs");
         if (needs !== null) {

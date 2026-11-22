@@ -66,6 +66,21 @@ Aceste taste sunt fixe:
   dintr-odată; un clic pe rotiță anunță sau dă ping. Numele pe care l-ar nimeri
   clicul este evidențiat.
 
+## Atingere
+
+Pe un telefon sau o tabletă, într-un meci și pe terenul de antrenament:
+
+- **Atinge** solul ca să mergi acolo.
+- **Atinge** un inamic, un aliat, un steag, suportul de steag, o manetă sau
+  un zid crăpat ca să-l ții în țintă; o atingere pe un personaj nu merge
+  niciodată. Atinge din nou, rapid, același inamic ca să-l ataci. O atingere
+  chiar lângă un personaj îl găsește totuși. O atingere pe tine însuți merge
+  până în acel loc sau ține în țintă suportul de steag ori maneta pe care
+  stai.
+- **Trage** cu un deget ca să te uiți în jur; ridică degetul și vederea
+  alunecă înapoi la tine. **Ciupește** ca să dai zoom.
+- **Atinge** o abilitate de pe bară ca s-o folosești pe ținta ta.
+
 ## Bara de sus
 
 În afara unui meci, bara de sus conține **[?]** (acest Ajutor), **⚙** (Opțiuni),
@@ -73,7 +88,7 @@ Aceste taste sunt fixe:
 **♪** (muzică: ce se aude și cât de tare), oprirea sunetului și ecranul complet. Într-un meci aceleași butoane,
 în afară de Lobby, stau în dreapta sus pe ecran. Într-o fereastră îngustă, aceste pictograme și
 celelalte butoane ale ecranului se strâng în **⋯**; doar butonul principal rămâne afară.
-⚙ deschide Opțiunile ca fereastră sub bară, cu ecranul încă în spate; Esc, × sau un clic în afară o închide. La **Afișare**, **Iluminare** pornește sau oprește lumina și umbra unei hărți luminate, imediat, chiar și în meci.
+⚙ deschide Opțiunile ca fereastră sub bară, cu ecranul încă în spate; Esc, × sau un clic în afară o închide.
 [?] deschide Ajutorul la fel, ca fereastră sub el cu un selector de pagină sus; meciul continuă în spate.
 Ajutorul se închide cu propriul ×, cu Esc, cu un clic în afară sau apăsând din nou [?].
 

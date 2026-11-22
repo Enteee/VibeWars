@@ -75,7 +75,7 @@ Slumparena och kan gå vart du vill under tiden, till dina builds,
 utrustning, Alternativ, Hjälp eller musikredigeraren, men inte byta
 karaktär, vara värd för eller gå med i en lobby, eller ändra ett lägets
 lagstorlek. Lagarena och de andra lobbyskärmarna säger att du står i en
-kö och listar sina kartor; lagstorleken visar storleken du köade med, i
+kö; lagstorleken visar storleken du köade med, i
 alla lägen. En snurrande ring till vänster om **Hjälp** i den övre raden
 visar att du står i kö; klicka på den för kön, väntetiden, hur många som
 söker och **Lämna kön**. När en match hittas tas du till dess

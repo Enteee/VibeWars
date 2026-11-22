@@ -331,12 +331,4 @@ Boven de filters toont de strook **Hal der Helden** de laatste 20 reeksen, de ni
 
 ## Gerankt
 
-Een wedstrijd uit de wachtrij zonder bots is gerankt. Het wachtrijscherm en de teamlobby zeggen het voordat je in de rij gaat; één bot houdt een wedstrijd ongerankt. Wordt een gerankte wedstrijd gevonden, dan ondertekent elke speler de start, en het scherm toont tot 15 seconden **Gerankte wedstrijd bevestigen…**. Bevestigt iemand niet, dan wordt de wedstrijd geannuleerd en staat iedereen weer in de rij. Aan het eind ondertekent elke speler de uitslag, en het bewijs van de wedstrijd wordt op de Nostr-relays gepubliceerd met de publieke sleutel en personagenaam van elke speler; een speler zonder personage staat erin als starter. Je rating verandert binnen het uur. Een gerankte wedstrijd verlaten telt als verlies, en de verlaatknop zegt dat.
-
-Gerankte wachtrijen koppelen spelers met een vergelijkbare rating en verdelen ze over teams met een vergelijkbare gemiddelde rating. Het zoeken begint binnen 100 punten van jouw rating en wordt per seconde wachten 10 punten ruimer, tot 600, zodat niemand eeuwig wacht. Terwijl je wacht, toont de wachtrij je rating.
-
-Je eerste 10 gewaardeerde wedstrijden zijn voorlopig: de wachtrij zegt **Voorlopig (3/10 wedstrijden)** en je hebt nog geen plaats. Daarna toont het hoofdmenu je plaats. Ratings vervallen: elke dag zonder gewaardeerde wedstrijd maakt die van jou onzekerder, en de ranglijst sorteert op een voorzichtige waarde, dus als je stopt met spelen zakt je plaats binnen weken.
-
-Zodra de ranglijst 20 gevestigde spelers heeft, telt een gerankte wedstrijd alleen als minstens één speler erin gevestigd is (10 of meer gewaardeerde wedstrijden): een wedstrijd tussen alleen nieuwe spelers wordt niet gewaardeerd. Speel tegen iemand die gevestigd is en je wedstrijden tellen.
-
-De knop **Ranglijst** in de bovenbalk toont de top 100 met plaats, naam en rating, met je eigen rij gemarkeerd. Hij wordt elk uur bijgewerkt.
+Een wedstrijd uit de wachtrij zonder bots is gerankt: zie [Ranking](ranking.md).

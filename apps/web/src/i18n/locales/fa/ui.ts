@@ -61,6 +61,7 @@ export default {
 
   "buildEditor.addWeapon": "افزودن سلاح",
   "buildEditor.armor": "زره",
+  "buildEditor.back": "بازگشت",
   "buildEditor.bothHandsFull": "هر دو دست پر است",
   "buildEditor.budgetSegment": {
     one: "{attribute}: {count} امتیاز",
@@ -878,13 +879,11 @@ export default {
 
   "options.controls": "کنترل‌ها",
   "options.cosmetics": "آرایه‌ها",
-  "options.display": "نمایش",
   "options.label": "تنظیمات",
   "options.language": "زبان",
   "options.languageBusy":
     "اول از لابی یا مسابقه خارج شو: تغییر زبان صفحه را دوباره بارگذاری می‌کند.",
   "options.languageLabel": "زبان",
-  "options.lightingLabel": "نورپردازی",
   "options.player": "بازیکن",
   "options.relay": "رله (TURN)",
   "options.sections": "بخش‌های تنظیمات",
@@ -999,8 +998,6 @@ export default {
   "queue.randomArena": "آرنای تصادفی {size}",
   "queue.rankedCancelled": "مسابقه رتبه‌بندی لغو شد: یک بازیکن تأیید نکرد.",
   "queue.rankedConfirming": "در حال تأیید مسابقه رتبه‌بندی…",
-  "queue.rankedNote":
-    "بدون ربات، مسابقه رتبه‌بندی است: نتیجه با کلید و نام شخصیت تو منتشر می‌شود. یک ربات در مسابقه آن را بدون رتبه نگه می‌دارد.",
   "queue.rankedPending": "رتبه‌ات ظرف یک ساعت به‌روز می‌شود.",
   "queue.rankedPublished": "نتیجه رتبه‌بندی منتشر شد.",
   "queue.searchingCount": "{searching} در جستجو · {needed} لازم",
@@ -1390,7 +1387,6 @@ export default {
   "teamPlay.noTeamBuilds": "هنوز بیلد تیمی {size} نفره‌ای نیست.",
   "teamPlay.notPlayable": "قابل بازی نیست: {problem}",
   "teamPlay.openingLobby": "در حال باز کردن لابی…",
-  "teamPlay.queuedMaps": "نقشه‌های این حالت",
   "teamPlay.random": "تصادفی",
   "teamPlay.reroll": "تعویض",
   "teamPlay.unnamedTeam": "تیم بی‌نام",
@@ -1541,6 +1537,7 @@ export default {
   "tutorial.climb.praise": "دو لایه، یک نقطه. حالا زمین را می‌خوانی.",
   "tutorial.climb.tip": "نکته: Alt+کلیک زمینِ زیر لبه را انتخاب می‌کند.",
   "tutorial.climb.under": "Alt را نگه دار و کلیک کن. حلقه‌ی خط‌چین زیر توست.",
+  "tutorial.coach.lost": "برگرد تا آموزش را ادامه دهی.",
   "tutorial.dodge.hint": "کنار یک حلقه منتظر سایه‌اش بمان، بعد کنار برو.",
   "tutorial.dodge.hit": "آخ! سایه‌ای که بزرگ می‌شود یعنی: حرکت کن.",
   "tutorial.dodge.how": "روی زمین کلیک چپ کن، یا با {keys} راه برو.",
@@ -1567,6 +1564,7 @@ export default {
   "tutorial.menu.arena.signup":
     "بیلدهای تیمی تو را باز کن، تیمی را که ساختی انتخاب کن و پیشنهادش بده.",
   "tutorial.menu.arena.signupDone": "تیمت را پیشنهاد بده",
+  "tutorial.menu.arena.signupTimeout": "زمان تمام شد، پس لابی برایت تیمی انتخاب کرد.",
   "tutorial.menu.arena.size":
     "اندازهٔ تیم را روی 2v2 بگذار. فقط تیم‌های هم‌اندازه با هم روبه‌رو می‌شوند.",
   "tutorial.menu.arena.sizeDone": "2v2 را انتخاب کن",
@@ -1620,6 +1618,7 @@ export default {
   "tutorial.menu.team.fillDone": "تیم را کامل کن",
   "tutorial.menu.team.members":
     "یک تیم همیشه به اندازهٔ خودش عضو دارد. هرگز عضوی اضافه نمی‌کنی: یکی را جایگزین می‌کنی.",
+  "tutorial.menu.team.memberBack": "این بیلد همان عضو است. بازگشت را بزن تا به تیمت برگردی.",
   "tutorial.menu.team.new": "اندازهٔ تیم را روی 2v2 بگذار، بعد یک بیلد تیمی جدید بساز.",
   "tutorial.menu.team.newDone": "یک تیم دونفره شروع کن",
   "tutorial.menu.team.open": "«تیم‌ها» را باز کن، جایی که بیلدهای تیمی‌ات هستند.",

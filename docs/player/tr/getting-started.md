@@ -75,7 +75,7 @@ Rastgele Arena'da kalırsın ve bu arada istediğin yere gidebilirsin,
 dizilimlerine, ekipmanına, Ayarlar'a, Yardım'a ya da müzik editörüne;
 ama karakter değiştiremez, lobi kuramaz ya da bir lobiye katılamaz,
 bir modun takım boyutunu değiştiremezsin. Takım Arenası ve diğer lobi
-ekranları sırada olduğunu söyler ve haritalarını listeler; takım boyutu
+ekranları sırada olduğunu söyler; takım boyutu
 her modda sıraya girdiğin boyutu gösterir. Üst çubukta **Yardım**'ın
 solunda dönen bir halka sırada olduğunu gösterir; sırayı, beklenen
 süreyi, kaç kişinin aradığını ve **Sıradan çık**'ı görmek için ona

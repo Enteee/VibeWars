@@ -69,6 +69,21 @@ Estas teclas son fijas:
   clic izquierdo selecciona y ataca a la vez; un clic con la rueda marca o
   señala. El nombre al que daría el clic se resalta.
 
+## Táctil
+
+En un móvil o una tableta, en una partida y en el campo de entrenamiento:
+
+- **Toca** el suelo para caminar hasta allí.
+- **Toca** un enemigo, un aliado, una bandera, la base de bandera, una palanca
+  o un muro agrietado para seleccionarlo; un toque sobre un personaje nunca
+  camina. Toca de nuevo el mismo enemigo, rápido, para atacarlo. Un toque
+  justo al lado de un personaje lo encuentra igualmente. Un toque sobre ti
+  camina hasta ese punto, o selecciona la base de bandera o la palanca en la
+  que estás.
+- **Arrastra** un dedo para mirar alrededor; suéltalo y la vista vuelve a ti
+  deslizándose. **Pellizca** para hacer zoom.
+- **Toca** una habilidad de la barra para usarla sobre tu objetivo.
+
 ## La barra superior
 
 Fuera de una partida, la barra superior tiene **[?]** (esta Ayuda), **⚙**
@@ -79,7 +94,7 @@ botones, menos Sala, están arriba a la derecha de la pantalla. En una ventana
 estrecha, estos iconos y los demás botones de la pantalla se pliegan en
 **⋯**; solo su botón principal se queda fuera. ⚙ abre Opciones como una
 ventana bajo la barra, con la pantalla aún detrás; Esc, × o un clic fuera la
-cierran. En **Pantalla**, **Iluminación** enciende o apaga la luz y la sombra de un mapa iluminado, al instante, incluso en una partida. [?] abre la Ayuda igual, como una
+cierran. [?] abre la Ayuda igual, como una
 ventana bajo él con un selector de página arriba; la partida sigue detrás. La
 Ayuda se cierra con su ×, Esc, un clic fuera u otra pulsación de [?].
 

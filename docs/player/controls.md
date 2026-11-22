@@ -66,6 +66,20 @@ These keys are fixed:
   once; a wheel click calls or pings. The name a click would hit is
   highlighted.
 
+## Touch
+
+On a phone or a tablet, in a match and in the Training Ground:
+
+- **Tap** the ground to walk there.
+- **Tap** a foe, an ally, a flag, the flag stand, a lever or a cracked
+  wall to target it; a tap on a character never walks. Tap the same foe
+  again, quickly, to attack it. A tap just beside a character still finds
+  it. A tap on yourself walks to that spot, or targets the flag stand or
+  lever you stand on.
+- **Drag** one finger to look around; let go and the view glides back to
+  you. **Pinch** to zoom.
+- **Tap** a skill on the bar to use it on your target.
+
 ## The top bar
 
 Outside a match, the top bar holds **[?]** (this Help), **⚙** (Options),
@@ -73,7 +87,7 @@ Outside a match, the top bar holds **[?]** (this Help), **⚙** (Options),
 **♪** (music: what plays, and how loud), the sound mute and fullscreen. In a match the same buttons,
 but Lobby, sit at the top right of the screen. In a narrow window, these icons and
 the screen's other buttons fold into **⋯**; only its main button stays out.
-⚙ opens Options as a window under the bar, the screen still behind it; Esc, × or a click outside closes it. Under **Display**, **Lighting** turns a lit map's light and shade on or off, at once, even in a match.
+⚙ opens Options as a window under the bar, the screen still behind it; Esc, × or a click outside closes it.
 [?] opens Help the same way, as a window under it with a page picker on top; a match keeps running behind it.
 Help closes with its ×, Esc, a click outside, or another press of [?].
 

@@ -69,6 +69,20 @@ Bu tuşlar sabittir:
   olsa, yalnızca hedef alır; sol tık hedef alır ve hemen saldırır; teker
   tıkı bildirir ya da işaretler. Bir tıkın isabet edeceği ad vurgulanır.
 
+## Dokunmatik
+
+Telefonda veya tablette, maçta ve eğitim alanında:
+
+- Oraya yürümek için yere **dokun**.
+- Hedef almak için bir düşmana, müttefike, bayrağa, bayrak direğine, bir
+  kola ya da çatlak bir duvara **dokun**; bir karaktere dokunmak hiçbir zaman
+  yürütmez. Saldırmak için aynı düşmana hızlıca tekrar dokun. Bir karakterin
+  hemen yanına dokunmak da onu bulur. Kendine dokunmak o noktaya yürütür ya
+  da üzerinde durduğun bayrak direğini veya kolu hedef alır.
+- Etrafına bakmak için tek parmakla **sürükle**; bırakınca görünüm sana
+  doğru kayarak döner. Yakınlaştırmak için **parmaklarını sıkıştır**.
+- Hedefinde kullanmak için çubuktaki bir yeteneğe **dokun**.
+
 ## Üst çubuk
 
 Maç dışında üst çubukta **[?]** (bu Yardım), **⚙** (Ayarlar), **Lobi**
@@ -78,9 +92,7 @@ yüksek), ses kapatma ve tam ekran bulunur. Maçta, Lobi dışındaki aynı
 düğmeler ekranın sağ üstündedir. Dar bir pencerede bu simgeler ve
 ekranın diğer düğmeleri **⋯** içine katlanır; yalnızca ana düğmesi
 dışarıda kalır. ⚙, Ayarlar'ı çubuğun altında bir pencere olarak açar,
-ekran arkasında kalır; Esc, × ya da dışarıya bir tık onu kapatır.
-**görüntü** altında **Aydınlatma**, ışıklı bir haritanın ışığını ve
-gölgesini hemen, maçta bile açar ya da kapatır. [?] da Yardım'ı aynı
+ekran arkasında kalır; Esc, × ya da dışarıya bir tık onu kapatır. [?] da Yardım'ı aynı
 şekilde, altında, en üstte sayfa seçicisi olan bir pencere olarak açar; maç
 arkasında sürer. Yardım kendi × düğmesiyle, Esc ile, dışarıya bir tıkla ya
 da [?]'e yeniden basarak kapanır.

@@ -280,8 +280,8 @@ test("a ranked 1v1 ends in a receipt both players published, which holds (#3680)
     await makeCharacter(alice);
     await bob.goto("./");
     await queue1v1(alice, "Alice");
-    // Said before the first queue: a match of strangers is ranked, and public.
-    await expect(alice.locator(".queue-ranked-note")).toContainText("ranked");
+    // The rules are Help's Ranking page (#3787): no note says them here.
+    await expect(alice.locator(".queue-ranked-note")).toHaveCount(0);
     await queue1v1(bob, "Bob");
     for (const page of [alice, bob]) {
       await expect(page.locator(".hud-bar-health .hud-bar-label")).toContainText("hp", {
@@ -488,8 +488,8 @@ test("queued, Team Arena stays browsable with no Find a match, and the flyout's 
   const size = page.locator(".mode-rail-size");
   await expect(size).toHaveAttribute("title", "Leave the queue to change the team size");
   await expect(size).toContainText("1v1");
-  // Its maps, to look at: a list, nothing to pick.
-  await expect(screen.locator(".screen-queued-maps li").first()).toBeVisible();
+  // Only that line: no list of maps (#3788), nothing to pick.
+  await expect(screen.locator(".screen-queued-maps")).toHaveCount(0);
   await expect(screen.locator("select")).toHaveCount(0);
 
   const flyout = await queueWindow(page);

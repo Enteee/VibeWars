@@ -67,6 +67,20 @@ Dessa tangenter är fasta:
   vänsterklick väljer mål och attackerar på en gång; ett hjulklick
   utpekar eller pingar. Namnet som ett klick skulle träffa är markerat.
 
+## Touch
+
+På en telefon eller surfplatta, i en match och på träningsplatsen:
+
+- **Tryck** på marken för att gå dit.
+- **Tryck** på en fiende, en allierad, en flagga, flaggstället, en spak eller
+  en sprucken mur för att välja den som mål; ett tryck på en karaktär går
+  aldrig. Tryck snabbt på samma fiende igen för att attackera den. Ett tryck
+  strax bredvid en karaktär hittar den ändå. Ett tryck på dig själv går till
+  den platsen, eller väljer det flaggställe eller den spak du står på.
+- **Dra** med ett finger för att se dig omkring; släpp, så glider vyn
+  tillbaka till dig. **Nyp** för att zooma.
+- **Tryck** på en förmåga i fältet för att använda den på ditt mål.
+
 ## Den övre raden
 
 Utanför en match innehåller den övre raden **[?]** (den här Hjälpen), **⚙** (Alternativ),
@@ -74,7 +88,7 @@ Utanför en match innehåller den övre raden **[?]** (den här Hjälpen), **⚙
 **♪** (musik: vad som spelas, och hur högt), ljudavstängning och helskärm. I en match sitter samma knappar,
 utom Lobby, uppe till höger på skärmen. I ett smalt fönster viks de här ikonerna och
 skärmens andra knappar in i **⋯**; bara dess huvudknapp står kvar utanför.
-⚙ öppnar Alternativ som ett fönster under raden, med skärmen kvar bakom; Esc, × eller ett klick utanför stänger det. Under **Visning** slår **Belysning** på eller av ljus och skugga på en upplyst karta, direkt, även i en match.
+⚙ öppnar Alternativ som ett fönster under raden, med skärmen kvar bakom; Esc, × eller ett klick utanför stänger det.
 [?] öppnar Hjälp på samma sätt, som ett fönster under den med en sidväljare överst; en match fortsätter bakom.
 Hjälp stängs med fönstrets ×, Esc, ett klick utanför, eller ett nytt tryck på [?].
 

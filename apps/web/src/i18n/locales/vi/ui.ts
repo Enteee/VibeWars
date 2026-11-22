@@ -61,6 +61,7 @@ export default {
 
   "buildEditor.addWeapon": "Thêm vũ khí",
   "buildEditor.armor": "Giáp",
+  "buildEditor.back": "Quay lại",
   "buildEditor.bothHandsFull": "cả hai tay đã bận",
   "buildEditor.budgetSegment": { other: "{attribute}: {count} điểm" },
   "buildEditor.cancel": "Hủy",
@@ -827,12 +828,10 @@ export default {
 
   "options.controls": "điều khiển",
   "options.cosmetics": "trang trí",
-  "options.display": "hiển thị",
   "options.label": "Tùy chọn",
   "options.language": "ngôn ngữ",
   "options.languageBusy": "Hãy rời sảnh hoặc trận trước: đổi ngôn ngữ sẽ tải lại trang.",
   "options.languageLabel": "Ngôn ngữ",
-  "options.lightingLabel": "Ánh sáng",
   "options.player": "người chơi",
   "options.relay": "relay (TURN)",
   "options.sections": "mục tùy chọn",
@@ -944,8 +943,6 @@ export default {
   "queue.randomArena": "Đấu trường ngẫu nhiên {size}",
   "queue.rankedCancelled": "Trận xếp hạng bị hủy: một người chơi không xác nhận.",
   "queue.rankedConfirming": "Đang xác nhận trận xếp hạng…",
-  "queue.rankedNote":
-    "Không có bot là trận xếp hạng: kết quả được công bố kèm khóa và tên nhân vật của bạn. Có bot trong trận thì không xếp hạng.",
   "queue.rankedPending": "Điểm của bạn cập nhật trong vòng một giờ.",
   "queue.rankedPublished": "Đã công bố kết quả xếp hạng.",
   "queue.searchingCount": "{searching} đang tìm · cần {needed}",
@@ -1310,7 +1307,6 @@ export default {
   "teamPlay.noTeamBuilds": "Chưa có Build đội {size}.",
   "teamPlay.notPlayable": "Không chơi được: {problem}",
   "teamPlay.openingLobby": "Đang mở sảnh của bạn…",
-  "teamPlay.queuedMaps": "Bản đồ của chế độ này",
   "teamPlay.random": "Random",
   "teamPlay.reroll": "Đổi khác",
   "teamPlay.unnamedTeam": "Đội chưa đặt tên",
@@ -1455,6 +1451,7 @@ export default {
   "tutorial.climb.praise": "Hai tầng, một chỗ. Giờ bạn đã biết đọc địa hình.",
   "tutorial.climb.tip": "Mẹo: Alt+nhấp chọn mặt đất dưới gờ đá.",
   "tutorial.climb.under": "Giữ Alt rồi nhấp. Vòng nét đứt ở bên dưới bạn.",
+  "tutorial.coach.lost": "Quay lại để tiếp tục hướng dẫn.",
   "tutorial.dodge.hint": "Đợi cạnh một vòng tròn đến khi bóng của nó hiện ra, rồi bước ra.",
   "tutorial.dodge.hit": "Ối! Bóng lớn dần nghĩa là: di chuyển.",
   "tutorial.dodge.how": "Nhấp chuột trái xuống đất, hoặc đi bằng {keys}.",
@@ -1480,6 +1477,7 @@ export default {
   "tutorial.menu.arena.queueDone": "Vào hàng chờ",
   "tutorial.menu.arena.signup": "Mở Build đội của bạn, chọn đội bạn đã tạo rồi đề xuất nó.",
   "tutorial.menu.arena.signupDone": "Đề xuất đội của bạn",
+  "tutorial.menu.arena.signupTimeout": "Hết giờ, nên phòng chờ đã chọn một đội cho bạn.",
   "tutorial.menu.arena.size": "Đặt cỡ đội là 2v2. Chỉ những đội cùng cỡ mới gặp nhau.",
   "tutorial.menu.arena.sizeDone": "Chọn 2v2",
   "tutorial.menu.arena.title": "Chứng tỏ đội của bạn trong một trận 2v2 ở Đấu trường đội.",
@@ -1530,6 +1528,8 @@ export default {
   "tutorial.menu.team.fillDone": "Lấp đầy đội",
   "tutorial.menu.team.members":
     "Một đội luôn có số thành viên bằng cỡ đội. Bạn không bao giờ thêm thành viên: bạn thay một người.",
+  "tutorial.menu.team.memberBack":
+    "Đây là bản dựng của thành viên đó. Nhấn Quay lại để trở về đội của bạn.",
   "tutorial.menu.team.new": "Đặt cỡ đội là 2v2, rồi tạo build đội mới.",
   "tutorial.menu.team.newDone": "Lập đội 2 người",
   "tutorial.menu.team.open": "Mở Đội, nơi có các build đội của bạn.",

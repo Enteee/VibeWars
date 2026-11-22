@@ -62,6 +62,7 @@ export default {
 
   "buildEditor.addWeapon": "Lisää ase",
   "buildEditor.armor": "Panssari",
+  "buildEditor.back": "Takaisin",
   "buildEditor.bothHandsFull": "molemmat kädet täynnä",
   "buildEditor.budgetSegment": {
     one: "{attribute}: {count} piste",
@@ -886,13 +887,11 @@ export default {
 
   "options.controls": "ohjaus",
   "options.cosmetics": "kosmetiikka",
-  "options.display": "näyttö",
   "options.label": "Asetukset",
   "options.language": "kieli",
   "options.languageBusy":
     "Poistu ensin aulasta tai ottelusta: kielen vaihto lataa sivun uudelleen.",
   "options.languageLabel": "Kieli",
-  "options.lightingLabel": "Valaistus",
   "options.player": "pelaaja",
   "options.relay": "relay (TURN)",
   "options.sections": "asetusosiot",
@@ -1007,8 +1006,6 @@ export default {
   "queue.randomArena": "Satunnaisareena {size}",
   "queue.rankedCancelled": "Rankattu ottelu peruttu: pelaaja ei vahvistanut.",
   "queue.rankedConfirming": "Vahvistetaan rankattua ottelua…",
-  "queue.rankedNote":
-    "Ilman botteja ottelu on rankattu: tulos julkaistaan avaimesi ja hahmosi nimen kanssa. Botti ottelussa pitää sen rankkaamattomana.",
   "queue.rankedPending": "Luokituksesi päivittyy tunnin sisällä.",
   "queue.rankedPublished": "Rankattu tulos julkaistu.",
   "queue.searchingCount": "{searching} etsii · {needed} tarvitaan",
@@ -1406,7 +1403,6 @@ export default {
   "teamPlay.noTeamBuilds": "Ei vielä {size} pelaajan tiimibuildeja.",
   "teamPlay.notPlayable": "Ei pelattava: {problem}",
   "teamPlay.openingLobby": "Avataan aulaasi…",
-  "teamPlay.queuedMaps": "Tämän tilan kartat",
   "teamPlay.random": "Arvottu",
   "teamPlay.reroll": "Arvo uusi",
   "teamPlay.unnamedTeam": "Nimetön tiimi",
@@ -1558,6 +1554,7 @@ export default {
   "tutorial.climb.praise": "Kaksi kerrosta, yksi kohta. Nyt osaat lukea maastoa.",
   "tutorial.climb.tip": "Vinkki: Alt+napsautus valitsee maan reunan alta.",
   "tutorial.climb.under": "Pidä Alt pohjassa ja napsauta. Katkoviivarengas on allasi.",
+  "tutorial.coach.lost": "Palaa takaisin jatkaaksesi opastusta.",
   "tutorial.dodge.hint": "Odota renkaan luona sen varjoa ja astu sitten pois.",
   "tutorial.dodge.hit": "Auts! Kasvava varjo tarkoittaa: liiku.",
   "tutorial.dodge.how": "Napsauta maata vasemmalla, tai kävele näppäimillä {keys}.",
@@ -1583,6 +1580,7 @@ export default {
   "tutorial.menu.arena.queueDone": "Liity jonoon",
   "tutorial.menu.arena.signup": "Avaa Omat tiimibuildit, valitse tekemäsi tiimi ja ehdota sitä.",
   "tutorial.menu.arena.signupDone": "Ehdota tiimiäsi",
+  "tutorial.menu.arena.signupTimeout": "Aika loppui, joten aula valitsi joukkueen puolestasi.",
   "tutorial.menu.arena.size":
     "Aseta tiimin kooksi 2v2. Vastakkain joutuvat vain samankokoiset tiimit.",
   "tutorial.menu.arena.sizeDone": "Valitse 2v2",
@@ -1636,6 +1634,8 @@ export default {
   "tutorial.menu.team.fillDone": "Täytä tiimi",
   "tutorial.menu.team.members":
     "Tiimissä on aina yhtä monta jäsentä kuin sen koko. Et koskaan lisää jäsentä: vaihdat yhden.",
+  "tutorial.menu.team.memberBack":
+    "Tämä on sen jäsenen build. Palaa joukkueeseesi painamalla Takaisin.",
   "tutorial.menu.team.new": "Aseta tiimin kooksi 2v2 ja tee sitten uusi tiimibuildi.",
   "tutorial.menu.team.newDone": "Aloita 2 hengen tiimi",
   "tutorial.menu.team.open": "Avaa Tiimit, jossa tiimibuildisi ovat.",

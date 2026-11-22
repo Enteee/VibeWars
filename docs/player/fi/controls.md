@@ -71,6 +71,21 @@ Nämä näppäimet ovat kiinteitä:
   napsautus kohdistaa ja hyökkää heti; rullan napsautus ilmoittaa tai
   merkitsee. Nimi, johon napsautus osuisi, on korostettu.
 
+## Kosketus
+
+Puhelimella tai tabletilla, ottelussa ja harjoituskentällä:
+
+- **Napauta** maata kävelläksesi sinne.
+- **Napauta** vihollista, liittolaista, lippua, lipputelinettä, vipua tai
+  halkeillutta muuria kohdistaaksesi siihen; hahmon napautus ei koskaan
+  kävele. Napauta samaa vihollista uudelleen, nopeasti, hyökätäksesi sen
+  kimppuun. Napautus aivan hahmon vierestä löytää sen silti. Napautus itseesi
+  kävelee sille kohdalle tai kohdistaa lipputelineeseen tai vipuun, jonka
+  päällä seisot.
+- **Vedä** yhdellä sormella katsoaksesi ympärillesi; päästä irti, ja näkymä
+  liukuu takaisin luoksesi. **Nipistä** zoomataksesi.
+- **Napauta** palkin taitoa käyttääksesi sitä kohteeseesi.
+
 ## Yläpalkki
 
 Ottelun ulkopuolella yläpalkissa ovat **[?]** (tämä Ohje), **⚙** (Asetukset),
@@ -78,7 +93,7 @@ Ottelun ulkopuolella yläpalkissa ovat **[?]** (tämä Ohje), **⚙** (Asetukset
 **♪** (musiikki: mitä soi ja kuinka kovaa), äänen mykistys ja koko näyttö. Ottelussa samat painikkeet
 Aulaa lukuun ottamatta ovat näytön oikeassa yläkulmassa. Kapeassa ikkunassa nämä kuvakkeet ja
 näkymän muut painikkeet taittuvat **⋯**-valikkoon; vain sen pääpainike jää näkyviin.
-⚙ avaa Asetukset ikkunana palkin alle, näkymä yhä sen takana; Esc, × tai napsautus ikkunan ulkopuolelle sulkee sen. Kohdassa **näyttö** **Valaistus** kytkee valaistun kartan valon ja varjot päälle tai pois, heti, myös ottelussa.
+⚙ avaa Asetukset ikkunana palkin alle, näkymä yhä sen takana; Esc, × tai napsautus ikkunan ulkopuolelle sulkee sen.
 [?] avaa Ohjeen samalla tavalla, ikkunana sen alle, ylimpänä sivuvalitsin; ottelu jatkuu sen takana.
 Ohje sulkeutuu sen ×:llä, Escillä, napsautuksella ikkunan ulkopuolelle tai painamalla [?] uudelleen.
 

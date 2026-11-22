@@ -69,6 +69,21 @@ Estas teclas são fixas:
   esquerdo mira e ataca de uma vez; um clique na roda anuncia ou marca. O
   nome que o clique atingiria fica destacado.
 
+## Toque
+
+Em um celular ou tablet, em uma partida e no campo de treino:
+
+- **Toque** no chão para andar até lá.
+- **Toque** em um inimigo, aliado, bandeira, no suporte da bandeira, em uma
+  alavanca ou em uma parede rachada para mirar nela; um toque em um
+  personagem nunca anda. Toque de novo no mesmo inimigo, rápido, para
+  atacá-lo. Um toque logo ao lado de um personagem ainda o encontra. Um toque
+  em você mesmo anda até aquele ponto, ou mira o suporte da bandeira ou a
+  alavanca em que você está.
+- **Arraste** um dedo para olhar ao redor; solte e a visão desliza de volta
+  para você. **Pince** para dar zoom.
+- **Toque** em uma habilidade da barra para usá-la no seu alvo.
+
 ## A barra superior
 
 Fora de uma partida, a barra superior tem **[?]** (esta Ajuda), **⚙** (Opções),
@@ -76,7 +91,7 @@ Fora de uma partida, a barra superior tem **[?]** (esta Ajuda), **⚙** (Opçõe
 **♪** (música: o que toca e em que volume), o mudo do som e a tela cheia. Em uma partida, os mesmos botões,
 menos Sala, ficam no canto superior direito da tela. Em uma janela estreita, esses ícones e
 os outros botões da tela se recolhem em **⋯**; só o botão principal fica de fora.
-⚙ abre as Opções como uma janela sob a barra, com a tela ainda atrás; Esc, × ou um clique fora a fecha. Em **Tela**, **Iluminação** liga ou desliga a luz e a sombra de um mapa iluminado, na hora, até numa partida.
+⚙ abre as Opções como uma janela sob a barra, com a tela ainda atrás; Esc, × ou um clique fora a fecha.
 [?] abre a Ajuda do mesmo jeito, como uma janela abaixo dele com um seletor de página no topo; uma partida continua rodando atrás.
 A Ajuda fecha com o seu ×, com Esc, com um clique fora ou pressionando [?] de novo.
 

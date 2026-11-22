@@ -61,6 +61,7 @@ export default {
 
   "buildEditor.addWeapon": "Добави оръжие",
   "buildEditor.armor": "Броня",
+  "buildEditor.back": "Назад",
   "buildEditor.bothHandsFull": "и двете ръце са заети",
   "buildEditor.budgetSegment": {
     one: "{attribute}: {count} точка",
@@ -878,12 +879,10 @@ export default {
 
   "options.controls": "управление",
   "options.cosmetics": "козметика",
-  "options.display": "дисплей",
   "options.label": "Настройки",
   "options.language": "език",
   "options.languageBusy": "Първо напусни лобито или мача: смяната на езика презарежда страницата.",
   "options.languageLabel": "Език",
-  "options.lightingLabel": "Осветление",
   "options.player": "играч",
   "options.relay": "реле (TURN)",
   "options.sections": "раздели с настройки",
@@ -998,8 +997,6 @@ export default {
   "queue.randomArena": "Случайна арена {size}",
   "queue.rankedCancelled": "Класираният мач е отменен: играч не потвърди.",
   "queue.rankedConfirming": "Потвърждаване на класиран мач…",
-  "queue.rankedNote":
-    "Без ботове мачът е класиран: резултатът се публикува с твоя ключ и името на героя ти. Бот в мача го оставя некласиран.",
   "queue.rankedPending": "Рейтингът ти се обновява до час.",
   "queue.rankedPublished": "Класираният резултат е публикуван.",
   "queue.searchingCount": "{searching} търсят · нужни {needed}",
@@ -1395,7 +1392,6 @@ export default {
   "teamPlay.noTeamBuilds": "Още няма отборни билдове за {size}.",
   "teamPlay.notPlayable": "Не може да се играе: {problem}",
   "teamPlay.openingLobby": "Отваряме лобито ти…",
-  "teamPlay.queuedMaps": "Карти в този режим",
   "teamPlay.random": "Случаен",
   "teamPlay.reroll": "Нов избор",
   "teamPlay.unnamedTeam": "Отбор без име",
@@ -1548,6 +1544,7 @@ export default {
   "tutorial.climb.praise": "Два слоя, едно място. Вече четеш терена.",
   "tutorial.climb.tip": "Съвет: Alt+клик избира земята под ръба.",
   "tutorial.climb.under": "Задръж Alt и кликни. Пунктирният кръг е под теб.",
+  "tutorial.coach.lost": "Върни се, за да продължиш обучението.",
   "tutorial.dodge.hint": "Изчакай до кръг да се появи сянката му, после се отмести.",
   "tutorial.dodge.hit": "Ох! Растяща сянка значи: мръдни.",
   "tutorial.dodge.how": "Кликни с левия бутон по земята или върви с {keys}.",
@@ -1574,6 +1571,7 @@ export default {
   "tutorial.menu.arena.signup":
     "Отвори Твоите отборни билдове, избери отбора, който направи, и го предложи.",
   "tutorial.menu.arena.signupDone": "Предложи отбора си",
+  "tutorial.menu.arena.signupTimeout": "Времето изтече, затова лобито избра отбор вместо теб.",
   "tutorial.menu.arena.size": "Задай размер на отбора 2v2. Срещат се само отбори с еднакъв размер.",
   "tutorial.menu.arena.sizeDone": "Избери 2v2",
   "tutorial.menu.arena.title": "Докажи отбора си в мач 2v2 на Отборна арена.",
@@ -1625,6 +1623,8 @@ export default {
   "tutorial.menu.team.fillDone": "Попълни отбора",
   "tutorial.menu.team.members":
     "Отборът винаги има толкова членове, колкото е размерът му. Никога не добавяш член: заменяш един.",
+  "tutorial.menu.team.memberBack":
+    "Това е билдът на този член. Натисни Назад, за да се върнеш към отбора си.",
   "tutorial.menu.team.new": "Задай размер на отбора 2v2, после направи нов отборен билд.",
   "tutorial.menu.team.newDone": "Започни отбор от 2",
   "tutorial.menu.team.open": "Отвори „Отбори“, където са отборните ти билдове.",

@@ -44,9 +44,23 @@ Tyto klávesy jsou pevné:
 - Kliknutím na dovednost na liště ji použiješ, kliknutím na jméno v okně skupiny zaměříš daného spojence.
 - Podrž **Ukázat jména** (Shift) a zobrazí se všechna jména, u každého hráče s jeho pečetí před jménem: malým štítem, který je u stejného hráče vždy stejný, a svou najdeš v **Možnosti › Hráč**. Během držení funguje kliknutí na jméno postavy jako kliknutí na její tělo. Kliknutí pravým jen zaměřuje, i dvojité; kliknutí levým zaměří a rovnou zaútočí; kliknutí kolečkem nahlásí nebo označí. Jméno, které by kliknutí zasáhlo, je zvýrazněné.
 
+## Dotyk
+
+Na telefonu nebo tabletu, v zápase i na cvičišti:
+
+- **Klepnutím** na zem tam dojdeš.
+- **Klepnutím** na nepřítele, spojence, vlajku, stojan vlajky, páku nebo
+  popraskanou zeď je zaměříš; klepnutí na postavu nikdy nechodí. Dalším
+  rychlým klepnutím na stejného nepřítele na něj zaútočíš. Klepnutí těsně
+  vedle postavy ji stále najde. Klepnutí na sebe tě dovede na to místo nebo
+  zaměří stojan vlajky či páku, na které stojíš.
+- **Tažením** jedním prstem se rozhlížíš; po puštění se pohled plynule vrátí
+  k tobě. **Sevřením** prstů přibližuješ.
+- **Klepnutím** na dovednost na liště ji použiješ na svůj cíl.
+
 ## Horní lišta
 
-Mimo zápas je v horní liště **[?]** (tato Nápověda), **⚙** (Možnosti), **Lobby** (tvůj odkaz na pozvánku, Připojit se k lobby, Otevřeno/Zavřeno, Opustit a kdo je v tvojí lobby; její odznak je počítá), **♪** (hudba: co hraje a jak hlasitě), ztlumení zvuku a celá obrazovka. V zápase jsou tatáž tlačítka, kromě Lobby, vpravo nahoře na obrazovce. V úzkém okně se tyto ikony a ostatní tlačítka obrazovky složí do **⋯**; venku zůstane jen její hlavní tlačítko. ⚙ otevře Možnosti jako okno pod lištou, s obrazovkou stále za ním; zavře ho Esc, × nebo kliknutí mimo. V části **Zobrazení** zapne nebo vypne **Osvětlení** světlo a stín osvětlené mapy, hned, i v zápase. [?] otevře Nápovědu stejně, jako okno pod ním s výběrem stránky nahoře; zápas za ním běží dál. Nápověda se zavírá svým křížkem ×, Esc, kliknutím mimo nebo dalším stisknutím [?].
+Mimo zápas je v horní liště **[?]** (tato Nápověda), **⚙** (Možnosti), **Lobby** (tvůj odkaz na pozvánku, Připojit se k lobby, Otevřeno/Zavřeno, Opustit a kdo je v tvojí lobby; její odznak je počítá), **♪** (hudba: co hraje a jak hlasitě), ztlumení zvuku a celá obrazovka. V zápase jsou tatáž tlačítka, kromě Lobby, vpravo nahoře na obrazovce. V úzkém okně se tyto ikony a ostatní tlačítka obrazovky složí do **⋯**; venku zůstane jen její hlavní tlačítko. ⚙ otevře Možnosti jako okno pod lištou, s obrazovkou stále za ním; zavře ho Esc, × nebo kliknutí mimo. [?] otevře Nápovědu stejně, jako okno pod ním s výběrem stránky nahoře; zápas za ním běží dál. Nápověda se zavírá svým křížkem ×, Esc, kliknutím mimo nebo dalším stisknutím [?].
 
 **Sdílej beat se svou lobby.** V editoru beatů (♪, pak **Upravit**) pošle **Sdílet s lobby** to, co jsi napsal, ať uložené, nebo ne, všem ostatním v lobby, kterou jsi hostoval nebo ke které ses připojil odkazem (nikdy v té, kterou našla fronta; nejvýše 8 KB, jedno sdílení za deset sekund). Uvidí odznak na ♪ a v jeho okně pod **Sdíleno s tebou** řádek za každého hráče, "Ann · Ember Deep", s **Přehrát**. Nic nehraje, dokud nestiskneš Přehrát, a jen mimo zápas; **Zpět na moji hudbu** vrátí tvoji. Sdílený beat se nikdy neuloží: zmizí, když opustíš lobby nebo znovu načteš stránku.
 

@@ -48,7 +48,7 @@ glimpsed. The only way on is the trail; station 5's wall shuts the full width un
 | 7   | bad ground (6300, 2800): mire centre, molten strip west, clear way east                             | `mire`, `molten`                | none                                         |
 | 8   | rat pocket (4700, 2100): bay for 3 rats                                                             | open ground                     | none                                         |
 | 9   | ledge L1 (3100, 2100): 620×180 on the north wall                                                    | static height structure (#3067) | none                                         |
-| 11  | tunnel (1900, 700): 720 long, mouths at 1580 and 2300, guard on top                                 | tunnel layer (#3070 cave)       | **sleeping guard prop** (grey body, "zz")    |
+| 11  | tunnel (1900, 700): 720 long, mouths at 1580 and 2300, guard on top                                 | tunnel layer (#3070 cave)       | **sleeping guard prop** (foe disc, "zz")     |
 | 12  | open patch (3300, 700): two rats                                                                    | open ground                     | none                                         |
 | 13  | two-arm junction (4400, 700): a rock island splits the trail, arms rejoin at `site-13r` (5650, 700) | map data                        | **parasol and deck chair** prop for the joke |
 | 14  | canyon mouth (6800, 700), exit at x = 7100                                                          | edge / exit                     | mist gate (below)                            |

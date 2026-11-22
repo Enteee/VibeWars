@@ -297,11 +297,6 @@ export function lobbyPanel(
     // A guest's word on a team-mode screen: matchmaking is the host's.
     panel.appendChild(h("div", "screen-info lobby-waiting", t("lobby.hostStartsMatchmaking")));
   }
-  if (matchmaking?.queuedMs === null) {
-    // A party without bots plays ranked (ADR-0055): said before it queues.
-    panel.appendChild(h("p", "queue-ranked-note", t("queue.rankedNote")));
-  }
-
   // Everyone sees it, not only the host: a guest who is the one being
   // waited for should know. Nobody waits on Ready for matchmaking.
   const waiting = matchmaking === undefined ? waitingFor(snapshot) : undefined;

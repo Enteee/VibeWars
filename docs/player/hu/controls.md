@@ -72,6 +72,20 @@ Ezek a billentyűk rögzítettek:
   támad; a görgőkattintás bemond vagy jelez. Az a név, amelyet a
   kattintás eltalálna, kiemelve látszik.
 
+## Érintés
+
+Telefonon vagy tableten, meccsen és a gyakorlótéren:
+
+- **Koppints** a talajra, hogy odasétálj.
+- **Koppints** egy ellenségre, szövetségesre, zászlóra, a zászlótartóra,
+  karra vagy repedt falra, hogy célba vedd; egy karakterre koppintva soha nem
+  sétálsz. Koppints gyorsan ugyanarra az ellenségre újra, hogy megtámadd.
+  A karakter mellé koppintva is megtalálod. Magadra koppintva arra a pontra
+  sétálsz, vagy célba veszed a zászlótartót vagy a kart, amelyen állsz.
+- **Húzd** egy ujjal, hogy körülnézz; engedd el, és a nézet visszacsúszik
+  hozzád. **Csíptess** a nagyításhoz.
+- **Koppints** egy képességre a sávon, hogy a célpontodon használd.
+
 ## A felső sáv
 
 Meccsen kívül a felső sávon van a **[?]** (ez a Súgó), a **⚙** (Opciók),
@@ -79,7 +93,7 @@ a **Lobbi** (a meghívó linked, Belépés lobbiba, Nyitva/Zárva, Kilép, és h
 a **♪** (zene: mi szól, és milyen hangosan), a hangnémítás és a teljes képernyő. Meccsen ugyanezek a gombok,
 a Lobbi kivételével, a képernyő jobb felső sarkában ülnek. Keskeny ablakban ezek az ikonok és
 a képernyő többi gombja a **⋯** mögé csukódik; csak a fő gomb marad kint.
-A ⚙ az Opciókat ablakként nyitja meg a sáv alatt, a képernyővel mögötte; az Esc, a × vagy egy kívülre kattintás bezárja. A **megjelenítés** részben a **Világítás** be- vagy kikapcsolja egy megvilágított pálya fényeit és árnyékait, azonnal, akár meccs közben is.
+A ⚙ az Opciókat ablakként nyitja meg a sáv alatt, a képernyővel mögötte; az Esc, a × vagy egy kívülre kattintás bezárja.
 A [?] ugyanígy nyitja meg a Súgót, alatta lévő ablakként, felül oldalválasztóval; a meccs mögötte tovább fut.
 A Súgó a saját ×-ével, az Esc-kel, egy kívülre kattintással vagy a [?] újabb megnyomásával zárul be.
 

@@ -24,6 +24,7 @@ import {
   pingCall,
   primaryClickIntents,
   secondaryClickIntents,
+  tapIntents,
 } from "../input/mouse-intents.js";
 import { attachKeyboardMoveInput } from "../input/keyboard-move.js";
 import { loadLayoutLabeller, type KeyLabeller } from "../input/key-labels.js";
@@ -1099,6 +1100,11 @@ export function createTrainingPanel(): TrainingPanel {
       if (stage.dataset.positions !== positions) {
         stage.dataset.positions = positions;
       }
+      // And whom you target (#3781): the stage has no target frame.
+      const target = self?.targetSessionId ?? "";
+      if (stage.dataset.target !== target) {
+        stage.dataset.target = target;
+      }
       paintVitals(latestMatch);
       sinceMeterPaint += deltaSeconds;
       if (sinceMeterPaint >= METER_PAINT_SECONDS) {
@@ -1122,6 +1128,26 @@ export function createTrainingPanel(): TrainingPanel {
       );
       for (const intent of intents) {
         session.connection.sendIntent(intent);
+      }
+    });
+    // A finger as in a match (#3781); the tap that takes control only takes it.
+    follow.onTap((world, slop) => {
+      if (session === undefined || !armedBeforeClick) {
+        return;
+      }
+      const intents = tapIntents(
+        session.connection.getSnapshot(),
+        latestArena,
+        world,
+        doubleClick,
+        performance.now(),
+        slop,
+      );
+      for (const intent of intents) {
+        session.connection.sendIntent(intent);
+        if (intent.kind === "walk-to") {
+          created.scene.showWalkMarker(world);
+        }
       }
     });
     offPointer = created.onButton(({ button, phase, world, altKey }) => {

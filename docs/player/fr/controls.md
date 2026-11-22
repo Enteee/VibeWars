@@ -69,6 +69,21 @@ Ces touches sont fixes :
   ; un clic molette annonce ou signale. Le nom qu'un clic toucherait est mis
   en évidence.
 
+## Tactile
+
+Sur un téléphone ou une tablette, en match et sur le terrain d'entraînement :
+
+- **Touche** le sol pour y marcher.
+- **Touche** un ennemi, un allié, un drapeau, le Socle du drapeau, un levier
+  ou un mur fissuré pour le cibler ; une touche sur un personnage ne fait
+  jamais marcher. Touche à nouveau le même ennemi, rapidement, pour
+  l'attaquer. Une touche juste à côté d'un personnage le trouve quand même.
+  Une touche sur toi-même fait marcher jusqu'à cet endroit, ou cible le
+  socle du drapeau ou le levier sur lequel tu te tiens.
+- **Fais glisser** un doigt pour regarder autour de toi ; relâche et la vue
+  revient vers toi en douceur. **Pince** pour zoomer.
+- **Touche** une compétence de la barre pour l'utiliser sur ta cible.
+
 ## La barre du haut
 
 Hors match, la barre du haut contient **[?]** (cette Aide), **⚙** (Options),
@@ -78,7 +93,7 @@ volume), la coupure du son et le plein écran. En match, les mêmes boutons,
 sauf Salon, sont en haut à droite de l'écran. Dans une fenêtre étroite, ces
 icônes et les autres boutons de l'écran se replient dans **⋯** ; seul son
 bouton principal reste visible. ⚙ ouvre les Options dans une fenêtre sous la
-barre, l'écran restant derrière ; Esc, × ou un clic à l'extérieur la ferme. Sous **Affichage**, **Éclairage** active ou coupe la lumière et l'ombre d'une carte éclairée, aussitôt, même en match.
+barre, l'écran restant derrière ; Esc, × ou un clic à l'extérieur la ferme.
 [?] ouvre l'Aide de la même façon, dans une fenêtre sous lui avec un sélecteur de page en haut ; un match continue derrière.
 L'Aide se ferme avec son ×, Esc, un clic à l'extérieur, ou un nouvel appui sur [?].
 

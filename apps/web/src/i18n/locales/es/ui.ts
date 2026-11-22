@@ -62,6 +62,7 @@ export default {
 
   "buildEditor.addWeapon": "Añadir arma",
   "buildEditor.armor": "Armadura",
+  "buildEditor.back": "Atrás",
   "buildEditor.bothHandsFull": "ambas manos ocupadas",
   "buildEditor.budgetSegment": {
     one: "{attribute}: {count} punto",
@@ -934,12 +935,10 @@ export default {
 
   "options.controls": "controles",
   "options.cosmetics": "cosméticos",
-  "options.display": "pantalla",
   "options.label": "Opciones",
   "options.language": "idioma",
   "options.languageBusy": "Sal antes de la sala o la partida: cambiar el idioma recarga la página.",
   "options.languageLabel": "Idioma",
-  "options.lightingLabel": "Iluminación",
   "options.player": "jugador",
   "options.relay": "relay (TURN)",
   "options.sections": "secciones de opciones",
@@ -1060,8 +1059,6 @@ export default {
   "queue.randomArena": "Arena aleatoria {size}",
   "queue.rankedCancelled": "Partida clasificatoria cancelada: un jugador no confirmó.",
   "queue.rankedConfirming": "Confirmando partida clasificatoria…",
-  "queue.rankedNote":
-    "Sin bots es clasificatoria: el resultado se publica con tu clave y el nombre de tu personaje. Un bot en la partida la deja sin clasificar.",
   "queue.rankedPending": "Tu puntuación se actualiza en menos de una hora.",
   "queue.rankedPublished": "Resultado clasificatorio publicado.",
   "queue.searchingCount": "{searching} buscando · faltan {needed}",
@@ -1479,7 +1476,6 @@ export default {
   "teamPlay.noTeamBuilds": "Aún no hay builds de equipo de {size}.",
   "teamPlay.notPlayable": "No jugable: {problem}",
   "teamPlay.openingLobby": "Abriendo tu sala…",
-  "teamPlay.queuedMaps": "Mapas de este modo",
   "teamPlay.random": "Aleatorio",
   "teamPlay.reroll": "Cambiar",
   "teamPlay.unnamedTeam": "Equipo sin nombre",
@@ -1634,6 +1630,7 @@ export default {
   "tutorial.climb.praise": "Dos niveles, un mismo sitio. Ya sabes leer el terreno.",
   "tutorial.climb.tip": "Consejo: Alt+clic elige el suelo bajo una cornisa.",
   "tutorial.climb.under": "Mantén Alt y haz clic. El anillo discontinuo está debajo de ti.",
+  "tutorial.coach.lost": "Vuelve atrás para seguir con el tutorial.",
   "tutorial.dodge.hint": "Espera junto a un anillo a que aparezca su sombra y apártate.",
   "tutorial.dodge.hit": "¡Ay! Una sombra que crece significa: muévete.",
   "tutorial.dodge.how": "Haz clic izquierdo en el suelo o camina con {keys}.",
@@ -1660,6 +1657,8 @@ export default {
   "tutorial.menu.arena.signup":
     "Abre Tus builds de equipo, elige el equipo que creaste y propónlo.",
   "tutorial.menu.arena.signupDone": "Propón tu equipo",
+  "tutorial.menu.arena.signupTimeout":
+    "Se acabó el tiempo, así que la sala eligió un equipo por ti.",
   "tutorial.menu.arena.size":
     "Pon el tamaño del equipo en 2v2. Solo se enfrentan equipos del mismo tamaño.",
   "tutorial.menu.arena.sizeDone": "Elige 2v2",
@@ -1715,6 +1714,8 @@ export default {
   "tutorial.menu.team.fillDone": "Completa el equipo",
   "tutorial.menu.team.members":
     "Un equipo siempre tiene tantos miembros como su tamaño. Nunca añades un miembro: reemplazas uno.",
+  "tutorial.menu.team.memberBack":
+    "Esta es la build de ese miembro. Pulsa Atrás para volver a tu equipo.",
   "tutorial.menu.team.new": "Pon el tamaño del equipo en 2v2 y luego crea una nueva build.",
   "tutorial.menu.team.newDone": "Empieza un equipo de 2",
   "tutorial.menu.team.open": "Abre Equipos, donde están las builds de tus equipos.",

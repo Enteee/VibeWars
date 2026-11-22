@@ -71,6 +71,20 @@ Các phím sau là cố định:
   chỉ nhắm, kể cả khi nhấn hai lần; chuột trái nhắm và tấn công cùng lúc; nhấn
   con lăn để gọi hoặc ping. Cái tên mà cú nhấn sẽ trúng được làm nổi bật.
 
+## Cảm ứng
+
+Trên điện thoại hoặc máy tính bảng, trong trận và ở sân tập:
+
+- **Chạm** vào mặt đất để đi tới đó.
+- **Chạm** vào một kẻ địch, đồng minh, lá cờ, bệ cờ, cần gạt hoặc bức tường nứt
+  để nhắm nó; chạm vào một nhân vật không bao giờ khiến bạn đi. Chạm lại vào
+  cùng kẻ địch đó, thật nhanh, để tấn công nó. Chạm ngay cạnh một nhân vật vẫn
+  tìm ra nhân vật đó. Chạm vào chính mình sẽ đi tới điểm đó, hoặc nhắm bệ cờ
+  hay cần gạt bạn đang đứng.
+- **Kéo** một ngón tay để nhìn quanh; thả ra và góc nhìn trượt về lại phía bạn.
+  **Chụm** hai ngón để thu phóng.
+- **Chạm** vào một kỹ năng trên thanh để dùng nó lên mục tiêu của bạn.
+
 ## Thanh trên cùng
 
 Ngoài trận, thanh trên cùng chứa **[?]** (trang Hỗ trợ này), **⚙** (Tùy
@@ -80,9 +94,7 @@ phát, và to bao nhiêu), nút tắt âm thanh và toàn màn hình. Trong tr�
 các nút đó, trừ Sảnh, nằm ở góc trên bên phải màn hình. Trong cửa sổ hẹp, các
 biểu tượng này và các nút khác của màn hình được gộp vào **⋯**; chỉ nút chính
 của nó còn ở ngoài. ⚙ mở Tùy chọn thành một cửa sổ dưới thanh, màn hình vẫn
-ở phía sau; Esc, × hoặc nhấn ra ngoài sẽ đóng nó. Trong **Hiển thị**, **Ánh
-sáng** bật hoặc tắt ánh sáng và bóng đổ của bản đồ có chiếu sáng, ngay lập
-tức, kể cả trong trận. [?] mở Hỗ trợ theo cùng
+ở phía sau; Esc, × hoặc nhấn ra ngoài sẽ đóng nó. [?] mở Hỗ trợ theo cùng
 cách, thành một cửa sổ dưới nó với bộ chọn trang ở trên cùng; trận vẫn tiếp
 diễn phía sau. Hỗ trợ đóng bằng dấu × của nó, Esc, nhấn ra ngoài, hoặc nhấn
 [?] lần nữa.

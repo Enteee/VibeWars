@@ -16,7 +16,7 @@ import {
 } from "./atmosphere.js";
 
 const view = { x: 0, y: 0, width: 1200, height: 800 };
-const lit = { on: true, reducedMotion: false };
+const lit = { reducedMotion: false };
 const plume = (index: number, kind: "smoke" | "steam" = "steam") => ({
   id: `vent-${String(index)}`,
   layer: 0,
@@ -53,19 +53,9 @@ describe("atmosphere particles (#3032)", () => {
     expect(particles.particles.some((particle) => particle.kind === "smoke")).toBe(true);
   });
 
-  it("makes nothing with lighting off, and drops what it had when it goes off", () => {
-    const particles = new AtmosphereParticles(atmosphere());
-    run(particles, 60, { on: false, reducedMotion: false });
-    expect(particles.particles).toHaveLength(0);
-    run(particles, 60);
-    expect(particles.particles.length).toBeGreaterThan(0);
-    run(particles, 1, { on: false, reducedMotion: false });
-    expect(particles.particles).toHaveLength(0);
-  });
-
   it("makes no particle under reduced motion", () => {
     const particles = new AtmosphereParticles(atmosphere());
-    run(particles, 120, { on: true, reducedMotion: true });
+    run(particles, 120, { reducedMotion: true });
     expect(particles.particles).toHaveLength(0);
   });
 
@@ -194,7 +184,7 @@ describe("an Ascent act's embers, motes and shafts (#3589)", () => {
       // Embers rise from the lava; motes hang and drift, never falling fast.
       expect(made.every((each) => (rises ? each.vy < 0 : Math.abs(each.vy) < 10))).toBe(true);
       const still = new AtmosphereParticles(air);
-      run(still, 120, { on: true, reducedMotion: true });
+      run(still, 120, { reducedMotion: true });
       expect(still.particles).toHaveLength(0);
     });
 

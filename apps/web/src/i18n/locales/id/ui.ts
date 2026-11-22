@@ -61,6 +61,7 @@ export default {
 
   "buildEditor.addWeapon": "Tambah senjata",
   "buildEditor.armor": "Armor",
+  "buildEditor.back": "Kembali",
   "buildEditor.bothHandsFull": "kedua tangan penuh",
   "buildEditor.budgetSegment": { other: "{attribute}: {count} poin" },
   "buildEditor.cancel": "Batal",
@@ -832,13 +833,11 @@ export default {
 
   "options.controls": "kontrol",
   "options.cosmetics": "kosmetik",
-  "options.display": "tampilan",
   "options.label": "Opsi",
   "options.language": "bahasa",
   "options.languageBusy":
     "Keluar dari lobi atau pertandingan dulu: ganti bahasa memuat ulang halaman.",
   "options.languageLabel": "Bahasa",
-  "options.lightingLabel": "Pencahayaan",
   "options.player": "pemain",
   "options.relay": "relay (TURN)",
   "options.sections": "bagian opsi",
@@ -950,8 +949,6 @@ export default {
   "queue.randomArena": "Arena Acak {size}",
   "queue.rankedCancelled": "Pertandingan peringkat dibatalkan: seorang pemain tidak mengonfirmasi.",
   "queue.rankedConfirming": "Mengonfirmasi pertandingan peringkat…",
-  "queue.rankedNote":
-    "Tanpa bot berarti peringkat: hasilnya dipublikasikan dengan kunci dan nama karaktermu. Bot dalam pertandingan membuatnya tanpa peringkat.",
   "queue.rankedPending": "Peringkatmu diperbarui dalam satu jam.",
   "queue.rankedPublished": "Hasil peringkat dipublikasikan.",
   "queue.searchingCount": "{searching} mencari · butuh {needed}",
@@ -1324,7 +1321,6 @@ export default {
   "teamPlay.noTeamBuilds": "Belum ada Build Tim {size}.",
   "teamPlay.notPlayable": "Tidak bisa dimainkan: {problem}",
   "teamPlay.openingLobby": "Membuka lobimu…",
-  "teamPlay.queuedMaps": "Peta di mode ini",
   "teamPlay.random": "Acak",
   "teamPlay.reroll": "Acak lagi",
   "teamPlay.unnamedTeam": "Tim tanpa nama",
@@ -1470,6 +1466,7 @@ export default {
   "tutorial.climb.praise": "Dua lapisan, satu titik. Sekarang kamu bisa membaca medan.",
   "tutorial.climb.tip": "Tips: Alt+klik memilih tanah di bawah tepian.",
   "tutorial.climb.under": "Tahan Alt lalu klik. Lingkaran putus-putus ada di bawahmu.",
+  "tutorial.coach.lost": "Kembali untuk melanjutkan tutorial.",
   "tutorial.dodge.hint": "Tunggu di dekat lingkaran sampai bayangannya muncul, lalu menyingkir.",
   "tutorial.dodge.hit": "Aduh! Bayangan yang membesar artinya: bergerak.",
   "tutorial.dodge.how": "Klik kiri tanah, atau berjalan dengan {keys}.",
@@ -1495,6 +1492,7 @@ export default {
   "tutorial.menu.arena.queueDone": "Masuk antrean",
   "tutorial.menu.arena.signup": "Buka Build Timmu, pilih tim yang kamu buat, lalu usulkan.",
   "tutorial.menu.arena.signupDone": "Usulkan timmu",
+  "tutorial.menu.arena.signupTimeout": "Waktu habis, jadi lobi memilihkan tim untukmu.",
   "tutorial.menu.arena.size":
     "Atur ukuran tim ke 2v2. Hanya tim dengan ukuran sama yang dipertemukan.",
   "tutorial.menu.arena.sizeDone": "Pilih 2v2",
@@ -1548,6 +1546,7 @@ export default {
   "tutorial.menu.team.fillDone": "Lengkapi tim",
   "tutorial.menu.team.members":
     "Tim selalu punya anggota sebanyak ukurannya. Kamu tidak pernah menambah anggota: kamu menggantinya.",
+  "tutorial.menu.team.memberBack": "Ini build anggota itu. Tekan Kembali untuk kembali ke timmu.",
   "tutorial.menu.team.new": "Atur ukuran tim ke 2v2, lalu buat build tim baru.",
   "tutorial.menu.team.newDone": "Mulai tim berisi 2",
   "tutorial.menu.team.open": "Buka Tim, tempat build timmu berada.",

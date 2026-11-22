@@ -66,6 +66,20 @@ Disse taster er faste:
   gang; et hjulklik udpeger eller pinger. Det navn, et klik ville ramme,
   fremhæves.
 
+## Touch
+
+På en telefon eller en tablet, i en kamp og på træningsbanen:
+
+- **Tryk** på jorden for at gå derhen.
+- **Tryk** på en fjende, en allieret, et flag, flagstanden, et håndtag eller
+  en revnet mur for at vælge det som mål; et tryk på en karakter går aldrig.
+  Tryk hurtigt på den samme fjende igen for at angribe den. Et tryk lige
+  ved siden af en karakter finder den stadig. Et tryk på dig selv går til
+  det sted eller vælger den flagstand eller det håndtag, du står på.
+- **Træk** med én finger for at se dig omkring; slip, og billedet glider
+  tilbage til dig. **Knib** for at zoome.
+- **Tryk** på en evne på bjælken for at bruge den på dit mål.
+
 ## Topbjælken
 
 Uden for en kamp rummer topbjælken **[?]** (denne Hjælp), **⚙** (Valg),
@@ -73,7 +87,7 @@ Uden for en kamp rummer topbjælken **[?]** (denne Hjælp), **⚙** (Valg),
 **♪** (musik: hvad der spiller, og hvor højt), lyd fra og fuld skærm. I en kamp sidder de samme knapper,
 undtagen Lobby, øverst til højre på skærmen. I et smalt vindue foldes disse ikoner og
 skærmens andre knapper ind i **⋯**; kun dens hovedknap bliver ude.
-⚙ åbner Valg som et vindue under bjælken, med skærmen stadig bagved; Esc, × eller et klik udenfor lukker det. Under **Visning** slår **Belysning** en oplyst banes lys og skygge til eller fra, med det samme, også i en kamp.
+⚙ åbner Valg som et vindue under bjælken, med skærmen stadig bagved; Esc, × eller et klik udenfor lukker det.
 [?] åbner Hjælp på samme måde, som et vindue under den med en sidevælger øverst; en kamp kører videre bagved.
 Hjælp lukkes med vinduets ×, Esc, et klik udenfor eller endnu et tryk på [?].
 

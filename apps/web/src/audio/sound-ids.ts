@@ -9,7 +9,6 @@
  * skill type's `cast-motif-*`, pitched per skill.
  */
 export const SOUND_IDS = [
-  "cast-target",
   "hit-dealt",
   "hit-taken",
   "heal",

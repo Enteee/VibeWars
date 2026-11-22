@@ -771,7 +771,7 @@ describe("LightingPass", () => {
     const TORCH = { ...light("torch", 0, 0), colour: 0xffb060 };
     const LIT: MapLighting = { ...BASE, lights: [TORCH] };
 
-    it("lift a pool past the lighting-off tone, and no further than the cap", () => {
+    it("lift a pool past the unlit tone, and no further than the cap", () => {
       const glow = tunnelGlow(TORCH.intensity);
       expect(glow).toBeGreaterThan(0);
       expect(glow).toBeLessThanOrEqual(TUNNEL_GLOW_CAP);

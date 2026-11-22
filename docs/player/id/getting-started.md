@@ -74,7 +74,7 @@ tim lain, di peta acak. Antrean menunggu di latar belakang: kamu
 tetap di Arena Acak dan boleh ke mana saja sementara itu, ke build-mu,
 perlengkapan, Opsi, Bantuan atau editor musik, tapi tidak bisa ganti karakter,
 menjadi host atau bergabung ke lobi, atau mengubah ukuran tim suatu mode. Arena Tim dan
-layar lobi lainnya menyatakan bahwa kamu sedang mengantre dan menampilkan peta-petanya; ukuran tim menunjukkan
+layar lobi lainnya menyatakan bahwa kamu sedang mengantre; ukuran tim menunjukkan
 ukuran yang kamu antrekan, di setiap mode. Cincin berputar di kiri **Info** di bilah atas
 menandakan kamu sedang mengantre; klik untuk melihat antrean, waktu tunggu, berapa banyak
 yang sedang mencari dan **Keluar Antrean**. Begitu lawan ditemukan, kamu dibawa

@@ -497,12 +497,4 @@ Over chipsene viser **Heltenes Hal**-striben de seneste 20 besiddelser, nyeste f
 
 ## Rangeret
 
-En kamp fra køen uden bots er rangeret. Køskærmen og hold-lobbyen siger det, før du stiller dig i kø; én bot holder en kamp urangeret. Når en rangeret kamp er fundet, underskriver hver spiller dens start, og skærmen viser **Bekræfter rangeret kamp…** i op til 15 sekunder. Hvis nogen ikke bekræfter, aflyses kampen, og alle er tilbage i køen. Til sidst underskriver hver spiller resultatet, og kampens kvittering offentliggøres på Nostr-relæerne med hver spillers offentlige nøgle og figurnavn; en spiller uden figur står som starter. Din rating ændres inden for en time. At forlade en rangeret kamp tæller som et nederlag, og forlad-knappen siger det.
-
-Rangerede køer parrer spillere med lignende rating og deler dem i hold med lignende gennemsnitsrating. Søgningen starter inden for 100 point af din rating og udvides med 10 point for hvert sekund, du venter, op til 600, så ingen venter for evigt. Mens du venter, viser køen din rating.
-
-Dine første 10 ratede kampe er foreløbige: køen siger **Foreløbig (3/10 kampe)**, og du har endnu ingen placering. Derefter viser hovedmenuen din placering. Ratings forfalder: hver dag uden en rated kamp gør din mindre sikker, og ranglisten sorterer efter en forsigtig værdi, så hvis du holder op med at spille, synker din placering inden for uger.
-
-Når ranglisten har 20 etablerede spillere, tæller en rangeret kamp kun, hvis mindst én spiller i den er etableret (10 eller flere ratede kampe): en kamp kun mellem nye spillere er ikke ratet. Spil mod en etableret spiller, så tæller dine kampe.
-
-Knappen **Rangliste** i topbjælken viser top 100 med placering, navn og rating, med din egen række fremhævet. Den opdateres hver time.
+En kamp fra køen uden bots er rangeret: se [Rangering](ranking.md).

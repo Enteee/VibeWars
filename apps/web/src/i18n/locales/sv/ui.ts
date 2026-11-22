@@ -61,6 +61,7 @@ export default {
 
   "buildEditor.addWeapon": "Lägg till vapen",
   "buildEditor.armor": "Rustning",
+  "buildEditor.back": "Tillbaka",
   "buildEditor.bothHandsFull": "båda händerna upptagna",
   "buildEditor.budgetSegment": {
     one: "{attribute}: {count} poäng",
@@ -875,12 +876,10 @@ export default {
 
   "options.controls": "kontroller",
   "options.cosmetics": "kosmetik",
-  "options.display": "visning",
   "options.label": "Alternativ",
   "options.language": "språk",
   "options.languageBusy": "Lämna lobbyn eller matchen först: språkbyte laddar om sidan.",
   "options.languageLabel": "Språk",
-  "options.lightingLabel": "Belysning",
   "options.player": "spelare",
   "options.relay": "relä (TURN)",
   "options.sections": "alternativsektioner",
@@ -995,8 +994,6 @@ export default {
   "queue.randomArena": "Slumparena {size}",
   "queue.rankedCancelled": "Rankad match avbruten: en spelare bekräftade inte.",
   "queue.rankedConfirming": "Bekräftar rankad match…",
-  "queue.rankedNote":
-    "Inga botar betyder rankad: resultatet publiceras med din nyckel och ditt figurnamn. En bot i matchen håller den orankad.",
   "queue.rankedPending": "Din rating uppdateras inom en timme.",
   "queue.rankedPublished": "Rankat resultat publicerat.",
   "queue.searchingCount": "{searching} söker · {needed} behövs",
@@ -1389,7 +1386,6 @@ export default {
   "teamPlay.noTeamBuilds": "Inga lagbuilds för {size} än.",
   "teamPlay.notPlayable": "Går inte att spela: {problem}",
   "teamPlay.openingLobby": "Öppnar din lobby…",
-  "teamPlay.queuedMaps": "Kartor i det här läget",
   "teamPlay.random": "Slump",
   "teamPlay.reroll": "Slumpa",
   "teamPlay.unnamedTeam": "Namnlöst lag",
@@ -1541,6 +1537,7 @@ export default {
   "tutorial.climb.praise": "Två lager, en plats. Nu kan du läsa terrängen.",
   "tutorial.climb.tip": "Tips: Alt+klick väljer marken under en avsats.",
   "tutorial.climb.under": "Håll ner Alt och klicka. Den streckade ringen ligger under dig.",
+  "tutorial.coach.lost": "Gå tillbaka för att fortsätta guiden.",
   "tutorial.dodge.hint": "Vänta vid en ring på dess skugga, och kliv sedan undan.",
   "tutorial.dodge.hit": "Aj! En växande skugga betyder: flytta dig.",
   "tutorial.dodge.how": "Vänsterklicka på marken, eller gå med {keys}.",
@@ -1566,6 +1563,7 @@ export default {
   "tutorial.menu.arena.queueDone": "Ställ dig i kön",
   "tutorial.menu.arena.signup": "Öppna Dina lagbuilds, välj laget du gjorde och föreslå det.",
   "tutorial.menu.arena.signupDone": "Föreslå ditt lag",
+  "tutorial.menu.arena.signupTimeout": "Tiden tog slut, så lobbyn valde ett lag åt dig.",
   "tutorial.menu.arena.size": "Sätt lagstorleken till 2v2. Bara lag av samma storlek möts.",
   "tutorial.menu.arena.sizeDone": "Välj 2v2",
   "tutorial.menu.arena.title": "Visa vad ditt lag går för i en 2v2-match på Lagarena.",
@@ -1617,6 +1615,8 @@ export default {
   "tutorial.menu.team.fillDone": "Fyll laget",
   "tutorial.menu.team.members":
     "Ett lag har alltid lika många medlemmar som sin storlek. Du lägger aldrig till en medlem: du byter ut en.",
+  "tutorial.menu.team.memberBack":
+    "Det här är den medlemmens build. Tryck Tillbaka för att återvända till ditt lag.",
   "tutorial.menu.team.new": "Sätt lagstorleken till 2v2 och skapa sedan en ny lagbuild.",
   "tutorial.menu.team.newDone": "Starta ett lag på 2",
   "tutorial.menu.team.open": "Öppna Lag, där dina lagbuilds finns.",

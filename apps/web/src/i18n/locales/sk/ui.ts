@@ -62,6 +62,7 @@ export default {
 
   "buildEditor.addWeapon": "Pridať zbraň",
   "buildEditor.armor": "Brnenie",
+  "buildEditor.back": "Späť",
   "buildEditor.bothHandsFull": "obe ruky plné",
   "buildEditor.budgetSegment": {
     one: "{attribute}: {count} bod",
@@ -960,12 +961,10 @@ export default {
 
   "options.controls": "ovládanie",
   "options.cosmetics": "kozmetika",
-  "options.display": "zobrazenie",
   "options.label": "Nastavenia",
   "options.language": "jazyk",
   "options.languageBusy": "Najprv opusti lobby alebo zápas: zmena jazyka znova načíta stránku.",
   "options.languageLabel": "Jazyk",
-  "options.lightingLabel": "Osvetlenie",
   "options.player": "hráč",
   "options.relay": "relé (TURN)",
   "options.sections": "sekcie nastavení",
@@ -1087,8 +1086,6 @@ export default {
   "queue.randomArena": "Náhodná aréna {size}",
   "queue.rankedCancelled": "Hodnotený zápas zrušený: hráč nepotvrdil.",
   "queue.rankedConfirming": "Potvrdzovanie hodnoteného zápasu…",
-  "queue.rankedNote":
-    "Bez botov je zápas hodnotený: výsledok sa zverejní s tvojím kľúčom a menom postavy. Bot v zápase ho nechá nehodnotený.",
   "queue.rankedPending": "Tvoje hodnotenie sa aktualizuje do hodiny.",
   "queue.rankedPublished": "Hodnotený výsledok zverejnený.",
   "queue.searchingCount": "hľadá: {searching} · treba: {needed}",
@@ -1511,7 +1508,6 @@ export default {
   "teamPlay.noTeamBuilds": "Zatiaľ žiadne tímové buildy {size}.",
   "teamPlay.notPlayable": "Nedá sa hrať: {problem}",
   "teamPlay.openingLobby": "Otvára sa tvoje lobby…",
-  "teamPlay.queuedMaps": "Mapy v tomto režime",
   "teamPlay.random": "Náhodný",
   "teamPlay.reroll": "Znova",
   "teamPlay.unnamedTeam": "Tím bez názvu",
@@ -1667,6 +1663,7 @@ export default {
   "tutorial.climb.praise": "Dve vrstvy, jedno miesto. Teraz už terén vieš čítať.",
   "tutorial.climb.tip": "Tip: Alt+klik vyberie zem pod rímsou.",
   "tutorial.climb.under": "Drž Alt a klikni. Prerušovaný kruh je pod tebou.",
+  "tutorial.coach.lost": "Vráť sa späť a pokračuj v návode.",
   "tutorial.dodge.hint": "Počkaj pri kruhu na jeho tieň, potom uhni.",
   "tutorial.dodge.hit": "Au! Rastúci tieň znamená: uhni.",
   "tutorial.dodge.how": "Klikni ľavým tlačidlom na zem, alebo choď pomocou {keys}.",
@@ -1693,6 +1690,7 @@ export default {
   "tutorial.menu.arena.signup":
     "Otvor Tvoje tímové buildy, vyber tím, ktorý si vytvoril, a navrhni ho.",
   "tutorial.menu.arena.signupDone": "Navrhni svoj tím",
+  "tutorial.menu.arena.signupTimeout": "Čas vypršal, takže lobby vybralo tím za teba.",
   "tutorial.menu.arena.size":
     "Nastav veľkosť tímu na 2v2. Proti sebe sa stretávajú len tímy rovnakej veľkosti.",
   "tutorial.menu.arena.sizeDone": "Vyber 2v2",
@@ -1744,6 +1742,8 @@ export default {
   "tutorial.menu.team.fillDone": "Doplň tím",
   "tutorial.menu.team.members":
     "Tím má vždy toľko členov, koľko je jeho veľkosť. Člena nikdy nepridávaš: nahrádzaš ho.",
+  "tutorial.menu.team.memberBack":
+    "Toto je build toho člena. Stlač Späť a vrátiš sa k svojmu tímu.",
   "tutorial.menu.team.new": "Nastav veľkosť tímu na 2v2 a potom vytvor nový tímový build.",
   "tutorial.menu.team.newDone": "Založ tím pre 2",
   "tutorial.menu.team.open": "Otvor Tímy, kde sú tvoje tímové buildy.",

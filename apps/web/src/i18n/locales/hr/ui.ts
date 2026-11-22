@@ -63,6 +63,7 @@ export default {
 
   "buildEditor.addWeapon": "Dodaj oružje",
   "buildEditor.armor": "Oklop",
+  "buildEditor.back": "Natrag",
   "buildEditor.bothHandsFull": "obje ruke su zauzete",
   "buildEditor.budgetSegment": {
     one: "{attribute}: {count} bod",
@@ -927,12 +928,10 @@ export default {
 
   "options.controls": "kontrole",
   "options.cosmetics": "kozmetika",
-  "options.display": "prikaz",
   "options.label": "Opcije",
   "options.language": "jezik",
   "options.languageBusy": "Prvo napusti sobu ili meč: promjena jezika ponovno učitava stranicu.",
   "options.languageLabel": "Jezik",
-  "options.lightingLabel": "Osvjetljenje",
   "options.player": "igrač",
   "options.relay": "relej (TURN)",
   "options.sections": "odjeljci opcija",
@@ -1052,8 +1051,6 @@ export default {
   "queue.randomArena": "Nasumična arena {size}",
   "queue.rankedCancelled": "Rangirani meč otkazan: igrač nije potvrdio.",
   "queue.rankedConfirming": "Potvrđivanje rangiranog meča…",
-  "queue.rankedNote":
-    "Bez botova meč je rangiran: rezultat se objavljuje s tvojim ključem i imenom lika. Bot u meču ostavlja ga nerangiranim.",
   "queue.rankedPending": "Tvoj rejting se ažurira unutar sat vremena.",
   "queue.rankedPublished": "Rangirani rezultat objavljen.",
   "queue.searchingCount": "traži: {searching} · treba: {needed}",
@@ -1465,7 +1462,6 @@ export default {
   "teamPlay.noTeamBuilds": "Još nema timskih sastava za {size}.",
   "teamPlay.notPlayable": "Nije igrivo: {problem}",
   "teamPlay.openingLobby": "Otvaranje tvoje sobe…",
-  "teamPlay.queuedMaps": "Karte u ovom načinu",
   "teamPlay.random": "Nasumično",
   "teamPlay.reroll": "Ponovi",
   "teamPlay.unnamedTeam": "Tim bez imena",
@@ -1618,6 +1614,7 @@ export default {
   "tutorial.climb.praise": "Dva sloja, jedno mjesto. Sad znaš čitati teren.",
   "tutorial.climb.tip": "Savjet: Alt+klik bira tlo ispod izbočine.",
   "tutorial.climb.under": "Drži Alt i klikni. Isprekidani krug je ispod tebe.",
+  "tutorial.coach.lost": "Vrati se natrag za nastavak vodiča.",
   "tutorial.dodge.hint": "Pričekaj kraj kruga njegovu sjenu, pa se makni.",
   "tutorial.dodge.hit": "Joj! Sjena koja raste znači: miči se.",
   "tutorial.dodge.how": "Lijevi klik na tlo, ili hodaj s {keys}.",
@@ -1644,6 +1641,7 @@ export default {
   "tutorial.menu.arena.signup":
     "Otvori Tvoji timski sastavi, odaberi tim koji si napravio i predloži ga.",
   "tutorial.menu.arena.signupDone": "Predloži svoj tim",
+  "tutorial.menu.arena.signupTimeout": "Vrijeme je isteklo, pa je predvorje odabralo tim za tebe.",
   "tutorial.menu.arena.size": "Postavi veličinu tima na 2v2. Sastaju se samo timovi iste veličine.",
   "tutorial.menu.arena.sizeDone": "Odaberi 2v2",
   "tutorial.menu.arena.title": "Dokaži svoj tim u meču 2v2 u Timskoj areni.",
@@ -1695,6 +1693,7 @@ export default {
   "tutorial.menu.team.fillDone": "Popuni tim",
   "tutorial.menu.team.members":
     "Tim uvijek ima onoliko članova kolika mu je veličina. Nikad ne dodaješ člana: zamjenjuješ jednog.",
+  "tutorial.menu.team.memberBack": "Ovo je build tog člana. Pritisni Natrag za povratak svom timu.",
   "tutorial.menu.team.new": "Postavi veličinu tima na 2v2, zatim napravi novi timski sastav.",
   "tutorial.menu.team.newDone": "Započni tim od 2",
   "tutorial.menu.team.open": "Otvori Timove, gdje su tvoji timski sastavi.",

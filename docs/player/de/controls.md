@@ -65,6 +65,21 @@ Diese Tasten sind fest:
   greift sofort an; ein Mausrad-Klick sagt an oder pingt. Der Name, den ein Klick
   treffen würde, ist hervorgehoben.
 
+## Touch
+
+Auf einem Handy oder Tablet, im Match und auf dem Trainingsplatz:
+
+- **Tippe** auf den Boden: Du läufst dorthin.
+- **Tippe** auf einen Gegner, einen Verbündeten, eine Flagge, den
+  Flaggenstand, einen Hebel oder eine rissige Mauer, um sie anzuvisieren; ein
+  Tipp auf einen Charakter läuft nie. Tippe kurz danach noch einmal auf
+  denselben Gegner, um ihn anzugreifen. Ein Tipp knapp neben einen Charakter
+  findet ihn trotzdem. Ein Tipp auf dich selbst läuft an diese Stelle oder
+  visiert den Flaggenstand oder Hebel an, auf dem du stehst.
+- **Ziehe** mit einem Finger, um dich umzusehen; lass los, und die Ansicht
+  gleitet zu dir zurück. **Zoome** mit zwei Fingern auseinander oder zusammen.
+- **Tippe** auf einen Skill in der Leiste, um ihn auf dein Ziel zu wirken.
+
 ## Die obere Leiste
 
 Außerhalb eines Matches liegen oben **[?]** (diese Hilfe), **⚙** (Optionen),
@@ -72,7 +87,7 @@ Außerhalb eines Matches liegen oben **[?]** (diese Hilfe), **⚙** (Optionen),
 **♪** (Musik: was läuft und wie laut), Ton aus und Vollbild. Im Match liegen dieselben Knöpfe,
 außer Lobby, oben rechts am Bildschirm. In einem schmalen Fenster klappen diese Symbole und die
 übrigen Knöpfe des Bildschirms unter **⋯** ein; nur sein Hauptknopf bleibt draußen.
-⚙ öffnet die Optionen als Fenster unter der Leiste, mit dem Bildschirm dahinter; Esc, × oder ein Klick daneben schließt es. Unter **Anzeige** schaltet **Beleuchtung** Licht und Schatten einer beleuchteten Karte ein oder aus, sofort, auch im Match.
+⚙ öffnet die Optionen als Fenster unter der Leiste, mit dem Bildschirm dahinter; Esc, × oder ein Klick daneben schließt es.
 [?] öffnet die Hilfe genauso, als Fenster darunter mit einer Seitenauswahl oben; ein Match läuft dahinter weiter.
 Die Hilfe schließt mit ihrem ×, Esc, einem Klick daneben oder einem weiteren Druck auf [?].
 
