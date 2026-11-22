@@ -260,9 +260,9 @@ export async function playOwnTeams(players: Parameters<typeof enterOwnTeams>[0])
  * particular character: nobody proposes, so each side plays a random
  * preset team. Everyone is ready, then each takes its side's seat `seats[i]`,
  * the first unless said, and is ready again. Resolves once each page's
- * HUD shows the player.
+ * HUD shows the player, held in its spawn until the match starts (#3818).
  */
-export async function playHouseTeams(
+export async function enterHouseTeams(
   pages: readonly Page[],
   seats: readonly number[] = [],
 ): Promise<void> {
@@ -279,6 +279,17 @@ export async function playHouseTeams(
   for (const page of pages) {
     await expect(page.locator(".hud-bar-health .hud-bar-label")).toContainText("hp");
   }
+}
+
+/**
+ * `enterHouseTeams`, then the pre-match waited out: resolves once the
+ * match is running on each page.
+ */
+export async function playHouseTeams(
+  pages: readonly Page[],
+  seats: readonly number[] = [],
+): Promise<void> {
+  await enterHouseTeams(pages, seats);
   await waitForMatchStart(pages);
 }
 

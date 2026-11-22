@@ -156,6 +156,7 @@ describe("connectMatch", () => {
           phase: "active",
           winningTeam: null,
           endReason: null,
+          preMatch: null,
           part: 0,
           parts: 1,
           players: [
