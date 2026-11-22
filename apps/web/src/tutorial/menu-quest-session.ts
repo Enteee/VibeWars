@@ -3,13 +3,14 @@ import { t } from "../i18n/index.js";
 import type { CoachOverlay } from "./coach-overlay.js";
 import {
   NO_MENU_QUEST_EVENTS,
+  MEMBER_BACK_BEAT,
   advanceMenuQuest,
   beatTarget,
-  currentBeat,
   foldMenuQuestEvent,
   menuQuestChecklist,
   menuQuestStep,
   resumeMenuQuest,
+  shownBeat,
   type MenuQuestCursor,
   type MenuQuestEvent,
   type MenuQuestStepId,
@@ -68,18 +69,21 @@ export function startMenuQuest(options: MenuQuestOptions): MenuQuestSession {
   let shown = "";
   const show = (): void => {
     const step = menuQuestStep(cursor.step);
-    const beat = currentBeat(cursor);
+    const beat = shownBeat(cursor, state);
     const objectives = menuQuestChecklist(cursor, state);
     const target = beatTarget(beat, state);
-    const view = JSON.stringify([cursor, target, objectives]);
+    const lead = beat.kind === "do" ? beat.lead?.(state) : undefined;
+    const view = JSON.stringify([cursor, beat.line, lead, target, objectives]);
     if (view === shown) {
       return;
     }
     shown = view;
     coach.show({
       title: t(step.title),
-      line: t(beat.line),
+      line: lead === undefined ? t(beat.line) : `${t(lead)} ${t(beat.line)}`,
       target,
+      // The member's build is the player's to edit, Back only pointed at.
+      locked: beat !== MEMBER_BACK_BEAT,
       objectives: objectives.map(({ label, done }) => ({
         label: t(label),
         done,

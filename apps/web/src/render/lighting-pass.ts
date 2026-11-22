@@ -55,7 +55,7 @@ export const OVER_BUDGET_LIMIT = 30;
 /**
  * A light in a tunnel adds a warm pool over the lit floor (#3350), this
  * much of its intensity at the heart, and never more than the cap: the
- * floor's colours lift past their lighting-off tone without clipping to white.
+ * floor's colours lift past their unlit tone without clipping to white.
  */
 export const TUNNEL_GLOW = 0.5;
 export const TUNNEL_GLOW_CAP = 0.3;
@@ -1055,7 +1055,7 @@ export class LightingPass {
   /**
    * The warm pools `lights` add on the tunnels' layer (#3350): black but
    * for each light at `tunnelGlow` of its intensity, drawn adding over
-   * the lit floor, so a torch lifts it past its lighting-off tone. Steady:
+   * the lit floor, so a torch lifts it past its unlit tone. Steady:
    * a pool does not flicker.
    */
   private buildGlow(

@@ -958,6 +958,51 @@ test.describe("the menu quest (#3540)", () => {
     await expect(panel).toContainText("Know where to fight.");
   });
 
+  test("a member's name opens its build, and Back carries on in the team (#3785)", async ({
+    page,
+  }) => {
+    test.setTimeout(180_000);
+    await page.goto(`./?menu-background=${FLAT_MAP}&tutorial-menu=team`);
+    const panel = page.locator(".coach-panel");
+    const bubble = page.locator(".coach-bubble");
+    const target = (id: string): Locator => page.locator(`[data-tutorial~="${id}"]`);
+
+    await target("rail-teams").click();
+    const stepper = page.locator('.mode-rail-stepper[data-tutorial~="team-new"]');
+    const smaller = stepper.getByRole("button", { name: "Smaller team" });
+    while (!(await smaller.isDisabled())) {
+      await smaller.click();
+    }
+    await page.locator(".play-card-new").click();
+    await expect(target("team-members")).toHaveClass(/tutorial-pulse/);
+    await bubble.getByRole("button", { name: "Got it" }).click();
+
+    // The name, as the line invites: its build, with Back pointed at and nothing locked.
+    const name = target("team-member-build").first();
+    await expect(name).toHaveClass(/tutorial-pulse/);
+    await name.click();
+    await expect(bubble).toContainText("This is that member's build.");
+    const back = page.locator('#topbar [data-tutorial~="screen-back"]');
+    await expect(back).toHaveClass(/tutorial-pulse/);
+    await expect(page.locator(".coach-dim")).toBeHidden();
+    await back.click();
+
+    // The team editor again, the name's beat done: on to the problems, then Save.
+    await expect(page.locator(".team-grid")).toBeVisible();
+    await expect(target("team-problems").first()).toHaveClass(/tutorial-pulse/);
+    await bubble.getByRole("button", { name: "Got it" }).click();
+    const rows = page.locator(".team-grid .team-row");
+    const pick = page.locator(".team-pick").first();
+    await expect(panel).toContainText("Put your character in the team");
+    await pick.dragTo(rows.nth(0));
+    await expect(panel).toContainText("Fill the team");
+    await pick.dragTo(rows.nth(1));
+    const save = page.locator('#topbar [data-tutorial~="team-save"]');
+    await expect(save).toHaveClass(/tutorial-pulse/);
+    await save.click();
+    await expect(panel).toContainText("Know where to fight.");
+  });
+
   test("opens and explains the five modes from the rail, locked (#3543)", async ({ page }) => {
     await page.goto(`./?menu-background=${FLAT_MAP}&tutorial-menu=modes`);
     const panel = page.locator(".coach-panel");
@@ -1063,6 +1108,38 @@ test.describe("the menu quest (#3540)", () => {
     await panel.click();
     await expect(page.locator(".coach")).toHaveCount(0);
     await expect(page.locator("#topbar .topbar-queue")).toBeVisible();
+  });
+
+  test("the Team Lobby's vote timer picking the team carries the quest on (#3785)", async ({
+    page,
+  }) => {
+    // The vote's own 30 s run out: no hook shortens it.
+    test.setTimeout(120_000);
+    await page.goto(`./?menu-background=${FLAT_MAP}&tutorial-menu=arena`);
+    const panel = page.locator(".coach-panel");
+    const bubble = page.locator(".coach-bubble");
+    const target = (id: string): Locator => page.locator(`[data-tutorial~="${id}"]`);
+    await target("rail-team-arena").click();
+    const stepper = page.locator('.mode-rail-stepper[data-tutorial~="team-size"]');
+    await expect(stepper).toHaveClass(/tutorial-pulse/);
+    const smaller = stepper.getByRole("button", { name: "Smaller team" });
+    while (!(await smaller.isDisabled())) {
+      await smaller.click();
+    }
+    const find = page.locator("#topbar .lobby-find");
+    await expect(find).toHaveClass(/tutorial-pulse/);
+    await find.click();
+    await expect(page.locator(".team-lobby-stage")).toHaveText("Choose a team build");
+    await expect(target("team-builds").first()).toHaveClass(/tutorial-pulse/);
+
+    // Nobody votes: the timer picks, and the quest says so and goes on.
+    await expect(page.locator(".team-lobby-stage")).toHaveText("Take a character", {
+      timeout: 45_000,
+    });
+    await expect(bubble).toContainText("Time ran out, so the lobby picked a team for you.");
+    await expect(target("team-lobby")).toHaveClass(/tutorial-pulse/);
+    await page.locator(".team-lobby-seat").first().click();
+    await expect(panel).toHaveText(/You're in the queue\. Good luck\./);
   });
 
   test("Skip tutorial, confirmed, ends it for good", async ({ page }) => {

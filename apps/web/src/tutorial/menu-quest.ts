@@ -14,7 +14,12 @@ import { validateTeam } from "../ui/team-builder.js";
  */
 
 /** A screen the quest can point into: a rail screen, the build editor, or a Team Lobby. */
-export type MenuQuestScreen = RailEntry | "character-builder" | "team-lobby";
+/**
+ * `"member-editor"`: a team member's build, opened from its name in the
+ * team editor (#3785); `"team-editor"` that editor, shown again.
+ */
+export type MenuQuestScreen =
+  RailEntry | "character-builder" | "team-editor" | "member-editor" | "team-lobby";
 
 /** Something the menu did that an objective may be waiting for. */
 export type MenuQuestEvent =
@@ -48,6 +53,8 @@ export type MenuQuestEvent =
       /** The Team Builds the Team Lobby offered: the ones the player could pick. */
       readonly offered: readonly string[];
     }
+  /** The Team Lobby left its vote (#3785), whoever or whatever picked the team. */
+  | { readonly kind: "vote-ended" }
   | { readonly kind: "queue-joined"; readonly mode: LobbyMode; readonly size: number };
 
 /**
@@ -82,6 +89,9 @@ export interface MenuQuestState {
   readonly questTeamId: string | undefined;
   readonly teamSize: number | undefined;
   readonly teamPicked: { readonly teamId: string; readonly offered: readonly string[] } | undefined;
+  /** Whether a member's build was ever opened from the team editor (#3785). */
+  readonly memberBuildOpened: boolean;
+  readonly voteEnded: boolean;
   readonly queueJoined: { readonly mode: LobbyMode; readonly size: number } | undefined;
 }
 
@@ -103,12 +113,20 @@ export type MenuTarget = string | ((state: MenuQuestState) => string);
  * target: an explanation the player reads and dismisses, or a thing to do.
  */
 export type MenuBeat =
-  | { readonly kind: "explain"; readonly target: MenuTarget; readonly line: MessageKey }
+  | {
+      readonly kind: "explain";
+      readonly target: MenuTarget;
+      readonly line: MessageKey;
+      /** What also moves it on, Got it unpressed: the player did what it explains (#3785). */
+      readonly passed?: (state: MenuQuestState) => boolean;
+    }
   | {
       readonly kind: "do";
       readonly target: MenuTarget;
       readonly line: MessageKey;
       readonly objectives: readonly Objective[];
+      /** A line said first, for how the beat before it ended (#3785). */
+      readonly lead?: (state: MenuQuestState) => MessageKey | undefined;
     };
 
 export interface MenuQuestStep {
@@ -325,7 +343,13 @@ export const MENU_QUEST_STEPS = [
         ],
       },
       { kind: "explain", target: "team-members", line: "tutorial.menu.team.members" },
-      { kind: "explain", target: "team-member-build", line: "tutorial.menu.team.build" },
+      {
+        kind: "explain",
+        target: "team-member-build",
+        line: "tutorial.menu.team.build",
+        // The line invites the click: the build it opens is the beat done.
+        passed: (state) => state.memberBuildOpened,
+      },
       { kind: "explain", target: "team-problems", line: "tutorial.menu.team.problems" },
       {
         kind: "do",
@@ -413,13 +437,22 @@ export const MENU_QUEST_STEPS = [
         target: "team-builds",
         line: "tutorial.menu.arena.signup",
         objectives: [
-          { id: "pick", label: "tutorial.menu.arena.signupDone", done: questTeamPicked },
+          {
+            id: "pick",
+            label: "tutorial.menu.arena.signupDone",
+            // The vote over is the team picked (#3785), even by its timer.
+            done: (state) => questTeamPicked(state) || state.voteEnded,
+          },
         ],
       },
       {
         kind: "do",
         target: "team-lobby",
         line: "tutorial.menu.arena.queue",
+        lead: (state) =>
+          state.voteEnded && state.teamPicked === undefined
+            ? "tutorial.menu.arena.signupTimeout"
+            : undefined,
         objectives: [
           {
             id: "queue",
@@ -467,6 +500,8 @@ export const NO_MENU_QUEST_EVENTS: MenuQuestState = {
   questTeamId: undefined,
   teamSize: undefined,
   teamPicked: undefined,
+  memberBuildOpened: false,
+  voteEnded: false,
   queueJoined: undefined,
 };
 
@@ -546,6 +581,7 @@ export function foldMenuQuestEvent(state: MenuQuestState, event: MenuQuestEvent)
       return {
         ...state,
         screen: event.screen,
+        memberBuildOpened: state.memberBuildOpened || event.screen === "member-editor",
         screensShown: state.screensShown.includes(event.screen)
           ? state.screensShown
           : [...state.screensShown, event.screen],
@@ -582,6 +618,8 @@ export function foldMenuQuestEvent(state: MenuQuestState, event: MenuQuestEvent)
       return { ...state, teamSize: event.size };
     case "team-picked":
       return { ...state, teamPicked: { teamId: event.teamId, offered: event.offered } };
+    case "vote-ended":
+      return { ...state, voteEnded: true };
     case "queue-joined":
       return { ...state, queueJoined: { mode: event.mode, size: event.size } };
   }
@@ -605,7 +643,7 @@ export function menuQuestChecklist(
   if (checklist !== undefined) {
     return checklist.map(({ label, beat }) => ({ label, done: cursor.beat > beat }));
   }
-  const beat = currentBeat(cursor);
+  const beat = shownBeat(cursor, state);
   return beat.kind === "do"
     ? beat.objectives.map(({ label, done }) => ({ label, done: done(state) }))
     : [];
@@ -619,6 +657,24 @@ export function resumeMenuQuest(step: MenuQuestStepId): MenuQuestCursor {
 /** The `data-tutorial` id `beat` points at, after `state`. */
 export function beatTarget(beat: MenuBeat, state: MenuQuestState): string {
   return typeof beat.target === "string" ? beat.target : beat.target(state);
+}
+
+/**
+ * The beat shown over the team step's while a member's build, opened from
+ * its name, is open (#3785): Back, to the team editor and the beat it was on.
+ */
+export const MEMBER_BACK_BEAT: MenuBeat = {
+  kind: "do",
+  target: "screen-back",
+  line: "tutorial.menu.team.memberBack",
+  objectives: [],
+};
+
+/** The beat the coach shows at `cursor` after `state`: its own, or the member's way back. */
+export function shownBeat(cursor: MenuQuestCursor, state: MenuQuestState): MenuBeat {
+  return cursor.step === "team" && state.screen === "member-editor"
+    ? MEMBER_BACK_BEAT
+    : currentBeat(cursor);
 }
 
 export function currentBeat(cursor: MenuQuestCursor): MenuBeat {
@@ -652,7 +708,9 @@ export function advanceMenuQuest(
   for (;;) {
     const beat = currentBeat(at);
     const passed =
-      beat.kind === "explain" ? pressed : beat.objectives.every(({ done }) => done(state));
+      beat.kind === "explain"
+        ? pressed || beat.passed?.(state) === true
+        : beat.objectives.every(({ done }) => done(state));
     if (!passed) {
       return at;
     }

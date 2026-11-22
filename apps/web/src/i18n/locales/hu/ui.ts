@@ -63,6 +63,7 @@ export default {
 
   "buildEditor.addWeapon": "Fegyver hozzáadása",
   "buildEditor.armor": "Páncél",
+  "buildEditor.back": "Vissza",
   "buildEditor.bothHandsFull": "mindkét kéz foglalt",
   "buildEditor.budgetSegment": {
     one: "{attribute}: {count} pont",
@@ -877,13 +878,11 @@ export default {
 
   "options.controls": "irányítás",
   "options.cosmetics": "kozmetikumok",
-  "options.display": "megjelenítés",
   "options.label": "Opciók",
   "options.language": "nyelv",
   "options.languageBusy":
     "Előbb hagyd el a lobbit vagy a meccset: a nyelvváltás újratölti az oldalt.",
   "options.languageLabel": "Nyelv",
-  "options.lightingLabel": "Világítás",
   "options.player": "játékos",
   "options.relay": "relay (TURN)",
   "options.sections": "opciók szakaszai",
@@ -1550,6 +1549,7 @@ export default {
   "tutorial.climb.praise": "Két szint, egy pont. Most már olvasod a terepet.",
   "tutorial.climb.tip": "Tipp: az Alt+kattintás a párkány alatti talajt választja.",
   "tutorial.climb.under": "Tartsd lenyomva az Altot, és kattints. A szaggatott kör alattad van.",
+  "tutorial.coach.lost": "Lépj vissza, hogy folytasd az oktatót.",
   "tutorial.dodge.hint": "Várd meg egy kör mellett az árnyékát, aztán lépj ki.",
   "tutorial.dodge.hit": "Jaj! A növekvő árnyék azt jelenti: mozdulj.",
   "tutorial.dodge.how": "Kattints a földre bal gombbal, vagy járj ezekkel: {keys}.",
@@ -1576,6 +1576,7 @@ export default {
   "tutorial.menu.arena.signup":
     "Nyisd meg a Csapatbuildjeid fület, válaszd az általad készített csapatot, és javasold.",
   "tutorial.menu.arena.signupDone": "Javasold a csapatod",
+  "tutorial.menu.arena.signupTimeout": "Lejárt az idő, ezért a lobby választott neked csapatot.",
   "tutorial.menu.arena.size":
     "Állítsd a csapatméretet 2v2-re. Csak azonos méretű csapatok kerülnek össze.",
   "tutorial.menu.arena.sizeDone": "Válaszd a 2v2-t",
@@ -1630,6 +1631,8 @@ export default {
   "tutorial.menu.team.fillDone": "Töltsd fel a csapatot",
   "tutorial.menu.team.members":
     "Egy csapatnak mindig annyi tagja van, amekkora a mérete. Tagot sosem adsz hozzá: lecserélsz egyet.",
+  "tutorial.menu.team.memberBack":
+    "Ez annak a tagnak a buildje. A Vissza gombbal visszatérsz a csapatodhoz.",
   "tutorial.menu.team.new": "Állítsd a csapatméretet 2v2-re, majd készíts új csapatbuildet.",
   "tutorial.menu.team.newDone": "Indíts egy 2 fős csapatot",
   "tutorial.menu.team.open": "Nyisd meg a Csapatokat, ahol a csapatbuildjeid vannak.",

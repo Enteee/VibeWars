@@ -62,6 +62,7 @@ export default {
 
   "buildEditor.addWeapon": "Silah ekle",
   "buildEditor.armor": "Zırh",
+  "buildEditor.back": "Geri",
   "buildEditor.bothHandsFull": "iki el de dolu",
   "buildEditor.budgetSegment": {
     one: "{attribute}: {count} puan",
@@ -876,12 +877,10 @@ export default {
 
   "options.controls": "kontroller",
   "options.cosmetics": "kozmetikler",
-  "options.display": "görüntü",
   "options.label": "Ayarlar",
   "options.language": "dil",
   "options.languageBusy": "Önce lobiden ya da maçtan çık: dili değiştirmek sayfayı yeniler.",
   "options.languageLabel": "Dil",
-  "options.lightingLabel": "Aydınlatma",
   "options.player": "oyuncu",
   "options.relay": "relay (TURN)",
   "options.sections": "ayar bölümleri",
@@ -1544,6 +1543,7 @@ export default {
   "tutorial.climb.praise": "İki katman, tek nokta. Artık zemini okuyorsun.",
   "tutorial.climb.tip": "İpucu: Alt+tık, çıkıntının altındaki zemini seçer.",
   "tutorial.climb.under": "Alt'a basılı tut ve tıkla. Kesikli halka altında.",
+  "tutorial.coach.lost": "Eğitime devam etmek için geri dön.",
   "tutorial.dodge.hint": "Bir halkanın yanında gölgesini bekle, sonra kenara çekil.",
   "tutorial.dodge.hit": "Ah! Büyüyen gölge, hareket et demek.",
   "tutorial.dodge.how": "Zemine sol tıkla ya da {keys} ile yürü.",
@@ -1569,6 +1569,7 @@ export default {
   "tutorial.menu.arena.queueDone": "Sıraya gir",
   "tutorial.menu.arena.signup": "Takım Dizilimlerin'i aç, yaptığın takımı seç ve öner.",
   "tutorial.menu.arena.signupDone": "Takımını öner",
+  "tutorial.menu.arena.signupTimeout": "Süre doldu, bu yüzden lobi senin için bir takım seçti.",
   "tutorial.menu.arena.size":
     "Takım boyutunu 2v2 yap. Yalnızca aynı boyuttaki takımlar karşılaşır.",
   "tutorial.menu.arena.sizeDone": "2v2 seç",
@@ -1621,6 +1622,7 @@ export default {
   "tutorial.menu.team.fillDone": "Takımı doldur",
   "tutorial.menu.team.members":
     "Bir takımın her zaman boyutu kadar üyesi olur. Asla üye eklemezsin: birini değiştirirsin.",
+  "tutorial.menu.team.memberBack": "Bu, o üyenin buildi. Takımına dönmek için Geri'ye bas.",
   "tutorial.menu.team.new": "Takım boyutunu 2v2 yap, sonra yeni bir takım dizilimi oluştur.",
   "tutorial.menu.team.newDone": "2 kişilik bir takım başlat",
   "tutorial.menu.team.open": "Takım dizilimlerinin bulunduğu Takımlar'ı aç.",

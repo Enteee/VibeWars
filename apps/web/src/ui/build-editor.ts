@@ -114,6 +114,8 @@ export interface BuildEditorCallbacks {
   readonly onDelete: ((id: string) => void) | undefined;
   readonly onDuplicate: ((character: StoredCharacter) => void) | undefined;
   readonly onClose: () => void;
+  /** A Back in the top bar, leaving as Esc does: only a Team Build's member has one (#3785), to its team. */
+  readonly onBack: (() => void) | undefined;
 }
 
 export function newCharacter(id: string): StoredCharacter {
@@ -1194,8 +1196,19 @@ function mountCommandBar(
     return false;
   };
   // The name is the last crumb: the place is the character (#1272).
+  const { onBack } = callbacks;
   screenBar({
     crumbs: [wordmark("topbar-wordmark"), nameInput],
+    ...(onBack === undefined
+      ? {}
+      : {
+          back: {
+            label: t("buildEditor.back"),
+            onBack: () => {
+              leave(onBack);
+            },
+          },
+        }),
     escape: () => {
       leave(callbacks.onClose);
     },

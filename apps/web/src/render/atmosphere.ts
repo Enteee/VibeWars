@@ -8,7 +8,7 @@ import { seeded } from "./zone-painter.js";
 /**
  * A map's atmosphere (#3032): fog banks, smoke and steam plumes, rain and
  * snow, and an Ascent act's embers, motes and light shafts (#3589). Render only: nothing here reaches the simulation, and none of it
- * hides a body, a name or a ring. Lighting off means none of it; reduced
+ * hides a body, a name or a ring. Reduced
  * motion holds the fog still and lets nothing fall or rise.
  */
 
@@ -54,9 +54,8 @@ export interface ViewRect {
   readonly height: number;
 }
 
-/** Whether atmosphere is drawn at all (Options › Lighting), and whether it may move. */
+/** Whether atmosphere may move. */
 export interface AtmosphereMode {
-  readonly on: boolean;
   readonly reducedMotion: boolean;
 }
 
@@ -105,7 +104,7 @@ export class AtmosphereParticles {
    * downpour never starves a vent of its smoke.
    */
   public step(dt: number, view: ViewRect, mode: AtmosphereMode): void {
-    if (!mode.on || mode.reducedMotion) {
+    if (mode.reducedMotion) {
       this.live.length = 0;
       this.owed.fill(0);
       return;

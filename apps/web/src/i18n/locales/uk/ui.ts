@@ -63,6 +63,7 @@ export default {
 
   "buildEditor.addWeapon": "Додати зброю",
   "buildEditor.armor": "Броня",
+  "buildEditor.back": "Назад",
   "buildEditor.bothHandsFull": "обидві руки зайняті",
   "buildEditor.budgetSegment": {
     one: "{attribute}: {count} очко",
@@ -961,12 +962,10 @@ export default {
 
   "options.controls": "керування",
   "options.cosmetics": "косметика",
-  "options.display": "екран",
   "options.label": "Опції",
   "options.language": "мова",
   "options.languageBusy": "Спершу вийди з лобі чи матчу: зміна мови перезавантажує сторінку.",
   "options.languageLabel": "Мова",
-  "options.lightingLabel": "Освітлення",
   "options.player": "гравець",
   "options.relay": "ретранслятор (TURN)",
   "options.sections": "розділи опцій",
@@ -1670,6 +1669,7 @@ export default {
   "tutorial.climb.praise": "Два рівні, одне місце. Тепер ти читаєш місцевість.",
   "tutorial.climb.tip": "Порада: Alt+клацання обирає землю під виступом.",
   "tutorial.climb.under": "Затисни Alt і клацни. Пунктирне коло — під тобою.",
+  "tutorial.coach.lost": "Повернися назад, щоб продовжити навчання.",
   "tutorial.dodge.hint": "Зачекай біля кола, поки з'явиться його тінь, і відійди.",
   "tutorial.dodge.hit": "Ой! Тінь, що росте, означає: рухайся.",
   "tutorial.dodge.how": "Клацни лівою кнопкою по землі або йди клавішами {keys}.",
@@ -1696,6 +1696,7 @@ export default {
   "tutorial.menu.arena.signup":
     "Відкрий Твої командні білди, вибери створену команду й запропонуй її.",
   "tutorial.menu.arena.signupDone": "Запропонуй свою команду",
+  "tutorial.menu.arena.signupTimeout": "Час вийшов, тож лобі вибрало команду за тебе.",
   "tutorial.menu.arena.size":
     "Встанови розмір команди 2v2. Зустрічаються лише команди однакового розміру.",
   "tutorial.menu.arena.sizeDone": "Вибери 2v2",
@@ -1748,6 +1749,8 @@ export default {
   "tutorial.menu.team.fillDone": "Заповни команду",
   "tutorial.menu.team.members":
     "У команді завжди стільки учасників, який її розмір. Учасника не додають: його замінюють.",
+  "tutorial.menu.team.memberBack":
+    "Це білд цього учасника. Натисни «Назад», щоб повернутися до команди.",
   "tutorial.menu.team.new": "Встанови розмір команди 2v2, потім створи новий командний білд.",
   "tutorial.menu.team.newDone": "Почни команду з 2",
   "tutorial.menu.team.open": "Відкрий «Команди», де твої командні білди.",
