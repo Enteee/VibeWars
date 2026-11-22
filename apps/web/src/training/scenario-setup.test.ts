@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { TRAINING_SCENARIOS } from "@vibewars/game-core";
+import { ARMOR_SLOTS, TRAINING_SCENARIOS, raisedMaxHealth } from "@vibewars/game-core";
 import { matchLayers } from "@vibewars/game-maps/layers";
 
+import type { StoredCharacter } from "../storage/schema.js";
 import { newCharacter, setProfessions, setSkill } from "../ui/build-editor.js";
 import { TRAINING_MAPS } from "./maps.js";
 import { SELF_ID, playerArming, playerSpawn, setupScenario } from "./scenario-setup.js";
@@ -118,5 +119,33 @@ describe("matchLayers' water (#2983)", () => {
     expect(layers.deepWater[0]).toHaveLength(4);
     expect(layers.deepWater[0]?.every(({ a }) => a.x <= 30)).toBe(true);
     expect(layers.deepWater.slice(1).flat()).toEqual([]);
+  });
+});
+
+describe("two Superior Runes of Vigor in the test area (#3822)", () => {
+  function wearingVigor(pieces: number): StoredCharacter {
+    const character = newCharacter("c1");
+    const armor = { ...character.equipment.armor };
+    for (const slot of ARMOR_SLOTS.slice(0, pieces)) {
+      armor[slot] = {
+        ...armor[slot],
+        rune: { kind: "universal", runeId: "vigor", tier: "superior" },
+      };
+    }
+    return { ...character, equipment: { ...character.equipment, armor } };
+  }
+
+  function maxHealthInTraining(character: StoredCharacter): number {
+    const scenario = TRAINING_SCENARIOS[0];
+    if (scenario === undefined) throw new Error("no scenarios");
+    const self = setupScenario(scenario, character).simulation.get(SELF_ID);
+    if (self === undefined) throw new Error("no player");
+    return raisedMaxHealth(self.combatant);
+  }
+
+  it("gives +50 once, not +100", () => {
+    const bare = maxHealthInTraining(newCharacter("c1"));
+    expect(maxHealthInTraining(wearingVigor(1))).toBe(bare + 50);
+    expect(maxHealthInTraining(wearingVigor(2))).toBe(bare + 50);
   });
 });

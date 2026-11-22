@@ -37,6 +37,7 @@ import { ALL_OFFHANDS, SHIELD_REQUIREMENT_ATTRIBUTES } from "./offhands.js";
 import {
   creatureResolvedEquipment,
   effectiveRanks,
+  healthSources,
   resolveLoadout,
   unarmedResolvedEquipment,
 } from "./resolve.js";
@@ -336,6 +337,92 @@ describe("resolving universal runes", () => {
       "minor",
     ]);
     expect(setWearing(...five).maxEnergy).toBe(setWearing().maxEnergy + 10);
+  });
+});
+
+describe("runes that do not stack, and where max health comes from (#3822)", () => {
+  function loadoutInput(
+    primaryProfession: ProfessionId,
+    runes: readonly EquippedRune[],
+    options: { insigniaId?: InsigniaId; upgrades?: ItemUpgrades } = {},
+  ) {
+    const armor = { ...bareArmorSet() };
+    ARMOR_SLOTS.forEach((slot, index) => {
+      armor[slot] = {
+        ...armor[slot],
+        insigniaId: options.insigniaId ?? null,
+        rune: runes[index] ?? null,
+      };
+    });
+    return {
+      primaryProfession,
+      secondaryProfession: undefined,
+      allocatedRanks: new Map<string, number>(),
+      equipment: {
+        weaponSets: [
+          {
+            mainHand: {
+              weaponId: "sword",
+              requirementAttributeId: null,
+              upgrades: options.upgrades ?? NO_UPGRADES,
+            },
+            offHand: null,
+          },
+          null,
+          null,
+          null,
+        ] as const,
+        armor,
+      },
+    };
+  }
+  const resolve = (...args: Parameters<typeof loadoutInput>) =>
+    resolveLoadout(loadoutInput(...args), MINIMAL_GW_INSPIRED_PVP_V1.combat);
+  const universal = (runeId: UniversalRuneId, tier: RuneTier): EquippedRune => ({
+    kind: "universal",
+    runeId,
+    tier,
+  });
+
+  it("two Superior Runes of Absorption take 3 off a hit, not 6", () => {
+    const two = [universal("absorption", "superior"), universal("absorption", "superior")];
+    expect(resolve("warrior", two).weaponSets[0].equipment.flatPhysicalReduction).toBe(3);
+  });
+
+  it("two Superior Domination Magic runes give +3 ranks once, and cost 150 Health", () => {
+    const rune: EquippedRune = {
+      kind: "attribute",
+      attributeId: "mesmer.domination-magic",
+      tier: "superior",
+    };
+    const bare = resolve("mesmer", []);
+    const two = resolve("mesmer", [rune, rune]);
+    expect(two.attributeRanks.get("mesmer.domination-magic")).toBe(3);
+    expect(two.weaponSets[0].maxHealth).toBe(bare.weaponSets[0].maxHealth - 150);
+  });
+
+  it("three Runes of Vitae give +30 Health: Vitae stacks", () => {
+    const three = Array.from({ length: 3 }, () => universal("vitae", "minor"));
+    expect(resolve("warrior", three).weaponSets[0].maxHealth).toBe(
+      resolve("warrior", []).weaponSets[0].maxHealth + 30,
+    );
+  });
+
+  it("splits max health into base, runes, insignia and mods, adding up to it", () => {
+    const input = loadoutInput(
+      "warrior",
+      [universal("vigor", "superior"), universal("vitae", "minor")],
+      { insigniaId: "survivor", upgrades: { ...NO_UPGRADES, suffix: "of-fortitude" } },
+    );
+    const rules = MINIMAL_GW_INSPIRED_PVP_V1.combat;
+    const sources = healthSources(input, rules);
+    expect(sources.base).toBe(rules.baseHealth);
+    expect(sources.runes).toBe(60);
+    expect(sources.insignia).toBeGreaterThan(0);
+    expect(sources.mods).toBeGreaterThan(0);
+    expect(sources.base + sources.runes + sources.insignia + sources.mods).toBe(
+      resolveLoadout(input, rules).weaponSets[0].maxHealth,
+    );
   });
 });
 
@@ -821,7 +908,9 @@ describe("validateEquipment", () => {
       },
       contextFor("warrior"),
     );
-    expect(problems.some((p) => p.message.includes("duplicates"))).toBe(true);
+    expect(problems.filter((p) => p.message.includes("duplicates"))).toEqual([
+      expect.objectContaining({ field: "equipment.armor.chest", code: "duplicate-attribute-rune" }),
+    ]);
   });
 
   it("reports a duplicated universal rune that does not stack, and not Vitae, which does", () => {
@@ -850,6 +939,7 @@ describe("validateEquipment", () => {
     expect(twoOf("clarity")).toEqual([
       {
         field: "equipment.armor.chest",
+        code: "duplicate-rune",
         message: "Rune of Clarity duplicates another rune of the same kind; only one applies",
       },
     ]);

@@ -214,7 +214,9 @@ function linkedAttribute(
 
 interface RuneTotals {
   readonly attributeBonuses: ReadonlyMap<string, number>;
+  /** The runes' health, penalties included; insignia apart. */
   readonly healthDelta: number;
+  readonly insigniaHealth: number;
   readonly energyDelta: number;
   readonly flatPhysicalReduction: number;
   readonly statusDurationReductions: ReadonlyMap<StatusId, readonly number[]>;
@@ -237,6 +239,7 @@ function totalRunes(equipment: BuildEquipment, primaryProfession: ProfessionId):
   const bestBonusPerAttribute = new Map<string, number>();
   const statusDurationReductions = new Map<StatusId, readonly number[]>();
   let healthDelta = 0;
+  let insigniaHealth = 0;
   let energyDelta = 0;
   let flatPhysicalReduction = 0;
   const bestTierPerRune = new Map<UniversalRuneId, RuneTier>();
@@ -245,7 +248,7 @@ function totalRunes(equipment: BuildEquipment, primaryProfession: ProfessionId):
   for (const [slot, piece] of armorPieces(equipment.armor)) {
     const insignia = wornInsignia(piece.insigniaId, primaryProfession);
     if (insignia?.effect.kind === "health") {
-      healthDelta += perSlotAmount(insignia.effect, slot);
+      insigniaHealth += perSlotAmount(insignia.effect, slot);
     } else if (insignia?.effect.kind === "energy") {
       energyDelta += perSlotAmount(insignia.effect, slot);
     }
@@ -315,6 +318,7 @@ function totalRunes(equipment: BuildEquipment, primaryProfession: ProfessionId):
   return {
     attributeBonuses: bestBonusPerAttribute,
     healthDelta,
+    insigniaHealth,
     energyDelta,
     flatPhysicalReduction,
     statusDurationReductions,
@@ -412,7 +416,7 @@ export function resolveLoadout(input: LoadoutInput, rules: CombatRules): Resolve
   // at join; only an Elementalist primary holds its rank.
   const shared: SharedGear = {
     baseArmor: baseArmorFor(input.primaryProfession),
-    health: rules.baseHealth + runes.healthDelta,
+    health: rules.baseHealth + runes.healthDelta + runes.insigniaHealth,
     baseEnergyPips: baseEnergyPipsFor(input.primaryProfession),
     energyDelta: runes.energyDelta + energyStorageBonus(rankOf(ENERGY_STORAGE_ATTRIBUTE)),
     conditionalArmor: INHERENT_ARMOR_BY_PROFESSION[input.primaryProfession],
@@ -433,6 +437,30 @@ export function resolveLoadout(input: LoadoutInput, rules: CombatRules): Resolve
       resolve(set3),
       resolve(set4),
     ],
+  };
+}
+
+/** Maximum health, part by part: insignia apart from runes, though both sit on armor. */
+export interface HealthSources {
+  readonly base: number;
+  readonly runes: number;
+  readonly insignia: number;
+  readonly mods: number;
+}
+
+/**
+ * Where weapon set 1's `maxHealth` comes from, for the gear summary to
+ * explain it (#3822). The parts add up to `maxHealth`: `mods` is the
+ * rest, so the rules' floor, should it ever lift a build, shows there.
+ */
+export function healthSources(input: LoadoutInput, rules: CombatRules): HealthSources {
+  const runes = totalRunes(input.equipment, input.primaryProfession);
+  const shared = rules.baseHealth + runes.healthDelta + runes.insigniaHealth;
+  return {
+    base: rules.baseHealth,
+    runes: runes.healthDelta,
+    insignia: runes.insigniaHealth,
+    mods: resolveLoadout(input, rules).weaponSets[0].maxHealth - shared,
   };
 }
 
