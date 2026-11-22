@@ -10322,19 +10322,31 @@ export class MatchSimulation {
   /**
    * Held before the start (#3817), `record` is back within
    * `SPAWN_BUBBLE_RADIUS` of its spawn: at the nearest point on the edge
-   * if it can stand there, else at its spawn. A walk that met the edge
-   * ends there; a held key slides along it, as along a wall.
+   * if it can stand there, else at its spawn, on the spawn's layer: a
+   * ramp climbed or a drop-off stepped off in the bubble may have left it
+   * on another. A walk that met the edge ends there; a held key slides
+   * along it, as along a wall.
    */
   #holdInBubble(record: ParticipantRecord): void {
     const inside = clampToCircle(record.position, record.spawn, SPAWN_BUBBLE_RADIUS);
     if (inside === record.position) {
       return;
     }
-    this.#placeAt(record, this.standable(inside, record.layer) ? inside : record.spawn);
+    if (!this.standable(inside, record.layer)) {
+      this.#placeAtSpawn(record);
+      return;
+    }
+    this.#placeAt(record, inside);
     // Pushed back off a body, it may be a hair out again.
     if (distance(record.position, record.spawn) > SPAWN_BUBBLE_RADIUS + ARRIVE_UNITS) {
-      this.#placeAt(record, record.spawn);
+      this.#placeAtSpawn(record);
     }
+  }
+
+  /** Back where `record` was added (#3817): its spawn, on the layer it spawned on. */
+  #placeAtSpawn(record: ParticipantRecord): void {
+    record.layer = record.spec.layer ?? this.#ground;
+    this.#placeAt(record, record.spawn);
   }
 
   /**

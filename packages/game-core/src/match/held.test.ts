@@ -3,12 +3,19 @@ import { describe, expect, it } from "vitest";
 import { SPAWN_BUBBLE_RADIUS } from "../distances.js";
 import { unarmedResolvedEquipment, type ResolvedEquipment } from "../equipment/resolve.js";
 import { WEAPONS } from "../equipment/weapons.js";
-import { segment } from "../geometry.js";
+import { segment, type Polygon, type Segment } from "../geometry.js";
 import { clampToCircle } from "../movement.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { distance, vec2, type Vec2 } from "../vec2.js";
 import type { Behaviour } from "./behaviour.js";
-import { MatchSimulation, type Participant, type ParticipantSpec } from "./simulation.js";
+import { BOUNDS, fighter, RANGER, RULESET } from "./bot/rules/test-support.js";
+import { UPHILL } from "./layer-rules.js";
+import {
+  MatchSimulation,
+  type MatchLayers,
+  type Participant,
+  type ParticipantSpec,
+} from "./simulation.js";
 
 const RULES = MINIMAL_GW_INSPIRED_PVP_V1;
 const DT = 1 / RULES.tickRateHz;
@@ -77,6 +84,37 @@ describe("clampToCircle (#3817)", () => {
 });
 
 describe("held before the start (#3817)", () => {
+  const rect = (x: number, y: number, width: number, height: number): Polygon => [
+    vec2(x, y),
+    vec2(x + width, y),
+    vec2(x + width, y + height),
+    vec2(x, y + height),
+  ];
+  /** `layer-test`'s bridge, with a drop-off along its north edge (as drop-offs.test.ts). */
+  const deckLayers = (ground: readonly Segment[] = []): MatchLayers => ({
+    count: 2,
+    ground: 0,
+    pits: [],
+    walls: [ground, []],
+    decks: [{ layer: 1, footprint: rect(500, 300, 600, 200) }],
+    transitions: [{ from: 0, to: 1, area: rect(350, 300, 170, 200), uphill: UPHILL.e, pace: 1 }],
+    outline: undefined,
+    deepWater: [[], []],
+    shallowWater: [[], []],
+    dropOffs: [{ layer: 1, edge: { a: vec2(700, 300), b: vec2(900, 300) }, outward: vec2(0, -1) }],
+  });
+
+  function onDeck(spawn: Vec2, ground: readonly Segment[] = []): MatchSimulation {
+    return new MatchSimulation({
+      seed: "held-deck",
+      ruleset: RULESET,
+      bounds: BOUNDS,
+      walls: [],
+      layers: deckLayers(ground),
+      participants: [fighter("a", 0, RANGER, spawn, { layer: 1, behaviour: undefined })],
+    });
+  }
+
   it("walks by keys to the edge of the spawn bubble and no further", () => {
     const sim = pair();
     sim.setInputDirection("a", vec2(-1, 0));
@@ -195,5 +233,39 @@ describe("held before the start (#3817)", () => {
     const tick = sim.tick;
     sim.stepHeld(DT);
     expect(sim.tick).toBe(tick);
+  });
+
+  it("keeps a deck spawn's bubble standable across a drop-off, and spawn on its own layer", () => {
+    const spawn = vec2(800, 340);
+    const sim = onDeck(spawn);
+    const a = one(sim, "a");
+    let dropped = false;
+    for (const direction of [vec2(0, -1), vec2(1, -1), vec2(0, 1), vec2(-1, 0), vec2(0, -1)]) {
+      sim.setInputDirection("a", direction);
+      for (let tick = 0; tick < 2 * RULES.tickRateHz; tick += 1) {
+        sim.stepHeld(DT);
+        dropped ||= a.layer === 0;
+        expect(distance(a.position, spawn)).toBeLessThanOrEqual(SPAWN_BUBBLE_RADIUS + 1);
+        if (a.position.x === spawn.x && a.position.y === spawn.y) {
+          expect(a.layer).toBe(1);
+        }
+      }
+      // At rest against the bubble: standing somewhere it may, on the layer it is on.
+      expect(sim.standable(a.position, a.layer), JSON.stringify(direction)).toBe(true);
+    }
+    // It did step off the deck: the bubble holds on the layer below too.
+    expect(dropped).toBe(true);
+  });
+
+  it("puts one displaced to another layer back at its spawn on the spawn's layer", () => {
+    const spawn = vec2(800, 400);
+    // Under the deck, a wall right where the bubble's edge would hold it.
+    const sim = onDeck(spawn, [segment(vec2(700, 481), vec2(900, 481))]);
+    const a = one(sim, "a");
+    a.layer = 0;
+    a.position = vec2(800, 520);
+    sim.stepHeld(DT);
+    expect(a.position).toEqual(spawn);
+    expect(a.layer).toBe(1);
   });
 });
