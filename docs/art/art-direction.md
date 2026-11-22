@@ -1419,7 +1419,6 @@ dropping your own (#3366).
 
 | id                 | Plays when                                                     | Length | Peak     | Character                                     |
 | ------------------ | -------------------------------------------------------------- | ------ | -------- | --------------------------------------------- |
-| `cast-target`      | your target starts a cast                                      | 0.14 s | −4 dBFS  | Two sharp high ticks: interrupt now           |
 | `hit-dealt`        | you deal damage                                                | 0.12 s | −6 dBFS  | Dry noise crack over a quick drop             |
 | `hit-taken`        | you take damage                                                | 0.20 s | −5 dBFS  | Low, dull thud                                |
 | `heal`             | you are healed                                                 | 0.32 s | −12 dBFS | Soft bright two-note chime, a fifth           |
@@ -1485,7 +1484,7 @@ together and count as one voice.
   no step holds more than its share: at most 4 skills sound alike. The same
   skill always sounds the same.
 - **Who:** your own cast, quietly (about −16 dBFS for both); your target's,
-  at full, with `cast-target`'s ticks over it; and anyone else's within 700
+  at full, the one cue to interrupt it, as in GW1; and anyone else's within 700
   of you, foe or ally, full to 200 and −12 dB at 700, an ally's 3 dB under a
   foe's. Sound carries over a ledge. A watcher hears from the player it
   follows.
@@ -1500,8 +1499,7 @@ Rules:
   quietest, and no peak goes above −1 dBFS after encoding.
 - **No clicks:** every sound fades in and out over 5 ms.
 - **Interrupt is the only harsh sound.** Interrupts are where skill play
-  lives; nothing else may sound like one. `cast-target` is the only one with
-  ticks, so the interrupt cue is unmistakable.
+  lives; nothing else may sound like one.
 - **Nothing pitched repeats fast.** The hits have almost no pitch, because
   they fire many times a second in a team fight.
 - **Budget:** at most 10 KB each and 120 KB for the set, as mono MP3 at
@@ -1582,7 +1580,6 @@ slash): Strudel does not derive it from the map's URL.
 
 ### Never in the music
 
-- A high double tick (that is `cast-target`).
 - A broadband crack into a buzzy falling tone (that is `interrupt`).
 - A short falling two-note blip (that is `refused`).
 - Anything above 4 kHz that is loud and short. Highs are for air and bells.
