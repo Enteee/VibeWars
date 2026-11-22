@@ -1266,6 +1266,7 @@ export default {
   "teamEditor.professions": "職業",
   "teamEditor.professionsTitle": "チームの職業",
   "teamEditor.replaceMember": "{member}を{character}に置き換える",
+  "teamEditor.copyMember": "Shift: {source}のビルドを{target}にコピー",
   "teamEditor.save": "保存",
   "teamEditor.saveTitle": "このチームを保存",
   "teamEditor.saveTitleProblem": "このチームを保存 (問題あり: {problem})",

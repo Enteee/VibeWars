@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { ANNIHILATION_MATCH_RULES, KING_OF_THE_HILL_MATCH_RULES } from "../../match-rules.js";
-import { vec2, type Vec2 } from "../../vec2.js";
+import { distance, vec2, type Vec2 } from "../../vec2.js";
 import {
   BOT_REACTION,
   createCursor,
@@ -20,6 +20,7 @@ import { NO_RANKS } from "../../skills/status.js";
 import {
   BOT,
   BOUNDS,
+  CONTEXT_SEED,
   DT,
   ELEMENTALIST,
   MONK,
@@ -32,7 +33,16 @@ import {
   match,
   starter,
 } from "./rules/test-support.js";
-import { reactionSeconds } from "./rules/shared.js";
+import { REGROUP_SPREAD, reactionSeconds } from "./rules/shared.js";
+import {
+  PLAN_SECONDS,
+  escortSpot,
+  flankParty,
+  flankWaypoint,
+  planPhase,
+  teamPlan,
+  type TeamPlan,
+} from "./plan.js";
 
 describe("play-build's target in King of the Hill (#2600)", () => {
   const ALTAR = vec2(800, 400);
@@ -496,5 +506,100 @@ describe("play-build with three teams (#2685)", () => {
     }
     expect(sim.phase).toBe("finished");
     expect([...dealt].sort()).toEqual([0, 1, 2]);
+  });
+});
+
+describe("play-build's pull-in gate (#3832)", () => {
+  // Team 0 spawns round (100,400), team 1 round (1500,400). A mate has
+  // walked to (1300,400) and fights foe-a; the bot is still at its spawn.
+  const sim = match([
+    fighter("bot", 0, WARRIOR, vec2(100, 300)),
+    fighter("mate", 0, WARRIOR, vec2(100, 500)),
+    fighter("foe-a", 1, WARRIOR, vec2(1500, 300), { behaviour: undefined }),
+    fighter("foe-b", 1, WARRIOR, vec2(1500, 500), { behaviour: undefined }),
+  ]);
+
+  /** The first second of a phase in which team 0's plan is `plan`. */
+  const when = (plan: TeamPlan): number => {
+    for (let phase = 0; ; phase += 1) {
+      if (teamPlan(CONTEXT_SEED, 0, phase * PLAN_SECONDS) === plan) return phase * PLAN_SECONDS + 1;
+    }
+  };
+
+  /** `id`'s view at `now`, its teammate at the front fighting foe-a, foe-a at `foeAt`. */
+  const viewOf = (id: string, now: number, foeAt = vec2(1400, 300)): BehaviourContext => {
+    const other = id === "bot" ? "mate" : "bot";
+    const participants = [...sim.participants()].map((each) =>
+      each.id === other
+        ? { ...each, position: vec2(1300, 400), targetId: "foe-a" }
+        : each.id === "foe-a"
+          ? { ...each, position: foeAt }
+          : each,
+    );
+    return contextFor(sim, id, { participants, now });
+  };
+
+  it("leaves a far teammate's target to walk to its hold spot", () => {
+    const intent = decide(BOT, createCursor(), viewOf("bot", when("hold")));
+    expect(intent.targetId).toBeUndefined();
+    // The hold point is 35% of the way across, at (590,400).
+    expect(distance(intent.moveTo ?? vec2(0, 0), vec2(590, 400))).toBeLessThan(REGROUP_SPREAD);
+  });
+
+  it("fights a teammate's target that comes near while it holds", () => {
+    const intent = decide(BOT, createCursor(), viewOf("bot", when("hold"), vec2(400, 300)));
+    expect(intent.targetId).toBe("foe-a");
+  });
+
+  it("leaves a far teammate's target to swing to its flank waypoint", () => {
+    const now = when("flank");
+    const flanker = ["bot", "mate"].find((id) =>
+      flankParty(viewOf(id, now), viewOf(id, now).self, planPhase(now)),
+    );
+    if (flanker === undefined) throw new Error("no flanker");
+    const view = viewOf(flanker, now);
+    const intent = decide(BOT, createCursor(), view);
+    expect(intent.targetId).toBeUndefined();
+    expect(intent.moveTo).toEqual(flankWaypoint(view, view.self, 1)?.point);
+  });
+
+  it("takes a far teammate's target under push, as ever", () => {
+    expect(decide(BOT, createCursor(), viewOf("bot", when("push"))).targetId).toBe("foe-a");
+  });
+
+  /** The bot's view at `when("push")` with an active human, `you`, beside it (#3833). */
+  const escortView = (): BehaviourContext => {
+    const escorted = match([
+      fighter("bot", 0, WARRIOR, vec2(100, 300)),
+      fighter("mate", 0, WARRIOR, vec2(100, 500)),
+      fighter("you", 0, WARRIOR, vec2(300, 400)),
+      fighter("foe-a", 1, WARRIOR, vec2(1500, 300), { behaviour: undefined }),
+      fighter("foe-b", 1, WARRIOR, vec2(1500, 500), { behaviour: undefined }),
+    ]);
+    const participants = [...escorted.participants()].map((each) =>
+      each.id === "mate"
+        ? { ...each, position: vec2(1300, 400), targetId: "foe-a" }
+        : each.id === "foe-a"
+          ? { ...each, position: vec2(1400, 300) }
+          : each,
+    );
+    const isBot = (id: string): boolean => id !== "you";
+    return contextFor(escorted, "bot", { participants, now: when("push"), isBot });
+  };
+
+  it("leaves a far teammate's target to escort its active human (#3833)", () => {
+    const view = escortView();
+    const intent = decide(BOT, createCursor(), view);
+    expect(intent.targetId).toBeUndefined();
+    expect(intent.moveTo).toEqual(escortSpot(view, view.self, "frontline")?.point);
+  });
+
+  it("takes a far teammate's target when told not to escort (#3833)", () => {
+    const loner = {
+      kind: "play-build",
+      reaction: { minSeconds: 0.25, maxSeconds: 0.25 },
+      escort: false,
+    } as const;
+    expect(decide(loner, createCursor(), escortView()).targetId).toBe("foe-a");
   });
 });

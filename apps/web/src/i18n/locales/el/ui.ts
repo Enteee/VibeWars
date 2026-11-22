@@ -1342,6 +1342,7 @@ export default {
   "teamEditor.professions": "Επαγγέλματα",
   "teamEditor.professionsTitle": "τα επαγγέλματα της ομάδας",
   "teamEditor.replaceMember": "Αντικατάσταση {member} με {character}",
+  "teamEditor.copyMember": "Shift: Αντιγραφή του build του {source} στον {target}",
   "teamEditor.save": "Αποθήκευση",
   "teamEditor.saveTitle": "Αποθήκευση ομάδας",
   "teamEditor.saveTitleProblem": "Αποθήκευση ομάδας (έχει προβλήματα: {problem})",

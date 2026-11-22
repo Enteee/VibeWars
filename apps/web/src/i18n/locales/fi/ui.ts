@@ -1340,6 +1340,7 @@ export default {
   "teamEditor.professions": "Ammatit",
   "teamEditor.professionsTitle": "tiimin ammatit",
   "teamEditor.replaceMember": "Korvaa {member}: {character}",
+  "teamEditor.copyMember": "Shift: Kopioi hahmon {source} buildi hahmolle {target}",
   "teamEditor.save": "Tallenna",
   "teamEditor.saveTitle": "Tallenna tämä tiimi",
   "teamEditor.saveTitleProblem": "Tallenna tämä tiimi (siinä on ongelmia: {problem})",

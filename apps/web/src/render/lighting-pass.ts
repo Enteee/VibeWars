@@ -166,6 +166,15 @@ function shapeCentre(shape: RenderableShape): Vec2 {
   return { x: sum.x / shape.points.length, y: sum.y / shape.points.length };
 }
 
+/** The light on what stands off the floor where `shape` stands, as a colour to multiply by (#3808). */
+export function structureTint(
+  lighting: MapLighting,
+  shape: RenderableShape,
+  layer: number,
+): number {
+  return tintOf(lightAt(lighting, shapeCentre(shape), layer, 0, SURFACE_LIGHT_FLOOR));
+}
+
 /**
  * The colours of what stands off the floor, lit where `shape` stands. A
  * wall can draw over a body of its own layer, so no light map can cover
@@ -180,7 +189,7 @@ export function litStructurePalette(
   if (lighting === undefined) {
     return palette;
   }
-  const tint = tintOf(lightAt(lighting, shapeCentre(shape), layer, 0, SURFACE_LIGHT_FLOOR));
+  const tint = structureTint(lighting, shape, layer);
   return {
     ...palette,
     wallTop: multiplyColour(palette.wallTop, tint),

@@ -1,7 +1,14 @@
 import { distance } from "../../../vec2.js";
 import type { BehaviourIntent } from "../../behaviour.js";
 import type { Participant } from "../../simulation.js";
-import { escortSpot, flankParty, flankWaypoint, holdPoint, planPhase } from "../plan.js";
+import {
+  escortSpot,
+  flankParty,
+  placedFlank,
+  placedHold,
+  planFoeTeam,
+  planPhase,
+} from "../plan.js";
 import type { BotRole } from "../role.js";
 import {
   NOTHING,
@@ -86,14 +93,9 @@ function escort({
  * `undefined`, so it pushes, where its team cannot hold.
  */
 function hold({ context, self, foes, cursor }: RuleContext): BehaviourIntent | undefined {
-  const foeTeam = cursor.front ?? foes.find((foe) => foe.creature === undefined)?.combatant.team;
+  const foeTeam = planFoeTeam(cursor, foes);
   if (foeTeam === undefined) return undefined;
-  const phase = planPhase(context.now);
-  const kept = cursor.holdPoint;
-  if (kept?.foeTeam !== foeTeam || (kept.at === undefined && kept.phase !== phase)) {
-    cursor.holdPoint = { foeTeam, at: holdPoint(context, self, foeTeam), phase };
-  }
-  const at = cursor.holdPoint?.at;
+  const at = placedHold(context, self, cursor, foeTeam);
   if (at === undefined) return undefined;
   return self.layer === at.layer && distance(self.position, at.spot) <= POSITION_SLACK
     ? { ...NOTHING, targetId: self.targetId }
@@ -114,13 +116,9 @@ function flank({ context, self, foes, cursor, roleOf }: RuleContext): BehaviourI
   const phase = planPhase(context.now);
   if (!flankParty(context, self, phase)) return undefined;
   if (cursor.flankReached !== phase) {
-    const foeTeam = cursor.front ?? foes.find((foe) => foe.creature === undefined)?.combatant.team;
+    const foeTeam = planFoeTeam(cursor, foes);
     if (foeTeam === undefined) return undefined;
-    const kept = cursor.flankPoint;
-    if (kept?.foeTeam !== foeTeam || kept.phase !== phase) {
-      cursor.flankPoint = { foeTeam, at: flankWaypoint(context, self, foeTeam), phase };
-    }
-    const at = cursor.flankPoint?.at;
+    const at = placedFlank(context, self, cursor, foeTeam);
     if (at === undefined) return undefined;
     if (self.layer !== at.layer || distance(self.position, at.point) > REGROUP_JOINED) {
       return { ...NOTHING, moveTo: at.point, moveToLayer: at.layer };

@@ -1442,6 +1442,7 @@ export default {
   "teamEditor.professions": "Povolania",
   "teamEditor.professionsTitle": "povolania tímu",
   "teamEditor.replaceMember": "Nahradiť {member} postavou {character}",
+  "teamEditor.copyMember": "Shift: Kopírovať build postavy {source} na {target}",
   "teamEditor.save": "Uložiť",
   "teamEditor.saveTitle": "Uložiť tento tím",
   "teamEditor.saveTitleProblem": "Uložiť tento tím (má problémy: {problem})",

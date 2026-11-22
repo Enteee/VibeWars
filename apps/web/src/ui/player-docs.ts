@@ -191,7 +191,31 @@ export function playerDocTargets(): DocTargets {
 
 /** `markdown` as the nodes the Help screen draws; see the module comment. */
 export function renderPlayerDoc(markdown: string, targets: DocTargets): readonly DocNode[] {
-  return blocks(Lexer.lex(markdown), targets);
+  return blocks(Lexer.lex(markdown), { ...targets, anchor: headingAnchors() });
+}
+
+/** `DocTargets` while one page renders: its headings' anchors so far. */
+interface Render extends DocTargets {
+  readonly anchor: (heading: string) => string;
+}
+
+/**
+ * A page's heading anchors, as GitHub writes them (#3812): each heading's
+ * Markdown text lower-cased, all but letters, marks, numbers, spaces, `_`
+ * and `-` dropped, spaces to `-`; a repeat on the page gets `-1`, `-2`.
+ * Call it once a page, with its headings in document order.
+ */
+export function headingAnchors(): (heading: string) => string {
+  const seen = new Map<string, number>();
+  return (heading) => {
+    const slug = heading
+      .toLowerCase()
+      .replace(/[^\p{L}\p{M}\p{N}\s_-]/gu, "")
+      .replace(/\s/g, "-");
+    const count = seen.get(slug) ?? 0;
+    seen.set(slug, count + 1);
+    return count === 0 ? slug : `${slug}-${String(count)}`;
+  };
 }
 
 function element(
@@ -240,17 +264,19 @@ function prose(value: string): DocNode {
   );
 }
 
-function blocks(tokens: readonly Token[], targets: DocTargets): DocNode[] {
+function blocks(tokens: readonly Token[], targets: Render): DocNode[] {
   return tokens.flatMap((token) => block(token, targets));
 }
 
-function block(token: Token, targets: DocTargets): DocNode[] {
+function block(token: Token, targets: Render): DocNode[] {
   switch (token.type) {
     case "heading": {
       const heading = token as Tokens.Heading;
       const tag = (["h1", "h2", "h3", "h4"] as const)[Math.min(heading.depth, 4) - 1] ?? "h4";
       // A heading's icon stays an icon: a chip would compete with its text.
-      return [element(tag, inline(heading.tokens, targets, false))];
+      return [
+        element(tag, inline(heading.tokens, targets, false), { id: targets.anchor(heading.text) }),
+      ];
     }
     case "paragraph": {
       const paragraph = token as Tokens.Paragraph;
@@ -308,7 +334,7 @@ function block(token: Token, targets: DocTargets): DocNode[] {
  * Inline tokens as nodes. With `chips`, an icon with bold text right after
  * it, a space between at most, is one `doc-chip`.
  */
-function inline(tokens: readonly Token[], targets: DocTargets, chips = true): DocNode[] {
+function inline(tokens: readonly Token[], targets: Render, chips = true): DocNode[] {
   const nodes: DocNode[] = [];
   for (let i = 0; i < tokens.length; i += 1) {
     const token = tokens[i];
@@ -329,7 +355,7 @@ function inline(tokens: readonly Token[], targets: DocTargets, chips = true): Do
   return nodes;
 }
 
-function inlineToken(token: Token, targets: DocTargets, chips: boolean): DocNode[] {
+function inlineToken(token: Token, targets: Render, chips: boolean): DocNode[] {
   switch (token.type) {
     case "text": {
       const run = token as Tokens.Text;
@@ -357,13 +383,29 @@ function inlineToken(token: Token, targets: DocTargets, chips: boolean): DocNode
   }
 }
 
+/** `value` percent-decoded, or as it is where it is not valid encoding. */
+function decoded(value: string): string {
+  try {
+    return decodeURIComponent(value);
+  } catch {
+    return value;
+  }
+}
+
 /** Another page, the web in a new tab, or, for anything else, just its text. */
-function link(token: Tokens.Link, targets: DocTargets): DocNode[] {
+function link(token: Tokens.Link, targets: Render): DocNode[] {
   const children = inline(token.tokens, targets);
   const href = token.href.trim();
-  const page = /^([a-z0-9-]+)\.md(#.*)?$/.exec(href)?.[1];
+  const [, page, anchor] = /^([a-z0-9-]+)\.md(?:#(.+))?$/.exec(href) ?? [];
   if (page !== undefined && targets.pages.has(page)) {
-    return [element("a", children, { href: `#${page}`, "data-page": page })];
+    // The section too (#3812): a non-ASCII anchor may come percent-encoded.
+    return [
+      element("a", children, {
+        href: `#${page}`,
+        "data-page": page,
+        ...(anchor === undefined ? {} : { "data-anchor": decoded(anchor) }),
+      }),
+    ];
   }
   if (/^https?:\/\//i.test(href)) {
     return [element("a", children, { href, target: "_blank", rel: "noopener noreferrer" })];
@@ -390,7 +432,7 @@ function isIcon(nodes: readonly DocNode[]): boolean {
  * A game icon, chip-sized, or a diagram from `docs/player/img/`; nothing
  * else, and nothing without alt text.
  */
-function image(token: Tokens.Image, targets: DocTargets): DocNode[] {
+function image(token: Tokens.Image, targets: Render): DocNode[] {
   const href = token.href.trim();
   const alt = token.text.trim();
   const icon = ICON_PATH.exec(href)?.[1];
@@ -408,7 +450,7 @@ function image(token: Tokens.Image, targets: DocTargets): DocNode[] {
 }
 
 /** A paragraph of only a diagram, as a figure its alt text captions. */
-function figure(tokens: readonly Token[], targets: DocTargets): DocNode | undefined {
+function figure(tokens: readonly Token[], targets: Render): DocNode | undefined {
   const [only, ...rest] = tokens.filter(
     (token) => !(token.type === "text" && token.raw.trim() === ""),
   );

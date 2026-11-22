@@ -1323,6 +1323,7 @@ export default {
   "teamEditor.professions": "Klasser",
   "teamEditor.professionsTitle": "holdets klasser",
   "teamEditor.replaceMember": "Erstat {member} med {character}",
+  "teamEditor.copyMember": "Shift: Kopiér {source}s build til {target}",
   "teamEditor.save": "Gem",
   "teamEditor.saveTitle": "Gem dette hold",
   "teamEditor.saveTitleProblem": "Gem dette hold (det har problemer: {problem})",
