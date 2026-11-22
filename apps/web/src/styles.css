@@ -1003,9 +1003,10 @@ body {
   display: none;
 }
 
-/* A fixed width: no skill bar up here to match. */
+/* A set width, no skill bar up here to match, but never wider than the
+   window less the frame (#3778). */
 .hud-target-health {
-  width: 260px;
+  width: min(260px, calc(100vw - 4rem));
 }
 
 /* Hidden with no target, but its space kept. */
@@ -1031,7 +1032,7 @@ body {
 /* The target's effects (#835) wrap inside the health bar's width, down. */
 .hud-target .effects-monitor {
   justify-content: center;
-  max-width: 260px;
+  max-width: min(260px, calc(100vw - 4rem));
 }
 
 /* Maximum health a deep wound took (#764): the bar's far end, greyed, as GW1. */
@@ -1051,7 +1052,7 @@ body {
   display: flex;
   align-items: center;
   gap: 0.35rem;
-  width: 220px;
+  width: min(220px, calc(100vw - 4rem));
   height: 20px;
   visibility: hidden;
 }
@@ -7727,7 +7728,8 @@ body:has(#screens[style*="none"]) .now-playing {
     width: min(170px, calc(var(--hud-top-width) - 2.6rem - 2px));
   }
 
-  .hud-target .effects-monitor {
+  .hud-target .effects-monitor,
+  .hud-target-cast {
     max-width: min(170px, calc(var(--hud-top-width) - 1.2rem - 2px));
   }
 
@@ -7852,6 +7854,11 @@ body:has(#screens[style*="none"]) .now-playing {
 }
 
 .party-window[hidden] {
+  display: none;
+}
+
+/* Only a phone's (#3778): the panel collapses behind it, below. */
+.party-toggle {
   display: none;
 }
 
@@ -9183,7 +9190,138 @@ body:has(> .splash) #app {
 
   .roster-random-tag,
   .team-lobby-drawer-chip,
-  .match-chip-label {
+  .match-chip-label,
+  .match-summary-bot {
     font-size: 0.75rem;
+  }
+}
+
+/* A phone in a match (#3778), held either way: the arena keeps its
+   middle. The skill bar is one row along the bottom; the party window
+   collapses behind a toggle under the compass, open until pressed again;
+   the closed chat shows no line over the arena, only a mark on its icon.
+   A long target name ends in an ellipsis inside its frame. */
+@media (pointer: coarse) and ((width <= 30rem) or (height <= 30rem)) {
+  .hud-skills {
+    flex-wrap: nowrap;
+  }
+
+  .hud-target {
+    box-sizing: border-box;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .hud-target-header {
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* The toggle right under the compass, the panel under the toggle. */
+  #viewport > .party-dock::before {
+    flex: none;
+  }
+
+  #viewport > .party-dock > .party-window {
+    order: 1;
+  }
+
+  #viewport > .party-dock::after {
+    order: 2;
+  }
+
+  #viewport > .party-dock:not(.is-open) > .party-window,
+  #viewport > .party-dock:has(> .party-window[hidden]) > .party-toggle {
+    display: none;
+  }
+
+  /* On the dock's right, as the compass is, in every language. */
+  #viewport > .party-dock > .party-toggle {
+    display: block;
+    flex: none;
+    min-width: 44px;
+    min-height: 44px;
+    margin-bottom: 0.4rem;
+    margin-left: auto;
+    padding: 0 0.8rem;
+    background: rgb(14 17 22 / 85%);
+    border: 1px solid var(--line);
+    color: var(--ink);
+    font: inherit;
+    font-size: 0.8rem;
+    cursor: pointer;
+    pointer-events: auto;
+  }
+
+  #viewport > .party-dock > .party-toggle[aria-expanded="true"] {
+    border-color: var(--accent);
+  }
+
+  /* Closed, it is its icon alone; open, it takes its usual width. */
+  #viewport > .chat:not(.is-open) {
+    width: max-content;
+  }
+
+  #viewport > .chat:not(.is-open) .chat-lines {
+    display: none;
+  }
+
+  #viewport > .chat .chat-toggle {
+    position: relative;
+    width: 44px;
+    height: 44px;
+    padding: 0.5rem;
+  }
+
+  /* A line came while it was closed: a dot on the icon, not the line. */
+  #viewport > .chat.has-unread .chat-toggle::after {
+    content: "";
+    position: absolute;
+    top: 3px;
+    right: 3px;
+    width: 10px;
+    height: 10px;
+    background: var(--accent);
+    border: 1px solid var(--bg);
+    border-radius: 50%;
+  }
+
+  /* The end of a match's one button takes a finger too. */
+  .hud-end button {
+    min-block-size: 44px;
+    min-inline-size: 44px;
+  }
+}
+
+/* Upright (#3778): eight slots a finger wide, 44 px, fit one row in
+   412 px with the HUD's margins narrowed. */
+@media (pointer: coarse) and (width <= 30rem) {
+  .hud {
+    padding-inline: 0.5rem;
+  }
+
+  .hud-skills {
+    gap: 4px;
+  }
+
+  .hud-skill {
+    width: 44px;
+    height: 44px;
+  }
+
+  /* No room left of the bar: the weapon sets stand over its left end,
+     beside your bars, which give them their width. The skill row reads
+     left to right in every language, so these sides are physical. */
+  .hud-skill-row > .weapon-sets {
+    top: auto;
+    right: auto;
+    bottom: calc(100% + 0.4rem);
+    left: 0;
+  }
+
+  .hud-bars {
+    margin-left: calc(48px + 8px);
   }
 }

@@ -2,12 +2,20 @@ import { expect, test, type Page } from "@playwright/test";
 
 import { key } from "./keys.js";
 import { hostLobby, playHouseTeams } from "./helpers/peers.js";
+import {
+  PIXEL_8A_LANDSCAPE,
+  PIXEL_8A_PORTRAIT,
+  TOUCH_TARGET,
+  expectFitsPhone,
+  passTouchNotice,
+} from "./helpers/phone.js";
 
 /**
  * A phone in a match (#1297, #1306): the HUD's top band is narrower than
  * the scoreboard and target frame beside the match buttons, so on a phone
  * they lay out apart. Every box here must miss every other, at 390x844 and
- * at 360x740.
+ * at 360x740. A Pixel 8a held either way (#3778) also keeps the arena's
+ * middle free, its skill bar one row of finger-sized slots.
  */
 
 interface Box {
@@ -27,6 +35,12 @@ const PARTS = [
   ".hud-fullscreen",
   ".hud-music",
   ".compass",
+  ".hud-skills",
+  ".weapon-sets",
+  ".hud-bars",
+  ".party-window",
+  ".party-toggle",
+  ".chat",
 ] as const;
 
 /** The phones the HUD must fit. */
@@ -35,26 +49,45 @@ const PHONES = [
   { width: 360, height: 740 },
 ] as const;
 
-type Phone = (typeof PHONES)[number];
+interface Phone {
+  readonly width: number;
+  readonly height: number;
+}
 
 function overlaps(a: Box, b: Box): boolean {
   return a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
 }
 
-/** Every box of one frame: the toast's and each part's, null where hidden. */
-type Frame = Record<string, Box | null>;
+/** Every box of one frame, the toast's and each part's, null where hidden; and the window's size. */
+interface Frame {
+  readonly width: number;
+  readonly height: number;
+  readonly boxes: Record<string, Box | null>;
+}
+
+/**
+ * Which frame: the last with the toast up (`hudFrame`), or the last at
+ * all (`hudNow`), its toast null once it hid. Both only once the bot is
+ * targeted.
+ */
+type FrameName = "hudFrame" | "hudNow";
 
 /**
  * A match against a bot from the menu on show, the bot targeted, the HUD
- * noted; in `lobby`'s size and map when given, else 1v1 on ember-pits.
+ * noted; in `lobby`'s size and map when given, else 1v1 on ember-pits. A
+ * `touch` phone passes its notice first.
  */
 async function phoneMatch(
   page: Page,
   phone: Phone,
   lobby?: { readonly size: 1 | 2 | 4 | 8; readonly map: string },
+  touch = false,
 ): Promise<void> {
   await page.setViewportSize(phone);
   await page.goto("./");
+  if (touch) {
+    await passTouchNotice(page);
+  }
   // The toast hides after a few seconds: note where it is, every frame it
   // shows in the match, as music.spec.ts does (#372). Every other part is
   // noted in that same frame (#1793): the build banner still grows early
@@ -75,17 +108,21 @@ async function phoneMatch(
       return box.width > 0 && box.height > 0 ? box : null;
     };
     const note = (): void => {
-      if (!toast.hidden && screens.style.display === "none") {
-        const frame: Record<string, unknown> = {
-          ".now-playing": toast.getBoundingClientRect().toJSON() as unknown,
+      if (screens.style.display === "none") {
+        const boxes: Record<string, unknown> = {
+          ".now-playing": toast.hidden ? null : (toast.getBoundingClientRect().toJSON() as unknown),
         };
         for (const part of parts) {
-          frame[part] = boxOf(document.querySelector(part))?.toJSON() ?? null;
+          boxes[part] = boxOf(document.querySelector(part))?.toJSON() ?? null;
         }
+        const frame = { width: innerWidth, height: innerHeight, boxes };
         // Only once the bot is targeted, which also means the HUD is up.
         const target = document.querySelector(".hud-target-text")?.textContent ?? "";
         if (target !== "" && target !== "no target") {
-          Object.assign(window, { hudFrame: frame });
+          Object.assign(
+            window,
+            toast.hidden ? { hudNow: frame } : { hudNow: frame, hudFrame: frame },
+          );
         }
       }
       requestAnimationFrame(note);
@@ -103,19 +140,55 @@ async function phoneMatch(
   await expect(page.locator(".hud-target-text")).not.toHaveText("no target");
 }
 
-/** The last frame noted with the toast up and a target: every box in it misses every other. */
-async function expectApart(page: Page): Promise<void> {
-  const hudFrame = (): Promise<Frame | null> =>
-    page.evaluate(() => (window as { hudFrame?: Frame }).hudFrame ?? null);
-  await expect.poll(hudFrame, { timeout: 5_000 }).not.toBeNull();
-  const frame = (await hudFrame()) ?? {};
+/**
+ * The `which` frame noted at `phone`'s size: every box in it misses every
+ * other. Only fullscreen, which shows only where the browser offers it,
+ * and the parts named in `absent` may be missing; those in `ignored` are
+ * not measured. Returns the boxes measured.
+ */
+async function expectApart(
+  page: Page,
+  {
+    which = "hudFrame",
+    absent = [],
+    ignored = [],
+    phone,
+  }: {
+    readonly which?: FrameName;
+    readonly absent?: readonly string[];
+    readonly ignored?: readonly string[];
+    readonly phone?: Phone;
+  } = {},
+): Promise<Map<string, Box>> {
+  const read = (): Promise<Frame | null> =>
+    page.evaluate(
+      (name) => (window as unknown as Record<string, Frame | undefined>)[name] ?? null,
+      which,
+    );
+  await expect
+    .poll(
+      async () => {
+        const frame = await read();
+        return (
+          frame !== null &&
+          (phone === undefined || (frame.width === phone.width && frame.height === phone.height))
+        );
+      },
+      { timeout: 5_000 },
+    )
+    .toBe(true);
   const boxes = new Map<string, Box>();
-  for (const [part, box] of Object.entries(frame)) {
-    // Fullscreen shows only where the browser offers it.
-    if (box === null) {
-      expect(part, "only fullscreen may be missing").toBe(".hud-fullscreen");
+  for (const [part, box] of Object.entries((await read())?.boxes ?? {})) {
+    if (ignored.includes(part)) {
       continue;
     }
+    if (box === null) {
+      if (part !== ".hud-fullscreen" && !(which === "hudNow" && part === ".now-playing")) {
+        expect(absent, `${part} is missing`).toContain(part);
+      }
+      continue;
+    }
+    expect(absent, `${part} is shown`).not.toContain(part);
     boxes.set(part, box);
   }
   const named = [...boxes];
@@ -124,6 +197,69 @@ async function expectApart(page: Page): Promise<void> {
       expect(overlaps(box, otherBox), `${name} overlaps ${other}`).toBe(false);
     }
   }
+  return boxes;
+}
+
+/**
+ * The arena's room on `phone` (#3778): every box wholly on screen; the
+ * boxes together cover at most half of it, sampled every 8 px; and the
+ * centred rectangle `free` (shares of the width and height) misses them all.
+ */
+function expectArenaFree(
+  boxes: ReadonlyMap<string, Box>,
+  phone: Phone,
+  free: { readonly width: number; readonly height: number },
+): void {
+  const slack = 0.5;
+  for (const [name, box] of boxes) {
+    expect(
+      box.x >= -slack &&
+        box.y >= -slack &&
+        box.x + box.width <= phone.width + slack &&
+        box.y + box.height <= phone.height + slack,
+      `${name} is wholly on screen: ${JSON.stringify(box)}`,
+    ).toBe(true);
+  }
+  let covered = 0;
+  let samples = 0;
+  for (let y = 4; y < phone.height; y += 8) {
+    for (let x = 4; x < phone.width; x += 8) {
+      samples += 1;
+      const inside = [...boxes.values()].some(
+        (box) => x >= box.x && x < box.x + box.width && y >= box.y && y < box.y + box.height,
+      );
+      covered += inside ? 1 : 0;
+    }
+  }
+  expect(covered / samples, "the HUD covers at most half the arena").toBeLessThanOrEqual(0.5);
+  const middle: Box = {
+    x: (phone.width * (1 - free.width)) / 2,
+    y: (phone.height * (1 - free.height)) / 2,
+    width: phone.width * free.width,
+    height: phone.height * free.height,
+  };
+  for (const [name, box] of boxes) {
+    expect(overlaps(box, middle), `${name} is in the arena's middle`).toBe(false);
+  }
+}
+
+/** The skill bar (#3778): eight slots, each a finger's size, in one row along the bottom. */
+async function expectSkillRow(page: Page, phone: Phone): Promise<void> {
+  const slots = page.locator(".hud-skills > .hud-skill");
+  await expect(slots).toHaveCount(8);
+  const boxes = await slots.evaluateAll((nodes) =>
+    nodes.map((node) => node.getBoundingClientRect().toJSON() as Box),
+  );
+  for (const [i, box] of boxes.entries()) {
+    expect(box.width, `slot ${String(i + 1)} width`).toBeGreaterThanOrEqual(TOUCH_TARGET);
+    expect(box.height, `slot ${String(i + 1)} height`).toBeGreaterThanOrEqual(TOUCH_TARGET);
+    expect(box.y, `slot ${String(i + 1)} is in the first's row`).toBeCloseTo(boxes[0]?.y ?? -1, 0);
+    expect(box.x + box.width, `slot ${String(i + 1)} is on screen`).toBeLessThanOrEqual(
+      phone.width,
+    );
+  }
+  const bottom = (boxes[0]?.y ?? 0) + (boxes[0]?.height ?? 0);
+  expect(phone.height - bottom, "the row is along the bottom edge").toBeLessThanOrEqual(24);
 }
 
 for (const phone of PHONES) {
@@ -133,7 +269,8 @@ for (const phone of PHONES) {
     page,
   }) => {
     await phoneMatch(page, phone);
-    await expectApart(page);
+    // Alone on a team, no party window; a mouse, no party toggle.
+    await expectApart(page, { absent: [".party-window", ".party-toggle"] });
     // "leave" alone on a phone, but still named in full.
     await expect(page.getByRole("button", { name: "leave match (F10)" })).toBeVisible();
   });
@@ -144,7 +281,7 @@ for (const phone of PHONES) {
     await page.route("**/build.json", (route) => route.fulfill({ json: { build: "newer" } }));
     await phoneMatch(page, phone);
     await expect(page.locator(".build-banner")).toBeVisible();
-    await expectApart(page);
+    await expectApart(page, { absent: [".party-window", ".party-toggle"] });
   });
 
   test(`on a ${size} phone a Guild Battle's long scoreboard wraps clear of them too (#1226)`, async ({
@@ -153,6 +290,111 @@ for (const phone of PHONES) {
     // A Guild Hall is played eight a side (#2104).
     await phoneMatch(page, phone, { size: 8, map: "guild-hall-isle" });
     await expect(page.locator(".hud-scoreboard")).toContainText("Lord");
-    await expectApart(page);
+    // A mouse keeps the party window open, under the compass, where the
+    // long scoreboard and target frame may reach: a phone collapses it.
+    await expectApart(page, { absent: [".party-toggle"], ignored: [".party-window"] });
   });
 }
+
+for (const [held, device, free] of [
+  ["upright", PIXEL_8A_PORTRAIT, { width: 0.5, height: 0.5 }],
+  ["on its side", PIXEL_8A_LANDSCAPE, { width: 0.4, height: 0.3 }],
+] as const) {
+  test.describe(`a Pixel 8a held ${held} (#3778)`, () => {
+    test.use(device);
+    const phone = device.viewport;
+
+    test("every HUD part is on screen, apart, the skill bar one row of fingers, the arena's middle free", async ({
+      page,
+    }) => {
+      await phoneMatch(page, phone, undefined, true);
+      const boxes = await expectApart(page, { absent: [".party-window", ".party-toggle"] });
+      expectArenaFree(boxes, phone, free);
+      await expectSkillRow(page, phone);
+    });
+
+    test("in an 8v8 the party window waits behind a toggle a press opens and closes", async ({
+      page,
+    }) => {
+      await phoneMatch(page, phone, { size: 8, map: "ember-pits" }, true);
+      const boxes = await expectApart(page, { absent: [".party-window"] });
+      expectArenaFree(boxes, phone, free);
+      await expectSkillRow(page, phone);
+      const toggle = page.locator(".party-toggle");
+      const panel = page.locator(".party-window");
+      await expect(toggle).toHaveText("Party");
+      await expect(toggle).toHaveAttribute("aria-expanded", "false");
+      await toggle.click();
+      await expect(panel).toBeVisible();
+      await expect(panel.locator(".party-row")).toHaveCount(8);
+      await expect(toggle).toHaveAttribute("aria-expanded", "true");
+      // Open, it stays inside the window and misses the toggle.
+      const [open, button] = await Promise.all([panel.boundingBox(), toggle.boundingBox()]);
+      expect(open, "the open party window has a box").not.toBeNull();
+      expect(button, "the toggle has a box").not.toBeNull();
+      if (open !== null && button !== null) {
+        expect(overlaps(open, button), "the open window misses its toggle").toBe(false);
+        expect(open.y + open.height, "the open window ends on screen").toBeLessThanOrEqual(
+          phone.height,
+        );
+      }
+      await toggle.click();
+      await expect(panel).toBeHidden();
+      await expect(toggle).toHaveAttribute("aria-expanded", "false");
+    });
+
+    test("a chat line shows nowhere over the arena while the chat is closed", async ({ page }) => {
+      await phoneMatch(page, phone, undefined, true);
+      const chat = page.locator("#viewport > .chat");
+      // A line in, as the host's own: the icon is not marked for it, and it
+      // shows nowhere over the arena while the panel is closed.
+      await page.keyboard.press("Enter");
+      await page.locator(".chat-input").fill("gg");
+      await page.keyboard.press("Enter");
+      await expect(chat.locator(".chat-line")).toHaveCount(1);
+      await expect(chat.locator(".chat-lines")).toBeHidden();
+      await expect(chat).not.toHaveClass(/has-unread/);
+      await chat.locator(".chat-toggle").click();
+      await expect(chat.locator(".chat-lines")).toBeVisible();
+    });
+  });
+}
+
+test.describe("a Pixel 8a turned mid-match (#3778)", () => {
+  test.use(PIXEL_8A_PORTRAIT);
+
+  test("upright, then on its side, then upright: the HUD lays out apart each time", async ({
+    page,
+  }) => {
+    await phoneMatch(page, PIXEL_8A_PORTRAIT.viewport, { size: 8, map: "ember-pits" }, true);
+    await expectApart(page, { absent: [".party-window"] });
+    for (const [phone, free] of [
+      [PIXEL_8A_LANDSCAPE.viewport, { width: 0.4, height: 0.3 }],
+      [PIXEL_8A_PORTRAIT.viewport, { width: 0.5, height: 0.5 }],
+    ] as const) {
+      await page.setViewportSize(phone);
+      // A few frames for the HUD's observers to re-measure.
+      await page.waitForTimeout(300);
+      const boxes = await expectApart(page, {
+        which: "hudNow",
+        absent: [".party-window"],
+        phone,
+      });
+      expectArenaFree(boxes, phone, free);
+      await expectSkillRow(page, phone);
+    }
+  });
+});
+
+test.describe("a Pixel 8a at the end of a match (#3778)", () => {
+  test.use(PIXEL_8A_PORTRAIT);
+
+  test("the match summary fits it either way: no sideways scroll, a finger's targets, readable text", async ({
+    page,
+  }) => {
+    await page.goto("./?summary-fixture");
+    await passTouchNotice(page);
+    await expect(page.locator(".hud-summary")).toBeVisible();
+    await expectFitsPhone(page, "match summary", [".hud-end"]);
+  });
+});

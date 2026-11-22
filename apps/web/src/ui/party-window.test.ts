@@ -413,6 +413,30 @@ describe("createPartyWindow (#1055)", () => {
     ]);
   });
 
+  it("has a toggle a phone collapses it behind: a press opens, the next closes (#3778)", () => {
+    party.update(match([ME, KAJA]));
+    const dock = parent.children[0];
+    const toggle = dock?.children.find((child) => child.className === "party-toggle");
+    if (dock === undefined || toggle === undefined) {
+      throw new Error("no dock or toggle");
+    }
+    const press = (): void => {
+      const preventDefault = vi.fn();
+      toggle.listeners.get("mousedown")?.({ preventDefault });
+      expect(preventDefault).toHaveBeenCalledOnce();
+      toggle.listeners.get("click")?.({ preventDefault: () => undefined });
+    };
+    expect(toggle.tabIndex).toBe(-1);
+    expect(toggle.attributes.get("aria-expanded")).toBe("false");
+    expect(dock.classes.has("is-open")).toBe(false);
+    press();
+    expect(toggle.attributes.get("aria-expanded")).toBe("true");
+    expect(dock.classes.has("is-open")).toBe(true);
+    press();
+    expect(toggle.attributes.get("aria-expanded")).toBe("false");
+    expect(dock.classes.has("is-open")).toBe(false);
+  });
+
   it("goes compact past 8 members", () => {
     const team = (size: number) => [
       ME,

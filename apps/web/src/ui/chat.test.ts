@@ -371,6 +371,18 @@ describe("mountChat: closed and open (#2018)", () => {
     expect(sent).toEqual([]);
   });
 
+  it("marks the icon for a line that arrives closed, until it opens; never for your own (#3778)", () => {
+    const unread = (): boolean => root.classList.contains("has-unread");
+    chat.add({ channel: "team", fromId: "me", name: "Me", team: 0, text: "on me" });
+    expect(unread()).toBe(false);
+    chat.add({ channel: "all", fromId: "ann", name: "Ann", team: 1, text: "hi" });
+    expect(unread()).toBe(true);
+    toggle.click();
+    expect(unread()).toBe(false);
+    chat.add({ channel: "all", fromId: "ann", name: "Ann", team: 1, text: "still there?" });
+    expect(unread()).toBe(false);
+  });
+
   it(`fades a line once it has shown ${String(CHAT_LINE_SHOWN_SECONDS)} s, and shows it again open`, () => {
     chat.add({ channel: "all", fromId: "ann", name: "Ann", team: 0, text: "hi" });
     const row = root.find("chat-line");
