@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/restrict-template-expressions -- an SVG generator: numbers go into strings everywhere. */
-// Study for #3237 (part of #3187): the tutorial canyon, stations 4-14.
+// Study for #3237 (part of #3187, reworked for #3792): the one tutorial canyon, stations 4-9 and 11-14, no station 10.
 // One world drawing in map units; the plan is the whole of it, every site frame is a
 // crop the size of the default camera (1100 tall, 16:9) with the pair standing in it.
 // Usage: node scripts/assets/tutorial-canyon-study.mjs <out-dir>   (needs inkscape, magick)
@@ -51,19 +51,42 @@ const TRAIL = [
   [500, 3500],
   [6300, 3500],
   [6300, 2100],
-  [700, 2100],
-  [700, 700],
+  [1000, 2100],
+  [1000, 700],
   [6900, 700],
 ];
 const HALF = 300; // corridor half width
-const ARM_HALF = 170;
-/** station 13's dead end: a short arm south-east, ending in a pocket inside the rock band */
-/** @type {Pt[]} */
-const ARM = [
-  [5400, 700],
-  [5560, 1000],
-  [5760, 1100],
+const ARM_HALF = 175;
+/** station 13's two arms: each a short detour into the rock band (north to 230, south to 1170), then they rejoin */
+/** @type {Pt[][]} */
+const ARMS = [
+  [
+    [4450, 700],
+    [4700, 420],
+    [4950, 405],
+    [5200, 420],
+    [5450, 700],
+  ],
+  [
+    [4450, 700],
+    [4700, 980],
+    [4950, 995],
+    [5200, 980],
+    [5450, 700],
+  ],
 ];
+/** the rock between the arms */
+/** @type {Pt[]} */
+const ISLAND = [
+  [4600, 700],
+  [4780, 580],
+  [5120, 580],
+  [5300, 700],
+  [5120, 820],
+  [4780, 820],
+];
+/** the parasol bay: a bulge off the south arm */
+const BAY = { x: 5050, y: 1170, rx: 230, ry: 100 };
 /** the canyon mouth: north edge then south edge, widening east */
 /** @type {Pt[]} */
 const FLARE = [
@@ -85,12 +108,11 @@ const SITE = {
   7: [6300, 2800],
   8: [4700, 2100],
   9: [3100, 2100],
-  10: [1500, 2100],
   11: [1900, 700],
-  12: [3700, 700],
-  13: [5300, 700],
+  12: [3300, 700],
+  13: [4400, 700],
   14: [6800, 700],
-  15: [5700, 1000],
+  15: [5050, 1150],
 };
 const poly = (/** @type {Pt[]} */ a) => a.map(([x, y]) => `${x},${y}`).join(" ");
 
@@ -128,10 +150,15 @@ function ground() {
   // rounded blobs at the corners
   for (const [x, y] of TRAIL.slice(1, -1))
     s += `<circle cx="${x}" cy="${y + 35}" r="${HALF - 35}" fill="${C.floor}"/>`;
-  // station 13's dead-end arm: the same lip, face and floor, cut a little into the rock band
-  s += line(2 * ARM_HALF + 50, C.lip, 0, "", ARM, "round");
-  s += line(2 * ARM_HALF, C.face, 0, "", ARM, "round");
-  s += line(2 * ARM_HALF - 60, C.floor, 30, "", ARM, "round");
+  // station 13's arms and the parasol bay: the same lip, face and floor, cut into the rock band
+  for (const arm of ARMS) {
+    s += line(2 * ARM_HALF + 50, C.lip, 0, "", arm, "round");
+    s += line(2 * ARM_HALF, C.face, 0, "", arm, "round");
+    s += line(2 * ARM_HALF - 60, C.floor, 30, "", arm, "round");
+  }
+  s += `<ellipse cx="${BAY.x}" cy="${BAY.y}" rx="${BAY.rx + 25}" ry="${BAY.ry + 25}" fill="${C.lip}"/><ellipse cx="${BAY.x}" cy="${BAY.y}" rx="${BAY.rx}" ry="${BAY.ry}" fill="${C.face}"/><ellipse cx="${BAY.x}" cy="${BAY.y + 25}" rx="${BAY.rx - 40}" ry="${BAY.ry - 50}" fill="${C.floor}"/>`;
+  // the rock island between the arms, with a lit rim
+  s += `<polygon points="${poly(ISLAND)}" fill="${C.lip}" transform="translate(0 -12)"/><polygon points="${poly(ISLAND)}" fill="${C.rock}"/><polygon points="${poly(ISLAND)}" fill="#000" filter="url(#grain)" opacity=".4"/>`;
   // station 14's mouth: the walls flare open into the gate
   for (const [grow, c, dy] of /** @type {const} */ ([
     [25, C.lip, 0],
@@ -190,8 +217,8 @@ const LAVA = [
   ],
   [
     [2400, 100],
-    [3800, 220],
-    [5200, 120],
+    [3800, 200],
+    [5200, 70],
     [6800, 220],
   ],
 ];
@@ -204,8 +231,8 @@ const glows = () =>
     [2200, 1500],
     [4800, 1480],
     [2600, 3900],
-    [3800, 220],
-    [5200, 120],
+    [3800, 200],
+    [5200, 70],
   ]
     .map(([x, y]) => `<circle cx="${x}" cy="${y}" r="420" fill="url(#glow)"/>`)
     .join("");
@@ -279,13 +306,6 @@ const boulder = (/** @type {number} */ x, /** @type {number} */ y, r = 40) =>
   `<ellipse cx="${x + 18}" cy="${y + 22}" rx="${r}" ry="${r * 0.6}" fill="#000" opacity=".45"/><circle cx="${x}" cy="${y}" r="${r}" fill="${C.rockHi}" stroke="${INK}" stroke-width="4"/><circle cx="${x - r * 0.3}" cy="${y - r * 0.3}" r="${r * 0.5}" fill="${C.lip}" opacity=".6"/>`;
 const path = (/** @type {Pt[]} */ a, c = "#f2f5fa") =>
   `<polyline points="${poly(a)}" fill="none" stroke="${c}" stroke-width="7" stroke-dasharray="6 24" stroke-linecap="round" opacity=".85"/>`;
-const arrow = (
-  /** @type {number} */ x,
-  /** @type {number} */ y,
-  /** @type {number} */ dx,
-  /** @type {number} */ dy,
-) =>
-  `<g stroke="#f2f5fa" stroke-width="8" fill="none" opacity=".8"><line x1="${x}" y1="${y}" x2="${x + dx}" y2="${y + dy}"/></g>`;
 
 // ---- site overlays ----------------------------------------------------------
 /** @type {Record<number, {slug: string; title: string; reuse: string; reads: string; draw: () => string}>} */
@@ -406,36 +426,6 @@ const SITES = {
       ]) +
       goal(3500, 2100),
   },
-  10: {
-    slug: "ramp",
-    title: "10 Ramp to the deck (L2)",
-    reuse: "ramp / terrace",
-    reads: "light steps climb to a deck with a gold mark; the trail runs on below",
-    draw: () => {
-      let s = block(1250, 1480, 560, 140, 100);
-      // ramp: five treads, lighter as they rise
-      for (let i = 0; i < 5; i++)
-        s += `<rect x="${1880 + i * 0}" y="${1700 - i * 56}" width="150" height="56" fill="${["#6d6058", "#7a6d63", "#887b70", "#968a7e", "#a3978a"][i]}" stroke="${INK}" stroke-width="2"/>`;
-      s += `<polygon points="${poly([
-        [1810, 1480],
-        [1880, 1480],
-        [1880, 1700],
-        [1810, 1620],
-      ])}" fill="${C.face}"/>`;
-      return (
-        s +
-        goal(1530, 1550) +
-        path([
-          [1500, 2150],
-          [1930, 1980],
-          [1960, 1700],
-          [1900, 1520],
-          [1700, 1550],
-        ]) +
-        pair(1280, 2160)
-      );
-    },
-  },
   11: {
     slug: "tunnel",
     title: "11 Tunnel under rock",
@@ -469,40 +459,34 @@ const SITES = {
     reuse: "open ground",
     reads: "wide open floor, two rats ahead; call one",
     draw: () =>
-      `<ellipse cx="3700" cy="740" rx="560" ry="320" fill="${C.floor}"/>` +
-      rat(4130, 650) +
-      rat(4210, 800) +
-      pair(3230, 720),
+      `<ellipse cx="3300" cy="740" rx="560" ry="320" fill="${C.floor}"/>` +
+      rat(3730, 650) +
+      rat(3810, 800) +
+      pair(2830, 720),
   },
   13: {
     slug: "junction",
-    title: "13 Y-junction",
+    title: "13 Two-arm junction",
     reuse: "map data",
-    reads: "the lit trail runs on east; the south-east arm ends at a tiny parasol and a deck chair",
+    reads:
+      "the trail splits round a rock island, north arm and south arm, and rejoins; the gold mark is the rejoin",
     draw: () =>
-      `<ellipse cx="5400" cy="720" rx="90" ry="90" fill="${C.floor}"/>` +
-      goal(6050, 700) +
-      arrow(5500, 700, 120, 0) +
-      path([
-        [4800, 720],
-        [5300, 710],
-        [5900, 700],
-      ]) +
-      pair(4880, 720) +
-      '<g fill="none" stroke="#f2f5fa" stroke-width="7" stroke-dasharray="4 20" stroke-linecap="round" opacity=".6"><path d="M5440,740 L5560,990"/></g>',
+      goal(5650, 700) +
+      path(/** @type {Pt[]} */ (ARMS[0])) +
+      path(/** @type {Pt[]} */ (ARMS[1]), "#c9d6ea") +
+      pair(4300, 720) +
+      ring(4950, 405, 90, "#f2f5fa"),
   },
   15: {
-    slug: "dead-end",
-    title: "13b Dead end",
+    slug: "parasol-bay",
+    title: "13 Parasol bay (off the south arm)",
     reuse: "map data",
-    reads: "a short arm ends in a tiny parasol and a deck chair: the joke, then back to the trail",
+    reads: "a small bay off the south arm: a parasol and a deck chair, the tutor says: nice view",
     draw: () => {
-      let s = `<ellipse cx="5760" cy="1100" rx="250" ry="120" fill="${C.floor}"/>`;
-      s += `<ellipse cx="5830" cy="1150" rx="50" ry="14" fill="#000" opacity=".35"/>`;
-      s += `<line x1="5800" y1="1060" x2="5800" y2="1140" stroke="${INK}" stroke-width="6"/><path d="M5730,1070 q70,-100 140,0 z" fill="#d9d3c4" stroke="${INK}" stroke-width="4"/>`;
-      s += `<rect x="5810" y="1110" width="80" height="42" fill="#9a7a62" stroke="${INK}" stroke-width="4"/><rect x="5810" y="1090" width="22" height="30" fill="#b89478" stroke="${INK}" stroke-width="3"/>`;
-      s += `<text x="5930" y="1080" font-size="42" font-family="DejaVu Sans" fill="#f2f5fa" stroke="${INK}" stroke-width="3" paint-order="stroke">?</text>`;
-      return s + pair(5600, 1020);
+      let s = `<ellipse cx="5110" cy="1190" rx="50" ry="14" fill="#000" opacity=".35"/>`;
+      s += `<line x1="5080" y1="1100" x2="5080" y2="1180" stroke="${INK}" stroke-width="6"/><path d="M5010,1110 q70,-100 140,0 z" fill="#d9d3c4" stroke="${INK}" stroke-width="4"/>`;
+      s += `<rect x="5090" y="1150" width="80" height="42" fill="#9a7a62" stroke="${INK}" stroke-width="4"/><rect x="5090" y="1130" width="22" height="30" fill="#b89478" stroke="${INK}" stroke-width="3"/>`;
+      return s + pair(4900, 1000);
     },
   },
   14: {
@@ -566,7 +550,7 @@ for (const [n, site] of Object.entries(SITES)) {
   let ov = "";
   for (const [n, [x, y]] of Object.entries(SITE)) {
     if (n === "15") {
-      ov += `<circle cx="5760" cy="1100" r="70" fill="#10141a" stroke="#fff" stroke-width="8"/><text x="5760" y="1140" font-size="100" text-anchor="middle" font-family="DejaVu Sans" font-weight="bold" fill="#fff">13b</text>`;
+      ov += `<circle cx="5050" cy="1170" r="70" fill="#10141a" stroke="#fff" stroke-width="8"/><text x="5050" y="1210" font-size="100" text-anchor="middle" font-family="DejaVu Sans" font-weight="bold" fill="#fff">13b</text>`;
       continue;
     }
     ov += `<rect x="${x - VW / 2}" y="${y - VH / 2}" width="${VW}" height="${VH}" fill="none" stroke="#fff" stroke-width="10" stroke-dasharray="40 30" opacity=".5"/>`;
@@ -579,7 +563,7 @@ for (const [n, site] of Object.entries(SITES)) {
     .replace("6 24", "20 70");
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${FW}" height="${PH + 52}" viewBox="0 0 ${FW} ${PH + 52}">${style}
 <rect width="${FW}" height="${PH + 52}" fill="#10141a"/>
-<text x="10" y="20" class="t">Tutorial canyon: plan, ${MW}×${MH} units (1 px = ${Math.round(1 / k)} units), one trail, stations 4–14</text>
+<text x="10" y="20" class="t">Tutorial canyon: plan, ${MW}×${MH} units (1 px = ${Math.round(1 / k)} units), one trail, stations 4–9 and 11–14</text>
 <svg x="0" y="28" width="${FW}" height="${PH}" viewBox="0 0 ${MW} ${MH}">${defs}${world(ov)}<rect width="${MW}" height="${MH}" fill="url(#dusk)"/></svg>
 <text x="10" y="${PH + 44}" class="s">dashed boxes: the default camera standing at each site · white dots: the trail · violet: arrival pad · orange: lava (scenery)</text></svg>`;
   render("3187-tutorial-canyon-plan", svg);
