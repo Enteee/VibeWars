@@ -998,8 +998,6 @@ export default {
   "queue.randomArena": "Случайна арена {size}",
   "queue.rankedCancelled": "Класираният мач е отменен: играч не потвърди.",
   "queue.rankedConfirming": "Потвърждаване на класиран мач…",
-  "queue.rankedNote":
-    "Без ботове мачът е класиран: резултатът се публикува с твоя ключ и името на героя ти. Бот в мача го оставя некласиран.",
   "queue.rankedPending": "Рейтингът ти се обновява до час.",
   "queue.rankedPublished": "Класираният резултат е публикуван.",
   "queue.searchingCount": "{searching} търсят · нужни {needed}",

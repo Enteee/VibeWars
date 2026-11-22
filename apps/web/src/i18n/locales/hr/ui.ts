@@ -1052,8 +1052,6 @@ export default {
   "queue.randomArena": "Nasumična arena {size}",
   "queue.rankedCancelled": "Rangirani meč otkazan: igrač nije potvrdio.",
   "queue.rankedConfirming": "Potvrđivanje rangiranog meča…",
-  "queue.rankedNote":
-    "Bez botova meč je rangiran: rezultat se objavljuje s tvojim ključem i imenom lika. Bot u meču ostavlja ga nerangiranim.",
   "queue.rankedPending": "Tvoj rejting se ažurira unutar sat vremena.",
   "queue.rankedPublished": "Rangirani rezultat objavljen.",
   "queue.searchingCount": "traži: {searching} · treba: {needed}",

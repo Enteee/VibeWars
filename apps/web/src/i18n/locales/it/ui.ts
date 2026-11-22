@@ -1051,8 +1051,6 @@ export default {
   "queue.randomArena": "Arena casuale {size}",
   "queue.rankedCancelled": "Partita classificata annullata: un giocatore non ha confermato.",
   "queue.rankedConfirming": "Conferma della partita classificata…",
-  "queue.rankedNote":
-    "Senza bot la partita è classificata: il risultato viene pubblicato con la tua chiave e il nome del tuo personaggio. Un bot nella partita la lascia non classificata.",
   "queue.rankedPending": "Il tuo punteggio si aggiorna entro un’ora.",
   "queue.rankedPublished": "Risultato classificato pubblicato.",
   "queue.searchingCount": "{searching} in ricerca · {needed} necessari",

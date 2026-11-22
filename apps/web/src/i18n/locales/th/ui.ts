@@ -945,8 +945,6 @@ export default {
   "queue.randomArena": "อารีนาสุ่ม {size}",
   "queue.rankedCancelled": "ยกเลิกแมตช์จัดอันดับ: มีผู้เล่นไม่ยืนยัน",
   "queue.rankedConfirming": "กำลังยืนยันแมตช์จัดอันดับ…",
-  "queue.rankedNote":
-    "ไม่มีบอทคือแมตช์จัดอันดับ: ผลจะเผยแพร่พร้อมกุญแจและชื่อตัวละครของคุณ มีบอทในแมตช์จะไม่จัดอันดับ",
   "queue.rankedPending": "คะแนนของคุณจะอัปเดตภายในหนึ่งชั่วโมง",
   "queue.rankedPublished": "เผยแพร่ผลจัดอันดับแล้ว",
   "queue.searchingCount": "กำลังค้นหา {searching} · ต้องการ {needed}",

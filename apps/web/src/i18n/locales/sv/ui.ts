@@ -995,8 +995,6 @@ export default {
   "queue.randomArena": "Slumparena {size}",
   "queue.rankedCancelled": "Rankad match avbruten: en spelare bekräftade inte.",
   "queue.rankedConfirming": "Bekräftar rankad match…",
-  "queue.rankedNote":
-    "Inga botar betyder rankad: resultatet publiceras med din nyckel och ditt figurnamn. En bot i matchen håller den orankad.",
   "queue.rankedPending": "Din rating uppdateras inom en timme.",
   "queue.rankedPublished": "Rankat resultat publicerat.",
   "queue.searchingCount": "{searching} söker · {needed} behövs",

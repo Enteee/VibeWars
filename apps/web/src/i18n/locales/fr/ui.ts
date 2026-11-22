@@ -1059,8 +1059,6 @@ export default {
   "queue.randomArena": "Arène aléatoire {size}",
   "queue.rankedCancelled": "Match classé annulé : un joueur n’a pas confirmé.",
   "queue.rankedConfirming": "Confirmation du match classé…",
-  "queue.rankedNote":
-    "Sans bots, le match est classé : le résultat est publié avec ta clé et le nom de ton personnage. Un bot dans le match le laisse non classé.",
   "queue.rankedPending": "Ton classement se met à jour dans l’heure.",
   "queue.rankedPublished": "Résultat classé publié.",
   "queue.searchingCount": "{searching} en recherche · {needed} requis",

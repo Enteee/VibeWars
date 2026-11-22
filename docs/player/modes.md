@@ -466,21 +466,4 @@ Above the chips, the **Hall of Heroes** strip lists the last 20 holds, newest fi
 
 ## Ranked
 
-A queued match with no bots in it is ranked. The queue screen and the
-Team Lobby say so before you queue; one bot keeps a match unranked.
-When a ranked match is found, every player signs its start, and the
-screen says **Confirming ranked match…** for up to 15 seconds. If
-someone does not confirm, the match is cancelled and everyone is back
-in the queue. At the end every player signs the result, and the match's
-receipt is published on the Nostr relays with each player's public key
-and character name; a player with no character is named as a starter.
-Your rating moves within the hour. Leaving a ranked match counts as a
-loss, and the leave button says so.
-
-Ranked queues pair players of similar rating, and split them into teams with similar average ratings. The search starts within 100 points of your rating and widens by 10 points for every second you wait, up to 600, so nobody waits forever. While you wait, the queue shows your rating.
-
-Your first 10 rated matches are provisional: the queue says **Provisional (3/10 matches)** and you have no rank yet. After that the main menu shows your rank. Ratings decay: each day without a rated match makes yours less certain, and the leaderboard ranks by a cautious value, so if you stop playing your rank sinks within weeks.
-
-Once the ladder has 20 established players, a ranked match counts only when at least one player in it is established (10 or more rated matches): a match between new players alone is unrated. Play someone established and your matches count.
-
-The **Leaderboard** button in the top bar lists the top 100 by rank, name and rating, your own row highlighted. It is updated every hour.
+A queued match with no bots is ranked: see [Ranking](ranking.md).

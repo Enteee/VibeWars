@@ -1091,8 +1091,6 @@ export default {
   "queue.randomArena": "Arena losowa {size}",
   "queue.rankedCancelled": "Mecz rankingowy anulowany: gracz nie potwierdził.",
   "queue.rankedConfirming": "Potwierdzanie meczu rankingowego…",
-  "queue.rankedNote":
-    "Bez botów mecz jest rankingowy: wynik jest publikowany z twoim kluczem i imieniem postaci. Bot w meczu sprawia, że nie jest rankingowy.",
   "queue.rankedPending": "Twój ranking aktualizuje się w ciągu godziny.",
   "queue.rankedPublished": "Wynik rankingowy opublikowany.",
   "queue.searchingCount": "Szuka: {searching} · potrzeba: {needed}",

@@ -1006,8 +1006,6 @@ export default {
   "queue.randomArena": "Zufallsarena {size}",
   "queue.rankedCancelled": "Gewertetes Match abgebrochen: ein Spieler hat nicht bestätigt.",
   "queue.rankedConfirming": "Gewertetes Match wird bestätigt…",
-  "queue.rankedNote":
-    "Ohne Bots ist es gewertet: Das Ergebnis wird mit deinem Schlüssel und Charakternamen veröffentlicht. Ein Bot im Match hält es ungewertet.",
   "queue.rankedPending": "Deine Wertung wird innerhalb einer Stunde aktualisiert.",
   "queue.rankedPublished": "Gewertetes Ergebnis veröffentlicht.",
   "queue.searchingCount": "{searching} suchen · {needed} benötigt",

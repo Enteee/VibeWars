@@ -996,8 +996,6 @@ export default {
   "queue.randomArena": "Rastgele Arena {size}",
   "queue.rankedCancelled": "Dereceli maç iptal edildi: bir oyuncu onaylamadı.",
   "queue.rankedConfirming": "Dereceli maç onaylanıyor…",
-  "queue.rankedNote":
-    "Bot yoksa dereceli: sonuç anahtarın ve karakter adınla yayımlanır. Maçta bir bot varsa derecesiz kalır.",
   "queue.rankedPending": "Puanın bir saat içinde güncellenir.",
   "queue.rankedPublished": "Dereceli sonuç yayımlandı.",
   "queue.searchingCount": "{searching} arıyor · {needed} gerekli",

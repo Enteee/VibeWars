@@ -1045,8 +1045,6 @@ export default {
   "queue.randomArena": "Arena Aleatória {size}",
   "queue.rankedCancelled": "Partida ranqueada cancelada: um jogador não confirmou.",
   "queue.rankedConfirming": "Confirmando partida ranqueada…",
-  "queue.rankedNote":
-    "Sem bots é ranqueada: o resultado é publicado com a tua chave e o nome da tua personagem. Um bot na partida deixa-a sem ranking.",
   "queue.rankedPending": "A tua classificação atualiza dentro de uma hora.",
   "queue.rankedPublished": "Resultado ranqueado publicado.",
   "queue.searchingCount": "{searching} buscando · {needed} necessários",

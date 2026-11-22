@@ -310,8 +310,6 @@ export function renderRandomArena(
   if (rank !== undefined) {
     body.appendChild(rank);
   }
-  // Said before the first queue (ADR-0055): a match of strangers is ranked, and public.
-  body.appendChild(h("p", "queue-ranked-note", t("queue.rankedNote")));
   const problem = randomArenaProblem(activeExists, alone);
   if (find !== undefined) {
     find.disabled = problem !== undefined;

@@ -997,8 +997,6 @@ export const en = {
   "queue.randomArena": "Random Arena {size}",
   "queue.rankedCancelled": "Ranked match cancelled: a player did not confirm.",
   "queue.rankedConfirming": "Confirming ranked match…",
-  "queue.rankedNote":
-    "No bots means ranked: the result is published with your key and character name. A bot in the match keeps it unranked.",
   "queue.rankedPending": "Your rating updates within the hour.",
   "queue.rankedPublished": "Ranked result published.",
   "queue.searchingCount": "{searching} searching · {needed} needed",

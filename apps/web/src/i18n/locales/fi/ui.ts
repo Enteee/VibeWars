@@ -1007,8 +1007,6 @@ export default {
   "queue.randomArena": "Satunnaisareena {size}",
   "queue.rankedCancelled": "Rankattu ottelu peruttu: pelaaja ei vahvistanut.",
   "queue.rankedConfirming": "Vahvistetaan rankattua ottelua…",
-  "queue.rankedNote":
-    "Ilman botteja ottelu on rankattu: tulos julkaistaan avaimesi ja hahmosi nimen kanssa. Botti ottelussa pitää sen rankkaamattomana.",
   "queue.rankedPending": "Luokituksesi päivittyy tunnin sisällä.",
   "queue.rankedPublished": "Rankattu tulos julkaistu.",
   "queue.searchingCount": "{searching} etsii · {needed} tarvitaan",
