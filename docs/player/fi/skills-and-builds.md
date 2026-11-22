@@ -212,7 +212,7 @@ sivukäden esineet, ja on näkyvissä vain, kun jäsen on auki: napsauta
 yhtä varustaaksesi sen tai vedä se sen käsiin. Yksi jäsen on auki
 kerrallaan; **Esc** sulkee sen. Uusi ammatti pudottaa taidot ja tasot,
 joita se ei voi käyttää, ja tarjoaa **Kumoa**-painikkeen.
-Paina jäsenen nimeä tai **Avaa hahmonäkymässä** muokataksesi sitä
+Paina jäsenen nimeä tai sen **✎**-painiketta muokataksesi sitä
 buildieditorissa;
 sen **Tallenna** palauttaa sen tiimiin, ja tiimin oma **Tallenna** säilyttää kaiken
 ja vie sinut takaisin Tiimieditoriin. **Esc** poistuu

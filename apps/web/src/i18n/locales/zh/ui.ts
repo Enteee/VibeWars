@@ -1228,7 +1228,6 @@ export default {
   "teamEditor.name": "名称",
   "teamEditor.noCharacters": "你没有可复制的角色。",
   "teamEditor.notSaved": "未保存：{error}",
-  "teamEditor.openInCharacter": "在角色界面打开 ›",
   "teamEditor.professions": "职业",
   "teamEditor.professionsTitle": "队伍的职业",
   "teamEditor.replaceMember": "用 {character} 替换 {member}",

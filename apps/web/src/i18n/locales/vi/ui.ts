@@ -1243,7 +1243,6 @@ export default {
   "teamEditor.name": "Tên",
   "teamEditor.noCharacters": "Bạn không có nhân vật để sao chép.",
   "teamEditor.notSaved": "Chưa lưu: {error}",
-  "teamEditor.openInCharacter": "Mở trong màn hình Nhân vật ›",
   "teamEditor.professions": "Lớp",
   "teamEditor.professionsTitle": "các lớp của đội",
   "teamEditor.replaceMember": "Thay {member} bằng {character}",

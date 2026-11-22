@@ -1320,7 +1320,6 @@ export default {
   "teamEditor.name": "نام",
   "teamEditor.noCharacters": "شخصیتی برای کپی نداری.",
   "teamEditor.notSaved": "ذخیره نشد: {error}",
-  "teamEditor.openInCharacter": "باز کردن در صفحهٔ شخصیت ›",
   "teamEditor.professions": "حرفه‌ها",
   "teamEditor.professionsTitle": "حرفه‌های تیم",
   "teamEditor.replaceMember": "جایگزینی {member} با {character}",

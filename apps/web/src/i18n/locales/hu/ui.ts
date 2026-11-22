@@ -1326,7 +1326,6 @@ export default {
   "teamEditor.name": "Név",
   "teamEditor.noCharacters": "Nincs másolható karaktered.",
   "teamEditor.notSaved": "Nincs mentve: {error}",
-  "teamEditor.openInCharacter": "Megnyitás a Karakter képernyőn ›",
   "teamEditor.professions": "Kasztok",
   "teamEditor.professionsTitle": "a csapat kasztjai",
   "teamEditor.replaceMember": "{member} cseréje erre: {character}",

@@ -195,7 +195,7 @@ armele și mâinile secundare ale membrului deschis și există doar cât timp e
 deschis: dă clic pe una ca s-o echipezi sau trage-o peste mâinile lui. Un singur
 membru e deschis odată; **Esc** îl închide. O clasă nouă renunță la abilitățile
 și rangurile pe care nu le poate folosi, cu un **Anulează**. Apasă numele unui
-membru sau **Deschide în ecranul Personaj** ca să-l editezi în editorul de build;
+membru sau butonul său **✎** ca să-l editezi în editorul de build;
 **Salvează** de acolo îl pune înapoi în echipă, iar **Salvează** al echipei păstrează
 totul și te duce înapoi la Constructor de echipe. **Esc** iese fără să salveze și
 întreabă mai întâi. **Trimite**, **Încarcă echipa**, **Duplică** și **Șterge** ale

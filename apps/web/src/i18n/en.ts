@@ -1322,7 +1322,6 @@ export const en = {
   "teamEditor.name": "Name",
   "teamEditor.noCharacters": "You have no characters to copy.",
   "teamEditor.notSaved": "Not saved: {error}",
-  "teamEditor.openInCharacter": "Open in the Character screen ›",
   "teamEditor.professions": "Professions",
   "teamEditor.professionsTitle": "the team's professions",
   "teamEditor.replaceMember": "Replace {member} with {character}",

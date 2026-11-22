@@ -207,7 +207,7 @@ vapnen och offhands för den öppna medlemmen, och finns bara där medan en
 är öppen: klicka på ett för att utrusta det, eller dra det till dess händer. En
 medlem är öppen åt gången; **Esc** stänger den. Ett nytt yrke tar bort de
 förmågor och ranger det inte kan använda, med ett **Ångra**.
-Tryck på en medlems namn, eller **Öppna i karaktärsvyn**, för att ändra
+Tryck på en medlems namn, eller dess **✎**-knapp, för att ändra
 den i build-redigeraren;
 dess **Spara** lägger tillbaka den i laget, och lagets egen **Spara** behåller alltihop
 och tar dig tillbaka till Lagbyggare. **Esc** lämnar

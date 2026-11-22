@@ -774,15 +774,6 @@ export function mountTeamEditor(
     }),
     mountGear(equipment, host, doll),
   ];
-  // Opening it in the Character screen stays (#2226).
-  equipment.appendChild(
-    button(t("teamEditor.openInCharacter"), "team-member-open", () => {
-      if (openMember !== undefined) {
-        asking?.dismiss();
-        callbacks.onOpenMember(openMember, { opened, team, stored: isStored });
-      }
-    }),
-  );
   memberEditor.append(identity, attributes, equipment, bar);
   const fillMemberEditor = (): void => {
     const character = openCharacter();
@@ -889,10 +880,15 @@ export function mountTeamEditor(
       picker.bindSlot(cell, () => ({ member: indexOf(), slot }));
       skills.appendChild(cell);
     }
+    // ✎ opens the build editor, as the name does (#3819).
+    const open = button("✎", "team-row-open", () => {
+      asking?.dismiss();
+      callbacks.onOpenMember(characterId, { opened, team, stored: isStored });
+    });
     const edit = button("▼", "team-row-edit", () => {
       toggleOpen(characterId);
     });
-    row.append(order, who, stats, skills, edit);
+    row.append(order, who, stats, skills, open, edit);
 
     row.addEventListener("dragstart", (event: DragEvent) => {
       if (dragging !== undefined) {
@@ -1107,6 +1103,12 @@ export function mountTeamEditor(
         const name = row.querySelector<HTMLButtonElement>(".team-row-name");
         if (name !== null) {
           name.title = t("teamEditor.editInBuilder", { name: character.name });
+        }
+        const open = row.querySelector<HTMLButtonElement>(".team-row-open");
+        if (open !== null) {
+          const label = t("teamEditor.editInBuilder", { name: character.name });
+          open.title = label;
+          open.setAttribute("aria-label", label);
         }
         row.draggable = true;
         fillDot(row.querySelector(".team-row-dot"), character);

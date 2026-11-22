@@ -1255,7 +1255,6 @@ export default {
   "teamEditor.name": "Nama",
   "teamEditor.noCharacters": "Kamu tidak punya karakter untuk disalin.",
   "teamEditor.notSaved": "Tidak disimpan: {error}",
-  "teamEditor.openInCharacter": "Buka di layar Karakter ›",
   "teamEditor.professions": "Profesi",
   "teamEditor.professionsTitle": "profesi tim",
   "teamEditor.replaceMember": "Ganti {member} dengan {character}",

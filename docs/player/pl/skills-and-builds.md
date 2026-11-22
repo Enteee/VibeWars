@@ -190,7 +190,7 @@ do drugiej ręki otwartego członka i jest dostępny tylko, gdy któryś jest ot
 kliknij jeden, aby go założyć, lub przeciągnij na jego ręce. Otwarty jest jeden członek
 naraz; **Esc** go zamyka. Nowa profesja usuwa umiejętności i rangi, których nie może
 używać, z opcją **Cofnij**.
-Naciśnij nazwę członka lub **Otwórz na ekranie postaci**, aby edytować go w edytorze
+Naciśnij nazwę członka lub jego przycisk **✎**, aby edytować go w edytorze
 buildu;
 jego **Zapisz** umieszcza go z powrotem w drużynie, a **Zapisz** drużyny zachowuje wszystko
 i wraca do Kreatora drużyn. **Esc** wychodzi bez zapisywania, ale najpierw pyta.

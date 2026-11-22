@@ -1262,7 +1262,6 @@ export default {
   "teamEditor.name": "名前",
   "teamEditor.noCharacters": "コピーできるキャラクターがいません。",
   "teamEditor.notSaved": "保存されていません: {error}",
-  "teamEditor.openInCharacter": "キャラクター画面で開く ›",
   "teamEditor.professions": "職業",
   "teamEditor.professionsTitle": "チームの職業",
   "teamEditor.replaceMember": "{member}を{character}に置き換える",

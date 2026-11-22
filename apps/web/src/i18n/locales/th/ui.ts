@@ -1240,7 +1240,6 @@ export default {
   "teamEditor.name": "ชื่อ",
   "teamEditor.noCharacters": "คุณไม่มีตัวละครให้คัดลอก",
   "teamEditor.notSaved": "ไม่ได้บันทึก: {error}",
-  "teamEditor.openInCharacter": "เปิดในหน้าตัวละคร ›",
   "teamEditor.professions": "อาชีพ",
   "teamEditor.professionsTitle": "อาชีพของทีม",
   "teamEditor.replaceMember": "แทนที่ {member} ด้วย {character}",

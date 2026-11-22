@@ -199,7 +199,7 @@ alleen zolang er een open is: klik er een aan om hem uit te rusten, of sleep hem
 naar zijn handen. Er is één lid tegelijk open; **Esc** sluit het. Een nieuwe
 klasse laat de skills en rangen vallen die ze niet kan gebruiken, met
 **Ongedaan**.
-Druk op de naam van een lid, of **Openen in het personagescherm**, om het in de
+Druk op de naam van een lid, of zijn **✎**-knop, om het in de
 build-editor te bewerken; zijn **Opslaan** zet het terug in het team, en de eigen
 **Opslaan** van het team bewaart alles en brengt je terug naar Teambouwer.
 **Esc** vertrekt zonder op te slaan, en vraagt het eerst. **Delen**,

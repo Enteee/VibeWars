@@ -821,6 +821,8 @@ test("a member opens in place: its secondary profession and a rank change there 
 
   await memberRows(page).first().locator(".team-row-edit").click();
   await expect(editor).toBeVisible();
+  // Opening it in the build editor is the row's ✎, not a button in here (#3819).
+  await expect(editor.locator(".team-member-open")).toHaveCount(0);
   await expect(memberRows(page).first().locator(".team-row-edit")).toHaveAttribute(
     "aria-expanded",
     "true",
@@ -1265,6 +1267,23 @@ test("team counters mark their cells; a cell finds its skill on the team (#575)"
   await expect(tip.locator(".tip-title")).toHaveText("Backbreaker");
   await page.locator(".team-row-name").first().hover();
   await expect(tip).toBeHidden();
+});
+
+test("a member's ✎ opens it in the build editor, as its name does (#3819)", async ({ page }) => {
+  await saveCharacters(page, ["Alpha", "Bravo"]);
+  await openTeamBuilder(page);
+  await setTeamSize(page, 2);
+  await page.getByRole("button", { name: "new team" }).click();
+  await copyOnto(page, "Bravo", 0);
+  await copyOnto(page, "Alpha", 1);
+  const open = memberRows(page).nth(1).locator(".team-row-open");
+  await expect(open).toHaveText("✎");
+  await expect(open).toHaveAccessibleName("edit Alpha in the build editor");
+  // It sits right before ▼, and a click on it starts no drag.
+  await expect(open.locator("xpath=following-sibling::*[1]")).toHaveClass(/team-row-edit/);
+  await open.click();
+  await expect(memberRows(page)).toHaveCount(0);
+  await expect(page.locator("input.editor-name")).toHaveValue("Alpha");
 });
 
 test("a member opens in the build editor and comes back to the unsaved team (#576)", async ({

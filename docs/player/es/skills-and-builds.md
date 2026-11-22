@@ -201,8 +201,8 @@ ninguno, va al primero vacío. **Equipo** tiene las armas y manos secundarias de
 miembro abierto, y solo aparece con uno abierto: haz clic en una para equiparla,
 o arrástrala a sus manos. Solo hay un miembro abierto a la vez; **Esc** lo
 cierra. Una nueva profesión descarta las habilidades y rangos que no puede usar,
-con un **Deshacer**. Pulsa el nombre de un miembro, o **Abrir en la pantalla de
-personaje**, para editarlo en el editor de builds; su **Guardar** lo devuelve al
+con un **Deshacer**. Pulsa el nombre de un miembro, o su botón
+**✎**, para editarlo en el editor de builds; su **Guardar** lo devuelve al
 equipo, y el **Guardar** del propio equipo lo conserva todo y te lleva de vuelta
 a Creador de equipos. **Esc** sale sin guardar, y pregunta antes. **Compartir**,
 **Cargar equipo**, **Duplicar** y **Eliminar** del equipo están en **⋯**.

@@ -1325,7 +1325,6 @@ export default {
   "teamEditor.name": "Naam",
   "teamEditor.noCharacters": "Je hebt geen personages om te kopiëren.",
   "teamEditor.notSaved": "Niet opgeslagen: {error}",
-  "teamEditor.openInCharacter": "Openen in het personagescherm ›",
   "teamEditor.professions": "Klassen",
   "teamEditor.professionsTitle": "de klassen van het team",
   "teamEditor.replaceMember": "{member} vervangen door {character}",

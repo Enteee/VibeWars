@@ -195,7 +195,7 @@ senjata dan off-hand milik anggota yang terbuka, dan hanya ada selama ada anggot
 yang terbuka: klik salah satunya untuk memasangnya, atau seret ke tangannya. Hanya satu
 anggota yang terbuka pada satu waktu; **Esc** menutupnya. Profesi baru membuang
 skill dan peringkat yang tidak bisa dipakainya, dengan tombol **Urung**.
-Tekan nama seorang anggota, atau **Buka di layar Karakter**, untuk mengeditnya di
+Tekan nama seorang anggota, atau tombol **✎**-nya, untuk mengeditnya di
 editor build;
 **Simpan**-nya menaruhnya kembali di tim, dan **Simpan** milik tim menyimpan semuanya
 lalu membawamu kembali ke Pembuat Tim. **Esc** keluar

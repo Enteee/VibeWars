@@ -196,7 +196,7 @@ oružja i predmete za drugu ruku otvorenog člana i postoji samo dok je jedan
 otvoren: klikni jedan da ga opremiš ili ga povuci na njegove ruke. Odjednom je
 otvoren jedan član; **Esc** ga zatvara. Nova profesija izbacuje
 vještine i razine koje ne može koristiti, uz **Poništi**.
-Pritisni ime člana ili **Otvori na zaslonu lika** da ga urediš u
+Pritisni ime člana ili njegov gumb **✎** da ga urediš u
 uređivaču sastava;
 njegov **Spremi** vraća ga u tim, a timski **Spremi** čuva sve
 i vraća te u Uređivač timova. **Esc** izlazi

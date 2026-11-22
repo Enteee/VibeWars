@@ -195,7 +195,7 @@ the weapons and off-hands of the open member, and is there only while one
 is open: click one to equip it, or drag it onto its hands. One
 member is open at a time; **Esc** closes it. A new profession drops the
 skills and ranks it cannot use, with an **Undo**.
-Press a member's name, or **Open in the Character screen**, to edit it in
+Press a member's name, or its **✎** button, to edit it in
 the build editor;
 its **Save** puts it back in the team, and the team's own **Save** keeps it all
 and takes you back to Team Builder. **Esc** leaves

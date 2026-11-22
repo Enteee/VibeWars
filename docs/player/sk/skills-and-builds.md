@@ -199,7 +199,7 @@ schopnosť na tú pozíciu; ak žiadna nie je vybraná, ide na prvú prázdnu.
 nejaký otvorený: kliknutím ho vybavíš alebo ho pretiahni na jeho ruky.
 Naraz je otvorený jeden člen; **Esc** ho zatvorí. Nové povolanie zahodí
 schopnosti a hodnosti, ktoré nemôže použiť, s voľbou **Späť**.
-Stlačením mena člena alebo **Otvoriť na obrazovke postavy** ho upravíš v
+Stlačením mena člena alebo jeho tlačidla **✎** ho upravíš v
 editore buildov;
 jeho **Uložiť** ho vráti do tímu a vlastné **Uložiť** tímu uloží všetko
 a vráti ťa do **Tvorba tímov**. **Esc** odíde

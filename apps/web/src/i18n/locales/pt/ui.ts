@@ -1391,7 +1391,6 @@ export default {
   "teamEditor.name": "Nome",
   "teamEditor.noCharacters": "Você não tem personagens para copiar.",
   "teamEditor.notSaved": "Não salvo: {error}",
-  "teamEditor.openInCharacter": "Abrir na tela de Personagem ›",
   "teamEditor.professions": "Profissões",
   "teamEditor.professionsTitle": "as profissões da equipe",
   "teamEditor.replaceMember": "Substituir {member} por {character}",
