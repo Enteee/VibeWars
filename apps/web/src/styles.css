@@ -9167,7 +9167,15 @@ body:has(> .splash) #app {
     text-align: center;
   }
 
+  .topbar-badge {
+    min-width: 1.15rem;
+    height: 1.15rem;
+    font-size: 0.75rem;
+    line-height: 1.15rem;
+  }
+
   .roster-random-tag,
+  .team-lobby-drawer-chip,
   .match-chip-label {
     font-size: 0.75rem;
   }
