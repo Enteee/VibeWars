@@ -1555,6 +1555,7 @@ export function mountAttributes(panel: HTMLElement, context: BuildHost): Region 
       ...sizers,
       next,
       h("span", "editor-attribute-needs"),
+      h("span", "editor-attribute-sources"),
     );
     return row;
   };
@@ -1663,6 +1664,12 @@ export function mountAttributes(panel: HTMLElement, context: BuildHost): Region 
         if (next !== null) {
           const cost = nextRankCost(character, attributeId);
           next.textContent = cost === undefined ? t("buildEditor.rankMax") : `+${String(cost)}`;
+        }
+        // Where the bonus comes from: its title on hover, a line under the
+        // row where there is no hover to show it (#3777).
+        const sources = row.querySelector(".editor-attribute-sources");
+        if (sources !== null) {
+          sources.textContent = bonus?.sources ?? "";
         }
         const needs = row.querySelector(".editor-attribute-needs");
         if (needs !== null) {

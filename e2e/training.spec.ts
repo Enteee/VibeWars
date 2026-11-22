@@ -531,18 +531,22 @@ test("(9) a match is unaffected", async ({ page }) => {
   await expect(page.locator("canvas:not(.compass):not(.character-figure)")).toHaveCount(1);
 });
 
-test("(10) on a narrow screen the columns stack: training, editor, library", async ({ page }) => {
+test("(10) on a narrow screen the columns stack: training, the bar, library, gear", async ({
+  page,
+}) => {
   await openTraining(page);
   await page.setViewportSize({ width: 700, height: 900 });
 
+  // The bar sits right above the library it fills, the gear after (#3777).
   await expect
     .poll(async () => {
-      const [training, editor, library] = await Promise.all([
-        page.locator(".training").boundingBox(),
-        page.locator(".editor").boundingBox(),
-        page.locator(".skill-library").boundingBox(),
-      ]);
-      return (training?.y ?? 0) < (editor?.y ?? 0) && (editor?.y ?? 0) < (library?.y ?? 0);
+      const boxes = await Promise.all(
+        [".training", ".editor-skills", ".skill-library", ".editor-gear"].map((selector) =>
+          page.locator(selector).boundingBox(),
+        ),
+      );
+      const ys = boxes.map((box) => box?.y ?? Number.NaN);
+      return ys.every((y, at) => at === 0 || (ys[at - 1] ?? Number.NaN) < y);
     })
     .toBe(true);
   await expect(page.locator("canvas")).toHaveCount(1);
