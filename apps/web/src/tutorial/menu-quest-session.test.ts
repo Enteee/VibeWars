@@ -101,8 +101,14 @@ describe("the menu quest session", () => {
     const onEnd = vi.fn();
     const quest = startMenuQuest({ from: "spec", coach, onEnd });
     quest.event({ kind: "screen-shown", screen: "characters" });
-    expect(shown.at(-1)?.target).toBe("character-open");
+    expect(shown.at(-1)?.target).toBe("rail-characters");
+    quest.event({ kind: "roster-shown", random: true });
+    expect(shown.at(-1)?.target).toBe("character-random");
+    gotIt(shown.at(-1));
+    expect(shown.at(-1)?.target).toBe("character-new");
     quest.event({ kind: "screen-shown", screen: "character-builder" });
+    expect(shown.at(-1)?.target).toBe("character-new");
+    quest.event({ kind: "character-new" });
     expect(shown.at(-1)?.target).toBe("professions");
     const start = newCharacter("c1");
     const ranger: StoredCharacter = { ...start, secondaryProfession: "ranger" };

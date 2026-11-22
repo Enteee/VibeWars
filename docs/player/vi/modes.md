@@ -463,12 +463,4 @@ Phía trên các nút chọn, dải **Đại sảnh Anh hùng** liệt kê 20 l�
 
 ## Xếp hạng
 
-Một trận từ hàng chờ không có bot là trận xếp hạng. Màn hình hàng chờ và sảnh đội cho biết điều đó trước khi bạn xếp hàng; chỉ một bot cũng khiến trận không xếp hạng. Khi tìm được trận xếp hạng, mọi người chơi ký vào lúc bắt đầu, và màn hình hiện **Đang xác nhận trận xếp hạng…** tối đa 15 giây. Nếu ai đó không xác nhận, trận bị hủy và mọi người trở lại hàng chờ. Khi kết thúc, mọi người chơi ký vào kết quả, và biên nhận của trận được công bố trên các relay Nostr cùng khóa công khai và tên nhân vật của từng người chơi; người chơi không có nhân vật được ghi là starter. Điểm của bạn thay đổi trong vòng một giờ. Rời trận xếp hạng tính là thua, và nút rời trận cho biết điều đó.
-
-Hàng chờ xếp hạng ghép những người chơi có điểm gần nhau và chia họ thành các đội có điểm trung bình gần nhau. Việc tìm kiếm bắt đầu trong phạm vi 100 điểm quanh điểm của bạn và nới rộng 10 điểm cho mỗi giây bạn chờ, tối đa 600, nên không ai phải chờ mãi. Trong lúc chờ, hàng chờ hiển thị điểm của bạn.
-
-10 trận tính điểm đầu tiên của bạn là tạm thời: hàng chờ ghi **Tạm thời (3/10 trận)** và bạn chưa có hạng. Sau đó menu chính hiển thị hạng của bạn. Điểm sẽ phai dần: mỗi ngày không có trận tính điểm khiến điểm của bạn kém chắc chắn hơn, và bảng xếp hạng sắp theo một giá trị thận trọng, nên nếu bạn ngừng chơi, hạng của bạn sẽ tụt trong vài tuần.
-
-Khi bảng xếp hạng có 20 người chơi đã ổn định, một trận xếp hạng chỉ được tính khi trong trận có ít nhất 1 người chơi đã ổn định (10 trận tính điểm trở lên): trận chỉ giữa những người chơi mới thì không tính điểm. Hãy chơi với người đã ổn định và các trận của bạn sẽ được tính.
-
-Nút **Bảng xếp hạng** trên thanh trên cùng liệt kê 100 người đứng đầu theo hạng, tên và điểm, với hàng của bạn được làm nổi bật. Nó được cập nhật mỗi giờ.
+Một trận từ hàng chờ không có bot là trận xếp hạng: xem [Xếp hạng](ranking.md).

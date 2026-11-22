@@ -9,6 +9,7 @@
 - [מיומנויות ומבנים](skills-and-builds.md)
 - [ציוד](equipment.md)
 - [מצבים](modes.md)
+- [דירוג](ranking.md)
 - [קוסמטיקה](cosmetics.md)
 - [רכיבי העולם](world-elements.md)
 - [בוטים](bots.md)

@@ -1005,8 +1005,6 @@ export default {
   "queue.randomArena": "Zufallsarena {size}",
   "queue.rankedCancelled": "Gewertetes Match abgebrochen: ein Spieler hat nicht bestätigt.",
   "queue.rankedConfirming": "Gewertetes Match wird bestätigt…",
-  "queue.rankedNote":
-    "Ohne Bots ist es gewertet: Das Ergebnis wird mit deinem Schlüssel und Charakternamen veröffentlicht. Ein Bot im Match hält es ungewertet.",
   "queue.rankedPending": "Deine Wertung wird innerhalb einer Stunde aktualisiert.",
   "queue.rankedPublished": "Gewertetes Ergebnis veröffentlicht.",
   "queue.searchingCount": "{searching} suchen · {needed} benötigt",
@@ -1622,12 +1620,15 @@ export default {
   "tutorial.menu.spec.gear":
     "Rüstung, Runen und Insignien: Wähle ein Teil an der Figur, dann, was darauf kommt.",
   "tutorial.menu.spec.gearDone": "Ändere ein Ausrüstungsteil",
-  "tutorial.menu.spec.open":
-    "Öffne Charaktere und dann einen Charakter, um seinen Build zu ändern.",
-  "tutorial.menu.spec.openDone": "Öffne einen Charakter",
+  "tutorial.menu.spec.new": "Bau dir deinen eigenen: Drücke „{newCharacter}“.",
+  "tutorial.menu.spec.newDone": "Drücke „{newCharacter}“",
+  "tutorial.menu.spec.open": "Öffne {characters}.",
+  "tutorial.menu.spec.openDone": "Öffne {characters}",
   "tutorial.menu.spec.professions":
-    "Deine Primärklasse gibt dir Attribute und Fertigkeiten; deine Sekundärklasse leiht dir ihre Fertigkeiten dazu.",
+    "Deine Primärklasse ist, was du bist: ihre Fertigkeiten und alle ihre Attribute, auch das, das nur sie hat ({warrior}: {strength}; {monk}: {divineFavor}). Deine Sekundärklasse bringt ihre Fertigkeiten und ihre übrigen Attribute mit, nie dieses besondere: Ein {warrior}/{monk} kann mit „{healingPrayers}“ heilen, hat aber keine „{divineFavor}“.",
   "tutorial.menu.spec.professionsDone": "Wechsle eine Klasse",
+  "tutorial.menu.spec.random":
+    "Das ist dein Charakter mit der Marke „{random}“: Das Spiel hat ihn für dich ausgewürfelt, spielbereit. Ändern kannst du ihn nicht, aber „{reroll}“ würfelt einen neuen aus und „{clone}“ gibt dir eine Kopie zum Bearbeiten.",
   "tutorial.menu.spec.save": "Speichere deinen Charakter, um den neuen Build zu behalten.",
   "tutorial.menu.spec.saveDone": "Speichern",
   "tutorial.menu.spec.skills":

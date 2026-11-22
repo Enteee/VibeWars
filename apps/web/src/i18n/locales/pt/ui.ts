@@ -1044,8 +1044,6 @@ export default {
   "queue.randomArena": "Arena Aleatória {size}",
   "queue.rankedCancelled": "Partida ranqueada cancelada: um jogador não confirmou.",
   "queue.rankedConfirming": "Confirmando partida ranqueada…",
-  "queue.rankedNote":
-    "Sem bots é ranqueada: o resultado é publicado com a tua chave e o nome da tua personagem. Um bot na partida deixa-a sem ranking.",
   "queue.rankedPending": "A tua classificação atualiza dentro de uma hora.",
   "queue.rankedPublished": "Resultado ranqueado publicado.",
   "queue.searchingCount": "{searching} buscando · {needed} necessários",
@@ -1676,11 +1674,15 @@ export default {
   "tutorial.menu.spec.gear":
     "Armadura, runas e insígnias: escolha uma peça na figura e depois o que vai nela.",
   "tutorial.menu.spec.gearDone": "Troque uma peça de equipamento",
-  "tutorial.menu.spec.open": "Abra Personagens e depois um personagem para mudar a build dele.",
-  "tutorial.menu.spec.openDone": "Abra um personagem",
+  "tutorial.menu.spec.new": "Crie o seu: aperte {newCharacter}.",
+  "tutorial.menu.spec.newDone": "Aperte {newCharacter}",
+  "tutorial.menu.spec.open": "Abra {characters}.",
+  "tutorial.menu.spec.openDone": "Abra {characters}",
   "tutorial.menu.spec.professions":
-    "Sua profissão primária dá seus atributos e habilidades; a secundária também empresta as habilidades dela.",
+    "Sua profissão primária é o que você é: as habilidades dela e todos os atributos dela, incluindo o que só ela tem ({warrior}: {strength}; {monk}: {divineFavor}). A secundária adiciona as habilidades dela e os outros atributos dela, nunca aquele especial: um {warrior}/{monk} pode curar com {healingPrayers}, mas não tem {divineFavor}.",
   "tutorial.menu.spec.professionsDone": "Troque uma profissão",
+  "tutorial.menu.spec.random":
+    "Este é o seu personagem marcado como {random}: o jogo o sorteou para você, pronto para jogar. Você não pode mudá-lo, mas {reroll} sorteia um novo e {clone} te dá uma cópia para editar.",
   "tutorial.menu.spec.save": "Salve seu personagem para manter a nova build.",
   "tutorial.menu.spec.saveDone": "Salvar",
   "tutorial.menu.spec.skills":

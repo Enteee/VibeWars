@@ -997,8 +997,6 @@ export default {
   "queue.randomArena": "Véletlen Aréna {size}",
   "queue.rankedCancelled": "Rangsorolt meccs törölve: egy játékos nem erősített meg.",
   "queue.rankedConfirming": "Rangsorolt meccs megerősítése…",
-  "queue.rankedNote":
-    "Botok nélkül a meccs rangsorolt: az eredmény a kulcsoddal és a karaktered nevével jelenik meg. Egy bot a meccsen rangsorolatlanul hagyja.",
   "queue.rankedPending": "A pontszámod egy órán belül frissül.",
   "queue.rankedPublished": "Rangsorolt eredmény közzétéve.",
   "queue.searchingCount": "{searching} keres · {needed} kell",
@@ -1608,12 +1606,15 @@ export default {
   "tutorial.menu.spec.gear":
     "Páncél, rúnák és jelvények: válassz egy darabot a figurán, aztán hogy mi kerüljön rá.",
   "tutorial.menu.spec.gearDone": "Cserélj egy felszerelésdarabot",
-  "tutorial.menu.spec.open":
-    "Nyisd meg a Karaktereket, majd egy karaktert, hogy módosítsd a buildjét.",
-  "tutorial.menu.spec.openDone": "Nyiss meg egy karaktert",
+  "tutorial.menu.spec.new": "Készíts sajátot: nyomd meg: „{newCharacter}”.",
+  "tutorial.menu.spec.newDone": "Nyomd meg: „{newCharacter}”",
+  "tutorial.menu.spec.open": "Nyisd meg: {characters}.",
+  "tutorial.menu.spec.openDone": "Nyisd meg: {characters}",
   "tutorial.menu.spec.professions":
-    "Az elsődleges kasztod adja a tulajdonságaidat és képességeidet; a másodlagos a saját képességeit is kölcsönadja.",
+    "Az elsődleges kasztod az, ami vagy: a képességei és az összes tulajdonsága, azzal együtt, ami csak neki van ({warrior}: {strength}; {monk}: {divineFavor}). A másodlagos hozzáadja a képességeit és a többi tulajdonságát, azt a különlegeset soha: egy {warrior}/{monk} tud gyógyítani „{healingPrayers}” segítségével, de „{divineFavor}” nincs neki.",
   "tutorial.menu.spec.professionsDone": "Válts kasztot",
+  "tutorial.menu.spec.random":
+    "Ez a „{random}” címkéjű karaktered: a játék sorsolta neked, játékra készen. Nem változtathatsz rajta, de a „{reroll}” újat sorsol, a „{clone}” pedig szerkeszthető másolatot ad.",
   "tutorial.menu.spec.save": "Mentsd el a karaktered, hogy megmaradjon az új build.",
   "tutorial.menu.spec.saveDone": "Mentés",
   "tutorial.menu.spec.skills":

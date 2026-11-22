@@ -1086,8 +1086,6 @@ export default {
   "queue.randomArena": "Náhodná aréna {size}",
   "queue.rankedCancelled": "Hodnotený zápas zrušený: hráč nepotvrdil.",
   "queue.rankedConfirming": "Potvrdzovanie hodnoteného zápasu…",
-  "queue.rankedNote":
-    "Bez botov je zápas hodnotený: výsledok sa zverejní s tvojím kľúčom a menom postavy. Bot v zápase ho nechá nehodnotený.",
   "queue.rankedPending": "Tvoje hodnotenie sa aktualizuje do hodiny.",
   "queue.rankedPublished": "Hodnotený výsledok zverejnený.",
   "queue.searchingCount": "hľadá: {searching} · treba: {needed}",
@@ -1722,11 +1720,15 @@ export default {
   "tutorial.menu.spec.attributesDone": "Zmeň atribút",
   "tutorial.menu.spec.gear": "Brnenie, runy a insígnie: vyber kus na postave, potom čo naň patrí.",
   "tutorial.menu.spec.gearDone": "Zmeň kus výstroja",
-  "tutorial.menu.spec.open": "Otvor Postavy a potom postavu, aby si zmenil jej build.",
-  "tutorial.menu.spec.openDone": "Otvor postavu",
+  "tutorial.menu.spec.new": "Vytvor si vlastnú: stlač „{newCharacter}“.",
+  "tutorial.menu.spec.newDone": "Stlač „{newCharacter}“",
+  "tutorial.menu.spec.open": "Otvor {characters}.",
+  "tutorial.menu.spec.openDone": "Otvor {characters}",
   "tutorial.menu.spec.professions":
-    "Hlavné povolanie ti dáva atribúty a schopnosti; vedľajšie ti požičia aj svoje schopnosti.",
+    "Hlavné povolanie je to, čím si: jeho schopnosti a všetky jeho atribúty, vrátane toho, ktorý má len ono ({warrior}: {strength}; {monk}: {divineFavor}). Vedľajšie pridá svoje schopnosti a ostatné atribúty, nikdy ten zvláštny: {warrior}/{monk} vie liečiť pomocou „{healingPrayers}“, ale nemá „{divineFavor}“.",
   "tutorial.menu.spec.professionsDone": "Prepni povolanie",
+  "tutorial.menu.spec.random":
+    "Toto je tvoja postava so štítkom „{random}“: hra ti ju vylosovala, pripravenú na hru. Meniť ju nemôžeš, ale „{reroll}“ vylosuje novú a „{clone}“ ti dá kópiu na úpravu.",
   "tutorial.menu.spec.save": "Ulož postavu, aby ti nový build zostal.",
   "tutorial.menu.spec.saveDone": "Uložiť",
   "tutorial.menu.spec.skills":

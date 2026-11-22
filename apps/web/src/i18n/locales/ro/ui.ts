@@ -1051,8 +1051,6 @@ export default {
   "queue.randomArena": "Arenă aleatorie {size}",
   "queue.rankedCancelled": "Meci clasat anulat: un jucător nu a confirmat.",
   "queue.rankedConfirming": "Se confirmă meciul clasat…",
-  "queue.rankedNote":
-    "Fără boți meciul e clasat: rezultatul e publicat cu cheia ta și numele personajului. Un bot în meci îl lasă neclasat.",
   "queue.rankedPending": "Ratingul tău se actualizează în decurs de o oră.",
   "queue.rankedPublished": "Rezultatul clasat a fost publicat.",
   "queue.searchingCount": "{searching} caută · {needed} necesari",
@@ -1683,11 +1681,15 @@ export default {
   "tutorial.menu.spec.gear":
     "Armură, rune și însemne: alege o piesă pe figurină, apoi ce pui pe ea.",
   "tutorial.menu.spec.gearDone": "Schimbă o piesă de echipament",
-  "tutorial.menu.spec.open": "Deschide Personaje, apoi un personaj ca să-i schimbi build-ul.",
-  "tutorial.menu.spec.openDone": "Deschide un personaj",
+  "tutorial.menu.spec.new": "Fă-ți propriul personaj: apasă „{newCharacter}”.",
+  "tutorial.menu.spec.newDone": "Apasă „{newCharacter}”",
+  "tutorial.menu.spec.open": "Deschide {characters}.",
+  "tutorial.menu.spec.openDone": "Deschide {characters}",
   "tutorial.menu.spec.professions":
-    "Clasa principală îți dă atributele și abilitățile; cea secundară îți împrumută și ea abilitățile ei.",
+    "Clasa principală este ceea ce ești: abilitățile ei și toate atributele ei, inclusiv cel pe care îl are doar ea ({warrior}: {strength}; {monk}: {divineFavor}). Cea secundară adaugă abilitățile ei și celelalte atribute ale ei, niciodată pe cel special: un {warrior}/{monk} poate vindeca prin „{healingPrayers}”, dar nu are „{divineFavor}”.",
   "tutorial.menu.spec.professionsDone": "Schimbă o clasă",
+  "tutorial.menu.spec.random":
+    "Acesta este personajul tău marcat „{random}”: jocul l-a tras la sorți pentru tine, gata de joc. Nu-l poți schimba, dar „{reroll}” trage unul nou, iar „{clone}” îți dă o copie de editat.",
   "tutorial.menu.spec.save": "Salvează personajul ca să păstrezi noul build.",
   "tutorial.menu.spec.saveDone": "Salvează",
   "tutorial.menu.spec.skills":

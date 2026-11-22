@@ -952,8 +952,6 @@ export default {
   "queue.randomArena": "ランダムアリーナ {size}",
   "queue.rankedCancelled": "ランク戦は中止されました: 確認しなかったプレイヤーがいます。",
   "queue.rankedConfirming": "ランク戦を確認中…",
-  "queue.rankedNote":
-    "ボットなしならランク戦: 結果はあなたの鍵とキャラクター名で公開されます。ボットがいる試合はランク外です。",
   "queue.rankedPending": "レートは1時間以内に更新されます。",
   "queue.rankedPublished": "ランク戦の結果を公開しました。",
   "queue.searchingCount": "{searching}人検索中 · {needed}人必要",
@@ -1525,11 +1523,15 @@ export default {
   "tutorial.menu.spec.gear":
     "防具、ルーン、インシグニア：フィギュアの部位を選び、次にそこへ付けるものを選ぶ。",
   "tutorial.menu.spec.gearDone": "装備を1つ変える",
-  "tutorial.menu.spec.open": "「キャラクター」を開き、キャラクターを開いてビルドを変えよう。",
-  "tutorial.menu.spec.openDone": "キャラクターを開く",
+  "tutorial.menu.spec.new": "自分のキャラを作ろう:「{newCharacter}」を押す。",
+  "tutorial.menu.spec.newDone": "「{newCharacter}」を押す",
+  "tutorial.menu.spec.open": "{characters}を開こう。",
+  "tutorial.menu.spec.openDone": "{characters}を開く",
   "tutorial.menu.spec.professions":
-    "メイン職業が属性とスキルを決める。サブ職業もスキルを貸してくれる。",
+    "メイン職業はキャラそのもの。そのスキルと全属性を持ち、その職業だけの属性も含む({warrior}なら{strength}、{monk}なら{divineFavor})。サブ職業はスキルと他の属性を足すが、その特別な属性は決して足さない。{warrior}/{monk}は{healingPrayers}で回復できるが、{divineFavor}は持たない。",
   "tutorial.menu.spec.professionsDone": "職業を切り替える",
+  "tutorial.menu.spec.random":
+    "これは「{random}」のキャラ。ゲームがランダムに作った、すぐ遊べるキャラだ。変更はできないが、「{reroll}」で新しく作り直せて、「{clone}」で編集できるコピーがもらえる。",
   "tutorial.menu.spec.save": "キャラクターを保存して、新しいビルドを残そう。",
   "tutorial.menu.spec.saveDone": "保存",
   "tutorial.menu.spec.skills":

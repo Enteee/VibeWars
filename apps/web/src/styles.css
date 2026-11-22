@@ -3014,6 +3014,37 @@ body:has(> .splash) #menu-background::after {
   display: block;
 }
 
+/* A phone (#3777): the bar takes a line of its own under the name, rather
+   than the row scrolling it out of sight; four a line for a finger. */
+@container (width < 32rem) {
+  .team-grid {
+    min-width: 0;
+  }
+
+  .team-row {
+    grid-template-columns: 0.8rem minmax(0, 1fr) 4.5rem 2rem;
+  }
+
+  .team-row-edit {
+    grid-row: 1;
+    grid-column: 4;
+  }
+
+  .team-row-skills {
+    display: grid;
+    grid-template-columns: repeat(8, max-content);
+    grid-column: 1 / -1;
+    gap: 0.3rem;
+    justify-content: center;
+  }
+
+  @media (pointer: coarse) {
+    .team-row-skills {
+      grid-template-columns: repeat(4, max-content);
+    }
+  }
+}
+
 .team-skill.is-empty {
   border: 1px dashed var(--line);
 }
@@ -3308,6 +3339,24 @@ body:has(> .splash) #menu-background::after {
 
 .editor-attribute-needs:empty {
   display: none;
+}
+
+.editor-attribute-sources {
+  grid-column: 1 / -1;
+  justify-self: end;
+  color: var(--ink-dim);
+  font-size: 0.75rem;
+}
+
+.editor-attribute-sources:empty {
+  display: none;
+}
+
+/* A pointer that hovers reads the bonus's title instead. */
+@media (hover: hover) {
+  .editor-attribute-sources {
+    display: none;
+  }
 }
 
 .editor-attributes {
@@ -5285,6 +5334,57 @@ body:has(> .splash) #menu-background::after {
       "training"
       "editor"
       "library";
+  }
+}
+
+/* A phone, upright (#3777): one column, where the library would come a
+   screen of gear after the bar it fills. The editor's sections join the
+   column, so the bar sits right above the library and stays in view while
+   it scrolls; the gear comes last. */
+@media (width <= 52rem) {
+  .editor-layout,
+  .editor-layout.has-training {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    align-items: stretch;
+  }
+
+  .editor-layout > .editor {
+    display: contents;
+  }
+
+  .editor-layout > .editor > .editor-skills {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    order: 1;
+    padding-block: 0.4rem;
+    background: var(--bg);
+  }
+
+  /* Pinned, the bar is kept short: one line a name, and the cost left to
+     the library and the tooltip. */
+  .editor-layout .skill-slot-cost {
+    display: none;
+  }
+
+  .editor-layout .skill-slot-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  /* What is left under the top bar and the pinned bar. */
+  .editor-layout > .skill-library {
+    position: static;
+    order: 2;
+    height: calc(100dvh - 25rem);
+    min-height: 18rem;
+  }
+
+  .editor-layout > .editor > .editor-gear {
+    order: 3;
   }
 }
 
@@ -8334,13 +8434,6 @@ body:has(#screens[style*="none"]) .now-playing {
   font-variant-numeric: tabular-nums;
 }
 
-/* Under Find a match (#3680): what a queued match without bots publishes. */
-.queue-ranked-note {
-  margin: 0;
-  color: var(--ink-dim);
-  font-size: 0.8rem;
-}
-
 .queue-actions {
   position: sticky;
   bottom: 0;
@@ -9185,5 +9278,91 @@ body:has(> .splash) #app {
   .team-lobby-drawer-chip,
   .match-chip-label {
     font-size: 0.75rem;
+  }
+}
+
+/* A finger in the editors (#3777): the same 12 px floor. */
+@media (pointer: coarse) {
+  .weapon-set-key,
+  .skill-slot-index,
+  .gear-slot-label,
+  .gear-slot-detail,
+  .editor-clear-armor,
+  .skill-slot-cost,
+  .skill-slot-warning,
+  .skill-box-cost,
+  .skill-box-headline,
+  .skill-box-on,
+  .skill-box-equip,
+  .skill-scale-step,
+  .scaled-number,
+  .tip-attribute,
+  .paper-doll-hotspot-number,
+  .paper-doll-row-name,
+  .skill-group-count,
+  .skill-group-marker,
+  .skill-group-rank,
+  .team-row-professions,
+  .team-row-attributes,
+  .team-row-health,
+  .team-row-energy,
+  .team-pick-sub {
+    font-size: 0.75rem;
+  }
+}
+
+/* The editors' × and paper-doll spots take a finger's 44 px too (#3777),
+   in room kept for them, so none covers what it sits beside: a skill
+   slot's number row is as tall as its ×, a gear slot and a set tab keep
+   their end free for theirs, and the figure grows until its spots, a
+   finger tall, no longer meet. */
+@media (pointer: coarse) {
+  .skill-slot-clear,
+  .gear-slot-clear,
+  .gear-set-tab-clear {
+    top: 0;
+    inset-inline-end: 0;
+    display: grid;
+    place-items: center;
+    min-block-size: 44px;
+    min-inline-size: 44px;
+  }
+
+  .skill-slot:has(> .skill-slot-clear) .skill-slot-index {
+    min-block-size: calc(44px - 0.4rem);
+  }
+
+  .gear-slot:has(> .gear-slot-clear),
+  .gear-set-tab-cell:has(> .gear-set-tab-clear) > .gear-set-tab {
+    padding-inline-end: 44px;
+  }
+
+  .paper-doll-stage {
+    max-width: 16rem;
+  }
+
+  .paper-doll-hotspot {
+    min-block-size: 44px;
+    min-inline-size: 44px;
+  }
+}
+
+@media (pointer: coarse) and (width > 700px) {
+  .paper-doll {
+    grid-template-columns: minmax(9rem, 16rem) 1fr;
+  }
+}
+
+/* In the top bar, the team size stays ‹ 4v4 › on one row (#3777): stacked
+   as on the rail, it would make the bar two rows tall on a phone's side. */
+@media (pointer: coarse) {
+  .team-lobby-size .mode-rail-stepper {
+    flex-wrap: nowrap;
+    width: auto;
+  }
+
+  .team-lobby-size .mode-rail-size-value {
+    flex: none;
+    order: 0;
   }
 }

@@ -1051,8 +1051,6 @@ export default {
   "queue.randomArena": "Nasumična arena {size}",
   "queue.rankedCancelled": "Rangirani meč otkazan: igrač nije potvrdio.",
   "queue.rankedConfirming": "Potvrđivanje rangiranog meča…",
-  "queue.rankedNote":
-    "Bez botova meč je rangiran: rezultat se objavljuje s tvojim ključem i imenom lika. Bot u meču ostavlja ga nerangiranim.",
   "queue.rankedPending": "Tvoj rejting se ažurira unutar sat vremena.",
   "queue.rankedPublished": "Rangirani rezultat objavljen.",
   "queue.searchingCount": "traži: {searching} · treba: {needed}",
@@ -1673,11 +1671,15 @@ export default {
   "tutorial.menu.spec.gear":
     "Oklop, rune i insignije: odaberi dio na liku, a zatim što ide na njega.",
   "tutorial.menu.spec.gearDone": "Promijeni dio opreme",
-  "tutorial.menu.spec.open": "Otvori Likove, zatim otvori lik da mu promijeniš build.",
-  "tutorial.menu.spec.openDone": "Otvori lik",
+  "tutorial.menu.spec.new": "Napravi svoj lik: pritisni „{newCharacter}”.",
+  "tutorial.menu.spec.newDone": "Pritisni „{newCharacter}”",
+  "tutorial.menu.spec.open": "Otvori {characters}.",
+  "tutorial.menu.spec.openDone": "Otvori {characters}",
   "tutorial.menu.spec.professions":
-    "Primarna profesija daje ti atribute i vještine; sekundarna ti posuđuje i svoje vještine.",
+    "Primarna profesija je ono što jesi: njezine vještine i svi njezini atributi, uključujući onaj koji ima samo ona ({warrior}: {strength}; {monk}: {divineFavor}). Sekundarna dodaje svoje vještine i ostale atribute, nikad taj posebni: {warrior}/{monk} može liječiti pomoću „{healingPrayers}”, ali nema „{divineFavor}”.",
   "tutorial.menu.spec.professionsDone": "Promijeni profesiju",
+  "tutorial.menu.spec.random":
+    "Ovo je tvoj lik s oznakom „{random}”: igra ga je nasumično složila za tebe, spremnog za igru. Ne možeš ga mijenjati, ali „{reroll}” složi novi, a „{clone}” ti daje kopiju za uređivanje.",
   "tutorial.menu.spec.save": "Spremi lik da zadržiš novi build.",
   "tutorial.menu.spec.saveDone": "Spremi",
   "tutorial.menu.spec.skills":

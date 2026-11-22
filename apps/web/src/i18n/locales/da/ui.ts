@@ -993,8 +993,6 @@ export default {
   "queue.randomArena": "Tilfældig arena {size}",
   "queue.rankedCancelled": "Rangeret kamp aflyst: en spiller bekræftede ikke.",
   "queue.rankedConfirming": "Bekræfter rangeret kamp…",
-  "queue.rankedNote":
-    "Ingen bots betyder rangeret: resultatet offentliggøres med din nøgle og dit figurnavn. En bot i kampen holder den urangeret.",
   "queue.rankedPending": "Din rating opdateres inden for en time.",
   "queue.rankedPublished": "Rangeret resultat offentliggjort.",
   "queue.searchingCount": "{searching} søger · {needed} mangler",
@@ -1595,11 +1593,15 @@ export default {
   "tutorial.menu.spec.gear":
     "Rustning, runer og insignier: vælg en del på figuren og så hvad der skal på den.",
   "tutorial.menu.spec.gearDone": "Skift en del af udstyret",
-  "tutorial.menu.spec.open": "Åbn Figurer, og åbn så en figur for at ændre dens build.",
-  "tutorial.menu.spec.openDone": "Åbn en figur",
+  "tutorial.menu.spec.new": "Lav din egen: tryk på {newCharacter}.",
+  "tutorial.menu.spec.newDone": "Tryk på {newCharacter}",
+  "tutorial.menu.spec.open": "Åbn {characters}.",
+  "tutorial.menu.spec.openDone": "Åbn {characters}",
   "tutorial.menu.spec.professions":
-    "Din primære klasse giver dine attributter og færdigheder; din sekundære låner dig også sine færdigheder.",
+    "Din primære klasse er det, du er: dens færdigheder og alle dens attributter, også den, kun den har ({warrior}: {strength}; {monk}: {divineFavor}). Din sekundære tilføjer sine færdigheder og sine andre attributter, aldrig den særlige: en {warrior}/{monk} kan hele med {healingPrayers}, men har ingen {divineFavor}.",
   "tutorial.menu.spec.professionsDone": "Skift en klasse",
+  "tutorial.menu.spec.random":
+    "Det her er din figur mærket {random}: spillet har slået den op til dig, klar til at spille. Du kan ikke ændre den, men {reroll} slår en ny op, og {clone} giver dig en kopi, du kan redigere.",
   "tutorial.menu.spec.save": "Gem din figur for at beholde det nye build.",
   "tutorial.menu.spec.saveDone": "Gem",
   "tutorial.menu.spec.skills":

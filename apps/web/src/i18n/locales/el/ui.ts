@@ -1005,8 +1005,6 @@ export default {
   "queue.randomArena": "Τυχαία Αρένα {size}",
   "queue.rankedCancelled": "Ο βαθμολογημένος αγώνας ακυρώθηκε: ένας παίκτης δεν επιβεβαίωσε.",
   "queue.rankedConfirming": "Επιβεβαίωση βαθμολογημένου αγώνα…",
-  "queue.rankedNote":
-    "Χωρίς bots ο αγώνας είναι βαθμολογημένος: το αποτέλεσμα δημοσιεύεται με το κλειδί σου και το όνομα του χαρακτήρα σου. Ένα bot στον αγώνα τον κρατά μη βαθμολογημένο.",
   "queue.rankedPending": "Η βαθμολογία σου ενημερώνεται μέσα σε μία ώρα.",
   "queue.rankedPublished": "Το βαθμολογημένο αποτέλεσμα δημοσιεύτηκε.",
   "queue.searchingCount": "{searching} ψάχνουν · χρειάζονται {needed}",
@@ -1623,12 +1621,15 @@ export default {
   "tutorial.menu.spec.gear":
     "Πανοπλία, ρούνοι και διακριτικά: διάλεξε ένα κομμάτι στη φιγούρα, μετά τι μπαίνει πάνω του.",
   "tutorial.menu.spec.gearDone": "Άλλαξε ένα κομμάτι εξοπλισμού",
-  "tutorial.menu.spec.open":
-    "Άνοιξε τους Χαρακτήρες και μετά έναν χαρακτήρα για να αλλάξεις το build του.",
-  "tutorial.menu.spec.openDone": "Άνοιξε έναν χαρακτήρα",
+  "tutorial.menu.spec.new": "Φτιάξε τον δικό σου: πάτησε «{newCharacter}».",
+  "tutorial.menu.spec.newDone": "Πάτησε «{newCharacter}»",
+  "tutorial.menu.spec.open": "Άνοιξε: «{characters}».",
+  "tutorial.menu.spec.openDone": "Άνοιξε: «{characters}»",
   "tutorial.menu.spec.professions":
-    "Το κύριο επάγγελμα σου δίνει χαρακτηριστικά και ικανότητες· το δευτερεύον σου δανείζει κι αυτό τις ικανότητές του.",
+    "Το κύριο επάγγελμα είναι αυτό που είσαι: οι ικανότητές του και όλα τα χαρακτηριστικά του, μαζί και αυτό που έχει μόνο εκείνο ({warrior}: {strength}· {monk}: {divineFavor}). Το δευτερεύον προσθέτει τις ικανότητές του και τα υπόλοιπα χαρακτηριστικά του, ποτέ εκείνο το ξεχωριστό: ένας {warrior}/{monk} μπορεί να θεραπεύει με «{healingPrayers}», αλλά δεν έχει «{divineFavor}».",
   "tutorial.menu.spec.professionsDone": "Άλλαξε ένα επάγγελμα",
+  "tutorial.menu.spec.random":
+    "Αυτός είναι ο χαρακτήρας σου με την ετικέτα «{random}»: το παιχνίδι τον έφτιαξε τυχαία για σένα, έτοιμο για παιχνίδι. Δεν μπορείς να τον αλλάξεις, αλλά το «{reroll}» φτιάχνει νέο και το «{clone}» σου δίνει ένα αντίγραφο για επεξεργασία.",
   "tutorial.menu.spec.save": "Αποθήκευσε τον χαρακτήρα σου για να κρατήσεις το νέο build.",
   "tutorial.menu.spec.saveDone": "Αποθήκευση",
   "tutorial.menu.spec.skills":

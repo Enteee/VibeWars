@@ -24,6 +24,10 @@ export type MenuQuestScreen =
 /** Something the menu did that an objective may be waiting for. */
 export type MenuQuestEvent =
   | { readonly kind: "screen-shown"; readonly screen: MenuQuestScreen }
+  /** The Characters screen drawn (#3786): whether the rolled Random character is on it. */
+  | { readonly kind: "roster-shown"; readonly random: boolean }
+  /** The build editor opened on a character never saved: New character (#3786). */
+  | { readonly kind: "character-new" }
   /** One edit in the build editor (#3541): the draft before it, and after. */
   | {
       readonly kind: "build-draft";
@@ -76,6 +80,10 @@ export interface MenuQuestState {
   readonly screen: MenuQuestScreen | undefined;
   readonly screensShown: readonly MenuQuestScreen[];
   readonly buildChanged: BuildChanges;
+  /** Whether the Characters screen, as last drawn, shows a Random character (#3786). */
+  readonly rosterRandom: boolean | undefined;
+  /** Whether New character was ever pressed (#3786). */
+  readonly newCharacterOpened: boolean;
   readonly charactersSaved: readonly {
     readonly before: StoredCharacter | undefined;
     readonly after: StoredCharacter;
@@ -226,14 +234,37 @@ export const MENU_QUEST_STEPS = [
     beats: [
       {
         kind: "do",
-        // The Characters entry, then, on its screen, the character to open.
-        target: (state) => (state.screen === "characters" ? "character-open" : "rail-characters"),
+        target: "rail-characters",
         line: "tutorial.menu.spec.open",
         objectives: [
           {
             id: "open",
             label: "tutorial.menu.spec.openDone",
-            done: (state) => state.screensShown.includes("character-builder"),
+            // Drawn, so the next beat knows whether there is a Random
+            // character; or already left through New character.
+            done: (state) =>
+              (state.screen === "characters" && state.rosterRandom !== undefined) ||
+              state.newCharacterOpened,
+          },
+        ],
+      },
+      {
+        // The rolled character cannot be opened (#1147): said, not asked.
+        // Skipped with none on the roster, or once New character is pressed.
+        kind: "explain",
+        target: "character-random",
+        line: "tutorial.menu.spec.random",
+        passed: (state) => state.rosterRandom === false || state.newCharacterOpened,
+      },
+      {
+        kind: "do",
+        target: "character-new",
+        line: "tutorial.menu.spec.new",
+        objectives: [
+          {
+            id: "new",
+            label: "tutorial.menu.spec.newDone",
+            done: (state) => state.newCharacterOpened,
           },
         ],
       },
@@ -493,6 +524,8 @@ export const NO_MENU_QUEST_EVENTS: MenuQuestState = {
     weapons: false,
     gear: false,
   },
+  rosterRandom: undefined,
+  newCharacterOpened: false,
   charactersSaved: [],
   teamDraft: undefined,
   characterInTeam: false,
@@ -586,6 +619,10 @@ export function foldMenuQuestEvent(state: MenuQuestState, event: MenuQuestEvent)
           ? state.screensShown
           : [...state.screensShown, event.screen],
       };
+    case "roster-shown":
+      return { ...state, rosterRandom: event.random };
+    case "character-new":
+      return { ...state, newCharacterOpened: true };
     case "build-draft":
       return {
         ...state,

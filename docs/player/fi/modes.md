@@ -505,12 +505,4 @@ Sirujen yläpuolella **Sankarien sali** -nauha luettelee viimeiset 20 hallintaka
 
 ## Rankatut
 
-Jonosta tuleva ottelu ilman botteja on rankattu. Jononäkymä ja joukkueaula kertovat sen ennen kuin jonotat; yksikin botti pitää ottelun rankkaamattomana. Kun rankattu ottelu löytyy, jokainen pelaaja allekirjoittaa sen alun, ja näytössä lukee enintään 15 sekunnin ajan **Vahvistetaan rankattua ottelua…**. Jos joku ei vahvista, ottelu perutaan ja kaikki palaavat jonoon. Lopuksi jokainen pelaaja allekirjoittaa tuloksen, ja ottelun kuitti julkaistaan Nostr-välittimille jokaisen pelaajan julkisen avaimen ja hahmon nimen kanssa; pelaaja ilman hahmoa merkitään nimellä starter. Luokituksesi muuttuu tunnin sisällä. Rankatusta ottelusta poistuminen lasketaan tappioksi, ja poistumispainike kertoo sen.
-
-Rankatut jonot yhdistävät pelaajia, joiden luokitus on lähellä toisiaan, ja jakavat heidät joukkueisiin, joiden keskiluokitus on lähellä toisiaan. Haku alkaa 100 pisteen säteeltä luokituksestasi ja laajenee 10 pistettä jokaista odotettua sekuntia kohden, enintään 600:aan, joten kukaan ei odota ikuisesti. Odottaessasi jono näyttää luokituksesi.
-
-Ensimmäiset 10 luokiteltua otteluasi ovat alustavia: jono sanoo **Alustava (3/10 ottelua)**, eikä sinulla ole vielä sijaa. Sen jälkeen päävalikko näyttää sijasi. Luokitus rapautuu: jokainen päivä ilman luokiteltua ottelua tekee siitä epävarmemman, ja tulostaulu järjestää varovaisen arvon mukaan, joten jos lopetat pelaamisen, sijasi laskee viikoissa.
-
-Kun tulostaululla on 20 vakiintunutta pelaajaa, rankattu ottelu lasketaan vain, jos ainakin yksi sen pelaajista on vakiintunut (10 tai enemmän luokiteltua ottelua): pelkästään uusien pelaajien välinen ottelu on luokittelematon. Pelaa vakiintunutta pelaajaa vastaan, niin otteluusi lasketaan.
-
-Yläpalkin **Tulostaulu**-painike näyttää 100 parasta sijan, nimen ja luokituksen mukaan, oma rivisi korostettuna. Se päivittyy tunneittain.
+Jonosta tuleva ottelu ilman botteja on rankattu: katso [Rankkaus](ranking.md).

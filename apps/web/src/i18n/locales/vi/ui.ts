@@ -943,8 +943,6 @@ export default {
   "queue.randomArena": "Đấu trường ngẫu nhiên {size}",
   "queue.rankedCancelled": "Trận xếp hạng bị hủy: một người chơi không xác nhận.",
   "queue.rankedConfirming": "Đang xác nhận trận xếp hạng…",
-  "queue.rankedNote":
-    "Không có bot là trận xếp hạng: kết quả được công bố kèm khóa và tên nhân vật của bạn. Có bot trong trận thì không xếp hạng.",
   "queue.rankedPending": "Điểm của bạn cập nhật trong vòng một giờ.",
   "queue.rankedPublished": "Đã công bố kết quả xếp hạng.",
   "queue.searchingCount": "{searching} đang tìm · cần {needed}",
@@ -1508,11 +1506,15 @@ export default {
   "tutorial.menu.spec.gear":
     "Giáp, rune và huy hiệu: chọn một món trên hình nhân, rồi chọn thứ gắn lên nó.",
   "tutorial.menu.spec.gearDone": "Đổi một món trang bị",
-  "tutorial.menu.spec.open": "Mở Nhân vật, rồi mở một nhân vật để đổi build.",
-  "tutorial.menu.spec.openDone": "Mở một nhân vật",
+  "tutorial.menu.spec.new": "Tự tạo nhân vật: bấm {newCharacter}.",
+  "tutorial.menu.spec.newDone": "Bấm {newCharacter}",
+  "tutorial.menu.spec.open": "Mở {characters}.",
+  "tutorial.menu.spec.openDone": "Mở {characters}",
   "tutorial.menu.spec.professions":
-    "Lớp chính cho bạn thuộc tính và kỹ năng; lớp phụ cũng cho bạn mượn kỹ năng của nó.",
+    "Lớp chính là con người bạn: kỹ năng của nó và mọi thuộc tính của nó, kể cả thuộc tính chỉ nó có ({warrior}: {strength}; {monk}: {divineFavor}). Lớp phụ thêm kỹ năng và các thuộc tính khác của nó, không bao giờ thêm thuộc tính đặc biệt đó: một {warrior}/{monk} có thể hồi máu bằng {healingPrayers}, nhưng không có {divineFavor}.",
   "tutorial.menu.spec.professionsDone": "Đổi một lớp",
+  "tutorial.menu.spec.random":
+    "Đây là nhân vật gắn nhãn {random} của bạn: trò chơi tạo ngẫu nhiên cho bạn, sẵn sàng để chơi. Bạn không thể thay đổi nó, nhưng {reroll} tạo một nhân vật mới và {clone} cho bạn một bản sao để chỉnh sửa.",
   "tutorial.menu.spec.save": "Lưu nhân vật để giữ build mới.",
   "tutorial.menu.spec.saveDone": "Lưu",
   "tutorial.menu.spec.skills":

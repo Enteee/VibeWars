@@ -1085,8 +1085,6 @@ export default {
   "queue.randomArena": "Náhodná aréna {size}",
   "queue.rankedCancelled": "Hodnocený zápas zrušen: hráč nepotvrdil.",
   "queue.rankedConfirming": "Potvrzování hodnoceného zápasu…",
-  "queue.rankedNote":
-    "Bez botů je zápas hodnocený: výsledek se zveřejní s tvým klíčem a jménem postavy. Bot v zápase ho nechá nehodnocený.",
   "queue.rankedPending": "Tvé hodnocení se aktualizuje do hodiny.",
   "queue.rankedPublished": "Hodnocený výsledek zveřejněn.",
   "queue.searchingCount": "hledá: {searching} · potřeba: {needed}",
@@ -1718,11 +1716,15 @@ export default {
   "tutorial.menu.spec.attributesDone": "Změň atribut",
   "tutorial.menu.spec.gear": "Brnění, runy a insignie: vyber kus na postavě, pak co na něj patří.",
   "tutorial.menu.spec.gearDone": "Změň kus výbavy",
-  "tutorial.menu.spec.open": "Otevři Postavy a pak otevři postavu, abys změnil její build.",
-  "tutorial.menu.spec.openDone": "Otevři postavu",
+  "tutorial.menu.spec.new": "Vytvoř si vlastní: stiskni „{newCharacter}“.",
+  "tutorial.menu.spec.newDone": "Stiskni „{newCharacter}“",
+  "tutorial.menu.spec.open": "Otevři {characters}.",
+  "tutorial.menu.spec.openDone": "Otevři {characters}",
   "tutorial.menu.spec.professions":
-    "Primární povolání ti dává atributy a dovednosti; sekundární ti propůjčí i své dovednosti.",
+    "Primární povolání je to, čím jsi: jeho dovednosti a všechny jeho atributy, včetně toho, který má jen ono ({warrior}: {strength}; {monk}: {divineFavor}). Sekundární přidá své dovednosti a své ostatní atributy, nikdy ten zvláštní: {warrior}/{monk} umí léčit pomocí „{healingPrayers}“, ale nemá „{divineFavor}“.",
   "tutorial.menu.spec.professionsDone": "Přepni povolání",
+  "tutorial.menu.spec.random":
+    "Tohle je tvoje postava se štítkem „{random}“: hra ji pro tebe vylosovala, připravenou ke hře. Měnit ji nemůžeš, ale „{reroll}“ vylosuje novou a „{clone}“ ti dá kopii k úpravám.",
   "tutorial.menu.spec.save": "Ulož postavu, aby ti nový build zůstal.",
   "tutorial.menu.spec.saveDone": "Uložit",
   "tutorial.menu.spec.skills":

@@ -998,8 +998,6 @@ export default {
   "queue.randomArena": "آرنای تصادفی {size}",
   "queue.rankedCancelled": "مسابقه رتبه‌بندی لغو شد: یک بازیکن تأیید نکرد.",
   "queue.rankedConfirming": "در حال تأیید مسابقه رتبه‌بندی…",
-  "queue.rankedNote":
-    "بدون ربات، مسابقه رتبه‌بندی است: نتیجه با کلید و نام شخصیت تو منتشر می‌شود. یک ربات در مسابقه آن را بدون رتبه نگه می‌دارد.",
   "queue.rankedPending": "رتبه‌ات ظرف یک ساعت به‌روز می‌شود.",
   "queue.rankedPublished": "نتیجه رتبه‌بندی منتشر شد.",
   "queue.searchingCount": "{searching} در جستجو · {needed} لازم",
@@ -1598,11 +1596,15 @@ export default {
   "tutorial.menu.spec.gear":
     "زره، رون‌ها و نشان‌ها: تکه‌ای را روی پیکر انتخاب کن، بعد آنچه رویش می‌رود.",
   "tutorial.menu.spec.gearDone": "یک تکه از تجهیزات را عوض کن",
-  "tutorial.menu.spec.open": "«شخصیت‌ها» را باز کن، بعد یک شخصیت را باز کن تا بیلدش را تغییر دهی.",
-  "tutorial.menu.spec.openDone": "یک شخصیت را باز کن",
+  "tutorial.menu.spec.new": "شخصیت خودت را بساز: «{newCharacter}» را بزن.",
+  "tutorial.menu.spec.newDone": "«{newCharacter}» را بزن",
+  "tutorial.menu.spec.open": "{characters} را باز کن.",
+  "tutorial.menu.spec.openDone": "{characters} را باز کن",
   "tutorial.menu.spec.professions":
-    "حرفهٔ اصلی‌ات ویژگی‌ها و مهارت‌هایت را می‌دهد؛ حرفهٔ دوم هم مهارت‌هایش را به تو قرض می‌دهد.",
+    "حرفهٔ اصلی‌ات همان چیزی است که هستی: مهارت‌هایش و همهٔ ویژگی‌هایش، از جمله ویژگی‌ای که فقط خودش دارد ({warrior}: {strength}؛ {monk}: {divineFavor}). حرفهٔ دوم مهارت‌ها و ویژگی‌های دیگرش را اضافه می‌کند، هرگز آن ویژگی خاص را: یک {warrior}/{monk} می‌تواند با «{healingPrayers}» درمان کند، اما «{divineFavor}» ندارد.",
   "tutorial.menu.spec.professionsDone": "یک حرفه را عوض کن",
+  "tutorial.menu.spec.random":
+    "این شخصیتِ «{random}» توست: بازی آن را برایت به‌طور تصادفی ساخته، آمادهٔ بازی. نمی‌توانی تغییرش بدهی، اما «{reroll}» یکی تازه می‌سازد و «{clone}» نسخه‌ای برای ویرایش به تو می‌دهد.",
   "tutorial.menu.spec.save": "شخصیتت را ذخیره کن تا بیلد تازه بماند.",
   "tutorial.menu.spec.saveDone": "ذخیره",
   "tutorial.menu.spec.skills":

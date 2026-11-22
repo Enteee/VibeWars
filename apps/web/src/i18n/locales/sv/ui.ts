@@ -994,8 +994,6 @@ export default {
   "queue.randomArena": "Slumparena {size}",
   "queue.rankedCancelled": "Rankad match avbruten: en spelare bekräftade inte.",
   "queue.rankedConfirming": "Bekräftar rankad match…",
-  "queue.rankedNote":
-    "Inga botar betyder rankad: resultatet publiceras med din nyckel och ditt figurnamn. En bot i matchen håller den orankad.",
   "queue.rankedPending": "Din rating uppdateras inom en timme.",
   "queue.rankedPublished": "Rankat resultat publicerat.",
   "queue.searchingCount": "{searching} söker · {needed} behövs",
@@ -1595,11 +1593,15 @@ export default {
   "tutorial.menu.spec.gear":
     "Rustning, runor och insignier: välj en del på figuren, sedan vad som ska sitta på den.",
   "tutorial.menu.spec.gearDone": "Byt en del av utrustningen",
-  "tutorial.menu.spec.open": "Öppna Karaktärer och sedan en karaktär för att ändra dess build.",
-  "tutorial.menu.spec.openDone": "Öppna en karaktär",
+  "tutorial.menu.spec.new": "Gör en egen: tryck på {newCharacter}.",
+  "tutorial.menu.spec.newDone": "Tryck på {newCharacter}",
+  "tutorial.menu.spec.open": "Öppna {characters}.",
+  "tutorial.menu.spec.openDone": "Öppna {characters}",
   "tutorial.menu.spec.professions":
-    "Ditt primära yrke ger dina attribut och färdigheter; ditt sekundära lånar dig också sina färdigheter.",
+    "Ditt primära yrke är det du är: dess färdigheter och alla dess attribut, även det som bara det har ({warrior}: {strength}; {monk}: {divineFavor}). Ditt sekundära lägger till sina färdigheter och sina andra attribut, aldrig det speciella: en {warrior}/{monk} kan hela med {healingPrayers}, men har ingen {divineFavor}.",
   "tutorial.menu.spec.professionsDone": "Byt ett yrke",
+  "tutorial.menu.spec.random":
+    "Det här är din karaktär märkt {random}: spelet slumpade fram den åt dig, redo att spela. Du kan inte ändra den, men {reroll} slumpar en ny och {clone} ger dig en kopia att redigera.",
   "tutorial.menu.spec.save": "Spara din karaktär för att behålla det nya buildet.",
   "tutorial.menu.spec.saveDone": "Spara",
   "tutorial.menu.spec.skills":

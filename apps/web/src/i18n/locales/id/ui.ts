@@ -949,8 +949,6 @@ export default {
   "queue.randomArena": "Arena Acak {size}",
   "queue.rankedCancelled": "Pertandingan peringkat dibatalkan: seorang pemain tidak mengonfirmasi.",
   "queue.rankedConfirming": "Mengonfirmasi pertandingan peringkat…",
-  "queue.rankedNote":
-    "Tanpa bot berarti peringkat: hasilnya dipublikasikan dengan kunci dan nama karaktermu. Bot dalam pertandingan membuatnya tanpa peringkat.",
   "queue.rankedPending": "Peringkatmu diperbarui dalam satu jam.",
   "queue.rankedPublished": "Hasil peringkat dipublikasikan.",
   "queue.searchingCount": "{searching} mencari · butuh {needed}",
@@ -1526,11 +1524,15 @@ export default {
   "tutorial.menu.spec.gear":
     "Armor, rune, dan insignia: pilih bagian pada figur, lalu apa yang dipasang di sana.",
   "tutorial.menu.spec.gearDone": "Ganti satu perlengkapan",
-  "tutorial.menu.spec.open": "Buka Karakter, lalu buka satu karakter untuk mengubah build-nya.",
-  "tutorial.menu.spec.openDone": "Buka karakter",
+  "tutorial.menu.spec.new": "Buat karaktermu sendiri: tekan {newCharacter}.",
+  "tutorial.menu.spec.newDone": "Tekan {newCharacter}",
+  "tutorial.menu.spec.open": "Buka {characters}.",
+  "tutorial.menu.spec.openDone": "Buka {characters}",
   "tutorial.menu.spec.professions":
-    "Profesi utamamu memberi atribut dan skill; profesi keduamu juga meminjamkan skill-nya.",
+    "Profesi utamamu adalah dirimu: skill-nya dan semua atributnya, termasuk satu yang hanya dimilikinya ({warrior}: {strength}; {monk}: {divineFavor}). Profesi keduamu menambahkan skill-nya dan atribut lainnya, tidak pernah yang khusus itu: {warrior}/{monk} bisa menyembuhkan dengan {healingPrayers}, tapi tidak punya {divineFavor}.",
   "tutorial.menu.spec.professionsDone": "Ganti profesi",
+  "tutorial.menu.spec.random":
+    "Ini karaktermu bertanda {random}: game mengacaknya untukmu, siap dimainkan. Kamu tidak bisa mengubahnya, tapi {reroll} mengacak yang baru dan {clone} memberimu salinan untuk diedit.",
   "tutorial.menu.spec.save": "Simpan karaktermu agar build baru tetap ada.",
   "tutorial.menu.spec.saveDone": "Simpan",
   "tutorial.menu.spec.skills":

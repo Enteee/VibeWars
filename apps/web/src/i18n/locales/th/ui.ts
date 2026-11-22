@@ -944,8 +944,6 @@ export default {
   "queue.randomArena": "อารีนาสุ่ม {size}",
   "queue.rankedCancelled": "ยกเลิกแมตช์จัดอันดับ: มีผู้เล่นไม่ยืนยัน",
   "queue.rankedConfirming": "กำลังยืนยันแมตช์จัดอันดับ…",
-  "queue.rankedNote":
-    "ไม่มีบอทคือแมตช์จัดอันดับ: ผลจะเผยแพร่พร้อมกุญแจและชื่อตัวละครของคุณ มีบอทในแมตช์จะไม่จัดอันดับ",
   "queue.rankedPending": "คะแนนของคุณจะอัปเดตภายในหนึ่งชั่วโมง",
   "queue.rankedPublished": "เผยแพร่ผลจัดอันดับแล้ว",
   "queue.searchingCount": "กำลังค้นหา {searching} · ต้องการ {needed}",
@@ -1501,11 +1499,15 @@ export default {
   "tutorial.menu.spec.attributesDone": "เปลี่ยนค่าสถานะ",
   "tutorial.menu.spec.gear": "เกราะ รูน และอินซิกเนีย: เลือกชิ้นบนหุ่น แล้วเลือกสิ่งที่จะใส่",
   "tutorial.menu.spec.gearDone": "เปลี่ยนอุปกรณ์หนึ่งชิ้น",
-  "tutorial.menu.spec.open": "เปิดตัวละคร แล้วเปิดตัวละครหนึ่งตัวเพื่อเปลี่ยนบิลด์",
-  "tutorial.menu.spec.openDone": "เปิดตัวละคร",
+  "tutorial.menu.spec.new": 'สร้างตัวละครของคุณเอง: กด "{newCharacter}"',
+  "tutorial.menu.spec.newDone": 'กด "{newCharacter}"',
+  "tutorial.menu.spec.open": "เปิด {characters}",
+  "tutorial.menu.spec.openDone": "เปิด {characters}",
   "tutorial.menu.spec.professions":
-    "อาชีพหลักให้ค่าสถานะและสกิล ส่วนอาชีพรองก็ให้ยืมสกิลของมันด้วย",
+    "อาชีพหลักคือตัวตนของคุณ: สกิลของมันและค่าสถานะทั้งหมดของมัน รวมถึงค่าที่มีแค่อาชีพนั้น ({warrior}: {strength}, {monk}: {divineFavor}) อาชีพรองเพิ่มสกิลและค่าสถานะอื่นของมัน แต่ไม่เคยเพิ่มค่าพิเศษนั้น: {warrior}/{monk} รักษาได้ด้วย {healingPrayers} แต่ไม่มี {divineFavor}",
   "tutorial.menu.spec.professionsDone": "สลับอาชีพ",
+  "tutorial.menu.spec.random":
+    'นี่คือตัวละครป้าย "{random}" ของคุณ: เกมสุ่มให้คุณ พร้อมเล่นทันที คุณเปลี่ยนมันไม่ได้ แต่ "{reroll}" จะสุ่มตัวใหม่ และ "{clone}" ให้สำเนาไว้แก้ไข',
   "tutorial.menu.spec.save": "บันทึกตัวละครเพื่อเก็บบิลด์ใหม่ไว้",
   "tutorial.menu.spec.saveDone": "บันทึก",
   "tutorial.menu.spec.skills": "เปิดกลุ่มในรายการ แล้วลากสกิลไปวางบนช่องในแถบเพื่อสลับเข้า",

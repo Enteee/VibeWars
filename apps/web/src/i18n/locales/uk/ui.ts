@@ -1088,8 +1088,6 @@ export default {
   "queue.randomArena": "Випадкова арена {size}",
   "queue.rankedCancelled": "Рейтинговий матч скасовано: гравець не підтвердив.",
   "queue.rankedConfirming": "Підтвердження рейтингового матчу…",
-  "queue.rankedNote":
-    "Без ботів матч рейтинговий: результат публікується з вашим ключем та ім’ям персонажа. Бот у матчі робить його нерейтинговим.",
   "queue.rankedPending": "Рейтинг оновиться протягом години.",
   "queue.rankedPublished": "Рейтинговий результат опубліковано.",
   "queue.searchingCount": "шукають: {searching} · потрібно: {needed}",
@@ -1727,11 +1725,15 @@ export default {
   "tutorial.menu.spec.gear":
     "Броня, руни й відзнаки: вибери частину на фігурі, потім що на неї вдягнути.",
   "tutorial.menu.spec.gearDone": "Зміни частину спорядження",
-  "tutorial.menu.spec.open": "Відкрий «Персонажі», потім персонажа, щоб змінити його білд.",
-  "tutorial.menu.spec.openDone": "Відкрий персонажа",
+  "tutorial.menu.spec.new": "Створи свого: натисни «{newCharacter}».",
+  "tutorial.menu.spec.newDone": "Натисни «{newCharacter}»",
+  "tutorial.menu.spec.open": "Відкрий {characters}.",
+  "tutorial.menu.spec.openDone": "Відкрий {characters}",
   "tutorial.menu.spec.professions":
-    "Основна професія дає атрибути й навички; додаткова теж позичає свої навички.",
+    "Основна професія — це те, ким ти є: її навички й усі її атрибути, зокрема той, що є лише в неї ({warrior}: {strength}; {monk}: {divineFavor}). Додаткова додає свої навички й інші атрибути, але ніколи не той особливий: {warrior}/{monk} може лікувати через «{healingPrayers}», але «{divineFavor}» у нього немає.",
   "tutorial.menu.spec.professionsDone": "Зміни професію",
+  "tutorial.menu.spec.random":
+    "Це твій персонаж із позначкою «{random}»: гра випадково зібрала його для тебе, він готовий до гри. Змінити його не можна, але «{reroll}» збере нового, а «{clone}» дасть копію для редагування.",
   "tutorial.menu.spec.save": "Збережи персонажа, щоб новий білд залишився.",
   "tutorial.menu.spec.saveDone": "Зберегти",
   "tutorial.menu.spec.skills":

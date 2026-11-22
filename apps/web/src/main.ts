@@ -1191,6 +1191,7 @@ async function main(): Promise<void> {
       onSwitch: switchTo,
       onNewCharacter: () => {
         showCharacterEditor(newCharacter(crypto.randomUUID()));
+        menuQuest?.event({ kind: "character-new" });
       },
       onEditCharacter: (id) => {
         void (async () => {
@@ -1218,6 +1219,8 @@ async function main(): Promise<void> {
             return;
           }
           showCharacterEditor(copy);
+          // A copy to edit is a new character of your own, as New character's is.
+          menuQuest?.event({ kind: "character-new" });
         })();
       },
       onRerollCharacter: (id) => {
@@ -1256,6 +1259,8 @@ async function main(): Promise<void> {
       );
     } else {
       renderCharacterBuilder(screenRoot, callbacks, list, problems, menuNotice);
+      const starter = loadStarterCharacterId();
+      menuQuest?.event({ kind: "roster-shown", random: list.some(({ id }) => id === starter) });
     }
   };
 

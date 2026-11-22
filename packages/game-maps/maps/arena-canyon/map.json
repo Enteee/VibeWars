@@ -551,9 +551,9 @@
       "area": {
         "kind": "rect",
         "x": 450,
-        "y": 910,
+        "y": 920,
         "width": 80,
-        "height": 120
+        "height": 110
       },
       "uphill": "n",
       "look": "rough-steps",
@@ -566,9 +566,9 @@
       "area": {
         "kind": "rect",
         "x": 2300,
-        "y": 740,
+        "y": 750,
         "width": 80,
-        "height": 120
+        "height": 110
       },
       "uphill": "n",
       "look": "rough-steps",
@@ -583,7 +583,7 @@
         "x": 680,
         "y": 1270,
         "width": 80,
-        "height": 120
+        "height": 110
       },
       "uphill": "s",
       "look": "rough-steps",
@@ -613,7 +613,7 @@
         "x": 1450,
         "y": 850,
         "width": 80,
-        "height": 120
+        "height": 110
       },
       "uphill": "s",
       "look": "rough-steps",
@@ -625,8 +625,8 @@
       "to": 2,
       "area": {
         "kind": "rect",
-        "x": 845,
-        "y": 710,
+        "x": 840,
+        "y": 730,
         "width": 120,
         "height": 80
       },
@@ -640,8 +640,8 @@
       "to": 2,
       "area": {
         "kind": "rect",
-        "x": 1035,
-        "y": 1110,
+        "x": 1040,
+        "y": 1100,
         "width": 120,
         "height": 80
       },
@@ -671,9 +671,9 @@
       "area": {
         "kind": "rect",
         "x": 1840,
-        "y": 330,
+        "y": 340,
         "width": 60,
-        "height": 130
+        "height": 120
       },
       "uphill": "n",
       "look": "stairs",

@@ -946,8 +946,6 @@ export default {
   "queue.randomArena": "랜덤 아레나 {size}",
   "queue.rankedCancelled": "랭크 경기 취소: 확인하지 않은 플레이어가 있습니다.",
   "queue.rankedConfirming": "랭크 경기 확인 중…",
-  "queue.rankedNote":
-    "봇이 없으면 랭크 경기입니다: 결과는 당신의 키와 캐릭터 이름으로 공개됩니다. 봇이 있으면 랭크 외 경기입니다.",
   "queue.rankedPending": "레이팅은 1시간 안에 갱신됩니다.",
   "queue.rankedPublished": "랭크 결과가 공개되었습니다.",
   "queue.searchingCount": "{searching}명 찾는 중 · {needed}명 필요",
@@ -1513,11 +1511,15 @@ export default {
   "tutorial.menu.spec.attributesDone": "속성 바꾸기",
   "tutorial.menu.spec.gear": "방어구, 룬, 휘장: 인형에서 부위를 고르고, 거기에 넣을 것을 고르세요.",
   "tutorial.menu.spec.gearDone": "장비 하나 바꾸기",
-  "tutorial.menu.spec.open": "캐릭터를 열고, 캐릭터 하나를 열어 빌드를 바꾸세요.",
-  "tutorial.menu.spec.openDone": "캐릭터 열기",
+  "tutorial.menu.spec.new": "나만의 캐릭터를 만드세요: '{newCharacter}'를 누르세요.",
+  "tutorial.menu.spec.newDone": "'{newCharacter}' 누르기",
+  "tutorial.menu.spec.open": "{characters} 화면을 여세요.",
+  "tutorial.menu.spec.openDone": "{characters} 화면 열기",
   "tutorial.menu.spec.professions":
-    "주 직업은 속성과 스킬을 주고, 보조 직업은 자기 스킬도 빌려줍니다.",
+    "주 직업은 당신 그 자체입니다: 그 스킬과 모든 속성, 그 직업만 가진 속성까지 포함합니다({warrior}: {strength}, {monk}: {divineFavor}). 보조 직업은 자기 스킬과 다른 속성을 더하지만, 그 특별한 속성은 절대 더하지 않습니다: {warrior}/{monk}는 {healingPrayers}로 치유할 수 있지만 {divineFavor}는 없습니다.",
   "tutorial.menu.spec.professionsDone": "직업 바꾸기",
+  "tutorial.menu.spec.random":
+    "이것은 '{random}' 캐릭터입니다. 게임이 무작위로 만들어 준, 바로 플레이할 수 있는 캐릭터죠. 바꿀 수는 없지만 '{reroll}'로 새로 뽑고 '{clone}'으로 편집할 사본을 받을 수 있습니다.",
   "tutorial.menu.spec.save": "새 빌드를 유지하려면 캐릭터를 저장하세요.",
   "tutorial.menu.spec.saveDone": "저장",
   "tutorial.menu.spec.skills": "목록에서 그룹을 연 뒤, 스킬을 바의 칸으로 끌어다 놓아 바꾸세요.",
