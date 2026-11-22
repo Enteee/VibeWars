@@ -2,6 +2,7 @@ import {
   expect,
   type Browser,
   type BrowserContext,
+  type BrowserContextOptions,
   type Locator,
   type Page,
 } from "@playwright/test";
@@ -15,12 +16,14 @@ import { awaitLobby, INVITE_URL, lobbyWindow, openRail, shutLobbyWindow } from "
  * `BrowserContext`: two contexts would never find each other, and the
  * test would fail as a lobby that never answers. Every multi-player test
  * opens its pages here, so none opens a second context by accident.
+ * `device` makes them all one kind of device, a phone say (#3776).
  */
 export async function openPeers(
   browser: Browser,
   count: number,
+  device: BrowserContextOptions = {},
 ): Promise<{ context: BrowserContext; pages: Page[] }> {
-  const context = await browser.newContext();
+  const context = await browser.newContext(device);
   const pages: Page[] = [];
   for (let i = 0; i < count; i += 1) {
     pages.push(await context.newPage());

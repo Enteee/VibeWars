@@ -2074,6 +2074,11 @@ body:has(> .splash) #menu-background::after {
   overflow: hidden;
 }
 
+/* The mode rail's width, which the menu's chat keeps clear of. */
+:root {
+  --mode-rail-width: 76px;
+}
+
 .screen.screen-rail {
   flex-direction: row;
   gap: 0;
@@ -2085,7 +2090,7 @@ body:has(> .splash) #menu-background::after {
 
 .mode-rail {
   display: flex;
-  flex: 0 0 76px;
+  flex: 0 0 var(--mode-rail-width);
   overflow-y: auto;
   min-height: 0;
   flex-direction: column;
@@ -8105,7 +8110,7 @@ body:has(#screens[style*="none"]) .now-playing {
 
 /* Beside the mode rail, never over its builders. */
 #app:has(.screen-rail) > .chat {
-  inset-inline-start: calc(76px + 0.9rem);
+  inset-inline-start: calc(var(--mode-rail-width) + 0.9rem);
 }
 
 /* Closed (#2018): only the lines and the icon. Every click and wheel goes
@@ -9099,5 +9104,71 @@ body:has(> .splash) #app {
 @keyframes splash-flash {
   from {
     opacity: 1;
+  }
+}
+
+/*
+ * A phone (#3776): on a coarse pointer every control outside a match and
+ * the editors is at least a fingertip, 44x44 CSS px, its glyph as it was
+ * and the box round it grown; and no text is under 12 px. A mouse keeps
+ * the sizes above.
+ */
+@media (pointer: coarse) {
+  :is(#topbar, #screens, .splash, .help-window, .options-screen, .chat)
+    :is(
+      button,
+      select,
+      summary,
+      [role="button"],
+      [role="tab"],
+      input:not([type="checkbox"], [type="radio"], [type="hidden"]),
+      label:has(> input:is([type="checkbox"], [type="radio"])),
+      a:is([class], :only-child)
+    ) {
+    min-block-size: 44px;
+    min-inline-size: 44px;
+  }
+
+  /* The chat's icon as it was, in its grown box. */
+  .chat-toggle img {
+    width: 1.3rem;
+    height: 1.3rem;
+  }
+
+  /* The rail widens to its labels at 12 px, and scrolls rather than
+     squeeze them; ‹ and › go under the size. */
+  :root {
+    --mode-rail-width: 96px;
+  }
+
+  .mode-rail > * {
+    flex-shrink: 0;
+  }
+
+  .screen .mode-rail-entry,
+  .mode-rail-size {
+    width: 88px;
+  }
+
+  .mode-rail-divider,
+  .mode-rail-stepper {
+    width: 88px;
+  }
+
+  .mode-rail-stepper {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .mode-rail-size-value {
+    flex-basis: 100%;
+    order: -1;
+    text-align: center;
+  }
+
+  .mode-rail-label,
+  .roster-random-tag,
+  .match-chip-label {
+    font-size: 0.75rem;
   }
 }
