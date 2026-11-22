@@ -508,7 +508,9 @@ function healthSourcesText(character: TeamCharacter, set: WeaponSetIndex): strin
     amount > 0 ? `+${String(amount)}` : `−${String(-amount)}`;
   const parts = [
     t("gearEditor.healthBase", { amount: sources.base }),
-    ...(sources.runes === 0 ? [] : [t("gearEditor.healthRunes", { amount: signed(sources.runes) })]),
+    ...(sources.runes === 0
+      ? []
+      : [t("gearEditor.healthRunes", { amount: signed(sources.runes) })]),
     ...(sources.insignia === 0
       ? []
       : [t("gearEditor.healthInsignia", { amount: signed(sources.insignia) })]),
