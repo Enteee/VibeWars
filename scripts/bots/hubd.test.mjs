@@ -145,7 +145,9 @@ if (group === "api" && sub !== "graphql") {
 if (group === "run" && argv.includes("--hang")) { setInterval(() => {}, 1000); return; }
 // A grandchild that holds the pipes, as git's remote helper does.
 if (group === "run" && argv.includes("--grandchild")) {
-  require("node:child_process").spawn("sleep", ["30"], { stdio: "inherit" });
+  const grandchild = require("node:child_process").spawn("sleep", ["30"], { stdio: "inherit" });
+  // Both pids, so a test can see the whole group is gone (#3803).
+  fs.writeFileSync(path.join(state, "grandchild.pids"), process.pid + " " + grandchild.pid);
   setInterval(() => {}, 1000);
   return;
 }
@@ -522,17 +524,38 @@ async function startHubd(remaining, before, extra) {
      * @returns {Promise<Record<string, unknown>>}
      */
     async request(role, kind, argv) {
+      const res = this.post(role, kind, argv);
+      await until(() => fs.existsSync(res), `an answer to ${argv.join(" ")}`);
+      return readJson(res);
+    },
+    /**
+     * Send one request as `hub` would, without waiting for the answer.
+     *
+     * @param {string} role
+     * @param {string} kind
+     * @param {string[]} argv
+     * @returns {string} where the answer will be
+     */
+    post(role, kind, argv) {
       next += 1;
       const id = `${String(Date.now())}-${String(next)}`;
       const req = path.join(hub, role, "req");
-      const res = path.join(hub, role, "res", `${id}.json`);
       fs.writeFileSync(
         path.join(req, `.${id}.json.part`),
         JSON.stringify({ id, role, kind, argv }),
       );
       fs.renameSync(path.join(req, `.${id}.json.part`), path.join(req, `${id}.json`));
-      await until(() => fs.existsSync(res), `an answer to ${argv.join(" ")}`);
-      return readJson(res);
+      return path.join(hub, role, "res", `${id}.json`);
+    },
+    /**
+     * SIGTERMs hubd, as systemd stops it, and waits for it to exit.
+     *
+     * @returns {Promise<void>}
+     */
+    async stop() {
+      const exited = new Promise((resolve) => child.once("exit", resolve));
+      child.kill("SIGTERM");
+      await exited;
     },
   };
 }
@@ -1323,6 +1346,27 @@ describe("hubd and the GraphQL budget", () => {
     expect(hung.code).toBe(124);
     expect(Date.now() - started).toBeLessThan(15_000);
   }, 30_000);
+
+  it("ends every child's group when it is stopped, so none outlives it (#3803)", async () => {
+    const hubd = await startHubd(5000);
+    const pids = path.join(hubd.state, "grandchild.pids");
+
+    hubd.post("developer", "gh", ["run", "list", "--grandchild"]);
+    await until(() => fs.existsSync(pids), "the child and its grandchild to start");
+    await hubd.stop();
+
+    /** @param {number} pid */
+    const alive = (pid) => {
+      try {
+        process.kill(pid, 0);
+        return true;
+      } catch {
+        return false;
+      }
+    };
+    const [child, grandchild] = fs.readFileSync(pids, "utf8").split(" ").map(Number);
+    await until(() => !alive(child) && !alive(grandchild), "the child and its grandchild to end");
+  }, 20_000);
 
   it("keeps the heartbeat fresh and names the request in flight while a child hangs (#496)", async () => {
     const hubd = await startHubd(5000);
