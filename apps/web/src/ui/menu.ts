@@ -347,7 +347,7 @@ export function renderCharacterBuilder(
   const starter = loadStarterCharacterId();
   const worn = wornCape();
   const cards = h("div", "play-cards");
-  for (const [index, character] of rosterOrder(characters, starter).entries()) {
+  for (const character of rosterOrder(characters, starter)) {
     const edit = (): void => {
       callbacks.onEditCharacter(character.id);
     };
@@ -373,15 +373,17 @@ export function renderCharacterBuilder(
           : { onOpen: edit, actions: [button(t("menu.edit"), "roster-edit", edit)] },
       ),
     );
-    // The menu quest's character to open (#3541): the first one shown.
-    if (index === 0) {
-      card.setAttribute("data-tutorial", "character-open");
+    // The menu quest's Random character, explained, never opened (#3786).
+    if (character.id === starter) {
+      card.setAttribute("data-tutorial", "character-random");
     }
   }
   if (characters.length > 0) {
-    cards.appendChild(
-      button(t("menu.newCharacter"), "play-card play-card-new", callbacks.onNewCharacter),
-    );
+    cards
+      .appendChild(
+        button(t("menu.newCharacter"), "play-card play-card-new", callbacks.onNewCharacter),
+      )
+      .setAttribute("data-tutorial", "character-new");
   }
   body.appendChild(cards);
   if (characters.length === 0) {
@@ -389,7 +391,8 @@ export function renderCharacterBuilder(
       .appendChild(
         emptyState(t("menu.noCharacters"), t("menu.newCharacter"), callbacks.onNewCharacter),
       )
-      .setAttribute("data-tutorial", "character-open");
+      .querySelector("button")
+      ?.setAttribute("data-tutorial", "character-new");
   }
 
   if (rerolled) {

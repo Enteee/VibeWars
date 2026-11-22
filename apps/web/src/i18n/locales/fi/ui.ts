@@ -1611,11 +1611,15 @@ export default {
   "tutorial.menu.spec.gear":
     "Panssari, riimut ja arvomerkit: valitse osa hahmosta ja sitten mitä siihen tulee.",
   "tutorial.menu.spec.gearDone": "Vaihda varusteen osa",
-  "tutorial.menu.spec.open": "Avaa Hahmot ja sitten hahmo muuttaaksesi sen buildia.",
-  "tutorial.menu.spec.openDone": "Avaa hahmo",
+  "tutorial.menu.spec.new": "Tee oma: paina ”{newCharacter}”.",
+  "tutorial.menu.spec.newDone": "Paina ”{newCharacter}”",
+  "tutorial.menu.spec.open": "Avaa {characters}.",
+  "tutorial.menu.spec.openDone": "Avaa {characters}",
   "tutorial.menu.spec.professions":
-    "Pääammattisi antaa ominaisuutesi ja taitosi; sivuammatti lainaa sinulle myös omia taitojaan.",
+    "Pääammattisi on se, mitä olet: sen taidot ja kaikki sen ominaisuudet, myös se, joka on vain sillä ({warrior}: {strength}; {monk}: {divineFavor}). Sivuammatti tuo taitonsa ja muut ominaisuutensa, ei koskaan sitä erityistä: {warrior}/{monk} voi parantaa ominaisuudella ”{healingPrayers}”, mutta ”{divineFavor}” puuttuu.",
   "tutorial.menu.spec.professionsDone": "Vaihda ammatti",
+  "tutorial.menu.spec.random":
+    "Tämä on ”{random}”-merkitty hahmosi: peli arpoi sen sinulle valmiiksi pelattavaksi. Et voi muuttaa sitä, mutta ”{reroll}” arpoo uuden ja ”{clone}” antaa sinulle kopion muokattavaksi.",
   "tutorial.menu.spec.save": "Tallenna hahmosi, niin uusi build säilyy.",
   "tutorial.menu.spec.saveDone": "Tallenna",
   "tutorial.menu.spec.skills":

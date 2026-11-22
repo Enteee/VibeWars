@@ -1790,11 +1790,15 @@ export default {
   "tutorial.menu.spec.attributesDone": "غيّر سمة",
   "tutorial.menu.spec.gear": "الدرع والرونات والشارات: اختر قطعة على المجسّم، ثم ما يوضع عليها.",
   "tutorial.menu.spec.gearDone": "غيّر قطعة من العتاد",
-  "tutorial.menu.spec.open": "افتح «الشخصيات»، ثم افتح شخصية لتغيّر بنيتها.",
-  "tutorial.menu.spec.openDone": "افتح شخصية",
+  "tutorial.menu.spec.new": "اصنع شخصيتك الخاصة: اضغط «{newCharacter}».",
+  "tutorial.menu.spec.newDone": "اضغط «{newCharacter}»",
+  "tutorial.menu.spec.open": "افتح {characters}.",
+  "tutorial.menu.spec.openDone": "افتح {characters}",
   "tutorial.menu.spec.professions":
-    "مهنتك الأساسية تمنحك السمات والمهارات؛ ومهنتك الثانوية تعيرك مهاراتها أيضًا.",
+    "مهنتك الأساسية هي ما أنت عليه: مهاراتها وكل سماتها، ومنها السمة التي تنفرد بها ({warrior}: {strength}، {monk}: {divineFavor}). ومهنتك الثانوية تضيف مهاراتها وسماتها الأخرى، لا تلك السمة الخاصة أبدًا: يستطيع {warrior}/{monk} أن يشفي بـ«{healingPrayers}»، لكن ليس لديه «{divineFavor}».",
   "tutorial.menu.spec.professionsDone": "بدّل مهنة",
+  "tutorial.menu.spec.random":
+    "هذه شخصيتك الموسومة «{random}»: صنعتها اللعبة لك عشوائيًا، جاهزة للعب. لا يمكنك تغييرها، لكن «{reroll}» يصنع واحدة جديدة و«{clone}» يعطيك نسخة تعدّلها.",
   "tutorial.menu.spec.save": "احفظ شخصيتك لتحتفظ بالبنية الجديدة.",
   "tutorial.menu.spec.saveDone": "حفظ",
   "tutorial.menu.spec.skills": "افتح مجموعة في القائمة، ثم اسحب مهارة إلى خانة في شريطك لتستبدلها.",

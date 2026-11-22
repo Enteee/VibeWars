@@ -1598,11 +1598,15 @@ export const en = {
   "tutorial.menu.spec.gear":
     "Armor, runes and insignias: pick a piece on the figure, then what goes on it.",
   "tutorial.menu.spec.gearDone": "Change a piece of gear",
-  "tutorial.menu.spec.open": "Open Characters, then open a character to change its build.",
-  "tutorial.menu.spec.openDone": "Open a character",
+  "tutorial.menu.spec.new": "Make your own: press {newCharacter}.",
+  "tutorial.menu.spec.newDone": "Press {newCharacter}",
+  "tutorial.menu.spec.open": "Open {characters}.",
+  "tutorial.menu.spec.openDone": "Open {characters}",
   "tutorial.menu.spec.professions":
-    "Your primary profession gives your attributes and skills; your secondary lends you its skills too.",
+    "Your primary profession is what you are: its skills, and all its attributes, including the one only it has (a {warrior}'s {strength}, a {monk}'s {divineFavor}). Your secondary adds its skills and its other attributes, never that special one: a {warrior}/{monk} can heal with {healingPrayers}, but has no {divineFavor}.",
   "tutorial.menu.spec.professionsDone": "Switch a profession",
+  "tutorial.menu.spec.random":
+    "This is your {random} character: the game rolled it for you, ready to play. You can't change it, but {reroll} rolls a new one and {clone} gives you a copy to edit.",
   "tutorial.menu.spec.save": "Save your character to keep the new build.",
   "tutorial.menu.spec.saveDone": "Save",
   "tutorial.menu.spec.skills":
