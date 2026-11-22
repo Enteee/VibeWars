@@ -334,9 +334,11 @@ export async function createArenaViewport(
         const screen = vec2(event.clientX - bounds.left, event.clientY - bounds.top);
         if (phase === "down") {
           canvas.setPointerCapture(event.pointerId);
+          // From the canvas's box now, not Phaser's cached one, which lags
+          // a page that scrolled or reflowed since its last refresh.
           const world = scene.cameras.main.getWorldPoint(
-            game.scale.transformX(event.pageX),
-            game.scale.transformY(event.pageY),
+            screen.x * game.scale.displayScale.x,
+            screen.y * game.scale.displayScale.y,
           );
           pressed.set(event.pointerId, { world: vec2(world.x, world.y), screen });
         }
