@@ -13,7 +13,7 @@ fights at 20 Hz, hosted by one player's browser.
 character, then open your lobby (the lock in the title bar) and send its
 invite link to your friends. Nothing to install; see [Play it](#play-it).
 
-![A match on The Warden's Gallery: the hero by the central plinth, its stairs and lit floor, allies and enemies closing in, the skill bar below](docs/media/readme-match.png)
+![A match on The Warden's Gallery: a fight on the central plinth, its stairs and lit floor, a foe targeted, the skill bar below](docs/media/readme-match.png)
 
 A browser-based, minimalist, multiplayer PvP arena game mechanically
 inspired by Guild Wars 1 PvP — original implementation, original
