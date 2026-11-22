@@ -95,27 +95,47 @@ for (const [held, device] of [
   });
 }
 
-test("upright, the bar stays in view above the list while the list scrolls (#3777)", async ({
+test("upright, the bar stays in view above the list while the page scrolls (#3777)", async ({
   page,
 }) => {
   await newCharacter(page);
   await page.locator(".skill-library button.skill-group-header").first().tap();
-  const library = page.locator(".skill-library");
-  await library.locator(".skill-search").tap();
-  const groups = library.locator(".skill-groups");
-  await groups.evaluate((node) => {
-    node.scrollTop = node.scrollHeight;
+  const bar = page.locator(".editor-skills");
+  // The training panel above it has drawn, so nothing moves the bar after.
+  await expect(page.locator(".editor-attributes")).toBeVisible();
+  await expect(page.locator(".training canvas")).toBeVisible();
+  // Scroll whatever scrolls the screen past where a bar that is not
+  // sticky would have left it.
+  const scroll = await bar.evaluate((node) => {
+    let scroller = node.parentElement;
+    while (scroller !== null) {
+      const { overflowY } = getComputedStyle(scroller);
+      const scrolls = overflowY === "auto" || overflowY === "scroll";
+      if (scrolls && scroller.scrollHeight > scroller.clientHeight) break;
+      scroller = scroller.parentElement;
+    }
+    if (scroller === null) return null;
+    scroller.scrollTop = 0;
+    // A sticky bar pins inside the scroller's padding.
+    const top =
+      scroller.getBoundingClientRect().top + parseFloat(getComputedStyle(scroller).paddingTop);
+    const needed = node.getBoundingClientRect().bottom - top;
+    scroller.scrollTop = needed + 50;
+    return { top, needed, scrolled: scroller.scrollTop };
   });
-  const bar = await page.locator(".editor-skills").boundingBox();
-  const list = await library.boundingBox();
-  const viewport = page.viewportSize();
-  expect(bar).not.toBeNull();
-  expect(list).not.toBeNull();
-  if (bar !== null && list !== null && viewport !== null) {
-    // The whole bar is on screen, and the library starts under it.
-    expect(bar.y).toBeGreaterThanOrEqual(0);
-    expect(bar.y + bar.height).toBeLessThanOrEqual(list.y + 1);
-    expect(list.y + list.height).toBeLessThanOrEqual(viewport.height + 1);
+  expect(scroll).not.toBeNull();
+  const box = await bar.boundingBox();
+  expect(box).not.toBeNull();
+  if (scroll !== null && box !== null) {
+    expect(scroll.scrolled).toBeGreaterThan(scroll.needed);
+    // The whole bar is pinned to the top of the screen, drawn over the
+    // library scrolling under it.
+    expect(Math.abs(box.y - scroll.top)).toBeLessThanOrEqual(1);
+    const onTop = await page.evaluate(
+      ([x, y]) => document.elementFromPoint(x, y)?.closest(".editor-skills") !== null,
+      [box.x + box.width / 2, box.y + box.height / 2],
+    );
+    expect(onTop).toBe(true);
   }
 });
 
