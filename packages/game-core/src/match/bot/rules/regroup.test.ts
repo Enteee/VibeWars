@@ -4,6 +4,7 @@ import { RANGE_SPELL } from "../../../distances.js";
 import { distance, vec2 } from "../../../vec2.js";
 import { createCursor, decide } from "../../behaviour.js";
 import { initialGates } from "../../gates.js";
+import { flankParty } from "../plan.js";
 import regroup from "./regroup.js";
 import { NOTHING, REGROUP_MAX_WAIT, REGROUP_SPREAD } from "./shared.js";
 import {
@@ -212,5 +213,43 @@ describe("a team of bots with one far ahead (#2621)", () => {
     const first = firstContact("regroup");
     expect(first.spread).toBeLessThanOrEqual(REGROUP_SPREAD);
     expect(firstContact("regroup")).toEqual(first);
+  });
+});
+
+describe("regroup under a flank plan (#3832)", () => {
+  const NOW = 50;
+  /** Team 0 of four warriors, the flank party far behind at x 100, the rest at `main`. */
+  function teamOf(main: readonly [number, number]) {
+    const ids = ["w", "a", "b", "c"];
+    const roll = match(ids.map((id) => fighter(id, 0, WARRIOR, vec2(100, 400))));
+    const flanks = ids.filter((id) => {
+      const one = roll.get(id);
+      if (one === undefined) throw new Error(`no ${id}`);
+      return flankParty(contextFor(roll, id, { now: NOW }), one, 1);
+    });
+    const rest = ids.filter((id) => !flanks.includes(id));
+    const sim = match([
+      ...rest.map((id, index) => fighter(id, 0, WARRIOR, vec2(main[index] ?? 0, 400))),
+      ...flanks.map((id) => fighter(id, 0, WARRIOR, vec2(100, 400))),
+      fighter("foe", 1, WARRIOR, vec2(1550, 400)),
+    ]);
+    return { sim, ahead: rest[0] ?? "w" };
+  }
+
+  it("holds the main group's lead for the whole team under push", () => {
+    const { sim, ahead } = teamOf([700, 650]);
+    const view = ruleFor(sim, ahead, { plan: "push" }, { now: NOW });
+    expect(regroup.decide(view)).toEqual({ ...NOTHING, targetId: view.self.targetId });
+  });
+
+  it("does not hold a main-group bot for the far flankers", () => {
+    const { sim, ahead } = teamOf([700, 650]);
+    expect(regroup.decide(ruleFor(sim, ahead, { plan: "flank" }, { now: NOW }))).toBeUndefined();
+  });
+
+  it("still holds a main-group bot far ahead of its own group", () => {
+    const { sim, ahead } = teamOf([800, 150]);
+    const view = ruleFor(sim, ahead, { plan: "flank" }, { now: NOW });
+    expect(regroup.decide(view)).toEqual({ ...NOTHING, targetId: view.self.targetId });
   });
 });

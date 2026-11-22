@@ -5,7 +5,7 @@ import type { StatusId } from "../skills/status.js";
 import { effectiveMaxHealth } from "../skills/tick.js";
 import { distance, dot, normalize, sub, vec2, ZERO, type Vec2 } from "../vec2.js";
 import { guard, playBuild } from "./bot/play-build.js";
-import type { HoldPlace } from "./bot/plan.js";
+import type { FlankPlace, HoldPlace } from "./bot/plan.js";
 import type { BreakableField } from "./breakables.js";
 import type { CapturePoint } from "./capture-points.js";
 import { atObjective } from "./layer-rules.js";
@@ -281,6 +281,15 @@ export interface BehaviourCursor {
   holdPoint:
     | { readonly foeTeam: number; readonly at: HoldPlace | undefined; readonly phase: number }
     | undefined;
+  /**
+   * `play-build`: its flank waypoint against foe team `foeTeam` in plan
+   * phase `phase` (#3832); `at` is `undefined` where it has none.
+   */
+  flankPoint:
+    | { readonly foeTeam: number; readonly at: FlankPlace | undefined; readonly phase: number }
+    | undefined;
+  /** `play-build`: the plan phase it reached its flank waypoint in (#3832); a respawn forgets it. */
+  flankReached: number | undefined;
   /** `play-build`: its health fraction at each think of the last `HEALTH_MARK_SECONDS` (#3369), oldest first. */
   readonly healthMarks: { readonly at: number; readonly health: number }[];
   /**
@@ -497,6 +506,8 @@ export function createCursor(): BehaviourCursor {
     foeReach: new Map(),
     walkFoe: undefined,
     holdPoint: undefined,
+    flankPoint: undefined,
+    flankReached: undefined,
     healthMarks: [],
     duck: undefined,
     duckReadyAt: 0,
