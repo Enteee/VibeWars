@@ -50,7 +50,7 @@ import type {
 import type { GoalMark } from "./goal-mark.js";
 import { harmsViewer } from "./ground-effect-look.js";
 import { LYING_WIDTH } from "./lying-pose.js";
-import { pickAt, type ClickableKind, type DrawnClickable } from "./pick.js";
+import { nearestWithin, pickAt, type ClickableKind, type DrawnClickable } from "./pick.js";
 import type { RenderableProjectile } from "./projectiles.js";
 import { screenPx } from "./screen-text.js";
 import type { WornCosmetics } from "../cosmetics/selection.js";
@@ -783,6 +783,11 @@ export function recordBody(out: DrawnClickable[], actor: RenderableActor, depth:
  * anywhere in the column from its name tag's top down to its drawn
  * body's bottom, as wide as the wider of the two. A body or object under
  * the point still wins; among columns, the nearest body centre does.
+ *
+ * With `slop` (#3781: a tap), a point that hits nothing, or only the body
+ * `under`, takes the nearest living body or `objects` kind drawn within
+ * `slop` world units of it, else the nearest ally's corpse. An exact hit
+ * always beats one in the slop.
  */
 export function clickableAt(
   snapshot: ArenaSnapshot,
@@ -791,10 +796,12 @@ export function clickableAt(
     objects = [],
     under,
     tagBoxes,
+    slop,
   }: {
     readonly objects?: readonly ClickableKind[];
     readonly under?: string | undefined;
     readonly tagBoxes?: ReadonlyMap<string, Rect> | undefined;
+    readonly slop?: number | undefined;
   } = {},
 ): DrawnClickable | undefined {
   const actors = new Map(snapshot.actors.map((actor) => [actor.id, actor]));
@@ -807,12 +814,19 @@ export function clickableAt(
   const { drawn } = snapshot;
   const over = (clickable: DrawnClickable): boolean =>
     (living(clickable) && clickable.id !== under) || objects.includes(clickable.kind);
-  return (
+  const exact =
     pickAt(drawn, point, over) ??
     inColumn(drawn, point, over, tagBoxes) ??
     pickAt(drawn, point, living) ??
     pickAt(drawn, point, allyCorpse) ??
-    inColumn(drawn, point, allyCorpse, tagBoxes)
+    inColumn(drawn, point, allyCorpse, tagBoxes);
+  if (slop === undefined || (exact !== undefined && exact.id !== under)) {
+    return exact;
+  }
+  return (
+    nearestWithin(drawn, point, slop, over) ??
+    nearestWithin(drawn, point, slop, allyCorpse) ??
+    exact
   );
 }
 

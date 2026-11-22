@@ -1,4 +1,10 @@
-import { Vec, pointInPolygon, segmentsIntersect, type Vec2 } from "@vibewars/game-core";
+import {
+  Vec,
+  distancePointToSegment,
+  pointInPolygon,
+  segmentsIntersect,
+  type Vec2,
+} from "@vibewars/game-core";
 
 /**
  * One pick path (#3634): what a click or hover finds is what the arena
@@ -87,6 +93,72 @@ export function pickAt(
     }
     if (best === undefined || before(clickable, best, point)) {
       best = clickable;
+    }
+  }
+  return best;
+}
+
+/** How far `point` is from `hit`, world units: zero on it. */
+function hitDistance(hit: ClickableHit, point: Vec2): number {
+  if (hitContains(hit, point)) {
+    return 0;
+  }
+  if ("circle" in hit) {
+    const { x, y, r } = hit.circle;
+    return Vec.distance({ x, y }, point) - r;
+  }
+  if ("polygon" in hit) {
+    return edgeDistance(hit.polygon, point);
+  }
+  // Drawn, a wall is its footprint at the foot and at the top, joined at
+  // each corner by an upright edge.
+  const { outline, low, high } = hit.column;
+  const lifted = (by: number): Vec2[] =>
+    outline.map((corner) => ({ x: corner.x, y: corner.y - by }));
+  const uprights = outline.map((corner) =>
+    distancePointToSegment(point, {
+      a: { x: corner.x, y: corner.y - low },
+      b: { x: corner.x, y: corner.y - high },
+    }),
+  );
+  return Math.min(edgeDistance(lifted(low), point), edgeDistance(lifted(high), point), ...uprights);
+}
+
+/** The distance from `point` to the nearest edge of `polygon`. */
+function edgeDistance(polygon: readonly Vec2[], point: Vec2): number {
+  let least = Number.POSITIVE_INFINITY;
+  polygon.forEach((corner, at) => {
+    const next = polygon[(at + 1) % polygon.length] ?? corner;
+    least = Math.min(least, distancePointToSegment(point, { a: corner, b: next }));
+  });
+  return least;
+}
+
+/**
+ * The clickable `accept` takes whose drawn hit is nearest `point`, within
+ * `slop` world units (#3781: a fingertip is wider than a cursor); ties
+ * as `pickAt`.
+ */
+export function nearestWithin(
+  drawn: readonly DrawnClickable[],
+  point: Vec2,
+  slop: number,
+  accept: (clickable: DrawnClickable) => boolean,
+): DrawnClickable | undefined {
+  let best: DrawnClickable | undefined;
+  let bestDistance = Number.POSITIVE_INFINITY;
+  for (const clickable of drawn) {
+    if (!accept(clickable)) {
+      continue;
+    }
+    const distance = hitDistance(clickable.hit, point);
+    if (
+      distance <= slop &&
+      (distance < bestDistance ||
+        (distance === bestDistance && best !== undefined && before(clickable, best, point)))
+    ) {
+      best = clickable;
+      bestDistance = distance;
     }
   }
   return best;

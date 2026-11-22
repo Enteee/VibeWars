@@ -17,6 +17,7 @@ import {
   pingCall,
   primaryClickIntents,
   secondaryClickIntents,
+  tapIntents,
 } from "./mouse-intents.js";
 
 function player(sessionId: string, team: number, x: number): PlayerSnapshot {
@@ -503,5 +504,83 @@ describe("the call keys (#443)", () => {
     expect(
       calledTargetIntent(targeting(undefined), { target: null, pings: [], strokes: [] }),
     ).toBeUndefined();
+  });
+});
+
+describe("tapIntents (#3781)", () => {
+  /** 20 CSS px at a zoom of 1. */
+  const SLOP = 20;
+
+  it("walks on a tap on the ground", () => {
+    expect(tapIntents(MATCH, ARENA, vec2(150, 80), createDoubleClick(), 0, SLOP)).toEqual([
+      { kind: "walk-to", layer: 0, x: 150, y: 80 },
+    ]);
+  });
+
+  it("targets a foe on a tap, without walking, and attacks it on a double tap", () => {
+    const double = createDoubleClick();
+    expect(tapIntents(MATCH, ARENA, vec2(200, 0), double, 0, SLOP)).toEqual([
+      { kind: "target", targetSessionId: "foe" },
+    ]);
+    expect(tapIntents(MATCH, ARENA, vec2(200, 0), double, 300, SLOP)).toEqual([
+      { kind: "target", targetSessionId: "foe" },
+      { kind: "attack", targetId: "foe" },
+    ]);
+  });
+
+  it("is no double when the second tap is late or on the ground between", () => {
+    const late = createDoubleClick();
+    tapIntents(MATCH, ARENA, vec2(200, 0), late, 0, SLOP);
+    expect(tapIntents(MATCH, ARENA, vec2(200, 0), late, 400, SLOP)).toEqual([
+      { kind: "target", targetSessionId: "foe" },
+    ]);
+    const broken = createDoubleClick();
+    tapIntents(MATCH, ARENA, vec2(200, 0), broken, 0, SLOP);
+    tapIntents(MATCH, ARENA, vec2(150, 80), broken, 100, SLOP);
+    expect(tapIntents(MATCH, ARENA, vec2(200, 0), broken, 200, SLOP)).toEqual([
+      { kind: "target", targetSessionId: "foe" },
+    ]);
+  });
+
+  it("falls through your own body to the stand under it, else walks", () => {
+    const onStand: ArenaSnapshot = atRest({
+      ...ARENA,
+      stand: { id: "flag-stand", position: vec2(0, 0), layer: 0, holder: undefined },
+    });
+    expect(tapIntents(MATCH, onStand, vec2(0, 0), createDoubleClick(), 0, SLOP)).toEqual([
+      { kind: "target", targetSessionId: "flag-stand" },
+    ]);
+    expect(tapIntents(MATCH, ARENA, vec2(3, 0), createDoubleClick(), 0, SLOP)).toEqual([
+      { kind: "walk-to", layer: 0, x: 3, y: 0 },
+    ]);
+  });
+
+  it("takes a body within the slop of a tap that hits nothing", () => {
+    // The foe's edge is 14 from its centre: 30 away is 16 off it.
+    expect(tapIntents(MATCH, ARENA, vec2(230, 0), createDoubleClick(), 0, SLOP)).toEqual([
+      { kind: "target", targetSessionId: "foe" },
+    ]);
+    expect(tapIntents(MATCH, ARENA, vec2(240, 0), createDoubleClick(), 0, SLOP)).toEqual([
+      { kind: "walk-to", layer: 0, x: 240, y: 0 },
+    ]);
+  });
+
+  it("prefers the nearest in the slop, and an exact hit over any slop hit", () => {
+    const close: ArenaSnapshot = atRest({
+      ...ARENA,
+      actors: [body("me", 0, "self"), body("ally", 230, "ally"), body("foe", 200, "enemy")],
+    });
+    // 213 is just inside the foe; 222 is 8 off the foe, 6 off the ally.
+    expect(tapIntents(MATCH, close, vec2(213, 0), createDoubleClick(), 0, SLOP)).toEqual([
+      { kind: "target", targetSessionId: "foe" },
+    ]);
+    const apart: ArenaSnapshot = atRest({
+      ...ARENA,
+      actors: [body("me", 0, "self"), body("ally", 260, "ally"), body("foe", 200, "enemy")],
+    });
+    // 230 is 16 off the foe and 16 off the ally; 233 nearer the ally.
+    expect(tapIntents(MATCH, apart, vec2(233, 0), createDoubleClick(), 0, SLOP)).toEqual([
+      { kind: "target", targetSessionId: "ally" },
+    ]);
   });
 });

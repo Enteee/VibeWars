@@ -12,6 +12,7 @@ import {
   type Cover,
   type Size,
 } from "./camera-rig.js";
+import { createTouchGesture } from "../input/touch-gesture.js";
 import { frameTiming } from "./frame-timing.js";
 import { buttonChanges, type MouseButton } from "./pointer-buttons.js";
 
@@ -27,6 +28,16 @@ export interface ButtonEvent {
   readonly screen: Vec2;
 }
 
+/** What a finger on the arena did (#3781). */
+export type FingerEvent =
+  /** A tap: where it was pressed, world units and CSS px from the canvas's corner. */
+  | { readonly kind: "tap"; readonly world: Vec2; readonly screen: Vec2 }
+  /** A one-finger drag, CSS px since the last. */
+  | { readonly kind: "pan"; readonly delta: Vec2 }
+  | { readonly kind: "pan-end" }
+  /** A pinch notch, as a wheel notch: `-1` closer in. */
+  | { readonly kind: "pinch"; readonly notch: -1 | 1 };
+
 /** A running Phaser host for one `ArenaScene`, whatever feeds it snapshots. */
 export interface ArenaViewport {
   readonly scene: ArenaScene;
@@ -39,10 +50,16 @@ export interface ArenaViewport {
    * included (#438); returns the unsubscribe. Only a press that began
    * over the arena counts, and its release arrives wherever the pointer
    * is by then. While it is held, every pointer move is a `"move"` of it
-   * (#442). A tap is the left button. The browser's menu does not open
-   * over the arena.
+   * (#442). A finger is never a button: it goes to `onFinger`. The
+   * browser's menu does not open over the arena.
    */
   onButton(handler: (event: ButtonEvent) => void): () => void;
+  /**
+   * What fingers on the arena did (#3781): a tap, a drag or a pinch;
+   * returns the unsubscribe. Each event is routed by its own
+   * `pointerType`, so a touchscreen laptop's mouse stays a mouse.
+   */
+  onFinger(handler: (event: FingerEvent) => void): () => void;
   /**
    * A wheel notch over the canvas: `1` down, `-1` up (#440). Over the
    * canvas only, the page neither scrolls nor zooms, Ctrl held or not, so
@@ -102,6 +119,13 @@ export interface ArenaViewportOptions {
   readonly fpsLimit?: number;
 }
 
+/** The pointer events a finger sends, in `onFinger`. */
+const FINGER_TYPES = ["pointerdown", "pointermove", "pointerup", "pointercancel"] as const;
+
+function isFingerType(type: string): type is (typeof FINGER_TYPES)[number] {
+  return (FINGER_TYPES as readonly string[]).includes(type);
+}
+
 /** The longest `destroy` waits for Phaser's next step to run it. */
 const DESTROY_WAIT_MS = 500;
 
@@ -152,6 +176,10 @@ export async function createArenaViewport(
       }
     });
   });
+
+  // A finger on the arena is a tap, drag or pinch of ours (#3781): the
+  // browser neither scrolls, zooms nor opens a menu over it.
+  game.canvas.style.touchAction = "none";
 
   /** The cursor on the canvas, game px, which RESIZE makes CSS px. */
   let pointer: Vec2 | undefined;
@@ -229,7 +257,7 @@ export async function createArenaViewport(
       };
       const onPointer = (event: PointerEvent): void => {
         // Buttons held with none tracked were pressed elsewhere first.
-        if (event.type !== "pointerdown" && held === 0) {
+        if (event.pointerType === "touch" || (event.type !== "pointerdown" && held === 0)) {
           return;
         }
         const bounds = canvas.getBoundingClientRect();
@@ -252,7 +280,10 @@ export async function createArenaViewport(
         }
         emit(pressed, released, moved);
       };
-      const releaseAll = (): void => {
+      const releaseAll = (event?: Event): void => {
+        if (event instanceof PointerEvent && event.pointerType === "touch") {
+          return;
+        }
         const { released } = buttonChanges(held, 0);
         held = 0;
         emit([], released, []);
@@ -281,6 +312,67 @@ export async function createArenaViewport(
         canvas.removeEventListener("contextmenu", onContextMenu);
         canvas.removeEventListener("mousedown", onMouseDown);
         window.removeEventListener("blur", releaseAll);
+      };
+    },
+    onFinger(handler) {
+      const canvas = game.canvas;
+      const gesture = createTouchGesture();
+      /** Each finger's world point as it was pressed: the camera may move before the tap ends. */
+      const pressed = new Map<number, { world: Vec2; screen: Vec2 }>();
+      const phases = {
+        pointerdown: "down",
+        pointermove: "move",
+        pointerup: "up",
+        pointercancel: "cancel",
+      } as const;
+      const onTouch = (event: PointerEvent): void => {
+        if (event.pointerType !== "touch" || !isFingerType(event.type)) {
+          return;
+        }
+        const phase = phases[event.type];
+        const bounds = canvas.getBoundingClientRect();
+        const screen = vec2(event.clientX - bounds.left, event.clientY - bounds.top);
+        if (phase === "down") {
+          canvas.setPointerCapture(event.pointerId);
+          const world = scene.cameras.main.getWorldPoint(
+            game.scale.transformX(event.pageX),
+            game.scale.transformY(event.pageY),
+          );
+          pressed.set(event.pointerId, { world: vec2(world.x, world.y), screen });
+        }
+        const outcome = gesture.feed({
+          id: event.pointerId,
+          phase,
+          x: screen.x,
+          y: screen.y,
+          t: event.timeStamp,
+        });
+        const press = pressed.get(event.pointerId);
+        if (phase === "up" || phase === "cancel") {
+          pressed.delete(event.pointerId);
+        }
+        switch (outcome.kind) {
+          case "tap":
+            if (press !== undefined) {
+              handler({ kind: "tap", world: press.world, screen: press.screen });
+            }
+            break;
+          case "pan":
+          case "pan-end":
+          case "pinch":
+            handler(outcome);
+            break;
+          case "none":
+            break;
+        }
+      };
+      for (const type of FINGER_TYPES) {
+        canvas.addEventListener(type, onTouch);
+      }
+      return () => {
+        for (const type of FINGER_TYPES) {
+          canvas.removeEventListener(type, onTouch);
+        }
       };
     },
     onWheelNotch(handler) {
