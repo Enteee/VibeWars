@@ -1,11 +1,16 @@
 #!/usr/bin/env node
 /**
- * `pnpm run readme:shots` — retake the README's three pictures (#1347, #3635).
+ * `pnpm run readme:shots` — retake the README's six pictures (#1347, #3635).
  * Not part of CI: it is a docs tool, run whenever the UI has moved.
  *
  * Builds the static client with the BroadcastChannel transport, serves it,
  * and plays it in Chromium at 1280×720, as a player would:
  *
+ *   readme-match.png     a Hosted Game on The Warden's Gallery, 8 a side:
+ *                        the host proposes and votes a Team Build and
+ *                        takes a seat; Near, by the central plinth
+ *   readme-map.png       the same match zoomed out
+ *   readme-heights.png   a Broken Tower match, its stairs and lights
  *   readme-editor.png    a character with both professions, a full bar,
  *                        its attributes spent and a skill's tooltip open
  *   readme-training.png  the Training Ground, a Fireball just landed on
@@ -14,7 +19,7 @@
  *                        menu's live arena background
  *
  * The background map is a random pick, so the README names no map. The shots are taken into a temporary directory and only moved into
- * docs/media/ once all three exist: a failed run leaves the old set. A step
+ * docs/media/ once all six exist: a failed run leaves the old set. A step
  * that cannot find what it looks for fails the run and says which step.
  *
  *   --url <url>   shoot a client already served there, built or run with
@@ -22,7 +27,7 @@
  *
  * Browser: VIBEWARS_CHROMIUM (as for e2e), else Playwright's own.
  */
-import { spawn } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -188,6 +193,133 @@ async function editorAndTraining(page, dir) {
 }
 
 /**
+ * A Hosted Game on `mapId`, 8 a side: the host proposes a Team Build,
+ * votes for it and takes a seat, and the match starts with the host's
+ * hero in it and bots around.
+ *
+ * @param {import("@playwright/test").Page} page
+ * @param {string} mapId
+ */
+async function startMatch(page, mapId) {
+  step = "hosted game";
+  await openRail(page, "Hosted Game");
+  await page.getByRole("button", { name: "Larger team" }).click();
+  await page.getByRole("button", { name: /^Join/ }).first().click();
+  await page.locator("#topbar select").selectOption(mapId);
+  await page.getByRole("button", { name: "Ready", exact: true }).click();
+  await page.getByRole("button", { name: "Start match" }).click();
+  step = "team lobby";
+  // The lobby's clock runs: no waiting between these.
+  await page.getByRole("button", { name: /^Your Team Builds/ }).click();
+  await page.getByText("8 members").first().click();
+  await page.getByRole("button", { name: "Propose this build" }).click();
+  await page.mouse.click(470, 300);
+  step = "seat";
+  // The seat card has no handle of its own: the button just under its
+  // title. An Elementalist, when the build has one; else the first seat.
+  const seats = page.getByRole("button", { name: "Sit here" });
+  await seats.first().waitFor();
+  const title = await page
+    .getByText(/^Elementalist/)
+    .first()
+    .boundingBox({ timeout: 1000 })
+    .catch(() => null);
+  let seat = seats.first();
+  for (let at = 0; title !== null && at < (await seats.count()); at += 1) {
+    const box = await seats.nth(at).boundingBox();
+    if (
+      box !== null &&
+      Math.abs(box.x - title.x) < 120 &&
+      box.y > title.y &&
+      box.y - title.y < 90
+    ) {
+      seat = seats.nth(at);
+    }
+  }
+  await seat.click();
+  step = "match";
+  await page.locator("#viewport canvas:not(.compass)").waitFor({ timeout: 90_000 });
+  await sleep(3000);
+  await page.mouse.move(640, 300);
+}
+
+/**
+ * Hold `key` for `ms`.
+ *
+ * @param {import("@playwright/test").Page} page
+ * @param {string} key
+ * @param {number} ms
+ */
+async function walk(page, key, ms) {
+  await page.keyboard.down(key);
+  await sleep(ms);
+  await page.keyboard.up(key);
+}
+
+/**
+ * The match pictures: the Warden's Gallery close on its plinth and whole,
+ * then Broken Tower's heights.
+ *
+ * @param {import("@playwright/test").Page} page
+ * @param {string} dir
+ */
+async function matchShots(page, dir) {
+  await startMatch(page, "wardens-gallery");
+  await walk(page, "KeyD", 9000);
+  step = "match shot";
+  await zoomTo(page, "Near", -120);
+  await page.screenshot({ path: path.join(dir, "readme-match.png") });
+  await zoomTo(page, "Wide", 120);
+  await page.screenshot({ path: path.join(dir, "readme-map.png") });
+}
+
+/**
+ * Broken Tower's heights, in a client of its own: the lobby of the match
+ * before is still running in the first.
+ *
+ * @param {import("@playwright/test").Page} page
+ * @param {string} dir
+ */
+async function heightsShot(page, dir) {
+  await startMatch(page, "broken-tower");
+  await walk(page, "KeyD", 6000);
+  step = "heights shot";
+  await page.screenshot({ path: path.join(dir, "readme-heights.png") });
+}
+
+/**
+ * Wheel a notch at a time until the stage names `name`, then wait until
+ * the camera, which eases there, holds still.
+ *
+ * @param {import("@playwright/test").Page} page
+ * @param {string} name a `data-zoom-step`: Close, Near, Default or Wide
+ * @param {number} deltaY per notch: negative in, positive out
+ */
+async function zoomTo(page, name, deltaY) {
+  const stage = page.locator("#viewport");
+  await page.locator("#viewport canvas:not(.compass)").hover();
+  for (let notch = 0; notch < 4; notch += 1) {
+    if ((await stage.getAttribute("data-zoom-step")) === name) {
+      break;
+    }
+    await page.mouse.wheel(0, deltaY);
+    await sleep(400);
+  }
+  if ((await stage.getAttribute("data-zoom-step")) !== name) {
+    throw new Error(`the camera did not step to ${name}`);
+  }
+  let last = "";
+  for (let poll = 0; poll < 40; poll += 1) {
+    const now = `${String(await stage.getAttribute("data-zoom"))} ${String(await stage.getAttribute("data-camera"))}`;
+    if (now === last) {
+      return;
+    }
+    last = now;
+    await sleep(250);
+  }
+}
+
+/**
  * Open `label`'s screen from the menu's mode rail.
  *
  * @param {import("@playwright/test").Page} page
@@ -223,9 +355,31 @@ try {
   await page.goto(url);
   await page.locator(".mode-rail").waitFor();
   await editorAndTraining(page, dir);
-  const shots = ["readme-editor.png", "readme-training.png", "readme-menu.png"];
+  await matchShots(page, dir);
+  const second = await browser.newContext({
+    viewport: { width: 1280, height: 720 },
+    deviceScaleFactor: 1,
+  });
+  const page2 = await second.newPage();
+  page2.setDefaultTimeout(20_000);
+  await page2.goto(url);
+  await page2.locator(".mode-rail").waitFor();
+  await heightsShot(page2, dir);
+  const shots = [
+    "readme-match.png",
+    "readme-map.png",
+    "readme-heights.png",
+    "readme-editor.png",
+    "readme-training.png",
+    "readme-menu.png",
+  ];
   for (const shot of shots) {
     fs.copyFileSync(path.join(dir, shot), path.join(MEDIA, shot));
+    if (/match|map|heights/.test(shot)) {
+      // The sand and stone take 96 colours; a third of the bytes (ImageMagick).
+      const target = path.join(MEDIA, shot);
+      spawnSync("magick", [target, "-colors", "96", `PNG8:${target}`], { stdio: "inherit" });
+    }
     const kb = Math.round(fs.statSync(path.join(MEDIA, shot)).size / 1024);
     console.log(`docs/media/${shot}  ${String(kb)} KB`);
   }

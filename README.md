@@ -13,7 +13,7 @@ fights at 20 Hz, hosted by one player's browser.
 character, then open your lobby (the lock in the title bar) and send its
 invite link to your friends. Nothing to install; see [Play it](#play-it).
 
-![The Random Arena screen with an Elementalist chosen, over the menu's live arena: the mode rail on the left, the character cards, Find a match in the top bar](docs/media/readme-menu.png)
+![A match on The Warden's Gallery: the hero by the central plinth, its stairs and lit floor, allies and enemies closing in, the skill bar below](docs/media/readme-match.png)
 
 A browser-based, minimalist, multiplayer PvP arena game mechanically
 inspired by Guild Wars 1 PvP — original implementation, original
@@ -116,6 +116,12 @@ Honest limits:
   everyone.
 
 ## Screenshots
+
+![The Warden's Gallery, wider: the raised plinths, the walls between them and the long walkway over the lower floor](docs/media/readme-map.png)
+
+![Broken Tower in play: a stair, torch light on the stone, and the dark lower path beside a raised wall-walk](docs/media/readme-heights.png)
+
+![The Random Arena screen with an Elementalist chosen, over the menu's live arena: the mode rail on the left, the character cards, Find a match in the top bar](docs/media/readme-menu.png)
 
 ![The build editor: an Elementalist/Mesmer with all eight skills on the bar, its attribute points spent, and the tooltip of Fireball open](docs/media/readme-editor.png)
 
