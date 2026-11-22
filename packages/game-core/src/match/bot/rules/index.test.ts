@@ -43,7 +43,6 @@ describe("BOT_RULES (#2042)", () => {
       "bind-spirit",
       "rider",
       "rest",
-      "flank",
       "setup",
       "run-relic",
       "boost",

@@ -12,7 +12,6 @@ import energy from "./energy.js";
 import fetchRelic from "./fetch-relic.js";
 import flee from "./flee.js";
 import fight from "./fight.js";
-import flank from "./flank.js";
 import heal from "./heal.js";
 import interrupt from "./interrupt.js";
 import keepErrand from "./keep-errand.js";
@@ -58,7 +57,6 @@ export const BOT_RULES: readonly BotRule[] = inOrder([
   fetchRelic,
   flee,
   fight,
-  flank,
   heal,
   interrupt,
   keepErrand,

@@ -1,5 +1,5 @@
 import { add, scale, sub, vec2, type Vec2 } from "../../vec2.js";
-import type { BehaviourContext } from "../behaviour.js";
+import type { BehaviourContext, BehaviourCursor } from "../behaviour.js";
 import type { Participant } from "../simulation.js";
 import { roleOf } from "./role.js";
 import { botRoll, REGROUP_SPREAD } from "./rules/shared.js";
@@ -170,4 +170,75 @@ export function flankWaypoint(
     if (Number.isFinite(context.routeLength(point, layer))) return { point, layer };
   }
   return undefined;
+}
+
+/**
+ * The foe team a bot's plan places it against (#3831): its front, else
+ * the first foe player's team. `undefined` with no foe player alive.
+ */
+export function planFoeTeam(
+  cursor: BehaviourCursor,
+  foes: readonly Participant[],
+): number | undefined {
+  return cursor.front ?? foes.find((foe) => foe.creature === undefined)?.combatant.team;
+}
+
+/**
+ * `self`'s hold spot against `foeTeam` (#3831), kept in `cursor`: placed
+ * once per foe team, and where it could not hold, again once per plan
+ * phase, so one bad moment does not last the match.
+ */
+export function placedHold(
+  context: BehaviourContext,
+  self: Participant,
+  cursor: BehaviourCursor,
+  foeTeam: number,
+): HoldPlace | undefined {
+  const phase = planPhase(context.now);
+  const kept = cursor.holdPoint;
+  if (kept?.foeTeam !== foeTeam || (kept.at === undefined && kept.phase !== phase)) {
+    cursor.holdPoint = { foeTeam, at: holdPoint(context, self, foeTeam), phase };
+  }
+  return cursor.holdPoint?.at;
+}
+
+/**
+ * `self`'s flank waypoint against `foeTeam` this plan phase (#3832), kept
+ * in `cursor`: one route search per phase and foe team.
+ */
+export function placedFlank(
+  context: BehaviourContext,
+  self: Participant,
+  cursor: BehaviourCursor,
+  foeTeam: number,
+): FlankPlace | undefined {
+  const phase = planPhase(context.now);
+  const kept = cursor.flankPoint;
+  if (kept?.foeTeam !== foeTeam || kept.phase !== phase) {
+    cursor.flankPoint = { foeTeam, at: flankWaypoint(context, self, foeTeam), phase };
+  }
+  return cursor.flankPoint?.at;
+}
+
+/**
+ * Whether `plan`, not the fight, decides where `self` goes this phase
+ * (#3832, pull-in gate): holding with a hold spot, or flanking in the
+ * flank party with a waypoint. Such a bot takes a teammate's target only
+ * near it, so it fights what reaches it and otherwise follows its plan.
+ */
+export function planPlaced(
+  context: BehaviourContext,
+  self: Participant,
+  cursor: BehaviourCursor,
+  plan: TeamPlan,
+  foes: readonly Participant[],
+): boolean {
+  if (plan === "push") return false;
+  const foeTeam = planFoeTeam(cursor, foes);
+  if (foeTeam === undefined) return false;
+  if (plan === "hold") return placedHold(context, self, cursor, foeTeam) !== undefined;
+  return (
+    flankParty(context, self, planPhase(context.now)) &&
+    placedFlank(context, self, cursor, foeTeam) !== undefined
+  );
 }
