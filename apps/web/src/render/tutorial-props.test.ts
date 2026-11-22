@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { MINIMAL_GW_INSPIRED_PVP_V1 as RULESET } from "@vibewars/game-core";
 
 import { teamColour } from "./arena-snapshot.js";
+import { FOE_COLOUR } from "./colour-wheel.js";
 import {
   CHAIR_BLUE,
   PARASOL_CREAM,
@@ -12,12 +13,11 @@ import {
   PARASOL_RIM,
   PARASOL_WOOD,
   SLEEPER_GLOW,
-  SLEEPER_GREY,
-  SLEEPER_RADIUS,
-  SLEEPER_RIM,
+  SILHOUETTE_FOE,
   SLEEPER_ZS,
   SLEEPER_Z_RISE,
   SLEEPER_Z_SECONDS,
+  mistGateCommands,
   parasolCommands,
   sleeperCommands,
   sleeperZAge,
@@ -26,52 +26,31 @@ import {
 
 const AT = { x: 500, y: 300 };
 
-/** A colour's channels summed: enough to tell the paler of two greys. */
-const lightness = (colour: number): number =>
-  ((colour >> 16) & 0xff) + ((colour >> 8) & 0xff) + (colour & 0xff);
-
 const zsOf = (commands: readonly SleeperCommand[]) =>
   commands.flatMap((command) => (command.kind === "z" ? [command] : []));
 
 describe("the sleeping guard (#3326)", () => {
-  it("lies flat, head to feet longer than a fighter's disc is wide", () => {
-    const commands = sleeperCommands(AT, 0, 0, false);
-    const body = commands.find((command) => command.kind === "body");
-    const head = commands.find((command) => command.kind === "head");
-    if (body?.kind !== "body" || head?.kind !== "head") {
-      throw new Error("no body or no head");
-    }
-    const xs = [...body.outline.map(({ x }) => x), head.at.x + head.radius];
-    const ys = body.outline.map(({ y }) => y);
-    expect(Math.max(...xs) - Math.min(...xs)).toBeCloseTo(2 * SLEEPER_RADIUS, 0);
-    expect(2 * SLEEPER_RADIUS).toBeGreaterThan(2 * RULESET.collision.playerRadius);
-    // Flattened across its facing, as a knocked-down body is.
-    expect(Math.max(...ys) - Math.min(...ys)).toBeLessThan(SLEEPER_RADIUS);
-    // The head at the end it faces, apart from the body.
-    expect(head.at.x).toBeGreaterThan(AT.x);
-    expect(head.at.x - head.radius).toBeGreaterThanOrEqual(
-      Math.max(...body.outline.map(({ x }) => x)) - 0.01,
-    );
+  it("is a foe's body disc at a fighter's radius, and no head (#3791)", () => {
+    const commands = sleeperCommands(AT, 0.4, 0, false);
+    const bodies = commands.filter((command) => command.kind === "body");
+    expect(bodies).toEqual([
+      { kind: "body", at: AT, radius: RULESET.collision.playerRadius, team: "enemy", facing: 0.4 },
+    ]);
+    expect(teamColour("enemy")).toBe(FOE_COLOUR);
+    expect(commands.map(({ kind }) => kind)).not.toContain("head");
   });
 
-  it("is pale-rimmed, and lit by a warm glow drawn under it", () => {
+  it("is lit by a warm glow drawn under it", () => {
     const commands = sleeperCommands(AT, 0, 0, false);
     expect(commands[0]?.kind).toBe("glow");
-    expect(commands[0]?.colour).toBe(SLEEPER_GLOW);
-    for (const command of commands) {
-      if (command.kind === "body" || command.kind === "head") {
-        expect(command.rim).toBe(SLEEPER_RIM);
-        expect(lightness(command.rim)).toBeGreaterThan(lightness(command.colour));
-      }
-    }
+    expect(commands[1]?.kind).toBe("body");
+    const [glow] = commands;
+    expect(glow?.kind === "glow" ? glow.colour : undefined).toBe(SLEEPER_GLOW);
   });
 
-  it("wears no team's colour", () => {
-    const colours = sleeperCommands(AT, 0, 0.7, false).map(({ colour }) => colour);
-    for (const team of ["ally", "enemy", "third", "self"] as const) {
-      expect(colours).not.toContain(teamColour(team));
-    }
-    expect(colours).toContain(SLEEPER_GREY);
+  it("lets its z's rise from over the disc", () => {
+    const [z] = zsOf(sleeperCommands(AT, 0, 0, false));
+    expect(z?.at.y).toBeLessThan(AT.y - RULESET.collision.playerRadius);
   });
 
   it("lets three z's rise 32 and fade over 2 s, staggered", () => {
@@ -144,5 +123,24 @@ describe("the parasol (#3332)", () => {
 
   it("is static: the same strokes whenever it is drawn", () => {
     expect(parasolCommands(AT)).toEqual(commands);
+  });
+});
+
+describe("the mist gate (#3334)", () => {
+  it("shows the fight beyond as foes' body discs, desaturated, no heads (#3791)", () => {
+    const silhouettes = mistGateCommands(AT, 0, false).filter(
+      (command) => command.kind === "shape",
+    );
+    expect(silhouettes.length).toBeGreaterThan(0);
+    for (const silhouette of silhouettes) {
+      const xs = silhouette.outline.map(({ x }) => x);
+      const ys = silhouette.outline.map(({ y }) => y);
+      expect(Math.max(...xs) - Math.min(...xs)).toBeCloseTo(2 * RULESET.collision.playerRadius, 5);
+      expect(Math.max(...ys) - Math.min(...ys)).toBeCloseTo(2 * RULESET.collision.playerRadius, 5);
+      expect(silhouette.colour).toBe(SILHOUETTE_FOE);
+    }
+    // Still a foe's warm red, greyed: not the foe colour itself.
+    expect(SILHOUETTE_FOE).not.toBe(FOE_COLOUR);
+    expect((SILHOUETTE_FOE >> 16) & 0xff).toBeGreaterThan(SILHOUETTE_FOE & 0xff);
   });
 });
