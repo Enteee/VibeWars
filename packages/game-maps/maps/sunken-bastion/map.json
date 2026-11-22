@@ -305,7 +305,7 @@
         "kind": "rect",
         "x": 1000,
         "y": 860,
-        "width": 130,
+        "width": 120,
         "height": 90
       },
       "uphill": "e",
@@ -318,9 +318,9 @@
       "to": 2,
       "area": {
         "kind": "rect",
-        "x": 1570,
+        "x": 1580,
         "y": 860,
-        "width": 130,
+        "width": 120,
         "height": 90
       },
       "uphill": "w",

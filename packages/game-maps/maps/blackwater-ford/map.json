@@ -446,9 +446,9 @@
       "to": 2,
       "area": {
         "kind": "rect",
-        "x": 2345,
+        "x": 2360,
         "y": 1550,
-        "width": 60,
+        "width": 45,
         "height": 110
       },
       "uphill": "n",
@@ -463,7 +463,7 @@
         "kind": "rect",
         "x": 2795,
         "y": 1140,
-        "width": 60,
+        "width": 45,
         "height": 110
       },
       "uphill": "s",
