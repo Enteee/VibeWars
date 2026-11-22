@@ -1517,7 +1517,6 @@ export default {
   "teamPlay.noTeamBuilds": "Nie ma jeszcze buildów drużyn: {size}.",
   "teamPlay.notPlayable": "Nie można zagrać: {problem}",
   "teamPlay.openingLobby": "Otwieranie lobby…",
-  "teamPlay.queuedMaps": "Mapy w tym trybie",
   "teamPlay.random": "Losowo",
   "teamPlay.reroll": "Losuj",
   "teamPlay.unnamedTeam": "Drużyna bez nazwy",

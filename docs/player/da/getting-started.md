@@ -74,7 +74,7 @@ baggrunden: du bliver på Tilfældig arena og kan gå hvor som helst
 imens, dine builds, udstyr, Valg, Hjælp eller musikeditoren, men ikke
 skifte figur, være vært for eller deltage i en lobby eller ændre en
 spiltilstands holdstørrelse. Holdarena og de andre lobbyskærme siger, at
-du står i kø, og viser deres baner; holdstørrelsen viser den størrelse,
+du står i kø; holdstørrelsen viser den størrelse,
 du stillede dig i kø med, på hver spiltilstand. En roterende ring til
 venstre for **Hjælp** i topbjælken viser, at du står i kø; klik på den
 for køen, ventetiden, hvor mange der søger, og **Forlad kø**. Når der er

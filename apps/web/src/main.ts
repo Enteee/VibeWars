@@ -1703,7 +1703,7 @@ async function main(): Promise<void> {
         menuNotice,
         callbacks,
         panelFor(entry),
-        queue === undefined ? undefined : mapsFor(entry),
+        queue !== undefined,
       );
       // A Hosted Game's host, or a Team Arena's leader, sets its lobby's
       // size with the sidebar's (#2104, #2107).

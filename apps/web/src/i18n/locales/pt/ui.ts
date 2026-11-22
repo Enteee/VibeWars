@@ -1462,7 +1462,6 @@ export default {
   "teamPlay.noTeamBuilds": "Nenhuma Build de Equipe de {size} ainda.",
   "teamPlay.notPlayable": "Não jogável: {problem}",
   "teamPlay.openingLobby": "Abrindo sua sala…",
-  "teamPlay.queuedMaps": "Mapas deste modo",
   "teamPlay.random": "Aleatória",
   "teamPlay.reroll": "Sortear",
   "teamPlay.unnamedTeam": "Equipe sem nome",

@@ -75,7 +75,7 @@ segundo plano: sigues en Arena aleatoria y mientras puedes ir a cualquier
 sitio, tus builds, equipo, Opciones, Ayuda o el editor de música, pero no
 cambiar de personaje, alojar o unirte a una sala, ni cambiar el tamaño de
 equipo de un modo. Arena por equipos y las demás pantallas de sala indican que
-estás en una cola y muestran sus mapas; el tamaño del equipo muestra el tamaño con el
+estás en una cola; el tamaño del equipo muestra el tamaño con el
 que entraste en la cola, en todos los modos. Un anillo que gira a la izquierda
 de **Ayuda** en la barra superior indica que estás en cola; haz clic en él para
 ver la cola, el tiempo esperado, cuántos buscan y **Salir de la cola**. Cuando

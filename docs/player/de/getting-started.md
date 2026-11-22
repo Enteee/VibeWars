@@ -73,7 +73,7 @@ Zufallsarena und kannst währenddessen überallhin, zu deinen Builds, deiner
 Ausrüstung, den Optionen, der Hilfe oder dem Musik-Editor, aber du kannst weder den
 Charakter wechseln noch eine Lobby hosten oder ihr beitreten oder die Teamgröße eines
 Modus ändern. Teamarena und die anderen Lobby-Bildschirme sagen dir, dass du in einer
-Warteschlange bist, und listen ihre Karten auf; die Teamgröße zeigt in jedem Modus die Größe, mit der du dich
+Warteschlange bist; die Teamgröße zeigt in jedem Modus die Größe, mit der du dich
 angemeldet hast. Ein Ring, der sich links von **Hilfe** in der oberen Leiste dreht,
 zeigt, dass du in der Warteschlange bist; klick darauf für die Warteschlange, die
 Wartezeit, wie viele suchen und **Abmelden**. Wird ein Match gefunden, kommst du von
