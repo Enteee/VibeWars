@@ -160,9 +160,15 @@ håller vapnen i setet du tittar på, med deras moddar.
 | Överlägsen attributruna                                                                                                                                                                                                                                                                                        | +3 till ett attribut, -75 hälsa            |
 | ![Vigor](../../../apps/web/public/icons/rune/vigor.svg) **Vigor**                                                                                                                                                                                                                                              | mer hälsa (+30, +41 eller +50)             |
 | ![Vitae](../../../apps/web/public/icons/rune/vitae.svg) **Vitae**                                                                                                                                                                                                                                              | +10 hälsa                                  |
-| ![Attunement](../../../apps/web/public/icons/rune/attunement.svg) **Attunement**                                                                                                                                                                                                                               | mer energi (+3, +6 eller +9)               |
+| ![Attunement](../../../apps/web/public/icons/rune/attunement.svg) **Attunement**                                                                                                                                                                                                                               | mer energi (+2)                            |
 | ![Clarity](../../../apps/web/public/icons/rune/clarity.svg) **Clarity**, ![Purity](../../../apps/web/public/icons/rune/purity.svg) **Purity**, ![Recovery](../../../apps/web/public/icons/rune/recovery.svg) **Recovery**, ![Restoration](../../../apps/web/public/icons/rune/restoration.svg) **Restoration** | två åkommor var som går över 20 % snabbare |
 | ![Absorption](../../../apps/web/public/icons/rune/absorption.svg) **Absorption** (![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior**)                                                                                                                                               | mindre fysisk skada från varje träff       |
+
+Vitae och Attunement läggs ihop: fem Attunement-runor ger +10 energi.
+Alla andra runor räknas en gång, hur många du än bär. Förkortade åkommor
+från olika källor läggs också ihop, var och en räknad på hela
+varaktigheten och avrundad till en hel sekund: Restoration och "Fear
+Cuts Deeper" tar ner en Bleeding på 8 sekunder till 4.
 
 Du väljer en dels runa på samma ställe som dess insignia: klicka på delen
 på figuren.

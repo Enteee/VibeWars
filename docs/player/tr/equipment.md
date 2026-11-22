@@ -162,9 +162,15 @@ gösterir ve baktığın setin silahlarını geliştirmeleriyle birlikte tutar.
 | Superior nitelik rünü                                                                                                                                                                                                                                                                                          | bir niteliğe +3, -75 Can                         |
 | ![Vigor](../../../apps/web/public/icons/rune/vigor.svg) **Vigor**                                                                                                                                                                                                                                              | daha fazla Can (+30, +41 ya da +50)              |
 | ![Vitae](../../../apps/web/public/icons/rune/vitae.svg) **Vitae**                                                                                                                                                                                                                                              | +10 Can                                          |
-| ![Attunement](../../../apps/web/public/icons/rune/attunement.svg) **Attunement**                                                                                                                                                                                                                               | daha fazla Enerji (+3, +6 ya da +9)              |
+| ![Attunement](../../../apps/web/public/icons/rune/attunement.svg) **Attunement**                                                                                                                                                                                                                               | daha fazla Enerji (+2)                           |
 | ![Clarity](../../../apps/web/public/icons/rune/clarity.svg) **Clarity**, ![Purity](../../../apps/web/public/icons/rune/purity.svg) **Purity**, ![Recovery](../../../apps/web/public/icons/rune/recovery.svg) **Recovery**, ![Restoration](../../../apps/web/public/icons/rune/restoration.svg) **Restoration** | her biri iki rahatsızlığı %20 daha erken geçirir |
 | ![Absorption](../../../apps/web/public/icons/rune/absorption.svg) **Absorption** (![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior**)                                                                                                                                               | her vuruştan daha az fiziksel hasar              |
+
+Vitae ve Attunement toplanır: beş Attunement rünü +10 Enerji verir.
+Başka her rün, kaç tane taksan da bir kez sayılır. Farklı kaynaklardan
+gelen rahatsızlık kısaltmaları da toplanır, her biri tam süreden
+hesaplanır ve tam saniyeye yuvarlanır: Restoration ve "Fear Cuts Deeper"
+8 saniyelik bir Bleeding'i 4'e indirir.
 
 Bir parçanın rününü nişanıyla aynı yerde seçersin: figür üzerinde
 parçaya tıkla.

@@ -158,9 +158,15 @@
 | Вища руна атрибута                                                                                                                                                                                                                                                                                             | +3 до атрибута, -75 здоров'я           |
 | ![Vigor](../../../apps/web/public/icons/rune/vigor.svg) **Vigor**                                                                                                                                                                                                                                              | більше здоров'я (+30, +41 або +50)     |
 | ![Vitae](../../../apps/web/public/icons/rune/vitae.svg) **Vitae**                                                                                                                                                                                                                                              | +10 здоров'я                           |
-| ![Attunement](../../../apps/web/public/icons/rune/attunement.svg) **Attunement**                                                                                                                                                                                                                               | більше енергії (+3, +6 або +9)         |
+| ![Attunement](../../../apps/web/public/icons/rune/attunement.svg) **Attunement**                                                                                                                                                                                                                               | більше енергії (+2)                    |
 | ![Clarity](../../../apps/web/public/icons/rune/clarity.svg) **Clarity**, ![Purity](../../../apps/web/public/icons/rune/purity.svg) **Purity**, ![Recovery](../../../apps/web/public/icons/rune/recovery.svg) **Recovery**, ![Restoration](../../../apps/web/public/icons/rune/restoration.svg) **Restoration** | два стани кожен минає на 20% раніше    |
 | ![Absorption](../../../apps/web/public/icons/rune/absorption.svg) **Absorption** (![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior**)                                                                                                                                               | менше фізичної шкоди від кожного удару |
+
+Vitae і Attunement додаються: п'ять рун Attunement дають +10 енергії.
+Будь-яка інша руна рахується один раз, скільки б їх ти не носив. Скорочення
+станів з різних джерел теж додаються, кожне рахується від повної тривалості
+й округлюється до цілої секунди: Restoration і "Fear Cuts Deeper" скорочують
+Bleeding тривалістю 8 секунд до 4.
 
 Руну частини вибирають там само, де й відзнаку: клікни по частині на фігурі.
 

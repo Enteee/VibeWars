@@ -163,9 +163,16 @@ pièce, et tient les armes du set que tu regardes, avec leurs mods.
 | Rune d'attribut supérieure                                                                                                                                                                                                                                                                                     | +3 à un attribut, -75 santé                       |
 | ![Vigor](../../../apps/web/public/icons/rune/vigor.svg) **Vigor**                                                                                                                                                                                                                                              | plus de santé (+30, +41 ou +50)                   |
 | ![Vitae](../../../apps/web/public/icons/rune/vitae.svg) **Vitae**                                                                                                                                                                                                                                              | +10 santé                                         |
-| ![Attunement](../../../apps/web/public/icons/rune/attunement.svg) **Attunement**                                                                                                                                                                                                                               | plus d'énergie (+3, +6 ou +9)                     |
+| ![Attunement](../../../apps/web/public/icons/rune/attunement.svg) **Attunement**                                                                                                                                                                                                                               | plus d'énergie (+2)                               |
 | ![Clarity](../../../apps/web/public/icons/rune/clarity.svg) **Clarity**, ![Purity](../../../apps/web/public/icons/rune/purity.svg) **Purity**, ![Recovery](../../../apps/web/public/icons/rune/recovery.svg) **Recovery**, ![Restoration](../../../apps/web/public/icons/rune/restoration.svg) **Restoration** | deux altérations chacune s'estompent 20% plus tôt |
 | ![Absorption](../../../apps/web/public/icons/rune/absorption.svg) **Absorption** (![Guerrier](../../../apps/web/public/icons/profession/warrior.svg) **Guerrier**)                                                                                                                                             | moins de dégâts physiques à chaque coup           |
+
+Vitae et Attunement s'additionnent : cinq runes d'Attunement donnent +10
+énergie. Toute autre rune compte une fois, quel que soit le nombre que tu
+portes. Les réductions d'altérations de sources différentes s'additionnent
+aussi, chacune calculée sur la durée complète et arrondie à la seconde
+entière : Restoration et "Fear Cuts Deeper" font passer un Saignement de 8
+secondes à 4.
 
 Tu choisis la rune d'une pièce au même endroit que son insigne : clique sur
 la pièce sur la figurine.

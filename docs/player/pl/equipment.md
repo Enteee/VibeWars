@@ -159,9 +159,15 @@ z jej modyfikacjami.
 | Najwyższa runa atrybutu                                                                                                                                                                                                                                                                                        | +3 do atrybutu, -75 Zdrowia                  |
 | ![Vigor](../../../apps/web/public/icons/rune/vigor.svg) **Vigor**                                                                                                                                                                                                                                              | więcej Zdrowia (+30, +41 lub +50)            |
 | ![Vitae](../../../apps/web/public/icons/rune/vitae.svg) **Vitae**                                                                                                                                                                                                                                              | +10 Zdrowia                                  |
-| ![Attunement](../../../apps/web/public/icons/rune/attunement.svg) **Attunement**                                                                                                                                                                                                                               | więcej Energii (+3, +6 lub +9)               |
+| ![Attunement](../../../apps/web/public/icons/rune/attunement.svg) **Attunement**                                                                                                                                                                                                                               | więcej Energii (+2)                          |
 | ![Clarity](../../../apps/web/public/icons/rune/clarity.svg) **Clarity**, ![Purity](../../../apps/web/public/icons/rune/purity.svg) **Purity**, ![Recovery](../../../apps/web/public/icons/rune/recovery.svg) **Recovery**, ![Restoration](../../../apps/web/public/icons/rune/restoration.svg) **Restoration** | po dwie dolegliwości mijają o 20% szybciej   |
 | ![Absorption](../../../apps/web/public/icons/rune/absorption.svg) **Absorption** (![Wojownik](../../../apps/web/public/icons/profession/warrior.svg) **Wojownik**)                                                                                                                                             | mniej obrażeń fizycznych z każdego trafienia |
+
+Vitae i Attunement sumują się: pięć run Attunement daje +10 Energii. Każda
+inna runa liczy się raz, ile byś ich nie nosił. Skrócenia dolegliwości z
+różnych źródeł też się sumują, każde liczone od pełnego czasu i zaokrąglane
+do pełnej sekundy: Restoration i "Fear Cuts Deeper" skracają 8-sekundowe
+Krwawienie do 4.
 
 Runę części wybierasz w tym samym miejscu co jej insygnia: kliknij część na figurze.
 
