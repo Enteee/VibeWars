@@ -158,9 +158,15 @@ Swordsmanship، أما ![Staff](../../../apps/web/public/icons/weapon/staff.svg)
 | رون سمة فائق                                                                                                                                                                                                                                                                                                   | +3 لسمة، -75 صحة                   |
 | ![Vigor](../../../apps/web/public/icons/rune/vigor.svg) **Vigor**                                                                                                                                                                                                                                              | صحة أكثر (+30 أو +41 أو +50)       |
 | ![Vitae](../../../apps/web/public/icons/rune/vitae.svg) **Vitae**                                                                                                                                                                                                                                              | +10 صحة                            |
-| ![Attunement](../../../apps/web/public/icons/rune/attunement.svg) **Attunement**                                                                                                                                                                                                                               | طاقة أكثر (+3 أو +6 أو +9)         |
+| ![Attunement](../../../apps/web/public/icons/rune/attunement.svg) **Attunement**                                                                                                                                                                                                                               | طاقة أكثر (+2)                     |
 | ![Clarity](../../../apps/web/public/icons/rune/clarity.svg) **Clarity**, ![Purity](../../../apps/web/public/icons/rune/purity.svg) **Purity**, ![Recovery](../../../apps/web/public/icons/rune/recovery.svg) **Recovery**, ![Restoration](../../../apps/web/public/icons/rune/restoration.svg) **Restoration** | علتان تزول كل منهما أسرع بنسبة 20% |
 | ![Absorption](../../../apps/web/public/icons/rune/absorption.svg) **Absorption** (![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior**)                                                                                                                                               | ضرر جسدي أقل من كل ضربة            |
+
+تتراكم Vitae وAttunement: خمسة رونات Attunement تمنح +10 طاقة. أي رون
+آخر يُحسب مرة واحدة، مهما كان عدد ما ترتديه منه. ويتراكم أيضًا تقصير
+العلل من مصادر مختلفة، كل تقصير يُحسب من المدة الكاملة ويُقرَّب إلى
+ثانية كاملة: Restoration و"Fear Cuts Deeper" يُنزلان Bleeding مدته 8
+ثوانٍ إلى 4.
 
 تختار رون القطعة في المكان نفسه الذي تختار فيه شارتها: انقر القطعة
 على المجسّم.

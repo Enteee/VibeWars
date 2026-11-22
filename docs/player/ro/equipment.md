@@ -160,9 +160,15 @@ care te uiți, cu modificatorii lor.
 | Rună de atribut Superioară                                                                                                                                                                                                                                                                                     | +3 la un atribut, -75 Viață                   |
 | ![Vigor](../../../apps/web/public/icons/rune/vigor.svg) **Vigor**                                                                                                                                                                                                                                              | mai multă Viață (+30, +41 sau +50)            |
 | ![Vitae](../../../apps/web/public/icons/rune/vitae.svg) **Vitae**                                                                                                                                                                                                                                              | +10 Viață                                     |
-| ![Attunement](../../../apps/web/public/icons/rune/attunement.svg) **Attunement**                                                                                                                                                                                                                               | mai multă Energie (+3, +6 sau +9)             |
+| ![Attunement](../../../apps/web/public/icons/rune/attunement.svg) **Attunement**                                                                                                                                                                                                                               | mai multă Energie (+2)                        |
 | ![Clarity](../../../apps/web/public/icons/rune/clarity.svg) **Clarity**, ![Purity](../../../apps/web/public/icons/rune/purity.svg) **Purity**, ![Recovery](../../../apps/web/public/icons/rune/recovery.svg) **Recovery**, ![Restoration](../../../apps/web/public/icons/rune/restoration.svg) **Restoration** | câte două afecțiuni expiră cu 20% mai devreme |
 | ![Absorption](../../../apps/web/public/icons/rune/absorption.svg) **Absorption** (![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior**)                                                                                                                                               | mai puține daune fizice la fiecare lovitură   |
+
+Vitae și Attunement se adună: cinci rune Attunement dau +10 Energie. Orice
+altă rună contează o singură dată, oricâte ai purta. Scurtările afecțiunilor
+din surse diferite se adună și ele, fiecare calculată din durata întreagă și
+rotunjită la o secundă întreagă: Restoration și "Fear Cuts Deeper" reduc un
+Bleeding de 8 secunde la 4.
 
 Alegi runa unei piese în același loc cu însemnul: dă clic pe piesă pe figură.
 

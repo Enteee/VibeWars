@@ -115,6 +115,11 @@ function checkRune(
     problems.push({ field, message: `unknown rune ${rune.runeId}` });
     return;
   }
+  // A rune with one tier is stored as minor; any other tier is not a rune
+  // that exists.
+  if (!definition.tiered && rune.tier !== "minor") {
+    problems.push({ field, message: `${definition.name} has no ${rune.tier} tier` });
+  }
   if (
     definition.requiresPrimary !== undefined &&
     definition.requiresPrimary !== context.primaryProfession

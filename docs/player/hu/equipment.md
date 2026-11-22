@@ -168,9 +168,16 @@ tartja a nézett készlet fegyvereit, a módosítóikkal együtt.
 | Kiváló tulajdonság-rúna                                                                                                                                                                                                                                                                                        | +3 egy tulajdonsághoz, -75 Életerő        |
 | ![Vigor](../../../apps/web/public/icons/rune/vigor.svg) **Vigor**                                                                                                                                                                                                                                              | több Életerő (+30, +41 vagy +50)          |
 | ![Vitae](../../../apps/web/public/icons/rune/vitae.svg) **Vitae**                                                                                                                                                                                                                                              | +10 Életerő                               |
-| ![Attunement](../../../apps/web/public/icons/rune/attunement.svg) **Attunement**                                                                                                                                                                                                                               | több Energia (+3, +6 vagy +9)             |
+| ![Attunement](../../../apps/web/public/icons/rune/attunement.svg) **Attunement**                                                                                                                                                                                                                               | több Energia (+2)                         |
 | ![Clarity](../../../apps/web/public/icons/rune/clarity.svg) **Clarity**, ![Purity](../../../apps/web/public/icons/rune/purity.svg) **Purity**, ![Recovery](../../../apps/web/public/icons/rune/recovery.svg) **Recovery**, ![Restoration](../../../apps/web/public/icons/rune/restoration.svg) **Restoration** | két-két kór 20%-kal hamarabb jár le       |
 | ![Absorption](../../../apps/web/public/icons/rune/absorption.svg) **Absorption** (![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior**)                                                                                                                                               | kevesebb fizikai sebzés minden találattól |
+
+A Vitae és az Attunement összeadódik: öt Attunement-rúna +10 Energiát
+ad. Bármely más rúna egyszer számít, akárhányat viselsz is belőle. A
+különböző forrásokból származó kór-rövidítések is összeadódnak,
+mindegyik a teljes időtartamból számolva és egész másodpercre kerekítve:
+a Restoration és a "Fear Cuts Deeper" egy 8 másodperces Bleedinget 4-re
+rövidít.
 
 Egy darab rúnáját ugyanott választod ki, ahol a jelvényét: kattints a
 figurán a darabra.

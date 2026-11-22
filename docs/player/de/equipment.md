@@ -156,9 +156,16 @@ und Rune jedes Teils und hält die Waffen des Sets, das du gerade ansiehst, mit 
 | Superior-Attributrune                                                                                                                                                                                                                                                                                          | +3 auf ein Attribut, -75 Leben          |
 | ![Vigor](../../../apps/web/public/icons/rune/vigor.svg) **Vigor**                                                                                                                                                                                                                                              | mehr Leben (+30, +41 oder +50)          |
 | ![Vitae](../../../apps/web/public/icons/rune/vitae.svg) **Vitae**                                                                                                                                                                                                                                              | +10 Leben                               |
-| ![Attunement](../../../apps/web/public/icons/rune/attunement.svg) **Attunement**                                                                                                                                                                                                                               | mehr Energie (+3, +6 oder +9)           |
+| ![Attunement](../../../apps/web/public/icons/rune/attunement.svg) **Attunement**                                                                                                                                                                                                                               | mehr Energie (+2)                       |
 | ![Clarity](../../../apps/web/public/icons/rune/clarity.svg) **Clarity**, ![Purity](../../../apps/web/public/icons/rune/purity.svg) **Purity**, ![Recovery](../../../apps/web/public/icons/rune/recovery.svg) **Recovery**, ![Restoration](../../../apps/web/public/icons/rune/restoration.svg) **Restoration** | zwei Zustände laufen je 20 % früher aus |
 | ![Absorption](../../../apps/web/public/icons/rune/absorption.svg) **Absorption** (![Krieger](../../../apps/web/public/icons/profession/warrior.svg) **Krieger**)                                                                                                                                               | weniger physischer Schaden pro Treffer  |
+
+Vitae und Attunement addieren sich: fünf Attunement-Runen geben +10
+Energie. Jede andere Rune zählt einmal, egal wie viele du trägst.
+Verkürzungen von Zuständen aus verschiedenen Quellen addieren sich
+ebenfalls, jede von der vollen Dauer abgezogen und auf eine ganze
+Sekunde gerundet: Restoration und "Fear Cuts Deeper" verkürzen eine
+Blutung von 8 Sekunden auf 4.
 
 Die Rune eines Teils wählst du am selben Ort wie seine Insignie: Klick auf das Teil an der
 Figur.
