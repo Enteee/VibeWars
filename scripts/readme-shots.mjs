@@ -8,7 +8,7 @@
  *
  *   readme-match.png     a Hosted Game on The Warden's Gallery, 8 a side:
  *                        the host proposes and votes a Team Build and
- *                        takes a seat; Near, by the central plinth
+ *                        takes a seat; the default zoom, in the skirmish after the raise
  *   readme-map.png       the same match zoomed out
  *   readme-heights.png   a Broken Tower match, its stairs and lights
  *   readme-editor.png    a character with both professions, a full bar,
@@ -265,9 +265,13 @@ async function walk(page, key, ms) {
  */
 async function matchShots(page, dir) {
   await startMatch(page, "wardens-gallery");
-  await walk(page, "KeyD", 9000);
+  // Heroes are held until the raise ends.
+  await sleep(20_000);
+  await page.keyboard.down("KeyW");
+  await walk(page, "KeyD", 8000);
+  await page.keyboard.up("KeyW");
   step = "match shot";
-  await zoomTo(page, "Near", -120);
+  await zoomTo(page, "Default", -120);
   await page.screenshot({ path: path.join(dir, "readme-match.png") });
   await zoomTo(page, "Wide", 120);
   await page.screenshot({ path: path.join(dir, "readme-map.png") });
