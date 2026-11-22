@@ -133,7 +133,7 @@ describe("a body's tint (#2987)", () => {
 });
 
 describe("a body in a deck's shade (#3078)", () => {
-  it("is darker than in the open, with lighting off too", () => {
+  it("is darker than in the open, on an unlit map too", () => {
     expect(shadedBodyTint(0xffffff)).toBe(0xb3b3b3);
   });
 

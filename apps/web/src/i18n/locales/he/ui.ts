@@ -930,12 +930,10 @@ export default {
 
   "options.controls": "שליטה",
   "options.cosmetics": "קוסמטיקה",
-  "options.display": "תצוגה",
   "options.label": "אפשרויות",
   "options.language": "שפה",
   "options.languageBusy": "עזוב קודם את הלובי או המשחק: החלפת השפה טוענת מחדש את הדף.",
   "options.languageLabel": "שפה",
-  "options.lightingLabel": "תאורה",
   "options.player": "שחקן",
   "options.relay": "ממסר (TURN)",
   "options.sections": "מקטעי אפשרויות",

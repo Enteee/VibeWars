@@ -918,13 +918,11 @@ export default {
 
   "options.controls": "controles",
   "options.cosmetics": "cosméticos",
-  "options.display": "tela",
   "options.label": "Opções",
   "options.language": "idioma",
   "options.languageBusy":
     "Saia da sala ou da partida primeiro: trocar o idioma recarrega a página.",
   "options.languageLabel": "Idioma",
-  "options.lightingLabel": "Iluminação",
   "options.player": "jogador",
   "options.relay": "relay (TURN)",
   "options.sections": "seções de opções",

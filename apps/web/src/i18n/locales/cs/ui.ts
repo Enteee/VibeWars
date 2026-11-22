@@ -959,12 +959,10 @@ export default {
 
   "options.controls": "ovládání",
   "options.cosmetics": "kosmetika",
-  "options.display": "zobrazení",
   "options.label": "Možnosti",
   "options.language": "jazyk",
   "options.languageBusy": "Nejdřív opusť lobby nebo zápas: změna jazyka znovu načte stránku.",
   "options.languageLabel": "Jazyk",
-  "options.lightingLabel": "Osvětlení",
   "options.player": "hráč",
   "options.relay": "relay (TURN)",
   "options.sections": "sekce možností",

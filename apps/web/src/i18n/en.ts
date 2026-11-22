@@ -877,12 +877,10 @@ export const en = {
 
   "options.controls": "controls",
   "options.cosmetics": "cosmetics",
-  "options.display": "display",
   "options.label": "Options",
   "options.language": "language",
   "options.languageBusy": "Leave the lobby or match first: changing the language reloads the page.",
   "options.languageLabel": "Language",
-  "options.lightingLabel": "Lighting",
   "options.player": "player",
   "options.relay": "relay (TURN)",
   "options.sections": "options sections",

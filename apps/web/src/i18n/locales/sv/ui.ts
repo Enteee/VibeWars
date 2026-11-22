@@ -875,12 +875,10 @@ export default {
 
   "options.controls": "kontroller",
   "options.cosmetics": "kosmetik",
-  "options.display": "visning",
   "options.label": "Alternativ",
   "options.language": "språk",
   "options.languageBusy": "Lämna lobbyn eller matchen först: språkbyte laddar om sidan.",
   "options.languageLabel": "Språk",
-  "options.lightingLabel": "Belysning",
   "options.player": "spelare",
   "options.relay": "relä (TURN)",
   "options.sections": "alternativsektioner",

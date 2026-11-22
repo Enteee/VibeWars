@@ -958,12 +958,10 @@ export default {
 
   "options.controls": "управление",
   "options.cosmetics": "косметика",
-  "options.display": "экран",
   "options.label": "Настройки",
   "options.language": "язык",
   "options.languageBusy": "Сначала выйди из лобби или матча: смена языка перезагружает страницу.",
   "options.languageLabel": "Язык",
-  "options.lightingLabel": "Освещение",
   "options.player": "игрок",
   "options.relay": "релей (TURN)",
   "options.sections": "разделы настроек",

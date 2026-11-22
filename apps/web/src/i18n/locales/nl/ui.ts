@@ -876,12 +876,10 @@ export default {
 
   "options.controls": "besturing",
   "options.cosmetics": "cosmetics",
-  "options.display": "weergave",
   "options.label": "Opties",
   "options.language": "taal",
   "options.languageBusy": "Verlaat eerst de lobby of match: de taal wijzigen herlaadt de pagina.",
   "options.languageLabel": "Taal",
-  "options.lightingLabel": "Belichting",
   "options.player": "speler",
   "options.relay": "relay (TURN)",
   "options.sections": "optiesecties",

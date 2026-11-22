@@ -832,13 +832,11 @@ export default {
 
   "options.controls": "kontrol",
   "options.cosmetics": "kosmetik",
-  "options.display": "tampilan",
   "options.label": "Opsi",
   "options.language": "bahasa",
   "options.languageBusy":
     "Keluar dari lobi atau pertandingan dulu: ganti bahasa memuat ulang halaman.",
   "options.languageLabel": "Bahasa",
-  "options.lightingLabel": "Pencahayaan",
   "options.player": "pemain",
   "options.relay": "relay (TURN)",
   "options.sections": "bagian opsi",

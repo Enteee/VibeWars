@@ -878,13 +878,11 @@ export default {
 
   "options.controls": "کنترل‌ها",
   "options.cosmetics": "آرایه‌ها",
-  "options.display": "نمایش",
   "options.label": "تنظیمات",
   "options.language": "زبان",
   "options.languageBusy":
     "اول از لابی یا مسابقه خارج شو: تغییر زبان صفحه را دوباره بارگذاری می‌کند.",
   "options.languageLabel": "زبان",
-  "options.lightingLabel": "نورپردازی",
   "options.player": "بازیکن",
   "options.relay": "رله (TURN)",
   "options.sections": "بخش‌های تنظیمات",

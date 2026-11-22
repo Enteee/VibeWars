@@ -886,13 +886,11 @@ export default {
 
   "options.controls": "ohjaus",
   "options.cosmetics": "kosmetiikka",
-  "options.display": "näyttö",
   "options.label": "Asetukset",
   "options.language": "kieli",
   "options.languageBusy":
     "Poistu ensin aulasta tai ottelusta: kielen vaihto lataa sivun uudelleen.",
   "options.languageLabel": "Kieli",
-  "options.lightingLabel": "Valaistus",
   "options.player": "pelaaja",
   "options.relay": "relay (TURN)",
   "options.sections": "asetusosiot",

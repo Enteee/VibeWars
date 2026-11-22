@@ -87,7 +87,7 @@ Uden for en kamp rummer topbjælken **[?]** (denne Hjælp), **⚙** (Valg),
 **♪** (musik: hvad der spiller, og hvor højt), lyd fra og fuld skærm. I en kamp sidder de samme knapper,
 undtagen Lobby, øverst til højre på skærmen. I et smalt vindue foldes disse ikoner og
 skærmens andre knapper ind i **⋯**; kun dens hovedknap bliver ude.
-⚙ åbner Valg som et vindue under bjælken, med skærmen stadig bagved; Esc, × eller et klik udenfor lukker det. Under **Visning** slår **Belysning** en oplyst banes lys og skygge til eller fra, med det samme, også i en kamp.
+⚙ åbner Valg som et vindue under bjælken, med skærmen stadig bagved; Esc, × eller et klik udenfor lukker det.
 [?] åbner Hjælp på samme måde, som et vindue under den med en sidevælger øverst; en kamp kører videre bagved.
 Hjælp lukkes med vinduets ×, Esc, et klik udenfor eller endnu et tryk på [?].
 

@@ -830,12 +830,10 @@ export default {
 
   "options.controls": "조작",
   "options.cosmetics": "치장",
-  "options.display": "화면",
   "options.label": "옵션",
   "options.language": "언어",
   "options.languageBusy": "먼저 로비나 매치에서 나가세요: 언어를 바꾸면 페이지가 새로고침돼요.",
   "options.languageLabel": "언어",
-  "options.lightingLabel": "조명",
   "options.player": "플레이어",
   "options.relay": "릴레이 (TURN)",
   "options.sections": "옵션 섹션",

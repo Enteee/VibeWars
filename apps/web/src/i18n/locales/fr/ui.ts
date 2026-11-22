@@ -932,13 +932,11 @@ export default {
 
   "options.controls": "commandes",
   "options.cosmetics": "cosmétiques",
-  "options.display": "affichage",
   "options.label": "Options",
   "options.language": "langue",
   "options.languageBusy":
     "Quitte d'abord le salon ou le match : changer de langue recharge la page.",
   "options.languageLabel": "Langue",
-  "options.lightingLabel": "Éclairage",
   "options.player": "joueur",
   "options.relay": "relais (TURN)",
   "options.sections": "sections des options",
