@@ -63,6 +63,7 @@ export default {
 
   "buildEditor.addWeapon": "Aggiungi arma",
   "buildEditor.armor": "Armatura",
+  "buildEditor.back": "Indietro",
   "buildEditor.bothHandsFull": "entrambe le mani occupate",
   "buildEditor.budgetSegment": {
     one: "{attribute}: {count} punto",
@@ -1625,6 +1626,7 @@ export default {
   "tutorial.climb.praise": "Due livelli, un solo punto. Ora sai leggere il terreno.",
   "tutorial.climb.tip": "Suggerimento: Alt+clic sceglie il terreno sotto una sporgenza.",
   "tutorial.climb.under": "Tieni premuto Alt e clicca. Il cerchio tratteggiato è sotto di te.",
+  "tutorial.coach.lost": "Torna indietro per continuare il tutorial.",
   "tutorial.dodge.hint": "Aspetta vicino a un cerchio la sua ombra, poi spostati.",
   "tutorial.dodge.hit": "Ahi! Un'ombra che cresce vuol dire: muoviti.",
   "tutorial.dodge.how": "Clic sinistro sul terreno, o cammina con {keys}.",
@@ -1651,6 +1653,8 @@ export default {
   "tutorial.menu.arena.signup":
     "Apri Le tue Build di squadra, scegli la squadra che hai creato e proponila.",
   "tutorial.menu.arena.signupDone": "Proponi la tua squadra",
+  "tutorial.menu.arena.signupTimeout":
+    "Il tempo è scaduto, quindi la lobby ha scelto una squadra per te.",
   "tutorial.menu.arena.size":
     "Imposta la dimensione della squadra su 2v2. Si affrontano solo squadre della stessa dimensione.",
   "tutorial.menu.arena.sizeDone": "Scegli 2v2",
@@ -1705,6 +1709,8 @@ export default {
   "tutorial.menu.team.fillDone": "Completa la squadra",
   "tutorial.menu.team.members":
     "Una squadra ha sempre tanti membri quanto la sua dimensione. Non aggiungi mai un membro: ne sostituisci uno.",
+  "tutorial.menu.team.memberBack":
+    "Questa è la build di quel membro. Premi Indietro per tornare alla tua squadra.",
   "tutorial.menu.team.new": "Imposta la dimensione della squadra su 2v2, poi crea una nuova build.",
   "tutorial.menu.team.newDone": "Inizia una squadra da 2",
   "tutorial.menu.team.open": "Apri Squadre, dove sono le build delle tue squadre.",

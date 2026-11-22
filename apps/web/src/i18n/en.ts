@@ -67,6 +67,7 @@ export const en = {
 
   "buildEditor.addWeapon": "Add a weapon",
   "buildEditor.armor": "Armor",
+  "buildEditor.back": "Back",
   "buildEditor.bothHandsFull": "both hands full",
   "buildEditor.budgetSegment": {
     one: "{attribute}: {count} point",
@@ -1544,6 +1545,7 @@ export const en = {
   "tutorial.climb.praise": "Two layers, one spot. You read the ground now.",
   "tutorial.climb.tip": "Tip: Alt+click picks the ground under a ledge.",
   "tutorial.climb.under": "Hold Alt and click. The dashed ring is below you.",
+  "tutorial.coach.lost": "Go back to carry on with the tutorial.",
   "tutorial.dodge.hint": "Wait by a ring for its shadow, then step out.",
   "tutorial.dodge.hit": "Ow! A growing shadow means move.",
   "tutorial.dodge.how": "Left click the ground, or walk with {keys}.",
@@ -1569,6 +1571,7 @@ export const en = {
   "tutorial.menu.arena.queueDone": "Join the queue",
   "tutorial.menu.arena.signup": "Open Your Team Builds, pick the team you made, and propose it.",
   "tutorial.menu.arena.signupDone": "Propose your team",
+  "tutorial.menu.arena.signupTimeout": "Time ran out, so the lobby picked a team for you.",
   "tutorial.menu.arena.size":
     "Set the team size to 2v2. Only teams of the same size are matched against each other.",
   "tutorial.menu.arena.sizeDone": "Pick 2v2",
@@ -1622,6 +1625,7 @@ export const en = {
   "tutorial.menu.team.fillDone": "Fill the team",
   "tutorial.menu.team.members":
     "A team always has as many members as its size. You never add a member: you replace one.",
+  "tutorial.menu.team.memberBack": "This is that member's build. Go Back to return to your team.",
   "tutorial.menu.team.new": "Set the team size to 2v2, then make a new team build.",
   "tutorial.menu.team.newDone": "Start a team of 2",
   "tutorial.menu.team.open": "Open Teams, where your team builds are.",

@@ -61,6 +61,7 @@ export default {
 
   "buildEditor.addWeapon": "Добавить оружие",
   "buildEditor.armor": "Броня",
+  "buildEditor.back": "Назад",
   "buildEditor.bothHandsFull": "обе руки заняты",
   "buildEditor.budgetSegment": {
     one: "{attribute}: {count} очко",
@@ -1666,6 +1667,7 @@ export default {
   "tutorial.climb.praise": "Два уровня, одно место. Теперь ты читаешь местность.",
   "tutorial.climb.tip": "Совет: Alt+щелчок выбирает землю под уступом.",
   "tutorial.climb.under": "Зажми Alt и щёлкни. Пунктирный круг — под тобой.",
+  "tutorial.coach.lost": "Вернись назад, чтобы продолжить обучение.",
   "tutorial.dodge.hint": "Подожди у круга, пока появится его тень, и отойди.",
   "tutorial.dodge.hit": "Ой! Растущая тень значит: двигайся.",
   "tutorial.dodge.how": "Щёлкни левой кнопкой по земле или иди клавишами {keys}.",
@@ -1692,6 +1694,7 @@ export default {
   "tutorial.menu.arena.signup":
     "Открой Твои командные билды, выбери созданную команду и предложи её.",
   "tutorial.menu.arena.signupDone": "Предложи свою команду",
+  "tutorial.menu.arena.signupTimeout": "Время вышло, и лобби выбрало команду за тебя.",
   "tutorial.menu.arena.size":
     "Поставь размер команды 2v2. Встречаются только команды одного размера.",
   "tutorial.menu.arena.sizeDone": "Выбери 2v2",
@@ -1744,6 +1747,8 @@ export default {
   "tutorial.menu.team.fillDone": "Заполни команду",
   "tutorial.menu.team.members":
     "В команде всегда столько участников, каков её размер. Участника не добавляют: его заменяют.",
+  "tutorial.menu.team.memberBack":
+    "Это билд этого участника. Нажми «Назад», чтобы вернуться к команде.",
   "tutorial.menu.team.new": "Поставь размер команды 2v2, затем создай новый билд команды.",
   "tutorial.menu.team.newDone": "Начни команду из 2",
   "tutorial.menu.team.open": "Открой «Команды», где лежат билды команд.",

@@ -63,6 +63,7 @@ export default {
 
   "buildEditor.addWeapon": "Adaugă o armă",
   "buildEditor.armor": "Armură",
+  "buildEditor.back": "Înapoi",
   "buildEditor.bothHandsFull": "ambele mâini ocupate",
   "buildEditor.budgetSegment": {
     one: "{attribute}: {count} punct",
@@ -1625,6 +1626,7 @@ export default {
   "tutorial.climb.praise": "Două niveluri, un singur loc. Acum știi să citești terenul.",
   "tutorial.climb.tip": "Sfat: Alt+clic alege terenul de sub o cornișă.",
   "tutorial.climb.under": "Ține apăsat Alt și dă clic. Cercul punctat e sub tine.",
+  "tutorial.coach.lost": "Întoarce-te ca să continui tutorialul.",
   "tutorial.dodge.hint": "Așteaptă lângă un cerc să-i apară umbra, apoi ieși.",
   "tutorial.dodge.hit": "Au! O umbră care crește înseamnă: mișcă-te.",
   "tutorial.dodge.how": "Clic stânga pe teren sau mergi cu {keys}.",
@@ -1651,6 +1653,8 @@ export default {
   "tutorial.menu.arena.signup":
     "Deschide Buildurile tale de echipă, alege echipa pe care ai făcut-o și propune-o.",
   "tutorial.menu.arena.signupDone": "Propune-ți echipa",
+  "tutorial.menu.arena.signupTimeout":
+    "Timpul a expirat, așa că lobby-ul a ales o echipă pentru tine.",
   "tutorial.menu.arena.size":
     "Setează mărimea echipei la 2v2. Se întâlnesc doar echipe de aceeași mărime.",
   "tutorial.menu.arena.sizeDone": "Alege 2v2",
@@ -1704,6 +1708,8 @@ export default {
   "tutorial.menu.team.fillDone": "Completează echipa",
   "tutorial.menu.team.members":
     "O echipă are mereu atâția membri cât îi e mărimea. Nu adaugi niciodată un membru: înlocuiești unul.",
+  "tutorial.menu.team.memberBack":
+    "Acesta e build-ul acelui membru. Apasă Înapoi ca să revii la echipa ta.",
   "tutorial.menu.team.new": "Setează mărimea echipei la 2v2, apoi creează un build de echipă nou.",
   "tutorial.menu.team.newDone": "Pornește o echipă de 2",
   "tutorial.menu.team.open": "Deschide Echipe, unde sunt build-urile tale de echipă.",

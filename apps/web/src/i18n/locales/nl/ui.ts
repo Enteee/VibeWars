@@ -63,6 +63,7 @@ export default {
 
   "buildEditor.addWeapon": "Wapen toevoegen",
   "buildEditor.armor": "Pantser",
+  "buildEditor.back": "Terug",
   "buildEditor.bothHandsFull": "beide handen vol",
   "buildEditor.budgetSegment": {
     one: "{attribute}: {count} punt",
@@ -1550,6 +1551,7 @@ export default {
   "tutorial.climb.praise": "Twee lagen, één plek. Nu kun je het terrein lezen.",
   "tutorial.climb.tip": "Tip: Alt+klik kiest de grond onder een richel.",
   "tutorial.climb.under": "Houd Alt ingedrukt en klik. De gestippelde ring ligt onder je.",
+  "tutorial.coach.lost": "Ga terug om verder te gaan met de tutorial.",
   "tutorial.dodge.hint": "Wacht bij een ring op zijn schaduw en stap dan opzij.",
   "tutorial.dodge.hit": "Au! Een groeiende schaduw betekent: bewegen.",
   "tutorial.dodge.how": "Klik met links op de grond, of loop met {keys}.",
@@ -1576,6 +1578,8 @@ export default {
   "tutorial.menu.arena.signup":
     "Open Jouw Teambuilds, kies het team dat je maakte en stel het voor.",
   "tutorial.menu.arena.signupDone": "Stel je team voor",
+  "tutorial.menu.arena.signupTimeout":
+    "De tijd is om, dus de lobby heeft een team voor je gekozen.",
   "tutorial.menu.arena.size":
     "Zet de teamgrootte op 2v2. Alleen teams van dezelfde grootte treffen elkaar.",
   "tutorial.menu.arena.sizeDone": "Kies 2v2",
@@ -1629,6 +1633,8 @@ export default {
   "tutorial.menu.team.fillDone": "Vul het team",
   "tutorial.menu.team.members":
     "Een team heeft altijd zoveel leden als zijn grootte. Je voegt nooit een lid toe: je vervangt er een.",
+  "tutorial.menu.team.memberBack":
+    "Dit is de build van dat lid. Ga Terug om naar je team terug te keren.",
   "tutorial.menu.team.new": "Zet de teamgrootte op 2v2 en maak dan een nieuwe teambuild.",
   "tutorial.menu.team.newDone": "Begin een team van 2",
   "tutorial.menu.team.open": "Open Teams, waar je teambuilds staan.",

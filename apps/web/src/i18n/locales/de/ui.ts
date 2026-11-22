@@ -63,6 +63,7 @@ export default {
 
   "buildEditor.addWeapon": "Waffe hinzufügen",
   "buildEditor.armor": "Rüstung",
+  "buildEditor.back": "Zurück",
   "buildEditor.bothHandsFull": "beide Hände voll",
   "buildEditor.budgetSegment": {
     one: "{attribute}: {count} Punkt",
@@ -1564,6 +1565,7 @@ export default {
   "tutorial.climb.praise": "Zwei Ebenen, eine Stelle. Jetzt liest du das Gelände.",
   "tutorial.climb.tip": "Tipp: Alt+Klick wählt den Boden unter einem Vorsprung.",
   "tutorial.climb.under": "Halte Alt und klick. Der gestrichelte Ring liegt unter dir.",
+  "tutorial.coach.lost": "Geh zurück, um mit dem Tutorial weiterzumachen.",
   "tutorial.dodge.hint": "Warte an einem Ring auf seinen Schatten, dann tritt heraus.",
   "tutorial.dodge.hit": "Au! Ein wachsender Schatten heißt: weg da.",
   "tutorial.dodge.how": "Linksklick auf den Boden, oder geh mit {keys}.",
@@ -1590,6 +1592,8 @@ export default {
   "tutorial.menu.arena.signup":
     "Öffne Deine Team-Builds, wähle das Team, das du gebaut hast, und schlag es vor.",
   "tutorial.menu.arena.signupDone": "Schlag dein Team vor",
+  "tutorial.menu.arena.signupTimeout":
+    "Die Zeit ist abgelaufen, also hat die Lobby ein Team für dich gewählt.",
   "tutorial.menu.arena.size":
     "Stell die Teamgröße auf 2v2. Nur Teams gleicher Größe treffen aufeinander.",
   "tutorial.menu.arena.sizeDone": "Wähle 2v2",
@@ -1645,6 +1649,8 @@ export default {
   "tutorial.menu.team.fillDone": "Füll das Team",
   "tutorial.menu.team.members":
     "Ein Team hat immer so viele Mitglieder wie seine Größe. Du fügst nie ein Mitglied hinzu: Du ersetzt eines.",
+  "tutorial.menu.team.memberBack":
+    "Das ist der Build dieses Mitglieds. Mit Zurück kommst du zu deinem Team.",
   "tutorial.menu.team.new": "Stell die Teamgröße auf 2v2 und erstelle dann einen neuen Team-Build.",
   "tutorial.menu.team.newDone": "Starte ein Team zu zweit",
   "tutorial.menu.team.open": "Öffne Teams, wo deine Team-Builds sind.",

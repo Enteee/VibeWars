@@ -5,6 +5,7 @@ import type { StoredCharacter, StoredTeam, TeamCharacter } from "../storage/sche
 import { teamCharacter, teamOf } from "../ui/team-builder.js";
 
 import {
+  MEMBER_BACK_BEAT,
   MENU_QUEST_STEPS,
   NO_MENU_QUEST_EVENTS,
   advanceMenuQuest,
@@ -16,6 +17,7 @@ import {
   menuQuestChecklist,
   modesStep,
   resumeMenuQuest,
+  shownBeat,
   stepComplete,
   type MenuQuestCursor,
   type MenuQuestEvent,
@@ -284,6 +286,30 @@ describe("the team step (#3542)", () => {
     expect(teamAfter(fold([teams, draft(opened), draft(copied)]), true)).toBe(6);
   });
 
+  it("shows the way Back over a member's build opened from its name, and counts its beat done (#3785)", () => {
+    const member: MenuQuestEvent = { kind: "screen-shown", screen: "member-editor" };
+    const back: MenuQuestEvent = { kind: "screen-shown", screen: "team-editor" };
+    // On the member-name beat, Got it unpressed.
+    const onName = { step: "team", beat: 3 } as const;
+    expect(currentBeat(onName).line).toBe("tutorial.menu.team.build");
+    const inMember = fold([teams, draft(opened), member]);
+    const next = advanceMenuQuest(onName, inMember, false);
+    expect(next).toEqual({ step: "team", beat: 4 });
+    expect(next !== "done" && shownBeat(next, inMember)).toBe(MEMBER_BACK_BEAT);
+    expect(next !== "done" && menuQuestChecklist(next, inMember)).toEqual([]);
+    // Back: the team editor again, and the beat after the name.
+    const returned = fold([teams, draft(opened), member, back, draft(opened)]);
+    expect(advanceMenuQuest(onName, returned, false)).toEqual({ step: "team", beat: 4 });
+    expect(shownBeat({ step: "team", beat: 4 }, returned)).toBe(
+      currentBeat({ step: "team", beat: 4 }),
+    );
+    // Opened on an earlier beat: that one still waits for its Got it.
+    expect(advanceMenuQuest({ step: "team", beat: 2 }, inMember, false)).toEqual({
+      step: "team",
+      beat: 2,
+    });
+  });
+
   it("takes the character saved in the spec step over the player's others", () => {
     const other = { ...START, id: "c2", secondaryProfession: "ranger" as const };
     const saved = fold([
@@ -456,6 +482,32 @@ describe("the arena step (#3544)", () => {
     expect(step([picked(filled.id, ["other", filled.id])])).toEqual({ step: "arena", beat: 4 });
     // Deleted since: any team of two it offered counts.
     expect(step([picked("other", ["other"])])).toEqual({ step: "arena", beat: 4 });
+  });
+
+  it("takes the vote's end as the team picked, by the timer or not, once (#3785)", () => {
+    const signup = { step: "arena", beat: 3 } as const;
+    const queue = { step: "arena", beat: 4 } as const;
+    const ended: MenuQuestEvent = { kind: "vote-ended" };
+    const lead = (state: MenuQuestState): string | undefined => {
+      const beat = currentBeat(queue);
+      return beat.kind === "do" ? beat.lead?.(state) : undefined;
+    };
+    // The timer picked: on to the queue, saying so.
+    const timedOut = fold([shown("team-lobby"), ended]);
+    expect(advanceMenuQuest(signup, timedOut, false)).toEqual(queue);
+    expect(lead(timedOut)).toBe("tutorial.menu.arena.signupTimeout");
+    // The player picked, then the vote ended: one beat on, the usual line.
+    const both = fold([shown("team-lobby"), picked("duo", ["duo"]), ended, ended]);
+    expect(advanceMenuQuest(signup, both, false)).toEqual(queue);
+    expect(lead(both)).toBeUndefined();
+    // Another team than the quest's, picked by the vote: on all the same.
+    const filled = teamOf("t1", 2, [teamCharacter(START, "m1"), teamCharacter(START, "m2")]);
+    const other = fold([
+      { kind: "team-saved", team: filled, isNew: true },
+      picked("other", ["other", filled.id]),
+      ended,
+    ]);
+    expect(advanceMenuQuest(signup, other, false)).toEqual(queue);
   });
 
   it("never takes a queue of another size or mode", () => {

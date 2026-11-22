@@ -62,6 +62,7 @@ export default {
 
   "buildEditor.addWeapon": "Dodaj broń",
   "buildEditor.armor": "Pancerz",
+  "buildEditor.back": "Wstecz",
   "buildEditor.bothHandsFull": "obie ręce zajęte",
   "buildEditor.budgetSegment": {
     one: "{attribute}: {count} punkt",
@@ -1676,6 +1677,7 @@ export default {
   "tutorial.climb.praise": "Dwie warstwy, jedno miejsce. Już umiesz czytać teren.",
   "tutorial.climb.tip": "Wskazówka: Alt+klik wybiera ziemię pod półką.",
   "tutorial.climb.under": "Przytrzymaj Alt i kliknij. Przerywany krąg jest pod tobą.",
+  "tutorial.coach.lost": "Wróć, aby kontynuować samouczek.",
   "tutorial.dodge.hint": "Poczekaj przy kręgu na jego cień, potem odsuń się.",
   "tutorial.dodge.hit": "Au! Rosnący cień znaczy: ruszaj się.",
   "tutorial.dodge.how": "Kliknij lewym przyciskiem ziemię albo idź klawiszami {keys}.",
@@ -1702,6 +1704,7 @@ export default {
   "tutorial.menu.arena.signup":
     "Otwórz Twoje buildy drużyn, wybierz utworzoną drużynę i zaproponuj ją.",
   "tutorial.menu.arena.signupDone": "Zaproponuj drużynę",
+  "tutorial.menu.arena.signupTimeout": "Czas minął, więc lobby wybrało drużynę za ciebie.",
   "tutorial.menu.arena.size":
     "Ustaw rozmiar drużyny na 2v2. Spotykają się tylko drużyny tego samego rozmiaru.",
   "tutorial.menu.arena.sizeDone": "Wybierz 2v2",
@@ -1754,6 +1757,7 @@ export default {
   "tutorial.menu.team.fillDone": "Uzupełnij drużynę",
   "tutorial.menu.team.members":
     "Drużyna zawsze ma tylu członków, ile wynosi jej rozmiar. Nigdy nie dodajesz członka: zastępujesz jednego.",
+  "tutorial.menu.team.memberBack": "To build tego członka. Naciśnij Wstecz, aby wrócić do drużyny.",
   "tutorial.menu.team.new": "Ustaw rozmiar drużyny na 2v2, potem utwórz nowy build drużyny.",
   "tutorial.menu.team.newDone": "Zacznij drużynę 2-osobową",
   "tutorial.menu.team.open": "Otwórz Drużyny, gdzie są twoje buildy drużyn.",

@@ -1289,6 +1289,7 @@ async function main(): Promise<void> {
         })();
       },
       onClose: back,
+      onBack: undefined,
     };
     teamEditor?.dispose();
     teamEditor = undefined;
@@ -1748,6 +1749,7 @@ async function main(): Promise<void> {
     music().menu("member-editor");
     teamEditor?.dispose();
     teamEditor = undefined;
+    menuQuest?.event({ kind: "screen-shown", screen: "member-editor" });
     openEditor(
       { ...member, schemaVersion: CHARACTER_SCHEMA_VERSION, updatedAt: Date.now() },
       {
@@ -1760,6 +1762,9 @@ async function main(): Promise<void> {
         onDelete: undefined,
         onDuplicate: undefined,
         onClose: () => {
+          back(team);
+        },
+        onBack: () => {
           back(team);
         },
       },
@@ -1815,6 +1820,7 @@ async function main(): Promise<void> {
     teamEditor?.dispose();
     // The sidebar comes back at the build's size, to its list (#2109).
     saveTeamSize("teams", state.team.size);
+    menuQuest?.event({ kind: "screen-shown", screen: "team-editor" });
     teamEditor = mountTeamEditor(screenRoot, state, available, {
       onSave: async (saved) => {
         await teams.save(saved);
@@ -2506,6 +2512,10 @@ async function main(): Promise<void> {
     }
     syncParty(snapshot);
     if (snapshot.phase === "team-lobby") {
+      // The vote over, whoever or whatever picked (#3785): the quest's sign-up is done.
+      if (snapshot.teamLobby?.stage === "claim") {
+        menuQuest?.event({ kind: "vote-ended" });
+      }
       // An open editor keeps its edits; its way out comes back here.
       if (editor !== undefined || teamEditor !== undefined) {
         return;

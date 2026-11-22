@@ -62,6 +62,7 @@ export default {
 
   "buildEditor.addWeapon": "무기 추가",
   "buildEditor.armor": "방어구",
+  "buildEditor.back": "뒤로",
   "buildEditor.bothHandsFull": "양손 사용 중",
   "buildEditor.budgetSegment": { other: "{attribute}: {count}포인트" },
   "buildEditor.cancel": "취소",
@@ -1460,6 +1461,7 @@ export default {
   "tutorial.climb.praise": "두 층, 한 자리. 이제 땅을 읽을 줄 아네요.",
   "tutorial.climb.tip": "팁: Alt+클릭하면 턱 아래 땅을 골라요.",
   "tutorial.climb.under": "Alt를 누른 채 클릭하세요. 점선 고리는 아래쪽이에요.",
+  "tutorial.coach.lost": "돌아가서 튜토리얼을 계속하세요.",
   "tutorial.dodge.hint": "고리 옆에서 그림자가 생길 때까지 기다렸다가 비켜서세요.",
   "tutorial.dodge.hit": "아야! 그림자가 커지면 움직이라는 뜻이에요.",
   "tutorial.dodge.how": "땅을 왼쪽 클릭하거나 {keys}(으)로 걸으세요.",
@@ -1485,6 +1487,7 @@ export default {
   "tutorial.menu.arena.queueDone": "대기열 참가",
   "tutorial.menu.arena.signup": "내 팀 빌드를 열고, 만든 팀을 골라 제안하세요.",
   "tutorial.menu.arena.signupDone": "팀 제안하기",
+  "tutorial.menu.arena.signupTimeout": "시간이 다 되어 로비가 팀을 대신 골랐습니다.",
   "tutorial.menu.arena.size": "팀 규모를 2v2로 정하세요. 같은 규모의 팀끼리만 만납니다.",
   "tutorial.menu.arena.sizeDone": "2v2 선택",
   "tutorial.menu.arena.title": "팀 아레나 2v2 매치에서 팀의 실력을 증명하세요.",
@@ -1534,6 +1537,7 @@ export default {
   "tutorial.menu.team.fillDone": "팀 채우기",
   "tutorial.menu.team.members":
     "팀은 항상 규모만큼 멤버가 있습니다. 멤버를 추가하지 않고, 교체합니다.",
+  "tutorial.menu.team.memberBack": "그 멤버의 빌드입니다. 뒤로를 눌러 팀으로 돌아가세요.",
   "tutorial.menu.team.new": "팀 규모를 2v2로 정한 뒤, 새 팀 빌드를 만드세요.",
   "tutorial.menu.team.newDone": "2인 팀 시작하기",
   "tutorial.menu.team.open": "팀 빌드가 있는 팀을 여세요.",

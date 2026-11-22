@@ -358,6 +358,7 @@ export function screenBar(options: ScreenBarOptions): {
     chevron.setAttribute("aria-hidden", "true");
     back.append(chevron, h("span", "topbar-back-label", options.back.label));
     back.setAttribute("aria-label", options.back.label);
+    back.setAttribute("data-tutorial", "screen-back");
   }
   const live: LiveBar = {
     options,
