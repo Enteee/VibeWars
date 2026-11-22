@@ -15,7 +15,7 @@ import { pointInShape, shapeVertices } from "./geometry.js";
 import { layeredFinder } from "./layered-finder.test-support.js";
 import { mapSimulationFields } from "./match-fields.js";
 import { unlinkedTransitions } from "./nav-graphs.js";
-import { validateMapData, type MapData } from "./schema.js";
+import { MAX_LIGHTS, validateMapData, type MapData } from "./schema.js";
 
 /**
  * The tutorial canyon (#3245): one trail from the arrival pad past every
@@ -232,6 +232,10 @@ describe("the tutorial canyon (#3245)", () => {
         }
       }
     }
+  });
+
+  it("holds at most half of MAX_LIGHTS, so zone glow and teleport lights fit (visual-style §2)", () => {
+    expect(CANYON.lighting?.lights.length ?? 0).toBeLessThanOrEqual(MAX_LIGHTS / 2);
   });
 
   it("is at least 340 wide at every pinch, so the tutor and the player pass", () => {

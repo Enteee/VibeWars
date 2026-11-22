@@ -2188,11 +2188,11 @@
       {
         "id": "lower-stream-glow-1",
         "position": {
-          "x": 400,
+          "x": 700,
           "y": 3150
         },
         "layer": 1,
-        "radius": 420,
+        "radius": 600,
         "colour": 16738856,
         "intensity": 0.85,
         "flicker": 0.35
@@ -2200,11 +2200,11 @@
       {
         "id": "lower-stream-glow-2",
         "position": {
-          "x": 1800,
+          "x": 2400,
           "y": 3150
         },
         "layer": 1,
-        "radius": 420,
+        "radius": 600,
         "colour": 16738856,
         "intensity": 0.85,
         "flicker": 0
@@ -2212,47 +2212,23 @@
       {
         "id": "lower-stream-glow-3",
         "position": {
-          "x": 3300,
+          "x": 4200,
           "y": 3150
         },
         "layer": 1,
-        "radius": 420,
-        "colour": 16738856,
-        "intensity": 0.85,
-        "flicker": 0
-      },
-      {
-        "id": "lower-stream-glow-4",
-        "position": {
-          "x": 4800,
-          "y": 3150
-        },
-        "layer": 1,
-        "radius": 420,
+        "radius": 600,
         "colour": 16738856,
         "intensity": 0.85,
         "flicker": 0.35
       },
       {
-        "id": "lower-stream-glow-5",
+        "id": "lower-stream-glow-4",
         "position": {
           "x": 5900,
           "y": 3150
         },
         "layer": 1,
-        "radius": 420,
-        "colour": 16738856,
-        "intensity": 0.85,
-        "flicker": 0
-      },
-      {
-        "id": "lower-stream-glow-6",
-        "position": {
-          "x": 6150,
-          "y": 3150
-        },
-        "layer": 1,
-        "radius": 420,
+        "radius": 600,
         "colour": 16738856,
         "intensity": 0.85,
         "flicker": 0
@@ -2260,11 +2236,11 @@
       {
         "id": "south-stream-glow-1",
         "position": {
-          "x": 1300,
+          "x": 1700,
           "y": 3850
         },
         "layer": 1,
-        "radius": 420,
+        "radius": 600,
         "colour": 16738856,
         "intensity": 0.85,
         "flicker": 0.35
@@ -2272,11 +2248,11 @@
       {
         "id": "south-stream-glow-2",
         "position": {
-          "x": 3000,
+          "x": 3700,
           "y": 3850
         },
         "layer": 1,
-        "radius": 420,
+        "radius": 600,
         "colour": 16738856,
         "intensity": 0.85,
         "flicker": 0
@@ -2284,35 +2260,23 @@
       {
         "id": "south-stream-glow-3",
         "position": {
-          "x": 4500,
+          "x": 5600,
           "y": 3850
         },
         "layer": 1,
-        "radius": 420,
-        "colour": 16738856,
-        "intensity": 0.85,
-        "flicker": 0
-      },
-      {
-        "id": "south-stream-glow-4",
-        "position": {
-          "x": 6000,
-          "y": 3850
-        },
-        "layer": 1,
-        "radius": 420,
+        "radius": 600,
         "colour": 16738856,
         "intensity": 0.85,
         "flicker": 0.35
       },
       {
-        "id": "south-stream-glow-5",
+        "id": "south-stream-glow-4",
         "position": {
-          "x": 7400,
+          "x": 7300,
           "y": 3850
         },
         "layer": 1,
-        "radius": 420,
+        "radius": 600,
         "colour": 16738856,
         "intensity": 0.85,
         "flicker": 0
@@ -2332,11 +2296,11 @@
       {
         "id": "north-stream-glow-1",
         "position": {
-          "x": 2600,
+          "x": 2900,
           "y": 360
         },
         "layer": 1,
-        "radius": 420,
+        "radius": 600,
         "colour": 16738856,
         "intensity": 0.85,
         "flicker": 0.35
@@ -2344,11 +2308,11 @@
       {
         "id": "north-stream-glow-2",
         "position": {
-          "x": 4000,
+          "x": 4900,
           "y": 360
         },
         "layer": 1,
-        "radius": 420,
+        "radius": 600,
         "colour": 16738856,
         "intensity": 0.85,
         "flicker": 0
@@ -2356,119 +2320,59 @@
       {
         "id": "north-stream-glow-3",
         "position": {
-          "x": 5300,
+          "x": 6900,
           "y": 360
         },
         "layer": 1,
-        "radius": 420,
-        "colour": 16738856,
-        "intensity": 0.85,
-        "flicker": 0
-      },
-      {
-        "id": "north-stream-glow-4",
-        "position": {
-          "x": 6600,
-          "y": 360
-        },
-        "layer": 1,
-        "radius": 420,
+        "radius": 600,
         "colour": 16738856,
         "intensity": 0.85,
         "flicker": 0.35
-      },
-      {
-        "id": "north-stream-glow-5",
-        "position": {
-          "x": 7300,
-          "y": 360
-        },
-        "layer": 1,
-        "radius": 420,
-        "colour": 16738856,
-        "intensity": 0.85,
-        "flicker": 0
       },
       {
         "id": "upper-stream-glow-1",
         "position": {
-          "x": 1640,
+          "x": 1700,
           "y": 1050
         },
         "layer": 1,
-        "radius": 420,
+        "radius": 600,
         "colour": 16738856,
         "intensity": 0.85,
-        "flicker": 0
+        "flicker": 0.35
       },
       {
         "id": "upper-stream-glow-2",
         "position": {
-          "x": 1700,
+          "x": 3300,
           "y": 1750
         },
         "layer": 1,
-        "radius": 420,
+        "radius": 600,
         "colour": 16738856,
         "intensity": 0.85,
-        "flicker": 0.35
+        "flicker": 0
       },
       {
         "id": "upper-stream-glow-3",
         "position": {
-          "x": 2500,
+          "x": 5000,
           "y": 1050
         },
         "layer": 1,
-        "radius": 420,
-        "colour": 16738856,
-        "intensity": 0.85,
-        "flicker": 0
-      },
-      {
-        "id": "upper-stream-glow-4",
-        "position": {
-          "x": 3900,
-          "y": 1750
-        },
-        "layer": 1,
-        "radius": 420,
-        "colour": 16738856,
-        "intensity": 0.85,
-        "flicker": 0
-      },
-      {
-        "id": "upper-stream-glow-5",
-        "position": {
-          "x": 5300,
-          "y": 1050
-        },
-        "layer": 1,
-        "radius": 420,
+        "radius": 600,
         "colour": 16738856,
         "intensity": 0.85,
         "flicker": 0.35
       },
       {
-        "id": "upper-stream-glow-6",
+        "id": "upper-stream-glow-4",
         "position": {
-          "x": 6600,
+          "x": 6900,
           "y": 1750
         },
         "layer": 1,
-        "radius": 420,
-        "colour": 16738856,
-        "intensity": 0.85,
-        "flicker": 0
-      },
-      {
-        "id": "upper-stream-glow-7",
-        "position": {
-          "x": 7200,
-          "y": 1050
-        },
-        "layer": 1,
-        "radius": 420,
+        "radius": 600,
         "colour": 16738856,
         "intensity": 0.85,
         "flicker": 0

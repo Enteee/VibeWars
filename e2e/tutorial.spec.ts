@@ -523,8 +523,6 @@ test.describe("the first-time tutorial (#3218)", () => {
           .split(",")
           .map(Number);
         const d = Math.hypot(cx - pocketX, cy - pocketY);
-        // Each step logged, so a red run shows where the player stopped.
-        console.log(`rat pocket walk: camera ${String(cx)},${String(cy)} d ${String(d)}`);
         expect(
           d,
           `camera ${String(cx)},${String(cy)}, pocket ${String(pocketX)},${String(pocketY)}`,
