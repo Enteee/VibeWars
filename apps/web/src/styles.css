@@ -203,9 +203,10 @@ body {
   display: none;
 }
 
-/* A phone: the back chevron, the place, the primary button and a ⋯ that
-   holds the screen's other buttons and the global icons. */
-@media (width <= 45rem) {
+/* A phone, upright or on its side (#3776): the back chevron, the place, the
+   primary button and a ⋯ that holds the screen's other buttons and the
+   global icons. */
+@media (width <= 45rem), (height <= 30rem) {
   #topbar {
     gap: 0.5rem;
     padding-inline-start: 0.4rem;
@@ -328,6 +329,22 @@ body {
   #topbar.has-more.is-more-open .topbar-join:not([hidden]) {
     display: flex;
     flex-wrap: wrap;
+  }
+}
+
+/* On its side (#3776) the bar keeps to one row: the status stays beside
+   the place instead of taking a row of its own, so the screen keeps the
+   little height there is. */
+@media (width > 45rem) and (height <= 30rem) {
+  #topbar {
+    flex-wrap: nowrap;
+  }
+
+  .topbar-status {
+    flex: 0 1 auto;
+    order: 0;
+    flex-wrap: nowrap;
+    min-width: 0;
   }
 }
 
@@ -3358,7 +3375,7 @@ body:has(> .splash) #menu-background::after {
    fill a row up to 75rem, so the status (an editor's pickers and problems,
    the lobby's map) takes the second row the phone's does and never runs
    under the buttons or the icons. */
-@media (45rem < width <= 75rem) {
+@media (45rem < width <= 75rem) and (height > 30rem) {
   #topbar:has(.problems-chip),
   #topbar:has(.lobby-map) {
     flex-wrap: wrap;
@@ -9099,5 +9116,59 @@ body:has(> .splash) #app {
 @keyframes splash-flash {
   from {
     opacity: 1;
+  }
+}
+
+/* A finger (#3776): every control outside a match takes a 44 px box, and
+   no text is under 12 px. A match's own HUD is outside #screens. */
+@media (pointer: coarse) {
+  :is(#topbar, #screens)
+    :is(
+      button,
+      a[href],
+      input:not([type="hidden"], [type="checkbox"], [type="radio"]),
+      select,
+      textarea,
+      summary,
+      [role="button"],
+      [role="tab"],
+      [role="switch"]
+    ),
+  :is(#topbar, #screens) label:has(> input:is([type="checkbox"], [type="radio"])) {
+    min-block-size: 44px;
+    min-inline-size: 44px;
+  }
+
+  /* The rail widens to hold its labels at 12 px, and the stepper puts the
+     size over ‹ and ›, each a finger wide. */
+  .mode-rail {
+    flex-basis: 92px;
+  }
+
+  .screen .mode-rail-entry,
+  .mode-rail-size {
+    width: 84px;
+  }
+
+  .mode-rail-label {
+    font-size: 0.75rem;
+    text-align: center;
+  }
+
+  .mode-rail-stepper {
+    flex-wrap: wrap;
+    justify-content: center;
+    width: 88px;
+  }
+
+  .mode-rail-size-value {
+    flex: 1 0 100%;
+    order: -1;
+    text-align: center;
+  }
+
+  .roster-random-tag,
+  .match-chip-label {
+    font-size: 0.75rem;
   }
 }
