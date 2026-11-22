@@ -467,12 +467,4 @@ Au-dessus des filtres, le bandeau **Hall des héros** liste les 20 dernières te
 
 ## Classé
 
-Un match de la file sans bot est classé. L’écran de la file et le lobby d’équipe le disent avant que tu ne rejoignes la file ; un seul bot laisse le match non classé. Quand un match classé est trouvé, chaque joueur signe son début, et l’écran affiche **Confirmation du match classé…** jusqu’à 15 secondes. Si quelqu’un ne confirme pas, le match est annulé et tout le monde retourne dans la file. À la fin, chaque joueur signe le résultat, et le reçu du match est publié sur les relais Nostr avec la clé publique et le nom de personnage de chaque joueur ; un joueur sans personnage y figure comme starter. Ton classement change dans l’heure. Quitter un match classé compte comme une défaite, et le bouton quitter le dit.
-
-Les files classées réunissent des joueurs de cote proche et les répartissent en équipes de cote moyenne proche. La recherche commence à 100 points de ta cote et s’élargit de 10 points par seconde d’attente, jusqu’à 600, pour que personne n’attende éternellement. Pendant l’attente, la file affiche ta cote.
-
-Tes 10 premiers matchs cotés sont provisoires : la file indique **Provisoire (3/10 matchs)** et tu n’as pas encore de rang. Ensuite, le menu principal affiche ton rang. Les cotes s’érodent : chaque jour sans match coté rend la tienne moins sûre, et le classement trie selon une valeur prudente, donc si tu arrêtes de jouer ton rang baisse en quelques semaines.
-
-Dès que le classement compte 20 joueurs confirmés, un match classé ne compte que si au moins un de ses joueurs est confirmé (10 matchs cotés ou plus) : un match entre nouveaux joueurs uniquement n’est pas coté. Joue contre quelqu’un de confirmé et tes matchs comptent.
-
-Le bouton **Classement** de la barre du haut liste les 100 meilleurs par rang, nom et cote, ta ligne mise en évidence. Il est mis à jour toutes les heures.
+Un match de la file sans bot est classé : voir [Classement](ranking.md).

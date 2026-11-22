@@ -9,6 +9,7 @@
 - [스킬과 빌드](skills-and-builds.md)
 - [장비](equipment.md)
 - [모드](modes.md)
+- [랭킹](ranking.md)
 - [치장](cosmetics.md)
 - [월드 요소](world-elements.md)
 - [봇](bots.md)

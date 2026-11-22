@@ -10,6 +10,7 @@ exactamente una vez.
 - [Habilidades y builds](skills-and-builds.md)
 - [Equipo](equipment.md)
 - [Modos](modes.md)
+- [Clasificación](ranking.md)
 - [Cosméticos](cosmetics.md)
 - [Elementos del mundo](world-elements.md)
 - [Bots](bots.md)

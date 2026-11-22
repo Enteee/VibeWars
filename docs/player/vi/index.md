@@ -9,6 +9,7 @@ Mỗi trang trong thư mục này được liệt kê ở đây đúng một l�
 - [Kỹ năng và build](skills-and-builds.md)
 - [Trang bị](equipment.md)
 - [Chế độ](modes.md)
+- [Xếp hạng](ranking.md)
 - [Trang trí](cosmetics.md)
 - [Các yếu tố trong thế giới](world-elements.md)
 - [Bot](bots.md)
