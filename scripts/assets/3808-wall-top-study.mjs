@@ -5,13 +5,16 @@
 // Usage: node scripts/assets/3808-wall-top-study.mjs <outdir>   (needs inkscape and esbuild;
 // ESBUILD=<path> overrides `pnpm exec esbuild`)
 import { execFileSync } from "node:child_process";
-import { mkdirSync, writeFileSync } from "node:fs";
+import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { pathToFileURL } from "node:url";
 
 const out = process.argv[2] ?? "docs/art";
-const tmp = join(out, ".3808-tmp");
-mkdirSync(tmp, { recursive: true });
+const tmp = mkdtempSync(join(tmpdir(), "3808-"));
+process.on("exit", () => {
+  rmSync(tmp, { recursive: true, force: true });
+});
 const esbuild = process.env.ESBUILD ?? "pnpm";
 const args = process.env.ESBUILD ? [] : ["exec", "esbuild"];
 execFileSync(
