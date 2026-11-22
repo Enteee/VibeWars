@@ -824,12 +824,10 @@ export default {
 
   "options.controls": "操作",
   "options.cosmetics": "装扮",
-  "options.display": "显示",
   "options.label": "选项",
   "options.language": "语言",
   "options.languageBusy": "请先离开大厅或对局：更改语言会重新加载页面。",
   "options.languageLabel": "语言",
-  "options.lightingLabel": "光照",
   "options.player": "玩家",
   "options.relay": "中继 (TURN)",
   "options.sections": "选项分区",

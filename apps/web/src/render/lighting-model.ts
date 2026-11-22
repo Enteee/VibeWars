@@ -143,11 +143,11 @@ export function bodyTintOf(sample: LightSample): number {
 /**
  * How much of its colour a body under a deck keeps (#3078): a 30 % dark
  * overlay, as in the deck's shade. It is shape, not light, so it is drawn
- * with lighting off too.
+ * on an unlit map too.
  */
 export const OVERHANG_SHADE = 0.7;
 
-/** `tint`, white with lighting off, darkened for a body under a deck: never below the body floor. */
+/** `tint`, white on an unlit map, darkened for a body under a deck: never below the body floor. */
 export function shadedBodyTint(tint: number): number {
   return aboveBodyFloor(scaleColour(tint, OVERHANG_SHADE));
 }

@@ -1011,12 +1011,10 @@ export default {
 
   "options.controls": "التحكم",
   "options.cosmetics": "الزينة",
-  "options.display": "العرض",
   "options.label": "الخيارات",
   "options.language": "اللغة",
   "options.languageBusy": "غادر الردهة أو المباراة أولًا: تغيير اللغة يعيد تحميل الصفحة.",
   "options.languageLabel": "اللغة",
-  "options.lightingLabel": "الإضاءة",
   "options.player": "اللاعب",
   "options.relay": "المرحّل (TURN)",
   "options.sections": "أقسام الخيارات",

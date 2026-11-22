@@ -330,7 +330,6 @@ import {
 } from "./cover-pieces.js";
 import { liftFrame, liftPlatform, liftShaft, type LiftFrame } from "./lift-art.js";
 import { paintDeckShadows, sunShadowOffset } from "./shadow-geometry.js";
-import { lightingOn } from "./lighting-preference.js";
 import { passEnd, passStart } from "./pass-timing.js";
 import { FootstepTrails, auraOf, paintAura, paintMotes } from "./cosmetic-ground.js";
 import { swingRibbon } from "./cosmetic-trail.js";
@@ -3358,10 +3357,10 @@ export class ArenaScene extends Phaser.Scene {
    * whoever stands in it; a trap (#1105) the same, with no disc. One that
    * ended takes its icon with it.
    */
-  /** The map's lighting, as Options and the frame budget allow (ADR-0052). */
+  /** The map's lighting, as the frame budget allows (ADR-0052). */
   private activeLighting(): MapLighting | undefined {
     const { lighting, zones } = this.snapshot.structure;
-    if (lighting === undefined || !lightingOn()) {
+    if (lighting === undefined) {
       return this.lightingPass?.allowed(undefined);
     }
     const { teleports } = this.snapshot;
@@ -3413,7 +3412,7 @@ export class ArenaScene extends Phaser.Scene {
   private tintAt(position: Vec2, layer: number): number | undefined {
     const lit = this.bodyLight(position, layer);
     const structure = this.drawnMap?.structure;
-    // Under a deck, in its shade (#3078): shape, not light, so with lighting off too.
+    // Under a deck, in its shade (#3078): shape, not light, so on an unlit map too.
     const shaded =
       structure !== undefined &&
       structure.decks.length > 0 &&
@@ -3421,7 +3420,7 @@ export class ArenaScene extends Phaser.Scene {
     return shaded ? shadedBodyTint(lit ?? 0xffffff) : lit;
   }
 
-  /** The light on a body at `position` on `layer`; `undefined` with lighting off. */
+  /** The light on a body at `position` on `layer`; `undefined` on an unlit map. */
   private bodyLight(position: Vec2, layer: number): number | undefined {
     const lighting = this.drawnMap?.lighting;
     if (lighting === undefined) {
@@ -3980,7 +3979,7 @@ export class ArenaScene extends Phaser.Scene {
     for (const drawing of this.breakableDrawings.values()) {
       drawing.settled = false;
     }
-    // A torch stands with lighting off too: it is on the map, its light is not.
+    // A torch stands unlit too: it is on the map, its light is not.
     for (const light of next.structure.lighting?.lights ?? []) {
       const key = lightMarkKey(light.id);
       if (key !== undefined) {
@@ -5256,7 +5255,7 @@ export class ArenaScene extends Phaser.Scene {
     return drawn.painter;
   }
 
-  /** The map's effect zones, lighting on or off: they are on the ground, as its water is. */
+  /** The map's effect zones, lit or unlit: they are on the ground, as its water is. */
   private drawZones(): void {
     for (const graphics of this.zoneGraphics.values()) {
       graphics.clear();
@@ -5314,8 +5313,8 @@ export class ArenaScene extends Phaser.Scene {
   }
 
   /**
-   * The map's fog, plumes and weather (#3032), only with lighting on. Its
-   * vents stand either way: they are stone on the ground, as torches are.
+   * The map's fog, plumes and weather (#3032). Its vents are stone on
+   * the ground, as torches are.
    */
   private drawAtmosphere(dt: number, view: Box): void {
     for (const graphics of [
@@ -5340,14 +5339,10 @@ export class ArenaScene extends Phaser.Scene {
     }
     const { fog, particles } = this.atmosphereDrawn;
     const line = 1 / (this.view?.zoom ?? 1);
-    const on = lightingOn();
     const worldView = this.cameras.main.worldView;
-    particles.step(dt, worldView, { on, reducedMotion: this.reducedMotion });
+    particles.step(dt, worldView, { reducedMotion: this.reducedMotion });
     for (const plume of atmosphere.plumes) {
       paintVent(this.fogAt(plume.layer), plume, elevationOf(plume.layer, ground), line);
-    }
-    if (!on) {
-      return;
     }
     const tint = fogTintOf(ascentAct);
     for (const art of fog) {

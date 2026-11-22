@@ -883,13 +883,11 @@ export default {
 
   "options.controls": "Steuerung",
   "options.cosmetics": "Kosmetik",
-  "options.display": "Anzeige",
   "options.label": "Optionen",
   "options.language": "Sprache",
   "options.languageBusy":
     "Verlasse zuerst die Lobby oder das Match: Beim Sprachwechsel wird die Seite neu geladen.",
   "options.languageLabel": "Sprache",
-  "options.lightingLabel": "Beleuchtung",
   "options.player": "Spieler",
   "options.relay": "Relay (TURN)",
   "options.sections": "Optionsbereiche",

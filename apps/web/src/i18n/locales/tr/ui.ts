@@ -876,12 +876,10 @@ export default {
 
   "options.controls": "kontroller",
   "options.cosmetics": "kozmetikler",
-  "options.display": "görüntü",
   "options.label": "Ayarlar",
   "options.language": "dil",
   "options.languageBusy": "Önce lobiden ya da maçtan çık: dili değiştirmek sayfayı yeniler.",
   "options.languageLabel": "Dil",
-  "options.lightingLabel": "Aydınlatma",
   "options.player": "oyuncu",
   "options.relay": "relay (TURN)",
   "options.sections": "ayar bölümleri",
