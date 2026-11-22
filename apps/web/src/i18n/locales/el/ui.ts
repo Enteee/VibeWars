@@ -64,6 +64,7 @@ export default {
 
   "buildEditor.addWeapon": "Προσθήκη όπλου",
   "buildEditor.armor": "Πανοπλία",
+  "buildEditor.back": "Πίσω",
   "buildEditor.bothHandsFull": "γεμάτα χέρια",
   "buildEditor.budgetSegment": {
     one: "{attribute}: {count} πόντος",
@@ -884,13 +885,11 @@ export default {
 
   "options.controls": "χειρισμός",
   "options.cosmetics": "διακοσμητικά",
-  "options.display": "οθόνη",
   "options.label": "Επιλογές",
   "options.language": "γλώσσα",
   "options.languageBusy":
     "Βγες πρώτα από το λόμπι ή τον αγώνα: η αλλαγή γλώσσας επαναφορτώνει τη σελίδα.",
   "options.languageLabel": "Γλώσσα",
-  "options.lightingLabel": "Φωτισμός",
   "options.player": "παίκτης",
   "options.relay": "αναμεταδότης (TURN)",
   "options.sections": "ενότητες επιλογών",
@@ -1562,6 +1561,7 @@ export default {
   "tutorial.climb.praise": "Δύο επίπεδα, ένα σημείο. Τώρα διαβάζεις το έδαφος.",
   "tutorial.climb.tip": "Συμβουλή: Alt+κλικ διαλέγει το έδαφος κάτω από ένα πεζούλι.",
   "tutorial.climb.under": "Κράτα το Alt και κάνε κλικ. Ο διακεκομμένος κύκλος είναι από κάτω σου.",
+  "tutorial.coach.lost": "Γύρνα πίσω για να συνεχίσεις τον οδηγό.",
   "tutorial.dodge.hint": "Περίμενε δίπλα σε έναν κύκλο τη σκιά του, μετά βγες.",
   "tutorial.dodge.hit": "Αχ! Σκιά που μεγαλώνει σημαίνει: κουνήσου.",
   "tutorial.dodge.how": "Αριστερό κλικ στο έδαφος, ή περπάτα με {keys}.",
@@ -1588,6 +1588,8 @@ export default {
   "tutorial.menu.arena.signup":
     "Άνοιξε τις Συνθέσεις ομάδας σου, διάλεξε την ομάδα που έφτιαξες και πρότεινέ την.",
   "tutorial.menu.arena.signupDone": "Πρότεινε την ομάδα σου",
+  "tutorial.menu.arena.signupTimeout":
+    "Ο χρόνος τελείωσε, οπότε το λόμπι διάλεξε μια ομάδα για σένα.",
   "tutorial.menu.arena.size":
     "Όρισε το μέγεθος ομάδας σε 2v2. Αντιμέτωπες βρίσκονται μόνο ομάδες ίδιου μεγέθους.",
   "tutorial.menu.arena.sizeDone": "Διάλεξε 2v2",
@@ -1643,6 +1645,8 @@ export default {
   "tutorial.menu.team.fillDone": "Συμπλήρωσε την ομάδα",
   "tutorial.menu.team.members":
     "Μια ομάδα έχει πάντα τόσα μέλη όσο το μέγεθός της. Ποτέ δεν προσθέτεις μέλος: αντικαθιστάς ένα.",
+  "tutorial.menu.team.memberBack":
+    "Αυτό είναι το build αυτού του μέλους. Πάτα Πίσω για να γυρίσεις στην ομάδα σου.",
   "tutorial.menu.team.new":
     "Όρισε το μέγεθος ομάδας σε 2v2 και μετά φτιάξε μια νέα σύνθεση ομάδας.",
   "tutorial.menu.team.newDone": "Ξεκίνα μια ομάδα των 2",

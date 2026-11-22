@@ -63,6 +63,7 @@ export default {
 
   "buildEditor.addWeapon": "Tilføj våben",
   "buildEditor.armor": "Rustning",
+  "buildEditor.back": "Tilbage",
   "buildEditor.bothHandsFull": "begge hænder optaget",
   "buildEditor.budgetSegment": {
     one: "{attribute}: {count} point",
@@ -874,12 +875,10 @@ export default {
 
   "options.controls": "styring",
   "options.cosmetics": "kosmetik",
-  "options.display": "visning",
   "options.label": "Valg",
   "options.language": "sprog",
   "options.languageBusy": "Forlad først lobbyen eller kampen: skift af sprog genindlæser siden.",
   "options.languageLabel": "Sprog",
-  "options.lightingLabel": "Belysning",
   "options.player": "spiller",
   "options.relay": "relay (TURN)",
   "options.sections": "afsnit i valg",
@@ -1537,6 +1536,7 @@ export default {
   "tutorial.climb.praise": "To lag, ét sted. Nu kan du læse terrænet.",
   "tutorial.climb.tip": "Tip: Alt+klik vælger jorden under en afsats.",
   "tutorial.climb.under": "Hold Alt nede og klik. Den stiplede ring er under dig.",
+  "tutorial.coach.lost": "Gå tilbage for at fortsætte vejledningen.",
   "tutorial.dodge.hint": "Vent ved en ring på dens skygge, og træd så væk.",
   "tutorial.dodge.hit": "Av! En voksende skygge betyder: flyt dig.",
   "tutorial.dodge.how": "Venstreklik på jorden, eller gå med {keys}.",
@@ -1562,6 +1562,7 @@ export default {
   "tutorial.menu.arena.queueDone": "Gå i køen",
   "tutorial.menu.arena.signup": "Åbn Dine Holdbuilds, vælg det hold, du lavede, og foreslå det.",
   "tutorial.menu.arena.signupDone": "Foreslå dit hold",
+  "tutorial.menu.arena.signupTimeout": "Tiden løb ud, så lobbyen valgte et hold for dig.",
   "tutorial.menu.arena.size":
     "Sæt holdstørrelsen til 2v2. Kun hold af samme størrelse møder hinanden.",
   "tutorial.menu.arena.sizeDone": "Vælg 2v2",
@@ -1614,6 +1615,8 @@ export default {
   "tutorial.menu.team.fillDone": "Fyld holdet",
   "tutorial.menu.team.members":
     "Et hold har altid lige så mange medlemmer som sin størrelse. Du tilføjer aldrig et medlem: du erstatter et.",
+  "tutorial.menu.team.memberBack":
+    "Dette er det medlems build. Tryk Tilbage for at vende tilbage til dit hold.",
   "tutorial.menu.team.new": "Sæt holdstørrelsen til 2v2, og lav så et nyt holdbuild.",
   "tutorial.menu.team.newDone": "Start et hold på 2",
   "tutorial.menu.team.open": "Åbn Hold, hvor dine holdbuilds er.",

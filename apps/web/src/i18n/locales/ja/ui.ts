@@ -65,6 +65,7 @@ export default {
 
   "buildEditor.addWeapon": "武器を追加",
   "buildEditor.armor": "防具",
+  "buildEditor.back": "戻る",
   "buildEditor.bothHandsFull": "両手がふさがっています",
   "buildEditor.budgetSegment": { other: "{attribute}: {count}ポイント" },
   "buildEditor.cancel": "キャンセル",
@@ -834,13 +835,11 @@ export default {
 
   "options.controls": "操作",
   "options.cosmetics": "コスメティック",
-  "options.display": "表示",
   "options.label": "オプション",
   "options.language": "言語",
   "options.languageBusy":
     "先にロビーまたはマッチを離れてください。言語を変更するとページが再読み込みされます。",
   "options.languageLabel": "言語",
-  "options.lightingLabel": "ライティング",
   "options.player": "プレイヤー",
   "options.relay": "リレー (TURN)",
   "options.sections": "オプションの項目",
@@ -1468,6 +1467,7 @@ export default {
   "tutorial.climb.praise": "二つの層、一つの場所。もう地面が読めるね。",
   "tutorial.climb.tip": "ヒント:Alt+クリックで岩棚の下の地面を選べる。",
   "tutorial.climb.under": "Altを押しながらクリック。点線の輪は足元の下だ。",
+  "tutorial.coach.lost": "戻ってチュートリアルを続けよう。",
   "tutorial.dodge.hint": "輪のそばで影が出るのを待って、外へ出よう。",
   "tutorial.dodge.hit": "いたっ!影が大きくなったら動いて。",
   "tutorial.dodge.how": "地面を左クリック、または {keys} で歩く。",
@@ -1493,6 +1493,7 @@ export default {
   "tutorial.menu.arena.queueDone": "キューに入る",
   "tutorial.menu.arena.signup": "チームビルドを開き、作ったチームを選んで提案しよう。",
   "tutorial.menu.arena.signupDone": "チームを提案する",
+  "tutorial.menu.arena.signupTimeout": "時間切れになったので、ロビーがチームを選んだ。",
   "tutorial.menu.arena.size": "チーム人数を2v2にしよう。同じ人数のチーム同士だけが対戦する。",
   "tutorial.menu.arena.sizeDone": "2v2を選ぶ",
   "tutorial.menu.arena.title": "チームアリーナの2v2マッチでチームの力を示そう。",
@@ -1544,6 +1545,7 @@ export default {
   "tutorial.menu.team.fillDone": "チームを埋める",
   "tutorial.menu.team.members":
     "チームのメンバー数は常にチーム人数と同じ。メンバーは追加せず、入れ替える。",
+  "tutorial.menu.team.memberBack": "これはそのメンバーのビルド。戻るでチームに戻ろう。",
   "tutorial.menu.team.new": "チーム人数を2v2にして、新規チームビルドを作ろう。",
   "tutorial.menu.team.newDone": "2人のチームを始める",
   "tutorial.menu.team.open": "チームビルドがある「チーム」を開こう。",

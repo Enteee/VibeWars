@@ -61,6 +61,7 @@ export default {
 
   "buildEditor.addWeapon": "הוסף נשק",
   "buildEditor.armor": "שריון",
+  "buildEditor.back": "חזרה",
   "buildEditor.bothHandsFull": "שתי הידיים תפוסות",
   "buildEditor.budgetSegment": {
     one: "{attribute}: נקודה {count}",
@@ -930,12 +931,10 @@ export default {
 
   "options.controls": "שליטה",
   "options.cosmetics": "קוסמטיקה",
-  "options.display": "תצוגה",
   "options.label": "אפשרויות",
   "options.language": "שפה",
   "options.languageBusy": "עזוב קודם את הלובי או המשחק: החלפת השפה טוענת מחדש את הדף.",
   "options.languageLabel": "שפה",
-  "options.lightingLabel": "תאורה",
   "options.player": "שחקן",
   "options.relay": "ממסר (TURN)",
   "options.sections": "מקטעי אפשרויות",
@@ -1605,6 +1604,7 @@ export default {
   "tutorial.climb.praise": "שתי שכבות, נקודה אחת. עכשיו אתה קורא את השטח.",
   "tutorial.climb.tip": "טיפ: Alt+לחיצה בוחרת את הקרקע מתחת למדף.",
   "tutorial.climb.under": "החזק Alt ולחץ. הטבעת המקווקוות נמצאת מתחתיך.",
+  "tutorial.coach.lost": "חזור אחורה כדי להמשיך במדריך.",
   "tutorial.dodge.hint": "חכה ליד טבעת עד שיופיע הצל שלה, ואז זוז ממנה.",
   "tutorial.dodge.hit": "אאוץ'! צל שגדל אומר: זוז.",
   "tutorial.dodge.how": "לחץ לחיצה שמאלית על הקרקע, או לך עם {keys}.",
@@ -1629,6 +1629,7 @@ export default {
   "tutorial.menu.arena.queueDone": "היכנסו לתור",
   "tutorial.menu.arena.signup": "פתחו את מבני הקבוצה שלך, בחרו את הקבוצה שיצרתם והציעו אותה.",
   "tutorial.menu.arena.signupDone": "הציעו את הקבוצה שלכם",
+  "tutorial.menu.arena.signupTimeout": "הזמן נגמר, אז הלובי בחר עבורך צוות.",
   "tutorial.menu.arena.size": "קבעו את גודל הקבוצה ל-2v2. רק קבוצות באותו גודל נפגשות.",
   "tutorial.menu.arena.sizeDone": "בחרו 2v2",
   "tutorial.menu.arena.title": "הוכיחו את הקבוצה שלכם במשחק 2v2 בזירת קבוצות.",
@@ -1677,6 +1678,7 @@ export default {
   "tutorial.menu.team.fillDone": "מלאו את הקבוצה",
   "tutorial.menu.team.members":
     "בקבוצה יש תמיד כמה חברים כגודלה. אף פעם לא מוסיפים חבר: מחליפים אחד.",
+  "tutorial.menu.team.memberBack": "זה הבילד של אותו חבר. לחץ על חזרה כדי לחזור לצוות שלך.",
   "tutorial.menu.team.new": "קבעו את גודל הקבוצה ל-2v2, ואז צרו מבנה קבוצה חדש.",
   "tutorial.menu.team.newDone": "התחילו קבוצה של 2",
   "tutorial.menu.team.open": "פתחו את קבוצות, שם נמצאים מבני הקבוצות שלכם.",

@@ -63,6 +63,7 @@ export default {
 
   "buildEditor.addWeapon": "Adicionar arma",
   "buildEditor.armor": "Armadura",
+  "buildEditor.back": "Voltar",
   "buildEditor.bothHandsFull": "as duas mãos ocupadas",
   "buildEditor.budgetSegment": {
     one: "{attribute}: {count} ponto",
@@ -918,13 +919,11 @@ export default {
 
   "options.controls": "controles",
   "options.cosmetics": "cosméticos",
-  "options.display": "tela",
   "options.label": "Opções",
   "options.language": "idioma",
   "options.languageBusy":
     "Saia da sala ou da partida primeiro: trocar o idioma recarrega a página.",
   "options.languageLabel": "Idioma",
-  "options.lightingLabel": "Iluminação",
   "options.player": "jogador",
   "options.relay": "relay (TURN)",
   "options.sections": "seções de opções",
@@ -1615,6 +1614,7 @@ export default {
   "tutorial.climb.praise": "Duas camadas, um só lugar. Agora você lê o terreno.",
   "tutorial.climb.tip": "Dica: Alt+clique escolhe o chão sob uma saliência.",
   "tutorial.climb.under": "Segure Alt e clique. O anel tracejado está abaixo de você.",
+  "tutorial.coach.lost": "Volta atrás para continuar o tutorial.",
   "tutorial.dodge.hint": "Espere junto a um anel pela sombra dele e saia de lado.",
   "tutorial.dodge.hit": "Ai! Uma sombra que cresce quer dizer: mexa-se.",
   "tutorial.dodge.how": "Clique com o botão esquerdo no chão, ou ande com {keys}.",
@@ -1641,6 +1641,8 @@ export default {
   "tutorial.menu.arena.signup":
     "Abra Suas Builds de Equipe, escolha a equipe que você criou e proponha-a.",
   "tutorial.menu.arena.signupDone": "Proponha sua equipe",
+  "tutorial.menu.arena.signupTimeout":
+    "O tempo acabou, por isso o lobby escolheu uma equipa por ti.",
   "tutorial.menu.arena.size":
     "Defina o tamanho da equipe como 2v2. Só equipes do mesmo tamanho se enfrentam.",
   "tutorial.menu.arena.sizeDone": "Escolha 2v2",
@@ -1694,6 +1696,8 @@ export default {
   "tutorial.menu.team.fillDone": "Complete a equipe",
   "tutorial.menu.team.members":
     "Uma equipe sempre tem tantos membros quanto seu tamanho. Você nunca adiciona um membro: substitui um.",
+  "tutorial.menu.team.memberBack":
+    "Esta é a build desse membro. Carrega em Voltar para regressares à tua equipa.",
   "tutorial.menu.team.new":
     "Defina o tamanho da equipe como 2v2 e depois crie uma nova build de equipe.",
   "tutorial.menu.team.newDone": "Comece uma equipe de 2",

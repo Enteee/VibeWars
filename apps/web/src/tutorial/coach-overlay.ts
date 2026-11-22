@@ -25,6 +25,13 @@ const EDGE = 16;
 
 const PULSE_CLASS = "tutorial-pulse";
 
+/**
+ * How long a beat's target may be missing from the page before the coach
+ * lets go (#3785): it waits that long on one not drawn yet, then lifts the
+ * dim and the lock, and says how to get back, until the target is there.
+ */
+export const LOST_TARGET_MS = 1500;
+
 const FOCUSABLE = "a[href], button:not([disabled]), input, select, textarea, [tabindex]";
 
 /**
@@ -51,6 +58,8 @@ export interface CoachView {
   /** The `data-tutorial` id of the control, or region, the beat points at: every element with it. */
   readonly target: string;
   readonly objectives: readonly { readonly label: string; readonly done: boolean }[];
+  /** `false` points at the target with no dim and no lock (#3785): the rest of the screen is the player's. */
+  readonly locked: boolean;
   /** Got it, on a pure explanation; a thing to do has no button. */
   readonly gotIt: (() => void) | undefined;
 }
@@ -262,12 +271,18 @@ export function mountCoachOverlay(
   let stale = true;
   let frame = 0;
   let removed = false;
+  /** Since when, on the frame clock, the target has been missing; `undefined` while it is there. */
+  let missingSince: number | undefined;
+  let lost = false;
+  /** Whether the player may click and tab anywhere: a beat unlocked, or a target lost. */
+  const free = (): boolean => lost || view?.locked === false;
 
   const open = (): HTMLElement[] => [...targets, ...(bubble.hidden ? [] : [bubble]), panel];
   const above = (node: EventTarget | null): boolean =>
     node instanceof Element && node.closest(ABOVE_THE_LOCK) !== null;
   const swallow = (event: Event): void => {
     if (
+      free() ||
       above(event.target) ||
       lockLets(event.target instanceof Node ? event.target : null, open())
     ) {
@@ -277,7 +292,7 @@ export function mountCoachOverlay(
     event.stopPropagation();
   };
   const trapTab = (event: KeyboardEvent): void => {
-    if (event.key !== "Tab" || above(event.target)) {
+    if (event.key !== "Tab" || free() || above(event.target)) {
       return;
     }
     const list = open().flatMap(focusables);
@@ -287,6 +302,7 @@ export function mountCoachOverlay(
   };
   const keepFocus = (event: FocusEvent): void => {
     if (
+      free() ||
       above(event.target) ||
       lockLets(event.target instanceof Node ? event.target : null, open())
     ) {
@@ -312,11 +328,13 @@ export function mountCoachOverlay(
     }
     shownHole = next;
     stale = false;
-    dim.hidden = next !== undefined;
+    dim.hidden = next !== undefined || free();
+    coach.classList.toggle("coach-free", free());
     hole.hidden = next === undefined;
     bubble.hidden = next === undefined || view === undefined;
     // The bubble says the line; the panel says it only when there is none.
     panelLine.hidden = !bubble.hidden;
+    panelLine.textContent = lost ? t("tutorial.coach.lost") : (view?.line ?? "");
     const clear: CoachRect[] = [];
     if (next !== undefined) {
       Object.assign(hole.style, {
@@ -344,8 +362,9 @@ export function mountCoachOverlay(
     panel.dataset.corner = spot.corner;
   };
   // The target is looked up every frame, so the cut-out follows it as it
-  // moves or is drawn anew; one not drawn yet is the dim, without a hole.
-  const follow = (): void => {
+  // moves or is drawn anew; one not drawn yet is the dim, without a hole,
+  // until it has been missing for LOST_TARGET_MS.
+  const follow = (now: number = performance.now()): void => {
     if (removed) {
       return;
     }
@@ -364,6 +383,10 @@ export function mountCoachOverlay(
       shownHole = undefined;
       hole.hidden = true;
     }
+    missingSince = view === undefined || found.length > 0 ? undefined : (missingSince ?? now);
+    const wasLost = lost;
+    lost = missingSince !== undefined && now - missingSince >= LOST_TARGET_MS;
+    stale ||= lost !== wasLost;
     place();
     frame = requestAnimationFrame(follow);
   };
@@ -398,7 +421,6 @@ export function mountCoachOverlay(
     show: (next) => {
       view = next;
       panelTitle.textContent = next.title;
-      panelLine.textContent = next.line;
       bubbleLine.textContent = next.line;
       checklist.replaceChildren(
         ...next.objectives.map(({ label, done }) => {
@@ -410,6 +432,9 @@ export function mountCoachOverlay(
       gotIt.hidden = next.gotIt === undefined;
       onGotIt = next.gotIt;
       stale = true;
+      // A new target has its own LOST_TARGET_MS to be drawn in.
+      missingSince = undefined;
+      lost = false;
       // A new beat may point elsewhere: look it up now, not a frame late.
       cancelAnimationFrame(frame);
       follow();
