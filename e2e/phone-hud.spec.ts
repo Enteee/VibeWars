@@ -308,7 +308,12 @@ for (const [held, device, free] of [
       page,
     }) => {
       await phoneMatch(page, phone, undefined, true);
-      const boxes = await expectApart(page, { absent: [".party-window", ".party-toggle"] });
+      // A 1v1 has no party, unless the house hands out a pet: then its
+      // toggle shows, the panel behind it closed.
+      const pet = (await page.locator(".party-row").count()) > 0;
+      const boxes = await expectApart(page, {
+        absent: pet ? [".party-window"] : [".party-window", ".party-toggle"],
+      });
       expectArenaFree(boxes, phone, free);
       await expectSkillRow(page, phone);
     });

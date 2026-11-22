@@ -9336,8 +9336,8 @@ body:has(> .splash) #app {
     flex: none;
     min-width: 44px;
     min-height: 44px;
-    margin-bottom: 0.4rem;
-    margin-left: auto;
+    margin-block-end: 0.4rem;
+    margin-inline: auto 0;
     padding: 0 0.8rem;
     background: rgb(14 17 22 / 85%);
     border: 1px solid var(--line);
@@ -9346,6 +9346,10 @@ body:has(> .splash) #app {
     font-size: 0.8rem;
     cursor: pointer;
     pointer-events: auto;
+  }
+
+  [dir="rtl"] #viewport > .party-dock > .party-toggle {
+    margin-inline: 0 auto;
   }
 
   #viewport > .party-dock > .party-toggle[aria-expanded="true"] {
@@ -9481,7 +9485,11 @@ body:has(> .splash) #app {
   }
 
   .hud-bars {
-    margin-left: calc(48px + 8px);
+    margin-inline-start: calc(48px + 8px);
+  }
+
+  [dir="rtl"] .hud-bars {
+    margin-inline: 0 calc(48px + 8px);
   }
 }
 
