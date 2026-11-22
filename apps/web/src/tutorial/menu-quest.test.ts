@@ -162,12 +162,12 @@ describe("the spec step (#3541)", () => {
       step: "spec",
       beat: 2,
     });
-    // A clone opens no new character: New character is still asked for.
-    const cloned = foldMenuQuestEvent(withRandom, {
+    // Opening the builder alone is no new character: New character is still asked for.
+    const builder = foldMenuQuestEvent(withRandom, {
       kind: "screen-shown",
       screen: "character-builder",
     });
-    expect(advanceMenuQuest({ step: "spec", beat: 2 }, cloned, false)).toEqual({
+    expect(advanceMenuQuest({ step: "spec", beat: 2 }, builder, false)).toEqual({
       step: "spec",
       beat: 2,
     });

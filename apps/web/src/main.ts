@@ -1219,6 +1219,8 @@ async function main(): Promise<void> {
             return;
           }
           showCharacterEditor(copy);
+          // A copy to edit is a new character of your own, as New character's is.
+          menuQuest?.event({ kind: "character-new" });
         })();
       },
       onRerollCharacter: (id) => {

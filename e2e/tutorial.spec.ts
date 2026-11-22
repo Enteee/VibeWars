@@ -833,6 +833,18 @@ test.describe("the menu quest (#3540)", () => {
     await expect(panel).toContainText("Change your spec.");
   });
 
+  test("Clone on the Random character counts as New character (#3786)", async ({ page }) => {
+    await page.goto(`./?menu-background=${FLAT_MAP}&tutorial-menu=spec`);
+    const target = (id: string): Locator => page.locator(`[data-tutorial~="${id}"]`);
+    await target("rail-characters").click();
+    const random = target("character-random");
+    await expect(random).toHaveClass(/tutorial-pulse/);
+    // The Random beat's line offers Clone, and it sits in the beat's hole.
+    await random.locator(".roster-clone").click();
+    await expect(target("professions")).toHaveClass(/tutorial-pulse/);
+    await expect(page.locator(".coach-panel")).toContainText("Switch a profession");
+  });
+
   test("changes the spec in the builder, one locked target at a time (#3541)", async ({ page }) => {
     // A walk through the whole builder: ~50 s on a loaded runner, past the default.
     test.setTimeout(180_000);
