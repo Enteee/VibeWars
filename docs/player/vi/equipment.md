@@ -170,6 +170,8 @@ các nguồn khác nhau cũng cộng dồn, mỗi nguồn tính trên toàn bộ
 làm tròn đến giây: Restoration và "Fear Cuts Deeper" giảm một Bleeding 8
 giây xuống còn 4.
 
+Trình chỉnh sửa không lưu hai món có cùng một rune, hoặc có rune của cùng một thuộc tính: chỉ phần thưởng mạnh nhất được tính, còn mọi hình phạt máu đều được tính. Trỏ vào máu trong trình chỉnh sửa để xem nó đến từ đâu: cơ bản, rune, phù hiệu và nâng cấp.
+
 Bạn chọn rune của một món ở cùng chỗ với huy hiệu của nó: nhấn vào món đó
 trên hình nhân.
 

@@ -168,6 +168,11 @@ from different sources add up too, each taken off the full duration and
 rounded to a whole second: Restoration and "Fear Cuts Deeper" take an
 8 second Bleeding down to 4.
 
+The editor will not save two pieces with the same rune, or with runes
+of the same attribute: only the strongest bonus would count, while
+every Health penalty would. Point at Health in the editor to see where
+yours comes from: base, runes, insignia and mods.
+
 You pick a piece's rune in the same place as its insignia: click the piece
 on the figure.
 

@@ -84,6 +84,9 @@ export default {
   "buildEditor.discardChanges": "Descartar alterações?",
   "buildEditor.duplicate": "Duplicar",
   "buildEditor.duplicateSkill": "{skill} está na barra mais de uma vez.",
+  "buildEditor.duplicateRune": "{rune}: outra peça já usa esta runa. Só uma conta.",
+  "buildEditor.duplicateAttributeRune":
+    "{rune}: outra peça já usa uma runa deste atributo. Só o bônus mais forte conta, mas toda penalidade de vida conta.",
   "buildEditor.emptySetAction": "esvaziar conjunto {set}",
   "buildEditor.emptySetNote": "Conjunto vazio",
   "buildEditor.emptySlot": "Vazio",
@@ -482,6 +485,11 @@ export default {
   "gearEditor.bareHands": "mãos nuas",
   "gearEditor.bonusFromHeadgear": "capacete +{amount}",
   "gearEditor.bonusFromRune": "runa +{amount}",
+  "gearEditor.healthBase": "base {amount}",
+  "gearEditor.healthInsignia": "insígnias {amount}",
+  "gearEditor.healthMods": "modificações {amount}",
+  "gearEditor.healthRunes": "runas {amount}",
+  "gearEditor.healthSources": "Vida máx.: {parts}",
   "gearEditor.itemA": "{item}",
   "gearEditor.itemAn": "{item}",
   "gearEditor.modRemoved": "{mod} removido: não serve em {item}.",
@@ -825,6 +833,8 @@ export default {
   "lobbyWindow.reconnecting": "Reconectando…",
   "lobbyWindow.removeMember": "Remover {name} da sala",
 
+  "match.buildReplaced":
+    "Sua build não é válida ({problem}): nesta partida você joga com uma build inicial.",
   "matchView.watching": "Assistindo · {seconds} s de atraso",
 
   "matches.bot": "{name} (bot)",

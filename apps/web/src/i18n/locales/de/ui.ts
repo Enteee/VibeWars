@@ -83,6 +83,9 @@ export default {
   "buildEditor.discardChanges": "Änderungen verwerfen?",
   "buildEditor.duplicate": "Duplizieren",
   "buildEditor.duplicateSkill": "{skill} ist mehrfach auf der Leiste.",
+  "buildEditor.duplicateRune": "{rune}: Ein anderes Teil trägt diese Rune bereits. Nur eine zählt.",
+  "buildEditor.duplicateAttributeRune":
+    "{rune}: Ein anderes Teil trägt bereits eine Rune dieses Attributs. Nur der stärkste Bonus zählt, aber jeder Lebensabzug schon.",
   "buildEditor.emptySetAction": "Set {set} leeren",
   "buildEditor.emptySetNote": "Leeres Set",
   "buildEditor.emptySlot": "Leer",
@@ -456,6 +459,11 @@ export default {
   "gearEditor.bareHands": "bloße Hände",
   "gearEditor.bonusFromHeadgear": "Kopfschutz +{amount}",
   "gearEditor.bonusFromRune": "Rune +{amount}",
+  "gearEditor.healthBase": "Basis {amount}",
+  "gearEditor.healthInsignia": "Insignien {amount}",
+  "gearEditor.healthMods": "Modifikationen {amount}",
+  "gearEditor.healthRunes": "Runen {amount}",
+  "gearEditor.healthSources": "Max. Leben: {parts}",
   "gearEditor.itemA": "{item}",
   "gearEditor.itemAn": "{item}",
   "gearEditor.modRemoved": "{mod} entfernt: passt nicht zu {item}.",
@@ -792,6 +800,8 @@ export default {
   "lobbyWindow.reconnecting": "Verbindet neu…",
   "lobbyWindow.removeMember": "{name} aus der Lobby entfernen",
 
+  "match.buildReplaced":
+    "Dein Build ist nicht erlaubt ({problem}): Du spielst diese Partie mit einem Starter-Build.",
   "matchView.watching": "Zuschauen · {seconds} s Verzögerung",
 
   "matches.bot": "{name} (Bot)",

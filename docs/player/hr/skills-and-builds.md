@@ -147,6 +147,8 @@ pritisneš **Spremi**.
 **Esc** izlazi bez spremanja i najprije pita ako si nešto promijenio.
 **Podijeli**, **Učitaj GW1 kôd**, **Dupliciraj** i **Obriši** nalaze se pod **⋯**.
 
+Build s problemom ne može se spremiti i područje za trening ne počinje s njim. Ako takav build ipak stigne u meč, ondje igraš s početnim buildom i poruka kaže zašto.
+
 Timski kôd učitava se umjesto toga u **Uređivaču timova**: zalijepi ga bilo gdje tamo,
 ili otvori timski sastav i upotrijebi njegov **⋯** → **Učitaj tim**.
 

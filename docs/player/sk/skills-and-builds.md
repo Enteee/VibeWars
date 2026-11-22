@@ -149,6 +149,8 @@ ešte nemá, príde ako prázdna pozícia. Build je tvoj, keď stlačíš
 **Esc** odíde bez uloženia, a ak si niečo zmenil, najprv sa opýta.
 **Zdieľať**, **Načítať kód GW1**, **Duplikovať** a **Zmazať** sú pod **⋯**.
 
+Build s problémom nemožno uložiť a tréningová oblasť s ním nezačne. Ak sa taký build aj tak dostane do zápasu, hráš tam so štartovacím buildom a správa povie prečo.
+
 Tímový kód sa namiesto toho načítava v **Tvorba tímov**: vlož ho tam kamkoľvek,
 alebo otvor tímový build a použi jeho **⋯** → **Načítať tím**.
 

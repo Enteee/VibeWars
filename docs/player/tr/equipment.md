@@ -172,6 +172,8 @@ gelen rahatsızlık kısaltmaları da toplanır, her biri tam süreden
 hesaplanır ve tam saniyeye yuvarlanır: Restoration ve "Fear Cuts Deeper"
 8 saniyelik bir Bleeding'i 4'e indirir.
 
+Düzenleyici aynı rünü taşıyan ya da aynı özelliğin rünlerini taşıyan iki parçayı kaydetmez: yalnızca en güçlü bonus sayılırdı, ama her can cezası sayılırdı. Canının nereden geldiğini görmek için düzenleyicide cana işaret et: temel, rünler, nişanlar ve modlar.
+
 Bir parçanın rününü nişanıyla aynı yerde seçersin: figür üzerinde
 parçaya tıkla.
 

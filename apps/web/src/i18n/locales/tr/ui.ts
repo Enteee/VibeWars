@@ -82,6 +82,10 @@ export default {
   "buildEditor.discardChanges": "Değişikliklerden vazgeçilsin mi?",
   "buildEditor.duplicate": "Çoğalt",
   "buildEditor.duplicateSkill": "{skill} çubukta birden fazla kez var.",
+  "buildEditor.duplicateRune":
+    "{rune}: başka bir parça bu rünü zaten taşıyor. Yalnızca biri sayılır.",
+  "buildEditor.duplicateAttributeRune":
+    "{rune}: başka bir parça bu özelliğin rününü zaten taşıyor. Yalnızca en güçlü bonus sayılır, ama her can cezası sayılır.",
   "buildEditor.emptySetAction": "{set}. seti boşalt",
   "buildEditor.emptySetNote": "Boş set",
   "buildEditor.emptySlot": "Boş",
@@ -454,6 +458,11 @@ export default {
   "gearEditor.bareHands": "çıplak eller",
   "gearEditor.bonusFromHeadgear": "başlık +{amount}",
   "gearEditor.bonusFromRune": "rün +{amount}",
+  "gearEditor.healthBase": "temel {amount}",
+  "gearEditor.healthInsignia": "nişanlar {amount}",
+  "gearEditor.healthMods": "modlar {amount}",
+  "gearEditor.healthRunes": "rünler {amount}",
+  "gearEditor.healthSources": "Maks. can: {parts}",
   "gearEditor.itemA": "{item}",
   "gearEditor.itemAn": "{item}",
   "gearEditor.modRemoved": "{mod} kaldırıldı: {item} için uygun değil.",
@@ -787,6 +796,8 @@ export default {
   "lobbyWindow.reconnecting": "Yeniden bağlanıyor…",
   "lobbyWindow.removeMember": "{name} oyuncusunu lobiden çıkar",
 
+  "match.buildReplaced":
+    "Yapın geçerli değil ({problem}): bu maçta başlangıç yapısıyla oynuyorsun.",
   "matchView.watching": "İzleniyor · {seconds} sn gecikme",
 
   "matches.bot": "{name} (bot)",

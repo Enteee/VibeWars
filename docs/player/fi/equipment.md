@@ -173,6 +173,8 @@ useampi. Vaivojen lyhennykset eri lähteistä lasketaan myös yhteen, kukin
 koko kestosta ja kokonaisiin sekunteihin pyöristettynä: Restoration ja
 "Fear Cuts Deeper" lyhentävät 8 sekunnin Bleedingin 4 sekuntiin.
 
+Editori ei tallenna kahta osaa, joissa on sama riimu tai saman ominaisuuden riimut: vain vahvin bonus laskettaisiin, mutta jokainen terveysrangaistus laskettaisiin. Osoita editorissa terveyttä nähdäksesi, mistä se tulee: perus, riimut, arvomerkit ja modit.
+
 Valitset osan riimun samasta paikasta kuin sen arvomerkin: napsauta osaa
 hahmokuvassa.
 

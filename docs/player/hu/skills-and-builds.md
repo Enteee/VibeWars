@@ -168,6 +168,8 @@ Az **Esc** mentés nélkül lép ki, és előbb rákérdez, ha bármit
 módosítottál. A **Megoszt**, a **GW1-kód betöltése**, a **Másolat** és a
 **Törlés** a **⋯** alatt van.
 
+Problémás build nem menthető, és a gyakorlóterület sem indul vele. Ha egy ilyen build mégis meccsre kerül, ott kezdő builddel játszol, és egy üzenet megmondja, miért.
+
 A csapatkódot ehelyett a **Csapatszerkesztőben** kell betölteni: illeszd be bárhová
 ott, vagy nyiss meg egy csapatbuildet, és használd a **⋯** → **Csapat betöltése**
 lehetőségét.

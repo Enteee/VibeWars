@@ -168,6 +168,8 @@ kondisi dari sumber yang berbeda juga bertumpuk, masing-masing dihitung dari
 durasi penuh dan dibulatkan ke detik utuh: Restoration dan "Fear Cuts
 Deeper" memangkas Bleeding 8 detik menjadi 4.
 
+Editor tidak menyimpan dua bagian dengan rune yang sama, atau dengan rune atribut yang sama: hanya bonus terkuat yang dihitung, sedangkan setiap penalti darah tetap berlaku. Arahkan ke darah di editor untuk melihat asalnya: dasar, rune, insignia, dan mod.
+
 Kamu memilih rune sebuah bagian di tempat yang sama dengan insignia-nya: klik bagian itu
 pada figur.
 

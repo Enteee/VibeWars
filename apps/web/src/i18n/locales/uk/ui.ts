@@ -85,6 +85,9 @@ export default {
   "buildEditor.discardChanges": "Відкинути зміни?",
   "buildEditor.duplicate": "Дублювати",
   "buildEditor.duplicateSkill": "{skill} є на панелі більше одного разу.",
+  "buildEditor.duplicateRune": "{rune}: інша частина вже має цю руну. Рахується лише одна.",
+  "buildEditor.duplicateAttributeRune":
+    "{rune}: інша частина вже має руну цього атрибута. Рахується лише найсильніший бонус, але кожен штраф до здоров'я діє.",
   "buildEditor.emptySetAction": "порожній набір {set}",
   "buildEditor.emptySetNote": "Порожній набір",
   "buildEditor.emptySlot": "Порожньо",
@@ -498,6 +501,11 @@ export default {
   "gearEditor.bareHands": "голі руки",
   "gearEditor.bonusFromHeadgear": "шолом +{amount}",
   "gearEditor.bonusFromRune": "руна +{amount}",
+  "gearEditor.healthBase": "база {amount}",
+  "gearEditor.healthInsignia": "інсигнії {amount}",
+  "gearEditor.healthMods": "моди {amount}",
+  "gearEditor.healthRunes": "руни {amount}",
+  "gearEditor.healthSources": "Макс. здоров'я: {parts}",
   "gearEditor.itemA": "{item}",
   "gearEditor.itemAn": "{item}",
   "gearEditor.modRemoved": "{mod} знято: не підходить до {item}.",
@@ -852,6 +860,8 @@ export default {
   "lobbyWindow.reconnecting": "Перепідключення…",
   "lobbyWindow.removeMember": "Вилучити {name} з лобі",
 
+  "match.buildReplaced":
+    "Твій білд недопустимий ({problem}): у цьому матчі ти граєш стартовим білдом.",
   "matchView.watching": "Перегляд · затримка {seconds} с",
 
   "matches.bot": "{name} (бот)",
