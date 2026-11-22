@@ -1,6 +1,7 @@
 import { RANGE_SPELL } from "../../../distances.js";
 import { distance, vec2 } from "../../../vec2.js";
 import { holdsPlate } from "../../gates.js";
+import { flankParty, planPhase } from "../plan.js";
 import { NOTHING, REGROUP_JOINED, REGROUP_MAX_WAIT, REGROUP_SPREAD } from "./shared.js";
 import type { BotRule, RuleContext } from "./types.js";
 
@@ -13,7 +14,8 @@ import type { BotRule, RuleContext } from "./types.js";
  * comes into reach or the team is no longer behind it. A bot on its
  * team's plate (#2691) stays there, so it is nobody to wait for (#2697).
  * Nor is a human who stands idle (#3489): only bots and players who gave
- * a command lately make the team's centre.
+ * a command lately make the team's centre. During a flank (#3832) a
+ * flanker waits only for flankers, and the rest only for the rest.
  *
  * It waits at most `REGROUP_MAX_WAIT` seconds (#3489), then walks on,
  * and waits no more until it has joined the team or a foe has come into
@@ -39,12 +41,26 @@ const regroup: BotRule = {
 };
 
 /** Whether a match bot, its team two or more, waits for it now. */
-function waits({ context, self, foes, allies, role, foeCentroid, cursor }: RuleContext): boolean {
+function waits({
+  context,
+  self,
+  foes,
+  allies,
+  role,
+  foeCentroid,
+  cursor,
+  plan,
+}: RuleContext): boolean {
+  // During a flank (#3832) the flank party and the rest each keep to their own.
+  const phase = planPhase(context.now);
+  const flanker = plan === "flank" && flankParty(context, self, phase);
   const coming = allies.filter(
     (ally) =>
       !context.objectives.gates.some((gate) =>
         holdsPlate(gate, ally.combatant.team, ally.position),
-      ) && !context.isIdle(ally.id),
+      ) &&
+      !context.isIdle(ally.id) &&
+      (plan !== "flank" || flankParty(context, ally, phase) === flanker),
   );
   if (role === undefined || foeCentroid === undefined || coming.length < 2) return false;
   if (foes.some((foe) => distance(foe.position, self.position) <= RANGE_SPELL)) {

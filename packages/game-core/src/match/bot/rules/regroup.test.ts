@@ -4,6 +4,7 @@ import { RANGE_SPELL } from "../../../distances.js";
 import { distance, vec2 } from "../../../vec2.js";
 import { createCursor, decide } from "../../behaviour.js";
 import { initialGates } from "../../gates.js";
+import { PLAN_SECONDS, flankParty } from "../plan.js";
 import regroup from "./regroup.js";
 import { NOTHING, REGROUP_MAX_WAIT, REGROUP_SPREAD } from "./shared.js";
 import {
@@ -212,5 +213,31 @@ describe("a team of bots with one far ahead (#2621)", () => {
     const first = firstContact("regroup");
     expect(first.spread).toBeLessThanOrEqual(REGROUP_SPREAD);
     expect(firstContact("regroup")).toEqual(first);
+  });
+});
+
+describe("regroup during a flank (#3832)", () => {
+  const ids = ["a", "b", "c", "d"];
+  const now = PLAN_SECONDS + 1;
+  /** Four warriors: the flank party at `flankers`, the rest at 700, a foe far east. */
+  function team(flankers: number) {
+    const probe = match(ids.map((id) => fighter(id, 0, WARRIOR, vec2(100, 400))));
+    const context = contextFor(probe, "a", { now });
+    const party = new Set(
+      ids.filter((id) => flankParty(context, probe.get(id) ?? context.self, 1)),
+    );
+    const sim = match([
+      ...ids.map((id) => fighter(id, 0, WARRIOR, vec2(party.has(id) ? flankers : 700, 400))),
+      fighter("foe", 1, WARRIOR, vec2(1550, 400)),
+    ]);
+    const main = ids.find((id) => !party.has(id)) ?? "a";
+    return { sim, main, party };
+  }
+
+  it("keeps the main group walking, however far behind the flankers are", () => {
+    const { sim, main, party } = team(0);
+    expect(party.size).toBe(2);
+    expect(regroup.decide(ruleFor(sim, main, { plan: "push" }, { now }))).toBeDefined();
+    expect(regroup.decide(ruleFor(sim, main, { plan: "flank" }, { now }))).toBeUndefined();
   });
 });

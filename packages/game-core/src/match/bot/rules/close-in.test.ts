@@ -3,9 +3,10 @@ import { describe, expect, it } from "vitest";
 import { add, distance, scale, sub, vec2, type Vec2 } from "../../../vec2.js";
 import { createCursor, type BehaviourCursor } from "../../behaviour.js";
 import type { Participant } from "../../simulation.js";
+import { PLAN_SECONDS, flankParty, flankWaypoint } from "../plan.js";
 import closeIn, { REPRICE_SECONDS } from "./close-in.js";
 import { POSITION_SLACK, REGROUP_SPREAD, WALK_CANDIDATES } from "./shared.js";
-import { body, match, ruleFor } from "./test-support.js";
+import { MONK, WARRIOR, body, contextFor, fighter, match, ruleFor } from "./test-support.js";
 
 /** The bot at (100,400) on the ground, layer 1; foes far beyond reach to the east, each on its layer. */
 function closeInTo(
@@ -258,5 +259,63 @@ describe("close-in under a hold plan (#3831)", () => {
     expect(distance(closeIn.decide(next)?.moveTo ?? vec2(0, 0), centre)).toBeLessThanOrEqual(
       REGROUP_SPREAD / 4 + 1e-9,
     );
+  });
+});
+
+describe("close-in under a flank plan (#3832)", () => {
+  // A team of two flanks with one; the foes' frontliner stands nearer
+  // than their healer.
+  const sim = match([
+    fighter("bot", 0, WARRIOR, vec2(100, 400)),
+    fighter("mate", 0, WARRIOR, vec2(100, 600)),
+    fighter("front", 1, WARRIOR, vec2(800, 500)),
+    fighter("healer", 1, MONK, vec2(1100, 500)),
+  ]);
+  const now = PLAN_SECONDS + 1;
+  const context = contextFor(sim, "bot", { now });
+  const [flanker, pusher] = ["bot", "mate"].sort(
+    (a, b) =>
+      Number(flankParty(context, sim.get(b) ?? context.self, 1)) -
+      Number(flankParty(context, sim.get(a) ?? context.self, 1)),
+  ) as [string, string];
+  const waypoint = flankWaypoint(
+    contextFor(sim, flanker, { now }),
+    sim.get(flanker) ?? context.self,
+    1,
+  );
+
+  it("sends one of the two to the waypoint, on its spawn's layer", () => {
+    expect(waypoint).toBeDefined();
+    const intent = closeIn.decide(ruleFor(sim, flanker, { plan: "flank" }, { now }));
+    expect(intent?.moveTo).toEqual(waypoint?.point);
+    expect(intent?.moveToLayer).toBe(waypoint?.layer);
+  });
+
+  it("at the waypoint, goes for the foe healer though the frontliner is nearer", () => {
+    const cursor = createCursor();
+    const base = ruleFor(sim, flanker);
+    const there = { ...base.self, position: waypoint?.point ?? vec2(0, 0) };
+    const intent = closeIn.decide(
+      ruleFor(sim, flanker, { plan: "flank", self: there, cursor }, { now }),
+    );
+    expect(intent?.moveTo).toEqual(vec2(1100, 500));
+    expect(cursor.flankReached).toBe(1);
+    // Once there, it keeps for the backline wherever it walks.
+    const back = closeIn.decide(ruleFor(sim, flanker, { plan: "flank", cursor }, { now: now + 1 }));
+    expect(back?.moveTo).toEqual(vec2(1100, 500));
+  });
+
+  it("leaves the rest of the team pushing", () => {
+    const intent = closeIn.decide(ruleFor(sim, pusher, { plan: "flank" }, { now }));
+    expect(intent?.moveTo).toEqual(vec2(800, 500));
+  });
+
+  it("pushes where neither side has a route", () => {
+    const none = (to: Vec2): number =>
+      to.x === 800 || to.x === 1100 ? 1 : Number.POSITIVE_INFINITY;
+    const intent = closeIn.decide(
+      ruleFor(sim, flanker, { plan: "flank" }, { now, routeLength: none }),
+    );
+    expect(intent?.moveTo).toEqual(vec2(800, 500));
   });
 });
