@@ -91,16 +91,24 @@ export async function phoneOffenders(page: Page): Promise<string[]> {
         }
       }
       // A control grown to a finger's size must not cover a picture (#3776):
-      // a card's corner buttons once sat on its skill bar.
+      // a card's corner buttons once sat on its skill bar. Only a picture
+      // in the control's own positioned box counts, and only where the
+      // control is on top: a window or overlay over the page may cover one.
       const icons = [...document.querySelectorAll("#topbar img, #screens img")].filter(shown);
       for (const node of measured) {
+        const scope = node instanceof HTMLElement ? node.offsetParent : null;
+        if (scope === null) continue;
         const box = node.getBoundingClientRect();
         for (const icon of icons) {
-          if (node.contains(icon)) continue;
+          if (node.contains(icon) || !scope.contains(icon)) continue;
           const over = icon.getBoundingClientRect();
-          const wide = Math.min(box.right, over.right) - Math.max(box.left, over.left);
-          const high = Math.min(box.bottom, over.bottom) - Math.max(box.top, over.top);
-          if (wide > 1 && high > 1) {
+          const left = Math.max(box.left, over.left);
+          const top = Math.max(box.top, over.top);
+          const wide = Math.min(box.right, over.right) - left;
+          const high = Math.min(box.bottom, over.bottom) - top;
+          if (wide <= 1 || high <= 1) continue;
+          const atop = document.elementFromPoint(left + wide / 2, top + high / 2);
+          if (atop !== null && node.contains(atop)) {
             out.push(`covers an icon: ${name(node)} over ${name(icon)}`);
             break;
           }
