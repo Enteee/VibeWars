@@ -1327,7 +1327,6 @@ export default {
   "teamPlay.noTeamBuilds": "{size}人用チームビルドはまだありません。",
   "teamPlay.notPlayable": "プレイ不可: {problem}",
   "teamPlay.openingLobby": "ロビーを開いています…",
-  "teamPlay.queuedMaps": "このモードのマップ",
   "teamPlay.random": "ランダム",
   "teamPlay.reroll": "リロール",
   "teamPlay.unnamedTeam": "名前なしチーム",

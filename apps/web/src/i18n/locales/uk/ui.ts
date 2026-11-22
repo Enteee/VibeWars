@@ -1512,7 +1512,6 @@ export default {
   "teamPlay.noTeamBuilds": "Командних білдів {size} ще немає.",
   "teamPlay.notPlayable": "Не можна грати: {problem}",
   "teamPlay.openingLobby": "Відкриваємо лобі…",
-  "teamPlay.queuedMaps": "Мапи цього режиму",
   "teamPlay.random": "Випадковий",
   "teamPlay.reroll": "Інший",
   "teamPlay.unnamedTeam": "Команда без назви",

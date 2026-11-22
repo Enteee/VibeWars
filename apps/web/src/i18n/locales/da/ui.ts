@@ -1386,7 +1386,6 @@ export default {
   "teamPlay.noTeamBuilds": "Ingen Holdbuilds til {size} endnu.",
   "teamPlay.notPlayable": "Kan ikke spilles: {problem}",
   "teamPlay.openingLobby": "Åbner din lobby…",
-  "teamPlay.queuedMaps": "Baner i denne type",
   "teamPlay.random": "Tilfældig",
   "teamPlay.reroll": "Rul igen",
   "teamPlay.unnamedTeam": "Unavngivet hold",

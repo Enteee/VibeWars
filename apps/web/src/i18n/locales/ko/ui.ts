@@ -1314,7 +1314,6 @@ export default {
   "teamPlay.noTeamBuilds": "아직 {size} 팀 빌드가 없어요.",
   "teamPlay.notPlayable": "플레이 불가: {problem}",
   "teamPlay.openingLobby": "로비 여는 중…",
-  "teamPlay.queuedMaps": "이 모드의 맵",
   "teamPlay.random": "랜덤",
   "teamPlay.reroll": "다시 뽑기",
   "teamPlay.unnamedTeam": "이름 없는 팀",

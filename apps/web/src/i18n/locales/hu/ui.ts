@@ -1395,7 +1395,6 @@ export default {
   "teamPlay.noTeamBuilds": "Még nincs {size} fős csapatbuild.",
   "teamPlay.notPlayable": "Nem játszható: {problem}",
   "teamPlay.openingLobby": "Lobbi megnyitása…",
-  "teamPlay.queuedMaps": "Pályák ebben a módban",
   "teamPlay.random": "Véletlen",
   "teamPlay.reroll": "Újra",
   "teamPlay.unnamedTeam": "Névtelen csapat",

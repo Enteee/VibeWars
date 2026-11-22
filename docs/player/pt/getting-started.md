@@ -76,7 +76,7 @@ fila espera em segundo plano: você fica em Arena Aleatória e pode ir a
 qualquer lugar enquanto isso, suas builds, equipamento, Opções, Ajuda ou
 o editor de música, mas não pode trocar de personagem, hospedar ou entrar
 em uma sala, nem mudar o tamanho de equipe de um modo. Arena de Equipes e
-as outras telas de sala dizem que você está em uma fila e listam os mapas; o
+as outras telas de sala dizem que você está em uma fila; o
 tamanho mostra aquele com que você entrou na fila, em todos os modos. Um
 anel girando à esquerda de **Ajuda** na barra superior mostra que você
 está na fila; clique nele para ver a fila, o tempo de espera, quantos

@@ -488,8 +488,8 @@ test("queued, Team Arena stays browsable with no Find a match, and the flyout's 
   const size = page.locator(".mode-rail-size");
   await expect(size).toHaveAttribute("title", "Leave the queue to change the team size");
   await expect(size).toContainText("1v1");
-  // Its maps, to look at: a list, nothing to pick.
-  await expect(screen.locator(".screen-queued-maps li").first()).toBeVisible();
+  // Only that line: no list of maps (#3788), nothing to pick.
+  await expect(screen.locator(".screen-queued-maps")).toHaveCount(0);
   await expect(screen.locator("select")).toHaveCount(0);
 
   const flyout = await queueWindow(page);

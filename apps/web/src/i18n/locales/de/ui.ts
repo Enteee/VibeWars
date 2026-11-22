@@ -1408,7 +1408,6 @@ export default {
   "teamPlay.noTeamBuilds": "Noch keine {size}er-Team-Builds.",
   "teamPlay.notPlayable": "Nicht spielbar: {problem}",
   "teamPlay.openingLobby": "Deine Lobby wird geöffnet…",
-  "teamPlay.queuedMaps": "Karten in diesem Modus",
   "teamPlay.random": "Zufall",
   "teamPlay.reroll": "Würfeln",
   "teamPlay.unnamedTeam": "Unbenanntes Team",

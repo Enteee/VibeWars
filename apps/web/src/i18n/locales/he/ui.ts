@@ -1457,7 +1457,6 @@ export default {
   "teamPlay.noTeamBuilds": "אין עדיין מבני קבוצה של {size}.",
   "teamPlay.notPlayable": "לא שמיש: {problem}",
   "teamPlay.openingLobby": "פותח את הלובי שלך…",
-  "teamPlay.queuedMaps": "מפות במצב הזה",
   "teamPlay.random": "אקראי",
   "teamPlay.reroll": "הגרל מחדש",
   "teamPlay.unnamedTeam": "קבוצה ללא שם",

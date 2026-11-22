@@ -73,7 +73,7 @@ ander team, op een willekeurige map. De wachtrij wacht op de achtergrond: je
 blijft op Random Arena en mag intussen overal heen, je builds, uitrusting,
 Opties, Help of de muziekeditor, maar niet van personage wisselen, een lobby
 hosten of binnengaan, of de teamgrootte van een modus wijzigen. Team Arena en
-de andere lobbyschermen zeggen dat je in een wachtrij staat en tonen hun maps; de teamgrootte toont de
+de andere lobbyschermen zeggen dat je in een wachtrij staat; de teamgrootte toont de
 grootte waarmee je in de rij staat, in elke modus. Een draaiende ring links van
 **Help** in de bovenste balk laat zien dat je in de rij staat; klik erop voor
 de wachtrij, de gewachte tijd, hoeveel er zoeken en **Uit wachtrij**. Als er

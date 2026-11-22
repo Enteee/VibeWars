@@ -1292,7 +1292,6 @@ export default {
   "teamPlay.noTeamBuilds": "暂无 {size} 队伍配置。",
   "teamPlay.notPlayable": "无法使用：{problem}",
   "teamPlay.openingLobby": "正在打开你的大厅…",
-  "teamPlay.queuedMaps": "此模式的地图",
   "teamPlay.random": "随机",
   "teamPlay.reroll": "重随",
   "teamPlay.unnamedTeam": "未命名队伍",

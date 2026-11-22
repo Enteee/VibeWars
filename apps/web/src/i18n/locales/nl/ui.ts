@@ -1394,7 +1394,6 @@ export default {
   "teamPlay.noTeamBuilds": "Nog geen Teambuilds voor {size}.",
   "teamPlay.notPlayable": "Niet speelbaar: {problem}",
   "teamPlay.openingLobby": "Je lobby openen…",
-  "teamPlay.queuedMaps": "Maps in deze modus",
   "teamPlay.random": "Random",
   "teamPlay.reroll": "Opnieuw",
   "teamPlay.unnamedTeam": "Naamloos team",

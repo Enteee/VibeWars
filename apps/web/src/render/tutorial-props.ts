@@ -1,6 +1,7 @@
-import type { Vec2 } from "@vibewars/game-core";
+import { MINIMAL_GW_INSPIRED_PVP_V1 as RULESET, type Vec2 } from "@vibewars/game-core";
 
-import { lyingPose } from "./lying-pose.js";
+import { mixColour } from "./body-reactions.js";
+import { FOE_COLOUR } from "./colour-wheel.js";
 import type { Point } from "./weapon-mark-geometry.js";
 
 /**
@@ -48,20 +49,16 @@ export type SleeperCommand =
       readonly colour: number;
       readonly alpha: number;
     }
-  /** The lying body: filled in `colour` lit where it lies, edged in a pale `rim`. */
+  /**
+   * The body (#3791): a foe's disc, as the body painter draws every
+   * fighter, lit where it lies; no cape, no weapon mark, no name or bar.
+   */
   | {
       readonly kind: "body";
-      readonly outline: readonly Point[];
-      readonly colour: number;
-      readonly rim: number;
-    }
-  /** The head, a disc at the body's top end, as the body is filled and edged. */
-  | {
-      readonly kind: "head";
       readonly at: Vec2;
       readonly radius: number;
-      readonly colour: number;
-      readonly rim: number;
+      readonly team: "enemy";
+      readonly facing: number;
     }
   /** A "z": three strokes in a box `size` wide, its middle at `at`. */
   | {
@@ -72,16 +69,8 @@ export type SleeperCommand =
       readonly alpha: number;
     };
 
-/** Head to feet, half of it: longer than a fighter's disc is wide, so it reads as a body. */
-export const SLEEPER_RADIUS = 22;
-/** Light stone grey: no team's colour, so it reads as nobody's, and pale on dark rock. */
-export const SLEEPER_GREY = 0xb8b2a6;
-/** The pale edge that lifts body and head off the rock. */
-export const SLEEPER_RIM = 0xeae6dc;
-/** How wide the rim is drawn, in world units. */
-export const SLEEPER_RIM_WIDTH = 2;
-/** The head's radius, against the body's. */
-const HEAD_SCALE = 0.32;
+/** A fighter's disc, as the arena draws every body. */
+export const BODY_RADIUS = RULESET.collision.playerRadius;
 /** The lantern's light: warm, dim, a pool round the feet. */
 export const SLEEPER_GLOW = 0xffb25a;
 const GLOW_RADIUS = 46;
@@ -100,8 +89,8 @@ export const SLEEPER_Z_WIDTH = 2.5;
 
 /**
  * The sleeper at `position` at `seconds` on the scene's clock: the
- * lantern's glow at its feet, the body lying along `facing` with its head
- * at that end, then the z's over the head, each rising `SLEEPER_Z_RISE`
+ * lantern's glow at its back, behind `facing`, its foe's disc, then the
+ * z's over the disc, each rising `SLEEPER_Z_RISE`
  * and fading over `SLEEPER_Z_SECONDS`, staggered by a third. Under reduced
  * motion two z's stand still.
  */
@@ -115,38 +104,28 @@ export function sleeperCommands(
     x: position.x + units * Math.cos(facing),
     y: position.y + units * Math.sin(facing),
   });
-  const headRadius = SLEEPER_RADIUS * HEAD_SCALE;
-  // The body from the feet to the neck; the head beyond it, the two apart.
-  const bodyRadius = SLEEPER_RADIUS - headRadius;
-  const middle = along(-headRadius);
-  const headAt = along(SLEEPER_RADIUS - headRadius);
-  const feet = along(-SLEEPER_RADIUS);
   const glow: SleeperCommand = {
     kind: "glow",
-    at: feet,
+    at: along(-BODY_RADIUS),
     radius: GLOW_RADIUS,
     colour: SLEEPER_GLOW,
     alpha: GLOW_ALPHA,
   };
   const body: SleeperCommand = {
     kind: "body",
-    outline: lyingPose(middle.x, middle.y, bodyRadius, facing).body,
-    colour: SLEEPER_GREY,
-    rim: SLEEPER_RIM,
+    at: position,
+    radius: BODY_RADIUS,
+    team: "enemy",
+    facing,
   };
-  const head: SleeperCommand = {
-    kind: "head",
-    at: headAt,
-    radius: headRadius,
-    colour: SLEEPER_GREY,
-    rim: SLEEPER_RIM,
+  const zFrom = {
+    x: position.x + BODY_RADIUS,
+    y: position.y - BODY_RADIUS - SLEEPER_Z_SIZE / 2,
   };
-  const zFrom = { x: headAt.x + headRadius, y: headAt.y - headRadius - SLEEPER_Z_SIZE / 2 };
   if (reducedMotion) {
     return [
       glow,
       body,
-      head,
       { kind: "z", at: zFrom, size: SLEEPER_Z_SIZE, colour: Z_COLOUR, alpha: 0.9 },
       {
         kind: "z",
@@ -167,7 +146,7 @@ export function sleeperCommands(
       alpha: 1 - age,
     };
   });
-  return [glow, body, head, ...zs];
+  return [glow, body, ...zs];
 }
 
 /** How far through its rise the `k`th z is at `seconds`, 0 to 1. */
@@ -357,8 +336,11 @@ export const MIST_OUTER = 0xe9e2dc;
 export const MIST_CORE = 0xffffff;
 /** How many rings each blur is drawn in, fading outward, so its edge is soft. */
 const MIST_RINGS = 4;
-/** The fight beyond: desaturated, so it reads as far off and as nobody near. */
-export const SILHOUETTE_GREY = 0x8d8a93;
+/**
+ * The fight beyond (#3791): foes' discs in their colour, desaturated
+ * toward the mist's grey, so they read as foes far off and nobody near.
+ */
+export const SILHOUETTE_FOE = mixColour(FOE_COLOUR, 0x8d8a93, 0.6);
 const SILHOUETTE_ALPHA = 0.6;
 /** The silhouettes, from the column's foot: staggered east, behind it, in rows. */
 const SILHOUETTES: readonly Vec2[] = [
@@ -368,9 +350,6 @@ const SILHOUETTES: readonly Vec2[] = [
   { x: 105, y: -15 },
   { x: 120, y: 40 },
 ];
-/** A silhouette's body and head, as a fighter's are wide. */
-const SILHOUETTE_BODY = 15;
-const SILHOUETTE_HEAD = 8;
 /** How many wisps swirl in the column, and how long one takes to go round. */
 export const MIST_WISPS = 3;
 export const MIST_SWIRL_SECONDS = 6;
@@ -386,31 +365,12 @@ export function mistGateCommands(
   seconds: number,
   reducedMotion: boolean,
 ): readonly MistGateCommand[] {
-  const silhouettes = SILHOUETTES.flatMap(({ x, y }): MistGateCommand[] => {
-    const foot = { x: position.x + x, y: position.y + y };
-    const head = { x: foot.x, y: foot.y - SILHOUETTE_BODY * 2 - SILHOUETTE_HEAD };
-    return [
-      {
-        kind: "shape",
-        outline: arc(
-          { x: foot.x, y: foot.y - SILHOUETTE_BODY },
-          SILHOUETTE_BODY * 0.7,
-          1 / 0.7,
-          0,
-          2 * Math.PI,
-          16,
-        ),
-        colour: SILHOUETTE_GREY,
-        alpha: SILHOUETTE_ALPHA,
-      },
-      {
-        kind: "shape",
-        outline: arc(head, SILHOUETTE_HEAD, 1, 0, 2 * Math.PI, 12),
-        colour: SILHOUETTE_GREY,
-        alpha: SILHOUETTE_ALPHA,
-      },
-    ];
-  });
+  const silhouettes = SILHOUETTES.map(({ x, y }): MistGateCommand => ({
+    kind: "shape",
+    outline: arc({ x: position.x + x, y: position.y + y }, BODY_RADIUS, 1, 0, 2 * Math.PI, 24),
+    colour: SILHOUETTE_FOE,
+    alpha: SILHOUETTE_ALPHA,
+  }));
   const middle = { x: position.x, y: position.y - MIST_HEIGHT / 2 };
   const blur = (colour: number, scale: number, alpha: number): MistGateCommand[] =>
     Array.from({ length: MIST_RINGS }, (_, k): MistGateCommand => {

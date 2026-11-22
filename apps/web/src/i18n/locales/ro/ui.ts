@@ -1468,7 +1468,6 @@ export default {
   "teamPlay.noTeamBuilds": "Niciun build de echipă de {size} încă.",
   "teamPlay.notPlayable": "Nu se poate juca: {problem}",
   "teamPlay.openingLobby": "Se deschide lobby-ul tău…",
-  "teamPlay.queuedMaps": "Hărți în acest mod",
   "teamPlay.random": "Aleator",
   "teamPlay.reroll": "Altul",
   "teamPlay.unnamedTeam": "Echipă fără nume",

@@ -1388,7 +1388,6 @@ export default {
   "teamPlay.noTeamBuilds": "هنوز بیلد تیمی {size} نفره‌ای نیست.",
   "teamPlay.notPlayable": "قابل بازی نیست: {problem}",
   "teamPlay.openingLobby": "در حال باز کردن لابی…",
-  "teamPlay.queuedMaps": "نقشه‌های این حالت",
   "teamPlay.random": "تصادفی",
   "teamPlay.reroll": "تعویض",
   "teamPlay.unnamedTeam": "تیم بی‌نام",

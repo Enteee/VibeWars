@@ -292,7 +292,6 @@ import {
 } from "./body-reactions.js";
 import { lyingPose } from "./lying-pose.js";
 import {
-  SLEEPER_RIM_WIDTH,
   SLEEPER_Z_WIDTH,
   mistGateCommands,
   parasolCommands,
@@ -437,6 +436,7 @@ import {
   BODY_EDGE_WIDTH,
   SELF_RIM,
   formAuraBreath,
+  paintBodyDisc,
   paintBodyMarks,
   paintFormAura,
   paintStandingBody,
@@ -2315,23 +2315,18 @@ export class ArenaScene extends Phaser.Scene {
             g.fillCircle(command.at.x, command.at.y, command.radius / 2);
             break;
           case "body":
-            g.fillStyle(
-              tint === undefined ? command.colour : multiplyColour(command.colour, tint),
-              1,
-            );
-            tracePath(g, command.outline);
-            g.fillPath();
-            g.lineStyle(SLEEPER_RIM_WIDTH, command.rim, 1);
-            g.strokePath();
-            break;
-          case "head":
-            g.fillStyle(
-              tint === undefined ? command.colour : multiplyColour(command.colour, tint),
-              1,
-            );
-            g.fillCircle(command.at.x, command.at.y, command.radius);
-            g.lineStyle(SLEEPER_RIM_WIDTH, command.rim, 1);
-            g.strokeCircle(command.at.x, command.at.y, command.radius);
+            paintBodyDisc(phaserPainter(g), {
+              x: command.at.x,
+              y: command.at.y,
+              r: command.radius,
+              facing: command.facing,
+              team: command.team,
+              weaponId: undefined,
+              offhandId: undefined,
+              frame: REST_FRAME,
+              cape: undefined,
+              tint,
+            });
             break;
           case "z": {
             const { at, size } = command;
