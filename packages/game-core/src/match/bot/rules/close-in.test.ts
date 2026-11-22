@@ -4,7 +4,7 @@ import { distance, vec2, type Vec2 } from "../../../vec2.js";
 import { createCursor, type BehaviourCursor } from "../../behaviour.js";
 import type { Participant } from "../../simulation.js";
 import closeIn, { REPRICE_SECONDS } from "./close-in.js";
-import { WALK_CANDIDATES } from "./shared.js";
+import { REGROUP_JOINED, REGROUP_SPREAD, WALK_CANDIDATES } from "./shared.js";
 import { body, match, ruleFor } from "./test-support.js";
 
 /** The bot at (100,400) on the ground, layer 1; foes far beyond reach to the east, each on its layer. */
@@ -133,5 +133,57 @@ describe("close-in: a bot walks to the foe nearest to walk to (#3353)", () => {
       tunnel,
     );
     expect(priced).toBe(2);
+  });
+});
+
+describe("close-in under a hold plan (#3831)", () => {
+  // Team 0 starts round (100,500), team 1 round (1100,500): the hold
+  // point is 35% of the way, at (450,500).
+  const centre = vec2(450, 500);
+  const sim = match([
+    body("bot", 0, vec2(100, 400)),
+    body("mate", 0, vec2(100, 600)),
+    body("foe-a", 1, vec2(1100, 400)),
+    body("foe-b", 1, vec2(1100, 600)),
+  ]);
+
+  it("walks to its spot by the hold point, on its spawn's layer", () => {
+    const intent = closeIn.decide(ruleFor(sim, "bot", { plan: "hold" }));
+    expect(intent?.moveToLayer).toBe(0);
+    expect(distance(intent?.moveTo ?? vec2(0, 0), centre)).toBeLessThanOrEqual(
+      REGROUP_SPREAD / 4 + 1e-9,
+    );
+  });
+
+  it("puts each bot of the team on its own spot", () => {
+    const one = closeIn.decide(ruleFor(sim, "bot", { plan: "hold" }))?.moveTo;
+    const other = closeIn.decide(ruleFor(sim, "mate", { plan: "hold" }))?.moveTo;
+    expect(one).not.toEqual(other);
+  });
+
+  it("stands once within REGROUP_JOINED of the hold point", () => {
+    const base = ruleFor(sim, "bot");
+    const near = { ...base.self, position: vec2(450 - REGROUP_JOINED + 1, 500) };
+    const intent = closeIn.decide(ruleFor(sim, "bot", { plan: "hold", self: near }));
+    expect(intent).toBeDefined();
+    expect(intent?.moveTo).toBeUndefined();
+  });
+
+  it("walks at the foes as ever under push", () => {
+    expect(closeIn.decide(ruleFor(sim, "bot", { plan: "push" }))?.moveTo).toEqual(vec2(1100, 400));
+  });
+
+  it("pushes on a team of one", () => {
+    const alone = match([body("bot", 0, vec2(100, 400)), body("foe", 1, vec2(1100, 400))]);
+    expect(closeIn.decide(ruleFor(alone, "bot", { plan: "hold" }))?.moveTo).toEqual(
+      vec2(1100, 400),
+    );
+  });
+
+  it("pushes where it has no route to the hold point", () => {
+    const walk = (to: Vec2): number =>
+      distance(to, centre) <= REGROUP_SPREAD ? Number.POSITIVE_INFINITY : 1;
+    const intent = closeIn.decide(ruleFor(sim, "bot", { plan: "hold" }, { routeLength: walk }));
+    expect(intent?.moveTo).toEqual(vec2(1100, 400));
   });
 });

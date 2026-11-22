@@ -377,6 +377,8 @@ describe("auto-attack", () => {
         highGround: [],
         cover: [],
         routeLength: () => 0,
+        teamSpawn: () => undefined,
+        standableNear: (point) => point,
         leverHolder: () => undefined,
       },
     );
@@ -451,6 +453,8 @@ describe("follow-and-attack (#467)", () => {
       highGround: [],
       cover: [],
       routeLength: () => 0,
+      teamSpawn: () => undefined,
+      standableNear: (point) => point,
       leverHolder: () => undefined,
     });
   }

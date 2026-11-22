@@ -5,6 +5,7 @@ import type { StatusId } from "../skills/status.js";
 import { effectiveMaxHealth } from "../skills/tick.js";
 import { distance, dot, normalize, sub, vec2, ZERO, type Vec2 } from "../vec2.js";
 import { guard, playBuild } from "./bot/play-build.js";
+import type { HoldPlace } from "./bot/plan.js";
 import type { BreakableField } from "./breakables.js";
 import type { CapturePoint } from "./capture-points.js";
 import { atObjective } from "./layer-rules.js";
@@ -272,6 +273,11 @@ export interface BehaviourCursor {
   readonly foeReach: Map<string, number>;
   /** `play-build`: the foe close-in priced a walk to, and the match second it did (#3353). */
   walkFoe: { readonly id: string; readonly pricedAt: number } | undefined;
+  /**
+   * `play-build`: its team's hold point against foe team `foeTeam` (#3831),
+   * placed once; `at` is `undefined` where it cannot hold there.
+   */
+  holdPoint: { readonly foeTeam: number; readonly at: HoldPlace | undefined } | undefined;
   /** `play-build`: its health fraction at each think of the last `HEALTH_MARK_SECONDS` (#3369), oldest first. */
   readonly healthMarks: { readonly at: number; readonly health: number }[];
   /**
@@ -359,6 +365,14 @@ export interface BehaviourContext {
   readonly cover: readonly HighGroundSpot[];
   /** How far `self` walks to `to` on `layer` (#3141), stairs and ramps included: Infinity with no route. */
   routeLength(to: Vec2, layer: number): number;
+  /**
+   * Where `team`'s players and bots start (#3831), on average, on the layer
+   * its first starts on, and how many there are: map knowledge, never where
+   * anyone stands now. `undefined` for a team with none.
+   */
+  teamSpawn(team: number): TeamSpawn | undefined;
+  /** The spot nearest `point` on `layer` a body fits on (#3831). */
+  standableNear(point: Vec2, layer: number): Vec2;
   /** The living bot of `self`'s team, `self` included, set on throwing lever `targetId` (#3532), if any. */
   leverHolder(targetId: string): string | undefined;
 }
@@ -369,6 +383,13 @@ export const HUMAN_IDLE_SECONDS = 10;
 /** Whether a human whose last command was at `lastCommandAt`, if ever, is idle at match second `now` (#3489). */
 export function idleAt(lastCommandAt: number | undefined, now: number): boolean {
   return lastCommandAt === undefined || now - lastCommandAt >= HUMAN_IDLE_SECONDS;
+}
+
+/** Where a team starts (#3831), as `BehaviourContext.teamSpawn` tells it. */
+export interface TeamSpawn {
+  readonly point: Vec2;
+  readonly layer: number;
+  readonly members: number;
 }
 
 /** A spot a bot may stand on above the ground (#3141). */
@@ -472,6 +493,7 @@ export function createCursor(): BehaviourCursor {
     thinks: 0,
     foeReach: new Map(),
     walkFoe: undefined,
+    holdPoint: undefined,
     healthMarks: [],
     duck: undefined,
     duckReadyAt: 0,
