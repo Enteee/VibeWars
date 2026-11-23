@@ -26,7 +26,7 @@ Postava, které se změnila pravidla hry pod rukama, má červené pruhy a nápi
 
 Nevíš, co si vzít? Náhodná startovní postava je označená **Náhodné** a má čárkovaný obrys. **Přehodit** ti na ní dá nový náhodný build na vyzkoušení. Náhodné buildy jsou dobře hodnocené PvP buildy z [PvX wiki](https://gwpvx.fandom.com/), pojmenované stejně jako na wiki a s uvedením povolání: "Gust (E/Me)".
 
-**Tvůrce týmů** také začíná náhodným Týmovým buildem, hotovým týmem pro Týmové lobby v každé velikosti, 2v2, 4v4 a 8v8, označeným stejně a vždy posledním. Tvůrce týmů uvádí Týmové buildy podle **Velikosti týmu** v postranním panelu, takže zobrazený náhodný build má velikost, kterou tam máš vybranou. **Přehodit** na jeho místo dá jiný hotový tým. Hotové týmy jsou dobře hodnocené PvP týmové buildy z PvX wiki; velikost, pro kterou PvX žádný nemá, dostane poskládané sólové buildy z PvX. **Klonovat** uloží kopii zobrazeného týmu jako tvůj vlastní Týmový build a otevře ji, abys ji mohl upravit podle sebe.
+**Tvůrce týmů** také začíná náhodným Týmovým buildem, hotovým týmem pro Týmové lobby v každé velikosti, 2v2, 4v4 a 8v8, označeným stejně a vždy posledním. Tvůrce týmů uvádí Týmové buildy podle **Velikosti týmu** v postranním panelu, takže zobrazený náhodný build má velikost, kterou tam máš vybranou. **Přehodit** na jeho místo dá jiný hotový tým. Hotové týmy jsou dobře hodnocené PvP týmové buildy z PvX wiki; velikost, pro kterou PvX žádný nemá, dostane poskládané sólové buildy z PvX. **Klonovat** uloží kopii zobrazeného týmu jako tvůj vlastní Týmový build a otevře ji, abys ji mohl upravit podle sebe. Velikost Týmového buildu změníš v jeho editoru: menší velikost odebere poslední členy, větší přidá prázdné.
 
 ## Zahraj si Náhodnou arénu
 
@@ -34,7 +34,9 @@ Nejrychlejší cesta do boje. V **Náhodné aréně** klikni na kartu postavy, z
 
 Po konci zápasu můžeš **Znovu do fronty**, nebo **Zůstat spolu** s týmem, se kterým jsi právě hrál.
 
-Vedle skóre vyprávějí dva grafy průběh zápasu v čase. **Ty** kreslí tvé způsobené poškození, přijaté poškození, léčení a Energii; **Týmy** kreslí zásobu zdraví každého týmu nad jeho celkovým poškozením. Značky pod časovou osou ukazují zabití, smrti, přerušení, obsazení a oživení: najeď na jednu, nebo na ni přejdi klávesou Tab, a přečteš si, co se stalo. Stiskem položky legendy skryješ nebo zobrazíš její čáru. Na telefonu jsou grafy pod skóre, které ukazuje tebe a dva další, dokud nestiskneš **Zobrazit vše**.
+Každý zápas končí svým skóre, ať z fronty, založený, nebo v lobby, a vedle něj vyprávějí dva grafy průběh zápasu v čase; obrazovka fronty je po zápase z fronty ukáže znovu. **Ty** kreslí tvé způsobené poškození, přijaté poškození, léčení a Energii; **Týmy** kreslí zásobu zdraví každého týmu nad jeho celkovým poškozením. Značky pod časovou osou ukazují zabití, smrti, přerušení, obsazení a oživení: najeď na jednu, nebo na ni přejdi klávesou Tab, a přečteš si, co se stalo. Stiskem položky legendy skryješ nebo zobrazíš její čáru. Na telefonu jsou grafy pod skóre, které ukazuje tebe a dva další, dokud nestiskneš **Zobrazit vše**.
+
+**Historie zápasů** v horní liště ukazuje tvých posledních 50 zápasů, nejnovější první: otevři jeden a znovu uvidíš jeho skóre a grafy. Uchovávají se jen v tomto prohlížeči. **Moje zápasy** ukáže jen ty odehrané s tvým současným hráčským klíčem.
 
 ## Založ zápas nebo se připoj
 

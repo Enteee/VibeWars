@@ -61,6 +61,8 @@ fertiges Team an seine Stelle. Die fertigen Teams sind die gut bewerteten
 PvP-Team-Builds des PvX-Wikis; für eine Größe, die PvX nicht hat, werden PvX-Solo-Builds
 zusammengestellt. **Klonen** speichert eine Kopie des angezeigten Teams als deinen
 eigenen Team-Build und öffnet sie, damit du sie nach Belieben ändern kannst.
+Die Größe eines Team-Builds änderst du in seinem Editor: Eine kleinere Größe entfernt
+die letzten Mitglieder, eine größere fügt leere hinzu.
 
 ## Eine Zufallsarena spielen
 
@@ -83,7 +85,10 @@ sofort aus der Warteschlange.
 Wenn das Match endet, kannst du **Nochmal** wählen oder mit dem Team von eben
 **Zusammenbleiben**.
 
-Neben den Punkten erzählen zwei Diagramme das Match im Zeitverlauf. **Du**
+Jedes Match endet auf seinen Punkten, ob aus der Warteschlange, gehostet oder
+in einer Lobby, und neben ihnen erzählen zwei Diagramme das Match im
+Zeitverlauf; der Warteschlangen-Bildschirm zeigt sie nach einem Match aus der
+Warteschlange noch einmal. **Du**
 zeigt deinen verursachten Schaden, erlittenen Schaden, deine Heilung und
 Energie; **Teams** zeigt den Lebenspool jedes Teams über seinem Gesamtschaden.
 Markierungen unter der Zeitachse zeigen Kills, Tode, Unterbrechungen,
@@ -91,6 +96,8 @@ Eroberungen und Wiederbelebungen: Zeig auf eine oder spring mit Tab zu ihr, um
 zu lesen, was passiert ist. Drück auf einen Legendeneintrag, um seine Linie
 aus- oder einzublenden. Auf dem Handy stehen die Diagramme unter den Punkten,
 die dich und zwei andere zeigen, bis du **Alle zeigen** drückst.
+
+**Spielverlauf** in der oberen Leiste listet deine letzten 50 Matches, die neuesten zuerst: Öffne eines, um seine Punkte und Diagramme noch einmal zu sehen. Sie bleiben nur in diesem Browser. **Meine Spiele** zeigt nur die, die du mit deinem aktuellen Spielerschlüssel gespielt hast.
 
 ## Match hosten oder beitreten
 

@@ -34,9 +34,12 @@ pot ajunge mai puțini inamici și folosesc coloanele drept acoperire. O echipă
 întoarce spre orice inamic la îndemână care scade sub 60% din viață, ca să-l
 termine. În Regele dealului, cât timp echipa ta nu deține altarul, Eroul
 Fantomatic al celeilalte echipe de pe altar are prioritate chiar și față de asta.
-Un bot care ajunge mult înaintea echipei îi așteaptă pe ceilalți înainte să
-înainteze, în afară de cazul în care ceilalți sunt jucători care stau inactivi
-de ceva vreme.
+Într-o echipă de boți, un bot care ajunge mult înaintea echipei îi așteaptă pe
+ceilalți înainte să înainteze. Boții din echipa ta rămân în schimb cu tine: cei
+de primă linie cu un pas înainte, cei la distanță lângă tine, vindecătorii în
+spate, și te urmează oriunde mergi. După ce ai stat inactiv de ceva vreme, joacă
+mai departe așa cum ar juca o echipă de boți.
+Cât timp ești activ, un bot pe care o luptă l-a tras departe de tine se întoarce la tine, în afară de cazul în care e grav rănit sau are un inamic chiar lângă el.
 
 Arcașii și lăncierii ocupă înălțimile când e sigur.
 Un bot asupra căruia se concentrează doi adversari, sau care are sub jumătate din viață și o pierde repede, se ascunde din vederea lor până la trei secunde: după un zid, sub o platformă sau pe înălțimi.

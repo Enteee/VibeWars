@@ -161,9 +161,18 @@ sostiene las armas del set que estás viendo, con sus mods.
 | Runa de atributo Superior                                                                                                                                                                                                                                                                                      | +3 a un atributo, -75 de salud              |
 | ![Vigor](../../../apps/web/public/icons/rune/vigor.svg) **Vigor**                                                                                                                                                                                                                                              | más salud (+30, +41 o +50)                  |
 | ![Vitae](../../../apps/web/public/icons/rune/vitae.svg) **Vitae**                                                                                                                                                                                                                                              | +10 de salud                                |
-| ![Attunement](../../../apps/web/public/icons/rune/attunement.svg) **Attunement**                                                                                                                                                                                                                               | más energía (+3, +6 o +9)                   |
+| ![Attunement](../../../apps/web/public/icons/rune/attunement.svg) **Attunement**                                                                                                                                                                                                                               | más energía (+2)                            |
 | ![Clarity](../../../apps/web/public/icons/rune/clarity.svg) **Clarity**, ![Purity](../../../apps/web/public/icons/rune/purity.svg) **Purity**, ![Recovery](../../../apps/web/public/icons/rune/recovery.svg) **Recovery**, ![Restoration](../../../apps/web/public/icons/rune/restoration.svg) **Restoration** | dos condiciones duran un 20% menos cada una |
 | ![Absorption](../../../apps/web/public/icons/rune/absorption.svg) **Absorption** (![Guerrero](../../../apps/web/public/icons/profession/warrior.svg) **Guerrero**)                                                                                                                                             | menos daño físico de cada golpe             |
+
+Vitae y Attunement se suman: cinco runas de Attunement dan +10 de
+energía. Cualquier otra runa cuenta una vez, lleves las que lleves. Las
+reducciones de condiciones de distintas fuentes también se suman, cada
+una calculada sobre la duración completa y redondeada a un segundo
+entero: Restoration y "Fear Cuts Deeper" dejan un Sangrado de 8 segundos
+en 4.
+
+El editor no guarda dos piezas con la misma runa, ni con runas del mismo atributo: solo contaría la bonificación más fuerte, pero todas las penalizaciones de salud sí. Señala la salud en el editor para ver de dónde sale la tuya: base, runas, insignias y mejoras.
 
 La runa de una pieza se elige en el mismo sitio que su insignia: haz clic en
 la pieza de la figura.

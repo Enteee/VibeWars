@@ -63,6 +63,8 @@ och alltid sist. Lagbyggare listar lagbuildsen för sidopanelens
 är PvX-wikins välbetygade PvP-lagbuilds; en storlek som PvX saknar får
 PvX-solobuilds ihopsatta. **Klona** sparar en kopia av det visade laget
 som din egen lagbuild och öppnar den, så att du kan ändra den som du vill.
+En lagbuilds storlek ändras i dess redigerare: en mindre storlek tar bort de
+sista medlemmarna, en större lägger till tomma.
 
 ## Spela en Slumparena
 
@@ -85,13 +87,17 @@ direkt.
 När matchen är slut kan du **Köa igen**, eller **Håll ihop** med laget
 du just spelade med.
 
-Bredvid poängen berättar två diagram matchen över tid. **Du** ritar din
+Varje match slutar på sina poäng, från kön, med värd eller i en lobby, och
+bredvid dem berättar två diagram matchen över tid; köskärmen visar dem igen
+efter en match från kön. **Du** ritar din
 utdelade skada, mottagna skada, helning och Energi; **Lag** ritar varje lags
 hälsopool ovanför dess totala skada. Markeringar under tidsaxeln visar
 dödanden, dödsfall, avbrott, erövringar och återupplivningar: peka på en, eller
 gå till den med Tab, för att läsa vad som hände. Tryck på en post i
 förklaringen för att dölja eller visa dess linje. På en telefon ligger
 diagrammen under poängen, som visar dig och två andra tills **Visa alla**.
+
+**Matchhistorik** i toppfältet visar dina senaste 50 matcher, nyaste först: öppna en för att se dess poäng och diagram igen. De sparas bara i den här webbläsaren. **Mina matcher** visar bara de du spelat med din nuvarande spelarnyckel.
 
 ## Var värd för eller gå med i en match
 

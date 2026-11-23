@@ -149,6 +149,8 @@ ešte nemá, príde ako prázdna pozícia. Build je tvoj, keď stlačíš
 **Esc** odíde bez uloženia, a ak si niečo zmenil, najprv sa opýta.
 **Zdieľať**, **Načítať kód GW1**, **Duplikovať** a **Zmazať** sú pod **⋯**.
 
+Build s problémom nemožno uložiť a tréningová oblasť s ním nezačne. Ak sa taký build aj tak dostane do zápasu, hráš tam so štartovacím buildom a správa povie prečo.
+
 Tímový kód sa namiesto toho načítava v **Tvorba tímov**: vlož ho tam kamkoľvek,
 alebo otvor tímový build a použi jeho **⋯** → **Načítať tím**.
 
@@ -172,11 +174,17 @@ s prázdnou postavou na každom mieste. Člena nikdy nepridávaš ani neodoberá
 nahrádzaš ho. Každý riadok ukazuje postavu člena so zbraňami, ktoré
 drží, bodku za každú sadu zbraní, ak ich má viac než jednu, jej
 maximálne zdravie a energiu a jej osem schopností; riadok môžeš presunúť
-ťahaním za jeho ⠿. Panel vpravo je knižnica Tvorby postáv,
+ťahaním za jeho ⠿. Ak pri položení riadka na iného člena podržíš
+**Shift**, namiesto toho skopíruješ celý jeho build na tohto člena; riadok, ktorý si
+potiahol, zostane taký, aký bol.
+Panel vpravo je knižnica Tvorby postáv,
 so záložkou **Moje postavy** pred **Schopnosti** a **Výbava**. Na záložke **Moje postavy** pretiahni
 jednu zo svojich postáv na člena, aby sa z neho stala jej kópia.
 Kópia patrí tímu: jej zmena ani zmena postavy, z ktorej vznikla,
-druhú neovplyvní. Na záložke **Schopnosti** knižnica ukazuje
+druhú neovplyvní. Naopak, pretiahni člena na **Moje postavy** alebo na
+ich záložku a uložíš ho ako svoju novú postavu; ak je jeho meno obsadené,
+dostane " (copy)", a tím si člena ponechá taký, aký je.
+Na záložke **Schopnosti** knižnica ukazuje
 schopnosti člena, na ktorého si klikol naposledy; pretiahni jednu na pozíciu
 ktoréhokoľvek člena, aby si ju tam vybavil. Na vlastnej lište toho člena sa
 schopnosť, ktorá už na nej je, presunie na danú pozíciu. Položenie, ktoré člen
@@ -196,7 +204,7 @@ schopnosť na tú pozíciu; ak žiadna nie je vybraná, ide na prvú prázdnu.
 nejaký otvorený: kliknutím ho vybavíš alebo ho pretiahni na jeho ruky.
 Naraz je otvorený jeden člen; **Esc** ho zatvorí. Nové povolanie zahodí
 schopnosti a hodnosti, ktoré nemôže použiť, s voľbou **Späť**.
-Stlačením mena člena alebo **Otvoriť na obrazovke postavy** ho upravíš v
+Stlačením mena člena alebo jeho tlačidla **✎** ho upravíš v
 editore buildov;
 jeho **Uložiť** ho vráti do tímu a vlastné **Uložiť** tímu uloží všetko
 a vráti ťa do **Tvorba tímov**. **Esc** odíde
@@ -209,3 +217,9 @@ bez názvu sa zobrazuje ako **Tím bez názvu**.
 Tvoje prvé spustenie vylosuje jeden hotový tím vo vybranej veľkosti, 4v4, ak si ju
 nezmenil, označený **Náhodná**: jeho
 **Znova** dosadí iný a **Klonovať** ti dá kópiu na úpravu.
+Každý tímový build má veľkosť, 2v2, 4v4 alebo 8v8 (tímové buildy 1v1 neexistujú): **Veľkosť tímu** v
+bočnej lište. **Tvorba tímov** zobrazuje tímové buildy veľkosti, ktorá je tam
+vybraná, a **Nový tímový build** vytvorí jeden tej veľkosti. **Veľkosť tímu** v
+jeho editore ju mení: menšia veľkosť odoberie posledných členov, väčšia pridá
+prázdnych a Uložiť prepne bočnú lištu na veľkosť, s akou bol uložený. Vložený
+tím si ponechá svoju veľkosť a bočná lišta sa naň prepne.

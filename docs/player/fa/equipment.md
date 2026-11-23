@@ -157,9 +157,17 @@
 | رون ویژگی برتر                                                                                                                                                                                                                                                                                                 | +3 به یک ویژگی، -75 سلامتی                |
 | ![Vigor](../../../apps/web/public/icons/rune/vigor.svg) **Vigor**                                                                                                                                                                                                                                              | سلامتی بیشتر (+30، +41 یا +50)            |
 | ![Vitae](../../../apps/web/public/icons/rune/vitae.svg) **Vitae**                                                                                                                                                                                                                                              | +10 سلامتی                                |
-| ![Attunement](../../../apps/web/public/icons/rune/attunement.svg) **Attunement**                                                                                                                                                                                                                               | انرژی بیشتر (+3، +6 یا +9)                |
+| ![Attunement](../../../apps/web/public/icons/rune/attunement.svg) **Attunement**                                                                                                                                                                                                                               | انرژی بیشتر (+2)                          |
 | ![Clarity](../../../apps/web/public/icons/rune/clarity.svg) **Clarity**, ![Purity](../../../apps/web/public/icons/rune/purity.svg) **Purity**, ![Recovery](../../../apps/web/public/icons/rune/recovery.svg) **Recovery**, ![Restoration](../../../apps/web/public/icons/rune/restoration.svg) **Restoration** | هر کدام دو عارضه را 20% زودتر تمام می کند |
 | ![Absorption](../../../apps/web/public/icons/rune/absorption.svg) **Absorption** (![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior**)                                                                                                                                               | آسیب فیزیکی کمتر از هر ضربه               |
+
+Vitae و Attunement با هم جمع می‌شوند: پنج رون Attunement، +10 انرژی
+می‌دهند. هر رون دیگری فقط یک بار حساب می‌شود، هر چند تا که بپوشی. کوتاه
+شدن عارضه‌ها از منابع مختلف هم جمع می‌شود، هر کدام از مدت کامل کم می‌شود
+و به ثانیهٔ کامل گرد می‌شود: Restoration و "Fear Cuts Deeper" یک
+Bleeding هشت ثانیه‌ای را به 4 ثانیه می‌رسانند.
+
+ویرایشگر دو قطعه با رون یکسان، یا با رون‌های یک ویژگی را ذخیره نمی‌کند: فقط قوی‌ترین پاداش حساب می‌شد، در حالی که همهٔ جریمه‌های سلامتی حساب می‌شدند. در ویرایشگر به سلامتی اشاره کنید تا ببینید از کجا می‌آید: پایه، رون‌ها، نشان‌ها و ارتقاها.
 
 رون یک تکه را در همان جایی انتخاب می‌کنی که نشانش را: روی تکه در پیکره کلیک
 کن.

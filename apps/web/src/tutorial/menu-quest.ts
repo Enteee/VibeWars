@@ -24,6 +24,10 @@ export type MenuQuestScreen =
 /** Something the menu did that an objective may be waiting for. */
 export type MenuQuestEvent =
   | { readonly kind: "screen-shown"; readonly screen: MenuQuestScreen }
+  /** The Characters screen drawn (#3786): whether the rolled Random character is on it. */
+  | { readonly kind: "roster-shown"; readonly random: boolean }
+  /** The build editor opened on a character never saved: New character (#3786). */
+  | { readonly kind: "character-new" }
   /** One edit in the build editor (#3541): the draft before it, and after. */
   | {
       readonly kind: "build-draft";
@@ -47,6 +51,8 @@ export type MenuQuestEvent =
     }
   | { readonly kind: "team-saved"; readonly team: StoredTeam; readonly isNew: boolean }
   | { readonly kind: "team-size"; readonly size: number }
+  /** Team Builder's sidebar size (#3794): stored at the quest's start, then each step. */
+  | { readonly kind: "team-build-size"; readonly size: number }
   | {
       readonly kind: "team-picked";
       readonly teamId: string;
@@ -76,6 +82,10 @@ export interface MenuQuestState {
   readonly screen: MenuQuestScreen | undefined;
   readonly screensShown: readonly MenuQuestScreen[];
   readonly buildChanged: BuildChanges;
+  /** Whether the Characters screen, as last drawn, shows a Random character (#3786). */
+  readonly rosterRandom: boolean | undefined;
+  /** Whether New character was ever pressed (#3786). */
+  readonly newCharacterOpened: boolean;
   readonly charactersSaved: readonly {
     readonly before: StoredCharacter | undefined;
     readonly after: StoredCharacter;
@@ -88,6 +98,8 @@ export interface MenuQuestState {
   /** The team the quest had saved (#3542), for the modes step to pick. */
   readonly questTeamId: string | undefined;
   readonly teamSize: number | undefined;
+  /** Team Builder's sidebar size, as last reported (#3794). */
+  readonly teamBuildSize: number | undefined;
   readonly teamPicked: { readonly teamId: string; readonly offered: readonly string[] } | undefined;
   /** Whether a member's build was ever opened from the team editor (#3785). */
   readonly memberBuildOpened: boolean;
@@ -226,14 +238,37 @@ export const MENU_QUEST_STEPS = [
     beats: [
       {
         kind: "do",
-        // The Characters entry, then, on its screen, the character to open.
-        target: (state) => (state.screen === "characters" ? "character-open" : "rail-characters"),
+        target: "rail-characters",
         line: "tutorial.menu.spec.open",
         objectives: [
           {
             id: "open",
             label: "tutorial.menu.spec.openDone",
-            done: (state) => state.screensShown.includes("character-builder"),
+            // Drawn, so the next beat knows whether there is a Random
+            // character; or already left through New character.
+            done: (state) =>
+              (state.screen === "characters" && state.rosterRandom !== undefined) ||
+              state.newCharacterOpened,
+          },
+        ],
+      },
+      {
+        // The rolled character cannot be opened (#1147): said, not asked.
+        // Skipped with none on the roster, or once New character is pressed.
+        kind: "explain",
+        target: "character-random",
+        line: "tutorial.menu.spec.random",
+        passed: (state) => state.rosterRandom === false || state.newCharacterOpened,
+      },
+      {
+        kind: "do",
+        target: "character-new",
+        line: "tutorial.menu.spec.new",
+        objectives: [
+          {
+            id: "new",
+            label: "tutorial.menu.spec.newDone",
+            done: (state) => state.newCharacterOpened,
           },
         ],
       },
@@ -331,7 +366,23 @@ export const MENU_QUEST_STEPS = [
       },
       {
         kind: "do",
-        // The sidebar's size and New team build: a new team takes that size.
+        // A new team takes the sidebar's size: 2v2 first (#3794).
+        target: "team-build-size",
+        line: "tutorial.menu.team.size",
+        objectives: [
+          {
+            id: "size",
+            label: "tutorial.menu.team.sizeDone",
+            // A new draft of two, stepped there in its editor, is past it too.
+            done: (state) =>
+              state.teamBuildSize === 2 ||
+              (state.teamDraft?.isNew === true && state.teamDraft.team.size === 2),
+          },
+        ],
+      },
+      {
+        kind: "do",
+        // Only the New team build card: a 4v4 draft stepped to 2v2 counts too.
         target: "team-new",
         line: "tutorial.menu.team.new",
         objectives: [
@@ -493,12 +544,15 @@ export const NO_MENU_QUEST_EVENTS: MenuQuestState = {
     weapons: false,
     gear: false,
   },
+  rosterRandom: undefined,
+  newCharacterOpened: false,
   charactersSaved: [],
   teamDraft: undefined,
   characterInTeam: false,
   teamsSaved: [],
   questTeamId: undefined,
   teamSize: undefined,
+  teamBuildSize: undefined,
   teamPicked: undefined,
   memberBuildOpened: false,
   voteEnded: false,
@@ -586,6 +640,10 @@ export function foldMenuQuestEvent(state: MenuQuestState, event: MenuQuestEvent)
           ? state.screensShown
           : [...state.screensShown, event.screen],
       };
+    case "roster-shown":
+      return { ...state, rosterRandom: event.random };
+    case "character-new":
+      return { ...state, newCharacterOpened: true };
     case "build-draft":
       return {
         ...state,
@@ -616,6 +674,8 @@ export function foldMenuQuestEvent(state: MenuQuestState, event: MenuQuestEvent)
       };
     case "team-size":
       return { ...state, teamSize: event.size };
+    case "team-build-size":
+      return { ...state, teamBuildSize: event.size };
     case "team-picked":
       return { ...state, teamPicked: { teamId: event.teamId, offered: event.offered } };
     case "vote-ended":

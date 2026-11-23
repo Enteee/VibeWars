@@ -64,6 +64,8 @@ export interface TeamPlayCallbacks {
   readonly onRerollTeam: (id: string) => void;
   /** A team code was pasted on the screen (#577) or loaded with Load team (#3181). */
   readonly onLoadTeam: (team: StoredTeam) => void;
+  /** Team Builder's sidebar size changed (#3794), for the menu quest. */
+  readonly onTeamBuildSize: (size: TeamBuildSize) => void;
   /** Leave Queue on a lobby's screen, while in the Random Arena queue (#2781). */
 }
 
@@ -232,6 +234,7 @@ function teamBuilderBody(
     const next = teamCards(teams, size, callbacks);
     section.replaceWith(next);
     section = next;
+    callbacks.onTeamBuildSize(size);
   });
 
   // A team code pasted here opens that team (#577); a single build code

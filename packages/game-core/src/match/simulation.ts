@@ -27,8 +27,10 @@ import {
   AREA_EARSHOT,
   RANGE_COMPASS,
   RANGE_NATURE_RITUAL,
+  RANGE_SPELL,
   RANGE_SPIRIT,
   SHADOW_STEP_AWAY_DISTANCE,
+  SPAWN_BUBBLE_RADIUS,
 } from "../distances.js";
 import {
   addPoint,
@@ -58,7 +60,12 @@ import {
   type TeamCount,
   type TeamStanding,
 } from "../match-rules.js";
-import { clampInputDirection, integrateMovement, SHALLOW_WATER_PACE } from "../movement.js";
+import {
+  clampInputDirection,
+  clampToCircle,
+  integrateMovement,
+  SHALLOW_WATER_PACE,
+} from "../movement.js";
 import {
   atObjective,
   deckBlocksSight,
@@ -292,11 +299,14 @@ import {
   type BotLever,
   type BotObjectives,
   type HighGroundSpot,
+  type TeamSpawn,
   type ResetPolicy,
   idleAt,
 } from "./behaviour.js";
+import { flankWaypoint, PLAN_SECONDS, planPhase, teamPlan } from "./bot/plan.js";
 import { LEVER_WORTH_UNITS } from "./bot/rules/levers.js";
 import { botRoll } from "./bot/rules/shared.js";
+import { nextPlan, stalemate, type PlanOverride, type StalemateState } from "./bot/stalemate.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { freshCorpsesWithin, nearestFreshCorpse } from "./corpses.js";
 import { companionSkills, PET_DEATH_GRACE_SECONDS } from "./companions.js";
@@ -335,6 +345,7 @@ import {
   initialFlags,
   stepFlags,
   type FlagField,
+  type FlagPlace,
   type FlagState,
   type FlagsState,
   type StandState,
@@ -1640,6 +1651,10 @@ export class MatchSimulation {
 
   #tick = 0;
   #elapsedSeconds = 0;
+  /** `stepHeld` has run and `step` not yet (#3817): skills and attacks are dropped. */
+  #held = false;
+  /** `step` has run once (#3817): the match is under way, and never held again. */
+  #started = false;
   readonly #teamCount: TeamCount;
   #score: MatchScore;
   #outcome: MatchOutcome = MATCH_IN_PROGRESS;
@@ -1742,6 +1757,16 @@ export class MatchSimulation {
   readonly #ledAt = new Map<number, number>();
   /** The whole second of match clock the Guild Lords' loss caps are for (#1223). */
   #lossSecond = 0;
+  /** When a participant last died or the mode's score or objectives last moved (#3834), match clock. */
+  #lastProgressAt = 0;
+  /** Each team's stalemate tracker since `#lastProgressAt` (#3834); a team with none has had no contact. */
+  readonly #stalemates = new Map<number, StalemateState>();
+  /** The plan a stalemate forced on each team (#3834), kept past its `until`, which `teamPlan` honours. */
+  readonly #planOverrides = new Map<number, PlanOverride>();
+  /** The whole second of match clock the stalemate trackers last counted (#3834). */
+  #stalemateSecond = 0;
+  /** The score and objectives at that count (#3834), `undefined` before the first: a change is progress. */
+  #progressMark: string | undefined;
   /** Every ground effect in the match (#1087), in id order. */
   #groundEffects: GroundEffect[] = [];
   /** The id of the next ground effect placed (#1087). */
@@ -1962,6 +1987,11 @@ export class MatchSimulation {
   /** Who won and why, once `phase` is `"finished"`. */
   public get outcome(): MatchOutcome {
     return this.#outcome;
+  }
+
+  /** The plan a stalemate forced on `team` (#3834), if one did; past its `until` it no longer counts. */
+  public planOverride(team: number): PlanOverride | undefined {
+    return this.#planOverrides.get(team);
   }
 
   public get score(): MatchScore {
@@ -3652,6 +3682,7 @@ export class MatchSimulation {
     const creature = record?.creature;
     if (
       record === undefined ||
+      this.#held ||
       creature?.ownerId !== ownerId ||
       creature.companionSkillId === undefined
     ) {
@@ -3708,7 +3739,8 @@ export class MatchSimulation {
    */
   public requestAttack(id: string, targetId: string): ActivationCheck | undefined {
     const record = this.#participants.get(id);
-    if (record === undefined) {
+    // Held before the start, an attack or an Interact is dropped (#3817).
+    if (record === undefined || this.#held) {
       return undefined;
     }
     record.lastCommandAt = this.#elapsedSeconds;
@@ -3829,7 +3861,8 @@ export class MatchSimulation {
    */
   public requestSkill(id: string, slot: number): SkillRequest | undefined {
     const record = this.#participants.get(id);
-    if (record === undefined) {
+    // Held before the start, a skill is dropped, not kept for it (#3817).
+    if (record === undefined || this.#held) {
       return undefined;
     }
     record.lastCommandAt = this.#elapsedSeconds;
@@ -4368,15 +4401,42 @@ export class MatchSimulation {
     }
   }
 
+  /**
+   * One tick before the match starts (#3817): everyone may walk, by keys
+   * or a click, within `SPAWN_BUBBLE_RADIUS` of its spawn, and nothing
+   * else runs: no skill, attack, bot, regeneration or map element. The
+   * tick counts; the match clock does not. Once `step` has run, or the
+   * match is over, it does nothing.
+   */
+  public stepHeld(dt: number): StepResult {
+    if (this.phase !== "active" || this.#started) {
+      return this.#result([]);
+    }
+    this.#held = true;
+    this.#tick += 1;
+    for (const record of this.#participants.values()) {
+      this.#stepStart.set(record.id, record.position);
+      if (!record.combatant.dead) {
+        this.advanceMovement(record, record.inputDirection, dt);
+        this.#advanceWalk(record, dt);
+      }
+      this.#holdInBubble(record);
+    }
+    return this.#result([]);
+  }
+
   public step(dt: number): StepResult {
     // A finished match stops simulating, so everyone can read the result.
     if (this.phase !== "active") {
       return this.#result([]);
     }
 
+    this.#held = false;
+    this.#started = true;
     this.#tick += 1;
     this.#elapsedSeconds += dt;
     this.#refillLossCaps();
+    this.#trackStalemates();
     this.checkMatchEnd();
     for (const record of this.#participants.values()) {
       this.#stepStart.set(record.id, record.position);
@@ -5289,6 +5349,9 @@ export class MatchSimulation {
         const route = this.#paths.find(record.position, record.layer, to, layer);
         return route === undefined ? Number.POSITIVE_INFINITY : walkLength(record.position, route);
       },
+      teamSpawn: (team) => this.#teamSpawn(team),
+      standableNear: (point, layer) => nearestStandable(this.#graphOn(layer), point),
+      planOverride: (team) => this.planOverride(team),
       leverHolder: (targetId) => {
         for (const other of this.#participants.values()) {
           if (
@@ -9805,6 +9868,7 @@ export class MatchSimulation {
           this.#deathPenalty(victim);
         }
         this.#reapSoul(victim);
+        this.#progress();
         this.recordDeath(victim.combatant.team);
       }
     }
@@ -10281,6 +10345,36 @@ export class MatchSimulation {
   }
 
   /**
+   * Held before the start (#3817), `record` is back within
+   * `SPAWN_BUBBLE_RADIUS` of its spawn: at the nearest point on the edge
+   * if it can stand there, else at its spawn, on the spawn's layer: a
+   * ramp climbed or a drop-off stepped off in the bubble may have left it
+   * on another. A walk that met the edge ends there; a held key slides
+   * along it, as along a wall.
+   */
+  #holdInBubble(record: ParticipantRecord): void {
+    const inside = clampToCircle(record.position, record.spawn, SPAWN_BUBBLE_RADIUS);
+    if (inside === record.position) {
+      return;
+    }
+    if (!this.standable(inside, record.layer)) {
+      this.#placeAtSpawn(record);
+      return;
+    }
+    this.#placeAt(record, inside);
+    // Pushed back off a body, it may be a hair out again.
+    if (distance(record.position, record.spawn) > SPAWN_BUBBLE_RADIUS + ARRIVE_UNITS) {
+      this.#placeAtSpawn(record);
+    }
+  }
+
+  /** Back where `record` was added (#3817): its spawn, on the layer it spawned on. */
+  #placeAtSpawn(record: ParticipantRecord): void {
+    record.layer = record.spec.layer ?? this.#ground;
+    this.#placeAt(record, record.spawn);
+  }
+
+  /**
    * Put `record` at `point`, as a step does: the push-outs settle it off
    * any body or wall, and its track starts over. Its facing is the
    * caller's.
@@ -10550,6 +10644,35 @@ export class MatchSimulation {
       this.#altarState.holder === record.combatant.team
       ? { at: field.altar, layer: field.altarLayer }
       : this.#spawnPlace(record);
+  }
+
+  /**
+   * Where `team`'s players and bots start, on average, on the layer its
+   * first starts on (#3831): from their spawns, never where they stand.
+   * Neither a creature nor a guard or other NPC counts.
+   */
+  #teamSpawn(team: number): TeamSpawn | undefined {
+    let x = 0;
+    let y = 0;
+    let members = 0;
+    let layer: number | undefined;
+    for (const record of this.#participants.values()) {
+      if (
+        record.combatant.team !== team ||
+        !countsForTeam(record) ||
+        (record.behaviour !== undefined && record.behaviour.kind !== "play-build")
+      ) {
+        continue;
+      }
+      const place = this.#spawnPlace(record);
+      x += place.at.x;
+      y += place.at.y;
+      members += 1;
+      layer ??= place.layer;
+    }
+    return layer === undefined
+      ? undefined
+      : { point: vec2(x / members, y / members), layer, members };
   }
 
   /** Where `record` starts, and is reset to: its spawn, on its spec's layer or the ground. */
@@ -10862,6 +10985,116 @@ export class MatchSimulation {
       }
       guard.remaining = guildLordLossCap(second);
     }
+  }
+
+  /** Progress (#3834): every team's stalemate tracker starts over now. */
+  #progress(): void {
+    this.#lastProgressAt = this.#elapsedSeconds;
+    this.#stalemates.clear();
+  }
+
+  /**
+   * The mode's score and objectives as one string (#3834): scores, shrine
+   * owners, relic, flag and altar holders. Any change between two counts
+   * is progress, whatever the mode scores.
+   */
+  #progressMarkNow(): string {
+    const where = (place: FlagPlace): string =>
+      place.kind === "carried" ? place.carrierId : place.kind;
+    return JSON.stringify([
+      [...this.#score.byTeam],
+      this.#capturePoints.map(({ owner }) => owner),
+      this.#relicsState?.relics.map(({ place }) => where(place)),
+      this.#flagsState?.flags.map(({ place }) => where(place)),
+      this.#flagsState?.stand.holder,
+      this.#altarState.holder,
+    ]);
+  }
+
+  /**
+   * As each whole second of match clock starts (#3834): progress since the
+   * last, or else a contact second for each team with a living member
+   * within `RANGE_SPELL` of a living foe, and a team in a stalemate
+   * switches plan. Deaths are progress the moment they happen.
+   */
+  #trackStalemates(): void {
+    const second = Math.floor(this.#elapsedSeconds + WHOLE_SECOND_EPSILON);
+    if (second === this.#stalemateSecond) {
+      return;
+    }
+    this.#stalemateSecond = second;
+    const mark = this.#progressMarkNow();
+    const moved = this.#progressMark !== undefined && mark !== this.#progressMark;
+    this.#progressMark = mark;
+    if (moved) {
+      this.#progress();
+      return;
+    }
+    // The whole second, not the clock a hair short of it, so 45 s is 45 s.
+    const now = second;
+    const living = [...this.#participants.values()].filter(
+      (record) => countsForTeam(record) && !record.combatant.dead,
+    );
+    for (const team of this.#teams) {
+      const members = living.filter((record) => record.combatant.team === team);
+      const contact = members.some((member) =>
+        living.some(
+          (foe) =>
+            foe.combatant.team !== team && distance(foe.position, member.position) <= RANGE_SPELL,
+        ),
+      );
+      const kept = this.#stalemates.get(team) ?? { since: this.#lastProgressAt, contactSeconds: 0 };
+      const state = contact ? { ...kept, contactSeconds: kept.contactSeconds + 1 } : kept;
+      if (!stalemate(state, now)) {
+        this.#stalemates.set(team, state);
+        continue;
+      }
+      this.#stalemates.set(team, { since: now, contactSeconds: 0 });
+      this.#switchPlan(team, members, now);
+    }
+  }
+
+  /**
+   * Team `team`, its living `members`, in a stalemate (#3834): a team of
+   * bots with no active human takes `nextPlan` for `PLAN_SECONDS`. A team
+   * with one does not: its bots escort the human, who makes the plan.
+   */
+  #switchPlan(team: number, members: readonly ParticipantRecord[], now: number): void {
+    const bots = members.filter((record) => record.behaviour?.kind === "play-build");
+    const human = members.some(
+      (record) => record.behaviour?.kind !== "play-build" && !idleAt(record.lastCommandAt, now),
+    );
+    const scout = bots[0];
+    if (scout === undefined || human) {
+      return;
+    }
+    const current = teamPlan(this.#seed, team, now, this.#planOverrides.get(team));
+    const next = nextPlan(current, current === "push" && this.#flankable(scout));
+    if (next !== undefined) {
+      this.#planOverrides.set(team, { plan: next, until: now + PLAN_SECONDS });
+    }
+  }
+
+  /**
+   * Whether `scout`'s team has a flank waypoint against some foe team
+   * (#3834, `flankWaypoint`). Any key does: it only picks which side is
+   * tried first.
+   */
+  #flankable(scout: ParticipantRecord): boolean {
+    const context = {
+      seed: this.#seed,
+      teamSpawn: (team: number) => this.#teamSpawn(team),
+      standableNear: (point: Vec2, layer: number) => nearestStandable(this.#graphOn(layer), point),
+      routeLength: (to: Vec2, layer: number) => {
+        const route = this.#paths.find(scout.position, scout.layer, to, layer);
+        return route === undefined ? Number.POSITIVE_INFINITY : walkLength(scout.position, route);
+      },
+    };
+    return [...this.#teams].some(
+      (foeTeam) =>
+        foeTeam !== scout.combatant.team &&
+        flankWaypoint(context, scout, foeTeam, planPhase(this.#elapsedSeconds)) !== undefined,
+    );
   }
 
   /** Whether `team`'s Guild Lord is in the match and alive (#1222). */

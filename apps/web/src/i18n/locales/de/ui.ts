@@ -83,6 +83,9 @@ export default {
   "buildEditor.discardChanges": "Änderungen verwerfen?",
   "buildEditor.duplicate": "Duplizieren",
   "buildEditor.duplicateSkill": "{skill} ist mehrfach auf der Leiste.",
+  "buildEditor.duplicateRune": "{rune}: Ein anderes Teil trägt diese Rune bereits. Nur eine zählt.",
+  "buildEditor.duplicateAttributeRune":
+    "{rune}: Ein anderes Teil trägt bereits eine Rune dieses Attributs. Nur der stärkste Bonus zählt, aber jeder Lebensabzug schon.",
   "buildEditor.emptySetAction": "Set {set} leeren",
   "buildEditor.emptySetNote": "Leeres Set",
   "buildEditor.emptySlot": "Leer",
@@ -456,6 +459,11 @@ export default {
   "gearEditor.bareHands": "bloße Hände",
   "gearEditor.bonusFromHeadgear": "Kopfschutz +{amount}",
   "gearEditor.bonusFromRune": "Rune +{amount}",
+  "gearEditor.healthBase": "Basis {amount}",
+  "gearEditor.healthInsignia": "Insignien {amount}",
+  "gearEditor.healthMods": "Modifikationen {amount}",
+  "gearEditor.healthRunes": "Runen {amount}",
+  "gearEditor.healthSources": "Max. Leben: {parts}",
   "gearEditor.itemA": "{item}",
   "gearEditor.itemAn": "{item}",
   "gearEditor.modRemoved": "{mod} entfernt: passt nicht zu {item}.",
@@ -546,6 +554,13 @@ export default {
   "help.source": "Quellcode",
   "help.version": "VibeWars {release} · Build {build}",
 
+  "history.back": "Zurück",
+  "history.empty": "Noch keine Spiele. Deine letzten 50 Spiele werden hier aufbewahrt.",
+  "history.emptyMine": "Keine Spiele mit deinem aktuellen Spielerschlüssel.",
+  "history.mine": "Meine Spiele",
+  "history.open": "Spielverlauf",
+  "history.title": "Spielverlauf",
+
   "hud.aggression": "Agg {ours} : {theirs}",
   "hud.altarPointOurs": "Altarpunkt!",
   "hud.altarPointTheirs": "Altarpunkt für Gegner",
@@ -603,6 +618,10 @@ export default {
   "hud.outcomeVictory": "Sieg",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (tot)",
+  "hud.preMatchStartingAnyway":
+    "Warte auf Spieler: {joined}/{expected}, Start trotzdem in {seconds} s",
+  "hud.preMatchStartsIn": "Match startet in {seconds}",
+  "hud.preMatchWaiting": "Warte auf Spieler: {joined}/{expected}",
   "hud.priest": "Priester",
   "hud.priestDead": "Priester (tot)",
   "hud.raise": "Auferstehung {clock}",
@@ -792,6 +811,8 @@ export default {
   "lobbyWindow.reconnecting": "Verbindet neu…",
   "lobbyWindow.removeMember": "{name} aus der Lobby entfernen",
 
+  "match.buildReplaced":
+    "Dein Build ist nicht erlaubt ({problem}): Du spielst diese Partie mit einem Starter-Build.",
   "matchView.watching": "Zuschauen · {seconds} s Verzögerung",
 
   "matches.bot": "{name} (Bot)",
@@ -978,6 +999,9 @@ export default {
   "queue.ascending": "Aufstieg nach {map} in {seconds} s",
   "queue.backToLobbyIn": "Zurück zur Lobby in {seconds} s",
   "queue.backToMenu": "Zum Menü",
+  "queue.backToLobby": "Zur Lobby",
+  "queue.countdownStopped": "Countdown angehalten",
+  "queue.stopCountdown": "Anhalten",
   "queue.backToMenuIn": "Zurück zum Menü in {seconds} s",
   "queue.busy": "Du bist in einer Warteschlange.",
   "queue.characterDeleted":
@@ -999,6 +1023,8 @@ export default {
   "queue.matchFound": "Match gefunden",
   "queue.matchFoundTitle": "Match gefunden!",
   "queue.nextMatchIn": "Nächstes Match in {seconds} s",
+  "queue.sameTeamIn": "Gewonnen: nächstes Match mit demselben Team in {seconds} s",
+  "queue.newTeamIn": "Eure Gruppe hat sich geändert: Team neu wählen in {seconds} s",
   "queue.now": "Jetzt",
   "queue.playBotsIn": "Gegen Bots spielen ({seconds} s)",
   "queue.queueAgain": "Nochmal",
@@ -1313,6 +1339,8 @@ export default {
   "teamEditor.closeMember": "{name} schließen",
   "teamEditor.costAdrenaline": "{amount}A",
   "teamEditor.costEnergy": "{amount}E",
+  "teamEditor.cannotCreateCharacter": "Charakter kann nicht erstellt werden: {problem}",
+  "teamEditor.characterCreated": "Charakter {name} erstellt",
   "teamEditor.crumb": "Team-Editor",
   "teamEditor.delete": "Löschen",
   "teamEditor.deleteNamed": "{name} löschen?",
@@ -1322,6 +1350,7 @@ export default {
   "teamEditor.discardForPaste": "Deine Änderungen verwerfen und das eingefügte Team öffnen?",
   "teamEditor.dragToReplace":
     "auf ein Mitglied ziehen, um es durch eine Kopie von {name} zu ersetzen",
+  "teamEditor.dropToCreate": "Zieh ein Teammitglied hierher, um es als Charakter zu speichern",
   "teamEditor.duplicate": "Duplizieren",
   "teamEditor.duplicateTitle": "dieses Team duplizieren",
   "teamEditor.duplicateUnsaved": "Zum Duplizieren erst speichern",
@@ -1336,12 +1365,13 @@ export default {
   "teamEditor.memberName": "Name des Mitglieds",
   "teamEditor.myCharacters": "Meine Charaktere",
   "teamEditor.name": "Name",
-  "teamEditor.noCharacters": "Du hast keine Charaktere zum Kopieren.",
+  "teamEditor.noCharacters":
+    "Noch keine Charaktere. Zieh ein Teammitglied hierher, um einen zu erstellen.",
   "teamEditor.notSaved": "Nicht gespeichert: {error}",
-  "teamEditor.openInCharacter": "Im Charakter-Editor öffnen ›",
   "teamEditor.professions": "Klassen",
   "teamEditor.professionsTitle": "die Klassen des Teams",
   "teamEditor.replaceMember": "{member} durch {character} ersetzen",
+  "teamEditor.copyMember": "Shift: Build von {source} auf {target} kopieren",
   "teamEditor.save": "Speichern",
   "teamEditor.saveTitle": "Dieses Team speichern",
   "teamEditor.saveTitleProblem": "Dieses Team speichern (es hat Probleme: {problem})",
@@ -1349,8 +1379,6 @@ export default {
   "teamEditor.share": "Teilen",
   "teamEditor.shareLabel": "Team zum Teilen",
   "teamEditor.shareTitle": "dieses Team als eine Zeile teilen",
-  "teamEditor.sizeFixed":
-    "Die Größe eines Team-Builds ist fest: Erstelle für eine andere Größe einen neuen",
   "teamEditor.sizeLabel": "Teamgröße",
   "teamEditor.teamName": "Teamname",
   "teamEditor.teamNameLabel": "Teamname",
@@ -1620,12 +1648,15 @@ export default {
   "tutorial.menu.spec.gear":
     "Rüstung, Runen und Insignien: Wähle ein Teil an der Figur, dann, was darauf kommt.",
   "tutorial.menu.spec.gearDone": "Ändere ein Ausrüstungsteil",
-  "tutorial.menu.spec.open":
-    "Öffne Charaktere und dann einen Charakter, um seinen Build zu ändern.",
-  "tutorial.menu.spec.openDone": "Öffne einen Charakter",
+  "tutorial.menu.spec.new": "Bau dir deinen eigenen: Drücke „{newCharacter}“.",
+  "tutorial.menu.spec.newDone": "Drücke „{newCharacter}“",
+  "tutorial.menu.spec.open": "Öffne {characters}.",
+  "tutorial.menu.spec.openDone": "Öffne {characters}",
   "tutorial.menu.spec.professions":
-    "Deine Primärklasse gibt dir Attribute und Fertigkeiten; deine Sekundärklasse leiht dir ihre Fertigkeiten dazu.",
+    "Deine Primärklasse ist, was du bist: ihre Fertigkeiten und alle ihre Attribute, auch das, das nur sie hat ({warrior}: {strength}; {monk}: {divineFavor}). Deine Sekundärklasse bringt ihre Fertigkeiten und ihre übrigen Attribute mit, nie dieses besondere: Ein {warrior}/{monk} kann mit „{healingPrayers}“ heilen, hat aber keine „{divineFavor}“.",
   "tutorial.menu.spec.professionsDone": "Wechsle eine Klasse",
+  "tutorial.menu.spec.random":
+    "Das ist dein Charakter mit der Marke „{random}“: Das Spiel hat ihn für dich ausgewürfelt, spielbereit. Ändern kannst du ihn nicht, aber „{reroll}“ würfelt einen neuen aus und „{clone}“ gibt dir eine Kopie zum Bearbeiten.",
   "tutorial.menu.spec.save": "Speichere deinen Charakter, um den neuen Build zu behalten.",
   "tutorial.menu.spec.saveDone": "Speichern",
   "tutorial.menu.spec.skills":
@@ -1646,8 +1677,10 @@ export default {
     "Ein Team hat immer so viele Mitglieder wie seine Größe. Du fügst nie ein Mitglied hinzu: Du ersetzt eines.",
   "tutorial.menu.team.memberBack":
     "Das ist der Build dieses Mitglieds. Mit Zurück kommst du zu deinem Team.",
-  "tutorial.menu.team.new": "Stell die Teamgröße auf 2v2 und erstelle dann einen neuen Team-Build.",
+  "tutorial.menu.team.new": "Erstelle jetzt einen neuen Team-Build.",
   "tutorial.menu.team.newDone": "Starte ein Team zu zweit",
+  "tutorial.menu.team.size": "Stell die Teamgröße auf 2v2.",
+  "tutorial.menu.team.sizeDone": "Teamgröße ist 2v2",
   "tutorial.menu.team.open": "Öffne Teams, wo deine Team-Builds sind.",
   "tutorial.menu.team.openDone": "Öffne Teams",
   "tutorial.menu.team.problems":

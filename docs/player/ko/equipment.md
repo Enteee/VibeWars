@@ -153,9 +153,16 @@ Shield, Focus는 내가 고르는 속성용으로 만들어져요. 인형에서 
 | 최상급 속성 룬                                                                                                                                                                                                                                                                                                 | 속성 하나에 +3, 체력 -75              |
 | ![Vigor](../../../apps/web/public/icons/rune/vigor.svg) **Vigor**                                                                                                                                                                                                                                              | 체력 증가 (+30, +41, +50)             |
 | ![Vitae](../../../apps/web/public/icons/rune/vitae.svg) **Vitae**                                                                                                                                                                                                                                              | 체력 +10                              |
-| ![Attunement](../../../apps/web/public/icons/rune/attunement.svg) **Attunement**                                                                                                                                                                                                                               | 에너지 증가 (+3, +6, +9)              |
+| ![Attunement](../../../apps/web/public/icons/rune/attunement.svg) **Attunement**                                                                                                                                                                                                                               | 에너지 증가 (+2)                      |
 | ![Clarity](../../../apps/web/public/icons/rune/clarity.svg) **Clarity**, ![Purity](../../../apps/web/public/icons/rune/purity.svg) **Purity**, ![Recovery](../../../apps/web/public/icons/rune/recovery.svg) **Recovery**, ![Restoration](../../../apps/web/public/icons/rune/restoration.svg) **Restoration** | 상태이상 두 가지가 각각 20% 빨리 풀림 |
 | ![Absorption](../../../apps/web/public/icons/rune/absorption.svg) **Absorption** (![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior**)                                                                                                                                               | 공격마다 받는 물리 피해 감소          |
+
+Vitae와 Attunement는 합산돼요. Attunement 룬 다섯 개면 에너지 +10이에요.
+다른 룬은 몇 개를 착용해도 한 번만 계산돼요. 서로 다른 출처의 상태이상
+단축도 합산되며, 각각 원래 지속 시간에서 계산해 초 단위로 반올림해요.
+Restoration과 "Fear Cuts Deeper"를 함께 쓰면 8초짜리 Bleeding이 4초가 돼요.
+
+편집기는 같은 룬을 단 부위 두 개나, 같은 속성의 룬을 단 부위 두 개를 저장하지 않습니다. 가장 강한 보너스만 적용되지만 체력 페널티는 모두 적용되기 때문입니다. 편집기에서 체력을 가리키면 기본, 룬, 휘장, 개조로 나뉜 출처를 볼 수 있습니다.
 
 부위의 룬은 휘장과 같은 곳에서 골라요. 인형의 그 부위를 클릭하세요.
 

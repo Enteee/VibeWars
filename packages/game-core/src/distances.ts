@@ -21,6 +21,11 @@ export const AREA_NEARBY = 81;
 /** "In the area". */
 export const AREA_IN_THE_AREA = 109;
 /**
+ * How far a participant may walk from its spawn while the match waits to
+ * start (#3817): a nearby step either way, and no further.
+ */
+export const SPAWN_BUBBLE_RADIUS = AREA_NEARBY;
+/**
  * "Within earshot", where a shout reaches (#524). GW1's earshot is about
  * 1,010 units against 1,250 for cast range; `RANGE_SPELL` is 420, so the
  * same ratio gives ~340, the ~0.34 that "nearby" and "in the area" are

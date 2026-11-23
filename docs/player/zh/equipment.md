@@ -127,9 +127,13 @@
 | 极品属性符文                                                                                                                                                                                                                                                                                                   | 一项属性 +3，生命 -75       |
 | ![Vigor](../../../apps/web/public/icons/rune/vigor.svg) **Vigor**                                                                                                                                                                                                                                              | 更多生命（+30、+41 或 +50） |
 | ![Vitae](../../../apps/web/public/icons/rune/vitae.svg) **Vitae**                                                                                                                                                                                                                                              | +10 生命                    |
-| ![Attunement](../../../apps/web/public/icons/rune/attunement.svg) **Attunement**                                                                                                                                                                                                                               | 更多能量（+3、+6 或 +9）    |
+| ![Attunement](../../../apps/web/public/icons/rune/attunement.svg) **Attunement**                                                                                                                                                                                                                               | 更多能量（+2）              |
 | ![Clarity](../../../apps/web/public/icons/rune/clarity.svg) **Clarity**, ![Purity](../../../apps/web/public/icons/rune/purity.svg) **Purity**, ![Recovery](../../../apps/web/public/icons/rune/recovery.svg) **Recovery**, ![Restoration](../../../apps/web/public/icons/rune/restoration.svg) **Restoration** | 两种异常状态各提前 20% 消退 |
 | ![Absorption](../../../apps/web/public/icons/rune/absorption.svg) **Absorption**（![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior**）                                                                                                                                              | 每次受击的物理伤害降低      |
+
+Vitae 和 Attunement 会叠加：五个 Attunement 符文提供 +10 能量。其他符文无论穿戴多少，都只计算一次。来自不同来源的异常状态缩短也会叠加，每一项都按完整持续时间计算并取整到整秒：Restoration 和 "Fear Cuts Deeper" 会把 8 秒的 Bleeding 缩短到 4 秒。
+
+编辑器不会保存两件镶有相同符文、或镶有同一属性符文的装备：只有最强的加成生效，而每个生命惩罚都会生效。在编辑器中指向生命，可以看到它的来源：基础、符文、徽记和改造。
 
 你在选择徽记的同一位置选择该部件的符文：点击人形图上的部件。
 

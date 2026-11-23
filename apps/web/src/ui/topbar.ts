@@ -7,6 +7,8 @@ import { paintMuteButton } from "./hud.js";
 import { helpIcon, LOBBY_ICON, lobbyIcon, settingsIcon } from "./icons.js";
 import { attachJukeboxPopover } from "./jukebox.js";
 import { leaderboardButton } from "./leaderboard-window.js";
+import { matchHistoryButton } from "./match-history-window.js";
+import type { MatchHistoryStore } from "../storage/match-history.js";
 import { sharedTracks } from "../music/shared-tracks.js";
 import { leaderboard as leaderboardStore } from "../net/leaderboard.js";
 import {
@@ -495,6 +497,7 @@ export function mountTopbar(
   callbacks: TopbarCallbacks,
   signet: number,
   pubkey: string,
+  history: MatchHistoryStore,
 ): Topbar {
   const actions = part(bar, ".topbar-actions");
   const tools = part(bar, ".topbar-tools");
@@ -510,6 +513,8 @@ export function mountTopbar(
 
   // The top 100, and where this player stands (#3575).
   const leaderboard = leaderboardButton(bar, leaderboardStore, pubkey);
+  // This browser's last ended matches, beside it (#3848).
+  const matchHistory = matchHistoryButton(bar, history, pubkey);
 
   const options = iconButton("topbar-options", t("topbar.options"), settingsIcon());
   attachOptionsWindow(options, bar, signet, callbacks.onOptionsClosed);
@@ -558,7 +563,17 @@ export function mountTopbar(
   const fullscreen = iconButton("topbar-fullscreen", t("fullscreen.enter"));
   attachFullscreenButton(fullscreen, fullscreenTarget());
 
-  actions.append(queue.element, help, leaderboard, options, lobby.element, music, mute, fullscreen);
+  actions.append(
+    queue.element,
+    help,
+    leaderboard,
+    matchHistory,
+    options,
+    lobby.element,
+    music,
+    mute,
+    fullscreen,
+  );
   queueAction.before(join.element);
   // An invite link the page opened with (#2100) waits for the first
   // screen with the bar's lobby on it: until then nothing could join.

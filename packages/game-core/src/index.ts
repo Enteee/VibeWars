@@ -17,11 +17,18 @@ export {
   CLIMB_PACE,
   SHALLOW_WATER_PACE,
   clampInputDirection,
+  clampToCircle,
   integrateMovement,
   type ClimbLook,
 } from "./movement.js";
 
-export { AREA_EARSHOT, RANGE_COMPASS, RANGE_MELEE, RANGE_SPELL } from "./distances.js";
+export {
+  AREA_EARSHOT,
+  RANGE_COMPASS,
+  RANGE_MELEE,
+  RANGE_SPELL,
+  SPAWN_BUBBLE_RADIUS,
+} from "./distances.js";
 export { beaconStrikeArea } from "./match/storm-stand.js";
 export {
   isZoneSourceId,

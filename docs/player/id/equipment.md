@@ -158,9 +158,17 @@ memegang senjata dari set yang sedang kamu lihat, beserta mod-nya.
 | Rune atribut Superior                                                                                                                                                                                                                                                                                          | +3 ke sebuah atribut, -75 Darah                  |
 | ![Vigor](../../../apps/web/public/icons/rune/vigor.svg) **Vigor**                                                                                                                                                                                                                                              | Darah lebih banyak (+30, +41 atau +50)           |
 | ![Vitae](../../../apps/web/public/icons/rune/vitae.svg) **Vitae**                                                                                                                                                                                                                                              | +10 Darah                                        |
-| ![Attunement](../../../apps/web/public/icons/rune/attunement.svg) **Attunement**                                                                                                                                                                                                                               | Energi lebih banyak (+3, +6 atau +9)             |
+| ![Attunement](../../../apps/web/public/icons/rune/attunement.svg) **Attunement**                                                                                                                                                                                                                               | Energi lebih banyak (+2)                         |
 | ![Clarity](../../../apps/web/public/icons/rune/clarity.svg) **Clarity**, ![Purity](../../../apps/web/public/icons/rune/purity.svg) **Purity**, ![Recovery](../../../apps/web/public/icons/rune/recovery.svg) **Recovery**, ![Restoration](../../../apps/web/public/icons/rune/restoration.svg) **Restoration** | masing-masing dua kondisi hilang 20% lebih cepat |
 | ![Absorption](../../../apps/web/public/icons/rune/absorption.svg) **Absorption** (![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior**)                                                                                                                                               | damage fisik dari setiap pukulan lebih kecil     |
+
+Vitae dan Attunement bertumpuk: lima rune Attunement memberi +10 Energi.
+Rune lain mana pun dihitung sekali, berapa pun yang kamu pakai. Pemendekan
+kondisi dari sumber yang berbeda juga bertumpuk, masing-masing dihitung dari
+durasi penuh dan dibulatkan ke detik utuh: Restoration dan "Fear Cuts
+Deeper" memangkas Bleeding 8 detik menjadi 4.
+
+Editor tidak menyimpan dua bagian dengan rune yang sama, atau dengan rune atribut yang sama: hanya bonus terkuat yang dihitung, sedangkan setiap penalti darah tetap berlaku. Arahkan ke darah di editor untuk melihat asalnya: dasar, rune, insignia, dan mod.
 
 Kamu memilih rune sebuah bagian di tempat yang sama dengan insignia-nya: klik bagian itu
 pada figur.

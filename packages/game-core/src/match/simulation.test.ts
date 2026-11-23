@@ -932,7 +932,7 @@ describe("a dummy's status on a rune wearer (#464)", () => {
         spec("a", 0, vec2(0, 0), {
           equipment: {
             ...unarmedResolvedEquipment(RULES.combat.armorReferenceLevel),
-            statusDurationScale: new Map([["bleeding", 0.8]]),
+            statusDurationReductions: new Map([["bleeding", [0.2]]]),
           },
         }),
         spec("b", 1, vec2(200, 0), {

@@ -64,6 +64,8 @@ pronta no lugar. As equipes prontas são as builds de equipe de PvP bem
 avaliadas da wiki PvX; um tamanho que a PvX não tem recebe builds solo da
 PvX reunidas. **Clonar** salva uma cópia da equipe mostrada como sua
 própria Build de Equipe e a abre, para você mudar como quiser.
+O tamanho de uma Build de Equipe muda no editor dela: um tamanho menor
+remove os últimos membros, um maior acrescenta membros em branco.
 
 ## Jogue uma Arena Aleatória
 
@@ -87,7 +89,9 @@ espera tira você da fila na hora.
 Quando a partida acaba, você pode usar **Entrar de novo** ou **Ficar
 juntos** com a equipe com que acabou de jogar.
 
-Ao lado das pontuações, dois gráficos contam a partida ao longo do tempo.
+Toda partida termina em suas pontuações, na fila, hospedada ou num lobby, e ao
+lado delas dois gráficos contam a partida ao longo do tempo; a tela da fila
+mostra-os de novo após uma partida na fila.
 **Tu** mostra seu dano causado, dano recebido, cura e Energia; **Equipas**
 mostra a reserva de vida de cada equipe acima do seu dano total. Marcas abaixo
 do eixo do tempo indicam abates, mortes, interrupções, capturas e
@@ -95,6 +99,8 @@ ressurreições: aponte para uma, ou chegue a ela com Tab, para ler o que
 aconteceu. Pressione um item da legenda para ocultar ou mostrar sua linha. No
 celular, os gráficos ficam abaixo das pontuações, que mostram você e mais dois
 até **Mostrar tudo**.
+
+**Histórico de partidas**, na barra superior, lista suas últimas 50 partidas, da mais nova para a mais antiga: abra uma para ver de novo o placar e os gráficos. Elas ficam guardadas só neste navegador. **Minhas partidas** mostra só as jogadas com sua chave de jogador atual.
 
 ## Hospedar ou entrar em uma partida
 

@@ -147,6 +147,8 @@ pritisneš **Spremi**.
 **Esc** izlazi bez spremanja i najprije pita ako si nešto promijenio.
 **Podijeli**, **Učitaj GW1 kôd**, **Dupliciraj** i **Obriši** nalaze se pod **⋯**.
 
+Build s problemom ne može se spremiti i područje za trening ne počinje s njim. Ako takav build ipak stigne u meč, ondje igraš s početnim buildom i poruka kaže zašto.
+
 Timski kôd učitava se umjesto toga u **Uređivaču timova**: zalijepi ga bilo gdje tamo,
 ili otvori timski sastav i upotrijebi njegov **⋯** → **Učitaj tim**.
 
@@ -170,11 +172,17 @@ s praznim likom na svakom mjestu. Nikad ne dodaješ ni ne uklanjaš člana,
 nego ga zamjenjuješ. Svaki redak prikazuje lika člana s oružjem
 koje drži, točkom za svaki komplet oružja kad ih ima više, njegovim
 najvećim zdravljem i energijom te njegovih osam vještina; povuci redak za ⠿ da
-promijeniš redoslijed. Ploča desno je biblioteka Uređivača likova,
+promijeniš redoslijed. Drži **Shift** dok ispuštaš redak na drugog člana
+da umjesto toga kopiraš cijeli njegov sastav na tog člana; redak koji si povukao
+ostaje kakav je bio.
+Ploča desno je biblioteka Uređivača likova,
 s karticom **Moji likovi** ispred **Vještine** i **Oprema**. Na **Moji likovi** povuci
 jednog svog lika na člana da taj član postane njegova kopija.
 Kopija pripada timu: mijenjanje nje ili lika od kojeg je nastala
-ostavlja drugo kakvo jest. Na **Vještine** biblioteka vještina prikazuje
+ostavlja drugo kakvo jest. Obrnuto, povuci člana na **Moji likovi**
+ili na tu karticu da ga spremiš kao svog novog lika; ako mu je ime zauzeto,
+dobiva " (copy)", a tim zadržava člana kakav jest.
+Na **Vještine** biblioteka vještina prikazuje
 vještine člana kojeg si zadnji kliknuo; povuci jednu na mjesto bilo kojeg člana
 da je tamo opremiš. Na vlastitoj traci tog člana vještina koja je već na njoj premješta se
 na to mjesto. Ispuštanje koje član ne može primiti, vještina druge profesije
@@ -193,7 +201,7 @@ oružja i predmete za drugu ruku otvorenog člana i postoji samo dok je jedan
 otvoren: klikni jedan da ga opremiš ili ga povuci na njegove ruke. Odjednom je
 otvoren jedan član; **Esc** ga zatvara. Nova profesija izbacuje
 vještine i razine koje ne može koristiti, uz **Poništi**.
-Pritisni ime člana ili **Otvori na zaslonu lika** da ga urediš u
+Pritisni ime člana ili njegov gumb **✎** da ga urediš u
 uređivaču sastava;
 njegov **Spremi** vraća ga u tim, a timski **Spremi** čuva sve
 i vraća te u Uređivač timova. **Esc** izlazi
@@ -206,3 +214,9 @@ predložiti samo tim bez problema: kartica kaže
 Tvoj prvi početak dodjeljuje jedan gotovi tim odabrane veličine, 4v4 osim ako je nisi
 promijenio, označen s **Nasumično**: njegov
 **Ponovi** stavlja drugi, a **Kloniraj** ti daje kopiju za uređivanje.
+Svaki timski sastav ima veličinu, 2v2, 4v4 ili 8v8 (nema timskih sastava 1v1): **Veličinu tima** na
+bočnoj traci. Uređivač timova navodi timske sastave veličine koja je tamo odabrana,
+a **Novi timski sastav** stvara jedan te veličine. **Veličina tima** u njegovu
+uređivaču mijenja je: manja veličina uklanja zadnje članove, veća dodaje prazne,
+a Spremi prebacuje bočnu traku na veličinu s kojom je spremljen. Zalijepljeni tim
+zadržava svoju veličinu, a bočna traka se prebacuje na nju.

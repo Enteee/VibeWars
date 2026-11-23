@@ -148,6 +148,8 @@ je op **Opslaan** drukt.
 **Esc** vertrekt zonder op te slaan, en vraagt eerst als je iets gewijzigd hebt.
 **Delen**, **GW1-code laden**, **Kopiëren** en **Wissen** staan onder **⋯**.
 
+Een build met een probleem kun je niet opslaan, en het trainingsgebied start er niet mee. Komt zo'n build toch in een wedstrijd, dan speel je daar een starterbuild, en een melding zegt waarom.
+
 Een teamcode laad je in plaats daarvan op **Teambouwer**: plak hem daar ergens, of
 open een teambuild en gebruik zijn **⋯** → **Team laden**.
 
@@ -170,11 +172,18 @@ een leeg personage op elke plek. Je voegt nooit een lid toe of verwijdert er een
 je vervangt er een. Elke rij toont het personage van het lid met de wapens die
 het vasthoudt, een stip voor elke wapenset als het er meer dan één heeft, zijn
 maximale Gezondheid en Energie, en zijn acht skills; sleep een rij aan zijn ⠿ om
-de volgorde te wijzigen. Het paneel rechts is de bibliotheek van de
+de volgorde te wijzigen. Houd **Shift** ingedrukt als je een rij op een ander
+lid laat vallen om in plaats daarvan zijn hele build naar dat lid te kopiëren; de
+rij die je sleepte blijft zoals hij was.
+Het paneel rechts is de bibliotheek van de
 Personagebouwer, met een tab **Mijn personages** voor **Skills** en **Uitrusting**.
 Sleep op **Mijn personages** een van je personages op een lid om van dat lid een
 kopie ervan te maken. Een kopie is van het team zelf: als je hem wijzigt, of het
-personage waar hij vandaan komt, blijft de andere zoals hij was. Op **Skills**
+personage waar hij vandaan komt, blijft de andere zoals hij was. Andersom sleep je een
+lid op **Mijn personages**, of op de tab ervan, om het als nieuw eigen personage
+op te slaan; is de naam al bezet, dan krijgt het " (copy)", en het team houdt
+het lid zoals het is.
+Op **Skills**
 toont de skillbibliotheek de skills van het lid waarop je het laatst klikte;
 sleep er een op het vak van een lid om hem daar uit te rusten. Op de eigen balk
 van dat lid verplaatst een skill die er al op staat naar het vak. Een drop die
@@ -196,7 +205,7 @@ alleen zolang er een open is: klik er een aan om hem uit te rusten, of sleep hem
 naar zijn handen. Er is één lid tegelijk open; **Esc** sluit het. Een nieuwe
 klasse laat de skills en rangen vallen die ze niet kan gebruiken, met
 **Ongedaan**.
-Druk op de naam van een lid, of **Openen in het personagescherm**, om het in de
+Druk op de naam van een lid, of zijn **✎**-knop, om het in de
 build-editor te bewerken; zijn **Opslaan** zet het terug in het team, en de eigen
 **Opslaan** van het team bewaart alles en brengt je terug naar Teambouwer.
 **Esc** vertrekt zonder op te slaan, en vraagt het eerst. **Delen**,
@@ -208,3 +217,10 @@ speelbaar** en waarom, en een team zonder naam staat als **Naamloos team**.
 Je eerste start rolt één kant-en-klaar team uit op de gekozen grootte, 4v4 tenzij
 je die veranderde, gemarkeerd met **Random**: zijn **Opnieuw** wisselt het om
 voor een ander, en **Klonen** geeft je een kopie om te bewerken.
+Elke teambuild heeft een grootte, 2v2, 4v4 of 8v8 (er zijn geen 1v1-teambuilds):
+de **Teamgrootte** in de zijbalk. Teambouwer toont de teambuilds van de daar
+gekozen grootte, en **Nieuwe teambuild** maakt er een van die grootte. De
+**Teamgrootte** in de editor verandert die: een kleinere grootte laat de laatste
+leden vallen, een grotere voegt lege toe, en Opslaan zet de zijbalk op de grootte
+waarmee hij is opgeslagen. Een geplakt team houdt zijn grootte, en de zijbalk
+schakelt erop over.

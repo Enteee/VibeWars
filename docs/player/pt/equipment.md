@@ -162,9 +162,18 @@ mods.
 | Runa de atributo Superior                                                                                                                                                                                                                                                                                      | +3 em um atributo, -75 de vida           |
 | ![Vigor](../../../apps/web/public/icons/rune/vigor.svg) **Vigor**                                                                                                                                                                                                                                              | mais vida (+30, +41 ou +50)              |
 | ![Vitae](../../../apps/web/public/icons/rune/vitae.svg) **Vitae**                                                                                                                                                                                                                                              | +10 de vida                              |
-| ![Attunement](../../../apps/web/public/icons/rune/attunement.svg) **Attunement**                                                                                                                                                                                                                               | mais energia (+3, +6 ou +9)              |
+| ![Attunement](../../../apps/web/public/icons/rune/attunement.svg) **Attunement**                                                                                                                                                                                                                               | mais energia (+2)                        |
 | ![Clarity](../../../apps/web/public/icons/rune/clarity.svg) **Clarity**, ![Purity](../../../apps/web/public/icons/rune/purity.svg) **Purity**, ![Recovery](../../../apps/web/public/icons/rune/recovery.svg) **Recovery**, ![Restoration](../../../apps/web/public/icons/rune/restoration.svg) **Restoration** | duas condições cada acabam 20% mais cedo |
 | ![Absorption](../../../apps/web/public/icons/rune/absorption.svg) **Absorption** (![Guerreiro](../../../apps/web/public/icons/profession/warrior.svg) **Guerreiro**)                                                                                                                                           | menos dano físico de cada golpe          |
+
+Vitae e Attunement se somam: cinco runas de Attunement dão +10 de
+energia. Qualquer outra runa conta uma vez, não importa quantas você
+use. Reduções de condições de fontes diferentes também se somam, cada
+uma calculada sobre a duração inteira e arredondada para um segundo
+inteiro: Restoration e "Fear Cuts Deeper" levam um Sangramento de 8
+segundos para 4.
+
+O editor não salva duas peças com a mesma runa, nem com runas do mesmo atributo: só contaria o bônus mais forte, enquanto toda penalidade de vida contaria. Aponte para a vida no editor para ver de onde vem a sua: base, runas, insígnias e modificações.
 
 Você escolhe a runa de uma peça no mesmo lugar da insígnia: clique na
 peça na figura.

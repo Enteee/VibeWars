@@ -16,6 +16,8 @@ Každá mapa je dělaná pro určité velikosti týmů a režim hraje jen mapu d
 
 V Bitvě cechů, Běhu s relikvií, Králi kopce nebo Dobývání bodů dostane cíl mimo obrazovku nebo pod HUD obrysovou šipku na okraji obrazovky: stojan nebo svatyně v barvě vlastníka, šedá, když nepatří nikomu, oltář zlatě. Plná šipka hráče se vykreslí přes ni.
 
+Zápas začíná se všemi drženými u jejich startu: můžeš udělat pár kroků, ale nemůžeš bojovat ani používat dovednosti. Řádek nahoře počítá hráče, kterým se zápas načetl. Jakmile se načte všem, odpočítá 10 sekund a zápas začne, a s ním i jeho čas. Na hráče, kterému se zápas nenačetl ani po 20 sekundách, se nečeká: odpočet začne bez něj a připojit se může i později.
+
 ## Vyhlazení
 
 **Poraz všechny nepřátele.** Mrtví zůstanou ležet, dokud je spojenec neoživí, a každá smrt stojí morálku. K vítězství vyhlaď druhý tým. Po 8 minutách vyhrává tým s největší zbývající morálkou.
@@ -117,6 +119,8 @@ Hostovaná lobby nespustí zápas, když jsou všichni připraveni. Nejprve otev
 Kdo během Týmového lobby odejde, přenechá svou postavu botovi, takže si strana udrží velikost. Kdo se v té chvíli připojí, jen sleduje.
 
 Po týmovém zápase z fronty se jeho vítězové sami znovu zařadí do fronty po 20 sekundách a poražení (i při remíze) se vrátí do menu; zápas z lobby s kódem vrací všechny do lobby. Tlačítko pod výsledkem čekání přeskočí, nebo u vítězů odejde bez zařazení do fronty.
+Vítězové Týmové arény si pro další zápas ponechají svůj týmový build i místo každého hráče, bez týmové lobby, pokud se mezitím skupina nezměnila: někdo odešel, není přítomen nebo se připojil. Pak si tým zvolí znovu.
+Pokud váš tým nevyhrál, tlačítko Zastavit tento odpočet zastaví, abyste si mohli přečíst výsledek; tlačítko vás pak vezme dál, až budete připraveni.
 
 ## Výstup hrdinů
 

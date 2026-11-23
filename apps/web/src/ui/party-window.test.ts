@@ -63,6 +63,7 @@ function match(players: readonly PlayerSnapshot[], selfSessionId = "me"): MatchS
     score: [0, 0],
     elapsedSeconds: 0,
     phase: "active",
+    preMatch: null,
     winningTeam: undefined,
     endReason: undefined,
     projectiles: [],

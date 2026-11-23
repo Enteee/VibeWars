@@ -5111,17 +5111,22 @@ export function preventsSignets(statuses: readonly Pick<ActiveStatus, "id">[]): 
 
 /**
  * How long a status lasts on `target`: its nominal duration, shortened
- * by the target's condition-duration runes (a Rune of Restoration takes
- * bleeding to 80%). Every path that puts a status on a combatant asks
- * this first, so a rune cannot work for skills and not for dummies. The
- * scale is the wearer's, never the caster's.
+ * by the target's condition-duration runes and mods. As in GW1, each
+ * reduction is taken off the original duration, rounded to a whole
+ * second on its own, and they add up: a Rune of Restoration and a −20%
+ * bleeding mod take an 8 s bleed to 8 − 2 − 2 = 4 s, never below 0.
+ * Every path that puts a status on a combatant asks this first, so a
+ * rune cannot work for skills and not for dummies. The reductions are
+ * the wearer's, never the caster's.
  */
 export function scaledStatusDuration(
   target: Pick<Combatant, "equipment">,
   statusId: StatusId,
   durationSeconds: number,
 ): number {
-  return durationSeconds * (target.equipment.statusDurationScale.get(statusId) ?? 1);
+  const reductions = target.equipment.statusDurationReductions.get(statusId) ?? [];
+  const removed = reductions.reduce((sum, r) => sum + Math.round(r * durationSeconds), 0);
+  return Math.max(0, durationSeconds - removed);
 }
 
 /* -------------------------------------------------------------------------- */

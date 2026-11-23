@@ -749,6 +749,7 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
     queueNonce: state.queueNonce,
     ascentRound: state.ascentRound,
     ascentLock: state.ascentLock,
+    teamKept: state.teamKept,
   });
 
   /**
@@ -831,8 +832,8 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
       removeMember(id) {
         send({ kind: "remove-member", id });
       },
-      findMatch(ascentRound) {
-        send({ kind: "find-match", ascentRound });
+      findMatch(ascentRound, again) {
+        send({ kind: "find-match", ascentRound, again });
       },
       leaveQueue() {
         send({ kind: "leave-queue" });

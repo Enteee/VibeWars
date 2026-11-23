@@ -62,6 +62,8 @@ drugi gotovi tim na njegovo mjesto. Gotovi timovi su dobro ocijenjeni PvP
 timski sastavi s PvX wikija; veličina za koju PvX nema nijedan dobiva sastavljene PvX
 solo sastave. **Kloniraj** sprema kopiju
 prikazanog tima kao tvoj timski sastav i otvara ga, da ga mijenjaš po volji.
+Veličina timskog sastava mijenja se u njegovu uređivaču: manja veličina uklanja
+zadnje članove, a veća dodaje prazne.
 
 ## Igraj Nasumičnu arenu
 
@@ -83,13 +85,17 @@ zaslon sučeljavanja s bilo kojeg mjesta. Zatvaranje kartice dok
 Kad meč završi, možeš **Opet u red** ili **Ostanite zajedno** s
 timom s kojim si upravo igrao.
 
-Uz rezultate dva grafikona pričaju tijek meča kroz vrijeme. **Ti** crta tvoju
+Svaki meč završava svojim rezultatima, iz reda, s domaćinom ili u sobi,
+a uz njih dva grafikona pričaju tijek meča kroz vrijeme; zaslon reda ih
+ponovno prikazuje nakon meča iz reda. **Ti** crta tvoju
 nanesenu štetu, primljenu štetu, liječenje i Energiju; **Timovi** crta zalihu
 zdravlja svakog tima iznad njegove ukupne štete. Oznake ispod vremenske osi
 prikazuju ubojstva, smrti, prekide, osvajanja i uskrsnuća: pokaži na jednu ili
 dođi do nje tipkom Tab da pročitaš što se dogodilo. Pritisni stavku legende da
 sakriješ ili prikažeš njezinu liniju. Na mobitelu su grafikoni ispod rezultata,
 koji prikazuju tebe i još dvoje dok ne pritisneš **Prikaži sve**.
+
+**Povijest mečeva** u gornjoj traci prikazuje tvojih zadnjih 50 mečeva, najnovije prvo: otvori jedan da ponovno vidiš njegove bodove i grafikone. Čuvaju se samo u ovom pregledniku. **Moji mečevi** prikazuje samo one odigrane s tvojim trenutnim ključem igrača.
 
 ## Budi domaćin ili se pridruži meču
 

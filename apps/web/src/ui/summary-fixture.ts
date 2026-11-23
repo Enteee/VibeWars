@@ -1,11 +1,11 @@
 import type { WireChartEvent, WireMatchChart } from "@vibewars/game-protocol";
 import type { MatchSummaryRow } from "@vibewars/game-session";
 
-import { t } from "../i18n/index.js";
-import { mountEndLine } from "./end-line.js";
+import { endLineSetter } from "./end-line.js";
 import { createHud, describeOutcome, placeEnd } from "./hud.js";
+import { chartRoster, renderMatchCharts } from "./match-charts.js";
 import { renderSummary, summaryTables } from "./match-summary.js";
-import { mountQueueScreen } from "./queue-screen.js";
+import { mountQueueScreen, stoppedEndLine, teamEndLine } from "./queue-screen.js";
 
 /**
  * `?summary-fixture` in an e2e build (#3563): the real HUD's end of a match,
@@ -24,11 +24,30 @@ export function mountSummaryFixture(parent: HTMLElement): void {
   }).observe(hud.top);
   hud.result.style.display = "";
   hud.result.textContent = describeOutcome(1, "time", 0, []);
-  const line = mountEndLine(hud.end, noop);
-  line.text.textContent = t("queue.backToLobbyIn", { seconds: 9 });
-  line.press.textContent = t("queue.now");
+  // Lost, so its countdown can be stopped (#3847), as main.ts does it.
+  const setEndLine = endLineSetter(hud.end);
+  const counting = teamEndLine("lobby", 9, null, null, false);
+  setEndLine({
+    text: counting.text,
+    button: counting.button,
+    onPress: noop,
+    stop:
+      counting.stop === undefined
+        ? undefined
+        : {
+            button: counting.stop,
+            onPress: () => {
+              setEndLine({ ...stoppedEndLine("lobby"), onPress: noop, stop: undefined });
+            },
+          },
+  });
   const bots = new Set(FIXTURE.filter((row) => row.signet === null).map((row) => row.id));
-  renderSummary(hud.end, summaryTables(FIXTURE, "p0-0", 0, 1, bots)).classList.add("hud-summary");
+  const tables = summaryTables(FIXTURE, "p0-0", 0, 1, bots);
+  const summary = renderSummary(hud.end, tables);
+  summary.classList.add("hud-summary");
+  hud.root.classList.add("is-ended");
+  // As the match's own end panel mounts them once the chart lands (#3790).
+  renderMatchCharts(summary, fixtureChart(), chartRoster(tables));
 }
 
 /**

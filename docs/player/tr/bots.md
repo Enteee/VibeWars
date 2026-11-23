@@ -34,9 +34,13 @@ botlar ve şifacılar daha az düşmanın erişebileceği yere geçer ve
 sütunları siper olarak kullanır. Bir takım, onu bitirmek için erişimdeki
 canı %60'ın altına düşen her düşmana yönelir. Tepenin Kralı'nda, takımın
 sunağı elinde tutmuyorken, diğer takımın sunaktaki Ghostly Hero'su bundan
-bile önce gelir. Takımının çok önüne geçen bir bot, ilerlemeden önce
-diğerlerini bekler; ancak diğerleri bir süredir boşta duran oyuncularsa
-beklemez.
+bile önce gelir. Yalnızca botlardan oluşan bir takımda, takımının çok
+önüne geçen bir bot ilerlemeden önce diğerlerini bekler. Senin
+takımındaki botlar ise seninle kalır: ön saf bir adım önünde, menzilliler
+yanında, şifacılar arkanda durur ve gittiğin her yere seni izler. Bir
+süre boşta durduğunda, yalnızca botlardan oluşan bir takım nasıl oynarsa
+öyle oynamaya devam ederler.
+Sen aktif olduğun sürece, bir çatışmanın senden uzağa sürüklediği bir bot, ağır yaralı değilse ya da hemen yanında bir düşman yoksa sana geri döner.
 
 Okçular ve mızrakçılar güvenli olduğunda yüksek yeri tutar.
 İki rakibin odaklandığı ya da canı yarının altında olup hızla azalan bir bot, en fazla üç saniye onların görüşünden saklanır: bir duvarın arkasına, bir platformun altına ya da yüksek yere.

@@ -63,6 +63,8 @@ tim siap pakai lain di tempatnya. Tim-tim siap pakai ini adalah build tim PvP
 berperingkat baik dari wiki PvX; untuk ukuran yang tidak dimiliki PvX, build solo
 PvX disusun bersama. **Klon** menyimpan salinan
 tim yang tampil sebagai Build Tim milikmu sendiri lalu membukanya, untuk kamu ubah sesukamu.
+Ukuran Build Tim diubah di editornya: ukuran yang lebih kecil membuang anggota
+terakhir, yang lebih besar menambah anggota kosong.
 
 ## Bermain Arena Acak
 
@@ -84,7 +86,9 @@ menunggu langsung mengeluarkanmu dari antrean.
 Saat laga berakhir kamu bisa **Antre lagi**, atau **Tetap bersama** dengan
 tim yang baru saja bermain bersamamu.
 
-Di samping skor, dua grafik menceritakan laga dari waktu ke waktu. **Kamu**
+Setiap laga berakhir pada skornya, dari antrean, di-host, atau di lobi, dan di
+sampingnya dua grafik menceritakan laga dari waktu ke waktu; layar antrean
+menampilkannya lagi setelah laga dari antrean. **Kamu**
 menggambar damage yang kamu berikan, damage yang kamu terima, penyembuhan, dan
 Energi; **Tim** menggambar kumpulan nyawa setiap tim di atas total damage-nya.
 Tanda di bawah sumbu waktu menunjukkan kill, kematian, interupsi, perebutan,
@@ -92,6 +96,8 @@ dan kebangkitan: arahkan ke salah satunya, atau pindah ke sana dengan Tab,
 untuk membaca apa yang terjadi. Tekan entri legenda untuk menyembunyikan atau
 menampilkan garisnya. Di ponsel grafik ada di bawah skor, yang menampilkan kamu
 dan dua orang lain sampai **Tampilkan semua**.
+
+**Riwayat pertandingan** di bilah atas menampilkan 50 pertandingan terakhirmu, yang terbaru dulu: buka salah satu untuk melihat lagi skor dan grafiknya. Semuanya hanya disimpan di peramban ini. **Pertandinganku** hanya menampilkan yang dimainkan dengan kunci pemainmu saat ini.
 
 ## Menjadi host atau bergabung ke laga
 

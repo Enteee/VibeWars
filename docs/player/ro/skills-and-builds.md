@@ -146,6 +146,8 @@ de cod funcționează în ambele feluri. O abilitate GW1 pe care VibeWars nu o a
 iese fără să salveze și întreabă mai întâi dacă ai schimbat ceva. **Trimite**,
 **Încarcă cod GW1**, **Duplică** și **Șterge** sunt în **⋯**.
 
+Un build cu o problemă nu poate fi salvat, iar zona de antrenament nu pornește cu el. Dacă un astfel de build ajunge totuși într-un meci, acolo joci cu un build de început, iar un mesaj spune de ce.
+
 Un cod de echipă se încarcă în schimb în **Constructor de echipe**: lipește-l
 oriunde acolo, sau deschide un build de echipă și folosește **⋯** →
 **Încarcă echipa** al lui.
@@ -169,12 +171,17 @@ Un build de echipă are mereu atâția membri câți spune mărimea: unul nou î
 un personaj gol pe fiecare loc. Nu adaugi și nu elimini niciodată un membru, ci
 înlocuiești unul. Fiecare rând arată personajul membrului cu armele pe care le
 ține, un punct pentru fiecare set de arme când are mai multe, Viața și Energia
-maximă și cele opt abilități; trage un rând de ⠿ ca să reordonezi. Panoul din
+maximă și cele opt abilități; trage un rând de ⠿ ca să reordonezi. Ține **Shift** când plasezi un rând pe alt membru
+ca să-i copiezi în schimb tot build-ul pe acel membru; rândul tras rămâne cum era.
+Panoul din
 dreapta este biblioteca din Constructor de personaje, cu o filă **Personajele
 mele** înainte de **Abilități** și **Echipament**. La **Personajele mele**, trage
 unul dintre personajele tale peste un membru ca să faci din acel membru o copie a
 lui. O copie aparține echipei: dacă o schimbi pe ea sau personajul din care a
-provenit, celălalt rămâne cum era. La **Abilități**, biblioteca arată abilitățile
+provenit, celălalt rămâne cum era. Invers, trage un membru pe **Personajele mele**
+sau pe fila sa ca să-l salvezi ca personaj nou al tău; dacă numele e deja luat,
+primește " (copy)", iar echipa păstrează membrul cum e.
+La **Abilități**, biblioteca arată abilitățile
 membrului pe care ai dat clic ultima dată; trage una pe locul oricărui membru ca
 s-o echipezi acolo. Pe bara acelui membru, o abilitate deja prezentă se mută pe
 loc. O plasare pe care un membru nu o poate primi, o abilitate a altei clase sau
@@ -193,7 +200,7 @@ armele și mâinile secundare ale membrului deschis și există doar cât timp e
 deschis: dă clic pe una ca s-o echipezi sau trage-o peste mâinile lui. Un singur
 membru e deschis odată; **Esc** îl închide. O clasă nouă renunță la abilitățile
 și rangurile pe care nu le poate folosi, cu un **Anulează**. Apasă numele unui
-membru sau **Deschide în ecranul Personaj** ca să-l editezi în editorul de build;
+membru sau butonul său **✎** ca să-l editezi în editorul de build;
 **Salvează** de acolo îl pune înapoi în echipă, iar **Salvează** al echipei păstrează
 totul și te duce înapoi la Constructor de echipe. **Esc** iese fără să salveze și
 întreabă mai întâi. **Trimite**, **Încarcă echipa**, **Duplică** și **Șterge** ale
@@ -204,3 +211,10 @@ juca** și motivul, iar o echipă fără nume apare ca **Echipă fără nume**. 
 tău start generează o echipă gata făcută la mărimea aleasă, 4v4 dacă nu ai
 schimbat-o, marcată **Aleator**: **Altul** de pe ea o înlocuiește cu alta, iar
 **Clonează** îți dă o copie de editat.
+Fiecare build de echipă are o mărime, 2v2, 4v4 sau 8v8 (nu există builduri de
+echipă 1v1): **Mărime echipă** din bara laterală. Constructor de echipe listează
+buildurile de echipă de mărimea aleasă acolo, iar **Build de echipă nou** creează
+unul de acea mărime. **Mărime echipă** din editorul lui o schimbă: o mărime mai
+mică scoate ultimii membri, una mai mare adaugă membri goi, iar Salvează mută
+bara laterală la mărimea cu care a fost salvat. O echipă lipită își păstrează
+mărimea, iar bara laterală trece la ea.

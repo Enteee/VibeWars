@@ -31,6 +31,8 @@ doel buiten beeld of onder de HUD een omlijnde pijl aan de rand van het scherm:
 de standaard of een schrijn in de kleur van de eigenaar, grijs als hij van niemand
 is, het altaar in goud. De gevulde pijl van een speler wordt eroverheen getekend.
 
+Een wedstrijd begint met iedereen vastgehouden bij hun startplek: je kunt een paar stappen lopen, maar niet vechten of vaardigheden gebruiken. Een regel bovenaan telt de spelers die de wedstrijd geladen hebben. Zodra iedereen geladen heeft, telt die 10 seconden af en begint de wedstrijd, en zijn klok mee. Op een speler die na 20 seconden niet geladen heeft, wordt niet gewacht: het aftellen begint zonder hen, en ze kunnen later nog meedoen.
+
 ## Annihilation
 
 **Versla elke vijand.** De doden blijven liggen tot een bondgenoot ze reanimeert,
@@ -289,6 +291,8 @@ Elke fase duurt 30 seconden en eindigt eerder zodra iedereen in de Teamlobby kla
 Wie tijdens de Teamlobby vertrekt, laat zijn personage aan een bot over, zodat de kant zijn grootte houdt. Wie dan binnenkomt, kijkt alleen.
 
 Na een teammatch uit de wachtrij gaan de winnaars na 20 seconden vanzelf weer in de wachtrij, en gaan de verliezers (ook bij gelijkspel) terug naar het menu; de match van een lobby met code brengt iedereen terug naar de lobby. Een knop onder de uitslag slaat het wachten over, of laat winnaars vertrekken zonder in de rij te gaan.
+Winnaars in de Team Arena houden voor de volgende match hun teambuild en ieders plek, zonder teamlobby, tenzij de groep sindsdien veranderd is: iemand is vertrokken, afwezig of erbij gekomen. Dan kiezen ze hun team opnieuw.
+Heeft je team niet gewonnen, dan zet Stoppen dat aftellen stil zodat je de uitslag kunt lezen; de knop brengt je daarna verder als je klaar bent.
 
 ## Heroes' Ascent
 

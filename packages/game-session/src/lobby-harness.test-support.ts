@@ -163,6 +163,7 @@ export async function openLobby(
           nowSeconds: () => 0,
           signetOf: testSignet,
           recordReplay: options.recordReplay ?? false,
+          preMatch: null,
         });
       matches.push({ plan, host });
       return host;

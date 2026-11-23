@@ -62,6 +62,8 @@ plaats. De kant-en-klare teams zijn de goed beoordeelde PvP-teambuilds van de
 PvX-wiki; een grootte waarvan PvX er geen heeft, krijgt samengestelde
 solo-builds van PvX. **Klonen** slaat een kopie van het getoonde team op als
 jouw eigen Teambuild en opent die, om naar wens te wijzigen.
+De grootte van een Teambuild verander je in de editor: een kleinere grootte laat
+de laatste leden vallen, een grotere voegt lege toe.
 
 ## Speel een Random Arena
 
@@ -84,7 +86,9 @@ wachtrij.
 Als de match afloopt, kun je **Opnieuw zoeken**, of **Bij elkaar** blijven met
 het team waarmee je net speelde.
 
-Naast de scores vertellen twee grafieken het verloop van de match. **Jij**
+Elke match eindigt op zijn scores, uit de wachtrij, gehost of in een lobby, en
+daarnaast vertellen twee grafieken het verloop van de match; het
+wachtrijscherm toont ze opnieuw na een match uit de wachtrij. **Jij**
 tekent je toegebrachte schade, ontvangen schade, genezing en Energie; **Teams**
 tekent de levenspool van elk team boven zijn totale schade. Markeringen onder
 de tijdas tonen kills, doden, onderbrekingen, veroveringen en
@@ -92,6 +96,8 @@ wederopstandingen: wijs er een aan, of ga er met Tab naartoe, om te lezen wat
 er gebeurde. Druk op een legenda-item om de lijn te verbergen of te tonen. Op
 een telefoon staan de grafieken onder de scores, die jou en twee anderen tonen
 tot **Alles tonen**.
+
+**Wedstrijdgeschiedenis** in de bovenbalk toont je laatste 50 wedstrijden, nieuwste eerst: open er een om de scores en grafieken opnieuw te zien. Ze worden alleen in deze browser bewaard. **Mijn wedstrijden** toont alleen die je met je huidige spelerssleutel hebt gespeeld.
 
 ## Een match hosten of meedoen
 

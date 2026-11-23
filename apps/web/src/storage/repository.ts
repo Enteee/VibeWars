@@ -20,13 +20,15 @@ import { STORAGE_NAMESPACE } from "./namespace.js";
  */
 
 const DB_NAME = STORAGE_NAMESPACE;
-const DB_VERSION = 4;
+const DB_VERSION = 5;
 const CHARACTER_STORE = "characters";
 const TEAM_STORE = "teams";
 /** The last match replays (#3572), by hash: `replays.ts`. */
 export const REPLAY_STORE = "replays";
 /** When each of them came, by the same hash, so pruning reads no replay. */
 export const REPLAY_DATE_STORE = "replay-dates";
+/** The last ended matches, by id (#3848): `match-history.ts`. */
+export const MATCH_HISTORY_STORE = "match-history";
 /** Match records lived here until #2019: a store left from then is deleted on open. */
 const MATCH_STORE = "matches";
 
@@ -107,6 +109,9 @@ export function openIndexedDbStore(onBlocked: () => void): Promise<KeyValueStore
       }
       if (!db.objectStoreNames.contains(REPLAY_DATE_STORE)) {
         db.createObjectStore(REPLAY_DATE_STORE);
+      }
+      if (!db.objectStoreNames.contains(MATCH_HISTORY_STORE)) {
+        db.createObjectStore(MATCH_HISTORY_STORE);
       }
       if (db.objectStoreNames.contains(MATCH_STORE)) {
         db.deleteObjectStore(MATCH_STORE);

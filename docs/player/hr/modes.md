@@ -30,6 +30,8 @@ cilj izvan zaslona ili pod HUD-om dobiva obrubljenu strelicu na
 rubu zaslona: stalak ili svetište u boji vlasnika, sivo za
 ničije, oltar zlatan. Ispunjena strelica igrača crta se preko nje.
 
+Meč počinje sa svima zadržanima blizu njihova mjesta pojavljivanja: možeš napraviti nekoliko koraka, ali ne i boriti se ni koristiti vještine. Redak na vrhu broji igrače koji su učitali meč. Kad ga svi učitaju, odbrojava 10 sekundi i meč počinje, a s njim i njegov sat. Na igrača koji ga nije učitao nakon 20 sekundi ne čeka se: odbrojavanje počinje bez njega, a on se i dalje može pridružiti kasnije.
+
 ## Uništenje
 
 **Porazi sve neprijatelje.** Mrtvi ostaju ležati dok ih saveznik ne uskrsne,
@@ -342,6 +344,8 @@ Nakon timskog meča iz reda pobjednici se sami vraćaju u red nakon
 20 sekundi, a poraženi (i neriješeno) vraćaju se na izbornik; meč
 sobe s kôdom vraća sve u sobu. Gumb ispod rezultata
 preskače čekanje ili, za pobjednike, izlazi bez ulaska u red.
+Pobjednici Timske arene zadržavaju svoj timski build i mjesto svakog igrača za sljedeći meč, bez timskog predvorja, osim ako se skupina u međuvremenu promijenila: netko je otišao, odsutan je ili se pridružio. Tada ponovno biraju tim.
+Ako tvoj tim nije pobijedio, Zaustavi zaustavlja to odbrojavanje da možeš pročitati rezultat; gumb te zatim vodi dalje kad budeš spreman.
 
 ## Uspon heroja
 

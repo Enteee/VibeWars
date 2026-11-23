@@ -232,6 +232,7 @@ function lobby(
     queueNonce: null,
     ascentRound: null,
     ascentLock: null,
+    teamKept: null,
     proposalBuilds,
     teamLobby: {
       stage,

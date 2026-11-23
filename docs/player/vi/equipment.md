@@ -160,9 +160,17 @@ của bộ bạn đang xem, cùng các mod của chúng.
 | Rune thuộc tính Superior                                                                                                                                                                                                                                                                                       | +3 cho một thuộc tính, -75 Máu            |
 | ![Vigor](../../../apps/web/public/icons/rune/vigor.svg) **Vigor**                                                                                                                                                                                                                                              | thêm Máu (+30, +41 hoặc +50)              |
 | ![Vitae](../../../apps/web/public/icons/rune/vitae.svg) **Vitae**                                                                                                                                                                                                                                              | +10 Máu                                   |
-| ![Attunement](../../../apps/web/public/icons/rune/attunement.svg) **Attunement**                                                                                                                                                                                                                               | thêm Năng lượng (+3, +6 hoặc +9)          |
+| ![Attunement](../../../apps/web/public/icons/rune/attunement.svg) **Attunement**                                                                                                                                                                                                                               | thêm Năng lượng (+2)                      |
 | ![Clarity](../../../apps/web/public/icons/rune/clarity.svg) **Clarity**, ![Purity](../../../apps/web/public/icons/rune/purity.svg) **Purity**, ![Recovery](../../../apps/web/public/icons/rune/recovery.svg) **Recovery**, ![Restoration](../../../apps/web/public/icons/rune/restoration.svg) **Restoration** | mỗi rune làm hai Dị trạng hết sớm hơn 20% |
 | ![Absorption](../../../apps/web/public/icons/rune/absorption.svg) **Absorption** (![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior**)                                                                                                                                               | giảm sát thương vật lý từ mỗi đòn         |
+
+Vitae và Attunement cộng dồn: năm rune Attunement cho +10 Năng lượng. Mọi
+rune khác chỉ tính một lần, dù bạn đeo bao nhiêu. Việc rút ngắn Dị trạng từ
+các nguồn khác nhau cũng cộng dồn, mỗi nguồn tính trên toàn bộ thời lượng và
+làm tròn đến giây: Restoration và "Fear Cuts Deeper" giảm một Bleeding 8
+giây xuống còn 4.
+
+Trình chỉnh sửa không lưu hai món có cùng một rune, hoặc có rune của cùng một thuộc tính: chỉ phần thưởng mạnh nhất được tính, còn mọi hình phạt máu đều được tính. Trỏ vào máu trong trình chỉnh sửa để xem nó đến từ đâu: cơ bản, rune, phù hiệu và nâng cấp.
 
 Bạn chọn rune của một món ở cùng chỗ với huy hiệu của nó: nhấn vào món đó
 trên hình nhân.

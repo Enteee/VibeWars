@@ -114,7 +114,7 @@ fails the tutorial: it hurts, the tutor jokes, the player walks on.
 
 ![Station 8: three rats, a skill bar with different skills lit](img/8-rats.png)
 
-- Three rats on the canyon's second map. The tutorial build has only melee attacks, so
+- Three rats on the canyon. The tutorial build has only melee attacks, so
   the lesson is combos (#3316): one rat runs when hit, which Protector's Strike punishes;
   a big one (240 health) is knocked down with Hammer Bash, then Crushing Blow; the third
   takes anything. The tutor waits east of the pocket, out of every rat's reach, and only
@@ -133,14 +133,6 @@ fails the tutorial: it hurts, the tutor jokes, the player walks on.
   **Alt + click** walks to the ground under a ledge.
 - **Do.** Reach the ledge, then Alt+click the ground beneath it.
 - **Check.** The player is on the upper layer, then on the lower one under it.
-
-## 10. Up the ramp
-
-![Station 10: a ramp climbing to a high deck](img/10-ramp.png)
-
-- **Teach.** A ramp joins two layers: walk onto it and it carries you up.
-- **Do.** Walk up the ramp to the marker on the high ground.
-- **Check.** The player stands on the high layer.
 
 ## 11. Sneak through the tunnel
 
@@ -164,22 +156,28 @@ fails the tutorial: it hurts, the tutor jokes, the player walks on.
 
 ## 13. Ping the way
 
-![Station 13: a Y-junction, a ping on one branch, the compass](img/13-junction.png)
+There is no station 10 (the ramp to a high deck went with the merge of the two canyon maps, #3792):
+the stations keep their numbers, and the canyon has stations 4–9 and 11–14, thirteen in all
+with the battlefield's three.
 
-- At a **Y-junction** the tutor: "Left or right? You call it."
+![Station 13: a two-arm junction, a ping on one arm, the compass](img/13-junction.png)
+
+- At a **junction round a rock island** the trail splits into a north and a south arm, each a
+  short detour, rejoining at a mark further on. The tutor: "Left or right? You call it."
 - **Teach.** Wheel-click the ground, or click the **compass**, to ping. Dragging on the compass
   draws a line.
-- **Do.** Ping the branch you pick.
-- **Check.** A ping on the east branch, and the tutor a few steps down it. The tutor follows
-  the pinged branch: the other is a short pocket with a parasol and a joke ("Nice view. Wrong
-  way, though."), and the tutor walks back from it, so a wrong pick costs only the walk.
+- **Do.** Ping the arm you pick.
+- **Check.** A ping on an arm, the tutor walks that arm, and the player reaches the rejoin mark
+  (`site-13r`) by either arm. The player may walk the other one. A ping on neither arm, or walking
+  on unpinged, gets the hint once each. A small bay off the south arm holds a parasol and a deck
+  chair, and the tutor says "Nice view." as it passes: scenery, not a wrong way.
 - **HUD.** The compass.
 
 ## 14. Back to the front
 
 ![Station 14: the pair emerges at their own spawn, the fight ahead](img/14-front.png)
 
-- The mist gate at the canyon's east end opens on the pair's own spawn, among their team. The tutor:
+- The mist gate at the canyon's east end (the same single map) opens on the pair's own spawn, among their team. The tutor:
   "Our team fights beyond the mist. Follow me." Through the gate: "Now they're in front of us. Charge!"
   The player joins the background fight on the tutor's team (bots), now a normal bot match.
 - The mode is the background fight's. A win or loss screen ends it and leads to the menu.

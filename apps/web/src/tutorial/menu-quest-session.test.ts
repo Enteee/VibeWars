@@ -101,8 +101,14 @@ describe("the menu quest session", () => {
     const onEnd = vi.fn();
     const quest = startMenuQuest({ from: "spec", coach, onEnd });
     quest.event({ kind: "screen-shown", screen: "characters" });
-    expect(shown.at(-1)?.target).toBe("character-open");
+    expect(shown.at(-1)?.target).toBe("rail-characters");
+    quest.event({ kind: "roster-shown", random: true });
+    expect(shown.at(-1)?.target).toBe("character-random");
+    gotIt(shown.at(-1));
+    expect(shown.at(-1)?.target).toBe("character-new");
     quest.event({ kind: "screen-shown", screen: "character-builder" });
+    expect(shown.at(-1)?.target).toBe("character-new");
+    quest.event({ kind: "character-new" });
     expect(shown.at(-1)?.target).toBe("professions");
     const start = newCharacter("c1");
     const ranger: StoredCharacter = { ...start, secondaryProfession: "ranger" };
@@ -153,6 +159,9 @@ describe("the menu quest session", () => {
     expect(items.get(KEY)).toBe("menu:team");
     expect(shown.at(-1)?.target).toBe("rail-teams");
     quest.event({ kind: "screen-shown", screen: "teams" });
+    // 2v2 in the sidebar first, then New team build (#3794).
+    expect(shown.at(-1)?.target).toBe("team-build-size");
+    quest.event({ kind: "team-build-size", size: 2 });
     expect(shown.at(-1)?.target).toBe("team-new");
     const mine: StoredCharacter = {
       ...newCharacter("c1"),

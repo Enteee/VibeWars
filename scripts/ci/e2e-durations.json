@@ -279,6 +279,7 @@
   "e2e/static.spec.ts › the menu loads under the sub-path, with every asset found": 3.2,
   "e2e/team-arena.spec.ts › #1766: two parties of two queue for Team Arena, meet, and play their own builds with two bots each": 35.5,
   "e2e/team-arena.spec.ts › #2107: a Team Arena leader picks 2v2, and the party queues for Team Arena 2v2": 33.5,
+  "e2e/team-arena.spec.ts › #3815: a Team Arena party that wins queues again with the same team, with no Team Lobby": 150,
   "e2e/team-lobby.spec.ts › #1460: two players and a bot propose, vote, take seats and play the claimed characters": 7.8,
   "e2e/touch-notice.spec.ts › never shows on a narrow desktop window": 0.7,
   "e2e/touch-notice.spec.ts › on a touch-only phone › holds the menu back until Continue anyway, once, keeping the link's fragment": 1.1,

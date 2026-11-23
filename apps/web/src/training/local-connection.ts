@@ -261,6 +261,8 @@ export function createLocalConnection(options: {
     selfSessionId: selfId,
     sendCall,
     getCalls,
+    // No pre-match here (#3852): nothing waits for the first frame.
+    sceneReady: () => undefined,
     map,
     timeLimitSeconds: null,
     get skillBar() {
@@ -296,6 +298,7 @@ export function createLocalConnection(options: {
         score: [...simulation.score.byTeam.values()],
         elapsedSeconds: simulation.elapsedSeconds,
         phase: simulation.phase,
+        preMatch: null,
         winningTeam: simulation.outcome.winningTeam,
         endReason: simulation.outcome.reason,
         projectiles: simulation.projectiles.map((shot) => ({

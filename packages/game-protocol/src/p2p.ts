@@ -83,6 +83,7 @@ export const CHANNELS = [
   "match-replay",
   "match-chart",
   "bye",
+  "scene-ready",
   "lobby-join",
   "lobby-challenge",
   "lobby-proof",
@@ -879,6 +880,27 @@ const END_REASONS = [
 type EndReason = (typeof END_REASONS)[number];
 
 /**
+ * Where a match is (#3818): `waiting` for its planned players, each held
+ * in its spawn bubble; `countdown` to the start, still held; `active`;
+ * `finished`.
+ */
+export const WIRE_MATCH_PHASES = ["waiting", "countdown", "active", "finished"] as const;
+export type WireMatchPhase = (typeof WIRE_MATCH_PHASES)[number];
+
+/** The wait before a match starts (#3818), while it is `waiting` or `countdown`. */
+export interface WirePreMatch {
+  /** Who has a seat and its first frame drawn (#3852), bots included, of `expected`. */
+  readonly joined: number;
+  readonly expected: number;
+  /**
+   * Whole seconds to the start in `countdown`; while `waiting`, to the
+   * countdown starting without whoever is missing, or `null` before that
+   * is announced.
+   */
+  readonly secondsLeft: number | null;
+}
+
+/**
  * The whole match at one tick, not a delta: what a client assembles from
  * that tick's `WireSnapshotPart`s. Never sent as it is.
  */
@@ -888,7 +910,9 @@ export interface WireSnapshot {
   readonly elapsedSeconds: number;
   /** Each team's points by team index (#2682): `teamCount` of them. */
   readonly score: readonly number[];
-  readonly phase: "active" | "finished";
+  readonly phase: WireMatchPhase;
+  /** The wait before the start (#3818); `null` once `active`. */
+  readonly preMatch: WirePreMatch | null;
   readonly winningTeam: WireTeam | null;
   readonly endReason: EndReason | null;
   readonly players: readonly WirePlayer[];
@@ -1032,6 +1056,12 @@ export type WireCombatBatch = readonly WireCombat[];
  * window.
  */
 export type PeerBye = Readonly<Record<string, never>>;
+
+/**
+ * Client to host, once (#3852): its first frame of the match is drawn.
+ * The pre-match countdown waits for every seated player's.
+ */
+export type PeerSceneReady = Readonly<Record<string, never>>;
 
 /** A world point, `[x, y]`. */
 export type WirePoint = readonly [number, number];
@@ -1637,6 +1667,12 @@ export interface WireLobbyState {
    * the slots its Team Build keeps, and who holds each. `null` otherwise.
    */
   readonly ascentLock: WireAscentLock | null;
+  /**
+   * After a Team Arena win (#3815): whether the party is still the one
+   * that played, so it queues again with the same Team Build and slots.
+   * `null` with no win to keep.
+   */
+  readonly teamKept: boolean | null;
 }
 
 /**
@@ -1733,9 +1769,14 @@ export type WireLobbyCommand =
    * Host only, in a team mode (#1766): the party's Team Lobby, then the
    * queue; `leave-queue` takes it out again, `play-bots` plays against
    * bots instead, in this lobby. In Heroes' Ascent it queues at the
-   * host's `ascentRound` (#1996), `null` in every other mode.
+   * host's `ascentRound` (#1996), `null` in every other mode. `again` is
+   * the queue after a Team Arena win (#3815), which keeps the team.
    */
-  | { readonly kind: "find-match"; readonly ascentRound: number | null }
+  | {
+      readonly kind: "find-match";
+      readonly ascentRound: number | null;
+      readonly again: boolean;
+    }
   | { readonly kind: "leave-queue" }
   | { readonly kind: "play-bots" }
   /**
@@ -2392,6 +2433,11 @@ export function parseWireSharedTrack(value: unknown): WireSharedTrack | undefine
     : undefined;
 }
 
+export function parsePeerSceneReady(value: unknown): PeerSceneReady | undefined {
+  const raw = fields(value);
+  return raw !== undefined && Object.keys(raw).length === 0 ? {} : undefined;
+}
+
 export function parsePeerBye(value: unknown): PeerBye | undefined {
   const raw = fields(value);
   return raw !== undefined && Object.keys(raw).length === 0 ? {} : undefined;
@@ -2825,13 +2871,27 @@ export function parseWireSnapshotPart(
     : { ...snapshot, part: raw.part, parts: raw.parts };
 }
 
+function parsePreMatch(value: unknown): WirePreMatch | undefined {
+  const raw = fields(value);
+  if (raw === undefined) {
+    return undefined;
+  }
+  const { joined, expected, secondsLeft } = raw;
+  return isCount(joined) &&
+    isCount(expected) &&
+    joined <= expected &&
+    (secondsLeft === null || isCount(secondsLeft))
+    ? { joined, expected, secondsLeft }
+    : undefined;
+}
+
 function parseSnapshot(raw: Fields): WireSnapshot | undefined {
   const score = parseArray(raw.score, MAX_WIRE_TEAMS, parseScore);
   if (
     !isCount(raw.tick) ||
     !isNumber(raw.elapsedSeconds) ||
     score === undefined ||
-    !isOneOf(raw.phase, ["active", "finished"] as const) ||
+    !isOneOf(raw.phase, WIRE_MATCH_PHASES) ||
     !(raw.winningTeam === null || isTeam(raw.winningTeam)) ||
     !(raw.endReason === null || isOneOf(raw.endReason, END_REASONS))
   ) {
@@ -2852,6 +2912,7 @@ function parseSnapshot(raw: Fields): WireSnapshot | undefined {
   const decks = parseArray(raw.decks, MAX_WIRE_TOGGLES, parseDeck);
   const lifts = parseArray(raw.lifts, MAX_WIRE_TOGGLES, parseLift);
   const capturePoints = parseArray(raw.capturePoints, MAX_WIRE_CAPTURE_POINTS, parseCapturePoint);
+  const preMatch = raw.preMatch === null ? null : parsePreMatch(raw.preMatch);
   const { altarHolder, altarHeldSeconds } = raw;
   return !(altarHolder === null || isTeam(altarHolder)) ||
     !isNumber(altarHeldSeconds) ||
@@ -2865,6 +2926,7 @@ function parseSnapshot(raw: Fields): WireSnapshot | undefined {
     relics === undefined ||
     altar === undefined ||
     capturePoints === undefined ||
+    preMatch === undefined ||
     gates === undefined ||
     switches === undefined ||
     teleports === undefined ||
@@ -2877,6 +2939,7 @@ function parseSnapshot(raw: Fields): WireSnapshot | undefined {
         elapsedSeconds: raw.elapsedSeconds,
         score,
         phase: raw.phase,
+        preMatch,
         winningTeam: raw.winningTeam,
         endReason: raw.endReason,
         players,
@@ -3306,6 +3369,41 @@ function parseChartEvent(
   }
 }
 
+/** A chart's period, drop count, series and events (#3564), between the ids of `roster`. */
+function parseChartBody(
+  raw: Fields,
+  roster: ReadonlySet<string>,
+  teamCount: WireTeamCount,
+): WireMatchChart | undefined {
+  if (!isCount(raw.period) || raw.period < 1 || !isCount(raw.dropped)) {
+    return undefined;
+  }
+  const players = parseArray(raw.players, roster.size, (item) => parseChartSeries(item, roster));
+  const events = parseArray(raw.events, MAX_CHART_EVENTS, (item) =>
+    parseChartEvent(item, roster, teamCount),
+  );
+  return players !== undefined && events !== undefined
+    ? { period: raw.period, players, events, dropped: raw.dropped }
+    : undefined;
+}
+
+/**
+ * Whether `chart` holds together as a whole one: at most
+ * `MAX_CHART_EVENTS`, no player twice, every series the same length.
+ */
+function wholeChart(chart: WireMatchChart): boolean {
+  const length = chart.players[0]?.dealt.length ?? 0;
+  return (
+    chart.events.length <= MAX_CHART_EVENTS &&
+    new Set(chart.players.map(({ id }) => id)).size === chart.players.length &&
+    chart.players.every((series) =>
+      [series.dealt, series.taken, series.healed, series.health, series.energy].every(
+        (samples) => samples.length === length,
+      ),
+    )
+  );
+}
+
 /**
  * One part of a match's charts (#3564), between the ids of `roster`, its
  * summary's. `joinMatchChart` checks the parts against each other.
@@ -3316,24 +3414,25 @@ export function parseWireMatchChartPart(
   teamCount: WireTeamCount,
 ): WireMatchChartPart | undefined {
   const raw = fields(value);
-  if (
-    raw === undefined ||
-    !isCount(raw.period) ||
-    raw.period < 1 ||
-    !isCount(raw.dropped) ||
-    !isCount(raw.parts) ||
-    raw.parts < 1 ||
-    raw.parts > MAX_CHART_PARTS
-  ) {
+  if (raw === undefined || !isCount(raw.parts) || raw.parts < 1 || raw.parts > MAX_CHART_PARTS) {
     return undefined;
   }
-  const players = parseArray(raw.players, roster.size, (item) => parseChartSeries(item, roster));
-  const events = parseArray(raw.events, MAX_CHART_EVENTS, (item) =>
-    parseChartEvent(item, roster, teamCount),
-  );
-  return players !== undefined && events !== undefined
-    ? { period: raw.period, parts: raw.parts, players, events, dropped: raw.dropped }
-    : undefined;
+  const body = parseChartBody(raw, roster, teamCount);
+  return body !== undefined ? { ...body, parts: raw.parts } : undefined;
+}
+
+/**
+ * A whole chart as `joinMatchChart` made it (#3848), kept with a match
+ * in the browser's history: its parts' checks, and the whole one's.
+ */
+export function parseWireMatchChart(
+  value: unknown,
+  roster: ReadonlySet<string>,
+  teamCount: WireTeamCount,
+): WireMatchChart | undefined {
+  const raw = fields(value);
+  const chart = raw === undefined ? undefined : parseChartBody(raw, roster, teamCount);
+  return chart !== undefined && wholeChart(chart) ? chart : undefined;
 }
 
 /**
@@ -3354,18 +3453,13 @@ export function joinMatchChart(parts: readonly WireMatchChartPart[]): WireMatchC
   ) {
     return undefined;
   }
-  const players = parts.flatMap((part) => part.players);
-  const events = parts.flatMap((part) => part.events);
-  const length = players[0]?.dealt.length ?? 0;
-  return events.length <= MAX_CHART_EVENTS &&
-    new Set(players.map(({ id }) => id)).size === players.length &&
-    players.every((series) =>
-      [series.dealt, series.taken, series.healed, series.health, series.energy].every(
-        (samples) => samples.length === length,
-      ),
-    )
-    ? { period: first.period, players, events, dropped: first.dropped }
-    : undefined;
+  const chart: WireMatchChart = {
+    period: first.period,
+    players: parts.flatMap((part) => part.players),
+    events: parts.flatMap((part) => part.events),
+    dropped: first.dropped,
+  };
+  return wholeChart(chart) ? chart : undefined;
 }
 
 /** The `"refused"` channel: a `CastRefusedMessage`, to the caster alone. */
@@ -3891,6 +3985,7 @@ export function parseWireLobbyState(value: unknown): WireLobbyState | undefined 
     !isOneOf(raw.phase, ["waiting", "team-lobby", "queued", "starting", "in-match"] as const) ||
     !(raw.queueNonce === null || isTicketId(raw.queueNonce)) ||
     !isAscentRound(raw.ascentRound) ||
+    !(raw.teamKept === null || typeof raw.teamKept === "boolean") ||
     !isOneOf(raw.mode, LOBBY_MODES) ||
     !isString(raw.mapId) ||
     !isTeamSize(raw.teamSize) ||
@@ -3919,6 +4014,7 @@ export function parseWireLobbyState(value: unknown): WireLobbyState | undefined 
         queueNonce: raw.queueNonce,
         ascentRound: raw.ascentRound,
         ascentLock,
+        teamKept: raw.teamKept,
       };
 }
 
@@ -3939,8 +4035,8 @@ export function parseWireLobbyCommand(value: unknown): WireLobbyCommand | undefi
     case "select-mode":
       return isOneOf(raw.mode, LOBBY_MODES) ? { kind: "select-mode", mode: raw.mode } : undefined;
     case "find-match":
-      return isAscentRound(raw.ascentRound)
-        ? { kind: "find-match", ascentRound: raw.ascentRound }
+      return isAscentRound(raw.ascentRound) && typeof raw.again === "boolean"
+        ? { kind: "find-match", ascentRound: raw.ascentRound, again: raw.again }
         : undefined;
     case "remove-member":
       return isString(raw.id) ? { kind: "remove-member", id: raw.id } : undefined;

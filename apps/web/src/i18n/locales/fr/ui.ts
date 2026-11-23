@@ -85,6 +85,9 @@ export default {
   "buildEditor.discardChanges": "Abandonner les modifs ?",
   "buildEditor.duplicate": "Dupliquer",
   "buildEditor.duplicateSkill": "{skill} figure plusieurs fois sur la barre.",
+  "buildEditor.duplicateRune": "{rune} : une autre pièce porte déjà cette rune. Une seule compte.",
+  "buildEditor.duplicateAttributeRune":
+    "{rune} : une autre pièce porte déjà une rune de cet attribut. Seul le bonus le plus fort compte, mais chaque pénalité de santé compte.",
   "buildEditor.emptySetAction": "vider le set {set}",
   "buildEditor.emptySetNote": "Set vide",
   "buildEditor.emptySlot": "Vide",
@@ -484,6 +487,11 @@ export default {
   "gearEditor.bareHands": "mains nues",
   "gearEditor.bonusFromHeadgear": "casque +{amount}",
   "gearEditor.bonusFromRune": "rune +{amount}",
+  "gearEditor.healthBase": "base {amount}",
+  "gearEditor.healthInsignia": "insignes {amount}",
+  "gearEditor.healthMods": "améliorations {amount}",
+  "gearEditor.healthRunes": "runes {amount}",
+  "gearEditor.healthSources": "Santé max. : {parts}",
   "gearEditor.itemA": "{item}",
   "gearEditor.itemAn": "{item}",
   "gearEditor.modRemoved": "{mod} retiré : incompatible avec {item}.",
@@ -579,6 +587,13 @@ export default {
   "help.source": "Code source",
   "help.version": "VibeWars {release} · build {build}",
 
+  "history.back": "Retour",
+  "history.empty": "Aucune partie pour l’instant. Vos 50 dernières parties sont conservées ici.",
+  "history.emptyMine": "Aucune partie avec votre clé de joueur actuelle.",
+  "history.mine": "Mes parties",
+  "history.open": "Historique des parties",
+  "history.title": "Historique des parties",
+
   "hud.aggression": "agr {ours} vs {theirs}",
   "hud.altarPointOurs": "Point d'autel !",
   "hud.altarPointTheirs": "Point d'autel ennemi",
@@ -636,6 +651,10 @@ export default {
   "hud.outcomeVictory": "Victoire",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (mort)",
+  "hud.preMatchStartingAnyway":
+    "En attente des joueurs : {joined}/{expected}, début quand même dans {seconds} s",
+  "hud.preMatchStartsIn": "Le match commence dans {seconds}",
+  "hud.preMatchWaiting": "En attente des joueurs : {joined}/{expected}",
   "hud.priest": "prêtre",
   "hud.priestDead": "prêtre (mort)",
   "hud.raise": "réa {clock}",
@@ -827,6 +846,8 @@ export default {
   "lobbyWindow.reconnecting": "Reconnexion…",
   "lobbyWindow.removeMember": "Retirer {name} du salon",
 
+  "match.buildReplaced":
+    "Ton build n'est pas valide ({problem}) : tu joues un build de départ pour ce match.",
   "matchView.watching": "Spectateur · {seconds} s de retard",
 
   "matches.bot": "{name} (bot)",
@@ -1032,6 +1053,9 @@ export default {
   "queue.ascending": "Ascension vers {map} dans {seconds} s",
   "queue.backToLobbyIn": "Retour au salon dans {seconds} s",
   "queue.backToMenu": "Retour au menu",
+  "queue.backToLobby": "Retour au salon",
+  "queue.countdownStopped": "Compte à rebours arrêté",
+  "queue.stopCountdown": "Arrêter",
   "queue.backToMenuIn": "Retour au menu dans {seconds} s",
   "queue.busy": "Tu es dans une file.",
   "queue.characterDeleted": "Ton personnage en file a été supprimé, tu as donc quitté la file",
@@ -1052,6 +1076,8 @@ export default {
   "queue.matchFound": "Match trouvé",
   "queue.matchFoundTitle": "Match trouvé !",
   "queue.nextMatchIn": "Prochain match dans {seconds} s",
+  "queue.sameTeamIn": "Victoire : prochain match avec la même équipe dans {seconds} s",
+  "queue.newTeamIn": "Votre groupe a changé : choisissez à nouveau votre équipe dans {seconds} s",
   "queue.now": "Maintenant",
   "queue.playBotsIn": "Jouer contre des bots ({seconds} s)",
   "queue.queueAgain": "Relancer la file",
@@ -1384,6 +1410,8 @@ export default {
   "teamEditor.closeMember": "fermer {name}",
   "teamEditor.costAdrenaline": "{amount}a",
   "teamEditor.costEnergy": "{amount}é",
+  "teamEditor.cannotCreateCharacter": "Impossible de créer un personnage : {problem}",
+  "teamEditor.characterCreated": "Personnage {name} créé",
   "teamEditor.crumb": "Atelier d'équipes",
   "teamEditor.delete": "Supprimer",
   "teamEditor.deleteNamed": "Supprimer {name} ?",
@@ -1392,6 +1420,8 @@ export default {
   "teamEditor.discardChanges": "Abandonner les modifs ?",
   "teamEditor.discardForPaste": "Abandonner tes modifications et ouvrir l'équipe collée ?",
   "teamEditor.dragToReplace": "dépose sur un membre pour le remplacer par une copie de {name}",
+  "teamEditor.dropToCreate":
+    "Fais glisser un membre de l'équipe ici pour l'enregistrer comme personnage",
   "teamEditor.duplicate": "Dupliquer",
   "teamEditor.duplicateTitle": "dupliquer cette équipe",
   "teamEditor.duplicateUnsaved": "Enregistre avant de dupliquer",
@@ -1406,12 +1436,13 @@ export default {
   "teamEditor.memberName": "nom du membre",
   "teamEditor.myCharacters": "Mes personnages",
   "teamEditor.name": "Nom",
-  "teamEditor.noCharacters": "Tu n'as aucun personnage à copier.",
+  "teamEditor.noCharacters":
+    "Aucun personnage pour l'instant. Fais glisser un membre de l'équipe ici pour en créer un.",
   "teamEditor.notSaved": "Non enregistré : {error}",
-  "teamEditor.openInCharacter": "Ouvrir dans l'écran Personnage ›",
   "teamEditor.professions": "Professions",
   "teamEditor.professionsTitle": "les professions de l'équipe",
   "teamEditor.replaceMember": "Remplacer {member} par {character}",
+  "teamEditor.copyMember": "Shift : copier le build de {source} sur {target}",
   "teamEditor.save": "Sauver",
   "teamEditor.saveTitle": "Enregistrer cette équipe",
   "teamEditor.saveTitleProblem": "Enregistrer cette équipe (problèmes : {problem})",
@@ -1419,8 +1450,6 @@ export default {
   "teamEditor.share": "Partager",
   "teamEditor.shareLabel": "équipe à partager",
   "teamEditor.shareTitle": "partager cette équipe en une ligne",
-  "teamEditor.sizeFixed":
-    "La taille d'un Build d'équipe est fixe : crées-en un autre pour une autre taille",
   "teamEditor.sizeLabel": "Taille d'équipe",
   "teamEditor.teamName": "Nom d'équipe",
   "teamEditor.teamNameLabel": "nom d'équipe",
@@ -1694,11 +1723,15 @@ export default {
   "tutorial.menu.spec.gear":
     "Armure, runes et insignes : choisis une pièce sur la figurine, puis ce qui va dessus.",
   "tutorial.menu.spec.gearDone": "Change une pièce d'équipement",
-  "tutorial.menu.spec.open": "Ouvre Personnages, puis un personnage pour changer son build.",
-  "tutorial.menu.spec.openDone": "Ouvre un personnage",
+  "tutorial.menu.spec.new": "Crée le tien : appuie sur {newCharacter}.",
+  "tutorial.menu.spec.newDone": "Appuie sur {newCharacter}",
+  "tutorial.menu.spec.open": "Ouvre {characters}.",
+  "tutorial.menu.spec.openDone": "Ouvre {characters}",
   "tutorial.menu.spec.professions":
-    "Ta profession principale donne tes attributs et compétences ; ta secondaire te prête aussi ses compétences.",
+    "Ta profession principale est ce que tu es : ses compétences et tous ses attributs, y compris celui qu'elle seule possède ({warrior} : {strength} ; {monk} : {divineFavor}). Ta secondaire ajoute ses compétences et ses autres attributs, jamais cet attribut spécial : un {warrior}/{monk} peut soigner avec {healingPrayers}, mais n'a pas {divineFavor}.",
   "tutorial.menu.spec.professionsDone": "Change de profession",
+  "tutorial.menu.spec.random":
+    "Voici ton personnage marqué {random} : le jeu l'a tiré au sort pour toi, prêt à jouer. Tu ne peux pas le modifier, mais {reroll} en tire un nouveau et {clone} te donne une copie à modifier.",
   "tutorial.menu.spec.save": "Sauve ton personnage pour garder le nouveau build.",
   "tutorial.menu.spec.saveDone": "Sauver",
   "tutorial.menu.spec.skills":
@@ -1719,8 +1752,10 @@ export default {
     "Une équipe a toujours autant de membres que sa taille. Tu n'ajoutes jamais de membre : tu en remplaces un.",
   "tutorial.menu.team.memberBack":
     "Voici le build de ce membre. Fais Retour pour revenir à ton équipe.",
-  "tutorial.menu.team.new": "Règle la taille d'équipe sur 2v2, puis crée un nouveau build.",
+  "tutorial.menu.team.new": "Crée maintenant un nouveau build.",
   "tutorial.menu.team.newDone": "Lance une équipe de 2",
+  "tutorial.menu.team.size": "Règle la taille d'équipe sur 2v2.",
+  "tutorial.menu.team.sizeDone": "La taille d'équipe est 2v2",
   "tutorial.menu.team.open": "Ouvre Équipes, où sont tes builds d'équipe.",
   "tutorial.menu.team.openDone": "Ouvre Équipes",
   "tutorial.menu.team.problems":

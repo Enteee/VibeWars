@@ -146,6 +146,8 @@ hat, kommt als leeres Feld an. Der Build gehört dir, sobald du **Speichern** dr
 **Esc** geht ohne Speichern und fragt vorher, wenn du etwas geändert hast.
 **Teilen**, **GW1-Code laden**, **Duplizieren** und **Löschen** liegen unter **⋯**.
 
+Ein Build mit einem Problem lässt sich nicht speichern, und der Trainingsbereich startet nicht damit. Erreicht so ein Build trotzdem eine Partie, spielst du dort einen Starter-Build, und eine Meldung sagt dir, warum.
+
 Einen Team-Code lädst du stattdessen im **Team-Editor**: füge ihn dort irgendwo ein, oder
 öffne einen Team-Build und nutze sein **⋯** → **Team laden**.
 
@@ -168,11 +170,16 @@ einem leeren Charakter an jedem Platz. Du fügst nie ein Mitglied hinzu oder ent
 eines, du ersetzt es. Jede Zeile zeigt den Charakter des Mitglieds mit den Waffen, die
 er trägt, einen Punkt für jedes Waffenset, wenn er mehr als eines hat, sein maximales
 Leben und seine Energie und seine acht Skills; zieh eine Zeile am ⠿, um umzusortieren.
+Halte beim Ablegen einer Zeile auf einem anderen Mitglied **Shift**, um stattdessen ihren
+ganzen Build auf dieses Mitglied zu kopieren; die gezogene Zeile bleibt, wie sie war.
 Das Panel rechts ist die Bibliothek des Charakter-Editors, mit einem Tab **Meine
 Charaktere** vor **Skills** und **Ausrüstung**. Unter **Meine Charaktere** ziehst du
 einen deiner Charaktere auf ein Mitglied, um es zu einer Kopie zu machen. Eine Kopie
 gehört dem Team: Änderst du sie oder den Charakter, von dem sie stammt, bleibt das
-andere, wie es war. Unter **Skills** zeigt die Skill-Bibliothek die Skills des
+andere, wie es war. Umgekehrt ziehst du ein Mitglied auf **Meine Charaktere**
+oder auf den Tab, um es als neuen eigenen Charakter zu speichern; ist sein Name
+schon vergeben, bekommt er " (copy)", und das Team behält das Mitglied, wie es ist.
+Unter **Skills** zeigt die Skill-Bibliothek die Skills des
 Mitglieds, das du zuletzt angeklickt hast; zieh einen auf ein beliebiges Feld eines
 Mitglieds, um ihn dort auszurüsten. Auf der eigenen Leiste des Mitglieds wandert ein
 Skill, der schon darauf ist, in das Feld. Was ein Mitglied nicht nehmen kann, ein
@@ -194,7 +201,7 @@ ist nur da, solange eines offen ist: Klick auf eine, um sie auszurüsten, oder z
 sie auf seine Hände. Es ist immer nur ein Mitglied offen; **Esc** schließt es. Eine
 neue Klasse verwirft die Skills und Ränge, die sie nicht nutzen kann, mit einem
 **Rückgängig**.
-Drück auf den Namen eines Mitglieds oder auf **Im Charakter-Editor öffnen**, um es im
+Drück auf den Namen eines Mitglieds oder auf seinen **✎**-Knopf, um es im
 Build-Editor zu bearbeiten; sein **Speichern** legt es zurück ins Team, und das
 eigene **Speichern** des Teams behält alles und bringt dich zum Team-Editor zurück.
 **Esc** geht ohne Speichern und fragt vorher. **Teilen**, **Team laden**,
@@ -206,3 +213,10 @@ spielbar** und warum, und ein Team ohne Namen erscheint als **Unbenanntes Team**
 Dein erster Start würfelt ein vorgefertigtes Team in der gewählten Größe, 4v4, falls
 du sie nicht geändert hast, markiert mit **Zufall**: Sein **Würfeln** tauscht es gegen
 ein anderes, und **Klonen** gibt dir eine Kopie zum Bearbeiten.
+Jeder Team-Build hat eine Größe, 2v2, 4v4 oder 8v8 (es gibt keine 1v1-Team-Builds):
+die **Teamgröße** in der Seitenleiste. Der Team-Editor zeigt die Team-Builds der dort
+gewählten Größe, und **Neuer Team-Build** erstellt einen dieser Größe. Die
+**Teamgröße** in seinem Editor ändert sie: Eine kleinere Größe entfernt die letzten
+Mitglieder, eine größere fügt leere hinzu, und Speichern stellt die Seitenleiste auf
+die gespeicherte Größe. Ein eingefügtes Team behält seine Größe, und die Seitenleiste
+wechselt dorthin.

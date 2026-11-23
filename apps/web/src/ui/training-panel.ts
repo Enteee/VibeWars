@@ -215,6 +215,7 @@ interface Session {
   readonly shrines: readonly MapShrine[];
   readonly sounds: MatchSounds;
   readonly music: MatchMusic;
+  /** An illegal build: the clock stops and the overlay says why (#3822). */
   parked: boolean;
 }
 
@@ -1044,7 +1045,8 @@ export function createTrainingPanel(): TrainingPanel {
     // The one clock: Phaser's STEP. It stops when the game is
     // destroyed, so teardown cannot leave an orphan loop behind.
     offFrame = created.onFrame((deltaSeconds) => {
-      if (disposed || session === undefined) {
+      // An illegal build does not run (#3822): the overlay says why.
+      if (disposed || session === undefined || session.parked) {
         return;
       }
       const { connection } = session;

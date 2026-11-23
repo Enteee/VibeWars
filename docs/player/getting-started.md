@@ -63,6 +63,8 @@ another ready-made team in its place. The ready-made teams are the PvX
 wiki's well-rated PvP team builds; a size PvX has none of gets PvX solo
 builds put together. **Clone** saves a copy of the
 team shown as your own Team Build and opens it, to change as you like.
+A Team Build's size changes in its editor: a smaller size drops the last
+members, a larger one adds blank ones.
 
 ## Play a Random Arena
 
@@ -84,13 +86,17 @@ wait takes you out of the queue at once.
 When the match ends you can **Queue again**, or **Stay together** with
 the team you just played with.
 
-Beside the scores, two charts tell the match over time. **You** draws your
+Every match ends on its scores, queued, hosted or in a lobby, and beside
+them two charts tell the match over time; the queue screen shows them again
+after a queued match. **You** draws your
 damage dealt, damage taken, healing and Energy; **Teams** draws each team's
 health pool above its total damage. Marks under the time axis show kills,
 deaths, interrupts, captures and resurrections: point at one, or Tab to it,
 to read what happened. Press a legend entry to hide or show its line. On a
 phone the charts sit under the scores, which show you and two others until
 **Show all**.
+
+**Match history** in the top bar lists your last 50 matches, newest first: open one to see its scores and charts again. They are kept in this browser only. **My matches** shows only the ones played with your current player key.
 
 ## Host or join a match
 

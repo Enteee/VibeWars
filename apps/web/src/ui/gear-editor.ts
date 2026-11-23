@@ -30,6 +30,7 @@ import {
   isWeaponId,
   primaryAttributeOf,
   reconcileEquipment,
+  healthSources,
   resolveLoadout,
   type ArmorCondition,
   type StatusCategory,
@@ -42,6 +43,7 @@ import {
   type InsigniaEffect,
   type InsigniaId,
   type ItemUpgrades,
+  type LoadoutInput,
   type ModId,
   type ModSlot,
   type OffhandId,
@@ -480,19 +482,47 @@ export function clearArmorUpgrades(character: StoredCharacter): StoredCharacter 
  * editor that promises 530 health and a match that gives 495.
  */
 export function resolveForDisplay(character: TeamCharacter): ResolvedLoadout {
-  return resolveLoadout(
-    {
-      primaryProfession: character.primaryProfession,
-      secondaryProfession: character.secondaryProfession,
-      allocatedRanks: new Map(character.attributes.map((a) => [a.attributeId, a.rank])),
-      equipment: character.equipment,
-    },
-    MINIMAL_GW_INSPIRED_PVP_V1.combat,
-  );
+  return resolveLoadout(loadoutInputOf(character), MINIMAL_GW_INSPIRED_PVP_V1.combat);
+}
+
+function loadoutInputOf(character: TeamCharacter): LoadoutInput {
+  return {
+    primaryProfession: character.primaryProfession,
+    secondaryProfession: character.secondaryProfession,
+    allocatedRanks: new Map(character.attributes.map((a) => [a.attributeId, a.rank])),
+    equipment: character.equipment,
+  };
+}
+
+/**
+ * Where set `set`'s max Health comes from (#3822), "base 480, runes +50,
+ * insignia +40": only the parts that add something. Morale is a match's,
+ * so not here.
+ */
+function healthSourcesText(character: TeamCharacter, set: WeaponSetIndex): string {
+  const sources = healthSources(loadoutInputOf(character), MINIMAL_GW_INSPIRED_PVP_V1.combat, set);
+  if (sources === undefined) {
+    return "";
+  }
+  const signed = (amount: number): string =>
+    amount > 0 ? `+${String(amount)}` : `−${String(-amount)}`;
+  const parts = [
+    t("gearEditor.healthBase", { amount: sources.base }),
+    ...(sources.runes === 0
+      ? []
+      : [t("gearEditor.healthRunes", { amount: signed(sources.runes) })]),
+    ...(sources.insignia === 0
+      ? []
+      : [t("gearEditor.healthInsignia", { amount: signed(sources.insignia) })]),
+    ...(sources.mods === 0 ? [] : [t("gearEditor.healthMods", { amount: signed(sources.mods) })]),
+  ];
+  return t("gearEditor.healthSources", { parts: parts.join(", ") });
 }
 
 export interface GearSummary {
   readonly maxHealth: number;
+  /** Where `maxHealth` comes from, for its tooltip (#3822). */
+  readonly healthSources: string;
   readonly maxEnergy: number;
   /** Energy regeneration in pips: the primary profession's, with the set's mods. */
   readonly baseEnergyPips: number;
@@ -777,6 +807,7 @@ export function summariseGear(
 
   return {
     maxHealth: held.maxHealth,
+    healthSources: healthSourcesText(character, set),
     maxEnergy: held.maxEnergy,
     baseEnergyPips: held.baseEnergyPips,
     armor: held.equipment.baseArmor,

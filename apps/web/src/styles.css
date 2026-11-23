@@ -776,6 +776,73 @@ body {
   color: var(--accent);
 }
 
+/*
+ * Match history (#3848): the last matches, each opening on its table and
+ * charts. Wide enough for the end panel's; on a phone it scrolls inside.
+ */
+#topbar .match-history-window {
+  position: absolute;
+  top: calc(100% + 0.3rem);
+  inset-inline-end: 0.5rem;
+  z-index: 20;
+  width: min(760px, calc(100vw - 1rem));
+  max-height: min(80vh, 44rem);
+  padding: 0.7rem;
+  gap: 0.5rem;
+  background: rgb(14 17 22 / 96%);
+  border: 1px solid var(--line);
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.match-history-title,
+.match-history-empty,
+.match-history-heading {
+  margin: 0;
+}
+
+.match-history-empty,
+.match-history-heading {
+  color: var(--ink-dim);
+}
+
+.match-history-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.match-history-mine {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.match-history-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.match-history-row {
+  display: grid;
+  grid-template-columns: 9rem 1fr auto auto;
+  gap: 0.6rem;
+  padding: 0.3rem 0.35rem;
+  text-align: start;
+  font-variant-numeric: tabular-nums;
+}
+
+.match-history-when,
+.match-history-mode {
+  color: var(--ink-dim);
+}
+
+.match-history-back {
+  align-self: flex-start;
+}
+
 /* The jukebox from the bar's ♪, just under the bar. */
 #topbar .hud-jukebox {
   top: calc(100% + 0.3rem);
@@ -2725,7 +2792,8 @@ body:has(> .splash) #menu-background::after {
 
 .team-row {
   display: grid;
-  grid-template-columns: 0.8rem 11rem 4.5rem repeat(8, 36px) 2rem;
+  /* ✎ and ▼ last (#3819), each as wide as a finger needs on a touch screen. */
+  grid-template-columns: 0.8rem 11rem 4.5rem repeat(8, 36px) repeat(2, minmax(2rem, max-content));
   align-items: center;
   gap: 0.3rem;
   padding: 0.35rem 0.5rem;
@@ -2745,6 +2813,13 @@ body:has(> .splash) #menu-background::after {
   border-color: var(--accent);
 }
 
+/* A member held over My characters saves as one (#3825). */
+.team-picker-characters.is-drop-target,
+.library-tab.is-drop-target {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
 /* The member the Skills tab shows (#2225). */
 .team-row.is-focused {
   box-shadow: inset 3px 0 0 var(--accent);
@@ -2755,6 +2830,7 @@ body:has(> .splash) #menu-background::after {
   border-bottom-style: dashed;
 }
 
+.team-row-open,
 .team-row-edit {
   padding: 0.2rem;
   min-width: 0;
@@ -2822,10 +2898,6 @@ body:has(> .splash) #menu-background::after {
 .team-member-editor .editor-professions {
   flex-direction: column;
   align-items: stretch;
-}
-
-.team-member-open {
-  align-self: flex-start;
 }
 
 .team-row-order {
@@ -3023,12 +3095,17 @@ body:has(> .splash) #menu-background::after {
   }
 
   .team-row {
-    grid-template-columns: 0.8rem minmax(0, 1fr) 4.5rem 2rem;
+    grid-template-columns: 0.8rem minmax(0, 1fr) 4.5rem repeat(2, minmax(2rem, max-content));
+  }
+
+  .team-row-open {
+    grid-row: 1;
+    grid-column: 4;
   }
 
   .team-row-edit {
     grid-row: 1;
-    grid-column: 4;
+    grid-column: 5;
   }
 
   .team-row-skills {
@@ -4342,6 +4419,14 @@ body:has(> .splash) #menu-background::after {
   white-space: nowrap;
 }
 
+/* The bar's button padding is wider than the rail's, so the stepper takes
+   its content's width rather than the rail's 56 px, and its › never runs
+   under the problems chip (#3794). */
+.team-lobby-size .mode-rail-stepper {
+  gap: 0.3rem;
+  width: auto;
+}
+
 /* A Team Build of the wrong size, on its faded card (#1862). */
 .team-lobby-needs {
   color: var(--ink-dim);
@@ -4744,6 +4829,22 @@ body:has(> .splash) #menu-background::after {
   color: var(--ink);
   white-space: nowrap;
   pointer-events: none;
+}
+
+/* Before the start (#3818): who the match waits for, then the countdown. */
+.hud-pre-match {
+  padding: 0.2rem 0.8rem;
+  background: rgb(14 17 22 / 85%);
+  border: 1px solid var(--accent);
+  color: var(--ink);
+  font-size: 1.1rem;
+  pointer-events: none;
+}
+
+/* Held in the spawn (#3818): the bar shows, inactive. */
+.hud-skills.is-held .hud-skill {
+  filter: grayscale(1);
+  opacity: 0.55;
 }
 
 /* A line a flag away from home, under the scoreboard (#1226). */
@@ -5203,6 +5304,19 @@ body:has(> .splash) #menu-background::after {
   min-height: 0;
   overflow-y: auto;
   pointer-events: auto;
+}
+
+/* The charts in the match's summary (#3790): beside the tables when the
+   column has room for both, under them when it has not, as on a phone. */
+.hud-summary .match-charts {
+  flex: 1 1 32rem;
+  max-width: 100%;
+}
+
+/* Once the summary is up nothing is cast: your effects, bars and skill bar
+   would only draw over the charts. Hidden in place, so nothing else moves. */
+.hud.is-ended .hud-column {
+  visibility: hidden;
 }
 
 /* Over the arena and the HUD while a guest reconnects (#602); it takes no
@@ -9506,7 +9620,6 @@ body:has(> .splash) #app {
 @media (pointer: coarse) {
   .team-lobby-size .mode-rail-stepper {
     flex-wrap: nowrap;
-    width: auto;
   }
 
   .team-lobby-size .mode-rail-size-value {

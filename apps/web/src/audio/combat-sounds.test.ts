@@ -26,7 +26,6 @@ import {
   soundsForCombat,
   soundsForRespawn,
   soundsForSkillGround,
-  soundsForSnapshot,
   soundsForWorld,
 } from "./combat-sounds.js";
 import type { WorldPlaces } from "./world-places.js";
@@ -414,6 +413,7 @@ function snapshot(players: PlayerSnapshot[]): MatchSnapshot {
     score: [0, 0],
     elapsedSeconds: 0,
     phase: "active",
+    preMatch: null,
     winningTeam: undefined,
     endReason: undefined,
     projectiles: [],
@@ -441,88 +441,6 @@ function snapshot(players: PlayerSnapshot[]): MatchSnapshot {
 const casting = (skill: string): Partial<PlayerSnapshot> => ({
   castingSkillId: skill,
   castRemaining: 1,
-});
-
-describe("soundsForSnapshot", () => {
-  const idle = snapshot([player(ME, { targetSessionId: "foe" }), player("foe")]);
-
-  it("is silent for your own cast: that is a voice (#3298)", () => {
-    const started = snapshot([
-      player(ME, { targetSessionId: "foe", ...casting("fireball") }),
-      player("foe"),
-    ]);
-    expect(soundsForSnapshot(idle, started)).toEqual([]);
-  });
-
-  it("plays cast-target when your target starts casting", () => {
-    const targetCasts = snapshot([
-      player(ME, { targetSessionId: "foe" }),
-      player("foe", casting("heal")),
-    ]);
-    expect(soundsForSnapshot(idle, targetCasts)).toEqual(["cast-target"]);
-  });
-
-  it("is silent for a target that was already casting", () => {
-    const before = snapshot([
-      player(ME, { targetSessionId: "foe" }),
-      player("foe", casting("heal")),
-    ]);
-    const after = snapshot([
-      player(ME, { targetSessionId: "foe" }),
-      player("foe", { castingSkillId: "heal", castRemaining: 0.5 }),
-    ]);
-    expect(soundsForSnapshot(before, after)).toEqual([]);
-  });
-
-  it("is silent when you switch onto someone in the middle of their cast", () => {
-    const before = snapshot([
-      player(ME, { targetSessionId: "foe" }),
-      player("foe"),
-      player("other"),
-    ]);
-    const after = snapshot([
-      player(ME, { targetSessionId: "other" }),
-      player("foe"),
-      player("other", casting("heal")),
-    ]);
-    expect(soundsForSnapshot(before, after)).toEqual([]);
-  });
-
-  it("is silent for a cast by someone who is not your target", () => {
-    const before = snapshot([...idle.players, player("other")]);
-    const after = snapshot([...idle.players, player("other", casting("heal"))]);
-    expect(soundsForSnapshot(before, after)).toEqual([]);
-  });
-
-  it("plays no cast-target when you target yourself", () => {
-    const before = snapshot([player(ME, { targetSessionId: ME })]);
-    const after = snapshot([player(ME, { targetSessionId: ME, ...casting("heal") })]);
-    expect(soundsForSnapshot(before, after)).toEqual([]);
-  });
-
-  it("plays cast-target when you and your target start casting together", () => {
-    const after = snapshot([
-      player(ME, { targetSessionId: "foe", ...casting("fireball") }),
-      player("foe", casting("heal")),
-    ]);
-    expect(soundsForSnapshot(idle, after)).toEqual(["cast-target"]);
-  });
-
-  it("is silent for a dead caster", () => {
-    const after = snapshot([
-      player(ME, { targetSessionId: "foe" }),
-      player("foe", { dead: true, ...casting("heal") }),
-    ]);
-    expect(soundsForSnapshot(idle, after)).toEqual([]);
-  });
-
-  it("is silent without a previous snapshot: the first one, or the one after a reconnect", () => {
-    const busy = snapshot([
-      player(ME, { targetSessionId: "foe", ...casting("fireball") }),
-      player("foe", casting("heal")),
-    ]);
-    expect(soundsForSnapshot(undefined, busy)).toEqual([]);
-  });
 });
 
 describe("soundsForWorld", () => {
@@ -851,7 +769,22 @@ describe("castVoices (#3298)", () => {
       ["cast-base-monk", "cast-motif-spell"],
     ]);
     expect(voices[0]?.gain).toBeLessThan(0.5);
-    expect(soundsForSnapshot(snapshot([player(ME)]), after)).toEqual([]);
+  });
+
+  it("voices your target's cast first and at full level, with no tick over it (#3827)", () => {
+    const idle = snapshot([
+      player(ME, { targetSessionId: "target" }),
+      player("near", at(150)),
+      player("target", at(650)),
+    ]);
+    const busy = snapshot([
+      player(ME, { targetSessionId: "target" }),
+      player("near", at(150, casting(monkSpell.id))),
+      player("target", at(650, casting(monkSpell.id))),
+    ]);
+    const [first] = castVoices(idle, busy, seat);
+    expect(first?.gain).toBe(1);
+    expect(first?.priority).toBe(0);
   });
 
   it("keeps the limit of 5 casts starting at once, and never cuts your target's", () => {

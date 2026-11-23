@@ -60,6 +60,8 @@ khác vào chỗ của nó. Các đội có sẵn là những build đội PvP �
 của wiki PvX; cỡ nào PvX không có thì được ghép từ các build solo của PvX.
 **Chép** lưu một bản sao của đội đang hiển thị thành Build đội của riêng bạn
 và mở nó, để bạn tùy ý thay đổi.
+Cỡ của Build đội đổi được trong trình sửa của nó: cỡ nhỏ hơn bỏ các thành viên
+cuối, cỡ lớn hơn thêm thành viên trống.
 
 ## Chơi Đấu trường ngẫu nhiên
 
@@ -81,7 +83,9 @@ Khi tìm thấy trận, bạn được đưa tới màn hình đối đầu củ
 Khi trận kết thúc, bạn có thể **Xếp lại**, hoặc **Ở cùng nhau** với đội bạn
 vừa chơi cùng.
 
-Bên cạnh điểm số, hai biểu đồ kể lại trận đấu theo thời gian. **Bạn** vẽ sát
+Mọi trận đấu đều kết thúc ở điểm số, dù từ hàng chờ, tự tạo hay trong sảnh,
+và bên cạnh đó hai biểu đồ kể lại trận đấu theo thời gian; màn hình hàng chờ
+hiển thị lại chúng sau một trận từ hàng chờ. **Bạn** vẽ sát
 thương bạn gây ra, sát thương bạn nhận, lượng hồi máu và Năng lượng;
 **Các đội** vẽ tổng máu của mỗi đội phía trên tổng sát thương của đội đó. Các
 dấu dưới trục thời gian cho thấy hạ gục, cái chết, ngắt chiêu, chiếm giữ và hồi
@@ -89,6 +93,8 @@ sinh: trỏ vào một dấu, hoặc dùng Tab để đến nó, để đọc ch
 Nhấn một mục chú giải để ẩn hoặc hiện đường của nó. Trên điện thoại, biểu đồ
 nằm dưới điểm số, nơi hiện bạn và hai người khác cho đến khi bạn nhấn
 **Hiện tất cả**.
+
+**Lịch sử trận đấu** trên thanh trên cùng liệt kê 50 trận gần nhất của bạn, mới nhất trước: mở một trận để xem lại điểm số và biểu đồ của nó. Chúng chỉ được lưu trong trình duyệt này. **Trận của tôi** chỉ hiện những trận chơi bằng khóa người chơi hiện tại của bạn.
 
 ## Tạo hoặc vào trận
 

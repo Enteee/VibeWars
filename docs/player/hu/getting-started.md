@@ -66,6 +66,8 @@ tesz a helyére. A kész csapatok a PvX wiki jól értékelt PvP
 csapatbuildjei; az a méret, amelyből a PvX-en nincs, összerakott PvX
 szólóbuildeket kap. A **Klón** a megjelenített csapat egy másolatát a
 saját Csapatbuildedként menti, és megnyitja, hogy kedvedre módosítsd.
+A Csapatbuild mérete a szerkesztőjében változtatható: kisebb méret
+elhagyja az utolsó tagokat, nagyobb üreseket ad hozzá.
 
 ## Játssz egy Véletlen Arénát
 
@@ -91,7 +93,9 @@ Amikor a meccs véget ér, választhatod az **Újra sorba** lehetőséget,
 vagy azt, hogy **Együtt maradunk** azzal a csapattal, amellyel épp
 játszottál.
 
-Az eredmények mellett két diagram meséli el a meccs menetét. A **Te** a
+Minden meccs az eredményeivel ér véget, legyen sorból, indított vagy
+lobbiban, és mellettük két diagram meséli el a meccs menetét; a sor képernyője
+egy sorból indult meccs után újra megmutatja őket. A **Te** a
 kiosztott sebzésedet, az elszenvedett sebzést, a gyógyítást és az Energiát
 rajzolja; a **Csapatok** minden csapat életerő-készletét rajzolja az
 összesített sebzése fölé. Az időtengely alatti jelek az öléseket, halálokat,
@@ -100,6 +104,8 @@ vagy lépj rá Tabbal, hogy elolvasd, mi történt. Nyomj meg egy
 jelmagyarázat-elemet a vonala elrejtéséhez vagy megjelenítéséhez. Telefonon a
 diagramok az eredmények alatt vannak, amelyek téged és két másik játékost
 mutatnak, amíg meg nem nyomod az **Összes mutatása** gombot.
+
+A felső sáv **Meccselőzmények** gombja az utolsó 50 meccsedet mutatja, a legújabbat elöl: nyiss meg egyet, hogy újra lásd a pontjait és a grafikonjait. Csak ebben a böngészőben maradnak meg. A **Saját meccsek** csak a jelenlegi játékoskulcsoddal játszottakat mutatja.
 
 ## Meccs indítása vagy csatlakozás
 

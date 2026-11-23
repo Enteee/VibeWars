@@ -62,6 +62,8 @@ făcute sunt buildurile de echipă PvP bine cotate de pe wiki-ul PvX; pentru o
 mărime pe care PvX nu o are, se combină builduri PvX individuale. **Clonează**
 salvează o copie a echipei afișate ca Build de echipă propriu și o deschide, ca
 s-o schimbi cum vrei.
+Mărimea unui Build de echipă se schimbă în editorul lui: o mărime mai mică
+scoate ultimii membri, una mai mare adaugă membri goi.
 
 ## Joacă o Arenă aleatorie
 
@@ -83,7 +85,9 @@ din coadă.
 Când se termină meciul, poți alege **Din nou în coadă** sau **Rămâneți împreună**
 cu echipa cu care tocmai ai jucat.
 
-Lângă scoruri, două grafice spun povestea meciului în timp. **Tu** desenează
+Fiecare meci se încheie pe scorurile lui, de la coadă, găzduit sau într-un
+lobby, iar lângă ele două grafice spun povestea meciului în timp; ecranul
+cozii le arată din nou după un meci de la coadă. **Tu** desenează
 daunele tale provocate, daunele primite, vindecarea și Energia; **Echipe**
 desenează rezerva de viață a fiecărei echipe deasupra daunelor ei totale.
 Marcajele de sub axa timpului arată eliminări, morți, întreruperi, capturi și
@@ -91,6 +95,8 @@ Marcajele de sub axa timpului arată eliminări, morți, întreruperi, capturi �
 Apasă o intrare din legendă ca să ascunzi sau să arăți linia ei. Pe telefon
 graficele stau sub scoruri, care te arată pe tine și pe încă doi până la
 **Arată tot**.
+
+**Istoricul meciurilor** din bara de sus îți arată ultimele 50 de meciuri, cele mai noi primele: deschide unul ca să-i revezi scorurile și graficele. Sunt păstrate doar în acest browser. **Meciurile mele** le arată doar pe cele jucate cu cheia ta de jucător actuală.
 
 ## Găzduiește un meci sau intră într-unul
 

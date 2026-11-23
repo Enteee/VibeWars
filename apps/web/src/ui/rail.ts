@@ -153,20 +153,25 @@ export function onTeamSizeChange(listener: (size: TeamSize) => void): void {
  * The team size stepper (#2141), `‹ 4v4 ›`, showing `value`, or `—` with
  * no size: ‹ steps to the next smaller size `entry` plays, › to the next
  * larger, an end's arrow disabled. Left and Right on a focused arrow step
- * too. A step is stored as `entry`'s own, then goes to `onPick`.
+ * too. A step goes to `onPick`; with `store`, it is stored as `entry`'s
+ * own first, and the menu quest may point at it. A team editor's does
+ * neither: its size is the build's, not the sidebar's (#3794).
  */
 export function teamSizeStepper(
   entry: RailEntry,
   value: number | undefined,
   disabled: boolean,
+  store: boolean,
   onPick: (size: TeamSize) => void,
 ): HTMLElement {
   const sizes = TEAM_SIZES_BY_ENTRY[entry];
   const stepper = h("div", "mode-rail-stepper");
   stepper.setAttribute("data-entry", "team-size");
-  // Team Builder's size is the new team's (#3542), a mode's who it meets
-  // (#3544): the menu quest points at either.
-  stepper.setAttribute("data-tutorial", entry === "teams" ? "team-new" : "team-size");
+  if (store) {
+    // Team Builder's size is the new team's (#3542, #3794), a mode's who it
+    // meets (#3544): the menu quest points at either.
+    stepper.setAttribute("data-tutorial", entry === "teams" ? "team-build-size" : "team-size");
+  }
   stepper.setAttribute("role", "group");
   stepper.setAttribute("aria-label", t("rail.teamSize"));
   let shown = value;
@@ -185,7 +190,9 @@ export function teamSizeStepper(
       return;
     }
     shown = size;
-    saveTeamSize(entry, size);
+    if (store) {
+      saveTeamSize(entry, size);
+    }
     draw();
     // An arrow that reached its end hands the keys to the other one.
     if (direction < 0 ? smaller.disabled : larger.disabled) {
@@ -244,6 +251,7 @@ function teamSizeField(active: RailEntry, party: RailParty | undefined): HTMLEle
       ? undefined
       : ((isModeEntry(active) ? queuedSize : undefined) ?? lobbySize ?? loadTeamSize(active)),
     noSizes || guest || queued,
+    true,
     (size) => {
       teamSizeListener?.(size);
     },

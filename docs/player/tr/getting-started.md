@@ -63,6 +63,8 @@ hazır takım koyar. Hazır takımlar PvX wiki'nin yüksek puanlı PvP takım
 dizilimleridir; PvX'te hiç olmayan bir boyut için PvX tekli dizilimleri
 bir araya getirilir. **Kopyala**, gösterilen takımın bir kopyasını kendi
 Takım Dizilimin olarak kaydeder ve dilediğin gibi değiştirmen için açar.
+Bir Takım Diziliminin boyutu editöründe değişir: daha küçük bir boyut son
+üyeleri çıkarır, daha büyüğü boş üyeler ekler.
 
 ## Rastgele Arena oyna
 
@@ -85,7 +87,9 @@ götürülürsün. Beklerken sekmeyi kapatmak seni hemen sıradan çıkarır.
 Maç bitince **Yeniden sıraya gir** diyebilir ya da az önce oynadığın
 takımla **Birlikte kal** diyebilirsin.
 
-Skorların yanında iki grafik maçı zaman içinde anlatır. **Sen** verdiğin
+Her maç, sıradan, kurulmuş ya da bir lobide, skorlarıyla biter ve onların
+yanında iki grafik maçı zaman içinde anlatır; sıra ekranı sıradan gelen bir
+maçtan sonra onları yeniden gösterir. **Sen** verdiğin
 hasarı, aldığın hasarı, iyileştirmeyi ve Enerjiyi çizer; **Takımlar** her
 takımın can havuzunu toplam hasarının üstünde çizer. Zaman ekseninin altındaki
 işaretler öldürmeleri, ölümleri, kesintileri, ele geçirmeleri ve dirilişleri
@@ -93,6 +97,8 @@ gösterir: ne olduğunu okumak için birinin üzerine gel ya da Tab ile ona git.
 Çizgisini gizlemek ya da göstermek için bir gösterge girdisine bas. Telefonda
 grafikler skorların altında durur; skorlar **Tümünü göster** basılana kadar
 seni ve iki kişiyi daha gösterir.
+
+Üst çubuktaki **Maç geçmişi** son 50 maçını en yenisi önce olmak üzere listeler: skorlarını ve grafiklerini yeniden görmek için birini aç. Yalnızca bu tarayıcıda saklanırlar. **Maçlarım** yalnızca mevcut oyuncu anahtarınla oynadıklarını gösterir.
 
 ## Maç kur ya da katıl
 

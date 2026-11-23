@@ -279,21 +279,6 @@ add(
 );
 
 add(
-  "10-ramp",
-  "10 Up the ramp",
-  "Walk up the ramp to reach the high ground.",
-  canyon() +
-    `<polygon points="520,330 600,350 600,372 520,352" fill="${DECK_F}" stroke="${INK}" stroke-width="2"/><rect x="600" y="226" width="200" height="126" fill="${DECK_F}" stroke="${INK}" stroke-width="2"/><rect x="600" y="186" width="200" height="126" fill="${DECK}" stroke="${INK}" stroke-width="2"/>` +
-    `<path d="M400,300 L600,250 L600,310 L400,340 Z" fill="#7d8ea4" stroke="${INK}" stroke-width="2"/>` +
-    body(430, 320, FRIEND) +
-    tutor(470, 340) +
-    arrow(446, 316, 600, 270) +
-    marker(700, 250, 1) +
-    say("“A ramp! Walk up it, it's easy.”") +
-    skip,
-);
-
-add(
   "11-tunnel",
   "11 Sneak through the tunnel",
   "Stay low and quiet through the tunnel.",
@@ -329,16 +314,17 @@ add(
 add(
   "13-junction",
   "13 Ping the way",
-  "A Y-junction: wheel-click the ground to ping.",
+  "A junction round a rock island: wheel-click an arm to ping.",
   canyon() +
-    `<path d="M300,330 L520,330 L700,200 M520,330 L700,440" stroke="#4a3d36" stroke-width="70" fill="none" stroke-linejoin="round"/>` +
-    `<path d="M300,330 L520,330 L700,200 M520,330 L700,440" stroke="#6a5a4e" stroke-width="3" fill="none" stroke-dasharray="6 8"/>` +
-    `<circle cx="700" cy="200" r="16" fill="none" stroke="${GLOW}" stroke-width="4"/><circle cx="700" cy="200" r="30" fill="none" stroke="${GLOW}" stroke-width="2" opacity=".5"/>` +
-    tag(700, 170, "ping the way") +
-    tag(780, 440, "dead end?") +
+    `<path d="M300,330 L480,330 L560,230 L700,230 L780,330 L860,330 M480,330 L560,430 L700,430 L780,330" stroke="#4a3d36" stroke-width="60" fill="none" stroke-linejoin="round"/>` +
+    `<polygon points="560,330 600,290 660,290 700,330 660,370 600,370" fill="${ROCK}" stroke="${INK}" stroke-width="3"/>` +
+    `<path d="M300,330 L480,330 L560,230 L700,230 L780,330 L860,330 M480,330 L560,430 L700,430 L780,330" stroke="#6a5a4e" stroke-width="3" fill="none" stroke-dasharray="6 8"/>` +
+    `<circle cx="630" cy="230" r="16" fill="none" stroke="${GLOW}" stroke-width="4"/><circle cx="630" cy="230" r="30" fill="none" stroke="${GLOW}" stroke-width="2" opacity=".5"/>` +
+    tag(630, 190, "ping an arm") +
+    tag(700, 460, "the other arm rejoins") +
     body(380, 330, FRIEND) +
     tutor(430, 350) +
-    cursor(700, 200) +
+    cursor(630, 230) +
     `<circle cx="${W - 90}" cy="${H - 150}" r="60" fill="#0b0f14" opacity=".8" stroke="#7a8697" stroke-width="3"/><circle cx="${W - 70}" cy="${H - 175}" r="8" fill="none" stroke="${GLOW}" stroke-width="3"/>` +
     say("“Left or right? You call it. Ping our way.”") +
     skip,

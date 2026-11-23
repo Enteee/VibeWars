@@ -307,3 +307,76 @@ describe("ArenaScene tunnel cutaway (#3272)", () => {
     expect(arch.alpha).toBe(1);
   });
 });
+
+describe("ArenaScene wall tops (#3808)", () => {
+  /** A scene whose factories write down the sprites they make. */
+  const sceneLog = (): { scene: object; sprites: string[]; stencils: number[] } => {
+    const sprites: string[] = [];
+    const stencils: number[] = [];
+    const chain = (): object =>
+      new Proxy({}, { get: (_target, name) => (name === "then" ? undefined : () => chain()) });
+    const scene = Object.assign(new ArenaScene(), {
+      wallTextures: [],
+      decksOverTunnels: new Map(),
+      textures: { exists: () => true },
+      make: { graphics: chain },
+      add: {
+        graphics: chain,
+        tileSprite: (_x: number, _y: number, _w: number, _h: number, key: string) => {
+          sprites.push(key);
+          return chain();
+        },
+        stencil: (_x: number, _y: number, _c: unknown, options: { stencilClearValue: number }) => {
+          stencils.push(options.stencilClearValue);
+          return chain();
+        },
+      },
+    });
+    return { scene, sprites, stencils };
+  };
+  const square = [
+    { x: 0, y: 0 },
+    { x: 100, y: 0 },
+    { x: 100, y: 100 },
+  ];
+  const layers = new Map([
+    [
+      1,
+      [
+        {
+          drawn: { group: undefined, faces: [], top: [square] },
+          wall: { kind: "rect", x: 0, y: 0, width: 100, height: 100 },
+          top: 0,
+          lit: { wallStroke: 0, wallLit: 0 },
+        },
+      ],
+    ],
+  ]);
+  interface Draws {
+    drawWallTextures(...args: unknown[]): void;
+  }
+
+  it("tops an outlined basalt map's walls with the basalt tile, through a stencil of the tops", () => {
+    const { scene, sprites, stencils } = sceneLog();
+    const structure = { bounds: { kind: "outline", outside: "basalt", outline: [] } };
+    (scene as Draws).drawWallTextures(structure, layers, 1, undefined);
+    expect(sprites).toEqual(["wall-top-basalt"]);
+    // Shut the box, open the tops, open the box again after.
+    expect(stencils).toEqual([1, 0, 0]);
+  });
+
+  it("gives a forest map's walls the rock tile", () => {
+    const { scene, sprites } = sceneLog();
+    const structure = { bounds: { kind: "outline", outside: "forest", outline: [] } };
+    (scene as Draws).drawWallTextures(structure, layers, 1, undefined);
+    expect(sprites).toEqual(["wall-top-rock"]);
+  });
+
+  it("leaves a rectangular map's walls flat", () => {
+    const { scene, sprites, stencils } = sceneLog();
+    const structure = { bounds: { kind: "rect" } };
+    (scene as Draws).drawWallTextures(structure, layers, 1, undefined);
+    expect(sprites).toEqual([]);
+    expect(stencils).toEqual([]);
+  });
+});

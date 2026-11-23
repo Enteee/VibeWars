@@ -195,6 +195,7 @@ describe("the team screens' Team Builds (#1515, #1525, #2031)", () => {
     onLoadTeam: (team) => {
       loaded.push(team);
     },
+    onTeamBuildSize: () => undefined,
     onCloneStarterTeam: (id) => {
       cloned.push(id);
     },

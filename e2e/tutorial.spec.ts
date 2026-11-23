@@ -833,6 +833,18 @@ test.describe("the menu quest (#3540)", () => {
     await expect(panel).toContainText("Change your spec.");
   });
 
+  test("Clone on the Random character counts as New character (#3786)", async ({ page }) => {
+    await page.goto(`./?menu-background=${FLAT_MAP}&tutorial-menu=spec`);
+    const target = (id: string): Locator => page.locator(`[data-tutorial~="${id}"]`);
+    await target("rail-characters").click();
+    const random = target("character-random");
+    await expect(random).toHaveClass(/tutorial-pulse/);
+    // The Random beat's line offers Clone, and it sits in the beat's hole.
+    await random.locator(".roster-clone").click();
+    await expect(target("professions")).toHaveClass(/tutorial-pulse/);
+    await expect(page.locator(".coach-panel")).toContainText("Switch a profession");
+  });
+
   test("changes the spec in the builder, one locked target at a time (#3541)", async ({ page }) => {
     // A walk through the whole builder: ~50 s on a loaded runner, past the default.
     test.setTimeout(180_000);
@@ -843,38 +855,38 @@ test.describe("the menu quest (#3540)", () => {
 
     await expect(target("rail-characters")).toHaveClass(/tutorial-pulse/);
     await target("rail-characters").click();
-    const card = target("character-open");
-    await expect(card).toHaveClass(/tutorial-pulse/);
+    // A fresh player's one character is the rolled Random one: said, not opened (#3786).
+    const random = target("character-random");
+    await expect(random).toHaveClass(/tutorial-pulse/);
+    await expect(random).toContainText("Random");
+    const bubble = page.locator(".coach-bubble");
+    await expect(bubble).toContainText("This is your Random character");
     // Teams is dimmed: a click on it never reaches the menu.
     await target("rail-teams").click({ force: true });
     await expect(page.locator(".screen-teams")).toHaveCount(0);
-    // The starter is cloned to be changed; any other is edited.
-    await card.locator(".roster-clone, .roster-edit").first().click();
+    await bubble.getByRole("button", { name: "Got it" }).click();
+    await expect(target("character-new")).toHaveClass(/tutorial-pulse/);
+    await expect(bubble).toContainText("Make your own: press New character.");
+    await target("character-new").click();
 
     await expect(target("professions")).toHaveClass(/tutorial-pulse/);
     await expect(panel).toContainText("Switch a profession");
+    await expect(bubble).toContainText("a Warrior's Strength, a Monk's Divine Favor");
     // Save is dimmed until its beat: a click on it saves nothing.
     await target("save").click({ force: true });
     await expect(page.locator(".editor-professions")).toBeVisible();
-    // The starter is random: one with a secondary drops it, one without takes one.
+    // A new character has no secondary: take one.
     await professionField(page, "secondary").click();
     const cells = target("professions").locator(".profession-grid .profession-cell");
-    const none = cells.and(page.locator('[data-profession="none"]'));
-    const hasSecondary = (await professionField(page, "secondary").textContent()) !== "(none)";
-    await (
-      hasSecondary ? none : cells.and(page.locator(':not([data-profession="none"])')).first()
-    ).click();
+    await cells.and(page.locator(':not([data-profession="none"])')).first().click();
 
     await expect(target("attributes").first()).toHaveClass(/tutorial-pulse/);
-    // Points may all be spent: a refund always goes through. The last lit pip
-    // is some attribute's own rank, and clicking it lowers that rank by one.
-    await page.locator(".editor-attribute .attribute-pip.is-on").last().click();
+    // No point is spent yet: a first rank always goes through.
+    await page.locator('.editor-attribute .attribute-pip[data-pip="1"]').first().click();
 
     await expect(target("skills").first()).toHaveClass(/tutorial-pulse/);
     await openLibraryGroup(page);
     const slot = page.locator(".skill-slot").last();
-    // The starter bar is random: a skill it already holds, or a second
-    // elite, could leave the bar as it was, and the beat rightly waits.
     const fresh = page.locator(".skill-library .skill-box:not(.is-equipped):not(.is-elite)");
     expect(await fresh.count()).toBeGreaterThan(0);
     await fresh.first().dragTo(slot);
@@ -915,15 +927,19 @@ test.describe("the menu quest (#3540)", () => {
     await expect(target("rail-teams")).toHaveClass(/tutorial-pulse/);
     await target("rail-teams").click();
 
-    // The sidebar's size and New team build; the starter team is dimmed.
-    const stepper = page.locator('.mode-rail-stepper[data-tutorial~="team-new"]');
+    // The sidebar's size first, at 4v4, with New team build dimmed (#3794).
+    const stepper = page.locator('.mode-rail-stepper[data-tutorial~="team-build-size"]');
     await expect(stepper).toHaveClass(/tutorial-pulse/);
-    const smaller = stepper.getByRole("button", { name: "Smaller team" });
-    while (!(await smaller.isDisabled())) {
-      await smaller.click();
-    }
+    await expect(stepper).toContainText("4v4");
+    await expect(bubble).toContainText("Set the team size to 2v2.");
+    await expect(target("team-new")).not.toHaveClass(/tutorial-pulse/);
+    await stepper.getByRole("button", { name: "Smaller team" }).click();
     await expect(stepper).toContainText("2v2");
-    await page.locator(".play-card-new").click();
+    // Then New team build alone.
+    await expect(target("team-new")).toHaveClass(/tutorial-pulse/);
+    await expect(bubble).toContainText("Now make a new team build.");
+    await target("team-new").click();
+    await expect(page.locator(".team-grid .team-row")).toHaveCount(2);
 
     await expect(target("team-members")).toHaveClass(/tutorial-pulse/);
     await bubble.getByRole("button", { name: "Got it" }).click();
@@ -961,7 +977,7 @@ test.describe("the menu quest (#3540)", () => {
     const target = (id: string): Locator => page.locator(`[data-tutorial~="${id}"]`);
 
     await target("rail-teams").click();
-    const stepper = page.locator('.mode-rail-stepper[data-tutorial~="team-new"]');
+    const stepper = page.locator('.mode-rail-stepper[data-tutorial~="team-build-size"]');
     const smaller = stepper.getByRole("button", { name: "Smaller team" });
     while (!(await smaller.isDisabled())) {
       await smaller.click();

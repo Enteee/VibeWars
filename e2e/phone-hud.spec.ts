@@ -1,7 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
 import { key } from "./keys.js";
-import { hostLobby, playHouseTeams } from "./helpers/peers.js";
+import { hostLobby, enterHouseTeams } from "./helpers/peers.js";
 import {
   PIXEL_8A_LANDSCAPE,
   PIXEL_8A_PORTRAIT,
@@ -134,8 +134,10 @@ async function phoneMatch(
   await page.getByRole("button", { name: "join team 1" }).click();
   await page.getByRole("button", { name: "Ready", exact: true }).click();
   await page.getByRole("button", { name: "start match" }).click();
-  // Any character will do: the house team's one seat (#1525).
-  await playHouseTeams([page]);
+  // Any character will do: the house team's one seat (#1525). Targeted
+  // while held before the start (#3818): the toast, up as the match's
+  // music begins, is gone by the time the countdown is.
+  await enterHouseTeams([page]);
   await page.keyboard.press(key("target-closest"));
   await expect(page.locator(".hud-target-text")).not.toHaveText("no target");
 }
