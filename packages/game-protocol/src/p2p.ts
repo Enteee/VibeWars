@@ -1257,6 +1257,37 @@ export interface WireSummaryRow {
   readonly interrupts: number;
 }
 
+/**
+ * One seat of a finished match as its record holds it (#2528): what a
+ * match record publishes and `ended` carries (#3903). Nothing in it
+ * identifies a player beyond the name and guild tag they played under
+ * and their public player key (#2739).
+ */
+export interface MatchRecordPlayer {
+  readonly name: string;
+  readonly guildTag: string | null;
+  readonly bot: boolean;
+  /**
+   * The public player key the host reports for this seat (#2739), which
+   * draws the player's signet; `null` exactly for a bot. A host can
+   * attach any key to a name, so it proves nothing.
+   */
+  readonly pubkey: string | null;
+  /**
+   * The build as played (the lobby's, or the hello's once the host
+   * accepted it) as a GW1 template code: professions, ranks and bar in
+   * about 40 bytes, where the whole build takes over a kilobyte.
+   */
+  readonly template: string;
+}
+
+export interface MatchRecordTeam {
+  readonly players: readonly MatchRecordPlayer[];
+}
+
+/** The longest template code a record may hold: GW1's longest is 64 characters. */
+export const MAX_TEMPLATE_LENGTH = 64;
+
 /** Host to every client, once: the match is over, and what each player did in it. */
 export interface WireEnded {
   readonly winningTeam: WireTeam | null;
@@ -1264,6 +1295,12 @@ export interface WireEnded {
   readonly summary: readonly WireSummaryRow[];
   /** Seconds on the Elite Zaishen Battle's clock (#2692); `null` in any other match. */
   readonly clearSeconds: number | null;
+  /**
+   * Who played on each team and with what build, by team id (#3903):
+   * what the match's published record holds, sent for every match, so a
+   * player's own Matches can show builds and clone them.
+   */
+  readonly teams: readonly MatchRecordTeam[];
 }
 
 /** The most samples a `WireMatchChart` series holds (#3564). */
@@ -3290,11 +3327,45 @@ function parseSummaryRow(value: unknown): WireSummaryRow | undefined {
     : undefined;
 }
 
+/**
+ * A record's seat as the host sent it, shape only: `game-session`'s
+ * `validateMatchRecord` holds a published one to the game's rules.
+ */
+function parseRecordPlayer(value: unknown): MatchRecordPlayer | undefined {
+  const raw = fields(value);
+  const pubkey = raw?.pubkey;
+  return raw !== undefined &&
+    typeof raw.name === "string" &&
+    raw.name.length <= MAX_WIRE_TEXT &&
+    isNullableString(raw.guildTag) &&
+    typeof raw.bot === "boolean" &&
+    (pubkey === null || isTicketId(pubkey)) &&
+    // A bot, and only a bot, has no key.
+    (pubkey === null) === raw.bot &&
+    typeof raw.template === "string" &&
+    raw.template.length <= MAX_TEMPLATE_LENGTH
+    ? {
+        name: raw.name,
+        guildTag: raw.guildTag,
+        bot: raw.bot,
+        pubkey,
+        template: raw.template,
+      }
+    : undefined;
+}
+
+function parseRecordTeam(value: unknown): MatchRecordTeam | undefined {
+  const players = parseArray(fields(value)?.players, MAX_LOBBY_PLAYERS, parseRecordPlayer);
+  return players === undefined ? undefined : { players };
+}
+
 /** The end of a match of `teamCount` teams (#2682): any other team is refused. */
 export function parseWireEnded(value: unknown, teamCount: WireTeamCount): WireEnded | undefined {
   const raw = fields(value);
   const summary = parseArray(raw?.summary, MAX_LOBBY_PLAYERS, parseSummaryRow);
+  const teams = parseArray(raw?.teams, teamCount, parseRecordTeam);
   return raw !== undefined &&
+    teams?.length === teamCount &&
     (raw.winningTeam === null || (isTeam(raw.winningTeam) && raw.winningTeam < teamCount)) &&
     isOneOf(raw.endReason, [...END_REASONS, "host-left"] as const) &&
     summary?.every(({ team }) => team < teamCount) === true &&
@@ -3304,6 +3375,7 @@ export function parseWireEnded(value: unknown, teamCount: WireTeamCount): WireEn
         endReason: raw.endReason,
         summary,
         clearSeconds: raw.clearSeconds,
+        teams,
       }
     : undefined;
 }

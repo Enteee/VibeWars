@@ -3,7 +3,6 @@ import type {
   Guild,
   LobbyConnection,
   LobbySnapshot,
-  MatchRecordTeam,
   MatchStarting,
   RecordedReplay,
   QueueState,
@@ -252,6 +251,7 @@ import {
   teamQueueModeOf,
   teamSizeOf,
   type LobbyMode,
+  type MatchRecordTeam,
   type QueueMode,
   type WireMatchChart,
 } from "@vibewars/game-protocol";

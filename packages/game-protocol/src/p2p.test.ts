@@ -522,11 +522,24 @@ const summaryRow = {
   interrupts: 3,
 } as const;
 
+/** A seat as a record holds it (#3903): Ann, and a bot. */
+const recordPlayer = {
+  name: "Ann",
+  guildTag: "Ab1",
+  bot: false,
+  pubkey: "a".repeat(64),
+  template: "OQBDAswDPiAAAAAAAAAAAAAA",
+} as const;
+
 const ended: WireEnded = {
   winningTeam: null,
   endReason: "host-left",
   summary: [summaryRow],
   clearSeconds: null,
+  teams: [
+    { players: [recordPlayer] },
+    { players: [{ ...recordPlayer, name: "Monk", guildTag: null, bot: true, pubkey: null }] },
+  ],
 };
 
 const refused: CastRefusedMessage = {
@@ -1028,7 +1041,7 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   [
     "ended by a wipe (#846)",
     parseWireEnded,
-    { winningTeam: 1, endReason: "annihilation", summary: [], clearSeconds: null },
+    { ...ended, winningTeam: 1, endReason: "annihilation", summary: [] },
   ],
   [
     "a bot's summary row, no signet (#2822)",
@@ -1038,7 +1051,7 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   [
     "ended at time by morale (#846)",
     parseWireEnded,
-    { winningTeam: null, endReason: "morale", summary: [], clearSeconds: null },
+    { ...ended, endReason: "morale", summary: [] },
   ],
   [
     "ended with a full summary (#1057)",
@@ -2515,6 +2528,26 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     },
   ],
   ["ended by an unknown reason", parseWireEnded, { ...ended, endReason: "forfeit" }],
+  ["ended without its teams (#3903)", parseWireEnded, { ...ended, teams: undefined }],
+  ["ended with one team of two (#3903)", parseWireEnded, { ...ended, teams: [ended.teams[0]] }],
+  [
+    "ended with a bot holding a key (#3903)",
+    parseWireEnded,
+    { ...ended, teams: [{ players: [{ ...recordPlayer, bot: true }] }, ended.teams[1]] },
+  ],
+  [
+    "ended with a player without one (#3903)",
+    parseWireEnded,
+    { ...ended, teams: [{ players: [{ ...recordPlayer, pubkey: null }] }, ended.teams[1]] },
+  ],
+  [
+    "ended with a template past GW1's longest (#3903)",
+    parseWireEnded,
+    {
+      ...ended,
+      teams: [{ players: [{ ...recordPlayer, template: "A".repeat(65) }] }, ended.teams[1]],
+    },
+  ],
   [
     "ended without a winner",
     parseWireEnded,
@@ -3298,7 +3331,12 @@ describe("the P2P validators (#82)", () => {
     expect(parseWireSnapshotPartOf({ ...snapshot, players: [{ ...player, team: 3 }] }, 3)).toBe(
       undefined,
     );
-    const won: WireEnded = { ...ended, winningTeam: 2, summary: [{ ...summaryRow, team: 2 }] };
+    const won: WireEnded = {
+      ...ended,
+      winningTeam: 2,
+      summary: [{ ...summaryRow, team: 2 }],
+      teams: [...ended.teams, { players: [recordPlayer] }],
+    };
     expect(parseWireEndedOf(won, 3)).toEqual(won);
     expect(parseWireEndedOf(won, 2)).toBeUndefined();
     expect(parseWireEndedOf({ ...won, winningTeam: 1 }, 2)).toBeUndefined();

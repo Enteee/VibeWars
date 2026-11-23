@@ -1,9 +1,5 @@
-import { LOBBY_MODES, type LobbyMode } from "@vibewars/game-protocol";
-import {
-  MATCH_RECORD_VERSION,
-  type MatchRecord,
-  type MatchRecordTeam,
-} from "@vibewars/game-session";
+import { LOBBY_MODES, type LobbyMode, type MatchRecordTeam } from "@vibewars/game-protocol";
+import { MATCH_RECORD_VERSION, type MatchRecord } from "@vibewars/game-session";
 import { describe, expect, it } from "vitest";
 
 import { MATCH_KINDS, matchesFilter, matchSize, type MatchFilter } from "./matches-filter.js";

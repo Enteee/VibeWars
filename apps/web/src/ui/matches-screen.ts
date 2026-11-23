@@ -5,8 +5,13 @@
  */
 
 import { decodeTemplateCode, type MatchEndReason } from "@vibewars/game-core";
-import { LOBBY_MODES, type LobbyMode } from "@vibewars/game-protocol";
-import type { MatchRecord, MatchRecordPlayer, MatchRecordTeam } from "@vibewars/game-session";
+import {
+  LOBBY_MODES,
+  type LobbyMode,
+  type MatchRecordPlayer,
+  type MatchRecordTeam,
+} from "@vibewars/game-protocol";
+import type { MatchRecord } from "@vibewars/game-session";
 
 import { mapName } from "../i18n/game-names.js";
 import { t, type MessageKey } from "../i18n/index.js";

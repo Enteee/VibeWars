@@ -1,10 +1,6 @@
 import { STARTER_BUILDS } from "@vibewars/game-core";
-import {
-  MATCH_RECORD_VERSION,
-  recordTemplate,
-  type MatchRecord,
-  type MatchRecordTeam,
-} from "@vibewars/game-session";
+import type { MatchRecordTeam } from "@vibewars/game-protocol";
+import { MATCH_RECORD_VERSION, recordTemplate, type MatchRecord } from "@vibewars/game-session";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { t } from "../i18n/index.js";
