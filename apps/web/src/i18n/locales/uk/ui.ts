@@ -606,6 +606,13 @@ export default {
   "help.source": "Вихідний код",
   "help.version": "VibeWars {release} · збірка {build}",
 
+  "history.back": "Назад",
+  "history.empty": "Матчів поки немає. Тут зберігаються твої останні 50 матчів.",
+  "history.emptyMine": "Немає матчів із твоїм поточним ключем гравця.",
+  "history.mine": "Мої матчі",
+  "history.open": "Історія матчів",
+  "history.title": "Історія матчів",
+
   "hud.aggression": "агр {ours} : {theirs}",
   "hud.altarPointOurs": "Очко вівтаря!",
   "hud.altarPointTheirs": "Очко вівтаря ворога",

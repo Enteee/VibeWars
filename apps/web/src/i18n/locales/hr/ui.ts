@@ -586,6 +586,13 @@ export default {
   "help.source": "Izvorni kôd",
   "help.version": "VibeWars {release} · verzija {build}",
 
+  "history.back": "Natrag",
+  "history.empty": "Još nema mečeva. Ovdje se čuva tvojih zadnjih 50 mečeva.",
+  "history.emptyMine": "Nema mečeva s tvojim trenutnim ključem igrača.",
+  "history.mine": "Moji mečevi",
+  "history.open": "Povijest mečeva",
+  "history.title": "Povijest mečeva",
+
   "hud.aggression": "agr {ours} : {theirs}",
   "hud.altarPointOurs": "Bod na oltaru!",
   "hud.altarPointTheirs": "Neprijateljski bod na oltaru",

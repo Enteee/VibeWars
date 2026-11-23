@@ -93,6 +93,8 @@ dođi do nje tipkom Tab da pročitaš što se dogodilo. Pritisni stavku legende 
 sakriješ ili prikažeš njezinu liniju. Na mobitelu su grafikoni ispod rezultata,
 koji prikazuju tebe i još dvoje dok ne pritisneš **Prikaži sve**.
 
+**Povijest mečeva** u gornjoj traci prikazuje tvojih zadnjih 50 mečeva, najnovije prvo: otvori jedan da ponovno vidiš njegove bodove i grafikone. Čuvaju se samo u ovom pregledniku. **Moji mečevi** prikazuje samo one odigrane s tvojim trenutnim ključem igrača.
+
 ## Budi domaćin ili se pridruži meču
 
 Uvijek si u sobi: od trenutka kad se stranica otvori vodi jednu

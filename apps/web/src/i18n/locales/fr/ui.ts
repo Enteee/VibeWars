@@ -587,6 +587,13 @@ export default {
   "help.source": "Code source",
   "help.version": "VibeWars {release} · build {build}",
 
+  "history.back": "Retour",
+  "history.empty": "Aucune partie pour l’instant. Vos 50 dernières parties sont conservées ici.",
+  "history.emptyMine": "Aucune partie avec votre clé de joueur actuelle.",
+  "history.mine": "Mes parties",
+  "history.open": "Historique des parties",
+  "history.title": "Historique des parties",
+
   "hud.aggression": "agr {ours} vs {theirs}",
   "hud.altarPointOurs": "Point d'autel !",
   "hud.altarPointTheirs": "Point d'autel ennemi",

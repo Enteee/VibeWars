@@ -586,6 +586,13 @@ export default {
   "help.source": "Cod sursă",
   "help.version": "VibeWars {release} · versiunea {build}",
 
+  "history.back": "Înapoi",
+  "history.empty": "Încă nu există meciuri. Ultimele tale 50 de meciuri sunt păstrate aici.",
+  "history.emptyMine": "Niciun meci cu cheia ta de jucător actuală.",
+  "history.mine": "Meciurile mele",
+  "history.open": "Istoricul meciurilor",
+  "history.title": "Istoricul meciurilor",
+
   "hud.aggression": "agr {ours} v {theirs}",
   "hud.altarPointOurs": "Punct la altar!",
   "hud.altarPointTheirs": "Punct la altar pentru inamic",

@@ -92,6 +92,7 @@ import {
   type KeyValueStore,
 } from "./storage/repository.js";
 import { ReplayStore } from "./storage/replays.js";
+import { MatchHistoryStore } from "./storage/match-history.js";
 import { cloneCharacter } from "./storage/clone-character.js";
 import { missingSkillsNote } from "./storage/gw1-template.js";
 import { characterFromMatch, teamFromMatch } from "./storage/match-team.js";
@@ -524,6 +525,8 @@ async function main(): Promise<void> {
     });
   };
   const teams = new TeamRepository(store);
+  // The last ended matches (#3848), for the bar's Match history.
+  const matchHistory = new MatchHistoryStore(store);
   // The first start plays a rolled starter character (#853). Not into
   // memory: it would be gone next start, with the key saying it was rolled.
   if (persistent) {
@@ -624,6 +627,8 @@ async function main(): Promise<void> {
   /** The rail entry last drawn: a guest's mode screen follows its host's (#1526). */
   let drawnEntry: RailEntry = "random-arena";
   let match: MatchView | undefined;
+  /** The mode of the lobby `match` was entered from (#3848), for its Match history line. */
+  let matchMode: LobbyMode | undefined;
   /** The lobby's chat (#479), for as long as the lobby: on its screen, then over its match. */
   let chat: ChatPanel | undefined;
   /**
@@ -984,6 +989,7 @@ async function main(): Promise<void> {
     },
     ownSignet,
     playerKey.pubkey,
+    matchHistory,
   );
   // Once a visit (#3575): the menu's rank and a queue's rating read it.
   leaderboard.onChange(() => {
@@ -2968,6 +2974,29 @@ async function main(): Promise<void> {
    * and its lobby, onto the queue screen's ended view rather than the
    * menu. The queue's place already closed as the match started.
    */
+  /**
+   * Keep the ended match `leaving` in Match history (#3848), read before
+   * it goes, so charts that came after the `ended` are in. A watcher's,
+   * or one left before its end, has no record. Fire and forget.
+   */
+  const keepInHistory = (leaving: MatchView): void => {
+    const record = leaving.record();
+    if (record === undefined || matchMode === undefined) {
+      return;
+    }
+    matchHistory
+      .add({
+        id: crypto.randomUUID(),
+        endedAt: Date.now(),
+        pubkey: playerKey.pubkey,
+        mode: matchMode,
+        ...record,
+      })
+      .catch((error: unknown) => {
+        console.warn("[web] could not keep the match in its history", error);
+      });
+  };
+
   const endQueuedMatch = async (outcome: string, won: boolean): Promise<void> => {
     clearQueuedEnd();
     const leaving = match;
@@ -2979,6 +3008,7 @@ async function main(): Promise<void> {
     // Read before the view goes: the table moves with the player (#1057).
     const summary = leaving.summary();
     const chart = leaving.chart();
+    keepInHistory(leaving);
     await leaving.dispose();
     enteringMatch = false;
     const leavingLobby = lobby;
@@ -3043,6 +3073,7 @@ async function main(): Promise<void> {
     const leaving = match;
     match = undefined;
     hallWatch.resume();
+    keepInHistory(leaving);
     await leaving.dispose();
     leaveScreen();
     enteringMatch = false;
@@ -3205,6 +3236,7 @@ async function main(): Promise<void> {
     }
     enteringMatch = true;
     matchFinished = false;
+    matchMode = undefined;
     stopShare();
     lobbyNotice = undefined;
     showViewport(true);
@@ -3256,6 +3288,7 @@ async function main(): Promise<void> {
     }
     enteringMatch = true;
     matchFinished = false;
+    matchMode = from.getSnapshot().mode;
     // The menu quest's closing line goes as its match is found (#3544).
     menuQuest?.stop();
     menuQuest = undefined;

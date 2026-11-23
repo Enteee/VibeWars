@@ -3369,6 +3369,41 @@ function parseChartEvent(
   }
 }
 
+/** A chart's period, drop count, series and events (#3564), between the ids of `roster`. */
+function parseChartBody(
+  raw: Fields,
+  roster: ReadonlySet<string>,
+  teamCount: WireTeamCount,
+): WireMatchChart | undefined {
+  if (!isCount(raw.period) || raw.period < 1 || !isCount(raw.dropped)) {
+    return undefined;
+  }
+  const players = parseArray(raw.players, roster.size, (item) => parseChartSeries(item, roster));
+  const events = parseArray(raw.events, MAX_CHART_EVENTS, (item) =>
+    parseChartEvent(item, roster, teamCount),
+  );
+  return players !== undefined && events !== undefined
+    ? { period: raw.period, players, events, dropped: raw.dropped }
+    : undefined;
+}
+
+/**
+ * Whether `chart` holds together as a whole one: at most
+ * `MAX_CHART_EVENTS`, no player twice, every series the same length.
+ */
+function wholeChart(chart: WireMatchChart): boolean {
+  const length = chart.players[0]?.dealt.length ?? 0;
+  return (
+    chart.events.length <= MAX_CHART_EVENTS &&
+    new Set(chart.players.map(({ id }) => id)).size === chart.players.length &&
+    chart.players.every((series) =>
+      [series.dealt, series.taken, series.healed, series.health, series.energy].every(
+        (samples) => samples.length === length,
+      ),
+    )
+  );
+}
+
 /**
  * One part of a match's charts (#3564), between the ids of `roster`, its
  * summary's. `joinMatchChart` checks the parts against each other.
@@ -3379,24 +3414,25 @@ export function parseWireMatchChartPart(
   teamCount: WireTeamCount,
 ): WireMatchChartPart | undefined {
   const raw = fields(value);
-  if (
-    raw === undefined ||
-    !isCount(raw.period) ||
-    raw.period < 1 ||
-    !isCount(raw.dropped) ||
-    !isCount(raw.parts) ||
-    raw.parts < 1 ||
-    raw.parts > MAX_CHART_PARTS
-  ) {
+  if (raw === undefined || !isCount(raw.parts) || raw.parts < 1 || raw.parts > MAX_CHART_PARTS) {
     return undefined;
   }
-  const players = parseArray(raw.players, roster.size, (item) => parseChartSeries(item, roster));
-  const events = parseArray(raw.events, MAX_CHART_EVENTS, (item) =>
-    parseChartEvent(item, roster, teamCount),
-  );
-  return players !== undefined && events !== undefined
-    ? { period: raw.period, parts: raw.parts, players, events, dropped: raw.dropped }
-    : undefined;
+  const body = parseChartBody(raw, roster, teamCount);
+  return body !== undefined ? { ...body, parts: raw.parts } : undefined;
+}
+
+/**
+ * A whole chart as `joinMatchChart` made it (#3848), kept with a match
+ * in the browser's history: its parts' checks, and the whole one's.
+ */
+export function parseWireMatchChart(
+  value: unknown,
+  roster: ReadonlySet<string>,
+  teamCount: WireTeamCount,
+): WireMatchChart | undefined {
+  const raw = fields(value);
+  const chart = raw === undefined ? undefined : parseChartBody(raw, roster, teamCount);
+  return chart !== undefined && wholeChart(chart) ? chart : undefined;
 }
 
 /**
@@ -3417,18 +3453,13 @@ export function joinMatchChart(parts: readonly WireMatchChartPart[]): WireMatchC
   ) {
     return undefined;
   }
-  const players = parts.flatMap((part) => part.players);
-  const events = parts.flatMap((part) => part.events);
-  const length = players[0]?.dealt.length ?? 0;
-  return events.length <= MAX_CHART_EVENTS &&
-    new Set(players.map(({ id }) => id)).size === players.length &&
-    players.every((series) =>
-      [series.dealt, series.taken, series.healed, series.health, series.energy].every(
-        (samples) => samples.length === length,
-      ),
-    )
-    ? { period: first.period, players, events, dropped: first.dropped }
-    : undefined;
+  const chart: WireMatchChart = {
+    period: first.period,
+    players: parts.flatMap((part) => part.players),
+    events: parts.flatMap((part) => part.events),
+    dropped: first.dropped,
+  };
+  return wholeChart(chart) ? chart : undefined;
 }
 
 /** The `"refused"` channel: a `CastRefusedMessage`, to the caster alone. */

@@ -94,6 +94,8 @@ til det med Tab, for at læse, hvad der skete. Tryk på et punkt i
 signaturforklaringen for at skjule eller vise dets linje. På en telefon står
 diagrammerne under resultaterne, som viser dig og to andre indtil **Vis alle**.
 
+**Kamphistorik** i topbjælken viser dine seneste 50 kampe, nyeste først: åbn en for at se dens point og diagrammer igen. De gemmes kun i denne browser. **Mine kampe** viser kun dem, du har spillet med din nuværende spillernøgle.
+
 ## Vær vært for eller deltag i en kamp
 
 Du er altid i en lobby: fra det øjeblik siden åbner, er den vært for din

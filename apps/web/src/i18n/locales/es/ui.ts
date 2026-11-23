@@ -585,6 +585,13 @@ export default {
   "help.source": "Código fuente",
   "help.version": "VibeWars {release} · versión {build}",
 
+  "history.back": "Volver",
+  "history.empty": "Aún no hay partidas. Aquí se guardan tus últimas 50 partidas.",
+  "history.emptyMine": "No hay partidas con tu clave de jugador actual.",
+  "history.mine": "Mis partidas",
+  "history.open": "Historial de partidas",
+  "history.title": "Historial de partidas",
+
   "hud.aggression": "agr {ours} v {theirs}",
   "hud.altarPointOurs": "¡Punto de altar!",
   "hud.altarPointTheirs": "Punto de altar enemigo",

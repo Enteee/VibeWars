@@ -605,6 +605,13 @@ export default {
   "help.source": "Zdrojový kód",
   "help.version": "VibeWars {release} · build {build}",
 
+  "history.back": "Zpět",
+  "history.empty": "Zatím žádné zápasy. Uchovává se tu tvých posledních 50 zápasů.",
+  "history.emptyMine": "Žádné zápasy s tvým současným klíčem hráče.",
+  "history.mine": "Moje zápasy",
+  "history.open": "Historie zápasů",
+  "history.title": "Historie zápasů",
+
   "hud.aggression": "agr {ours} : {theirs}",
   "hud.altarPointOurs": "Bod z oltáře!",
   "hud.altarPointTheirs": "Bod nepřátel z oltáře",

@@ -98,6 +98,8 @@ aconteceu. Pressione um item da legenda para ocultar ou mostrar sua linha. No
 celular, os gráficos ficam abaixo das pontuações, que mostram você e mais dois
 até **Mostrar tudo**.
 
+**Histórico de partidas**, na barra superior, lista suas últimas 50 partidas, da mais nova para a mais antiga: abra uma para ver de novo o placar e os gráficos. Elas ficam guardadas só neste navegador. **Minhas partidas** mostra só as jogadas com sua chave de jogador atual.
+
 ## Hospedar ou entrar em uma partida
 
 Você está sempre em uma sala: desde que a página abre, ela hospeda uma

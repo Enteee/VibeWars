@@ -94,6 +94,8 @@ alebo na ňu prejdi klávesom Tab a prečítaš si, čo sa stalo. Stlačením po
 legendy skryješ alebo zobrazíš jej čiaru. Na telefóne sú grafy pod skóre, ktoré
 ukazuje teba a dvoch ďalších, kým nestlačíš **Zobraziť všetko**.
 
+**História zápasov** v hornej lište ukazuje tvojich posledných 50 zápasov, najnovšie prvé: otvor jeden a znova uvidíš jeho skóre a grafy. Uchovávajú sa len v tomto prehliadači. **Moje zápasy** ukáže len tie odohrané s tvojím súčasným kľúčom hráča.
+
 ## Hostiť zápas alebo sa pripojiť
 
 Vždy si v lobby: od chvíle, keď sa stránka otvorí, hostí jedno

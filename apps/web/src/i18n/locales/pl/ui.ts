@@ -607,6 +607,13 @@ export default {
   "help.source": "Kod źródłowy",
   "help.version": "VibeWars {release} · kompilacja {build}",
 
+  "history.back": "Wstecz",
+  "history.empty": "Brak meczów. Tutaj przechowywanych jest Twoich ostatnich 50 meczów.",
+  "history.emptyMine": "Brak meczów z Twoim obecnym kluczem gracza.",
+  "history.mine": "Moje mecze",
+  "history.open": "Historia meczów",
+  "history.title": "Historia meczów",
+
   "hud.aggression": "agr {ours} v {theirs}",
   "hud.altarPointOurs": "Punkt z ołtarza!",
   "hud.altarPointTheirs": "Punkt wroga z ołtarza",

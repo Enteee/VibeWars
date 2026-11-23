@@ -551,6 +551,13 @@ export default {
   "help.source": "کد منبع",
   "help.version": "VibeWars {release} · بیلد {build}",
 
+  "history.back": "بازگشت",
+  "history.empty": "هنوز مسابقه‌ای نیست. ۵۰ مسابقهٔ آخر شما اینجا نگه داشته می‌شود.",
+  "history.emptyMine": "مسابقه‌ای با کلید بازیکن فعلی شما نیست.",
+  "history.mine": "مسابقه‌های من",
+  "history.open": "تاریخچهٔ مسابقه‌ها",
+  "history.title": "تاریخچهٔ مسابقه‌ها",
+
   "hud.aggression": "تهاجم {ours} مقابل {theirs}",
   "hud.altarPointOurs": "امتیاز محراب!",
   "hud.altarPointTheirs": "امتیاز محراب دشمن",

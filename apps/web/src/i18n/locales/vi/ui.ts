@@ -503,6 +503,13 @@ export default {
   "help.source": "Mã nguồn",
   "help.version": "VibeWars {release} · build {build}",
 
+  "history.back": "Quay lại",
+  "history.empty": "Chưa có trận nào. 50 trận gần nhất của bạn được lưu ở đây.",
+  "history.emptyMine": "Không có trận nào với khóa người chơi hiện tại của bạn.",
+  "history.mine": "Trận của tôi",
+  "history.open": "Lịch sử trận đấu",
+  "history.title": "Lịch sử trận đấu",
+
   "hud.aggression": "hung hăng {ours} vs {theirs}",
   "hud.altarPointOurs": "Điểm tế đàn!",
   "hud.altarPointTheirs": "Địch ghi điểm tế đàn",

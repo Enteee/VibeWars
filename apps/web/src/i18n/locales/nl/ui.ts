@@ -550,6 +550,13 @@ export default {
   "help.source": "Broncode",
   "help.version": "VibeWars {release} · build {build}",
 
+  "history.back": "Terug",
+  "history.empty": "Nog geen wedstrijden. Je laatste 50 wedstrijden worden hier bewaard.",
+  "history.emptyMine": "Geen wedstrijden met je huidige spelerssleutel.",
+  "history.mine": "Mijn wedstrijden",
+  "history.open": "Wedstrijdgeschiedenis",
+  "history.title": "Wedstrijdgeschiedenis",
+
   "hud.aggression": "agr {ours} v {theirs}",
   "hud.altarPointOurs": "Altaarpunt!",
   "hud.altarPointTheirs": "Altaarpunt vijand",

@@ -103,6 +103,8 @@ jelmagyarázat-elemet a vonala elrejtéséhez vagy megjelenítéséhez. Telefono
 diagramok az eredmények alatt vannak, amelyek téged és két másik játékost
 mutatnak, amíg meg nem nyomod az **Összes mutatása** gombot.
 
+A felső sáv **Meccselőzmények** gombja az utolsó 50 meccsedet mutatja, a legújabbat elöl: nyiss meg egyet, hogy újra lásd a pontjait és a grafikonjait. Csak ebben a böngészőben maradnak meg. A **Saját meccsek** csak a jelenlegi játékoskulcsoddal játszottakat mutatja.
+
 ## Meccs indítása vagy csatlakozás
 
 Mindig egy lobbiban vagy: attól a pillanattól, hogy az oldal megnyílik,

@@ -92,6 +92,8 @@ Nhấn một mục chú giải để ẩn hoặc hiện đường của nó. Tr�
 nằm dưới điểm số, nơi hiện bạn và hai người khác cho đến khi bạn nhấn
 **Hiện tất cả**.
 
+**Lịch sử trận đấu** trên thanh trên cùng liệt kê 50 trận gần nhất của bạn, mới nhất trước: mở một trận để xem lại điểm số và biểu đồ của nó. Chúng chỉ được lưu trong trình duyệt này. **Trận của tôi** chỉ hiện những trận chơi bằng khóa người chơi hiện tại của bạn.
+
 ## Tạo hoặc vào trận
 
 Bạn luôn ở trong một sảnh: ngay từ lúc trang mở ra, nó đã tạo một sảnh của

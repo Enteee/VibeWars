@@ -36,6 +36,8 @@ A fine partita puoi scegliere **Di nuovo in coda**, o **Restate uniti** con la s
 
 Ogni partita termina sui suoi punteggi, in coda, ospitata o in una lobby, e accanto a essi due grafici raccontano la partita nel tempo; la schermata della coda li mostra di nuovo dopo una partita in coda. **Tu** traccia i danni inflitti, i danni subiti, le cure e l'Energia; **Squadre** traccia la riserva di salute di ogni squadra sopra i suoi danni totali. I segni sotto l'asse del tempo mostrano uccisioni, morti, interruzioni, conquiste e resurrezioni: punta su uno, o raggiungilo con Tab, per leggere cosa è successo. Premi una voce della legenda per nascondere o mostrare la sua linea. Su telefono i grafici stanno sotto i punteggi, che mostrano te e altri due finché non premi **Mostra tutto**.
 
+**Cronologia partite**, nella barra in alto, elenca le tue ultime 50 partite, dalla più recente: aprine una per rivederne punteggi e grafici. Sono conservate solo in questo browser. **Le mie partite** mostra solo quelle giocate con la tua chiave giocatore attuale.
+
 ## Ospita o entra in una partita
 
 Sei sempre in una lobby: dal momento in cui apri la pagina ne ospiti una tua. La lobby è il tuo gruppo: **Lobby** nella barra superiore, tra Opzioni e Musica, apre una finestra con il link d'invito, Aperta/Chiusa ed Esci, e l'elenco di chi c'è; il badge li conta.

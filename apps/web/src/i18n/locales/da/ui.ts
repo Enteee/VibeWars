@@ -550,6 +550,13 @@ export default {
   "help.source": "Kildekode",
   "help.version": "VibeWars {release} · build {build}",
 
+  "history.back": "Tilbage",
+  "history.empty": "Ingen kampe endnu. Dine seneste 50 kampe gemmes her.",
+  "history.emptyMine": "Ingen kampe med din nuværende spillernøgle.",
+  "history.mine": "Mine kampe",
+  "history.open": "Kamphistorik",
+  "history.title": "Kamphistorik",
+
   "hud.aggression": "agg {ours} v {theirs}",
   "hud.altarPointOurs": "Alterpoint!",
   "hud.altarPointTheirs": "Fjendens alterpoint",
