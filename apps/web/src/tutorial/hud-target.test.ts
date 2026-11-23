@@ -4,7 +4,7 @@ import { hudTarget, type HudNode } from "./hud-target.js";
 
 /** A node as the tests build it: shown or not, and where it sits. */
 interface FakeNode extends HudNode<FakeNode> {
-  checkVisibility(): boolean;
+  getClientRects(): { readonly length: number };
 }
 
 /** A node that is `shown` or not, inside `dock` if given. */
@@ -12,7 +12,7 @@ function node(shown: boolean, dock?: FakeNode): FakeNode {
   return {
     closest: (selector) => (selector === ".party-dock:not(.is-open)" ? (dock ?? null) : null),
     querySelector: () => null,
-    checkVisibility: () => shown,
+    getClientRects: () => ({ length: shown ? 1 : 0 }),
   };
 }
 
@@ -21,7 +21,7 @@ function closedDock(toggle: FakeNode): FakeNode {
   return {
     closest: () => null,
     querySelector: (selector) => (selector === ".party-toggle" ? toggle : null),
-    checkVisibility: () => true,
+    getClientRects: () => ({ length: 1 }),
   };
 }
 
