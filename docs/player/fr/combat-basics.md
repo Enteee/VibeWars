@@ -65,18 +65,20 @@ pendant un moment, sauf un ![Cri](../../../apps/web/public/icons/skill-type/shou
 Les **altérations** te font du mal jusqu'à ce qu'elles expirent ou soient
 retirées :
 
-| Altération                                                                                       | Effet                                                     |
-| ------------------------------------------------------------------------------------------------ | --------------------------------------------------------- |
-| ![Saignement](../../../apps/web/public/icons/status/bleeding.svg) **Saignement**                 | draine la santé                                           |
-| ![Brûlure](../../../apps/web/public/icons/status/burning.svg) **Brûlure**                        | draine la santé rapidement                                |
-| ![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison**                           | draine la santé                                           |
-| ![Maladie](../../../apps/web/public/icons/status/disease.svg) **Maladie**                        | draine la santé, et se propage à tes voisins              |
-| ![Infirmité](../../../apps/web/public/icons/status/crippled.svg) **Infirmité**                   | tu avances à mi-vitesse                                   |
-| ![Cécité](../../../apps/web/public/icons/status/blind.svg) **Cécité**                            | la plupart de tes attaques ratent                         |
-| ![Faiblesse](../../../apps/web/public/icons/status/weakness.svg) **Faiblesse**                   | tes coups d'arme sont bien plus faibles                   |
-| ![Armure fissurée](../../../apps/web/public/icons/status/cracked-armor.svg) **Armure fissurée**  | moins d'armure                                            |
-| ![Blessure profonde](../../../apps/web/public/icons/status/deep-wound.svg) **Blessure profonde** | moins de santé maximale, et les soins marchent moins bien |
-| ![Hébétude](../../../apps/web/public/icons/status/dazed.svg) **Hébétude**                        | sorts lents à lancer ; toute attaque les interrompt       |
+| Altération                                                                                       | Effet                                                                 |
+| ------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------- |
+| ![Saignement](../../../apps/web/public/icons/status/bleeding.svg) **Saignement**                 | draine la santé                                                       |
+| ![Brûlure](../../../apps/web/public/icons/status/burning.svg) **Brûlure**                        | draine la santé rapidement                                            |
+| ![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison**                           | draine la santé                                                       |
+| ![Maladie](../../../apps/web/public/icons/status/disease.svg) **Maladie**                        | draine la santé, et se propage aux corps de même nature à côté de toi |
+| ![Infirmité](../../../apps/web/public/icons/status/crippled.svg) **Infirmité**                   | tu avances à mi-vitesse                                               |
+| ![Cécité](../../../apps/web/public/icons/status/blind.svg) **Cécité**                            | la plupart de tes attaques ratent                                     |
+| ![Faiblesse](../../../apps/web/public/icons/status/weakness.svg) **Faiblesse**                   | tes coups d'arme sont bien plus faibles                               |
+| ![Armure fissurée](../../../apps/web/public/icons/status/cracked-armor.svg) **Armure fissurée**  | moins d'armure                                                        |
+| ![Blessure profonde](../../../apps/web/public/icons/status/deep-wound.svg) **Blessure profonde** | moins de santé maximale, et les soins marchent moins bien             |
+| ![Hébétude](../../../apps/web/public/icons/status/dazed.svg) **Hébétude**                        | sorts lents à lancer ; toute attaque les interrompt                   |
+
+Les serviteurs (sauf le Golem de chair), les fantômes et les esprits ne saignent pas, ne sont ni empoisonnés ni malades, et les esprits ne prennent aucun maléfice ni aucune condition sauf **Brûlure**.
 
 Les ![Maléfice](../../../apps/web/public/icons/skill-type/hex.svg) **maléfices** sont lancés sur toi par les ennemis ; les ![Enchantement](../../../apps/web/public/icons/skill-type/enchantment.svg) **enchantements**
 par toi ou tes alliés. Chacun est retiré par son propre type de compétence.

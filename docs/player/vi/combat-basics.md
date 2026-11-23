@@ -60,18 +60,20 @@ chốc lát, trừ ![Tiếng hô](../../../apps/web/public/icons/skill-type/shou
 
 **Dị trạng** gây hại cho bạn cho đến khi hết hoặc bị gỡ bỏ:
 
-| Dị trạng                                                                                    | Tác dụng                                             |
-| ------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
-| ![Bleeding](../../../apps/web/public/icons/status/bleeding.svg) **Bleeding**                | rút Máu                                              |
-| ![Burning](../../../apps/web/public/icons/status/burning.svg) **Burning**                   | rút Máu nhanh                                        |
-| ![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison**                      | rút Máu                                              |
-| ![Disease](../../../apps/web/public/icons/status/disease.svg) **Disease**                   | rút Máu, và lây sang bất kỳ ai đứng cạnh bạn         |
-| ![Crippled](../../../apps/web/public/icons/status/crippled.svg) **Crippled**                | bạn di chuyển với nửa tốc độ                         |
-| ![Blind](../../../apps/web/public/icons/status/blind.svg) **Blind**                         | hầu hết đòn tấn công của bạn đánh trượt              |
-| ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness**                | đòn vũ khí của bạn yếu đi nhiều                      |
-| ![Cracked Armor](../../../apps/web/public/icons/status/cracked-armor.svg) **Cracked Armor** | giảm giáp                                            |
-| ![Deep Wound](../../../apps/web/public/icons/status/deep-wound.svg) **Deep Wound**          | giảm Máu tối đa, và hồi máu kém hiệu quả hơn         |
-| ![Dazed](../../../apps/web/public/icons/status/dazed.svg) **Dazed**                         | Phép thi triển chậm; mọi đòn tấn công đều ngắt chúng |
+| Dị trạng                                                                                    | Tác dụng                                              |
+| ------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| ![Bleeding](../../../apps/web/public/icons/status/bleeding.svg) **Bleeding**                | rút Máu                                               |
+| ![Burning](../../../apps/web/public/icons/status/burning.svg) **Burning**                   | rút Máu nhanh                                         |
+| ![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison**                      | rút Máu                                               |
+| ![Disease](../../../apps/web/public/icons/status/disease.svg) **Disease**                   | rút Máu, và lây sang thân thể cùng loại đứng cạnh bạn |
+| ![Crippled](../../../apps/web/public/icons/status/crippled.svg) **Crippled**                | bạn di chuyển với nửa tốc độ                          |
+| ![Blind](../../../apps/web/public/icons/status/blind.svg) **Blind**                         | hầu hết đòn tấn công của bạn đánh trượt               |
+| ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness**                | đòn vũ khí của bạn yếu đi nhiều                       |
+| ![Cracked Armor](../../../apps/web/public/icons/status/cracked-armor.svg) **Cracked Armor** | giảm giáp                                             |
+| ![Deep Wound](../../../apps/web/public/icons/status/deep-wound.svg) **Deep Wound**          | giảm Máu tối đa, và hồi máu kém hiệu quả hơn          |
+| ![Dazed](../../../apps/web/public/icons/status/dazed.svg) **Dazed**                         | Phép thi triển chậm; mọi đòn tấn công đều ngắt chúng  |
+
+Tay sai (trừ Golem Thịt), hồn ma và linh hồn không chảy máu, không trúng độc và không mắc bệnh, còn linh hồn không nhận lời nguyền nào và không trạng thái nào ngoài **Burning**.
 
 ![Nguyền](../../../apps/web/public/icons/skill-type/hex.svg) **Nguyền** do địch thi triển lên bạn; ![Phù phép](../../../apps/web/public/icons/skill-type/enchantment.svg) **Phù phép** do chính bạn hoặc đồng
 minh. Mỗi loại bị gỡ bỏ bằng loại kỹ năng riêng của nó. Một số Phù phép được

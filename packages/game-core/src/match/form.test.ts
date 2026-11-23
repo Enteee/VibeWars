@@ -154,7 +154,7 @@ describe("a form (#1437)", () => {
   });
 
   it("ends any other form: one at a time", () => {
-    const statuses = new StatusSet();
+    const statuses = new StatusSet("fleshy");
     statuses.apply("avatar-of-melandru", 74, "d", NO_RANKS);
     statuses.apply("avatar-of-dwayna", 74, "d", NO_RANKS);
     expect(statuses.has("avatar-of-melandru")).toBe(false);

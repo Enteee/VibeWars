@@ -273,7 +273,7 @@ describe("Siphon Strength and Shadowy Burden (#2502)", () => {
   });
 
   it("Shadowy Burden's armor penalty is back once the other hex ends", () => {
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     const foe: Combatant = makeCombatant({ id: "f", team: 1, statuses: set });
     set.apply("shadowy-burden", 13, "a", shadow(12));
     set.apply("dulled-weapon", 2, "c", spawning(12));

@@ -68,18 +68,20 @@ varázslás meghiúsul.
 A **kórok** addig ártanak neked, amíg le nem járnak vagy el nem
 távolítják őket:
 
-| Kór                                                                                         | Mit csinál                                                    |
-| ------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
-| ![Bleeding](../../../apps/web/public/icons/status/bleeding.svg) **Bleeding**                | Életerőt szív el                                              |
-| ![Burning](../../../apps/web/public/icons/status/burning.svg) **Burning**                   | gyorsan szív el Életerőt                                      |
-| ![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison**                      | Életerőt szív el                                              |
-| ![Disease](../../../apps/web/public/icons/status/disease.svg) **Disease**                   | Életerőt szív el, és átterjed mindenkire melletted            |
-| ![Crippled](../../../apps/web/public/icons/status/crippled.svg) **Crippled**                | fele sebességgel mozogsz                                      |
-| ![Blind](../../../apps/web/public/icons/status/blind.svg) **Blind**                         | a legtöbb támadásod mellémegy                                 |
-| ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness**                | a fegyvered sokkal gyengébben üt                              |
-| ![Cracked Armor](../../../apps/web/public/icons/status/cracked-armor.svg) **Cracked Armor** | kevesebb páncél                                               |
-| ![Deep Wound](../../../apps/web/public/icons/status/deep-wound.svg) **Deep Wound**          | kevesebb maximális Életerő, és a gyógyítás is kevésbé hat     |
-| ![Dazed](../../../apps/web/public/icons/status/dazed.svg) **Dazed**                         | a varázslatok lassan mennek; bármely támadás megszakítja őket |
+| Kór                                                                                         | Mit csinál                                                                |
+| ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| ![Bleeding](../../../apps/web/public/icons/status/bleeding.svg) **Bleeding**                | Életerőt szív el                                                          |
+| ![Burning](../../../apps/web/public/icons/status/burning.svg) **Burning**                   | gyorsan szív el Életerőt                                                  |
+| ![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison**                      | Életerőt szív el                                                          |
+| ![Disease](../../../apps/web/public/icons/status/disease.svg) **Disease**                   | Életerőt szív el, és átterjed a melletted álló, veled azonos fajta testre |
+| ![Crippled](../../../apps/web/public/icons/status/crippled.svg) **Crippled**                | fele sebességgel mozogsz                                                  |
+| ![Blind](../../../apps/web/public/icons/status/blind.svg) **Blind**                         | a legtöbb támadásod mellémegy                                             |
+| ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness**                | a fegyvered sokkal gyengébben üt                                          |
+| ![Cracked Armor](../../../apps/web/public/icons/status/cracked-armor.svg) **Cracked Armor** | kevesebb páncél                                                           |
+| ![Deep Wound](../../../apps/web/public/icons/status/deep-wound.svg) **Deep Wound**          | kevesebb maximális Életerő, és a gyógyítás is kevésbé hat                 |
+| ![Dazed](../../../apps/web/public/icons/status/dazed.svg) **Dazed**                         | a varázslatok lassan mennek; bármely támadás megszakítja őket             |
+
+A szolgák (a Húsgólem kivételével), a kísértetek és a szellemek nem véreznek, nem mérgeződnek meg és nem betegszenek meg, a szellemekre pedig semmilyen átok és a **Burning** kivételével semmilyen állapot nem hat.
 
 Az ![Átok](../../../apps/web/public/icons/skill-type/hex.svg) **átkokat** az ellenségek varázsolják rád; a ![Bűbáj](../../../apps/web/public/icons/skill-type/enchantment.svg) **bűbájokat** te magad
 vagy a szövetségeseid. Mindegyiket a saját fajta készsége távolítja el.

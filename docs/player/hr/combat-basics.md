@@ -60,18 +60,20 @@ osim ![Povik](../../../apps/web/public/icons/skill-type/shout.svg) **povika** il
 
 **Stanja** ti štete dok ne isteknu ili se ne uklone:
 
-| Stanje                                                                                        | Što radi                                         |
-| --------------------------------------------------------------------------------------------- | ------------------------------------------------ |
-| ![Krvarenje](../../../apps/web/public/icons/status/bleeding.svg) **Krvarenje**                | oduzima zdravlje                                 |
-| ![Gorenje](../../../apps/web/public/icons/status/burning.svg) **Gorenje**                     | brzo oduzima zdravlje                            |
-| ![Otrov](../../../apps/web/public/icons/status/poison.svg) **Otrov**                          | oduzima zdravlje                                 |
-| ![Bolest](../../../apps/web/public/icons/status/disease.svg) **Bolest**                       | oduzima zdravlje i širi se na one do tebe        |
-| ![Osakaćenost](../../../apps/web/public/icons/status/crippled.svg) **Osakaćenost**            | krećeš se upola sporije                          |
-| ![Zaslijepljenost](../../../apps/web/public/icons/status/blind.svg) **Zaslijepljenost**       | većina tvojih napada promaši                     |
-| ![Slabost](../../../apps/web/public/icons/status/weakness.svg) **Slabost**                    | tvoje oružje udara znatno slabije                |
-| ![Napuknut oklop](../../../apps/web/public/icons/status/cracked-armor.svg) **Napuknut oklop** | manje oklopa                                     |
-| ![Duboka rana](../../../apps/web/public/icons/status/deep-wound.svg) **Duboka rana**          | manje najvećeg zdravlja i slabije liječenje      |
-| ![Omamljenost](../../../apps/web/public/icons/status/dazed.svg) **Omamljenost**               | čarolije se bacaju sporo; svaki ih napad prekida |
+| Stanje                                                                                        | Što radi                                                |
+| --------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| ![Krvarenje](../../../apps/web/public/icons/status/bleeding.svg) **Krvarenje**                | oduzima zdravlje                                        |
+| ![Gorenje](../../../apps/web/public/icons/status/burning.svg) **Gorenje**                     | brzo oduzima zdravlje                                   |
+| ![Otrov](../../../apps/web/public/icons/status/poison.svg) **Otrov**                          | oduzima zdravlje                                        |
+| ![Bolest](../../../apps/web/public/icons/status/disease.svg) **Bolest**                       | oduzima zdravlje i širi se na istu vrstu tijela do tebe |
+| ![Osakaćenost](../../../apps/web/public/icons/status/crippled.svg) **Osakaćenost**            | krećeš se upola sporije                                 |
+| ![Zaslijepljenost](../../../apps/web/public/icons/status/blind.svg) **Zaslijepljenost**       | većina tvojih napada promaši                            |
+| ![Slabost](../../../apps/web/public/icons/status/weakness.svg) **Slabost**                    | tvoje oružje udara znatno slabije                       |
+| ![Napuknut oklop](../../../apps/web/public/icons/status/cracked-armor.svg) **Napuknut oklop** | manje oklopa                                            |
+| ![Duboka rana](../../../apps/web/public/icons/status/deep-wound.svg) **Duboka rana**          | manje najvećeg zdravlja i slabije liječenje             |
+| ![Omamljenost](../../../apps/web/public/icons/status/dazed.svg) **Omamljenost**               | čarolije se bacaju sporo; svaki ih napad prekida        |
+
+Sluge (osim Mesnog golema), sablasti i duhovi ne krvare, ne truju se i ne obolijevaju, a duhovi ne primaju nijedan urok ni stanje osim **Gorenja**.
 
 ![Urok](../../../apps/web/public/icons/skill-type/hex.svg) **Uroke** na tebe bacaju neprijatelji, a ![Začaranje](../../../apps/web/public/icons/skill-type/enchantment.svg) **začaranja** ti sam ili tvoji
 saveznici. Svako uklanja vlastita vrsta vještine. Neka su začaranja

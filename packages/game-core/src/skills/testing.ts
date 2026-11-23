@@ -17,7 +17,7 @@ import type { Combatant } from "./types.js";
  * will want it too.
  */
 export function makeCombatant(overrides: Partial<Combatant> & { id: string }): Combatant {
-  const statuses = overrides.statuses ?? new StatusSet();
+  const statuses = overrides.statuses ?? new StatusSet("fleshy");
   return {
     health: 500,
     maxHealth: 500,

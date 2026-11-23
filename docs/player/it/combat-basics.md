@@ -34,18 +34,20 @@ Alcune ![Posizione](../../../apps/web/public/icons/skill-type/stance.svg) **posi
 
 Le **condizioni** ti danneggiano finché non svaniscono o non vengono rimosse:
 
-| Condizione                                                                                            | Effetto                                                           |
-| ----------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------- |
-| ![Sanguinamento](../../../apps/web/public/icons/status/bleeding.svg) **Sanguinamento**                | toglie Salute                                                     |
-| ![Bruciatura](../../../apps/web/public/icons/status/burning.svg) **Bruciatura**                       | toglie Salute in fretta                                           |
-| ![Veleno](../../../apps/web/public/icons/status/poison.svg) **Veleno**                                | toglie Salute                                                     |
-| ![Malattia](../../../apps/web/public/icons/status/disease.svg) **Malattia**                           | toglie Salute e si diffonde a chi ti sta accanto                  |
-| ![Azzoppato](../../../apps/web/public/icons/status/crippled.svg) **Azzoppato**                        | ti muovi a metà velocità                                          |
-| ![Cecità](../../../apps/web/public/icons/status/blind.svg) **Cecità**                                 | la maggior parte dei tuoi attacchi manca il bersaglio             |
-| ![Debolezza](../../../apps/web/public/icons/status/weakness.svg) **Debolezza**                        | i tuoi colpi d'arma sono molto più deboli                         |
-| ![Armatura incrinata](../../../apps/web/public/icons/status/cracked-armor.svg) **Armatura incrinata** | meno armatura                                                     |
-| ![Ferita profonda](../../../apps/web/public/icons/status/deep-wound.svg) **Ferita profonda**          | meno Salute massima, e le cure funzionano meno                    |
-| ![Stordimento](../../../apps/web/public/icons/status/dazed.svg) **Stordimento**                       | lanci lentamente gli incantesimi; qualsiasi attacco li interrompe |
+| Condizione                                                                                            | Effetto                                                               |
+| ----------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| ![Sanguinamento](../../../apps/web/public/icons/status/bleeding.svg) **Sanguinamento**                | toglie Salute                                                         |
+| ![Bruciatura](../../../apps/web/public/icons/status/burning.svg) **Bruciatura**                       | toglie Salute in fretta                                               |
+| ![Veleno](../../../apps/web/public/icons/status/poison.svg) **Veleno**                                | toglie Salute                                                         |
+| ![Malattia](../../../apps/web/public/icons/status/disease.svg) **Malattia**                           | toglie Salute e si diffonde ai corpi della stessa specie accanto a te |
+| ![Azzoppato](../../../apps/web/public/icons/status/crippled.svg) **Azzoppato**                        | ti muovi a metà velocità                                              |
+| ![Cecità](../../../apps/web/public/icons/status/blind.svg) **Cecità**                                 | la maggior parte dei tuoi attacchi manca il bersaglio                 |
+| ![Debolezza](../../../apps/web/public/icons/status/weakness.svg) **Debolezza**                        | i tuoi colpi d'arma sono molto più deboli                             |
+| ![Armatura incrinata](../../../apps/web/public/icons/status/cracked-armor.svg) **Armatura incrinata** | meno armatura                                                         |
+| ![Ferita profonda](../../../apps/web/public/icons/status/deep-wound.svg) **Ferita profonda**          | meno Salute massima, e le cure funzionano meno                        |
+| ![Stordimento](../../../apps/web/public/icons/status/dazed.svg) **Stordimento**                       | lanci lentamente gli incantesimi; qualsiasi attacco li interrompe     |
+
+I servitori (tranne il Golem di carne), i fantasmi e gli spiriti non sanguinano, non vengono avvelenati né si ammalano, e gli spiriti non subiscono alcun maleficio né alcuna condizione tranne **Bruciatura**.
 
 I ![Maleficio](../../../apps/web/public/icons/skill-type/hex.svg) **malefici** sono lanciati su di te dai nemici; gli ![Incantamento](../../../apps/web/public/icons/skill-type/enchantment.svg) **incantamenti** da te o dai tuoi alleati. Ognuno viene rimosso da un suo tipo di abilità. Alcuni incantamenti sono **mantenuti**: durano finché non li termini, e consumano un pip di Energia finché sono attivi. Fai doppio clic sull'icona per terminarne uno.
 

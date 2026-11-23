@@ -63,18 +63,20 @@ stund, utom ett ![Rop](../../../apps/web/public/icons/skill-type/shout.svg) **ro
 
 **Åkommor** skadar dig tills de tar slut eller tas bort:
 
-| Åkomma                                                                                      | Vad den gör                                             |
-| ------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
-| ![Bleeding](../../../apps/web/public/icons/status/bleeding.svg) **Bleeding**                | tömmer hälsa                                            |
-| ![Burning](../../../apps/web/public/icons/status/burning.svg) **Burning**                   | tömmer hälsa snabbt                                     |
-| ![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison**                      | tömmer hälsa                                            |
-| ![Disease](../../../apps/web/public/icons/status/disease.svg) **Disease**                   | tömmer hälsa, och sprids till alla bredvid dig          |
-| ![Crippled](../../../apps/web/public/icons/status/crippled.svg) **Crippled**                | du rör dig med halv fart                                |
-| ![Blind](../../../apps/web/public/icons/status/blind.svg) **Blind**                         | de flesta av dina attacker missar                       |
-| ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness**                | ditt vapen slår mycket svagare                          |
-| ![Cracked Armor](../../../apps/web/public/icons/status/cracked-armor.svg) **Cracked Armor** | mindre rustning                                         |
-| ![Deep Wound](../../../apps/web/public/icons/status/deep-wound.svg) **Deep Wound**          | lägre maximal hälsa, och helande fungerar sämre         |
-| ![Dazed](../../../apps/web/public/icons/status/dazed.svg) **Dazed**                         | besvärjelser kastas långsamt; varje attack avbryter dem |
+| Åkomma                                                                                      | Vad den gör                                                 |
+| ------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| ![Bleeding](../../../apps/web/public/icons/status/bleeding.svg) **Bleeding**                | tömmer hälsa                                                |
+| ![Burning](../../../apps/web/public/icons/status/burning.svg) **Burning**                   | tömmer hälsa snabbt                                         |
+| ![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison**                      | tömmer hälsa                                                |
+| ![Disease](../../../apps/web/public/icons/status/disease.svg) **Disease**                   | tömmer hälsa, och sprids till samma sorts kropp bredvid dig |
+| ![Crippled](../../../apps/web/public/icons/status/crippled.svg) **Crippled**                | du rör dig med halv fart                                    |
+| ![Blind](../../../apps/web/public/icons/status/blind.svg) **Blind**                         | de flesta av dina attacker missar                           |
+| ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness**                | ditt vapen slår mycket svagare                              |
+| ![Cracked Armor](../../../apps/web/public/icons/status/cracked-armor.svg) **Cracked Armor** | mindre rustning                                             |
+| ![Deep Wound](../../../apps/web/public/icons/status/deep-wound.svg) **Deep Wound**          | lägre maximal hälsa, och helande fungerar sämre             |
+| ![Dazed](../../../apps/web/public/icons/status/dazed.svg) **Dazed**                         | besvärjelser kastas långsamt; varje attack avbryter dem     |
+
+Tjänare (utom Köttgolemen), gastar och andar blöder inte, blir inte förgiftade eller sjuka, och andar tar ingen förbannelse och inget tillstånd utom **Burning**.
 
 ![Förbannelse](../../../apps/web/public/icons/skill-type/hex.svg) **Förbannelser** kastas på dig av fiender; ![Förtrollning](../../../apps/web/public/icons/skill-type/enchantment.svg) **förtrollningar** av dig själv
 eller dina allierade. Var och en tas bort av sin egen sorts förmåga. Vissa

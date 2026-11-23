@@ -62,18 +62,20 @@ außer einem ![Schrei](../../../apps/web/public/icons/skill-type/shout.svg) **Sc
 
 **Zustände** schaden dir, bis sie auslaufen oder entfernt werden:
 
-| Zustand                                                                                         | Was er tut                                           |
-| ----------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
-| ![Blutung](../../../apps/web/public/icons/status/bleeding.svg) **Blutung**                      | zieht Leben ab                                       |
-| ![Brennen](../../../apps/web/public/icons/status/burning.svg) **Brennen**                       | zieht schnell Leben ab                               |
-| ![Vergiftung](../../../apps/web/public/icons/status/poison.svg) **Vergiftung**                  | zieht Leben ab                                       |
-| ![Krankheit](../../../apps/web/public/icons/status/disease.svg) **Krankheit**                   | zieht Leben ab und steckt jeden neben dir an         |
-| ![Verkrüppelt](../../../apps/web/public/icons/status/crippled.svg) **Verkrüppelt**              | du läufst halb so schnell                            |
-| ![Blindheit](../../../apps/web/public/icons/status/blind.svg) **Blindheit**                     | die meisten deiner Angriffe verfehlen                |
-| ![Schwäche](../../../apps/web/public/icons/status/weakness.svg) **Schwäche**                    | deine Waffentreffer sind viel schwächer              |
-| ![Rissige Rüstung](../../../apps/web/public/icons/status/cracked-armor.svg) **Rissige Rüstung** | weniger Rüstung                                      |
-| ![Tiefe Wunde](../../../apps/web/public/icons/status/deep-wound.svg) **Tiefe Wunde**            | weniger maximales Leben, und Heilung wirkt schwächer |
-| ![Benommen](../../../apps/web/public/icons/status/dazed.svg) **Benommen**                       | Zauber wirken langsam; jeder Angriff unterbricht sie |
+| Zustand                                                                                         | Was er tut                                                 |
+| ----------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
+| ![Blutung](../../../apps/web/public/icons/status/bleeding.svg) **Blutung**                      | zieht Leben ab                                             |
+| ![Brennen](../../../apps/web/public/icons/status/burning.svg) **Brennen**                       | zieht schnell Leben ab                                     |
+| ![Vergiftung](../../../apps/web/public/icons/status/poison.svg) **Vergiftung**                  | zieht Leben ab                                             |
+| ![Krankheit](../../../apps/web/public/icons/status/disease.svg) **Krankheit**                   | zieht Leben ab und steckt dieselbe Art Körper neben dir an |
+| ![Verkrüppelt](../../../apps/web/public/icons/status/crippled.svg) **Verkrüppelt**              | du läufst halb so schnell                                  |
+| ![Blindheit](../../../apps/web/public/icons/status/blind.svg) **Blindheit**                     | die meisten deiner Angriffe verfehlen                      |
+| ![Schwäche](../../../apps/web/public/icons/status/weakness.svg) **Schwäche**                    | deine Waffentreffer sind viel schwächer                    |
+| ![Rissige Rüstung](../../../apps/web/public/icons/status/cracked-armor.svg) **Rissige Rüstung** | weniger Rüstung                                            |
+| ![Tiefe Wunde](../../../apps/web/public/icons/status/deep-wound.svg) **Tiefe Wunde**            | weniger maximales Leben, und Heilung wirkt schwächer       |
+| ![Benommen](../../../apps/web/public/icons/status/dazed.svg) **Benommen**                       | Zauber wirken langsam; jeder Angriff unterbricht sie       |
+
+Diener (außer dem Fleischgolem), Gespenster und Geister bluten nicht, werden nicht vergiftet und nicht krank, und Geister nehmen keine Verhexung und keinen Zustand außer **Brennen** an.
 
 ![Verhexung](../../../apps/web/public/icons/skill-type/hex.svg) **Verhexungen** wirken Gegner auf dich, ![Verzauberung](../../../apps/web/public/icons/skill-type/enchantment.svg) **Verzauberungen** du selbst oder deine
 Verbündeten. Jede wird durch ihre eigene Art von Skill entfernt. Manche

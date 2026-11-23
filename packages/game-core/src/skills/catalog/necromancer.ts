@@ -255,8 +255,8 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
     petAttack: undefined,
     projectile: undefined,
     // "Target fleshy foe becomes Diseased for 10...22...25 seconds": 22 s,
-    // its rank-12 value. Disease spreads on its own (#765); everyone
-    // here is fleshy.
+    // its rank-12 value. Disease spreads on its own (#765), to the same
+    // kind of body; a body that is not fleshy never takes it (#3881).
     effects: [
       {
         kind: "apply-status",
