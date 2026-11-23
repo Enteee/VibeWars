@@ -21,7 +21,7 @@ const ROOT = path.join(import.meta.dirname, "..", "..");
 const CAPTURE = path.join(ROOT, "out", "promo", "capture");
 const OUT = path.join(ROOT, "out", "promo");
 const FPS = 30;
-const MAPS = ["broken-tower", "frozen-crossing", "ember-pits"];
+const MAPS = ["broken-tower", "arena-canyon", "ember-pits"];
 /** @type {unknown} */
 const raw = JSON.parse(fs.readFileSync(path.join(import.meta.dirname, "captions.json"), "utf8"));
 const {

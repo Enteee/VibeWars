@@ -42,7 +42,7 @@ const NAME = "Aria Stormveil";
 const FIGHT_TRIES = 5;
 /** The longest a fight is watched for its interrupt, ms. */
 const FIGHT_MS = 150_000;
-const MAPS = ["broken-tower", "frozen-crossing", "ember-pits"];
+const MAPS = ["broken-tower", "arena-canyon", "ember-pits"];
 
 /**
  * Runs in every frame before its scripts, the sandboxed music host's
