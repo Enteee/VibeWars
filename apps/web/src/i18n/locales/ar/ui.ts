@@ -1522,7 +1522,6 @@ export default {
   "teamEditor.name": "الاسم",
   "teamEditor.noCharacters": "ليس لديك شخصيات لنسخها.",
   "teamEditor.notSaved": "لم يُحفظ: {error}",
-  "teamEditor.openInCharacter": "فتح في شاشة الشخصية ›",
   "teamEditor.professions": "المهن",
   "teamEditor.professionsTitle": "مهن الفريق",
   "teamEditor.replaceMember": "استبدال {member} بـ {character}",

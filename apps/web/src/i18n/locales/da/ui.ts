@@ -1329,7 +1329,6 @@ export default {
   "teamEditor.name": "Navn",
   "teamEditor.noCharacters": "Du har ingen figurer at kopiere.",
   "teamEditor.notSaved": "Ikke gemt: {error}",
-  "teamEditor.openInCharacter": "Åbn på figursiden ›",
   "teamEditor.professions": "Klasser",
   "teamEditor.professionsTitle": "holdets klasser",
   "teamEditor.replaceMember": "Erstat {member} med {character}",

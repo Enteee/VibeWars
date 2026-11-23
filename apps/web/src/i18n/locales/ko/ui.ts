@@ -1260,7 +1260,6 @@ export default {
   "teamEditor.name": "이름",
   "teamEditor.noCharacters": "복사할 캐릭터가 없어요.",
   "teamEditor.notSaved": "저장 안 됨: {error}",
-  "teamEditor.openInCharacter": "캐릭터 화면에서 열기 ›",
   "teamEditor.professions": "직업",
   "teamEditor.professionsTitle": "팀의 직업",
   "teamEditor.replaceMember": "{member}을(를) {character}(으)로 교체",

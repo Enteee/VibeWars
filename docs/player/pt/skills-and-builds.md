@@ -214,7 +214,7 @@ do membro aberto, e só aparece enquanto houver um aberto: clique em uma
 para equipar, ou arraste até as mãos dele. Só um membro fica aberto por
 vez; **Esc** o fecha. Uma nova profissão descarta as habilidades e níveis
 que ela não pode usar, com **Desfazer**.
-Pressione o nome de um membro, ou **Abrir na tela de Personagem**, para
+Pressione o nome de um membro, ou seu botão **✎**, para
 editá-lo no editor de builds; **Salvar** ali o devolve à equipe, e o
 **Salvar** da própria equipe guarda tudo e leva você de volta ao Criador
 de Equipes. **Esc** sai sem salvar e pergunta antes. **Compartilhar**,

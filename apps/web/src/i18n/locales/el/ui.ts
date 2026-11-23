@@ -1348,7 +1348,6 @@ export default {
   "teamEditor.name": "Όνομα",
   "teamEditor.noCharacters": "Δεν έχεις χαρακτήρες για αντιγραφή.",
   "teamEditor.notSaved": "Δεν αποθηκεύτηκε: {error}",
-  "teamEditor.openInCharacter": "Άνοιγμα στην οθόνη Χαρακτήρα ›",
   "teamEditor.professions": "Επαγγέλματα",
   "teamEditor.professionsTitle": "τα επαγγέλματα της ομάδας",
   "teamEditor.replaceMember": "Αντικατάσταση {member} με {character}",

@@ -1401,7 +1401,6 @@ export default {
   "teamEditor.name": "Ime",
   "teamEditor.noCharacters": "Nemaš likova za kopiranje.",
   "teamEditor.notSaved": "Nije spremljeno: {error}",
-  "teamEditor.openInCharacter": "Otvori na zaslonu lika ›",
   "teamEditor.professions": "Profesije",
   "teamEditor.professionsTitle": "profesije tima",
   "teamEditor.replaceMember": "Zamijeni: {member} → {character}",

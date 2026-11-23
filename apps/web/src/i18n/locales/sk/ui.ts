@@ -1448,7 +1448,6 @@ export default {
   "teamEditor.name": "Názov",
   "teamEditor.noCharacters": "Nemáš žiadne postavy na kopírovanie.",
   "teamEditor.notSaved": "Neuložené: {error}",
-  "teamEditor.openInCharacter": "Otvoriť na obrazovke postavy ›",
   "teamEditor.professions": "Povolania",
   "teamEditor.professionsTitle": "povolania tímu",
   "teamEditor.replaceMember": "Nahradiť {member} postavou {character}",

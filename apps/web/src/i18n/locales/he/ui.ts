@@ -1398,7 +1398,6 @@ export default {
   "teamEditor.name": "שם",
   "teamEditor.noCharacters": "אין לך דמויות להעתקה.",
   "teamEditor.notSaved": "לא נשמר: {error}",
-  "teamEditor.openInCharacter": "פתח במסך הדמות ›",
   "teamEditor.professions": "מקצועות",
   "teamEditor.professionsTitle": "המקצועות של הקבוצה",
   "teamEditor.replaceMember": "החלף את {member} ב-{character}",

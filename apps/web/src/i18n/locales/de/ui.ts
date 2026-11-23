@@ -1348,7 +1348,6 @@ export default {
   "teamEditor.name": "Name",
   "teamEditor.noCharacters": "Du hast keine Charaktere zum Kopieren.",
   "teamEditor.notSaved": "Nicht gespeichert: {error}",
-  "teamEditor.openInCharacter": "Im Charakter-Editor öffnen ›",
   "teamEditor.professions": "Klassen",
   "teamEditor.professionsTitle": "die Klassen des Teams",
   "teamEditor.replaceMember": "{member} durch {character} ersetzen",

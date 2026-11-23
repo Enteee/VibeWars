@@ -1446,7 +1446,6 @@ export default {
   "teamEditor.name": "Název",
   "teamEditor.noCharacters": "Nemáš žádné postavy ke zkopírování.",
   "teamEditor.notSaved": "Neuloženo: {error}",
-  "teamEditor.openInCharacter": "Otevřít na obrazovce postavy ›",
   "teamEditor.professions": "Povolání",
   "teamEditor.professionsTitle": "povolání v týmu",
   "teamEditor.replaceMember": "Nahradit {member} postavou {character}",

@@ -1407,7 +1407,6 @@ export default {
   "teamEditor.name": "Nume",
   "teamEditor.noCharacters": "Nu ai personaje de copiat.",
   "teamEditor.notSaved": "Nesalvat: {error}",
-  "teamEditor.openInCharacter": "Deschide în ecranul Personaj ›",
   "teamEditor.professions": "Clase",
   "teamEditor.professionsTitle": "clasele echipei",
   "teamEditor.replaceMember": "Înlocuiește {member} cu {character}",

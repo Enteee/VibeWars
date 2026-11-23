@@ -1330,7 +1330,6 @@ export default {
   "teamEditor.name": "Namn",
   "teamEditor.noCharacters": "Du har inga karaktärer att kopiera.",
   "teamEditor.notSaved": "Inte sparat: {error}",
-  "teamEditor.openInCharacter": "Öppna i karaktärsvyn ›",
   "teamEditor.professions": "Yrken",
   "teamEditor.professionsTitle": "lagets yrken",
   "teamEditor.replaceMember": "Ersätt {member} med {character}",

@@ -1333,7 +1333,6 @@ export default {
   "teamEditor.name": "Ad",
   "teamEditor.noCharacters": "Kopyalanacak karakterin yok.",
   "teamEditor.notSaved": "Kaydedilmedi: {error}",
-  "teamEditor.openInCharacter": "Karakter ekranında aç ›",
   "teamEditor.professions": "Meslekler",
   "teamEditor.professionsTitle": "takımın meslekleri",
   "teamEditor.replaceMember": "{member} yerine {character} koy",

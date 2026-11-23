@@ -1346,7 +1346,6 @@ export default {
   "teamEditor.name": "Nimi",
   "teamEditor.noCharacters": "Sinulla ei ole kopioitavia hahmoja.",
   "teamEditor.notSaved": "Ei tallennettu: {error}",
-  "teamEditor.openInCharacter": "Avaa hahmonäkymässä ›",
   "teamEditor.professions": "Ammatit",
   "teamEditor.professionsTitle": "tiimin ammatit",
   "teamEditor.replaceMember": "Korvaa {member}: {character}",

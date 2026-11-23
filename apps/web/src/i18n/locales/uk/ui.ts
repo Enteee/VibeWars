@@ -1451,7 +1451,6 @@ export default {
   "teamEditor.name": "Назва",
   "teamEditor.noCharacters": "У тебе немає персонажів для копіювання.",
   "teamEditor.notSaved": "Не збережено: {error}",
-  "teamEditor.openInCharacter": "Відкрити на екрані персонажа ›",
   "teamEditor.professions": "Професії",
   "teamEditor.professionsTitle": "професії команди",
   "teamEditor.replaceMember": "Замінити {member} на {character}",

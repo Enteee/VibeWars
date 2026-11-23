@@ -224,7 +224,7 @@ tag fegyvereit és mellékkezeit tartalmazza, és csak addig van ott, amíg egy 
 nyitva van: kattints egyre, hogy felvedd, vagy húzd a kezeire. Egyszerre
 egy tag lehet nyitva; az **Esc** bezárja. Az új kaszt elveti azokat a
 készségeket és szinteket, amelyeket nem tud használni, egy **Vissza** lehetőséggel.
-Nyomd meg egy tag nevét, vagy a **Megnyitás a Karakter képernyőn** gombot, hogy a
+Nyomd meg egy tag nevét, vagy a **✎** gombját, hogy a
 buildszerkesztőben szerkeszd;
 annak **Mentés** gombja visszateszi a csapatba, a csapat saját **Mentés** gombja pedig mindent
 megtart, és visszavisz a Csapatszerkesztőbe. Az **Esc** mentés
