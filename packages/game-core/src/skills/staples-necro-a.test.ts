@@ -238,13 +238,13 @@ describe("Tainted Flesh (#2313)", () => {
     expect(get(match, "foe").statuses.has("disease")).toBe(false);
   });
 
-  it("diseases a minion that strikes, its blow no weapon's but melee", () => {
+  it("diseases a Flesh Golem that strikes, its blow no weapon's but melee", () => {
     const minion: ParticipantSpec = {
       ...spec("minion", 1, vec2(-30, 30), [], R0),
       creature: {
         ownerId: "foe",
         kind: "minion",
-        look: "bone-minion",
+        look: "flesh-golem",
         name: "minion",
         expiresInSeconds: Number.POSITIVE_INFINITY,
         ageSeconds: 0,

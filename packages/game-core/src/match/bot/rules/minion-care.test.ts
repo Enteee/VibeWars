@@ -84,9 +84,9 @@ describe("play-build's minion care (#1986)", () => {
   it("casts Verata's Sacrifice once its minions bear two conditions", () => {
     const fight = sim([VERATA], [minion("m1", "n", vec2(420, 400))]);
     const m1 = fight.get("m1")?.combatant;
-    m1?.statuses.apply("bleeding", 10, "foe", NO_RANKS);
+    m1?.statuses.apply("burning", 10, "foe", NO_RANKS);
     expect(askBot(fight, "n").useSkillId).toBeUndefined();
-    m1?.statuses.apply("poison", 10, "foe", NO_RANKS);
+    m1?.statuses.apply("weakness", 10, "foe", NO_RANKS);
     expect(askBot(fight, "n")).toMatchObject({ useSkillId: VERATA, targetId: "n" });
   });
 
