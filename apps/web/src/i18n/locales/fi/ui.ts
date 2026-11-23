@@ -618,6 +618,10 @@ export default {
   "hud.outcomeVictory": "Voitto",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (kuollut)",
+  "hud.preMatchStartingAnyway":
+    "Odotetaan pelaajia: {joined}/{expected}, alkaa silti {seconds} s kuluttua",
+  "hud.preMatchStartsIn": "Ottelu alkaa {seconds} kuluttua",
+  "hud.preMatchWaiting": "Odotetaan pelaajia: {joined}/{expected}",
   "hud.priest": "pappi",
   "hud.priestDead": "pappi (kuollut)",
   "hud.raise": "herätys {clock}",

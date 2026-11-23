@@ -607,6 +607,10 @@ export default {
   "hud.outcomeVictory": "Sejr",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (død)",
+  "hud.preMatchStartingAnyway":
+    "Venter på spillere: {joined}/{expected}, starter alligevel om {seconds} s",
+  "hud.preMatchStartsIn": "Kampen starter om {seconds}",
+  "hud.preMatchWaiting": "Venter på spillere: {joined}/{expected}",
   "hud.priest": "præst",
   "hud.priestDead": "præst (død)",
   "hud.raise": "genoplivning {clock}",

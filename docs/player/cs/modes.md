@@ -16,6 +16,8 @@ Každá mapa je dělaná pro určité velikosti týmů a režim hraje jen mapu d
 
 V Bitvě cechů, Běhu s relikvií, Králi kopce nebo Dobývání bodů dostane cíl mimo obrazovku nebo pod HUD obrysovou šipku na okraji obrazovky: stojan nebo svatyně v barvě vlastníka, šedá, když nepatří nikomu, oltář zlatě. Plná šipka hráče se vykreslí přes ni.
 
+Zápas začíná se všemi drženými u jejich startu: můžeš udělat pár kroků, ale nemůžeš bojovat ani používat dovednosti. Řádek nahoře počítá hráče, kteří jsou ve hře. Jakmile jsou tam všichni, odpočítá 10 sekund a zápas začne, a s ním i jeho čas. Na hráče, který není ve hře po 20 sekundách, se nečeká: odpočet začne bez něj a připojit se může i později.
+
 ## Vyhlazení
 
 **Poraz všechny nepřátele.** Mrtví zůstanou ležet, dokud je spojenec neoživí, a každá smrt stojí morálku. K vítězství vyhlaď druhý tým. Po 8 minutách vyhrává tým s největší zbývající morálkou.

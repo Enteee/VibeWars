@@ -642,6 +642,10 @@ export default {
   "hud.outcomeVictory": "Victoria",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (muerto)",
+  "hud.preMatchStartingAnyway":
+    "Esperando jugadores: {joined}/{expected}, empieza de todos modos en {seconds} s",
+  "hud.preMatchStartsIn": "La partida empieza en {seconds}",
+  "hud.preMatchWaiting": "Esperando jugadores: {joined}/{expected}",
   "hud.priest": "sacerdote",
   "hud.priestDead": "sacerdote (muerto)",
   "hud.raise": "revive {clock}",

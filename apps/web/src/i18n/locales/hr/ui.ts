@@ -643,6 +643,10 @@ export default {
   "hud.outcomeVictory": "Pobjeda",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (mrtav)",
+  "hud.preMatchStartingAnyway":
+    "Čeka se igrače: {joined}/{expected}, počinje svejedno za {seconds} s",
+  "hud.preMatchStartsIn": "Meč počinje za {seconds}",
+  "hud.preMatchWaiting": "Čeka se igrače: {joined}/{expected}",
   "hud.priest": "svećenik",
   "hud.priestDead": "svećenik (mrtav)",
   "hud.raise": "uskrsnuće {clock}",

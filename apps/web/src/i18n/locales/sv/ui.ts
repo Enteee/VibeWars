@@ -608,6 +608,10 @@ export default {
   "hud.outcomeVictory": "Seger",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (död)",
+  "hud.preMatchStartingAnyway":
+    "Väntar på spelare: {joined}/{expected}, startar ändå om {seconds} s",
+  "hud.preMatchStartsIn": "Matchen börjar om {seconds}",
+  "hud.preMatchWaiting": "Väntar på spelare: {joined}/{expected}",
   "hud.priest": "präst",
   "hud.priestDead": "präst (död)",
   "hud.raise": "återupplivning {clock}",

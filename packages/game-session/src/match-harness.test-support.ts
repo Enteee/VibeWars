@@ -37,6 +37,7 @@ import {
   type HostMap,
   type MatchHost,
   type PlannedSeats,
+  type PreMatchTimes,
   type ReplayRecording,
 } from "./match-host.js";
 import type { MatchRecord } from "./match-record.js";
@@ -248,6 +249,8 @@ export function startMatch(
     recordReplay?: false | ReplayRecording;
     /** Where `joinLocal`'s player keeps the replay (#3572); nowhere by default. */
     replays?: ReplayKeeper;
+    /** The wait before the start (#3818); none by default. */
+    preMatch?: PreMatchTimes | null;
   } = {},
 ): TestMatch {
   const network = createMemoryNetwork();
@@ -270,6 +273,7 @@ export function startMatch(
     nowSeconds: () => TEST_NOW_SECONDS,
     signetOf: options.signetOf ?? testSignet,
     recordReplay: options.recordReplay ?? false,
+    preMatch: options.preMatch ?? null,
   });
   return {
     network,

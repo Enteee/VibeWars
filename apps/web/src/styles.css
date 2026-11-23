@@ -4748,6 +4748,22 @@ body:has(> .splash) #menu-background::after {
   pointer-events: none;
 }
 
+/* Before the start (#3818): who the match waits for, then the countdown. */
+.hud-pre-match {
+  padding: 0.2rem 0.8rem;
+  background: rgb(14 17 22 / 85%);
+  border: 1px solid var(--accent);
+  color: var(--ink);
+  font-size: 1.1rem;
+  pointer-events: none;
+}
+
+/* Held in the spawn (#3818): the bar shows, inactive. */
+.hud-skills.is-held .hud-skill {
+  filter: grayscale(1);
+  opacity: 0.55;
+}
+
 /* A line a flag away from home, under the scoreboard (#1226). */
 /* A watcher is told how late what it sees is (#480). */
 .hud-watching {

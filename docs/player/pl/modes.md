@@ -30,6 +30,8 @@ ekranem lub pod interfejsem dostaje konturową strzałkę przy krawędzi ekranu:
 lub kapliczka w kolorze właściciela, szara, gdy nie ma właściciela, ołtarz w złocie.
 Wypełniona strzałka gracza rysuje się na niej.
 
+Mecz zaczyna się od zatrzymania wszystkich przy ich punkcie odrodzenia: możesz zrobić kilka kroków, ale nie walczyć ani używać umiejętności. Wiersz u góry liczy graczy, którzy weszli. Gdy wejdą wszyscy, odlicza 10 sekund i mecz się zaczyna, a z nim jego zegar. Na gracza, który nie wszedł po 20 sekundach, się nie czeka: odliczanie zaczyna się bez niego, a on wciąż może dołączyć później.
+
 ## Anihilacja
 
 **Pokonaj wszystkich wrogów.** Polegli leżą, dopóki sojusznik ich nie wskrzesi, a

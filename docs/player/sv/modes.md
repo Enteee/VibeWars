@@ -33,6 +33,8 @@ konturpil vid skärmkanten: stället eller en helgedom i ägarens färg,
 grå om ingen äger den, altaret i guld. En spelares fyllda pil ritas
 ovanpå.
 
+En match börjar med alla fasthållna nära sin startplats: du kan gå några steg, men inte slåss eller använda färdigheter. En rad överst räknar spelarna som är inne. När alla är inne räknar den ner 10 sekunder och matchen börjar, och dess klocka med den. En spelare som inte är inne efter 20 sekunder väntar man inte på: nedräkningen börjar utan dem, och de kan fortfarande ansluta senare.
+
 ## Förintelse
 
 **Besegra alla fiender.** De döda ligger kvar tills en allierad

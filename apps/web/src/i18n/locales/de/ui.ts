@@ -611,6 +611,10 @@ export default {
   "hud.outcomeVictory": "Sieg",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (tot)",
+  "hud.preMatchStartingAnyway":
+    "Warte auf Spieler: {joined}/{expected}, Start trotzdem in {seconds} s",
+  "hud.preMatchStartsIn": "Match startet in {seconds}",
+  "hud.preMatchWaiting": "Warte auf Spieler: {joined}/{expected}",
   "hud.priest": "Priester",
   "hud.priestDead": "Priester (tot)",
   "hud.raise": "Auferstehung {clock}",
