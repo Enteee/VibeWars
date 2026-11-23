@@ -1004,6 +1004,8 @@ export default {
   "queue.matchFound": "Мачът е намерен",
   "queue.matchFoundTitle": "Намерен е мач!",
   "queue.nextMatchIn": "Следващ мач след {seconds} с",
+  "queue.sameTeamIn": "Победихте: следващ мач със същия отбор след {seconds} с",
+  "queue.newTeamIn": "Групата ви се промени: изберете отбора отново след {seconds} с",
   "queue.now": "Сега",
   "queue.playBotsIn": "Играй срещу ботове ({seconds} с)",
   "queue.queueAgain": "Пак на опашка",

@@ -1014,6 +1014,8 @@ export default {
   "queue.matchFound": "Ottelu löytyi",
   "queue.matchFoundTitle": "Ottelu löytyi!",
   "queue.nextMatchIn": "Seuraava ottelu: {seconds} s",
+  "queue.sameTeamIn": "Voitit: seuraava ottelu samalla joukkueella: {seconds} s",
+  "queue.newTeamIn": "Ryhmäsi muuttui: valitse joukkue uudelleen: {seconds} s",
   "queue.now": "Nyt",
   "queue.playBotsIn": "Pelaa botteja vastaan ({seconds} s)",
   "queue.queueAgain": "Jonota uudelleen",

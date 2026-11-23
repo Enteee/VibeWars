@@ -280,6 +280,7 @@ Każdy etap trwa 30 sekund i kończy się wcześniej, gdy wszyscy w Lobby druży
 Kto wyjdzie w trakcie Lobby drużyny, zostawia swoją postać botowi, więc strona zachowuje rozmiar. Kto wtedy dołączy, tylko ogląda.
 
 Po meczu drużynowym z kolejki zwycięzcy sami wracają do kolejki po 20 sekundach, a przegrani (także przy remisie) wracają do menu; mecz lobby z kodem przywraca wszystkich do lobby. Przycisk pod wynikiem pomija oczekiwanie albo, dla zwycięzców, wychodzi bez ustawiania się w kolejce.
+Zwycięzcy Areny drużynowej zachowują na następny mecz build drużyny i miejsce każdego gracza, bez lobby drużyny, chyba że grupa od tego czasu się zmieniła: ktoś wyszedł, jest nieobecny albo dołączył. Wtedy wybierają drużynę od nowa.
 
 ## Szczyt Bohaterów
 

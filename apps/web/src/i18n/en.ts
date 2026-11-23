@@ -1003,6 +1003,8 @@ export const en = {
   "queue.matchFound": "Match found",
   "queue.matchFoundTitle": "Match found!",
   "queue.nextMatchIn": "Next match in {seconds} s",
+  "queue.sameTeamIn": "You won: next match with the same team in {seconds} s",
+  "queue.newTeamIn": "Your party changed: choose your team again in {seconds} s",
   "queue.now": "Now",
   "queue.playBotsIn": "Play against bots ({seconds} s)",
   "queue.queueAgain": "Queue again",

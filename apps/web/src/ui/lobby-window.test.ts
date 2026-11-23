@@ -105,6 +105,7 @@ function lobby(players: readonly LobbyPlayerSnapshot[]): LobbySnapshot {
     queueNonce: null,
     ascentRound: null,
     ascentLock: null,
+    teamKept: null,
     proposalBuilds: new Map(),
   };
 }

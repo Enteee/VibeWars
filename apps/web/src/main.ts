@@ -1627,7 +1627,7 @@ async function main(): Promise<void> {
       queuedMs: queuedMsOf(lobby.getSnapshot()),
       groupMapId: teamQueue?.groupMapId,
       onFindMatch: () => {
-        lobby?.findMatch(roundFor(entry));
+        lobby?.findMatch(roundFor(entry), false);
       },
     };
   };
@@ -3128,7 +3128,12 @@ async function main(): Promise<void> {
       return;
     }
     match?.setEndLine({
-      ...teamEndLine(current.action, seconds, current.ascentRound),
+      ...teamEndLine(
+        current.action,
+        seconds,
+        current.ascentRound,
+        current.party?.getSnapshot().teamKept ?? null,
+      ),
       onPress: () => {
         void exitMatch();
       },
@@ -3146,7 +3151,7 @@ async function main(): Promise<void> {
       lobby === party &&
       party.getSnapshot().isHost
     ) {
-      party.findMatch(roundFor(party.getSnapshot().mode));
+      party.findMatch(roundFor(party.getSnapshot().mode), true);
     }
   };
 

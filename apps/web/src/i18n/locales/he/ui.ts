@@ -1061,6 +1061,8 @@ export default {
   "queue.matchFound": "נמצא משחק",
   "queue.matchFoundTitle": "נמצא משחק!",
   "queue.nextMatchIn": "המשחק הבא בעוד {seconds} שנ׳",
+  "queue.sameTeamIn": "ניצחתם: המשחק הבא עם אותה קבוצה בעוד {seconds} שנ׳",
+  "queue.newTeamIn": "הקבוצה שלכם השתנתה: בחרו קבוצה מחדש בעוד {seconds} שנ׳",
   "queue.now": "עכשיו",
   "queue.playBotsIn": "שחק נגד בוטים ({seconds} שנ׳)",
   "queue.queueAgain": "שוב לתור",

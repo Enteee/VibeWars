@@ -639,6 +639,7 @@ const lobbyState: WireLobbyState = {
   queueNonce: null,
   ascentRound: null,
   ascentLock: null,
+  teamKept: null,
   teamLobby: null,
 };
 
@@ -1247,6 +1248,12 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
     },
   ],
   ["waiting lobby-state", parseWireLobbyState, { ...lobbyState, phase: "waiting", matchId: null }],
+  ["lobby-state of a kept team (#3815)", parseWireLobbyState, { ...lobbyState, teamKept: true }],
+  [
+    "lobby-state of a changed party (#3815)",
+    parseWireLobbyState,
+    { ...lobbyState, teamKept: false },
+  ],
   ["choose-team", parseWireLobbyCommand, { kind: "choose-team", team: 1 }],
   ["spectate", parseWireLobbyCommand, { kind: "choose-team", team: null }],
   ["ready", parseWireLobbyCommand, { kind: "ready", ready: false }],
@@ -1256,11 +1263,20 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["select-mode (#1526)", parseWireLobbyCommand, { kind: "select-mode", mode: "heroes-ascent" }],
   ["start", parseWireLobbyCommand, { kind: "start" }],
   ["remove-member (#2746)", parseWireLobbyCommand, { kind: "remove-member", id: "peer-2" }],
-  ["find-match (#1766)", parseWireLobbyCommand, { kind: "find-match", ascentRound: null }],
+  [
+    "find-match (#1766)",
+    parseWireLobbyCommand,
+    { kind: "find-match", ascentRound: null, again: false },
+  ],
+  [
+    "find-match again after a Team Arena win (#3815)",
+    parseWireLobbyCommand,
+    { kind: "find-match", ascentRound: null, again: true },
+  ],
   [
     "find-match at a Heroes' Ascent round (#1996)",
     parseWireLobbyCommand,
-    { kind: "find-match", ascentRound: 2 },
+    { kind: "find-match", ascentRound: 2, again: false },
   ],
   ["leave-queue (#1766)", parseWireLobbyCommand, { kind: "leave-queue" }],
   ["play-bots (#2148)", parseWireLobbyCommand, { kind: "play-bots" }],
@@ -2888,11 +2904,30 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     parseWireLobbyState,
     { ...lobbyState, ascentLock: { slots: [{ slot: 0, claimedBy: 7 }] } },
   ],
-  ["find-match without a round (#1996)", parseWireLobbyCommand, { kind: "find-match" }],
+  [
+    "find-match without a round (#1996)",
+    parseWireLobbyCommand,
+    { kind: "find-match", again: false },
+  ],
   [
     "find-match at a negative round (#1996)",
     parseWireLobbyCommand,
-    { kind: "find-match", ascentRound: -1 },
+    { kind: "find-match", ascentRound: -1, again: false },
+  ],
+  [
+    "find-match without again (#3815)",
+    parseWireLobbyCommand,
+    { kind: "find-match", ascentRound: null },
+  ],
+  [
+    "lobby-state with a team kept not a boolean (#3815)",
+    parseWireLobbyState,
+    { ...lobbyState, teamKept: "yes" },
+  ],
+  [
+    "lobby-state without team kept (#3815)",
+    parseWireLobbyState,
+    { ...lobbyState, teamKept: undefined },
   ],
   [
     "lobby-state of a short queue nonce (#1766)",

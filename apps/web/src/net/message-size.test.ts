@@ -591,6 +591,7 @@ describe("every message fits in one Trystero chunk (#403)", () => {
       queueNonce: "f".repeat(64),
       ascentRound: 3,
       ascentLock: null,
+      teamKept: null,
     };
     expect(messageBytes(state)).toBeLessThanOrEqual(MAX_MESSAGE_BYTES);
   });
@@ -659,6 +660,7 @@ describe("every message fits in one Trystero chunk (#403)", () => {
       queueNonce: null,
       ascentRound: null,
       ascentLock: null,
+      teamKept: null,
     };
     // The vote has proposals and no choice yet; the claim the choice and its claims.
     const vote = {

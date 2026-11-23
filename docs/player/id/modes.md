@@ -343,6 +343,7 @@ Setelah laga tim dari antrean, pemenangnya otomatis mengantre lagi setelah
 20 detik, dan yang kalah (seri juga) kembali ke menu; laga dari lobi
 berkode mengembalikan semua orang ke lobi. Sebuah tombol di bawah hasil
 melewati waktu tunggu, atau, bagi pemenang, keluar tanpa mengantre.
+Pemenang Arena Tim tetap memakai build tim dan kursi tiap pemain untuk pertandingan berikutnya, tanpa lobi tim, kecuali rombongan berubah sejak itu: ada yang keluar, pergi, atau bergabung. Lalu mereka memilih tim lagi.
 
 ## Pendakian Pahlawan
 

@@ -1058,6 +1058,8 @@ export default {
   "queue.matchFound": "Meč pronađen",
   "queue.matchFoundTitle": "Meč pronađen!",
   "queue.nextMatchIn": "Sljedeći meč za {seconds} s",
+  "queue.sameTeamIn": "Pobijedili ste: sljedeći meč s istim timom za {seconds} s",
+  "queue.newTeamIn": "Vaša se skupina promijenila: odaberite tim ponovno za {seconds} s",
   "queue.now": "Sad",
   "queue.playBotsIn": "Igraj protiv botova ({seconds} s)",
   "queue.queueAgain": "Opet u red",

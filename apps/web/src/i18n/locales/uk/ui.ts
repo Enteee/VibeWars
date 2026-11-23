@@ -1096,6 +1096,8 @@ export default {
   "queue.matchFound": "Матч знайдено",
   "queue.matchFoundTitle": "Матч знайдено!",
   "queue.nextMatchIn": "Наступний матч за {seconds} с",
+  "queue.sameTeamIn": "Перемога: наступний матч тією ж командою за {seconds} с",
+  "queue.newTeamIn": "Склад групи змінився: оберіть команду знову за {seconds} с",
   "queue.now": "Зараз",
   "queue.playBotsIn": "Грати проти ботів ({seconds} с)",
   "queue.queueAgain": "Знову в чергу",

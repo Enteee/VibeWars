@@ -287,17 +287,26 @@ export function requeuedSince(
 /**
  * The line under a team match's result (#1997), `seconds` before
  * `action`, and its button. A Heroes' Ascent won at `ascentRound`
- * names where it goes on to (#1996); `null` in any other mode.
+ * names where it goes on to (#1996); `null` in any other mode. A
+ * Team Arena party's `teamKept` says whether it keeps its team (#3815),
+ * `null` with none to keep.
  */
 export function teamEndLine(
   action: TeamEndAction,
   seconds: number,
   ascentRound: number | null,
+  teamKept: boolean | null,
 ): { text: string; button: string } {
   switch (action) {
     case "requeue":
       if (ascentRound === null) {
-        return { text: t("queue.nextMatchIn", { seconds }), button: t("queue.leave") };
+        const key =
+          teamKept === null
+            ? "queue.nextMatchIn"
+            : teamKept
+              ? "queue.sameTeamIn"
+              : "queue.newTeamIn";
+        return { text: t(key, { seconds }), button: t("queue.leave") };
       }
       return ascentRound === ASCENT_PROGRESSION.length - 1
         ? {

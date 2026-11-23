@@ -349,6 +349,7 @@ Po tímovom zápase z fronty sa víťazi po 20 sekundách sami znova zaradia do
 fronty a porazení (aj pri remíze) sa vrátia do menu; zápas lobby s kódom
 vráti všetkých do lobby. Tlačidlo pod výsledkom
 preskočí čakanie alebo, pre víťazov, odíde bez zaradenia do fronty.
+Víťazi Tímovej arény si na ďalší zápas ponechajú svoj tímový build aj miesto každého hráča, bez tímovej lobby, pokiaľ sa medzitým skupina nezmenila: niekto odišiel, nie je prítomný alebo sa pridal. Potom si tím zvolia znova.
 
 ## Výstup hrdinov
 

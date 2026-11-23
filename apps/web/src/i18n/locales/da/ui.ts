@@ -1001,6 +1001,8 @@ export default {
   "queue.matchFound": "Kamp fundet",
   "queue.matchFoundTitle": "Kamp fundet!",
   "queue.nextMatchIn": "Næste kamp om {seconds} s",
+  "queue.sameTeamIn": "I vandt: næste kamp med samme hold om {seconds} s",
+  "queue.newTeamIn": "Jeres gruppe har ændret sig: vælg holdet igen om {seconds} s",
   "queue.now": "Nu",
   "queue.playBotsIn": "Spil mod bots ({seconds} s)",
   "queue.queueAgain": "I kø igen",

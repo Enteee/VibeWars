@@ -945,6 +945,8 @@ export default {
   "queue.matchFound": "已找到对局",
   "queue.matchFoundTitle": "已找到对局！",
   "queue.nextMatchIn": "下一场对局 {seconds} 秒后开始",
+  "queue.sameTeamIn": "胜利：{seconds} 秒后以同一队伍进行下一场",
+  "queue.newTeamIn": "你的队伍成员变了：{seconds} 秒后重新选择队伍",
   "queue.now": "现在",
   "queue.playBotsIn": "对战机器人（{seconds} 秒）",
   "queue.queueAgain": "再次排队",
