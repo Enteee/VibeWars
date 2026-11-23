@@ -176,8 +176,8 @@ promijeniš redoslijed. Drži **Shift** dok ispuštaš redak na drugog člana
 da umjesto toga kopiraš cijeli njegov sastav na tog člana; redak koji si povukao
 ostaje kakav je bio.
 Ploča desno je biblioteka Uređivača likova,
-s karticom **Moji likovi** ispred **Vještine** i **Oprema**. Na **Moji likovi** povuci
-jednog svog lika na člana da taj član postane njegova kopija.
+s karticom **Moji likovi** ispred **Vještine** i **Oprema**. Na **Moji likovi** povuci jednog svog lika na člana, ili ga dodirni pa **Stavi ovdje** na članu, da taj član postane
+njegova kopija. Dodirni ga ponovno ili pritisni Esc da ga pustiš.
 Kopija pripada timu: mijenjanje nje ili lika od kojeg je nastala
 ostavlja drugo kakvo jest. Obrnuto, povuci člana na **Moji likovi**
 ili na tu karticu da ga spremiš kao svog novog lika; ako mu je ime zauzeto,

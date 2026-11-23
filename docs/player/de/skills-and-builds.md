@@ -173,8 +173,8 @@ Leben und seine Energie und seine acht Skills; zieh eine Zeile am ⠿, um umzuso
 Halte beim Ablegen einer Zeile auf einem anderen Mitglied **Shift**, um stattdessen ihren
 ganzen Build auf dieses Mitglied zu kopieren; die gezogene Zeile bleibt, wie sie war.
 Das Panel rechts ist die Bibliothek des Charakter-Editors, mit einem Tab **Meine
-Charaktere** vor **Skills** und **Ausrüstung**. Unter **Meine Charaktere** ziehst du
-einen deiner Charaktere auf ein Mitglied, um es zu einer Kopie zu machen. Eine Kopie
+Charaktere** vor **Skills** und **Ausrüstung**. Unter **Meine Charaktere** ziehst du einen deiner Charaktere auf ein Mitglied, oder tippst ihn an und dann bei einem
+Mitglied auf **Hier einsetzen**, um es zu einer Kopie zu machen. Tipp ihn noch einmal an oder drück Esc, um ihn loszulassen. Eine Kopie
 gehört dem Team: Änderst du sie oder den Charakter, von dem sie stammt, bleibt das
 andere, wie es war. Umgekehrt ziehst du ein Mitglied auf **Meine Charaktere**
 oder auf den Tab, um es als neuen eigenen Charakter zu speichern; ist sein Name

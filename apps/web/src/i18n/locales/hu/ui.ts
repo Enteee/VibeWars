@@ -1650,7 +1650,8 @@ export default {
     "Egy tag neve megnyitja a buildjét a buildszerkesztőben. Visszatérve megmarad, amit módosítottál, mentetlenül.",
   "tutorial.menu.team.character":
     "Húzd a karakteredet a Karaktereim közül egy tagra. A tag a másolata lesz.",
-  "tutorial.menu.team.characterTouch": "Koppints a karakteredre, aztán egy tagnál az Ide tedd gombra.",
+  "tutorial.menu.team.characterTouch":
+    "Koppints a karakteredre, aztán egy tagnál az Ide tedd gombra.",
   "tutorial.menu.team.characterDone": "Tedd a karakteredet a csapatba",
   "tutorial.menu.team.fill": "Adj buildet minden tagnak, amíg a csapatnak nem marad problémája.",
   "tutorial.menu.team.fillDone": "Töltsd fel a csapatot",

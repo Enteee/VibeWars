@@ -189,8 +189,8 @@ membro para copiar a build inteira dela para esse membro; a linha que você
 arrastou continua como estava.
 O painel à direita é a biblioteca
 do Criador de Personagem, com uma aba **Meus personagens** antes de
-**Habilidades** e **Equip.**. Em **Meus personagens**, arraste um dos seus
-personagens sobre um membro para torná-lo uma cópia dele. Uma cópia é da
+**Habilidades** e **Equip.**. Em **Meus personagens**, arraste um dos seus personagens sobre um membro, ou toque em um e depois em **Colocar aqui** em um membro,
+para torná-lo uma cópia dele. Toque nele de novo, ou aperte Esc, para soltá-lo. Uma cópia é da
 própria equipe: mudar ela, ou o personagem de origem, não afeta o outro.
 No sentido inverso, arraste um membro para **Meus personagens**, ou para a
 aba dele, para salvá-lo como um novo personagem seu; se o nome já estiver em

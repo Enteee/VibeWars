@@ -191,8 +191,8 @@ için bir satırı başka bir üyeye bırakırken **Shift**'i basılı tut; sür
 satır olduğu gibi kalır.
 Sağdaki panel Karakter Oluşturucu'nun
 kütüphanesidir; **Beceriler** ve **Eşya**'dan önce bir **Karakterlerim**
-sekmesi vardır. **Karakterlerim**'de, bir üyeyi kendi karakterlerinden
-birinin kopyası yapmak için o karakteri üyenin üzerine sürükle. Kopya
+sekmesi vardır. **Karakterlerim**'de, bir üyeyi kendi karakterlerinden birinin kopyası yapmak için o karakteri üyenin üzerine sürükle
+ya da karaktere dokunup sonra üyede **Buraya koy**'a dokun. Bırakmak için ona yeniden dokun ya da Esc'ye bas. Kopya
 takıma aittir: onu ya da geldiği karakteri değiştirmek diğerini olduğu
 gibi bırakır. Tersine, bir üyeyi **Karakterlerim**'e ya da sekmesine
 sürükleyerek kendi yeni karakterin olarak kaydet; adı zaten alınmışsa

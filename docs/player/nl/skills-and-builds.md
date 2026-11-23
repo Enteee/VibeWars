@@ -177,8 +177,8 @@ lid laat vallen om in plaats daarvan zijn hele build naar dat lid te kopiëren; 
 rij die je sleepte blijft zoals hij was.
 Het paneel rechts is de bibliotheek van de
 Personagebouwer, met een tab **Mijn personages** voor **Skills** en **Uitrusting**.
-Sleep op **Mijn personages** een van je personages op een lid om van dat lid een
-kopie ervan te maken. Een kopie is van het team zelf: als je hem wijzigt, of het
+Sleep op **Mijn personages** een van je personages op een lid, of tik er een aan en dan op **Hier zetten**
+bij een lid, om van dat lid een kopie ervan te maken. Tik er nog eens op, of druk op Esc, om hem los te laten. Een kopie is van het team zelf: als je hem wijzigt, of het
 personage waar hij vandaan komt, blijft de andere zoals hij was. Andersom sleep je een
 lid op **Mijn personages**, of op de tab ervan, om het als nieuw eigen personage
 op te slaan; is de naam al bezet, dan krijgt het " (copy)", en het team houdt

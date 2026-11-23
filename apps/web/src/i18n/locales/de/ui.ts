@@ -1664,7 +1664,8 @@ export default {
     "Der Name eines Mitglieds öffnet seinen Build im Build-Editor. Beim Zurückkehren bleibt, was du geändert hast, ungespeichert.",
   "tutorial.menu.team.character":
     "Zieh deinen Charakter aus Meine Charaktere auf ein Mitglied. Das Mitglied wird eine Kopie davon.",
-  "tutorial.menu.team.characterTouch": "Tipp auf deinen Charakter, dann bei einem Mitglied auf Hier einsetzen.",
+  "tutorial.menu.team.characterTouch":
+    "Tipp auf deinen Charakter, dann bei einem Mitglied auf Hier einsetzen.",
   "tutorial.menu.team.characterDone": "Setz deinen Charakter ins Team",
   "tutorial.menu.team.fill":
     "Gib jedem Mitglied einen Build, bis das Team keine Probleme mehr hat.",

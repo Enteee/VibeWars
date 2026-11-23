@@ -199,8 +199,8 @@ egy sort egy másik tagra ejtesz, hogy inkább a teljes buildjét másold arra a
 tagra; a húzott sor olyan marad, amilyen volt.
 A jobb oldali panel a
 Karakterszerkesztő könyvtára, a **Készségek** és a **Tárgyak** előtt egy
-**Karaktereim** füllel. A **Karaktereim** fülön húzd az egyik
-karakteredet egy tagra, hogy az a tag annak másolata legyen. A másolat
+**Karaktereim** füllel. A **Karaktereim** fülön húzd az egyik karakteredet egy tagra, vagy koppints rá, aztán egy tagnál az **Ide tedd** gombra,
+hogy az a tag annak másolata legyen. Koppints rá újra, vagy nyomd meg az Esc-et, hogy elengedd. A másolat
 a csapaté: ha módosítod, vagy azt a karaktert, amelyből készült, a
 másik olyan marad, amilyen volt. Fordítva: húzz egy tagot a
 **Karaktereim** részre vagy a fülére, hogy új saját karakterként mentsd; ha

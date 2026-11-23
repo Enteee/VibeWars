@@ -184,9 +184,8 @@ för att ändra ordningen. Håll in **Shift** när du släpper en rad på en ann
 medlem för att i stället kopiera hela dess build till den medlemmen; raden du
 drog förblir som den var.
 Panelen till höger är Karaktärsbyggarens
-bibliotek, med en flik **Mina karaktärer** före **Förmågor** och **Prylar**. På **Mina karaktärer** drar du
-en av dina karaktärer till en medlem för att göra den medlemmen till en
-kopia av den. En kopia är lagets egen: att ändra den, eller karaktären
+bibliotek, med en flik **Mina karaktärer** före **Förmågor** och **Prylar**. På **Mina karaktärer** drar du en av dina karaktärer till en medlem, eller trycker på en och sedan **Sätt här** på en medlem,
+för att göra den medlemmen till en kopia av den. Tryck på den igen, eller tryck Esc, för att släppa den. En kopia är lagets egen: att ändra den, eller karaktären
 den kom från, lämnar den andra som den var. Åt andra hållet drar du en
 medlem till **Mina karaktärer**, eller till fliken, för att spara den som en ny
 egen karaktär; har den ett namn som redan finns får den " (copy)", och laget

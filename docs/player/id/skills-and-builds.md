@@ -175,8 +175,8 @@ Darah dan Energi maksimumnya, dan delapan skill-nya; seret baris lewat ⠿-nya u
 mengubah urutan. Tahan **Shift** saat menjatuhkan baris ke anggota lain
 untuk menyalin seluruh build-nya ke anggota itu; baris yang kamu seret tetap seperti semula.
 Panel di kanan adalah perpustakaan Pembuat Karakter,
-dengan tab **Karakterku** sebelum **Skill** dan **Gear**. Di **Karakterku**, seret
-salah satu karaktermu ke seorang anggota untuk menjadikan anggota itu salinannya.
+dengan tab **Karakterku** sebelum **Skill** dan **Gear**. Di **Karakterku**, seret salah satu karaktermu ke seorang anggota, atau ketuk satu lalu **Taruh di sini** pada seorang anggota,
+untuk menjadikan anggota itu salinannya. Ketuk lagi, atau tekan Esc, untuk melepasnya.
 Salinan adalah milik tim itu sendiri: mengubahnya, atau mengubah karakter asalnya,
 membiarkan yang lain seperti semula. Sebaliknya, seret seorang anggota ke
 **Karakterku**, atau ke tabnya, untuk menyimpannya sebagai karakter barumu sendiri;

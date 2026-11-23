@@ -189,8 +189,8 @@ autre membre pour copier tout son build sur ce membre à la place ; la ligne
 que tu as fait glisser reste telle quelle.
 Le panneau de droite est la
 bibliothèque de l'Atelier de personnages, avec un onglet **Mes personnages**
-avant **Compétences** et **Équipement**. Sur **Mes personnages**, fais glisser
-un de tes personnages sur un membre pour faire de ce membre une copie. Une
+avant **Compétences** et **Équipement**. Sur **Mes personnages**, fais glisser un de tes personnages sur un membre, ou touche-le puis **Mettre ici** sur un membre,
+pour faire de ce membre une copie. Touche-le de nouveau, ou appuie sur Esc, pour le lâcher. Une
 copie appartient à l'équipe : la modifier, ou modifier le personnage d'origine,
 laisse l'autre tel quel. Dans l'autre sens, fais glisser un membre sur
 **Mes personnages**, ou sur son onglet, pour l'enregistrer comme un nouveau
