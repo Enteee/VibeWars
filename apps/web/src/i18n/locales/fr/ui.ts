@@ -1398,6 +1398,8 @@ export default {
   "teamEditor.closeMember": "fermer {name}",
   "teamEditor.costAdrenaline": "{amount}a",
   "teamEditor.costEnergy": "{amount}é",
+  "teamEditor.cannotCreateCharacter": "Impossible de créer un personnage : {problem}",
+  "teamEditor.characterCreated": "Personnage {name} créé",
   "teamEditor.crumb": "Atelier d'équipes",
   "teamEditor.delete": "Supprimer",
   "teamEditor.deleteNamed": "Supprimer {name} ?",
@@ -1406,6 +1408,8 @@ export default {
   "teamEditor.discardChanges": "Abandonner les modifs ?",
   "teamEditor.discardForPaste": "Abandonner tes modifications et ouvrir l'équipe collée ?",
   "teamEditor.dragToReplace": "dépose sur un membre pour le remplacer par une copie de {name}",
+  "teamEditor.dropToCreate":
+    "Fais glisser un membre de l'équipe ici pour l'enregistrer comme personnage",
   "teamEditor.duplicate": "Dupliquer",
   "teamEditor.duplicateTitle": "dupliquer cette équipe",
   "teamEditor.duplicateUnsaved": "Enregistre avant de dupliquer",
@@ -1420,7 +1424,8 @@ export default {
   "teamEditor.memberName": "nom du membre",
   "teamEditor.myCharacters": "Mes personnages",
   "teamEditor.name": "Nom",
-  "teamEditor.noCharacters": "Tu n'as aucun personnage à copier.",
+  "teamEditor.noCharacters":
+    "Aucun personnage pour l'instant. Fais glisser un membre de l'équipe ici pour en créer un.",
   "teamEditor.notSaved": "Non enregistré : {error}",
   "teamEditor.professions": "Professions",
   "teamEditor.professionsTitle": "les professions de l'équipe",

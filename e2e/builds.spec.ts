@@ -1159,6 +1159,53 @@ test("the team grid: a full team, eight cells and Health and Energy a member, dr
   expect(await skills(0)).toEqual(alphaSkills);
 });
 
+test("a member dragged onto My characters, or its tab, is saved as a character; the team stays as it is (#3825)", async ({
+  page,
+}) => {
+  await page.goto("./");
+  await openTeamBuilder(page);
+  await setTeamSize(page, 2);
+  await page.getByRole("button", { name: "new team" }).click();
+  await memberRows(page).first().locator(".team-row-edit").click();
+  await page.getByLabel("member name").fill("Scout");
+  await page.getByRole("button", { name: "Save", exact: true }).click();
+  await expect(page.locator(".screen-teams")).toBeVisible();
+  await teamRows(page).first().getByRole("button", { name: "Edit" }).click();
+  await expect(page.locator(".editor-unsaved")).toBeHidden();
+
+  const picks = page.locator(".team-picker .team-pick-name");
+  const toasts = page.locator(".toast");
+  await page.getByRole("tab", { name: "My characters", exact: true }).click();
+  await expect(picks).toHaveText([ROLLED_STARTER]);
+  await memberRows(page).first().dragTo(page.locator(".team-picker-characters"));
+  await expect(toasts.filter({ hasText: "Created character Scout" })).toBeVisible();
+  await expect(picks).toHaveCount(2);
+  await expect(picks.filter({ hasText: /^Scout$/ })).toHaveCount(1);
+  // The member stays, and the team has nothing to save.
+  await expect(memberNames(page).first()).toHaveText("Scout");
+  await expect(page.locator(".editor-unsaved")).toBeHidden();
+
+  // On the tab from another one: it opens, and the name is taken, so a copy.
+  await page.getByRole("tab", { name: "Skills", exact: true }).click();
+  await memberRows(page)
+    .first()
+    .dragTo(page.getByRole("tab", { name: "My characters", exact: true }));
+  await expect(toasts.filter({ hasText: "Created character Scout (copy)" })).toBeVisible();
+  await expect(page.locator(".team-picker-characters")).toBeVisible();
+  await expect(picks).toHaveCount(3);
+  await expect(picks.filter({ hasText: /^Scout \(copy\)$/ })).toHaveCount(1);
+
+  // A member with no name is no legal character: nothing is saved.
+  await memberRows(page).nth(1).locator(".team-row-edit").click();
+  await page.getByLabel("member name").fill("");
+  await page.getByRole("tab", { name: "My characters", exact: true }).click();
+  await memberRows(page).nth(1).dragTo(page.locator(".team-picker-characters"));
+  await expect(
+    toasts.filter({ hasText: "Cannot create a character: Give the character a name." }),
+  ).toBeVisible();
+  await expect(picks).toHaveCount(3);
+});
+
 test("a skill dragged from the Skills tab equips on a member's slot; a refused drop changes nothing (#2225)", async ({
   page,
 }) => {

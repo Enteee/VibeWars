@@ -182,7 +182,11 @@ Bảng bên phải là thư viện
 của Tạo Nhân Vật, với thẻ **Nhân vật của tôi** đứng trước **Kỹ năng** và
 **Đồ**. Ở **Nhân vật của tôi**, kéo một nhân vật của bạn lên một thành viên để
 biến thành viên đó thành bản sao của nhân vật ấy. Bản sao là của riêng đội:
-thay đổi nó, hoặc nhân vật gốc, sẽ để nguyên cái còn lại. Ở **Kỹ năng**, thư
+thay đổi nó, hoặc nhân vật gốc, sẽ để nguyên cái còn lại. Ngược lại, kéo một thành viên lên
+**Nhân vật của tôi**, hoặc lên thẻ đó, để lưu nó thành một nhân vật mới của
+bạn; nếu tên đã bị dùng thì nó được thêm " (copy)", và đội vẫn giữ nguyên
+thành viên đó.
+Ở **Kỹ năng**, thư
 viện kỹ năng hiển thị kỹ năng của thành viên bạn nhấn vào gần nhất; kéo một
 kỹ năng lên ô của bất kỳ thành viên nào để trang bị nó ở đó. Trên thanh của
 chính thành viên đó, kỹ năng đã có trên thanh sẽ chuyển sang ô đó. Lần thả

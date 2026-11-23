@@ -9,7 +9,9 @@ import {
 import { t, type MessageKey } from "../i18n/index.js";
 import { SKILL_BAR_SLOTS, validateBuild } from "../storage/build-validation.js";
 import {
+  CHARACTER_SCHEMA_VERSION,
   TEAM_SCHEMA_VERSION,
+  type StoredCharacter,
   type StoredTeam,
   type TeamCharacter,
   type TeamBuildSize,
@@ -64,6 +66,26 @@ export function teamCharacter(character: TeamCharacter, id: string): TeamCharact
     attributes: character.attributes.map((a) => ({ attributeId: a.attributeId, rank: a.rank })),
     skillBar: [...character.skillBar],
     equipment: character.equipment,
+  };
+}
+
+/**
+ * A new character of the player's own from team member `member`
+ * (#3825), under `id`: its build, copied. A name one of `takenNames`
+ * already has gets " (copy)", as a cloned character's does.
+ */
+export function characterFromMember(
+  member: TeamCharacter,
+  id: string,
+  now: number,
+  takenNames: ReadonlySet<string>,
+): StoredCharacter {
+  return {
+    ...teamCharacter(member, id),
+    equipment: structuredClone(member.equipment),
+    schemaVersion: CHARACTER_SCHEMA_VERSION,
+    name: takenNames.has(member.name) ? `${member.name} (copy)` : member.name,
+    updatedAt: now,
   };
 }
 

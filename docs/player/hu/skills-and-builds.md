@@ -202,7 +202,11 @@ Karakterszerkesztő könyvtára, a **Készségek** és a **Tárgyak** előtt egy
 **Karaktereim** füllel. A **Karaktereim** fülön húzd az egyik
 karakteredet egy tagra, hogy az a tag annak másolata legyen. A másolat
 a csapaté: ha módosítod, vagy azt a karaktert, amelyből készült, a
-másik olyan marad, amilyen volt. A **Készségek** fülön a készségkönyvtár
+másik olyan marad, amilyen volt. Fordítva: húzz egy tagot a
+**Karaktereim** részre vagy a fülére, hogy új saját karakterként mentsd; ha
+a neve már foglalt, " (copy)" kerül a végére, a csapat pedig megtartja a
+tagot úgy, ahogy van.
+A **Készségek** fülön a készségkönyvtár
 annak a tagnak a készségeit mutatja, amelyre utoljára kattintottál; húzz
 egyet bármelyik tag helyére, hogy oda vedd fel. Ugyanannak a tagnak a
 saját sávján a már rajta lévő készség az adott helyre kerül át. Az az

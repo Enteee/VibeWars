@@ -194,7 +194,10 @@ kütüphanesidir; **Beceriler** ve **Eşya**'dan önce bir **Karakterlerim**
 sekmesi vardır. **Karakterlerim**'de, bir üyeyi kendi karakterlerinden
 birinin kopyası yapmak için o karakteri üyenin üzerine sürükle. Kopya
 takıma aittir: onu ya da geldiği karakteri değiştirmek diğerini olduğu
-gibi bırakır. **Beceriler**'de beceri kütüphanesi en son tıkladığın
+gibi bırakır. Tersine, bir üyeyi **Karakterlerim**'e ya da sekmesine
+sürükleyerek kendi yeni karakterin olarak kaydet; adı zaten alınmışsa
+" (copy)" eklenir ve takım üyeyi olduğu gibi tutar.
+**Beceriler**'de beceri kütüphanesi en son tıkladığın
 üyenin becerilerini gösterir; takmak için birini herhangi bir üyenin
 yuvasına sürükle. O üyenin kendi çubuğunda zaten olan bir beceri o
 yuvaya taşınır. Bir üyenin alamayacağı bir bırakma, başka bir mesleğin

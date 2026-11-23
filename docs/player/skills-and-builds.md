@@ -180,7 +180,10 @@ The panel on the right is the Character Builder's library,
 with a **My characters** tab before **Skills** and **Gear**. On **My characters**, drag
 one of your characters onto a member to make that member a copy of it. A
 copy is the team's own: changing it, or the character it came from,
-leaves the other as it was. On **Skills**, the skill library shows the
+leaves the other as it was. The other way round, drag a member onto
+**My characters**, or onto its tab, to save it as a new character of your
+own; one whose name is taken gets " (copy)", and the team keeps the member
+as it is. On **Skills**, the skill library shows the
 skills of the member you last clicked; drag one onto any member's slot
 to equip it there. On that member's own bar, a skill already on it moves
 to the slot. A drop a member cannot take, a skill of another profession

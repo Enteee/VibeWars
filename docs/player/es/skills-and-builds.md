@@ -183,7 +183,11 @@ El panel de la derecha es la biblioteca del Creador de personajes,
 con una pestaña **Mis personajes** antes de **Habilidades** y **Equipo**. En
 **Mis personajes**, arrastra uno de tus personajes sobre un miembro para que
 ese miembro sea una copia. Una copia es propia del equipo: cambiarla, o cambiar
-el personaje del que viene, deja al otro como estaba. En **Habilidades**, la
+el personaje del que viene, deja al otro como estaba. A la inversa, arrastra un miembro sobre
+**Mis personajes**, o sobre su pestaña, para guardarlo como un personaje nuevo
+tuyo; si su nombre ya está en uso, recibe " (copy)", y el equipo conserva el
+miembro como está.
+En **Habilidades**, la
 biblioteca muestra las habilidades del último miembro en el que hiciste clic;
 arrastra una al hueco de cualquier miembro para equiparla ahí. En la propia
 barra de ese miembro, una habilidad que ya está se mueve al hueco. Si un miembro

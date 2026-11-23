@@ -28,6 +28,7 @@ import {
   type Region,
 } from "./build-editor.js";
 import { mountBuildPicker } from "./build-picker.js";
+import { blockingProblems } from "./editor-problems.js";
 import { createCharacterDot } from "./character-figure.js";
 import { characterRanks } from "./character-ranks.js";
 import { equippedCount, professionLabel } from "./character-preview.js";
@@ -49,6 +50,7 @@ import {
   wordmark,
 } from "./kit.js";
 import {
+  characterFromMember,
   moveMember,
   professionMix,
   replaceMember,
@@ -117,6 +119,11 @@ export interface TeamEditorCallbacks {
   readonly onImportTeam: (team: StoredTeam) => void;
   /** The draft on opening and after every edit (#3542), for the menu quest. */
   readonly onDraft: ((draft: StoredTeam) => void) | undefined;
+  /**
+   * Store `character`, made from a member (#3825), and resolve to the
+   * player's characters as they are now; rejects when it cannot store.
+   */
+  readonly onCreateCharacter: (character: StoredCharacter) => Promise<readonly StoredCharacter[]>;
 }
 
 export interface TeamEditorView {
@@ -375,16 +382,17 @@ type TeamDrag =
 const MEMBER_EDITOR_KEY = "member-editor";
 
 /**
- * The team editor for `initial`; `characters` are the player's Solo
- * characters, offered to copy in.
+ * The team editor for `initial`; `saved` are the player's Solo
+ * characters, offered to copy in, and a member dropped on them is one more.
  */
 export function mountTeamEditor(
   root: HTMLElement,
   initial: TeamEditorState,
-  characters: readonly StoredCharacter[],
+  saved: readonly StoredCharacter[],
   callbacks: TeamEditorCallbacks,
 ): TeamEditorView {
   let team = initial.team;
+  let characters = saved;
   const opened = initial.opened;
   const isStored = initial.stored;
   let asking: InlineConfirm | undefined;
@@ -626,6 +634,7 @@ export function mountTeamEditor(
   const pickerList = h("div", "team-picker-list");
   const pickerEmpty = h("p", "team-picker-empty", t("teamEditor.noCharacters"));
   charactersPane.append(pickerList, pickerEmpty);
+  charactersPane.title = t("teamEditor.dropToCreate");
   const indexOfMember = (characterId: string): number =>
     team.members.findIndex((m) => m.character.id === characterId);
   const memberOf = (characterId: string): TeamCharacter | undefined =>
@@ -708,7 +717,7 @@ export function mountTeamEditor(
     picker.hideReason();
     for (const node of Array.from(
       panel.querySelectorAll(
-        ".team-row.is-dragging, .team-pick.is-dragging, .team-row.is-drop-target",
+        ".team-row.is-dragging, .team-pick.is-dragging, .team-row.is-drop-target, .team-picker-characters.is-drop-target, .library-tab.is-drop-target",
       ),
     )) {
       node.classList.remove("is-dragging", "is-drop-target");
@@ -716,6 +725,72 @@ export function mountTeamEditor(
   };
   // Esc, or a drop anywhere else, ends a drag with nothing done.
   panel.addEventListener("dragend", endDrag);
+
+  /**
+   * Save member `memberId` as a character of the player's own (#3825);
+   * the team is left as it is. An illegal build is never saved.
+   */
+  const createCharacter = (memberId: string): void => {
+    const member = memberOf(memberId);
+    if (member === undefined) {
+      return;
+    }
+    const character = characterFromMember(
+      member,
+      crypto.randomUUID(),
+      Date.now(),
+      new Set(characters.map((each) => each.name)),
+    );
+    const problem = blockingProblems(character).find((each) => each.blocking);
+    if (problem !== undefined) {
+      toast(t("teamEditor.cannotCreateCharacter", { problem: problem.text }));
+      return;
+    }
+    callbacks.onCreateCharacter(character).then(
+      (next) => {
+        if (disposed) {
+          return;
+        }
+        characters = next;
+        update();
+        toast(t("teamEditor.characterCreated", { name: character.name }));
+      },
+      () => {
+        toast(t("app.couldNotSaveCharacter"));
+      },
+    );
+  };
+  /** A member dropped on `target` becomes a character; `then` runs first. */
+  const createOnDrop = (target: HTMLElement, then?: () => void): void => {
+    target.addEventListener("dragover", (event: DragEvent) => {
+      if (dragging?.kind === "member") {
+        event.preventDefault();
+        target.classList.add("is-drop-target");
+      }
+    });
+    target.addEventListener("dragleave", (event: DragEvent) => {
+      if (!(event.relatedTarget instanceof Node && target.contains(event.relatedTarget))) {
+        target.classList.remove("is-drop-target");
+      }
+    });
+    target.addEventListener("drop", (event: DragEvent) => {
+      const drag = dragging;
+      if (drag?.kind !== "member") {
+        return;
+      }
+      event.preventDefault();
+      endDrag();
+      then?.();
+      createCharacter(drag.id);
+    });
+  };
+  createOnDrop(charactersPane);
+  const charactersTab = picker.tabButton("characters");
+  if (charactersTab !== undefined) {
+    createOnDrop(charactersTab, () => {
+      picker.showLibrary("characters");
+    });
+  }
 
   const host: GearHost & ProfessionsHost = {
     ...openHost,

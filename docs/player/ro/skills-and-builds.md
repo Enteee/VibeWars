@@ -178,7 +178,10 @@ dreapta este biblioteca din Constructor de personaje, cu o filă **Personajele
 mele** înainte de **Abilități** și **Echipament**. La **Personajele mele**, trage
 unul dintre personajele tale peste un membru ca să faci din acel membru o copie a
 lui. O copie aparține echipei: dacă o schimbi pe ea sau personajul din care a
-provenit, celălalt rămâne cum era. La **Abilități**, biblioteca arată abilitățile
+provenit, celălalt rămâne cum era. Invers, trage un membru pe **Personajele mele**
+sau pe fila sa ca să-l salvezi ca personaj nou al tău; dacă numele e deja luat,
+primește " (copy)", iar echipa păstrează membrul cum e.
+La **Abilități**, biblioteca arată abilitățile
 membrului pe care ai dat clic ultima dată; trage una pe locul oricărui membru ca
 s-o echipezi acolo. Pe bara acelui membru, o abilitate deja prezentă se mută pe
 loc. O plasare pe care un membru nu o poate primi, o abilitate a altei clase sau

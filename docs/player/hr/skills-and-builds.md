@@ -179,7 +179,10 @@ Ploča desno je biblioteka Uređivača likova,
 s karticom **Moji likovi** ispred **Vještine** i **Oprema**. Na **Moji likovi** povuci
 jednog svog lika na člana da taj član postane njegova kopija.
 Kopija pripada timu: mijenjanje nje ili lika od kojeg je nastala
-ostavlja drugo kakvo jest. Na **Vještine** biblioteka vještina prikazuje
+ostavlja drugo kakvo jest. Obrnuto, povuci člana na **Moji likovi**
+ili na tu karticu da ga spremiš kao svog novog lika; ako mu je ime zauzeto,
+dobiva " (copy)", a tim zadržava člana kakav jest.
+Na **Vještine** biblioteka vještina prikazuje
 vještine člana kojeg si zadnji kliknuo; povuci jednu na mjesto bilo kojeg člana
 da je tamo opremiš. Na vlastitoj traci tog člana vještina koja je već na njoj premješta se
 na to mjesto. Ispuštanje koje član ne može primiti, vještina druge profesije
