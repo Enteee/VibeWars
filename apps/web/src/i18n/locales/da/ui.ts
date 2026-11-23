@@ -1350,6 +1350,7 @@ export default {
   "teamEditor.notSaved": "Ikke gemt: {error}",
   "teamEditor.professions": "Klasser",
   "teamEditor.professionsTitle": "holdets klasser",
+  "teamEditor.putHere": "Sæt her",
   "teamEditor.replaceMember": "Erstat {member} med {character}",
   "teamEditor.copyMember": "Shift: Kopiér {source}s build til {target}",
   "teamEditor.save": "Gem",
@@ -1636,6 +1637,7 @@ export default {
     "Et medlems navn åbner dets build i build-editoren. Når du kommer tilbage, er dine ændringer der stadig, ikke gemt.",
   "tutorial.menu.team.character":
     "Træk din figur fra Mine figurer over på et medlem. Medlemmet bliver en kopi af den.",
+  "tutorial.menu.team.characterTouch": "Tryk på din figur, og så Sæt her på et medlem.",
   "tutorial.menu.team.characterDone": "Sæt din figur på holdet",
   "tutorial.menu.team.fill": "Giv hvert medlem et build, indtil holdet ikke har flere problemer.",
   "tutorial.menu.team.fillDone": "Fyld holdet",

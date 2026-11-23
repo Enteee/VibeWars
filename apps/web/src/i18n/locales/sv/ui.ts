@@ -1351,6 +1351,7 @@ export default {
   "teamEditor.notSaved": "Inte sparat: {error}",
   "teamEditor.professions": "Yrken",
   "teamEditor.professionsTitle": "lagets yrken",
+  "teamEditor.putHere": "Sätt här",
   "teamEditor.replaceMember": "Ersätt {member} med {character}",
   "teamEditor.copyMember": "Shift: Kopiera {source}s build till {target}",
   "teamEditor.save": "Spara",
@@ -1636,6 +1637,7 @@ export default {
     "En medlems namn öppnar dess build i buildredigeraren. När du kommer tillbaka finns ändringarna kvar, osparade.",
   "tutorial.menu.team.character":
     "Dra din karaktär från Mina karaktärer till en medlem. Medlemmen blir en kopia av den.",
+  "tutorial.menu.team.characterTouch": "Tryck på din karaktär och sedan Sätt här på en medlem.",
   "tutorial.menu.team.characterDone": "Sätt din karaktär i laget",
   "tutorial.menu.team.fill": "Ge varje medlem ett build, tills laget inte har några problem kvar.",
   "tutorial.menu.team.fillDone": "Fyll laget",

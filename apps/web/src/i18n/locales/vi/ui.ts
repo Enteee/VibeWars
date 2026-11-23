@@ -1274,6 +1274,7 @@ export default {
   "teamEditor.notSaved": "Chưa lưu: {error}",
   "teamEditor.professions": "Lớp",
   "teamEditor.professionsTitle": "các lớp của đội",
+  "teamEditor.putHere": "Đặt vào đây",
   "teamEditor.replaceMember": "Thay {member} bằng {character}",
   "teamEditor.copyMember": "Shift: Chép build của {source} sang {target}",
   "teamEditor.save": "Lưu",
@@ -1549,6 +1550,7 @@ export default {
     "Tên của một thành viên mở build của họ trong trình sửa build. Khi quay lại, thay đổi vẫn còn, chưa lưu.",
   "tutorial.menu.team.character":
     "Kéo nhân vật của bạn từ Nhân vật của tôi vào một thành viên. Thành viên đó trở thành bản sao của nó.",
+  "tutorial.menu.team.characterTouch": "Chạm vào nhân vật của bạn, rồi chọn Đặt vào đây ở một thành viên.",
   "tutorial.menu.team.characterDone": "Đưa nhân vật vào đội",
   "tutorial.menu.team.fill": "Cho mỗi thành viên một build, đến khi đội không còn vấn đề nào.",
   "tutorial.menu.team.fillDone": "Lấp đầy đội",

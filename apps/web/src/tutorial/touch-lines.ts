@@ -19,6 +19,8 @@ const TOUCH_LINES: Partial<Readonly<Record<MessageKey, MessageKey>>> = {
   "tutorial.heal.hint": "tutorial.touch.healHint",
   "tutorial.heal.how": "tutorial.touch.healHow",
   "tutorial.look.how": "tutorial.touch.look",
+  // My characters take a tap, then Put here, as well as a drag (#3876).
+  "tutorial.menu.team.character": "tutorial.menu.team.characterTouch",
   "tutorial.ping.how": "tutorial.touch.pingHow",
   "tutorial.ramp.how": "tutorial.touch.rampHow",
   "tutorial.rats.how": "tutorial.touch.ratsHow",

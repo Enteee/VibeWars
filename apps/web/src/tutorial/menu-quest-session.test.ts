@@ -196,6 +196,25 @@ describe("the menu quest session", () => {
     expect(onEnd).not.toHaveBeenCalled();
   });
 
+  it("asks a phone for a tap and Put here, not a drag, for the character in the team (#3876)", () => {
+    const { coach, shown } = fakeCoach();
+    const quest = startMenuQuest({ touch: true, from: "team", coach, onEnd: () => undefined });
+    quest.event({ kind: "screen-shown", screen: "teams" });
+    quest.event({ kind: "team-build-size", size: 2 });
+    const blank = (id: string) => teamCharacter(newCharacter(id), id);
+    quest.event({
+      kind: "team-draft",
+      draft: teamOf("t1", 2, [blank("m1"), blank("m2")]),
+      isNew: true,
+      characters: [{ ...newCharacter("c1"), secondaryProfession: "monk" }],
+    });
+    for (let beat = 0; beat < 3; beat += 1) {
+      gotIt(shown.at(-1));
+    }
+    expect(shown.at(-1)?.target).toBe("team-character");
+    expect(shown.at(-1)?.line).toBe("Tap your character, then Put here on a member.");
+  });
+
   it("opens and explains each mode, ticking its list, then goes on to the arena (#3543)", () => {
     const { coach, shown, removed } = fakeCoach();
     const onEnd = vi.fn();

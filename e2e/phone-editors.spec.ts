@@ -164,3 +164,25 @@ test("the team editor fits the phone, its bars on screen (#3777)", async ({ page
   }
   await expectFitsPhone(page, "team editor");
 });
+
+test("a saved character goes into a team by tap, then Put here (#3876)", async ({ page }) => {
+  await newCharacter(page);
+  await page.locator("input.editor-name").fill("Thumbs");
+  await page.getByRole("button", { name: "Save", exact: true }).tap();
+  await expect(page.locator(".toast")).toHaveText("Saved");
+  await openRail(page, "Team Builder");
+  await page.getByRole("button", { name: "New team build", exact: true }).tap();
+  const rows = page.locator(".team-grid .team-row");
+  await expect(rows.first()).toBeVisible();
+  const put = page.getByRole("button", { name: "Put here", exact: true });
+  await expect(put).toHaveCount(0);
+
+  const pick = page.locator(".team-pick", { hasText: "Thumbs" });
+  await pick.tap();
+  await expect(pick).toHaveAttribute("aria-pressed", "true");
+  await expect(put.first()).toBeVisible();
+  await rows.nth(1).getByRole("button", { name: "Put here", exact: true }).tap();
+  await expect(rows.nth(1).locator(".team-row-name")).toHaveText("Thumbs");
+  await expect(pick).toHaveAttribute("aria-pressed", "false");
+  await expect(put).toHaveCount(0);
+});

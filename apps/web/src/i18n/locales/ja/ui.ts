@@ -1294,6 +1294,7 @@ export default {
   "teamEditor.notSaved": "保存されていません: {error}",
   "teamEditor.professions": "職業",
   "teamEditor.professionsTitle": "チームの職業",
+  "teamEditor.putHere": "ここに置く",
   "teamEditor.replaceMember": "{member}を{character}に置き換える",
   "teamEditor.copyMember": "Shift: {source}のビルドを{target}にコピー",
   "teamEditor.save": "保存",
@@ -1567,6 +1568,7 @@ export default {
     "メンバーの名前を押すと、そのビルドがビルドエディタで開く。戻っても変更は未保存のまま残る。",
   "tutorial.menu.team.character":
     "「マイキャラクター」から自分のキャラクターをメンバーへドラッグしよう。メンバーはそのコピーになる。",
+  "tutorial.menu.team.characterTouch": "自分のキャラクターをタップして、メンバーの「ここに置く」を押そう。",
   "tutorial.menu.team.characterDone": "キャラクターをチームに入れる",
   "tutorial.menu.team.fill": "チームの問題がなくなるまで、全メンバーにビルドを与えよう。",
   "tutorial.menu.team.fillDone": "チームを埋める",

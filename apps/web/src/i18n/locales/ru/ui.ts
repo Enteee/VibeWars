@@ -1469,6 +1469,7 @@ export default {
   "teamEditor.notSaved": "Не сохранено: {error}",
   "teamEditor.professions": "Профессии",
   "teamEditor.professionsTitle": "профессии команды",
+  "teamEditor.putHere": "Поставить сюда",
   "teamEditor.replaceMember": "Заменить {member} на {character}",
   "teamEditor.copyMember": "Shift: копировать билд {source} на {target}",
   "teamEditor.save": "Сохранить",
@@ -1764,6 +1765,7 @@ export default {
     "Имя участника открывает его билд в редакторе билдов. Когда вернёшься, изменения останутся несохранёнными.",
   "tutorial.menu.team.character":
     "Перетащи своего персонажа из «Мои персонажи» на участника. Участник станет его копией.",
+  "tutorial.menu.team.characterTouch": "Коснись своего персонажа, потом «Поставить сюда» у участника.",
   "tutorial.menu.team.characterDone": "Поставь персонажа в команду",
   "tutorial.menu.team.fill": "Дай билд каждому участнику, пока у команды не останется проблем.",
   "tutorial.menu.team.fillDone": "Заполни команду",

@@ -1257,6 +1257,7 @@ export default {
   "teamEditor.notSaved": "未保存：{error}",
   "teamEditor.professions": "职业",
   "teamEditor.professionsTitle": "队伍的职业",
+  "teamEditor.putHere": "放到这里",
   "teamEditor.replaceMember": "用 {character} 替换 {member}",
   "teamEditor.copyMember": "Shift：将 {source} 的配置复制到 {target}",
   "teamEditor.save": "保存",
@@ -1519,6 +1520,7 @@ export default {
   "tutorial.menu.team.build":
     "点击成员的名字会在配置编辑器中打开其配置。回来时，你的修改仍在，但未保存。",
   "tutorial.menu.team.character": "把你的角色从「我的角色」拖到一名成员上。该成员会变成它的副本。",
+  "tutorial.menu.team.characterTouch": "点一下你的角色，再点成员上的「放到这里」。",
   "tutorial.menu.team.characterDone": "把你的角色放进队伍",
   "tutorial.menu.team.fill": "给每名成员一个配置，直到队伍不再有问题。",
   "tutorial.menu.team.fillDone": "填满队伍",

@@ -1356,6 +1356,7 @@ export default {
   "teamEditor.notSaved": "Niet opgeslagen: {error}",
   "teamEditor.professions": "Klassen",
   "teamEditor.professionsTitle": "de klassen van het team",
+  "teamEditor.putHere": "Hier zetten",
   "teamEditor.replaceMember": "{member} vervangen door {character}",
   "teamEditor.copyMember": "Shift: build van {source} kopiëren naar {target}",
   "teamEditor.save": "Opslaan",
@@ -1648,6 +1649,7 @@ export default {
     "De naam van een lid opent zijn build in de build-editor. Als je terugkomt, blijft wat je veranderde, niet opgeslagen.",
   "tutorial.menu.team.character":
     "Sleep je personage uit Mijn personages naar een lid. Het lid wordt er een kopie van.",
+  "tutorial.menu.team.characterTouch": "Tik op je personage en dan op Hier zetten bij een lid.",
   "tutorial.menu.team.characterDone": "Zet je personage in het team",
   "tutorial.menu.team.fill": "Geef elk lid een build, tot het team geen problemen meer heeft.",
   "tutorial.menu.team.fillDone": "Vul het team",

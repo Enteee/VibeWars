@@ -1269,6 +1269,7 @@ export default {
   "teamEditor.notSaved": "ไม่ได้บันทึก: {error}",
   "teamEditor.professions": "อาชีพ",
   "teamEditor.professionsTitle": "อาชีพของทีม",
+  "teamEditor.putHere": "วางที่นี่",
   "teamEditor.replaceMember": "แทนที่ {member} ด้วย {character}",
   "teamEditor.copyMember": "Shift: คัดลอกบิลด์ของ {source} ไปยัง {target}",
   "teamEditor.save": "บันทึก",
@@ -1540,6 +1541,7 @@ export default {
     "ชื่อสมาชิกจะเปิดบิลด์ของสมาชิกนั้นในตัวแก้ไขบิลด์ เมื่อกลับมา สิ่งที่คุณเปลี่ยนยังอยู่ แต่ยังไม่บันทึก",
   "tutorial.menu.team.character":
     "ลากตัวละครของคุณจากตัวละครของฉันไปวางบนสมาชิก สมาชิกนั้นจะกลายเป็นสำเนาของตัวละคร",
+  "tutorial.menu.team.characterTouch": "แตะตัวละครของคุณ แล้วแตะ วางที่นี่ บนสมาชิก",
   "tutorial.menu.team.characterDone": "ใส่ตัวละครของคุณในทีม",
   "tutorial.menu.team.fill": "ให้บิลด์แก่สมาชิกทุกคน จนกว่าทีมจะไม่มีปัญหาเหลืออยู่",
   "tutorial.menu.team.fillDone": "เติมทีมให้เต็ม",

@@ -1543,6 +1543,7 @@ export default {
   "teamEditor.notSaved": "لم يُحفظ: {error}",
   "teamEditor.professions": "المهن",
   "teamEditor.professionsTitle": "مهن الفريق",
+  "teamEditor.putHere": "ضعه هنا",
   "teamEditor.replaceMember": "استبدال {member} بـ {character}",
   "teamEditor.copyMember": "Shift: نسخ بنية {source} إلى {target}",
   "teamEditor.save": "حفظ",
@@ -1831,6 +1832,7 @@ export default {
   "tutorial.menu.team.build":
     "اسم العضو يفتح بنيته في محرر البنى. عند عودتك تبقى تغييراتك، دون حفظ.",
   "tutorial.menu.team.character": "اسحب شخصيتك من «شخصياتي» إلى عضو. يصبح العضو نسخة منها.",
+  "tutorial.menu.team.characterTouch": "المس شخصيتك، ثم «ضعه هنا» على عضو.",
   "tutorial.menu.team.characterDone": "ضع شخصيتك في الفريق",
   "tutorial.menu.team.fill": "امنح كل عضو بنية، حتى لا تبقى في الفريق أي مشكلة.",
   "tutorial.menu.team.fillDone": "املأ الفريق",

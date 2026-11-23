@@ -1438,6 +1438,7 @@ export default {
   "teamEditor.notSaved": "No guardado: {error}",
   "teamEditor.professions": "Profesiones",
   "teamEditor.professionsTitle": "las profesiones del equipo",
+  "teamEditor.putHere": "Poner aquí",
   "teamEditor.replaceMember": "Sustituir a {member} por {character}",
   "teamEditor.copyMember": "Shift: copiar la build de {source} en {target}",
   "teamEditor.save": "Guardar",
@@ -1735,6 +1736,7 @@ export default {
     "El nombre de un miembro abre su build en el editor de builds. Al volver, conservas lo que cambiaste, sin guardar.",
   "tutorial.menu.team.character":
     "Arrastra tu personaje desde Mis personajes a un miembro. El miembro se convierte en una copia de él.",
+  "tutorial.menu.team.characterTouch": "Toca tu personaje y luego Poner aquí en un miembro.",
   "tutorial.menu.team.characterDone": "Pon tu personaje en el equipo",
   "tutorial.menu.team.fill":
     "Dale una build a cada miembro, hasta que el equipo no tenga problemas.",

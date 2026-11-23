@@ -1370,6 +1370,7 @@ export default {
   "teamEditor.notSaved": "Δεν αποθηκεύτηκε: {error}",
   "teamEditor.professions": "Επαγγέλματα",
   "teamEditor.professionsTitle": "τα επαγγέλματα της ομάδας",
+  "teamEditor.putHere": "Βάλε εδώ",
   "teamEditor.replaceMember": "Αντικατάσταση {member} με {character}",
   "teamEditor.copyMember": "Shift: Αντιγραφή του build του {source} στον {target}",
   "teamEditor.save": "Αποθήκευση",
@@ -1664,6 +1665,7 @@ export default {
     "Το όνομα ενός μέλους ανοίγει το build του στον επεξεργαστή build. Όταν επιστρέψεις, οι αλλαγές σου μένουν, χωρίς αποθήκευση.",
   "tutorial.menu.team.character":
     "Σύρε τον χαρακτήρα σου από το «Οι χαρακτήρες μου» σε ένα μέλος. Το μέλος γίνεται αντίγραφό του.",
+  "tutorial.menu.team.characterTouch": "Πάτησε τον χαρακτήρα σου, μετά «Βάλε εδώ» σε ένα μέλος.",
   "tutorial.menu.team.characterDone": "Βάλε τον χαρακτήρα σου στην ομάδα",
   "tutorial.menu.team.fill":
     "Δώσε build σε κάθε μέλος, μέχρι να μη μείνει κανένα πρόβλημα στην ομάδα.",

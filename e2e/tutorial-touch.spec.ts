@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Locator } from "@playwright/test";
 
 import { projection } from "./camera.js";
 import { PIXEL_8A_PORTRAIT } from "./helpers/phone.js";
@@ -7,7 +7,8 @@ import { PIXEL_8A_PORTRAIT } from "./helpers/phone.js";
  * Phones are welcome (#3782): a Pixel 8a is offered the tutorial after the
  * splash like any other device, its tutor names the gesture rather than a
  * key, and a tap walks its first station. Only that one station: the rest
- * is `tutorial.spec`'s, which is at its per-spec ceiling.
+ * is `tutorial.spec`'s, which is at its per-spec ceiling. The menu quest's
+ * team step takes its character by tap and Put here (#3876).
  */
 
 test.use(PIXEL_8A_PORTRAIT);
@@ -47,4 +48,28 @@ test("a phone learns to walk with a tap (#3782)", async ({ page }) => {
     await page.touchscreen.tap(at.x, at.y);
     await expect(said).toHaveText(walked, { timeout: 15_000 });
   }).toPass({ timeout: 120_000 });
+});
+
+test("a phone puts its character in the team by tap and Put here (#3876)", async ({ page }) => {
+  test.setTimeout(180_000);
+  await page.goto("./?menu-background=bench-flat&tutorial-menu=team");
+  const panel = page.locator(".coach-panel");
+  const bubble = page.locator(".coach-bubble");
+  const target = (id: string): Locator => page.locator(`[data-tutorial~="${id}"]`);
+  await target("rail-teams").tap();
+  const stepper = page.locator('.mode-rail-stepper[data-tutorial~="team-build-size"]');
+  await stepper.getByRole("button", { name: "Smaller team" }).tap();
+  await expect(stepper).toContainText("2v2");
+  await target("team-new").tap();
+  const rows = page.locator(".team-grid .team-row");
+  await expect(rows).toHaveCount(2);
+  for (let beat = 0; beat < 3; beat += 1) {
+    await bubble.getByRole("button", { name: "Got it" }).tap();
+  }
+
+  await expect(panel).toContainText("Put your character in the team");
+  await expect(bubble).toContainText("Tap your character, then Put here on a member.");
+  await page.locator(".team-pick").first().tap();
+  await rows.nth(0).getByRole("button", { name: "Put here", exact: true }).tap();
+  await expect(panel).toContainText("Fill the team");
 });

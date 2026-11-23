@@ -412,6 +412,11 @@ export function mountTeamEditor(
   const isStored = initial.stored;
   let asking: InlineConfirm | undefined;
   let highlight: TeamHighlight | undefined;
+  /**
+   * The character tapped in My characters (#3876), if any: Put here on a
+   * member copies it there, as a drop does. Touch fires no drag.
+   */
+  let picked: string | undefined;
   let disposed = false;
 
   /** Turn `next` on, or off if it is the one already on. */
@@ -590,6 +595,11 @@ export function mountTeamEditor(
         doll.close();
         return true;
       }
+      if (picked !== undefined) {
+        picked = undefined;
+        update();
+        return true;
+      }
       if (highlight !== undefined) {
         highlight = undefined;
         update();
@@ -721,6 +731,11 @@ export function mountTeamEditor(
     tab: lastPanelTab,
     onTab: (tab) => {
       lastPanelTab = tab;
+      // Off My characters, a character picked there is let go.
+      if (tab !== "characters" && picked !== undefined) {
+        picked = undefined;
+        update();
+      }
     },
     keysBlocked: () => asking?.isOpen() === true,
     // Gear is the open member's alone (#2226), and not offered with none open.
@@ -780,6 +795,21 @@ export function mountTeamEditor(
         toast(t("app.couldNotSaveCharacter"));
       },
     );
+  };
+  /**
+   * Member `memberId` replaced by a copy of my character `characterId`,
+   * dropped or put there (#2225, #3876): onto the member it was copied
+   * from, too, a fresh copy.
+   */
+  const putCharacter = (memberId: string, characterId: string): void => {
+    picked = undefined;
+    const character = characters.find((c) => c.id === characterId);
+    if (character !== undefined) {
+      focused = memberId;
+      commit(copyOntoMember(team, memberId, character));
+    } else {
+      update();
+    }
   };
   /** A member dropped on `target` becomes a character; `then` runs first. */
   const createOnDrop = (target: HTMLElement, then?: () => void): void => {
@@ -984,7 +1014,14 @@ export function mountTeamEditor(
     const edit = button("▼", "team-row-edit", () => {
       toggleOpen(characterId);
     });
-    row.append(order, who, stats, skills, open, edit);
+    // Shown while a character is picked (#3876): it copies it here.
+    const put = button(t("teamEditor.putHere"), "team-row-put", () => {
+      if (picked !== undefined) {
+        putCharacter(characterId, picked);
+      }
+    });
+    put.hidden = true;
+    row.append(order, who, stats, skills, open, edit, put);
 
     row.addEventListener("dragstart", (event: DragEvent) => {
       if (dragging !== undefined) {
@@ -1060,12 +1097,7 @@ export function mountTeamEditor(
         commit(dragMember(team, indexOfMember(drag.id), indexOf()));
         return;
       }
-      // Onto the member it was copied from, too: a fresh copy (#2225).
-      const character = characters.find((c) => c.id === drag.id);
-      if (character !== undefined) {
-        focused = characterId;
-        commit(copyOntoMember(team, characterId, character));
-      }
+      putCharacter(characterId, drag.id);
     });
     return row;
   };
@@ -1128,6 +1160,20 @@ export function mountTeamEditor(
       }
       pick.classList.add("is-dragging");
     });
+    // Tapped, it is picked for Put here (#3876); tapped again, let go.
+    pick.setAttribute("role", "button");
+    pick.tabIndex = 0;
+    const toggle = (): void => {
+      picked = picked === characterId ? undefined : characterId;
+      update();
+    };
+    pick.addEventListener("click", toggle);
+    pick.addEventListener("keydown", (event: KeyboardEvent) => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        toggle();
+      }
+    });
     return pick;
   };
 
@@ -1169,6 +1215,9 @@ export function mountTeamEditor(
 
     if (openMember !== undefined && memberOf(openMember) === undefined) {
       openMember = undefined;
+    }
+    if (picked !== undefined && !characters.some((c) => c.id === picked)) {
+      picked = undefined;
     }
     // A smaller size may have dropped the focused member (#3794).
     if (memberOf(focused) === undefined) {
@@ -1214,6 +1263,10 @@ export function mountTeamEditor(
         fillDot(row.querySelector(".team-row-dot"), character);
         row.classList.toggle("is-focused", characterId === focused);
         row.classList.toggle("is-open", characterId === openMember);
+        const put = row.querySelector<HTMLButtonElement>(".team-row-put");
+        if (put !== null) {
+          put.hidden = picked === undefined;
+        }
         const edit = row.querySelector<HTMLButtonElement>(".team-row-edit");
         if (edit !== null) {
           const toggle = memberToggle(character, openMember);
@@ -1294,6 +1347,8 @@ export function mountTeamEditor(
           return;
         }
         fillDot(pick.querySelector(".team-row-dot"), character);
+        pick.classList.toggle("is-picked", characterId === picked);
+        pick.setAttribute("aria-pressed", String(characterId === picked));
         pick.title = t("teamEditor.dragToReplace", { name: character.name });
         const text = pick.querySelector(".team-pick-text");
         if (text !== null) {

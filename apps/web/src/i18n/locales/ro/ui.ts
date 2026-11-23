@@ -1429,6 +1429,7 @@ export default {
   "teamEditor.notSaved": "Nesalvat: {error}",
   "teamEditor.professions": "Clase",
   "teamEditor.professionsTitle": "clasele echipei",
+  "teamEditor.putHere": "Pune aici",
   "teamEditor.replaceMember": "Înlocuiește {member} cu {character}",
   "teamEditor.copyMember": "Shift: copiază build-ul lui {source} pe {target}",
   "teamEditor.save": "Salvează",
@@ -1725,6 +1726,7 @@ export default {
     "Numele unui membru îi deschide build-ul în editorul de build-uri. Când revii, schimbările rămân, nesalvate.",
   "tutorial.menu.team.character":
     "Trage personajul tău din Personajele mele pe un membru. Membrul devine o copie a lui.",
+  "tutorial.menu.team.characterTouch": "Atinge personajul tău, apoi Pune aici pe un membru.",
   "tutorial.menu.team.characterDone": "Pune-ți personajul în echipă",
   "tutorial.menu.team.fill": "Dă fiecărui membru un build, până când echipa nu mai are probleme.",
   "tutorial.menu.team.fillDone": "Completează echipa",

@@ -517,3 +517,66 @@ describe("the editor's team size (#3794)", () => {
     expect(arrow(root, t("rail.smallerTeam"))?.disabled).toBe(true);
   });
 });
+
+describe("My characters by tap, then Put here (#3876)", () => {
+  const mine: StoredCharacter = {
+    ...character("Mine"),
+    secondaryProfession: "monk",
+    schemaVersion: CHARACTER_SCHEMA_VERSION,
+    updatedAt: 1,
+  };
+  let drafts: StoredTeam[] = [];
+  /** The editor on a stored team of two, with `mine` to copy in. */
+  const mount = (): FakeElement => {
+    const page = new FakeElement();
+    mountTeamEditor(page as unknown as HTMLElement, openedTeam(teamOf("a", "b"), true), [mine], {
+      onSave: () => Promise.resolve(),
+      onDuplicate: () => undefined,
+      onDelete: () => undefined,
+      onClose: () => undefined,
+      onOpenMember: () => undefined,
+      onDraft: (draft) => {
+        drafts.push(draft);
+      },
+      onImportTeam: () => undefined,
+      onCreateCharacter: () => Promise.resolve([]),
+    });
+    return page;
+  };
+  const puts = (page: FakeElement): FakeElement[] => page.all("team-row-put");
+
+  beforeEach(() => {
+    drafts = [];
+    stubDom();
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("picks a character on a tap, offers Put here on every member, and copies it there", () => {
+    const page = mount();
+    const [pick] = page.all("team-pick");
+    expect(puts(page).map((put) => put.hidden)).toEqual([true, true]);
+    pick?.click();
+    expect(pick?.classList.contains("is-picked")).toBe(true);
+    expect(puts(page).map((put) => put.hidden)).toEqual([false, false]);
+    puts(page)[1]?.click();
+    const member = drafts.at(-1)?.members[1]?.character;
+    expect(member?.id).toBe("b");
+    expect(member?.name).toBe("Mine");
+    expect(member?.secondaryProfession).toBe("monk");
+    expect(drafts.at(-1)?.members[0]?.character.name).toBe("a");
+    expect(pick?.classList.contains("is-picked")).toBe(false);
+    expect(puts(page).map((put) => put.hidden)).toEqual([true, true]);
+  });
+
+  it("lets the pick go on a second tap", () => {
+    const page = mount();
+    const [pick] = page.all("team-pick");
+    pick?.click();
+    pick?.click();
+    expect(pick?.classList.contains("is-picked")).toBe(false);
+    expect(puts(page).map((put) => put.hidden)).toEqual([true, true]);
+  });
+});

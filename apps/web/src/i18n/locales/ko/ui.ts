@@ -1280,6 +1280,7 @@ export default {
   "teamEditor.notSaved": "저장 안 됨: {error}",
   "teamEditor.professions": "직업",
   "teamEditor.professionsTitle": "팀의 직업",
+  "teamEditor.putHere": "여기에 놓기",
   "teamEditor.replaceMember": "{member}을(를) {character}(으)로 교체",
   "teamEditor.copyMember": "Shift: {source}의 빌드를 {target}에 복사",
   "teamEditor.save": "저장",
@@ -1552,6 +1553,7 @@ export default {
     "멤버 이름을 누르면 빌드 편집기에서 그 빌드가 열립니다. 돌아와도 바꾼 내용은 저장되지 않은 채 남습니다.",
   "tutorial.menu.team.character":
     "내 캐릭터에서 캐릭터를 멤버 위로 끌어다 놓으세요. 그 멤버가 캐릭터의 복사본이 됩니다.",
+  "tutorial.menu.team.characterTouch": "캐릭터를 탭한 다음, 멤버의 여기에 놓기를 탭하세요.",
   "tutorial.menu.team.characterDone": "캐릭터를 팀에 넣기",
   "tutorial.menu.team.fill": "팀에 문제가 남지 않을 때까지 모든 멤버에게 빌드를 주세요.",
   "tutorial.menu.team.fillDone": "팀 채우기",

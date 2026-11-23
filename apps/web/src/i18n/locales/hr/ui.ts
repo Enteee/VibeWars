@@ -1422,6 +1422,7 @@ export default {
   "teamEditor.notSaved": "Nije spremljeno: {error}",
   "teamEditor.professions": "Profesije",
   "teamEditor.professionsTitle": "profesije tima",
+  "teamEditor.putHere": "Stavi ovdje",
   "teamEditor.replaceMember": "Zamijeni: {member} → {character}",
   "teamEditor.copyMember": "Shift: kopiraj build od {source} na {target}",
   "teamEditor.save": "Spremi",
@@ -1713,6 +1714,7 @@ export default {
     "Ime člana otvara njegov build u uređivaču buildova. Kad se vratiš, promjene ostaju, nespremljene.",
   "tutorial.menu.team.character":
     "Povuci svoj lik iz Moji likovi na člana. Član postaje njegova kopija.",
+  "tutorial.menu.team.characterTouch": "Dodirni svoj lik, pa Stavi ovdje na članu.",
   "tutorial.menu.team.characterDone": "Stavi svoj lik u tim",
   "tutorial.menu.team.fill": "Daj svakom članu build, dok tim ne ostane bez problema.",
   "tutorial.menu.team.fillDone": "Popuni tim",

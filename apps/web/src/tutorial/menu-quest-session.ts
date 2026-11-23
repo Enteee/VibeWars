@@ -17,6 +17,7 @@ import {
   type MenuQuestStepId,
 } from "./menu-quest.js";
 import { saveTutorialRecord } from "./tutorial-preference.js";
+import { touchLine } from "./touch-lines.js";
 
 /**
  * The menu quest being played (#3540): the menu's events in, the coach
@@ -57,7 +58,7 @@ export interface MenuQuestSession {
 
 export interface MenuQuestOptions {
   readonly from: MenuQuestStepId;
-  /** Whether this is a touch-only device: its mouse-only beats are passed by (#3782). */
+  /** Whether this is a touch-only device: its lines say the gesture (#3782, #3876). */
   readonly touch: boolean;
   /** The coach to show it on; `onSkip` once Skip tutorial is confirmed. */
   readonly coach: (callbacks: { readonly onSkip: () => void }) => CoachOverlay;
@@ -95,7 +96,8 @@ export function startMenuQuest(options: MenuQuestOptions): MenuQuestSession {
     const objectives = menuQuestChecklist(cursor, state);
     const target = beatTarget(beat, state);
     const lead = beat.kind === "do" ? beat.lead?.(state) : undefined;
-    const view = JSON.stringify([cursor, beat.line, lead, target, objectives]);
+    const line = touchLine(beat.line, options.touch);
+    const view = JSON.stringify([cursor, line, lead, target, objectives]);
     if (view === shown) {
       return;
     }
@@ -103,7 +105,7 @@ export function startMenuQuest(options: MenuQuestOptions): MenuQuestSession {
     coach.show({
       title: t(step.title),
       line:
-        lead === undefined ? t(beat.line, lineNames()) : `${t(lead)} ${t(beat.line, lineNames())}`,
+        lead === undefined ? t(line, lineNames()) : `${t(lead)} ${t(line, lineNames())}`,
       target,
       // The member's build is the player's to edit, Back only pointed at.
       locked: beat !== MEMBER_BACK_BEAT,
@@ -123,7 +125,7 @@ export function startMenuQuest(options: MenuQuestOptions): MenuQuestSession {
     if (over) {
       return;
     }
-    const next = advanceMenuQuest(cursor, state, gotIt, options.touch);
+    const next = advanceMenuQuest(cursor, state, gotIt);
     if (next === "done") {
       finish("done");
       return;

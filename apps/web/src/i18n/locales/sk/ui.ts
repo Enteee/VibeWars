@@ -1469,6 +1469,7 @@ export default {
   "teamEditor.notSaved": "Neuložené: {error}",
   "teamEditor.professions": "Povolania",
   "teamEditor.professionsTitle": "povolania tímu",
+  "teamEditor.putHere": "Dať sem",
   "teamEditor.replaceMember": "Nahradiť {member} postavou {character}",
   "teamEditor.copyMember": "Shift: Kopírovať build postavy {source} na {target}",
   "teamEditor.save": "Uložiť",
@@ -1763,6 +1764,7 @@ export default {
     "Meno člena otvorí jeho build v editore buildov. Po návrate ti zmeny zostanú, neuložené.",
   "tutorial.menu.team.character":
     "Pretiahni svoju postavu z Moje postavy na člena. Člen sa stane jej kópiou.",
+  "tutorial.menu.team.characterTouch": "Ťukni na svoju postavu, potom na Dať sem pri členovi.",
   "tutorial.menu.team.characterDone": "Daj svoju postavu do tímu",
   "tutorial.menu.team.fill": "Daj každému členovi build, kým v tíme nezostanú žiadne problémy.",
   "tutorial.menu.team.fillDone": "Doplň tím",

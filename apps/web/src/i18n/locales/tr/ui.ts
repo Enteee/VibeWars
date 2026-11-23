@@ -1355,6 +1355,7 @@ export default {
   "teamEditor.notSaved": "Kaydedilmedi: {error}",
   "teamEditor.professions": "Meslekler",
   "teamEditor.professionsTitle": "takımın meslekleri",
+  "teamEditor.putHere": "Buraya koy",
   "teamEditor.replaceMember": "{member} yerine {character} koy",
   "teamEditor.copyMember": "Shift: {source} buildini {target} üzerine kopyala",
   "teamEditor.save": "Kaydet",
@@ -1643,6 +1644,7 @@ export default {
     "Bir üyenin adı, yapısını yapı düzenleyicide açar. Geri döndüğünde değişikliklerin kaydedilmemiş olarak kalır.",
   "tutorial.menu.team.character":
     "Karakterini Karakterlerim'den bir üyenin üzerine sürükle. Üye onun bir kopyası olur.",
+  "tutorial.menu.team.characterTouch": "Karakterine dokun, sonra bir üyede Buraya koy'a dokun.",
   "tutorial.menu.team.characterDone": "Karakterini takıma koy",
   "tutorial.menu.team.fill": "Takımda hiç sorun kalmayana kadar her üyeye bir yapı ver.",
   "tutorial.menu.team.fillDone": "Takımı doldur",

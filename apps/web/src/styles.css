@@ -2836,6 +2836,22 @@ body:has(> .splash) #menu-background::after {
   min-width: 0;
 }
 
+/* Put here (#3876): a line of its own under the row while a character is
+   picked, as tall as a finger needs on a touch screen. */
+.team-row-put {
+  grid-column: 1 / -1;
+}
+
+.team-row-put[hidden] {
+  display: none;
+}
+
+@media (pointer: coarse) {
+  .team-row-put {
+    min-block-size: 44px;
+  }
+}
+
 /* The open member, in place under its row (#2226). Its columns follow the
    room the scroll box gives it, not the window (#2379): one, then equipment
    under the other two, then three. It is never wider than the box, and stays
@@ -3194,6 +3210,12 @@ body:has(> .splash) #menu-background::after {
 
 .team-pick.is-dragging {
   opacity: 0.5;
+}
+
+/* The character picked for Put here (#3876). */
+.team-pick.is-picked {
+  border-color: var(--accent);
+  box-shadow: inset 3px 0 0 var(--accent);
 }
 
 /* A skill dragged off its slot (#2227): its origin dims while it travels. */

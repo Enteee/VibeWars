@@ -1419,6 +1419,7 @@ export default {
   "teamEditor.notSaved": "לא נשמר: {error}",
   "teamEditor.professions": "מקצועות",
   "teamEditor.professionsTitle": "המקצועות של הקבוצה",
+  "teamEditor.putHere": "שימו כאן",
   "teamEditor.replaceMember": "החלף את {member} ב-{character}",
   "teamEditor.copyMember": "Shift: העתק את המבנה של {source} אל {target}",
   "teamEditor.save": "שמור",
@@ -1699,6 +1700,7 @@ export default {
     "שם של חבר פותח את הבילד שלו בעורך הבילדים. כשחוזרים, השינויים נשארים, לא שמורים.",
   "tutorial.menu.team.character":
     "גררו את הדמות מתוך הדמויות שלי אל חבר בקבוצה. החבר הופך לעותק שלה.",
+  "tutorial.menu.team.characterTouch": "הקישו על הדמות, ואז על שימו כאן ליד חבר בקבוצה.",
   "tutorial.menu.team.characterDone": "הכניסו את הדמות שלכם לקבוצה",
   "tutorial.menu.team.fill": "תנו בילד לכל חבר, עד שלא יישארו בקבוצה בעיות.",
   "tutorial.menu.team.fillDone": "מלאו את הקבוצה",
