@@ -4,6 +4,7 @@ import type { MatchSummaryRow } from "@vibewars/game-session";
 import { t } from "../i18n/index.js";
 import { mountEndLine } from "./end-line.js";
 import { createHud, describeOutcome, placeEnd } from "./hud.js";
+import { chartRoster, renderMatchCharts } from "./match-charts.js";
 import { renderSummary, summaryTables } from "./match-summary.js";
 import { mountQueueScreen } from "./queue-screen.js";
 
@@ -28,7 +29,11 @@ export function mountSummaryFixture(parent: HTMLElement): void {
   line.text.textContent = t("queue.backToLobbyIn", { seconds: 9 });
   line.press.textContent = t("queue.now");
   const bots = new Set(FIXTURE.filter((row) => row.signet === null).map((row) => row.id));
-  renderSummary(hud.end, summaryTables(FIXTURE, "p0-0", 0, 1, bots)).classList.add("hud-summary");
+  const tables = summaryTables(FIXTURE, "p0-0", 0, 1, bots);
+  const summary = renderSummary(hud.end, tables);
+  summary.classList.add("hud-summary");
+  // As the match's own end panel mounts them once the chart lands (#3790).
+  renderMatchCharts(summary, fixtureChart(), chartRoster(tables));
 }
 
 /**

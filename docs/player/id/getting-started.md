@@ -84,7 +84,9 @@ menunggu langsung mengeluarkanmu dari antrean.
 Saat laga berakhir kamu bisa **Antre lagi**, atau **Tetap bersama** dengan
 tim yang baru saja bermain bersamamu.
 
-Di samping skor, dua grafik menceritakan laga dari waktu ke waktu. **Kamu**
+Setiap laga berakhir pada skornya, dari antrean, di-host, atau di lobi, dan di
+sampingnya dua grafik menceritakan laga dari waktu ke waktu; layar antrean
+menampilkannya lagi setelah laga dari antrean. **Kamu**
 menggambar damage yang kamu berikan, damage yang kamu terima, penyembuhan, dan
 Energi; **Tim** menggambar kumpulan nyawa setiap tim di atas total damage-nya.
 Tanda di bawah sumbu waktu menunjukkan kill, kematian, interupsi, perebutan,

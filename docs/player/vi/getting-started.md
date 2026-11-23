@@ -81,7 +81,9 @@ Khi tìm thấy trận, bạn được đưa tới màn hình đối đầu củ
 Khi trận kết thúc, bạn có thể **Xếp lại**, hoặc **Ở cùng nhau** với đội bạn
 vừa chơi cùng.
 
-Bên cạnh điểm số, hai biểu đồ kể lại trận đấu theo thời gian. **Bạn** vẽ sát
+Mọi trận đấu đều kết thúc ở điểm số, dù từ hàng chờ, tự tạo hay trong sảnh,
+và bên cạnh đó hai biểu đồ kể lại trận đấu theo thời gian; màn hình hàng chờ
+hiển thị lại chúng sau một trận từ hàng chờ. **Bạn** vẽ sát
 thương bạn gây ra, sát thương bạn nhận, lượng hồi máu và Năng lượng;
 **Các đội** vẽ tổng máu của mỗi đội phía trên tổng sát thương của đội đó. Các
 dấu dưới trục thời gian cho thấy hạ gục, cái chết, ngắt chiêu, chiếm giữ và hồi

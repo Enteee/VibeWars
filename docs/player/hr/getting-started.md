@@ -83,7 +83,9 @@ zaslon sučeljavanja s bilo kojeg mjesta. Zatvaranje kartice dok
 Kad meč završi, možeš **Opet u red** ili **Ostanite zajedno** s
 timom s kojim si upravo igrao.
 
-Uz rezultate dva grafikona pričaju tijek meča kroz vrijeme. **Ti** crta tvoju
+Svaki meč završava svojim rezultatima, iz reda, s domaćinom ili u sobi,
+a uz njih dva grafikona pričaju tijek meča kroz vrijeme; zaslon reda ih
+ponovno prikazuje nakon meča iz reda. **Ti** crta tvoju
 nanesenu štetu, primljenu štetu, liječenje i Energiju; **Timovi** crta zalihu
 zdravlja svakog tima iznad njegove ukupne štete. Oznake ispod vremenske osi
 prikazuju ubojstva, smrti, prekide, osvajanja i uskrsnuća: pokaži na jednu ili

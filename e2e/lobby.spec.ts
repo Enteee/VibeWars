@@ -549,6 +549,31 @@ test("a player who quits a 1v1 forfeits it, and is back in an open lobby; its wi
   }
 });
 
+test("a hosted match's end panel shows its charts under the scores, not only the queue screen (#3790)", async ({
+  browser,
+}) => {
+  const { context, pages } = await openPeers(browser, 2);
+  const [host, guest] = pages as [Page, Page];
+
+  try {
+    await startTwoPlayerMatch(host, guest);
+    await expect(guest.locator(".hud-leave")).toBeVisible();
+    // The guest quits, so the host wins at once and stays on its end panel.
+    await leaveMatch(guest);
+    const summary = host.locator(".hud-summary");
+    await expect(summary.locator(".match-summary-panel").first()).toBeVisible();
+    // The charts come in their own message after `ended`, and are mounted once.
+    const charts = summary.locator(".match-charts");
+    await expect(charts.locator(".match-charts-svg")).toBeVisible();
+    await expect(charts).toHaveCount(1);
+    await expect(charts.getByRole("tab", { name: "You" })).toBeEnabled();
+    await expect(charts.locator(".match-charts-chip").first()).toBeVisible();
+    await expect(charts.locator(".match-charts-none")).toHaveCount(0);
+  } finally {
+    await context.close();
+  }
+});
+
 /** This page's own address and `#lobby=`, as an invite link to its lobby starts (#2100). */
 function invitePrefix(page: Page): string {
   const { origin, pathname } = new URL(page.url());

@@ -84,7 +84,9 @@ wachtrij.
 Als de match afloopt, kun je **Opnieuw zoeken**, of **Bij elkaar** blijven met
 het team waarmee je net speelde.
 
-Naast de scores vertellen twee grafieken het verloop van de match. **Jij**
+Elke match eindigt op zijn scores, uit de wachtrij, gehost of in een lobby, en
+daarnaast vertellen twee grafieken het verloop van de match; het
+wachtrijscherm toont ze opnieuw na een match uit de wachtrij. **Jij**
 tekent je toegebrachte schade, ontvangen schade, genezing en Energie; **Teams**
 tekent de levenspool van elk team boven zijn totale schade. Markeringen onder
 de tijdas tonen kills, doden, onderbrekingen, veroveringen en

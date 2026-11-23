@@ -126,6 +126,7 @@ import { attachJukeboxPopover } from "./ui/jukebox.js";
 import { attachOptionsWindow, isOptionsWindowOpen } from "./ui/options-screen.js";
 import { createPartyWindow } from "./ui/party-window.js";
 import { attachReconnectCountdown, mountReconnectOverlay } from "./ui/reconnect-overlay.js";
+import { chartRoster, chartUsable, renderMatchCharts } from "./ui/match-charts.js";
 import { renderSummary, summaryTables, type SummaryTable } from "./ui/match-summary.js";
 import { flashSlot, slotFlashes } from "./ui/skill-slot-state.js";
 import { mountEndLine, type EndLineElements } from "./ui/end-line.js";
@@ -1095,7 +1096,13 @@ export async function startMatchView(
   let lastMatch: MatchSnapshot | undefined;
   /** The summary (#1057), drawn once under the result banner when the host's `ended` lands. */
   let summary:
-    { readonly tables: readonly SummaryTable[]; readonly panel: HTMLElement } | undefined;
+    | {
+        readonly tables: readonly SummaryTable[];
+        readonly panel: HTMLElement;
+        /** Its charts (#3790), mounted once, when the host's chart message lands. */
+        charts: boolean;
+      }
+    | undefined;
   const stats = frameTiming();
   const cadence = stats === undefined ? undefined : snapshotCadence(stats, () => performance.now());
   const onFrame = (deltaSeconds: number): void => {
@@ -1170,7 +1177,12 @@ export async function startMatchView(
       );
       const panel = renderSummary(hud.end, tables);
       panel.classList.add("hud-summary");
-      summary = { tables, panel };
+      summary = { tables, panel, charts: false };
+    }
+    // Training sends none, and a host may never send it: then the table stays alone.
+    if (summary !== undefined && !summary.charts && chartUsable(match.chart)) {
+      renderMatchCharts(summary.panel, match.chart, chartRoster(summary.tables));
+      summary.charts = true;
     }
     // A watcher follows one player (#480), the first seat until it picks
     // another, and keeps to a body that died. One gone, it starts over.
