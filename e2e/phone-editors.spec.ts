@@ -3,6 +3,7 @@ import { expect, test, type Page } from "@playwright/test";
 import { openRail } from "./helpers/menu.js";
 import { scrollToEnd, underChatIcon } from "./helpers/overlay.js";
 import { PIXEL_8A_LANDSCAPE, PIXEL_8A_PORTRAIT, expectFitsPhone } from "./helpers/phone.js";
+import { chooseProfession } from "./helpers/professions.js";
 
 /**
  * The build, gear and team editors on a Pixel 8a (#3777), by finger
@@ -185,24 +186,40 @@ test("a saved character goes into a team member by tap and Put here (#3876)", as
   await expect(page.locator(".team-row-put:visible")).toHaveCount(0);
 });
 
-test("the training bar is one row of 8 under its weapon sets, clear of the chat's icon (#3887)", async ({
-  page,
-}) => {
-  await newCharacter(page);
-  await expect(page.locator(".training canvas")).toBeVisible();
-  const slots = await page
-    .locator(".training-skill")
-    .evaluateAll((nodes) => nodes.map((node) => node.getBoundingClientRect().top));
-  expect(slots).toHaveLength(8);
-  expect(new Set(slots).size).toBe(1);
-  const sets = await page
-    .locator(".training-skills .weapon-set")
-    .evaluateAll((nodes) => nodes.map((node) => node.getBoundingClientRect()));
-  expect(sets).toHaveLength(4);
-  for (const set of sets) expect(set.bottom).toBeLessThanOrEqual(slots[0] ?? 0);
-  expect(await underChatIcon(page, ".training-skill, .weapon-set")).toEqual([]);
-  await scrollToEnd(page, ".editor-layout");
-  expect(
-    await underChatIcon(page, ".editor-layout :is(button, input, select, label, span)"),
-  ).toEqual([]);
-});
+// The Pixel 8a; a height where the bar's own place is under the icon; a
+// narrow phone, where eight fingers do not fit and the slots shrink.
+for (const viewport of [
+  { width: 412, height: 915 },
+  { width: 412, height: 800 },
+  { width: 360, height: 780 },
+]) {
+  test(`at ${String(viewport.width)}x${String(viewport.height)} the training bar is one row of 8 under its weapon sets, clear of the chat's icon (#3887)`, async ({
+    page,
+  }) => {
+    await page.setViewportSize(viewport);
+    await newCharacter(page);
+    // What a player does first: the profession's row moves the bar down.
+    await chooseProfession(page, "primary", "elementalist");
+    await expect(page.locator(".training canvas")).toBeVisible();
+    const slots = await page
+      .locator(".training-skill")
+      .evaluateAll((nodes) =>
+        nodes.map((node) => node.getBoundingClientRect().toJSON() as DOMRect),
+      );
+    expect(slots).toHaveLength(8);
+    expect(new Set(slots.map((slot) => slot.top)).size).toBe(1);
+    for (const slot of slots) expect(slot.right).toBeLessThanOrEqual(viewport.width);
+    const sets = await page
+      .locator(".training-skills .weapon-set")
+      .evaluateAll((nodes) =>
+        nodes.map((node) => node.getBoundingClientRect().toJSON() as DOMRect),
+      );
+    expect(sets).toHaveLength(4);
+    for (const set of sets) expect(set.bottom).toBeLessThanOrEqual(slots[0]?.top ?? 0);
+    expect(await underChatIcon(page, ".training-skill, .weapon-set")).toEqual([]);
+    await scrollToEnd(page, ".editor-layout");
+    expect(
+      await underChatIcon(page, ".editor-layout :is(button, input, select, label, span)"),
+    ).toEqual([]);
+  });
+}

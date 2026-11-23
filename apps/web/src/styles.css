@@ -9336,7 +9336,9 @@ body:has(> .splash) #app {
 /* A finger (#3776): every control outside a match takes a 44 px box, and
    no text is under 12 px. A match's own HUD is outside #screens. The
    editors' × and paper-doll spots sit on a slot's corner, where 44 px
-   would cover the slot: the editors' touch layout (#3777) sizes them. */
+   would cover the slot: the editors' touch layout (#3777) sizes them.
+   The Training Ground's bar is sized as the HUD's (#3887): a finger,
+   unless eight do not fit the phone's width. */
 @media (pointer: coarse) {
   :is(#topbar, #screens)
     :is(
@@ -9349,7 +9351,13 @@ body:has(> .splash) #app {
       [role="button"],
       [role="tab"],
       [role="switch"]
-    ):not(.skill-slot-clear, .gear-slot-clear, .gear-set-tab-clear, .paper-doll-hotspot),
+    ):not(
+      .skill-slot-clear,
+      .gear-slot-clear,
+      .gear-set-tab-clear,
+      .paper-doll-hotspot,
+      .training-skill
+    ),
   :is(#topbar, #screens) label:has(> input:is([type="checkbox"], [type="radio"])) {
     min-block-size: 44px;
     min-inline-size: 44px;
@@ -9604,6 +9612,21 @@ body:has(> .splash) #app {
   .training-skills {
     container-type: inline-size;
     --skill-row-room: 100cqi;
+  }
+
+  /* The bar right under your bars, as the HUD's, the character's stats
+     after the log; and never under the chat's icon, whatever the top bar
+     and the phone's height leave it: low on the first screen, it rises
+     to stand just clear of the icon. */
+  .editor-layout.has-training > .training:not(.is-expanded) > .training-stats-slot {
+    order: 1;
+  }
+
+  .editor-layout.has-training > .training:not(.is-expanded) > .training-skills {
+    position: sticky;
+    bottom: var(--chat-reserve);
+    z-index: 1;
+    background: var(--bg);
   }
 
   .hud-skills,
