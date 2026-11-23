@@ -73,7 +73,7 @@ describe("the bundled maps, which the page does not validate (#3679)", () => {
 
   it("covers every map the client ships with", () => {
     const covered = new Set(Object.values(BUNDLED));
-    for (const map of [...ARENA_MAPS, ...TRAINING_MAPS.values(), ...TUTORIAL_CANYON]) {
+    for (const map of [...ARENA_MAPS, ...TRAINING_MAPS.values(), TUTORIAL_CANYON]) {
       expect(covered.has(map), map.id).toBe(true);
     }
   });

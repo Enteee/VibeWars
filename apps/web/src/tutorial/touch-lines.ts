@@ -20,7 +20,6 @@ const TOUCH_LINES: Partial<Readonly<Record<MessageKey, MessageKey>>> = {
   "tutorial.heal.how": "tutorial.touch.healHow",
   "tutorial.look.how": "tutorial.touch.look",
   "tutorial.ping.how": "tutorial.touch.pingHow",
-  "tutorial.ramp.how": "tutorial.touch.rampHow",
   "tutorial.rats.how": "tutorial.touch.ratsHow",
   "tutorial.stepIn.how": "tutorial.touch.walk",
   "tutorial.tunnel.how": "tutorial.touch.tunnelHow",

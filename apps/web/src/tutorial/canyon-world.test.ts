@@ -9,16 +9,15 @@ import {
 import { pointInShape, shapeVertices } from "@vibewars/game-maps/geometry";
 import { describe, expect, it } from "vitest";
 
-import { CANYON_ARRIVAL, CANYON_ARRIVALS } from "./canyon-map.js";
+import { CANYON_ARRIVAL, TUTORIAL_CANYON } from "./canyon-map.js";
 import {
   BAD_GROUND,
   CALL_RATS,
   CLEARING,
   CRACKED_WALL,
   DODGE_MARK,
-  FORK,
+  JUNCTION,
   LEDGE,
-  RAMP,
   RAT_AGGRO,
   RAT_POCKET,
   badGroundTutor,
@@ -27,9 +26,10 @@ import {
   clearingTutor,
   ledgeTutor,
   pingTutor,
-  rampTutor,
+  pocketStart,
   ratPocket,
   tunnelStart,
+  gateStart,
   wallStart,
   wallTutor,
 } from "./canyon-world.js";
@@ -58,22 +58,27 @@ const stepWatched = (simulation: MatchSimulation, watch: RatWatch): void => {
 describe("canyonWorld (#3247)", () => {
   const build = houseBuild(PLAYER_PROFESSION);
 
-  it("holds the pair alone, the player on the arrival and the tutor beside", () => {
-    const world = canyonWorld("canyon-test", build, build, 0);
+  it("holds the pair and the rats of stations 8 and 12, the player on the arrival and the tutor beside", () => {
+    const world = canyonWorld("canyon-test", build, build);
     const self = world.simulation.get(SELF_ID);
     const tutor = world.simulation.get(TUTOR_ID);
     expect([...world.simulation.participants()].map(({ id }) => id).sort()).toEqual(
-      [SELF_ID, TUTOR_ID].sort(),
+      [
+        SELF_ID,
+        TUTOR_ID,
+        ...RAT_POCKET.rats.map(({ id }) => id),
+        ...CALL_RATS.rats.map(({ id }) => id),
+      ].sort(),
     );
     expect(self?.position).toEqual(CANYON_ARRIVAL.position);
     expect(self?.layer).toBe(CANYON_ARRIVAL.layer);
     expect(tutor?.layer).toBe(CANYON_ARRIVAL.layer);
-    expect(world.map.id).toBe(CANYON_ARRIVAL.map.id);
+    expect(world.map.id).toBe(TUTORIAL_CANYON.id);
     expect(world.zones.filter(({ kind }) => kind === "rockfall").length).toBeGreaterThanOrEqual(3);
   });
 
-  it("starts the pair on the high deck, with station 8's rats slain, for a seeded station 11 (#3383)", () => {
-    const world = canyonWorld("canyon-test", build, build, 1, tunnelStart());
+  it("starts the pair by station 9's ledge, with station 8's rats slain, for a seeded station 11 (#3383)", () => {
+    const world = canyonWorld("canyon-test", build, build, tunnelStart());
     const { simulation } = world;
     for (let elapsed = 0; elapsed < 1; elapsed += TICK) {
       simulation.step(TICK);
@@ -84,13 +89,13 @@ describe("canyonWorld (#3247)", () => {
       expect(ids).not.toContain(id);
     }
     for (const id of [SELF_ID, TUTOR_ID]) {
-      expect(simulation.get(id)?.layer).toBe(RAMP.layer);
+      expect(simulation.get(id)?.layer).toBe(LEDGE.lower);
     }
-    expect(simulation.get(SELF_ID)?.position).toEqual(RAMP.mark);
+    expect(simulation.get(SELF_ID)?.position).toEqual(LEDGE.foot);
   });
 
   it("starts the pair on station 4's mark, the wall still whole, for a seeded station 5 (#3383)", () => {
-    const { simulation } = canyonWorld("canyon-test", build, build, 0, wallStart());
+    const { simulation } = canyonWorld("canyon-test", build, build, wallStart());
     expect(simulation.get(SELF_ID)?.position).toEqual(DODGE_MARK.position);
     for (const id of [SELF_ID, TUTOR_ID]) {
       expect(simulation.get(id)?.layer).toBe(DODGE_MARK.layer);
@@ -100,7 +105,7 @@ describe("canyonWorld (#3247)", () => {
   });
 
   it("puts station 4's mark where the player walks to, on the trail past the boulder run", () => {
-    const world = canyonWorld("canyon-test", build, build, 0);
+    const world = canyonWorld("canyon-test", build, build);
     const { simulation } = world;
     const landings = world.zones.filter(({ id }) => id.startsWith("boulder-run-"));
     expect(landings).toHaveLength(3);
@@ -121,7 +126,7 @@ describe("canyonWorld (#3247)", () => {
   });
 
   it("keeps the mark within the last landing's DODGE_REACH, so a dodge there counts", () => {
-    const world = canyonWorld("canyon-test", build, build, 0);
+    const world = canyonWorld("canyon-test", build, build);
     const last = world.zones.find(({ id }) => id === "boulder-run-3");
     if (last === undefined) {
       throw new Error("no boulder-run-3");
@@ -143,7 +148,7 @@ describe("wallTutor (#3302)", () => {
     world.simulation.breakables.find(({ id }) => id === CRACKED_WALL.id)?.health;
 
   it("waits by the wall until the player's first blow lands, then strikes it too", () => {
-    const world = canyonWorld("canyon-test", build, build, 0);
+    const world = canyonWorld("canyon-test", build, build);
     const { simulation } = world;
     simulation.walkTo(SELF_ID, CRACKED_WALL.face, CRACKED_WALL.layer);
     const tutor = wallTutor(simulation);
@@ -174,7 +179,7 @@ describe("clearingTutor (#3303)", () => {
   const build = houseBuild(PLAYER_PROFESSION);
 
   it("stays in the rockfall until half its health is gone, then bleeds east of it until healed", () => {
-    const world = canyonWorld("canyon-test", build, build, 0);
+    const world = canyonWorld("canyon-test", build, build);
     const { simulation } = world;
     const rockfall = world.zones.find(({ id }) => id === CLEARING.zoneId);
     if (rockfall === undefined) {
@@ -260,7 +265,7 @@ describe("badGroundTutor (#3310)", () => {
   const build = houseBuild(PLAYER_PROFESSION);
   /** The canyon with its cracked wall down, as station 5 leaves it, the pair at its face. */
   const pastTheWall = (): ReturnType<typeof canyonWorld> => {
-    const world = canyonWorld("canyon-test", build, build, 0);
+    const world = canyonWorld("canyon-test", build, build);
     const { simulation } = world;
     simulation.walkTo(SELF_ID, CRACKED_WALL.face, CRACKED_WALL.layer);
     simulation.walkTo(TUTOR_ID, CRACKED_WALL.besideFace, CRACKED_WALL.layer);
@@ -278,7 +283,7 @@ describe("badGroundTutor (#3310)", () => {
     world.zones.filter(({ kind }) => kind === "mire" || kind === "molten");
 
   it("puts the mark past the mire, in no zone, the straight way to it through the mud", () => {
-    const world = canyonWorld("canyon-test", build, build, 0);
+    const world = canyonWorld("canyon-test", build, build);
     const zones = badGround(world);
     expect(zones.map(({ kind }) => kind).sort()).toEqual(["mire", "molten"]);
     const mire = zones.find(({ kind }) => kind === "mire");
@@ -356,10 +361,8 @@ describe("badGroundTutor (#3310)", () => {
 describe("ratPocket (#3316)", () => {
   const build = houseBuild(PLAYER_PROFESSION);
   const ids = RAT_POCKET.rats.map(({ id }) => id);
-  it("places three rats at the pocket on the second map, on team 1, the big one at 240", () => {
-    const world = canyonWorld("rats-test", build, build, 1);
-    const { simulation } = world;
-    expect(world.map.id).toBe(CANYON_ARRIVALS[1].map.id);
+  it("places three rats at the pocket, on team 1, the big one at 240", () => {
+    const { simulation } = canyonWorld("rats-test", build, build);
     for (const id of ids) {
       const rat = simulation.get(id);
       expect(rat?.combatant.team).toBe(1);
@@ -374,20 +377,17 @@ describe("ratPocket (#3316)", () => {
     expect(simulation.get(ids[0] ?? "")?.combatant.team).not.toBe(
       simulation.get(SELF_ID)?.combatant.team,
     );
-    const first = canyonWorld("rats-test", build, build, 0).simulation;
-    expect(ids.map((id) => first.get(id))).toEqual([undefined, undefined, undefined]);
   });
 
   it("has the tutor wait out of every rat's aggro, where it can stand", () => {
-    const world = canyonWorld("rats-test", build, build, 1);
+    const world = canyonWorld("rats-test", build, build, pocketStart());
     const spot = RAT_POCKET.tutorSpot;
-    expect(world.besideMark).toEqual(spot);
     expect(world.simulation.standable(spot, RAT_POCKET.layer)).toBe(true);
     for (const post of [...RAT_POCKET.rats.map((rat) => rat.post), RAT_POCKET.extra]) {
       expect(Math.hypot(spot.x - post.x, spot.y - post.y)).toBeGreaterThanOrEqual(RAT_AGGRO + 50);
     }
     // Gone on ahead, it stands there unbitten however long the player takes.
-    world.simulation.walkTo(TUTOR_ID, world.besideMark, world.ground);
+    world.simulation.walkTo(TUTOR_ID, spot, RAT_POCKET.layer);
     for (let t = 0; t < 60; t += TICK) {
       world.simulation.step(TICK);
     }
@@ -399,7 +399,7 @@ describe("ratPocket (#3316)", () => {
   });
 
   it("runs the runner off when the player hits it, the tutor joining only once it is hit", () => {
-    const { simulation } = canyonWorld("rats-test", build, build, 1);
+    const { simulation } = canyonWorld("rats-test", build, build, pocketStart());
     const [runnerId = ""] = ids;
     const watch = createRatWatch(SELF_ID, TUTOR_ID, ids, build.skillBar);
     const pocket = ratPocket(simulation, watch, undefined);
@@ -432,7 +432,7 @@ describe("ratPocket (#3316)", () => {
   });
 
   it("brings one more rat once all are dead with too few skills, and no more after two", () => {
-    const { simulation } = canyonWorld("rats-test", build, build, 1);
+    const { simulation } = canyonWorld("rats-test", build, build, pocketStart());
     const watch = createRatWatch(SELF_ID, TUTOR_ID, ids, build.skillBar);
     const pocket = ratPocket(simulation, watch, undefined);
     const none: RatTally = {
@@ -469,7 +469,7 @@ describe("callTutor (#3331)", () => {
   };
 
   it("places two rats on team 1 that bite no one who has not struck them", () => {
-    const { simulation } = canyonWorld("call-test", build, build, 1);
+    const { simulation } = canyonWorld("call-test", build, build, tunnelStart());
     for (const { id, post } of CALL_RATS.rats) {
       expect(simulation.get(id)?.combatant.team).toBe(1);
       expect(simulation.get(id)?.position).toEqual(post);
@@ -479,7 +479,7 @@ describe("callTutor (#3331)", () => {
   });
 
   it("has the tutor strike the rat called, the latest call, and never the other", () => {
-    const { simulation } = canyonWorld("call-test", build, build, 1);
+    const { simulation } = canyonWorld("call-test", build, build, tunnelStart());
     const watch = createRatWatch(SELF_ID, TUTOR_ID, [first, second], build.skillBar);
     const tutor = callTutor(simulation, watch);
     const attacking = (): string | undefined =>
@@ -492,7 +492,7 @@ describe("callTutor (#3331)", () => {
     expect(attacking()).toBe(first);
     tutor.step(second, watch.tally());
     expect(attacking()).toBe(second);
-    // The tutor walks from where the pair arrives, round through the tunnel.
+    // The tutor walks from station 9's ledge, round through the tunnel.
     for (let walked = 0; walked < 90 && !watch.tally().hitByTutor.has(second); walked += TICK) {
       stepWatched(simulation, watch);
       tutor.step(second, watch.tally());
@@ -502,7 +502,7 @@ describe("callTutor (#3331)", () => {
   });
 
   it("says a called rat was lost once it died unstruck by the tutor, and brings one more once both are", () => {
-    const { simulation } = canyonWorld("call-test", build, build, 1);
+    const { simulation } = canyonWorld("call-test", build, build, tunnelStart());
     const watch = createRatWatch(SELF_ID, TUTOR_ID, [first, second], build.skillBar);
     const tutor = callTutor(simulation, watch);
     tutor.step(first, none);
@@ -520,7 +520,7 @@ describe("ledgeTutor (#3323)", () => {
   const build = houseBuild(PLAYER_PROFESSION);
 
   it("takes the player up the stairs onto the ledge and down under it, the tutor along by the stairs", () => {
-    const { simulation } = canyonWorld("ledge-test", build, build, 1);
+    const { simulation } = canyonWorld("ledge-test", build, build, tunnelStart());
     // Only the pair: no rat bites on the way.
     for (const { id } of RAT_POCKET.rats) {
       simulation.remove(id);
@@ -567,77 +567,9 @@ describe("ledgeTutor (#3323)", () => {
   });
 });
 
-describe("rampTutor (#3325)", () => {
+describe("pingTutor (#3332, #3792)", () => {
   const build = houseBuild(PLAYER_PROFESSION);
-
-  it("takes the player up both flights to the high deck's mark, the tutor behind", () => {
-    const { simulation } = canyonWorld("ramp-test", build, build, 1);
-    for (const { id } of RAT_POCKET.rats) {
-      simulation.remove(id);
-    }
-    const body = (id: string) => {
-      const found = simulation.get(id);
-      if (found === undefined) {
-        throw new Error(`no ${id}`);
-      }
-      return found;
-    };
-    const run = (seconds: number, step?: () => void): void => {
-      for (let elapsed = 0; elapsed < seconds; elapsed += TICK) {
-        simulation.step(TICK);
-        step?.();
-      }
-    };
-    const near = (id: string, point: Vec2): boolean =>
-      Math.hypot(body(id).position.x - point.x, body(id).position.y - point.y) < MARK_REACH;
-    // From the ground under the ledge, where station 9 leaves the player.
-    simulation.walkTo(SELF_ID, vec2(3600, 1890), LEDGE.lower);
-    run(40);
-    const tutor = rampTutor(simulation);
-    const layers = new Set<number>();
-    const climb = (): void => {
-      tutor.step();
-      layers.add(body(SELF_ID).layer);
-    };
-    // Along the ground to under the high deck, as the e2e walks it.
-    const underDeck = vec2(RAMP.mark.x, 1700);
-    simulation.walkTo(SELF_ID, underDeck, RAMP.ground);
-    run(40, climb);
-    expect(body(SELF_ID).layer).toBe(RAMP.ground);
-    expect(near(SELF_ID, underDeck)).toBe(true);
-    // One walk to the mark: round to the first flight, up both.
-    simulation.walkTo(SELF_ID, RAMP.mark, RAMP.layer);
-    run(60, climb);
-    expect([...layers]).toContain(RAMP.landing);
-    expect(body(SELF_ID).layer).toBe(RAMP.layer);
-    expect(near(SELF_ID, RAMP.mark)).toBe(true);
-    expect(body(TUTOR_ID).layer).toBe(RAMP.layer);
-  });
-
-  it("stays at the first flight's foot while the player stands on station 9's ledge", () => {
-    const { simulation } = canyonWorld("ramp-ledge-test", build, build, 1);
-    for (const { id } of RAT_POCKET.rats) {
-      simulation.remove(id);
-    }
-    const tutor = rampTutor(simulation);
-    simulation.walkTo(SELF_ID, vec2(3600, 1890), LEDGE.upper);
-    for (let elapsed = 0; elapsed < 40; elapsed += TICK) {
-      simulation.step(TICK);
-      tutor.step();
-    }
-    expect(simulation.get(SELF_ID)?.layer).toBe(LEDGE.upper);
-    expect(LEDGE.upper).toBe(RAMP.landing);
-    const at = simulation.get(TUTOR_ID);
-    expect(at?.layer).toBe(RAMP.ground);
-    expect(
-      Math.hypot((at?.position.x ?? 0) - RAMP.foot.x, (at?.position.y ?? 0) - RAMP.foot.y),
-    ).toBeLessThan(MARK_REACH);
-  });
-});
-
-describe("pingTutor (#3332)", () => {
-  const build = houseBuild(PLAYER_PROFESSION);
-  const { fork, east, pocket, eastSide, lounge } = FORK;
+  const { fork, north, south, rejoin } = JUNCTION;
   const at = (simulation: MatchSimulation, point: Vec2): boolean => {
     const tutor = simulation.get(TUTOR_ID);
     return (
@@ -651,41 +583,45 @@ describe("pingTutor (#3332)", () => {
     }
   };
 
-  it("marks the pocket off the north leg, the east end as far from the fork", () => {
-    expect(pocket.y).toBeGreaterThan(fork.y);
-    expect(Math.hypot(east.x - fork.x, east.y - fork.y)).toBeCloseTo(
-      Math.hypot(pocket.x - fork.x, pocket.y - fork.y),
-    );
-    expect(eastSide.x).toBeGreaterThan(fork.x);
-  });
-
-  it("goes into the pocket once on a pocket ping, back to the fork, and east on an east ping", () => {
-    const { simulation } = canyonWorld("ping-test", build, build, 1);
-    for (const { id } of [...RAT_POCKET.rats, ...CALL_RATS.rats]) {
-      simulation.remove(id);
-    }
-    const tutor = pingTutor(simulation);
-    let ping: Vec2 | undefined;
-    const step = (): void => {
-      simulation.step(TICK);
-      tutor.step(ping);
-    };
-    run(() => at(simulation, fork), step);
-    expect(at(simulation, fork)).toBe(true);
-    ping = pocket;
-    run(() => at(simulation, lounge), step, 30);
-    expect(at(simulation, lounge)).toBe(true);
-    run(() => at(simulation, fork), step, 30);
-    expect(at(simulation, fork)).toBe(true);
-    // Once back, the same pocket ping sends it nowhere.
-    run(() => !at(simulation, fork), step, 5);
-    expect(at(simulation, fork)).toBe(true);
-    ping = east;
-    run(() => at(simulation, eastSide), step, 30);
-    expect(at(simulation, eastSide)).toBe(true);
-    // East is for good: a pocket ping after it does not move it.
-    ping = pocket;
-    run(() => !at(simulation, eastSide), step, 5);
-    expect(at(simulation, eastSide)).toBe(true);
-  });
+  it.each([
+    ["north", north, south],
+    ["south", south, north],
+  ] as const)(
+    "walks the %s arm once it is pinged, round the island to beside the rejoin, and is not turned",
+    (_, arm, other) => {
+      const { simulation } = canyonWorld("ping-test", build, build, gateStart());
+      for (const { id } of [...RAT_POCKET.rats, ...CALL_RATS.rats]) {
+        simulation.remove(id);
+      }
+      // From the fork, as station 12 leaves it.
+      simulation.walkTo(TUTOR_ID, fork, JUNCTION.layer);
+      run(
+        () => at(simulation, fork),
+        () => simulation.step(TICK),
+      );
+      const tutor = pingTutor(simulation);
+      let ping: Vec2 | undefined;
+      /** The furthest the tutor has been from the other arm's side of the fork. */
+      let byArm = false;
+      let byOther = false;
+      const step = (): void => {
+        simulation.step(TICK);
+        tutor.step(ping);
+        byArm ||= at(simulation, arm);
+        byOther ||= at(simulation, other);
+      };
+      // Unpinged, it waits.
+      run(() => !at(simulation, fork), step, 3);
+      expect(at(simulation, fork)).toBe(true);
+      ping = arm;
+      run(() => byArm, step, 30);
+      // A ping on the other arm now does not turn it.
+      ping = other;
+      const beside = vec2(rejoin.x, rejoin.y - 90);
+      run(() => at(simulation, beside), step, 30);
+      expect(byArm).toBe(true);
+      expect(byOther).toBe(false);
+      expect(at(simulation, beside)).toBe(true);
+    },
+  );
 });

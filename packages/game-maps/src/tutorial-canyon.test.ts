@@ -15,12 +15,13 @@ import { pointInShape, shapeVertices } from "./geometry.js";
 import { layeredFinder } from "./layered-finder.test-support.js";
 import { mapSimulationFields } from "./match-fields.js";
 import { unlinkedTransitions } from "./nav-graphs.js";
-import { validateMapData, type MapData } from "./schema.js";
+import { MAX_LIGHTS, validateMapData, type MapData } from "./schema.js";
 
 /**
  * The tutorial canyon (#3245): one trail from the arrival pad past every
  * station site to the mist gate, shut by station 5's wall until it falls,
- * in two maps for the render budget: stations 4 to 7, then 8 to 14.
+ * on one map (#3792). Station 13's junction splits the trail into two
+ * arms round a rock island, which rejoin at `site-13r`.
  */
 
 const RULESET = MINIMAL_GW_INSPIRED_PVP_V1;
@@ -40,13 +41,7 @@ function canyon(id: string): MapData {
   return found;
 }
 
-/** Each map of the canyon, and its stations. */
-const PARTS = [
-  { map: canyon("tutorial-canyon-1"), stations: [4, 5, 6, 7] },
-  { map: canyon("tutorial-canyon-2"), stations: [8, 9, 10, 11, 12, 13, 14] },
-];
-const [first, second] = PARTS.map(({ map }) => map);
-if (first === undefined || second === undefined) throw new Error("two canyon maps");
+const CANYON = canyon("tutorial-canyon");
 
 /** The paving `id` marks a site with on `of`. */
 function marked(of: MapData, id: string) {
@@ -71,15 +66,22 @@ function site(of: MapData, id: string): Vec2 {
   };
 }
 
-/** A map's trail: its arrival, its stations' sites, its exit. */
-function trail(stations: readonly number[]): string[] {
-  return ["arrival", ...stations.map((station) => `site-${String(station)}`), "exit"];
+/** The trail by one arm of the junction: the arrival, every site, the exit. */
+function trail(arm: "site-13n" | "site-13s"): string[] {
+  return [
+    "arrival",
+    ...[4, 5, 6, 7, 8, 9, 11, 12, 13].map((station) => `site-${String(station)}`),
+    arm,
+    "site-13r",
+    "site-14",
+    "exit",
+  ];
 }
 
-/** Each map's legs, site to next site. */
-const LEGS = PARTS.flatMap(({ map, stations }) => {
-  const ids = trail(stations);
-  return ids.slice(1).map((id, k) => [map, ids[k] ?? "", id] as const);
+/** The trail's legs, site to next site, by either arm. */
+const LEGS = (["site-13n", "site-13s"] as const).flatMap((arm) => {
+  const ids = trail(arm);
+  return ids.slice(1).map((id, k) => [ids[k] ?? "", id] as const);
 });
 
 /** How far `point` is from the segment `a`–`b`. */
@@ -125,30 +127,31 @@ describe("every tutorial map (#3245)", () => {
 });
 
 describe("the tutorial canyon (#3245)", () => {
-  it("marks each map's arrival pad, station sites and exit", () => {
-    for (const { map, stations } of PARTS) {
+  it("marks the arrival pad, every station's site but 10's, both arms, the rejoin and the exit", () => {
+    for (const id of [...trail("site-13n"), "site-13s", "site-13b"]) {
       expect(
-        trail(stations).map((id) => map.paving?.some((paving) => paving.id === id)),
-        map.id,
-      ).not.toContain(false);
+        CANYON.paving?.some((paving) => paving.id === id),
+        id,
+      ).toBe(true);
     }
+    expect(CANYON.paving?.some((paving) => paving.id === "site-10")).toBe(false);
   });
 
   it("walks from each arrival through every site in order to the exit once the wall is down", () => {
-    for (const [map, from, to] of LEGS) {
-      expect(walks(map, from, to), `${map.id}: ${from} → ${to}`).toBe(true);
+    for (const [from, to] of LEGS) {
+      expect(walks(CANYON, from, to), `${from} → ${to}`).toBe(true);
     }
   });
 
   it("does not pass station 5 while its wall stands", () => {
-    const shut = walled(first);
+    const shut = walled(CANYON);
     expect(walks(shut, "arrival", "site-4")).toBe(true);
     expect(walks(shut, "site-4", "site-6")).toBe(false);
     expect(walks(shut, "arrival", "exit")).toBe(false);
   });
 
   it("walks down from the ledge at station 9 to the trail under it", () => {
-    const map = second;
+    const map = CANYON;
     const ledge = map.decks.find(({ id }) => id === "ledge");
     if (ledge?.footprint.kind !== "rect") throw new Error("no ledge");
     const { x, y, width, height } = ledge.footprint;
@@ -200,15 +203,15 @@ describe("the tutorial canyon (#3245)", () => {
     ).toBeLessThanOrEqual(4);
   });
 
-  it.each(PARTS.map(({ map }) => map))(
-    "runs $id's lava streams in rock, a body's radius and more from anywhere a body stands",
-    (map) => {
+  it("runs its lava streams in rock, a body's radius and more from anywhere a body stands", () => {
+    const map = CANYON;
+    {
       if (map.bounds.kind !== "outline") throw new Error("the canyon has an outline");
       const ground = { kind: "polygon" as const, points: map.bounds.outline };
       // Every floor: the ground inside the outline, and every deck on it.
       const floors = [ground, ...map.decks.map(({ footprint }) => footprint)];
       const streams = (map.paving ?? []).filter(({ look }) => look === "lava");
-      expect(streams).toHaveLength(2);
+      expect(streams).toHaveLength(4);
       for (const stream of streams) {
         const lava = shapeVertices(stream.area);
         for (const floor of floors) {
@@ -228,12 +231,46 @@ describe("the tutorial canyon (#3245)", () => {
           ).toBe(false);
         }
       }
-    },
-  );
+    }
+  });
+
+  it("holds at most half of MAX_LIGHTS, so zone glow and teleport lights fit (visual-style §2)", () => {
+    expect(CANYON.lighting?.lights.length ?? 0).toBeLessThanOrEqual(MAX_LIGHTS / 2);
+  });
 
   it("is at least 340 wide at every pinch, so the tutor and the player pass", () => {
-    for (const [map, from, to] of LEGS) {
-      expect(walks(map, from, to, 170), `${map.id}: ${from} → ${to}`).toBe(true);
+    for (const [from, to] of LEGS) {
+      expect(walks(CANYON, from, to, 170), `${from} → ${to}`).toBe(true);
+    }
+  });
+
+  it("splits the trail at station 13 into two arms round a rock island, neither through it", () => {
+    const island = CANYON.walls.find(({ kind }) => kind === "polygon");
+    if (island === undefined) throw new Error("no island");
+    expect(pointInShape(site(CANYON, "site-13"), island)).toBe(false);
+    expect(pointInShape({ x: 5450, y: 700 }, island)).toBe(true);
+    // Each arm alone, the other walled shut, still reaches the rejoin.
+    for (const [arm, other] of [
+      ["site-13n", "site-13s"],
+      ["site-13s", "site-13n"],
+    ] as const) {
+      const { x, y } = site(CANYON, other);
+      const shut: MapData = {
+        ...CANYON,
+        walls: [
+          ...CANYON.walls,
+          {
+            kind: "rect",
+            x: x - 30,
+            y: y - 250,
+            width: 60,
+            height: 500,
+            layer: CANYON.groundLayer,
+          },
+        ],
+      };
+      expect(walks(shut, "site-13", arm, 170), arm).toBe(true);
+      expect(walks(shut, arm, "site-13r", 170), arm).toBe(true);
     }
   });
 });

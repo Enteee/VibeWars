@@ -13,7 +13,6 @@ import {
   callStation,
   pingStation,
   climbStation,
-  rampStation,
   tunnelStation,
   dodgeStation,
   gateStation,
@@ -133,7 +132,7 @@ describe("the tutorial runner", () => {
   });
 
   it("starts at station `first`, in that station's world (#3383)", () => {
-    const later: Station = { ...walkStation(vec2(400, 400), 0), id: "later", world: "canyon-2" };
+    const later: Station = { ...walkStation(vec2(400, 400), 0), id: "later", world: "canyon" };
     const runner = createTutorialRunner(
       [walkStation(MARK, 0), later],
       () => KEYMAP_PRESETS.classic,
@@ -142,7 +141,7 @@ describe("the tutorial runner", () => {
     );
     expect(runner.tick(AWAY, 0)).toMatchObject({
       station: "later",
-      world: "canyon-2",
+      world: "canyon",
       say: { key: "tutorial.walk.intro" },
       highlight: { kind: "ground", at: vec2(400, 400) },
     });
@@ -173,7 +172,7 @@ describe("the tutorial runner", () => {
     ]);
   });
 
-  it("runs walk, look around and step in, swaps to the canyon once, dodges, breaks the wall, heals the tutor, crosses the bad ground, swaps to the second map, kills the rats, climbs the ledge, climbs to the high deck, goes through the tunnel, calls a rat, pings the way, goes through the mist gate and finishes (#3247, #3302, #3303, #3310, #3316, #3323, #3325, #3326, #3331, #3332, #3334)", () => {
+  it("runs walk, look around and step in, swaps to the canyon once, dodges, breaks the wall, heals the tutor, crosses the bad ground, kills the rats, climbs the ledge, goes through the tunnel, calls a rat, pings an arm of the junction, goes through the mist gate and finishes (#3247, #3302, #3303, #3310, #3316, #3323, #3326, #3331, #3332, #3334, #3792)", () => {
     const pad = vec2(200, -900);
     const goal = vec2(2850, 1800);
     const face = vec2(3480, 1800);
@@ -182,14 +181,16 @@ describe("the tutorial runner", () => {
     const ledge = { kind: "rect", x: 3290, y: 1800, width: 620, height: 180 } as const;
     const stairs = { kind: "rect", x: 3890, y: 1800, width: 140, height: 180 } as const;
     const onLedge = vec2(3600, 1890);
-    const onDeck = vec2(1980, 1610);
-    const onLanding = vec2(2350, 1560);
     const tunnel = { kind: "rect", x: 2080, y: 450, width: 720, height: 500 } as const;
     const pastTunnel = vec2(3240, 700);
-    const fork = vec2(5800, 700);
-    const eastEnd = vec2(6450, 700);
-    const lounge = vec2(6260, 1160);
-    const eastSide = vec2(6000, 700);
+    const junction = {
+      fork: vec2(4900, 700),
+      layer: 1,
+      north: vec2(5450, 375),
+      south: vec2(5450, 1335),
+      rejoin: vec2(6150, 700),
+      bay: vec2(5660, 1545),
+    };
     const gate = vec2(7600, 700);
     const bar = [
       "warrior.enraged-smash",
@@ -212,10 +213,9 @@ describe("the tutorial runner", () => {
         badGroundStation(across, 0),
         ratsStation(pocket, { runner: "rat-1", big: "rat-2" }, bar),
         climbStation(ledge, stairs, 2, 1),
-        rampStation(onDeck, 3, { kind: "rect", x: 2260, y: 1480, width: 180, height: 160 }, 2),
         tunnelStation(tunnel, 0, 1, pastTunnel),
         callStation(),
-        pingStation(fork, eastEnd, lounge, eastSide),
+        pingStation(junction),
         gateStation(gate, 1),
       ],
       () => KEYMAP_PRESETS.classic,
@@ -290,22 +290,32 @@ describe("the tutorial runner", () => {
       [{ ...climb, self: onLedge, selfLayer: 2 }, 11_000 + 8 * PRAISE_MS + 10 * ASIDE_MS],
       [{ ...climb, self: onLedge, belowClicked: true }, 11_000 + 8 * PRAISE_MS + 11 * ASIDE_MS],
       [{ ...climb, self: onLedge, belowClicked: true }, 11_000 + 9 * PRAISE_MS + 11 * ASIDE_MS],
-      [{ ...climb, self: onLanding, selfLayer: 2 }, 11_000 + 9 * PRAISE_MS + 12 * ASIDE_MS],
-      [{ ...climb, self: onDeck, selfLayer: 3 }, 11_000 + 9 * PRAISE_MS + 13 * ASIDE_MS],
-      [{ ...climb, self: onDeck, selfLayer: 3 }, 11_000 + 10 * PRAISE_MS + 13 * ASIDE_MS],
-      [{ ...climb, self: vec2(2200, 700), selfLayer: 0 }, 11_000 + 10 * PRAISE_MS + 14 * ASIDE_MS],
-      [{ ...climb, self: vec2(2700, 700), selfLayer: 0 }, 11_000 + 10 * PRAISE_MS + 15 * ASIDE_MS],
-      [{ ...climb, self: pastTunnel, selfLayer: 1 }, 11_000 + 10 * PRAISE_MS + 16 * ASIDE_MS],
+      [{ ...climb, self: vec2(2200, 700), selfLayer: 0 }, 11_000 + 10 * PRAISE_MS + 12 * ASIDE_MS],
+      [{ ...climb, self: vec2(2700, 700), selfLayer: 0 }, 11_000 + 10 * PRAISE_MS + 13 * ASIDE_MS],
+      [{ ...climb, self: pastTunnel, selfLayer: 1 }, 11_000 + 10 * PRAISE_MS + 14 * ASIDE_MS],
       [{ ...called, calledId: "call-rat-1" }, 11_000 + 11 * PRAISE_MS + 16 * ASIDE_MS],
       [
         { ...called, calledId: "call-rat-1", hitByTutor: new Set(["call-rat-1"]) },
         11_000 + 11 * PRAISE_MS + 17 * ASIDE_MS,
       ],
-      [{ ...called, tutor: fork }, 11_000 + 12 * PRAISE_MS + 17 * ASIDE_MS],
-      [{ ...called, lastPing: lounge, tutor: lounge }, 11_000 + 12 * PRAISE_MS + 18 * ASIDE_MS],
-      [{ ...called, lastPing: eastEnd, tutor: eastSide }, 11_000 + 12 * PRAISE_MS + 19 * ASIDE_MS],
-      [{ ...called, lastPing: eastEnd, tutor: eastSide }, 11_000 + 13 * PRAISE_MS + 19 * ASIDE_MS],
-      [{ ...called, self: gate, tutor: gate }, 12_000 + 13 * PRAISE_MS + 19 * ASIDE_MS],
+      [{ ...called, tutor: junction.fork }, 11_000 + 12 * PRAISE_MS + 17 * ASIDE_MS],
+      [
+        { ...called, lastPing: junction.south, tutor: junction.fork },
+        11_000 + 12 * PRAISE_MS + 18 * ASIDE_MS,
+      ],
+      [
+        { ...called, lastPing: junction.south, tutor: junction.south },
+        11_000 + 12 * PRAISE_MS + 19 * ASIDE_MS,
+      ],
+      [
+        { ...called, lastPing: junction.south, self: junction.rejoin, tutor: junction.rejoin },
+        11_000 + 12 * PRAISE_MS + 20 * ASIDE_MS,
+      ],
+      [
+        { ...called, lastPing: junction.south, self: junction.rejoin, tutor: junction.rejoin },
+        11_000 + 13 * PRAISE_MS + 20 * ASIDE_MS,
+      ],
+      [{ ...called, self: gate, tutor: gate }, 12_000 + 13 * PRAISE_MS + 20 * ASIDE_MS],
     ];
     const beats = ticks.map(([view, now]) => runner.tick(view, now));
     expect(beats.map((beat) => beat.say?.key)).toEqual([
@@ -341,9 +351,6 @@ describe("the tutorial runner", () => {
       "tutorial.climb.intro",
       "tutorial.climb.under",
       "tutorial.climb.praise",
-      "tutorial.ramp.intro",
-      "tutorial.ramp.landing",
-      "tutorial.ramp.praise",
       "tutorial.tunnel.intro",
       undefined,
       undefined,
@@ -351,20 +358,20 @@ describe("the tutorial runner", () => {
       "tutorial.call.intro",
       "tutorial.call.praise",
       "tutorial.ping.intro",
-      "tutorial.ping.pocket",
+      "tutorial.ping.called",
+      "tutorial.ping.view",
       "tutorial.ping.praise",
       "tutorial.gate.intro",
       "tutorial.gate.praise",
     ]);
-    // The compass is lit while a ping is wanted, the fork marked beside it.
-    expect([beats[41]?.highlight, beats[41]?.mark]).toEqual([
+    // The compass is lit while a ping is wanted, the fork marked beside it, then the rejoin.
+    expect([beats[38]?.highlight, beats[38]?.mark, beats[39]?.mark]).toEqual([
       { kind: "hud", element: ".compass" },
-      fork,
+      junction.fork,
+      junction.rejoin,
     ]);
     // The party window, where the tutor stands, is lit while the call is wanted.
-    expect(beats[39]?.highlight).toEqual({ kind: "hud", element: ".party-window" });
-    // The high deck is marked on its layer.
-    expect(beats[32]?.highlight).toEqual({ kind: "ground", at: onDeck, layer: 3 });
+    expect(beats[36]?.highlight).toEqual({ kind: "hud", element: ".party-window" });
     // The ledge is marked on its layer, then the ground under its middle.
     expect(beats.slice(29, 31).map((beat) => beat.highlight)).toEqual([
       { kind: "ground", at: onLedge, layer: 2 },
@@ -417,10 +424,9 @@ describe("the tutorial runner", () => {
     // The world turns once, under the step in's praise, and stays turned.
     expect(beats.map((beat) => beat.world)).toEqual([
       ...Array<string>(5).fill("battlefield"),
-      ...Array<string>(15).fill("canyon"),
-      ...Array<string>(26).fill("canyon-2"),
+      ...Array<string>(39).fill("canyon"),
     ]);
-    expect(beats.map((beat) => beat.finished)).toEqual([...Array<boolean>(45).fill(false), true]);
+    expect(beats.map((beat) => beat.finished)).toEqual([...Array<boolean>(43).fill(false), true]);
   });
 
   it("says a station's reaction once, then no more hints until it is done (#3302)", () => {
