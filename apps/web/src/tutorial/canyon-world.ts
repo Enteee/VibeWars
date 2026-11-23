@@ -171,11 +171,12 @@ export function pocketStart(): CanyonStart {
 }
 
 /**
- * The canyon entered at station 11 (#3383), which only an e2e build's
- * seeded start does: the pair at the foot of station 9's ledge, on the
- * trail where it leaves them, and station 8's rats slain.
+ * The canyon entered at station 9 or 11 (#3383, #3878), which only an
+ * e2e build's seeded start does: the pair at the foot of station 9's
+ * ledge, on the trail where station 9 leaves them, and station 8's
+ * rats slain.
  */
-export function tunnelStart(): CanyonStart {
+export function ledgeFootStart(): CanyonStart {
   return { position: LEDGE.foot, layer: LEDGE.lower, ratsSlain: true };
 }
 

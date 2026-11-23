@@ -50,7 +50,7 @@ import {
   ratPocket,
   forkStart,
   gateStart,
-  tunnelStart,
+  ledgeFootStart,
   tunnelTutor,
   wallStart,
   wallTutor,
@@ -129,7 +129,8 @@ const MIST_GATE: MistGateProp = {
 const SEEDED_STARTS: ReadonlyMap<string, () => CanyonStart> = new Map([
   ["break-wall", wallStart],
   ["rats", pocketStart],
-  ["tunnel", tunnelStart],
+  ["climb", ledgeFootStart],
+  ["tunnel", ledgeFootStart],
   ["ping", forkStart],
   ["gate", gateStart],
 ]);

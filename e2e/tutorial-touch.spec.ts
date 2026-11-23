@@ -89,8 +89,7 @@ const REACH_PX = 160;
 const CLEAR_ABOVE_PX = 100;
 
 test("a phone climbs down under the ledge with a long-press (#3878)", async ({ page }) => {
-  // From the arrival some 3000 units east, up the stairs and down again on
-  // a loaded runner.
+  // From the stairs' foot, up and down again on a loaded runner.
   test.setTimeout(300_000);
   await page.goto("./?menu-background=bench-flat&tutorial-station=9");
   const frame = page.locator(".tutorial-frame");
