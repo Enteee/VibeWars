@@ -40,6 +40,7 @@ linha de frente um passo à frente, os à distância ao seu lado, os
 curandeiros atrás, e eles seguem você aonde você for. Depois que você
 fica parado por algum tempo, eles continuam jogando como uma equipe só de
 bots jogaria.
+Enquanto você estiver ativo, um bot que uma luta afastou de você volta para perto de você, a menos que esteja muito ferido ou tenha um inimigo colado nele.
 
 Arqueiros e lanceiros tomam o terreno alto quando é seguro.
 Um bot que dois inimigos focam, ou que está abaixo de metade da vida e a perde depressa, esconde-se da vista deles até três segundos: atrás de um muro, sob uma plataforma ou em terreno alto.

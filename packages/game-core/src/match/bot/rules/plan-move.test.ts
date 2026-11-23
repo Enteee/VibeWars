@@ -3,9 +3,16 @@ import { describe, expect, it } from "vitest";
 import { distance, vec2, type Vec2 } from "../../../vec2.js";
 import { createCursor, type BehaviourCursor } from "../../behaviour.js";
 import type { Participant } from "../../simulation.js";
-import { flankParty, flankWaypoint, planPhase, type TeamPlan } from "../plan.js";
+import {
+  ESCORT_LEASH,
+  escortSpot,
+  flankParty,
+  flankWaypoint,
+  planPhase,
+  type TeamPlan,
+} from "../plan.js";
 import planMove, { HOLD_LEASH, PLAN_ELBOW } from "./plan-move.js";
-import { body, contextFor, match, ruleFor } from "./test-support.js";
+import { WARRIOR, body, contextFor, fighter, match, ruleFor } from "./test-support.js";
 
 describe("plan-move (#3832)", () => {
   // Team 0 spawns round (100,500), team 1 round (950,500): the hold
@@ -102,5 +109,45 @@ describe("plan-move (#3832)", () => {
 
   it("lets a holder within its leash fight from there", () => {
     expect(moveOf("bot", "hold", { at: vec2(397 + 200, 500) })).toBeUndefined();
+  });
+});
+
+describe("plan-move for a bot escorting a human (#3853)", () => {
+  // The human `you` at (800,400), its bot `w` west of them by `apart`,
+  // the foe `apart - foeFrom` east of the bot.
+  const isBot = (id: string): boolean => id !== "you";
+  function escortOf(apart: number, foeFrom: number, health = 1) {
+    const sim = match([
+      fighter("you", 0, WARRIOR, vec2(800, 400)),
+      fighter("w", 0, WARRIOR, vec2(800 - apart, 400)),
+      fighter("foe", 1, WARRIOR, vec2(800 - apart + foeFrom, 400)),
+    ]);
+    const w = sim.get("w");
+    if (w === undefined) throw new Error("no w");
+    w.combatant.health *= health;
+    const view = ruleFor(sim, "w", {}, { isBot });
+    return {
+      intent: planMove.decide(view),
+      spot: escortSpot(view.context, view.self, "frontline", createCursor()),
+    };
+  }
+
+  it("walks back to its escort spot from 500 away, past a foe at 300", () => {
+    const { intent, spot } = escortOf(500, 300);
+    expect(spot).toBeDefined();
+    expect(intent?.moveTo).toEqual(spot?.point);
+  });
+
+  it("fights within ESCORT_LEASH of the human", () => {
+    expect(escortOf(200, 100).intent).toBeUndefined();
+    expect(escortOf(ESCORT_LEASH, 100).intent).toBeUndefined();
+  });
+
+  it("fights below half health", () => {
+    expect(escortOf(500, 300, 0.4).intent).toBeUndefined();
+  });
+
+  it("fights a foe at its elbow", () => {
+    expect(escortOf(500, 60).intent).toBeUndefined();
   });
 });

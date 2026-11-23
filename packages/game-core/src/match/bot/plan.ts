@@ -42,6 +42,9 @@ export const ESCORT_OFFSET: Readonly<Record<BotRole, number>> = {
   healer: -150,
 };
 
+/** How far an escorting bot strays from its nearest human before it walks back (#3853). */
+export const ESCORT_LEASH = REGROUP_SPREAD;
+
 /** How long an escorting bot keeps whether it has a route to its spot (#3833). */
 export const ESCORT_ROUTE_SECONDS = 0.5;
 

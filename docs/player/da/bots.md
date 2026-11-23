@@ -39,6 +39,7 @@ Bots på dit hold bliver i stedet hos dig: frontlinjen et skridt foran,
 afstandskæmpere ved siden af dig, healere bagved, og de følger med, hvor
 du går. Når du har stået uvirksom et stykke tid, spiller de videre, som et
 hold af bots ville.
+Mens du er aktiv, går en bot, som en kamp har trukket langt væk fra dig, tilbage til dig, medmindre den er hårdt såret, eller en fjende står lige ved den.
 
 Bueskytter og spydkastere indtager det høje terræn, når det er sikkert.
 En bot, som to fjender går efter, eller som har under halvt helbred og hurtigt mister det, dukker sig ud af deres syn i op til tre sekunder: bag en mur, under et dæk eller op på højt terræn.
