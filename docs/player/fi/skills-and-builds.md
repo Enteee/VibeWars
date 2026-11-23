@@ -158,6 +158,8 @@ tyhjänä paikkana. Buildi on sinun, kun painat **Tallenna**.
 **Esc** poistuu tallentamatta ja kysyy ensin, jos muutit jotain.
 **Jaa**, **Lataa GW1-koodi**, **Kopioi** ja **Poista** ovat **⋯**-valikossa.
 
+Buildia, jossa on ongelma, ei voi tallentaa, eikä harjoitusalue käynnisty sillä. Jos sellainen build silti päätyy otteluun, pelaat siellä aloitusbuildilla, ja viesti kertoo miksi.
+
 Tiimikoodi ladataan sen sijaan **Tiimieditorissa**: liitä se mihin tahansa siellä,
 tai avaa tiimibuildi ja käytä sen **⋯** → **Lataa tiimi**.
 
@@ -189,7 +191,11 @@ paneeli on Hahmoeditorin kirjasto, jossa on **Omat hahmot** -välilehti
 ennen välilehtiä **Taidot** ja **Kamat**. **Omat hahmot** -välilehdellä
 vedä yksi hahmoistasi jäsenen päälle tehdäksesi jäsenestä sen kopion.
 Kopio on tiimin oma: sen tai sen lähteenä olleen hahmon muuttaminen
-jättää toisen ennalleen. **Taidot**-välilehdellä taitokirjasto näyttää
+jättää toisen ennalleen. Toisin päin vedä jäsen **Omat hahmot**
+-kohtaan tai sen välilehdelle tallentaaksesi sen uudeksi omaksi hahmoksesi;
+jos sen nimi on jo käytössä, se saa perään " (copy)", ja tiimi pitää jäsenen
+ennallaan.
+**Taidot**-välilehdellä taitokirjasto näyttää
 viimeksi napsauttamasi jäsenen taidot; vedä yksi minkä tahansa jäsenen
 paikkaan varustaaksesi sen sinne. Jäsenen omassa palkissa jo oleva taito
 siirtyy siihen paikkaan. Pudotus, jota jäsen ei voi ottaa, toisen
@@ -212,7 +218,7 @@ sivukäden esineet, ja on näkyvissä vain, kun jäsen on auki: napsauta
 yhtä varustaaksesi sen tai vedä se sen käsiin. Yksi jäsen on auki
 kerrallaan; **Esc** sulkee sen. Uusi ammatti pudottaa taidot ja tasot,
 joita se ei voi käyttää, ja tarjoaa **Kumoa**-painikkeen.
-Paina jäsenen nimeä tai **Avaa hahmonäkymässä** muokataksesi sitä
+Paina jäsenen nimeä tai sen **✎**-painiketta muokataksesi sitä
 buildieditorissa;
 sen **Tallenna** palauttaa sen tiimiin, ja tiimin oma **Tallenna** säilyttää kaiken
 ja vie sinut takaisin Tiimieditoriin. **Esc** poistuu

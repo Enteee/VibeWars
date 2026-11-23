@@ -133,6 +133,8 @@ V editoru je brnění figurína. Klikni na očíslovaný kus nebo na jeho řáde
 
 Vitae a Attunement se sčítají: pět run Attunement dá +10 energie. Každá jiná runa se počítá jednou, ať jich neseš kolik chceš. Zkrácení stavů z různých zdrojů se také sčítají, každé se počítá z plné doby a zaokrouhlí se na celé sekundy: Restoration a "Fear Cuts Deeper" zkrátí 8sekundové Krvácení na 4.
 
+Editor neuloží dva díly se stejnou runou ani s runami stejného atributu: počítal by se jen nejsilnější bonus, ale každá penalizace zdraví ano. Najeď v editoru na zdraví a uvidíš, odkud se bere: základ, runy, insignie a úpravy.
+
 Runu kusu vybíráš na stejném místě jako jeho insignii: klikni na kus na figuríně.
 
 Editor všechno sečte za tebe: zdraví, energii, brnění a poškození, jak je má tvoje první sada zbraní.

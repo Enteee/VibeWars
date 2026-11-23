@@ -141,6 +141,8 @@ nie ma, pojawia się jako puste miejsce. Build jest twój, gdy naciśniesz **Zap
 zapisywania, a jeśli coś zmieniłeś, najpierw pyta.
 **Udostępnij**, **Wczytaj kod GW1**, **Duplikuj** i **Usuń** są pod **⋯**.
 
+Buildu z problemem nie da się zapisać, a obszar treningowy z nim nie wystartuje. Jeśli taki build mimo to trafi do meczu, grasz w nim buildem startowym, a komunikat mówi dlaczego.
+
 Kod drużyny wczytuje się natomiast w **Kreatorze drużyn**: wklej go
 tam w dowolnym miejscu albo otwórz build drużyny i użyj jego **⋯** →
 **Wczytaj drużynę**.
@@ -170,7 +172,10 @@ Panel po prawej to
 biblioteka Kreatora postaci, z kartą **Moje postacie** przed **Umiejętności**
 i **Sprzęt**. Na **Moje postacie** przeciągnij jedną ze swoich postaci na członka, aby
 uczynić z niego jej kopię. Kopia należy do drużyny: zmiana jej lub postaci, z której
-powstała, nie dotyka tej drugiej. Na **Umiejętności** biblioteka pokazuje umiejętności
+powstała, nie dotyka tej drugiej. W drugą stronę przeciągnij członka na
+**Moje postacie** albo na tę kartę, aby zapisać go jako nową własną postać; jeśli
+jego nazwa jest zajęta, dostaje " (copy)", a drużyna zachowuje członka bez zmian.
+Na **Umiejętności** biblioteka pokazuje umiejętności
 członka, którego kliknięto ostatnio; przeciągnij jedną na miejsce dowolnego członka,
 aby ją tam założyć. Na pasku tego członka umiejętność, która już na nim jest,
 przenosi się na to miejsce. Upuszczenie, którego członek nie przyjmie, umiejętność
@@ -190,7 +195,7 @@ do drugiej ręki otwartego członka i jest dostępny tylko, gdy któryś jest ot
 kliknij jeden, aby go założyć, lub przeciągnij na jego ręce. Otwarty jest jeden członek
 naraz; **Esc** go zamyka. Nowa profesja usuwa umiejętności i rangi, których nie może
 używać, z opcją **Cofnij**.
-Naciśnij nazwę członka lub **Otwórz na ekranie postaci**, aby edytować go w edytorze
+Naciśnij nazwę członka lub jego przycisk **✎**, aby edytować go w edytorze
 buildu;
 jego **Zapisz** umieszcza go z powrotem w drużynie, a **Zapisz** drużyny zachowuje wszystko
 i wraca do Kreatora drużyn. **Esc** wychodzi bez zapisywania, ale najpierw pyta.

@@ -2,8 +2,14 @@ import { expect, test, type Locator, type Page } from "@playwright/test";
 
 import { STORAGE_NAMESPACE } from "./helpers/base.js";
 import { openRail } from "./helpers/menu.js";
-import { expectTeamSize, expectTeamSizeAtMost, openPeers, setTeamSize } from "./helpers/peers.js";
-import { namePlayer } from "./helpers/player.js";
+import {
+  expectTeamSize,
+  expectTeamSizeAtMost,
+  openPeers,
+  setTeamSize,
+  waitForMatchStart,
+} from "./helpers/peers.js";
+import { namePlayer, ownPlayerKey } from "./helpers/player.js";
 import { bringStarter, starterKey } from "./helpers/starter.js";
 import {
   parseReceipt,
@@ -201,6 +207,7 @@ test("two players queue for a 1v1, are matched, see the versus splash, play it o
  * result shows, while Alice casts.
  */
 async function aliceBeatsBob(alice: Page, bob: Page): Promise<[ResultHud, ResultHud]> {
+  await waitForMatchStart([alice, bob]);
   await alice.keyboard.press(key("target-next"));
   await alice.keyboard.press(key("attack"));
   const aliceSaw = resultShown(alice);
@@ -223,26 +230,11 @@ async function aliceBeatsBob(alice: Page, bob: Page): Promise<[ResultHud, Result
   return Promise.all([aliceSaw, bobSaw]);
 }
 
-/**
- * Give `page` a player key of its own (#3680): two pages of one context
- * share localStorage, and so one key, which a ranked match cannot seat
- * twice. The key and its receipt chain live in the tab's sessionStorage.
- * And keep, in `__rankedPosts`, every ranked receipt the page posts.
- */
+/** Give `page` a player key of its own, and keep, in `__rankedPosts`, every ranked receipt it posts. */
 async function ownRankedSelf(page: Page): Promise<void> {
+  await ownPlayerKey(page);
   // Source text, as the e2e tsconfig has no DOM lib (see builds.spec.ts).
   await page.addInitScript(`
-    const own = (key) => key.endsWith(".playerKey") || key.endsWith(".rankedPrev");
-    const get = Storage.prototype.getItem;
-    const set = Storage.prototype.setItem;
-    Storage.prototype.getItem = function (key) {
-      return this === localStorage && own(key) ? get.call(sessionStorage, key) : get.call(this, key);
-    };
-    Storage.prototype.setItem = function (key, value) {
-      return this === localStorage && own(key)
-        ? set.call(sessionStorage, key, value)
-        : set.call(this, key, value);
-    };
     window.__rankedPosts = [];
     const post = BroadcastChannel.prototype.postMessage;
     BroadcastChannel.prototype.postMessage = function (message) {

@@ -150,6 +150,8 @@ dán mã ở bất kỳ đâu trong trình sửa mà không phải ô nhập ch�
 không lưu, và hỏi trước nếu bạn đã thay đổi gì. **Chia sẻ**, **Nạp mã GW1**,
 **Nhân bản** và **Xóa** nằm dưới **⋯**.
 
+Build có vấn đề không thể lưu, và khu luyện tập không bắt đầu với nó. Nếu một build như vậy vẫn vào được trận, bạn chơi với build khởi đầu ở trận đó, và một thông báo cho biết lý do.
+
 Mã đội thì được tải ở **Tạo Đội**: dán nó ở bất kỳ đâu tại đó, hoặc mở
 một build đội và dùng **⋯** → **Tải đội** của nó.
 
@@ -180,7 +182,11 @@ Bảng bên phải là thư viện
 của Tạo Nhân Vật, với thẻ **Nhân vật của tôi** đứng trước **Kỹ năng** và
 **Đồ**. Ở **Nhân vật của tôi**, kéo một nhân vật của bạn lên một thành viên để
 biến thành viên đó thành bản sao của nhân vật ấy. Bản sao là của riêng đội:
-thay đổi nó, hoặc nhân vật gốc, sẽ để nguyên cái còn lại. Ở **Kỹ năng**, thư
+thay đổi nó, hoặc nhân vật gốc, sẽ để nguyên cái còn lại. Ngược lại, kéo một thành viên lên
+**Nhân vật của tôi**, hoặc lên thẻ đó, để lưu nó thành một nhân vật mới của
+bạn; nếu tên đã bị dùng thì nó được thêm " (copy)", và đội vẫn giữ nguyên
+thành viên đó.
+Ở **Kỹ năng**, thư
 viện kỹ năng hiển thị kỹ năng của thành viên bạn nhấn vào gần nhất; kéo một
 kỹ năng lên ô của bất kỳ thành viên nào để trang bị nó ở đó. Trên thanh của
 chính thành viên đó, kỹ năng đã có trên thanh sẽ chuyển sang ô đó. Lần thả
@@ -200,7 +206,7 @@ kỹ năng vào ô trống đầu tiên. **Đồ** chứa vũ khí và món tay 
 viên đang mở, và chỉ có ở đó khi một thành viên đang mở: nhấn vào một món để
 trang bị, hoặc kéo nó lên tay. Mỗi lúc chỉ mở một thành viên; **Esc** đóng
 nó. Lớp mới sẽ bỏ các kỹ năng và cấp mà nó không dùng được, kèm nút **Hoàn
-tác**. Nhấn vào tên một thành viên, hoặc **Mở trong màn hình Nhân vật**, để
+tác**. Nhấn vào tên một thành viên, hoặc nút **✎** của nó, để
 sửa nó trong trình sửa build; nút **Lưu** ở đó đưa nó trở lại đội, và nút
 **Lưu** của chính đội giữ tất cả và đưa bạn về Tạo Đội. **Esc** rời đi mà
 không lưu, và hỏi trước. **Chia sẻ**, **Tải đội**, **Nhân bản** và **Xóa**

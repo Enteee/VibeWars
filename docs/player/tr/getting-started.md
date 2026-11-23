@@ -85,7 +85,9 @@ götürülürsün. Beklerken sekmeyi kapatmak seni hemen sıradan çıkarır.
 Maç bitince **Yeniden sıraya gir** diyebilir ya da az önce oynadığın
 takımla **Birlikte kal** diyebilirsin.
 
-Skorların yanında iki grafik maçı zaman içinde anlatır. **Sen** verdiğin
+Her maç, sıradan, kurulmuş ya da bir lobide, skorlarıyla biter ve onların
+yanında iki grafik maçı zaman içinde anlatır; sıra ekranı sıradan gelen bir
+maçtan sonra onları yeniden gösterir. **Sen** verdiğin
 hasarı, aldığın hasarı, iyileştirmeyi ve Enerjiyi çizer; **Takımlar** her
 takımın can havuzunu toplam hasarının üstünde çizer. Zaman ekseninin altındaki
 işaretler öldürmeleri, ölümleri, kesintileri, ele geçirmeleri ve dirilişleri

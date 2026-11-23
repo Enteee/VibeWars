@@ -172,6 +172,8 @@ una calculada sobre la duración completa y redondeada a un segundo
 entero: Restoration y "Fear Cuts Deeper" dejan un Sangrado de 8 segundos
 en 4.
 
+El editor no guarda dos piezas con la misma runa, ni con runas del mismo atributo: solo contaría la bonificación más fuerte, pero todas las penalizaciones de salud sí. Señala la salud en el editor para ver de dónde sale la tuya: base, runas, insignias y mejoras.
+
 La runa de una pieza se elige en el mismo sitio que su insignia: haz clic en
 la pieza de la figura.
 

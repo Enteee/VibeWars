@@ -30,6 +30,8 @@ objective off screen or under the HUD gets an outlined arrow at the
 screen edge: the stand or a shrine in its owner's colour, grey for
 nobody's, the altar in gold. A player's filled arrow draws over it.
 
+A match opens with everyone held near their spawn: you can walk a few steps, but not fight or use skills. A line at the top counts the players who are in. Once everyone is in, it counts down 10 seconds and the match starts, and its clock with it. A player who is not in after 20 seconds is not waited for: the countdown starts without them, and they can still join later.
+
 ## Annihilation
 
 **Defeat every foe.** The dead stay down until an ally resurrects them,
@@ -345,6 +347,9 @@ After a queued team match, its winners queue again on their own after
 20 seconds, and its losers (a draw too) return to the menu; a coded
 lobby's match returns everyone to the lobby. A button under the result
 skips the wait, or, for winners, leaves without queueing.
+Team Arena winners keep their Team Build and each player's seat for
+that next match, with no Team Lobby, unless the party changed since:
+someone left, went away or joined. Then they pick their team again.
 
 ## Heroes' Ascent
 

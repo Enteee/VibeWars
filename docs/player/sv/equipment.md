@@ -170,6 +170,8 @@ från olika källor läggs också ihop, var och en räknad på hela
 varaktigheten och avrundad till en hel sekund: Restoration och "Fear
 Cuts Deeper" tar ner en Bleeding på 8 sekunder till 4.
 
+Editorn sparar inte två delar med samma runa, eller med runor för samma egenskap: bara den starkaste bonusen skulle räknas, medan varje hälsostraff skulle det. Peka på hälsa i editorn för att se var din kommer ifrån: bas, runor, insignier och moddar.
+
 Du väljer en dels runa på samma ställe som dess insignia: klicka på delen
 på figuren.
 

@@ -147,6 +147,8 @@ menekan **Simpan**.
 **Esc** keluar tanpa menyimpan, dan bertanya dulu kalau kamu mengubah sesuatu.
 **Bagikan**, **Muat kode GW1**, **Duplikat** dan **Hapus** ada di bawah **⋯**.
 
+Build yang punya masalah tidak bisa disimpan, dan area latihan tidak dimulai dengannya. Jika build seperti itu tetap masuk ke pertandingan, kamu memakai build awal di sana, dan sebuah pesan menjelaskan alasannya.
+
 Kode tim dimuat di **Pembuat Tim** sebagai gantinya: tempel di mana saja di sana,
 atau buka sebuah build tim dan pakai **⋯** → **Muat tim**-nya.
 
@@ -176,7 +178,11 @@ Panel di kanan adalah perpustakaan Pembuat Karakter,
 dengan tab **Karakterku** sebelum **Skill** dan **Gear**. Di **Karakterku**, seret
 salah satu karaktermu ke seorang anggota untuk menjadikan anggota itu salinannya.
 Salinan adalah milik tim itu sendiri: mengubahnya, atau mengubah karakter asalnya,
-membiarkan yang lain seperti semula. Di **Skill**, perpustakaan skill menampilkan
+membiarkan yang lain seperti semula. Sebaliknya, seret seorang anggota ke
+**Karakterku**, atau ke tabnya, untuk menyimpannya sebagai karakter barumu sendiri;
+jika namanya sudah dipakai, ia mendapat " (copy)", dan tim tetap menyimpan
+anggota itu apa adanya.
+Di **Skill**, perpustakaan skill menampilkan
 skill anggota yang terakhir kamu klik; seret satu ke slot anggota mana pun
 untuk memasangnya di sana. Di bar milik anggota itu sendiri, skill yang sudah ada di sana pindah
 ke slot tersebut. Jatuhan yang tidak bisa diterima anggota, skill dari profesi lain
@@ -195,7 +201,7 @@ senjata dan off-hand milik anggota yang terbuka, dan hanya ada selama ada anggot
 yang terbuka: klik salah satunya untuk memasangnya, atau seret ke tangannya. Hanya satu
 anggota yang terbuka pada satu waktu; **Esc** menutupnya. Profesi baru membuang
 skill dan peringkat yang tidak bisa dipakainya, dengan tombol **Urung**.
-Tekan nama seorang anggota, atau **Buka di layar Karakter**, untuk mengeditnya di
+Tekan nama seorang anggota, atau tombol **✎**-nya, untuk mengeditnya di
 editor build;
 **Simpan**-nya menaruhnya kembali di tim, dan **Simpan** milik tim menyimpan semuanya
 lalu membawamu kembali ke Pembuat Tim. **Esc** keluar

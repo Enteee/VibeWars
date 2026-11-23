@@ -34,7 +34,7 @@ Nejrychlejší cesta do boje. V **Náhodné aréně** klikni na kartu postavy, z
 
 Po konci zápasu můžeš **Znovu do fronty**, nebo **Zůstat spolu** s týmem, se kterým jsi právě hrál.
 
-Vedle skóre vyprávějí dva grafy průběh zápasu v čase. **Ty** kreslí tvé způsobené poškození, přijaté poškození, léčení a Energii; **Týmy** kreslí zásobu zdraví každého týmu nad jeho celkovým poškozením. Značky pod časovou osou ukazují zabití, smrti, přerušení, obsazení a oživení: najeď na jednu, nebo na ni přejdi klávesou Tab, a přečteš si, co se stalo. Stiskem položky legendy skryješ nebo zobrazíš její čáru. Na telefonu jsou grafy pod skóre, které ukazuje tebe a dva další, dokud nestiskneš **Zobrazit vše**.
+Každý zápas končí svým skóre, ať z fronty, založený, nebo v lobby, a vedle něj vyprávějí dva grafy průběh zápasu v čase; obrazovka fronty je po zápase z fronty ukáže znovu. **Ty** kreslí tvé způsobené poškození, přijaté poškození, léčení a Energii; **Týmy** kreslí zásobu zdraví každého týmu nad jeho celkovým poškozením. Značky pod časovou osou ukazují zabití, smrti, přerušení, obsazení a oživení: najeď na jednu, nebo na ni přejdi klávesou Tab, a přečteš si, co se stalo. Stiskem položky legendy skryješ nebo zobrazíš její čáru. Na telefonu jsou grafy pod skóre, které ukazuje tebe a dva další, dokud nestiskneš **Zobrazit vše**.
 
 ## Založ zápas nebo se připoj
 

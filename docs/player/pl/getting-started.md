@@ -78,7 +78,9 @@ usuwa cię z kolejki.
 Po zakończeniu meczu możesz wybrać **Szukaj ponownie** albo **Zostańmy razem**
 z drużyną, z którą właśnie grałeś.
 
-Obok wyników dwa wykresy opowiadają przebieg meczu w czasie. **Ty** rysuje
+Każdy mecz kończy się na swoich wynikach, z kolejki, hostowany czy w lobby, a
+obok nich dwa wykresy opowiadają przebieg meczu w czasie; ekran kolejki
+pokazuje je ponownie po meczu z kolejki. **Ty** rysuje
 zadane obrażenia, otrzymane obrażenia, leczenie i Energię; **Drużyny** rysuje
 pulę zdrowia każdej drużyny nad jej łącznymi obrażeniami. Znaczniki pod osią
 czasu pokazują zabójstwa, śmierci, przerwania, przejęcia i wskrzeszenia: wskaż

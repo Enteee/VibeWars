@@ -84,7 +84,9 @@ Zatvorením karty počas čakania okamžite opustíš frontu.
 Keď sa zápas skončí, môžeš zvoliť **Znova do fronty** alebo **Zostať spolu**
 s tímom, s ktorým si práve hral.
 
-Vedľa skóre rozprávajú dva grafy priebeh zápasu v čase. **Ty** kreslí tvoje
+Každý zápas končí svojím skóre, či už z frontu, hostený, alebo v lobby, a
+vedľa neho rozprávajú dva grafy priebeh zápasu v čase; obrazovka frontu ich
+po zápase z frontu ukáže znova. **Ty** kreslí tvoje
 spôsobené poškodenie, prijaté poškodenie, liečenie a Energiu; **Tímy** kreslí
 zásobu zdravia každého tímu nad jeho celkovým poškodením. Značky pod časovou
 osou ukazujú zabitia, smrti, prerušenia, obsadenia a oživenia: ukáž na jednu

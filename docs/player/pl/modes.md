@@ -30,6 +30,8 @@ ekranem lub pod interfejsem dostaje konturową strzałkę przy krawędzi ekranu:
 lub kapliczka w kolorze właściciela, szara, gdy nie ma właściciela, ołtarz w złocie.
 Wypełniona strzałka gracza rysuje się na niej.
 
+Mecz zaczyna się od zatrzymania wszystkich przy ich punkcie odrodzenia: możesz zrobić kilka kroków, ale nie walczyć ani używać umiejętności. Wiersz u góry liczy graczy, którzy weszli. Gdy wejdą wszyscy, odlicza 10 sekund i mecz się zaczyna, a z nim jego zegar. Na gracza, który nie wszedł po 20 sekundach, się nie czeka: odliczanie zaczyna się bez niego, a on wciąż może dołączyć później.
+
 ## Anihilacja
 
 **Pokonaj wszystkich wrogów.** Polegli leżą, dopóki sojusznik ich nie wskrzesi, a
@@ -278,6 +280,7 @@ Każdy etap trwa 30 sekund i kończy się wcześniej, gdy wszyscy w Lobby druży
 Kto wyjdzie w trakcie Lobby drużyny, zostawia swoją postać botowi, więc strona zachowuje rozmiar. Kto wtedy dołączy, tylko ogląda.
 
 Po meczu drużynowym z kolejki zwycięzcy sami wracają do kolejki po 20 sekundach, a przegrani (także przy remisie) wracają do menu; mecz lobby z kodem przywraca wszystkich do lobby. Przycisk pod wynikiem pomija oczekiwanie albo, dla zwycięzców, wychodzi bez ustawiania się w kolejce.
+Zwycięzcy Areny drużynowej zachowują na następny mecz build drużyny i miejsce każdego gracza, bez lobby drużyny, chyba że grupa od tego czasu się zmieniła: ktoś wyszedł, jest nieobecny albo dołączył. Wtedy wybierają drużynę od nowa.
 
 ## Szczyt Bohaterów
 

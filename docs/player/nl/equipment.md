@@ -170,6 +170,8 @@ condities uit verschillende bronnen tellen ook op, elk berekend op de volle
 duur en afgerond op een hele seconde: Restoration en "Fear Cuts Deeper"
 brengen een Bloeding van 8 seconden terug tot 4.
 
+De editor slaat geen twee stukken op met dezelfde rune, of met runes van hetzelfde attribuut: alleen de sterkste bonus zou tellen, terwijl elke gezondheidsstraf telt. Wijs in de editor gezondheid aan om te zien waar die vandaan komt: basis, runes, insignes en mods.
+
 Je kiest de rune van een stuk op dezelfde plek als het insigne: klik op het stuk
 op de figuur.
 

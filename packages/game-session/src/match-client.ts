@@ -609,6 +609,7 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
                 score: [0, 0],
                 elapsedSeconds: welcome.elapsedSeconds,
                 phase: "active",
+                preMatch: null,
                 winningTeam: undefined,
                 endReason: undefined,
                 projectiles: [],
@@ -647,6 +648,7 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
           : {
               ...snapshot,
               phase: "finished",
+              preMatch: null,
               winningTeam: ended.winningTeam ?? undefined,
               endReason: ended.endReason,
               clearSeconds: ended.clearSeconds ?? undefined,

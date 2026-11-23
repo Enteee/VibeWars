@@ -174,6 +174,8 @@ aussi, chacune calculée sur la durée complète et arrondie à la seconde
 entière : Restoration et "Fear Cuts Deeper" font passer un Saignement de 8
 secondes à 4.
 
+L'éditeur n'enregistre pas deux pièces avec la même rune, ni avec des runes du même attribut : seul le bonus le plus fort compterait, alors que chaque pénalité de santé compterait. Pointe la santé dans l'éditeur pour voir d'où vient la tienne : base, runes, insignes et améliorations.
+
 Tu choisis la rune d'une pièce au même endroit que son insigne : clique sur
 la pièce sur la figurine.
 

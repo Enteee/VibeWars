@@ -32,6 +32,8 @@ mål uden for skærmen eller under HUD'en en pil med omrids ved
 skærmkanten: standen eller en helligdom i ejerens farve, grå hvis ingen
 ejer den, alteret i guld. En spillers udfyldte pil tegnes oven på den.
 
+En kamp åbner med alle holdt nær deres startsted: du kan gå et par skridt, men ikke kæmpe eller bruge færdigheder. En linje øverst tæller de spillere, der er inde. Når alle er inde, tæller den 10 sekunder ned, og kampen starter, og dens ur med den. Der ventes ikke på en spiller, der ikke er inde efter 20 sekunder: nedtællingen starter uden dem, og de kan stadig komme med senere.
+
 ## Udslettelse
 
 **Besejr alle fjender.** De døde bliver liggende, indtil en allieret
@@ -371,6 +373,7 @@ sekunder, og taberne (også ved uafgjort) vender tilbage til menuen; en
 kodet lobbys kamp sender alle tilbage til lobbyen. En knap under
 resultatet springer ventetiden over eller, for vinderne, går uden at
 stille sig i kø.
+Vindere i Holdarena beholder deres holdbuild og hver spillers plads til den næste kamp, uden holdlobby, medmindre gruppen har ændret sig siden: nogen er gået, er væk eller er kommet til. Så vælger de deres hold igen.
 
 ## Heltenes opstigning
 

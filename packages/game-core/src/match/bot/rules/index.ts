@@ -23,6 +23,7 @@ import mantra from "./mantra.js";
 import mimicElite from "./mimic-elite.js";
 import minionCare from "./minion-care.js";
 import pickUpGhost from "./pick-up-ghost.js";
+import planMove from "./plan-move.js";
 import position from "./position.js";
 import raise from "./raise.js";
 import regroup from "./regroup.js";
@@ -68,6 +69,7 @@ export const BOT_RULES: readonly BotRule[] = inOrder([
   mimicElite,
   minionCare,
   pickUpGhost,
+  planMove,
   position,
   raise,
   regroup,

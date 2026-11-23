@@ -83,7 +83,9 @@ din coadă.
 Când se termină meciul, poți alege **Din nou în coadă** sau **Rămâneți împreună**
 cu echipa cu care tocmai ai jucat.
 
-Lângă scoruri, două grafice spun povestea meciului în timp. **Tu** desenează
+Fiecare meci se încheie pe scorurile lui, de la coadă, găzduit sau într-un
+lobby, iar lângă ele două grafice spun povestea meciului în timp; ecranul
+cozii le arată din nou după un meci de la coadă. **Tu** desenează
 daunele tale provocate, daunele primite, vindecarea și Energia; **Echipe**
 desenează rezerva de viață a fiecărei echipe deasupra daunelor ei totale.
 Marcajele de sub axa timpului arată eliminări, morți, întreruperi, capturi și

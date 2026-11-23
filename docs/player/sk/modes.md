@@ -30,6 +30,8 @@ cieľ mimo obrazovky alebo pod HUD obrysovú šípku na okraji
 obrazovky: stojan alebo svätyňa vo farbe svojho vlastníka, sivá, ak nikomu
 nepatrí, oltár v zlatej. Vyplnená šípka hráča sa kreslí cez ňu.
 
+Zápas sa začína so všetkými držanými pri ich štarte: môžeš urobiť pár krokov, ale nemôžeš bojovať ani používať schopnosti. Riadok hore počíta hráčov, ktorí sú v hre. Keď sú tam všetci, odpočíta 10 sekúnd a zápas sa začne, a s ním aj jeho čas. Na hráča, ktorý nie je v hre po 20 sekundách, sa nečaká: odpočítavanie začne bez neho a pripojiť sa môže aj neskôr.
+
 ## Anihilácia
 
 **Poraz všetkých nepriateľov.** Mŕtvi zostávajú ležať, kým ich spojenec neoživí,
@@ -347,6 +349,7 @@ Po tímovom zápase z fronty sa víťazi po 20 sekundách sami znova zaradia do
 fronty a porazení (aj pri remíze) sa vrátia do menu; zápas lobby s kódom
 vráti všetkých do lobby. Tlačidlo pod výsledkom
 preskočí čakanie alebo, pre víťazov, odíde bez zaradenia do fronty.
+Víťazi Tímovej arény si na ďalší zápas ponechajú svoj tímový build aj miesto každého hráča, bez tímovej lobby, pokiaľ sa medzitým skupina nezmenila: niekto odišiel, nie je prítomný alebo sa pridal. Potom si tím zvolia znova.
 
 ## Výstup hrdinov
 

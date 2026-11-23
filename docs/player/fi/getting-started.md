@@ -86,7 +86,9 @@ oletkin. Välilehden sulkeminen odottaessa poistaa sinut jonosta heti.
 Kun ottelu päättyy, voit valita **Jonota uudelleen** tai **Pysykää yhdessä**
 juuri kanssasi pelanneen tiimin kanssa.
 
-Pisteiden vieressä kaksi kaaviota kertoo ottelun kulun ajan mittaan. **Sinä**
+Jokainen ottelu päättyy pisteisiinsä, jonosta, isännöitynä tai aulassa, ja
+niiden vieressä kaksi kaaviota kertoo ottelun kulun ajan mittaan; jononäkymä
+näyttää ne uudelleen jonotetun ottelun jälkeen. **Sinä**
 piirtää tekemäsi vahingon, saamasi vahingon, parannuksen ja Energian;
 **Joukkueet** piirtää kunkin joukkueen terveysvarannon sen kokonaisvahingon
 yläpuolelle. Aika-akselin alla olevat merkit näyttävät tapot, kuolemat,

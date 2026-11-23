@@ -89,7 +89,9 @@ aussitôt de la file.
 Quand le match se termine, tu peux **Relancer la file**, ou **Rester ensemble**
 avec l'équipe avec laquelle tu viens de jouer.
 
-À côté des scores, deux graphiques racontent le match dans le temps. **Vous**
+Chaque match se termine sur ses scores, en file, hébergé ou dans un salon, et
+à côté d'eux deux graphiques racontent le match dans le temps ; l'écran de la
+file les montre de nouveau après un match en file. **Vous**
 trace tes dégâts infligés, tes dégâts subis, tes soins et ton Énergie ;
 **Équipes** trace la réserve de santé de chaque équipe au-dessus de ses dégâts
 totaux. Des repères sous l'axe du temps montrent les éliminations, les morts,

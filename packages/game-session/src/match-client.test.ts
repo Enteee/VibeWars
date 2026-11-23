@@ -156,6 +156,7 @@ describe("connectMatch", () => {
           phase: "active",
           winningTeam: null,
           endReason: null,
+          preMatch: null,
           part: 0,
           parts: 1,
           players: [
@@ -949,6 +950,7 @@ describe("connectMatch, before the host's match listens (#1805)", () => {
       nowSeconds: () => 0,
       signetOf: testSignet,
       recordReplay: false,
+      preMatch: null,
     });
   }
 

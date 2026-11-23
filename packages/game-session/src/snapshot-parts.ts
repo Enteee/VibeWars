@@ -91,6 +91,9 @@ function sameHeader(a: WireSnapshotPart, b: WireSnapshotPart): boolean {
     a.score[0] === b.score[0] &&
     a.score[1] === b.score[1] &&
     a.phase === b.phase &&
+    a.preMatch?.joined === b.preMatch?.joined &&
+    a.preMatch?.expected === b.preMatch?.expected &&
+    a.preMatch?.secondsLeft === b.preMatch?.secondsLeft &&
     a.winningTeam === b.winningTeam &&
     a.endReason === b.endReason
   );
@@ -170,6 +173,7 @@ export function snapshotAssembler(): (part: WireSnapshotPart) => WireSnapshot | 
       elapsedSeconds: part.elapsedSeconds,
       score: part.score,
       phase: part.phase,
+      preMatch: part.preMatch,
       winningTeam: part.winningTeam,
       endReason: part.endReason,
       players,

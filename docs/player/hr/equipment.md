@@ -168,6 +168,8 @@ iz različitih izvora također se zbrajaju, svako računato od punog
 trajanja i zaokruženo na cijelu sekundu: Restoration i "Fear Cuts
 Deeper" skraćuju Krvarenje od 8 sekundi na 4.
 
+Uređivač ne sprema dva dijela s istom runom ili s runama istog atributa: računao bi se samo najjači bonus, a svaka kazna zdravlja bi se računala. Pokaži na zdravlje u uređivaču da vidiš odakle dolazi: osnova, rune, insignije i modovi.
+
 Runu dijela biraš na istom mjestu kao i njegovu insigniju: klikni dio
 na figuri.
 

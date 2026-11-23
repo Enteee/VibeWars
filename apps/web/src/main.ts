@@ -115,6 +115,7 @@ import {
   saveStarterTeamId,
 } from "./storage/starter-team.js";
 import { importedTeamSummary } from "./storage/team-transfer.js";
+import { buildReplacedNotice } from "./ui/build-replaced.js";
 import { closeBeatEditor } from "./ui/beat-editor.js";
 import { mountBuildBanner } from "./ui/build-ribbon.js";
 import {
@@ -1626,7 +1627,7 @@ async function main(): Promise<void> {
       queuedMs: queuedMsOf(lobby.getSnapshot()),
       groupMapId: teamQueue?.groupMapId,
       onFindMatch: () => {
-        lobby?.findMatch(roundFor(entry));
+        lobby?.findMatch(roundFor(entry), false);
       },
     };
   };
@@ -1818,7 +1819,9 @@ async function main(): Promise<void> {
     toast(t("app.cloned", { team: team.name, missing: missingSkillsNote(missingSkills) }));
   };
 
-  const showTeamEditor = (state: TeamEditorState, available: readonly StoredCharacter[]): void => {
+  const showTeamEditor = (state: TeamEditorState, listed: readonly StoredCharacter[]): void => {
+    // One more with each member saved as a character (#3825).
+    let available = listed;
     leaveScreen();
     music().menu("team-builder");
     closeEditor();
@@ -1856,6 +1859,11 @@ async function main(): Promise<void> {
       },
       onImportTeam: (team) => {
         openPastedTeam(team, available);
+      },
+      onCreateCharacter: async (character) => {
+        await characters.save(character);
+        ({ characters: available } = await characters.list());
+        return available;
       },
       onOpenMember: (memberId, left) => {
         const member = left.team.members.find((m) => m.character.id === memberId);
@@ -3120,7 +3128,12 @@ async function main(): Promise<void> {
       return;
     }
     match?.setEndLine({
-      ...teamEndLine(current.action, seconds, current.ascentRound),
+      ...teamEndLine(
+        current.action,
+        seconds,
+        current.ascentRound,
+        current.party?.getSnapshot().teamKept ?? null,
+      ),
       onPress: () => {
         void exitMatch();
       },
@@ -3138,7 +3151,7 @@ async function main(): Promise<void> {
       lobby === party &&
       party.getSnapshot().isHost
     ) {
-      party.findMatch(roundFor(party.getSnapshot().mode));
+      party.findMatch(roundFor(party.getSnapshot().mode), true);
     }
   };
 
@@ -3309,6 +3322,18 @@ async function main(): Promise<void> {
       // Said once, on the match screen: the lobby's went with it.
       if (start.teamPlanRejected) {
         toast(t("session.teamPlanRejected"));
+      }
+      // An illegal build of the player's own plays a starter build (#3822):
+      // said once, here. A Team Lobby's or a queued party's seat is planned.
+      const replaced = buildReplacedNotice(
+        entrant.characterId === undefined
+          ? undefined
+          : // Unreadable, it was not worth failing the match over: nor is this.
+            await characters.load(entrant.characterId).catch(() => undefined),
+        from.getSnapshot().teamLobby !== null || teamQueue !== undefined,
+      );
+      if (replaced !== undefined) {
+        toast(replaced);
       }
     } catch (error) {
       console.error("[web] could not enter match", error);

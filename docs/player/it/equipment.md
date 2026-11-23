@@ -133,6 +133,8 @@ Nell'editor, l'armatura è una figura. Clicca su un pezzo numerato, o sulla sua 
 
 Vitae e Attunement si sommano: cinque rune di Attunement danno +10 Energia. Ogni altra runa conta una volta sola, per quante ne indossi. Anche le riduzioni delle condizioni da fonti diverse si sommano, ciascuna calcolata sulla durata piena e arrotondata al secondo intero: Restoration e "Fear Cuts Deeper" portano un Sanguinamento di 8 secondi a 4.
 
+L'editor non salva due pezzi con la stessa runa, o con rune dello stesso attributo: conterebbe solo il bonus più forte, mentre ogni penalità di salute conterebbe. Punta la salute nell'editor per vedere da dove viene la tua: base, rune, insegne e modifiche.
+
 Scegli la runa di un pezzo nello stesso punto dell'insegna: clicca sul pezzo nella figura.
 
 L'editor fa il conto per te: Salute, Energia, armatura e danni, come li ha il tuo primo set di armi.

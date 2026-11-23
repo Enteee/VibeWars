@@ -173,6 +173,8 @@ uma calculada sobre a duração inteira e arredondada para um segundo
 inteiro: Restoration e "Fear Cuts Deeper" levam um Sangramento de 8
 segundos para 4.
 
+O editor não salva duas peças com a mesma runa, nem com runas do mesmo atributo: só contaria o bônus mais forte, enquanto toda penalidade de vida contaria. Aponte para a vida no editor para ver de onde vem a sua: base, runas, insígnias e modificações.
+
 Você escolhe a runa de uma peça no mesmo lugar da insígnia: clique na
 peça na figura.
 

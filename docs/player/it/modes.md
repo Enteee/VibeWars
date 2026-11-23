@@ -16,6 +16,8 @@ Ogni mappa è fatta per alcune dimensioni di squadra, e una modalità gioca solo
 
 In una Battaglia di gilda, una Corsa alla reliquia, Re della collina o Conquista, un obiettivo fuori schermo o sotto l'HUD ha una freccia contornata sul bordo dello schermo: la Base bandiera o un santuario nel colore del proprietario, grigio se non è di nessuno, l'altare in oro. La freccia piena di un giocatore si disegna sopra.
 
+Una partita si apre con tutti trattenuti vicino al loro punto di comparsa: puoi fare qualche passo, ma non combattere né usare abilità. Una riga in alto conta i giocatori entrati. Quando sono entrati tutti, conta alla rovescia 10 secondi e la partita inizia, e con essa il suo orologio. Un giocatore che non è entrato dopo 20 secondi non viene aspettato: il conto alla rovescia parte senza di lui, e può comunque unirsi più tardi.
+
 ## Annientamento
 
 **Sconfiggi ogni nemico.** I morti restano a terra finché un alleato non li resuscita, e ogni morte costa morale. Elimina l'altra squadra per vincere. Dopo 8 minuti vince la squadra con più morale.
@@ -117,6 +119,7 @@ Una lobby ospitata non avvia la partita quando tutti sono pronti. Prima apre la 
 Chi esce durante la Lobby squadra lascia il suo personaggio a un bot, così lo schieramento mantiene la sua dimensione. Chi entra in quel momento può solo guardare.
 
 Dopo una partita a squadre in coda, i vincitori tornano in coda da soli dopo 20 secondi, e i perdenti (anche in caso di pareggio) tornano al menu; la partita di una lobby con codice riporta tutti alla lobby. Un pulsante sotto il risultato salta l'attesa o, per i vincitori, esce senza rimettersi in coda.
+I vincitori dell'Arena a squadre mantengono la build di squadra e il posto di ogni giocatore per la partita successiva, senza lobby di squadra, a meno che il gruppo non sia cambiato nel frattempo: qualcuno è uscito, è assente o si è unito. Allora scelgono di nuovo la squadra.
 
 ## Ascesa degli Eroi
 

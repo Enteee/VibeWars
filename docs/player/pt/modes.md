@@ -34,6 +34,8 @@ seta contornada na borda da tela: o suporte ou um santuário na cor do
 dono, cinza se não for de ninguém, e o altar em dourado. A seta preenchida
 de um jogador é desenhada por cima.
 
+Uma partida abre com todos retidos perto do seu ponto de surgimento: você pode dar alguns passos, mas não lutar nem usar habilidades. Uma linha no topo conta os jogadores que entraram. Quando todos entram, ela conta 10 segundos e a partida começa, e o seu relógio com ela. Um jogador que não entrou após 20 segundos não é esperado: a contagem começa sem ele, e ele ainda pode entrar depois.
+
 ## Aniquilação
 
 **Derrote todos os inimigos.** Os mortos ficam caídos até um aliado os
@@ -359,6 +361,7 @@ sozinhos depois de 20 segundos, e os perdedores (e em empate também)
 voltam ao menu; a partida de uma sala por código devolve todos à sala. Um
 botão sob o resultado pula a espera ou, para os vencedores, sai sem entrar
 na fila.
+Os vencedores da Arena de Equipes mantêm o build de equipe e o lugar de cada jogador para a partida seguinte, sem sala de equipe, a não ser que o grupo tenha mudado nesse meio-tempo: alguém saiu, está ausente ou entrou. Nesse caso, escolhem a equipe de novo.
 
 ## Ascensão dos Heróis
 

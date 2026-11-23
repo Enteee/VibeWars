@@ -34,6 +34,8 @@ ekran dışındaki ya da HUD'ın altındaki bir hedef, ekranın kenarında
 kimsenin değilse gri, sunak ise altın renginde. Bir oyuncunun dolu oku
 onun üstüne çizilir.
 
+Bir maç, herkes doğma noktasının yakınında tutularak açılır: birkaç adım yürüyebilirsin ama dövüşemez ya da beceri kullanamazsın. Üstteki bir satır içeri giren oyuncuları sayar. Herkes içeri girince 10 saniye geri sayar ve maç başlar, saati de onunla. 20 saniye sonra içeride olmayan bir oyuncu beklenmez: geri sayım onsuz başlar ve o yine de sonradan katılabilir.
+
 ## İmha
 
 **Tüm düşmanları yen.** Ölüler bir müttefik onları diriltene kadar
@@ -361,6 +363,7 @@ Sıralı bir takım maçından sonra kazananlar 20 saniye sonra kendiliğinden
 yeniden sıraya girer, kaybedenler (beraberlik de) menüye döner; kodla
 kurulan bir lobinin maçı herkesi lobiye döndürür. Sonucun altındaki bir
 düğme beklemeyi atlar ya da, kazananlar için, sıraya girmeden ayrılır.
+Takım Arenası'nın kazananları bir sonraki maç için takım buildlerini ve her oyuncunun yerini takım lobisi olmadan korur; meğer ki grup o zamandan beri değişmiş olsun: biri ayrıldı, uzaklaştı ya da katıldı. O zaman takımlarını yeniden seçerler.
 
 ## Kahramanların Yükselişi
 

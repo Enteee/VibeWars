@@ -87,7 +87,9 @@ espera tira você da fila na hora.
 Quando a partida acaba, você pode usar **Entrar de novo** ou **Ficar
 juntos** com a equipe com que acabou de jogar.
 
-Ao lado das pontuações, dois gráficos contam a partida ao longo do tempo.
+Toda partida termina em suas pontuações, na fila, hospedada ou num lobby, e ao
+lado delas dois gráficos contam a partida ao longo do tempo; a tela da fila
+mostra-os de novo após uma partida na fila.
 **Tu** mostra seu dano causado, dano recebido, cura e Energia; **Equipas**
 mostra a reserva de vida de cada equipe acima do seu dano total. Marcas abaixo
 do eixo do tempo indicam abates, mortes, interrupções, capturas e

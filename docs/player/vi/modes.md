@@ -31,6 +31,8 @@ nằm ngoài màn hình hoặc dưới HUD có một mũi tên viền ở mép m
 hoặc đền mang màu của chủ sở hữu, xám nếu chưa thuộc về ai, tế đàn màu vàng.
 Mũi tên đặc của người chơi được vẽ đè lên nó.
 
+Trận đấu mở đầu với mọi người bị giữ gần điểm xuất hiện của mình: bạn có thể đi vài bước, nhưng không thể chiến đấu hay dùng kỹ năng. Một dòng ở trên cùng đếm số người chơi đã vào. Khi mọi người đã vào, nó đếm ngược 10 giây rồi trận đấu bắt đầu, cùng với đồng hồ của trận. Người chơi chưa vào sau 20 giây sẽ không được chờ: đếm ngược bắt đầu mà không có họ, và họ vẫn có thể vào sau.
+
 ## Hủy diệt
 
 **Hạ gục mọi địch.** Người chết nằm yên cho đến khi một đồng minh hồi sinh
@@ -341,6 +343,7 @@ Sau một trận đội có xếp hàng, đội thắng tự xếp hàng lại s
 thua (cả khi hòa) trở về menu; trận của sảnh vào bằng mã đưa mọi người về
 sảnh. Một nút dưới kết quả cho phép bỏ qua thời gian chờ, hoặc, với đội
 thắng, rời đi mà không xếp hàng.
+Người thắng ở Đấu trường đội giữ nguyên build đội và chỗ của từng người chơi cho trận tiếp theo, không qua sảnh đội, trừ khi nhóm đã thay đổi từ đó: có người rời đi, vắng mặt hoặc tham gia. Khi đó họ chọn lại đội.
 
 ## Đỉnh Anh Hùng
 

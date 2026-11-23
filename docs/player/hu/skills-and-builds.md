@@ -168,6 +168,8 @@ Az **Esc** mentés nélkül lép ki, és előbb rákérdez, ha bármit
 módosítottál. A **Megoszt**, a **GW1-kód betöltése**, a **Másolat** és a
 **Törlés** a **⋯** alatt van.
 
+Problémás build nem menthető, és a gyakorlóterület sem indul vele. Ha egy ilyen build mégis meccsre kerül, ott kezdő builddel játszol, és egy üzenet megmondja, miért.
+
 A csapatkódot ehelyett a **Csapatszerkesztőben** kell betölteni: illeszd be bárhová
 ott, vagy nyiss meg egy csapatbuildet, és használd a **⋯** → **Csapat betöltése**
 lehetőségét.
@@ -200,7 +202,11 @@ Karakterszerkesztő könyvtára, a **Készségek** és a **Tárgyak** előtt egy
 **Karaktereim** füllel. A **Karaktereim** fülön húzd az egyik
 karakteredet egy tagra, hogy az a tag annak másolata legyen. A másolat
 a csapaté: ha módosítod, vagy azt a karaktert, amelyből készült, a
-másik olyan marad, amilyen volt. A **Készségek** fülön a készségkönyvtár
+másik olyan marad, amilyen volt. Fordítva: húzz egy tagot a
+**Karaktereim** részre vagy a fülére, hogy új saját karakterként mentsd; ha
+a neve már foglalt, " (copy)" kerül a végére, a csapat pedig megtartja a
+tagot úgy, ahogy van.
+A **Készségek** fülön a készségkönyvtár
 annak a tagnak a készségeit mutatja, amelyre utoljára kattintottál; húzz
 egyet bármelyik tag helyére, hogy oda vedd fel. Ugyanannak a tagnak a
 saját sávján a már rajta lévő készség az adott helyre kerül át. Az az
@@ -222,7 +228,7 @@ tag fegyvereit és mellékkezeit tartalmazza, és csak addig van ott, amíg egy 
 nyitva van: kattints egyre, hogy felvedd, vagy húzd a kezeire. Egyszerre
 egy tag lehet nyitva; az **Esc** bezárja. Az új kaszt elveti azokat a
 készségeket és szinteket, amelyeket nem tud használni, egy **Vissza** lehetőséggel.
-Nyomd meg egy tag nevét, vagy a **Megnyitás a Karakter képernyőn** gombot, hogy a
+Nyomd meg egy tag nevét, vagy a **✎** gombját, hogy a
 buildszerkesztőben szerkeszd;
 annak **Mentés** gombja visszateszi a csapatba, a csapat saját **Mentés** gombja pedig mindent
 megtart, és visszavisz a Csapatszerkesztőbe. Az **Esc** mentés

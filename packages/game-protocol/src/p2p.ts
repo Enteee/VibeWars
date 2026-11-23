@@ -879,6 +879,27 @@ const END_REASONS = [
 type EndReason = (typeof END_REASONS)[number];
 
 /**
+ * Where a match is (#3818): `waiting` for its planned players, each held
+ * in its spawn bubble; `countdown` to the start, still held; `active`;
+ * `finished`.
+ */
+export const WIRE_MATCH_PHASES = ["waiting", "countdown", "active", "finished"] as const;
+export type WireMatchPhase = (typeof WIRE_MATCH_PHASES)[number];
+
+/** The wait before a match starts (#3818), while it is `waiting` or `countdown`. */
+export interface WirePreMatch {
+  /** Who has taken a seat, bots included, of `expected`. */
+  readonly joined: number;
+  readonly expected: number;
+  /**
+   * Whole seconds to the start in `countdown`; while `waiting`, to the
+   * countdown starting without whoever is missing, or `null` before that
+   * is announced.
+   */
+  readonly secondsLeft: number | null;
+}
+
+/**
  * The whole match at one tick, not a delta: what a client assembles from
  * that tick's `WireSnapshotPart`s. Never sent as it is.
  */
@@ -888,7 +909,9 @@ export interface WireSnapshot {
   readonly elapsedSeconds: number;
   /** Each team's points by team index (#2682): `teamCount` of them. */
   readonly score: readonly number[];
-  readonly phase: "active" | "finished";
+  readonly phase: WireMatchPhase;
+  /** The wait before the start (#3818); `null` once `active`. */
+  readonly preMatch: WirePreMatch | null;
   readonly winningTeam: WireTeam | null;
   readonly endReason: EndReason | null;
   readonly players: readonly WirePlayer[];
@@ -1637,6 +1660,12 @@ export interface WireLobbyState {
    * the slots its Team Build keeps, and who holds each. `null` otherwise.
    */
   readonly ascentLock: WireAscentLock | null;
+  /**
+   * After a Team Arena win (#3815): whether the party is still the one
+   * that played, so it queues again with the same Team Build and slots.
+   * `null` with no win to keep.
+   */
+  readonly teamKept: boolean | null;
 }
 
 /**
@@ -1733,9 +1762,14 @@ export type WireLobbyCommand =
    * Host only, in a team mode (#1766): the party's Team Lobby, then the
    * queue; `leave-queue` takes it out again, `play-bots` plays against
    * bots instead, in this lobby. In Heroes' Ascent it queues at the
-   * host's `ascentRound` (#1996), `null` in every other mode.
+   * host's `ascentRound` (#1996), `null` in every other mode. `again` is
+   * the queue after a Team Arena win (#3815), which keeps the team.
    */
-  | { readonly kind: "find-match"; readonly ascentRound: number | null }
+  | {
+      readonly kind: "find-match";
+      readonly ascentRound: number | null;
+      readonly again: boolean;
+    }
   | { readonly kind: "leave-queue" }
   | { readonly kind: "play-bots" }
   /**
@@ -2825,13 +2859,27 @@ export function parseWireSnapshotPart(
     : { ...snapshot, part: raw.part, parts: raw.parts };
 }
 
+function parsePreMatch(value: unknown): WirePreMatch | undefined {
+  const raw = fields(value);
+  if (raw === undefined) {
+    return undefined;
+  }
+  const { joined, expected, secondsLeft } = raw;
+  return isCount(joined) &&
+    isCount(expected) &&
+    joined <= expected &&
+    (secondsLeft === null || isCount(secondsLeft))
+    ? { joined, expected, secondsLeft }
+    : undefined;
+}
+
 function parseSnapshot(raw: Fields): WireSnapshot | undefined {
   const score = parseArray(raw.score, MAX_WIRE_TEAMS, parseScore);
   if (
     !isCount(raw.tick) ||
     !isNumber(raw.elapsedSeconds) ||
     score === undefined ||
-    !isOneOf(raw.phase, ["active", "finished"] as const) ||
+    !isOneOf(raw.phase, WIRE_MATCH_PHASES) ||
     !(raw.winningTeam === null || isTeam(raw.winningTeam)) ||
     !(raw.endReason === null || isOneOf(raw.endReason, END_REASONS))
   ) {
@@ -2852,6 +2900,7 @@ function parseSnapshot(raw: Fields): WireSnapshot | undefined {
   const decks = parseArray(raw.decks, MAX_WIRE_TOGGLES, parseDeck);
   const lifts = parseArray(raw.lifts, MAX_WIRE_TOGGLES, parseLift);
   const capturePoints = parseArray(raw.capturePoints, MAX_WIRE_CAPTURE_POINTS, parseCapturePoint);
+  const preMatch = raw.preMatch === null ? null : parsePreMatch(raw.preMatch);
   const { altarHolder, altarHeldSeconds } = raw;
   return !(altarHolder === null || isTeam(altarHolder)) ||
     !isNumber(altarHeldSeconds) ||
@@ -2865,6 +2914,7 @@ function parseSnapshot(raw: Fields): WireSnapshot | undefined {
     relics === undefined ||
     altar === undefined ||
     capturePoints === undefined ||
+    preMatch === undefined ||
     gates === undefined ||
     switches === undefined ||
     teleports === undefined ||
@@ -2877,6 +2927,7 @@ function parseSnapshot(raw: Fields): WireSnapshot | undefined {
         elapsedSeconds: raw.elapsedSeconds,
         score,
         phase: raw.phase,
+        preMatch,
         winningTeam: raw.winningTeam,
         endReason: raw.endReason,
         players,
@@ -3891,6 +3942,7 @@ export function parseWireLobbyState(value: unknown): WireLobbyState | undefined 
     !isOneOf(raw.phase, ["waiting", "team-lobby", "queued", "starting", "in-match"] as const) ||
     !(raw.queueNonce === null || isTicketId(raw.queueNonce)) ||
     !isAscentRound(raw.ascentRound) ||
+    !(raw.teamKept === null || typeof raw.teamKept === "boolean") ||
     !isOneOf(raw.mode, LOBBY_MODES) ||
     !isString(raw.mapId) ||
     !isTeamSize(raw.teamSize) ||
@@ -3919,6 +3971,7 @@ export function parseWireLobbyState(value: unknown): WireLobbyState | undefined 
         queueNonce: raw.queueNonce,
         ascentRound: raw.ascentRound,
         ascentLock,
+        teamKept: raw.teamKept,
       };
 }
 
@@ -3939,8 +3992,8 @@ export function parseWireLobbyCommand(value: unknown): WireLobbyCommand | undefi
     case "select-mode":
       return isOneOf(raw.mode, LOBBY_MODES) ? { kind: "select-mode", mode: raw.mode } : undefined;
     case "find-match":
-      return isAscentRound(raw.ascentRound)
-        ? { kind: "find-match", ascentRound: raw.ascentRound }
+      return isAscentRound(raw.ascentRound) && typeof raw.again === "boolean"
+        ? { kind: "find-match", ascentRound: raw.ascentRound, again: raw.again }
         : undefined;
     case "remove-member":
       return isString(raw.id) ? { kind: "remove-member", id: raw.id } : undefined;

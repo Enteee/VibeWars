@@ -296,6 +296,7 @@ export function createLocalConnection(options: {
         score: [...simulation.score.byTeam.values()],
         elapsedSeconds: simulation.elapsedSeconds,
         phase: simulation.phase,
+        preMatch: null,
         winningTeam: simulation.outcome.winningTeam,
         endReason: simulation.outcome.reason,
         projectiles: simulation.projectiles.map((shot) => ({

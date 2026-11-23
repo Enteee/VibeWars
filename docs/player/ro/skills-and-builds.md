@@ -146,6 +146,8 @@ de cod funcționează în ambele feluri. O abilitate GW1 pe care VibeWars nu o a
 iese fără să salveze și întreabă mai întâi dacă ai schimbat ceva. **Trimite**,
 **Încarcă cod GW1**, **Duplică** și **Șterge** sunt în **⋯**.
 
+Un build cu o problemă nu poate fi salvat, iar zona de antrenament nu pornește cu el. Dacă un astfel de build ajunge totuși într-un meci, acolo joci cu un build de început, iar un mesaj spune de ce.
+
 Un cod de echipă se încarcă în schimb în **Constructor de echipe**: lipește-l
 oriunde acolo, sau deschide un build de echipă și folosește **⋯** →
 **Încarcă echipa** al lui.
@@ -176,7 +178,10 @@ dreapta este biblioteca din Constructor de personaje, cu o filă **Personajele
 mele** înainte de **Abilități** și **Echipament**. La **Personajele mele**, trage
 unul dintre personajele tale peste un membru ca să faci din acel membru o copie a
 lui. O copie aparține echipei: dacă o schimbi pe ea sau personajul din care a
-provenit, celălalt rămâne cum era. La **Abilități**, biblioteca arată abilitățile
+provenit, celălalt rămâne cum era. Invers, trage un membru pe **Personajele mele**
+sau pe fila sa ca să-l salvezi ca personaj nou al tău; dacă numele e deja luat,
+primește " (copy)", iar echipa păstrează membrul cum e.
+La **Abilități**, biblioteca arată abilitățile
 membrului pe care ai dat clic ultima dată; trage una pe locul oricărui membru ca
 s-o echipezi acolo. Pe bara acelui membru, o abilitate deja prezentă se mută pe
 loc. O plasare pe care un membru nu o poate primi, o abilitate a altei clase sau
@@ -195,7 +200,7 @@ armele și mâinile secundare ale membrului deschis și există doar cât timp e
 deschis: dă clic pe una ca s-o echipezi sau trage-o peste mâinile lui. Un singur
 membru e deschis odată; **Esc** îl închide. O clasă nouă renunță la abilitățile
 și rangurile pe care nu le poate folosi, cu un **Anulează**. Apasă numele unui
-membru sau **Deschide în ecranul Personaj** ca să-l editezi în editorul de build;
+membru sau butonul său **✎** ca să-l editezi în editorul de build;
 **Salvează** de acolo îl pune înapoi în echipă, iar **Salvează** al echipei păstrează
 totul și te duce înapoi la Constructor de echipe. **Esc** iese fără să salveze și
 întreabă mai întâi. **Trimite**, **Încarcă echipa**, **Duplică** și **Șterge** ale

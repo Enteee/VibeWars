@@ -2724,7 +2724,8 @@ body:has(> .splash) #menu-background::after {
 
 .team-row {
   display: grid;
-  grid-template-columns: 0.8rem 11rem 4.5rem repeat(8, 36px) 2rem;
+  /* ✎ and ▼ last (#3819), each as wide as a finger needs on a touch screen. */
+  grid-template-columns: 0.8rem 11rem 4.5rem repeat(8, 36px) repeat(2, minmax(2rem, max-content));
   align-items: center;
   gap: 0.3rem;
   padding: 0.35rem 0.5rem;
@@ -2744,6 +2745,13 @@ body:has(> .splash) #menu-background::after {
   border-color: var(--accent);
 }
 
+/* A member held over My characters saves as one (#3825). */
+.team-picker-characters.is-drop-target,
+.library-tab.is-drop-target {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
 /* The member the Skills tab shows (#2225). */
 .team-row.is-focused {
   box-shadow: inset 3px 0 0 var(--accent);
@@ -2754,6 +2762,7 @@ body:has(> .splash) #menu-background::after {
   border-bottom-style: dashed;
 }
 
+.team-row-open,
 .team-row-edit {
   padding: 0.2rem;
   min-width: 0;
@@ -2821,10 +2830,6 @@ body:has(> .splash) #menu-background::after {
 .team-member-editor .editor-professions {
   flex-direction: column;
   align-items: stretch;
-}
-
-.team-member-open {
-  align-self: flex-start;
 }
 
 .team-row-order {
@@ -3022,12 +3027,17 @@ body:has(> .splash) #menu-background::after {
   }
 
   .team-row {
-    grid-template-columns: 0.8rem minmax(0, 1fr) 4.5rem 2rem;
+    grid-template-columns: 0.8rem minmax(0, 1fr) 4.5rem repeat(2, minmax(2rem, max-content));
+  }
+
+  .team-row-open {
+    grid-row: 1;
+    grid-column: 4;
   }
 
   .team-row-edit {
     grid-row: 1;
-    grid-column: 4;
+    grid-column: 5;
   }
 
   .team-row-skills {
@@ -4745,6 +4755,22 @@ body:has(> .splash) #menu-background::after {
   pointer-events: none;
 }
 
+/* Before the start (#3818): who the match waits for, then the countdown. */
+.hud-pre-match {
+  padding: 0.2rem 0.8rem;
+  background: rgb(14 17 22 / 85%);
+  border: 1px solid var(--accent);
+  color: var(--ink);
+  font-size: 1.1rem;
+  pointer-events: none;
+}
+
+/* Held in the spawn (#3818): the bar shows, inactive. */
+.hud-skills.is-held .hud-skill {
+  filter: grayscale(1);
+  opacity: 0.55;
+}
+
 /* A line a flag away from home, under the scoreboard (#1226). */
 /* A watcher is told how late what it sees is (#480). */
 .hud-watching {
@@ -5202,6 +5228,19 @@ body:has(> .splash) #menu-background::after {
   min-height: 0;
   overflow-y: auto;
   pointer-events: auto;
+}
+
+/* The charts in the match's summary (#3790): beside the tables when the
+   column has room for both, under them when it has not, as on a phone. */
+.hud-summary .match-charts {
+  flex: 1 1 32rem;
+  max-width: 100%;
+}
+
+/* Once the summary is up nothing is cast: your effects, bars and skill bar
+   would only draw over the charts. Hidden in place, so nothing else moves. */
+.hud.is-ended .hud-column {
+  visibility: hidden;
 }
 
 /* Over the arena and the HUD while a guest reconnects (#602); it takes no
