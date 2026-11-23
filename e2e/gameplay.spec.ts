@@ -580,9 +580,11 @@ test("clicking the ground walks there, round a wall, and stops (#310)", async ({
 
   await canvas.click({ position: await matchPoint(page, canvas, goal) });
   // The marker there fades in 0.4 s; the walk round the wall takes about 3 s.
+  // One shot of a page the walk keeps busy can take tens of seconds on a
+  // loaded software renderer, so each poll's window outlasts a slow sample (#3866).
   await page.waitForTimeout(600);
   await expect
-    .poll(async () => (await spotShot(page, canvas, goal)).equals(empty), { timeout: 10_000 })
+    .poll(async () => (await spotShot(page, canvas, goal)).equals(empty), { timeout: 30_000 })
     .toBe(false);
 
   // Arrived, it stays. The view follows the walk (#721), so the spot
@@ -597,7 +599,7 @@ test("clicking the ground walks there, round a wall, and stops (#310)", async ({
         there = now;
         return still;
       },
-      { message: "the hero should stop there", intervals: [0], timeout: 15_000 },
+      { message: "the hero should stop there", intervals: [0], timeout: 30_000 },
     )
     .toBe(true);
 });
