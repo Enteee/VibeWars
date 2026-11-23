@@ -84,7 +84,9 @@ wait takes you out of the queue at once.
 When the match ends you can **Queue again**, or **Stay together** with
 the team you just played with.
 
-Beside the scores, two charts tell the match over time. **You** draws your
+Every match ends on its scores, queued, hosted or in a lobby, and beside
+them two charts tell the match over time; the queue screen shows them again
+after a queued match. **You** draws your
 damage dealt, damage taken, healing and Energy; **Teams** draws each team's
 health pool above its total damage. Marks under the time axis show kills,
 deaths, interrupts, captures and resurrections: point at one, or Tab to it,

@@ -85,7 +85,9 @@ direkt.
 När matchen är slut kan du **Köa igen**, eller **Håll ihop** med laget
 du just spelade med.
 
-Bredvid poängen berättar två diagram matchen över tid. **Du** ritar din
+Varje match slutar på sina poäng, från kön, med värd eller i en lobby, och
+bredvid dem berättar två diagram matchen över tid; köskärmen visar dem igen
+efter en match från kön. **Du** ritar din
 utdelade skada, mottagna skada, helning och Energi; **Lag** ritar varje lags
 hälsopool ovanför dess totala skada. Markeringar under tidsaxeln visar
 dödanden, dödsfall, avbrott, erövringar och återupplivningar: peka på en, eller

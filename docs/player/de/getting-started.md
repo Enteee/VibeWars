@@ -83,7 +83,10 @@ sofort aus der Warteschlange.
 Wenn das Match endet, kannst du **Nochmal** wählen oder mit dem Team von eben
 **Zusammenbleiben**.
 
-Neben den Punkten erzählen zwei Diagramme das Match im Zeitverlauf. **Du**
+Jedes Match endet auf seinen Punkten, ob aus der Warteschlange, gehostet oder
+in einer Lobby, und neben ihnen erzählen zwei Diagramme das Match im
+Zeitverlauf; der Warteschlangen-Bildschirm zeigt sie nach einem Match aus der
+Warteschlange noch einmal. **Du**
 zeigt deinen verursachten Schaden, erlittenen Schaden, deine Heilung und
 Energie; **Teams** zeigt den Lebenspool jedes Teams über seinem Gesamtschaden.
 Markierungen unter der Zeitachse zeigen Kills, Tode, Unterbrechungen,

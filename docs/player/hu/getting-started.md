@@ -91,7 +91,9 @@ Amikor a meccs véget ér, választhatod az **Újra sorba** lehetőséget,
 vagy azt, hogy **Együtt maradunk** azzal a csapattal, amellyel épp
 játszottál.
 
-Az eredmények mellett két diagram meséli el a meccs menetét. A **Te** a
+Minden meccs az eredményeivel ér véget, legyen sorból, indított vagy
+lobbiban, és mellettük két diagram meséli el a meccs menetét; a sor képernyője
+egy sorból indult meccs után újra megmutatja őket. A **Te** a
 kiosztott sebzésedet, az elszenvedett sebzést, a gyógyítást és az Energiát
 rajzolja; a **Csapatok** minden csapat életerő-készletét rajzolja az
 összesített sebzése fölé. Az időtengely alatti jelek az öléseket, halálokat,
