@@ -50,6 +50,24 @@ export function planPhase(now: number): number {
   return Math.floor(now / PLAN_SECONDS);
 }
 
+/**
+ * What team `team`'s flank and hold choices are keyed on at match second
+ * `now` (#3834): its stalemate override while that is in force, so who
+ * flanks, the side and the latches last the whole override even across a
+ * phase boundary, else `planPhase`. An override's key is negative, from
+ * its start, so it never meets a phase.
+ */
+export function planKey(
+  context: Pick<BehaviourContext, "now" | "planOverride">,
+  team: number,
+): number {
+  const override = context.planOverride(team);
+  if (override !== undefined && context.now < override.until) {
+    return -1 - (override.until - PLAN_SECONDS);
+  }
+  return planPhase(context.now);
+}
+
 /** What team `team` rolls for phase `phase` (#3832), before the run rule. */
 function rolled(seed: number, team: number, phase: number): TeamPlan {
   const roll = botRoll(seed, team, `plan:${String(phase)}`);
@@ -165,13 +183,13 @@ export interface FlankPlace {
 /** What `flankWaypoint` reads (#3834): the sim asks it too, with no bot deciding. */
 export type FlankContext = Pick<
   BehaviourContext,
-  "seed" | "now" | "teamSpawn" | "standableNear" | "routeLength"
+  "seed" | "teamSpawn" | "standableNear" | "routeLength"
 >;
 
 /**
  * The waypoint `self` swings round to against team `foeTeam` (#3832):
  * `FLANK_FRACTION` of the way from its spawn to theirs and `FLANK_WIDTH`
- * of that distance off to one side, rolled per phase, on a spot a body
+ * of that distance off to one side, rolled per plan key `key`, on a spot a body
  * fits on. Only spawns, never where a foe stands. The other side where
  * the rolled one has no route; `undefined`, so the bot pushes, where
  * neither has.
@@ -180,6 +198,7 @@ export function flankWaypoint(
   context: FlankContext,
   self: Participant,
   foeTeam: number,
+  key: number,
 ): FlankPlace | undefined {
   const own = context.teamSpawn(self.combatant.team);
   const foe = context.teamSpawn(foeTeam);
@@ -188,9 +207,7 @@ export function flankWaypoint(
   const across = sub(foe.point, own.point);
   const ahead = add(own.point, scale(across, FLANK_FRACTION));
   const rolledSide =
-    botRoll(context.seed, self.combatant.team, `flank-side:${String(planPhase(context.now))}`) < 0.5
-      ? 1
-      : -1;
+    botRoll(context.seed, self.combatant.team, `flank-side:${String(key)}`) < 0.5 ? 1 : -1;
   for (const side of [rolledSide, -rolledSide]) {
     const point = context.standableNear(
       add(ahead, scale(vec2(-across.y, across.x), side * FLANK_WIDTH)),
@@ -312,7 +329,7 @@ export function placedHold(
   cursor: BehaviourCursor,
   foeTeam: number,
 ): HoldPlace | undefined {
-  const phase = planPhase(context.now);
+  const phase = planKey(context, self.combatant.team);
   const kept = cursor.holdPoint;
   if (kept?.foeTeam !== foeTeam || (kept.at === undefined && kept.phase !== phase)) {
     cursor.holdPoint = { foeTeam, at: holdPoint(context, self, foeTeam), phase };
@@ -330,10 +347,10 @@ export function placedFlank(
   cursor: BehaviourCursor,
   foeTeam: number,
 ): FlankPlace | undefined {
-  const phase = planPhase(context.now);
+  const phase = planKey(context, self.combatant.team);
   const kept = cursor.flankPoint;
   if (kept?.foeTeam !== foeTeam || kept.phase !== phase) {
-    cursor.flankPoint = { foeTeam, at: flankWaypoint(context, self, foeTeam), phase };
+    cursor.flankPoint = { foeTeam, at: flankWaypoint(context, self, foeTeam, phase), phase };
   }
   return cursor.flankPoint?.at;
 }
@@ -376,7 +393,7 @@ export function planPlaced(
   if (foeTeam === undefined) return false;
   if (plan === "hold") return placedHold(context, self, cursor, foeTeam) !== undefined;
   return (
-    inFlankSwing(context, self, cursor, planPhase(context.now)) &&
+    inFlankSwing(context, self, cursor, planKey(context, self.combatant.team)) &&
     placedFlank(context, self, cursor, foeTeam) !== undefined
   );
 }

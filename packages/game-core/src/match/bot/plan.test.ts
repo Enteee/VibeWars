@@ -12,6 +12,7 @@ import {
   flankParty,
   flankWaypoint,
   holdPoint,
+  planPhase,
   teamPlan,
 } from "./plan.js";
 import type { BotRole } from "./role.js";
@@ -185,6 +186,7 @@ describe("flankWaypoint (#3832)", () => {
       }),
       self(),
       1,
+      planPhase(now),
     );
 
   it("swings 35% of the spawns' distance off the line, 60% of the way", () => {

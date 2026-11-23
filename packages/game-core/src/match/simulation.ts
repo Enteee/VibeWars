@@ -303,7 +303,7 @@ import {
   type ResetPolicy,
   idleAt,
 } from "./behaviour.js";
-import { flankWaypoint, PLAN_SECONDS, teamPlan } from "./bot/plan.js";
+import { flankWaypoint, PLAN_SECONDS, planPhase, teamPlan } from "./bot/plan.js";
 import { LEVER_WORTH_UNITS } from "./bot/rules/levers.js";
 import { botRoll } from "./bot/rules/shared.js";
 import { nextPlan, stalemate, type PlanOverride, type StalemateState } from "./bot/stalemate.js";
@@ -11075,11 +11075,14 @@ export class MatchSimulation {
     }
   }
 
-  /** Whether `scout`'s team has a flank waypoint against some foe team (#3834, `flankWaypoint`). */
+  /**
+   * Whether `scout`'s team has a flank waypoint against some foe team
+   * (#3834, `flankWaypoint`). Any key does: it only picks which side is
+   * tried first.
+   */
   #flankable(scout: ParticipantRecord): boolean {
     const context = {
       seed: this.#seed,
-      now: this.#elapsedSeconds,
       teamSpawn: (team: number) => this.#teamSpawn(team),
       standableNear: (point: Vec2, layer: number) => nearestStandable(this.#graphOn(layer), point),
       routeLength: (to: Vec2, layer: number) => {
@@ -11089,7 +11092,8 @@ export class MatchSimulation {
     };
     return [...this.#teams].some(
       (foeTeam) =>
-        foeTeam !== scout.combatant.team && flankWaypoint(context, scout, foeTeam) !== undefined,
+        foeTeam !== scout.combatant.team &&
+        flankWaypoint(context, scout, foeTeam, planPhase(this.#elapsedSeconds)) !== undefined,
     );
   }
 

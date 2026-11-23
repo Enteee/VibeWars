@@ -2,8 +2,11 @@ import { describe, expect, it } from "vitest";
 
 import { NO_RANKS } from "../../skills/status.js";
 import { vec2 } from "../../vec2.js";
-import { DT, MONK, fighter, match } from "./rules/test-support.js";
-import { PLAN_SECONDS } from "./plan.js";
+import { CAPTURE_SECONDS, MAX_PIPS } from "../capture-points.js";
+import { MatchSimulation } from "../simulation.js";
+import { createCursor } from "../behaviour.js";
+import { DT, MONK, RULESET, BOUNDS, contextFor, fighter, match } from "./rules/test-support.js";
+import { PLAN_SECONDS, flankParty, placedFlank, planKey, planPhase } from "./plan.js";
 import { STALEMATE_CONTACT, STALEMATE_SECONDS, nextPlan, stalemate } from "./stalemate.js";
 
 describe("stalemate (#3834)", () => {
@@ -82,6 +85,66 @@ describe("a bot team in a stalemate in the simulation (#3834)", () => {
     expect([sim.planOverride(0), sim.planOverride(1)].some((each) => each !== undefined)).toBe(
       true,
     );
+  });
+
+  it("starts over at a shrine changing hands, with nobody dying", () => {
+    const shrine = { ...vec2(300, 400), layer: 0 };
+    const sim = new MatchSimulation({
+      seed: "bot",
+      ruleset: RULESET,
+      bounds: BOUNDS,
+      participants: [
+        fighter("a1", 0, MONK, vec2(700, 380)),
+        fighter("a2", 0, MONK, vec2(700, 420)),
+        fighter("b1", 1, MONK, vec2(900, 380)),
+        fighter("b2", 1, MONK, vec2(900, 420)),
+      ],
+      capturePoints: [shrine],
+    });
+    const capper = sim.get("a1");
+    if (capper === undefined) throw new Error("no a1");
+    // Held on the shrine until it is theirs, a pip a time: the bot would
+    // walk back to the fight. Its mate stays in contact.
+    let taken = 0;
+    while (sim.capturePoints[0]?.owner !== 0) {
+      capper.position = vec2(shrine.x, shrine.y);
+      sim.step(DT);
+      taken = sim.elapsedSeconds;
+      if (taken > MAX_PIPS * CAPTURE_SECONDS + 1) throw new Error("shrine not taken");
+    }
+    expect(taken).toBeGreaterThan(1);
+    run(sim, STALEMATE_SECONDS + 1 - taken);
+    expect(dead(sim)).toEqual([]);
+    expect([sim.planOverride(0), sim.planOverride(1)]).toEqual([undefined, undefined]);
+  });
+
+  it("keeps who flanks, the waypoint and a reached flank across a phase boundary", () => {
+    const sim = monks();
+    run(sim, STALEMATE_SECONDS + 1);
+    const team = [0, 1].find((each) => sim.planOverride(each)?.plan === "flank");
+    if (team === undefined) throw new Error("no forced flank");
+    const until = sim.planOverride(team)?.until ?? 0;
+    const boundary = planPhase(until) * PLAN_SECONDS;
+    expect(boundary).toBeGreaterThan(sim.elapsedSeconds);
+    run(sim, boundary - 1 - sim.elapsedSeconds);
+    const mates = [...sim.participants()].filter((each) => each.combatant.team === team);
+    /** `id`'s view, with the sim's overrides. */
+    const view = (id: string) =>
+      contextFor(sim, id, { planOverride: (each) => sim.planOverride(each) });
+    const before = view(mates[0]?.id ?? "");
+    const flankers = mates.filter((each) => flankParty(before, each, planKey(before, team)));
+    expect(flankers.length).toBe(1);
+    const flanker = flankers[0];
+    if (flanker === undefined) throw new Error("no flanker");
+    const cursor = createCursor();
+    const waypoint = placedFlank(view(flanker.id), flanker, cursor, 1 - team);
+    cursor.flankReached = planKey(before, team);
+    run(sim, 2);
+    const after = view(flanker.id);
+    expect(planPhase(after.now)).toBe(planPhase(before.now) + 1);
+    expect(mates.filter((each) => flankParty(after, each, planKey(after, team)))).toEqual(flankers);
+    expect(placedFlank(after, flanker, cursor, 1 - team)).toEqual(waypoint);
+    expect(cursor.flankReached).toBe(planKey(after, team));
   });
 
   it("does not switch a team with an active human", () => {

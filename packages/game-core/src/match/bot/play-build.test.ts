@@ -578,7 +578,7 @@ describe("play-build's pull-in gate (#3832)", () => {
     const view = viewOf(flanker, now);
     const intent = decide(BOT, createCursor(), view);
     expect(intent.targetId).toBeUndefined();
-    expect(intent.moveTo).toEqual(flankWaypoint(view, view.self, 1)?.point);
+    expect(intent.moveTo).toEqual(flankWaypoint(view, view.self, 1, planPhase(now))?.point);
   });
 
   it("keeps to its give-up once rested: no walk back to the waypoint, no refused far target", () => {
@@ -603,7 +603,7 @@ describe("play-build's pull-in gate (#3832)", () => {
     const cursor = createCursor();
     cursor.planGaveUp = planPhase(now);
     const intent = decide(BOT, cursor, rested);
-    expect(intent.moveTo).not.toEqual(flankWaypoint(view, view.self, 1)?.point);
+    expect(intent.moveTo).not.toEqual(flankWaypoint(view, view.self, 1, planPhase(now))?.point);
     expect(intent.targetId).toBe("foe-a");
   });
 

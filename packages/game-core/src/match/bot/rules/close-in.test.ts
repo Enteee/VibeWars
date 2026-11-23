@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { add, distance, scale, sub, vec2, type Vec2 } from "../../../vec2.js";
 import { createCursor, type BehaviourCursor } from "../../behaviour.js";
 import type { Participant } from "../../simulation.js";
-import { ESCORT_OFFSET, flankParty, flankWaypoint } from "../plan.js";
+import { ESCORT_OFFSET, flankParty, flankWaypoint, planPhase } from "../plan.js";
 import type { BotRole } from "../role.js";
 import closeIn, { REPRICE_SECONDS } from "./close-in.js";
 import {
@@ -294,7 +294,8 @@ describe("close-in under a flank plan (#3832)", () => {
       Number(flankParty(contextFor(sim, one, { now: NOW }), member(one), 1)),
   );
   const waypoint =
-    flankWaypoint(contextFor(sim, flanker, { now: NOW }), member(flanker), 1)?.point ?? vec2(0, 0);
+    flankWaypoint(contextFor(sim, flanker, { now: NOW }), member(flanker), 1, planPhase(NOW))
+      ?.point ?? vec2(0, 0);
 
   it("walks a flanker to its waypoint first", () => {
     const intent = closeIn.decide(ruleFor(sim, flanker, { plan: "flank", roleOf }, { now: NOW }));
