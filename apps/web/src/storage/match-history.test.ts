@@ -47,7 +47,7 @@ const CHART: WireMatchChart = {
   dropped: 0,
 };
 
-function record(id: string, endedAt: number, playerKey = "key-a"): MatchRecord {
+function record(id: string, endedAt: number, pubkey = "key-a"): MatchRecord {
   return {
     id,
     endedAt,
@@ -55,7 +55,7 @@ function record(id: string, endedAt: number, playerKey = "key-a"): MatchRecord {
     mode: "hosted-game",
     teamCount: 2,
     selfId: "me",
-    playerKey,
+    pubkey,
     selfTeam: 0,
     bots: ["foe"],
     ended: ENDED,
@@ -105,7 +105,7 @@ describe("parseMatchRecord (#3848)", () => {
   it.each([
     ["an unknown mode", { mode: "chess" }],
     ["a team past the team count", { selfTeam: 2 }],
-    ["no player key", { playerKey: undefined }],
+    ["no player key", { pubkey: undefined }],
     ["a bot that is no id", { bots: [3] }],
     [
       "a chart of a stranger",

@@ -12,7 +12,7 @@ const ENDED: WireEnded = {
   clearSeconds: null,
 };
 
-function record(id: string, playerKey: string, change: Partial<MatchRecord> = {}): MatchRecord {
+function record(id: string, pubkey: string, change: Partial<MatchRecord> = {}): MatchRecord {
   return {
     id,
     endedAt: 1_700_000_000_000,
@@ -20,7 +20,7 @@ function record(id: string, playerKey: string, change: Partial<MatchRecord> = {}
     mode: "hosted-game",
     teamCount: 2,
     selfId: "me",
-    playerKey,
+    pubkey,
     selfTeam: 0,
     bots: [],
     ended: ENDED,

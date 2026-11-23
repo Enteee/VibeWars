@@ -2985,7 +2985,7 @@ async function main(): Promise<void> {
       .add({
         id: crypto.randomUUID(),
         endedAt: Date.now(),
-        playerKey: playerKey.pubkey,
+        pubkey: playerKey.pubkey,
         mode: matchMode,
         ...record,
       })

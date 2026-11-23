@@ -27,7 +27,7 @@ export interface MatchRecord {
   readonly teamCount: WireTeamCount;
   readonly selfId: string;
   /** The player key's public key, hex, when the player left it. */
-  readonly playerKey: string;
+  readonly pubkey: string;
   readonly selfTeam: number;
   readonly bots: readonly string[];
   readonly ended: WireEnded;
@@ -35,7 +35,7 @@ export interface MatchRecord {
 }
 
 /** What a finished match's view holds of its record (#3848): the rest is the leaving's. */
-export type MatchRecordFields = Omit<MatchRecord, "id" | "endedAt" | "playerKey" | "mode">;
+export type MatchRecordFields = Omit<MatchRecord, "id" | "endedAt" | "pubkey" | "mode">;
 
 type Fields = Readonly<Record<string, unknown>>;
 
@@ -65,7 +65,7 @@ export function parseMatchRecord(value: unknown): MatchRecord | undefined {
     !isLobbyMode(raw.mode) ||
     (raw.teamCount !== 2 && raw.teamCount !== 3) ||
     !isString(raw.selfId) ||
-    !isString(raw.playerKey) ||
+    !isString(raw.pubkey) ||
     typeof raw.selfTeam !== "number" ||
     !Number.isInteger(raw.selfTeam) ||
     raw.selfTeam < 0 ||
@@ -91,7 +91,7 @@ export function parseMatchRecord(value: unknown): MatchRecord | undefined {
         mode: raw.mode,
         teamCount,
         selfId: raw.selfId,
-        playerKey: raw.playerKey,
+        pubkey: raw.pubkey,
         selfTeam: raw.selfTeam,
         bots: raw.bots,
         ended,

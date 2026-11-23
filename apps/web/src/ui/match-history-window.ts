@@ -41,7 +41,7 @@ export function historyRows(
   mine: boolean,
   ownKey: string,
 ): { readonly rows: readonly HistoryRow[]; readonly empty: string | undefined } {
-  const shown = mine ? records.filter((record) => record.playerKey === ownKey) : records;
+  const shown = mine ? records.filter((record) => record.pubkey === ownKey) : records;
   const when = new Intl.DateTimeFormat(locale(), { dateStyle: "short", timeStyle: "short" });
   return {
     rows: shown.map((record) => ({
