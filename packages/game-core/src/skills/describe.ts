@@ -2,8 +2,8 @@ import { AREA_ADJACENT, AREA_EARSHOT, AREA_NEARBY, RANGE_SPELL } from "../distan
 import { WEAPONS } from "../equipment/weapons.js";
 import {
   SPAWNING_POWER_ATTRIBUTE,
+  spawningPowerDuration,
   spawningPowerHealth,
-  spawningPowerMultiplier,
 } from "../primary-attributes.js";
 import type { ProfessionId } from "../professions.js";
 
@@ -207,7 +207,7 @@ function spawningPowerOf(ranks: ReadonlyMap<string, number>): number {
 }
 
 /**
- * "31.1s (21s)": how long a status lasts at these ranks, the base in
+ * "31s (21s)": how long a status lasts at these ranks, the base in
  * brackets when Spawning Power lengthens a weapon spell (#1098).
  */
 function statusDuration(
@@ -235,7 +235,7 @@ function statusDuration(
     return base;
   }
   const at = resolveMagnitudeAtRanks(effect.durationSeconds, ranks);
-  const lasts = at * spawningPowerMultiplier(spawningPowerOf(ranks));
+  const lasts = spawningPowerDuration(spawningPowerOf(ranks), at);
   return say.words.composedLastsAtBase({ lasts, at, base });
 }
 

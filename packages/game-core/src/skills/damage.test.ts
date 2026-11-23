@@ -765,26 +765,22 @@ describe("profession and attacking insignias, per piece (#1142)", () => {
   });
 });
 
-describe("Mysticism's armor while enchanted (#874)", () => {
+describe("Mysticism gives no armor while enchanted (#874, #3880)", () => {
   function dervish(rank: number): Combatant {
     return defender(80, { attributeRanks: new Map([["dervish.mysticism", rank]]) });
   }
 
-  it("adds +1 a rank while any enchantment is up, and nothing without one", () => {
+  it("adds nothing at rank 12 with an enchantment up: GW1's +1 a rank is PvE only", () => {
     const target = dervish(12);
     expect(effectiveArmor(target, physical(10), "chest")).toBe(80);
-    // Armor of Earth's own +24, then Mysticism's +12.
+    // Armor of Earth's own +24, and nothing of Mysticism's.
     target.statuses.apply("armor-boost", 30, "someone-else", NO_RANKS);
-    expect(effectiveArmor(target, physical(10), "chest")).toBe(116);
-    expect(mitigate(physical(100), target, RULES, "chest", createRng(1), new Map())).toBeLessThan(
-      mitigate(physical(100), dervish(12), RULES, "chest", createRng(1), new Map()),
-    );
-  });
-
-  it("adds nothing at rank 0", () => {
-    const target = dervish(0);
-    target.statuses.apply("armor-boost", 30, "self", NO_RANKS);
     expect(effectiveArmor(target, physical(10), "chest")).toBe(104);
+    const without = dervish(0);
+    without.statuses.apply("armor-boost", 30, "someone-else", NO_RANKS);
+    expect(mitigate(physical(100), target, RULES, "chest", createRng(1), new Map())).toBe(
+      mitigate(physical(100), without, RULES, "chest", createRng(1), new Map()),
+    );
   });
 });
 
