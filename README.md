@@ -32,8 +32,8 @@ for the decisions behind this repository (start with
 
 ## Play it
 
-**Requirements:** a desktop browser, a keyboard and a mouse. VibeWars
-does not work on a phone or a touch-only tablet.
+**Requirements:** a browser, with a keyboard and a mouse, or a phone or
+a tablet played by touch.
 
 Open [the game](https://enteee.github.io/VibeWars/) on GitHub Pages.
 Every player is always in a lobby of your own.

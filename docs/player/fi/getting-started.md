@@ -3,8 +3,8 @@
 VibeWars on tiimitaistelu pienellä areenalla. Jokainen pelaaja tuo yhden
 hahmon, jolla on kahdeksan taitoa. Taistelun voittava tiimi voittaa
 ottelun. Et tarvitse tiliä etkä asenna mitään: peli toimii tässä
-selaimen välilehdessä. VibeWars vaatii näppäimistön ja hiiren. Se ei toimi
-puhelimella eikä pelkällä kosketustabletilla: avaa se tietokoneella.
+selaimen välilehdessä. Pelaa näppäimistöllä ja hiirellä tai kosketuksella
+puhelimella tai tabletilla: katso [Kosketus](controls.md#kosketus).
 
 ## Opetus
 

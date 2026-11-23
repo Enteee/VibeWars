@@ -3,8 +3,8 @@
 VibeWars est un combat d'équipes dans une petite arène. Chaque joueur amène
 un personnage avec huit compétences. L'équipe qui gagne le combat gagne le
 match. Pas de compte, rien à installer : le jeu tourne dans cet onglet du
-navigateur. VibeWars requiert un clavier et une souris. Ça ne marche pas sur
-téléphone ni sur tablette tactile : ouvre-le sur un ordinateur.
+navigateur. Joue au clavier et à la souris, ou au toucher sur téléphone ou
+tablette : vois [Tactile](controls.md#tactile).
 
 ## Le tutoriel
 

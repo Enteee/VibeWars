@@ -1456,12 +1456,6 @@ export const en = {
     other: "Your party of {count} joins with you.",
   },
 
-  "touchNotice.continue": "Continue anyway",
-  "touchNotice.headline": "VibeWars needs a keyboard and mouse.",
-  "touchNotice.title": "VibeWars",
-  "touchNotice.where":
-    "It does not work on a phone or a touch-only tablet. Open it on a computer: {url}.",
-
   "training.arena": "training arena",
   "training.attacking": "attacking",
   "training.cannotTest": "This build cannot be tested: {problem}",
@@ -1701,6 +1695,25 @@ export const en = {
   "tutorial.stepIn.how": "Left click the pad, or walk with {keys}.",
   "tutorial.stepIn.intro": "Come on, into the teleporter with me!",
   "tutorial.stepIn.praise": "Together. Hold your breath.",
+  "tutorial.touch.callHow": "Tap a rat, then tap the target bar to call it.",
+  "tutorial.touch.callT": "That's it. Now you're on the called one.",
+  "tutorial.touch.climbHint": "Onto the ledge, then back down beside it.",
+  "tutorial.touch.climbHow": "Tap the ledge, then tap the ground beside it.",
+  "tutorial.touch.climbPraise": "Up and down again. You read the ground now.",
+  "tutorial.touch.climbTip": "Tip: a tap on a ledge always picks its top.",
+  "tutorial.touch.climbUnder": "Now back down, beside the ledge.",
+  "tutorial.touch.healHint":
+    "Tap my name in the party list first. Tap Party if the list is closed.",
+  "tutorial.touch.healHow":
+    "Tap Party if the list is closed, then my name, then the glowing skill.",
+  "tutorial.touch.look": "Pinch to zoom. Drag one finger to look.",
+  "tutorial.touch.pingHow": "Tap the compass, or drag on it to draw a line.",
+  "tutorial.touch.ratsHow": "Tap a rat to target it.",
+  "tutorial.touch.tunnelHow": "Tap the steps down, then the mark past the far end.",
+  "tutorial.touch.walk": "Tap the ground to walk there.",
+  "tutorial.touch.wallHint": "Tap the wall first, then strike it.",
+  "tutorial.touch.wallHow": "Tap the wall, then tap it again to strike it.",
+  "tutorial.touch.wallIntro": "A wall blocks the trail. Tap it, then hit it.",
   "tutorial.tunnel.hint": "Down the steps, through the tunnel, to the mark.",
   "tutorial.tunnel.how": "Click the steps down, then the mark past the far end.",
   "tutorial.tunnel.intro": "Shh. Don't wake them. We go under.",

@@ -3,8 +3,8 @@
 VibeWars este o luptă de echipă într-o arenă mică. Fiecare jucător aduce un
 personaj cu opt abilități. Echipa care câștigă lupta câștigă meciul. Nu ai nevoie
 de cont și nu trebuie să instalezi nimic: jocul rulează în această filă de
-browser. VibeWars are nevoie de tastatură și mouse. Nu funcționează pe telefon
-sau pe o tabletă doar cu ecran tactil: deschide-l pe un computer.
+browser. Joacă-l cu tastatura și mouse-ul sau prin atingere pe un telefon ori o
+tabletă: vezi [Atingere](controls.md#atingere).
 
 ## Tutorialul
 

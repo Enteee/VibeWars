@@ -1530,12 +1530,6 @@ export default {
     other: "Tvoja grupa od {count} ulazi s tobom.",
   },
 
-  "touchNotice.continue": "Ipak nastavi",
-  "touchNotice.headline": "VibeWars treba tipkovnicu i miš.",
-  "touchNotice.title": "VibeWars",
-  "touchNotice.where":
-    "Ne radi na mobitelu ni na tabletu samo s dodirom. Otvori na računalu: {url}.",
-
   "training.arena": "arena za vježbu",
   "training.attacking": "napada",
   "training.cannotTest": "Ovaj se sastav ne može testirati: {problem}",
@@ -1774,6 +1768,25 @@ export default {
   "tutorial.stepIn.how": "Lijevi klik na ploču, ili hodaj s {keys}.",
   "tutorial.stepIn.intro": "Hajde, u teleporter sa mnom!",
   "tutorial.stepIn.praise": "Zajedno. Zadrži dah.",
+  "tutorial.touch.callHow": "Dodirni štakora, pa traku mete da ga označiš.",
+  "tutorial.touch.callT": "Tako je. Sad ciljaš označenu metu.",
+  "tutorial.touch.climbHint": "Gore na izbočinu, pa opet dolje pokraj nje.",
+  "tutorial.touch.climbHow": "Dodirni izbočinu, pa tlo pokraj nje.",
+  "tutorial.touch.climbPraise": "Gore i opet dolje. Sad znaš čitati teren.",
+  "tutorial.touch.climbTip": "Savjet: dodir izbočine uvijek bira njezin vrh.",
+  "tutorial.touch.climbUnder": "Sad opet dolje, pokraj izbočine.",
+  "tutorial.touch.healHint":
+    "Prvo dodirni moje ime na popisu skupine. Dodirni Grupa ako je popis zatvoren.",
+  "tutorial.touch.healHow":
+    "Dodirni Grupa ako je popis zatvoren, zatim moje ime, pa vještinu koja svijetli.",
+  "tutorial.touch.look": "Raširi prste za zum. Povuci jednim prstom da se osvrneš.",
+  "tutorial.touch.pingHow": "Dodirni kompas ili povuci po njemu da nacrtaš crtu.",
+  "tutorial.touch.ratsHow": "Dodirni štakora da ga naciljaš.",
+  "tutorial.touch.tunnelHow": "Dodirni stepenice dolje, zatim oznaku iza drugog kraja.",
+  "tutorial.touch.walk": "Dodirni tlo da odeš onamo.",
+  "tutorial.touch.wallHint": "Prvo dodirni zid, pa ga udari.",
+  "tutorial.touch.wallHow": "Dodirni zid, pa ga dodirni opet da ga udariš.",
+  "tutorial.touch.wallIntro": "Zid zatvara stazu. Dodirni ga, pa ga udari.",
   "tutorial.tunnel.hint": "Niz stepenice, kroz tunel, do oznake.",
   "tutorial.tunnel.how": "Klikni stepenice dolje, zatim oznaku iza drugog kraja.",
   "tutorial.tunnel.intro": "Pst. Ne budi ga. Idemo ispod.",

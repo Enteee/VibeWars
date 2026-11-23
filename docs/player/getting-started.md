@@ -3,8 +3,8 @@
 VibeWars is a team fight in a small arena. Each player brings one
 character with eight skills. The team that wins the fight wins the
 match. You need no account and nothing to install: the game runs in
-this browser tab. VibeWars needs a keyboard and mouse. It does not work
-on a phone or a touch-only tablet: open it on a computer.
+this browser tab. Play it with a keyboard and mouse, or on a phone or a
+tablet by touch: see [Touch](controls.md#touch).
 
 ## The tutorial
 

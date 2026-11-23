@@ -1461,12 +1461,6 @@ export default {
     other: "Je groep van {count} doet met je mee.",
   },
 
-  "touchNotice.continue": "Toch doorgaan",
-  "touchNotice.headline": "VibeWars heeft een toetsenbord en muis nodig.",
-  "touchNotice.title": "VibeWars",
-  "touchNotice.where":
-    "Het werkt niet op een telefoon of een tablet met alleen touch. Open het op een computer: {url}.",
-
   "training.arena": "trainingsarena",
   "training.attacking": "valt aan",
   "training.cannotTest": "Deze build kan niet getest worden: {problem}",
@@ -1711,6 +1705,26 @@ export default {
   "tutorial.stepIn.how": "Klik links op het platform, of loop met {keys}.",
   "tutorial.stepIn.intro": "Kom, de teleporter in met mij!",
   "tutorial.stepIn.praise": "Samen. Houd je adem in.",
+  "tutorial.touch.callHow": "Tik op een rat en dan op de doelbalk om hem af te roepen.",
+  "tutorial.touch.callT": "Zo is het. Nu zit je op het afgeroepen doel.",
+  "tutorial.touch.climbHint": "Op de richel, en dan ernaast weer omlaag.",
+  "tutorial.touch.climbHow": "Tik op de richel en dan op de grond ernaast.",
+  "tutorial.touch.climbPraise": "Op en weer neer. Nu kun je het terrein lezen.",
+  "tutorial.touch.climbTip": "Tip: een tik op een richel kiest altijd de bovenkant.",
+  "tutorial.touch.climbUnder": "Nu weer omlaag, naast de richel.",
+  "tutorial.touch.healHint":
+    "Tik eerst op mijn naam in de groepslijst. Tik op Groep als de lijst dicht is.",
+  "tutorial.touch.healHow":
+    "Tik op Groep als de lijst dicht is, dan op mijn naam en dan op de oplichtende skill.",
+  "tutorial.touch.look": "Knijp om te zoomen. Sleep met één vinger om rond te kijken.",
+  "tutorial.touch.pingHow": "Tik op het kompas, of sleep erover om een lijn te tekenen.",
+  "tutorial.touch.ratsHow": "Tik op een rat om hem te kiezen.",
+  "tutorial.touch.tunnelHow":
+    "Tik op de treden omlaag, dan op de markering voorbij het andere eind.",
+  "tutorial.touch.walk": "Tik op de grond om erheen te lopen.",
+  "tutorial.touch.wallHint": "Tik eerst op de muur, sla er dan op.",
+  "tutorial.touch.wallHow": "Tik op de muur en tik nog eens om erop te slaan.",
+  "tutorial.touch.wallIntro": "Een muur verspert het pad. Tik erop en sla erop.",
   "tutorial.tunnel.hint": "De treden af, door de tunnel, naar de markering.",
   "tutorial.tunnel.how": "Klik op de treden omlaag, dan op de markering voorbij het andere eind.",
   "tutorial.tunnel.intro": "Sst. Maak de wacht niet wakker. We gaan eronderdoor.",

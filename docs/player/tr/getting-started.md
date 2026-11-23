@@ -3,8 +3,8 @@
 VibeWars, küçük bir arenada geçen bir takım dövüşüdür. Her oyuncu sekiz
 beceriye sahip tek bir karakter getirir. Dövüşü kazanan takım maçı da
 kazanır. Hesap açman ya da bir şey kurman gerekmez: oyun bu tarayıcı
-sekmesinde çalışır. VibeWars için klavye ve fare gerekir. Telefonda ya
-da yalnızca dokunmatik bir tablette çalışmaz: bir bilgisayarda aç.
+sekmesinde çalışır. Klavye ve fareyle ya da telefonda veya tablette
+dokunarak oyna: bkz. [Dokunmatik](controls.md#dokunmatik).
 
 ## Öğretici
 

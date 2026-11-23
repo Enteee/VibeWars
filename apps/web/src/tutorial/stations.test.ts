@@ -418,6 +418,18 @@ describe("climbStation (#3323)", () => {
       "tutorial.climb.praise",
     ]);
   });
+
+  it("on touch is done back down beside the ledge, its mark gone once up (#3782)", () => {
+    const station = climbStation(LEDGE, STAIRS, UPPER, LOWER, true);
+    if (typeof station.highlight !== "function") {
+      throw new Error("a climb station's mark moves");
+    }
+    expect(station.done(view(BESIDE))).toBe(false);
+    expect(station.highlight(view(BESIDE))).toEqual({ kind: "ground", at: MIDDLE, layer: UPPER });
+    expect(station.done(view(ON_LEDGE))).toBe(false);
+    expect(station.highlight(view(ON_LEDGE))).toBeUndefined();
+    expect(station.done(view(BESIDE))).toBe(true);
+  });
 });
 
 describe("tunnelStation (#3326)", () => {

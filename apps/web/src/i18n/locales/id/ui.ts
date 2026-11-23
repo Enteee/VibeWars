@@ -1383,12 +1383,6 @@ export default {
   "topbar.ownLobby": "Lobimu",
   "topbar.partyJoins": { other: "Party-mu yang berisi {count} orang ikut bersamamu." },
 
-  "touchNotice.continue": "Tetap lanjut",
-  "touchNotice.headline": "VibeWars butuh keyboard dan mouse.",
-  "touchNotice.title": "VibeWars",
-  "touchNotice.where":
-    "Game ini tidak bisa dimainkan di ponsel atau tablet layar sentuh. Buka di komputer: {url}.",
-
   "training.arena": "arena latihan",
   "training.attacking": "menyerang",
   "training.cannotTest": "Build ini tidak bisa diuji: {problem}",
@@ -1629,6 +1623,25 @@ export default {
   "tutorial.stepIn.how": "Klik kiri landasannya, atau berjalan dengan {keys}.",
   "tutorial.stepIn.intro": "Ayo, masuk teleporter bersamaku!",
   "tutorial.stepIn.praise": "Bersama. Tahan napasmu.",
+  "tutorial.touch.callHow": "Ketuk tikus, lalu ketuk bilah target untuk menandainya.",
+  "tutorial.touch.callT": "Begitu. Sekarang kamu mengincar sasaran yang ditandai.",
+  "tutorial.touch.climbHint": "Naik ke tepian, lalu turun lagi di sampingnya.",
+  "tutorial.touch.climbHow": "Ketuk tepiannya, lalu ketuk tanah di sampingnya.",
+  "tutorial.touch.climbPraise": "Naik dan turun lagi. Sekarang kamu bisa membaca medan.",
+  "tutorial.touch.climbTip": "Tips: ketukan pada tepian selalu memilih bagian atasnya.",
+  "tutorial.touch.climbUnder": "Sekarang turun lagi, di samping tepian.",
+  "tutorial.touch.healHint":
+    "Ketuk namaku di daftar regu dulu. Ketuk Party kalau daftarnya tertutup.",
+  "tutorial.touch.healHow":
+    "Ketuk Party kalau daftarnya tertutup, lalu namaku, lalu skill yang menyala.",
+  "tutorial.touch.look": "Cubit untuk zoom. Seret satu jari untuk melihat.",
+  "tutorial.touch.pingHow": "Ketuk kompas, atau seret di atasnya untuk menggambar garis.",
+  "tutorial.touch.ratsHow": "Ketuk tikus untuk membidiknya.",
+  "tutorial.touch.tunnelHow": "Ketuk tangga turun, lalu tanda di balik ujung satunya.",
+  "tutorial.touch.walk": "Ketuk tanah untuk berjalan ke sana.",
+  "tutorial.touch.wallHint": "Ketuk temboknya dulu, lalu pukul.",
+  "tutorial.touch.wallHow": "Ketuk temboknya, lalu ketuk lagi untuk memukul.",
+  "tutorial.touch.wallIntro": "Sebuah tembok menghalangi jalan. Ketuk, lalu pukul.",
   "tutorial.tunnel.hint": "Turuni tangga, lewati terowongan, ke tanda.",
   "tutorial.tunnel.how": "Klik tangga turun, lalu tanda di balik ujung satunya.",
   "tutorial.tunnel.intro": "Sst. Jangan bangunkan dia. Kita lewat bawah.",

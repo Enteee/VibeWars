@@ -1579,12 +1579,6 @@ export default {
     other: "Tvoja družina ({count}) ide s tebou.",
   },
 
-  "touchNotice.continue": "Pokračovať",
-  "touchNotice.headline": "VibeWars vyžaduje klávesnicu a myš.",
-  "touchNotice.title": "VibeWars",
-  "touchNotice.where":
-    "Na telefóne ani na čisto dotykovom tablete nefunguje. Otvor ho na počítači: {url}.",
-
   "training.arena": "cvičná aréna",
   "training.attacking": "útočí",
   "training.cannotTest": "Tento build sa nedá otestovať: {problem}",
@@ -1825,6 +1819,25 @@ export default {
   "tutorial.stepIn.how": "Klikni ľavým na plošinu, alebo choď pomocou {keys}.",
   "tutorial.stepIn.intro": "Poď, do teleportu so mnou!",
   "tutorial.stepIn.praise": "Spolu. Zadrž dych.",
+  "tutorial.touch.callHow": "Ťukni na potkana, potom na lištu cieľa, aby si ho označil.",
+  "tutorial.touch.callT": "Presne tak. Teraz mieriš na označený cieľ.",
+  "tutorial.touch.climbHint": "Hore na rímsu, potom zas dole vedľa nej.",
+  "tutorial.touch.climbHow": "Ťukni na rímsu, potom na zem vedľa nej.",
+  "tutorial.touch.climbPraise": "Hore a zas dole. Teraz už terén vieš čítať.",
+  "tutorial.touch.climbTip": "Tip: ťuknutie na rímsu vždy vyberie jej vrch.",
+  "tutorial.touch.climbUnder": "Teraz zas dole, vedľa rímsy.",
+  "tutorial.touch.healHint":
+    "Najprv ťukni na moje meno v zozname družiny. Ak je zoznam zatvorený, ťukni na Družina.",
+  "tutorial.touch.healHow":
+    "Ak je zoznam zatvorený, ťukni na Družina, potom na moje meno a potom na žiariacu zručnosť.",
+  "tutorial.touch.look": "Približuj roztiahnutím prstov. Ťahaj jedným prstom a rozhliadni sa.",
+  "tutorial.touch.pingHow": "Ťukni na kompas alebo po ňom ťahaj a nakresli čiaru.",
+  "tutorial.touch.ratsHow": "Ťukni na potkana a zameraj ho.",
+  "tutorial.touch.tunnelHow": "Ťukni na schody dolu, potom na značku za druhým koncom.",
+  "tutorial.touch.walk": "Ťukni na zem a dôjdi tam.",
+  "tutorial.touch.wallHint": "Najprv ťukni na múr, potom doň udri.",
+  "tutorial.touch.wallHow": "Ťukni na múr, potom naň ťukni znova a udri.",
+  "tutorial.touch.wallIntro": "Chodník blokuje múr. Ťukni naň a potom doň udri.",
   "tutorial.tunnel.hint": "Dolu po schodoch, tunelom, k značke.",
   "tutorial.tunnel.how": "Klikni na schody dolu, potom na značku za druhým koncom.",
   "tutorial.tunnel.intro": "Pst. Nezobuď ho. Pôjdeme spodom.",

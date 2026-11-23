@@ -1576,12 +1576,6 @@ export default {
     other: "Tvoje skupina ({count}) se připojí s tebou.",
   },
 
-  "touchNotice.continue": "Přesto pokračovat",
-  "touchNotice.headline": "VibeWars potřebuje klávesnici a myš.",
-  "touchNotice.title": "VibeWars",
-  "touchNotice.where":
-    "Na telefonu ani čistě dotykovém tabletu to nefunguje. Otevři hru na počítači: {url}.",
-
   "training.arena": "tréninková aréna",
   "training.attacking": "útočí",
   "training.cannotTest": "Tento build nelze otestovat: {problem}",
@@ -1819,6 +1813,25 @@ export default {
   "tutorial.stepIn.how": "Klikni levým na plošinu, nebo jdi pomocí {keys}.",
   "tutorial.stepIn.intro": "Pojď, do teleportu se mnou!",
   "tutorial.stepIn.praise": "Spolu. Zadrž dech.",
+  "tutorial.touch.callHow": "Klepni na krysu, pak na lištu cíle, abys ji označil.",
+  "tutorial.touch.callT": "Přesně tak. Teď míříš na označený cíl.",
+  "tutorial.touch.climbHint": "Nahoru na římsu, pak zase dolů vedle ní.",
+  "tutorial.touch.climbHow": "Klepni na římsu, pak na zem vedle ní.",
+  "tutorial.touch.climbPraise": "Nahoru a zase dolů. Teď už terén umíš číst.",
+  "tutorial.touch.climbTip": "Tip: klepnutí na římsu vždy vybere její vršek.",
+  "tutorial.touch.climbUnder": "Teď zase dolů, vedle římsy.",
+  "tutorial.touch.healHint":
+    "Nejdřív klepni na mé jméno v seznamu družiny. Když je seznam zavřený, klepni na Skupina.",
+  "tutorial.touch.healHow":
+    "Když je seznam zavřený, klepni na Skupina, pak na mé jméno a pak na zářící dovednost.",
+  "tutorial.touch.look": "Přibližuj roztažením prstů. Táhni jedním prstem a rozhlédni se.",
+  "tutorial.touch.pingHow": "Klepni na kompas, nebo po něm táhni a nakresli čáru.",
+  "tutorial.touch.ratsHow": "Klepni na krysu a zaměř ji.",
+  "tutorial.touch.tunnelHow": "Klepni na schody dolů, pak na značku za druhým koncem.",
+  "tutorial.touch.walk": "Klepni na zem a dojdi tam.",
+  "tutorial.touch.wallHint": "Nejdřív klepni na zeď, pak do ní udeř.",
+  "tutorial.touch.wallHow": "Klepni na zeď, pak na ni klepni znovu a udeř.",
+  "tutorial.touch.wallIntro": "Stezku blokuje zeď. Klepni na ni a pak do ní udeř.",
   "tutorial.tunnel.hint": "Dolů po schodech, tunelem, ke značce.",
   "tutorial.tunnel.how": "Klikni na schody dolů, pak na značku za druhým koncem.",
   "tutorial.tunnel.intro": "Pst. Nevzbuď ho. Půjdeme spodem.",

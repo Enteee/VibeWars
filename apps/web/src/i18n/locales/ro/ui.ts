@@ -1538,12 +1538,6 @@ export default {
     other: "Grupul tău ({count}) intră cu tine.",
   },
 
-  "touchNotice.continue": "Continuă oricum",
-  "touchNotice.headline": "VibeWars are nevoie de tastatură și mouse.",
-  "touchNotice.title": "VibeWars",
-  "touchNotice.where":
-    "Nu funcționează pe telefon sau pe o tabletă doar cu ecran tactil. Deschide-l pe un calculator: {url}.",
-
   "training.arena": "arenă de antrenament",
   "training.attacking": "atacă",
   "training.cannotTest": "Acest build nu poate fi testat: {problem}",
@@ -1789,6 +1783,25 @@ export default {
   "tutorial.stepIn.how": "Clic stânga pe platformă sau mergi cu {keys}.",
   "tutorial.stepIn.intro": "Hai, în teleportor cu mine!",
   "tutorial.stepIn.praise": "Împreună. Ține-ți respirația.",
+  "tutorial.touch.callHow": "Atinge un șobolan, apoi bara țintei ca să-l semnalezi.",
+  "tutorial.touch.callT": "Exact. Acum ești pe ținta semnalată.",
+  "tutorial.touch.climbHint": "Urcă pe cornișă, apoi coboară iar lângă ea.",
+  "tutorial.touch.climbHow": "Atinge cornișa, apoi pământul de lângă ea.",
+  "tutorial.touch.climbPraise": "Sus și iar jos. Acum știi să citești terenul.",
+  "tutorial.touch.climbTip": "Sfat: o atingere pe cornișă alege mereu partea de sus.",
+  "tutorial.touch.climbUnder": "Acum coboară înapoi, lângă cornișă.",
+  "tutorial.touch.healHint":
+    "Mai întâi atinge numele meu în lista grupului. Atinge Grup dacă lista e închisă.",
+  "tutorial.touch.healHow":
+    "Atinge Grup dacă lista e închisă, apoi numele meu, apoi abilitatea care strălucește.",
+  "tutorial.touch.look": "Ciupește ca să faci zoom. Trage cu un deget ca să privești.",
+  "tutorial.touch.pingHow": "Atinge busola sau trage pe ea ca să desenezi o linie.",
+  "tutorial.touch.ratsHow": "Atinge un șobolan ca să-l țintești.",
+  "tutorial.touch.tunnelHow": "Atinge treptele în jos, apoi semnul de dincolo de capătul celălalt.",
+  "tutorial.touch.walk": "Atinge solul ca să mergi acolo.",
+  "tutorial.touch.wallHint": "Întâi atinge zidul, apoi lovește-l.",
+  "tutorial.touch.wallHow": "Atinge zidul, apoi atinge-l din nou ca să-l lovești.",
+  "tutorial.touch.wallIntro": "Un zid blochează poteca. Atinge-l, apoi lovește-l.",
   "tutorial.tunnel.hint": "Coboară treptele, prin tunel, până la semn.",
   "tutorial.tunnel.how":
     "Dă clic pe treptele în jos, apoi pe semnul de dincolo de capătul celălalt.",

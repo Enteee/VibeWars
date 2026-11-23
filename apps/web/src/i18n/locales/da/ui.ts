@@ -1452,12 +1452,6 @@ export default {
     other: "Din gruppe på {count} deltager sammen med dig.",
   },
 
-  "touchNotice.continue": "Fortsæt alligevel",
-  "touchNotice.headline": "VibeWars kræver tastatur og mus.",
-  "touchNotice.title": "VibeWars",
-  "touchNotice.where":
-    "Det virker ikke på en telefon eller en ren touch-tablet. Åbn det på en computer: {url}.",
-
   "training.arena": "træningsarena",
   "training.attacking": "angriber",
   "training.cannotTest": "Dette build kan ikke testes: {problem}",
@@ -1697,6 +1691,25 @@ export default {
   "tutorial.stepIn.how": "Venstreklik på pladen, eller gå med {keys}.",
   "tutorial.stepIn.intro": "Kom, ind i teleporten med mig!",
   "tutorial.stepIn.praise": "Sammen. Hold vejret.",
+  "tutorial.touch.callHow": "Tryk på en rotte, og så på målbjælken for at kalde den.",
+  "tutorial.touch.callT": "Sådan. Nu er du på det kaldte mål.",
+  "tutorial.touch.climbHint": "Op på afsatsen, og så ned igen ved siden af.",
+  "tutorial.touch.climbHow": "Tryk på afsatsen, og så på jorden ved siden af.",
+  "tutorial.touch.climbPraise": "Op og ned igen. Nu kan du læse terrænet.",
+  "tutorial.touch.climbTip": "Tip: et tryk på en afsats vælger altid toppen.",
+  "tutorial.touch.climbUnder": "Nu ned igen, ved siden af afsatsen.",
+  "tutorial.touch.healHint":
+    "Tryk først på mit navn i gruppelisten. Tryk på Gruppe, hvis listen er lukket.",
+  "tutorial.touch.healHow":
+    "Tryk på Gruppe, hvis listen er lukket, så på mit navn og så på den lysende evne.",
+  "tutorial.touch.look": "Knib for at zoome. Træk med én finger for at se dig om.",
+  "tutorial.touch.pingHow": "Tryk på kompasset, eller træk på det for at tegne en linje.",
+  "tutorial.touch.ratsHow": "Tryk på en rotte for at vælge den.",
+  "tutorial.touch.tunnelHow": "Tryk på trinene ned, så på mærket bag den anden ende.",
+  "tutorial.touch.walk": "Tryk på jorden for at gå derhen.",
+  "tutorial.touch.wallHint": "Tryk først på muren, og slå den så.",
+  "tutorial.touch.wallHow": "Tryk på muren, og tryk igen for at slå den.",
+  "tutorial.touch.wallIntro": "En mur spærrer stien. Tryk på den, og slå så.",
   "tutorial.tunnel.hint": "Ned ad trinene, gennem tunnelen, hen til mærket.",
   "tutorial.tunnel.how": "Klik på trinene ned, så på mærket bag den anden ende.",
   "tutorial.tunnel.intro": "Shh. Væk dem ikke. Vi går nedenunder.",
