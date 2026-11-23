@@ -910,6 +910,8 @@ export interface WireSpawn {
   readonly id: string;
   readonly x: number;
   readonly y: number;
+  /** The map layer it spawned on (ADR-0051), whose height it is drawn at. */
+  readonly layer: number;
 }
 
 /**
@@ -2901,8 +2903,12 @@ function parsePreMatch(value: unknown): WirePreMatch | undefined {
 
 function parseSpawn(value: unknown): WireSpawn | undefined {
   const raw = fields(value);
-  return raw !== undefined && isString(raw.id) && isNumber(raw.x) && isNumber(raw.y)
-    ? { id: raw.id, x: raw.x, y: raw.y }
+  return raw !== undefined &&
+    isString(raw.id) &&
+    isNumber(raw.x) &&
+    isNumber(raw.y) &&
+    isLayer(raw.layer)
+    ? { id: raw.id, x: raw.x, y: raw.y, layer: raw.layer }
     : undefined;
 }
 

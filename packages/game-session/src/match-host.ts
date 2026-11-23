@@ -615,11 +615,13 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
             ? untilAnyway
             : null,
       // Every body a snapshot shows is held, each at its own spawn (#3909).
-      spawns: [...sim.participants()].flatMap((participant) =>
-        wireIdentity(participant, seats, sim.elapsedSeconds) === undefined
+      spawns: [...sim.participants()].flatMap((participant) => {
+        const held = sim.heldAt(participant.id);
+        return held === undefined ||
+          wireIdentity(participant, seats, sim.elapsedSeconds) === undefined
           ? []
-          : [{ id: participant.id, x: participant.spawn.x, y: participant.spawn.y }],
-      ),
+          : [{ id: participant.id, x: held.at.x, y: held.at.y, layer: held.layer }];
+      }),
     };
   };
   /** At most one per peer: a new rejoin hello kills the old nonce. */

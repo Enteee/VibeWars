@@ -137,7 +137,7 @@ describe("a match's wait before its start (#3818)", () => {
         .sort(),
     );
     const mine = spawns.find((spawn) => spawn.id === me?.sessionId);
-    expect(mine).toEqual({ id: me?.sessionId, x: me?.x, y: me?.y });
+    expect(mine).toEqual({ id: me?.sessionId, x: me?.x, y: me?.y, layer: me?.layer });
 
     // Walked off it, the centre stays where it was.
     local.sendIntent({ kind: "move", dirX: 1, dirY: 0 });

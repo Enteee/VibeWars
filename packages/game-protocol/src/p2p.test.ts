@@ -288,8 +288,8 @@ const minion: WirePlayer = {
 
 /** Two bodies held in their spawn bubbles (#3909). */
 const spawns = [
-  { id: "p1", x: -40, y: 12.5 },
-  { id: "p2", x: 40, y: -12.5 },
+  { id: "p1", x: -40, y: 12.5, layer: 0 },
+  { id: "p2", x: 40, y: -12.5, layer: 1 },
 ];
 
 const snapshot: WireSnapshotPart = {
@@ -2070,7 +2070,7 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     parseWireSnapshotPart,
     {
       ...snapshot,
-      preMatch: { joined: 4, expected: 4, secondsLeft: 7, spawns: [{ id: "p1", x: 0 }] },
+      preMatch: { joined: 4, expected: 4, secondsLeft: 7, spawns: [{ id: "p1", x: 0, layer: 0 }] },
     },
   ],
   [
@@ -2078,7 +2078,25 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     parseWireSnapshotPart,
     {
       ...snapshot,
-      preMatch: { joined: 4, expected: 4, secondsLeft: 7, spawns: [{ id: 3, x: 0, y: 0 }] },
+      preMatch: {
+        joined: 4,
+        expected: 4,
+        secondsLeft: 7,
+        spawns: [{ id: 3, x: 0, y: 0, layer: 0 }],
+      },
+    },
+  ],
+  [
+    "snapshot with a spawn on a fractional layer (#3909)",
+    parseWireSnapshotPart,
+    {
+      ...snapshot,
+      preMatch: {
+        joined: 4,
+        expected: 4,
+        secondsLeft: 7,
+        spawns: [{ id: "p1", x: 0, y: 0, layer: 0.5 }],
+      },
     },
   ],
   ["snapshot with team 2 winning", parseWireSnapshotPart, { ...snapshot, winningTeam: 2 }],

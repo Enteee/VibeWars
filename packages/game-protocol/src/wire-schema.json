@@ -8938,6 +8938,7 @@
             "array": {
               "properties": [
                 { "name": "id", "optional": false, "type": "string" },
+                { "name": "layer", "optional": false, "type": "number" },
                 { "name": "x", "optional": false, "type": "number" },
                 { "name": "y", "optional": false, "type": "number" }
               ]
@@ -9680,6 +9681,7 @@
                       "array": {
                         "properties": [
                           { "name": "id", "optional": false, "type": "string" },
+                          { "name": "layer", "optional": false, "type": "number" },
                           { "name": "x", "optional": false, "type": "number" },
                           { "name": "y", "optional": false, "type": "number" }
                         ]
@@ -10174,6 +10176,7 @@
                       "array": {
                         "properties": [
                           { "name": "id", "optional": false, "type": "string" },
+                          { "name": "layer", "optional": false, "type": "number" },
                           { "name": "x", "optional": false, "type": "number" },
                           { "name": "y", "optional": false, "type": "number" }
                         ]
@@ -10287,6 +10290,7 @@
     "WireSpawn": {
       "properties": [
         { "name": "id", "optional": false, "type": "string" },
+        { "name": "layer", "optional": false, "type": "number" },
         { "name": "x", "optional": false, "type": "number" },
         { "name": "y", "optional": false, "type": "number" }
       ]
