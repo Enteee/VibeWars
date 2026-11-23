@@ -217,3 +217,10 @@ speelbaar** en waarom, en een team zonder naam staat als **Naamloos team**.
 Je eerste start rolt één kant-en-klaar team uit op de gekozen grootte, 4v4 tenzij
 je die veranderde, gemarkeerd met **Random**: zijn **Opnieuw** wisselt het om
 voor een ander, en **Klonen** geeft je een kopie om te bewerken.
+Elke teambuild heeft een grootte, 2v2, 4v4 of 8v8 (er zijn geen 1v1-teambuilds):
+de **Teamgrootte** in de zijbalk. Teambouwer toont de teambuilds van de daar
+gekozen grootte, en **Nieuwe teambuild** maakt er een van die grootte. De
+**Teamgrootte** in de editor verandert die: een kleinere grootte laat de laatste
+leden vallen, een grotere voegt lege toe, en Opslaan zet de zijbalk op de grootte
+waarmee hij is opgeslagen. Een geplakt team houdt zijn grootte, en de zijbalk
+schakelt erop over.

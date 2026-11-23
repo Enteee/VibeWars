@@ -26,7 +26,7 @@ Postava, které se změnila pravidla hry pod rukama, má červené pruhy a nápi
 
 Nevíš, co si vzít? Náhodná startovní postava je označená **Náhodné** a má čárkovaný obrys. **Přehodit** ti na ní dá nový náhodný build na vyzkoušení. Náhodné buildy jsou dobře hodnocené PvP buildy z [PvX wiki](https://gwpvx.fandom.com/), pojmenované stejně jako na wiki a s uvedením povolání: "Gust (E/Me)".
 
-**Tvůrce týmů** také začíná náhodným Týmovým buildem, hotovým týmem pro Týmové lobby v každé velikosti, 2v2, 4v4 a 8v8, označeným stejně a vždy posledním. Tvůrce týmů uvádí Týmové buildy podle **Velikosti týmu** v postranním panelu, takže zobrazený náhodný build má velikost, kterou tam máš vybranou. **Přehodit** na jeho místo dá jiný hotový tým. Hotové týmy jsou dobře hodnocené PvP týmové buildy z PvX wiki; velikost, pro kterou PvX žádný nemá, dostane poskládané sólové buildy z PvX. **Klonovat** uloží kopii zobrazeného týmu jako tvůj vlastní Týmový build a otevře ji, abys ji mohl upravit podle sebe.
+**Tvůrce týmů** také začíná náhodným Týmovým buildem, hotovým týmem pro Týmové lobby v každé velikosti, 2v2, 4v4 a 8v8, označeným stejně a vždy posledním. Tvůrce týmů uvádí Týmové buildy podle **Velikosti týmu** v postranním panelu, takže zobrazený náhodný build má velikost, kterou tam máš vybranou. **Přehodit** na jeho místo dá jiný hotový tým. Hotové týmy jsou dobře hodnocené PvP týmové buildy z PvX wiki; velikost, pro kterou PvX žádný nemá, dostane poskládané sólové buildy z PvX. **Klonovat** uloží kopii zobrazeného týmu jako tvůj vlastní Týmový build a otevře ji, abys ji mohl upravit podle sebe. Velikost Týmového buildu změníš v jeho editoru: menší velikost odebere poslední členy, větší přidá prázdné.
 
 ## Zahraj si Náhodnou arénu
 

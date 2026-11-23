@@ -61,6 +61,8 @@ fertiges Team an seine Stelle. Die fertigen Teams sind die gut bewerteten
 PvP-Team-Builds des PvX-Wikis; für eine Größe, die PvX nicht hat, werden PvX-Solo-Builds
 zusammengestellt. **Klonen** speichert eine Kopie des angezeigten Teams als deinen
 eigenen Team-Build und öffnet sie, damit du sie nach Belieben ändern kannst.
+Die Größe eines Team-Builds änderst du in seinem Editor: Eine kleinere Größe entfernt
+die letzten Mitglieder, eine größere fügt leere hinzu.
 
 ## Eine Zufallsarena spielen
 

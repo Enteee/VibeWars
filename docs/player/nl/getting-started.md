@@ -62,6 +62,8 @@ plaats. De kant-en-klare teams zijn de goed beoordeelde PvP-teambuilds van de
 PvX-wiki; een grootte waarvan PvX er geen heeft, krijgt samengestelde
 solo-builds van PvX. **Klonen** slaat een kopie van het getoonde team op als
 jouw eigen Teambuild en opent die, om naar wens te wijzigen.
+De grootte van een Teambuild verander je in de editor: een kleinere grootte laat
+de laatste leden vallen, een grotere voegt lege toe.
 
 ## Speel een Random Arena
 

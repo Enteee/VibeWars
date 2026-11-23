@@ -213,3 +213,10 @@ spielbar** und warum, und ein Team ohne Namen erscheint als **Unbenanntes Team**
 Dein erster Start würfelt ein vorgefertigtes Team in der gewählten Größe, 4v4, falls
 du sie nicht geändert hast, markiert mit **Zufall**: Sein **Würfeln** tauscht es gegen
 ein anderes, und **Klonen** gibt dir eine Kopie zum Bearbeiten.
+Jeder Team-Build hat eine Größe, 2v2, 4v4 oder 8v8 (es gibt keine 1v1-Team-Builds):
+die **Teamgröße** in der Seitenleiste. Der Team-Editor zeigt die Team-Builds der dort
+gewählten Größe, und **Neuer Team-Build** erstellt einen dieser Größe. Die
+**Teamgröße** in seinem Editor ändert sie: Eine kleinere Größe entfernt die letzten
+Mitglieder, eine größere fügt leere hinzu, und Speichern stellt die Seitenleiste auf
+die gespeicherte Größe. Ein eingefügtes Team behält seine Größe, und die Seitenleiste
+wechselt dorthin.

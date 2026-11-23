@@ -232,3 +232,10 @@ takım** olarak görünür. İlk açılışın, seçili boyutta, değiştirmediy
 4v4, **Rastgele** işaretli bir hazır takım getirir: **Yenile**'si
 başka birini koyar, **Kopyala** ise düzenlemen için sana bir kopya
 verir.
+Her takım diziliminin bir boyutu vardır, 2v2, 4v4 ya da 8v8 (1v1 takım
+dizilimi yoktur): kenar çubuğundaki **Takım boyutu**. Takım Oluşturucu
+orada seçilen boyuttaki takım dizilimlerini listeler ve **Yeni takım
+dizilimi** o boyutta bir tane yapar. Editöründeki **Takım boyutu** onu
+değiştirir: daha küçük bir boyut son üyeleri çıkarır, daha büyüğü boş
+üyeler ekler ve Kaydet kenar çubuğunu kaydedildiği boyuta getirir.
+Yapıştırılan bir takım boyutunu korur ve kenar çubuğu ona geçer.

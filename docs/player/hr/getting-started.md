@@ -62,6 +62,8 @@ drugi gotovi tim na njegovo mjesto. Gotovi timovi su dobro ocijenjeni PvP
 timski sastavi s PvX wikija; veličina za koju PvX nema nijedan dobiva sastavljene PvX
 solo sastave. **Kloniraj** sprema kopiju
 prikazanog tima kao tvoj timski sastav i otvara ga, da ga mijenjaš po volji.
+Veličina timskog sastava mijenja se u njegovu uređivaču: manja veličina uklanja
+zadnje članove, a veća dodaje prazne.
 
 ## Igraj Nasumičnu arenu
 

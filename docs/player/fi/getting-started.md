@@ -64,6 +64,8 @@ PvP-tiimibuildeja; koolle, jolle PvX:ssä ei ole yhtään, kootaan tiimi
 PvX:n yksittäisistä buildeista. **Kloonaa** tallentaa näytetystä tiimistä
 kopion omaksi tiimibuildiksesi ja avaa sen, jotta voit muuttaa sitä
 mielesi mukaan.
+Tiimibuildin koko vaihtuu sen editorissa: pienempi koko pudottaa viimeiset
+jäsenet, suurempi lisää tyhjiä.
 
 ## Pelaa satunnaisareenaa
 

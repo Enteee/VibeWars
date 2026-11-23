@@ -63,6 +63,8 @@ vybraná. **Znova** naň dosadí iný hotový tím. Hotové tímy sú dobre hodn
 PvP tímové buildy z PvX wiki; pre veľkosť, ktorú PvX nemá, sa zostavia zo
 sólových buildov PvX. **Klonovať** uloží kópiu zobrazeného tímu ako tvoj
 vlastný tímový build a otvorí ju, aby si ju mohol zmeniť podľa seba.
+Veľkosť tímového buildu zmeníš v jeho editore: menšia veľkosť odoberie
+posledných členov, väčšia pridá prázdnych.
 
 ## Zahraj si Náhodnú arénu
 

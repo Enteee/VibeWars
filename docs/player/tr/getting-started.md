@@ -63,6 +63,8 @@ hazır takım koyar. Hazır takımlar PvX wiki'nin yüksek puanlı PvP takım
 dizilimleridir; PvX'te hiç olmayan bir boyut için PvX tekli dizilimleri
 bir araya getirilir. **Kopyala**, gösterilen takımın bir kopyasını kendi
 Takım Dizilimin olarak kaydeder ve dilediğin gibi değiştirmen için açar.
+Bir Takım Diziliminin boyutu editöründe değişir: daha küçük bir boyut son
+üyeleri çıkarır, daha büyüğü boş üyeler ekler.
 
 ## Rastgele Arena oyna
 

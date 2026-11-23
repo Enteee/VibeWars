@@ -241,3 +241,10 @@ probléma nélküli csapatot lehet a Csapatlobbiban javasolni: a kártyán a
 Az első indításod egy kész csapatot sorsol a választott méretben, 4v4-ben, hacsak
 nem változtattál rajta, **Véletlen** jelöléssel: az
 **Újra** gombja másikat tesz a helyére, a **Klón** pedig egy szerkeszthető másolatot ad.
+Minden csapatbuildnek van mérete, 2v2, 4v4 vagy 8v8 (1v1-es csapatbuild nincs): az oldalsáv
+**Csapatmérete**. A Csapatszerkesztő az ott választott méretű
+csapatbuildeket sorolja fel, és az **Új csapatbuild** ilyen méretűt
+készít. A szerkesztőjében a **Csapatméret** módosítja: kisebb méret
+elhagyja az utolsó tagokat, nagyobb üreseket ad hozzá, a Mentés pedig az
+oldalsávot arra a méretre állítja, amellyel mentetted. A beillesztett
+csapat megtartja a méretét, és az oldalsáv átvált rá.

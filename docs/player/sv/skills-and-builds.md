@@ -226,3 +226,10 @@ utan problem kan föreslås i en laglobby: ett kort säger
 Din första start slumpar fram ett färdigt lag i den valda storleken, 4v4
 om du inte ändrade den, märkt **Slump**: dess
 **Slumpa** byter in ett annat, och **Klona** ger dig en kopia att ändra.
+Varje lagbuild har en storlek, 2v2, 4v4 eller 8v8 (det finns inga lagbuilds för 1v1): **Lagstorlek** i
+sidopanelen. Lagbyggare listar lagbuildsen av storleken som valts där,
+och **Ny lagbuild** skapar en av den storleken. Dess redigerares
+**Lagstorlek** ändrar den: en mindre storlek tar bort de sista medlemmarna,
+en större lägger till tomma, och Spara byter sidopanelen till storleken den
+sparades med. Ett inklistrat lag behåller sin storlek, och sidopanelen byter
+till den.

@@ -230,3 +230,10 @@ cartão diz **Não jogável** e o motivo, e uma equipe sem nome aparece como
 Seu primeiro início sorteia uma equipe pronta no tamanho escolhido, 4v4 se
 você não mudou, marcada com **Aleatória**: **Sortear** troca por outra, e
 **Clonar** dá uma cópia para editar.
+Toda Build de Equipe tem um tamanho, 2v2, 4v4 ou 8v8 (não existe Build de
+Equipe 1v1): o **Tamanho** na barra lateral. O Criador de Equipes lista as
+Builds de Equipe do tamanho escolhido ali, e **Nova build de equipe** cria
+uma desse tamanho. O **Tamanho** no editor dela o muda: um tamanho menor
+remove os últimos membros, um maior acrescenta membros em branco, e Salvar
+leva a barra lateral ao tamanho com que ela foi salva. Uma equipe colada
+mantém o tamanho, e a barra lateral muda para ele.

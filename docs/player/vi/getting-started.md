@@ -60,6 +60,8 @@ khác vào chỗ của nó. Các đội có sẵn là những build đội PvP �
 của wiki PvX; cỡ nào PvX không có thì được ghép từ các build solo của PvX.
 **Chép** lưu một bản sao của đội đang hiển thị thành Build đội của riêng bạn
 và mở nó, để bạn tùy ý thay đổi.
+Cỡ của Build đội đổi được trong trình sửa của nó: cỡ nhỏ hơn bỏ các thành viên
+cuối, cỡ lớn hơn thêm thành viên trống.
 
 ## Chơi Đấu trường ngẫu nhiên
 

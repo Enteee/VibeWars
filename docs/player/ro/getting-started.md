@@ -62,6 +62,8 @@ făcute sunt buildurile de echipă PvP bine cotate de pe wiki-ul PvX; pentru o
 mărime pe care PvX nu o are, se combină builduri PvX individuale. **Clonează**
 salvează o copie a echipei afișate ca Build de echipă propriu și o deschide, ca
 s-o schimbi cum vrei.
+Mărimea unui Build de echipă se schimbă în editorul lui: o mărime mai mică
+scoate ultimii membri, una mai mare adaugă membri goi.
 
 ## Joacă o Arenă aleatorie
 

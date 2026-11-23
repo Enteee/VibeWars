@@ -224,3 +224,10 @@ spilles** og hvorfor, og et hold uden navn vises som **Unavngivet hold**.
 Din første start trækker ét færdigt hold i den valgte størrelse, 4v4,
 medmindre du har ændret den, mærket **Tilfældig**: dets **Rul igen**
 bytter et andet ind, og **Klon** giver dig en kopi at redigere.
+Hvert holdbuild har en størrelse, 2v2, 4v4 eller 8v8 (der findes ingen
+1v1-holdbuilds): **Holdstørrelse** i sidebjælken. Holdeditor viser
+holdbuilds af den størrelse, der er valgt der, og **Nyt holdbuild** laver
+et af den størrelse. Dets editors **Holdstørrelse** ændrer den: en mindre
+størrelse fjerner de sidste medlemmer, en større tilføjer tomme, og Gem
+sætter sidebjælken til den størrelse, det blev gemt med. Et indsat hold
+beholder sin størrelse, og sidebjælken skifter til den.
