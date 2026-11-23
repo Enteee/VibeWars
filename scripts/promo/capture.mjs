@@ -408,6 +408,7 @@ async function friends(browser, url) {
   scene.marks.copy = scene.now();
   const lobby = page.locator("#topbar .topbar-lobby-button");
   await lobby.click();
+  await page.locator("#topbar .lobby-window .topbar-lobby-open").click();
   await page.locator("#topbar .lobby-window .lobby-copy").click();
   await page.locator(".toast", { hasText: "Copied" }).waitFor();
   const invite = await page.evaluate(() => navigator.clipboard.readText());
