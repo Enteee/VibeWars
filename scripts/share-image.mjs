@@ -9,9 +9,12 @@
  * VibeWars name and rule over it, without the "Press any key" line, at
  * 1200×630. ImageMagick then quantises the PNG under 300 KB.
  *
- *   --map <id>     the arena behind the title (default arena-canyon)
- *   --wait <s>     seconds to let the fight run before the shot (default 14)
- *   --sweep        also keep a frame every 2 s in $TMPDIR/share-sweep, to pick --wait
+ *   --map <id>     the arena behind the title (default DEFAULT_MAP)
+ *   --wait <s>     seconds to let the fight run before the shot (default the map's)
+ *   --crop x,y,w,h the part of the 1200×630 page shot, in CSS px, 1200:630
+ *                  (default the map's, from CROPS)
+ *   --sweep        also keep the whole page every 2 s in $TMPDIR/share-sweep,
+ *                  to pick --wait and --crop by eye
  *   --url <url>    shoot a client already served there
  *
  * Wrap in `company heavy`. Browser: VIBEWARS_CHROMIUM, else Playwright's.
@@ -28,17 +31,51 @@ import { chromium } from "@playwright/test";
 
 const PORT = 4322;
 const SWEEP = path.join(os.tmpdir(), "share-sweep");
-/** Where the fight is on the canyon at 1200×630 CSS px: shot at 2×, so its bodies are readable. */
-const CROP = { x: 300, y: 162, width: 600, height: 315 };
+/** The map share.png is taken on (#3879). */
+const DEFAULT_MAP = "arena-crossroads";
+/**
+ * Per map, where its fight is at 1200×630 CSS px and when it is at its
+ * busiest: a part of the page shot at 2×, so its bodies are readable.
+ *
+ * @type {Record<string, { wait: number, crop: Crop } | undefined>}
+ */
+const CROPS = {
+  "arena-crossroads": { wait: 30, crop: { x: 300, y: 162, width: 600, height: 315 } },
+  "arena-canyon": { wait: 14, crop: { x: 300, y: 162, width: 600, height: 315 } },
+};
 const OUT = path.join(import.meta.dirname, "..", "apps", "web", "public", "share.png");
 const { values: options } = parseArgs({
   options: {
     url: { type: "string" },
-    map: { type: "string", default: "arena-canyon" },
-    wait: { type: "string", default: "14" },
+    map: { type: "string", default: DEFAULT_MAP },
+    wait: { type: "string" },
+    crop: { type: "string" },
     sweep: { type: "boolean", default: false },
   },
 });
+
+const preset = CROPS[options.map];
+const wait = Number(options.wait ?? preset?.wait ?? 14);
+const CROP = options.crop === undefined ? preset?.crop : parseCrop(options.crop);
+if (CROP === undefined) {
+  throw new Error(`no crop for ${options.map}: add it to CROPS or pass --crop`);
+}
+
+/** @typedef {{ x: number, y: number, width: number, height: number }} Crop */
+
+/**
+ * `x,y,w,h` in CSS px of the page, at the page's 1200:630.
+ *
+ * @param {string} text
+ * @returns {Crop}
+ */
+function parseCrop(text) {
+  const [x, y, width, height] = text.split(",").map(Number);
+  if (![x, y, width, height].every(Number.isFinite) || width * 630 !== height * 1200) {
+    throw new Error(`--crop ${text}: want x,y,w,h with w:h = 1200:630`);
+  }
+  return { x, y, width, height };
+}
 
 async function serve() {
   const url = `http://127.0.0.1:${String(PORT)}/`;
@@ -108,15 +145,15 @@ try {
   });
   if (options.sweep) {
     fs.mkdirSync(SWEEP, { recursive: true });
-    for (let second = 2; second <= Number(options.wait); second += 2) {
+    // Named by the second it was taken at: a 2× page can take seconds to shoot.
+    const start = Date.now();
+    for (let second = 0; second < wait; second = (Date.now() - start) / 1000) {
       await sleep(2000);
-      await page.screenshot({
-        path: path.join(SWEEP, `${String(second).padStart(2, "0")}.png`),
-        clip: CROP,
-      });
+      const name = String(Math.round((Date.now() - start) / 1000)).padStart(2, "0");
+      await page.screenshot({ path: path.join(SWEEP, `${options.map}-${name}.png`) });
     }
   } else {
-    await sleep(Number(options.wait) * 1000);
+    await sleep(wait * 1000);
   }
   await page.screenshot({ path: path.join(work, "shot.png"), clip: CROP });
   await browser.close();
