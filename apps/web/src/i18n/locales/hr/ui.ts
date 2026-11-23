@@ -1779,8 +1779,10 @@ export default {
   "tutorial.touch.climbPraise": "Gore i opet dolje. Sad znaš čitati teren.",
   "tutorial.touch.climbTip": "Savjet: dodir izbočine uvijek bira njezin vrh.",
   "tutorial.touch.climbUnder": "Sad opet dolje, pokraj izbočine.",
-  "tutorial.touch.healHint": "Prvo dodirni moje ime na popisu skupine.",
-  "tutorial.touch.healHow": "Dodirni moje ime na popisu skupine, pa vještinu koja svijetli.",
+  "tutorial.touch.healHint":
+    "Prvo dodirni moje ime na popisu skupine. Dodirni Grupa ako je popis zatvoren.",
+  "tutorial.touch.healHow":
+    "Dodirni Grupa ako je popis zatvoren, zatim moje ime, pa vještinu koja svijetli.",
   "tutorial.touch.look": "Raširi prste za zum. Povuci jednim prstom da se osvrneš.",
   "tutorial.touch.pingHow": "Dodirni kompas ili povuci po njemu da nacrtaš crtu.",
   "tutorial.touch.rampHow": "Dodirni visoku platformu. Put sam ide stubama.",

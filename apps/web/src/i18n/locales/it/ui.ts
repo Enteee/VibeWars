@@ -1794,8 +1794,10 @@ export default {
   "tutorial.touch.climbPraise": "Su e di nuovo giù. Ora sai leggere il terreno.",
   "tutorial.touch.climbTip": "Suggerimento: toccare una sporgenza sceglie sempre la cima.",
   "tutorial.touch.climbUnder": "Ora riscendi, accanto alla sporgenza.",
-  "tutorial.touch.healHint": "Prima tocca il mio nome nella lista del gruppo.",
-  "tutorial.touch.healHow": "Tocca il mio nome nella lista del gruppo, poi l'abilità che brilla.",
+  "tutorial.touch.healHint":
+    "Prima tocca il mio nome nella lista del gruppo. Tocca Gruppo se la lista è chiusa.",
+  "tutorial.touch.healHow":
+    "Tocca Gruppo se la lista è chiusa, poi il mio nome, poi l'abilità che brilla.",
   "tutorial.touch.look": "Pizzica per lo zoom. Trascina un dito per guardare.",
   "tutorial.touch.pingHow": "Tocca la bussola, o trascina sopra per tracciare una linea.",
   "tutorial.touch.rampHow": "Tocca la piattaforma alta. Il percorso sale i gradini per te.",

@@ -1634,8 +1634,10 @@ export default {
   "tutorial.touch.climbPraise": "Naik dan turun lagi. Sekarang kamu bisa membaca medan.",
   "tutorial.touch.climbTip": "Tips: ketukan pada tepian selalu memilih bagian atasnya.",
   "tutorial.touch.climbUnder": "Sekarang turun lagi, di samping tepian.",
-  "tutorial.touch.healHint": "Ketuk namaku di daftar regu dulu.",
-  "tutorial.touch.healHow": "Ketuk namaku di daftar regu, lalu skill yang menyala.",
+  "tutorial.touch.healHint":
+    "Ketuk namaku di daftar regu dulu. Ketuk Party kalau daftarnya tertutup.",
+  "tutorial.touch.healHow":
+    "Ketuk Party kalau daftarnya tertutup, lalu namaku, lalu skill yang menyala.",
   "tutorial.touch.look": "Cubit untuk zoom. Seret satu jari untuk melihat.",
   "tutorial.touch.pingHow": "Ketuk kompas, atau seret di atasnya untuk menggambar garis.",
   "tutorial.touch.rampHow": "Ketuk dek tinggi. Jalurmu menaiki tangga untukmu.",

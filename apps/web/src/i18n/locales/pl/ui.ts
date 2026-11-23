@@ -1840,9 +1840,10 @@ export default {
   "tutorial.touch.climbPraise": "W górę i znów w dół. Już umiesz czytać teren.",
   "tutorial.touch.climbTip": "Wskazówka: dotknięcie półki zawsze wybiera jej szczyt.",
   "tutorial.touch.climbUnder": "Teraz zejdź z powrotem, obok półki.",
-  "tutorial.touch.healHint": "Najpierw dotknij mojego imienia na liście drużyny.",
+  "tutorial.touch.healHint":
+    "Najpierw dotknij mojego imienia na liście drużyny. Dotknij Grupa, jeśli lista jest zamknięta.",
   "tutorial.touch.healHow":
-    "Dotknij mojego imienia na liście drużyny, potem świecącej umiejętności.",
+    "Dotknij Grupa, jeśli lista jest zamknięta, potem mojego imienia, potem świecącej umiejętności.",
   "tutorial.touch.look": "Uszczypnij, by przybliżyć. Przeciągnij jednym palcem, by się rozejrzeć.",
   "tutorial.touch.pingHow": "Dotknij kompasu albo przeciągnij po nim, by narysować linię.",
   "tutorial.touch.rampHow": "Dotknij wysokiej platformy. Ścieżka sama poprowadzi po schodach.",

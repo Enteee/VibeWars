@@ -1706,8 +1706,10 @@ export const en = {
   "tutorial.touch.climbPraise": "Up and down again. You read the ground now.",
   "tutorial.touch.climbTip": "Tip: a tap on a ledge always picks its top.",
   "tutorial.touch.climbUnder": "Now back down, beside the ledge.",
-  "tutorial.touch.healHint": "Tap my name in the party list first.",
-  "tutorial.touch.healHow": "Tap my name in the party list, then the glowing skill.",
+  "tutorial.touch.healHint":
+    "Tap my name in the party list first. Tap Party if the list is closed.",
+  "tutorial.touch.healHow":
+    "Tap Party if the list is closed, then my name, then the glowing skill.",
   "tutorial.touch.look": "Pinch to zoom. Drag one finger to look.",
   "tutorial.touch.pingHow": "Tap the compass, or drag on it to draw a line.",
   "tutorial.touch.rampHow": "Tap the high deck. Your path takes the steps for you.",

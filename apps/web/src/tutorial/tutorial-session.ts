@@ -26,6 +26,7 @@ import {
 } from "../training/local-connection.js";
 
 import { mountSkipTutorial } from "./tutorial-offer.js";
+import { hudTarget } from "./hud-target.js";
 import { touchLine } from "./touch-lines.js";
 import { DEFAULT_STEP } from "../render/camera-rig.js";
 
@@ -318,6 +319,11 @@ export async function startTutorialSession(
       element?.classList.add(PULSE_CLASS);
       pulsing = element;
     }
+  };
+  /** The HUD element `selector` names, or what stands in while it is collapsed. */
+  const findHud = (selector: string): Element | undefined => {
+    const found = parent.querySelector(selector);
+    return found === null ? undefined : hudTarget(found);
   };
   const stop = async (): Promise<void> => {
     ended = true;
@@ -669,11 +675,7 @@ export async function startTutorialSession(
       running = beat.station;
       highlight = beat.highlight;
       besideHud = beat.mark;
-      pulse(
-        highlight?.kind === "hud"
-          ? (parent.querySelector(highlight.element) ?? undefined)
-          : undefined,
-      );
+      pulse(highlight?.kind === "hud" ? findHud(highlight.element) : undefined);
       // Station 5 is next: the tutor goes to wait by the wall, and joins in
       // once the player has struck it.
       if (atWall === undefined && beat.station === "break-wall" && stage.name === "canyon") {

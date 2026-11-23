@@ -1706,8 +1706,9 @@ export default {
   "tutorial.touch.climbPraise": "بالا و دوباره پایین. حالا زمین را می‌خوانی.",
   "tutorial.touch.climbTip": "نکته: لمس لبه همیشه بالای آن را انتخاب می‌کند.",
   "tutorial.touch.climbUnder": "حالا برگرد پایین، کنار لبه.",
-  "tutorial.touch.healHint": "اول نامم را در فهرست گروه لمس کن.",
-  "tutorial.touch.healHow": "نامم را در فهرست گروه لمس کن، بعد مهارتِ درخشان را.",
+  "tutorial.touch.healHint":
+    "اول نامم را در فهرست گروه لمس کن. اگر فهرست بسته است، گروه را لمس کن.",
+  "tutorial.touch.healHow": "اگر فهرست بسته است گروه را لمس کن، بعد نامم را، بعد مهارتِ درخشان را.",
   "tutorial.touch.look": "دو انگشت را جمع و باز کن تا بزرگ‌نمایی شود. با یک انگشت بکش تا نگاه کنی.",
   "tutorial.touch.pingHow": "قطب‌نما را لمس کن، یا رویش بکش تا خطی بکشی.",
   "tutorial.touch.rampHow": "سکوی بلند را لمس کن. مسیرت خودش از پله‌ها می‌گذرد.",

@@ -1711,8 +1711,8 @@ export default {
   "tutorial.touch.climbPraise": "Yukarı ve yine aşağı. Artık zemini okuyorsun.",
   "tutorial.touch.climbTip": "İpucu: çıkıntıya dokunmak hep üstünü seçer.",
   "tutorial.touch.climbUnder": "Şimdi çıkıntının yanına geri in.",
-  "tutorial.touch.healHint": "Önce grup listesinde adıma dokun.",
-  "tutorial.touch.healHow": "Grup listesinde adıma dokun, sonra parlayan beceriye.",
+  "tutorial.touch.healHint": "Önce grup listesinde adıma dokun. Liste kapalıysa Grup'a dokun.",
+  "tutorial.touch.healHow": "Liste kapalıysa Grup'a dokun, sonra adıma, sonra parlayan beceriye.",
   "tutorial.touch.look":
     "Yakınlaştırmak için iki parmakla sıkıştır. Bakmak için tek parmakla sürükle.",
   "tutorial.touch.pingHow": "Pusulaya dokun ya da üzerinde sürükleyip bir çizgi çiz.",

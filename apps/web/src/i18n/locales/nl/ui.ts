@@ -1716,8 +1716,10 @@ export default {
   "tutorial.touch.climbPraise": "Op en weer neer. Nu kun je het terrein lezen.",
   "tutorial.touch.climbTip": "Tip: een tik op een richel kiest altijd de bovenkant.",
   "tutorial.touch.climbUnder": "Nu weer omlaag, naast de richel.",
-  "tutorial.touch.healHint": "Tik eerst op mijn naam in de groepslijst.",
-  "tutorial.touch.healHow": "Tik op mijn naam in de groepslijst en dan op de oplichtende skill.",
+  "tutorial.touch.healHint":
+    "Tik eerst op mijn naam in de groepslijst. Tik op Groep als de lijst dicht is.",
+  "tutorial.touch.healHow":
+    "Tik op Groep als de lijst dicht is, dan op mijn naam en dan op de oplichtende skill.",
   "tutorial.touch.look": "Knijp om te zoomen. Sleep met één vinger om rond te kijken.",
   "tutorial.touch.pingHow": "Tik op het kompas, of sleep erover om een lijn te tekenen.",
   "tutorial.touch.rampHow": "Tik op het hoge platform. Je route neemt de treden voor je.",

@@ -1617,8 +1617,10 @@ export default {
   "tutorial.touch.climbPraise": "Lên rồi lại xuống. Giờ bạn đã biết đọc địa hình.",
   "tutorial.touch.climbTip": "Mẹo: chạm vào gờ đá luôn chọn mặt trên của nó.",
   "tutorial.touch.climbUnder": "Giờ xuống lại, bên cạnh gờ đá.",
-  "tutorial.touch.healHint": "Chạm vào tên tôi trong danh sách nhóm trước.",
-  "tutorial.touch.healHow": "Chạm vào tên tôi trong danh sách nhóm, rồi chạm kỹ năng đang sáng.",
+  "tutorial.touch.healHint":
+    "Chạm vào tên tôi trong danh sách nhóm trước. Chạm Tổ đội nếu danh sách đang đóng.",
+  "tutorial.touch.healHow":
+    "Chạm Tổ đội nếu danh sách đang đóng, rồi chạm tên tôi, rồi chạm kỹ năng đang sáng.",
   "tutorial.touch.look": "Chụm hai ngón để thu phóng. Kéo một ngón để nhìn quanh.",
   "tutorial.touch.pingHow": "Chạm vào la bàn, hoặc kéo trên đó để vẽ một đường.",
   "tutorial.touch.rampHow": "Chạm vào sàn cao. Đường đi tự leo bậc giúp bạn.",

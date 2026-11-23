@@ -1830,8 +1830,10 @@ export default {
   "tutorial.touch.climbPraise": "Hore a zas dole. Teraz už terén vieš čítať.",
   "tutorial.touch.climbTip": "Tip: ťuknutie na rímsu vždy vyberie jej vrch.",
   "tutorial.touch.climbUnder": "Teraz zas dole, vedľa rímsy.",
-  "tutorial.touch.healHint": "Najprv ťukni na moje meno v zozname družiny.",
-  "tutorial.touch.healHow": "Ťukni na moje meno v zozname družiny, potom na žiariacu zručnosť.",
+  "tutorial.touch.healHint":
+    "Najprv ťukni na moje meno v zozname družiny. Ak je zoznam zatvorený, ťukni na Družina.",
+  "tutorial.touch.healHow":
+    "Ak je zoznam zatvorený, ťukni na Družina, potom na moje meno a potom na žiariacu zručnosť.",
   "tutorial.touch.look": "Približuj roztiahnutím prstov. Ťahaj jedným prstom a rozhliadni sa.",
   "tutorial.touch.pingHow": "Ťukni na kompas alebo po ňom ťahaj a nakresli čiaru.",
   "tutorial.touch.rampHow": "Ťukni na vysokú plošinu. Cesta vedie po schodoch sama.",

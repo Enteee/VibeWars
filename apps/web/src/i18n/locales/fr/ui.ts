@@ -1808,9 +1808,10 @@ export default {
   "tutorial.touch.climbPraise": "Monté, redescendu. Tu sais lire le terrain.",
   "tutorial.touch.climbTip": "Astuce : toucher une corniche choisit toujours son sommet.",
   "tutorial.touch.climbUnder": "Maintenant redescends, à côté de la corniche.",
-  "tutorial.touch.healHint": "Touche d'abord mon nom dans la liste du groupe.",
+  "tutorial.touch.healHint":
+    "Touche d'abord mon nom dans la liste du groupe. Touche Groupe si la liste est fermée.",
   "tutorial.touch.healHow":
-    "Touche mon nom dans la liste du groupe, puis la compétence qui brille.",
+    "Touche Groupe si la liste est fermée, puis mon nom, puis la compétence qui brille.",
   "tutorial.touch.look": "Pince pour zoomer. Glisse un doigt pour regarder.",
   "tutorial.touch.pingHow": "Touche la boussole, ou glisse dessus pour tracer une ligne.",
   "tutorial.touch.rampHow": "Touche la plate-forme haute. Ton chemin prend les marches pour toi.",

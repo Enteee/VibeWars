@@ -1732,8 +1732,10 @@ export default {
   "tutorial.touch.climbPraise": "Rauf und wieder runter. Jetzt liest du das Gelände.",
   "tutorial.touch.climbTip": "Tipp: Ein Tippen auf einen Vorsprung wählt immer seine Oberseite.",
   "tutorial.touch.climbUnder": "Jetzt wieder runter, neben den Vorsprung.",
-  "tutorial.touch.healHint": "Tipp zuerst meinen Namen in der Gruppenliste an.",
-  "tutorial.touch.healHow": "Tipp meinen Namen in der Gruppenliste an, dann den leuchtenden Skill.",
+  "tutorial.touch.healHint":
+    "Tipp zuerst meinen Namen in der Gruppenliste an. Tipp auf Gruppe, falls die Liste zu ist.",
+  "tutorial.touch.healHow":
+    "Tipp auf Gruppe, falls die Liste zu ist, dann auf meinen Namen und dann auf den leuchtenden Skill.",
   "tutorial.touch.look": "Mit zwei Fingern zoomen. Mit einem Finger ziehen, um dich umzusehen.",
   "tutorial.touch.pingHow": "Tipp auf den Kompass oder zieh darauf eine Linie.",
   "tutorial.touch.rampHow": "Tipp auf die hohe Plattform. Dein Weg nimmt die Stufen für dich.",

@@ -12,6 +12,7 @@ import type {
 import type { NostrQueue } from "./net/transport/nostr-queue.js";
 import { watchRecords } from "./net/transport/index.js";
 import { leaderboard } from "./net/leaderboard.js";
+import { isTouchOnly } from "./input/touch-only.js";
 import { loadPlayerKey } from "./net/transport/player-key.js";
 
 import {
@@ -3527,6 +3528,7 @@ async function main(): Promise<void> {
     menuQuest?.stop();
     const quest = startMenuQuest({
       from,
+      touch: isTouchOnly((query) => matchMedia(query).matches),
       coach: (callbacks) => mountCoachOverlay(document.body, callbacks),
       onEnd: () => {
         if (menuQuest === quest) {

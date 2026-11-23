@@ -233,7 +233,9 @@ It teaches the menu one step at a time, and the record is `done` only once its l
   readable, 2.5D.
 - On a touch-only device (#3782) the lines that name a key or a mouse button say the gesture
   instead (`apps/web/src/tutorial/touch-lines.ts`), and station 9 is done back on the lower
-  layer by any way down: a tap on a ledge always picks its top.
+  layer by any way down: a tap on a ledge always picks its top. A HUD highlight whose element a
+  phone keeps behind the Party toggle pulses the toggle (`hud-target.ts`). The menu quest passes
+  by its one mouse-only beat, the team step's drag of a character onto a member.
 
 ## Edge cases
 

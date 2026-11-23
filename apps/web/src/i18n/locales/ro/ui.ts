@@ -1794,9 +1794,10 @@ export default {
   "tutorial.touch.climbPraise": "Sus și iar jos. Acum știi să citești terenul.",
   "tutorial.touch.climbTip": "Sfat: o atingere pe cornișă alege mereu partea de sus.",
   "tutorial.touch.climbUnder": "Acum coboară înapoi, lângă cornișă.",
-  "tutorial.touch.healHint": "Mai întâi atinge numele meu în lista grupului.",
+  "tutorial.touch.healHint":
+    "Mai întâi atinge numele meu în lista grupului. Atinge Grup dacă lista e închisă.",
   "tutorial.touch.healHow":
-    "Atinge numele meu în lista grupului, apoi abilitatea care strălucește.",
+    "Atinge Grup dacă lista e închisă, apoi numele meu, apoi abilitatea care strălucește.",
   "tutorial.touch.look": "Ciupește ca să faci zoom. Trage cu un deget ca să privești.",
   "tutorial.touch.pingHow": "Atinge busola sau trage pe ea ca să desenezi o linie.",
   "tutorial.touch.rampHow": "Atinge platforma înaltă. Drumul urcă treptele pentru tine.",

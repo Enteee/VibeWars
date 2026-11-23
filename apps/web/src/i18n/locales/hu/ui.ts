@@ -1717,8 +1717,10 @@ export default {
   "tutorial.touch.climbPraise": "Fel és újra le. Most már olvasod a terepet.",
   "tutorial.touch.climbTip": "Tipp: a párkányra koppintás mindig a tetejét választja.",
   "tutorial.touch.climbUnder": "Most vissza le, a párkány mellé.",
-  "tutorial.touch.healHint": "Előbb koppints a nevemre a csapatlistában.",
-  "tutorial.touch.healHow": "Koppints a nevemre a csapatlistában, aztán a világító készségre.",
+  "tutorial.touch.healHint":
+    "Előbb koppints a nevemre a csapatlistában. Koppints az Osztag gombra, ha a lista zárva van.",
+  "tutorial.touch.healHow":
+    "Ha a lista zárva van, koppints az Osztag gombra, aztán a nevemre, aztán a világító készségre.",
   "tutorial.touch.look": "Csippents a nagyításhoz. Húzd egy ujjal a körülnézéshez.",
   "tutorial.touch.pingHow": "Koppints az iránytűre, vagy húzz rajta vonalat.",
   "tutorial.touch.rampHow": "Koppints a magas teraszra. Az utad magától veszi a lépcsőket.",

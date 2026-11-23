@@ -57,6 +57,8 @@ export interface MenuQuestSession {
 
 export interface MenuQuestOptions {
   readonly from: MenuQuestStepId;
+  /** Whether this is a touch-only device: its mouse-only beats are passed by (#3782). */
+  readonly touch: boolean;
   /** The coach to show it on; `onSkip` once Skip tutorial is confirmed. */
   readonly coach: (callbacks: { readonly onSkip: () => void }) => CoachOverlay;
   readonly onEnd: (end: "done" | "skipped") => void;
@@ -121,7 +123,7 @@ export function startMenuQuest(options: MenuQuestOptions): MenuQuestSession {
     if (over) {
       return;
     }
-    const next = advanceMenuQuest(cursor, state, gotIt);
+    const next = advanceMenuQuest(cursor, state, gotIt, options.touch);
     if (next === "done") {
       finish("done");
       return;

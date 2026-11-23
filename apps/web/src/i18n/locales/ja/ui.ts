@@ -1632,8 +1632,10 @@ export default {
   "tutorial.touch.climbPraise": "上って、また降りた。もう地面が読めるね。",
   "tutorial.touch.climbTip": "ヒント:岩棚をタップすると常にその上が選ばれる。",
   "tutorial.touch.climbUnder": "さあ、岩棚の横へ降りよう。",
-  "tutorial.touch.healHint": "まずパーティリストで私の名前をタップして。",
-  "tutorial.touch.healHow": "パーティリストで私の名前をタップして、光るスキルをタップ。",
+  "tutorial.touch.healHint":
+    "まずパーティリストで私の名前をタップして。リストが閉じていたら「パーティー」をタップ。",
+  "tutorial.touch.healHow":
+    "リストが閉じていたら「パーティー」をタップして、私の名前、光るスキルの順にタップ。",
   "tutorial.touch.look": "ピンチでズーム。指一本でドラッグして見回す。",
   "tutorial.touch.pingHow": "コンパスをタップするか、その上をドラッグして線を引こう。",
   "tutorial.touch.rampHow": "高台をタップ。道が階段を通ってくれる。",

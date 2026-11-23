@@ -1720,8 +1720,10 @@ export default {
   "tutorial.touch.climbPraise": "Ylös ja taas alas. Nyt osaat lukea maastoa.",
   "tutorial.touch.climbTip": "Vinkki: reunan napautus valitsee aina sen yläpinnan.",
   "tutorial.touch.climbUnder": "Nyt takaisin alas, reunan viereen.",
-  "tutorial.touch.healHint": "Napauta ensin nimeäni ryhmän luettelossa.",
-  "tutorial.touch.healHow": "Napauta nimeäni ryhmän luettelossa ja sitten hehkuvaa taitoa.",
+  "tutorial.touch.healHint":
+    "Napauta ensin nimeäni ryhmän luettelossa. Napauta Ryhmä, jos luettelo on kiinni.",
+  "tutorial.touch.healHow":
+    "Napauta Ryhmä, jos luettelo on kiinni, sitten nimeäni ja sitten hehkuvaa taitoa.",
   "tutorial.touch.look": "Nipistä zoomataksesi. Vedä yhdellä sormella katsoaksesi.",
   "tutorial.touch.pingHow": "Napauta kompassia tai vedä sillä viiva.",
   "tutorial.touch.rampHow": "Napauta korkeaa tasannetta. Reittisi kulkee portaat puolestasi.",

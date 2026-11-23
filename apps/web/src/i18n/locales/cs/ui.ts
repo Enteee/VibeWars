@@ -1824,8 +1824,10 @@ export default {
   "tutorial.touch.climbPraise": "Nahoru a zase dolů. Teď už terén umíš číst.",
   "tutorial.touch.climbTip": "Tip: klepnutí na římsu vždy vybere její vršek.",
   "tutorial.touch.climbUnder": "Teď zase dolů, vedle římsy.",
-  "tutorial.touch.healHint": "Nejdřív klepni na mé jméno v seznamu družiny.",
-  "tutorial.touch.healHow": "Klepni na mé jméno v seznamu družiny, pak na zářící dovednost.",
+  "tutorial.touch.healHint":
+    "Nejdřív klepni na mé jméno v seznamu družiny. Když je seznam zavřený, klepni na Skupina.",
+  "tutorial.touch.healHow":
+    "Když je seznam zavřený, klepni na Skupina, pak na mé jméno a pak na zářící dovednost.",
   "tutorial.touch.look": "Přibližuj roztažením prstů. Táhni jedním prstem a rozhlédni se.",
   "tutorial.touch.pingHow": "Klepni na kompas, nebo po něm táhni a nakresli čáru.",
   "tutorial.touch.rampHow": "Klepni na vysokou plošinu. Cesta vede po schodech sama.",

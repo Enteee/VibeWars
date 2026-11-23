@@ -1805,8 +1805,10 @@ export default {
   "tutorial.touch.climbPraise": "Arriba y abajo otra vez. Ya sabes leer el terreno.",
   "tutorial.touch.climbTip": "Consejo: tocar una cornisa siempre elige su parte de arriba.",
   "tutorial.touch.climbUnder": "Ahora baja otra vez, junto a la cornisa.",
-  "tutorial.touch.healHint": "Primero toca mi nombre en la lista del grupo.",
-  "tutorial.touch.healHow": "Toca mi nombre en la lista del grupo y luego la habilidad que brilla.",
+  "tutorial.touch.healHint":
+    "Primero toca mi nombre en la lista del grupo. Toca Grupo si la lista está cerrada.",
+  "tutorial.touch.healHow":
+    "Toca Grupo si la lista está cerrada, luego mi nombre y luego la habilidad que brilla.",
   "tutorial.touch.look": "Pellizca para hacer zoom. Arrastra un dedo para mirar.",
   "tutorial.touch.pingHow": "Toca la brújula o arrastra sobre ella para trazar una línea.",
   "tutorial.touch.rampHow": "Toca la plataforma alta. Tu camino sube los escalones por ti.",

@@ -1702,8 +1702,10 @@ export default {
   "tutorial.touch.climbPraise": "Upp och ner igen. Nu kan du läsa terrängen.",
   "tutorial.touch.climbTip": "Tips: ett tryck på en avsats väljer alltid toppen.",
   "tutorial.touch.climbUnder": "Ner igen nu, bredvid avsatsen.",
-  "tutorial.touch.healHint": "Tryck först på mitt namn i grupplistan.",
-  "tutorial.touch.healHow": "Tryck på mitt namn i grupplistan och sedan på den lysande förmågan.",
+  "tutorial.touch.healHint":
+    "Tryck först på mitt namn i grupplistan. Tryck på Grupp om listan är stängd.",
+  "tutorial.touch.healHow":
+    "Tryck på Grupp om listan är stängd, sedan på mitt namn och sedan på den lysande förmågan.",
   "tutorial.touch.look": "Nyp för att zooma. Dra med ett finger för att se dig om.",
   "tutorial.touch.pingHow": "Tryck på kompassen eller dra på den för att rita en linje.",
   "tutorial.touch.rampHow": "Tryck på den höga plattformen. Din väg tar trappstegen åt dig.",

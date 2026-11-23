@@ -1785,9 +1785,10 @@ export default {
   "tutorial.touch.climbPraise": "Subiu e desceu. Agora você lê o terreno.",
   "tutorial.touch.climbTip": "Dica: tocar numa saliência sempre escolhe o topo.",
   "tutorial.touch.climbUnder": "Agora desça de novo, ao lado da saliência.",
-  "tutorial.touch.healHint": "Primeiro toque no meu nome na lista do grupo.",
+  "tutorial.touch.healHint":
+    "Primeiro toque no meu nome na lista do grupo. Toque em Grupo se a lista estiver fechada.",
   "tutorial.touch.healHow":
-    "Toque no meu nome na lista do grupo e depois na habilidade que brilha.",
+    "Toque em Grupo se a lista estiver fechada, depois no meu nome e depois na habilidade que brilha.",
   "tutorial.touch.look": "Use dois dedos para zoom. Arraste um dedo para olhar.",
   "tutorial.touch.pingHow": "Toque na bússola ou arraste nela para traçar uma linha.",
   "tutorial.touch.rampHow": "Toque na plataforma alta. Seu caminho sobe os degraus por você.",
