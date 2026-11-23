@@ -898,6 +898,18 @@ export interface WirePreMatch {
    * is announced.
    */
   readonly secondsLeft: number | null;
+  /**
+   * Where each body is held (#3909): the centre of its spawn bubble, of
+   * radius `SPAWN_BUBBLE_RADIUS`, so a client can draw its own.
+   */
+  readonly spawns: readonly WireSpawn[];
+}
+
+/** One body's spawn bubble centre (#3909), by its player id. */
+export interface WireSpawn {
+  readonly id: string;
+  readonly x: number;
+  readonly y: number;
 }
 
 /**
@@ -2877,11 +2889,20 @@ function parsePreMatch(value: unknown): WirePreMatch | undefined {
     return undefined;
   }
   const { joined, expected, secondsLeft } = raw;
+  const spawns = parseArray(raw.spawns, MAX_WIRE_ACTORS, parseSpawn);
   return isCount(joined) &&
     isCount(expected) &&
     joined <= expected &&
-    (secondsLeft === null || isCount(secondsLeft))
-    ? { joined, expected, secondsLeft }
+    (secondsLeft === null || isCount(secondsLeft)) &&
+    spawns !== undefined
+    ? { joined, expected, secondsLeft, spawns }
+    : undefined;
+}
+
+function parseSpawn(value: unknown): WireSpawn | undefined {
+  const raw = fields(value);
+  return raw !== undefined && isString(raw.id) && isNumber(raw.x) && isNumber(raw.y)
+    ? { id: raw.id, x: raw.x, y: raw.y }
     : undefined;
 }
 

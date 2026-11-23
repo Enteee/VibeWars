@@ -65,14 +65,18 @@ describe("a match's wait before its start (#3818)", () => {
     await match.step(TICK_SECONDS);
     expect(match.host.phase).toBe("waiting");
     // The bot counts from the start.
-    expect(local.getSnapshot().preMatch).toEqual({ joined: 2, expected: 3, secondsLeft: null });
+    expect(local.getSnapshot().preMatch).toMatchObject({
+      joined: 2,
+      expected: 3,
+      secondsLeft: null,
+    });
     expect(local.getSnapshot().elapsedSeconds).toBe(0);
 
     await match.join();
     await match.step(TICK_SECONDS);
     expect(match.host.phase).toBe("countdown");
     expect(local.getSnapshot().phase).toBe("countdown");
-    expect(local.getSnapshot().preMatch).toEqual({
+    expect(local.getSnapshot().preMatch).toMatchObject({
       joined: 3,
       expected: 3,
       secondsLeft: PRE_MATCH_COUNTDOWN_SECONDS,
@@ -100,11 +104,15 @@ describe("a match's wait before its start (#3818)", () => {
     const match = threeSeats();
     const local = await match.joinLocal();
     await match.step(JOIN_TIMEOUT_SECONDS / 2 - 1);
-    expect(local.getSnapshot().preMatch).toEqual({ joined: 2, expected: 3, secondsLeft: null });
+    expect(local.getSnapshot().preMatch).toMatchObject({
+      joined: 2,
+      expected: 3,
+      secondsLeft: null,
+    });
 
     await match.step(2);
     expect(match.host.phase).toBe("waiting");
-    expect(local.getSnapshot().preMatch).toEqual({
+    expect(local.getSnapshot().preMatch).toMatchObject({
       joined: 2,
       expected: 3,
       secondsLeft: JOIN_TIMEOUT_SECONDS / 2 - 1,
@@ -113,6 +121,35 @@ describe("a match's wait before its start (#3818)", () => {
     await match.step(JOIN_TIMEOUT_SECONDS / 2);
     expect(match.host.phase).toBe("countdown");
     expect(local.getSnapshot().preMatch?.joined).toBe(2);
+  });
+
+  it("tells where each body is held, its spawn, until the start (#3909)", async () => {
+    const match = threeSeats();
+    const local = await match.joinLocal();
+    const { connection: guest } = await match.join();
+    await match.step(TICK_SECONDS);
+    const me = self(local);
+    const spawns = local.getSnapshot().preMatch?.spawns ?? [];
+    expect(spawns.map((spawn) => spawn.id).sort()).toEqual(
+      local
+        .getSnapshot()
+        .players.map((player) => player.sessionId)
+        .sort(),
+    );
+    const mine = spawns.find((spawn) => spawn.id === me?.sessionId);
+    expect(mine).toEqual({ id: me?.sessionId, x: me?.x, y: me?.y });
+
+    // Walked off it, the centre stays where it was.
+    local.sendIntent({ kind: "move", dirX: 1, dirY: 0 });
+    guest.sendIntent({ kind: "move", dirX: 0, dirY: 1 });
+    await match.step(1);
+    expect(match.host.phase).toBe("countdown");
+    expect(self(local)?.x).not.toBe(mine?.x);
+    expect(local.getSnapshot().preMatch?.spawns).toEqual(spawns);
+
+    await match.step(PRE_MATCH_COUNTDOWN_SECONDS);
+    expect(match.host.phase).toBe("active");
+    expect(local.getSnapshot().preMatch).toBeNull();
   });
 
   it("seats a late hello during the countdown held in its spawn bubble", async () => {
@@ -158,7 +195,7 @@ describe("a match's wait before its start (#3818)", () => {
     const local = await match.joinLocal();
     await match.step(TICK_SECONDS);
     expect(match.host.phase).toBe("countdown");
-    expect(local.getSnapshot().preMatch).toEqual({
+    expect(local.getSnapshot().preMatch).toMatchObject({
       joined: 1,
       expected: 1,
       secondsLeft: PRE_MATCH_COUNTDOWN_SECONDS,
@@ -174,7 +211,11 @@ describe("a match's countdown waits for every seated player's first frame (#3852
     await match.step(TICK_SECONDS);
     expect(match.host.phase).toBe("waiting");
     // The bot counts from the start; both humans are seated, neither drawn.
-    expect(local.getSnapshot().preMatch).toEqual({ joined: 1, expected: 3, secondsLeft: null });
+    expect(local.getSnapshot().preMatch).toMatchObject({
+      joined: 1,
+      expected: 3,
+      secondsLeft: null,
+    });
 
     local.sceneReady();
     await settle();
@@ -186,7 +227,7 @@ describe("a match's countdown waits for every seated player's first frame (#3852
     await settle();
     await match.step(TICK_SECONDS);
     expect(match.host.phase).toBe("countdown");
-    expect(local.getSnapshot().preMatch).toEqual({
+    expect(local.getSnapshot().preMatch).toMatchObject({
       joined: 3,
       expected: 3,
       secondsLeft: PRE_MATCH_COUNTDOWN_SECONDS,
@@ -216,7 +257,11 @@ describe("a match's countdown waits for every seated player's first frame (#3852
     await settle();
     await match.step(TICK_SECONDS);
     expect(match.host.phase).toBe("waiting");
-    expect(local.getSnapshot().preMatch).toEqual({ joined: 0, expected: 1, secondsLeft: null });
+    expect(local.getSnapshot().preMatch).toMatchObject({
+      joined: 0,
+      expected: 1,
+      secondsLeft: null,
+    });
   });
 
   it("ignores one that is not an empty object", async () => {

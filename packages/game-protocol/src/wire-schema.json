@@ -8930,7 +8930,20 @@
       "properties": [
         { "name": "expected", "optional": false, "type": "number" },
         { "name": "joined", "optional": false, "type": "number" },
-        { "name": "secondsLeft", "optional": false, "type": { "union": ["null", "number"] } }
+        { "name": "secondsLeft", "optional": false, "type": { "union": ["null", "number"] } },
+        {
+          "name": "spawns",
+          "optional": false,
+          "type": {
+            "array": {
+              "properties": [
+                { "name": "id", "optional": false, "type": "string" },
+                { "name": "x", "optional": false, "type": "number" },
+                { "name": "y", "optional": false, "type": "number" }
+              ]
+            }
+          }
+        }
       ]
     },
     "WireProjectile": {
@@ -9659,6 +9672,19 @@
                     "name": "secondsLeft",
                     "optional": false,
                     "type": { "union": ["null", "number"] }
+                  },
+                  {
+                    "name": "spawns",
+                    "optional": false,
+                    "type": {
+                      "array": {
+                        "properties": [
+                          { "name": "id", "optional": false, "type": "string" },
+                          { "name": "x", "optional": false, "type": "number" },
+                          { "name": "y", "optional": false, "type": "number" }
+                        ]
+                      }
+                    }
                   }
                 ]
               }
@@ -10140,6 +10166,19 @@
                     "name": "secondsLeft",
                     "optional": false,
                     "type": { "union": ["null", "number"] }
+                  },
+                  {
+                    "name": "spawns",
+                    "optional": false,
+                    "type": {
+                      "array": {
+                        "properties": [
+                          { "name": "id", "optional": false, "type": "string" },
+                          { "name": "x", "optional": false, "type": "number" },
+                          { "name": "y", "optional": false, "type": "number" }
+                        ]
+                      }
+                    }
                   }
                 ]
               }
@@ -10243,6 +10282,13 @@
           "optional": false,
           "type": { "union": ["null", { "literal": 0 }, { "literal": 1 }, { "literal": 2 }] }
         }
+      ]
+    },
+    "WireSpawn": {
+      "properties": [
+        { "name": "id", "optional": false, "type": "string" },
+        { "name": "x", "optional": false, "type": "number" },
+        { "name": "y", "optional": false, "type": "number" }
       ]
     },
     "WireStand": {
