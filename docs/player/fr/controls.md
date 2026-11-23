@@ -91,7 +91,7 @@ Hors match, la barre du haut contient **[?]** (cette Aide), **⚙** (Options),
 salon ; sa pastille les compte), **♪** (la musique : ce qui joue, et à quel
 volume), la coupure du son et le plein écran. En match, les mêmes boutons,
 sauf Salon, sont en haut à droite de l'écran. Dans une fenêtre étroite, ces
-icônes et les autres boutons de l'écran se replient dans **⋯** ; seul son
+icônes et les autres boutons de l'écran se replient dans **☰** ; seul son
 bouton principal reste visible. ⚙ ouvre les Options dans une fenêtre sous la
 barre, l'écran restant derrière ; Esc, × ou un clic à l'extérieur la ferme.
 [?] ouvre l'Aide de la même façon, dans une fenêtre sous lui avec un sélecteur de page en haut ; un match continue derrière.

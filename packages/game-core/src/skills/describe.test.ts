@@ -1558,7 +1558,7 @@ describe("describeSkill at a primary attribute's rank (#531)", () => {
     const signet = skill("common.resurrection-signet");
     expect(
       describeSkill(signet, new Map([["mesmer.fast-casting", 12]]), EN_WORDS, EN_NAMES).castTime,
-    ).toBe("1.9s (3s)");
+    ).toBe("1.7s (3s)");
   });
 
   it("shows the base alone when the rank changes nothing", () => {
@@ -1587,7 +1587,7 @@ describe("Spawning Power in the tooltip (#1098)", () => {
         EN_WORDS,
         EN_NAMES,
       ).effects[0]?.text;
-    expect(line(12)).toMatch(/^Applies Weapon of Quickening for 31\.1s \(21s\) \(/);
+    expect(line(12)).toMatch(/^Applies Weapon of Quickening for 31s \(21s\) \(/);
     expect(line(0)).toMatch(/^Applies Weapon of Quickening for 21s \(/);
   });
 

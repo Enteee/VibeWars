@@ -1,34 +1,27 @@
 import type { Vec2 } from "@vibewars/game-core";
 import type { MapData } from "@vibewars/game-maps/schema";
 import { bundledMaps } from "../net/bundled-maps.js";
-import tutorialCanyon1 from "@vibewars/game-maps/tutorial/tutorial-canyon-1/map.json" with { type: "json" };
-import tutorialCanyon2 from "@vibewars/game-maps/tutorial/tutorial-canyon-2/map.json" with { type: "json" };
+import tutorialCanyon from "@vibewars/game-maps/tutorial/tutorial-canyon/map.json" with { type: "json" };
 
 /**
  * The tutorial canyon (#3245, docs/art/3187-tutorial-canyon.md): one trail
- * from the arrival pad past station sites 4 to 14 to the mist gate, in two
- * maps, cut as the study says to keep each in the render budget: stations
- * 4 to 7, then 8 to 14. Each has its own arrival and exit. They are in no
- * queue, list or picker; only the tutorial loads them. CI validates them,
- * not the page (`bundledMaps`, #3679).
+ * on one map (#3792) from the arrival pad past station sites 4 to 14 to
+ * the mist gate. It is in no queue, list or picker; only the tutorial
+ * loads it. CI validates it, not the page (`bundledMaps`, #3679).
  */
-export const TUTORIAL_CANYON: readonly [MapData, MapData] = bundledMaps([
-  tutorialCanyon1,
-  tutorialCanyon2,
-]);
+export const [TUTORIAL_CANYON]: readonly [MapData] = bundledMaps([tutorialCanyon]);
 
-/** A point on the trail, on its map and layer: site 11 is in the tunnel, under the ground. */
+/** A point on the trail, on its layer: site 11 is in the tunnel, under the ground. */
 export interface CanyonPoint {
-  readonly map: MapData;
   readonly position: Vec2;
   readonly layer: number;
 }
 
-/** The centre of the paving `map` marks `id` with. */
-function marked(map: MapData, id: string): CanyonPoint {
-  const paving = map.paving?.find((each) => each.id === id);
+/** The centre of the paving the canyon marks `id` with. */
+function marked(id: string): CanyonPoint {
+  const paving = TUTORIAL_CANYON.paving?.find((each) => each.id === id);
   if (paving === undefined) {
-    throw new Error(`${map.id}: no paving marks ${id}`);
+    throw new Error(`${TUTORIAL_CANYON.id}: no paving marks ${id}`);
   }
   const corners =
     paving.area.kind === "rect"
@@ -40,7 +33,6 @@ function marked(map: MapData, id: string): CanyonPoint {
   const xs = corners.map(({ x }) => x);
   const ys = corners.map(({ y }) => y);
   return {
-    map,
     position: {
       x: (Math.min(...xs) + Math.max(...xs)) / 2,
       y: (Math.min(...ys) + Math.max(...ys)) / 2,
@@ -49,34 +41,24 @@ function marked(map: MapData, id: string): CanyonPoint {
   };
 }
 
-/** Where each map of the canyon is arrived in: the first's is the trail's start. */
-export const CANYON_ARRIVALS: readonly [CanyonPoint, CanyonPoint] = [
-  marked(TUTORIAL_CANYON[0], "arrival"),
-  marked(TUTORIAL_CANYON[1], "arrival"),
-];
-
-/** Where each map of the canyon is left by: the second's is the mist gate. */
-export const CANYON_EXITS: readonly [CanyonPoint, CanyonPoint] = [
-  marked(TUTORIAL_CANYON[0], "exit"),
-  marked(TUTORIAL_CANYON[1], "exit"),
-];
-
 /** Where the pair arrives, at the west end of the south leg. */
-export const CANYON_ARRIVAL: CanyonPoint = CANYON_ARRIVALS[0];
+export const CANYON_ARRIVAL: CanyonPoint = marked("arrival");
 
-/** Each station's site, 4 to 14, along the trail, on whichever map holds it. */
+/** The mist gate the trail leaves by, at the east end of the north leg. */
+export const CANYON_EXIT: CanyonPoint = marked("exit");
+
+/**
+ * Each station's site along the trail, by the number the study gives it:
+ * 4 to 14, but no 10, whose high deck is gone (#3792).
+ */
 export const CANYON_SITES: ReadonlyMap<number, CanyonPoint> = new Map(
-  Array.from({ length: 11 }, (_, k) => {
-    const station = k + 4;
-    return [
-      station,
-      marked(TUTORIAL_CANYON[station <= 7 ? 0 : 1], `site-${String(station)}`),
-    ] as const;
-  }),
+  [4, 5, 6, 7, 8, 9, 11, 12, 13, 14].map((site) => [site, marked(`site-${String(site)}`)] as const),
 );
 
-/** Station 13's pocket (#3332), the wrong way at the fork: south off the north leg. */
-export const CANYON_POCKET: CanyonPoint = marked(TUTORIAL_CANYON[1], "site-13b");
+/** Station 13's junction (#3792): each arm's mark round the rock island, and where they rejoin. */
+export const CANYON_NORTH_ARM: CanyonPoint = marked("site-13n");
+export const CANYON_SOUTH_ARM: CanyonPoint = marked("site-13s");
+export const CANYON_REJOIN: CanyonPoint = marked("site-13r");
 
-/** The mist gate the trail leaves by, on the north leg. */
-export const CANYON_EXIT: CanyonPoint = CANYON_EXITS[1];
+/** The bay off the south arm (#3332), where the parasol and deck chair stand. */
+export const CANYON_BAY: CanyonPoint = marked("site-13b");

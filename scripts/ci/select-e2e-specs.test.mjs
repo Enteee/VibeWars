@@ -157,8 +157,13 @@ describe("specSeconds", () => {
 });
 
 describe("the plan under the real budget", () => {
-  it("keeps the two largest specs within MAX_JOBS and every job within the budget", () => {
-    const weights = { "gameplay.spec.ts": 663, "tutorial.spec.ts": 407 };
+  it("keeps the four tutorial specs within MAX_JOBS and every job within the budget", () => {
+    const weights = {
+      "tutorial.spec.ts": 16,
+      "tutorial-learn-flat.spec.ts": 597,
+      "tutorial-learn-raised.spec.ts": 690,
+      "tutorial-menu-quest.spec.ts": 74,
+    };
     const plan = planJobs(weights, 10, SECONDS_PER_JOB, MAX_JOBS);
     expect(plan.length).toBeLessThanOrEqual(MAX_JOBS);
     for (const job of plan) {

@@ -14,8 +14,7 @@ import arenaCrossroads from "@vibewars/game-maps/maps/arena-crossroads/map.json"
 import arenaLongHall from "@vibewars/game-maps/maps/arena-long-hall/map.json" with { type: "json" };
 import benchFlat from "@vibewars/game-maps/bench/flat-map.json" with { type: "json" };
 import benchReference from "@vibewars/game-maps/bench/reference-map.json" with { type: "json" };
-import tutorialCanyon1 from "@vibewars/game-maps/tutorial/tutorial-canyon-1/map.json" with { type: "json" };
-import tutorialCanyon2 from "@vibewars/game-maps/tutorial/tutorial-canyon-2/map.json" with { type: "json" };
+import tutorialCanyon from "@vibewars/game-maps/tutorial/tutorial-canyon/map.json" with { type: "json" };
 import ashenCourtyard from "@vibewars/game-maps/maps/ashen-courtyard/map.json" with { type: "json" };
 import elonianPlateau from "@vibewars/game-maps/maps/elonian-plateau/map.json" with { type: "json" };
 import emberPits from "@vibewars/game-maps/maps/ember-pits/map.json" with { type: "json" };
@@ -80,7 +79,7 @@ import { TUTORIAL_CANYON } from "../tutorial/canyon-map.js";
  */
 const BENCH_MAPS =
   typeof __VIBEWARS_BENCH_REFERENCE__ !== "undefined" && __VIBEWARS_BENCH_REFERENCE__
-    ? [benchReference, benchFlat, tutorialCanyon1, tutorialCanyon2]
+    ? [benchReference, benchFlat, tutorialCanyon]
     : [];
 
 export const ARENA_MAPS: readonly MapData[] = bundledMaps([
@@ -376,7 +375,7 @@ function fileMap(mapId: string): MapData | undefined {
   return (
     ARENA_MAPS.find((map) => map.id === mapId) ??
     TRAINING_MAPS.get(mapId) ??
-    TUTORIAL_CANYON.find((map) => map.id === mapId)
+    (TUTORIAL_CANYON.id === mapId ? TUTORIAL_CANYON : undefined)
   );
 }
 
