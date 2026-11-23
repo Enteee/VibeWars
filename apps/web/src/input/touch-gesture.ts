@@ -36,6 +36,11 @@ export type TouchOutcome =
 
 export interface TouchGesture {
   feed(sample: TouchSample): TouchOutcome;
+  /**
+   * Whether one finger is down and still, `LONG_PRESS_MS` or more as of
+   * `nowMs`: a release now would long-press (#3878).
+   */
+  heldLong(nowMs: number): boolean;
 }
 
 const NONE: TouchOutcome = { kind: "none" };
@@ -77,6 +82,9 @@ export function createTouchGesture(): TouchGesture {
   };
 
   return {
+    heldLong(nowMs) {
+      return state.kind === "press" && !state.panning && nowMs - state.atMs >= LONG_PRESS_MS;
+    },
     feed(sample) {
       const at = { x: sample.x, y: sample.y };
       switch (sample.phase) {

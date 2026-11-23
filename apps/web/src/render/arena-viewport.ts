@@ -377,10 +377,14 @@ export async function createArenaViewport(
       for (const type of FINGER_TYPES) {
         canvas.addEventListener(type, onTouch);
       }
+      // A pointer event's timeStamp is on performance.now()'s clock: the
+      // hover ring turns to the ground below as the hold passes long-press.
+      scene.setHeldBelow(() => gesture.heldLong(performance.now()));
       return () => {
         for (const type of FINGER_TYPES) {
           canvas.removeEventListener(type, onTouch);
         }
+        scene.setHeldBelow(() => false);
       };
     },
     onWheelNotch(handler) {

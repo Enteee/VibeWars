@@ -83,12 +83,15 @@ test("a phone puts its character in the team by tap and Put here (#3876)", async
 
 /** On station 9's ledge, as `tutorial.spec`'s ON_THE_LEDGE: a tap here picks the deck. */
 const ON_THE_LEDGE = { x: 3850, y: 1830 };
-/** Screen px a tap goes from the camera's centre at most, clear of the phone's HUD. */
-const REACH_PX = 120;
+/** Screen px a tap goes sideways from the camera's centre at most, inside a Pixel 8a's width. */
+const REACH_PX = 160;
+/** Screen px a tap goes up at most: the tutor's lines sit over the arena above that. */
+const CLEAR_ABOVE_PX = 100;
 
 test("a phone climbs down under the ledge with a long-press (#3878)", async ({ page }) => {
-  // Up the stairs and down again on a loaded runner, as tutorial.spec's station 9.
-  test.setTimeout(240_000);
+  // From the arrival some 3000 units east, up the stairs and down again on
+  // a loaded runner.
+  test.setTimeout(300_000);
   await page.goto("./?menu-background=bench-flat&tutorial-station=9");
   const frame = page.locator(".tutorial-frame");
   await expect(frame).toHaveCount(1, { timeout: 30_000 });
@@ -98,7 +101,7 @@ test("a phone climbs down under the ledge with a long-press (#3878)", async ({ p
     .map(Number);
   const stage = page.locator("#viewport");
   const canvas = page.locator("#viewport canvas:not(.compass)");
-  /** Where `point` is on the page, `REACH_PX` from the centre at most. */
+  /** Where `point` is on the page, a stride toward it at most, clear of the tutor's lines. */
   const toward = async (point: { x: number; y: number }): Promise<{ x: number; y: number }> => {
     const view = await projection(stage, canvas);
     const there = view.onPage(point);
@@ -108,7 +111,11 @@ test("a phone climbs down under the ledge with a long-press (#3878)", async ({ p
     });
     const dx = there.x - mid.x;
     const dy = there.y - mid.y;
-    const reach = Math.min(1, REACH_PX / Math.max(Math.hypot(dx, dy), 1));
+    const reach = Math.min(
+      1,
+      REACH_PX / Math.max(Math.abs(dx), 1),
+      CLEAR_ABOVE_PX / Math.max(-dy, 1),
+    );
     return { x: mid.x + dx * reach, y: mid.y + dy * reach };
   };
 
@@ -121,7 +128,7 @@ test("a phone climbs down under the ledge with a long-press (#3878)", async ({ p
     const at = await toward(ON_THE_LEDGE);
     await page.touchscreen.tap(at.x, at.y);
     await expect(frame).not.toHaveAttribute("data-mark-layer", upper, { timeout: 3_000 });
-  }).toPass({ timeout: 120_000 });
+  }).toPass({ timeout: 180_000 });
   await expect(frame.locator(".tutorial-how")).toHaveText(
     "Tap where to stand. Press and hold picks the ground below.",
   );

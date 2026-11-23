@@ -32,6 +32,23 @@ describe("createTouchGesture (#3781)", () => {
     });
   });
 
+  it("is held long once a still press passes 500 ms, until it lifts or pans (#3878)", () => {
+    const gesture = createTouchGesture();
+    expect(gesture.heldLong(1000)).toBe(false);
+    gesture.feed(at(1, "down", 0, 0, 0));
+    expect(gesture.heldLong(499)).toBe(false);
+    expect(gesture.heldLong(500)).toBe(true);
+    gesture.feed(at(1, "up", 0, 0, 600));
+    expect(gesture.heldLong(700)).toBe(false);
+    gesture.feed(at(2, "down", 0, 0, 1000));
+    gesture.feed(at(2, "move", 20, 0, 1100));
+    expect(gesture.heldLong(1600)).toBe(false);
+    gesture.feed(at(2, "up", 20, 0, 1700));
+    gesture.feed(at(3, "down", 0, 0, 2000));
+    gesture.feed(at(4, "down", 100, 0, 2100));
+    expect(gesture.heldLong(2600)).toBe(false);
+  });
+
   it("never long-presses a held press that panned, pinched or was cancelled (#3878)", () => {
     const gesture = createTouchGesture();
     gesture.feed(at(1, "down", 0, 0, 0));
