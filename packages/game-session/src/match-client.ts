@@ -30,6 +30,7 @@ import {
   type Channel,
   type ClientIntent,
   type PeerBye,
+  type PeerSceneReady,
   type PeerCall,
   type PeerHello,
   type PeerRefuse,
@@ -281,6 +282,8 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
   let capes = new Map<string, WireCape>();
   const worn = new Map<string, SeatWorn>();
   let lost = false;
+  /** The first frame was said drawn (#3852): it goes once. */
+  let sceneSent = false;
   /** When the host's peer went, by `Date.now`, while waiting for it back. */
   let droppedAt: number | undefined;
   let reconnectTimer: unknown;
@@ -719,6 +722,13 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
           ),
           strokes: lines,
         };
+      },
+      sceneReady() {
+        if (!sceneSent) {
+          sceneSent = true;
+          const message: PeerSceneReady = {};
+          transport.send("scene-ready", message, hostId);
+        }
       },
       async disconnect() {
         stop();

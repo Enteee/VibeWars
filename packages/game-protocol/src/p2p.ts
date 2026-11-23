@@ -83,6 +83,7 @@ export const CHANNELS = [
   "match-replay",
   "match-chart",
   "bye",
+  "scene-ready",
   "lobby-join",
   "lobby-challenge",
   "lobby-proof",
@@ -888,7 +889,7 @@ export type WireMatchPhase = (typeof WIRE_MATCH_PHASES)[number];
 
 /** The wait before a match starts (#3818), while it is `waiting` or `countdown`. */
 export interface WirePreMatch {
-  /** Who has taken a seat, bots included, of `expected`. */
+  /** Who has a seat and its first frame drawn (#3852), bots included, of `expected`. */
   readonly joined: number;
   readonly expected: number;
   /**
@@ -1055,6 +1056,12 @@ export type WireCombatBatch = readonly WireCombat[];
  * window.
  */
 export type PeerBye = Readonly<Record<string, never>>;
+
+/**
+ * Client to host, once (#3852): its first frame of the match is drawn.
+ * The pre-match countdown waits for every seated player's.
+ */
+export type PeerSceneReady = Readonly<Record<string, never>>;
 
 /** A world point, `[x, y]`. */
 export type WirePoint = readonly [number, number];
@@ -2424,6 +2431,11 @@ export function parseWireSharedTrack(value: unknown): WireSharedTrack | undefine
     isSharedSource(raw.source)
     ? { from: raw.from, trackId: raw.trackId, source: raw.source }
     : undefined;
+}
+
+export function parsePeerSceneReady(value: unknown): PeerSceneReady | undefined {
+  const raw = fields(value);
+  return raw !== undefined && Object.keys(raw).length === 0 ? {} : undefined;
 }
 
 export function parsePeerBye(value: unknown): PeerBye | undefined {

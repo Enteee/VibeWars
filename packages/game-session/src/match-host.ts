@@ -47,6 +47,7 @@ import {
   helloProtocolVersion,
   parseClientIntent,
   parsePeerBye,
+  parsePeerSceneReady,
   parsePeerCall,
   parsePeerHello,
   parsePeerObserve,
@@ -560,12 +561,21 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
   let pre: { readonly phase: "waiting" | "countdown"; ticks: number } | null =
     options.preMatch === null ? null : { phase: "waiting", ticks: 0 };
   let startLogged = false;
+  /**
+   * The seated players whose first frame is drawn (#3852), by player id,
+   * so a reconnect keeps it. The countdown waits for every seated human's.
+   */
+  const sceneReady = new Set<string>();
+  /** The seated humans the countdown still waits on to draw their scene. */
+  const unready = (): number =>
+    [...seats.values()].filter((seat) => !seat.bot && !sceneReady.has(seat.playerId)).length;
   const ticksOf = (seconds: number): number => Math.round(seconds / TICK_SECONDS);
   /** This tick, held until the start (#3818), the match's own after. */
   const stepOrHold = (): ReturnType<typeof sim.step> => {
     const times = options.preMatch;
     if (pre?.phase === "waiting" && times !== null) {
-      if (awaited.size === 0 || pre.ticks >= ticksOf(times.joinTimeoutSeconds)) {
+      const loaded = awaited.size === 0 && unready() === 0;
+      if (loaded || pre.ticks >= ticksOf(times.joinTimeoutSeconds)) {
         pre = { phase: "countdown", ticks: 0 };
       }
     }
@@ -596,7 +606,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       Math.ceil((ticksOf(seconds) - now.ticks) / RULESET.tickRateHz);
     const untilAnyway = left(times.joinTimeoutSeconds);
     return {
-      joined: expected - awaited.size,
+      joined: expected - awaited.size - unready(),
       expected,
       secondsLeft:
         now.phase === "countdown"
@@ -1452,6 +1462,20 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     // The player meant to go: there is nothing to hold the seat for.
     departed.add(from);
     free(seat);
+  });
+
+  // A seated player's first frame is drawn (#3852). Only the wait starts
+  // the countdown on it; during the countdown it only counts. A watcher has
+  // no seat.
+  transport.on("scene-ready", (data, from) => {
+    const seat = seatOfPeer.get(from);
+    if (!budget.take(from, nowMs()) || parsePeerSceneReady(data) === undefined) {
+      return;
+    }
+    if (seat === undefined || retired || pre === null) {
+      return;
+    }
+    sceneReady.add(seat.playerId);
   });
 
   // The budget outlives a bye and a seat: only a peer leaving the room

@@ -395,6 +395,11 @@ export interface MatchConnection {
   sendCall(call: PeerCall): void;
   /** Your team's calls right now; nobody else's ever reach you. */
   getCalls(): CallsSnapshot;
+  /**
+   * Tell the host this player's first frame of the match is drawn (#3852):
+   * the pre-match countdown waits for it. Sent once; later calls do nothing.
+   */
+  sceneReady(): void;
   disconnect(): Promise<void>;
 }
 

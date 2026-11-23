@@ -1094,6 +1094,8 @@ export async function startMatchView(
   let finished = false;
   /** The match as the last frame saw it, so an objective toasts once (#1226, #1387). */
   let lastMatch: MatchSnapshot | undefined;
+  /** Frames the match has been in the scene, counted to the one that says it is drawn (#3852). */
+  let sceneFrames = 0;
   /** The summary (#1057), drawn once under the result banner when the host's `ended` lands. */
   let summary:
     | {
@@ -1218,6 +1220,14 @@ export async function startMatchView(
       latestArena = { ...latestArena, goals: tutorial.goals() };
     }
     viewport?.scene.setSnapshot(latestArena);
+    // Phaser draws after each step, so by the second the match's first
+    // frame is on screen: the host's countdown waits for that (#3852).
+    if (sceneFrames < 2) {
+      sceneFrames += 1;
+      if (sceneFrames === 2) {
+        seat?.sceneReady();
+      }
+    }
     if (tutorial !== undefined) {
       viewport?.scene.setProps(tutorial.props());
     }

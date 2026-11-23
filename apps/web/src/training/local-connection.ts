@@ -261,6 +261,8 @@ export function createLocalConnection(options: {
     selfSessionId: selfId,
     sendCall,
     getCalls,
+    // No pre-match here (#3852): nothing waits for the first frame.
+    sceneReady: () => undefined,
     map,
     timeLimitSeconds: null,
     get skillBar() {
