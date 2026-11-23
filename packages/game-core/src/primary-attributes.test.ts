@@ -347,6 +347,8 @@ describe("Spawning Power (#1098)", () => {
     expect(spawningPowerDuration(0.5, 25)).toBe(25);
     // 10 s at 12: 14.8 s lasts 15.
     expect(spawningPowerDuration(12, 10)).toBe(15);
+    // 37.5 s at 16: exactly 61.5, a half, so 61 (no float lands a hair over).
+    expect(spawningPowerDuration(16, 37.5)).toBe(61);
     expect(spawningPowerDuration(0, 7.5)).toBe(7.5);
   });
 

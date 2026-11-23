@@ -74,10 +74,10 @@ function shout(leadership: number, missing?: number) {
 }
 
 describe("Leadership (#625)", () => {
-  it("gives 1 energy per ally a shout affects, the shouter included: 3 at rank 12", () => {
+  it("gives 2 energy per ally a shout affects, the shouter included: 6 at rank 12 (#3880)", () => {
     const { gained, gains } = shout(12);
-    expect(gained).toBe(3);
-    expect(gains).toEqual([{ kind: "energy-gain", targetId: "s", amount: 3 }]);
+    expect(gained).toBe(6);
+    expect(gains).toEqual([{ kind: "energy-gain", targetId: "s", amount: 6 }]);
   });
 
   it("caps the gain at 1 for every 2 ranks", () => {

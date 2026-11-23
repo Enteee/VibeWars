@@ -209,7 +209,13 @@ export function spawningPowerMultiplier(rank: number): number {
  * 0.9 lasts 31 s, not 31.08. At rank 0 the duration stands as it is.
  */
 export function spawningPowerDuration(rank: number, seconds: number): number {
-  return rank > 0 ? Math.ceil(seconds * spawningPowerMultiplier(rank) - 0.5) : seconds;
+  if (rank <= 0) {
+    return seconds;
+  }
+  // In hundredths, so a half lands on a half: 37.5 s at 16 is 61.5, not
+  // 61.50000000000001.
+  const percent = 100 + 100 * SPAWNING_POWER_BONUS_PER_RANK * rank;
+  return Math.ceil((seconds * percent) / 100 - 0.5);
 }
 
 /** A summoned creature's max health with this rank of its summoner's, rounded once. */

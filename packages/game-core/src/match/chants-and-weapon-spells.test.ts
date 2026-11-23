@@ -348,7 +348,7 @@ function untilFlying(match: MatchSimulation, count: number): CombatLogEntry[] {
 }
 
 describe("Anthem of Flame in the match (#758)", () => {
-  it("a 1 s chant reaches every ally in earshot, the paragon too, and Leadership pays for 3", () => {
+  it("a 1 s chant reaches every ally in earshot, the paragon too, and Leadership pays for 6", () => {
     const match = new MatchSimulation({
       seed: "anthem",
       participants: [
@@ -372,7 +372,7 @@ describe("Anthem of Flame in the match (#758)", () => {
     expect(get(match, "foe").combatant.statuses.has("anthem-of-flame")).toBe(false);
     // The same as "Watch Yourself!" reaching three (#625).
     expect(entry?.events.filter((event) => event.kind === "energy-gain")).toEqual([
-      { kind: "energy-gain", targetId: "p", amount: 3 },
+      { kind: "energy-gain", targetId: "p", amount: 6 },
     ]);
   });
 
