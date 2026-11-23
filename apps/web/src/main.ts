@@ -218,6 +218,7 @@ import type { QueueStatusInput } from "./ui/queue-popover.js";
 import { rankLineElement, standingOf, type Standing } from "./ui/leaderboard-window.js";
 import { duplicateTeam, newTeam, replaceMember, teamCharacter } from "./ui/team-builder.js";
 import {
+  blankMember,
   mountTeamEditor,
   openedTeam,
   pastedTeam,
@@ -266,12 +267,6 @@ import { type PlayerBuild, zaishenMoraleBoost } from "@vibewars/game-core";
  * five screens and one connection at a time, and a router would be more
  * machinery than the problem has (brief §30).
  */
-
-/** A new Team Build's member (#2225): what a new character is, as the team's own. */
-function blankMember(): TeamCharacter {
-  const blank = newCharacter(crypto.randomUUID());
-  return teamCharacter(blank, blank.id);
-}
 
 /**
  * The station the tutorial starts at, as an index (#3383): the URL's
@@ -1666,6 +1661,9 @@ async function main(): Promise<void> {
       onLoadTeam: (team) => {
         openPastedTeam(team, characterList.characters);
       },
+      onTeamBuildSize: (size) => {
+        menuQuest?.event({ kind: "team-build-size", size });
+      },
       // Only the random starter team has Clone: an exact copy, to edit (#2036).
       onCloneStarterTeam: (id) => {
         void (async () => {
@@ -1832,6 +1830,8 @@ async function main(): Promise<void> {
     teamEditor = mountTeamEditor(screenRoot, state, available, {
       onSave: async (saved) => {
         await teams.save(saved);
+        // The sidebar comes back at the size the build was saved at (#3794).
+        saveTeamSize("teams", saved.size);
         menuQuest?.event({ kind: "team-saved", team: saved, isNew: !state.stored });
       },
       onDraft: (draft) => {
@@ -3480,6 +3480,8 @@ async function main(): Promise<void> {
     });
     menuQuest = quest;
     quest.event({ kind: "screen-shown", screen: railEntry() });
+    // A sidebar already at 2v2 passes the size beat at once (#3794).
+    quest.event({ kind: "team-build-size", size: loadTeamBuildSize() });
   };
   /** Nobody on a touch device gets the tutorial (#3218), nor its menu quest. */
   const onTouch = (): boolean =>

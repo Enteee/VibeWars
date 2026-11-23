@@ -51,6 +51,8 @@ export type MenuQuestEvent =
     }
   | { readonly kind: "team-saved"; readonly team: StoredTeam; readonly isNew: boolean }
   | { readonly kind: "team-size"; readonly size: number }
+  /** Team Builder's sidebar size (#3794): stored at the quest's start, then each step. */
+  | { readonly kind: "team-build-size"; readonly size: number }
   | {
       readonly kind: "team-picked";
       readonly teamId: string;
@@ -96,6 +98,8 @@ export interface MenuQuestState {
   /** The team the quest had saved (#3542), for the modes step to pick. */
   readonly questTeamId: string | undefined;
   readonly teamSize: number | undefined;
+  /** Team Builder's sidebar size, as last reported (#3794). */
+  readonly teamBuildSize: number | undefined;
   readonly teamPicked: { readonly teamId: string; readonly offered: readonly string[] } | undefined;
   /** Whether a member's build was ever opened from the team editor (#3785). */
   readonly memberBuildOpened: boolean;
@@ -362,7 +366,23 @@ export const MENU_QUEST_STEPS = [
       },
       {
         kind: "do",
-        // The sidebar's size and New team build: a new team takes that size.
+        // A new team takes the sidebar's size: 2v2 first (#3794).
+        target: "team-build-size",
+        line: "tutorial.menu.team.size",
+        objectives: [
+          {
+            id: "size",
+            label: "tutorial.menu.team.sizeDone",
+            // A new draft of two, stepped there in its editor, is past it too.
+            done: (state) =>
+              state.teamBuildSize === 2 ||
+              (state.teamDraft?.isNew === true && state.teamDraft.team.size === 2),
+          },
+        ],
+      },
+      {
+        kind: "do",
+        // Only the New team build card: a 4v4 draft stepped to 2v2 counts too.
         target: "team-new",
         line: "tutorial.menu.team.new",
         objectives: [
@@ -532,6 +552,7 @@ export const NO_MENU_QUEST_EVENTS: MenuQuestState = {
   teamsSaved: [],
   questTeamId: undefined,
   teamSize: undefined,
+  teamBuildSize: undefined,
   teamPicked: undefined,
   memberBuildOpened: false,
   voteEnded: false,
@@ -653,6 +674,8 @@ export function foldMenuQuestEvent(state: MenuQuestState, event: MenuQuestEvent)
       };
     case "team-size":
       return { ...state, teamSize: event.size };
+    case "team-build-size":
+      return { ...state, teamBuildSize: event.size };
     case "team-picked":
       return { ...state, teamPicked: { teamId: event.teamId, offered: event.offered } };
     case "vote-ended":

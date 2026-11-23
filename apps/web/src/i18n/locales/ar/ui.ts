@@ -1542,7 +1542,6 @@ export default {
   "teamEditor.share": "مشاركة",
   "teamEditor.shareLabel": "فريق للمشاركة",
   "teamEditor.shareTitle": "شارك هذا الفريق في سطر واحد",
-  "teamEditor.sizeFixed": "حجم بنية الفريق ثابت: أنشئ بنية جديدة لحجم آخر",
   "teamEditor.sizeLabel": "حجم الفريق",
   "teamEditor.teamName": "اسم الفريق",
   "teamEditor.teamNameLabel": "اسم الفريق",
@@ -1833,8 +1832,10 @@ export default {
   "tutorial.menu.team.members":
     "للفريق دائمًا عدد أعضاء يساوي حجمه. لا تضيف عضوًا أبدًا: بل تستبدل واحدًا.",
   "tutorial.menu.team.memberBack": "هذه بنية ذلك العضو. اضغط رجوع لتعود إلى فريقك.",
-  "tutorial.menu.team.new": "اضبط حجم الفريق على 2v2، ثم أنشئ بنية فريق جديدة.",
+  "tutorial.menu.team.new": "الآن أنشئ بنية فريق جديدة.",
   "tutorial.menu.team.newDone": "ابدأ فريقًا من اثنين",
+  "tutorial.menu.team.size": "اضبط حجم الفريق على 2v2.",
+  "tutorial.menu.team.sizeDone": "حجم الفريق 2v2",
   "tutorial.menu.team.open": "افتح «الفرق»، حيث بنى فرقك.",
   "tutorial.menu.team.openDone": "افتح «الفرق»",
   "tutorial.menu.team.problems":

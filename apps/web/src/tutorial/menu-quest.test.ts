@@ -287,6 +287,7 @@ describe("the team step (#3542)", () => {
   const copied = teamOf("t1", 2, [teamCharacter(START, "m1"), blank("m2")]);
   const filled = teamOf("t1", 2, [teamCharacter(START, "m1"), teamCharacter(START, "m2")]);
   const teams: MenuQuestEvent = { kind: "screen-shown", screen: "teams" };
+  const size2: MenuQuestEvent = { kind: "team-build-size", size: 2 };
   const draft = (team: StoredTeam, isNew = true): MenuQuestEvent => ({
     kind: "team-draft",
     draft: team,
@@ -304,44 +305,57 @@ describe("the team step (#3542)", () => {
     ]);
   });
 
-  it("opens Teams, then a new team of two", () => {
+  it("opens Teams, sets the sidebar to 2v2, then a new team of two (#3794)", () => {
     expect(teamAfter(NO_MENU_QUEST_EVENTS)).toBe(0);
     expect(teamAfter(fold([teams]))).toBe(1);
-    expect(teamAfter(fold([teams, draft(opened)]))).toBe(2);
+    expect(teamAfter(fold([teams, { kind: "team-build-size", size: 4 }]))).toBe(1);
+    expect(teamAfter(fold([teams, size2]))).toBe(2);
+    expect(teamAfter(fold([teams, size2, draft(opened)]))).toBe(3);
+  });
+
+  it("passes the size beat on a sidebar already at 2v2 when the quest starts (#3794)", () => {
+    expect(teamAfter(fold([size2, teams]))).toBe(2);
+  });
+
+  it("takes a 4v4 draft stepped to 2v2 in its editor past both beats (#3794)", () => {
+    const four = teamOf("t1", 4, [blank("m1"), blank("m2"), blank("m3"), blank("m4")]);
+    const sidebarFour: MenuQuestEvent = { kind: "team-build-size", size: 4 };
+    expect(teamAfter(fold([sidebarFour, teams, draft(four)]))).toBe(1);
+    expect(teamAfter(fold([sidebarFour, teams, draft(four), draft(opened)]))).toBe(3);
   });
 
   it("never takes a team of another size, nor one already stored", () => {
     const four = teamOf("t1", 4, [blank("m1"), blank("m2"), blank("m3"), blank("m4")]);
-    expect(teamAfter(fold([teams, draft(four)]))).toBe(1);
-    expect(teamAfter(fold([teams, draft(opened, false)]))).toBe(1);
+    expect(teamAfter(fold([teams, size2, draft(four)]))).toBe(2);
+    expect(teamAfter(fold([teams, size2, draft(opened, false)]))).toBe(2);
   });
 
   it("explains the editor, then waits for the character in the team", () => {
-    expect(teamAfter(fold([teams, draft(opened)]), true)).toBe(5);
-    expect(teamAfter(fold([teams, draft(opened), draft(copied)]), true)).toBe(6);
+    expect(teamAfter(fold([teams, size2, draft(opened)]), true)).toBe(6);
+    expect(teamAfter(fold([teams, size2, draft(opened), draft(copied)]), true)).toBe(7);
   });
 
   it("shows the way Back over a member's build opened from its name, and counts its beat done (#3785)", () => {
     const member: MenuQuestEvent = { kind: "screen-shown", screen: "member-editor" };
     const back: MenuQuestEvent = { kind: "screen-shown", screen: "team-editor" };
     // On the member-name beat, Got it unpressed.
-    const onName = { step: "team", beat: 3 } as const;
+    const onName = { step: "team", beat: 4 } as const;
     expect(currentBeat(onName).line).toBe("tutorial.menu.team.build");
-    const inMember = fold([teams, draft(opened), member]);
+    const inMember = fold([teams, size2, draft(opened), member]);
     const next = advanceMenuQuest(onName, inMember, false);
-    expect(next).toEqual({ step: "team", beat: 4 });
+    expect(next).toEqual({ step: "team", beat: 5 });
     expect(next !== "done" && shownBeat(next, inMember)).toBe(MEMBER_BACK_BEAT);
     expect(next !== "done" && menuQuestChecklist(next, inMember)).toEqual([]);
     // Back: the team editor again, and the beat after the name.
-    const returned = fold([teams, draft(opened), member, back, draft(opened)]);
-    expect(advanceMenuQuest(onName, returned, false)).toEqual({ step: "team", beat: 4 });
-    expect(shownBeat({ step: "team", beat: 4 }, returned)).toBe(
-      currentBeat({ step: "team", beat: 4 }),
+    const returned = fold([teams, size2, draft(opened), member, back, draft(opened)]);
+    expect(advanceMenuQuest(onName, returned, false)).toEqual({ step: "team", beat: 5 });
+    expect(shownBeat({ step: "team", beat: 5 }, returned)).toBe(
+      currentBeat({ step: "team", beat: 5 }),
     );
     // Opened on an earlier beat: that one still waits for its Got it.
-    expect(advanceMenuQuest({ step: "team", beat: 2 }, inMember, false)).toEqual({
+    expect(advanceMenuQuest({ step: "team", beat: 3 }, inMember, false)).toEqual({
       step: "team",
-      beat: 2,
+      beat: 3,
     });
   });
 
@@ -354,29 +368,31 @@ describe("the team step (#3542)", () => {
       draft(copied),
     ]);
     expect(saved.characterInTeam).toBe(false);
-    expect(fold([teams, draft(opened), draft(copied)]).characterInTeam).toBe(true);
+    expect(fold([teams, size2, draft(opened), draft(copied)]).characterInTeam).toBe(true);
   });
 
   it("keeps the character ticked once in, even if replaced later", () => {
-    const state = fold([teams, draft(opened), draft(copied), draft(opened)]);
+    const state = fold([teams, size2, draft(opened), draft(copied), draft(opened)]);
     expect(state.characterInTeam).toBe(true);
-    expect(teamAfter(state, true)).toBe(6);
+    expect(teamAfter(state, true)).toBe(7);
   });
 
   it("is filled only with every member built and no problem", () => {
-    expect(teamAfter(fold([teams, draft(opened), draft(filled)]), true)).toBe(7);
+    expect(teamAfter(fold([teams, size2, draft(opened), draft(filled)]), true)).toBe(8);
     const unnamed = { ...filled, name: " " };
-    expect(teamAfter(fold([teams, draft(opened), draft(copied), draft(unnamed)]), true)).toBe(6);
+    expect(
+      teamAfter(fold([teams, size2, draft(opened), draft(copied), draft(unnamed)]), true),
+    ).toBe(7);
   });
 
   it("completes Save on the new team saved, playable, and remembers its id", () => {
-    const ready = fold([teams, draft(opened), draft(filled)]);
+    const ready = fold([teams, size2, draft(opened), draft(filled)]);
     const unnamed = { ...filled, name: "" };
     const refused = foldMenuQuestEvent(ready, { kind: "team-saved", team: unnamed, isNew: true });
-    expect(teamAfter(refused, true)).toBe(7);
+    expect(teamAfter(refused, true)).toBe(8);
     expect(refused.questTeamId).toBeUndefined();
     const old = foldMenuQuestEvent(ready, { kind: "team-saved", team: filled, isNew: false });
-    expect(teamAfter(old, true)).toBe(7);
+    expect(teamAfter(old, true)).toBe(8);
     const saved = foldMenuQuestEvent(ready, { kind: "team-saved", team: filled, isNew: true });
     expect(teamAfter(saved, true)).toBe("past");
     expect(saved.questTeamId).toBe("t1");

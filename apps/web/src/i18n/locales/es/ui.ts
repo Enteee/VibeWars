@@ -1437,7 +1437,6 @@ export default {
   "teamEditor.share": "Compartir",
   "teamEditor.shareLabel": "equipo para compartir",
   "teamEditor.shareTitle": "compartir este equipo en una línea",
-  "teamEditor.sizeFixed": "El tamaño de una build de equipo es fijo: crea otra para otro tamaño",
   "teamEditor.sizeLabel": "Tamaño del equipo",
   "teamEditor.teamName": "Nombre del equipo",
   "teamEditor.teamNameLabel": "nombre del equipo",
@@ -1740,8 +1739,10 @@ export default {
     "Un equipo siempre tiene tantos miembros como su tamaño. Nunca añades un miembro: reemplazas uno.",
   "tutorial.menu.team.memberBack":
     "Esta es la build de ese miembro. Pulsa Atrás para volver a tu equipo.",
-  "tutorial.menu.team.new": "Pon el tamaño del equipo en 2v2 y luego crea una nueva build.",
+  "tutorial.menu.team.new": "Ahora crea una nueva build.",
   "tutorial.menu.team.newDone": "Empieza un equipo de 2",
+  "tutorial.menu.team.size": "Pon el tamaño del equipo en 2v2.",
+  "tutorial.menu.team.sizeDone": "El tamaño del equipo es 2v2",
   "tutorial.menu.team.open": "Abre Equipos, donde están las builds de tus equipos.",
   "tutorial.menu.team.openDone": "Abre Equipos",
   "tutorial.menu.team.problems":

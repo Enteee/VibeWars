@@ -17,6 +17,7 @@ import {
   newTeam,
   professionMix,
   replaceMember,
+  resizeTeam,
   teamCharacter,
   teamCounters,
   teamOf,
@@ -65,6 +66,39 @@ describe("newTeam (#2225)", () => {
     for (const size of [2, 4, 8] as const) {
       expect(newTeam("t1", size, () => member("x")).members).toHaveLength(size);
     }
+  });
+});
+
+describe("resizeTeam (#3794)", () => {
+  const blanks = (): (() => TeamCharacter) => {
+    let made = 0;
+    return () => {
+      made += 1;
+      return member(`blank${String(made)}`);
+    };
+  };
+
+  it("drops the last members on a smaller size", () => {
+    const team = resizeTeam(teamWith("a", "b", "c", "d"), 2, blanks());
+    expect(team.size).toBe(2);
+    expect(ids(team)).toEqual(["a", "b"]);
+  });
+
+  it("appends blank members on a larger size", () => {
+    const team = resizeTeam(teamWith("a", "b"), 4, blanks());
+    expect(team.size).toBe(4);
+    expect(ids(team)).toEqual(["a", "b", "blank1", "blank2"]);
+  });
+
+  it("changes nothing at the same size", () => {
+    const team = teamWith("a", "b");
+    expect(resizeTeam(team, 2, blanks())).toEqual(team);
+  });
+
+  it("brings no dropped member back on growing again", () => {
+    const make = blanks();
+    const team = resizeTeam(resizeTeam(teamWith("a", "b", "c", "d"), 2, make), 4, make);
+    expect(ids(team)).toEqual(["a", "b", "blank1", "blank2"]);
   });
 });
 

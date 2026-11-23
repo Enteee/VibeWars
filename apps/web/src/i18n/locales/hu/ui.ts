@@ -1356,7 +1356,6 @@ export default {
   "teamEditor.share": "Megoszt",
   "teamEditor.shareLabel": "megosztandó csapat",
   "teamEditor.shareTitle": "csapat megosztása egy sorban",
-  "teamEditor.sizeFixed": "A csapatbuild mérete rögzített: más mérethez készíts újat",
   "teamEditor.sizeLabel": "Csapatméret",
   "teamEditor.teamName": "Csapatnév",
   "teamEditor.teamNameLabel": "csapatnév",
@@ -1653,8 +1652,10 @@ export default {
     "Egy csapatnak mindig annyi tagja van, amekkora a mérete. Tagot sosem adsz hozzá: lecserélsz egyet.",
   "tutorial.menu.team.memberBack":
     "Ez annak a tagnak a buildje. A Vissza gombbal visszatérsz a csapatodhoz.",
-  "tutorial.menu.team.new": "Állítsd a csapatméretet 2v2-re, majd készíts új csapatbuildet.",
+  "tutorial.menu.team.new": "Most készíts új csapatbuildet.",
   "tutorial.menu.team.newDone": "Indíts egy 2 fős csapatot",
+  "tutorial.menu.team.size": "Állítsd a csapatméretet 2v2-re.",
+  "tutorial.menu.team.sizeDone": "A csapatméret 2v2",
   "tutorial.menu.team.open": "Nyisd meg a Csapatokat, ahol a csapatbuildjeid vannak.",
   "tutorial.menu.team.openDone": "Nyisd meg a Csapatokat",
   "tutorial.menu.team.problems":

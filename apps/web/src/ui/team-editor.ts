@@ -11,6 +11,7 @@ import { t } from "../i18n/index.js";
 import { SKILL_BAR_SLOTS } from "../storage/build-validation.js";
 import {
   CHARACTER_SCHEMA_VERSION,
+  isTeamBuildSize,
   type StoredCharacter,
   type StoredTeam,
   type TeamBuildSize,
@@ -22,6 +23,7 @@ import {
   mountGear,
   mountProfessions,
   mountSkillBar,
+  newCharacter,
   type BuildHost,
   type GearHost,
   type ProfessionsHost,
@@ -54,6 +56,7 @@ import {
   moveMember,
   professionMix,
   replaceMember,
+  resizeTeam,
   teamCharacter,
   teamCounters,
   validateTeam,
@@ -71,9 +74,10 @@ import { describeNames, describeWords } from "../i18n/describe-words.js";
  * The team editor (#573, epic #554), mounted once per ADR-0030.
  *
  * Reorder, rename, and a character or a skill dragged onto a member
- * (#2225) change the team in memory and stay on screen; a team is always
- * its size, its members replaced, never added or taken off. Nothing is
- * stored until Save, which always stores, problems and all
+ * (#2225) change the team in memory and stay on screen, and so does the
+ * size: a smaller one drops the last members, a larger one appends blank
+ * ones (#3794). Nothing is stored until Save, which always stores,
+ * problems and all
  * (#2110), and leaves once it has stored (#1902). Esc with unsaved edits, and
  * Delete always, ask inline first. A member's name
  * opens them in the build editor, and the way back hands the editor its
@@ -210,14 +214,25 @@ export function memberStats(character: TeamCharacter): MemberStats | undefined {
     : { health: summary.maxHealth, energy: summary.maxEnergy };
 }
 
-/** The team size stepper in the editor's bar (#2109, #2141), locked at the build's size. */
-function lockedTeamSize(size: TeamBuildSize): HTMLElement {
+/** A new Team Build's member (#2225): what a new character is, as the team's own. */
+export function blankMember(): TeamCharacter {
+  const blank = newCharacter(crypto.randomUUID());
+  return teamCharacter(blank, blank.id);
+}
+
+/**
+ * The team size stepper in the editor's bar (#2141, #3794): a step goes
+ * to `onPick`, never to the sidebar's stored size.
+ */
+function teamSizeField(size: TeamBuildSize, onPick: (size: TeamBuildSize) => void): HTMLElement {
   const field = h("div", "team-lobby-size");
-  // The size a build was made at stays (#2109).
-  field.title = t("teamEditor.sizeFixed");
   field.append(
     h("span", "field-label", t("teamEditor.sizeLabel")),
-    teamSizeStepper("teams", size, true, () => undefined),
+    teamSizeStepper("teams", size, false, false, (picked) => {
+      if (isTeamBuildSize(picked)) {
+        onPick(picked);
+      }
+    }),
   );
   return field;
 }
@@ -544,7 +559,13 @@ export function mountTeamEditor(
     escape: () => {
       leave(callbacks.onClose);
     },
-    status: [lockedTeamSize(team.size), chip.element, unsaved],
+    status: [
+      teamSizeField(team.size, (size) => {
+        commit(resizeTeam(team, size, blankMember));
+      }),
+      chip.element,
+      unsaved,
+    ],
     actions: [save, more.element],
     // Esc puts away the ⋯ menu, Share and the problem list, then clears
     // the counter's marks, before it leaves.
@@ -1148,6 +1169,10 @@ export function mountTeamEditor(
 
     if (openMember !== undefined && memberOf(openMember) === undefined) {
       openMember = undefined;
+    }
+    // A smaller size may have dropped the focused member (#3794).
+    if (memberOf(focused) === undefined) {
+      focused = team.members[0]?.character.id ?? "";
     }
     syncList(
       list,

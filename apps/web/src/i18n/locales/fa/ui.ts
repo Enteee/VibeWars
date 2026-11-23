@@ -1350,7 +1350,6 @@ export default {
   "teamEditor.share": "اشتراک",
   "teamEditor.shareLabel": "تیم برای اشتراک",
   "teamEditor.shareTitle": "اشتراک این تیم در یک خط",
-  "teamEditor.sizeFixed": "اندازهٔ بیلد تیمی ثابت است: برای اندازهٔ دیگر یکی تازه بساز",
   "teamEditor.sizeLabel": "اندازهٔ تیم",
   "teamEditor.teamName": "نام تیم",
   "teamEditor.teamNameLabel": "نام تیم",
@@ -1642,8 +1641,10 @@ export default {
   "tutorial.menu.team.members":
     "یک تیم همیشه به اندازهٔ خودش عضو دارد. هرگز عضوی اضافه نمی‌کنی: یکی را جایگزین می‌کنی.",
   "tutorial.menu.team.memberBack": "این بیلد همان عضو است. بازگشت را بزن تا به تیمت برگردی.",
-  "tutorial.menu.team.new": "اندازهٔ تیم را روی 2v2 بگذار، بعد یک بیلد تیمی جدید بساز.",
+  "tutorial.menu.team.new": "حالا یک بیلد تیمی جدید بساز.",
   "tutorial.menu.team.newDone": "یک تیم دونفره شروع کن",
+  "tutorial.menu.team.size": "اندازهٔ تیم را روی 2v2 بگذار.",
+  "tutorial.menu.team.sizeDone": "اندازهٔ تیم 2v2 است",
   "tutorial.menu.team.open": "«تیم‌ها» را باز کن، جایی که بیلدهای تیمی‌ات هستند.",
   "tutorial.menu.team.openDone": "«تیم‌ها» را باز کن",
   "tutorial.menu.team.problems":

@@ -1476,7 +1476,6 @@ export default {
   "teamEditor.share": "Udostępnij",
   "teamEditor.shareLabel": "drużyna do udostępnienia",
   "teamEditor.shareTitle": "udostępnij tę drużynę jako jeden wiersz",
-  "teamEditor.sizeFixed": "Rozmiar buildu drużyny jest stały: dla innego rozmiaru stwórz nowy",
   "teamEditor.sizeLabel": "Rozmiar drużyny",
   "teamEditor.teamName": "Nazwa drużyny",
   "teamEditor.teamNameLabel": "nazwa drużyny",
@@ -1777,8 +1776,10 @@ export default {
   "tutorial.menu.team.members":
     "Drużyna zawsze ma tylu członków, ile wynosi jej rozmiar. Nigdy nie dodajesz członka: zastępujesz jednego.",
   "tutorial.menu.team.memberBack": "To build tego członka. Naciśnij Wstecz, aby wrócić do drużyny.",
-  "tutorial.menu.team.new": "Ustaw rozmiar drużyny na 2v2, potem utwórz nowy build drużyny.",
+  "tutorial.menu.team.new": "Teraz utwórz nowy build drużyny.",
   "tutorial.menu.team.newDone": "Zacznij drużynę 2-osobową",
+  "tutorial.menu.team.size": "Ustaw rozmiar drużyny na 2v2.",
+  "tutorial.menu.team.sizeDone": "Rozmiar drużyny to 2v2",
   "tutorial.menu.team.open": "Otwórz Drużyny, gdzie są twoje buildy drużyn.",
   "tutorial.menu.team.openDone": "Otwórz Drużyny",
   "tutorial.menu.team.problems":

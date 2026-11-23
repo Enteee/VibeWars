@@ -1421,7 +1421,6 @@ export default {
   "teamEditor.share": "Podijeli",
   "teamEditor.shareLabel": "tim za dijeljenje",
   "teamEditor.shareTitle": "podijeli ovaj tim kao jedan redak",
-  "teamEditor.sizeFixed": "Veličina timskog sastava je fiksna: za drugu veličinu napravi novi",
   "teamEditor.sizeLabel": "Veličina tima",
   "teamEditor.teamName": "Ime tima",
   "teamEditor.teamNameLabel": "ime tima",
@@ -1716,8 +1715,10 @@ export default {
   "tutorial.menu.team.members":
     "Tim uvijek ima onoliko članova kolika mu je veličina. Nikad ne dodaješ člana: zamjenjuješ jednog.",
   "tutorial.menu.team.memberBack": "Ovo je build tog člana. Pritisni Natrag za povratak svom timu.",
-  "tutorial.menu.team.new": "Postavi veličinu tima na 2v2, zatim napravi novi timski sastav.",
+  "tutorial.menu.team.new": "Sada napravi novi timski sastav.",
   "tutorial.menu.team.newDone": "Započni tim od 2",
+  "tutorial.menu.team.size": "Postavi veličinu tima na 2v2.",
+  "tutorial.menu.team.sizeDone": "Veličina tima je 2v2",
   "tutorial.menu.team.open": "Otvori Timove, gdje su tvoji timski sastavi.",
   "tutorial.menu.team.openDone": "Otvori Timove",
   "tutorial.menu.team.problems":

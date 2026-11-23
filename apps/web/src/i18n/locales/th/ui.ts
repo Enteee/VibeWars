@@ -1268,7 +1268,6 @@ export default {
   "teamEditor.share": "แชร์",
   "teamEditor.shareLabel": "ทีมที่จะแชร์",
   "teamEditor.shareTitle": "แชร์ทีมนี้เป็นบรรทัดเดียว",
-  "teamEditor.sizeFixed": "ขนาดของทีมบิลด์ตายตัว: สร้างใหม่สำหรับขนาดอื่น",
   "teamEditor.sizeLabel": "ขนาดทีม",
   "teamEditor.teamName": "ชื่อทีม",
   "teamEditor.teamNameLabel": "ชื่อทีม",
@@ -1542,8 +1541,10 @@ export default {
   "tutorial.menu.team.members":
     "ทีมมีสมาชิกเท่ากับขนาดทีมเสมอ คุณไม่เคยเพิ่มสมาชิก แต่จะเปลี่ยนตัวแทน",
   "tutorial.menu.team.memberBack": "นี่คือบิลด์ของสมาชิกคนนั้น กดย้อนกลับเพื่อกลับไปที่ทีมของคุณ",
-  "tutorial.menu.team.new": "ตั้งขนาดทีมเป็น 2v2 แล้วสร้างทีมบิลด์ใหม่",
+  "tutorial.menu.team.new": "ตอนนี้สร้างทีมบิลด์ใหม่",
   "tutorial.menu.team.newDone": "เริ่มทีม 2 คน",
+  "tutorial.menu.team.size": "ตั้งขนาดทีมเป็น 2v2",
+  "tutorial.menu.team.sizeDone": "ขนาดทีมเป็น 2v2",
   "tutorial.menu.team.open": "เปิดทีม ซึ่งเก็บทีมบิลด์ของคุณไว้",
   "tutorial.menu.team.openDone": "เปิดทีม",
   "tutorial.menu.team.problems":

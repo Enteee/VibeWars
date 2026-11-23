@@ -1418,7 +1418,6 @@ export default {
   "teamEditor.share": "שתף",
   "teamEditor.shareLabel": "קבוצה לשיתוף",
   "teamEditor.shareTitle": "שתף את הקבוצה בשורה אחת",
-  "teamEditor.sizeFixed": "גודל מבנה קבוצה קבוע: צור חדש לגודל אחר",
   "teamEditor.sizeLabel": "גודל קבוצה",
   "teamEditor.teamName": "שם הקבוצה",
   "teamEditor.teamNameLabel": "שם הקבוצה",
@@ -1701,8 +1700,10 @@ export default {
   "tutorial.menu.team.members":
     "בקבוצה יש תמיד כמה חברים כגודלה. אף פעם לא מוסיפים חבר: מחליפים אחד.",
   "tutorial.menu.team.memberBack": "זה הבילד של אותו חבר. לחץ על חזרה כדי לחזור לצוות שלך.",
-  "tutorial.menu.team.new": "קבעו את גודל הקבוצה ל-2v2, ואז צרו מבנה קבוצה חדש.",
+  "tutorial.menu.team.new": "עכשיו צרו מבנה קבוצה חדש.",
   "tutorial.menu.team.newDone": "התחילו קבוצה של 2",
+  "tutorial.menu.team.size": "קבעו את גודל הקבוצה ל-2v2.",
+  "tutorial.menu.team.sizeDone": "גודל הקבוצה הוא 2v2",
   "tutorial.menu.team.open": "פתחו את קבוצות, שם נמצאים מבני הקבוצות שלכם.",
   "tutorial.menu.team.openDone": "פתחו את קבוצות",
   "tutorial.menu.team.problems":

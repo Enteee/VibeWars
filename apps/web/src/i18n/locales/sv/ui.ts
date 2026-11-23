@@ -1350,7 +1350,6 @@ export default {
   "teamEditor.share": "Dela",
   "teamEditor.shareLabel": "lag att dela",
   "teamEditor.shareTitle": "dela laget som en rad",
-  "teamEditor.sizeFixed": "En lagbuilds storlek är fast: skapa en ny för en annan storlek",
   "teamEditor.sizeLabel": "Lagstorlek",
   "teamEditor.teamName": "Lagnamn",
   "teamEditor.teamNameLabel": "lagnamn",
@@ -1640,8 +1639,10 @@ export default {
     "Ett lag har alltid lika många medlemmar som sin storlek. Du lägger aldrig till en medlem: du byter ut en.",
   "tutorial.menu.team.memberBack":
     "Det här är den medlemmens build. Tryck Tillbaka för att återvända till ditt lag.",
-  "tutorial.menu.team.new": "Sätt lagstorleken till 2v2 och skapa sedan en ny lagbuild.",
+  "tutorial.menu.team.new": "Skapa nu en ny lagbuild.",
   "tutorial.menu.team.newDone": "Starta ett lag på 2",
+  "tutorial.menu.team.size": "Sätt lagstorleken till 2v2.",
+  "tutorial.menu.team.sizeDone": "Lagstorleken är 2v2",
   "tutorial.menu.team.open": "Öppna Lag, där dina lagbuilds finns.",
   "tutorial.menu.team.openDone": "Öppna Lag",
   "tutorial.menu.team.problems":

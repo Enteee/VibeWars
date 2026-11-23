@@ -1062,7 +1062,7 @@ test("the team editor's bar puts its status on a second row from 721 to 1200 px,
   }
 });
 
-test("a Team Build is made at the sidebar's size, which its editor shows locked (#2109)", async ({
+test("a Team Build is made at the sidebar's size, and its editor changes it: drops the last members, adds blank ones (#2109, #3794)", async ({
   page,
 }) => {
   await saveCharacters(page, ["Alpha"]);
@@ -1073,15 +1073,33 @@ test("a Team Build is made at the sidebar's size, which its editor shows locked 
   await expect(starterTeamCard(page)).toHaveCount(1);
   await page.getByRole("button", { name: "new team" }).click();
 
-  await expectTeamSize(page.locator("#topbar"), 2, { locked: true });
+  const topbar = page.locator("#topbar");
+  await expectTeamSize(topbar, 2);
   // Full from the start (#2225): a blank member for each place.
   await expect(memberNames(page)).toHaveText(["New Character", "New Character"]);
   await page.getByLabel("team name").fill("Pair");
+  await copyOnto(page, "Alpha", 0);
+
+  // 4v4 keeps both and adds two blank members, unsaved; back to 2v2 drops them.
+  await topbar.getByRole("button", { name: "Larger team" }).click();
+  await expectTeamSize(topbar, 4);
+  await expect(memberNames(page)).toHaveText([
+    "Alpha",
+    "New Character",
+    "New Character",
+    "New Character",
+  ]);
+  await expect(page.locator(".editor-unsaved")).toBeVisible();
+  await topbar.getByRole("button", { name: "Smaller team" }).click();
+  await expect(memberNames(page)).toHaveText(["Alpha", "New Character"]);
+  await topbar.getByRole("button", { name: "Larger team" }).click();
   await page.getByRole("button", { name: "Save", exact: true }).click();
 
-  // Back at 2v2, the build listed full; at 4v4 it is not.
-  await expect(teamRows(page).locator(".play-card-size")).toHaveText(["2/2"]);
-  await setTeamSize(page, 4);
+  // Saved at 4v4, the sidebar comes back at 4v4, the build listed full; at 2v2 it is not.
+  await expect(page.locator(".screen-teams")).toBeVisible();
+  await expectTeamSize(page, 4);
+  await expect(teamRows(page).locator(".play-card-size")).toHaveText(["4/4"]);
+  await setTeamSize(page, 2);
   await expect(teamRows(page)).toHaveCount(0);
 });
 
