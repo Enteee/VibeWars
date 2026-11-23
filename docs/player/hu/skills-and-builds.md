@@ -200,7 +200,9 @@ tagra; a húzott sor olyan marad, amilyen volt.
 A jobb oldali panel a
 Karakterszerkesztő könyvtára, a **Készségek** és a **Tárgyak** előtt egy
 **Karaktereim** füllel. A **Karaktereim** fülön húzd az egyik
-karakteredet egy tagra, hogy az a tag annak másolata legyen. A másolat
+karakteredet egy tagra, vagy koppints rá, majd egy tagnál az **Ide** gombra,
+hogy az a tag annak másolata legyen. Ha újra rákoppintasz, vagy megnyomod az
+Esc-et, elengeded. A másolat
 a csapaté: ha módosítod, vagy azt a karaktert, amelyből készült, a
 másik olyan marad, amilyen volt. Fordítva: húzz egy tagot a
 **Karaktereim** részre vagy a fülére, hogy új saját karakterként mentsd; ha

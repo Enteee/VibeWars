@@ -1353,6 +1353,7 @@ export default {
   "teamEditor.notSaved": "Не е запазено: {error}",
   "teamEditor.professions": "Професии",
   "teamEditor.professionsTitle": "професиите в отбора",
+  "teamEditor.putHere": "Сложи тук",
   "teamEditor.replaceMember": "Замени {member} с {character}",
   "teamEditor.copyMember": "Shift: Копирай билда на {source} върху {target}",
   "teamEditor.save": "Запази",
@@ -1644,6 +1645,7 @@ export default {
   "tutorial.menu.team.character":
     "Плъзни героя си от „Моите герои“ върху член. Членът става негово копие.",
   "tutorial.menu.team.characterDone": "Сложи героя си в отбора",
+  "tutorial.menu.team.characterTouch": "Докосни своя герой, после „Сложи тук“ на член на отбора.",
   "tutorial.menu.team.fill": "Дай билд на всеки член, докато в отбора не останат проблеми.",
   "tutorial.menu.team.fillDone": "Попълни отбора",
   "tutorial.menu.team.members":

@@ -179,7 +179,9 @@ maximálne zdravie a energiu a jej osem schopností; riadok môžeš presunúť
 potiahol, zostane taký, aký bol.
 Panel vpravo je knižnica Tvorby postáv,
 so záložkou **Moje postavy** pred **Schopnosti** a **Výbava**. Na záložke **Moje postavy** pretiahni
-jednu zo svojich postáv na člena, aby sa z neho stala jej kópia.
+jednu zo svojich postáv na člena alebo na ňu ťukni a potom ťukni na **Dať sem**
+pri členovi, aby sa z neho stala jej kópia. Ďalším ťuknutím alebo klávesom Esc
+ju pustíš.
 Kópia patrí tímu: jej zmena ani zmena postavy, z ktorej vznikla,
 druhú neovplyvní. Naopak, pretiahni člena na **Moje postavy** alebo na
 ich záložku a uložíš ho ako svoju novú postavu; ak je jeho meno obsadené,

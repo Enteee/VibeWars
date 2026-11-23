@@ -1287,6 +1287,7 @@ export default {
   "teamEditor.notSaved": "Tidak disimpan: {error}",
   "teamEditor.professions": "Profesi",
   "teamEditor.professionsTitle": "profesi tim",
+  "teamEditor.putHere": "Taruh di sini",
   "teamEditor.replaceMember": "Ganti {member} dengan {character}",
   "teamEditor.copyMember": "Shift: Salin build {source} ke {target}",
   "teamEditor.save": "Simpan",
@@ -1569,6 +1570,7 @@ export default {
   "tutorial.menu.team.character":
     "Seret karaktermu dari Karakterku ke seorang anggota. Anggota itu menjadi salinannya.",
   "tutorial.menu.team.characterDone": "Masukkan karaktermu ke tim",
+  "tutorial.menu.team.characterTouch": "Ketuk karaktermu, lalu Taruh di sini pada seorang anggota.",
   "tutorial.menu.team.fill": "Beri setiap anggota build, sampai tim tidak punya masalah lagi.",
   "tutorial.menu.team.fillDone": "Lengkapi tim",
   "tutorial.menu.team.members":

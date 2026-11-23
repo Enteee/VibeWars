@@ -1367,6 +1367,7 @@ export default {
   "teamEditor.notSaved": "Ei tallennettu: {error}",
   "teamEditor.professions": "Ammatit",
   "teamEditor.professionsTitle": "tiimin ammatit",
+  "teamEditor.putHere": "Laita tähän",
   "teamEditor.replaceMember": "Korvaa {member}: {character}",
   "teamEditor.copyMember": "Shift: Kopioi hahmon {source} buildi hahmolle {target}",
   "teamEditor.save": "Tallenna",
@@ -1655,6 +1656,7 @@ export default {
   "tutorial.menu.team.character":
     "Vedä hahmosi kohdasta Omat hahmot jäsenen päälle. Jäsenestä tulee sen kopio.",
   "tutorial.menu.team.characterDone": "Laita hahmosi tiimiin",
+  "tutorial.menu.team.characterTouch": "Napauta hahmoasi ja sitten jäsenen kohdalla Laita tähän.",
   "tutorial.menu.team.fill":
     "Anna jokaiselle jäsenelle build, kunnes tiimissä ei ole enää ongelmia.",
   "tutorial.menu.team.fillDone": "Täytä tiimi",

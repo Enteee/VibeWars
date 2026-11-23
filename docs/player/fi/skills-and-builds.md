@@ -189,7 +189,9 @@ kyseiselle jäsenelle siirtämisen sijaan; vetämäsi rivi pysyy ennallaan.
 Oikealla oleva
 paneeli on Hahmoeditorin kirjasto, jossa on **Omat hahmot** -välilehti
 ennen välilehtiä **Taidot** ja **Kamat**. **Omat hahmot** -välilehdellä
-vedä yksi hahmoistasi jäsenen päälle tehdäksesi jäsenestä sen kopion.
+vedä yksi hahmoistasi jäsenen päälle, tai napauta sitä ja sitten jäsenen
+**Laita tähän** -painiketta, tehdäksesi jäsenestä sen kopion. Napauta sitä
+uudelleen tai paina Esc päästääksesi siitä irti.
 Kopio on tiimin oma: sen tai sen lähteenä olleen hahmon muuttaminen
 jättää toisen ennalleen. Toisin päin vedä jäsen **Omat hahmot**
 -kohtaan tai sen välilehdelle tallentaaksesi sen uudeksi omaksi hahmoksesi;

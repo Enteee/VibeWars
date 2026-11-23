@@ -1473,6 +1473,7 @@ export default {
   "teamEditor.notSaved": "Не збережено: {error}",
   "teamEditor.professions": "Професії",
   "teamEditor.professionsTitle": "професії команди",
+  "teamEditor.putHere": "Поставити сюди",
   "teamEditor.replaceMember": "Замінити {member} на {character}",
   "teamEditor.copyMember": "Shift: копіювати білд {source} на {target}",
   "teamEditor.save": "Зберегти",
@@ -1770,6 +1771,8 @@ export default {
   "tutorial.menu.team.character":
     "Перетягни свого персонажа з «Мої персонажі» на учасника. Учасник стане його копією.",
   "tutorial.menu.team.characterDone": "Постав персонажа в команду",
+  "tutorial.menu.team.characterTouch":
+    "Торкнися свого персонажа, потім «Поставити сюди» біля учасника.",
   "tutorial.menu.team.fill": "Дай білд кожному учаснику, доки в команди не залишиться проблем.",
   "tutorial.menu.team.fillDone": "Заповни команду",
   "tutorial.menu.team.members":

@@ -170,8 +170,9 @@ innego członka, aby zamiast tego skopiować cały jego build na tego członka; 
 wiersz zostaje bez zmian.
 Panel po prawej to
 biblioteka Kreatora postaci, z kartą **Moje postacie** przed **Umiejętności**
-i **Sprzęt**. Na **Moje postacie** przeciągnij jedną ze swoich postaci na członka, aby
-uczynić z niego jej kopię. Kopia należy do drużyny: zmiana jej lub postaci, z której
+i **Sprzęt**. Na **Moje postacie** przeciągnij jedną ze swoich postaci na członka albo stuknij
+ją, a potem **Wstaw tutaj** przy członku, aby uczynić z niego jej kopię. Stuknij
+ją ponownie albo naciśnij Esc, aby ją puścić. Kopia należy do drużyny: zmiana jej lub postaci, z której
 powstała, nie dotyka tej drugiej. W drugą stronę przeciągnij członka na
 **Moje postacie** albo na tę kartę, aby zapisać go jako nową własną postać; jeśli
 jego nazwa jest zajęta, dostaje " (copy)", a drużyna zachowuje członka bez zmian.

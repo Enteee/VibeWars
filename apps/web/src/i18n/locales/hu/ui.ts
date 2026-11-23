@@ -1357,6 +1357,7 @@ export default {
   "teamEditor.notSaved": "Nincs mentve: {error}",
   "teamEditor.professions": "Kasztok",
   "teamEditor.professionsTitle": "a csapat kasztjai",
+  "teamEditor.putHere": "Ide",
   "teamEditor.replaceMember": "{member} cseréje erre: {character}",
   "teamEditor.copyMember": "Shift: {source} buildjének másolása ide: {target}",
   "teamEditor.save": "Mentés",
@@ -1650,6 +1651,7 @@ export default {
   "tutorial.menu.team.character":
     "Húzd a karakteredet a Karaktereim közül egy tagra. A tag a másolata lesz.",
   "tutorial.menu.team.characterDone": "Tedd a karakteredet a csapatba",
+  "tutorial.menu.team.characterTouch": "Koppints a karakteredre, majd egy tagnál az Ide gombra.",
   "tutorial.menu.team.fill": "Adj buildet minden tagnak, amíg a csapatnak nem marad problémája.",
   "tutorial.menu.team.fillDone": "Töltsd fel a csapatot",
   "tutorial.menu.team.members":

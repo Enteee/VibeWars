@@ -176,8 +176,9 @@ ca să-i copiezi în schimb tot build-ul pe acel membru; rândul tras rămâne c
 Panoul din
 dreapta este biblioteca din Constructor de personaje, cu o filă **Personajele
 mele** înainte de **Abilități** și **Echipament**. La **Personajele mele**, trage
-unul dintre personajele tale peste un membru ca să faci din acel membru o copie a
-lui. O copie aparține echipei: dacă o schimbi pe ea sau personajul din care a
+unul dintre personajele tale peste un membru, sau atinge-l și apoi atinge
+**Pune aici** la un membru, ca să faci din acel membru o copie a lui. Atinge-l
+din nou sau apasă Esc ca să-l lași. O copie aparține echipei: dacă o schimbi pe ea sau personajul din care a
 provenit, celălalt rămâne cum era. Invers, trage un membru pe **Personajele mele**
 sau pe fila sa ca să-l salvezi ca personaj nou al tău; dacă numele e deja luat,
 primește " (copy)", iar echipa păstrează membrul cum e.

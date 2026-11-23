@@ -272,11 +272,11 @@ describe("the spec step (#3541)", () => {
 });
 
 /** The team step from `events`: where it is, or done with it. */
-function teamAfter(state: MenuQuestState, gotIt = false, touch = false): number | "past" {
-  let cursor = advanceMenuQuest(resumeMenuQuest("team"), state, false, touch);
+function teamAfter(state: MenuQuestState, gotIt = false): number | "past" {
+  let cursor = advanceMenuQuest(resumeMenuQuest("team"), state, false);
   // The three explanations are read: Got it on each.
   while (gotIt && cursor !== "done" && currentBeat(cursor).kind === "explain") {
-    cursor = advanceMenuQuest(cursor, state, true, touch);
+    cursor = advanceMenuQuest(cursor, state, true);
   }
   return cursor !== "done" && cursor.step === "team" ? cursor.beat : "past";
 }
@@ -333,10 +333,6 @@ describe("the team step (#3542)", () => {
   it("explains the editor, then waits for the character in the team", () => {
     expect(teamAfter(fold([teams, size2, draft(opened)]), true)).toBe(6);
     expect(teamAfter(fold([teams, size2, draft(opened), draft(copied)]), true)).toBe(7);
-  });
-
-  it("passes the character by on touch, where the editor takes no drag (#3782)", () => {
-    expect(teamAfter(fold([teams, size2, draft(opened)]), true, true)).toBe(7);
   });
 
   it("shows the way Back over a member's build opened from its name, and counts its beat done (#3785)", () => {

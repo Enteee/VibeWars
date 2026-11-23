@@ -180,8 +180,10 @@ tám kỹ năng; kéo một hàng bằng ⠿ để sắp xếp lại. Giữ **Sh
 kéo vẫn giữ nguyên.
 Bảng bên phải là thư viện
 của Tạo Nhân Vật, với thẻ **Nhân vật của tôi** đứng trước **Kỹ năng** và
-**Đồ**. Ở **Nhân vật của tôi**, kéo một nhân vật của bạn lên một thành viên để
-biến thành viên đó thành bản sao của nhân vật ấy. Bản sao là của riêng đội:
+**Đồ**. Ở **Nhân vật của tôi**, kéo một nhân vật của bạn lên một thành viên, hoặc
+chạm vào nhân vật đó rồi chạm **Đặt vào đây** trên một thành viên, để biến
+thành viên đó thành bản sao của nhân vật ấy. Chạm lại lần nữa, hoặc nhấn Esc,
+để thả nó ra. Bản sao là của riêng đội:
 thay đổi nó, hoặc nhân vật gốc, sẽ để nguyên cái còn lại. Ngược lại, kéo một thành viên lên
 **Nhân vật của tôi**, hoặc lên thẻ đó, để lưu nó thành một nhân vật mới của
 bạn; nếu tên đã bị dùng thì nó được thêm " (copy)", và đội vẫn giữ nguyên
