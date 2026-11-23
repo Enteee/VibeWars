@@ -1592,6 +1592,7 @@ export default {
   "tutorial.look.praise": "저기 있다! 전투를 돌아가는 길이야.",
   "tutorial.offer": "처음인가요? 스승이 기본을 알려 줄 거예요.",
   "tutorial.offerTitle": "처음이신가요?",
+  "tutorial.ping.called": "간다. 길이 만나는 곳에서 보자.",
   "tutorial.ping.hint": "가고 싶은 길에 핑을 찍어.",
   "tutorial.ping.how": "땅을 휠 클릭하거나, 나침반을 클릭하거나, 나침반 위를 드래그해 선을 그어.",
   "tutorial.ping.intro": "왼쪽이야, 오른쪽이야? 네가 정해.",

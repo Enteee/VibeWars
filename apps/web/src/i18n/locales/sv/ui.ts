@@ -1677,6 +1677,7 @@ export default {
   "tutorial.look.praise": "Där är den! Vår väg runt striden.",
   "tutorial.offer": "Ny här? Din lärare visar dig grunderna.",
   "tutorial.offerTitle": "Första gången?",
+  "tutorial.ping.called": "Jag går. Vi ses där stigarna möts.",
   "tutorial.ping.hint": "Pinga vägen du vill gå.",
   "tutorial.ping.how":
     "Klicka med hjulet på marken, klicka på kompassen eller dra på kompassen för att rita en linje.",

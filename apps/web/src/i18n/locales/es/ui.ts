@@ -1780,6 +1780,7 @@ export default {
   "tutorial.look.praise": "¡Ahí está! Nuestro camino alrededor de la lucha.",
   "tutorial.offer": "¿Eres nuevo? Tu tutor te enseñará lo básico.",
   "tutorial.offerTitle": "¿Primera vez?",
+  "tutorial.ping.called": "Voy. Nos vemos donde se unen los caminos.",
   "tutorial.ping.hint": "Marca el camino que quieres seguir.",
   "tutorial.ping.how":
     "Haz clic con la rueda en el suelo, haz clic en la brújula o arrastra sobre la brújula para trazar una línea.",

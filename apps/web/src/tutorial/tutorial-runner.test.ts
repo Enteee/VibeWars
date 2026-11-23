@@ -300,18 +300,22 @@ describe("the tutorial runner", () => {
       ],
       [{ ...called, tutor: junction.fork }, 11_000 + 12 * PRAISE_MS + 17 * ASIDE_MS],
       [
-        { ...called, lastPing: junction.south, tutor: junction.south },
+        { ...called, lastPing: junction.south, tutor: junction.fork },
         11_000 + 12 * PRAISE_MS + 18 * ASIDE_MS,
       ],
       [
-        { ...called, lastPing: junction.south, self: junction.rejoin, tutor: junction.rejoin },
+        { ...called, lastPing: junction.south, tutor: junction.south },
         11_000 + 12 * PRAISE_MS + 19 * ASIDE_MS,
       ],
       [
         { ...called, lastPing: junction.south, self: junction.rejoin, tutor: junction.rejoin },
-        11_000 + 13 * PRAISE_MS + 19 * ASIDE_MS,
+        11_000 + 12 * PRAISE_MS + 20 * ASIDE_MS,
       ],
-      [{ ...called, self: gate, tutor: gate }, 12_000 + 13 * PRAISE_MS + 19 * ASIDE_MS],
+      [
+        { ...called, lastPing: junction.south, self: junction.rejoin, tutor: junction.rejoin },
+        11_000 + 13 * PRAISE_MS + 20 * ASIDE_MS,
+      ],
+      [{ ...called, self: gate, tutor: gate }, 12_000 + 13 * PRAISE_MS + 20 * ASIDE_MS],
     ];
     const beats = ticks.map(([view, now]) => runner.tick(view, now));
     expect(beats.map((beat) => beat.say?.key)).toEqual([
@@ -354,6 +358,7 @@ describe("the tutorial runner", () => {
       "tutorial.call.intro",
       "tutorial.call.praise",
       "tutorial.ping.intro",
+      "tutorial.ping.called",
       "tutorial.ping.view",
       "tutorial.ping.praise",
       "tutorial.gate.intro",
@@ -419,9 +424,9 @@ describe("the tutorial runner", () => {
     // The world turns once, under the step in's praise, and stays turned.
     expect(beats.map((beat) => beat.world)).toEqual([
       ...Array<string>(5).fill("battlefield"),
-      ...Array<string>(38).fill("canyon"),
+      ...Array<string>(39).fill("canyon"),
     ]);
-    expect(beats.map((beat) => beat.finished)).toEqual([...Array<boolean>(42).fill(false), true]);
+    expect(beats.map((beat) => beat.finished)).toEqual([...Array<boolean>(43).fill(false), true]);
   });
 
   it("says a station's reaction once, then no more hints until it is done (#3302)", () => {

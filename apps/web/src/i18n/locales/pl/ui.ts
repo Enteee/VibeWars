@@ -1815,6 +1815,7 @@ export default {
   "tutorial.look.praise": "Jest! Nasza droga wokół walki.",
   "tutorial.offer": "Nowy? Twój nauczyciel pokaże ci podstawy.",
   "tutorial.offerTitle": "Pierwszy raz?",
+  "tutorial.ping.called": "Już idę. Spotkajmy się tam, gdzie ścieżki się łączą.",
   "tutorial.ping.hint": "Wskaż drogę, którą chcesz iść.",
   "tutorial.ping.how":
     "Kliknij kółkiem w ziemię, kliknij kompas albo przeciągnij po kompasie, by narysować linię.",

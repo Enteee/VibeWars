@@ -1768,6 +1768,7 @@ export default {
   "tutorial.look.praise": "Iată-l! Drumul nostru pe lângă luptă.",
   "tutorial.offer": "Ești nou? Tutorele tău îți arată elementele de bază.",
   "tutorial.offerTitle": "Prima dată?",
+  "tutorial.ping.called": "Pornesc. Ne vedem unde se unesc cărările.",
   "tutorial.ping.hint": "Semnalează drumul pe care vrei să mergi.",
   "tutorial.ping.how":
     "Clic cu rotița pe sol, clic pe busolă sau trage pe busolă ca să desenezi o linie.",

@@ -1738,6 +1738,7 @@ export default {
   "tutorial.look.praise": "הנה הוא! הדרך שלנו מסביב לקרב.",
   "tutorial.offer": "חדש כאן? המורה שלך יראה לך את הבסיס.",
   "tutorial.offerTitle": "פעם ראשונה?",
+  "tutorial.ping.called": "אני בדרך. ניפגש איפה שהשבילים מתחברים.",
   "tutorial.ping.hint": "סמן את הדרך שאתה רוצה ללכת בה.",
   "tutorial.ping.how": "לחץ בגלגלת על הקרקע, לחץ על המצפן, או גרור על המצפן כדי לצייר קו.",
   "tutorial.ping.intro": "שמאלה או ימינה? אתה מחליט.",

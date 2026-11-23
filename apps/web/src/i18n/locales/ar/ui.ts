@@ -1870,6 +1870,7 @@ export default {
   "tutorial.look.praise": "ها هي! طريقنا حول القتال.",
   "tutorial.offer": "جديد هنا؟ معلّمك سيريك الأساسيات.",
   "tutorial.offerTitle": "أول مرة؟",
+  "tutorial.ping.called": "في طريقي. لنلتقِ حيث تلتقي الطرق.",
   "tutorial.ping.hint": "أشِر إلى الطريق الذي تريده.",
   "tutorial.ping.how":
     "انقر بعجلة الفأرة على الأرض، أو انقر على البوصلة، أو اسحب على البوصلة لترسم خطًا.",

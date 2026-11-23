@@ -1680,6 +1680,7 @@ export const en = {
   "tutorial.look.praise": "There it is! Our way around the fight.",
   "tutorial.offer": "New here? Your tutor can show you the ropes.",
   "tutorial.offerTitle": "First time?",
+  "tutorial.ping.called": "On my way. Meet me where the paths join.",
   "tutorial.ping.hint": "Ping the way you want to go.",
   "tutorial.ping.how":
     "Wheel-click the ground, click the compass, or drag on the compass to draw a line.",

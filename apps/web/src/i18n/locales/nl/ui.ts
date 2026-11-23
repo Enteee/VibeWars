@@ -1690,6 +1690,7 @@ export default {
   "tutorial.look.praise": "Daar is hij! Onze weg om het gevecht heen.",
   "tutorial.offer": "Nieuw hier? Je leraar laat je de basis zien.",
   "tutorial.offerTitle": "Eerste keer?",
+  "tutorial.ping.called": "Ik ga. We zien elkaar waar de paden samenkomen.",
   "tutorial.ping.hint": "Ping de kant die je op wilt.",
   "tutorial.ping.how":
     "Klik met het wiel op de grond, klik op het kompas, of sleep over het kompas om een lijn te tekenen.",

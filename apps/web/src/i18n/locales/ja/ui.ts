@@ -1607,6 +1607,7 @@ export default {
   "tutorial.look.praise": "あったぞ!戦いを回り込む道だ。",
   "tutorial.offer": "初めて? 師匠が基本を教えてくれます。",
   "tutorial.offerTitle": "初めてですか?",
+  "tutorial.ping.called": "了解、行くぞ。道が合流する所で会おう。",
   "tutorial.ping.hint": "行きたい道をピンで示して。",
   "tutorial.ping.how":
     "地面をホイールクリック、コンパスをクリック、またはコンパス上をドラッグして線を引こう。",

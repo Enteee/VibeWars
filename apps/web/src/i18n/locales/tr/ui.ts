@@ -1685,6 +1685,7 @@ export default {
   "tutorial.look.praise": "İşte orada! Savaşın etrafından yolumuz.",
   "tutorial.offer": "Yeni misin? Öğretmenin sana temelleri gösterecek.",
   "tutorial.offerTitle": "İlk kez mi?",
+  "tutorial.ping.called": "Yoldayım. Yolların birleştiği yerde buluşalım.",
   "tutorial.ping.hint": "Gitmek istediğin yolu işaretle.",
   "tutorial.ping.how":
     "Zemine tekerlekle tıkla, pusulaya tıkla ya da pusulada sürükleyip bir çizgi çiz.",

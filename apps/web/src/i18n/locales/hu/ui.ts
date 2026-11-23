@@ -1691,6 +1691,7 @@ export default {
   "tutorial.look.praise": "Ott van! Az utunk a harc mellett.",
   "tutorial.offer": "Új vagy? A tanítód megmutatja az alapokat.",
   "tutorial.offerTitle": "Először jársz itt?",
+  "tutorial.ping.called": "Indulok. Ott találkozunk, ahol az utak összefutnak.",
   "tutorial.ping.hint": "Jelöld meg, merre mennél.",
   "tutorial.ping.how":
     "Kattints a görgővel a földre, kattints az iránytűre, vagy húzz vonalat az iránytűn.",

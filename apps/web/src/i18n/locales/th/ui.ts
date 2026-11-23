@@ -1579,6 +1579,7 @@ export default {
   "tutorial.look.praise": "นั่นไง! ทางอ้อมการต่อสู้ของเรา",
   "tutorial.offer": "มาใหม่หรือ? ผู้สอนจะสอนพื้นฐานให้",
   "tutorial.offerTitle": "ครั้งแรกหรือ?",
+  "tutorial.ping.called": "กำลังไป เจอกันตรงที่ทางมาบรรจบกัน",
   "tutorial.ping.hint": "ปิงทางที่เจ้าอยากไป",
   "tutorial.ping.how": "คลิกล้อเมาส์ที่พื้น คลิกที่เข็มทิศ หรือลากบนเข็มทิศเพื่อวาดเส้น",
   "tutorial.ping.intro": "ซ้ายหรือขวา? เจ้าเลือกเอง",

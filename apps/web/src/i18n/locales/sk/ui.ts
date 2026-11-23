@@ -1805,6 +1805,7 @@ export default {
   "tutorial.look.praise": "Tu je! Naša cesta okolo boja.",
   "tutorial.offer": "Si tu nový? Tvoj učiteľ ti ukáže základy.",
   "tutorial.offerTitle": "Prvýkrát?",
+  "tutorial.ping.called": "Už idem. Stretneme sa, kde sa cesty spoja.",
   "tutorial.ping.hint": "Označ cestu, kadiaľ chceš ísť.",
   "tutorial.ping.how":
     "Klikni kolieskom na zem, klikni na kompas alebo ťahaj po kompase a nakresli čiaru.",

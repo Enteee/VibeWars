@@ -1768,6 +1768,7 @@ export default {
   "tutorial.look.praise": "Eccolo! La nostra via attorno alla battaglia.",
   "tutorial.offer": "Nuovo qui? Il tuo tutor ti mostrerà le basi.",
   "tutorial.offerTitle": "Prima volta?",
+  "tutorial.ping.called": "Arrivo. Ci vediamo dove i sentieri si uniscono.",
   "tutorial.ping.hint": "Segnala la strada che vuoi prendere.",
   "tutorial.ping.how":
     "Clic con la rotellina sul terreno, clic sulla bussola o trascina sulla bussola per tracciare una linea.",

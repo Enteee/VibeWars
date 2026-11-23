@@ -167,7 +167,8 @@ with the battlefield's three.
 - **Teach.** Wheel-click the ground, or click the **compass**, to ping. Dragging on the compass
   draws a line.
 - **Do.** Ping the arm you pick.
-- **Check.** A ping on an arm, the tutor walks that arm, and the player reaches the rejoin mark
+- **Check.** A ping on an arm, the tutor says "On my way. Meet me where the paths join." once
+  and walks that arm; the hint is not said again on the way. The player reaches the rejoin mark
   (`site-13r`) by either arm. The player may walk the other one. A ping on neither arm, or walking
   on unpinged, gets the hint once each. A small bay off the south arm holds a parasol and a deck
   chair, and the tutor says "Nice view." as it passes: scenery, not a wrong way.

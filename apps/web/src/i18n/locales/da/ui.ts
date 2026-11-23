@@ -1677,6 +1677,7 @@ export default {
   "tutorial.look.praise": "Der er den! Vores vej uden om kampen.",
   "tutorial.offer": "Ny her? Din læremester viser dig det grundlæggende.",
   "tutorial.offerTitle": "Første gang?",
+  "tutorial.ping.called": "Jeg går nu. Vi mødes, hvor stierne løber sammen.",
   "tutorial.ping.hint": "Ping den vej, du vil gå.",
   "tutorial.ping.how":
     "Klik med hjulet på jorden, klik på kompasset, eller træk på kompasset for at tegne en linje.",

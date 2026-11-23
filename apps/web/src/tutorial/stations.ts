@@ -606,9 +606,11 @@ export const BY_THE_BAY = 320;
  * Station 13 (playbook §13), at the canyon's junction (#3792): ping an
  * arm, and the tutor walks it. The compass is lit. The first arm called
  * is the tutor's; the player may walk either. Passing the bay off the
- * south arm, the tutor says one line on the view. A ping on neither arm,
- * or a walk east unpinged, gets the hint once each. Done once an arm is
- * called and the player stands on the rejoin mark.
+ * south arm, the tutor says one line on the view. The call heard, the
+ * tutor says so once and points at the rejoin; the hint is not said again
+ * on the walk there. A ping on neither arm, or a walk east unpinged, gets
+ * the hint once each. Done once an arm is called and the player stands on
+ * the rejoin mark.
  */
 export function pingStation(junction: Junction): Station {
   const { fork, layer, north, south, rejoin, bay } = junction;
@@ -637,6 +639,13 @@ export function pingStation(junction: Junction): Station {
     mark: (view) => {
       look(view);
       return called ? rejoin : fork;
+    },
+    reaction: {
+      line: "tutorial.ping.called",
+      when: (view) => {
+        look(view);
+        return called;
+      },
     },
     asides: [
       {

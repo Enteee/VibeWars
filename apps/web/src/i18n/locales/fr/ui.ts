@@ -1781,6 +1781,7 @@ export default {
   "tutorial.look.praise": "Le voilà ! Notre chemin autour du combat.",
   "tutorial.offer": "Nouveau ? Ton tuteur va te montrer les bases.",
   "tutorial.offerTitle": "Première fois ?",
+  "tutorial.ping.called": "J'y vais. On se retrouve là où les chemins se rejoignent.",
   "tutorial.ping.hint": "Signale le chemin que tu veux prendre.",
   "tutorial.ping.how":
     "Clic molette sur le sol, clic sur la boussole, ou glisse sur la boussole pour tracer une ligne.",

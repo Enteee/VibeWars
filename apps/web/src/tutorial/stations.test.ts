@@ -27,7 +27,7 @@ import {
   tunnelStation,
   type TutorialView,
 } from "./stations.js";
-import { ASIDE_MS, createTutorialRunner } from "./tutorial-runner.js";
+import { ASIDE_MS, HINT_REPEAT_MS, createTutorialRunner } from "./tutorial-runner.js";
 import { PLAYER_PROFESSION, houseBuild } from "./tutorial-world.js";
 
 const PAD = vec2(500, -900);
@@ -586,9 +586,23 @@ describe("pingStation (#3332, #3792)", () => {
     ];
     expect(looks.map((over, at) => runner.tick(view(over), at * ASIDE_MS).say?.key)).toEqual([
       "tutorial.ping.intro",
-      undefined,
+      "tutorial.ping.called",
       "tutorial.ping.view",
       undefined,
+    ]);
+  });
+
+  it("says the call was heard once, then no hint on the walk to the rejoin", () => {
+    const runner = createTutorialRunner([station()], () => KEYMAP_PRESETS.classic);
+    const said: (string | undefined)[] = [runner.tick(view(), 0).say?.key];
+    // Called at 1 s, then 30 s on the north arm, a look a second, nowhere near the rejoin.
+    for (let at = 1; at <= 31; at += 1) {
+      said.push(runner.tick(view({ lastPing: ON_NORTH, self: ON_NORTH }), at * 1000).say?.key);
+    }
+    expect(31_000).toBeGreaterThan(HINT_REPEAT_MS * 2);
+    expect(said.filter((key) => key !== undefined)).toEqual([
+      "tutorial.ping.intro",
+      "tutorial.ping.called",
     ]);
   });
 

@@ -1696,6 +1696,7 @@ export default {
   "tutorial.look.praise": "Siinä se on! Tiemme taistelun ohi.",
   "tutorial.offer": "Uusi täällä? Opettajasi näyttää perusteet.",
   "tutorial.offerTitle": "Ensimmäinen kerta?",
+  "tutorial.ping.called": "Matkalla. Tavataan siellä, missä polut yhtyvät.",
   "tutorial.ping.hint": "Merkitse suunta, johon haluat mennä.",
   "tutorial.ping.how": "Napsauta maata rullalla, napsauta kompassia tai vedä kompassilla viiva.",
   "tutorial.ping.intro": "Vasemmalle vai oikealle? Sinä päätät.",

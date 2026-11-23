@@ -1591,6 +1591,7 @@ export default {
   "tutorial.look.praise": "Nó đây rồi! Đường vòng qua trận chiến của ta.",
   "tutorial.offer": "Mới đến? Người hướng dẫn sẽ chỉ bạn những điều cơ bản.",
   "tutorial.offerTitle": "Lần đầu?",
+  "tutorial.ping.called": "Tôi đi đây. Gặp nhau ở chỗ các lối nhập lại.",
   "tutorial.ping.hint": "Ping con đường bạn muốn đi.",
   "tutorial.ping.how":
     "Nhấp chuột giữa lên mặt đất, nhấp vào la bàn, hoặc kéo trên la bàn để vẽ một đường.",

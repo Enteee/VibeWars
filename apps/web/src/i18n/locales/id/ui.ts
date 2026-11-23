@@ -1609,6 +1609,7 @@ export default {
   "tutorial.look.praise": "Itu dia! Jalan kita memutari pertempuran.",
   "tutorial.offer": "Baru di sini? Gurumu akan menunjukkan dasarnya.",
   "tutorial.offerTitle": "Pertama kali?",
+  "tutorial.ping.called": "Aku jalan. Kita bertemu di tempat jalan bertemu.",
   "tutorial.ping.hint": "Ping jalan yang ingin kamu tempuh.",
   "tutorial.ping.how":
     "Klik roda di tanah, klik kompas, atau seret di kompas untuk menggambar garis.",

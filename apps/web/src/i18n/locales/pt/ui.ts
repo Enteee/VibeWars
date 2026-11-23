@@ -1760,6 +1760,7 @@ export default {
   "tutorial.look.praise": "Ali está! O nosso caminho à volta da luta.",
   "tutorial.offer": "Novo por aqui? O seu tutor mostra-lhe o básico.",
   "tutorial.offerTitle": "Primeira vez?",
+  "tutorial.ping.called": "Estou a caminho. Encontramo-nos onde os caminhos se juntam.",
   "tutorial.ping.hint": "Assinala o caminho que queres seguir.",
   "tutorial.ping.how":
     "Clica com a roda no chão, clica na bússola ou arrasta na bússola para traçar uma linha.",

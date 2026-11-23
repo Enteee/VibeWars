@@ -1556,6 +1556,7 @@ export default {
   "tutorial.look.praise": "在那儿!我们绕过战斗的路。",
   "tutorial.offer": "新来的?你的导师会教你基础。",
   "tutorial.offerTitle": "第一次来?",
+  "tutorial.ping.called": "这就去。在小路汇合处见。",
   "tutorial.ping.hint": "标记你想走的路。",
   "tutorial.ping.how": "用滚轮点击地面、点击罗盘，或在罗盘上拖动画一条线。",
   "tutorial.ping.intro": "左还是右？你来定。",

@@ -1706,6 +1706,7 @@ export default {
   "tutorial.look.praise": "Da ist er! Unser Weg um die Schlacht herum.",
   "tutorial.offer": "Neu hier? Dein Lehrer zeigt dir, wie es geht.",
   "tutorial.offerTitle": "Zum ersten Mal hier?",
+  "tutorial.ping.called": "Bin unterwegs. Wir treffen uns, wo die Wege zusammenlaufen.",
   "tutorial.ping.hint": "Pinge den Weg, den du gehen willst.",
   "tutorial.ping.how":
     "Klick mit dem Mausrad auf den Boden, klick auf den Kompass oder zieh auf dem Kompass eine Linie.",

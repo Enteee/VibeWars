@@ -1753,6 +1753,7 @@ export default {
   "tutorial.look.praise": "Evo ga! Naš put oko bitke.",
   "tutorial.offer": "Novi si? Tvoj učitelj pokazat će ti osnove.",
   "tutorial.offerTitle": "Prvi put?",
+  "tutorial.ping.called": "Krećem. Nađimo se gdje se putevi spajaju.",
   "tutorial.ping.hint": "Označi put kojim želiš ići.",
   "tutorial.ping.how":
     "Klikni kotačićem na tlo, klikni na kompas ili povuci po kompasu da nacrtaš crtu.",
