@@ -51,6 +51,8 @@ for (const [width, height] of [
     await expect(summary).toBeVisible();
     const panels = summary.locator(".match-summary-panel");
     await expect(panels).toHaveCount(3);
+    // The party window would cover the right end of 'Their team' (#3890).
+    await expect(page.locator(".party-dock")).toHaveCSS("visibility", "hidden");
 
     const banner = await box(page.locator(".hud-result"));
     const line = await box(page.locator(".hud-end-line"));

@@ -5,6 +5,7 @@ import { endLineSetter } from "./end-line.js";
 import { createHud, describeOutcome, placeEnd } from "./hud.js";
 import { chartRoster, renderMatchCharts } from "./match-charts.js";
 import { renderSummary, summaryTables } from "./match-summary.js";
+import { createPartyWindow } from "./party-window.js";
 import { mountQueueScreen, stoppedEndLine, teamEndLine } from "./queue-screen.js";
 
 /**
@@ -17,6 +18,8 @@ export function mountSummaryFixture(parent: HTMLElement): void {
   // Nothing here is a match: the HUD's controls do nothing.
   const noop = (): void => undefined;
   const hud = createHud(parent, noop, noop, noop);
+  // After the HUD, as the match mounts it, so its end hides it too (#3890).
+  createPartyWindow(parent, noop, noop);
   // A match ends with your last foe still targeted, a bot here.
   hud.targetText.textContent = seat(1, 3).name;
   new ResizeObserver(() => {
