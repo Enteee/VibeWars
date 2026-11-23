@@ -1,7 +1,7 @@
 import { distance } from "../../../vec2.js";
 import type { BehaviourIntent } from "../../behaviour.js";
 import type { Participant } from "../../simulation.js";
-import { flankParty, placedFlank, placedHold, planFoeTeam, planPhase } from "../plan.js";
+import { inFlankSwing, placedFlank, placedHold, planFoeTeam, planPhase } from "../plan.js";
 import type { BotRole } from "../role.js";
 import {
   NOTHING,
@@ -78,12 +78,12 @@ const BACKLINE: readonly BotRole[] = ["healer", "ranged"];
  * Where a flanker goes (#3832): to its flank waypoint, until within
  * `REGROUP_JOINED` of it, then to the nearest foe healer, else ranged,
  * else any foe. The waypoint is placed once per phase and foe team.
- * `undefined`, so it pushes, outside the flank party, or where its team
- * has no flank waypoint.
+ * `undefined`, so it pushes, outside its flank swing (`inFlankSwing`),
+ * or where its team has no flank waypoint.
  */
 function flank({ context, self, foes, cursor, roleOf }: RuleContext): BehaviourIntent | undefined {
   const phase = planPhase(context.now);
-  if (!flankParty(context, self, phase)) return undefined;
+  if (!inFlankSwing(context, self, cursor, phase)) return undefined;
   if (cursor.flankReached !== phase) {
     const foeTeam = planFoeTeam(cursor, foes);
     if (foeTeam === undefined) return undefined;

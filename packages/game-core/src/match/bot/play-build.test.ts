@@ -579,6 +579,32 @@ describe("play-build's pull-in gate (#3832)", () => {
     expect(intent.moveTo).toEqual(flankWaypoint(view, view.self, 1)?.point);
   });
 
+  it("keeps to its give-up once rested: no walk back to the waypoint, no refused far target", () => {
+    const now = when("flank");
+    const flanker = ["bot", "mate"].find((id) =>
+      flankParty(viewOf(id, now), viewOf(id, now).self, planPhase(now)),
+    );
+    if (flanker === undefined) throw new Error("no flanker");
+    const view = viewOf(flanker, now);
+    // It gave the swing up hurt with a foe in reach, then rested out of
+    // reach past REST_FRACTION: plan-move has latched, and close-in and
+    // the pull-in gate must keep to it too.
+    const self = {
+      ...view.self,
+      combatant: { ...view.self.combatant, health: 0.8 * view.self.combatant.health },
+    };
+    const rested: BehaviourContext = {
+      ...view,
+      self,
+      participants: view.participants.map((each) => (each.id === flanker ? self : each)),
+    };
+    const cursor = createCursor();
+    cursor.planGaveUp = planPhase(now);
+    const intent = decide(BOT, cursor, rested);
+    expect(intent.moveTo).not.toEqual(flankWaypoint(view, view.self, 1)?.point);
+    expect(intent.targetId).toBe("foe-a");
+  });
+
   it("takes a far teammate's target under push, as ever", () => {
     expect(decide(BOT, createCursor(), viewOf("bot", when("push"))).targetId).toBe("foe-a");
   });

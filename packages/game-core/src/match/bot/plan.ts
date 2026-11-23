@@ -221,6 +221,20 @@ export function placedFlank(
 }
 
 /**
+ * Whether `self` is on its flank swing in plan phase `phase` (#3832): in
+ * the flank party, and it has not given the swing up hurt this phase.
+ * The one test of "is this bot flanking" for every rule that asks.
+ */
+export function inFlankSwing(
+  context: BehaviourContext,
+  self: Participant,
+  cursor: BehaviourCursor,
+  phase: number,
+): boolean {
+  return cursor.planGaveUp !== phase && flankParty(context, self, phase);
+}
+
+/**
  * Whether `plan`, not the fight, decides where `self` goes this phase
  * (#3832, pull-in gate): holding with a hold spot, or flanking in the
  * flank party with a waypoint. Such a bot takes a teammate's target only
@@ -238,7 +252,7 @@ export function planPlaced(
   if (foeTeam === undefined) return false;
   if (plan === "hold") return placedHold(context, self, cursor, foeTeam) !== undefined;
   return (
-    flankParty(context, self, planPhase(context.now)) &&
+    inFlankSwing(context, self, cursor, planPhase(context.now)) &&
     placedFlank(context, self, cursor, foeTeam) !== undefined
   );
 }
