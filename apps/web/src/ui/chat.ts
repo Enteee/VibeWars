@@ -265,6 +265,9 @@ export function mountChat(deps: ChatDeps): ChatPanel {
   const setOpen = (value: boolean): void => {
     open = value;
     root.classList.toggle("is-open", value);
+    if (value) {
+      root.classList.remove("has-unread");
+    }
     toggle.setAttribute("aria-expanded", String(value));
     if (value) {
       paintChannel();
@@ -332,6 +335,11 @@ export function mountChat(deps: ChatDeps): ChatPanel {
     add(line) {
       const kept = { line, at: Date.now(), signet: deps.signetOf(line.fromId) };
       if (log.add(kept)) {
+        // A phone in a match shows no line closed (#3778): the icon is
+        // marked instead, until the panel opens. Not for your own line.
+        if (!open && line.fromId !== deps.selfId) {
+          root.classList.add("has-unread");
+        }
         lines.append(lineElement(kept));
         while (lines.childElementCount > CHAT_LINES_KEPT) {
           lines.firstElementChild?.remove();
