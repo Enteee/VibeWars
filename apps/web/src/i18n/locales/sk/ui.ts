@@ -605,6 +605,13 @@ export default {
   "help.source": "Zdrojový kód",
   "help.version": "VibeWars {release} · zostava {build}",
 
+  "history.back": "Späť",
+  "history.empty": "Zatiaľ žiadne zápasy. Uchováva sa tu tvojich posledných 50 zápasov.",
+  "history.emptyMine": "Žiadne zápasy s tvojím súčasným kľúčom hráča.",
+  "history.mine": "Moje zápasy",
+  "history.open": "História zápasov",
+  "history.title": "História zápasov",
+
   "hud.aggression": "agr {ours} : {theirs}",
   "hud.altarPointOurs": "Bod na oltári!",
   "hud.altarPointTheirs": "Nepriateľský bod na oltári",
@@ -1074,6 +1081,9 @@ export default {
   "queue.ascending": "Postup na {map} o {seconds} s",
   "queue.backToLobbyIn": "Späť do lobby o {seconds} s",
   "queue.backToMenu": "Späť do menu",
+  "queue.backToLobby": "Späť do lobby",
+  "queue.countdownStopped": "Odpočítavanie zastavené",
+  "queue.stopCountdown": "Zastaviť",
   "queue.backToMenuIn": "Späť do menu o {seconds} s",
   "queue.busy": "Si vo fronte.",
   "queue.characterDeleted": "Postava vo fronte bola zmazaná, preto ťa vyradilo z fronty",

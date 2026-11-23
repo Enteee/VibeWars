@@ -553,6 +553,13 @@ export const en = {
   "help.source": "Source code",
   "help.version": "VibeWars {release} · build {build}",
 
+  "history.back": "Back",
+  "history.empty": "No matches yet. Your last 50 matches are kept here.",
+  "history.emptyMine": "No matches with your current player key.",
+  "history.mine": "My matches",
+  "history.open": "Match history",
+  "history.title": "Match history",
+
   "hud.aggression": "agg {ours} v {theirs}",
   "hud.altarPointOurs": "Altar point!",
   "hud.altarPointTheirs": "Enemy altar point",
@@ -983,6 +990,9 @@ export const en = {
   "queue.ascending": "Ascending to {map} in {seconds} s",
   "queue.backToLobbyIn": "Back to lobby in {seconds} s",
   "queue.backToMenu": "Back to menu",
+  "queue.backToLobby": "Back to lobby",
+  "queue.countdownStopped": "Countdown stopped",
+  "queue.stopCountdown": "Stop",
   "queue.backToMenuIn": "Back to menu in {seconds} s",
   "queue.busy": "You are in a queue.",
   "queue.characterDeleted": "Your queued character was deleted, so you left the queue",

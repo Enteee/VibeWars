@@ -504,6 +504,13 @@ export default {
   "help.source": "ซอร์สโค้ด",
   "help.version": "VibeWars {release} · บิลด์ {build}",
 
+  "history.back": "กลับ",
+  "history.empty": "ยังไม่มีการแข่งขัน การแข่งขัน 50 ครั้งล่าสุดของคุณจะเก็บไว้ที่นี่",
+  "history.emptyMine": "ไม่มีการแข่งขันที่ใช้คีย์ผู้เล่นปัจจุบันของคุณ",
+  "history.mine": "การแข่งขันของฉัน",
+  "history.open": "ประวัติการแข่งขัน",
+  "history.title": "ประวัติการแข่งขัน",
+
   "hud.aggression": "agg {ours} : {theirs}",
   "hud.altarPointOurs": "แต้มแท่นบูชา!",
   "hud.altarPointTheirs": "แต้มแท่นบูชาของศัตรู",
@@ -930,6 +937,9 @@ export default {
   "queue.ascending": "ขึ้นสู่ {map} ใน {seconds} วิ",
   "queue.backToLobbyIn": "กลับล็อบบี้ใน {seconds} วิ",
   "queue.backToMenu": "กลับเมนู",
+  "queue.backToLobby": "กลับไปที่ล็อบบี้",
+  "queue.countdownStopped": "หยุดนับถอยหลังแล้ว",
+  "queue.stopCountdown": "หยุด",
   "queue.backToMenuIn": "กลับเมนูใน {seconds} วิ",
   "queue.busy": "คุณอยู่ในคิว",
   "queue.characterDeleted": "ตัวละครที่เข้าคิวถูกลบ คุณจึงออกจากคิว",

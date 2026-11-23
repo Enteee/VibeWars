@@ -95,6 +95,8 @@ gå till den med Tab, för att läsa vad som hände. Tryck på en post i
 förklaringen för att dölja eller visa dess linje. På en telefon ligger
 diagrammen under poängen, som visar dig och två andra tills **Visa alla**.
 
+**Matchhistorik** i toppfältet visar dina senaste 50 matcher, nyaste först: öppna en för att se dess poäng och diagram igen. De sparas bara i den här webbläsaren. **Mina matcher** visar bara de du spelat med din nuvarande spelarnyckel.
+
 ## Var värd för eller gå med i en match
 
 Du är alltid i en lobby: från det att sidan öppnas är du värd för en egen.

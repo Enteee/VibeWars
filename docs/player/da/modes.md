@@ -374,6 +374,7 @@ kodet lobbys kamp sender alle tilbage til lobbyen. En knap under
 resultatet springer ventetiden over eller, for vinderne, går uden at
 stille sig i kø.
 Vindere i Holdarena beholder deres holdbuild og hver spillers plads til den næste kamp, uden holdlobby, medmindre gruppen har ændret sig siden: nogen er gået, er væk eller er kommet til. Så vælger de deres hold igen.
+Vandt dit hold ikke, standser Stop nedtællingen, så du kan læse resultatet; knappen tager dig så videre, når du er klar.
 
 ## Heltenes opstigning
 

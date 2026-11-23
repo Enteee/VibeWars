@@ -510,6 +510,13 @@ export default {
   "help.source": "ソースコード",
   "help.version": "VibeWars {release} · ビルド {build}",
 
+  "history.back": "戻る",
+  "history.empty": "まだ対戦がありません。直近50件の対戦がここに保存されます。",
+  "history.emptyMine": "現在のプレイヤーキーでの対戦はありません。",
+  "history.mine": "自分の対戦",
+  "history.open": "対戦履歴",
+  "history.title": "対戦履歴",
+
   "hud.aggression": "攻勢 {ours} : {theirs}",
   "hud.altarPointOurs": "祭壇ポイント!",
   "hud.altarPointTheirs": "敵の祭壇ポイント",
@@ -940,6 +947,9 @@ export default {
   "queue.ascending": "{seconds}秒後に{map}へ進みます",
   "queue.backToLobbyIn": "{seconds}秒後にロビーへ戻ります",
   "queue.backToMenu": "メニューへ戻る",
+  "queue.backToLobby": "ロビーへ戻る",
+  "queue.countdownStopped": "カウントダウン停止中",
+  "queue.stopCountdown": "停止",
   "queue.backToMenuIn": "{seconds}秒後にメニューへ戻ります",
   "queue.busy": "キューに入っています。",
   "queue.characterDeleted": "キュー中のキャラクターが削除されたため、キューを離れました",

@@ -585,6 +585,13 @@ export default {
   "help.source": "Código-fonte",
   "help.version": "VibeWars {release} · build {build}",
 
+  "history.back": "Voltar",
+  "history.empty": "Ainda não há partidas. Suas últimas 50 partidas ficam guardadas aqui.",
+  "history.emptyMine": "Não há partidas com sua chave de jogador atual.",
+  "history.mine": "Minhas partidas",
+  "history.open": "Histórico de partidas",
+  "history.title": "Histórico de partidas",
+
   "hud.aggression": "agr {ours} x {theirs}",
   "hud.altarPointOurs": "Ponto no altar!",
   "hud.altarPointTheirs": "Ponto inimigo no altar",
@@ -1032,6 +1039,9 @@ export default {
   "queue.ascending": "Subindo para {map} em {seconds} s",
   "queue.backToLobbyIn": "De volta à sala em {seconds} s",
   "queue.backToMenu": "Voltar ao menu",
+  "queue.backToLobby": "Voltar ao lobby",
+  "queue.countdownStopped": "Contagem parada",
+  "queue.stopCountdown": "Parar",
   "queue.backToMenuIn": "De volta ao menu em {seconds} s",
   "queue.busy": "Você está em uma fila.",
   "queue.characterDeleted": "Seu personagem na fila foi excluído, então você saiu da fila",

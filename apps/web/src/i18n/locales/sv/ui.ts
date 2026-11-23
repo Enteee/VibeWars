@@ -551,6 +551,13 @@ export default {
   "help.source": "Källkod",
   "help.version": "VibeWars {release} · build {build}",
 
+  "history.back": "Tillbaka",
+  "history.empty": "Inga matcher än. Dina senaste 50 matcher sparas här.",
+  "history.emptyMine": "Inga matcher med din nuvarande spelarnyckel.",
+  "history.mine": "Mina matcher",
+  "history.open": "Matchhistorik",
+  "history.title": "Matchhistorik",
+
   "hud.aggression": "agg {ours} mot {theirs}",
   "hud.altarPointOurs": "Altarpoäng!",
   "hud.altarPointTheirs": "Fiendens altarpoäng",
@@ -982,6 +989,9 @@ export default {
   "queue.ascending": "Går upp till {map} om {seconds} s",
   "queue.backToLobbyIn": "Tillbaka till lobbyn om {seconds} s",
   "queue.backToMenu": "Till menyn",
+  "queue.backToLobby": "Tillbaka till lobbyn",
+  "queue.countdownStopped": "Nedräkningen stoppad",
+  "queue.stopCountdown": "Stoppa",
   "queue.backToMenuIn": "Tillbaka till menyn om {seconds} s",
   "queue.busy": "Du står i en kö.",
   "queue.characterDeleted": "Karaktären du köade med raderades, så du lämnade kön",

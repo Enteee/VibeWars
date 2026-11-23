@@ -554,6 +554,13 @@ export default {
   "help.source": "Quellcode",
   "help.version": "VibeWars {release} · Build {build}",
 
+  "history.back": "Zurück",
+  "history.empty": "Noch keine Spiele. Deine letzten 50 Spiele werden hier aufbewahrt.",
+  "history.emptyMine": "Keine Spiele mit deinem aktuellen Spielerschlüssel.",
+  "history.mine": "Meine Spiele",
+  "history.open": "Spielverlauf",
+  "history.title": "Spielverlauf",
+
   "hud.aggression": "Agg {ours} : {theirs}",
   "hud.altarPointOurs": "Altarpunkt!",
   "hud.altarPointTheirs": "Altarpunkt für Gegner",
@@ -992,6 +999,9 @@ export default {
   "queue.ascending": "Aufstieg nach {map} in {seconds} s",
   "queue.backToLobbyIn": "Zurück zur Lobby in {seconds} s",
   "queue.backToMenu": "Zum Menü",
+  "queue.backToLobby": "Zur Lobby",
+  "queue.countdownStopped": "Countdown angehalten",
+  "queue.stopCountdown": "Anhalten",
   "queue.backToMenuIn": "Zurück zum Menü in {seconds} s",
   "queue.busy": "Du bist in einer Warteschlange.",
   "queue.characterDeleted":

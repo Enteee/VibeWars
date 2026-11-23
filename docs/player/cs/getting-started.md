@@ -36,6 +36,8 @@ Po konci zápasu můžeš **Znovu do fronty**, nebo **Zůstat spolu** s týmem, 
 
 Každý zápas končí svým skóre, ať z fronty, založený, nebo v lobby, a vedle něj vyprávějí dva grafy průběh zápasu v čase; obrazovka fronty je po zápase z fronty ukáže znovu. **Ty** kreslí tvé způsobené poškození, přijaté poškození, léčení a Energii; **Týmy** kreslí zásobu zdraví každého týmu nad jeho celkovým poškozením. Značky pod časovou osou ukazují zabití, smrti, přerušení, obsazení a oživení: najeď na jednu, nebo na ni přejdi klávesou Tab, a přečteš si, co se stalo. Stiskem položky legendy skryješ nebo zobrazíš její čáru. Na telefonu jsou grafy pod skóre, které ukazuje tebe a dva další, dokud nestiskneš **Zobrazit vše**.
 
+**Historie zápasů** v horní liště ukazuje tvých posledních 50 zápasů, nejnovější první: otevři jeden a znovu uvidíš jeho skóre a grafy. Uchovávají se jen v tomto prohlížeči. **Moje zápasy** ukáže jen ty odehrané s tvým současným hráčským klíčem.
+
 ## Založ zápas nebo se připoj
 
 Vždycky jsi v lobby: od chvíle, kdy se stránka otevře, hostuje jednu tvoji vlastní. Lobby je tvoje skupina: **Lobby** v horní liště, mezi Možnostmi a Hudbou, otevře okno s odkazem na pozvánku, Otevřeno/Zavřeno a Opustit a se seznamem toho, kdo v ní je; její odznak je počítá.

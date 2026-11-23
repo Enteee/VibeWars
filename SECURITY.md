@@ -490,6 +490,13 @@ What it does not defend against:
   resets it, so a peer cannot refill it by quitting and saying hello
   again. A peer that said `bye` is not seated again until it leaves the
   room.
+- `scene-ready` (#3852) is a client's word that its first frame is drawn,
+  and the pre-match countdown waits for every seated human's. It is
+  charged to the budget before it is parsed, must be empty, and counts
+  only from a seated peer; the host keeps at most one entry per seat. A
+  client that lies early only starts its own match unseen; one that never
+  sends it holds the wait no longer than `joinTimeoutSeconds`, as one that
+  never joins already can.
 - The key gate (#1681, ADR-0043, `keyGated`) runs under `LobbyHost` and
   `joinLobby` on every transport. The host sends a new peer a
   `key-challenge` nonce and nothing else, and ignores everything but its

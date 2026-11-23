@@ -20,6 +20,7 @@ import {
   requeuedSince,
   teamEndAction,
   teamEndLine,
+  stoppedEndLine,
   mountQueueScreen,
   type QueueView,
   renderVersusSplash,
@@ -232,50 +233,78 @@ describe("teamEndAction and teamEndLine (#1997)", () => {
   });
 
   it("counts down to each, with its button", () => {
-    expect(teamEndLine("requeue", 20, null, null)).toEqual({
+    expect(teamEndLine("requeue", 20, null, null, true)).toEqual({
       text: "Next match in 20 s",
       button: "Leave",
+      stop: undefined,
     });
-    expect(teamEndLine("menu", 3, null, null)).toEqual({
+    expect(teamEndLine("menu", 3, null, null, false)).toEqual({
       text: "Back to menu in 3 s",
       button: "Now",
+      stop: "Stop",
     });
-    expect(teamEndLine("lobby", 1, null, null)).toEqual({
+    expect(teamEndLine("lobby", 1, null, null, false)).toEqual({
       text: "Back to lobby in 1 s",
       button: "Now",
+      stop: "Stop",
     });
   });
 
   it("says whether a won Team Arena keeps its team (#3815)", () => {
-    expect(teamEndLine("requeue", 20, null, true)).toEqual({
+    expect(teamEndLine("requeue", 20, null, true, true)).toEqual({
       text: "You won: next match with the same team in 20 s",
       button: "Leave",
+      stop: undefined,
     });
-    expect(teamEndLine("requeue", 4, null, false)).toEqual({
+    expect(teamEndLine("requeue", 4, null, false, true)).toEqual({
       text: "Your party changed: choose your team again in 4 s",
       button: "Leave",
+      stop: undefined,
     });
-    expect(teamEndLine("requeue", 9, null, null)).toEqual({
+    expect(teamEndLine("requeue", 9, null, null, true)).toEqual({
       text: "Next match in 9 s",
       button: "Leave",
+      stop: undefined,
     });
   });
 
   it("names where a won Heroes' Ascent goes on to, and the Hall held (#1996)", () => {
-    expect(teamEndLine("requeue", 20, 0, null)).toEqual({
+    expect(teamEndLine("requeue", 20, 0, null, true)).toEqual({
       text: "Ascending to Blackwater Ford in 20 s",
       button: "Leave",
+      stop: undefined,
     });
-    expect(teamEndLine("requeue", 20, 7, null)).toEqual({
+    expect(teamEndLine("requeue", 20, 7, null, true)).toEqual({
       text: "Ascending to Hall of Heroes in 20 s",
       button: "Leave",
+      stop: undefined,
     });
-    expect(teamEndLine("requeue", 5, 8, null)).toEqual({
+    expect(teamEndLine("requeue", 5, 8, null, true)).toEqual({
       text: "You hold the Hall of Heroes · defending in 5 s",
       button: "Leave",
+      stop: undefined,
     });
     // A lost Ascent goes back to the menu as any other team match.
-    expect(teamEndLine("menu", 3, 2, null)).toEqual({ text: "Back to menu in 3 s", button: "Now" });
+    expect(teamEndLine("menu", 3, 2, null, false)).toEqual({
+      text: "Back to menu in 3 s",
+      button: "Now",
+      stop: "Stop",
+    });
+  });
+
+  it("lets only a team that did not win stop its countdown (#3847)", () => {
+    expect(teamEndLine("menu", 3, null, null, false).stop).toBe("Stop");
+    expect(teamEndLine("lobby", 3, null, null, false).stop).toBe("Stop");
+    expect(teamEndLine("lobby", 3, null, null, true).stop).toBeUndefined();
+    for (const round of [null, ...ASCENT_PROGRESSION.keys()]) {
+      expect(teamEndLine("requeue", 3, round, null, true).stop).toBeUndefined();
+      expect(teamEndLine("requeue", 3, round, true, true).stop).toBeUndefined();
+    }
+  });
+
+  it("says a stopped countdown is stopped, and where its button goes (#3847)", () => {
+    expect(stoppedEndLine("menu")).toEqual({ text: "Countdown stopped", button: "Back to menu" });
+    expect(stoppedEndLine("lobby")).toEqual({ text: "Countdown stopped", button: "Back to lobby" });
   });
 });
 

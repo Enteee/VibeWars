@@ -606,6 +606,13 @@ export default {
   "help.source": "Вихідний код",
   "help.version": "VibeWars {release} · збірка {build}",
 
+  "history.back": "Назад",
+  "history.empty": "Матчів поки немає. Тут зберігаються твої останні 50 матчів.",
+  "history.emptyMine": "Немає матчів із твоїм поточним ключем гравця.",
+  "history.mine": "Мої матчі",
+  "history.open": "Історія матчів",
+  "history.title": "Історія матчів",
+
   "hud.aggression": "агр {ours} : {theirs}",
   "hud.altarPointOurs": "Очко вівтаря!",
   "hud.altarPointTheirs": "Очко вівтаря ворога",
@@ -1076,6 +1083,9 @@ export default {
   "queue.ascending": "Сходження на {map} за {seconds} с",
   "queue.backToLobbyIn": "До лобі за {seconds} с",
   "queue.backToMenu": "До меню",
+  "queue.backToLobby": "Назад до лобі",
+  "queue.countdownStopped": "Відлік зупинено",
+  "queue.stopCountdown": "Зупинити",
   "queue.backToMenuIn": "До меню за {seconds} с",
   "queue.busy": "Ти в черзі.",
   "queue.characterDeleted": "Персонажа в черзі видалено, тому пошук скасовано",

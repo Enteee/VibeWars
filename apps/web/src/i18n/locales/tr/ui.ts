@@ -553,6 +553,13 @@ export default {
   "help.source": "Kaynak kodu",
   "help.version": "VibeWars {release} · yapı {build}",
 
+  "history.back": "Geri",
+  "history.empty": "Henüz maç yok. Son 50 maçın burada saklanır.",
+  "history.emptyMine": "Mevcut oyuncu anahtarınla oynanmış maç yok.",
+  "history.mine": "Maçlarım",
+  "history.open": "Maç geçmişi",
+  "history.title": "Maç geçmişi",
+
   "hud.aggression": "sald {ours} - {theirs}",
   "hud.altarPointOurs": "Sunak puanı!",
   "hud.altarPointTheirs": "Düşman sunak puanı",
@@ -984,6 +991,9 @@ export default {
   "queue.ascending": "{seconds} sn sonra {map} haritasına yükseliş",
   "queue.backToLobbyIn": "{seconds} sn sonra lobiye dönüş",
   "queue.backToMenu": "Menüye dön",
+  "queue.backToLobby": "Lobiye dön",
+  "queue.countdownStopped": "Geri sayım durduruldu",
+  "queue.stopCountdown": "Durdur",
   "queue.backToMenuIn": "{seconds} sn sonra menüye dönüş",
   "queue.busy": "Sıradasın.",
   "queue.characterDeleted": "Sıradaki karakterin silindi, sıradan çıktın",

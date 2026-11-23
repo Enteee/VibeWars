@@ -11,6 +11,7 @@ import type {
   WireDeck,
   WireMatchChart,
 } from "@vibewars/game-protocol";
+import { parseWireEnded } from "@vibewars/game-protocol";
 import type {
   CombatMessage,
   MatchConnection,
@@ -129,9 +130,10 @@ import { attachReconnectCountdown, mountReconnectOverlay } from "./ui/reconnect-
 import { chartRoster, chartUsable, renderMatchCharts } from "./ui/match-charts.js";
 import { renderSummary, summaryTables, type SummaryTable } from "./ui/match-summary.js";
 import { flashSlot, slotFlashes } from "./ui/skill-slot-state.js";
-import { mountEndLine, type EndLineElements } from "./ui/end-line.js";
+import { endLineSetter, type EndLine } from "./ui/end-line.js";
 import { setToastHost, toast } from "./ui/kit.js";
 import { signedText } from "./ui/player-label.js";
+import type { MatchRecordFields } from "./storage/match-history.js";
 
 /**
  * The in-match view: a Phaser viewport for the arena plus the DOM HUD,
@@ -264,18 +266,16 @@ async function viewedMatch(options: MatchViewOptions): Promise<ViewedMatch> {
   };
 }
 
-/** The line over a finished team match's result (#1997): what comes next, when, and one button. */
-export interface EndLine {
-  readonly text: string;
-  readonly button: string;
-  readonly onPress: () => void;
-}
-
 export interface MatchView {
   /** The match summary's tables once the host has sent them (#1057), for the queue screen. */
   summary(): readonly SummaryTable[] | undefined;
   /** The match's charts once the host has sent them all (#3564), for the queue screen. */
   chart(): WireMatchChart | undefined;
+  /**
+   * What Match history keeps of it (#3848), once the host's `ended` has
+   * come: `undefined` before, and for a watcher or the tutorial.
+   */
+  record(): MatchRecordFields | undefined;
   /** Shows `line` over the result, or none. */
   setEndLine(line: EndLine | undefined): void;
   /** What the camera shows (#3222), or nothing before its first frame or without a canvas. */
@@ -1370,26 +1370,47 @@ export async function startMatchView(
   });
 
   /** The end line (#1997), made the first time it is set. */
-  let endLine: EndLineElements | undefined;
-  let onEndPress: (() => void) | undefined;
+  const setEndLine = endLineSetter(hud.end);
 
   return {
     summary: () => summary?.tables,
     chart: () => lastMatch?.chart,
-    camera: () => camera?.look(),
-    setEndLine(line) {
-      if (line === undefined) {
-        endLine?.root.remove();
-        endLine = undefined;
-        return;
+    record: () => {
+      const match = lastMatch;
+      const self = match?.players.find((p) => p.sessionId === viewed.selfSessionId);
+      if (
+        seat === undefined ||
+        tutorial !== undefined ||
+        match?.phase !== "finished" ||
+        match.summary === undefined ||
+        self === undefined
+      ) {
+        return undefined;
       }
-      endLine ??= mountEndLine(hud.end, () => {
-        onEndPress?.();
-      });
-      onEndPress = line.onPress;
-      endLine.text.textContent = line.text;
-      endLine.press.textContent = line.button;
+      // Read back through the wire's check: the snapshot holds what `ended` said.
+      const ended = parseWireEnded(
+        {
+          winningTeam: match.winningTeam ?? null,
+          endReason: match.endReason,
+          summary: match.summary,
+          clearSeconds: match.clearSeconds ?? null,
+        },
+        viewed.map.teamCount,
+      );
+      return ended === undefined
+        ? undefined
+        : {
+            mapId: viewed.map.id,
+            teamCount: viewed.map.teamCount,
+            selfId: viewed.selfSessionId,
+            selfTeam: self.team,
+            bots: match.players.filter((player) => player.bot).map((player) => player.sessionId),
+            ended,
+            chart: match.chart ?? null,
+          };
     },
+    camera: () => camera?.look(),
+    setEndLine,
     async dispose(): Promise<void> {
       // Order matters: stop listening before tearing down, so a late
       // event cannot touch a destroyed scene.

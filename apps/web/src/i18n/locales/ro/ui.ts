@@ -586,6 +586,13 @@ export default {
   "help.source": "Cod sursă",
   "help.version": "VibeWars {release} · versiunea {build}",
 
+  "history.back": "Înapoi",
+  "history.empty": "Încă nu există meciuri. Ultimele tale 50 de meciuri sunt păstrate aici.",
+  "history.emptyMine": "Niciun meci cu cheia ta de jucător actuală.",
+  "history.mine": "Meciurile mele",
+  "history.open": "Istoricul meciurilor",
+  "history.title": "Istoricul meciurilor",
+
   "hud.aggression": "agr {ours} v {theirs}",
   "hud.altarPointOurs": "Punct la altar!",
   "hud.altarPointTheirs": "Punct la altar pentru inamic",
@@ -1039,6 +1046,9 @@ export default {
   "queue.ascending": "Urcare spre {map} în {seconds} s",
   "queue.backToLobbyIn": "Înapoi la lobby în {seconds} s",
   "queue.backToMenu": "Înapoi la meniu",
+  "queue.backToLobby": "Înapoi în lobby",
+  "queue.countdownStopped": "Numărătoare oprită",
+  "queue.stopCountdown": "Oprește",
   "queue.backToMenuIn": "Înapoi la meniu în {seconds} s",
   "queue.busy": "Ești într-o coadă.",
   "queue.characterDeleted": "Personajul tău din coadă a fost șters, așa că ai ieșit din coadă",

@@ -550,6 +550,13 @@ export default {
   "help.source": "Broncode",
   "help.version": "VibeWars {release} · build {build}",
 
+  "history.back": "Terug",
+  "history.empty": "Nog geen wedstrijden. Je laatste 50 wedstrijden worden hier bewaard.",
+  "history.emptyMine": "Geen wedstrijden met je huidige spelerssleutel.",
+  "history.mine": "Mijn wedstrijden",
+  "history.open": "Wedstrijdgeschiedenis",
+  "history.title": "Wedstrijdgeschiedenis",
+
   "hud.aggression": "agr {ours} v {theirs}",
   "hud.altarPointOurs": "Altaarpunt!",
   "hud.altarPointTheirs": "Altaarpunt vijand",
@@ -983,6 +990,9 @@ export default {
   "queue.ascending": "Over {seconds} s op naar {map}",
   "queue.backToLobbyIn": "Terug naar lobby over {seconds} s",
   "queue.backToMenu": "Naar menu",
+  "queue.backToLobby": "Terug naar de lobby",
+  "queue.countdownStopped": "Aftellen gestopt",
+  "queue.stopCountdown": "Stoppen",
   "queue.backToMenuIn": "Terug naar menu over {seconds} s",
   "queue.busy": "Je staat in een wachtrij.",
   "queue.characterDeleted":

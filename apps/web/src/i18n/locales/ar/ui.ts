@@ -645,6 +645,13 @@ export default {
   "help.source": "الشيفرة المصدرية",
   "help.version": "VibeWars {release} · بناء {build}",
 
+  "history.back": "رجوع",
+  "history.empty": "لا توجد مباريات بعد. تُحفظ هنا آخر 50 مباراة لك.",
+  "history.emptyMine": "لا توجد مباريات بمفتاح اللاعب الحالي.",
+  "history.mine": "مبارياتي",
+  "history.open": "سجل المباريات",
+  "history.title": "سجل المباريات",
+
   "hud.aggression": "عدوان {ours} ضد {theirs}",
   "hud.altarPointOurs": "نقطة مذبح!",
   "hud.altarPointTheirs": "نقطة مذبح للعدو",
@@ -1128,6 +1135,9 @@ export default {
   "queue.ascending": "الصعود إلى {map} بعد {seconds} ث",
   "queue.backToLobbyIn": "العودة إلى الردهة بعد {seconds} ث",
   "queue.backToMenu": "العودة إلى القائمة",
+  "queue.backToLobby": "العودة إلى الردهة",
+  "queue.countdownStopped": "أُوقف العد التنازلي",
+  "queue.stopCountdown": "إيقاف",
   "queue.backToMenuIn": "العودة إلى القائمة بعد {seconds} ث",
   "queue.busy": "أنت في طابور.",
   "queue.characterDeleted": "حُذفت شخصيتك في الطابور، فغادرت الطابور",

@@ -587,6 +587,13 @@ export default {
   "help.source": "Code source",
   "help.version": "VibeWars {release} · build {build}",
 
+  "history.back": "Retour",
+  "history.empty": "Aucune partie pour l’instant. Vos 50 dernières parties sont conservées ici.",
+  "history.emptyMine": "Aucune partie avec votre clé de joueur actuelle.",
+  "history.mine": "Mes parties",
+  "history.open": "Historique des parties",
+  "history.title": "Historique des parties",
+
   "hud.aggression": "agr {ours} vs {theirs}",
   "hud.altarPointOurs": "Point d'autel !",
   "hud.altarPointTheirs": "Point d'autel ennemi",
@@ -1046,6 +1053,9 @@ export default {
   "queue.ascending": "Ascension vers {map} dans {seconds} s",
   "queue.backToLobbyIn": "Retour au salon dans {seconds} s",
   "queue.backToMenu": "Retour au menu",
+  "queue.backToLobby": "Retour au salon",
+  "queue.countdownStopped": "Compte à rebours arrêté",
+  "queue.stopCountdown": "Arrêter",
   "queue.backToMenuIn": "Retour au menu dans {seconds} s",
   "queue.busy": "Tu es dans une file.",
   "queue.characterDeleted": "Ton personnage en file a été supprimé, tu as donc quitté la file",

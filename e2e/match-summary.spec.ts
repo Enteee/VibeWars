@@ -54,8 +54,12 @@ for (const [width, height] of [
 
     const banner = await box(page.locator(".hud-result"));
     const line = await box(page.locator(".hud-end-line"));
-    const press = page.locator(".hud-end-line button");
+    const press = page.locator(".hud-end-line").getByRole("button", { name: "Now" });
     const button = await box(press);
+    // A lost match's Stop (#3847) sits beside it, inside the line.
+    const stop = await box(page.locator(".hud-end-line").getByRole("button", { name: "Stop" }));
+    expect(apart(button, stop), "Now and Stop do not overlap").toBe(true);
+    expect(inside(stop, line), "Stop is inside the end line").toBe(true);
     const whole = await box(summary);
     const parts: [string, Box][] = [
       ["banner", banner],
@@ -162,3 +166,20 @@ for (const [width, height] of [
     await expect(charts.locator(".match-charts-tip")).toHaveText(/^\d+:\d\d — /);
   });
 }
+
+test("a lost match's countdown stops: the line says so, and its one button goes back (#3847)", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await page.goto("./?summary-fixture");
+  const line = page.locator(".hud-end-line");
+  await expect(line).toContainText("Back to lobby in 9 s");
+  // Tab order: the button that goes now, then Stop.
+  const buttons = line.getByRole("button");
+  await expect(buttons).toHaveText(["Now", "Stop"]);
+
+  await line.getByRole("button", { name: "Stop" }).click();
+  await expect(line).toContainText("Countdown stopped");
+  await expect(buttons).toHaveText(["Back to lobby"]);
+  await expect(line.getByRole("button", { name: "Stop" })).toHaveCount(0);
+});

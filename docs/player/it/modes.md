@@ -120,6 +120,7 @@ Chi esce durante la Lobby squadra lascia il suo personaggio a un bot, così lo s
 
 Dopo una partita a squadre in coda, i vincitori tornano in coda da soli dopo 20 secondi, e i perdenti (anche in caso di pareggio) tornano al menu; la partita di una lobby con codice riporta tutti alla lobby. Un pulsante sotto il risultato salta l'attesa o, per i vincitori, esce senza rimettersi in coda.
 I vincitori dell'Arena a squadre mantengono la build di squadra e il posto di ogni giocatore per la partita successiva, senza lobby di squadra, a meno che il gruppo non sia cambiato nel frattempo: qualcuno è uscito, è assente o si è unito. Allora scelgono di nuovo la squadra.
+Se la tua squadra non ha vinto, Ferma blocca quel conto alla rovescia così puoi leggere il risultato; poi il pulsante ti porta avanti quando sei pronto.
 
 ## Ascesa degli Eroi
 

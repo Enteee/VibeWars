@@ -291,6 +291,7 @@ Nach einem Team-Match aus der Warteschlange melden sich die Gewinner nach 20 Sek
 Verlierer (auch bei einem Unentschieden) kehren ins Menü zurück; das Match einer Lobby mit Code bringt alle in die Lobby
 zurück. Ein Knopf unter dem Ergebnis überspringt die Wartezeit oder geht für Gewinner, ohne sich anzumelden.
 Gewinner der Teamarena behalten für das nächste Match ihren Team-Build und jeder seinen Platz, ohne Team-Lobby, außer die Gruppe hat sich seitdem geändert: Jemand ist gegangen, abwesend oder dazugekommen. Dann wählen sie ihr Team neu.
+Hat dein Team nicht gewonnen, hält „Anhalten“ diesen Countdown an, damit du das Ergebnis lesen kannst; der Knopf bringt dich dann weiter, wenn du so weit bist.
 
 ## Aufstieg der Helden
 

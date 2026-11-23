@@ -561,6 +561,13 @@ export default {
   "help.source": "Lähdekoodi",
   "help.version": "VibeWars {release} · koontiversio {build}",
 
+  "history.back": "Takaisin",
+  "history.empty": "Ei vielä otteluita. Viimeiset 50 otteluasi säilytetään täällä.",
+  "history.emptyMine": "Ei otteluita nykyisellä pelaaja-avaimellasi.",
+  "history.mine": "Omat ottelut",
+  "history.open": "Otteluhistoria",
+  "history.title": "Otteluhistoria",
+
   "hud.aggression": "agg {ours} – {theirs}",
   "hud.altarPointOurs": "Alttaripiste!",
   "hud.altarPointTheirs": "Vihollisen alttaripiste",
@@ -994,6 +1001,9 @@ export default {
   "queue.ascending": "Nousu kartalle {map}: {seconds} s",
   "queue.backToLobbyIn": "Takaisin aulaan: {seconds} s",
   "queue.backToMenu": "Takaisin valikkoon",
+  "queue.backToLobby": "Takaisin aulaan",
+  "queue.countdownStopped": "Lähtölaskenta pysäytetty",
+  "queue.stopCountdown": "Pysäytä",
   "queue.backToMenuIn": "Takaisin valikkoon: {seconds} s",
   "queue.busy": "Olet jonossa.",
   "queue.characterDeleted": "Jonossa ollut hahmosi poistettiin, joten poistuit jonosta",

@@ -604,6 +604,13 @@ export default {
   "help.source": "Исходный код",
   "help.version": "VibeWars {release} · сборка {build}",
 
+  "history.back": "Назад",
+  "history.empty": "Матчей пока нет. Здесь хранятся твои последние 50 матчей.",
+  "history.emptyMine": "Нет матчей с твоим текущим ключом игрока.",
+  "history.mine": "Мои матчи",
+  "history.open": "История матчей",
+  "history.title": "История матчей",
+
   "hud.aggression": "агр {ours} – {theirs}",
   "hud.altarPointOurs": "Очко алтаря!",
   "hud.altarPointTheirs": "Очко алтаря у врага",
@@ -1072,6 +1079,9 @@ export default {
   "queue.ascending": "Путь на {map}: через {seconds} с",
   "queue.backToLobbyIn": "В лобби через {seconds} с",
   "queue.backToMenu": "В меню",
+  "queue.backToLobby": "Вернуться в лобби",
+  "queue.countdownStopped": "Отсчёт остановлен",
+  "queue.stopCountdown": "Остановить",
   "queue.backToMenuIn": "В меню через {seconds} с",
   "queue.busy": "Ты в очереди.",
   "queue.characterDeleted": "Персонаж из очереди удалён, поэтому ты вышел из очереди",

@@ -92,6 +92,7 @@ import {
   type KeyValueStore,
 } from "./storage/repository.js";
 import { ReplayStore } from "./storage/replays.js";
+import { MatchHistoryStore } from "./storage/match-history.js";
 import { cloneCharacter } from "./storage/clone-character.js";
 import { missingSkillsNote } from "./storage/gw1-template.js";
 import { characterFromMatch, teamFromMatch } from "./storage/match-team.js";
@@ -146,6 +147,7 @@ import {
   nextAscentWins,
   nextStreak,
   requeuedSince,
+  stoppedEndLine,
   teamEndAction,
   teamEndLine,
   type QueueScreen,
@@ -523,6 +525,8 @@ async function main(): Promise<void> {
     });
   };
   const teams = new TeamRepository(store);
+  // The last ended matches (#3848), for the bar's Match history.
+  const matchHistory = new MatchHistoryStore(store);
   // The first start plays a rolled starter character (#853). Not into
   // memory: it would be gone next start, with the key saying it was rolled.
   if (persistent) {
@@ -623,6 +627,8 @@ async function main(): Promise<void> {
   /** The rail entry last drawn: a guest's mode screen follows its host's (#1526). */
   let drawnEntry: RailEntry = "random-arena";
   let match: MatchView | undefined;
+  /** The mode of the lobby `match` was entered from (#3848), for its Match history line. */
+  let matchMode: LobbyMode | undefined;
   /** The lobby's chat (#479), for as long as the lobby: on its screen, then over its match. */
   let chat: ChatPanel | undefined;
   /**
@@ -747,6 +753,8 @@ async function main(): Promise<void> {
         readonly party: LobbyConnection | undefined;
         /** The Heroes' Ascent round just played (#1996); `null` in other modes. */
         readonly ascentRound: number | null;
+        /** Whether this player's team won: only a team that did not may stop the countdown (#3847). */
+        readonly won: boolean;
         readonly timer: number;
       }
     | undefined;
@@ -981,6 +989,7 @@ async function main(): Promise<void> {
     },
     ownSignet,
     playerKey.pubkey,
+    matchHistory,
   );
   // Once a visit (#3575): the menu's rank and a queue's rating read it.
   leaderboard.onChange(() => {
@@ -2965,6 +2974,29 @@ async function main(): Promise<void> {
    * and its lobby, onto the queue screen's ended view rather than the
    * menu. The queue's place already closed as the match started.
    */
+  /**
+   * Keep the ended match `leaving` in Match history (#3848), read before
+   * it goes, so charts that came after the `ended` are in. A watcher's,
+   * or one left before its end, has no record. Fire and forget.
+   */
+  const keepInHistory = (leaving: MatchView): void => {
+    const record = leaving.record();
+    if (record === undefined || matchMode === undefined) {
+      return;
+    }
+    matchHistory
+      .add({
+        id: crypto.randomUUID(),
+        endedAt: Date.now(),
+        pubkey: playerKey.pubkey,
+        mode: matchMode,
+        ...record,
+      })
+      .catch((error: unknown) => {
+        console.warn("[web] could not keep the match in its history", error);
+      });
+  };
+
   const endQueuedMatch = async (outcome: string, won: boolean): Promise<void> => {
     clearQueuedEnd();
     const leaving = match;
@@ -2976,6 +3008,7 @@ async function main(): Promise<void> {
     // Read before the view goes: the table moves with the player (#1057).
     const summary = leaving.summary();
     const chart = leaving.chart();
+    keepInHistory(leaving);
     await leaving.dispose();
     enteringMatch = false;
     const leavingLobby = lobby;
@@ -3040,6 +3073,7 @@ async function main(): Promise<void> {
     const leaving = match;
     match = undefined;
     hallWatch.resume();
+    keepInHistory(leaving);
     await leaving.dispose();
     leaveScreen();
     enteringMatch = false;
@@ -3095,12 +3129,14 @@ async function main(): Promise<void> {
    * A finished team match counts down to `action` (#1997) over its
    * result: its winners' party queues again, its losers go back to the
    * menu, a coded lobby's players back to it. Its button goes now; a
-   * winner's, without queueing.
+   * winner's, without queueing. A team that did not `won` may stop it
+   * and read the result, then go by the button (#3847).
    */
   const startTeamEnd = (
     action: TeamEndAction,
     party: LobbyConnection | undefined,
     ascentRound: number | null,
+    won: boolean,
   ): void => {
     clearTeamEnd();
     teamEnd = {
@@ -3108,6 +3144,7 @@ async function main(): Promise<void> {
       endsAt: Date.now() + TEAM_RESULT_SECONDS * 1000,
       party,
       ascentRound,
+      won,
       timer: window.setInterval(tickTeamEnd, 250),
     };
     tickTeamEnd();
@@ -3124,19 +3161,50 @@ async function main(): Promise<void> {
     }
     const seconds = Math.ceil((current.endsAt - Date.now()) / 1000);
     if (seconds <= 0) {
+      // Cleared first, so a Stop pressed in this last tick finds nothing (#3847).
+      clearTeamEnd();
       void endTeamMatch(current);
       return;
     }
+    const line = teamEndLine(
+      current.action,
+      seconds,
+      current.ascentRound,
+      current.party?.getSnapshot().teamKept ?? null,
+      current.won,
+    );
+    const { action } = current;
     match?.setEndLine({
-      ...teamEndLine(
-        current.action,
-        seconds,
-        current.ascentRound,
-        current.party?.getSnapshot().teamKept ?? null,
-      ),
+      text: line.text,
+      button: line.button,
       onPress: () => {
         void exitMatch();
       },
+      stop:
+        line.stop === undefined || action === "requeue"
+          ? undefined
+          : {
+              button: line.stop,
+              onPress: () => {
+                stopTeamEnd(action);
+              },
+            },
+    });
+  };
+
+  /** Stop this player's countdown (#3847): the line stays until its button, or Leave. */
+  const stopTeamEnd = (action: "menu" | "lobby"): void => {
+    const current = teamEnd;
+    if (current === undefined) {
+      return;
+    }
+    clearTeamEnd();
+    match?.setEndLine({
+      ...stoppedEndLine(action),
+      onPress: () => {
+        void endTeamMatch(current);
+      },
+      stop: undefined,
     });
   };
 
@@ -3168,6 +3236,7 @@ async function main(): Promise<void> {
     }
     enteringMatch = true;
     matchFinished = false;
+    matchMode = undefined;
     stopShare();
     lobbyNotice = undefined;
     showViewport(true);
@@ -3219,6 +3288,7 @@ async function main(): Promise<void> {
     }
     enteringMatch = true;
     matchFinished = false;
+    matchMode = from.getSnapshot().mode;
     // The menu quest's closing line goes as its match is found (#3544).
     menuQuest?.stop();
     menuQuest = undefined;
@@ -3258,7 +3328,7 @@ async function main(): Promise<void> {
             if (finished.clearSeconds !== undefined) {
               // The Elite Zaishen Battle (#2692): the boost starts the run, or the wipe ends it.
               ascentMorale = won ? zaishenMoraleBoost(finished.clearSeconds) : 0;
-              startTeamEnd(won ? "requeue" : "lobby", lobby, null);
+              startTeamEnd(won ? "requeue" : "lobby", lobby, null, won);
               return;
             }
             if (queue === undefined) {
@@ -3292,6 +3362,7 @@ async function main(): Promise<void> {
                 teamEndAction(won, team !== undefined),
                 team?.party,
                 team?.playedRound ?? null,
+                won,
               );
               return;
             }

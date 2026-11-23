@@ -506,6 +506,13 @@ export default {
   "help.source": "소스 코드",
   "help.version": "VibeWars {release} · 빌드 {build}",
 
+  "history.back": "뒤로",
+  "history.empty": "아직 경기가 없습니다. 최근 50경기가 여기에 보관됩니다.",
+  "history.emptyMine": "현재 플레이어 키로 치른 경기가 없습니다.",
+  "history.mine": "내 경기",
+  "history.open": "경기 기록",
+  "history.title": "경기 기록",
+
   "hud.aggression": "공세 {ours} : {theirs}",
   "hud.altarPointOurs": "제단 점수!",
   "hud.altarPointTheirs": "적 제단 점수",
@@ -933,6 +940,9 @@ export default {
   "queue.ascending": "{seconds}초 후 {map}(으)로 승천",
   "queue.backToLobbyIn": "{seconds}초 후 로비로",
   "queue.backToMenu": "메뉴로",
+  "queue.backToLobby": "로비로 돌아가기",
+  "queue.countdownStopped": "카운트다운 정지됨",
+  "queue.stopCountdown": "정지",
   "queue.backToMenuIn": "{seconds}초 후 메뉴로",
   "queue.busy": "대기열에 있어요.",
   "queue.characterDeleted": "대기 중인 캐릭터가 삭제되어 대기열에서 나갔어요",

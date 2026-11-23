@@ -96,6 +96,8 @@ gösterir: ne olduğunu okumak için birinin üzerine gel ya da Tab ile ona git.
 grafikler skorların altında durur; skorlar **Tümünü göster** basılana kadar
 seni ve iki kişiyi daha gösterir.
 
+Üst çubuktaki **Maç geçmişi** son 50 maçını en yenisi önce olmak üzere listeler: skorlarını ve grafiklerini yeniden görmek için birini aç. Yalnızca bu tarayıcıda saklanırlar. **Maçlarım** yalnızca mevcut oyuncu anahtarınla oynadıklarını gösterir.
+
 ## Maç kur ya da katıl
 
 Her zaman bir lobidesin: sayfa açıldığı andan itibaren kendine ait bir

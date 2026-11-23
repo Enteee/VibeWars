@@ -97,6 +97,8 @@ Tabilla lukeaksesi, mitä tapahtui. Paina selitteen kohtaa piilottaaksesi tai
 näyttääksesi sen viivan. Puhelimessa kaaviot ovat pisteiden alla, ja pisteet
 näyttävät sinut ja kaksi muuta, kunnes painat **Näytä kaikki**.
 
+Yläpalkin **Otteluhistoria** näyttää viimeiset 50 otteluasi uusin ensin: avaa yksi nähdäksesi sen pisteet ja kaaviot uudelleen. Ne säilyvät vain tässä selaimessa. **Omat ottelut** näyttää vain ne, jotka pelasit nykyisellä pelaaja-avaimellasi.
+
 ## Isännöi ottelu tai liity siihen
 
 Olet aina aulassa: siitä hetkestä, kun sivu avautuu, se isännöi omaa

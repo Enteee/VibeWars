@@ -508,6 +508,13 @@ export default {
   "help.source": "Kode sumber",
   "help.version": "VibeWars {release} · build {build}",
 
+  "history.back": "Kembali",
+  "history.empty": "Belum ada pertandingan. 50 pertandingan terakhirmu disimpan di sini.",
+  "history.emptyMine": "Tidak ada pertandingan dengan kunci pemainmu saat ini.",
+  "history.mine": "Pertandinganku",
+  "history.open": "Riwayat pertandingan",
+  "history.title": "Riwayat pertandingan",
+
   "hud.aggression": "agr {ours} vs {theirs}",
   "hud.altarPointOurs": "Poin altar!",
   "hud.altarPointTheirs": "Poin altar musuh",
@@ -938,6 +945,9 @@ export default {
   "queue.ascending": "Mendaki ke {map} dalam {seconds} s",
   "queue.backToLobbyIn": "Kembali ke lobi dalam {seconds} s",
   "queue.backToMenu": "Ke menu",
+  "queue.backToLobby": "Kembali ke lobi",
+  "queue.countdownStopped": "Hitung mundur dihentikan",
+  "queue.stopCountdown": "Hentikan",
   "queue.backToMenuIn": "Ke menu dalam {seconds} s",
   "queue.busy": "Kamu sedang dalam antrean.",
   "queue.characterDeleted": "Karakter antreanmu dihapus, jadi kamu keluar dari antrean",

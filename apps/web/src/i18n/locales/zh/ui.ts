@@ -500,6 +500,13 @@ export default {
   "help.source": "源代码",
   "help.version": "VibeWars {release} · 构建 {build}",
 
+  "history.back": "返回",
+  "history.empty": "还没有比赛。这里会保存你最近的 50 场比赛。",
+  "history.emptyMine": "没有使用你当前玩家密钥的比赛。",
+  "history.mine": "我的比赛",
+  "history.open": "比赛记录",
+  "history.title": "比赛记录",
+
   "hud.aggression": "攻势 {ours} : {theirs}",
   "hud.altarPointOurs": "祭坛得分！",
   "hud.altarPointTheirs": "敌方祭坛得分",
@@ -926,6 +933,9 @@ export default {
   "queue.ascending": "{seconds} 秒后前往 {map}",
   "queue.backToLobbyIn": "{seconds} 秒后返回大厅",
   "queue.backToMenu": "返回菜单",
+  "queue.backToLobby": "返回大厅",
+  "queue.countdownStopped": "倒计时已停止",
+  "queue.stopCountdown": "停止",
   "queue.backToMenuIn": "{seconds} 秒后返回菜单",
   "queue.busy": "你正在排队中。",
   "queue.characterDeleted": "排队中的角色已被删除，你已退出队列",

@@ -586,6 +586,13 @@ export default {
   "help.source": "Izvorni kôd",
   "help.version": "VibeWars {release} · verzija {build}",
 
+  "history.back": "Natrag",
+  "history.empty": "Još nema mečeva. Ovdje se čuva tvojih zadnjih 50 mečeva.",
+  "history.emptyMine": "Nema mečeva s tvojim trenutnim ključem igrača.",
+  "history.mine": "Moji mečevi",
+  "history.open": "Povijest mečeva",
+  "history.title": "Povijest mečeva",
+
   "hud.aggression": "agr {ours} : {theirs}",
   "hud.altarPointOurs": "Bod na oltaru!",
   "hud.altarPointTheirs": "Neprijateljski bod na oltaru",
@@ -1038,6 +1045,9 @@ export default {
   "queue.ascending": "Uspon na {map} za {seconds} s",
   "queue.backToLobbyIn": "Natrag u sobu za {seconds} s",
   "queue.backToMenu": "U izbornik",
+  "queue.backToLobby": "Natrag u predvorje",
+  "queue.countdownStopped": "Odbrojavanje zaustavljeno",
+  "queue.stopCountdown": "Zaustavi",
   "queue.backToMenuIn": "Natrag u izbornik za {seconds} s",
   "queue.busy": "U redu si.",
   "queue.characterDeleted": "Tvoj lik u redu je obrisan pa si izašao iz reda",

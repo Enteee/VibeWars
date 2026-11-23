@@ -364,6 +364,7 @@ yeniden sıraya girer, kaybedenler (beraberlik de) menüye döner; kodla
 kurulan bir lobinin maçı herkesi lobiye döndürür. Sonucun altındaki bir
 düğme beklemeyi atlar ya da, kazananlar için, sıraya girmeden ayrılır.
 Takım Arenası'nın kazananları bir sonraki maç için takım buildlerini ve her oyuncunun yerini takım lobisi olmadan korur; meğer ki grup o zamandan beri değişmiş olsun: biri ayrıldı, uzaklaştı ya da katıldı. O zaman takımlarını yeniden seçerler.
+Takımın kazanmadıysa, Durdur bu geri sayımı durdurur, böylece sonucu okuyabilirsin; hazır olduğunda düğme seni devam ettirir.
 
 ## Kahramanların Yükselişi
 

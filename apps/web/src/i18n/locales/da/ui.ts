@@ -550,6 +550,13 @@ export default {
   "help.source": "Kildekode",
   "help.version": "VibeWars {release} · build {build}",
 
+  "history.back": "Tilbage",
+  "history.empty": "Ingen kampe endnu. Dine seneste 50 kampe gemmes her.",
+  "history.emptyMine": "Ingen kampe med din nuværende spillernøgle.",
+  "history.mine": "Mine kampe",
+  "history.open": "Kamphistorik",
+  "history.title": "Kamphistorik",
+
   "hud.aggression": "agg {ours} v {theirs}",
   "hud.altarPointOurs": "Alterpoint!",
   "hud.altarPointTheirs": "Fjendens alterpoint",
@@ -981,6 +988,9 @@ export default {
   "queue.ascending": "Stiger op til {map} om {seconds} s",
   "queue.backToLobbyIn": "Tilbage til lobbyen om {seconds} s",
   "queue.backToMenu": "Til menuen",
+  "queue.backToLobby": "Til lobbyen",
+  "queue.countdownStopped": "Nedtælling stoppet",
+  "queue.stopCountdown": "Stop",
   "queue.backToMenuIn": "Tilbage til menuen om {seconds} s",
   "queue.busy": "Du står i kø.",
   "queue.characterDeleted": "Din figur i køen blev slettet, så du forlod køen",

@@ -362,6 +362,7 @@ voltam ao menu; a partida de uma sala por código devolve todos à sala. Um
 botão sob o resultado pula a espera ou, para os vencedores, sai sem entrar
 na fila.
 Os vencedores da Arena de Equipes mantêm o build de equipe e o lugar de cada jogador para a partida seguinte, sem sala de equipe, a não ser que o grupo tenha mudado nesse meio-tempo: alguém saiu, está ausente ou entrou. Nesse caso, escolhem a equipe de novo.
+Se a tua equipa não ganhou, Parar suspende essa contagem para leres o resultado; depois o botão leva-te em frente quando estiveres pronto.
 
 ## Ascensão dos Heróis
 

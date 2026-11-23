@@ -95,6 +95,8 @@ untuk membaca apa yang terjadi. Tekan entri legenda untuk menyembunyikan atau
 menampilkan garisnya. Di ponsel grafik ada di bawah skor, yang menampilkan kamu
 dan dua orang lain sampai **Tampilkan semua**.
 
+**Riwayat pertandingan** di bilah atas menampilkan 50 pertandingan terakhirmu, yang terbaru dulu: buka salah satu untuk melihat lagi skor dan grafiknya. Semuanya hanya disimpan di peramban ini. **Pertandinganku** hanya menampilkan yang dimainkan dengan kunci pemainmu saat ini.
+
 ## Menjadi host atau bergabung ke laga
 
 Kamu selalu berada di sebuah lobi: sejak halaman dibuka, kamu menjadi host

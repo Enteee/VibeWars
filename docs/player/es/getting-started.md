@@ -96,6 +96,8 @@ una entrada de la leyenda para ocultar o mostrar su línea. En el móvil los
 gráficos quedan bajo las puntuaciones, que te muestran a ti y a otros dos hasta
 que pulses **Mostrar todo**.
 
+**Historial de partidas**, en la barra superior, muestra tus últimas 50 partidas, de la más nueva a la más antigua: abre una para ver de nuevo sus puntuaciones y gráficos. Solo se guardan en este navegador. **Mis partidas** muestra solo las que jugaste con tu clave de jugador actual.
+
 ## Alojar o unirse a una partida
 
 Siempre estás en una sala: desde que se abre la página aloja una propia. La

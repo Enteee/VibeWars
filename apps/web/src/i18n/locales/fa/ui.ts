@@ -551,6 +551,13 @@ export default {
   "help.source": "کد منبع",
   "help.version": "VibeWars {release} · بیلد {build}",
 
+  "history.back": "بازگشت",
+  "history.empty": "هنوز مسابقه‌ای نیست. ۵۰ مسابقهٔ آخر شما اینجا نگه داشته می‌شود.",
+  "history.emptyMine": "مسابقه‌ای با کلید بازیکن فعلی شما نیست.",
+  "history.mine": "مسابقه‌های من",
+  "history.open": "تاریخچهٔ مسابقه‌ها",
+  "history.title": "تاریخچهٔ مسابقه‌ها",
+
   "hud.aggression": "تهاجم {ours} مقابل {theirs}",
   "hud.altarPointOurs": "امتیاز محراب!",
   "hud.altarPointTheirs": "امتیاز محراب دشمن",
@@ -986,6 +993,9 @@ export default {
   "queue.ascending": "عروج به {map} تا {seconds} ثانیه دیگر",
   "queue.backToLobbyIn": "بازگشت به لابی تا {seconds} ثانیه دیگر",
   "queue.backToMenu": "بازگشت به منو",
+  "queue.backToLobby": "بازگشت به لابی",
+  "queue.countdownStopped": "شمارش معکوس متوقف شد",
+  "queue.stopCountdown": "توقف",
   "queue.backToMenuIn": "بازگشت به منو تا {seconds} ثانیه دیگر",
   "queue.busy": "در صف هستی.",
   "queue.characterDeleted": "شخصیت داخل صف حذف شد، پس از صف خارج شدی",

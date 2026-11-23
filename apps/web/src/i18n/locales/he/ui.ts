@@ -582,6 +582,13 @@ export default {
   "help.source": "קוד מקור",
   "help.version": "VibeWars {release} · בנייה {build}",
 
+  "history.back": "חזרה",
+  "history.empty": "אין עדיין משחקים. 50 המשחקים האחרונים שלך נשמרים כאן.",
+  "history.emptyMine": "אין משחקים עם מפתח השחקן הנוכחי שלך.",
+  "history.mine": "המשחקים שלי",
+  "history.open": "היסטוריית משחקים",
+  "history.title": "היסטוריית משחקים",
+
   "hud.aggression": "תוק׳ {ours} מול {theirs}",
   "hud.altarPointOurs": "נקודת מזבח!",
   "hud.altarPointTheirs": "נקודת מזבח לאויב",
@@ -1041,6 +1048,9 @@ export default {
   "queue.ascending": "עולה אל {map} בעוד {seconds} שנ׳",
   "queue.backToLobbyIn": "חזרה ללובי בעוד {seconds} שנ׳",
   "queue.backToMenu": "חזרה לתפריט",
+  "queue.backToLobby": "חזרה ללובי",
+  "queue.countdownStopped": "הספירה לאחור נעצרה",
+  "queue.stopCountdown": "עצור",
   "queue.backToMenuIn": "חזרה לתפריט בעוד {seconds} שנ׳",
   "queue.busy": "אתה בתור.",
   "queue.characterDeleted": "הדמות שלך בתור נמחקה, ולכן יצאת מהתור",

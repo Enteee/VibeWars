@@ -345,6 +345,7 @@ Nakon timskog meča iz reda pobjednici se sami vraćaju u red nakon
 sobe s kôdom vraća sve u sobu. Gumb ispod rezultata
 preskače čekanje ili, za pobjednike, izlazi bez ulaska u red.
 Pobjednici Timske arene zadržavaju svoj timski build i mjesto svakog igrača za sljedeći meč, bez timskog predvorja, osim ako se skupina u međuvremenu promijenila: netko je otišao, odsutan je ili se pridružio. Tada ponovno biraju tim.
+Ako tvoj tim nije pobijedio, Zaustavi zaustavlja to odbrojavanje da možeš pročitati rezultat; gumb te zatim vodi dalje kad budeš spreman.
 
 ## Uspon heroja
 

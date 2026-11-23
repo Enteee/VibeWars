@@ -587,6 +587,13 @@ export default {
   "help.source": "Codice sorgente",
   "help.version": "VibeWars {release} · build {build}",
 
+  "history.back": "Indietro",
+  "history.empty": "Nessuna partita finora. Qui sono conservate le tue ultime 50 partite.",
+  "history.emptyMine": "Nessuna partita con la tua chiave giocatore attuale.",
+  "history.mine": "Le mie partite",
+  "history.open": "Cronologia partite",
+  "history.title": "Cronologia partite",
+
   "hud.aggression": "agg {ours} v {theirs}",
   "hud.altarPointOurs": "Punto altare!",
   "hud.altarPointTheirs": "Punto altare nemico",
@@ -1037,6 +1044,9 @@ export default {
   "queue.ascending": "Ascesa a {map} tra {seconds} s",
   "queue.backToLobbyIn": "Ritorno alla lobby tra {seconds} s",
   "queue.backToMenu": "Torna al menu",
+  "queue.backToLobby": "Torna alla lobby",
+  "queue.countdownStopped": "Conto alla rovescia fermato",
+  "queue.stopCountdown": "Ferma",
   "queue.backToMenuIn": "Ritorno al menu tra {seconds} s",
   "queue.busy": "Sei in coda.",
   "queue.characterDeleted":
