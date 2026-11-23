@@ -301,12 +301,17 @@ const FOG_RINGS = 4;
 const FOG_DRIFT_SECONDS = 11;
 /** World units a fog puff wanders from its place. */
 const FOG_DRIFT = 7;
+/** The widest a fog puff spreads, in world units from its middle (#3885). */
+const FOG_PUFF_REACH = 160;
+/** A fog puff lies flat: its height, against its width (#3885). */
+const FOG_PUFF_FLAT = 0.5;
 
-/** One puff of a fog bank, at rest. */
+/** One puff of a fog bank, at rest: a flat ellipse, `radiusX` across and `radiusY` up. */
 export interface FogPuff {
   readonly x: number;
   readonly y: number;
-  readonly radius: number;
+  readonly radiusX: number;
+  readonly radiusY: number;
   readonly alpha: number;
   readonly phase: number;
 }
@@ -317,7 +322,14 @@ export interface FogArt {
   readonly puffs: readonly FogPuff[];
 }
 
-/** `bank`'s puffs, the `index`th on its map: about one per 1200 square units, 3 to 24. */
+/**
+ * `bank`'s puffs, the `index`th on its map. Their size goes with the
+ * bank's (#3885): each a third of its narrower side across, up to
+ * FOG_PUFF_REACH, and wholly inside its box, so a big bank is a handful
+ * of wide flat puffs rather than rows of small discs. About one per four
+ * of a puff's squared radius, and never more than one per 1200 square
+ * units: 3 to 24.
+ */
 export function fogArtOf(bank: FogBank, index: number): FogArt {
   const outline = shapeOutline(bank.area);
   const xs = outline.map((corner) => corner.x);
@@ -327,14 +339,24 @@ export function fogArtOf(bank: FogBank, index: number): FogArt {
   const width = Math.max(...xs) - left;
   const height = Math.max(...ys) - top;
   const random = seeded((index + 1) * 104729 + Math.round(left) * 31 + Math.round(top));
-  const count = Math.max(3, Math.min(24, Math.round((width * height) / 1200)));
+  const reach = Math.min(Math.min(width, height) / 3, FOG_PUFF_REACH);
+  const count = Math.max(
+    3,
+    Math.min(24, Math.round((width * height) / Math.max(4 * reach * reach, 1200))),
+  );
   const puffs: FogPuff[] = [];
   for (let tries = 0; puffs.length < count && tries < count * 20; tries += 1) {
-    const at = { x: left + random() * width, y: top + random() * height };
+    const radiusX = reach * (0.8 + random() * 0.2);
+    const radiusY = radiusX * FOG_PUFF_FLAT;
+    const at = {
+      x: left + radiusX + random() * (width - 2 * radiusX),
+      y: top + radiusY + random() * (height - 2 * radiusY),
+    };
     if (pointInPolygon(at, outline)) {
       puffs.push({
         ...at,
-        radius: Math.min(14 + random() * 14, width / 2, height / 2) + 8,
+        radiusX,
+        radiusY,
         alpha: 0.18 + random() * 0.08,
         phase: random() * Math.PI * 2,
       });
@@ -364,7 +386,7 @@ export interface AtmospherePainter {
 }
 
 /**
- * A fog bank `lift` world units up: each puff a soft disc with a paler
+ * A fog bank `lift` world units up: each puff a soft flat ellipse with a paler
  * crown up and to the left, where the sky lights it, so the bank reads as
  * haze with body rather than a flat tint. A puff wholly outside `view`
  * is not drawn (#3240): a bank spans the map, the camera a part of it.
@@ -382,20 +404,26 @@ export function paintFog(
     const at = fogPuffAt(puff, now, reducedMotion);
     const y = at.y - lift;
     if (
-      at.x + puff.radius < view.left ||
-      at.x - puff.radius > view.right ||
-      y + puff.radius < view.top ||
-      y - puff.radius > view.bottom
+      at.x + puff.radiusX < view.left ||
+      at.x - puff.radiusX > view.right ||
+      y + puff.radiusY < view.top ||
+      y - puff.radiusY > view.bottom
     ) {
       continue;
     }
     // Rings shrinking inward: the puff is densest at its heart, its edge melts away.
     for (let ring = 0; ring < FOG_RINGS; ring += 1) {
+      const scale = 2 * (1 - ring * 0.2);
       painter.fillStyle(tint.body, puff.alpha / FOG_RINGS);
-      painter.fillCircle(at.x, y, puff.radius * (1 - ring * 0.2));
+      painter.fillEllipse(at.x, y, puff.radiusX * scale, puff.radiusY * scale);
     }
     painter.fillStyle(tint.crown, puff.alpha * 0.3);
-    painter.fillCircle(at.x - puff.radius * 0.2, y - puff.radius * 0.25, puff.radius * 0.45);
+    painter.fillEllipse(
+      at.x - puff.radiusX * 0.2,
+      y - puff.radiusY * 0.25,
+      puff.radiusX * 0.9,
+      puff.radiusY * 0.9,
+    );
   }
 }
 

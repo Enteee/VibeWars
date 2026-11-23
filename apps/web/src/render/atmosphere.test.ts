@@ -12,6 +12,7 @@ import {
   paintParticle,
   paintShaft,
   type AtmospherePainter,
+  type FogBank,
   type Particle,
 } from "./atmosphere.js";
 
@@ -112,6 +113,44 @@ describe("fog banks (#3032)", () => {
       expect(puff.alpha).toBeLessThanOrEqual(0.26);
     }
     expect(fogArtOf(bank, 0)).toEqual(art);
+  });
+
+  /** A bank over the rectangle `width` by `height` at the origin. */
+  function rectBank(width: number, height: number): FogBank {
+    return {
+      layer: 0,
+      area: {
+        kind: "polygon",
+        points: [
+          { x: 0, y: 0 },
+          { x: width, y: 0 },
+          { x: width, y: height },
+          { x: 0, y: height },
+        ],
+      },
+    };
+  }
+
+  it("a big bank is a handful of wide, flat puffs, not rows of small discs (#3885)", () => {
+    const { puffs } = fogArtOf(rectBank(1100, 400), 0);
+    expect(puffs.length).toBeGreaterThanOrEqual(3);
+    expect(puffs.length).toBeLessThanOrEqual(8);
+    for (const puff of puffs) {
+      expect(puff.radiusX).toBeGreaterThan(60);
+      expect(puff.radiusY).toBeLessThan(puff.radiusX);
+      expect(puff.alpha).toBeLessThanOrEqual(0.3);
+    }
+  });
+
+  it("a small bank still has three puffs, each wholly inside it (#3885)", () => {
+    const { puffs } = fogArtOf(rectBank(120, 120), 0);
+    expect(puffs.length).toBeGreaterThanOrEqual(3);
+    for (const puff of puffs) {
+      expect(puff.x - puff.radiusX).toBeGreaterThanOrEqual(0);
+      expect(puff.x + puff.radiusX).toBeLessThanOrEqual(120);
+      expect(puff.y - puff.radiusY).toBeGreaterThanOrEqual(0);
+      expect(puff.y + puff.radiusY).toBeLessThanOrEqual(120);
+    }
   });
 
   it("drifts, and holds still under reduced motion", () => {
