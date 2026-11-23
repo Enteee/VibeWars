@@ -5211,6 +5211,12 @@ body:has(> .splash) #menu-background::after {
   max-width: 100%;
 }
 
+/* Once the summary is up nothing is cast: your effects, bars and skill bar
+   would only draw over the charts. Hidden in place, so nothing else moves. */
+.hud.is-ended .hud-column {
+  visibility: hidden;
+}
+
 /* Over the arena and the HUD while a guest reconnects (#602); it takes no
    clicks, so the leave control under it still works. */
 .reconnect-overlay {

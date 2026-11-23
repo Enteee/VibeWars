@@ -1177,6 +1177,8 @@ export async function startMatchView(
       );
       const panel = renderSummary(hud.end, tables);
       panel.classList.add("hud-summary");
+      // Nothing is cast any more, and the summary reaches down to the bar (#3790).
+      hud.root.classList.add("is-ended");
       summary = { tables, panel, charts: false };
     }
     // Training sends none, and a host may never send it: then the table stays alone.

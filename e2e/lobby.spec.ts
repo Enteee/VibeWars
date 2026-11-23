@@ -569,6 +569,9 @@ test("a hosted match's end panel shows its charts under the scores, not only the
     await expect(charts.getByRole("tab", { name: "You" })).toBeEnabled();
     await expect(charts.locator(".match-charts-chip").first()).toBeVisible();
     await expect(charts.locator(".match-charts-none")).toHaveCount(0);
+    // Nothing is cast any more: your bars and skill bar do not draw over the charts.
+    await expect(host.locator(".hud-bar-health")).toBeHidden();
+    await expect(host.locator(".hud-skill-row")).toBeHidden();
   } finally {
     await context.close();
   }

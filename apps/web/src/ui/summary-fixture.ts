@@ -32,6 +32,7 @@ export function mountSummaryFixture(parent: HTMLElement): void {
   const tables = summaryTables(FIXTURE, "p0-0", 0, 1, bots);
   const summary = renderSummary(hud.end, tables);
   summary.classList.add("hud-summary");
+  hud.root.classList.add("is-ended");
   // As the match's own end panel mounts them once the chart lands (#3790).
   renderMatchCharts(summary, fixtureChart(), chartRoster(tables));
 }
