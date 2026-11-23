@@ -153,9 +153,20 @@ async function takeTheArm(
   arm: readonly { x: number; y: number }[],
 ): Promise<void> {
   const mark = arm[1] ?? AT_THE_REJOIN;
+  const canvas = page.locator("#viewport canvas:not(.compass)");
   await expect(async () => {
-    const view = await projection(stage, page.locator("#viewport canvas:not(.compass)"));
-    const at = view.onPage(mark);
+    const view = await projection(stage, canvas);
+    const box = await canvas.boundingBox();
+    // The ping goes where the arm is seen from the fork: on its way to
+    // the mark, past halfway, no further than a third of the view off
+    // its middle, clear of the skill bar below.
+    const reach = (box?.height ?? 0) / 3 / view.zoom / Math.abs(mark.y - AT_THE_FORK.y);
+    const along = Math.min(1, reach);
+    expect(along).toBeGreaterThan(0.55);
+    const at = view.onPage({
+      x: AT_THE_FORK.x + (mark.x - AT_THE_FORK.x) * along,
+      y: AT_THE_FORK.y + (mark.y - AT_THE_FORK.y) * along,
+    });
     await page.mouse.click(at.x, at.y, { button: "middle" });
     // Once an arm is called, the rejoin is marked.
     await expect(frame).toHaveAttribute(
