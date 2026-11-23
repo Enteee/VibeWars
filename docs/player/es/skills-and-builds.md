@@ -219,3 +219,10 @@ un equipo sin problemas se puede proponer en una Sala de equipo: una carta dice
 nombre**. Tu primer inicio te da un equipo ya hecho del tamaño elegido, 4v4 si
 no lo cambiaste, marcado **Aleatorio**: su **Cambiar** pone otro, y **Clonar**
 te da una copia para editar.
+Cada build de equipo tiene un tamaño, 2v2, 4v4 u 8v8 (no hay builds de equipo
+de 1v1): el **Tamaño del equipo** de la barra lateral. Creador de equipos
+muestra las builds de equipo del tamaño elegido ahí, y **Nueva build** crea una
+de ese tamaño. El **Tamaño del equipo** de su editor lo cambia: un tamaño menor
+quita los últimos miembros, uno mayor añade miembros en blanco, y Guardar lleva
+la barra lateral al tamaño con el que se guardó. Un equipo pegado conserva su
+tamaño, y la barra lateral cambia a él.

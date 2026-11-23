@@ -207,3 +207,10 @@ a drużyna bez nazwy widnieje jako **Drużyna bez nazwy**.
 Pierwsze uruchomienie losuje jedną gotową drużynę w wybranym rozmiarze, 4v4, chyba że
 go zmienisz, oznaczoną **Losowo**: jej **Losuj** podmienia ją na inną, a **Klonuj** daje
 ci kopię do edycji.
+Każdy build drużyny ma rozmiar, 2v2, 4v4 lub 8v8 (nie ma buildów drużyn 1v1):
+**Rozmiar drużyny** na pasku bocznym. Kreator drużyn wymienia buildy drużyn
+wybranego tam rozmiaru, a **Nowy build drużyny** tworzy jeden tego rozmiaru.
+**Rozmiar drużyny** w jego edytorze go zmienia: mniejszy rozmiar usuwa ostatnich
+członków, większy dodaje pustych, a Zapisz przełącza pasek boczny na rozmiar,
+z jakim go zapisano. Wklejona drużyna zachowuje swój rozmiar, a pasek boczny
+przełącza się na niego.

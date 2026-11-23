@@ -211,3 +211,10 @@ juca** și motivul, iar o echipă fără nume apare ca **Echipă fără nume**. 
 tău start generează o echipă gata făcută la mărimea aleasă, 4v4 dacă nu ai
 schimbat-o, marcată **Aleator**: **Altul** de pe ea o înlocuiește cu alta, iar
 **Clonează** îți dă o copie de editat.
+Fiecare build de echipă are o mărime, 2v2, 4v4 sau 8v8 (nu există builduri de
+echipă 1v1): **Mărime echipă** din bara laterală. Constructor de echipe listează
+buildurile de echipă de mărimea aleasă acolo, iar **Build de echipă nou** creează
+unul de acea mărime. **Mărime echipă** din editorul lui o schimbă: o mărime mai
+mică scoate ultimii membri, una mai mare adaugă membri goi, iar Salvează mută
+bara laterală la mărimea cu care a fost salvat. O echipă lipită își păstrează
+mărimea, iar bara laterală trece la ea.

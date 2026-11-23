@@ -217,3 +217,9 @@ bez názvu sa zobrazuje ako **Tím bez názvu**.
 Tvoje prvé spustenie vylosuje jeden hotový tím vo vybranej veľkosti, 4v4, ak si ju
 nezmenil, označený **Náhodná**: jeho
 **Znova** dosadí iný a **Klonovať** ti dá kópiu na úpravu.
+Každý tímový build má veľkosť, 2v2, 4v4 alebo 8v8 (tímové buildy 1v1 neexistujú): **Veľkosť tímu** v
+bočnej lište. **Tvorba tímov** zobrazuje tímové buildy veľkosti, ktorá je tam
+vybraná, a **Nový tímový build** vytvorí jeden tej veľkosti. **Veľkosť tímu** v
+jeho editore ju mení: menšia veľkosť odoberie posledných členov, väčšia pridá
+prázdnych a Uložiť prepne bočnú lištu na veľkosť, s akou bol uložený. Vložený
+tím si ponechá svoju veľkosť a bočná lišta sa naň prepne.

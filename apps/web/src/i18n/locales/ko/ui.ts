@@ -1289,7 +1289,6 @@ export default {
   "teamEditor.share": "공유",
   "teamEditor.shareLabel": "공유할 팀",
   "teamEditor.shareTitle": "이 팀을 한 줄로 공유",
-  "teamEditor.sizeFixed": "팀 빌드의 규모는 고정이에요: 다른 규모는 새로 만드세요",
   "teamEditor.sizeLabel": "팀 규모",
   "teamEditor.teamName": "팀 이름",
   "teamEditor.teamNameLabel": "팀 이름",
@@ -1565,8 +1564,10 @@ export default {
   "tutorial.menu.team.members":
     "팀은 항상 규모만큼 멤버가 있습니다. 멤버를 추가하지 않고, 교체합니다.",
   "tutorial.menu.team.memberBack": "그 멤버의 빌드입니다. 뒤로를 눌러 팀으로 돌아가세요.",
-  "tutorial.menu.team.new": "팀 규모를 2v2로 정한 뒤, 새 팀 빌드를 만드세요.",
+  "tutorial.menu.team.new": "이제 새 팀 빌드를 만드세요.",
   "tutorial.menu.team.newDone": "2인 팀 시작하기",
+  "tutorial.menu.team.size": "팀 규모를 2v2로 정하세요.",
+  "tutorial.menu.team.sizeDone": "팀 규모는 2v2",
   "tutorial.menu.team.open": "팀 빌드가 있는 팀을 여세요.",
   "tutorial.menu.team.openDone": "팀 열기",
   "tutorial.menu.team.problems":

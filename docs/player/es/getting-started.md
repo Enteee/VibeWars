@@ -63,6 +63,8 @@ lugar. Los equipos ya hechos son las builds de equipo PvP bien valoradas de la
 wiki de PvX; un tamaño del que PvX no tiene ninguna recibe builds individuales
 de PvX combinadas. **Clonar** guarda una copia del equipo mostrado como tu
 propia build de equipo y la abre, para que la cambies como quieras.
+El tamaño de una build de equipo cambia en su editor: un tamaño menor quita los
+últimos miembros y uno mayor añade miembros en blanco.
 
 ## Juega una Arena aleatoria
 

@@ -66,6 +66,8 @@ tesz a helyére. A kész csapatok a PvX wiki jól értékelt PvP
 csapatbuildjei; az a méret, amelyből a PvX-en nincs, összerakott PvX
 szólóbuildeket kap. A **Klón** a megjelenített csapat egy másolatát a
 saját Csapatbuildedként menti, és megnyitja, hogy kedvedre módosítsd.
+A Csapatbuild mérete a szerkesztőjében változtatható: kisebb méret
+elhagyja az utolsó tagokat, nagyobb üreseket ad hozzá.
 
 ## Játssz egy Véletlen Arénát
 

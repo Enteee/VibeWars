@@ -1376,7 +1376,6 @@ export default {
   "teamEditor.share": "Jaa",
   "teamEditor.shareLabel": "jaettava tiimi",
   "teamEditor.shareTitle": "jaa tämä tiimi yhtenä rivinä",
-  "teamEditor.sizeFixed": "Tiimibuildin koko on kiinteä: luo uusi toista kokoa varten",
   "teamEditor.sizeLabel": "Tiimin koko",
   "teamEditor.teamName": "Tiimin nimi",
   "teamEditor.teamNameLabel": "tiimin nimi",
@@ -1669,8 +1668,10 @@ export default {
     "Tiimissä on aina yhtä monta jäsentä kuin sen koko. Et koskaan lisää jäsentä: vaihdat yhden.",
   "tutorial.menu.team.memberBack":
     "Tämä on sen jäsenen build. Palaa joukkueeseesi painamalla Takaisin.",
-  "tutorial.menu.team.new": "Aseta tiimin kooksi 2v2 ja tee sitten uusi tiimibuildi.",
+  "tutorial.menu.team.new": "Tee nyt uusi tiimibuildi.",
   "tutorial.menu.team.newDone": "Aloita 2 hengen tiimi",
+  "tutorial.menu.team.size": "Aseta tiimin kooksi 2v2.",
+  "tutorial.menu.team.sizeDone": "Tiimin koko on 2v2",
   "tutorial.menu.team.open": "Avaa Tiimit, jossa tiimibuildisi ovat.",
   "tutorial.menu.team.openDone": "Avaa Tiimit",
   "tutorial.menu.team.problems":

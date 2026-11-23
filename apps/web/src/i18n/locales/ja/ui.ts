@@ -1303,7 +1303,6 @@ export default {
   "teamEditor.share": "共有",
   "teamEditor.shareLabel": "共有するチーム",
   "teamEditor.shareTitle": "このチームを1行で共有",
-  "teamEditor.sizeFixed": "チームビルドの人数は固定です。別の人数には新しく作成してください",
   "teamEditor.sizeLabel": "チーム人数",
   "teamEditor.teamName": "チーム名",
   "teamEditor.teamNameLabel": "チーム名",
@@ -1580,8 +1579,10 @@ export default {
   "tutorial.menu.team.members":
     "チームのメンバー数は常にチーム人数と同じ。メンバーは追加せず、入れ替える。",
   "tutorial.menu.team.memberBack": "これはそのメンバーのビルド。戻るでチームに戻ろう。",
-  "tutorial.menu.team.new": "チーム人数を2v2にして、新規チームビルドを作ろう。",
+  "tutorial.menu.team.new": "次に、新規チームビルドを作ろう。",
   "tutorial.menu.team.newDone": "2人のチームを始める",
+  "tutorial.menu.team.size": "チーム人数を2v2にしよう。",
+  "tutorial.menu.team.sizeDone": "チーム人数は2v2",
   "tutorial.menu.team.open": "チームビルドがある「チーム」を開こう。",
   "tutorial.menu.team.openDone": "「チーム」を開く",
   "tutorial.menu.team.problems":

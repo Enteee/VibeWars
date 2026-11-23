@@ -164,10 +164,10 @@ there loads one shared with you, and a click on a card, or its **Edit**, opens i
 
 Every team build has a size, 2v2, 4v4 or 8v8 (there are no 1v1 team builds): the **Team size** in
 the sidebar. Team Builder lists the team builds of the size picked there,
-and **New team build** makes one of that size. A team build's size is
-fixed: its editor shows it locked, and to play another size you make
-another team build. A pasted team keeps its size, and the sidebar
-switches to it.
+and **New team build** makes one of that size. Its editor's **Team size**
+changes it: a smaller size drops the last members, a larger one adds
+blank ones, and Save brings the sidebar to the size it was saved at. A
+pasted team keeps its size, and the sidebar switches to it.
 
 A team build always has as many members as its size: a new one starts
 with a blank character in each place. You never add or remove a member,

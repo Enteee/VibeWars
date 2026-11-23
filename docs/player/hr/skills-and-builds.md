@@ -214,3 +214,9 @@ predložiti samo tim bez problema: kartica kaže
 Tvoj prvi početak dodjeljuje jedan gotovi tim odabrane veličine, 4v4 osim ako je nisi
 promijenio, označen s **Nasumično**: njegov
 **Ponovi** stavlja drugi, a **Kloniraj** ti daje kopiju za uređivanje.
+Svaki timski sastav ima veličinu, 2v2, 4v4 ili 8v8 (nema timskih sastava 1v1): **Veličinu tima** na
+bočnoj traci. Uređivač timova navodi timske sastave veličine koja je tamo odabrana,
+a **Novi timski sastav** stvara jedan te veličine. **Veličina tima** u njegovu
+uređivaču mijenja je: manja veličina uklanja zadnje članove, veća dodaje prazne,
+a Spremi prebacuje bočnu traku na veličinu s kojom je spremljen. Zalijepljeni tim
+zadržava svoju veličinu, a bočna traka se prebacuje na nju.

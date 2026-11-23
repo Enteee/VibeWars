@@ -232,3 +232,11 @@ indique **Non jouable** et pourquoi, et une équipe sans nom s'affiche comme
 Ton premier démarrage tire une équipe prête à la taille choisie, 4v4 sauf si
 tu l'as changée, marquée **Aléatoire** : son **Relancer** en met une autre à
 la place, et **Cloner** te donne une copie à modifier.
+Chaque Build d'équipe a une taille, 2v2, 4v4 ou 8v8 (il n'y a pas de Build
+d'équipe 1v1) : la **Taille d'équipe** de la barre latérale. L'Atelier
+d'équipes liste les Builds d'équipe de la taille choisie là, et **Nouveau
+build** en crée un de cette taille. La **Taille d'équipe** de son éditeur la
+change : une taille plus petite retire les derniers membres, une plus grande
+en ajoute des vierges, et Sauver aligne la barre latérale sur la taille
+enregistrée. Une équipe collée garde sa taille, et la barre latérale s'y
+aligne.

@@ -64,6 +64,8 @@ pronta no lugar. As equipes prontas são as builds de equipe de PvP bem
 avaliadas da wiki PvX; um tamanho que a PvX não tem recebe builds solo da
 PvX reunidas. **Clonar** salva uma cópia da equipe mostrada como sua
 própria Build de Equipe e a abre, para você mudar como quiser.
+O tamanho de uma Build de Equipe muda no editor dela: um tamanho menor
+remove os últimos membros, um maior acrescenta membros em branco.
 
 ## Jogue uma Arena Aleatória
 

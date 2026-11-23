@@ -1438,7 +1438,6 @@ export default {
   "teamEditor.share": "Trimite",
   "teamEditor.shareLabel": "echipă de trimis",
   "teamEditor.shareTitle": "trimite această echipă ca o singură linie",
-  "teamEditor.sizeFixed": "Mărimea unui build de echipă e fixă: creează altul pentru altă mărime",
   "teamEditor.sizeLabel": "Mărime echipă",
   "teamEditor.teamName": "Numele echipei",
   "teamEditor.teamNameLabel": "numele echipei",
@@ -1739,8 +1738,10 @@ export default {
     "O echipă are mereu atâția membri cât îi e mărimea. Nu adaugi niciodată un membru: înlocuiești unul.",
   "tutorial.menu.team.memberBack":
     "Acesta e build-ul acelui membru. Apasă Înapoi ca să revii la echipa ta.",
-  "tutorial.menu.team.new": "Setează mărimea echipei la 2v2, apoi creează un build de echipă nou.",
+  "tutorial.menu.team.new": "Acum creează un build de echipă nou.",
   "tutorial.menu.team.newDone": "Pornește o echipă de 2",
+  "tutorial.menu.team.size": "Setează mărimea echipei la 2v2.",
+  "tutorial.menu.team.sizeDone": "Mărimea echipei e 2v2",
   "tutorial.menu.team.open": "Deschide Echipe, unde sunt build-urile tale de echipă.",
   "tutorial.menu.team.openDone": "Deschide Echipe",
   "tutorial.menu.team.problems":

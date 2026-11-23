@@ -1482,7 +1482,6 @@ export default {
   "teamEditor.share": "Поділитися",
   "teamEditor.shareLabel": "команда для поширення",
   "teamEditor.shareTitle": "поділитися цією командою одним рядком",
-  "teamEditor.sizeFixed": "Розмір командного білду незмінний: для іншого розміру створи новий",
   "teamEditor.sizeLabel": "Розмір команди",
   "teamEditor.teamName": "Назва команди",
   "teamEditor.teamNameLabel": "назва команди",
@@ -1783,8 +1782,10 @@ export default {
     "У команді завжди стільки учасників, який її розмір. Учасника не додають: його замінюють.",
   "tutorial.menu.team.memberBack":
     "Це білд цього учасника. Натисни «Назад», щоб повернутися до команди.",
-  "tutorial.menu.team.new": "Встанови розмір команди 2v2, потім створи новий командний білд.",
+  "tutorial.menu.team.new": "Тепер створи новий командний білд.",
   "tutorial.menu.team.newDone": "Почни команду з 2",
+  "tutorial.menu.team.size": "Встанови розмір команди 2v2.",
+  "tutorial.menu.team.sizeDone": "Розмір команди 2v2",
   "tutorial.menu.team.open": "Відкрий «Команди», де твої командні білди.",
   "tutorial.menu.team.openDone": "Відкрий «Команди»",
   "tutorial.menu.team.problems":

@@ -63,6 +63,8 @@ och alltid sist. Lagbyggare listar lagbuildsen för sidopanelens
 är PvX-wikins välbetygade PvP-lagbuilds; en storlek som PvX saknar får
 PvX-solobuilds ihopsatta. **Klona** sparar en kopia av det visade laget
 som din egen lagbuild och öppnar den, så att du kan ändra den som du vill.
+En lagbuilds storlek ändras i dess redigerare: en mindre storlek tar bort de
+sista medlemmarna, en större lägger till tomma.
 
 ## Spela en Slumparena
 

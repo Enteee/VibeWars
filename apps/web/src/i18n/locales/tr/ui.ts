@@ -1364,7 +1364,6 @@ export default {
   "teamEditor.share": "Paylaş",
   "teamEditor.shareLabel": "paylaşılacak takım",
   "teamEditor.shareTitle": "bu takımı tek satır olarak paylaş",
-  "teamEditor.sizeFixed": "Takım Diziliminin boyutu sabittir: başka boyut için yenisini oluştur",
   "teamEditor.sizeLabel": "Takım boyutu",
   "teamEditor.teamName": "Takım adı",
   "teamEditor.teamNameLabel": "takım adı",
@@ -1656,8 +1655,10 @@ export default {
   "tutorial.menu.team.members":
     "Bir takımın her zaman boyutu kadar üyesi olur. Asla üye eklemezsin: birini değiştirirsin.",
   "tutorial.menu.team.memberBack": "Bu, o üyenin buildi. Takımına dönmek için Geri'ye bas.",
-  "tutorial.menu.team.new": "Takım boyutunu 2v2 yap, sonra yeni bir takım dizilimi oluştur.",
+  "tutorial.menu.team.new": "Şimdi yeni bir takım dizilimi oluştur.",
   "tutorial.menu.team.newDone": "2 kişilik bir takım başlat",
+  "tutorial.menu.team.size": "Takım boyutunu 2v2 yap.",
+  "tutorial.menu.team.sizeDone": "Takım boyutu 2v2",
   "tutorial.menu.team.open": "Takım dizilimlerinin bulunduğu Takımlar'ı aç.",
   "tutorial.menu.team.openDone": "Takımlar'ı aç",
   "tutorial.menu.team.problems":

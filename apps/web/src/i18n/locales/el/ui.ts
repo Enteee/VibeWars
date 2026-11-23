@@ -1379,8 +1379,6 @@ export default {
   "teamEditor.share": "Μοίρασμα",
   "teamEditor.shareLabel": "ομάδα για μοίρασμα",
   "teamEditor.shareTitle": "μοίρασε την ομάδα σε μία γραμμή",
-  "teamEditor.sizeFixed":
-    "Το μέγεθος μιας Σύνθεσης ομάδας είναι σταθερό: φτιάξε νέα για άλλο μέγεθος",
   "teamEditor.sizeLabel": "Μέγεθος ομάδας",
   "teamEditor.teamName": "Όνομα ομάδας",
   "teamEditor.teamNameLabel": "όνομα ομάδας",
@@ -1680,9 +1678,10 @@ export default {
     "Μια ομάδα έχει πάντα τόσα μέλη όσο το μέγεθός της. Ποτέ δεν προσθέτεις μέλος: αντικαθιστάς ένα.",
   "tutorial.menu.team.memberBack":
     "Αυτό είναι το build αυτού του μέλους. Πάτα Πίσω για να γυρίσεις στην ομάδα σου.",
-  "tutorial.menu.team.new":
-    "Όρισε το μέγεθος ομάδας σε 2v2 και μετά φτιάξε μια νέα σύνθεση ομάδας.",
+  "tutorial.menu.team.new": "Τώρα φτιάξε μια νέα σύνθεση ομάδας.",
   "tutorial.menu.team.newDone": "Ξεκίνα μια ομάδα των 2",
+  "tutorial.menu.team.size": "Όρισε το μέγεθος ομάδας σε 2v2.",
+  "tutorial.menu.team.sizeDone": "Το μέγεθος ομάδας είναι 2v2",
   "tutorial.menu.team.open": "Άνοιξε τις Ομάδες, όπου είναι οι συνθέσεις ομάδων σου.",
   "tutorial.menu.team.openDone": "Άνοιξε τις Ομάδες",
   "tutorial.menu.team.problems":

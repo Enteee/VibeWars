@@ -1478,7 +1478,6 @@ export default {
   "teamEditor.share": "Поделиться",
   "teamEditor.shareLabel": "код команды",
   "teamEditor.shareTitle": "поделиться командой одной строкой",
-  "teamEditor.sizeFixed": "Размер командного билда не меняется: для другого размера создай новый",
   "teamEditor.sizeLabel": "Размер команды",
   "teamEditor.teamName": "Название команды",
   "teamEditor.teamNameLabel": "название команды",
@@ -1778,8 +1777,10 @@ export default {
     "В команде всегда столько участников, каков её размер. Участника не добавляют: его заменяют.",
   "tutorial.menu.team.memberBack":
     "Это билд этого участника. Нажми «Назад», чтобы вернуться к команде.",
-  "tutorial.menu.team.new": "Поставь размер команды 2v2, затем создай новый билд команды.",
+  "tutorial.menu.team.new": "Теперь создай новый билд команды.",
   "tutorial.menu.team.newDone": "Начни команду из 2",
+  "tutorial.menu.team.size": "Поставь размер команды 2v2.",
+  "tutorial.menu.team.sizeDone": "Размер команды 2v2",
   "tutorial.menu.team.open": "Открой «Команды», где лежат билды команд.",
   "tutorial.menu.team.openDone": "Открой «Команды»",
   "tutorial.menu.team.problems":

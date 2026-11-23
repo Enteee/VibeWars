@@ -62,6 +62,8 @@ hold er PvX-wikiens velbedømte PvP-holdbuilds; en størrelse, PvX ikke har
 nogen af, får sat PvX-solobuilds sammen. **Klon** gemmer en kopi af det
 viste hold som dit eget Holdbuild og åbner det, så du kan ændre det, som
 du vil.
+Et Holdbuilds størrelse ændres i dets editor: en mindre størrelse fjerner
+de sidste medlemmer, en større tilføjer tomme.
 
 ## Spil en Tilfældig arena
 

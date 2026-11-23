@@ -1475,7 +1475,6 @@ export default {
   "teamEditor.share": "Sdílet",
   "teamEditor.shareLabel": "tým ke sdílení",
   "teamEditor.shareTitle": "sdílet tento tým jako jeden řádek",
-  "teamEditor.sizeFixed": "Velikost Týmového buildu je pevná: pro jinou velikost si vytvoř nový",
   "teamEditor.sizeLabel": "Velikost týmu",
   "teamEditor.teamName": "Název týmu",
   "teamEditor.teamNameLabel": "název týmu",
@@ -1772,8 +1771,10 @@ export default {
     "Tým má vždy tolik členů, kolik je jeho velikost. Člena nikdy nepřidáváš: nahrazuješ ho.",
   "tutorial.menu.team.memberBack":
     "Tohle je build toho člena. Stiskni Zpět a vrátíš se ke svému týmu.",
-  "tutorial.menu.team.new": "Nastav velikost týmu na 2v2 a pak vytvoř nový týmový build.",
+  "tutorial.menu.team.new": "Teď vytvoř nový týmový build.",
   "tutorial.menu.team.newDone": "Založ tým pro 2",
+  "tutorial.menu.team.size": "Nastav velikost týmu na 2v2.",
+  "tutorial.menu.team.sizeDone": "Velikost týmu je 2v2",
   "tutorial.menu.team.open": "Otevři Týmy, kde jsou tvé týmové buildy.",
   "tutorial.menu.team.openDone": "Otevři Týmy",
   "tutorial.menu.team.problems":

@@ -1361,7 +1361,6 @@ export const en = {
   "teamEditor.share": "Share",
   "teamEditor.shareLabel": "team to share",
   "teamEditor.shareTitle": "share this team as one line",
-  "teamEditor.sizeFixed": "A Team Build's size is fixed: make a new one for another size",
   "teamEditor.sizeLabel": "Team size",
   "teamEditor.teamName": "Team name",
   "teamEditor.teamNameLabel": "team name",
@@ -1653,8 +1652,10 @@ export const en = {
   "tutorial.menu.team.members":
     "A team always has as many members as its size. You never add a member: you replace one.",
   "tutorial.menu.team.memberBack": "This is that member's build. Go Back to return to your team.",
-  "tutorial.menu.team.new": "Set the team size to 2v2, then make a new team build.",
+  "tutorial.menu.team.new": "Now make a new team build.",
   "tutorial.menu.team.newDone": "Start a team of 2",
+  "tutorial.menu.team.size": "Set the team size to 2v2.",
+  "tutorial.menu.team.sizeDone": "Team size is 2v2",
   "tutorial.menu.team.open": "Open Teams, where your team builds are.",
   "tutorial.menu.team.openDone": "Open Teams",
   "tutorial.menu.team.problems":

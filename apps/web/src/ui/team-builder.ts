@@ -20,11 +20,11 @@ import {
 /**
  * The team builder (brief §18, §4).
  *
- * Teams are first-class. Each has a size, 2, 4 or 8, fixed when it is
- * made (#2109), and always exactly that many members (#2225): a member is
- * replaced, never added or taken off. Each member is a character of the
- * team's own (#1452): one copied from a Solo character is a copy, and
- * editing either leaves the other alone.
+ * Teams are first-class. Each has a size, 2, 4 or 8, and always exactly
+ * that many members (#2225): a member is replaced, and a size change in
+ * the editor drops the last or appends blank ones (#3794). Each member is
+ * a character of the team's own (#1452): one copied from a Solo character
+ * is a copy, and editing either leaves the other alone.
  */
 
 /** A team of `members`, which must be `size` of them. */
@@ -51,6 +51,26 @@ export function newTeam(id: string, size: TeamBuildSize, blank: () => TeamCharac
     size,
     Array.from({ length: size }, () => blank()),
   );
+}
+
+/**
+ * `team` at `size` (#3794): a smaller size drops the last members, a
+ * larger one appends members `blank` makes.
+ */
+export function resizeTeam(
+  team: StoredTeam,
+  size: TeamBuildSize,
+  blank: () => TeamCharacter,
+): StoredTeam {
+  const kept = team.members.slice(0, size);
+  return {
+    ...team,
+    size,
+    members: [
+      ...kept,
+      ...Array.from({ length: size - kept.length }, () => ({ character: blank() })),
+    ],
+  };
 }
 
 /**

@@ -216,3 +216,9 @@ chơi được** và lý do, và đội không có tên hiện là **Đội chư
 khởi động đầu tiên tạo ngẫu nhiên một đội có sẵn ở cỡ được chọn, 4v4 nếu bạn
 chưa đổi, đánh dấu **Random**: nút **Đổi khác** của nó thay bằng đội khác, và
 **Chép** cho bạn một bản sao để sửa.
+Mỗi build đội có một cỡ, 2v2, 4v4 hoặc 8v8 (không có build đội 1v1): **Cỡ
+đội** ở thanh bên. Tạo Đội liệt kê các build đội của cỡ được chọn ở đó, và
+**Build đội mới** tạo một build có cỡ đó. **Cỡ đội** trong trình sửa của nó
+đổi cỡ: cỡ nhỏ hơn bỏ các thành viên cuối, cỡ lớn hơn thêm thành viên trống,
+và Lưu chuyển thanh bên sang cỡ mà build được lưu. Đội được dán vào giữ nguyên
+cỡ của nó, và thanh bên chuyển sang cỡ đó.

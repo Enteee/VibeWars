@@ -1365,8 +1365,6 @@ export default {
   "teamEditor.share": "Delen",
   "teamEditor.shareLabel": "team om te delen",
   "teamEditor.shareTitle": "dit team delen als één regel",
-  "teamEditor.sizeFixed":
-    "De grootte van een Teambuild ligt vast: maak een nieuwe voor een andere grootte",
   "teamEditor.sizeLabel": "Teamgrootte",
   "teamEditor.teamName": "Teamnaam",
   "teamEditor.teamNameLabel": "teamnaam",
@@ -1663,8 +1661,10 @@ export default {
     "Een team heeft altijd zoveel leden als zijn grootte. Je voegt nooit een lid toe: je vervangt er een.",
   "tutorial.menu.team.memberBack":
     "Dit is de build van dat lid. Ga Terug om naar je team terug te keren.",
-  "tutorial.menu.team.new": "Zet de teamgrootte op 2v2 en maak dan een nieuwe teambuild.",
+  "tutorial.menu.team.new": "Maak nu een nieuwe teambuild.",
   "tutorial.menu.team.newDone": "Begin een team van 2",
+  "tutorial.menu.team.size": "Zet de teamgrootte op 2v2.",
+  "tutorial.menu.team.sizeDone": "Teamgrootte is 2v2",
   "tutorial.menu.team.open": "Open Teams, waar je teambuilds staan.",
   "tutorial.menu.team.openDone": "Open Teams",
   "tutorial.menu.team.problems":

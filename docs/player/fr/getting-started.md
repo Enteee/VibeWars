@@ -66,6 +66,8 @@ place. Les équipes prêtes sont les builds d'équipe PvP bien notés du wiki Pv
 une taille que PvX n'a pas reçoit des builds solo PvX assemblés. **Cloner**
 enregistre une copie de l'équipe affichée comme ton propre Build d'équipe et
 l'ouvre, à modifier comme tu veux.
+La taille d'un Build d'équipe se change dans son éditeur : une taille plus
+petite retire les derniers membres, une plus grande en ajoute des vierges.
 
 ## Jouer une Arène aléatoire
 

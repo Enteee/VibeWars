@@ -1359,7 +1359,6 @@ export default {
   "teamEditor.share": "Del",
   "teamEditor.shareLabel": "hold, der skal deles",
   "teamEditor.shareTitle": "del dette hold som én linje",
-  "teamEditor.sizeFixed": "Et Holdbuilds størrelse er fast: lav et nyt til en anden størrelse",
   "teamEditor.sizeLabel": "Holdstørrelse",
   "teamEditor.teamName": "Holdnavn",
   "teamEditor.teamNameLabel": "holdnavn",
@@ -1650,8 +1649,10 @@ export default {
     "Et hold har altid lige så mange medlemmer som sin størrelse. Du tilføjer aldrig et medlem: du erstatter et.",
   "tutorial.menu.team.memberBack":
     "Dette er det medlems build. Tryk Tilbage for at vende tilbage til dit hold.",
-  "tutorial.menu.team.new": "Sæt holdstørrelsen til 2v2, og lav så et nyt holdbuild.",
+  "tutorial.menu.team.new": "Lav nu et nyt holdbuild.",
   "tutorial.menu.team.newDone": "Start et hold på 2",
+  "tutorial.menu.team.size": "Sæt holdstørrelsen til 2v2.",
+  "tutorial.menu.team.sizeDone": "Holdstørrelsen er 2v2",
   "tutorial.menu.team.open": "Åbn Hold, hvor dine holdbuilds er.",
   "tutorial.menu.team.openDone": "Åbn Hold",
   "tutorial.menu.team.problems":

@@ -58,6 +58,8 @@ wstawia na jego miejsce inną gotową drużynę. Gotowe drużyny to dobrze oceni
 drużynowe buildy PvP z wiki PvX; rozmiar, dla którego PvX ich nie ma, dostaje
 zestawione solowe buildy PvX. **Klonuj** zapisuje kopię
 pokazanej drużyny jako twój build drużyny i otwiera ją do dowolnych zmian.
+Rozmiar buildu drużyny zmienia się w jego edytorze: mniejszy rozmiar usuwa
+ostatnich członków, większy dodaje pustych.
 
 ## Zagraj na Arenie losowej
 

@@ -63,6 +63,8 @@ another ready-made team in its place. The ready-made teams are the PvX
 wiki's well-rated PvP team builds; a size PvX has none of gets PvX solo
 builds put together. **Clone** saves a copy of the
 team shown as your own Team Build and opens it, to change as you like.
+A Team Build's size changes in its editor: a smaller size drops the last
+members, a larger one adds blank ones.
 
 ## Play a Random Arena
 

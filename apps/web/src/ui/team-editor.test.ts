@@ -44,15 +44,34 @@ vi.mock("./character-figure.js", async (original) => ({
   createCharacterDot: () => document.createElement("span"),
 }));
 
-// The top bar is outside the editor's root: its actions, ⋯ among them, land here.
-const bar: { actions: FakeElement[] } = { actions: [] };
+// The top bar is outside the editor's root: its status, the size among it,
+// and its actions, ⋯ among them, land here.
+const bar: { status: FakeElement[]; actions: FakeElement[] } = { status: [], actions: [] };
 vi.mock("./kit.js", async (original) => ({
   ...(await original<typeof Kit>()),
-  screenBar: (options: { readonly actions?: readonly FakeElement[] }) => {
+  screenBar: (options: {
+    readonly status?: readonly FakeElement[];
+    readonly actions?: readonly FakeElement[];
+  }) => {
+    bar.status = [...(options.status ?? [])];
     bar.actions = [...(options.actions ?? [])];
     return { back: undefined, release: () => undefined };
   },
 }));
+
+/** The editor's globals, faked. */
+function stubDom(): void {
+  vi.stubGlobal("HTMLElement", FakeElement);
+  vi.stubGlobal("HTMLButtonElement", FakeElement);
+  vi.stubGlobal("window", { addEventListener: () => undefined, innerWidth: 1000 });
+  vi.stubGlobal("document", {
+    addEventListener: () => undefined,
+    removeEventListener: () => undefined,
+    body: new FakeElement(),
+    createElement: () => new FakeElement(),
+    createTextNode: (text: string) => Object.assign(new FakeElement(), { textContent: text }),
+  });
+}
 
 /** `node` and everything under it. */
 function treeOf(node: FakeElement): FakeElement[] {
@@ -397,16 +416,7 @@ describe("⋯ → Load team (#3181, #3638)", () => {
 
   beforeEach(() => {
     imported = [];
-    vi.stubGlobal("HTMLElement", FakeElement);
-    vi.stubGlobal("HTMLButtonElement", FakeElement);
-    vi.stubGlobal("window", { addEventListener: () => undefined, innerWidth: 1000 });
-    vi.stubGlobal("document", {
-      addEventListener: () => undefined,
-      removeEventListener: () => undefined,
-      body: new FakeElement(),
-      createElement: () => new FakeElement(),
-      createTextNode: (text: string) => Object.assign(new FakeElement(), { textContent: text }),
-    });
+    stubDom();
   });
 
   afterEach(() => {
@@ -436,5 +446,74 @@ describe("⋯ → Load team (#3181, #3638)", () => {
     expect(loadText(root, short)).toEqual([t("storage.teamMemberCount", { size: 2, found: 1 })]);
     expect(imported).toEqual([]);
     expect(root.all("editor-load")[0]?.hidden).toBe(false);
+  });
+});
+
+describe("the editor's team size (#3794)", () => {
+  let drafts: StoredTeam[] = [];
+  let stored: string[] = [];
+  /** The editor on a stored team of two, and its top bar's status. */
+  const mount = (): FakeElement => {
+    mountTeamEditor(
+      new FakeElement() as unknown as HTMLElement,
+      openedTeam(teamOf("a", "b"), true),
+      [],
+      {
+        onSave: () => Promise.resolve(),
+        onDuplicate: () => undefined,
+        onDelete: () => undefined,
+        onClose: () => undefined,
+        onOpenMember: () => undefined,
+        onDraft: (draft) => {
+          drafts.push(draft);
+        },
+        onImportTeam: () => undefined,
+        onCreateCharacter: () => Promise.resolve([]),
+      },
+    );
+    const root = new FakeElement();
+    root.append(...bar.status);
+    return root;
+  };
+  const arrow = (root: FakeElement, label: string): FakeElement | undefined =>
+    treeOf(root).find((node) => node.getAttribute("aria-label") === label);
+
+  beforeEach(() => {
+    drafts = [];
+    stored = [];
+    stubDom();
+    vi.stubGlobal("localStorage", {
+      getItem: () => null,
+      setItem: (key: string) => {
+        stored.push(key);
+      },
+    });
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("steps live: a larger size appends blank members, unsaved, and stores no sidebar size", () => {
+    const root = mount();
+    const larger = arrow(root, t("rail.largerTeam"));
+    expect(root.all("editor-unsaved")[0]?.hidden).toBe(true);
+    expect(larger?.disabled).toBe(false);
+    larger?.click();
+    const draft = drafts.at(-1);
+    expect(draft?.size).toBe(4);
+    expect(draft?.members.map((m) => m.character.id).slice(0, 2)).toEqual(["a", "b"]);
+    expect(draft?.members).toHaveLength(4);
+    const [unsaved] = root.all("editor-unsaved");
+    expect(unsaved?.hidden).toBe(false);
+    expect(stored).toEqual([]);
+  });
+
+  it("a smaller size drops the last members", () => {
+    const root = mount();
+    arrow(root, t("rail.largerTeam"))?.click();
+    arrow(root, t("rail.smallerTeam"))?.click();
+    expect(drafts.at(-1)?.members.map((m) => m.character.id)).toEqual(["a", "b"]);
+    expect(arrow(root, t("rail.smallerTeam"))?.disabled).toBe(true);
   });
 });

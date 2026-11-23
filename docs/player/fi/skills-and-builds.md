@@ -231,3 +231,9 @@ ongelmaton tiimi voidaan ehdottaa tiimiaulassa: kortissa lukee
 Ensimmäinen käynnistyksesi arpoo yhden valmiin tiimin valitulla koolla, 4v4, ellet
 muuttanut sitä, merkittynä **Arvottu**: sen
 **Arvo uusi** vaihtaa tilalle toisen, ja **Kloonaa** antaa sinulle kopion muokattavaksi.
+Jokaisella tiimibuildilla on koko, 2v2, 4v4 tai 8v8 (1v1-tiimibuildeja ei ole): sivupalkin
+**Tiimin koko**. Tiimieditori luettelee siellä valitun koon tiimibuildit,
+ja **Uusi tiimibuildi** luo sen kokoisen. Sen editorin **Tiimin koko**
+muuttaa sitä: pienempi koko pudottaa viimeiset jäsenet, suurempi lisää
+tyhjiä, ja Tallenna vaihtaa sivupalkin kokoon, jolla se tallennettiin.
+Liitetty tiimi säilyttää kokonsa, ja sivupalkki vaihtaa siihen.

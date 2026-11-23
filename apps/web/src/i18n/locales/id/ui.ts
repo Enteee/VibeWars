@@ -1296,7 +1296,6 @@ export default {
   "teamEditor.share": "Bagikan",
   "teamEditor.shareLabel": "tim untuk dibagikan",
   "teamEditor.shareTitle": "bagikan tim ini dalam satu baris",
-  "teamEditor.sizeFixed": "Ukuran Build Tim sudah tetap: buat yang baru untuk ukuran lain",
   "teamEditor.sizeLabel": "Ukuran tim",
   "teamEditor.teamName": "Nama tim",
   "teamEditor.teamNameLabel": "nama tim",
@@ -1581,8 +1580,10 @@ export default {
   "tutorial.menu.team.members":
     "Tim selalu punya anggota sebanyak ukurannya. Kamu tidak pernah menambah anggota: kamu menggantinya.",
   "tutorial.menu.team.memberBack": "Ini build anggota itu. Tekan Kembali untuk kembali ke timmu.",
-  "tutorial.menu.team.new": "Atur ukuran tim ke 2v2, lalu buat build tim baru.",
+  "tutorial.menu.team.new": "Sekarang buat build tim baru.",
   "tutorial.menu.team.newDone": "Mulai tim berisi 2",
+  "tutorial.menu.team.size": "Atur ukuran tim ke 2v2.",
+  "tutorial.menu.team.sizeDone": "Ukuran tim 2v2",
   "tutorial.menu.team.open": "Buka Tim, tempat build timmu berada.",
   "tutorial.menu.team.openDone": "Buka Tim",
   "tutorial.menu.team.problems":

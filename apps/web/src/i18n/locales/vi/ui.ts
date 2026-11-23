@@ -1283,7 +1283,6 @@ export default {
   "teamEditor.share": "Chia sẻ",
   "teamEditor.shareLabel": "đội để chia sẻ",
   "teamEditor.shareTitle": "chia sẻ đội này thành một dòng",
-  "teamEditor.sizeFixed": "Cỡ của Build đội là cố định: hãy tạo build mới cho cỡ khác",
   "teamEditor.sizeLabel": "Cỡ đội",
   "teamEditor.teamName": "Tên đội",
   "teamEditor.teamNameLabel": "tên đội",
@@ -1563,8 +1562,10 @@ export default {
     "Một đội luôn có số thành viên bằng cỡ đội. Bạn không bao giờ thêm thành viên: bạn thay một người.",
   "tutorial.menu.team.memberBack":
     "Đây là bản dựng của thành viên đó. Nhấn Quay lại để trở về đội của bạn.",
-  "tutorial.menu.team.new": "Đặt cỡ đội là 2v2, rồi tạo build đội mới.",
+  "tutorial.menu.team.new": "Giờ hãy tạo build đội mới.",
   "tutorial.menu.team.newDone": "Lập đội 2 người",
+  "tutorial.menu.team.size": "Đặt cỡ đội là 2v2.",
+  "tutorial.menu.team.sizeDone": "Cỡ đội là 2v2",
   "tutorial.menu.team.open": "Mở Đội, nơi có các build đội của bạn.",
   "tutorial.menu.team.openDone": "Mở Đội",
   "tutorial.menu.team.problems":

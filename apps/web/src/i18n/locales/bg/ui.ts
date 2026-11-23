@@ -1362,7 +1362,6 @@ export default {
   "teamEditor.share": "Сподели",
   "teamEditor.shareLabel": "отбор за споделяне",
   "teamEditor.shareTitle": "сподели този отбор като един ред",
-  "teamEditor.sizeFixed": "Размерът на отборния билд е фиксиран: направи нов за друг размер",
   "teamEditor.sizeLabel": "Размер на отбора",
   "teamEditor.teamName": "Име на отбора",
   "teamEditor.teamNameLabel": "име на отбора",
@@ -1657,8 +1656,10 @@ export default {
     "Отборът винаги има толкова членове, колкото е размерът му. Никога не добавяш член: заменяш един.",
   "tutorial.menu.team.memberBack":
     "Това е билдът на този член. Натисни Назад, за да се върнеш към отбора си.",
-  "tutorial.menu.team.new": "Задай размер на отбора 2v2, после направи нов отборен билд.",
+  "tutorial.menu.team.new": "Сега направи нов отборен билд.",
   "tutorial.menu.team.newDone": "Започни отбор от 2",
+  "tutorial.menu.team.size": "Задай размер на отбора 2v2.",
+  "tutorial.menu.team.sizeDone": "Размерът на отбора е 2v2",
   "tutorial.menu.team.open": "Отвори „Отбори“, където са отборните ти билдове.",
   "tutorial.menu.team.openDone": "Отвори „Отбори“",
   "tutorial.menu.team.problems":

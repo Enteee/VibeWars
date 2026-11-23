@@ -214,3 +214,10 @@ tanpa masalah yang bisa diusulkan di Lobi Tim: kartunya bertuliskan
 Saat pertama kali kamu mulai, satu tim siap pakai diacak pada ukuran yang dipilih, 4v4 kecuali kamu
 mengubahnya, ditandai **Acak**:
 **Acak lagi**-nya menukarnya dengan tim lain, dan **Klon** memberimu salinan untuk diedit.
+Setiap build tim punya ukuran, 2v2, 4v4 atau 8v8 (tidak ada build tim 1v1): **Ukuran tim** di
+bilah samping. Pembuat Tim menampilkan build tim dengan ukuran yang dipilih di sana,
+dan **Build tim baru** membuat build dengan ukuran itu. **Ukuran tim** di editornya
+mengubahnya: ukuran yang lebih kecil membuang anggota terakhir, yang lebih besar
+menambah anggota kosong, dan Simpan memindahkan bilah samping ke ukuran saat build
+itu disimpan. Tim yang ditempel mempertahankan ukurannya, dan bilah samping
+berpindah ke ukuran itu.
