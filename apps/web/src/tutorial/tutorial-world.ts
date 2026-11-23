@@ -358,7 +358,8 @@ export function tutorialWorld(
   );
   const centre = vec2(map.descriptor.width / 2, map.descriptor.height / 2);
   // Their side's bots, moved as far as the pair and then ahead of it,
-  // the way their side faces.
+  // the way their side faces. They hold that front rather than escort
+  // the pair (#3833), or they would follow the tutor onto the mark.
   const forward = Math.hypot(centre.x - edge.x, centre.y - edge.y);
   const ahead = (from: Vec2): Vec2 =>
     forward === 0
@@ -378,7 +379,10 @@ export function tutorialWorld(
     "battlefield",
     (bot) => {
       if (bot.team === 0) {
-        return { ...bot, spawn: nearestStandable(graph, ahead(bot.spawn)) };
+        const spot = nearestStandable(graph, ahead(bot.spawn));
+        return bot.behaviour?.kind === "play-build"
+          ? { ...bot, spawn: spot, behaviour: { ...bot.behaviour, escort: false } }
+          : { ...bot, spawn: spot };
       }
       const guard = guarding(bot.spawn, centre, [spawn, post, mark, teleporter, besidePad]);
       foes.push(guard);

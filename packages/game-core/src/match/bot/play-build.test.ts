@@ -36,6 +36,7 @@ import {
 import { REGROUP_SPREAD, reactionSeconds } from "./rules/shared.js";
 import {
   PLAN_SECONDS,
+  escortSpot,
   flankParty,
   flankWaypoint,
   planPhase,
@@ -607,5 +608,41 @@ describe("play-build's pull-in gate (#3832)", () => {
 
   it("takes a far teammate's target under push, as ever", () => {
     expect(decide(BOT, createCursor(), viewOf("bot", when("push"))).targetId).toBe("foe-a");
+  });
+
+  /** The bot's view at `when("push")` with an active human, `you`, beside it (#3833). */
+  const escortView = (): BehaviourContext => {
+    const escorted = match([
+      fighter("bot", 0, WARRIOR, vec2(100, 300)),
+      fighter("mate", 0, WARRIOR, vec2(100, 500)),
+      fighter("you", 0, WARRIOR, vec2(300, 400)),
+      fighter("foe-a", 1, WARRIOR, vec2(1500, 300), { behaviour: undefined }),
+      fighter("foe-b", 1, WARRIOR, vec2(1500, 500), { behaviour: undefined }),
+    ]);
+    const participants = [...escorted.participants()].map((each) =>
+      each.id === "mate"
+        ? { ...each, position: vec2(1300, 400), targetId: "foe-a" }
+        : each.id === "foe-a"
+          ? { ...each, position: vec2(1400, 300) }
+          : each,
+    );
+    const isBot = (id: string): boolean => id !== "you";
+    return contextFor(escorted, "bot", { participants, now: when("push"), isBot });
+  };
+
+  it("leaves a far teammate's target to escort its active human (#3833)", () => {
+    const view = escortView();
+    const intent = decide(BOT, createCursor(), view);
+    expect(intent.targetId).toBeUndefined();
+    expect(intent.moveTo).toEqual(escortSpot(view, view.self, "frontline", createCursor())?.point);
+  });
+
+  it("takes a far teammate's target when told not to escort (#3833)", () => {
+    const loner = {
+      kind: "play-build",
+      reaction: { minSeconds: 0.25, maxSeconds: 0.25 },
+      escort: false,
+    } as const;
+    expect(decide(loner, createCursor(), escortView()).targetId).toBe("foe-a");
   });
 });

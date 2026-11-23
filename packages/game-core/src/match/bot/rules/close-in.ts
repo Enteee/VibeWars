@@ -1,7 +1,14 @@
 import { distance } from "../../../vec2.js";
 import type { BehaviourIntent } from "../../behaviour.js";
 import type { Participant } from "../../simulation.js";
-import { inFlankSwing, placedFlank, placedHold, planFoeTeam, planPhase } from "../plan.js";
+import {
+  escortSpot,
+  inFlankSwing,
+  placedFlank,
+  placedHold,
+  planFoeTeam,
+  planPhase,
+} from "../plan.js";
 import type { BotRole } from "../role.js";
 import {
   NOTHING,
@@ -23,13 +30,17 @@ export const REPRICE_SECONDS = 0.5;
  * While its team's plan is `hold` (#3831), it walks to its hold spot
  * instead, and stands once within `POSITION_SLACK` of it. While it is
  * `flank` (#3832), a bot of the flank party swings round to its flank
- * waypoint first, then makes for the foes' backline.
+ * waypoint first, then makes for the foes' backline. Before any plan, on
+ * a team with an active human (#3833), it walks to its escort spot
+ * instead, and stands once within `REGROUP_JOINED/2` of it.
  */
 const closeIn: BotRule = {
   order: 120,
   name: "close-in",
   decide: (rule) => {
     const { context, self, foes: all, cursor } = rule;
+    const escorted = escort(rule);
+    if (escorted !== undefined) return escorted;
     const held = rule.plan === "hold" ? hold(rule) : undefined;
     if (held !== undefined) return held;
     const flanked = rule.plan === "flank" ? flank(rule) : undefined;
@@ -54,6 +65,27 @@ const closeIn: BotRule = {
       : { ...NOTHING, moveTo: foe.position, moveToLayer: foe.layer };
   },
 };
+
+/**
+ * Where a bot escorting its team's active humans goes (#3833): to its
+ * escort spot, which moves as they do, and nowhere once there. `undefined`,
+ * so it plays its team's plan, with no active human, no route, as a
+ * guard, which has no role, or as a bot told not to escort.
+ */
+function escort({
+  context,
+  self,
+  cursor,
+  role,
+  escort: escorts,
+}: RuleContext): BehaviourIntent | undefined {
+  if (role === undefined || !escorts) return undefined;
+  const at = escortSpot(context, self, role, cursor);
+  if (at === undefined) return undefined;
+  return self.layer === at.layer && distance(self.position, at.point) <= REGROUP_JOINED / 2
+    ? { ...NOTHING, targetId: self.targetId }
+    : { ...NOTHING, moveTo: at.point, moveToLayer: at.layer };
+}
 
 /**
  * Where a holding bot goes (#3831): to its spot, and nowhere once there.

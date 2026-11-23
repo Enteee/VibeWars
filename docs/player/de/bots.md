@@ -33,9 +33,11 @@ kommt. Fernkämpfer und Heiler gehen dorthin, wo weniger Gegner sie erreichen, u
 nutzen Säulen als Deckung. Ein Team stürzt sich auf jeden Gegner in Reichweite,
 der unter 60 % Leben fällt, um ihn zu erledigen. In King of the Hill geht,
 solange dein Team den Altar nicht hält, der Geisterheld des anderen Teams auf dem
-Altar sogar noch vor. Ein Bot, der seinem Team weit voraus ist, wartet auf die
-anderen, bevor er weitergeht, es sei denn, die anderen sind Spieler, die schon
-eine Weile untätig herumstehen.
+Altar sogar noch vor. In einem Team aus Bots wartet ein Bot, der seinem Team weit
+voraus ist, auf die anderen, bevor er weitergeht. Bots in deinem Team bleiben
+stattdessen bei dir: Frontkämpfer einen Schritt voraus, Fernkämpfer neben dir,
+Heiler dahinter, und sie folgen dir, wohin du gehst. Sobald du eine Weile untätig
+herumgestanden hast, spielen sie weiter wie ein Team aus Bots.
 
 Bogenschützen und Speerwerfer besetzen die Anhöhe, wenn es sicher ist.
 Ein Bot, auf den sich zwei Gegner stürzen oder der unter halber Gesundheit schnell weiter verliert, duckt sich bis zu drei Sekunden aus ihrer Sicht: hinter eine Mauer, unter eine Plattform oder auf eine Anhöhe.

@@ -76,9 +76,10 @@ export function playBuild(
       cursor,
       foes,
       livingMembers(context),
-      teamTarget(context, cursor, foes, front),
+      teamTarget(context, cursor, foes, front, behaviour.escort !== false),
       roleOf(context.self),
       behaviour.spikeHold !== false,
+      behaviour.escort !== false,
       front === undefined ? context.foeCentroid : centroid(foes, front),
     );
   });
@@ -139,6 +140,7 @@ export function guard(
         allies,
         weakest(self, foes)?.id,
         undefined,
+        false,
         false,
         context.foeCentroid,
       ),
@@ -320,6 +322,7 @@ function think(
   targetId: string | undefined,
   role: BotRole | undefined,
   spikeHold: boolean,
+  escort: boolean,
   foeCentroid: Vec2 | undefined,
 ): BehaviourIntent {
   const self = context.self;
@@ -357,6 +360,7 @@ function think(
     role,
     foeCentroid,
     spikeHold,
+    escort,
     roleOf,
     foeReach: (foe) => foeReach(cursor.foeReach, foe),
     plan: teamPlan(context.seed, self.combatant.team, context.now),
@@ -389,9 +393,9 @@ function think(
  * past spell range (#2573), or anywhere while no foe is in range; else
  * `focusPick` in spell range. With no foe in spell range, one shooting
  * at the bot from further counts as in range (#3150). A creature only while no other foe is in
- * range. While its team's plan places it (#3832, `planPlaced`), the
- * team's target only within `FOCUS_REACH` past spell range, so a holding
- * or flanking bot is not pulled across the map into its teammates' fight. With shrines to hold or a relic to run, the team's target only
+ * range. While its team's plan or an escort (#3833) places it (#3832,
+ * `planPlaced`), the team's target only within `FOCUS_REACH` past spell
+ * range, so a holding, flanking or escorting bot is not pulled across the map into its teammates' fight. With shrines to hold or a relic to run, the team's target only
  * in range. With two foe teams, all but the call and the ghost come from
  * the `front` team (#2685).
  */
@@ -400,6 +404,7 @@ function teamTarget(
   cursor: BehaviourCursor,
   all: readonly Participant[],
   front: number | undefined,
+  escorts: boolean,
 ): string | undefined {
   const called = all.find((foe) => foe.id === context.calledTargetId);
   if (called !== undefined) {
@@ -419,7 +424,14 @@ function teamTarget(
   const held =
     teams !== undefined &&
     distance(teams.position, self.position) > RANGE_SPELL + FOCUS_REACH &&
-    planPlaced(context, self, cursor, teamPlan(context.seed, self.combatant.team, context.now), all)
+    planPlaced(
+      context,
+      self,
+      cursor,
+      teamPlan(context.seed, self.combatant.team, context.now),
+      all,
+      escorts,
+    )
       ? undefined
       : teams;
   if (held !== undefined && healthFraction(held) < FINISH_FRACTION) {

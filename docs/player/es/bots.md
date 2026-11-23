@@ -34,9 +34,12 @@ los sanadores se mueven a donde menos enemigos pueden alcanzarlos, y usan
 los pilares como cobertura. Un equipo se lanza contra cualquier enemigo a
 su alcance que baje del 60% de salud, para rematarlo. En Rey de la colina,
 mientras tu equipo no controla el altar, el Héroe Fantasmal del otro equipo
-sobre el altar va incluso antes. Un bot que se adelanta mucho a su equipo
-espera al resto antes de seguir, salvo que el resto sean jugadores que
-llevan un rato quietos.
+sobre el altar va incluso antes. En un equipo de bots, un bot que se
+adelanta mucho a su equipo espera al resto antes de seguir. Los bots de tu
+equipo, en cambio, se quedan contigo: los de primera línea un paso por
+delante, los de a distancia a tu lado, los sanadores detrás, y te siguen
+adonde vayas. Cuando llevas un rato quieto, siguen jugando como lo haría un
+equipo de bots.
 
 Los arqueros y lanceros toman el terreno elevado cuando es seguro.
 Un bot al que atacan dos enemigos, o que está por debajo de la mitad de su salud y la pierde rápido, se oculta de su vista hasta tres segundos: tras un muro, bajo una plataforma o en terreno elevado.

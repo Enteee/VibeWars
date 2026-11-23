@@ -175,6 +175,12 @@ export type Behaviour =
        * is measured against. Unset: they hold.
        */
       readonly spikeHold?: boolean;
+      /**
+       * Whether it escorts its team's active humans (#3833). `false`: it
+       * plays its team's plan whoever is on its team, as the tutorial's
+       * scripted allies do. Unset: it escorts.
+       */
+      readonly escort?: boolean;
     }
   /**
    * A guard's (#1222): hold `post`, and play its bar as `play-build` does
@@ -288,6 +294,11 @@ export interface BehaviourCursor {
   flankPoint:
     | { readonly foeTeam: number; readonly at: FlankPlace | undefined; readonly phase: number }
     | undefined;
+  /**
+   * `play-build`: whether it had a route to its escort spot, and the
+   * match second it searched (#3833).
+   */
+  escortRoute: { readonly routed: boolean; readonly pricedAt: number } | undefined;
   /** `play-build`: the plan phase it reached its flank waypoint in (#3832); a respawn forgets it. */
   flankReached: number | undefined;
   /** `play-build`: the plan phase it gave its flank swing up in, hurt (#3832); a respawn forgets it. */
@@ -511,6 +522,7 @@ export function createCursor(): BehaviourCursor {
     flankPoint: undefined,
     flankReached: undefined,
     planGaveUp: undefined,
+    escortRoute: undefined,
     healthMarks: [],
     duck: undefined,
     duckReadyAt: 0,

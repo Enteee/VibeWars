@@ -28,6 +28,8 @@ export interface RuleContext {
   readonly role: BotRole | undefined;
   /** Whether it holds its spike skills for the team's (#2631); a guard never does. */
   readonly spikeHold: boolean;
+  /** Whether it escorts its team's active humans (#3833); a guard never does. */
+  readonly escort: boolean;
   /** Where its foes' living players stand on average (#2545). */
   readonly foeCentroid: Vec2 | undefined;
   /** Any participant's role, from the match's cache; a creature: `undefined` (#2549). */

@@ -36,9 +36,12 @@ harvemmat viholliset ylettyvät, ja käyttävät pylväitä suojana. Tiimi
 kääntyy minkä tahansa ulottuvilla olevan vihollisen kimppuun, jonka
 terveys putoaa alle 60 %:n, viimeistelläkseen sen. Kukkulan kuninkaassa,
 kun tiimisi ei hallitse alttaria, toisen tiimin alttarilla oleva
-aavesankari menee jopa sen edelle. Botti, joka etenee kauas tiiminsä
-edelle, odottaa muita ennen kuin jatkaa, paitsi jos muut ovat pelaajia,
-jotka ovat seisoneet toimettomina jo jonkin aikaa.
+aavesankari menee jopa sen edelle. Pelkistä boteista koostuvassa tiimissä
+botti, joka etenee kauas tiiminsä edelle, odottaa muita ennen kuin jatkaa.
+Sinun tiimisi botit sen sijaan pysyvät kanssasi: etulinja askeleen edellä,
+kaukotaistelijat vierelläsi, parantajat takana, ja ne seuraavat sinua minne
+menetkin. Kun olet seissyt toimettomana jonkin aikaa, ne pelaavat eteenpäin
+niin kuin pelkkien bottien tiimi pelaisi.
 
 Jousiampujat ja keihäänheittäjät ottavat korkean maaston, kun se on turvallista.
 Botti, johon kaksi vihollista keskittyy tai jonka terveys on alle puolet ja hupenee nopeasti, piiloutuu heidän näkyvistään enintään kolmeksi sekunniksi: muurin taakse, tasanteen alle tai korkealle maastolle.
