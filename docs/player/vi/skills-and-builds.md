@@ -150,6 +150,8 @@ dán mã ở bất kỳ đâu trong trình sửa mà không phải ô nhập ch�
 không lưu, và hỏi trước nếu bạn đã thay đổi gì. **Chia sẻ**, **Nạp mã GW1**,
 **Nhân bản** và **Xóa** nằm dưới **⋯**.
 
+Build có vấn đề không thể lưu, và khu luyện tập không bắt đầu với nó. Nếu một build như vậy vẫn vào được trận, bạn chơi với build khởi đầu ở trận đó, và một thông báo cho biết lý do.
+
 Mã đội thì được tải ở **Tạo Đội**: dán nó ở bất kỳ đâu tại đó, hoặc mở
 một build đội và dùng **⋯** → **Tải đội** của nó.
 
@@ -173,7 +175,10 @@ Build đội luôn có số thành viên bằng cỡ của nó: build mới bắ
 nhân vật trống ở mỗi chỗ. Bạn không bao giờ thêm hay bớt thành viên, bạn thay
 thế họ. Mỗi hàng hiển thị nhân vật của thành viên với vũ khí đang cầm, một
 chấm cho mỗi bộ vũ khí khi có nhiều hơn một bộ, Máu và Năng lượng tối đa, và
-tám kỹ năng; kéo một hàng bằng ⠿ để sắp xếp lại. Bảng bên phải là thư viện
+tám kỹ năng; kéo một hàng bằng ⠿ để sắp xếp lại. Giữ **Shift** khi thả một hàng lên thành viên khác
+để sao chép toàn bộ build của nó sang thành viên đó thay vì sắp xếp lại; hàng bạn đã
+kéo vẫn giữ nguyên.
+Bảng bên phải là thư viện
 của Tạo Nhân Vật, với thẻ **Nhân vật của tôi** đứng trước **Kỹ năng** và
 **Đồ**. Ở **Nhân vật của tôi**, kéo một nhân vật của bạn lên một thành viên để
 biến thành viên đó thành bản sao của nhân vật ấy. Bản sao là của riêng đội:

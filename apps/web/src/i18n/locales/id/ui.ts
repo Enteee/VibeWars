@@ -78,6 +78,10 @@ export default {
   "buildEditor.discardChanges": "Buang perubahan?",
   "buildEditor.duplicate": "Duplikat",
   "buildEditor.duplicateSkill": "{skill} ada di bar lebih dari sekali.",
+  "buildEditor.duplicateRune":
+    "{rune}: bagian lain sudah memakai rune ini. Hanya satu yang dihitung.",
+  "buildEditor.duplicateAttributeRune":
+    "{rune}: bagian lain sudah memakai rune atribut ini. Hanya bonus terkuat yang dihitung, tetapi setiap penalti darah tetap berlaku.",
   "buildEditor.emptySetAction": "kosongkan set {set}",
   "buildEditor.emptySetNote": "Set kosong",
   "buildEditor.emptySlot": "Kosong",
@@ -424,6 +428,11 @@ export default {
   "gearEditor.bareHands": "tangan kosong",
   "gearEditor.bonusFromHeadgear": "pelindung kepala +{amount}",
   "gearEditor.bonusFromRune": "rune +{amount}",
+  "gearEditor.healthBase": "dasar {amount}",
+  "gearEditor.healthInsignia": "insignia {amount}",
+  "gearEditor.healthMods": "mod {amount}",
+  "gearEditor.healthRunes": "rune {amount}",
+  "gearEditor.healthSources": "Darah maks.: {parts}",
   "gearEditor.itemA": "{item}",
   "gearEditor.itemAn": "{item}",
   "gearEditor.modRemoved": "{mod} dihapus: tidak cocok dengan {item}.",
@@ -742,6 +751,8 @@ export default {
   "lobbyWindow.reconnecting": "Menyambung ulang…",
   "lobbyWindow.removeMember": "Keluarkan {name} dari lobi",
 
+  "match.buildReplaced":
+    "Build-mu tidak sah ({problem}): kamu memakai build awal di pertandingan ini.",
   "matchView.watching": "Menonton · jeda {seconds} s",
 
   "matches.bot": "{name} (bot)",
@@ -1261,6 +1272,7 @@ export default {
   "teamEditor.professions": "Profesi",
   "teamEditor.professionsTitle": "profesi tim",
   "teamEditor.replaceMember": "Ganti {member} dengan {character}",
+  "teamEditor.copyMember": "Shift: Salin build {source} ke {target}",
   "teamEditor.save": "Simpan",
   "teamEditor.saveTitle": "Simpan tim ini",
   "teamEditor.saveTitleProblem": "Simpan tim ini (ada masalah: {problem})",

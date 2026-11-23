@@ -84,6 +84,9 @@ export default {
   "buildEditor.discardChanges": "Odbaciti izmjene?",
   "buildEditor.duplicate": "Dupliciraj",
   "buildEditor.duplicateSkill": "{skill} je na traci više puta.",
+  "buildEditor.duplicateRune": "{rune}: drugi dio već nosi ovu runu. Računa se samo jedna.",
+  "buildEditor.duplicateAttributeRune":
+    "{rune}: drugi dio već nosi runu ovog atributa. Računa se samo najjači bonus, ali svaka kazna zdravlja se računa.",
   "buildEditor.emptySetAction": "isprazni komplet {set}",
   "buildEditor.emptySetNote": "Prazan komplet",
   "buildEditor.emptySlot": "Prazno",
@@ -483,6 +486,11 @@ export default {
   "gearEditor.bareHands": "gole ruke",
   "gearEditor.bonusFromHeadgear": "kaciga +{amount}",
   "gearEditor.bonusFromRune": "runa +{amount}",
+  "gearEditor.healthBase": "osnova {amount}",
+  "gearEditor.healthInsignia": "insignije {amount}",
+  "gearEditor.healthMods": "modovi {amount}",
+  "gearEditor.healthRunes": "rune {amount}",
+  "gearEditor.healthSources": "Maks. zdravlje: {parts}",
   "gearEditor.itemA": "{item}",
   "gearEditor.itemAn": "{item}",
   "gearEditor.modRemoved": "Uklonjeno {mod}: ne pristaje uz {item}.",
@@ -821,6 +829,7 @@ export default {
   "lobbyWindow.reconnecting": "Ponovno povezivanje…",
   "lobbyWindow.removeMember": "Ukloni {name} iz sobe",
 
+  "match.buildReplaced": "Tvoj build nije dopušten ({problem}): ovaj meč igraš s početnim buildom.",
   "matchView.watching": "Gledaš · kašnjenje {seconds} s",
 
   "matches.bot": "{name} (bot)",
@@ -1398,6 +1407,7 @@ export default {
   "teamEditor.professions": "Profesije",
   "teamEditor.professionsTitle": "profesije tima",
   "teamEditor.replaceMember": "Zamijeni: {member} → {character}",
+  "teamEditor.copyMember": "Shift: kopiraj build od {source} na {target}",
   "teamEditor.save": "Spremi",
   "teamEditor.saveTitle": "Spremi ovaj tim",
   "teamEditor.saveTitleProblem": "Spremi ovaj tim (ima problema: {problem})",

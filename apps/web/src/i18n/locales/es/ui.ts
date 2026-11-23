@@ -83,6 +83,9 @@ export default {
   "buildEditor.discardChanges": "¿Descartar los cambios?",
   "buildEditor.duplicate": "Duplicar",
   "buildEditor.duplicateSkill": "{skill} está en la barra más de una vez.",
+  "buildEditor.duplicateRune": "{rune}: otra pieza ya lleva esta runa. Solo cuenta una.",
+  "buildEditor.duplicateAttributeRune":
+    "{rune}: otra pieza ya lleva una runa de este atributo. Solo cuenta la bonificación más fuerte, pero todas las penalizaciones de salud sí.",
   "buildEditor.emptySetAction": "vaciar set {set}",
   "buildEditor.emptySetNote": "Set vacío",
   "buildEditor.emptySlot": "Vacío",
@@ -482,6 +485,11 @@ export default {
   "gearEditor.bareHands": "manos desnudas",
   "gearEditor.bonusFromHeadgear": "casco +{amount}",
   "gearEditor.bonusFromRune": "runa +{amount}",
+  "gearEditor.healthBase": "base {amount}",
+  "gearEditor.healthInsignia": "insignias {amount}",
+  "gearEditor.healthMods": "mejoras {amount}",
+  "gearEditor.healthRunes": "runas {amount}",
+  "gearEditor.healthSources": "Salud máx.: {parts}",
   "gearEditor.itemA": "{item}",
   "gearEditor.itemAn": "{item}",
   "gearEditor.modRemoved": "Se quitó {mod}: no encaja en {item}.",
@@ -828,6 +836,8 @@ export default {
   "lobbyWindow.reconnecting": "Reconectando…",
   "lobbyWindow.removeMember": "Expulsar a {name} de la sala",
 
+  "match.buildReplaced":
+    "Tu build no es válida ({problem}): en esta partida juegas con una build inicial.",
   "matchView.watching": "Observando · {seconds} s de retraso",
 
   "matches.bot": "{name} (bot)",
@@ -1412,6 +1422,7 @@ export default {
   "teamEditor.professions": "Profesiones",
   "teamEditor.professionsTitle": "las profesiones del equipo",
   "teamEditor.replaceMember": "Sustituir a {member} por {character}",
+  "teamEditor.copyMember": "Shift: copiar la build de {source} en {target}",
   "teamEditor.save": "Guardar",
   "teamEditor.saveTitle": "Guardar este equipo",
   "teamEditor.saveTitleProblem": "Guardar este equipo (tiene problemas: {problem})",

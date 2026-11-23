@@ -146,6 +146,8 @@ hat, kommt als leeres Feld an. Der Build gehört dir, sobald du **Speichern** dr
 **Esc** geht ohne Speichern und fragt vorher, wenn du etwas geändert hast.
 **Teilen**, **GW1-Code laden**, **Duplizieren** und **Löschen** liegen unter **⋯**.
 
+Ein Build mit einem Problem lässt sich nicht speichern, und der Trainingsbereich startet nicht damit. Erreicht so ein Build trotzdem eine Partie, spielst du dort einen Starter-Build, und eine Meldung sagt dir, warum.
+
 Einen Team-Code lädst du stattdessen im **Team-Editor**: füge ihn dort irgendwo ein, oder
 öffne einen Team-Build und nutze sein **⋯** → **Team laden**.
 
@@ -168,6 +170,8 @@ einem leeren Charakter an jedem Platz. Du fügst nie ein Mitglied hinzu oder ent
 eines, du ersetzt es. Jede Zeile zeigt den Charakter des Mitglieds mit den Waffen, die
 er trägt, einen Punkt für jedes Waffenset, wenn er mehr als eines hat, sein maximales
 Leben und seine Energie und seine acht Skills; zieh eine Zeile am ⠿, um umzusortieren.
+Halte beim Ablegen einer Zeile auf einem anderen Mitglied **Shift**, um stattdessen ihren
+ganzen Build auf dieses Mitglied zu kopieren; die gezogene Zeile bleibt, wie sie war.
 Das Panel rechts ist die Bibliothek des Charakter-Editors, mit einem Tab **Meine
 Charaktere** vor **Skills** und **Ausrüstung**. Unter **Meine Charaktere** ziehst du
 einen deiner Charaktere auf ein Mitglied, um es zu einer Kopie zu machen. Eine Kopie

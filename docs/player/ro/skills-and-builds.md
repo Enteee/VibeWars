@@ -146,6 +146,8 @@ de cod funcționează în ambele feluri. O abilitate GW1 pe care VibeWars nu o a
 iese fără să salveze și întreabă mai întâi dacă ai schimbat ceva. **Trimite**,
 **Încarcă cod GW1**, **Duplică** și **Șterge** sunt în **⋯**.
 
+Un build cu o problemă nu poate fi salvat, iar zona de antrenament nu pornește cu el. Dacă un astfel de build ajunge totuși într-un meci, acolo joci cu un build de început, iar un mesaj spune de ce.
+
 Un cod de echipă se încarcă în schimb în **Constructor de echipe**: lipește-l
 oriunde acolo, sau deschide un build de echipă și folosește **⋯** →
 **Încarcă echipa** al lui.
@@ -169,7 +171,9 @@ Un build de echipă are mereu atâția membri câți spune mărimea: unul nou î
 un personaj gol pe fiecare loc. Nu adaugi și nu elimini niciodată un membru, ci
 înlocuiești unul. Fiecare rând arată personajul membrului cu armele pe care le
 ține, un punct pentru fiecare set de arme când are mai multe, Viața și Energia
-maximă și cele opt abilități; trage un rând de ⠿ ca să reordonezi. Panoul din
+maximă și cele opt abilități; trage un rând de ⠿ ca să reordonezi. Ține **Shift** când plasezi un rând pe alt membru
+ca să-i copiezi în schimb tot build-ul pe acel membru; rândul tras rămâne cum era.
+Panoul din
 dreapta este biblioteca din Constructor de personaje, cu o filă **Personajele
 mele** înainte de **Abilități** și **Echipament**. La **Personajele mele**, trage
 unul dintre personajele tale peste un membru ca să faci din acel membru o copie a

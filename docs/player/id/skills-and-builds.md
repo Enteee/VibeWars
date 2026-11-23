@@ -147,6 +147,8 @@ menekan **Simpan**.
 **Esc** keluar tanpa menyimpan, dan bertanya dulu kalau kamu mengubah sesuatu.
 **Bagikan**, **Muat kode GW1**, **Duplikat** dan **Hapus** ada di bawah **⋯**.
 
+Build yang punya masalah tidak bisa disimpan, dan area latihan tidak dimulai dengannya. Jika build seperti itu tetap masuk ke pertandingan, kamu memakai build awal di sana, dan sebuah pesan menjelaskan alasannya.
+
 Kode tim dimuat di **Pembuat Tim** sebagai gantinya: tempel di mana saja di sana,
 atau buka sebuah build tim dan pakai **⋯** → **Muat tim**-nya.
 
@@ -170,7 +172,9 @@ dengan karakter kosong di setiap tempat. Kamu tidak pernah menambah atau membuan
 kamu menggantinya. Setiap baris menampilkan karakter anggota dengan senjata yang
 dipegangnya, satu titik untuk setiap set senjata kalau punya lebih dari satu,
 Darah dan Energi maksimumnya, dan delapan skill-nya; seret baris lewat ⠿-nya untuk
-mengubah urutan. Panel di kanan adalah perpustakaan Pembuat Karakter,
+mengubah urutan. Tahan **Shift** saat menjatuhkan baris ke anggota lain
+untuk menyalin seluruh build-nya ke anggota itu; baris yang kamu seret tetap seperti semula.
+Panel di kanan adalah perpustakaan Pembuat Karakter,
 dengan tab **Karakterku** sebelum **Skill** dan **Gear**. Di **Karakterku**, seret
 salah satu karaktermu ke seorang anggota untuk menjadikan anggota itu salinannya.
 Salinan adalah milik tim itu sendiri: mengubahnya, atau mengubah karakter asalnya,

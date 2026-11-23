@@ -115,6 +115,7 @@ import {
   saveStarterTeamId,
 } from "./storage/starter-team.js";
 import { importedTeamSummary } from "./storage/team-transfer.js";
+import { buildReplacedNotice } from "./ui/build-replaced.js";
 import { closeBeatEditor } from "./ui/beat-editor.js";
 import { mountBuildBanner } from "./ui/build-ribbon.js";
 import {
@@ -3314,6 +3315,18 @@ async function main(): Promise<void> {
       // Said once, on the match screen: the lobby's went with it.
       if (start.teamPlanRejected) {
         toast(t("session.teamPlanRejected"));
+      }
+      // An illegal build of the player's own plays a starter build (#3822):
+      // said once, here. A Team Lobby's or a queued party's seat is planned.
+      const replaced = buildReplacedNotice(
+        entrant.characterId === undefined
+          ? undefined
+          : // Unreadable, it was not worth failing the match over: nor is this.
+            await characters.load(entrant.characterId).catch(() => undefined),
+        from.getSnapshot().teamLobby !== null || teamQueue !== undefined,
+      );
+      if (replaced !== undefined) {
+        toast(replaced);
       }
     } catch (error) {
       console.error("[web] could not enter match", error);

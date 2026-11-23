@@ -155,6 +155,8 @@ plats. Builden är din när du trycker på **Spara**.
 **Esc** lämnar utan att spara, och frågar först om du har ändrat något.
 **Dela**, **Ladda GW1-kod**, **Duplicera** och **Radera** finns under **⋯**.
 
+Ett build med ett problem kan inte sparas, och träningsområdet startar inte med det. Om ett sådant build ändå når en match spelar du ett startbuild där, och ett meddelande säger varför.
+
 En lagkod laddas i stället i **Lagbyggare**: klistra in den var som helst där,
 eller öppna en lagbuild och använd dess **⋯** → **Ladda lag**.
 
@@ -178,7 +180,10 @@ med en tom karaktär på varje plats. Du lägger aldrig till eller tar bort
 en medlem, du ersätter en. Varje rad visar medlemmens karaktär med vapnen
 den håller, en prick för varje vapenset när den har fler än ett, dess
 maximala hälsa och energi, och dess åtta förmågor; dra en rad i dess ⠿
-för att ändra ordningen. Panelen till höger är Karaktärsbyggarens
+för att ändra ordningen. Håll in **Shift** när du släpper en rad på en annan
+medlem för att i stället kopiera hela dess build till den medlemmen; raden du
+drog förblir som den var.
+Panelen till höger är Karaktärsbyggarens
 bibliotek, med en flik **Mina karaktärer** före **Förmågor** och **Prylar**. På **Mina karaktärer** drar du
 en av dina karaktärer till en medlem för att göra den medlemmen till en
 kopia av den. En kopia är lagets egen: att ändra den, eller karaktären

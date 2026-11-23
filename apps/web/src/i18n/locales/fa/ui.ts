@@ -81,6 +81,9 @@ export default {
   "buildEditor.discardChanges": "تغییرات دور ریخته شود؟",
   "buildEditor.duplicate": "کپی",
   "buildEditor.duplicateSkill": "{skill} بیش از یک بار روی نوار است.",
+  "buildEditor.duplicateRune": "{rune}: قطعهٔ دیگری از قبل این رون را دارد. فقط یکی حساب می‌شود.",
+  "buildEditor.duplicateAttributeRune":
+    "{rune}: قطعهٔ دیگری از قبل رونی از این ویژگی دارد. فقط قوی‌ترین پاداش حساب می‌شود، اما همهٔ جریمه‌های سلامتی حساب می‌شوند.",
   "buildEditor.emptySetAction": "خالی کردن ست {set}",
   "buildEditor.emptySetNote": "ست خالی",
   "buildEditor.emptySlot": "خالی",
@@ -453,6 +456,11 @@ export default {
   "gearEditor.bareHands": "دست خالی",
   "gearEditor.bonusFromHeadgear": "کلاهخود +{amount}",
   "gearEditor.bonusFromRune": "رون +{amount}",
+  "gearEditor.healthBase": "پایه {amount}",
+  "gearEditor.healthInsignia": "نشان‌ها {amount}",
+  "gearEditor.healthMods": "ارتقاها {amount}",
+  "gearEditor.healthRunes": "رون‌ها {amount}",
+  "gearEditor.healthSources": "حداکثر سلامتی: {parts}",
   "gearEditor.itemA": "{item}",
   "gearEditor.itemAn": "{item}",
   "gearEditor.modRemoved": "{mod} حذف شد: با {item} سازگار نیست.",
@@ -786,6 +794,8 @@ export default {
   "lobbyWindow.reconnecting": "اتصال دوباره…",
   "lobbyWindow.removeMember": "حذف {name} از لابی",
 
+  "match.buildReplaced":
+    "بیلد شما مجاز نیست ({problem}): در این مسابقه با یک بیلد آغازین بازی می‌کنید.",
   "matchView.watching": "تماشا · {seconds} ثانیه تأخیر",
 
   "matches.bot": "{name} (بات)",
@@ -1326,6 +1336,7 @@ export default {
   "teamEditor.professions": "حرفه‌ها",
   "teamEditor.professionsTitle": "حرفه‌های تیم",
   "teamEditor.replaceMember": "جایگزینی {member} با {character}",
+  "teamEditor.copyMember": "Shift: کپی بیلد {source} روی {target}",
   "teamEditor.save": "ذخیره",
   "teamEditor.saveTitle": "ذخیرهٔ این تیم",
   "teamEditor.saveTitleProblem": "ذخیرهٔ این تیم (مشکل دارد: {problem})",

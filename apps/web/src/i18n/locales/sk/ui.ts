@@ -84,6 +84,9 @@ export default {
   "buildEditor.discardChanges": "Zahodiť zmeny?",
   "buildEditor.duplicate": "Duplikovať",
   "buildEditor.duplicateSkill": "{skill} je na lište viackrát.",
+  "buildEditor.duplicateRune": "{rune}: iný diel už nesie túto runu. Počíta sa len jedna.",
+  "buildEditor.duplicateAttributeRune":
+    "{rune}: iný diel už nesie runu tohto atribútu. Počíta sa len najsilnejší bonus, ale každá penalizácia zdravia áno.",
   "buildEditor.emptySetAction": "vyprázdniť sadu {set}",
   "buildEditor.emptySetNote": "Prázdna sada",
   "buildEditor.emptySlot": "Prázdne",
@@ -497,6 +500,11 @@ export default {
   "gearEditor.bareHands": "holé ruky",
   "gearEditor.bonusFromHeadgear": "pokrývka hlavy +{amount}",
   "gearEditor.bonusFromRune": "runa +{amount}",
+  "gearEditor.healthBase": "základ {amount}",
+  "gearEditor.healthInsignia": "insígnie {amount}",
+  "gearEditor.healthMods": "úpravy {amount}",
+  "gearEditor.healthRunes": "runy {amount}",
+  "gearEditor.healthSources": "Max. zdravie: {parts}",
   "gearEditor.itemA": "{item}",
   "gearEditor.itemAn": "{item}",
   "gearEditor.modRemoved": "Odstránené: {mod}. Nehodí sa k: {item}.",
@@ -850,6 +858,8 @@ export default {
   "lobbyWindow.reconnecting": "Znovu sa pripája…",
   "lobbyWindow.removeMember": "Odstrániť {name} z lobby",
 
+  "match.buildReplaced":
+    "Tvoj build nie je povolený ({problem}): tento zápas hráš so štartovacím buildom.",
   "matchView.watching": "Sleduješ · oneskorenie {seconds} s",
 
   "matches.bot": "{name} (bot)",
@@ -1444,6 +1454,7 @@ export default {
   "teamEditor.professions": "Povolania",
   "teamEditor.professionsTitle": "povolania tímu",
   "teamEditor.replaceMember": "Nahradiť {member} postavou {character}",
+  "teamEditor.copyMember": "Shift: Kopírovať build postavy {source} na {target}",
   "teamEditor.save": "Uložiť",
   "teamEditor.saveTitle": "Uložiť tento tím",
   "teamEditor.saveTitleProblem": "Uložiť tento tím (má problémy: {problem})",

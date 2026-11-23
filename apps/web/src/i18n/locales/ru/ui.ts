@@ -83,6 +83,9 @@ export default {
   "buildEditor.discardChanges": "Отбросить изменения?",
   "buildEditor.duplicate": "Копировать",
   "buildEditor.duplicateSkill": "{skill} стоит на панели больше одного раза.",
+  "buildEditor.duplicateRune": "{rune}: другая часть уже несёт эту руну. Считается только одна.",
+  "buildEditor.duplicateAttributeRune":
+    "{rune}: другая часть уже несёт руну этого атрибута. Считается только самый сильный бонус, но каждый штраф к здоровью действует.",
   "buildEditor.emptySetAction": "очистить набор {set}",
   "buildEditor.emptySetNote": "Пустой набор",
   "buildEditor.emptySlot": "Пусто",
@@ -496,6 +499,11 @@ export default {
   "gearEditor.bareHands": "голые руки",
   "gearEditor.bonusFromHeadgear": "шлем +{amount}",
   "gearEditor.bonusFromRune": "руна +{amount}",
+  "gearEditor.healthBase": "база {amount}",
+  "gearEditor.healthInsignia": "инсигнии {amount}",
+  "gearEditor.healthMods": "моды {amount}",
+  "gearEditor.healthRunes": "руны {amount}",
+  "gearEditor.healthSources": "Макс. здоровье: {parts}",
   "gearEditor.itemA": "{item}",
   "gearEditor.itemAn": "{item}",
   "gearEditor.modRemoved": "Снято: {mod} не подходит к {item}.",
@@ -849,6 +857,8 @@ export default {
   "lobbyWindow.reconnecting": "Переподключение…",
   "lobbyWindow.removeMember": "Убрать {name} из лобби",
 
+  "match.buildReplaced":
+    "Твой билд недопустим ({problem}): в этом матче ты играешь стартовым билдом.",
   "matchView.watching": "Просмотр · задержка {seconds} с",
 
   "matches.bot": "{name} (бот)",
@@ -1443,6 +1453,7 @@ export default {
   "teamEditor.professions": "Профессии",
   "teamEditor.professionsTitle": "профессии команды",
   "teamEditor.replaceMember": "Заменить {member} на {character}",
+  "teamEditor.copyMember": "Shift: копировать билд {source} на {target}",
   "teamEditor.save": "Сохранить",
   "teamEditor.saveTitle": "Сохранить эту команду",
   "teamEditor.saveTitleProblem": "Сохранить эту команду (есть проблемы: {problem})",

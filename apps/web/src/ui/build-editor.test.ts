@@ -10,7 +10,10 @@ import {
   accessibleAttributeIds,
   getSkill,
   primaryAttributeOf,
+  type EquippedRune,
 } from "@vibewars/game-core";
+import { runeName } from "../i18n/game-names.js";
+import { t } from "../i18n/index.js";
 
 import { exportBuild } from "../storage/build-transfer.js";
 import { SKILL_BAR_SLOTS, validateBuild } from "../storage/build-validation.js";
@@ -488,6 +491,36 @@ describe("editorProblems (#566)", () => {
       ["7 empty skill slots.", false],
     ]);
     expect(validateBuild(character)).toEqual([]);
+  });
+
+  it("says a duplicate rune in the player's words, and still blocks (#3822)", () => {
+    const monk = setProfessions(newCharacter("c1"), "monk", undefined);
+    const favor = {
+      kind: "attribute",
+      attributeId: "monk.divine-favor",
+      tier: "superior",
+    } as const;
+    const minorFavor = { ...favor, tier: "minor" } as const;
+    const vigor = { kind: "universal", runeId: "vigor", tier: "superior" } as const;
+    const wearing = (head: EquippedRune, chest: EquippedRune): StoredCharacter => ({
+      ...monk,
+      equipment: {
+        ...monk.equipment,
+        armor: {
+          ...monk.equipment.armor,
+          head: { ...monk.equipment.armor.head, rune: head },
+          chest: { ...monk.equipment.armor.chest, rune: chest },
+        },
+      },
+    });
+    expect(texts(wearing(vigor, vigor))).toContainEqual([
+      t("buildEditor.duplicateRune", { rune: runeName(vigor) }),
+      true,
+    ]);
+    expect(texts(wearing(favor, minorFavor))).toContainEqual([
+      t("buildEditor.duplicateAttributeRune", { rune: runeName(minorFavor) }),
+      true,
+    ]);
   });
 });
 

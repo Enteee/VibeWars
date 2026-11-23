@@ -78,6 +78,9 @@ export default {
   "buildEditor.discardChanges": "ทิ้งการแก้ไขไหม?",
   "buildEditor.duplicate": "ทำสำเนา",
   "buildEditor.duplicateSkill": "{skill} อยู่บนแถบมากกว่าหนึ่งครั้ง",
+  "buildEditor.duplicateRune": "{rune}: ชิ้นอื่นสวมรูนนี้อยู่แล้ว นับได้เพียงอันเดียว",
+  "buildEditor.duplicateAttributeRune":
+    "{rune}: ชิ้นอื่นสวมรูนของคุณสมบัตินี้อยู่แล้ว นับเฉพาะโบนัสที่แรงที่สุด แต่บทลงโทษพลังชีวิตทุกอันยังมีผล",
   "buildEditor.emptySetAction": "ล้างชุด {set}",
   "buildEditor.emptySetNote": "ชุดว่าง",
   "buildEditor.emptySlot": "ว่าง",
@@ -421,6 +424,11 @@ export default {
   "gearEditor.bareHands": "มือเปล่า",
   "gearEditor.bonusFromHeadgear": "หมวก +{amount}",
   "gearEditor.bonusFromRune": "รูน +{amount}",
+  "gearEditor.healthBase": "พื้นฐาน {amount}",
+  "gearEditor.healthInsignia": "เครื่องหมาย {amount}",
+  "gearEditor.healthMods": "ม็อด {amount}",
+  "gearEditor.healthRunes": "รูน {amount}",
+  "gearEditor.healthSources": "พลังชีวิตสูงสุด: {parts}",
   "gearEditor.itemA": "{item}",
   "gearEditor.itemAn": "{item}",
   "gearEditor.modRemoved": "เอา {mod} ออกแล้ว: ใช้กับ {item} ไม่ได้",
@@ -739,6 +747,7 @@ export default {
   "lobbyWindow.reconnecting": "กำลังเชื่อมต่อใหม่…",
   "lobbyWindow.removeMember": "เอา {name} ออกจากล็อบบี้",
 
+  "match.buildReplaced": "บิลด์ของคุณไม่ถูกต้อง ({problem}): แมตช์นี้คุณจะเล่นด้วยบิลด์เริ่มต้น",
   "matchView.watching": "กำลังรับชม · ดีเลย์ {seconds} วิ",
 
   "matches.bot": "{name} (บอต)",
@@ -1246,6 +1255,7 @@ export default {
   "teamEditor.professions": "อาชีพ",
   "teamEditor.professionsTitle": "อาชีพของทีม",
   "teamEditor.replaceMember": "แทนที่ {member} ด้วย {character}",
+  "teamEditor.copyMember": "Shift: คัดลอกบิลด์ของ {source} ไปยัง {target}",
   "teamEditor.save": "บันทึก",
   "teamEditor.saveTitle": "บันทึกทีมนี้",
   "teamEditor.saveTitleProblem": "บันทึกทีมนี้ (มีปัญหา: {problem})",

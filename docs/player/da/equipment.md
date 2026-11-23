@@ -172,6 +172,8 @@ trukket fra den fulde varighed og afrundet til et helt sekund:
 Restoration og "Fear Cuts Deeper" bringer en Bleeding på 8 sekunder ned
 på 4.
 
+Editoren gemmer ikke to dele med samme rune eller med runer for samme egenskab: kun den stærkeste bonus ville tælle, mens alle livsstraffe ville. Peg på liv i editoren for at se, hvor dit kommer fra: basis, runer, insignier og mods.
+
 Du vælger en dels rune samme sted som dens insignie: klik på delen på
 figuren.
 

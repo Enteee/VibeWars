@@ -81,6 +81,9 @@ export default {
   "buildEditor.discardChanges": "Kassera ändringarna?",
   "buildEditor.duplicate": "Duplicera",
   "buildEditor.duplicateSkill": "{skill} finns på raden mer än en gång.",
+  "buildEditor.duplicateRune": "{rune}: en annan del bär redan denna runa. Bara en räknas.",
+  "buildEditor.duplicateAttributeRune":
+    "{rune}: en annan del bär redan en runa för denna egenskap. Bara den starkaste bonusen räknas, men varje hälsostraff gör det.",
   "buildEditor.emptySetAction": "töm set {set}",
   "buildEditor.emptySetNote": "Tomt set",
   "buildEditor.emptySlot": "Tom",
@@ -453,6 +456,11 @@ export default {
   "gearEditor.bareHands": "bara händer",
   "gearEditor.bonusFromHeadgear": "huvudbonad +{amount}",
   "gearEditor.bonusFromRune": "runa +{amount}",
+  "gearEditor.healthBase": "bas {amount}",
+  "gearEditor.healthInsignia": "insignier {amount}",
+  "gearEditor.healthMods": "moddar {amount}",
+  "gearEditor.healthRunes": "runor {amount}",
+  "gearEditor.healthSources": "Max. hälsa: {parts}",
   "gearEditor.itemA": "{item}",
   "gearEditor.itemAn": "{item}",
   "gearEditor.modRemoved": "Tog bort {mod}: den passar inte {item}.",
@@ -786,6 +794,8 @@ export default {
   "lobbyWindow.reconnecting": "Återansluter…",
   "lobbyWindow.removeMember": "Ta bort {name} från lobbyn",
 
+  "match.buildReplaced":
+    "Ditt build är inte tillåtet ({problem}): du spelar ett startbuild den här matchen.",
   "matchView.watching": "Tittar · {seconds} s fördröjning",
 
   "matches.bot": "{name} (bot)",
@@ -1326,6 +1336,7 @@ export default {
   "teamEditor.professions": "Yrken",
   "teamEditor.professionsTitle": "lagets yrken",
   "teamEditor.replaceMember": "Ersätt {member} med {character}",
+  "teamEditor.copyMember": "Shift: Kopiera {source}s build till {target}",
   "teamEditor.save": "Spara",
   "teamEditor.saveTitle": "Spara laget",
   "teamEditor.saveTitleProblem": "Spara laget (det har problem: {problem})",

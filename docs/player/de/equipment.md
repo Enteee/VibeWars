@@ -167,6 +167,8 @@ ebenfalls, jede von der vollen Dauer abgezogen und auf eine ganze
 Sekunde gerundet: Restoration und "Fear Cuts Deeper" verkürzen eine
 Blutung von 8 Sekunden auf 4.
 
+Der Editor speichert keine zwei Teile mit derselben Rune oder mit Runen desselben Attributs: Nur der stärkste Bonus würde zählen, jeder Lebensabzug aber schon. Zeig im Editor auf Leben, um zu sehen, woher deins kommt: Basis, Runen, Insignien und Modifikationen.
+
 Die Rune eines Teils wählst du am selben Ort wie seine Insignie: Klick auf das Teil an der
 Figur.
 

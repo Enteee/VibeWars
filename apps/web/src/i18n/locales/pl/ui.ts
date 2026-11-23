@@ -84,6 +84,9 @@ export default {
   "buildEditor.discardChanges": "Odrzucić zmiany?",
   "buildEditor.duplicate": "Duplikuj",
   "buildEditor.duplicateSkill": "{skill} jest na pasku więcej niż raz.",
+  "buildEditor.duplicateRune": "{rune}: inna część już nosi tę runę. Liczy się tylko jedna.",
+  "buildEditor.duplicateAttributeRune":
+    "{rune}: inna część już nosi runę tego atrybutu. Liczy się tylko najsilniejsza premia, ale każda kara do zdrowia tak.",
   "buildEditor.emptySetAction": "opróżnij zestaw {set}",
   "buildEditor.emptySetNote": "Pusty zestaw",
   "buildEditor.emptySlot": "Puste",
@@ -499,6 +502,11 @@ export default {
   "gearEditor.bareHands": "gołe ręce",
   "gearEditor.bonusFromHeadgear": "hełm +{amount}",
   "gearEditor.bonusFromRune": "runa +{amount}",
+  "gearEditor.healthBase": "podstawa {amount}",
+  "gearEditor.healthInsignia": "insygnia {amount}",
+  "gearEditor.healthMods": "modyfikacje {amount}",
+  "gearEditor.healthRunes": "runy {amount}",
+  "gearEditor.healthSources": "Maks. zdrowie: {parts}",
   "gearEditor.itemA": "{item}",
   "gearEditor.itemAn": "{item}",
   "gearEditor.modRemoved": "Usunięto {mod}: nie pasuje do {item}.",
@@ -853,6 +861,8 @@ export default {
   "lobbyWindow.reconnecting": "Ponowne łączenie…",
   "lobbyWindow.removeMember": "Usuń {name} z lobby",
 
+  "match.buildReplaced":
+    "Twój build jest niedozwolony ({problem}): w tym meczu grasz buildem startowym.",
   "matchView.watching": "Oglądasz · opóźnienie {seconds} s",
 
   "matches.bot": "{name} (bot)",
@@ -1451,6 +1461,7 @@ export default {
   "teamEditor.professions": "Profesje",
   "teamEditor.professionsTitle": "profesje drużyny",
   "teamEditor.replaceMember": "Zastąp {member} postacią {character}",
+  "teamEditor.copyMember": "Shift: kopiuj build {source} na {target}",
   "teamEditor.save": "Zapisz",
   "teamEditor.saveTitle": "Zapisz tę drużynę",
   "teamEditor.saveTitleProblem": "Zapisz tę drużynę (są problemy: {problem})",

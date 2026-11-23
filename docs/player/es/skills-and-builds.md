@@ -153,6 +153,8 @@ es tuya cuando pulsas **Guardar**.
 guardar, y pregunta antes si has cambiado algo. **Compartir**, **Cargar código
 GW1**, **Duplicar** y **Eliminar** están en **⋯**.
 
+Una build con un problema no se puede guardar, y la zona de entrenamiento no empieza con ella. Si aun así llega a una partida, allí juegas con una build inicial, y un mensaje te dice por qué.
+
 Un código de equipo se carga en **Creador de equipos**: pégalo en cualquier parte
 ahí, o abre una build de equipo y usa su **⋯** → **Cargar equipo**.
 
@@ -175,7 +177,9 @@ empieza con un personaje en blanco en cada puesto. Nunca añades ni quitas un
 miembro, lo sustituyes. Cada fila muestra el personaje del miembro con las
 armas que lleva, un punto por cada set de armas cuando tiene más de uno, su
 salud y energía máximas y sus ocho habilidades; arrastra una fila por su ⠿ para
-reordenarla. El panel de la derecha es la biblioteca del Creador de personajes,
+reordenarla. Mantén **Shift** al soltar una fila sobre otro miembro para copiar
+toda su build en ese miembro; la fila que arrastraste queda como estaba.
+El panel de la derecha es la biblioteca del Creador de personajes,
 con una pestaña **Mis personajes** antes de **Habilidades** y **Equipo**. En
 **Mis personajes**, arrastra uno de tus personajes sobre un miembro para que
 ese miembro sea una copia. Una copia es propia del equipo: cambiarla, o cambiar

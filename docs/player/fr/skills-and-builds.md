@@ -157,6 +157,8 @@ emplacement vide. Le build est à toi une fois que tu appuies sur **Sauver**.
 enregistrer, et demande d'abord si tu as changé quelque chose. **Partager**,
 **Charger code GW1**, **Dupliquer** et **Supprimer** sont sous **⋯**.
 
+Un build qui a un problème ne peut pas être enregistré, et la zone d'entraînement ne démarre pas avec. Si un tel build arrive quand même dans un match, tu y joues un build de départ, et un message dit pourquoi.
+
 Un code d'équipe se charge plutôt dans l'**Atelier d'équipes** : colle-le n'importe où
 là-bas, ou ouvre un build d'équipe et utilise son **⋯** → **Charger une équipe**.
 
@@ -182,7 +184,10 @@ commence avec un personnage vierge à chaque place. Tu n'ajoutes ni ne retires
 jamais de membre, tu en remplaces un. Chaque ligne montre le personnage du
 membre avec les armes qu'il tient, un point par set d'armes quand il en a
 plusieurs, sa santé et son énergie maximales, et ses huit compétences ; fais
-glisser une ligne par son ⠿ pour réordonner. Le panneau de droite est la
+glisser une ligne par son ⠿ pour réordonner. Maintiens **Shift** en déposant une ligne sur un
+autre membre pour copier tout son build sur ce membre à la place ; la ligne
+que tu as fait glisser reste telle quelle.
+Le panneau de droite est la
 bibliothèque de l'Atelier de personnages, avec un onglet **Mes personnages**
 avant **Compétences** et **Équipement**. Sur **Mes personnages**, fais glisser
 un de tes personnages sur un membre pour faire de ce membre une copie. Une

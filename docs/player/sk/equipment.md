@@ -170,6 +170,8 @@ rôznych zdrojov sa tiež sčítajú, každé sa počíta z plného trvania a
 zaokrúhli sa na celé sekundy: Restoration a "Fear Cuts Deeper" skrátia
 8-sekundové Krvácanie na 4.
 
+Editor neuloží dva diely s rovnakou runou ani s runami rovnakého atribútu: počítal by sa len najsilnejší bonus, ale každá penalizácia zdravia áno. Ukáž v editore na zdravie a uvidíš, odkiaľ pochádza: základ, runy, insígnie a úpravy.
+
 Runu kusu vyberáš na tom istom mieste ako jeho insígniu: klikni na kus
 na figúre.
 

@@ -169,6 +169,8 @@ różnych źródeł też się sumują, każde liczone od pełnego czasu i zaokr�
 do pełnej sekundy: Restoration i "Fear Cuts Deeper" skracają 8-sekundowe
 Krwawienie do 4.
 
+Edytor nie zapisze dwóch części z tą samą runą ani z runami tego samego atrybutu: liczyłaby się tylko najsilniejsza premia, a każda kara do zdrowia tak. Wskaż zdrowie w edytorze, aby zobaczyć, skąd się bierze: podstawa, runy, insygnia i modyfikacje.
+
 Runę części wybierasz w tym samym miejscu co jej insygnia: kliknij część na figurze.
 
 Edytor sumuje wszystko za ciebie: Zdrowie, Energię, pancerz i obrażenia, takie

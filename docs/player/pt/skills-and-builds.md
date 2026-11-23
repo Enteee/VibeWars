@@ -158,6 +158,8 @@ como um espaço vazio. A build é sua quando você pressiona **Salvar**.
 **Compartilhar**, **Carregar código GW1**, **Duplicar** e **Excluir**
 ficam em **⋯**.
 
+Uma build com um problema não pode ser salva, e a área de treino não começa com ela. Se uma build assim ainda chegar a uma partida, você joga com uma build inicial nela, e uma mensagem diz por quê.
+
 Um código de equipe é carregado no **Criador de Equipes**: cole-o em
 qualquer lugar ali, ou abra uma build de equipe e use o **⋯** →
 **Carregar equipe** dela.
@@ -182,7 +184,10 @@ começa com um personagem em branco em cada lugar. Você nunca adiciona nem
 remove um membro, você substitui. Cada linha mostra o personagem do membro
 com as armas que ele segura, um ponto para cada conjunto de armas quando
 ele tem mais de um, sua vida e energia máximas e suas oito habilidades;
-arraste uma linha pelo ⠿ para reordenar. O painel à direita é a biblioteca
+arraste uma linha pelo ⠿ para reordenar. Segure **Shift** ao soltar uma linha em outro
+membro para copiar a build inteira dela para esse membro; a linha que você
+arrastou continua como estava.
+O painel à direita é a biblioteca
 do Criador de Personagem, com uma aba **Meus personagens** antes de
 **Habilidades** e **Equip.**. Em **Meus personagens**, arraste um dos seus
 personagens sobre um membro para torná-lo uma cópia dele. Uma cópia é da

@@ -24,6 +24,7 @@ import { allowsOffhand, getWeapon, type WeaponId } from "./weapons.js";
 export interface EquipmentProblem {
   readonly field: string;
   readonly message: string;
+  readonly code?: "duplicate-rune" | "duplicate-attribute-rune";
 }
 
 export interface EquipmentValidationContext {
@@ -309,6 +310,7 @@ export function validateEquipment(
       if (runedAttributes.has(piece.rune.attributeId)) {
         problems.push({
           field,
+          code: "duplicate-attribute-rune",
           message: `${runeDisplayName(piece.rune)} duplicates another rune of the same attribute; only the strongest bonus applies but both health penalties do`,
         });
       }
@@ -317,6 +319,7 @@ export function validateEquipment(
       if (universalRunes.has(piece.rune.runeId)) {
         problems.push({
           field,
+          code: "duplicate-rune",
           message: `${runeDisplayName(piece.rune)} duplicates another rune of the same kind; only one applies`,
         });
       }

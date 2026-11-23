@@ -158,6 +158,8 @@ Dizilim, **Kaydet**'e bastığında senin olur.
 **Esc** kaydetmeden çıkar, bir şey değiştirdiysen önce sorar.
 **Paylaş**, **GW1 kodu yükle**, **Çoğalt** ve **Sil** **⋯** altındadır.
 
+Sorunu olan bir yapı kaydedilemez ve antrenman alanı onunla başlamaz. Böyle bir yapı yine de bir maça ulaşırsa, orada başlangıç yapısıyla oynarsın ve bir mesaj nedenini söyler.
+
 Takım kodu ise **Takım Oluşturucu**'da yüklenir: kodu orada herhangi bir yere
 yapıştır ya da bir takım dizilimi aç ve onun **⋯** → **Takım yükle**'sini
 kullan.
@@ -184,7 +186,10 @@ yerde boş bir karakterle başlar. Asla üye eklemez ya da çıkarmazsın,
 birini değiştirirsin. Her satır üyenin karakterini tuttuğu silahlarla,
 birden fazla silah seti varsa her set için bir noktayla, en yüksek Can
 ve Enerjisiyle ve sekiz becerisiyle gösterir; yeniden sıralamak için
-bir satırı ⠿ ile sürükle. Sağdaki panel Karakter Oluşturucu'nun
+bir satırı ⠿ ile sürükle. Bunun yerine tüm dizilimini o üyeye kopyalamak
+için bir satırı başka bir üyeye bırakırken **Shift**'i basılı tut; sürüklediğin
+satır olduğu gibi kalır.
+Sağdaki panel Karakter Oluşturucu'nun
 kütüphanesidir; **Beceriler** ve **Eşya**'dan önce bir **Karakterlerim**
 sekmesi vardır. **Karakterlerim**'de, bir üyeyi kendi karakterlerinden
 birinin kopyası yapmak için o karakteri üyenin üzerine sürükle. Kopya

@@ -83,6 +83,9 @@ export default {
   "buildEditor.discardChanges": "Wijzigingen weggooien?",
   "buildEditor.duplicate": "Kopiëren",
   "buildEditor.duplicateSkill": "{skill} staat meer dan eens op de balk.",
+  "buildEditor.duplicateRune": "{rune}: een ander stuk draagt deze rune al. Er telt er maar één.",
+  "buildEditor.duplicateAttributeRune":
+    "{rune}: een ander stuk draagt al een rune van dit attribuut. Alleen de sterkste bonus telt, maar elke gezondheidsstraf telt wel.",
   "buildEditor.emptySetAction": "set {set} leegmaken",
   "buildEditor.emptySetNote": "Lege set",
   "buildEditor.emptySlot": "Leeg",
@@ -452,6 +455,11 @@ export default {
   "gearEditor.bareHands": "blote handen",
   "gearEditor.bonusFromHeadgear": "hoofddeksel +{amount}",
   "gearEditor.bonusFromRune": "rune +{amount}",
+  "gearEditor.healthBase": "basis {amount}",
+  "gearEditor.healthInsignia": "insignes {amount}",
+  "gearEditor.healthMods": "mods {amount}",
+  "gearEditor.healthRunes": "runes {amount}",
+  "gearEditor.healthSources": "Max. gezondheid: {parts}",
   "gearEditor.itemA": "een {item}",
   "gearEditor.itemAn": "een {item}",
   "gearEditor.modRemoved": "{mod} verwijderd: past niet op {item}.",
@@ -785,6 +793,8 @@ export default {
   "lobbyWindow.reconnecting": "Opnieuw verbinden…",
   "lobbyWindow.removeMember": "{name} uit de lobby verwijderen",
 
+  "match.buildReplaced":
+    "Je build is niet toegestaan ({problem}): je speelt deze wedstrijd met een starterbuild.",
   "matchView.watching": "Je kijkt mee · {seconds} s vertraging",
 
   "matches.bot": "{name} (bot)",
@@ -1331,6 +1341,7 @@ export default {
   "teamEditor.professions": "Klassen",
   "teamEditor.professionsTitle": "de klassen van het team",
   "teamEditor.replaceMember": "{member} vervangen door {character}",
+  "teamEditor.copyMember": "Shift: build van {source} kopiëren naar {target}",
   "teamEditor.save": "Opslaan",
   "teamEditor.saveTitle": "Dit team opslaan",
   "teamEditor.saveTitleProblem": "Dit team opslaan (er zijn problemen: {problem})",

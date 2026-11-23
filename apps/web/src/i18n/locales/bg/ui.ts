@@ -81,6 +81,9 @@ export default {
   "buildEditor.discardChanges": "Отхвърляне на промените?",
   "buildEditor.duplicate": "Дублирай",
   "buildEditor.duplicateSkill": "{skill} е в лентата повече от веднъж.",
+  "buildEditor.duplicateRune": "{rune}: друга част вече носи тази руна. Брои се само една.",
+  "buildEditor.duplicateAttributeRune":
+    "{rune}: друга част вече носи руна за този атрибут. Брои се само най-силният бонус, но всяко наказание за здраве се брои.",
   "buildEditor.emptySetAction": "изпразни комплект {set}",
   "buildEditor.emptySetNote": "Празен комплект",
   "buildEditor.emptySlot": "Празно",
@@ -456,6 +459,11 @@ export default {
   "gearEditor.bareHands": "голи ръце",
   "gearEditor.bonusFromHeadgear": "шлем +{amount}",
   "gearEditor.bonusFromRune": "руна +{amount}",
+  "gearEditor.healthBase": "основа {amount}",
+  "gearEditor.healthInsignia": "инсигнии {amount}",
+  "gearEditor.healthMods": "модове {amount}",
+  "gearEditor.healthRunes": "руни {amount}",
+  "gearEditor.healthSources": "Макс. здраве: {parts}",
   "gearEditor.itemA": "{item}",
   "gearEditor.itemAn": "{item}",
   "gearEditor.modRemoved": "Махнато {mod}: не пасва на {item}.",
@@ -789,6 +797,7 @@ export default {
   "lobbyWindow.reconnecting": "Свързване отново…",
   "lobbyWindow.removeMember": "Махни {name} от лобито",
 
+  "match.buildReplaced": "Билдът ти не е позволен ({problem}): в този мач играеш с начален билд.",
   "matchView.watching": "Гледане · закъснение {seconds} с",
 
   "matches.bot": "{name} (бот)",
@@ -1329,6 +1338,7 @@ export default {
   "teamEditor.professions": "Професии",
   "teamEditor.professionsTitle": "професиите в отбора",
   "teamEditor.replaceMember": "Замени {member} с {character}",
+  "teamEditor.copyMember": "Shift: Копирай билда на {source} върху {target}",
   "teamEditor.save": "Запази",
   "teamEditor.saveTitle": "Запази този отбор",
   "teamEditor.saveTitleProblem": "Запази този отбор (има проблеми: {problem})",

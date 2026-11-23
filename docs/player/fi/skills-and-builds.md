@@ -158,6 +158,8 @@ tyhjänä paikkana. Buildi on sinun, kun painat **Tallenna**.
 **Esc** poistuu tallentamatta ja kysyy ensin, jos muutit jotain.
 **Jaa**, **Lataa GW1-koodi**, **Kopioi** ja **Poista** ovat **⋯**-valikossa.
 
+Buildia, jossa on ongelma, ei voi tallentaa, eikä harjoitusalue käynnisty sillä. Jos sellainen build silti päätyy otteluun, pelaat siellä aloitusbuildilla, ja viesti kertoo miksi.
+
 Tiimikoodi ladataan sen sijaan **Tiimieditorissa**: liitä se mihin tahansa siellä,
 tai avaa tiimibuildi ja käytä sen **⋯** → **Lataa tiimi**.
 
@@ -181,7 +183,10 @@ tyhjällä hahmolla jokaisella paikalla. Et koskaan lisää tai poista
 jäsentä, vaan korvaat sellaisen. Jokainen rivi näyttää jäsenen hahmon ja
 sen kantamat aseet, pisteen jokaista asesarjaa kohden, kun niitä on
 useampi, sen enimmäisterveyden ja -energian sekä sen kahdeksan taitoa;
-vedä riviä sen ⠿-kahvasta järjestääksesi uudelleen. Oikealla oleva
+vedä riviä sen ⠿-kahvasta järjestääksesi uudelleen. Pidä **Shift** pohjassa
+pudottaessasi rivin toiselle jäsenelle kopioidaksesi sen koko buildin
+kyseiselle jäsenelle siirtämisen sijaan; vetämäsi rivi pysyy ennallaan.
+Oikealla oleva
 paneeli on Hahmoeditorin kirjasto, jossa on **Omat hahmot** -välilehti
 ennen välilehtiä **Taidot** ja **Kamat**. **Omat hahmot** -välilehdellä
 vedä yksi hahmoistasi jäsenen päälle tehdäksesi jäsenestä sen kopion.

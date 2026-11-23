@@ -82,6 +82,9 @@ export default {
   "buildEditor.discardChanges": "Hylätäänkö muutokset?",
   "buildEditor.duplicate": "Kopioi",
   "buildEditor.duplicateSkill": "{skill} on palkissa useammin kuin kerran.",
+  "buildEditor.duplicateRune": "{rune}: toinen osa kantaa jo tätä riimua. Vain yksi lasketaan.",
+  "buildEditor.duplicateAttributeRune":
+    "{rune}: toinen osa kantaa jo tämän ominaisuuden riimua. Vain vahvin bonus lasketaan, mutta jokainen terveysrangaistus lasketaan.",
   "buildEditor.emptySetAction": "tyhjennä sarja {set}",
   "buildEditor.emptySetNote": "Tyhjä sarja",
   "buildEditor.emptySlot": "Tyhjä",
@@ -463,6 +466,11 @@ export default {
   "gearEditor.bareHands": "paljaat kädet",
   "gearEditor.bonusFromHeadgear": "päähine +{amount}",
   "gearEditor.bonusFromRune": "riimu +{amount}",
+  "gearEditor.healthBase": "perus {amount}",
+  "gearEditor.healthInsignia": "arvomerkit {amount}",
+  "gearEditor.healthMods": "modit {amount}",
+  "gearEditor.healthRunes": "riimut {amount}",
+  "gearEditor.healthSources": "Maks. terveys: {parts}",
   "gearEditor.itemA": "{item}",
   "gearEditor.itemAn": "{item}",
   "gearEditor.modRemoved": "{mod} poistettu: ei sovi esineeseen {item}.",
@@ -796,6 +804,8 @@ export default {
   "lobbyWindow.reconnecting": "Yhdistetään uudelleen…",
   "lobbyWindow.removeMember": "Poista {name} aulasta",
 
+  "match.buildReplaced":
+    "Buildisi ei ole sallittu ({problem}): pelaat tämän ottelun aloitusbuildilla.",
   "matchView.watching": "Katsot · viive {seconds} s",
 
   "matches.bot": "{name} (botti)",
@@ -1342,6 +1352,7 @@ export default {
   "teamEditor.professions": "Ammatit",
   "teamEditor.professionsTitle": "tiimin ammatit",
   "teamEditor.replaceMember": "Korvaa {member}: {character}",
+  "teamEditor.copyMember": "Shift: Kopioi hahmon {source} buildi hahmolle {target}",
   "teamEditor.save": "Tallenna",
   "teamEditor.saveTitle": "Tallenna tämä tiimi",
   "teamEditor.saveTitleProblem": "Tallenna tämä tiimi (siinä on ongelmia: {problem})",
