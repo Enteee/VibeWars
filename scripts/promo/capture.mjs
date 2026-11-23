@@ -233,7 +233,10 @@ async function startMatch(page, mapId) {
   step = "seat";
   const seats = page.getByRole("button", { name: "Sit here" });
   await seats.first().waitFor();
-  await seats.first().click();
+  // The lobby redraws under the pointer at 1920x1080: click the live button, retried.
+  await seats.first().evaluate((button) => {
+    /** @type {HTMLElement} */ (button).click();
+  });
   step = "match";
   await page.locator("#viewport canvas:not(.compass)").waitFor({ timeout: 90_000 });
 }
