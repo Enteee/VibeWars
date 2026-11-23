@@ -1323,6 +1323,8 @@ export default {
   "teamEditor.closeMember": "{name} schließen",
   "teamEditor.costAdrenaline": "{amount}A",
   "teamEditor.costEnergy": "{amount}E",
+  "teamEditor.cannotCreateCharacter": "Charakter kann nicht erstellt werden: {problem}",
+  "teamEditor.characterCreated": "Charakter {name} erstellt",
   "teamEditor.crumb": "Team-Editor",
   "teamEditor.delete": "Löschen",
   "teamEditor.deleteNamed": "{name} löschen?",
@@ -1332,6 +1334,7 @@ export default {
   "teamEditor.discardForPaste": "Deine Änderungen verwerfen und das eingefügte Team öffnen?",
   "teamEditor.dragToReplace":
     "auf ein Mitglied ziehen, um es durch eine Kopie von {name} zu ersetzen",
+  "teamEditor.dropToCreate": "Zieh ein Teammitglied hierher, um es als Charakter zu speichern",
   "teamEditor.duplicate": "Duplizieren",
   "teamEditor.duplicateTitle": "dieses Team duplizieren",
   "teamEditor.duplicateUnsaved": "Zum Duplizieren erst speichern",
@@ -1346,7 +1349,8 @@ export default {
   "teamEditor.memberName": "Name des Mitglieds",
   "teamEditor.myCharacters": "Meine Charaktere",
   "teamEditor.name": "Name",
-  "teamEditor.noCharacters": "Du hast keine Charaktere zum Kopieren.",
+  "teamEditor.noCharacters":
+    "Noch keine Charaktere. Zieh ein Teammitglied hierher, um einen zu erstellen.",
   "teamEditor.notSaved": "Nicht gespeichert: {error}",
   "teamEditor.professions": "Klassen",
   "teamEditor.professionsTitle": "die Klassen des Teams",

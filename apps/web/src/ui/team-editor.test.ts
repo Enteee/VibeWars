@@ -373,6 +373,7 @@ describe("⋯ → Load team (#3181, #3638)", () => {
       onImportTeam: (team) => {
         imported.push(team);
       },
+      onCreateCharacter: () => Promise.resolve([]),
     });
     // The top bar's actions, ⋯ with its Share and Load lines among them.
     const root = new FakeElement();

@@ -2745,6 +2745,13 @@ body:has(> .splash) #menu-background::after {
   border-color: var(--accent);
 }
 
+/* A member held over My characters saves as one (#3825). */
+.team-picker-characters.is-drop-target,
+.library-tab.is-drop-target {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
 /* The member the Skills tab shows (#2225). */
 .team-row.is-focused {
   box-shadow: inset 3px 0 0 var(--accent);

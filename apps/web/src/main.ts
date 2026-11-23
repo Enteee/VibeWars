@@ -1819,7 +1819,9 @@ async function main(): Promise<void> {
     toast(t("app.cloned", { team: team.name, missing: missingSkillsNote(missingSkills) }));
   };
 
-  const showTeamEditor = (state: TeamEditorState, available: readonly StoredCharacter[]): void => {
+  const showTeamEditor = (state: TeamEditorState, listed: readonly StoredCharacter[]): void => {
+    // One more with each member saved as a character (#3825).
+    let available = listed;
     leaveScreen();
     music().menu("team-builder");
     closeEditor();
@@ -1857,6 +1859,11 @@ async function main(): Promise<void> {
       },
       onImportTeam: (team) => {
         openPastedTeam(team, available);
+      },
+      onCreateCharacter: async (character) => {
+        await characters.save(character);
+        ({ characters: available } = await characters.list());
+        return available;
       },
       onOpenMember: (memberId, left) => {
         const member = left.team.members.find((m) => m.character.id === memberId);
