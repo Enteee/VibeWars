@@ -600,7 +600,7 @@ export function pingBranch(at: Vec2, fork: Vec2, north: Vec2, south: Vec2): Ping
 /** How far east of the fork the player walks, unpinged, before station 13 says its hint again. */
 export const PAST_THE_FORK = 300;
 /** How near the bay the tutor passes for its line on the view there. */
-export const BY_THE_BAY = 260;
+export const BY_THE_BAY = 320;
 
 /**
  * Station 13 (playbook §13), at the canyon's junction (#3792): ping an

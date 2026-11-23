@@ -105,14 +105,14 @@ const AT_THE_FORK = { x: 4900, y: 700 };
  * (`site-13n`, `site-13s`) to the rejoin (`site-13r`), where it is done.
  */
 const NORTH_ARM = [
-  { x: 5150, y: 460 },
-  { x: 5450, y: 415 },
-  { x: 5750, y: 460 },
+  { x: 5120, y: 460 },
+  { x: 5450, y: 375 },
+  { x: 5780, y: 460 },
 ];
 const SOUTH_ARM = [
-  { x: 5150, y: 940 },
-  { x: 5450, y: 985 },
-  { x: 5750, y: 940 },
+  { x: 5150, y: 1250 },
+  { x: 5450, y: 1335 },
+  { x: 5750, y: 1250 },
 ];
 const AT_THE_REJOIN = { x: 6150, y: 700 };
 /** Station 14's mist gate (#3334), `CANYON_EXIT` at the canyon's east end. */

@@ -186,10 +186,10 @@ describe("the tutorial runner", () => {
     const junction = {
       fork: vec2(4900, 700),
       layer: 1,
-      north: vec2(5450, 415),
-      south: vec2(5450, 985),
+      north: vec2(5450, 375),
+      south: vec2(5450, 1335),
       rejoin: vec2(6150, 700),
-      bay: vec2(5520, 1180),
+      bay: vec2(5660, 1545),
     };
     const gate = vec2(7600, 700);
     const bar = [
