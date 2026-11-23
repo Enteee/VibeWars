@@ -231,7 +231,7 @@ async function startMatch(page, mapId) {
   await liveClick(page.getByRole("button", { name: "Propose this build" }));
   await page.mouse.click(470, 300);
   step = "seat";
-  const seats = page.getByRole("button", { name: "Sit here" });
+  const seats = page.locator(".team-lobby-seat-free");
   await liveClick(seats.first());
   step = "match";
   await page.locator("#viewport canvas:not(.compass)").waitFor({ timeout: 90_000 });
