@@ -296,7 +296,9 @@ export interface FogTint {
   readonly crown: number;
 }
 /** How many soft rings a fog puff is drawn in. */
-const FOG_RINGS = 4;
+const FOG_RINGS = 8;
+/** How many soft rings a fog puff's paler crown is drawn in. */
+const FOG_CROWN_RINGS = 3;
 /** Seconds a fog puff takes round its drift. */
 const FOG_DRIFT_SECONDS = 11;
 /** World units a fog puff wanders from its place. */
@@ -348,9 +350,14 @@ export function fogArtOf(bank: FogBank, index: number): FogArt {
   for (let tries = 0; puffs.length < count && tries < count * 20; tries += 1) {
     const radiusX = reach * (0.8 + random() * 0.2);
     const radiusY = radiusX * FOG_PUFF_FLAT;
+    // Spread evenly along the bank's length, each puff in a share of it,
+    // so no stretch of a long bank is left bare (#3885).
+    const along = (puffs.length + random()) / count;
+    const across = random();
+    const lengthwise = width >= height;
     const at = {
-      x: left + radiusX + random() * (width - 2 * radiusX),
-      y: top + radiusY + random() * (height - 2 * radiusY),
+      x: left + radiusX + (lengthwise ? along : across) * (width - 2 * radiusX),
+      y: top + radiusY + (lengthwise ? across : along) * (height - 2 * radiusY),
     };
     if (pointInPolygon(at, outline)) {
       puffs.push({
@@ -411,19 +418,25 @@ export function paintFog(
     ) {
       continue;
     }
-    // Rings shrinking inward: the puff is densest at its heart, its edge melts away.
+    // Many fine rings shrinking inward, from the full width to a fifth:
+    // the puff is densest at its heart, its edge melts away with no step
+    // to see (#3885).
     for (let ring = 0; ring < FOG_RINGS; ring += 1) {
-      const scale = 2 * (1 - ring * 0.2);
+      const across = 2 - (ring * 1.6) / (FOG_RINGS - 1);
       painter.fillStyle(tint.body, puff.alpha / FOG_RINGS);
-      painter.fillEllipse(at.x, y, puff.radiusX * scale, puff.radiusY * scale);
+      painter.fillEllipse(at.x, y, puff.radiusX * across, puff.radiusY * across);
     }
-    painter.fillStyle(tint.crown, puff.alpha * 0.3);
-    painter.fillEllipse(
-      at.x - puff.radiusX * 0.2,
-      y - puff.radiusY * 0.25,
-      puff.radiusX * 0.9,
-      puff.radiusY * 0.9,
-    );
+    // The crown in soft rings of its own, so it has no edge either.
+    for (let ring = 0; ring < FOG_CROWN_RINGS; ring += 1) {
+      const across = 1.4 - ring * 0.4;
+      painter.fillStyle(tint.crown, (puff.alpha * 0.3) / FOG_CROWN_RINGS);
+      painter.fillEllipse(
+        at.x - puff.radiusX * 0.15,
+        y - puff.radiusY * 0.2,
+        puff.radiusX * across,
+        puff.radiusY * across,
+      );
+    }
   }
 }
 

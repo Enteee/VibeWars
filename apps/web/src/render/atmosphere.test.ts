@@ -142,6 +142,13 @@ describe("fog banks (#3032)", () => {
     }
   });
 
+  it("a long bank's puffs spread along it, leaving no stretch bare (#3885)", () => {
+    const { puffs } = fogArtOf(rectBank(1100, 400), 3);
+    for (let x = 150; x <= 950; x += 50) {
+      expect(puffs.some((puff) => Math.abs(puff.x - x) <= puff.radiusX)).toBe(true);
+    }
+  });
+
   it("a small bank still has three puffs, each wholly inside it (#3885)", () => {
     const { puffs } = fogArtOf(rectBank(120, 120), 0);
     expect(puffs.length).toBeGreaterThanOrEqual(3);
