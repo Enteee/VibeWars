@@ -183,8 +183,10 @@ medlem, for i stedet at kopiere hele dens build over på det medlem; rækken,
 du trak, forbliver som den var.
 Panelet til højre er Figureditorens bibliotek,
 med en fane **Mine figurer** før **Evner** og **Udstyr**. På **Mine
-figurer** trækker du en af dine figurer hen på et medlem for at gøre det
-medlem til en kopi af den. En kopi er holdets egen: ændrer du den, eller
+figurer** trækker du en af dine figurer hen på et medlem, eller trykker
+på den og derefter på **Sæt her** på et medlem, for at gøre det medlem til
+en kopi af den. Tryk på den igen, eller tryk på Esc, for at give slip på
+den. En kopi er holdets egen: ændrer du den, eller
 den figur, den kom fra, forbliver den anden, som den var. Omvendt kan du trække et
 medlem hen på **Mine figurer**, eller på fanen, for at gemme det som en ny
 figur af dine egne; har den et navn, der er taget, får den " (copy)", og

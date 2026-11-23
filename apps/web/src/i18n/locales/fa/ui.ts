@@ -1351,6 +1351,7 @@ export default {
   "teamEditor.notSaved": "ذخیره نشد: {error}",
   "teamEditor.professions": "حرفه‌ها",
   "teamEditor.professionsTitle": "حرفه‌های تیم",
+  "teamEditor.putHere": "اینجا بگذار",
   "teamEditor.replaceMember": "جایگزینی {member} با {character}",
   "teamEditor.copyMember": "Shift: کپی بیلد {source} روی {target}",
   "teamEditor.save": "ذخیره",
@@ -1641,6 +1642,7 @@ export default {
   "tutorial.menu.team.character":
     "شخصیتت را از «شخصیت‌های من» روی یک عضو بکش. آن عضو کپی‌ای از آن می‌شود.",
   "tutorial.menu.team.characterDone": "شخصیتت را در تیم بگذار",
+  "tutorial.menu.team.characterTouch": "روی شخصیتت بزن، بعد روی «اینجا بگذار» کنار یک عضو.",
   "tutorial.menu.team.fill": "به هر عضو یک بیلد بده، تا تیم دیگر هیچ مشکلی نداشته باشد.",
   "tutorial.menu.team.fillDone": "تیم را کامل کن",
   "tutorial.menu.team.members":

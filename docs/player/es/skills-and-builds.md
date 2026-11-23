@@ -181,8 +181,9 @@ reordenarla. Mantén **Shift** al soltar una fila sobre otro miembro para copiar
 toda su build en ese miembro; la fila que arrastraste queda como estaba.
 El panel de la derecha es la biblioteca del Creador de personajes,
 con una pestaña **Mis personajes** antes de **Habilidades** y **Equipo**. En
-**Mis personajes**, arrastra uno de tus personajes sobre un miembro para que
-ese miembro sea una copia. Una copia es propia del equipo: cambiarla, o cambiar
+**Mis personajes**, arrastra uno de tus personajes sobre un miembro, o tócalo y
+luego toca **Poner aquí** en un miembro, para que ese miembro sea una copia.
+Tócalo otra vez, o pulsa Esc, para soltarlo. Una copia es propia del equipo: cambiarla, o cambiar
 el personaje del que viene, deja al otro como estaba. A la inversa, arrastra un miembro sobre
 **Mis personajes**, o sobre su pestaña, para guardarlo como un personaje nuevo
 tuyo; si su nombre ya está en uso, recibe " (copy)", y el equipo conserva el

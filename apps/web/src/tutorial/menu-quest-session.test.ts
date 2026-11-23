@@ -196,6 +196,27 @@ describe("the menu quest session", () => {
     expect(onEnd).not.toHaveBeenCalled();
   });
 
+  it("on touch, asks for the character by tap and Put here, and waits for it (#3876)", () => {
+    const { coach, shown } = fakeCoach();
+    const quest = startMenuQuest({ touch: true, from: "team", coach, onEnd: vi.fn() });
+    quest.event({ kind: "screen-shown", screen: "teams" });
+    quest.event({ kind: "team-build-size", size: 2 });
+    const mine: StoredCharacter = { ...newCharacter("c1"), secondaryProfession: "monk" };
+    const blank = (id: string) => teamCharacter(newCharacter(id), id);
+    const draft = (team: StoredTeam) =>
+      quest.event({ kind: "team-draft", draft: team, isNew: true, characters: [mine] });
+    draft(teamOf("t1", 2, [blank("m1"), blank("m2")]));
+    gotIt(shown.at(-1));
+    gotIt(shown.at(-1));
+    gotIt(shown.at(-1));
+    expect(shown.at(-1)?.target).toBe("team-character");
+    expect(shown.at(-1)?.line).toBe("Tap your character, then Put here on a member.");
+    draft(teamOf("t1", 2, [teamCharacter(mine, "m1"), blank("m2")]));
+    expect(shown.at(-1)?.line).toBe(
+      "Give every member a build, until the team has no problems left.",
+    );
+  });
+
   it("opens and explains each mode, ticking its list, then goes on to the arena (#3543)", () => {
     const { coach, shown, removed } = fakeCoach();
     const onEnd = vi.fn();

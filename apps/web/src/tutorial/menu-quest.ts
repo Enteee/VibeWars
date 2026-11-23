@@ -137,8 +137,8 @@ export type MenuBeat =
       readonly target: MenuTarget;
       readonly line: MessageKey;
       readonly objectives: readonly Objective[];
-      /** Whether a finger cannot do it, so touch passes it by (#3782). */
-      readonly mouseOnly?: true;
+      /** The line on a touch-only device, where a finger does it another way (#3876). */
+      readonly touchLine?: MessageKey;
       /** A line said first, for how the beat before it ended (#3785). */
       readonly lead?: (state: MenuQuestState) => MessageKey | undefined;
     };
@@ -408,9 +408,8 @@ export const MENU_QUEST_STEPS = [
         kind: "do",
         target: "team-character",
         line: "tutorial.menu.team.character",
-        // The team editor takes a character by drag alone, which touch
-        // never fires (#3782).
-        mouseOnly: true,
+        // A finger starts no drag: it taps, then Put here (#3876).
+        touchLine: "tutorial.menu.team.characterTouch",
         objectives: [
           {
             id: "character",
@@ -761,13 +760,12 @@ export function stepComplete(step: MenuQuestStep, state: MenuQuestState): boolea
  * The cursor after `state`, and Got it if `gotIt`: an explanation moves on
  * on Got it only, a thing to do once all its objectives hold. Past a
  * step's last beat is the next step's first, and past the last step,
- * `"done"`. On `touch`, a mouse-only beat is passed by.
+ * `"done"`.
  */
 export function advanceMenuQuest(
   cursor: MenuQuestCursor,
   state: MenuQuestState,
   gotIt: boolean,
-  touch = false,
 ): MenuQuestCursor | "done" {
   let at = cursor;
   let pressed = gotIt;
@@ -776,7 +774,7 @@ export function advanceMenuQuest(
     const passed =
       beat.kind === "explain"
         ? pressed || beat.passed?.(state) === true
-        : (touch && beat.mouseOnly === true) || beat.objectives.every(({ done }) => done(state));
+        : beat.objectives.every(({ done }) => done(state));
     if (!passed) {
       return at;
     }

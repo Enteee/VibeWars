@@ -517,3 +517,74 @@ describe("the editor's team size (#3794)", () => {
     expect(arrow(root, t("rail.smallerTeam"))?.disabled).toBe(true);
   });
 });
+
+describe("My characters by tap, then Put here (#3876)", () => {
+  let drafts: StoredTeam[] = [];
+  const mine: StoredCharacter = {
+    ...character("mine"),
+    name: "Mine",
+    primaryProfession: "monk",
+    equipment: defaultBuildEquipment("monk"),
+    schemaVersion: CHARACTER_SCHEMA_VERSION,
+    updatedAt: 1,
+  };
+  /** The editor on a stored team of two, with `mine` on My characters. */
+  const mount = (): FakeElement => {
+    const page = new FakeElement();
+    mountTeamEditor(page as unknown as HTMLElement, openedTeam(teamOf("a", "b"), true), [mine], {
+      onSave: () => Promise.resolve(),
+      onDuplicate: () => undefined,
+      onDelete: () => undefined,
+      onClose: () => undefined,
+      onOpenMember: () => undefined,
+      onDraft: (draft) => {
+        drafts.push(draft);
+      },
+      onImportTeam: () => undefined,
+      onCreateCharacter: () => Promise.resolve([]),
+    });
+    return page;
+  };
+  const puts = (page: FakeElement): (boolean | undefined)[] =>
+    page.all("team-row-put").map((put) => put.hidden);
+
+  beforeEach(() => {
+    drafts = [];
+    stubDom();
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("picks a character, and Put here on a member replaces it with a copy, under its id", () => {
+    const page = mount();
+    expect(puts(page)).toEqual([true, true]);
+    const [pick] = page.all("team-pick");
+    pick?.click();
+    expect(pick?.classList.contains("is-picked")).toBe(true);
+    expect(puts(page)).toEqual([false, false]);
+    page.all("team-row-put")[1]?.click();
+    const draft = drafts.at(-1);
+    expect(draft?.members.map((m) => m.character.id)).toEqual(["a", "b"]);
+    expect(draft?.members[1]?.character.name).toBe("Mine");
+    expect(draft?.members[1]?.character.primaryProfession).toBe("monk");
+    // The pick is let go, and the edit is unsaved, as a drop's.
+    expect(pick?.classList.contains("is-picked")).toBe(false);
+    expect(puts(page)).toEqual([true, true]);
+    expect(bar.status.find((node) => node.classList.contains("editor-unsaved"))?.hidden).toBe(
+      false,
+    );
+  });
+
+  it("lets the pick go on a second tap, with the team unchanged", () => {
+    const page = mount();
+    const [pick] = page.all("team-pick");
+    const before = drafts.length;
+    pick?.click();
+    pick?.click();
+    expect(pick?.classList.contains("is-picked")).toBe(false);
+    expect(puts(page)).toEqual([true, true]);
+    expect(drafts).toHaveLength(before);
+  });
+});

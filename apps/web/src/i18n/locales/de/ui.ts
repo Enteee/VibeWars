@@ -1370,6 +1370,7 @@ export default {
   "teamEditor.notSaved": "Nicht gespeichert: {error}",
   "teamEditor.professions": "Klassen",
   "teamEditor.professionsTitle": "die Klassen des Teams",
+  "teamEditor.putHere": "Hierher",
   "teamEditor.replaceMember": "{member} durch {character} ersetzen",
   "teamEditor.copyMember": "Shift: Build von {source} auf {target} kopieren",
   "teamEditor.save": "Speichern",
@@ -1664,6 +1665,8 @@ export default {
   "tutorial.menu.team.character":
     "Zieh deinen Charakter aus Meine Charaktere auf ein Mitglied. Das Mitglied wird eine Kopie davon.",
   "tutorial.menu.team.characterDone": "Setz deinen Charakter ins Team",
+  "tutorial.menu.team.characterTouch":
+    "Tipp auf deinen Charakter, dann bei einem Mitglied auf Hierher.",
   "tutorial.menu.team.fill":
     "Gib jedem Mitglied einen Build, bis das Team keine Probleme mehr hat.",
   "tutorial.menu.team.fillDone": "Füll das Team",

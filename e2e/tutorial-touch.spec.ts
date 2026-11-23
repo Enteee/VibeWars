@@ -48,3 +48,35 @@ test("a phone learns to walk with a tap (#3782)", async ({ page }) => {
     await expect(said).toHaveText(walked, { timeout: 15_000 });
   }).toPass({ timeout: 120_000 });
 });
+
+test("a phone puts its character in the team by tap and Put here (#3876)", async ({ page }) => {
+  // A walk through the team editor on a loaded runner, as tutorial.spec's.
+  test.setTimeout(180_000);
+  await page.goto("./?menu-background=bench-flat&tutorial-menu=team");
+  const panel = page.locator(".coach-panel");
+  const bubble = page.locator(".coach-bubble");
+  const target = (id: string) => page.locator(`[data-tutorial~="${id}"]`);
+  await expect(target("rail-teams")).toHaveClass(/tutorial-pulse/);
+  await target("rail-teams").tap();
+  const stepper = page.locator('.mode-rail-stepper[data-tutorial~="team-build-size"]');
+  await stepper.getByRole("button", { name: "Smaller team" }).tap();
+  await expect(stepper).toContainText("2v2");
+  await target("team-new").tap();
+  await expect(page.locator(".team-grid .team-row")).toHaveCount(2);
+  for (let read = 0; read < 3; read += 1) {
+    await bubble.getByRole("button", { name: "Got it" }).tap();
+  }
+
+  // The touch line, not the drag one, and the step waits for it done.
+  await expect(panel).toContainText("Put your character in the team");
+  await expect(bubble).toContainText("Tap your character, then Put here on a member.");
+  await page.locator(".library-tab", { hasText: "My characters" }).tap();
+  const pick = page.locator(".team-pick").first();
+  await pick.tap();
+  await expect(pick).toHaveAttribute("aria-pressed", "true");
+  const put = page.locator(".team-grid .team-row").nth(1).locator(".team-row-put");
+  await put.tap();
+  await expect(put).toBeHidden();
+  await expect(pick).toHaveAttribute("aria-pressed", "false");
+  await expect(panel).toContainText("Fill the team");
+});

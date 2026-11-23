@@ -1352,6 +1352,7 @@ export const en = {
   "teamEditor.notSaved": "Not saved: {error}",
   "teamEditor.professions": "Professions",
   "teamEditor.professionsTitle": "the team's professions",
+  "teamEditor.putHere": "Put here",
   "teamEditor.replaceMember": "Replace {member} with {character}",
   "teamEditor.copyMember": "Shift: Copy {source}'s build onto {target}",
   "teamEditor.save": "Save",
@@ -1641,6 +1642,7 @@ export const en = {
   "tutorial.menu.team.character":
     "Drag your character from My characters onto a member. The member becomes a copy of it.",
   "tutorial.menu.team.characterDone": "Put your character in the team",
+  "tutorial.menu.team.characterTouch": "Tap your character, then Put here on a member.",
   "tutorial.menu.team.fill": "Give every member a build, until the team has no problems left.",
   "tutorial.menu.team.fillDone": "Fill the team",
   "tutorial.menu.team.members":

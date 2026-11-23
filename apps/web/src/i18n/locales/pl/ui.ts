@@ -1477,6 +1477,7 @@ export default {
   "teamEditor.notSaved": "Nie zapisano: {error}",
   "teamEditor.professions": "Profesje",
   "teamEditor.professionsTitle": "profesje drużyny",
+  "teamEditor.putHere": "Wstaw tutaj",
   "teamEditor.replaceMember": "Zastąp {member} postacią {character}",
   "teamEditor.copyMember": "Shift: kopiuj build {source} na {target}",
   "teamEditor.save": "Zapisz",
@@ -1775,6 +1776,7 @@ export default {
   "tutorial.menu.team.character":
     "Przeciągnij swoją postać z Moje postacie na członka. Członek staje się jej kopią.",
   "tutorial.menu.team.characterDone": "Wstaw swoją postać do drużyny",
+  "tutorial.menu.team.characterTouch": "Stuknij swoją postać, a potem Wstaw tutaj przy członku.",
   "tutorial.menu.team.fill": "Daj każdemu członkowi build, aż drużynie nie zostaną żadne problemy.",
   "tutorial.menu.team.fillDone": "Uzupełnij drużynę",
   "tutorial.menu.team.members":

@@ -178,7 +178,9 @@ reorder. Hold **Shift** as you drop a row on another member to copy
 its whole build onto that member instead; the row you dragged stays as it was.
 The panel on the right is the Character Builder's library,
 with a **My characters** tab before **Skills** and **Gear**. On **My characters**, drag
-one of your characters onto a member to make that member a copy of it. A
+one of your characters onto a member, or tap it and then **Put here** on a
+member, to make that member a copy of it. Tap it again, or press Esc, to
+let it go. A
 copy is the team's own: changing it, or the character it came from,
 leaves the other as it was. The other way round, drag a member onto
 **My characters**, or onto its tab, to save it as a new character of your
