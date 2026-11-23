@@ -1037,6 +1037,9 @@ export default {
   "queue.ascending": "Ascesa a {map} tra {seconds} s",
   "queue.backToLobbyIn": "Ritorno alla lobby tra {seconds} s",
   "queue.backToMenu": "Torna al menu",
+  "queue.backToLobby": "Torna alla lobby",
+  "queue.countdownStopped": "Conto alla rovescia fermato",
+  "queue.stopCountdown": "Ferma",
   "queue.backToMenuIn": "Ritorno al menu tra {seconds} s",
   "queue.busy": "Sei in coda.",
   "queue.characterDeleted":

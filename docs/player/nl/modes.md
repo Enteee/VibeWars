@@ -292,6 +292,7 @@ Wie tijdens de Teamlobby vertrekt, laat zijn personage aan een bot over, zodat d
 
 Na een teammatch uit de wachtrij gaan de winnaars na 20 seconden vanzelf weer in de wachtrij, en gaan de verliezers (ook bij gelijkspel) terug naar het menu; de match van een lobby met code brengt iedereen terug naar de lobby. Een knop onder de uitslag slaat het wachten over, of laat winnaars vertrekken zonder in de rij te gaan.
 Winnaars in de Team Arena houden voor de volgende match hun teambuild en ieders plek, zonder teamlobby, tenzij de groep sindsdien veranderd is: iemand is vertrokken, afwezig of erbij gekomen. Dan kiezen ze hun team opnieuw.
+Heeft je team niet gewonnen, dan zet Stoppen dat aftellen stil zodat je de uitslag kunt lezen; de knop brengt je daarna verder als je klaar bent.
 
 ## Heroes' Ascent
 

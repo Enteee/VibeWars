@@ -129,7 +129,7 @@ import { attachReconnectCountdown, mountReconnectOverlay } from "./ui/reconnect-
 import { chartRoster, chartUsable, renderMatchCharts } from "./ui/match-charts.js";
 import { renderSummary, summaryTables, type SummaryTable } from "./ui/match-summary.js";
 import { flashSlot, slotFlashes } from "./ui/skill-slot-state.js";
-import { mountEndLine, type EndLineElements } from "./ui/end-line.js";
+import { endLineSetter, type EndLine } from "./ui/end-line.js";
 import { setToastHost, toast } from "./ui/kit.js";
 import { signedText } from "./ui/player-label.js";
 
@@ -262,13 +262,6 @@ async function viewedMatch(options: MatchViewOptions): Promise<ViewedMatch> {
     },
     disconnect: () => watched.disconnect(),
   };
-}
-
-/** The line over a finished team match's result (#1997): what comes next, when, and one button. */
-export interface EndLine {
-  readonly text: string;
-  readonly button: string;
-  readonly onPress: () => void;
 }
 
 export interface MatchView {
@@ -1370,26 +1363,13 @@ export async function startMatchView(
   });
 
   /** The end line (#1997), made the first time it is set. */
-  let endLine: EndLineElements | undefined;
-  let onEndPress: (() => void) | undefined;
+  const setEndLine = endLineSetter(hud.end);
 
   return {
     summary: () => summary?.tables,
     chart: () => lastMatch?.chart,
     camera: () => camera?.look(),
-    setEndLine(line) {
-      if (line === undefined) {
-        endLine?.root.remove();
-        endLine = undefined;
-        return;
-      }
-      endLine ??= mountEndLine(hud.end, () => {
-        onEndPress?.();
-      });
-      onEndPress = line.onPress;
-      endLine.text.textContent = line.text;
-      endLine.press.textContent = line.button;
-    },
+    setEndLine,
     async dispose(): Promise<void> {
       // Order matters: stop listening before tearing down, so a late
       // event cannot touch a destroyed scene.

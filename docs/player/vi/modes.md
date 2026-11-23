@@ -344,6 +344,7 @@ thua (cả khi hòa) trở về menu; trận của sảnh vào bằng mã đưa 
 sảnh. Một nút dưới kết quả cho phép bỏ qua thời gian chờ, hoặc, với đội
 thắng, rời đi mà không xếp hàng.
 Người thắng ở Đấu trường đội giữ nguyên build đội và chỗ của từng người chơi cho trận tiếp theo, không qua sảnh đội, trừ khi nhóm đã thay đổi từ đó: có người rời đi, vắng mặt hoặc tham gia. Khi đó họ chọn lại đội.
+Nếu đội bạn không thắng, nút Dừng sẽ dừng đếm ngược để bạn đọc kết quả; khi sẵn sàng, nút còn lại đưa bạn đi tiếp.
 
 ## Đỉnh Anh Hùng
 

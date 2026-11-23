@@ -281,6 +281,7 @@ Kto wyjdzie w trakcie Lobby drużyny, zostawia swoją postać botowi, więc stro
 
 Po meczu drużynowym z kolejki zwycięzcy sami wracają do kolejki po 20 sekundach, a przegrani (także przy remisie) wracają do menu; mecz lobby z kodem przywraca wszystkich do lobby. Przycisk pod wynikiem pomija oczekiwanie albo, dla zwycięzców, wychodzi bez ustawiania się w kolejce.
 Zwycięzcy Areny drużynowej zachowują na następny mecz build drużyny i miejsce każdego gracza, bez lobby drużyny, chyba że grupa od tego czasu się zmieniła: ktoś wyszedł, jest nieobecny albo dołączył. Wtedy wybierają drużynę od nowa.
+Jeśli twoja drużyna nie wygrała, Zatrzymaj wstrzymuje to odliczanie, żebyś mógł przeczytać wynik; przycisk zabierze cię dalej, gdy będziesz gotowy.
 
 ## Szczyt Bohaterów
 

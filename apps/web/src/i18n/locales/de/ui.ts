@@ -992,6 +992,9 @@ export default {
   "queue.ascending": "Aufstieg nach {map} in {seconds} s",
   "queue.backToLobbyIn": "Zurück zur Lobby in {seconds} s",
   "queue.backToMenu": "Zum Menü",
+  "queue.backToLobby": "Zur Lobby",
+  "queue.countdownStopped": "Countdown angehalten",
+  "queue.stopCountdown": "Anhalten",
   "queue.backToMenuIn": "Zurück zum Menü in {seconds} s",
   "queue.busy": "Du bist in einer Warteschlange.",
   "queue.characterDeleted":
