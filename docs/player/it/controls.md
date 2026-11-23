@@ -55,6 +55,7 @@ Su un telefono o un tablet, in partita e nel campo di allenamento:
   appena accanto a un personaggio lo trova comunque. Un tocco su te stesso
   cammina fino a quel punto, oppure bersaglia la base bandiera o la leva su
   cui ti trovi.
+- **Tieni premuto** per camminare fino al terreno sotto una sporgenza o un ponte, come Alt+clic.
 - **Trascina** un dito per guardarti intorno; rilascia e la visuale torna su
   di te. **Pizzica** per zoomare.
 - **Tocca** un'abilità nella barra per usarla sul tuo bersaglio.

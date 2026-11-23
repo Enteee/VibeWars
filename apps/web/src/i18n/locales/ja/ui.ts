@@ -1630,11 +1630,9 @@ export default {
   "tutorial.stepIn.praise": "一緒に。息を止めろ。",
   "tutorial.touch.callHow": "ネズミをタップし、ターゲットバーをタップしてコールしよう。",
   "tutorial.touch.callT": "その通り。これでコール先を狙えている。",
-  "tutorial.touch.climbHint": "岩棚に上って、その横へまた降りよう。",
-  "tutorial.touch.climbHow": "岩棚をタップして、その横の地面をタップ。",
-  "tutorial.touch.climbPraise": "上って、また降りた。もう地面が読めるね。",
-  "tutorial.touch.climbTip": "ヒント:岩棚をタップすると常にその上が選ばれる。",
-  "tutorial.touch.climbUnder": "さあ、岩棚の横へ降りよう。",
+  "tutorial.touch.climbHow": "立ちたい場所をタップ。長押しすると下の地面を選ぶ。",
+  "tutorial.touch.climbTip": "ヒント:長押しで岩棚の下の地面を選べる。",
+  "tutorial.touch.climbUnder": "長押ししよう。点線の輪は足元の下だ。",
   "tutorial.touch.healHint":
     "まずパーティリストで私の名前をタップして。リストが閉じていたら「パーティー」をタップ。",
   "tutorial.touch.healHow":

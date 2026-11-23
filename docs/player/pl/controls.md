@@ -77,6 +77,7 @@ Na telefonie lub tablecie, w meczu i na poligonie:
   iść. Szybko dotknij ponownie tego samego wroga, aby go zaatakować.
   Dotknięcie tuż obok postaci nadal ją znajduje. Dotknięcie siebie prowadzi
   w to miejsce albo obiera na cel stojak flagi lub dźwignię, na której stoisz.
+- **Przytrzymaj** palec, by pójść na ziemię pod półką lub mostem, jak Alt+klik.
 - **Przeciągnij** jednym palcem, aby się rozejrzeć; puść, a widok powoli
   wraca do ciebie. **Ściągnij palce**, aby przybliżać.
 - **Dotknij** umiejętności na pasku, aby użyć jej na swoim celu.

@@ -1714,11 +1714,10 @@ export default {
   "tutorial.stepIn.praise": "Együtt. Tartsd vissza a lélegzeted.",
   "tutorial.touch.callHow": "Koppints egy patkányra, aztán a célpontsávra, hogy kijelöld.",
   "tutorial.touch.callT": "Ez az. Most a kijelölt célponton vagy.",
-  "tutorial.touch.climbHint": "Fel a párkányra, aztán vissza le mellé.",
-  "tutorial.touch.climbHow": "Koppints a párkányra, aztán a mellette lévő talajra.",
-  "tutorial.touch.climbPraise": "Fel és újra le. Most már olvasod a terepet.",
-  "tutorial.touch.climbTip": "Tipp: a párkányra koppintás mindig a tetejét választja.",
-  "tutorial.touch.climbUnder": "Most vissza le, a párkány mellé.",
+  "tutorial.touch.climbHow":
+    "Koppints oda, ahol állni akarsz. A hosszú nyomás az alatta lévő talajt választja.",
+  "tutorial.touch.climbTip": "Tipp: a hosszú nyomás a párkány alatti talajt választja.",
+  "tutorial.touch.climbUnder": "Nyomd hosszan. A szaggatott kör alattad van.",
   "tutorial.touch.healHint":
     "Előbb koppints a nevemre a csapatlistában. Koppints az Osztag gombra, ha a lista zárva van.",
   "tutorial.touch.healHow":

@@ -421,7 +421,7 @@ export async function startTutorialSession(
       { runner: RAT_POCKET.rats[0].id, big: RAT_POCKET.rats[1].id },
       playerBuild.skillBar,
     ),
-    climbStation(LEDGE.footprint, LEDGE.stairs, LEDGE.upper, LEDGE.lower, touch),
+    climbStation(LEDGE.footprint, LEDGE.stairs, LEDGE.upper, LEDGE.lower),
     rampStation(RAMP.mark, RAMP.layer, RAMP.landingFootprint, RAMP.landing),
     tunnelStation(TUNNEL.footprint, TUNNEL.under, TUNNEL.above, TUNNEL.mark),
     callStation(),

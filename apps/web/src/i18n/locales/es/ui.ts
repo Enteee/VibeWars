@@ -1802,11 +1802,9 @@ export default {
   "tutorial.stepIn.praise": "Juntos. Contén la respiración.",
   "tutorial.touch.callHow": "Toca una rata y luego la barra de objetivo para marcarla.",
   "tutorial.touch.callT": "Eso es. Ahora vas a por el objetivo marcado.",
-  "tutorial.touch.climbHint": "Sube a la cornisa y luego baja a su lado.",
-  "tutorial.touch.climbHow": "Toca la cornisa y luego el suelo a su lado.",
-  "tutorial.touch.climbPraise": "Arriba y abajo otra vez. Ya sabes leer el terreno.",
-  "tutorial.touch.climbTip": "Consejo: tocar una cornisa siempre elige su parte de arriba.",
-  "tutorial.touch.climbUnder": "Ahora baja otra vez, junto a la cornisa.",
+  "tutorial.touch.climbHow": "Toca donde quieras estar. Mantener pulsado elige el suelo de debajo.",
+  "tutorial.touch.climbTip": "Consejo: mantener pulsado elige el suelo bajo una cornisa.",
+  "tutorial.touch.climbUnder": "Mantén pulsado. El anillo discontinuo está debajo de ti.",
   "tutorial.touch.healHint":
     "Primero toca mi nombre en la lista del grupo. Toca Grupo si la lista está cerrada.",
   "tutorial.touch.healHow":

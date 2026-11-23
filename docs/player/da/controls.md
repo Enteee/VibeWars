@@ -76,6 +76,7 @@ På en telefon eller en tablet, i en kamp og på træningsbanen:
   Tryk hurtigt på den samme fjende igen for at angribe den. Et tryk lige
   ved siden af en karakter finder den stadig. Et tryk på dig selv går til
   det sted eller vælger den flagstand eller det håndtag, du står på.
+- **Tryk og hold** for at gå til jorden under en afsats eller bro, som Alt+klik.
 - **Træk** med én finger for at se dig omkring; slip, og billedet glider
   tilbage til dig. **Knib** for at zoome.
 - **Tryk** på en evne på bjælken for at bruge den på dit mål.

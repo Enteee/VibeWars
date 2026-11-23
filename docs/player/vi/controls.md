@@ -81,6 +81,7 @@ Trên điện thoại hoặc máy tính bảng, trong trận và ở sân tập:
   cùng kẻ địch đó, thật nhanh, để tấn công nó. Chạm ngay cạnh một nhân vật vẫn
   tìm ra nhân vật đó. Chạm vào chính mình sẽ đi tới điểm đó, hoặc nhắm bệ cờ
   hay cần gạt bạn đang đứng.
+- **Nhấn giữ** để đi tới mặt đất dưới gờ đá hoặc cây cầu, như Alt+nhấp.
 - **Kéo** một ngón tay để nhìn quanh; thả ra và góc nhìn trượt về lại phía bạn.
   **Chụm** hai ngón để thu phóng.
 - **Chạm** vào một kỹ năng trên thanh để dùng nó lên mục tiêu của bạn.

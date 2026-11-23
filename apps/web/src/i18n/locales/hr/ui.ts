@@ -1776,11 +1776,9 @@ export default {
   "tutorial.stepIn.praise": "Zajedno. Zadrži dah.",
   "tutorial.touch.callHow": "Dodirni štakora, pa traku mete da ga označiš.",
   "tutorial.touch.callT": "Tako je. Sad ciljaš označenu metu.",
-  "tutorial.touch.climbHint": "Gore na izbočinu, pa opet dolje pokraj nje.",
-  "tutorial.touch.climbHow": "Dodirni izbočinu, pa tlo pokraj nje.",
-  "tutorial.touch.climbPraise": "Gore i opet dolje. Sad znaš čitati teren.",
-  "tutorial.touch.climbTip": "Savjet: dodir izbočine uvijek bira njezin vrh.",
-  "tutorial.touch.climbUnder": "Sad opet dolje, pokraj izbočine.",
+  "tutorial.touch.climbHow": "Dodirni gdje želiš stajati. Dugi pritisak bira tlo ispod.",
+  "tutorial.touch.climbTip": "Savjet: dugi pritisak bira tlo ispod izbočine.",
+  "tutorial.touch.climbUnder": "Pritisni i drži. Isprekidani krug je ispod tebe.",
   "tutorial.touch.healHint":
     "Prvo dodirni moje ime na popisu skupine. Dodirni Grupa ako je popis zatvoren.",
   "tutorial.touch.healHow":

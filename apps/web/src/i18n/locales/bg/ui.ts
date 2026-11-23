@@ -1709,11 +1709,9 @@ export default {
   "tutorial.stepIn.praise": "Заедно. Задръж дъха си.",
   "tutorial.touch.callHow": "Докосни плъх, после лентата на целта, за да го обявиш.",
   "tutorial.touch.callT": "Точно така. Сега си на обявената цел.",
-  "tutorial.touch.climbHint": "Качи се на ръба, после слез отново до него.",
-  "tutorial.touch.climbHow": "Докосни ръба, после земята до него.",
-  "tutorial.touch.climbPraise": "Нагоре и пак надолу. Вече четеш терена.",
-  "tutorial.touch.climbTip": "Съвет: докосване на ръб винаги избира горната му част.",
-  "tutorial.touch.climbUnder": "Сега слез обратно, до ръба.",
+  "tutorial.touch.climbHow": "Докосни където да застанеш. Задържане избира земята отдолу.",
+  "tutorial.touch.climbTip": "Съвет: задържане избира земята под ръба.",
+  "tutorial.touch.climbUnder": "Задръж пръста. Пунктирният кръг е под теб.",
   "tutorial.touch.healHint":
     "Първо докосни името ми в списъка на групата. Докосни Група, ако списъкът е затворен.",
   "tutorial.touch.healHow":

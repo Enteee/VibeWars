@@ -74,6 +74,7 @@ Na telefonu ili tabletu, u meču i na poligonu za vježbu:
   istog neprijatelja da ga napadneš. Dodir tik uz lik ga svejedno nalazi.
   Dodir na sebe hoda do tog mjesta ili cilja stalak za zastavu ili polugu na
   kojoj stojiš.
+- **Pritisni i drži** da hodaš do tla ispod izbočine ili mosta, kao Alt+klik.
 - **Povuci** jednim prstom za razgledavanje; pusti i pogled klizi natrag
   k tebi. **Stisni** prste za zumiranje.
 - **Dodirni** vještinu na traci da je upotrijebiš na svoju metu.

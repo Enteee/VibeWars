@@ -1717,11 +1717,9 @@ export default {
   "tutorial.stepIn.praise": "Yhdessä. Pidätä hengitystä.",
   "tutorial.touch.callHow": "Napauta rottaa ja sitten kohdepalkkia merkitäksesi sen.",
   "tutorial.touch.callT": "Juuri noin. Nyt olet merkityn kohteen kimpussa.",
-  "tutorial.touch.climbHint": "Ylös reunalle, sitten taas alas sen viereen.",
-  "tutorial.touch.climbHow": "Napauta reunaa ja sitten maata sen vieressä.",
-  "tutorial.touch.climbPraise": "Ylös ja taas alas. Nyt osaat lukea maastoa.",
-  "tutorial.touch.climbTip": "Vinkki: reunan napautus valitsee aina sen yläpinnan.",
-  "tutorial.touch.climbUnder": "Nyt takaisin alas, reunan viereen.",
+  "tutorial.touch.climbHow": "Napauta, mihin haluat seistä. Pitkä painallus valitsee maan alta.",
+  "tutorial.touch.climbTip": "Vinkki: pitkä painallus valitsee maan reunan alta.",
+  "tutorial.touch.climbUnder": "Paina pitkään. Katkoviivarengas on allasi.",
   "tutorial.touch.healHint":
     "Napauta ensin nimeäni ryhmän luettelossa. Napauta Ryhmä, jos luettelo on kiinni.",
   "tutorial.touch.healHow":

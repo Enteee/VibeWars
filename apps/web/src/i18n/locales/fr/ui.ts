@@ -1805,11 +1805,9 @@ export default {
   "tutorial.stepIn.praise": "Ensemble. Retiens ton souffle.",
   "tutorial.touch.callHow": "Touche un rat, puis la barre de cible pour le désigner.",
   "tutorial.touch.callT": "C'est ça. Tu vises maintenant la cible désignée.",
-  "tutorial.touch.climbHint": "Monte sur la corniche, puis redescends à côté.",
-  "tutorial.touch.climbHow": "Touche la corniche, puis le sol à côté.",
-  "tutorial.touch.climbPraise": "Monté, redescendu. Tu sais lire le terrain.",
-  "tutorial.touch.climbTip": "Astuce : toucher une corniche choisit toujours son sommet.",
-  "tutorial.touch.climbUnder": "Maintenant redescends, à côté de la corniche.",
+  "tutorial.touch.climbHow": "Touche où te placer. Un appui long choisit le sol en dessous.",
+  "tutorial.touch.climbTip": "Astuce : un appui long choisit le sol sous une corniche.",
+  "tutorial.touch.climbUnder": "Appuie longuement. Le cercle en pointillés est sous toi.",
   "tutorial.touch.healHint":
     "Touche d'abord mon nom dans la liste du groupe. Touche Groupe si la liste est fermée.",
   "tutorial.touch.healHow":

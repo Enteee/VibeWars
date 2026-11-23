@@ -75,6 +75,7 @@ Op een telefoon of tablet, in een match en op het trainingsveld:
   Tik snel nog eens op dezelfde vijand om hem aan te vallen. Een tik net
   naast een personage vindt het toch. Een tik op jezelf loopt naar die plek,
   of kiest de vlaggenstandaard of hendel waarop je staat.
+- **Druk lang** om naar de grond onder een richel of brug te lopen, zoals met Alt+klik.
 - **Sleep** met één vinger om rond te kijken; laat los en het beeld glijdt
   terug naar jou. **Knijp** om te zoomen.
 - **Tik** op een skill op de balk om hem op je doel te gebruiken.

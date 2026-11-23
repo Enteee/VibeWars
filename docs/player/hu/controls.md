@@ -82,6 +82,7 @@ Telefonon vagy tableten, meccsen és a gyakorlótéren:
   sétálsz. Koppints gyorsan ugyanarra az ellenségre újra, hogy megtámadd.
   A karakter mellé koppintva is megtalálod. Magadra koppintva arra a pontra
   sétálsz, vagy célba veszed a zászlótartót vagy a kart, amelyen állsz.
+- **Nyomd hosszan**, hogy a párkány vagy híd alatti talajra sétálj, mint Alt+kattintással.
 - **Húzd** egy ujjal, hogy körülnézz; engedd el, és a nézet visszacsúszik
   hozzád. **Csíptess** a nagyításhoz.
 - **Koppints** egy képességre a sávon, hogy a célpontodon használd.

@@ -1827,11 +1827,9 @@ export default {
   "tutorial.stepIn.praise": "Вместе. Задержи дыхание.",
   "tutorial.touch.callHow": "Коснись крысы, затем панели цели, чтобы отметить её.",
   "tutorial.touch.callT": "Вот так. Теперь ты на отмеченной цели.",
-  "tutorial.touch.climbHint": "Наверх на уступ, потом снова вниз рядом с ним.",
-  "tutorial.touch.climbHow": "Коснись уступа, затем земли рядом с ним.",
-  "tutorial.touch.climbPraise": "Вверх и снова вниз. Теперь ты читаешь местность.",
-  "tutorial.touch.climbTip": "Совет: касание уступа всегда выбирает его верх.",
-  "tutorial.touch.climbUnder": "Теперь обратно вниз, рядом с уступом.",
+  "tutorial.touch.climbHow": "Коснись, где встать. Долгое нажатие выбирает землю внизу.",
+  "tutorial.touch.climbTip": "Совет: долгое нажатие выбирает землю под уступом.",
+  "tutorial.touch.climbUnder": "Нажми и держи. Пунктирный круг — под тобой.",
   "tutorial.touch.healHint":
     "Сначала коснись моего имени в списке отряда. Коснись «Группа», если список закрыт.",
   "tutorial.touch.healHow":

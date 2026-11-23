@@ -1615,11 +1615,9 @@ export default {
   "tutorial.stepIn.praise": "Cùng nhau. Nín thở nào.",
   "tutorial.touch.callHow": "Chạm vào một con chuột, rồi chạm thanh mục tiêu để gọi nó.",
   "tutorial.touch.callT": "Đúng rồi. Giờ bạn đang nhắm mục tiêu đã gọi.",
-  "tutorial.touch.climbHint": "Lên gờ đá, rồi xuống lại bên cạnh nó.",
-  "tutorial.touch.climbHow": "Chạm vào gờ đá, rồi chạm mặt đất bên cạnh.",
-  "tutorial.touch.climbPraise": "Lên rồi lại xuống. Giờ bạn đã biết đọc địa hình.",
-  "tutorial.touch.climbTip": "Mẹo: chạm vào gờ đá luôn chọn mặt trên của nó.",
-  "tutorial.touch.climbUnder": "Giờ xuống lại, bên cạnh gờ đá.",
+  "tutorial.touch.climbHow": "Chạm chỗ muốn đứng. Nhấn giữ sẽ chọn mặt đất bên dưới.",
+  "tutorial.touch.climbTip": "Mẹo: nhấn giữ sẽ chọn mặt đất dưới gờ đá.",
+  "tutorial.touch.climbUnder": "Nhấn giữ. Vòng nét đứt ở bên dưới bạn.",
   "tutorial.touch.healHint":
     "Chạm vào tên tôi trong danh sách nhóm trước. Chạm Tổ đội nếu danh sách đang đóng.",
   "tutorial.touch.healHow":

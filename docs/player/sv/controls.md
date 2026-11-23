@@ -77,6 +77,7 @@ På en telefon eller surfplatta, i en match och på träningsplatsen:
   aldrig. Tryck snabbt på samma fiende igen för att attackera den. Ett tryck
   strax bredvid en karaktär hittar den ändå. Ett tryck på dig själv går till
   den platsen, eller väljer det flaggställe eller den spak du står på.
+- **Tryck och håll** för att gå till marken under en avsats eller bro, som Alt+klick.
 - **Dra** med ett finger för att se dig omkring; släpp, så glider vyn
   tillbaka till dig. **Nyp** för att zooma.
 - **Tryck** på en förmåga i fältet för att använda den på ditt mål.

@@ -79,6 +79,7 @@ Telefonda veya tablette, maçta ve eğitim alanında:
   yürütmez. Saldırmak için aynı düşmana hızlıca tekrar dokun. Bir karakterin
   hemen yanına dokunmak da onu bulur. Kendine dokunmak o noktaya yürütür ya
   da üzerinde durduğun bayrak direğini veya kolu hedef alır.
+- **Basılı tut**: çıkıntının ya da köprünün altındaki zemine yürürsün, Alt+tıklama gibi.
 - Etrafına bakmak için tek parmakla **sürükle**; bırakınca görünüm sana
   doğru kayarak döner. Yakınlaştırmak için **parmaklarını sıkıştır**.
 - Hedefinde kullanmak için çubuktaki bir yeteneğe **dokun**.

@@ -1703,11 +1703,9 @@ export const en = {
   "tutorial.stepIn.praise": "Together. Hold your breath.",
   "tutorial.touch.callHow": "Tap a rat, then tap the target bar to call it.",
   "tutorial.touch.callT": "That's it. Now you're on the called one.",
-  "tutorial.touch.climbHint": "Onto the ledge, then back down beside it.",
-  "tutorial.touch.climbHow": "Tap the ledge, then tap the ground beside it.",
-  "tutorial.touch.climbPraise": "Up and down again. You read the ground now.",
-  "tutorial.touch.climbTip": "Tip: a tap on a ledge always picks its top.",
-  "tutorial.touch.climbUnder": "Now back down, beside the ledge.",
+  "tutorial.touch.climbHow": "Tap where to stand. Press and hold picks the ground below.",
+  "tutorial.touch.climbTip": "Tip: press and hold picks the ground under a ledge.",
+  "tutorial.touch.climbUnder": "Press and hold. The dashed ring is below you.",
   "tutorial.touch.healHint":
     "Tap my name in the party list first. Tap Party if the list is closed.",
   "tutorial.touch.healHow":
