@@ -53,6 +53,7 @@ export {
   OBSERVER_DELAY_SECONDS,
   PRE_MATCH,
   PRE_MATCH_COUNTDOWN_SECONDS,
+  PRE_MATCH_E2E,
   RECONNECT_WINDOW_SECONDS,
   createMatchHost,
 } from "./match-host.js";
@@ -63,6 +64,7 @@ export type {
   MatchHostOptions,
   PlannedSeat,
   PlannedSeats,
+  PreMatchTimes,
 } from "./match-host.js";
 export {
   HostLeftError,

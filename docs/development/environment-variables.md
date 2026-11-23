@@ -20,6 +20,7 @@ Read by Vite when it builds `apps/web`, not at runtime.
 | `VITE_VIBEWARS_SPLASH`           | unset      | `off` only in the e2e build: no splash screen (#2884) unless the URL has `?splash`.                                                                                                                                                                                                    |
 | `VITE_VIBEWARS_MENU_BACKGROUND`  | unset      | `off` only in the e2e build: the menu background draws no fight (#3156) unless the URL has `?menu-background`.                                                                                                                                                                         |
 | `VITE_VIBEWARS_TUTORIAL_STATION` | unset      | `on` only in the e2e build: a URL with `?tutorial-station=N`, N above 1, opens straight on that station of the tutorial, on the `?menu-background` map, with no splash or offer, so each stage of its spec is its own test (#3383). A player build drops the check.                    |
+| `VITE_VIBEWARS_PRE_MATCH`        | unset      | `short` only in the e2e build: a hosted match counts down 1 s instead of 10 s before its start (#3855), after the real 20 s join wait, unless the host's URL has `?pre-match=real`. A player build has the real wait.                                                                  |
 
 ## Development
 
