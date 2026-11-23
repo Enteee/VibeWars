@@ -3,8 +3,8 @@
 VibeWars adalah pertarungan tim di arena kecil. Setiap pemain membawa satu
 karakter dengan delapan skill. Tim yang memenangkan pertarungan memenangkan
 laga. Kamu tidak perlu akun dan tidak perlu memasang apa pun: game berjalan di
-tab browser ini. VibeWars butuh keyboard dan mouse. Game ini tidak bisa
-dimainkan di ponsel atau tablet yang hanya layar sentuh: bukalah di komputer.
+tab browser ini. Mainkan dengan keyboard dan mouse, atau dengan sentuhan di
+ponsel atau tablet: lihat [Sentuh](controls.md#sentuh).
 
 ## Tutorial
 

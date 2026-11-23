@@ -3,8 +3,8 @@
 VibeWars là một trận đấu đồng đội trong một đấu trường nhỏ. Mỗi người chơi
 mang theo một nhân vật với tám kỹ năng. Đội thắng cuộc chiến sẽ thắng trận.
 Bạn không cần tài khoản và không cần cài gì: game chạy ngay trong tab trình
-duyệt này. VibeWars cần bàn phím và chuột. Game không chạy trên điện thoại
-hay máy tính bảng chỉ có cảm ứng: hãy mở nó trên máy tính.
+duyệt này. Hãy chơi bằng bàn phím và chuột, hoặc bằng cảm ứng trên điện
+thoại hay máy tính bảng: xem [Cảm ứng](controls.md#cảm-ứng).
 
 ## Hướng dẫn
 

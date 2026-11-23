@@ -27,12 +27,6 @@ export const MIN_TEXT = 12;
 /** How tall the top bar may be on the phone on its side (#3776), in CSS px. */
 export const LANDSCAPE_TOPBAR = 56;
 
-/** Pass the touch-only notice (#1392), which a touch phone sees first. */
-export async function passTouchNotice(page: Page): Promise<void> {
-  await page.locator(".touch-notice-continue").click();
-  await expect(page.locator(".touch-notice")).toHaveCount(0);
-}
-
 /**
  * What on the page breaks the phone's rules (#3776), one line each: a
  * sideways scroll, a control in `scope` (`#topbar` and `#screens` unless

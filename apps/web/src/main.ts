@@ -129,11 +129,6 @@ import { setLanguageBusy } from "./ui/language-section.js";
 import { mountChat, type ChatPanel } from "./ui/chat.js";
 import { openRelayPrompt } from "./ui/relay-prompt.js";
 import { openGuildLinkPrompt } from "./ui/guild-link-prompt.js";
-import { needsTouchNotice, showTouchNotice } from "./ui/touch-notice.js";
-import {
-  loadTouchNoticeDismissed,
-  saveTouchNoticeDismissed,
-} from "./ui/touch-notice-preference.js";
 import { describeOutcome } from "./ui/hud.js";
 import type { SummaryTable } from "./ui/match-summary.js";
 import { renderMatchesScreen, type MatchesScreen } from "./ui/matches-screen.js";
@@ -441,16 +436,6 @@ async function main(): Promise<void> {
   const lobbyLink = takeLobbyLink();
   // Every screen reads its text in the player's language (#2648).
   await loadLocale();
-  // A touch-only device is told it needs a keyboard and mouse (#1392)
-  // before the menu, which waits until it goes past.
-  if (needsTouchNotice((query) => matchMedia(query).matches, loadTouchNoticeDismissed)) {
-    await new Promise<void>((resolve) => {
-      showTouchNotice(document.body, () => {
-        saveTouchNoticeDismissed();
-        resolve();
-      });
-    });
-  }
   const screenRoot = requireElement("#screens");
   const showNowPlaying = createNowPlayingToast(document.body);
   musicPlayer().onNowPlaying((trackId) => {
@@ -3554,20 +3539,14 @@ async function main(): Promise<void> {
     // A sidebar already at 2v2 passes the size beat at once (#3794).
     quest.event({ kind: "team-build-size", size: loadTeamBuildSize() });
   };
-  /** Nobody on a touch device gets the tutorial (#3218), nor its menu quest. */
-  const onTouch = (): boolean =>
-    needsTouchNotice(
-      (query) => matchMedia(query).matches,
-      () => false,
-    );
   /**
    * The menu, and the menu quest at the start of the step it got to if a
-   * launch finds it under way (#3540), unless a link came or on touch.
+   * launch finds it under way (#3540), unless a link came.
    */
   const enterMenuOrQuest = (): void => {
     enterMenu();
     const step = menuQuestStepOf(loadTutorialRecord());
-    if (step !== undefined && !linked && !onTouch()) {
+    if (step !== undefined && !linked) {
       startMenuQuestAt(step);
     }
   };
@@ -3629,7 +3608,7 @@ async function main(): Promise<void> {
   };
   /**
    * After the splash, a first-timer is offered the tutorial (#3218) over
-   * its fight; nobody is on a touch device, without a fight to stand in,
+   * its fight, on touch too (#3782); nobody without a fight to stand in,
    * or once a link has come. One into the menu quest resumes it (#3540).
    */
   const afterSplash = (): void => {
@@ -3638,8 +3617,7 @@ async function main(): Promise<void> {
       linked ||
       loadTutorialRecord() !== undefined ||
       mapId === undefined ||
-      teamSize === undefined ||
-      onTouch()
+      teamSize === undefined
     ) {
       enterMenuOrQuest();
       return;

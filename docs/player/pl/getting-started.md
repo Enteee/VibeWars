@@ -2,9 +2,9 @@
 
 VibeWars to walka drużynowa na małej arenie. Każdy gracz przynosi jedną postać
 z ośmioma umiejętnościami. Drużyna, która wygra walkę, wygrywa mecz. Nie
-potrzebujesz konta ani instalacji: gra działa w tej karcie przeglądarki. VibeWars
-wymaga klawiatury i myszy. Nie działa na telefonie ani na tablecie obsługiwanym
-wyłącznie dotykiem: otwórz grę na komputerze.
+potrzebujesz konta ani instalacji: gra działa w tej karcie przeglądarki. Graj
+klawiaturą i myszą albo dotykiem na telefonie lub tablecie: zobacz
+[Dotyk](controls.md#dotyk).
 
 ## Samouczek
 

@@ -1,12 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
 import { openRail } from "./helpers/menu.js";
-import {
-  PIXEL_8A_LANDSCAPE,
-  PIXEL_8A_PORTRAIT,
-  expectFitsPhone,
-  passTouchNotice,
-} from "./helpers/phone.js";
+import { PIXEL_8A_LANDSCAPE, PIXEL_8A_PORTRAIT, expectFitsPhone } from "./helpers/phone.js";
 
 /**
  * The build, gear and team editors on a Pixel 8a (#3777), by finger
@@ -17,10 +12,9 @@ import {
 
 test.use(PIXEL_8A_PORTRAIT);
 
-/** The Character Builder on the phone, past the touch notice, with a new character open. */
+/** The Character Builder on the phone, with a new character open. */
 async function newCharacter(page: Page): Promise<void> {
   await page.goto("./");
-  await passTouchNotice(page);
   await openRail(page, "Character Builder");
   await page.getByRole("button", { name: "New character", exact: true }).tap();
   await expect(page.locator("input.editor-name")).toBeVisible();
@@ -159,7 +153,6 @@ test("the build editor, its skills and its gear, fits the phone (#3777)", async 
 
 test("the team editor fits the phone, its bars on screen (#3777)", async ({ page }) => {
   await page.goto("./");
-  await passTouchNotice(page);
   await openRail(page, "Team Builder");
   await page.getByRole("button", { name: "New team build", exact: true }).tap();
   await expect(page.locator(".team-editor")).toBeVisible();

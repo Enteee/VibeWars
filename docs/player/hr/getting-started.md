@@ -3,8 +3,8 @@
 VibeWars je timska borba u maloj areni. Svaki igrač dovodi jednog
 lika s osam vještina. Tim koji pobijedi u borbi pobjeđuje u
 meču. Ne trebaš račun ni instalaciju: igra radi u
-ovoj kartici preglednika. VibeWarsu trebaju tipkovnica i miš. Ne radi
-na mobitelu ni na tabletu samo s dodirom: otvori ga na računalu.
+ovoj kartici preglednika. Igraj ga tipkovnicom i mišem ili dodirom na
+mobitelu ili tabletu: vidi [Dodir](controls.md#dodir).
 
 ## Vodič
 

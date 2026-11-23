@@ -8,7 +8,7 @@ real HUD is the authority.
 ## 0. The frame
 
 - **Who.** A first-time player: no `${STORAGE_NAMESPACE}.tutorial` record in **localStorage**
-  (pattern: `apps/web/src/ui/touch-notice-preference.ts`). Values are `done` and `skipped`;
+  (pattern: `apps/web/src/tutorial/tutorial-preference.ts`). Values are `done` and `skipped`;
   anything else is discarded and counts as absent. It is not the splash's sessionStorage flag.
 - **Start.** The splash's second input (`apps/web/src/ui/splash-screen.ts` `end()`, "Press any
   key to begin"). For a first-timer a card offers **Learn to play** or **Skip**. Skip is today's
@@ -231,7 +231,9 @@ It teaches the menu one step at a time, and the record is `done` only once its l
   build cards.
 - The canyon, the teleporter, the boulders, the wall and the rats follow `docs/art/visual-style.md` and the map-look rule: lit,
   readable, 2.5D.
-- Touch devices are out of scope for v1 (the game shows its touch notice already).
+- On a touch-only device (#3782) the lines that name a key or a mouse button say the gesture
+  instead (`apps/web/src/tutorial/touch-lines.ts`), and station 9 is done back on the lower
+  layer by any way down: a tap on a ledge always picks its top.
 
 ## Edge cases
 

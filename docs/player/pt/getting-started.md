@@ -3,8 +3,8 @@
 VibeWars é uma luta em equipe em uma arena pequena. Cada jogador leva um
 personagem com oito habilidades. A equipe que vence a luta vence a
 partida. Você não precisa de conta nem de instalar nada: o jogo roda
-nesta aba do navegador. O VibeWars precisa de teclado e mouse. Ele não
-funciona em celular nem em tablet só com toque: abra em um computador.
+nesta aba do navegador. Jogue com teclado e mouse, ou no celular ou
+tablet por toque: veja [Toque](controls.md#toque).
 
 ## O tutorial
 

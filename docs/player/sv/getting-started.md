@@ -3,8 +3,8 @@
 VibeWars är en lagstrid på en liten arena. Varje spelare tar med sig en
 karaktär med åtta förmågor. Laget som vinner striden vinner matchen. Du
 behöver inget konto och inget att installera: spelet körs i den här
-webbläsarfliken. VibeWars kräver tangentbord och mus. Det fungerar inte
-på en telefon eller en surfplatta med bara pekskärm: öppna det på en dator.
+webbläsarfliken. Spela det med tangentbord och mus, eller med touch på en
+telefon eller en surfplatta: se [Touch](controls.md#touch).
 
 ## Guiden
 

@@ -5,7 +5,7 @@ import { projection } from "./camera.js";
 import { chooseProfession } from "./helpers/professions.js";
 import { openLibraryGroup } from "./helpers/library.js";
 import { openRail } from "./helpers/menu.js";
-import { PIXEL_8A_PORTRAIT, passTouchNotice } from "./helpers/phone.js";
+import { PIXEL_8A_PORTRAIT } from "./helpers/phone.js";
 import { skillKey } from "./keys.js";
 
 /**
@@ -35,7 +35,6 @@ async function shownAt(page: Page, id: string): Promise<{ x: number; y: number }
 /** A new elementalist with Fireball on the bar, its Training Ground on screen. */
 async function openTraining(page: Page): Promise<Locator> {
   await page.goto("./");
-  await passTouchNotice(page);
   await openRail(page, "Character Builder");
   await page.getByRole("button", { name: "new character" }).click();
   await chooseProfession(page, "primary", "elementalist");
