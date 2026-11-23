@@ -423,7 +423,7 @@ async function friends(browser, url) {
   await page.bringToFront();
   scene.marks.joined = scene.now();
   await page
-    .locator(".lobby-panel", { hasText: /Player|Guest|Anonymous/ })
+    .locator(".lobby-panel", { hasText: /Spectating:.+,/ })
     .first()
     .waitFor();
   await sleep(2500);
