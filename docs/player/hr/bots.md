@@ -38,6 +38,7 @@ krene dalje. Botovi u tvom timu umjesto toga ostaju uz tebe: prva linija
 korak ispred, dalekometni pokraj tebe, iscjelitelji iza, i prate te kamo
 god kreneš. Kad već neko vrijeme stojiš neaktivno, igraju dalje kao što bi
 igrao tim botova.
+Dok si aktivan, bot kojeg je borba odvukla daleko od tebe vraća se k tebi, osim ako je teško ranjen ili mu je neprijatelj odmah uz njega.
 
 Strijelci i kopljanici zauzmu uzvisinu kad je to sigurno.
 Bot na kojeg se usredotoče dva protivnika, ili koji ima manje od pola zdravlja i brzo ga gubi, skloni im se s vida do tri sekunde: iza zida, ispod platforme ili na uzvisinu.

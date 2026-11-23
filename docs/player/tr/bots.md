@@ -40,6 +40,7 @@ takımındaki botlar ise seninle kalır: ön saf bir adım önünde, menzilliler
 yanında, şifacılar arkanda durur ve gittiğin her yere seni izler. Bir
 süre boşta durduğunda, yalnızca botlardan oluşan bir takım nasıl oynarsa
 öyle oynamaya devam ederler.
+Sen aktif olduğun sürece, bir çatışmanın senden uzağa sürüklediği bir bot, ağır yaralı değilse ya da hemen yanında bir düşman yoksa sana geri döner.
 
 Okçular ve mızrakçılar güvenli olduğunda yüksek yeri tutar.
 İki rakibin odaklandığı ya da canı yarının altında olup hızla azalan bir bot, en fazla üç saniye onların görüşünden saklanır: bir duvarın arkasına, bir platformun altına ya da yüksek yere.

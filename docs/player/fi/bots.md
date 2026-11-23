@@ -42,6 +42,7 @@ Sinun tiimisi botit sen sijaan pysyvät kanssasi: etulinja askeleen edellä,
 kaukotaistelijat vierelläsi, parantajat takana, ja ne seuraavat sinua minne
 menetkin. Kun olet seissyt toimettomana jonkin aikaa, ne pelaavat eteenpäin
 niin kuin pelkkien bottien tiimi pelaisi.
+Kun olet aktiivinen, botti, jonka taistelu on vetänyt kauas sinusta, kävelee takaisin luoksesi, ellei se ole pahasti haavoittunut tai vihollinen ole aivan sen vieressä.
 
 Jousiampujat ja keihäänheittäjät ottavat korkean maaston, kun se on turvallista.
 Botti, johon kaksi vihollista keskittyy tai jonka terveys on alle puolet ja hupenee nopeasti, piiloutuu heidän näkyvistään enintään kolmeksi sekunniksi: muurin taakse, tasanteen alle tai korkealle maastolle.

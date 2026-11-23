@@ -39,6 +39,7 @@ loopt op de rest voordat hij doorduwt. Bots in jouw team blijven in plaats
 daarvan bij je: frontlinie een stap voor je uit, ranged naast je, healers
 achter je, en ze volgen je waar je ook heen gaat. Zodra je een tijdje
 stilstaat, spelen ze verder zoals een team van bots dat zou doen.
+Zolang je actief bent, loopt een bot die een gevecht ver bij je vandaan heeft getrokken terug naar je, tenzij hij zwaargewond is of er een vijand vlak bij hem staat.
 
 Boogschutters en speerwerpers nemen de hoge grond in als dat veilig is.
 Een bot waar twee vijanden zich op richten, of die onder de helft van zijn gezondheid zit en die snel verliest, duikt tot drie seconden uit hun zicht: achter een muur, onder een platform of op hoge grond.

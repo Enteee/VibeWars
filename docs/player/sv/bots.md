@@ -40,6 +40,7 @@ på vidare. Bottar i ditt lag stannar i stället hos dig: frontlinjen ett
 steg före, avståndsstridande bredvid dig, helare bakom, och de följer med
 dit du går. När du har stått overksam ett tag spelar de vidare som ett
 lag av bottar skulle göra.
+Medan du är aktiv går en bott som en strid har dragit långt bort från dig tillbaka till dig, om den inte är svårt skadad eller har en fiende alldeles intill sig.
 
 Bågskyttar och spjutkastare tar höjden när det är säkert.
 En bott som två fiender fokuserar på, eller som har under halva hälsan och tappar den snabbt, gömmer sig från deras syn i upp till tre sekunder: bakom en mur, under ett däck eller på höjden.

@@ -38,6 +38,7 @@ sisanya sebelum terus maju. Bot di timmu justru tetap bersamamu: garis depan
 selangkah di depan, jarak jauh di sampingmu, penyembuh di belakang, dan mereka
 mengikuti ke mana pun kamu pergi. Begitu kamu sudah diam beberapa lama, mereka
 terus bermain seperti tim yang seluruhnya bot.
+Selama kamu aktif, bot yang terseret pertarungan jauh darimu berjalan kembali kepadamu, kecuali ia terluka parah atau ada lawan tepat di dekatnya.
 
 Pemanah dan pelempar tombak mengambil tempat tinggi saat aman.
 Bot yang diincar dua lawan, atau yang nyawanya di bawah separuh dan cepat berkurang, bersembunyi dari pandangan mereka hingga tiga detik: di balik dinding, di bawah dek, atau di tempat tinggi.
