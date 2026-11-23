@@ -1148,6 +1148,8 @@ export default {
   "queue.matchFound": "عُثر على مباراة",
   "queue.matchFoundTitle": "عُثر على مباراة!",
   "queue.nextMatchIn": "المباراة التالية بعد {seconds} ث",
+  "queue.sameTeamIn": "لقد فزت: المباراة التالية بالفريق نفسه بعد {seconds} ث",
+  "queue.newTeamIn": "تغيّرت مجموعتك: اختر فريقك من جديد بعد {seconds} ث",
   "queue.now": "الآن",
   "queue.playBotsIn": "العب ضد البوتات ({seconds} ث)",
   "queue.queueAgain": "طابور مجددًا",

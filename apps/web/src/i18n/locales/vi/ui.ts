@@ -951,6 +951,8 @@ export default {
   "queue.matchFound": "Đã tìm thấy trận",
   "queue.matchFoundTitle": "Tìm thấy trận!",
   "queue.nextMatchIn": "Trận tiếp theo sau {seconds} s",
+  "queue.sameTeamIn": "Bạn đã thắng: trận tiếp theo với cùng đội sau {seconds} giây",
+  "queue.newTeamIn": "Nhóm của bạn đã thay đổi: chọn lại đội sau {seconds} giây",
   "queue.now": "Ngay",
   "queue.playBotsIn": "Đấu với bot ({seconds} s)",
   "queue.queueAgain": "Xếp lại",

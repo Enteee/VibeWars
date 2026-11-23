@@ -111,6 +111,7 @@ import {
   type VerifyTicketSig,
 } from "./queue-admission.js";
 import { ticketsOf, type FormedGroup } from "./queue-formation.js";
+import { keepsParty } from "./party-lock.js";
 import { createRelayAdmission } from "./relay-admission.js";
 import { scopeTransport } from "./scoped-transport.js";
 import { decideStayTogether } from "./stay-together.js";
@@ -246,10 +247,11 @@ interface TeamLobby {
 }
 
 /**
- * A Heroes' Ascent run's Team Build and who holds each slot (#2539), as
- * its first map's Team Lobby left them, kept for every map after a win.
+ * A party's Team Build and who holds each slot, as its Team Lobby left
+ * them: a Heroes' Ascent run's, kept for every map after a win (#2539),
+ * and a Team Arena party's, for the next match after a win (#3815).
  */
-interface AscentLock {
+interface PartyLock {
   readonly chosen: NonNullable<TeamSide["chosen"]>;
   /** Each slot's member; `null` for a vacant one, a bot's or one whose member left. */
   claimers: (string | null)[];
@@ -813,7 +815,13 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
    * Heroes' Ascent's party (#2539): recorded each time it queues, applied
    * by a `find-match` past round 0, and gone with round 0 or a new mode.
    */
-  let ascentLock: AscentLock | undefined;
+  let ascentLock: PartyLock | undefined;
+  /**
+   * Team Arena's party (#3815): recorded each time it queues, applied by
+   * the `find-match` again after a win, and gone with any `find-match`,
+   * a new mode or a new arena size.
+   */
+  let arenaLock: PartyLock | undefined;
   /** A ranked match's rounds (#3573), from its start round on; never in an unranked lobby. */
   let rankedRound: RankedRound | undefined;
 
@@ -862,6 +870,18 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
   /** Each human on `team`, in join order. */
   const humansOn = (team: WireTeam): Member[] =>
     [...members.values()].filter((member) => member.bot === null && member.team === team);
+
+  /**
+   * Whether `lock` still holds Team Arena's party (#3815): every human
+   * here, whichever side, since `find-match` seats them all on side 0.
+   */
+  const keepsArenaParty = (lock: PartyLock): boolean =>
+    keepsParty(
+      lock,
+      [...members.values()]
+        .filter((member) => member.bot === null)
+        .map((member) => ({ id: member.id, away: away.has(member.id) })),
+    );
 
   /** Who breaks a tie on `team`: the host on its own side, else its earliest-joined human. */
   const captainOf = (team: WireTeam): string | null => {
@@ -947,6 +967,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       ascentLock === undefined
         ? null
         : { slots: ascentLock.claimers.map((claimedBy, slot) => ({ slot, claimedBy })) },
+    teamKept: arenaLock === undefined ? null : keepsArenaParty(arenaLock),
     teamLobby:
       teamLobby === undefined ? null : wireTeamLobby(teamLobby, lobbySideOf(to?.team ?? null)),
   });
@@ -1255,7 +1276,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
    * its run's Team Build and slots. With every member seated it queues at
    * once; a member who holds no slot first claims one of the vacant ones.
    */
-  const requeueLocked = (lock: AscentLock, ascentRound: number): boolean => {
+  const requeueLocked = (lock: PartyLock, ascentRound: number): boolean => {
     if (humansOn(0).every((human) => lock.claimers.includes(human.id))) {
       const seats = lock.chosen.builds.map((build, slot) => ({
         holder: lock.claimers[slot] ?? null,
@@ -1420,6 +1441,10 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       // Heroes' Ascent keeps them for the run (#2539).
       if (lobby.ascentRound !== null && chosen !== undefined) {
         ascentLock = { chosen, claimers: seats.map((seat) => seat.holder) };
+      }
+      // Team Arena keeps them for the next match after a win (#3815).
+      if (mode === "team-arena" && chosen !== undefined) {
+        arenaLock = { chosen, claimers: seats.map((seat) => seat.holder) };
       }
       teamLobby = undefined;
       if (lobby.ascentRound === 0 && !zaishenBeaten) {
@@ -1698,6 +1723,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       return false;
     }
     arenaSize = size;
+    arenaLock = undefined;
     if (!mapsOf(mode).includes(mapId)) {
       mapId = mapsOf(mode)[0] ?? mapId;
     }
@@ -1937,6 +1963,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
         }
         mode = command.mode;
         ascentLock = undefined;
+        arenaLock = undefined;
         const [first = defaultMap, ...rest] = mapsOf(mode);
         // In the same broadcast as the mode: no member ever sees a mode
         // with a map outside it. Only a Hosted Game keeps a picked one
@@ -2004,6 +2031,26 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
         }
         for (const other of members.values()) {
           other.team = 0;
+        }
+        // Team Arena's winners queue again as they played (#3815), unless
+        // the party changed since; any other find-match picks again.
+        const arena = arenaLock;
+        arenaLock = undefined;
+        if (
+          mode === "team-arena" &&
+          command.again &&
+          arena !== undefined &&
+          keepsArenaParty(arena)
+        ) {
+          arenaLock = arena;
+          beginQueueing(
+            arena.chosen.builds.map((build, slot) => ({
+              holder: arena.claimers[slot] ?? null,
+              build,
+            })),
+            null,
+          );
+          return false;
         }
         return lock === undefined || command.ascentRound === null
           ? beginTeamLobby(true, command.ascentRound)
@@ -3406,6 +3453,10 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
           rankedRound.played = match.host;
         }
         zaishenBeaten = zaishenFight && winningTeam === 0;
+        // Only a win keeps a Team Arena party (#3815).
+        if (winningTeam !== 0) {
+          arenaLock = undefined;
+        }
         zaishenFight = false;
         if (match.host.draining) {
           match.host.retire();

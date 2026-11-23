@@ -39,10 +39,13 @@ async function paste(target: Locator, text: string): Promise<void> {
   }, text);
 }
 
-/** Save the starter build `name` as a character and pick it; on the menu after. */
-export async function bringStarter(page: Page, name: string): Promise<void> {
+/**
+ * Save the starter build `name` as a character and pick it; on the menu
+ * after, at `url`.
+ */
+export async function bringStarter(page: Page, name: string, url = "./"): Promise<void> {
   const build = starter(name);
-  await page.goto("./");
+  await page.goto(url);
   await openRail(page, "Character Builder");
   await page.getByRole("button", { name: "new character" }).click();
   await expect(page.locator("input.editor-name")).toBeVisible();

@@ -953,6 +953,8 @@ export default {
   "queue.matchFound": "매치 찾음",
   "queue.matchFoundTitle": "매치를 찾았어요!",
   "queue.nextMatchIn": "{seconds}초 후 다음 매치",
+  "queue.sameTeamIn": "승리: {seconds}초 후 같은 팀으로 다음 매치",
+  "queue.newTeamIn": "파티가 바뀌었습니다: {seconds}초 후 팀을 다시 고릅니다",
   "queue.now": "지금",
   "queue.playBotsIn": "봇과 대전 ({seconds}초)",
   "queue.queueAgain": "다시 대기",

@@ -381,6 +381,7 @@ itsestään 20 sekunnin kuluttua, ja sen häviäjät (myös tasapelissä)
 palaavat valikkoon; koodilla avatun aulan ottelu palauttaa kaikki aulaan.
 Tuloksen alla oleva painike ohittaa odotuksen tai, voittajille, poistuu
 jonottamatta.
+Tiimiareenan voittajat pitävät seuraavaan otteluun joukkuebuildinsa ja jokaisen pelaajan paikan ilman joukkueaulaa, ellei ryhmä ole sen jälkeen muuttunut: joku lähti, on poissa tai liittyi. Silloin he valitsevat joukkueensa uudelleen.
 
 ## Sankarien nousu
 

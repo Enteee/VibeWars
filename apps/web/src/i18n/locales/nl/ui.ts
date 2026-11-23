@@ -1004,6 +1004,8 @@ export default {
   "queue.matchFound": "Match gevonden",
   "queue.matchFoundTitle": "Match gevonden!",
   "queue.nextMatchIn": "Volgende match over {seconds} s",
+  "queue.sameTeamIn": "Gewonnen: volgende match met hetzelfde team over {seconds} s",
+  "queue.newTeamIn": "Je groep is veranderd: kies je team opnieuw over {seconds} s",
   "queue.now": "Nu",
   "queue.playBotsIn": "Tegen bots spelen ({seconds} s)",
   "queue.queueAgain": "Opnieuw zoeken",

@@ -1005,6 +1005,8 @@ export default {
   "queue.matchFound": "Meccs megvan",
   "queue.matchFoundTitle": "Meccs megvan!",
   "queue.nextMatchIn": "Következő meccs {seconds} mp múlva",
+  "queue.sameTeamIn": "Nyertetek: következő meccs ugyanazzal a csapattal {seconds} mp múlva",
+  "queue.newTeamIn": "A csapatotok megváltozott: válasszatok újra csapatot {seconds} mp múlva",
   "queue.now": "Most",
   "queue.playBotsIn": "Játék botok ellen ({seconds} mp)",
   "queue.queueAgain": "Újra sorba",

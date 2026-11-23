@@ -1094,6 +1094,8 @@ export default {
   "queue.matchFound": "Zápas nájdený",
   "queue.matchFoundTitle": "Zápas nájdený!",
   "queue.nextMatchIn": "Ďalší zápas o {seconds} s",
+  "queue.sameTeamIn": "Vyhrali ste: ďalší zápas s rovnakým tímom o {seconds} s",
+  "queue.newTeamIn": "Vaša skupina sa zmenila: zvoľte tím znova o {seconds} s",
   "queue.now": "Teraz",
   "queue.playBotsIn": "Hrať proti botom ({seconds} s)",
   "queue.queueAgain": "Znova do fronty",
