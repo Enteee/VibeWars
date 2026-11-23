@@ -289,14 +289,17 @@ export function requeuedSince(
  * `action`, and its button. A Heroes' Ascent won at `ascentRound`
  * names where it goes on to (#1996); `null` in any other mode. A
  * Team Arena party's `teamKept` says whether it keeps its team (#3815),
- * `null` with none to keep.
+ * `null` with none to keep. A team that did not `won` may stop the
+ * countdown (#3847): `stop` is that button's label, never a winner's.
  */
 export function teamEndLine(
   action: TeamEndAction,
   seconds: number,
   ascentRound: number | null,
   teamKept: boolean | null,
-): { text: string; button: string } {
+  won: boolean,
+): { text: string; button: string; stop: string | undefined } {
+  const stop = won ? undefined : t("queue.stopCountdown");
   switch (action) {
     case "requeue":
       if (ascentRound === null) {
@@ -306,22 +309,32 @@ export function teamEndLine(
             : teamKept
               ? "queue.sameTeamIn"
               : "queue.newTeamIn";
-        return { text: t(key, { seconds }), button: t("queue.leave") };
+        return { text: t(key, { seconds }), button: t("queue.leave"), stop: undefined };
       }
       return ascentRound === ASCENT_PROGRESSION.length - 1
         ? {
             text: t("queue.defending", { map: mapName(ascentMapId(ascentRound)), seconds }),
             button: t("queue.leave"),
+            stop: undefined,
           }
         : {
             text: t("queue.ascending", { map: mapName(ascentMapId(ascentRound + 1)), seconds }),
             button: t("queue.leave"),
+            stop: undefined,
           };
     case "menu":
-      return { text: t("queue.backToMenuIn", { seconds }), button: t("queue.now") };
+      return { text: t("queue.backToMenuIn", { seconds }), button: t("queue.now"), stop };
     case "lobby":
-      return { text: t("queue.backToLobbyIn", { seconds }), button: t("queue.now") };
+      return { text: t("queue.backToLobbyIn", { seconds }), button: t("queue.now"), stop };
   }
+}
+
+/** The end line once its countdown was stopped (#3847): it stays, and its button goes. */
+export function stoppedEndLine(action: "menu" | "lobby"): { text: string; button: string } {
+  return {
+    text: t("queue.countdownStopped"),
+    button: t(action === "menu" ? "queue.backToMenu" : "queue.backToLobby"),
+  };
 }
 
 /** The splash's two sides and its countdown line, from a queued lobby's snapshot. */

@@ -350,6 +350,7 @@ fronty a porazení (aj pri remíze) sa vrátia do menu; zápas lobby s kódom
 vráti všetkých do lobby. Tlačidlo pod výsledkom
 preskočí čakanie alebo, pre víťazov, odíde bez zaradenia do fronty.
 Víťazi Tímovej arény si na ďalší zápas ponechajú svoj tímový build aj miesto každého hráča, bez tímovej lobby, pokiaľ sa medzitým skupina nezmenila: niekto odišiel, nie je prítomný alebo sa pridal. Potom si tím zvolia znova.
+Ak váš tím nevyhral, Zastaviť toto odpočítavanie zastaví, aby ste si mohli prečítať výsledok; tlačidlo vás potom vezme ďalej, keď budete pripravení.
 
 ## Výstup hrdinov
 

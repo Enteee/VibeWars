@@ -356,6 +356,7 @@ export async function startTutorialSession(
               onPress: () => {
                 end("done");
               },
+              stop: undefined,
             });
           },
         },

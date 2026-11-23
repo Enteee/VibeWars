@@ -339,6 +339,7 @@ de secunde, iar învinșii (și la o remiză) se întorc la meniu; meciul unui l
 îi readuce pe toți în lobby. Un buton sub rezultat sare peste așteptare sau, pentru
 câștigători, pleacă fără să intre la coadă.
 Câștigătorii din Arena de echipe își păstrează build-ul de echipă și locul fiecărui jucător pentru meciul următor, fără lobby de echipă, dacă grupul nu s-a schimbat între timp: cineva a plecat, lipsește sau s-a alăturat. Atunci își aleg din nou echipa.
+Dacă echipa ta nu a câștigat, Oprește oprește numărătoarea ca să poți citi rezultatul; butonul te duce apoi mai departe când ești gata.
 
 ## Ascensiunea Eroilor
 

@@ -398,6 +398,7 @@ menübe; a kóddal létrehozott lobbi meccse mindenkit visszavisz a
 lobbiba. Az eredmény alatti gomb átugorja a várakozást, a győzteseknek
 pedig sorba állás nélkül lép ki.
 A Csapataréna győztesei a következő meccsre megtartják a csapatbuildjüket és minden játékos helyét, csapatváró nélkül, hacsak a csoport azóta nem változott: valaki kilépett, távol van vagy csatlakozott. Ilyenkor újra választanak csapatot.
+Ha a csapatod nem nyert, a Leállítás megállítja a visszaszámlálást, hogy elolvashasd az eredményt; utána a gomb visz tovább, amikor készen állsz.
 
 ## Hősök Útja
 

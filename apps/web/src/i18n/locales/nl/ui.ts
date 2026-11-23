@@ -983,6 +983,9 @@ export default {
   "queue.ascending": "Over {seconds} s op naar {map}",
   "queue.backToLobbyIn": "Terug naar lobby over {seconds} s",
   "queue.backToMenu": "Naar menu",
+  "queue.backToLobby": "Terug naar de lobby",
+  "queue.countdownStopped": "Aftellen gestopt",
+  "queue.stopCountdown": "Stoppen",
   "queue.backToMenuIn": "Terug naar menu over {seconds} s",
   "queue.busy": "Je staat in een wachtrij.",
   "queue.characterDeleted":

@@ -350,6 +350,7 @@ skips the wait, or, for winners, leaves without queueing.
 Team Arena winners keep their Team Build and each player's seat for
 that next match, with no Team Lobby, unless the party changed since:
 someone left, went away or joined. Then they pick their team again.
+If your team did not win, Stop halts that countdown so you can read the result; the button then takes you on when you are ready.
 
 ## Heroes' Ascent
 
