@@ -4351,6 +4351,14 @@ body:has(> .splash) #menu-background::after {
   white-space: nowrap;
 }
 
+/* The bar's button padding is wider than the rail's, so the stepper takes
+   its content's width rather than the rail's 56 px, and its › never runs
+   under the problems chip (#3794). */
+.team-lobby-size .mode-rail-stepper {
+  gap: 0.3rem;
+  width: auto;
+}
+
 /* A Team Build of the wrong size, on its faded card (#1862). */
 .team-lobby-needs {
   color: var(--ink-dim);
@@ -9397,7 +9405,6 @@ body:has(> .splash) #app {
 @media (pointer: coarse) {
   .team-lobby-size .mode-rail-stepper {
     flex-wrap: nowrap;
-    width: auto;
   }
 
   .team-lobby-size .mode-rail-size-value {
