@@ -32,7 +32,7 @@ import { chromium } from "@playwright/test";
 const PORT = 4322;
 const SWEEP = path.join(os.tmpdir(), "share-sweep");
 /** The map share.png is taken on (#3879). */
-const DEFAULT_MAP = "arena-crossroads";
+const DEFAULT_MAP = "ember-pits";
 /**
  * Per map, where its fight is at 1200×630 CSS px and when it is at its
  * busiest: a part of the page shot at 2×, so its bodies are readable.
@@ -40,7 +40,7 @@ const DEFAULT_MAP = "arena-crossroads";
  * @type {Record<string, { wait: number, crop: Crop } | undefined>}
  */
 const CROPS = {
-  "arena-crossroads": { wait: 30, crop: { x: 300, y: 162, width: 600, height: 315 } },
+  "ember-pits": { wait: 33, crop: { x: 300, y: 162, width: 600, height: 315 } },
   "arena-canyon": { wait: 14, crop: { x: 300, y: 162, width: 600, height: 315 } },
 };
 const OUT = path.join(import.meta.dirname, "..", "apps", "web", "public", "share.png");

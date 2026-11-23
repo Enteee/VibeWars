@@ -25,8 +25,9 @@ pixels: look at it before you commit it.
 
 ## Picking a new picture
 
-Sweep several Team Arena maps with `--sweep --wait 40` and look at the
-frames at full size. Pick the moment with the most bodies of every team
+Sweep the maps rebuilt in 2.5D (`docs/art/visual-style.md`) with
+`--sweep --wait 40 --crop 0,0,1200,630` and look at the frames at full
+size: a flat map is not the game's face. Pick the moment with the most bodies of every team
 mixed together, and no rendering fault in frame: nothing drawn through a
 bridge or deck, no wall top cut off, no stair laid over a wall. Then add
 the map's `wait` and `crop` to `CROPS` and make it `DEFAULT_MAP`, so a
