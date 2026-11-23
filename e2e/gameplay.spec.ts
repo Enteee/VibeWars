@@ -565,6 +565,9 @@ async function spotShot(
 }
 
 test("clicking the ground walks there, round a wall, and stops (#310)", async ({ page }) => {
+  // A solo start takes ~22 s on CI since #3852, and each of the dozen spot
+  // shots below waits ~2 s for a frame on a software renderer: ~60 s.
+  test.slow();
   // Ember Pits breathes, and never settles unless motion is reduced.
   await page.emulateMedia({ reducedMotion: "reduce" });
   const canvas = await startSoloMatch(page);
