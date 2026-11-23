@@ -610,6 +610,10 @@ export const en = {
   "hud.outcomeVictory": "Victory",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (dead)",
+  "hud.preMatchStartingAnyway":
+    "Waiting for players: {joined}/{expected}, starting anyway in {seconds} s",
+  "hud.preMatchStartsIn": "Match starts in {seconds}",
+  "hud.preMatchWaiting": "Waiting for players: {joined}/{expected}",
   "hud.priest": "priest",
   "hud.priestDead": "priest (dead)",
   "hud.raise": "raise {clock}",
@@ -1333,7 +1337,6 @@ export const en = {
   "teamEditor.name": "Name",
   "teamEditor.noCharacters": "You have no characters to copy.",
   "teamEditor.notSaved": "Not saved: {error}",
-  "teamEditor.openInCharacter": "Open in the Character screen ›",
   "teamEditor.professions": "Professions",
   "teamEditor.professionsTitle": "the team's professions",
   "teamEditor.replaceMember": "Replace {member} with {character}",

@@ -215,7 +215,7 @@ et mains gauches du membre ouvert, et n'est là que quand un membre est ouvert :
 clique sur une pour l'équiper, ou fais-la glisser sur ses mains. Un seul membre
 est ouvert à la fois ; **Esc** le ferme. Une nouvelle profession retire les
 compétences et rangs qu'elle ne peut pas utiliser, avec un **Annuler**.
-Appuie sur le nom d'un membre, ou sur **Ouvrir dans l'écran Personnage**, pour
+Appuie sur le nom d'un membre, ou sur son bouton **✎**, pour
 le modifier dans l'éditeur de build ; son **Sauver** le remet dans l'équipe,
 et le **Sauver** de l'équipe garde le tout et te ramène à l'Atelier d'équipes.
 **Esc** quitte sans enregistrer, et demande d'abord. **Partager**,

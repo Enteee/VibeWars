@@ -33,6 +33,8 @@ perfilada en el borde de la pantalla: la base de bandera o un santuario en el
 color de su dueño, gris si no es de nadie, y el altar en dorado. La flecha
 rellena de un jugador se dibuja encima.
 
+Una partida empieza con todos retenidos cerca de su punto de aparición: puedes dar unos pasos, pero no luchar ni usar habilidades. Una línea arriba cuenta los jugadores que han entrado. Cuando han entrado todos, cuenta 10 segundos hacia atrás y la partida empieza, y su reloj con ella. A un jugador que no ha entrado tras 20 segundos no se le espera: la cuenta atrás empieza sin él, y aún puede unirse después.
+
 ## Aniquilación
 
 **Derrota a todos los enemigos.** Los muertos siguen caídos hasta que un aliado

@@ -895,6 +895,7 @@ export function observedSnapshot(
     score: snapshot.score,
     elapsedSeconds: snapshot.elapsedSeconds,
     phase: snapshot.phase,
+    preMatch: snapshot.preMatch,
     winningTeam: absent(snapshot.winningTeam),
     endReason: absent(snapshot.endReason),
     projectiles: snapshot.projectiles.map(projectileSnapshot),

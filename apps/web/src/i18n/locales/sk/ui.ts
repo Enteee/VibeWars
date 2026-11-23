@@ -662,6 +662,10 @@ export default {
   "hud.outcomeVictory": "Víťazstvo",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (mŕtvy)",
+  "hud.preMatchStartingAnyway":
+    "Čaká sa na hráčov: {joined}/{expected}, začne aj tak o {seconds} s",
+  "hud.preMatchStartsIn": "Zápas začne o {seconds}",
+  "hud.preMatchWaiting": "Čaká sa na hráčov: {joined}/{expected}",
   "hud.priest": "kňaz",
   "hud.priestDead": "kňaz (mŕtvy)",
   "hud.raise": "vzkriesenie {clock}",
@@ -1450,7 +1454,6 @@ export default {
   "teamEditor.name": "Názov",
   "teamEditor.noCharacters": "Nemáš žiadne postavy na kopírovanie.",
   "teamEditor.notSaved": "Neuložené: {error}",
-  "teamEditor.openInCharacter": "Otvoriť na obrazovke postavy ›",
   "teamEditor.professions": "Povolania",
   "teamEditor.professionsTitle": "povolania tímu",
   "teamEditor.replaceMember": "Nahradiť {member} postavou {character}",

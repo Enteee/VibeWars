@@ -208,7 +208,7 @@ der kun, mens et er åbent: klik på et for at tage det på, eller træk det
 hen på dets hænder. Ét medlem er åbent ad gangen; **Esc** lukker det. En
 ny klasse fjerner de evner og rang, den ikke kan bruge, med en
 **Fortryd**.
-Tryk på et medlems navn, eller **Åbn på figursiden**, for at redigere
+Tryk på et medlems navn, eller dets **✎**-knap, for at redigere
 det i build-editoren; dens **Gem** sætter det tilbage på holdet, og
 holdets egen **Gem** beholder det hele og tager dig tilbage til
 Holdeditor. **Esc** går uden at gemme og spørger først. Holdets **Del**,

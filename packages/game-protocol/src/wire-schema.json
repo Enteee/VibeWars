@@ -8690,6 +8690,14 @@
         }
       ]
     },
+    "WireMatchPhase": {
+      "union": [
+        { "literal": "active" },
+        { "literal": "countdown" },
+        { "literal": "finished" },
+        { "literal": "waiting" }
+      ]
+    },
     "WireMatchReplayPart": {
       "properties": [
         { "name": "hash", "optional": false, "type": "string" },
@@ -8915,6 +8923,13 @@
       ]
     },
     "WirePoint": { "tuple": ["number", "number"] },
+    "WirePreMatch": {
+      "properties": [
+        { "name": "expected", "optional": false, "type": "number" },
+        { "name": "joined", "optional": false, "type": "number" },
+        { "name": "secondsLeft", "optional": false, "type": { "union": ["null", "number"] } }
+      ]
+    },
     "WireProjectile": {
       "properties": [
         { "name": "attackerId", "optional": false, "type": "string" },
@@ -9429,7 +9444,14 @@
         {
           "name": "phase",
           "optional": false,
-          "type": { "union": [{ "literal": "active" }, { "literal": "finished" }] }
+          "type": {
+            "union": [
+              { "literal": "active" },
+              { "literal": "countdown" },
+              { "literal": "finished" },
+              { "literal": "waiting" }
+            ]
+          }
         },
         {
           "name": "players",
@@ -9618,6 +9640,26 @@
                 { "name": "y", "optional": false, "type": "number" }
               ]
             }
+          }
+        },
+        {
+          "name": "preMatch",
+          "optional": false,
+          "type": {
+            "union": [
+              "null",
+              {
+                "properties": [
+                  { "name": "expected", "optional": false, "type": "number" },
+                  { "name": "joined", "optional": false, "type": "number" },
+                  {
+                    "name": "secondsLeft",
+                    "optional": false,
+                    "type": { "union": ["null", "number"] }
+                  }
+                ]
+              }
+            ]
           }
         },
         {
@@ -9883,7 +9925,14 @@
         {
           "name": "phase",
           "optional": false,
-          "type": { "union": [{ "literal": "active" }, { "literal": "finished" }] }
+          "type": {
+            "union": [
+              { "literal": "active" },
+              { "literal": "countdown" },
+              { "literal": "finished" },
+              { "literal": "waiting" }
+            ]
+          }
         },
         {
           "name": "players",
@@ -10072,6 +10121,26 @@
                 { "name": "y", "optional": false, "type": "number" }
               ]
             }
+          }
+        },
+        {
+          "name": "preMatch",
+          "optional": false,
+          "type": {
+            "union": [
+              "null",
+              {
+                "properties": [
+                  { "name": "expected", "optional": false, "type": "number" },
+                  { "name": "joined", "optional": false, "type": "number" },
+                  {
+                    "name": "secondsLeft",
+                    "optional": false,
+                    "type": { "union": ["null", "number"] }
+                  }
+                ]
+              }
+            ]
           }
         },
         {

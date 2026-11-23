@@ -610,6 +610,10 @@ export default {
   "hud.outcomeVictory": "Zafer",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (ölü)",
+  "hud.preMatchStartingAnyway":
+    "Oyuncular bekleniyor: {joined}/{expected}, {seconds} sn içinde yine de başlıyor",
+  "hud.preMatchStartsIn": "Maç {seconds} içinde başlıyor",
+  "hud.preMatchWaiting": "Oyuncular bekleniyor: {joined}/{expected}",
   "hud.priest": "rahip",
   "hud.priestDead": "rahip (ölü)",
   "hud.raise": "diriliş {clock}",
@@ -1335,7 +1339,6 @@ export default {
   "teamEditor.name": "Ad",
   "teamEditor.noCharacters": "Kopyalanacak karakterin yok.",
   "teamEditor.notSaved": "Kaydedilmedi: {error}",
-  "teamEditor.openInCharacter": "Karakter ekranında aç ›",
   "teamEditor.professions": "Meslekler",
   "teamEditor.professionsTitle": "takımın meslekleri",
   "teamEditor.replaceMember": "{member} yerine {character} koy",

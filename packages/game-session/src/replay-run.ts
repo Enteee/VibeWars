@@ -22,12 +22,14 @@ export interface Rerun {
 
 /**
  * Runs `replay` again on `map` under `matchRules` (#3572): the host's
- * simulation, built alike, given every input at its tick, stepped to the
- * tick the match finished at. The same build gets the same outcome; any
+ * simulation, built alike, given every input at its tick, held until its
+ * `start` (#3818), stepped to the tick the match finished at. The same build gets the same outcome; any
  * wall clock or `Math.random` in the simulation would not.
  */
 export function rerun(replay: MatchReplay, map: HostMap, matchRules: MatchRules): Rerun {
   const sim = createMatchSimulation(map, replay.seed, matchRules);
+  // Held before it (#3818); a replay without one never started.
+  const start = replay.inputs.find((input) => input[1] === "start")?.[0];
   const apply = (input: ReplayInput): void => {
     switch (input[1]) {
       case "intent":
@@ -52,6 +54,8 @@ export function rerun(replay: MatchReplay, map: HostMap, matchRules: MatchRules)
       case "called":
         sim.setCalledTarget(input[2], input[3] ?? undefined);
         return;
+      case "start":
+        return;
     }
   };
   let next = 0;
@@ -64,7 +68,11 @@ export function rerun(replay: MatchReplay, map: HostMap, matchRules: MatchRules)
   };
   while (sim.tick < replay.ticks) {
     applyDue();
-    sim.step(TICK_SECONDS);
+    if (start !== undefined && sim.tick >= start) {
+      sim.step(TICK_SECONDS);
+    } else {
+      sim.stepHeld(TICK_SECONDS);
+    }
   }
   applyDue();
   return {

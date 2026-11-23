@@ -643,6 +643,10 @@ export default {
   "hud.outcomeVictory": "Victorie",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (mort)",
+  "hud.preMatchStartingAnyway":
+    "Se așteaptă jucătorii: {joined}/{expected}, începe oricum în {seconds} s",
+  "hud.preMatchStartsIn": "Meciul începe în {seconds}",
+  "hud.preMatchWaiting": "Se așteaptă jucătorii: {joined}/{expected}",
   "hud.priest": "preot",
   "hud.priestDead": "preot (mort)",
   "hud.raise": "reînviere {clock}",
@@ -1409,7 +1413,6 @@ export default {
   "teamEditor.name": "Nume",
   "teamEditor.noCharacters": "Nu ai personaje de copiat.",
   "teamEditor.notSaved": "Nesalvat: {error}",
-  "teamEditor.openInCharacter": "Deschide în ecranul Personaj ›",
   "teamEditor.professions": "Clase",
   "teamEditor.professionsTitle": "clasele echipei",
   "teamEditor.replaceMember": "Înlocuiește {member} cu {character}",

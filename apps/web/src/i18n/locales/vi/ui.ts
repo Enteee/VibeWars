@@ -560,6 +560,10 @@ export default {
   "hud.outcomeVictory": "Chiến thắng",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (đã chết)",
+  "hud.preMatchStartingAnyway":
+    "Đang chờ người chơi: {joined}/{expected}, vẫn bắt đầu sau {seconds} giây",
+  "hud.preMatchStartsIn": "Trận đấu bắt đầu sau {seconds}",
+  "hud.preMatchWaiting": "Đang chờ người chơi: {joined}/{expected}",
   "hud.priest": "tư tế",
   "hud.priestDead": "tư tế (đã chết)",
   "hud.raise": "hồi sinh {clock}",
@@ -1255,7 +1259,6 @@ export default {
   "teamEditor.name": "Tên",
   "teamEditor.noCharacters": "Bạn không có nhân vật để sao chép.",
   "teamEditor.notSaved": "Chưa lưu: {error}",
-  "teamEditor.openInCharacter": "Mở trong màn hình Nhân vật ›",
   "teamEditor.professions": "Lớp",
   "teamEditor.professionsTitle": "các lớp của đội",
   "teamEditor.replaceMember": "Thay {member} bằng {character}",

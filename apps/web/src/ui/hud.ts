@@ -65,6 +65,7 @@ import { percent, setHidden, setStyle, setText } from "./dom-write.js";
 import { iconButton } from "./kit.js";
 import { energyLabel, overcastBandElement, renderOvercastBand } from "./overcast-band.js";
 import { pipsElement, renderPips } from "./pips.js";
+import { preMatchLine } from "./pre-match-line.js";
 import {
   SIGNET_ROW_PX,
   bodyName,
@@ -186,6 +187,8 @@ export interface HudElements {
   readonly scoreboard: HTMLElement;
   readonly scoreboardText: HTMLElement;
   readonly enemies: HTMLElement;
+  /** Before the match starts, who it waits for or when it starts, under the scoreboard (#3818). */
+  readonly preMatch: HTMLElement;
   /** While you are dead, when you are back, under the scoreboard (#3367). */
   readonly respawn: HTMLElement;
   /** A Guild Battle's flag carriers under the scoreboard, a line a flag (#1226), or a Relic Run's relics (#1374). */
@@ -259,6 +262,9 @@ export function createHud(
   scoreboard.hidden = !inMatch;
   const scoreboardText = element("span", "hud-scoreboard-text", scoreboard);
   const enemies = element("span", "hud-enemies", scoreboard);
+  const preMatch = element("div", "hud-pre-match", top);
+  preMatch.setAttribute("role", "status");
+  preMatch.hidden = true;
   const respawn = element("div", "hud-respawn", top);
   respawn.setAttribute("role", "status");
   respawn.hidden = true;
@@ -429,6 +435,7 @@ export function createHud(
     scoreboard,
     scoreboardText,
     enemies,
+    preMatch,
     respawn,
     carriers,
     end,
@@ -2173,6 +2180,13 @@ export function updateHud(
     );
     renderEnemyPips(hud.enemies, enemyPips(match.players, self?.team), self?.team);
     renderCarriers(hud.carriers, carrierLines(match, self?.team), self?.team);
+    // Held in the spawn until the start (#3818): the bar shows, inactive.
+    const waiting = preMatchLine(match);
+    setHidden(hud.preMatch, waiting === undefined);
+    if (waiting !== undefined) {
+      setText(hud.preMatch, waiting);
+    }
+    hud.skillBar.classList.toggle("is-held", waiting !== undefined);
 
     if (match.phase === "finished") {
       setStyle(hud.result.style, "display", "");

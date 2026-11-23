@@ -162,7 +162,8 @@ export function stingsFor(
   const deaths = heard.filter((combat) =>
     combat.events.some((event) => event.kind === "death" && player(event.targetId) !== undefined),
   );
-  if (prev.phase === null && next.phase === "active") {
+  // At the start itself, not while everyone is held before it (#3818).
+  if (prev.phase !== "active" && prev.phase !== "finished" && next.phase === "active") {
     stings.push("match-start");
   }
   if (!bloodied && deaths.length > 0) {

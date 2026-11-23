@@ -202,7 +202,7 @@ kỹ năng vào ô trống đầu tiên. **Đồ** chứa vũ khí và món tay 
 viên đang mở, và chỉ có ở đó khi một thành viên đang mở: nhấn vào một món để
 trang bị, hoặc kéo nó lên tay. Mỗi lúc chỉ mở một thành viên; **Esc** đóng
 nó. Lớp mới sẽ bỏ các kỹ năng và cấp mà nó không dùng được, kèm nút **Hoàn
-tác**. Nhấn vào tên một thành viên, hoặc **Mở trong màn hình Nhân vật**, để
+tác**. Nhấn vào tên một thành viên, hoặc nút **✎** của nó, để
 sửa nó trong trình sửa build; nút **Lưu** ở đó đưa nó trở lại đội, và nút
 **Lưu** của chính đội giữ tất cả và đưa bạn về Tạo Đội. **Esc** rời đi mà
 không lưu, và hỏi trước. **Chia sẻ**, **Tải đội**, **Nhân bản** và **Xóa**

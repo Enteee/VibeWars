@@ -607,6 +607,10 @@ export default {
   "hud.outcomeVictory": "Overwinning",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (dood)",
+  "hud.preMatchStartingAnyway":
+    "Wachten op spelers: {joined}/{expected}, start toch over {seconds} s",
+  "hud.preMatchStartsIn": "Wedstrijd begint over {seconds}",
+  "hud.preMatchWaiting": "Wachten op spelers: {joined}/{expected}",
   "hud.priest": "priester",
   "hud.priestDead": "priester (dood)",
   "hud.raise": "opwekking {clock}",
@@ -1337,7 +1341,6 @@ export default {
   "teamEditor.name": "Naam",
   "teamEditor.noCharacters": "Je hebt geen personages om te kopiëren.",
   "teamEditor.notSaved": "Niet opgeslagen: {error}",
-  "teamEditor.openInCharacter": "Openen in het personagescherm ›",
   "teamEditor.professions": "Klassen",
   "teamEditor.professionsTitle": "de klassen van het team",
   "teamEditor.replaceMember": "{member} vervangen door {character}",

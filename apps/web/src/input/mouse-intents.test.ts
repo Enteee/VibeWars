@@ -73,6 +73,7 @@ const MATCH: MatchSnapshot = {
   score: [0, 0],
   elapsedSeconds: 0,
   phase: "active",
+  preMatch: null,
   winningTeam: undefined,
   endReason: undefined,
   projectiles: [],

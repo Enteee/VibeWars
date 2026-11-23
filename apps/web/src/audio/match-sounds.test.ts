@@ -65,6 +65,7 @@ function snapshot(castingSkillId: string | undefined, switches: boolean[] = []):
     score: [0, 0],
     elapsedSeconds: 0,
     phase: "active",
+    preMatch: null,
     winningTeam: undefined,
     endReason: undefined,
     projectiles: [],

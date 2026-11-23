@@ -337,6 +337,7 @@ describe("every message fits in one Trystero chunk (#403)", () => {
       elapsedSeconds: FLOAT,
       score: [15, 15],
       phase: "finished",
+      preMatch: null,
       winningTeam: 1,
       endReason: "score",
       players: Array.from({ length: players }, (_, i) => player(i)),

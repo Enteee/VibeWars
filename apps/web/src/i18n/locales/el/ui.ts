@@ -614,6 +614,10 @@ export default {
   "hud.outcomeVictory": "Νίκη",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (νεκρός)",
+  "hud.preMatchStartingAnyway":
+    "Αναμονή παικτών: {joined}/{expected}, ξεκινά ούτως ή άλλως σε {seconds} δ",
+  "hud.preMatchStartsIn": "Ο αγώνας ξεκινά σε {seconds}",
+  "hud.preMatchWaiting": "Αναμονή παικτών: {joined}/{expected}",
   "hud.priest": "ιερέας",
   "hud.priestDead": "ιερέας (νεκρός)",
   "hud.raise": "ανάσταση {clock}",
@@ -1350,7 +1354,6 @@ export default {
   "teamEditor.name": "Όνομα",
   "teamEditor.noCharacters": "Δεν έχεις χαρακτήρες για αντιγραφή.",
   "teamEditor.notSaved": "Δεν αποθηκεύτηκε: {error}",
-  "teamEditor.openInCharacter": "Άνοιγμα στην οθόνη Χαρακτήρα ›",
   "teamEditor.professions": "Επαγγέλματα",
   "teamEditor.professionsTitle": "τα επαγγέλματα της ομάδας",
   "teamEditor.replaceMember": "Αντικατάσταση {member} με {character}",

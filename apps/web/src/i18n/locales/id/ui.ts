@@ -565,6 +565,10 @@ export default {
   "hud.outcomeVictory": "Menang",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (tewas)",
+  "hud.preMatchStartingAnyway":
+    "Menunggu pemain: {joined}/{expected}, tetap dimulai dalam {seconds} dtk",
+  "hud.preMatchStartsIn": "Pertandingan dimulai dalam {seconds}",
+  "hud.preMatchWaiting": "Menunggu pemain: {joined}/{expected}",
   "hud.priest": "pendeta",
   "hud.priestDead": "pendeta (tewas)",
   "hud.raise": "bangkit {clock}",
@@ -1268,7 +1272,6 @@ export default {
   "teamEditor.name": "Nama",
   "teamEditor.noCharacters": "Kamu tidak punya karakter untuk disalin.",
   "teamEditor.notSaved": "Tidak disimpan: {error}",
-  "teamEditor.openInCharacter": "Buka di layar Karakter ›",
   "teamEditor.professions": "Profesi",
   "teamEditor.professionsTitle": "profesi tim",
   "teamEditor.replaceMember": "Ganti {member} dengan {character}",

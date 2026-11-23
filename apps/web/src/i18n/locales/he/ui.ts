@@ -639,6 +639,10 @@ export default {
   "hud.outcomeVictory": "ניצחון",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (מת)",
+  "hud.preMatchStartingAnyway":
+    "ממתינים לשחקנים: {joined}/{expected}, מתחילים בכל זאת בעוד {seconds} ש׳",
+  "hud.preMatchStartsIn": "המשחק מתחיל בעוד {seconds}",
+  "hud.preMatchWaiting": "ממתינים לשחקנים: {joined}/{expected}",
   "hud.priest": "כוהן",
   "hud.priestDead": "כוהן (מת)",
   "hud.raise": "החייאה {clock}",
@@ -1400,7 +1404,6 @@ export default {
   "teamEditor.name": "שם",
   "teamEditor.noCharacters": "אין לך דמויות להעתקה.",
   "teamEditor.notSaved": "לא נשמר: {error}",
-  "teamEditor.openInCharacter": "פתח במסך הדמות ›",
   "teamEditor.professions": "מקצועות",
   "teamEditor.professionsTitle": "המקצועות של הקבוצה",
   "teamEditor.replaceMember": "החלף את {member} ב-{character}",
