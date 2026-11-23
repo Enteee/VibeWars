@@ -92,7 +92,7 @@ chọn), **Sảnh** (link mời, Vào sảnh, Mở/Đóng, Rời, và những ai
 sảnh của bạn; huy hiệu số của nó đếm số người), **♪** (nhạc: cái gì đang
 phát, và to bao nhiêu), nút tắt âm thanh và toàn màn hình. Trong trận, cũng
 các nút đó, trừ Sảnh, nằm ở góc trên bên phải màn hình. Trong cửa sổ hẹp, các
-biểu tượng này và các nút khác của màn hình được gộp vào **⋯**; chỉ nút chính
+biểu tượng này và các nút khác của màn hình được gộp vào **☰**; chỉ nút chính
 của nó còn ở ngoài. ⚙ mở Tùy chọn thành một cửa sổ dưới thanh, màn hình vẫn
 ở phía sau; Esc, × hoặc nhấn ra ngoài sẽ đóng nó. [?] mở Hỗ trợ theo cùng
 cách, thành một cửa sổ dưới nó với bộ chọn trang ở trên cùng; trận vẫn tiếp

@@ -570,6 +570,38 @@ test("on a phone both editors keep Save and their ⋯ in the bar, and ⋯ opens 
   await expect(bar.locator(".editor-share:not([hidden])")).toBeVisible();
 });
 
+test("on a phone the bar's fold is ☰, so no two buttons in the bar look alike (#3886)", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 412, height: 915 });
+  await page.goto("./");
+  const bar = page.locator("#topbar");
+  /** The text of every top-bar button a player can see, the fold closed. */
+  const shown = () =>
+    bar.locator("button").evaluateAll((buttons) =>
+      buttons
+        .filter((button) => button.checkVisibility({ visibilityProperty: true }))
+        .map((button) => button.textContent.trim())
+        .filter((text) => text !== ""),
+    );
+  const expectDistinct = async (): Promise<void> => {
+    await expect(bar.locator(".topbar-more")).toHaveText("☰");
+    const texts = await shown();
+    expect(texts.filter((text, i) => texts.indexOf(text) !== i)).toEqual([]);
+  };
+  await expectDistinct();
+
+  await openRail(page, "Team Builder");
+  await page.getByRole("button", { name: "New team build", exact: true }).click();
+  await expect(bar.getByRole("button", { name: "more actions" })).toHaveText("⋯");
+  await expectDistinct();
+
+  await page.locator(".team-row-name").first().click();
+  await expect(bar.getByRole("button", { name: "Save", exact: true })).toBeVisible();
+  await expect(bar.getByRole("button", { name: "more actions" })).toHaveText("⋯");
+  await expectDistinct();
+});
+
 test("a new team is stored only on Save, which leaves the editor (#573, #1902)", async ({
   page,
 }) => {

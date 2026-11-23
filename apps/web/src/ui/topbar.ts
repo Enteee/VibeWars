@@ -98,6 +98,12 @@ export function partyJoinsNotice(party: number): string {
 export const CONNECTING_NOTICE_MS = 3000;
 
 /**
+ * The glyph on the bar's fold on a phone (#3886): ☰, so it does not look
+ * like an editor's own ⋯ beside it.
+ */
+export const TOPBAR_FOLD_GLYPH = "☰";
+
+/**
  * The lobby's controls, which the Lobby window mounts (#2385), and the
  * bar's word on the joins invite links ask for.
  */
@@ -582,8 +588,8 @@ export function mountTopbar(
   attachJukeboxPopover(music, bar, false);
 
   // On a phone the screen's other buttons and the global icons fold into
-  // ⋯ (styles.css); the screen's primary button and an editor's own ⋯ stay out.
-  const more = button("⋯", "topbar-more", () => {
+  // ☰ (styles.css); the screen's primary button and an editor's own ⋯ stay out.
+  const more = button(TOPBAR_FOLD_GLYPH, "topbar-more", () => {
     setMore(!bar.classList.contains("is-more-open"));
   });
   more.setAttribute("aria-label", t("topbar.more"));

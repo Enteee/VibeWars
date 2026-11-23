@@ -90,7 +90,7 @@ Maç dışında üst çubukta **[?]** (bu Yardım), **⚙** (Ayarlar), **Lobi**
 olduğu; rozeti onları sayar), **♪** (müzik: ne çaldığı ve ne kadar
 yüksek), ses kapatma ve tam ekran bulunur. Maçta, Lobi dışındaki aynı
 düğmeler ekranın sağ üstündedir. Dar bir pencerede bu simgeler ve
-ekranın diğer düğmeleri **⋯** içine katlanır; yalnızca ana düğmesi
+ekranın diğer düğmeleri **☰** içine katlanır; yalnızca ana düğmesi
 dışarıda kalır. ⚙, Ayarlar'ı çubuğun altında bir pencere olarak açar,
 ekran arkasında kalır; Esc, × ya da dışarıya bir tık onu kapatır. [?] da Yardım'ı aynı
 şekilde, altında, en üstte sayfa seçicisi olan bir pencere olarak açar; maç
