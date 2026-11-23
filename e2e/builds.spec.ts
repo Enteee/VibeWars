@@ -2005,11 +2005,11 @@ test("the primary attribute's row says what it does at its rank (#531)", async (
   await expect(fastCasting.locator(".editor-attribute-effect")).toHaveCount(0);
   await pip(fastCasting, 11).click();
   await expect(fastCasting.locator(".editor-attribute-effect")).toHaveText(
-    "spells cast 40% faster, signets 33% faster",
+    "spells and signets cast 40% faster",
   );
   await pip(fastCasting, 12).click();
   await expect(fastCasting.locator(".editor-attribute-effect")).toHaveText(
-    "spells cast 43% faster, signets 36% faster",
+    "spells and signets cast 43% faster",
   );
 });
 

@@ -4,7 +4,7 @@ import {
   DIVINE_FAVOR_ATTRIBUTE,
   divineFavorBonusHeal,
   SPAWNING_POWER_ATTRIBUTE,
-  spawningPowerMultiplier,
+  spawningPowerDuration,
 } from "../primary-attributes.js";
 import { emptyAdrenaline, emptyPool, fillPools } from "./adrenaline.js";
 import { adrenalSkillsOnBar, isAttacking, skillsOnBar } from "./attacking.js";
@@ -2386,7 +2386,7 @@ export function applyEffect(
       );
       const base =
         getStatusDefinition(effect.statusId).category === "weapon-spell"
-          ? seconds * spawningPowerMultiplier(rankOf(caster, SPAWNING_POWER_ATTRIBUTE))
+          ? spawningPowerDuration(rankOf(caster, SPAWNING_POWER_ATTRIBUTE), seconds)
           : seconds;
       // A count of none, as "I Will Avenge You!"'s with no dead ally (#2320):
       // a 0 s status never lands.

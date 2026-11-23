@@ -7,7 +7,6 @@ import {
 } from "../equipment/types.js";
 import type { ArmorCondition } from "../equipment/insignias.js";
 import { wieldsFor } from "../equipment/weapons.js";
-import { MYSTICISM_ATTRIBUTE, mysticismArmor } from "../primary-attributes.js";
 import type { SkillProfession } from "../professions.js";
 import type { SimulationRng } from "../rng.js";
 import type { CombatRules } from "../ruleset.js";
@@ -156,11 +155,6 @@ export function effectiveArmor(
       armor += bonus.amount;
     }
   }
-  // Mysticism (#874): +1 a rank while enchanted, by anyone.
-  if (target.statuses.countByCategory("enchantment") > 0) {
-    armor += mysticismArmor(rankOf(target, MYSTICISM_ATTRIBUTE));
-  }
-
   // Cracked Armor (#763) before status modifiers: −20, never below 60,
   // and never a raise for armor already under it. Armor of Earth then
   // adds its full +24 even to a cracked caster.

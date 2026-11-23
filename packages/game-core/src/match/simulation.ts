@@ -5461,10 +5461,10 @@ export class MatchSimulation {
   }
 
   /**
-   * Leadership's energy for a shout or a chant (#625, #758): one for
-   * each ally it reached, the shouter included, however many events each got, up to
-   * the rank's cap. Pushed onto the shout's own events, so its log entry
-   * carries the gain.
+   * Leadership's energy for a shout or a chant (#625, #758, #3880): two
+   * for each ally it reached, the shouter included, however many events
+   * each got, up to the rank's cap. Pushed onto the shout's own events, so
+   * its log entry carries the gain.
    */
   #gainLeadershipEnergy(record: ParticipantRecord, events: CombatEvent[]): void {
     const team = record.combatant.team;
@@ -10166,7 +10166,9 @@ export class MatchSimulation {
   /**
    * Soul Reaping (#530): every living Necromancer within spirit range of
    * `victim` gains its rank in energy, up to its maximum, at most 3 times
-   * in any 15 s. The victim's own rank does nothing: it is dead.
+   * in any 15 s. The victim's own rank does nothing: it is dead. A death
+   * while the Necromancer is at maximum energy gives nothing and does not
+   * use up one of the 3 (#3880), as in GW1.
    */
   #reapSoul(victim: ParticipantRecord): void {
     for (const record of this.#participants.values()) {
@@ -10175,7 +10177,8 @@ export class MatchSimulation {
       if (
         rank <= 0 ||
         combatant.dead ||
-        !distanceWithinRange(record.position, victim.position, RANGE_SPIRIT)
+        !distanceWithinRange(record.position, victim.position, RANGE_SPIRIT) ||
+        combatant.energy >= effectiveMaxEnergy(combatant)
       ) {
         continue;
       }

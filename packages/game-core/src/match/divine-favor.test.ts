@@ -80,7 +80,7 @@ function castOrison(divineFavor: number, targetId: "m" | "ally"): CombatLogEntry
 }
 
 describe("Divine Favor (#529)", () => {
-  it("adds floor(3.2 × rank) to an Orison on an ally: +38 at rank 12, after the spell's own heal", () => {
+  it("adds 3.2 × rank, rounded, to an Orison on an ally: +38 at rank 12, after the spell's own heal", () => {
     const plain = orisonHeals(castOrison(0, "ally"), "ally");
     const favored = orisonHeals(castOrison(12, "ally"), "ally");
     expect(plain).toHaveLength(1);

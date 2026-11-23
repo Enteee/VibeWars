@@ -1518,19 +1518,21 @@ GW1 PvP (#473). Only a primary can hold its rank, and runes count.
   1.15 s but Faintheartedness in 1 s as usual. It multiplies with dazed
   (rank 12 and dazed: ×1.149). Aftercast and recharge are unchanged;
   attack skills and other non-spells too. Signets, under the same
-  Mesmer-or-2-s rule, activate 3% faster a rank, linear: ×0.64 at rank
-  12, so a Me/Mo casts Resurrection Signet (3 s) in 1.92 s. Dazed does
+  Mesmer-or-2-s rule, are sped up the same way, as the GW1 wiki has it
+  (#3880): a Me/Mo casts Resurrection Signet (3 s) in 1.72 s. Dazed does
   not slow a signet (#1100).
 - **Strength** (Warrior). Attack skills ignore 1% of armor a rank (12%
-  at 12), unless the weapon has armor penetration of its own (a
-  hornbow's 10%), which stands instead; the two do not add. Plain swings
-  get none.
-- **Expertise** (Ranger). Attack skills, rituals of any profession and
-  every Ranger skill cost 4% less energy a rank (−48% at 12), rounded once, never below 0.
+  at 12), or the weapon's own armor penetration if that is higher; the
+  two do not add. A hornbow's 10% loses to Strength 12, as the wiki's
+  "unless a higher amount" has it (#3880). Plain swings get none.
+- **Expertise** (Ranger). Attack skills, rituals of any profession, touch
+  skills (#3880) and every Ranger skill cost 4% less energy a rank (−48%
+  at 12), rounded once, never below 0.
   Adrenaline costs are untouched.
 - **Divine Favor** (Monk). A Monk spell cast on an ally, yourself
-  included, heals that ally another floor(3.2 × rank) when it lands: +38
-  at rank 12. Once a cast and on the target only, even for a spell that
+  included, heals that ally another 3.2 × rank, rounded to the nearest,
+  when it lands: +10 at rank 3, +26 at 8, +38 at 12, +42 at 13 (#3880).
+  Once a cast and on the target only, even for a spell that
   also reaches others. A spell that doubles Divine Favor, such as
   Healing Touch, adds twice that: +76 at rank 12. An interrupted spell, a
   dead target or a Monk spell at a foe gets nothing.
@@ -1539,29 +1541,33 @@ GW1 PvP (#473). Only a primary can hold its rank, and runes count.
   3–7, 2 at 8–12, 3 at 13 and above (#1100).
 - **Soul Reaping** (Necromancer). When anyone else, ally or foe, dies
   within spirit range (850), you gain energy equal to your rank, up to
-  your maximum, at most 3 times in any 15 s. Not while you are dead.
+  your maximum, at most 3 times in any 15 s. Not while you are dead. A
+  death while you are at maximum energy gives nothing and does not use
+  up one of the 3 (#3880).
   The gain floats over you, and the Training log names Soul Reaping.
-- **Leadership** (Paragon). Each shout or chant gives its user 1 energy
-  for every ally it affected, the user included, up to 1 for every 2
-  ranks: up to 6 at rank 12.
+- **Leadership** (Paragon). Each shout or chant gives its user 2 energy
+  for every ally it affected, the user included (the wiki counts each
+  player as their own ally), up to 1 for every 2 ranks: up to 6 at rank
+  12 (#3880).
 - **Energy Storage** (Elementalist). +3 maximum energy a rank, +36 at
   rank 12, and more above it. It adds to Rune of Attunement and gear,
   and you start the match full at the new maximum. The build editor's
   max energy counts it.
 - **Mysticism** (Dervish). Dervish enchantments cost 4% less energy a
   rank (−48% at 12: Mystic Regeneration 8 instead of 15), rounded once,
-  never below 0. While any enchantment is on you, yours or an ally's,
-  you have +1 armor a rank against every hit.
+  never below 0. GW1's +1 armor a rank while enchanted is PvE only, so
+  Mysticism gives none here (#3880).
 - **Spawning Power** (Ritualist). A creature you summon, of any
   profession (spirits and minions, not a charmed pet), has 4% more
   Health a rank, rounded once: a spirit of 210 has 311 at rank 12. A
   weapon spell you put on anyone, yourself included, lasts 4% longer a
-  rank: Weapon of Quickening 31.08 s instead of 21 s. A spirit's lifetime
-  is unchanged. The tooltip shows both, the base in brackets: "311 Health
-  (210)", "31.1s (21s)" (#1098).
+  rank, rounded to a whole second, a half down (#3880): Weapon of
+  Quickening 31 s instead of 21 s. A spirit's lifetime is unchanged. The
+  tooltip shows both, the base in brackets: "311 Health (210)", "31s
+  (21s)" (#1098).
 
 The build editor says under a primary's row what it does at its rank
-("Fast Casting 12: spells cast 43% faster, signets 36% faster"), and a skill tooltip for a
+("Fast Casting 12: spells and signets cast 43% faster"), and a skill tooltip for a
 known character shows the cost and activation Expertise, Mysticism and
 Fast Casting make of it, the base in brackets: "5 energy (10)",
 "1.1s (2s)" (#531). The skill bar shows icons only (#719); a slot's
