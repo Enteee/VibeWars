@@ -569,7 +569,8 @@ export function callStation(): Station {
       how: "tutorial.call.how",
     },
     keys: ["target-called"],
-    highlight: { kind: "hud", element: ".party-window" },
+    // The target bar, which both its lines name (#3884), as the wall station does.
+    highlight: { kind: "hud", element: ".hud-target" },
     asides: [
       { line: "tutorial.call.t", when: (view) => view.calledTargeted },
       { line: "tutorial.call.other", when: (view) => view.calledLost },

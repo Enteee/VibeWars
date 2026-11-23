@@ -671,11 +671,12 @@ export function learnTests(mapId: string): void {
 
     // Station 12 (#3331): on to the two rats, the closest targeted and
     // called with a click on the target frame, T on the call, and the
-    // tutor walks over and hits it. The party window is lit meanwhile.
+    // tutor walks over and hits it. The target bar its line names is lit
+    // meanwhile (#3884).
     await expect
       .poll(() => hasSaid("Two rats. You pick, I hit. Call one."), { timeout: 15_000 })
       .toBe(true);
-    await expect(page.locator(".party-window")).toHaveClass(/tutorial-pulse/);
+    await expect(page.locator(".hud-target")).toHaveClass(/tutorial-pulse/);
     await expect(async () => {
       // Its view gone, the tutorial has ended under the walk (#3363):
       // what the tutor said last says how.
