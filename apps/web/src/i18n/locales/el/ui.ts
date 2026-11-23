@@ -64,6 +64,23 @@ export default {
 
   "buildEditor.addWeapon": "Προσθήκη όπλου",
   "buildEditor.armor": "Πανοπλία",
+  "buildEditor.attributeEffect.critical-strikes":
+    "+{percent}% πιθανότητα κρίσιμου χτυπήματος, +{energy} Ενέργεια ανά κρίσιμο χτύπημα",
+  "buildEditor.attributeEffect.divine-favor": "τα ξόρκια Monk σε συμμάχους θεραπεύουν +{heal}",
+  "buildEditor.attributeEffect.energy-storage": "+{energy} μέγιστη Ενέργεια",
+  "buildEditor.attributeEffect.expertise":
+    "οι ικανότητες επίθεσης, οι τελετές, οι ικανότητες αφής και οι ικανότητες Ranger κοστίζουν {percent}% λιγότερη Ενέργεια",
+  "buildEditor.attributeEffect.fast-casting":
+    "τα ξόρκια και οι σφραγίδες εκτελούνται {percent}% ταχύτερα",
+  "buildEditor.attributeEffect.leadership":
+    "έως {max} Ενέργεια ανά κραυγή, {perAlly} ανά σύμμαχο που επηρεάζεται",
+  "buildEditor.attributeEffect.mysticism":
+    "τα μαγέματα Dervish κοστίζουν {percent}% λιγότερη Ενέργεια",
+  "buildEditor.attributeEffect.soul-reaping":
+    "+{energy} Ενέργεια όταν κάποιος κοντά πεθαίνει ({triggers} ανά {seconds} δ)",
+  "buildEditor.attributeEffect.spawning-power":
+    "πλάσματα +{percent}% Υγεία, τα ξόρκια όπλου διαρκούν {percent}% περισσότερο",
+  "buildEditor.attributeEffect.strength": "ικανότητες επίθεσης: {percent}% διάτρηση πανοπλίας",
   "buildEditor.back": "Πίσω",
   "buildEditor.bothHandsFull": "γεμάτα χέρια",
   "buildEditor.budgetSegment": {

@@ -64,6 +64,23 @@ export default {
 
   "buildEditor.addWeapon": "Ajouter une arme",
   "buildEditor.armor": "Armure",
+  "buildEditor.attributeEffect.critical-strikes":
+    "+{percent}% de chances de coup critique, +{energy} énergie par coup critique",
+  "buildEditor.attributeEffect.divine-favor": "les sorts de Moine sur les alliés soignent +{heal}",
+  "buildEditor.attributeEffect.energy-storage": "+{energy} énergie maximale",
+  "buildEditor.attributeEffect.expertise":
+    "compétences d'attaque, rituels, compétences de contact et compétences de Rôdeur : {percent}% d'énergie en moins",
+  "buildEditor.attributeEffect.fast-casting": "sorts et sceaux lancés {percent}% plus vite",
+  "buildEditor.attributeEffect.leadership":
+    "jusqu'à {max} énergie par cri, {perAlly} par allié affecté",
+  "buildEditor.attributeEffect.mysticism":
+    "les enchantements de Derviche coûtent {percent}% d'énergie en moins",
+  "buildEditor.attributeEffect.soul-reaping":
+    "+{energy} énergie quand quelqu'un meurt à proximité ({triggers} par {seconds} s)",
+  "buildEditor.attributeEffect.spawning-power":
+    "créatures +{percent}% santé, les sorts d'arme durent {percent}% plus longtemps",
+  "buildEditor.attributeEffect.strength":
+    "compétences d'attaque : {percent}% de pénétration d'armure",
   "buildEditor.back": "Retour",
   "buildEditor.bothHandsFull": "les deux mains prises",
   "buildEditor.budgetSegment": {

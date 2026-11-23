@@ -62,6 +62,21 @@ export default {
 
   "buildEditor.addWeapon": "Silah ekle",
   "buildEditor.armor": "Zırh",
+  "buildEditor.attributeEffect.critical-strikes":
+    "+%{percent} kritik vuruş şansı, kritik vuruş başına +{energy} Enerji",
+  "buildEditor.attributeEffect.divine-favor": "Monk büyüleri müttefikleri +{heal} iyileştirir",
+  "buildEditor.attributeEffect.energy-storage": "+{energy} maksimum Enerji",
+  "buildEditor.attributeEffect.expertise":
+    "saldırı becerileri, ritüeller, dokunma becerileri ve Ranger becerileri %{percent} daha az Enerji harcar",
+  "buildEditor.attributeEffect.fast-casting": "büyüler ve mühürler %{percent} daha hızlı yapılır",
+  "buildEditor.attributeEffect.leadership":
+    "haykırış başına en fazla {max} Enerji, etkilenen müttefik başına {perAlly}",
+  "buildEditor.attributeEffect.mysticism": "Dervish tılsımları %{percent} daha az Enerji harcar",
+  "buildEditor.attributeEffect.soul-reaping":
+    "yakında biri öldüğünde +{energy} Enerji ({seconds} sn'de {triggers})",
+  "buildEditor.attributeEffect.spawning-power":
+    "yaratıklar +%{percent} Can, silah büyüleri %{percent} daha uzun sürer",
+  "buildEditor.attributeEffect.strength": "saldırı becerileri %{percent} zırh delme",
   "buildEditor.back": "Geri",
   "buildEditor.bothHandsFull": "iki el de dolu",
   "buildEditor.budgetSegment": {

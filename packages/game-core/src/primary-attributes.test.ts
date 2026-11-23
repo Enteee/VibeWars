@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 
 import {
   criticalStrikesEnergy,
-  describePrimaryAttribute,
+  primaryAttributeEffect,
+  type PrimaryAttributeEffect,
   divineFavorBonusHeal,
   expertiseEnergyCost,
   fastCastingMultiplier,
@@ -358,38 +359,38 @@ describe("Spawning Power (#1098)", () => {
   });
 });
 
-describe("describePrimaryAttribute (#531)", () => {
-  it.each([
-    ["mesmer.fast-casting", 12, "spells and signets cast 43% faster"],
-    ["mesmer.fast-casting", 15, "spells and signets cast 50% faster"],
+describe("primaryAttributeEffect (#531, #3893)", () => {
+  it.each<[string, number, PrimaryAttributeEffect]>([
+    ["mesmer.fast-casting", 12, { kind: "fast-casting", percent: 43 }],
+    ["mesmer.fast-casting", 15, { kind: "fast-casting", percent: 50 }],
+    ["ranger.expertise", 12, { kind: "expertise", percent: 48 }],
+    ["ranger.expertise", 15, { kind: "expertise", percent: 60 }],
+    ["warrior.strength", 12, { kind: "strength", percent: 12 }],
+    ["warrior.strength", 15, { kind: "strength", percent: 15 }],
+    ["monk.divine-favor", 12, { kind: "divine-favor", heal: 38 }],
+    ["monk.divine-favor", 15, { kind: "divine-favor", heal: 48 }],
+    ["assassin.critical-strikes", 2, { kind: "critical-strikes", percent: 2, energy: 0 }],
+    ["assassin.critical-strikes", 12, { kind: "critical-strikes", percent: 12, energy: 2 }],
+    ["assassin.critical-strikes", 15, { kind: "critical-strikes", percent: 15, energy: 3 }],
     [
-      "ranger.expertise",
+      "necromancer.soul-reaping",
       12,
-      "attack skills, rituals, touch skills and Ranger skills cost 48% less energy",
+      { kind: "soul-reaping", energy: 12, triggers: 3, seconds: 15 },
     ],
     [
-      "ranger.expertise",
+      "necromancer.soul-reaping",
       15,
-      "attack skills, rituals, touch skills and Ranger skills cost 60% less energy",
+      { kind: "soul-reaping", energy: 15, triggers: 3, seconds: 15 },
     ],
-    ["warrior.strength", 12, "attack skills 12% armor penetration"],
-    ["warrior.strength", 15, "attack skills 15% armor penetration"],
-    ["monk.divine-favor", 12, "Monk spells on allies heal +38"],
-    ["monk.divine-favor", 15, "Monk spells on allies heal +48"],
-    ["assassin.critical-strikes", 2, "+2% critical chance, +0 energy per critical"],
-    ["assassin.critical-strikes", 12, "+12% critical chance, +2 energy per critical"],
-    ["assassin.critical-strikes", 15, "+15% critical chance, +3 energy per critical"],
-    ["necromancer.soul-reaping", 12, "+12 energy when someone nearby dies (3 per 15 s)"],
-    ["necromancer.soul-reaping", 15, "+15 energy when someone nearby dies (3 per 15 s)"],
-    ["paragon.leadership", 12, "up to 6 energy per shout, 2 per ally affected"],
-    ["paragon.leadership", 15, "up to 7 energy per shout, 2 per ally affected"],
-    ["elementalist.energy-storage", 12, "+36 maximum energy"],
-    ["elementalist.energy-storage", 15, "+45 maximum energy"],
-    ["ritualist.spawning-power", 12, "creatures +48% Health, weapon spells last 48% longer"],
-    ["ritualist.spawning-power", 15, "creatures +60% Health, weapon spells last 60% longer"],
-    ["dervish.mysticism", 12, "Dervish enchantments cost 48% less energy"],
-  ])("says what %s does at rank %i", (attributeId, rank, text) => {
-    expect(describePrimaryAttribute(attributeId, rank)).toBe(text);
+    ["paragon.leadership", 12, { kind: "leadership", max: 6, perAlly: 2 }],
+    ["paragon.leadership", 15, { kind: "leadership", max: 7, perAlly: 2 }],
+    ["elementalist.energy-storage", 12, { kind: "energy-storage", energy: 36 }],
+    ["elementalist.energy-storage", 15, { kind: "energy-storage", energy: 45 }],
+    ["ritualist.spawning-power", 12, { kind: "spawning-power", percent: 48 }],
+    ["ritualist.spawning-power", 15, { kind: "spawning-power", percent: 60 }],
+    ["dervish.mysticism", 12, { kind: "mysticism", percent: 48 }],
+  ])("says what %s does at rank %i", (attributeId, rank, effect) => {
+    expect(primaryAttributeEffect(attributeId, rank)).toEqual(effect);
   });
 
   it.each([
@@ -404,10 +405,10 @@ describe("describePrimaryAttribute (#531)", () => {
     "dervish.mysticism",
     "ritualist.spawning-power",
   ])("says nothing for %s at rank 0", (attributeId) => {
-    expect(describePrimaryAttribute(attributeId, 0)).toBeUndefined();
+    expect(primaryAttributeEffect(attributeId, 0)).toBeUndefined();
   });
 
   it("says nothing for a secondary", () => {
-    expect(describePrimaryAttribute("mesmer.domination-magic", 12)).toBeUndefined();
+    expect(primaryAttributeEffect("mesmer.domination-magic", 12)).toBeUndefined();
   });
 });

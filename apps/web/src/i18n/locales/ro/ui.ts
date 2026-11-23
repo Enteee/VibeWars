@@ -63,6 +63,23 @@ export default {
 
   "buildEditor.addWeapon": "Adaugă o armă",
   "buildEditor.armor": "Armură",
+  "buildEditor.attributeEffect.critical-strikes":
+    "+{percent}% șansă de lovitură critică, +{energy} Energie per lovitură critică",
+  "buildEditor.attributeEffect.divine-favor": "vrăjile de Monk asupra aliaților vindecă +{heal}",
+  "buildEditor.attributeEffect.energy-storage": "+{energy} Energie maximă",
+  "buildEditor.attributeEffect.expertise":
+    "abilitățile de atac, ritualurile, abilitățile de atingere și abilitățile de Ranger costă cu {percent}% mai puțină Energie",
+  "buildEditor.attributeEffect.fast-casting":
+    "vrăjile și sigiliile se lansează cu {percent}% mai repede",
+  "buildEditor.attributeEffect.leadership":
+    "până la {max} Energie per strigăt, {perAlly} per aliat afectat",
+  "buildEditor.attributeEffect.mysticism":
+    "farmecele de Dervish costă cu {percent}% mai puțină Energie",
+  "buildEditor.attributeEffect.soul-reaping":
+    "+{energy} Energie când cineva din apropiere moare ({triggers} la {seconds} s)",
+  "buildEditor.attributeEffect.spawning-power":
+    "creaturi +{percent}% Viață, vrăjile de armă durează cu {percent}% mai mult",
+  "buildEditor.attributeEffect.strength": "abilitățile de atac: {percent}% penetrare a armurii",
   "buildEditor.back": "Înapoi",
   "buildEditor.bothHandsFull": "ambele mâini ocupate",
   "buildEditor.budgetSegment": {
