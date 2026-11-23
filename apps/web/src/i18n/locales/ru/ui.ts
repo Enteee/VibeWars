@@ -61,6 +61,22 @@ export default {
 
   "buildEditor.addWeapon": "Добавить оружие",
   "buildEditor.armor": "Броня",
+  "buildEditor.attributeEffect.critical-strikes":
+    "+{percent}% шанс критического удара, +{energy} энергии за критический удар",
+  "buildEditor.attributeEffect.divine-favor": "заклинания Monk на союзников лечат +{heal}",
+  "buildEditor.attributeEffect.energy-storage": "+{energy} к максимальной энергии",
+  "buildEditor.attributeEffect.expertise":
+    "атакующие навыки, ритуалы, навыки касания и навыки Ranger стоят на {percent}% меньше энергии",
+  "buildEditor.attributeEffect.fast-casting":
+    "заклинания и печати применяются на {percent}% быстрее",
+  "buildEditor.attributeEffect.leadership":
+    "до {max} энергии за клич, {perAlly} за каждого затронутого союзника",
+  "buildEditor.attributeEffect.mysticism": "зачарования Dervish стоят на {percent}% меньше энергии",
+  "buildEditor.attributeEffect.soul-reaping":
+    "+{energy} энергии, когда кто-то рядом умирает ({triggers} за {seconds} с)",
+  "buildEditor.attributeEffect.spawning-power":
+    "существа +{percent}% здоровья, заклинания оружия длятся на {percent}% дольше",
+  "buildEditor.attributeEffect.strength": "атакующие навыки: {percent}% пробития брони",
   "buildEditor.back": "Назад",
   "buildEditor.bothHandsFull": "обе руки заняты",
   "buildEditor.budgetSegment": {

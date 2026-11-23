@@ -61,6 +61,20 @@ export default {
 
   "buildEditor.addWeapon": "أضف سلاحًا",
   "buildEditor.armor": "الدرع",
+  "buildEditor.attributeEffect.critical-strikes":
+    "+{percent}% فرصة ضربة حرجة، +{energy} طاقة لكل ضربة حرجة",
+  "buildEditor.attributeEffect.divine-favor": "تعاويذ Monk على الحلفاء تشفي +{heal}",
+  "buildEditor.attributeEffect.energy-storage": "+{energy} للطاقة القصوى",
+  "buildEditor.attributeEffect.expertise":
+    "مهارات الهجوم والطقوس ومهارات اللمس ومهارات Ranger تكلف طاقة أقل بنسبة {percent}%",
+  "buildEditor.attributeEffect.fast-casting": "التعاويذ والأختام تُلقى أسرع بنسبة {percent}%",
+  "buildEditor.attributeEffect.leadership": "حتى {max} طاقة لكل صيحة، {perAlly} لكل حليف متأثر",
+  "buildEditor.attributeEffect.mysticism": "طلاسم Dervish تكلف طاقة أقل بنسبة {percent}%",
+  "buildEditor.attributeEffect.soul-reaping":
+    "+{energy} طاقة عندما يموت أحد قريب ({triggers} كل {seconds} ث)",
+  "buildEditor.attributeEffect.spawning-power":
+    "المخلوقات +{percent}% صحة، تعاويذ السلاح تدوم أطول بنسبة {percent}%",
+  "buildEditor.attributeEffect.strength": "مهارات الهجوم: {percent}% اختراق للدرع",
   "buildEditor.back": "رجوع",
   "buildEditor.bothHandsFull": "كلتا اليدين مشغولتان",
   "buildEditor.budgetSegment": {

@@ -62,6 +62,21 @@ export default {
 
   "buildEditor.addWeapon": "무기 추가",
   "buildEditor.armor": "방어구",
+  "buildEditor.attributeEffect.critical-strikes":
+    "치명타 확률 +{percent}%, 치명타마다 에너지 +{energy}",
+  "buildEditor.attributeEffect.divine-favor": "아군에게 쓰는 Monk 주문의 치유량 +{heal}",
+  "buildEditor.attributeEffect.energy-storage": "최대 에너지 +{energy}",
+  "buildEditor.attributeEffect.expertise":
+    "공격 스킬, 의식, 접촉 스킬, Ranger 스킬의 에너지 소모 {percent}% 감소",
+  "buildEditor.attributeEffect.fast-casting": "주문과 인장 시전 속도 {percent}% 증가",
+  "buildEditor.attributeEffect.leadership":
+    "외침 하나당 최대 에너지 {max}, 영향받은 아군 한 명당 {perAlly}",
+  "buildEditor.attributeEffect.mysticism": "Dervish 인챈트의 에너지 소모 {percent}% 감소",
+  "buildEditor.attributeEffect.soul-reaping":
+    "근처에서 누군가 죽으면 에너지 +{energy} ({seconds}초마다 {triggers}회)",
+  "buildEditor.attributeEffect.spawning-power":
+    "소환수 체력 +{percent}%, 무기 주문 지속 시간 {percent}% 증가",
+  "buildEditor.attributeEffect.strength": "공격 스킬 방어력 관통 {percent}%",
   "buildEditor.back": "뒤로",
   "buildEditor.bothHandsFull": "양손 사용 중",
   "buildEditor.budgetSegment": { other: "{attribute}: {count}포인트" },

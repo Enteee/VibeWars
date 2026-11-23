@@ -61,6 +61,20 @@ export default {
 
   "buildEditor.addWeapon": "添加武器",
   "buildEditor.armor": "护甲",
+  "buildEditor.attributeEffect.critical-strikes": "暴击率 +{percent}%，每次暴击 +{energy} 能量",
+  "buildEditor.attributeEffect.divine-favor": "Monk 对友方施放的法术治疗 +{heal}",
+  "buildEditor.attributeEffect.energy-storage": "最大能量 +{energy}",
+  "buildEditor.attributeEffect.expertise":
+    "攻击技能、仪式、触摸技能和 Ranger 技能的能量消耗降低 {percent}%",
+  "buildEditor.attributeEffect.fast-casting": "法术和纹章的施放速度加快 {percent}%",
+  "buildEditor.attributeEffect.leadership":
+    "每次呐喊最多 {max} 点能量，每个受影响的友方 {perAlly} 点",
+  "buildEditor.attributeEffect.mysticism": "Dervish 附魔的能量消耗降低 {percent}%",
+  "buildEditor.attributeEffect.soul-reaping":
+    "附近有人死亡时 +{energy} 能量（每 {seconds} 秒 {triggers} 次）",
+  "buildEditor.attributeEffect.spawning-power":
+    "生物生命 +{percent}%，武器法术持续时间延长 {percent}%",
+  "buildEditor.attributeEffect.strength": "攻击技能 {percent}% 护甲穿透",
   "buildEditor.back": "返回",
   "buildEditor.bothHandsFull": "双手已占用",
   "buildEditor.budgetSegment": { other: "{attribute}：{count} 点" },

@@ -62,6 +62,22 @@ export default {
 
   "buildEditor.addWeapon": "Pridať zbraň",
   "buildEditor.armor": "Brnenie",
+  "buildEditor.attributeEffect.critical-strikes":
+    "+{percent} % šanca na kritický zásah, +{energy} energie za kritický zásah",
+  "buildEditor.attributeEffect.divine-favor": "kúzla Mnícha na spojencov liečia +{heal}",
+  "buildEditor.attributeEffect.energy-storage": "+{energy} maximálnej energie",
+  "buildEditor.attributeEffect.expertise":
+    "útočné schopnosti, rituály, dotykové schopnosti a schopnosti Hraničiara stoja o {percent} % menej energie",
+  "buildEditor.attributeEffect.fast-casting":
+    "kúzla a pečate sa zosielajú o {percent} % rýchlejšie",
+  "buildEditor.attributeEffect.leadership":
+    "až {max} energie za pokrik, {perAlly} za každého zasiahnutého spojenca",
+  "buildEditor.attributeEffect.mysticism": "očarovania Derviša stoja o {percent} % menej energie",
+  "buildEditor.attributeEffect.soul-reaping":
+    "+{energy} energie, keď niekto nablízku zomrie ({triggers} za {seconds} s)",
+  "buildEditor.attributeEffect.spawning-power":
+    "stvorenia +{percent} % zdravia, zbraňové kúzla trvajú o {percent} % dlhšie",
+  "buildEditor.attributeEffect.strength": "útočné schopnosti: {percent} % prierazu brnenia",
   "buildEditor.back": "Späť",
   "buildEditor.bothHandsFull": "obe ruky plné",
   "buildEditor.budgetSegment": {

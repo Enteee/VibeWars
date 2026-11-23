@@ -63,6 +63,23 @@ export default {
 
   "buildEditor.addWeapon": "Додати зброю",
   "buildEditor.armor": "Броня",
+  "buildEditor.attributeEffect.critical-strikes":
+    "+{percent}% шанс критичного удару, +{energy} енергії за критичний удар",
+  "buildEditor.attributeEffect.divine-favor": "закляття Monk на союзників лікують +{heal}",
+  "buildEditor.attributeEffect.energy-storage": "+{energy} до максимальної енергії",
+  "buildEditor.attributeEffect.expertise":
+    "атакувальні вміння, ритуали, вміння дотику та вміння Ranger коштують на {percent}% менше енергії",
+  "buildEditor.attributeEffect.fast-casting":
+    "закляття та печатки застосовуються на {percent}% швидше",
+  "buildEditor.attributeEffect.leadership":
+    "до {max} енергії за вигук, {perAlly} за кожного зачепленого союзника",
+  "buildEditor.attributeEffect.mysticism":
+    "зачарування Dervish коштують на {percent}% менше енергії",
+  "buildEditor.attributeEffect.soul-reaping":
+    "+{energy} енергії, коли хтось поруч гине ({triggers} за {seconds} с)",
+  "buildEditor.attributeEffect.spawning-power":
+    "істоти +{percent}% здоров'я, закляття зброї тривають на {percent}% довше",
+  "buildEditor.attributeEffect.strength": "атакувальні вміння: {percent}% пробиття броні",
   "buildEditor.back": "Назад",
   "buildEditor.bothHandsFull": "обидві руки зайняті",
   "buildEditor.budgetSegment": {
