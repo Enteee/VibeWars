@@ -13,6 +13,7 @@ import { createDoubleClick } from "./double-click.js";
 import {
   calledTargetIntent,
   callTargetCall,
+  longPressIntents,
   middleClickAction,
   pingCall,
   primaryClickIntents,
@@ -414,6 +415,10 @@ describe("clicks with Show names held (#2738)", () => {
     expect(
       primaryClickIntents(MATCH, layered, vec2(150, 150 - ELEVATION_STEP), false, true),
     ).toEqual([{ kind: "walk-to", layer: 0, x: 150, y: 150 - ELEVATION_STEP }]);
+    // A long-press is the touch Alt+click (#3878).
+    expect(longPressIntents(MATCH, layered, vec2(150, 150 - ELEVATION_STEP))).toEqual(
+      primaryClickIntents(MATCH, layered, vec2(150, 150 - ELEVATION_STEP), false, true),
+    );
   });
 
   const CULVERT = {
@@ -582,6 +587,14 @@ describe("tapIntents (#3781)", () => {
     // 230 is 16 off the foe and 16 off the ally; 233 nearer the ally.
     expect(tapIntents(MATCH, apart, vec2(233, 0), createDoubleClick(), 0, SLOP)).toEqual([
       { kind: "target", targetSessionId: "ally" },
+    ]);
+  });
+});
+
+describe("longPressIntents (#3878)", () => {
+  it("walks over a foe's body, and never targets it", () => {
+    expect(longPressIntents(MATCH, ARENA, vec2(200, 0))).toEqual([
+      { kind: "walk-to", layer: 0, x: 200, y: 0 },
     ]);
   });
 });
