@@ -12,7 +12,7 @@ import {
   proposeTeam,
   setTeamSize,
 } from "./helpers/peers.js";
-import { namePlayer } from "./helpers/player.js";
+import { namePlayer, ownPlayerKey } from "./helpers/player.js";
 
 /**
  * Team Arena matchmaking (#1766, ADR-0042): a party is one side, runs its
@@ -226,6 +226,102 @@ test("#2107: a Team Arena leader picks 2v2, and the party queues for Team Arena 
     await expect(
       ann.locator("#topbar .queue-window").getByRole("button", { name: "Leave Queue" }),
     ).toBeVisible();
+  } finally {
+    await context.close();
+  }
+});
+
+/**
+ * Make `page`'s ticket keys from `seed`, as random-arena.spec.ts does:
+ * the tickets' ids decide the group's map and its host. Seeds 1 and 2
+ * meet on an Annihilation map that Ann's party hosts, so Cid's leaving
+ * beats it; a change to formation fails the win, loudly.
+ */
+async function seedTicketKeys(page: Page, seed: number): Promise<void> {
+  // Source text, as the e2e tsconfig has no DOM lib (see builds.spec.ts).
+  await page.addInitScript(`
+    const random = crypto.getRandomValues.bind(crypto);
+    crypto.getRandomValues = (array) => {
+      if (!(array instanceof Uint8Array) || array.length !== 48) return random(array);
+      for (let i = 0; i < 48; i += 1) array[i] = (${String(seed)} * 97 + i * 13) & 0xff;
+      return array;
+    };
+  `);
+}
+
+/** The first skill on `page`'s bar, once its match is up. */
+async function firstSkill(page: Page): Promise<string | null> {
+  const skill = page.locator(".hud-skills .hud-skill").first();
+  // Met, the countdown and four arenas booting outlast expect's 15 s (#2777).
+  await expect(skill).toBeAttached({ timeout: 25_000 });
+  return skill.getAttribute("data-skill-id");
+}
+
+test("#3815: a Team Arena party that wins queues again with the same team, with no Team Lobby", async ({
+  browser,
+}) => {
+  // Three Team Lobby clocks of 30 s, the result's 20 s and two ranked starts.
+  test.setTimeout(300_000);
+  const { context, pages } = await openPeers(browser, 4);
+  const [ann, bea, cid, dot] = pages as [Page, Page, Page, Page];
+  // Two humans a side is ranked: each needs a key of its own.
+  for (const page of pages) {
+    await ownPlayerKey(page);
+  }
+  await seedTicketKeys(ann, 1);
+  await seedTicketKeys(cid, 2);
+
+  try {
+    for (const [party, names] of [
+      [
+        [ann, bea],
+        ["Ann", "Bea"],
+      ],
+      [
+        [cid, dot],
+        ["Cid", "Dot"],
+      ],
+    ] as const) {
+      await formParty(party, names);
+      await party[0].bringToFront();
+      await setTeamSize(party[0], 2);
+      await runTeamLobby(party, undefined, 2);
+    }
+    const builds = [await firstSkill(ann), await firstSkill(bea)];
+
+    // Cid's side leaves: on an Annihilation map, a side with nobody left is beaten.
+    for (const page of [cid, dot]) {
+      const leave = page.locator(".hud-leave");
+      await press(page, leave.getByRole("button", { name: "leave match" }));
+      await press(page, leave.getByRole("button", { name: "yes" }));
+    }
+    for (const page of [ann, bea]) {
+      await expect(page.locator(".hud-end-line")).toContainText(
+        /You won: next match with the same team in \d+ s/,
+      );
+    }
+
+    // Cid's party picks its team again; Ann's queues on its own, past
+    // the result's 20 s, with no Team Lobby, and meets it.
+    await press(cid, cid.getByRole("button", { name: "Find a match" }));
+    for (const page of [cid, dot]) {
+      await expect(page.locator(".team-lobby-stage")).toHaveText("Choose a team build");
+    }
+    for (const page of [ann, bea]) {
+      await expect(page.locator("#topbar .topbar-queue")).toBeVisible({ timeout: 30_000 });
+      await expect(page.locator(".team-lobby-stage")).toHaveCount(0);
+    }
+    await expect(cid.locator(".team-lobby-stage")).toHaveText("Take a character", {
+      timeout: 40_000,
+    });
+    await press(cid, cid.locator(".team-lobby-seat").nth(0));
+    await press(dot, dot.locator(".team-lobby-seat").nth(1));
+
+    // Met again (Cid only ever plays this one), each of Ann's party plays
+    // the build and seat it played before.
+    await firstSkill(cid);
+    expect([await firstSkill(ann), await firstSkill(bea)]).toEqual(builds);
+    await expect(ann.locator(".party-row-name")).toContainText(["Bea"]);
   } finally {
     await context.close();
   }
