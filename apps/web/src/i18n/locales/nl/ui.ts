@@ -1686,17 +1686,13 @@ export default {
   "tutorial.look.praise": "Daar is hij! Onze weg om het gevecht heen.",
   "tutorial.offer": "Nieuw hier? Je leraar laat je de basis zien.",
   "tutorial.offerTitle": "Eerste keer?",
+  "tutorial.ping.called": "Ik ga. We zien elkaar waar de paden samenkomen.",
   "tutorial.ping.hint": "Ping de kant die je op wilt.",
   "tutorial.ping.how":
     "Klik met het wiel op de grond, klik op het kompas, of sleep over het kompas om een lijn te tekenen.",
   "tutorial.ping.intro": "Links of rechts? Jij beslist.",
-  "tutorial.ping.pocket": "Mooi uitzicht. Maar verkeerde kant.",
   "tutorial.ping.praise": "Goed gekozen. Verder.",
-  "tutorial.ramp.hint": "Beide trappen op naar de markering op het hoge platform.",
-  "tutorial.ramp.how": "Klik op het hoge platform. Je route neemt de treden voor je.",
-  "tutorial.ramp.intro": "Trappen verbinden lagen. Loop erop en ze dragen je omhoog.",
-  "tutorial.ramp.landing": "Nog één trap.",
-  "tutorial.ramp.praise": "Hoge grond. Vijanden beneden bereiken je moeilijk.",
+  "tutorial.ping.view": "Mooi uitzicht.",
   "tutorial.rats.again": "Probeer een andere vaardigheid op deze.",
   "tutorial.rats.big":
     "Een grote. Sla hem tot {bash} oplicht, sla hem dan neer en gebruik {crush}.",
@@ -1722,7 +1718,6 @@ export default {
     "Tik op Groep als de lijst dicht is, dan op mijn naam en dan op de oplichtende skill.",
   "tutorial.touch.look": "Knijp om te zoomen. Sleep met één vinger om rond te kijken.",
   "tutorial.touch.pingHow": "Tik op het kompas, of sleep erover om een lijn te tekenen.",
-  "tutorial.touch.rampHow": "Tik op het hoge platform. Je route neemt de treden voor je.",
   "tutorial.touch.ratsHow": "Tik op een rat om hem te kiezen.",
   "tutorial.touch.tunnelHow":
     "Tik op de treden omlaag, dan op de markering voorbij het andere eind.",

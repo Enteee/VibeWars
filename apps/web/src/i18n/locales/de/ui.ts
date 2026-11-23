@@ -1703,17 +1703,13 @@ export default {
   "tutorial.look.praise": "Da ist er! Unser Weg um die Schlacht herum.",
   "tutorial.offer": "Neu hier? Dein Lehrer zeigt dir, wie es geht.",
   "tutorial.offerTitle": "Zum ersten Mal hier?",
+  "tutorial.ping.called": "Bin unterwegs. Wir treffen uns, wo die Wege zusammenlaufen.",
   "tutorial.ping.hint": "Pinge den Weg, den du gehen willst.",
   "tutorial.ping.how":
     "Klick mit dem Mausrad auf den Boden, klick auf den Kompass oder zieh auf dem Kompass eine Linie.",
   "tutorial.ping.intro": "Links oder rechts? Du entscheidest.",
-  "tutorial.ping.pocket": "Schöne Aussicht. Aber falscher Weg.",
   "tutorial.ping.praise": "Gute Wahl. Weiter.",
-  "tutorial.ramp.hint": "Beide Treppen hinauf zur Markierung auf der hohen Plattform.",
-  "tutorial.ramp.how": "Klick auf die hohe Plattform. Dein Weg nimmt die Stufen für dich.",
-  "tutorial.ramp.intro": "Stufen verbinden Ebenen. Geh drauf, und sie tragen dich hinauf.",
-  "tutorial.ramp.landing": "Noch eine Treppe.",
-  "tutorial.ramp.praise": "Hoher Grund. Feinde unten erreichen dich nur schwer.",
+  "tutorial.ping.view": "Schöne Aussicht.",
   "tutorial.rats.again": "Versuch bei dieser eine andere Fertigkeit.",
   "tutorial.rats.big":
     "Ein großer. Schlag zu, bis {bash} aufleuchtet, dann wirf ihn um und nimm {crush}.",
@@ -1739,7 +1735,6 @@ export default {
     "Tipp auf Gruppe, falls die Liste zu ist, dann auf meinen Namen und dann auf den leuchtenden Skill.",
   "tutorial.touch.look": "Mit zwei Fingern zoomen. Mit einem Finger ziehen, um dich umzusehen.",
   "tutorial.touch.pingHow": "Tipp auf den Kompass oder zieh darauf eine Linie.",
-  "tutorial.touch.rampHow": "Tipp auf die hohe Plattform. Dein Weg nimmt die Stufen für dich.",
   "tutorial.touch.ratsHow": "Tipp eine Ratte an, um sie ins Ziel zu nehmen.",
   "tutorial.touch.tunnelHow":
     "Tipp auf die Stufen hinab, dann auf die Markierung hinter dem anderen Ende.",

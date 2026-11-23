@@ -1777,18 +1777,13 @@ export default {
   "tutorial.look.praise": "Le voilà ! Notre chemin autour du combat.",
   "tutorial.offer": "Nouveau ? Ton tuteur va te montrer les bases.",
   "tutorial.offerTitle": "Première fois ?",
+  "tutorial.ping.called": "J'y vais. On se retrouve là où les chemins se rejoignent.",
   "tutorial.ping.hint": "Signale le chemin que tu veux prendre.",
   "tutorial.ping.how":
     "Clic molette sur le sol, clic sur la boussole, ou glisse sur la boussole pour tracer une ligne.",
   "tutorial.ping.intro": "À gauche ou à droite ? À toi de voir.",
-  "tutorial.ping.pocket": "Jolie vue. Mais mauvais chemin.",
   "tutorial.ping.praise": "Bien vu. En avant.",
-  "tutorial.ramp.hint":
-    "Monte les deux volées de marches jusqu'à la marque sur la plate-forme haute.",
-  "tutorial.ramp.how": "Clique sur la plate-forme haute. Ton chemin prend les marches pour toi.",
-  "tutorial.ramp.intro": "Les marches relient les niveaux. Avance, elles te montent.",
-  "tutorial.ramp.landing": "Encore une volée.",
-  "tutorial.ramp.praise": "Position haute. Les ennemis d'en bas t'atteignent mal.",
+  "tutorial.ping.view": "Jolie vue.",
   "tutorial.rats.again": "Essaie une autre compétence sur celui-ci.",
   "tutorial.rats.big":
     "Un gros. Frappe-le jusqu'à ce que {bash} s'allume, renverse-le, puis {crush}.",
@@ -1814,7 +1809,6 @@ export default {
     "Touche Groupe si la liste est fermée, puis mon nom, puis la compétence qui brille.",
   "tutorial.touch.look": "Pince pour zoomer. Glisse un doigt pour regarder.",
   "tutorial.touch.pingHow": "Touche la boussole, ou glisse dessus pour tracer une ligne.",
-  "tutorial.touch.rampHow": "Touche la plate-forme haute. Ton chemin prend les marches pour toi.",
   "tutorial.touch.ratsHow": "Touche un rat pour le cibler.",
   "tutorial.touch.tunnelHow":
     "Touche les marches qui descendent, puis la marque après l'autre bout.",
