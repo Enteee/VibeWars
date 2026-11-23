@@ -226,19 +226,27 @@ async function startMatch(page, mapId) {
   await page.getByRole("button", { name: "Ready", exact: true }).click();
   await page.getByRole("button", { name: "Start match" }).click();
   step = "team lobby";
-  await page.getByRole("button", { name: /^Your Team Builds/ }).click();
-  await page.getByText("8 members").first().click();
-  await page.getByRole("button", { name: "Propose this build" }).click();
+  await liveClick(page.getByRole("button", { name: /^Your Team Builds/ }));
+  await liveClick(page.getByText("8 members").first());
+  await liveClick(page.getByRole("button", { name: "Propose this build" }));
   await page.mouse.click(470, 300);
   step = "seat";
   const seats = page.getByRole("button", { name: "Sit here" });
-  await seats.first().waitFor();
-  // The lobby redraws under the pointer at 1920x1080: click the live button, retried.
-  await seats.first().evaluate((button) => {
-    /** @type {HTMLElement} */ (button).click();
-  });
+  await liveClick(seats.first());
   step = "match";
   await page.locator("#viewport canvas:not(.compass)").waitFor({ timeout: 90_000 });
+}
+
+/**
+ * Click through the DOM: the lobby redraws under the pointer at 1920x1080 and
+ * detaches the element a real click is aiming at.
+ * @param {import("@playwright/test").Locator} locator
+ */
+async function liveClick(locator) {
+  await locator.waitFor();
+  await locator.evaluate((element) => {
+    /** @type {HTMLElement} */ (element).click();
+  });
 }
 
 /**
