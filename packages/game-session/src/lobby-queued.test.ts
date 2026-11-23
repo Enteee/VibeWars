@@ -828,12 +828,18 @@ describe("a queued team mode's seat plans (ADR-0042)", () => {
   /** The 4v4 preset team the lobby's RNG, always 0.5, draws (#2148). */
   const PRESET = pickStarterTeam(() => 0.5, 4);
 
-  /** Seats as `sideOf` says them: who, and a plan's build or PRESET's member `index`. */
-  function side(builds: readonly (readonly [string, number, "plan" | "preset"])[]): string[] {
+  /** The one side 1 draws once side 0 has drawn PRESET: never the same team (#3891). */
+  const SECOND_PRESET = pickStarterTeam(() => 0.5, 4, PRESET === undefined ? [] : [PRESET]);
+
+  /** Seats as `sideOf` says them: who, and a plan's build or `preset`'s member `index`. */
+  function side(
+    builds: readonly (readonly [string, number, "plan" | "preset"])[],
+    preset = PRESET,
+  ): string[] {
     return builds
       .map(
         ([who, index, from]) =>
-          `${who}:${from === "plan" ? `plan ${String(index)}` : (PRESET?.members[index]?.name ?? "none")}`,
+          `${who}:${from === "plan" ? `plan ${String(index)}` : (preset?.members[index]?.name ?? "none")}`,
       )
       .sort();
   }
@@ -879,12 +885,15 @@ describe("a queued team mode's seat plans (ADR-0042)", () => {
     );
   });
 
-  const PRESET_FOE = side([
-    ["ticket-3", 0, "preset"],
-    ["bot", 1, "preset"],
-    ["bot", 2, "preset"],
-    ["bot", 3, "preset"],
-  ]);
+  const PRESET_FOE = side(
+    [
+      ["ticket-3", 0, "preset"],
+      ["bot", 1, "preset"],
+      ["bot", 2, "preset"],
+      ["bot", 3, "preset"],
+    ],
+    SECOND_PRESET,
+  );
 
   it.each<[string, (queued: QueuedLobby, foe: Transport) => void]>([
     [
