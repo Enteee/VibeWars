@@ -95,7 +95,13 @@ test("a skill that lands glows on the body it helped, then is gone (#1139)", asy
   await expect(
     page.getByRole("list", { name: "your effects" }).getByAltText("Sprint"),
   ).toBeVisible();
-  // It glowed, and the frames since are the strip as it was.
+  // It glowed, then a frame since is the strip as it was. Not the last
+  // frame: the foe fights back (#3888), and what it lands marks you too.
   await expect.poll(async () => (await strip(page)).includes(true)).toBe(true);
-  await expect.poll(async () => (await strip(page)).at(-1)).toBe(false);
+  await expect
+    .poll(async () => {
+      const frames = await strip(page);
+      return frames.slice(frames.indexOf(true)).includes(false);
+    })
+    .toBe(true);
 });
