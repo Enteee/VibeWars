@@ -7,7 +7,7 @@ import {
   placedFlank,
   placedHold,
   planFoeTeam,
-  planPhase,
+  planKey,
 } from "../plan.js";
 import type { BotRole } from "../role.js";
 import {
@@ -114,7 +114,7 @@ const BACKLINE: readonly BotRole[] = ["healer", "ranged"];
  * or where its team has no flank waypoint.
  */
 function flank({ context, self, foes, cursor, roleOf }: RuleContext): BehaviourIntent | undefined {
-  const phase = planPhase(context.now);
+  const phase = planKey(context, self.combatant.team);
   if (!inFlankSwing(context, self, cursor, phase)) return undefined;
   if (cursor.flankReached !== phase) {
     const foeTeam = planFoeTeam(cursor, foes);

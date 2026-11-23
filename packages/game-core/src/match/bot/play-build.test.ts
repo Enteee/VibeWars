@@ -522,7 +522,8 @@ describe("play-build's pull-in gate (#3832)", () => {
   /** The first second of a phase in which team 0's plan is `plan`. */
   const when = (plan: TeamPlan): number => {
     for (let phase = 0; ; phase += 1) {
-      if (teamPlan(CONTEXT_SEED, 0, phase * PLAN_SECONDS) === plan) return phase * PLAN_SECONDS + 1;
+      if (teamPlan(CONTEXT_SEED, 0, phase * PLAN_SECONDS, undefined) === plan)
+        return phase * PLAN_SECONDS + 1;
     }
   };
 
@@ -577,7 +578,7 @@ describe("play-build's pull-in gate (#3832)", () => {
     const view = viewOf(flanker, now);
     const intent = decide(BOT, createCursor(), view);
     expect(intent.targetId).toBeUndefined();
-    expect(intent.moveTo).toEqual(flankWaypoint(view, view.self, 1)?.point);
+    expect(intent.moveTo).toEqual(flankWaypoint(view, view.self, 1, planPhase(now))?.point);
   });
 
   it("keeps to its give-up once rested: no walk back to the waypoint, no refused far target", () => {
@@ -602,7 +603,7 @@ describe("play-build's pull-in gate (#3832)", () => {
     const cursor = createCursor();
     cursor.planGaveUp = planPhase(now);
     const intent = decide(BOT, cursor, rested);
-    expect(intent.moveTo).not.toEqual(flankWaypoint(view, view.self, 1)?.point);
+    expect(intent.moveTo).not.toEqual(flankWaypoint(view, view.self, 1, planPhase(now))?.point);
     expect(intent.targetId).toBe("foe-a");
   });
 

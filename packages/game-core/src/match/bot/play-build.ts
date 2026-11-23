@@ -363,7 +363,12 @@ function think(
     escort,
     roleOf,
     foeReach: (foe) => foeReach(cursor.foeReach, foe),
-    plan: teamPlan(context.seed, self.combatant.team, context.now),
+    plan: teamPlan(
+      context.seed,
+      self.combatant.team,
+      context.now,
+      context.planOverride(self.combatant.team),
+    ),
     use: (skill, targetId) => ({ ...NOTHING, targetId, useSkillId: skill.id }),
   };
   for (const each of BOT_RULES) {
@@ -428,7 +433,12 @@ function teamTarget(
       context,
       self,
       cursor,
-      teamPlan(context.seed, self.combatant.team, context.now),
+      teamPlan(
+        context.seed,
+        self.combatant.team,
+        context.now,
+        context.planOverride(self.combatant.team),
+      ),
       all,
       escorts,
     )

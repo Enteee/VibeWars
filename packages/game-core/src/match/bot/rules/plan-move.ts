@@ -1,6 +1,6 @@
 import { RANGE_MELEE } from "../../../distances.js";
 import { distance } from "../../../vec2.js";
-import { inFlankSwing, placedFlank, placedHold, planFoeTeam, planPhase } from "../plan.js";
+import { inFlankSwing, placedFlank, placedHold, planFoeTeam, planKey } from "../plan.js";
 import { NOTHING, REGROUP_JOINED, REGROUP_SPREAD, healthFraction } from "./shared.js";
 import type { BotRule } from "./types.js";
 
@@ -28,7 +28,7 @@ const planMove: BotRule = {
   name: "plan-move",
   decide: ({ context, self, foes, cursor, plan }) => {
     if (plan === "push") return undefined;
-    const phase = planPhase(context.now);
+    const phase = planKey(context, self.combatant.team);
     if (
       plan === "flank" &&
       (cursor.flankReached === phase || !inFlankSwing(context, self, cursor, phase))

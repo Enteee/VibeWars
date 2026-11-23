@@ -379,6 +379,7 @@ describe("auto-attack", () => {
         routeLength: () => 0,
         teamSpawn: () => undefined,
         standableNear: (point) => point,
+        planOverride: () => undefined,
         leverHolder: () => undefined,
       },
     );
@@ -455,6 +456,7 @@ describe("follow-and-attack (#467)", () => {
       routeLength: () => 0,
       teamSpawn: () => undefined,
       standableNear: (point) => point,
+      planOverride: () => undefined,
       leverHolder: () => undefined,
     });
   }

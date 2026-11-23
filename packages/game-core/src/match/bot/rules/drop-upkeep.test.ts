@@ -58,6 +58,7 @@ describe("play-build ends its own upkeep when Energy-starved (#2492)", () => {
       routeLength: () => 0,
       teamSpawn: () => undefined,
       standableNear: (point) => point,
+      planOverride: () => undefined,
       leverHolder: () => undefined,
     });
   }

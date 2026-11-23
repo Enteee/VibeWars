@@ -163,6 +163,7 @@ export function contextFor(
       };
     },
     standableNear: (point) => point,
+    planOverride: () => undefined,
     leverHolder: () => undefined,
     ...extra,
   };

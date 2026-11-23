@@ -12,6 +12,7 @@ import {
   flankParty,
   flankWaypoint,
   holdPoint,
+  planPhase,
   teamPlan,
 } from "./plan.js";
 import type { BotRole } from "./role.js";
@@ -24,7 +25,7 @@ const PHASES = 1000;
 /** Team `team`'s plan in each of the first `PHASES` phases under `seed`. */
 function plans(seed: number, team: number): string[] {
   return Array.from({ length: PHASES }, (_, phase) =>
-    teamPlan(seed, team, phase * PLAN_SECONDS + PLAN_SECONDS / 2),
+    teamPlan(seed, team, phase * PLAN_SECONDS + PLAN_SECONDS / 2, undefined),
   );
 }
 
@@ -36,17 +37,25 @@ describe("teamPlan (#3831, #3832)", () => {
   it("keeps one plan through a phase", () => {
     for (const seed of SEEDS) {
       for (let phase = 0; phase < 50; phase += 1) {
-        const start = teamPlan(seed, 0, phase * PLAN_SECONDS);
-        expect(teamPlan(seed, 0, (phase + 1) * PLAN_SECONDS - 0.01)).toBe(start);
+        const start = teamPlan(seed, 0, phase * PLAN_SECONDS, undefined);
+        expect(teamPlan(seed, 0, (phase + 1) * PLAN_SECONDS - 0.01, undefined)).toBe(start);
       }
     }
+  });
+
+  it("plays a stalemate's override until its until, then the roll again (#3834)", () => {
+    const override = { plan: "flank", until: 50 } as const;
+    expect(teamPlan(7, 0, 10, override)).toBe("flank");
+    expect(teamPlan(7, 0, 49.99, override)).toBe("flank");
+    expect(teamPlan(7, 0, 50, override)).toBe(teamPlan(7, 0, 50, undefined));
+    expect(teamPlan(7, 0, 90, override)).toBe(teamPlan(7, 0, 90, undefined));
   });
 
   it("pushes in phase 0", () => {
     for (const seed of SEEDS) {
       for (const team of [0, 1, 2]) {
-        expect(teamPlan(seed, team, 0)).toBe("push");
-        expect(teamPlan(seed, team, PLAN_SECONDS - 0.01)).toBe("push");
+        expect(teamPlan(seed, team, 0, undefined)).toBe("push");
+        expect(teamPlan(seed, team, PLAN_SECONDS - 0.01, undefined)).toBe("push");
       }
     }
   });
@@ -177,6 +186,7 @@ describe("flankWaypoint (#3832)", () => {
       }),
       self(),
       1,
+      planPhase(now),
     );
 
   it("swings 35% of the spawns' distance off the line, 60% of the way", () => {

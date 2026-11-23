@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { distance, vec2, type Vec2 } from "../../../vec2.js";
 import { createCursor, type BehaviourCursor } from "../../behaviour.js";
 import type { Participant } from "../../simulation.js";
-import { flankParty, flankWaypoint, type TeamPlan } from "../plan.js";
+import { flankParty, flankWaypoint, planPhase, type TeamPlan } from "../plan.js";
 import planMove, { HOLD_LEASH, PLAN_ELBOW } from "./plan-move.js";
 import { body, contextFor, match, ruleFor } from "./test-support.js";
 
@@ -26,7 +26,8 @@ describe("plan-move (#3832)", () => {
     ["bot", "mate"].find((id) => flankParty(contextFor(sim, id, { now: NOW }), member(id), 1)) ??
     "bot";
   const waypoint =
-    flankWaypoint(contextFor(sim, flanker, { now: NOW }), member(flanker), 1)?.point ?? vec2(0, 0);
+    flankWaypoint(contextFor(sim, flanker, { now: NOW }), member(flanker), 1, planPhase(NOW))
+      ?.point ?? vec2(0, 0);
 
   /** `id` at `at` with `health` of its health, under `plan`, foe-a at `foeAt`. */
   function moveOf(
