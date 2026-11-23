@@ -13,8 +13,10 @@ import {
   putsMoreAway,
   showJoin,
   type StatusElement,
+  TOPBAR_FOLD_GLYPH,
 } from "./topbar.js";
 import { LOBBY_ICON } from "./icons.js";
+import { MORE_ACTIONS_GLYPH } from "./kit.js";
 
 const toasts: string[] = [];
 
@@ -74,6 +76,11 @@ describe("the top bar's ⋯ on a repaint (#1305)", () => {
 });
 
 describe("the top bar's ⋯ on a phone (#2053)", () => {
+  it("shows ☰, not the ⋯ of an editor's more actions beside it (#3886)", () => {
+    expect(TOPBAR_FOLD_GLYPH).toBe("☰");
+    expect(TOPBAR_FOLD_GLYPH).not.toBe(MORE_ACTIONS_GLYPH);
+  });
+
   it("comes with the join controls, even beside only a primary button", () => {
     expect(barHasMore([true], true)).toBe(true);
     expect(barHasMore([], true)).toBe(true);
