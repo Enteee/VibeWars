@@ -356,6 +356,28 @@ export function createPartyWindow(
   panel.setAttribute("aria-label", t("partyWindow.party"));
   panel.hidden = true;
   dock.appendChild(panel);
+  // A phone collapses the panel behind this (#3778, styles.css): a press
+  // opens it, the next closes it. Hidden elsewhere, and never stored. It
+  // keeps the keyboard in the arena, as a row does.
+  const toggle = document.createElement("button");
+  toggle.type = "button";
+  toggle.className = "party-toggle";
+  toggle.textContent = t("partyWindow.party");
+  toggle.tabIndex = -1;
+  let open = false;
+  const setOpen = (value: boolean): void => {
+    open = value;
+    toggle.setAttribute("aria-expanded", String(value));
+    dock.classList.toggle("is-open", value);
+  };
+  setOpen(false);
+  toggle.addEventListener("mousedown", (event) => {
+    event.preventDefault();
+  });
+  toggle.addEventListener("click", () => {
+    setOpen(!open);
+  });
+  dock.appendChild(toggle);
   parent.appendChild(dock);
   const rows = new Map<string, RowElements>();
   let order = "";

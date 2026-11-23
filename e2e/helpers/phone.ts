@@ -35,16 +35,21 @@ export async function passTouchNotice(page: Page): Promise<void> {
 
 /**
  * What on the page breaks the phone's rules (#3776), one line each: a
- * sideways scroll, a control in `#topbar` or `#screens` smaller than a
+ * sideways scroll, a control in `scope` (`#topbar` and `#screens` unless
+ * told: a match's HUD is outside both) smaller than a
  * finger, a control over an icon that is not its own, visible text
  * under `MIN_TEXT`. Empty when the page fits.
  *
  * A checkbox or radio is measured by its label when it has one: the label
  * is what a finger presses.
  */
-export async function phoneOffenders(page: Page): Promise<string[]> {
+export async function phoneOffenders(
+  page: Page,
+  scope: readonly string[] = ["#topbar", "#screens"],
+): Promise<string[]> {
   return page.evaluate(
-    ({ target, minText }) => {
+    ({ target, minText, scope }) => {
+      const within = (what: string): string => scope.map((root) => `${root} ${what}`).join(", ");
       const out: string[] = [];
       const root = document.documentElement;
       if (root.scrollWidth > root.clientWidth) {
@@ -72,7 +77,7 @@ export async function phoneOffenders(page: Page): Promise<string[]> {
           "[role=switch]",
           "[role=checkbox]",
         ]
-          .map((s) => `#topbar ${s}, #screens ${s}`)
+          .map(within)
           .join(", "),
       );
       const measured = new Set<Element>();
@@ -97,11 +102,9 @@ export async function phoneOffenders(page: Page): Promise<string[]> {
       // Only the part of a picture its scrolling boxes show counts (#3777):
       // a list scrolled under its own tabs hides it, it is not covered. A
       // hand's art is not an icon: the paper doll draws its spot on it.
-      const icons = [
-        ...document.querySelectorAll(
-          "#topbar img:not(.paper-doll-held), #screens img:not(.paper-doll-held)",
-        ),
-      ].filter(shown);
+      const icons = [...document.querySelectorAll(within("img:not(.paper-doll-held)"))].filter(
+        shown,
+      );
       const seen = (icon: Element): DOMRect | undefined => {
         const box = icon.getBoundingClientRect();
         let left = box.left;
@@ -140,7 +143,7 @@ export async function phoneOffenders(page: Page): Promise<string[]> {
           }
         }
       }
-      for (const node of document.querySelectorAll("#topbar *, #screens *")) {
+      for (const node of document.querySelectorAll(within("*"))) {
         const own = [...node.childNodes].some(
           (child) => child.nodeType === Node.TEXT_NODE && (child.textContent ?? "").trim() !== "",
         );
@@ -152,19 +155,23 @@ export async function phoneOffenders(page: Page): Promise<string[]> {
       }
       return out;
     },
-    { target: TOUCH_TARGET, minText: MIN_TEXT },
+    { target: TOUCH_TARGET, minText: MIN_TEXT, scope },
   );
 }
 
 /**
  * Check the screen on show fits the phone held both ways (#3776): no
  * offenders upright, none on its side, where the top bar is also one
- * short row. Ends upright again.
+ * short row. Ends upright again. `scope` is `phoneOffenders`'.
  */
-export async function expectFitsPhone(page: Page, screen: string): Promise<void> {
-  expect(await phoneOffenders(page), `${screen}, portrait`).toEqual([]);
+export async function expectFitsPhone(
+  page: Page,
+  screen: string,
+  scope?: readonly string[],
+): Promise<void> {
+  expect(await phoneOffenders(page, scope), `${screen}, portrait`).toEqual([]);
   await page.setViewportSize(PIXEL_8A_LANDSCAPE.viewport);
-  expect(await phoneOffenders(page), `${screen}, landscape`).toEqual([]);
+  expect(await phoneOffenders(page, scope), `${screen}, landscape`).toEqual([]);
   const bar = await page.locator("#topbar").boundingBox();
   expect(bar?.height ?? 0, `${screen}: top bar height, landscape`).toBeLessThanOrEqual(
     LANDSCAPE_TOPBAR,
