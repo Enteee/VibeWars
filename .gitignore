@@ -7,6 +7,8 @@ dist/
 dist-types/
 # The static Pages build the e2e suite previews (#103).
 dist-static/
+# The promo video's captures and cuts (#3811): release assets, never committed.
+out/promo/
 build/
 *.tsbuildinfo
 
