@@ -702,6 +702,10 @@ export default {
   "hud.outcomeVictory": "نصر",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (ميت)",
+  "hud.preMatchStartingAnyway":
+    "بانتظار اللاعبين: {joined}/{expected}، تبدأ على أي حال خلال {seconds} ث",
+  "hud.preMatchStartsIn": "تبدأ المباراة خلال {seconds}",
+  "hud.preMatchWaiting": "بانتظار اللاعبين: {joined}/{expected}",
   "hud.priest": "كاهن",
   "hud.priestDead": "كاهن (ميت)",
   "hud.raise": "إحياء {clock}",

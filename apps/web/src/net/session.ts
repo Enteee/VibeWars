@@ -21,6 +21,7 @@ import {
   connectMatch,
   connectObserver,
   createLobbyHost,
+  PRE_MATCH,
   createMatchHost,
   createQueueClient,
   deriveLobbyRoom,
@@ -226,6 +227,8 @@ function startMatch(plan: MatchPlan) {
     nowSeconds: () => Date.now() / 1000,
     // Every match for now (#3572): the ranked flow (#3569) will set it for its own.
     recordReplay: { buildHash: __VIBEWARS_BUILD__, sha256 },
+    // Everyone held in its spawn until all are in, then 10 s (#3818).
+    preMatch: PRE_MATCH,
   });
 }
 

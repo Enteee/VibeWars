@@ -289,6 +289,7 @@ const snapshot: WireSnapshotPart = {
   elapsedSeconds: 2.1,
   score: [1, 0],
   phase: "active",
+  preMatch: null,
   winningTeam: null,
   endReason: null,
   part: 0,
@@ -1057,6 +1058,16 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
     "snapshot ended by morale (#846)",
     parseWireSnapshotPart,
     { ...snapshot, phase: "finished", winningTeam: null, endReason: "morale" },
+  ],
+  [
+    "snapshot waiting for players (#3818)",
+    parseWireSnapshotPart,
+    { ...snapshot, phase: "waiting", preMatch: { joined: 3, expected: 4, secondsLeft: null } },
+  ],
+  [
+    "snapshot counting down (#3818)",
+    parseWireSnapshotPart,
+    { ...snapshot, phase: "countdown", preMatch: { joined: 4, expected: 4, secondsLeft: 7 } },
   ],
   ["refused", parseCastRefused, refused],
   ["refused attack", parseCastRefused, { kind: "attack", reason: "no-weapon" }],
@@ -2003,6 +2014,17 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
   ["snapshot with one score", parseWireSnapshotPart, { ...snapshot, score: [1] }],
   ["snapshot with three scores", parseWireSnapshotPart, { ...snapshot, score: [1, 0, 0] }],
   ["snapshot with an unknown phase", parseWireSnapshotPart, { ...snapshot, phase: "paused" }],
+  ["snapshot without preMatch", parseWireSnapshotPart, { ...snapshot, preMatch: undefined }],
+  [
+    "snapshot with more joined than expected",
+    parseWireSnapshotPart,
+    { ...snapshot, preMatch: { joined: 5, expected: 4, secondsLeft: null } },
+  ],
+  [
+    "snapshot with a fractional countdown",
+    parseWireSnapshotPart,
+    { ...snapshot, preMatch: { joined: 4, expected: 4, secondsLeft: 2.5 } },
+  ],
   ["snapshot with team 2 winning", parseWireSnapshotPart, { ...snapshot, winningTeam: 2 }],
   ["snapshot ended by host-left", parseWireSnapshotPart, { ...snapshot, endReason: "host-left" }],
   [
