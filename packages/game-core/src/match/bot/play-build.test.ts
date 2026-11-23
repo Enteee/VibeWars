@@ -522,7 +522,8 @@ describe("play-build's pull-in gate (#3832)", () => {
   /** The first second of a phase in which team 0's plan is `plan`. */
   const when = (plan: TeamPlan): number => {
     for (let phase = 0; ; phase += 1) {
-      if (teamPlan(CONTEXT_SEED, 0, phase * PLAN_SECONDS) === plan) return phase * PLAN_SECONDS + 1;
+      if (teamPlan(CONTEXT_SEED, 0, phase * PLAN_SECONDS, undefined) === plan)
+        return phase * PLAN_SECONDS + 1;
     }
   };
 

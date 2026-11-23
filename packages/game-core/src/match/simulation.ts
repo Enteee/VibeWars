@@ -27,6 +27,7 @@ import {
   AREA_EARSHOT,
   RANGE_COMPASS,
   RANGE_NATURE_RITUAL,
+  RANGE_SPELL,
   RANGE_SPIRIT,
   SHADOW_STEP_AWAY_DISTANCE,
   SPAWN_BUBBLE_RADIUS,
@@ -302,8 +303,10 @@ import {
   type ResetPolicy,
   idleAt,
 } from "./behaviour.js";
+import { flankWaypoint, PLAN_SECONDS, teamPlan } from "./bot/plan.js";
 import { LEVER_WORTH_UNITS } from "./bot/rules/levers.js";
 import { botRoll } from "./bot/rules/shared.js";
+import { nextPlan, stalemate, type PlanOverride, type StalemateState } from "./bot/stalemate.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { freshCorpsesWithin, nearestFreshCorpse } from "./corpses.js";
 import { companionSkills, PET_DEATH_GRACE_SECONDS } from "./companions.js";
@@ -342,6 +345,7 @@ import {
   initialFlags,
   stepFlags,
   type FlagField,
+  type FlagPlace,
   type FlagState,
   type FlagsState,
   type StandState,
@@ -1753,6 +1757,16 @@ export class MatchSimulation {
   readonly #ledAt = new Map<number, number>();
   /** The whole second of match clock the Guild Lords' loss caps are for (#1223). */
   #lossSecond = 0;
+  /** When a participant last died or the mode's score or objectives last moved (#3834), match clock. */
+  #lastProgressAt = 0;
+  /** Each team's stalemate tracker since `#lastProgressAt` (#3834); a team with none has had no contact. */
+  readonly #stalemates = new Map<number, StalemateState>();
+  /** The plan a stalemate forced on each team (#3834), kept past its `until`, which `teamPlan` honours. */
+  readonly #planOverrides = new Map<number, PlanOverride>();
+  /** The whole second of match clock the stalemate trackers last counted (#3834). */
+  #stalemateSecond = 0;
+  /** The score and objectives at that count (#3834), `undefined` before the first: a change is progress. */
+  #progressMark: string | undefined;
   /** Every ground effect in the match (#1087), in id order. */
   #groundEffects: GroundEffect[] = [];
   /** The id of the next ground effect placed (#1087). */
@@ -1973,6 +1987,11 @@ export class MatchSimulation {
   /** Who won and why, once `phase` is `"finished"`. */
   public get outcome(): MatchOutcome {
     return this.#outcome;
+  }
+
+  /** The plan a stalemate forced on `team` (#3834), if one did; past its `until` it no longer counts. */
+  public planOverride(team: number): PlanOverride | undefined {
+    return this.#planOverrides.get(team);
   }
 
   public get score(): MatchScore {
@@ -4417,6 +4436,7 @@ export class MatchSimulation {
     this.#tick += 1;
     this.#elapsedSeconds += dt;
     this.#refillLossCaps();
+    this.#trackStalemates();
     this.checkMatchEnd();
     for (const record of this.#participants.values()) {
       this.#stepStart.set(record.id, record.position);
@@ -5331,6 +5351,7 @@ export class MatchSimulation {
       },
       teamSpawn: (team) => this.#teamSpawn(team),
       standableNear: (point, layer) => nearestStandable(this.#graphOn(layer), point),
+      planOverride: (team) => this.planOverride(team),
       leverHolder: (targetId) => {
         for (const other of this.#participants.values()) {
           if (
@@ -9847,6 +9868,7 @@ export class MatchSimulation {
           this.#deathPenalty(victim);
         }
         this.#reapSoul(victim);
+        this.#progress();
         this.recordDeath(victim.combatant.team);
       }
     }
@@ -10963,6 +10985,112 @@ export class MatchSimulation {
       }
       guard.remaining = guildLordLossCap(second);
     }
+  }
+
+  /** Progress (#3834): every team's stalemate tracker starts over now. */
+  #progress(): void {
+    this.#lastProgressAt = this.#elapsedSeconds;
+    this.#stalemates.clear();
+  }
+
+  /**
+   * The mode's score and objectives as one string (#3834): scores, shrine
+   * owners, relic, flag and altar holders. Any change between two counts
+   * is progress, whatever the mode scores.
+   */
+  #progressMarkNow(): string {
+    const where = (place: FlagPlace): string =>
+      place.kind === "carried" ? place.carrierId : place.kind;
+    return JSON.stringify([
+      [...this.#score.byTeam],
+      this.#capturePoints.map(({ owner }) => owner),
+      this.#relicsState?.relics.map(({ place }) => where(place)),
+      this.#flagsState?.flags.map(({ place }) => where(place)),
+      this.#flagsState?.stand.holder,
+      this.#altarState.holder,
+    ]);
+  }
+
+  /**
+   * As each whole second of match clock starts (#3834): progress since the
+   * last, or else a contact second for each team with a living member
+   * within `RANGE_SPELL` of a living foe, and a team in a stalemate
+   * switches plan. Deaths are progress the moment they happen.
+   */
+  #trackStalemates(): void {
+    const second = Math.floor(this.#elapsedSeconds + WHOLE_SECOND_EPSILON);
+    if (second === this.#stalemateSecond) {
+      return;
+    }
+    this.#stalemateSecond = second;
+    const mark = this.#progressMarkNow();
+    const moved = this.#progressMark !== undefined && mark !== this.#progressMark;
+    this.#progressMark = mark;
+    if (moved) {
+      this.#progress();
+      return;
+    }
+    // The whole second, not the clock a hair short of it, so 45 s is 45 s.
+    const now = second;
+    const living = [...this.#participants.values()].filter(
+      (record) => countsForTeam(record) && !record.combatant.dead,
+    );
+    for (const team of this.#teams) {
+      const members = living.filter((record) => record.combatant.team === team);
+      const contact = members.some((member) =>
+        living.some(
+          (foe) =>
+            foe.combatant.team !== team && distance(foe.position, member.position) <= RANGE_SPELL,
+        ),
+      );
+      const kept = this.#stalemates.get(team) ?? { since: this.#lastProgressAt, contactSeconds: 0 };
+      const state = contact ? { ...kept, contactSeconds: kept.contactSeconds + 1 } : kept;
+      if (!stalemate(state, now)) {
+        this.#stalemates.set(team, state);
+        continue;
+      }
+      this.#stalemates.set(team, { since: now, contactSeconds: 0 });
+      this.#switchPlan(team, members, now);
+    }
+  }
+
+  /**
+   * Team `team`, its living `members`, in a stalemate (#3834): a team of
+   * bots with no active human takes `nextPlan` for `PLAN_SECONDS`. A team
+   * with one does not: its bots escort the human, who makes the plan.
+   */
+  #switchPlan(team: number, members: readonly ParticipantRecord[], now: number): void {
+    const bots = members.filter((record) => record.behaviour?.kind === "play-build");
+    const human = members.some(
+      (record) => record.behaviour?.kind !== "play-build" && !idleAt(record.lastCommandAt, now),
+    );
+    const scout = bots[0];
+    if (scout === undefined || human) {
+      return;
+    }
+    const current = teamPlan(this.#seed, team, now, this.#planOverrides.get(team));
+    const next = nextPlan(current, current === "push" && this.#flankable(scout));
+    if (next !== undefined) {
+      this.#planOverrides.set(team, { plan: next, until: now + PLAN_SECONDS });
+    }
+  }
+
+  /** Whether `scout`'s team has a flank waypoint against some foe team (#3834, `flankWaypoint`). */
+  #flankable(scout: ParticipantRecord): boolean {
+    const context = {
+      seed: this.#seed,
+      now: this.#elapsedSeconds,
+      teamSpawn: (team: number) => this.#teamSpawn(team),
+      standableNear: (point: Vec2, layer: number) => nearestStandable(this.#graphOn(layer), point),
+      routeLength: (to: Vec2, layer: number) => {
+        const route = this.#paths.find(scout.position, scout.layer, to, layer);
+        return route === undefined ? Number.POSITIVE_INFINITY : walkLength(scout.position, route);
+      },
+    };
+    return [...this.#teams].some(
+      (foeTeam) =>
+        foeTeam !== scout.combatant.team && flankWaypoint(context, scout, foeTeam) !== undefined,
+    );
   }
 
   /** Whether `team`'s Guild Lord is in the match and alive (#1222). */

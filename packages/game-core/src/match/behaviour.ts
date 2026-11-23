@@ -6,6 +6,7 @@ import { effectiveMaxHealth } from "../skills/tick.js";
 import { distance, dot, normalize, sub, vec2, ZERO, type Vec2 } from "../vec2.js";
 import { guard, playBuild } from "./bot/play-build.js";
 import type { FlankPlace, HoldPlace } from "./bot/plan.js";
+import type { PlanOverride } from "./bot/stalemate.js";
 import type { BreakableField } from "./breakables.js";
 import type { CapturePoint } from "./capture-points.js";
 import { atObjective } from "./layer-rules.js";
@@ -398,6 +399,8 @@ export interface BehaviourContext {
   teamSpawn(team: number): TeamSpawn | undefined;
   /** The spot nearest `point` on `layer` a body fits on (#3831). */
   standableNear(point: Vec2, layer: number): Vec2;
+  /** The plan a stalemate forced on `team` (#3834), if one did; `teamPlan` drops it at its `until`. */
+  planOverride(team: number): PlanOverride | undefined;
   /** The living bot of `self`'s team, `self` included, set on throwing lever `targetId` (#3532), if any. */
   leverHolder(targetId: string): string | undefined;
 }

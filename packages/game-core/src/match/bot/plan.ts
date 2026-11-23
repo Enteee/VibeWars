@@ -3,6 +3,7 @@ import type { BehaviourContext, BehaviourCursor } from "../behaviour.js";
 import type { Participant } from "../simulation.js";
 import { roleOf, type BotRole } from "./role.js";
 import { botRoll, REGROUP_SPREAD } from "./rules/shared.js";
+import type { PlanOverride } from "./stalemate.js";
 
 /**
  * A bot team's plan for one phase (#3831): `push` walks at the foes, as
@@ -60,9 +61,16 @@ function rolled(seed: number, team: number, phase: number): TeamPlan {
  * Team `team`'s plan at match second `now` (#3831, #3832): pure, a roll
  * per phase from the match's `seed`. Phase 0 pushes, so a match opens
  * into a fight; a phase after a `hold` or a `flank` pushes, so two
- * holding teams wait each other out for one phase at most.
+ * holding teams wait each other out for one phase at most. A stalemate's
+ * `override` (#3834) wins while `now` is before its `until`.
  */
-export function teamPlan(seed: number, team: number, now: number): TeamPlan {
+export function teamPlan(
+  seed: number,
+  team: number,
+  now: number,
+  override: PlanOverride | undefined,
+): TeamPlan {
+  if (override !== undefined && now < override.until) return override.plan;
   // The non-push rolls running back from this phase: a run of them
   // alternates rolled, push, rolled, … from the push before it, so an odd
   // run ends on what this phase rolled.
@@ -154,6 +162,12 @@ export interface FlankPlace {
   readonly layer: number;
 }
 
+/** What `flankWaypoint` reads (#3834): the sim asks it too, with no bot deciding. */
+export type FlankContext = Pick<
+  BehaviourContext,
+  "seed" | "now" | "teamSpawn" | "standableNear" | "routeLength"
+>;
+
 /**
  * The waypoint `self` swings round to against team `foeTeam` (#3832):
  * `FLANK_FRACTION` of the way from its spawn to theirs and `FLANK_WIDTH`
@@ -163,7 +177,7 @@ export interface FlankPlace {
  * neither has.
  */
 export function flankWaypoint(
-  context: BehaviourContext,
+  context: FlankContext,
   self: Participant,
   foeTeam: number,
 ): FlankPlace | undefined {
