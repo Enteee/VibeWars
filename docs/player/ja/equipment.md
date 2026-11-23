@@ -127,9 +127,13 @@
 | Superior attribute rune                                                                                                                                                                                                                                                                                        | 属性1つに+3、ヘルス -75              |
 | ![Vigor](../../../apps/web/public/icons/rune/vigor.svg) **Vigor**                                                                                                                                                                                                                                              | ヘルス上昇（+30、+41、+50）          |
 | ![Vitae](../../../apps/web/public/icons/rune/vitae.svg) **Vitae**                                                                                                                                                                                                                                              | ヘルス +10                           |
-| ![Attunement](../../../apps/web/public/icons/rune/attunement.svg) **Attunement**                                                                                                                                                                                                                               | エナジー上昇（+3、+6、+9）           |
+| ![Attunement](../../../apps/web/public/icons/rune/attunement.svg) **Attunement**                                                                                                                                                                                                                               | エナジー上昇（+2）                   |
 | ![Clarity](../../../apps/web/public/icons/rune/clarity.svg) **Clarity**, ![Purity](../../../apps/web/public/icons/rune/purity.svg) **Purity**, ![Recovery](../../../apps/web/public/icons/rune/recovery.svg) **Recovery**, ![Restoration](../../../apps/web/public/icons/rune/restoration.svg) **Restoration** | それぞれ2つの状態異常が20%早く消える |
 | ![Absorption](../../../apps/web/public/icons/rune/absorption.svg) **Absorption** (![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior**)                                                                                                                                               | 攻撃ごとに受ける物理ダメージが減る   |
+
+VitaeとAttunementは重複します。Attunementのルーン5つでエナジー+10です。それ以外のルーンは、いくつ装備しても1回分しか数えません。異なる効果源による状態異常の短縮も重複し、それぞれ元の持続時間から計算して秒単位に丸めます。Restorationと"Fear Cuts Deeper"で、8秒のBleedingは4秒になります。
+
+エディターは、同じルーンを付けた部位や同じ属性のルーンを付けた部位を2つ保存しません。有効なのは最も強いボーナスだけで、ヘルスのペナルティはすべて適用されるためです。エディターでヘルスを指すと、その内訳（基本、ルーン、記章、改造）が見られます。
 
 部位のルーンは、インシグニアと同じ場所で選びます。フィギュアの部位をクリックしてください。
 

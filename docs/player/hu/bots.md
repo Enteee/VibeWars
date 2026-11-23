@@ -36,9 +36,14 @@ a gyógyítók oda lépnek, ahol kevesebb ellenség érheti el őket, és az
 oszlopokat fedezéknek használják. A csapat ráfordul minden elérhető
 ellenségre, akinek az életereje 60% alá esik, hogy végezzen vele. A
 domb urában, amíg a csapatod nem tartja az oltárt, a másik csapat
-oltáron álló Kísértethőse még ennél is előbbre való. Az a bot, amelyik
-messze a csapata elé kerül, megvárja a többieket, mielőtt továbbnyomul,
-hacsak a többiek nem olyan játékosok, akik már egy ideje tétlenül állnak.
+oltáron álló Kísértethőse még ennél is előbbre való. Egy csak botokból
+álló csapatban az a bot, amelyik messze a csapata elé kerül, megvárja a
+többieket, mielőtt továbbnyomul. A te csapatodban a botok ehelyett veled
+maradnak: a frontvonalbeliek egy lépéssel előtted, a távolságiak
+melletted, a gyógyítók mögötted, és követnek, amerre mész. Ha már egy
+ideje tétlenül állsz, úgy játszanak tovább, ahogy egy csak botokból álló
+csapat tenné.
+Amíg aktív vagy, az a bot, amelyet egy harc messzire sodort tőled, visszajön hozzád, hacsak nem súlyosan sebesült, vagy nem áll közvetlenül mellette egy ellenfél.
 
 Az íjászok és a dárdások elfoglalják a magaslatot, ha az biztonságos.
 Az a bot, amelyre két ellenfél összpontosít, vagy amelynek az élete fél alatt van és gyorsan fogy, legfeljebb három másodpercre eltűnik a szemük elől: fal mögé, emelvény alá vagy magaslatra.

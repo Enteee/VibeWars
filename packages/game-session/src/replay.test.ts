@@ -9,7 +9,7 @@ import {
   startMatch,
   until,
 } from "./match-harness.test-support.js";
-import type { PlannedSeat } from "./match-host.js";
+import { PRE_MATCH, type PlannedSeat } from "./match-host.js";
 import { rerun } from "./replay-run.js";
 import {
   encodeReplay,
@@ -126,10 +126,13 @@ describe("a match's replay (#3572)", () => {
     expect(parseReplay(seedless)).toBeUndefined();
   });
 
-  it(
-    "of a bot match runs again to the same end, and reaches the player whole",
+  it.each([
+    ["at once", null],
+    ["after its wait, held (#3818)", PRE_MATCH],
+  ] as const)(
+    "of a bot match started %s runs again to the same end, and reaches the player whole",
     { timeout: 30_000 },
-    async () => {
+    async (_, preMatch) => {
       const kept: RecordedReplay[] = [];
       const seats = new Map<string, PlannedSeat>([
         ...[0, 1, 2, 3].map((index) => botSeat(0, index)),
@@ -155,6 +158,7 @@ describe("a match's replay (#3572)", () => {
         matchRules: RULES,
         recordReplay: RECORDING,
         replays: { sha256, keep: (recorded) => kept.push(recorded) },
+        preMatch,
       });
       const local = await match.joinLocal();
       // The player does a little: two intents in one tick, now and then.
@@ -163,7 +167,7 @@ describe("a match's replay (#3572)", () => {
         { kind: "use-skill", slot: 0 },
         { kind: "stop" },
       ];
-      for (let tick = 0; match.host.phase === "active" && tick < 2 * 60 * 20; tick += 1) {
+      for (let tick = 0; match.host.phase !== "finished" && tick < 3 * 60 * 20; tick += 1) {
         if (tick % 20 === 0) {
           local.sendIntent(intents[(tick / 20) % intents.length] ?? { kind: "stop" });
           local.sendIntent({ kind: "use-skill", slot: (tick / 20) % 8 });

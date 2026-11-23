@@ -31,9 +31,12 @@ Boty dystansowe i uzdrowiciele przechodzą tam, gdzie może ich dosięgnąć mni
 wrogów, i chowają się za filarami. Drużyna rzuca się na każdego wroga w zasięgu,
 który spadnie poniżej 60% zdrowia, by go dobić. W Królu wzgórza, gdy twoja drużyna
 nie utrzymuje ołtarza, Upiorny Bohater drugiej drużyny na ołtarzu ma pierwszeństwo
-nawet przed tym. Bot, który znacznie wysunie się przed drużynę, czeka na resztę,
-zanim ruszy dalej, chyba że reszta to gracze, którzy od jakiegoś czasu stoją
-bezczynnie.
+nawet przed tym. W drużynie złożonej z botów bot, który znacznie wysunie się przed
+drużynę, czeka na resztę, zanim ruszy dalej. Boty w twojej drużynie trzymają się
+natomiast ciebie: frontowcy krok przed tobą, boty dystansowe obok ciebie,
+uzdrowiciele z tyłu, i idą tam, dokąd ty idziesz. Gdy od jakiegoś czasu stoisz
+bezczynnie, grają dalej tak, jak grałaby drużyna złożona z botów.
+Dopóki jesteś aktywny, bot, którego walka odciągnęła daleko od ciebie, wraca do ciebie, chyba że jest ciężko ranny albo tuż przy nim stoi wróg.
 
 Łucznicy i włócznicy zajmują wzniesienie, gdy jest to bezpieczne.
 Bot, na którym skupiło się dwóch wrogów albo który ma mniej niż połowę zdrowia i szybko je traci, chowa się przed ich wzrokiem na maksymalnie trzy sekundy: za murem, pod pomostem albo na wzniesieniu.

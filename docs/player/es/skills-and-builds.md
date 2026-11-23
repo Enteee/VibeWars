@@ -153,6 +153,8 @@ es tuya cuando pulsas **Guardar**.
 guardar, y pregunta antes si has cambiado algo. **Compartir**, **Cargar código
 GW1**, **Duplicar** y **Eliminar** están en **⋯**.
 
+Una build con un problema no se puede guardar, y la zona de entrenamiento no empieza con ella. Si aun así llega a una partida, allí juegas con una build inicial, y un mensaje te dice por qué.
+
 Un código de equipo se carga en **Creador de equipos**: pégalo en cualquier parte
 ahí, o abre una build de equipo y usa su **⋯** → **Cargar equipo**.
 
@@ -175,11 +177,17 @@ empieza con un personaje en blanco en cada puesto. Nunca añades ni quitas un
 miembro, lo sustituyes. Cada fila muestra el personaje del miembro con las
 armas que lleva, un punto por cada set de armas cuando tiene más de uno, su
 salud y energía máximas y sus ocho habilidades; arrastra una fila por su ⠿ para
-reordenarla. El panel de la derecha es la biblioteca del Creador de personajes,
+reordenarla. Mantén **Shift** al soltar una fila sobre otro miembro para copiar
+toda su build en ese miembro; la fila que arrastraste queda como estaba.
+El panel de la derecha es la biblioteca del Creador de personajes,
 con una pestaña **Mis personajes** antes de **Habilidades** y **Equipo**. En
 **Mis personajes**, arrastra uno de tus personajes sobre un miembro para que
 ese miembro sea una copia. Una copia es propia del equipo: cambiarla, o cambiar
-el personaje del que viene, deja al otro como estaba. En **Habilidades**, la
+el personaje del que viene, deja al otro como estaba. A la inversa, arrastra un miembro sobre
+**Mis personajes**, o sobre su pestaña, para guardarlo como un personaje nuevo
+tuyo; si su nombre ya está en uso, recibe " (copy)", y el equipo conserva el
+miembro como está.
+En **Habilidades**, la
 biblioteca muestra las habilidades del último miembro en el que hiciste clic;
 arrastra una al hueco de cualquier miembro para equiparla ahí. En la propia
 barra de ese miembro, una habilidad que ya está se mueve al hueco. Si un miembro
@@ -199,8 +207,8 @@ ninguno, va al primero vacío. **Equipo** tiene las armas y manos secundarias de
 miembro abierto, y solo aparece con uno abierto: haz clic en una para equiparla,
 o arrástrala a sus manos. Solo hay un miembro abierto a la vez; **Esc** lo
 cierra. Una nueva profesión descarta las habilidades y rangos que no puede usar,
-con un **Deshacer**. Pulsa el nombre de un miembro, o **Abrir en la pantalla de
-personaje**, para editarlo en el editor de builds; su **Guardar** lo devuelve al
+con un **Deshacer**. Pulsa el nombre de un miembro, o su botón
+**✎**, para editarlo en el editor de builds; su **Guardar** lo devuelve al
 equipo, y el **Guardar** del propio equipo lo conserva todo y te lleva de vuelta
 a Creador de equipos. **Esc** sale sin guardar, y pregunta antes. **Compartir**,
 **Cargar equipo**, **Duplicar** y **Eliminar** del equipo están en **⋯**.
@@ -211,3 +219,10 @@ un equipo sin problemas se puede proponer en una Sala de equipo: una carta dice
 nombre**. Tu primer inicio te da un equipo ya hecho del tamaño elegido, 4v4 si
 no lo cambiaste, marcado **Aleatorio**: su **Cambiar** pone otro, y **Clonar**
 te da una copia para editar.
+Cada build de equipo tiene un tamaño, 2v2, 4v4 u 8v8 (no hay builds de equipo
+de 1v1): el **Tamaño del equipo** de la barra lateral. Creador de equipos
+muestra las builds de equipo del tamaño elegido ahí, y **Nueva build** crea una
+de ese tamaño. El **Tamaño del equipo** de su editor lo cambia: un tamaño menor
+quita los últimos miembros, uno mayor añade miembros en blanco, y Guardar lleva
+la barra lateral al tamaño con el que se guardó. Un equipo pegado conserva su
+tamaño, y la barra lateral cambia a él.

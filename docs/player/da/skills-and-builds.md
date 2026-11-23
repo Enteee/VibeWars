@@ -153,6 +153,8 @@ Buildet er dit, når du trykker på **Gem**.
 går uden at gemme og spørger først, hvis du har ændret noget. **Del**,
 **Indlæs GW1-kode**, **Duplikér** og **Slet** ligger under **⋯**.
 
+Et build med et problem kan ikke gemmes, og træningsområdet starter ikke med det. Når sådan et build alligevel når en kamp, spiller du et startbuild der, og en besked fortæller hvorfor.
+
 En holdkode indlæses i stedet i **Holdeditor**: indsæt den hvor som helst der, eller
 åbn et holdbuild og brug dets **⋯** → **Indlæs hold**.
 
@@ -176,11 +178,18 @@ starter med en tom figur på hver plads. Du tilføjer eller fjerner aldrig
 et medlem, du erstatter et. Hver række viser medlemmets figur med de
 våben, den holder, en prik for hvert våbensæt, når den har mere end ét,
 dens maksimale liv og energi og dens otte evner; træk en række i dens ⠿
-for at ændre rækkefølgen. Panelet til højre er Figureditorens bibliotek,
+for at ændre rækkefølgen. Hold **Shift**, mens du slipper en række på et andet
+medlem, for i stedet at kopiere hele dens build over på det medlem; rækken,
+du trak, forbliver som den var.
+Panelet til højre er Figureditorens bibliotek,
 med en fane **Mine figurer** før **Evner** og **Udstyr**. På **Mine
 figurer** trækker du en af dine figurer hen på et medlem for at gøre det
 medlem til en kopi af den. En kopi er holdets egen: ændrer du den, eller
-den figur, den kom fra, forbliver den anden, som den var. På **Evner**
+den figur, den kom fra, forbliver den anden, som den var. Omvendt kan du trække et
+medlem hen på **Mine figurer**, eller på fanen, for at gemme det som en ny
+figur af dine egne; har den et navn, der er taget, får den " (copy)", og
+holdet beholder medlemmet, som det er.
+På **Evner**
 viser evnebiblioteket evnerne for det medlem, du sidst klikkede på; træk
 en hen på et vilkårligt medlems plads for at sætte den på der. På det
 medlems egen bjælke flytter en evne, der allerede er på den, til
@@ -203,7 +212,7 @@ der kun, mens et er åbent: klik på et for at tage det på, eller træk det
 hen på dets hænder. Ét medlem er åbent ad gangen; **Esc** lukker det. En
 ny klasse fjerner de evner og rang, den ikke kan bruge, med en
 **Fortryd**.
-Tryk på et medlems navn, eller **Åbn på figursiden**, for at redigere
+Tryk på et medlems navn, eller dets **✎**-knap, for at redigere
 det i build-editoren; dens **Gem** sætter det tilbage på holdet, og
 holdets egen **Gem** beholder det hele og tager dig tilbage til
 Holdeditor. **Esc** går uden at gemme og spørger først. Holdets **Del**,
@@ -215,3 +224,10 @@ spilles** og hvorfor, og et hold uden navn vises som **Unavngivet hold**.
 Din første start trækker ét færdigt hold i den valgte størrelse, 4v4,
 medmindre du har ændret den, mærket **Tilfældig**: dets **Rul igen**
 bytter et andet ind, og **Klon** giver dig en kopi at redigere.
+Hvert holdbuild har en størrelse, 2v2, 4v4 eller 8v8 (der findes ingen
+1v1-holdbuilds): **Holdstørrelse** i sidebjælken. Holdeditor viser
+holdbuilds af den størrelse, der er valgt der, og **Nyt holdbuild** laver
+et af den størrelse. Dets editors **Holdstørrelse** ændrer den: en mindre
+størrelse fjerner de sidste medlemmer, en større tilføjer tomme, og Gem
+sætter sidebjælken til den størrelse, det blev gemt med. Et indsat hold
+beholder sin størrelse, og sidebjælken skifter til den.

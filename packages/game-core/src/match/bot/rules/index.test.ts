@@ -51,6 +51,7 @@ describe("BOT_RULES (#2042)", () => {
       "break-wall",
       "keep-lever",
       "keep-errand",
+      "plan-move",
       "fight",
       "gates",
       "levers",

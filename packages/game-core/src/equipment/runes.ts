@@ -132,19 +132,9 @@ export const UNIVERSAL_RUNES: Readonly<Record<UniversalRuneId, UniversalRune>> =
 
   vitae: flat("vitae", "Rune of Vitae", { kind: "health", amount: 10 }, true),
 
-  // Rescaled from the reference data's +1/+2/+3. That was sized for a
-  // much smaller energy pool; against this game's 50 energy regenerating
-  // at 2/second, a single point is below the threshold of noticing, and
-  // a rune nobody can feel is a rune nobody will take. The *shape* of
-  // the effect is preserved; the magnitude is this project's own tuning,
-  // the same licence `status.ts` already takes with condition values.
-  attunement: tiered(
-    "attunement",
-    "Rune of Attunement",
-    { kind: "energy", amount: 3 },
-    { kind: "energy", amount: 6 },
-    { kind: "energy", amount: 9 },
-  ),
+  // GW1's own rune (Q159): one tier, +2 Energy, and it stacks like
+  // Vitae, so five worn give +10.
+  attunement: flat("attunement", "Rune of Attunement", { kind: "energy", amount: 2 }, true),
 
   clarity: durationRune("clarity", "Rune of Clarity", ["blind", "weakness"]),
   purity: durationRune("purity", "Rune of Purity", ["poison", "disease"]),

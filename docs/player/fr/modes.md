@@ -33,6 +33,8 @@ détourée au bord de l'écran : le socle ou un sanctuaire à la couleur de son
 propriétaire, gris s'il n'est à personne, l'autel en or. La flèche pleine d'un
 joueur s'affiche par-dessus.
 
+Un match s'ouvre avec tout le monde retenu près de son point d'apparition : tu peux faire quelques pas, mais pas combattre ni utiliser de compétences. Une ligne en haut compte les joueurs qui ont chargé le match. Une fois que tout le monde a chargé, elle décompte 10 secondes et le match commence, et son chrono avec lui. Un joueur qui n'a pas chargé après 20 secondes n'est pas attendu : le décompte commence sans lui, et il peut encore rejoindre plus tard.
+
 ## Annihilation
 
 **Élimine tous les ennemis.** Les morts restent à terre jusqu'à ce qu'un allié
@@ -359,6 +361,8 @@ Après un match d'équipe en file, ses gagnants repartent en file tout seuls apr
 20 secondes, et ses perdants (un match nul aussi) retournent au menu ; le match
 d'un salon à code ramène tout le monde au salon. Un bouton sous le résultat saute
 l'attente, ou, pour les gagnants, part sans repartir en file.
+Les gagnants de l'Arène d'équipe gardent leur build d'équipe et la place de chaque joueur pour le match suivant, sans salon d'équipe, sauf si le groupe a changé entre-temps : quelqu'un est parti, absent ou arrivé. Ils choisissent alors à nouveau leur équipe.
+Si ton équipe n'a pas gagné, Arrêter fige ce compte à rebours pour que tu puisses lire le résultat ; le bouton t'emmène ensuite quand tu es prêt.
 
 ## Ascension des héros
 

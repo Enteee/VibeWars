@@ -61,6 +61,7 @@ import { frameTiming } from "../render/frame-timing.js";
 import { t, type MessageKey } from "../i18n/index.js";
 import { leaderboard } from "./leaderboard.js";
 import { linkLobbyRoom, needsRoom } from "./lobby-room.js";
+import { preMatchTimes } from "./pre-match-times.js";
 import {
   arenaIds,
   arenaMap,
@@ -226,6 +227,8 @@ function startMatch(plan: MatchPlan) {
     nowSeconds: () => Date.now() / 1000,
     // Every match for now (#3572): the ranked flow (#3569) will set it for its own.
     recordReplay: { buildHash: __VIBEWARS_BUILD__, sha256 },
+    // Everyone held in its spawn until all are in, then 10 s (#3818); 1 s in e2e (#3855).
+    preMatch: preMatchTimes(import.meta.env.VITE_VIBEWARS_PRE_MATCH, window.location.search),
   });
 }
 

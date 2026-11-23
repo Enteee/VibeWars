@@ -147,6 +147,10 @@ press **Save**.
 **Esc** leaves without saving, and asks first if you changed anything.
 **Share**, **Load GW1 code**, **Duplicate** and **Delete** are under **⋯**.
 
+A build with a problem cannot be saved, and the **Training Ground**
+will not start with one. If such a build still reaches a match, you
+play a starter build there, and a message says why.
+
 A team code loads on **Team Builder** instead: paste it anywhere there, or
 open a team build and use its **⋯** → **Load team**.
 
@@ -160,21 +164,26 @@ there loads one shared with you, and a click on a card, or its **Edit**, opens i
 
 Every team build has a size, 2v2, 4v4 or 8v8 (there are no 1v1 team builds): the **Team size** in
 the sidebar. Team Builder lists the team builds of the size picked there,
-and **New team build** makes one of that size. A team build's size is
-fixed: its editor shows it locked, and to play another size you make
-another team build. A pasted team keeps its size, and the sidebar
-switches to it.
+and **New team build** makes one of that size. Its editor's **Team size**
+changes it: a smaller size drops the last members, a larger one adds
+blank ones, and Save brings the sidebar to the size it was saved at. A
+pasted team keeps its size, and the sidebar switches to it.
 
 A team build always has as many members as its size: a new one starts
 with a blank character in each place. You never add or remove a member,
 you replace one. Each row shows the member's character with the weapons
 it holds, a dot for each weapon set when it has more than one, its
 maximum Health and Energy, and its eight skills; drag a row by its ⠿ to
-reorder. The panel on the right is the Character Builder's library,
+reorder. Hold **Shift** as you drop a row on another member to copy
+its whole build onto that member instead; the row you dragged stays as it was.
+The panel on the right is the Character Builder's library,
 with a **My characters** tab before **Skills** and **Gear**. On **My characters**, drag
 one of your characters onto a member to make that member a copy of it. A
 copy is the team's own: changing it, or the character it came from,
-leaves the other as it was. On **Skills**, the skill library shows the
+leaves the other as it was. The other way round, drag a member onto
+**My characters**, or onto its tab, to save it as a new character of your
+own; one whose name is taken gets " (copy)", and the team keeps the member
+as it is. On **Skills**, the skill library shows the
 skills of the member you last clicked; drag one onto any member's slot
 to equip it there. On that member's own bar, a skill already on it moves
 to the slot. A drop a member cannot take, a skill of another profession
@@ -193,7 +202,7 @@ the weapons and off-hands of the open member, and is there only while one
 is open: click one to equip it, or drag it onto its hands. One
 member is open at a time; **Esc** closes it. A new profession drops the
 skills and ranks it cannot use, with an **Undo**.
-Press a member's name, or **Open in the Character screen**, to edit it in
+Press a member's name, or its **✎** button, to edit it in
 the build editor;
 its **Save** puts it back in the team, and the team's own **Save** keeps it all
 and takes you back to Team Builder. **Esc** leaves

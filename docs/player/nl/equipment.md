@@ -160,9 +160,17 @@ set die je bekijkt, met hun mods.
 | Superior attribuutrune                                                                                                                                                                                                                                                                                         | +3 op een attribuut, -75 Gezondheid       |
 | ![Vigor](../../../apps/web/public/icons/rune/vigor.svg) **Vigor**                                                                                                                                                                                                                                              | meer Gezondheid (+30, +41 of +50)         |
 | ![Vitae](../../../apps/web/public/icons/rune/vitae.svg) **Vitae**                                                                                                                                                                                                                                              | +10 Gezondheid                            |
-| ![Attunement](../../../apps/web/public/icons/rune/attunement.svg) **Attunement**                                                                                                                                                                                                                               | meer Energie (+3, +6 of +9)               |
+| ![Attunement](../../../apps/web/public/icons/rune/attunement.svg) **Attunement**                                                                                                                                                                                                                               | meer Energie (+2)                         |
 | ![Clarity](../../../apps/web/public/icons/rune/clarity.svg) **Clarity**, ![Purity](../../../apps/web/public/icons/rune/purity.svg) **Purity**, ![Recovery](../../../apps/web/public/icons/rune/recovery.svg) **Recovery**, ![Restoration](../../../apps/web/public/icons/rune/restoration.svg) **Restoration** | twee condities slijten elk 20% sneller af |
 | ![Absorption](../../../apps/web/public/icons/rune/absorption.svg) **Absorption** (![Krijger](../../../apps/web/public/icons/profession/warrior.svg) **Krijger**)                                                                                                                                               | minder fysieke schade van elke treffer    |
+
+Vitae en Attunement tellen op: vijf Attunement-runen geven +10 Energie. Elke
+andere rune telt één keer, hoeveel je er ook draagt. Verkortingen van
+condities uit verschillende bronnen tellen ook op, elk berekend op de volle
+duur en afgerond op een hele seconde: Restoration en "Fear Cuts Deeper"
+brengen een Bloeding van 8 seconden terug tot 4.
+
+De editor slaat geen twee stukken op met dezelfde rune, of met runes van hetzelfde attribuut: alleen de sterkste bonus zou tellen, terwijl elke gezondheidsstraf telt. Wijs in de editor gezondheid aan om te zien waar die vandaan komt: basis, runes, insignes en mods.
 
 Je kiest de rune van een stuk op dezelfde plek als het insigne: klik op het stuk
 op de figuur.

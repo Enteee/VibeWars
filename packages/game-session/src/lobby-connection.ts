@@ -90,6 +90,11 @@ export interface LobbySnapshot {
   readonly ascentRound: number | null;
   /** A Heroes' Ascent run's slots, once its party queued (#2539); `null` otherwise. */
   readonly ascentLock: WireAscentLock | null;
+  /**
+   * After a Team Arena win (#3815), whether the party is still the one
+   * that played and so keeps its team; `null` with no win to keep.
+   */
+  readonly teamKept: boolean | null;
 }
 
 /** A seat of a party's team plan as its host sends it (ADR-0042): its human's member key, `null` for a bot. */
@@ -152,8 +157,9 @@ export interface LobbyConnection {
   /**
    * Host only, in a team mode (#1766): the party's Team Lobby, then the
    * queue; in Heroes' Ascent at `ascentRound` (#1996), `null` otherwise.
+   * `again`, after a Team Arena win, keeps the team that won (#3815).
    */
-  findMatch(ascentRound: number | null): void;
+  findMatch(ascentRound: number | null, again: boolean): void;
   /** Host only (#1766): the queued party back in its lobby. */
   leaveQueue(): void;
   /** Host only (#1766): the queued party plays against bots, here. */

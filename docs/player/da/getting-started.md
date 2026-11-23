@@ -62,6 +62,8 @@ hold er PvX-wikiens velbedømte PvP-holdbuilds; en størrelse, PvX ikke har
 nogen af, får sat PvX-solobuilds sammen. **Klon** gemmer en kopi af det
 viste hold som dit eget Holdbuild og åbner det, så du kan ændre det, som
 du vil.
+Et Holdbuilds størrelse ændres i dets editor: en mindre størrelse fjerner
+de sidste medlemmer, en større tilføjer tomme.
 
 ## Spil en Tilfældig arena
 
@@ -84,13 +86,17 @@ Lukker du fanen, mens du venter, forlader du køen med det samme.
 Når kampen slutter, kan du vælge **I kø igen** eller **Bliv sammen** med
 det hold, du lige har spillet med.
 
-Ved siden af resultaterne fortæller to diagrammer kampen over tid. **Dig**
+Hver kamp slutter på sine resultater, fra køen, med vært eller i en lobby, og
+ved siden af dem fortæller to diagrammer kampen over tid; køskærmen viser dem
+igen efter en kamp fra køen. **Dig**
 tegner din uddelte skade, modtagne skade, heling og Energi; **Hold** tegner
 hvert holds helbredspulje over dets samlede skade. Mærker under tidsaksen viser
 drab, dødsfald, afbrydelser, erobringer og genoplivninger: peg på et, eller gå
 til det med Tab, for at læse, hvad der skete. Tryk på et punkt i
 signaturforklaringen for at skjule eller vise dets linje. På en telefon står
 diagrammerne under resultaterne, som viser dig og to andre indtil **Vis alle**.
+
+**Kamphistorik** i topbjælken viser dine seneste 50 kampe, nyeste først: åbn en for at se dens point og diagrammer igen. De gemmes kun i denne browser. **Mine kampe** viser kun dem, du har spillet med din nuværende spillernøgle.
 
 ## Vær vært for eller deltag i en kamp
 

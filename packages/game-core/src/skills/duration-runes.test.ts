@@ -87,20 +87,20 @@ function land(skillId: string, caster: Combatant, target: Combatant) {
 }
 
 describe("condition-duration runes (#464)", () => {
-  it("a Restoration wearer hit by Sever Artery bleeds 16.8 s, and the event says 16.8", () => {
+  it("a Restoration wearer hit by Sever Artery bleeds 21 − 4 = 17 s, and the event says 17", () => {
     const target = wearing("target", 1, "restoration");
     const events = land("warrior.sever-artery", caster(), target);
 
-    expect(target.statuses.get("bleeding")?.remainingSeconds).toBeCloseTo(16.8, 9);
+    expect(target.statuses.get("bleeding")?.remainingSeconds).toBe(17);
     const applied = events.find((event) => event.kind === "status-applied");
     expect(applied).toMatchObject({ statusId: "bleeding" });
-    expect(applied?.kind === "status-applied" && applied.durationSeconds).toBeCloseTo(16.8, 9);
+    expect(applied?.kind === "status-applied" && applied.durationSeconds).toBe(17);
   });
 
-  it("a Recovery wearer is dazed by Broad Head Arrow for 13.6 s", () => {
+  it("a Recovery wearer is dazed by Broad Head Arrow for 17 − 3 = 14 s", () => {
     const target = wearing("target", 1, "recovery");
     land("ranger.broad-head-arrow", caster(), target);
-    expect(target.statuses.get("dazed")?.remainingSeconds).toBeCloseTo(13.6, 9);
+    expect(target.statuses.get("dazed")?.remainingSeconds).toBe(14);
   });
 
   it("Recovery shortens deep wound too", () => {
@@ -132,15 +132,41 @@ describe("condition-duration runes (#464)", () => {
     expect(scaledStatusDuration(target, "bleeding", 10)).toBe(10);
   });
 
-  it("two Runes of Clarity give 80%, not 64% (GW1: non-stacking)", () => {
+  it("two Runes of Clarity take 20% off once, not twice (GW1: non-stacking)", () => {
     const target = wearing("target", 1, "clarity", "clarity");
-    expect(target.equipment.statusDurationScale.get("blind")).toBeCloseTo(0.8, 9);
+    expect(target.equipment.statusDurationReductions.get("blind")).toEqual([0.2]);
   });
 
   it("different duration runes still each apply", () => {
     const target = wearing("target", 1, "clarity", "restoration");
     expect(scaledStatusDuration(target, "blind", 10)).toBeCloseTo(8, 9);
     expect(scaledStatusDuration(target, "bleeding", 10)).toBeCloseTo(8, 9);
+  });
+
+  it("takes each share off the full duration, rounded to a whole second (GW1)", () => {
+    const target = wearing("target", 1, "restoration");
+    expect(scaledStatusDuration(target, "bleeding", 8)).toBe(6);
+    expect(scaledStatusDuration(target, "crippled", 3)).toBe(2);
+    // 0.2 s rounds to nothing.
+    expect(scaledStatusDuration(target, "bleeding", 1)).toBe(1);
+  });
+
+  it("adds a rune's share to a mod's: 8 − 2 − 2 = 4 s, and never below 0", () => {
+    const rune = wearing("target", 1, "restoration");
+    const target = {
+      equipment: {
+        ...rune.equipment,
+        statusDurationReductions: new Map([["bleeding", [0.2, 0.2]] as const]),
+      },
+    };
+    expect(scaledStatusDuration(target, "bleeding", 8)).toBe(4);
+    const all = {
+      equipment: {
+        ...rune.equipment,
+        statusDurationReductions: new Map([["bleeding", [0.6, 0.6]] as const]),
+      },
+    };
+    expect(scaledStatusDuration(all, "bleeding", 5)).toBe(0);
   });
 
   it("leaves statuses that are not conditions alone, whatever is worn", () => {
@@ -157,11 +183,11 @@ describe("condition-duration runes (#464)", () => {
 
   it("compares the scaled duration against a longer bleed already running", () => {
     const target = wearing("target", 1, "restoration");
-    target.statuses.apply("bleeding", 17, "earlier", NO_RANKS);
+    target.statuses.apply("bleeding", 17.5, "earlier", NO_RANKS);
     land("warrior.sever-artery", caster(), target);
-    // 21 s scaled is 16.8 s, shorter than the 17 s left, so the 17 s stays.
+    // 21 s less 4 is 17 s, shorter than the 17.5 s left, so the 17.5 s stays.
     expect(target.statuses.get("bleeding")).toMatchObject({
-      remainingSeconds: 17,
+      remainingSeconds: 17.5,
       sourceId: "earlier",
     });
   });

@@ -751,6 +751,7 @@ describe("carriedBundle (#1225, #1374)", () => {
     score: [0, 0],
     elapsedSeconds: 0,
     phase: "active",
+    preMatch: null,
     winningTeam: undefined,
     endReason: undefined,
     projectiles: [],
@@ -2055,6 +2056,7 @@ describe("createHud's layout (#1042)", () => {
     expect(hud.respawn.hidden).toBe(true);
     expect(top.children.map((node) => node.className)).toEqual([
       "hud-scoreboard",
+      "hud-pre-match",
       "hud-respawn",
       "hud-carriers",
       "hud-target",
@@ -2080,6 +2082,7 @@ describe("createHud's layout (#1042)", () => {
     const top = hud.top as unknown as FakeNode;
     expect(top.children.map((node) => node.className)).toEqual([
       "hud-scoreboard",
+      "hud-pre-match",
       "hud-respawn",
       "hud-carriers",
       "hud-target",

@@ -84,6 +84,8 @@ export interface BuildPicker {
   update(): void;
   /** Open `tab`, scrolled to the group named `group` if given (#570). */
   showLibrary(tab: string, group?: string): void;
+  /** The button that opens `tab`, for a drop on it to open it (#3825). */
+  tabButton(tab: string): HTMLElement | undefined;
   /**
    * Show the tooltip at `anchor`, with what `describe` says now; `update`
    * redraws it in place from `describe` again (#1932).
@@ -369,6 +371,9 @@ export function mountBuildPicker<C extends TeamCharacter>(
 
   return {
     element,
+    tabButton(tab) {
+      return tabButtons.find(([id]) => id === tab)?.[1];
+    },
     update() {
       skills.update(host.current());
       if (markGear()) {

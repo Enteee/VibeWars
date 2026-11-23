@@ -33,8 +33,12 @@ bots and healers step to where fewer foes can reach them, and use pillars
 as cover. A team turns on any foe in reach who drops below 60% health,
 to finish them. In King of the Hill, while your team does not hold the
 altar, the other team's Ghostly Hero on the altar comes before even that.
-A bot that gets far ahead of its team waits for the rest before it pushes
-on, unless the rest are players who have stood idle a while.
+On a team of bots, a bot that gets far ahead of its team waits for the
+rest before it pushes on. Bots on your team stay with you instead:
+frontliners a step ahead, casters beside you, healers behind, and they
+follow where you go. Once you have stood idle a while, they play on as a
+team of bots would.
+While you are active, a bot that a fight drags far from you walks back to you, unless it is badly hurt or a foe is right on it.
 
 Archers and spearmen take the high ground when it is safe.
 A bot that two foes focus on, or that is below half health and losing it fast, ducks out of their sight for up to three seconds: behind a wall, under a deck or onto high ground.

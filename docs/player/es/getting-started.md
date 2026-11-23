@@ -63,6 +63,8 @@ lugar. Los equipos ya hechos son las builds de equipo PvP bien valoradas de la
 wiki de PvX; un tamaño del que PvX no tiene ninguna recibe builds individuales
 de PvX combinadas. **Clonar** guarda una copia del equipo mostrado como tu
 propia build de equipo y la abre, para que la cambies como quieras.
+El tamaño de una build de equipo cambia en su editor: un tamaño menor quita los
+últimos miembros y uno mayor añade miembros en blanco.
 
 ## Juega una Arena aleatoria
 
@@ -86,14 +88,17 @@ instante.
 Cuando termina la partida puedes pulsar **Otra vez** o **Seguir juntos** con
 el equipo con el que acabas de jugar.
 
-Junto a las puntuaciones, dos gráficos cuentan la partida a lo largo del
-tiempo. **Tú** traza tu daño infligido, daño recibido, curación y Energía;
+Toda partida termina en sus puntuaciones, en cola, alojada o en una sala, y
+junto a ellas dos gráficos cuentan la partida a lo largo del tiempo; la
+pantalla de la cola los muestra de nuevo tras una partida en cola. **Tú** traza tu daño infligido, daño recibido, curación y Energía;
 **Equipos** traza la reserva de salud de cada equipo sobre su daño total. Las
 marcas bajo el eje del tiempo muestran bajas, muertes, interrupciones, capturas
 y resurrecciones: señala una, o llega a ella con Tab, para leer qué pasó. Pulsa
 una entrada de la leyenda para ocultar o mostrar su línea. En el móvil los
 gráficos quedan bajo las puntuaciones, que te muestran a ti y a otros dos hasta
 que pulses **Mostrar todo**.
+
+**Historial de partidas**, en la barra superior, muestra tus últimas 50 partidas, de la más nueva a la más antigua: abre una para ver de nuevo sus puntuaciones y gráficos. Solo se guardan en este navegador. **Mis partidas** muestra solo las que jugaste con tu clave de jugador actual.
 
 ## Alojar o unirse a una partida
 

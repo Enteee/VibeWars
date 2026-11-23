@@ -158,6 +158,8 @@ Dizilim, **Kaydet**'e bastığında senin olur.
 **Esc** kaydetmeden çıkar, bir şey değiştirdiysen önce sorar.
 **Paylaş**, **GW1 kodu yükle**, **Çoğalt** ve **Sil** **⋯** altındadır.
 
+Sorunu olan bir yapı kaydedilemez ve antrenman alanı onunla başlamaz. Böyle bir yapı yine de bir maça ulaşırsa, orada başlangıç yapısıyla oynarsın ve bir mesaj nedenini söyler.
+
 Takım kodu ise **Takım Oluşturucu**'da yüklenir: kodu orada herhangi bir yere
 yapıştır ya da bir takım dizilimi aç ve onun **⋯** → **Takım yükle**'sini
 kullan.
@@ -184,12 +186,18 @@ yerde boş bir karakterle başlar. Asla üye eklemez ya da çıkarmazsın,
 birini değiştirirsin. Her satır üyenin karakterini tuttuğu silahlarla,
 birden fazla silah seti varsa her set için bir noktayla, en yüksek Can
 ve Enerjisiyle ve sekiz becerisiyle gösterir; yeniden sıralamak için
-bir satırı ⠿ ile sürükle. Sağdaki panel Karakter Oluşturucu'nun
+bir satırı ⠿ ile sürükle. Bunun yerine tüm dizilimini o üyeye kopyalamak
+için bir satırı başka bir üyeye bırakırken **Shift**'i basılı tut; sürüklediğin
+satır olduğu gibi kalır.
+Sağdaki panel Karakter Oluşturucu'nun
 kütüphanesidir; **Beceriler** ve **Eşya**'dan önce bir **Karakterlerim**
 sekmesi vardır. **Karakterlerim**'de, bir üyeyi kendi karakterlerinden
 birinin kopyası yapmak için o karakteri üyenin üzerine sürükle. Kopya
 takıma aittir: onu ya da geldiği karakteri değiştirmek diğerini olduğu
-gibi bırakır. **Beceriler**'de beceri kütüphanesi en son tıkladığın
+gibi bırakır. Tersine, bir üyeyi **Karakterlerim**'e ya da sekmesine
+sürükleyerek kendi yeni karakterin olarak kaydet; adı zaten alınmışsa
+" (copy)" eklenir ve takım üyeyi olduğu gibi tutar.
+**Beceriler**'de beceri kütüphanesi en son tıkladığın
 üyenin becerilerini gösterir; takmak için birini herhangi bir üyenin
 yuvasına sürükle. O üyenin kendi çubuğunda zaten olan bir beceri o
 yuvaya taşınır. Bir üyenin alamayacağı bir bırakma, başka bir mesleğin
@@ -211,8 +219,8 @@ yalnızca biri açıkken oradadır: takmak için birine tıkla ya da onu
 ellerine sürükle. Aynı anda tek bir üye açıktır; **Esc** onu kapatır.
 Yeni bir meslek, kullanamadığı becerileri ve seviyeleri bir **Geri
 al** ile birlikte düşürür.
-Dizilim editöründe düzenlemek için bir üyenin adına ya da **Karakter
-ekranında aç**'a bas; onun **Kaydet**'i onu takıma geri koyar, takımın
+Dizilim editöründe düzenlemek için bir üyenin adına ya da **✎** düğmesine
+bas; onun **Kaydet**'i onu takıma geri koyar, takımın
 kendi **Kaydet**'i ise her şeyi saklar ve seni Takım Oluşturucu'ya geri
 götürür. **Esc** kaydetmeden çıkar ve önce sorar. Takımın **Paylaş**,
 **Takım yükle**, **Çoğalt** ve **Sil**'i **⋯** altındadır. Oradaki **Takım yükle**
@@ -224,3 +232,10 @@ takım** olarak görünür. İlk açılışın, seçili boyutta, değiştirmediy
 4v4, **Rastgele** işaretli bir hazır takım getirir: **Yenile**'si
 başka birini koyar, **Kopyala** ise düzenlemen için sana bir kopya
 verir.
+Her takım diziliminin bir boyutu vardır, 2v2, 4v4 ya da 8v8 (1v1 takım
+dizilimi yoktur): kenar çubuğundaki **Takım boyutu**. Takım Oluşturucu
+orada seçilen boyuttaki takım dizilimlerini listeler ve **Yeni takım
+dizilimi** o boyutta bir tane yapar. Editöründeki **Takım boyutu** onu
+değiştirir: daha küçük bir boyut son üyeleri çıkarır, daha büyüğü boş
+üyeler ekler ve Kaydet kenar çubuğunu kaydedildiği boyuta getirir.
+Yapıştırılan bir takım boyutunu korur ve kenar çubuğu ona geçer.

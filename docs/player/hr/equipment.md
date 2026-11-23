@@ -158,9 +158,17 @@ drži oružja kompleta koji gledaš, s njihovim modifikacijama.
 | Vrhunska runa atributa                                                                                                                                                                                                                                                                                         | +3 atributu, -75 zdravlja             |
 | ![Vigor](../../../apps/web/public/icons/rune/vigor.svg) **Vigor**                                                                                                                                                                                                                                              | više zdravlja (+30, +41 ili +50)      |
 | ![Vitae](../../../apps/web/public/icons/rune/vitae.svg) **Vitae**                                                                                                                                                                                                                                              | +10 zdravlja                          |
-| ![Attunement](../../../apps/web/public/icons/rune/attunement.svg) **Attunement**                                                                                                                                                                                                                               | više energije (+3, +6 ili +9)         |
+| ![Attunement](../../../apps/web/public/icons/rune/attunement.svg) **Attunement**                                                                                                                                                                                                                               | više energije (+2)                    |
 | ![Clarity](../../../apps/web/public/icons/rune/clarity.svg) **Clarity**, ![Purity](../../../apps/web/public/icons/rune/purity.svg) **Purity**, ![Recovery](../../../apps/web/public/icons/rune/recovery.svg) **Recovery**, ![Restoration](../../../apps/web/public/icons/rune/restoration.svg) **Restoration** | po dva stanja nestaju 20% brže        |
 | ![Absorption](../../../apps/web/public/icons/rune/absorption.svg) **Absorption** (![Ratnik](../../../apps/web/public/icons/profession/warrior.svg) **Ratnik**)                                                                                                                                                 | manje fizičke štete od svakog pogotka |
+
+Vitae i Attunement se zbrajaju: pet runa Attunement daje +10 energije.
+Svaka druga runa računa se jednom, koliko god ih nosio. Skraćenja stanja
+iz različitih izvora također se zbrajaju, svako računato od punog
+trajanja i zaokruženo na cijelu sekundu: Restoration i "Fear Cuts
+Deeper" skraćuju Krvarenje od 8 sekundi na 4.
+
+Uređivač ne sprema dva dijela s istom runom ili s runama istog atributa: računao bi se samo najjači bonus, a svaka kazna zdravlja bi se računala. Pokaži na zdravlje u uređivaču da vidiš odakle dolazi: osnova, rune, insignije i modovi.
 
 Runu dijela biraš na istom mjestu kao i njegovu insigniju: klikni dio
 na figuri.

@@ -25,7 +25,7 @@ import {
   type ArmorCondition,
   type Insignia,
 } from "./insignias.js";
-import type { BuildEquipment, WeaponSet } from "./loadout.js";
+import type { BuildEquipment, WeaponSet, WeaponSetIndex } from "./loadout.js";
 import { wornMods, type ModEffect, type ModSpells, type ModWhile, type WeaponMod } from "./mods.js";
 import { getOffhand, type OffhandId } from "./offhands.js";
 import {
@@ -151,8 +151,8 @@ export interface ResolvedEquipment {
   readonly conditionalMaxHealth: readonly ModOf<"conditional-max-health">[];
   /** The held set's maximum Energy while its condition holds (#2010): Hale and Hearty's. */
   readonly conditionalMaxEnergy: readonly ModOf<"conditional-max-energy">[];
-  /** Multiplier applied to an incoming condition's duration. Absent means 1. */
-  readonly statusDurationScale: ReadonlyMap<StatusId, number>;
+  /** Each share taken off an incoming condition's duration, one per source. */
+  readonly statusDurationReductions: ReadonlyMap<StatusId, readonly number[]>;
   /**
    * What runes and headgear add to each attribute, already in `attributeRanks`: what
    * tells an allocated rank from a boosted one, as weakness must (#762).
@@ -214,10 +214,12 @@ function linkedAttribute(
 
 interface RuneTotals {
   readonly attributeBonuses: ReadonlyMap<string, number>;
+  /** The runes' health, penalties included; insignia apart. */
   readonly healthDelta: number;
+  readonly insigniaHealth: number;
   readonly energyDelta: number;
   readonly flatPhysicalReduction: number;
-  readonly statusDurationScale: ReadonlyMap<StatusId, number>;
+  readonly statusDurationReductions: ReadonlyMap<StatusId, readonly number[]>;
 }
 
 /**
@@ -235,8 +237,9 @@ interface RuneTotals {
  */
 function totalRunes(equipment: BuildEquipment, primaryProfession: ProfessionId): RuneTotals {
   const bestBonusPerAttribute = new Map<string, number>();
-  const statusDurationScale = new Map<StatusId, number>();
+  const statusDurationReductions = new Map<StatusId, readonly number[]>();
   let healthDelta = 0;
+  let insigniaHealth = 0;
   let energyDelta = 0;
   let flatPhysicalReduction = 0;
   const bestTierPerRune = new Map<UniversalRuneId, RuneTier>();
@@ -245,7 +248,7 @@ function totalRunes(equipment: BuildEquipment, primaryProfession: ProfessionId):
   for (const [slot, piece] of armorPieces(equipment.armor)) {
     const insignia = wornInsignia(piece.insigniaId, primaryProfession);
     if (insignia?.effect.kind === "health") {
-      healthDelta += perSlotAmount(insignia.effect, slot);
+      insigniaHealth += perSlotAmount(insignia.effect, slot);
     } else if (insignia?.effect.kind === "energy") {
       energyDelta += perSlotAmount(insignia.effect, slot);
     }
@@ -303,11 +306,10 @@ function totalRunes(equipment: BuildEquipment, primaryProfession: ProfessionId):
         break;
       case "status-duration":
         for (const statusId of effect.statusIds) {
-          // Multiplicative across different runes, so two reductions
-          // never reach zero duration — the same reason miss chance
-          // multiplies. Two of the same rune count once, above.
-          const current = statusDurationScale.get(statusId) ?? 1;
-          statusDurationScale.set(statusId, current * (1 - effect.reduction));
+          // Different runes each take their own share off, as GW1 adds
+          // them. Two of the same rune count once, above.
+          const current = statusDurationReductions.get(statusId) ?? [];
+          statusDurationReductions.set(statusId, [...current, effect.reduction]);
         }
         break;
     }
@@ -316,9 +318,10 @@ function totalRunes(equipment: BuildEquipment, primaryProfession: ProfessionId):
   return {
     attributeBonuses: bestBonusPerAttribute,
     healthDelta,
+    insigniaHealth,
     energyDelta,
     flatPhysicalReduction,
-    statusDurationScale,
+    statusDurationReductions,
   };
 }
 
@@ -413,13 +416,13 @@ export function resolveLoadout(input: LoadoutInput, rules: CombatRules): Resolve
   // at join; only an Elementalist primary holds its rank.
   const shared: SharedGear = {
     baseArmor: baseArmorFor(input.primaryProfession),
-    health: rules.baseHealth + runes.healthDelta,
+    health: rules.baseHealth + runes.healthDelta + runes.insigniaHealth,
     baseEnergyPips: baseEnergyPipsFor(input.primaryProfession),
     energyDelta: runes.energyDelta + energyStorageBonus(rankOf(ENERGY_STORAGE_ATTRIBUTE)),
     conditionalArmor: INHERENT_ARMOR_BY_PROFESSION[input.primaryProfession],
     ...pieceInsigniasOf(input.equipment, input.primaryProfession),
     flatPhysicalReduction: runes.flatPhysicalReduction,
-    statusDurationScale: runes.statusDurationScale,
+    statusDurationReductions: runes.statusDurationReductions,
     attributeBonuses,
   };
   const [set1, set2, set3, set4] = input.equipment.weaponSets;
@@ -437,6 +440,39 @@ export function resolveLoadout(input: LoadoutInput, rules: CombatRules): Resolve
   };
 }
 
+/** Maximum health, part by part: insignia apart from runes, though both sit on armor. */
+export interface HealthSources {
+  readonly base: number;
+  readonly runes: number;
+  readonly insignia: number;
+  readonly mods: number;
+}
+
+/**
+ * Where `maxHealth` comes from holding weapon set `set`, for the gear
+ * summary to explain it (#3822); `undefined` for an empty set. The parts
+ * add up to `maxHealth`: `mods` is the rest, so the rules' floor,
+ * should it ever lift a build, shows there.
+ */
+export function healthSources(
+  input: LoadoutInput,
+  rules: CombatRules,
+  set: WeaponSetIndex,
+): HealthSources | undefined {
+  const held = resolveLoadout(input, rules).weaponSets[set];
+  if (held === null) {
+    return undefined;
+  }
+  const runes = totalRunes(input.equipment, input.primaryProfession);
+  const shared = rules.baseHealth + runes.healthDelta + runes.insigniaHealth;
+  return {
+    base: rules.baseHealth,
+    runes: runes.healthDelta,
+    insignia: runes.insigniaHealth,
+    mods: held.maxHealth - shared,
+  };
+}
+
 /** What every weapon set shares: armor and runes are one set (ADR-0036). */
 interface SharedGear {
   /** Before any mod's; runes and insignias count once, in every set. */
@@ -451,7 +487,7 @@ interface SharedGear {
   readonly pieceArmor: PieceArmor;
   readonly pieceReduction: PieceReduction;
   readonly flatPhysicalReduction: number;
-  readonly statusDurationScale: ReadonlyMap<StatusId, number>;
+  readonly statusDurationReductions: ReadonlyMap<StatusId, readonly number[]>;
   readonly attributeBonuses: ReadonlyMap<string, number>;
 }
 
@@ -500,7 +536,7 @@ function resolveWeaponSet(
   let pipsDelta = 0;
   let healthPips = 0;
   let conditionalArmor = shared.conditionalArmor;
-  let statusDurationScale = shared.statusDurationScale;
+  let statusDurationReductions = shared.statusDurationReductions;
   let mainHand = resolvedWeapon;
   let hitMods = NO_HIT_MODS;
   const physicalReductions: ModOf<"physical-reduction">[] = [];
@@ -537,10 +573,13 @@ function resolveWeaponSet(
         conditionalArmor = [...conditionalArmor, modArmor(effect)];
         break;
       case "condition-duration": {
-        // Multiplies with a rune of the same condition, as two runes do.
-        const scale = new Map(statusDurationScale);
-        scale.set(effect.statusId, (scale.get(effect.statusId) ?? 1) * (1 - effect.reduction));
-        statusDurationScale = scale;
+        // Adds to a rune of the same condition, as two runes do.
+        const reductions = new Map(statusDurationReductions);
+        reductions.set(effect.statusId, [
+          ...(reductions.get(effect.statusId) ?? []),
+          effect.reduction,
+        ]);
+        statusDurationReductions = reductions;
         break;
       }
       case "life-steal-on-hit":
@@ -624,7 +663,7 @@ function resolveWeaponSet(
       physicalReductions,
       conditionalMaxHealth,
       conditionalMaxEnergy,
-      statusDurationScale,
+      statusDurationReductions,
       attributeBonuses: shared.attributeBonuses,
       offhandId,
     },
@@ -699,7 +738,7 @@ export function unarmedResolvedEquipment(baseArmor: number): ResolvedEquipment {
     physicalReductions: [],
     conditionalMaxHealth: [],
     conditionalMaxEnergy: [],
-    statusDurationScale: new Map(),
+    statusDurationReductions: new Map(),
     attributeBonuses: new Map(),
     offhandId: undefined,
   };

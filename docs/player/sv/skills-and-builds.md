@@ -155,6 +155,8 @@ plats. Builden är din när du trycker på **Spara**.
 **Esc** lämnar utan att spara, och frågar först om du har ändrat något.
 **Dela**, **Ladda GW1-kod**, **Duplicera** och **Radera** finns under **⋯**.
 
+Ett build med ett problem kan inte sparas, och träningsområdet startar inte med det. Om ett sådant build ändå når en match spelar du ett startbuild där, och ett meddelande säger varför.
+
 En lagkod laddas i stället i **Lagbyggare**: klistra in den var som helst där,
 eller öppna en lagbuild och använd dess **⋯** → **Ladda lag**.
 
@@ -178,11 +180,18 @@ med en tom karaktär på varje plats. Du lägger aldrig till eller tar bort
 en medlem, du ersätter en. Varje rad visar medlemmens karaktär med vapnen
 den håller, en prick för varje vapenset när den har fler än ett, dess
 maximala hälsa och energi, och dess åtta förmågor; dra en rad i dess ⠿
-för att ändra ordningen. Panelen till höger är Karaktärsbyggarens
+för att ändra ordningen. Håll in **Shift** när du släpper en rad på en annan
+medlem för att i stället kopiera hela dess build till den medlemmen; raden du
+drog förblir som den var.
+Panelen till höger är Karaktärsbyggarens
 bibliotek, med en flik **Mina karaktärer** före **Förmågor** och **Prylar**. På **Mina karaktärer** drar du
 en av dina karaktärer till en medlem för att göra den medlemmen till en
 kopia av den. En kopia är lagets egen: att ändra den, eller karaktären
-den kom från, lämnar den andra som den var. På **Förmågor** visar
+den kom från, lämnar den andra som den var. Åt andra hållet drar du en
+medlem till **Mina karaktärer**, eller till fliken, för att spara den som en ny
+egen karaktär; har den ett namn som redan finns får den " (copy)", och laget
+behåller medlemmen som den är.
+På **Förmågor** visar
 förmågebiblioteket förmågorna för medlemmen du senast klickade på; dra en
 till valfri medlems plats för att utrusta den där. På medlemmens egen rad
 flyttas en förmåga som redan finns där till platsen. Ett släpp som en
@@ -204,7 +213,7 @@ vapnen och offhands för den öppna medlemmen, och finns bara där medan en
 är öppen: klicka på ett för att utrusta det, eller dra det till dess händer. En
 medlem är öppen åt gången; **Esc** stänger den. Ett nytt yrke tar bort de
 förmågor och ranger det inte kan använda, med ett **Ångra**.
-Tryck på en medlems namn, eller **Öppna i karaktärsvyn**, för att ändra
+Tryck på en medlems namn, eller dess **✎**-knapp, för att ändra
 den i build-redigeraren;
 dess **Spara** lägger tillbaka den i laget, och lagets egen **Spara** behåller alltihop
 och tar dig tillbaka till Lagbyggare. **Esc** lämnar
@@ -217,3 +226,10 @@ utan problem kan föreslås i en laglobby: ett kort säger
 Din första start slumpar fram ett färdigt lag i den valda storleken, 4v4
 om du inte ändrade den, märkt **Slump**: dess
 **Slumpa** byter in ett annat, och **Klona** ger dig en kopia att ändra.
+Varje lagbuild har en storlek, 2v2, 4v4 eller 8v8 (det finns inga lagbuilds för 1v1): **Lagstorlek** i
+sidopanelen. Lagbyggare listar lagbuildsen av storleken som valts där,
+och **Ny lagbuild** skapar en av den storleken. Dess redigerares
+**Lagstorlek** ändrar den: en mindre storlek tar bort de sista medlemmarna,
+en större lägger till tomma, och Spara byter sidopanelen till storleken den
+sparades med. Ett inklistrat lag behåller sin storlek, och sidopanelen byter
+till den.

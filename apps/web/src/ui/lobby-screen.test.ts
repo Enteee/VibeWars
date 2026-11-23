@@ -61,6 +61,7 @@ function snapshot(phase: LobbySnapshot["phase"]): LobbySnapshot {
     queueNonce: null,
     ascentRound: null,
     ascentLock: null,
+    teamKept: null,
     proposalBuilds: new Map(),
   };
 }

@@ -2,6 +2,7 @@ import { defaultBuildEquipment } from "@vibewars/game-core";
 import { describe, expect, it } from "vitest";
 
 import { t } from "../i18n/index.js";
+import { validateBuild } from "../storage/build-validation.js";
 import {
   CHARACTER_SCHEMA_VERSION,
   type StoredCharacter,
@@ -9,12 +10,14 @@ import {
   type TeamCharacter,
 } from "../storage/schema.js";
 import {
+  characterFromMember,
   duplicateTeam,
   memberCount,
   moveMember,
   newTeam,
   professionMix,
   replaceMember,
+  resizeTeam,
   teamCharacter,
   teamCounters,
   teamOf,
@@ -66,6 +69,39 @@ describe("newTeam (#2225)", () => {
   });
 });
 
+describe("resizeTeam (#3794)", () => {
+  const blanks = (): (() => TeamCharacter) => {
+    let made = 0;
+    return () => {
+      made += 1;
+      return member(`blank${String(made)}`);
+    };
+  };
+
+  it("drops the last members on a smaller size", () => {
+    const team = resizeTeam(teamWith("a", "b", "c", "d"), 2, blanks());
+    expect(team.size).toBe(2);
+    expect(ids(team)).toEqual(["a", "b"]);
+  });
+
+  it("appends blank members on a larger size", () => {
+    const team = resizeTeam(teamWith("a", "b"), 4, blanks());
+    expect(team.size).toBe(4);
+    expect(ids(team)).toEqual(["a", "b", "blank1", "blank2"]);
+  });
+
+  it("changes nothing at the same size", () => {
+    const team = teamWith("a", "b");
+    expect(resizeTeam(team, 2, blanks())).toEqual(team);
+  });
+
+  it("brings no dropped member back on growing again", () => {
+    const make = blanks();
+    const team = resizeTeam(resizeTeam(teamWith("a", "b", "c", "d"), 2, make), 4, make);
+    expect(ids(team)).toEqual(["a", "b", "blank1", "blank2"]);
+  });
+});
+
 describe("teamCharacter (#1452)", () => {
   const solo: StoredCharacter = {
     ...member("solo"),
@@ -85,6 +121,41 @@ describe("teamCharacter (#1452)", () => {
     const copy = teamCharacter(solo, "m1");
     expect(copy.skillBar).not.toBe(solo.skillBar);
     expect(copy.attributes).not.toBe(solo.attributes);
+  });
+});
+
+describe("characterFromMember (#3825)", () => {
+  const ann: TeamCharacter = {
+    ...member("m1"),
+    name: "Ann",
+    attributes: [{ attributeId: "warrior.tactics", rank: 8 }],
+    skillBar: ["warrior.sever-artery", null, null, null, null, null, null, null],
+  };
+
+  it("copies the member's build under the new id, as a stored character", () => {
+    const character = characterFromMember(ann, "c1", 5, new Set());
+    expect(character).toEqual({
+      ...ann,
+      id: "c1",
+      schemaVersion: CHARACTER_SCHEMA_VERSION,
+      updatedAt: 5,
+    });
+    expect(character.skillBar).not.toBe(ann.skillBar);
+    expect(character.attributes).not.toBe(ann.attributes);
+    expect(character.equipment).not.toBe(ann.equipment);
+  });
+
+  it("keeps the member's name while no character has it", () => {
+    expect(characterFromMember(ann, "c1", 5, new Set(["Bo"])).name).toBe("Ann");
+  });
+
+  it('appends " (copy)" once when a character already has the name', () => {
+    expect(characterFromMember(ann, "c1", 5, new Set(["Ann"])).name).toBe("Ann (copy)");
+  });
+
+  it("is a legal build when the member is", () => {
+    expect(validateBuild(ann)).toEqual([]);
+    expect(validateBuild(characterFromMember(ann, "c1", 5, new Set()))).toEqual([]);
   });
 });
 

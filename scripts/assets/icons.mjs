@@ -220,6 +220,11 @@ const ui = {
     `<path d="M7 3.5h10v5.5a5 5 0 0 1-10 0z" fill="${C.ink}"/>` +
     `<path d="M7 5.5H4.2v1.8a3.6 3.6 0 0 0 3.4 3.6M17 5.5h2.8v1.8a3.6 3.6 0 0 1-3.4 3.6" ${stroke(C.ink, 1.8)}/>` +
     `<path d="M12 14v4" ${stroke(C.ink, 2.2)}/><path d="M7.5 20.5h9" ${stroke(C.ink, 2.4)}/>`,
+  // A clock face whose ring runs back round to an arrowhead: the matches
+  // played before, Match history (#3848).
+  "match-history": () =>
+    `<path d="M3.5 12a8.5 8.5 0 1 0 2.5-6" ${stroke(C.ink, 2)}/><path d="M5.6 2.4v3.9h3.9" ${stroke(C.ink, 2)}/>` +
+    `<path d="M12 7.5V12l3 2" ${stroke(C.ink, 2.2)}/>`,
   // Two crossed swords, tips up, guards and grips low: you are auto-attacking
   // (#160). Two blades, so it never reads as the one-sword attack skill type.
   attacking: () =>

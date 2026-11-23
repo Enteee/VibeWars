@@ -274,6 +274,7 @@ async function openQueued(options: OpenQueuedOptions = {}): Promise<QueuedLobby>
         nowSeconds: () => 0,
         signetOf: testSignet,
         recordReplay: false,
+        preMatch: null,
       });
     },
     queued: {
@@ -561,6 +562,7 @@ describe("a queued lobby", () => {
           queueNonce: null,
           ascentRound: null,
           ascentLock: null,
+          teamKept: null,
           players: [
             {
               id: from,

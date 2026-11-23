@@ -161,9 +161,18 @@ holder våbnene fra det sæt, du ser på, med deres mods.
 | Overlegen attributrune                                                                                                                                                                                                                                                                                         | +3 til en attribut, -75 liv                   |
 | ![Vigor](../../../apps/web/public/icons/rune/vigor.svg) **Vigor**                                                                                                                                                                                                                                              | mere liv (+30, +41 eller +50)                 |
 | ![Vitae](../../../apps/web/public/icons/rune/vitae.svg) **Vitae**                                                                                                                                                                                                                                              | +10 liv                                       |
-| ![Attunement](../../../apps/web/public/icons/rune/attunement.svg) **Attunement**                                                                                                                                                                                                                               | mere energi (+3, +6 eller +9)                 |
+| ![Attunement](../../../apps/web/public/icons/rune/attunement.svg) **Attunement**                                                                                                                                                                                                                               | mere energi (+2)                              |
 | ![Clarity](../../../apps/web/public/icons/rune/clarity.svg) **Clarity**, ![Purity](../../../apps/web/public/icons/rune/purity.svg) **Purity**, ![Recovery](../../../apps/web/public/icons/rune/recovery.svg) **Recovery**, ![Restoration](../../../apps/web/public/icons/rune/restoration.svg) **Restoration** | to tilstande hver fortager sig 20 % hurtigere |
 | ![Absorption](../../../apps/web/public/icons/rune/absorption.svg) **Absorption** (![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior**)                                                                                                                                               | mindre fysisk skade fra hvert træf            |
+
+Vitae og Attunement lægges sammen: fem Attunement-runer giver +10
+energi. Alle andre runer tæller én gang, uanset hvor mange du bærer.
+Kortere tilstande fra forskellige kilder lægges også sammen, hver
+trukket fra den fulde varighed og afrundet til et helt sekund:
+Restoration og "Fear Cuts Deeper" bringer en Bleeding på 8 sekunder ned
+på 4.
+
+Editoren gemmer ikke to dele med samme rune eller med runer for samme egenskab: kun den stærkeste bonus ville tælle, mens alle livsstraffe ville. Peg på liv i editoren for at se, hvor dit kommer fra: basis, runer, insignier og mods.
 
 Du vælger en dels rune samme sted som dens insignie: klik på delen på
 figuren.

@@ -26,7 +26,9 @@ export type ReplayInput =
   | readonly [tick: number, kind: "drop", seat: string]
   | readonly [tick: number, kind: "forfeit", team: WireTeam, teams: readonly WireTeam[]]
   | readonly [tick: number, kind: "awaited", teams: readonly WireTeam[]]
-  | readonly [tick: number, kind: "called", team: WireTeam, target: string | null];
+  | readonly [tick: number, kind: "called", team: WireTeam, target: string | null]
+  /** The match starts (#3818): ticks before it were held, every one after is the match's own. */
+  | readonly [tick: number, kind: "start"];
 
 /**
  * A match as its host ran it (#3572, ADR-0054): enough to run it again
@@ -177,6 +179,8 @@ function parseInput(value: unknown, teamCount: WireTeamCount): ReplayInput | und
       const teams = teamsOf(a, teamCount);
       return arity(3) && teams !== undefined ? [tick, "awaited", teams] : undefined;
     }
+    case "start":
+      return arity(2) ? [tick, "start"] : undefined;
     case "called": {
       const team = teamOf(a, teamCount);
       return arity(4) && team !== undefined && (b === null || isText(b))

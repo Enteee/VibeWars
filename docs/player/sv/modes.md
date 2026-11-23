@@ -33,6 +33,8 @@ konturpil vid skärmkanten: stället eller en helgedom i ägarens färg,
 grå om ingen äger den, altaret i guld. En spelares fyllda pil ritas
 ovanpå.
 
+En match börjar med alla fasthållna nära sin startplats: du kan gå några steg, men inte slåss eller använda färdigheter. En rad överst räknar spelarna som har läst in matchen. När alla har läst in den räknar den ner 10 sekunder och matchen börjar, och dess klocka med den. En spelare som inte har läst in den efter 20 sekunder väntar man inte på: nedräkningen börjar utan dem, och de kan fortfarande ansluta senare.
+
 ## Förintelse
 
 **Besegra alla fiender.** De döda ligger kvar tills en allierad
@@ -359,6 +361,8 @@ Efter en köad lagmatch köar vinnarna igen av sig själva efter
 20 sekunder, och förlorarna (även vid oavgjort) återvänder till menyn;
 en kodlobbys match tar alla tillbaka till lobbyn. En knapp under
 resultatet hoppar över väntan, eller, för vinnare, lämnar utan att köa.
+Vinnare i Lagarenan behåller sitt lagbygge och varje spelares plats till nästa match, utan laglobby, om inte gruppen har ändrats sedan dess: någon har gått, är borta eller har anslutit. Då väljer de sitt lag igen.
+Vann inte ditt lag stoppar Stoppa nedräkningen så att du kan läsa resultatet; knappen tar dig sedan vidare när du är redo.
 
 ## Heroes' Ascent
 

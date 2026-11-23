@@ -37,6 +37,7 @@ import {
   type HostMap,
   type MatchHost,
   type PlannedSeats,
+  type PreMatchTimes,
   type ReplayRecording,
 } from "./match-host.js";
 import type { MatchRecord } from "./match-record.js";
@@ -248,12 +249,24 @@ export function startMatch(
     recordReplay?: false | ReplayRecording;
     /** Where `joinLocal`'s player keeps the replay (#3572); nowhere by default. */
     replays?: ReplayKeeper;
+    /** The wait before the start (#3818); none by default. */
+    preMatch?: PreMatchTimes | null;
+    /** Each player says its scene is drawn as soon as it is welcomed (#3852); `false` leaves that to the test. */
+    sceneReady?: boolean;
   } = {},
 ): TestMatch {
   const network = createMemoryNetwork();
   const remote = network.join("host");
   const { host: hostTransport, local } = createLocalPeer(remote);
   let draws = 0;
+  /** As a page would once its first frame is up (#3852). */
+  const drawn = async <C extends PeerMatchConnection>(connection: C): Promise<C> => {
+    if (options.sceneReady !== false) {
+      connection.sceneReady();
+      await settle();
+    }
+    return connection;
+  };
   const host = createMatchHost({
     transport: hostTransport,
     map: options.map ?? ARENA,
@@ -270,6 +283,7 @@ export function startMatch(
     nowSeconds: () => TEST_NOW_SECONDS,
     signetOf: options.signetOf ?? testSignet,
     recordReplay: options.recordReplay ?? false,
+    preMatch: options.preMatch ?? null,
   });
   return {
     network,
@@ -293,7 +307,7 @@ export function startMatch(
         timeoutMs: 1000,
         replays: null,
       });
-      return { connection, transport };
+      return { connection: await drawn(connection), transport };
     },
     async rejoin(dropped) {
       const transport = network.join();
@@ -306,17 +320,19 @@ export function startMatch(
         timeoutMs: 1000,
         replays: null,
       });
-      return { connection, transport };
+      return { connection: await drawn(connection), transport };
     },
     async joinLocal(peerHello = hello()) {
       await settle();
-      return connectMatch({
-        transport: local,
-        hostId: "host",
-        hello: peerHello,
-        timeoutMs: 1000,
-        replays: options.replays ?? null,
-      });
+      return drawn(
+        await connectMatch({
+          transport: local,
+          hostId: "host",
+          hello: peerHello,
+          timeoutMs: 1000,
+          replays: options.replays ?? null,
+        }),
+      );
     },
   };
 }

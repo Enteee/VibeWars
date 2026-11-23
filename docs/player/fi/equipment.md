@@ -163,9 +163,17 @@ aseita modeineen.
 | Ylivertainen ominaisuusriimu                                                                                                                                                                                                                                                                                   | +3 ominaisuuteen, -75 terveyttä                 |
 | ![Vigor](../../../apps/web/public/icons/rune/vigor.svg) **Vigor**                                                                                                                                                                                                                                              | lisää terveyttä (+30, +41 tai +50)              |
 | ![Vitae](../../../apps/web/public/icons/rune/vitae.svg) **Vitae**                                                                                                                                                                                                                                              | +10 terveyttä                                   |
-| ![Attunement](../../../apps/web/public/icons/rune/attunement.svg) **Attunement**                                                                                                                                                                                                                               | lisää energiaa (+3, +6 tai +9)                  |
+| ![Attunement](../../../apps/web/public/icons/rune/attunement.svg) **Attunement**                                                                                                                                                                                                                               | lisää energiaa (+2)                             |
 | ![Clarity](../../../apps/web/public/icons/rune/clarity.svg) **Clarity**, ![Purity](../../../apps/web/public/icons/rune/purity.svg) **Purity**, ![Recovery](../../../apps/web/public/icons/rune/recovery.svg) **Recovery**, ![Restoration](../../../apps/web/public/icons/rune/restoration.svg) **Restoration** | kaksi vaivaa kumpikin kuluu pois 20 % nopeammin |
 | ![Absorption](../../../apps/web/public/icons/rune/absorption.svg) **Absorption** (![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior**)                                                                                                                                               | vähemmän fyysistä vahinkoa jokaisesta osumasta  |
+
+Vitae ja Attunement lasketaan yhteen: viisi Attunement-riimua antaa +10
+energiaa. Muut riimut lasketaan kerran, vaikka niitä olisi päällä
+useampi. Vaivojen lyhennykset eri lähteistä lasketaan myös yhteen, kukin
+koko kestosta ja kokonaisiin sekunteihin pyöristettynä: Restoration ja
+"Fear Cuts Deeper" lyhentävät 8 sekunnin Bleedingin 4 sekuntiin.
+
+Editori ei tallenna kahta osaa, joissa on sama riimu tai saman ominaisuuden riimut: vain vahvin bonus laskettaisiin, mutta jokainen terveysrangaistus laskettaisiin. Osoita editorissa terveyttä nähdäksesi, mistä se tulee: perus, riimut, arvomerkit ja modit.
 
 Valitset osan riimun samasta paikasta kuin sen arvomerkin: napsauta osaa
 hahmokuvassa.

@@ -168,6 +168,8 @@ Az **Esc** mentés nélkül lép ki, és előbb rákérdez, ha bármit
 módosítottál. A **Megoszt**, a **GW1-kód betöltése**, a **Másolat** és a
 **Törlés** a **⋯** alatt van.
 
+Problémás build nem menthető, és a gyakorlóterület sem indul vele. Ha egy ilyen build mégis meccsre kerül, ott kezdő builddel játszol, és egy üzenet megmondja, miért.
+
 A csapatkódot ehelyett a **Csapatszerkesztőben** kell betölteni: illeszd be bárhová
 ott, vagy nyiss meg egy csapatbuildet, és használd a **⋯** → **Csapat betöltése**
 lehetőségét.
@@ -192,12 +194,19 @@ A csapatbuildnek mindig annyi tagja van, amekkora a mérete: az új egy
 el, hanem lecserélsz. Minden sor a tag karakterét mutatja a nála lévő
 fegyverekkel, fegyverkészletenként egy ponttal, ha egynél több van neki,
 a maximális Életerejével és Energiájával, és a nyolc készségével; húzz
-egy sort a ⠿ jelénél fogva az átrendezéshez. A jobb oldali panel a
+egy sort a ⠿ jelénél fogva az átrendezéshez. Tartsd nyomva a **Shift** billentyűt, miközben
+egy sort egy másik tagra ejtesz, hogy inkább a teljes buildjét másold arra a
+tagra; a húzott sor olyan marad, amilyen volt.
+A jobb oldali panel a
 Karakterszerkesztő könyvtára, a **Készségek** és a **Tárgyak** előtt egy
 **Karaktereim** füllel. A **Karaktereim** fülön húzd az egyik
 karakteredet egy tagra, hogy az a tag annak másolata legyen. A másolat
 a csapaté: ha módosítod, vagy azt a karaktert, amelyből készült, a
-másik olyan marad, amilyen volt. A **Készségek** fülön a készségkönyvtár
+másik olyan marad, amilyen volt. Fordítva: húzz egy tagot a
+**Karaktereim** részre vagy a fülére, hogy új saját karakterként mentsd; ha
+a neve már foglalt, " (copy)" kerül a végére, a csapat pedig megtartja a
+tagot úgy, ahogy van.
+A **Készségek** fülön a készségkönyvtár
 annak a tagnak a készségeit mutatja, amelyre utoljára kattintottál; húzz
 egyet bármelyik tag helyére, hogy oda vedd fel. Ugyanannak a tagnak a
 saját sávján a már rajta lévő készség az adott helyre kerül át. Az az
@@ -219,7 +228,7 @@ tag fegyvereit és mellékkezeit tartalmazza, és csak addig van ott, amíg egy 
 nyitva van: kattints egyre, hogy felvedd, vagy húzd a kezeire. Egyszerre
 egy tag lehet nyitva; az **Esc** bezárja. Az új kaszt elveti azokat a
 készségeket és szinteket, amelyeket nem tud használni, egy **Vissza** lehetőséggel.
-Nyomd meg egy tag nevét, vagy a **Megnyitás a Karakter képernyőn** gombot, hogy a
+Nyomd meg egy tag nevét, vagy a **✎** gombját, hogy a
 buildszerkesztőben szerkeszd;
 annak **Mentés** gombja visszateszi a csapatba, a csapat saját **Mentés** gombja pedig mindent
 megtart, és visszavisz a Csapatszerkesztőbe. Az **Esc** mentés
@@ -232,3 +241,10 @@ probléma nélküli csapatot lehet a Csapatlobbiban javasolni: a kártyán a
 Az első indításod egy kész csapatot sorsol a választott méretben, 4v4-ben, hacsak
 nem változtattál rajta, **Véletlen** jelöléssel: az
 **Újra** gombja másikat tesz a helyére, a **Klón** pedig egy szerkeszthető másolatot ad.
+Minden csapatbuildnek van mérete, 2v2, 4v4 vagy 8v8 (1v1-es csapatbuild nincs): az oldalsáv
+**Csapatmérete**. A Csapatszerkesztő az ott választott méretű
+csapatbuildeket sorolja fel, és az **Új csapatbuild** ilyen méretűt
+készít. A szerkesztőjében a **Csapatméret** módosítja: kisebb méret
+elhagyja az utolsó tagokat, nagyobb üreseket ad hozzá, a Mentés pedig az
+oldalsávot arra a méretre állítja, amellyel mentetted. A beillesztett
+csapat megtartja a méretét, és az oldalsáv átvált rá.

@@ -154,9 +154,16 @@
 | רונת תכונה Superior                                                                                                                                                                                                                                                                                            | +3 לתכונה, חיים -75                    |
 | ![Vigor](../../../apps/web/public/icons/rune/vigor.svg) **Vigor**                                                                                                                                                                                                                                              | יותר חיים (+30, +41 או +50)            |
 | ![Vitae](../../../apps/web/public/icons/rune/vitae.svg) **Vitae**                                                                                                                                                                                                                                              | +10 חיים                               |
-| ![Attunement](../../../apps/web/public/icons/rune/attunement.svg) **Attunement**                                                                                                                                                                                                                               | יותר אנרגיה (+3, +6 או +9)             |
+| ![Attunement](../../../apps/web/public/icons/rune/attunement.svg) **Attunement**                                                                                                                                                                                                                               | יותר אנרגיה (+2)                       |
 | ![Clarity](../../../apps/web/public/icons/rune/clarity.svg) **Clarity**, ![Purity](../../../apps/web/public/icons/rune/purity.svg) **Purity**, ![Recovery](../../../apps/web/public/icons/rune/recovery.svg) **Recovery**, ![Restoration](../../../apps/web/public/icons/rune/restoration.svg) **Restoration** | שני פגעים כל אחת חולפים מהר יותר ב-20% |
 | ![Absorption](../../../apps/web/public/icons/rune/absorption.svg) **Absorption** (![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior**)                                                                                                                                               | פחות נזק פיזי מכל פגיעה                |
+
+Vitae ו-Attunement מצטברות: חמש רונות Attunement נותנות +10 אנרגיה.
+כל רונה אחרת נספרת פעם אחת, לא משנה כמה אתה לובש. גם קיצורי פגעים
+ממקורות שונים מצטברים, כל אחד מחושב מהמשך המלא ומעוגל לשנייה שלמה:
+Restoration ו-"Fear Cuts Deeper" מקצרות Bleeding של 8 שניות ל-4.
+
+העורך לא שומר שני חלקים עם אותה רונה, או עם רונות של אותה תכונה: רק הבונוס החזק ביותר היה נספר, בעוד שכל קנס חיים היה נספר. הצבע על החיים בעורך כדי לראות מאין הם באים: בסיס, רונות, סמלים ושדרוגים.
 
 את הרונה של חלק בוחרים באותו מקום כמו את הסמל שלו: לחץ על החלק על
 הדמות.

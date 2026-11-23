@@ -159,6 +159,9 @@ describe("the menu quest session", () => {
     expect(items.get(KEY)).toBe("menu:team");
     expect(shown.at(-1)?.target).toBe("rail-teams");
     quest.event({ kind: "screen-shown", screen: "teams" });
+    // 2v2 in the sidebar first, then New team build (#3794).
+    expect(shown.at(-1)?.target).toBe("team-build-size");
+    quest.event({ kind: "team-build-size", size: 2 });
     expect(shown.at(-1)?.target).toBe("team-new");
     const mine: StoredCharacter = {
       ...newCharacter("c1"),

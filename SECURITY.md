@@ -322,6 +322,25 @@ What it does not defend against:
   32 M-character replay every match, and 50 are kept, so it can grow a
   peer's IndexedDB by over a gigabyte across many matches with it.
 
+## Match history
+
+A player keeps the newest `KEPT_MATCHES` (50) ended matches they had a
+seat in (#3848, `apps/web/src/storage/match-history.ts`): the host's
+`ended` and, if it came, its charts. Nothing in it is sent anywhere.
+
+What it defends against:
+
+- **A host or an edited store breaking the page.** Each record is parsed
+  again on every read with the wire's own checks (`parseWireEnded`,
+  `parseWireMatchChart`, its roster and `MAX_CHART_EVENTS`), and one that
+  fails is deleted. So a kept match is never larger or stranger than the
+  end panel already accepts live. Names and labels render as text.
+
+What it does not defend against:
+
+- **A host lying in the result.** The history keeps what the host said,
+  as the end panel showed it; it proves nothing about what was played.
+
 ## Ranked receipts
 
 A ranked match (ADR-0055, `packages/ranking`) ends in a receipt that every
@@ -490,6 +509,13 @@ What it does not defend against:
   resets it, so a peer cannot refill it by quitting and saying hello
   again. A peer that said `bye` is not seated again until it leaves the
   room.
+- `scene-ready` (#3852) is a client's word that its first frame is drawn,
+  and the pre-match countdown waits for every seated human's. It is
+  charged to the budget before it is parsed, must be empty, and counts
+  only from a seated peer; the host keeps at most one entry per seat. A
+  client that lies early only starts its own match unseen; one that never
+  sends it holds the wait no longer than `joinTimeoutSeconds`, as one that
+  never joins already can.
 - The key gate (#1681, ADR-0043, `keyGated`) runs under `LobbyHost` and
   `joinLobby` on every transport. The host sends a new peer a
   `key-challenge` nonce and nothing else, and ignores everything but its

@@ -147,6 +147,8 @@ menekan **Simpan**.
 **Esc** keluar tanpa menyimpan, dan bertanya dulu kalau kamu mengubah sesuatu.
 **Bagikan**, **Muat kode GW1**, **Duplikat** dan **Hapus** ada di bawah **⋯**.
 
+Build yang punya masalah tidak bisa disimpan, dan area latihan tidak dimulai dengannya. Jika build seperti itu tetap masuk ke pertandingan, kamu memakai build awal di sana, dan sebuah pesan menjelaskan alasannya.
+
 Kode tim dimuat di **Pembuat Tim** sebagai gantinya: tempel di mana saja di sana,
 atau buka sebuah build tim dan pakai **⋯** → **Muat tim**-nya.
 
@@ -170,11 +172,17 @@ dengan karakter kosong di setiap tempat. Kamu tidak pernah menambah atau membuan
 kamu menggantinya. Setiap baris menampilkan karakter anggota dengan senjata yang
 dipegangnya, satu titik untuk setiap set senjata kalau punya lebih dari satu,
 Darah dan Energi maksimumnya, dan delapan skill-nya; seret baris lewat ⠿-nya untuk
-mengubah urutan. Panel di kanan adalah perpustakaan Pembuat Karakter,
+mengubah urutan. Tahan **Shift** saat menjatuhkan baris ke anggota lain
+untuk menyalin seluruh build-nya ke anggota itu; baris yang kamu seret tetap seperti semula.
+Panel di kanan adalah perpustakaan Pembuat Karakter,
 dengan tab **Karakterku** sebelum **Skill** dan **Gear**. Di **Karakterku**, seret
 salah satu karaktermu ke seorang anggota untuk menjadikan anggota itu salinannya.
 Salinan adalah milik tim itu sendiri: mengubahnya, atau mengubah karakter asalnya,
-membiarkan yang lain seperti semula. Di **Skill**, perpustakaan skill menampilkan
+membiarkan yang lain seperti semula. Sebaliknya, seret seorang anggota ke
+**Karakterku**, atau ke tabnya, untuk menyimpannya sebagai karakter barumu sendiri;
+jika namanya sudah dipakai, ia mendapat " (copy)", dan tim tetap menyimpan
+anggota itu apa adanya.
+Di **Skill**, perpustakaan skill menampilkan
 skill anggota yang terakhir kamu klik; seret satu ke slot anggota mana pun
 untuk memasangnya di sana. Di bar milik anggota itu sendiri, skill yang sudah ada di sana pindah
 ke slot tersebut. Jatuhan yang tidak bisa diterima anggota, skill dari profesi lain
@@ -193,7 +201,7 @@ senjata dan off-hand milik anggota yang terbuka, dan hanya ada selama ada anggot
 yang terbuka: klik salah satunya untuk memasangnya, atau seret ke tangannya. Hanya satu
 anggota yang terbuka pada satu waktu; **Esc** menutupnya. Profesi baru membuang
 skill dan peringkat yang tidak bisa dipakainya, dengan tombol **Urung**.
-Tekan nama seorang anggota, atau **Buka di layar Karakter**, untuk mengeditnya di
+Tekan nama seorang anggota, atau tombol **✎**-nya, untuk mengeditnya di
 editor build;
 **Simpan**-nya menaruhnya kembali di tim, dan **Simpan** milik tim menyimpan semuanya
 lalu membawamu kembali ke Pembuat Tim. **Esc** keluar
@@ -206,3 +214,10 @@ tanpa masalah yang bisa diusulkan di Lobi Tim: kartunya bertuliskan
 Saat pertama kali kamu mulai, satu tim siap pakai diacak pada ukuran yang dipilih, 4v4 kecuali kamu
 mengubahnya, ditandai **Acak**:
 **Acak lagi**-nya menukarnya dengan tim lain, dan **Klon** memberimu salinan untuk diedit.
+Setiap build tim punya ukuran, 2v2, 4v4 atau 8v8 (tidak ada build tim 1v1): **Ukuran tim** di
+bilah samping. Pembuat Tim menampilkan build tim dengan ukuran yang dipilih di sana,
+dan **Build tim baru** membuat build dengan ukuran itu. **Ukuran tim** di editornya
+mengubahnya: ukuran yang lebih kecil membuang anggota terakhir, yang lebih besar
+menambah anggota kosong, dan Simpan memindahkan bilah samping ke ukuran saat build
+itu disimpan. Tim yang ditempel mempertahankan ukurannya, dan bilah samping
+berpindah ke ukuran itu.

@@ -4,6 +4,8 @@ import {
   ADRENALINE_PER_STRIKE,
   CHAIN_MARK_SECONDS,
   ANNIHILATION_MATCH_RULES,
+  ARMOR_SLOTS,
+  type ArmorSlot,
   KILL_COUNT_MATCH_RULES,
   MINIMAL_GW_INSPIRED_PVP_V1,
   defaultBuildEquipment,
@@ -241,6 +243,36 @@ describe("networked combat (P2P)", () => {
     expect(me?.health).toBe(me?.maxHealth);
     expect(me?.energy).toBe(me?.maxEnergy);
     expect(me?.dead).toBe(false);
+  });
+
+  it("two Superior Runes of Vigor never make +100: the build is refused for a starter one (#3822)", async () => {
+    const warrior = starterBuild("Warrior/Monk");
+    const wearingVigor = (pieces: number): PlayerBuild => {
+      const vigor = { kind: "universal", runeId: "vigor", tier: "superior" } as const;
+      const rune = (slot: ArmorSlot) => (ARMOR_SLOTS.indexOf(slot) < pieces ? vigor : null);
+      const { head, chest, hands, legs, feet } = warrior.equipment.armor;
+      const armor = {
+        head: { ...head, rune: rune("head") },
+        chest: { ...chest, rune: rune("chest") },
+        hands: { ...hands, rune: rune("hands") },
+        legs: { ...legs, rune: rune("legs") },
+        feet: { ...feet, rune: rune("feet") },
+      };
+      return { ...warrior, equipment: { ...warrior.equipment, armor } };
+    };
+    const joinWith = async (build: PlayerBuild) => {
+      const match = startMatch();
+      const { connection } = await match.join(hello({ build: toJson(build) }));
+      await match.step(TICK);
+      return connection;
+    };
+
+    const bare = self(await joinWith(wearingVigor(0)))?.maxHealth ?? 0;
+    expect(self(await joinWith(wearingVigor(1)))?.maxHealth).toBe(bare + 50);
+    // Two: illegal, so the player plays a starter build. Its Vigor and
+    // Survivor insignia are what read as "+100" in play.
+    const doubled = await joinWith(wearingVigor(2));
+    expect(isStarterBar(doubled.skillBar.map((slot) => slot?.id ?? null))).toBe(true);
   });
 
   it("sends the skill bar on join, so the client can render it", async () => {

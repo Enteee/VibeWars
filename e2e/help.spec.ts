@@ -121,6 +121,28 @@ test("Help, not the menu, says peers see your IP address (#541, #1442)", async (
   await expect(help.locator(".help-page")).toContainText("see your IP address");
 });
 
+test("a Help link to a section opens its page at that heading, not the top (#3812)", async ({
+  page,
+}) => {
+  await page.goto("./");
+  await page.locator(".topbar-help").click();
+  const help = page.getByRole("dialog", { name: "Help" });
+  await picker(help).selectOption("ranking");
+  await help.locator('.help-page a[data-anchor="heroes-ascent"]').first().click();
+  const pane = help.locator(".help-page");
+  await expect(pane).toHaveAttribute("data-page", "modes");
+  const heading = pane.locator("h2#heroes-ascent");
+  await expect(heading).toHaveText("Heroes' Ascent");
+  // Scrolled to it: the heading stands at the pane's top, not far down the page.
+  await expect
+    .poll(async () => {
+      const [top, at] = await Promise.all([pane.boundingBox(), heading.boundingBox()]);
+      return top === null || at === null ? Infinity : Math.abs(at.y - top.y);
+    })
+    .toBeLessThan(40);
+  expect(await pane.evaluate((node) => node.scrollTop)).toBeGreaterThan(0);
+});
+
 /** Help on its Third-party licences page, as a player reaches it. */
 async function openLicences(page: Page): Promise<Locator> {
   await page.goto("./");

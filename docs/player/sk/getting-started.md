@@ -63,6 +63,8 @@ vybraná. **Znova** naň dosadí iný hotový tím. Hotové tímy sú dobre hodn
 PvP tímové buildy z PvX wiki; pre veľkosť, ktorú PvX nemá, sa zostavia zo
 sólových buildov PvX. **Klonovať** uloží kópiu zobrazeného tímu ako tvoj
 vlastný tímový build a otvorí ju, aby si ju mohol zmeniť podľa seba.
+Veľkosť tímového buildu zmeníš v jeho editore: menšia veľkosť odoberie
+posledných členov, väčšia pridá prázdnych.
 
 ## Zahraj si Náhodnú arénu
 
@@ -84,13 +86,17 @@ Zatvorením karty počas čakania okamžite opustíš frontu.
 Keď sa zápas skončí, môžeš zvoliť **Znova do fronty** alebo **Zostať spolu**
 s tímom, s ktorým si práve hral.
 
-Vedľa skóre rozprávajú dva grafy priebeh zápasu v čase. **Ty** kreslí tvoje
+Každý zápas končí svojím skóre, či už z frontu, hostený, alebo v lobby, a
+vedľa neho rozprávajú dva grafy priebeh zápasu v čase; obrazovka frontu ich
+po zápase z frontu ukáže znova. **Ty** kreslí tvoje
 spôsobené poškodenie, prijaté poškodenie, liečenie a Energiu; **Tímy** kreslí
 zásobu zdravia každého tímu nad jeho celkovým poškodením. Značky pod časovou
 osou ukazujú zabitia, smrti, prerušenia, obsadenia a oživenia: ukáž na jednu
 alebo na ňu prejdi klávesom Tab a prečítaš si, čo sa stalo. Stlačením položky
 legendy skryješ alebo zobrazíš jej čiaru. Na telefóne sú grafy pod skóre, ktoré
 ukazuje teba a dvoch ďalších, kým nestlačíš **Zobraziť všetko**.
+
+**História zápasov** v hornej lište ukazuje tvojich posledných 50 zápasov, najnovšie prvé: otvor jeden a znova uvidíš jeho skóre a grafy. Uchovávajú sa len v tomto prehliadači. **Moje zápasy** ukáže len tie odohrané s tvojím súčasným kľúčom hráča.
 
 ## Hostiť zápas alebo sa pripojiť
 

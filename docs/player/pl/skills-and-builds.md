@@ -141,6 +141,8 @@ nie ma, pojawia się jako puste miejsce. Build jest twój, gdy naciśniesz **Zap
 zapisywania, a jeśli coś zmieniłeś, najpierw pyta.
 **Udostępnij**, **Wczytaj kod GW1**, **Duplikuj** i **Usuń** są pod **⋯**.
 
+Buildu z problemem nie da się zapisać, a obszar treningowy z nim nie wystartuje. Jeśli taki build mimo to trafi do meczu, grasz w nim buildem startowym, a komunikat mówi dlaczego.
+
 Kod drużyny wczytuje się natomiast w **Kreatorze drużyn**: wklej go
 tam w dowolnym miejscu albo otwórz build drużyny i użyj jego **⋯** →
 **Wczytaj drużynę**.
@@ -163,11 +165,17 @@ Build drużyny ma zawsze tylu członków, ile wynosi jego rozmiar: nowy zaczyna 
 postacią na każdym miejscu. Nigdy nie dodajesz ani nie usuwasz członka, tylko go
 zastępujesz. Każdy wiersz pokazuje postać członka z bronią, którą trzyma, kropkę dla
 każdego zestawu broni, gdy ma ich więcej, maksymalne Zdrowie i Energię oraz osiem
-umiejętności; przeciągnij wiersz za ⠿, aby zmienić kolejność. Panel po prawej to
+umiejętności; przeciągnij wiersz za ⠿, aby zmienić kolejność. Przytrzymaj **Shift** podczas upuszczania wiersza na
+innego członka, aby zamiast tego skopiować cały jego build na tego członka; przeciągnięty
+wiersz zostaje bez zmian.
+Panel po prawej to
 biblioteka Kreatora postaci, z kartą **Moje postacie** przed **Umiejętności**
 i **Sprzęt**. Na **Moje postacie** przeciągnij jedną ze swoich postaci na członka, aby
 uczynić z niego jej kopię. Kopia należy do drużyny: zmiana jej lub postaci, z której
-powstała, nie dotyka tej drugiej. Na **Umiejętności** biblioteka pokazuje umiejętności
+powstała, nie dotyka tej drugiej. W drugą stronę przeciągnij członka na
+**Moje postacie** albo na tę kartę, aby zapisać go jako nową własną postać; jeśli
+jego nazwa jest zajęta, dostaje " (copy)", a drużyna zachowuje członka bez zmian.
+Na **Umiejętności** biblioteka pokazuje umiejętności
 członka, którego kliknięto ostatnio; przeciągnij jedną na miejsce dowolnego członka,
 aby ją tam założyć. Na pasku tego członka umiejętność, która już na nim jest,
 przenosi się na to miejsce. Upuszczenie, którego członek nie przyjmie, umiejętność
@@ -187,7 +195,7 @@ do drugiej ręki otwartego członka i jest dostępny tylko, gdy któryś jest ot
 kliknij jeden, aby go założyć, lub przeciągnij na jego ręce. Otwarty jest jeden członek
 naraz; **Esc** go zamyka. Nowa profesja usuwa umiejętności i rangi, których nie może
 używać, z opcją **Cofnij**.
-Naciśnij nazwę członka lub **Otwórz na ekranie postaci**, aby edytować go w edytorze
+Naciśnij nazwę członka lub jego przycisk **✎**, aby edytować go w edytorze
 buildu;
 jego **Zapisz** umieszcza go z powrotem w drużynie, a **Zapisz** drużyny zachowuje wszystko
 i wraca do Kreatora drużyn. **Esc** wychodzi bez zapisywania, ale najpierw pyta.
@@ -199,3 +207,10 @@ a drużyna bez nazwy widnieje jako **Drużyna bez nazwy**.
 Pierwsze uruchomienie losuje jedną gotową drużynę w wybranym rozmiarze, 4v4, chyba że
 go zmienisz, oznaczoną **Losowo**: jej **Losuj** podmienia ją na inną, a **Klonuj** daje
 ci kopię do edycji.
+Każdy build drużyny ma rozmiar, 2v2, 4v4 lub 8v8 (nie ma buildów drużyn 1v1):
+**Rozmiar drużyny** na pasku bocznym. Kreator drużyn wymienia buildy drużyn
+wybranego tam rozmiaru, a **Nowy build drużyny** tworzy jeden tego rozmiaru.
+**Rozmiar drużyny** w jego edytorze go zmienia: mniejszy rozmiar usuwa ostatnich
+członków, większy dodaje pustych, a Zapisz przełącza pasek boczny na rozmiar,
+z jakim go zapisano. Wklejona drużyna zachowuje swój rozmiar, a pasek boczny
+przełącza się na niego.

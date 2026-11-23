@@ -64,6 +64,8 @@ PvP-tiimibuildeja; koolle, jolle PvX:ssä ei ole yhtään, kootaan tiimi
 PvX:n yksittäisistä buildeista. **Kloonaa** tallentaa näytetystä tiimistä
 kopion omaksi tiimibuildiksesi ja avaa sen, jotta voit muuttaa sitä
 mielesi mukaan.
+Tiimibuildin koko vaihtuu sen editorissa: pienempi koko pudottaa viimeiset
+jäsenet, suurempi lisää tyhjiä.
 
 ## Pelaa satunnaisareenaa
 
@@ -86,7 +88,9 @@ oletkin. Välilehden sulkeminen odottaessa poistaa sinut jonosta heti.
 Kun ottelu päättyy, voit valita **Jonota uudelleen** tai **Pysykää yhdessä**
 juuri kanssasi pelanneen tiimin kanssa.
 
-Pisteiden vieressä kaksi kaaviota kertoo ottelun kulun ajan mittaan. **Sinä**
+Jokainen ottelu päättyy pisteisiinsä, jonosta, isännöitynä tai aulassa, ja
+niiden vieressä kaksi kaaviota kertoo ottelun kulun ajan mittaan; jononäkymä
+näyttää ne uudelleen jonotetun ottelun jälkeen. **Sinä**
 piirtää tekemäsi vahingon, saamasi vahingon, parannuksen ja Energian;
 **Joukkueet** piirtää kunkin joukkueen terveysvarannon sen kokonaisvahingon
 yläpuolelle. Aika-akselin alla olevat merkit näyttävät tapot, kuolemat,
@@ -94,6 +98,8 @@ keskeytykset, valtaukset ja herätykset: osoita merkkiä tai siirry siihen
 Tabilla lukeaksesi, mitä tapahtui. Paina selitteen kohtaa piilottaaksesi tai
 näyttääksesi sen viivan. Puhelimessa kaaviot ovat pisteiden alla, ja pisteet
 näyttävät sinut ja kaksi muuta, kunnes painat **Näytä kaikki**.
+
+Yläpalkin **Otteluhistoria** näyttää viimeiset 50 otteluasi uusin ensin: avaa yksi nähdäksesi sen pisteet ja kaaviot uudelleen. Ne säilyvät vain tässä selaimessa. **Omat ottelut** näyttää vain ne, jotka pelasit nykyisellä pelaaja-avaimellasi.
 
 ## Isännöi ottelu tai liity siihen
 

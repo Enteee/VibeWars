@@ -34,6 +34,8 @@ képernyő szélén: a zászlótartó vagy egy szentély a birtokosa színében,
 szürkén, ha senkié, az oltár aranyszínben. Egy játékos kitöltött nyila
 fölé rajzolódik.
 
+A meccs úgy indul, hogy mindenki a kezdőhelye közelében van tartva: tehetsz néhány lépést, de harcolni és képességet használni nem. Egy sor fent számolja azokat a játékosokat, akiknél betöltött a meccs. Ha mindenkinél betöltött, 10 másodpercet visszaszámol, és a meccs elindul, vele az órája is. Arra a játékosra, akinél 20 másodperc után sem töltött be, nem várnak: a visszaszámlálás nélküle indul, és később még csatlakozhat.
+
 ## Megsemmisítés
 
 **Győzz le minden ellenséget.** A halottak addig fekve maradnak, amíg
@@ -395,6 +397,8 @@ Egy sorban álló csapatmeccs után a győztesek 20 másodperc után maguktól
 menübe; a kóddal létrehozott lobbi meccse mindenkit visszavisz a
 lobbiba. Az eredmény alatti gomb átugorja a várakozást, a győzteseknek
 pedig sorba állás nélkül lép ki.
+A Csapataréna győztesei a következő meccsre megtartják a csapatbuildjüket és minden játékos helyét, csapatváró nélkül, hacsak a csoport azóta nem változott: valaki kilépett, távol van vagy csatlakozott. Ilyenkor újra választanak csapatot.
+Ha a csapatod nem nyert, a Leállítás megállítja a visszaszámlálást, hogy elolvashasd az eredményt; utána a gomb visz tovább, amikor készen állsz.
 
 ## Hősök Útja
 

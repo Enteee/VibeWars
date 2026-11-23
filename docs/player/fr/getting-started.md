@@ -66,6 +66,8 @@ place. Les équipes prêtes sont les builds d'équipe PvP bien notés du wiki Pv
 une taille que PvX n'a pas reçoit des builds solo PvX assemblés. **Cloner**
 enregistre une copie de l'équipe affichée comme ton propre Build d'équipe et
 l'ouvre, à modifier comme tu veux.
+La taille d'un Build d'équipe se change dans son éditeur : une taille plus
+petite retire les derniers membres, une plus grande en ajoute des vierges.
 
 ## Jouer une Arène aléatoire
 
@@ -89,7 +91,9 @@ aussitôt de la file.
 Quand le match se termine, tu peux **Relancer la file**, ou **Rester ensemble**
 avec l'équipe avec laquelle tu viens de jouer.
 
-À côté des scores, deux graphiques racontent le match dans le temps. **Vous**
+Chaque match se termine sur ses scores, en file, hébergé ou dans un salon, et
+à côté d'eux deux graphiques racontent le match dans le temps ; l'écran de la
+file les montre de nouveau après un match en file. **Vous**
 trace tes dégâts infligés, tes dégâts subis, tes soins et ton Énergie ;
 **Équipes** trace la réserve de santé de chaque équipe au-dessus de ses dégâts
 totaux. Des repères sous l'axe du temps montrent les éliminations, les morts,
@@ -98,6 +102,8 @@ ou atteins-le avec Tab, pour lire ce qui s'est passé. Appuie sur une entrée de
 la légende pour masquer ou afficher sa courbe. Sur téléphone, les graphiques se
 placent sous les scores, qui te montrent avec deux autres joueurs jusqu'à
 **Tout afficher**.
+
+**Historique des parties**, dans la barre du haut, liste tes 50 dernières parties, les plus récentes d’abord : ouvres-en une pour revoir ses scores et ses graphiques. Elles ne sont gardées que dans ce navigateur. **Mes parties** n’affiche que celles jouées avec ta clé de joueur actuelle.
 
 ## Héberger ou rejoindre un match
 

@@ -26,7 +26,7 @@ Un personaggio che le regole del gioco hanno reso non valido mostra strisce ross
 
 Non sai cosa scegliere? Il personaggio iniziale casuale è segnato **Casuale**, con un bordo tratteggiato. **Rigenera** ti dà una nuova build casuale da provare. Le build casuali sono build PvP ben valutate del [wiki PvX](https://gwpvx.fandom.com/), ognuna con il nome del wiki e le sue professioni: "Gust (E/Me)".
 
-Anche **Editor squadre** parte con una Build di squadra casuale, una squadra già pronta per una Lobby squadra per ogni dimensione, 2v2, 4v4 e 8v8, segnata allo stesso modo e sempre per ultima. Editor squadre elenca le Build di squadra della **Dim. squadra** della barra laterale, quindi quella casuale mostrata è della dimensione scelta lì. **Rigenera** mette al suo posto un'altra squadra pronta. Le squadre pronte sono le build PvP di squadra ben valutate del wiki PvX; una dimensione per cui PvX non ne ha riceve build PvX singole messe insieme. **Clona** salva una copia della squadra mostrata come tua Build di squadra e la apre, per cambiarla come vuoi.
+Anche **Editor squadre** parte con una Build di squadra casuale, una squadra già pronta per una Lobby squadra per ogni dimensione, 2v2, 4v4 e 8v8, segnata allo stesso modo e sempre per ultima. Editor squadre elenca le Build di squadra della **Dim. squadra** della barra laterale, quindi quella casuale mostrata è della dimensione scelta lì. **Rigenera** mette al suo posto un'altra squadra pronta. Le squadre pronte sono le build PvP di squadra ben valutate del wiki PvX; una dimensione per cui PvX non ne ha riceve build PvX singole messe insieme. **Clona** salva una copia della squadra mostrata come tua Build di squadra e la apre, per cambiarla come vuoi. La dimensione di una Build di squadra si cambia nel suo editor: una dimensione minore toglie gli ultimi membri, una maggiore ne aggiunge di vuoti.
 
 ## Gioca un'Arena casuale
 
@@ -34,7 +34,9 @@ Il modo più rapido per entrare in uno scontro. In **Arena casuale**, clicca sul
 
 A fine partita puoi scegliere **Di nuovo in coda**, o **Restate uniti** con la squadra con cui hai appena giocato.
 
-Accanto ai punteggi, due grafici raccontano la partita nel tempo. **Tu** traccia i danni inflitti, i danni subiti, le cure e l'Energia; **Squadre** traccia la riserva di salute di ogni squadra sopra i suoi danni totali. I segni sotto l'asse del tempo mostrano uccisioni, morti, interruzioni, conquiste e resurrezioni: punta su uno, o raggiungilo con Tab, per leggere cosa è successo. Premi una voce della legenda per nascondere o mostrare la sua linea. Su telefono i grafici stanno sotto i punteggi, che mostrano te e altri due finché non premi **Mostra tutto**.
+Ogni partita termina sui suoi punteggi, in coda, ospitata o in una lobby, e accanto a essi due grafici raccontano la partita nel tempo; la schermata della coda li mostra di nuovo dopo una partita in coda. **Tu** traccia i danni inflitti, i danni subiti, le cure e l'Energia; **Squadre** traccia la riserva di salute di ogni squadra sopra i suoi danni totali. I segni sotto l'asse del tempo mostrano uccisioni, morti, interruzioni, conquiste e resurrezioni: punta su uno, o raggiungilo con Tab, per leggere cosa è successo. Premi una voce della legenda per nascondere o mostrare la sua linea. Su telefono i grafici stanno sotto i punteggi, che mostrano te e altri due finché non premi **Mostra tutto**.
+
+**Cronologia partite**, nella barra in alto, elenca le tue ultime 50 partite, dalla più recente: aprine una per rivederne punteggi e grafici. Sono conservate solo in questo browser. **Le mie partite** mostra solo quelle giocate con la tua chiave giocatore attuale.
 
 ## Ospita o entra in una partita
 

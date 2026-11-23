@@ -940,15 +940,19 @@ test.describe("the menu quest (#3540)", () => {
     await expect(target("rail-teams")).toHaveClass(/tutorial-pulse/);
     await target("rail-teams").click();
 
-    // The sidebar's size and New team build; the starter team is dimmed.
-    const stepper = page.locator('.mode-rail-stepper[data-tutorial~="team-new"]');
+    // The sidebar's size first, at 4v4, with New team build dimmed (#3794).
+    const stepper = page.locator('.mode-rail-stepper[data-tutorial~="team-build-size"]');
     await expect(stepper).toHaveClass(/tutorial-pulse/);
-    const smaller = stepper.getByRole("button", { name: "Smaller team" });
-    while (!(await smaller.isDisabled())) {
-      await smaller.click();
-    }
+    await expect(stepper).toContainText("4v4");
+    await expect(bubble).toContainText("Set the team size to 2v2.");
+    await expect(target("team-new")).not.toHaveClass(/tutorial-pulse/);
+    await stepper.getByRole("button", { name: "Smaller team" }).click();
     await expect(stepper).toContainText("2v2");
-    await page.locator(".play-card-new").click();
+    // Then New team build alone.
+    await expect(target("team-new")).toHaveClass(/tutorial-pulse/);
+    await expect(bubble).toContainText("Now make a new team build.");
+    await target("team-new").click();
+    await expect(page.locator(".team-grid .team-row")).toHaveCount(2);
 
     await expect(target("team-members")).toHaveClass(/tutorial-pulse/);
     await bubble.getByRole("button", { name: "Got it" }).click();
@@ -986,7 +990,7 @@ test.describe("the menu quest (#3540)", () => {
     const target = (id: string): Locator => page.locator(`[data-tutorial~="${id}"]`);
 
     await target("rail-teams").click();
-    const stepper = page.locator('.mode-rail-stepper[data-tutorial~="team-new"]');
+    const stepper = page.locator('.mode-rail-stepper[data-tutorial~="team-build-size"]');
     const smaller = stepper.getByRole("button", { name: "Smaller team" });
     while (!(await smaller.isDisabled())) {
       await smaller.click();

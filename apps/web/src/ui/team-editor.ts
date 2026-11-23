@@ -11,6 +11,7 @@ import { t } from "../i18n/index.js";
 import { SKILL_BAR_SLOTS } from "../storage/build-validation.js";
 import {
   CHARACTER_SCHEMA_VERSION,
+  isTeamBuildSize,
   type StoredCharacter,
   type StoredTeam,
   type TeamBuildSize,
@@ -22,12 +23,14 @@ import {
   mountGear,
   mountProfessions,
   mountSkillBar,
+  newCharacter,
   type BuildHost,
   type GearHost,
   type ProfessionsHost,
   type Region,
 } from "./build-editor.js";
 import { mountBuildPicker } from "./build-picker.js";
+import { blockingProblems } from "./editor-problems.js";
 import { createCharacterDot } from "./character-figure.js";
 import { characterRanks } from "./character-ranks.js";
 import { equippedCount, professionLabel } from "./character-preview.js";
@@ -49,9 +52,11 @@ import {
   wordmark,
 } from "./kit.js";
 import {
+  characterFromMember,
   moveMember,
   professionMix,
   replaceMember,
+  resizeTeam,
   teamCharacter,
   teamCounters,
   validateTeam,
@@ -69,9 +74,10 @@ import { describeNames, describeWords } from "../i18n/describe-words.js";
  * The team editor (#573, epic #554), mounted once per ADR-0030.
  *
  * Reorder, rename, and a character or a skill dragged onto a member
- * (#2225) change the team in memory and stay on screen; a team is always
- * its size, its members replaced, never added or taken off. Nothing is
- * stored until Save, which always stores, problems and all
+ * (#2225) change the team in memory and stay on screen, and so does the
+ * size: a smaller one drops the last members, a larger one appends blank
+ * ones (#3794). Nothing is stored until Save, which always stores,
+ * problems and all
  * (#2110), and leaves once it has stored (#1902). Esc with unsaved edits, and
  * Delete always, ask inline first. A member's name
  * opens them in the build editor, and the way back hands the editor its
@@ -117,6 +123,11 @@ export interface TeamEditorCallbacks {
   readonly onImportTeam: (team: StoredTeam) => void;
   /** The draft on opening and after every edit (#3542), for the menu quest. */
   readonly onDraft: ((draft: StoredTeam) => void) | undefined;
+  /**
+   * Store `character`, made from a member (#3825), and resolve to the
+   * player's characters as they are now; rejects when it cannot store.
+   */
+  readonly onCreateCharacter: (character: StoredCharacter) => Promise<readonly StoredCharacter[]>;
 }
 
 export interface TeamEditorView {
@@ -203,14 +214,25 @@ export function memberStats(character: TeamCharacter): MemberStats | undefined {
     : { health: summary.maxHealth, energy: summary.maxEnergy };
 }
 
-/** The team size stepper in the editor's bar (#2109, #2141), locked at the build's size. */
-function lockedTeamSize(size: TeamBuildSize): HTMLElement {
+/** A new Team Build's member (#2225): what a new character is, as the team's own. */
+export function blankMember(): TeamCharacter {
+  const blank = newCharacter(crypto.randomUUID());
+  return teamCharacter(blank, blank.id);
+}
+
+/**
+ * The team size stepper in the editor's bar (#2141, #3794): a step goes
+ * to `onPick`, never to the sidebar's stored size.
+ */
+function teamSizeField(size: TeamBuildSize, onPick: (size: TeamBuildSize) => void): HTMLElement {
   const field = h("div", "team-lobby-size");
-  // The size a build was made at stays (#2109).
-  field.title = t("teamEditor.sizeFixed");
   field.append(
     h("span", "field-label", t("teamEditor.sizeLabel")),
-    teamSizeStepper("teams", size, true, () => undefined),
+    teamSizeStepper("teams", size, false, false, (picked) => {
+      if (isTeamBuildSize(picked)) {
+        onPick(picked);
+      }
+    }),
   );
   return field;
 }
@@ -375,16 +397,17 @@ type TeamDrag =
 const MEMBER_EDITOR_KEY = "member-editor";
 
 /**
- * The team editor for `initial`; `characters` are the player's Solo
- * characters, offered to copy in.
+ * The team editor for `initial`; `saved` are the player's Solo
+ * characters, offered to copy in, and a member dropped on them is one more.
  */
 export function mountTeamEditor(
   root: HTMLElement,
   initial: TeamEditorState,
-  characters: readonly StoredCharacter[],
+  saved: readonly StoredCharacter[],
   callbacks: TeamEditorCallbacks,
 ): TeamEditorView {
   let team = initial.team;
+  let characters = saved;
   const opened = initial.opened;
   const isStored = initial.stored;
   let asking: InlineConfirm | undefined;
@@ -536,7 +559,13 @@ export function mountTeamEditor(
     escape: () => {
       leave(callbacks.onClose);
     },
-    status: [lockedTeamSize(team.size), chip.element, unsaved],
+    status: [
+      teamSizeField(team.size, (size) => {
+        commit(resizeTeam(team, size, blankMember));
+      }),
+      chip.element,
+      unsaved,
+    ],
     actions: [save, more.element],
     // Esc puts away the ⋯ menu, Share and the problem list, then clears
     // the counter's marks, before it leaves.
@@ -626,6 +655,7 @@ export function mountTeamEditor(
   const pickerList = h("div", "team-picker-list");
   const pickerEmpty = h("p", "team-picker-empty", t("teamEditor.noCharacters"));
   charactersPane.append(pickerList, pickerEmpty);
+  charactersPane.title = t("teamEditor.dropToCreate");
   const indexOfMember = (characterId: string): number =>
     team.members.findIndex((m) => m.character.id === characterId);
   const memberOf = (characterId: string): TeamCharacter | undefined =>
@@ -708,7 +738,7 @@ export function mountTeamEditor(
     picker.hideReason();
     for (const node of Array.from(
       panel.querySelectorAll(
-        ".team-row.is-dragging, .team-pick.is-dragging, .team-row.is-drop-target",
+        ".team-row.is-dragging, .team-pick.is-dragging, .team-row.is-drop-target, .team-picker-characters.is-drop-target, .library-tab.is-drop-target",
       ),
     )) {
       node.classList.remove("is-dragging", "is-drop-target");
@@ -716,6 +746,72 @@ export function mountTeamEditor(
   };
   // Esc, or a drop anywhere else, ends a drag with nothing done.
   panel.addEventListener("dragend", endDrag);
+
+  /**
+   * Save member `memberId` as a character of the player's own (#3825);
+   * the team is left as it is. An illegal build is never saved.
+   */
+  const createCharacter = (memberId: string): void => {
+    const member = memberOf(memberId);
+    if (member === undefined) {
+      return;
+    }
+    const character = characterFromMember(
+      member,
+      crypto.randomUUID(),
+      Date.now(),
+      new Set(characters.map((each) => each.name)),
+    );
+    const problem = blockingProblems(character).find((each) => each.blocking);
+    if (problem !== undefined) {
+      toast(t("teamEditor.cannotCreateCharacter", { problem: problem.text }));
+      return;
+    }
+    callbacks.onCreateCharacter(character).then(
+      (next) => {
+        if (disposed) {
+          return;
+        }
+        characters = next;
+        update();
+        toast(t("teamEditor.characterCreated", { name: character.name }));
+      },
+      () => {
+        toast(t("app.couldNotSaveCharacter"));
+      },
+    );
+  };
+  /** A member dropped on `target` becomes a character; `then` runs first. */
+  const createOnDrop = (target: HTMLElement, then?: () => void): void => {
+    target.addEventListener("dragover", (event: DragEvent) => {
+      if (dragging?.kind === "member") {
+        event.preventDefault();
+        target.classList.add("is-drop-target");
+      }
+    });
+    target.addEventListener("dragleave", (event: DragEvent) => {
+      if (!(event.relatedTarget instanceof Node && target.contains(event.relatedTarget))) {
+        target.classList.remove("is-drop-target");
+      }
+    });
+    target.addEventListener("drop", (event: DragEvent) => {
+      const drag = dragging;
+      if (drag?.kind !== "member") {
+        return;
+      }
+      event.preventDefault();
+      endDrag();
+      then?.();
+      createCharacter(drag.id);
+    });
+  };
+  createOnDrop(charactersPane);
+  const charactersTab = picker.tabButton("characters");
+  if (charactersTab !== undefined) {
+    createOnDrop(charactersTab, () => {
+      picker.showLibrary("characters");
+    });
+  }
 
   const host: GearHost & ProfessionsHost = {
     ...openHost,
@@ -774,15 +870,6 @@ export function mountTeamEditor(
     }),
     mountGear(equipment, host, doll),
   ];
-  // Opening it in the Character screen stays (#2226).
-  equipment.appendChild(
-    button(t("teamEditor.openInCharacter"), "team-member-open", () => {
-      if (openMember !== undefined) {
-        asking?.dismiss();
-        callbacks.onOpenMember(openMember, { opened, team, stored: isStored });
-      }
-    }),
-  );
   memberEditor.append(identity, attributes, equipment, bar);
   const fillMemberEditor = (): void => {
     const character = openCharacter();
@@ -889,10 +976,15 @@ export function mountTeamEditor(
       picker.bindSlot(cell, () => ({ member: indexOf(), slot }));
       skills.appendChild(cell);
     }
+    // ✎ opens the build editor, as the name does (#3819).
+    const open = button("✎", "team-row-open", () => {
+      asking?.dismiss();
+      callbacks.onOpenMember(characterId, { opened, team, stored: isStored });
+    });
     const edit = button("▼", "team-row-edit", () => {
       toggleOpen(characterId);
     });
-    row.append(order, who, stats, skills, edit);
+    row.append(order, who, stats, skills, open, edit);
 
     row.addEventListener("dragstart", (event: DragEvent) => {
       if (dragging !== undefined) {
@@ -902,14 +994,29 @@ export function mountTeamEditor(
       // Firefox starts no drag without data.
       event.dataTransfer?.setData("text/plain", characterId);
       if (event.dataTransfer !== null) {
-        event.dataTransfer.effectAllowed = "move";
+        // Plain drag reorders, Shift-drag copies the build (#3826).
+        event.dataTransfer.effectAllowed = "copyMove";
       }
       row.classList.add("is-dragging");
     });
     row.addEventListener("dragover", (event: DragEvent) => {
-      if (dragging?.kind === "member") {
+      const held = dragging;
+      if (held?.kind === "member") {
         event.preventDefault();
-        row.classList.toggle("is-drop-target", dragging.id !== characterId);
+        const other = held.id !== characterId;
+        row.classList.toggle("is-drop-target", other);
+        // Read on every dragover, so Shift pressed or let go mid-drag shows.
+        const source = memberOf(held.id);
+        const target = memberOf(characterId);
+        if (other && event.shiftKey && source !== undefined && target !== undefined) {
+          picker.showReason(
+            row,
+            t("teamEditor.copyMember", { source: source.name, target: target.name }),
+            false,
+          );
+        } else {
+          picker.hideReason();
+        }
         return;
       }
       const drag = dragging;
@@ -940,6 +1047,16 @@ export function mountTeamEditor(
       event.preventDefault();
       endDrag();
       if (drag.kind === "member") {
+        if (drag.id === characterId) {
+          return;
+        }
+        // The drop's Shift decides, whatever was held at dragstart (#3826).
+        const source = memberOf(drag.id);
+        if (event.shiftKey && source !== undefined) {
+          focused = characterId;
+          commit(copyOntoMember(team, characterId, source));
+          return;
+        }
         commit(dragMember(team, indexOfMember(drag.id), indexOf()));
         return;
       }
@@ -1053,6 +1170,10 @@ export function mountTeamEditor(
     if (openMember !== undefined && memberOf(openMember) === undefined) {
       openMember = undefined;
     }
+    // A smaller size may have dropped the focused member (#3794).
+    if (memberOf(focused) === undefined) {
+      focused = team.members[0]?.character.id ?? "";
+    }
     syncList(
       list,
       team.members.flatMap((member) =>
@@ -1082,6 +1203,12 @@ export function mountTeamEditor(
         const name = row.querySelector<HTMLButtonElement>(".team-row-name");
         if (name !== null) {
           name.title = t("teamEditor.editInBuilder", { name: character.name });
+        }
+        const open = row.querySelector<HTMLButtonElement>(".team-row-open");
+        if (open !== null) {
+          const label = t("teamEditor.editInBuilder", { name: character.name });
+          open.title = label;
+          open.setAttribute("aria-label", label);
         }
         row.draggable = true;
         fillDot(row.querySelector(".team-row-dot"), character);

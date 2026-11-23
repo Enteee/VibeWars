@@ -58,6 +58,8 @@ wstawia na jego miejsce inną gotową drużynę. Gotowe drużyny to dobrze oceni
 drużynowe buildy PvP z wiki PvX; rozmiar, dla którego PvX ich nie ma, dostaje
 zestawione solowe buildy PvX. **Klonuj** zapisuje kopię
 pokazanej drużyny jako twój build drużyny i otwiera ją do dowolnych zmian.
+Rozmiar buildu drużyny zmienia się w jego edytorze: mniejszy rozmiar usuwa
+ostatnich członków, większy dodaje pustych.
 
 ## Zagraj na Arenie losowej
 
@@ -78,7 +80,9 @@ usuwa cię z kolejki.
 Po zakończeniu meczu możesz wybrać **Szukaj ponownie** albo **Zostańmy razem**
 z drużyną, z którą właśnie grałeś.
 
-Obok wyników dwa wykresy opowiadają przebieg meczu w czasie. **Ty** rysuje
+Każdy mecz kończy się na swoich wynikach, z kolejki, hostowany czy w lobby, a
+obok nich dwa wykresy opowiadają przebieg meczu w czasie; ekran kolejki
+pokazuje je ponownie po meczu z kolejki. **Ty** rysuje
 zadane obrażenia, otrzymane obrażenia, leczenie i Energię; **Drużyny** rysuje
 pulę zdrowia każdej drużyny nad jej łącznymi obrażeniami. Znaczniki pod osią
 czasu pokazują zabójstwa, śmierci, przerwania, przejęcia i wskrzeszenia: wskaż
@@ -86,6 +90,8 @@ jeden lub przejdź do niego klawiszem Tab, aby przeczytać, co się stało.
 Naciśnij pozycję legendy, aby ukryć lub pokazać jej linię. Na telefonie wykresy
 są pod wynikami, które pokazują ciebie i dwie inne osoby, dopóki nie wybierzesz
 **Pokaż wszystko**.
+
+**Historia meczów** na górnym pasku pokazuje twoich ostatnich 50 meczów, od najnowszego: otwórz jeden, by znów zobaczyć jego wyniki i wykresy. Są przechowywane tylko w tej przeglądarce. **Moje mecze** pokazuje tylko te rozegrane z twoim obecnym kluczem gracza.
 
 ## Hostuj mecz lub dołącz
 
