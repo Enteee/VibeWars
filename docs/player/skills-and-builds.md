@@ -147,6 +147,10 @@ press **Save**.
 **Esc** leaves without saving, and asks first if you changed anything.
 **Share**, **Load GW1 code**, **Duplicate** and **Delete** are under **⋯**.
 
+A build with a problem cannot be saved, and the **Training Ground**
+will not start with one. If such a build still reaches a match, you
+play a starter build there, and a message says why.
+
 A team code loads on **Team Builder** instead: paste it anywhere there, or
 open a team build and use its **⋯** → **Load team**.
 

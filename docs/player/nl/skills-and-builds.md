@@ -148,6 +148,8 @@ je op **Opslaan** drukt.
 **Esc** vertrekt zonder op te slaan, en vraagt eerst als je iets gewijzigd hebt.
 **Delen**, **GW1-code laden**, **Kopiëren** en **Wissen** staan onder **⋯**.
 
+Een build met een probleem kun je niet opslaan, en het trainingsgebied start er niet mee. Komt zo'n build toch in een wedstrijd, dan speel je daar een starterbuild, en een melding zegt waarom.
+
 Een teamcode laad je in plaats daarvan op **Teambouwer**: plak hem daar ergens, of
 open een teambuild en gebruik zijn **⋯** → **Team laden**.
 

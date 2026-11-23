@@ -170,6 +170,8 @@ din surse diferite se adună și ele, fiecare calculată din durata întreagă �
 rotunjită la o secundă întreagă: Restoration și "Fear Cuts Deeper" reduc un
 Bleeding de 8 secunde la 4.
 
+Editorul nu salvează două piese cu aceeași rună sau cu rune ale aceluiași atribut: ar conta doar bonusul cel mai puternic, dar fiecare penalizare de viață ar conta. Arată spre viață în editor ca să vezi de unde vine: bază, rune, însemne și modificări.
+
 Alegi runa unei piese în același loc cu însemnul: dă clic pe piesă pe figură.
 
 Editorul adună totul pentru tine: Viața, Energia, armura și daunele, așa cum le

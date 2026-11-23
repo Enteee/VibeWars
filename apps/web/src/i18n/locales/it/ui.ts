@@ -84,6 +84,9 @@ export default {
   "buildEditor.discardChanges": "Scartare le modifiche?",
   "buildEditor.duplicate": "Duplica",
   "buildEditor.duplicateSkill": "{skill} è nella barra più di una volta.",
+  "buildEditor.duplicateRune": "{rune}: un altro pezzo indossa già questa runa. Ne conta solo una.",
+  "buildEditor.duplicateAttributeRune":
+    "{rune}: un altro pezzo indossa già una runa di questo attributo. Conta solo il bonus più forte, ma ogni penalità di salute conta.",
   "buildEditor.emptySetAction": "svuota il set {set}",
   "buildEditor.emptySetNote": "Set vuoto",
   "buildEditor.emptySlot": "Vuoto",
@@ -484,6 +487,11 @@ export default {
   "gearEditor.bareHands": "mani nude",
   "gearEditor.bonusFromHeadgear": "copricapo +{amount}",
   "gearEditor.bonusFromRune": "runa +{amount}",
+  "gearEditor.healthBase": "base {amount}",
+  "gearEditor.healthInsignia": "insegne {amount}",
+  "gearEditor.healthMods": "modifiche {amount}",
+  "gearEditor.healthRunes": "rune {amount}",
+  "gearEditor.healthSources": "Salute max: {parts}",
   "gearEditor.itemA": "{item}",
   "gearEditor.itemAn": "{item}",
   "gearEditor.modRemoved": "{mod} rimosso: non è compatibile con {item}.",
@@ -830,6 +838,8 @@ export default {
   "lobbyWindow.reconnecting": "Riconnessione…",
   "lobbyWindow.removeMember": "Rimuovi {name} dalla lobby",
 
+  "match.buildReplaced":
+    "La tua build non è valida ({problem}): in questa partita giochi una build iniziale.",
   "matchView.watching": "Spettatore · {seconds} s di ritardo",
 
   "matches.bot": "{name} (bot)",

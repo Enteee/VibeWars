@@ -52,6 +52,7 @@ import { decodeTemplate, missingSkillsNote } from "../storage/gw1-template.js";
 import { looksLikeTeam } from "../storage/team-transfer.js";
 import { noWebGlNotice } from "./arena-notice.js";
 import { eliteNotice, equipOnBar } from "./build-drop.js";
+import { blockingProblems, type EditorProblem, type ProblemCause } from "./editor-problems.js";
 import { mountBuildPicker, type BuildPicker } from "./build-picker.js";
 import { commitGear } from "./gear-library-view.js";
 import { characterRanks } from "./character-ranks.js";
@@ -532,22 +533,6 @@ export function isUnsaved(opened: StoredCharacter, current: StoredCharacter): bo
   return canonical(comparable(opened)) !== canonical(comparable(current));
 }
 
-/** The part of the editor a problem is about, which its line jumps to. */
-export type ProblemCause =
-  | { readonly kind: "name" }
-  | { readonly kind: "professions" }
-  | { readonly kind: "attributes" }
-  | { readonly kind: "bar" }
-  | { readonly kind: "slot"; readonly slot: number }
-  | { readonly kind: "gear"; readonly field: string };
-
-/** One line of the problems chip, before it knows the page (#566). */
-export interface EditorProblem {
-  readonly text: string;
-  readonly blocking: boolean;
-  readonly cause: ProblemCause;
-}
-
 /** A code read for the editor (#2004): the build it holds, or why not, in words. */
 export type LoadedCode =
   | {
@@ -607,21 +592,13 @@ function loadInto(context: EditorContext, loaded: Extract<LoadedCode, { ok: true
   );
 }
 
-/** A message as a sentence: capitalised, with a full stop. */
-function sentence(message: string): string {
-  const capitalised = message.charAt(0).toUpperCase() + message.slice(1);
-  return /[.!?]$/.test(capitalised) ? capitalised : `${capitalised}.`;
-}
-
 /** A skill icon on a bar slot, and in a library row, px (#727, art-direction sizes). */
 const SLOT_ICON_PX = 48;
 
-const SLOT_FIELD = /^skillBar\[(\d+)\]$/;
 /** A gear problem in weapon set i (#489): `equipment.weaponSets[i]…`. */
 const SET_FIELD = /^equipment\.weaponSets\[(\d)\]/;
 /** Every weapon set, in tab order (#489). */
 const WEAPON_SET_INDICES: readonly WeaponSetIndex[] = [0, 1, 2, 3];
-const DUPLICATE = " appears more than once on the bar";
 
 /**
  * What stops this build saving, as plain sentences that say where (#566):
@@ -629,37 +606,7 @@ const DUPLICATE = " appears more than once on the bar";
  * that never block, unspent points and empty slots.
  */
 export function editorProblems(character: StoredCharacter): EditorProblem[] {
-  const blocking = validateBuild(character).map((problem): EditorProblem => {
-    const slotMatch = SLOT_FIELD.exec(problem.field);
-    if (slotMatch !== null) {
-      const slot = Number(slotMatch[1]);
-      const duplicate = problem.message.endsWith(DUPLICATE)
-        ? problem.message.slice(0, -DUPLICATE.length)
-        : undefined;
-      const text =
-        duplicate === undefined
-          ? t("buildEditor.slotProblem", { slot: slot + 1, problem: sentence(problem.message) })
-          : t("buildEditor.duplicateSkill", { skill: skillName(duplicate) });
-      return { text, blocking: true, cause: { kind: "slot", slot } };
-    }
-    if (problem.field.startsWith("equipment")) {
-      return {
-        text: sentence(problem.message),
-        blocking: true,
-        cause: { kind: "gear", field: problem.field },
-      };
-    }
-    if (problem.field === "character" && problem.message === "name must not be empty") {
-      return { text: t("buildEditor.nameMissing"), blocking: true, cause: { kind: "name" } };
-    }
-    if (problem.field === "character" && problem.message.startsWith("secondary profession")) {
-      return { text: sentence(problem.message), blocking: true, cause: { kind: "professions" } };
-    }
-    if (problem.field === "character") {
-      return { text: sentence(problem.message), blocking: true, cause: { kind: "attributes" } };
-    }
-    return { text: sentence(problem.message), blocking: true, cause: { kind: "bar" } };
-  });
+  const blocking = blockingProblems(character);
 
   const hints: EditorProblem[] = [];
   const unspent = remainingPoints(character);
@@ -2237,6 +2184,7 @@ function mountStats(): Region & { readonly element: HTMLElement } {
         return;
       }
       health.textContent = String(summary.maxHealth);
+      health.title = summary.healthSources;
       energy.textContent = t("buildEditor.energyValue", {
         energy: summary.maxEnergy,
         count: summary.baseEnergyPips,

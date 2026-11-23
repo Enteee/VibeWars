@@ -158,6 +158,8 @@ como um espaço vazio. A build é sua quando você pressiona **Salvar**.
 **Compartilhar**, **Carregar código GW1**, **Duplicar** e **Excluir**
 ficam em **⋯**.
 
+Uma build com um problema não pode ser salva, e a área de treino não começa com ela. Se uma build assim ainda chegar a uma partida, você joga com uma build inicial nela, e uma mensagem diz por quê.
+
 Um código de equipe é carregado no **Criador de Equipes**: cole-o em
 qualquer lugar ali, ou abra uma build de equipe e use o **⋯** →
 **Carregar equipe** dela.

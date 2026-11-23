@@ -146,6 +146,8 @@ hat, kommt als leeres Feld an. Der Build gehört dir, sobald du **Speichern** dr
 **Esc** geht ohne Speichern und fragt vorher, wenn du etwas geändert hast.
 **Teilen**, **GW1-Code laden**, **Duplizieren** und **Löschen** liegen unter **⋯**.
 
+Ein Build mit einem Problem lässt sich nicht speichern, und der Trainingsbereich startet nicht damit. Erreicht so ein Build trotzdem eine Partie, spielst du dort einen Starter-Build, und eine Meldung sagt dir, warum.
+
 Einen Team-Code lädst du stattdessen im **Team-Editor**: füge ihn dort irgendwo ein, oder
 öffne einen Team-Build und nutze sein **⋯** → **Team laden**.
 

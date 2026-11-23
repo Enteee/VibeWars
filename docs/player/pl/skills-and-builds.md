@@ -141,6 +141,8 @@ nie ma, pojawia się jako puste miejsce. Build jest twój, gdy naciśniesz **Zap
 zapisywania, a jeśli coś zmieniłeś, najpierw pyta.
 **Udostępnij**, **Wczytaj kod GW1**, **Duplikuj** i **Usuń** są pod **⋯**.
 
+Buildu z problemem nie da się zapisać, a obszar treningowy z nim nie wystartuje. Jeśli taki build mimo to trafi do meczu, grasz w nim buildem startowym, a komunikat mówi dlaczego.
+
 Kod drużyny wczytuje się natomiast w **Kreatorze drużyn**: wklej go
 tam w dowolnym miejscu albo otwórz build drużyny i użyj jego **⋯** →
 **Wczytaj drużynę**.

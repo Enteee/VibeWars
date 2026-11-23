@@ -64,6 +64,8 @@ Převzetí provedeš volbou **Načíst kód GW1** pod **⋯**, vložením kódu 
 
 **Uložit** tvůj build uchová a vrátí tě tam, odkud jsi přišel. **Esc** odejde bez uložení a pokud jsi něco změnil, nejdřív se zeptá. **Sdílet**, **Načíst kód GW1**, **Duplikovat** a **Smazat** jsou pod **⋯**.
 
+Build s problémem nelze uložit a tréninková oblast s ním nezačne. Pokud se takový build přesto dostane do zápasu, hraješ tam se startovním buildem a zpráva řekne proč.
+
 Kód týmu se místo toho načítá v **Tvůrci týmů**: vlož ho tam kamkoli, nebo otevři týmový build a použij jeho **⋯** → **Načíst tým**.
 
 ## Týmové buildy
