@@ -38,3 +38,14 @@ ship with, under a fixed tag, never `latest`:
 `https://github.com/Enteee/VibeWars/releases/download/<tag>/vibewars-trailer-16x9.mp4`
 
 The `<tag>` is recorded here once the first release carries them.
+
+## Playwright's video encoder
+
+`recordVideo` looks for its own ffmpeg at
+`~/.cache/ms-playwright/ffmpeg-1011/ffmpeg-linux`. Where Playwright's
+download is not available, point it at the devenv's ffmpeg (it has libvpx):
+
+```sh
+mkdir -p ~/.cache/ms-playwright/ffmpeg-1011
+ln -sf "$(command -v ffmpeg)" ~/.cache/ms-playwright/ffmpeg-1011/ffmpeg-linux
+```
