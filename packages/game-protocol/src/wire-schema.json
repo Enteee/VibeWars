@@ -17,6 +17,7 @@
     "match-replay",
     "match-chart",
     "bye",
+    "scene-ready",
     "lobby-join",
     "lobby-challenge",
     "lobby-proof",
@@ -959,6 +960,7 @@
         { "literal": "relay-holding" },
         { "literal": "relay-offers" },
         { "literal": "respawns" },
+        { "literal": "scene-ready" },
         { "literal": "seat-dropped" },
         { "literal": "shared-track" },
         { "literal": "skill-bar" },
@@ -6713,6 +6715,7 @@
         }
       ]
     },
+    "PeerSceneReady": { "properties": [], "index": [{ "key": "string", "value": "never" }] },
     "PeerSeatDropped": {
       "properties": [
         { "name": "expired", "optional": false, "type": "boolean" },

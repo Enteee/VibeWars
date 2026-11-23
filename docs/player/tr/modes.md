@@ -34,7 +34,7 @@ ekran dışındaki ya da HUD'ın altındaki bir hedef, ekranın kenarında
 kimsenin değilse gri, sunak ise altın renginde. Bir oyuncunun dolu oku
 onun üstüne çizilir.
 
-Bir maç, herkes doğma noktasının yakınında tutularak açılır: birkaç adım yürüyebilirsin ama dövüşemez ya da beceri kullanamazsın. Üstteki bir satır içeri giren oyuncuları sayar. Herkes içeri girince 10 saniye geri sayar ve maç başlar, saati de onunla. 20 saniye sonra içeride olmayan bir oyuncu beklenmez: geri sayım onsuz başlar ve o yine de sonradan katılabilir.
+Bir maç, herkes doğma noktasının yakınında tutularak açılır: birkaç adım yürüyebilirsin ama dövüşemez ya da beceri kullanamazsın. Üstteki bir satır maçı yüklemiş oyuncuları sayar. Herkes yükleyince 10 saniye geri sayar ve maç başlar, saati de onunla. 20 saniye sonra hâlâ yüklememiş bir oyuncu beklenmez: geri sayım onsuz başlar ve o yine de sonradan katılabilir.
 
 ## İmha
 

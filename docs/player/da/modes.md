@@ -32,7 +32,7 @@ mål uden for skærmen eller under HUD'en en pil med omrids ved
 skærmkanten: standen eller en helligdom i ejerens farve, grå hvis ingen
 ejer den, alteret i guld. En spillers udfyldte pil tegnes oven på den.
 
-En kamp åbner med alle holdt nær deres startsted: du kan gå et par skridt, men ikke kæmpe eller bruge færdigheder. En linje øverst tæller de spillere, der er inde. Når alle er inde, tæller den 10 sekunder ned, og kampen starter, og dens ur med den. Der ventes ikke på en spiller, der ikke er inde efter 20 sekunder: nedtællingen starter uden dem, og de kan stadig komme med senere.
+En kamp åbner med alle holdt nær deres startsted: du kan gå et par skridt, men ikke kæmpe eller bruge færdigheder. En linje øverst tæller de spillere, der har indlæst kampen. Når alle har indlæst den, tæller den 10 sekunder ned, og kampen starter, og dens ur med den. Der ventes ikke på en spiller, der ikke har indlæst kampen efter 20 sekunder: nedtællingen starter uden dem, og de kan stadig komme med senere.
 
 ## Udslettelse
 

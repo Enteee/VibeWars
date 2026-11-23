@@ -34,7 +34,7 @@ saa ääriviivoitetun nuolen näytön reunaan: teline tai pyhäkkö omistajansa
 värissä, harmaana, jos se ei ole kenenkään, alttari kultaisena. Pelaajan
 täytetty nuoli piirtyy sen päälle.
 
-Ottelu alkaa kaikki pidettyinä lähtöpaikkansa lähellä: voit kävellä muutaman askeleen, mutta et taistella etkä käyttää taitoja. Ylhäällä oleva rivi laskee sisällä olevat pelaajat. Kun kaikki ovat sisällä, se laskee 10 sekuntia ja ottelu alkaa, ja sen kello sen mukana. Pelaajaa, joka ei ole sisällä 20 sekunnin jälkeen, ei odoteta: lähtölaskenta alkaa ilman häntä, ja hän voi silti liittyä myöhemmin.
+Ottelu alkaa kaikki pidettyinä lähtöpaikkansa lähellä: voit kävellä muutaman askeleen, mutta et taistella etkä käyttää taitoja. Ylhäällä oleva rivi laskee pelaajat, jotka ovat ladanneet ottelun. Kun kaikki ovat ladanneet, se laskee 10 sekuntia ja ottelu alkaa, ja sen kello sen mukana. Pelaajaa, joka ei ole ladannut 20 sekunnin jälkeen, ei odoteta: lähtölaskenta alkaa ilman häntä, ja hän voi silti liittyä myöhemmin.
 
 ## Tuho
 

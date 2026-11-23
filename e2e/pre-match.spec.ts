@@ -10,6 +10,8 @@ import { key } from "./keys.js";
 /** One look at the host's page: is the pre-match line up, and where its view stands. */
 interface Sample {
   readonly held: boolean;
+  /** The line's text while it is up. */
+  readonly text: string;
   readonly x: number;
   readonly y: number;
 }
@@ -30,7 +32,7 @@ async function startSampling(page: Page): Promise<() => Promise<readonly Sample[
       )
         .split(",")
         .map(Number);
-      samples.push({ held: line?.hidden === false, x, y });
+      samples.push({ held: line?.hidden === false, text: line?.textContent ?? "", x, y });
     }, 100);
   });
   return () =>
@@ -61,7 +63,7 @@ test("#3818: both in, the match counts 10 s down with everyone held in the spawn
     await host.getByRole("button", { name: "start match" }).click();
 
     // The host is checked while the guest, a tab behind, still loads: the
-    // countdown runs from the moment both are in, not from their HUDs.
+    // countdown runs from the moment both scenes are drawn (#3852).
     const line = host.locator(".hud-pre-match");
     await Promise.all([
       enterOwnTeams([{ page: host }, { page: guest }]),
@@ -93,6 +95,15 @@ test("#3818: both in, the match counts 10 s down with everyone held in the spawn
       .poll(away, { message: "the host should walk off the spawn" })
       .toBeGreaterThan(SPAWN_BUBBLE_RADIUS + speed / 2);
     await host.keyboard.up(key("move-up"));
+
+    // The countdown waits for every scene to be up (#3852), so the host's
+    // first look at it is close to the whole 10 s.
+    const counted = (await samples()).flatMap(({ held, text }) =>
+      held ? (/^Match starts in (\d+)$/.exec(text)?.slice(1, 2) ?? []) : [],
+    );
+    expect(Number(counted[0]), "the first countdown second the host sees").toBeGreaterThanOrEqual(
+      9,
+    );
 
     // While the line was up, the held key walked the hero to its spawn
     // bubble's edge and no further (#3817); started, it walked on past it.
