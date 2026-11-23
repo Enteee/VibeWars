@@ -198,7 +198,7 @@ async function stillCamera(page: Page): Promise<string> {
  * A match against an idle player, which is what a test with nobody to
  * fight needs: nothing moves in it that the test did not move (#128). Not
  * a lobby of one: its empty side would play a bot (#2029). As slow as
- * `startMatchFromMenu` to start (#3866): the scene-ready wait and the lobby.
+ * `startSoloMatch` in `helpers/peers.ts` to start (#3866): the scene-ready wait and the lobby.
  */
 async function startSoloMatch(page: Page): Promise<Locator> {
   return startLobbyMatch(page, [await page.context().newPage()]);
