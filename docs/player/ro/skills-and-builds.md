@@ -146,6 +146,8 @@ de cod funcționează în ambele feluri. O abilitate GW1 pe care VibeWars nu o a
 iese fără să salveze și întreabă mai întâi dacă ai schimbat ceva. **Trimite**,
 **Încarcă cod GW1**, **Duplică** și **Șterge** sunt în **⋯**.
 
+Un build cu o problemă nu poate fi salvat, iar zona de antrenament nu pornește cu el. Dacă un astfel de build ajunge totuși într-un meci, acolo joci cu un build de început, iar un mesaj spune de ce.
+
 Un cod de echipă se încarcă în schimb în **Constructor de echipe**: lipește-l
 oriunde acolo, sau deschide un build de echipă și folosește **⋯** →
 **Încarcă echipa** al lui.
@@ -195,7 +197,7 @@ armele și mâinile secundare ale membrului deschis și există doar cât timp e
 deschis: dă clic pe una ca s-o echipezi sau trage-o peste mâinile lui. Un singur
 membru e deschis odată; **Esc** îl închide. O clasă nouă renunță la abilitățile
 și rangurile pe care nu le poate folosi, cu un **Anulează**. Apasă numele unui
-membru sau **Deschide în ecranul Personaj** ca să-l editezi în editorul de build;
+membru sau butonul său **✎** ca să-l editezi în editorul de build;
 **Salvează** de acolo îl pune înapoi în echipă, iar **Salvează** al echipei păstrează
 totul și te duce înapoi la Constructor de echipe. **Esc** iese fără să salveze și
 întreabă mai întâi. **Trimite**, **Încarcă echipa**, **Duplică** și **Șterge** ale

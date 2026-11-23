@@ -157,6 +157,8 @@ emplacement vide. Le build est à toi une fois que tu appuies sur **Sauver**.
 enregistrer, et demande d'abord si tu as changé quelque chose. **Partager**,
 **Charger code GW1**, **Dupliquer** et **Supprimer** sont sous **⋯**.
 
+Un build qui a un problème ne peut pas être enregistré, et la zone d'entraînement ne démarre pas avec. Si un tel build arrive quand même dans un match, tu y joues un build de départ, et un message dit pourquoi.
+
 Un code d'équipe se charge plutôt dans l'**Atelier d'équipes** : colle-le n'importe où
 là-bas, ou ouvre un build d'équipe et utilise son **⋯** → **Charger une équipe**.
 
@@ -213,7 +215,7 @@ et mains gauches du membre ouvert, et n'est là que quand un membre est ouvert :
 clique sur une pour l'équiper, ou fais-la glisser sur ses mains. Un seul membre
 est ouvert à la fois ; **Esc** le ferme. Une nouvelle profession retire les
 compétences et rangs qu'elle ne peut pas utiliser, avec un **Annuler**.
-Appuie sur le nom d'un membre, ou sur **Ouvrir dans l'écran Personnage**, pour
+Appuie sur le nom d'un membre, ou sur son bouton **✎**, pour
 le modifier dans l'éditeur de build ; son **Sauver** le remet dans l'équipe,
 et le **Sauver** de l'équipe garde le tout et te ramène à l'Atelier d'équipes.
 **Esc** quitte sans enregistrer, et demande d'abord. **Partager**,

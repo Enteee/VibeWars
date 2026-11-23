@@ -82,6 +82,9 @@ export default {
   "buildEditor.discardChanges": "לבטל את השינויים?",
   "buildEditor.duplicate": "שכפל",
   "buildEditor.duplicateSkill": "{skill} מופיע בסרגל יותר מפעם אחת.",
+  "buildEditor.duplicateRune": "{rune}: חלק אחר כבר עונד את הרונה הזו. רק אחת נספרת.",
+  "buildEditor.duplicateAttributeRune":
+    "{rune}: חלק אחר כבר עונד רונה של תכונה זו. רק הבונוס החזק ביותר נספר, אבל כל קנס חיים נספר.",
   "buildEditor.emptySetAction": "רוקן את סט {set}",
   "buildEditor.emptySetNote": "סט ריק",
   "buildEditor.emptySlot": "ריק",
@@ -479,6 +482,11 @@ export default {
   "gearEditor.bareHands": "ידיים חשופות",
   "gearEditor.bonusFromHeadgear": "כיסוי ראש +{amount}",
   "gearEditor.bonusFromRune": "רונה +{amount}",
+  "gearEditor.healthBase": "בסיס {amount}",
+  "gearEditor.healthInsignia": "סמלים {amount}",
+  "gearEditor.healthMods": "שדרוגים {amount}",
+  "gearEditor.healthRunes": "רונות {amount}",
+  "gearEditor.healthSources": "חיים מרביים: {parts}",
   "gearEditor.itemA": "{item}",
   "gearEditor.itemAn": "{item}",
   "gearEditor.modRemoved": "{mod} הוסר: לא מתאים ל-{item}.",
@@ -631,6 +639,10 @@ export default {
   "hud.outcomeVictory": "ניצחון",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (מת)",
+  "hud.preMatchStartingAnyway":
+    "ממתינים לשחקנים: {joined}/{expected}, מתחילים בכל זאת בעוד {seconds} ש׳",
+  "hud.preMatchStartsIn": "המשחק מתחיל בעוד {seconds}",
+  "hud.preMatchWaiting": "ממתינים לשחקנים: {joined}/{expected}",
   "hud.priest": "כוהן",
   "hud.priestDead": "כוהן (מת)",
   "hud.raise": "החייאה {clock}",
@@ -825,6 +837,7 @@ export default {
   "lobbyWindow.reconnecting": "מתחבר מחדש…",
   "lobbyWindow.removeMember": "הסר את {name} מהלובי",
 
+  "match.buildReplaced": "הבילד שלך אינו חוקי ({problem}): במשחק הזה תשחק עם בילד התחלתי.",
   "matchView.watching": "צופה · השהיה של {seconds} שנ׳",
 
   "matches.bot": "{name} (בוט)",
@@ -1389,7 +1402,6 @@ export default {
   "teamEditor.name": "שם",
   "teamEditor.noCharacters": "אין לך דמויות להעתקה.",
   "teamEditor.notSaved": "לא נשמר: {error}",
-  "teamEditor.openInCharacter": "פתח במסך הדמות ›",
   "teamEditor.professions": "מקצועות",
   "teamEditor.professionsTitle": "המקצועות של הקבוצה",
   "teamEditor.replaceMember": "החלף את {member} ב-{character}",

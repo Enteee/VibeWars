@@ -153,6 +153,8 @@ es tuya cuando pulsas **Guardar**.
 guardar, y pregunta antes si has cambiado algo. **Compartir**, **Cargar código
 GW1**, **Duplicar** y **Eliminar** están en **⋯**.
 
+Una build con un problema no se puede guardar, y la zona de entrenamiento no empieza con ella. Si aun así llega a una partida, allí juegas con una build inicial, y un mensaje te dice por qué.
+
 Un código de equipo se carga en **Creador de equipos**: pégalo en cualquier parte
 ahí, o abre una build de equipo y usa su **⋯** → **Cargar equipo**.
 
@@ -201,8 +203,8 @@ ninguno, va al primero vacío. **Equipo** tiene las armas y manos secundarias de
 miembro abierto, y solo aparece con uno abierto: haz clic en una para equiparla,
 o arrástrala a sus manos. Solo hay un miembro abierto a la vez; **Esc** lo
 cierra. Una nueva profesión descarta las habilidades y rangos que no puede usar,
-con un **Deshacer**. Pulsa el nombre de un miembro, o **Abrir en la pantalla de
-personaje**, para editarlo en el editor de builds; su **Guardar** lo devuelve al
+con un **Deshacer**. Pulsa el nombre de un miembro, o su botón
+**✎**, para editarlo en el editor de builds; su **Guardar** lo devuelve al
 equipo, y el **Guardar** del propio equipo lo conserva todo y te lleva de vuelta
 a Creador de equipos. **Esc** sale sin guardar, y pregunta antes. **Compartir**,
 **Cargar equipo**, **Duplicar** y **Eliminar** del equipo están en **⋯**.

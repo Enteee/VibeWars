@@ -141,6 +141,8 @@ nie ma, pojawia się jako puste miejsce. Build jest twój, gdy naciśniesz **Zap
 zapisywania, a jeśli coś zmieniłeś, najpierw pyta.
 **Udostępnij**, **Wczytaj kod GW1**, **Duplikuj** i **Usuń** są pod **⋯**.
 
+Buildu z problemem nie da się zapisać, a obszar treningowy z nim nie wystartuje. Jeśli taki build mimo to trafi do meczu, grasz w nim buildem startowym, a komunikat mówi dlaczego.
+
 Kod drużyny wczytuje się natomiast w **Kreatorze drużyn**: wklej go
 tam w dowolnym miejscu albo otwórz build drużyny i użyj jego **⋯** →
 **Wczytaj drużynę**.
@@ -190,7 +192,7 @@ do drugiej ręki otwartego członka i jest dostępny tylko, gdy któryś jest ot
 kliknij jeden, aby go założyć, lub przeciągnij na jego ręce. Otwarty jest jeden członek
 naraz; **Esc** go zamyka. Nowa profesja usuwa umiejętności i rangi, których nie może
 używać, z opcją **Cofnij**.
-Naciśnij nazwę członka lub **Otwórz na ekranie postaci**, aby edytować go w edytorze
+Naciśnij nazwę członka lub jego przycisk **✎**, aby edytować go w edytorze
 buildu;
 jego **Zapisz** umieszcza go z powrotem w drużynie, a **Zapisz** drużyny zachowuje wszystko
 i wraca do Kreatora drużyn. **Esc** wychodzi bez zapisywania, ale najpierw pyta.

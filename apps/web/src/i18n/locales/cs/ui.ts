@@ -84,6 +84,9 @@ export default {
   "buildEditor.discardChanges": "Zahodit změny?",
   "buildEditor.duplicate": "Duplikovat",
   "buildEditor.duplicateSkill": "{skill} je na liště víckrát.",
+  "buildEditor.duplicateRune": "{rune}: jiný díl už tuto runu nese. Počítá se jen jedna.",
+  "buildEditor.duplicateAttributeRune":
+    "{rune}: jiný díl už nese runu tohoto atributu. Počítá se jen nejsilnější bonus, ale každá penalizace zdraví ano.",
   "buildEditor.emptySetAction": "vyprázdnit sadu {set}",
   "buildEditor.emptySetNote": "Prázdná sada",
   "buildEditor.emptySlot": "Prázdné",
@@ -497,6 +500,11 @@ export default {
   "gearEditor.bareHands": "holé ruce",
   "gearEditor.bonusFromHeadgear": "pokrývka hlavy +{amount}",
   "gearEditor.bonusFromRune": "runa +{amount}",
+  "gearEditor.healthBase": "základ {amount}",
+  "gearEditor.healthInsignia": "insignie {amount}",
+  "gearEditor.healthMods": "úpravy {amount}",
+  "gearEditor.healthRunes": "runy {amount}",
+  "gearEditor.healthSources": "Max. zdraví: {parts}",
   "gearEditor.itemA": "{item}",
   "gearEditor.itemAn": "{item}",
   "gearEditor.modRemoved": "Odebráno {mod}: nehodí se k {item}.",
@@ -654,6 +662,9 @@ export default {
   "hud.outcomeVictory": "Vítězství",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (mrtvý)",
+  "hud.preMatchStartingAnyway": "Čeká se na hráče: {joined}/{expected}, začne i tak za {seconds} s",
+  "hud.preMatchStartsIn": "Zápas začne za {seconds}",
+  "hud.preMatchWaiting": "Čeká se na hráče: {joined}/{expected}",
   "hud.priest": "kněz",
   "hud.priestDead": "kněz (mrtvý)",
   "hud.raise": "oživení {clock}",
@@ -850,6 +861,8 @@ export default {
   "lobbyWindow.reconnecting": "Znovu se připojuji…",
   "lobbyWindow.removeMember": "Odebrat {name} z lobby",
 
+  "match.buildReplaced":
+    "Tvůj build není povolený ({problem}): tento zápas hraješ se startovním buildem.",
   "matchView.watching": "Sleduješ · zpoždění {seconds} s",
 
   "matches.bot": "{name} (bot)",
@@ -1436,7 +1449,6 @@ export default {
   "teamEditor.name": "Název",
   "teamEditor.noCharacters": "Nemáš žádné postavy ke zkopírování.",
   "teamEditor.notSaved": "Neuloženo: {error}",
-  "teamEditor.openInCharacter": "Otevřít na obrazovce postavy ›",
   "teamEditor.professions": "Povolání",
   "teamEditor.professionsTitle": "povolání v týmu",
   "teamEditor.replaceMember": "Nahradit {member} postavou {character}",

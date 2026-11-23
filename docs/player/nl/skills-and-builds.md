@@ -148,6 +148,8 @@ je op **Opslaan** drukt.
 **Esc** vertrekt zonder op te slaan, en vraagt eerst als je iets gewijzigd hebt.
 **Delen**, **GW1-code laden**, **Kopiëren** en **Wissen** staan onder **⋯**.
 
+Een build met een probleem kun je niet opslaan, en het trainingsgebied start er niet mee. Komt zo'n build toch in een wedstrijd, dan speel je daar een starterbuild, en een melding zegt waarom.
+
 Een teamcode laad je in plaats daarvan op **Teambouwer**: plak hem daar ergens, of
 open een teambuild en gebruik zijn **⋯** → **Team laden**.
 
@@ -199,7 +201,7 @@ alleen zolang er een open is: klik er een aan om hem uit te rusten, of sleep hem
 naar zijn handen. Er is één lid tegelijk open; **Esc** sluit het. Een nieuwe
 klasse laat de skills en rangen vallen die ze niet kan gebruiken, met
 **Ongedaan**.
-Druk op de naam van een lid, of **Openen in het personagescherm**, om het in de
+Druk op de naam van een lid, of zijn **✎**-knop, om het in de
 build-editor te bewerken; zijn **Opslaan** zet het terug in het team, en de eigen
 **Opslaan** van het team bewaart alles en brengt je terug naar Teambouwer.
 **Esc** vertrekt zonder op te slaan, en vraagt het eerst. **Delen**,

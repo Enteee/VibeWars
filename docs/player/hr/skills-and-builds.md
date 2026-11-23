@@ -147,6 +147,8 @@ pritisneš **Spremi**.
 **Esc** izlazi bez spremanja i najprije pita ako si nešto promijenio.
 **Podijeli**, **Učitaj GW1 kôd**, **Dupliciraj** i **Obriši** nalaze se pod **⋯**.
 
+Build s problemom ne može se spremiti i područje za trening ne počinje s njim. Ako takav build ipak stigne u meč, ondje igraš s početnim buildom i poruka kaže zašto.
+
 Timski kôd učitava se umjesto toga u **Uređivaču timova**: zalijepi ga bilo gdje tamo,
 ili otvori timski sastav i upotrijebi njegov **⋯** → **Učitaj tim**.
 
@@ -196,7 +198,7 @@ oružja i predmete za drugu ruku otvorenog člana i postoji samo dok je jedan
 otvoren: klikni jedan da ga opremiš ili ga povuci na njegove ruke. Odjednom je
 otvoren jedan član; **Esc** ga zatvara. Nova profesija izbacuje
 vještine i razine koje ne može koristiti, uz **Poništi**.
-Pritisni ime člana ili **Otvori na zaslonu lika** da ga urediš u
+Pritisni ime člana ili njegov gumb **✎** da ga urediš u
 uređivaču sastava;
 njegov **Spremi** vraća ga u tim, a timski **Spremi** čuva sve
 i vraća te u Uređivač timova. **Esc** izlazi

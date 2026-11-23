@@ -54,6 +54,12 @@ export const ONE_ELITE_PER_BAR = "Only one elite skill per bar";
 export interface BuildProblem {
   readonly field: string;
   readonly message: string;
+  /**
+   * Which problem this is, for one a client words itself (#3822). Set
+   * only by the duplicate-rune checks; every other problem has its
+   * `message` alone.
+   */
+  readonly code?: "duplicate-rune" | "duplicate-attribute-rune";
 }
 
 export function isProfessionId(value: unknown): value is ProfessionId {

@@ -71,6 +71,8 @@ import {
   type WirePlayer,
   type WireSkillBar,
   type WireSnapshot,
+  type WireMatchPhase,
+  type WirePreMatch,
   type WireSnapshotPart,
   type WireRespawns,
   type WireCapes,
@@ -162,6 +164,30 @@ export const RECONNECT_WINDOW_SECONDS = 30;
  */
 export const OBSERVER_DELAY_SECONDS = 10;
 
+/** How long the countdown to a match's start lasts (#3818), everyone held. */
+export const PRE_MATCH_COUNTDOWN_SECONDS = 10;
+
+/** How long a match waits for its planned players before counting down without them (#3818). */
+export const JOIN_TIMEOUT_SECONDS = 20;
+
+/**
+ * For how much of the wait the players are told the match starts anyway
+ * (#3818): its last seconds, after a plain wait.
+ */
+export const STARTING_ANYWAY_SECONDS = 10;
+
+/** A match's wait before its start (#3818), in seconds the host advances. */
+export interface PreMatchTimes {
+  readonly countdownSeconds: number;
+  readonly joinTimeoutSeconds: number;
+}
+
+/** The wait every lobby match has (#3818). */
+export const PRE_MATCH: PreMatchTimes = {
+  countdownSeconds: PRE_MATCH_COUNTDOWN_SECONDS,
+  joinTimeoutSeconds: JOIN_TIMEOUT_SECONDS,
+};
+
 /** The arena, already built from game-maps by the caller: game-session does not depend on it. */
 export interface HostMap {
   readonly descriptor: MapDescriptor;
@@ -248,6 +274,12 @@ export interface MatchHostOptions {
    * a match keeps nothing and pays nothing. `sha256` hashes its encoding.
    */
   readonly recordReplay: false | ReplayRecording;
+  /**
+   * The wait before the start (#3818): everyone held in its spawn bubble
+   * until the planned players are in, then a countdown. `null` starts at
+   * once.
+   */
+  readonly preMatch: PreMatchTimes | null;
 }
 
 /**
@@ -306,7 +338,7 @@ export interface MatchEnding {
 export interface MatchHost {
   /** Run as many whole ticks as `seconds` holds, carrying the rest. */
   advance(seconds: number): void;
-  readonly phase: "active" | "finished";
+  readonly phase: WireMatchPhase;
   /** The team that won, once it is `finished` with a winner; `null` until then, or for none. */
   readonly winningTeam: WireTeam | null;
   /**
@@ -510,6 +542,61 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     }
   };
   syncAwaitedTeams();
+
+  /**
+   * Before the start (#3818): `waiting` for the planned players, then the
+   * `countdown`, every tick held; `ticks` into it. `null` once started,
+   * which the replay hears once, as `start`.
+   */
+  let pre: { readonly phase: "waiting" | "countdown"; ticks: number } | null =
+    options.preMatch === null ? null : { phase: "waiting", ticks: 0 };
+  let startLogged = false;
+  const ticksOf = (seconds: number): number => Math.round(seconds / TICK_SECONDS);
+  /** This tick, held until the start (#3818), the match's own after. */
+  const stepOrHold = (): ReturnType<typeof sim.step> => {
+    const times = options.preMatch;
+    if (pre?.phase === "waiting" && times !== null) {
+      if (awaited.size === 0 || pre.ticks >= ticksOf(times.joinTimeoutSeconds)) {
+        pre = { phase: "countdown", ticks: 0 };
+      }
+    }
+    if (pre?.phase === "countdown" && times !== null) {
+      if (pre.ticks >= ticksOf(times.countdownSeconds)) {
+        pre = null;
+      }
+    }
+    if (pre !== null) {
+      pre.ticks += 1;
+      return sim.stepHeld(TICK_SECONDS);
+    }
+    if (!startLogged) {
+      startLogged = true;
+      logInput([sim.tick, "start"]);
+    }
+    return sim.step(TICK_SECONDS);
+  };
+  /** What the players are told of the wait (#3818); `null` once started. */
+  const preMatch = (): WirePreMatch | null => {
+    const times = options.preMatch;
+    const now = pre;
+    if (now === null || times === null) {
+      return null;
+    }
+    const expected = planned === null ? seats.size : planned.size;
+    const left = (seconds: number): number =>
+      Math.ceil((ticksOf(seconds) - now.ticks) / RULESET.tickRateHz);
+    const untilAnyway = left(times.joinTimeoutSeconds);
+    return {
+      joined: expected - awaited.size,
+      expected,
+      secondsLeft:
+        now.phase === "countdown"
+          ? left(times.countdownSeconds)
+          : untilAnyway <= STARTING_ANYWAY_SECONDS
+            ? untilAnyway
+            : null,
+    };
+  };
   /** At most one per peer: a new rejoin hello kills the old nonce. */
   const challenges = new Map<string, Challenge>();
   /**
@@ -1462,7 +1549,8 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     tick: sim.tick,
     elapsedSeconds: sim.elapsedSeconds,
     score: [...sim.score.byTeam.values()],
-    phase: sim.phase,
+    phase: sim.phase === "finished" ? "finished" : (pre?.phase ?? "active"),
+    preMatch: preMatch(),
     winningTeam: wireTeam(sim.outcome.winningTeam),
     endReason: sim.outcome.reason ?? null,
     players: [...sim.participants()].flatMap((participant) => {
@@ -1579,7 +1667,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     for (const participant of sim.participants()) {
       teams.set(participant.id, participant.combatant.team);
     }
-    const result = sim.step(TICK_SECONDS);
+    const result = stepOrHold();
     expireDropped();
     for (const team of calls.step(sim.elapsedSeconds, isAlive)) {
       callsDirty.add(team);
@@ -1691,7 +1779,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       }
     },
     get phase() {
-      return finished ? "finished" : "active";
+      return finished ? "finished" : (pre?.phase ?? "active");
     },
     get winningTeam() {
       return sim.phase === "finished" ? wireTeam(sim.outcome.winningTeam) : null;

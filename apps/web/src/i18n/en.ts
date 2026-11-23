@@ -87,6 +87,9 @@ export const en = {
   "buildEditor.discardChanges": "Discard changes?",
   "buildEditor.duplicate": "Duplicate",
   "buildEditor.duplicateSkill": "{skill} is on the bar more than once.",
+  "buildEditor.duplicateRune": "{rune}: another piece already wears this rune. Only one counts.",
+  "buildEditor.duplicateAttributeRune":
+    "{rune}: another piece already wears a rune of this attribute. Only the strongest bonus counts, but every health penalty does.",
   "buildEditor.emptySetAction": "empty set {set}",
   "buildEditor.emptySetNote": "Empty set",
   "buildEditor.emptySlot": "Empty",
@@ -455,6 +458,11 @@ export const en = {
   "gearEditor.bareHands": "bare hands",
   "gearEditor.bonusFromHeadgear": "headgear +{amount}",
   "gearEditor.bonusFromRune": "rune +{amount}",
+  "gearEditor.healthBase": "base {amount}",
+  "gearEditor.healthInsignia": "insignia {amount}",
+  "gearEditor.healthMods": "mods {amount}",
+  "gearEditor.healthRunes": "runes {amount}",
+  "gearEditor.healthSources": "Max Health: {parts}",
   "gearEditor.itemA": "a {item}",
   "gearEditor.itemAn": "an {item}",
   "gearEditor.modRemoved": "Removed {mod}: it does not fit {item}.",
@@ -602,6 +610,10 @@ export const en = {
   "hud.outcomeVictory": "Victory",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (dead)",
+  "hud.preMatchStartingAnyway":
+    "Waiting for players: {joined}/{expected}, starting anyway in {seconds} s",
+  "hud.preMatchStartsIn": "Match starts in {seconds}",
+  "hud.preMatchWaiting": "Waiting for players: {joined}/{expected}",
   "hud.priest": "priest",
   "hud.priestDead": "priest (dead)",
   "hud.raise": "raise {clock}",
@@ -788,6 +800,7 @@ export const en = {
   "lobbyWindow.reconnecting": "Reconnecting…",
   "lobbyWindow.removeMember": "Remove {name} from the lobby",
 
+  "match.buildReplaced": "Your build isn't legal ({problem}): you play a starter build this match.",
   "matchView.watching": "Watching · {seconds} s delay",
 
   "matches.bot": "{name} (bot)",
@@ -1322,7 +1335,6 @@ export const en = {
   "teamEditor.name": "Name",
   "teamEditor.noCharacters": "You have no characters to copy.",
   "teamEditor.notSaved": "Not saved: {error}",
-  "teamEditor.openInCharacter": "Open in the Character screen ›",
   "teamEditor.professions": "Professions",
   "teamEditor.professionsTitle": "the team's professions",
   "teamEditor.replaceMember": "Replace {member} with {character}",

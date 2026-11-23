@@ -210,9 +210,10 @@ export async function proposeTeam(page: Page, team: string): Promise<void> {
  * Team Build `team`, or in a 1v1, with no `team`, sees its active
  * character picked for it (#2141, #2387). Everyone is ready, then each takes
  * its side's seat `seat`, the first unless said, and is ready again.
- * Resolves once each page's HUD shows the player.
+ * Resolves once each page's HUD shows the player, held in its spawn
+ * until the match starts (#3818).
  */
-export async function playOwnTeams(
+export async function enterOwnTeams(
   players: readonly {
     readonly page: Page;
     readonly team?: string | undefined;
@@ -246,13 +247,22 @@ export async function playOwnTeams(
 }
 
 /**
+ * `enterOwnTeams`, then the pre-match waited out: resolves once the
+ * match is running on each page.
+ */
+export async function playOwnTeams(players: Parameters<typeof enterOwnTeams>[0]): Promise<void> {
+  await enterOwnTeams(players);
+  await waitForMatchStart(players.map(({ page }) => page));
+}
+
+/**
  * The Team Lobby (#1460) for a spec that needs a match and not a
  * particular character: nobody proposes, so each side plays a random
  * preset team. Everyone is ready, then each takes its side's seat `seats[i]`,
  * the first unless said, and is ready again. Resolves once each page's
- * HUD shows the player.
+ * HUD shows the player, held in its spawn until the match starts (#3818).
  */
-export async function playHouseTeams(
+export async function enterHouseTeams(
   pages: readonly Page[],
   seats: readonly number[] = [],
 ): Promise<void> {
@@ -268,6 +278,29 @@ export async function playHouseTeams(
   }
   for (const page of pages) {
     await expect(page.locator(".hud-bar-health .hud-bar-label")).toContainText("hp");
+  }
+}
+
+/**
+ * `enterHouseTeams`, then the pre-match waited out: resolves once the
+ * match is running on each page.
+ */
+export async function playHouseTeams(
+  pages: readonly Page[],
+  seats: readonly number[] = [],
+): Promise<void> {
+  await enterHouseTeams(pages, seats);
+  await waitForMatchStart(pages);
+}
+
+/**
+ * Wait out the pre-match (#3818): the host holds everyone in the spawn
+ * until all are in, then counts 10 s down. Resolves once each page's
+ * centre line is gone, so the match is really running.
+ */
+export async function waitForMatchStart(pages: readonly Page[]): Promise<void> {
+  for (const page of pages) {
+    await expect(page.locator(".hud-pre-match")).toBeHidden({ timeout: 30_000 });
   }
 }
 

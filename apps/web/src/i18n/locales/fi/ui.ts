@@ -82,6 +82,9 @@ export default {
   "buildEditor.discardChanges": "Hylätäänkö muutokset?",
   "buildEditor.duplicate": "Kopioi",
   "buildEditor.duplicateSkill": "{skill} on palkissa useammin kuin kerran.",
+  "buildEditor.duplicateRune": "{rune}: toinen osa kantaa jo tätä riimua. Vain yksi lasketaan.",
+  "buildEditor.duplicateAttributeRune":
+    "{rune}: toinen osa kantaa jo tämän ominaisuuden riimua. Vain vahvin bonus lasketaan, mutta jokainen terveysrangaistus lasketaan.",
   "buildEditor.emptySetAction": "tyhjennä sarja {set}",
   "buildEditor.emptySetNote": "Tyhjä sarja",
   "buildEditor.emptySlot": "Tyhjä",
@@ -463,6 +466,11 @@ export default {
   "gearEditor.bareHands": "paljaat kädet",
   "gearEditor.bonusFromHeadgear": "päähine +{amount}",
   "gearEditor.bonusFromRune": "riimu +{amount}",
+  "gearEditor.healthBase": "perus {amount}",
+  "gearEditor.healthInsignia": "arvomerkit {amount}",
+  "gearEditor.healthMods": "modit {amount}",
+  "gearEditor.healthRunes": "riimut {amount}",
+  "gearEditor.healthSources": "Maks. terveys: {parts}",
   "gearEditor.itemA": "{item}",
   "gearEditor.itemAn": "{item}",
   "gearEditor.modRemoved": "{mod} poistettu: ei sovi esineeseen {item}.",
@@ -610,6 +618,10 @@ export default {
   "hud.outcomeVictory": "Voitto",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (kuollut)",
+  "hud.preMatchStartingAnyway":
+    "Odotetaan pelaajia: {joined}/{expected}, alkaa silti {seconds} s kuluttua",
+  "hud.preMatchStartsIn": "Ottelu alkaa {seconds} kuluttua",
+  "hud.preMatchWaiting": "Odotetaan pelaajia: {joined}/{expected}",
   "hud.priest": "pappi",
   "hud.priestDead": "pappi (kuollut)",
   "hud.raise": "herätys {clock}",
@@ -796,6 +808,8 @@ export default {
   "lobbyWindow.reconnecting": "Yhdistetään uudelleen…",
   "lobbyWindow.removeMember": "Poista {name} aulasta",
 
+  "match.buildReplaced":
+    "Buildisi ei ole sallittu ({problem}): pelaat tämän ottelun aloitusbuildilla.",
   "matchView.watching": "Katsot · viive {seconds} s",
 
   "matches.bot": "{name} (botti)",
@@ -1336,7 +1350,6 @@ export default {
   "teamEditor.name": "Nimi",
   "teamEditor.noCharacters": "Sinulla ei ole kopioitavia hahmoja.",
   "teamEditor.notSaved": "Ei tallennettu: {error}",
-  "teamEditor.openInCharacter": "Avaa hahmonäkymässä ›",
   "teamEditor.professions": "Ammatit",
   "teamEditor.professionsTitle": "tiimin ammatit",
   "teamEditor.replaceMember": "Korvaa {member}: {character}",

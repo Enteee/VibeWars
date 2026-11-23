@@ -179,6 +179,8 @@ mindegyik a teljes időtartamból számolva és egész másodpercre kerekítve:
 a Restoration és a "Fear Cuts Deeper" egy 8 másodperces Bleedinget 4-re
 rövidít.
 
+A szerkesztő nem ment el két darabot ugyanazzal a rúnával, vagy ugyanannak a tulajdonságnak a rúnáival: csak a legerősebb bónusz számítana, de minden életerő-büntetés igen. Mutass a szerkesztőben az életerőre, hogy lásd, honnan jön: alap, rúnák, jelvények és módosítók.
+
 Egy darab rúnáját ugyanott választod ki, ahol a jelvényét: kattints a
 figurán a darabra.
 

@@ -141,6 +141,7 @@ export type {
   ResolvedEquipment,
   ResolvedLoadout,
   ResolvedWeapon,
+  HealthSources,
   ResolvedWeaponSet,
   ResolvedWeaponSets,
   WeaponHitMods,
@@ -149,6 +150,7 @@ export {
   NO_HIT_MODS,
   creatureResolvedEquipment,
   effectiveRanks,
+  healthSources,
   resolveLoadout,
   unarmedResolvedEquipment,
 } from "./resolve.js";

@@ -31,6 +31,8 @@ puncte, un obiectiv din afara ecranului sau de sub HUD primește o săgeată con
 la marginea ecranului: suportul sau un sanctuar în culoarea proprietarului, gri dacă
 nu e al nimănui, altarul în auriu. Săgeata plină a unui jucător se desenează peste ea.
 
+Un meci începe cu toți ținuți lângă locul lor de apariție: poți face câțiva pași, dar nu poți lupta sau folosi abilități. Un rând sus numără jucătorii intrați. Când au intrat toți, numără invers 10 secunde și meciul începe, iar odată cu el și ceasul său. Un jucător care nu a intrat după 20 de secunde nu este așteptat: numărătoarea începe fără el și se poate alătura și mai târziu.
+
 ## Anihilare
 
 **Învinge toți inamicii.** Morții rămân la pământ până când un aliat îi învie, iar

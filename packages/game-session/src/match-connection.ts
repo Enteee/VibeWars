@@ -30,6 +30,8 @@ import type {
   WireMatchChart,
   WireStroke,
   WireWeaponSets,
+  WireMatchPhase,
+  WirePreMatch,
 } from "@vibewars/game-protocol";
 
 /**
@@ -180,8 +182,9 @@ export interface MatchSnapshot {
   /** Each team's points by team index (#2682): one a team. */
   readonly score: readonly number[];
   readonly elapsedSeconds: number;
-  /** "active" or "finished". */
-  readonly phase: string;
+  readonly phase: WireMatchPhase;
+  /** The wait before the start (#3818); `null` once `active`. */
+  readonly preMatch: WirePreMatch | null;
   /** The winning team, or `undefined` while active or on a draw. */
   readonly winningTeam: number | undefined;
   /** "score", "time", "annihilation", "morale", "guild-lord", "aggression", "host-left", or `undefined` while active. */

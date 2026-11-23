@@ -149,6 +149,8 @@ ešte nemá, príde ako prázdna pozícia. Build je tvoj, keď stlačíš
 **Esc** odíde bez uloženia, a ak si niečo zmenil, najprv sa opýta.
 **Zdieľať**, **Načítať kód GW1**, **Duplikovať** a **Zmazať** sú pod **⋯**.
 
+Build s problémom nemožno uložiť a tréningová oblasť s ním nezačne. Ak sa taký build aj tak dostane do zápasu, hráš tam so štartovacím buildom a správa povie prečo.
+
 Tímový kód sa namiesto toho načítava v **Tvorba tímov**: vlož ho tam kamkoľvek,
 alebo otvor tímový build a použi jeho **⋯** → **Načítať tím**.
 
@@ -199,7 +201,7 @@ schopnosť na tú pozíciu; ak žiadna nie je vybraná, ide na prvú prázdnu.
 nejaký otvorený: kliknutím ho vybavíš alebo ho pretiahni na jeho ruky.
 Naraz je otvorený jeden člen; **Esc** ho zatvorí. Nové povolanie zahodí
 schopnosti a hodnosti, ktoré nemôže použiť, s voľbou **Späť**.
-Stlačením mena člena alebo **Otvoriť na obrazovke postavy** ho upravíš v
+Stlačením mena člena alebo jeho tlačidla **✎** ho upravíš v
 editore buildov;
 jeho **Uložiť** ho vráti do tímu a vlastné **Uložiť** tímu uloží všetko
 a vráti ťa do **Tvorba tímov**. **Esc** odíde

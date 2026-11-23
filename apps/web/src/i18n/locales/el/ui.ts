@@ -84,6 +84,9 @@ export default {
   "buildEditor.discardChanges": "Απόρριψη αλλαγών;",
   "buildEditor.duplicate": "Αντίγραφο",
   "buildEditor.duplicateSkill": "{skill}: υπάρχει πάνω από μία φορά στην μπάρα.",
+  "buildEditor.duplicateRune": "{rune}: άλλο κομμάτι φορά ήδη αυτόν τον ρούνο. Μετράει μόνο ένας.",
+  "buildEditor.duplicateAttributeRune":
+    "{rune}: άλλο κομμάτι φορά ήδη ρούνο αυτού του χαρακτηριστικού. Μετράει μόνο το ισχυρότερο μπόνους, αλλά κάθε ποινή υγείας μετράει.",
   "buildEditor.emptySetAction": "άδειασμα σετ {set}",
   "buildEditor.emptySetNote": "Άδειο σετ",
   "buildEditor.emptySlot": "Άδειο",
@@ -459,6 +462,11 @@ export default {
   "gearEditor.bareHands": "γυμνά χέρια",
   "gearEditor.bonusFromHeadgear": "κάλυμμα κεφαλής +{amount}",
   "gearEditor.bonusFromRune": "ρούνος +{amount}",
+  "gearEditor.healthBase": "βάση {amount}",
+  "gearEditor.healthInsignia": "διακριτικά {amount}",
+  "gearEditor.healthMods": "τροποποιήσεις {amount}",
+  "gearEditor.healthRunes": "ρούνοι {amount}",
+  "gearEditor.healthSources": "Μέγ. υγεία: {parts}",
   "gearEditor.itemA": "{item}",
   "gearEditor.itemAn": "{item}",
   "gearEditor.modRemoved": "Αφαιρέθηκε {mod}: δεν ταιριάζει σε {item}.",
@@ -606,6 +614,10 @@ export default {
   "hud.outcomeVictory": "Νίκη",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (νεκρός)",
+  "hud.preMatchStartingAnyway":
+    "Αναμονή παικτών: {joined}/{expected}, ξεκινά ούτως ή άλλως σε {seconds} δ",
+  "hud.preMatchStartsIn": "Ο αγώνας ξεκινά σε {seconds}",
+  "hud.preMatchWaiting": "Αναμονή παικτών: {joined}/{expected}",
   "hud.priest": "ιερέας",
   "hud.priestDead": "ιερέας (νεκρός)",
   "hud.raise": "ανάσταση {clock}",
@@ -794,6 +806,8 @@ export default {
   "lobbyWindow.reconnecting": "Επανασύνδεση…",
   "lobbyWindow.removeMember": "Αφαίρεση {name} από το λόμπι",
 
+  "match.buildReplaced":
+    "Το build σου δεν είναι έγκυρο ({problem}): σε αυτόν τον αγώνα παίζεις με αρχικό build.",
   "matchView.watching": "Παρακολούθηση · καθυστέρηση {seconds} δ",
 
   "matches.bot": "{name} (bot)",
@@ -1338,7 +1352,6 @@ export default {
   "teamEditor.name": "Όνομα",
   "teamEditor.noCharacters": "Δεν έχεις χαρακτήρες για αντιγραφή.",
   "teamEditor.notSaved": "Δεν αποθηκεύτηκε: {error}",
-  "teamEditor.openInCharacter": "Άνοιγμα στην οθόνη Χαρακτήρα ›",
   "teamEditor.professions": "Επαγγέλματα",
   "teamEditor.professionsTitle": "τα επαγγέλματα της ομάδας",
   "teamEditor.replaceMember": "Αντικατάσταση {member} με {character}",

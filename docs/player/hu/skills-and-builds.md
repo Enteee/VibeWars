@@ -168,6 +168,8 @@ Az **Esc** mentés nélkül lép ki, és előbb rákérdez, ha bármit
 módosítottál. A **Megoszt**, a **GW1-kód betöltése**, a **Másolat** és a
 **Törlés** a **⋯** alatt van.
 
+Problémás build nem menthető, és a gyakorlóterület sem indul vele. Ha egy ilyen build mégis meccsre kerül, ott kezdő builddel játszol, és egy üzenet megmondja, miért.
+
 A csapatkódot ehelyett a **Csapatszerkesztőben** kell betölteni: illeszd be bárhová
 ott, vagy nyiss meg egy csapatbuildet, és használd a **⋯** → **Csapat betöltése**
 lehetőségét.
@@ -222,7 +224,7 @@ tag fegyvereit és mellékkezeit tartalmazza, és csak addig van ott, amíg egy 
 nyitva van: kattints egyre, hogy felvedd, vagy húzd a kezeire. Egyszerre
 egy tag lehet nyitva; az **Esc** bezárja. Az új kaszt elveti azokat a
 készségeket és szinteket, amelyeket nem tud használni, egy **Vissza** lehetőséggel.
-Nyomd meg egy tag nevét, vagy a **Megnyitás a Karakter képernyőn** gombot, hogy a
+Nyomd meg egy tag nevét, vagy a **✎** gombját, hogy a
 buildszerkesztőben szerkeszd;
 annak **Mentés** gombja visszateszi a csapatba, a csapat saját **Mentés** gombja pedig mindent
 megtart, és visszavisz a Csapatszerkesztőbe. Az **Esc** mentés

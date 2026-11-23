@@ -85,6 +85,9 @@ export default {
   "buildEditor.discardChanges": "تجاهل التغييرات؟",
   "buildEditor.duplicate": "تكرار",
   "buildEditor.duplicateSkill": "{skill} موجودة في الشريط أكثر من مرة.",
+  "buildEditor.duplicateRune": "{rune}: قطعة أخرى ترتدي هذه الرونية بالفعل. واحدة فقط تُحتسب.",
+  "buildEditor.duplicateAttributeRune":
+    "{rune}: قطعة أخرى ترتدي بالفعل رونية من هذه السمة. تُحتسب أقوى مكافأة فقط، لكن كل عقوبات الصحة تُحتسب.",
   "buildEditor.emptySetAction": "إفراغ المجموعة {set}",
   "buildEditor.emptySetNote": "مجموعة فارغة",
   "buildEditor.emptySlot": "فارغة",
@@ -527,6 +530,11 @@ export default {
   "gearEditor.bareHands": "يدان عاريتان",
   "gearEditor.bonusFromHeadgear": "غطاء الرأس +{amount}",
   "gearEditor.bonusFromRune": "الرون +{amount}",
+  "gearEditor.healthBase": "الأساس {amount}",
+  "gearEditor.healthInsignia": "الشارات {amount}",
+  "gearEditor.healthMods": "التعديلات {amount}",
+  "gearEditor.healthRunes": "الرونيات {amount}",
+  "gearEditor.healthSources": "الصحة القصوى: {parts}",
   "gearEditor.itemA": "{item}",
   "gearEditor.itemAn": "{item}",
   "gearEditor.modRemoved": "أُزيل {mod}: لا يناسب {item}.",
@@ -694,6 +702,10 @@ export default {
   "hud.outcomeVictory": "نصر",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (ميت)",
+  "hud.preMatchStartingAnyway":
+    "بانتظار اللاعبين: {joined}/{expected}، تبدأ على أي حال خلال {seconds} ث",
+  "hud.preMatchStartsIn": "تبدأ المباراة خلال {seconds}",
+  "hud.preMatchWaiting": "بانتظار اللاعبين: {joined}/{expected}",
   "hud.priest": "كاهن",
   "hud.priestDead": "كاهن (ميت)",
   "hud.raise": "إحياء {clock}",
@@ -894,6 +906,7 @@ export default {
   "lobbyWindow.reconnecting": "جارٍ إعادة الاتصال…",
   "lobbyWindow.removeMember": "إزالة {name} من الردهة",
 
+  "match.buildReplaced": "بنيتك غير قانونية ({problem}): ستلعب ببنية مبتدئة في هذه المباراة.",
   "matchView.watching": "مشاهدة · تأخير {seconds} ث",
 
   "matches.bot": "{name} (بوت)",
@@ -1513,7 +1526,6 @@ export default {
   "teamEditor.name": "الاسم",
   "teamEditor.noCharacters": "ليس لديك شخصيات لنسخها.",
   "teamEditor.notSaved": "لم يُحفظ: {error}",
-  "teamEditor.openInCharacter": "فتح في شاشة الشخصية ›",
   "teamEditor.professions": "المهن",
   "teamEditor.professionsTitle": "مهن الفريق",
   "teamEditor.replaceMember": "استبدال {member} بـ {character}",

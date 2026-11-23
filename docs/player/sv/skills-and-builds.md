@@ -155,6 +155,8 @@ plats. Builden är din när du trycker på **Spara**.
 **Esc** lämnar utan att spara, och frågar först om du har ändrat något.
 **Dela**, **Ladda GW1-kod**, **Duplicera** och **Radera** finns under **⋯**.
 
+Ett build med ett problem kan inte sparas, och träningsområdet startar inte med det. Om ett sådant build ändå når en match spelar du ett startbuild där, och ett meddelande säger varför.
+
 En lagkod laddas i stället i **Lagbyggare**: klistra in den var som helst där,
 eller öppna en lagbuild och använd dess **⋯** → **Ladda lag**.
 
@@ -207,7 +209,7 @@ vapnen och offhands för den öppna medlemmen, och finns bara där medan en
 är öppen: klicka på ett för att utrusta det, eller dra det till dess händer. En
 medlem är öppen åt gången; **Esc** stänger den. Ett nytt yrke tar bort de
 förmågor och ranger det inte kan använda, med ett **Ångra**.
-Tryck på en medlems namn, eller **Öppna i karaktärsvyn**, för att ändra
+Tryck på en medlems namn, eller dess **✎**-knapp, för att ändra
 den i build-redigeraren;
 dess **Spara** lägger tillbaka den i laget, och lagets egen **Spara** behåller alltihop
 och tar dig tillbaka till Lagbyggare. **Esc** lämnar

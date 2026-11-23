@@ -82,6 +82,10 @@ export default {
   "buildEditor.discardChanges": "変更を破棄しますか?",
   "buildEditor.duplicate": "複製",
   "buildEditor.duplicateSkill": "{skill}がバーに複数あります。",
+  "buildEditor.duplicateRune":
+    "{rune}：別の部位がすでにこのルーンを装備しています。有効なのは1つだけです。",
+  "buildEditor.duplicateAttributeRune":
+    "{rune}：別の部位がすでにこの属性のルーンを装備しています。最も強いボーナスのみ有効ですが、ヘルスペナルティはすべて適用されます。",
   "buildEditor.emptySetAction": "セット{set}を空にする",
   "buildEditor.emptySetNote": "空のセット",
   "buildEditor.emptySlot": "空",
@@ -426,6 +430,11 @@ export default {
   "gearEditor.bareHands": "素手",
   "gearEditor.bonusFromHeadgear": "頭装備 +{amount}",
   "gearEditor.bonusFromRune": "ルーン +{amount}",
+  "gearEditor.healthBase": "基本 {amount}",
+  "gearEditor.healthInsignia": "記章 {amount}",
+  "gearEditor.healthMods": "改造 {amount}",
+  "gearEditor.healthRunes": "ルーン {amount}",
+  "gearEditor.healthSources": "最大ヘルス：{parts}",
   "gearEditor.itemA": "{item}",
   "gearEditor.itemAn": "{item}",
   "gearEditor.modRemoved": "{mod}を外しました: {item}には装着できません。",
@@ -558,6 +567,9 @@ export default {
   "hud.outcomeVictory": "勝利",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (死亡)",
+  "hud.preMatchStartingAnyway": "プレイヤー待機中: {joined}/{expected}、{seconds}秒後に開始します",
+  "hud.preMatchStartsIn": "試合開始まで {seconds}",
+  "hud.preMatchWaiting": "プレイヤー待機中: {joined}/{expected}",
   "hud.priest": "司祭",
   "hud.priestDead": "司祭 (死亡)",
   "hud.raise": "蘇生 {clock}",
@@ -745,6 +757,8 @@ export default {
   "lobbyWindow.reconnecting": "再接続中…",
   "lobbyWindow.removeMember": "{name}をロビーから外す",
 
+  "match.buildReplaced":
+    "ビルドが不正です（{problem}）：この試合はスタータービルドでプレイします。",
   "matchView.watching": "観戦中 · {seconds}秒遅延",
 
   "matches.bot": "{name} (ボット)",
@@ -1262,7 +1276,6 @@ export default {
   "teamEditor.name": "名前",
   "teamEditor.noCharacters": "コピーできるキャラクターがいません。",
   "teamEditor.notSaved": "保存されていません: {error}",
-  "teamEditor.openInCharacter": "キャラクター画面で開く ›",
   "teamEditor.professions": "職業",
   "teamEditor.professionsTitle": "チームの職業",
   "teamEditor.replaceMember": "{member}を{character}に置き換える",

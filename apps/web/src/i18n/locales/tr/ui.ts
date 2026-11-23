@@ -82,6 +82,10 @@ export default {
   "buildEditor.discardChanges": "Değişikliklerden vazgeçilsin mi?",
   "buildEditor.duplicate": "Çoğalt",
   "buildEditor.duplicateSkill": "{skill} çubukta birden fazla kez var.",
+  "buildEditor.duplicateRune":
+    "{rune}: başka bir parça bu rünü zaten taşıyor. Yalnızca biri sayılır.",
+  "buildEditor.duplicateAttributeRune":
+    "{rune}: başka bir parça bu özelliğin rününü zaten taşıyor. Yalnızca en güçlü bonus sayılır, ama her can cezası sayılır.",
   "buildEditor.emptySetAction": "{set}. seti boşalt",
   "buildEditor.emptySetNote": "Boş set",
   "buildEditor.emptySlot": "Boş",
@@ -454,6 +458,11 @@ export default {
   "gearEditor.bareHands": "çıplak eller",
   "gearEditor.bonusFromHeadgear": "başlık +{amount}",
   "gearEditor.bonusFromRune": "rün +{amount}",
+  "gearEditor.healthBase": "temel {amount}",
+  "gearEditor.healthInsignia": "nişanlar {amount}",
+  "gearEditor.healthMods": "modlar {amount}",
+  "gearEditor.healthRunes": "rünler {amount}",
+  "gearEditor.healthSources": "Maks. can: {parts}",
   "gearEditor.itemA": "{item}",
   "gearEditor.itemAn": "{item}",
   "gearEditor.modRemoved": "{mod} kaldırıldı: {item} için uygun değil.",
@@ -601,6 +610,10 @@ export default {
   "hud.outcomeVictory": "Zafer",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (ölü)",
+  "hud.preMatchStartingAnyway":
+    "Oyuncular bekleniyor: {joined}/{expected}, {seconds} sn içinde yine de başlıyor",
+  "hud.preMatchStartsIn": "Maç {seconds} içinde başlıyor",
+  "hud.preMatchWaiting": "Oyuncular bekleniyor: {joined}/{expected}",
   "hud.priest": "rahip",
   "hud.priestDead": "rahip (ölü)",
   "hud.raise": "diriliş {clock}",
@@ -787,6 +800,8 @@ export default {
   "lobbyWindow.reconnecting": "Yeniden bağlanıyor…",
   "lobbyWindow.removeMember": "{name} oyuncusunu lobiden çıkar",
 
+  "match.buildReplaced":
+    "Yapın geçerli değil ({problem}): bu maçta başlangıç yapısıyla oynuyorsun.",
   "matchView.watching": "İzleniyor · {seconds} sn gecikme",
 
   "matches.bot": "{name} (bot)",
@@ -1322,7 +1337,6 @@ export default {
   "teamEditor.name": "Ad",
   "teamEditor.noCharacters": "Kopyalanacak karakterin yok.",
   "teamEditor.notSaved": "Kaydedilmedi: {error}",
-  "teamEditor.openInCharacter": "Karakter ekranında aç ›",
   "teamEditor.professions": "Meslekler",
   "teamEditor.professionsTitle": "takımın meslekleri",
   "teamEditor.replaceMember": "{member} yerine {character} koy",

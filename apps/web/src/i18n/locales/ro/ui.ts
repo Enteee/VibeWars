@@ -84,6 +84,9 @@ export default {
   "buildEditor.discardChanges": "Renunți la modificări?",
   "buildEditor.duplicate": "Duplică",
   "buildEditor.duplicateSkill": "{skill} apare de mai multe ori pe bară.",
+  "buildEditor.duplicateRune": "{rune}: altă piesă poartă deja această rună. Contează doar una.",
+  "buildEditor.duplicateAttributeRune":
+    "{rune}: altă piesă poartă deja o rună a acestui atribut. Contează doar bonusul cel mai puternic, dar fiecare penalizare de viață contează.",
   "buildEditor.emptySetAction": "golește setul {set}",
   "buildEditor.emptySetNote": "Set gol",
   "buildEditor.emptySlot": "Gol",
@@ -483,6 +486,11 @@ export default {
   "gearEditor.bareHands": "mâini goale",
   "gearEditor.bonusFromHeadgear": "coif +{amount}",
   "gearEditor.bonusFromRune": "rună +{amount}",
+  "gearEditor.healthBase": "bază {amount}",
+  "gearEditor.healthInsignia": "însemne {amount}",
+  "gearEditor.healthMods": "modificări {amount}",
+  "gearEditor.healthRunes": "rune {amount}",
+  "gearEditor.healthSources": "Viață max.: {parts}",
   "gearEditor.itemA": "{item}",
   "gearEditor.itemAn": "{item}",
   "gearEditor.modRemoved": "{mod} eliminat: nu se potrivește cu {item}.",
@@ -635,6 +643,10 @@ export default {
   "hud.outcomeVictory": "Victorie",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (mort)",
+  "hud.preMatchStartingAnyway":
+    "Se așteaptă jucătorii: {joined}/{expected}, începe oricum în {seconds} s",
+  "hud.preMatchStartsIn": "Meciul începe în {seconds}",
+  "hud.preMatchWaiting": "Se așteaptă jucătorii: {joined}/{expected}",
   "hud.priest": "preot",
   "hud.priestDead": "preot (mort)",
   "hud.raise": "reînviere {clock}",
@@ -829,6 +841,8 @@ export default {
   "lobbyWindow.reconnecting": "Reconectare…",
   "lobbyWindow.removeMember": "Elimină {name} din lobby",
 
+  "match.buildReplaced":
+    "Build-ul tău nu este valid ({problem}): în acest meci joci cu un build de început.",
   "matchView.watching": "Urmărești · întârziere {seconds} s",
 
   "matches.bot": "{name} (bot)",
@@ -1397,7 +1411,6 @@ export default {
   "teamEditor.name": "Nume",
   "teamEditor.noCharacters": "Nu ai personaje de copiat.",
   "teamEditor.notSaved": "Nesalvat: {error}",
-  "teamEditor.openInCharacter": "Deschide în ecranul Personaj ›",
   "teamEditor.professions": "Clase",
   "teamEditor.professionsTitle": "clasele echipei",
   "teamEditor.replaceMember": "Înlocuiește {member} cu {character}",

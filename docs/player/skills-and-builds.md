@@ -147,6 +147,10 @@ press **Save**.
 **Esc** leaves without saving, and asks first if you changed anything.
 **Share**, **Load GW1 code**, **Duplicate** and **Delete** are under **⋯**.
 
+A build with a problem cannot be saved, and the **Training Ground**
+will not start with one. If such a build still reaches a match, you
+play a starter build there, and a message says why.
+
 A team code loads on **Team Builder** instead: paste it anywhere there, or
 open a team build and use its **⋯** → **Load team**.
 
@@ -195,7 +199,7 @@ the weapons and off-hands of the open member, and is there only while one
 is open: click one to equip it, or drag it onto its hands. One
 member is open at a time; **Esc** closes it. A new profession drops the
 skills and ranks it cannot use, with an **Undo**.
-Press a member's name, or **Open in the Character screen**, to edit it in
+Press a member's name, or its **✎** button, to edit it in
 the build editor;
 its **Save** puts it back in the team, and the team's own **Save** keeps it all
 and takes you back to Team Builder. **Esc** leaves

@@ -146,6 +146,8 @@ hat, kommt als leeres Feld an. Der Build gehört dir, sobald du **Speichern** dr
 **Esc** geht ohne Speichern und fragt vorher, wenn du etwas geändert hast.
 **Teilen**, **GW1-Code laden**, **Duplizieren** und **Löschen** liegen unter **⋯**.
 
+Ein Build mit einem Problem lässt sich nicht speichern, und der Trainingsbereich startet nicht damit. Erreicht so ein Build trotzdem eine Partie, spielst du dort einen Starter-Build, und eine Meldung sagt dir, warum.
+
 Einen Team-Code lädst du stattdessen im **Team-Editor**: füge ihn dort irgendwo ein, oder
 öffne einen Team-Build und nutze sein **⋯** → **Team laden**.
 
@@ -196,7 +198,7 @@ ist nur da, solange eines offen ist: Klick auf eine, um sie auszurüsten, oder z
 sie auf seine Hände. Es ist immer nur ein Mitglied offen; **Esc** schließt es. Eine
 neue Klasse verwirft die Skills und Ränge, die sie nicht nutzen kann, mit einem
 **Rückgängig**.
-Drück auf den Namen eines Mitglieds oder auf **Im Charakter-Editor öffnen**, um es im
+Drück auf den Namen eines Mitglieds oder auf seinen **✎**-Knopf, um es im
 Build-Editor zu bearbeiten; sein **Speichern** legt es zurück ins Team, und das
 eigene **Speichern** des Teams behält alles und bringt dich zum Team-Editor zurück.
 **Esc** geht ohne Speichern und fragt vorher. **Teilen**, **Team laden**,

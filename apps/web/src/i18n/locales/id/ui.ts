@@ -78,6 +78,10 @@ export default {
   "buildEditor.discardChanges": "Buang perubahan?",
   "buildEditor.duplicate": "Duplikat",
   "buildEditor.duplicateSkill": "{skill} ada di bar lebih dari sekali.",
+  "buildEditor.duplicateRune":
+    "{rune}: bagian lain sudah memakai rune ini. Hanya satu yang dihitung.",
+  "buildEditor.duplicateAttributeRune":
+    "{rune}: bagian lain sudah memakai rune atribut ini. Hanya bonus terkuat yang dihitung, tetapi setiap penalti darah tetap berlaku.",
   "buildEditor.emptySetAction": "kosongkan set {set}",
   "buildEditor.emptySetNote": "Set kosong",
   "buildEditor.emptySlot": "Kosong",
@@ -424,6 +428,11 @@ export default {
   "gearEditor.bareHands": "tangan kosong",
   "gearEditor.bonusFromHeadgear": "pelindung kepala +{amount}",
   "gearEditor.bonusFromRune": "rune +{amount}",
+  "gearEditor.healthBase": "dasar {amount}",
+  "gearEditor.healthInsignia": "insignia {amount}",
+  "gearEditor.healthMods": "mod {amount}",
+  "gearEditor.healthRunes": "rune {amount}",
+  "gearEditor.healthSources": "Darah maks.: {parts}",
   "gearEditor.itemA": "{item}",
   "gearEditor.itemAn": "{item}",
   "gearEditor.modRemoved": "{mod} dihapus: tidak cocok dengan {item}.",
@@ -556,6 +565,10 @@ export default {
   "hud.outcomeVictory": "Menang",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (tewas)",
+  "hud.preMatchStartingAnyway":
+    "Menunggu pemain: {joined}/{expected}, tetap dimulai dalam {seconds} dtk",
+  "hud.preMatchStartsIn": "Pertandingan dimulai dalam {seconds}",
+  "hud.preMatchWaiting": "Menunggu pemain: {joined}/{expected}",
   "hud.priest": "pendeta",
   "hud.priestDead": "pendeta (tewas)",
   "hud.raise": "bangkit {clock}",
@@ -742,6 +755,8 @@ export default {
   "lobbyWindow.reconnecting": "Menyambung ulang…",
   "lobbyWindow.removeMember": "Keluarkan {name} dari lobi",
 
+  "match.buildReplaced":
+    "Build-mu tidak sah ({problem}): kamu memakai build awal di pertandingan ini.",
   "matchView.watching": "Menonton · jeda {seconds} s",
 
   "matches.bot": "{name} (bot)",
@@ -1255,7 +1270,6 @@ export default {
   "teamEditor.name": "Nama",
   "teamEditor.noCharacters": "Kamu tidak punya karakter untuk disalin.",
   "teamEditor.notSaved": "Tidak disimpan: {error}",
-  "teamEditor.openInCharacter": "Buka di layar Karakter ›",
   "teamEditor.professions": "Profesi",
   "teamEditor.professionsTitle": "profesi tim",
   "teamEditor.replaceMember": "Ganti {member} dengan {character}",

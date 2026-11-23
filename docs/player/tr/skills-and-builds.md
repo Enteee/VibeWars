@@ -158,6 +158,8 @@ Dizilim, **Kaydet**'e bastığında senin olur.
 **Esc** kaydetmeden çıkar, bir şey değiştirdiysen önce sorar.
 **Paylaş**, **GW1 kodu yükle**, **Çoğalt** ve **Sil** **⋯** altındadır.
 
+Sorunu olan bir yapı kaydedilemez ve antrenman alanı onunla başlamaz. Böyle bir yapı yine de bir maça ulaşırsa, orada başlangıç yapısıyla oynarsın ve bir mesaj nedenini söyler.
+
 Takım kodu ise **Takım Oluşturucu**'da yüklenir: kodu orada herhangi bir yere
 yapıştır ya da bir takım dizilimi aç ve onun **⋯** → **Takım yükle**'sini
 kullan.
@@ -214,8 +216,8 @@ yalnızca biri açıkken oradadır: takmak için birine tıkla ya da onu
 ellerine sürükle. Aynı anda tek bir üye açıktır; **Esc** onu kapatır.
 Yeni bir meslek, kullanamadığı becerileri ve seviyeleri bir **Geri
 al** ile birlikte düşürür.
-Dizilim editöründe düzenlemek için bir üyenin adına ya da **Karakter
-ekranında aç**'a bas; onun **Kaydet**'i onu takıma geri koyar, takımın
+Dizilim editöründe düzenlemek için bir üyenin adına ya da **✎** düğmesine
+bas; onun **Kaydet**'i onu takıma geri koyar, takımın
 kendi **Kaydet**'i ise her şeyi saklar ve seni Takım Oluşturucu'ya geri
 götürür. **Esc** kaydetmeden çıkar ve önce sorar. Takımın **Paylaş**,
 **Takım yükle**, **Çoğalt** ve **Sil**'i **⋯** altındadır. Oradaki **Takım yükle**

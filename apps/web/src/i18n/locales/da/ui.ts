@@ -83,6 +83,9 @@ export default {
   "buildEditor.discardChanges": "Kassér ændringer?",
   "buildEditor.duplicate": "Duplikér",
   "buildEditor.duplicateSkill": "{skill} er på bjælken mere end én gang.",
+  "buildEditor.duplicateRune": "{rune}: en anden del bærer allerede denne rune. Kun én tæller.",
+  "buildEditor.duplicateAttributeRune":
+    "{rune}: en anden del bærer allerede en rune for denne egenskab. Kun den stærkeste bonus tæller, men alle livsstraffe gør.",
   "buildEditor.emptySetAction": "tøm sæt {set}",
   "buildEditor.emptySetNote": "Tomt sæt",
   "buildEditor.emptySlot": "Tom",
@@ -452,6 +455,11 @@ export default {
   "gearEditor.bareHands": "bare næver",
   "gearEditor.bonusFromHeadgear": "hjelm +{amount}",
   "gearEditor.bonusFromRune": "rune +{amount}",
+  "gearEditor.healthBase": "basis {amount}",
+  "gearEditor.healthInsignia": "insignier {amount}",
+  "gearEditor.healthMods": "mods {amount}",
+  "gearEditor.healthRunes": "runer {amount}",
+  "gearEditor.healthSources": "Maks. liv: {parts}",
   "gearEditor.itemA": "{item}",
   "gearEditor.itemAn": "{item}",
   "gearEditor.modRemoved": "{mod} fjernet: passer ikke til {item}.",
@@ -599,6 +607,10 @@ export default {
   "hud.outcomeVictory": "Sejr",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (død)",
+  "hud.preMatchStartingAnyway":
+    "Venter på spillere: {joined}/{expected}, starter alligevel om {seconds} s",
+  "hud.preMatchStartsIn": "Kampen starter om {seconds}",
+  "hud.preMatchWaiting": "Venter på spillere: {joined}/{expected}",
   "hud.priest": "præst",
   "hud.priestDead": "præst (død)",
   "hud.raise": "genoplivning {clock}",
@@ -785,6 +797,8 @@ export default {
   "lobbyWindow.reconnecting": "Genopretter forbindelse…",
   "lobbyWindow.removeMember": "Fjern {name} fra lobbyen",
 
+  "match.buildReplaced":
+    "Dit build er ikke lovligt ({problem}): du spiller et startbuild i denne kamp.",
   "matchView.watching": "Ser med · {seconds} s forsinkelse",
 
   "matches.bot": "{name} (bot)",
@@ -1319,7 +1333,6 @@ export default {
   "teamEditor.name": "Navn",
   "teamEditor.noCharacters": "Du har ingen figurer at kopiere.",
   "teamEditor.notSaved": "Ikke gemt: {error}",
-  "teamEditor.openInCharacter": "Åbn på figursiden ›",
   "teamEditor.professions": "Klasser",
   "teamEditor.professionsTitle": "holdets klasser",
   "teamEditor.replaceMember": "Erstat {member} med {character}",

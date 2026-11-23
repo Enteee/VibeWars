@@ -83,6 +83,9 @@ export default {
   "buildEditor.discardChanges": "¿Descartar los cambios?",
   "buildEditor.duplicate": "Duplicar",
   "buildEditor.duplicateSkill": "{skill} está en la barra más de una vez.",
+  "buildEditor.duplicateRune": "{rune}: otra pieza ya lleva esta runa. Solo cuenta una.",
+  "buildEditor.duplicateAttributeRune":
+    "{rune}: otra pieza ya lleva una runa de este atributo. Solo cuenta la bonificación más fuerte, pero todas las penalizaciones de salud sí.",
   "buildEditor.emptySetAction": "vaciar set {set}",
   "buildEditor.emptySetNote": "Set vacío",
   "buildEditor.emptySlot": "Vacío",
@@ -482,6 +485,11 @@ export default {
   "gearEditor.bareHands": "manos desnudas",
   "gearEditor.bonusFromHeadgear": "casco +{amount}",
   "gearEditor.bonusFromRune": "runa +{amount}",
+  "gearEditor.healthBase": "base {amount}",
+  "gearEditor.healthInsignia": "insignias {amount}",
+  "gearEditor.healthMods": "mejoras {amount}",
+  "gearEditor.healthRunes": "runas {amount}",
+  "gearEditor.healthSources": "Salud máx.: {parts}",
   "gearEditor.itemA": "{item}",
   "gearEditor.itemAn": "{item}",
   "gearEditor.modRemoved": "Se quitó {mod}: no encaja en {item}.",
@@ -634,6 +642,10 @@ export default {
   "hud.outcomeVictory": "Victoria",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (muerto)",
+  "hud.preMatchStartingAnyway":
+    "Esperando jugadores: {joined}/{expected}, empieza de todos modos en {seconds} s",
+  "hud.preMatchStartsIn": "La partida empieza en {seconds}",
+  "hud.preMatchWaiting": "Esperando jugadores: {joined}/{expected}",
   "hud.priest": "sacerdote",
   "hud.priestDead": "sacerdote (muerto)",
   "hud.raise": "revive {clock}",
@@ -828,6 +840,8 @@ export default {
   "lobbyWindow.reconnecting": "Reconectando…",
   "lobbyWindow.removeMember": "Expulsar a {name} de la sala",
 
+  "match.buildReplaced":
+    "Tu build no es válida ({problem}): en esta partida juegas con una build inicial.",
   "matchView.watching": "Observando · {seconds} s de retraso",
 
   "matches.bot": "{name} (bot)",
@@ -1406,7 +1420,6 @@ export default {
   "teamEditor.name": "Nombre",
   "teamEditor.noCharacters": "No tienes personajes que copiar.",
   "teamEditor.notSaved": "No guardado: {error}",
-  "teamEditor.openInCharacter": "Abrir en la pantalla de personaje ›",
   "teamEditor.professions": "Profesiones",
   "teamEditor.professionsTitle": "las profesiones del equipo",
   "teamEditor.replaceMember": "Sustituir a {member} por {character}",
