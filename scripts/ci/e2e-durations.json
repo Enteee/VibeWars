@@ -331,8 +331,6 @@
   "e2e/team-arena.spec.ts › #2107: a Team Arena leader picks 2v2, and the party queues for Team Arena 2v2": 33.4,
   "e2e/team-arena.spec.ts › #3815: a Team Arena party that wins queues again with the same team, with no Team Lobby": 162,
   "e2e/team-lobby.spec.ts › #1460: two players and a bot propose, vote, take seats and play the claimed characters": 8.2,
-  "e2e/touch-notice.spec.ts › never shows on a narrow desktop window": 1,
-  "e2e/touch-notice.spec.ts › on a touch-only phone › holds the menu back until Continue anyway, once, keeping the link's fragment": 1.1,
   "e2e/training.spec.ts › (1) the arena is a third column, left of the editor and the library": 1.9,
   "e2e/training.spec.ts › (10) on a narrow screen the columns stack: training, the bar, library, gear": 2,
   "e2e/training.spec.ts › (11) every skill button shows its skill-type badge, as the HUD does": 2.5,

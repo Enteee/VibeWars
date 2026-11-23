@@ -3,8 +3,8 @@
 VibeWars is een teamgevecht in een kleine arena. Elke speler brengt één
 personage met acht skills mee. Het team dat het gevecht wint, wint de match.
 Je hebt geen account nodig en hoeft niets te installeren: het spel draait in
-dit browsertabblad. VibeWars heeft een toetsenbord en muis nodig. Het werkt
-niet op een telefoon of een tablet met alleen touch: open het op een computer.
+dit browsertabblad. Speel het met toetsenbord en muis, of met aanraking op een
+telefoon of tablet: zie [Aanraking](controls.md#aanraking).
 
 ## De tutorial
 

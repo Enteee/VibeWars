@@ -1476,12 +1476,6 @@ export default {
     other: "Deine Gruppe mit {count} Personen tritt mit dir bei.",
   },
 
-  "touchNotice.continue": "Trotzdem weiter",
-  "touchNotice.headline": "VibeWars braucht Tastatur und Maus.",
-  "touchNotice.title": "VibeWars",
-  "touchNotice.where":
-    "Es läuft nicht auf Handys oder reinen Touch-Tablets. Öffne es auf einem Computer: {url}.",
-
   "training.arena": "Trainingsarena",
   "training.attacking": "greift an",
   "training.cannotTest": "Dieser Build kann nicht getestet werden: {problem}",
@@ -1731,6 +1725,27 @@ export default {
   "tutorial.stepIn.how": "Linksklick auf die Plattform, oder geh mit {keys}.",
   "tutorial.stepIn.intro": "Komm, mit mir in den Teleporter!",
   "tutorial.stepIn.praise": "Zusammen. Halt die Luft an.",
+  "tutorial.touch.callHow": "Tipp eine Ratte an, dann die Zielleiste, um sie auszurufen.",
+  "tutorial.touch.callT": "Genau so. Jetzt bist du am ausgerufenen Ziel.",
+  "tutorial.touch.climbHint": "Rauf auf den Vorsprung, dann daneben wieder runter.",
+  "tutorial.touch.climbHow": "Tipp auf den Vorsprung, dann auf den Boden daneben.",
+  "tutorial.touch.climbPraise": "Rauf und wieder runter. Jetzt liest du das Gelände.",
+  "tutorial.touch.climbTip": "Tipp: Ein Tippen auf einen Vorsprung wählt immer seine Oberseite.",
+  "tutorial.touch.climbUnder": "Jetzt wieder runter, neben den Vorsprung.",
+  "tutorial.touch.healHint":
+    "Tipp zuerst meinen Namen in der Gruppenliste an. Tipp auf Gruppe, falls die Liste zu ist.",
+  "tutorial.touch.healHow":
+    "Tipp auf Gruppe, falls die Liste zu ist, dann auf meinen Namen und dann auf den leuchtenden Skill.",
+  "tutorial.touch.look": "Mit zwei Fingern zoomen. Mit einem Finger ziehen, um dich umzusehen.",
+  "tutorial.touch.pingHow": "Tipp auf den Kompass oder zieh darauf eine Linie.",
+  "tutorial.touch.rampHow": "Tipp auf die hohe Plattform. Dein Weg nimmt die Stufen für dich.",
+  "tutorial.touch.ratsHow": "Tipp eine Ratte an, um sie ins Ziel zu nehmen.",
+  "tutorial.touch.tunnelHow":
+    "Tipp auf die Stufen hinab, dann auf die Markierung hinter dem anderen Ende.",
+  "tutorial.touch.walk": "Tipp auf den Boden, um dorthin zu gehen.",
+  "tutorial.touch.wallHint": "Tipp zuerst auf die Mauer, dann schlag zu.",
+  "tutorial.touch.wallHow": "Tipp auf die Mauer, dann noch mal, um zuzuschlagen.",
+  "tutorial.touch.wallIntro": "Eine Mauer versperrt den Pfad. Tipp drauf, dann schlag zu.",
   "tutorial.tunnel.hint": "Die Stufen hinab, durch den Tunnel, zur Markierung.",
   "tutorial.tunnel.how": "Klick die Stufen hinab, dann die Markierung hinter dem anderen Ende.",
   "tutorial.tunnel.intro": "Pst. Weck die Wache nicht. Wir gehen unten durch.",

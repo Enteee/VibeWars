@@ -8899,37 +8899,6 @@ body:has(#screens[style*="none"]) .now-playing {
 }
 
 /*
- * A touch-only device is told it needs a keyboard and mouse (#1392), over
- * everything, before the menu. Nothing animates.
- */
-.touch-notice-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 80;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  padding: 3rem 1rem;
-  overflow-y: auto;
-  background: var(--bg);
-}
-
-.touch-notice-headline {
-  margin: 0;
-  font-size: 1.2rem;
-  font-weight: bold;
-}
-
-.touch-notice-url {
-  overflow-wrap: anywhere;
-  color: var(--ink);
-}
-
-.touch-notice-continue {
-  align-self: flex-start;
-}
-
-/*
  * The first-time tutorial (#3218). Its offer is a menu card over the
  * background fight, before the menu; fades only.
  */

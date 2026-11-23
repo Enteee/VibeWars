@@ -1547,12 +1547,6 @@ export default {
     other: "Tu grupo de {count} entra contigo.",
   },
 
-  "touchNotice.continue": "Continuar",
-  "touchNotice.headline": "VibeWars necesita teclado y ratón.",
-  "touchNotice.title": "VibeWars",
-  "touchNotice.where":
-    "No funciona en móviles ni tabletas solo táctiles. Ábrelo en un ordenador: {url}.",
-
   "training.arena": "arena de entrenamiento",
   "training.attacking": "atacando",
   "training.cannotTest": "Esta build no se puede probar: {problem}",
@@ -1804,6 +1798,26 @@ export default {
   "tutorial.stepIn.how": "Haz clic izquierdo en la plataforma, o camina con {keys}.",
   "tutorial.stepIn.intro": "¡Vamos, al teletransportador conmigo!",
   "tutorial.stepIn.praise": "Juntos. Contén la respiración.",
+  "tutorial.touch.callHow": "Toca una rata y luego la barra de objetivo para marcarla.",
+  "tutorial.touch.callT": "Eso es. Ahora vas a por el objetivo marcado.",
+  "tutorial.touch.climbHint": "Sube a la cornisa y luego baja a su lado.",
+  "tutorial.touch.climbHow": "Toca la cornisa y luego el suelo a su lado.",
+  "tutorial.touch.climbPraise": "Arriba y abajo otra vez. Ya sabes leer el terreno.",
+  "tutorial.touch.climbTip": "Consejo: tocar una cornisa siempre elige su parte de arriba.",
+  "tutorial.touch.climbUnder": "Ahora baja otra vez, junto a la cornisa.",
+  "tutorial.touch.healHint":
+    "Primero toca mi nombre en la lista del grupo. Toca Grupo si la lista está cerrada.",
+  "tutorial.touch.healHow":
+    "Toca Grupo si la lista está cerrada, luego mi nombre y luego la habilidad que brilla.",
+  "tutorial.touch.look": "Pellizca para hacer zoom. Arrastra un dedo para mirar.",
+  "tutorial.touch.pingHow": "Toca la brújula o arrastra sobre ella para trazar una línea.",
+  "tutorial.touch.rampHow": "Toca la plataforma alta. Tu camino sube los escalones por ti.",
+  "tutorial.touch.ratsHow": "Toca una rata para seleccionarla.",
+  "tutorial.touch.tunnelHow": "Toca los escalones de bajada y luego la marca tras el otro extremo.",
+  "tutorial.touch.walk": "Toca el suelo para caminar hasta allí.",
+  "tutorial.touch.wallHint": "Primero toca el muro, luego golpéalo.",
+  "tutorial.touch.wallHow": "Toca el muro y vuelve a tocarlo para golpearlo.",
+  "tutorial.touch.wallIntro": "Un muro bloquea el sendero. Tócalo y golpéalo.",
   "tutorial.tunnel.hint": "Baja los escalones, cruza el túnel, hasta la marca.",
   "tutorial.tunnel.how":
     "Haz clic en los escalones de bajada y luego en la marca tras el otro extremo.",

@@ -1,0 +1,50 @@
+import { expect, test } from "@playwright/test";
+
+import { projection } from "./camera.js";
+import { PIXEL_8A_PORTRAIT } from "./helpers/phone.js";
+
+/**
+ * Phones are welcome (#3782): a Pixel 8a is offered the tutorial after the
+ * splash like any other device, its tutor names the gesture rather than a
+ * key, and a tap walks its first station. Only that one station: the rest
+ * is `tutorial.spec`'s, which is at its per-spec ceiling.
+ */
+
+test.use(PIXEL_8A_PORTRAIT);
+
+test("a phone learns to walk with a tap (#3782)", async ({ page }) => {
+  // A solo start plus a walk on a loaded runner, as tutorial.spec's first station.
+  test.setTimeout(240_000);
+  await page.goto("./?splash&menu-background=bench-flat");
+  const splash = page.locator(".splash");
+  await expect(splash.locator(".splash-hint")).toBeVisible();
+  await expect(page.locator("#menu-background")).toHaveAttribute("data-map", "bench-flat");
+  await page.touchscreen.tap(200, 450);
+  await expect(splash.locator(".splash-prompt")).toBeVisible({ timeout: 10_000 });
+  await page.touchscreen.tap(200, 450);
+  await expect(splash).toHaveCount(0);
+  await page.getByRole("button", { name: "Learn to play" }).tap();
+
+  const frame = page.locator(".tutorial-frame");
+  await expect(frame).toHaveCount(1, { timeout: 30_000 });
+  await expect(frame.locator(".tutorial-how")).toHaveText("Tap the ground to walk there.");
+  await expect(frame).toHaveAttribute("data-mark", /^-?\d+,-?\d+$/);
+  const [x = 0, y = 0] = ((await frame.getAttribute("data-mark")) ?? "").split(",").map(Number);
+  const stage = page.locator("#viewport");
+  const said = frame.locator(".tutorial-said");
+  // The praise stands 2.5 s only, then the next station's intro: either is past the walk.
+  const walked = /Nice stride! You're a natural\.|Look north!/;
+  // The camera may still be easing in on a slow runner, which makes one
+  // projection stale: project afresh and tap again until the walk lands.
+  await expect(async () => {
+    if (walked.test((await said.textContent()) ?? "")) {
+      return;
+    }
+    const at = (await projection(stage, page.locator("#viewport canvas:not(.compass)"))).onPage({
+      x,
+      y,
+    });
+    await page.touchscreen.tap(at.x, at.y);
+    await expect(said).toHaveText(walked, { timeout: 15_000 });
+  }).toPass({ timeout: 120_000 });
+});

@@ -3,9 +3,9 @@
 A VibeWars csapatharc egy kis arénában. Minden játékos egy karaktert hoz
 nyolc készséggel. Az a csapat, amelyik megnyeri a harcot, megnyeri a
 meccset. Nem kell fiók, és semmit sem kell telepíteni: a játék ebben a
-böngészőlapban fut. A VibeWarshoz billentyűzet és egér kell. Telefonon
-vagy csak érintéssel működő táblagépen nem működik: nyisd meg
-számítógépen.
+böngészőlapban fut. Játszhatsz billentyűzettel és egérrel, vagy
+érintéssel telefonon vagy táblagépen: lásd
+[Érintés](controls.md#érintés).
 
 ## Az oktatás
 

@@ -73,7 +73,7 @@ describe("the menu quest session", () => {
 
   it("saves its step as it starts, and points at the rail first, with Got it", () => {
     const { coach, shown } = fakeCoach();
-    startMenuQuest({ from: "menu", coach, onEnd: () => undefined });
+    startMenuQuest({ touch: false, from: "menu", coach, onEnd: () => undefined });
     expect(items.get(KEY)).toBe("menu:menu");
     expect(shown.at(-1)?.target).toBe("rail");
     expect(shown.at(-1)?.gotIt).toBeDefined();
@@ -83,7 +83,7 @@ describe("the menu quest session", () => {
   it("walks rail, Characters and Teams on Got it, then saves the spec step and points on", () => {
     const { coach, shown, removed } = fakeCoach();
     const onEnd = vi.fn();
-    startMenuQuest({ from: "menu", coach, onEnd });
+    startMenuQuest({ touch: false, from: "menu", coach, onEnd });
     gotIt(shown.at(-1));
     expect(shown.at(-1)?.target).toBe("rail-characters");
     gotIt(shown.at(-1));
@@ -99,7 +99,7 @@ describe("the menu quest session", () => {
   it("follows the spec step from the editor events, then saves the team step and points on (#3541, #3542)", () => {
     const { coach, shown, removed } = fakeCoach();
     const onEnd = vi.fn();
-    const quest = startMenuQuest({ from: "spec", coach, onEnd });
+    const quest = startMenuQuest({ touch: false, from: "spec", coach, onEnd });
     quest.event({ kind: "screen-shown", screen: "characters" });
     expect(shown.at(-1)?.target).toBe("rail-characters");
     quest.event({ kind: "roster-shown", random: true });
@@ -155,7 +155,7 @@ describe("the menu quest session", () => {
   it("follows the team step from the team editor's events, then on to the modes (#3542)", () => {
     const { coach, shown, removed } = fakeCoach();
     const onEnd = vi.fn();
-    const quest = startMenuQuest({ from: "team", coach, onEnd });
+    const quest = startMenuQuest({ touch: false, from: "team", coach, onEnd });
     expect(items.get(KEY)).toBe("menu:team");
     expect(shown.at(-1)?.target).toBe("rail-teams");
     quest.event({ kind: "screen-shown", screen: "teams" });
@@ -199,7 +199,7 @@ describe("the menu quest session", () => {
   it("opens and explains each mode, ticking its list, then goes on to the arena (#3543)", () => {
     const { coach, shown, removed } = fakeCoach();
     const onEnd = vi.fn();
-    const quest = startMenuQuest({ from: "modes", coach, onEnd });
+    const quest = startMenuQuest({ touch: false, from: "modes", coach, onEnd });
     expect(items.get(KEY)).toBe("menu:modes");
     quest.event({ kind: "screen-shown", screen: "teams" });
     expect(shown.at(-1)?.target).toBe("rail-random-arena");
@@ -238,7 +238,7 @@ describe("the menu quest session", () => {
   it("queues a team of two for Team Arena, then saves done and says goodbye (#3544)", () => {
     const { coach, shown, removed, farewell, farewellGone } = fakeCoach();
     const onEnd = vi.fn();
-    const quest = startMenuQuest({ from: "arena", coach, onEnd });
+    const quest = startMenuQuest({ touch: false, from: "arena", coach, onEnd });
     expect(items.get(KEY)).toBe("menu:arena");
     quest.event({ kind: "screen-shown", screen: "team-arena" });
     expect(shown.at(-1)?.target).toBe("team-size");
@@ -266,7 +266,7 @@ describe("the menu quest session", () => {
 
   it("is not moved on by the menu's events while it explains", () => {
     const { coach, shown } = fakeCoach();
-    const quest = startMenuQuest({ from: "menu", coach, onEnd: () => undefined });
+    const quest = startMenuQuest({ touch: false, from: "menu", coach, onEnd: () => undefined });
     quest.event({ kind: "screen-shown", screen: "teams" });
     expect(shown.at(-1)?.target).toBe("rail");
   });
@@ -274,7 +274,7 @@ describe("the menu quest session", () => {
   it("saves skipped on a confirmed Skip, and goes", () => {
     const { coach, removed, skip } = fakeCoach();
     const onEnd = vi.fn();
-    startMenuQuest({ from: "menu", coach, onEnd });
+    startMenuQuest({ touch: false, from: "menu", coach, onEnd });
     skip();
     expect(items.get(KEY)).toBe("skipped");
     expect(removed()).toBe(true);
@@ -284,7 +284,7 @@ describe("the menu quest session", () => {
   it("keeps its step when stopped for a link, so the next launch resumes", () => {
     const { coach, shown, removed } = fakeCoach();
     const onEnd = vi.fn();
-    const quest = startMenuQuest({ from: "menu", coach, onEnd });
+    const quest = startMenuQuest({ touch: false, from: "menu", coach, onEnd });
     gotIt(shown.at(-1));
     quest.stop();
     expect(items.get(KEY)).toBe("menu:menu");

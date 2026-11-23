@@ -14,6 +14,7 @@ import { NO_GUILD } from "@vibewars/game-session";
 import { skillName } from "../i18n/game-names.js";
 import { t } from "../i18n/index.js";
 import { loadKeymap } from "../input/keymap-preference.js";
+import { isTouchOnly } from "../input/touch-only.js";
 import { startMatchView, type MatchView } from "../match-view.js";
 import type { GoalMark } from "../render/goal-mark.js";
 import type { MistGateProp, ParasolProp, SleeperProp } from "../render/tutorial-props.js";
@@ -25,6 +26,8 @@ import {
 } from "../training/local-connection.js";
 
 import { mountSkipTutorial } from "./tutorial-offer.js";
+import { hudTarget } from "./hud-target.js";
+import { touchLine } from "./touch-lines.js";
 import { DEFAULT_STEP } from "../render/camera-rig.js";
 
 import {
@@ -317,6 +320,11 @@ export async function startTutorialSession(
       pulsing = element;
     }
   };
+  /** The HUD element `selector` names, or what stands in while it is collapsed. */
+  const findHud = (selector: string): Element | undefined => {
+    const found = parent.querySelector(selector);
+    return found === null ? undefined : hudTarget(found);
+  };
   const stop = async (): Promise<void> => {
     ended = true;
     cancelAnimationFrame(request);
@@ -331,12 +339,15 @@ export async function startTutorialSession(
       options.onEnd(how);
     }
   };
+  // A phone hears the gestures, not the keys (#3782), and climbs down by any way.
+  const touch = isTouchOnly((query) => matchMedia(query).matches);
   const say = (line: TutorLine): void => {
     const skills = Object.fromEntries(
       Object.entries(line.skills).map(([slot, id]) => [slot, skillName(id)]),
     );
-    said.textContent = t(line.key, { ...skills, keys: line.keys.join(" ") });
-    how.textContent = line.how === undefined ? "" : t(line.how, { keys: line.keys.join(" ") });
+    said.textContent = t(touchLine(line.key, touch), { ...skills, keys: line.keys.join(" ") });
+    how.textContent =
+      line.how === undefined ? "" : t(touchLine(line.how, touch), { keys: line.keys.join(" ") });
   };
   const open = (): Promise<MatchView> => {
     const { connection } = stage;
@@ -410,7 +421,7 @@ export async function startTutorialSession(
       { runner: RAT_POCKET.rats[0].id, big: RAT_POCKET.rats[1].id },
       playerBuild.skillBar,
     ),
-    climbStation(LEDGE.footprint, LEDGE.stairs, LEDGE.upper, LEDGE.lower),
+    climbStation(LEDGE.footprint, LEDGE.stairs, LEDGE.upper, LEDGE.lower, touch),
     rampStation(RAMP.mark, RAMP.layer, RAMP.landingFootprint, RAMP.landing),
     tunnelStation(TUNNEL.footprint, TUNNEL.under, TUNNEL.above, TUNNEL.mark),
     callStation(),
@@ -664,11 +675,7 @@ export async function startTutorialSession(
       running = beat.station;
       highlight = beat.highlight;
       besideHud = beat.mark;
-      pulse(
-        highlight?.kind === "hud"
-          ? (parent.querySelector(highlight.element) ?? undefined)
-          : undefined,
-      );
+      pulse(highlight?.kind === "hud" ? findHud(highlight.element) : undefined);
       // Station 5 is next: the tutor goes to wait by the wall, and joins in
       // once the player has struck it.
       if (atWall === undefined && beat.station === "break-wall" && stage.name === "canyon") {

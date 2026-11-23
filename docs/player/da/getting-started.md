@@ -2,9 +2,9 @@
 
 VibeWars er en holdkamp i en lille arena. Hver spiller tager én figur med
 otte evner. Det hold, der vinder kampen, vinder matchen. Du behøver ingen
-konto og intet at installere: spillet kører i denne browserfane. VibeWars
-kræver tastatur og mus. Det virker ikke på en telefon eller en tablet
-kun med berøring: åbn det på en computer.
+konto og intet at installere: spillet kører i denne browserfane. Spil det
+med tastatur og mus, eller med berøring på en telefon eller en tablet: se
+[Touch](controls.md#touch).
 
 ## Vejledningen
 

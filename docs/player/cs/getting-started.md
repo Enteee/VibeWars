@@ -1,6 +1,6 @@
 # Začínáme
 
-VibeWars je týmový souboj v malé aréně. Každý hráč si přinese jednu postavu s osmi dovednostmi. Tým, který vyhraje boj, vyhrává zápas. Nepotřebuješ účet ani nic instalovat: hra běží v této kartě prohlížeče. VibeWars vyžaduje klávesnici a myš. Na telefonu ani na tabletu ovládaném jen dotykem nefunguje: otevři ji na počítači.
+VibeWars je týmový souboj v malé aréně. Každý hráč si přinese jednu postavu s osmi dovednostmi. Tým, který vyhraje boj, vyhrává zápas. Nepotřebuješ účet ani nic instalovat: hra běží v této kartě prohlížeče. Hraj ji s klávesnicí a myší, nebo dotykem na telefonu či tabletu: viz [Dotyk](controls.md#dotyk).
 
 ## Výuka
 

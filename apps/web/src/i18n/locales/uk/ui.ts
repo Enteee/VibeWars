@@ -1584,12 +1584,6 @@ export default {
     other: "Твій загін із {count} особи приєднується з тобою.",
   },
 
-  "touchNotice.continue": "Усе одно далі",
-  "touchNotice.headline": "VibeWars потребує клавіатури й миші.",
-  "touchNotice.title": "VibeWars",
-  "touchNotice.where":
-    "Гра не працює на телефоні чи суто сенсорному планшеті. Відкрий її на комп'ютері: {url}.",
-
   "training.arena": "тренувальна арена",
   "training.attacking": "атакує",
   "training.cannotTest": "Цей білд не можна випробувати: {problem}",
@@ -1836,6 +1830,27 @@ export default {
   "tutorial.stepIn.how": "Клацни лівою кнопкою по платформі або йди за допомогою {keys}.",
   "tutorial.stepIn.intro": "Ходімо, в телепорт зі мною!",
   "tutorial.stepIn.praise": "Разом. Затримай подих.",
+  "tutorial.touch.callHow": "Торкнися щура, потім панелі цілі, щоб позначити його.",
+  "tutorial.touch.callT": "Саме так. Тепер ти на позначеній цілі.",
+  "tutorial.touch.climbHint": "Нагору на виступ, потім знову вниз поруч із ним.",
+  "tutorial.touch.climbHow": "Торкнися виступу, потім землі поруч із ним.",
+  "tutorial.touch.climbPraise": "Угору й знову вниз. Тепер ти читаєш місцевість.",
+  "tutorial.touch.climbTip": "Порада: дотик до виступу завжди обирає його верх.",
+  "tutorial.touch.climbUnder": "Тепер назад униз, поруч із виступом.",
+  "tutorial.touch.healHint":
+    "Спершу торкнися мого імені у списку загону. Торкнися «Загін», якщо список закрито.",
+  "tutorial.touch.healHow":
+    "Якщо список закрито, торкнися «Загін», потім мого імені, потім вміння, що світиться.",
+  "tutorial.touch.look":
+    "Зведи чи розведи пальці для масштабу. Тягни одним пальцем, щоб роззирнутися.",
+  "tutorial.touch.pingHow": "Торкнися компаса або проведи по ньому лінію.",
+  "tutorial.touch.rampHow": "Торкнися високого майданчика. Шлях сам пройде сходами.",
+  "tutorial.touch.ratsHow": "Торкнися щура, щоб вибрати його.",
+  "tutorial.touch.tunnelHow": "Торкнися сходів униз, потім позначки за дальнім кінцем.",
+  "tutorial.touch.walk": "Торкнися землі, щоб піти туди.",
+  "tutorial.touch.wallHint": "Спершу торкнися стіни, тоді бий.",
+  "tutorial.touch.wallHow": "Торкнися стіни, потім торкнися знову, щоб ударити.",
+  "tutorial.touch.wallIntro": "Стіна перегородила стежку. Торкнися її, тоді бий.",
   "tutorial.tunnel.hint": "Униз сходами, крізь тунель, до позначки.",
   "tutorial.tunnel.how": "Клацни сходи вниз, потім позначку за дальнім кінцем.",
   "tutorial.tunnel.intro": "Тсс. Не розбуди його. Ідемо низом.",

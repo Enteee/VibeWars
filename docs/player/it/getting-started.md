@@ -1,6 +1,6 @@
 # Primi passi
 
-VibeWars è uno scontro a squadre in una piccola arena. Ogni giocatore porta un personaggio con otto abilità. La squadra che vince lo scontro vince la partita. Non servono account né installazioni: il gioco funziona in questa scheda del browser. VibeWars richiede tastiera e mouse. Non funziona su un telefono o su un tablet solo touch: aprilo su un computer.
+VibeWars è uno scontro a squadre in una piccola arena. Ogni giocatore porta un personaggio con otto abilità. La squadra che vince lo scontro vince la partita. Non servono account né installazioni: il gioco funziona in questa scheda del browser. Giocalo con tastiera e mouse, oppure al tocco su un telefono o un tablet: vedi [Tocco](controls.md#tocco).
 
 ## Il tutorial
 
