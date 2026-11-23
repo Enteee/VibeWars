@@ -1,6 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
 import { openRail } from "./helpers/menu.js";
+import { scrollToEnd, underChatIcon } from "./helpers/overlay.js";
 import { PIXEL_8A_LANDSCAPE, PIXEL_8A_PORTRAIT, expectFitsPhone } from "./helpers/phone.js";
 
 /**
@@ -182,4 +183,26 @@ test("a saved character goes into a team member by tap and Put here (#3876)", as
   await expect(rows.nth(1).locator(".team-row-name")).toHaveText("Thumbs");
   await expect(pick).toHaveAttribute("aria-pressed", "false");
   await expect(page.locator(".team-row-put:visible")).toHaveCount(0);
+});
+
+test("the training bar is one row of 8 under its weapon sets, clear of the chat's icon (#3887)", async ({
+  page,
+}) => {
+  await newCharacter(page);
+  await expect(page.locator(".training canvas")).toBeVisible();
+  const slots = await page
+    .locator(".training-skill")
+    .evaluateAll((nodes) => nodes.map((node) => node.getBoundingClientRect().top));
+  expect(slots).toHaveLength(8);
+  expect(new Set(slots).size).toBe(1);
+  const sets = await page
+    .locator(".training-skills .weapon-set")
+    .evaluateAll((nodes) => nodes.map((node) => node.getBoundingClientRect()));
+  expect(sets).toHaveLength(4);
+  for (const set of sets) expect(set.bottom).toBeLessThanOrEqual(slots[0] ?? 0);
+  expect(await underChatIcon(page, ".training-skill, .weapon-set")).toEqual([]);
+  await scrollToEnd(page, ".editor-layout");
+  expect(
+    await underChatIcon(page, ".editor-layout :is(button, input, select, label, span)"),
+  ).toEqual([]);
 });

@@ -9620,9 +9620,11 @@ body:has(> .splash) #app {
   }
 
   /* Over the bar's left end, a row of its own: the panel has no bars
-     beside it to stand by. */
+     beside it to stand by. Finger-wide, the four sets lie in one line,
+     which keeps the bar a screen's height up, clear of the chat's icon. */
   .training-skills > .weapon-sets {
     flex-basis: 100%;
+    grid-template-columns: repeat(4, max-content);
   }
 
   /* No room left of the bar: the weapon sets stand over its left end,
