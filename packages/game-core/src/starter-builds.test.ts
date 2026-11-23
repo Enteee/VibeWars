@@ -79,7 +79,7 @@ describe("pickStarterBuild (#852)", () => {
     for (const build of STARTER_BUILDS) {
       const not = { ...build, name: "Kaelen Ashvale" };
       for (const r of [0, 0.2, 0.4, 0.6, 0.8, 0.9999999]) {
-        const picked = pickStarterBuild(() => r, not);
+        const picked = pickStarterBuild(() => r, [not]);
         expect([picked.primaryProfession, picked.secondaryProfession]).not.toEqual([
           not.primaryProfession,
           not.secondaryProfession,
@@ -90,6 +90,6 @@ describe("pickStarterBuild (#852)", () => {
 
   it("still picks a build when the one it is told not to is the only one", () => {
     const only = STARTER_BUILDS.slice(0, 1);
-    expect(pickBuildFrom(only, () => 0.5, only[0])).toBe(only[0]);
+    expect(pickBuildFrom(only, () => 0.5, only)).toBe(only[0]);
   });
 });

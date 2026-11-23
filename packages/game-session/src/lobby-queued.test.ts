@@ -156,6 +156,8 @@ interface OpenQueuedOptions {
   readonly host?: string;
   /** Play this match instead of a real one. */
   readonly match?: FakeMatch;
+  /** The lobby's RNG: 0.5 for good. */
+  readonly random?: () => number;
 }
 
 interface QueuedLobby {
@@ -235,7 +237,7 @@ function joinQueued(
 }
 
 async function openQueued(options: OpenQueuedOptions = {}): Promise<QueuedLobby> {
-  const { group = GROUP, match, host: hostTicket = HOST } = options;
+  const { group = GROUP, match, host: hostTicket = HOST, random = () => 0.5 } = options;
   const network = createMemoryNetwork();
   const plans: MatchPlan[] = [];
   const fellThrough: (readonly string[])[] = [];
@@ -252,7 +254,7 @@ async function openQueued(options: OpenQueuedOptions = {}): Promise<QueuedLobby>
     mapTeamSizes: MAP_TEAM_SIZES,
     hostedTeamSize: 4,
     teamLobby: false,
-    random: () => 0.5,
+    random,
     verifyPlayerProof: verifyTestProof,
     startMatch(plan) {
       plans.push(plan);
@@ -1031,6 +1033,34 @@ describe("a queued three-team Heroes' Ascent round (#2683)", () => {
     expect(plan?.teamCount).toBe(3);
     expect(teamSizes(plan)).toEqual({ 0: 8, 1: 8, 2: 8 });
     expect(teamOf(plan, "ticket-4")).toBe(2);
+  });
+
+  it("deals each of the three sides another preset, so no build name is on two (#3891)", async () => {
+    for (const draw of [0, 0.5, 0.999]) {
+      const queued = await openQueued({
+        group: THREE_GROUP,
+        match: fakeMatch(),
+        random: () => draw,
+      });
+      await queued.join(ALLY);
+      await queued.join(FOE);
+      await queued.join(FOE_2);
+      await settle();
+      await queued.step(COUNTDOWN_SECONDS);
+      const seats = [...(queued.plans[0]?.seats.values() ?? [])];
+      const names = (team: number) =>
+        new Set(seats.flatMap((seat) => (seat.team === team ? [seat.build?.name] : [])));
+      for (const [a, b] of [
+        [0, 1],
+        [0, 2],
+        [1, 2],
+      ] as const) {
+        expect(
+          [...names(a)].filter((name) => names(b).has(name)),
+          `${String(a)}/${String(b)} at ${String(draw)}`,
+        ).toEqual([]);
+      }
+    }
   });
 
   it("plays the two sides that came as two teams when nobody of the third did", async () => {

@@ -1354,21 +1354,29 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
    * A preset team of `size` at random from the lobby's RNG (#2148): its
    * name, and its builds in slot order under its members' job names.
    * Size 1 has no preset team: one starter build, and no name. A queued
-   * party's foe side is of size 0, and plays none. Never `not`, the
-   * other side's preset (#3891): another team name, or for size 1 a
-   * build of other professions, so no bot's name is on both sides.
+   * party's foe side is of size 0, and plays none. Never one of `not`,
+   * the other sides' presets (#3891): another team name, or for size 1 a
+   * build of other professions, so no bot's name is on two sides.
    */
-  const presetTeamFor = (size: number, not?: PresetTeam): PresetTeam => {
+  const presetTeamFor = (size: number, not: readonly PresetTeam[] = []): PresetTeam => {
     if (size === 0) {
       return { name: null, builds: [] };
     }
     if (size === 1) {
-      return { name: null, builds: [pickStarterBuild(random, not?.builds[0])] };
+      return {
+        name: null,
+        builds: [
+          pickStarterBuild(
+            random,
+            not.flatMap(({ builds }) => builds),
+          ),
+        ],
+      };
     }
     const preset = pickStarterTeam(
       random,
       size,
-      not?.name === undefined || not.name === null ? undefined : { name: not.name },
+      not.flatMap(({ name }) => (name === null ? [] : [{ name }])),
     );
     if (preset === undefined) {
       throw new Error(`there are no preset teams of ${String(size)}`);
@@ -1389,7 +1397,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     team: 0 | 1,
     side: TeamSide,
     size: number,
-    not?: PresetTeam,
+    not: readonly PresetTeam[],
   ): NonNullable<TeamSide["chosen"]> => {
     if (playsPreset(team, side)) {
       const preset = presetTeamFor(size, not);
@@ -1433,8 +1441,8 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
           side,
           side.size,
           team === 1 && other?.reason === "preset"
-            ? { name: other.presetName, builds: other.builds }
-            : undefined,
+            ? [{ name: other.presetName, builds: other.builds }]
+            : [],
         );
         side.claims = Array.from({ length: side.chosen.builds.length }, () => null);
       }
@@ -2286,8 +2294,8 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     const assigned = new Map<string, PlayerBuild>();
     const rejected = new Set<WireTeam>();
     const botBuilds = new Map<string, PlayerBuild>();
-    // The first preset drawn, which the next side's never repeats (#3891).
-    let drawn: PresetTeam | undefined;
+    // The presets drawn so far, which the next side's never repeats (#3891).
+    const drawn: PresetTeam[] = [];
     for (const team of teamsOf(plan.group)) {
       const keys = plan.group.teams[team] ?? [];
       const whole = wholePlan(teamPlans[team], keys, size);
@@ -2297,7 +2305,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       let seats = whole;
       if (seats === undefined) {
         const preset = presetTeamFor(size, drawn);
-        drawn ??= preset;
+        drawn.push(preset);
         seats = preset.builds.map((build, slot) => ({ memberKey: keys[slot] ?? null, build }));
       }
       for (const { memberKey, build } of seats) {
