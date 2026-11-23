@@ -61,6 +61,21 @@ export default {
 
   "buildEditor.addWeapon": "افزودن سلاح",
   "buildEditor.armor": "زره",
+  "buildEditor.attributeEffect.critical-strikes":
+    "+{percent}% شانس ضربهٔ بحرانی، +{energy} انرژی به ازای هر ضربهٔ بحرانی",
+  "buildEditor.attributeEffect.divine-favor": "طلسم‌های Monk روی متحدان +{heal} درمان می‌کنند",
+  "buildEditor.attributeEffect.energy-storage": "+{energy} حداکثر انرژی",
+  "buildEditor.attributeEffect.expertise":
+    "مهارت‌های حمله، آیین‌ها، مهارت‌های لمسی و مهارت‌های Ranger {percent}% انرژی کمتری می‌گیرند",
+  "buildEditor.attributeEffect.fast-casting": "طلسم‌ها و مهرها {percent}% سریع‌تر اجرا می‌شوند",
+  "buildEditor.attributeEffect.leadership":
+    "تا {max} انرژی به ازای هر فریاد، {perAlly} به ازای هر متحد تحت تأثیر",
+  "buildEditor.attributeEffect.mysticism": "افسون‌های Dervish {percent}% انرژی کمتری می‌گیرند",
+  "buildEditor.attributeEffect.soul-reaping":
+    "+{energy} انرژی وقتی کسی در نزدیکی می‌میرد ({triggers} در هر {seconds} ثانیه)",
+  "buildEditor.attributeEffect.spawning-power":
+    "موجودات +{percent}% سلامتی، طلسم‌های سلاح {percent}% بیشتر دوام می‌آورند",
+  "buildEditor.attributeEffect.strength": "مهارت‌های حمله: {percent}% نفوذ در زره",
   "buildEditor.back": "بازگشت",
   "buildEditor.bothHandsFull": "هر دو دست پر است",
   "buildEditor.budgetSegment": {
@@ -1699,11 +1714,10 @@ export default {
   "tutorial.stepIn.praise": "با هم. نفست را نگه دار.",
   "tutorial.touch.callHow": "یک موش را لمس کن، بعد نوار هدف را تا اعلامش کنی.",
   "tutorial.touch.callT": "همین است. حالا روی هدف اعلام‌شده‌ای.",
-  "tutorial.touch.climbHint": "برو روی لبه، بعد دوباره کنارش پایین بیا.",
-  "tutorial.touch.climbHow": "لبه را لمس کن، بعد زمینِ کنارش را.",
-  "tutorial.touch.climbPraise": "بالا و دوباره پایین. حالا زمین را می‌خوانی.",
-  "tutorial.touch.climbTip": "نکته: لمس لبه همیشه بالای آن را انتخاب می‌کند.",
-  "tutorial.touch.climbUnder": "حالا برگرد پایین، کنار لبه.",
+  "tutorial.touch.climbHow":
+    "جایی را که می‌خواهی بایستی لمس کن. نگه‌داشتنِ انگشت زمینِ زیرش را انتخاب می‌کند.",
+  "tutorial.touch.climbTip": "نکته: نگه‌داشتنِ انگشت زمینِ زیرِ لبه را انتخاب می‌کند.",
+  "tutorial.touch.climbUnder": "انگشتت را نگه دار. حلقه‌ی خط‌چین زیر توست.",
   "tutorial.touch.healHint":
     "اول نامم را در فهرست گروه لمس کن. اگر فهرست بسته است، گروه را لمس کن.",
   "tutorial.touch.healHow": "اگر فهرست بسته است گروه را لمس کن، بعد نامم را، بعد مهارتِ درخشان را.",

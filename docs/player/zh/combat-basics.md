@@ -34,18 +34,20 @@
 
 **异常状态** 会伤害你，直到它们结束或被移除：
 
-| 异常状态                                                                                    | 效果                               |
-| ------------------------------------------------------------------------------------------- | ---------------------------------- |
-| ![Bleeding](../../../apps/web/public/icons/status/bleeding.svg) **Bleeding**                | 使生命流失                         |
-| ![Burning](../../../apps/web/public/icons/status/burning.svg) **Burning**                   | 使生命快速流失                     |
-| ![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison**                      | 使生命流失                         |
-| ![Disease](../../../apps/web/public/icons/status/disease.svg) **Disease**                   | 使生命流失，并传染给你身边的任何人 |
-| ![Crippled](../../../apps/web/public/icons/status/crippled.svg) **Crippled**                | 你以一半速度移动                   |
-| ![Blind](../../../apps/web/public/icons/status/blind.svg) **Blind**                         | 你的大多数攻击会落空               |
-| ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness**                | 你的武器攻击弱得多                 |
-| ![Cracked Armor](../../../apps/web/public/icons/status/cracked-armor.svg) **Cracked Armor** | 护甲降低                           |
-| ![Deep Wound](../../../apps/web/public/icons/status/deep-wound.svg) **Deep Wound**          | 最大生命降低，治疗效果减弱         |
-| ![Dazed](../../../apps/web/public/icons/status/dazed.svg) **Dazed**                         | 法术施放缓慢；任何攻击都会打断它们 |
+| 异常状态                                                                                    | 效果                                 |
+| ------------------------------------------------------------------------------------------- | ------------------------------------ |
+| ![Bleeding](../../../apps/web/public/icons/status/bleeding.svg) **Bleeding**                | 使生命流失                           |
+| ![Burning](../../../apps/web/public/icons/status/burning.svg) **Burning**                   | 使生命快速流失                       |
+| ![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison**                      | 使生命流失                           |
+| ![Disease](../../../apps/web/public/icons/status/disease.svg) **Disease**                   | 使生命流失，并传染给你身边同类的身体 |
+| ![Crippled](../../../apps/web/public/icons/status/crippled.svg) **Crippled**                | 你以一半速度移动                     |
+| ![Blind](../../../apps/web/public/icons/status/blind.svg) **Blind**                         | 你的大多数攻击会落空                 |
+| ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness**                | 你的武器攻击弱得多                   |
+| ![Cracked Armor](../../../apps/web/public/icons/status/cracked-armor.svg) **Cracked Armor** | 护甲降低                             |
+| ![Deep Wound](../../../apps/web/public/icons/status/deep-wound.svg) **Deep Wound**          | 最大生命降低，治疗效果减弱           |
+| ![Dazed](../../../apps/web/public/icons/status/dazed.svg) **Dazed**                         | 法术施放缓慢；任何攻击都会打断它们   |
+
+仆从（血肉魔像除外）、幽灵和灵魂不会流血、中毒或染病，灵魂也不受任何咒术，除 **Burning** 外不受任何状态。
 
 ![咒术](../../../apps/web/public/icons/skill-type/hex.svg) **咒术** 由敌人施加在你身上；![附魔](../../../apps/web/public/icons/skill-type/enchantment.svg) **附魔** 由你自己或你的队友施加。每一种都由其对应类型的技能移除。有些附魔是 **维持** 的：它们会一直持续到你结束它们，持续期间消耗一个能量 pip。双击其图标即可结束。
 

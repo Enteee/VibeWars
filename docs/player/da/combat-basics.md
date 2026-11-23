@@ -65,18 +65,20 @@ mislykkes.
 
 **Tilstande** skader dig, indtil de løber ud eller fjernes:
 
-| Tilstand                                                                                    | Hvad den gør                                              |
-| ------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
-| ![Bleeding](../../../apps/web/public/icons/status/bleeding.svg) **Bleeding**                | dræner liv                                                |
-| ![Burning](../../../apps/web/public/icons/status/burning.svg) **Burning**                   | dræner liv hurtigt                                        |
-| ![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison**                      | dræner liv                                                |
-| ![Disease](../../../apps/web/public/icons/status/disease.svg) **Disease**                   | dræner liv og spreder sig til alle lige ved siden af dig  |
-| ![Crippled](../../../apps/web/public/icons/status/crippled.svg) **Crippled**                | du bevæger dig med halv fart                              |
-| ![Blind](../../../apps/web/public/icons/status/blind.svg) **Blind**                         | de fleste af dine angreb rammer ved siden af              |
-| ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness**                | dit våben rammer meget svagere                            |
-| ![Cracked Armor](../../../apps/web/public/icons/status/cracked-armor.svg) **Cracked Armor** | mindre rustning                                           |
-| ![Deep Wound](../../../apps/web/public/icons/status/deep-wound.svg) **Deep Wound**          | mindre maksimalt liv, og helbredelse virker dårligere     |
-| ![Dazed](../../../apps/web/public/icons/status/dazed.svg) **Dazed**                         | besværgelser kastes langsomt; ethvert angreb afbryder dem |
+| Tilstand                                                                                    | Hvad den gør                                                         |
+| ------------------------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| ![Bleeding](../../../apps/web/public/icons/status/bleeding.svg) **Bleeding**                | dræner liv                                                           |
+| ![Burning](../../../apps/web/public/icons/status/burning.svg) **Burning**                   | dræner liv hurtigt                                                   |
+| ![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison**                      | dræner liv                                                           |
+| ![Disease](../../../apps/web/public/icons/status/disease.svg) **Disease**                   | dræner liv og spreder sig til samme slags krop lige ved siden af dig |
+| ![Crippled](../../../apps/web/public/icons/status/crippled.svg) **Crippled**                | du bevæger dig med halv fart                                         |
+| ![Blind](../../../apps/web/public/icons/status/blind.svg) **Blind**                         | de fleste af dine angreb rammer ved siden af                         |
+| ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness**                | dit våben rammer meget svagere                                       |
+| ![Cracked Armor](../../../apps/web/public/icons/status/cracked-armor.svg) **Cracked Armor** | mindre rustning                                                      |
+| ![Deep Wound](../../../apps/web/public/icons/status/deep-wound.svg) **Deep Wound**          | mindre maksimalt liv, og helbredelse virker dårligere                |
+| ![Dazed](../../../apps/web/public/icons/status/dazed.svg) **Dazed**                         | besværgelser kastes langsomt; ethvert angreb afbryder dem            |
+
+Tjenere (undtagen Kødgolemen), genfærd og ånder bløder ikke, bliver ikke forgiftet og får ikke sygdom, og ånder får ingen forbandelse og ingen tilstand undtagen **Burning**.
 
 ![Forbandelse](../../../apps/web/public/icons/skill-type/hex.svg) **Forbandelser** kastes på dig af fjender; ![Fortryllelse](../../../apps/web/public/icons/skill-type/enchantment.svg) **fortryllelser** af dig selv
 eller dine allierede. Hver fjernes af sin egen slags evne. Nogle

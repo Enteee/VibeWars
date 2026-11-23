@@ -65,18 +65,20 @@ eșuează.
 
 **Afecțiunile** îți fac rău până expiră sau sunt eliminate:
 
-| Afecțiune                                                                                   | Ce face                                                       |
-| ------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
-| ![Bleeding](../../../apps/web/public/icons/status/bleeding.svg) **Bleeding**                | scurge Viață                                                  |
-| ![Burning](../../../apps/web/public/icons/status/burning.svg) **Burning**                   | scurge Viață repede                                           |
-| ![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison**                      | scurge Viață                                                  |
-| ![Disease](../../../apps/web/public/icons/status/disease.svg) **Disease**                   | scurge Viață și se răspândește la oricine e lângă tine        |
-| ![Crippled](../../../apps/web/public/icons/status/crippled.svg) **Crippled**                | te miști cu jumătate din viteză                               |
-| ![Blind](../../../apps/web/public/icons/status/blind.svg) **Blind**                         | majoritatea atacurilor tale ratează                           |
-| ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness**                | arma ta lovește mult mai slab                                 |
-| ![Cracked Armor](../../../apps/web/public/icons/status/cracked-armor.svg) **Cracked Armor** | mai puțină armură                                             |
-| ![Deep Wound](../../../apps/web/public/icons/status/deep-wound.svg) **Deep Wound**          | mai puțină Viață maximă, iar vindecarea funcționează mai slab |
-| ![Dazed](../../../apps/web/public/icons/status/dazed.svg) **Dazed**                         | vrăjile se lansează încet; orice atac le întrerupe            |
+| Afecțiune                                                                                   | Ce face                                                                  |
+| ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| ![Bleeding](../../../apps/web/public/icons/status/bleeding.svg) **Bleeding**                | scurge Viață                                                             |
+| ![Burning](../../../apps/web/public/icons/status/burning.svg) **Burning**                   | scurge Viață repede                                                      |
+| ![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison**                      | scurge Viață                                                             |
+| ![Disease](../../../apps/web/public/icons/status/disease.svg) **Disease**                   | scurge Viață și se răspândește la corpurile de același fel de lângă tine |
+| ![Crippled](../../../apps/web/public/icons/status/crippled.svg) **Crippled**                | te miști cu jumătate din viteză                                          |
+| ![Blind](../../../apps/web/public/icons/status/blind.svg) **Blind**                         | majoritatea atacurilor tale ratează                                      |
+| ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness**                | arma ta lovește mult mai slab                                            |
+| ![Cracked Armor](../../../apps/web/public/icons/status/cracked-armor.svg) **Cracked Armor** | mai puțină armură                                                        |
+| ![Deep Wound](../../../apps/web/public/icons/status/deep-wound.svg) **Deep Wound**          | mai puțină Viață maximă, iar vindecarea funcționează mai slab            |
+| ![Dazed](../../../apps/web/public/icons/status/dazed.svg) **Dazed**                         | vrăjile se lansează încet; orice atac le întrerupe                       |
+
+Slujitorii (în afară de Golemul de carne), fantomele și spiritele nu sângerează, nu se otrăvesc și nu se îmbolnăvesc, iar spiritele nu primesc niciun blestem și nicio stare în afară de **Burning**.
 
 ![Blestem](../../../apps/web/public/icons/skill-type/hex.svg) **Blestemele** sunt lansate asupra ta de inamici; ![Farmec](../../../apps/web/public/icons/skill-type/enchantment.svg) **farmecele**, de tine sau de
 aliații tăi. Fiecare este eliminat de un tip propriu de abilitate. Unele farmece

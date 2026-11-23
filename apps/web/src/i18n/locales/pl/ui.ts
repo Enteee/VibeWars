@@ -62,6 +62,22 @@ export default {
 
   "buildEditor.addWeapon": "Dodaj broń",
   "buildEditor.armor": "Pancerz",
+  "buildEditor.attributeEffect.critical-strikes":
+    "+{percent}% szansy na trafienie krytyczne, +{energy} Energii za trafienie krytyczne",
+  "buildEditor.attributeEffect.divine-favor": "czary Mnicha na sojuszników leczą +{heal}",
+  "buildEditor.attributeEffect.energy-storage": "+{energy} maksymalnej Energii",
+  "buildEditor.attributeEffect.expertise":
+    "umiejętności ataku, rytuały, umiejętności dotyku i umiejętności Łowcy kosztują {percent}% mniej Energii",
+  "buildEditor.attributeEffect.fast-casting": "czary i sygnety rzucane są {percent}% szybciej",
+  "buildEditor.attributeEffect.leadership":
+    "do {max} Energii za okrzyk, {perAlly} za każdego objętego sojusznika",
+  "buildEditor.attributeEffect.mysticism":
+    "zaczarowania Derwisza kosztują {percent}% mniej Energii",
+  "buildEditor.attributeEffect.soul-reaping":
+    "+{energy} Energii, gdy ktoś w pobliżu zginie ({triggers} na {seconds} s)",
+  "buildEditor.attributeEffect.spawning-power":
+    "istoty +{percent}% Zdrowia, czary broni trwają {percent}% dłużej",
+  "buildEditor.attributeEffect.strength": "umiejętności ataku: {percent}% przebicia pancerza",
   "buildEditor.back": "Wstecz",
   "buildEditor.bothHandsFull": "obie ręce zajęte",
   "buildEditor.budgetSegment": {
@@ -1833,11 +1849,9 @@ export default {
   "tutorial.stepIn.praise": "Razem. Wstrzymaj oddech.",
   "tutorial.touch.callHow": "Dotknij szczura, potem paska celu, by go wskazać.",
   "tutorial.touch.callT": "Właśnie tak. Teraz celujesz we wskazany cel.",
-  "tutorial.touch.climbHint": "Wejdź na półkę, a potem zejdź obok niej.",
-  "tutorial.touch.climbHow": "Dotknij półki, potem ziemi obok niej.",
-  "tutorial.touch.climbPraise": "W górę i znów w dół. Już umiesz czytać teren.",
-  "tutorial.touch.climbTip": "Wskazówka: dotknięcie półki zawsze wybiera jej szczyt.",
-  "tutorial.touch.climbUnder": "Teraz zejdź z powrotem, obok półki.",
+  "tutorial.touch.climbHow": "Dotknij, gdzie stanąć. Przytrzymanie wybiera ziemię pod spodem.",
+  "tutorial.touch.climbTip": "Wskazówka: przytrzymanie wybiera ziemię pod półką.",
+  "tutorial.touch.climbUnder": "Przytrzymaj palec. Przerywany krąg jest pod tobą.",
   "tutorial.touch.healHint":
     "Najpierw dotknij mojego imienia na liście drużyny. Dotknij Grupa, jeśli lista jest zamknięta.",
   "tutorial.touch.healHow":

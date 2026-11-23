@@ -1,5 +1,5 @@
 import {
-  describePrimaryAttribute,
+  primaryAttributeEffect,
   describeSkill,
   LARGEST_RANK_COST,
   MAX_ATTRIBUTE_RANK,
@@ -25,6 +25,7 @@ import {
   type BuildEquipment,
   type ProfessionId,
   type Skill,
+  type PrimaryAttributeEffect,
   type SkillDescription,
   type WeaponId,
   type WeaponSet,
@@ -117,6 +118,14 @@ export interface BuildEditorCallbacks {
   readonly onClose: () => void;
   /** A Back in the top bar, leaving as Esc does: only a Team Build's member has one (#3785), to its team. */
   readonly onBack: (() => void) | undefined;
+}
+
+/**
+ * A primary attribute's effect in the player's language (#3893): one key
+ * per kind, so a new kind does not compile without its line.
+ */
+export function describeEffect(effect: PrimaryAttributeEffect): string {
+  return t(`buildEditor.attributeEffect.${effect.kind}`, effect);
 }
 
 export function newCharacter(id: string): StoredCharacter {
@@ -1578,9 +1587,9 @@ export function mountAttributes(panel: HTMLElement, context: BuildHost): Region 
         if (name !== null) {
           name.textContent = `${attributeName(attributeId)}${definition?.isPrimary === true ? " ★" : ""}`;
           // What the primary does at this rank (#531), under its name.
-          const effect = describePrimaryAttribute(attributeId, rank);
+          const effect = primaryAttributeEffect(attributeId, rank);
           if (effect !== undefined) {
-            name.appendChild(h("span", "editor-attribute-effect", effect));
+            name.appendChild(h("span", "editor-attribute-effect", describeEffect(effect)));
           }
         }
 

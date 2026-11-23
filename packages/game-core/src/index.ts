@@ -147,7 +147,7 @@ export {
 
 export * from "./equipment/index.js";
 
-export { describePrimaryAttribute } from "./primary-attributes.js";
+export { primaryAttributeEffect, type PrimaryAttributeEffect } from "./primary-attributes.js";
 
 export type { BuildProblem, PlayerBuild, SkillBar } from "./build.js";
 export {

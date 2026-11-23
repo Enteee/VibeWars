@@ -174,17 +174,17 @@ describe("Verata's Sacrifice (#1986)", () => {
   it("moves its minions' conditions to you, with their time, and has them regenerate", () => {
     const sim = match(minion("m1", "n", 0, vec2(20, 0)));
     const m1 = get(sim, "m1");
-    m1.combatant.statuses.apply("bleeding", 10, "f", NO_RANKS);
-    m1.combatant.statuses.apply("poison", 12, "f", NO_RANKS);
+    m1.combatant.statuses.apply("burning", 10, "f", NO_RANKS);
+    m1.combatant.statuses.apply("weakness", 12, "f", NO_RANKS);
     cast(sim, VERATA);
     const n = get(sim, "n").combatant;
     const left = (id: string): number | undefined =>
       n.statuses.active.find((status) => status.id === id)?.remainingSeconds;
     // Two seconds of activation gone from each.
-    expect(left("bleeding")).toBeCloseTo(8, 0);
-    expect(left("poison")).toBeCloseTo(10, 0);
-    expect(m1.combatant.statuses.has("bleeding")).toBe(false);
-    expect(m1.combatant.statuses.has("poison")).toBe(false);
+    expect(left("burning")).toBeCloseTo(8, 0);
+    expect(left("weakness")).toBeCloseTo(10, 0);
+    expect(m1.combatant.statuses.has("burning")).toBe(false);
+    expect(m1.combatant.statuses.has("weakness")).toBe(false);
     expect(m1.combatant.statuses.has("veratas-sacrifice")).toBe(true);
     // +10 pips, 20 a second, over a minion's own -1.
     const before = m1.combatant.health;

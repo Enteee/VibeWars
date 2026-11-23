@@ -76,6 +76,7 @@ On a phone or a tablet, in a match and in the Training Ground:
   again, quickly, to attack it. A tap just beside a character still finds
   it. A tap on yourself walks to that spot, or targets the flag stand or
   lever you stand on.
+- **Press and hold** to walk to the ground under a ledge or bridge, as Alt+click.
 - **Drag** one finger to look around; let go and the view glides back to
   you. **Pinch** to zoom.
 - **Tap** a skill on the bar to use it on your target.

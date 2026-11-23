@@ -64,6 +64,23 @@ export default {
 
   "buildEditor.addWeapon": "Προσθήκη όπλου",
   "buildEditor.armor": "Πανοπλία",
+  "buildEditor.attributeEffect.critical-strikes":
+    "+{percent}% πιθανότητα κρίσιμου χτυπήματος, +{energy} Ενέργεια ανά κρίσιμο χτύπημα",
+  "buildEditor.attributeEffect.divine-favor": "τα ξόρκια Monk σε συμμάχους θεραπεύουν +{heal}",
+  "buildEditor.attributeEffect.energy-storage": "+{energy} μέγιστη Ενέργεια",
+  "buildEditor.attributeEffect.expertise":
+    "οι ικανότητες επίθεσης, οι τελετές, οι ικανότητες αφής και οι ικανότητες Ranger κοστίζουν {percent}% λιγότερη Ενέργεια",
+  "buildEditor.attributeEffect.fast-casting":
+    "τα ξόρκια και οι σφραγίδες εκτελούνται {percent}% ταχύτερα",
+  "buildEditor.attributeEffect.leadership":
+    "έως {max} Ενέργεια ανά κραυγή, {perAlly} ανά σύμμαχο που επηρεάζεται",
+  "buildEditor.attributeEffect.mysticism":
+    "τα μαγέματα Dervish κοστίζουν {percent}% λιγότερη Ενέργεια",
+  "buildEditor.attributeEffect.soul-reaping":
+    "+{energy} Ενέργεια όταν κάποιος κοντά πεθαίνει ({triggers} ανά {seconds} δ)",
+  "buildEditor.attributeEffect.spawning-power":
+    "πλάσματα +{percent}% Υγεία, τα ξόρκια όπλου διαρκούν {percent}% περισσότερο",
+  "buildEditor.attributeEffect.strength": "ικανότητες επίθεσης: {percent}% διάτρηση πανοπλίας",
   "buildEditor.back": "Πίσω",
   "buildEditor.bothHandsFull": "γεμάτα χέρια",
   "buildEditor.budgetSegment": {
@@ -1728,11 +1745,11 @@ export default {
   "tutorial.stepIn.praise": "Μαζί. Κράτα την ανάσα σου.",
   "tutorial.touch.callHow": "Άγγιξε έναν αρουραίο, μετά τη μπάρα στόχου για να τον δηλώσεις.",
   "tutorial.touch.callT": "Αυτό είναι. Τώρα είσαι στον δηλωμένο στόχο.",
-  "tutorial.touch.climbHint": "Πάνω στο πεζούλι, μετά πάλι κάτω δίπλα του.",
-  "tutorial.touch.climbHow": "Άγγιξε το πεζούλι, μετά το έδαφος δίπλα του.",
-  "tutorial.touch.climbPraise": "Πάνω και πάλι κάτω. Τώρα διαβάζεις το έδαφος.",
-  "tutorial.touch.climbTip": "Συμβουλή: ένα άγγιγμα σε πεζούλι διαλέγει πάντα την κορυφή του.",
-  "tutorial.touch.climbUnder": "Τώρα πάλι κάτω, δίπλα στο πεζούλι.",
+  "tutorial.touch.climbHow":
+    "Άγγιξε όπου θες να σταθείς. Το παρατεταμένο πάτημα διαλέγει το έδαφος από κάτω.",
+  "tutorial.touch.climbTip":
+    "Συμβουλή: το παρατεταμένο πάτημα διαλέγει το έδαφος κάτω από ένα πεζούλι.",
+  "tutorial.touch.climbUnder": "Πάτα παρατεταμένα. Ο διακεκομμένος κύκλος είναι από κάτω σου.",
   "tutorial.touch.healHint":
     "Άγγιξε πρώτα το όνομά μου στη λίστα της ομάδας. Άγγιξε Παρέα αν η λίστα είναι κλειστή.",
   "tutorial.touch.healHow":

@@ -64,6 +64,23 @@ export default {
 
   "buildEditor.addWeapon": "Ajouter une arme",
   "buildEditor.armor": "Armure",
+  "buildEditor.attributeEffect.critical-strikes":
+    "+{percent}% de chances de coup critique, +{energy} énergie par coup critique",
+  "buildEditor.attributeEffect.divine-favor": "les sorts de Moine sur les alliés soignent +{heal}",
+  "buildEditor.attributeEffect.energy-storage": "+{energy} énergie maximale",
+  "buildEditor.attributeEffect.expertise":
+    "compétences d'attaque, rituels, compétences de contact et compétences de Rôdeur : {percent}% d'énergie en moins",
+  "buildEditor.attributeEffect.fast-casting": "sorts et sceaux lancés {percent}% plus vite",
+  "buildEditor.attributeEffect.leadership":
+    "jusqu'à {max} énergie par cri, {perAlly} par allié affecté",
+  "buildEditor.attributeEffect.mysticism":
+    "les enchantements de Derviche coûtent {percent}% d'énergie en moins",
+  "buildEditor.attributeEffect.soul-reaping":
+    "+{energy} énergie quand quelqu'un meurt à proximité ({triggers} par {seconds} s)",
+  "buildEditor.attributeEffect.spawning-power":
+    "créatures +{percent}% santé, les sorts d'arme durent {percent}% plus longtemps",
+  "buildEditor.attributeEffect.strength":
+    "compétences d'attaque : {percent}% de pénétration d'armure",
   "buildEditor.back": "Retour",
   "buildEditor.bothHandsFull": "les deux mains prises",
   "buildEditor.budgetSegment": {
@@ -1800,11 +1817,9 @@ export default {
   "tutorial.stepIn.praise": "Ensemble. Retiens ton souffle.",
   "tutorial.touch.callHow": "Touche un rat, puis la barre de cible pour le désigner.",
   "tutorial.touch.callT": "C'est ça. Tu vises maintenant la cible désignée.",
-  "tutorial.touch.climbHint": "Monte sur la corniche, puis redescends à côté.",
-  "tutorial.touch.climbHow": "Touche la corniche, puis le sol à côté.",
-  "tutorial.touch.climbPraise": "Monté, redescendu. Tu sais lire le terrain.",
-  "tutorial.touch.climbTip": "Astuce : toucher une corniche choisit toujours son sommet.",
-  "tutorial.touch.climbUnder": "Maintenant redescends, à côté de la corniche.",
+  "tutorial.touch.climbHow": "Touche où te placer. Un appui long choisit le sol en dessous.",
+  "tutorial.touch.climbTip": "Astuce : un appui long choisit le sol sous une corniche.",
+  "tutorial.touch.climbUnder": "Appuie longuement. Le cercle en pointillés est sous toi.",
   "tutorial.touch.healHint":
     "Touche d'abord mon nom dans la liste du groupe. Touche Groupe si la liste est fermée.",
   "tutorial.touch.healHow":

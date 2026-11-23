@@ -60,18 +60,20 @@ kecuali ![Teriakan](../../../apps/web/public/icons/skill-type/shout.svg) **teria
 
 **Kondisi** melukaimu sampai habis atau dihapus:
 
-| Kondisi                                                                                     | Efeknya                                                  |
-| ------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
-| ![Bleeding](../../../apps/web/public/icons/status/bleeding.svg) **Bleeding**                | menguras Darah                                           |
-| ![Burning](../../../apps/web/public/icons/status/burning.svg) **Burning**                   | menguras Darah dengan cepat                              |
-| ![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison**                      | menguras Darah                                           |
-| ![Disease](../../../apps/web/public/icons/status/disease.svg) **Disease**                   | menguras Darah, dan menular ke siapa pun di sebelahmu    |
-| ![Crippled](../../../apps/web/public/icons/status/crippled.svg) **Crippled**                | kamu bergerak dengan setengah kecepatan                  |
-| ![Blind](../../../apps/web/public/icons/status/blind.svg) **Blind**                         | kebanyakan seranganmu meleset                            |
-| ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness**                | pukulan senjatamu jauh lebih lemah                       |
-| ![Cracked Armor](../../../apps/web/public/icons/status/cracked-armor.svg) **Cracked Armor** | armor berkurang                                          |
-| ![Deep Wound](../../../apps/web/public/icons/status/deep-wound.svg) **Deep Wound**          | Darah maksimum berkurang, dan penyembuhan kurang manjur  |
-| ![Dazed](../../../apps/web/public/icons/status/dazed.svg) **Dazed**                         | mantra dirapal lambat; serangan apa pun menginterupsinya |
+| Kondisi                                                                                     | Efeknya                                                   |
+| ------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| ![Bleeding](../../../apps/web/public/icons/status/bleeding.svg) **Bleeding**                | menguras Darah                                            |
+| ![Burning](../../../apps/web/public/icons/status/burning.svg) **Burning**                   | menguras Darah dengan cepat                               |
+| ![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison**                      | menguras Darah                                            |
+| ![Disease](../../../apps/web/public/icons/status/disease.svg) **Disease**                   | menguras Darah, dan menular ke tubuh sejenis di sebelahmu |
+| ![Crippled](../../../apps/web/public/icons/status/crippled.svg) **Crippled**                | kamu bergerak dengan setengah kecepatan                   |
+| ![Blind](../../../apps/web/public/icons/status/blind.svg) **Blind**                         | kebanyakan seranganmu meleset                             |
+| ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness**                | pukulan senjatamu jauh lebih lemah                        |
+| ![Cracked Armor](../../../apps/web/public/icons/status/cracked-armor.svg) **Cracked Armor** | armor berkurang                                           |
+| ![Deep Wound](../../../apps/web/public/icons/status/deep-wound.svg) **Deep Wound**          | Darah maksimum berkurang, dan penyembuhan kurang manjur   |
+| ![Dazed](../../../apps/web/public/icons/status/dazed.svg) **Dazed**                         | mantra dirapal lambat; serangan apa pun menginterupsinya  |
+
+Antek (kecuali Golem Daging), hantu, dan roh tidak berdarah, tidak keracunan, dan tidak tertular penyakit, dan roh tidak terkena kutukan apa pun maupun kondisi apa pun selain **Burning**.
 
 ![Kutukan](../../../apps/web/public/icons/skill-type/hex.svg) **Kutukan** dirapal kepadamu oleh musuh; ![Berkah](../../../apps/web/public/icons/skill-type/enchantment.svg) **berkah** oleh dirimu sendiri atau
 sekutumu. Masing-masing dihapus oleh jenis skill-nya sendiri. Sebagian berkah

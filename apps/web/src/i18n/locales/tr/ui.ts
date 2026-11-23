@@ -62,6 +62,21 @@ export default {
 
   "buildEditor.addWeapon": "Silah ekle",
   "buildEditor.armor": "Zırh",
+  "buildEditor.attributeEffect.critical-strikes":
+    "+%{percent} kritik vuruş şansı, kritik vuruş başına +{energy} Enerji",
+  "buildEditor.attributeEffect.divine-favor": "Monk büyüleri müttefikleri +{heal} iyileştirir",
+  "buildEditor.attributeEffect.energy-storage": "+{energy} maksimum Enerji",
+  "buildEditor.attributeEffect.expertise":
+    "saldırı becerileri, ritüeller, dokunma becerileri ve Ranger becerileri %{percent} daha az Enerji harcar",
+  "buildEditor.attributeEffect.fast-casting": "büyüler ve mühürler %{percent} daha hızlı yapılır",
+  "buildEditor.attributeEffect.leadership":
+    "haykırış başına en fazla {max} Enerji, etkilenen müttefik başına {perAlly}",
+  "buildEditor.attributeEffect.mysticism": "Dervish tılsımları %{percent} daha az Enerji harcar",
+  "buildEditor.attributeEffect.soul-reaping":
+    "yakında biri öldüğünde +{energy} Enerji ({seconds} sn'de {triggers})",
+  "buildEditor.attributeEffect.spawning-power":
+    "yaratıklar +%{percent} Can, silah büyüleri %{percent} daha uzun sürer",
+  "buildEditor.attributeEffect.strength": "saldırı becerileri %{percent} zırh delme",
   "buildEditor.back": "Geri",
   "buildEditor.bothHandsFull": "iki el de dolu",
   "buildEditor.budgetSegment": {
@@ -1704,11 +1719,9 @@ export default {
   "tutorial.stepIn.praise": "Birlikte. Nefesini tut.",
   "tutorial.touch.callHow": "Bir sıçana dokun, sonra çağırmak için hedef çubuğuna dokun.",
   "tutorial.touch.callT": "İşte bu. Artık çağrılan hedeftesin.",
-  "tutorial.touch.climbHint": "Çıkıntıya çık, sonra yanına geri in.",
-  "tutorial.touch.climbHow": "Çıkıntıya dokun, sonra yanındaki zemine dokun.",
-  "tutorial.touch.climbPraise": "Yukarı ve yine aşağı. Artık zemini okuyorsun.",
-  "tutorial.touch.climbTip": "İpucu: çıkıntıya dokunmak hep üstünü seçer.",
-  "tutorial.touch.climbUnder": "Şimdi çıkıntının yanına geri in.",
+  "tutorial.touch.climbHow": "Duracağın yere dokun. Basılı tutmak alttaki zemini seçer.",
+  "tutorial.touch.climbTip": "İpucu: basılı tutmak çıkıntının altındaki zemini seçer.",
+  "tutorial.touch.climbUnder": "Basılı tut. Kesikli halka altında.",
   "tutorial.touch.healHint": "Önce grup listesinde adıma dokun. Liste kapalıysa Grup'a dokun.",
   "tutorial.touch.healHow": "Liste kapalıysa Grup'a dokun, sonra adıma, sonra parlayan beceriye.",
   "tutorial.touch.look":

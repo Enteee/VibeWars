@@ -67,6 +67,21 @@ export const en = {
 
   "buildEditor.addWeapon": "Add a weapon",
   "buildEditor.armor": "Armor",
+  "buildEditor.attributeEffect.critical-strikes":
+    "+{percent}% critical chance, +{energy} energy per critical",
+  "buildEditor.attributeEffect.divine-favor": "Monk spells on allies heal +{heal}",
+  "buildEditor.attributeEffect.energy-storage": "+{energy} maximum energy",
+  "buildEditor.attributeEffect.expertise":
+    "attack skills, rituals, touch skills and Ranger skills cost {percent}% less energy",
+  "buildEditor.attributeEffect.fast-casting": "spells and signets cast {percent}% faster",
+  "buildEditor.attributeEffect.leadership":
+    "up to {max} energy per shout, {perAlly} per ally affected",
+  "buildEditor.attributeEffect.mysticism": "Dervish enchantments cost {percent}% less energy",
+  "buildEditor.attributeEffect.soul-reaping":
+    "+{energy} energy when someone nearby dies ({triggers} per {seconds} s)",
+  "buildEditor.attributeEffect.spawning-power":
+    "creatures +{percent}% Health, weapon spells last {percent}% longer",
+  "buildEditor.attributeEffect.strength": "attack skills {percent}% armor penetration",
   "buildEditor.back": "Back",
   "buildEditor.bothHandsFull": "both hands full",
   "buildEditor.budgetSegment": {
@@ -1699,11 +1714,9 @@ export const en = {
   "tutorial.stepIn.praise": "Together. Hold your breath.",
   "tutorial.touch.callHow": "Tap a rat, then tap the target bar to call it.",
   "tutorial.touch.callT": "That's it. Now you're on the called one.",
-  "tutorial.touch.climbHint": "Onto the ledge, then back down beside it.",
-  "tutorial.touch.climbHow": "Tap the ledge, then tap the ground beside it.",
-  "tutorial.touch.climbPraise": "Up and down again. You read the ground now.",
-  "tutorial.touch.climbTip": "Tip: a tap on a ledge always picks its top.",
-  "tutorial.touch.climbUnder": "Now back down, beside the ledge.",
+  "tutorial.touch.climbHow": "Tap where to stand. Press and hold picks the ground below.",
+  "tutorial.touch.climbTip": "Tip: press and hold picks the ground under a ledge.",
+  "tutorial.touch.climbUnder": "Press and hold. The dashed ring is below you.",
   "tutorial.touch.healHint":
     "Tap my name in the party list first. Tap Party if the list is closed.",
   "tutorial.touch.healHow":

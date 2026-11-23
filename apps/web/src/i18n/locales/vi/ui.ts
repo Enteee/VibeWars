@@ -61,6 +61,21 @@ export default {
 
   "buildEditor.addWeapon": "Thêm vũ khí",
   "buildEditor.armor": "Giáp",
+  "buildEditor.attributeEffect.critical-strikes":
+    "+{percent}% tỉ lệ chí mạng, +{energy} Năng lượng mỗi đòn chí mạng",
+  "buildEditor.attributeEffect.divine-favor": "Phép của Monk lên đồng minh hồi thêm +{heal}",
+  "buildEditor.attributeEffect.energy-storage": "+{energy} Năng lượng tối đa",
+  "buildEditor.attributeEffect.expertise":
+    "kỹ năng tấn công, nghi thức, kỹ năng chạm và kỹ năng Ranger tốn ít hơn {percent}% Năng lượng",
+  "buildEditor.attributeEffect.fast-casting": "Phép và ấn ký thi triển nhanh hơn {percent}%",
+  "buildEditor.attributeEffect.leadership":
+    "tối đa {max} Năng lượng mỗi hiệu lệnh, {perAlly} mỗi đồng minh chịu ảnh hưởng",
+  "buildEditor.attributeEffect.mysticism": "Phù phép của Dervish tốn ít hơn {percent}% Năng lượng",
+  "buildEditor.attributeEffect.soul-reaping":
+    "+{energy} Năng lượng khi có ai đó gần bên chết ({triggers} mỗi {seconds} giây)",
+  "buildEditor.attributeEffect.spawning-power":
+    "sinh vật +{percent}% Máu, phép vũ khí kéo dài thêm {percent}%",
+  "buildEditor.attributeEffect.strength": "kỹ năng tấn công xuyên {percent}% giáp",
   "buildEditor.back": "Quay lại",
   "buildEditor.bothHandsFull": "cả hai tay đã bận",
   "buildEditor.budgetSegment": { other: "{attribute}: {count} điểm" },
@@ -1611,11 +1626,9 @@ export default {
   "tutorial.stepIn.praise": "Cùng nhau. Nín thở nào.",
   "tutorial.touch.callHow": "Chạm vào một con chuột, rồi chạm thanh mục tiêu để gọi nó.",
   "tutorial.touch.callT": "Đúng rồi. Giờ bạn đang nhắm mục tiêu đã gọi.",
-  "tutorial.touch.climbHint": "Lên gờ đá, rồi xuống lại bên cạnh nó.",
-  "tutorial.touch.climbHow": "Chạm vào gờ đá, rồi chạm mặt đất bên cạnh.",
-  "tutorial.touch.climbPraise": "Lên rồi lại xuống. Giờ bạn đã biết đọc địa hình.",
-  "tutorial.touch.climbTip": "Mẹo: chạm vào gờ đá luôn chọn mặt trên của nó.",
-  "tutorial.touch.climbUnder": "Giờ xuống lại, bên cạnh gờ đá.",
+  "tutorial.touch.climbHow": "Chạm chỗ muốn đứng. Nhấn giữ sẽ chọn mặt đất bên dưới.",
+  "tutorial.touch.climbTip": "Mẹo: nhấn giữ sẽ chọn mặt đất dưới gờ đá.",
+  "tutorial.touch.climbUnder": "Nhấn giữ. Vòng nét đứt ở bên dưới bạn.",
   "tutorial.touch.healHint":
     "Chạm vào tên tôi trong danh sách nhóm trước. Chạm Tổ đội nếu danh sách đang đóng.",
   "tutorial.touch.healHow":

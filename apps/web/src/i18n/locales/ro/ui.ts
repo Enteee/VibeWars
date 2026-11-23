@@ -63,6 +63,23 @@ export default {
 
   "buildEditor.addWeapon": "Adaugă o armă",
   "buildEditor.armor": "Armură",
+  "buildEditor.attributeEffect.critical-strikes":
+    "+{percent}% șansă de lovitură critică, +{energy} Energie per lovitură critică",
+  "buildEditor.attributeEffect.divine-favor": "vrăjile de Monk asupra aliaților vindecă +{heal}",
+  "buildEditor.attributeEffect.energy-storage": "+{energy} Energie maximă",
+  "buildEditor.attributeEffect.expertise":
+    "abilitățile de atac, ritualurile, abilitățile de atingere și abilitățile de Ranger costă cu {percent}% mai puțină Energie",
+  "buildEditor.attributeEffect.fast-casting":
+    "vrăjile și sigiliile se lansează cu {percent}% mai repede",
+  "buildEditor.attributeEffect.leadership":
+    "până la {max} Energie per strigăt, {perAlly} per aliat afectat",
+  "buildEditor.attributeEffect.mysticism":
+    "farmecele de Dervish costă cu {percent}% mai puțină Energie",
+  "buildEditor.attributeEffect.soul-reaping":
+    "+{energy} Energie când cineva din apropiere moare ({triggers} la {seconds} s)",
+  "buildEditor.attributeEffect.spawning-power":
+    "creaturi +{percent}% Viață, vrăjile de armă durează cu {percent}% mai mult",
+  "buildEditor.attributeEffect.strength": "abilitățile de atac: {percent}% penetrare a armurii",
   "buildEditor.back": "Înapoi",
   "buildEditor.bothHandsFull": "ambele mâini ocupate",
   "buildEditor.budgetSegment": {
@@ -1787,11 +1804,9 @@ export default {
   "tutorial.stepIn.praise": "Împreună. Ține-ți respirația.",
   "tutorial.touch.callHow": "Atinge un șobolan, apoi bara țintei ca să-l semnalezi.",
   "tutorial.touch.callT": "Exact. Acum ești pe ținta semnalată.",
-  "tutorial.touch.climbHint": "Urcă pe cornișă, apoi coboară iar lângă ea.",
-  "tutorial.touch.climbHow": "Atinge cornișa, apoi pământul de lângă ea.",
-  "tutorial.touch.climbPraise": "Sus și iar jos. Acum știi să citești terenul.",
-  "tutorial.touch.climbTip": "Sfat: o atingere pe cornișă alege mereu partea de sus.",
-  "tutorial.touch.climbUnder": "Acum coboară înapoi, lângă cornișă.",
+  "tutorial.touch.climbHow": "Atinge unde vrei să stai. Apăsarea lungă alege pământul de dedesubt.",
+  "tutorial.touch.climbTip": "Sfat: apăsarea lungă alege pământul de sub o cornișă.",
+  "tutorial.touch.climbUnder": "Apasă lung. Cercul punctat e sub tine.",
   "tutorial.touch.healHint":
     "Mai întâi atinge numele meu în lista grupului. Atinge Grup dacă lista e închisă.",
   "tutorial.touch.healHow":

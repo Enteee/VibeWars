@@ -63,6 +63,22 @@ export default {
 
   "buildEditor.addWeapon": "Waffe hinzufügen",
   "buildEditor.armor": "Rüstung",
+  "buildEditor.attributeEffect.critical-strikes":
+    "+{percent}% kritische Trefferchance, +{energy} Energie pro kritischem Treffer",
+  "buildEditor.attributeEffect.divine-favor": "Mönch-Zauber auf Verbündete heilen +{heal}",
+  "buildEditor.attributeEffect.energy-storage": "+{energy} maximale Energie",
+  "buildEditor.attributeEffect.expertise":
+    "Angriffs-Skills, Rituale, Berührungs-Skills und Waldläufer-Skills kosten {percent}% weniger Energie",
+  "buildEditor.attributeEffect.fast-casting": "Zauber und Siegel wirken {percent}% schneller",
+  "buildEditor.attributeEffect.leadership":
+    "bis zu {max} Energie pro Schrei, {perAlly} pro betroffenem Verbündeten",
+  "buildEditor.attributeEffect.mysticism":
+    "Derwisch-Verzauberungen kosten {percent}% weniger Energie",
+  "buildEditor.attributeEffect.soul-reaping":
+    "+{energy} Energie, wenn jemand in der Nähe stirbt ({triggers} pro {seconds} s)",
+  "buildEditor.attributeEffect.spawning-power":
+    "Kreaturen +{percent}% Leben, Waffenzauber halten {percent}% länger",
+  "buildEditor.attributeEffect.strength": "Angriffs-Skills {percent}% Rüstungsdurchdringung",
   "buildEditor.back": "Zurück",
   "buildEditor.bothHandsFull": "beide Hände voll",
   "buildEditor.budgetSegment": {
@@ -1726,11 +1742,9 @@ export default {
   "tutorial.stepIn.praise": "Zusammen. Halt die Luft an.",
   "tutorial.touch.callHow": "Tipp eine Ratte an, dann die Zielleiste, um sie auszurufen.",
   "tutorial.touch.callT": "Genau so. Jetzt bist du am ausgerufenen Ziel.",
-  "tutorial.touch.climbHint": "Rauf auf den Vorsprung, dann daneben wieder runter.",
-  "tutorial.touch.climbHow": "Tipp auf den Vorsprung, dann auf den Boden daneben.",
-  "tutorial.touch.climbPraise": "Rauf und wieder runter. Jetzt liest du das Gelände.",
-  "tutorial.touch.climbTip": "Tipp: Ein Tippen auf einen Vorsprung wählt immer seine Oberseite.",
-  "tutorial.touch.climbUnder": "Jetzt wieder runter, neben den Vorsprung.",
+  "tutorial.touch.climbHow": "Tipp, wo du stehen willst. Gedrückt halten wählt den Boden darunter.",
+  "tutorial.touch.climbTip": "Tipp: Gedrückt halten wählt den Boden unter einem Vorsprung.",
+  "tutorial.touch.climbUnder": "Halte gedrückt. Der gestrichelte Ring liegt unter dir.",
   "tutorial.touch.healHint":
     "Tipp zuerst meinen Namen in der Gruppenliste an. Tipp auf Gruppe, falls die Liste zu ist.",
   "tutorial.touch.healHow":

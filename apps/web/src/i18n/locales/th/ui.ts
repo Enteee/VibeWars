@@ -61,6 +61,21 @@ export default {
 
   "buildEditor.addWeapon": "เพิ่มอาวุธ",
   "buildEditor.armor": "เกราะ",
+  "buildEditor.attributeEffect.critical-strikes":
+    "+{percent}% โอกาสคริติคอล, +{energy} พลังงานต่อคริติคอล",
+  "buildEditor.attributeEffect.divine-favor": "เวทของ Monk ที่ใช้กับพันธมิตรฟื้นพลังชีวิต +{heal}",
+  "buildEditor.attributeEffect.energy-storage": "+{energy} พลังงานสูงสุด",
+  "buildEditor.attributeEffect.expertise":
+    "สกิลโจมตี พิธี สกิลสัมผัส และสกิล Ranger ใช้พลังงานน้อยลง {percent}%",
+  "buildEditor.attributeEffect.fast-casting": "เวทและตราผนึกร่ายเร็วขึ้น {percent}%",
+  "buildEditor.attributeEffect.leadership":
+    "สูงสุด {max} พลังงานต่อการตะโกน, {perAlly} ต่อพันธมิตรที่ได้รับผล",
+  "buildEditor.attributeEffect.mysticism": "มนตร์เสริมของ Dervish ใช้พลังงานน้อยลง {percent}%",
+  "buildEditor.attributeEffect.soul-reaping":
+    "+{energy} พลังงานเมื่อมีใครตายใกล้ๆ ({triggers} ครั้งต่อ {seconds} วินาที)",
+  "buildEditor.attributeEffect.spawning-power":
+    "สิ่งมีชีวิต +{percent}% พลังชีวิต, เวทอาวุธอยู่นานขึ้น {percent}%",
+  "buildEditor.attributeEffect.strength": "สกิลโจมตีเจาะเกราะ {percent}%",
   "buildEditor.back": "ย้อนกลับ",
   "buildEditor.bothHandsFull": "มือเต็มทั้งสองข้าง",
   "buildEditor.budgetSegment": { other: "{attribute}: {count} แต้ม" },
@@ -1597,11 +1612,9 @@ export default {
   "tutorial.stepIn.praise": "ไปด้วยกัน กลั้นหายใจไว้",
   "tutorial.touch.callHow": "แตะหนู แล้วแตะแถบเป้าหมายเพื่อเรียกเป้า",
   "tutorial.touch.callT": "นั่นแหละ ตอนนี้คุณเล็งเป้าที่ถูกเรียกไว้แล้ว",
-  "tutorial.touch.climbHint": "ขึ้นไปบนชะง่อน แล้วลงมาข้างๆ อีกครั้ง",
-  "tutorial.touch.climbHow": "แตะชะง่อน แล้วแตะพื้นข้างๆ",
-  "tutorial.touch.climbPraise": "ขึ้นแล้วลงอีกครั้ง ตอนนี้คุณอ่านพื้นออกแล้ว",
-  "tutorial.touch.climbTip": "เคล็ดลับ: แตะชะง่อนจะเลือกด้านบนเสมอ",
-  "tutorial.touch.climbUnder": "ตอนนี้ลงกลับมา ข้างชะง่อน",
+  "tutorial.touch.climbHow": "แตะตรงที่จะยืน กดค้างเพื่อเลือกพื้นข้างล่าง",
+  "tutorial.touch.climbTip": "เคล็ดลับ: กดค้างเพื่อเลือกพื้นใต้ชะง่อน",
+  "tutorial.touch.climbUnder": "กดค้างไว้ วงเส้นประอยู่ข้างล่างคุณ",
   "tutorial.touch.healHint": "แตะชื่อของฉันในรายชื่อปาร์ตี้ก่อน ถ้ารายชื่อปิดอยู่ ให้แตะ ปาร์ตี้",
   "tutorial.touch.healHow":
     "ถ้ารายชื่อปิดอยู่ ให้แตะ ปาร์ตี้ แล้วแตะชื่อของฉัน แล้วแตะสกิลที่เรืองแสง",

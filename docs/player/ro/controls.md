@@ -77,6 +77,7 @@ Pe un telefon sau o tabletă, într-un meci și pe terenul de antrenament:
   chiar lângă un personaj îl găsește totuși. O atingere pe tine însuți merge
   până în acel loc sau ține în țintă suportul de steag ori maneta pe care
   stai.
+- **Apasă lung** ca să mergi pe pământul de sub o cornișă sau un pod, ca Alt+clic.
 - **Trage** cu un deget ca să te uiți în jur; ridică degetul și vederea
   alunecă înapoi la tine. **Ciupește** ca să dai zoom.
 - **Atinge** o abilitate de pe bară ca s-o folosești pe ținta ta.

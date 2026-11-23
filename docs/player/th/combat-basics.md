@@ -64,13 +64,15 @@ spell" จะไม่ยุ่งกับการโจมตีธรรม�
 | ![Bleeding](../../../apps/web/public/icons/status/bleeding.svg) **Bleeding** | ลดพลังชีวิต |
 | ![Burning](../../../apps/web/public/icons/status/burning.svg) **Burning** | ลดพลังชีวิตอย่างรวดเร็ว |
 | ![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison** | ลดพลังชีวิต |
-| ![Disease](../../../apps/web/public/icons/status/disease.svg) **Disease** | ลดพลังชีวิต และแพร่ไปยังทุกคนที่อยู่ข้างคุณ |
+| ![Disease](../../../apps/web/public/icons/status/disease.svg) **Disease** | ลดพลังชีวิต และแพร่ไปยังร่างชนิดเดียวกันที่อยู่ข้างคุณ |
 | ![Crippled](../../../apps/web/public/icons/status/crippled.svg) **Crippled** | คุณเคลื่อนที่ด้วยความเร็วครึ่งเดียว |
 | ![Blind](../../../apps/web/public/icons/status/blind.svg) **Blind** | การโจมตีส่วนใหญ่ของคุณพลาด |
 | ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness** | อาวุธของคุณตีเบาลงมาก |
 | ![Cracked Armor](../../../apps/web/public/icons/status/cracked-armor.svg) **Cracked Armor** | เกราะลดลง |
 | ![Deep Wound](../../../apps/web/public/icons/status/deep-wound.svg) **Deep Wound** | พลังชีวิตสูงสุดลดลง และการรักษาได้ผลน้อยลง |
 | ![Dazed](../../../apps/web/public/icons/status/dazed.svg) **Dazed** | ร่ายเวทช้าลง การโจมตีใดๆ ก็ขัดจังหวะได้ |
+
+มินเนียน (ยกเว้นโกเลมเนื้อ) ผี และวิญญาณ ไม่เลือดออก ไม่ติดพิษ และไม่ติดโรค และวิญญาณไม่โดนคำสาปใด ๆ และไม่โดนสภาวะใดนอกจาก **Burning**
 
 ![คำสาป](../../../apps/web/public/icons/skill-type/hex.svg) **คำสาป** ถูกร่ายใส่คุณโดยศัตรู ![มนตร์เสริม](../../../apps/web/public/icons/skill-type/enchantment.svg) **มนตร์เสริม** ถูกร่ายโดยตัวคุณเองหรือพันธมิตร
 แต่ละอย่างถูกลบออกได้ด้วยสกิลประเภทของมันเอง มนตร์เสริมบางอย่าง

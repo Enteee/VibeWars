@@ -19,36 +19,38 @@ const told = (
 
 describe("rechargeState", () => {
   it("lists running recharges by bar slot, with the duration each started with", () => {
-    const cast = new CastState("p", new StatusSet());
+    const cast = new CastState("p", new StatusSet("fleshy"));
     cast.startRecharge("b", 8);
     cast.advance(2);
     expect(rechargeState(["a", "b", "c"], cast)).toEqual(told([recharging(1, 6, 8)]));
   });
 
   it("is empty for a bar with nothing recharging", () => {
-    expect(rechargeState(["a", "b"], new CastState("p", new StatusSet()))).toEqual(told([]));
+    expect(rechargeState(["a", "b"], new CastState("p", new StatusSet("fleshy")))).toEqual(
+      told([]),
+    );
   });
 
   it("keeps an empty slot's index: the slots after it are where the bar has them (#347)", () => {
-    const cast = new CastState("p", new StatusSet());
+    const cast = new CastState("p", new StatusSet("fleshy"));
     cast.startRecharge("c", 8);
     expect(rechargeState(["a", null, "c"], cast)).toEqual(told([recharging(2, 8, 8)]));
   });
 
   it("lists the slots spent until a morale boost, apart from the recharges (#474)", () => {
-    const cast = new CastState("p", new StatusSet());
+    const cast = new CastState("p", new StatusSet("fleshy"));
     cast.spend("c");
     expect(rechargeState(["a", null, "c"], cast)).toEqual(told([], [2]));
   });
 
   it("names the slot queued to go next (#1722)", () => {
-    const cast = new CastState("p", new StatusSet());
+    const cast = new CastState("p", new StatusSet("fleshy"));
     cast.queue(2);
     expect(rechargeState(["a", null, "c"], cast)).toEqual(told([], [], 2));
   });
 
   it("a copy standing in a slot (#469) shows its own recharge there, not the original's", () => {
-    const cast = new CastState("p", new StatusSet());
+    const cast = new CastState("p", new StatusSet("fleshy"));
     cast.override(0, {
       skillId: "c",
       key: "c@0",

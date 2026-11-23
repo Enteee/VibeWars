@@ -3125,6 +3125,17 @@ function heldSecondsOf(status: ActiveStatus): number {
 }
 
 /**
+ * What a bearer's body is made of (#3881), for what it can carry. GW1's
+ * *Fleshy*: a `"non-fleshy"` body (a minion but the Flesh Golem, a ghost)
+ * never bleeds, sickens or takes poison; a `"spirit"` takes no hex and no
+ * condition but Burning.
+ */
+export type BodyTrait = "fleshy" | "non-fleshy" | "spirit";
+
+/** The conditions only a fleshy body carries (#3881). */
+const FLESHY_ONLY: readonly StatusId[] = ["bleeding", "poison", "disease"];
+
+/**
  * All active statuses on one combatant, plus the lifecycle rules that
  * govern them.
  */
@@ -3138,6 +3149,7 @@ export class StatusSet {
     readonly ranks: ReadonlyMap<string, number>;
   }[] = [];
   readonly #spent: Set<string>;
+  readonly #body: BodyTrait;
   /**
    * How many seconds faster than real time each status has run out
    * (#2373, `advance`), so its pulses keep real time. None once its
@@ -3172,11 +3184,13 @@ export class StatusSet {
   }
 
   /**
+   * `body`: what the bearer is made of (#3881), for what it is immune to.
    * `spent`: the match's `endsEverywhereWhenSpent` statuses spent this
    * tick (#1955), as `spentKey`s, shared by every set in it, so
    * one Angelic Bond saves exactly one ally even when two die in a tick.
    */
-  public constructor(spent = new Set<string>()) {
+  public constructor(body: BodyTrait, spent = new Set<string>()) {
+    this.#body = body;
     this.#spent = spent;
   }
 
@@ -3786,9 +3800,20 @@ export class StatusSet {
   /**
    * Whether a status on the bearer keeps `id` off it (#1455): Avatar of
    * Grenth's Disease, or any enchantment under Well of the Profane (#1732).
-   * Frigid Armor's `refuses` keeps Burning off too (#2373).
+   * Frigid Armor's `refuses` keeps Burning off too (#2373). A body that
+   * is not fleshy refuses what only flesh carries, and a spirit every hex
+   * and condition but Burning (#3881).
    */
   public isImmuneTo(id: StatusId): boolean {
+    if (this.#body !== "fleshy" && FLESHY_ONLY.includes(id)) {
+      return true;
+    }
+    if (this.#body === "spirit") {
+      const { category } = getStatusDefinition(id);
+      if (category === "hex" || (category === "condition" && id !== "burning")) {
+        return true;
+      }
+    }
     if (getStatusDefinition(id).category === "enchantment" && preventsEnchantments(this.active)) {
       return true;
     }

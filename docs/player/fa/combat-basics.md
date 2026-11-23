@@ -62,18 +62,20 @@
 
 **عارضه‌ها** تا وقتی تمام نشده‌اند یا برداشته نشده‌اند به تو آسیب می‌زنند:
 
-| عارضه                                                                                       | چه می کند                                                      |
-| ------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
-| ![Bleeding](../../../apps/web/public/icons/status/bleeding.svg) **Bleeding**                | سلامتی را تحلیل می برد                                         |
-| ![Burning](../../../apps/web/public/icons/status/burning.svg) **Burning**                   | سلامتی را سریع تحلیل می برد                                    |
-| ![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison**                      | سلامتی را تحلیل می برد                                         |
-| ![Disease](../../../apps/web/public/icons/status/disease.svg) **Disease**                   | سلامتی را تحلیل می برد، و به هر کسی که کنارت باشد سرایت می کند |
-| ![Crippled](../../../apps/web/public/icons/status/crippled.svg) **Crippled**                | با نصف سرعت حرکت می کنی                                        |
-| ![Blind](../../../apps/web/public/icons/status/blind.svg) **Blind**                         | بیشتر حمله هایت خطا می روند                                    |
-| ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness**                | سلاحت خیلی ضعیف تر ضربه می زند                                 |
-| ![Cracked Armor](../../../apps/web/public/icons/status/cracked-armor.svg) **Cracked Armor** | زره کمتر                                                       |
-| ![Deep Wound](../../../apps/web/public/icons/status/deep-wound.svg) **Deep Wound**          | سلامتی بیشینه کمتر، و شفا کمتر اثر می کند                      |
-| ![Dazed](../../../apps/web/public/icons/status/dazed.svg) **Dazed**                         | طلسم ها کند اجرا می شوند؛ هر حمله ای قطعشان می کند             |
+| عارضه                                                                                       | چه می کند                                                               |
+| ------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| ![Bleeding](../../../apps/web/public/icons/status/bleeding.svg) **Bleeding**                | سلامتی را تحلیل می برد                                                  |
+| ![Burning](../../../apps/web/public/icons/status/burning.svg) **Burning**                   | سلامتی را سریع تحلیل می برد                                             |
+| ![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison**                      | سلامتی را تحلیل می برد                                                  |
+| ![Disease](../../../apps/web/public/icons/status/disease.svg) **Disease**                   | سلامتی را تحلیل می برد، و به بدن های هم نوع که کنارت باشند سرایت می کند |
+| ![Crippled](../../../apps/web/public/icons/status/crippled.svg) **Crippled**                | با نصف سرعت حرکت می کنی                                                 |
+| ![Blind](../../../apps/web/public/icons/status/blind.svg) **Blind**                         | بیشتر حمله هایت خطا می روند                                             |
+| ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness**                | سلاحت خیلی ضعیف تر ضربه می زند                                          |
+| ![Cracked Armor](../../../apps/web/public/icons/status/cracked-armor.svg) **Cracked Armor** | زره کمتر                                                                |
+| ![Deep Wound](../../../apps/web/public/icons/status/deep-wound.svg) **Deep Wound**          | سلامتی بیشینه کمتر، و شفا کمتر اثر می کند                               |
+| ![Dazed](../../../apps/web/public/icons/status/dazed.svg) **Dazed**                         | طلسم ها کند اجرا می شوند؛ هر حمله ای قطعشان می کند                      |
+
+خادمان (به جز گولم گوشتی)، شبح ها و ارواح خونریزی نمی کنند، مسموم و بیمار نمی شوند، و ارواح هیچ نفرینی و هیچ وضعیتی جز **Burning** نمی گیرند.
 
 ![نفرین](../../../apps/web/public/icons/skill-type/hex.svg) **نفرین‌ها** را دشمنان روی تو اجرا می‌کنند؛ ![افسون](../../../apps/web/public/icons/skill-type/enchantment.svg) **افسون‌ها** را خودت یا
 هم‌تیمی‌هایت. هر کدام با نوع خاص خودش از مهارت‌ها برداشته می‌شود. برخی افسون‌ها

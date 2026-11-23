@@ -62,6 +62,21 @@ export default {
 
   "buildEditor.addWeapon": "무기 추가",
   "buildEditor.armor": "방어구",
+  "buildEditor.attributeEffect.critical-strikes":
+    "치명타 확률 +{percent}%, 치명타마다 에너지 +{energy}",
+  "buildEditor.attributeEffect.divine-favor": "아군에게 쓰는 Monk 주문의 치유량 +{heal}",
+  "buildEditor.attributeEffect.energy-storage": "최대 에너지 +{energy}",
+  "buildEditor.attributeEffect.expertise":
+    "공격 스킬, 의식, 접촉 스킬, Ranger 스킬의 에너지 소모 {percent}% 감소",
+  "buildEditor.attributeEffect.fast-casting": "주문과 인장 시전 속도 {percent}% 증가",
+  "buildEditor.attributeEffect.leadership":
+    "외침 하나당 최대 에너지 {max}, 영향받은 아군 한 명당 {perAlly}",
+  "buildEditor.attributeEffect.mysticism": "Dervish 인챈트의 에너지 소모 {percent}% 감소",
+  "buildEditor.attributeEffect.soul-reaping":
+    "근처에서 누군가 죽으면 에너지 +{energy} ({seconds}초마다 {triggers}회)",
+  "buildEditor.attributeEffect.spawning-power":
+    "소환수 체력 +{percent}%, 무기 주문 지속 시간 {percent}% 증가",
+  "buildEditor.attributeEffect.strength": "공격 스킬 방어력 관통 {percent}%",
   "buildEditor.back": "뒤로",
   "buildEditor.bothHandsFull": "양손 사용 중",
   "buildEditor.budgetSegment": { other: "{attribute}: {count}포인트" },
@@ -1609,11 +1624,9 @@ export default {
   "tutorial.stepIn.praise": "함께. 숨 참아.",
   "tutorial.touch.callHow": "쥐를 탭한 다음 대상 표시줄을 탭해 지목해.",
   "tutorial.touch.callT": "바로 그거야. 이제 지목된 대상을 노리고 있어.",
-  "tutorial.touch.climbHint": "턱 위로 올라간 다음, 그 옆으로 다시 내려가세요.",
-  "tutorial.touch.climbHow": "턱을 탭한 다음, 그 옆의 땅을 탭하세요.",
-  "tutorial.touch.climbPraise": "올라갔다 다시 내려왔네요. 이제 땅을 읽을 줄 아네요.",
-  "tutorial.touch.climbTip": "팁: 턱을 탭하면 항상 그 위쪽을 골라요.",
-  "tutorial.touch.climbUnder": "이제 턱 옆으로 다시 내려가세요.",
+  "tutorial.touch.climbHow": "설 곳을 탭하세요. 길게 누르면 아래쪽 땅을 골라요.",
+  "tutorial.touch.climbTip": "팁: 길게 누르면 턱 아래의 땅을 골라요.",
+  "tutorial.touch.climbUnder": "길게 누르세요. 점선 고리는 아래쪽이에요.",
   "tutorial.touch.healHint": "먼저 파티 목록에서 내 이름을 탭해. 목록이 닫혀 있으면 파티를 탭해.",
   "tutorial.touch.healHow": "목록이 닫혀 있으면 파티를 탭하고, 내 이름, 빛나는 스킬 순서로 탭해.",
   "tutorial.touch.look": "두 손가락으로 확대/축소해. 한 손가락으로 끌어서 둘러봐.",

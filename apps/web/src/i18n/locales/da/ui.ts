@@ -63,6 +63,22 @@ export default {
 
   "buildEditor.addWeapon": "Tilføj våben",
   "buildEditor.armor": "Rustning",
+  "buildEditor.attributeEffect.critical-strikes":
+    "+{percent}% chance for kritisk træf, +{energy} energi pr. kritisk træf",
+  "buildEditor.attributeEffect.divine-favor": "Monk-besværgelser på allierede heler +{heal}",
+  "buildEditor.attributeEffect.energy-storage": "+{energy} maksimal energi",
+  "buildEditor.attributeEffect.expertise":
+    "angrebsevner, ritualer, berøringsevner og Ranger-evner koster {percent}% mindre energi",
+  "buildEditor.attributeEffect.fast-casting":
+    "besværgelser og signeter kastes {percent}% hurtigere",
+  "buildEditor.attributeEffect.leadership":
+    "op til {max} energi pr. råb, {perAlly} pr. berørt allieret",
+  "buildEditor.attributeEffect.mysticism": "Dervish-fortryllelser koster {percent}% mindre energi",
+  "buildEditor.attributeEffect.soul-reaping":
+    "+{energy} energi, når nogen i nærheden dør ({triggers} pr. {seconds} s)",
+  "buildEditor.attributeEffect.spawning-power":
+    "væsner +{percent}% liv, våbenbesværgelser varer {percent}% længere",
+  "buildEditor.attributeEffect.strength": "angrebsevner {percent}% rustningsgennemtrængning",
   "buildEditor.back": "Tilbage",
   "buildEditor.bothHandsFull": "begge hænder optaget",
   "buildEditor.budgetSegment": {
@@ -1695,11 +1711,9 @@ export default {
   "tutorial.stepIn.praise": "Sammen. Hold vejret.",
   "tutorial.touch.callHow": "Tryk på en rotte, og så på målbjælken for at kalde den.",
   "tutorial.touch.callT": "Sådan. Nu er du på det kaldte mål.",
-  "tutorial.touch.climbHint": "Op på afsatsen, og så ned igen ved siden af.",
-  "tutorial.touch.climbHow": "Tryk på afsatsen, og så på jorden ved siden af.",
-  "tutorial.touch.climbPraise": "Op og ned igen. Nu kan du læse terrænet.",
-  "tutorial.touch.climbTip": "Tip: et tryk på en afsats vælger altid toppen.",
-  "tutorial.touch.climbUnder": "Nu ned igen, ved siden af afsatsen.",
+  "tutorial.touch.climbHow": "Tryk, hvor du vil stå. Tryk og hold vælger jorden nedenunder.",
+  "tutorial.touch.climbTip": "Tip: tryk og hold vælger jorden under en afsats.",
+  "tutorial.touch.climbUnder": "Tryk og hold. Den stiplede ring er under dig.",
   "tutorial.touch.healHint":
     "Tryk først på mit navn i gruppelisten. Tryk på Gruppe, hvis listen er lukket.",
   "tutorial.touch.healHow":

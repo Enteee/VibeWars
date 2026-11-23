@@ -61,6 +61,22 @@ export default {
 
   "buildEditor.addWeapon": "Lägg till vapen",
   "buildEditor.armor": "Rustning",
+  "buildEditor.attributeEffect.critical-strikes":
+    "+{percent} % chans till kritisk träff, +{energy} energi per kritisk träff",
+  "buildEditor.attributeEffect.divine-favor": "Monk-besvärjelser på allierade helar +{heal}",
+  "buildEditor.attributeEffect.energy-storage": "+{energy} maximal energi",
+  "buildEditor.attributeEffect.expertise":
+    "attackförmågor, ritualer, beröringsförmågor och Ranger-förmågor kostar {percent} % mindre energi",
+  "buildEditor.attributeEffect.fast-casting": "besvärjelser och sigill kastas {percent} % snabbare",
+  "buildEditor.attributeEffect.leadership":
+    "upp till {max} energi per rop, {perAlly} per påverkad allierad",
+  "buildEditor.attributeEffect.mysticism":
+    "Dervish-förtrollningar kostar {percent} % mindre energi",
+  "buildEditor.attributeEffect.soul-reaping":
+    "+{energy} energi när någon i närheten dör ({triggers} per {seconds} s)",
+  "buildEditor.attributeEffect.spawning-power":
+    "varelser +{percent} % hälsa, vapenbesvärjelser varar {percent} % längre",
+  "buildEditor.attributeEffect.strength": "attackförmågor {percent} % rustningsgenomträngning",
   "buildEditor.back": "Tillbaka",
   "buildEditor.bothHandsFull": "båda händerna upptagna",
   "buildEditor.budgetSegment": {
@@ -1695,11 +1711,9 @@ export default {
   "tutorial.stepIn.praise": "Tillsammans. Håll andan.",
   "tutorial.touch.callHow": "Tryck på en råtta och sedan på målfältet för att ropa ut den.",
   "tutorial.touch.callT": "Just så. Nu är du på det utropade målet.",
-  "tutorial.touch.climbHint": "Upp på avsatsen, och sedan ner igen bredvid.",
-  "tutorial.touch.climbHow": "Tryck på avsatsen och sedan på marken bredvid.",
-  "tutorial.touch.climbPraise": "Upp och ner igen. Nu kan du läsa terrängen.",
-  "tutorial.touch.climbTip": "Tips: ett tryck på en avsats väljer alltid toppen.",
-  "tutorial.touch.climbUnder": "Ner igen nu, bredvid avsatsen.",
+  "tutorial.touch.climbHow": "Tryck där du vill stå. Tryck och håll väljer marken under.",
+  "tutorial.touch.climbTip": "Tips: tryck och håll väljer marken under en avsats.",
+  "tutorial.touch.climbUnder": "Tryck och håll. Den streckade ringen ligger under dig.",
   "tutorial.touch.healHint":
     "Tryck först på mitt namn i grupplistan. Tryck på Grupp om listan är stängd.",
   "tutorial.touch.healHow":

@@ -74,6 +74,7 @@ Di ponsel atau tablet, di pertandingan dan di area latihan:
   Ketuk musuh yang sama lagi, dengan cepat, untuk menyerangnya. Ketukan tepat
   di samping karakter tetap menemukannya. Ketukan pada dirimu berjalan ke
   titik itu, atau menargetkan tiang bendera atau tuas yang kamu pijak.
+- **Tekan lama** untuk berjalan ke tanah di bawah tepian atau jembatan, seperti Alt+klik.
 - **Seret** satu jari untuk melihat sekeliling; lepaskan dan tampilan
   meluncur kembali padamu. **Cubit** untuk zoom.
 - **Ketuk** skill di bar untuk menggunakannya pada targetmu.

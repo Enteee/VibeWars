@@ -54,6 +54,7 @@ Na telefonu nebo tabletu, v zápase i na cvičišti:
   rychlým klepnutím na stejného nepřítele na něj zaútočíš. Klepnutí těsně
   vedle postavy ji stále najde. Klepnutí na sebe tě dovede na to místo nebo
   zaměří stojan vlajky či páku, na které stojíš.
+- **Podrž** prst a dojdeš na zem pod římsou nebo mostem, jako Alt+klik.
 - **Tažením** jedním prstem se rozhlížíš; po puštění se pohled plynule vrátí
   k tobě. **Sevřením** prstů přibližuješ.
 - **Klepnutím** na dovednost na liště ji použiješ na svůj cíl.

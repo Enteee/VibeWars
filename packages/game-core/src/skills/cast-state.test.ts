@@ -6,13 +6,13 @@ import { StatusSet } from "./status.js";
 
 describe("CastState casting", () => {
   it("starts with nothing casting", () => {
-    const state = new CastState("caster", new StatusSet());
+    const state = new CastState("caster", new StatusSet("fleshy"));
     expect(state.isCasting).toBe(false);
     expect(state.activeCast).toBeUndefined();
   });
 
   it("tracks an in-progress cast", () => {
-    const state = new CastState("caster", new StatusSet());
+    const state = new CastState("caster", new StatusSet("fleshy"));
     state.beginCast("skill.a", "target-1", 2, undefined);
     expect(state.isCasting).toBe(true);
     expect(state.activeCast?.skillId).toBe("skill.a");
@@ -20,14 +20,14 @@ describe("CastState casting", () => {
   });
 
   it("does not complete before the activation time elapses", () => {
-    const state = new CastState("caster", new StatusSet());
+    const state = new CastState("caster", new StatusSet("fleshy"));
     state.beginCast("skill.a", undefined, 1, undefined);
     expect(state.advance(0.5)).toBeUndefined();
     expect(state.isCasting).toBe(true);
   });
 
   it("completes exactly when the activation time elapses", () => {
-    const state = new CastState("caster", new StatusSet());
+    const state = new CastState("caster", new StatusSet("fleshy"));
     state.beginCast("skill.a", undefined, 1, undefined);
     state.advance(0.5);
     const completed = state.advance(0.5);
@@ -36,20 +36,20 @@ describe("CastState casting", () => {
   });
 
   it("completes an instant (zero activation) cast on the very next advance", () => {
-    const state = new CastState("caster", new StatusSet());
+    const state = new CastState("caster", new StatusSet("fleshy"));
     state.beginCast("skill.instant", undefined, 0, undefined);
     expect(state.advance(0.05)?.skillId).toBe("skill.instant");
   });
 
   it("completes only once, not repeatedly", () => {
-    const state = new CastState("caster", new StatusSet());
+    const state = new CastState("caster", new StatusSet("fleshy"));
     state.beginCast("skill.a", undefined, 0.1, undefined);
     expect(state.advance(0.2)).toBeDefined();
     expect(state.advance(0.2)).toBeUndefined();
   });
 
   it("cancelCast aborts without completing and returns what was cancelled", () => {
-    const state = new CastState("caster", new StatusSet());
+    const state = new CastState("caster", new StatusSet("fleshy"));
     state.beginCast("skill.a", "t", 5, undefined);
     const cancelled = state.cancelCast();
     expect(cancelled?.skillId).toBe("skill.a");
@@ -58,11 +58,11 @@ describe("CastState casting", () => {
   });
 
   it("cancelCast on nothing is harmless", () => {
-    expect(new CastState("caster", new StatusSet()).cancelCast()).toBeUndefined();
+    expect(new CastState("caster", new StatusSet("fleshy")).cancelCast()).toBeUndefined();
   });
 
   it("beginCast replaces any previous cast", () => {
-    const state = new CastState("caster", new StatusSet());
+    const state = new CastState("caster", new StatusSet("fleshy"));
     state.beginCast("skill.a", undefined, 5, undefined);
     state.beginCast("skill.b", undefined, 1, undefined);
     expect(state.activeCast?.skillId).toBe("skill.b");
@@ -71,34 +71,34 @@ describe("CastState casting", () => {
 
 describe("CastState recharge", () => {
   it("records a recharge and reports it as remaining", () => {
-    const state = new CastState("caster", new StatusSet());
+    const state = new CastState("caster", new StatusSet("fleshy"));
     state.startRecharge("skill.a", 5);
     expect(state.rechargeRemaining.get("skill.a")).toBe(5);
   });
 
   it("ignores a zero or negative recharge rather than storing a useless entry", () => {
-    const state = new CastState("caster", new StatusSet());
+    const state = new CastState("caster", new StatusSet("fleshy"));
     state.startRecharge("skill.a", 0);
     state.startRecharge("skill.b", -1);
     expect(state.rechargeRemaining.size).toBe(0);
   });
 
   it("counts recharge down over time", () => {
-    const state = new CastState("caster", new StatusSet());
+    const state = new CastState("caster", new StatusSet("fleshy"));
     state.startRecharge("skill.a", 5);
     state.advance(2);
     expect(state.rechargeRemaining.get("skill.a")).toBeCloseTo(3, 10);
   });
 
   it("removes the entry entirely once recharge completes", () => {
-    const state = new CastState("caster", new StatusSet());
+    const state = new CastState("caster", new StatusSet("fleshy"));
     state.startRecharge("skill.a", 1);
     state.advance(1.5);
     expect(state.rechargeRemaining.has("skill.a")).toBe(false);
   });
 
   it("records the duration a recharge started with, until it completes (#152)", () => {
-    const state = new CastState("caster", new StatusSet());
+    const state = new CastState("caster", new StatusSet("fleshy"));
     state.startRecharge("skill.a", 5);
     expect(state.rechargeTotal.get("skill.a")).toBe(5);
     state.advance(2);
@@ -108,7 +108,7 @@ describe("CastState recharge", () => {
   });
 
   it("tracks several skills' recharges independently", () => {
-    const state = new CastState("caster", new StatusSet());
+    const state = new CastState("caster", new StatusSet("fleshy"));
     state.startRecharge("skill.a", 1);
     state.startRecharge("skill.b", 10);
     state.advance(2);
@@ -117,7 +117,7 @@ describe("CastState recharge", () => {
   });
 
   it("advances recharge even while a cast is in progress", () => {
-    const state = new CastState("caster", new StatusSet());
+    const state = new CastState("caster", new StatusSet("fleshy"));
     state.startRecharge("skill.a", 5);
     state.beginCast("skill.b", undefined, 10, undefined);
     state.advance(2);
@@ -126,7 +126,7 @@ describe("CastState recharge", () => {
 
   it("is deterministic across identical advance sequences", () => {
     const run = (): number | undefined => {
-      const state = new CastState("caster", new StatusSet());
+      const state = new CastState("caster", new StatusSet("fleshy"));
       state.startRecharge("skill.a", 5);
       for (let i = 0; i < 10; i += 1) {
         state.advance(0.05);
@@ -139,7 +139,7 @@ describe("CastState recharge", () => {
 
 describe("CastState disable (#914)", () => {
   it("raises a shorter recharge, and its total, to the disable", () => {
-    const state = new CastState("caster", new StatusSet());
+    const state = new CastState("caster", new StatusSet("fleshy"));
     state.startRecharge("skill.a", 5);
     state.advance(1);
     expect(state.disable("skill.a", 10)).toBe(true);
@@ -148,7 +148,7 @@ describe("CastState disable (#914)", () => {
   });
 
   it("leaves a longer recharge alone", () => {
-    const state = new CastState("caster", new StatusSet());
+    const state = new CastState("caster", new StatusSet("fleshy"));
     state.startRecharge("skill.a", 30);
     expect(state.disable("skill.a", 10)).toBe(false);
     expect(state.rechargeRemaining.get("skill.a")).toBe(30);
@@ -156,7 +156,7 @@ describe("CastState disable (#914)", () => {
   });
 
   it("disables a ready skill, which then counts down as a recharge", () => {
-    const state = new CastState("caster", new StatusSet());
+    const state = new CastState("caster", new StatusSet("fleshy"));
     expect(state.disable("skill.a", 10)).toBe(true);
     state.advance(4);
     expect(state.rechargeRemaining.get("skill.a")).toBeCloseTo(6, 10);
@@ -165,7 +165,7 @@ describe("CastState disable (#914)", () => {
   });
 
   it("keeps the disable when the recharge ends early, or restarts shorter", () => {
-    const state = new CastState("caster", new StatusSet());
+    const state = new CastState("caster", new StatusSet("fleshy"));
     state.startRecharge("skill.a", 5);
     state.disable("skill.a", 20);
     state.endRecharge("skill.a");
@@ -177,7 +177,7 @@ describe("CastState disable (#914)", () => {
   });
 
   it("keeps a disable a longer recharge hides, for when that recharge ends early", () => {
-    const state = new CastState("caster", new StatusSet());
+    const state = new CastState("caster", new StatusSet("fleshy"));
     state.startRecharge("skill.a", 30);
     expect(state.disable("skill.a", 10)).toBe(false);
     state.endRecharge("skill.a");
@@ -187,7 +187,7 @@ describe("CastState disable (#914)", () => {
 
 describe("CastState lengthenRecharge (#949)", () => {
   it("lengthens a running recharge, its total too", () => {
-    const state = new CastState("caster", new StatusSet());
+    const state = new CastState("caster", new StatusSet("fleshy"));
     state.startRecharge("skill.a", 4);
     state.advance(1);
     state.lengthenRecharge("skill.a", 47);
@@ -196,7 +196,7 @@ describe("CastState lengthenRecharge (#949)", () => {
   });
 
   it("starts one on a ready skill, which counts down as a recharge", () => {
-    const state = new CastState("caster", new StatusSet());
+    const state = new CastState("caster", new StatusSet("fleshy"));
     state.lengthenRecharge("skill.a", 47);
     expect(state.rechargeRemaining.get("skill.a")).toBe(47);
     expect(state.rechargeTotal.get("skill.a")).toBe(47);
@@ -205,7 +205,7 @@ describe("CastState lengthenRecharge (#949)", () => {
   });
 
   it("is recharge: ending the recharge ends it, not a disable", () => {
-    const state = new CastState("caster", new StatusSet());
+    const state = new CastState("caster", new StatusSet("fleshy"));
     state.startRecharge("skill.a", 4);
     state.disable("skill.a", 10);
     state.lengthenRecharge("skill.a", 47);
@@ -215,7 +215,7 @@ describe("CastState lengthenRecharge (#949)", () => {
   });
 
   it("shows a longer disable over it", () => {
-    const state = new CastState("caster", new StatusSet());
+    const state = new CastState("caster", new StatusSet("fleshy"));
     state.startRecharge("skill.a", 2);
     state.disable("skill.a", 60);
     state.lengthenRecharge("skill.a", 47);
@@ -225,7 +225,7 @@ describe("CastState lengthenRecharge (#949)", () => {
 
 describe("aftercast and the queue (#317)", () => {
   it("counts down from the next advance, and is not casting", () => {
-    const state = new CastState("caster", new StatusSet());
+    const state = new CastState("caster", new StatusSet("fleshy"));
     state.beginAftercast(0.75);
     expect(state.inAftercast).toBe(true);
     expect(state.isCasting).toBe(false);
@@ -238,7 +238,7 @@ describe("aftercast and the queue (#317)", () => {
   });
 
   it("takes the queued slot once; a later press replaces it", () => {
-    const state = new CastState("caster", new StatusSet());
+    const state = new CastState("caster", new StatusSet("fleshy"));
     state.queue(0);
     state.queue(2);
     expect(state.takeQueued()).toBe(2);
@@ -246,7 +246,7 @@ describe("aftercast and the queue (#317)", () => {
   });
 
   it("ending the aftercast drops the queue, and cancelling a cast starts none", () => {
-    const state = new CastState("caster", new StatusSet());
+    const state = new CastState("caster", new StatusSet("fleshy"));
     state.beginAftercast(0.75);
     state.queue(1);
     state.endAftercast();
@@ -261,7 +261,7 @@ describe("aftercast and the queue (#317)", () => {
 
 describe("CastState whileActivating (#524)", () => {
   it("puts the status on its caster for the cast and takes it off when it goes off", () => {
-    const statuses = new StatusSet();
+    const statuses = new StatusSet("fleshy");
     const state = new CastState("caster", statuses);
     state.beginCast("warrior.healing-signet", undefined, 2, "healing-signet-armor");
     expect(statuses.get("healing-signet-armor")?.sourceId).toBe("caster");
@@ -272,7 +272,7 @@ describe("CastState whileActivating (#524)", () => {
   });
 
   it("takes it off when the cast is cancelled", () => {
-    const statuses = new StatusSet();
+    const statuses = new StatusSet("fleshy");
     const state = new CastState("caster", statuses);
     state.beginCast("warrior.healing-signet", undefined, 2, "healing-signet-armor");
     state.cancelCast();
@@ -280,7 +280,7 @@ describe("CastState whileActivating (#524)", () => {
   });
 
   it("puts nothing on for an instant, which has no activation to bear it in", () => {
-    const statuses = new StatusSet();
+    const statuses = new StatusSet("fleshy");
     new CastState("caster", statuses).beginCast("x", undefined, 0, "healing-signet-armor");
     expect(statuses.size).toBe(0);
   });
@@ -294,7 +294,7 @@ describe("spent until a morale boost (#474)", () => {
     if (signet === undefined || fireball === undefined) {
       throw new Error("missing skill");
     }
-    const state = new CastState("caster", new StatusSet());
+    const state = new CastState("caster", new StatusSet("fleshy"));
     beginRecharge(state, signet, 0);
     beginRecharge(state, fireball, 5);
     expect([...state.spent]).toEqual([signet.id]);
@@ -305,7 +305,7 @@ describe("spent until a morale boost (#474)", () => {
   });
 
   it("readies every spent skill on a boost, and says whether there was one", () => {
-    const state = new CastState("caster", new StatusSet());
+    const state = new CastState("caster", new StatusSet("fleshy"));
     expect(state.refreshSpent()).toBe(false);
     state.spend("common.resurrection-signet");
     expect(state.refreshSpent()).toBe(true);
@@ -325,7 +325,7 @@ describe("CastState slot overrides (#469)", () => {
   });
 
   it("resolves a slot to the copy standing there, and the rest to the build", () => {
-    const state = new CastState("p", new StatusSet());
+    const state = new CastState("p", new StatusSet("fleshy"));
     state.override(0, copy());
     expect(slotSkill(bar, state, 0)).toEqual({ skillId: FIREBALL, key: "elementalist.fireball@0" });
     expect(resolvedBar(bar, state)).toEqual([
@@ -336,7 +336,7 @@ describe("CastState slot overrides (#469)", () => {
   });
 
   it("ends a copy after its time, with its waits, and starts the echo's recharge", () => {
-    const state = new CastState("p", new StatusSet());
+    const state = new CastState("p", new StatusSet("fleshy"));
     state.override(0, copy());
     state.startRecharge(copyKey(FIREBALL, 0), 30);
     state.advance(19.5);
@@ -348,7 +348,7 @@ describe("CastState slot overrides (#469)", () => {
   });
 
   it("a copy gone mid-cast has nothing to recharge", () => {
-    const state = new CastState("p", new StatusSet());
+    const state = new CastState("p", new StatusSet("fleshy"));
     state.override(0, copy());
     state.clearOverrides();
     state.startRecharge(copyKey(FIREBALL, 0), 7);

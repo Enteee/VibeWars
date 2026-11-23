@@ -62,6 +62,24 @@ export default {
 
   "buildEditor.addWeapon": "Añadir arma",
   "buildEditor.armor": "Armadura",
+  "buildEditor.attributeEffect.critical-strikes":
+    "+{percent}% de probabilidad de golpe crítico, +{energy} de energía por crítico",
+  "buildEditor.attributeEffect.divine-favor": "los hechizos de Monje sobre aliados curan +{heal}",
+  "buildEditor.attributeEffect.energy-storage": "+{energy} de energía máxima",
+  "buildEditor.attributeEffect.expertise":
+    "las habilidades de ataque, rituales, de toque y de Guardabosques cuestan un {percent}% menos de energía",
+  "buildEditor.attributeEffect.fast-casting":
+    "hechizos y sellos se lanzan un {percent}% más rápido",
+  "buildEditor.attributeEffect.leadership":
+    "hasta {max} de energía por grito, {perAlly} por aliado afectado",
+  "buildEditor.attributeEffect.mysticism":
+    "los encantamientos de Derviche cuestan un {percent}% menos de energía",
+  "buildEditor.attributeEffect.soul-reaping":
+    "+{energy} de energía cuando alguien cercano muere ({triggers} cada {seconds} s)",
+  "buildEditor.attributeEffect.spawning-power":
+    "criaturas +{percent}% de salud, los hechizos de arma duran un {percent}% más",
+  "buildEditor.attributeEffect.strength":
+    "habilidades de ataque: {percent}% de penetración de armadura",
   "buildEditor.back": "Atrás",
   "buildEditor.bothHandsFull": "ambas manos ocupadas",
   "buildEditor.budgetSegment": {
@@ -1798,11 +1816,9 @@ export default {
   "tutorial.stepIn.praise": "Juntos. Contén la respiración.",
   "tutorial.touch.callHow": "Toca una rata y luego la barra de objetivo para marcarla.",
   "tutorial.touch.callT": "Eso es. Ahora vas a por el objetivo marcado.",
-  "tutorial.touch.climbHint": "Sube a la cornisa y luego baja a su lado.",
-  "tutorial.touch.climbHow": "Toca la cornisa y luego el suelo a su lado.",
-  "tutorial.touch.climbPraise": "Arriba y abajo otra vez. Ya sabes leer el terreno.",
-  "tutorial.touch.climbTip": "Consejo: tocar una cornisa siempre elige su parte de arriba.",
-  "tutorial.touch.climbUnder": "Ahora baja otra vez, junto a la cornisa.",
+  "tutorial.touch.climbHow": "Toca donde quieras estar. Mantener pulsado elige el suelo de debajo.",
+  "tutorial.touch.climbTip": "Consejo: mantener pulsado elige el suelo bajo una cornisa.",
+  "tutorial.touch.climbUnder": "Mantén pulsado. El anillo discontinuo está debajo de ti.",
   "tutorial.touch.healHint":
     "Primero toca mi nombre en la lista del grupo. Toca Grupo si la lista está cerrada.",
   "tutorial.touch.healHow":

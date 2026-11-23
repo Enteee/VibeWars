@@ -60,18 +60,20 @@ poza ![Okrzyk](../../../apps/web/public/icons/skill-type/shout.svg) **okrzykiem*
 
 **Dolegliwości** szkodzą ci, dopóki nie miną lub nie zostaną usunięte:
 
-| Dolegliwość                                                                                       | Działanie                                             |
-| ------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
-| ![Krwawienie](../../../apps/web/public/icons/status/bleeding.svg) **Krwawienie**                  | odbiera Zdrowie                                       |
-| ![Podpalenie](../../../apps/web/public/icons/status/burning.svg) **Podpalenie**                   | szybko odbiera Zdrowie                                |
-| ![Zatrucie](../../../apps/web/public/icons/status/poison.svg) **Zatrucie**                        | odbiera Zdrowie                                       |
-| ![Choroba](../../../apps/web/public/icons/status/disease.svg) **Choroba**                         | odbiera Zdrowie i przenosi się na każdego obok ciebie |
-| ![Okaleczenie](../../../apps/web/public/icons/status/crippled.svg) **Okaleczenie**                | poruszasz się z połową prędkości                      |
-| ![Oślepienie](../../../apps/web/public/icons/status/blind.svg) **Oślepienie**                     | większość twoich ataków chybia                        |
-| ![Słabość](../../../apps/web/public/icons/status/weakness.svg) **Słabość**                        | twoja broń trafia znacznie słabiej                    |
-| ![Pęknięty Pancerz](../../../apps/web/public/icons/status/cracked-armor.svg) **Pęknięty Pancerz** | mniej pancerza                                        |
-| ![Głęboka Rana](../../../apps/web/public/icons/status/deep-wound.svg) **Głęboka Rana**            | mniej maksymalnego Zdrowia i słabsze leczenie         |
-| ![Oszołomienie](../../../apps/web/public/icons/status/dazed.svg) **Oszołomienie**                 | czary rzucane są wolno; każdy atak je przerywa        |
+| Dolegliwość                                                                                       | Działanie                                                               |
+| ------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| ![Krwawienie](../../../apps/web/public/icons/status/bleeding.svg) **Krwawienie**                  | odbiera Zdrowie                                                         |
+| ![Podpalenie](../../../apps/web/public/icons/status/burning.svg) **Podpalenie**                   | szybko odbiera Zdrowie                                                  |
+| ![Zatrucie](../../../apps/web/public/icons/status/poison.svg) **Zatrucie**                        | odbiera Zdrowie                                                         |
+| ![Choroba](../../../apps/web/public/icons/status/disease.svg) **Choroba**                         | odbiera Zdrowie i przenosi się na ciało tego samego rodzaju obok ciebie |
+| ![Okaleczenie](../../../apps/web/public/icons/status/crippled.svg) **Okaleczenie**                | poruszasz się z połową prędkości                                        |
+| ![Oślepienie](../../../apps/web/public/icons/status/blind.svg) **Oślepienie**                     | większość twoich ataków chybia                                          |
+| ![Słabość](../../../apps/web/public/icons/status/weakness.svg) **Słabość**                        | twoja broń trafia znacznie słabiej                                      |
+| ![Pęknięty Pancerz](../../../apps/web/public/icons/status/cracked-armor.svg) **Pęknięty Pancerz** | mniej pancerza                                                          |
+| ![Głęboka Rana](../../../apps/web/public/icons/status/deep-wound.svg) **Głęboka Rana**            | mniej maksymalnego Zdrowia i słabsze leczenie                           |
+| ![Oszołomienie](../../../apps/web/public/icons/status/dazed.svg) **Oszołomienie**                 | czary rzucane są wolno; każdy atak je przerywa                          |
+
+Sługi (poza Golemem z mięsa), zjawy i duchy nie krwawią, nie ulegają zatruciu ani chorobie, a duchy nie przyjmują żadnej klątwy ani żadnego stanu poza **Podpaleniem**.
 
 ![Klątwa](../../../apps/web/public/icons/skill-type/hex.svg) **Klątwy** rzucają na ciebie wrogowie; ![Zaczarowanie](../../../apps/web/public/icons/skill-type/enchantment.svg) **zaczarowania** ty sam lub twoi
 sojusznicy. Każde z nich usuwa własny rodzaj umiejętności. Niektóre zaczarowania

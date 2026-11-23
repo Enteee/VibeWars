@@ -61,6 +61,21 @@ export default {
 
   "buildEditor.addWeapon": "הוסף נשק",
   "buildEditor.armor": "שריון",
+  "buildEditor.attributeEffect.critical-strikes":
+    "+{percent}% סיכוי למכה קריטית, +{energy} אנרגיה לכל מכה קריטית",
+  "buildEditor.attributeEffect.divine-favor": "לחשי Monk על בני ברית מרפאים +{heal}",
+  "buildEditor.attributeEffect.energy-storage": "+{energy} אנרגיה מרבית",
+  "buildEditor.attributeEffect.expertise":
+    "מיומנויות התקפה, טקסים, מיומנויות מגע ומיומנויות Ranger עולות {percent}% פחות אנרגיה",
+  "buildEditor.attributeEffect.fast-casting": "לחשים וחותמות מוטלים מהר יותר ב-{percent}%",
+  "buildEditor.attributeEffect.leadership":
+    "עד {max} אנרגיה לכל קריאה, {perAlly} לכל בן ברית מושפע",
+  "buildEditor.attributeEffect.mysticism": "הקסמים של Dervish עולים {percent}% פחות אנרגיה",
+  "buildEditor.attributeEffect.soul-reaping":
+    "+{energy} אנרגיה כשמישהו בקרבת מקום מת ({triggers} לכל {seconds} שנ׳)",
+  "buildEditor.attributeEffect.spawning-power":
+    "יצורים +{percent}% חיים, לחשי נשק נמשכים {percent}% יותר",
+  "buildEditor.attributeEffect.strength": "מיומנויות התקפה: {percent}% חדירת שריון",
   "buildEditor.back": "חזרה",
   "buildEditor.bothHandsFull": "שתי הידיים תפוסות",
   "buildEditor.budgetSegment": {
@@ -1756,11 +1771,9 @@ export default {
   "tutorial.stepIn.praise": "ביחד. עצור את הנשימה.",
   "tutorial.touch.callHow": "גע בעכברוש, ואז בפס המטרה כדי לסמן אותו.",
   "tutorial.touch.callT": "בדיוק. עכשיו אתה על המטרה המסומנת.",
-  "tutorial.touch.climbHint": "עלה על המדף, ואז רד שוב לצידו.",
-  "tutorial.touch.climbHow": "גע במדף, ואז בקרקע שלצידו.",
-  "tutorial.touch.climbPraise": "למעלה ושוב למטה. עכשיו אתה קורא את השטח.",
-  "tutorial.touch.climbTip": "טיפ: נגיעה במדף תמיד בוחרת את ראשו.",
-  "tutorial.touch.climbUnder": "עכשיו רד בחזרה, לצד המדף.",
+  "tutorial.touch.climbHow": "גע איפה לעמוד. לחיצה ארוכה בוחרת את הקרקע שמתחת.",
+  "tutorial.touch.climbTip": "טיפ: לחיצה ארוכה בוחרת את הקרקע שמתחת למדף.",
+  "tutorial.touch.climbUnder": "לחץ לחיצה ארוכה. הטבעת המקווקוות נמצאת מתחתיך.",
   "tutorial.touch.healHint": "קודם גע בשם שלי ברשימת הקבוצה. גע בחבורה אם הרשימה סגורה.",
   "tutorial.touch.healHow": "גע בחבורה אם הרשימה סגורה, אחר כך בשם שלי, ואז במיומנות הזוהרת.",
   "tutorial.touch.look": "צבוט כדי להתקרב. גרור באצבע אחת כדי להסתכל.",

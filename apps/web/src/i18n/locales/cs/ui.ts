@@ -62,6 +62,21 @@ export default {
 
   "buildEditor.addWeapon": "Přidat zbraň",
   "buildEditor.armor": "Brnění",
+  "buildEditor.attributeEffect.critical-strikes":
+    "+{percent} % šance na kritický zásah, +{energy} energie za kritický zásah",
+  "buildEditor.attributeEffect.divine-favor": "kouzla Mnicha na spojence léčí +{heal}",
+  "buildEditor.attributeEffect.energy-storage": "+{energy} maximální energie",
+  "buildEditor.attributeEffect.expertise":
+    "útočné dovednosti, rituály, dotykové dovednosti a dovednosti Hraničáře stojí o {percent} % méně energie",
+  "buildEditor.attributeEffect.fast-casting": "kouzla a pečetě se sesílají o {percent} % rychleji",
+  "buildEditor.attributeEffect.leadership":
+    "až {max} energie za pokřik, {perAlly} za každého zasaženého spojence",
+  "buildEditor.attributeEffect.mysticism": "očarování Derviše stojí o {percent} % méně energie",
+  "buildEditor.attributeEffect.soul-reaping":
+    "+{energy} energie, když někdo poblíž zemře ({triggers} za {seconds} s)",
+  "buildEditor.attributeEffect.spawning-power":
+    "stvoření +{percent} % zdraví, kouzla zbraně trvají o {percent} % déle",
+  "buildEditor.attributeEffect.strength": "útočné dovednosti: {percent} % průraznost brnění",
   "buildEditor.back": "Zpět",
   "buildEditor.bothHandsFull": "obě ruce plné",
   "buildEditor.budgetSegment": {
@@ -1817,11 +1832,9 @@ export default {
   "tutorial.stepIn.praise": "Spolu. Zadrž dech.",
   "tutorial.touch.callHow": "Klepni na krysu, pak na lištu cíle, abys ji označil.",
   "tutorial.touch.callT": "Přesně tak. Teď míříš na označený cíl.",
-  "tutorial.touch.climbHint": "Nahoru na římsu, pak zase dolů vedle ní.",
-  "tutorial.touch.climbHow": "Klepni na římsu, pak na zem vedle ní.",
-  "tutorial.touch.climbPraise": "Nahoru a zase dolů. Teď už terén umíš číst.",
-  "tutorial.touch.climbTip": "Tip: klepnutí na římsu vždy vybere její vršek.",
-  "tutorial.touch.climbUnder": "Teď zase dolů, vedle římsy.",
+  "tutorial.touch.climbHow": "Klepni, kam se postavit. Podržení vybere zem pod tím.",
+  "tutorial.touch.climbTip": "Tip: podržení vybere zem pod římsou.",
+  "tutorial.touch.climbUnder": "Podrž prst. Čárkovaný kruh je pod tebou.",
   "tutorial.touch.healHint":
     "Nejdřív klepni na mé jméno v seznamu družiny. Když je seznam zavřený, klepni na Skupina.",
   "tutorial.touch.healHow":

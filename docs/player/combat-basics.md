@@ -60,18 +60,20 @@ except a ![Shout](../../apps/web/public/icons/skill-type/shout.svg) **shout** or
 
 **Conditions** hurt you until they run out or are removed:
 
-| Condition                                                                                | What it does                                     |
-| ---------------------------------------------------------------------------------------- | ------------------------------------------------ |
-| ![Bleeding](../../apps/web/public/icons/status/bleeding.svg) **Bleeding**                | drains Health                                    |
-| ![Burning](../../apps/web/public/icons/status/burning.svg) **Burning**                   | drains Health fast                               |
-| ![Poison](../../apps/web/public/icons/status/poison.svg) **Poison**                      | drains Health                                    |
-| ![Disease](../../apps/web/public/icons/status/disease.svg) **Disease**                   | drains Health, and spreads to anyone next to you |
-| ![Crippled](../../apps/web/public/icons/status/crippled.svg) **Crippled**                | you move at half speed                           |
-| ![Blind](../../apps/web/public/icons/status/blind.svg) **Blind**                         | most of your attacks miss                        |
-| ![Weakness](../../apps/web/public/icons/status/weakness.svg) **Weakness**                | your weapon hits much weaker                     |
-| ![Cracked Armor](../../apps/web/public/icons/status/cracked-armor.svg) **Cracked Armor** | less armor                                       |
-| ![Deep Wound](../../apps/web/public/icons/status/deep-wound.svg) **Deep Wound**          | less maximum Health, and healing works less      |
-| ![Dazed](../../apps/web/public/icons/status/dazed.svg) **Dazed**                         | spells cast slowly; any attack interrupts them   |
+| Condition                                                                                | What it does                                                    |
+| ---------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| ![Bleeding](../../apps/web/public/icons/status/bleeding.svg) **Bleeding**                | drains Health                                                   |
+| ![Burning](../../apps/web/public/icons/status/burning.svg) **Burning**                   | drains Health fast                                              |
+| ![Poison](../../apps/web/public/icons/status/poison.svg) **Poison**                      | drains Health                                                   |
+| ![Disease](../../apps/web/public/icons/status/disease.svg) **Disease**                   | drains Health, and spreads to the same kind of body next to you |
+| ![Crippled](../../apps/web/public/icons/status/crippled.svg) **Crippled**                | you move at half speed                                          |
+| ![Blind](../../apps/web/public/icons/status/blind.svg) **Blind**                         | most of your attacks miss                                       |
+| ![Weakness](../../apps/web/public/icons/status/weakness.svg) **Weakness**                | your weapon hits much weaker                                    |
+| ![Cracked Armor](../../apps/web/public/icons/status/cracked-armor.svg) **Cracked Armor** | less armor                                                      |
+| ![Deep Wound](../../apps/web/public/icons/status/deep-wound.svg) **Deep Wound**          | less maximum Health, and healing works less                     |
+| ![Dazed](../../apps/web/public/icons/status/dazed.svg) **Dazed**                         | spells cast slowly; any attack interrupts them                  |
+
+Minions (except the Flesh Golem), ghosts and spirits don't bleed, get poisoned or catch Disease, and spirits take no hex and no condition but **Burning**.
 
 ![Hex](../../apps/web/public/icons/skill-type/hex.svg) **Hexes** are cast on you by foes; ![Enchantment](../../apps/web/public/icons/skill-type/enchantment.svg) **enchantments** by yourself or your
 allies. Each is removed by its own kind of skill. Some enchantments are

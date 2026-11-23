@@ -55,18 +55,20 @@ Mantra of Concentration 같은 일부 ![태세](../../../apps/web/public/icons/s
 
 **상태이상**은 시간이 다 되거나 제거될 때까지 피해를 줘요.
 
-| 상태이상                                                                                    | 효과                                         |
-| ------------------------------------------------------------------------------------------- | -------------------------------------------- |
-| ![Bleeding](../../../apps/web/public/icons/status/bleeding.svg) **Bleeding**                | 체력을 빼앗아요                              |
-| ![Burning](../../../apps/web/public/icons/status/burning.svg) **Burning**                   | 체력을 빠르게 빼앗아요                       |
-| ![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison**                      | 체력을 빼앗아요                              |
-| ![Disease](../../../apps/web/public/icons/status/disease.svg) **Disease**                   | 체력을 빼앗고, 옆에 있는 누구에게나 퍼져요   |
-| ![Crippled](../../../apps/web/public/icons/status/crippled.svg) **Crippled**                | 이동 속도가 절반이 돼요                      |
-| ![Blind](../../../apps/web/public/icons/status/blind.svg) **Blind**                         | 공격이 대부분 빗나가요                       |
-| ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness**                | 무기 공격이 훨씬 약해져요                    |
-| ![Cracked Armor](../../../apps/web/public/icons/status/cracked-armor.svg) **Cracked Armor** | 방어력이 줄어요                              |
-| ![Deep Wound](../../../apps/web/public/icons/status/deep-wound.svg) **Deep Wound**          | 최대 체력이 줄고, 치유 효과가 줄어요         |
-| ![Dazed](../../../apps/web/public/icons/status/dazed.svg) **Dazed**                         | 주문 시전이 느려지고, 어떤 공격에도 차단돼요 |
+| 상태이상                                                                                    | 효과                                             |
+| ------------------------------------------------------------------------------------------- | ------------------------------------------------ |
+| ![Bleeding](../../../apps/web/public/icons/status/bleeding.svg) **Bleeding**                | 체력을 빼앗아요                                  |
+| ![Burning](../../../apps/web/public/icons/status/burning.svg) **Burning**                   | 체력을 빠르게 빼앗아요                           |
+| ![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison**                      | 체력을 빼앗아요                                  |
+| ![Disease](../../../apps/web/public/icons/status/disease.svg) **Disease**                   | 체력을 빼앗고, 옆에 있는 같은 종류의 몸에 퍼져요 |
+| ![Crippled](../../../apps/web/public/icons/status/crippled.svg) **Crippled**                | 이동 속도가 절반이 돼요                          |
+| ![Blind](../../../apps/web/public/icons/status/blind.svg) **Blind**                         | 공격이 대부분 빗나가요                           |
+| ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness**                | 무기 공격이 훨씬 약해져요                        |
+| ![Cracked Armor](../../../apps/web/public/icons/status/cracked-armor.svg) **Cracked Armor** | 방어력이 줄어요                                  |
+| ![Deep Wound](../../../apps/web/public/icons/status/deep-wound.svg) **Deep Wound**          | 최대 체력이 줄고, 치유 효과가 줄어요             |
+| ![Dazed](../../../apps/web/public/icons/status/dazed.svg) **Dazed**                         | 주문 시전이 느려지고, 어떤 공격에도 차단돼요     |
+
+하수인(살점 골렘 제외), 유령, 정령은 출혈, 중독, 질병에 걸리지 않고, 정령은 저주도 받지 않으며 **Burning** 외의 상태 이상도 받지 않아요.
 
 ![저주](../../../apps/web/public/icons/skill-type/hex.svg) **저주**는 적이 나에게 걸고, ![인챈트](../../../apps/web/public/icons/skill-type/enchantment.svg) **인챈트**는 나 자신이나 아군이 걸어요. 각각 그에
 맞는 종류의 스킬로 제거돼요. 일부 인챈트는 **유지형**이에요. 직접 끝낼 때까지

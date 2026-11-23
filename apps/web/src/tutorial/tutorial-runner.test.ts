@@ -370,8 +370,8 @@ describe("the tutorial runner", () => {
       junction.fork,
       junction.rejoin,
     ]);
-    // The party window, where the tutor stands, is lit while the call is wanted.
-    expect(beats[36]?.highlight).toEqual({ kind: "hud", element: ".party-window" });
+    // The target bar, which the call lines name, is lit while the call is wanted (#3884).
+    expect(beats[36]?.highlight).toEqual({ kind: "hud", element: ".hud-target" });
     // The ledge is marked on its layer, then the ground under its middle.
     expect(beats.slice(29, 31).map((beat) => beat.highlight)).toEqual([
       { kind: "ground", at: onLedge, layer: 2 },

@@ -63,6 +63,24 @@ export default {
 
   "buildEditor.addWeapon": "Adicionar arma",
   "buildEditor.armor": "Armadura",
+  "buildEditor.attributeEffect.critical-strikes":
+    "+{percent}% de chance de acerto crítico, +{energy} de energia por crítico",
+  "buildEditor.attributeEffect.divine-favor": "feitiços de Monge em aliados curam +{heal}",
+  "buildEditor.attributeEffect.energy-storage": "+{energy} de energia máxima",
+  "buildEditor.attributeEffect.expertise":
+    "habilidades de ataque, rituais, de toque e de Patrulheiro custam {percent}% menos energia",
+  "buildEditor.attributeEffect.fast-casting":
+    "feitiços e sinetes são conjurados {percent}% mais rápido",
+  "buildEditor.attributeEffect.leadership":
+    "até {max} de energia por grito, {perAlly} por aliado afetado",
+  "buildEditor.attributeEffect.mysticism":
+    "encantamentos de Dervixe custam {percent}% menos energia",
+  "buildEditor.attributeEffect.soul-reaping":
+    "+{energy} de energia quando alguém próximo morre ({triggers} a cada {seconds} s)",
+  "buildEditor.attributeEffect.spawning-power":
+    "criaturas +{percent}% de vida, feitiços de arma duram {percent}% mais",
+  "buildEditor.attributeEffect.strength":
+    "habilidades de ataque: {percent}% de penetração de armadura",
   "buildEditor.back": "Voltar",
   "buildEditor.bothHandsFull": "as duas mãos ocupadas",
   "buildEditor.budgetSegment": {
@@ -1778,11 +1796,9 @@ export default {
   "tutorial.stepIn.praise": "Juntos. Sustém a respiração.",
   "tutorial.touch.callHow": "Toque num rato e depois na barra de alvo para marcá-lo.",
   "tutorial.touch.callT": "É isso. Agora você está no alvo marcado.",
-  "tutorial.touch.climbHint": "Suba na saliência e depois desça ao lado dela.",
-  "tutorial.touch.climbHow": "Toque na saliência e depois no chão ao lado.",
-  "tutorial.touch.climbPraise": "Subiu e desceu. Agora você lê o terreno.",
-  "tutorial.touch.climbTip": "Dica: tocar numa saliência sempre escolhe o topo.",
-  "tutorial.touch.climbUnder": "Agora desça de novo, ao lado da saliência.",
+  "tutorial.touch.climbHow": "Toque onde quer ficar. Tocar e segurar escolhe o chão de baixo.",
+  "tutorial.touch.climbTip": "Dica: tocar e segurar escolhe o chão sob uma saliência.",
+  "tutorial.touch.climbUnder": "Toque e segure. O anel tracejado está abaixo de você.",
   "tutorial.touch.healHint":
     "Primeiro toque no meu nome na lista do grupo. Toque em Grupo se a lista estiver fechada.",
   "tutorial.touch.healHow":

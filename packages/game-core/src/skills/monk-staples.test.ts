@@ -221,7 +221,7 @@ describe("Reversal of Fortune (#987)", () => {
   });
 
   it("takeReversal spends it and returns its cap; nothing without one", () => {
-    const statuses = new StatusSet();
+    const statuses = new StatusSet("fleshy");
     expect(statuses.takeReversal()).toBeUndefined();
     statuses.apply("reversal-of-fortune", 8, "monk", PROTECTION_12);
     expect(statuses.takeReversal()).toEqual({ id: "reversal-of-fortune", cap: 67 });

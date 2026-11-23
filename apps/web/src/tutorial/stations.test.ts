@@ -1,6 +1,7 @@
 import { vec2, type Vec2 } from "@vibewars/game-core";
 import { describe, expect, it } from "vitest";
 
+import { en } from "../i18n/en.js";
 import { KEYMAP_PRESETS } from "../input/keymap.js";
 
 import {
@@ -25,8 +26,11 @@ import {
   skillSlot,
   stepInStation,
   tunnelStation,
+  walkStation,
+  type Station,
   type TutorialView,
 } from "./stations.js";
+import { touchLine } from "./touch-lines.js";
 import { ASIDE_MS, HINT_REPEAT_MS, createTutorialRunner } from "./tutorial-runner.js";
 import { PLAYER_PROFESSION, houseBuild } from "./tutorial-world.js";
 
@@ -418,18 +422,6 @@ describe("climbStation (#3323)", () => {
       "tutorial.climb.praise",
     ]);
   });
-
-  it("on touch is done back down beside the ledge, its mark gone once up (#3782)", () => {
-    const station = climbStation(LEDGE, STAIRS, UPPER, LOWER, true);
-    if (typeof station.highlight !== "function") {
-      throw new Error("a climb station's mark moves");
-    }
-    expect(station.done(view(BESIDE))).toBe(false);
-    expect(station.highlight(view(BESIDE))).toEqual({ kind: "ground", at: MIDDLE, layer: UPPER });
-    expect(station.done(view(ON_LEDGE))).toBe(false);
-    expect(station.highlight(view(ON_LEDGE))).toBeUndefined();
-    expect(station.done(view(BESIDE))).toBe(true);
-  });
 });
 
 describe("tunnelStation (#3326)", () => {
@@ -505,8 +497,8 @@ describe("callStation (#3331)", () => {
     expect(callStation().done(view({ calledId: "tutorial-tutor" }))).toBe(false);
   });
 
-  it("lights the party window", () => {
-    expect(callStation().highlight).toEqual({ kind: "hud", element: ".party-window" });
+  it("lights the target bar, which its lines name (#3884)", () => {
+    expect(callStation().highlight).toEqual({ kind: "hud", element: ".hud-target" });
   });
 
   it("says T finds the call once, the first time the player uses it", () => {
@@ -667,5 +659,43 @@ describe("gateStation (#3334)", () => {
     const station = gateStation(GATE, LAYER);
     expect(station.highlight).toEqual({ kind: "ground", at: GATE, layer: LAYER });
     expect(station.world).toBe("canyon");
+  });
+});
+
+describe("a station whose how line names the target bar lights it (#3884)", () => {
+  const box = { kind: "rect", x: 0, y: 0, width: 100, height: 100 } as const;
+  const at = vec2(0, 0);
+  const junction = { fork: at, layer: GROUND, north: at, south: at, rejoin: at, bay: at };
+  const stations = [
+    walkStation(at, GROUND),
+    lookStation(at),
+    stepInStation(at, GROUND),
+    dodgeStation(at, GROUND),
+    breakWallStation(at, 400),
+    healStation("tutor", 7),
+    badGroundStation(at, GROUND),
+    ratsStation(at, { runner: "rat-1", big: "rat-2" }, houseBuild(PLAYER_PROFESSION).skillBar),
+    climbStation(box, box, 2, 1),
+    tunnelStation(box, 0, 1, at),
+    callStation(),
+    pingStation(junction),
+    gateStation(at, GROUND),
+  ];
+  /** Its how line, on a desktop or by touch, names the target bar. */
+  const namesTargetBar = (station: Station): boolean =>
+    [station.lines.how, touchLine(station.lines.how, true)].some((key) => {
+      const line = en[key];
+      return typeof line === "string" && line.includes("target bar");
+    });
+  const naming = stations.filter(namesTargetBar);
+
+  it("finds the call station's lines", () => {
+    expect(naming.map((station) => station.id)).toContain("call");
+  });
+
+  it.each(naming)("$id", (station) => {
+    const highlight =
+      typeof station.highlight === "function" ? station.highlight(view()) : station.highlight;
+    expect(highlight).toEqual({ kind: "hud", element: ".hud-target" });
   });
 });

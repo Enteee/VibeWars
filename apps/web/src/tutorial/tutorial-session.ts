@@ -50,7 +50,7 @@ import {
   ratPocket,
   forkStart,
   gateStart,
-  tunnelStart,
+  ledgeFootStart,
   tunnelTutor,
   wallStart,
   wallTutor,
@@ -129,7 +129,8 @@ const MIST_GATE: MistGateProp = {
 const SEEDED_STARTS: ReadonlyMap<string, () => CanyonStart> = new Map([
   ["break-wall", wallStart],
   ["rats", pocketStart],
-  ["tunnel", tunnelStart],
+  ["climb", ledgeFootStart],
+  ["tunnel", ledgeFootStart],
   ["ping", forkStart],
   ["gate", gateStart],
 ]);
@@ -430,7 +431,7 @@ export async function startTutorialSession(
       { runner: RAT_POCKET.rats[0].id, big: RAT_POCKET.rats[1].id },
       playerBuild.skillBar,
     ),
-    climbStation(LEDGE.footprint, LEDGE.stairs, LEDGE.upper, LEDGE.lower, touch),
+    climbStation(LEDGE.footprint, LEDGE.stairs, LEDGE.upper, LEDGE.lower),
     tunnelStation(TUNNEL.footprint, TUNNEL.under, TUNNEL.above, TUNNEL.mark),
     callStation(),
     pingStation(JUNCTION),

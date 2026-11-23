@@ -371,7 +371,7 @@ export function outsideMatch(ranks: ReadonlyMap<string, number>): RankHolder {
     attributeRanks: ranks,
     borrowedAttribute: null,
     heldAttributeDeltas: [],
-    statuses: new StatusSet(),
+    statuses: new StatusSet("fleshy"),
     equipment: { attributeBonuses: new Map() },
   };
 }

@@ -62,6 +62,22 @@ export default {
 
   "buildEditor.addWeapon": "Lisää ase",
   "buildEditor.armor": "Panssari",
+  "buildEditor.attributeEffect.critical-strikes":
+    "+{percent}% kriittisen osuman mahdollisuus, +{energy} energiaa per kriittinen osuma",
+  "buildEditor.attributeEffect.divine-favor": "Monkin loitsut liittolaisiin parantavat +{heal}",
+  "buildEditor.attributeEffect.energy-storage": "+{energy} enimmäisenergiaa",
+  "buildEditor.attributeEffect.expertise":
+    "hyökkäystaidot, riitit, kosketustaidot ja Ranger-taidot maksavat {percent}% vähemmän energiaa",
+  "buildEditor.attributeEffect.fast-casting": "loitsut ja sinetit loitsitaan {percent}% nopeammin",
+  "buildEditor.attributeEffect.leadership":
+    "enintään {max} energiaa per huuto, {perAlly} per vaikutettu liittolainen",
+  "buildEditor.attributeEffect.mysticism":
+    "Dervishin lumoukset maksavat {percent}% vähemmän energiaa",
+  "buildEditor.attributeEffect.soul-reaping":
+    "+{energy} energiaa, kun joku lähellä kuolee ({triggers} per {seconds} s)",
+  "buildEditor.attributeEffect.spawning-power":
+    "olennot +{percent}% terveyttä, aseloitsut kestävät {percent}% pidempään",
+  "buildEditor.attributeEffect.strength": "hyökkäystaidot: {percent}% panssarin läpäisy",
   "buildEditor.back": "Takaisin",
   "buildEditor.bothHandsFull": "molemmat kädet täynnä",
   "buildEditor.budgetSegment": {
@@ -1713,11 +1729,9 @@ export default {
   "tutorial.stepIn.praise": "Yhdessä. Pidätä hengitystä.",
   "tutorial.touch.callHow": "Napauta rottaa ja sitten kohdepalkkia merkitäksesi sen.",
   "tutorial.touch.callT": "Juuri noin. Nyt olet merkityn kohteen kimpussa.",
-  "tutorial.touch.climbHint": "Ylös reunalle, sitten taas alas sen viereen.",
-  "tutorial.touch.climbHow": "Napauta reunaa ja sitten maata sen vieressä.",
-  "tutorial.touch.climbPraise": "Ylös ja taas alas. Nyt osaat lukea maastoa.",
-  "tutorial.touch.climbTip": "Vinkki: reunan napautus valitsee aina sen yläpinnan.",
-  "tutorial.touch.climbUnder": "Nyt takaisin alas, reunan viereen.",
+  "tutorial.touch.climbHow": "Napauta, mihin haluat seistä. Pitkä painallus valitsee maan alta.",
+  "tutorial.touch.climbTip": "Vinkki: pitkä painallus valitsee maan reunan alta.",
+  "tutorial.touch.climbUnder": "Paina pitkään. Katkoviivarengas on allasi.",
   "tutorial.touch.healHint":
     "Napauta ensin nimeäni ryhmän luettelossa. Napauta Ryhmä, jos luettelo on kiinni.",
   "tutorial.touch.healHow":

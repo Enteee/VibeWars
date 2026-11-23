@@ -58,18 +58,20 @@ Regeneration ולחשי ריפוי מוסיפים. אחרי 5 שניות מחו�
 
 **פגעים** פוגעים בך עד שהם נגמרים או מוסרים:
 
-| פגע                                                                                         | מה הוא עושה                           |
-| ------------------------------------------------------------------------------------------- | ------------------------------------- |
-| ![Bleeding](../../../apps/web/public/icons/status/bleeding.svg) **Bleeding**                | מרוקן חיים                            |
-| ![Burning](../../../apps/web/public/icons/status/burning.svg) **Burning**                   | מרוקן חיים מהר                        |
-| ![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison**                      | מרוקן חיים                            |
-| ![Disease](../../../apps/web/public/icons/status/disease.svg) **Disease**                   | מרוקן חיים, ומתפשט לכל מי שלידך       |
-| ![Crippled](../../../apps/web/public/icons/status/crippled.svg) **Crippled**                | אתה זז בחצי מהירות                    |
-| ![Blind](../../../apps/web/public/icons/status/blind.svg) **Blind**                         | רוב ההתקפות שלך מחטיאות               |
-| ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness**                | הנשק שלך פוגע הרבה יותר חלש           |
-| ![Cracked Armor](../../../apps/web/public/icons/status/cracked-armor.svg) **Cracked Armor** | פחות שריון                            |
-| ![Deep Wound](../../../apps/web/public/icons/status/deep-wound.svg) **Deep Wound**          | פחות חיים מרביים, והריפוי עובד פחות   |
-| ![Dazed](../../../apps/web/public/icons/status/dazed.svg) **Dazed**                         | לחשים מוטלים לאט; כל התקפה קוטעת אותם |
+| פגע                                                                                         | מה הוא עושה                             |
+| ------------------------------------------------------------------------------------------- | --------------------------------------- |
+| ![Bleeding](../../../apps/web/public/icons/status/bleeding.svg) **Bleeding**                | מרוקן חיים                              |
+| ![Burning](../../../apps/web/public/icons/status/burning.svg) **Burning**                   | מרוקן חיים מהר                          |
+| ![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison**                      | מרוקן חיים                              |
+| ![Disease](../../../apps/web/public/icons/status/disease.svg) **Disease**                   | מרוקן חיים, ומתפשט לגוף מאותו סוג שלידך |
+| ![Crippled](../../../apps/web/public/icons/status/crippled.svg) **Crippled**                | אתה זז בחצי מהירות                      |
+| ![Blind](../../../apps/web/public/icons/status/blind.svg) **Blind**                         | רוב ההתקפות שלך מחטיאות                 |
+| ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness**                | הנשק שלך פוגע הרבה יותר חלש             |
+| ![Cracked Armor](../../../apps/web/public/icons/status/cracked-armor.svg) **Cracked Armor** | פחות שריון                              |
+| ![Deep Wound](../../../apps/web/public/icons/status/deep-wound.svg) **Deep Wound**          | פחות חיים מרביים, והריפוי עובד פחות     |
+| ![Dazed](../../../apps/web/public/icons/status/dazed.svg) **Dazed**                         | לחשים מוטלים לאט; כל התקפה קוטעת אותם   |
+
+משרתים (חוץ מגולם הבשר), רוחות רפאים ורוחות לא מדממים, לא מורעלים ולא חולים, ורוחות לא מקבלות שום קללה ושום מצב חוץ מ־**Burning**.
 
 ![קללה](../../../apps/web/public/icons/skill-type/hex.svg) **קללות** מוטלות עליך על ידי אויבים; ![הקסם](../../../apps/web/public/icons/skill-type/enchantment.svg) **הקסמים** על ידך או על ידי בני
 הברית שלך. כל אחד מהם מוסר בסוג משלו של מיומנות. חלק מההקסמים

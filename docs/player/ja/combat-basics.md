@@ -39,13 +39,15 @@ Mantra of Concentrationなど一部の![スタンス](../../../apps/web/public/i
 | ![Bleeding](../../../apps/web/public/icons/status/bleeding.svg) **Bleeding**                | ヘルスが減る                                     |
 | ![Burning](../../../apps/web/public/icons/status/burning.svg) **Burning**                   | ヘルスが速く減る                                 |
 | ![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison**                      | ヘルスが減る                                     |
-| ![Disease](../../../apps/web/public/icons/status/disease.svg) **Disease**                   | ヘルスが減り、隣にいる人にうつる                 |
+| ![Disease](../../../apps/web/public/icons/status/disease.svg) **Disease**                   | ヘルスが減り、隣にいる同じ種類の体にうつる       |
 | ![Crippled](../../../apps/web/public/icons/status/crippled.svg) **Crippled**                | 移動速度が半分になる                             |
 | ![Blind](../../../apps/web/public/icons/status/blind.svg) **Blind**                         | 攻撃のほとんどが外れる                           |
 | ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness**                | 武器の攻撃がかなり弱くなる                       |
 | ![Cracked Armor](../../../apps/web/public/icons/status/cracked-armor.svg) **Cracked Armor** | 防御力が下がる                                   |
 | ![Deep Wound](../../../apps/web/public/icons/status/deep-wound.svg) **Deep Wound**          | 最大ヘルスが下がり、回復の効果も下がる           |
 | ![Dazed](../../../apps/web/public/icons/status/dazed.svg) **Dazed**                         | スペルの詠唱が遅くなり、どんな攻撃でも中断される |
+
+ミニオン（フレッシュゴーレムを除く）、ゴースト、スピリットは出血せず、毒にも病気にもかからない。スピリットは呪いを受けず、**Burning** 以外の状態異常も受けない。
 
 ![呪い](../../../apps/web/public/icons/skill-type/hex.svg) **呪い**は敵があなたにかけるもの、![エンチャント](../../../apps/web/public/icons/skill-type/enchantment.svg) **エンチャント**はあなた自身や味方がかけるものです。それぞれ専用の種類のスキルで除去されます。一部のエンチャントは**維持**されます。自分で終わらせるまで続き、続く間はエナジーのピップを1つ消費します。終わらせるには、そのアイコンをダブルクリックします。
 

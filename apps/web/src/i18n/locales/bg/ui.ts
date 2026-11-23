@@ -61,6 +61,23 @@ export default {
 
   "buildEditor.addWeapon": "Добави оръжие",
   "buildEditor.armor": "Броня",
+  "buildEditor.attributeEffect.critical-strikes":
+    "+{percent}% шанс за критичен удар, +{energy} енергия за критичен удар",
+  "buildEditor.attributeEffect.divine-favor": "заклинанията на Monk върху съюзници лекуват +{heal}",
+  "buildEditor.attributeEffect.energy-storage": "+{energy} максимална енергия",
+  "buildEditor.attributeEffect.expertise":
+    "атакуващите умения, ритуалите, уменията с докосване и уменията на Ranger струват с {percent}% по-малко енергия",
+  "buildEditor.attributeEffect.fast-casting":
+    "заклинанията и печатите се правят с {percent}% по-бързо",
+  "buildEditor.attributeEffect.leadership":
+    "до {max} енергия на вик, {perAlly} за всеки засегнат съюзник",
+  "buildEditor.attributeEffect.mysticism":
+    "омагьосванията на Dervish струват с {percent}% по-малко енергия",
+  "buildEditor.attributeEffect.soul-reaping":
+    "+{energy} енергия, когато някой наблизо умре ({triggers} на {seconds} s)",
+  "buildEditor.attributeEffect.spawning-power":
+    "създания +{percent}% здраве, заклинанията в оръжие траят с {percent}% по-дълго",
+  "buildEditor.attributeEffect.strength": "атакуващи умения: {percent}% пробиване на броня",
   "buildEditor.back": "Назад",
   "buildEditor.bothHandsFull": "и двете ръце са заети",
   "buildEditor.budgetSegment": {
@@ -1705,11 +1722,9 @@ export default {
   "tutorial.stepIn.praise": "Заедно. Задръж дъха си.",
   "tutorial.touch.callHow": "Докосни плъх, после лентата на целта, за да го обявиш.",
   "tutorial.touch.callT": "Точно така. Сега си на обявената цел.",
-  "tutorial.touch.climbHint": "Качи се на ръба, после слез отново до него.",
-  "tutorial.touch.climbHow": "Докосни ръба, после земята до него.",
-  "tutorial.touch.climbPraise": "Нагоре и пак надолу. Вече четеш терена.",
-  "tutorial.touch.climbTip": "Съвет: докосване на ръб винаги избира горната му част.",
-  "tutorial.touch.climbUnder": "Сега слез обратно, до ръба.",
+  "tutorial.touch.climbHow": "Докосни където да застанеш. Задържане избира земята отдолу.",
+  "tutorial.touch.climbTip": "Съвет: задържане избира земята под ръба.",
+  "tutorial.touch.climbUnder": "Задръж пръста. Пунктирният кръг е под теб.",
   "tutorial.touch.healHint":
     "Първо докосни името ми в списъка на групата. Докосни Група, ако списъкът е затворен.",
   "tutorial.touch.healHow":

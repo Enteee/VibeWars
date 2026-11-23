@@ -61,6 +61,20 @@ export default {
 
   "buildEditor.addWeapon": "添加武器",
   "buildEditor.armor": "护甲",
+  "buildEditor.attributeEffect.critical-strikes": "暴击率 +{percent}%，每次暴击 +{energy} 能量",
+  "buildEditor.attributeEffect.divine-favor": "Monk 对友方施放的法术治疗 +{heal}",
+  "buildEditor.attributeEffect.energy-storage": "最大能量 +{energy}",
+  "buildEditor.attributeEffect.expertise":
+    "攻击技能、仪式、触摸技能和 Ranger 技能的能量消耗降低 {percent}%",
+  "buildEditor.attributeEffect.fast-casting": "法术和纹章的施放速度加快 {percent}%",
+  "buildEditor.attributeEffect.leadership":
+    "每次呐喊最多 {max} 点能量，每个受影响的友方 {perAlly} 点",
+  "buildEditor.attributeEffect.mysticism": "Dervish 附魔的能量消耗降低 {percent}%",
+  "buildEditor.attributeEffect.soul-reaping":
+    "附近有人死亡时 +{energy} 能量（每 {seconds} 秒 {triggers} 次）",
+  "buildEditor.attributeEffect.spawning-power":
+    "生物生命 +{percent}%，武器法术持续时间延长 {percent}%",
+  "buildEditor.attributeEffect.strength": "攻击技能 {percent}% 护甲穿透",
   "buildEditor.back": "返回",
   "buildEditor.bothHandsFull": "双手已占用",
   "buildEditor.budgetSegment": { other: "{attribute}：{count} 点" },
@@ -1574,11 +1588,9 @@ export default {
   "tutorial.stepIn.praise": "一起。屏住呼吸。",
   "tutorial.touch.callHow": "点按一只老鼠，再点按目标栏即可点名。",
   "tutorial.touch.callT": "就是这样。现在你锁定了点名的目标。",
-  "tutorial.touch.climbHint": "登上岩台，再从旁边下来。",
-  "tutorial.touch.climbHow": "点按岩台，再点按它旁边的地面。",
-  "tutorial.touch.climbPraise": "上去又下来。你已经会看地形了。",
-  "tutorial.touch.climbTip": "提示：点按岩台总是选中它的顶部。",
-  "tutorial.touch.climbUnder": "现在下来，到岩台旁边。",
+  "tutorial.touch.climbHow": "点按要站的地方。长按会选中下方的地面。",
+  "tutorial.touch.climbTip": "提示:长按可选中岩台下方的地面。",
+  "tutorial.touch.climbUnder": "长按。虚线圆环在你下方。",
   "tutorial.touch.healHint": "先在队伍列表里点按我的名字。如果列表关着，先点按“小队”。",
   "tutorial.touch.healHow": "如果列表关着，先点按“小队”，再点按我的名字，然后点按发光的技能。",
   "tutorial.touch.look": "双指捏合缩放。单指拖动环顾四周。",

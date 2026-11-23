@@ -32,6 +32,8 @@ export interface ButtonEvent {
 export type FingerEvent =
   /** A tap: where it was pressed, world units and CSS px from the canvas's corner. */
   | { readonly kind: "tap"; readonly world: Vec2; readonly screen: Vec2 }
+  /** A long-press (#3878): where it was pressed, as a tap. */
+  | { readonly kind: "long-press"; readonly world: Vec2; readonly screen: Vec2 }
   /** A one-finger drag, CSS px since the last. */
   | { readonly kind: "pan"; readonly delta: Vec2 }
   | { readonly kind: "pan-end" }
@@ -177,9 +179,12 @@ export async function createArenaViewport(
     });
   });
 
-  // A finger on the arena is a tap, drag or pinch of ours (#3781): the
-  // browser neither scrolls, zooms nor opens a menu over it.
+  // A finger on the arena is a tap, drag, pinch or long-press of ours
+  // (#3781, #3878): the browser neither scrolls, zooms, selects nor opens
+  // a menu or callout over it.
   game.canvas.style.touchAction = "none";
+  game.canvas.style.userSelect = "none";
+  game.canvas.style.setProperty("-webkit-touch-callout", "none");
 
   /** The cursor on the canvas, game px, which RESIZE makes CSS px. */
   let pointer: Vec2 | undefined;
@@ -355,8 +360,9 @@ export async function createArenaViewport(
         }
         switch (outcome.kind) {
           case "tap":
+          case "long-press":
             if (press !== undefined) {
-              handler({ kind: "tap", world: press.world, screen: press.screen });
+              handler({ kind: outcome.kind, world: press.world, screen: press.screen });
             }
             break;
           case "pan":
@@ -371,10 +377,14 @@ export async function createArenaViewport(
       for (const type of FINGER_TYPES) {
         canvas.addEventListener(type, onTouch);
       }
+      // A pointer event's timeStamp is on performance.now()'s clock: the
+      // hover ring turns to the ground below as the hold passes long-press.
+      scene.setHeldBelow(() => gesture.heldLong(performance.now()));
       return () => {
         for (const type of FINGER_TYPES) {
           canvas.removeEventListener(type, onTouch);
         }
+        scene.setHeldBelow(() => false);
       };
     },
     onWheelNotch(handler) {

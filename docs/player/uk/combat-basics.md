@@ -62,18 +62,20 @@
 
 **Стани** шкодять тобі, доки не минуть або їх не знімуть:
 
-| Стан                                                                                        | Що робить                                                 |
-| ------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
-| ![Bleeding](../../../apps/web/public/icons/status/bleeding.svg) **Bleeding**                | забирає здоров'я                                          |
-| ![Burning](../../../apps/web/public/icons/status/burning.svg) **Burning**                   | швидко забирає здоров'я                                   |
-| ![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison**                      | забирає здоров'я                                          |
-| ![Disease](../../../apps/web/public/icons/status/disease.svg) **Disease**                   | забирає здоров'я і передається всім поруч із тобою        |
-| ![Crippled](../../../apps/web/public/icons/status/crippled.svg) **Crippled**                | ти рухаєшся вдвічі повільніше                             |
-| ![Blind](../../../apps/web/public/icons/status/blind.svg) **Blind**                         | більшість твоїх атак не влучає                            |
-| ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness**                | удари твоєю зброєю значно слабші                          |
-| ![Cracked Armor](../../../apps/web/public/icons/status/cracked-armor.svg) **Cracked Armor** | менше броні                                               |
-| ![Deep Wound](../../../apps/web/public/icons/status/deep-wound.svg) **Deep Wound**          | менший максимум здоров'я, і лікування діє слабше          |
-| ![Dazed](../../../apps/web/public/icons/status/dazed.svg) **Dazed**                         | закляття кастуються повільно; будь-яка атака їх перериває |
+| Стан                                                                                        | Що робить                                                       |
+| ------------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| ![Bleeding](../../../apps/web/public/icons/status/bleeding.svg) **Bleeding**                | забирає здоров'я                                                |
+| ![Burning](../../../apps/web/public/icons/status/burning.svg) **Burning**                   | швидко забирає здоров'я                                         |
+| ![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison**                      | забирає здоров'я                                                |
+| ![Disease](../../../apps/web/public/icons/status/disease.svg) **Disease**                   | забирає здоров'я і передається тілам того ж роду поруч із тобою |
+| ![Crippled](../../../apps/web/public/icons/status/crippled.svg) **Crippled**                | ти рухаєшся вдвічі повільніше                                   |
+| ![Blind](../../../apps/web/public/icons/status/blind.svg) **Blind**                         | більшість твоїх атак не влучає                                  |
+| ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness**                | удари твоєю зброєю значно слабші                                |
+| ![Cracked Armor](../../../apps/web/public/icons/status/cracked-armor.svg) **Cracked Armor** | менше броні                                                     |
+| ![Deep Wound](../../../apps/web/public/icons/status/deep-wound.svg) **Deep Wound**          | менший максимум здоров'я, і лікування діє слабше                |
+| ![Dazed](../../../apps/web/public/icons/status/dazed.svg) **Dazed**                         | закляття кастуються повільно; будь-яка атака їх перериває       |
+
+Посіпаки (крім М'ясного голема), привиди й духи не кровоточать, не отруюються і не хворіють, а духи не отримують жодного прокляття й жодного стану, крім **Burning**.
 
 ![Прокляття](../../../apps/web/public/icons/skill-type/hex.svg) **Прокляття** накладають на тебе вороги, а ![Зачарування](../../../apps/web/public/icons/skill-type/enchantment.svg) **зачарування** — ти сам або
 союзники. Кожне знімається своїм типом уміння. Деякі зачарування

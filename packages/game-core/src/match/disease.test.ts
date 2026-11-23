@@ -7,7 +7,12 @@ import { describeStatus } from "../skills/describe.js";
 import type { CombatEvent } from "../skills/effects.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
-import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
+import {
+  MatchSimulation,
+  type CreatureKind,
+  type CreatureLook,
+  type ParticipantSpec,
+} from "./simulation.js";
 import { NO_RANKS } from "../skills/status.js";
 import { EN_NAMES, EN_WORDS } from "../skills/describe-words.js";
 
@@ -247,5 +252,116 @@ describe("Rotting Flesh (#765)", () => {
       rechargeSeconds: 3,
       target: "single-enemy",
     });
+  });
+});
+
+/** A creature of `kind` and `look`, a body like `body`'s, `w`'s, standing still. */
+function creature(
+  id: string,
+  spawn: Vec2,
+  kind: CreatureKind,
+  look: CreatureLook,
+): ParticipantSpec {
+  return {
+    ...body(id, 1, spawn),
+    creature: {
+      ownerId: "w",
+      kind,
+      look,
+      name: id,
+      expiresInSeconds: Number.POSITIVE_INFINITY,
+      ageSeconds: 0,
+      summonedAtTick: 0,
+      skillId: undefined,
+      aura: undefined,
+      onDeath: "vanish",
+      ownerDisableSeconds: 0,
+      deathBurst: undefined,
+      onDeathInRange: undefined,
+      pulse: undefined,
+      replacedBy: undefined,
+      corpsesLeft: 0,
+      companionSkillId: undefined,
+      leaderId: undefined,
+      bondStatusId: undefined,
+      mode: "guard",
+    },
+  };
+}
+
+/** `participants` standing still, with `melee()`'s rules. */
+function standing(participants: ParticipantSpec[]): MatchSimulation {
+  return new MatchSimulation({
+    seed: "disease-kinds",
+    participants,
+    matchRules: {
+      victory: "kill-count",
+      scoreToWin: 10,
+      timeLimitSeconds: 600,
+      deathRule: "respawn",
+      respawnSeconds: 100,
+      respawnOnWave: false,
+      deathPenalty: false,
+    },
+  });
+}
+
+describe("Disease spreads to the same kind of body (#3881)", () => {
+  it("a diseased character infects an adjacent character, not a minion or a pet beside it", () => {
+    const match = standing([
+      body("w", 1, vec2(300, 0)),
+      body("a", 1, vec2(330, 0)),
+      creature("golem", vec2(270, 0), "minion", "flesh-golem"),
+      creature("pet", vec2(300, 30), "pet", "beast"),
+    ]);
+    get(match, "w").statuses.apply("disease", 10, "w", NO_RANKS);
+    const log = stepFor(match, DT);
+    expect(spreads(log)).toEqual([
+      { kind: "status-spread", targetId: "a", fromId: "w", statusId: "disease" },
+    ]);
+    expect(get(match, "golem").statuses.has("disease")).toBe(false);
+    expect(get(match, "pet").statuses.has("disease")).toBe(false);
+  });
+
+  it("two adjacent pets pass it between themselves, and not to a character beside them", () => {
+    const match = standing([
+      body("w", 1, vec2(270, 0)),
+      creature("p1", vec2(300, 0), "pet", "beast"),
+      creature("p2", vec2(330, 0), "pet", "beast"),
+    ]);
+    get(match, "p1").statuses.apply("disease", 10, "w", NO_RANKS);
+    const log = stepFor(match, DT);
+    expect(spreads(log)).toEqual([
+      { kind: "status-spread", targetId: "p2", fromId: "p1", statusId: "disease" },
+    ]);
+    expect(get(match, "w").statuses.has("disease")).toBe(false);
+  });
+
+  it("a Flesh Golem bleeds, is poisoned and diseased; a Bone Horror is none of these", () => {
+    const match = standing([
+      body("w", 1, vec2(0, 0)),
+      creature("golem", vec2(300, 0), "minion", "flesh-golem"),
+      creature("horror", vec2(600, 0), "minion", "bone-horror"),
+    ]);
+    for (const id of ["bleeding", "poison", "disease"] as const) {
+      get(match, "golem").statuses.apply(id, 10, "w", NO_RANKS);
+      get(match, "horror").statuses.apply(id, 10, "w", NO_RANKS);
+      expect(get(match, "golem").statuses.has(id)).toBe(true);
+      expect(get(match, "horror").statuses.has(id)).toBe(false);
+    }
+  });
+
+  it("a ghost and a spirit take no Bleeding; a spirit takes Burning", () => {
+    const match = standing([
+      body("w", 1, vec2(0, 0)),
+      creature("ghost", vec2(300, 0), "ghostly-hero", "ghostly-hero"),
+      creature("spirit", vec2(600, 0), "spirit", "spirit"),
+    ]);
+    for (const id of ["ghost", "spirit"]) {
+      get(match, id).statuses.apply("bleeding", 10, "w", NO_RANKS);
+      expect(get(match, id).statuses.has("bleeding")).toBe(false);
+    }
+    get(match, "spirit").statuses.apply("burning", 10, "w", NO_RANKS);
+    expect(get(match, "spirit").statuses.has("burning")).toBe(true);
   });
 });

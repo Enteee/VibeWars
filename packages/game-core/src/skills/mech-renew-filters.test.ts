@@ -101,14 +101,14 @@ describe("Recurring Insecurity (#2501)", () => {
       [0, -1],
       [12, -5],
     ] as const) {
-      const set = new StatusSet();
+      const set = new StatusSet("fleshy");
       set.apply("recurring-insecurity", 5, "m", illusion(rank));
       expect(aggregateModifiers(set.active).healthPips).toBe(pips);
     }
   });
 
   it("is reapplied while the foe has another hex, and ends once it has none", () => {
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     set.apply("recurring-insecurity", 5, "m", illusion(12));
     set.apply("images-of-remorse", 12, "m", illusion(12));
     advance(set, 11);
@@ -119,7 +119,7 @@ describe("Recurring Insecurity (#2501)", () => {
   });
 
   it("is reapplied when the other hex ends in the same tick", () => {
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     set.apply("recurring-insecurity", 5, "m", illusion(12));
     set.apply("images-of-remorse", 5, "m", illusion(12));
     advance(set, 5.05);
@@ -128,7 +128,7 @@ describe("Recurring Insecurity (#2501)", () => {
   });
 
   it("ends for good when it is removed", () => {
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     set.apply("recurring-insecurity", 5, "m", illusion(12));
     set.apply("images-of-remorse", 20, "m", illusion(12));
     set.remove("recurring-insecurity");
@@ -139,7 +139,7 @@ describe("Recurring Insecurity (#2501)", () => {
 
 describe("Storm's Embrace (#2501)", () => {
   it("moves 25% faster and is refreshed by elemental damage above 0", () => {
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     set.apply("storms-embrace", 10, "r", NO_RANKS);
     expect(aggregateModifiers(set.active).moveSpeedMultiplier).toBeCloseTo(1.25);
     advance(set, 6);
@@ -156,14 +156,14 @@ describe("Vow of Piety (#2501)", () => {
       [0, 1],
       [12, 3],
     ] as const) {
-      const set = new StatusSet();
+      const set = new StatusSet("fleshy");
       set.apply("vow-of-piety", 20, "d", wind(rank));
       expect(aggregateModifiers(set.active)).toMatchObject({ armorModifier: 24, healthPips: pips });
     }
   });
 
   it("renews whenever another enchantment on the bearer ends, once for several at once", () => {
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     set.apply("vow-of-piety", 20, "d", wind(12));
     set.apply("kinetic-armor", 5, "d", NO_RANKS);
     set.apply("lyssas-haste", 5, "d", NO_RANKS);
@@ -201,10 +201,10 @@ describe("Spirit's Strength (#2501)", () => {
 
 describe("Soldier's Speed (#2501)", () => {
   it("moves 15% faster, and 15% more again under a shout", () => {
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     set.apply("soldiers-speed", 15, "w", NO_RANKS);
     expect(aggregateModifiers(set.active).moveSpeedMultiplier).toBeCloseTo(1.15);
-    const shout = new StatusSet();
+    const shout = new StatusSet("fleshy");
     shout.apply("call-of-protection", 15, "w", NO_RANKS);
     set.apply("call-of-protection", 15, "w", NO_RANKS);
     expect(

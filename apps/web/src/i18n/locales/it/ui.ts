@@ -63,6 +63,25 @@ export default {
 
   "buildEditor.addWeapon": "Aggiungi arma",
   "buildEditor.armor": "Armatura",
+  "buildEditor.attributeEffect.critical-strikes":
+    "+{percent}% di probabilità di colpo critico, +{energy} Energia per colpo critico",
+  "buildEditor.attributeEffect.divine-favor":
+    "gli incantesimi da Monaco sugli alleati curano +{heal}",
+  "buildEditor.attributeEffect.energy-storage": "+{energy} Energia massima",
+  "buildEditor.attributeEffect.expertise":
+    "abilità di attacco, rituali, abilità a contatto e abilità da Ranger costano il {percent}% di Energia in meno",
+  "buildEditor.attributeEffect.fast-casting":
+    "incantesimi e sigilli si lanciano il {percent}% più velocemente",
+  "buildEditor.attributeEffect.leadership":
+    "fino a {max} Energia per grido, {perAlly} per alleato coinvolto",
+  "buildEditor.attributeEffect.mysticism":
+    "gli incantamenti da Derviscio costano il {percent}% di Energia in meno",
+  "buildEditor.attributeEffect.soul-reaping":
+    "+{energy} Energia quando qualcuno muore nelle vicinanze ({triggers} ogni {seconds} s)",
+  "buildEditor.attributeEffect.spawning-power":
+    "creature +{percent}% Salute, gli incantesimi su arma durano il {percent}% in più",
+  "buildEditor.attributeEffect.strength":
+    "abilità di attacco: {percent}% di penetrazione dell'armatura",
   "buildEditor.back": "Indietro",
   "buildEditor.bothHandsFull": "entrambe le mani occupate",
   "buildEditor.budgetSegment": {
@@ -1787,11 +1806,10 @@ export default {
   "tutorial.stepIn.praise": "Insieme. Trattieni il respiro.",
   "tutorial.touch.callHow": "Tocca un ratto, poi la barra del bersaglio per segnalarlo.",
   "tutorial.touch.callT": "Esatto. Ora punti il bersaglio segnalato.",
-  "tutorial.touch.climbHint": "Sali sulla sporgenza, poi riscendi accanto.",
-  "tutorial.touch.climbHow": "Tocca la sporgenza, poi il terreno accanto.",
-  "tutorial.touch.climbPraise": "Su e di nuovo giù. Ora sai leggere il terreno.",
-  "tutorial.touch.climbTip": "Suggerimento: toccare una sporgenza sceglie sempre la cima.",
-  "tutorial.touch.climbUnder": "Ora riscendi, accanto alla sporgenza.",
+  "tutorial.touch.climbHow": "Tocca dove stare. Una pressione lunga sceglie il terreno sotto.",
+  "tutorial.touch.climbTip":
+    "Suggerimento: una pressione lunga sceglie il terreno sotto una sporgenza.",
+  "tutorial.touch.climbUnder": "Tieni premuto. Il cerchio tratteggiato è sotto di te.",
   "tutorial.touch.healHint":
     "Prima tocca il mio nome nella lista del gruppo. Tocca Gruppo se la lista è chiusa.",
   "tutorial.touch.healHow":

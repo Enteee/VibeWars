@@ -35,6 +35,7 @@ import { loadKeymap } from "./input/keymap-preference.js";
 import {
   calledTargetIntent,
   callTargetCall,
+  longPressIntents,
   middleClickAction,
   pingCall,
   primaryClickIntents,
@@ -1365,6 +1366,19 @@ export async function startMatchView(
       if (intent.kind === "walk-to") {
         viewport?.scene.showWalkMarker(world);
         tutorial?.onWalk(false);
+      }
+    }
+  });
+  // A long-press walks to the ground below, as Alt+click (#3878).
+  camera?.onLongPress((world) => {
+    if (seat === undefined || latestArena === undefined) {
+      return;
+    }
+    for (const intent of longPressIntents(seat.getSnapshot(), latestArena, world)) {
+      seat.sendIntent(intent);
+      if (intent.kind === "walk-to") {
+        viewport?.scene.showWalkMarker(world);
+        tutorial?.onWalk(true);
       }
     }
   });

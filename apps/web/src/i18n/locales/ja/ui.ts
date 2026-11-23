@@ -65,6 +65,21 @@ export default {
 
   "buildEditor.addWeapon": "武器を追加",
   "buildEditor.armor": "防具",
+  "buildEditor.attributeEffect.critical-strikes":
+    "クリティカル率 +{percent}%、クリティカルごとにエナジー +{energy}",
+  "buildEditor.attributeEffect.divine-favor": "味方へのMonkのスペルの回復量 +{heal}",
+  "buildEditor.attributeEffect.energy-storage": "最大エナジー +{energy}",
+  "buildEditor.attributeEffect.expertise":
+    "攻撃スキル、儀式、タッチスキル、Rangerスキルのエナジーコスト −{percent}%",
+  "buildEditor.attributeEffect.fast-casting": "スペルとシグネットの詠唱が{percent}%速くなる",
+  "buildEditor.attributeEffect.leadership":
+    "シャウト1回につき最大{max}エナジー、影響を受けた味方1人につき{perAlly}",
+  "buildEditor.attributeEffect.mysticism": "Dervishのエンチャントのエナジーコスト −{percent}%",
+  "buildEditor.attributeEffect.soul-reaping":
+    "近くで誰かが死ぬとエナジー +{energy} ({seconds}秒に{triggers}回まで)",
+  "buildEditor.attributeEffect.spawning-power":
+    "クリーチャーのヘルス +{percent}%、武器スペルの持続時間 +{percent}%",
+  "buildEditor.attributeEffect.strength": "攻撃スキルの防御力貫通 {percent}%",
   "buildEditor.back": "戻る",
   "buildEditor.bothHandsFull": "両手がふさがっています",
   "buildEditor.budgetSegment": { other: "{attribute}: {count}ポイント" },
@@ -1626,11 +1641,9 @@ export default {
   "tutorial.stepIn.praise": "一緒に。息を止めろ。",
   "tutorial.touch.callHow": "ネズミをタップし、ターゲットバーをタップしてコールしよう。",
   "tutorial.touch.callT": "その通り。これでコール先を狙えている。",
-  "tutorial.touch.climbHint": "岩棚に上って、その横へまた降りよう。",
-  "tutorial.touch.climbHow": "岩棚をタップして、その横の地面をタップ。",
-  "tutorial.touch.climbPraise": "上って、また降りた。もう地面が読めるね。",
-  "tutorial.touch.climbTip": "ヒント:岩棚をタップすると常にその上が選ばれる。",
-  "tutorial.touch.climbUnder": "さあ、岩棚の横へ降りよう。",
+  "tutorial.touch.climbHow": "立ちたい場所をタップ。長押しすると下の地面を選ぶ。",
+  "tutorial.touch.climbTip": "ヒント:長押しで岩棚の下の地面を選べる。",
+  "tutorial.touch.climbUnder": "長押ししよう。点線の輪は足元の下だ。",
   "tutorial.touch.healHint":
     "まずパーティリストで私の名前をタップして。リストが閉じていたら「パーティー」をタップ。",
   "tutorial.touch.healHow":

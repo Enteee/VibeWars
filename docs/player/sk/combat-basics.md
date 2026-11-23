@@ -62,18 +62,20 @@ okrem ![Pokrik](../../../apps/web/public/icons/skill-type/shout.svg) **pokriku**
 
 **Neduhy** ti škodia, kým nevypršia alebo kým sa neodstránia:
 
-| Neduh                                                                                               | Čo robí                                             |
-| --------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
-| ![Krvácanie](../../../apps/web/public/icons/status/bleeding.svg) **Krvácanie**                      | uberá zdravie                                       |
-| ![Horenie](../../../apps/web/public/icons/status/burning.svg) **Horenie**                           | rýchlo uberá zdravie                                |
-| ![Jed](../../../apps/web/public/icons/status/poison.svg) **Jed**                                    | uberá zdravie                                       |
-| ![Choroba](../../../apps/web/public/icons/status/disease.svg) **Choroba**                           | uberá zdravie a šíri sa na každého vedľa teba       |
-| ![Ochromenie](../../../apps/web/public/icons/status/crippled.svg) **Ochromenie**                    | pohybuješ sa polovičnou rýchlosťou                  |
-| ![Oslepenie](../../../apps/web/public/icons/status/blind.svg) **Oslepenie**                         | väčšina tvojich útokov minie                        |
-| ![Slabosť](../../../apps/web/public/icons/status/weakness.svg) **Slabosť**                          | tvoja zbraň zasahuje oveľa slabšie                  |
-| ![Prasknuté brnenie](../../../apps/web/public/icons/status/cracked-armor.svg) **Prasknuté brnenie** | menej brnenia                                       |
-| ![Hlboká rana](../../../apps/web/public/icons/status/deep-wound.svg) **Hlboká rana**                | menej maximálneho zdravia a liečenie účinkuje menej |
-| ![Omámenie](../../../apps/web/public/icons/status/dazed.svg) **Omámenie**                           | kúzla zosielaš pomaly; každý útok ich preruší       |
+| Neduh                                                                                               | Čo robí                                                 |
+| --------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| ![Krvácanie](../../../apps/web/public/icons/status/bleeding.svg) **Krvácanie**                      | uberá zdravie                                           |
+| ![Horenie](../../../apps/web/public/icons/status/burning.svg) **Horenie**                           | rýchlo uberá zdravie                                    |
+| ![Jed](../../../apps/web/public/icons/status/poison.svg) **Jed**                                    | uberá zdravie                                           |
+| ![Choroba](../../../apps/web/public/icons/status/disease.svg) **Choroba**                           | uberá zdravie a šíri sa na rovnaký druh tela vedľa teba |
+| ![Ochromenie](../../../apps/web/public/icons/status/crippled.svg) **Ochromenie**                    | pohybuješ sa polovičnou rýchlosťou                      |
+| ![Oslepenie](../../../apps/web/public/icons/status/blind.svg) **Oslepenie**                         | väčšina tvojich útokov minie                            |
+| ![Slabosť](../../../apps/web/public/icons/status/weakness.svg) **Slabosť**                          | tvoja zbraň zasahuje oveľa slabšie                      |
+| ![Prasknuté brnenie](../../../apps/web/public/icons/status/cracked-armor.svg) **Prasknuté brnenie** | menej brnenia                                           |
+| ![Hlboká rana](../../../apps/web/public/icons/status/deep-wound.svg) **Hlboká rana**                | menej maximálneho zdravia a liečenie účinkuje menej     |
+| ![Omámenie](../../../apps/web/public/icons/status/dazed.svg) **Omámenie**                           | kúzla zosielaš pomaly; každý útok ich preruší           |
+
+Prisluhovači (okrem Mäsového golema), prízraky a duchovia nekrvácajú, neotrávia sa ani neochorejú a duchovia nedostanú žiadnu kliatbu ani stav okrem **Horenia**.
 
 ![Kliatba](../../../apps/web/public/icons/skill-type/hex.svg) **Kliatby** na teba zosielajú nepriatelia; ![Očarovanie](../../../apps/web/public/icons/skill-type/enchantment.svg) **očarovania** ty sám alebo tvoji
 spojenci. Každé z nich odstraňuje vlastný druh schopnosti. Niektoré očarovania
