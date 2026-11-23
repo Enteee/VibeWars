@@ -1,6 +1,6 @@
 relays reached: 4 of 8
-  ok   wss://cdn.satellite.earth
-  down wss://relay.degmods.com
+  down wss://cdn.satellite.earth
+  ok   wss://relay.degmods.com
   ok   wss://nostr.stakey.net
   ok   wss://nostr.rblb.it
   ok   wss://relay.agentry.com
