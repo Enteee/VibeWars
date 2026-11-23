@@ -1831,11 +1831,9 @@ export default {
   "tutorial.stepIn.praise": "Разом. Затримай подих.",
   "tutorial.touch.callHow": "Торкнися щура, потім панелі цілі, щоб позначити його.",
   "tutorial.touch.callT": "Саме так. Тепер ти на позначеній цілі.",
-  "tutorial.touch.climbHint": "Нагору на виступ, потім знову вниз поруч із ним.",
-  "tutorial.touch.climbHow": "Торкнися виступу, потім землі поруч із ним.",
-  "tutorial.touch.climbPraise": "Угору й знову вниз. Тепер ти читаєш місцевість.",
-  "tutorial.touch.climbTip": "Порада: дотик до виступу завжди обирає його верх.",
-  "tutorial.touch.climbUnder": "Тепер назад униз, поруч із виступом.",
+  "tutorial.touch.climbHow": "Торкнися, де стати. Довге натискання обирає землю внизу.",
+  "tutorial.touch.climbTip": "Порада: довге натискання обирає землю під виступом.",
+  "tutorial.touch.climbUnder": "Натисни й тримай. Пунктирне коло — під тобою.",
   "tutorial.touch.healHint":
     "Спершу торкнися мого імені у списку загону. Торкнися «Загін», якщо список закрито.",
   "tutorial.touch.healHow":

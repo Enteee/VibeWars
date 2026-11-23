@@ -1726,11 +1726,9 @@ export default {
   "tutorial.stepIn.praise": "Zusammen. Halt die Luft an.",
   "tutorial.touch.callHow": "Tipp eine Ratte an, dann die Zielleiste, um sie auszurufen.",
   "tutorial.touch.callT": "Genau so. Jetzt bist du am ausgerufenen Ziel.",
-  "tutorial.touch.climbHint": "Rauf auf den Vorsprung, dann daneben wieder runter.",
-  "tutorial.touch.climbHow": "Tipp auf den Vorsprung, dann auf den Boden daneben.",
-  "tutorial.touch.climbPraise": "Rauf und wieder runter. Jetzt liest du das Gelände.",
-  "tutorial.touch.climbTip": "Tipp: Ein Tippen auf einen Vorsprung wählt immer seine Oberseite.",
-  "tutorial.touch.climbUnder": "Jetzt wieder runter, neben den Vorsprung.",
+  "tutorial.touch.climbHow": "Tipp, wo du stehen willst. Gedrückt halten wählt den Boden darunter.",
+  "tutorial.touch.climbTip": "Tipp: Gedrückt halten wählt den Boden unter einem Vorsprung.",
+  "tutorial.touch.climbUnder": "Halte gedrückt. Der gestrichelte Ring liegt unter dir.",
   "tutorial.touch.healHint":
     "Tipp zuerst meinen Namen in der Gruppenliste an. Tipp auf Gruppe, falls die Liste zu ist.",
   "tutorial.touch.healHow":

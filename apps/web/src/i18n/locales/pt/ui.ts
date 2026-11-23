@@ -1778,11 +1778,9 @@ export default {
   "tutorial.stepIn.praise": "Juntos. Sustém a respiração.",
   "tutorial.touch.callHow": "Toque num rato e depois na barra de alvo para marcá-lo.",
   "tutorial.touch.callT": "É isso. Agora você está no alvo marcado.",
-  "tutorial.touch.climbHint": "Suba na saliência e depois desça ao lado dela.",
-  "tutorial.touch.climbHow": "Toque na saliência e depois no chão ao lado.",
-  "tutorial.touch.climbPraise": "Subiu e desceu. Agora você lê o terreno.",
-  "tutorial.touch.climbTip": "Dica: tocar numa saliência sempre escolhe o topo.",
-  "tutorial.touch.climbUnder": "Agora desça de novo, ao lado da saliência.",
+  "tutorial.touch.climbHow": "Toque onde quer ficar. Tocar e segurar escolhe o chão de baixo.",
+  "tutorial.touch.climbTip": "Dica: tocar e segurar escolhe o chão sob uma saliência.",
+  "tutorial.touch.climbUnder": "Toque e segure. O anel tracejado está abaixo de você.",
   "tutorial.touch.healHint":
     "Primeiro toque no meu nome na lista do grupo. Toque em Grupo se a lista estiver fechada.",
   "tutorial.touch.healHow":

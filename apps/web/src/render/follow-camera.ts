@@ -23,7 +23,8 @@ import {
  * and the Training Ground both call, so the two cameras cannot drift. It
  * owns the right button (#442): a drag pans, a click goes to
  * `onSecondaryClick`. It owns fingers too (#3781): a drag pans, a pinch
- * zooms as the wheel, and a tap goes to `onTap`.
+ * zooms as the wheel, a tap goes to `onTap` and a long-press to
+ * `onLongPress` (#3878).
  *
  * The stage carries `data-zoom-step`, `data-zoom` (CSS px per world
  * unit) and `data-camera="<x>,<y>"` for the e2e specs, written only when
@@ -60,6 +61,8 @@ export interface FollowCamera {
    * world units `FINGER_SLOP_PX` is at the zoom shown.
    */
   onTap(handler: (world: Vec2, slop: number) => void): void;
+  /** A finger's long-press, at the world point it pressed (#3878). */
+  onLongPress(handler: (world: Vec2) => void): void;
   /**
    * A new session on `arena`, e.g. another training scenario: back to
    * `Default`, and the view snaps there with no glide.
@@ -88,6 +91,7 @@ export function attachFollowCamera(
     rig = wheelNotch(rig, direction);
   });
   let onFingerTap: (world: Vec2, slop: number) => void = () => undefined;
+  let onFingerLongPress: (world: Vec2) => void = () => undefined;
   const offFinger = viewport.onFinger((event) => {
     switch (event.kind) {
       case "pan":
@@ -102,6 +106,9 @@ export function attachFollowCamera(
         break;
       case "tap":
         onFingerTap(event.world, FINGER_SLOP_PX / (shown?.zoom ?? 1));
+        break;
+      case "long-press":
+        onFingerLongPress(event.world);
         break;
     }
   });
@@ -176,6 +183,9 @@ export function attachFollowCamera(
     },
     onTap(handler) {
       onFingerTap = handler;
+    },
+    onLongPress(handler) {
+      onFingerLongPress = handler;
     },
     look() {
       return shown === undefined

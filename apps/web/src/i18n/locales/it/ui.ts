@@ -1787,11 +1787,10 @@ export default {
   "tutorial.stepIn.praise": "Insieme. Trattieni il respiro.",
   "tutorial.touch.callHow": "Tocca un ratto, poi la barra del bersaglio per segnalarlo.",
   "tutorial.touch.callT": "Esatto. Ora punti il bersaglio segnalato.",
-  "tutorial.touch.climbHint": "Sali sulla sporgenza, poi riscendi accanto.",
-  "tutorial.touch.climbHow": "Tocca la sporgenza, poi il terreno accanto.",
-  "tutorial.touch.climbPraise": "Su e di nuovo giù. Ora sai leggere il terreno.",
-  "tutorial.touch.climbTip": "Suggerimento: toccare una sporgenza sceglie sempre la cima.",
-  "tutorial.touch.climbUnder": "Ora riscendi, accanto alla sporgenza.",
+  "tutorial.touch.climbHow": "Tocca dove stare. Una pressione lunga sceglie il terreno sotto.",
+  "tutorial.touch.climbTip":
+    "Suggerimento: una pressione lunga sceglie il terreno sotto una sporgenza.",
+  "tutorial.touch.climbUnder": "Tieni premuto. Il cerchio tratteggiato è sotto di te.",
   "tutorial.touch.healHint":
     "Prima tocca il mio nome nella lista del gruppo. Tocca Gruppo se la lista è chiusa.",
   "tutorial.touch.healHow":

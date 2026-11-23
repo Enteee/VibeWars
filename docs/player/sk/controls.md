@@ -76,6 +76,7 @@ Na telefóne alebo tablete, v zápase aj na cvičisku:
   rýchlym ťuknutím na toho istého nepriateľa naňho zaútočíš. Ťuknutie tesne
   vedľa postavy ju stále nájde. Ťuknutie na seba ťa dovedie na to miesto
   alebo zameria stojan na vlajku či páku, na ktorej stojíš.
+- **Podrž** prst a dôjdeš na zem pod rímsou alebo mostom, ako Alt+klik.
 - **Ťahom** jedným prstom sa obzeráš; po pustení sa pohľad plynule vráti
   k tebe. **Stiahnutím** prstov približuješ.
 - **Ťuknutím** na schopnosť na lište ju použiješ na svoj cieľ.

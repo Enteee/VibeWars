@@ -28,7 +28,7 @@ import {
   pingTutor,
   pocketStart,
   ratPocket,
-  tunnelStart,
+  ledgeFootStart,
   gateStart,
   wallStart,
   wallTutor,
@@ -78,7 +78,7 @@ describe("canyonWorld (#3247)", () => {
   });
 
   it("starts the pair by station 9's ledge, with station 8's rats slain, for a seeded station 11 (#3383)", () => {
-    const world = canyonWorld("canyon-test", build, build, tunnelStart());
+    const world = canyonWorld("canyon-test", build, build, ledgeFootStart());
     const { simulation } = world;
     for (let elapsed = 0; elapsed < 1; elapsed += TICK) {
       simulation.step(TICK);
@@ -469,7 +469,7 @@ describe("callTutor (#3331)", () => {
   };
 
   it("places two rats on team 1 that bite no one who has not struck them", () => {
-    const { simulation } = canyonWorld("call-test", build, build, tunnelStart());
+    const { simulation } = canyonWorld("call-test", build, build, ledgeFootStart());
     for (const { id, post } of CALL_RATS.rats) {
       expect(simulation.get(id)?.combatant.team).toBe(1);
       expect(simulation.get(id)?.position).toEqual(post);
@@ -479,7 +479,7 @@ describe("callTutor (#3331)", () => {
   });
 
   it("has the tutor strike the rat called, the latest call, and never the other", () => {
-    const { simulation } = canyonWorld("call-test", build, build, tunnelStart());
+    const { simulation } = canyonWorld("call-test", build, build, ledgeFootStart());
     const watch = createRatWatch(SELF_ID, TUTOR_ID, [first, second], build.skillBar);
     const tutor = callTutor(simulation, watch);
     const attacking = (): string | undefined =>
@@ -502,7 +502,7 @@ describe("callTutor (#3331)", () => {
   });
 
   it("says a called rat was lost once it died unstruck by the tutor, and brings one more once both are", () => {
-    const { simulation } = canyonWorld("call-test", build, build, tunnelStart());
+    const { simulation } = canyonWorld("call-test", build, build, ledgeFootStart());
     const watch = createRatWatch(SELF_ID, TUTOR_ID, [first, second], build.skillBar);
     const tutor = callTutor(simulation, watch);
     tutor.step(first, none);
@@ -520,7 +520,7 @@ describe("ledgeTutor (#3323)", () => {
   const build = houseBuild(PLAYER_PROFESSION);
 
   it("takes the player up the stairs onto the ledge and down under it, the tutor along by the stairs", () => {
-    const { simulation } = canyonWorld("ledge-test", build, build, tunnelStart());
+    const { simulation } = canyonWorld("ledge-test", build, build, ledgeFootStart());
     // Only the pair: no rat bites on the way.
     for (const { id } of RAT_POCKET.rats) {
       simulation.remove(id);

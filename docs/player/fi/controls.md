@@ -82,6 +82,7 @@ Puhelimella tai tabletilla, ottelussa ja harjoituskentällä:
   kimppuun. Napautus aivan hahmon vierestä löytää sen silti. Napautus itseesi
   kävelee sille kohdalle tai kohdistaa lipputelineeseen tai vipuun, jonka
   päällä seisot.
+- **Paina pitkään** kävelläksesi maahan reunan tai sillan alle, kuten Alt+napsautuksella.
 - **Vedä** yhdellä sormella katsoaksesi ympärillesi; päästä irti, ja näkymä
   liukuu takaisin luoksesi. **Nipistä** zoomataksesi.
 - **Napauta** palkin taitoa käyttääksesi sitä kohteeseesi.

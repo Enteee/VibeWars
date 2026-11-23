@@ -1709,11 +1709,9 @@ export default {
   "tutorial.stepIn.praise": "Samen. Houd je adem in.",
   "tutorial.touch.callHow": "Tik op een rat en dan op de doelbalk om hem af te roepen.",
   "tutorial.touch.callT": "Zo is het. Nu zit je op het afgeroepen doel.",
-  "tutorial.touch.climbHint": "Op de richel, en dan ernaast weer omlaag.",
-  "tutorial.touch.climbHow": "Tik op de richel en dan op de grond ernaast.",
-  "tutorial.touch.climbPraise": "Op en weer neer. Nu kun je het terrein lezen.",
-  "tutorial.touch.climbTip": "Tip: een tik op een richel kiest altijd de bovenkant.",
-  "tutorial.touch.climbUnder": "Nu weer omlaag, naast de richel.",
+  "tutorial.touch.climbHow": "Tik waar je wilt staan. Lang indrukken kiest de grond eronder.",
+  "tutorial.touch.climbTip": "Tip: lang indrukken kiest de grond onder een richel.",
+  "tutorial.touch.climbUnder": "Druk lang. De gestippelde ring ligt onder je.",
   "tutorial.touch.healHint":
     "Tik eerst op mijn naam in de groepslijst. Tik op Groep als de lijst dicht is.",
   "tutorial.touch.healHow":

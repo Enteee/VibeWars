@@ -80,6 +80,7 @@ Em um celular ou tablet, em uma partida e no campo de treino:
   atacá-lo. Um toque logo ao lado de um personagem ainda o encontra. Um toque
   em você mesmo anda até aquele ponto, ou mira o suporte da bandeira ou a
   alavanca em que você está.
+- **Toque e segure** para andar até o chão sob uma saliência ou ponte, como Alt+clique.
 - **Arraste** um dedo para olhar ao redor; solte e a visão desliza de volta
   para você. **Pince** para dar zoom.
 - **Toque** em uma habilidade da barra para usá-la no seu alvo.

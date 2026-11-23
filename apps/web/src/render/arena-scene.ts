@@ -1041,6 +1041,8 @@ export class ArenaScene extends Phaser.Scene {
   private lightingPass: LightingPass | undefined;
   /** Whether Alt is held, for the hover ring (#3020); a key does not wait for the mouse to move. */
   private alt: AltTracker | undefined;
+  /** Whether a finger has been held still long enough to pick the ground below (#3878). */
+  private heldBelow: () => boolean = () => false;
   /** Where the wards draw: under the grid, or over the light. */
   private groundDepth = GROUND_DEPTH;
   /** Reused every body, every frame: the lighting allocates nothing per frame. */
@@ -4325,6 +4327,11 @@ export class ArenaScene extends Phaser.Scene {
     this.fixedMarkers = markers;
   }
 
+  /** What the hover ring asks of a finger held still (#3878): below, once a release would long-press. */
+  setHeldBelow(held: () => boolean): void {
+    this.heldBelow = held;
+  }
+
   /** Where a click would go, before it does (#2831): a ring off the ground (#2973), dashed on it. */
   private drawHoverMarker(g: Phaser.GameObjects.Graphics): void {
     for (const marker of this.fixedMarkers ?? []) {
@@ -4340,7 +4347,7 @@ export class ArenaScene extends Phaser.Scene {
       structure,
       walls,
       world,
-      this.alt?.held() === true,
+      this.alt?.held() === true || this.heldBelow(),
       selfLayer(this.snapshot),
     );
     drawRing(g, world.x, world.y, layer === structure.ground, 1);

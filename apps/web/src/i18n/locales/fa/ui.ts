@@ -1699,11 +1699,10 @@ export default {
   "tutorial.stepIn.praise": "با هم. نفست را نگه دار.",
   "tutorial.touch.callHow": "یک موش را لمس کن، بعد نوار هدف را تا اعلامش کنی.",
   "tutorial.touch.callT": "همین است. حالا روی هدف اعلام‌شده‌ای.",
-  "tutorial.touch.climbHint": "برو روی لبه، بعد دوباره کنارش پایین بیا.",
-  "tutorial.touch.climbHow": "لبه را لمس کن، بعد زمینِ کنارش را.",
-  "tutorial.touch.climbPraise": "بالا و دوباره پایین. حالا زمین را می‌خوانی.",
-  "tutorial.touch.climbTip": "نکته: لمس لبه همیشه بالای آن را انتخاب می‌کند.",
-  "tutorial.touch.climbUnder": "حالا برگرد پایین، کنار لبه.",
+  "tutorial.touch.climbHow":
+    "جایی را که می‌خواهی بایستی لمس کن. نگه‌داشتنِ انگشت زمینِ زیرش را انتخاب می‌کند.",
+  "tutorial.touch.climbTip": "نکته: نگه‌داشتنِ انگشت زمینِ زیرِ لبه را انتخاب می‌کند.",
+  "tutorial.touch.climbUnder": "انگشتت را نگه دار. حلقه‌ی خط‌چین زیر توست.",
   "tutorial.touch.healHint":
     "اول نامم را در فهرست گروه لمس کن. اگر فهرست بسته است، گروه را لمس کن.",
   "tutorial.touch.healHow": "اگر فهرست بسته است گروه را لمس کن، بعد نامم را، بعد مهارتِ درخشان را.",

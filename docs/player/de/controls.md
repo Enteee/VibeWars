@@ -76,6 +76,7 @@ Auf einem Handy oder Tablet, im Match und auf dem Trainingsplatz:
   denselben Gegner, um ihn anzugreifen. Ein Tipp knapp neben einen Charakter
   findet ihn trotzdem. Ein Tipp auf dich selbst läuft an diese Stelle oder
   visiert den Flaggenstand oder Hebel an, auf dem du stehst.
+- **Halte gedrückt**, um zum Boden unter einem Vorsprung oder einer Brücke zu laufen, wie mit Alt+Klick.
 - **Ziehe** mit einem Finger, um dich umzusehen; lass los, und die Ansicht
   gleitet zu dir zurück. **Zoome** mit zwei Fingern auseinander oder zusammen.
 - **Tippe** auf einen Skill in der Leiste, um ihn auf dein Ziel zu wirken.

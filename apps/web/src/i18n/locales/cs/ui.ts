@@ -1817,11 +1817,9 @@ export default {
   "tutorial.stepIn.praise": "Spolu. Zadrž dech.",
   "tutorial.touch.callHow": "Klepni na krysu, pak na lištu cíle, abys ji označil.",
   "tutorial.touch.callT": "Přesně tak. Teď míříš na označený cíl.",
-  "tutorial.touch.climbHint": "Nahoru na římsu, pak zase dolů vedle ní.",
-  "tutorial.touch.climbHow": "Klepni na římsu, pak na zem vedle ní.",
-  "tutorial.touch.climbPraise": "Nahoru a zase dolů. Teď už terén umíš číst.",
-  "tutorial.touch.climbTip": "Tip: klepnutí na římsu vždy vybere její vršek.",
-  "tutorial.touch.climbUnder": "Teď zase dolů, vedle římsy.",
+  "tutorial.touch.climbHow": "Klepni, kam se postavit. Podržení vybere zem pod tím.",
+  "tutorial.touch.climbTip": "Tip: podržení vybere zem pod římsou.",
+  "tutorial.touch.climbUnder": "Podrž prst. Čárkovaný kruh je pod tebou.",
   "tutorial.touch.healHint":
     "Nejdřív klepni na mé jméno v seznamu družiny. Když je seznam zavřený, klepni na Skupina.",
   "tutorial.touch.healHow":

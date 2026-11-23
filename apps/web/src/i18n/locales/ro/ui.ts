@@ -1787,11 +1787,9 @@ export default {
   "tutorial.stepIn.praise": "Împreună. Ține-ți respirația.",
   "tutorial.touch.callHow": "Atinge un șobolan, apoi bara țintei ca să-l semnalezi.",
   "tutorial.touch.callT": "Exact. Acum ești pe ținta semnalată.",
-  "tutorial.touch.climbHint": "Urcă pe cornișă, apoi coboară iar lângă ea.",
-  "tutorial.touch.climbHow": "Atinge cornișa, apoi pământul de lângă ea.",
-  "tutorial.touch.climbPraise": "Sus și iar jos. Acum știi să citești terenul.",
-  "tutorial.touch.climbTip": "Sfat: o atingere pe cornișă alege mereu partea de sus.",
-  "tutorial.touch.climbUnder": "Acum coboară înapoi, lângă cornișă.",
+  "tutorial.touch.climbHow": "Atinge unde vrei să stai. Apăsarea lungă alege pământul de dedesubt.",
+  "tutorial.touch.climbTip": "Sfat: apăsarea lungă alege pământul de sub o cornișă.",
+  "tutorial.touch.climbUnder": "Apasă lung. Cercul punctat e sub tine.",
   "tutorial.touch.healHint":
     "Mai întâi atinge numele meu în lista grupului. Atinge Grup dacă lista e închisă.",
   "tutorial.touch.healHow":

@@ -456,17 +456,10 @@ function shapeCentre(shape: Shape): Vec2 {
  * on `upper`, then down to the ground under it, on `lower`. The mark is
  * on the ledge until the player has stood on it, then under its middle;
  * the cursor's rings teach the rest. Any way down counts, but one that was
- * no Alt walk gets the tip, once. Done under the ledge, after it.
- * On `touch` there is no Alt, and a tap on the ledge picks its top
- * (#3782): done back on `lower` anywhere, and the mark stays on the ledge.
+ * no Alt walk (or long-press, #3878) gets the tip, once. Done under the
+ * ledge, after it.
  */
-export function climbStation(
-  ledge: Shape,
-  stairs: Shape,
-  upper: number,
-  lower: number,
-  touch = false,
-): Station {
+export function climbStation(ledge: Shape, stairs: Shape, upper: number, lower: number): Station {
   const centre = shapeCentre(ledge);
   /** The player has stood on the ledge; then has come down, and whether by an Alt walk. */
   let up = false;
@@ -492,10 +485,7 @@ export function climbStation(
       praise: "tutorial.climb.praise",
       how: "tutorial.climb.how",
     },
-    highlight: (view) =>
-      touch && look(view).up
-        ? undefined
-        : { kind: "ground", at: centre, layer: look(view).up ? lower : upper },
+    highlight: (view) => ({ kind: "ground", at: centre, layer: look(view).up ? lower : upper }),
     asides: [
       { line: "tutorial.climb.under", when: (view) => look(view).up },
       {
@@ -506,8 +496,7 @@ export function climbStation(
         },
       },
     ],
-    done: (view) =>
-      look(view).up && view.selfLayer === lower && (touch || pointInShape(view.self, ledge)),
+    done: (view) => look(view).up && view.selfLayer === lower && pointInShape(view.self, ledge),
   };
 }
 

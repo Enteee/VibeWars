@@ -80,6 +80,7 @@ En un móvil o una tableta, en una partida y en el campo de entrenamiento:
   justo al lado de un personaje lo encuentra igualmente. Un toque sobre ti
   camina hasta ese punto, o selecciona la base de bandera o la palanca en la
   que estás.
+- **Mantén pulsado** para caminar al suelo bajo una cornisa o un puente, como Alt+clic.
 - **Arrastra** un dedo para mirar alrededor; suéltalo y la vista vuelve a ti
   deslizándose. **Pellizca** para hacer zoom.
 - **Toca** una habilidad de la barra para usarla sobre tu objetivo.

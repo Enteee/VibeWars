@@ -1695,11 +1695,9 @@ export default {
   "tutorial.stepIn.praise": "Tillsammans. Håll andan.",
   "tutorial.touch.callHow": "Tryck på en råtta och sedan på målfältet för att ropa ut den.",
   "tutorial.touch.callT": "Just så. Nu är du på det utropade målet.",
-  "tutorial.touch.climbHint": "Upp på avsatsen, och sedan ner igen bredvid.",
-  "tutorial.touch.climbHow": "Tryck på avsatsen och sedan på marken bredvid.",
-  "tutorial.touch.climbPraise": "Upp och ner igen. Nu kan du läsa terrängen.",
-  "tutorial.touch.climbTip": "Tips: ett tryck på en avsats väljer alltid toppen.",
-  "tutorial.touch.climbUnder": "Ner igen nu, bredvid avsatsen.",
+  "tutorial.touch.climbHow": "Tryck där du vill stå. Tryck och håll väljer marken under.",
+  "tutorial.touch.climbTip": "Tips: tryck och håll väljer marken under en avsats.",
+  "tutorial.touch.climbUnder": "Tryck och håll. Den streckade ringen ligger under dig.",
   "tutorial.touch.healHint":
     "Tryck först på mitt namn i grupplistan. Tryck på Grupp om listan är stängd.",
   "tutorial.touch.healHow":

@@ -1695,11 +1695,9 @@ export default {
   "tutorial.stepIn.praise": "Sammen. Hold vejret.",
   "tutorial.touch.callHow": "Tryk på en rotte, og så på målbjælken for at kalde den.",
   "tutorial.touch.callT": "Sådan. Nu er du på det kaldte mål.",
-  "tutorial.touch.climbHint": "Op på afsatsen, og så ned igen ved siden af.",
-  "tutorial.touch.climbHow": "Tryk på afsatsen, og så på jorden ved siden af.",
-  "tutorial.touch.climbPraise": "Op og ned igen. Nu kan du læse terrænet.",
-  "tutorial.touch.climbTip": "Tip: et tryk på en afsats vælger altid toppen.",
-  "tutorial.touch.climbUnder": "Nu ned igen, ved siden af afsatsen.",
+  "tutorial.touch.climbHow": "Tryk, hvor du vil stå. Tryk og hold vælger jorden nedenunder.",
+  "tutorial.touch.climbTip": "Tip: tryk og hold vælger jorden under en afsats.",
+  "tutorial.touch.climbUnder": "Tryk og hold. Den stiplede ring er under dig.",
   "tutorial.touch.healHint":
     "Tryk først på mit navn i gruppelisten. Tryk på Gruppe, hvis listen er lukket.",
   "tutorial.touch.healHow":

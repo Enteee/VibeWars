@@ -1833,11 +1833,9 @@ export default {
   "tutorial.stepIn.praise": "Razem. Wstrzymaj oddech.",
   "tutorial.touch.callHow": "Dotknij szczura, potem paska celu, by go wskazać.",
   "tutorial.touch.callT": "Właśnie tak. Teraz celujesz we wskazany cel.",
-  "tutorial.touch.climbHint": "Wejdź na półkę, a potem zejdź obok niej.",
-  "tutorial.touch.climbHow": "Dotknij półki, potem ziemi obok niej.",
-  "tutorial.touch.climbPraise": "W górę i znów w dół. Już umiesz czytać teren.",
-  "tutorial.touch.climbTip": "Wskazówka: dotknięcie półki zawsze wybiera jej szczyt.",
-  "tutorial.touch.climbUnder": "Teraz zejdź z powrotem, obok półki.",
+  "tutorial.touch.climbHow": "Dotknij, gdzie stanąć. Przytrzymanie wybiera ziemię pod spodem.",
+  "tutorial.touch.climbTip": "Wskazówka: przytrzymanie wybiera ziemię pod półką.",
+  "tutorial.touch.climbUnder": "Przytrzymaj palec. Przerywany krąg jest pod tobą.",
   "tutorial.touch.healHint":
     "Najpierw dotknij mojego imienia na liście drużyny. Dotknij Grupa, jeśli lista jest zamknięta.",
   "tutorial.touch.healHow":

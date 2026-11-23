@@ -4,6 +4,8 @@ import type { Vec2 } from "@vibewars/game-core";
 export const TAP_SLOP_PX = 10;
 /** A finger lifted within this many ms of its press, never dragged, is a tap. */
 export const TAP_MAX_MS = 500;
+/** One held still at least this long is a long-press (#3878): where a tap ends, it begins. */
+export const LONG_PRESS_MS = TAP_MAX_MS;
 /** A tap that hits nothing takes what is drawn within this many screen px of it. */
 export const FINGER_SLOP_PX = 20;
 /** A pinch changes the finger distance by this factor per zoom notch, as one wheel notch (#440). */
@@ -22,6 +24,8 @@ export interface TouchSample {
 export type TouchOutcome =
   /** A tap, at the screen point of its press. */
   | { readonly kind: "tap"; readonly at: Vec2 }
+  /** A press held still for `LONG_PRESS_MS` or more, at the screen point of its press. */
+  | { readonly kind: "long-press"; readonly at: Vec2 }
   /** One finger dragged: screen px since the last pan, the first the whole way from the press. */
   | { readonly kind: "pan"; readonly delta: Vec2 }
   /** The drag ended, or was cut by a second finger or the OS. */
@@ -32,6 +36,11 @@ export type TouchOutcome =
 
 export interface TouchGesture {
   feed(sample: TouchSample): TouchOutcome;
+  /**
+   * Whether one finger is down and still, `LONG_PRESS_MS` or more as of
+   * `nowMs`: a release now would long-press (#3878).
+   */
+  heldLong(nowMs: number): boolean;
 }
 
 const NONE: TouchOutcome = { kind: "none" };
@@ -52,9 +61,10 @@ type State =
 
 /**
  * Fingers on the arena (#3781): one finger lifted within `TAP_SLOP_PX`
- * and `TAP_MAX_MS` of its press is a tap, one that moved further pans,
- * and a second finger turns it into a pinch, which zooms in notches and
- * never taps. A tap is decided on release, so a drag never walks. A
+ * and `TAP_MAX_MS` of its press is a tap, one held still longer is a
+ * long-press (#3878), one that moved further pans, and a second finger
+ * turns it into a pinch, which zooms in notches and never taps. Both
+ * are decided on release, so a drag never walks. A
  * cancel drops the gesture. Pure: the caller passes the clock in.
  */
 export function createTouchGesture(): TouchGesture {
@@ -72,6 +82,9 @@ export function createTouchGesture(): TouchGesture {
   };
 
   return {
+    heldLong(nowMs) {
+      return state.kind === "press" && !state.panning && nowMs - state.atMs >= LONG_PRESS_MS;
+    },
     feed(sample) {
       const at = { x: sample.x, y: sample.y };
       switch (sample.phase) {
@@ -136,9 +149,12 @@ export function createTouchGesture(): TouchGesture {
             if (ended.panning) {
               return { kind: "pan-end" };
             }
-            return sample.phase === "up" && sample.t - ended.atMs <= TAP_MAX_MS
+            if (sample.phase === "cancel") {
+              return NONE;
+            }
+            return sample.t - ended.atMs < LONG_PRESS_MS
               ? { kind: "tap", at: ended.from }
-              : NONE;
+              : { kind: "long-press", at: ended.from };
           }
           if (ended.kind !== "idle") {
             settle();
