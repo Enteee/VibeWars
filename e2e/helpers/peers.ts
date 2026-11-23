@@ -311,6 +311,11 @@ export async function waitForMatchStart(pages: readonly Page[]): Promise<void> {
  * preset team its empty side plays (#2029). The player plays the active
  * character, as a 1v1 does (#2141). Resolves once the HUD shows the
  * player, so the match is really on. Starts from the menu.
+ *
+ * It costs about 22 s on CI (#3866): about 7.5 s of it is the wait for the
+ * drawn scene (#3852), about 6.6 s the team lobby. A test that starts one
+ * and then polls pixels or takes screenshots budgets for it, with
+ * `test.slow()` once it nears its 60 s.
  */
 export async function startSoloMatch(page: Page): Promise<void> {
   await hostLobby(page);
