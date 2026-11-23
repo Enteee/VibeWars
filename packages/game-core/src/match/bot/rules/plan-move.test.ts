@@ -114,7 +114,7 @@ describe("plan-move (#3832)", () => {
 
 describe("plan-move for a bot escorting a human (#3853)", () => {
   // The human `you` at (800,400), its bot `w` west of them by `apart`,
-  // the foe `apart - foeFrom` east of the bot.
+  // the foe `foeFrom` east of the bot: forward is west, toward the foe.
   const isBot = (id: string): boolean => id !== "you";
   function escortOf(apart: number, foeFrom: number, health = 1) {
     const sim = match([
@@ -126,21 +126,45 @@ describe("plan-move for a bot escorting a human (#3853)", () => {
     if (w === undefined) throw new Error("no w");
     w.combatant.health *= health;
     const view = ruleFor(sim, "w", {}, { isBot });
+    const spot = escortSpot(view.context, view.self, "frontline", createCursor());
     return {
       intent: planMove.decide(view),
-      spot: escortSpot(view.context, view.self, "frontline", createCursor()),
+      spot,
+      fromSpot: spot === undefined ? Infinity : distance(spot.point, view.self.position),
     };
   }
 
   it("walks back to its escort spot from 500 away, past a foe at 300", () => {
-    const { intent, spot } = escortOf(500, 300);
-    expect(spot).toBeDefined();
+    const { intent, spot, fromSpot } = escortOf(500, 300);
+    expect(fromSpot).toBeGreaterThan(ESCORT_LEASH);
     expect(intent?.moveTo).toEqual(spot?.point);
   });
 
-  it("fights within ESCORT_LEASH of the human", () => {
-    expect(escortOf(200, 100).intent).toBeUndefined();
-    expect(escortOf(ESCORT_LEASH, 100).intent).toBeUndefined();
+  it("fights within ESCORT_LEASH of its escort spot", () => {
+    for (const apart of [200, 400]) {
+      const { intent, fromSpot } = escortOf(apart, 100);
+      expect(fromSpot).toBeLessThanOrEqual(ESCORT_LEASH);
+      expect(intent).toBeUndefined();
+    }
+  });
+
+  it("fights on its escort spot between two humans far apart", () => {
+    const sim = match([
+      fighter("you", 0, WARRIOR, vec2(400, 400)),
+      fighter("me", 0, WARRIOR, vec2(1200, 400)),
+      fighter("w", 0, WARRIOR, vec2(800, 400)),
+      fighter("foe", 1, WARRIOR, vec2(800, 700)),
+    ]);
+    const humans = { isBot: (id: string) => id === "w" || id === "foe" };
+    const view = ruleFor(sim, "w", {}, humans);
+    const spot = escortSpot(view.context, view.self, "frontline", createCursor());
+    if (spot === undefined) throw new Error("no spot");
+    const w = sim.get("w");
+    if (w === undefined) throw new Error("no w");
+    w.position = spot.point;
+    expect(distance(spot.point, vec2(400, 400))).toBeGreaterThan(ESCORT_LEASH);
+    expect(distance(spot.point, vec2(1200, 400))).toBeGreaterThan(ESCORT_LEASH);
+    expect(planMove.decide(ruleFor(sim, "w", {}, humans))).toBeUndefined();
   });
 
   it("fights below half health", () => {

@@ -2,7 +2,6 @@ import { RANGE_MELEE } from "../../../distances.js";
 import { distance } from "../../../vec2.js";
 import {
   ESCORT_LEASH,
-  activeHumans,
   escortSpot,
   inFlankSwing,
   placedFlank,
@@ -31,8 +30,8 @@ export const PLAN_ELBOW = 2 * RANGE_MELEE;
  * move up, a flanker for the rest of the phase, so a hurt one does not run
  * back out; a holder also with a foe within `PLAN_ELBOW`. A flanker walks
  * on past a foe at its elbow: one sticks to it most of a fight. An
- * escorting bot (#3833) further than `ESCORT_LEASH` from its nearest
- * active human walks back to its escort spot past the foes in its reach,
+ * escorting bot (#3833) further than `ESCORT_LEASH` from its escort spot,
+ * which follows its humans, walks back to it past the foes in its reach,
  * and within it fights; it gives the walk up as a holder does (#3853).
  */
 const planMove: BotRule = {
@@ -42,10 +41,8 @@ const planMove: BotRule = {
     const escortAt =
       role === undefined || !escort ? undefined : escortSpot(context, self, role, cursor);
     if (escortAt !== undefined) {
-      const strayed = !activeHumans(context, self.combatant.team).some(
-        (human) =>
-          human.layer === self.layer && distance(human.position, self.position) <= ESCORT_LEASH,
-      );
+      const strayed =
+        self.layer !== escortAt.layer || distance(escortAt.point, self.position) > ESCORT_LEASH;
       return strayed &&
         healthFraction(self) >= PLAN_ABANDON_HEALTH &&
         !foes.some((foe) => distance(foe.position, self.position) <= PLAN_ELBOW)
