@@ -69,7 +69,9 @@ test("#3818: both in, the match counts 10 s down with everyone held in the spawn
       (async () => {
         // Held: the centre line says when it starts, the bar is greyed.
         await expect(line).toBeVisible();
-        await expect(line).toHaveText(/^Match starts in \d+$/);
+        // Above 1 s, so the host runs the real countdown, not the e2e
+        // build's (#3855): it fails should ?pre-match=real be lost.
+        await expect(line).toHaveText(/^Match starts in ([2-9]|10)$/);
         await expect(host.locator(".hud-skills")).toHaveClass(/\bis-held\b/);
         // Up from team 1's first spawn on Ember Pits is open ground onto
         // the middle lane: held from now until the hero has walked.
