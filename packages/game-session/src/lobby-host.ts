@@ -216,6 +216,12 @@ interface TeamSide {
   claims: (string | null)[];
 }
 
+/** A preset team (#2148): its name, `null` for size 1's lone build, and its builds in slot order. */
+interface PresetTeam {
+  readonly name: string | null;
+  readonly builds: readonly PlayerBuild[];
+}
+
 /**
  * One seat of a team mode's side, as its party host plans it (ADR-0042):
  * the human `memberKey` or, `null`, a bot, and the build it plays,
@@ -1348,18 +1354,22 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
    * A preset team of `size` at random from the lobby's RNG (#2148): its
    * name, and its builds in slot order under its members' job names.
    * Size 1 has no preset team: one starter build, and no name. A queued
-   * party's foe side is of size 0, and plays none.
+   * party's foe side is of size 0, and plays none. Never `not`, the
+   * other side's preset (#3891): another team name, or for size 1 a
+   * build of other professions, so no bot's name is on both sides.
    */
-  const presetTeamFor = (
-    size: number,
-  ): { readonly name: string | null; readonly builds: readonly PlayerBuild[] } => {
+  const presetTeamFor = (size: number, not?: PresetTeam): PresetTeam => {
     if (size === 0) {
       return { name: null, builds: [] };
     }
     if (size === 1) {
-      return { name: null, builds: [pickStarterBuild(random)] };
+      return { name: null, builds: [pickStarterBuild(random, not?.builds[0])] };
     }
-    const preset = pickStarterTeam(random, size);
+    const preset = pickStarterTeam(
+      random,
+      size,
+      not?.name === undefined || not.name === null ? undefined : { name: not.name },
+    );
     if (preset === undefined) {
       throw new Error(`there are no preset teams of ${String(size)}`);
     }
@@ -1379,9 +1389,10 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     team: 0 | 1,
     side: TeamSide,
     size: number,
+    not?: PresetTeam,
   ): NonNullable<TeamSide["chosen"]> => {
     if (playsPreset(team, side)) {
-      const preset = presetTeamFor(size);
+      const preset = presetTeamFor(size, not);
       return { proposerId: null, reason: "preset", presetName: preset.name, builds: preset.builds };
     }
     const tally = new Map([...side.proposals.keys()].map((proposerId) => [proposerId, 0]));
@@ -1416,7 +1427,15 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
         const side = lobby.sides[team];
         // A proposal still arriving is not one.
         side.pending.clear();
-        side.chosen = chooseFor(team, side, side.size);
+        const other = lobby.sides[0].chosen;
+        side.chosen = chooseFor(
+          team,
+          side,
+          side.size,
+          team === 1 && other?.reason === "preset"
+            ? { name: other.presetName, builds: other.builds }
+            : undefined,
+        );
         side.claims = Array.from({ length: side.chosen.builds.length }, () => null);
       }
       lobby.stage = "claim";
@@ -2267,15 +2286,20 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     const assigned = new Map<string, PlayerBuild>();
     const rejected = new Set<WireTeam>();
     const botBuilds = new Map<string, PlayerBuild>();
+    // The first preset drawn, which the next side's never repeats (#3891).
+    let drawn: PresetTeam | undefined;
     for (const team of teamsOf(plan.group)) {
       const keys = plan.group.teams[team] ?? [];
       const whole = wholePlan(teamPlans[team], keys, size);
       if (teamPlans[team] !== undefined && whole === undefined) {
         rejected.add(team);
       }
-      const preset = whole === undefined ? presetTeamFor(size).builds : [];
-      const seats =
-        whole ?? preset.map((build, slot) => ({ memberKey: keys[slot] ?? null, build }));
+      let seats = whole;
+      if (seats === undefined) {
+        const preset = presetTeamFor(size, drawn);
+        drawn ??= preset;
+        seats = preset.builds.map((build, slot) => ({ memberKey: keys[slot] ?? null, build }));
+      }
       for (const { memberKey, build } of seats) {
         if (memberKey === null) {
           const id = addBot(team);

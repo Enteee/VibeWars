@@ -10,6 +10,7 @@ import {
   type JsonValue,
   type LobbyMode,
   type LobbyTeamSize,
+  LOBBY_TEAM_SIZES,
   PROTOCOL_VERSION,
   TEAM_LOBBY_CLAIM_SECONDS,
   TEAM_LOBBY_VOTE_SECONDS,
@@ -1621,6 +1622,26 @@ describe("a Team Lobby (#1458)", () => {
     const build = STARTER_BUILDS.at(-1);
     const [seat0] = [...(lobby.matches[0]?.plan.seats.values() ?? [])];
     expect(seat0?.build?.primaryProfession).toBe(build?.primaryProfession);
+  });
+
+  it("never deals both sides the same preset, so no bot's name is on both (#3891)", async () => {
+    for (const size of LOBBY_TEAM_SIZES) {
+      for (const draw of [0, 0.37, 0.5, 0.999]) {
+        const { lobby } = await teamLobby(["Ann"], [0, 1], () => draw, undefined, undefined, size);
+        await begin(lobby);
+        await timeOut(lobby);
+        lobby.lobby.advance(TEAM_LOBBY_CLAIM_SECONDS);
+        await settle();
+        const seats = [...(lobby.matches[0]?.plan.seats.values() ?? [])];
+        const names = (team: 0 | 1) =>
+          seats.flatMap((seat) => (seat.team === team ? [seat.build?.name] : []));
+        expect(names(0)).toHaveLength(size);
+        expect(
+          names(1).filter((name) => names(0).includes(name)),
+          `${String(size)} at ${String(draw)}`,
+        ).toEqual([]);
+      }
+    }
   });
 
   it("plays preset teams of the team size when neither side chose, and a team mode's of its size (#2104)", async () => {
