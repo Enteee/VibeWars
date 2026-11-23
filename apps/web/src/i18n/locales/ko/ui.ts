@@ -506,6 +506,13 @@ export default {
   "help.source": "소스 코드",
   "help.version": "VibeWars {release} · 빌드 {build}",
 
+  "history.back": "뒤로",
+  "history.empty": "아직 경기가 없습니다. 최근 50경기가 여기에 보관됩니다.",
+  "history.emptyMine": "현재 플레이어 키로 치른 경기가 없습니다.",
+  "history.mine": "내 경기",
+  "history.open": "경기 기록",
+  "history.title": "경기 기록",
+
   "hud.aggression": "공세 {ours} : {theirs}",
   "hud.altarPointOurs": "제단 점수!",
   "hud.altarPointTheirs": "적 제단 점수",

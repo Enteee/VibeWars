@@ -94,6 +94,8 @@ Apasă o intrare din legendă ca să ascunzi sau să arăți linia ei. Pe telefo
 graficele stau sub scoruri, care te arată pe tine și pe încă doi până la
 **Arată tot**.
 
+**Istoricul meciurilor** din bara de sus îți arată ultimele 50 de meciuri, cele mai noi primele: deschide unul ca să-i revezi scorurile și graficele. Sunt păstrate doar în acest browser. **Meciurile mele** le arată doar pe cele jucate cu cheia ta de jucător actuală.
+
 ## Găzduiește un meci sau intră într-unul
 
 Ești mereu într-un lobby: din clipa în care se deschide pagina, găzduiește unul al

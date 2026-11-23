@@ -83,6 +83,7 @@ import {
   parseWireCombatBatch,
   parseWireEnded as parseWireEndedOf,
   parseWireMatchChartPart,
+  parseWireMatchChart,
   joinMatchChart,
   parseWireSkillBar,
   parseWireSnapshotPart as parseWireSnapshotPartOf,
@@ -3513,6 +3514,36 @@ describe("the match's charts (#3564)", () => {
     ],
   ])("joins nothing from %s", (_, parts) => {
     expect(joinMatchChart(parts)).toBeUndefined();
+  });
+
+  describe("a whole one, as kept in the match history (#3848)", () => {
+    const halves: WireMatchChartPart[] = [
+      { ...part, parts: 2, players: [series("ann"), series("bob")], events: [] },
+      { ...part, parts: 2, players: [series("cat")] },
+    ];
+    const whole = joinMatchChart(halves);
+
+    it("takes the chart joinMatchChart makes", () => {
+      expect(whole).toBeDefined();
+      expect(parseWireMatchChart(JSON.parse(JSON.stringify(whole)), roster, 2)).toEqual(whole);
+    });
+
+    it.each([
+      ["a stranger's series", { ...whole, players: [series("eve")] }],
+      [
+        "a series past MAX_CHART_SAMPLES",
+        { ...whole, players: [{ ...series("ann"), dealt: long }] },
+      ],
+      ["a player twice", { ...whole, players: [series("ann"), series("ann")] }],
+      [
+        "series of different lengths",
+        { ...whole, players: [series("ann"), { ...series("bob"), health: [100, 100] }] },
+      ],
+      ["a stranger's death", { ...whole, events: [{ t: 1, kind: "death", id: "eve", by: null }] }],
+      ["no period", { ...whole, period: undefined }],
+    ])("refuses %s", (_, value) => {
+      expect(parseWireMatchChart(value, roster, 2)).toBeUndefined();
+    });
   });
 });
 

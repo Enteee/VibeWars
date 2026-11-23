@@ -553,6 +553,13 @@ export default {
   "help.source": "Kaynak kodu",
   "help.version": "VibeWars {release} · yapı {build}",
 
+  "history.back": "Geri",
+  "history.empty": "Henüz maç yok. Son 50 maçın burada saklanır.",
+  "history.emptyMine": "Mevcut oyuncu anahtarınla oynanmış maç yok.",
+  "history.mine": "Maçlarım",
+  "history.open": "Maç geçmişi",
+  "history.title": "Maç geçmişi",
+
   "hud.aggression": "sald {ours} - {theirs}",
   "hud.altarPointOurs": "Sunak puanı!",
   "hud.altarPointTheirs": "Düşman sunak puanı",

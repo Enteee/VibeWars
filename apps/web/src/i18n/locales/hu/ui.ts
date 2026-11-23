@@ -553,6 +553,13 @@ export default {
   "help.source": "Forráskód",
   "help.version": "VibeWars {release} · build {build}",
 
+  "history.back": "Vissza",
+  "history.empty": "Még nincs meccs. Itt őrizzük az utolsó 50 meccsedet.",
+  "history.emptyMine": "Nincs meccs a jelenlegi játékoskulcsoddal.",
+  "history.mine": "Saját meccsek",
+  "history.open": "Meccselőzmények",
+  "history.title": "Meccselőzmények",
+
   "hud.aggression": "agr {ours} vs {theirs}",
   "hud.altarPointOurs": "Oltárpont!",
   "hud.altarPointTheirs": "Ellenséges oltárpont",

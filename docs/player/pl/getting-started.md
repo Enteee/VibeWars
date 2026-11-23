@@ -89,6 +89,8 @@ Naciśnij pozycję legendy, aby ukryć lub pokazać jej linię. Na telefonie wyk
 są pod wynikami, które pokazują ciebie i dwie inne osoby, dopóki nie wybierzesz
 **Pokaż wszystko**.
 
+**Historia meczów** na górnym pasku pokazuje twoich ostatnich 50 meczów, od najnowszego: otwórz jeden, by znów zobaczyć jego wyniki i wykresy. Są przechowywane tylko w tej przeglądarce. **Moje mecze** pokazuje tylko te rozegrane z twoim obecnym kluczem gracza.
+
 ## Hostuj mecz lub dołącz
 
 Zawsze jesteś w lobby: od chwili otwarcia strony hostujesz własne. Lobby to twoja

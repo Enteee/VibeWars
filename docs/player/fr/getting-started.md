@@ -101,6 +101,8 @@ la légende pour masquer ou afficher sa courbe. Sur téléphone, les graphiques 
 placent sous les scores, qui te montrent avec deux autres joueurs jusqu'à
 **Tout afficher**.
 
+**Historique des parties**, dans la barre du haut, liste tes 50 dernières parties, les plus récentes d’abord : ouvres-en une pour revoir ses scores et ses graphiques. Elles ne sont gardées que dans ce navigateur. **Mes parties** n’affiche que celles jouées avec ta clé de joueur actuelle.
+
 ## Héberger ou rejoindre un match
 
 Tu es toujours dans un salon : dès que la page s'ouvre, elle en héberge un à

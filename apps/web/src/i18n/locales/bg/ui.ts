@@ -554,6 +554,13 @@ export default {
   "help.source": "Изходен код",
   "help.version": "VibeWars {release} · билд {build}",
 
+  "history.back": "Назад",
+  "history.empty": "Още няма мачове. Последните ти 50 мача се пазят тук.",
+  "history.emptyMine": "Няма мачове с текущия ти ключ на играч.",
+  "history.mine": "Моите мачове",
+  "history.open": "История на мачовете",
+  "history.title": "История на мачовете",
+
   "hud.aggression": "агр {ours} с/у {theirs}",
   "hud.altarPointOurs": "Точка от олтара!",
   "hud.altarPointTheirs": "Вражеска точка от олтара",

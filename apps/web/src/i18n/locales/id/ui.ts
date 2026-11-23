@@ -508,6 +508,13 @@ export default {
   "help.source": "Kode sumber",
   "help.version": "VibeWars {release} · build {build}",
 
+  "history.back": "Kembali",
+  "history.empty": "Belum ada pertandingan. 50 pertandingan terakhirmu disimpan di sini.",
+  "history.emptyMine": "Tidak ada pertandingan dengan kunci pemainmu saat ini.",
+  "history.mine": "Pertandinganku",
+  "history.open": "Riwayat pertandingan",
+  "history.title": "Riwayat pertandingan",
+
   "hud.aggression": "agr {ours} vs {theirs}",
   "hud.altarPointOurs": "Poin altar!",
   "hud.altarPointTheirs": "Poin altar musuh",

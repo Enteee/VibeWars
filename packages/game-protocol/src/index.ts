@@ -153,6 +153,7 @@ export {
   parseWireMatchReplayPart,
   MAX_REPLAY_PARTS,
   parseWireMatchChartPart,
+  parseWireMatchChart,
   joinMatchChart,
   MAX_CHART_PARTS,
   MAX_CHART_SAMPLES,

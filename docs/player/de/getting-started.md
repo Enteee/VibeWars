@@ -95,6 +95,8 @@ zu lesen, was passiert ist. Drück auf einen Legendeneintrag, um seine Linie
 aus- oder einzublenden. Auf dem Handy stehen die Diagramme unter den Punkten,
 die dich und zwei andere zeigen, bis du **Alle zeigen** drückst.
 
+**Spielverlauf** in der oberen Leiste listet deine letzten 50 Matches, die neuesten zuerst: Öffne eines, um seine Punkte und Diagramme noch einmal zu sehen. Sie bleiben nur in diesem Browser. **Meine Spiele** zeigt nur die, die du mit deinem aktuellen Spielerschlüssel gespielt hast.
+
 ## Match hosten oder beitreten
 
 Du bist immer in einer Lobby: Ab dem Moment, in dem die Seite öffnet, hostet sie eine

@@ -94,6 +94,8 @@ to read what happened. Press a legend entry to hide or show its line. On a
 phone the charts sit under the scores, which show you and two others until
 **Show all**.
 
+**Match history** in the top bar lists your last 50 matches, newest first: open one to see its scores and charts again. They are kept in this browser only. **My matches** shows only the ones played with your current player key.
+
 ## Host or join a match
 
 You are always in a lobby: from the moment the page opens it hosts one

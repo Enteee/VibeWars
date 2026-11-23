@@ -557,6 +557,13 @@ export default {
   "help.source": "Πηγαίος κώδικας",
   "help.version": "VibeWars {release} · build {build}",
 
+  "history.back": "Πίσω",
+  "history.empty": "Δεν υπάρχουν αγώνες ακόμα. Εδώ φυλάσσονται οι τελευταίοι 50 αγώνες σου.",
+  "history.emptyMine": "Δεν υπάρχουν αγώνες με το τρέχον κλειδί παίκτη σου.",
+  "history.mine": "Οι αγώνες μου",
+  "history.open": "Ιστορικό αγώνων",
+  "history.title": "Ιστορικό αγώνων",
+
   "hud.aggression": "επιθ. {ours} κατά {theirs}",
   "hud.altarPointOurs": "Πόντος βωμού!",
   "hud.altarPointTheirs": "Εχθρικός πόντος βωμού",

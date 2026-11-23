@@ -95,6 +95,8 @@ er gebeurde. Druk op een legenda-item om de lijn te verbergen of te tonen. Op
 een telefoon staan de grafieken onder de scores, die jou en twee anderen tonen
 tot **Alles tonen**.
 
+**Wedstrijdgeschiedenis** in de bovenbalk toont je laatste 50 wedstrijden, nieuwste eerst: open er een om de scores en grafieken opnieuw te zien. Ze worden alleen in deze browser bewaard. **Mijn wedstrijden** toont alleen die je met je huidige spelerssleutel hebt gespeeld.
+
 ## Een match hosten of meedoen
 
 Je zit altijd in een lobby: vanaf het moment dat de pagina opent, host hij er

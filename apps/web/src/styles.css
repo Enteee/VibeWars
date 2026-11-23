@@ -776,6 +776,73 @@ body {
   color: var(--accent);
 }
 
+/*
+ * Match history (#3848): the last matches, each opening on its table and
+ * charts. Wide enough for the end panel's; on a phone it scrolls inside.
+ */
+#topbar .match-history-window {
+  position: absolute;
+  top: calc(100% + 0.3rem);
+  inset-inline-end: 0.5rem;
+  z-index: 20;
+  width: min(760px, calc(100vw - 1rem));
+  max-height: min(80vh, 44rem);
+  padding: 0.7rem;
+  gap: 0.5rem;
+  background: rgb(14 17 22 / 96%);
+  border: 1px solid var(--line);
+  text-transform: none;
+  letter-spacing: normal;
+}
+
+.match-history-title,
+.match-history-empty,
+.match-history-heading {
+  margin: 0;
+}
+
+.match-history-empty,
+.match-history-heading {
+  color: var(--ink-dim);
+}
+
+.match-history-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.match-history-mine {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.match-history-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.match-history-row {
+  display: grid;
+  grid-template-columns: 9rem 1fr auto auto;
+  gap: 0.6rem;
+  padding: 0.3rem 0.35rem;
+  text-align: start;
+  font-variant-numeric: tabular-nums;
+}
+
+.match-history-when,
+.match-history-mode {
+  color: var(--ink-dim);
+}
+
+.match-history-back {
+  align-self: flex-start;
+}
+
 /* The jukebox from the bar's ♪, just under the bar. */
 #topbar .hud-jukebox {
   top: calc(100% + 0.3rem);

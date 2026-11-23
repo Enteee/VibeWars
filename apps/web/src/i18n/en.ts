@@ -553,6 +553,13 @@ export const en = {
   "help.source": "Source code",
   "help.version": "VibeWars {release} · build {build}",
 
+  "history.back": "Back",
+  "history.empty": "No matches yet. Your last 50 matches are kept here.",
+  "history.emptyMine": "No matches with your current player key.",
+  "history.mine": "My matches",
+  "history.open": "Match history",
+  "history.title": "Match history",
+
   "hud.aggression": "agg {ours} v {theirs}",
   "hud.altarPointOurs": "Altar point!",
   "hud.altarPointTheirs": "Enemy altar point",

@@ -645,6 +645,13 @@ export default {
   "help.source": "الشيفرة المصدرية",
   "help.version": "VibeWars {release} · بناء {build}",
 
+  "history.back": "رجوع",
+  "history.empty": "لا توجد مباريات بعد. تُحفظ هنا آخر 50 مباراة لك.",
+  "history.emptyMine": "لا توجد مباريات بمفتاح اللاعب الحالي.",
+  "history.mine": "مبارياتي",
+  "history.open": "سجل المباريات",
+  "history.title": "سجل المباريات",
+
   "hud.aggression": "عدوان {ours} ضد {theirs}",
   "hud.altarPointOurs": "نقطة مذبح!",
   "hud.altarPointTheirs": "نقطة مذبح للعدو",

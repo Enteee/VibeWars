@@ -561,6 +561,13 @@ export default {
   "help.source": "Lähdekoodi",
   "help.version": "VibeWars {release} · koontiversio {build}",
 
+  "history.back": "Takaisin",
+  "history.empty": "Ei vielä otteluita. Viimeiset 50 otteluasi säilytetään täällä.",
+  "history.emptyMine": "Ei otteluita nykyisellä pelaaja-avaimellasi.",
+  "history.mine": "Omat ottelut",
+  "history.open": "Otteluhistoria",
+  "history.title": "Otteluhistoria",
+
   "hud.aggression": "agg {ours} – {theirs}",
   "hud.altarPointOurs": "Alttaripiste!",
   "hud.altarPointTheirs": "Vihollisen alttaripiste",
