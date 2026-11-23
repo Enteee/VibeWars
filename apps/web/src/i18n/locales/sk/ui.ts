@@ -1579,12 +1579,6 @@ export default {
     other: "Tvoja družina ({count}) ide s tebou.",
   },
 
-  "touchNotice.continue": "Pokračovať",
-  "touchNotice.headline": "VibeWars vyžaduje klávesnicu a myš.",
-  "touchNotice.title": "VibeWars",
-  "touchNotice.where":
-    "Na telefóne ani na čisto dotykovom tablete nefunguje. Otvor ho na počítači: {url}.",
-
   "training.arena": "cvičná aréna",
   "training.attacking": "útočí",
   "training.cannotTest": "Tento build sa nedá otestovať: {problem}",

@@ -1463,12 +1463,6 @@ export default {
     other: "A(z) {count} fős osztagod veled együtt lép be.",
   },
 
-  "touchNotice.continue": "Folytatom így is",
-  "touchNotice.headline": "A VibeWarshoz billentyűzet és egér kell.",
-  "touchNotice.title": "VibeWars",
-  "touchNotice.where":
-    "Telefonon és csak érintőképernyős táblagépen nem működik. Nyisd meg számítógépen: {url}.",
-
   "training.arena": "gyakorlóaréna",
   "training.attacking": "támad",
   "training.cannotTest": "Ez a build nem tesztelhető: {problem}",

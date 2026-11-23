@@ -3,7 +3,7 @@ import { expect, test, type Locator, type Page } from "@playwright/test";
 import { joinFriend, openRail, type RailLabel } from "./helpers/menu.js";
 import { clickTopbarIcon } from "./helpers/overlay.js";
 import { copyInvite, hostLobby, openPeers, openToFriends, setTeamSize } from "./helpers/peers.js";
-import { PIXEL_8A_PORTRAIT, expectFitsPhone, passTouchNotice } from "./helpers/phone.js";
+import { PIXEL_8A_PORTRAIT, expectFitsPhone } from "./helpers/phone.js";
 import { namePlayer } from "./helpers/player.js";
 import { bringStarter } from "./helpers/starter.js";
 
@@ -16,16 +16,21 @@ import { bringStarter } from "./helpers/starter.js";
 
 test.use(PIXEL_8A_PORTRAIT);
 
-/** The menu on the phone, past the touch notice. */
+/** The menu on the phone. */
 async function openPhone(page: Page, url = "./"): Promise<void> {
   await page.goto(url);
-  await passTouchNotice(page);
   await expect(page.locator(".mode-rail")).toBeVisible();
 }
 
+test("a phone opens straight on the menu, which a tap reaches (#3782)", async ({ page }) => {
+  await openPhone(page);
+  const entry = page.locator(".mode-rail").getByRole("button", { name: "Matches", exact: true });
+  await entry.tap();
+  await expect(entry).toHaveAttribute("aria-pressed", "true");
+});
+
 test("the splash screen fits the phone (#3776)", async ({ page }) => {
   await page.goto("./?splash&menu-background");
-  await passTouchNotice(page);
   await expect(page.locator(".splash")).toBeVisible();
   await expectFitsPhone(page, "splash");
 });
@@ -148,7 +153,6 @@ test("a party's Team Lobby and its Team Arena queue fit the phone (#3776)", asyn
 
 test("the queue's window fits the phone (#3776)", async ({ page }) => {
   await page.goto("./");
-  await passTouchNotice(page);
   await bringStarter(page, "Elementalist/Mesmer");
   await namePlayer(page, "Queuer");
   await openRail(page, "Random Arena");

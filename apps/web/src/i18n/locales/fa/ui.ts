@@ -1454,11 +1454,6 @@ export default {
     other: "گروه {count} نفره‌ات با تو می‌پیوندد.",
   },
 
-  "touchNotice.continue": "ادامه به‌هرحال",
-  "touchNotice.headline": "VibeWars به کیبورد و ماوس نیاز دارد.",
-  "touchNotice.title": "VibeWars",
-  "touchNotice.where": "روی گوشی یا تبلت فقط‌لمسی کار نمی‌کند. آن را روی رایانه باز کن: {url}.",
-
   "training.arena": "آرنای تمرین",
   "training.attacking": "در حال حمله",
   "training.cannotTest": "این بیلد قابل آزمایش نیست: {problem}",

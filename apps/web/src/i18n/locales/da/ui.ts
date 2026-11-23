@@ -1452,12 +1452,6 @@ export default {
     other: "Din gruppe på {count} deltager sammen med dig.",
   },
 
-  "touchNotice.continue": "Fortsæt alligevel",
-  "touchNotice.headline": "VibeWars kræver tastatur og mus.",
-  "touchNotice.title": "VibeWars",
-  "touchNotice.where":
-    "Det virker ikke på en telefon eller en ren touch-tablet. Åbn det på en computer: {url}.",
-
   "training.arena": "træningsarena",
   "training.attacking": "angriber",
   "training.cannotTest": "Dette build kan ikke testes: {problem}",

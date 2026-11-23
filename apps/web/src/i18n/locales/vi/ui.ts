@@ -1368,12 +1368,6 @@ export default {
   "topbar.ownLobby": "Sảnh của bạn",
   "topbar.partyJoins": { other: "Tổ đội {count} người của bạn vào cùng." },
 
-  "touchNotice.continue": "Vẫn tiếp tục",
-  "touchNotice.headline": "VibeWars cần bàn phím và chuột.",
-  "touchNotice.title": "VibeWars",
-  "touchNotice.where":
-    "Game không chạy trên điện thoại hay máy tính bảng cảm ứng. Hãy mở trên máy tính: {url}.",
-
   "training.arena": "đấu trường luyện tập",
   "training.attacking": "đang tấn công",
   "training.cannotTest": "Không thể thử build này: {problem}",

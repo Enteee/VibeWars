@@ -1576,12 +1576,6 @@ export default {
     other: "Tvoje skupina ({count}) se připojí s tebou.",
   },
 
-  "touchNotice.continue": "Přesto pokračovat",
-  "touchNotice.headline": "VibeWars potřebuje klávesnici a myš.",
-  "touchNotice.title": "VibeWars",
-  "touchNotice.where":
-    "Na telefonu ani čistě dotykovém tabletu to nefunguje. Otevři hru na počítači: {url}.",
-
   "training.arena": "tréninková aréna",
   "training.attacking": "útočí",
   "training.cannotTest": "Tento build nelze otestovat: {problem}",

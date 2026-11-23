@@ -1579,12 +1579,6 @@ export default {
     other: "Твоя группа из {count} человека войдёт с тобой.",
   },
 
-  "touchNotice.continue": "Всё равно продолжить",
-  "touchNotice.headline": "Для VibeWars нужны клавиатура и мышь.",
-  "touchNotice.title": "VibeWars",
-  "touchNotice.where":
-    "Игра не работает на телефоне и сенсорном планшете. Открой её на компьютере: {url}.",
-
   "training.arena": "тренировочная арена",
   "training.attacking": "атакует",
   "training.cannotTest": "Этот билд нельзя проверить: {problem}",

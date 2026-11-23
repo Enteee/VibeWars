@@ -1461,12 +1461,6 @@ export default {
     other: "Je groep van {count} doet met je mee.",
   },
 
-  "touchNotice.continue": "Toch doorgaan",
-  "touchNotice.headline": "VibeWars heeft een toetsenbord en muis nodig.",
-  "touchNotice.title": "VibeWars",
-  "touchNotice.where":
-    "Het werkt niet op een telefoon of een tablet met alleen touch. Open het op een computer: {url}.",
-
   "training.arena": "trainingsarena",
   "training.attacking": "valt aan",
   "training.cannotTest": "Deze build kan niet getest worden: {problem}",

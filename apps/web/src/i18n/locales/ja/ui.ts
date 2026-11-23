@@ -1388,12 +1388,6 @@ export default {
   "topbar.ownLobby": "自分のロビー",
   "topbar.partyJoins": { other: "{count}人のパーティーで参加します。" },
 
-  "touchNotice.continue": "このまま続ける",
-  "touchNotice.headline": "VibeWarsにはキーボードとマウスが必要です。",
-  "touchNotice.title": "VibeWars",
-  "touchNotice.where":
-    "スマートフォンやタッチ専用タブレットでは動作しません。パソコンで開いてください: {url}。",
-
   "training.arena": "訓練アリーナ",
   "training.attacking": "攻撃中",
   "training.cannotTest": "このビルドはテストできません: {problem}",

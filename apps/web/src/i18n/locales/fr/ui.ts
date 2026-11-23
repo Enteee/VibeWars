@@ -1550,12 +1550,6 @@ export default {
     other: "Ton groupe de {count} te suit.",
   },
 
-  "touchNotice.continue": "Continuer quand même",
-  "touchNotice.headline": "VibeWars requiert un clavier et une souris.",
-  "touchNotice.title": "VibeWars",
-  "touchNotice.where":
-    "Ça ne marche pas sur téléphone ni sur tablette tactile. Ouvre-le sur un ordinateur : {url}.",
-
   "training.arena": "arène d'entraînement",
   "training.attacking": "en attaque",
   "training.cannotTest": "Impossible de tester ce build : {problem}",

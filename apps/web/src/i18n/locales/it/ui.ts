@@ -1537,12 +1537,6 @@ export default {
     other: "Il tuo gruppo di {count} entra con te.",
   },
 
-  "touchNotice.continue": "Continua comunque",
-  "touchNotice.headline": "VibeWars richiede tastiera e mouse.",
-  "touchNotice.title": "VibeWars",
-  "touchNotice.where":
-    "Non funziona su telefono o su tablet solo touch. Aprilo su un computer: {url}.",
-
   "training.arena": "arena di allenamento",
   "training.attacking": "attacco",
   "training.cannotTest": "Questa build non può essere provata: {problem}",

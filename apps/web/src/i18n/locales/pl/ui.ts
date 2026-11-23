@@ -1589,12 +1589,6 @@ export default {
     other: "Twoja {count}-osobowa grupa dołącza z tobą.",
   },
 
-  "touchNotice.continue": "Kontynuuj mimo to",
-  "touchNotice.headline": "VibeWars wymaga klawiatury i myszy.",
-  "touchNotice.title": "VibeWars",
-  "touchNotice.where":
-    "Gra nie działa na telefonie ani na tablecie tylko z ekranem dotykowym. Otwórz ją na komputerze: {url}.",
-
   "training.arena": "arena treningowa",
   "training.attacking": "atakuje",
   "training.cannotTest": "Nie można przetestować tego buildu: {problem}",

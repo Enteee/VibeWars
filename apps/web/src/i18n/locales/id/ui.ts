@@ -1383,12 +1383,6 @@ export default {
   "topbar.ownLobby": "Lobimu",
   "topbar.partyJoins": { other: "Party-mu yang berisi {count} orang ikut bersamamu." },
 
-  "touchNotice.continue": "Tetap lanjut",
-  "touchNotice.headline": "VibeWars butuh keyboard dan mouse.",
-  "touchNotice.title": "VibeWars",
-  "touchNotice.where":
-    "Game ini tidak bisa dimainkan di ponsel atau tablet layar sentuh. Buka di komputer: {url}.",
-
   "training.arena": "arena latihan",
   "training.attacking": "menyerang",
   "training.cannotTest": "Build ini tidak bisa diuji: {problem}",

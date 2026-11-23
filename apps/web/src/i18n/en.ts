@@ -1456,12 +1456,6 @@ export const en = {
     other: "Your party of {count} joins with you.",
   },
 
-  "touchNotice.continue": "Continue anyway",
-  "touchNotice.headline": "VibeWars needs a keyboard and mouse.",
-  "touchNotice.title": "VibeWars",
-  "touchNotice.where":
-    "It does not work on a phone or a touch-only tablet. Open it on a computer: {url}.",
-
   "training.arena": "training arena",
   "training.attacking": "attacking",
   "training.cannotTest": "This build cannot be tested: {problem}",

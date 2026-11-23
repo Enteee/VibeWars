@@ -1350,11 +1350,6 @@ export default {
   "topbar.ownLobby": "你的大厅",
   "topbar.partyJoins": { other: "你的 {count} 人小队将一同加入。" },
 
-  "touchNotice.continue": "仍然继续",
-  "touchNotice.headline": "VibeWars 需要键盘和鼠标。",
-  "touchNotice.title": "VibeWars",
-  "touchNotice.where": "它无法在手机或纯触屏平板上运行。请在电脑上打开：{url}。",
-
   "training.arena": "训练竞技场",
   "training.attacking": "攻击中",
   "training.cannotTest": "此配置无法测试：{problem}",

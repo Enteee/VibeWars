@@ -7,7 +7,6 @@ import {
   PIXEL_8A_PORTRAIT,
   TOUCH_TARGET,
   expectFitsPhone,
-  passTouchNotice,
 } from "./helpers/phone.js";
 
 /**
@@ -75,7 +74,7 @@ type FrameName = "hudFrame" | "hudNow";
 /**
  * A match against a bot from the menu on show, the bot targeted, the HUD
  * noted; in `lobby`'s size and map when given, else 1v1 on ember-pits. A
- * `touch` phone passes its notice first.
+ * `touch` phone has no drag to build a team with.
  */
 async function phoneMatch(
   page: Page,
@@ -85,9 +84,6 @@ async function phoneMatch(
 ): Promise<void> {
   await page.setViewportSize(phone);
   await page.goto("./");
-  if (touch) {
-    await passTouchNotice(page);
-  }
   // A team lobby's own Team Build, proposed, ends the vote at once: with
   // none, the side waits out the vote's 30 s clock for a preset team,
   // which put an 8v8 within seconds of the test's timeout (#3778). It is
@@ -446,7 +442,6 @@ test.describe("a Pixel 8a at the end of a match (#3778)", () => {
     page,
   }) => {
     await page.goto("./?summary-fixture");
-    await passTouchNotice(page);
     await expect(page.locator(".hud-summary")).toBeVisible();
     await expectFitsPhone(page, "match summary", [".hud-end"]);
   });

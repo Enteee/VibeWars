@@ -1530,12 +1530,6 @@ export default {
     other: "Tvoja grupa od {count} ulazi s tobom.",
   },
 
-  "touchNotice.continue": "Ipak nastavi",
-  "touchNotice.headline": "VibeWars treba tipkovnicu i miš.",
-  "touchNotice.title": "VibeWars",
-  "touchNotice.where":
-    "Ne radi na mobitelu ni na tabletu samo s dodirom. Otvori na računalu: {url}.",
-
   "training.arena": "arena za vježbu",
   "training.attacking": "napada",
   "training.cannotTest": "Ovaj se sastav ne može testirati: {problem}",

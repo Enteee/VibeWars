@@ -1373,12 +1373,6 @@ export default {
   "topbar.ownLobby": "내 로비",
   "topbar.partyJoins": { other: "{count}명 파티가 함께 참가해요." },
 
-  "touchNotice.continue": "그래도 계속",
-  "touchNotice.headline": "VibeWars에는 키보드와 마우스가 필요해요.",
-  "touchNotice.title": "VibeWars",
-  "touchNotice.where":
-    "휴대폰이나 터치 전용 태블릿에서는 작동하지 않아요. 컴퓨터에서 여세요: {url}.",
-
   "training.arena": "훈련 아레나",
   "training.attacking": "공격 중",
   "training.cannotTest": "이 빌드는 테스트할 수 없어요: {problem}",

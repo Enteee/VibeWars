@@ -1477,12 +1477,6 @@ export default {
     other: "Η παρέα σου των {count} μπαίνει μαζί σου.",
   },
 
-  "touchNotice.continue": "Συνέχισε πάντως",
-  "touchNotice.headline": "Το VibeWars χρειάζεται πληκτρολόγιο και ποντίκι.",
-  "touchNotice.title": "VibeWars",
-  "touchNotice.where":
-    "Δεν λειτουργεί σε κινητό ή tablet μόνο με αφή. Άνοιξέ το σε υπολογιστή: {url}.",
-
   "training.arena": "αρένα εξάσκησης",
   "training.attacking": "επίθεση",
   "training.cannotTest": "Αυτή η σύνθεση δεν μπορεί να δοκιμαστεί: {problem}",

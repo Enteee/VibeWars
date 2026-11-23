@@ -1584,12 +1584,6 @@ export default {
     other: "Твій загін із {count} особи приєднується з тобою.",
   },
 
-  "touchNotice.continue": "Усе одно далі",
-  "touchNotice.headline": "VibeWars потребує клавіатури й миші.",
-  "touchNotice.title": "VibeWars",
-  "touchNotice.where":
-    "Гра не працює на телефоні чи суто сенсорному планшеті. Відкрий її на комп'ютері: {url}.",
-
   "training.arena": "тренувальна арена",
   "training.attacking": "атакує",
   "training.cannotTest": "Цей білд не можна випробувати: {problem}",

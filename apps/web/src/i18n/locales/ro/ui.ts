@@ -1538,12 +1538,6 @@ export default {
     other: "Grupul tău ({count}) intră cu tine.",
   },
 
-  "touchNotice.continue": "Continuă oricum",
-  "touchNotice.headline": "VibeWars are nevoie de tastatură și mouse.",
-  "touchNotice.title": "VibeWars",
-  "touchNotice.where":
-    "Nu funcționează pe telefon sau pe o tabletă doar cu ecran tactil. Deschide-l pe un calculator: {url}.",
-
   "training.arena": "arenă de antrenament",
   "training.attacking": "atacă",
   "training.cannotTest": "Acest build nu poate fi testat: {problem}",

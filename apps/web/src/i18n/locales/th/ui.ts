@@ -1362,11 +1362,6 @@ export default {
   "topbar.ownLobby": "ล็อบบี้ของคุณ",
   "topbar.partyJoins": { other: "ปาร์ตี้ของคุณ {count} คนเข้าร่วมพร้อมคุณ" },
 
-  "touchNotice.continue": "ไปต่อเลย",
-  "touchNotice.headline": "VibeWars ต้องใช้คีย์บอร์ดและเมาส์",
-  "touchNotice.title": "VibeWars",
-  "touchNotice.where": "ใช้บนโทรศัพท์หรือแท็บเล็ตจอสัมผัสไม่ได้ เปิดบนคอมพิวเตอร์: {url}",
-
   "training.arena": "อารีนาฝึกซ้อม",
   "training.attacking": "กำลังโจมตี",
   "training.cannotTest": "ทดสอบบิลด์นี้ไม่ได้: {problem}",

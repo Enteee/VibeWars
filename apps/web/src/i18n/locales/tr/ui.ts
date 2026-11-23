@@ -1459,12 +1459,6 @@ export default {
     other: "{count} kişilik grubun seninle katılıyor.",
   },
 
-  "touchNotice.continue": "Yine de devam et",
-  "touchNotice.headline": "VibeWars klavye ve fare ister.",
-  "touchNotice.title": "VibeWars",
-  "touchNotice.where":
-    "Telefonda ya da yalnızca dokunmatik tablette çalışmaz. Bir bilgisayarda aç: {url}.",
-
   "training.arena": "eğitim arenası",
   "training.attacking": "saldırıyor",
   "training.cannotTest": "Bu dizilim test edilemez: {problem}",

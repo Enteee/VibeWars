@@ -1524,11 +1524,6 @@ export default {
     other: "החבורה שלך, {count} שחקנים, מצטרפת איתך.",
   },
 
-  "touchNotice.continue": "המשך בכל זאת",
-  "touchNotice.headline": "VibeWars דורש מקלדת ועכבר.",
-  "touchNotice.title": "VibeWars",
-  "touchNotice.where": "המשחק לא עובד בטלפון או בטאבלט מגע בלבד. פתח אותו במחשב: {url}.",
-
   "training.arena": "זירת אימונים",
   "training.attacking": "תוקף",
   "training.cannotTest": "אי אפשר לבדוק את המבנה הזה: {problem}",

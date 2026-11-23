@@ -1453,12 +1453,6 @@ export default {
     other: "Din grupp på {count} följer med dig.",
   },
 
-  "touchNotice.continue": "Fortsätt ändå",
-  "touchNotice.headline": "VibeWars kräver tangentbord och mus.",
-  "touchNotice.title": "VibeWars",
-  "touchNotice.where":
-    "Det fungerar inte på en telefon eller en surfplatta med bara pekskärm. Öppna det på en dator: {url}.",
-
   "training.arena": "träningsarena",
   "training.attacking": "attackerar",
   "training.cannotTest": "Den här builden kan inte testas: {problem}",

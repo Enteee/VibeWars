@@ -1470,12 +1470,6 @@ export default {
     other: "{count} hengen ryhmäsi liittyy mukaasi.",
   },
 
-  "touchNotice.continue": "Jatka silti",
-  "touchNotice.headline": "VibeWars vaatii näppäimistön ja hiiren.",
-  "touchNotice.title": "VibeWars",
-  "touchNotice.where":
-    "Peli ei toimi puhelimella eikä pelkällä kosketustabletilla. Avaa se tietokoneella: {url}.",
-
   "training.arena": "harjoitusareena",
   "training.attacking": "hyökkää",
   "training.cannotTest": "Tätä buildia ei voi testata: {problem}",

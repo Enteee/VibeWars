@@ -1657,11 +1657,6 @@ export default {
     other: "تنضم معك فرقتك المكونة من {count}.",
   },
 
-  "touchNotice.continue": "المتابعة رغم ذلك",
-  "touchNotice.headline": "يحتاج VibeWars إلى لوحة مفاتيح وفأرة.",
-  "touchNotice.title": "VibeWars",
-  "touchNotice.where": "لا يعمل على الهاتف أو الجهاز اللوحي باللمس فقط. افتحه على حاسوب: {url}.",
-
   "training.arena": "ساحة التدريب",
   "training.attacking": "يهاجم",
   "training.cannotTest": "لا يمكن اختبار هذه البنية: {problem}",
