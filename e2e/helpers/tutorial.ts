@@ -591,7 +591,8 @@ export function learnTests(mapId: string): void {
   test(`Learn on ${mapId}, from the tunnel to the fork`, async ({ page }) => {
     // Seeded at the foot of station 9's ledge, where it leaves the player
     // (#3383). The tunnel some two minutes (#3326), the call some 40 s
-    // (#3331), the junction some 40 s (#3332).
+    // (#3331), the walk on to the fork some 30 s; the junction is the next
+    // test's, which a loaded runner's 7 min here left no room for.
     test.setTimeout(420_000);
     const { frame, stage, saidLog, hasSaid, walkTo } = await learn(page, mapId, 10);
     const target = page.locator(".hud-target");
@@ -698,17 +699,25 @@ export function learnTests(mapId: string): void {
       .poll(() => hasSaid("Call it, and the team hits the same thing."), { timeout: 90_000 })
       .toBe(true);
 
-    // Station 13 (#3332, #3792): on east to the fork, the compass lit; a
-    // wheel-click on the north arm sends the tutor along it, and the
-    // player walks it too, round the island to the rejoin.
+    // Station 13 (#3332, #3792): on east to the fork, the compass lit.
     await expect.poll(() => hasSaid("Left or right? You call it."), { timeout: 15_000 }).toBe(true);
     await expect(page.locator("canvas.compass")).toHaveClass(/tutorial-pulse/);
     await expect(async () => {
       await walkTo(AT_THE_FORK, LONG_STRIDE);
       await near(AT_THE_FORK, 100);
     }).toPass({ timeout: 90_000 });
-    await takeTheArm(page, stage, frame, hasSaid, walkTo, NORTH_ARM);
+  });
 
+  test(`Learn on ${mapId}, from the junction by its north arm`, async ({ page }) => {
+    // Seeded at the junction's fork (#3792), the arm some 40 s.
+    test.setTimeout(180_000);
+    const { frame, stage, hasSaid, walkTo } = await learn(page, mapId, 12);
+    // Station 13 (#3332, #3792): a wheel-click on the north arm sends the
+    // tutor along it, and the player walks it too, round the island to the
+    // rejoin, told once that the call was heard.
+    await expect.poll(() => hasSaid("Left or right? You call it."), { timeout: 15_000 }).toBe(true);
+    await takeTheArm(page, stage, frame, hasSaid, walkTo, NORTH_ARM);
+    expect(await hasSaid("On my way. Meet me where the paths join.")).toBe(true);
     // On to station 14 (#3334).
     await expect
       .poll(() => hasSaid("Our team fights beyond the mist. Follow me."), { timeout: 15_000 })
