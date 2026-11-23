@@ -188,6 +188,15 @@ export const PRE_MATCH: PreMatchTimes = {
   joinTimeoutSeconds: JOIN_TIMEOUT_SECONDS,
 };
 
+/**
+ * The e2e build's wait (#3855): a 1 s countdown, so a spec does not spend
+ * its budget in it, and the real join timeout, so a late page is waited for.
+ */
+export const PRE_MATCH_E2E: PreMatchTimes = {
+  countdownSeconds: 1,
+  joinTimeoutSeconds: JOIN_TIMEOUT_SECONDS,
+};
+
 /** The arena, already built from game-maps by the caller: game-session does not depend on it. */
 export interface HostMap {
   readonly descriptor: MapDescriptor;
