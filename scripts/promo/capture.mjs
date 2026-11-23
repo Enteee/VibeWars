@@ -229,7 +229,7 @@ async function startMatch(page, mapId) {
   await liveClick(page.getByRole("button", { name: /^Your Team Builds/ }));
   await liveClick(page.getByText("8 members").first());
   await liveClick(page.getByRole("button", { name: "Propose this build" }));
-  await liveClick(page.locator(".team-lobby-proposals > *").first());
+  await liveClick(page.locator(".team-lobby-proposals button").first());
   step = "seat";
   const seats = page.locator(".team-lobby-seat-free");
   await liveClick(seats.first());
