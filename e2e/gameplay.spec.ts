@@ -197,7 +197,8 @@ async function stillCamera(page: Page): Promise<string> {
 /**
  * A match against an idle player, which is what a test with nobody to
  * fight needs: nothing moves in it that the test did not move (#128). Not
- * a lobby of one: its empty side would play a bot (#2029).
+ * a lobby of one: its empty side would play a bot (#2029). As slow as
+ * `startMatchFromMenu` to start (#3866): the scene-ready wait and the lobby.
  */
 async function startSoloMatch(page: Page): Promise<Locator> {
   return startLobbyMatch(page, [await page.context().newPage()]);
@@ -565,6 +566,9 @@ async function spotShot(
 }
 
 test("clicking the ground walks there, round a wall, and stops (#310)", async ({ page }) => {
+  // The match start (~22 s since #3852) and a dozen pixel polls, ~2 s each
+  // on a software renderer, outrun the default 60 s (#3866).
+  test.slow();
   // Ember Pits breathes, and never settles unless motion is reduced.
   await page.emulateMedia({ reducedMotion: "reduce" });
   const canvas = await startSoloMatch(page);
