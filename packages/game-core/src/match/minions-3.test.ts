@@ -346,10 +346,10 @@ describe("Infuse Condition (#1915)", () => {
     cast(sim, HORROR);
     const horror = onlyHorror(sim);
     cast(sim, INFUSE);
-    get(sim, "c").combatant.statuses.apply("bleeding", 10, "n", NO_RANKS);
+    get(sim, "c").combatant.statuses.apply("burning", 10, "n", NO_RANKS);
     useFirst(sim, "c", PLAGUE_SIGNET, "n");
-    expect(conditionsOf(horror)).toContain("bleeding");
-    expect(conditionsOf(get(sim, "n"))).not.toContain("bleeding");
+    expect(conditionsOf(horror)).toContain("burning");
+    expect(conditionsOf(get(sim, "n"))).not.toContain("burning");
   });
 
   it("hands a spread condition to a minion: Epidemic beside its bearer", () => {
@@ -358,10 +358,10 @@ describe("Infuse Condition (#1915)", () => {
     cast(sim, HORROR);
     const horror = onlyHorror(sim);
     cast(sim, INFUSE);
-    get(sim, "a").combatant.statuses.apply("bleeding", 10, "c", NO_RANKS);
+    get(sim, "a").combatant.statuses.apply("burning", 10, "c", NO_RANKS);
     useFirst(sim, "c", EPIDEMIC, "a");
-    expect(conditionsOf(horror)).toContain("bleeding");
-    expect(conditionsOf(get(sim, "n"))).not.toContain("bleeding");
+    expect(conditionsOf(horror)).toContain("burning");
+    expect(conditionsOf(get(sim, "n"))).not.toContain("burning");
   });
 
   it("lands on its bearer with no minion alive", () => {

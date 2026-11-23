@@ -18,6 +18,7 @@ import {
   nextSkillAnswers,
   ownSkillBoost,
   scaledStatAttributes,
+  type BodyTrait,
   type StatusId,
   type StatusStat,
 } from "./status.js";
@@ -401,13 +402,13 @@ describe("status definitions", () => {
 
 describe("StatusSet apply/remove", () => {
   it("starts empty", () => {
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     expect(set.size).toBe(0);
     expect(set.active).toEqual([]);
   });
 
   it("applies a status with a duration and source", () => {
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     set.apply("bleeding", 10, "attacker", NO_RANKS);
     expect(set.has("bleeding")).toBe(true);
     expect(set.get("bleeding")?.remainingSeconds).toBe(10);
@@ -415,14 +416,14 @@ describe("StatusSet apply/remove", () => {
   });
 
   it("ignores a zero or negative duration", () => {
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     set.apply("bleeding", 0, "a", NO_RANKS);
     set.apply("burning", -5, "a", NO_RANKS);
     expect(set.size).toBe(0);
   });
 
   it("does not stack durations — the longer one wins", () => {
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     set.apply("bleeding", 10, "a", NO_RANKS);
     set.apply("bleeding", 5, "b", NO_RANKS);
     expect(set.get("bleeding")?.remainingSeconds).toBe(10);
@@ -430,7 +431,7 @@ describe("StatusSet apply/remove", () => {
   });
 
   it("refreshes to a longer incoming duration", () => {
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     set.apply("bleeding", 5, "a", NO_RANKS);
     set.apply("bleeding", 20, "b", NO_RANKS);
     expect(set.get("bleeding")?.remainingSeconds).toBe(20);
@@ -442,7 +443,7 @@ describe("StatusSet apply/remove", () => {
       new Map([["warrior.strength", rank]]);
     const maxHealthBonus = (set: StatusSet): number =>
       aggregateModifiers(set.active).maxHealthBonus;
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     set.apply("endure-pain", 16, "w", strength(12));
     // Shorter, at a lower rank: the one running stays, at 258.
     set.apply("endure-pain", 8, "w", strength(0));
@@ -453,7 +454,7 @@ describe("StatusSet apply/remove", () => {
   });
 
   it("removes a single status by id", () => {
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     set.apply("bleeding", 10, "a", NO_RANKS);
     expect(set.remove("bleeding")).toBe(true);
     expect(set.has("bleeding")).toBe(false);
@@ -461,7 +462,7 @@ describe("StatusSet apply/remove", () => {
   });
 
   it("counts statuses by category", () => {
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     set.apply("bleeding", 10, "a", NO_RANKS);
     set.apply("burning", 10, "a", NO_RANKS);
     set.apply("regeneration", 10, "a", NO_RANKS);
@@ -471,7 +472,7 @@ describe("StatusSet apply/remove", () => {
   });
 
   it("removes up to N statuses of one category, leaving other categories alone", () => {
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     set.apply("bleeding", 10, "a", NO_RANKS);
     set.apply("burning", 10, "a", NO_RANKS);
     set.apply("poison", 10, "a", NO_RANKS);
@@ -484,7 +485,7 @@ describe("StatusSet apply/remove", () => {
   });
 
   it("removes every status of a category when no count is given", () => {
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     set.apply("bleeding", 10, "a", NO_RANKS);
     set.apply("burning", 10, "a", NO_RANKS);
     set.apply("regeneration", 10, "a", NO_RANKS);
@@ -494,12 +495,12 @@ describe("StatusSet apply/remove", () => {
   });
 
   it("removing from an empty category is harmless", () => {
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     expect(set.removeByCategory("hex", 3)).toEqual([]);
   });
 
   it("removes the newest first, so a cheap one covers an older one (#521)", () => {
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     set.apply("guardian", 10, "a", NO_RANKS);
     set.apply("regeneration", 10, "a", NO_RANKS);
     expect(set.removeByCategory("enchantment", 1)).toEqual([
@@ -510,7 +511,7 @@ describe("StatusSet apply/remove", () => {
 
   it("counts a re-application as the newest, whichever duration wins (#521)", () => {
     for (const duration of [5, 20]) {
-      const set = new StatusSet();
+      const set = new StatusSet("fleshy");
       set.apply("guardian", 10, "a", NO_RANKS);
       set.apply("regeneration", 10, "a", NO_RANKS);
       set.apply("guardian", duration, "a", NO_RANKS);
@@ -521,7 +522,7 @@ describe("StatusSet apply/remove", () => {
   });
 
   it("records the skill that put each on, and says it as it removes it (#1928)", () => {
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     set.apply("armor-boost", 10, "a", NO_RANKS, null, "elementalist.armor-of-earth");
     set.apply("guardian", 10, "a", NO_RANKS);
     expect(set.get("armor-boost")?.sourceSkillId).toBe("elementalist.armor-of-earth");
@@ -534,7 +535,7 @@ describe("StatusSet apply/remove", () => {
 
 describe("StatusSet refusesEnchantments (#2479)", () => {
   it("keeps a new enchantment off, but strips none already on, unlike Well of the Profane", () => {
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     set.apply("guardian", 10, "ally", NO_RANKS);
     set.apply("shadow-shroud", 6, "foe", NO_RANKS);
     expect(set.has("guardian")).toBe(true);
@@ -546,7 +547,7 @@ describe("StatusSet refusesEnchantments (#2479)", () => {
 
 describe("StatusSet removal by profession (#845)", () => {
   it("takes the newest of that profession's, past a newer one of another", () => {
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     set.apply("mystic-regeneration", 10, "a", NO_RANKS);
     set.apply("fleeting-stability", 10, "a", NO_RANKS);
     set.apply("guardian", 10, "b", NO_RANKS);
@@ -558,7 +559,7 @@ describe("StatusSet removal by profession (#845)", () => {
   });
 
   it("takes nothing when only another profession's are up", () => {
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     set.apply("guardian", 10, "b", NO_RANKS);
     set.apply("regeneration", 10, "b", NO_RANKS);
     expect(set.removeByCategory("enchantment", 1, "dervish")).toEqual([]);
@@ -566,7 +567,7 @@ describe("StatusSet removal by profession (#845)", () => {
   });
 
   it("ends what ends on a prevented knockdown, and nothing else", () => {
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     set.apply("fleeting-stability", 10, "a", NO_RANKS);
     set.apply("mystic-regeneration", 10, "a", NO_RANKS);
     expect(set.endOnKnockdownPrevented("foe", true)).toEqual(["fleeting-stability"]);
@@ -579,14 +580,14 @@ describe("StatusSet durationSeconds (#803)", () => {
   const order = (set: StatusSet) => set.active.map((status) => status.id);
 
   it("is the applied duration, and stays as the time runs down", () => {
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     set.apply("bleeding", 10, "a", NO_RANKS);
     set.advance(4, false);
     expect(set.get("bleeding")).toMatchObject({ remainingSeconds: 6, durationSeconds: 10 });
   });
 
   it("restarts at a longer refresh, which moves to the end", () => {
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     set.apply("bleeding", 10, "a", NO_RANKS);
     set.apply("burning", 5, "a", NO_RANKS);
     set.advance(4, false);
@@ -596,7 +597,7 @@ describe("StatusSet durationSeconds (#803)", () => {
   });
 
   it("keeps its length through a shorter refresh, which still moves to the end", () => {
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     set.apply("bleeding", 10, "a", NO_RANKS);
     set.apply("burning", 5, "a", NO_RANKS);
     set.apply("bleeding", 3, "b", NO_RANKS);
@@ -606,11 +607,11 @@ describe("StatusSet durationSeconds (#803)", () => {
 
   it("is the caught duration, and a catch never leaves more time than length (#765)", () => {
     const outbreak = { infected: new Set<string>(), refused: new Set<string>() };
-    const fresh = new StatusSet();
+    const fresh = new StatusSet("fleshy");
     fresh.catch("disease", 7, "a", outbreak, NO_RANKS);
     expect(fresh.get("disease")).toMatchObject({ remainingSeconds: 7, durationSeconds: 7 });
 
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     set.apply("disease", 10, "a", NO_RANKS);
     set.advance(6, false);
     set.catch("disease", 8, "b", outbreak, NO_RANKS);
@@ -622,14 +623,14 @@ describe("StatusSet durationSeconds (#803)", () => {
 
 describe("StatusSet stances, one at a time (#523)", () => {
   it("a new stance ends the one that is up", () => {
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     set.apply("sprint", 13, "a", NO_RANKS);
     set.apply("dash", 3, "a", NO_RANKS);
     expect(set.active.map((status) => status.id)).toEqual(["dash"]);
   });
 
   it("the same stance again restarts at its full duration, shorter or not", () => {
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     set.apply("sprint", 13, "a", NO_RANKS);
     set.advance(10, false);
     set.apply("sprint", 13, "a", NO_RANKS);
@@ -639,7 +640,7 @@ describe("StatusSet stances, one at a time (#523)", () => {
   });
 
   it("leaves the other categories alone, and they leave it alone", () => {
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     set.apply("regeneration", 10, "a", NO_RANKS);
     set.apply("bleeding", 10, "b", NO_RANKS);
     set.apply("sprint", 13, "a", NO_RANKS);
@@ -653,21 +654,21 @@ describe("StatusSet stances, one at a time (#523)", () => {
 
 describe("StatusSet duration advance", () => {
   it("counts durations down", () => {
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     set.apply("bleeding", 10, "a", NO_RANKS);
     set.advance(3, false);
     expect(set.get("bleeding")?.remainingSeconds).toBeCloseTo(7, 10);
   });
 
   it("expires a status once its duration elapses and reports it", () => {
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     set.apply("bleeding", 1, "a", NO_RANKS);
     expect(set.advance(1.5, false)).toEqual(["bleeding"]);
     expect(set.has("bleeding")).toBe(false);
   });
 
   it("expires several at once", () => {
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     set.apply("bleeding", 1, "a", NO_RANKS);
     set.apply("burning", 1, "a", NO_RANKS);
     set.apply("poison", 10, "a", NO_RANKS);
@@ -677,7 +678,7 @@ describe("StatusSet duration advance", () => {
   });
 
   it("reports nothing when nothing expires", () => {
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     set.apply("bleeding", 10, "a", NO_RANKS);
     expect(set.advance(1, false)).toEqual([]);
   });
@@ -685,7 +686,7 @@ describe("StatusSet duration advance", () => {
 
 describe("StatusSet refuses (#2373)", () => {
   it("keeps a Burning already on the bearer running", () => {
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     set.apply("burning", 5, "a", NO_RANKS);
     set.apply("frigid-armor", 20, "s", NO_RANKS);
     expect(set.get("burning")?.remainingSeconds).toBe(5);
@@ -694,7 +695,7 @@ describe("StatusSet refuses (#2373)", () => {
   });
 
   it("refuses a new Burning, applied or caught, as immuneTo does", () => {
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     set.apply("frigid-armor", 20, "s", NO_RANKS);
     expect(set.isImmuneTo("burning")).toBe(true);
     expect(set.apply("burning", 5, "a", NO_RANKS)).toBe(false);
@@ -714,7 +715,7 @@ describe("StatusSet enchantments and stances expire faster (#2373)", () => {
   const DEADLY = new Map([["assassin.deadly-arts", 12]]);
 
   it("Air of Disenchantment runs enchantments 1 + 2.7 times as fast, and nothing else", () => {
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     set.apply("gust", 10, "s", NO_RANKS);
     set.apply("bonettis-defense", 10, "s", NO_RANKS);
     set.apply("air-of-disenchantment", 30, "m", new Map([["mesmer.illusion-magic", 12]]));
@@ -729,7 +730,7 @@ describe("StatusSet enchantments and stances expire faster (#2373)", () => {
       [DEADLY, 0.52],
       [NO_RANKS, 0.2],
     ] as const) {
-      const set = new StatusSet();
+      const set = new StatusSet("fleshy");
       set.apply("gust", 10, "s", NO_RANKS);
       set.apply("bonettis-defense", 10, "s", NO_RANKS);
       set.apply("mark-of-insecurity", 30, "a", ranks);
@@ -740,7 +741,7 @@ describe("StatusSet enchantments and stances expire faster (#2373)", () => {
   });
 
   it("stacks additively, and the time lost stays lost once the hex is gone", () => {
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     set.apply("gust", 10, "s", NO_RANKS);
     set.apply("mark-of-insecurity", 30, "a", DEADLY);
     set.apply("air-of-disenchantment", 30, "m", new Map([["mesmer.illusion-magic", 12]]));
@@ -755,7 +756,7 @@ describe("StatusSet enchantments and stances expire faster (#2373)", () => {
 
 describe("StatusSet changes, for the triggers (#887)", () => {
   it("records a condition newly on the bearer, not its refresh", () => {
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     set.apply("burning", 5, "a", NO_RANKS);
     set.apply("burning", 8, "b", NO_RANKS);
     set.apply("burning", 2, "c", NO_RANKS);
@@ -766,7 +767,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
   });
 
   it("records no gained condition for a hex, an enchantment or a stance", () => {
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     set.apply("faintheartedness", 5, "a", NO_RANKS);
     set.apply("regeneration", 5, "a", NO_RANKS);
     set.apply("sprint", 5, "a", NO_RANKS);
@@ -774,7 +775,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
   });
 
   it("records a condition caught from an outbreak, once (#765)", () => {
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     const outbreak = { infected: new Set<string>(), refused: new Set<string>() };
     set.catch("disease", 6, "a", outbreak, NO_RANKS);
     set.catch("disease", 9, "a", outbreak, NO_RANKS);
@@ -784,7 +785,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
   });
 
   it("records every ending with its source, and only the duration running out as expired (#944)", () => {
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     set.apply("parasitic-bond", 1, "expiry", NO_RANKS);
     set.apply("backfire", 10, "removed", NO_RANKS);
     set.apply("malaise", 10, "by-category", NO_RANKS);
@@ -880,7 +881,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
   });
 
   it("takeNewest takes the newest of a category first, with the time each had left (#944)", () => {
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     set.apply("bleeding", 10, "a", NO_RANKS);
     set.apply("guardian", 10, "a", NO_RANKS);
     set.apply("blind", 8, "a", NO_RANKS);
@@ -917,7 +918,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
   });
 
   it("ends Make Haste! on any hit, Defensive Anthem only on an attack skill's (#956)", () => {
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     set.apply("make-haste", 17, "p", NO_RANKS);
     set.apply("defensive-anthem", 9, "p", NO_RANKS);
     expect(set.endOnBearerHit(false)).toEqual(["make-haste"]);
@@ -930,7 +931,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
 
   it("ends Hexer's Vigor on any skill but a hex, or the one that spared it (#2411)", () => {
     const vigor = (): StatusSet => {
-      const set = new StatusSet();
+      const set = new StatusSet("fleshy");
       set.apply("hexers-vigor", 10, "p", NO_RANKS);
       return set;
     };
@@ -953,7 +954,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
   it("ends Battle Rage on a non-adrenal skill, Disciplined Stance on an adrenal one (#2411)", () => {
     // One stance at a time: each on its own.
     const stance = (id: StatusId): StatusSet => {
-      const set = new StatusSet();
+      const set = new StatusSet("fleshy");
       set.apply(id, 10, "p", NO_RANKS);
       return set;
     };
@@ -968,7 +969,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
   });
 
   it("ends what ends on a skill used, but what that skill spared (#999)", () => {
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     set.apply("song-of-restoration", 10, "p", NO_RANKS);
     set.apply("diversion", 6, "foe", NO_RANKS);
     expect(
@@ -985,7 +986,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
   });
 
   it("ends Stand Your Ground! on any attack, Escape only on a melee one (#976)", () => {
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     set.apply("stand-your-ground", 10, "p", NO_RANKS);
     set.apply("escape", 7, "p", NO_RANKS);
     expect(set.endOnBearerAttack("projectile")).toEqual(["stand-your-ground"]);
@@ -997,7 +998,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
   });
 
   it("ends Protector's Defense when its bearer moves, and nothing else (#2096)", () => {
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     set.apply("protectors-defense", 7, "p", NO_RANKS);
     set.apply("stand-your-ground", 10, "p", NO_RANKS);
     expect(set.endOnBearerMove()).toEqual(["protectors-defense"]);
@@ -1019,7 +1020,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
   });
 
   it("ends every status on a death, each recorded with its source, in order (#940)", () => {
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     set.apply("burning", 5, "a", NO_RANKS);
     set.apply("parasitic-bond", 10, "b", NO_RANKS);
     set.apply("regeneration", 10, "c", NO_RANKS);
@@ -1074,7 +1075,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
   });
 
   it("records nothing for a reset, or a removal of what is not there", () => {
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     set.apply("parasitic-bond", 10, "a", NO_RANKS);
     set.drainChanges();
     set.clear();
@@ -1083,7 +1084,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
   });
 
   it("records a hex it applied only while a status answers that (#1951)", () => {
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     set.recordAppliedHex("deep-freeze", "d");
     expect(set.drainChanges()).toEqual([]);
 
@@ -1107,7 +1108,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
   });
 
   it("records each time a foe takes aim only while a status answers that (#2095)", () => {
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     set.recordTargetedByFoe("f");
     expect(set.drainChanges()).toEqual([]);
 
@@ -1129,7 +1130,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
   });
 
   it("answers a hit by its source's attack of the role it names, and no one else's (#2134)", () => {
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     set.apply("mark-of-instability", 20, "s", NO_RANKS);
     set.drainChanges();
     set.recordHitByAttack("s", 30, "lead", WEAPONS.sword);
@@ -1153,7 +1154,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
   });
 
   it("frees and hastens only the chain roles Way of the Empty Palm names (#2134)", () => {
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     set.apply("way-of-the-empty-palm", 13, "s", new Map([["assassin.deadly-arts", 12]]));
     const boost = (id: string) => {
       const found = getSkill(id);
@@ -1180,7 +1181,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
       throw new Error("missing assassin.death-blossom");
     }
     const rechargeAt = (rank: number) => {
-      const set = new StatusSet();
+      const set = new StatusSet("fleshy");
       set.apply("way-of-the-empty-palm", 13, "s", new Map([["assassin.deadly-arts", rank]]));
       return ownSkillBoost(set.active, deathBlossom).rechargeFaster;
     };
@@ -1205,12 +1206,12 @@ describe("StatusSet changes, for the triggers (#887)", () => {
   });
 
   it("ends only a once-only interrupt guard when an interrupt is stopped (#1964)", () => {
-    const once = new StatusSet();
+    const once = new StatusSet("fleshy");
     once.apply("mantra-of-concentration", 31, "m", NO_RANKS);
     expect(once.endOnInterruptGuarded()).toEqual(["mantra-of-concentration"]);
     expect(once.has("mantra-of-concentration")).toBe(false);
 
-    const paying = new StatusSet();
+    const paying = new StatusSet("fleshy");
     paying.apply("mantra-of-resolve", 5, "m", NO_RANKS);
     expect(paying.endOnInterruptGuarded()).toEqual([]);
     expect(paying.has("mantra-of-resolve")).toBe(true);
@@ -1243,7 +1244,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
       sourceId: "b",
       trigger: getStatusDefinition("mark-of-pain").triggers[0],
     };
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     set.apply("backfire", 10, "a", NO_RANKS);
     set.drainChanges();
     set.recordHit(WEAPONS.sword, undefined);
@@ -1270,7 +1271,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
   });
 
   it("a melee-bound hit trigger answers a sword or a hammer, not a bow nor a thrown spear (#1359)", () => {
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     set.apply("warriors-endurance", 29, "w", NO_RANKS);
     set.drainChanges();
     for (const weapon of [WEAPONS.longbow, WEAPONS.spear]) {
@@ -1282,7 +1283,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
     expect(set.drainChanges()).toHaveLength(2);
   });
   it("a hit trigger bound to a chain role answers only that role's hit; unbound, every hit (#2432)", () => {
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     set.apply("way-of-the-lotus", 20, "a", NO_RANKS);
     set.drainChanges();
     set.recordHit(WEAPONS.daggers, undefined);
@@ -1292,7 +1293,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
     set.recordHit(WEAPONS.daggers, "dual");
     expect(set.drainChanges()).toHaveLength(1);
 
-    const unbound = new StatusSet();
+    const unbound = new StatusSet("fleshy");
     unbound.apply("insidious-parasite", 13, "a", NO_RANKS);
     unbound.drainChanges();
     unbound.recordHit(WEAPONS.daggers, undefined);
@@ -1301,7 +1302,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
   });
 
   it("a record keeps the triggers it was made with, though they end before the drain (#953)", () => {
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     set.apply("mark-of-pain", 30, "b", NO_RANKS);
     set.drainChanges();
     set.recordPhysicalDamage();
@@ -1337,7 +1338,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
       sourceId: "rit",
       trigger: getStatusDefinition("vengeful-weapon").triggers[0],
     };
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     set.recordDamageFromFoe("war", "slashing", 10, false);
     expect(set.drainChanges()).toEqual([]);
 
@@ -1361,7 +1362,7 @@ describe("StatusSet changes, for the triggers (#887)", () => {
       sourceId: "ele",
       trigger: getStatusDefinition("mark-of-rodgort").triggers[0],
     };
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     set.apply("mark-of-rodgort", 30, "ele", NO_RANKS);
     set.drainChanges();
     set.recordDamageFromFoe("ele", "lightning", 10, false);
@@ -1463,7 +1464,7 @@ describe("aggregateModifiers", () => {
   });
 
   it("sums additive health degeneration from stacked conditions", () => {
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     set.apply("bleeding", 10, "a", NO_RANKS);
     set.apply("poison", 10, "a", NO_RANKS);
     const mods = aggregateModifiers(set.active);
@@ -1474,7 +1475,7 @@ describe("aggregateModifiers", () => {
   });
 
   it("lets a regeneration enchantment offset a degenerating condition", () => {
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     set.apply("bleeding", 10, "a", NO_RANKS);
     set.apply("regeneration", 10, "a", NO_RANKS);
     // -3 + 4 = +1: the heal wins, which is exactly the counterplay a
@@ -1483,21 +1484,21 @@ describe("aggregateModifiers", () => {
   });
 
   it("sums armor modifiers, including a negative one", () => {
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     set.apply("armor-boost", 10, "a", NO_RANKS);
     set.apply("healing-signet-armor", 10, "a", NO_RANKS);
     expect(aggregateModifiers(set.active).armorModifier).toBe(24 - 40);
   });
 
   it("multiplies movement penalties rather than summing them", () => {
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     set.apply("crippled", 10, "a", NO_RANKS);
     const mods = aggregateModifiers(set.active);
     expect(mods.moveSpeedMultiplier).toBe(0.5);
   });
 
   it("takes the worst miss chance rather than compounding it", () => {
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     set.apply("blind", 10, "a", NO_RANKS);
     expect(aggregateModifiers(set.active).attackMissChance).toBe(
       getStatusDefinition("blind").attackMissChance,
@@ -1508,7 +1509,7 @@ describe("aggregateModifiers", () => {
 describe("attack duration (ADR-0029)", () => {
   function multiplierWith(statuses: Partial<Record<StatusId, number>>): number {
     return withAttackDuration(statuses, () => {
-      const set = new StatusSet();
+      const set = new StatusSet("fleshy");
       for (const id of Object.keys(statuses)) {
         set.apply(id as StatusId, 10, "a", NO_RANKS);
       }
@@ -1584,7 +1585,7 @@ describe("attack duration (ADR-0029)", () => {
 
 describe("StatusSet.countIncomingAttack (#524)", () => {
   it("ends a status after its endsAfterAttacks, and leaves the others", () => {
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     set.apply("watch-yourself", 10, "w", NO_RANKS);
     set.apply("guardian", 10, "m", NO_RANKS);
     expect(set.countIncomingAttack()).toEqual([]);
@@ -1595,7 +1596,7 @@ describe("StatusSet.countIncomingAttack (#524)", () => {
   });
 
   it("starts the count again when the status is applied anew", () => {
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     set.apply("watch-yourself", 5, "w", NO_RANKS);
     set.countIncomingAttack();
     set.countIncomingAttack();
@@ -1606,7 +1607,7 @@ describe("StatusSet.countIncomingAttack (#524)", () => {
 
 describe("countHit (#939)", () => {
   it("counts a hit with any weapon for a status that names none (#1022)", () => {
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     set.apply("splinter-weapon", 20, "rit", NO_RANKS);
     set.apply("sand-shards", 20, "dervish", NO_RANKS);
     expect(set.countHit("sword")).toEqual([]);
@@ -1703,7 +1704,7 @@ describe("StatusSet.castSpell (#1614, #2132)", () => {
   it("renews Lyssa's Aura only for a spell at a foe, and Kinetic Armor for any", () => {
     expect(getStatusDefinition("lyssas-aura").renewsOn).toEqual(["bearer-casts-spell-at-foe"]);
     expect(getStatusDefinition("kinetic-armor").renewsOn).toEqual(["bearer-casts-spell"]);
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     set.apply("lyssas-aura", 10, "m", NO_RANKS);
     set.apply("kinetic-armor", 12, "m", NO_RANKS);
     set.advance(7, false);
@@ -1717,7 +1718,7 @@ describe("StatusSet.castSpell (#1614, #2132)", () => {
 
 describe("StatusSet.recordInterrupt (#1473, #2132)", () => {
   it("carries the skill interrupted, and none for a plain swing", () => {
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     set.apply("persistence-of-memory", 17, "m", NO_RANKS);
     set.recordInterrupt("foe", { skillId: "mesmer.empathy", key: "mesmer.empathy" });
     set.recordInterrupt("foe", undefined);
@@ -1735,20 +1736,20 @@ describe("rank-scaled speed and reversal (#2428)", () => {
     [0, 1.3],
     [12, 1.42],
   ])("Burning Speed at Fire Magic %i moves %f times as fast", (rank, multiplier) => {
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     set.apply("burning-speed", 7, "e", new Map([[FIRE, rank]]));
     expect(speed(set)).toBeCloseTo(multiplier);
   });
 
   it("is barred like any boost by preventsSpeedBoosts", () => {
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     set.apply("muddy-terrain", 10, "r", NO_RANKS);
     set.apply("burning-speed", 7, "e", new Map([[FIRE, 12]]));
     expect(speed(set)).toBeCloseTo(0.9);
   });
 
   it("leaves a flat speed as it was: Crippled and Dash", () => {
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     set.apply("crippled", 10, "a", NO_RANKS);
     expect(speed(set)).toBe(0.5);
     set.apply("dash", 3, "a", NO_RANKS);
@@ -1759,7 +1760,7 @@ describe("rank-scaled speed and reversal (#2428)", () => {
     [0, 20],
     [12, 84],
   ])("Life Sheath at Protection Prayers %i caps its reversal at %i", (rank, cap) => {
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     set.apply("life-sheath", 8, "monk", new Map([["monk.protection-prayers", rank]]));
     expect(set.takeReversal()).toEqual({ id: "life-sheath", cap });
   });
@@ -1773,20 +1774,20 @@ describe("scaled damage reduction, a slow under a boost bar, an elemental trigge
     [0, 1],
     [12, 25],
   ])("Stoneflesh Aura at Earth Magic %i takes %i off each packet", (rank, reduction) => {
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     set.apply("stoneflesh-aura", 13, "e", new Map([[EARTH, rank]]));
     expect(modifiers(set).damageReduction).toBe(reduction);
     expect(modifiers(set).preventsCriticalHits).toBe(true);
   });
 
   it("leaves a flat reduction as it was: Call of Protection's 17", () => {
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     set.apply("call-of-protection", 10, "r", NO_RANKS);
     expect(modifiers(set).damageReduction).toBe(17);
   });
 
   it("slows Icy Shackles' bearer 66%, 90% while enchanted, a speed-boost bar or not", () => {
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     set.apply("icy-shackles", 8, "e", NO_RANKS);
     expect(modifiers(set).moveSpeedMultiplier).toBeCloseTo(0.34);
     set.apply("stoneflesh-aura", 13, "f", NO_RANKS);
@@ -1796,7 +1797,7 @@ describe("scaled damage reduction, a slow under a boost bar, an elemental trigge
   });
 
   it("still bars Godspeed's boost under a speed-boost bar", () => {
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     set.apply("godspeed", 10, "p", NO_RANKS);
     set.apply("stoneflesh-aura", 13, "f", NO_RANKS);
     expect(modifiers(set).moveSpeedMultiplier).toBeCloseTo(1.25);
@@ -1805,7 +1806,7 @@ describe("scaled damage reduction, a slow under a boost bar, an elemental trigge
   });
 
   it("answers elemental damage with Ward of Weakness, physical with Mark of Pain", () => {
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     set.apply("ward-of-weakness", 1, "e", NO_RANKS);
     set.apply("mark-of-pain", 10, "n", NO_RANKS);
     set.recordElementalDamage(10);
@@ -1820,8 +1821,35 @@ describe("scaled damage reduction, a slow under a boost bar, an elemental trigge
     [0, 1],
     [12, 4],
   ])("Glyph of Swiftness at Air Magic %i holds the next %i spells", (rank, count) => {
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     set.apply("glyph-of-swiftness", 15, "e", new Map([["elementalist.air-magic", rank]]));
     expect(set.get("glyph-of-swiftness")?.spellsLeft).toBe(count);
+  });
+});
+
+describe("StatusSet body traits (#3881)", () => {
+  const immune = (body: BodyTrait): StatusId[] => {
+    const set = new StatusSet(body);
+    return (
+      ["bleeding", "poison", "disease", "burning", "blind", "expose-defenses", "guardian"] as const
+    ).filter((id) => set.isImmuneTo(id));
+  };
+
+  it("a fleshy body carries everything", () => {
+    expect(immune("fleshy")).toEqual([]);
+  });
+
+  it("a body that is not fleshy never bleeds, sickens or takes poison", () => {
+    expect(immune("non-fleshy")).toEqual(["bleeding", "poison", "disease"]);
+  });
+
+  it("a spirit takes no hex and no condition but Burning, and is still enchanted", () => {
+    expect(immune("spirit")).toEqual(["bleeding", "poison", "disease", "blind", "expose-defenses"]);
+  });
+
+  it("an immune body's apply lands nothing", () => {
+    const set = new StatusSet("non-fleshy");
+    set.apply("bleeding", 10, "foe", NO_RANKS);
+    expect(set.has("bleeding")).toBe(false);
   });
 });

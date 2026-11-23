@@ -61,18 +61,20 @@
 
 **Состояния** вредят тебе, пока не закончатся или пока их не снимут:
 
-| Состояние                                                                                   | Что делает                                              |
-| ------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
-| ![Bleeding](../../../apps/web/public/icons/status/bleeding.svg) **Bleeding**                | отнимает здоровье                                       |
-| ![Burning](../../../apps/web/public/icons/status/burning.svg) **Burning**                   | быстро отнимает здоровье                                |
-| ![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison**                      | отнимает здоровье                                       |
-| ![Disease](../../../apps/web/public/icons/status/disease.svg) **Disease**                   | отнимает здоровье и передаётся всем рядом с тобой       |
-| ![Crippled](../../../apps/web/public/icons/status/crippled.svg) **Crippled**                | ты двигаешься вдвое медленнее                           |
-| ![Blind](../../../apps/web/public/icons/status/blind.svg) **Blind**                         | большинство твоих атак промахиваются                    |
-| ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness**                | твоё оружие бьёт намного слабее                         |
-| ![Cracked Armor](../../../apps/web/public/icons/status/cracked-armor.svg) **Cracked Armor** | меньше брони                                            |
-| ![Deep Wound](../../../apps/web/public/icons/status/deep-wound.svg) **Deep Wound**          | меньше максимального здоровья, и лечение работает хуже  |
-| ![Dazed](../../../apps/web/public/icons/status/dazed.svg) **Dazed**                         | заклинания кастуются медленно; любая атака их прерывает |
+| Состояние                                                                                   | Что делает                                                      |
+| ------------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| ![Bleeding](../../../apps/web/public/icons/status/bleeding.svg) **Bleeding**                | отнимает здоровье                                               |
+| ![Burning](../../../apps/web/public/icons/status/burning.svg) **Burning**                   | быстро отнимает здоровье                                        |
+| ![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison**                      | отнимает здоровье                                               |
+| ![Disease](../../../apps/web/public/icons/status/disease.svg) **Disease**                   | отнимает здоровье и передаётся телам того же рода рядом с тобой |
+| ![Crippled](../../../apps/web/public/icons/status/crippled.svg) **Crippled**                | ты двигаешься вдвое медленнее                                   |
+| ![Blind](../../../apps/web/public/icons/status/blind.svg) **Blind**                         | большинство твоих атак промахиваются                            |
+| ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness**                | твоё оружие бьёт намного слабее                                 |
+| ![Cracked Armor](../../../apps/web/public/icons/status/cracked-armor.svg) **Cracked Armor** | меньше брони                                                    |
+| ![Deep Wound](../../../apps/web/public/icons/status/deep-wound.svg) **Deep Wound**          | меньше максимального здоровья, и лечение работает хуже          |
+| ![Dazed](../../../apps/web/public/icons/status/dazed.svg) **Dazed**                         | заклинания кастуются медленно; любая атака их прерывает         |
+
+Прислужники (кроме Мясного голема), призраки и духи не кровоточат, не отравляются и не заболевают, а духи не получают ни порчи, ни состояний, кроме **Burning**.
 
 ![Порча](../../../apps/web/public/icons/skill-type/hex.svg) **Порчи** накладывают на тебя враги, ![Зачарование](../../../apps/web/public/icons/skill-type/enchantment.svg) **зачарования** — ты сам или союзники. Каждое
 снимается навыком своего типа. Некоторые зачарования **поддерживаются**: они

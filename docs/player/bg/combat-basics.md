@@ -34,18 +34,20 @@
 
 **Състоянията** ти вредят, докато изтекат или бъдат премахнати:
 
-| Състояние                                                                                   | Какво прави                                             |
-| ------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
-| ![Bleeding](../../../apps/web/public/icons/status/bleeding.svg) **Bleeding**                | изтощава здравето                                       |
-| ![Burning](../../../apps/web/public/icons/status/burning.svg) **Burning**                   | бързо изтощава здравето                                 |
-| ![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison**                      | изтощава здравето                                       |
-| ![Disease](../../../apps/web/public/icons/status/disease.svg) **Disease**                   | изтощава здравето и се разпространява към всеки до теб  |
-| ![Crippled](../../../apps/web/public/icons/status/crippled.svg) **Crippled**                | движиш се с половин скорост                             |
-| ![Blind](../../../apps/web/public/icons/status/blind.svg) **Blind**                         | повечето ти атаки не попадат                            |
-| ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness**                | ударите с оръжие са много по-слаби                      |
-| ![Cracked Armor](../../../apps/web/public/icons/status/cracked-armor.svg) **Cracked Armor** | по-малко броня                                          |
-| ![Deep Wound](../../../apps/web/public/icons/status/deep-wound.svg) **Deep Wound**          | по-малко максимално здраве и лечението действа по-слабо |
-| ![Dazed](../../../apps/web/public/icons/status/dazed.svg) **Dazed**                         | заклинанията се правят бавно; всяка атака ги прекъсва   |
+| Състояние                                                                                   | Какво прави                                                         |
+| ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| ![Bleeding](../../../apps/web/public/icons/status/bleeding.svg) **Bleeding**                | изтощава здравето                                                   |
+| ![Burning](../../../apps/web/public/icons/status/burning.svg) **Burning**                   | бързо изтощава здравето                                             |
+| ![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison**                      | изтощава здравето                                                   |
+| ![Disease](../../../apps/web/public/icons/status/disease.svg) **Disease**                   | изтощава здравето и се разпространява към същия вид същество до теб |
+| ![Crippled](../../../apps/web/public/icons/status/crippled.svg) **Crippled**                | движиш се с половин скорост                                         |
+| ![Blind](../../../apps/web/public/icons/status/blind.svg) **Blind**                         | повечето ти атаки не попадат                                        |
+| ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness**                | ударите с оръжие са много по-слаби                                  |
+| ![Cracked Armor](../../../apps/web/public/icons/status/cracked-armor.svg) **Cracked Armor** | по-малко броня                                                      |
+| ![Deep Wound](../../../apps/web/public/icons/status/deep-wound.svg) **Deep Wound**          | по-малко максимално здраве и лечението действа по-слабо             |
+| ![Dazed](../../../apps/web/public/icons/status/dazed.svg) **Dazed**                         | заклинанията се правят бавно; всяка атака ги прекъсва               |
+
+Слугите (без Месния голем), призраците и духовете не кървят, не се отравят и не се разболяват, а духовете не поемат проклятия и никакво състояние освен **Burning**.
 
 ![Проклятие](../../../apps/web/public/icons/skill-type/hex.svg) **Проклятията** ти се налагат от врагове; ![Омагьосване](../../../apps/web/public/icons/skill-type/enchantment.svg) **омагьосванията** от теб или от съюзниците ти. Всяко се премахва със свой вид умение. Някои омагьосвания са **поддържани**: траят, докато ги прекратиш, и струват един пип енергия, докато действат. Щракни два пъти върху иконата, за да прекратиш такова.
 

@@ -71,13 +71,15 @@ verir:
 | ![Bleeding](../../../apps/web/public/icons/status/bleeding.svg) **Bleeding**                | Can akıtır                                             |
 | ![Burning](../../../apps/web/public/icons/status/burning.svg) **Burning**                   | Can'ı hızlı akıtır                                     |
 | ![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison**                      | Can akıtır                                             |
-| ![Disease](../../../apps/web/public/icons/status/disease.svg) **Disease**                   | Can akıtır ve yanındaki herkese yayılır                |
+| ![Disease](../../../apps/web/public/icons/status/disease.svg) **Disease**                   | Can akıtır ve yanındaki aynı türden bedenlere yayılır  |
 | ![Crippled](../../../apps/web/public/icons/status/crippled.svg) **Crippled**                | yarı hızda hareket edersin                             |
 | ![Blind](../../../apps/web/public/icons/status/blind.svg) **Blind**                         | saldırılarının çoğu ıskalar                            |
 | ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness**                | silahın çok daha zayıf vurur                           |
 | ![Cracked Armor](../../../apps/web/public/icons/status/cracked-armor.svg) **Cracked Armor** | daha az zırh                                           |
 | ![Deep Wound](../../../apps/web/public/icons/status/deep-wound.svg) **Deep Wound**          | daha az en yüksek Can ve iyileştirme daha az işe yarar |
 | ![Dazed](../../../apps/web/public/icons/status/dazed.svg) **Dazed**                         | büyüler yavaş yapılır; her saldırı onları keser        |
+
+Köleler (Et Golemi hariç), hayaletler ve ruhlar kanamaz, zehirlenmez ve hastalanmaz; ruhlar hiçbir lanet ve **Burning** dışında hiçbir durum almaz.
 
 ![Lanet](../../../apps/web/public/icons/skill-type/hex.svg) **Lanetler** sana düşmanlar tarafından yapılır; ![Tılsım](../../../apps/web/public/icons/skill-type/enchantment.svg) **tılsımlar** ise
 kendin ya da müttefiklerin tarafından. Her biri kendi türünden bir

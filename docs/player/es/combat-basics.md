@@ -62,18 +62,20 @@ momento, salvo un ![Grito](../../../apps/web/public/icons/skill-type/shout.svg) 
 
 Las **condiciones** te dañan hasta que se agotan o se eliminan:
 
-| Condición                                                                                             | Qué hace                                          |
-| ----------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
-| ![Sangrado](../../../apps/web/public/icons/status/bleeding.svg) **Sangrado**                          | quita salud                                       |
-| ![Quemadura](../../../apps/web/public/icons/status/burning.svg) **Quemadura**                         | quita salud rápido                                |
-| ![Veneno](../../../apps/web/public/icons/status/poison.svg) **Veneno**                                | quita salud                                       |
-| ![Enfermedad](../../../apps/web/public/icons/status/disease.svg) **Enfermedad**                       | quita salud, y se contagia a quien esté a tu lado |
-| ![Lisiado](../../../apps/web/public/icons/status/crippled.svg) **Lisiado**                            | te mueves a la mitad de velocidad                 |
-| ![Ceguera](../../../apps/web/public/icons/status/blind.svg) **Ceguera**                               | la mayoría de tus ataques fallan                  |
-| ![Debilidad](../../../apps/web/public/icons/status/weakness.svg) **Debilidad**                        | tus golpes de arma son mucho más débiles          |
-| ![Armadura agrietada](../../../apps/web/public/icons/status/cracked-armor.svg) **Armadura agrietada** | menos armadura                                    |
-| ![Herida profunda](../../../apps/web/public/icons/status/deep-wound.svg) **Herida profunda**          | menos salud máxima, y la curación funciona menos  |
-| ![Aturdido](../../../apps/web/public/icons/status/dazed.svg) **Aturdido**                             | hechizos lentos; cualquier ataque los interrumpe  |
+| Condición                                                                                             | Qué hace                                                                       |
+| ----------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
+| ![Sangrado](../../../apps/web/public/icons/status/bleeding.svg) **Sangrado**                          | quita salud                                                                    |
+| ![Quemadura](../../../apps/web/public/icons/status/burning.svg) **Quemadura**                         | quita salud rápido                                                             |
+| ![Veneno](../../../apps/web/public/icons/status/poison.svg) **Veneno**                                | quita salud                                                                    |
+| ![Enfermedad](../../../apps/web/public/icons/status/disease.svg) **Enfermedad**                       | quita salud, y se contagia a los cuerpos de tu misma clase que estén a tu lado |
+| ![Lisiado](../../../apps/web/public/icons/status/crippled.svg) **Lisiado**                            | te mueves a la mitad de velocidad                                              |
+| ![Ceguera](../../../apps/web/public/icons/status/blind.svg) **Ceguera**                               | la mayoría de tus ataques fallan                                               |
+| ![Debilidad](../../../apps/web/public/icons/status/weakness.svg) **Debilidad**                        | tus golpes de arma son mucho más débiles                                       |
+| ![Armadura agrietada](../../../apps/web/public/icons/status/cracked-armor.svg) **Armadura agrietada** | menos armadura                                                                 |
+| ![Herida profunda](../../../apps/web/public/icons/status/deep-wound.svg) **Herida profunda**          | menos salud máxima, y la curación funciona menos                               |
+| ![Aturdido](../../../apps/web/public/icons/status/dazed.svg) **Aturdido**                             | hechizos lentos; cualquier ataque los interrumpe                               |
+
+Los esbirros (salvo el Gólem de carne), los fantasmas y los espíritus no sangran, no se envenenan ni enferman, y los espíritus no reciben ningún maleficio ni ninguna condición salvo **Quemadura**.
 
 Los ![Maleficio](../../../apps/web/public/icons/skill-type/hex.svg) **maleficios** te los lanzan los enemigos; los ![Encantamiento](../../../apps/web/public/icons/skill-type/enchantment.svg) **encantamientos**, tú
 o tus aliados. Cada uno se elimina con su propio tipo de habilidad. Algunos

@@ -34,18 +34,20 @@
 
 Οι **παθήσεις** σε βλάπτουν μέχρι να λήξουν ή να αφαιρεθούν:
 
-| Πάθηση                                                                                      | Τι κάνει                                                  |
-| ------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
-| ![Bleeding](../../../apps/web/public/icons/status/bleeding.svg) **Bleeding**                | αφαιρεί Υγεία                                             |
-| ![Burning](../../../apps/web/public/icons/status/burning.svg) **Burning**                   | αφαιρεί Υγεία γρήγορα                                     |
-| ![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison**                      | αφαιρεί Υγεία                                             |
-| ![Disease](../../../apps/web/public/icons/status/disease.svg) **Disease**                   | αφαιρεί Υγεία, και μεταδίδεται σε όποιον είναι δίπλα σου  |
-| ![Crippled](../../../apps/web/public/icons/status/crippled.svg) **Crippled**                | κινείσαι με τη μισή ταχύτητα                              |
-| ![Blind](../../../apps/web/public/icons/status/blind.svg) **Blind**                         | οι περισσότερες επιθέσεις σου αστοχούν                    |
-| ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness**                | τα χτυπήματα του όπλου σου γίνονται πολύ πιο αδύναμα      |
-| ![Cracked Armor](../../../apps/web/public/icons/status/cracked-armor.svg) **Cracked Armor** | λιγότερη πανοπλία                                         |
-| ![Deep Wound](../../../apps/web/public/icons/status/deep-wound.svg) **Deep Wound**          | λιγότερη μέγιστη Υγεία, και οι θεραπείες πιάνουν λιγότερο |
-| ![Dazed](../../../apps/web/public/icons/status/dazed.svg) **Dazed**                         | τα ξόρκια ρίχνονται αργά· κάθε επίθεση τα διακόπτει       |
+| Πάθηση                                                                                      | Τι κάνει                                                        |
+| ------------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| ![Bleeding](../../../apps/web/public/icons/status/bleeding.svg) **Bleeding**                | αφαιρεί Υγεία                                                   |
+| ![Burning](../../../apps/web/public/icons/status/burning.svg) **Burning**                   | αφαιρεί Υγεία γρήγορα                                           |
+| ![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison**                      | αφαιρεί Υγεία                                                   |
+| ![Disease](../../../apps/web/public/icons/status/disease.svg) **Disease**                   | αφαιρεί Υγεία, και μεταδίδεται στο ίδιο είδος σώματος δίπλα σου |
+| ![Crippled](../../../apps/web/public/icons/status/crippled.svg) **Crippled**                | κινείσαι με τη μισή ταχύτητα                                    |
+| ![Blind](../../../apps/web/public/icons/status/blind.svg) **Blind**                         | οι περισσότερες επιθέσεις σου αστοχούν                          |
+| ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness**                | τα χτυπήματα του όπλου σου γίνονται πολύ πιο αδύναμα            |
+| ![Cracked Armor](../../../apps/web/public/icons/status/cracked-armor.svg) **Cracked Armor** | λιγότερη πανοπλία                                               |
+| ![Deep Wound](../../../apps/web/public/icons/status/deep-wound.svg) **Deep Wound**          | λιγότερη μέγιστη Υγεία, και οι θεραπείες πιάνουν λιγότερο       |
+| ![Dazed](../../../apps/web/public/icons/status/dazed.svg) **Dazed**                         | τα ξόρκια ρίχνονται αργά· κάθε επίθεση τα διακόπτει             |
+
+Οι υπηρέτες (εκτός από το Γκόλεμ από Σάρκα), τα φαντάσματα και τα πνεύματα δεν αιμορραγούν, δεν δηλητηριάζονται και δεν αρρωσταίνουν, και τα πνεύματα δεν δέχονται καμία κατάρα και καμία κατάσταση εκτός από **Burning**.
 
 Οι ![Κατάρα](../../../apps/web/public/icons/skill-type/hex.svg) **κατάρες** σου ρίχνονται από εχθρούς· τα ![Μάγεμα](../../../apps/web/public/icons/skill-type/enchantment.svg) **μαγέματα** από εσένα ή τους συμμάχους σου. Το καθένα αφαιρείται από το δικό του είδος ικανότητας. Κάποια μαγέματα είναι **συντηρούμενα**: κρατούν μέχρι να τα τελειώσεις, και κοστίζουν ένα pip Ενέργειας όσο είναι ενεργά. Κάνε διπλό κλικ στο εικονίδιό του για να τελειώσεις ένα.
 

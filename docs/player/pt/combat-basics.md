@@ -65,18 +65,20 @@ falha.
 
 **Condições** machucam você até acabarem ou serem removidas:
 
-| Condição                                                                                          | O que faz                                            |
-| ------------------------------------------------------------------------------------------------- | ---------------------------------------------------- |
-| ![Sangramento](../../../apps/web/public/icons/status/bleeding.svg) **Sangramento**                | drena vida                                           |
-| ![Queimadura](../../../apps/web/public/icons/status/burning.svg) **Queimadura**                   | drena vida rápido                                    |
-| ![Veneno](../../../apps/web/public/icons/status/poison.svg) **Veneno**                            | drena vida                                           |
-| ![Doença](../../../apps/web/public/icons/status/disease.svg) **Doença**                           | drena vida e passa para quem estiver ao seu lado     |
-| ![Aleijado](../../../apps/web/public/icons/status/crippled.svg) **Aleijado**                      | você anda na metade da velocidade                    |
-| ![Cegueira](../../../apps/web/public/icons/status/blind.svg) **Cegueira**                         | a maioria dos seus ataques erra                      |
-| ![Fraqueza](../../../apps/web/public/icons/status/weakness.svg) **Fraqueza**                      | seus golpes de arma ficam bem mais fracos            |
-| ![Armadura Rachada](../../../apps/web/public/icons/status/cracked-armor.svg) **Armadura Rachada** | menos armadura                                       |
-| ![Ferida Profunda](../../../apps/web/public/icons/status/deep-wound.svg) **Ferida Profunda**      | menos vida máxima, e as curas funcionam menos        |
-| ![Atordoado](../../../apps/web/public/icons/status/dazed.svg) **Atordoado**                       | feitiços saem devagar; qualquer ataque os interrompe |
+| Condição                                                                                          | O que faz                                                |
+| ------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| ![Sangramento](../../../apps/web/public/icons/status/bleeding.svg) **Sangramento**                | drena vida                                               |
+| ![Queimadura](../../../apps/web/public/icons/status/burning.svg) **Queimadura**                   | drena vida rápido                                        |
+| ![Veneno](../../../apps/web/public/icons/status/poison.svg) **Veneno**                            | drena vida                                               |
+| ![Doença](../../../apps/web/public/icons/status/disease.svg) **Doença**                           | drena vida e passa para corpos do mesmo tipo ao seu lado |
+| ![Aleijado](../../../apps/web/public/icons/status/crippled.svg) **Aleijado**                      | você anda na metade da velocidade                        |
+| ![Cegueira](../../../apps/web/public/icons/status/blind.svg) **Cegueira**                         | a maioria dos seus ataques erra                          |
+| ![Fraqueza](../../../apps/web/public/icons/status/weakness.svg) **Fraqueza**                      | seus golpes de arma ficam bem mais fracos                |
+| ![Armadura Rachada](../../../apps/web/public/icons/status/cracked-armor.svg) **Armadura Rachada** | menos armadura                                           |
+| ![Ferida Profunda](../../../apps/web/public/icons/status/deep-wound.svg) **Ferida Profunda**      | menos vida máxima, e as curas funcionam menos            |
+| ![Atordoado](../../../apps/web/public/icons/status/dazed.svg) **Atordoado**                       | feitiços saem devagar; qualquer ataque os interrompe     |
+
+Lacaios (exceto o Golem de Carne), fantasmas e espíritos não sangram, não são envenenados nem adoecem, e os espíritos não recebem nenhuma maldição nem nenhuma condição além de **Queimadura**.
 
 ![Maldição](../../../apps/web/public/icons/skill-type/hex.svg) **Maldições** são conjuradas em você por inimigos; ![Encantamento](../../../apps/web/public/icons/skill-type/enchantment.svg) **encantamentos**, por
 você ou por aliados. Cada um é removido pelo seu próprio tipo de

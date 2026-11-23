@@ -292,6 +292,8 @@ describe("ending a maintained enchantment (#838)", () => {
 
 describe("StatusSet.maintain (#837)", () => {
   it("refuses a status that is not an enchantment", () => {
-    expect(() => new StatusSet().maintain("bleeding", "a", 0, NO_RANKS)).toThrow(/enchantment/);
+    expect(() => new StatusSet("fleshy").maintain("bleeding", "a", 0, NO_RANKS)).toThrow(
+      /enchantment/,
+    );
   });
 });

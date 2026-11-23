@@ -71,13 +71,15 @@ kohdistetun keskeytyksen. Mikään niistä ei pysäytä kaatoa.
 | ![Bleeding](../../../apps/web/public/icons/status/bleeding.svg) **Bleeding**                | valuttaa terveyttä                                              |
 | ![Burning](../../../apps/web/public/icons/status/burning.svg) **Burning**                   | valuttaa terveyttä nopeasti                                     |
 | ![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison**                      | valuttaa terveyttä                                              |
-| ![Disease](../../../apps/web/public/icons/status/disease.svg) **Disease**                   | valuttaa terveyttä ja leviää jokaiseen vieressäsi               |
+| ![Disease](../../../apps/web/public/icons/status/disease.svg) **Disease**                   | valuttaa terveyttä ja leviää samanlaiseen kehoon vieressäsi     |
 | ![Crippled](../../../apps/web/public/icons/status/crippled.svg) **Crippled**                | liikut puolella nopeudella                                      |
 | ![Blind](../../../apps/web/public/icons/status/blind.svg) **Blind**                         | useimmat hyökkäyksistäsi menevät ohi                            |
 | ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness**                | aseesi osuu paljon heikommin                                    |
 | ![Cracked Armor](../../../apps/web/public/icons/status/cracked-armor.svg) **Cracked Armor** | vähemmän panssaria                                              |
 | ![Deep Wound](../../../apps/web/public/icons/status/deep-wound.svg) **Deep Wound**          | vähemmän enimmäisterveyttä, ja parannus tehoaa heikommin        |
 | ![Dazed](../../../apps/web/public/icons/status/dazed.svg) **Dazed**                         | loitsut käytetään hitaasti; mikä tahansa hyökkäys keskeyttää ne |
+
+Kätyrit (paitsi Lihagolemi), aaveet ja henget eivät vuoda verta, myrkyty tai sairastu, eivätkä henget saa kirouksia eivätkä muita tiloja kuin **Burning**.
 
 ![Kirous](../../../apps/web/public/icons/skill-type/hex.svg) **Kirouksia** loitsivat sinuun viholliset; ![Lumous](../../../apps/web/public/icons/skill-type/enchantment.svg) **lumouksia** sinä itse tai
 liittolaisesi. Kumpikin poistetaan omanlaisellaan taidolla. Jotkin

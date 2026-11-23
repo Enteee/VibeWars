@@ -57,18 +57,20 @@
 
 **العلل** تؤذيك حتى ينتهي أمدها أو تُزال:
 
-| العلة                                                                                       | ماذا تفعل                              |
-| ------------------------------------------------------------------------------------------- | -------------------------------------- |
-| ![Bleeding](../../../apps/web/public/icons/status/bleeding.svg) **Bleeding**                | تستنزف الصحة                           |
-| ![Burning](../../../apps/web/public/icons/status/burning.svg) **Burning**                   | تستنزف الصحة بسرعة                     |
-| ![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison**                      | تستنزف الصحة                           |
-| ![Disease](../../../apps/web/public/icons/status/disease.svg) **Disease**                   | تستنزف الصحة، وتنتقل إلى أي أحد بجانبك |
-| ![Crippled](../../../apps/web/public/icons/status/crippled.svg) **Crippled**                | تتحرك بنصف السرعة                      |
-| ![Blind](../../../apps/web/public/icons/status/blind.svg) **Blind**                         | تخطئ معظم هجماتك                       |
-| ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness**                | تصبح ضربات سلاحك أضعف بكثير            |
-| ![Cracked Armor](../../../apps/web/public/icons/status/cracked-armor.svg) **Cracked Armor** | درع أقل                                |
-| ![Deep Wound](../../../apps/web/public/icons/status/deep-wound.svg) **Deep Wound**          | صحة قصوى أقل، ويعمل العلاج بقدر أقل    |
-| ![Dazed](../../../apps/web/public/icons/status/dazed.svg) **Dazed**                         | تلقى التعاويذ ببطء؛ وأي هجوم يقاطعها   |
+| العلة                                                                                       | ماذا تفعل                                        |
+| ------------------------------------------------------------------------------------------- | ------------------------------------------------ |
+| ![Bleeding](../../../apps/web/public/icons/status/bleeding.svg) **Bleeding**                | تستنزف الصحة                                     |
+| ![Burning](../../../apps/web/public/icons/status/burning.svg) **Burning**                   | تستنزف الصحة بسرعة                               |
+| ![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison**                      | تستنزف الصحة                                     |
+| ![Disease](../../../apps/web/public/icons/status/disease.svg) **Disease**                   | تستنزف الصحة، وتنتقل إلى من بجانبك من النوع نفسه |
+| ![Crippled](../../../apps/web/public/icons/status/crippled.svg) **Crippled**                | تتحرك بنصف السرعة                                |
+| ![Blind](../../../apps/web/public/icons/status/blind.svg) **Blind**                         | تخطئ معظم هجماتك                                 |
+| ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness**                | تصبح ضربات سلاحك أضعف بكثير                      |
+| ![Cracked Armor](../../../apps/web/public/icons/status/cracked-armor.svg) **Cracked Armor** | درع أقل                                          |
+| ![Deep Wound](../../../apps/web/public/icons/status/deep-wound.svg) **Deep Wound**          | صحة قصوى أقل، ويعمل العلاج بقدر أقل              |
+| ![Dazed](../../../apps/web/public/icons/status/dazed.svg) **Dazed**                         | تلقى التعاويذ ببطء؛ وأي هجوم يقاطعها             |
+
+التوابع (عدا غولم اللحم) والأشباح والأرواح لا تنزف ولا تتسمم ولا تمرض، والأرواح لا تأخذ أي لعنة ولا أي حالة سوى **Burning**.
 
 ![لعنة](../../../apps/web/public/icons/skill-type/hex.svg) **اللعنات** يلقيها عليك الأعداء؛ و![طلسم](../../../apps/web/public/icons/skill-type/enchantment.svg) **الطلاسم** تلقيها أنت أو حلفاؤك. وكل
 منها يُزال بنوعه الخاص من المهارات. بعض الطلاسم **مُدامة**: تدوم حتى تنهيها،

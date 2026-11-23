@@ -179,6 +179,7 @@ import {
   STATUS_DEFINITIONS,
   StatusSet,
   type ActiveStatus,
+  type BodyTrait,
   type Outbreak,
   type StatusChange,
   type StatusDefinition,
@@ -4799,7 +4800,8 @@ export class MatchSimulation {
 
   /**
    * Spreading statuses (#765), once everyone has acted: every living
-   * combatant adjacent to a living bearer, on either team, catches it for
+   * combatant of the bearer's own kind of body (#3881, `bodyType`)
+   * adjacent to a living bearer, on either team, catches it for
    * as long as the bearer has left, once per outbreak. Who carries what
    * is read before anyone catches anything, so one caught this step
    * spreads from the next, and in the participants' fixed order, so the
@@ -4832,6 +4834,7 @@ export class MatchSimulation {
         // Immune (#1455): not caught, and free to catch it once that ends.
         if (
           outbreak.infected.has(other.id) ||
+          bodyType(other) !== bodyType(record) ||
           !sharesFloor(other.floors, floorOf(record.layer)) ||
           distance(record.position, other.position) > AREA_ADJACENT ||
           other.combatant.statuses.isImmuneTo(status.id)
@@ -11625,7 +11628,7 @@ export class MatchSimulation {
 
   #combatant(spec: ParticipantSpec): Combatant {
     const maxHealth = spec.maxHealth ?? this.#ruleset.combat.baseHealth;
-    const statuses = new StatusSet(this.#spentStatuses);
+    const statuses = new StatusSet(bodyTrait(spec.creature), this.#spentStatuses);
     return {
       id: spec.id,
       health: maxHealth * (spec.startHealthFraction ?? 1),
@@ -11660,7 +11663,27 @@ export class MatchSimulation {
   }
 }
 
-/** A body's type, as Edge of Extinction reads it (#1886): a creature's kind, or `"character"`. */
+/**
+ * A body's type, a creature's kind or `"character"`: what Edge of
+ * Extinction reads (#1886), and who catches Disease from whom (#3881).
+ */
 function bodyType(record: ParticipantRecord): CreatureKind | "character" {
   return record.creature?.kind ?? "character";
+}
+
+/**
+ * What a body is made of (#3881), GW1's *Fleshy*: a spirit is a spirit, a
+ * minion but the Flesh Golem and a ghost are not fleshy, and everyone else is.
+ */
+function bodyTrait(creature: Creature | undefined): BodyTrait {
+  switch (creature?.kind) {
+    case "spirit":
+      return "spirit";
+    case "minion":
+      return creature.look === "flesh-golem" ? "fleshy" : "non-fleshy";
+    case "ghostly-hero":
+      return "non-fleshy";
+    default:
+      return "fleshy";
+  }
 }

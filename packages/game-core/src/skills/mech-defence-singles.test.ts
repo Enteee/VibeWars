@@ -230,7 +230,7 @@ function bearing(id: StatusId, ranks: ReadonlyMap<string, number> = NO_RANKS): C
 
 describe("Stone Striker (#2503)", () => {
   it("turns physical and elemental damage dealt and taken into earth", () => {
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     set.apply("stone-striker", 25, "b", NO_RANKS);
     const dealtAs = damageDealtAsOf(set.active);
     expect(damageTypeDealt("slashing", dealtAs)).toBe("earth");
@@ -240,7 +240,7 @@ describe("Stone Striker (#2503)", () => {
   });
 
   it("leaves armor-ignoring damage as it is", () => {
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     set.apply("stone-striker", 25, "b", NO_RANKS);
     expect(damageTypeDealt("chaos", damageDealtAsOf(set.active))).toBe("chaos");
     expect(damageTypeTaken("holy", set.active)).toBe("holy");
