@@ -608,6 +608,10 @@ export default {
   "hud.outcomeVictory": "پیروزی",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (مرده)",
+  "hud.preMatchStartingAnyway":
+    "در انتظار بازیکنان: {joined}/{expected}، در هر صورت تا {seconds} ثانیه دیگر شروع می‌شود",
+  "hud.preMatchStartsIn": "مسابقه تا {seconds} دیگر شروع می‌شود",
+  "hud.preMatchWaiting": "در انتظار بازیکنان: {joined}/{expected}",
   "hud.priest": "کشیش",
   "hud.priestDead": "کشیش (مرده)",
   "hud.raise": "زنده‌شدن {clock}",
@@ -1330,7 +1334,6 @@ export default {
   "teamEditor.name": "نام",
   "teamEditor.noCharacters": "شخصیتی برای کپی نداری.",
   "teamEditor.notSaved": "ذخیره نشد: {error}",
-  "teamEditor.openInCharacter": "باز کردن در صفحهٔ شخصیت ›",
   "teamEditor.professions": "حرفه‌ها",
   "teamEditor.professionsTitle": "حرفه‌های تیم",
   "teamEditor.replaceMember": "جایگزینی {member} با {character}",

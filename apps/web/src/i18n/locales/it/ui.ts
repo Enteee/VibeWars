@@ -644,6 +644,10 @@ export default {
   "hud.outcomeVictory": "Vittoria",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (morto)",
+  "hud.preMatchStartingAnyway":
+    "In attesa dei giocatori: {joined}/{expected}, inizia comunque tra {seconds} s",
+  "hud.preMatchStartsIn": "La partita inizia tra {seconds}",
+  "hud.preMatchWaiting": "In attesa dei giocatori: {joined}/{expected}",
   "hud.priest": "sacerdote",
   "hud.priestDead": "sacerdote (morto)",
   "hud.raise": "risorge {clock}",
@@ -1406,7 +1410,6 @@ export default {
   "teamEditor.name": "Nome",
   "teamEditor.noCharacters": "Non hai personaggi da copiare.",
   "teamEditor.notSaved": "Non salvato: {error}",
-  "teamEditor.openInCharacter": "Apri nella schermata Personaggio ›",
   "teamEditor.professions": "Professioni",
   "teamEditor.professionsTitle": "le professioni della squadra",
   "teamEditor.replaceMember": "Sostituisci {member} con {character}",

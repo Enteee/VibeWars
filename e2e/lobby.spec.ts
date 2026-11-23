@@ -774,6 +774,8 @@ test("a 1v1 lists every character, team members too, and one click plays the one
 test("a spectator presses Watch and follows the match 10 s late, with nothing to act with (#480)", async ({
   browser,
 }) => {
+  // The pre-match countdown (#3818) and the 10 s delay both come before the first look.
+  test.setTimeout(90_000);
   const { context, pages } = await openPeers(browser, 3);
   const [host, guest, watcher] = pages as [Page, Page, Page];
 

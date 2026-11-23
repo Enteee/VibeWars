@@ -607,6 +607,10 @@ export default {
   "hud.outcomeVictory": "Sejr",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (død)",
+  "hud.preMatchStartingAnyway":
+    "Venter på spillere: {joined}/{expected}, starter alligevel om {seconds} s",
+  "hud.preMatchStartsIn": "Kampen starter om {seconds}",
+  "hud.preMatchWaiting": "Venter på spillere: {joined}/{expected}",
   "hud.priest": "præst",
   "hud.priestDead": "præst (død)",
   "hud.raise": "genoplivning {clock}",
@@ -1329,7 +1333,6 @@ export default {
   "teamEditor.name": "Navn",
   "teamEditor.noCharacters": "Du har ingen figurer at kopiere.",
   "teamEditor.notSaved": "Ikke gemt: {error}",
-  "teamEditor.openInCharacter": "Åbn på figursiden ›",
   "teamEditor.professions": "Klasser",
   "teamEditor.professionsTitle": "holdets klasser",
   "teamEditor.replaceMember": "Erstat {member} med {character}",

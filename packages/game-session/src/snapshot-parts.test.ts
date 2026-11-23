@@ -104,6 +104,7 @@ function snapshot(
     elapsedSeconds: tick / 20,
     score: [3, 4],
     phase: "active",
+    preMatch: null,
     winningTeam: null,
     endReason: null,
     players: Array.from({ length: players }, (_, i) => player(i)),

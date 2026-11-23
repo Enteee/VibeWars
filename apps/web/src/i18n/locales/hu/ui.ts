@@ -610,6 +610,10 @@ export default {
   "hud.outcomeVictory": "Győzelem",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (halott)",
+  "hud.preMatchStartingAnyway":
+    "Várakozás a játékosokra: {joined}/{expected}, {seconds} mp múlva mindenképp indul",
+  "hud.preMatchStartsIn": "A meccs {seconds} múlva kezdődik",
+  "hud.preMatchWaiting": "Várakozás a játékosokra: {joined}/{expected}",
   "hud.priest": "pap",
   "hud.priestDead": "pap (halott)",
   "hud.raise": "feltámasztás {clock}",
@@ -1336,7 +1340,6 @@ export default {
   "teamEditor.name": "Név",
   "teamEditor.noCharacters": "Nincs másolható karaktered.",
   "teamEditor.notSaved": "Nincs mentve: {error}",
-  "teamEditor.openInCharacter": "Megnyitás a Karakter képernyőn ›",
   "teamEditor.professions": "Kasztok",
   "teamEditor.professionsTitle": "a csapat kasztjai",
   "teamEditor.replaceMember": "{member} cseréje erre: {character}",

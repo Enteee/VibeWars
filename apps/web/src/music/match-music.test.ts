@@ -87,6 +87,7 @@ function snapshot(
     score: [0, 0],
     elapsedSeconds: 0,
     phase: over.finished === undefined ? "active" : "finished",
+    preMatch: null,
     winningTeam: over.finished,
     endReason: over.finished === undefined ? undefined : "score",
     projectiles: [],

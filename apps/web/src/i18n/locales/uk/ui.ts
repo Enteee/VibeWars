@@ -663,6 +663,10 @@ export default {
   "hud.outcomeVictory": "Перемога",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (мертвий)",
+  "hud.preMatchStartingAnyway":
+    "Очікування гравців: {joined}/{expected}, почнеться все одно за {seconds} с",
+  "hud.preMatchStartsIn": "Матч почнеться за {seconds}",
+  "hud.preMatchWaiting": "Очікування гравців: {joined}/{expected}",
   "hud.priest": "жрець",
   "hud.priestDead": "жрець (мертвий)",
   "hud.raise": "воскресіння {clock}",
@@ -1451,7 +1455,6 @@ export default {
   "teamEditor.name": "Назва",
   "teamEditor.noCharacters": "У тебе немає персонажів для копіювання.",
   "teamEditor.notSaved": "Не збережено: {error}",
-  "teamEditor.openInCharacter": "Відкрити на екрані персонажа ›",
   "teamEditor.professions": "Професії",
   "teamEditor.professionsTitle": "професії команди",
   "teamEditor.replaceMember": "Замінити {member} на {character}",

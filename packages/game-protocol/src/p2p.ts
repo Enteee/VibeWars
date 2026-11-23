@@ -879,6 +879,27 @@ const END_REASONS = [
 type EndReason = (typeof END_REASONS)[number];
 
 /**
+ * Where a match is (#3818): `waiting` for its planned players, each held
+ * in its spawn bubble; `countdown` to the start, still held; `active`;
+ * `finished`.
+ */
+export const WIRE_MATCH_PHASES = ["waiting", "countdown", "active", "finished"] as const;
+export type WireMatchPhase = (typeof WIRE_MATCH_PHASES)[number];
+
+/** The wait before a match starts (#3818), while it is `waiting` or `countdown`. */
+export interface WirePreMatch {
+  /** Who has taken a seat, bots included, of `expected`. */
+  readonly joined: number;
+  readonly expected: number;
+  /**
+   * Whole seconds to the start in `countdown`; while `waiting`, to the
+   * countdown starting without whoever is missing, or `null` before that
+   * is announced.
+   */
+  readonly secondsLeft: number | null;
+}
+
+/**
  * The whole match at one tick, not a delta: what a client assembles from
  * that tick's `WireSnapshotPart`s. Never sent as it is.
  */
@@ -888,7 +909,9 @@ export interface WireSnapshot {
   readonly elapsedSeconds: number;
   /** Each team's points by team index (#2682): `teamCount` of them. */
   readonly score: readonly number[];
-  readonly phase: "active" | "finished";
+  readonly phase: WireMatchPhase;
+  /** The wait before the start (#3818); `null` once `active`. */
+  readonly preMatch: WirePreMatch | null;
   readonly winningTeam: WireTeam | null;
   readonly endReason: EndReason | null;
   readonly players: readonly WirePlayer[];
@@ -2825,13 +2848,27 @@ export function parseWireSnapshotPart(
     : { ...snapshot, part: raw.part, parts: raw.parts };
 }
 
+function parsePreMatch(value: unknown): WirePreMatch | undefined {
+  const raw = fields(value);
+  if (raw === undefined) {
+    return undefined;
+  }
+  const { joined, expected, secondsLeft } = raw;
+  return isCount(joined) &&
+    isCount(expected) &&
+    joined <= expected &&
+    (secondsLeft === null || isCount(secondsLeft))
+    ? { joined, expected, secondsLeft }
+    : undefined;
+}
+
 function parseSnapshot(raw: Fields): WireSnapshot | undefined {
   const score = parseArray(raw.score, MAX_WIRE_TEAMS, parseScore);
   if (
     !isCount(raw.tick) ||
     !isNumber(raw.elapsedSeconds) ||
     score === undefined ||
-    !isOneOf(raw.phase, ["active", "finished"] as const) ||
+    !isOneOf(raw.phase, WIRE_MATCH_PHASES) ||
     !(raw.winningTeam === null || isTeam(raw.winningTeam)) ||
     !(raw.endReason === null || isOneOf(raw.endReason, END_REASONS))
   ) {
@@ -2852,6 +2889,7 @@ function parseSnapshot(raw: Fields): WireSnapshot | undefined {
   const decks = parseArray(raw.decks, MAX_WIRE_TOGGLES, parseDeck);
   const lifts = parseArray(raw.lifts, MAX_WIRE_TOGGLES, parseLift);
   const capturePoints = parseArray(raw.capturePoints, MAX_WIRE_CAPTURE_POINTS, parseCapturePoint);
+  const preMatch = raw.preMatch === null ? null : parsePreMatch(raw.preMatch);
   const { altarHolder, altarHeldSeconds } = raw;
   return !(altarHolder === null || isTeam(altarHolder)) ||
     !isNumber(altarHeldSeconds) ||
@@ -2865,6 +2903,7 @@ function parseSnapshot(raw: Fields): WireSnapshot | undefined {
     relics === undefined ||
     altar === undefined ||
     capturePoints === undefined ||
+    preMatch === undefined ||
     gates === undefined ||
     switches === undefined ||
     teleports === undefined ||
@@ -2877,6 +2916,7 @@ function parseSnapshot(raw: Fields): WireSnapshot | undefined {
         elapsedSeconds: raw.elapsedSeconds,
         score,
         phase: raw.phase,
+        preMatch,
         winningTeam: raw.winningTeam,
         endReason: raw.endReason,
         players,
