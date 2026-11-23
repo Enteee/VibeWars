@@ -181,7 +181,10 @@ Panel vpravo je knižnica Tvorby postáv,
 so záložkou **Moje postavy** pred **Schopnosti** a **Výbava**. Na záložke **Moje postavy** pretiahni
 jednu zo svojich postáv na člena, aby sa z neho stala jej kópia.
 Kópia patrí tímu: jej zmena ani zmena postavy, z ktorej vznikla,
-druhú neovplyvní. Na záložke **Schopnosti** knižnica ukazuje
+druhú neovplyvní. Naopak, pretiahni člena na **Moje postavy** alebo na
+ich záložku a uložíš ho ako svoju novú postavu; ak je jeho meno obsadené,
+dostane " (copy)", a tím si člena ponechá taký, aký je.
+Na záložke **Schopnosti** knižnica ukazuje
 schopnosti člena, na ktorého si klikol naposledy; pretiahni jednu na pozíciu
 ktoréhokoľvek člena, aby si ju tam vybavil. Na vlastnej lište toho člena sa
 schopnosť, ktorá už na nej je, presunie na danú pozíciu. Položenie, ktoré člen

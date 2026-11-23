@@ -172,7 +172,10 @@ Panel po prawej to
 biblioteka Kreatora postaci, z kartą **Moje postacie** przed **Umiejętności**
 i **Sprzęt**. Na **Moje postacie** przeciągnij jedną ze swoich postaci na członka, aby
 uczynić z niego jej kopię. Kopia należy do drużyny: zmiana jej lub postaci, z której
-powstała, nie dotyka tej drugiej. Na **Umiejętności** biblioteka pokazuje umiejętności
+powstała, nie dotyka tej drugiej. W drugą stronę przeciągnij członka na
+**Moje postacie** albo na tę kartę, aby zapisać go jako nową własną postać; jeśli
+jego nazwa jest zajęta, dostaje " (copy)", a drużyna zachowuje członka bez zmian.
+Na **Umiejętności** biblioteka pokazuje umiejętności
 członka, którego kliknięto ostatnio; przeciągnij jedną na miejsce dowolnego członka,
 aby ją tam założyć. Na pasku tego członka umiejętność, która już na nim jest,
 przenosi się na to miejsce. Upuszczenie, którego członek nie przyjmie, umiejętność

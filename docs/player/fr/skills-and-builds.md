@@ -192,7 +192,11 @@ bibliothèque de l'Atelier de personnages, avec un onglet **Mes personnages**
 avant **Compétences** et **Équipement**. Sur **Mes personnages**, fais glisser
 un de tes personnages sur un membre pour faire de ce membre une copie. Une
 copie appartient à l'équipe : la modifier, ou modifier le personnage d'origine,
-laisse l'autre tel quel. Sur **Compétences**, la bibliothèque de compétences
+laisse l'autre tel quel. Dans l'autre sens, fais glisser un membre sur
+**Mes personnages**, ou sur son onglet, pour l'enregistrer comme un nouveau
+personnage à toi ; s'il porte un nom déjà pris, il reçoit " (copy)", et
+l'équipe garde le membre tel quel.
+Sur **Compétences**, la bibliothèque de compétences
 montre les compétences du dernier membre cliqué ; fais-en glisser une sur
 l'emplacement de n'importe quel membre pour l'y équiper. Sur la barre de ce
 membre, une compétence déjà présente se déplace vers l'emplacement. Un dépôt

@@ -192,6 +192,9 @@ do Criador de Personagem, com uma aba **Meus personagens** antes de
 **Habilidades** e **Equip.**. Em **Meus personagens**, arraste um dos seus
 personagens sobre um membro para torná-lo uma cópia dele. Uma cópia é da
 própria equipe: mudar ela, ou o personagem de origem, não afeta o outro.
+No sentido inverso, arraste um membro para **Meus personagens**, ou para a
+aba dele, para salvá-lo como um novo personagem seu; se o nome já estiver em
+uso, ele ganha " (copy)", e a equipe mantém o membro como está.
 Em **Habilidades**, a biblioteca mostra as habilidades do último membro em
 que você clicou; arraste uma para o espaço de qualquer membro para
 equipá-la ali. Na própria barra desse membro, uma habilidade que já está

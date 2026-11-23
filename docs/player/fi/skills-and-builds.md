@@ -191,7 +191,11 @@ paneeli on Hahmoeditorin kirjasto, jossa on **Omat hahmot** -välilehti
 ennen välilehtiä **Taidot** ja **Kamat**. **Omat hahmot** -välilehdellä
 vedä yksi hahmoistasi jäsenen päälle tehdäksesi jäsenestä sen kopion.
 Kopio on tiimin oma: sen tai sen lähteenä olleen hahmon muuttaminen
-jättää toisen ennalleen. **Taidot**-välilehdellä taitokirjasto näyttää
+jättää toisen ennalleen. Toisin päin vedä jäsen **Omat hahmot**
+-kohtaan tai sen välilehdelle tallentaaksesi sen uudeksi omaksi hahmoksesi;
+jos sen nimi on jo käytössä, se saa perään " (copy)", ja tiimi pitää jäsenen
+ennallaan.
+**Taidot**-välilehdellä taitokirjasto näyttää
 viimeksi napsauttamasi jäsenen taidot; vedä yksi minkä tahansa jäsenen
 paikkaan varustaaksesi sen sinne. Jäsenen omassa palkissa jo oleva taito
 siirtyy siihen paikkaan. Pudotus, jota jäsen ei voi ottaa, toisen

@@ -185,7 +185,11 @@ Panelet til højre er Figureditorens bibliotek,
 med en fane **Mine figurer** før **Evner** og **Udstyr**. På **Mine
 figurer** trækker du en af dine figurer hen på et medlem for at gøre det
 medlem til en kopi af den. En kopi er holdets egen: ændrer du den, eller
-den figur, den kom fra, forbliver den anden, som den var. På **Evner**
+den figur, den kom fra, forbliver den anden, som den var. Omvendt kan du trække et
+medlem hen på **Mine figurer**, eller på fanen, for at gemme det som en ny
+figur af dine egne; har den et navn, der er taget, får den " (copy)", og
+holdet beholder medlemmet, som det er.
+På **Evner**
 viser evnebiblioteket evnerne for det medlem, du sidst klikkede på; træk
 en hen på et vilkårligt medlems plads for at sætte den på der. På det
 medlems egen bjælke flytter en evne, der allerede er på den, til

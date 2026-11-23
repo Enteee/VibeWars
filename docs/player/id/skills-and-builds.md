@@ -178,7 +178,11 @@ Panel di kanan adalah perpustakaan Pembuat Karakter,
 dengan tab **Karakterku** sebelum **Skill** dan **Gear**. Di **Karakterku**, seret
 salah satu karaktermu ke seorang anggota untuk menjadikan anggota itu salinannya.
 Salinan adalah milik tim itu sendiri: mengubahnya, atau mengubah karakter asalnya,
-membiarkan yang lain seperti semula. Di **Skill**, perpustakaan skill menampilkan
+membiarkan yang lain seperti semula. Sebaliknya, seret seorang anggota ke
+**Karakterku**, atau ke tabnya, untuk menyimpannya sebagai karakter barumu sendiri;
+jika namanya sudah dipakai, ia mendapat " (copy)", dan tim tetap menyimpan
+anggota itu apa adanya.
+Di **Skill**, perpustakaan skill menampilkan
 skill anggota yang terakhir kamu klik; seret satu ke slot anggota mana pun
 untuk memasangnya di sana. Di bar milik anggota itu sendiri, skill yang sudah ada di sana pindah
 ke slot tersebut. Jatuhan yang tidak bisa diterima anggota, skill dari profesi lain
