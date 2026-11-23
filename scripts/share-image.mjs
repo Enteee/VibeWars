@@ -40,7 +40,7 @@ const DEFAULT_MAP = "ember-pits";
  * @type {Record<string, { wait: number, crop: Crop } | undefined>}
  */
 const CROPS = {
-  "ember-pits": { wait: 33, crop: { x: 300, y: 162, width: 600, height: 315 } },
+  "ember-pits": { wait: 55, crop: { x: 420, y: 60, width: 600, height: 315 } },
   "arena-canyon": { wait: 14, crop: { x: 300, y: 162, width: 600, height: 315 } },
 };
 const OUT = path.join(import.meta.dirname, "..", "apps", "web", "public", "share.png");
@@ -136,10 +136,12 @@ try {
   // A key starts it, and the fight runs until the name arrives.
   await page.keyboard.press("Space");
   // The title is put up over the fight while it still runs: at the prompt the
-  // fight is over, and a card with a title and no battle says nothing.
+  // fight is over, and a card with a title and no battle says nothing. Its
+  // band sits across the crop's lower third, wherever on the page the crop is.
+  const band = `left:${String(CROP.x)}px!important;width:${String(CROP.width)}px!important;top:${String(CROP.y + CROP.height * 0.68)}px!important`;
   await page.addStyleTag({
     content:
-      ".splash-title{visibility:visible!important;background:rgba(0,0,0,.5);top:62%!important;padding-block:.75rem!important}" +
+      `.splash-title{visibility:visible!important;background:rgba(0,0,0,.5);inset-inline:auto!important;${band};padding-block:.75rem!important}` +
       ".splash-wordmark{font-size:3rem!important}" +
       ".splash-prompt,.splash-hint{visibility:hidden!important}",
   });
