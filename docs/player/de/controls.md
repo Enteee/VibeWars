@@ -86,7 +86,7 @@ Außerhalb eines Matches liegen oben **[?]** (diese Hilfe), **⚙** (Optionen),
 **Lobby** (dein Einladungslink, Lobby beitreten, Offen/Zu, Verlassen und wer in deiner Lobby ist; das Abzeichen zählt sie),
 **♪** (Musik: was läuft und wie laut), Ton aus und Vollbild. Im Match liegen dieselben Knöpfe,
 außer Lobby, oben rechts am Bildschirm. In einem schmalen Fenster klappen diese Symbole und die
-übrigen Knöpfe des Bildschirms unter **⋯** ein; nur sein Hauptknopf bleibt draußen.
+übrigen Knöpfe des Bildschirms unter **☰** ein; nur sein Hauptknopf bleibt draußen.
 ⚙ öffnet die Optionen als Fenster unter der Leiste, mit dem Bildschirm dahinter; Esc, × oder ein Klick daneben schließt es.
 [?] öffnet die Hilfe genauso, als Fenster darunter mit einer Seitenauswahl oben; ein Match läuft dahinter weiter.
 Die Hilfe schließt mit ihrem ×, Esc, einem Klick daneben oder einem weiteren Druck auf [?].

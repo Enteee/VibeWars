@@ -206,7 +206,7 @@ describe("in a match (#1667)", () => {
   type BarSkill = (typeof BAR)[number];
   const SLOT = Object.fromEntries(BAR.map((id, slot) => [id, slot])) as Record<BarSkill, number>;
 
-  /** Only the Dervish has ranks: a foe's Mysticism would armor it while enchanted. */
+  /** Only the Dervish has ranks. */
   function body(id: string, team: number, spawn: Vec2, equipment = SCYTHE): ParticipantSpec {
     return {
       id,

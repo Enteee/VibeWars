@@ -904,6 +904,9 @@ export function loadLine(
   };
 }
 
+/** The glyph on a screen's more-actions toggle (#1902). */
+export const MORE_ACTIONS_GLYPH = "⋯";
+
 /** A screen's ⋯ (#1902): everything it does besides Save. */
 export interface MoreMenu {
   /** The ⋯ button, which an inline confirmation from the menu hangs off. */
@@ -942,7 +945,7 @@ export function moreMenu(
       }
     }
   };
-  const toggle = button("⋯", "editor-more-toggle", () => {
+  const toggle = button(MORE_ACTIONS_GLYPH, "editor-more-toggle", () => {
     menu.hidden = !menu.hidden;
     toggle.setAttribute("aria-expanded", String(!menu.hidden));
     if (!menu.hidden) {

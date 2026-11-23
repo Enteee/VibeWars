@@ -11,7 +11,7 @@ import {
   type PlayerBuild,
   type Vec2,
 } from "@vibewars/game-core";
-import { allWallSegments, pointInShape } from "@vibewars/game-maps/geometry";
+import { allWallSegments } from "@vibewars/game-maps/geometry";
 import {
   matchBreakables,
   matchGates,
@@ -30,14 +30,16 @@ import { SPLASH_RULES } from "../ui/splash-fight.js";
 
 import {
   CANYON_ARRIVAL,
-  CANYON_ARRIVALS,
-  CANYON_POCKET,
+  CANYON_BAY,
+  CANYON_NORTH_ARM,
+  CANYON_REJOIN,
   CANYON_SITES,
+  CANYON_SOUTH_ARM,
   TUTORIAL_CANYON,
   type CanyonPoint,
 } from "./canyon-map.js";
 import type { RatTally, RatWatch } from "./rat-watch.js";
-import { SKILLS_ON_RATS, pingBranch } from "./stations.js";
+import { SKILLS_ON_RATS, pingBranch, type Junction } from "./stations.js";
 import { SELF_ID, TUTOR_ID, body } from "./tutorial-world.js";
 
 /** Where the tutor stands as the pair arrives: beside the player, to the north. */
@@ -51,7 +53,7 @@ const LAST_LANDING = "boulder-run-3";
 
 /** Station 4's mark (#3247): east of the boulder run's last landing, on the trail. */
 export const DODGE_MARK: CanyonPoint = ((): CanyonPoint => {
-  const { map } = CANYON_ARRIVAL;
+  const map = TUTORIAL_CANYON;
   const landing = map.zones?.find((zone) => zone.id === LAST_LANDING);
   if (landing?.area.kind !== "polygon") {
     throw new Error(`${map.id}: no ${LAST_LANDING} to put station 4's mark past`);
@@ -59,7 +61,6 @@ export const DODGE_MARK: CanyonPoint = ((): CanyonPoint => {
   const xs = landing.area.points.map(({ x }) => x);
   const ys = landing.area.points.map(({ y }) => y);
   return {
-    map,
     position: vec2(Math.max(...xs) + MARK_PAST, (Math.min(...ys) + Math.max(...ys)) / 2),
     layer: landing.layer,
   };
@@ -84,7 +85,7 @@ export interface CanyonWall {
 }
 
 export const CRACKED_WALL: CanyonWall = ((): CanyonWall => {
-  const { map } = CANYON_ARRIVAL;
+  const map = TUTORIAL_CANYON;
   const id = "cracked-wall";
   const breakable = map.breakables?.find((entry) => entry.id === id);
   if (breakable?.wall.kind !== "rect") {
@@ -117,7 +118,7 @@ export interface CanyonClearing {
 }
 
 export const CLEARING: CanyonClearing = ((): CanyonClearing => {
-  const { map } = CANYON_ARRIVAL;
+  const map = TUTORIAL_CANYON;
   const zoneId = "clearing-rockfall";
   const zone = map.zones?.find((entry) => entry.id === zoneId);
   if (zone?.area.kind !== "polygon") {
@@ -153,7 +154,7 @@ export interface CanyonStart {
 }
 
 /**
- * The canyon's first map entered at station 5 (#3383), which only an e2e
+ * The canyon entered at station 5 (#3383), which only an e2e
  * build's seeded start does: the pair on station 4's mark, where its
  * dodges leave them.
  */
@@ -162,42 +163,59 @@ export function wallStart(): CanyonStart {
 }
 
 /**
- * The canyon's second map entered at station 11 (#3383), which only an e2e
- * build's seeded start does: the pair on the high deck, where station 10
- * leaves them, and station 8's rats slain.
+ * The canyon entered at station 8 (#3383), which only an e2e build's
+ * seeded start does: the pair on station 7's mark, where it leaves them.
+ */
+export function pocketStart(): CanyonStart {
+  return { position: BAD_GROUND.mark, layer: BAD_GROUND.layer, ratsSlain: false };
+}
+
+/**
+ * The canyon entered at station 11 (#3383), which only an e2e build's
+ * seeded start does: the pair at the foot of station 9's ledge, on the
+ * trail where it leaves them, and station 8's rats slain.
  */
 export function tunnelStart(): CanyonStart {
-  return { position: RAMP.mark, layer: RAMP.layer, ratsSlain: true };
+  return { position: LEDGE.foot, layer: LEDGE.lower, ratsSlain: true };
 }
 
 /**
- * The canyon's second map entered at station 14 (#3334), which only an
- * e2e build's seeded start does: the pair a few steps down the east
- * branch, where station 13 leaves the tutor, and station 8's rats slain.
+ * The canyon entered at station 13 (#3792), which only an e2e build's
+ * seeded start does: the pair at the junction's fork, where station 12
+ * leaves them, and station 8's rats slain.
+ */
+export function forkStart(): CanyonStart {
+  return { position: JUNCTION.fork, layer: JUNCTION.layer, ratsSlain: true };
+}
+
+/**
+ * The canyon entered at station 14 (#3334), which only an e2e build's
+ * seeded start does: the pair at the junction's rejoin, where station 13
+ * leaves them, and station 8's rats slain.
  */
 export function gateStart(): CanyonStart {
-  return { position: FORK.eastSide, layer: FORK.layer, ratsSlain: true };
+  return { position: JUNCTION.rejoin, layer: JUNCTION.layer, ratsSlain: true };
 }
 
 /**
- * One of the tutorial canyon's two maps (#3245), `part` 0 or 1, as a world
- * for the pair: no bots, only its zones, which strike on their own clock,
- * and on the second the rat pocket's rats (#3316). The player stands on
- * `start`, the map's arrival unless a seeded start says otherwise, the
- * tutor beside them; both play the builds they played on the battlefield.
+ * The tutorial canyon (#3245), one map (#3792), as a world for the pair:
+ * no bots, only its zones, which strike on their own clock, and the rats
+ * of stations 8 (#3316) and 12. The player stands on `start`, the
+ * arrival unless a seeded start says otherwise, the tutor beside them;
+ * both play the builds they played on the battlefield.
  */
 export function canyonWorld(
   seed: string,
   playerBuild: PlayerBuild,
   tutorBuild: PlayerBuild,
-  part: 0 | 1,
   start: CanyonStart = {
-    position: CANYON_ARRIVALS[part].position,
-    layer: CANYON_ARRIVALS[part].layer,
+    position: CANYON_ARRIVAL.position,
+    layer: CANYON_ARRIVAL.layer,
     ratsSlain: false,
   },
 ): CanyonWorld {
-  const { map: data, layer: ground } = CANYON_ARRIVALS[part];
+  const data = TUTORIAL_CANYON;
+  const ground = CANYON_ARRIVAL.layer;
   const { position: arrival, layer } = start;
   const rats = start.ratsSlain ? [] : RAT_POCKET.rats.map(ratAt);
   const zones = matchZones(data);
@@ -227,7 +245,8 @@ export function canyonWorld(
         ),
         layer,
       },
-      ...(part === 0 ? [] : [...rats, ...CALL_RATS.rats.map(callRatAt)]),
+      ...rats,
+      ...CALL_RATS.rats.map(callRatAt),
     ],
   });
   return {
@@ -235,10 +254,10 @@ export function canyonWorld(
     simulation,
     zones,
     ground,
-    besideMark:
-      part === 0
-        ? vec2(DODGE_MARK.position.x + TUTOR_AT_MARK.x, DODGE_MARK.position.y + TUTOR_AT_MARK.y)
-        : RAT_POCKET.tutorSpot,
+    besideMark: vec2(
+      DODGE_MARK.position.x + TUTOR_AT_MARK.x,
+      DODGE_MARK.position.y + TUTOR_AT_MARK.y,
+    ),
   };
 }
 
@@ -333,7 +352,7 @@ export interface CanyonBadGround {
 }
 
 export const BAD_GROUND: CanyonBadGround = ((): CanyonBadGround => {
-  const { map } = CANYON_ARRIVAL;
+  const map = TUTORIAL_CANYON;
   const zoneId = "bad-ground-mire";
   const zone = map.zones?.find((entry) => entry.id === zoneId);
   if (zone?.area.kind !== "polygon") {
@@ -408,7 +427,7 @@ export interface CanyonRat {
   readonly maxHealth: number | undefined;
 }
 
-/** Station 8's rat pocket (#3316), on the canyon's second map. */
+/** Station 8's rat pocket (#3316). */
 export interface CanyonRats {
   readonly layer: number;
   /** The pocket's middle, which the player is led to. */
@@ -602,7 +621,7 @@ export function ratPocket(
   };
 }
 
-/** Station 12's two rats (#3331), on the canyon's second map: they bite only once hit. */
+/** Station 12's two rats (#3331): they bite only once hit. */
 export interface CanyonCallRats {
   readonly layer: number;
   readonly rats: readonly [CanyonRat, CanyonRat];
@@ -691,7 +710,7 @@ const TUTOR_BESIDE_LEDGE = 90;
 /** How far past a stair's ends the tutor's way runs, on the layer there. */
 const PAST_THE_STAIRS = 60;
 
-/** Station 9's ledge (#3323), on the canyon's second map: a deck, and the stairs up to it. */
+/** Station 9's ledge (#3323): a deck, and the stairs up to it. */
 export interface CanyonLedge {
   /** The deck's footprint. */
   readonly footprint: Shape;
@@ -706,7 +725,7 @@ export interface CanyonLedge {
 }
 
 export const LEDGE: CanyonLedge = ((): CanyonLedge => {
-  const map = TUTORIAL_CANYON[1];
+  const map = TUTORIAL_CANYON;
   const deck = map.decks.find(({ id }) => id === "ledge");
   const stairs = map.transitions.find(({ id }) => id === "ledge-steps");
   if (deck === undefined || stairs?.area.kind !== "rect") {
@@ -788,97 +807,10 @@ export function ledgeTutor(simulation: MatchSimulation): LedgeTutor {
   };
 }
 
-/** How far east of the mark the tutor waits on the high deck at station 10 (#3325). */
-const TUTOR_BESIDE_MARK = 90;
-
-/** Station 10's climb (#3325), on the canyon's second map: two flights to the high deck. */
-export interface CanyonRamp {
-  /** The mark, at the high deck's middle, on its layer. */
-  readonly mark: Vec2;
-  readonly layer: number;
-  /** The landing between the flights: its layer, its footprint and its middle. */
-  readonly landing: number;
-  readonly landingFootprint: Shape;
-  readonly onLanding: Vec2;
-  /** The first flight's foot, on the ground. */
-  readonly foot: Vec2;
-  readonly ground: number;
-}
-
-export const RAMP: CanyonRamp = ((): CanyonRamp => {
-  const map = TUTORIAL_CANYON[1];
-  const deck = map.decks.find(({ id }) => id === "deck");
-  const landing = map.decks.find(({ id }) => id === "landing");
-  const stairs = map.transitions.find(({ id }) => id === "landing-steps");
-  if (
-    deck?.footprint.kind !== "rect" ||
-    landing?.footprint.kind !== "rect" ||
-    stairs?.area.kind !== "rect"
-  ) {
-    throw new Error(`${map.id}: no deck, landing and landing-steps for station 10`);
-  }
-  const middle = (rect: { x: number; y: number; width: number; height: number }): Vec2 =>
-    vec2(rect.x + rect.width / 2, rect.y + rect.height / 2);
-  const { x, y, width, height } = stairs.area;
-  // `uphill` is the way the stairs climb: the foot is the other way.
-  const along = { n: vec2(0, -1), s: vec2(0, 1), e: vec2(1, 0), w: vec2(-1, 0) }[stairs.uphill];
-  const half = Math.abs(along.x) * (width / 2) + Math.abs(along.y) * (height / 2) + PAST_THE_STAIRS;
-  const centre = middle({ x, y, width, height });
-  return {
-    mark: middle(deck.footprint),
-    layer: deck.layer,
-    landing: landing.layer,
-    landingFootprint: landing.footprint,
-    onLanding: middle(landing.footprint),
-    foot: vec2(centre.x - along.x * half, centre.y - along.y * half),
-    ground: stairs.from,
-  };
-})();
-
-/** The tutor at station 10 (#3325), stepped once a frame. */
-export interface RampTutor {
-  readonly step: () => void;
-}
-
-/**
- * The tutor at station 10: waits at the first flight's foot, then climbs
- * behind the player, to the landing once they are on it and to beside the
- * mark once they are on the high deck. The walk finds the stairs itself.
- */
-export function rampTutor(simulation: MatchSimulation): RampTutor {
-  const { mark, layer, landing, landingFootprint, onLanding, foot, ground } = RAMP;
-  const beside = vec2(mark.x + TUTOR_BESIDE_MARK, mark.y);
-  /** The highest layer the player has reached, which the tutor follows to. */
-  let reached = ground;
-  simulation.walkTo(TUTOR_ID, foot, ground);
-  return {
-    step: () => {
-      const self = simulation.get(SELF_ID);
-      if (
-        self === undefined ||
-        self.layer <= reached ||
-        // The ledge of station 9 is on the landing's layer: on the landing itself.
-        !(
-          (self.layer === landing && pointInShape(self.position, landingFootprint)) ||
-          self.layer === layer
-        )
-      ) {
-        return;
-      }
-      reached = self.layer;
-      if (reached === layer) {
-        simulation.walkTo(TUTOR_ID, beside, layer);
-      } else {
-        simulation.walkTo(TUTOR_ID, onLanding, landing);
-      }
-    },
-  };
-}
-
 /** How far past the east stairs' top station 11's mark lies, and the tutor beside it. */
 const TUTOR_BESIDE_TUNNEL = 70;
 
-/** Station 11's tunnel (#3326), on the canyon's second map, under its sleeping guard. */
+/** Station 11's tunnel (#3326), under its sleeping guard. */
 export interface CanyonTunnel {
   /** The tunnel's footprint: on `under` inside it is in the tunnel, on `above` over it. */
   readonly footprint: Shape;
@@ -896,7 +828,7 @@ export interface CanyonTunnel {
 }
 
 export const TUNNEL: CanyonTunnel = ((): CanyonTunnel => {
-  const map = TUTORIAL_CANYON[1];
+  const map = TUTORIAL_CANYON;
   const tunnel = map.tunnels.find(({ id }) => id === "tunnel");
   const west = map.transitions.find(({ id }) => id === "tunnel-west-steps");
   const east = map.transitions.find(({ id }) => id === "tunnel-east-steps");
@@ -988,45 +920,24 @@ export function tunnelTutor(simulation: MatchSimulation): TunnelTutor {
   };
 }
 
-/** How far east of the fork the tutor goes once the east branch is called at station 13 (#3332). */
-const A_FEW_STEPS = 200;
-/** How far west of the parasol the tutor stands in the pocket, and how long, for its line there. */
-const BESIDE_PARASOL = 70;
-const IN_THE_POCKET_SECONDS = 3;
-
-/** Station 13's fork (#3332), on the canyon's second map: the east branch and the pocket. */
-export interface CanyonFork {
-  readonly fork: Vec2;
-  readonly layer: number;
-  /**
-   * The east branch's end, as far east of the fork as the pocket is from
-   * it, so a ping along the trail just past the fork calls east.
-   */
-  readonly east: Vec2;
-  /** The pocket's middle, where the parasol stands. */
-  readonly pocket: Vec2;
-  /** Where the tutor goes once the east branch is called: a few steps past the fork. */
-  readonly eastSide: Vec2;
-  /** Where the tutor stands in the pocket: beside the parasol. */
-  readonly lounge: Vec2;
-}
-
-export const FORK: CanyonFork = ((): CanyonFork => {
+/** Station 13's junction (#3332, #3792), round its rock island: its fork, arms, rejoin and bay. */
+export const JUNCTION: Junction = ((): Junction => {
   const site = CANYON_SITES.get(13);
   if (site === undefined) {
     throw new Error("no site 13 for station 13");
   }
-  const { position: fork, layer } = site;
-  const pocket = CANYON_POCKET.position;
   return {
-    fork,
-    layer,
-    east: vec2(fork.x + Math.hypot(pocket.x - fork.x, pocket.y - fork.y), fork.y),
-    pocket,
-    eastSide: vec2(fork.x + A_FEW_STEPS, fork.y),
-    lounge: vec2(pocket.x - BESIDE_PARASOL, pocket.y),
+    fork: site.position,
+    layer: site.layer,
+    north: CANYON_NORTH_ARM.position,
+    south: CANYON_SOUTH_ARM.position,
+    rejoin: CANYON_REJOIN.position,
+    bay: CANYON_BAY.position,
   };
 })();
+
+/** How far north of the rejoin the tutor waits for the player there. */
+const TUTOR_BY_REJOIN = 90;
 
 /** The tutor at station 13 (#3332), stepped once a frame with the player's latest ping. */
 export interface PingTutor {
@@ -1034,43 +945,37 @@ export interface PingTutor {
 }
 
 /**
- * The tutor at station 13: waits at the fork, and follows the branch the
- * player pings. The pocket, called first, gets one detour: in to the
- * parasol, a while there, and back to the fork. The east branch, called
- * at any time, sends it a few steps past the fork; after that it stays.
+ * The tutor at station 13: waits at the fork, and walks the arm the
+ * player pings first (#3792), by its mark round the island, to beside
+ * the rejoin. A later ping on the other arm does not turn it.
  */
 export function pingTutor(simulation: MatchSimulation): PingTutor {
-  const { fork, layer, east, pocket, eastSide, lounge } = FORK;
-  /** Where the tutor is bound: waiting, in the pocket, back from it, or east for good. */
-  let state: "fork" | "pocket" | "back" | "east" = "fork";
-  /** When the tutor reached the parasol, on the match clock. */
-  let lounging: number | undefined;
+  const { fork, layer, north, south, rejoin } = JUNCTION;
+  const beside = vec2(rejoin.x, rejoin.y - TUTOR_BY_REJOIN);
+  /** Where the tutor is bound: waiting, along its arm, or on to the rejoin. */
+  let state: "fork" | "arm" | "rejoin" = "fork";
+  /** The arm's mark the tutor walks by, once one is called. */
+  let arm: Vec2 | undefined;
   simulation.walkTo(TUTOR_ID, fork, layer);
   return {
     step: (ping) => {
-      const branch = ping === undefined ? undefined : pingBranch(ping, fork, east, pocket);
-      if (state !== "east" && branch === "east") {
-        state = "east";
-        simulation.walkTo(TUTOR_ID, eastSide, layer);
-        return;
-      }
-      if (state === "fork" && branch === "pocket") {
-        state = "pocket";
-        simulation.walkTo(TUTOR_ID, lounge, layer);
+      if (state === "fork") {
+        const branch = ping === undefined ? undefined : pingBranch(ping, fork, north, south);
+        if (branch === undefined) {
+          return;
+        }
+        arm = branch === "north" ? north : south;
+        state = "arm";
+        simulation.walkTo(TUTOR_ID, arm, layer);
         return;
       }
       const tutor = simulation.get(TUTOR_ID);
-      if (state !== "pocket" || tutor === undefined) {
+      if (state !== "arm" || arm === undefined || tutor === undefined) {
         return;
       }
-      const there =
-        Math.hypot(tutor.position.x - lounge.x, tutor.position.y - lounge.y) <= WAYPOINT_REACH;
-      if (lounging === undefined && there) {
-        lounging = simulation.elapsedSeconds;
-      }
-      if (lounging !== undefined && simulation.elapsedSeconds - lounging >= IN_THE_POCKET_SECONDS) {
-        state = "back";
-        simulation.walkTo(TUTOR_ID, fork, layer);
+      if (Math.hypot(tutor.position.x - arm.x, tutor.position.y - arm.y) <= WAYPOINT_REACH) {
+        state = "rejoin";
+        simulation.walkTo(TUTOR_ID, beside, layer);
       }
     },
   };

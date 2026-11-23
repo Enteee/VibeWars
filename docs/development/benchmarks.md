@@ -302,9 +302,13 @@ frames are dominated by software-GL pixel filling, not by these passes.
 | sandstone-steps (follow)   | 109    | 114.1  | 135.7  | 2.2           | 1.4           | 2 %          | 114.6           | 238.7           | 30.3               | 3         | 10.19      |
 | shiverpeak-pass (follow)   | 142    | 83.8   | 117.8  | 2.2           | 2.5           | 3 %          | 86.8            | 169.5           | 24.5               | 2         | 7.48       |
 | sunken-bastion (follow)    | 126    | 97.9   | 116.2  | 2.1           | 1.6           | 2 %          | 99.0            | 208.9           | 34.1               | 3         | 8.74       |
-| tutorial-canyon-1 (follow) | 118    | 102.8  | 120.1  | 2.0           | 0.8           | 2 %          | 104.1           | 210.9           | 25.2               | 0         | 9.18       |
-| tutorial-canyon-2 (follow) | 122    | 99.5   | 116.7  | 1.5           | 0.8           | 2 %          | 101.6           | 205.6           | 28.1               | 0         | 8.88       |
+| tutorial-canyon (follow)\* | 95     | 120.2  | 202.5  | 80.6          | 1.5           | 11 %         | 122.6           | 218.3           | 33.2               | 0         | 4.71       |
 | jungle-ruins (follow)      | 1053   | 11.2   | 28.4   | 0.9           | 0.8           | 9 %          | 52.6            | 157.2           | 31.5               | 1         | 1.00       |
+
+\* `tutorial-canyon`, the one canyon of #3792, from its PR's run
+([run 45026725061](https://github.com/Enteee/VibeWars/actions/runs/45026725061)),
+where the maps beside it read p50 / flat 5.3 to 6.2 (arena-canyon 5.88), so
+compare its ratio with theirs, not its ms with this table's.
 
 | passes (follow)           | cutAwayTunnels ms/frame | drawHiddenOutlines ms/frame | fadeOverhangs ms/frame | lighting ms/frame | passes % of p50 |
 | ------------------------- | ----------------------- | --------------------------- | ---------------------- | ----------------- | --------------- |

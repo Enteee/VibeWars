@@ -302,16 +302,16 @@ describe("effectiveActivationSeconds with Fast Casting (#527)", () => {
     expect(effectiveActivationSeconds(mesmerHex, c)).toBeCloseTo(1.149, 3);
   });
 
-  it("casts a 3 s Resurrection Signet in 1.92 s at rank 12, dazed or not (#1100)", () => {
+  it("casts a 3 s Resurrection Signet in 1.72 s at rank 12, dazed or not (#1100, #3880)", () => {
     const signet = getSkill("common.resurrection-signet");
     if (signet === undefined) {
       throw new Error("catalog skill missing");
     }
     expect(signet.activationSeconds).toBe(3);
     const c = mesmer();
-    expect(effectiveActivationSeconds(signet, c)).toBeCloseTo(1.92, 9);
+    expect(effectiveActivationSeconds(signet, c)).toBeCloseTo(1.723, 3);
     c.statuses.apply("dazed", 10, "a", NO_RANKS);
-    expect(effectiveActivationSeconds(signet, c)).toBeCloseTo(1.92, 9);
+    expect(effectiveActivationSeconds(signet, c)).toBeCloseTo(1.723, 3);
   });
 
   it("leaves an attack skill and a rank-0 caster alone", () => {

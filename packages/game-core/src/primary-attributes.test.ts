@@ -7,9 +7,10 @@ import {
   expertiseEnergyCost,
   fastCastingMultiplier,
   leadershipEnergy,
-  mysticismArmor,
+  divineFavorHeal,
   mysticismEnergyCost,
   soulReapingTrigger,
+  spawningPowerDuration,
   spawningPowerHealth,
   spawningPowerMultiplier,
   strengthArmorPenetration,
@@ -68,6 +69,12 @@ describe("Expertise (#528)", () => {
     expect(expertiseEnergyCost(12, { ...recuperation, type: "nature-ritual" }, 25)).toBe(13);
     // A Ritualist spell that is no ritual stands.
     expect(expertiseEnergyCost(12, { ...recuperation, type: "spell" }, 25)).toBe(25);
+  });
+
+  it("cuts a touch skill of any profession, as GW1's wiki has it (#3880)", () => {
+    const vampiricTouch = skill("necromancer.vampiric-touch");
+    expect(vampiricTouch.touch).toBe(true);
+    expect(expertiseEnergyCost(12, vampiricTouch, 15)).toBe(8);
   });
 
   it("leaves a non-Ranger skill that is no attack alone", () => {
@@ -147,11 +154,6 @@ describe("Mysticism (#874)", () => {
     expect(mysticismEnergyCost(12, skill("dervish.heart-of-fury"), 5)).toBe(5);
   });
 
-  it("gives +1 armor a rank", () => {
-    expect(mysticismArmor(0)).toBe(0);
-    expect(mysticismArmor(12)).toBe(12);
-  });
-
   /** A Dervish with Mysticism 12 and `energy`, casting on itself. */
   function check(energy: number) {
     const caster = makeCombatant({
@@ -186,10 +188,12 @@ describe("Mysticism (#874)", () => {
 });
 
 describe("strengthArmorPenetration (#528)", () => {
-  it("is 1% a rank, unless the weapon has its own, which stands instead", () => {
+  it("is 1% a rank, or the weapon's own if higher; the two do not add (#3880)", () => {
     expect(strengthArmorPenetration(0, 0)).toBe(0);
     expect(strengthArmorPenetration(12, 0)).toBeCloseTo(0.12);
-    expect(strengthArmorPenetration(12, 0.1)).toBe(0.1);
+    // A hornbow's 10% at Strength 12: Strength's 12% stands.
+    expect(strengthArmorPenetration(12, 0.1)).toBeCloseTo(0.12);
+    expect(strengthArmorPenetration(8, 0.1)).toBe(0.1);
     expect(strengthArmorPenetration(0, 0.1)).toBe(0.1);
   });
 });
@@ -214,12 +218,12 @@ describe("fastCastingMultiplier (#527)", () => {
     expect(fastCastingMultiplier(12, { ...malaise, activationSeconds: 3 })).toBeCloseTo(0.574, 3);
   });
 
-  it("speeds a signet 3% a rank, linear, under the same rule (#1100)", () => {
+  it("speeds a signet as a spell, under the same rule (#1100, #3880)", () => {
     const signet: Skill = { ...malaise, type: "signet", profession: "mesmer" };
-    expect(fastCastingMultiplier(12, signet)).toBeCloseTo(0.64, 9);
-    expect(fastCastingMultiplier(16, signet)).toBeCloseTo(0.52, 9);
+    expect(fastCastingMultiplier(12, signet)).toBeCloseTo(0.574, 3);
+    expect(fastCastingMultiplier(15, signet)).toBeCloseTo(0.5, 9);
     const foreign: Skill = { ...signet, profession: "monk" };
-    expect(fastCastingMultiplier(12, { ...foreign, activationSeconds: 3 })).toBeCloseTo(0.64, 9);
+    expect(fastCastingMultiplier(12, { ...foreign, activationSeconds: 3 })).toBeCloseTo(0.574, 3);
     expect(fastCastingMultiplier(12, { ...foreign, activationSeconds: 1 })).toBe(1);
   });
 
@@ -233,7 +237,13 @@ describe("fastCastingMultiplier (#527)", () => {
 describe("Divine Favor (#529)", () => {
   const orison = skill("monk.orison-of-healing");
 
-  it("is floor(3.2 × rank) on a Monk spell at an ally: +38 at 12, 0 at 0", () => {
+  it("rounds 3.2 × rank to the nearest, as GW1's 10 / 26 / 42 at 3 / 8 / 13 (#3880)", () => {
+    expect(divineFavorHeal(3)).toBe(10);
+    expect(divineFavorHeal(8)).toBe(26);
+    expect(divineFavorHeal(13)).toBe(42);
+  });
+
+  it("is 3.2 × rank on a Monk spell at an ally: +38 at 12, 0 at 0", () => {
     expect(divineFavorBonusHeal(12, orison, true, false)).toBe(38);
     expect(divineFavorBonusHeal(15, orison, true, false)).toBe(48);
     expect(divineFavorBonusHeal(0, orison, true, false)).toBe(0);
@@ -305,16 +315,19 @@ describe("soulReapingTrigger (#530)", () => {
   });
 });
 
-describe("leadershipEnergy (#625)", () => {
+describe("leadershipEnergy (#625, #3880)", () => {
   it.each([
     [0, 1, 0],
     [0, 8, 0],
     [1, 3, 0],
     [2, 1, 1],
     [2, 3, 1],
-    [12, 1, 1],
-    [12, 3, 3],
+    [12, 1, 2],
+    [12, 2, 4],
+    [12, 3, 6],
     [12, 8, 6],
+    [15, 3, 6],
+    [15, 4, 7],
   ])("rank %i, %i allies affected: %i energy", (rank, allies, energy) => {
     expect(leadershipEnergy(rank, allies)).toBe(energy);
   });
@@ -327,6 +340,18 @@ describe("Spawning Power (#1098)", () => {
     expect(spawningPowerMultiplier(15)).toBeCloseTo(1.6, 9);
   });
 
+  it("rounds a weapon spell's duration to a whole second, a half down (#3880)", () => {
+    // 30 s at +3.6%: 31.08 s lasts 31.
+    expect(spawningPowerDuration(0.9, 30)).toBe(31);
+    // 25 s at +2%: 25.5 s rounds down to 25.
+    expect(spawningPowerDuration(0.5, 25)).toBe(25);
+    // 10 s at 12: 14.8 s lasts 15.
+    expect(spawningPowerDuration(12, 10)).toBe(15);
+    // 37.5 s at 16: exactly 61.5, a half, so 61 (no float lands a hair over).
+    expect(spawningPowerDuration(16, 37.5)).toBe(61);
+    expect(spawningPowerDuration(0, 7.5)).toBe(7.5);
+  });
+
   it("rounds a creature's health once: 210 is 311 at 12, and exactly 210 at 0", () => {
     expect(spawningPowerHealth(12, 210)).toBe(311);
     expect(spawningPowerHealth(0, 210)).toBe(210);
@@ -335,10 +360,18 @@ describe("Spawning Power (#1098)", () => {
 
 describe("describePrimaryAttribute (#531)", () => {
   it.each([
-    ["mesmer.fast-casting", 12, "spells cast 43% faster, signets 36% faster"],
-    ["mesmer.fast-casting", 15, "spells cast 50% faster, signets 45% faster"],
-    ["ranger.expertise", 12, "attack skills, rituals and Ranger skills cost 48% less energy"],
-    ["ranger.expertise", 15, "attack skills, rituals and Ranger skills cost 60% less energy"],
+    ["mesmer.fast-casting", 12, "spells and signets cast 43% faster"],
+    ["mesmer.fast-casting", 15, "spells and signets cast 50% faster"],
+    [
+      "ranger.expertise",
+      12,
+      "attack skills, rituals, touch skills and Ranger skills cost 48% less energy",
+    ],
+    [
+      "ranger.expertise",
+      15,
+      "attack skills, rituals, touch skills and Ranger skills cost 60% less energy",
+    ],
     ["warrior.strength", 12, "attack skills 12% armor penetration"],
     ["warrior.strength", 15, "attack skills 15% armor penetration"],
     ["monk.divine-favor", 12, "Monk spells on allies heal +38"],
@@ -348,17 +381,13 @@ describe("describePrimaryAttribute (#531)", () => {
     ["assassin.critical-strikes", 15, "+15% critical chance, +3 energy per critical"],
     ["necromancer.soul-reaping", 12, "+12 energy when someone nearby dies (3 per 15 s)"],
     ["necromancer.soul-reaping", 15, "+15 energy when someone nearby dies (3 per 15 s)"],
-    ["paragon.leadership", 12, "up to 6 energy per shout, 1 per ally affected"],
-    ["paragon.leadership", 15, "up to 7 energy per shout, 1 per ally affected"],
+    ["paragon.leadership", 12, "up to 6 energy per shout, 2 per ally affected"],
+    ["paragon.leadership", 15, "up to 7 energy per shout, 2 per ally affected"],
     ["elementalist.energy-storage", 12, "+36 maximum energy"],
     ["elementalist.energy-storage", 15, "+45 maximum energy"],
     ["ritualist.spawning-power", 12, "creatures +48% Health, weapon spells last 48% longer"],
     ["ritualist.spawning-power", 15, "creatures +60% Health, weapon spells last 60% longer"],
-    [
-      "dervish.mysticism",
-      12,
-      "Dervish enchantments cost 48% less energy, +12 armor while enchanted",
-    ],
+    ["dervish.mysticism", 12, "Dervish enchantments cost 48% less energy"],
   ])("says what %s does at rank %i", (attributeId, rank, text) => {
     expect(describePrimaryAttribute(attributeId, rank)).toBe(text);
   });
