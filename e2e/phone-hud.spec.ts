@@ -1,7 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
 import { key } from "./keys.js";
-import { hostLobby, enterHouseTeams } from "./helpers/peers.js";
+import { enterHouseTeams, enterOwnTeams, hostLobby, saveSoloTeam } from "./helpers/peers.js";
 import {
   PIXEL_8A_LANDSCAPE,
   PIXEL_8A_PORTRAIT,
@@ -88,6 +88,17 @@ async function phoneMatch(
   if (touch) {
     await passTouchNotice(page);
   }
+  // A team lobby's own Team Build, proposed, ends the vote at once: with
+  // none, the side waits out the vote's 30 s clock for a preset team,
+  // which put an 8v8 within seconds of the test's timeout (#3778). It is
+  // built at a desktop's width, where a character drags onto a member; a
+  // touch page has no drag to build one with, so it waits the clock out.
+  let team: string | undefined;
+  if (!touch && lobby !== undefined && lobby.size !== 1) {
+    await page.setViewportSize({ width: 1280, height: 800 });
+    team = await saveSoloTeam(page, lobby.size);
+    await page.setViewportSize(phone);
+  }
   // The toast hides after a few seconds: note where it is, every frame it
   // shows in the match, as music.spec.ts does (#372). Every other part is
   // noted in that same frame (#1793): the build banner still grows early
@@ -134,12 +145,22 @@ async function phoneMatch(
   await page.getByRole("button", { name: "join team 1" }).click();
   await page.getByRole("button", { name: "Ready", exact: true }).click();
   await page.getByRole("button", { name: "start match" }).click();
-  // Any character will do: the house team's one seat (#1525). Targeted
+  // Any character will do: a 1v1's house team's one seat (#1525), or the
+  // own Team Build's first in a team lobby. Targeted
   // while held before the start (#3818): the toast, up as the match's
   // music begins, is gone by the time the countdown is.
-  await enterHouseTeams([page]);
+  await (team === undefined ? enterHouseTeams([page]) : enterOwnTeams([{ page, team }]));
   await page.keyboard.press(key("target-closest"));
   await expect(page.locator(".hud-target-text")).not.toHaveText("no target");
+}
+
+/**
+ * What a mouse's 1v1 leaves out: the party toggle, and the party window
+ * unless the house handed out a pet, which makes a party of two.
+ */
+async function soloAbsent(page: Page): Promise<readonly string[]> {
+  const pet = (await page.locator(".party-row").count()) > 0;
+  return pet ? [".party-toggle"] : [".party-window", ".party-toggle"];
 }
 
 /**
@@ -274,8 +295,9 @@ for (const phone of PHONES) {
     page,
   }) => {
     await phoneMatch(page, phone);
-    // Alone on a team, no party window; a mouse, no party toggle.
-    await expectApart(page, { absent: [".party-window", ".party-toggle"] });
+    // Alone on a team, no party window unless the house hands out a pet;
+    // a mouse, no party toggle.
+    await expectApart(page, { absent: await soloAbsent(page) });
     // "leave" alone on a phone, but still named in full.
     await expect(page.getByRole("button", { name: "leave match (F10)" })).toBeVisible();
   });
@@ -286,7 +308,7 @@ for (const phone of PHONES) {
     await page.route("**/build.json", (route) => route.fulfill({ json: { build: "newer" } }));
     await phoneMatch(page, phone);
     await expect(page.locator(".build-banner")).toBeVisible();
-    await expectApart(page, { absent: [".party-window", ".party-toggle"] });
+    await expectApart(page, { absent: await soloAbsent(page) });
   });
 
   test(`on a ${size} phone a Guild Battle's long scoreboard wraps clear of them too (#1226)`, async ({
@@ -297,7 +319,12 @@ for (const phone of PHONES) {
     await expect(page.locator(".hud-scoreboard")).toContainText("Lord");
     // A mouse keeps the party window open, under the compass, where the
     // long scoreboard and target frame may reach: a phone collapses it.
-    await expectApart(page, { absent: [".party-toggle"], ignored: [".party-window"] });
+    // The toast is not what this measures: an 8v8's load may outlast it.
+    await expectApart(page, {
+      which: "hudNow",
+      absent: [".party-toggle"],
+      ignored: [".party-window"],
+    });
   });
 }
 
@@ -326,8 +353,12 @@ for (const [held, device, free] of [
     test("in an 8v8 the party window waits behind a toggle a press opens and closes", async ({
       page,
     }) => {
+      // A touch page waits out the vote's 30 s clock (see phoneMatch), and
+      // an 8v8's 16 bodies load on top of it: ~50 s of a 60 s budget.
+      test.slow();
       await phoneMatch(page, phone, { size: 8, map: "ember-pits" }, true);
-      const boxes = await expectApart(page, { absent: [".party-window"] });
+      // The toast is not what this measures: an 8v8's load may outlast it.
+      const boxes = await expectApart(page, { which: "hudNow", absent: [".party-window"] });
       expectArenaFree(boxes, phone, free);
       await expectSkillRow(page, phone);
       const toggle = page.locator(".party-toggle");
@@ -386,8 +417,10 @@ test.describe("a Pixel 8a turned mid-match (#3778)", () => {
   test("upright, then on its side, then upright: the HUD lays out apart each time", async ({
     page,
   }) => {
+    // A touch 8v8, as above: the vote's clock and 16 bodies take most of 60 s.
+    test.slow();
     await phoneMatch(page, PIXEL_8A_PORTRAIT.viewport, { size: 8, map: "ember-pits" }, true);
-    await expectApart(page, { absent: [".party-window"] });
+    await expectApart(page, { which: "hudNow", absent: [".party-window"] });
     for (const [phone, free] of [
       [PIXEL_8A_LANDSCAPE.viewport, { width: 0.4, height: 0.3 }],
       [PIXEL_8A_PORTRAIT.viewport, { width: 0.5, height: 0.5 }],

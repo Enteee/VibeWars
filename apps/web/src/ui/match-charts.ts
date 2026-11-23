@@ -367,8 +367,9 @@ interface Panel {
   readonly title?: string;
 }
 
+/** Room for "1.5 k" and "100 %" at a touch screen's 12 px labels (#3778). */
 const PAD_LEFT = 44;
-const PAD_RIGHT = 36;
+const PAD_RIGHT = 44;
 const AXIS_PX = 16;
 /** Above the first panel: room for the upper half of its top tick label. */
 const PAD_TOP = 12;

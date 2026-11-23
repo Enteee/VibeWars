@@ -9401,6 +9401,13 @@ body:has(> .splash) #app {
   .match-summary-bot {
     font-size: 0.75rem;
   }
+
+  /* The match summary's charts are outside #screens, but read after the
+     match as a screen is (#3778). */
+  .chart-grid text,
+  .chart-title {
+    font-size: 12px;
+  }
 }
 
 /* A phone in a match (#3778), held either way: the arena keeps its
