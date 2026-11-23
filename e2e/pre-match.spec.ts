@@ -45,7 +45,8 @@ test("#3818: both in, the match counts 10 s down with everyone held in the spawn
   const [host, guest] = pages as [Page, Page];
   try {
     // The pages share one storage: both play this character, a side of one each.
-    await bringStarter(host, "Elementalist/Mesmer");
+    // The host runs the real 10 s/20 s, not the e2e build's 1 s (#3855).
+    await bringStarter(host, "Elementalist/Mesmer", "./?pre-match=real");
     const code = await hostLobby(host);
     await guest.goto("./");
     await joinFriend(guest, code);
