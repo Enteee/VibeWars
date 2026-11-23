@@ -566,8 +566,9 @@ async function spotShot(
 }
 
 test("clicking the ground walks there, round a wall, and stops (#310)", async ({ page }) => {
-  // The match start (~22 s since #3852) and a dozen pixel polls, ~2 s each
-  // on a software renderer, outrun the default 60 s (#3866).
+  // The match start (~22 s since #3852) and a dozen pixel samples, seconds
+  // each on a software renderer and far more on a loaded one, outrun the
+  // default 60 s (#3866).
   test.slow();
   // Ember Pits breathes, and never settles unless motion is reduced.
   await page.emulateMedia({ reducedMotion: "reduce" });
@@ -580,11 +581,11 @@ test("clicking the ground walks there, round a wall, and stops (#310)", async ({
 
   await canvas.click({ position: await matchPoint(page, canvas, goal) });
   // The marker there fades in 0.4 s; the walk round the wall takes about 3 s.
-  // One shot of a page the walk keeps busy can take tens of seconds on a
+  // One shot of a page the walk keeps busy has taken ~38 s on a
   // loaded software renderer, so each poll's window outlasts a slow sample (#3866).
   await page.waitForTimeout(600);
   await expect
-    .poll(async () => (await spotShot(page, canvas, goal)).equals(empty), { timeout: 30_000 })
+    .poll(async () => (await spotShot(page, canvas, goal)).equals(empty), { timeout: 60_000 })
     .toBe(false);
 
   // Arrived, it stays. The view follows the walk (#721), so the spot
@@ -599,7 +600,7 @@ test("clicking the ground walks there, round a wall, and stops (#310)", async ({
         there = now;
         return still;
       },
-      { message: "the hero should stop there", intervals: [0], timeout: 30_000 },
+      { message: "the hero should stop there", intervals: [0], timeout: 60_000 },
     )
     .toBe(true);
 });
