@@ -97,7 +97,13 @@ async function serve() {
     `--host 127.0.0.1 --port ${String(PORT)} --strictPort`;
   const child = spawn("sh", ["-c", command], {
     stdio: ["ignore", "ignore", "inherit"],
-    env: { ...process.env, VITE_VIBEWARS_TRANSPORT: "broadcast", VITE_VIBEWARS_SPLASH: "off" },
+    env: {
+      ...process.env,
+      VITE_VIBEWARS_TRANSPORT: "broadcast",
+      VITE_VIBEWARS_SPLASH: "off",
+      // The ranked scene shows the end panel from the e2e fixture; the build is thrown away after.
+      VITE_VIBEWARS_SUMMARY_FIXTURE: "on",
+    },
     detached: true,
   });
   const stop = () => {
@@ -413,12 +419,75 @@ async function friends(browser, url) {
   await closeScene(scene, "friends", events, timeOrigin);
 }
 
+/**
+ * Ranked: the match end panel with its charts (the e2e fixture's fixed
+ * summary), then a character in the Training Ground wearing what a top
+ * player has earned: the cosmetics' unlock facts are seeded into this
+ * context's storage, as a fetched leaderboard would leave them.
+ *
+ * @param {import("@playwright/test").Browser} browser
+ * @param {string} url
+ */
+async function ranked(browser, url) {
+  const scene = await openScene(browser, "ranked", url);
+  const { page } = scene;
+  step = "end panel";
+  scene.marks.panel = scene.now();
+  await page.goto(`${url}?summary-fixture`);
+  await sleep(4500);
+  step = "seed cosmetics";
+  await page.evaluate(() => {
+    localStorage.setItem(
+      "vibewars.cosmetics",
+      JSON.stringify({
+        choice: {
+          aura: "aura-starlight",
+          trail: "trail-starlight",
+          swing: "swing-starlight",
+          cape: "cape-stars",
+          emblemFrame: "emblem-frame-gilt",
+          frame: "frame-orchid",
+          title: "title-champion",
+        },
+        facts: { wins: 500, streak: 5, rank: 1 },
+      }),
+    );
+  });
+  await page.goto(`${url}?capture`);
+  await page.locator(".mode-rail").waitFor();
+  await openRail(page, "Character Builder");
+  await page.getByRole("button", { name: "new character" }).click();
+  await page.locator("input.editor-name").waitFor();
+  await paste(page, BUILD_CODE);
+  await page.locator(".toast", { hasText: "Imported" }).waitFor();
+  await page.locator(".toast").waitFor({ state: "detached", timeout: 15_000 });
+  step = "training ground";
+  await page.getByRole("button", { name: "expand training ground" }).click();
+  const stage = page.getByLabel("training arena");
+  await stage.waitFor();
+  const box = await stage.boundingBox();
+  if (box === null) {
+    throw new Error("the training arena has no box");
+  }
+  await page.mouse.click(box.x + box.width / 2, box.y + box.height - 20);
+  await page.mouse.wheel(0, -240);
+  await sleep(500);
+  await page.keyboard.press("KeyC");
+  scene.marks.cape = scene.now();
+  await walk(page, "KeyD", 2500);
+  await walk(page, "KeyW", 1500);
+  await walk(page, "KeyA", 2500);
+  const { events, timeOrigin } = await pageEvents(page);
+  await closeScene(scene, "ranked", events, timeOrigin);
+}
+
 /** The scenes by name; a `map-<id>` is made from `MAPS`. */
 /** @type {Record<string, (browser: import("@playwright/test").Browser, url: string) => Promise<void>>} */
 const SCENES = {
   fight,
   editor,
   friends,
+  ranked,
   ...Object.fromEntries(
     MAPS.map((id) => [
       `map-${id}`,

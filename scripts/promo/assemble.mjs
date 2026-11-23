@@ -244,14 +244,12 @@ function timeline() {
   });
   if (fs.existsSync(path.join(CAPTURE, "ranked.webm"))) {
     const ranked = scene("ranked");
-    const at = ranked.marks.panel ?? 0;
-    pieces.push({
-      scene: "ranked",
-      src: path.join(CAPTURE, "ranked.webm"),
-      from: at,
-      to: at + 6,
-      speed: 1,
-    });
+    const src = path.join(CAPTURE, "ranked.webm");
+    const panel = ranked.marks.panel ?? 0;
+    const cape = ranked.marks.cape ?? 0;
+    // The end panel, then the look it earned.
+    pieces.push({ scene: "ranked", src, from: panel + 1, to: panel + 3.5, speed: 1 });
+    pieces.push({ scene: "ranked", src, from: cape + 0.3, to: cape + 3.8, speed: 1 });
   }
   pieces.push({ scene: "end", card: END, length: 5 });
   return { pieces, hitAt };
@@ -292,10 +290,14 @@ function assemble(plan, width, height, name, musicStart) {
     // The title over the cold open; then a caption over each scene that has one.
     const wanted = [{ scene: "cold", text: TITLE }, ...CAPTIONS];
     for (const caption of wanted) {
-      const span = spans.find((s) => s.scene === caption.scene);
-      if (span === undefined) {
+      // Every piece of the scene: its first start to its last end.
+      const of = spans.filter((s) => s.scene === caption.scene);
+      const first = of[0];
+      const last = of.at(-1);
+      if (first === undefined || last === undefined) {
         continue;
       }
+      const span = { at: first.at, length: last.at + last.length - first.at };
       const lines = wrap(caption.text, box.maxChars);
       const title = caption.scene === "cold";
       lines.forEach((line, i) => {
