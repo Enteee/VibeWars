@@ -619,6 +619,8 @@ async function main(): Promise<void> {
   let matchMode: LobbyMode | undefined;
   /** `match` is a queued party's warmup (#3899): kept nowhere, its end no news. */
   let matchWarmup = false;
+  /** A warmup gave way to a found match (#3899): said once that match is entered. */
+  let warmupFound = false;
   /**
    * A warmup's line over its match (#3899): the top bar is hidden there
    * (#454), so the queue's ring, its flyout and Leave Queue come with it.
@@ -2403,10 +2405,8 @@ async function main(): Promise<void> {
             current.party.endWarmup();
           }
           if (match !== undefined && matchWarmup) {
-            // After the screen change, whose leaveScreen dismisses any toast.
-            void dropWarmupView().then(() => {
-              toast(t("queue.warmupOver"));
-            });
+            warmupFound = true;
+            void dropWarmupView();
           }
           current.parked = { hosted, entrant, name, look };
           lobby = undefined;
@@ -2505,6 +2505,7 @@ async function main(): Promise<void> {
       return;
     }
     teamQueue = undefined;
+    warmupFound = false;
     clearInterval(ending.timer);
     stopTeamFlash?.();
     stopTeamFlash = undefined;
@@ -3362,6 +3363,8 @@ async function main(): Promise<void> {
     matchFinished = false;
     matchMode = from.getSnapshot().mode;
     matchWarmup = from.getSnapshot().warmup;
+    const found = warmupFound;
+    warmupFound = false;
     // The menu quest's closing line goes as its match is found (#3544).
     menuQuest?.stop();
     menuQuest = undefined;
@@ -3485,6 +3488,10 @@ async function main(): Promise<void> {
       // Said once, on the match screen: the lobby's went with it.
       if (start.teamPlanRejected) {
         toast(t("session.teamPlanRejected"));
+      }
+      // The queue's found match, on its own screen: any earlier toast went with the warmup's.
+      if (found) {
+        toast(t("queue.warmupOver"));
       }
       // An illegal build of the player's own plays a starter build (#3822):
       // said once, here. A Team Lobby's or a queued party's seat is planned.
