@@ -86,8 +86,12 @@ async function voteQuad(leader: Page, member: Page): Promise<void> {
   await leader.bringToFront();
   await proposeTeam(leader, "Quad");
   const card = leader.locator(".team-lobby-proposals .play-card-open").first();
-  await press(leader, card);
-  await expect(card).toHaveAttribute("aria-pressed", "true");
+  // A click can land on the card just as the list redraws, and be lost
+  // (#3935); a vote is never taken back, so pressing again is safe.
+  await expect(async () => {
+    await press(leader, card);
+    await expect(card).toHaveAttribute("aria-pressed", "true", { timeout: 3_000 });
+  }).toPass({ timeout: 15_000 });
   // The last vote ends the stage, so its card is gone at once.
   await press(member, member.locator(".team-lobby-proposals .play-card-open").first());
 }
@@ -179,7 +183,10 @@ test("#1766: two parties of two queue for Team Arena, meet, and play their own b
     // Met, the queued lobby counts down five seconds before the match
     // starts (QUEUED_COUNTDOWN_SECONDS), then four pages boot an arena
     // each: on a busy runner that is past expect's 15 s (#2777).
+    // A page behind the others gets no animation frames, so it never
+    // mounts its HUD (#3935): each is brought to the front for its wait.
     for (const page of [ann, bea, cid, dot]) {
+      await page.bringToFront();
       await expect(page.locator(".hud-skills .hud-skill").first()).toBeAttached({
         timeout: 25_000,
       });
@@ -189,6 +196,7 @@ test("#1766: two parties of two queue for Team Arena, meet, and play their own b
     await expectPlays(cid, QUAD[0]);
     await expectPlays(dot, QUAD[1]);
     // Four a side: the party's two and two bots.
+    await ann.bringToFront();
     await expect(ann.locator(".party-row-bot:visible")).toHaveCount(2);
     await expect(ann.locator(".party-row-name")).toContainText(["Bea"]);
 
@@ -255,7 +263,9 @@ async function seedTicketKeys(page: Page, seed: number): Promise<void> {
 /** The first skill on `page`'s bar, once its match is up. */
 async function firstSkill(page: Page): Promise<string | null> {
   const skill = page.locator(".hud-skills .hud-skill").first();
-  // Met, the countdown and four arenas booting outlast expect's 15 s (#2777).
+  // Met, the countdown and four arenas booting outlast expect's 15 s
+  // (#2777); a page behind the others never mounts its HUD (#3935).
+  await page.bringToFront();
   await expect(skill).toBeAttached({ timeout: 25_000 });
   return skill.getAttribute("data-skill-id");
 }
