@@ -53,10 +53,20 @@ describe("pickStarterTeam (#2035)", () => {
     for (const team of STARTER_TEAMS) {
       const not = { name: team.name };
       for (const r of [0, 0.2, 0.4, 0.6, 0.8, 0.9999999]) {
-        const next = pickStarterTeam(() => r, team.members.length, not);
+        const next = pickStarterTeam(() => r, team.members.length, [not]);
         expect(next?.members).toHaveLength(team.members.length);
         expect(next?.name).not.toBe(team.name);
       }
+    }
+  });
+
+  it("never picks any of several teams it is told not to (#3891)", () => {
+    const [first, second] = EIGHTS;
+    if (first === undefined || second === undefined) throw new Error("fewer than two 8s");
+    for (const r of [0, 0.2, 0.4, 0.6, 0.8, 0.9999999]) {
+      expect([first.name, second.name]).not.toContain(
+        pickStarterTeam(() => r, 8, [first, second])?.name,
+      );
     }
   });
 

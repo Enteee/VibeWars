@@ -201,10 +201,13 @@ export const STARTER_BUILDS: readonly PlayerBuild[] = decodePvxBuilds(PVX_SOLO).
 
 /**
  * A starter build by `random` ([0, 1), the host's own), never one with
- * `not`'s professions, so a reroll always changes it. By professions,
+ * the professions of any of `not`, so a reroll always changes it. By professions,
  * not name: a rolled character carries a name of its own (#1149).
  */
-export function pickStarterBuild(random: () => number, not?: PlayerBuild): PlayerBuild {
+export function pickStarterBuild(
+  random: () => number,
+  not: readonly PlayerBuild[] = [],
+): PlayerBuild {
   return pickBuildFrom(STARTER_BUILDS, random, not);
 }
 
@@ -221,9 +224,12 @@ export const SOLO_FOE_BUILDS: readonly PlayerBuild[] = STARTER_BUILDS.filter((bu
   return weapon === undefined || botRole(bar, weapon.range) !== "healer";
 });
 
-/** `pickStarterBuild` for a size-1 bot: never a healer (#3888). */
-export function pickSoloFoeBuild(random: () => number): PlayerBuild {
-  return pickBuildFrom(SOLO_FOE_BUILDS, random);
+/** `pickStarterBuild` for a size-1 bot: never a healer (#3888), and not of `not`'s professions. */
+export function pickSoloFoeBuild(
+  random: () => number,
+  not: readonly PlayerBuild[] = [],
+): PlayerBuild {
+  return pickBuildFrom(SOLO_FOE_BUILDS, random, not);
 }
 
 function sameProfessions(a: PlayerBuild, b: PlayerBuild): boolean {
@@ -232,13 +238,13 @@ function sameProfessions(a: PlayerBuild, b: PlayerBuild): boolean {
   );
 }
 
-/** `pickStarterBuild` over `builds`. With only `not` to pick, that is what it picks. */
+/** `pickStarterBuild` over `builds`. With nothing but `not` to pick, it picks one of those. */
 export function pickBuildFrom(
   builds: readonly PlayerBuild[],
   random: () => number,
-  not?: PlayerBuild,
+  not: readonly PlayerBuild[] = [],
 ): PlayerBuild {
-  const others = builds.filter((build) => not === undefined || !sameProfessions(build, not));
+  const others = builds.filter((build) => !not.some((other) => sameProfessions(build, other)));
   const pool = others.length > 0 ? others : builds;
   // Clamped: a `random` just under 1 must not index past the end.
   const picked = pool[Math.min(pool.length - 1, Math.floor(random() * pool.length))];
