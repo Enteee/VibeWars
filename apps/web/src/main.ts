@@ -2403,8 +2403,10 @@ async function main(): Promise<void> {
             current.party.endWarmup();
           }
           if (match !== undefined && matchWarmup) {
-            void dropWarmupView();
-            toast(t("queue.warmupOver"));
+            // After the screen change, whose leaveScreen dismisses any toast.
+            void dropWarmupView().then(() => {
+              toast(t("queue.warmupOver"));
+            });
           }
           current.parked = { hosted, entrant, name, look };
           lobby = undefined;
@@ -3397,12 +3399,14 @@ async function main(): Promise<void> {
             if (matchWarmup) {
               // Said once, and the next warmup comes on its own (#3899).
               const { winningTeam, endReason, selfTeam, aggression } = finished;
-              toast(
-                t("queue.warmupNext", {
-                  outcome: describeOutcome(winningTeam, endReason, selfTeam, aggression),
-                }),
-              );
-              void exitMatch();
+              // After the screen change, whose leaveScreen dismisses any toast.
+              void exitMatch().then(() => {
+                toast(
+                  t("queue.warmupNext", {
+                    outcome: describeOutcome(winningTeam, endReason, selfTeam, aggression),
+                  }),
+                );
+              });
               return;
             }
             const team = teamQueue?.parked === undefined ? undefined : teamQueue;

@@ -240,7 +240,11 @@ test("#3899: a queued party warms up against bots, and goes to its match once an
     await formParty([cid, dot], ["Cid", "Dot"]);
     await runTeamLobby([cid, dot]);
     for (const page of [ann, bea]) {
-      await expect(page.locator(".hud-warmup")).toHaveCount(0, { timeout: 60_000 });
+      // Told so, after the warmup is gone, not dismissed with it.
+      await expect(page.locator(".toast")).toHaveText("Match found — warmup over", {
+        timeout: 60_000,
+      });
+      await expect(page.locator(".hud-warmup")).toHaveCount(0);
     }
     for (const page of [ann, bea, cid, dot]) {
       await expect(page.locator(".hud-skills .hud-skill").first()).toBeAttached({
