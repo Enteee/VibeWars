@@ -110,7 +110,7 @@ export const planJobs = (weights, repeats, budget, maxJobs) => {
   return jobs.map(({ specs, repeat }) => ({ specs, repeat }));
 };
 
-/** Recorded seconds (e2e-durations.json, hosted CI shard times) of test runs per job: 800 s, so a job's tests take about 23 min at 1.75x and a run ends near 25 min with setup; a spec over the budget still gets one run per job. MAX_JOBS fits ten repeats of the four tutorial specs at once (learn-raised 690 s and learn-flat 597 s a job per run, menu-quest and the rest two more: 22 jobs), as a PR to their shared helper runs them, and of the two largest (gameplay 826 s, learn-raised 690 s: 20). */
+/** Recorded seconds (e2e-durations.json, hosted CI shard times) of test runs per job: 800 s, so a job's tests take about 23 min at 1.75x and a run ends near 28 min with setup; a spec over the budget still gets one run per job. MAX_JOBS fits ten repeats of the four tutorial specs at once (learn-raised 690 s and learn-flat 597 s a job per run, menu-quest and the rest two more: 22 jobs), as a PR to their shared helper runs them, and of the two largest (gameplay 826 s, learn-raised 690 s: 20). */
 export const SECONDS_PER_JOB = 800;
 export const MAX_JOBS = 22;
 /** The e2e-repeat matrix job's timeout-minutes; a test holds it equal to the workflow's. */
