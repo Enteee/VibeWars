@@ -29,8 +29,10 @@ const SCOPE = ["#screens"];
 /**
  * Which two controls on screen share ground, one line per pair. A
  * control's box is the part its scrolling boxes show; one inside the
- * other is a single control. The pinned skill bar going over what
- * scrolls under it is #3952's and not counted here.
+ * other is a single control. Only two in the same layer are compared:
+ * the page's flow, or one pinned box (sticky or fixed). What scrolls
+ * under a pinned bar, or lies under the expanded arena, is not covered
+ * by it; the pinned skill bar's own share of that is #3952's.
  */
 async function overlapping(page: Page): Promise<string[]> {
   return page.evaluate(() => {
@@ -56,12 +58,18 @@ async function overlapping(page: Page): Promise<string[]> {
       if (right - left < 1 || bottom - top < 1) continue;
       seen.push({ node, box: new DOMRect(left, top, right - left, bottom - top) });
     }
-    const pinned = (node: Element): boolean => node.closest(".editor-skills") !== null;
+    const layer = (node: Element): Element | null => {
+      for (let up: Element | null = node; up !== null; up = up.parentElement) {
+        const { position } = getComputedStyle(up);
+        if (position === "sticky" || position === "fixed") return up;
+      }
+      return null;
+    };
     const out: string[] = [];
     for (const [index, a] of seen.entries()) {
       for (const b of seen.slice(index + 1)) {
         if (a.node.contains(b.node) || b.node.contains(a.node)) continue;
-        if (pinned(a.node) !== pinned(b.node)) continue;
+        if (layer(a.node) !== layer(b.node)) continue;
         const wide = Math.min(a.box.right, b.box.right) - Math.max(a.box.left, b.box.left);
         const high = Math.min(a.box.bottom, b.box.bottom) - Math.max(a.box.top, b.box.top);
         if (wide > 0.5 && high > 0.5) out.push(`${name(a.node)} over ${name(b.node)}`);
