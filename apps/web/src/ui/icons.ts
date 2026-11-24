@@ -295,3 +295,8 @@ export const LOBBY_ICON: Readonly<Record<"closed" | "open", string>> = {
   closed: iconUrl("ui", "lobby-closed"),
   open: iconUrl("ui", "lobby-open"),
 };
+
+/** The in-match menu's Leave row (#3956): an empty door frame, an arrow going out. */
+export function leaveIcon(): string {
+  return iconUrl("ui", "leave");
+}

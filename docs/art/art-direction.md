@@ -1040,13 +1040,14 @@ Gold is `elite` only, not `target` (`#ffd866`), which stays in the arena.
 Buttons and indicators in the HUD and menus. Ink on the panel. The states of one control
 differ by shape, so the icon shows the current state at a glance.
 
-| Icon        | Means                  | Shape                          |
-| ----------- | ---------------------- | ------------------------------ |
-| `sound-on`  | Sound is on            | Speaker, two waves             |
-| `sound-off` | Sound is muted         | Speaker, a cross               |
-| `music-on`  | Music is on            | Beamed eighth notes            |
-| `music-off` | Music is muted         | The notes under a slash        |
-| `attacking` | You are auto-attacking | Two crossed swords, guards low |
+| Icon        | Means                  | Shape                                   |
+| ----------- | ---------------------- | --------------------------------------- |
+| `sound-on`  | Sound is on            | Speaker, two waves                      |
+| `sound-off` | Sound is muted         | Speaker, a cross                        |
+| `music-on`  | Music is on            | Beamed eighth notes                     |
+| `music-off` | Music is muted         | The notes under a slash                 |
+| `leave`     | Leave the match        | An empty door frame, an arrow going out |
+| `attacking` | You are auto-attacking | Two crossed swords, guards low          |
 
 `attacking` has two blades, so at 16 px it never reads as the one-sword
 `attack` skill type badge.

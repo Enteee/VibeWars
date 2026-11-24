@@ -242,6 +242,11 @@ const ui = {
     `<path d="M9 21.5V2.5h12v19" ${stroke(C.ink, 2)}/>` +
     `<path d="M21 2.5L16 5v14.5l5 2z" fill="${C.ink}"/>` +
     `<path d="M1.5 12H13M9.5 8.5L13 12l-3.5 3.5" ${stroke(C.ink, 2.2)}/>`,
+  // An empty door frame, no leaf, an arrow going out through its leading
+  // jamb: leave the match (#3956). `lobby-open` has the leaf and the arrow in.
+  leave: () =>
+    `<path d="M9 21.5V2.5h12v19" ${stroke(C.ink, 2)}/>` +
+    `<path d="M18.5 12H2.5M6 8.5L2.5 12 6 15.5" ${stroke(C.ink, 2.2)}/>`,
 };
 
 // ---------------------------------------------------------------------------
