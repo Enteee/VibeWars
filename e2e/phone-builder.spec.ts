@@ -74,7 +74,7 @@ async function overlapping(page: Page): Promise<string[]> {
 /** Scroll the editor's page to its top, or as far down as it goes. */
 async function scrollEditor(page: Page, to: "top" | "end"): Promise<void> {
   await page.locator(".editor-layout").evaluate((node, to) => {
-    for (let up: HTMLElement | null = node; up !== null; up = up.parentElement) {
+    for (let up: Element | null = node; up !== null; up = up.parentElement) {
       const overflow = getComputedStyle(up).overflowY;
       if (overflow === "auto" || overflow === "scroll" || up === document.scrollingElement) {
         up.scrollTop = to === "top" ? 0 : up.scrollHeight;
