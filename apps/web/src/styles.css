@@ -5641,9 +5641,11 @@ body.has-expanded-training #screens {
   gap: 0.4rem;
 }
 
+/* No label widens a bar: it clips, the bar keeps its share (#3907). */
 .training-bar {
   position: relative;
   flex: 1 1 8rem;
+  min-width: 0;
   height: 16px;
   background: #11161d;
   border: 1px solid var(--line);
@@ -5670,12 +5672,21 @@ body.has-expanded-training #screens {
   text-align: center;
   line-height: 16px;
   font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
   text-shadow: 0 1px 2px rgb(0 0 0 / 80%);
 }
 
+/* A line of its own, always there and only shown while attacking, so the
+   row never grows or shrinks with it (#3907). */
 .training-attacking {
+  flex: 1 0 100%;
+  overflow: hidden;
   color: var(--ink-dim);
   font-size: 0.75rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  visibility: hidden;
 }
 
 .training-skills {

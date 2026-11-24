@@ -7,6 +7,8 @@ import {
   codeLabel,
   type Keymap,
 } from "../apps/web/src/input/keymap.js";
+import arUi from "../apps/web/src/i18n/locales/ar/ui.js";
+import deUi from "../apps/web/src/i18n/locales/de/ui.js";
 import { DEFAULT_STEP, zoomFor } from "../apps/web/src/render/camera-rig.js";
 import { STORAGE_NAMESPACE } from "./helpers/base.js";
 import { chooseProfession, professionField } from "./helpers/professions.js";
@@ -861,7 +863,7 @@ test("(20) a double right click on a far enemy attacks it: you walk there and sw
   const dummy = (await trainingView(page, canvas)).onPage({ x: 480, y: 210 });
   await page.mouse.dblclick(dummy.x, dummy.y, { button: "right" });
 
-  await expect(page.locator(".training-attacking")).toContainText("attacking");
+  await expect(page.locator(".training-attacking")).toBeVisible();
   // Only a body that walked the whole way there can land this. The walk
   // is in game time, which runs slower than wall time under load (#327).
   await expect(page.locator(".training-log")).toContainText(/Sword \(.+\) hits Bow-range dummy/, {
@@ -1925,7 +1927,7 @@ test("(47) under Show names, a right click on a name only targets it; a left cli
   await page.keyboard.down(key("show-names"));
   await page.mouse.click(name.x, name.y);
   await page.keyboard.up(key("show-names"));
-  await expect(page.locator(".training-attacking")).toContainText("attacking");
+  await expect(page.locator(".training-attacking")).toBeVisible();
 });
 
 test("on a laptop the arena never runs under the chat's icon, at the top or the end (#3887)", async ({
@@ -1942,3 +1944,52 @@ test("on a laptop the arena never runs under the chat's icon, at the top or the 
     await underChatIcon(page, ".editor-layout :is(button, input, select, label, span)"),
   ).toEqual([]);
 });
+
+for (const { locale, ui } of [
+  { locale: "de-DE", ui: deUi },
+  { locale: "ar", ui: arUi },
+]) {
+  test.describe(`the training vitals in ${locale} at 380 px (#3907)`, () => {
+    test.use({ locale, viewport: { width: 380, height: 720 } });
+
+    test("attacking and stopping move nothing below them", async ({ page }) => {
+      await page.goto("./");
+      await page
+        .locator(".mode-rail")
+        .getByRole("button", { name: ui["rail.characters"], exact: true })
+        .click();
+      await page.getByRole("button", { name: ui["menu.newCharacter"], exact: true }).click();
+      await page.locator("select.training-scenario").selectOption("weapon-dps");
+      await takeControl(page);
+      const attacking = page.locator(".training-attacking");
+      const panel = page.locator(".training");
+      const row = page.locator(".editor-attribute").first();
+      // Off the panel's top, so a scroll the arena's click made is no jump.
+      const offset = async (): Promise<number> => {
+        const [top, at] = await Promise.all([panel.boundingBox(), row.boundingBox()]);
+        if (top === null || at === null) {
+          throw new Error("the panel or the attribute list is not on the page");
+        }
+        return at.y - top.y;
+      };
+      const still = await offset();
+      const samples: number[] = [];
+      const sample = async (): Promise<void> => {
+        for (let index = 0; index < 15; index++) {
+          samples.push(await offset());
+          await page.waitForTimeout(100);
+        }
+      };
+
+      await expect(attacking).toBeHidden();
+      await page.keyboard.press(key("attack"));
+      await expect(attacking).toBeVisible();
+      await sample();
+      // The first Esc stops the attack and keeps the arena (#1151).
+      await page.keyboard.press("Escape");
+      await expect(attacking).toBeHidden();
+      await sample();
+      expect(samples).toEqual(samples.map(() => still));
+    });
+  });
+}
