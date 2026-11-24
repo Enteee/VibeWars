@@ -462,7 +462,13 @@ export function mountTeamLobbyScreen(
     clearInterval(ticking);
     clock.textContent = clockText(secondsLeft);
     const endsAt = Date.now() + secondsLeft * 1000;
+    // A match entered from the lobby never disposes it: the clock stops
+    // itself once it has left the page.
     ticking = setInterval(() => {
+      if (!clock.isConnected) {
+        clearInterval(ticking);
+        return;
+      }
       clock.textContent = clockText(Math.ceil((endsAt - Date.now()) / 1000));
     }, 250);
   };

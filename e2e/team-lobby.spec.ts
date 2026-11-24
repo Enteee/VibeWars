@@ -210,11 +210,13 @@ test("#3929: on a phone, proposing keeps the Team Lobby where it was scrolled", 
     await expect(host.locator(".team-lobby-proposals .play-card")).toHaveCount(1);
     expect(
       await screens.evaluate((element) => element.scrollHeight - element.clientHeight),
-    ).toBeGreaterThan(0);
+    ).toBeGreaterThanOrEqual(100);
     await screens.evaluate((element) => {
       element.scrollTop = element.scrollHeight;
     });
-    await expect.poll(() => screens.evaluate((element) => element.scrollTop)).toBeGreaterThan(0);
+    await expect
+      .poll(() => screens.evaluate((element) => element.scrollTop))
+      .toBeGreaterThanOrEqual(100);
     const scrolled = await screens.evaluate((element) => element.scrollTop);
 
     // Proposing redraws nothing but the new card: not on the host's own
