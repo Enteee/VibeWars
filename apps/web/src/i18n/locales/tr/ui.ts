@@ -629,7 +629,6 @@ export default {
   "hud.preMatchStartingAnyway":
     "Oyuncular bekleniyor: {joined}/{expected}, {seconds} sn içinde yine de başlıyor",
   "hud.preMatchStartsIn": "Maç {seconds} içinde başlıyor",
-  "hud.preMatchSelfAllyOnly": "Başlamadan önce: yalnızca kendine veya müttefiklere beceriler.",
   "hud.preMatchWaiting": "Oyuncular bekleniyor: {joined}/{expected}",
   "hud.priest": "rahip",
   "hud.priestDead": "rahip (ölü)",
@@ -663,6 +662,7 @@ export default {
   "hud.refusalInvalidTargetSpirit": "Ruh hedef alınamaz.",
   "hud.refusalInvalidTargetUnenchantable": "Bu hedefe tılsım yapılamaz.",
   "hud.refusalInvalidTargetWall": "Duvara yalnızca hasar veren bir yetenek vurabilir.",
+  "hud.refusalWallBeforeStart": "Maç başlamadan hiçbir duvara vurulamaz.",
   "hud.refusalInvalidTargetUntargetable": "Büyülerin bu düşmanı hedef alamaz.",
   "hud.refusalNeedsWeapon": "Gerekli: {weapon}.",
   "hud.refusalNoAnimalToCharm": "Burada evcilleştirilecek hayvan yok.",

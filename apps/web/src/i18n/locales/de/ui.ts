@@ -631,7 +631,6 @@ export default {
   "hud.preMatchStartingAnyway":
     "Warte auf Spieler: {joined}/{expected}, Start trotzdem in {seconds} s",
   "hud.preMatchStartsIn": "Match startet in {seconds}",
-  "hud.preMatchSelfAllyOnly": "Vor dem Start: nur Fertigkeiten auf dich oder Verbündete.",
   "hud.preMatchWaiting": "Warte auf Spieler: {joined}/{expected}",
   "hud.priest": "Priester",
   "hud.priestDead": "Priester (tot)",
@@ -667,6 +666,7 @@ export default {
   "hud.refusalInvalidTargetUnenchantable": "Dieses Ziel kann nicht verzaubert werden.",
   "hud.refusalInvalidTargetWall":
     "Nur eine Fertigkeit, die Schaden verursacht, kann eine Mauer treffen.",
+  "hud.refusalWallBeforeStart": "Vor dem Spielbeginn kann keine Mauer getroffen werden.",
   "hud.refusalInvalidTargetUntargetable": "Deine Zauber können diesen Gegner nicht treffen.",
   "hud.refusalNeedsWeapon": "Braucht {weapon}.",
   "hud.refusalNoAnimalToCharm": "Hier gibt es kein Tier zum Zähmen.",

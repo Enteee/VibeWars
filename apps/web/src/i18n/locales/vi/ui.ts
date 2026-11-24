@@ -579,7 +579,6 @@ export default {
   "hud.preMatchStartingAnyway":
     "Đang chờ người chơi: {joined}/{expected}, vẫn bắt đầu sau {seconds} giây",
   "hud.preMatchStartsIn": "Trận đấu bắt đầu sau {seconds}",
-  "hud.preMatchSelfAllyOnly": "Trước khi bắt đầu: chỉ dùng kỹ năng lên bản thân hoặc đồng minh.",
   "hud.preMatchWaiting": "Đang chờ người chơi: {joined}/{expected}",
   "hud.priest": "tư tế",
   "hud.priestDead": "tư tế (đã chết)",
@@ -613,6 +612,7 @@ export default {
   "hud.refusalInvalidTargetSpirit": "Không thể nhắm linh thể.",
   "hud.refusalInvalidTargetUnenchantable": "Mục tiêu đó không thể được phù phép.",
   "hud.refusalInvalidTargetWall": "Chỉ kỹ năng gây sát thương mới đánh được tường.",
+  "hud.refusalWallBeforeStart": "Không thể đánh tường trước khi trận đấu bắt đầu.",
   "hud.refusalInvalidTargetUntargetable": "Phép của bạn không thể nhắm địch đó.",
   "hud.refusalNeedsWeapon": "Cần {weapon}.",
   "hud.refusalNoAnimalToCharm": "Không có thú để thuần hóa ở đây.",

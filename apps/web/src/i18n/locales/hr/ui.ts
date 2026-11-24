@@ -662,7 +662,6 @@ export default {
   "hud.preMatchStartingAnyway":
     "Čeka se igrače: {joined}/{expected}, počinje svejedno za {seconds} s",
   "hud.preMatchStartsIn": "Meč počinje za {seconds}",
-  "hud.preMatchSelfAllyOnly": "Prije početka: samo vještine na sebe ili saveznike.",
   "hud.preMatchWaiting": "Čeka se igrače: {joined}/{expected}",
   "hud.priest": "svećenik",
   "hud.priestDead": "svećenik (mrtav)",
@@ -696,6 +695,7 @@ export default {
   "hud.refusalInvalidTargetSpirit": "Duha se ne može ciljati.",
   "hud.refusalInvalidTargetUnenchantable": "Ta se meta ne može začarati.",
   "hud.refusalInvalidTargetWall": "Zid može pogoditi samo vještina koja nanosi štetu.",
+  "hud.refusalWallBeforeStart": "Nijedan zid ne može se pogoditi prije početka meča.",
   "hud.refusalInvalidTargetUntargetable": "Tvoje čarolije ne mogu ciljati tog neprijatelja.",
   "hud.refusalNeedsWeapon": "Treba: {weapon}.",
   "hud.refusalNoAnimalToCharm": "Ovdje nema životinje za pripitomljavanje.",

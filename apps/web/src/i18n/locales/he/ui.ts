@@ -658,7 +658,6 @@ export default {
   "hud.preMatchStartingAnyway":
     "ממתינים לשחקנים: {joined}/{expected}, מתחילים בכל זאת בעוד {seconds} ש׳",
   "hud.preMatchStartsIn": "המשחק מתחיל בעוד {seconds}",
-  "hud.preMatchSelfAllyOnly": "לפני ההתחלה: רק מיומנויות על עצמך או על בני ברית.",
   "hud.preMatchWaiting": "ממתינים לשחקנים: {joined}/{expected}",
   "hud.priest": "כוהן",
   "hud.priestDead": "כוהן (מת)",
@@ -692,6 +691,7 @@ export default {
   "hud.refusalInvalidTargetSpirit": "אי אפשר לכוון לרוח.",
   "hud.refusalInvalidTargetUnenchantable": "אי אפשר להטיל הקסם על המטרה הזו.",
   "hud.refusalInvalidTargetWall": "רק מיומנות שגורמת נזק יכולה לפגוע בחומה.",
+  "hud.refusalWallBeforeStart": "אי אפשר לפגוע בחומה לפני שהמשחק מתחיל.",
   "hud.refusalInvalidTargetUntargetable": "הלחשים שלך לא יכולים לכוון לאויב הזה.",
   "hud.refusalNeedsWeapon": "דורש {weapon}.",
   "hud.refusalNoAnimalToCharm": "אין כאן חיה לאילוף.",

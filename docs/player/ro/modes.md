@@ -33,7 +33,7 @@ puncte, un obiectiv din afara ecranului sau de sub HUD primește o săgeată con
 la marginea ecranului: suportul sau un sanctuar în culoarea proprietarului, gri dacă
 nu e al nimănui, altarul în auriu. Săgeata plină a unui jucător se desenează peste ea.
 
-Un meci începe cu fiecare echipă ținută laolaltă în zona ei de start: poți merge oriunde în interiorul ei și te poți pregăti cu abilități asupra ta și a aliaților tăi, cum ar fi farmece, posturi și vindecări, dar nu poți ataca sau folosi o abilitate asupra unui inamic. Energia și Viața se regenerează cât aștepți, iar boții se pregătesc și ei. Un zid sclipitor în jurul zonei de start a echipei tale arată până unde poți merge. Un rând sus numără jucătorii care au încărcat meciul. Când l-au încărcat toți, numără invers 10 secunde și meciul începe, iar odată cu el și ceasul său. Un jucător care nu l-a încărcat după 20 de secunde nu este așteptat: numărătoarea începe fără el și se poate alătura și mai târziu.
+Un meci începe cu fiecare echipă ținută laolaltă în zona ei de start: poți merge oriunde în interiorul ei și poți folosi orice abilitate, așa că pregătește farmece, posturi, spirite sau protecții înainte să se deschidă porțile; cealaltă echipă este ținută departe, în propria zonă de start. Energia și Viața se regenerează cât aștepți, iar boții se pregătesc și ei. Un zid sclipitor în jurul zonei de start a echipei tale arată până unde poți merge. Un rând sus numără jucătorii care au încărcat meciul. Când l-au încărcat toți, numără invers 10 secunde și meciul începe, iar odată cu el și ceasul său. Un jucător care nu l-a încărcat după 20 de secunde nu este așteptat: numărătoarea începe fără el și se poate alătura și mai târziu.
 
 ## Anihilare
 

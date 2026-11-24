@@ -720,7 +720,6 @@ export default {
   "hud.preMatchStartingAnyway":
     "بانتظار اللاعبين: {joined}/{expected}، تبدأ على أي حال خلال {seconds} ث",
   "hud.preMatchStartsIn": "تبدأ المباراة خلال {seconds}",
-  "hud.preMatchSelfAllyOnly": "قبل البداية: مهارات على نفسك أو حلفائك فقط.",
   "hud.preMatchWaiting": "بانتظار اللاعبين: {joined}/{expected}",
   "hud.priest": "كاهن",
   "hud.priestDead": "كاهن (ميت)",
@@ -754,6 +753,7 @@ export default {
   "hud.refusalInvalidTargetSpirit": "لا يمكن استهداف روح.",
   "hud.refusalInvalidTargetUnenchantable": "لا يمكن وضع طلسم على هذا الهدف.",
   "hud.refusalInvalidTargetWall": "وحدها المهارة التي تُحدث ضررًا تستطيع ضرب الجدار.",
+  "hud.refusalWallBeforeStart": "لا يمكن ضرب أي جدار قبل بدء المباراة.",
   "hud.refusalInvalidTargetUntargetable": "لا يمكن لتعويذاتك استهداف هذا العدو.",
   "hud.refusalNeedsWeapon": "يتطلب {weapon}.",
   "hud.refusalNoAnimalToCharm": "لا يوجد حيوان لترويضه هنا.",

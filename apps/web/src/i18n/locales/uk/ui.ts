@@ -684,7 +684,6 @@ export default {
   "hud.preMatchStartingAnyway":
     "Очікування гравців: {joined}/{expected}, почнеться все одно за {seconds} с",
   "hud.preMatchStartsIn": "Матч почнеться за {seconds}",
-  "hud.preMatchSelfAllyOnly": "До початку: лише вміння на себе або союзників.",
   "hud.preMatchWaiting": "Очікування гравців: {joined}/{expected}",
   "hud.priest": "жрець",
   "hud.priestDead": "жрець (мертвий)",
@@ -718,6 +717,7 @@ export default {
   "hud.refusalInvalidTargetSpirit": "Не можна вибрати духа.",
   "hud.refusalInvalidTargetUnenchantable": "Цю ціль не можна зачарувати.",
   "hud.refusalInvalidTargetWall": "Вдарити стіну може лише вміння, що завдає шкоди.",
+  "hud.refusalWallBeforeStart": "До початку матчу стіни бити не можна.",
   "hud.refusalInvalidTargetUntargetable": "Твої закляття не можуть вибрати цього ворога.",
   "hud.refusalNeedsWeapon": "Потрібно: {weapon}.",
   "hud.refusalNoAnimalToCharm": "Тут немає звіра, якого можна приручити.",

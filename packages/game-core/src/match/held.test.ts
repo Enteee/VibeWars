@@ -54,6 +54,30 @@ function swordsman(id: string, team: number, spawn: Vec2, behaviour?: Behaviour)
   };
 }
 
+const EMPATHY = "mesmer.empathy";
+const HAMSTRING = "warrior.hamstring";
+const WARD = "elementalist.ward-against-melee";
+const WELL = "necromancer.well-of-suffering";
+const SPIRIT = "ranger.edge-of-extinction";
+/** Every kind once refused before the start (#3910), all allowed now (#3931). */
+const CASTER_BAR = [EMPATHY, HAMSTRING, WARD, WELL, SPIRIT];
+
+/** A swordsman with `CASTER_BAR`, its energy deep enough for all of it. */
+function caster(id: string, team: number, spawn: Vec2): ParticipantSpec {
+  return {
+    ...swordsman(id, team, spawn),
+    skillBar: CASTER_BAR,
+    attributeRanks: new Map([
+      ["warrior.swordsmanship", 12],
+      ["mesmer.domination-magic", 12],
+      ["elementalist.earth-magic", 12],
+      ["necromancer.death-magic", 12],
+      ["ranger.wilderness-survival", 12],
+    ]),
+    maxEnergy: 100,
+  };
+}
+
 /** `a` at the origin, and `b`, a foe within reach of a sword and a Fireball. */
 function pair(behaviour?: Behaviour, walls: ReturnType<typeof segment>[] = []): MatchSimulation {
   return new MatchSimulation({
@@ -167,27 +191,93 @@ describe("held before the start (#3817)", () => {
     expect(sim.elapsedSeconds).toBeCloseTo(DT, 9);
   });
 
-  it("refuses a foe's skill and an attack while held, and nothing fires at the start", () => {
+  it("casts a foe's skill on a foe in reach while held, and it lands (#3931)", () => {
     const sim = pair();
     sim.stepHeld(DT, null);
     sim.setTarget("a", "b");
-    expect(sim.requestSkill("a", 0)).toEqual({
-      skillId: FIREBALL,
-      check: { ok: false, reason: "pre-match" },
-    });
-    expect(sim.requestAttack("a", "b")).toBeUndefined();
+    expect(sim.requestSkill("a", 0)).toEqual({ skillId: FIREBALL, check: { ok: true } });
     hold(sim, 3);
-    const a = one(sim, "a");
-    const b = one(sim, "b");
-    expect(a.combatant.cast.activeCast).toBeUndefined();
-    expect(a.combatant.energy).toBe(50);
-    expect(b.combatant.health).toBe(500);
-
+    expect(one(sim, "a").combatant.energy).toBeLessThan(50);
     for (let tick = 0; tick < 3 * RULES.tickRateHz; tick += 1) {
       sim.step(DT);
     }
-    expect(a.combatant.energy).toBe(50);
-    expect(b.combatant.health).toBe(500);
+    expect(one(sim, "b").combatant.health).toBeLessThan(500);
+  });
+
+  it("still drops a plain attack while held (#3817)", () => {
+    const sim = pair();
+    sim.stepHeld(DT, null);
+    expect(sim.requestAttack("a", "b")).toBeUndefined();
+    hold(sim, 3);
+    expect(one(sim, "b").combatant.health).toBe(500);
+  });
+
+  it("puts a hex and an attack skill on a foe in reach while held (#3931)", () => {
+    const sim = new MatchSimulation({
+      seed: "held",
+      participants: [caster("a", 0, vec2(0, 0)), swordsman("b", 1, vec2(60, 0))],
+    });
+    sim.stepHeld(DT, null);
+    sim.setTarget("a", "b");
+    expect(sim.requestSkill("a", CASTER_BAR.indexOf(EMPATHY))?.check).toEqual({ ok: true });
+    hold(sim, 2);
+    expect(one(sim, "b").combatant.statuses.has("empathy")).toBe(true);
+    expect(sim.requestSkill("a", CASTER_BAR.indexOf(HAMSTRING))?.check).toEqual({ ok: true });
+    hold(sim, 2);
+    expect(one(sim, "b").combatant.statuses.has("crippled")).toBe(true);
+  });
+
+  it("places a ward, a well and a spirit while held, with no foe near (#3931)", () => {
+    const sim = new MatchSimulation({
+      seed: "held",
+      participants: [caster("a", 0, vec2(0, 0)), swordsman("b", 1, vec2(5000, 0))],
+    });
+    for (const skillId of [WARD, WELL, SPIRIT]) {
+      sim.stepHeld(DT, null);
+      expect(sim.requestSkill("a", CASTER_BAR.indexOf(skillId))?.check, skillId).toEqual({
+        ok: true,
+      });
+      hold(sim, 6);
+    }
+    expect(sim.groundEffects).toHaveLength(2);
+    expect([...sim.participants()].some(({ creature }) => creature?.skillId === SPIRIT)).toBe(true);
+  });
+
+  it("keeps a spirit and a ward cast while held whole until the start (#3931)", () => {
+    const sim = new MatchSimulation({
+      seed: "held",
+      participants: [caster("a", 0, vec2(0, 0)), swordsman("b", 1, vec2(5000, 0))],
+    });
+    for (const skillId of [WARD, SPIRIT]) {
+      sim.stepHeld(DT, null);
+      expect(sim.requestSkill("a", CASTER_BAR.indexOf(skillId))?.check, skillId).toEqual({
+        ok: true,
+      });
+      hold(sim, 6);
+    }
+    const spirit = [...sim.participants()].find(({ creature }) => creature?.skillId === SPIRIT);
+    const lasts = spirit?.creature?.expiresInSeconds;
+    const ward = sim.groundEffects[0]?.remainingSeconds;
+    expect(lasts).toBeLessThan(Number.POSITIVE_INFINITY);
+    expect(ward).toBeGreaterThan(0);
+    // Held is a paused world beyond your own body: neither runs down.
+    hold(sim, 10);
+    expect(spirit?.creature?.expiresInSeconds).toBe(lasts);
+    expect(sim.groundEffects[0]?.remainingSeconds).toBe(ward);
+    sim.step(DT);
+    expect(spirit?.creature?.expiresInSeconds).toBeCloseTo((lasts ?? 0) - DT, 9);
+  });
+
+  it("refuses a hex with no foe in reach by the target rule alone (#3931)", () => {
+    const sim = new MatchSimulation({
+      seed: "held",
+      participants: [caster("a", 0, vec2(0, 0)), swordsman("b", 1, vec2(5000, 0))],
+    });
+    sim.stepHeld(DT, null);
+    expect(sim.requestSkill("a", CASTER_BAR.indexOf(EMPATHY))?.check).toEqual({
+      ok: false,
+      reason: "no-target",
+    });
   });
 
   it("casts an enchantment on oneself while held, and it runs down (#3910)", () => {

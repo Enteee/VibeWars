@@ -628,7 +628,6 @@ export default {
   "hud.preMatchStartingAnyway":
     "Väntar på spelare: {joined}/{expected}, startar ändå om {seconds} s",
   "hud.preMatchStartsIn": "Matchen börjar om {seconds}",
-  "hud.preMatchSelfAllyOnly": "Före start: bara färdigheter på dig själv eller allierade.",
   "hud.preMatchWaiting": "Väntar på spelare: {joined}/{expected}",
   "hud.priest": "präst",
   "hud.priestDead": "präst (död)",
@@ -662,6 +661,7 @@ export default {
   "hud.refusalInvalidTargetSpirit": "Kan inte sikta på en ande.",
   "hud.refusalInvalidTargetUnenchantable": "Målet kan inte förtrollas.",
   "hud.refusalInvalidTargetWall": "Bara en färdighet som gör skada kan träffa en mur.",
+  "hud.refusalWallBeforeStart": "Ingen mur kan träffas innan matchen börjar.",
   "hud.refusalInvalidTargetUntargetable": "Dina besvärjelser kan inte sikta på den fienden.",
   "hud.refusalNeedsWeapon": "Kräver {weapon}.",
   "hud.refusalNoAnimalToCharm": "Det finns inget djur att tämja här.",

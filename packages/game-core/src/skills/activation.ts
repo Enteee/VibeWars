@@ -72,6 +72,9 @@ export type ActivationRejection =
   | "invalid-target-spirit"
   // Anything but a damage skill at a foe, aimed at a breakable wall (#3031).
   | "invalid-target-wall"
+  // Any skill at a breakable wall while held before the start (#3931):
+  // checked by the simulation, which knows the match has not begun.
+  | "wall-before-start"
   | "out-of-range"
   | "no-line-of-sight"
   // A corpse skill with no fresh corpse in reach (#466): checked by the
@@ -117,10 +120,7 @@ export type ActivationRejection =
   | "no-flag-carried"
   // Space on a foe's relic at its spawn (#1374); a return with a relic
   // in hand is `"hands-full"`.
-  | "not-your-relic"
-  // Before the start, a skill not only for the caster or its allies
-  // (#3910): checked by the simulation, which knows it is held.
-  | "pre-match";
+  | "not-your-relic";
 
 export type ActivationCheck =
   { readonly ok: true } | { readonly ok: false; readonly reason: ActivationRejection };

@@ -26,6 +26,7 @@ export {
   AREA_EARSHOT,
   RANGE_COMPASS,
   RANGE_MELEE,
+  RANGE_NATURE_RITUAL,
   RANGE_SPELL,
   SPAWN_BUBBLE_RADIUS,
 } from "./distances.js";

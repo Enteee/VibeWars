@@ -684,7 +684,6 @@ export default {
   "hud.preMatchStartingAnyway":
     "Oczekiwanie na graczy: {joined}/{expected}, start mimo to za {seconds} s",
   "hud.preMatchStartsIn": "Mecz zaczyna się za {seconds}",
-  "hud.preMatchSelfAllyOnly": "Przed startem: tylko umiejętności na siebie lub sojuszników.",
   "hud.preMatchWaiting": "Oczekiwanie na graczy: {joined}/{expected}",
   "hud.priest": "kapłan",
   "hud.priestDead": "kapłan (nie żyje)",
@@ -718,6 +717,7 @@ export default {
   "hud.refusalInvalidTargetSpirit": "Nie można wybrać ducha.",
   "hud.refusalInvalidTargetUnenchantable": "Tego celu nie można zaczarować.",
   "hud.refusalInvalidTargetWall": "Tylko umiejętność zadająca obrażenia może uderzyć w mur.",
+  "hud.refusalWallBeforeStart": "Przed rozpoczęciem meczu nie można uderzyć w żaden mur.",
   "hud.refusalInvalidTargetUntargetable": "Twoje czary nie mogą objąć tego wroga.",
   "hud.refusalNeedsWeapon": "Wymaga: {weapon}.",
   "hud.refusalNoAnimalToCharm": "Nie ma tu zwierzęcia do oswojenia.",

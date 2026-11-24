@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { getSkill } from "./catalog.js";
-import { preMatchAllowed } from "./pre-match.js";
+import { getSkill } from "../../../skills/catalog.js";
+import { worthPrecasting } from "./precast.js";
 
-/** Real skills, and whether each may be used in the spawn bubble (#3910). */
+/** Real skills, and whether a bot precasts each in the spawn bubble (#3910). */
 const TABLE: readonly (readonly [string, boolean])[] = [
   // On the caster or an ally only: an enchantment, a stance, a shout, a
   // preparation, a glyph, a signet, a heal.
@@ -36,10 +36,10 @@ const TABLE: readonly (readonly [string, boolean])[] = [
   ["assassin.deaths-charge", false],
 ];
 
-describe("preMatchAllowed (#3910)", () => {
+describe("worthPrecasting (#3910)", () => {
   it.each(TABLE)("%s: %s", (id, allowed) => {
     const skill = getSkill(id);
     expect(skill, id).toBeDefined();
-    expect(skill === undefined ? undefined : preMatchAllowed(skill)).toBe(allowed);
+    expect(skill === undefined ? undefined : worthPrecasting(skill)).toBe(allowed);
   });
 });
