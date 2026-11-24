@@ -297,11 +297,13 @@ export async function playHouseTeams(
  * Wait out the pre-match (#3818): the host holds everyone in the spawn
  * until all are in, at most 20 s, then counts down, 1 s in the e2e build
  * (#3855). Resolves once each page's centre line is gone, so the match is
- * really running.
+ * really running, and its spawn bubble (#3909) has faded out, so a spec
+ * that reads the pixels round you right after reads none of the curtain.
  */
 export async function waitForMatchStart(pages: readonly Page[]): Promise<void> {
   for (const page of pages) {
     await expect(page.locator(".hud-pre-match")).toBeHidden({ timeout: 25_000 });
+    await expect(page.locator("#viewport")).not.toHaveAttribute("data-spawn-bubble");
   }
 }
 
