@@ -1,5 +1,5 @@
 import type { FlagField, RelicField, Segment } from "@vibewars/game-core";
-import { ELITE_ZAISHEN_MAP } from "@vibewars/game-core";
+import { ELITE_ZAISHEN_MAP, teamBubble } from "@vibewars/game-core";
 import { allWallSegments } from "@vibewars/game-maps/geometry";
 import type { MapShrine } from "@vibewars/game-maps/match-fields";
 import type { GateLook } from "@vibewars/game-maps/schema";
@@ -569,12 +569,26 @@ export function toArenaSnapshot(
   };
 }
 
-/** Your spawn bubble (#3909) while the match holds you in it; a watcher has none. */
+/**
+ * Your team's bubble (#3909, #3930) while the match holds you in it, round
+ * the spawns of your team's bodies, as the host holds it; a watcher has none.
+ */
 function heldIn(match: MatchSnapshot): SpawnBubble | undefined {
-  const spawn = match.preMatch?.spawns.find(({ id }) => id === match.selfSessionId);
-  return spawn === undefined
-    ? undefined
-    : { centre: { x: spawn.x, y: spawn.y }, layer: spawn.layer };
+  const spawns = match.preMatch?.spawns ?? [];
+  const own = spawns.find(({ id }) => id === match.selfSessionId);
+  const self = match.players.find(({ sessionId }) => sessionId === match.selfSessionId);
+  if (own === undefined || self === undefined) {
+    return undefined;
+  }
+  const team = new Set(
+    match.players
+      .filter((player) => player.team === self.team && player.creature === undefined)
+      .map(({ sessionId }) => sessionId),
+  );
+  return {
+    bubble: teamBubble(spawns.filter(({ id }) => team.has(id)).map(({ x, y }) => ({ x, y }))),
+    layer: own.layer,
+  };
 }
 
 /** Whether this tab has said why its spawn bubble holds you (#3909): once a session. */
@@ -1178,7 +1192,7 @@ export async function startMatchView(
       !heldToldThisSession &&
       held !== undefined &&
       self !== undefined &&
-      spawnBubbleContact(held.centre, self) !== undefined
+      spawnBubbleContact(held.bubble, self) !== undefined
     ) {
       heldToldThisSession = true;
       toast(t("hud.preMatchHeld"));
