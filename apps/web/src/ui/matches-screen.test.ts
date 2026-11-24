@@ -754,6 +754,26 @@ describe("the Matches page (#2532)", () => {
     expect(note.textContent).toBe(t("matches.emptyMine"));
   });
 
+  it("shows a kept match its host left: no winner, no draw, the host left (#3903)", async () => {
+    kept = [{ ...KEPT, ended: { ...KEPT.ended, winningTeam: null, endReason: "host-left" } }];
+    const { root } = render();
+    await historyRead();
+    root.one("match-chip-mine").click();
+    const rows = root.all("match-row");
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.one("match-result").textContent).toBe(t("matches.versus"));
+    expect(
+      rows[0]?.all("match-team").filter((team) => team.className.includes("is-winner")),
+    ).toEqual([]);
+    root.one("match-row-head").click();
+    expect(root.one("match-detail-summary").textContent).toBe(
+      t("matches.endSummary", { reason: t("matches.endHostLeft"), duration: "2:05" }),
+    );
+    expect(root.one("match-detail-result").textContent).toBe(
+      t("matches.teamResult", { team: 1, result: t("matches.unfinished") }),
+    );
+  });
+
   it("opens a kept match on Builds, beside its Stats and Diagram (#3903)", async () => {
     const { root } = render();
     await historyRead();

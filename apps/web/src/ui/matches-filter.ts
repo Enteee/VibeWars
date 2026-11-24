@@ -37,12 +37,15 @@ export interface MatchFilter {
 export const sessionFilter: MatchFilter = { kinds: new Set(), sizes: new Set(), mine: false };
 
 /** A record's size: its largest team's player count, bots included. */
-export function matchSize(record: MatchRecord): number {
+export function matchSize(record: Pick<MatchRecord, "teams">): number {
   return Math.max(...record.teams.map((team) => team.players.length));
 }
 
 /** Kinds OR'd, sizes OR'd, the two AND'd. */
-export function matchesFilter(record: MatchRecord, filter: MatchFilter): boolean {
+export function matchesFilter(
+  record: Pick<MatchRecord, "mode" | "teams">,
+  filter: MatchFilter,
+): boolean {
   const size = matchSize(record);
   return (
     (filter.kinds.size === 0 || filter.kinds.has(record.mode)) &&

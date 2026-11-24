@@ -59,7 +59,16 @@ const END_REASONS = {
   morale: "matches.endMorale",
   "guild-lord": "matches.endGuildLord",
   aggression: "matches.endAggression",
-} as const satisfies Readonly<Record<MatchEndReason, MessageKey>>;
+  "host-left": "matches.endHostLeft",
+} as const satisfies Readonly<Record<ShownRecord["endReason"], MessageKey>>;
+
+/**
+ * What a row shows (#3903): a published record, or a kept match as one,
+ * which may have ended with its host leaving.
+ */
+type ShownRecord = Omit<MatchRecord, "endReason"> & {
+  readonly endReason: MatchEndReason | "host-left";
+};
 
 export interface MatchesScreenOptions {
   readonly onSwitch: (entry: RailEntry) => void;
@@ -78,37 +87,31 @@ export interface MatchesScreenOptions {
 /** A row's match (#3903): a published record, or one this browser kept. */
 interface ShownMatch {
   readonly id: string;
-  readonly record: MatchRecord;
+  readonly record: ShownRecord;
   /** This browser's own record of it, whose team was the player's, its table and charts. */
   readonly kept: KeptMatch | undefined;
 }
 
-/**
- * A kept match as a row reads it (#3903), or `undefined` for one its
- * host left before the end, which has no result to show.
- */
-export function keptAsRecord(kept: KeptMatch): MatchRecord | undefined {
+/** A kept match as a row reads it (#3903), one its host left included. */
+export function keptAsRecord(kept: KeptMatch): ShownRecord {
   const { ended } = kept;
-  return ended.endReason === "host-left"
-    ? undefined
-    : {
-        v: MATCH_RECORD_VERSION,
-        mode: kept.mode,
-        map: kept.mapId,
-        endedAt: Math.floor(kept.endedAt / 1000),
-        durationSeconds: kept.durationSeconds,
-        winningTeam: ended.winningTeam,
-        endReason: ended.endReason,
-        teams: ended.teams,
-      };
+  return {
+    v: MATCH_RECORD_VERSION,
+    mode: kept.mode,
+    map: kept.mapId,
+    endedAt: Math.floor(kept.endedAt / 1000),
+    durationSeconds: kept.durationSeconds,
+    winningTeam: ended.winningTeam,
+    endReason: ended.endReason,
+    teams: ended.teams,
+  };
 }
 
 /** My matches (#3903): the ones kept under `pubkey`, newest first as `kept` comes. */
 export function myMatches(kept: readonly KeptMatch[], pubkey: string): ShownMatch[] {
-  return kept.flatMap((match) => {
-    const record = match.pubkey === pubkey ? keptAsRecord(match) : undefined;
-    return record === undefined ? [] : [{ id: match.id, record, kept: match }];
-  });
+  return kept
+    .filter((match) => match.pubkey === pubkey)
+    .map((match) => ({ id: match.id, record: keptAsRecord(match), kept: match }));
 }
 
 export interface MatchesScreen {
@@ -146,8 +149,11 @@ export function relativeTime(endedAt: number, nowSeconds: number): string {
   return t("matches.daysAgo", { count: Math.floor(ago / 86_400) });
 }
 
-/** "Won", "Lost" or "Draw", for team `team` of `record`. */
-function teamResult(record: MatchRecord, team: number): string {
+/** "Won", "Lost", "Draw" or, its host gone, "Unfinished", for team `team` of `record`. */
+function teamResult(record: ShownRecord, team: number): string {
+  if (record.endReason === "host-left") {
+    return t("matches.unfinished");
+  }
   if (record.winningTeam === null) {
     return t("matches.draw");
   }
@@ -160,7 +166,7 @@ function teamResult(record: MatchRecord, team: number): string {
  * underlined. A build it can't read is a question mark.
  */
 function teamIcons(
-  record: MatchRecord,
+  record: ShownRecord,
   team: number,
   players: MatchRecordTeam,
   yours: boolean,
@@ -199,10 +205,14 @@ function teamIcons(
 }
 
 /**
- * Between two teams: which side won, or a draw. Three teams (#2684) are
+ * Between two teams: which side won, or a draw; neither when the host
+ * left (#3903). Three teams (#2684) are
  * just set apart: the winner's underline says who won.
  */
-function resultMark(record: MatchRecord): string {
+function resultMark(record: ShownRecord): string {
+  if (record.endReason === "host-left") {
+    return t("matches.versus");
+  }
   if (record.winningTeam === null) {
     return t("matches.draw");
   }
@@ -252,7 +262,7 @@ function cloneButton(players: MatchRecordTeam, onClone: () => void): HTMLElement
 }
 
 function teamDetail(
-  record: MatchRecord,
+  record: ShownRecord,
   team: number,
   players: MatchRecordTeam,
   onCloneTeam: (team: MatchRecordTeam) => void,
