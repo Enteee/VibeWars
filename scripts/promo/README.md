@@ -37,7 +37,7 @@ workspace packages built (`pnpm -r --filter "./packages/**" run build`).
 Every published `v0.N.0` release carries the cuts, starting with `v0.12.0`.
 `.github/workflows/trailer.yml` builds and uploads them when the release is
 published, replacing same-named assets; it never creates or edits a release.
-Re-run it by hand with the `tag` input. The files appear some minutes after
+It builds the commit it runs from (a release event: the tag; a hand run: the branch you pick, normally main), and `tag` only names the release the cuts go to. Re-run it by hand with the `tag` input, which is also how a release older than `scripts/promo` gets its cuts. The files appear some minutes after
 the release, so the URL 404s until then:
 
 `https://github.com/Enteee/VibeWars/releases/download/<tag>/vibewars-trailer-16x9.mp4`
