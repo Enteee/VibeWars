@@ -683,8 +683,6 @@ async function main(): Promise<void> {
         readonly ascentRound: number | null;
         /** The round its match plays: a later one when it skipped ahead (#2687). */
         playedRound: number | null;
-        /** The map of the group it was formed into (#2687); `undefined` until then. */
-        groupMapId: string | undefined;
       }
     | undefined;
   /** A team's match found while the tab was hidden (#2743): its title flashing. */
@@ -1616,7 +1614,6 @@ async function main(): Promise<void> {
     startNatCheck();
     return {
       queuedMs: queuedMsOf(lobby.getSnapshot()),
-      groupMapId: teamQueue?.groupMapId,
       onFindMatch: () => {
         lobby?.findMatch(roundFor(entry), false);
       },
@@ -2276,7 +2273,6 @@ async function main(): Promise<void> {
       finished: false,
       ascentRound: snapshot.ascentRound,
       playedRound: snapshot.ascentRound,
-      groupMapId: undefined,
     };
     teamQueue = started;
     music().menu("queue");
@@ -2331,11 +2327,9 @@ async function main(): Promise<void> {
           } else if (state.kind === "fell-through") {
             // That group is gone: the party is bound for its own round again.
             current.playedRound = current.ascentRound;
-            current.groupMapId = undefined;
             redrawRail();
           } else if (state.kind === "in-lobby" && current.ascentRound !== null) {
             current.playedRound = ascentRoundOf(state.group.mapId);
-            current.groupMapId = state.group.mapId;
             redrawRail();
           }
           paintQueue();

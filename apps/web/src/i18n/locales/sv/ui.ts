@@ -789,7 +789,6 @@ export default {
   "lobby.leaveTeamLabel": "Lämna lag {team}",
   "lobby.map": "Karta:",
   "lobby.mapLabel": "{name} ({size})",
-  "lobby.mapRandom": "Karta: slumpad (Lagarena)",
   "lobby.mapShown": "Karta: {map}",
   "lobby.matchRunning": "En match pågår fortfarande. Lobbyn öppnas igen när den är slut.",
   "lobby.modeNameCapturePoints": "Erövringspunkter",

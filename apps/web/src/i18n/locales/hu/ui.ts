@@ -793,7 +793,6 @@ export default {
   "lobby.leaveTeamLabel": "Kilépés a csapatból: {team}",
   "lobby.map": "Pálya:",
   "lobby.mapLabel": "{name} ({size})",
-  "lobby.mapRandom": "Pálya: véletlen (Csapataréna)",
   "lobby.mapShown": "Pálya: {map}",
   "lobby.matchRunning": "Még tart egy meccs. A lobbi a vége után nyílik meg újra.",
   "lobby.modeNameCapturePoints": "Pontfoglalás",

@@ -827,7 +827,6 @@ export default {
   "lobby.leaveTeamLabel": "עזוב את קבוצה {team}",
   "lobby.map": "מפה:",
   "lobby.mapLabel": "{name} ({size})",
-  "lobby.mapRandom": "מפה: אקראית (זירת קבוצות)",
   "lobby.mapShown": "מפה: {map}",
   "lobby.matchRunning": "משחק עדיין מתנהל. הלובי ייפתח שוב כשיסתיים.",
   "lobby.modeNameCapturePoints": "כיבוש נקודות",

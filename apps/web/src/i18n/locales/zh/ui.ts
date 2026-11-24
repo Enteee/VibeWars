@@ -735,7 +735,6 @@ export default {
   "lobby.leaveTeamLabel": "离开 {team} 队",
   "lobby.map": "地图：",
   "lobby.mapLabel": "{name}（{size}）",
-  "lobby.mapRandom": "地图：随机（团队竞技场）",
   "lobby.mapShown": "地图：{map}",
   "lobby.matchRunning": "对局仍在进行，结束后大厅将重新开放。",
   "lobby.modeNameCapturePoints": "占点",

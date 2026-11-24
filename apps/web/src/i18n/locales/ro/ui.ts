@@ -833,7 +833,6 @@ export default {
   "lobby.leaveTeamLabel": "Ieși din echipa {team}",
   "lobby.map": "Hartă:",
   "lobby.mapLabel": "{name} ({size})",
-  "lobby.mapRandom": "Hartă: aleatorie (Arenă de echipe)",
   "lobby.mapShown": "Hartă: {map}",
   "lobby.matchRunning": "Un meci încă rulează. Lobby-ul se redeschide când se termină.",
   "lobby.modeNameCapturePoints": "Capturare de puncte",
