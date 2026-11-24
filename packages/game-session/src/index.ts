@@ -96,6 +96,7 @@ export {
   RANKED_RESULT_TIMEOUT_MS,
   RANKED_START_TIMEOUT_MS,
   SHARE_INTERVAL_MS,
+  WARMUP_AFTER_MS,
   canStart,
   createLobbyHost,
 } from "./lobby-host.js";

@@ -8065,12 +8065,12 @@
           ]
         },
         {
+          "properties": [{ "name": "kind", "optional": false, "type": { "literal": "end-warmup" } }]
+        },
+        {
           "properties": [
             { "name": "kind", "optional": false, "type": { "literal": "leave-queue" } }
           ]
-        },
-        {
-          "properties": [{ "name": "kind", "optional": false, "type": { "literal": "play-bots" } }]
         },
         {
           "properties": [
@@ -8128,6 +8128,11 @@
           ]
         },
         { "properties": [{ "name": "kind", "optional": false, "type": { "literal": "start" } }] },
+        {
+          "properties": [
+            { "name": "kind", "optional": false, "type": { "literal": "start-warmup" } }
+          ]
+        },
         {
           "properties": [
             { "name": "kind", "optional": false, "type": { "literal": "vote" } },
@@ -8530,7 +8535,8 @@
             ]
           }
         },
-        { "name": "teamSize", "optional": false, "type": "number" }
+        { "name": "teamSize", "optional": false, "type": "number" },
+        { "name": "warmup", "optional": false, "type": "boolean" }
       ]
     },
     "WireLobbyWelcome": {

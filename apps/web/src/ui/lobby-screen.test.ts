@@ -59,6 +59,7 @@ function snapshot(phase: LobbySnapshot["phase"]): LobbySnapshot {
     countdownSeconds: null,
     teamLobby: null,
     queueNonce: null,
+    warmup: false,
     ascentRound: null,
     ascentLock: null,
     teamKept: null,

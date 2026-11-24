@@ -845,7 +845,6 @@ export default {
   "lobby.modeNameKingOfTheHill": "Rey de la colina",
   "lobby.modeNameRelicRun": "Carrera de reliquias",
   "lobby.notReady": "No listo",
-  "lobby.playBots": "Jugar contra bots",
   "lobby.ready": "Listo",
   "lobby.readyJoinATeam": "Primero únete a un equipo.",
   "lobby.readyMatchStarted": "La partida ya ha empezado.",
@@ -1098,7 +1097,13 @@ export default {
   "queue.sameTeamIn": "Habéis ganado: siguiente partida con el mismo equipo en {seconds} s",
   "queue.newTeamIn": "Vuestro grupo ha cambiado: elegid el equipo de nuevo en {seconds} s",
   "queue.now": "Ya",
-  "queue.playBotsIn": "Jugar contra bots ({seconds} s)",
+  "queue.warmupIn":
+    "Todavía no hay otro equipo. Partida de calentamiento contra bots en {seconds} s. No cuenta y sigues en la cola.",
+  "queue.warmupNow": "Empezar calentamiento ya",
+  "queue.warmupRunning": "Calentamiento — sigues en la cola de {queue} ({waited} de espera)",
+  "queue.warmupOver": "Partida encontrada — fin del calentamiento",
+  "queue.warmupNext":
+    "Fin del calentamiento: {outcome}. Siguiente calentamiento en 3 s, sigues en la cola.",
   "queue.queueAgain": "Otra vez",
   "queue.randomArena": "Arena aleatoria {size}",
   "queue.rankedCancelled": "Partida clasificatoria cancelada: un jugador no confirmó.",

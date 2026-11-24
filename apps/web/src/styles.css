@@ -4880,6 +4880,17 @@ body:has(> .splash) #menu-background::after {
   pointer-events: none;
 }
 
+/* A warmup's label under the score (#3899): still queued, this match counts for nothing. */
+.hud-warmup {
+  padding: 0.1rem 0.6rem;
+  background: rgb(14 17 22 / 85%);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  font-size: 0.85rem;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
 .hud-carriers {
   display: flex;
   flex-direction: column;

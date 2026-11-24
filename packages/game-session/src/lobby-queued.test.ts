@@ -560,6 +560,7 @@ describe("a queued lobby", () => {
           matchId: null,
           teamLobby: null,
           queueNonce: null,
+          warmup: false,
           ascentRound: null,
           ascentLock: null,
           teamKept: null,

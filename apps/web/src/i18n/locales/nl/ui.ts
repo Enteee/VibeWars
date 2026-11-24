@@ -800,7 +800,6 @@ export default {
   "lobby.modeNameKingOfTheHill": "King of the Hill",
   "lobby.modeNameRelicRun": "Relic Run",
   "lobby.notReady": "Niet klaar",
-  "lobby.playBots": "Tegen bots spelen",
   "lobby.ready": "Klaar",
   "lobby.readyJoinATeam": "Kies eerst een team.",
   "lobby.readyMatchStarted": "De match is al begonnen.",
@@ -1033,7 +1032,13 @@ export default {
   "queue.sameTeamIn": "Gewonnen: volgende match met hetzelfde team over {seconds} s",
   "queue.newTeamIn": "Je groep is veranderd: kies je team opnieuw over {seconds} s",
   "queue.now": "Nu",
-  "queue.playBotsIn": "Tegen bots spelen ({seconds} s)",
+  "queue.warmupIn":
+    "Nog geen ander team. Opwarmpotje tegen bots over {seconds} s. Het telt niet, en je blijft in de wachtrij.",
+  "queue.warmupNow": "Nu opwarmen",
+  "queue.warmupRunning": "Opwarmen — nog in de wachtrij voor {queue} ({waited} gewacht)",
+  "queue.warmupOver": "Wedstrijd gevonden — opwarmen voorbij",
+  "queue.warmupNext":
+    "Opwarmen voorbij: {outcome}. Volgende opwarmronde over 3 s, nog in de wachtrij.",
   "queue.queueAgain": "Opnieuw zoeken",
   "queue.randomArena": "Random Arena {size}",
   "queue.rankedCancelled": "Gerankte wedstrijd geannuleerd: een speler bevestigde niet.",

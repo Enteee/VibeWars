@@ -845,7 +845,6 @@ export default {
   "lobby.modeNameKingOfTheHill": "Regele dealului",
   "lobby.modeNameRelicRun": "Cursa relicvelor",
   "lobby.notReady": "Nepregătit",
-  "lobby.playBots": "Joacă contra boților",
   "lobby.ready": "Gata",
   "lobby.readyJoinATeam": "Intră mai întâi într-o echipă.",
   "lobby.readyMatchStarted": "Meciul a început deja.",
@@ -1089,7 +1088,13 @@ export default {
   "queue.sameTeamIn": "Ați câștigat: următorul meci cu aceeași echipă în {seconds} s",
   "queue.newTeamIn": "Grupul s-a schimbat: alegeți din nou echipa în {seconds} s",
   "queue.now": "Acum",
-  "queue.playBotsIn": "Joacă contra boților ({seconds} s)",
+  "queue.warmupIn":
+    "Încă nicio altă echipă. Meci de încălzire contra boților în {seconds} s. Nu contează și rămâi în coadă.",
+  "queue.warmupNow": "Începe încălzirea acum",
+  "queue.warmupRunning": "Încălzire — încă în coadă pentru {queue} ({waited} de așteptare)",
+  "queue.warmupOver": "Meci găsit — încălzirea s-a terminat",
+  "queue.warmupNext":
+    "Încălzirea s-a terminat: {outcome}. Următoarea încălzire în 3 s, încă în coadă.",
   "queue.queueAgain": "Din nou în coadă",
   "queue.randomArena": "Arenă aleatorie {size}",
   "queue.rankedCancelled": "Meci clasat anulat: un jucător nu a confirmat.",

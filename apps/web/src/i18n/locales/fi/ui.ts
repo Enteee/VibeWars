@@ -811,7 +811,6 @@ export default {
   "lobby.modeNameKingOfTheHill": "Kukkulan kuningas",
   "lobby.modeNameRelicRun": "Reliikkijuoksu",
   "lobby.notReady": "Ei valmis",
-  "lobby.playBots": "Pelaa botteja vastaan",
   "lobby.ready": "Valmis",
   "lobby.readyJoinATeam": "Liity ensin tiimiin.",
   "lobby.readyMatchStarted": "Ottelu on jo alkanut.",
@@ -1043,7 +1042,13 @@ export default {
   "queue.sameTeamIn": "Voitit: seuraava ottelu samalla joukkueella: {seconds} s",
   "queue.newTeamIn": "Ryhmäsi muuttui: valitse joukkue uudelleen: {seconds} s",
   "queue.now": "Nyt",
-  "queue.playBotsIn": "Pelaa botteja vastaan ({seconds} s)",
+  "queue.warmupIn":
+    "Ei vielä muuta joukkuetta. Lämmittelyottelu botteja vastaan {seconds} s kuluttua. Se ei vaikuta mihinkään, ja pysyt jonossa.",
+  "queue.warmupNow": "Aloita lämmittely nyt",
+  "queue.warmupRunning": "Lämmittely — yhä jonossa: {queue} ({waited} odotettu)",
+  "queue.warmupOver": "Ottelu löytyi — lämmittely päättyi",
+  "queue.warmupNext":
+    "Lämmittely päättyi: {outcome}. Seuraava lämmittely 3 s kuluttua, yhä jonossa.",
   "queue.queueAgain": "Jonota uudelleen",
   "queue.randomArena": "Satunnaisareena {size}",
   "queue.rankedCancelled": "Rankattu ottelu peruttu: pelaaja ei vahvistanut.",

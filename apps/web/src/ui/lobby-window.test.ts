@@ -103,6 +103,7 @@ function lobby(players: readonly LobbyPlayerSnapshot[]): LobbySnapshot {
     countdownSeconds: null,
     teamLobby: null,
     queueNonce: null,
+    warmup: false,
     ascentRound: null,
     ascentLock: null,
     teamKept: null,

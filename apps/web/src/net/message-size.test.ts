@@ -589,6 +589,7 @@ describe("every message fits in one Trystero chunk (#403)", () => {
       teamLobby: null,
       // The longest a nonce is (#1766).
       queueNonce: "f".repeat(64),
+      warmup: false,
       ascentRound: 3,
       ascentLock: null,
       teamKept: null,
@@ -658,6 +659,7 @@ describe("every message fits in one Trystero chunk (#403)", () => {
       countdownSeconds: null,
       teamLobby: null,
       queueNonce: null,
+      warmup: false,
       ascentRound: null,
       ascentLock: null,
       teamKept: null,
