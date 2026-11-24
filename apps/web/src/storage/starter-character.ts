@@ -65,7 +65,7 @@ function rollCharacter(
   now: number,
   not?: StoredCharacter,
 ): StoredCharacter {
-  const build = pickStarterBuild(random, not === undefined ? undefined : toPlayerBuild(not));
+  const build = pickStarterBuild(random, not === undefined ? [] : [toPlayerBuild(not)]);
   return { ...fromPlayerBuild(build, id, now), name: freeName(build.name, taken) };
 }
 

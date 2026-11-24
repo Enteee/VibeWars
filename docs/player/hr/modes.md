@@ -460,6 +460,15 @@ pritisnutoj veličini; skupina bez pritisnutih pušta sve. Veličina je
 najveći tim, s botovima, pa Igra s domaćinom 3v2 ne odgovara nijednoj veličini.
 Oznake ostaju kako si ih ostavio dok se stranica ponovno ne učita.
 
+**Moji mečevi**, iza oznaka, umjesto toga prikazuje tvoje vlastite
+mečeve: zadnjih 50 koje je ovaj preglednik sačuvao za tvoj trenutni
+ključ igrača, najnovije prvo, bilo koje starosti, objavljene ili ne, i
+Elite Zaishen Battle. Vrsta i Veličina i dalje ih filtriraju, a tvoj tim
+je označen s **Ti**. Otvori jedan za tri kartice: **Buildovi**, njegovi
+timovi s Kloniraj kao gore; **Statistika**, tablica bodova koju je
+pokazala njegova završna ploča; i **Dijagram**, njegovi grafikoni.
+Čuvaju se samo u ovom pregledniku.
+
 Iznad filtara traka **Dvorana junaka** prikazuje zadnjih 20 nizova, od najnovijeg: držatelja (oznaka ceha ili ime vođe), ljude iz pobjedničkog tima, kada je završila najnovija pobjeda i, od dvije pobjede, koliko ih je zaredom. Niz je neprekinuti slijed pobjeda u Dvorani jednog držatelja. Traka čita zapise s ove stranice, zanemaruje filtre i skrivena je kada nijedan od njih nije pobjeda u Dvorani. Kao i svaki zapis, to je ono što je prijavio domaćin svakog meča, i ništa to ne provjerava.
 
 ## Rangirani

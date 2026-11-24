@@ -239,7 +239,13 @@ describe("connectMatch", () => {
       overrunBy: null,
       inputs: [[1, "intent", "player-1", { kind: "stop" }]],
     };
-    const ENDED = { winningTeam: 1, endReason: "score", summary: [], clearSeconds: null };
+    const ENDED = {
+      winningTeam: 1,
+      endReason: "score",
+      summary: [],
+      clearSeconds: null,
+      teams: [{ players: [] }, { players: [] }],
+    };
 
     async function joined() {
       const kept: RecordedReplay[] = [];

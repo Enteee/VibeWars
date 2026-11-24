@@ -445,6 +445,16 @@ grupo sin ninguno pulsado deja pasar todo. El tamaño es el del equipo más gran
 bots incluidos, así que una Partida alojada de 3v2 no encaja con ningún tamaño. Los
 chips se quedan como los dejaste hasta que se recarga la página.
 
+**Mis partidas**, tras los chips, muestra en cambio tus propias
+partidas: las últimas 50 que este navegador guardó para tu clave de
+jugador actual, de la más nueva a la más antigua, de cualquier
+antigüedad, publicadas o no, también una Batalla de los Zaishen de
+élite. Tipo y Tamaño siguen filtrándolas, y tu equipo va marcado con
+**Tú**. Abre una para ver tres pestañas: **Builds**, sus equipos con
+Clonar como arriba; **Estadísticas**, la tabla de puntuaciones que
+mostró su panel final; y **Diagrama**, sus gráficos. Solo se guardan en
+este navegador.
+
 Encima de los filtros, la franja **Salón de los héroes** muestra los últimos 20 dominios, del más reciente al más antiguo: quien domina (una etiqueta de gremio o el nombre del líder), las personas del equipo ganador, cuándo terminó la victoria más reciente y, desde dos victorias, cuántas seguidas. Un dominio es una racha ininterrumpida de victorias en el Salón de quien domina. La franja lee los registros de esta página, ignora los filtros y se oculta si ninguno es una victoria en el Salón. Como todo registro, es lo que informó el anfitrión de cada partida, y nada lo comprueba.
 
 ## Clasificatorias

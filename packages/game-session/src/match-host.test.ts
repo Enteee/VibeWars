@@ -13,6 +13,7 @@ import {
 } from "@vibewars/game-core";
 import {
   MAX_LOBBY_PLAYERS,
+  MAX_TEMPLATE_LENGTH,
   MAX_WIRE_SIGNET,
   MAX_WIRE_STATUSES,
   parseWireEnded,
@@ -241,9 +242,16 @@ describe("guild capes (#1422)", () => {
 });
 
 describe("the match summary's size (#1057)", () => {
-  it("fits a full lobby's lines in one `ended`", () => {
+  it("fits a full lobby's lines and builds in one `ended`", () => {
     // Sixteen names of sixteen four-byte characters, the most a name keeps,
-    // and numbers no match reaches.
+    // numbers no match reaches, and templates of GW1's longest (#3903).
+    const players = Array.from({ length: MAX_LOBBY_PLAYERS / 2 }, () => ({
+      name: "\u{1D54E}".repeat(16),
+      guildTag: "WWWW",
+      bot: false,
+      pubkey: "f".repeat(64),
+      template: "A".repeat(MAX_TEMPLATE_LENGTH),
+    }));
     const ended: WireEnded = {
       winningTeam: 0,
       endReason: "annihilation",
@@ -262,6 +270,7 @@ describe("the match summary's size (#1057)", () => {
         deaths: 9_999,
         interrupts: 9_999,
       })),
+      teams: [{ players }, { players }],
     };
     expect(parseWireEnded(ended, 2)).toEqual(ended);
     expect(messageBytes(ended)).toBeLessThanOrEqual(MAX_MESSAGE_BYTES);
@@ -879,6 +888,32 @@ describe("a map's layers (#3017)", () => {
     await match.step(0.05);
     expect(self(local)?.layer).toBe(1);
     expect(self(remote)?.layer).toBe(1);
+  });
+});
+
+describe("the teams on `ended` (#3903)", () => {
+  it("are the published record's, for every client", async () => {
+    const records: MatchRecord[] = [];
+    const match = startMatch({
+      matchRules: { ...ANNIHILATION_MATCH_RULES, timeLimitSeconds: 3 },
+      publishRecord: (record) => records.push(record),
+    });
+    await match.join(hello({ name: "Ann" }));
+    await match.join(hello({ name: "Bob" }));
+    const send = vi.spyOn(match.hostTransport, "send");
+
+    await match.step(4);
+    await settle();
+
+    const ended = send.mock.calls.find(([channel]) => channel === "ended")?.[1] as
+      WireEnded | undefined;
+    expect(records).toHaveLength(1);
+    expect(ended?.teams).toEqual(records[0]?.teams);
+    expect(ended?.teams.flatMap(({ players }) => players.map(({ name }) => name)).sort()).toEqual([
+      "Ann",
+      "Bob",
+    ]);
+    vi.restoreAllMocks();
   });
 });
 

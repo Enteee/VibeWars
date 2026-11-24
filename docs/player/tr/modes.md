@@ -535,6 +535,15 @@ uyuyorsa görünür; hiçbirine basılmamış bir grup hepsini geçirir. Boyut,
 botlar dahil en büyük takımdır, yani 3v2'lik bir Özel Oyun hiçbir boyuta
 uymaz. Çipler, sayfa yeniden yüklenene kadar bıraktığın gibi kalır.
 
+Çiplerden sonra gelen **Maçlarım** ise kendi maçlarını listeler: bu
+tarayıcının mevcut oyuncu anahtarın için sakladığı son 50 maç, en yenisi
+önce, ne kadar eski olursa olsun, yayımlanmış olsun ya da olmasın, bir
+Elite Zaishen Battle da. Tür ve Boyut onları yine filtreler, takımın da
+**Sen** ile işaretlenir. Birini açınca üç sekme çıkar: **Buildler**,
+takımları ve yukarıdaki gibi Kopyala; **İstatistikler**, bitiş panelinin
+gösterdiği skor tablosu; ve **Diyagram**, grafikleri. Yalnızca bu
+tarayıcıda saklanırlar.
+
 Çiplerin üstünde **Kahramanlar Salonu** şeridi son 20 tutuşu, en yenisi
 başta, listeler: tutan (bir lonca etiketi ya da liderin adı), kazanan
 takımın kişileri, en yeni galibiyetin ne zaman bittiği ve, iki

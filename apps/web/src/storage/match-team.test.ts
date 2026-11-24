@@ -1,5 +1,6 @@
 import { STARTER_BUILDS, encodeTemplateCode } from "@vibewars/game-core";
-import { sanitizeCharacterName, type MatchRecordPlayer } from "@vibewars/game-session";
+import type { MatchRecordPlayer } from "@vibewars/game-protocol";
+import { sanitizeCharacterName } from "@vibewars/game-session";
 import { describe, expect, it } from "vitest";
 
 import { fromPlayerBuild } from "./build-validation.js";

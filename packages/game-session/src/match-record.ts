@@ -8,7 +8,14 @@ import {
   type MatchEndReason,
   type PlayerBuild,
 } from "@vibewars/game-core";
-import { LOBBY_MODES, isTicketId, type LobbyMode } from "@vibewars/game-protocol";
+import {
+  LOBBY_MODES,
+  MAX_TEMPLATE_LENGTH,
+  isTicketId,
+  type LobbyMode,
+  type MatchRecordPlayer,
+  type MatchRecordTeam,
+} from "@vibewars/game-protocol";
 
 import { sanitizeCharacterName, sanitizeGuildTag, sanitizeName } from "./names.js";
 
@@ -30,33 +37,8 @@ export const MAX_RECORD_TEAM = 8;
 /** The longest match a record may claim, in seconds. */
 export const MAX_RECORD_DURATION_SECONDS = 7200;
 
-/** The longest template code a record may hold: GW1's longest is 64 characters. */
-const MAX_TEMPLATE_LENGTH = 64;
-
 /** How far ahead of the reader's clock `endedAt` may be, in seconds. */
 export const RECORD_CLOCK_SKEW_SECONDS = 300;
-
-export interface MatchRecordPlayer {
-  readonly name: string;
-  readonly guildTag: string | null;
-  readonly bot: boolean;
-  /**
-   * The public player key the host reports for this seat (#2739), which
-   * draws the player's signet; `null` exactly for a bot. A host can
-   * attach any key to a name, so it proves nothing.
-   */
-  readonly pubkey: string | null;
-  /**
-   * The build as played (the lobby's, or the hello's once the host
-   * accepted it) as a GW1 template code: professions, ranks and bar in
-   * about 40 bytes, where the whole build takes over a kilobyte.
-   */
-  readonly template: string;
-}
-
-export interface MatchRecordTeam {
-  readonly players: readonly MatchRecordPlayer[];
-}
 
 export interface MatchRecord {
   readonly v: typeof MATCH_RECORD_VERSION;
