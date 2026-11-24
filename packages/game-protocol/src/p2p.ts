@@ -1650,12 +1650,18 @@ export interface WireLobbyState {
   /** The Team Lobby (#1458), while `phase` is `"team-lobby"`; `null` otherwise. */
   readonly teamLobby: WireTeamLobby | null;
   /**
-   * While `phase` is `"queued"` (#1766), the nonce of this queueing, 64
-   * hex digits; `null` otherwise. The party's group is
+   * While the party is queued (#1766), the nonce of this queueing, 64
+   * hex digits; `null` otherwise. `phase` is `"queued"`, or a match's
+   * while `warmup` (#3899). The party's group is
    * `sha256(roomId ‖ queueNonce)`, which each member works out for itself
    * before it consents. Public: the room id never is.
    */
   readonly queueNonce: string | null;
+  /**
+   * The match on is a warmup (#3899): the queued party against bots
+   * while no other team comes, still in the queue, counting for nothing.
+   */
+  readonly warmup: boolean;
   /**
    * While `phase` is `"queued"` in Heroes' Ascent (#1996), the round the
    * party queues at, the host's run: every member's ticket is at it.
@@ -1767,8 +1773,9 @@ export type WireLobbyCommand =
   | { readonly kind: "remove-member"; readonly id: string }
   /**
    * Host only, in a team mode (#1766): the party's Team Lobby, then the
-   * queue; `leave-queue` takes it out again, `play-bots` plays against
-   * bots instead, in this lobby. In Heroes' Ascent it queues at the
+   * queue; `leave-queue` takes it out again. `start-warmup` plays a
+   * warmup against bots in this lobby, still queued, and `end-warmup`
+   * ends it with no result (#3899), as the party's match is found. In Heroes' Ascent it queues at the
    * host's `ascentRound` (#1996), `null` in every other mode. `again` is
    * the queue after a Team Arena win (#3815), which keeps the team.
    */
@@ -1778,7 +1785,8 @@ export type WireLobbyCommand =
       readonly again: boolean;
     }
   | { readonly kind: "leave-queue" }
-  | { readonly kind: "play-bots" }
+  | { readonly kind: "start-warmup" }
+  | { readonly kind: "end-warmup" }
   /**
    * A music track's code, `source`, the member's edit of the shipped
    * track `trackId`, for every other member of a coded lobby (#2745).
@@ -3984,6 +3992,7 @@ export function parseWireLobbyState(value: unknown): WireLobbyState | undefined 
     !isString(raw.code) ||
     !isOneOf(raw.phase, ["waiting", "team-lobby", "queued", "starting", "in-match"] as const) ||
     !(raw.queueNonce === null || isTicketId(raw.queueNonce)) ||
+    typeof raw.warmup !== "boolean" ||
     !isAscentRound(raw.ascentRound) ||
     !(raw.teamKept === null || typeof raw.teamKept === "boolean") ||
     !isOneOf(raw.mode, LOBBY_MODES) ||
@@ -4012,6 +4021,7 @@ export function parseWireLobbyState(value: unknown): WireLobbyState | undefined 
         countdownSeconds: raw.countdownSeconds,
         teamLobby,
         queueNonce: raw.queueNonce,
+        warmup: raw.warmup,
         ascentRound: raw.ascentRound,
         ascentLock,
         teamKept: raw.teamKept,
@@ -4042,7 +4052,8 @@ export function parseWireLobbyCommand(value: unknown): WireLobbyCommand | undefi
       return isString(raw.id) ? { kind: "remove-member", id: raw.id } : undefined;
     case "start":
     case "leave-queue":
-    case "play-bots":
+    case "start-warmup":
+    case "end-warmup":
       return { kind: raw.kind };
     case "share-track":
       return Object.keys(raw).length === 3 && isString(raw.trackId) && isSharedSource(raw.source)

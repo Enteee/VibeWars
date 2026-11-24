@@ -639,6 +639,7 @@ const lobbyState: WireLobbyState = {
   ],
   countdownSeconds: null,
   queueNonce: null,
+  warmup: false,
   ascentRound: null,
   ascentLock: null,
   teamKept: null,
@@ -1233,6 +1234,11 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
     { ...lobbyState, phase: "queued", matchId: null, queueNonce: "ab".repeat(32) },
   ],
   [
+    "lobby-state of a queued party's warmup (#3899)",
+    parseWireLobbyState,
+    { ...lobbyState, phase: "in-match", queueNonce: "ab".repeat(32), warmup: true },
+  ],
+  [
     "queued Heroes' Ascent lobby-state at its last round (#1996)",
     parseWireLobbyState,
     {
@@ -1282,7 +1288,8 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
     { kind: "find-match", ascentRound: 2, again: false },
   ],
   ["leave-queue (#1766)", parseWireLobbyCommand, { kind: "leave-queue" }],
-  ["play-bots (#2148)", parseWireLobbyCommand, { kind: "play-bots" }],
+  ["start-warmup (#3899)", parseWireLobbyCommand, { kind: "start-warmup" }],
+  ["end-warmup (#3899)", parseWireLobbyCommand, { kind: "end-warmup" }],
   ["Team Lobby lobby-state (#1458)", parseWireLobbyState, teamLobbyState],
   [
     "Hosted Game's Team Lobby lobby-state, a side of one (#2104)",
@@ -2884,6 +2891,12 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     parseWireLobbyState,
     { ...lobbyState, queueNonce: undefined },
   ],
+  [
+    "lobby-state without a warmup flag (#3899)",
+    parseWireLobbyState,
+    { ...lobbyState, warmup: undefined },
+  ],
+  ["play-bots, gone for start-warmup (#3899)", parseWireLobbyCommand, { kind: "play-bots" }],
   [
     "lobby-state without an ascent round (#1996)",
     parseWireLobbyState,
