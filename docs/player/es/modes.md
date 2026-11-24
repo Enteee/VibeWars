@@ -307,7 +307,10 @@ en Arena por equipos, Ascenso de los Héroes o GvG) tiene una Sala de equipo sol
 su propio bando, tan grande como el equipo del modo (el tamaño elegido en Arena por
 equipos, 8 en los demás) aunque el grupo sea menor; los bots juegan los asientos
 que nadie reclama. Mientras está en cola puedes ver los otros modos: el grupo
-conserva su modo y tamaño hasta salir de la cola. Cada etapa dura 30 segundos y
+conserva su modo y tamaño hasta salir de la cola. En Arena por equipos y GvG, un
+grupo que ha esperado 30 s juega calentamientos contra bots, todavía en cola,
+hasta que se encuentra un equipo
+([calentamientos](getting-started.md#alojar-o-unirse-a-una-partida)). Cada etapa dura 30 segundos y
 termina antes si todos en la Sala de equipo están listos. Votar y tomar un asiento te marcan como listo.
 
 ![Arena por equipos: las flechas del tamaño del equipo al pie de la barra y el equipo de tu sala para unirte](../img/team-arena-1.png)

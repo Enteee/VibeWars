@@ -177,10 +177,16 @@ phòng sẽ đưa tổ đội ra khỏi hàng chờ ngay lập tức. Khi một 
 độ đang xếp hàng xuất hiện, các bạn đấu với họ trên một bản đồ của chế độ đó,
 mỗi bên với build riêng, rồi quay về sảnh của mình sau đó. Chủ phòng có thể
 rời hàng chờ từ cửa sổ của vòng xoay bất cứ lúc nào; khách rời đi sẽ kéo cả
-tổ đội ra khỏi hàng chờ. Sau 10 giây trong hàng chờ, chủ phòng
-cũng có thể nhấn **Đấu với bot** trong cửa sổ của vòng xoay: một trận trong chính sảnh của bạn với một
-đội bot có sẵn ngẫu nhiên, trừ ở [Đỉnh Anh Hùng](modes.md#đỉnh-anh-hùng),
-nơi bạn chờ một đội ở cùng vòng với bạn.
+tổ đội ra khỏi hàng chờ. Trong lúc chưa có đội nào khác tới, cửa sổ của
+vòng xoay và sảnh của bạn đếm ngược 30 giây tới một trận **khởi động**: một
+trận trong chính sảnh của bạn với một đội bot có sẵn ngẫu nhiên. Trận này
+không tính gì cả, không có điểm xếp hạng và không vào Lịch sử trận đấu, và
+bạn vẫn ở trong hàng chờ suốt thời gian đó: một nhãn trong trận cho biết
+điều này. Các trận khởi động nối tiếp nhau cho đến khi tìm thấy một đội;
+khi đó trận khởi động kết thúc ngay và bạn vào trận của mình. Chủ phòng có
+thể nhấn **Khởi động ngay** trong cửa sổ của vòng xoay thay vì chờ. Không
+có trận khởi động ở [Đỉnh Anh Hùng](modes.md#đỉnh-anh-hùng), nơi bạn chờ
+một đội ở cùng vòng với bạn.
 
 ![Đấu trường đội: các mũi tên cỡ đội ở cuối thanh, và đội trong sảnh của bạn để tham gia](../img/team-arena-1.png)
 
@@ -240,4 +246,4 @@ trận của bạn thấy địa chỉ IP của bạn.
   mục Điều khiển; mẫu VibeWars đặt kỹ năng trên Q W E R và A S D F và di chuyển
   bằng các phím mũi tên. Tất cả đều có trong [Điều khiển](controls.md).
 
-Nút [?], góc trên bên phải, mở lại trang Hỗ trợ này, kể cả trong trận.
+Nút [?], góc trên bên phải, mở lại trang Hỗ trợ này; trong trận, nút này nằm trong **☰**, góc trên bên phải.

@@ -202,11 +202,16 @@ ugyanabban a módban sorban álló csapat, a mód valamelyik pályáján
 játszotok ellenük, mindkét oldal a saját buildjeivel, utána pedig
 visszatértek a lobbitokba. A házigazda bármikor kiléphet a sorból a
 gyűrű ablakából; a vendég, aki kilép, az egész osztagot kiveszi a
-sorból. 10 mp sorban állás után a házigazda a gyűrű ablakában megnyomhatja a
-**Játék botok ellen** gombot is: egy meccs a saját lobbidban egy
-véletlen előre beállított botcsapat ellen, kivéve a
-[Hősök Útját](modes.md#hősök-útja), amely egy, a te körödben lévő
-csapatra vár.
+sorból. Amíg nem jön másik csapat, a gyűrű ablaka és a lobbid 30 mp-et
+számol vissza egy **bemelegítésig**: egy meccs a saját lobbidban egy
+véletlen előre beállított botcsapat ellen. Semmibe nem számít, sem a
+pontszámba, sem a Meccselőzményekbe, és végig sorban maradtok: egy
+felirat a meccsben ezt jelzi. Egyik bemelegítés követi a másikat, amíg
+csapat nem akad; akkor a bemelegítés azonnal véget ér, és mentek a
+meccsetekre. A házigazda várakozás helyett megnyomhatja a gyűrű ablakában
+a **Bemelegítés indítása most** gombot. A
+[Hősök Útján](modes.md#hősök-útja) nincs bemelegítés, az egy, a te
+körödben lévő csapatra vár.
 
 ![Csapataréna: a csapatméret nyilai a sáv alján, és a lobbid csapata, amelyhez csatlakozhatsz](../img/team-arena-1.png)
 
@@ -268,5 +273,5 @@ Az online játék peer to peer: a meccsed többi játékosa látja az IP-címede
   A S D F billentyűkre teszi a készségeket, és a nyílbillentyűkkel mozog.
   Mindegyik megtalálható az [Irányítás](controls.md) oldalon.
 
-A jobb felső sarokban lévő [?] gomb újra megnyitja ezt a Súgót, meccs
-közben is.
+A jobb felső sarokban lévő [?] gomb újra megnyitja ezt a Súgót; meccs
+közben a **☰** mögött van, jobb fent.

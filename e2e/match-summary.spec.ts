@@ -73,10 +73,8 @@ for (const [width, height] of [
     for (const [index, panel] of (await panels.all()).entries()) {
       parts.push([`panel ${String(index + 1)}`, await box(panel)]);
     }
-    // The HUD corner buttons stay clear of the column too.
-    for (const [index, row] of (await page.locator(".hud-controls-row").all()).entries()) {
-      parts.push([`corner row ${String(index + 1)}`, await box(row)]);
-    }
+    // The HUD corner's ☰ stays clear of the column too (#3923).
+    parts.push(["menu button", await box(page.locator(".hud-menu-toggle"))]);
     for (const [i, [nameA, a]] of parts.entries()) {
       for (const [nameB, b] of parts.slice(i + 1)) {
         if (nameA === "summary" || nameB === "summary") {

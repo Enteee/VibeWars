@@ -1,6 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
 import { key } from "./keys.js";
+import { hudMenuRow } from "./helpers/hud-menu.js";
 import { enterHouseTeams, enterOwnTeams, hostLobby, saveSoloTeam } from "./helpers/peers.js";
 import {
   PIXEL_8A_LANDSCAPE,
@@ -11,7 +12,7 @@ import {
 
 /**
  * A phone in a match (#1297, #1306): the HUD's top band is narrower than
- * the scoreboard and target frame beside the match buttons, so on a phone
+ * the scoreboard and target frame beside the match's ☰, so on a phone
  * they lay out apart. Every box here must miss every other, at 390x844 and
  * at 360x740. A Pixel 8a held either way (#3778) also keeps the arena's
  * middle free, its skill bar one row of finger-sized slots.
@@ -27,12 +28,7 @@ interface Box {
 const PARTS = [
   ".hud-scoreboard",
   ".hud-target",
-  ".hud-leave",
-  ".hud-mute",
-  ".hud-help",
-  ".hud-options",
-  ".hud-fullscreen",
-  ".hud-music",
+  ".hud-menu-toggle",
   ".compass",
   ".hud-skills",
   ".weapon-sets",
@@ -202,7 +198,7 @@ async function expectApart(
       continue;
     }
     if (box === null) {
-      if (part !== ".hud-fullscreen" && !(which === "hudNow" && part === ".now-playing")) {
+      if (!(which === "hudNow" && part === ".now-playing")) {
         expect(absent, `${part} is missing`).toContain(part);
       }
       continue;
@@ -294,8 +290,11 @@ for (const phone of PHONES) {
     // Alone on a team, no party window unless the house hands out a pet;
     // a mouse, no party toggle.
     await expectApart(page, { absent: await soloAbsent(page) });
-    // "leave" alone on a phone, but still named in full.
-    await expect(page.getByRole("button", { name: "leave match (F10)" })).toBeVisible();
+    // In ☰'s list (#3923), named in full, its key shown to a mouse.
+    const leave = await hudMenuRow(page, "leave");
+    await expect(leave.getByRole("button", { name: "leave match (F10)" })).toBeVisible();
+    await expect(leave).toContainText("F10", { useInnerText: true });
+    await page.keyboard.press("Escape");
     // A mouse keeps its keys' hints (#3889).
     await expect(page.locator(".hud-skill-key").first()).toBeVisible();
     await expect(page.locator(".weapon-set-key").first()).toBeVisible();
@@ -402,9 +401,10 @@ for (const [held, device, free] of [
       await expect(
         page.locator(".hud-skill-key, .weapon-set-key").filter({ visible: true }),
       ).toHaveCount(0);
-      await expect(page.locator(".hud-leave button")).not.toContainText("F10", {
-        useInnerText: true,
-      });
+      // In ☰'s list (#3923), "leave" is its word alone.
+      const leave = await hudMenuRow(page, "leave");
+      await expect(leave.getByRole("button")).toBeVisible();
+      await expect(leave.getByRole("button")).not.toContainText("F10", { useInnerText: true });
       // Each weapon set is told apart by its number instead (#3889).
       await expect(page.locator(".hud .weapon-set")).toHaveText(["1", "2", "3", "4"], {
         useInnerText: true,
@@ -424,6 +424,68 @@ for (const [held, device, free] of [
       await expect(chat).not.toHaveClass(/has-unread/);
       await chat.locator(".chat-toggle").click();
       await expect(chat.locator(".chat-lines")).toBeVisible();
+    });
+  });
+}
+
+for (const [held, device] of [
+  ["upright, 360 px wide", { ...PIXEL_8A_PORTRAIT, viewport: { width: 360, height: 780 } }],
+  ["on its side", PIXEL_8A_LANDSCAPE],
+] as const) {
+  test.describe(`the match's ☰ on a touch phone held ${held} (#3923)`, () => {
+    test.use(device);
+
+    test("only ☰ shows top right; its list's rows take a finger, clear of the chat and the skill bar", async ({
+      page,
+    }) => {
+      await phoneMatch(page, device.viewport, undefined, true);
+      const toggle = page.locator(".hud-menu-toggle");
+      await expect(page.locator(".hud-controls button").filter({ visible: true })).toHaveCount(1);
+      await expect(toggle).toBeVisible();
+      const toggleBox = await toggle.boundingBox();
+      expect(toggleBox?.width ?? 0).toBeGreaterThanOrEqual(TOUCH_TARGET);
+      expect(toggleBox?.height ?? 0).toBeGreaterThanOrEqual(TOUCH_TARGET);
+
+      await toggle.click();
+      await expect(toggle).toHaveAttribute("aria-expanded", "true");
+      const menu = page.locator(".hud-menu");
+      await expect(menu).toBeVisible();
+      const short = await menu.locator(":scope > *").evaluateAll(
+        (rows, target) =>
+          rows.flatMap((row) => {
+            const { height } = row.getBoundingClientRect();
+            return height > 0 && height < target
+              ? [`${row.getAttribute("class") ?? ""} ${String(height)}`]
+              : [];
+          }),
+        TOUCH_TARGET,
+      );
+      expect(short, "rows under a finger's height").toEqual([]);
+      const menuBox = await menu.boundingBox();
+      expect(menuBox).not.toBeNull();
+      if (menuBox !== null) {
+        expect(menuBox.y + menuBox.height).toBeLessThanOrEqual(device.viewport.height);
+        for (const part of [".chat-toggle", ".hud-skills"]) {
+          const box = await page.locator(part).first().boundingBox();
+          expect(box, `${part} is shown`).not.toBeNull();
+          if (box !== null) {
+            expect(overlaps(menuBox, box), `☰'s list overlaps ${part}`).toBe(false);
+          }
+        }
+      }
+
+      // Leave asks in its row, and "no" leaves the list open.
+      const leave = menu.locator(".hud-leave");
+      await leave.getByRole("button").click();
+      await expect(leave).toContainText("leave?");
+      await leave.getByRole("button", { name: "no" }).click();
+      await expect(leave.getByRole("button", { name: "no" })).toHaveCount(0);
+      await expect(toggle).toHaveAttribute("aria-expanded", "true");
+      await expect(menu).toBeVisible();
+
+      await page.keyboard.press("Escape");
+      await expect(menu).toBeHidden();
+      await expect(toggle).toHaveAttribute("aria-expanded", "false");
     });
   });
 }

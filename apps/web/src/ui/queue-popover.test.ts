@@ -1,12 +1,14 @@
 import { describe, expect, it } from "vitest";
 
-import type { FormedGroup } from "@vibewars/game-session";
+import { WARMUP_AFTER_MS, type FormedGroup } from "@vibewars/game-session";
 
 import { ASCENT_PROGRESSION } from "../net/maps.js";
 import type { Standing } from "./leaderboard-window.js";
-import { PLAY_BOTS_AFTER_MS, queueStatus, type QueueStatusInput } from "./queue-popover.js";
+import { queueStatus, type QueueStatusInput } from "./queue-popover.js";
 
 const NOW = 1_000_000;
+const WARMUP_IN_21 =
+  "No other team yet. Warmup match against bots in 21 s. It does not count, and you stay in the queue.";
 
 const GROUP: FormedGroup = {
   groupId: "g",
@@ -100,7 +102,7 @@ describe("queueStatus (#2743)", () => {
           since: NOW - 9_999,
           teams,
           isHost,
-          playBots: false,
+          warmup: false,
           hallHolder: undefined,
           standing: undefined,
         },
@@ -110,11 +112,18 @@ describe("queueStatus (#2743)", () => {
       title: "Team Arena 2v2",
       waited: "0:09",
       detail: "2 teams searching",
+      warmupLine: WARMUP_IN_21,
+      warmupNow: true,
       leave: "button",
     });
     expect(team(1, true)?.detail).toBe("1 team searching");
     expect(team(undefined, true)?.detail).toBeUndefined();
-    expect(team(0, false)).toEqual({ title: "Team Arena 2v2", waited: "0:09", leave: "host-only" });
+    expect(team(0, false)).toEqual({
+      title: "Team Arena 2v2",
+      waited: "0:09",
+      warmupLine: WARMUP_IN_21,
+      leave: "host-only",
+    });
   });
 
   it("shows the Vault instead of the search while a party waits for the Hall (#2701)", () => {
@@ -127,7 +136,7 @@ describe("queueStatus (#2743)", () => {
         since: 0,
         teams: 1,
         isHost: false,
-        playBots: false,
+        warmup: false,
         hallHolder: { name: "Ana", signet: 5 },
         standing: undefined,
       },
@@ -148,7 +157,7 @@ describe("queueStatus (#2743)", () => {
       since: NOW,
       teams: 3,
       isHost: true,
-      playBots: false,
+      warmup: false,
       hallHolder: undefined,
       standing: undefined,
     } as const;
@@ -160,11 +169,14 @@ describe("queueStatus (#2743)", () => {
     expect(queueStatus({ ...base, mode: "gvg", ascentRound: null }, NOW)).toEqual({
       title: "Guild vs Guild",
       waited: "0:00",
+      warmupLine:
+        "No other team yet. Warmup match against bots in 30 s. It does not count, and you stay in the queue.",
+      warmupNow: true,
       leave: "button",
     });
   });
 
-  describe("Play against bots (#3547)", () => {
+  describe("the warmup (#3899)", () => {
     const team = (
       waitedMs: number,
       overrides: Partial<Extract<QueueStatusInput, { kind: "team" }>> = {},
@@ -178,33 +190,33 @@ describe("queueStatus (#2743)", () => {
           since: NOW - waitedMs,
           teams: undefined,
           isHost: true,
-          playBots: true,
+          warmup: false,
           hallHolder: undefined,
           standing: undefined,
           ...overrides,
         },
         NOW,
-      )?.playBots;
+      );
 
-    it("counts down from 10 s and is enabled at exactly PLAY_BOTS_AFTER_MS", () => {
-      expect(team(0)).toEqual({ inSeconds: 10 });
-      expect(team(9_200)).toEqual({ inSeconds: 1 });
-      expect(team(PLAY_BOTS_AFTER_MS)).toEqual({ inSeconds: 0 });
-      expect(team(10 * PLAY_BOTS_AFTER_MS)).toEqual({ inSeconds: 0 });
+    it("counts down to WARMUP_AFTER_MS for every member, and says nothing once it is due", () => {
+      expect(team(0)?.warmupLine).toContain("in 30 s");
+      expect(team(WARMUP_AFTER_MS - 800, { isHost: false })?.warmupLine).toContain("in 1 s");
+      expect(team(WARMUP_AFTER_MS)?.warmupLine).toBeUndefined();
+      expect(team(0, { warmup: true })?.warmupLine).toBeUndefined();
     });
 
-    it("is none for a guest, where bots are not offered, in the Vault, and in Random Arena", () => {
-      expect(team(PLAY_BOTS_AFTER_MS, { isHost: false })).toBeUndefined();
-      // main.ts says Heroes' Ascent may not (#1996).
+    it("offers Start warmup now to the host alone, at once, and never during one", () => {
+      expect(team(0)?.warmupNow).toBe(true);
+      expect(team(0, { isHost: false })?.warmupNow).toBeUndefined();
+      expect(team(0, { warmup: true })?.warmupNow).toBeUndefined();
+    });
+
+    it("is none in Heroes' Ascent, in the Vault, and in Random Arena", () => {
+      expect(team(0, { mode: "heroes-ascent", ascentRound: 1 })).not.toHaveProperty("warmupLine");
+      expect(team(0, { mode: "heroes-ascent", ascentRound: 1 })).not.toHaveProperty("warmupNow");
       expect(
-        team(PLAY_BOTS_AFTER_MS, { mode: "heroes-ascent", ascentRound: 1, playBots: false }),
-      ).toBeUndefined();
-      expect(
-        team(PLAY_BOTS_AFTER_MS, {
-          mode: "heroes-ascent",
-          ascentRound: ASCENT_PROGRESSION.length - 1,
-        }),
-      ).toBeUndefined();
+        team(0, { mode: "heroes-ascent", ascentRound: ASCENT_PROGRESSION.length - 1 }),
+      ).not.toHaveProperty("warmupNow");
       expect(
         queueStatus(
           {
@@ -215,8 +227,8 @@ describe("queueStatus (#2743)", () => {
             standing: undefined,
           },
           NOW,
-        )?.playBots,
-      ).toBeUndefined();
+        ),
+      ).not.toHaveProperty("warmupNow");
     });
   });
 });

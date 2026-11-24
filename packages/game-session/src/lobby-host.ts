@@ -148,6 +148,15 @@ export const PROFILE_INTERVAL_MS = 2000;
 export const PARTY_CONSENT_MS = 5000;
 
 /**
+ * On the lobby's clock, from a Team Arena or Guild vs Guild party's
+ * queueing, until it plays a warmup against bots while it waits (#3899).
+ */
+export const WARMUP_AFTER_MS = 30_000;
+
+/** From a warmup's end until the next, the party still queued (#3899). */
+export const WARMUP_GAP_MS = 3000;
+
+/**
  * From a `lobby-join`, on the lobby's clock, until its `lobby-proof`
  * must have come (#2706), or the join is refused.
  */
@@ -746,6 +755,8 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
   let mapId = queued?.group.mapId ?? defaultMap;
   /** The match on is a run's Elite Zaishen Battle (#2692). */
   let zaishenFight = false;
+  /** The match on is a queued party's warmup against bots (#3899). */
+  let warmup = false;
   /** This party won it, and its next queue is the run's first (#2692). */
   let zaishenBeaten = false;
   /** A Hosted Game's players a side, the host's pick (#2104). */
@@ -797,7 +808,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
   let teamLobby: TeamLobby | undefined;
   /**
    * A team mode's party, from its Team Lobby's end until it leaves the
-   * queue or plays against bots (#1766), while `phase` is `"queued"`.
+   * queue (#1766): `phase` is `"queued"`, or a warmup's (#3899).
    */
   let queueing:
     | {
@@ -813,6 +824,8 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
         readonly keys: Map<string, string>;
         /** Once every member sent its key: the party each must consent to. */
         proposal: PartyProposal | undefined;
+        /** On the lobby's clock, the next warmup's start (#3899); none in Heroes' Ascent or during one. */
+        warmupAt: number | undefined;
       }
     | undefined;
   /** A team mode's queued lobby: each side's seat plan so far (ADR-0042). */
@@ -968,6 +981,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     })),
     countdownSeconds: countdownEndsAt === undefined ? null : countdownLeft(countdownEndsAt),
     queueNonce: queueing?.nonce ?? null,
+    warmup,
     ascentRound: queueing?.ascentRound ?? null,
     ascentLock:
       ascentLock === undefined
@@ -1194,7 +1208,12 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       // The caller's to report; the lobby only has to stay usable.
       void room.leave();
       rankedRound = undefined;
-      phase = "waiting";
+      // A warmup that cannot start leaves the party queued (#3899), to try again later.
+      phase = warmup ? "queued" : "waiting";
+      if (warmup && queueing !== undefined) {
+        queueing.warmupAt = clockMs() + WARMUP_AFTER_MS;
+      }
+      warmup = false;
       // Back as before the vote (#2086): no retry adds a second set of
       // bots, and nobody stays ready to start the same failure again.
       dropCodedBots();
@@ -1541,6 +1560,8 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       groupId: undefined,
       keys: new Map(),
       proposal: undefined,
+      // Heroes' Ascent waits for a side at its round, never for bots (#1996).
+      warmupAt: mode === "heroes-ascent" ? undefined : clockMs() + WARMUP_AFTER_MS,
     };
     queueing = current;
     phase = "queued";
@@ -1626,6 +1647,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     if (current === undefined) {
       return;
     }
+    dropWarmup();
     queueing = undefined;
     phase = "waiting";
     for (const to of current.keys.keys()) {
@@ -1637,20 +1659,17 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
   };
 
   /**
-   * No other team came (#1766, Q191): the party plays its own seats here,
-   * a bot in each seat nobody holds, against a random preset team of bots.
+   * No other team yet (#3899): the party plays its own seats here, a bot
+   * in each seat nobody holds, against a random preset team of bots, and
+   * stays queued. The warmup counts for nothing: no vote, no rating.
    */
-  const playAgainstBots = (): void => {
+  const startWarmup = (): void => {
     const current = queueing;
-    if (current === undefined) {
+    if (current === undefined || phase !== "queued" || mode === "heroes-ascent") {
       return;
     }
-    queueing = undefined;
-    for (const to of current.keys.keys()) {
-      if (members.has(to)) {
-        transport.send("party-split", {} satisfies WirePartySplit, to);
-      }
-    }
+    current.warmupAt = undefined;
+    warmup = true;
     const assigned = new Map<string, PlayerBuild>();
     for (const seat of current.seats) {
       const holder = seat.holder === null ? undefined : peerMember(seat.holder);
@@ -1661,6 +1680,35 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     }
     nameSlotBots(assigned);
     start(assigned);
+  };
+
+  /**
+   * A warmup on is over with no result (#3899): its bots gone, the party
+   * still queued. One that finished drains as any match does; one cut
+   * short tells its players it ended, as `close` does, not a lost host.
+   */
+  const dropWarmup = (): void => {
+    if (!warmup) {
+      return;
+    }
+    warmup = false;
+    if (match !== undefined) {
+      const over = match;
+      match = undefined;
+      if (over.host.phase === "finished" || over.host.abandoned) {
+        if (over.host.draining) {
+          over.host.retire();
+          draining.push(over);
+        } else {
+          void over.room.leave();
+        }
+      } else {
+        void over.host.close("host-left");
+      }
+    }
+    phase = "queued";
+    dropCodedBots();
+    clearReady();
   };
 
   /** A run's first step (#2692): the party's seats against the six Zaishen, no queue. */
@@ -2085,7 +2133,8 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
           : requeueLocked(lock, command.ascentRound);
       }
       case "leave-queue":
-      case "play-bots":
+      case "start-warmup":
+      case "end-warmup":
         // A queued party's, and this one is not.
         return false;
       case "propose":
@@ -2678,17 +2727,22 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       removeMember(member, command.id);
       return;
     }
-    // Queued, the host may only take its party out, or play against bots (#1766).
-    if (phase === "queued") {
-      if (member.id === local.selfId && command.kind === "leave-queue") {
+    // Queued, the host may only take its party out, or start or end a warmup (#1766, #3899).
+    if (queueing !== undefined) {
+      if (member.id !== local.selfId) {
+        return;
+      }
+      if (command.kind === "leave-queue") {
         leaveQueue();
-      } else if (
-        member.id === local.selfId &&
-        command.kind === "play-bots" &&
-        // Heroes' Ascent waits for a side at its round, never for bots (#1996).
-        mode !== "heroes-ascent"
-      ) {
-        playAgainstBots();
+      } else if (command.kind === "start-warmup") {
+        startWarmup();
+      } else if (command.kind === "end-warmup") {
+        // Found: no warmup now, and none to come, nor in the gap before the next.
+        queueing.warmupAt = undefined;
+        if (warmup) {
+          dropWarmup();
+        }
+        broadcast();
       }
       return;
     }
@@ -3445,6 +3499,9 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       if (queueing !== undefined) {
         gatherParty();
       }
+      if (queueing?.warmupAt !== undefined && clockMs() >= queueing.warmupAt) {
+        startWarmup();
+      }
       if (teamLobby !== undefined) {
         if (clockMs() >= teamLobby.endsAt) {
           endStage(teamLobby);
@@ -3476,6 +3533,15 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
         return;
       }
       match.host.advance(seconds);
+      // A warmup over: the next after a moment, still queued (#3899).
+      if (warmup && (match.host.phase === "finished" || match.host.abandoned)) {
+        dropWarmup();
+        if (queueing !== undefined) {
+          queueing.warmupAt = clockMs() + WARMUP_GAP_MS;
+        }
+        broadcast();
+        return;
+      }
       // Over, or everyone walked out of it: either way, back to the lobby.
       if (match.host.phase === "finished" || match.host.abandoned) {
         // Back to the lobby: teams kept, so sides are not re-picked every

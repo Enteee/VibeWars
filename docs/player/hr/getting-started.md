@@ -179,10 +179,14 @@ kartice domaćina odmah izbacuje grupu iz reda. Kad se pojavi drugi
 tim istog načina u redu, igraš protiv njega na jednoj od
 karata tog načina, svaka strana sa svojim sastavima, a poslije se vraćaš u svoju
 sobu. Domaćin može napustiti red iz prozora prstena u bilo kojem trenutku; gost koji ode izvodi cijelu
-grupu iz njega. Nakon 10 s u redu domaćin može u prozoru prstena
-pritisnuti i **Igraj protiv botova**: meč u tvojoj vlastitoj sobi protiv
-nasumičnog unaprijed zadanog tima botova,
-osim u [Usponu heroja](modes.md#uspon-heroja), koji čeka
+grupu iz njega. Dok ne dođe nijedan drugi tim, prozor prstena i tvoja soba
+odbrojavaju 30 s do **zagrijavanja**: meča u tvojoj vlastitoj sobi protiv
+nasumičnog unaprijed zadanog tima botova. Ne računa se ni za što, ni za
+rejting ni za Povijest mečeva, a cijelo vrijeme ostajete u redu: oznaka u
+meču to kaže. Zagrijavanje slijedi za zagrijavanjem dok se ne pronađe tim;
+tada zagrijavanje odmah završava i idete na svoj meč. Domaćin može u
+prozoru prstena pritisnuti **Započni zagrijavanje odmah** umjesto da čeka.
+Nema zagrijavanja u [Usponu heroja](modes.md#uspon-heroja), koji čeka
 tim u tvojoj rundi.
 
 ![Timska arena: strelice veličine tima na dnu trake i tim tvoje sobe kojem se pridružuješ](../img/team-arena-1.png)
@@ -241,4 +245,4 @@ IP adresu.
   pod kontrole; predložak VibeWars stavlja vještine na Q W E R i A S D F i
   kretanje na strelice. Sve su navedene u [Kontrolama](controls.md).
 
-Gumb [?] gore desno ponovno otvara ovu Pomoć, i u meču.
+Gumb [?] gore desno ponovno otvara ovu Pomoć; u meču je u **☰**, gore desno.

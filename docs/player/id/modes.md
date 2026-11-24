@@ -303,6 +303,9 @@ sendiri, sebesar tim mode itu (ukuran pilihan di Arena Tim, 8 untuk yang lain)
 berapa pun jumlah orang di party; bot mengisi kursi yang tidak diklaim siapa pun.
 Selama mengantre kamu boleh melihat-lihat mode lain: party mempertahankan
 mode dan ukurannya sampai keluar dari antrean.
+Di Arena Tim dan GvG, party yang sudah menunggu 30 detik memainkan pemanasan
+melawan bot, tetap di antrean, sampai tim ditemukan
+([pemanasan](getting-started.md#menjadi-host-atau-bergabung-ke-laga)).
 Setiap tahap berlangsung 30 detik dan berakhir lebih cepat begitu semua orang di Lobi
 Tim siap. Memberi suara dan mengambil kursi menandaimu siap.
 

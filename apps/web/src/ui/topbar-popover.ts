@@ -19,6 +19,18 @@ export interface PopoverContent {
 /** The popover open now, page-wide, and how to shut it without stealing focus. */
 let shutOpen: (() => void) | undefined;
 
+/** Who takes focus back from a popover in place of its trigger, by trigger (#3923). */
+const standIns = new WeakMap<HTMLElement, () => HTMLElement>();
+
+/**
+ * When a popover from `trigger` shuts, focus goes to `standIn()` rather
+ * than to `trigger`: a match's ☰ (#3923), when `trigger` is folded away in
+ * its shut menu and could not hold it.
+ */
+export function refocusVia(trigger: HTMLElement, standIn: () => HTMLElement): void {
+  standIns.set(trigger, standIn);
+}
+
 /** Shut whichever popover is open (#2385): Help opens over it, a match takes the page. */
 export function closeTopbarPopover(): void {
   shutOpen?.();
@@ -63,7 +75,7 @@ export function attachTopbarPopover(
     closing.element.remove();
     trigger.setAttribute("aria-expanded", "false");
     if (refocus) {
-      trigger.focus();
+      (standIns.get(trigger)?.() ?? trigger).focus();
     }
   };
   const close = (): void => {

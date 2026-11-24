@@ -182,10 +182,15 @@ host langsung mengeluarkan party dari antrean. Saat ada tim lain
 dari mode yang sama di antrean, kalian melawan mereka di salah satu peta
 mode itu, masing-masing sisi dengan build-nya sendiri, lalu kembali ke lobi
 sesudahnya. Host bisa keluar dari jendela cincin kapan saja; tamu yang keluar membawa seluruh
-party keluar dari antrean. Setelah 10 detik dalam antrean, host juga bisa
-menekan **Lawan bot** di jendela cincin: laga di lobimu sendiri melawan
-tim bot preset acak,
-kecuali di [Pendakian Pahlawan](modes.md#pendakian-pahlawan), yang menunggu
+party keluar dari antrean. Selama belum ada tim lain yang datang, jendela
+cincin dan lobimu menghitung mundur 30 detik menuju **pemanasan**: laga di
+lobimu sendiri melawan tim bot preset acak. Pemanasan tidak dihitung sama
+sekali, tanpa rating dan tanpa Riwayat pertandingan, dan kalian tetap di
+antrean sepanjang waktu: sebuah label di laga mengatakannya. Pemanasan
+berganti pemanasan sampai tim ditemukan; lalu pemanasan langsung berakhir
+dan kalian menuju laga kalian. Host bisa menekan **Mulai pemanasan sekarang**
+di jendela cincin alih-alih menunggu. Tidak ada pemanasan di
+[Pendakian Pahlawan](modes.md#pendakian-pahlawan), yang menunggu
 tim di ronde yang sama denganmu.
 
 ![Arena Tim: panah ukuran tim di bagian bawah rel, dan tim lobimu untuk bergabung](../img/team-arena-1.png)
@@ -246,4 +251,4 @@ alamat IP-mu.
   A S D F dan bergerak dengan tombol panah. Semuanya ada di
   [Kontrol](controls.md).
 
-Tombol [?], di kanan atas, membuka Bantuan ini lagi, juga di dalam laga.
+Tombol [?], di kanan atas, membuka Bantuan ini lagi; di dalam laga tombol ini ada di **☰**, di kanan atas.

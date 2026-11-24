@@ -320,6 +320,9 @@ seul camp, de la taille de l'équipe du mode (la taille choisie en Arène d'équ
 8 pour les autres) quel que soit le nombre de joueurs du groupe ; les bots jouent
 les places que personne ne prend. En file, tu peux parcourir les autres modes :
 le groupe garde son mode et sa taille jusqu'à ce qu'il quitte la file.
+En Arène d'équipe et en GvG, un groupe qui a attendu 30 s joue des
+échauffements contre des bots, toujours en file, jusqu'à ce qu'une équipe soit
+trouvée ([échauffements](getting-started.md#héberger-ou-rejoindre-un-match)).
 Chaque étape dure 30 secondes et se termine plus tôt quand tout le monde dans le
 Salon d'équipe est prêt. Voter et prendre une place te marquent comme prêt.
 

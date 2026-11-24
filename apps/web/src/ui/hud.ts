@@ -62,10 +62,11 @@ import {
   type EffectsMonitor,
 } from "./effects-monitor.js";
 import { percent, setHidden, setStyle, setText } from "./dom-write.js";
-import { iconButton } from "./kit.js";
+import { iconButton, TOPBAR_FOLD_GLYPH } from "./kit.js";
 import { energyLabel, overcastBandElement, renderOvercastBand } from "./overcast-band.js";
 import { pipsElement, renderPips } from "./pips.js";
 import { preMatchLine } from "./pre-match-line.js";
+import { closeTopbarPopover, refocusVia } from "./topbar-popover.js";
 import {
   SIGNET_ROW_PX,
   bodyName,
@@ -196,8 +197,12 @@ export interface HudElements {
   /** The end of a match, one column (#3563): the end line, `result`, the summary. */
   readonly end: HTMLElement;
   readonly result: HTMLElement;
-  /** The match's buttons, top right, as one cluster (#454): the five below. */
+  /** The match's buttons, top right (#454): ☰ and the menu it drops (#3923). */
   readonly controls: HTMLElement;
+  /** ☰, which opens and shuts `menu`; `attachHudMenu` drives the two. */
+  readonly menuToggle: HTMLButtonElement;
+  /** The list under ☰: leave, mute, Help, Options, fullscreen and music, in that order. */
+  readonly menu: HTMLElement;
   /** Sound on or off (#112); `renderMute` keeps it showing which. */
   readonly mute: HTMLButtonElement;
   /** Opens the jukebox (#372), showing whether the music is muted. */
@@ -272,21 +277,32 @@ export function createHud(
   const end = element("div", "hud-end", parent);
   const result = element("div", "hud-result", end);
   result.style.display = "none";
-  // One cluster, top right (#454): leave and mute on top, Help, Options,
-  // fullscreen and music under them.
+  // Top right (#454), folded into one ☰ (#3923): the arena keeps the room,
+  // and M and F10 still mute and leave without it. Each row is its icon
+  // and its name, so the list needs no tooltips.
   const controls = element("div", "hud-controls", parent);
-  const controlsTop = element("div", "hud-controls-row", controls);
-  const leave = element("div", "hud-leave", controlsTop);
-  const mute = controlsTop.appendChild(iconButton("hud-mute", t("hud.muteSounds")));
-  const controlsUnder = element("div", "hud-controls-row", controls);
-  const help = controlsUnder.appendChild(iconButton("hud-help", t("hud.help"), helpIcon()));
+  const menuToggle = controls.appendChild(document.createElement("button"));
+  menuToggle.type = "button";
+  menuToggle.className = "hud-menu-toggle";
+  menuToggle.textContent = TOPBAR_FOLD_GLYPH;
+  menuToggle.setAttribute("aria-label", t("hud.menu"));
+  menuToggle.setAttribute("aria-haspopup", "true");
+  menuToggle.setAttribute("aria-expanded", "false");
+  const menu = element("div", "hud-menu", controls);
+  menu.hidden = true;
+  const leave = element("div", "hud-leave", menu);
+  const row = (className: string, label: string, icon = ""): HTMLButtonElement => {
+    const node = menu.appendChild(iconButton(className, label, icon));
+    element("span", "hud-menu-label", node).textContent = label;
+    return node;
+  };
+  const mute = row("hud-mute", t("hud.muteSounds"));
+  const help = row("hud-help", t("hud.help"), helpIcon());
   help.setAttribute("aria-haspopup", "dialog");
-  const options = controlsUnder.appendChild(
-    iconButton("hud-options", t("hud.options"), settingsIcon()),
-  );
+  const options = row("hud-options", t("hud.options"), settingsIcon());
   options.setAttribute("aria-haspopup", "dialog");
-  const fullscreen = controlsUnder.appendChild(iconButton("hud-fullscreen", t("hud.fullscreen")));
-  const music = controlsUnder.appendChild(iconButton("hud-music", t("hud.music")));
+  const fullscreen = row("hud-fullscreen", t("hud.fullscreen"));
+  const music = row("hud-music", t("hud.music"));
   music.setAttribute("aria-haspopup", "dialog");
 
   // Three rows (#484): who, how hurt, and what they are casting. The cast
@@ -441,6 +457,8 @@ export function createHud(
     end,
     result,
     controls,
+    menuToggle,
+    menu,
     mute,
     music,
     leave,
@@ -1688,6 +1706,88 @@ export function renderLeave(hud: HudElements, onLeave: () => void, ranked: boole
   };
   control.close();
   return control;
+}
+
+/** The match's ☰ (#3923), as the keyboard and the match drive it. */
+export interface HudMenu {
+  readonly isOpen: () => boolean;
+  /** Drop the list, and shut any top-bar popover: one drop-down at a time. */
+  readonly open: () => void;
+  /** Put the list away, and the leave question in it; focus in it goes back to ☰. */
+  readonly close: () => void;
+  dispose(): void;
+}
+
+/**
+ * Make ☰ open and shut the HUD's menu. A press on ☰ toggles it; one
+ * anywhere else shuts it, as does a press on a row once the row has done
+ * its work, as the top bar's fold does. Leave's row stays open: its
+ * question asks in the row. A window a row opened sends focus back to ☰
+ * when it shuts, its own button being folded away.
+ */
+export function attachHudMenu(
+  hud: Pick<HudElements, "menuToggle" | "menu" | "leave" | "help" | "options" | "music">,
+  leave: LeaveControl,
+): HudMenu {
+  const isOpen = (): boolean => !hud.menu.hidden;
+  const paint = (open: boolean): void => {
+    hud.menu.hidden = !open;
+    hud.menuToggle.setAttribute("aria-expanded", String(open));
+  };
+  const open = (): void => {
+    if (!isOpen()) {
+      closeTopbarPopover();
+      paint(true);
+    }
+  };
+  const close = (): void => {
+    if (!isOpen()) {
+      return;
+    }
+    if (leave.isOpen()) {
+      leave.close();
+    }
+    const focused = document.activeElement;
+    paint(false);
+    if (focused instanceof HTMLElement && hud.menu.contains(focused)) {
+      hud.menuToggle.focus();
+    }
+  };
+  const toggle = (): void => {
+    if (isOpen()) {
+      close();
+    } else {
+      open();
+    }
+  };
+  // By the path the press took: leave's buttons are gone from the row by
+  // the time it gets here, swapped for the question or back.
+  const onRow = (event: MouseEvent): void => {
+    const path = event.composedPath();
+    if (path.some((node) => node instanceof HTMLButtonElement) && !path.includes(hud.leave)) {
+      close();
+    }
+  };
+  const onOutside = (event: PointerEvent): void => {
+    const target = event.target;
+    if (target instanceof Node && !hud.menuToggle.contains(target) && !hud.menu.contains(target)) {
+      close();
+    }
+  };
+  for (const trigger of [hud.help, hud.options, hud.music]) {
+    refocusVia(trigger, () => (isOpen() ? trigger : hud.menuToggle));
+  }
+  hud.menuToggle.addEventListener("click", toggle);
+  hud.menu.addEventListener("click", onRow);
+  document.addEventListener("pointerdown", onOutside);
+  return {
+    isOpen,
+    open,
+    close,
+    dispose() {
+      document.removeEventListener("pointerdown", onOutside);
+    },
+  };
 }
 
 /** One profession icon for the target panel. */

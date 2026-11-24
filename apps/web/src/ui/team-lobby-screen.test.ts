@@ -262,6 +262,7 @@ function lobby(
     isHost: self === "aria",
     countdownSeconds: null,
     queueNonce: null,
+    warmup: false,
     ascentRound: null,
     ascentLock: null,
     teamKept: null,

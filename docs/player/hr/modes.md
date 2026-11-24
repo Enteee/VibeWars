@@ -304,6 +304,9 @@ strane, veliku kao tim tog načina (odabrana veličina Timske arene, 8 za ostale
 koliko god ih je u grupi; botovi igraju mjesta koja nitko ne uzme.
 Dok je u redu, možeš pregledavati druge načine: grupa zadržava svoj
 način i veličinu dok ne napusti red.
+U Timskoj areni i GvG-u grupa koja je čekala 30 s igra zagrijavanja protiv
+botova, još u redu, dok se ne pronađe tim
+([zagrijavanja](getting-started.md#budi-domaćin-ili-se-pridruži-meču)).
 Svaka faza traje 30 sekundi i završava ranije kad su svi u Timskoj
 sobi spremni. Glasanje i uzimanje mjesta označavaju te kao spremnog.
 

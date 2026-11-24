@@ -42,6 +42,7 @@ describe("a guest in a room other key holders come into (#1682)", () => {
       players: [],
       countdownSeconds: null,
       queueNonce: null,
+      warmup: false,
       ascentRound: null,
       ascentLock: null,
       teamKept: null,

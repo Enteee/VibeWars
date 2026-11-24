@@ -183,9 +183,14 @@ tabblad, dan gaat de groep meteen uit de wachtrij. Als er een ander team van
 dezelfde modus in de wachtrij opduikt, speel je tegen hen op een van de maps
 van de modus, elke kant met zijn eigen builds, en kom je daarna terug in je
 lobby. De host kan op elk moment de wachtrij verlaten via het venster van de ring; een gast die
-vertrekt, haalt de hele groep eruit. Na 10 s in de wachtrij kan de host ook
-in het venster van de ring op **Tegen bots spelen** drukken: een match in je eigen lobby
-tegen een willekeurig kant-en-klaar team van bots, behalve in
+vertrekt, haalt de hele groep eruit. Zolang er geen ander team komt, tellen
+het venster van de ring en je lobby 30 s af naar een **opwarmpotje**: een match in
+je eigen lobby tegen een willekeurig kant-en-klaar team van bots. Het telt
+nergens voor, geen rating en geen Wedstrijdgeschiedenis, en je blijft de hele
+tijd in de wachtrij: een label in de match zegt dat. Het ene opwarmpotje volgt op
+het andere tot er een team is gevonden; dan stopt het opwarmpotje meteen en ga je
+naar je match. De host kan in het venster van de ring op **Nu opwarmen**
+drukken in plaats van te wachten. Er zijn geen opwarmpotjes in
 [Heroes' Ascent](modes.md#heroes-ascent), dat wacht op een team van jouw ronde.
 
 ![Teamarena: de pijlen voor teamgrootte onder aan de balk, en het team van je lobby om bij aan te sluiten](../img/team-arena-1.png)
@@ -246,4 +251,4 @@ Online spelen is peer-to-peer: de andere spelers in je match zien je IP-adres.
   A S D F en beweegt met de pijltjestoetsen. Ze staan allemaal in
   [Besturing](controls.md).
 
-De knop [?], rechtsboven, opent deze Help opnieuw, ook in een match.
+De knop [?], rechtsboven, opent deze Help opnieuw; in een match zit hij in **☰**, rechtsboven.

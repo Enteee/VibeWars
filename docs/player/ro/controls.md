@@ -87,7 +87,8 @@ Pe un telefon sau o tabletă, într-un meci și pe terenul de antrenament:
 În afara unui meci, bara de sus conține **[?]** (acest Ajutor), **⚙** (Opțiuni),
 **Lobby** (linkul tău de invitație, Intră într-un lobby, Deschis/Închis, Ieși și cine e în lobby-ul tău; insigna îi numără),
 **♪** (muzică: ce se aude și cât de tare), oprirea sunetului și ecranul complet. Într-un meci aceleași butoane,
-în afară de Lobby, stau în dreapta sus pe ecran. Într-o fereastră îngustă, aceste pictograme și
+în afară de Lobby, stau în **☰** din dreapta sus a ecranului, împreună cu **Ieși**;
+**M** încă oprește sunetul și **F10** încă iese și fără el. Într-o fereastră îngustă, aceste pictograme și
 celelalte butoane ale ecranului se strâng în **☰**; doar butonul principal rămâne afară.
 ⚙ deschide Opțiunile ca fereastră sub bară, cu ecranul încă în spate; Esc, × sau un clic în afară o închide.
 [?] deschide Ajutorul la fel, ca fereastră sub el cu un selector de pagină sus; meciul continuă în spate.

@@ -319,7 +319,10 @@ Sıradaki bir grup (Takım Arenası, Kahramanların Yükselişi ya da GvG'de
 olursa olsun, yalnızca kendi tarafının, modun takımı kadar büyük (Takım
 Arenası'nda seçilen boyut, diğerlerinde 8) bir Takım Lobisi alır;
 kimsenin almadığı yerleri botlar oynar. Sıradayken diğer modlara göz
-atabilirsin: grup sıradan çıkana kadar modunu ve boyutunu korur.
+atabilirsin: grup sıradan çıkana kadar modunu ve boyutunu korur. Takım
+Arenası ve GvG'de 30 sn beklemiş bir grup, bir takım bulunana kadar hâlâ
+sıradayken botlara karşı ısınmalar oynar
+([ısınmalar](getting-started.md#maç-kur-ya-da-katıl)).
 Her aşama 30 saniye sürer ve Takım Lobisi'ndeki herkes hazır olunca
 erken biter. Oy vermek ve bir yer almak seni hazır işaretler.
 

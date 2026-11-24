@@ -267,7 +267,7 @@ Hostowane lobby nie rozpoczyna meczu, gdy wszyscy są gotowi. Najpierw otwiera L
 Grupa w kolejce ([Znajdź mecz](getting-started.md#hostuj-mecz-lub-dołącz)
 na Arenie drużynowej, Szczycie Bohaterów lub w GvG) dostaje Lobby drużyny tylko ze swoją stroną,
 o rozmiarze drużyny trybu (wybrany rozmiar Areny drużynowej, 8 dla pozostałych), niezależnie od liczby osób w grupie; miejsca, których nikt nie zajmie, grają boty.
-W kolejce możesz przeglądać inne tryby: grupa zachowuje swój tryb i rozmiar, dopóki nie opuści kolejki.
+W kolejce możesz przeglądać inne tryby: grupa zachowuje swój tryb i rozmiar, dopóki nie opuści kolejki. Na Arenie drużynowej i w GvG grupa, która czekała 30 s, gra rozgrzewki z botami, wciąż w kolejce, dopóki nie znajdzie się drużyna ([rozgrzewki](getting-started.md#hostuj-mecz-lub-dołącz)).
 Każdy etap trwa 30 sekund i kończy się wcześniej, gdy wszyscy w Lobby drużyny są gotowi. Głosowanie i zajęcie miejsca oznaczają gotowość.
 
 ![Arena drużynowa: strzałki rozmiaru drużyny u dołu paska i drużyna twojego lobby, do której dołączasz](../img/team-arena-1.png)

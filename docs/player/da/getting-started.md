@@ -184,9 +184,14 @@ samme. Når et andet hold i kø i samme spiltilstand dukker op, spiller I
 mod dem på en af spiltilstandens baner, hver side med sine egne builds,
 og vender tilbage til jeres lobby bagefter. Værten kan til enhver tid
 forlade køen fra ringens vindue; en gæst, der forlader den, tager hele
-gruppen ud af den. Efter 10 s i køen kan værten også trykke på
-**Spil mod bots** i ringens vindue: en kamp i jeres egen lobby mod et
-tilfældigt forudindstillet hold af bots, undtagen i
+gruppen ud af den. Så længe intet andet hold kommer, tæller ringens vindue
+og jeres lobby 30 s ned til en **opvarmning**: en kamp i jeres egen lobby
+mod et tilfældigt forudindstillet hold af bots. Den tæller ikke for noget,
+ingen rating og ingen Kamphistorik, og du bliver i køen hele tiden: en
+etiket i kampen siger det. Den ene opvarmning følger den anden, indtil et
+hold er fundet; så slutter opvarmningen med det samme, og du går til din
+kamp. Værten kan trykke på **Start opvarmning nu** i ringens vindue i
+stedet for at vente. Der er ingen opvarmninger i
 [Heltenes opstigning](modes.md#heltenes-opstigning), som venter på et hold
 i jeres runde.
 
@@ -248,4 +253,4 @@ IP-adresse.
   i Styring; forvalget VibeWars lægger evner på Q W E R og A S D F og bevæger
   dig med piletasterne. De står alle under [Styring](controls.md).
 
-Knappen [?] øverst til højre åbner denne Hjælp igen, også i en kamp.
+Knappen [?] øverst til højre åbner denne Hjælp igen; i en kamp sidder den i **☰**, øverst til højre.

@@ -86,7 +86,8 @@ På en telefon eller en tablet, i en kamp og på træningsbanen:
 Uden for en kamp rummer topbjælken **[?]** (denne Hjælp), **⚙** (Valg),
 **Lobby** (dit invitationslink, Deltag i lobby, Åben/Lukket, Forlad, og hvem der er i din lobby; mærket tæller dem),
 **♪** (musik: hvad der spiller, og hvor højt), lyd fra og fuld skærm. I en kamp sidder de samme knapper,
-undtagen Lobby, øverst til højre på skærmen. I et smalt vindue foldes disse ikoner og
+undtagen Lobby, i **☰** øverst til højre på skærmen, sammen med **Forlad**;
+**M** slår stadig lyden fra, og **F10** forlader stadig kampen uden den. I et smalt vindue foldes disse ikoner og
 skærmens andre knapper ind i **☰**; kun dens hovedknap bliver ude.
 ⚙ åbner Valg som et vindue under bjælken, med skærmen stadig bagved; Esc, × eller et klik udenfor lukker det.
 [?] åbner Hjælp på samme måde, som et vindue under den med en sidevælger øverst; en kamp kører videre bagved.

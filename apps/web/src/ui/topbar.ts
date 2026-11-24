@@ -17,6 +17,7 @@ import {
   shareLine,
   type OwnIcon,
   type ShownBar,
+  TOPBAR_FOLD_GLYPH,
 } from "./kit.js";
 import { copyInviteLink } from "./lobby-screen.js";
 import { lobbyWindowBody, type RailParty } from "./lobby-window.js";
@@ -68,8 +69,8 @@ export interface TopbarCallbacks {
   readonly onRemoveMember: (id: string) => void;
   /** The queue flyout's Leave Queue (#2743): out of whichever queue this tab is in. */
   readonly onLeaveQueue: () => void;
-  /** The queue flyout's Play against bots (#3547): the host's party fights bots instead. */
-  readonly onPlayBots: () => void;
+  /** The queue flyout's Start warmup now (#3899): the host's party plays bots, still queued. */
+  readonly onStartWarmup: () => void;
 }
 
 /** The lobby the bar names (#1526): this tab's own, or the one it joined. */
@@ -94,12 +95,6 @@ export function partyJoinsNotice(party: number): string {
  * (#707): a join may take up to 20 s, which should not look like a hang.
  */
 export const CONNECTING_NOTICE_MS = 3000;
-
-/**
- * The glyph on the bar's fold on a phone (#3886): ☰, so it does not look
- * like an editor's own ⋯ beside it.
- */
-export const TOPBAR_FOLD_GLYPH = "☰";
 
 /**
  * The lobby's controls, which the Lobby window mounts (#2385), and the
@@ -512,7 +507,7 @@ export function mountTopbar(
   attachHelpWindow(help);
 
   // Left of Help while in any queue (#2743).
-  const queue = queueButton(bar, callbacks.onLeaveQueue, callbacks.onPlayBots);
+  const queue = queueButton(bar, callbacks.onLeaveQueue, callbacks.onStartWarmup);
 
   // The top 100, and where this player stands (#3575).
   const leaderboard = leaderboardButton(bar, leaderboardStore, pubkey);

@@ -422,7 +422,7 @@ describe("the top bar's queue icon (#2743)", () => {
         left.push("left");
       },
       () => {
-        left.push("bots");
+        left.push("warmup");
       },
     );
     return { ...queue, parent, button: queue.element as unknown as FakeElement, left };
@@ -487,7 +487,7 @@ describe("the top bar's queue icon (#2743)", () => {
       since: Date.now(),
       teams: undefined,
       isHost: false,
-      playBots: false,
+      warmup: false,
       hallHolder: undefined,
       standing: undefined,
     });
@@ -495,6 +495,7 @@ describe("the top bar's queue icon (#2743)", () => {
     expect(shown(parent.children[0])).toEqual([
       "Guild vs Guild",
       "0:00",
+      "No other team yet. Warmup match against bots in 30 s. It does not count, and you stay in the queue.",
       "Only the host can leave the queue.",
     ]);
     setQueue(undefined);
@@ -502,35 +503,33 @@ describe("the top bar's queue icon (#2743)", () => {
     expect(parent.children).toEqual([]);
   });
 
-  it("gives the host Play against bots, counting down 10 s greyed, then plays them (#3547)", () => {
+  it("gives the host Start warmup now at once, and none during a warmup (#3899)", () => {
     const { parent, button, setQueue, left } = mount();
-    const queue = (since: number) => {
+    const queue = (warmup: boolean) => {
       setQueue({
         kind: "team",
         mode: "team-arena",
         teamSize: 2,
         ascentRound: null,
-        since,
+        since: Date.now(),
         teams: undefined,
         isHost: true,
-        playBots: true,
+        warmup,
         hallHolder: undefined,
         standing: undefined,
       });
     };
-    queue(Date.now() - 9_200);
+    queue(true);
     button.fire("click");
-    const bots = parent.children[0]?.children.find((child) =>
-      child.className.split(" ").includes("queue-play-bots"),
-    ) as (FakeElement & { disabled?: boolean }) | undefined;
-    expect(bots?.hidden).toBe(false);
-    expect(bots?.textContent).toBe("Play against bots (1 s)");
-    expect(bots?.disabled).toBe(true);
-    queue(Date.now() - 10_000);
-    expect(bots?.textContent).toBe("Play against bots");
-    expect(bots?.disabled).toBe(false);
-    bots?.fire("click");
-    expect(left).toEqual(["bots"]);
+    const now = parent.children[0]?.children.find((child) =>
+      child.className.split(" ").includes("queue-warmup-now"),
+    );
+    expect(now?.hidden).toBe(true);
+    queue(false);
+    expect(now?.hidden).toBe(false);
+    expect(now?.textContent).toBe("Start warmup now");
+    now?.fire("click");
+    expect(left).toEqual(["warmup"]);
     expect(isTopbarPopoverOpen()).toBe(false);
   });
 });

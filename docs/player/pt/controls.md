@@ -90,7 +90,8 @@ Em um celular ou tablet, em uma partida e no campo de treino:
 Fora de uma partida, a barra superior tem **[?]** (esta Ajuda), **⚙** (Opções),
 **Sala** (seu link de convite, Entrar em uma sala, Aberta/Fechada, Sair, e quem está na sua sala; o selo conta as pessoas),
 **♪** (música: o que toca e em que volume), o mudo do som e a tela cheia. Em uma partida, os mesmos botões,
-menos Sala, ficam no canto superior direito da tela. Em uma janela estreita, esses ícones e
+menos Sala, ficam em **☰** no canto superior direito da tela, junto com **Sair**;
+**M** ainda tira o som e **F10** ainda sai sem ele. Em uma janela estreita, esses ícones e
 os outros botões da tela se recolhem em **☰**; só o botão principal fica de fora.
 ⚙ abre as Opções como uma janela sob a barra, com a tela ainda atrás; Esc, × ou um clique fora a fecha.
 [?] abre a Ajuda do mesmo jeito, como uma janela abaixo dele com um seletor de página no topo; uma partida continua rodando atrás.
