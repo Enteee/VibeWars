@@ -162,7 +162,7 @@ valgt der; vælger du en anden, spiller du den fra næste kamp.
 spiltilstands baner: **Holdarena** banerne til Udslettelse, Drabstælling
 og Præsteudslettelse, **Heltenes opstigning** banerne til Relikvieløb,
 Kongen af bakken og Erobring, og **GvG** Laugskampens. **Værtsspil**
-tilbyder alle baner. Dine **Holdbuilds** findes kun i **Holdeditor**, og
+tilbyder alle baner, og dets vært vælger en over holdene. Dine **Holdbuilds** findes kun i **Holdeditor**, og
 du vælger intet før lobbyen. På **Værtsspil** åbner lobbyen, når værten
 starter, [Holdlobbyen](modes.md#holdlobby): foreslå et Holdbuild der,
 klik på et kort, som viser hvert medlems våben og evner, for at stemme på

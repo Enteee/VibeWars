@@ -25,6 +25,7 @@ import {
   saveSoloTeam,
   setTeamSize,
 } from "./helpers/peers.js";
+import { PIXEL_8A_PORTRAIT } from "./helpers/phone.js";
 import { namePlayer } from "./helpers/player.js";
 import { expectTopbarFits } from "./helpers/topbar.js";
 import { key } from "./keys.js";
@@ -372,14 +373,60 @@ test("the status bar says nothing in a lobby, which the title bar names, on any 
   await expect(page.locator("#status")).toBeHidden();
 });
 
-test("the lobby's bar puts its status on a second row from 721 to 1200 px, nothing overlapping (#1368)", async ({
-  page,
+test("#3926: a Hosted Game's map tops the lobby, over the teams; the host picks it, and the guest sees it", async ({
+  browser,
 }) => {
-  await hostLobby(page, "Host");
-  // More than one map, so the host's bar carries the select, its widest part.
-  await expect(page.locator(".lobby-map select")).toBeVisible();
-  for (const width of [700, 721, 800, 940, 1100, 1201]) {
-    await expectTopbarFits(page, width, "#topbar > :not(.topbar-status), #topbar .lobby-map");
+  const { context, pages } = await openPeers(browser, 2);
+  const [host, guest] = pages as [Page, Page];
+
+  try {
+    const invite = await hostLobby(host, "Host");
+    await joinLobby(guest, "Guest", invite);
+    for (const page of [host, guest]) {
+      // The map is the panel's first row, and the title bar has none.
+      await expect(page.locator(".lobby-panel > .lobby-map:first-child")).toBeVisible();
+      await expect(page.locator(".lobby-panel > .lobby-map ~ .lobby-teams")).toHaveCount(1);
+      await expect(page.locator("#topbar .lobby-map")).toHaveCount(0);
+    }
+    await expect(guest.locator(".lobby-map select")).toHaveCount(0);
+
+    await host.bringToFront();
+    await host.locator(".lobby-panel .lobby-map select").selectOption("arena-crossroads");
+    await expect(guest.locator(".lobby-panel .lobby-map")).toHaveText("Map: Crossroads (small)");
+
+    // Without the map the bar still fits on one row, nothing overlapping (#1368).
+    for (const width of [700, 721, 800, 940, 1100, 1201]) {
+      await expectTopbarFits(host, width, "#topbar > :not(.topbar-status)");
+    }
+  } finally {
+    await context.close();
+  }
+});
+
+test("#3926: on a phone held upright, the host's map picker sits above the first team, inside the panel", async ({
+  browser,
+}) => {
+  const context = await browser.newContext(PIXEL_8A_PORTRAIT);
+  const page = await context.newPage();
+
+  try {
+    await hostLobby(page, "Host");
+    const select = page.locator(".lobby-panel > .lobby-map select");
+    await expect(select).toBeVisible();
+    const map = await page.locator(".lobby-panel > .lobby-map").boundingBox();
+    const panel = await page.locator(".lobby-panel").boundingBox();
+    const team = await page.locator(".lobby-team").first().boundingBox();
+    const picker = await select.boundingBox();
+    expect(map && panel && team && picker).toBeTruthy();
+    if (map === null || panel === null || team === null || picker === null) {
+      return;
+    }
+    expect(map.y + map.height).toBeLessThanOrEqual(team.y);
+    // A finger's height, and no wider than the panel.
+    expect(picker.height).toBeGreaterThanOrEqual(44);
+    expect(picker.x + picker.width).toBeLessThanOrEqual(panel.x + panel.width + 1);
+  } finally {
+    await context.close();
   }
 });
 

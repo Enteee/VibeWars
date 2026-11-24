@@ -149,7 +149,7 @@ Gra postacią tam wybraną; wybierz inną, a zagrasz nią od następnego meczu.
 **Arena drużynowa**, **Szczyt Bohaterów** i **GvG** oferują tylko mapy swojego trybu:
 **Arena drużynowa** mapy Anihilacji, Licznika zabójstw i Anihilacji kapłana,
 **Szczyt Bohaterów** mapy Wyścigu relikwii, Króla wzgórza i Punktów kontrolnych,
-a **GvG** mapy Bitwy gildii. **Gra prywatna** oferuje każdą mapę. Twoje **Buildy drużyn**
+a **GvG** mapy Bitwy gildii. **Gra prywatna** oferuje każdą mapę, a jej host wybiera jedną nad drużynami. Twoje **Buildy drużyn**
 są tylko w **Kreatorze drużyn** i przed lobby żadnego nie wybierasz. W **Grze
 prywatnej**, gdy host rozpocznie, lobby otwiera [Lobby drużyny](modes.md#lobby-drużyny):
 zaproponuj tam build drużyny, kliknij kartę, która pokazuje broń i umiejętności

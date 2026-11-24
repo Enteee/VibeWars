@@ -164,7 +164,7 @@ valitse toinen, ja pelaat sillä seuraavasta ottelusta alkaen.
 pelitilan karttoja: **Tiimiareena** Tuho-, Tappolaskenta- ja Pappituho-kartat,
 **Sankarien nousu** Reliikkijuoksu-, Kukkulan kuningas- ja
 Valtauspisteet-kartat, ja **GvG** Kiltataistelun kartat. **Isännöity peli**
-tarjoaa kaikki kartat. **Tiimibuildisi** ovat vain **Tiimieditorissa**, etkä
+tarjoaa kaikki kartat, ja sen isäntä valitsee yhden tiimien yläpuolelta. **Tiimibuildisi** ovat vain **Tiimieditorissa**, etkä
 valitse mitään ennen aulaa. Kun isäntä aloittaa **Isännöidyssä pelissä**,
 aula avaa [tiimiaulan](modes.md#tiimiaula): ehdota siellä tiimibuildia,
 napsauta korttia, joka näyttää jokaisen jäsenen aseet ja taidot,

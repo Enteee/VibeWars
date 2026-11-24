@@ -161,7 +161,7 @@ nästa match.
 kartor: **Lagarena** kartorna för Förintelse, Dödsräkning och
 Prästförintelse, **Heroes' Ascent** kartorna för Reliklöpning, King of the
 Hill och Erövringspunkter, och **GvG** gillestridens. **Eget spel**
-erbjuder alla kartor. Dina **lagbuilds** finns bara i **Lagbyggare**, och
+erbjuder alla kartor, och dess värd väljer en ovanför lagen. Dina **lagbuilds** finns bara i **Lagbyggare**, och
 du väljer ingen före lobbyn. I **Eget spel** öppnar lobbyn, när värden
 startar, [laglobbyn](modes.md#laglobby): föreslå en lagbuild där, klicka
 på ett kort, som visar varje medlems vapen och förmågor, för att rösta

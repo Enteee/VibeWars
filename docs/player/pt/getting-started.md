@@ -166,7 +166,7 @@ outro e você joga com ele a partir da próxima partida.
 mapas desse modo: **Arena de Equipes**, os mapas de Aniquilação,
 Contagem de Abates e Aniquilação de Sacerdotes; **Ascensão dos Heróis**,
 os de Corrida da Relíquia, Rei da Colina e Captura de Pontos; e **GvG**,
-os de Batalha de Guildas. **Partida Hospedada** oferece todos os mapas.
+os de Batalha de Guildas. **Partida Hospedada** oferece todos os mapas, e o host dela escolhe um acima das equipes.
 Suas **Builds de Equipe** ficam só no **Criador de Equipes**, e você não
 escolhe nenhuma antes da sala. Em **Partida Hospedada**, quando o host
 inicia, a sala abre a [Sala de Equipe](modes.md#sala-de-equipe): proponha

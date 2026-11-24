@@ -10,7 +10,7 @@ kartor. En ![Slumparena](../../../apps/web/public/icons/mode/random-arena.svg) *
 men aldrig en gillestrid, en reliklöpning, King of the Hill eller
 Erövringspunkter. Lagarena drar en av sina kartor för varje match,
 Heroes' Ascent börjar på sin första karta, och bara i ett eget spel får
-värden välja. Inget annat läges skärm säger vilken karta som kommer
+värden välja, i listan Karta ovanför lagen. Inget annat läges skärm säger vilken karta som kommer
 härnäst: matchen visar den medan den laddas.
 
 Två spelare bakom strikta nätverk kan inte matchas mot varandra i en kö, så kön räknar bara spelare som kan matchas med dig, och säger det. Ett relä under **Alternativ → Relä (TURN)** hjälper.
@@ -305,8 +305,8 @@ tar inte emot någon mer ("Gruppen är full."). Två grupper möts bara med
 samma storlek, och köikonens fönster i den övre raden namnger den:
 "Lagarena 2v2". I ett eget spel bestämmer värden
 lagstorleken med dess pilar, 1v1 till 8v8, före laglobbyn,
-och båda sidor spelar exakt så många; laglobbyn visar ingen Lagstorlek. En gäst ser värdens, låst. Värdens kartlista
-visar bara kartor gjorda för den storleken, och en storlek som kartan
+och båda sidor spelar exakt så många; laglobbyn visar ingen Lagstorlek. En gäst ser värdens, låst. Värdens kartlista,
+övanför lagen, visar bara kartor gjorda för den storleken, och en storlek som kartan
 inte passar för flyttar lobbyn till den första karta som passar. Den går
 aldrig under en sidas antal spelare, och en sida som har lika många
 spelare som lagstorleken tar inte emot någon mer. Ett 1v1 listar alla

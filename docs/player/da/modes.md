@@ -9,7 +9,7 @@ spiller: ![Holdarena](../../../apps/web/public/icons/mode/team-arena.svg) **Hold
 arena** vælger en bane for dig, og dermed spiltilstanden, men aldrig en
 Laugskamp, et Relikvieløb, Kongen af bakken eller Erobring. Holdarena
 trækker en af sine baner til hver kamp, Heltenes opstigning starter på
-sin første bane, og kun et Værtsspil lader værten vælge.
+sin første bane, og kun et Værtsspil lader værten vælge, i listen Bane over holdene.
 Ingen anden spiltilstands skærm siger, hvilken bane der står for tur: kampen
 viser den, mens den indlæses.
 
@@ -313,7 +313,7 @@ gruppe med lige så mange spillere som sin størrelse tager ikke flere ind
 og vinduet bag køikonet i topbjælken nævner den: "Holdarena 2v2". I et
 Værtsspil sætter værten holdstørrelsen med dens pile, 1v1 til 8v8, før
 Holdlobbyen, og begge sider spiller præcis så mange; Holdlobbyen viser
-ingen Holdstørrelse. En gæst ser værtens, låst. Værtens baneliste viser
+ingen Holdstørrelse. En gæst ser værtens, låst. Værtens baneliste, over holdene, viser
 kun baner lavet til den størrelse, og en størrelse, banen ikke passer
 til, flytter lobbyen til den første bane, der gør. Den går aldrig under
 en sides antal spillere, og en side, der har lige så mange spillere som

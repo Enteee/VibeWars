@@ -10,7 +10,7 @@ Geçirme; ![GvG](../../../apps/web/public/icons/mode/gvg.svg) **GvG** ise Lonca 
 ama asla Lonca Savaşı, Kalıntı Koşusu, Tepenin Kralı ya da Nokta Ele
 Geçirme seçmez. Takım Arenası her maç için haritalarından birini çeker,
 Kahramanların Yükselişi ilk haritasında başlar ve kurucunun seçmesine
-yalnızca Özel Oyun izin verir. Başka hiçbir modun ekranı sıradaki haritayı
+yalnızca Özel Oyun izin verir; kurucu, takımların üstündeki Harita listesinden seçer. Başka hiçbir modun ekranı sıradaki haritayı
 söylemez: maç, yüklenirken onu gösterir.
 
 Katı ağların arkasındaki iki oyuncu bir kuyrukta birbiriyle eşleşemez, bu yüzden kuyruk yalnızca seninle eşleşebilecek oyuncuları sayar ve bunu söyler. **Ayarlar → relay (TURN)** altındaki bir relay yardımcı olur.
@@ -307,7 +307,7 @@ sıra simgesinin penceresi onu adlandırır: "Takım Arenası 2v2". Özel
 Oyun'da kurucu, Takım Lobisi'nden önce takım boyutunu oklarıyla 1v1 ile
 8v8 arasında ayarlar ve iki taraf da tam o kadar oyuncuyla oynar; Takım
 Lobisi takım boyutu göstermez. Bir misafir kurucununkini kilitli görür.
-Kurucunun harita listesi yalnızca o boyut için yapılmış haritaları
+Kurucunun takımların üstündeki harita listesi yalnızca o boyut için yapılmış haritaları
 gösterir ve haritaya uymayan bir boyut lobiyi uyan ilk haritaya geçirir.
 Asla bir tarafın oyuncu sayısının altına inmez ve takım boyutu kadar
 oyuncusu olan bir taraf kimseyi daha almaz. 1v1, tüm karakterlerini,

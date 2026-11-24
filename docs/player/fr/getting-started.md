@@ -168,7 +168,7 @@ suivant.
 cartes de leur mode : **Arène d'équipe** celles d'Annihilation, de Décompte et
 d'Annihilation de prêtre, **Ascension des héros** celles de Course aux reliques,
 de Roi de la colline et de Points de capture, et **GvG** celles de la Bataille
-de guilde. **Partie hébergée** propose toutes les cartes. Tes **Builds
+de guilde. **Partie hébergée** propose toutes les cartes, et son hôte en choisit une au-dessus des équipes. Tes **Builds
 d'équipe** ne sont que dans l'**Atelier d'équipes**, et tu n'en choisis aucun
 avant le salon. Sur **Partie hébergée**, quand l'hôte lance, le salon ouvre le
 [Salon d'équipe](modes.md#salon-déquipe) : propose-y un Build d'équipe, clique

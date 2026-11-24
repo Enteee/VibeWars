@@ -160,7 +160,7 @@ eliges otro, juegas con él desde la siguiente partida.
 mapas de ese modo: **Arena por equipos**, los de Aniquilación, Recuento de
 bajas y Aniquilación de sacerdote; **Ascenso de los Héroes**, los de Carrera
 de reliquias, Rey de la colina y Puntos de captura; y **GvG**, los de Batalla
-de gremios. **Partida alojada** ofrece todos los mapas. Tus **Builds de
+de gremios. **Partida alojada** ofrece todos los mapas, y su anfitrión elige uno sobre los equipos. Tus **Builds de
 equipo** están solo en **Creador de equipos**, y no eliges ninguna antes de la
 sala. En **Partida alojada**, cuando el anfitrión empieza, la sala abre la
 [Sala de equipo](modes.md#sala-de-equipo): propón ahí una build de equipo, haz

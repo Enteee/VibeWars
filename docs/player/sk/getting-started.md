@@ -158,7 +158,7 @@ inú, hráš s ňou od ďalšieho zápasu.
 **Tímová aréna**, **Výstup hrdinov** a **GvG** ponúkajú len mapy daného
 režimu: **Tímová aréna** mapy Anihilácie, Počtu zabití a Anihilácie kňaza,
 **Výstup hrdinov** mapy Behu s relikviou, Kráľa kopca a Dobývania bodov
-a **GvG** mapy Cechovej bitky. **Vlastná hra** ponúka každú mapu. Tvoje
+a **GvG** mapy Cechovej bitky. **Vlastná hra** ponúka každú mapu a jej hostiteľ jednu vyberie nad tímami. Tvoje
 **Tímové buildy** sú len na obrazovke **Tvorba tímov** a pred lobby žiadny
 nevyberáš. Vo **Vlastnej hre** sa po spustení hostiteľom otvorí
 [tímové lobby](modes.md#tímové-lobby): tam navrhni tímový build, klikni na
