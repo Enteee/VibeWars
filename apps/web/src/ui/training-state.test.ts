@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { NO_UPGRADES, TRAINING_SCENARIOS } from "@vibewars/game-core";
 
 import { t } from "../i18n/index.js";
-import { DEFAULT_KEYMAP, KEYMAP_PRESETS } from "../input/keymap.js";
+import { DEFAULT_KEYMAP, KEYMAP_PRESETS, codeLabel } from "../input/keymap.js";
 import { newCharacter, setProfessions, setRank, setSkill } from "./build-editor.js";
 import {
   SCENARIO_STORAGE_KEY,
@@ -87,20 +87,31 @@ describe("armedHint (#302)", () => {
       t("training.hintAttack", { key: t("keys.space").toLowerCase() }),
       t("training.hintRelease"),
     ];
-    expect(armedHint(KEYMAP_PRESETS.vibewars)).toBe(
+    expect(armedHint(KEYMAP_PRESETS.vibewars, codeLabel, false)).toBe(
       [
         t("training.hintMoveArrows"),
         t("training.hintCast", { first: "Q", last: "F" }),
         ...rest,
       ].join(" · "),
     );
-    expect(armedHint(DEFAULT_KEYMAP)).toBe(
+    expect(armedHint(DEFAULT_KEYMAP, codeLabel, false)).toBe(
       [
         t("training.hintMove", { keys: "WASD" }),
         t("training.hintCast", { first: "1", last: "8" }),
         ...rest,
       ].join(" · "),
     );
+  });
+
+  it("names the gestures on a touch-only device, whatever the keymap (#3962)", () => {
+    const touch = [
+      t("training.touchHintWalk"),
+      t("training.touchHintCast"),
+      t("training.touchHintTarget"),
+      t("training.touchHintLook"),
+    ].join(" · ");
+    expect(armedHint(DEFAULT_KEYMAP, codeLabel, true)).toBe(touch);
+    expect(armedHint(KEYMAP_PRESETS.vibewars, codeLabel, true)).toBe(touch);
   });
 });
 
