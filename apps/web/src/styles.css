@@ -9902,15 +9902,16 @@ body:has(> .splash) #app {
 
   /* The Training Ground's eight stay a finger wide (#3927): narrower than
      eight of them and their gaps (380 px), the bar reaches out over its
-     panel's padding to the screen's edges, and then its gaps give way. */
+     panel's padding to the screen's edges, then its gaps give way, and
+     only on a screen narrower than eight fingers (352 px) do they shrink. */
   .editor-layout.has-training > .training:not(.is-expanded) > .training-skills {
     margin-inline: max(-0.9rem, min(0px, (100vw - 1.8rem - 380px) / 2));
     column-gap: clamp(0px, (100vw - 8 * 44px) / 7, 4px);
   }
 
   .editor-layout.has-training > .training:not(.is-expanded) .training-skill {
-    width: 44px;
-    height: 44px;
+    width: min(44px, 100cqi / 8);
+    height: min(44px, 100cqi / 8);
   }
 
   /* Over the bar's left end, a row of its own: the panel has no bars
