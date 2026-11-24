@@ -21,7 +21,9 @@ export type RailLabel =
 export async function showRail(page: Page): Promise<boolean> {
   const toggle = page.locator(".rail-drawer-toggle");
   // The screen drawn first: one or the other is in view.
-  await expect(page.locator(".mode-rail").or(toggle).first()).toBeVisible();
+  await expect(
+    page.locator(".mode-rail:visible, .rail-drawer-toggle:visible").first(),
+  ).toBeVisible();
   if (!(await toggle.isVisible()) || (await toggle.getAttribute("aria-expanded")) === "true") {
     return false;
   }
