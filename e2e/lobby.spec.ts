@@ -554,7 +554,12 @@ test("a player who quits early is told the match still runs, until it ends", asy
     await expect(host.locator(".lobby-map select")).toBeDisabled();
 
     // The last player leaves, the match is over, and the lobby opens.
-    await leaveMatch(guest);
+    // Alone against team 2's two bots (#1194), the guest is often wiped
+    // before saying yes: the match ends by annihilation, and its end panel
+    // takes the question away (#3923). Then its Now is the way back
+    // (#1997). Whichever comes first, the match is over (#3960).
+    const now = guest.locator(".hud-end-line").getByRole("button", { name: "Now" });
+    await Promise.race([leaveMatch(guest), now.click()]);
     await expect(running).toHaveCount(0);
     await expect(guest.locator(".lobby-panel")).toBeVisible();
     const ready = host.getByRole("button", { name: "Ready", exact: true });
