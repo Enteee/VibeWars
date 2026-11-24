@@ -58,7 +58,7 @@ jobs:
       - name: Point Playwright's video encoder at ffmpeg
         run: |
           mkdir -p ~/.cache/ms-playwright/ffmpeg-1011
-          ln -sf "$(devenv shell -- which ffmpeg)" ~/.cache/ms-playwright/ffmpeg-1011/ffmpeg-linux
+          ln -sf "$(devenv shell -- which ffmpeg | tail -n 1)" ~/.cache/ms-playwright/ffmpeg-1011/ffmpeg-linux
 
       - name: Capture the scenes
         run: devenv shell -- pnpm run promo:capture
