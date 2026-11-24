@@ -215,12 +215,14 @@ function timeline() {
     const dropped = plan.cuts.pop();
     total -= dropped === undefined ? 0 : cutSeconds(dropped);
   }
+  // Everything before the run-up: the cold open and the editor, as cut.
+  const lead = pieces.reduce((sum, piece) => sum + pieceSeconds(piece), 0);
   for (const cut of plan.cuts) {
     pieces.push({ scene: "fight", src: fightFile, from: cut.from, to: cut.to, speed: cut.speed });
   }
-  // The interrupt's frame, on the timeline: the cold open, the editor, the run-up, then 0.4 s of the slow cut at 0.5x.
+  // The interrupt's frame, on the timeline: the lead, the run-up, then 0.4 s of the slow cut at 0.5x.
   const before = plan.cuts.slice(0, plan.hit).reduce((sum, cut) => sum + cutSeconds(cut), 0);
-  const hitAt = 4 + 6 + before + 0.8;
+  const hitAt = lead + before + 0.8;
 
   for (const id of MAPS) {
     const map = scene(`map-${id}`);
@@ -252,7 +254,17 @@ function timeline() {
     pieces.push({ scene: "ranked", src, from: cape + 0.3, to: cape + 3.8, speed: 1 });
   }
   pieces.push({ scene: "end", card: END, length: 5 });
-  return { pieces, hitAt };
+  const length = pieces.reduce((sum, piece) => sum + pieceSeconds(piece), 0);
+  return { pieces, hitAt, length };
+}
+
+/**
+ * How long a piece of the timeline runs.
+ *
+ * @param {{ from: number, to: number, speed: number } | { length: number }} piece
+ */
+function pieceSeconds(piece) {
+  return "length" in piece ? piece.length : cutSeconds(piece);
 }
 
 /**
@@ -363,6 +375,12 @@ if (grid === undefined) {
   throw new Error("no beat found in the music take");
 }
 const start = musicOffset(grid, plan.hitAt);
+const musicLength = seconds(path.join(CAPTURE, "music.webm"));
+if (musicLength < start + plan.length) {
+  throw new Error(
+    `the music take is ${musicLength.toFixed(1)} s, the cut needs ${(start + plan.length).toFixed(1)} s from it; shoot the fight again, longer`,
+  );
+}
 console.log(
   `music: beat ${grid.period.toFixed(3)} s, starts at ${start.toFixed(2)} s, interrupt at ${plan.hitAt.toFixed(1)} s`,
 );
