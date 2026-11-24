@@ -230,6 +230,13 @@ body {
     flex: 0 1 auto;
   }
 
+  /* An editor's name gives way before anything wraps (#3933): its crumbs
+     ask for no more than the name's min-width, so the ☰ keeps to the
+     first row and the name takes what is left of it. */
+  .topbar-crumbs:has(.editor-name) {
+    flex: 1 1 4rem;
+  }
+
   .topbar-tools {
     flex: 1 1 auto;
     flex-wrap: wrap;
@@ -3858,6 +3865,29 @@ body:has(> .splash) #menu-background::after {
   color: #ffa657;
   font-size: 0.85rem;
   white-space: nowrap;
+}
+
+/* A phone upright (#3933): the editor's status keeps to its one row. A
+   chosen profession shows as its icon, its name in its grid; unsaved is
+   a dot, its word still there for a screen reader. */
+@media (width <= 45rem) {
+  #topbar .editor-profession {
+    min-width: 0;
+  }
+
+  #topbar .editor-profession:not([data-value="none"]) .editor-profession-name {
+    display: none;
+  }
+
+  #topbar .editor-unsaved:not([hidden]) {
+    flex: 0 0 auto;
+    width: 0.6rem;
+    height: 0.6rem;
+    overflow: hidden;
+    color: transparent;
+    background: #ffa657;
+    border-radius: 50%;
+  }
 }
 
 .editor-more-wrap {

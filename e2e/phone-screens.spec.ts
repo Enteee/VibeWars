@@ -5,6 +5,7 @@ import { clickTopbarIcon } from "./helpers/overlay.js";
 import { copyInvite, hostLobby, openPeers, openToFriends, setTeamSize } from "./helpers/peers.js";
 import { PIXEL_8A_PORTRAIT, expectFitsPhone } from "./helpers/phone.js";
 import { namePlayer } from "./helpers/player.js";
+import { chooseProfession } from "./helpers/professions.js";
 import { bringStarter } from "./helpers/starter.js";
 
 /**
@@ -177,3 +178,54 @@ test("the menu and Options fit the phone in German, the menu in Arabic (#3776)",
     await context.close();
   }
 });
+
+/**
+ * A phone's top bar (#3933): its first row, and the status's row under it
+ * where a screen has one; never a third. 44 px buttons, two rows and the
+ * bar's padding come to under this.
+ */
+const TWO_ROW_TOPBAR = 110;
+
+/** The top bar is at most two rows, and in an editor the ☰ is on the name's. */
+async function expectTwoRowTopbar(page: Page, what: string, editor: boolean): Promise<void> {
+  const bar = await page.locator("#topbar").boundingBox();
+  expect(bar?.height ?? Infinity, what).toBeLessThanOrEqual(TWO_ROW_TOPBAR);
+  if (editor) {
+    const name = await page.locator("#topbar .editor-name").boundingBox();
+    const more = await page.locator("#topbar .topbar-more").boundingBox();
+    expect(more?.y, `${what}: ☰ on the name's row`).toBe(name?.y);
+  }
+}
+
+/** The rail entry `entry` in any language: `openRail` goes by the English name. */
+async function openEntry(page: Page, entry: string): Promise<void> {
+  const choice = page.locator(`.mode-rail [data-entry="${entry}"]`);
+  await choice.click();
+  await expect(choice).toHaveAttribute("aria-pressed", "true");
+}
+
+for (const viewport of [PIXEL_8A_PORTRAIT.viewport, { width: 360, height: 800 }]) {
+  for (const locale of ["en", "de"]) {
+    const size = `${String(viewport.width)}x${String(viewport.height)}, ${locale}`;
+    test(`the editors' top bar keeps to two rows at ${size} (#3933)`, async ({ browser }) => {
+      const context = await browser.newContext({ ...PIXEL_8A_PORTRAIT, viewport, locale });
+      const page = await context.newPage();
+      await openPhone(page);
+      await openEntry(page, "characters");
+      await page.locator(".play-card-new").click();
+      await chooseProfession(page, "primary", "elementalist");
+      // A long name scrolls in its field; the bar does not grow for it.
+      await page.locator("input.editor-name").fill("Ailsa the Unbroken Stormcaller of Ascalon");
+      await expectTwoRowTopbar(page, `Character Builder, ${size}`, true);
+      await openPhone(page);
+      await openEntry(page, "teams");
+      await page.locator(".play-card-new").click();
+      await expect(page.locator(".team-editor")).toBeVisible();
+      await expectTwoRowTopbar(page, `Team Builder, ${size}`, true);
+      await openPhone(page);
+      await openEntry(page, "team-arena");
+      await expectTwoRowTopbar(page, `Team Arena, ${size}`, false);
+      await context.close();
+    });
+  }
+}

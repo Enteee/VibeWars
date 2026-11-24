@@ -1,8 +1,8 @@
 import { readFileSync } from "node:fs";
 
 import { expect, test, type Page } from "@playwright/test";
-
 import { hudMenuRow } from "./helpers/hud-menu.js";
+
 import { joinFriend, openRail } from "./helpers/menu.js";
 import { OVERLAY_VIEWPORTS, clickTopbarIcon, expectCloseAtTopRight } from "./helpers/overlay.js";
 import { hostLobby, openPeers, startSoloMatch } from "./helpers/peers.js";
