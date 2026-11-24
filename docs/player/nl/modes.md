@@ -31,7 +31,7 @@ doel buiten beeld of onder de HUD een omlijnde pijl aan de rand van het scherm:
 de standaard of een schrijn in de kleur van de eigenaar, grijs als hij van niemand
 is, het altaar in goud. De gevulde pijl van een speler wordt eroverheen getekend.
 
-Een wedstrijd begint met iedereen vastgehouden bij hun startplek: je kunt een paar stappen lopen, maar niet vechten of vaardigheden gebruiken. Een regel bovenaan telt de spelers die de wedstrijd geladen hebben. Zodra iedereen geladen heeft, telt die 10 seconden af en begint de wedstrijd, en zijn klok mee. Op een speler die na 20 seconden niet geladen heeft, wordt niet gewacht: het aftellen begint zonder hen, en ze kunnen later nog meedoen.
+Een wedstrijd begint met iedereen vastgehouden bij hun startplek: je kunt een paar stappen lopen, maar niet vechten of vaardigheden gebruiken. Een glinsterende wand rond je startplek laat zien hoe ver je kunt gaan. Een regel bovenaan telt de spelers die de wedstrijd geladen hebben. Zodra iedereen geladen heeft, telt die 10 seconden af en begint de wedstrijd, en zijn klok mee. Op een speler die na 20 seconden niet geladen heeft, wordt niet gewacht: het aftellen begint zonder hen, en ze kunnen later nog meedoen.
 
 ## Annihilation
 

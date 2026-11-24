@@ -34,7 +34,7 @@ képernyő szélén: a zászlótartó vagy egy szentély a birtokosa színében,
 szürkén, ha senkié, az oltár aranyszínben. Egy játékos kitöltött nyila
 fölé rajzolódik.
 
-A meccs úgy indul, hogy mindenki a kezdőhelye közelében van tartva: tehetsz néhány lépést, de harcolni és képességet használni nem. Egy sor fent számolja azokat a játékosokat, akiknél betöltött a meccs. Ha mindenkinél betöltött, 10 másodpercet visszaszámol, és a meccs elindul, vele az órája is. Arra a játékosra, akinél 20 másodperc után sem töltött be, nem várnak: a visszaszámlálás nélküle indul, és később még csatlakozhat.
+A meccs úgy indul, hogy mindenki a kezdőhelye közelében van tartva: tehetsz néhány lépést, de harcolni és képességet használni nem. A kezdőhelyed körüli csillámló fal mutatja, meddig mehetsz. Egy sor fent számolja azokat a játékosokat, akiknél betöltött a meccs. Ha mindenkinél betöltött, 10 másodpercet visszaszámol, és a meccs elindul, vele az órája is. Arra a játékosra, akinél 20 másodperc után sem töltött be, nem várnak: a visszaszámlálás nélküle indul, és később még csatlakozhat.
 
 ## Megsemmisítés
 

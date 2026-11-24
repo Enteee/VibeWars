@@ -29,7 +29,7 @@ außerhalb des Bildschirms oder unter dem HUD einen umrandeten Pfeil am Bildschi
 Flaggenstand oder ein Schrein in der Farbe seines Besitzers, grau, wenn er niemandem gehört, der
 Altar in Gold. Der gefüllte Pfeil eines Spielers wird darüber gezeichnet.
 
-Ein Match beginnt mit allen festgehalten nahe ihrem Startpunkt: Du kannst ein paar Schritte gehen, aber nicht kämpfen oder Fertigkeiten einsetzen. Eine Zeile oben zählt die Spieler, die das Match geladen haben. Haben alle geladen, zählt sie 10 Sekunden herunter, und das Match beginnt, mit ihm seine Uhr. Auf einen Spieler, der nach 20 Sekunden nicht geladen hat, wird nicht gewartet: Der Countdown beginnt ohne ihn, und er kann später noch dazukommen.
+Ein Match beginnt mit allen festgehalten nahe ihrem Startpunkt: Du kannst ein paar Schritte gehen, aber nicht kämpfen oder Fertigkeiten einsetzen. Eine schimmernde Wand um deinen Startpunkt zeigt, wie weit du gehen kannst. Eine Zeile oben zählt die Spieler, die das Match geladen haben. Haben alle geladen, zählt sie 10 Sekunden herunter, und das Match beginnt, mit ihm seine Uhr. Auf einen Spieler, der nach 20 Sekunden nicht geladen hat, wird nicht gewartet: Der Countdown beginnt ohne ihn, und er kann später noch dazukommen.
 
 ## Vernichtung
 
