@@ -18,7 +18,7 @@ import {
   type TeamFigureMember,
 } from "./character-card.js";
 import { professionLabel } from "./character-preview.js";
-import { button, h, playCard, screenBar, wordmark } from "./kit.js";
+import { button, h, playCard, screenBar, syncList, wordmark } from "./kit.js";
 import { SIGNET_ROW_PX, signetElement, signetOf } from "./player-label.js";
 import { memberCount, validateTeam } from "./team-builder.js";
 
@@ -340,141 +340,278 @@ export function seat(
   return node;
 }
 
-/** The clock between two states: the host sends whole seconds only on a change. */
-let ticking: ReturnType<typeof setInterval> | undefined;
-
-/** Count `shown` down from `secondsLeft`, once a second, until it is off screen. */
-function tickDown(shown: HTMLElement, secondsLeft: number): void {
-  clearInterval(ticking);
-  const endsAt = Date.now() + secondsLeft * 1000;
-  ticking = setInterval(() => {
-    if (!shown.isConnected) {
-      clearInterval(ticking);
-      return;
-    }
-    shown.textContent = clockText(Math.ceil((endsAt - Date.now()) / 1000));
-  }, 250);
+/** What the Team Lobby shows: the host's snapshot and the player's own picks. */
+export interface TeamLobbyView {
+  readonly snapshot: LobbySnapshot;
+  /** The saved Team Builds, for the drawer. */
+  readonly teams: readonly StoredTeam[];
+  /** The player's own proposal, if any. */
+  readonly proposedTeamId: string | undefined;
+  readonly solo: SoloChoice;
+  readonly notice: string | undefined;
 }
 
-export function renderTeamLobbyScreen(
-  root: HTMLElement,
-  snapshot: LobbySnapshot,
-  teams: readonly StoredTeam[],
-  proposedTeamId: string | undefined,
-  solo: SoloChoice,
-  callbacks: TeamLobbyCallbacks,
-  notice: string | undefined,
+/** The Team Lobby, mounted once (ADR-0030), updated in place on every lobby change. */
+export interface TeamLobbyScreen {
+  /** Show `view`, changing only what changed: the same view twice changes nothing. */
+  update(view: TeamLobbyView): void;
+  /** Esc's first job in the vote (#2116): put the open drawer away; true when it was. */
+  readonly putAway: () => boolean;
+  /** Whether this screen is still the one on its root: another screen may have drawn over it. */
+  shown(): boolean;
+  /** Stop the clock. */
+  dispose(): void;
+}
+
+/**
+ * Make `container` one element per item, keyed by `key` (ADR-0030): an
+ * item whose `look` is unchanged keeps its element, with its focus,
+ * hover and listeners; a changed one is drawn again in its place, and
+ * the focus it held goes to the new one's first button, the page left
+ * where it was scrolled (#3929).
+ */
+function syncDrawn<T>(
+  container: HTMLElement,
+  items: readonly T[],
+  key: (item: T) => string,
+  look: (item: T) => string,
+  draw: (item: T) => HTMLElement,
 ): void {
-  const lobby = snapshot.teamLobby;
-  if (lobby === null) {
-    return;
+  const focused = document.activeElement;
+  const at =
+    focused === null
+      ? -1
+      : Array.from(container.children).findIndex((child) => child.contains(focused));
+  syncList(
+    container,
+    items,
+    (item) => `${key(item)}\n${look(item)}`,
+    draw,
+    () => undefined,
+  );
+  if (at !== -1 && focused !== null && !container.contains(focused)) {
+    const next = container.children[at];
+    const target = next?.querySelector<HTMLElement>("button") ?? next;
+    if (target instanceof HTMLElement) {
+      target.focus({ preventScroll: true });
+    }
   }
-  // The drawer's search keeps its focus and caret across the redraw (#2116).
-  const active = document.activeElement;
-  const typing =
-    active instanceof HTMLInputElement && active.classList.contains("team-lobby-drawer-search")
-      ? { start: active.selectionStart, end: active.selectionEnd }
-      : undefined;
-  const onTab = active?.classList.contains("team-lobby-drawer-tab") === true;
+}
+
+/** What the screen is showing under the bar. */
+type Region = "spectating" | "vote" | "solo" | "claim" | "none";
+
+/**
+ * Mount the Team Lobby on `root` (#3929, ADR-0030): the panel, the bar,
+ * the drawer and the lists are built here once, and `update` changes in
+ * place only what a lobby change changed, so a vote, a proposal or a
+ * tick never drops the page's scroll, the drawer's, or the focus.
+ */
+export function mountTeamLobbyScreen(
+  root: HTMLElement,
+  callbacks: TeamLobbyCallbacks,
+): TeamLobbyScreen {
   root.replaceChildren();
   const panel = h("div", "screen screen-team-lobby");
   panel.setAttribute("data-tutorial", "team-lobby");
-  const self = snapshot.players.find((p) => p.sessionId === snapshot.selfSessionId);
-  const team = self?.team ?? null;
-  const side = team === null || team === 2 ? null : lobby.sides[team];
-  const clock = h("span", "team-lobby-clock", clockText(lobby.secondsLeft));
-  tickDown(clock, lobby.secondsLeft);
+  const notice = h("div", "screen-problem");
+  notice.hidden = true;
+  const stage = h("span", "team-lobby-stage");
+  const clock = h("span", "team-lobby-clock");
   const status = h("div", "team-lobby-status");
-  status.append(h("span", "team-lobby-stage", stageTitle(lobby.stage, side?.size)), clock);
-  const actions: HTMLElement[] = [];
-  screenBar({
-    crumbs: [
-      wordmark("topbar-wordmark"),
-      team === null ? t("teamLobby.crumb") : t("teamLobby.crumbTeam", { team: team + 1 }),
+  status.append(stage, clock);
+
+  const drawer = buildsDrawer(callbacks.onPropose);
+  const proposals = h("div", "play-cards team-lobby-proposals");
+  const noProposals = h("div", "team-lobby-empty", t("teamLobby.noProposals"));
+  const soloCards = h("div", "play-cards team-lobby-solo");
+  const seats = h("div", "team-lobby-seats");
+  const regions: Readonly<Record<Region, readonly HTMLElement[]>> = {
+    spectating: [h("div", "screen-info team-lobby-spectating", t("teamLobby.spectating"))],
+    vote: [
+      drawer.tab,
+      drawer.element,
+      h("h3", "menu-column-title", t("teamLobby.proposals")),
+      proposals,
     ],
-    back: { label: t("teamLobby.leave"), onBack: callbacks.onLeave },
-    // Esc puts the builds drawer away before it leaves (#2116).
-    putAway: putAwayBuildsDrawer,
-    status: [status],
-    actions,
-  });
-
-  if (notice !== undefined) {
-    panel.appendChild(h("div", "screen-problem", notice));
-  }
-
-  panel.append(...teamLobbyBody(snapshot, teams, proposedTeamId, solo, callbacks));
+    solo: [soloCards],
+    claim: [seats, h("div", "screen-info team-lobby-seats-line", t("teamLobby.seatsLine"))],
+    none: [],
+  };
+  let region: Region | undefined;
+  let crumb: string | undefined;
+  let clockFrom: string | undefined;
+  let ticking: ReturnType<typeof setInterval> | undefined;
+  panel.appendChild(notice);
   root.appendChild(panel);
-  // The drawer and its tab hang just below the top bar, however tall it wraps.
-  const topbar = document.getElementById("topbar");
-  if (topbar !== null) {
-    panel.style.setProperty(
-      "--team-lobby-drawer-top",
-      `${String(topbar.getBoundingClientRect().bottom)}px`,
-    );
-  }
-  if (typing !== undefined) {
-    const search = panel.querySelector<HTMLInputElement>(".team-lobby-drawer-search");
-    search?.focus();
-    search?.setSelectionRange(typing.start, typing.end);
-  } else if (onTab) {
-    panel.querySelector<HTMLElement>(".team-lobby-drawer-tab")?.focus();
-  }
+
+  const show = (next: Region): void => {
+    if (next === region) {
+      return;
+    }
+    // The vote is over, or was never yours: the next one opens on a closed drawer.
+    if (next !== "vote") {
+      drawer.forget();
+    }
+    region = next;
+    panel.replaceChildren(notice, ...regions[next]);
+  };
+
+  /** Count the clock down from the host's `secondsLeft`, sent only on a change. */
+  const tick = (secondsLeft: number): void => {
+    clearInterval(ticking);
+    clock.textContent = clockText(secondsLeft);
+    const endsAt = Date.now() + secondsLeft * 1000;
+    ticking = setInterval(() => {
+      clock.textContent = clockText(Math.ceil((endsAt - Date.now()) / 1000));
+    }, 250);
+  };
+
+  const update = ({
+    snapshot,
+    teams,
+    proposedTeamId,
+    solo,
+    notice: problem,
+  }: TeamLobbyView): void => {
+    const lobby = snapshot.teamLobby;
+    if (lobby === null) {
+      return;
+    }
+    const team = snapshot.players.find((p) => p.sessionId === snapshot.selfSessionId)?.team ?? null;
+    const side = team === null || team === 2 ? null : lobby.sides[team];
+    const title =
+      team === null ? t("teamLobby.crumb") : t("teamLobby.crumbTeam", { team: team + 1 });
+    if (title !== crumb) {
+      crumb = title;
+      screenBar({
+        crumbs: [wordmark("topbar-wordmark"), title],
+        back: { label: t("teamLobby.leave"), onBack: callbacks.onLeave },
+        // Esc puts the builds drawer away before it leaves (#2116).
+        putAway: drawer.putAway,
+        status: [status],
+        actions: [],
+      });
+    }
+    stage.textContent = stageTitle(lobby.stage, side?.size);
+    const from = `${lobby.stage}:${String(lobby.secondsLeft)}`;
+    if (from !== clockFrom) {
+      clockFrom = from;
+      tick(lobby.secondsLeft);
+    }
+    notice.textContent = problem ?? "";
+    notice.hidden = problem === undefined;
+    // The drawer and its tab hang just below the top bar, however tall it wraps.
+    const topbar = document.getElementById("topbar");
+    if (topbar !== null) {
+      panel.style.setProperty(
+        "--team-lobby-drawer-top",
+        `${String(topbar.getBoundingClientRect().bottom)}px`,
+      );
+    }
+
+    if (side === null) {
+      show("spectating");
+    } else if (lobby.stage === "vote" && side.size === 1) {
+      // A 1v1 picks one of the player's characters, not a Team Build (#2387).
+      show("solo");
+      syncSolo(soloCards, solo.entries, solo.picked, callbacks.onPickSolo);
+    } else if (lobby.stage === "vote") {
+      show("vote");
+      drawer.update(teams, side.size, proposedTeamId);
+      syncProposals(proposals, noProposals, side, snapshot, callbacks.onVote);
+    } else if (side.chosen === null || side.size === 1) {
+      // A 1v1 takes its one seat itself (#2387), so has none to show.
+      show("none");
+    } else {
+      show("claim");
+      syncSeats(seats, side, side.chosen, snapshot, callbacks.onClaim);
+    }
+  };
+
+  return {
+    update,
+    putAway: drawer.putAway,
+    shown: () => panel.parentElement === root,
+    dispose: () => {
+      clearInterval(ticking);
+      drawer.forget();
+    },
+  };
 }
 
-/**
- * Everything under the bar: a spectator's one line, the vote's picker
- * and cards, or the claim's result and seats.
- */
-export function teamLobbyBody(
+/** The vote's cards, one per proposal, by proposer; one dashed box while nobody proposed. */
+function syncProposals(
+  cards: HTMLElement,
+  empty: HTMLElement,
+  side: WireTeamSide,
   snapshot: LobbySnapshot,
-  teams: readonly StoredTeam[],
-  proposedTeamId: string | undefined,
-  solo: SoloChoice,
-  callbacks: TeamLobbyCallbacks,
-): HTMLElement[] {
-  const lobby = snapshot.teamLobby;
-  const team = snapshot.players.find((p) => p.sessionId === snapshot.selfSessionId)?.team ?? null;
-  const side = lobby === null || team === null || team === 2 ? null : lobby.sides[team];
-  if (lobby === null || side === null) {
-    forgetDrawer();
-    return [h("div", "screen-info team-lobby-spectating", t("teamLobby.spectating"))];
+  onVote: (proposerId: string) => void,
+): void {
+  if (side.proposals.length === 0) {
+    if (cards.children.length !== 1 || cards.children[0] !== empty) {
+      cards.replaceChildren(empty);
+    }
+    return;
   }
-  if (lobby.stage === "vote") {
-    return voteStage(side, snapshot, teams, proposedTeamId, solo, callbacks);
-  }
-  forgetDrawer();
-  return side.chosen === null ? [] : claimStage(side, side.chosen, snapshot, callbacks);
+  syncDrawn(
+    cards,
+    side.proposals,
+    (proposal) => proposal.proposerId,
+    (proposal) =>
+      JSON.stringify([
+        proposal,
+        proposal.proposerId === side.captainId,
+        snapshot.selfSessionId,
+        [proposal.proposerId, ...proposal.voterIds].map((id) => personOf(snapshot.players, id)),
+        snapshot.proposalBuilds.get(proposal.proposerId),
+      ]),
+    (proposal) => proposalCard(proposal, side, snapshot, onVote),
+  );
+}
+
+/** The claim's seats, one per member of the chosen build. */
+function syncSeats(
+  seats: HTMLElement,
+  side: WireTeamSide,
+  choice: WireTeamChoice,
+  snapshot: LobbySnapshot,
+  onClaim: (slot: number) => void,
+): void {
+  // Whatever a seat draws from, but the slot: who sits where, and the build.
+  const drawnFrom = JSON.stringify([
+    choice,
+    side.claims,
+    side.captainId,
+    snapshot.selfSessionId,
+    snapshot.ascentLock,
+    snapshot.players.map((player) => personOf(snapshot.players, player.sessionId)),
+    choiceBuilds(choice, snapshot),
+  ]);
+  syncDrawn(
+    seats,
+    choice.members.map((_, slot) => slot),
+    String,
+    () => drawnFrom,
+    (slot) => seat(slot, choice, side, snapshot, onClaim),
+  );
 }
 
 /**
- * The Your Team Builds drawer (#2116): whether it is open, its search,
- * and its one expanded row. The lobby redraws on every snapshot, so this
- * outlives the elements.
+ * The Your Team Builds drawer (#2116): the tab on the right edge and
+ * the drawer it opens, over the lobby's right side and never dimming
+ * it, so the vote stays clickable beside it. Its state, open, search
+ * and one expanded row, lives as long as the screen and outlives every
+ * snapshot; the vote's end forgets it.
  */
-const drawerState: { open: boolean; query: string; expanded: string | undefined } = {
-  open: false,
-  query: "",
-  expanded: undefined,
-};
-/** Closes the drawer on screen, focus back on its tab; none while no vote shows one. */
-let closeDrawer: (() => void) | undefined;
-
-/** Esc's first job in the vote (#2116): put the open drawer away; true when it was. */
-export function putAwayBuildsDrawer(): boolean {
-  if (!drawerState.open || closeDrawer === undefined) {
-    return false;
-  }
-  closeDrawer();
-  return true;
-}
-
-/** The vote is over, or was never yours: the next one opens on a closed drawer. */
-function forgetDrawer(): void {
-  drawerState.open = false;
-  drawerState.query = "";
-  drawerState.expanded = undefined;
-  closeDrawer = undefined;
+interface BuildsDrawer {
+  readonly tab: HTMLButtonElement;
+  readonly element: HTMLElement;
+  update(teams: readonly StoredTeam[], size: number, proposedTeamId: string | undefined): void;
+  /** Close it, focus back on its tab; true when it was open. */
+  readonly putAway: () => boolean;
+  /** Closed, its search empty, nothing expanded. */
+  forget(): void;
 }
 
 /** A member's professions as a chip: "W/Mo". */
@@ -498,10 +635,10 @@ function professionChip({ character }: StoredTeam["members"][number]): HTMLEleme
 function drawerRow(
   team: StoredTeam,
   proposed: boolean,
+  expanded: boolean,
   onToggle: () => void,
   onPropose: (teamId: string | undefined) => void,
 ): { readonly row: HTMLElement; readonly head: HTMLButtonElement } {
-  const expanded = drawerState.expanded === team.id;
   const row = h("div", "team-lobby-drawer-row");
   row.classList.toggle("is-proposed", proposed);
   row.classList.toggle("is-expanded", expanded);
@@ -536,7 +673,6 @@ function drawerRow(
       proposed ? "team-lobby-drawer-go" : "primary team-lobby-drawer-go",
       () => {
         onPropose(proposed ? undefined : team.id);
-        closeDrawer?.();
       },
     );
     row.append(members, action);
@@ -544,152 +680,159 @@ function drawerRow(
   return { row, head };
 }
 
-/**
- * The tab on the right edge and the drawer it opens (#2116), over the
- * lobby's right side and never dimming it: the vote stays clickable
- * beside it. What it shows comes from `drawerState`, redrawn in place
- * as the player types and expands, and kept across snapshots.
- */
-function buildsDrawer(
-  teams: readonly StoredTeam[],
-  size: number,
-  proposedTeamId: string | undefined,
-  onPropose: (teamId: string | undefined) => void,
-): HTMLElement[] {
-  const drawer = h("aside", "team-lobby-drawer");
+/** The drawer, built once per screen; `update` and the player's typing redraw only its rows. */
+function buildsDrawer(onPropose: (teamId: string | undefined) => void): BuildsDrawer {
+  const state: { open: boolean; query: string; expanded: string | undefined } = {
+    open: false,
+    query: "",
+    expanded: undefined,
+  };
+  let shown: {
+    readonly teams: readonly StoredTeam[];
+    readonly size: number;
+    readonly proposedTeamId: string | undefined;
+  } = { teams: [], size: 0, proposedTeamId: undefined };
+
+  const element = h("aside", "team-lobby-drawer");
   const drawerName = t("teamLobby.buildsDrawer");
-  drawer.setAttribute("aria-label", drawerName);
+  element.setAttribute("aria-label", drawerName);
   const tab = button(`${drawerName} ▾`, "team-lobby-drawer-tab", () => {
-    if (drawerState.open) {
-      closeDrawer?.();
+    if (state.open) {
+      close();
     } else {
-      show();
+      open();
     }
   });
   tab.setAttribute("aria-label", drawerName);
   // The menu quest's arena step points at both (#3544).
   tab.setAttribute("data-tutorial", "team-builds");
-  drawer.setAttribute("data-tutorial", "team-builds");
-  const close = button(t("teamLobby.escClose"), "team-lobby-drawer-close", () => {
-    closeDrawer?.();
+  element.setAttribute("data-tutorial", "team-builds");
+  const closeButton = button(t("teamLobby.escClose"), "team-lobby-drawer-close", () => {
+    close();
   });
-  close.setAttribute("aria-label", t("teamLobby.closeBuildsDrawer"));
+  closeButton.setAttribute("aria-label", t("teamLobby.closeBuildsDrawer"));
   const head = h("div", "team-lobby-drawer-head");
-  head.append(h("h3", "team-lobby-drawer-title", drawerName), close);
+  head.append(h("h3", "team-lobby-drawer-title", drawerName), closeButton);
 
-  const proposable = proposableTeams(teams, size);
   const search = document.createElement("input");
   search.type = "search";
   search.className = "team-lobby-drawer-search";
   search.placeholder = t("teamLobby.search");
   search.setAttribute("aria-label", t("teamLobby.searchLabel"));
-  search.value = drawerState.query;
-  search.hidden = proposable.length === 0;
   const body = h("div", "team-lobby-drawer-body");
+  const noTeams = h("div", "screen-info team-lobby-no-teams");
+  const showing = h("div", "team-lobby-drawer-showing");
+  const noMatch = h("div", "team-lobby-drawer-empty");
+  const list = h("div", "team-lobby-drawer-list");
+  const heads = new Map<string, HTMLButtonElement>();
 
-  const fill = (): Map<string, HTMLButtonElement> => {
-    const heads = new Map<string, HTMLButtonElement>();
+  /** The body's parts, put in again only when which of them show changes. */
+  const parts = (wanted: readonly HTMLElement[]): void => {
+    const there = Array.from(body.children);
+    if (there.length !== wanted.length || wanted.some((part, index) => there[index] !== part)) {
+      body.replaceChildren(...wanted);
+    }
+  };
+
+  const fill = (): void => {
+    const { teams, size, proposedTeamId } = shown;
+    const proposable = proposableTeams(teams, size);
+    search.hidden = proposable.length === 0;
     if (proposable.length === 0) {
       const ofSize = teams.some((team) => team.members.length === size);
-      body.replaceChildren(
-        h(
-          "div",
-          "screen-info team-lobby-no-teams",
-          // Every Team Build of the size has problems (#2110), or none is the side's size (#2104).
-          teams.length === 0
-            ? t("teamLobby.noTeamBuilds")
-            : ofSize
-              ? t("teamLobby.noPlayableTeamBuilds")
-              : t("teamLobby.noTeamBuildOf", { size }),
-        ),
-      );
-      return heads;
+      // Every Team Build of the size has problems (#2110), or none is the side's size (#2104).
+      noTeams.textContent =
+        teams.length === 0
+          ? t("teamLobby.noTeamBuilds")
+          : ofSize
+            ? t("teamLobby.noPlayableTeamBuilds")
+            : t("teamLobby.noTeamBuildOf", { size });
+      parts([noTeams]);
+      return;
     }
-    const { rows, hiddenOtherSizes } = drawerRows(teams, size, drawerState.query);
-    const shown: HTMLElement[] = [
-      h("div", "team-lobby-drawer-showing", drawerShowing(size, hiddenOtherSizes)),
-    ];
-    if (rows.length === 0) {
-      shown.push(h("div", "team-lobby-drawer-empty", noTeamBuildNamed(drawerState.query.trim())));
-    }
-    const list = h("div", "team-lobby-drawer-list");
-    for (const team of rows) {
-      const { row, head: rowHead } = drawerRow(
-        team,
-        team.id === proposedTeamId,
-        () => {
-          drawerState.expanded = drawerState.expanded === team.id ? undefined : team.id;
-          fill().get(team.id)?.focus();
-        },
-        onPropose,
-      );
-      heads.set(team.id, rowHead);
-      list.appendChild(row);
-    }
-    shown.push(list);
-    body.replaceChildren(...shown);
-    return heads;
+    const { rows, hiddenOtherSizes } = drawerRows(teams, size, state.query);
+    showing.textContent = drawerShowing(size, hiddenOtherSizes);
+    noMatch.textContent = noTeamBuildNamed(state.query.trim());
+    parts(rows.length === 0 ? [showing, noMatch, list] : [showing, list]);
+    syncDrawn(
+      list,
+      rows,
+      (team) => team.id,
+      (team) => JSON.stringify([team, team.id === proposedTeamId, team.id === state.expanded]),
+      (team) => {
+        const { row, head: rowHead } = drawerRow(
+          team,
+          team.id === proposedTeamId,
+          team.id === state.expanded,
+          () => {
+            state.expanded = state.expanded === team.id ? undefined : team.id;
+            fill();
+            heads.get(team.id)?.focus({ preventScroll: true });
+          },
+          (teamId) => {
+            onPropose(teamId);
+            close();
+          },
+        );
+        heads.set(team.id, rowHead);
+        return row;
+      },
+    );
   };
 
   const place = (): void => {
-    drawer.hidden = !drawerState.open;
-    tab.setAttribute("aria-expanded", String(drawerState.open));
-    tab.classList.toggle("is-open", drawerState.open);
+    element.hidden = !state.open;
+    tab.setAttribute("aria-expanded", String(state.open));
+    tab.classList.toggle("is-open", state.open);
   };
-  const show = (): void => {
-    drawerState.open = true;
+  const open = (): void => {
+    state.open = true;
     place();
-    (search.hidden ? close : search).focus();
+    (search.hidden ? closeButton : search).focus();
+  };
+  const close = (): void => {
+    state.open = false;
+    state.expanded = undefined;
+    place();
+    fill();
+    tab.focus({ preventScroll: true });
   };
   search.addEventListener("input", () => {
-    drawerState.query = search.value;
+    state.query = search.value;
     fill();
   });
   // A search field keeps its own Esc (kit.ts): this one's closes the drawer.
   search.addEventListener("keydown", (event) => {
     if (event.key === "Escape") {
       event.preventDefault();
-      closeDrawer?.();
+      close();
     }
   });
-  closeDrawer = () => {
-    drawerState.open = false;
-    drawerState.expanded = undefined;
-    place();
-    fill();
-    tab.focus();
-  };
 
-  fill();
   place();
-  drawer.append(head, search, body);
-  return [tab, drawer];
-}
-
-function voteStage(
-  side: WireTeamSide,
-  snapshot: LobbySnapshot,
-  teams: readonly StoredTeam[],
-  proposedTeamId: string | undefined,
-  solo: SoloChoice,
-  callbacks: TeamLobbyCallbacks,
-): HTMLElement[] {
-  // A 1v1 picks one of the player's characters, not a Team Build (#2387).
-  if (side.size === 1) {
-    return [soloChooser(solo.entries, solo.picked, callbacks.onPickSolo)];
-  }
-  const shown = buildsDrawer(teams, side.size, proposedTeamId, callbacks.onPropose);
-  shown.push(h("h3", "menu-column-title", t("teamLobby.proposals")));
-
-  const cards = h("div", "play-cards team-lobby-proposals");
-  if (side.proposals.length === 0) {
-    cards.appendChild(h("div", "team-lobby-empty", t("teamLobby.noProposals")));
-  }
-  for (const proposal of side.proposals) {
-    cards.appendChild(proposalCard(proposal, side, snapshot, callbacks.onVote));
-  }
-  shown.push(cards);
-  return shown;
+  element.append(head, search, body);
+  return {
+    tab,
+    element,
+    update: (teams, size, proposedTeamId) => {
+      shown = { teams, size, proposedTeamId };
+      fill();
+    },
+    putAway: () => {
+      if (!state.open) {
+        return false;
+      }
+      close();
+      return true;
+    },
+    forget: () => {
+      state.open = false;
+      state.query = "";
+      state.expanded = undefined;
+      search.value = "";
+      place();
+    },
+  };
 }
 
 /**
@@ -707,56 +850,46 @@ function stageTitle(stage: "vote" | "claim", size: number | undefined): string {
  * A 1v1's chooser (#2387): every character the player has, `picked`
  * pressed. An illegal one is shown, tagged and explained, never picked.
  */
-function soloChooser(
+function syncSolo(
+  cards: HTMLElement,
   entries: readonly SoloEntry[],
   picked: string | undefined,
   onPick: (key: string) => void,
-): HTMLElement {
-  const cards = h("div", "play-cards team-lobby-solo");
-  for (const entry of entries) {
-    const content = [
-      characterFigureCard(lookOfCharacter(entry.character, undefined), {
-        size: "card",
-        note: entry.team === undefined ? undefined : t("teamLobby.teamNote", { team: entry.team }),
-      }),
-    ];
-    const card = playCard({
-      name: entry.character.name,
-      tags: entry.legal ? [] : [h("span", "roster-invalid-tag", t("teamLobby.invalid"))],
-      content,
-      pressed: entry.key === picked && entry.legal,
-      disabled: !entry.legal,
-      onOpen: () => {
-        if (entry.legal) {
-          onPick(entry.key);
-        }
-      },
-    });
-    card.classList.add("character-card");
-    if (!entry.legal) {
-      card.classList.add("is-invalid");
-      card.title = validateBuild(entry.character)
-        .map((problem) => problem.message)
-        .join("\n");
-    }
-    cards.appendChild(card);
-  }
-  return cards;
+): void {
+  syncDrawn(
+    cards,
+    entries,
+    (entry) => entry.key,
+    (entry) => JSON.stringify([entry, entry.key === picked]),
+    (entry) => soloCard(entry, entry.key === picked, onPick),
+  );
 }
 
-function claimStage(
-  side: WireTeamSide,
-  choice: WireTeamChoice,
-  snapshot: LobbySnapshot,
-  callbacks: TeamLobbyCallbacks,
-): HTMLElement[] {
-  // A 1v1 takes its one seat itself (#2387), so has none to show.
-  if (side.size === 1) {
-    return [];
+function soloCard(entry: SoloEntry, picked: boolean, onPick: (key: string) => void): HTMLElement {
+  const content = [
+    characterFigureCard(lookOfCharacter(entry.character, undefined), {
+      size: "card",
+      note: entry.team === undefined ? undefined : t("teamLobby.teamNote", { team: entry.team }),
+    }),
+  ];
+  const card = playCard({
+    name: entry.character.name,
+    tags: entry.legal ? [] : [h("span", "roster-invalid-tag", t("teamLobby.invalid"))],
+    content,
+    pressed: picked && entry.legal,
+    disabled: !entry.legal,
+    onOpen: () => {
+      if (entry.legal) {
+        onPick(entry.key);
+      }
+    },
+  });
+  card.classList.add("character-card");
+  if (!entry.legal) {
+    card.classList.add("is-invalid");
+    card.title = validateBuild(entry.character)
+      .map((problem) => problem.message)
+      .join("\n");
   }
-  const seats = h("div", "team-lobby-seats");
-  for (let slot = 0; slot < choice.members.length; slot += 1) {
-    seats.appendChild(seat(slot, choice, side, snapshot, callbacks.onClaim));
-  }
-  return [seats, h("div", "screen-info team-lobby-seats-line", t("teamLobby.seatsLine"))];
+  return card;
 }

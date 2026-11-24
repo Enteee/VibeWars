@@ -18,15 +18,14 @@ import {
   drawerRows,
   drawerShowing,
   initial,
+  mountTeamLobbyScreen,
   noTeamBuildNamed,
   proposableTeams,
-  putAwayBuildsDrawer,
-  renderTeamLobbyScreen,
   soloCharacterKey,
   soloEntries,
-  teamLobbyBody,
   type SoloChoice,
   type TeamLobbyCallbacks,
+  type TeamLobbyScreen,
 } from "./team-lobby-screen.js";
 
 // The figure draws on a canvas, which Node has none of: a bare one,
@@ -72,6 +71,8 @@ class FakeElement {
   hidden = false;
   placeholder = "";
   type = "";
+  scrollTop = 0;
+  parentElement: FakeElement | null = null;
   readonly children: FakeElement[] = [];
   readonly attributes = new Map<string, string>();
   readonly listeners = new Map<string, () => void>();
@@ -95,13 +96,44 @@ class FakeElement {
   };
 
   appendChild(child: FakeElement): FakeElement {
-    this.children.push(child);
+    return this.insertBefore(child, null);
+  }
+
+  insertBefore(child: FakeElement, before: FakeElement | null): FakeElement {
+    child.remove();
+    const at = before === null ? -1 : this.children.indexOf(before);
+    this.children.splice(at === -1 ? this.children.length : at, 0, child);
+    child.parentElement = this;
     return child;
   }
 
+  remove(): void {
+    const siblings = this.parentElement?.children;
+    siblings?.splice(siblings.indexOf(this), 1);
+    this.parentElement = null;
+  }
+
   replaceChildren(...children: FakeElement[]): void {
-    this.children.length = 0;
+    for (const child of [...this.children]) {
+      child.remove();
+    }
     this.append(...children);
+  }
+
+  contains(other: FakeElement | null): boolean {
+    return other === this || this.children.some((child) => child.contains(other));
+  }
+
+  /** The first element under this one with tag `selector`. */
+  querySelector(selector: string): FakeElement | null {
+    for (const child of this.children) {
+      const found =
+        child.tagName === selector.toUpperCase() ? child : child.querySelector(selector);
+      if (found !== null) {
+        return found;
+      }
+    }
+    return null;
   }
 
   focus(): void {
@@ -115,7 +147,7 @@ class FakeElement {
   }
 
   prepend(child: FakeElement): void {
-    this.children.unshift(child);
+    this.insertBefore(child, this.children[0] ?? null);
   }
 
   has(name: string): boolean {
@@ -344,6 +376,17 @@ describe("the Team Lobby's body (#1460)", () => {
     onPickSolo: (key) => sent.push({ kind: "pick", value: key }),
     onLeave: () => undefined,
   };
+  /** The screen last mounted, which `refresh` updates as the next snapshot would. */
+  let screen: TeamLobbyScreen | undefined;
+  const refresh = (
+    shown: LobbySnapshot,
+    teams: readonly StoredTeam[] = [],
+    proposed?: string,
+    solo: SoloChoice = NO_SOLO,
+  ): void => {
+    screen?.update({ snapshot: shown, teams, proposedTeamId: proposed, solo, notice: undefined });
+  };
+  /** A Team Lobby mounted on a root of its own, showing `shown`; the root. */
   const body = (
     shown: LobbySnapshot,
     teams: readonly StoredTeam[] = [],
@@ -351,56 +394,47 @@ describe("the Team Lobby's body (#1460)", () => {
     solo: SoloChoice = NO_SOLO,
   ): FakeElement => {
     const root = new FakeElement();
-    root.append(
-      ...(teamLobbyBody(shown, teams, proposed, solo, callbacks) as unknown as FakeElement[]),
-    );
+    screen?.dispose();
+    screen = mountTeamLobbyScreen(root as unknown as HTMLElement, callbacks);
+    refresh(shown, teams, proposed, solo);
     return root;
   };
 
   beforeEach(() => {
     sent = [];
-    vi.stubGlobal("document", {
-      createElement: (tag: string) =>
-        Object.assign(new FakeElement(), { tagName: tag.toUpperCase() }),
-    });
-    // A spectator's body forgets the last test's drawer (#2116).
-    teamLobbyBody(lobby("watcher", "vote", voteSide([])), [], undefined, NO_SOLO, callbacks);
-    focusLog.length = 0;
-  });
-
-  afterEach(() => {
-    vi.unstubAllGlobals();
-  });
-
-  it("puts no Team size in the bar, at any stage, host or guest (#2141)", () => {
     vi.useFakeTimers();
+    vi.stubGlobal("HTMLElement", FakeElement);
     vi.stubGlobal("HTMLInputElement", FakeElement);
     vi.stubGlobal("document", {
       createElement: (tag: string) =>
         Object.assign(new FakeElement(), { tagName: tag.toUpperCase() }),
       getElementById: () => null,
+      get activeElement() {
+        return focusLog.at(-1) ?? null;
+      },
     });
+    focusLog.length = 0;
+  });
+
+  afterEach(() => {
+    screen?.dispose();
+    screen = undefined;
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+  });
+
+  it("puts no Team size in the bar, at any stage, host or guest (#2141)", () => {
     const screens = [
       lobby("aria", "vote", voteSide([])),
       lobby("aria", "claim", voteSide([])),
       lobby("brann", "vote", voteSide([])),
     ];
     for (const shown of screens) {
-      const root = new FakeElement();
-      renderTeamLobbyScreen(
-        root as unknown as HTMLElement,
-        shown,
-        [],
-        undefined,
-        NO_SOLO,
-        callbacks,
-        undefined,
-      );
+      body(shown);
       const status = bar.status as readonly FakeElement[];
       expect(status).toHaveLength(1);
       expect(status[0]?.text()).not.toMatch(/Team size|\dv\d/);
     }
-    vi.useRealTimers();
   });
 
   it("draws a card per proposal with its proposer, captain crown and voters' initials", () => {
@@ -505,6 +539,61 @@ describe("the Team Lobby's body (#1460)", () => {
     expect(focusLog.at(-1)).toBe(tab);
   });
 
+  it("updates in place: a proposal, a vote or a tick keeps the screen, its scroll and the drawer's (#3929)", () => {
+    const teams = [team("four", "Four", 4), team("quad", "Quad", 4)];
+    const root = body(lobby("aria", "vote", voteSide([proposal("brann", ["brann"])])), teams);
+    const { tab, drawer, rows } = drawerOf(root);
+    const panel = root.children[0];
+    const drawerBody = root.all("team-lobby-drawer-body")[0];
+    const [brannCard] = root.all("play-card");
+    tab?.click();
+    const [fourRow] = rows();
+    if (panel === undefined || drawerBody === undefined) {
+      throw new Error("no Team Lobby drawn");
+    }
+    panel.scrollTop = 300;
+    drawerBody.scrollTop = 120;
+    const redraws = vi.spyOn(root, "replaceChildren");
+    const panelRedraws = vi.spyOn(panel, "replaceChildren");
+
+    // Aria proposes Quad, then Cass proposes too and the clock moves on.
+    refresh(
+      lobby("aria", "vote", voteSide([proposal("brann", ["brann"]), proposal("aria", ["aria"])])),
+      teams,
+      "quad",
+    );
+    const later = lobby(
+      "aria",
+      "vote",
+      voteSide([
+        proposal("brann", ["brann"]),
+        proposal("aria", ["aria"]),
+        proposal("cass", ["cass"]),
+      ]),
+    );
+    const { teamLobby } = later;
+    refresh(
+      { ...later, teamLobby: teamLobby === null ? null : { ...teamLobby, secondsLeft: 21 } },
+      teams,
+      "quad",
+    );
+
+    expect(redraws).not.toHaveBeenCalled();
+    expect(panelRedraws).not.toHaveBeenCalled();
+    expect(root.children[0]).toBe(panel);
+    expect(root.all("team-lobby-drawer-body")[0]).toBe(drawerBody);
+    expect(panel.scrollTop).toBe(300);
+    expect(drawerBody.scrollTop).toBe(120);
+    expect(drawer?.hidden).toBe(false);
+    expect((bar.status as readonly FakeElement[])[0]?.text()).toContain("0:21");
+    // Brann's card and the Four row did not change, so they are the same elements.
+    const cards = root.all("play-card");
+    expect(cards).toHaveLength(3);
+    expect(cards[0]).toBe(brannCard);
+    expect(rows()[0]).toBe(fourRow);
+    expect(rows()[1]?.has("is-proposed")).toBe(true);
+  });
+
   it("marks your proposal, whose button withdraws it (#1862, #2116)", () => {
     const shown = body(
       lobby("aria", "vote", voteSide([])),
@@ -549,8 +638,9 @@ describe("the Team Lobby's body (#1460)", () => {
     }
     expect(rows()).toEqual([]);
     expect(shown.all("team-lobby-drawer-empty")[0]?.textContent).toBe("No Team Build named “zzz”.");
-    // A redraw, as the next snapshot brings, keeps the search.
-    const again = drawerOf(body(lobby("aria", "vote", voteSide([])), [team("quad", "Quad", 4)]));
+    // The next snapshot keeps the search.
+    refresh(lobby("aria", "vote", voteSide([])), [team("quad", "Quad", 4)]);
+    const again = drawerOf(shown);
     expect(again.drawer?.hidden).toBe(false);
     expect(again.search?.value).toBe("zzz");
   });
@@ -558,12 +648,12 @@ describe("the Team Lobby's body (#1460)", () => {
   it("puts the drawer away on Esc, focus back on its tab, before Esc leaves (#2116)", () => {
     const shown = body(lobby("aria", "vote", voteSide([])), [team("four", "Four", 4)]);
     const { tab, drawer } = drawerOf(shown);
-    expect(putAwayBuildsDrawer()).toBe(false);
+    expect(screen?.putAway()).toBe(false);
     tab?.click();
-    expect(putAwayBuildsDrawer()).toBe(true);
+    expect(screen?.putAway()).toBe(true);
     expect(drawer?.hidden).toBe(true);
     expect(focusLog.at(-1)).toBe(tab);
-    expect(putAwayBuildsDrawer()).toBe(false);
+    expect(screen?.putAway()).toBe(false);
   });
 
   it("leaves out a Team Build of the wrong size, and says so when none is the side's (#2104)", () => {
@@ -674,44 +764,19 @@ describe("the Team Lobby's body (#1460)", () => {
   });
 
   it("starts a 1v1 with the chosen card and no seats (#2387)", () => {
-    vi.useFakeTimers();
-    vi.stubGlobal("HTMLInputElement", FakeElement);
-    vi.stubGlobal("document", {
-      createElement: (tag: string) =>
-        Object.assign(new FakeElement(), { tagName: tag.toUpperCase() }),
-      getElementById: () => null,
-    });
     const solo = {
       ...claimSide([null]),
       size: 1,
       chosen: { ...SUNRISE, members: SUNRISE.members.slice(0, 1) },
     };
-    const root = new FakeElement();
-    renderTeamLobbyScreen(
-      root as unknown as HTMLElement,
-      lobby("brann", "claim", solo),
-      [],
-      undefined,
-      NO_SOLO,
-      callbacks,
-      undefined,
-    );
+    const root = body(lobby("brann", "claim", solo));
     expect((bar.status as readonly FakeElement[])[0]?.text()).toContain(
       t("teamLobby.soloStarting"),
     );
     expect(root.all("team-lobby-seat")).toEqual([]);
     expect(root.all("play-card")).toEqual([]);
-    renderTeamLobbyScreen(
-      root as unknown as HTMLElement,
-      lobby("brann", "vote", { ...voteSide([]), size: 1 }),
-      [],
-      undefined,
-      NO_SOLO,
-      callbacks,
-      undefined,
-    );
+    refresh(lobby("brann", "vote", { ...voteSide([]), size: 1 }));
     expect((bar.status as readonly FakeElement[])[0]?.text()).toContain(t("teamLobby.soloTitle"));
-    vi.useRealTimers();
   });
 
   it("shows a spectator one line and nothing of either side", () => {

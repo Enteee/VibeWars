@@ -6,6 +6,7 @@ import { PROFESSIONS } from "../packages/game-core/src/professions.js";
 import { STARTER_BUILDS } from "../packages/game-core/src/starter-builds.js";
 import { joinFriend, openRail } from "./helpers/menu.js";
 import { hostLobby, openPeers, proposeTeam, setTeamSize } from "./helpers/peers.js";
+import { PIXEL_8A_PORTRAIT } from "./helpers/phone.js";
 import { namePlayer } from "./helpers/player.js";
 
 /**
@@ -160,6 +161,65 @@ test("#1460: two players and a bot propose, vote, take seats and play the claime
       "data-skill-id",
       FOUR[1]?.skillBar[0] ?? "",
     );
+  } finally {
+    await context.close();
+  }
+});
+
+test("#3929: on a phone, proposing keeps the Team Lobby where it was scrolled", async ({
+  browser,
+}) => {
+  test.setTimeout(60_000);
+  const context = await browser.newContext(PIXEL_8A_PORTRAIT);
+  const host = await context.newPage();
+  const guest = await context.newPage();
+  const screens = host.locator("#screens");
+
+  try {
+    await nameOnMenu(host, "Host");
+    await openRail(host, "Team Builder");
+    await expect(host.getByRole("button", { name: "New team build", exact: true })).toBeVisible();
+    await paste(host.locator(".screen"), fourCode());
+    await host.getByRole("button", { name: "Save", exact: true }).click();
+    await expect(host.locator(".toast")).toHaveText("Saved");
+
+    const code = await hostLobby(host, { size: 4 });
+    await nameOnMenu(guest, "Guest");
+    await joinFriend(guest, code);
+    await expect(guest.locator(".lobby-panel")).toBeVisible();
+    for (const page of [host, guest]) {
+      await page.bringToFront();
+      await page.getByRole("button", { name: "join team 1" }).click();
+    }
+    await expect(host.locator(".lobby-panel")).toContainText("Guest");
+    for (const page of [host, guest]) {
+      await page.bringToFront();
+      await page.getByRole("button", { name: "Ready", exact: true }).click();
+    }
+    await host.bringToFront();
+    await host.getByRole("button", { name: "start match" }).click();
+    for (const page of [host, guest]) {
+      await expect(page.locator(".team-lobby-stage")).toHaveText("Choose a team build");
+    }
+
+    // The guest's card makes the vote taller than the phone; the host scrolls down to it.
+    await guest.bringToFront();
+    await proposeTeam(guest, "Four");
+    await host.bringToFront();
+    await expect(host.locator(".team-lobby-proposals .play-card")).toHaveCount(1);
+    await screens.evaluate((element) => {
+      element.scrollTop = element.scrollHeight;
+    });
+    await expect.poll(() => screens.evaluate((element) => element.scrollTop)).toBeGreaterThan(0);
+    const scrolled = await screens.evaluate((element) => element.scrollTop);
+
+    // Proposing redraws nothing but the new card: not on the host's own
+    // change, nor when the guest's snapshot brings it back.
+    await proposeTeam(host, "Four");
+    await expect(guest.locator(".team-lobby-proposals .play-card")).toHaveCount(2);
+    await expect(host.locator(".team-lobby-proposals .play-card")).toHaveCount(2);
+    const after = await screens.evaluate((element) => element.scrollTop);
+    expect(Math.abs(after - scrolled)).toBeLessThanOrEqual(1);
   } finally {
     await context.close();
   }
