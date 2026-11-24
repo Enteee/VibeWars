@@ -23,6 +23,7 @@ make your characters, and ![Team Builder](../../apps/web/public/icons/mode/teams
 ![Matches](../../apps/web/public/icons/mode/matches.svg) **Matches**, the [finished matches](modes.md#match-records) as their
 hosts report them, and your own. The game opens on the
 one you used last.
+On a phone held upright, the rail is tucked away behind the button at the top left of the screen, which shows the current mode's icon.
 
 ## Make a character
 

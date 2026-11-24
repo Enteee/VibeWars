@@ -1,7 +1,6 @@
 # Modlar
 
-Her harita tek bir mod oynatır ve lobi hangisi olduğunu haritanın
-adının altında söyler. Modlar, ana ekranın solundaki şeridin
+Her harita tek bir mod oynatır. Modlar, ana ekranın solundaki şeridin
 girdileridir. Bir haritanın modunu kimse seçmez, ama lobiyi kurduğun
 şerit girdisi, lobisinin haritalarının hangi modları oynatacağını
 seçer: ![Takım Arenası](../../../apps/web/public/icons/mode/team-arena.svg) **Takım Arenası** İmha, Leş Sayısı ve Rahip İmhası;
@@ -11,7 +10,8 @@ Geçirme; ![GvG](../../../apps/web/public/icons/mode/gvg.svg) **GvG** ise Lonca 
 ama asla Lonca Savaşı, Kalıntı Koşusu, Tepenin Kralı ya da Nokta Ele
 Geçirme seçmez. Takım Arenası her maç için haritalarından birini çeker,
 Kahramanların Yükselişi ilk haritasında başlar ve kurucunun seçmesine
-yalnızca Özel Oyun izin verir.
+yalnızca Özel Oyun izin verir. Başka hiçbir modun ekranı sıradaki haritayı
+söylemez: maç, yüklenirken onu gösterir.
 
 Katı ağların arkasındaki iki oyuncu bir kuyrukta birbiriyle eşleşemez, bu yüzden kuyruk yalnızca seninle eşleşebilecek oyuncuları sayar ve bunu söyler. **Ayarlar → relay (TURN)** altındaki bir relay yardımcı olur.
 

@@ -14,9 +14,31 @@ export type RailLabel =
   | "Team Builder"
   | "Matches";
 
+/**
+ * The rail in view: on a phone held upright it is a drawer (#3924), which
+ * its toggle opens; elsewhere it is always there. Whether it opened it.
+ */
+export async function showRail(page: Page): Promise<boolean> {
+  const toggle = page.locator(".rail-drawer-toggle");
+  // The screen drawn first: one or the other is in view.
+  await expect(
+    page.locator(".mode-rail:visible, .rail-drawer-toggle:visible").first(),
+  ).toBeVisible();
+  if (!(await toggle.isVisible()) || (await toggle.getAttribute("aria-expanded")) === "true") {
+    return false;
+  }
+  await toggle.click();
+  await expect(page.locator(".mode-rail")).toBeVisible();
+  return true;
+}
+
 /** Open `label`'s screen from the rail, as a player would. */
 export async function openRail(page: Page, label: RailLabel): Promise<void> {
-  const entry = page.locator(".mode-rail").getByRole("button", { name: label, exact: true });
+  await showRail(page);
+  // Hidden too: the click puts a drawer away.
+  const entry = page
+    .locator(".mode-rail")
+    .getByRole("button", { name: label, exact: true, includeHidden: true });
   await entry.click();
   await expect(entry).toHaveAttribute("aria-pressed", "true");
 }

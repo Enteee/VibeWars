@@ -1,6 +1,6 @@
 # Modi
 
-Jede Karte spielt einen Modus, und die Lobby nennt ihn unter dem Namen der Karte. Die Modi
+Jede Karte spielt einen Modus. Die Modi
 sind die Einträge in der Leiste links im Hauptbildschirm. Niemand wählt den Modus einer Karte,
 aber der Leisteneintrag, von dem aus du hostest, bestimmt, welche Modi die Karten seiner Lobby
 spielen: ![Teamarena](../../../apps/web/public/icons/mode/team-arena.svg) **Teamarena** Vernichtung, Kill-Zähler und Priestervernichtung, ![Aufstieg der Helden](../../../apps/web/public/icons/mode/heroes-ascent.svg) **Aufstieg der Helden**
@@ -8,7 +8,8 @@ Reliktlauf, King of the Hill und Punkte erobern, und ![GvG](../../../apps/web/pu
 Spiel** bietet jede Karte. Eine ![Zufallsarena](../../../apps/web/public/icons/mode/random-arena.svg) **Zufallsarena** wählt eine Karte für dich und damit den Modus,
 aber nie eine Gildenschlacht, einen Reliktlauf, King of the Hill oder Punkte erobern. Die
 Teamarena lost für jedes Match eine ihrer Karten aus, der Aufstieg der Helden beginnt auf seiner
-ersten Karte, und nur in einem Gehosteten Spiel wählt der Host.
+ersten Karte, und nur in einem Gehosteten Spiel wählt der Host. Der Bildschirm keines anderen
+Modus sagt, welche Karte als Nächstes kommt: Das Match zeigt sie, während es lädt.
 
 Zwei Spieler hinter strengen Netzwerken können in einer Warteschlange nicht zueinander finden. Die Warteschlange zählt deshalb nur Spieler, die mit dir spielen können, und sagt es dir. Ein Relay unter **Optionen → Relay (TURN)** hilft.
 

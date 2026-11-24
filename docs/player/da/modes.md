@@ -1,7 +1,6 @@
 # Spiltilstande
 
-Hver bane spiller én spiltilstand, og lobbyen siger hvilken under banens
-navn. Spiltilstandene er punkterne i skinnen til venstre på
+Hver bane spiller én spiltilstand. Spiltilstandene er punkterne i skinnen til venstre på
 hovedskærmen. Ingen vælger en banes spiltilstand, men det punkt i
 skinnen, du er vært fra, vælger de spiltilstande, dens lobbys baner
 spiller: ![Holdarena](../../../apps/web/public/icons/mode/team-arena.svg) **Holdarena** Udslettelse, Drabstælling og Præsteudslettelse,
@@ -11,6 +10,8 @@ arena** vælger en bane for dig, og dermed spiltilstanden, men aldrig en
 Laugskamp, et Relikvieløb, Kongen af bakken eller Erobring. Holdarena
 trækker en af sine baner til hver kamp, Heltenes opstigning starter på
 sin første bane, og kun et Værtsspil lader værten vælge.
+Ingen anden spiltilstands skærm siger, hvilken bane der står for tur: kampen
+viser den, mens den indlæses.
 
 To spillere bag strenge netværk kan ikke sættes sammen i en kø, så køen tæller kun de spillere, du kan sættes sammen med, og siger det. Et relay under **Valg → Relay (TURN)** hjælper.
 

@@ -1,6 +1,6 @@
 # Modos
 
-Cada mapa juega un modo, y la sala indica cuál bajo el nombre del mapa. Los
+Cada mapa juega un modo. Los
 modos son las entradas de la barra a la izquierda de la pantalla principal.
 Nadie elige el modo de un mapa, pero la entrada de la barra desde la que alojas
 elige los modos de los mapas de su sala: ![Arena por equipos](../../../apps/web/public/icons/mode/team-arena.svg) **Arena por equipos**, Aniquilación,
@@ -11,6 +11,8 @@ aleatoria** elige un mapa por ti, y con él el modo, pero nunca una Batalla de
 gremios, una Carrera de reliquias, Rey de la colina ni Puntos de captura. Arena
 por equipos sortea uno de sus mapas en cada partida, Ascenso de los Héroes
 empieza en su primer mapa, y solo una Partida alojada deja elegir al anfitrión.
+La pantalla de ningún otro modo indica qué mapa viene después: la partida lo
+muestra mientras carga.
 
 Dos jugadores detrás de redes estrictas no pueden emparejarse entre sí en una cola, así que la cola cuenta solo a los jugadores que pueden emparejarse contigo, y lo dice. Ayuda un relay en **Opciones → relay (TURN)**.
 

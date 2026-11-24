@@ -2,9 +2,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { t } from "../i18n/index.js";
 import { STORAGE_NAMESPACE } from "../storage/namespace.js";
+import { TUCKED_BEHIND } from "./kit.js";
 import {
   RAIL,
   defaultTeamSize,
+  drawerNext,
   loadRail,
   loadTeamBuildSize,
   loadTeamSize,
@@ -29,6 +31,7 @@ interface FakeKey {
 }
 
 class FakeElement {
+  id = "";
   className = "";
   textContent = "";
   title = "";
@@ -38,7 +41,18 @@ class FakeElement {
   readonly children: FakeElement[] = [];
   readonly attributes = new Map<string, string>();
   readonly listeners = new Map<string, (event: FakeKey) => void>();
+  readonly classes = new Set<string>();
   focused = false;
+
+  readonly classList = {
+    toggle: (name: string, on: boolean): void => {
+      if (on) {
+        this.classes.add(name);
+      } else {
+        this.classes.delete(name);
+      }
+    },
+  };
 
   constructor(tagName: string) {
     this.tagName = tagName;
@@ -56,6 +70,17 @@ class FakeElement {
   readonly setAttribute = (name: string, value: string): void => {
     this.attributes.set(name, value);
   };
+
+  readonly getAttribute = (name: string): string | null => this.attributes.get(name) ?? null;
+
+  readonly removeAttribute = (name: string): void => {
+    this.attributes.delete(name);
+  };
+
+  /** The page's rail is the one this panel was drawn with: nothing replaces it here. */
+  querySelector(): null {
+    return null;
+  }
 
   readonly addEventListener = (type: string, listener: (event: FakeKey) => void): void => {
     this.listeners.set(type, listener);
@@ -91,7 +116,11 @@ describe("the mode rail (#1525)", () => {
       getItem: (key: string) => stored.get(key) ?? null,
       setItem: (key: string, value: string) => stored.set(key, value),
     });
-    vi.stubGlobal("document", { createElement: (tag: string) => new FakeElement(tag) });
+    vi.stubGlobal("document", {
+      createElement: (tag: string) => new FakeElement(tag),
+      addEventListener: () => undefined,
+    });
+    vi.stubGlobal("matchMedia", () => ({ addEventListener: () => undefined }));
   });
 
   afterEach(() => {
@@ -252,14 +281,16 @@ describe("the mode rail (#1525)", () => {
     const parts = (): string[] => {
       const root = new FakeElement("div");
       const body = railScreen(root as unknown as HTMLElement, "gvg", () => undefined);
-      return (body as unknown as FakeElement).children.map((child) => child.className);
+      return (body as unknown as FakeElement).children.flatMap((child) =>
+        child.children.map((part) => part.className),
+      );
     };
     const members = [member("me", true), member("Friend", false)];
     // Who is in it is the top bar's Lobby window's, queued or not.
     setRailParty({ ...party, members, queuedMs: null });
-    expect(parts()).toEqual(["rail-title"]);
+    expect(parts()).toEqual(["rail-drawer-toggle", "rail-title"]);
     setRailParty({ ...party, members });
-    expect(parts()).toEqual(["rail-title"]);
+    expect(parts()).toEqual(["rail-drawer-toggle", "rail-title"]);
   });
 
   it("opens on Random Arena first, and for anything else stored", () => {
@@ -464,5 +495,88 @@ describe("the mode rail (#1525)", () => {
     railScreen(new FakeElement("div") as unknown as HTMLElement, "teams", () => undefined);
     smaller.click();
     expect(heard).toEqual([2]);
+  });
+});
+
+describe("the rail's drawer on an upright phone (#3924)", () => {
+  beforeEach(() => {
+    vi.stubGlobal("localStorage", { getItem: () => null, setItem: () => undefined });
+    vi.stubGlobal("document", {
+      createElement: (tag: string) => new FakeElement(tag),
+      addEventListener: () => undefined,
+    });
+    vi.stubGlobal("matchMedia", () => ({ addEventListener: () => undefined }));
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("opens and closes on its toggle, which names the rail it controls", () => {
+    const root = new FakeElement("div");
+    railScreen(root as unknown as HTMLElement, "gvg", () => undefined);
+    const [panel] = root.children;
+    const [rail, scrim, body] = panel?.children ?? [];
+    const toggle = body?.children[0]?.children[0];
+    expect(scrim?.className).toBe("rail-drawer-scrim");
+    expect(toggle?.attributes.get("aria-label")).toBe(t("rail.open"));
+    expect(toggle?.attributes.get("aria-controls")).toBe(rail?.id);
+    expect(toggle?.attributes.get("aria-expanded")).toBe("false");
+    // Closed, the tutorial's coach points at the toggle for what is in it.
+    expect(rail?.attributes.get(TUCKED_BEHIND)).toBe(toggle?.id);
+
+    toggle?.click();
+    expect(toggle?.attributes.get("aria-expanded")).toBe("true");
+    expect(panel?.classes.has("is-drawer-open")).toBe(true);
+    expect(rail?.attributes.has(TUCKED_BEHIND)).toBe(false);
+
+    toggle?.click();
+    expect(toggle?.attributes.get("aria-expanded")).toBe("false");
+    expect(panel?.classes.has("is-drawer-open")).toBe(false);
+    expect(toggle?.focused).toBe(true);
+  });
+
+  it("stays open through a redraw of its screen, as a lobby's new size, but not of another", () => {
+    const drawn = (entry: "gvg" | "hosted-game"): FakeElement | undefined => {
+      const root = new FakeElement("div");
+      railScreen(root as unknown as HTMLElement, entry, () => undefined);
+      return root.children[0];
+    };
+    const toggleOf = (panel: FakeElement | undefined): FakeElement | undefined =>
+      panel?.children[2]?.children[0]?.children[0];
+    toggleOf(drawn("hosted-game"))?.click();
+
+    const again = drawn("hosted-game");
+    expect(again?.classes.has("is-drawer-open")).toBe(true);
+    expect(toggleOf(again)?.attributes.get("aria-expanded")).toBe("true");
+    expect(drawn("gvg")?.classes.has("is-drawer-open")).toBe(false);
+    expect(drawn("hosted-game")?.classes.has("is-drawer-open")).toBe(false);
+  });
+
+  it("goes away on an entry, Esc, a press outside, the focus leaving or a turn of the phone", () => {
+    expect(drawerNext(false, { kind: "toggle" })).toEqual({ open: true, focus: "entry" });
+    expect(drawerNext(true, { kind: "toggle" })).toEqual({ open: false, focus: "toggle" });
+    // The chosen screen takes the focus; a guest's locked mode chooses nothing.
+    expect(drawerNext(true, { kind: "entry", locked: false })).toEqual({
+      open: false,
+      focus: "none",
+    });
+    expect(drawerNext(true, { kind: "entry", locked: true })).toEqual({
+      open: true,
+      focus: "none",
+    });
+    expect(drawerNext(true, { kind: "escape" })).toEqual({ open: false, focus: "toggle" });
+    expect(drawerNext(false, { kind: "escape" })).toEqual({ open: false, focus: "none" });
+    // The dim gives the focus back to the toggle; the top bar keeps what it was pressed on.
+    expect(drawerNext(true, { kind: "press-outside", onScrim: true })).toEqual({
+      open: false,
+      focus: "toggle",
+    });
+    expect(drawerNext(true, { kind: "press-outside", onScrim: false })).toEqual({
+      open: false,
+      focus: "none",
+    });
+    expect(drawerNext(true, { kind: "focus-left" })).toEqual({ open: false, focus: "none" });
+    expect(drawerNext(true, { kind: "layout" })).toEqual({ open: false, focus: "none" });
   });
 });

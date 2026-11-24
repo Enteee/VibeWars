@@ -1,6 +1,6 @@
 # Režimy
 
-Každá mapa hrá jeden režim a lobby ho uvádza pod názvom mapy.
+Každá mapa hrá jeden režim.
 Režimy sú položky lišty na ľavej strane hlavnej obrazovky.
 Nikto nevyberá režim mapy, ale položka lišty, z ktorej hostíš, určuje
 režimy, ktoré hrajú mapy jej lobby: ![Tímová aréna](../../../apps/web/public/icons/mode/team-arena.svg) **Tímová aréna** Anihiláciu, Počet zabití a
@@ -10,6 +10,8 @@ každú mapu. ![Náhodná aréna](../../../apps/web/public/icons/mode/random-are
 ale nikdy Cechovú bitku, Beh s relikviou, Kráľa kopca ani Dobývanie
 bodov. Tímová aréna vylosuje jednu zo svojich máp pre každý zápas, Výstup hrdinov
 začína na svojej prvej mape a len vo Vlastnej hre vyberá hostiteľ.
+Obrazovka žiadneho iného režimu neuvádza, ktorá mapa príde na rad: zápas
+ju ukáže pri načítaní.
 
 Dvaja hráči za prísnymi sieťami sa vo fronte nemôžu spárovať navzájom, preto front počíta len hráčov, s ktorými sa spárovať môžete, a povie vám to. Pomôže relé v **Nastavenia → relé (TURN)**.
 

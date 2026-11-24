@@ -1,6 +1,6 @@
 # Moduri
 
-Fiecare hartă joacă un singur mod, iar lobby-ul îți spune care, sub numele hărții.
+Fiecare hartă joacă un singur mod.
 Modurile sunt intrările de pe bara din stânga ecranului principal. Nimeni nu alege
 modul unei hărți, dar intrarea de pe bară din care găzduiești alege modurile jucate
 de hărțile lobby-ului: ![Arenă de echipe](../../../apps/web/public/icons/mode/team-arena.svg) **Arenă de echipe** Anihilare, Număr de ucideri și Anihilare
@@ -10,6 +10,8 @@ aleatorie** alege o hartă pentru tine și, odată cu ea, modul, dar niciodată 
 de bresle, o Cursă a relicvelor, Regele dealului sau Capturare de puncte. Arena de
 echipe trage la sorți una dintre hărțile ei pentru fiecare meci, Ascensiunea Eroilor
 începe de la prima ei hartă și doar un Joc găzduit îi permite gazdei să aleagă.
+Ecranul niciunui alt mod nu spune ce hartă urmează: meciul o arată în timp ce se
+încarcă.
 
 Doi jucători din spatele unor rețele stricte nu pot fi potriviți unul cu altul într-o coadă, așa că coada numără doar jucătorii cu care poți fi potrivit și îți spune asta. Ajută un releu în **Opțiuni → Releu (TURN)**.
 

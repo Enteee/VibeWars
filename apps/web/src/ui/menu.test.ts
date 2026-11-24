@@ -218,8 +218,10 @@ describe("the character screens (#1525)", () => {
       setItem: (key: string, value: string) => stored.set(key, value),
     });
     vi.stubGlobal("window", { addEventListener: () => undefined });
+    vi.stubGlobal("matchMedia", () => ({ addEventListener: () => undefined }));
     vi.stubGlobal("document", {
       activeElement: null,
+      addEventListener: () => undefined,
       createElement: (tag: string) => new FakeElement(tag),
     });
   });

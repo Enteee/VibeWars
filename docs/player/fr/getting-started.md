@@ -24,6 +24,7 @@ personnages, et l'![Atelier d'équipes](../../../apps/web/public/icons/mode/team
 ![Matchs](../../../apps/web/public/icons/mode/matches.svg) **Matchs**, l'[historique des matchs](modes.md#historique-des-matchs) terminés
 tels que leurs hôtes les déclarent, et les tiens. Le jeu s'ouvre sur le dernier que tu as
 utilisé.
+Sur un téléphone tenu à la verticale, la barre est rangée derrière le bouton en haut à gauche de l'écran, qui affiche l'icône du mode actuel.
 
 ## Créer un personnage
 

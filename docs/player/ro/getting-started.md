@@ -21,6 +21,7 @@ jos sunt ![Constructor de personaje](../../../apps/web/public/icons/mode/charact
 de echipe**, unde îți faci [Buildurile de echipă](skills-and-builds.md#builduri-de-echipă),
 apoi ![Meciuri](../../../apps/web/public/icons/mode/matches.svg) **Meciuri**, [meciurile terminate](modes.md#înregistrări-de-meciuri) așa cum
 le raportează gazdele lor, și pe ale tale. Jocul se deschide pe cel folosit ultima dată.
+Pe un telefon ținut vertical, bara este ascunsă în spatele butonului din stânga sus a ecranului, care arată pictograma modului curent.
 
 ## Creează un personaj
 

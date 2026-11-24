@@ -1,7 +1,6 @@
 # Játékmódok
 
-Minden pálya egy módot játszik, és a lobbi a pálya neve alatt kiírja,
-melyiket. A módok a főképernyő bal oldalán lévő sáv bejegyzései. Egy
+Minden pálya egy módot játszik. A módok a főképernyő bal oldalán lévő sáv bejegyzései. Egy
 pálya módját senki sem választja, de az a sávbejegyzés, ahonnan
 létrehozod a lobbit, eldönti, milyen módokat játszanak a lobbi pályái:
 a ![Csapataréna](../../../apps/web/public/icons/mode/team-arena.svg) **Csapataréna** a Megsemmisítést, az Ölésversenyt és a Papirtást, a
@@ -11,7 +10,8 @@ a ![Csapataréna](../../../apps/web/public/icons/mode/team-arena.svg) **Csapatar
 Céhcsatát, Ereklyefutamot, A domb urát vagy Pontfoglalást. A
 Csapataréna minden meccsre kisorsolja egy pályáját, a Hősök Útja az
 első pályáján kezdődik, és csak a Saját játékban választhat a
-házigazda.
+házigazda. Más mód képernyője nem írja ki, melyik pálya következik: a
+meccs a betöltéskor mutatja meg.
 
 Két szigorú hálózat mögötti játékos nem kerülhet össze a sorban, ezért a sor csak azokat a játékosokat számolja, akikkel összekerülhetsz, és ezt meg is mondja. Segít egy relay az **Opciók → relay (TURN)** alatt.
 

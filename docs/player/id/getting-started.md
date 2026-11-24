@@ -23,6 +23,7 @@ membuat karakter, dan ![Pembuat Tim](../../../apps/web/public/icons/mode/teams.s
 ![Laga](../../../apps/web/public/icons/mode/matches.svg) **Laga**, yaitu [laga yang sudah selesai](modes.md#catatan-laga) seperti yang
 dilaporkan host-nya, juga laga milikmu sendiri. Game terbuka di
 layar yang terakhir kamu pakai.
+Di ponsel yang dipegang tegak, rel tersimpan di balik tombol di kiri atas layar, yang menampilkan ikon mode saat ini.
 
 ## Membuat karakter
 

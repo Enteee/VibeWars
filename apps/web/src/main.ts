@@ -158,11 +158,12 @@ import {
 } from "./ui/lobby-screen.js";
 import { setRelayStatus } from "./ui/relay-status.js";
 import {
+  mountTeamLobbyScreen,
   proposableTeams,
-  renderTeamLobbyScreen,
   soloCharacterKey,
   soloEntries,
   type SoloEntry,
+  type TeamLobbyScreen,
 } from "./ui/team-lobby-screen.js";
 import { createNowPlayingToast, nowPlayingText } from "./ui/now-playing.js";
 import {
@@ -603,6 +604,8 @@ async function main(): Promise<void> {
   let followsLobby = false;
   /** Whether the Team Lobby screen is up (#1460). */
   let teamLobbyShown = false;
+  /** The Team Lobby, mounted once while it is up (#3929). */
+  let teamLobbyScreen: TeamLobbyScreen | undefined;
   /** The party the rail was last drawn for: a builder's rail redraws only when its locks change. */
   let drawnParty = "";
   /** The rail entry last drawn: a guest's mode screen follows its host's (#1526). */
@@ -683,8 +686,6 @@ async function main(): Promise<void> {
         readonly ascentRound: number | null;
         /** The round its match plays: a later one when it skipped ahead (#2687). */
         playedRound: number | null;
-        /** The map of the group it was formed into (#2687); `undefined` until then. */
-        groupMapId: string | undefined;
       }
     | undefined;
   /** A team's match found while the tab was hidden (#2743): its title flashing. */
@@ -927,6 +928,8 @@ async function main(): Promise<void> {
     matchesScreen = undefined;
     followsLobby = false;
     teamLobbyShown = false;
+    teamLobbyScreen?.dispose();
+    teamLobbyScreen = undefined;
     dismissToast();
     closeBeatEditor();
     notices.leave();
@@ -1616,7 +1619,6 @@ async function main(): Promise<void> {
     startNatCheck();
     return {
       queuedMs: queuedMsOf(lobby.getSnapshot()),
-      groupMapId: teamQueue?.groupMapId,
       onFindMatch: () => {
         lobby?.findMatch(roundFor(entry), false);
       },
@@ -2276,7 +2278,6 @@ async function main(): Promise<void> {
       finished: false,
       ascentRound: snapshot.ascentRound,
       playedRound: snapshot.ascentRound,
-      groupMapId: undefined,
     };
     teamQueue = started;
     music().menu("queue");
@@ -2331,11 +2332,9 @@ async function main(): Promise<void> {
           } else if (state.kind === "fell-through") {
             // That group is gone: the party is bound for its own round again.
             current.playedRound = current.ascentRound;
-            current.groupMapId = undefined;
             redrawRail();
           } else if (state.kind === "in-lobby" && current.ascentRound !== null) {
             current.playedRound = ascentRoundOf(state.group.mapId);
-            current.groupMapId = state.group.mapId;
             redrawRail();
           }
           paintQueue();
@@ -2683,13 +2682,11 @@ async function main(): Promise<void> {
       teamPicks.proposed = undefined;
     }
     proposeSolo(joined, snapshot, teamPicks);
-    renderTeamLobbyScreen(
-      screenRoot,
-      snapshot,
-      teamPicks.teams,
-      teamPicks.proposed,
-      { entries: teamPicks.solo, picked: teamPicks.soloKey },
-      {
+    // Mounted once, then updated in place (ADR-0030); drawn again only
+    // after another screen took the root.
+    if (teamLobbyScreen?.shown() !== true) {
+      teamLobbyScreen?.dispose();
+      teamLobbyScreen = mountTeamLobbyScreen(screenRoot, {
         onVote: (proposerId) => {
           lobby?.vote(proposerId);
         },
@@ -2701,9 +2698,15 @@ async function main(): Promise<void> {
         onLeave: () => {
           void leaveLobby();
         },
-      },
-      lobbyNotice,
-    );
+      });
+    }
+    teamLobbyScreen.update({
+      snapshot,
+      teams: teamPicks.teams,
+      proposedTeamId: teamPicks.proposed,
+      solo: { entries: teamPicks.solo, picked: teamPicks.soloKey },
+      notice: lobbyNotice,
+    });
   };
 
   /**

@@ -9,7 +9,7 @@ import {
   type TeamBuildSize,
   type TeamSize,
 } from "../storage/schema.js";
-import { button, h } from "./kit.js";
+import { button, h, PUTS_AWAY, TUCKED_BEHIND } from "./kit.js";
 import type { RailParty } from "./lobby-window.js";
 
 /**
@@ -336,6 +336,7 @@ export function railIconUrl(entry: RailEntry): string {
  */
 export function modeRail(active: RailEntry, onSwitch: (entry: RailEntry) => void): HTMLElement {
   const rail = h("nav", "mode-rail");
+  rail.id = RAIL_ID;
   rail.setAttribute("aria-label", t("rail.modes"));
   // What the menu quest points at (#3540): the rail, and each of its entries.
   rail.setAttribute("data-tutorial", "rail");
@@ -401,15 +402,106 @@ export function redrawModeRail(
   const focusedEntry =
     focused !== null && old.contains(focused) ? focused.getAttribute("data-entry") : null;
   const rail = modeRail(active, onSwitch);
+  // A closed drawer's rail stays tucked behind its toggle (#3924).
+  const tucked = old.getAttribute(TUCKED_BEHIND);
+  if (tucked !== null) {
+    rail.setAttribute(TUCKED_BEHIND, tucked);
+  }
   old.replaceWith(rail);
   if (focusedEntry !== null) {
     rail.querySelector<HTMLElement>(`[data-entry="${focusedEntry}"]`)?.focus();
   }
 }
+
+/** The rail's id, which its drawer's toggle controls (#3924). */
+const RAIL_ID = "mode-rail";
+
+/** The drawer's toggle's id: what a tucked rail stands behind. */
+const DRAWER_TOGGLE_ID = "rail-drawer-toggle";
+
+/** Where the rail is a drawer (#3924): a phone held upright, as the HUD's query (styles.css). */
+const DRAWER_QUERY = "(pointer: coarse) and (width <= 30rem)";
+
+/** What happens to the drawer (#3924). */
+export type DrawerEvent =
+  | { readonly kind: "toggle" }
+  | { readonly kind: "entry"; readonly locked: boolean }
+  | { readonly kind: "escape" }
+  | { readonly kind: "press-outside"; readonly onScrim: boolean }
+  | { readonly kind: "focus-left" }
+  | { readonly kind: "layout" };
+
+/** Where the focus goes after a drawer event: the pressed entry, the toggle, or where it is. */
+export type DrawerFocus = "entry" | "toggle" | "none";
+
+/**
+ * The drawer after `event`, `open` before it (#3924): it opens and
+ * closes on its toggle; choosing an entry, Esc, a press outside it, the
+ * focus leaving it or the layout changing put it away. Nothing else in
+ * it does: the size stepper leaves it open, to step and look. Opening focuses the shown entry;
+ * closing gives the focus back to the toggle, unless an entry was chosen
+ * or the press was on something else, which takes it.
+ */
+export function drawerNext(
+  open: boolean,
+  event: DrawerEvent,
+): { readonly open: boolean; readonly focus: DrawerFocus } {
+  switch (event.kind) {
+    case "toggle":
+      return { open: !open, focus: open ? "toggle" : "entry" };
+    case "entry":
+      return event.locked ? { open, focus: "none" } : { open: false, focus: "none" };
+    case "escape":
+      return { open: false, focus: open ? "toggle" : "none" };
+    case "press-outside":
+      return { open: false, focus: open && event.onScrim ? "toggle" : "none" };
+    case "focus-left":
+    case "layout":
+      return { open: false, focus: "none" };
+  }
+}
+
+/** The drawn rail screen's drawer, told what happened; none before one is drawn. */
+let drawerListener: ((event: DrawerEvent) => void) | undefined;
+let drawerWatched = false;
+/** The entry whose drawer is open: a redraw of its screen, as a lobby's new size, keeps it open. */
+let drawerOpenOn: RailEntry | undefined;
+
+/**
+ * A press anywhere but the drawer and its toggle puts it away, and so
+ * does a turn of the phone out of the drawer's layout. One listener of
+ * each for the page, told the rail screen drawn last.
+ */
+function watchDrawer(): void {
+  if (drawerWatched) {
+    return;
+  }
+  drawerWatched = true;
+  document.addEventListener("click", (event) => {
+    const target = event.target;
+    if (!(target instanceof Element) || drawerListener === undefined) {
+      return;
+    }
+    // A press that redrew what it hit, like the size stepper redrawing
+    // the rail, is no press outside: its target has left the page.
+    if (target.isConnected && target.closest(`#${RAIL_ID}, #${DRAWER_TOGGLE_ID}`) === null) {
+      drawerListener({
+        kind: "press-outside",
+        onScrim: target.closest(".rail-drawer-scrim") !== null,
+      });
+    }
+  });
+  matchMedia(DRAWER_QUERY).addEventListener("change", () => {
+    drawerListener?.({ kind: "layout" });
+  });
+}
+
 /**
  * A rail screen (#1525): the rail on the left, and `body` beside it, the
  * screen's own, under its heading. Who is in the party is the top bar's
  * Lobby window's (#2385), and whether it is queued its queue icon's (#2743).
+ * On a phone held upright the rail is a drawer (#3924), behind a toggle
+ * before the heading that shows the screen's icon.
  */
 export function railScreen(
   root: HTMLElement,
@@ -419,13 +511,93 @@ export function railScreen(
   teamSizeListener = undefined;
   const panel = h("div", `screen screen-rail screen-${active}`);
   const body = h("div", "rail-body");
-  const title = body.appendChild(h("h2", "rail-title", railLabel(active)));
+  const head = body.appendChild(h("div", "rail-head"));
+  const toggle = button("", "rail-drawer-toggle", () => {
+    tell({ kind: "toggle" });
+  });
+  toggle.id = DRAWER_TOGGLE_ID;
+  toggle.setAttribute("aria-label", t("rail.open"));
+  toggle.setAttribute("aria-controls", RAIL_ID);
+  const icon = h("span", "mode-rail-icon");
+  icon.setAttribute("aria-hidden", "true");
+  icon.setAttribute("style", `--icon: url("${railIconUrl(active)}")`);
+  toggle.appendChild(icon);
+  const title = h("h2", "rail-title", railLabel(active));
+  head.append(toggle, title);
   // What the menu quest's modes step explains a mode beside (#3543): its
   // heading, so the lock keeps the screen's own controls out of reach.
   if (isModeEntry(active)) {
     title.setAttribute("data-tutorial", `mode-${active}`);
   }
-  panel.append(modeRail(active, onSwitch), body);
+  const rail = modeRail(active, onSwitch);
+  const scrim = h("div", "rail-drawer-scrim");
+  scrim.setAttribute(PUTS_AWAY, "");
+  panel.append(rail, scrim, body);
+
+  let open = drawerOpenOn === active;
+  drawerOpenOn = open ? active : undefined;
+  // `shown` is the rail drawn now: a new team size swaps one in (setTeamSize).
+  const paint = (shown: Element): void => {
+    panel.classList.toggle("is-drawer-open", open);
+    toggle.setAttribute("aria-expanded", String(open));
+    if (open) {
+      shown.removeAttribute(TUCKED_BEHIND);
+    } else {
+      shown.setAttribute(TUCKED_BEHIND, DRAWER_TOGGLE_ID);
+    }
+  };
+  const tell = (event: DrawerEvent): void => {
+    // A hand slides the drawer; a turn of the phone puts it away at once.
+    panel.classList.toggle("is-drawer-sliding", event.kind !== "layout");
+    const next = drawerNext(open, event);
+    if (next.open === open && next.focus === "none") {
+      return;
+    }
+    open = next.open;
+    drawerOpenOn = open ? active : undefined;
+    paint(panel.querySelector(".mode-rail") ?? rail);
+    if (next.focus === "entry") {
+      panel.querySelector<HTMLElement>('.mode-rail [aria-pressed="true"]')?.focus();
+    } else if (next.focus === "toggle") {
+      toggle.focus();
+    }
+  };
+  paint(rail);
+  // An entry's own click switches the screen first; this one, bubbling
+  // after it, puts away the drawer of the screen drawn now.
+  panel.addEventListener("click", (event) => {
+    const target = event.target;
+    if (!(target instanceof Element) || target.closest(".mode-rail") === null) {
+      return;
+    }
+    const entry = target.closest(".mode-rail-entry");
+    if (entry !== null) {
+      drawerListener?.({ kind: "entry", locked: entry.getAttribute("aria-disabled") === "true" });
+    }
+  });
+  // Esc puts it away, prevented, so the menu's own Esc (kit.ts) does not go back too.
+  panel.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && open) {
+      event.preventDefault();
+      tell({ kind: "escape" });
+    }
+  });
+  // Tab off the drawer's end puts it away; onto its toggle does not.
+  panel.addEventListener("focusout", (event) => {
+    const to = event.relatedTarget;
+    const from = event.target;
+    if (
+      open &&
+      from instanceof Element &&
+      from.closest(".mode-rail") !== null &&
+      to instanceof Element &&
+      to.closest(`#${RAIL_ID}, #${DRAWER_TOGGLE_ID}`) === null
+    ) {
+      tell({ kind: "focus-left" });
+    }
+  });
+  drawerListener = tell;
+  watchDrawer();
   root.replaceChildren(panel);
   return body;
 }
