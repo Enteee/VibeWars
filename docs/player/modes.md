@@ -30,7 +30,7 @@ objective off screen or under the HUD gets an outlined arrow at the
 screen edge: the stand or a shrine in its owner's colour, grey for
 nobody's, the altar in gold. A player's filled arrow draws over it.
 
-A match opens with everyone held near their spawn: you can walk a few steps, but not fight or use skills. A line at the top counts the players who have loaded the match. Once everyone has loaded, it counts down 10 seconds and the match starts, and its clock with it. A player who has not loaded after 20 seconds is not waited for: the countdown starts without them, and they can still join later.
+A match opens with everyone held near their spawn: you can walk a few steps and prepare with skills on yourself and your allies, such as enchantments, stances and heals, but you cannot attack or use a skill on a foe. Energy and Health regenerate while you wait, and bots prepare too. A line at the top counts the players who have loaded the match. Once everyone has loaded, it counts down 10 seconds and the match starts, and its clock with it. A player who has not loaded after 20 seconds is not waited for: the countdown starts without them, and they can still join later.
 
 ## Annihilation
 

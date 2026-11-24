@@ -641,6 +641,7 @@ export default {
   "hud.preMatchStartingAnyway":
     "Αναμονή παικτών: {joined}/{expected}, ξεκινά ούτως ή άλλως σε {seconds} δ",
   "hud.preMatchStartsIn": "Ο αγώνας ξεκινά σε {seconds}",
+  "hud.preMatchSelfAllyOnly": "Πριν την έναρξη: μόνο δεξιότητες σε εσένα ή συμμάχους.",
   "hud.preMatchWaiting": "Αναμονή παικτών: {joined}/{expected}",
   "hud.priest": "ιερέας",
   "hud.priestDead": "ιερέας (νεκρός)",

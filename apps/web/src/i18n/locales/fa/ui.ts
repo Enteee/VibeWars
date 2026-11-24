@@ -633,6 +633,7 @@ export default {
   "hud.preMatchStartingAnyway":
     "در انتظار بازیکنان: {joined}/{expected}، در هر صورت تا {seconds} ثانیه دیگر شروع می‌شود",
   "hud.preMatchStartsIn": "مسابقه تا {seconds} دیگر شروع می‌شود",
+  "hud.preMatchSelfAllyOnly": "پیش از شروع: فقط مهارت‌ها روی خودت یا هم‌پیمانان.",
   "hud.preMatchWaiting": "در انتظار بازیکنان: {joined}/{expected}",
   "hud.priest": "کشیش",
   "hud.priestDead": "کشیش (مرده)",

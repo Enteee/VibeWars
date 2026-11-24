@@ -668,6 +668,7 @@ export default {
   "hud.preMatchStartingAnyway":
     "Čeka se igrače: {joined}/{expected}, počinje svejedno za {seconds} s",
   "hud.preMatchStartsIn": "Meč počinje za {seconds}",
+  "hud.preMatchSelfAllyOnly": "Prije početka: samo vještine na sebe ili saveznike.",
   "hud.preMatchWaiting": "Čeka se igrače: {joined}/{expected}",
   "hud.priest": "svećenik",
   "hud.priestDead": "svećenik (mrtav)",

@@ -4,8 +4,12 @@ import { SPAWN_BUBBLE_RADIUS } from "../packages/game-core/src/distances.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../packages/game-core/src/ruleset.js";
 import { joinFriend } from "./helpers/menu.js";
 import { enterOwnTeams, hostLobby, openPeers, waitForMatchStart } from "./helpers/peers.js";
-import { bringStarter } from "./helpers/starter.js";
+import { bringStarter, starterKey } from "./helpers/starter.js";
 import { key } from "./keys.js";
+
+const BUILD = "Elementalist/Mesmer";
+/** A timed enchantment on yourself: allowed before the start (#3910). */
+const ARMOR_OF_EARTH = starterKey(BUILD, "elementalist.armor-of-earth");
 
 /** One look at the host's page: is the pre-match line up, and where its view stands. */
 interface Sample {
@@ -48,7 +52,7 @@ test("#3818: both in, the match counts 10 s down with everyone held in the spawn
   try {
     // The pages share one storage: both play this character, a side of one each.
     // The host runs the real 10 s/20 s, not the e2e build's 1 s (#3855).
-    await bringStarter(host, "Elementalist/Mesmer", "./?pre-match=real");
+    await bringStarter(host, BUILD, "./?pre-match=real");
     const code = await hostLobby(host);
     await guest.goto("./");
     await joinFriend(guest, code);
@@ -69,12 +73,21 @@ test("#3818: both in, the match counts 10 s down with everyone held in the spawn
     await Promise.all([
       enterOwnTeams([{ page: host }, { page: guest }]),
       (async () => {
-        // Held: the centre line says when it starts, the bar is greyed.
+        // Held: the centre line says when it starts.
         await expect(line).toBeVisible();
         // Above 1 s, so the host runs the real countdown, not the e2e
         // build's (#3855): it fails should ?pre-match=real be lost.
         await expect(line).toHaveText(/^Match starts in ([2-9]|10)$/);
-        await expect(host.locator(".hud-skills")).toHaveClass(/\bis-held\b/);
+        // Only skills on yourself or allies go (#3910): Fireball is greyed,
+        // Armor of Earth is not, and it lands.
+        const slots = host.locator(".hud-skills .hud-skill");
+        await expect(slots.nth(0)).toHaveClass(/\bis-held\b/);
+        await expect(slots.nth(4)).not.toHaveClass(/\bis-held\b/);
+        await host.keyboard.press(ARMOR_OF_EARTH);
+        const effects = host.getByRole("list", { name: "your effects" });
+        await expect(
+          effects.getByRole("listitem").filter({ has: host.getByAltText("Armor Boost") }),
+        ).toBeVisible();
         // Up from team 1's first spawn on Ember Pits is open ground onto
         // the middle lane: held from now until the hero has walked.
         await host.keyboard.down(key("move-up"));
@@ -83,7 +96,7 @@ test("#3818: both in, the match counts 10 s down with everyone held in the spawn
 
     // Started: the line goes, the bar wakes, and the key held all along walks.
     await waitForMatchStart([host, guest]);
-    await expect(host.locator(".hud-skills")).not.toHaveClass(/\bis-held\b/);
+    await expect(host.locator(".hud-skills .hud-skill.is-held")).toHaveCount(0);
     const speed = MINIMAL_GW_INSPIRED_PVP_V1.movement.maxSpeedUnitsPerSecond;
     // The first held sample is the hero in its spawn: before it, the page
     // was still in the lobby.

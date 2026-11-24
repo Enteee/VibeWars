@@ -30,7 +30,7 @@ cieľ mimo obrazovky alebo pod HUD obrysovú šípku na okraji
 obrazovky: stojan alebo svätyňa vo farbe svojho vlastníka, sivá, ak nikomu
 nepatrí, oltár v zlatej. Vyplnená šípka hráča sa kreslí cez ňu.
 
-Zápas sa začína so všetkými držanými pri ich štarte: môžeš urobiť pár krokov, ale nemôžeš bojovať ani používať schopnosti. Riadok hore počíta hráčov, ktorým sa zápas načítal. Keď sa načíta všetkým, odpočíta 10 sekúnd a zápas sa začne, a s ním aj jeho čas. Na hráča, ktorému sa zápas nenačítal ani po 20 sekundách, sa nečaká: odpočítavanie začne bez neho a pripojiť sa môže aj neskôr.
+Zápas sa začína so všetkými držanými pri ich štarte: môžeš urobiť pár krokov a pripraviť sa schopnosťami na seba a svojich spojencov, ako sú očarovania, postoje a liečenie, ale nemôžeš útočiť ani použiť schopnosť na nepriateľa. Energia a zdravie sa počas čakania obnovujú a boti sa pripravujú tiež. Riadok hore počíta hráčov, ktorým sa zápas načítal. Keď sa načíta všetkým, odpočíta 10 sekúnd a zápas sa začne, a s ním aj jeho čas. Na hráča, ktorému sa zápas nenačítal ani po 20 sekundách, sa nečaká: odpočítavanie začne bez neho a pripojiť sa môže aj neskôr.
 
 ## Anihilácia
 

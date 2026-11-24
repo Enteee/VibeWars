@@ -585,6 +585,7 @@ export default {
   "hud.preMatchStartingAnyway":
     "Đang chờ người chơi: {joined}/{expected}, vẫn bắt đầu sau {seconds} giây",
   "hud.preMatchStartsIn": "Trận đấu bắt đầu sau {seconds}",
+  "hud.preMatchSelfAllyOnly": "Trước khi bắt đầu: chỉ dùng kỹ năng lên bản thân hoặc đồng minh.",
   "hud.preMatchWaiting": "Đang chờ người chơi: {joined}/{expected}",
   "hud.priest": "tư tế",
   "hud.priestDead": "tư tế (đã chết)",

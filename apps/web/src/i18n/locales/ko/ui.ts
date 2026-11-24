@@ -587,6 +587,7 @@ export default {
   "hud.pipDead": "{name} (사망)",
   "hud.preMatchStartingAnyway": "플레이어 대기 중: {joined}/{expected}, {seconds}초 후 그대로 시작",
   "hud.preMatchStartsIn": "{seconds} 후 경기 시작",
+  "hud.preMatchSelfAllyOnly": "시작 전: 자신이나 아군에게 쓰는 스킬만 가능합니다.",
   "hud.preMatchWaiting": "플레이어 대기 중: {joined}/{expected}",
   "hud.priest": "사제",
   "hud.priestDead": "사제 (사망)",

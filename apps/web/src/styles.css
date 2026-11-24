@@ -4862,8 +4862,8 @@ body:has(> .splash) #menu-background::after {
   pointer-events: none;
 }
 
-/* Held in the spawn (#3818): the bar shows, inactive. */
-.hud-skills.is-held .hud-skill {
+/* Held in the spawn (#3818): a skill refused until the start, greyed (#3910). */
+.hud-skill.is-held {
   filter: grayscale(1);
   opacity: 0.55;
 }

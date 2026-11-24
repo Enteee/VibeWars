@@ -638,6 +638,7 @@ export default {
   "hud.preMatchStartingAnyway":
     "Изчакване на играчи: {joined}/{expected}, започва все пак след {seconds} с",
   "hud.preMatchStartsIn": "Мачът започва след {seconds}",
+  "hud.preMatchSelfAllyOnly": "Преди началото: само умения върху себе си или съюзници.",
   "hud.preMatchWaiting": "Изчакване на играчи: {joined}/{expected}",
   "hud.priest": "жрец",
   "hud.priestDead": "жрец (мъртъв)",

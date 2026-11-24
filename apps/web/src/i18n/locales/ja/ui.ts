@@ -591,6 +591,7 @@ export default {
   "hud.pipDead": "{name} (死亡)",
   "hud.preMatchStartingAnyway": "プレイヤー待機中: {joined}/{expected}、{seconds}秒後に開始します",
   "hud.preMatchStartsIn": "試合開始まで {seconds}",
+  "hud.preMatchSelfAllyOnly": "開始前：自分か味方へのスキルのみ使えます。",
   "hud.preMatchWaiting": "プレイヤー待機中: {joined}/{expected}",
   "hud.priest": "司祭",
   "hud.priestDead": "司祭 (死亡)",

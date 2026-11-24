@@ -31,7 +31,7 @@ nằm ngoài màn hình hoặc dưới HUD có một mũi tên viền ở mép m
 hoặc đền mang màu của chủ sở hữu, xám nếu chưa thuộc về ai, tế đàn màu vàng.
 Mũi tên đặc của người chơi được vẽ đè lên nó.
 
-Trận đấu mở đầu với mọi người bị giữ gần điểm xuất hiện của mình: bạn có thể đi vài bước, nhưng không thể chiến đấu hay dùng kỹ năng. Một dòng ở trên cùng đếm số người chơi đã tải xong trận. Khi mọi người đã tải xong, nó đếm ngược 10 giây rồi trận đấu bắt đầu, cùng với đồng hồ của trận. Người chơi chưa tải xong sau 20 giây sẽ không được chờ: đếm ngược bắt đầu mà không có họ, và họ vẫn có thể vào sau.
+Trận đấu mở đầu với mọi người bị giữ gần điểm xuất hiện của mình: bạn có thể đi vài bước và chuẩn bị bằng kỹ năng lên bản thân và đồng minh, như phù phép, tư thế và hồi máu, nhưng không thể tấn công hay dùng kỹ năng lên địch. Năng lượng và Máu hồi lại trong lúc chờ, và bot cũng chuẩn bị. Một dòng ở trên cùng đếm số người chơi đã tải xong trận. Khi mọi người đã tải xong, nó đếm ngược 10 giây rồi trận đấu bắt đầu, cùng với đồng hồ của trận. Người chơi chưa tải xong sau 20 giây sẽ không được chờ: đếm ngược bắt đầu mà không có họ, và họ vẫn có thể vào sau.
 
 ## Hủy diệt
 

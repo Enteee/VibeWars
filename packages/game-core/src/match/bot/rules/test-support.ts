@@ -144,6 +144,7 @@ export function contextFor(
     projectiles: sim.projectiles,
     seed: CONTEXT_SEED,
     now: sim.elapsedSeconds,
+    preMatch: undefined,
     highGround: [],
     cover: [],
     routeLength: (to) => distance(self.position, to),

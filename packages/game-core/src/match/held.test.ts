@@ -8,7 +8,7 @@ import { clampToCircle } from "../movement.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { distance, vec2, type Vec2 } from "../vec2.js";
 import type { Behaviour } from "./behaviour.js";
-import { BOUNDS, fighter, RANGER, RULESET } from "./bot/rules/test-support.js";
+import { BOT, BOUNDS, fighter, RANGER, RULESET } from "./bot/rules/test-support.js";
 import { UPHILL } from "./layer-rules.js";
 import {
   MatchSimulation,
@@ -20,6 +20,8 @@ import {
 const RULES = MINIMAL_GW_INSPIRED_PVP_V1;
 const DT = 1 / RULES.tickRateHz;
 const FIREBALL = "elementalist.fireball";
+/** A timed enchantment on the caster alone: allowed before the start (#3910). */
+const AURA = "elementalist.aura-of-restoration";
 /** Floating point puts a clamped point a hair past the edge, no more. */
 const EDGE = SPAWN_BUBBLE_RADIUS + 1e-9;
 
@@ -37,7 +39,7 @@ function swordsman(id: string, team: number, spawn: Vec2, behaviour?: Behaviour)
   return {
     id,
     team,
-    skillBar: [FIREBALL],
+    skillBar: [FIREBALL, AURA],
     attributeRanks: new Map([
       ["warrior.swordsmanship", 12],
       ["elementalist.fire-magic", 12],
@@ -70,7 +72,7 @@ function one(sim: MatchSimulation, id: string): Participant {
 
 function hold(sim: MatchSimulation, seconds: number): void {
   for (let tick = 0; tick < Math.round(seconds / DT); tick += 1) {
-    sim.stepHeld(DT);
+    sim.stepHeld(DT, null);
   }
 }
 
@@ -164,11 +166,14 @@ describe("held before the start (#3817)", () => {
     expect(sim.elapsedSeconds).toBeCloseTo(DT, 9);
   });
 
-  it("drops a skill or an attack asked for while held, and nothing fires at the start", () => {
+  it("refuses a foe's skill and an attack while held, and nothing fires at the start", () => {
     const sim = pair();
-    sim.stepHeld(DT);
+    sim.stepHeld(DT, null);
     sim.setTarget("a", "b");
-    expect(sim.requestSkill("a", 0)).toBeUndefined();
+    expect(sim.requestSkill("a", 0)).toEqual({
+      skillId: FIREBALL,
+      check: { ok: false, reason: "pre-match" },
+    });
     expect(sim.requestAttack("a", "b")).toBeUndefined();
     hold(sim, 3);
     const a = one(sim, "a");
@@ -184,16 +189,45 @@ describe("held before the start (#3817)", () => {
     expect(b.combatant.health).toBe(500);
   });
 
-  it("changes nobody's health or energy", () => {
+  it("casts an enchantment on oneself while held, and it runs down (#3910)", () => {
     const sim = pair();
-    one(sim, "a").combatant.energy = 10;
-    one(sim, "b").combatant.health = 100;
-    hold(sim, 5);
-    expect(one(sim, "a").combatant.energy).toBe(10);
-    expect(one(sim, "b").combatant.health).toBe(100);
+    sim.stepHeld(DT, null);
+    sim.setTarget("a", "b");
+    expect(sim.requestSkill("a", 1)?.check).toEqual({ ok: true });
+    hold(sim, 3);
+    const aura = one(sim, "a").combatant.statuses.active.find(
+      ({ id }) => id === "aura-of-restoration",
+    );
+    expect(aura).toBeDefined();
+    expect(aura?.remainingSeconds).toBeLessThan(60);
+    // Still selected: casting on oneself does not drop the foe.
+    expect(one(sim, "a").targetId).toBe("b");
+    expect(one(sim, "b").combatant.health).toBe(500);
   });
 
-  it("keeps a bot still: it neither chases nor swings", () => {
+  it("regenerates energy while held, and the match clock stays at 0 (#3910)", () => {
+    const sim = pair();
+    one(sim, "a").combatant.energy = 10;
+    one(sim, "a").combatant.baseEnergyPips = 4;
+    hold(sim, 5);
+    expect(one(sim, "a").combatant.energy).toBeGreaterThan(10);
+    expect(sim.elapsedSeconds).toBe(0);
+  });
+
+  it("lets a bot wander within half its bubble, and move at least once in 10 s (#3910)", () => {
+    const sim = pair(BOT);
+    const b = one(sim, "b");
+    let moved = false;
+    for (let tick = 0; tick < 10 * RULES.tickRateHz; tick += 1) {
+      sim.stepHeld(DT, null);
+      moved ||= distance(b.position, vec2(60, 0)) > 1;
+      expect(distance(b.position, vec2(60, 0))).toBeLessThanOrEqual(0.5 * SPAWN_BUBBLE_RADIUS + 1);
+    }
+    expect(moved).toBe(true);
+    expect(one(sim, "a").combatant.health).toBe(500);
+  });
+
+  it("keeps a chasing creature still: it neither chases nor swings", () => {
     const sim = pair({
       kind: "parallel",
       behaviours: [
@@ -208,7 +242,7 @@ describe("held before the start (#3817)", () => {
 
   it("holds a participant added while held in its own bubble", () => {
     const sim = pair();
-    sim.stepHeld(DT);
+    sim.stepHeld(DT, null);
     sim.add(swordsman("c", 0, vec2(0, -300)));
     sim.walkTo("c", vec2(0, 1000));
     hold(sim, 5);
@@ -220,7 +254,7 @@ describe("held before the start (#3817)", () => {
     sim.step(DT);
     sim.setInputDirection("a", vec2(-1, 0));
     const before = one(sim, "a").position;
-    const result = sim.stepHeld(DT);
+    const result = sim.stepHeld(DT, null);
     expect(result.tick).toBe(1);
     expect(one(sim, "a").position).toEqual(before);
   });
@@ -231,7 +265,7 @@ describe("held before the start (#3817)", () => {
     sim.step(DT);
     expect(sim.phase).toBe("finished");
     const tick = sim.tick;
-    sim.stepHeld(DT);
+    sim.stepHeld(DT, null);
     expect(sim.tick).toBe(tick);
   });
 
@@ -243,7 +277,7 @@ describe("held before the start (#3817)", () => {
     for (const direction of [vec2(0, -1), vec2(1, -1), vec2(0, 1), vec2(-1, 0), vec2(0, -1)]) {
       sim.setInputDirection("a", direction);
       for (let tick = 0; tick < 2 * RULES.tickRateHz; tick += 1) {
-        sim.stepHeld(DT);
+        sim.stepHeld(DT, null);
         dropped ||= a.layer === 0;
         expect(distance(a.position, spawn)).toBeLessThanOrEqual(SPAWN_BUBBLE_RADIUS + 1);
         if (a.position.x === spawn.x && a.position.y === spawn.y) {
@@ -264,8 +298,69 @@ describe("held before the start (#3817)", () => {
     const a = one(sim, "a");
     a.layer = 0;
     a.position = vec2(800, 520);
-    sim.stepHeld(DT);
+    sim.stepHeld(DT, null);
     expect(a.position).toEqual(spawn);
     expect(a.layer).toBe(1);
+  });
+});
+
+describe("bots prepare before the start (#3910)", () => {
+  const MENDING = "monk.mending";
+  /** A 10 s stance on oneself. */
+  const STEADY = "warrior.steady-stance";
+  const COUNTDOWN_SECONDS = 10;
+
+  function prepping(): MatchSimulation {
+    return new MatchSimulation({
+      seed: "prep",
+      participants: [
+        swordsman("a", 0, vec2(0, 0)),
+        {
+          ...swordsman("b", 1, vec2(600, 0), BOT),
+          skillBar: [MENDING, STEADY],
+          attributeRanks: new Map([
+            ["monk.healing-prayers", 12],
+            ["warrior.tactics", 12],
+          ]),
+          baseEnergyPips: 4,
+        },
+      ],
+    });
+  }
+
+  /** 3 s waiting for the players, then the countdown: what `b` used, when, and where it ended. */
+  function hold(sim: MatchSimulation) {
+    const used: { readonly skillId: string; readonly secondsLeft: number | null }[] = [];
+    const countdown = Math.round(COUNTDOWN_SECONDS / DT);
+    const ticks = Math.round(3 / DT) + countdown;
+    for (let tick = 0; tick < ticks; tick += 1) {
+      const counted = tick - (ticks - countdown);
+      const secondsLeft = counted < 0 ? null : (countdown - counted) * DT;
+      for (const entry of sim.stepHeld(DT, secondsLeft).log) {
+        if (entry.sourceId === "b" && entry.skillId !== undefined) {
+          used.push({ skillId: entry.skillId, secondsLeft });
+        }
+      }
+    }
+    return { used, at: one(sim, "b").position };
+  }
+
+  it("puts a maintained enchantment up while waiting, and a stance only once it lasts past the start", () => {
+    const sim = prepping();
+    const { used } = hold(sim);
+    const mending = used.find(({ skillId }) => skillId === MENDING);
+    const steady = used.find(({ skillId }) => skillId === STEADY);
+    expect(mending?.secondsLeft).toBeNull();
+    expect(steady?.secondsLeft).not.toBeNull();
+    expect(steady?.secondsLeft).toBeLessThanOrEqual(8);
+    const b = one(sim, "b");
+    expect(b.combatant.statuses.has("mending")).toBe(true);
+    expect(b.combatant.statuses.has("steady-stance")).toBe(true);
+    expect(b.combatant.energy).toBeGreaterThanOrEqual(0.5 * b.combatant.maxEnergy);
+    expect(one(sim, "a").combatant.health).toBe(500);
+  });
+
+  it("does the same, in the same places, for the same seed", () => {
+    expect(hold(prepping())).toEqual(hold(prepping()));
   });
 });
