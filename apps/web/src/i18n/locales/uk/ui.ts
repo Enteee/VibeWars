@@ -623,13 +623,6 @@ export default {
   "help.source": "Вихідний код",
   "help.version": "VibeWars {release} · збірка {build}",
 
-  "history.back": "Назад",
-  "history.empty": "Матчів поки немає. Тут зберігаються твої останні 50 матчів.",
-  "history.emptyMine": "Немає матчів із твоїм поточним ключем гравця.",
-  "history.mine": "Мої матчі",
-  "history.open": "Історія матчів",
-  "history.title": "Історія матчів",
-
   "hud.aggression": "агр {ours} : {theirs}",
   "hud.altarPointOurs": "Очко вівтаря!",
   "hud.altarPointTheirs": "Очко вівтаря ворога",
@@ -902,6 +895,7 @@ export default {
     other: "{count} д тому",
   },
   "matches.draw": "Нічия",
+  "matches.emptyMine": "Немає матчів із твоїм поточним ключем гравця.",
   "matches.endAggression": "Агресія на кінець часу",
   "matches.endAnnihilation": "Винищення",
   "matches.endGuildLord": "Лорда гільдії вбито",
@@ -934,6 +928,7 @@ export default {
   "matches.kindRandom": "Випадкові",
   "matches.kindTeam": "Командні",
   "matches.lost": "Поразка",
+  "matches.mine": "Мої матчі",
   "matches.minutesAgo": {
     one: "{count} хв тому",
     few: "{count} хв тому",
@@ -945,6 +940,9 @@ export default {
   "matches.offline": "Зараз не вдається зв'язатися з ретрансляторами матчів.",
   "matches.playerBuild": "{player}: {build}",
   "matches.sizeChip": "{size}v{size}",
+  "matches.tabBuilds": "Білди",
+  "matches.tabDiagram": "Діаграма",
+  "matches.tabStats": "Статистика",
   "matches.teamResult": "Команда {team}: {result}",
   "matches.teamTab": "Команда {team} · {result}",
   "matches.teamUnreadable": "Не вдається прочитати білд у цій команді",
@@ -952,6 +950,7 @@ export default {
   "matches.won": "Перемога",
   "matches.wonLeft": "‹ Перемога",
   "matches.wonRight": "Перемога ›",
+  "matches.you": "Ви",
 
   "menu.characterBuilder": "Редактор персонажів",
   "menu.clone": "Клонувати",

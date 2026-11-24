@@ -29,7 +29,10 @@ export interface MatchRecord {
   /** The player key's public key, hex, when the player left it. */
   readonly pubkey: string;
   readonly selfTeam: number;
+  /** How long the match ran, whole seconds. */
+  readonly durationSeconds: number;
   readonly bots: readonly string[];
+  /** The host's `ended`: its teams (#3903) are the builds the Matches page shows. */
   readonly ended: WireEnded;
   readonly chart: WireMatchChart | null;
 }
@@ -70,6 +73,9 @@ export function parseMatchRecord(value: unknown): MatchRecord | undefined {
     !Number.isInteger(raw.selfTeam) ||
     raw.selfTeam < 0 ||
     raw.selfTeam >= raw.teamCount ||
+    typeof raw.durationSeconds !== "number" ||
+    !Number.isInteger(raw.durationSeconds) ||
+    raw.durationSeconds < 0 ||
     !Array.isArray(raw.bots) ||
     !raw.bots.every(isString)
   ) {
@@ -93,6 +99,7 @@ export function parseMatchRecord(value: unknown): MatchRecord | undefined {
         selfId: raw.selfId,
         pubkey: raw.pubkey,
         selfTeam: raw.selfTeam,
+        durationSeconds: raw.durationSeconds,
         bots: raw.bots,
         ended,
         chart,

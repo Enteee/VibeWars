@@ -603,13 +603,6 @@ export default {
   "help.source": "Cod sursă",
   "help.version": "VibeWars {release} · versiunea {build}",
 
-  "history.back": "Înapoi",
-  "history.empty": "Încă nu există meciuri. Ultimele tale 50 de meciuri sunt păstrate aici.",
-  "history.emptyMine": "Niciun meci cu cheia ta de jucător actuală.",
-  "history.mine": "Meciurile mele",
-  "history.open": "Istoricul meciurilor",
-  "history.title": "Istoricul meciurilor",
-
   "hud.aggression": "agr {ours} v {theirs}",
   "hud.altarPointOurs": "Punct la altar!",
   "hud.altarPointTheirs": "Punct la altar pentru inamic",
@@ -874,6 +867,7 @@ export default {
   "matches.clone": "Clonează",
   "matches.daysAgo": { one: "acum {count} z", few: "acum {count} z", other: "acum {count} z" },
   "matches.draw": "Egal",
+  "matches.emptyMine": "Niciun meci cu cheia ta de jucător actuală.",
   "matches.endAggression": "Agresiune la final",
   "matches.endAnnihilation": "Anihilare",
   "matches.endGuildLord": "Lordul breslei ucis",
@@ -900,6 +894,7 @@ export default {
   "matches.kindRandom": "Aleator",
   "matches.kindTeam": "Echipă",
   "matches.lost": "Pierdut",
+  "matches.mine": "Meciurile mele",
   "matches.minutesAgo": {
     one: "acum {count} min",
     few: "acum {count} min",
@@ -910,6 +905,9 @@ export default {
   "matches.offline": "Releele de meciuri nu pot fi contactate acum.",
   "matches.playerBuild": "{player}: {build}",
   "matches.sizeChip": "{size}v{size}",
+  "matches.tabBuilds": "Builduri",
+  "matches.tabDiagram": "Diagramă",
+  "matches.tabStats": "Statistici",
   "matches.teamResult": "Echipa {team}: {result}",
   "matches.teamTab": "Echipa {team} · {result}",
   "matches.teamUnreadable": "Un build din această echipă nu poate fi citit",
@@ -917,6 +915,7 @@ export default {
   "matches.won": "Câștigat",
   "matches.wonLeft": "‹ Câștigat",
   "matches.wonRight": "Câștigat ›",
+  "matches.you": "Tu",
 
   "menu.characterBuilder": "Constructor de personaje",
   "menu.clone": "Clonează",

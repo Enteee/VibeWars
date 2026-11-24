@@ -1,7 +1,9 @@
 /**
  * The Matches page (#2532): the finished matches hosts publish on Nostr
  * (#2528), newest first, live while the page is open. Every record is
- * the host's word only, and every row says so.
+ * the host's word only, and every row says so. My matches (#3903) shows
+ * this browser's own ended matches instead, each with its score table
+ * and charts.
  */
 
 import { decodeTemplateCode, type MatchEndReason } from "@vibewars/game-core";
@@ -11,7 +13,7 @@ import {
   type MatchRecordPlayer,
   type MatchRecordTeam,
 } from "@vibewars/game-protocol";
-import type { MatchRecord } from "@vibewars/game-session";
+import { MATCH_RECORD_VERSION, type MatchRecord } from "@vibewars/game-session";
 
 import { mapName } from "../i18n/game-names.js";
 import { t, type MessageKey } from "../i18n/index.js";
@@ -22,12 +24,15 @@ import type {
   MatchRecordWatchHandlers,
 } from "../net/transport/match-records.js";
 import { decodeTemplate } from "../storage/gw1-template.js";
+import type { MatchRecord as KeptMatch } from "../storage/match-history.js";
 import { isTeamBuildSize } from "../storage/schema.js";
 import { lookOfCharacter, teamFigureCard, type TeamFigureMember } from "./character-card.js";
 import { professionLabel } from "./character-preview.js";
 import { formatClock } from "./hud.js";
 import { professionIcon } from "./icons.js";
 import { button, h, screenBar, syncList, wordmark } from "./kit.js";
+import { chartRoster, renderMatchCharts } from "./match-charts.js";
+import { renderSummary, summaryTables } from "./match-summary.js";
 import { MATCH_KINDS, MATCH_SIZES, matchesFilter, sessionFilter } from "./matches-filter.js";
 import {
   SIGNET_HEADING_PX,
@@ -64,6 +69,46 @@ export interface MatchesScreenOptions {
   readonly now: () => number;
   /** A team's Clone (#2585): save it as a new Team Build and open it. */
   readonly onCloneTeam: (team: MatchRecordTeam) => void;
+  /** This browser's kept matches (#3848), newest first: `MatchHistoryStore.list` in the app. */
+  readonly history: () => Promise<readonly KeptMatch[]>;
+  /** The player key's public key, hex: My matches are the ones kept under it. */
+  readonly pubkey: string;
+}
+
+/** A row's match (#3903): a published record, or one this browser kept. */
+interface ShownMatch {
+  readonly id: string;
+  readonly record: MatchRecord;
+  /** This browser's own record of it, whose team was the player's, its table and charts. */
+  readonly kept: KeptMatch | undefined;
+}
+
+/**
+ * A kept match as a row reads it (#3903), or `undefined` for one its
+ * host left before the end, which has no result to show.
+ */
+export function keptAsRecord(kept: KeptMatch): MatchRecord | undefined {
+  const { ended } = kept;
+  return ended.endReason === "host-left"
+    ? undefined
+    : {
+        v: MATCH_RECORD_VERSION,
+        mode: kept.mode,
+        map: kept.mapId,
+        endedAt: Math.floor(kept.endedAt / 1000),
+        durationSeconds: kept.durationSeconds,
+        winningTeam: ended.winningTeam,
+        endReason: ended.endReason,
+        teams: ended.teams,
+      };
+}
+
+/** My matches (#3903): the ones kept under `pubkey`, newest first as `kept` comes. */
+export function myMatches(kept: readonly KeptMatch[], pubkey: string): ShownMatch[] {
+  return kept.flatMap((match) => {
+    const record = match.pubkey === pubkey ? keptAsRecord(match) : undefined;
+    return record === undefined ? [] : [{ id: match.id, record, kept: match }];
+  });
 }
 
 export interface MatchesScreen {
@@ -114,8 +159,16 @@ function teamResult(record: MatchRecord, team: number): string {
  * player, the name and both professions on hover, and the winner's
  * underlined. A build it can't read is a question mark.
  */
-function teamIcons(record: MatchRecord, team: number, players: MatchRecordTeam): HTMLElement {
+function teamIcons(
+  record: MatchRecord,
+  team: number,
+  players: MatchRecordTeam,
+  yours: boolean,
+): HTMLElement {
   const icons = h("span", record.winningTeam === team ? "match-team is-winner" : "match-team");
+  if (yours) {
+    icons.appendChild(h("span", "match-you", t("matches.you")));
+  }
   for (const player of players.players) {
     const name = playerLabelText(player.name, player.guildTag, 0);
     const label = player.bot ? t("matches.bot", { name }) : name;
@@ -221,11 +274,69 @@ function teamDetail(
   return section;
 }
 
-/** The opened row (#2585): one team at a time, a tab for each. */
-function matchDetail(
-  record: MatchRecord,
-  onCloneTeam: (team: MatchRecordTeam) => void,
-): HTMLElement {
+/** A kept match's score table, as its end panel showed it (#3903). */
+function keptTables(kept: KeptMatch): ReturnType<typeof summaryTables> {
+  return summaryTables(
+    kept.ended.summary,
+    kept.selfId,
+    kept.selfTeam,
+    kept.ended.winningTeam ?? undefined,
+    new Set(kept.bots),
+  );
+}
+
+/**
+ * A kept match's views (#3903): Builds, Stats and Diagram, a tab each,
+ * Builds open. A match whose charts never came says so under Diagram.
+ */
+function keptViews(kept: KeptMatch, builds: HTMLElement): HTMLElement {
+  const views = h("div", "match-views");
+  const tabs = views.appendChild(h("div", "match-tabs match-view-tabs"));
+  tabs.setAttribute("role", "tablist");
+  const panel = views.appendChild(h("div", "match-tab-panel"));
+  panel.setAttribute("role", "tabpanel");
+  const show: Record<"builds" | "stats" | "diagram", () => HTMLElement> = {
+    builds: () => builds,
+    stats: () => {
+      const stats = h("div", "match-stats");
+      renderSummary(stats, keptTables(kept));
+      return stats;
+    },
+    diagram: () => {
+      const diagram = h("div", "match-diagram");
+      renderMatchCharts(diagram, kept.chart ?? undefined, chartRoster(keptTables(kept)));
+      return diagram;
+    },
+  };
+  const labels = {
+    builds: "matches.tabBuilds",
+    stats: "matches.tabStats",
+    diagram: "matches.tabDiagram",
+  } as const satisfies Readonly<Record<keyof typeof show, MessageKey>>;
+  const buttons = (Object.keys(labels) as (keyof typeof labels)[]).map((view) => {
+    const tab = button(t(labels[view]), "match-tab", () => {
+      choose(view);
+    });
+    tab.setAttribute("role", "tab");
+    tab.dataset.view = view;
+    return tabs.appendChild(tab);
+  });
+  function choose(view: keyof typeof show): void {
+    for (const tab of buttons) {
+      tab.setAttribute("aria-selected", String(tab.dataset.view === view));
+    }
+    panel.replaceChildren(show[view]());
+  }
+  choose("builds");
+  return views;
+}
+
+/**
+ * The opened row: its teams, one at a time, a tab for each (#2585); a
+ * kept match's under Builds, beside its Stats and Diagram (#3903).
+ */
+function matchDetail(shown: ShownMatch, onCloneTeam: (team: MatchRecordTeam) => void): HTMLElement {
+  const { record } = shown;
   const detail = h("div", "match-detail");
   detail.appendChild(
     h(
@@ -237,9 +348,13 @@ function matchDetail(
       }),
     ),
   );
-  const tabs = detail.appendChild(h("div", "match-tabs"));
+  const builds = shown.kept === undefined ? detail : h("div", "match-builds");
+  if (shown.kept !== undefined) {
+    detail.appendChild(keptViews(shown.kept, builds));
+  }
+  const tabs = builds.appendChild(h("div", "match-tabs"));
   tabs.setAttribute("role", "tablist");
-  const panel = detail.appendChild(h("div", "match-tab-panel"));
+  const panel = builds.appendChild(h("div", "match-tab-panel"));
   panel.setAttribute("role", "tabpanel");
   // The winner's tab first, and open (#2637); the rest, or a draw's
   // every team, in order.
@@ -330,8 +445,9 @@ function hallRow(hold: HallHold, nowSeconds: number): HTMLElement {
 }
 
 /**
- * The two chip groups (#2741): kinds, then sizes. Within a group a match
- * fits any pressed chip; it must fit both groups.
+ * The chip groups (#2741): kinds, then sizes. Within a group a match
+ * fits any pressed chip; it must fit both groups. Beside them My
+ * matches (#3903), which switches whose matches the list holds.
  */
 function filterChips(onChange: () => void): HTMLElement {
   const filters = h("div", "match-filters");
@@ -349,6 +465,16 @@ function filterChips(onChange: () => void): HTMLElement {
       filterChip(t("matches.sizeChip", { size }), sessionFilter.sizes, size, onChange),
     );
   }
+  const mine = filters.appendChild(h("div", "skill-type-chips match-chip-group"));
+  const mineChip = mine.appendChild(
+    button("", "skill-type-chip match-chip match-chip-mine", () => {
+      sessionFilter.mine = !sessionFilter.mine;
+      mineChip.setAttribute("aria-pressed", String(sessionFilter.mine));
+      onChange();
+    }),
+  );
+  mineChip.setAttribute("aria-pressed", String(sessionFilter.mine));
+  mineChip.append(h("span", "match-chip-label", t("matches.mine")));
   return filters;
 }
 
@@ -356,11 +482,8 @@ function filterChips(onChange: () => void): HTMLElement {
 const rowWhen = new WeakMap<HTMLElement, HTMLElement>();
 
 /** A record's row: its summary, a button that opens its detail in place. */
-function matchRow(
-  heard: HeardMatchRecord,
-  onCloneTeam: (team: MatchRecordTeam) => void,
-): HTMLElement {
-  const { record } = heard;
+function matchRow(shown: ShownMatch, onCloneTeam: (team: MatchRecordTeam) => void): HTMLElement {
+  const { record, kept } = shown;
   const row = h("li", "match-row");
   row.setAttribute("data-kind", record.mode);
   const when = h("span", "match-when");
@@ -375,14 +498,17 @@ function matchRow(
     h("span", "match-mode", railLabel(record.mode)),
     ...record.teams.flatMap((players, team) => [
       ...(team === 0 ? [] : [h("span", "match-result", resultMark(record))]),
-      teamIcons(record, team, players),
+      teamIcons(record, team, players, kept?.selfTeam === team),
     ]),
     h("span", "match-map", mapName(record.map)),
     h("span", "match-duration", formatClock(record.durationSeconds)),
     when,
   );
-  const badge = head.appendChild(h("span", "match-host-reported", t("matches.hostReported")));
-  badge.title = t("matches.hostReportedTitle");
+  // A kept match was never published: it is the host's word only to its players.
+  if (kept === undefined) {
+    const badge = head.appendChild(h("span", "match-host-reported", t("matches.hostReported")));
+    badge.title = t("matches.hostReportedTitle");
+  }
   let detail: HTMLElement | undefined;
   head.addEventListener("click", () => {
     if (detail !== undefined) {
@@ -391,7 +517,7 @@ function matchRow(
       head.setAttribute("aria-expanded", "false");
       return;
     }
-    detail = row.appendChild(matchDetail(record, onCloneTeam));
+    detail = row.appendChild(matchDetail(shown, onCloneTeam));
     head.setAttribute("aria-expanded", "true");
   });
   return row;
@@ -424,6 +550,7 @@ export function renderMatchesScreen(
   const list = body.appendChild(h("ol", "match-list"));
   let records: HeardMatchRecord[] = [];
   let offline = false;
+  let mine: readonly ShownMatch[] = [];
 
   const draw = (): void => {
     const nowSeconds = Math.floor(options.now() / 1000);
@@ -434,20 +561,30 @@ export function renderMatchesScreen(
     hall.hidden = holds.length === 0;
     hallList.replaceChildren(...holds.map((hold) => hallRow(hold, nowSeconds)));
     // A row the filter hides leaves the list, so it comes back closed.
-    const shown = records.filter((heard) => matchesFilter(heard.record, sessionFilter));
+    const source: readonly ShownMatch[] = sessionFilter.mine
+      ? mine
+      : records.map((heard) => ({ ...heard, kept: undefined }));
+    const shown = source.filter((match) => matchesFilter(match.record, sessionFilter));
+    const offlineNow = offline && !sessionFilter.mine;
     note.textContent = t(
-      offline ? "matches.offline" : records.length === 0 ? "matches.noMatches" : "matches.noneFit",
+      offlineNow
+        ? "matches.offline"
+        : source.length > 0
+          ? "matches.noneFit"
+          : sessionFilter.mine
+            ? "matches.emptyMine"
+            : "matches.noMatches",
     );
-    note.hidden = !offline && shown.length > 0;
+    note.hidden = !offlineNow && shown.length > 0;
     syncList(
       list,
       shown,
-      (heard) => heard.id,
-      (heard) => matchRow(heard, options.onCloneTeam),
-      (element, heard) => {
+      (match) => match.id,
+      (match) => matchRow(match, options.onCloneTeam),
+      (element, match) => {
         const when = rowWhen.get(element);
         if (when !== undefined) {
-          when.textContent = relativeTime(heard.record.endedAt, nowSeconds);
+          when.textContent = relativeTime(match.record.endedAt, nowSeconds);
         }
       },
     );
@@ -469,6 +606,19 @@ export function renderMatchesScreen(
       draw();
     },
   });
+  let open = true;
+  options.history().then(
+    (kept) => {
+      mine = myMatches(kept, options.pubkey);
+      if (open) {
+        draw();
+      }
+    },
+    (error: unknown) => {
+      // The history is a convenience: unreadable, it is empty.
+      console.warn("[web] could not read the match history", error);
+    },
+  );
   const refresh = setInterval(() => {
     records = recentMatches(records, secondsNow());
     draw();
@@ -476,6 +626,7 @@ export function renderMatchesScreen(
   draw();
   return {
     close: () => {
+      open = false;
       clearInterval(refresh);
       watch.close();
     },

@@ -1408,6 +1408,7 @@ export async function startMatchView(
           endReason: match.endReason,
           summary: match.summary,
           clearSeconds: match.clearSeconds ?? null,
+          teams: match.teams,
         },
         viewed.map.teamCount,
       );
@@ -1418,6 +1419,7 @@ export async function startMatchView(
             teamCount: viewed.map.teamCount,
             selfId: viewed.selfSessionId,
             selfTeam: self.team,
+            durationSeconds: Math.round(match.elapsedSeconds),
             bots: match.players.filter((player) => player.bot).map((player) => player.sessionId),
             ended,
             chart: match.chart ?? null,

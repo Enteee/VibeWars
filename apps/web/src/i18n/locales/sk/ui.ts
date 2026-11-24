@@ -621,13 +621,6 @@ export default {
   "help.source": "Zdrojový kód",
   "help.version": "VibeWars {release} · zostava {build}",
 
-  "history.back": "Späť",
-  "history.empty": "Zatiaľ žiadne zápasy. Uchováva sa tu tvojich posledných 50 zápasov.",
-  "history.emptyMine": "Žiadne zápasy s tvojím súčasným kľúčom hráča.",
-  "history.mine": "Moje zápasy",
-  "history.open": "História zápasov",
-  "history.title": "História zápasov",
-
   "hud.aggression": "agr {ours} : {theirs}",
   "hud.altarPointOurs": "Bod na oltári!",
   "hud.altarPointTheirs": "Nepriateľský bod na oltári",
@@ -899,6 +892,7 @@ export default {
     other: "pred {count} d",
   },
   "matches.draw": "Remíza",
+  "matches.emptyMine": "Žiadne zápasy s tvojím súčasným kľúčom hráča.",
   "matches.endAggression": "Agresia po uplynutí času",
   "matches.endAnnihilation": "Anihilácia",
   "matches.endGuildLord": "Pán cechu padol",
@@ -931,6 +925,7 @@ export default {
   "matches.kindRandom": "Náhodná",
   "matches.kindTeam": "Tímová",
   "matches.lost": "Prehra",
+  "matches.mine": "Moje zápasy",
   "matches.minutesAgo": {
     one: "pred {count} min",
     few: "pred {count} min",
@@ -942,6 +937,9 @@ export default {
   "matches.offline": "Relé zápasov sú momentálne nedostupné.",
   "matches.playerBuild": "{player}: {build}",
   "matches.sizeChip": "{size}v{size}",
+  "matches.tabBuilds": "Buildy",
+  "matches.tabDiagram": "Diagram",
+  "matches.tabStats": "Štatistiky",
   "matches.teamResult": "Tím {team}: {result}",
   "matches.teamTab": "Tím {team} · {result}",
   "matches.teamUnreadable": "Build v tomto tíme sa nedá prečítať",
@@ -949,6 +947,7 @@ export default {
   "matches.won": "Výhra",
   "matches.wonLeft": "‹ Výhra",
   "matches.wonRight": "Výhra ›",
+  "matches.you": "Ty",
 
   "menu.characterBuilder": "Tvorba postáv",
   "menu.clone": "Klonovať",

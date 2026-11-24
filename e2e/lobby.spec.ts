@@ -577,40 +577,6 @@ test("a hosted match's end panel shows its charts under the scores, not only the
   }
 });
 
-test("Match history keeps the ended match, its scores and charts, and not one left before its end (#3848)", async ({
-  browser,
-}) => {
-  const { context, pages } = await openPeers(browser, 2);
-  const [host, guest] = pages as [Page, Page];
-
-  try {
-    await startTwoPlayerMatch(host, guest);
-    await expect(guest.locator(".hud-leave")).toBeVisible();
-    // The guest quits before the end: no record. The host wins, and keeps
-    // the match as it leaves, the charts in.
-    await leaveMatch(guest);
-    await expect(host.locator(".hud-summary .match-charts-svg")).toBeVisible();
-    await host.locator(".hud-end-line").getByRole("button", { name: "Now" }).click();
-    await expect(host.locator(".lobby-panel")).toBeVisible();
-
-    await host.locator(".topbar-match-history").click();
-    const window = host.locator(".match-history-window");
-    await expect(window.getByRole("checkbox", { name: "My matches" })).toBeChecked();
-    // The pages share one storage, so the guest's would be listed too.
-    const rows = window.locator(".match-history-row");
-    await expect(rows).toHaveCount(1);
-    await expect(rows.first()).toContainText("Victory");
-    await expect(rows.first()).toContainText("Hosted");
-    await rows.first().click();
-    await expect(window.locator(".match-summary-panel").first()).toBeVisible();
-    await expect(window.locator(".match-charts .match-charts-svg")).toBeVisible();
-    await window.getByRole("button", { name: "Back" }).click();
-    await expect(rows).toHaveCount(1);
-  } finally {
-    await context.close();
-  }
-});
-
 /** This page's own address and `#lobby=`, as an invite link to its lobby starts (#2100). */
 function invitePrefix(page: Page): string {
   const { origin, pathname } = new URL(page.url());

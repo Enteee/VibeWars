@@ -19,6 +19,7 @@ import type {
   CombatBatchMessage as WireCombatBatchMessage,
   CombatMessage as WireCombatMessage,
   MapDescriptor,
+  MatchRecordTeam,
   PeerCall,
   SkillBarSlot,
   WireCalls,
@@ -191,6 +192,8 @@ export interface MatchSnapshot {
   readonly endReason: string | undefined;
   /** Seconds on the Elite Zaishen Battle's clock (#2692), only once it has ended. */
   readonly clearSeconds?: number | undefined;
+  /** Who played on each team and with what build (#3903), only once it has ended. */
+  readonly teams?: readonly MatchRecordTeam[] | undefined;
   /** Weapon shots and flying spells in flight, oldest first (#160, #535). */
   readonly projectiles: readonly ProjectileSnapshot[];
   /** Wards on the ground, oldest first (#1087). */

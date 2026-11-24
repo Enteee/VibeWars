@@ -6,6 +6,11 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { t } from "../i18n/index.js";
 import { arenaIds } from "../net/maps.js";
 import type { MatchRecordWatchHandlers } from "../net/transport/match-records.js";
+import type { MatchRecord as KeptMatch } from "../storage/match-history.js";
+import type * as Charts from "./match-charts.js";
+import { renderMatchCharts } from "./match-charts.js";
+import type * as Summary from "./match-summary.js";
+import { renderSummary } from "./match-summary.js";
 import { sessionFilter } from "./matches-filter.js";
 import {
   MATCHES_KEPT,
@@ -22,6 +27,20 @@ const fail = (): never => {
 };
 
 const played = (index: number) => recordTemplate(STARTER_BUILDS.at(index) ?? fail());
+
+// A table and charts need a real DOM: here each only leaves its mark.
+vi.mock("./match-summary.js", async (actual) => ({
+  ...(await actual<typeof Summary>()),
+  renderSummary: vi.fn((parent: { appendChild: (child: unknown) => unknown }) =>
+    parent.appendChild(Object.assign(document.createElement("div"), { className: "fake-summary" })),
+  ),
+}));
+vi.mock("./match-charts.js", async (actual) => ({
+  ...(await actual<typeof Charts>()),
+  renderMatchCharts: vi.fn((parent: { appendChild: (child: unknown) => unknown }) =>
+    parent.appendChild(Object.assign(document.createElement("div"), { className: "fake-charts" })),
+  ),
+}));
 
 const RECORD: MatchRecord = {
   v: MATCH_RECORD_VERSION,
@@ -66,6 +85,31 @@ const PAIRS: MatchRecord = {
 };
 
 /** Just enough DOM to render the Matches page; the unit tests run in Node. */
+/** The player key's public key, whose kept matches are My matches (#3903). */
+const OWN = "c".repeat(64);
+
+/** A 2v2 this browser kept (#3903): the player on team 2, which lost. */
+const KEPT: KeptMatch = {
+  id: "kept-1",
+  endedAt: NOW - 3_600_000,
+  mapId: RECORD.map,
+  mode: "team-arena",
+  teamCount: 2,
+  selfId: "me",
+  pubkey: OWN,
+  selfTeam: 1,
+  durationSeconds: 125,
+  bots: [],
+  ended: {
+    winningTeam: 0,
+    endReason: "score",
+    summary: [],
+    clearSeconds: null,
+    teams: PAIRS.teams,
+  },
+  chart: null,
+};
+
 class FakeElement {
   className = "";
   #text = "";
@@ -185,6 +229,7 @@ describe("the Matches page (#2532)", () => {
   let closed: number;
   let cloned: MatchRecordTeam[];
   let nowMs: number;
+  let kept: readonly KeptMatch[];
 
   const render = (): { root: FakeElement; close: () => void } => {
     const root = new FakeElement();
@@ -202,6 +247,8 @@ describe("the Matches page (#2532)", () => {
       onCloneTeam: (team) => {
         cloned.push(team);
       },
+      history: () => Promise.resolve(kept),
+      pubkey: OWN,
     });
     return { root, close: () => screen.close() };
   };
@@ -217,6 +264,10 @@ describe("the Matches page (#2532)", () => {
     nowMs = NOW;
     sessionFilter.kinds.clear();
     sessionFilter.sizes.clear();
+    sessionFilter.mine = false;
+    kept = [KEPT];
+    vi.mocked(renderSummary).mockClear();
+    vi.mocked(renderMatchCharts).mockClear();
     vi.stubGlobal("localStorage", { getItem: () => null });
     vi.stubGlobal("window", { addEventListener: () => undefined });
     vi.stubGlobal("document", {
@@ -648,6 +699,113 @@ describe("the Matches page (#2532)", () => {
     expect(root.all("match-row").map((row) => row.attributes.get("data-kind"))).toEqual([
       "team-arena",
     ]);
+  });
+
+  /** The history is read once the page is up: wait for it. */
+  const historyRead = (): Promise<void> => new Promise((resolve) => setTimeout(resolve, 0));
+
+  it("shows, with My matches, the matches kept under the player's key instead (#3903)", async () => {
+    kept = [KEPT, { ...KEPT, id: "kept-2", pubkey: "d".repeat(64) }];
+    const { root } = render();
+    await historyRead();
+    hear("a");
+    const mine = root.one("match-chip-mine");
+    expect(mine.textContent).toBe(t("matches.mine"));
+    expect(mine.attributes.get("aria-pressed")).toBe("false");
+    expect(root.all("match-row").map((row) => row.attributes.get("data-kind"))).toEqual([
+      "random-arena",
+    ]);
+
+    mine.click();
+    expect(mine.attributes.get("aria-pressed")).toBe("true");
+    const rows = root.all("match-row");
+    expect(rows.map((row) => row.attributes.get("data-kind"))).toEqual(["team-arena"]);
+    // Never published, so not marked as the host's report; "You" on your team.
+    expect(rows[0]?.all("match-host-reported")).toEqual([]);
+    const teams = rows[0]?.all("match-team") ?? [];
+    expect(teams.map((team) => team.all("match-you").length)).toEqual([0, 1]);
+    expect(rows[0]?.one("match-you").textContent).toBe(t("matches.you"));
+    expect(rows[0]?.one("match-when").textContent).toBe(t("matches.hoursAgo", { count: 1 }));
+    expect(rows[0]?.one("match-duration").textContent).toBe("2:05");
+
+    mine.click();
+    expect(root.all("match-row").map((row) => row.attributes.get("data-kind"))).toEqual([
+      "random-arena",
+    ]);
+  });
+
+  it("combines My matches with the kind and size chips, and says when none is kept (#3903)", async () => {
+    const { root } = render();
+    await historyRead();
+    root.one("match-chip-mine").click();
+    chip(root, "size", "2v2").click();
+    expect(root.all("match-row")).toHaveLength(1);
+    chip(root, "kind", t("matches.kindRandom")).click();
+    expect(root.all("match-row")).toEqual([]);
+    expect(root.one("matches-note").textContent).toBe(t("matches.noneFit"));
+
+    kept = [];
+    const empty = render();
+    await historyRead();
+    // Not the relays' fault: My matches never asks them.
+    on?.noRelay();
+    const note = empty.root.one("matches-note");
+    expect(note.hidden).toBe(false);
+    expect(note.textContent).toBe(t("matches.emptyMine"));
+  });
+
+  it("opens a kept match on Builds, beside its Stats and Diagram (#3903)", async () => {
+    const { root } = render();
+    await historyRead();
+    root.one("match-chip-mine").click();
+    root.one("match-row-head").click();
+    const views = root.one("match-view-tabs").all("match-tab");
+    expect(views.map((tab) => tab.textContent)).toEqual([
+      t("matches.tabBuilds"),
+      t("matches.tabStats"),
+      t("matches.tabDiagram"),
+    ]);
+    expect(views.map((tab) => tab.attributes.get("aria-selected"))).toEqual([
+      "true",
+      "false",
+      "false",
+    ]);
+    // Builds: the teams, the winner's first, each with its Clone.
+    expect(root.one("match-detail-result").textContent).toBe(
+      t("matches.teamResult", { team: 1, result: t("matches.won") }),
+    );
+    root.one("play-card-clone").click();
+    expect(cloned).toEqual([PAIRS.teams[0]]);
+
+    views[1]?.click();
+    expect(root.all("play-card")).toEqual([]);
+    expect(root.all("fake-summary")).toHaveLength(1);
+    expect(vi.mocked(renderSummary).mock.calls[0]?.[1].map(({ caption }) => caption)).toHaveLength(
+      2,
+    );
+
+    views[2]?.click();
+    expect(root.all("fake-summary")).toEqual([]);
+    expect(root.all("fake-charts")).toHaveLength(1);
+    // Its charts never came: Diagram's own empty line, from no chart.
+    expect(vi.mocked(renderMatchCharts).mock.calls[0]?.[1]).toBeUndefined();
+
+    // Closed and opened again, it opens on Builds.
+    root.one("match-row-head").click();
+    root.one("match-row-head").click();
+    expect(root.one("match-view-tabs").all("match-tab")[0]?.attributes.get("aria-selected")).toBe(
+      "true",
+    );
+  });
+
+  it("opens a published match on its teams alone: no Stats, no Diagram (#3903)", () => {
+    const { root } = render();
+    hear("a");
+    root.one("match-row-head").click();
+    expect(root.all("match-view-tabs")).toEqual([]);
+    expect(root.all("match-tab").map((tab) => tab.textContent)).not.toContain(
+      t("matches.tabStats"),
+    );
   });
 
   it("adds no note on how recent the matches are (#3186)", () => {

@@ -604,13 +604,6 @@ export default {
   "help.source": "Code source",
   "help.version": "VibeWars {release} · build {build}",
 
-  "history.back": "Retour",
-  "history.empty": "Aucune partie pour l’instant. Vos 50 dernières parties sont conservées ici.",
-  "history.emptyMine": "Aucune partie avec votre clé de joueur actuelle.",
-  "history.mine": "Mes parties",
-  "history.open": "Historique des parties",
-  "history.title": "Historique des parties",
-
   "hud.aggression": "agr {ours} vs {theirs}",
   "hud.altarPointOurs": "Point d'autel !",
   "hud.altarPointTheirs": "Point d'autel ennemi",
@@ -876,6 +869,7 @@ export default {
     other: "il y a {count} j",
   },
   "matches.draw": "Égalité",
+  "matches.emptyMine": "Aucune partie avec votre clé de joueur actuelle.",
   "matches.endAggression": "Agressivité à la fin",
   "matches.endAnnihilation": "Annihilation",
   "matches.endGuildLord": "Seigneur de guilde tué",
@@ -906,6 +900,7 @@ export default {
   "matches.kindRandom": "Aléatoire",
   "matches.kindTeam": "Équipe",
   "matches.lost": "Perdu",
+  "matches.mine": "Mes parties",
   "matches.minutesAgo": {
     one: "il y a {count} min",
     many: "il y a {count} min",
@@ -916,6 +911,9 @@ export default {
   "matches.offline": "Relais de matchs injoignables pour le moment.",
   "matches.playerBuild": "{player} : {build}",
   "matches.sizeChip": "{size}v{size}",
+  "matches.tabBuilds": "Builds",
+  "matches.tabDiagram": "Diagramme",
+  "matches.tabStats": "Statistiques",
   "matches.teamResult": "Équipe {team} : {result}",
   "matches.teamTab": "Équipe {team} · {result}",
   "matches.teamUnreadable": "Un build de cette équipe est illisible",
@@ -923,6 +921,7 @@ export default {
   "matches.won": "Gagné",
   "matches.wonLeft": "‹ Gagné",
   "matches.wonRight": "Gagné ›",
+  "matches.you": "Vous",
 
   "menu.characterBuilder": "Atelier de personnages",
   "menu.clone": "Cloner",

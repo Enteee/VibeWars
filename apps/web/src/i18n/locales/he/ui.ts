@@ -597,13 +597,6 @@ export default {
   "help.source": "קוד מקור",
   "help.version": "VibeWars {release} · בנייה {build}",
 
-  "history.back": "חזרה",
-  "history.empty": "אין עדיין משחקים. 50 המשחקים האחרונים שלך נשמרים כאן.",
-  "history.emptyMine": "אין משחקים עם מפתח השחקן הנוכחי שלך.",
-  "history.mine": "המשחקים שלי",
-  "history.open": "היסטוריית משחקים",
-  "history.title": "היסטוריית משחקים",
-
   "hud.aggression": "תוק׳ {ours} מול {theirs}",
   "hud.altarPointOurs": "נקודת מזבח!",
   "hud.altarPointTheirs": "נקודת מזבח לאויב",
@@ -871,6 +864,7 @@ export default {
     other: "לפני {count} י׳",
   },
   "matches.draw": "תיקו",
+  "matches.emptyMine": "אין משחקים עם מפתח השחקן הנוכחי שלך.",
   "matches.endAggression": "תוקפנות בסיום הזמן",
   "matches.endAnnihilation": "השמדה",
   "matches.endGuildLord": "לורד הגילדה נהרג",
@@ -901,6 +895,7 @@ export default {
   "matches.kindRandom": "אקראי",
   "matches.kindTeam": "קבוצה",
   "matches.lost": "הפסד",
+  "matches.mine": "המשחקים שלי",
   "matches.minutesAgo": {
     one: "לפני {count} דק׳",
     two: "לפני {count} דק׳",
@@ -911,6 +906,9 @@ export default {
   "matches.offline": "אין גישה לשרתי המשחקים כרגע.",
   "matches.playerBuild": "{player}: {build}",
   "matches.sizeChip": "{size} מול {size}",
+  "matches.tabBuilds": "בילדים",
+  "matches.tabDiagram": "תרשים",
+  "matches.tabStats": "סטטיסטיקה",
   "matches.teamResult": "קבוצה {team}: {result}",
   "matches.teamTab": "קבוצה {team} · {result}",
   "matches.teamUnreadable": "מבנה בקבוצה הזו לא קריא",
@@ -918,6 +916,7 @@ export default {
   "matches.won": "ניצחון",
   "matches.wonLeft": "‹ ניצחון",
   "matches.wonRight": "ניצחון ›",
+  "matches.you": "את/ה",
 
   "menu.characterBuilder": "בונה הדמויות",
   "menu.clone": "שכפל",

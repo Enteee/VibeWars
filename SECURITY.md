@@ -328,6 +328,15 @@ A player keeps the newest `KEPT_MATCHES` (50) ended matches they had a
 seat in (#3848, `apps/web/src/storage/match-history.ts`): the host's
 `ended` and, if it came, its charts. Nothing in it is sent anywhere.
 
+Since #3903 `ended` carries each team's players as the published match
+record holds them (`recordTeams` in `match-host.ts`, one function for
+both): name, guild tag, public player key and template code. Every seat
+gets it for every match, published or not, so a player sees the full
+public keys of whoever shared a match that was never published (one its
+host left before the end). They are the keys the host reported; the
+signet bits in the summary already said as much. The Matches page shows
+them under My matches.
+
 What it defends against:
 
 - **A host or an edited store breaking the page.** Each record is parsed
@@ -335,6 +344,10 @@ What it defends against:
   `parseWireMatchChart`, its roster and `MAX_CHART_EVENTS`), and one that
   fails is deleted. So a kept match is never larger or stranger than the
   end panel already accepts live. Names and labels render as text.
+- **A host's teams breaking Clone (#3903).** `parseWireEnded` checks only
+  their shape (lengths, a key exactly for a human); the page decodes each
+  template as it does a published record's, shows one it cannot read as
+  a question mark and disables Clone for its team.
 
 What it does not defend against:
 

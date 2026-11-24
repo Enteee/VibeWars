@@ -320,6 +320,8 @@ Zobaczysz je na stronie **Mecze**, pod Kreatorem drużyn: 50 najnowszych z ostat
 
 Każdy wiersz zaczyna się ikoną trybu, a ikona i lewa krawędź wiersza mają kolor trybu: pomarańczowy Losowy, niebieski Drużyna, złoty Szczyt, fioletowy GvG, zielony Prywatny. Nad listą przyciski filtrują ją po **Rodzaj** (Losowy, Drużyna, Szczyt, GvG, Prywatny) i **Rozmiar** (1v1, 2v2, 4v4, 8v8): naciśnij dowolną liczbę, a mecz pokaże się, jeśli pasuje do jednego wciśniętego rodzaju i jednego wciśniętego rozmiaru; grupa bez wciśniętych przepuszcza wszystko. Rozmiar to największa drużyna, wliczając boty, więc Gra prywatna 3v2 nie pasuje do żadnego rozmiaru. Przyciski zostają takie, jak je ustawiłeś, do odświeżenia strony.
 
+**Moje mecze**, za przyciskami, pokazuje zamiast tego twoje własne mecze: ostatnie 50, które ta przeglądarka zachowała dla twojego obecnego klucza gracza, od najnowszego, w dowolnym wieku, opublikowane lub nie, także Elite Zaishen Battle. Rodzaj i Rozmiar nadal je filtrują, a twoja drużyna jest oznaczona jako **Ty**. Otwórz jeden, by zobaczyć trzy karty: **Buildy**, jego drużyny z Klonuj jak wyżej; **Statystyki**, tabelę wyników z jego panelu końcowego; i **Wykres**, jego wykresy. Są przechowywane tylko w tej przeglądarce.
+
 Nad filtrami pasek **Sala Bohaterów** pokazuje ostatnie 20 serii, od najnowszej: posiadacza (tag gildii lub imię lidera), ludzi ze zwycięskiej drużyny, kiedy skończyła się najnowsza wygrana oraz, od dwóch wygranych, ile ich było z rzędu. Seria to nieprzerwany ciąg wygranych w Sali jednego posiadacza. Pasek czyta zapisy z tej strony, ignoruje filtry i jest ukryty, gdy żaden z nich nie jest wygraną w Sali. Jak każdy zapis pokazuje to, co zgłosił host każdego meczu, i nic tego nie sprawdza.
 
 ## Rankingowe
