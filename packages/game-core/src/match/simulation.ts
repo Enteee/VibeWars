@@ -4418,10 +4418,12 @@ export class MatchSimulation {
   /**
    * One tick before the match starts (#3817): everyone may walk, by keys
    * or a click, anywhere in its team's bubble (#3930), and prepare
-   * (#3910): a skill only for the caster or its allies goes off, and
+   * (#3910): any skill goes off under the normal rules (#3931), and
    * energy, health, recharges, casts, statuses and upkeep run, as bots
-   * do. Nothing else runs: no attack, adrenaline, zone, projectile,
-   * creature, map element or score. The tick counts; the match clock
+   * do. A projectile, ground effect or creature a skill makes waits,
+   * unaged, until the start; a plain attack is still dropped. Nothing
+   * else runs: no adrenaline, zone, map element or score. The tick
+   * counts; the match clock
    * does not. `secondsLeft` is the countdown's, `null` while it waits
    * for the players. Once `step` has run, or the match is over, it does
    * nothing.
