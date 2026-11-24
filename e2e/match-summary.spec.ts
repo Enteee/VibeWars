@@ -185,3 +185,14 @@ test("a lost match's countdown stops: the line says so, and its one button goes 
   await expect(buttons).toHaveText(["Back to lobby"]);
   await expect(line.getByRole("button", { name: "Stop" })).toHaveCount(0);
 });
+
+test("?summary-fixture=win ends the same match in a Victory, its countdown with no Stop (#3916)", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await page.goto("./?summary-fixture=win");
+  await expect(page.locator(".hud-result")).toContainText("Victory");
+  const line = page.locator(".hud-end-line");
+  await expect(line).toContainText("Back to lobby in 9 s");
+  await expect(line.getByRole("button")).toHaveText(["Now"]);
+});

@@ -3640,7 +3640,8 @@ async function main(): Promise<void> {
   const seededMenuStep = tutorialMenuStep();
   if (summaryFixtureAsked()) {
     // An e2e build's fixed end of a match (#3563), over no arena.
-    if (new URLSearchParams(window.location.search).get("summary-fixture") === "queue") {
+    const fixture = new URLSearchParams(window.location.search).get("summary-fixture");
+    if (fixture === "queue") {
       // The queue screen after it (#3565), its scores beside its charts.
       void import("./ui/summary-fixture.js").then(({ mountQueueFixture }) => {
         mountQueueFixture(screenRoot);
@@ -3648,7 +3649,8 @@ async function main(): Promise<void> {
     } else {
       showViewport(true);
       void import("./ui/summary-fixture.js").then(({ mountSummaryFixture }) => {
-        mountSummaryFixture(viewport);
+        // Lost, unless `=win` (#3916): any other value is the default.
+        mountSummaryFixture(viewport, fixture === "win" ? "win" : "loss");
       });
     }
   } else if (tutorialFirstStation() > 0) {
