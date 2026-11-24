@@ -4914,10 +4914,10 @@ body:has(> .splash) #menu-background::after {
   display: none;
 }
 
+/* Centred under the line, either way the text runs (#2655). */
 .hud-warmup .queue-window {
-  inset-inline-end: auto;
-  left: 50%;
-  transform: translateX(-50%);
+  inset-inline: 0;
+  margin-inline: auto;
 }
 
 @media (pointer: coarse) {
