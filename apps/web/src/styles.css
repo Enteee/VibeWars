@@ -2732,6 +2732,8 @@ body:has(> .splash) #menu-background::after {
 }
 
 .team-grid {
+  /* A bar cell's track: its 32 px and border, or a finger's 44 (#3928). */
+  --team-skill-size: 36px;
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
@@ -2741,7 +2743,10 @@ body:has(> .splash) #menu-background::after {
 .team-row {
   display: grid;
   /* ✎ and ▼ last (#3819), each as wide as a finger needs on a touch screen. */
-  grid-template-columns: 0.8rem 11rem 4.5rem repeat(8, 36px) repeat(2, minmax(2rem, max-content));
+  grid-template-columns: 0.8rem 11rem 4.5rem repeat(8, var(--team-skill-size)) repeat(
+      2,
+      minmax(2rem, max-content)
+    );
   align-items: center;
   gap: 0.3rem;
   padding: 0.35rem 0.5rem;
@@ -3063,10 +3068,84 @@ body:has(> .splash) #menu-background::after {
     gap: 0.3rem;
     justify-content: center;
   }
+}
 
+/* A finger's cell (#3928): 44 px, so the row takes two lines sooner than
+   a mouse's. The marker, name and ✎ ▼ on one, Health and Energy and the
+   eight cells under them; four a line where eight do not fit. The
+   counters are buttons too: one row, which scrolls sideways. */
+@media (pointer: coarse) {
+  .team-grid {
+    --team-skill-size: 44px;
+  }
+
+  .team-skill {
+    box-sizing: border-box;
+    width: var(--team-skill-size);
+    height: var(--team-skill-size);
+  }
+
+  .team-counters {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+  }
+
+  .screen .team-counter,
+  .team-counter-mix {
+    flex: none;
+    white-space: nowrap;
+  }
+}
+
+@container (width < 49rem) {
+  @media (pointer: coarse) {
+    .team-grid {
+      min-width: 0;
+    }
+
+    .team-row {
+      grid-template-columns: 0.8rem 3.4rem minmax(0, 1fr) repeat(2, max-content);
+    }
+
+    .team-row-order {
+      grid-row: 1;
+      grid-column: 1;
+    }
+
+    .team-row-character {
+      grid-row: 1;
+      grid-column: 2 / 4;
+    }
+
+    .team-row-open {
+      grid-row: 1;
+      grid-column: 4;
+    }
+
+    .team-row-edit {
+      grid-row: 1;
+      grid-column: 5;
+    }
+
+    .team-row-stats {
+      grid-row: 2;
+      grid-column: 1 / 3;
+    }
+
+    .team-row-skills {
+      display: grid;
+      grid-row: 2;
+      grid-column: 3 / -1;
+      grid-template-columns: repeat(8, var(--team-skill-size));
+      gap: 0.3rem;
+    }
+  }
+}
+
+@container (width < 30rem) {
   @media (pointer: coarse) {
     .team-row-skills {
-      grid-template-columns: repeat(4, max-content);
+      grid-template-columns: repeat(4, var(--team-skill-size));
     }
   }
 }
