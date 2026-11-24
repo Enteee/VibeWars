@@ -395,7 +395,7 @@ test("keys typed in the beat editor reach no skill in a match (#373)", async ({ 
   await startSoloMatch(page);
   const effects = page.getByRole("list", { name: "your effects" }).getByRole("listitem");
   await expect(effects).toHaveCount(0);
-  await (await hudMenuRow(page, ".hud-music")).click();
+  await (await hudMenuRow(page, "music")).click();
   await page.getByRole("button", { name: "Edit what plays" }).click();
   const editor = page.getByRole("dialog", { name: /^Beat editor: / });
   await editor.locator(".cm-content").click();
@@ -418,7 +418,7 @@ test("in the HUD ♪ popover, pinning a track narrows neither its row nor its bu
   await page.goto("./");
   await startSoloMatch(page);
   await expect(page.locator(".hud-bar-health .hud-bar-label")).toContainText("hp");
-  await (await hudMenuRow(page, ".hud-music")).click();
+  await (await hudMenuRow(page, "music")).click();
   const popover = page.locator(".hud-jukebox");
   const pinned = popover.locator(".jukebox-row", { hasText: "Ember Deep" });
   await pinned.getByRole("button", { name: "pin" }).click();

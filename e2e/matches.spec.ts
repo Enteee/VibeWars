@@ -216,7 +216,7 @@ test("My matches keeps the ended match: builds, scores and charts; not one left 
     await expect(hudCorner(guest)).toBeVisible();
     // The guest quits before the end: no record. The host wins, and keeps
     // the match as it leaves, the charts in.
-    const leave = await hudMenuRow(guest, ".hud-leave");
+    const leave = await hudMenuRow(guest, "leave");
     await leave.getByRole("button", { name: "leave match" }).click();
     await leave.getByRole("button", { name: "yes" }).click();
     await expect(host.locator(".hud-summary .match-charts-svg")).toBeVisible();

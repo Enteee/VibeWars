@@ -237,7 +237,7 @@ async function startLobbyMatch(
 
 /** Leave by the button, which leaves for good: a closed page is held for its reconnection. */
 async function leaveMatch(page: Page): Promise<void> {
-  const leave = await hudMenuRow(page, ".hud-leave");
+  const leave = await hudMenuRow(page, "leave");
   await leave.getByRole("button", { name: "leave match" }).click();
   await leave.getByRole("button", { name: "yes" }).click();
   await expect(page.locator(".hud-bar-health")).toHaveCount(0);
@@ -330,7 +330,7 @@ test("hovering a slot shows its tooltip at the host's ranks, above the bar (#485
 
 test("#2012: in full screen, hovering a slot still shows its tooltip", async ({ page }) => {
   await startSoloMatch(page);
-  await (await hudMenuRow(page, ".hud-fullscreen")).click();
+  await (await hudMenuRow(page, "fullscreen")).click();
   // The whole document, so the tooltip hung off <body> is in the top layer.
   await expect
     .poll(() => page.evaluate(() => document.fullscreenElement === document.documentElement))
@@ -654,7 +654,7 @@ test("Esc cancels the attack; leaving the match is a button that asks first (#16
   // Esc no longer leaves: still in the match.
   await expect(page.locator(".hud-bar-health")).toBeVisible();
 
-  const leave = await hudMenuRow(page, ".hud-leave");
+  const leave = await hudMenuRow(page, "leave");
   await leave.getByRole("button", { name: "leave match" }).click();
   await expect(leave).toContainText("leave?");
   await leave.getByRole("button", { name: "no" }).click();
@@ -1188,7 +1188,7 @@ test("⚙ opens Options over the match: Esc closes it, and the attack and the ma
 
   const clock = page.locator(".hud-scoreboard");
   const before = (await clock.textContent()) ?? "";
-  await (await hudMenuRow(page, ".hud-options")).click();
+  await (await hudMenuRow(page, "options")).click();
   const options = page.getByRole("dialog", { name: "Options" });
   await expect(options).toBeVisible();
   // Not paused: the clock runs under it.

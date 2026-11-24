@@ -81,7 +81,7 @@ test("on a phone the banner makes room: nothing at the top hides under it, its b
   // The compass sits under the match's ☰, so it moves down with it.
   await below(".compass", page.locator(".hud-controls"));
   // So does the ♪ jukebox, which opens under it; its row shut ☰'s list (#3923).
-  await (await hudMenuRow(page, ".hud-music")).click();
+  await (await hudMenuRow(page, "music")).click();
   await below(".hud-jukebox", page.locator(".hud-controls"));
   await page.keyboard.press("Escape");
   await expect(page.locator(".hud-jukebox")).toHaveCount(0);

@@ -291,7 +291,7 @@ for (const phone of PHONES) {
     // a mouse, no party toggle.
     await expectApart(page, { absent: await soloAbsent(page) });
     // In ☰'s list (#3923), named in full, its key shown to a mouse.
-    const leave = await hudMenuRow(page, ".hud-leave");
+    const leave = await hudMenuRow(page, "leave");
     await expect(leave.getByRole("button", { name: "leave match (F10)" })).toBeVisible();
     await expect(leave).toContainText("F10", { useInnerText: true });
     await page.keyboard.press("Escape");
@@ -402,7 +402,7 @@ for (const [held, device, free] of [
         page.locator(".hud-skill-key, .weapon-set-key").filter({ visible: true }),
       ).toHaveCount(0);
       // In ☰'s list (#3923), "leave" is its word alone.
-      const leave = await hudMenuRow(page, ".hud-leave");
+      const leave = await hudMenuRow(page, "leave");
       await expect(leave.getByRole("button")).toBeVisible();
       await expect(leave.getByRole("button")).not.toContainText("F10", { useInnerText: true });
       // Each weapon set is told apart by its number instead (#3889).

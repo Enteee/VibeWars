@@ -97,7 +97,7 @@ test("the HUD's [?] opens Help over a match; Esc closes it and gives focus back 
   await page.goto("./");
   await startSoloMatch(page);
   await expect(page.locator("#topbar")).toBeHidden();
-  await (await hudMenuRow(page, ".hud-help")).click();
+  await (await hudMenuRow(page, "help")).click();
   const help = page.getByRole("dialog", { name: "Help" });
   await expect(help).toBeVisible();
   await expect(help.locator(".help-page h1")).toHaveText("Getting started");
