@@ -9,8 +9,6 @@ name: Trailer
 # creates or edits a release: that is the release manager's job.
 
 on:
-  push:
-    branches: ["bot/cicd-engineer@2/trailer-workflow"]
   release:
     types: [published]
   workflow_dispatch:
@@ -24,7 +22,7 @@ permissions:
   contents: read
 
 env:
-  TAG: v0.12.0
+  TAG: ${{ github.event_name == 'release' && github.event.release.tag_name || inputs.tag }}
 
 concurrency:
   group: trailer-${{ github.event_name == 'release' && github.event.release.tag_name || inputs.tag }}
@@ -45,7 +43,7 @@ jobs:
 
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
         with:
-          ref: ${{ github.sha }}
+          ref: refs/tags/${{ env.TAG }}
           persist-credentials: false
 
       - uses: ./.github/actions/devenv
@@ -86,7 +84,6 @@ jobs:
           retention-days: 1
 
   publish:
-    if: github.event_name == 'release'
     name: publish
     needs: build
     runs-on: ubuntu-latest
