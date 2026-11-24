@@ -23,6 +23,7 @@ kde si vytváraš postavy, a ![Tvorba tímov](../../../apps/web/public/icons/mod
 ![Zápasy](../../../apps/web/public/icons/mode/matches.svg) **Zápasy**, [odohrané zápasy](modes.md#záznamy-zápasov) tak, ako ich
 nahlásili ich hostitelia, a aj tvoje vlastné. Hra sa otvorí na tej
 položke, ktorú si použil naposledy.
+Na telefóne drženom na výšku je lišta schovaná za tlačidlom vľavo hore na obrazovke, ktoré ukazuje ikonu aktuálneho režimu.
 
 ## Vytvor si postavu
 

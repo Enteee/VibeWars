@@ -1024,6 +1024,7 @@ export default {
   "rail.matchesShort": "매치",
   "rail.modes": "모드",
   "rail.noTeamSizeHere": "팀 규모는 팀 모드와 팀 빌드에만 있어요",
+  "rail.open": "모드",
   "rail.randomArena": "랜덤 아레나",
   "rail.randomArenaShort": "랜덤",
   "rail.smallerTeam": "팀 규모 줄이기",

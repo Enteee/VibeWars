@@ -1078,6 +1078,7 @@ export default {
   "rail.matchesShort": "Maçlar",
   "rail.modes": "Modlar",
   "rail.noTeamSizeHere": "Takım boyutu yalnızca takım modları ve Takım Dizilimleri içindir",
+  "rail.open": "Modlar",
   "rail.randomArena": "Rastgele Arena",
   "rail.randomArenaShort": "Rastgele",
   "rail.smallerTeam": "Daha küçük takım",

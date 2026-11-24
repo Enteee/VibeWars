@@ -56,11 +56,21 @@ test("a phone puts its character in the team by tap and Put here (#3876)", async
   const panel = page.locator(".coach-panel");
   const bubble = page.locator(".coach-bubble");
   const target = (id: string) => page.locator(`[data-tutorial~="${id}"]`);
+  // Upright, the rail is a drawer (#3924): the coach points at its toggle,
+  // then, the drawer open, at what is in it.
+  const toggle = page.locator(".rail-drawer-toggle");
+  await expect(toggle).toHaveClass(/tutorial-pulse/);
+  await toggle.tap();
   await expect(target("rail-teams")).toHaveClass(/tutorial-pulse/);
   await target("rail-teams").tap();
   const stepper = page.locator('.mode-rail-stepper[data-tutorial~="team-build-size"]');
+  await expect(toggle).toHaveClass(/tutorial-pulse/);
+  await toggle.tap();
+  await expect(stepper).toHaveClass(/tutorial-pulse/);
   await stepper.getByRole("button", { name: "Smaller team" }).tap();
   await expect(stepper).toContainText("2v2");
+  // The coach's next target is out of the drawer: focus going to it puts the drawer away.
+  await expect(page.locator(".mode-rail")).toBeHidden();
   await target("team-new").tap();
   await expect(page.locator(".team-grid .team-row")).toHaveCount(2);
   for (let read = 0; read < 3; read += 1) {

@@ -6,7 +6,14 @@ import {
   type Page,
 } from "@playwright/test";
 
-import { awaitLobby, INVITE_URL, lobbyWindow, openRail, shutLobbyWindow } from "./menu.js";
+import {
+  awaitLobby,
+  INVITE_URL,
+  lobbyWindow,
+  openRail,
+  showRail,
+  shutLobbyWindow,
+} from "./menu.js";
 
 /**
  * Pages that play with each other (#403).
@@ -61,6 +68,8 @@ export async function copyInvite(page: Page): Promise<string> {
  * side (#2104), and Team Builder lists and makes Team Builds of it (#2109).
  */
 export async function setTeamSize(page: Page, size: 1 | 2 | 4 | 8): Promise<void> {
+  // The stepper leaves an upright phone's drawer open (#3924): a tap on its dim puts it away.
+  const drawer = await showRail(page);
   const stepper = teamSizeStepper(page.locator(".mode-rail"));
   const shown = stepper.locator(".mode-rail-size-value");
   const label = `${String(size)}v${String(size)}`;
@@ -75,6 +84,10 @@ export async function setTeamSize(page: Page, size: 1 | 2 | 4 | 8): Promise<void
     await expect(shown).not.toHaveText(before);
   }
   await expect(shown).toHaveText(label);
+  if (drawer) {
+    await page.locator(".rail-drawer-scrim").click();
+    await expect(page.locator(".mode-rail")).toBeHidden();
+  }
 }
 
 /** The team size stepper (#2141) in `scope`: ‹ 4v4 ›. */

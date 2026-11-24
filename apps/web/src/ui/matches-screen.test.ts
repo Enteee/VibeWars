@@ -270,6 +270,7 @@ describe("the Matches page (#2532)", () => {
     vi.mocked(renderMatchCharts).mockClear();
     vi.stubGlobal("localStorage", { getItem: () => null });
     vi.stubGlobal("window", { addEventListener: () => undefined });
+    vi.stubGlobal("matchMedia", () => ({ addEventListener: () => undefined }));
     vi.stubGlobal("document", {
       addEventListener: () => undefined,
       createElement: () => new FakeElement(),

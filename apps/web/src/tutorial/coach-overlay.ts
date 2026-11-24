@@ -1,5 +1,5 @@
 import { t } from "../i18n/index.js";
-import { button, h, inlineConfirm } from "../ui/kit.js";
+import { button, h, inlineConfirm, PUTS_AWAY, TUCKED_BEHIND } from "../ui/kit.js";
 
 /**
  * The menu quest's coach (#3540): the menu dimmed but for a lit cut-out
@@ -39,6 +39,9 @@ const FOCUSABLE = "a[href], button:not([disabled]), input, select, textarea, [ta
  * the dim, and never locked, so the overlay never blocks an error.
  */
 const ABOVE_THE_LOCK = ".toast, [role='dialog'], [role='alertdialog']";
+
+/** What the lock lets a press through to besides: what only puts something away (#3924). */
+const PUTS_AWAY_SELECTOR = `[${PUTS_AWAY}]`;
 
 /** The events a locked-out pointer could do something with. */
 const POINTER_EVENTS = [
@@ -279,7 +282,8 @@ export function mountCoachOverlay(
 
   const open = (): HTMLElement[] => [...targets, ...(bubble.hidden ? [] : [bubble]), panel];
   const above = (node: EventTarget | null): boolean =>
-    node instanceof Element && node.closest(ABOVE_THE_LOCK) !== null;
+    node instanceof Element &&
+    (node.closest(ABOVE_THE_LOCK) !== null || node.closest(PUTS_AWAY_SELECTOR) !== null);
   const swallow = (event: Event): void => {
     if (
       free() ||
@@ -361,6 +365,13 @@ export function mountCoachOverlay(
     panel.dataset.edge = spot.edge;
     panel.dataset.corner = spot.corner;
   };
+  // A target tucked away, as in the rail's drawer on a phone (#3924), is
+  // pointed at through the control that brings it back, while that is drawn.
+  const standIn = (target: HTMLElement): HTMLElement => {
+    const id = target.closest(`[${TUCKED_BEHIND}]`)?.getAttribute(TUCKED_BEHIND);
+    const behind = id === undefined || id === null ? null : doc.getElementById(id);
+    return behind !== null && behind.getClientRects().length > 0 ? behind : target;
+  };
   // The target is looked up every frame, so the cut-out follows it as it
   // moves or is drawn anew; one not drawn yet is the dim, without a hole,
   // until it has been missing for LOST_TARGET_MS.
@@ -371,7 +382,13 @@ export function mountCoachOverlay(
     const found =
       view === undefined
         ? []
-        : [...doc.querySelectorAll<HTMLElement>(tutorialTargetSelector(view.target))];
+        : [
+            ...new Set(
+              [...doc.querySelectorAll<HTMLElement>(tutorialTargetSelector(view.target))].map(
+                standIn,
+              ),
+            ),
+          ];
     if (found.length !== targets.length || found.some((node, at) => node !== targets[at])) {
       for (const target of targets) {
         target.classList.remove(PULSE_CLASS);

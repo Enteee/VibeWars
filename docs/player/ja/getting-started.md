@@ -9,6 +9,7 @@ VibeWarsを初めて開くと、短いチュートリアルが提案される。
 ## モードレール
 
 メイン画面の左側に縦に並ぶレールには、上から順に[モード](modes.md)が並んでいます: ![ランダムアリーナ](../../../apps/web/public/icons/mode/random-arena.svg) **ランダムアリーナ**、![チームアリーナ](../../../apps/web/public/icons/mode/team-arena.svg) **チームアリーナ**、![ヒーローズアセント](../../../apps/web/public/icons/mode/heroes-ascent.svg) **ヒーローズアセント**、![GvG](../../../apps/web/public/icons/mode/gvg.svg) **GvG**、![ホストゲーム](../../../apps/web/public/icons/mode/hosted-game.svg) **ホストゲーム**。モードの一番下には**チーム人数** `‹ 4v4 ›` があり、矢印でその画面がプレイする次に小さい、または大きい人数へ切り替えます。人数は画面ごとに記憶され、その画面がプレイする人数で開きます（GvGは8v8）。その下には、キャラクターを作る![キャラクター編集](../../../apps/web/public/icons/mode/characters.svg) **キャラクター編集**と、[チームビルド](skills-and-builds.md#チームビルド)を作る![チーム編集](../../../apps/web/public/icons/mode/teams.svg) **チーム編集**があり、続いて![マッチ](../../../apps/web/public/icons/mode/matches.svg) **マッチ**があります。これは、ホストが報告した[終了済みのマッチ](modes.md#マッチ記録)と、あなた自身のマッチです。ゲームは最後に使った画面で開きます。
+スマートフォンを縦に持つと、レールは画面左上のボタンの裏にしまわれます。ボタンには今のモードのアイコンが表示されます。
 
 ## キャラクターを作る
 

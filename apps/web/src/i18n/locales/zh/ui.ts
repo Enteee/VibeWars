@@ -1015,6 +1015,7 @@ export default {
   "rail.matchesShort": "对局",
   "rail.modes": "模式",
   "rail.noTeamSizeHere": "队伍人数仅适用于团队模式和队伍配置",
+  "rail.open": "模式",
   "rail.randomArena": "随机竞技场",
   "rail.randomArenaShort": "随机",
   "rail.smallerTeam": "减少人数",

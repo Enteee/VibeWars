@@ -1082,6 +1082,7 @@ export default {
   "rail.matchesShort": "Meccsek",
   "rail.modes": "Módok",
   "rail.noTeamSizeHere": "A csapatméret csapatmódokhoz és csapatbuildekhez tartozik",
+  "rail.open": "Módok",
   "rail.randomArena": "Véletlen Aréna",
   "rail.randomArenaShort": "Véletlen",
   "rail.smallerTeam": "Kisebb csapat",

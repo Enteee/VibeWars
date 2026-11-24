@@ -57,7 +57,8 @@ for (const [phone, device] of [
         page,
       }) => {
         await page.goto("./");
-        await expect(page.locator(".mode-rail")).toBeVisible();
+        // Upright, the rail is a drawer behind its toggle (#3924).
+        await expect(page.locator(".rail-drawer-toggle")).toBeVisible();
         await noteToast(page);
         // The tap on the rail starts the music; its toast is up a few seconds.
         await openRail(page, label);

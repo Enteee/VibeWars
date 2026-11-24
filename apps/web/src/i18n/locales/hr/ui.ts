@@ -1137,6 +1137,7 @@ export default {
   "rail.matchesShort": "Mečevi",
   "rail.modes": "Načini",
   "rail.noTeamSizeHere": "Veličina tima vrijedi za timske načine i timske sastave",
+  "rail.open": "Načini",
   "rail.randomArena": "Nasumična arena",
   "rail.randomArenaShort": "Nasumično",
   "rail.smallerTeam": "Manji tim",

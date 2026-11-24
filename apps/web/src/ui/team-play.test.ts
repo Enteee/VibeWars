@@ -234,6 +234,7 @@ describe("the team screens' Team Builds (#1515, #1525, #2031)", () => {
         starterIds.get(/\.starterTeamId\.(\d+)$/.exec(key)?.[1] ?? "") ?? null,
     });
     vi.stubGlobal("window", { addEventListener: () => undefined, innerWidth: 1000 });
+    vi.stubGlobal("matchMedia", () => ({ addEventListener: () => undefined }));
     vi.stubGlobal("document", {
       addEventListener: () => undefined,
       createElement: () => new FakeElement(),

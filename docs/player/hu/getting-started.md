@@ -24,6 +24,7 @@ Alatta van a ![Karakterszerkesztő](../../../apps/web/public/icons/mode/characte
 készíted, aztán a ![Meccsek](../../../apps/web/public/icons/mode/matches.svg) **Meccsek**, a [befejezett meccsek](modes.md#meccsjegyzőkönyvek),
 ahogy a házigazdáik jelentik őket, és a saját meccseid. A játék azon nyílik meg, amelyiket
 utoljára használtad.
+Állítva tartott telefonon a sáv a képernyő bal felső sarkában lévő gomb mögé húzódik, amely az aktuális mód ikonját mutatja.
 
 ## Készíts karaktert
 
