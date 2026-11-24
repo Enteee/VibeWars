@@ -40,6 +40,7 @@ import {
   objectiveScoreToast,
   standBoostToast,
   carrierLines,
+  renderLeave,
   renderTargetSignet,
   renderWallHealth,
   respawnLine,
@@ -2179,5 +2180,64 @@ describe("a click on the target frame calls its target (#2737)", () => {
     expect(isCallableTarget({ ...self, dead: true }, foe)).toBe(false);
     expect(isCallableTarget(self, undefined)).toBe(false);
     expect(isCallableTarget(undefined, foe)).toBe(false);
+  });
+});
+
+/** Just enough of a DOM node for `renderLeave`'s row. */
+class LeaveNode {
+  className = "";
+  textContent = "";
+  src = "";
+  alt = "x";
+  type = "";
+  children: LeaveNode[] = [];
+
+  addEventListener(): void {
+    return undefined;
+  }
+
+  append(...children: LeaveNode[]): void {
+    this.children.push(...children);
+  }
+
+  replaceChildren(...children: LeaveNode[]): void {
+    this.children = children;
+  }
+
+  contains(): boolean {
+    return false;
+  }
+
+  focus(): void {
+    return undefined;
+  }
+}
+
+describe("renderLeave's row (#3956)", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("starts with the leave icon, closed and asking, and the question follows it", () => {
+    vi.stubGlobal("document", { createElement: () => new LeaveNode(), activeElement: null });
+    vi.stubGlobal("HTMLElement", LeaveNode);
+    const leave = new LeaveNode();
+    const control = renderLeave({ leave } as unknown as HudElements, () => undefined, false);
+    const isIcon = (node: LeaveNode | undefined): boolean =>
+      node?.src.endsWith("ui/leave.svg") === true && node.alt === "";
+
+    const [closed] = leave.children;
+    expect(leave.children).toHaveLength(1);
+    expect(isIcon(closed?.children[0])).toBe(true);
+    expect(closed?.children[1]?.textContent).toBe(t("hud.leave"));
+
+    control.open();
+    const [icon, question] = leave.children;
+    expect(isIcon(icon)).toBe(true);
+    expect(question?.textContent).toBe(t("hud.leaveQuestion"));
+    expect(leave.children).toHaveLength(4);
+
+    control.close();
+    expect(isIcon(leave.children[0]?.children[0])).toBe(true);
   });
 });

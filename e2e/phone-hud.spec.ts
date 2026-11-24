@@ -478,6 +478,15 @@ for (const [held, device] of [
       const leave = menu.locator(".hud-leave");
       await leave.getByRole("button").click();
       await expect(leave).toContainText("leave?");
+      // Its icon and question start where Help's do, give or take 2 px (#3956).
+      const help = menu.locator(".hud-help");
+      for (const [part, row] of [
+        [leave.locator(":scope > img"), help.locator("img")],
+        [leave.locator(":scope > span"), help.locator(".hud-menu-label")],
+      ] as const) {
+        const [at, want] = await Promise.all([part.boundingBox(), row.boundingBox()]);
+        expect(Math.abs((at?.x ?? Infinity) - (want?.x ?? 0))).toBeLessThanOrEqual(2);
+      }
       await leave.getByRole("button", { name: "no" }).click();
       await expect(leave.getByRole("button", { name: "no" })).toHaveCount(0);
       await expect(toggle).toHaveAttribute("aria-expanded", "true");

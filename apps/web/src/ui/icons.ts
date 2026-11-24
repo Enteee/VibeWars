@@ -287,6 +287,11 @@ export function chatIcon(): string {
   return iconUrl("ui", "chat");
 }
 
+/** The empty door frame, an arrow going out, before ☰'s Leave (#3956). */
+export function leaveIcon(): string {
+  return iconUrl("ui", "leave");
+}
+
 /**
  * The host's lobby toggle (#2382): a shut padlock while closed, an open
  * door while open. They differ in shape, so neither leans on colour.

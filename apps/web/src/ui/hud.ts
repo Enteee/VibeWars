@@ -45,6 +45,7 @@ import {
   chainMarkIcon,
   helpIcon,
   isEliteSkill,
+  leaveIcon,
   professionIcon,
   settingsIcon,
   skillBadgeHtml,
@@ -1666,6 +1667,13 @@ export function renderLeave(hud: HudElements, onLeave: () => void, ranked: boole
     node.addEventListener("click", onClick);
     return node;
   };
+  // Decorative: the row's words stay its name (#3956).
+  const icon = (): HTMLImageElement => {
+    const img = document.createElement("img");
+    img.src = leaveIcon();
+    img.alt = "";
+    return img;
+  };
   const control: LeaveControl = {
     open: () => {
       const question = document.createElement("span");
@@ -1678,7 +1686,7 @@ export function renderLeave(hud: HudElements, onLeave: () => void, ranked: boole
       });
       const no = button(t("hud.leaveNo"), control.close);
       answers = [yes, no];
-      hud.leave.replaceChildren(question, yes, no);
+      hud.leave.replaceChildren(icon(), question, yes, no);
       no.focus();
     },
     close: () => {
@@ -1689,11 +1697,14 @@ export function renderLeave(hud: HudElements, onLeave: () => void, ranked: boole
         focused.blur();
       }
       // A phone shows only "leave" (#1297); the rest stays in its name.
-      const leave = button(t("hud.leave"), control.open);
+      const leave = button("", control.open);
+      const label = document.createElement("span");
+      label.textContent = t("hud.leave");
       const extra = document.createElement("span");
       extra.className = "hud-leave-extra";
       extra.textContent = t("hud.leaveExtra");
-      leave.append(extra);
+      label.append(extra);
+      leave.append(icon(), label);
       hud.leave.replaceChildren(leave);
     },
     isOpen: () => {

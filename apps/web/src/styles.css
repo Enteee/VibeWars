@@ -5201,6 +5201,13 @@ body:has(> .splash) #menu-background::after {
   font-size: 0.85rem;
 }
 
+/* Asking (#3956): its icon and question start where the closed row's did,
+   the rows' 0.5rem plus their 1px border, wrapped lines too. */
+.hud-leave:has(> img) {
+  gap: 0.6rem;
+  padding-inline: calc(0.5rem + 1px);
+}
+
 .hud-leave button {
   padding: 0.15rem 0.5rem;
   background: var(--panel);
@@ -5212,8 +5219,11 @@ body:has(> .splash) #menu-background::after {
 
 /* Alone, it is a row like the others. */
 .hud-leave button:only-child {
+  display: flex;
   flex: 1;
+  align-items: center;
   align-self: stretch;
+  gap: 0.6rem;
   padding: 0 0.5rem;
   background: transparent;
   border-color: transparent;
