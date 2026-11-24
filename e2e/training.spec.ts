@@ -1753,8 +1753,12 @@ test("set 2's key swaps to weapon set 2, the empty set 3's does nothing, and a s
   await page.locator(".gear-box").filter({ hasText: "Recurve Bow" }).first().click();
   await expect(page.locator(".training canvas")).toBeVisible();
   const slots = page.locator(".training .weapon-set");
-  // Each slot shows its key: F1 to F4 in Classic, the default (#3134).
-  await expect(slots).toHaveText(WEAPON_SET_ACTIONS.map((action) => codeLabel(key(action))));
+  // Each slot shows its key, F1 to F4 in Classic (#3134); shows, as the
+  // phone HUD's set number is in its text but hidden here (#3889).
+  await expect(slots).toHaveText(
+    WEAPON_SET_ACTIONS.map((action) => codeLabel(key(action))),
+    { useInnerText: true },
+  );
   await expect(slots.nth(0)).toHaveClass(/is-active/);
   await expect(slots.nth(1)).toHaveAccessibleName("Weapon set 2: Recurve Bow");
   await expect(slots.nth(2)).toHaveClass(/is-empty/);
