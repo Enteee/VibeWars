@@ -574,6 +574,15 @@ beleértve, így egy 3v2-es Saját játék egyik méretbe sem illik. A
 chipek úgy maradnak, ahogy hagytad őket, amíg újra nem töltöd az
 oldalt.
 
+A **Saját meccsek**, a chipek után, ehelyett a saját meccseidet mutatja:
+az utolsó 50-et, amelyet ez a böngésző a jelenlegi játékoskulcsodhoz
+megőrzött, a legújabbat elöl, bármilyen régit, közzétettet vagy sem, egy
+Elite Zaishen Battle-t is. A Típus és a Méret továbbra is szűri őket, a
+csapatodat pedig **Te** jelöli. Nyiss meg egyet, és három lapot kapsz:
+**Buildek**, a csapatai a fenti Klón gombbal; **Statisztika**, a
+ponttáblázat, amelyet a záró panelje mutatott; és **Diagram**, a
+grafikonjai. Csak ebben a böngészőben maradnak meg.
+
 A chipek fölött a **Hősök Csarnoka** csík az utolsó 20 tartást sorolja
 fel, a legújabbal elöl: a tartót (céhjel vagy a vezető neve), a győztes
 csapat tagjait, hogy mikor ért véget a legújabb győzelem, és két

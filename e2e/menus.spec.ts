@@ -308,7 +308,6 @@ test("#579: Random Arena's cards are buttons: Enter or Space chooses; Edit is on
     "topbar-queue",
     "topbar-help",
     "topbar-leaderboard",
-    "topbar-match-history",
     "topbar-options",
     "topbar-lobby-button",
     "topbar-music",

@@ -483,6 +483,15 @@ grupp utan något valt släpper igenom allt. Storlek är det största laget,
 bottar inräknade, så ett eget spel med 3v2 passar ingen storlek.
 Chipsen står kvar som du lämnade dem tills sidan laddas om.
 
+**Mina matcher**, efter chipsen, visar i stället dina egna matcher: de
+senaste 50 som den här webbläsaren sparat för din nuvarande
+spelarnyckel, nyaste först, hur gamla som helst och publicerade eller
+inte, även en Elite Zaishen Battle. Typ och Storlek filtrerar dem
+fortfarande, och ditt lag är märkt **Du**. Öppna en för tre flikar:
+**Byggen**, dess lag med Klona som ovan; **Statistik**, poängtabellen
+som dess slutpanel visade; och **Diagram**, dess diagram. De sparas bara
+i den här webbläsaren.
+
 Ovanför chipsen listar remsan **Hjältarnas sal** de senaste 20 innehaven, nyaste först: innehavaren (en gilletagg eller ledarens namn), det vinnande lagets spelare, när den senaste vinsten slutade och, från två vinster och uppåt, hur många i rad. Ett innehav är en obruten följd av vinster i Salen av en innehavare. Remsan läser protokollen på den här sidan, bryr sig inte om chipsen, och döljs när inget av dem är en vinst i Salen. Som varje protokoll är den vad varje matchs värd rapporterade, och inget kontrollerar den.
 
 ## Rankat

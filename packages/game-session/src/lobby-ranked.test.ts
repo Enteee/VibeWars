@@ -136,6 +136,7 @@ function fakeMatch(): FakeMatch {
         endReason: "annihilation",
         summary: [],
         clearSeconds: null,
+        teams: [{ players: [] }, { players: [] }],
       };
       this.room?.send("ended", ended);
       phase = "finished";

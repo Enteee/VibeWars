@@ -766,6 +766,7 @@
     "MAX_SNAPSHOT_PARTS": { "literal": 12 },
     "MAX_STROKE_POINTS": { "literal": 16 },
     "MAX_TEAM_LOBBY_SIDE": { "literal": 8 },
+    "MAX_TEMPLATE_LENGTH": { "literal": 64 },
     "MAX_WIRE_BREAKABLES": { "literal": 6 },
     "MAX_WIRE_CAPTURE_POINTS": { "literal": 7 },
     "MAX_WIRE_CHAT_TEXT": { "literal": 2048 },
@@ -6079,6 +6080,34 @@
         { "name": "width", "optional": false, "type": "number" }
       ]
     },
+    "MatchRecordPlayer": {
+      "properties": [
+        { "name": "bot", "optional": false, "type": "boolean" },
+        { "name": "guildTag", "optional": false, "type": { "union": ["null", "string"] } },
+        { "name": "name", "optional": false, "type": "string" },
+        { "name": "pubkey", "optional": false, "type": { "union": ["null", "string"] } },
+        { "name": "template", "optional": false, "type": "string" }
+      ]
+    },
+    "MatchRecordTeam": {
+      "properties": [
+        {
+          "name": "players",
+          "optional": false,
+          "type": {
+            "array": {
+              "properties": [
+                { "name": "bot", "optional": false, "type": "boolean" },
+                { "name": "guildTag", "optional": false, "type": { "union": ["null", "string"] } },
+                { "name": "name", "optional": false, "type": "string" },
+                { "name": "pubkey", "optional": false, "type": { "union": ["null", "string"] } },
+                { "name": "template", "optional": false, "type": "string" }
+              ]
+            }
+          }
+        }
+      ]
+    },
     "MoveIntent": {
       "properties": [
         { "name": "dirX", "optional": false, "type": "number" },
@@ -7858,6 +7887,39 @@
                   "name": "team",
                   "optional": false,
                   "type": { "union": [{ "literal": 0 }, { "literal": 1 }, { "literal": 2 }] }
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "teams",
+          "optional": false,
+          "type": {
+            "array": {
+              "properties": [
+                {
+                  "name": "players",
+                  "optional": false,
+                  "type": {
+                    "array": {
+                      "properties": [
+                        { "name": "bot", "optional": false, "type": "boolean" },
+                        {
+                          "name": "guildTag",
+                          "optional": false,
+                          "type": { "union": ["null", "string"] }
+                        },
+                        { "name": "name", "optional": false, "type": "string" },
+                        {
+                          "name": "pubkey",
+                          "optional": false,
+                          "type": { "union": ["null", "string"] }
+                        },
+                        { "name": "template", "optional": false, "type": "string" }
+                      ]
+                    }
+                  }
                 }
               ]
             }
