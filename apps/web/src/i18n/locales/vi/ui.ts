@@ -579,6 +579,7 @@ export default {
   "hud.preMatchStartingAnyway":
     "Đang chờ người chơi: {joined}/{expected}, vẫn bắt đầu sau {seconds} giây",
   "hud.preMatchStartsIn": "Trận đấu bắt đầu sau {seconds}",
+  "hud.preMatchSelfAllyOnly": "Trước khi bắt đầu: chỉ dùng kỹ năng lên bản thân hoặc đồng minh.",
   "hud.preMatchWaiting": "Đang chờ người chơi: {joined}/{expected}",
   "hud.priest": "tư tế",
   "hud.priestDead": "tư tế (đã chết)",
@@ -739,7 +740,6 @@ export default {
   "lobby.leaveTeamLabel": "Rời đội {team}",
   "lobby.map": "Bản đồ:",
   "lobby.mapLabel": "{name} ({size})",
-  "lobby.mapRandom": "Bản đồ: ngẫu nhiên (Đấu trường đội)",
   "lobby.mapShown": "Bản đồ: {map}",
   "lobby.matchRunning": "Trận đấu vẫn đang diễn ra. Sảnh sẽ mở lại khi trận kết thúc.",
   "lobby.modeNameCapturePoints": "Chiếm điểm",

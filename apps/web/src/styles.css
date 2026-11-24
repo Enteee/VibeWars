@@ -1315,6 +1315,11 @@ body {
   border-radius: 1px;
 }
 
+/* A set's number, in its key's place where there are no keys (#3889). */
+.weapon-set-number {
+  display: none;
+}
+
 /* The skills, the weapon sets hung off their left end (#489): the skill
    bar stays centred, as GW1's. */
 .hud-skill-row {
@@ -1404,7 +1409,8 @@ body {
   height: 10px;
 }
 
-.weapon-set-key {
+.weapon-set-key,
+.weapon-set-number {
   position: absolute;
   top: 0;
   left: 0;
@@ -2733,6 +2739,8 @@ body:has(> .splash) #menu-background::after {
 }
 
 .team-grid {
+  /* A bar cell's track: its 32 px and border, or a finger's 44 (#3928). */
+  --team-skill-size: 36px;
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
@@ -2742,7 +2750,10 @@ body:has(> .splash) #menu-background::after {
 .team-row {
   display: grid;
   /* ✎ and ▼ last (#3819), each as wide as a finger needs on a touch screen. */
-  grid-template-columns: 0.8rem 11rem 4.5rem repeat(8, 36px) repeat(2, minmax(2rem, max-content));
+  grid-template-columns: 0.8rem 11rem 4.5rem repeat(8, var(--team-skill-size)) repeat(
+      2,
+      minmax(2rem, max-content)
+    );
   align-items: center;
   gap: 0.3rem;
   padding: 0.35rem 0.5rem;
@@ -3064,10 +3075,84 @@ body:has(> .splash) #menu-background::after {
     gap: 0.3rem;
     justify-content: center;
   }
+}
 
+/* A finger's cell (#3928): 44 px, so the row takes two lines sooner than
+   a mouse's. The marker, name and ✎ ▼ on one, Health and Energy and the
+   eight cells under them; four a line where eight do not fit. The
+   counters are buttons too: one row, which scrolls sideways. */
+@media (pointer: coarse) {
+  .team-grid {
+    --team-skill-size: 44px;
+  }
+
+  .team-skill {
+    box-sizing: border-box;
+    width: var(--team-skill-size);
+    height: var(--team-skill-size);
+  }
+
+  .team-counters {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+  }
+
+  .screen .team-counter,
+  .team-counter-mix {
+    flex: none;
+    white-space: nowrap;
+  }
+}
+
+@container (width < 49rem) {
+  @media (pointer: coarse) {
+    .team-grid {
+      min-width: 0;
+    }
+
+    .team-row {
+      grid-template-columns: 0.8rem 3.4rem minmax(0, 1fr) repeat(2, max-content);
+    }
+
+    .team-row-order {
+      grid-row: 1;
+      grid-column: 1;
+    }
+
+    .team-row-character {
+      grid-row: 1;
+      grid-column: 2 / 4;
+    }
+
+    .team-row-open {
+      grid-row: 1;
+      grid-column: 4;
+    }
+
+    .team-row-edit {
+      grid-row: 1;
+      grid-column: 5;
+    }
+
+    .team-row-stats {
+      grid-row: 2;
+      grid-column: 1 / 3;
+    }
+
+    .team-row-skills {
+      display: grid;
+      grid-row: 2;
+      grid-column: 3 / -1;
+      grid-template-columns: repeat(8, var(--team-skill-size));
+      gap: 0.3rem;
+    }
+  }
+}
+
+@container (width < 30rem) {
   @media (pointer: coarse) {
     .team-row-skills {
-      grid-template-columns: repeat(4, max-content);
+      grid-template-columns: repeat(4, var(--team-skill-size));
     }
   }
 }
@@ -4811,8 +4896,8 @@ body:has(> .splash) #menu-background::after {
   pointer-events: none;
 }
 
-/* Held in the spawn (#3818): the bar shows, inactive. */
-.hud-skills.is-held .hud-skill {
+/* Held in the spawn (#3818): a skill refused until the start, greyed (#3910). */
+.hud-skill.is-held {
   filter: grayscale(1);
   opacity: 0.55;
 }
@@ -5464,6 +5549,12 @@ body:has(> .splash) #menu-background::after {
     position: static;
     max-height: none;
   }
+
+  /* One height, so a hit's row never pushes the editor below down (#3907). */
+  .editor-layout.has-training > .training:not(.is-expanded) .training-log-rows {
+    flex: none;
+    height: 8rem;
+  }
 }
 
 @media (width <= 52rem) {
@@ -5687,9 +5778,11 @@ body.has-expanded-training #screens {
   gap: 0.4rem;
 }
 
+/* No label widens a bar: it clips, the bar keeps its share (#3907). */
 .training-bar {
   position: relative;
   flex: 1 1 8rem;
+  min-width: 0;
   height: 16px;
   background: #11161d;
   border: 1px solid var(--line);
@@ -5716,12 +5809,21 @@ body.has-expanded-training #screens {
   text-align: center;
   line-height: 16px;
   font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
   text-shadow: 0 1px 2px rgb(0 0 0 / 80%);
 }
 
+/* A line of its own, always there and only shown while attacking, so the
+   row never grows or shrinks with it (#3907). */
 .training-attacking {
+  flex: 1 0 100%;
+  overflow: hidden;
   color: var(--ink-dim);
   font-size: 0.75rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  visibility: hidden;
 }
 
 .training-skills {
@@ -5942,13 +6044,25 @@ body.has-expanded-training #screens {
   font-size: 0.8rem;
 }
 
+/* One line each, so a number growing as you hit never wraps a row and
+   pushes the editor below down (#3907). */
 .training-meter-label {
   color: var(--ink-dim);
+  white-space: nowrap;
 }
 
 .training-meter-value {
   margin: 0;
   text-align: end;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* A phone: two to a row, so the longest label and value still fit on one. */
+@media (width <= 52rem) {
+  .training:not(.is-expanded) .training-meter {
+    grid-template-columns: repeat(2, auto 1fr);
+  }
 }
 
 .training-log {
@@ -7898,6 +8012,28 @@ body:has(#screens[style*="none"]) .now-playing {
   display: none;
 }
 
+/* A phone's menu (#3934): every corner is a screen's content or the chat,
+   so the toast shows centred under the top bar, however many rows that
+   bar takes, for the few seconds it is up. A match keeps its corner. */
+@media (pointer: coarse) and ((width <= 30rem) or (height <= 30rem)) {
+  #topbar {
+    anchor-name: --topbar;
+  }
+
+  body:has(#screens:not([style*="none"])) .now-playing {
+    top: calc(2.9rem + var(--build-banner-space, 0px));
+    top: calc(anchor(--topbar bottom) + 0.4rem);
+    bottom: auto;
+    inset-inline: 0;
+    width: fit-content;
+    max-width: calc(100vw - 2 * var(--chat-inset));
+    margin-inline: auto;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
 /*
  * A phone in a match (#1297): the centred scoreboard and target frame are
  * wider than the room left of the match buttons. So "leave" loses
@@ -8332,6 +8468,24 @@ body:has(#screens[style*="none"]) .now-playing {
   /* What a screen leaves clear at its bottom for the closed chat's icon
      (#3887): its size, its offset, and a gap. */
   --chat-reserve: calc(var(--chat-toggle-size) + var(--chat-inset) + 0.5rem);
+}
+
+/* A finger's icon on every screen (#3934), not only in a match, and the
+   reserve with it. Every screen's end scrolls clear of it: the shared
+   scrollers leave the reserve, so the editor's own (#3887) gives way. */
+@media (pointer: coarse) {
+  :root {
+    --chat-toggle-size: 44px;
+  }
+
+  #screens,
+  .rail-body {
+    padding-bottom: var(--chat-reserve);
+  }
+
+  .editor-layout {
+    padding-bottom: 0;
+  }
 }
 
 .chat {
@@ -9429,6 +9583,22 @@ body:has(> .splash) #app {
     flex-wrap: nowrap;
   }
 
+  /* The weapon sets take a finger too (#3889): a row of four left of the
+     bar, where two by two would hang below the screen. */
+  .hud .weapon-sets {
+    grid-template-columns: repeat(4, 44px);
+  }
+
+  .hud .weapon-set {
+    width: 44px;
+    height: 44px;
+  }
+
+  .hud .weapon-set-off {
+    width: 20px;
+    height: 20px;
+  }
+
   .hud-target {
     box-sizing: border-box;
     min-width: 0;
@@ -9497,8 +9667,6 @@ body:has(> .splash) #app {
 
   #viewport > .chat .chat-toggle {
     position: relative;
-    width: 44px;
-    height: 44px;
     padding: 0.5rem;
   }
 
@@ -9651,8 +9819,9 @@ body:has(> .splash) #app {
   }
 
   /* No room left of the bar: the weapon sets stand over its left end,
-     beside your bars, which give them their width. The skill row reads
-     left to right in every language, so these sides are physical. */
+     two by two, beside your bars, which give them their width. The skill
+     row reads left to right in every language, so these sides are
+     physical. */
   .hud-skill-row > .weapon-sets {
     top: auto;
     right: auto;
@@ -9660,12 +9829,69 @@ body:has(> .splash) #app {
     left: 0;
   }
 
+  .hud .weapon-sets {
+    grid-template-columns: repeat(2, 44px);
+  }
+
   .hud-bars {
-    margin-inline-start: calc(48px + 8px);
+    margin-inline-start: calc(2 * 44px + 4px + 8px);
   }
 
   [dir="rtl"] .hud-bars {
-    margin-inline: 0 calc(48px + 8px);
+    margin-inline: 0 calc(2 * 44px + 4px + 8px);
+  }
+}
+
+/* Touch alone, as `input/touch-only.ts` judges it (#3889): no keys to
+   hint at. A set shows its number instead; "leave" is its word alone.
+   A touch laptop with a trackpad keeps its hints. */
+@media (pointer: coarse) and (hover: none) and (not (any-pointer: fine)) {
+  .hud .hud-skill-key,
+  .hud .weapon-set-key,
+  .hud-leave-extra {
+    display: none;
+  }
+
+  .hud .weapon-set-number {
+    display: block;
+  }
+}
+
+/* The match's buttons, top right, take a finger too (#3889): they sit
+   beside the HUD, not in it, so the HUD's own rules miss them. Leave and
+   its yes and no grow inside their box, which drops its top and bottom
+   edge so that row is 44 px too. The compass goes down under the taller
+   rows, a little closer than with a mouse, to stay out of an upright
+   phone's middle; and on a phone the scoreboard and target keep clear of
+   the wider second row: four 44 px buttons and three gaps. */
+@media (pointer: coarse) {
+  :root {
+    --compass-top: calc(0.6rem + 2 * 44px + 0.4rem + 0.2rem + var(--build-banner-space, 0px));
+  }
+
+  .hud-mute,
+  .hud-help,
+  .hud-music,
+  .hud-options,
+  .hud-fullscreen {
+    width: 44px;
+    height: 44px;
+  }
+
+  .hud-leave {
+    height: auto;
+    border-block: none;
+  }
+
+  .hud-leave button {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
+
+@media (pointer: coarse) and (width <= 30rem) {
+  :root {
+    --hud-top-width: calc(100vw - max(var(--compass-size), 4 * 44px + 1.2rem) - 2rem);
   }
 }
 

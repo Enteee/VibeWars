@@ -415,14 +415,14 @@ test("#1525: the rail switches screens and keeps the last; each mode hosts on it
     "true",
   );
 
-  // GvG plays one map, so its host sees it named, not picked.
-  await expect(page.locator("#topbar .lobby-map")).toHaveText("Map: Guild Hall Isle (large)");
-
-  // Heroes' Ascent starts on its first map, and Team Arena draws one for
-  // each match: neither is picked (#1994).
-  await openRail(page, "Heroes' Ascent");
-  await expect(page.locator("#topbar .lobby-map")).toHaveText(/^Map: The Hollow Deep \(/);
-  await expect(page.locator("#topbar .lobby-map select")).toHaveCount(0);
-  await openRail(page, "Team Arena");
-  await expect(page.locator("#topbar .lobby-map")).toHaveText("Map: random (Team Arena)");
+  // Outside a Hosted Game no screen shows the map: the match says it (#3925).
+  await expect(page.locator("#topbar .lobby-map")).toHaveCount(0);
+  for (const mode of ["Heroes' Ascent", "Team Arena", "Random Arena"] as const) {
+    await openRail(page, mode);
+    await expect(page.locator(`.mode-rail-entry[aria-label="${mode}"]`)).toHaveAttribute(
+      "aria-pressed",
+      "true",
+    );
+    await expect(page.locator("#topbar .lobby-map")).toHaveCount(0);
+  }
 });

@@ -667,6 +667,7 @@ export default {
   "hud.preMatchStartingAnyway":
     "In attesa dei giocatori: {joined}/{expected}, inizia comunque tra {seconds} s",
   "hud.preMatchStartsIn": "La partita inizia tra {seconds}",
+  "hud.preMatchSelfAllyOnly": "Prima dell'inizio: solo abilità su te stesso o sugli alleati.",
   "hud.preMatchWaiting": "In attesa dei giocatori: {joined}/{expected}",
   "hud.priest": "sacerdote",
   "hud.priestDead": "sacerdote (morto)",
@@ -835,7 +836,6 @@ export default {
   "lobby.leaveTeamLabel": "Esci dalla squadra {team}",
   "lobby.map": "Mappa:",
   "lobby.mapLabel": "{name} ({size})",
-  "lobby.mapRandom": "Mappa: casuale (Arena a squadre)",
   "lobby.mapShown": "Mappa: {map}",
   "lobby.matchRunning": "C'è ancora una partita in corso. La lobby riaprirà al termine.",
   "lobby.modeNameCapturePoints": "Conquista",

@@ -1,6 +1,6 @@
 # Modos
 
-Cada mapa joga um modo, e a sala diz qual embaixo do nome do mapa. Os
+Cada mapa joga um modo. Os
 modos são as entradas da barra à esquerda da tela principal. Ninguém
 escolhe o modo de um mapa, mas a entrada da barra de onde você hospeda
 escolhe os modos que os mapas da sala jogam: ![Arena de Equipes](../../../apps/web/public/icons/mode/team-arena.svg) **Arena de Equipes**
@@ -11,7 +11,8 @@ mapas. Uma ![Arena Aleatória](../../../apps/web/public/icons/mode/random-arena.
 modo, mas nunca uma Batalha de Guildas, uma Corrida da Relíquia, Rei da
 Colina ou Captura de Pontos. A Arena de Equipes sorteia um dos seus mapas
 a cada partida, a Ascensão dos Heróis começa no primeiro mapa dela, e só
-uma Partida Hospedada deixa o host escolher.
+uma Partida Hospedada deixa o host escolher. A tela de nenhum outro modo
+diz qual mapa vem a seguir: a partida o mostra enquanto carrega.
 
 Dois jogadores atrás de redes restritas não podem ser pareados entre si numa fila, então a fila conta só os jogadores que podem ser pareados com você, e diz isso. Um relay em **Opções → relay (TURN)** ajuda.
 
@@ -34,7 +35,7 @@ seta contornada na borda da tela: o suporte ou um santuário na cor do
 dono, cinza se não for de ninguém, e o altar em dourado. A seta preenchida
 de um jogador é desenhada por cima.
 
-Uma partida abre com todos retidos perto do seu ponto de surgimento: você pode dar alguns passos, mas não lutar nem usar habilidades. Uma parede cintilante em volta do seu ponto de surgimento mostra até onde você pode ir. Uma linha no topo conta os jogadores que carregaram a partida. Quando todos carregam, ela conta 10 segundos e a partida começa, e o seu relógio com ela. Um jogador que não carregou após 20 segundos não é esperado: a contagem começa sem ele, e ele ainda pode entrar depois.
+Uma partida abre com todos retidos perto do seu ponto de surgimento: você pode dar alguns passos e se preparar com habilidades em você e nos seus aliados, como encantamentos, posturas e curas, mas não pode atacar nem usar uma habilidade em um inimigo. Energia e vida se regeneram enquanto você espera, e os bots também se preparam. Uma parede cintilante em volta do seu ponto de surgimento mostra até onde você pode ir. Uma linha no topo conta os jogadores que carregaram a partida. Quando todos carregam, ela conta 10 segundos e a partida começa, e o seu relógio com ela. Um jogador que não carregou após 20 segundos não é esperado: a contagem começa sem ele, e ele ainda pode entrar depois.
 
 ## Aniquilação
 

@@ -628,6 +628,7 @@ export default {
   "hud.preMatchStartingAnyway":
     "Väntar på spelare: {joined}/{expected}, startar ändå om {seconds} s",
   "hud.preMatchStartsIn": "Matchen börjar om {seconds}",
+  "hud.preMatchSelfAllyOnly": "Före start: bara färdigheter på dig själv eller allierade.",
   "hud.preMatchWaiting": "Väntar på spelare: {joined}/{expected}",
   "hud.priest": "präst",
   "hud.priestDead": "präst (död)",
@@ -788,7 +789,6 @@ export default {
   "lobby.leaveTeamLabel": "Lämna lag {team}",
   "lobby.map": "Karta:",
   "lobby.mapLabel": "{name} ({size})",
-  "lobby.mapRandom": "Karta: slumpad (Lagarena)",
   "lobby.mapShown": "Karta: {map}",
   "lobby.matchRunning": "En match pågår fortfarande. Lobbyn öppnas igen när den är slut.",
   "lobby.modeNameCapturePoints": "Erövringspunkter",

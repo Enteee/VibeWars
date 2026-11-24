@@ -1,7 +1,6 @@
 # Modlar
 
-Her harita tek bir mod oynatır ve lobi hangisi olduğunu haritanın
-adının altında söyler. Modlar, ana ekranın solundaki şeridin
+Her harita tek bir mod oynatır. Modlar, ana ekranın solundaki şeridin
 girdileridir. Bir haritanın modunu kimse seçmez, ama lobiyi kurduğun
 şerit girdisi, lobisinin haritalarının hangi modları oynatacağını
 seçer: ![Takım Arenası](../../../apps/web/public/icons/mode/team-arena.svg) **Takım Arenası** İmha, Leş Sayısı ve Rahip İmhası;
@@ -11,7 +10,8 @@ Geçirme; ![GvG](../../../apps/web/public/icons/mode/gvg.svg) **GvG** ise Lonca 
 ama asla Lonca Savaşı, Kalıntı Koşusu, Tepenin Kralı ya da Nokta Ele
 Geçirme seçmez. Takım Arenası her maç için haritalarından birini çeker,
 Kahramanların Yükselişi ilk haritasında başlar ve kurucunun seçmesine
-yalnızca Özel Oyun izin verir.
+yalnızca Özel Oyun izin verir. Başka hiçbir modun ekranı sıradaki haritayı
+söylemez: maç, yüklenirken onu gösterir.
 
 Katı ağların arkasındaki iki oyuncu bir kuyrukta birbiriyle eşleşemez, bu yüzden kuyruk yalnızca seninle eşleşebilecek oyuncuları sayar ve bunu söyler. **Ayarlar → relay (TURN)** altındaki bir relay yardımcı olur.
 
@@ -34,7 +34,7 @@ ekran dışındaki ya da HUD'ın altındaki bir hedef, ekranın kenarında
 kimsenin değilse gri, sunak ise altın renginde. Bir oyuncunun dolu oku
 onun üstüne çizilir.
 
-Bir maç, herkes doğma noktasının yakınında tutularak açılır: birkaç adım yürüyebilirsin ama dövüşemez ya da beceri kullanamazsın. Doğma noktanın çevresindeki parıldayan bir duvar, ne kadar uzağa gidebileceğini gösterir. Üstteki bir satır maçı yüklemiş oyuncuları sayar. Herkes yükleyince 10 saniye geri sayar ve maç başlar, saati de onunla. 20 saniye sonra hâlâ yüklememiş bir oyuncu beklenmez: geri sayım onsuz başlar ve o yine de sonradan katılabilir.
+Bir maç, herkes doğma noktasının yakınında tutularak açılır: birkaç adım yürüyebilir ve kendine ve müttefiklerine tılsımlar, duruşlar ve iyileştirmeler gibi becerilerle hazırlanabilirsin, ama saldıramaz ya da bir düşmana beceri kullanamazsın. Beklerken Enerji ve Can yenilenir, botlar da hazırlanır. Doğma noktanın çevresindeki parıldayan bir duvar, ne kadar uzağa gidebileceğini gösterir. Üstteki bir satır maçı yüklemiş oyuncuları sayar. Herkes yükleyince 10 saniye geri sayar ve maç başlar, saati de onunla. 20 saniye sonra hâlâ yüklememiş bir oyuncu beklenmez: geri sayım onsuz başlar ve o yine de sonradan katılabilir.
 
 ## İmha
 

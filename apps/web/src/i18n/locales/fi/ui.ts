@@ -638,6 +638,7 @@ export default {
   "hud.preMatchStartingAnyway":
     "Odotetaan pelaajia: {joined}/{expected}, alkaa silti {seconds} s kuluttua",
   "hud.preMatchStartsIn": "Ottelu alkaa {seconds} kuluttua",
+  "hud.preMatchSelfAllyOnly": "Ennen alkua: vain taitoja itseesi tai liittolaisiin.",
   "hud.preMatchWaiting": "Odotetaan pelaajia: {joined}/{expected}",
   "hud.priest": "pappi",
   "hud.priestDead": "pappi (kuollut)",
@@ -798,7 +799,6 @@ export default {
   "lobby.leaveTeamLabel": "Poistu tiimistä {team}",
   "lobby.map": "Kartta:",
   "lobby.mapLabel": "{name} ({size})",
-  "lobby.mapRandom": "Kartta: satunnainen (tiimiareena)",
   "lobby.mapShown": "Kartta: {map}",
   "lobby.matchRunning": "Ottelu on vielä käynnissä. Aula avautuu taas, kun se päättyy.",
   "lobby.modeNameCapturePoints": "Valtauspisteet",

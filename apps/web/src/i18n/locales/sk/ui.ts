@@ -682,6 +682,7 @@ export default {
   "hud.preMatchStartingAnyway":
     "Čaká sa na hráčov: {joined}/{expected}, začne aj tak o {seconds} s",
   "hud.preMatchStartsIn": "Zápas začne o {seconds}",
+  "hud.preMatchSelfAllyOnly": "Pred začiatkom: len zručnosti na seba alebo spojencov.",
   "hud.preMatchWaiting": "Čaká sa na hráčov: {joined}/{expected}",
   "hud.priest": "kňaz",
   "hud.priestDead": "kňaz (mŕtvy)",
@@ -852,7 +853,6 @@ export default {
   "lobby.leaveTeamLabel": "Opustiť tím {team}",
   "lobby.map": "Mapa:",
   "lobby.mapLabel": "{name} ({size})",
-  "lobby.mapRandom": "Mapa: náhodná (Tímová aréna)",
   "lobby.mapShown": "Mapa: {map}",
   "lobby.matchRunning": "Zápas ešte beží. Lobby sa znova otvorí, keď skončí.",
   "lobby.modeNameCapturePoints": "Dobývanie bodov",

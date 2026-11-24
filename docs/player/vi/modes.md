@@ -1,6 +1,6 @@
 # Chế độ
 
-Mỗi bản đồ chơi một chế độ, và sảnh ghi chế độ đó dưới tên bản đồ. Các chế
+Mỗi bản đồ chơi một chế độ. Các chế
 độ là các mục trên thanh bên trái màn hình chính. Không ai chọn chế độ của
 một bản đồ, nhưng mục trên thanh mà bạn làm chủ phòng từ đó sẽ chọn các chế
 độ mà bản đồ của sảnh chơi: ![Đấu trường đội](../../../apps/web/public/icons/mode/team-arena.svg) **Đấu trường đội** Hủy diệt, Đếm hạ gục và Diệt
@@ -9,7 +9,8 @@ tư tế, ![Đỉnh Anh Hùng](../../../apps/web/public/icons/mode/heroes-ascent
 nhiên** chọn bản đồ cho bạn, và kèm theo đó là chế độ, nhưng không bao giờ là
 Chiến Bang, Vận chuyển thánh tích, Vua đồi hay Chiếm điểm. Đấu trường đội
 bốc một bản đồ của nó cho mỗi trận, Đỉnh Anh Hùng bắt đầu ở bản đồ đầu tiên
-của nó, và chỉ Trận tự tạo cho chủ phòng chọn.
+của nó, và chỉ Trận tự tạo cho chủ phòng chọn. Màn hình của các chế độ khác
+không ghi bản đồ nào đến tiếp theo: trận hiện bản đồ đó khi đang tải.
 
 Hai người chơi sau mạng nghiêm ngặt không thể được ghép với nhau trong hàng chờ, nên hàng chờ chỉ đếm những người chơi có thể ghép với bạn, và cho bạn biết. Một relay trong **Tùy chọn → Relay (TURN)** sẽ giúp ích.
 
@@ -31,7 +32,7 @@ nằm ngoài màn hình hoặc dưới HUD có một mũi tên viền ở mép m
 hoặc đền mang màu của chủ sở hữu, xám nếu chưa thuộc về ai, tế đàn màu vàng.
 Mũi tên đặc của người chơi được vẽ đè lên nó.
 
-Trận đấu mở đầu với mọi người bị giữ gần điểm xuất hiện của mình: bạn có thể đi vài bước, nhưng không thể chiến đấu hay dùng kỹ năng. Một bức tường lấp lánh quanh điểm xuất hiện cho bạn thấy mình đi được bao xa. Một dòng ở trên cùng đếm số người chơi đã tải xong trận. Khi mọi người đã tải xong, nó đếm ngược 10 giây rồi trận đấu bắt đầu, cùng với đồng hồ của trận. Người chơi chưa tải xong sau 20 giây sẽ không được chờ: đếm ngược bắt đầu mà không có họ, và họ vẫn có thể vào sau.
+Trận đấu mở đầu với mọi người bị giữ gần điểm xuất hiện của mình: bạn có thể đi vài bước và chuẩn bị bằng kỹ năng lên bản thân và đồng minh, như phù phép, tư thế và hồi máu, nhưng không thể tấn công hay dùng kỹ năng lên địch. Năng lượng và Máu hồi lại trong lúc chờ, và bot cũng chuẩn bị. Một bức tường lấp lánh quanh điểm xuất hiện cho bạn thấy mình đi được bao xa. Một dòng ở trên cùng đếm số người chơi đã tải xong trận. Khi mọi người đã tải xong, nó đếm ngược 10 giây rồi trận đấu bắt đầu, cùng với đồng hồ của trận. Người chơi chưa tải xong sau 20 giây sẽ không được chờ: đếm ngược bắt đầu mà không có họ, và họ vẫn có thể vào sau.
 
 ## Hủy diệt
 

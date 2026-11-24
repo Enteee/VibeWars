@@ -1,6 +1,6 @@
 # Modes
 
-Each map plays one mode, and the lobby says which under the map's name.
+Each map plays one mode.
 The modes are the entries of the rail on the left of the main screen.
 Nobody picks a map's mode, but the rail entry you host from picks the
 modes its lobby's maps play: ![Team Arena](../../apps/web/public/icons/mode/team-arena.svg) **Team Arena** Annihilation, Kill Count and
@@ -10,6 +10,8 @@ every map. A ![Random Arena](../../apps/web/public/icons/mode/random-arena.svg) 
 but never a Guild Battle, a Relic Run, King of the Hill or Capture
 Points. Team Arena draws one of its maps for each match, Heroes' Ascent
 starts on its first map, and only a Hosted Game lets the host pick.
+No other mode's screen says which map comes next: the match shows it
+as it loads.
 
 Two players behind strict networks cannot be matched with each other in a queue, so the queue counts only players who can match you, and says so. A relay in **Options → Relay (TURN)** helps.
 
@@ -30,7 +32,7 @@ objective off screen or under the HUD gets an outlined arrow at the
 screen edge: the stand or a shrine in its owner's colour, grey for
 nobody's, the altar in gold. A player's filled arrow draws over it.
 
-A match opens with everyone held near their spawn: you can walk a few steps, but not fight or use skills. A shimmering wall around your spawn shows how far you can go. A line at the top counts the players who have loaded the match. Once everyone has loaded, it counts down 10 seconds and the match starts, and its clock with it. A player who has not loaded after 20 seconds is not waited for: the countdown starts without them, and they can still join later.
+A match opens with everyone held near their spawn: you can walk a few steps and prepare with skills on yourself and your allies, such as enchantments, stances and heals, but you cannot attack or use a skill on a foe. Energy and Health regenerate while you wait, and bots prepare too. A shimmering wall around your spawn shows how far you can go. A line at the top counts the players who have loaded the match. Once everyone has loaded, it counts down 10 seconds and the match starts, and its clock with it. A player who has not loaded after 20 seconds is not waited for: the countdown starts without them, and they can still join later.
 
 ## Annihilation
 

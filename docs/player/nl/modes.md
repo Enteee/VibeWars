@@ -1,6 +1,6 @@
 # Modi
 
-Elke map speelt één modus, en de lobby zegt welke onder de naam van de map. De
+Elke map speelt één modus. De
 modi zijn de items van de balk links op het hoofdscherm. Niemand kiest de modus
 van een map, maar het balkitem waarvandaan je host, kiest de modi die de maps van
 zijn lobby spelen: ![Team Arena](../../../apps/web/public/icons/mode/team-arena.svg) **Team Arena** Annihilation, Kill Count en Priest
@@ -9,7 +9,8 @@ en ![GvG](../../../apps/web/public/icons/mode/gvg.svg) **GvG** de Guild Battle. 
 kiest een map voor je, en daarmee de modus, maar nooit een Guild Battle, een
 Relic Run, King of the Hill of Capture Points. Team Arena trekt voor elke match
 een van zijn maps, Heroes' Ascent begint op zijn eerste map, en alleen bij een
-Gehost spel kiest de host.
+Gehost spel kiest de host. Het scherm van geen enkele andere modus zegt welke
+map hierna komt: de match toont hem tijdens het laden.
 
 Twee spelers achter strikte netwerken kunnen in een wachtrij niet met elkaar gekoppeld worden, dus de wachtrij telt alleen spelers met wie je gekoppeld kunt worden, en zegt dat. Een relay in **Opties → relay (TURN)** helpt.
 
@@ -31,7 +32,7 @@ doel buiten beeld of onder de HUD een omlijnde pijl aan de rand van het scherm:
 de standaard of een schrijn in de kleur van de eigenaar, grijs als hij van niemand
 is, het altaar in goud. De gevulde pijl van een speler wordt eroverheen getekend.
 
-Een wedstrijd begint met iedereen vastgehouden bij hun startplek: je kunt een paar stappen lopen, maar niet vechten of vaardigheden gebruiken. Een glinsterende wand rond je startplek laat zien hoe ver je kunt gaan. Een regel bovenaan telt de spelers die de wedstrijd geladen hebben. Zodra iedereen geladen heeft, telt die 10 seconden af en begint de wedstrijd, en zijn klok mee. Op een speler die na 20 seconden niet geladen heeft, wordt niet gewacht: het aftellen begint zonder hen, en ze kunnen later nog meedoen.
+Een wedstrijd begint met iedereen vastgehouden bij hun startplek: je kunt een paar stappen lopen en je voorbereiden met vaardigheden op jezelf en je bondgenoten, zoals betoveringen, houdingen en genezingen, maar je kunt niet aanvallen of een vaardigheid op een vijand gebruiken. Energie en Gezondheid regenereren terwijl je wacht, en bots bereiden zich ook voor. Een glinsterende wand rond je startplek laat zien hoe ver je kunt gaan. Een regel bovenaan telt de spelers die de wedstrijd geladen hebben. Zodra iedereen geladen heeft, telt die 10 seconden af en begint de wedstrijd, en zijn klok mee. Op een speler die na 20 seconden niet geladen heeft, wordt niet gewacht: het aftellen begint zonder hen, en ze kunnen later nog meedoen.
 
 ## Annihilation
 

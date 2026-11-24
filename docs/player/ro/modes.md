@@ -1,6 +1,6 @@
 # Moduri
 
-Fiecare hartă joacă un singur mod, iar lobby-ul îți spune care, sub numele hărții.
+Fiecare hartă joacă un singur mod.
 Modurile sunt intrările de pe bara din stânga ecranului principal. Nimeni nu alege
 modul unei hărți, dar intrarea de pe bară din care găzduiești alege modurile jucate
 de hărțile lobby-ului: ![Arenă de echipe](../../../apps/web/public/icons/mode/team-arena.svg) **Arenă de echipe** Anihilare, Număr de ucideri și Anihilare
@@ -10,6 +10,8 @@ aleatorie** alege o hartă pentru tine și, odată cu ea, modul, dar niciodată 
 de bresle, o Cursă a relicvelor, Regele dealului sau Capturare de puncte. Arena de
 echipe trage la sorți una dintre hărțile ei pentru fiecare meci, Ascensiunea Eroilor
 începe de la prima ei hartă și doar un Joc găzduit îi permite gazdei să aleagă.
+Ecranul niciunui alt mod nu spune ce hartă urmează: meciul o arată în timp ce se
+încarcă.
 
 Doi jucători din spatele unor rețele stricte nu pot fi potriviți unul cu altul într-o coadă, așa că coada numără doar jucătorii cu care poți fi potrivit și îți spune asta. Ajută un releu în **Opțiuni → Releu (TURN)**.
 
@@ -31,7 +33,7 @@ puncte, un obiectiv din afara ecranului sau de sub HUD primește o săgeată con
 la marginea ecranului: suportul sau un sanctuar în culoarea proprietarului, gri dacă
 nu e al nimănui, altarul în auriu. Săgeata plină a unui jucător se desenează peste ea.
 
-Un meci începe cu toți ținuți lângă locul lor de apariție: poți face câțiva pași, dar nu poți lupta sau folosi abilități. Un zid sclipitor în jurul locului tău de apariție arată până unde poți merge. Un rând sus numără jucătorii care au încărcat meciul. Când l-au încărcat toți, numără invers 10 secunde și meciul începe, iar odată cu el și ceasul său. Un jucător care nu l-a încărcat după 20 de secunde nu este așteptat: numărătoarea începe fără el și se poate alătura și mai târziu.
+Un meci începe cu toți ținuți lângă locul lor de apariție: poți face câțiva pași și te poți pregăti cu abilități asupra ta și a aliaților tăi, cum ar fi farmece, posturi și vindecări, dar nu poți ataca sau folosi o abilitate asupra unui inamic. Energia și Viața se regenerează cât aștepți, iar boții se pregătesc și ei. Un zid sclipitor în jurul locului tău de apariție arată până unde poți merge. Un rând sus numără jucătorii care au încărcat meciul. Când l-au încărcat toți, numără invers 10 secunde și meciul începe, iar odată cu el și ceasul său. Un jucător care nu l-a încărcat după 20 de secunde nu este așteptat: numărătoarea începe fără el și se poate alătura și mai târziu.
 
 ## Anihilare
 

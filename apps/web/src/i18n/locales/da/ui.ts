@@ -627,6 +627,7 @@ export default {
   "hud.preMatchStartingAnyway":
     "Venter på spillere: {joined}/{expected}, starter alligevel om {seconds} s",
   "hud.preMatchStartsIn": "Kampen starter om {seconds}",
+  "hud.preMatchSelfAllyOnly": "Før starten: kun færdigheder på dig selv eller allierede.",
   "hud.preMatchWaiting": "Venter på spillere: {joined}/{expected}",
   "hud.priest": "præst",
   "hud.priestDead": "præst (død)",
@@ -787,7 +788,6 @@ export default {
   "lobby.leaveTeamLabel": "Forlad hold {team}",
   "lobby.map": "Bane:",
   "lobby.mapLabel": "{name} ({size})",
-  "lobby.mapRandom": "Bane: tilfældig (Holdarena)",
   "lobby.mapShown": "Bane: {map}",
   "lobby.matchRunning": "En kamp er stadig i gang. Lobbyen åbner igen, når den er slut.",
   "lobby.modeNameCapturePoints": "Erobring",

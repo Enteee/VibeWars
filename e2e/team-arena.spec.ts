@@ -3,6 +3,7 @@ import { expect, test, type Locator, type Page } from "@playwright/test";
 import { BUILD_FORMAT_VERSION } from "../apps/web/src/storage/build-transfer.js";
 import { TEAM_FORMAT_VERSION } from "../apps/web/src/storage/team-transfer.js";
 import { STARTER_BUILDS } from "../packages/game-core/src/starter-builds.js";
+import { hudMenuRow } from "./helpers/hud-menu.js";
 import { joinFriend, lobbyWindow, openRail, shutLobbyWindow } from "./helpers/menu.js";
 import {
   copyInvite,
@@ -85,8 +86,12 @@ async function voteQuad(leader: Page, member: Page): Promise<void> {
   await leader.bringToFront();
   await proposeTeam(leader, "Quad");
   const card = leader.locator(".team-lobby-proposals .play-card-open").first();
-  await press(leader, card);
-  await expect(card).toHaveAttribute("aria-pressed", "true");
+  // A click can land on the card just as the list redraws, and be lost
+  // (#3935); a vote is never taken back, so pressing again is safe.
+  await expect(async () => {
+    await press(leader, card);
+    await expect(card).toHaveAttribute("aria-pressed", "true", { timeout: 3_000 });
+  }).toPass({ timeout: 15_000 });
   // The last vote ends the stage, so its card is gone at once.
   await press(member, member.locator(".team-lobby-proposals .play-card-open").first());
 }
@@ -178,7 +183,10 @@ test("#1766: two parties of two queue for Team Arena, meet, and play their own b
     // Met, the queued lobby counts down five seconds before the match
     // starts (QUEUED_COUNTDOWN_SECONDS), then four pages boot an arena
     // each: on a busy runner that is past expect's 15 s (#2777).
+    // A page behind the others gets no animation frames, so it never
+    // mounts its HUD (#3935): each is brought to the front for its wait.
     for (const page of [ann, bea, cid, dot]) {
+      await page.bringToFront();
       await expect(page.locator(".hud-skills .hud-skill").first()).toBeAttached({
         timeout: 25_000,
       });
@@ -188,12 +196,15 @@ test("#1766: two parties of two queue for Team Arena, meet, and play their own b
     await expectPlays(cid, QUAD[0]);
     await expectPlays(dot, QUAD[1]);
     // Four a side: the party's two and two bots.
+    await ann.bringToFront();
     await expect(ann.locator(".party-row-bot:visible")).toHaveCount(2);
     await expect(ann.locator(".party-row-name")).toContainText(["Bea"]);
 
     // Out of the match, Bea is back in Ann's lobby, out of the queue.
-    await press(bea, bea.locator(".hud-leave").getByRole("button", { name: "leave match" }));
-    await press(bea, bea.locator(".hud-leave").getByRole("button", { name: "yes" }));
+    await bea.bringToFront();
+    const beaLeave = await hudMenuRow(bea, "leave");
+    await press(bea, beaLeave.getByRole("button", { name: "leave match" }));
+    await press(bea, beaLeave.getByRole("button", { name: "yes" }));
     await expect((await lobbyWindow(bea)).locator(".topbar-leave")).toBeVisible();
     await shutLobbyWindow(bea);
     await expect(bea.locator(".lobby-panel")).toContainText("Ann");
@@ -345,7 +356,9 @@ async function seedTicketKeys(page: Page, seed: number): Promise<void> {
 /** The first skill on `page`'s bar, once its match is up. */
 async function firstSkill(page: Page): Promise<string | null> {
   const skill = page.locator(".hud-skills .hud-skill").first();
-  // Met, the countdown and four arenas booting outlast expect's 15 s (#2777).
+  // Met, the countdown and four arenas booting outlast expect's 15 s
+  // (#2777); a page behind the others never mounts its HUD (#3935).
+  await page.bringToFront();
   await expect(skill).toBeAttached({ timeout: 25_000 });
   return skill.getAttribute("data-skill-id");
 }
@@ -384,7 +397,8 @@ test("#3815: a Team Arena party that wins queues again with the same team, with 
 
     // Cid's side leaves: on an Annihilation map, a side with nobody left is beaten.
     for (const page of [cid, dot]) {
-      const leave = page.locator(".hud-leave");
+      await page.bringToFront();
+      const leave = await hudMenuRow(page, "leave");
       await press(page, leave.getByRole("button", { name: "leave match" }));
       await press(page, leave.getByRole("button", { name: "yes" }));
     }

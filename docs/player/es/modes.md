@@ -1,6 +1,6 @@
 # Modos
 
-Cada mapa juega un modo, y la sala indica cuál bajo el nombre del mapa. Los
+Cada mapa juega un modo. Los
 modos son las entradas de la barra a la izquierda de la pantalla principal.
 Nadie elige el modo de un mapa, pero la entrada de la barra desde la que alojas
 elige los modos de los mapas de su sala: ![Arena por equipos](../../../apps/web/public/icons/mode/team-arena.svg) **Arena por equipos**, Aniquilación,
@@ -11,6 +11,8 @@ aleatoria** elige un mapa por ti, y con él el modo, pero nunca una Batalla de
 gremios, una Carrera de reliquias, Rey de la colina ni Puntos de captura. Arena
 por equipos sortea uno de sus mapas en cada partida, Ascenso de los Héroes
 empieza en su primer mapa, y solo una Partida alojada deja elegir al anfitrión.
+La pantalla de ningún otro modo indica qué mapa viene después: la partida lo
+muestra mientras carga.
 
 Dos jugadores detrás de redes estrictas no pueden emparejarse entre sí en una cola, así que la cola cuenta solo a los jugadores que pueden emparejarse contigo, y lo dice. Ayuda un relay en **Opciones → relay (TURN)**.
 
@@ -33,7 +35,7 @@ perfilada en el borde de la pantalla: la base de bandera o un santuario en el
 color de su dueño, gris si no es de nadie, y el altar en dorado. La flecha
 rellena de un jugador se dibuja encima.
 
-Una partida empieza con todos retenidos cerca de su punto de aparición: puedes dar unos pasos, pero no luchar ni usar habilidades. Un muro reluciente alrededor de tu punto de aparición muestra hasta dónde puedes llegar. Una línea arriba cuenta los jugadores que han cargado la partida. Cuando la han cargado todos, cuenta 10 segundos hacia atrás y la partida empieza, y su reloj con ella. A un jugador que no la ha cargado tras 20 segundos no se le espera: la cuenta atrás empieza sin él, y aún puede unirse después.
+Una partida empieza con todos retenidos cerca de su punto de aparición: puedes dar unos pasos y prepararte con habilidades sobre ti y tus aliados, como encantamientos, posturas y curaciones, pero no puedes atacar ni usar una habilidad sobre un enemigo. La energía y la salud se regeneran mientras esperas, y los bots también se preparan. Un muro reluciente alrededor de tu punto de aparición muestra hasta dónde puedes llegar. Una línea arriba cuenta los jugadores que han cargado la partida. Cuando la han cargado todos, cuenta 10 segundos hacia atrás y la partida empieza, y su reloj con ella. A un jugador que no la ha cargado tras 20 segundos no se le espera: la cuenta atrás empieza sin él, y aún puede unirse después.
 
 ## Aniquilación
 

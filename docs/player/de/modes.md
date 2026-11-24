@@ -1,6 +1,6 @@
 # Modi
 
-Jede Karte spielt einen Modus, und die Lobby nennt ihn unter dem Namen der Karte. Die Modi
+Jede Karte spielt einen Modus. Die Modi
 sind die Einträge in der Leiste links im Hauptbildschirm. Niemand wählt den Modus einer Karte,
 aber der Leisteneintrag, von dem aus du hostest, bestimmt, welche Modi die Karten seiner Lobby
 spielen: ![Teamarena](../../../apps/web/public/icons/mode/team-arena.svg) **Teamarena** Vernichtung, Kill-Zähler und Priestervernichtung, ![Aufstieg der Helden](../../../apps/web/public/icons/mode/heroes-ascent.svg) **Aufstieg der Helden**
@@ -8,7 +8,8 @@ Reliktlauf, King of the Hill und Punkte erobern, und ![GvG](../../../apps/web/pu
 Spiel** bietet jede Karte. Eine ![Zufallsarena](../../../apps/web/public/icons/mode/random-arena.svg) **Zufallsarena** wählt eine Karte für dich und damit den Modus,
 aber nie eine Gildenschlacht, einen Reliktlauf, King of the Hill oder Punkte erobern. Die
 Teamarena lost für jedes Match eine ihrer Karten aus, der Aufstieg der Helden beginnt auf seiner
-ersten Karte, und nur in einem Gehosteten Spiel wählt der Host.
+ersten Karte, und nur in einem Gehosteten Spiel wählt der Host. Der Bildschirm keines anderen
+Modus sagt, welche Karte als Nächstes kommt: Das Match zeigt sie, während es lädt.
 
 Zwei Spieler hinter strengen Netzwerken können in einer Warteschlange nicht zueinander finden. Die Warteschlange zählt deshalb nur Spieler, die mit dir spielen können, und sagt es dir. Ein Relay unter **Optionen → Relay (TURN)** hilft.
 
@@ -29,7 +30,7 @@ außerhalb des Bildschirms oder unter dem HUD einen umrandeten Pfeil am Bildschi
 Flaggenstand oder ein Schrein in der Farbe seines Besitzers, grau, wenn er niemandem gehört, der
 Altar in Gold. Der gefüllte Pfeil eines Spielers wird darüber gezeichnet.
 
-Ein Match beginnt mit allen festgehalten nahe ihrem Startpunkt: Du kannst ein paar Schritte gehen, aber nicht kämpfen oder Fertigkeiten einsetzen. Eine schimmernde Wand um deinen Startpunkt zeigt, wie weit du gehen kannst. Eine Zeile oben zählt die Spieler, die das Match geladen haben. Haben alle geladen, zählt sie 10 Sekunden herunter, und das Match beginnt, mit ihm seine Uhr. Auf einen Spieler, der nach 20 Sekunden nicht geladen hat, wird nicht gewartet: Der Countdown beginnt ohne ihn, und er kann später noch dazukommen.
+Ein Match beginnt mit allen festgehalten nahe ihrem Startpunkt: Du kannst ein paar Schritte gehen und dich mit Fertigkeiten auf dich selbst und deine Verbündeten vorbereiten, etwa mit Verzauberungen, Haltungen und Heilungen, aber du kannst nicht angreifen oder eine Fertigkeit auf einen Gegner einsetzen. Energie und Leben regenerieren, während du wartest, und auch Bots bereiten sich vor. Eine schimmernde Wand um deinen Startpunkt zeigt, wie weit du gehen kannst. Eine Zeile oben zählt die Spieler, die das Match geladen haben. Haben alle geladen, zählt sie 10 Sekunden herunter, und das Match beginnt, mit ihm seine Uhr. Auf einen Spieler, der nach 20 Sekunden nicht geladen hat, wird nicht gewartet: Der Countdown beginnt ohne ihn, und er kann später noch dazukommen.
 
 ## Vernichtung
 

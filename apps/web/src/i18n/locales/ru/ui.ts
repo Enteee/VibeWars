@@ -681,6 +681,7 @@ export default {
   "hud.preMatchStartingAnyway":
     "Ожидание игроков: {joined}/{expected}, начнётся в любом случае через {seconds} с",
   "hud.preMatchStartsIn": "Матч начнётся через {seconds}",
+  "hud.preMatchSelfAllyOnly": "До начала: только умения на себя или союзников.",
   "hud.preMatchWaiting": "Ожидание игроков: {joined}/{expected}",
   "hud.priest": "жрец",
   "hud.priestDead": "жрец (мёртв)",
@@ -851,7 +852,6 @@ export default {
   "lobby.leaveTeamLabel": "Выйти из команды {team}",
   "lobby.map": "Карта:",
   "lobby.mapLabel": "{name} ({size})",
-  "lobby.mapRandom": "Карта: случайная (Командная арена)",
   "lobby.mapShown": "Карта: {map}",
   "lobby.matchRunning": "Матч ещё идёт. Лобби откроется, когда он закончится.",
   "lobby.modeNameCapturePoints": "Захват точек",

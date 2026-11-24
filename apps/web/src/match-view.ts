@@ -133,6 +133,7 @@ import { chartRoster, chartUsable, renderMatchCharts } from "./ui/match-charts.j
 import { renderSummary, summaryTables, type SummaryTable } from "./ui/match-summary.js";
 import { flashSlot, slotFlashes } from "./ui/skill-slot-state.js";
 import { endLineSetter, type EndLine } from "./ui/end-line.js";
+import { captureEvents } from "./capture-events.js";
 import { setToastHost, toast } from "./ui/kit.js";
 import { signedText } from "./ui/player-label.js";
 import type { MatchRecordFields } from "./storage/match-history.js";
@@ -1076,9 +1077,13 @@ export async function startMatchView(
     callbacks.onConnectionChange?.(state);
   });
 
+  const captured = captureEvents(location.search);
   viewed.onCombat((message) => {
     if (latestMatch === undefined) {
       return;
+    }
+    for (const event of message.events) {
+      captured?.push({ t: performance.now(), kind: event.kind, skillId: message.skillId });
     }
     if (viewport !== undefined) {
       showCombatFeedback(viewport.scene, message, latestMatch, structure.ground);

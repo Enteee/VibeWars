@@ -7,6 +7,8 @@ import {
   codeLabel,
   type Keymap,
 } from "../apps/web/src/input/keymap.js";
+import arUi from "../apps/web/src/i18n/locales/ar/ui.js";
+import deUi from "../apps/web/src/i18n/locales/de/ui.js";
 import { DEFAULT_STEP, zoomFor } from "../apps/web/src/render/camera-rig.js";
 import { STORAGE_NAMESPACE } from "./helpers/base.js";
 import { chooseProfession, professionField } from "./helpers/professions.js";
@@ -861,7 +863,7 @@ test("(20) a double right click on a far enemy attacks it: you walk there and sw
   const dummy = (await trainingView(page, canvas)).onPage({ x: 480, y: 210 });
   await page.mouse.dblclick(dummy.x, dummy.y, { button: "right" });
 
-  await expect(page.locator(".training-attacking")).toContainText("attacking");
+  await expect(page.locator(".training-attacking")).toBeVisible();
   // Only a body that walked the whole way there can land this. The walk
   // is in game time, which runs slower than wall time under load (#327).
   await expect(page.locator(".training-log")).toContainText(/Sword \(.+\) hits Bow-range dummy/, {
@@ -1130,7 +1132,7 @@ test("(26) left click walks, even onto a dummy, and never targets; right click t
   await page.mouse.click(moved.x, moved.y, { button: "right" });
   await page.mouse.move(1, 1);
   await expect.poll(() => shownNames(page)).toEqual([LADDER_IDS[0]]);
-  await expect(page.locator(".training-attacking")).not.toContainText("attacking");
+  await expect(page.locator(".training-attacking")).toBeHidden();
 });
 
 test("(27) a right click on the ground moves nobody and keeps the target (#438)", async ({
@@ -1723,10 +1725,10 @@ test("(43) Esc stops the attack and keeps the target, then a second Esc clears i
   await page.keyboard.press("Tab");
   await expect.poll(() => shownNames(page)).toHaveLength(1);
   await page.keyboard.press(key("attack"));
-  await expect(attacking).toContainText("attacking");
+  await expect(attacking).toBeVisible();
 
   await page.keyboard.press("Escape");
-  await expect(attacking).not.toContainText("attacking");
+  await expect(attacking).toBeHidden();
   await expect.poll(() => shownNames(page)).toHaveLength(1);
   await expect(page.locator(".training")).toHaveClass(/is-armed/);
 
@@ -1751,8 +1753,12 @@ test("set 2's key swaps to weapon set 2, the empty set 3's does nothing, and a s
   await page.locator(".gear-box").filter({ hasText: "Recurve Bow" }).first().click();
   await expect(page.locator(".training canvas")).toBeVisible();
   const slots = page.locator(".training .weapon-set");
-  // Each slot shows its key: F1 to F4 in Classic, the default (#3134).
-  await expect(slots).toHaveText(WEAPON_SET_ACTIONS.map((action) => codeLabel(key(action))));
+  // Each slot shows its key, F1 to F4 in Classic (#3134); shows, as the
+  // phone HUD's set number is in its text but hidden here (#3889).
+  await expect(slots).toHaveText(
+    WEAPON_SET_ACTIONS.map((action) => codeLabel(key(action))),
+    { useInnerText: true },
+  );
   await expect(slots.nth(0)).toHaveClass(/is-active/);
   await expect(slots.nth(1)).toHaveAccessibleName("Weapon set 2: Recurve Bow");
   await expect(slots.nth(2)).toHaveClass(/is-empty/);
@@ -1918,14 +1924,14 @@ test("(47) under Show names, a right click on a name only targets it; a left cli
   await expect.poll(() => shownNames(page)).toEqual(["ranged"]);
   // Long enough for an attack, or a walk, to have started.
   await page.waitForTimeout(1000);
-  await expect(page.locator(".training-attacking")).not.toContainText("attacking");
+  await expect(page.locator(".training-attacking")).toBeHidden();
   expect(await stage.getAttribute("data-positions")).toBe(before);
 
   // One Shift+left click on the name attacks at once.
   await page.keyboard.down(key("show-names"));
   await page.mouse.click(name.x, name.y);
   await page.keyboard.up(key("show-names"));
-  await expect(page.locator(".training-attacking")).toContainText("attacking");
+  await expect(page.locator(".training-attacking")).toBeVisible();
 });
 
 test("on a laptop the arena never runs under the chat's icon, at the top or the end (#3887)", async ({
@@ -1942,3 +1948,63 @@ test("on a laptop the arena never runs under the chat's icon, at the top or the 
     await underChatIcon(page, ".editor-layout :is(button, input, select, label, span)"),
   ).toEqual([]);
 });
+
+for (const { locale, ui } of [
+  { locale: "de-DE", ui: deUi },
+  { locale: "ar", ui: arUi },
+]) {
+  test.describe(`the training vitals in ${locale} at 380 px (#3907)`, () => {
+    test.use({ locale, viewport: { width: 380, height: 720 } });
+
+    test("attacking and stopping move nothing below them", async ({ page }) => {
+      test.slow();
+      await page.goto("./");
+      await page
+        .locator(".mode-rail")
+        .getByRole("button", { name: ui["rail.characters"], exact: true })
+        .click();
+      await page.getByRole("button", { name: ui["menu.newCharacter"], exact: true }).click();
+      await page.locator("select.training-scenario").selectOption("weapon-dps");
+      await takeControl(page);
+      const attacking = page.locator(".training-attacking");
+      const panel = page.locator(".training");
+      const row = page.locator(".editor-attribute").first();
+      // Off the panel's top, so a scroll the arena's click made is no jump.
+      const offset = async (): Promise<number> => {
+        const [top, at] = await Promise.all([panel.boundingBox(), row.boundingBox()]);
+        if (top === null || at === null) {
+          throw new Error("the panel or the attribute list is not on the page");
+        }
+        return at.y - top.y;
+      };
+      const still = await offset();
+      const samples: number[] = [];
+      const sample = async (): Promise<void> => {
+        for (let index = 0; index < 15; index++) {
+          samples.push(await offset());
+          await page.waitForTimeout(100);
+        }
+      };
+
+      await expect(attacking).toBeHidden();
+      await page.keyboard.press(key("attack"));
+      await expect(attacking).toBeVisible();
+      await sample();
+      // Past the rows the log shows, so its growth would have moved the list.
+      await expect
+        .poll(
+          async () => {
+            samples.push(await offset());
+            return await page.locator(".training-log-row").count();
+          },
+          { timeout: 40_000, intervals: [100] },
+        )
+        .toBeGreaterThanOrEqual(12);
+      // The first Esc stops the attack and keeps the arena (#1151).
+      await page.keyboard.press("Escape");
+      await expect(attacking).toBeHidden();
+      await sample();
+      expect(samples).toEqual(samples.map(() => still));
+    });
+  });
+}

@@ -1,6 +1,6 @@
 # Načini
 
-Svaka karta igra jedan način, a soba kaže koji ispod imena karte.
+Svaka karta igra jedan način.
 Načini su stavke trake s lijeve strane glavnog zaslona.
 Nitko ne bira način karte, ali stavka trake iz koje vodiš sobu bira
 načine koje igraju karte te sobe: ![Timska arena](../../../apps/web/public/icons/mode/team-arena.svg) **Timska arena** Uništenje, Broj ubojstava i
@@ -10,6 +10,8 @@ svaku kartu. ![Nasumična arena](../../../apps/web/public/icons/mode/random-aren
 ali nikad Bitku cehova, Utrku za relikvijom, Kralja brda ili Zauzimanje
 točaka. Timska arena za svaki meč izvlači jednu od svojih karata, Uspon heroja
 počinje na svojoj prvoj karti, a samo Igra s domaćinom dopušta domaćinu da bira.
+Zaslon nijednog drugog načina ne kaže koja karta slijedi: meč je prikazuje
+dok se učitava.
 
 Dva igrača iza strogih mreža ne mogu se upariti jedan s drugim u redu, pa red broji samo igrače s kojima se možete upariti i to kaže. Pomaže relej u **Opcije → relej (TURN)**.
 
@@ -30,7 +32,7 @@ cilj izvan zaslona ili pod HUD-om dobiva obrubljenu strelicu na
 rubu zaslona: stalak ili svetište u boji vlasnika, sivo za
 ničije, oltar zlatan. Ispunjena strelica igrača crta se preko nje.
 
-Meč počinje sa svima zadržanima blizu njihova mjesta pojavljivanja: možeš napraviti nekoliko koraka, ali ne i boriti se ni koristiti vještine. Svjetlucavi zid oko tvog mjesta pojavljivanja pokazuje dokle možeš ići. Redak na vrhu broji igrače koji su učitali meč. Kad ga svi učitaju, odbrojava 10 sekundi i meč počinje, a s njim i njegov sat. Na igrača koji ga nije učitao nakon 20 sekundi ne čeka se: odbrojavanje počinje bez njega, a on se i dalje može pridružiti kasnije.
+Meč počinje sa svima zadržanima blizu njihova mjesta pojavljivanja: možeš napraviti nekoliko koraka i pripremiti se vještinama na sebi i svojim saveznicima, poput začaranja, stavova i liječenja, ali ne možeš napadati ni koristiti vještinu na neprijatelju. Energija i zdravlje obnavljaju se dok čekaš, a i botovi se pripremaju. Svjetlucavi zid oko tvog mjesta pojavljivanja pokazuje dokle možeš ići. Redak na vrhu broji igrače koji su učitali meč. Kad ga svi učitaju, odbrojava 10 sekundi i meč počinje, a s njim i njegov sat. Na igrača koji ga nije učitao nakon 20 sekundi ne čeka se: odbrojavanje počinje bez njega, a on se i dalje može pridružiti kasnije.
 
 ## Uništenje
 

@@ -1,6 +1,7 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
 import { STORAGE_NAMESPACE } from "./helpers/base.js";
+import { hudCorner, hudMenuRow } from "./helpers/hud-menu.js";
 import { openRail } from "./helpers/menu.js";
 import {
   expectTeamSize,
@@ -281,9 +282,10 @@ test("a ranked 1v1 ends in a receipt both players published, which holds (#3680)
       });
     }
     // The leave question says what leaving costs.
-    await alice.locator(".hud-leave").getByRole("button", { name: "leave match" }).click();
-    await expect(alice.locator(".hud-leave")).toContainText("counts as a loss");
-    await alice.locator(".hud-leave").getByRole("button", { name: "no" }).click();
+    const aliceLeave = await hudMenuRow(alice, "leave");
+    await aliceLeave.getByRole("button", { name: "leave match" }).click();
+    await expect(aliceLeave).toContainText("counts as a loss");
+    await aliceLeave.getByRole("button", { name: "no" }).click();
 
     const [aliceHud] = await aliceBeatsBob(alice, bob);
     expect(aliceHud.result).toMatch(/victory/i);
@@ -364,7 +366,7 @@ async function meetInMatch(alice: Page, bob: Page): Promise<void> {
 }
 
 async function leaveMatch(page: Page): Promise<void> {
-  const leave = page.locator(".hud-leave");
+  const leave = await hudMenuRow(page, "leave");
   await leave.getByRole("button", { name: "leave match" }).click();
   await leave.getByRole("button", { name: "yes" }).click();
 }
@@ -380,7 +382,7 @@ test("#2905: the host leaving a queued match tells the guest the host left", asy
     await leaveMatch(alice);
     await expect(bob.getByText("The host left")).toBeVisible();
     await expect(bob.getByText("Lost the connection to the match.")).toHaveCount(0);
-    await expect(bob.locator(".hud-leave")).toBeHidden();
+    await expect(hudCorner(bob)).toBeHidden();
   } finally {
     await context.close();
   }
@@ -395,8 +397,8 @@ test("#2905: a guest leaving a queued match leaves the host playing, with no not
   try {
     await meetInMatch(alice, bob);
     await leaveMatch(bob);
-    await expect(bob.locator(".hud-leave")).toBeHidden();
-    await expect(alice.locator(".hud-leave")).toBeVisible();
+    await expect(hudCorner(bob)).toBeHidden();
+    await expect(hudCorner(alice)).toBeVisible();
     await expect(alice.getByText("Lost the connection to the match.")).toHaveCount(0);
   } finally {
     await context.close();

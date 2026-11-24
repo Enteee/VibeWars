@@ -658,6 +658,7 @@ export default {
   "hud.preMatchStartingAnyway":
     "ממתינים לשחקנים: {joined}/{expected}, מתחילים בכל זאת בעוד {seconds} ש׳",
   "hud.preMatchStartsIn": "המשחק מתחיל בעוד {seconds}",
+  "hud.preMatchSelfAllyOnly": "לפני ההתחלה: רק מיומנויות על עצמך או על בני ברית.",
   "hud.preMatchWaiting": "ממתינים לשחקנים: {joined}/{expected}",
   "hud.priest": "כוהן",
   "hud.priestDead": "כוהן (מת)",
@@ -826,7 +827,6 @@ export default {
   "lobby.leaveTeamLabel": "עזוב את קבוצה {team}",
   "lobby.map": "מפה:",
   "lobby.mapLabel": "{name} ({size})",
-  "lobby.mapRandom": "מפה: אקראית (זירת קבוצות)",
   "lobby.mapShown": "מפה: {map}",
   "lobby.matchRunning": "משחק עדיין מתנהל. הלובי ייפתח שוב כשיסתיים.",
   "lobby.modeNameCapturePoints": "כיבוש נקודות",

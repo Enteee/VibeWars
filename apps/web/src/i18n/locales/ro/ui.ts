@@ -664,6 +664,7 @@ export default {
   "hud.preMatchStartingAnyway":
     "Se așteaptă jucătorii: {joined}/{expected}, începe oricum în {seconds} s",
   "hud.preMatchStartsIn": "Meciul începe în {seconds}",
+  "hud.preMatchSelfAllyOnly": "Înainte de start: doar abilități pe tine sau pe aliați.",
   "hud.preMatchWaiting": "Se așteaptă jucătorii: {joined}/{expected}",
   "hud.priest": "preot",
   "hud.priestDead": "preot (mort)",
@@ -832,7 +833,6 @@ export default {
   "lobby.leaveTeamLabel": "Ieși din echipa {team}",
   "lobby.map": "Hartă:",
   "lobby.mapLabel": "{name} ({size})",
-  "lobby.mapRandom": "Hartă: aleatorie (Arenă de echipe)",
   "lobby.mapShown": "Hartă: {map}",
   "lobby.matchRunning": "Un meci încă rulează. Lobby-ul se redeschide când se termină.",
   "lobby.modeNameCapturePoints": "Capturare de puncte",

@@ -1,6 +1,6 @@
 # Mode
 
-Setiap peta memainkan satu mode, dan lobi menyebutkan mode itu di bawah nama peta.
+Setiap peta memainkan satu mode.
 Mode-mode adalah entri rel di kiri layar utama.
 Tak ada yang memilih mode sebuah peta, tapi entri rel tempat kamu menjadi host menentukan
 mode yang dimainkan peta-peta lobinya: ![Arena Tim](../../../apps/web/public/icons/mode/team-arena.svg) **Arena Tim** Pemusnahan, Hitung Kill dan
@@ -10,6 +10,8 @@ semua peta. ![Arena Acak](../../../apps/web/public/icons/mode/random-arena.svg) 
 tapi tidak pernah Perang Guild, Lari Relik, Raja Bukit atau Rebut
 Titik. Arena Tim mengundi salah satu petanya untuk setiap laga, Pendakian Pahlawan
 dimulai di peta pertamanya, dan hanya Game Host yang membiarkan host memilih.
+Layar mode lain tidak menyebutkan peta mana yang berikutnya: laga
+menampilkannya saat dimuat.
 
 Dua pemain di balik jaringan ketat tidak bisa dipasangkan satu sama lain dalam antrean, jadi antrean hanya menghitung pemain yang bisa dipasangkan denganmu, dan memberitahukannya. Relay di **Opsi → relay (TURN)** membantu.
 
@@ -30,7 +32,7 @@ sasaran yang di luar layar atau tertutup HUD mendapat panah bergaris tepi di
 tepi layar: tiang atau kuil dalam warna pemiliknya, abu-abu kalau
 belum dimiliki siapa pun, altar dalam warna emas. Panah terisi milik pemain digambar di atasnya.
 
-Pertandingan dibuka dengan semua orang ditahan di dekat titik munculnya: kamu bisa berjalan beberapa langkah, tetapi tidak bisa bertarung atau memakai skill. Dinding berkilau di sekitar titik munculmu menunjukkan seberapa jauh kamu bisa pergi. Satu baris di atas menghitung pemain yang sudah selesai memuat pertandingan. Begitu semua selesai memuat, baris itu menghitung mundur 10 detik dan pertandingan dimulai, beserta jamnya. Pemain yang belum selesai memuat setelah 20 detik tidak ditunggu: hitung mundur dimulai tanpanya, dan ia masih bisa bergabung nanti.
+Pertandingan dibuka dengan semua orang ditahan di dekat titik munculnya: kamu bisa berjalan beberapa langkah dan bersiap dengan skill pada dirimu sendiri dan sekutumu, seperti berkah, kuda-kuda, dan penyembuhan, tetapi tidak bisa menyerang atau memakai skill pada musuh. Energi dan Darah pulih selama kamu menunggu, dan bot juga bersiap. Dinding berkilau di sekitar titik munculmu menunjukkan seberapa jauh kamu bisa pergi. Satu baris di atas menghitung pemain yang sudah selesai memuat pertandingan. Begitu semua selesai memuat, baris itu menghitung mundur 10 detik dan pertandingan dimulai, beserta jamnya. Pemain yang belum selesai memuat setelah 20 detik tidak ditunggu: hitung mundur dimulai tanpanya, dan ia masih bisa bergabung nanti.
 
 ## Pemusnahan
 

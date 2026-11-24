@@ -632,6 +632,7 @@ export default {
   "hud.preMatchStartingAnyway":
     "Várakozás a játékosokra: {joined}/{expected}, {seconds} mp múlva mindenképp indul",
   "hud.preMatchStartsIn": "A meccs {seconds} múlva kezdődik",
+  "hud.preMatchSelfAllyOnly": "A kezdés előtt: csak magadra vagy szövetségesekre ható képességek.",
   "hud.preMatchWaiting": "Várakozás a játékosokra: {joined}/{expected}",
   "hud.priest": "pap",
   "hud.priestDead": "pap (halott)",
@@ -792,7 +793,6 @@ export default {
   "lobby.leaveTeamLabel": "Kilépés a csapatból: {team}",
   "lobby.map": "Pálya:",
   "lobby.mapLabel": "{name} ({size})",
-  "lobby.mapRandom": "Pálya: véletlen (Csapataréna)",
   "lobby.mapShown": "Pálya: {map}",
   "lobby.matchRunning": "Még tart egy meccs. A lobbi a vége után nyílik meg újra.",
   "lobby.modeNameCapturePoints": "Pontfoglalás",

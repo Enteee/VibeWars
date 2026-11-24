@@ -635,6 +635,7 @@ export default {
   "hud.preMatchStartingAnyway":
     "Αναμονή παικτών: {joined}/{expected}, ξεκινά ούτως ή άλλως σε {seconds} δ",
   "hud.preMatchStartsIn": "Ο αγώνας ξεκινά σε {seconds}",
+  "hud.preMatchSelfAllyOnly": "Πριν την έναρξη: μόνο δεξιότητες σε εσένα ή συμμάχους.",
   "hud.preMatchWaiting": "Αναμονή παικτών: {joined}/{expected}",
   "hud.priest": "ιερέας",
   "hud.priestDead": "ιερέας (νεκρός)",
@@ -797,7 +798,6 @@ export default {
   "lobby.leaveTeamLabel": "Έξοδος από την ομάδα {team}",
   "lobby.map": "Χάρτης:",
   "lobby.mapLabel": "{name} ({size})",
-  "lobby.mapRandom": "Χάρτης: τυχαίος (Αρένα Ομάδων)",
   "lobby.mapShown": "Χάρτης: {map}",
   "lobby.matchRunning": "Ένας αγώνας είναι ακόμη σε εξέλιξη. Το λόμπι ανοίγει ξανά όταν τελειώσει.",
   "lobby.modeNameCapturePoints": "Κατάληψη σημείων",

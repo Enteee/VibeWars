@@ -1,7 +1,6 @@
 # Spiltilstande
 
-Hver bane spiller én spiltilstand, og lobbyen siger hvilken under banens
-navn. Spiltilstandene er punkterne i skinnen til venstre på
+Hver bane spiller én spiltilstand. Spiltilstandene er punkterne i skinnen til venstre på
 hovedskærmen. Ingen vælger en banes spiltilstand, men det punkt i
 skinnen, du er vært fra, vælger de spiltilstande, dens lobbys baner
 spiller: ![Holdarena](../../../apps/web/public/icons/mode/team-arena.svg) **Holdarena** Udslettelse, Drabstælling og Præsteudslettelse,
@@ -11,6 +10,8 @@ arena** vælger en bane for dig, og dermed spiltilstanden, men aldrig en
 Laugskamp, et Relikvieløb, Kongen af bakken eller Erobring. Holdarena
 trækker en af sine baner til hver kamp, Heltenes opstigning starter på
 sin første bane, og kun et Værtsspil lader værten vælge.
+Ingen anden spiltilstands skærm siger, hvilken bane der står for tur: kampen
+viser den, mens den indlæses.
 
 To spillere bag strenge netværk kan ikke sættes sammen i en kø, så køen tæller kun de spillere, du kan sættes sammen med, og siger det. Et relay under **Valg → Relay (TURN)** hjælper.
 
@@ -32,7 +33,7 @@ mål uden for skærmen eller under HUD'en en pil med omrids ved
 skærmkanten: standen eller en helligdom i ejerens farve, grå hvis ingen
 ejer den, alteret i guld. En spillers udfyldte pil tegnes oven på den.
 
-En kamp åbner med alle holdt nær deres startsted: du kan gå et par skridt, men ikke kæmpe eller bruge færdigheder. En glitrende væg omkring dit startsted viser, hvor langt du kan gå. En linje øverst tæller de spillere, der har indlæst kampen. Når alle har indlæst den, tæller den 10 sekunder ned, og kampen starter, og dens ur med den. Der ventes ikke på en spiller, der ikke har indlæst kampen efter 20 sekunder: nedtællingen starter uden dem, og de kan stadig komme med senere.
+En kamp åbner med alle holdt nær deres startsted: du kan gå et par skridt og forberede dig med færdigheder på dig selv og dine allierede, såsom fortryllelser, kampstillinger og helbredelser, men du kan ikke angribe eller bruge en færdighed på en fjende. Energi og liv regenererer, mens du venter, og bots forbereder sig også. En glitrende væg omkring dit startsted viser, hvor langt du kan gå. En linje øverst tæller de spillere, der har indlæst kampen. Når alle har indlæst den, tæller den 10 sekunder ned, og kampen starter, og dens ur med den. Der ventes ikke på en spiller, der ikke har indlæst kampen efter 20 sekunder: nedtællingen starter uden dem, og de kan stadig komme med senere.
 
 ## Udslettelse
 

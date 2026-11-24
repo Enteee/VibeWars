@@ -684,6 +684,7 @@ export default {
   "hud.preMatchStartingAnyway":
     "Очікування гравців: {joined}/{expected}, почнеться все одно за {seconds} с",
   "hud.preMatchStartsIn": "Матч почнеться за {seconds}",
+  "hud.preMatchSelfAllyOnly": "До початку: лише вміння на себе або союзників.",
   "hud.preMatchWaiting": "Очікування гравців: {joined}/{expected}",
   "hud.priest": "жрець",
   "hud.priestDead": "жрець (мертвий)",
@@ -855,7 +856,6 @@ export default {
   "lobby.leaveTeamLabel": "Вийти з команди {team}",
   "lobby.map": "Мапа:",
   "lobby.mapLabel": "{name} ({size})",
-  "lobby.mapRandom": "Мапа: випадкова (Командна арена)",
   "lobby.mapShown": "Мапа: {map}",
   "lobby.matchRunning": "Матч ще триває. Лобі відкриється, коли він завершиться.",
   "lobby.modeNameCapturePoints": "Захоплення точок",

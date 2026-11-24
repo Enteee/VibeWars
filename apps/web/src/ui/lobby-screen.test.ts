@@ -2,7 +2,6 @@ import type { LobbyPlayerSnapshot, LobbySnapshot } from "@vibewars/game-session"
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { t } from "../i18n/index.js";
-import { ASCENT_PROGRESSION } from "../net/maps.js";
 import {
   hostMaps,
   inviteUrl,
@@ -514,7 +513,6 @@ describe("matchmakingButtons (#1766)", () => {
   const pressed: string[] = [];
   const matchmaking = (queuedMs: number | null) => ({
     queuedMs,
-    groupMapId: undefined,
     onFindMatch: () => pressed.push("find"),
   });
   const buttons = (queuedMs: number | null, phase: LobbySnapshot["phase"] = "waiting") => {
@@ -615,16 +613,23 @@ describe("lobbyPanel: the map (#1994)", () => {
     expect(selects(part as unknown as FakeElement)).toEqual([]);
   });
 
-  it("says Team Arena draws it, with no picker", () => {
-    const part = mapPart("team-arena");
-    expect(selects(part)).toEqual([]);
-    expect(part.textContent).toBe("Map: random (Team Arena)");
+  it("shows no map outside a Hosted Game: the match says it (#3925)", () => {
+    for (const mode of ["random-arena", "team-arena", "heroes-ascent", "gvg"] as const) {
+      const shown = { ...snapshot("waiting"), mode, mapId: "arena-crossroads", ascentRound: null };
+      expect(lobbyPanel(shown, callbacks, undefined, maps).status).toEqual([]);
+    }
   });
 
-  it("names Heroes' Ascent's, with no picker", () => {
-    const part = mapPart("heroes-ascent");
-    expect(selects(part)).toEqual([]);
-    expect(part.textContent).toBe("Map: Crossroads (small)");
+  it("names a Hosted Game's map to a guest, with no picker", () => {
+    const shown = {
+      ...snapshot("waiting"),
+      mode: "hosted-game",
+      mapId: "arena-crossroads",
+      isHost: false,
+    } as const;
+    const [part] = lobbyPanel(shown, callbacks, undefined, maps).status;
+    expect(selects(part as unknown as FakeElement)).toEqual([]);
+    expect(part?.textContent).toBe("Map: Crossroads (small)");
   });
 
   it("says on a disabled Ready why, and nothing on an enabled one (#2124)", () => {
@@ -646,68 +651,6 @@ describe("lobbyPanel: the map (#1994)", () => {
       const { body } = lobbyPanel(shown, callbacks, undefined, maps);
       expect((body as unknown as FakeElement).all("lobby-mode")).toEqual([]);
     }
-  });
-
-  it("names a queued Heroes' Ascent's round map, not the lobby's (#1996)", () => {
-    const ascent = [
-      {
-        id: "broken-tower",
-        size: "medium",
-        mode: "relic-run",
-        teamSizes: [4, 8],
-      },
-      {
-        id: "blackwater-ford",
-        name: "Blackwater Ford",
-        size: "medium",
-        mode: "capture-points",
-        teamSizes: [4, 8],
-      },
-    ] as const;
-    const queued = {
-      ...snapshot("waiting"),
-      mode: "heroes-ascent",
-      mapId: "broken-tower",
-      ascentRound: 1,
-    } as const;
-    const { status } = lobbyPanel(queued, callbacks, undefined, ascent);
-    expect((status[0] as unknown as FakeElement).textContent).toBe("Map: Blackwater Ford (medium)");
-  });
-
-  it("shows the group's map once a party that skipped ahead is formed into one (#2687)", () => {
-    const ascent = ASCENT_PROGRESSION.slice(0, 4).map((id, index) => ({
-      id,
-      name: `Round ${String(index)}`,
-      size: "small" as const,
-      mode: "capture-points" as const,
-      teamSizes: [8],
-    }));
-    const queued = {
-      ...snapshot("waiting"),
-      mode: "heroes-ascent",
-      ascentRound: 1,
-    } as const;
-    const matchmaking = {
-      queuedMs: 70_000,
-      onFindMatch: () => undefined,
-    };
-    const shown = (groupMapId: string | undefined): string | null | undefined =>
-      (
-        lobbyPanel(queued, callbacks, undefined, ascent, { ...matchmaking, groupMapId })
-          .status[0] as unknown as FakeElement
-      ).textContent;
-    expect(shown(undefined)).toBe("Map: Blackwater Ford (small)");
-    expect(shown(ASCENT_PROGRESSION[3])).toBe("Map: Cinder Sanctum (small)");
-  });
-
-  it("shows the lobby's map for a round a hostile host claims past the maps (#2686)", () => {
-    const queued = {
-      ...snapshot("waiting"),
-      mode: "heroes-ascent",
-      mapId: "broken-tower",
-      ascentRound: 9,
-    } as const;
-    expect(() => lobbyPanel(queued, callbacks, undefined, maps)).not.toThrow();
   });
 });
 

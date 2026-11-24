@@ -720,6 +720,7 @@ export default {
   "hud.preMatchStartingAnyway":
     "بانتظار اللاعبين: {joined}/{expected}، تبدأ على أي حال خلال {seconds} ث",
   "hud.preMatchStartsIn": "تبدأ المباراة خلال {seconds}",
+  "hud.preMatchSelfAllyOnly": "قبل البداية: مهارات على نفسك أو حلفائك فقط.",
   "hud.preMatchWaiting": "بانتظار اللاعبين: {joined}/{expected}",
   "hud.priest": "كاهن",
   "hud.priestDead": "كاهن (ميت)",
@@ -894,7 +895,6 @@ export default {
   "lobby.leaveTeamLabel": "مغادرة الفريق {team}",
   "lobby.map": "الخريطة:",
   "lobby.mapLabel": "{name} ({size})",
-  "lobby.mapRandom": "الخريطة: عشوائية (ساحة الفرق)",
   "lobby.mapShown": "الخريطة: {map}",
   "lobby.matchRunning": "ما زالت هناك مباراة جارية. تُفتح الردهة مجددًا عند انتهائها.",
   "lobby.modeNameCapturePoints": "نقاط السيطرة",

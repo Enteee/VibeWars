@@ -1,7 +1,6 @@
 # Pelitilat
 
-Jokainen kartta pelaa yhtä pelitilaa, ja aula kertoo sen kartan nimen
-alla. Pelitilat ovat päänäkymän vasemmassa reunassa olevan palkin
+Jokainen kartta pelaa yhtä pelitilaa. Pelitilat ovat päänäkymän vasemmassa reunassa olevan palkin
 kohdat. Kukaan ei valitse kartan pelitilaa, mutta palkin kohta, josta
 isännöit, valitsee pelitilat, joita sen aulan kartat pelaavat:
 ![Tiimiareena](../../../apps/web/public/icons/mode/team-arena.svg) **Tiimiareena** Tuho, Tappolaskenta ja Pappituho, ![Sankarien nousu](../../../apps/web/public/icons/mode/heroes-ascent.svg) **Sankarien nousu**
@@ -11,7 +10,8 @@ Kiltataistelu. ![Isännöity peli](../../../apps/web/public/icons/mode/hosted-ga
 mutta ei koskaan Kiltataistelua, Reliikkijuoksua, Kukkulan kuningasta
 eikä Valtauspisteitä. Tiimiareena arpoo jokaiseen otteluun yhden
 kartoistaan, Sankarien nousu alkaa ensimmäiseltä kartaltaan, ja vain
-Isännöity peli antaa isännän valita.
+Isännöity peli antaa isännän valita. Minkään muun pelitilan näkymä ei
+kerro, mikä kartta on seuraavana: ottelu näyttää sen latautuessaan.
 
 Kahta tiukkojen verkkojen takana olevaa pelaajaa ei voi yhdistää toisiinsa jonossa, joten jono laskee vain pelaajat, joiden kanssa sinut voi yhdistää, ja kertoo sen. Relay kohdassa **Asetukset → relay (TURN)** auttaa.
 
@@ -34,7 +34,7 @@ saa ääriviivoitetun nuolen näytön reunaan: teline tai pyhäkkö omistajansa
 värissä, harmaana, jos se ei ole kenenkään, alttari kultaisena. Pelaajan
 täytetty nuoli piirtyy sen päälle.
 
-Ottelu alkaa kaikki pidettyinä lähtöpaikkansa lähellä: voit kävellä muutaman askeleen, mutta et taistella etkä käyttää taitoja. Lähtöpaikkasi ympärillä hohtava seinä näyttää, kuinka pitkälle voit kävellä. Ylhäällä oleva rivi laskee pelaajat, jotka ovat ladanneet ottelun. Kun kaikki ovat ladanneet, se laskee 10 sekuntia ja ottelu alkaa, ja sen kello sen mukana. Pelaajaa, joka ei ole ladannut 20 sekunnin jälkeen, ei odoteta: lähtölaskenta alkaa ilman häntä, ja hän voi silti liittyä myöhemmin.
+Ottelu alkaa kaikki pidettyinä lähtöpaikkansa lähellä: voit kävellä muutaman askeleen ja valmistautua taidoilla, jotka kohdistat itseesi ja liittolaisiisi, kuten lumouksilla, asennoilla ja parannuksilla, mutta et voi hyökätä etkä käyttää taitoa viholliseen. Energia ja terveys palautuvat odottaessasi, ja myös botit valmistautuvat. Lähtöpaikkasi ympärillä hohtava seinä näyttää, kuinka pitkälle voit kävellä. Ylhäällä oleva rivi laskee pelaajat, jotka ovat ladanneet ottelun. Kun kaikki ovat ladanneet, se laskee 10 sekuntia ja ottelu alkaa, ja sen kello sen mukana. Pelaajaa, joka ei ole ladannut 20 sekunnin jälkeen, ei odoteta: lähtölaskenta alkaa ilman häntä, ja hän voi silti liittyä myöhemmin.
 
 ## Tuho
 

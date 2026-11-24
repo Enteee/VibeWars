@@ -632,6 +632,7 @@ export default {
   "hud.preMatchStartingAnyway":
     "Изчакване на играчи: {joined}/{expected}, започва все пак след {seconds} с",
   "hud.preMatchStartsIn": "Мачът започва след {seconds}",
+  "hud.preMatchSelfAllyOnly": "Преди началото: само умения върху себе си или съюзници.",
   "hud.preMatchWaiting": "Изчакване на играчи: {joined}/{expected}",
   "hud.priest": "жрец",
   "hud.priestDead": "жрец (мъртъв)",
@@ -792,7 +793,6 @@ export default {
   "lobby.leaveTeamLabel": "Напусни отбор {team}",
   "lobby.map": "Карта:",
   "lobby.mapLabel": "{name} ({size})",
-  "lobby.mapRandom": "Карта: случайна (Отборна арена)",
   "lobby.mapShown": "Карта: {map}",
   "lobby.matchRunning": "Още тече мач. Лобито се отваря отново, когато свърши.",
   "lobby.modeNameCapturePoints": "Превземане на точки",

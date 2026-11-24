@@ -1,6 +1,6 @@
 # Modes
 
-Chaque carte joue un mode, et le salon l'indique sous le nom de la carte.
+Chaque carte joue un mode.
 Les modes sont les entrées de la colonne à gauche de l'écran principal.
 Personne ne choisit le mode d'une carte, mais l'entrée d'où tu héberges choisit
 les modes que jouent les cartes de son salon : ![Arène d'équipe](../../../apps/web/public/icons/mode/team-arena.svg) **Arène d'équipe** Annihilation,
@@ -11,6 +11,8 @@ une carte pour toi, et avec elle le mode, mais jamais une Bataille de guilde,
 une Course aux reliques, un Roi de la colline ou des Points de capture. L'Arène
 d'équipe tire une de ses cartes à chaque match, l'Ascension des héros commence
 sur sa première carte, et seule une Partie hébergée laisse l'hôte choisir.
+L'écran d'aucun autre mode n'indique quelle carte vient ensuite : le match
+l'affiche pendant son chargement.
 
 Deux joueurs derrière des réseaux stricts ne peuvent pas être appariés entre eux dans une file, alors la file ne compte que les joueurs qui peuvent jouer avec vous, et le dit. Un relais dans **Options → relais (TURN)** aide.
 
@@ -33,7 +35,7 @@ détourée au bord de l'écran : le socle ou un sanctuaire à la couleur de son
 propriétaire, gris s'il n'est à personne, l'autel en or. La flèche pleine d'un
 joueur s'affiche par-dessus.
 
-Un match s'ouvre avec tout le monde retenu près de son point d'apparition : tu peux faire quelques pas, mais pas combattre ni utiliser de compétences. Un mur chatoyant autour de ton point d'apparition montre jusqu'où tu peux aller. Une ligne en haut compte les joueurs qui ont chargé le match. Une fois que tout le monde a chargé, elle décompte 10 secondes et le match commence, et son chrono avec lui. Un joueur qui n'a pas chargé après 20 secondes n'est pas attendu : le décompte commence sans lui, et il peut encore rejoindre plus tard.
+Un match s'ouvre avec tout le monde retenu près de son point d'apparition : tu peux faire quelques pas et te préparer avec des compétences sur toi et tes alliés, comme des enchantements, des postures et des soins, mais tu ne peux pas attaquer ni utiliser de compétence sur un ennemi. L'énergie et la santé se régénèrent pendant l'attente, et les bots se préparent aussi. Un mur chatoyant autour de ton point d'apparition montre jusqu'où tu peux aller. Une ligne en haut compte les joueurs qui ont chargé le match. Une fois que tout le monde a chargé, elle décompte 10 secondes et le match commence, et son chrono avec lui. Un joueur qui n'a pas chargé après 20 secondes n'est pas attendu : le décompte commence sans lui, et il peut encore rejoindre plus tard.
 
 ## Annihilation
 

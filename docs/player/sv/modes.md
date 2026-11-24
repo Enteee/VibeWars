@@ -1,6 +1,6 @@
 # Lägen
 
-Varje karta spelar ett läge, och lobbyn säger vilket under kartans namn.
+Varje karta spelar ett läge.
 Lägena är posterna på raden till vänster på huvudskärmen. Ingen väljer
 en kartas läge, men raden du är värd från väljer vilka lägen lobbyns
 kartor spelar: ![Lagarena](../../../apps/web/public/icons/mode/team-arena.svg) **Lagarena** Förintelse, Dödsräkning och
@@ -10,7 +10,8 @@ kartor. En ![Slumparena](../../../apps/web/public/icons/mode/random-arena.svg) *
 men aldrig en gillestrid, en reliklöpning, King of the Hill eller
 Erövringspunkter. Lagarena drar en av sina kartor för varje match,
 Heroes' Ascent börjar på sin första karta, och bara i ett eget spel får
-värden välja.
+värden välja. Inget annat läges skärm säger vilken karta som kommer
+härnäst: matchen visar den medan den laddas.
 
 Två spelare bakom strikta nätverk kan inte matchas mot varandra i en kö, så kön räknar bara spelare som kan matchas med dig, och säger det. Ett relä under **Alternativ → Relä (TURN)** hjälper.
 
@@ -33,7 +34,7 @@ konturpil vid skärmkanten: stället eller en helgedom i ägarens färg,
 grå om ingen äger den, altaret i guld. En spelares fyllda pil ritas
 ovanpå.
 
-En match börjar med alla fasthållna nära sin startplats: du kan gå några steg, men inte slåss eller använda färdigheter. En skimrande vägg runt din startplats visar hur långt du kan gå. En rad överst räknar spelarna som har läst in matchen. När alla har läst in den räknar den ner 10 sekunder och matchen börjar, och dess klocka med den. En spelare som inte har läst in den efter 20 sekunder väntar man inte på: nedräkningen börjar utan dem, och de kan fortfarande ansluta senare.
+En match börjar med alla fasthållna nära sin startplats: du kan gå några steg och förbereda dig med färdigheter på dig själv och dina allierade, som förtrollningar, ställningar och helningar, men du kan inte anfalla eller använda en färdighet på en fiende. Energi och hälsa återhämtar sig medan du väntar, och bottar förbereder sig också. En skimrande vägg runt din startplats visar hur långt du kan gå. En rad överst räknar spelarna som har läst in matchen. När alla har läst in den räknar den ner 10 sekunder och matchen börjar, och dess klocka med den. En spelare som inte har läst in den efter 20 sekunder väntar man inte på: nedräkningen börjar utan dem, och de kan fortfarande ansluta senare.
 
 ## Förintelse
 

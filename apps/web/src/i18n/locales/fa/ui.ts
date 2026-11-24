@@ -627,6 +627,7 @@ export default {
   "hud.preMatchStartingAnyway":
     "در انتظار بازیکنان: {joined}/{expected}، در هر صورت تا {seconds} ثانیه دیگر شروع می‌شود",
   "hud.preMatchStartsIn": "مسابقه تا {seconds} دیگر شروع می‌شود",
+  "hud.preMatchSelfAllyOnly": "پیش از شروع: فقط مهارت‌ها روی خودت یا هم‌پیمانان.",
   "hud.preMatchWaiting": "در انتظار بازیکنان: {joined}/{expected}",
   "hud.priest": "کشیش",
   "hud.priestDead": "کشیش (مرده)",
@@ -787,7 +788,6 @@ export default {
   "lobby.leaveTeamLabel": "خروج از تیم {team}",
   "lobby.map": "نقشه:",
   "lobby.mapLabel": "{name} ({size})",
-  "lobby.mapRandom": "نقشه: تصادفی (آرنای تیمی)",
   "lobby.mapShown": "نقشه: {map}",
   "lobby.matchRunning": "مسابقه‌ای هنوز در جریان است. لابی پس از پایانش دوباره باز می‌شود.",
   "lobby.modeNameCapturePoints": "تسخیر نقاط",

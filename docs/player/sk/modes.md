@@ -1,6 +1,6 @@
 # Režimy
 
-Každá mapa hrá jeden režim a lobby ho uvádza pod názvom mapy.
+Každá mapa hrá jeden režim.
 Režimy sú položky lišty na ľavej strane hlavnej obrazovky.
 Nikto nevyberá režim mapy, ale položka lišty, z ktorej hostíš, určuje
 režimy, ktoré hrajú mapy jej lobby: ![Tímová aréna](../../../apps/web/public/icons/mode/team-arena.svg) **Tímová aréna** Anihiláciu, Počet zabití a
@@ -10,6 +10,8 @@ každú mapu. ![Náhodná aréna](../../../apps/web/public/icons/mode/random-are
 ale nikdy Cechovú bitku, Beh s relikviou, Kráľa kopca ani Dobývanie
 bodov. Tímová aréna vylosuje jednu zo svojich máp pre každý zápas, Výstup hrdinov
 začína na svojej prvej mape a len vo Vlastnej hre vyberá hostiteľ.
+Obrazovka žiadneho iného režimu neuvádza, ktorá mapa príde na rad: zápas
+ju ukáže pri načítaní.
 
 Dvaja hráči za prísnymi sieťami sa vo fronte nemôžu spárovať navzájom, preto front počíta len hráčov, s ktorými sa spárovať môžete, a povie vám to. Pomôže relé v **Nastavenia → relé (TURN)**.
 
@@ -30,7 +32,7 @@ cieľ mimo obrazovky alebo pod HUD obrysovú šípku na okraji
 obrazovky: stojan alebo svätyňa vo farbe svojho vlastníka, sivá, ak nikomu
 nepatrí, oltár v zlatej. Vyplnená šípka hráča sa kreslí cez ňu.
 
-Zápas sa začína so všetkými držanými pri ich štarte: môžeš urobiť pár krokov, ale nemôžeš bojovať ani používať schopnosti. Trblietavá stena okolo tvojho štartu ukazuje, kam až môžeš dôjsť. Riadok hore počíta hráčov, ktorým sa zápas načítal. Keď sa načíta všetkým, odpočíta 10 sekúnd a zápas sa začne, a s ním aj jeho čas. Na hráča, ktorému sa zápas nenačítal ani po 20 sekundách, sa nečaká: odpočítavanie začne bez neho a pripojiť sa môže aj neskôr.
+Zápas sa začína so všetkými držanými pri ich štarte: môžeš urobiť pár krokov a pripraviť sa schopnosťami na seba a svojich spojencov, ako sú očarovania, postoje a liečenie, ale nemôžeš útočiť ani použiť schopnosť na nepriateľa. Energia a zdravie sa počas čakania obnovujú a boti sa pripravujú tiež. Trblietavá stena okolo tvojho štartu ukazuje, kam až môžeš dôjsť. Riadok hore počíta hráčov, ktorým sa zápas načítal. Keď sa načíta všetkým, odpočíta 10 sekúnd a zápas sa začne, a s ním aj jeho čas. Na hráča, ktorému sa zápas nenačítal ani po 20 sekundách, sa nečaká: odpočítavanie začne bez neho a pripojiť sa môže aj neskôr.
 
 ## Anihilácia
 

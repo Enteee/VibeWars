@@ -629,6 +629,7 @@ export const en = {
   "hud.preMatchStartingAnyway":
     "Waiting for players: {joined}/{expected}, starting anyway in {seconds} s",
   "hud.preMatchStartsIn": "Match starts in {seconds}",
+  "hud.preMatchSelfAllyOnly": "Before the start: only skills on yourself or allies.",
   "hud.preMatchWaiting": "Waiting for players: {joined}/{expected}",
   "hud.priest": "priest",
   "hud.priestDead": "priest (dead)",
@@ -789,7 +790,6 @@ export const en = {
   "lobby.leaveTeamLabel": "Leave team {team}",
   "lobby.map": "Map:",
   "lobby.mapLabel": "{name} ({size})",
-  "lobby.mapRandom": "Map: random (Team Arena)",
   "lobby.mapShown": "Map: {map}",
   "lobby.matchRunning": "A match is still running. The lobby opens again when it ends.",
   "lobby.modeNameCapturePoints": "Capture Points",

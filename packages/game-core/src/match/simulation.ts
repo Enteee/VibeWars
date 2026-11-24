@@ -121,6 +121,7 @@ import {
   type ActivationCheck,
   type ActivationRejection,
 } from "../skills/activation.js";
+import { preMatchAllowed } from "../skills/pre-match.js";
 import {
   adrenalineLossIn,
   adrenalinePools,
@@ -1652,8 +1653,13 @@ export class MatchSimulation {
 
   #tick = 0;
   #elapsedSeconds = 0;
-  /** `stepHeld` has run and `step` not yet (#3817): skills and attacks are dropped. */
+  /**
+   * `stepHeld` has run and `step` not yet (#3817): attacks are dropped,
+   * and every skill but one for the caster or its allies (#3910).
+   */
   #held = false;
+  /** The countdown's seconds left while held (#3910); `null` while it waits. */
+  #heldSecondsLeft: number | null = null;
   /** `step` has run once (#3817): the match is under way, and never held again. */
   #started = false;
   readonly #teamCount: TeamCount;
@@ -3873,8 +3879,7 @@ export class MatchSimulation {
    */
   public requestSkill(id: string, slot: number): SkillRequest | undefined {
     const record = this.#participants.get(id);
-    // Held before the start, a skill is dropped, not kept for it (#3817).
-    if (record === undefined || this.#held) {
+    if (record === undefined) {
       return undefined;
     }
     record.lastCommandAt = this.#elapsedSeconds;
@@ -3891,7 +3896,8 @@ export class MatchSimulation {
       return { skillId: skill.id, check: { ok: true } };
     }
 
-    if (skill.target === "single-enemy" && record.targetId === undefined) {
+    // Held before the start, nobody picks a foe: none can be cast at (#3910).
+    if (skill.target === "single-enemy" && record.targetId === undefined && !this.#held) {
       const team = record.combatant.team;
       record.targetId = nearestLiving(
         record,
@@ -4415,26 +4421,55 @@ export class MatchSimulation {
 
   /**
    * One tick before the match starts (#3817): everyone may walk, by keys
-   * or a click, within `SPAWN_BUBBLE_RADIUS` of its spawn, and nothing
-   * else runs: no skill, attack, bot, regeneration or map element. The
-   * tick counts; the match clock does not. Once `step` has run, or the
-   * match is over, it does nothing.
+   * or a click, within `SPAWN_BUBBLE_RADIUS` of its spawn, and prepare
+   * (#3910): a skill only for the caster or its allies goes off, and
+   * energy, health, recharges, casts, statuses and upkeep run, as bots
+   * do. Nothing else runs: no attack, adrenaline, zone, projectile,
+   * creature, map element or score. The tick counts; the match clock
+   * does not. `secondsLeft` is the countdown's, `null` while it waits
+   * for the players. Once `step` has run, or the match is over, it does
+   * nothing.
    */
-  public stepHeld(dt: number): StepResult {
+  public stepHeld(dt: number, secondsLeft: number | null): StepResult {
     if (this.phase !== "active" || this.#started) {
       return this.#result([]);
     }
     this.#held = true;
+    this.#heldSecondsLeft = secondsLeft;
     this.#tick += 1;
     for (const record of this.#participants.values()) {
       this.#stepStart.set(record.id, record.position);
-      if (!record.combatant.dead) {
+      recoverOvercast(record.combatant, this.#ruleset.resources.overcastRecoveryPerSecond, dt);
+      if (record.combatant.dead) {
+        this.#holdInBubble(record);
+        continue;
+      }
+      if (!record.combatant.cast.inAftercast) {
         this.advanceMovement(record, record.inputDirection, dt);
         this.#advanceWalk(record, dt);
+        this.#advanceFollow(record, dt);
       }
       this.#holdInBubble(record);
+      const statusEvents = this.#runResources(record, dt);
+      if (
+        statusEvents.some((event) => event.kind === "death" || event.kind === "creature-destroyed")
+      ) {
+        this.#recordDeaths(statusEvents);
+        continue;
+      }
+      this.#advanceCast(record, dt);
+      this.#advancePendingSkill(record, dt);
+      this.#faceCastTarget(record);
+      if (record.behaviour !== undefined) {
+        this.#act(record, record.behaviour, dt);
+      }
     }
-    return this.#result([]);
+    this.#settleUpkeep(dt);
+    this.#fireStatusChanges();
+    const log = this.#log;
+    this.#log = [];
+    this.#healthLost(log);
+    return this.#result(log);
   }
 
   public step(dt: number): StepResult {
@@ -4534,75 +4569,7 @@ export class MatchSimulation {
       // Where it stands now, before its statuses run (ADR-0053).
       this.#applyZones(record);
 
-      // Degeneration its statuses' own regeneration does not cancel is
-      // health lost, so natural regeneration stops before it would.
-      // A minion's rot (#467) counts as one, and it never regenerates.
-      const modifiers = aggregateModifiers(record.combatant.statuses.active);
-      const rot = creaturePips(record);
-      record.outOfCombatSeconds += dt;
-      if (clampPips(modifiers.healthPips + rot) < 0) {
-        record.outOfCombatSeconds = 0;
-      }
-      const natural = this.#naturalPips(record);
-
-      // Energy regenerates continuously, at the net pips (GW1); adrenaline
-      // is earned by acting, not by waiting, so it deliberately does not
-      // tick up here.
-      const energyPips = netPips(record.combatant, natural, this.#upkeep(record.combatant)).energy;
-      // Up to the ceiling overcast leaves, which can be below 0 (#461).
-      record.combatant.energy = Math.max(
-        energyFloor(record.combatant),
-        Math.min(
-          effectiveMaxEnergy(record.combatant),
-          record.combatant.energy + energyPips * ENERGY_PER_PIP * dt,
-        ),
-      );
-
-      const sources = degenerationSources(record.combatant);
-      // Spirit Light Weapon's more near a spirit (#1064): counted only for
-      // a bearer it could matter to.
-      const nearSpirit =
-        modifiers.healthPerSecondNearSpirit !== 0 &&
-        spiritsWithin(this.#participants.values(), record, AREA_EARSHOT) > 0;
-      // Signet of Ghostly Might's (#1827): who put each status on a
-      // summoned creature that destroys it as it runs out.
-      const destroyers = new Map(
-        isSummonedCreature(record.creature?.kind)
-          ? record.combatant.statuses.active
-              .filter(({ id }) => getStatusDefinition(id).destroysBearerOnExpiry)
-              .map(({ id, sourceId }) => [id, sourceId] as const)
-          : [],
-      );
-      const statusEvents = advanceStatuses(record.combatant, dt, natural + rot, nearSpirit);
-      // One ran out on a creature still standing: it is destroyed as
-      // Rupture Soul destroys a spirit, no corpse, no killer, no morale.
-      const ranOut = statusEvents.find(
-        (event) => event.kind === "status-expired" && destroyers.has(event.statusId),
-      );
-      const destroyedBy =
-        ranOut?.kind === "status-expired" && !statusEvents.some((event) => event.kind === "death")
-          ? destroyers.get(ranOut.statusId)
-          : undefined;
-      if (destroyedBy !== undefined) {
-        record.combatant.health = 0;
-        record.combatant.dead = true;
-        statusEvents.push({ kind: "creature-destroyed", targetId: record.id });
-      }
-      if (statusEvents.length > 0) {
-        const drained = statusEvents.some((event) => event.kind === "damage");
-        this.#log.push({
-          tick: this.#tick,
-          atSeconds: this.#elapsedSeconds,
-          cause: "degeneration",
-          sourceId: destroyedBy ?? (drained ? sources.draining : sources.healing),
-          skillId: undefined,
-          weaponId: undefined,
-          attributeId: undefined,
-          area: undefined,
-          doubleStrike: false,
-          events: statusEvents,
-        });
-      }
+      const statusEvents = this.#runResources(record, dt);
 
       // Degeneration (bleeding, burning, a hex) can kill between ticks.
       // Keyed off the emitted death event rather than re-reading
@@ -4616,36 +4583,7 @@ export class MatchSimulation {
         continue;
       }
 
-      // A copy that ends this tick takes its cast with it (#1928): the
-      // skill being cast is no longer in the slot.
-      const casting = record.combatant.cast.activeCast;
-      if (
-        casting !== undefined &&
-        [...record.combatant.cast.overrides.values()].some(
-          (copy) => copy.key === casting.key && copy.remainingSeconds <= dt,
-        )
-      ) {
-        this.#cancelCast(record);
-      }
-      const completed = record.combatant.cast.advance(dt);
-      dropEndedCopyPools(record.combatant);
-      if (completed !== undefined) {
-        this.resolveCast(record, completed, dt);
-        // A claim finished that the rule still allows (#1377): the altar
-        // is settled once every death is in.
-        if (completed.skillId === CLAIM_SKILL_ID && this.#mayClaim(record)) {
-          this.#claims.push(record.combatant.team);
-        }
-      }
-      // A skill pressed during an activation or the aftercast goes off the
-      // tick both are over (#317, #1722). A refusal now is dropped: nobody
-      // is pressing a key at this moment.
-      if (!record.combatant.cast.isCasting && !record.combatant.cast.inAftercast) {
-        const queued = record.combatant.cast.takeQueued();
-        if (queued !== undefined) {
-          this.requestSkill(record.id, queued);
-        }
-      }
+      this.#advanceCast(record, dt);
 
       if (!down) {
         // Before a skill queued behind the same cast goes off, and after a
@@ -4955,6 +4893,10 @@ export class MatchSimulation {
     key: string = skill.id,
     isCasting: boolean = record.combatant.cast.isCasting,
   ): ActivationCheck {
+    // Held before the start, only a skill for the caster or its allies (#3910).
+    if (this.#held && !preMatchAllowed(skill)) {
+      return { ok: false, reason: "pre-match" };
+    }
     // A pet skill acts on the pet, whatever was asked (#1046).
     const targetedId = isCompanionRule(skill.target) ? this.#companionOf(record)?.id : targetId;
     const target = targetedId === undefined ? undefined : this.#participants.get(targetedId);
@@ -5310,6 +5252,121 @@ export class MatchSimulation {
       : walkCostOf(from.position, route, walls.graphs);
   }
 
+  /**
+   * One tick of `record`'s energy and statuses, alive (#3910): what a
+   * step and a held step both run. The events are logged; a death among
+   * them is the caller's to record.
+   */
+  #runResources(record: ParticipantRecord, dt: number): readonly CombatEvent[] {
+    // Degeneration its statuses' own regeneration does not cancel is
+    // health lost, so natural regeneration stops before it would.
+    // A minion's rot (#467) counts as one, and it never regenerates.
+    const modifiers = aggregateModifiers(record.combatant.statuses.active);
+    const rot = creaturePips(record);
+    record.outOfCombatSeconds += dt;
+    if (clampPips(modifiers.healthPips + rot) < 0) {
+      record.outOfCombatSeconds = 0;
+    }
+    const natural = this.#naturalPips(record);
+
+    // Energy regenerates continuously, at the net pips (GW1); adrenaline
+    // is earned by acting, not by waiting, so it deliberately does not
+    // tick up here.
+    const energyPips = netPips(record.combatant, natural, this.#upkeep(record.combatant)).energy;
+    // Up to the ceiling overcast leaves, which can be below 0 (#461).
+    record.combatant.energy = Math.max(
+      energyFloor(record.combatant),
+      Math.min(
+        effectiveMaxEnergy(record.combatant),
+        record.combatant.energy + energyPips * ENERGY_PER_PIP * dt,
+      ),
+    );
+
+    const sources = degenerationSources(record.combatant);
+    // Spirit Light Weapon's more near a spirit (#1064): counted only for
+    // a bearer it could matter to.
+    const nearSpirit =
+      modifiers.healthPerSecondNearSpirit !== 0 &&
+      spiritsWithin(this.#participants.values(), record, AREA_EARSHOT) > 0;
+    // Signet of Ghostly Might's (#1827): who put each status on a
+    // summoned creature that destroys it as it runs out.
+    const destroyers = new Map(
+      isSummonedCreature(record.creature?.kind)
+        ? record.combatant.statuses.active
+            .filter(({ id }) => getStatusDefinition(id).destroysBearerOnExpiry)
+            .map(({ id, sourceId }) => [id, sourceId] as const)
+        : [],
+    );
+    const statusEvents = advanceStatuses(record.combatant, dt, natural + rot, nearSpirit);
+    // One ran out on a creature still standing: it is destroyed as
+    // Rupture Soul destroys a spirit, no corpse, no killer, no morale.
+    const ranOut = statusEvents.find(
+      (event) => event.kind === "status-expired" && destroyers.has(event.statusId),
+    );
+    const destroyedBy =
+      ranOut?.kind === "status-expired" && !statusEvents.some((event) => event.kind === "death")
+        ? destroyers.get(ranOut.statusId)
+        : undefined;
+    if (destroyedBy !== undefined) {
+      record.combatant.health = 0;
+      record.combatant.dead = true;
+      statusEvents.push({ kind: "creature-destroyed", targetId: record.id });
+    }
+    if (statusEvents.length > 0) {
+      const drained = statusEvents.some((event) => event.kind === "damage");
+      this.#log.push({
+        tick: this.#tick,
+        atSeconds: this.#elapsedSeconds,
+        cause: "degeneration",
+        sourceId: destroyedBy ?? (drained ? sources.draining : sources.healing),
+        skillId: undefined,
+        weaponId: undefined,
+        attributeId: undefined,
+        area: undefined,
+        doubleStrike: false,
+        events: statusEvents,
+      });
+    }
+    return statusEvents;
+  }
+
+  /**
+   * One tick of `record`'s cast (#3910), as a step and a held step both
+   * run it: it advances, resolves, and a queued skill goes off after.
+   */
+  #advanceCast(record: ParticipantRecord, dt: number): void {
+    // A copy that ends this tick takes its cast with it (#1928): the
+    // skill being cast is no longer in the slot.
+    const casting = record.combatant.cast.activeCast;
+    if (
+      casting !== undefined &&
+      [...record.combatant.cast.overrides.values()].some(
+        (copy) => copy.key === casting.key && copy.remainingSeconds <= dt,
+      )
+    ) {
+      this.#cancelCast(record);
+    }
+    const completed = record.combatant.cast.advance(dt);
+    dropEndedCopyPools(record.combatant);
+    if (completed !== undefined) {
+      this.resolveCast(record, completed, dt);
+      // A claim finished that the rule still allows (#1377): the altar
+      // is settled once every death is in.
+      if (completed.skillId === CLAIM_SKILL_ID && this.#mayClaim(record)) {
+        this.#claims.push(record.combatant.team);
+      }
+    }
+    // A skill pressed during an activation or the aftercast goes off the
+    // tick both are over (#317, #1722). A refusal now is dropped: nobody
+    // is pressing a key at this moment.
+    if (!record.combatant.cast.isCasting && !record.combatant.cast.inAftercast) {
+      const queued = record.combatant.cast.takeQueued();
+      if (queued !== undefined) {
+        this.requestSkill(record.id, queued);
+      }
+    }
+  }
+
   /** Put a behaviour's intent through the same calls a player's messages make. */
   #act(record: ParticipantRecord, behaviour: Behaviour, dt: number): void {
     if (this.#centroidsTick !== this.#tick) {
@@ -5357,6 +5414,7 @@ export class MatchSimulation {
       projectiles: this.#projectiles,
       seed: this.#seed,
       now: this.#elapsedSeconds,
+      preMatch: this.#held ? { secondsLeft: this.#heldSecondsLeft } : undefined,
       highGround: this.#highGround,
       cover: this.#cover,
       routeLength: (to, layer) => {

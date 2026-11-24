@@ -631,6 +631,7 @@ export default {
   "hud.preMatchStartingAnyway":
     "Warte auf Spieler: {joined}/{expected}, Start trotzdem in {seconds} s",
   "hud.preMatchStartsIn": "Match startet in {seconds}",
+  "hud.preMatchSelfAllyOnly": "Vor dem Start: nur Fertigkeiten auf dich oder Verbündete.",
   "hud.preMatchWaiting": "Warte auf Spieler: {joined}/{expected}",
   "hud.priest": "Priester",
   "hud.priestDead": "Priester (tot)",
@@ -794,7 +795,6 @@ export default {
   "lobby.leaveTeamLabel": "Team {team} verlassen",
   "lobby.map": "Karte:",
   "lobby.mapLabel": "{name} ({size})",
-  "lobby.mapRandom": "Karte: zufällig (Teamarena)",
   "lobby.mapShown": "Karte: {map}",
   "lobby.matchRunning": "Ein Match läuft noch. Die Lobby öffnet wieder, wenn es vorbei ist.",
   "lobby.modeNameCapturePoints": "Punkte erobern",

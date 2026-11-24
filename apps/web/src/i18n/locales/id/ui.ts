@@ -584,6 +584,7 @@ export default {
   "hud.preMatchStartingAnyway":
     "Menunggu pemain: {joined}/{expected}, tetap dimulai dalam {seconds} dtk",
   "hud.preMatchStartsIn": "Pertandingan dimulai dalam {seconds}",
+  "hud.preMatchSelfAllyOnly": "Sebelum mulai: hanya skill pada dirimu atau sekutu.",
   "hud.preMatchWaiting": "Menunggu pemain: {joined}/{expected}",
   "hud.priest": "pendeta",
   "hud.priestDead": "pendeta (tewas)",
@@ -744,7 +745,6 @@ export default {
   "lobby.leaveTeamLabel": "Keluar dari tim {team}",
   "lobby.map": "Peta:",
   "lobby.mapLabel": "{name} ({size})",
-  "lobby.mapRandom": "Peta: acak (Arena Tim)",
   "lobby.mapShown": "Peta: {map}",
   "lobby.matchRunning": "Masih ada pertandingan berjalan. Lobi dibuka lagi setelah selesai.",
   "lobby.modeNameCapturePoints": "Rebut Titik",

@@ -27,6 +27,8 @@ export type ReplayInput =
   | readonly [tick: number, kind: "forfeit", team: WireTeam, teams: readonly WireTeam[]]
   | readonly [tick: number, kind: "awaited", teams: readonly WireTeam[]]
   | readonly [tick: number, kind: "called", team: WireTeam, target: string | null]
+  /** The countdown begins (#3910), `ticks` long: the bots prepare for when it ends. */
+  | readonly [tick: number, kind: "countdown", ticks: number]
   /** The match starts (#3818): ticks before it were held, every one after is the match's own. */
   | readonly [tick: number, kind: "start"];
 
@@ -181,6 +183,8 @@ function parseInput(value: unknown, teamCount: WireTeamCount): ReplayInput | und
     }
     case "start":
       return arity(2) ? [tick, "start"] : undefined;
+    case "countdown":
+      return arity(3) && isCount(a) ? [tick, "countdown", a] : undefined;
     case "called": {
       const team = teamOf(a, teamCount);
       return arity(4) && team !== undefined && (b === null || isText(b))

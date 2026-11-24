@@ -8,7 +8,7 @@ import { mapName } from "../i18n/game-names.js";
 import { t, type MessageKey } from "../i18n/index.js";
 import { keySignet } from "../identity/key-signet.js";
 import { LOBBY_FRAGMENT_KEY } from "../net/fragment.js";
-import { ASCENT_PROGRESSION, arenaMap } from "../net/maps.js";
+import { arenaMap } from "../net/maps.js";
 import { button, findMatchButton, h, readyButton, toast, type ShareLine } from "./kit.js";
 import { warmupLine } from "./queue-popover.js";
 import {
@@ -40,8 +40,6 @@ export interface LobbyScreenCallbacks {
 export interface LobbyMatchmaking {
   /** How long the party has looked for a team; `null` while it is not queued. */
   readonly queuedMs: number | null;
-  /** The map of the group the queue formed (#2687); `undefined` until it has. */
-  readonly groupMapId: string | undefined;
   readonly onFindMatch: () => void;
 }
 
@@ -200,23 +198,8 @@ export interface LobbyPanel {
 }
 
 /**
- * The map a lobby shows. A
- * party queued in Heroes' Ascent is bound for its round's map, not the
- * lobby's (#1996), until a group is formed: a party that skipped ahead
- * plays the group's map, `groupMapId` (#2687). A host's round with no map
- * yet is wrong data: the lobby's map is shown (#2686).
- */
-export function lobbyShownMapId(snapshot: LobbySnapshot, groupMapId: string | undefined): string {
-  return (
-    groupMapId ??
-    (snapshot.ascentRound === null ? undefined : ASCENT_PROGRESSION[snapshot.ascentRound]) ??
-    snapshot.mapId
-  );
-}
-
-/**
- * The lobby on a mode screen (#1526, ADR-0041): the map and Ready and
- * Start for the bar, and below, both team rosters with each player's
+ * The lobby on a mode screen (#1526, ADR-0041): Ready and Start for the
+ * bar, and a Hosted Game's map (#3925), and below, both team rosters with each player's
  * character and ready state, and who Start is waiting for. The code is
  * the title bar's.
  */
@@ -234,10 +217,9 @@ export function lobbyPanel(
 
   // Only a Hosted Game's host may change the map (#1994), so everyone
   // else sees it as a label rather than a control they would be refused
-  // on clicking. Team Arena draws its own at the start.
-  const shownMapId = lobbyShownMapId(snapshot, matchmaking?.groupMapId);
-  const current = availableMaps.find((map) => map.id === shownMapId);
-  let mapPart: HTMLElement;
+  // on clicking. Other modes show no map: the match says it (#3925).
+  const current = availableMaps.find((map) => map.id === snapshot.mapId);
+  let mapPart: HTMLElement | undefined;
   // The host lists only the maps made for the lobby's team size (#2104).
   const sized = availableMaps.filter((map) => map.teamSizes.includes(snapshot.teamSize));
   if (snapshot.mode === "hosted-game" && snapshot.isHost && sized.length > 1) {
@@ -256,13 +238,11 @@ export function lobbyPanel(
       callbacks.onSelectMap(select.value);
     });
     mapPart.appendChild(select);
-  } else if (snapshot.mode === "team-arena") {
-    mapPart = h("div", "lobby-map", t("lobby.mapRandom"));
-  } else {
+  } else if (snapshot.mode === "hosted-game") {
     mapPart = h(
       "div",
       "lobby-map",
-      t("lobby.mapShown", { map: current === undefined ? shownMapId : mapLabel(current) }),
+      t("lobby.mapShown", { map: current === undefined ? snapshot.mapId : mapLabel(current) }),
     );
   }
 
@@ -330,7 +310,7 @@ export function lobbyPanel(
     panel.appendChild(h("div", "screen-info lobby-running", controls.running));
   }
 
-  return { status: [mapPart], actions, queueAction, body: panel };
+  return { status: mapPart === undefined ? [] : [mapPart], actions, queueAction, body: panel };
 }
 
 /**
