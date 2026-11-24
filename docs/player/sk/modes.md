@@ -9,7 +9,7 @@ Dobývanie bodov a ![GvG](../../../apps/web/public/icons/mode/gvg.svg) **GvG** C
 každú mapu. ![Náhodná aréna](../../../apps/web/public/icons/mode/random-arena.svg) **Náhodná aréna** vyberie mapu za teba a s ňou aj režim,
 ale nikdy Cechovú bitku, Beh s relikviou, Kráľa kopca ani Dobývanie
 bodov. Tímová aréna vylosuje jednu zo svojich máp pre každý zápas, Výstup hrdinov
-začína na svojej prvej mape a len vo Vlastnej hre vyberá hostiteľ.
+začína na svojej prvej mape a len vo Vlastnej hre vyberá hostiteľ, a to v zozname Mapa nad tímami.
 Obrazovka žiadneho iného režimu neuvádza, ktorá mapa príde na rad: zápas
 ju ukáže pri načítaní.
 
@@ -296,7 +296,7 @@ je plná.“). Dve družiny sa stretnú vždy len v rovnakej veľkosti a okno
 ikony fronty v hornej lište ju pomenúva: „Tímová aréna 2v2“. Vo Vlastnej hre nastaví hostiteľ
 veľkosť tímu jej šípkami, 1v1 až 8v8, pred tímovým lobby,
 a obe strany hrajú presne toľko; tímové lobby Veľkosť tímu nezobrazuje. Hosť vidí veľkosť hostiteľa zamknutú. Zoznam máp hostiteľa
-ukazuje len mapy určené pre túto veľkosť a veľkosť, ktorá mape nesedí,
+nad tímami ukazuje len mapy určené pre túto veľkosť a veľkosť, ktorá mape nesedí,
 presunie lobby na prvú mapu, ktorá sedí. Nikdy neklesne pod počet hráčov
 strany a strana s toľkými hráčmi, aká je veľkosť tímu, už nikoho
 neprijme. Pri 1v1 sú uvedené všetky tvoje postavy, členovia tímov označení

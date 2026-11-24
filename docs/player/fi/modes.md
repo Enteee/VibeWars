@@ -10,7 +10,7 @@ Kiltataistelu. ![Isännöity peli](../../../apps/web/public/icons/mode/hosted-ga
 mutta ei koskaan Kiltataistelua, Reliikkijuoksua, Kukkulan kuningasta
 eikä Valtauspisteitä. Tiimiareena arpoo jokaiseen otteluun yhden
 kartoistaan, Sankarien nousu alkaa ensimmäiseltä kartaltaan, ja vain
-Isännöity peli antaa isännän valita. Minkään muun pelitilan näkymä ei
+Isännöity peli antaa isännän valita, tiimien yläpuolella olevasta Kartta-luettelosta. Minkään muun pelitilan näkymä ei
 kerro, mikä kartta on seuraavana: ottelu näyttää sen latautuessaan.
 
 Kahta tiukkojen verkkojen takana olevaa pelaajaa ei voi yhdistää toisiinsa jonossa, joten jono laskee vain pelaajat, joiden kanssa sinut voi yhdistää, ja kertoo sen. Relay kohdassa **Asetukset → relay (TURN)** auttaa.
@@ -320,7 +320,7 @@ lisää ("Ryhmä on täynnä."). Kaksi ryhmää kohtaa vain saman koon kesken, j
 yläpalkin jonokuvakkeen ikkuna nimeää sen: "Tiimiareena 2v2". Isännöidyssä pelissä isäntä asettaa
 tiimin koon sen nuolilla, 1v1:stä 8v8:aan, ennen tiimiaulaa,
 ja kumpikin puoli pelaa täsmälleen niin monella; tiimiaula ei näytä tiimin kokoa. Vieras näkee isännän koon lukittuna. Isännän karttaluettelo
-näyttää vain sille koolle tehdyt kartat, ja koko, jolle kartta ei sovi,
+tiimien yläpuolella näyttää vain sille koolle tehdyt kartat, ja koko, jolle kartta ei sovi,
 siirtää aulan ensimmäiseen sopivaan karttaan. Se ei koskaan mene puolen
 pelaajamäärän alle, eikä puoli, jolla on yhtä monta pelaajaa kuin tiimin
 koko, ota ketään lisää. 1v1 luettelee kaikki hahmosi, tiimien jäsenet

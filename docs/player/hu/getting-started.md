@@ -177,7 +177,7 @@ A **Csapataréna**, a **Hősök Útja** és a **GvG** csak az adott mód
 pályáit kínálja: a **Csapataréna** a Megsemmisítés, az Ölésverseny és a
 Papirtás pályáit, a **Hősök Útja** az Ereklyefutam, A domb ura és a
 Pontfoglalás pályáit, a **GvG** pedig a Céhcsatáét. A **Saját játék**
-minden pályát kínál. A **Csapatbuildjeid** egyedül a
+minden pályát kínál, és a házigazdája a csapatok fölött választ egyet. A **Csapatbuildjeid** egyedül a
 **Csapatszerkesztőben** vannak, és a lobbi előtt egyet sem választasz. A
 **Saját játékban**, amikor a házigazda indít, a lobbi megnyitja a
 [Csapatlobbit](modes.md#csapatlobbi): javasolj ott egy Csapatbuildet,

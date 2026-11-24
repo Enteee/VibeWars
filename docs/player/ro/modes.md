@@ -9,7 +9,7 @@ puncte, iar ![GvG](../../../apps/web/public/icons/mode/gvg.svg) **GvG** Bătăli
 aleatorie** alege o hartă pentru tine și, odată cu ea, modul, dar niciodată o Bătălie
 de bresle, o Cursă a relicvelor, Regele dealului sau Capturare de puncte. Arena de
 echipe trage la sorți una dintre hărțile ei pentru fiecare meci, Ascensiunea Eroilor
-începe de la prima ei hartă și doar un Joc găzduit îi permite gazdei să aleagă.
+începe de la prima ei hartă și doar un Joc găzduit îi permite gazdei să aleagă, în lista Hartă de deasupra echipelor.
 Ecranul niciunui alt mod nu spune ce hartă urmează: meciul o arată în timp ce se
 încarcă.
 
@@ -288,7 +288,7 @@ nimeni („Grupul e plin.”). Două grupuri se întâlnesc mereu doar la aceea�
 fereastra pictogramei de coadă din bara de sus o numește: „Arenă de echipe 2v2”. La un
 Joc găzduit, gazda setează mărimea echipei cu săgețile, de la 1v1 la 8v8, înainte de
 Lobby-ul de echipă, iar ambele părți joacă exact atâția; Lobby-ul de echipă nu arată
-Mărime echipă. Un invitat o vede pe a gazdei, blocată. Lista de hărți a gazdei arată
+Mărime echipă. Un invitat o vede pe a gazdei, blocată. Lista de hărți a gazdei, deasupra echipelor, arată
 doar hărțile făcute pentru acea mărime, iar o mărime nepotrivită pentru hartă mută
 lobby-ul la prima hartă potrivită. Nu coboară niciodată sub numărul de jucători al unei
 părți, iar o parte cu atâția jucători câți spune mărimea echipei nu mai primește pe

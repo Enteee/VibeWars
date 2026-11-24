@@ -9,7 +9,7 @@ Zauzimanje točaka, a ![GvG](../../../apps/web/public/icons/mode/gvg.svg) **GvG*
 svaku kartu. ![Nasumična arena](../../../apps/web/public/icons/mode/random-arena.svg) **Nasumična arena** bira kartu umjesto tebe, a s njom i način,
 ali nikad Bitku cehova, Utrku za relikvijom, Kralja brda ili Zauzimanje
 točaka. Timska arena za svaki meč izvlači jednu od svojih karata, Uspon heroja
-počinje na svojoj prvoj karti, a samo Igra s domaćinom dopušta domaćinu da bira.
+počinje na svojoj prvoj karti, a samo Igra s domaćinom dopušta domaćinu da bira, na popisu Karta iznad timova.
 Zaslon nijednog drugog načina ne kaže koja karta slijedi: meč je prikazuje
 dok se učitava.
 
@@ -290,8 +290,8 @@ a grupa s onoliko igrača kolika joj je veličina ne prima više nikoga ("Grupa
 je puna."). Dvije grupe susreću se samo u istoj veličini, a prozor ikone
 reda na gornjoj traci je imenuje: "Timska arena 2v2". U Igri s domaćinom domaćin
 strelicama postavlja veličinu tima, od 1v1 do 8v8, prije Timske sobe,
-a obje strane igraju točno toliko; Timska soba ne prikazuje Veličinu tima. Gost vidi domaćinovu, zaključanu. Popis karata domaćina
-prikazuje samo karte napravljene za tu veličinu, a veličina koja ne odgovara karti
+a obje strane igraju točno toliko; Timska soba ne prikazuje Veličinu tima. Gost vidi domaćinovu, zaključanu. Popis karata domaćina,
+iznad timova, prikazuje samo karte napravljene za tu veličinu, a veličina koja ne odgovara karti
 premješta sobu na prvu kartu koja joj odgovara. Nikad ne ide ispod broja igrača
 neke strane, a strana s onoliko igrača kolika je veličina tima ne prima
 više nikoga. 1v1 navodi sve tvoje likove, članove timova označene s

@@ -9,7 +9,7 @@ tư tế, ![Đỉnh Anh Hùng](../../../apps/web/public/icons/mode/heroes-ascent
 nhiên** chọn bản đồ cho bạn, và kèm theo đó là chế độ, nhưng không bao giờ là
 Chiến Bang, Vận chuyển thánh tích, Vua đồi hay Chiếm điểm. Đấu trường đội
 bốc một bản đồ của nó cho mỗi trận, Đỉnh Anh Hùng bắt đầu ở bản đồ đầu tiên
-của nó, và chỉ Trận tự tạo cho chủ phòng chọn. Màn hình của các chế độ khác
+của nó, và chỉ Trận tự tạo cho chủ phòng chọn, trong danh sách Bản đồ phía trên các đội. Màn hình của các chế độ khác
 không ghi bản đồ nào đến tiếp theo: trận hiện bản đồ đó khi đang tải.
 
 Hai người chơi sau mạng nghiêm ngặt không thể được ghép với nhau trong hàng chờ, nên hàng chờ chỉ đếm những người chơi có thể ghép với bạn, và cho bạn biết. Một relay trong **Tùy chọn → Relay (TURN)** sẽ giúp ích.
@@ -289,7 +289,7 @@ thêm ai ("Tổ đội đã đầy."). Hai tổ đội chỉ gặp nhau ở cùn
 biểu tượng hàng chờ trên thanh trên cùng ghi tên nó: "Đấu trường đội 2v2".
 Trong Trận tự tạo, chủ phòng đặt cỡ đội bằng các mũi tên, 1v1 tới 8v8, trước
 Sảnh Đội, và cả hai bên chơi đúng số người đó; Sảnh Đội không hiển thị Cỡ
-đội. Khách thấy cỡ của chủ phòng, bị khóa. Danh sách bản đồ của chủ phòng chỉ
+đội. Khách thấy cỡ của chủ phòng, bị khóa. Danh sách bản đồ của chủ phòng, phía trên các đội, chỉ
 hiển thị bản đồ làm cho cỡ đó, và cỡ nào không hợp với bản đồ sẽ chuyển sảnh
 sang bản đồ đầu tiên hợp. Nó không bao giờ xuống dưới số người chơi của một
 bên, và bên có số người chơi bằng cỡ đội thì không nhận thêm ai. Trận 1v1

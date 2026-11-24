@@ -10,7 +10,7 @@ Batalla de gremios. ![Partida alojada](../../../apps/web/public/icons/mode/hoste
 aleatoria** elige un mapa por ti, y con él el modo, pero nunca una Batalla de
 gremios, una Carrera de reliquias, Rey de la colina ni Puntos de captura. Arena
 por equipos sortea uno de sus mapas en cada partida, Ascenso de los Héroes
-empieza en su primer mapa, y solo una Partida alojada deja elegir al anfitrión.
+empieza en su primer mapa, y solo una Partida alojada deja elegir al anfitrión, en la lista Mapa sobre los equipos.
 La pantalla de ningún otro modo indica qué mapa viene después: la partida lo
 muestra mientras carga.
 
@@ -296,7 +296,7 @@ de la barra superior lo indica: "Arena por equipos 2v2". En una Partida alojada,
 anfitrión fija el tamaño del equipo con sus flechas, de 1v1 a 8v8, antes de la Sala
 de equipo, y ambos bandos juegan exactamente con ese número; la Sala de equipo no
 muestra Tamaño del equipo. Un invitado ve el del anfitrión, bloqueado. La lista de
-mapas del anfitrión solo muestra los hechos para ese tamaño, y un tamaño que no
+mapas del anfitrión, sobre los equipos, solo muestra los hechos para ese tamaño, y un tamaño que no
 encaja con el mapa lleva la sala al primer mapa que encaje. Nunca baja del número
 de jugadores de un bando, y un bando con tantos jugadores como el tamaño del equipo
 no acepta a nadie más. Un 1v1 muestra todos tus personajes, con los miembros de

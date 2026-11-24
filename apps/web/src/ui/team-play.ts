@@ -260,7 +260,6 @@ function teamScreen(
 ): HTMLElement {
   screenBar({
     crumbs: [wordmark("topbar-wordmark")],
-    status: panel?.status ?? [],
     actions: panel?.actions ?? [],
     ...(panel?.queueAction === undefined ? {} : { queueAction: panel.queueAction }),
     join: true,

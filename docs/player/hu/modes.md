@@ -10,7 +10,7 @@ a ![Csapataréna](../../../apps/web/public/icons/mode/team-arena.svg) **Csapatar
 Céhcsatát, Ereklyefutamot, A domb urát vagy Pontfoglalást. A
 Csapataréna minden meccsre kisorsolja egy pályáját, a Hősök Útja az
 első pályáján kezdődik, és csak a Saját játékban választhat a
-házigazda. Más mód képernyője nem írja ki, melyik pálya következik: a
+házigazda, a csapatok fölötti Pálya listában. Más mód képernyője nem írja ki, melyik pálya következik: a
 meccs a betöltéskor mutatja meg.
 
 Két szigorú hálózat mögötti játékos nem kerülhet össze a sorban, ezért a sor csak azokat a játékosokat számolja, akikkel összekerülhetsz, és ezt meg is mondja. Segít egy relay az **Opciók → relay (TURN)** alatt.
@@ -332,7 +332,7 @@ találkozik, és a felső sávon a sor ikonjának ablaka megnevezi:
 „Csapataréna 2v2”. Saját játékban a házigazda a nyilakkal állítja be a
 csapatméretet, 1v1-től 8v8-ig, a Csapatlobbi előtt, és mindkét oldal
 pontosan ennyivel játszik; a Csapatlobbi nem mutat Csapatméretet. A
-vendég a házigazdáét látja, zárolva. A házigazda pályalistája csak az
+vendég a házigazdáét látja, zárolva. A házigazda pályalistája, a csapatok fölött, csak az
 erre a méretre készült pályákat mutatja, és ha a méret nem illik a
 pályához, a lobbi az első olyan pályára vált, amelyhez igen. Sosem megy
 egy oldal játékosszáma alá, és az az oldal, amelyben annyi játékos van,

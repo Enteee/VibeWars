@@ -355,19 +355,6 @@ body {
   }
 }
 
-/* Just above 75rem the host's map shares the row with all of that: its
-   select says which map, and the word Map stays only for a reader. */
-@media (75rem < width <= 80rem) {
-  #topbar .lobby-map .field-label {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
-  }
-}
-
 .status {
   min-width: 0;
   overflow: hidden;
@@ -3565,27 +3552,19 @@ body:has(> .splash) #menu-background::after {
   min-width: 1.5ch;
 }
 
-/* The editors' bars (#1334, #1452) and the lobby's (#1368, #1526): the
-   crumbs, the screen's buttons, the lobby's code with Join and the icons
-   fill a row up to 75rem, so the status (an editor's pickers and problems,
-   the lobby's map) takes the second row the phone's does and never runs
-   under the buttons or the icons. */
+/* The editors' bars (#1334, #1452): the crumbs, the screen's buttons
+   and the icons fill a row up to 75rem, so the status (an editor's
+   pickers and problems) takes the second row the phone's does and never
+   runs under the buttons or the icons. */
 @media (45rem < width <= 75rem) and (height > 30rem) {
-  #topbar:has(.problems-chip),
-  #topbar:has(.lobby-map) {
+  #topbar:has(.problems-chip) {
     flex-wrap: wrap;
   }
 
-  #topbar:has(.problems-chip) .topbar-status,
-  #topbar:has(.lobby-map) .topbar-status {
+  #topbar:has(.problems-chip) .topbar-status {
     flex: 1 0 100%;
     order: 10;
     flex-wrap: wrap;
-  }
-
-  /* A long map label stays inside the row rather than widening it. */
-  #topbar .lobby-map select {
-    max-width: 100%;
   }
 }
 
@@ -4372,32 +4351,52 @@ body:has(> .splash) #menu-background::after {
 
 /* --- lobby -------------------------------------------------------------- */
 
-/* In the top bar (#1272): the map on one row, not squeezed. */
-#topbar .lobby-map {
+/* A Hosted Game's map tops the lobby, over the teams (#3926): one full
+   row, the host's picker as tall as a guest's label, so the screen does
+   not jump when a guest becomes host. */
+.lobby-panel > .lobby-map {
   display: flex;
-  flex: 0 0 auto;
   align-items: center;
   gap: 0.6rem;
-  white-space: nowrap;
+  min-height: 2.25rem;
+  min-width: 0;
+}
+
+/* A long map name ends in an ellipsis inside the select, never past the
+   panel on a 360 px phone. */
+.lobby-panel > .lobby-map select {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 100%;
+  text-overflow: ellipsis;
+}
+
+@media (pointer: coarse) {
+  .lobby-panel > .lobby-map select {
+    min-height: 44px;
+  }
+}
+
+/* The host's picker reads "Map:", as a guest's map does. */
+.lobby-panel > .lobby-map .field-label {
+  text-transform: none;
 }
 
 /* Ready and Start match at the bar's end, before the lobby's code and
    the icons (#3626): one auto margin, so the free space is not split.
    A phone's bar keeps its ⋯ where it is. */
 @media (width > 45rem) {
-  #topbar:has(.topbar-status .lobby-map) .topbar-screen-actions {
+  #topbar:has(.topbar-screen-actions :is(.screen-ready, .lobby-watch)) .topbar-screen-actions {
     margin-inline-start: auto;
   }
 
-  #topbar:has(.topbar-status .lobby-map) :is(.topbar-join, .topbar-queue-action),
-  #topbar:has(.topbar-status .lobby-map) .topbar-queue-action:empty + .topbar-actions {
+  #topbar:has(.topbar-screen-actions :is(.screen-ready, .lobby-watch))
+    :is(.topbar-join, .topbar-queue-action),
+  #topbar:has(.topbar-screen-actions :is(.screen-ready, .lobby-watch))
+    .topbar-queue-action:empty
+    + .topbar-actions {
     margin-inline-start: 0;
   }
-}
-
-/* The host's picker reads "Map:", as a guest's map does. */
-#topbar .lobby-map .field-label {
-  text-transform: none;
 }
 
 .lobby-code-label {
