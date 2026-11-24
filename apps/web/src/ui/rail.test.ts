@@ -536,6 +536,23 @@ describe("the rail's drawer on an upright phone (#3924)", () => {
     expect(toggle?.focused).toBe(true);
   });
 
+  it("stays open through a redraw of its screen, as a lobby's new size, but not of another", () => {
+    const drawn = (entry: "gvg" | "hosted-game"): FakeElement | undefined => {
+      const root = new FakeElement("div");
+      railScreen(root as unknown as HTMLElement, entry, () => undefined);
+      return root.children[0];
+    };
+    const toggleOf = (panel: FakeElement | undefined): FakeElement | undefined =>
+      panel?.children[2]?.children[0]?.children[0];
+    toggleOf(drawn("hosted-game"))?.click();
+
+    const again = drawn("hosted-game");
+    expect(again?.classes.has("is-drawer-open")).toBe(true);
+    expect(toggleOf(again)?.attributes.get("aria-expanded")).toBe("true");
+    expect(drawn("gvg")?.classes.has("is-drawer-open")).toBe(false);
+    expect(drawn("hosted-game")?.classes.has("is-drawer-open")).toBe(false);
+  });
+
   it("goes away on an entry, Esc, a press outside, the focus leaving or a turn of the phone", () => {
     expect(drawerNext(false, { kind: "toggle" })).toEqual({ open: true, focus: "entry" });
     expect(drawerNext(true, { kind: "toggle" })).toEqual({ open: false, focus: "toggle" });

@@ -464,6 +464,8 @@ export function drawerNext(
 /** The drawn rail screen's drawer, told what happened; none before one is drawn. */
 let drawerListener: ((event: DrawerEvent) => void) | undefined;
 let drawerWatched = false;
+/** The entry whose drawer is open: a redraw of its screen, as a lobby's new size, keeps it open. */
+let drawerOpenOn: RailEntry | undefined;
 
 /**
  * A press anywhere but the drawer and its toggle puts it away, and so
@@ -532,7 +534,8 @@ export function railScreen(
   scrim.setAttribute(PUTS_AWAY, "");
   panel.append(rail, scrim, body);
 
-  let open = false;
+  let open = drawerOpenOn === active;
+  drawerOpenOn = open ? active : undefined;
   // `shown` is the rail drawn now: a new team size swaps one in (setTeamSize).
   const paint = (shown: Element): void => {
     panel.classList.toggle("is-drawer-open", open);
@@ -551,6 +554,7 @@ export function railScreen(
       return;
     }
     open = next.open;
+    drawerOpenOn = open ? active : undefined;
     paint(panel.querySelector(".mode-rail") ?? rail);
     if (next.focus === "entry") {
       panel.querySelector<HTMLElement>('.mode-rail [aria-pressed="true"]')?.focus();
@@ -560,7 +564,7 @@ export function railScreen(
   };
   paint(rail);
   // An entry's own click switches the screen first; this one, bubbling
-  // after it, puts the drawer away.
+  // after it, puts away the drawer of the screen drawn now.
   panel.addEventListener("click", (event) => {
     const target = event.target;
     if (!(target instanceof Element) || target.closest(".mode-rail") === null) {
@@ -568,7 +572,7 @@ export function railScreen(
     }
     const entry = target.closest(".mode-rail-entry");
     if (entry !== null) {
-      tell({ kind: "entry", locked: entry.getAttribute("aria-disabled") === "true" });
+      drawerListener?.({ kind: "entry", locked: entry.getAttribute("aria-disabled") === "true" });
     }
   });
   // Esc puts it away, prevented, so the menu's own Esc (kit.ts) does not go back too.

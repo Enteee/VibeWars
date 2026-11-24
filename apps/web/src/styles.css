@@ -9838,6 +9838,11 @@ body:has(> .splash) #app {
   #app:has(.screen-rail) > .chat {
     inset-inline-start: var(--chat-inset);
   }
+
+  /* Its icon would sit on the drawer's last entry. */
+  #app:has(.screen-rail.is-drawer-open) > .chat {
+    visibility: hidden;
+  }
 }
 
 @media (pointer: coarse) and (width <= 30rem) and (prefers-reduced-motion: reduce) {
