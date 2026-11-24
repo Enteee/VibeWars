@@ -371,6 +371,11 @@ Blau Team, Gold Aufstieg, Violett GvG, Grün Gehostet. Über der Liste filtern C
 passt; eine Gruppe ohne gedrückten Chip lässt alles durch. Die Größe ist das größte Team, Bots eingeschlossen, ein 3v2 Gehostetes Spiel
 passt also zu keiner Größe. Die Chips bleiben, wie du sie gelassen hast, bis die Seite neu lädt.
 
+Der Chip **Meine Spiele** tauscht die Liste gegen deine eigenen: die letzten 50 Matches, die du in diesem Browser beendet hast, egal wie
+alt, veröffentlicht oder nicht (eine Elite-Zaishen-Schlacht, ein Match gegen Bots), mit **Du** in deinem Team. Die Chips Art und Größe
+filtern auch sie. Öffne eines, und es hat drei Tabs: **Builds**, die Teams wie oben; **Statistik**, seine Punktetabelle; und **Diagramm**,
+seine Diagramme. Ein veröffentlichtes Match hat nur Builds. Ein Match, das du vor seinem Ende verlassen hast, wird nicht behalten.
+
 Über den Chips listet der Streifen **Halle der Helden** die letzten 20 Haltephasen auf, die neueste zuerst: den Halter (ein Gildenkürzel oder den Namen des Anführers), die Spieler des Siegerteams, wann der neueste Sieg endete und ab zwei Siegen, wie viele in Folge. Eine Haltephase ist eine ununterbrochene Reihe von Hallen-Siegen desselben Halters. Der Streifen liest die Berichte auf dieser Seite, ignoriert die Chips und bleibt verborgen, wenn keiner davon ein Hallen-Sieg ist. Wie jeder Bericht zeigt er, was der Host des jeweiligen Matches gemeldet hat, und nichts überprüft das.
 
 ## Gewertet

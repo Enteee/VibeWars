@@ -20,7 +20,7 @@ Elk scherm onthoudt zijn eigen grootte, en opent op een grootte die het speelt
 (GvG op 8v8). Daaronder staan ![Personagebouwer](../../../apps/web/public/icons/mode/characters.svg) **Personagebouwer**, waar je je personages maakt,
 en ![Teambouwer](../../../apps/web/public/icons/mode/teams.svg) **Teambouwer**, waar je je [Teambuilds](skills-and-builds.md#teambuilds)
 maakt, en dan ![Matches](../../../apps/web/public/icons/mode/matches.svg) **Matches**, de [afgelopen matches](modes.md#matchrecords) zoals
-hun hosts ze melden. Het spel opent op het scherm dat je het laatst gebruikte.
+hun hosts ze melden, en je eigen onder **Mijn wedstrijden**. Het spel opent op het scherm dat je het laatst gebruikte.
 
 ## Maak een personage
 
@@ -97,7 +97,7 @@ er gebeurde. Druk op een legenda-item om de lijn te verbergen of te tonen. Op
 een telefoon staan de grafieken onder de scores, die jou en twee anderen tonen
 tot **Alles tonen**.
 
-**Wedstrijdgeschiedenis** in de bovenbalk toont je laatste 50 wedstrijden, nieuwste eerst: open er een om de scores en grafieken opnieuw te zien. Ze worden alleen in deze browser bewaard. **Mijn wedstrijden** toont alleen die je met je huidige spelerssleutel hebt gespeeld.
+**Mijn wedstrijden** op de pagina **Matches** toont je laatste 50 wedstrijden, nieuwste eerst: open er een om de builds te zien, en opnieuw de scores en grafieken onder **Statistieken** en **Grafiek**. Ze worden alleen in deze browser bewaard.
 
 ## Een match hosten of meedoen
 

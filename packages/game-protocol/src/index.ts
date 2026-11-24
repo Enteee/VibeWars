@@ -262,6 +262,8 @@ export type {
   WireWeaponSet,
   WireWeaponSets,
   WireEnded,
+  WireEndedPlayer,
+  WireEndedTeam,
   WireMatchChart,
   WireMatchChartPart,
   WireChartSeries,

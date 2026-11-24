@@ -22,7 +22,7 @@ jegyzi meg, és olyan méreten nyílik meg, amelyet játszik (a GvG 8v8-on).
 Alatta van a ![Karakterszerkesztő](../../../apps/web/public/icons/mode/characters.svg) **Karakterszerkesztő**, ahol a karaktereidet készíted, és a
 ![Csapatszerkesztő](../../../apps/web/public/icons/mode/teams.svg) **Csapatszerkesztő**, ahol a [Csapatbuildjeidet](skills-and-builds.md#csapatbuildek)
 készíted, aztán a ![Meccsek](../../../apps/web/public/icons/mode/matches.svg) **Meccsek**, a [befejezett meccsek](modes.md#meccsjegyzőkönyvek),
-ahogy a házigazdáik jelentik őket. A játék azon nyílik meg, amelyiket
+ahogy a házigazdáik jelentik őket, a sajátjaid pedig a **Saját meccsek** alatt. A játék azon nyílik meg, amelyiket
 utoljára használtad.
 
 ## Készíts karaktert
@@ -105,7 +105,7 @@ jelmagyarázat-elemet a vonala elrejtéséhez vagy megjelenítéséhez. Telefono
 diagramok az eredmények alatt vannak, amelyek téged és két másik játékost
 mutatnak, amíg meg nem nyomod az **Összes mutatása** gombot.
 
-A felső sáv **Meccselőzmények** gombja az utolsó 50 meccsedet mutatja, a legújabbat elöl: nyiss meg egyet, hogy újra lásd a pontjait és a grafikonjait. Csak ebben a böngészőben maradnak meg. A **Saját meccsek** csak a jelenlegi játékoskulcsoddal játszottakat mutatja.
+A **Meccsek** oldal **Saját meccsek** chipje az utolsó 50 meccsedet mutatja, a legújabbat elöl: nyiss meg egyet, hogy lásd a buildjeit, és a **Statisztika** és **Diagram** alatt újra a pontjait és a grafikonjait. Csak ebben a böngészőben maradnak meg.
 
 ## Meccs indítása vagy csatlakozás
 

@@ -21,7 +21,7 @@ a otvorí sa vo veľkosti, ktorú hrá (GvG v 8v8). Pod tým je ![Tvorba postáv
 kde si vytváraš postavy, a ![Tvorba tímov](../../../apps/web/public/icons/mode/teams.svg) **Tvorba tímov**, kde si vytváraš
 [tímové buildy](skills-and-builds.md#tímové-buildy), a potom
 ![Zápasy](../../../apps/web/public/icons/mode/matches.svg) **Zápasy**, [odohrané zápasy](modes.md#záznamy-zápasov) tak, ako ich
-nahlásili ich hostitelia. Hra sa otvorí na tej
+nahlásili ich hostitelia, a tvoje vlastné pod **Moje zápasy**. Hra sa otvorí na tej
 položke, ktorú si použil naposledy.
 
 ## Vytvor si postavu
@@ -96,7 +96,7 @@ alebo na ňu prejdi klávesom Tab a prečítaš si, čo sa stalo. Stlačením po
 legendy skryješ alebo zobrazíš jej čiaru. Na telefóne sú grafy pod skóre, ktoré
 ukazuje teba a dvoch ďalších, kým nestlačíš **Zobraziť všetko**.
 
-**História zápasov** v hornej lište ukazuje tvojich posledných 50 zápasov, najnovšie prvé: otvor jeden a znova uvidíš jeho skóre a grafy. Uchovávajú sa len v tomto prehliadači. **Moje zápasy** ukáže len tie odohrané s tvojím súčasným kľúčom hráča.
+**Moje zápasy** na stránke **Zápasy** ukazuje tvojich posledných 50 zápasov, najnovšie prvé: otvor jeden a uvidíš jeho buildy a pod **Štatistiky** a **Graf** znova jeho skóre a grafy. Uchovávajú sa len v tomto prehliadači.
 
 ## Hostiť zápas alebo sa pripojiť
 

@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test, type Page } from "@playwright/test";
 
 import { RECORDS_CHANNEL, recordMessage } from "../apps/web/src/net/transport/broadcast-records.js";
 import { matchRecordEvent } from "../apps/web/src/net/transport/match-records.js";
@@ -8,7 +8,9 @@ import {
   recordTemplate,
   type MatchRecord,
 } from "../packages/game-session/src/match-record.js";
-import { openRail } from "./helpers/menu.js";
+import { joinFriend, openRail } from "./helpers/menu.js";
+import { hostLobby, openPeers, playOwnTeams } from "./helpers/peers.js";
+import { namePlayer } from "./helpers/player.js";
 
 const played = (index: number): string => {
   const build = STARTER_BUILDS[index];
@@ -63,7 +65,11 @@ test("Clone saves a finished match's team as a Team Build and opens it (#2585)",
   );
   await page.locator(".match-row-head").click();
   const teams = page.locator(".match-detail .play-card");
-  await expect(page.getByRole("tab")).toHaveText(["Team 1 · Won", "Team 2 · Lost"]);
+  await expect(page.locator(".match-view-tab")).toHaveText(["Builds"]);
+  await expect(page.locator(".match-tabs").getByRole("tab")).toHaveText([
+    "Team 1 · Won",
+    "Team 2 · Lost",
+  ]);
   await expect(teams).toHaveCount(1);
   await expect(teams.first().locator(".play-card-member")).toHaveCount(2);
   await teams.first().getByRole("button", { name: "Clone", exact: true }).click();
@@ -183,4 +189,60 @@ test("shows only the 50 most recent matches of the past 7 days (#3133), with no 
   await expect(page.locator(".match-duration").first()).toHaveText("1:00");
   await expect(page.locator(".match-duration").last()).toHaveText("1:49");
   await expect(page.locator(".matches-recent")).toHaveCount(0);
+});
+
+/** Open the menu as `playerName`. */
+async function openMenu(page: Page, playerName: string): Promise<void> {
+  await page.goto("./");
+  await namePlayer(page, playerName);
+}
+
+test("My matches keeps the ended match, its builds, scores and charts, and not one left before its end (#3848, #3903)", async ({
+  browser,
+}) => {
+  const { context, pages } = await openPeers(browser, 2);
+  const [host, guest] = pages as [Page, Page];
+
+  try {
+    // A 1v1 on Crossroads, an Annihilation map: the guest quitting ends it.
+    await openMenu(host, "Host");
+    const invite = await hostLobby(host, { size: 1, map: "arena-crossroads" });
+    await openMenu(guest, "Guest");
+    await joinFriend(guest, invite);
+    await expect(guest.locator(".lobby-panel")).toBeVisible();
+    await host.getByRole("button", { name: "join team 1" }).click();
+    await guest.getByRole("button", { name: "join team 2" }).click();
+    await host.getByRole("button", { name: "Ready", exact: true }).click();
+    await guest.getByRole("button", { name: "Ready", exact: true }).click();
+    await host.getByRole("button", { name: "start match" }).click();
+    await playOwnTeams([{ page: host }, { page: guest }]);
+    await expect(guest.locator(".hud-leave")).toBeVisible();
+    // The guest quits before the end: no record. The host wins, and keeps
+    // the match as it leaves, the charts in.
+    const leave = guest.locator(".hud-leave");
+    await leave.getByRole("button", { name: "leave match" }).click();
+    await leave.getByRole("button", { name: "yes" }).click();
+    await expect(host.locator(".hud-summary .match-charts-svg")).toBeVisible();
+    await host.locator(".hud-end-line").getByRole("button", { name: "Now" }).click();
+    await expect(host.locator(".lobby-panel")).toBeVisible();
+
+    await openRail(host, "Matches");
+    const mine = host.locator(".match-chip-mine");
+    await mine.click();
+    await expect(mine).toHaveAttribute("aria-pressed", "true");
+    // The pages share one storage, so the guest's would be listed too.
+    const rows = host.locator(".match-row");
+    await expect(rows).toHaveCount(1);
+    await expect(rows.first().locator(".match-you")).toHaveText("You");
+    await rows.first().locator(".match-row-head").click();
+    const tabs = host.locator(".match-view-tab");
+    await expect(tabs).toHaveText(["Builds", "Stats", "Diagram"]);
+    await expect(host.locator(".match-detail .play-card")).toHaveCount(1);
+    await tabs.nth(1).click();
+    await expect(host.locator(".match-detail .match-summary-panel").first()).toBeVisible();
+    await tabs.nth(2).click();
+    await expect(host.locator(".match-detail .match-charts-svg")).toBeVisible();
+  } finally {
+    await context.close();
+  }
 });

@@ -467,6 +467,14 @@ est celle de la plus grande équipe, bots compris : une Partie hébergée en 3v2
 correspond donc à aucune taille. Les pastilles restent comme tu les as laissées
 jusqu'au rechargement de la page.
 
+La pastille **Mes parties** remplace la liste par les tiennes : les 50 dernières
+parties que tu as terminées dans ce navigateur, quel que soit leur âge, publiées ou
+non (une Bataille des Zaishen d'élite, une partie contre des bots), avec **Vous**
+dans ton équipe. Les pastilles Type et Taille les filtrent aussi. Ouvres-en une et
+elle a trois onglets : **Builds**, les équipes comme ci-dessus ; **Statistiques**,
+son tableau des scores ; et **Graphique**, ses graphiques. Une partie publiée n'a que
+Builds. Une partie que tu as quittée avant sa fin n'est pas gardée.
+
 Au-dessus des filtres, le bandeau **Hall des héros** liste les 20 dernières tenues, de la plus récente à la plus ancienne : le détenteur (un tag de guilde ou le nom du chef), les personnes de l'équipe gagnante, la fin de la victoire la plus récente et, à partir de deux victoires, le nombre d'affilée. Une tenue est une suite ininterrompue de victoires au Hall par le même détenteur. Le bandeau lit les enregistrements de cette page, ignore les filtres et reste masqué si aucun n'est une victoire au Hall. Comme tout enregistrement, c'est ce qu'a signalé l'hôte de chaque match, et rien ne le vérifie.
 
 ## Classé

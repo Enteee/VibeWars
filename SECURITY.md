@@ -322,11 +322,12 @@ What it does not defend against:
   32 M-character replay every match, and 50 are kept, so it can grow a
   peer's IndexedDB by over a gigabyte across many matches with it.
 
-## Match history
+## My matches
 
 A player keeps the newest `KEPT_MATCHES` (50) ended matches they had a
-seat in (#3848, `apps/web/src/storage/match-history.ts`): the host's
-`ended` and, if it came, its charts. Nothing in it is sent anywhere.
+seat in (#3848, #3903, `apps/web/src/storage/match-history.ts`), shown
+under the Matches page's My matches: the host's `ended`, every team's
+builds in it, and, if they came, its charts. Nothing in it is sent anywhere.
 
 What it defends against:
 

@@ -25,6 +25,7 @@ import type {
   WireCape,
   WireCosmetics,
   WireDeck,
+  WireEndedTeam,
   WireLift,
   WirePing,
   WireMatchChart,
@@ -191,6 +192,8 @@ export interface MatchSnapshot {
   readonly endReason: string | undefined;
   /** Seconds on the Elite Zaishen Battle's clock (#2692), only once it has ended. */
   readonly clearSeconds?: number | undefined;
+  /** Each team's seats and builds (#3903), from the host's `ended`; only once it has ended. */
+  readonly endedTeams?: readonly WireEndedTeam[] | undefined;
   /** Weapon shots and flying spells in flight, oldest first (#160, #535). */
   readonly projectiles: readonly ProjectileSnapshot[];
   /** Wards on the ground, oldest first (#1087). */

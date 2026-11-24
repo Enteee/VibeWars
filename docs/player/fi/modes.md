@@ -505,6 +505,14 @@ tiimi botit mukaan lukien, joten 3v2-Isännöity peli ei sovi mihinkään
 kokoon. Sirut pysyvät sellaisina kuin jätit ne, kunnes sivu ladataan
 uudelleen.
 
+Siru **Omat ottelut** vaihtaa luettelon omiisi: viimeiset 50 ottelua,
+jotka pelasit loppuun tässä selaimessa, iästä riippumatta, julkaistuina
+tai ei (Elite Zaishen Battle, ottelu botteja vastaan), ja **Sinä** omassa
+tiimissäsi. Laji- ja Koko-sirut suodattavat niitäkin. Avaa yksi, niin
+siinä on kolme välilehteä: **Buildit**, tiimit kuten yllä; **Tilastot**,
+sen pistetaulukko; ja **Kaavio**, sen kaaviot. Julkaistussa ottelussa on
+vain Buildit. Ottelua, josta poistuit ennen sen loppua, ei säilytetä.
+
 Sirujen yläpuolella **Sankarien sali** -nauha luettelee viimeiset 20 hallintakautta, uusin ensin: hallitsija (kiltatunnus tai johtajan nimi), voittaneen tiimin pelaajat, milloin uusin voitto päättyi ja, kahdesta voitosta alkaen, montako peräkkäin. Hallintakausi on yhden hallitsijan katkeamaton Salin voittojen sarja. Nauha lukee tämän sivun kirjaukset, ei välitä siruista, ja on piilossa, kun mikään niistä ei ole Salin voitto. Kuten jokainen kirjaus, se on sitä, mitä kunkin ottelun isäntä ilmoitti, eikä mikään tarkista sitä.
 
 ## Rankatut

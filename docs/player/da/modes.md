@@ -497,6 +497,14 @@ alle igennem. Størrelsen er det største hold, bots medregnet, så et 3v2
 Værtsspil passer ikke til nogen størrelse. Chipsene bliver, som du
 efterlod dem, indtil siden genindlæses.
 
+Chippen **Mine kampe** bytter listen ud med dine egne: de seneste 50
+kampe, du har afsluttet i denne browser, uanset alder, offentliggjort
+eller ej (en Elite Zaishen Battle, en kamp mod bots), med **Dig** på dit
+hold. Type- og Antal-chipsene filtrerer dem også. Åbn en, og den har tre
+faner: **Builds**, holdene som ovenfor; **Statistik**, dens pointtabel;
+og **Diagram**, dens diagrammer. En offentliggjort kamp har kun Builds.
+En kamp, du forlod før dens afslutning, gemmes ikke.
+
 Over chipsene viser **Heltenes Hal**-striben de seneste 20 besiddelser, nyeste først: holderen (et laugsmærke eller lederens navn), det vindende holds folk, hvornår den nyeste sejr sluttede og, fra to sejre og op, hvor mange i træk. En besiddelse er en ubrudt række af sejre i Hallen af én holder. Striben læser registreringerne på denne side, ignorerer chipsene og er skjult, når ingen af dem er en sejr i Hallen. Som enhver registrering er den, hvad hver kamps vært rapporterede, og intet tjekker den.
 
 ## Rangeret

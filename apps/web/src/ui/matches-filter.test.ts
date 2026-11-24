@@ -33,6 +33,7 @@ const record = (mode: LobbyMode, ...sizes: number[]): MatchRecord => ({
 const filter = (kinds: LobbyMode[], sizes: (1 | 2 | 4 | 8)[]): MatchFilter => ({
   kinds: new Set(kinds),
   sizes: new Set(sizes),
+  mine: false,
 });
 
 const RANDOM_4 = record("random-arena", 4, 4);

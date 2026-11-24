@@ -10,6 +10,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { t } from "../i18n/index.js";
 import { arenaIds } from "../net/maps.js";
 import type { MatchRecordWatchHandlers } from "../net/transport/match-records.js";
+import type { MatchRecord as KeptMatch } from "../storage/match-history.js";
 import { sessionFilter } from "./matches-filter.js";
 import {
   MATCHES_KEPT,
@@ -67,6 +68,57 @@ const PAIRS: MatchRecord = {
       ],
     },
   ],
+};
+
+/** One of this browser's own ended matches (#3903): `RECORD`, as Ann played it. */
+const KEPT: KeptMatch = {
+  id: "kept-1",
+  endedAt: NOW - 3_600_000,
+  mapId: RECORD.map,
+  mode: "random-arena",
+  durationSeconds: 305,
+  teamCount: 2,
+  selfId: "ann",
+  pubkey: "a".repeat(64),
+  selfTeam: 0,
+  bots: ["bot"],
+  ended: {
+    winningTeam: 0,
+    endReason: "annihilation",
+    summary: [
+      {
+        id: "ann",
+        name: "Ann",
+        guildTag: "VIBE",
+        heroRank: 0,
+        team: 0,
+        signet: null,
+        damage: 900,
+        healing: 0,
+        taken: 300,
+        kills: 1,
+        deaths: 0,
+        interrupts: 0,
+      },
+      {
+        id: "bot",
+        name: "Elementalist Bot",
+        guildTag: null,
+        heroRank: 0,
+        team: 1,
+        signet: null,
+        damage: 300,
+        healing: 0,
+        taken: 900,
+        kills: 0,
+        deaths: 1,
+        interrupts: 0,
+      },
+    ],
+    clearSeconds: null,
+    teams: RECORD.teams,
+  },
+  chart: null,
 };
 
 /** Just enough DOM to render the Matches page; the unit tests run in Node. */
@@ -175,6 +227,19 @@ class FakeElement {
     // Nothing to show it on.
   }
 
+  /** A table's parts (#3903): the Stats tab's score table. */
+  createTHead(): FakeElement {
+    return this.appendChild(new FakeElement());
+  }
+
+  createTBody(): FakeElement {
+    return this.appendChild(new FakeElement());
+  }
+
+  insertRow(): FakeElement {
+    return this.appendChild(new FakeElement());
+  }
+
   /** As a browser does, a disabled button hears no click. */
   click(): void {
     if (this.disabled) {
@@ -190,7 +255,7 @@ describe("the Matches page (#2532)", () => {
   let cloned: MatchRecordTeam[];
   let nowMs: number;
 
-  const render = (): { root: FakeElement; close: () => void } => {
+  const render = (kept: readonly KeptMatch[] = []): { root: FakeElement; close: () => void } => {
     const root = new FakeElement();
     const screen = renderMatchesScreen(root as unknown as HTMLElement, {
       onSwitch: () => undefined,
@@ -206,6 +271,7 @@ describe("the Matches page (#2532)", () => {
       onCloneTeam: (team) => {
         cloned.push(team);
       },
+      kept: () => Promise.resolve(kept),
     });
     return { root, close: () => screen.close() };
   };
@@ -221,6 +287,7 @@ describe("the Matches page (#2532)", () => {
     nowMs = NOW;
     sessionFilter.kinds.clear();
     sessionFilter.sizes.clear();
+    sessionFilter.mine = false;
     vi.stubGlobal("localStorage", { getItem: () => null });
     vi.stubGlobal("window", { addEventListener: () => undefined });
     vi.stubGlobal("document", {
@@ -679,6 +746,104 @@ describe("the Matches page (#2532)", () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  /** The My matches chip (#3903). */
+  const mineChip = (root: FakeElement): FakeElement => root.one("match-chip-mine");
+
+  /** Lets the page read this browser's own matches. */
+  const settle = async (): Promise<void> => {
+    await Promise.resolve();
+    await Promise.resolve();
+  };
+
+  it("shows this browser's own matches with My matches on, and the published ones off (#3903)", async () => {
+    const { root } = render([KEPT]);
+    await settle();
+    hear("public", PAIRS);
+    expect(root.all("match-row").map((row) => row.attributes.get("data-kind"))).toEqual([
+      "team-arena",
+    ]);
+    const mine = mineChip(root);
+    mine.click();
+    expect(mine.attributes.get("aria-pressed")).toBe("true");
+    const rows = root.all("match-row");
+    expect(rows.map((row) => row.attributes.get("data-kind"))).toEqual(["random-arena"]);
+    // Read as a published row, with no host's word to doubt and "You" on Ann's team.
+    expect(rows[0]?.all("match-host-reported")).toEqual([]);
+    expect(rows[0]?.all("match-you").map((you) => you.textContent)).toEqual([t("charts.you")]);
+    expect(rows[0]?.all("match-team")[0]?.all("match-you")).toHaveLength(1);
+    expect(rows[0]?.one("match-duration").textContent).toBe("5:05");
+    mine.click();
+    expect(root.all("match-row").map((row) => row.attributes.get("data-kind"))).toEqual([
+      "team-arena",
+    ]);
+  });
+
+  it("filters my matches by kind and size too (#3903)", async () => {
+    const { root } = render([KEPT, { ...KEPT, id: "kept-2", mode: "gvg" }]);
+    await settle();
+    mineChip(root).click();
+    expect(root.all("match-row")).toHaveLength(2);
+    chip(root, "kind", t("matches.kindGvg")).click();
+    expect(root.all("match-row").map((row) => row.attributes.get("data-kind"))).toEqual(["gvg"]);
+    chip(root, "size", "2v2").click();
+    expect(root.all("match-row")).toEqual([]);
+    expect(root.one("matches-note").textContent).toBe(t("matches.noneFit"));
+  });
+
+  it("says no match of mine is kept yet, even with the relays out of reach (#3903)", async () => {
+    const { root } = render();
+    await settle();
+    on?.noRelay();
+    mineChip(root).click();
+    const note = root.one("matches-note");
+    expect(note.hidden).toBe(false);
+    expect(note.textContent).toBe(t("matches.emptyMine"));
+  });
+
+  it("opens my match on Builds, with Stats and Diagram beside it (#3903)", async () => {
+    const { root } = render([KEPT]);
+    await settle();
+    mineChip(root).click();
+    root.one("match-row-head").click();
+    const tabs = root.all("match-view-tab");
+    expect(tabs.map((tab) => tab.textContent)).toEqual([
+      t("matches.tabBuilds"),
+      t("matches.tabStats"),
+      t("matches.tabDiagram"),
+    ]);
+    expect(tabs[0]?.attributes.get("aria-selected")).toBe("true");
+    expect(root.all("match-builds")).toHaveLength(1);
+
+    tabs[1]?.click();
+    expect(tabs[1]?.attributes.get("aria-selected")).toBe("true");
+    expect(root.all("match-builds")).toEqual([]);
+    expect(root.all("match-summary-table")).toHaveLength(2);
+    expect(root.one("match-summary").textContent).toContain("Ann");
+
+    // Its charts never came: Diagram says so rather than breaking.
+    tabs[2]?.click();
+    expect(root.all("match-summary-table")).toEqual([]);
+    expect(root.one("match-charts-none").textContent).toBe(t("charts.none"));
+  });
+
+  it("opens a published match on Builds alone (#3903)", () => {
+    const { root } = render();
+    hear("a");
+    root.one("match-row-head").click();
+    expect(root.all("match-view-tab").map((tab) => tab.textContent)).toEqual([
+      t("matches.tabBuilds"),
+    ]);
+  });
+
+  it("clones a team from my match (#3903)", async () => {
+    const { root } = render([KEPT]);
+    await settle();
+    mineChip(root).click();
+    root.one("match-row-head").click();
+    root.one("play-card-clone").click();
+    expect(cloned).toEqual([RECORD.teams[0]]);
   });
 
   it("stops listening when the page closes", () => {

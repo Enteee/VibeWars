@@ -273,7 +273,7 @@ export interface MatchView {
   /** The match's charts once the host has sent them all (#3564), for the queue screen. */
   chart(): WireMatchChart | undefined;
   /**
-   * What Match history keeps of it (#3848), once the host's `ended` has
+   * What My matches keeps of it (#3848, #3903), once the host's `ended` has
    * come: `undefined` before, and for a watcher or the tutorial.
    */
   record(): MatchRecordFields | undefined;
@@ -1408,6 +1408,7 @@ export async function startMatchView(
           endReason: match.endReason,
           summary: match.summary,
           clearSeconds: match.clearSeconds ?? null,
+          teams: match.endedTeams,
         },
         viewed.map.teamCount,
       );
@@ -1415,6 +1416,7 @@ export async function startMatchView(
         ? undefined
         : {
             mapId: viewed.map.id,
+            durationSeconds: Math.round(match.elapsedSeconds),
             teamCount: viewed.map.teamCount,
             selfId: viewed.selfSessionId,
             selfTeam: self.team,

@@ -10,13 +10,14 @@ import {
 
 import { MATCH_HISTORY_STORE, type KeyValueStore } from "./repository.js";
 
-/** How many ended matches a player keeps in Match history (#3848): the newest, by when they ended. */
+/** How many ended matches a player keeps for My matches (#3848, #3903): the newest, by when they ended. */
 export const KEPT_MATCHES = 50;
 
 /**
  * One ended match this browser's player had a seat in (#3848), as the
- * end panel showed it: the host's `ended` as received and, if it came,
- * its charts. Nothing here is sent anywhere.
+ * end panel showed it: the host's `ended` as received, every team's
+ * builds in it (#3903), and, if they came, its charts. Nothing here is
+ * sent anywhere.
  */
 export interface MatchRecord {
   readonly id: string;
@@ -24,6 +25,8 @@ export interface MatchRecord {
   readonly endedAt: number;
   readonly mapId: string;
   readonly mode: LobbyMode;
+  /** How long it ran, whole seconds. */
+  readonly durationSeconds: number;
   readonly teamCount: WireTeamCount;
   readonly selfId: string;
   /** The player key's public key, hex, when the player left it. */
@@ -63,6 +66,9 @@ export function parseMatchRecord(value: unknown): MatchRecord | undefined {
     !Number.isFinite(raw.endedAt) ||
     !isString(raw.mapId) ||
     !isLobbyMode(raw.mode) ||
+    typeof raw.durationSeconds !== "number" ||
+    !Number.isInteger(raw.durationSeconds) ||
+    raw.durationSeconds < 0 ||
     (raw.teamCount !== 2 && raw.teamCount !== 3) ||
     !isString(raw.selfId) ||
     !isString(raw.pubkey) ||
@@ -89,6 +95,7 @@ export function parseMatchRecord(value: unknown): MatchRecord | undefined {
         endedAt: raw.endedAt,
         mapId: raw.mapId,
         mode: raw.mode,
+        durationSeconds: raw.durationSeconds,
         teamCount,
         selfId: raw.selfId,
         pubkey: raw.pubkey,

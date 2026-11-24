@@ -574,6 +574,15 @@ beleértve, így egy 3v2-es Saját játék egyik méretbe sem illik. A
 chipek úgy maradnak, ahogy hagytad őket, amíg újra nem töltöd az
 oldalt.
 
+A **Saját meccsek** chip a listát a sajátjaidra cseréli: az utolsó 50
+meccsre, amelyet ebben a böngészőben fejeztél be, bármilyen régiek,
+akár közzétették őket, akár nem (egy Elite Zaishen Battle, egy botok
+elleni meccs), és a csapatodban **Te** áll. A Típus és Méret chipek
+ezeket is szűrik. Nyiss meg egyet, és három füle van: **Buildek**, a
+csapatok, mint fent; **Statisztika**, a pontjainak táblázata; és
+**Diagram**, a grafikonjai. Egy közzétett meccsnek csak Buildek füle
+van. Az a meccs, amelyet a vége előtt hagytál el, nem marad meg.
+
 A chipek fölött a **Hősök Csarnoka** csík az utolsó 20 tartást sorolja
 fel, a legújabbal elöl: a tartót (céhjel vagy a vezető neve), a győztes
 csapat tagjait, hogy mikor ért véget a legújabb győzelem, és két

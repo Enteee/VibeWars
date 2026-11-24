@@ -20,7 +20,7 @@ Mỗi màn hình nhớ cỡ riêng của mình, và mở ở một cỡ mà nó 
 Dưới đó là ![Tạo Nhân Vật](../../../apps/web/public/icons/mode/characters.svg) **Tạo Nhân Vật**, nơi bạn tạo nhân vật, và ![Tạo Đội](../../../apps/web/public/icons/mode/teams.svg) **Tạo Đội**, nơi bạn
 tạo [Build đội](skills-and-builds.md#build-đội), rồi đến ![Trận đấu](../../../apps/web/public/icons/mode/matches.svg) **Trận đấu**, các
 [trận đã kết thúc](modes.md#bản-ghi-trận-đấu) như chủ phòng của chúng báo
-lại. Game mở ở mục bạn dùng lần cuối.
+lại, và trận của bạn trong **Trận của tôi**. Game mở ở mục bạn dùng lần cuối.
 
 ## Tạo nhân vật
 
@@ -94,7 +94,7 @@ Nhấn một mục chú giải để ẩn hoặc hiện đường của nó. Tr�
 nằm dưới điểm số, nơi hiện bạn và hai người khác cho đến khi bạn nhấn
 **Hiện tất cả**.
 
-**Lịch sử trận đấu** trên thanh trên cùng liệt kê 50 trận gần nhất của bạn, mới nhất trước: mở một trận để xem lại điểm số và biểu đồ của nó. Chúng chỉ được lưu trong trình duyệt này. **Trận của tôi** chỉ hiện những trận chơi bằng khóa người chơi hiện tại của bạn.
+**Trận của tôi** trên trang **Trận đấu** liệt kê 50 trận gần nhất của bạn, mới nhất trước: mở một trận để xem các bản dựng của nó, và xem lại điểm số cùng biểu đồ trong **Thống kê** và **Biểu đồ**. Chúng chỉ được lưu trong trình duyệt này.
 
 ## Tạo hoặc vào trận
 

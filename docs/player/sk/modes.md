@@ -465,6 +465,13 @@ stlačenú veľkosť; skupina bez stlačených všetko prepustí. Veľkosť je
 najväčší tím vrátane botov, takže Vlastná hra 3v2 nesedí na žiadnu veľkosť.
 Čipy zostávajú tak, ako si ich nechal, kým sa stránka znova nenačíta.
 
+Čip **Moje zápasy** vymení zoznam za tvoje vlastné: posledných 50 zápasov, ktoré
+si dohral v tomto prehliadači, akokoľvek starých, zverejnených aj nezverejnených
+(Elite Zaishen Battle, zápas proti botom), s **Ty** v tvojom tíme. Filtrujú ich
+aj čipy Druh a Veľkosť. Otvor jeden a má tri karty: **Buildy**, tímy ako vyššie;
+**Štatistiky**, jeho tabuľku skóre; a **Graf**, jeho grafy. Zverejnený zápas má
+len Buildy. Zápas, ktorý si opustil pred jeho koncom, sa neuchováva.
+
 Nad filtrami ukazuje pás **Sieň hrdinov** posledných 20 sérií, od najnovšej: držiteľa (cechová značka alebo meno vodcu), ľudí z víťazného tímu, kedy sa skončila najnovšia výhra a od dvoch výhier, koľko ich bolo v rade. Séria je neprerušený rad výhier v Sieni jedného držiteľa. Pás číta záznamy na tejto stránke, neberie ohľad na filtre a je skrytý, keď žiadny z nich nie je výhrou v Sieni. Ako každý záznam ukazuje to, čo nahlásil hostiteľ každého zápasu, a nič to neoveruje.
 
 ## Hodnotené

@@ -21,7 +21,7 @@ i otvara se na veličini koju igra (GvG na 8v8). Ispod su ![Uređivač likova](.
 stvaraš svoje likove, i ![Uređivač timova](../../../apps/web/public/icons/mode/teams.svg) **Uređivač timova**, gdje stvaraš svoje
 [timske sastave](skills-and-builds.md#timski-sastavi), a zatim
 ![Mečevi](../../../apps/web/public/icons/mode/matches.svg) **Mečevi**, [završeni mečevi](modes.md#zapisi-mečeva) kako ih
-prijavljuju domaćini. Igra se otvara na
+prijavljuju domaćini, a tvoji pod **Moji mečevi**. Igra se otvara na
 onom koji si zadnji koristio.
 
 ## Stvori lika
@@ -95,7 +95,7 @@ dođi do nje tipkom Tab da pročitaš što se dogodilo. Pritisni stavku legende 
 sakriješ ili prikažeš njezinu liniju. Na mobitelu su grafikoni ispod rezultata,
 koji prikazuju tebe i još dvoje dok ne pritisneš **Prikaži sve**.
 
-**Povijest mečeva** u gornjoj traci prikazuje tvojih zadnjih 50 mečeva, najnovije prvo: otvori jedan da ponovno vidiš njegove bodove i grafikone. Čuvaju se samo u ovom pregledniku. **Moji mečevi** prikazuje samo one odigrane s tvojim trenutnim ključem igrača.
+**Moji mečevi** na stranici **Mečevi** prikazuje tvojih zadnjih 50 mečeva, najnovije prvo: otvori jedan da vidiš njegove buildove, a pod **Statistika** i **Grafikon** ponovno njegove bodove i grafikone. Čuvaju se samo u ovom pregledniku.
 
 ## Budi domaćin ili se pridruži meču
 

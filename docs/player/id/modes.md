@@ -459,6 +459,13 @@ ukuran yang ditekan; kelompok yang tak satu pun ditekan meloloskan semuanya. Uku
 tim terbesar, termasuk bot, jadi Game Host 3v2 tidak cocok dengan ukuran mana pun.
 Chip tetap seperti yang kamu tinggalkan sampai halaman dimuat ulang.
 
+Chip **Pertandinganku** mengganti daftar dengan milikmu sendiri: 50 laga terakhir yang kamu
+selesaikan di peramban ini, berapa pun usianya, diterbitkan atau tidak (Elite Zaishen
+Battle, laga melawan bot), dengan **Kamu** di timmu. Chip Jenis dan Ukuran juga
+menyaringnya. Buka salah satu dan ada tiga tab: **Build**, tim seperti di atas;
+**Statistik**, tabel skornya; dan **Diagram**, grafiknya. Laga yang diterbitkan hanya punya
+Build. Laga yang kamu tinggalkan sebelum berakhir tidak disimpan.
+
 Di atas chip, strip **Aula Pahlawan** menampilkan 20 penguasaan terakhir, yang terbaru di depan: penguasa (tag guild atau nama pemimpinnya), orang-orang tim pemenang, kapan kemenangan terbarunya berakhir dan, mulai dua kemenangan, berapa kali berturut-turut. Satu penguasaan adalah rangkaian kemenangan Aula tanpa putus oleh satu penguasa. Strip ini membaca catatan di halaman ini, mengabaikan chip, dan disembunyikan kalau tak satu pun catatan itu kemenangan Aula. Seperti setiap catatan, isinya adalah apa yang dilaporkan host setiap laga, dan tak ada yang memeriksanya.
 
 ## Peringkat

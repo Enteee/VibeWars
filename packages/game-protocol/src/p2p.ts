@@ -1257,6 +1257,26 @@ export interface WireSummaryRow {
   readonly interrupts: number;
 }
 
+/** The longest template code an `ended` seat may carry: GW1's longest is 64 characters. */
+const MAX_ENDED_TEMPLATE = 64;
+
+/**
+ * A seat as the match's published record has it (#3903): who played and
+ * the build as a GW1 template code, so the player's own Matches page can
+ * show and clone it. `pubkey` is `null` exactly for a bot.
+ */
+export interface WireEndedPlayer {
+  readonly name: string;
+  readonly guildTag: string | null;
+  readonly bot: boolean;
+  readonly pubkey: string | null;
+  readonly template: string;
+}
+
+export interface WireEndedTeam {
+  readonly players: readonly WireEndedPlayer[];
+}
+
 /** Host to every client, once: the match is over, and what each player did in it. */
 export interface WireEnded {
   readonly winningTeam: WireTeam | null;
@@ -1264,6 +1284,8 @@ export interface WireEnded {
   readonly summary: readonly WireSummaryRow[];
   /** Seconds on the Elite Zaishen Battle's clock (#2692); `null` in any other match. */
   readonly clearSeconds: number | null;
+  /** Each team's seats by team id (#3903), as the match's record lists them. */
+  readonly teams: readonly WireEndedTeam[];
 }
 
 /** The most samples a `WireMatchChart` series holds (#3564). */
@@ -3290,20 +3312,47 @@ function parseSummaryRow(value: unknown): WireSummaryRow | undefined {
     : undefined;
 }
 
+function parseEndedPlayer(value: unknown): WireEndedPlayer | undefined {
+  const raw = fields(value);
+  return raw !== undefined &&
+    isString(raw.name, MAX_WIRE_TEXT) &&
+    isNullableString(raw.guildTag) &&
+    typeof raw.bot === "boolean" &&
+    (raw.pubkey === null || isTicketId(raw.pubkey)) &&
+    (raw.pubkey === null) === raw.bot &&
+    isString(raw.template, MAX_ENDED_TEMPLATE)
+    ? {
+        name: raw.name,
+        guildTag: raw.guildTag,
+        bot: raw.bot,
+        pubkey: raw.pubkey,
+        template: raw.template,
+      }
+    : undefined;
+}
+
+function parseEndedTeam(value: unknown): WireEndedTeam | undefined {
+  const players = parseArray(fields(value)?.players, MAX_LOBBY_PLAYERS, parseEndedPlayer);
+  return players === undefined ? undefined : { players };
+}
+
 /** The end of a match of `teamCount` teams (#2682): any other team is refused. */
 export function parseWireEnded(value: unknown, teamCount: WireTeamCount): WireEnded | undefined {
   const raw = fields(value);
   const summary = parseArray(raw?.summary, MAX_LOBBY_PLAYERS, parseSummaryRow);
+  const teams = parseArray(raw?.teams, teamCount, parseEndedTeam);
   return raw !== undefined &&
     (raw.winningTeam === null || (isTeam(raw.winningTeam) && raw.winningTeam < teamCount)) &&
     isOneOf(raw.endReason, [...END_REASONS, "host-left"] as const) &&
     summary?.every(({ team }) => team < teamCount) === true &&
-    (raw.clearSeconds === null || (isNumber(raw.clearSeconds) && raw.clearSeconds >= 0))
+    (raw.clearSeconds === null || (isNumber(raw.clearSeconds) && raw.clearSeconds >= 0)) &&
+    teams?.length === teamCount
     ? {
         winningTeam: raw.winningTeam,
         endReason: raw.endReason,
         summary,
         clearSeconds: raw.clearSeconds,
+        teams,
       }
     : undefined;
 }

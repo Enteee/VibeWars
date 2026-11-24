@@ -31,6 +31,22 @@ const ENDED: WireEnded = {
   endReason: "annihilation",
   summary: [row("me", 0), row("foe", 1)],
   clearSeconds: null,
+  teams: [
+    {
+      players: [
+        {
+          name: "me",
+          guildTag: null,
+          bot: false,
+          pubkey: "a".repeat(64),
+          template: "OQAAAAAAAAAA",
+        },
+      ],
+    },
+    {
+      players: [{ name: "foe", guildTag: null, bot: true, pubkey: null, template: "OQAAAAAAAAAA" }],
+    },
+  ],
 };
 
 const CHART: WireMatchChart = {
@@ -53,6 +69,7 @@ function record(id: string, endedAt: number, pubkey = "key-a"): MatchRecord {
     endedAt,
     mapId: "ember-pits",
     mode: "hosted-game",
+    durationSeconds: 305,
     teamCount: 2,
     selfId: "me",
     pubkey,
@@ -104,6 +121,7 @@ describe("parseMatchRecord (#3848)", () => {
 
   it.each([
     ["an unknown mode", { mode: "chess" }],
+    ["no duration", { durationSeconds: undefined }],
     ["a team past the team count", { selfTeam: 2 }],
     ["no player key", { pubkey: undefined }],
     ["a bot that is no id", { bots: [3] }],
@@ -112,6 +130,7 @@ describe("parseMatchRecord (#3848)", () => {
       { chart: { ...CHART, players: [{ ...CHART.players[0], id: "eve" }] } },
     ],
     ["no chart field", { chart: undefined }],
+    ["an ended without its teams (#3903)", { ended: { ...ENDED, teams: undefined } }],
   ])("refuses %s", (_, change) => {
     expect(parseMatchRecord({ ...record("a", 1), ...change })).toBeUndefined();
   });

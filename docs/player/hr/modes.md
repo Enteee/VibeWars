@@ -460,6 +460,13 @@ pritisnutoj veličini; skupina bez pritisnutih pušta sve. Veličina je
 najveći tim, s botovima, pa Igra s domaćinom 3v2 ne odgovara nijednoj veličini.
 Oznake ostaju kako si ih ostavio dok se stranica ponovno ne učita.
 
+Oznaka **Moji mečevi** zamjenjuje popis tvojima: zadnjih 50 mečeva koje si završio u ovom
+pregledniku, bilo koje starosti, objavljenih ili ne (Elite Zaishen Battle, meč protiv
+botova), s **Ti** u tvom timu. Filtriraju ih i oznake Vrsta i Veličina. Otvori jedan i ima
+tri kartice: **Buildovi**, timove kao gore; **Statistika**, njegovu tablicu bodova; i
+**Grafikon**, njegove grafikone. Objavljeni meč ima samo Buildove. Meč koji si napustio
+prije kraja ne čuva se.
+
 Iznad filtara traka **Dvorana junaka** prikazuje zadnjih 20 nizova, od najnovijeg: držatelja (oznaka ceha ili ime vođe), ljude iz pobjedničkog tima, kada je završila najnovija pobjeda i, od dvije pobjede, koliko ih je zaredom. Niz je neprekinuti slijed pobjeda u Dvorani jednog držatelja. Traka čita zapise s ove stranice, zanemaruje filtre i skrivena je kada nijedan od njih nije pobjeda u Dvorani. Kao i svaki zapis, to je ono što je prijavio domaćin svakog meča, i ništa to ne provjerava.
 
 ## Rangirani

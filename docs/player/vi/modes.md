@@ -463,6 +463,14 @@ không có nút nào được bấm thì cho tất cả đi qua. Cỡ là đội
 bot, nên Trận tự tạo 3v2 không khớp cỡ nào. Các nút chọn giữ nguyên như bạn để
 cho đến khi trang được tải lại.
 
+Nút chọn **Trận của tôi** thay danh sách bằng các trận của bạn: 50 trận gần
+nhất bạn chơi xong trong trình duyệt này, cũ bao lâu cũng được, đã công bố hay
+chưa (một Elite Zaishen Battle, một trận đấu với bot), với **Bạn** trong đội
+của bạn. Các nút Loại và Cỡ cũng lọc chúng. Mở một trận và nó có ba thẻ: **Bản
+dựng**, các đội như trên; **Thống kê**, bảng điểm của nó; và **Biểu đồ**, các
+biểu đồ của nó. Trận đã công bố chỉ có Bản dựng. Trận bạn rời trước khi kết
+thúc sẽ không được giữ lại.
+
 Phía trên các nút chọn, dải **Đại sảnh Anh hùng** liệt kê 20 lần giữ gần nhất, mới nhất trước: đội giữ (một tag Bang hoặc tên trưởng tổ đội), những người trong đội thắng, thời điểm trận thắng mới nhất kết thúc và, từ hai trận thắng trở lên, bao nhiêu trận liên tiếp. Một lần giữ là chuỗi thắng Đại sảnh không gián đoạn của một đội giữ. Dải này đọc các bản ghi trên trang này, bỏ qua các nút chọn, và bị ẩn khi không có bản ghi nào là trận thắng Đại sảnh. Như mọi bản ghi, nó là những gì chủ phòng của mỗi trận báo lại, và không có gì kiểm tra nó.
 
 ## Xếp hạng

@@ -21,7 +21,7 @@ suyo, y se abre con un tamaño que juega (GvG en 8v8). Debajo están ![Creador d
 de personajes**, donde haces tus personajes, y ![Creador de equipos](../../../apps/web/public/icons/mode/teams.svg) **Creador de equipos**, donde
 haces tus [builds de equipo](skills-and-builds.md#builds-de-equipo), y luego
 ![Partidas](../../../apps/web/public/icons/mode/matches.svg) **Partidas**, las [partidas terminadas](modes.md#registros-de-partidas) tal
-como las informan sus anfitriones. El juego se abre en la última que usaste.
+como las informan sus anfitriones, y las tuyas en **Mis partidas**. El juego se abre en la última que usaste.
 
 ## Crea un personaje
 
@@ -98,7 +98,7 @@ una entrada de la leyenda para ocultar o mostrar su línea. En el móvil los
 gráficos quedan bajo las puntuaciones, que te muestran a ti y a otros dos hasta
 que pulses **Mostrar todo**.
 
-**Historial de partidas**, en la barra superior, muestra tus últimas 50 partidas, de la más nueva a la más antigua: abre una para ver de nuevo sus puntuaciones y gráficos. Solo se guardan en este navegador. **Mis partidas** muestra solo las que jugaste con tu clave de jugador actual.
+**Mis partidas**, en la página **Partidas**, muestra tus últimas 50 partidas, de la más nueva a la más antigua: abre una para ver sus builds, y de nuevo sus puntuaciones y gráficos en **Estadísticas** y **Gráfico**. Solo se guardan en este navegador.
 
 ## Alojar o unirse a una partida
 

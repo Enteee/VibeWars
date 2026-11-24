@@ -20,7 +20,7 @@ Jeder Bildschirm merkt sich seine eigene und öffnet mit einer Größe, die er s
 (GvG mit 8v8). Darunter liegen der ![Charakter-Editor](../../../apps/web/public/icons/mode/characters.svg) **Charakter-Editor**, in dem du deine Charaktere
 baust, und der ![Team-Editor](../../../apps/web/public/icons/mode/teams.svg) **Team-Editor**, in dem du deine
 [Team-Builds](skills-and-builds.md#team-builds) baust, dann ![Matches](../../../apps/web/public/icons/mode/matches.svg) **Matches**, die
-[beendeten Matches](modes.md#match-berichte), wie ihre Hosts sie melden. Das Spiel
+[beendeten Matches](modes.md#match-berichte), wie ihre Hosts sie melden, und deine eigenen unter **Meine Spiele**. Das Spiel
 öffnet mit dem, den du zuletzt genutzt hast.
 
 ## Einen Charakter bauen
@@ -97,7 +97,7 @@ zu lesen, was passiert ist. Drück auf einen Legendeneintrag, um seine Linie
 aus- oder einzublenden. Auf dem Handy stehen die Diagramme unter den Punkten,
 die dich und zwei andere zeigen, bis du **Alle zeigen** drückst.
 
-**Spielverlauf** in der oberen Leiste listet deine letzten 50 Matches, die neuesten zuerst: Öffne eines, um seine Punkte und Diagramme noch einmal zu sehen. Sie bleiben nur in diesem Browser. **Meine Spiele** zeigt nur die, die du mit deinem aktuellen Spielerschlüssel gespielt hast.
+**Meine Spiele** auf der Seite **Matches** listet deine letzten 50 Matches, die neuesten zuerst: Öffne eines, um seine Builds zu sehen und unter **Statistik** und **Diagramm** noch einmal seine Punkte und Diagramme. Sie bleiben nur in diesem Browser.
 
 ## Match hosten oder beitreten
 

@@ -22,7 +22,7 @@ Derunder er ![Figureditor](../../../apps/web/public/icons/mode/characters.svg) *
 ![Holdeditor](../../../apps/web/public/icons/mode/teams.svg) **Holdeditor**, hvor du laver dine
 [Holdbuilds](skills-and-builds.md#holdbuilds), og derefter ![Kampe](../../../apps/web/public/icons/mode/matches.svg) **Kampe**, de
 [afsluttede kampe](modes.md#kampregistreringer), som deres værter
-rapporterer dem. Spillet åbner på den, du brugte sidst.
+rapporterer dem, og dine egne under **Mine kampe**. Spillet åbner på den, du brugte sidst.
 
 ## Lav en figur
 
@@ -96,7 +96,7 @@ til det med Tab, for at læse, hvad der skete. Tryk på et punkt i
 signaturforklaringen for at skjule eller vise dets linje. På en telefon står
 diagrammerne under resultaterne, som viser dig og to andre indtil **Vis alle**.
 
-**Kamphistorik** i topbjælken viser dine seneste 50 kampe, nyeste først: åbn en for at se dens point og diagrammer igen. De gemmes kun i denne browser. **Mine kampe** viser kun dem, du har spillet med din nuværende spillernøgle.
+**Mine kampe** på siden **Kampe** viser dine seneste 50 kampe, nyeste først: åbn en for at se dens builds og igen dens point og diagrammer under **Statistik** og **Diagram**. De gemmes kun i denne browser.
 
 ## Vær vært for eller deltag i en kamp
 

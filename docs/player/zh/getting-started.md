@@ -8,7 +8,7 @@ VibeWars 是一场在小型竞技场中进行的团队战斗。每位玩家带�
 
 ## 模式栏
 
-主界面左侧的竖栏从上到下列出了各[模式](modes.md)：![随机竞技场](../../../apps/web/public/icons/mode/random-arena.svg) **随机竞技场**、![团队竞技场](../../../apps/web/public/icons/mode/team-arena.svg) **团队竞技场**、![英雄之路](../../../apps/web/public/icons/mode/heroes-ascent.svg) **英雄之路**、![GvG](../../../apps/web/public/icons/mode/gvg.svg) **GvG** 和 ![自建游戏](../../../apps/web/public/icons/mode/hosted-game.svg) **自建游戏**。模式下方是 **队伍人数**，`‹ 4v4 ›`：箭头会切换到该界面支持的下一个更小或更大的人数。每个界面会记住自己的人数，并以它支持的人数打开（GvG 为 8v8）。再往下是 ![角色配置](../../../apps/web/public/icons/mode/characters.svg) **角色配置**，你在这里创建角色；![队伍配置](../../../apps/web/public/icons/mode/teams.svg) **队伍配置**，你在这里创建[队伍配置](skills-and-builds.md#队伍配置)；然后是 ![对局](../../../apps/web/public/icons/mode/matches.svg) **对局**，即各房主上报的[已结束对局](modes.md#对局记录)。游戏会打开你上次使用的那一项。
+主界面左侧的竖栏从上到下列出了各[模式](modes.md)：![随机竞技场](../../../apps/web/public/icons/mode/random-arena.svg) **随机竞技场**、![团队竞技场](../../../apps/web/public/icons/mode/team-arena.svg) **团队竞技场**、![英雄之路](../../../apps/web/public/icons/mode/heroes-ascent.svg) **英雄之路**、![GvG](../../../apps/web/public/icons/mode/gvg.svg) **GvG** 和 ![自建游戏](../../../apps/web/public/icons/mode/hosted-game.svg) **自建游戏**。模式下方是 **队伍人数**，`‹ 4v4 ›`：箭头会切换到该界面支持的下一个更小或更大的人数。每个界面会记住自己的人数，并以它支持的人数打开（GvG 为 8v8）。再往下是 ![角色配置](../../../apps/web/public/icons/mode/characters.svg) **角色配置**，你在这里创建角色；![队伍配置](../../../apps/web/public/icons/mode/teams.svg) **队伍配置**，你在这里创建[队伍配置](skills-and-builds.md#队伍配置)；然后是 ![对局](../../../apps/web/public/icons/mode/matches.svg) **对局**，即各房主上报的[已结束对局](modes.md#对局记录)，你自己的对局则在 **我的比赛** 下。游戏会打开你上次使用的那一项。
 
 ## 创建角色
 
@@ -36,7 +36,7 @@ VibeWars 是一场在小型竞技场中进行的团队战斗。每位玩家带�
 
 每场对局，无论是排队、主持还是在大厅中进行，都以比分收尾，在比分旁边，两张图表按时间讲述整场对局；排队对局结束后，队列界面会再次显示它们。**你** 绘制你造成的伤害、承受的伤害、治疗和能量；**队伍** 绘制每支队伍的生命池，下方是其总伤害。时间轴下方的标记显示击杀、死亡、打断、占领和复活：指向一个标记，或用 Tab 移到它上面，即可查看发生了什么。点击图例条目可隐藏或显示对应的线。在手机上，图表位于比分下方，比分只显示你和另外两人，直到你点 **显示全部**。
 
-顶栏的**比赛记录**按从新到旧列出你最近的 50 场比赛：打开一场即可再次查看它的比分和图表。记录只保存在这个浏览器里。勾选**我的比赛**只显示用你当前玩家密钥打的比赛。
+**对局**页面上的**我的比赛**按从新到旧列出你最近的 50 场比赛：打开一场即可查看它的配置，并在**统计**和**图表**下再次查看它的比分和图表。记录只保存在这个浏览器里。
 
 ## 主持或加入对局
 

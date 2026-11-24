@@ -655,6 +655,7 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
               winningTeam: ended.winningTeam ?? undefined,
               endReason: ended.endReason,
               clearSeconds: ended.clearSeconds ?? undefined,
+              endedTeams: ended.teams,
             };
       },
       onCombat(handler) {

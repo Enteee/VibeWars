@@ -241,9 +241,9 @@ describe("guild capes (#1422)", () => {
 });
 
 describe("the match summary's size (#1057)", () => {
-  it("fits a full lobby's lines in one `ended`", () => {
+  it("fits a full lobby's lines and builds in one `ended` (#3903)", () => {
     // Sixteen names of sixteen four-byte characters, the most a name keeps,
-    // and numbers no match reaches.
+    // numbers no match reaches, and GW1's longest template code.
     const ended: WireEnded = {
       winningTeam: 0,
       endReason: "annihilation",
@@ -261,6 +261,15 @@ describe("the match summary's size (#1057)", () => {
         kills: 9_999,
         deaths: 9_999,
         interrupts: 9_999,
+      })),
+      teams: [0, 1].map(() => ({
+        players: Array.from({ length: MAX_LOBBY_PLAYERS / 2 }, () => ({
+          name: "\u{1D54E}".repeat(16),
+          guildTag: "WWWW",
+          bot: false,
+          pubkey: "f".repeat(64),
+          template: "A".repeat(64),
+        })),
       })),
     };
     expect(parseWireEnded(ended, 2)).toEqual(ended);

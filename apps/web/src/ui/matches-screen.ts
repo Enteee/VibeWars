@@ -1,12 +1,19 @@
 /**
  * The Matches page (#2532): the finished matches hosts publish on Nostr
  * (#2528), newest first, live while the page is open. Every record is
- * the host's word only, and every row says so.
+ * the host's word only, and every row says so. With My matches (#3903),
+ * this browser's own ended matches instead, each with its score table
+ * and charts.
  */
 
 import { decodeTemplateCode, type MatchEndReason } from "@vibewars/game-core";
 import { LOBBY_MODES, type LobbyMode } from "@vibewars/game-protocol";
-import type { MatchRecord, MatchRecordPlayer, MatchRecordTeam } from "@vibewars/game-session";
+import {
+  MATCH_RECORD_VERSION,
+  type MatchRecord,
+  type MatchRecordPlayer,
+  type MatchRecordTeam,
+} from "@vibewars/game-session";
 
 import { mapName } from "../i18n/game-names.js";
 import { t, type MessageKey } from "../i18n/index.js";
@@ -17,12 +24,15 @@ import type {
   MatchRecordWatchHandlers,
 } from "../net/transport/match-records.js";
 import { decodeTemplate } from "../storage/gw1-template.js";
+import type { MatchRecord as KeptMatch } from "../storage/match-history.js";
 import { isTeamBuildSize } from "../storage/schema.js";
 import { lookOfCharacter, teamFigureCard, type TeamFigureMember } from "./character-card.js";
 import { professionLabel } from "./character-preview.js";
 import { formatClock } from "./hud.js";
 import { professionIcon } from "./icons.js";
 import { button, h, screenBar, syncList, wordmark } from "./kit.js";
+import { chartRoster, renderMatchCharts } from "./match-charts.js";
+import { renderSummary, summaryTables } from "./match-summary.js";
 import { MATCH_KINDS, MATCH_SIZES, matchesFilter, sessionFilter } from "./matches-filter.js";
 import {
   SIGNET_HEADING_PX,
@@ -59,6 +69,35 @@ export interface MatchesScreenOptions {
   readonly now: () => number;
   /** A team's Clone (#2585): save it as a new Team Build and open it. */
   readonly onCloneTeam: (team: MatchRecordTeam) => void;
+  /** This browser's own ended matches (#3903), newest first; `MatchHistoryStore.list` in the app. */
+  readonly kept: () => Promise<readonly KeptMatch[]>;
+}
+
+/** A row's match: a published record, or one of this browser's own with what its end panel showed. */
+interface ShownMatch {
+  readonly id: string;
+  readonly record: MatchRecord;
+  readonly kept?: KeptMatch;
+}
+
+/**
+ * A kept match as a record (#3903), so its row reads as a published one.
+ * A match its host left has no result to show, and no row.
+ */
+export function keptRecord(kept: KeptMatch): MatchRecord | undefined {
+  const { endReason } = kept.ended;
+  return endReason === "host-left"
+    ? undefined
+    : {
+        v: MATCH_RECORD_VERSION,
+        mode: kept.mode,
+        map: kept.mapId,
+        endedAt: Math.floor(kept.endedAt / 1000),
+        durationSeconds: kept.durationSeconds,
+        winningTeam: kept.ended.winningTeam,
+        endReason,
+        teams: kept.ended.teams,
+      };
 }
 
 export interface MatchesScreen {
@@ -109,8 +148,16 @@ function teamResult(record: MatchRecord, team: number): string {
  * player, the name and both professions on hover, and the winner's
  * underlined. A build it can't read is a question mark.
  */
-function teamIcons(record: MatchRecord, team: number, players: MatchRecordTeam): HTMLElement {
+function teamIcons(
+  record: MatchRecord,
+  team: number,
+  players: MatchRecordTeam,
+  you: boolean,
+): HTMLElement {
   const icons = h("span", record.winningTeam === team ? "match-team is-winner" : "match-team");
+  if (you) {
+    icons.appendChild(h("span", "match-you", t("charts.you")));
+  }
   for (const player of players.players) {
     const name = playerLabelText(player.name, player.guildTag, 0);
     const label = player.bot ? t("matches.bot", { name }) : name;
@@ -216,12 +263,12 @@ function teamDetail(
   return section;
 }
 
-/** The opened row (#2585): one team at a time, a tab for each. */
-function matchDetail(
+/** The Builds tab (#2585): one team at a time, a tab for each. */
+function buildsDetail(
   record: MatchRecord,
   onCloneTeam: (team: MatchRecordTeam) => void,
 ): HTMLElement {
-  const detail = h("div", "match-detail");
+  const detail = h("div", "match-builds");
   detail.appendChild(
     h(
       "p",
@@ -258,6 +305,72 @@ function matchDetail(
       tab.setAttribute("aria-selected", String(index === position));
     });
     panel.replaceChildren(sections[position] ?? h("div"));
+  }
+  show(0);
+  return detail;
+}
+
+/** A kept match's score table, as its end panel showed it (#3903). */
+function keptTables(kept: KeptMatch): ReturnType<typeof summaryTables> {
+  return summaryTables(
+    kept.ended.summary,
+    kept.selfId,
+    kept.selfTeam,
+    kept.ended.winningTeam ?? undefined,
+    new Set(kept.bots),
+  );
+}
+
+/**
+ * The opened row (#2585, #3903): Builds, and for a match of this
+ * browser's own its Stats and Diagram too, a tab each. Builds opens; each
+ * tab is drawn the first time it is chosen.
+ */
+function matchDetail(shown: ShownMatch, onCloneTeam: (team: MatchRecordTeam) => void): HTMLElement {
+  const { record, kept } = shown;
+  const detail = h("div", "match-detail");
+  const views: { readonly label: string; readonly draw: () => HTMLElement }[] = [
+    { label: t("matches.tabBuilds"), draw: () => buildsDetail(record, onCloneTeam) },
+  ];
+  if (kept !== undefined) {
+    views.push(
+      {
+        label: t("matches.tabStats"),
+        draw: () => {
+          const stats = h("div", "match-stats");
+          renderSummary(stats, keptTables(kept));
+          return stats;
+        },
+      },
+      {
+        label: t("matches.tabDiagram"),
+        draw: () => {
+          const diagram = h("div", "match-diagram");
+          renderMatchCharts(diagram, kept.chart ?? undefined, chartRoster(keptTables(kept)));
+          return diagram;
+        },
+      },
+    );
+  }
+  const tabs = detail.appendChild(h("div", "match-views"));
+  tabs.setAttribute("role", "tablist");
+  const panel = detail.appendChild(h("div", "match-view-panel"));
+  panel.setAttribute("role", "tabpanel");
+  const drawn: (HTMLElement | undefined)[] = [];
+  const buttons = views.map(({ label }, position) => {
+    const tab = button(label, "match-view-tab", () => {
+      show(position);
+    });
+    tab.setAttribute("role", "tab");
+    return tabs.appendChild(tab);
+  });
+  function show(position: number): void {
+    buttons.forEach((tab, index) => {
+      tab.setAttribute("aria-selected", String(index === position));
+    });
+    const view = drawn[position] ?? views[position]?.draw();
+    drawn[position] = view;
+    panel.replaceChildren(view ?? h("div"));
   }
   show(0);
   return detail;
@@ -325,8 +438,9 @@ function hallRow(hold: HallHold, nowSeconds: number): HTMLElement {
 }
 
 /**
- * The two chip groups (#2741): kinds, then sizes. Within a group a match
- * fits any pressed chip; it must fit both groups.
+ * The chip groups (#2741): kinds, then sizes. Within a group a match
+ * fits any pressed chip; it must fit both groups. Then My matches
+ * (#3903), which picks the list they filter.
  */
 function filterChips(onChange: () => void): HTMLElement {
   const filters = h("div", "match-filters");
@@ -344,6 +458,17 @@ function filterChips(onChange: () => void): HTMLElement {
       filterChip(t("matches.sizeChip", { size }), sessionFilter.sizes, size, onChange),
     );
   }
+  const mine = filters.appendChild(h("div", "skill-type-chips match-chip-group"));
+  mine.setAttribute("role", "group");
+  mine.setAttribute("aria-label", t("matches.mine"));
+  const chip = button("", "skill-type-chip match-chip match-chip-mine", () => {
+    sessionFilter.mine = !sessionFilter.mine;
+    chip.setAttribute("aria-pressed", String(sessionFilter.mine));
+    onChange();
+  });
+  chip.setAttribute("aria-pressed", String(sessionFilter.mine));
+  chip.append(h("span", "match-chip-label", t("matches.mine")));
+  mine.appendChild(chip);
   return filters;
 }
 
@@ -351,11 +476,8 @@ function filterChips(onChange: () => void): HTMLElement {
 const rowWhen = new WeakMap<HTMLElement, HTMLElement>();
 
 /** A record's row: its summary, a button that opens its detail in place. */
-function matchRow(
-  heard: HeardMatchRecord,
-  onCloneTeam: (team: MatchRecordTeam) => void,
-): HTMLElement {
-  const { record } = heard;
+function matchRow(shown: ShownMatch, onCloneTeam: (team: MatchRecordTeam) => void): HTMLElement {
+  const { record, kept } = shown;
   const row = h("li", "match-row");
   row.setAttribute("data-kind", record.mode);
   const when = h("span", "match-when");
@@ -370,14 +492,17 @@ function matchRow(
     h("span", "match-mode", railLabel(record.mode)),
     ...record.teams.flatMap((players, team) => [
       ...(team === 0 ? [] : [h("span", "match-result", resultMark(record))]),
-      teamIcons(record, team, players),
+      teamIcons(record, team, players, team === kept?.selfTeam),
     ]),
     h("span", "match-map", mapName(record.map)),
     h("span", "match-duration", formatClock(record.durationSeconds)),
     when,
   );
-  const badge = head.appendChild(h("span", "match-host-reported", t("matches.hostReported")));
-  badge.title = t("matches.hostReportedTitle");
+  // A match of this browser's own is no host's word to it.
+  if (kept === undefined) {
+    const badge = head.appendChild(h("span", "match-host-reported", t("matches.hostReported")));
+    badge.title = t("matches.hostReportedTitle");
+  }
   let detail: HTMLElement | undefined;
   head.addEventListener("click", () => {
     if (detail !== undefined) {
@@ -386,7 +511,7 @@ function matchRow(
       head.setAttribute("aria-expanded", "false");
       return;
     }
-    detail = row.appendChild(matchDetail(record, onCloneTeam));
+    detail = row.appendChild(matchDetail(shown, onCloneTeam));
     head.setAttribute("aria-expanded", "true");
   });
   return row;
@@ -419,6 +544,8 @@ export function renderMatchesScreen(
   const list = body.appendChild(h("ol", "match-list"));
   let records: HeardMatchRecord[] = [];
   let offline = false;
+  /** This browser's own, read when the page opens. */
+  let mine: ShownMatch[] = [];
 
   const draw = (): void => {
     const nowSeconds = Math.floor(options.now() / 1000);
@@ -429,20 +556,28 @@ export function renderMatchesScreen(
     hall.hidden = holds.length === 0;
     hallList.replaceChildren(...holds.map((hold) => hallRow(hold, nowSeconds)));
     // A row the filter hides leaves the list, so it comes back closed.
-    const shown = records.filter((heard) => matchesFilter(heard.record, sessionFilter));
+    const source: readonly ShownMatch[] = sessionFilter.mine ? mine : records;
+    const shown = source.filter((match) => matchesFilter(match.record, sessionFilter));
+    const unreachable = offline && !sessionFilter.mine;
     note.textContent = t(
-      offline ? "matches.offline" : records.length === 0 ? "matches.noMatches" : "matches.noneFit",
+      unreachable
+        ? "matches.offline"
+        : source.length > 0
+          ? "matches.noneFit"
+          : sessionFilter.mine
+            ? "matches.emptyMine"
+            : "matches.noMatches",
     );
-    note.hidden = !offline && shown.length > 0;
+    note.hidden = !unreachable && shown.length > 0;
     syncList(
       list,
       shown,
-      (heard) => heard.id,
-      (heard) => matchRow(heard, options.onCloneTeam),
-      (element, heard) => {
+      (match) => match.id,
+      (match) => matchRow(match, options.onCloneTeam),
+      (element, match) => {
         const when = rowWhen.get(element);
         if (when !== undefined) {
-          when.textContent = relativeTime(heard.record.endedAt, nowSeconds);
+          when.textContent = relativeTime(match.record.endedAt, nowSeconds);
         }
       },
     );
@@ -464,6 +599,22 @@ export function renderMatchesScreen(
       draw();
     },
   });
+  let open = true;
+  options.kept().then(
+    (kept) => {
+      mine = kept.flatMap((match) => {
+        const record = keptRecord(match);
+        return record === undefined ? [] : [{ id: match.id, record, kept: match }];
+      });
+      if (open) {
+        draw();
+      }
+    },
+    (error: unknown) => {
+      // My matches are a convenience: unreadable, there are none.
+      console.warn("[web] could not read the match history", error);
+    },
+  );
   const refresh = setInterval(() => {
     records = recentMatches(records, secondsNow());
     draw();
@@ -471,6 +622,7 @@ export function renderMatchesScreen(
   draw();
   return {
     close: () => {
+      open = false;
       clearInterval(refresh);
       watch.close();
     },

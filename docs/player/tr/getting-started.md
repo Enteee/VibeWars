@@ -21,7 +21,7 @@ boyutla açılır (GvG 8v8 ile). Onun altında karakterlerini yaptığın
 ![Karakter Oluşturucu](../../../apps/web/public/icons/mode/characters.svg) **Karakter Oluşturucu** ve [Takım Dizilimlerini](skills-and-builds.md#takım-dizilimleri)
 yaptığın ![Takım Oluşturucu](../../../apps/web/public/icons/mode/teams.svg) **Takım Oluşturucu**, ardından da kurucularının bildirdiği
 şekliyle [biten maçları](modes.md#maç-kayıtları) gösteren ![Maçlar](../../../apps/web/public/icons/mode/matches.svg) **Maçlar**
-yer alır. Oyun en son kullandığın ekranda açılır.
+yer alır; kendi maçların da **Maçlarım** altındadır. Oyun en son kullandığın ekranda açılır.
 
 ## Karakter oluştur
 
@@ -98,7 +98,7 @@ gösterir: ne olduğunu okumak için birinin üzerine gel ya da Tab ile ona git.
 grafikler skorların altında durur; skorlar **Tümünü göster** basılana kadar
 seni ve iki kişiyi daha gösterir.
 
-Üst çubuktaki **Maç geçmişi** son 50 maçını en yenisi önce olmak üzere listeler: skorlarını ve grafiklerini yeniden görmek için birini aç. Yalnızca bu tarayıcıda saklanırlar. **Maçlarım** yalnızca mevcut oyuncu anahtarınla oynadıklarını gösterir.
+**Maçlar** sayfasındaki **Maçlarım** son 50 maçını en yenisi önce olmak üzere listeler: buildlerini görmek, skorlarını ve grafiklerini de **İstatistikler** ve **Grafik** altında yeniden görmek için birini aç. Yalnızca bu tarayıcıda saklanırlar.
 
 ## Maç kur ya da katıl
 

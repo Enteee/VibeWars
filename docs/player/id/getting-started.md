@@ -21,7 +21,7 @@ ukurannya sendiri, dan terbuka pada ukuran yang dimainkannya (GvG pada 8v8). Di 
 membuat karakter, dan ![Pembuat Tim](../../../apps/web/public/icons/mode/teams.svg) **Pembuat Tim**, tempat kamu membuat
 [Build Tim](skills-and-builds.md#build-tim), lalu
 ![Laga](../../../apps/web/public/icons/mode/matches.svg) **Laga**, yaitu [laga yang sudah selesai](modes.md#catatan-laga) seperti yang
-dilaporkan host-nya. Game terbuka di
+dilaporkan host-nya, dan milikmu sendiri di **Pertandinganku**. Game terbuka di
 layar yang terakhir kamu pakai.
 
 ## Membuat karakter
@@ -97,7 +97,7 @@ untuk membaca apa yang terjadi. Tekan entri legenda untuk menyembunyikan atau
 menampilkan garisnya. Di ponsel grafik ada di bawah skor, yang menampilkan kamu
 dan dua orang lain sampai **Tampilkan semua**.
 
-**Riwayat pertandingan** di bilah atas menampilkan 50 pertandingan terakhirmu, yang terbaru dulu: buka salah satu untuk melihat lagi skor dan grafiknya. Semuanya hanya disimpan di peramban ini. **Pertandinganku** hanya menampilkan yang dimainkan dengan kunci pemainmu saat ini.
+**Pertandinganku** di halaman **Laga** menampilkan 50 pertandingan terakhirmu, yang terbaru dulu: buka salah satu untuk melihat build-nya, dan lagi skor serta grafiknya di **Statistik** dan **Diagram**. Semuanya hanya disimpan di peramban ini.
 
 ## Menjadi host atau bergabung ke laga
 

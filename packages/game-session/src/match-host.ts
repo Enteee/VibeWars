@@ -700,9 +700,12 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
         interrupts: row.interrupts,
       };
     });
-  /** The finished match as the world may read it (#2528): names, public keys and builds, no peer ids. */
-  const record = (endReason: MatchEndReason): MatchRecord => {
-    const team = (side: number): MatchRecordTeam => ({
+  /**
+   * Each team's seats as the record lists them: `ended` carries the same
+   * (#3903), so a player's own Matches page and the published record never differ.
+   */
+  const recordTeams = (): MatchRecordTeam[] =>
+    teamIds(map.descriptor.teamCount).map((side) => ({
       players: [...everSeated.values()]
         .filter((seat) => seat.team === side)
         .map(({ name, guildTag, bot, pubkey, build }) => ({
@@ -712,7 +715,9 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
           pubkey,
           template: recordTemplate(build),
         })),
-    });
+    }));
+  /** The finished match as the world may read it (#2528): names, public keys and builds, no peer ids. */
+  const record = (endReason: MatchEndReason): MatchRecord => {
     return {
       v: MATCH_RECORD_VERSION,
       mode: options.mode,
@@ -721,7 +726,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       durationSeconds: Math.round(sim.elapsedSeconds),
       winningTeam: sim.outcome.winningTeam ?? null,
       endReason,
-      teams: teamIds(map.descriptor.teamCount).map(team),
+      teams: recordTeams(),
     };
   };
   let accumulator = 0;
@@ -1756,6 +1761,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
         endReason: sim.outcome.reason ?? "time",
         summary: summary(),
         clearSeconds: sim.clearSeconds,
+        teams: recordTeams(),
       };
       transport.send("ended", ended, live);
       // After the summary, so its size never holds the summary up.
@@ -1845,6 +1851,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
         endReason: reason,
         summary: summary(),
         clearSeconds: null,
+        teams: recordTeams(),
       };
       transport.send("ended", ended);
       await transport.leave();

@@ -487,6 +487,13 @@ grup fără niciun buton apăsat lasă totul să treacă. Mărimea este cea mai 
 inclusiv boții, așa că un Joc găzduit 3v2 nu se potrivește niciunei mărimi. Butoanele
 rămân cum le-ai lăsat până se reîncarcă pagina.
 
+Butonul **Meciurile mele** înlocuiește lista cu meciurile tale: ultimele 50 de meciuri pe
+care le-ai terminat în acest browser, oricât de vechi, publicate sau nu (o Elite Zaishen
+Battle, un meci împotriva boților), cu **Tu** în echipa ta. Butoanele Tip și Mărime le
+filtrează și pe ele. Deschide unul și are trei file: **Builduri**, echipele ca mai sus;
+**Statistici**, tabelul lui de scoruri; și **Grafic**, graficele lui. Un meci publicat
+are doar Builduri. Un meci pe care l-ai părăsit înainte de final nu este păstrat.
+
 Deasupra butoanelor, banda **Sala Eroilor** arată ultimele 20 de dețineri, cele mai noi primele: deținătorul (un tag de breaslă sau numele liderului), jucătorii echipei câștigătoare, când s-a încheiat cea mai nouă victorie și, de la două victorii în sus, câte la rând. O deținere este un șir neîntrerupt de victorii în Sală ale aceluiași deținător. Banda citește înregistrările de pe această pagină, ignoră butoanele și este ascunsă când niciuna dintre ele nu este o victorie în Sală. Ca orice înregistrare, arată ce a raportat gazda fiecărui meci, și nimic nu verifică asta.
 
 ## Clasate

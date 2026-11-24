@@ -506,7 +506,7 @@ async function main(): Promise<void> {
     });
   };
   const teams = new TeamRepository(store);
-  // The last ended matches (#3848), for the bar's Match history.
+  // The last ended matches (#3848), for My matches on the Matches page (#3903).
   const matchHistory = new MatchHistoryStore(store);
   // The first start plays a rolled starter character (#853). Not into
   // memory: it would be gone next start, with the key saying it was rolled.
@@ -608,7 +608,7 @@ async function main(): Promise<void> {
   /** The rail entry last drawn: a guest's mode screen follows its host's (#1526). */
   let drawnEntry: RailEntry = "random-arena";
   let match: MatchView | undefined;
-  /** The mode of the lobby `match` was entered from (#3848), for its Match history line. */
+  /** The mode of the lobby `match` was entered from (#3848), for its My matches row (#3903). */
   let matchMode: LobbyMode | undefined;
   /** The lobby's chat (#479), for as long as the lobby: on its screen, then over its match. */
   let chat: ChatPanel | undefined;
@@ -970,7 +970,6 @@ async function main(): Promise<void> {
     },
     ownSignet,
     playerKey.pubkey,
-    matchHistory,
   );
   // Once a visit (#3575): the menu's rank and a queue's rating read it.
   leaderboard.onChange(() => {
@@ -1122,6 +1121,7 @@ async function main(): Promise<void> {
         onCloneTeam: (record) => {
           void (record.players.length === 1 ? cloneMatchCharacter(record) : cloneMatchTeam(record));
         },
+        kept: () => matchHistory.list(),
       });
       return;
     }
@@ -2961,7 +2961,7 @@ async function main(): Promise<void> {
    * menu. The queue's place already closed as the match started.
    */
   /**
-   * Keep the ended match `leaving` in Match history (#3848), read before
+   * Keep the ended match `leaving` for My matches (#3848, #3903), read before
    * it goes, so charts that came after the `ended` are in. A watcher's,
    * or one left before its end, has no record. Fire and forget.
    */

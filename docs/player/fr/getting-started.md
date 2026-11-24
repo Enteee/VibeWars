@@ -22,7 +22,7 @@ En dessous se trouvent l'![Atelier de personnages](../../../apps/web/public/icon
 personnages, et l'![Atelier d'équipes](../../../apps/web/public/icons/mode/teams.svg) **Atelier d'équipes**, où tu crées tes
 [Builds d'équipe](skills-and-builds.md#builds-déquipe), puis
 ![Matchs](../../../apps/web/public/icons/mode/matches.svg) **Matchs**, l'[historique des matchs](modes.md#historique-des-matchs) terminés
-tels que leurs hôtes les déclarent. Le jeu s'ouvre sur le dernier que tu as
+tels que leurs hôtes les déclarent, et les tiens sous **Mes parties**. Le jeu s'ouvre sur le dernier que tu as
 utilisé.
 
 ## Créer un personnage
@@ -103,7 +103,7 @@ la légende pour masquer ou afficher sa courbe. Sur téléphone, les graphiques 
 placent sous les scores, qui te montrent avec deux autres joueurs jusqu'à
 **Tout afficher**.
 
-**Historique des parties**, dans la barre du haut, liste tes 50 dernières parties, les plus récentes d’abord : ouvres-en une pour revoir ses scores et ses graphiques. Elles ne sont gardées que dans ce navigateur. **Mes parties** n’affiche que celles jouées avec ta clé de joueur actuelle.
+**Mes parties**, sur la page **Matchs**, liste tes 50 dernières parties, les plus récentes d’abord : ouvres-en une pour voir ses builds, et revoir ses scores et ses graphiques sous **Statistiques** et **Graphique**. Elles ne sont gardées que dans ce navigateur.
 
 ## Héberger ou rejoindre un match
 

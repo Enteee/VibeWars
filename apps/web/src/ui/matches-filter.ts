@@ -25,10 +25,16 @@ export type MatchSize = (typeof MATCH_SIZES)[number];
 export interface MatchFilter {
   readonly kinds: Set<LobbyMode>;
   readonly sizes: Set<MatchSize>;
+  /**
+   * My matches (#3903): the list is this browser's own ended matches
+   * instead of the published ones. A source, not a filter: kinds and
+   * sizes still apply to it.
+   */
+  mine: boolean;
 }
 
 /** The page's filter, kept while the page is open, gone on reload. */
-export const sessionFilter: MatchFilter = { kinds: new Set(), sizes: new Set() };
+export const sessionFilter: MatchFilter = { kinds: new Set(), sizes: new Set(), mine: false };
 
 /** A record's size: its largest team's player count, bots included. */
 export function matchSize(record: MatchRecord): number {

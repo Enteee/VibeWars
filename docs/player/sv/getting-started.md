@@ -21,7 +21,7 @@ med en storlek den spelar (GvG med 8v8). Under den finns ![Karaktärsbyggare](..
 skapar dina karaktärer, och ![Lagbyggare](../../../apps/web/public/icons/mode/teams.svg) **Lagbyggare**, där du skapar dina
 [lagbuilds](skills-and-builds.md#lagbuilds), och sedan
 ![Matcher](../../../apps/web/public/icons/mode/matches.svg) **Matcher**, de [avslutade matcherna](modes.md#matchprotokoll) så som
-deras värdar rapporterar dem. Spelet öppnas på den
+deras värdar rapporterar dem, och dina egna under **Mina matcher**. Spelet öppnas på den
 du använde senast.
 
 ## Skapa en karaktär
@@ -97,7 +97,7 @@ gå till den med Tab, för att läsa vad som hände. Tryck på en post i
 förklaringen för att dölja eller visa dess linje. På en telefon ligger
 diagrammen under poängen, som visar dig och två andra tills **Visa alla**.
 
-**Matchhistorik** i toppfältet visar dina senaste 50 matcher, nyaste först: öppna en för att se dess poäng och diagram igen. De sparas bara i den här webbläsaren. **Mina matcher** visar bara de du spelat med din nuvarande spelarnyckel.
+**Mina matcher** på sidan **Matcher** visar dina senaste 50 matcher, nyaste först: öppna en för att se dess byggen, och dess poäng och diagram igen under **Statistik** och **Diagram**. De sparas bara i den här webbläsaren.
 
 ## Var värd för eller gå med i en match
 

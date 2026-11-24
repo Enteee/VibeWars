@@ -158,6 +158,8 @@ Najdeš je na stránce **Zápasy**, pod Tvůrcem týmů: 50 nejnovějších za p
 
 Každý řádek začíná ikonou svého režimu a ikona i levý okraj řádku mají barvu režimu: oranžová Náhodná, modrá Týmová, zlatá Výstup, fialová GvG, zelená Vlastní. Nad seznamem ho štítky filtrují podle **Druhu** (Náhodná, Týmová, Výstup, GvG, Vlastní) a **Velikosti** (1v1, 2v2, 4v4, 8v8): stiskni libovolný počet a zápas se ukáže, pokud sedí na jeden stisknutý druh a jednu stisknutou velikost; skupina bez stisknutého štítku propustí všechny. Velikost je největší tým včetně botů, takže Vlastní hra 3v2 nesedí na žádnou velikost. Štítky zůstanou, jak jsi je nechal, dokud se stránka znovu nenačte.
 
+Štítek **Moje zápasy** vymění seznam za tvoje vlastní: posledních 50 zápasů, které jsi dohrál v tomto prohlížeči, jakkoli starých, zveřejněných i nezveřejněných (Elite Zaishen Battle, zápas proti botům), s **Ty** ve tvém týmu. Štítky Druh a Velikost je filtrují také. Otevři jeden a má tři karty: **Buildy**, týmy jako výše; **Statistiky**, jeho tabulku skóre; a **Graf**, jeho grafy. Zveřejněný zápas má jen Buildy. Zápas, který jsi opustil před jeho koncem, se neuchovává.
+
 Nad filtry ukazuje pruh **Síň hrdinů** posledních 20 sérií, od nejnovější: držitele (cechovní značka nebo jméno vůdce), lidi z vítězného týmu, kdy skončila nejnovější výhra a od dvou výher, kolik jich bylo v řadě. Série je nepřerušená řada výher v Síni jednoho držitele. Pruh čte záznamy na této stránce, nebere ohled na filtry a je skrytý, když žádný z nich není výhrou v Síni. Jako každý záznam ukazuje to, co nahlásil hostitel každého zápasu, a nic to neověřuje.
 
 ## Hodnocené

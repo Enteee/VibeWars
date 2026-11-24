@@ -7864,9 +7864,70 @@
           }
         },
         {
+          "name": "teams",
+          "optional": false,
+          "type": {
+            "array": {
+              "properties": [
+                {
+                  "name": "players",
+                  "optional": false,
+                  "type": {
+                    "array": {
+                      "properties": [
+                        { "name": "bot", "optional": false, "type": "boolean" },
+                        {
+                          "name": "guildTag",
+                          "optional": false,
+                          "type": { "union": ["null", "string"] }
+                        },
+                        { "name": "name", "optional": false, "type": "string" },
+                        {
+                          "name": "pubkey",
+                          "optional": false,
+                          "type": { "union": ["null", "string"] }
+                        },
+                        { "name": "template", "optional": false, "type": "string" }
+                      ]
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        },
+        {
           "name": "winningTeam",
           "optional": false,
           "type": { "union": ["null", { "literal": 0 }, { "literal": 1 }, { "literal": 2 }] }
+        }
+      ]
+    },
+    "WireEndedPlayer": {
+      "properties": [
+        { "name": "bot", "optional": false, "type": "boolean" },
+        { "name": "guildTag", "optional": false, "type": { "union": ["null", "string"] } },
+        { "name": "name", "optional": false, "type": "string" },
+        { "name": "pubkey", "optional": false, "type": { "union": ["null", "string"] } },
+        { "name": "template", "optional": false, "type": "string" }
+      ]
+    },
+    "WireEndedTeam": {
+      "properties": [
+        {
+          "name": "players",
+          "optional": false,
+          "type": {
+            "array": {
+              "properties": [
+                { "name": "bot", "optional": false, "type": "boolean" },
+                { "name": "guildTag", "optional": false, "type": { "union": ["null", "string"] } },
+                { "name": "name", "optional": false, "type": "string" },
+                { "name": "pubkey", "optional": false, "type": { "union": ["null", "string"] } },
+                { "name": "template", "optional": false, "type": "string" }
+              ]
+            }
+          }
         }
       ]
     },
