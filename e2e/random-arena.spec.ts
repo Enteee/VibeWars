@@ -1,7 +1,7 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
 import { STORAGE_NAMESPACE } from "./helpers/base.js";
-import { hudMenuRow } from "./helpers/hud-menu.js";
+import { hudCorner, hudMenuRow } from "./helpers/hud-menu.js";
 import { openRail } from "./helpers/menu.js";
 import {
   expectTeamSize,
@@ -382,7 +382,7 @@ test("#2905: the host leaving a queued match tells the guest the host left", asy
     await leaveMatch(alice);
     await expect(bob.getByText("The host left")).toBeVisible();
     await expect(bob.getByText("Lost the connection to the match.")).toHaveCount(0);
-    await expect(bob.locator(".hud-menu-toggle")).toBeHidden();
+    await expect(hudCorner(bob)).toBeHidden();
   } finally {
     await context.close();
   }
@@ -397,8 +397,8 @@ test("#2905: a guest leaving a queued match leaves the host playing, with no not
   try {
     await meetInMatch(alice, bob);
     await leaveMatch(bob);
-    await expect(bob.locator(".hud-menu-toggle")).toBeHidden();
-    await expect(alice.locator(".hud-menu-toggle")).toBeVisible();
+    await expect(hudCorner(bob)).toBeHidden();
+    await expect(hudCorner(alice)).toBeVisible();
     await expect(alice.getByText("Lost the connection to the match.")).toHaveCount(0);
   } finally {
     await context.close();

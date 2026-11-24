@@ -3,6 +3,7 @@ import { expect, test, type Page } from "@playwright/test";
 import { STARTER_BUILDS } from "../packages/game-core/src/starter-builds.js";
 import { STARTER_TEAMS } from "../packages/game-core/src/starter-teams.js";
 import { sanitizeCharacterName } from "../packages/game-session/src/names.js";
+import { hudCorner, hudMenuRow } from "./helpers/hud-menu.js";
 import { openLibraryGroup } from "./helpers/library.js";
 import {
   INVITE_URL,
@@ -24,7 +25,6 @@ import {
   saveSoloTeam,
   setTeamSize,
 } from "./helpers/peers.js";
-import { hudMenuRow } from "./helpers/hud-menu.js";
 import { namePlayer } from "./helpers/player.js";
 import { expectTopbarFits } from "./helpers/topbar.js";
 import { key } from "./keys.js";
@@ -486,11 +486,11 @@ test("a player who quits early is told the match still runs, until it ends", asy
     await expect(host.locator("#viewport canvas:not(.compass)")).toBeVisible();
     await expect(guest.locator("#viewport canvas:not(.compass)")).toBeVisible();
 
-    // The canvas shows before the join resolves, and the menu button only
+    // The canvas shows before the join resolves, and the leave button only
     // exists once the match view is up. The top bar hides in a match (#454).
-    await expect(host.locator(".hud-menu-toggle")).toBeVisible();
+    await expect(hudCorner(host)).toBeVisible();
     await expect(host.locator("#topbar")).toBeHidden();
-    await expect(guest.locator(".hud-menu-toggle")).toBeVisible();
+    await expect(hudCorner(guest)).toBeVisible();
 
     // The host quits; the guest is still fighting.
     await leaveMatch(host);
@@ -530,8 +530,8 @@ test("a player who quits a 1v1 forfeits it, and is back in an open lobby; its wi
 
   try {
     await startTwoPlayerMatch(host, guest);
-    await expect(host.locator(".hud-menu-toggle")).toBeVisible();
-    await expect(guest.locator(".hud-menu-toggle")).toBeVisible();
+    await expect(hudCorner(host)).toBeVisible();
+    await expect(hudCorner(guest)).toBeVisible();
 
     await leaveMatch(host);
     await expect(host.locator(".lobby-panel")).toBeVisible();
@@ -558,7 +558,7 @@ test("a hosted match's end panel shows its charts under the scores, not only the
 
   try {
     await startTwoPlayerMatch(host, guest);
-    await expect(guest.locator(".hud-menu-toggle")).toBeVisible();
+    await expect(hudCorner(guest)).toBeVisible();
     // The guest quits, so the host wins at once and stays on its end panel.
     await leaveMatch(guest);
     const summary = host.locator(".hud-summary");
@@ -782,7 +782,7 @@ test("a spectator presses Watch and follows the match 10 s late, with nothing to
 
   try {
     const invite = await startTwoPlayerMatch(host, guest);
-    await expect(host.locator(".hud-menu-toggle")).toBeVisible();
+    await expect(hudCorner(host)).toBeVisible();
     // Joined mid-match, on no team: Watch, not Ready.
     await joinLobby(watcher, "Watcher", invite);
     await expect(watcher.getByRole("button", { name: "Ready", exact: true })).toHaveCount(0);
@@ -810,7 +810,7 @@ test("a spectator presses Watch and follows the match 10 s late, with nothing to
     await watcher.keyboard.press("Escape");
     await expect(watcher.locator(".lobby-panel")).toBeVisible();
     await expect(watcher.getByRole("button", { name: "Watch", exact: true })).toBeVisible();
-    await expect(host.locator(".hud-menu-toggle")).toBeVisible();
+    await expect(hudCorner(host)).toBeVisible();
   } finally {
     await context.close();
   }

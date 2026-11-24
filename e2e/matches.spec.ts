@@ -8,7 +8,7 @@ import {
   recordTemplate,
   type MatchRecord,
 } from "../packages/game-session/src/match-record.js";
-import { hudMenuRow } from "./helpers/hud-menu.js";
+import { hudCorner, hudMenuRow } from "./helpers/hud-menu.js";
 import { joinFriend, openRail } from "./helpers/menu.js";
 import { hostLobby, openPeers, playOwnTeams } from "./helpers/peers.js";
 import { namePlayer } from "./helpers/player.js";
@@ -213,7 +213,7 @@ test("My matches keeps the ended match: builds, scores and charts; not one left 
     await guest.getByRole("button", { name: "Ready", exact: true }).click();
     await host.getByRole("button", { name: "start match" }).click();
     await playOwnTeams([{ page: host }, { page: guest, seat: 0 }]);
-    await expect(guest.locator(".hud-menu-toggle")).toBeVisible();
+    await expect(hudCorner(guest)).toBeVisible();
     // The guest quits before the end: no record. The host wins, and keeps
     // the match as it leaves, the charts in.
     const leave = await hudMenuRow(guest, ".hud-leave");
