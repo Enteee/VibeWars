@@ -35,6 +35,7 @@ import {
   moraleLabel,
   muteButtonState,
   refreshSkillBar,
+  renderLeave,
   scoreboardParts,
   scoreboardText,
   objectiveScoreToast,
@@ -2179,5 +2180,61 @@ describe("a click on the target frame calls its target (#2737)", () => {
     expect(isCallableTarget({ ...self, dead: true }, foe)).toBe(false);
     expect(isCallableTarget(self, undefined)).toBe(false);
     expect(isCallableTarget(undefined, foe)).toBe(false);
+  });
+});
+
+/** Enough of an element for the leave control: its children, a src, focus. */
+class LeaveNode {
+  className = "";
+  textContent = "";
+  type = "";
+  src = "";
+  alt = "";
+  children: LeaveNode[] = [];
+  readonly listeners = new Map<string, () => void>();
+
+  addEventListener(type: string, listener: () => void): void {
+    this.listeners.set(type, listener);
+  }
+
+  append(...children: LeaveNode[]): void {
+    this.children.push(...children);
+  }
+
+  replaceChildren(...children: LeaveNode[]): void {
+    this.children = children;
+  }
+
+  contains(): boolean {
+    return false;
+  }
+
+  readonly focus = (): void => undefined;
+}
+
+describe("renderLeave's icon (#3956)", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("starts the closed row and the question with the leave icon", () => {
+    vi.stubGlobal("document", { createElement: () => new LeaveNode(), activeElement: null });
+    vi.stubGlobal("HTMLElement", LeaveNode);
+    const leave = new LeaveNode();
+    const control = renderLeave({ leave } as unknown as HudElements, () => undefined, false);
+
+    const [button] = leave.children;
+    expect(leave.children).toHaveLength(1);
+    expect(button?.children[0]?.src).toMatch(/ui\/leave\.svg$/);
+    expect(button?.children[0]?.alt).toBe("");
+
+    control.open();
+    const [icon, question] = leave.children;
+    expect(icon?.src).toMatch(/ui\/leave\.svg$/);
+    expect(icon?.alt).toBe("");
+    expect(question?.textContent).toBe(t("hud.leaveQuestion"));
+
+    control.close();
+    expect(leave.children[0]?.children[0]?.src).toMatch(/ui\/leave\.svg$/);
   });
 });
