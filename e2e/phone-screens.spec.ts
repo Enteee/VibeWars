@@ -1,10 +1,16 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
-import { joinFriend, openRail, type RailLabel } from "./helpers/menu.js";
+import { joinFriend, openRail, showRail, type RailLabel } from "./helpers/menu.js";
 import { clickTopbarIcon } from "./helpers/overlay.js";
 import { copyInvite, hostLobby, openPeers, openToFriends, setTeamSize } from "./helpers/peers.js";
-import { PIXEL_8A_PORTRAIT, expectFitsPhone } from "./helpers/phone.js";
+import {
+  PIXEL_8A_LANDSCAPE,
+  PIXEL_8A_PORTRAIT,
+  TOUCH_TARGET,
+  expectFitsPhone,
+} from "./helpers/phone.js";
 import { namePlayer } from "./helpers/player.js";
+import { chooseProfession } from "./helpers/professions.js";
 import { bringStarter } from "./helpers/starter.js";
 
 /**
@@ -19,8 +25,64 @@ test.use(PIXEL_8A_PORTRAIT);
 /** The menu on the phone, which opens straight to it (#3782). */
 async function openPhone(page: Page, url = "./"): Promise<void> {
   await page.goto(url);
-  await expect(page.locator(".mode-rail")).toBeVisible();
+  await expect(page.locator(".rail-title")).toBeVisible();
 }
+
+/** `locator`'s box is a finger's at least (#3776). */
+async function expectFingerSized(locator: Locator, what: string): Promise<void> {
+  const box = await locator.boundingBox();
+  expect(box?.width ?? 0, `${what} wide`).toBeGreaterThanOrEqual(TOUCH_TARGET);
+  expect(box?.height ?? 0, `${what} tall`).toBeGreaterThanOrEqual(TOUCH_TARGET);
+}
+
+test("upright, the rail is a drawer behind a finger-wide toggle (#3924)", async ({ page }) => {
+  await openPhone(page);
+  const toggle = page.locator(".rail-drawer-toggle");
+  const rail = page.locator(".mode-rail");
+  const scrim = page.locator(".rail-drawer-scrim");
+  await expect(rail).toBeHidden();
+  await expectFingerSized(toggle, "toggle");
+
+  await toggle.tap();
+  await expect(toggle).toHaveAttribute("aria-expanded", "true");
+  await expect(rail).toBeVisible();
+  await expect(rail.locator('[aria-pressed="true"]')).toBeFocused();
+  for (const entry of await rail.locator(".mode-rail-entry").all()) {
+    await expectFingerSized(entry, (await entry.getAttribute("aria-label")) ?? "entry");
+  }
+  // A tap on the dim puts it away, and the focus goes back to the toggle.
+  await scrim.tap();
+  await expect(rail).toBeHidden();
+  await expect(toggle).toHaveAttribute("aria-expanded", "false");
+  await expect(toggle).toBeFocused();
+
+  // An entry switches the screen and puts the drawer away.
+  await toggle.tap();
+  await rail.getByRole("button", { name: "Team Builder", exact: true }).tap();
+  await expect(page.locator(".rail-title")).toHaveText("Team Builder");
+  await expect(rail).toBeHidden();
+
+  // The size stepper does not: you step sizes and look.
+  await toggle.tap();
+  const shown = rail.locator(".mode-rail-size-value");
+  const before = (await shown.textContent()) ?? "";
+  await rail.getByRole("button", { name: "Smaller team" }).tap();
+  await expect(shown).not.toHaveText(before);
+  await expect(rail).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(rail).toBeHidden();
+  await expectFitsPhone(page, "menu, drawer put away");
+});
+
+test.describe("on its side", () => {
+  test.use(PIXEL_8A_LANDSCAPE);
+
+  test("the rail stays a rail, with no drawer toggle (#3924)", async ({ page }) => {
+    await openPhone(page);
+    await expect(page.locator(".mode-rail")).toBeVisible();
+    await expect(page.locator(".rail-drawer-toggle")).toBeHidden();
+  });
+});
 
 test("a phone opens straight to the menu, with no keyboard-and-mouse notice (#3782)", async ({
   page,
@@ -83,7 +145,7 @@ test("a hosted lobby fits the phone, for its host and its guest (#3776)", async 
   const invite = await hostLobby(host);
   await expectFitsPhone(host, "lobby, host");
   await guest.goto("./");
-  await expect(guest.locator(".mode-rail")).toBeVisible();
+  await expect(guest.locator(".rail-drawer-toggle")).toBeVisible();
   await namePlayer(guest, "Guest");
   await joinFriend(guest, invite);
   await expect(guest.locator(".lobby-panel")).toBeVisible();
@@ -116,7 +178,7 @@ test("a party's Team Lobby and its Team Arena queue fit the phone (#3776)", asyn
   await openToFriends(leader);
   const invite = await copyInvite(leader);
   await member.goto("./");
-  await expect(member.locator(".mode-rail")).toBeVisible();
+  await expect(member.locator(".rail-drawer-toggle")).toBeVisible();
   await namePlayer(member, "Member");
   await joinFriend(member, invite);
   await expect(member.locator(".lobby-panel")).toContainText("Leader");
@@ -177,3 +239,55 @@ test("the menu and Options fit the phone in German, the menu in Arabic (#3776)",
     await context.close();
   }
 });
+
+/**
+ * A phone's top bar (#3933): its first row, and the status's row under it
+ * where a screen has one; never a third. 44 px buttons, two rows and the
+ * bar's padding come to under this.
+ */
+const TWO_ROW_TOPBAR = 110;
+
+/** The top bar is at most two rows, and in an editor the ☰ is on the name's. */
+async function expectTwoRowTopbar(page: Page, what: string, editor: boolean): Promise<void> {
+  const bar = await page.locator("#topbar").boundingBox();
+  expect(bar?.height ?? Infinity, what).toBeLessThanOrEqual(TWO_ROW_TOPBAR);
+  if (editor) {
+    const name = await page.locator("#topbar .editor-name").boundingBox();
+    const more = await page.locator("#topbar .topbar-more").boundingBox();
+    expect(more?.y, `${what}: ☰ on the name's row`).toBe(name?.y);
+  }
+}
+
+/** The rail entry `entry` in any language, the drawer opened first: `openRail` goes by the English name. */
+async function openEntry(page: Page, entry: string): Promise<void> {
+  await showRail(page);
+  const choice = page.locator(`.mode-rail [data-entry="${entry}"]`);
+  await choice.click();
+  await expect(choice).toHaveAttribute("aria-pressed", "true");
+}
+
+for (const viewport of [PIXEL_8A_PORTRAIT.viewport, { width: 360, height: 800 }]) {
+  for (const locale of ["en", "de"]) {
+    const size = `${String(viewport.width)}x${String(viewport.height)}, ${locale}`;
+    test(`the editors' top bar keeps to two rows at ${size} (#3933)`, async ({ browser }) => {
+      const context = await browser.newContext({ ...PIXEL_8A_PORTRAIT, viewport, locale });
+      const page = await context.newPage();
+      await openPhone(page);
+      await openEntry(page, "characters");
+      await page.locator(".play-card-new").click();
+      await chooseProfession(page, "primary", "elementalist");
+      // A long name scrolls in its field; the bar does not grow for it.
+      await page.locator("input.editor-name").fill("Ailsa the Unbroken Stormcaller of Ascalon");
+      await expectTwoRowTopbar(page, `Character Builder, ${size}`, true);
+      await openPhone(page);
+      await openEntry(page, "teams");
+      await page.locator(".play-card-new").click();
+      await expect(page.locator(".team-editor")).toBeVisible();
+      await expectTwoRowTopbar(page, `Team Builder, ${size}`, true);
+      await openPhone(page);
+      await openEntry(page, "team-arena");
+      await expectTwoRowTopbar(page, `Team Arena, ${size}`, false);
+      await context.close();
+    });
+  }
+}

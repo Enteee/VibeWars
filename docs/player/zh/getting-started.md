@@ -9,6 +9,7 @@ VibeWars 是一场在小型竞技场中进行的团队战斗。每位玩家带�
 ## 模式栏
 
 主界面左侧的竖栏从上到下列出了各[模式](modes.md)：![随机竞技场](../../../apps/web/public/icons/mode/random-arena.svg) **随机竞技场**、![团队竞技场](../../../apps/web/public/icons/mode/team-arena.svg) **团队竞技场**、![英雄之路](../../../apps/web/public/icons/mode/heroes-ascent.svg) **英雄之路**、![GvG](../../../apps/web/public/icons/mode/gvg.svg) **GvG** 和 ![自建游戏](../../../apps/web/public/icons/mode/hosted-game.svg) **自建游戏**。模式下方是 **队伍人数**，`‹ 4v4 ›`：箭头会切换到该界面支持的下一个更小或更大的人数。每个界面会记住自己的人数，并以它支持的人数打开（GvG 为 8v8）。再往下是 ![角色配置](../../../apps/web/public/icons/mode/characters.svg) **角色配置**，你在这里创建角色；![队伍配置](../../../apps/web/public/icons/mode/teams.svg) **队伍配置**，你在这里创建[队伍配置](skills-and-builds.md#队伍配置)；然后是 ![对局](../../../apps/web/public/icons/mode/matches.svg) **对局**，即各房主上报的[已结束对局](modes.md#对局记录)，以及你自己的对局。游戏会打开你上次使用的那一项。
+竖握手机时，模式栏收在屏幕左上角的按钮后面，按钮上显示当前模式的图标。
 
 ## 创建角色
 

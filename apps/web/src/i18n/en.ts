@@ -1081,6 +1081,7 @@ export const en = {
   "rail.matchesShort": "Matches",
   "rail.modes": "Modes",
   "rail.noTeamSizeHere": "Team size is for team modes and Team Builds",
+  "rail.open": "Modes",
   "rail.randomArena": "Random Arena",
   "rail.randomArenaShort": "Random",
   "rail.smallerTeam": "Smaller team",

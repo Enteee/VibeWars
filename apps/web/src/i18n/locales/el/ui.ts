@@ -1094,6 +1094,7 @@ export default {
   "rail.matchesShort": "Αγώνες",
   "rail.modes": "Λειτουργίες",
   "rail.noTeamSizeHere": "Το μέγεθος ομάδας αφορά ομαδικές λειτουργίες και Συνθέσεις ομάδας",
+  "rail.open": "Λειτουργίες",
   "rail.randomArena": "Τυχαία Αρένα",
   "rail.randomArenaShort": "Τυχαία",
   "rail.smallerTeam": "Μικρότερη ομάδα",

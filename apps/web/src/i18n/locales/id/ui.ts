@@ -1034,6 +1034,7 @@ export default {
   "rail.matchesShort": "Laga",
   "rail.modes": "Mode",
   "rail.noTeamSizeHere": "Ukuran tim hanya untuk mode tim dan Build Tim",
+  "rail.open": "Mode",
   "rail.randomArena": "Arena Acak",
   "rail.randomArenaShort": "Acak",
   "rail.smallerTeam": "Tim lebih kecil",

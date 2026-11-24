@@ -23,6 +23,7 @@ skapar dina karaktärer, och ![Lagbyggare](../../../apps/web/public/icons/mode/t
 ![Matcher](../../../apps/web/public/icons/mode/matches.svg) **Matcher**, de [avslutade matcherna](modes.md#matchprotokoll) så som
 deras värdar rapporterar dem, och dina egna. Spelet öppnas på den
 du använde senast.
+På en telefon som hålls upprätt ligger listen undanstoppad bakom knappen uppe till vänster på skärmen, som visar ikonen för det aktuella läget.
 
 ## Skapa en karaktär
 

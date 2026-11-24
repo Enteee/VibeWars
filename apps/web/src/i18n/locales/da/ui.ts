@@ -1080,6 +1080,7 @@ export default {
   "rail.matchesShort": "Kampe",
   "rail.modes": "Typer",
   "rail.noTeamSizeHere": "Holdstørrelse gælder holdtyper og Holdbuilds",
+  "rail.open": "Typer",
   "rail.randomArena": "Tilfældig arena",
   "rail.randomArenaShort": "Tilfældig",
   "rail.smallerTeam": "Mindre hold",

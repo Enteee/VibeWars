@@ -1084,6 +1084,7 @@ export default {
   "rail.matchesShort": "Matches",
   "rail.modes": "Modi",
   "rail.noTeamSizeHere": "Teamgrootte geldt voor teammodi en Teambuilds",
+  "rail.open": "Modi",
   "rail.randomArena": "Random Arena",
   "rail.randomArenaShort": "Random",
   "rail.smallerTeam": "Kleiner team",

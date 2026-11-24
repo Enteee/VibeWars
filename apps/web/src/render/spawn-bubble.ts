@@ -1,16 +1,23 @@
-import { SPAWN_BUBBLE_RADIUS, type Vec2 } from "@vibewars/game-core";
+import {
+  nearestOnHull,
+  teamBubbleDepth,
+  teamBubbleOutline,
+  type TeamBubble,
+  type Vec2,
+} from "@vibewars/game-core";
 
 /**
- * Your spawn bubble before the start (#3909): you are held within
- * `SPAWN_BUBBLE_RADIUS` of your spawn until the match starts, and this is
- * the wall that holds you. A low curtain stands up from a hard rim on the
- * ground, near-white so it reads on snow, sand and lava alike, and it is
- * neither help nor harm (visual-style §6). It is faint at rest and
- * brightens on the arc you walk up to; a bump ripples where you met it.
- * Only yours is drawn, and only before the start; it fades out at it.
+ * Your team's bubble before the start (#3909, #3930): your team is held
+ * in the rounded shape round its spawns until the match starts, and this
+ * is the wall that holds you. A low curtain stands up from a hard rim on
+ * the ground, near-white so it reads on snow, sand and lava alike, and it
+ * is neither help nor harm (visual-style §6). It is faint at rest and
+ * brightens on the stretch you walk up to; a bump ripples where you met
+ * it. Only your team's is drawn, and only before the start; it fades out
+ * at it.
  */
 export interface SpawnBubble {
-  readonly centre: Vec2;
+  readonly bubble: TeamBubble;
   /** The map layer you spawned on, whose height it is drawn at. */
   readonly layer: number;
 }
@@ -21,6 +28,14 @@ export type SpawnBubbleCommand =
   | {
       readonly kind: "quad";
       readonly points: readonly [Vec2, Vec2, Vec2, Vec2];
+      readonly colour: number;
+      readonly alpha: number;
+    }
+  /** The rim along the ground, a closed loop. */
+  | {
+      readonly kind: "rim";
+      readonly points: readonly Vec2[];
+      readonly width: number;
       readonly colour: number;
       readonly alpha: number;
     }
@@ -51,7 +66,7 @@ export const SPAWN_BUBBLE_CONTACT = 1;
 export const SPAWN_BUBBLE_FADE_SECONDS = 0.3;
 /** How long a bump's ripple lasts. */
 export const SPAWN_BUBBLE_RIPPLE_SECONDS = 0.3;
-/** Pieces round the curtain, and slices up it, faintest at the top. */
+/** Pieces a full turn of its round ends has, and slices up it, faintest at the top. */
 const SEGMENTS = 48;
 const SLICES = 5;
 /** The shimmer: bands climbing it, one every `SHIMMER_SECONDS / SHIMMER_BANDS`. */
@@ -74,13 +89,18 @@ export function spawnBubbleArc(angle: number): number {
   return off >= Math.PI / 2 ? 0 : 0.5 + 0.5 * Math.cos(2 * off);
 }
 
-/** The direction from `centre` to the edge `body` touches, or `undefined` while it is clear of it. */
-export function spawnBubbleContact(centre: Vec2, body: Vec2): number | undefined {
-  const dx = body.x - centre.x;
-  const dy = body.y - centre.y;
-  return Math.hypot(dx, dy) >= SPAWN_BUBBLE_RADIUS - SPAWN_BUBBLE_CONTACT
-    ? Math.atan2(dy, dx)
-    : undefined;
+/** The point on its edge nearest `body`: out from the hull, through it. */
+function edgeNear(bubble: TeamBubble, body: Vec2): Vec2 {
+  const on = nearestOnHull(body, bubble);
+  const off = Math.hypot(body.x - on.x, body.y - on.y);
+  // On the hull itself, any way out is as near: the first corner's way.
+  const away = off === 0 ? { x: 1, y: 0 } : { x: (body.x - on.x) / off, y: (body.y - on.y) / off };
+  return { x: on.x + bubble.radius * away.x, y: on.y + bubble.radius * away.y };
+}
+
+/** The point on the edge `body` touches, or `undefined` while it is clear of it. */
+export function spawnBubbleContact(bubble: TeamBubble, body: Vec2): Vec2 | undefined {
+  return teamBubbleDepth(body, bubble) <= SPAWN_BUBBLE_CONTACT ? edgeNear(bubble, body) : undefined;
 }
 
 /** Its opacity `goneSeconds` after the start: 1 before it, 0 once faded. */
@@ -88,27 +108,50 @@ export function spawnBubbleFade(goneSeconds: number | undefined): number {
   return goneSeconds === undefined ? 1 : Math.max(0, 1 - goneSeconds / SPAWN_BUBBLE_FADE_SECONDS);
 }
 
-/** The point on the curtain `angle` round its edge and `height` up it. */
-function onCurtain(centre: Vec2, angle: number, height: number): Vec2 {
-  return {
-    x: centre.x + SPAWN_BUBBLE_RADIUS * Math.cos(angle),
-    y: centre.y + SPAWN_BUBBLE_RADIUS * Math.sin(angle) - height,
-  };
+/**
+ * The edge cut in pieces no longer than a round end's: each straight side
+ * in as many as it needs, so the brightening follows you along it too.
+ */
+function edgePieces(bubble: TeamBubble): readonly Vec2[] {
+  const outline = teamBubbleOutline(bubble, SEGMENTS);
+  const longest = (2 * Math.PI * bubble.radius) / SEGMENTS;
+  return outline.flatMap((from, index) => {
+    const to = outline[(index + 1) % outline.length] ?? from;
+    const pieces = Math.max(1, Math.ceil(Math.hypot(to.x - from.x, to.y - from.y) / longest));
+    return Array.from({ length: pieces }, (_, piece) => ({
+      x: from.x + ((to.x - from.x) * piece) / pieces,
+      y: from.y + ((to.y - from.y) * piece) / pieces,
+    }));
+  });
+}
+
+/** `point` on the ground, `height` up the curtain. */
+function up(point: Vec2, height: number): Vec2 {
+  return { x: point.x, y: point.y - height };
 }
 
 /**
- * The bubble round `centre` at `seconds` on the scene's clock, with you
- * at `body` (`undefined`: nobody to brighten it for), faded to `fade`:
- * the curtain, its shimmer, the rim and its dark line, then the ripple
- * of a bump `bump.seconds` ago at `bump.angle`. Lines are at least
+ * The angle round a circle of `radius` whose chord is `chord`: how far
+ * round the edge a piece is from where you meet it, as on a lone spawn's
+ * circle; past its diameter, the far side.
+ */
+function chordAngle(chord: number, radius: number): number {
+  return 2 * Math.asin(Math.min(1, chord / (2 * radius)));
+}
+
+/**
+ * `bubble` at `seconds` on the scene's clock, with you at `body`
+ * (`undefined`: nobody to brighten it for), faded to `fade`: the curtain,
+ * its shimmer, the rim and its dark line, then the ripple of a bump
+ * `bump.seconds` ago at `bump.at` on the edge. Lines are at least
  * `pixel` * 2 wide, `pixel` being a CSS pixel in world units. Under
  * reduced motion the shimmer stands still and a bump does not ripple.
  */
 export function spawnBubbleCommands(
-  centre: Vec2,
+  bubble: TeamBubble,
   body: Vec2 | undefined,
   seconds: number,
-  bump: { readonly angle: number; readonly seconds: number } | undefined,
+  bump: { readonly at: Vec2; readonly seconds: number } | undefined,
   reducedMotion: boolean,
   fade: number,
   pixel: number,
@@ -116,29 +159,29 @@ export function spawnBubbleCommands(
   if (fade <= 0) {
     return [];
   }
-  const facing = body === undefined ? undefined : Math.atan2(body.y - centre.y, body.x - centre.x);
+  const facing = body === undefined ? undefined : edgeNear(bubble, body);
   const near =
-    body === undefined
-      ? SPAWN_BUBBLE_REST_ALPHA
-      : spawnBubbleAlpha(SPAWN_BUBBLE_RADIUS - Math.hypot(body.x - centre.x, body.y - centre.y));
+    body === undefined ? SPAWN_BUBBLE_REST_ALPHA : spawnBubbleAlpha(teamBubbleDepth(body, bubble));
   const commands: SpawnBubbleCommand[] = [];
-  const step = (2 * Math.PI) / SEGMENTS;
+  const edge = edgePieces(bubble);
   const slice = SPAWN_BUBBLE_HEIGHT / SLICES;
   const climb = reducedMotion ? 0 : seconds / SHIMMER_SECONDS;
-  for (let segment = 0; segment < SEGMENTS; segment += 1) {
-    const from = segment * step;
-    const to = from + step;
-    const arc = facing === undefined ? 0 : spawnBubbleArc((from + to) / 2 - facing);
+  for (const [index, from] of edge.entries()) {
+    const to = edge[(index + 1) % edge.length] ?? from;
+    const arc =
+      facing === undefined
+        ? 0
+        : spawnBubbleArc(
+            chordAngle(
+              Math.hypot((from.x + to.x) / 2 - facing.x, (from.y + to.y) / 2 - facing.y),
+              bubble.radius,
+            ),
+          );
     const alpha = (SPAWN_BUBBLE_REST_ALPHA + (near - SPAWN_BUBBLE_REST_ALPHA) * arc) * fade;
     const piece = (low: number, high: number, opacity: number): void => {
       commands.push({
         kind: "quad",
-        points: [
-          onCurtain(centre, from, low),
-          onCurtain(centre, to, low),
-          onCurtain(centre, to, high),
-          onCurtain(centre, from, high),
-        ],
+        points: [up(from, low), up(to, low), up(to, high), up(from, high)],
         colour: SPAWN_BUBBLE_COLOUR,
         alpha: opacity,
       });
@@ -147,35 +190,21 @@ export function spawnBubbleCommands(
       piece(level * slice, (level + 1) * slice, alpha * (1 - level / SLICES));
     }
     for (let band = 0; band < SHIMMER_BANDS; band += 1) {
-      const up = (climb + band / SHIMMER_BANDS) % 1;
-      const low = up * SPAWN_BUBBLE_HEIGHT * (1 - SHIMMER_THICKNESS);
-      piece(low, low + SPAWN_BUBBLE_HEIGHT * SHIMMER_THICKNESS, 0.5 * alpha * (1 - up));
+      const rise = (climb + band / SHIMMER_BANDS) % 1;
+      const low = rise * SPAWN_BUBBLE_HEIGHT * (1 - SHIMMER_THICKNESS);
+      piece(low, low + SPAWN_BUBBLE_HEIGHT * SHIMMER_THICKNESS, 0.5 * alpha * (1 - rise));
     }
   }
   const line = Math.max(2, 2 * pixel);
   commands.push(
-    {
-      kind: "ring",
-      at: centre,
-      radius: SPAWN_BUBBLE_RADIUS,
-      width: line + 2 * pixel,
-      colour: OUTLINE,
-      alpha: 0.5 * fade,
-    },
-    {
-      kind: "ring",
-      at: centre,
-      radius: SPAWN_BUBBLE_RADIUS,
-      width: line,
-      colour: SPAWN_BUBBLE_COLOUR,
-      alpha: 0.9 * fade,
-    },
+    { kind: "rim", points: edge, width: line + 2 * pixel, colour: OUTLINE, alpha: 0.5 * fade },
+    { kind: "rim", points: edge, width: line, colour: SPAWN_BUBBLE_COLOUR, alpha: 0.9 * fade },
   );
   if (bump !== undefined && !reducedMotion && bump.seconds < SPAWN_BUBBLE_RIPPLE_SECONDS) {
     const spread = bump.seconds / SPAWN_BUBBLE_RIPPLE_SECONDS;
     commands.push({
       kind: "ring",
-      at: onCurtain(centre, bump.angle, SPAWN_BUBBLE_HEIGHT / 2),
+      at: up(bump.at, SPAWN_BUBBLE_HEIGHT / 2),
       radius: 4 + 16 * spread,
       width: line,
       colour: SPAWN_BUBBLE_COLOUR,

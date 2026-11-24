@@ -32,7 +32,7 @@ cilj izvan zaslona ili pod HUD-om dobiva obrubljenu strelicu na
 rubu zaslona: stalak ili svetište u boji vlasnika, sivo za
 ničije, oltar zlatan. Ispunjena strelica igrača crta se preko nje.
 
-Meč počinje sa svima zadržanima blizu njihova mjesta pojavljivanja: možeš napraviti nekoliko koraka i pripremiti se vještinama na sebi i svojim saveznicima, poput začaranja, stavova i liječenja, ali ne možeš napadati ni koristiti vještinu na neprijatelju. Energija i zdravlje obnavljaju se dok čekaš, a i botovi se pripremaju. Svjetlucavi zid oko tvog mjesta pojavljivanja pokazuje dokle možeš ići. Redak na vrhu broji igrače koji su učitali meč. Kad ga svi učitaju, odbrojava 10 sekundi i meč počinje, a s njim i njegov sat. Na igrača koji ga nije učitao nakon 20 sekundi ne čeka se: odbrojavanje počinje bez njega, a on se i dalje može pridružiti kasnije.
+Meč počinje sa svakim timom zadržanim zajedno u njegovu početnom području: možeš hodati bilo kamo unutar njega i pripremiti se vještinama na sebi i svojim saveznicima, poput začaranja, stavova i liječenja, ali ne možeš napadati ni koristiti vještinu na neprijatelju. Energija i zdravlje obnavljaju se dok čekaš, a i botovi se pripremaju. Svjetlucavi zid oko početnog područja tvog tima pokazuje dokle možeš ići. Redak na vrhu broji igrače koji su učitali meč. Kad ga svi učitaju, odbrojava 10 sekundi i meč počinje, a s njim i njegov sat. Na igrača koji ga nije učitao nakon 20 sekundi ne čeka se: odbrojavanje počinje bez njega, a on se i dalje može pridružiti kasnije.
 
 ## Uništenje
 

@@ -1084,6 +1084,7 @@ export default {
   "rail.matchesShort": "Мачове",
   "rail.modes": "Режими",
   "rail.noTeamSizeHere": "Размерът на отбора важи за отборни режими и отборни билдове",
+  "rail.open": "Режими",
   "rail.randomArena": "Случайна арена",
   "rail.randomArenaShort": "Случайна",
   "rail.smallerTeam": "По-малък отбор",

@@ -21,6 +21,7 @@ Dưới đó là ![Tạo Nhân Vật](../../../apps/web/public/icons/mode/charac
 tạo [Build đội](skills-and-builds.md#build-đội), rồi đến ![Trận đấu](../../../apps/web/public/icons/mode/matches.svg) **Trận đấu**, các
 [trận đã kết thúc](modes.md#bản-ghi-trận-đấu) như chủ phòng của chúng báo
 lại, và cả trận của bạn. Game mở ở mục bạn dùng lần cuối.
+Trên điện thoại cầm dọc, thanh được thu gọn sau nút ở góc trên bên trái màn hình, nút này hiện biểu tượng của chế độ hiện tại.
 
 ## Tạo nhân vật
 

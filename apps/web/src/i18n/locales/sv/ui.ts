@@ -1082,6 +1082,7 @@ export default {
   "rail.matchesShort": "Matcher",
   "rail.modes": "Lägen",
   "rail.noTeamSizeHere": "Lagstorlek gäller lagläge och lagbuilds",
+  "rail.open": "Lägen",
   "rail.randomArena": "Slumparena",
   "rail.randomArenaShort": "Slump",
   "rail.smallerTeam": "Mindre lag",

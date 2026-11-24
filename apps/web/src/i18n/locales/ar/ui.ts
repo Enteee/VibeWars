@@ -1237,6 +1237,7 @@ export default {
   "rail.matchesShort": "المباريات",
   "rail.modes": "الأنماط",
   "rail.noTeamSizeHere": "حجم الفريق لأنماط الفرق وبنى الفرق",
+  "rail.open": "الأنماط",
   "rail.randomArena": "الساحة العشوائية",
   "rail.randomArenaShort": "عشوائية",
   "rail.smallerTeam": "فريق أصغر",

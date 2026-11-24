@@ -22,6 +22,7 @@ tworzysz swoje postacie, i ![Kreator drużyn](../../../apps/web/public/icons/mod
 ![Mecze](../../../apps/web/public/icons/mode/matches.svg) **Mecze**, [ukończone mecze](modes.md#zapisy-meczów) w takiej postaci, w jakiej
 zgłaszają je hosty, oraz twoje własne. Gra otwiera się na
 tym, którego używałeś ostatnio.
+Na telefonie trzymanym pionowo pasek chowa się za przyciskiem w lewym górnym rogu ekranu, który pokazuje ikonę bieżącego trybu.
 
 ## Stwórz postać
 

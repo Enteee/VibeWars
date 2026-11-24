@@ -1027,6 +1027,7 @@ export default {
   "rail.matchesShort": "Trận",
   "rail.modes": "Chế độ",
   "rail.noTeamSizeHere": "Cỡ đội chỉ dùng cho chế độ đội và Build đội",
+  "rail.open": "Chế độ",
   "rail.randomArena": "Đấu trường ngẫu nhiên",
   "rail.randomArenaShort": "Random",
   "rail.smallerTeam": "Đội nhỏ hơn",

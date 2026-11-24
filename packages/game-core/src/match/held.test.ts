@@ -8,6 +8,7 @@ import { clampToCircle } from "../movement.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { distance, vec2, type Vec2 } from "../vec2.js";
 import type { Behaviour } from "./behaviour.js";
+import { teamBubble, teamBubbleDepth } from "./team-bubble.js";
 import { BOT, BOUNDS, fighter, RANGER, RULESET } from "./bot/rules/test-support.js";
 import { UPHILL } from "./layer-rules.js";
 import {
@@ -240,13 +241,77 @@ describe("held before the start (#3817)", () => {
     expect(one(sim, "a").combatant.health).toBe(500);
   });
 
-  it("holds a participant added while held in its own bubble", () => {
+  it("holds a participant added while held in its team's bubble, now grown to its spawn (#3930)", () => {
     const sim = pair();
     sim.stepHeld(DT, null);
     sim.add(swordsman("c", 0, vec2(0, -300)));
+    expect(one(sim, "c").position).toEqual(vec2(0, -300));
     sim.walkTo("c", vec2(0, 1000));
-    hold(sim, 5);
-    expect(distance(one(sim, "c").position, vec2(0, -300))).toBeLessThanOrEqual(EDGE);
+    hold(sim, 10);
+    // Past `a`, far out of its own circle, at the edge of the two's bubble.
+    const c = one(sim, "c").position;
+    const bubble = teamBubble([vec2(0, 0), vec2(0, -300)]);
+    expect(c.y).toBeGreaterThan(0);
+    expect(teamBubbleDepth(c, bubble)).toBeGreaterThanOrEqual(-1e-9);
+    expect(teamBubbleDepth(c, bubble)).toBeLessThan(1);
+  });
+
+  describe("in one bubble for the whole team (#3930)", () => {
+    /** `a` at the origin and its teammate `c` 300 east; the foe `b` far south. */
+    function team(behaviour?: Behaviour): MatchSimulation {
+      return new MatchSimulation({
+        seed: "held-team",
+        walls: [],
+        participants: [
+          swordsman("a", 0, vec2(0, 0)),
+          swordsman("c", 0, vec2(300, 0), behaviour),
+          swordsman("b", 1, vec2(150, 2000)),
+        ],
+      });
+    }
+    const bubble = teamBubble([vec2(0, 0), vec2(300, 0)]);
+
+    it("walks from its spawn to a teammate's 300 away, and arrives", () => {
+      const sim = team();
+      sim.walkTo("a", vec2(300, 30));
+      hold(sim, 10);
+      expect(distance(one(sim, "a").position, vec2(300, 30))).toBeLessThan(1);
+    });
+
+    it("stops a walk out of the team's bubble at its edge, between the spawns too", () => {
+      const sim = team();
+      sim.walkTo("a", vec2(150, -1000));
+      hold(sim, 10);
+      const a = one(sim, "a").position;
+      expect(teamBubbleDepth(a, bubble)).toBeGreaterThanOrEqual(-1e-9);
+      expect(teamBubbleDepth(a, bubble)).toBeLessThan(1);
+      expect(a.y).toBeLessThan(-(SPAWN_BUBBLE_RADIUS - 1));
+    });
+
+    it("slides along a straight side with a key held out of it", () => {
+      const sim = team();
+      sim.setInputDirection("a", vec2(1, -1));
+      hold(sim, 5);
+      const a = one(sim, "a").position;
+      expect(a.x).toBeGreaterThan(SPAWN_BUBBLE_RADIUS);
+      expect(teamBubbleDepth(a, bubble)).toBeGreaterThanOrEqual(-1e-9);
+      expect(teamBubbleDepth(a, bubble)).toBeLessThan(1);
+    });
+
+    it("lets a bot wander round every teammate's spawn, always inside the bubble", () => {
+      const sim = team(BOT);
+      const c = one(sim, "c");
+      let nearA = false;
+      for (let tick = 0; tick < 120 * RULES.tickRateHz; tick += 1) {
+        sim.stepHeld(DT, null);
+        nearA ||= distance(c.position, vec2(0, 0)) <= 0.5 * SPAWN_BUBBLE_RADIUS + 1;
+        // Within half the margin of a spawn, and straight between such points.
+        expect(teamBubbleDepth(c.position, bubble)).toBeGreaterThanOrEqual(
+          0.5 * SPAWN_BUBBLE_RADIUS - 1,
+        );
+      }
+      expect(nearA).toBe(true);
+    });
   });
 
   it("does nothing once the match has started", () => {

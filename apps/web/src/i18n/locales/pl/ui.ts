@@ -1184,6 +1184,7 @@ export default {
   "rail.matchesShort": "Mecze",
   "rail.modes": "Tryby",
   "rail.noTeamSizeHere": "Rozmiar drużyny dotyczy trybów drużynowych i buildów drużyn",
+  "rail.open": "Tryby",
   "rail.randomArena": "Arena losowa",
   "rail.randomArenaShort": "Losowa",
   "rail.smallerTeam": "Mniejsza drużyna",

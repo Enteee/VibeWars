@@ -30,7 +30,6 @@ import {
   RANGE_SPELL,
   RANGE_SPIRIT,
   SHADOW_STEP_AWAY_DISTANCE,
-  SPAWN_BUBBLE_RADIUS,
 } from "../distances.js";
 import {
   addPoint,
@@ -60,12 +59,8 @@ import {
   type TeamCount,
   type TeamStanding,
 } from "../match-rules.js";
-import {
-  clampInputDirection,
-  clampToCircle,
-  integrateMovement,
-  SHALLOW_WATER_PACE,
-} from "../movement.js";
+import { clampToTeamBubble, teamBubble, teamBubbleDepth, type TeamBubble } from "./team-bubble.js";
+import { clampInputDirection, integrateMovement, SHALLOW_WATER_PACE } from "../movement.js";
 import {
   atObjective,
   deckBlocksSight,
@@ -2141,8 +2136,9 @@ export class MatchSimulation {
   }
 
   /**
-   * Where `id` is held before the start (#3909): its spawn bubble's centre,
-   * on the layer it spawned on, as `#holdInBubble` holds it.
+   * Where `id` is held before the start (#3909): its spawn, one of the
+   * points its team's bubble (#3930) is built round, on the layer it
+   * spawned on, as `#holdInBubble` holds it.
    */
   public heldAt(id: string): { readonly at: Vec2; readonly layer: number } | undefined {
     const record = this.#participants.get(id);
@@ -4421,7 +4417,7 @@ export class MatchSimulation {
 
   /**
    * One tick before the match starts (#3817): everyone may walk, by keys
-   * or a click, within `SPAWN_BUBBLE_RADIUS` of its spawn, and prepare
+   * or a click, anywhere in its team's bubble (#3930), and prepare
    * (#3910): a skill only for the caster or its allies goes off, and
    * energy, health, recharges, casts, statuses and upkeep run, as bots
    * do. Nothing else runs: no attack, adrenaline, zone, projectile,
@@ -4437,11 +4433,12 @@ export class MatchSimulation {
     this.#held = true;
     this.#heldSecondsLeft = secondsLeft;
     this.#tick += 1;
+    const bubbles = this.#teamBubbles();
     for (const record of this.#participants.values()) {
       this.#stepStart.set(record.id, record.position);
       recoverOvercast(record.combatant, this.#ruleset.resources.overcastRecoveryPerSecond, dt);
       if (record.combatant.dead) {
-        this.#holdInBubble(record);
+        this.#holdInBubble(record, bubbles);
         continue;
       }
       if (!record.combatant.cast.inAftercast) {
@@ -4449,7 +4446,7 @@ export class MatchSimulation {
         this.#advanceWalk(record, dt);
         this.#advanceFollow(record, dt);
       }
-      this.#holdInBubble(record);
+      this.#holdInBubble(record, bubbles);
       const statusEvents = this.#runResources(record, dt);
       if (
         statusEvents.some((event) => event.kind === "death" || event.kind === "creature-destroyed")
@@ -10420,15 +10417,37 @@ export class MatchSimulation {
   }
 
   /**
-   * Held before the start (#3817), `record` is back within
-   * `SPAWN_BUBBLE_RADIUS` of its spawn: at the nearest point on the edge
-   * if it can stand there, else at its spawn, on the spawn's layer: a
-   * ramp climbed or a drop-off stepped off in the bubble may have left it
-   * on another. A walk that met the edge ends there; a held key slides
-   * along it, as along a wall.
+   * Each team's bubble (#3930), from the spawns of its bodies as they
+   * are now: a body seated late counts from the tick after.
    */
-  #holdInBubble(record: ParticipantRecord): void {
-    const inside = clampToCircle(record.position, record.spawn, SPAWN_BUBBLE_RADIUS);
+  #teamBubbles(): ReadonlyMap<number, TeamBubble> {
+    const spawns = new Map<number, Vec2[]>();
+    for (const record of this.#participants.values()) {
+      if (record.creature !== undefined) {
+        continue;
+      }
+      const team = record.combatant.team;
+      const own = spawns.get(team) ?? [];
+      own.push(record.spawn);
+      spawns.set(team, own);
+    }
+    return new Map([...spawns].map(([team, points]) => [team, teamBubble(points)]));
+  }
+
+  /**
+   * Held before the start (#3817), `record` is back inside its team's
+   * bubble (#3930): at the nearest point on the edge if it can stand
+   * there, else at its spawn, on the spawn's layer: a ramp climbed or a
+   * drop-off stepped off in the bubble may have left it on another. A
+   * walk that met the edge ends there; a held key slides along it, as
+   * along a wall. A creature, in no team's bubble, is held in the circle
+   * round its own spawn.
+   */
+  #holdInBubble(record: ParticipantRecord, bubbles: ReadonlyMap<number, TeamBubble>): void {
+    const held =
+      (record.creature === undefined ? bubbles.get(record.combatant.team) : undefined) ??
+      teamBubble([record.spawn]);
+    const inside = clampToTeamBubble(record.position, held);
     if (inside === record.position) {
       return;
     }
@@ -10438,7 +10457,7 @@ export class MatchSimulation {
     }
     this.#placeAt(record, inside);
     // Pushed back off a body, it may be a hair out again.
-    if (distance(record.position, record.spawn) > SPAWN_BUBBLE_RADIUS + ARRIVE_UNITS) {
+    if (teamBubbleDepth(record.position, held) < -ARRIVE_UNITS) {
       this.#placeAtSpawn(record);
     }
   }

@@ -1084,6 +1084,7 @@ export default {
   "rail.matchesShort": "مسابقه‌ها",
   "rail.modes": "حالت‌ها",
   "rail.noTeamSizeHere": "اندازهٔ تیم برای حالت‌های تیمی و بیلدهای تیمی است",
+  "rail.open": "حالت‌ها",
   "rail.randomArena": "آرنای تصادفی",
   "rail.randomArenaShort": "تصادفی",
   "rail.smallerTeam": "تیم کوچک‌تر",

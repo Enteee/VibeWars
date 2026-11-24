@@ -9,6 +9,20 @@
 
 import { t } from "../i18n/index.js";
 
+/**
+ * On an element whose contents are out of sight, the id of the control
+ * that brings them back (#3924), as a drawer's toggle: the tutorial's
+ * coach points at that control while it is drawn (coach-overlay.ts).
+ */
+export const TUCKED_BEHIND = "data-tucked-behind";
+
+/**
+ * On a control that only puts something away, as a drawer's dim (#3924):
+ * the tutorial's lock lets a press through to it, so what it covers can
+ * be reached.
+ */
+export const PUTS_AWAY = "data-puts-away";
+
 export function h(tag: string, className?: string, text?: string): HTMLElement {
   const node = document.createElement(tag);
   if (className !== undefined) {

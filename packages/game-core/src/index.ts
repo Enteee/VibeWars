@@ -29,6 +29,13 @@ export {
   RANGE_SPELL,
   SPAWN_BUBBLE_RADIUS,
 } from "./distances.js";
+export {
+  nearestOnHull,
+  teamBubble,
+  teamBubbleDepth,
+  teamBubbleOutline,
+  type TeamBubble,
+} from "./match/team-bubble.js";
 export { beaconStrikeArea } from "./match/storm-stand.js";
 export {
   isZoneSourceId,

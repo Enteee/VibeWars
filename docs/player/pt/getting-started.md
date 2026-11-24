@@ -22,6 +22,7 @@ Personagem**, onde você faz seus personagens, e ![Criador de Equipes](../../../
 onde você faz suas [Builds de Equipe](skills-and-builds.md#builds-de-equipe),
 e depois ![Partidas](../../../apps/web/public/icons/mode/matches.svg) **Partidas**, as [partidas terminadas](modes.md#registros-de-partidas),
 como os hosts as informam, e as suas. O jogo abre na última que você usou.
+Num telemóvel na vertical, a barra fica recolhida atrás do botão no canto superior esquerdo do ecrã, que mostra o ícone do modo atual.
 
 ## Crie um personagem
 

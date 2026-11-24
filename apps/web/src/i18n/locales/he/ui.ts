@@ -1144,6 +1144,7 @@ export default {
   "rail.matchesShort": "משחקים",
   "rail.modes": "מצבים",
   "rail.noTeamSizeHere": "גודל קבוצה רלוונטי למצבי קבוצות ולמבני קבוצה",
+  "rail.open": "מצבים",
   "rail.randomArena": "זירה אקראית",
   "rail.randomArenaShort": "אקראי",
   "rail.smallerTeam": "קבוצה קטנה יותר",

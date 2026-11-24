@@ -9,6 +9,7 @@ Když VibeWars otevřeš poprvé, nabídne ti krátkou výuku: procházku kaňon
 ## Lišta režimů
 
 Lišta na levé straně hlavní obrazovky obsahuje [režimy](modes.md), shora dolů: ![Náhodná aréna](../../../apps/web/public/icons/mode/random-arena.svg) **Náhodná aréna**, ![Týmová aréna](../../../apps/web/public/icons/mode/team-arena.svg) **Týmová aréna**, ![Výstup hrdinů](../../../apps/web/public/icons/mode/heroes-ascent.svg) **Výstup hrdinů**, ![GvG](../../../apps/web/public/icons/mode/gvg.svg) **GvG** a ![Vlastní hra](../../../apps/web/public/icons/mode/hosted-game.svg) **Vlastní hra**. Pod režimy je **Velikost týmu**, `‹ 4v4 ›`: šipky přepínají na nejbližší menší nebo větší velikost, kterou daná obrazovka hraje. Každá obrazovka si pamatuje svou vlastní a otevře se na velikosti, kterou hraje (GvG na 8v8). Pod ní je ![Tvůrce postav](../../../apps/web/public/icons/mode/characters.svg) **Tvůrce postav**, kde si vytváříš postavy, a ![Tvůrce týmů](../../../apps/web/public/icons/mode/teams.svg) **Tvůrce týmů**, kde si vytváříš [Týmové buildy](skills-and-builds.md#týmové-buildy), a pak ![Zápasy](../../../apps/web/public/icons/mode/matches.svg) **Zápasy**, [dohrané zápasy](modes.md#záznamy-zápasů), jak je nahlásili jejich hostitelé, a také tvoje vlastní. Hra se otevře na té položce, kterou jsi použil naposledy.
+Na telefonu drženém na výšku je lišta schovaná za tlačítkem vlevo nahoře na obrazovce, které ukazuje ikonu aktuálního režimu.
 
 ## Vytvoř si postavu
 

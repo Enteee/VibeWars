@@ -23,6 +23,7 @@ stvaraš svoje likove, i ![Uređivač timova](../../../apps/web/public/icons/mod
 ![Mečevi](../../../apps/web/public/icons/mode/matches.svg) **Mečevi**, [završeni mečevi](modes.md#zapisi-mečeva) kako ih
 prijavljuju domaćini, i tvoji vlastiti. Igra se otvara na
 onom koji si zadnji koristio.
+Na telefonu koji držite uspravno, traka je skrivena iza gumba gore lijevo na zaslonu, koji prikazuje ikonu trenutnog načina.
 
 ## Stvori lika
 

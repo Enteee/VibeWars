@@ -1154,6 +1154,7 @@ export default {
   "rail.matchesShort": "Partidas",
   "rail.modes": "Modos",
   "rail.noTeamSizeHere": "El tamaño es para modos de equipo y builds de equipo",
+  "rail.open": "Modos",
   "rail.randomArena": "Arena aleatoria",
   "rail.randomArenaShort": "Aleatoria",
   "rail.smallerTeam": "Equipo menor",

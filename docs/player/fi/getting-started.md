@@ -23,6 +23,7 @@ teet hahmosi, ja ![Tiimieditori](../../../apps/web/public/icons/mode/teams.svg) 
 ![Ottelut](../../../apps/web/public/icons/mode/matches.svg) **Ottelut**, [päättyneet ottelut](modes.md#ottelukirjaukset) sellaisina kuin
 niiden isännät ne ilmoittavat, ja omasi. Peli avautuu siinä näkymässä, jota
 käytit viimeksi.
+Pystyasennossa pidetyssä puhelimessa palkki on piilossa näytön vasemman yläkulman painikkeen takana, joka näyttää nykyisen tilan kuvakkeen.
 
 ## Luo hahmo
 
