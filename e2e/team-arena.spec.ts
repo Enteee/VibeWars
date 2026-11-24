@@ -272,20 +272,20 @@ test("#3899: over a warmup, the queue's flyout leaves the queue, and the party i
   try {
     await formParty([ann, bea], ["Ann", "Bea"]);
     await runTeamLobby([ann, bea]);
-    await ann.locator("#topbar .topbar-queue").click();
-    await ann
-      .locator("#topbar .queue-window")
-      .getByRole("button", { name: "Start warmup now" })
-      .click();
+    await press(ann, ann.locator("#topbar .topbar-queue"));
+    await press(
+      ann,
+      ann.locator("#topbar .queue-window").getByRole("button", { name: "Start warmup now" }),
+    );
     const line = ann.locator(".hud-warmup .topbar-queue");
     await expect(line).toContainText("Warmup — still in the queue", { timeout: 25_000 });
 
     // The top bar is hidden in a match (#454): the warmup's line opens the flyout.
-    await line.click();
-    await ann
-      .locator(".hud-warmup .queue-window")
-      .getByRole("button", { name: "Leave Queue" })
-      .click();
+    await press(ann, line);
+    await press(
+      ann,
+      ann.locator(".hud-warmup .queue-window").getByRole("button", { name: "Leave Queue" }),
+    );
     for (const page of [ann, bea]) {
       await expect(page.locator(".hud-warmup")).toHaveCount(0, { timeout: 15_000 });
       await expect(page.locator("#topbar .topbar-queue")).toBeHidden();
