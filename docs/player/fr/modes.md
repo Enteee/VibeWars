@@ -33,7 +33,7 @@ détourée au bord de l'écran : le socle ou un sanctuaire à la couleur de son
 propriétaire, gris s'il n'est à personne, l'autel en or. La flèche pleine d'un
 joueur s'affiche par-dessus.
 
-Un match s'ouvre avec tout le monde retenu près de son point d'apparition : tu peux faire quelques pas, mais pas combattre ni utiliser de compétences. Une ligne en haut compte les joueurs qui ont chargé le match. Une fois que tout le monde a chargé, elle décompte 10 secondes et le match commence, et son chrono avec lui. Un joueur qui n'a pas chargé après 20 secondes n'est pas attendu : le décompte commence sans lui, et il peut encore rejoindre plus tard.
+Un match s'ouvre avec tout le monde retenu près de son point d'apparition : tu peux faire quelques pas et te préparer avec des compétences sur toi et tes alliés, comme des enchantements, des postures et des soins, mais tu ne peux pas attaquer ni utiliser de compétence sur un ennemi. L'énergie et la santé se régénèrent pendant l'attente, et les bots se préparent aussi. Un mur chatoyant autour de ton point d'apparition montre jusqu'où tu peux aller. Une ligne en haut compte les joueurs qui ont chargé le match. Une fois que tout le monde a chargé, elle décompte 10 secondes et le match commence, et son chrono avec lui. Un joueur qui n'a pas chargé après 20 secondes n'est pas attendu : le décompte commence sans lui, et il peut encore rejoindre plus tard.
 
 ## Annihilation
 
@@ -466,6 +466,16 @@ et à une taille activée ; un groupe sans rien d'activé laisse tout passer. La
 est celle de la plus grande équipe, bots compris : une Partie hébergée en 3v2 ne
 correspond donc à aucune taille. Les pastilles restent comme tu les as laissées
 jusqu'au rechargement de la page.
+
+**Mes parties**, après les pastilles, liste plutôt tes propres matchs :
+les 50 derniers que ce navigateur a gardés pour ta clé de joueur
+actuelle, les plus récents d'abord, quel que soit leur âge, publiés ou
+non, une Bataille des Zaishen d'élite aussi. Type et Taille les filtrent
+toujours, et ton équipe est marquée **Vous**. Ouvres-en un pour trois
+onglets : **Builds**, ses équipes avec Cloner comme plus haut ;
+**Statistiques**, le tableau des scores que montrait son panneau de fin
+; et **Diagramme**, ses graphiques. Ils ne sont gardés que dans ce
+navigateur.
 
 Au-dessus des filtres, le bandeau **Hall des héros** liste les 20 dernières tenues, de la plus récente à la plus ancienne : le détenteur (un tag de guilde ou le nom du chef), les personnes de l'équipe gagnante, la fin de la victoire la plus récente et, à partir de deux victoires, le nombre d'affilée. Une tenue est une suite ininterrompue de victoires au Hall par le même détenteur. Le bandeau lit les enregistrements de cette page, ignore les filtres et reste masqué si aucun n'est une victoire au Hall. Comme tout enregistrement, c'est ce qu'a signalé l'hôte de chaque match, et rien ne le vérifie.
 

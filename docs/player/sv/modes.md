@@ -33,7 +33,7 @@ konturpil vid skärmkanten: stället eller en helgedom i ägarens färg,
 grå om ingen äger den, altaret i guld. En spelares fyllda pil ritas
 ovanpå.
 
-En match börjar med alla fasthållna nära sin startplats: du kan gå några steg, men inte slåss eller använda färdigheter. En rad överst räknar spelarna som har läst in matchen. När alla har läst in den räknar den ner 10 sekunder och matchen börjar, och dess klocka med den. En spelare som inte har läst in den efter 20 sekunder väntar man inte på: nedräkningen börjar utan dem, och de kan fortfarande ansluta senare.
+En match börjar med alla fasthållna nära sin startplats: du kan gå några steg och förbereda dig med färdigheter på dig själv och dina allierade, som förtrollningar, ställningar och helningar, men du kan inte anfalla eller använda en färdighet på en fiende. Energi och hälsa återhämtar sig medan du väntar, och bottar förbereder sig också. En skimrande vägg runt din startplats visar hur långt du kan gå. En rad överst räknar spelarna som har läst in matchen. När alla har läst in den räknar den ner 10 sekunder och matchen börjar, och dess klocka med den. En spelare som inte har läst in den efter 20 sekunder väntar man inte på: nedräkningen börjar utan dem, och de kan fortfarande ansluta senare.
 
 ## Förintelse
 
@@ -482,6 +482,15 @@ vill, så visas en match om den passar en vald typ och en vald storlek; en
 grupp utan något valt släpper igenom allt. Storlek är det största laget,
 bottar inräknade, så ett eget spel med 3v2 passar ingen storlek.
 Chipsen står kvar som du lämnade dem tills sidan laddas om.
+
+**Mina matcher**, efter chipsen, visar i stället dina egna matcher: de
+senaste 50 som den här webbläsaren sparat för din nuvarande
+spelarnyckel, nyaste först, hur gamla som helst och publicerade eller
+inte, även en Elite Zaishen Battle. Typ och Storlek filtrerar dem
+fortfarande, och ditt lag är märkt **Du**. Öppna en för tre flikar:
+**Byggen**, dess lag med Klona som ovan; **Statistik**, poängtabellen
+som dess slutpanel visade; och **Diagram**, dess diagram. De sparas bara
+i den här webbläsaren.
 
 Ovanför chipsen listar remsan **Hjältarnas sal** de senaste 20 innehaven, nyaste först: innehavaren (en gilletagg eller ledarens namn), det vinnande lagets spelare, när den senaste vinsten slutade och, från två vinster och uppåt, hur många i rad. Ett innehav är en obruten följd av vinster i Salen av en innehavare. Remsan läser protokollen på den här sidan, bryr sig inte om chipsen, och döljs när inget av dem är en vinst i Salen. Som varje protokoll är den vad varje matchs värd rapporterade, och inget kontrollerar den.
 

@@ -1,9 +1,5 @@
-import { LOBBY_MODES, type LobbyMode } from "@vibewars/game-protocol";
-import {
-  MATCH_RECORD_VERSION,
-  type MatchRecord,
-  type MatchRecordTeam,
-} from "@vibewars/game-session";
+import { LOBBY_MODES, type LobbyMode, type MatchRecordTeam } from "@vibewars/game-protocol";
+import { MATCH_RECORD_VERSION, type MatchRecord } from "@vibewars/game-session";
 import { describe, expect, it } from "vitest";
 
 import { MATCH_KINDS, matchesFilter, matchSize, type MatchFilter } from "./matches-filter.js";
@@ -33,6 +29,7 @@ const record = (mode: LobbyMode, ...sizes: number[]): MatchRecord => ({
 const filter = (kinds: LobbyMode[], sizes: (1 | 2 | 4 | 8)[]): MatchFilter => ({
   kinds: new Set(kinds),
   sizes: new Set(sizes),
+  mine: false,
 });
 
 const RANDOM_4 = record("random-arena", 4, 4);

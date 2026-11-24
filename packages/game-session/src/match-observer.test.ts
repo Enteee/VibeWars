@@ -237,6 +237,7 @@ describe("a match's observers (#480)", () => {
       endReason: "annihilation",
       summary: [],
       clearSeconds: null,
+      teams: [{ players: [] }, { players: [] }],
     };
     match.hostTransport.send("ended", ended, "viewer");
     await settle();

@@ -30,7 +30,7 @@ objective off screen or under the HUD gets an outlined arrow at the
 screen edge: the stand or a shrine in its owner's colour, grey for
 nobody's, the altar in gold. A player's filled arrow draws over it.
 
-A match opens with everyone held near their spawn: you can walk a few steps, but not fight or use skills. A line at the top counts the players who have loaded the match. Once everyone has loaded, it counts down 10 seconds and the match starts, and its clock with it. A player who has not loaded after 20 seconds is not waited for: the countdown starts without them, and they can still join later.
+A match opens with everyone held near their spawn: you can walk a few steps and prepare with skills on yourself and your allies, such as enchantments, stances and heals, but you cannot attack or use a skill on a foe. Energy and Health regenerate while you wait, and bots prepare too. A shimmering wall around your spawn shows how far you can go. A line at the top counts the players who have loaded the match. Once everyone has loaded, it counts down 10 seconds and the match starts, and its clock with it. A player who has not loaded after 20 seconds is not waited for: the countdown starts without them, and they can still join later.
 
 ## Annihilation
 
@@ -467,6 +467,14 @@ press any number, and a match shows if it fits one pressed kind and one
 pressed size; a group with none pressed lets all through. Size is the
 largest team, bots included, so a 3v2 Hosted Game fits no size. The
 chips stay as you left them until the page reloads.
+
+**My matches**, after the chips, lists your own matches instead: the
+last 50 this browser kept for your current player key, newest first, of
+any age, and published or not, an Elite Zaishen Battle too. Kind and
+Size still filter them, and your team is marked **You**. Open one for
+three tabs: **Builds**, its teams with Clone as above; **Stats**, the
+score table its end panel showed; and **Diagram**, its charts. They are
+kept in this browser only.
 
 Above the chips, the **Hall of Heroes** strip lists the last 20 holds, newest first: the holder (a guild tag or the leader's name), the winning team's people, when the newest win ended and, from two wins on, how many in a row. A hold is an unbroken run of Hall wins by one holder. The strip reads the records on this page, ignores the chips, and is hidden when none of them is a Hall win. Like every record, it is what each match's host reported, and nothing checks it.
 

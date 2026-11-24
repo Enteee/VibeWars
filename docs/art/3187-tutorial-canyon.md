@@ -18,7 +18,8 @@ station puts one. Regenerate with `node scripts/assets/tutorial-canyon-study.mjs
   warm glow, radius ≈ 420, still under reduced motion). Only every third glow flickers (0.35): a
   flickering light is redrawn as it flickers, and all of them put the map over the render bench's
   cap. Station 7's strip is a `molten` zone that hurts, the way round is visible beside it.
-- **Mist** is low, pale, soft ellipses (`#cfc6c0`, ≤ 0.30) drawn under bodies, rings and bars,
+- **Mist** is low, pale, soft flat ellipses in the plain fog grey (`FOG_COLOUR`, ≤ 0.30), a few
+  wide puffs scaled to the bank (#3885), drawn under bodies, rings and bars,
   so it never hides one (§signals). Mist drifts at 0.14 at most.
 - **Light:** the dusk row (`#7f86a8` ambient 0.5, sun 25° `#ffb87a` 0.5) from the north-west,
   so shadows fall south-east (blocks, wall, boulders); lava is the warm light.

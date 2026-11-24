@@ -29,7 +29,7 @@ außerhalb des Bildschirms oder unter dem HUD einen umrandeten Pfeil am Bildschi
 Flaggenstand oder ein Schrein in der Farbe seines Besitzers, grau, wenn er niemandem gehört, der
 Altar in Gold. Der gefüllte Pfeil eines Spielers wird darüber gezeichnet.
 
-Ein Match beginnt mit allen festgehalten nahe ihrem Startpunkt: Du kannst ein paar Schritte gehen, aber nicht kämpfen oder Fertigkeiten einsetzen. Eine Zeile oben zählt die Spieler, die das Match geladen haben. Haben alle geladen, zählt sie 10 Sekunden herunter, und das Match beginnt, mit ihm seine Uhr. Auf einen Spieler, der nach 20 Sekunden nicht geladen hat, wird nicht gewartet: Der Countdown beginnt ohne ihn, und er kann später noch dazukommen.
+Ein Match beginnt mit allen festgehalten nahe ihrem Startpunkt: Du kannst ein paar Schritte gehen und dich mit Fertigkeiten auf dich selbst und deine Verbündeten vorbereiten, etwa mit Verzauberungen, Haltungen und Heilungen, aber du kannst nicht angreifen oder eine Fertigkeit auf einen Gegner einsetzen. Energie und Leben regenerieren, während du wartest, und auch Bots bereiten sich vor. Eine schimmernde Wand um deinen Startpunkt zeigt, wie weit du gehen kannst. Eine Zeile oben zählt die Spieler, die das Match geladen haben. Haben alle geladen, zählt sie 10 Sekunden herunter, und das Match beginnt, mit ihm seine Uhr. Auf einen Spieler, der nach 20 Sekunden nicht geladen hat, wird nicht gewartet: Der Countdown beginnt ohne ihn, und er kann später noch dazukommen.
 
 ## Vernichtung
 
@@ -370,6 +370,11 @@ Blau Team, Gold Aufstieg, Violett GvG, Grün Gehostet. Über der Liste filtern C
 **Größe** (1v1, 2v2, 4v4, 8v8): Drück beliebig viele, und ein Match erscheint, wenn es zu einer gedrückten Art und einer gedrückten Größe
 passt; eine Gruppe ohne gedrückten Chip lässt alles durch. Die Größe ist das größte Team, Bots eingeschlossen, ein 3v2 Gehostetes Spiel
 passt also zu keiner Größe. Die Chips bleiben, wie du sie gelassen hast, bis die Seite neu lädt.
+
+**Meine Spiele**, hinter den Chips, listet stattdessen deine eigenen Matches: die letzten 50, die dieser Browser für deinen aktuellen
+Spielerschlüssel behalten hat, die neuesten zuerst, egal wie alt und ob veröffentlicht oder nicht, auch eine Elite-Zaishen-Schlacht. Art und
+Größe filtern sie weiterhin, und dein Team ist mit **Du** markiert. Öffne eines für drei Tabs: **Builds**, seine Teams mit Klonen wie oben;
+**Statistik**, die Punktetabelle, die sein Endpanel zeigte; und **Diagramm**, seine Diagramme. Sie bleiben nur in diesem Browser.
 
 Über den Chips listet der Streifen **Halle der Helden** die letzten 20 Haltephasen auf, die neueste zuerst: den Halter (ein Gildenkürzel oder den Namen des Anführers), die Spieler des Siegerteams, wann der neueste Sieg endete und ab zwei Siegen, wie viele in Folge. Eine Haltephase ist eine ununterbrochene Reihe von Hallen-Siegen desselben Halters. Der Streifen liest die Berichte auf dieser Seite, ignoriert die Chips und bleibt verborgen, wenn keiner davon ein Hallen-Sieg ist. Wie jeder Bericht zeigt er, was der Host des jeweiligen Matches gemeldet hat, und nichts überprüft das.
 

@@ -13,6 +13,7 @@ import { chooseProfession, professionField } from "./helpers/professions.js";
 import { startSoloMatch } from "./helpers/peers.js";
 import { openLibraryGroup } from "./helpers/library.js";
 import { openRail } from "./helpers/menu.js";
+import { scrollToEnd, underChatIcon } from "./helpers/overlay.js";
 import { projection, type Projection } from "./camera.js";
 import { key, skillKey } from "./keys.js";
 
@@ -1929,4 +1930,19 @@ test("(47) under Show names, a right click on a name only targets it; a left cli
   await page.mouse.click(name.x, name.y);
   await page.keyboard.up(key("show-names"));
   await expect(page.locator(".training-attacking")).toContainText("attacking");
+});
+
+test("on a laptop the arena never runs under the chat's icon, at the top or the end (#3887)", async ({
+  page,
+}) => {
+  await openTraining(page);
+  await page.setViewportSize({ width: 1280, height: 800 });
+  const inArena = ".training-skill, .weapon-set, .training-meter-label, .training-meter-value";
+  await expect.poll(() => underChatIcon(page, inArena)).toEqual([]);
+  expect(await underChatIcon(page, ".training")).toEqual([]);
+  await scrollToEnd(page, ".editor-layout");
+  expect(await underChatIcon(page, ".training")).toEqual([]);
+  expect(
+    await underChatIcon(page, ".editor-layout :is(button, input, select, label, span)"),
+  ).toEqual([]);
 });

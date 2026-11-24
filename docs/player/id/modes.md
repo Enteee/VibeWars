@@ -30,7 +30,7 @@ sasaran yang di luar layar atau tertutup HUD mendapat panah bergaris tepi di
 tepi layar: tiang atau kuil dalam warna pemiliknya, abu-abu kalau
 belum dimiliki siapa pun, altar dalam warna emas. Panah terisi milik pemain digambar di atasnya.
 
-Pertandingan dibuka dengan semua orang ditahan di dekat titik munculnya: kamu bisa berjalan beberapa langkah, tetapi tidak bisa bertarung atau memakai skill. Satu baris di atas menghitung pemain yang sudah selesai memuat pertandingan. Begitu semua selesai memuat, baris itu menghitung mundur 10 detik dan pertandingan dimulai, beserta jamnya. Pemain yang belum selesai memuat setelah 20 detik tidak ditunggu: hitung mundur dimulai tanpanya, dan ia masih bisa bergabung nanti.
+Pertandingan dibuka dengan semua orang ditahan di dekat titik munculnya: kamu bisa berjalan beberapa langkah dan bersiap dengan skill pada dirimu sendiri dan sekutumu, seperti berkah, kuda-kuda, dan penyembuhan, tetapi tidak bisa menyerang atau memakai skill pada musuh. Energi dan Darah pulih selama kamu menunggu, dan bot juga bersiap. Dinding berkilau di sekitar titik munculmu menunjukkan seberapa jauh kamu bisa pergi. Satu baris di atas menghitung pemain yang sudah selesai memuat pertandingan. Begitu semua selesai memuat, baris itu menghitung mundur 10 detik dan pertandingan dimulai, beserta jamnya. Pemain yang belum selesai memuat setelah 20 detik tidak ditunggu: hitung mundur dimulai tanpanya, dan ia masih bisa bergabung nanti.
 
 ## Pemusnahan
 
@@ -458,6 +458,15 @@ tekan berapa pun, dan sebuah laga tampil kalau cocok dengan satu jenis yang dite
 ukuran yang ditekan; kelompok yang tak satu pun ditekan meloloskan semuanya. Ukuran adalah
 tim terbesar, termasuk bot, jadi Game Host 3v2 tidak cocok dengan ukuran mana pun.
 Chip tetap seperti yang kamu tinggalkan sampai halaman dimuat ulang.
+
+**Pertandinganku**, setelah chip, menampilkan laga milikmu sendiri
+sebagai gantinya: 50 terakhir yang disimpan peramban ini untuk kunci
+pemainmu saat ini, yang terbaru dulu, berapa pun umurnya, dipublikasikan
+atau tidak, termasuk Elite Zaishen Battle. Jenis dan Ukuran tetap
+menyaringnya, dan timmu ditandai **Kamu**. Buka salah satu untuk tiga
+tab: **Build**, tim-timnya dengan Klon seperti di atas; **Statistik**,
+tabel skor yang ditampilkan panel akhirnya; dan **Diagram**, grafiknya.
+Semuanya hanya disimpan di peramban ini.
 
 Di atas chip, strip **Aula Pahlawan** menampilkan 20 penguasaan terakhir, yang terbaru di depan: penguasa (tag guild atau nama pemimpinnya), orang-orang tim pemenang, kapan kemenangan terbarunya berakhir dan, mulai dua kemenangan, berapa kali berturut-turut. Satu penguasaan adalah rangkaian kemenangan Aula tanpa putus oleh satu penguasa. Strip ini membaca catatan di halaman ini, mengabaikan chip, dan disembunyikan kalau tak satu pun catatan itu kemenangan Aula. Seperti setiap catatan, isinya adalah apa yang dilaporkan host setiap laga, dan tak ada yang memeriksanya.
 

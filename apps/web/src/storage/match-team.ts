@@ -1,4 +1,5 @@
-import { sanitizeCharacterName, type MatchRecordTeam } from "@vibewars/game-session";
+import type { MatchRecordTeam } from "@vibewars/game-protocol";
+import { sanitizeCharacterName } from "@vibewars/game-session";
 
 import { teamCharacter, teamOf } from "../ui/team-builder.js";
 import { decodeTemplate } from "./gw1-template.js";

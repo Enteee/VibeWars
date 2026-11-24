@@ -286,6 +286,12 @@ const minion: WirePlayer = {
   signet: null,
 };
 
+/** Two bodies held in their spawn bubbles (#3909). */
+const spawns = [
+  { id: "p1", x: -40, y: 12.5, layer: 0 },
+  { id: "p2", x: 40, y: -12.5, layer: 1 },
+];
+
 const snapshot: WireSnapshotPart = {
   tick: 42,
   elapsedSeconds: 2.1,
@@ -522,11 +528,24 @@ const summaryRow = {
   interrupts: 3,
 } as const;
 
+/** A seat as a record holds it (#3903): Ann, and a bot. */
+const recordPlayer = {
+  name: "Ann",
+  guildTag: "Ab1",
+  bot: false,
+  pubkey: "a".repeat(64),
+  template: "OQBDAswDPiAAAAAAAAAAAAAA",
+} as const;
+
 const ended: WireEnded = {
   winningTeam: null,
   endReason: "host-left",
   summary: [summaryRow],
   clearSeconds: null,
+  teams: [
+    { players: [recordPlayer] },
+    { players: [{ ...recordPlayer, name: "Monk", guildTag: null, bot: true, pubkey: null }] },
+  ],
 };
 
 const refused: CastRefusedMessage = {
@@ -1028,7 +1047,7 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   [
     "ended by a wipe (#846)",
     parseWireEnded,
-    { winningTeam: 1, endReason: "annihilation", summary: [], clearSeconds: null },
+    { ...ended, winningTeam: 1, endReason: "annihilation", summary: [] },
   ],
   [
     "a bot's summary row, no signet (#2822)",
@@ -1038,7 +1057,7 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   [
     "ended at time by morale (#846)",
     parseWireEnded,
-    { winningTeam: null, endReason: "morale", summary: [], clearSeconds: null },
+    { ...ended, endReason: "morale", summary: [] },
   ],
   [
     "ended with a full summary (#1057)",
@@ -1065,12 +1084,20 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   [
     "snapshot waiting for players (#3818)",
     parseWireSnapshotPart,
-    { ...snapshot, phase: "waiting", preMatch: { joined: 3, expected: 4, secondsLeft: null } },
+    {
+      ...snapshot,
+      phase: "waiting",
+      preMatch: { joined: 3, expected: 4, secondsLeft: null, spawns },
+    },
   ],
   [
     "snapshot counting down (#3818)",
     parseWireSnapshotPart,
-    { ...snapshot, phase: "countdown", preMatch: { joined: 4, expected: 4, secondsLeft: 7 } },
+    {
+      ...snapshot,
+      phase: "countdown",
+      preMatch: { joined: 4, expected: 4, secondsLeft: 7, spawns },
+    },
   ],
   ["refused", parseCastRefused, refused],
   ["refused attack", parseCastRefused, { kind: "attack", reason: "no-weapon" }],
@@ -2039,12 +2066,51 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
   [
     "snapshot with more joined than expected",
     parseWireSnapshotPart,
-    { ...snapshot, preMatch: { joined: 5, expected: 4, secondsLeft: null } },
+    { ...snapshot, preMatch: { joined: 5, expected: 4, secondsLeft: null, spawns } },
   ],
   [
     "snapshot with a fractional countdown",
     parseWireSnapshotPart,
-    { ...snapshot, preMatch: { joined: 4, expected: 4, secondsLeft: 2.5 } },
+    { ...snapshot, preMatch: { joined: 4, expected: 4, secondsLeft: 2.5, spawns } },
+  ],
+  [
+    "snapshot without spawns (#3909)",
+    parseWireSnapshotPart,
+    { ...snapshot, preMatch: { joined: 4, expected: 4, secondsLeft: 7 } },
+  ],
+  [
+    "snapshot with a spawn of no place (#3909)",
+    parseWireSnapshotPart,
+    {
+      ...snapshot,
+      preMatch: { joined: 4, expected: 4, secondsLeft: 7, spawns: [{ id: "p1", x: 0, layer: 0 }] },
+    },
+  ],
+  [
+    "snapshot with a spawn of no id (#3909)",
+    parseWireSnapshotPart,
+    {
+      ...snapshot,
+      preMatch: {
+        joined: 4,
+        expected: 4,
+        secondsLeft: 7,
+        spawns: [{ id: 3, x: 0, y: 0, layer: 0 }],
+      },
+    },
+  ],
+  [
+    "snapshot with a spawn on a fractional layer (#3909)",
+    parseWireSnapshotPart,
+    {
+      ...snapshot,
+      preMatch: {
+        joined: 4,
+        expected: 4,
+        secondsLeft: 7,
+        spawns: [{ id: "p1", x: 0, y: 0, layer: 0.5 }],
+      },
+    },
   ],
   ["snapshot with team 2 winning", parseWireSnapshotPart, { ...snapshot, winningTeam: 2 }],
   ["snapshot ended by host-left", parseWireSnapshotPart, { ...snapshot, endReason: "host-left" }],
@@ -2515,6 +2581,21 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     },
   ],
   ["ended by an unknown reason", parseWireEnded, { ...ended, endReason: "forfeit" }],
+  ["ended without its teams (#3903)", parseWireEnded, { ...ended, teams: undefined }],
+  ["ended with one team of two (#3903)", parseWireEnded, { ...ended, teams: [ended.teams[0]] }],
+  [
+    "ended with a bot holding a key (#3903)",
+    parseWireEnded,
+    { ...ended, teams: [{ players: [{ ...recordPlayer, bot: true }] }, ended.teams[1]] },
+  ],
+  [
+    "ended with a template past GW1's longest (#3903)",
+    parseWireEnded,
+    {
+      ...ended,
+      teams: [{ players: [{ ...recordPlayer, template: "A".repeat(65) }] }, ended.teams[1]],
+    },
+  ],
   [
     "ended without a winner",
     parseWireEnded,
@@ -3298,7 +3379,12 @@ describe("the P2P validators (#82)", () => {
     expect(parseWireSnapshotPartOf({ ...snapshot, players: [{ ...player, team: 3 }] }, 3)).toBe(
       undefined,
     );
-    const won: WireEnded = { ...ended, winningTeam: 2, summary: [{ ...summaryRow, team: 2 }] };
+    const won: WireEnded = {
+      ...ended,
+      winningTeam: 2,
+      summary: [{ ...summaryRow, team: 2 }],
+      teams: [...ended.teams, { players: [recordPlayer] }],
+    };
     expect(parseWireEndedOf(won, 3)).toEqual(won);
     expect(parseWireEndedOf(won, 2)).toBeUndefined();
     expect(parseWireEndedOf({ ...won, winningTeam: 1 }, 2)).toBeUndefined();
@@ -3322,6 +3408,14 @@ describe("the P2P validators (#82)", () => {
         players: [player],
       },
     );
+  });
+
+  it("accept an ended with a human the host knows no key of (#3903)", () => {
+    const keyless = {
+      ...ended,
+      teams: [{ players: [{ ...recordPlayer, pubkey: null }] }, ...ended.teams.slice(1)],
+    };
+    expect(parseWireEnded(keyless)).toEqual(keyless);
   });
 
   it("accept a masterless body on MASTERLESS_WIRE_TEAM (#2092)", () => {

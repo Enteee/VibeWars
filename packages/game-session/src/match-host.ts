@@ -67,6 +67,7 @@ import {
   type SkillBarSlot,
   type WireCombatBatch,
   type WireChartEvent,
+  type MatchRecordTeam,
   type WireEnded,
   type WireMatchChart,
   type WirePlayer,
@@ -89,12 +90,7 @@ import {
 import { createCallBoard, type Team } from "./calls.js";
 import { packCombat, packMatchChart } from "./combat-batches.js";
 import { MESSAGE_BURST, MESSAGES_PER_SECOND, MessageBudget } from "./intent-budget.js";
-import {
-  MATCH_RECORD_VERSION,
-  recordTemplate,
-  type MatchRecord,
-  type MatchRecordTeam,
-} from "./match-record.js";
+import { MATCH_RECORD_VERSION, recordTemplate, type MatchRecord } from "./match-record.js";
 import { NO_GUILD, sanitizeGuild, sanitizeName, type Guild } from "./names.js";
 import { adrenalineSlots, sameAdrenaline } from "./adrenaline.js";
 import { chainMarks, chainMarksPredicted } from "./chain-marks.js";
@@ -577,6 +573,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       const loaded = awaited.size === 0 && unready() === 0;
       if (loaded || pre.ticks >= ticksOf(times.joinTimeoutSeconds)) {
         pre = { phase: "countdown", ticks: 0 };
+        logInput([sim.tick, "countdown", ticksOf(times.countdownSeconds)]);
       }
     }
     if (pre?.phase === "countdown" && times !== null) {
@@ -584,9 +581,14 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
         pre = null;
       }
     }
-    if (pre !== null) {
+    if (pre !== null && times !== null) {
+      // The countdown's seconds left, as the bots prepare for them (#3910).
+      const secondsLeft =
+        pre.phase === "countdown"
+          ? (ticksOf(times.countdownSeconds) - pre.ticks) * TICK_SECONDS
+          : null;
       pre.ticks += 1;
-      return sim.stepHeld(TICK_SECONDS);
+      return sim.stepHeld(TICK_SECONDS, secondsLeft);
     }
     if (!startLogged) {
       startLogged = true;
@@ -614,6 +616,14 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
           : untilAnyway <= STARTING_ANYWAY_SECONDS
             ? untilAnyway
             : null,
+      // Every body a snapshot shows is held, each at its own spawn (#3909).
+      spawns: [...sim.participants()].flatMap((participant) => {
+        const held = sim.heldAt(participant.id);
+        return held === undefined ||
+          wireIdentity(participant, seats, sim.elapsedSeconds) === undefined
+          ? []
+          : [{ id: participant.id, x: held.at.x, y: held.at.y, layer: held.layer }];
+      }),
     };
   };
   /** At most one per peer: a new rejoin hello kills the old nonce. */
@@ -700,9 +710,12 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
         interrupts: row.interrupts,
       };
     });
-  /** The finished match as the world may read it (#2528): names, public keys and builds, no peer ids. */
-  const record = (endReason: MatchEndReason): MatchRecord => {
-    const team = (side: number): MatchRecordTeam => ({
+  /**
+   * Who played on each team, as the record publishes it and `ended`
+   * sends it (#3903): one function, so the two never differ.
+   */
+  const recordTeams = (): MatchRecordTeam[] =>
+    teamIds(map.descriptor.teamCount).map((side) => ({
       players: [...everSeated.values()]
         .filter((seat) => seat.team === side)
         .map(({ name, guildTag, bot, pubkey, build }) => ({
@@ -712,18 +725,18 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
           pubkey,
           template: recordTemplate(build),
         })),
-    });
-    return {
-      v: MATCH_RECORD_VERSION,
-      mode: options.mode,
-      map: map.descriptor.id,
-      endedAt: Math.floor(options.nowSeconds()),
-      durationSeconds: Math.round(sim.elapsedSeconds),
-      winningTeam: sim.outcome.winningTeam ?? null,
-      endReason,
-      teams: teamIds(map.descriptor.teamCount).map(team),
-    };
-  };
+    }));
+  /** The finished match as the world may read it (#2528): names, public keys and builds, no peer ids. */
+  const record = (endReason: MatchEndReason): MatchRecord => ({
+    v: MATCH_RECORD_VERSION,
+    mode: options.mode,
+    map: map.descriptor.id,
+    endedAt: Math.floor(options.nowSeconds()),
+    durationSeconds: Math.round(sim.elapsedSeconds),
+    winningTeam: sim.outcome.winningTeam ?? null,
+    endReason,
+    teams: recordTeams(),
+  });
   let accumulator = 0;
   let finished = false;
   /** Handed its room on: see `MatchHost.retire`. */
@@ -1756,6 +1769,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
         endReason: sim.outcome.reason ?? "time",
         summary: summary(),
         clearSeconds: sim.clearSeconds,
+        teams: recordTeams(),
       };
       transport.send("ended", ended, live);
       // After the summary, so its size never holds the summary up.
@@ -1845,6 +1859,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
         endReason: reason,
         summary: summary(),
         clearSeconds: null,
+        teams: recordTeams(),
       };
       transport.send("ended", ended);
       await transport.leave();

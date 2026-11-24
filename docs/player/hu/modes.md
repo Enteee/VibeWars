@@ -34,7 +34,7 @@ képernyő szélén: a zászlótartó vagy egy szentély a birtokosa színében,
 szürkén, ha senkié, az oltár aranyszínben. Egy játékos kitöltött nyila
 fölé rajzolódik.
 
-A meccs úgy indul, hogy mindenki a kezdőhelye közelében van tartva: tehetsz néhány lépést, de harcolni és képességet használni nem. Egy sor fent számolja azokat a játékosokat, akiknél betöltött a meccs. Ha mindenkinél betöltött, 10 másodpercet visszaszámol, és a meccs elindul, vele az órája is. Arra a játékosra, akinél 20 másodperc után sem töltött be, nem várnak: a visszaszámlálás nélküle indul, és később még csatlakozhat.
+A meccs úgy indul, hogy mindenki a kezdőhelye közelében van tartva: tehetsz néhány lépést, és felkészülhetsz önmagadra és a szövetségeseidre használt képességekkel, például bűbájokkal, állásokkal és gyógyításokkal, de nem támadhatsz, és ellenségre sem használhatsz képességet. Az Energia és az Életerő várakozás közben töltődik, és a botok is felkészülnek. A kezdőhelyed körüli csillámló fal mutatja, meddig mehetsz. Egy sor fent számolja azokat a játékosokat, akiknél betöltött a meccs. Ha mindenkinél betöltött, 10 másodpercet visszaszámol, és a meccs elindul, vele az órája is. Arra a játékosra, akinél 20 másodperc után sem töltött be, nem várnak: a visszaszámlálás nélküle indul, és később még csatlakozhat.
 
 ## Megsemmisítés
 
@@ -573,6 +573,15 @@ megnyomva, mindent átenged. A méret a legnagyobb csapat, a botokat is
 beleértve, így egy 3v2-es Saját játék egyik méretbe sem illik. A
 chipek úgy maradnak, ahogy hagytad őket, amíg újra nem töltöd az
 oldalt.
+
+A **Saját meccsek**, a chipek után, ehelyett a saját meccseidet mutatja:
+az utolsó 50-et, amelyet ez a böngésző a jelenlegi játékoskulcsodhoz
+megőrzött, a legújabbat elöl, bármilyen régit, közzétettet vagy sem, egy
+Elite Zaishen Battle-t is. A Típus és a Méret továbbra is szűri őket, a
+csapatodat pedig **Te** jelöli. Nyiss meg egyet, és három lapot kapsz:
+**Buildek**, a csapatai a fenti Klón gombbal; **Statisztika**, a
+ponttáblázat, amelyet a záró panelje mutatott; és **Diagram**, a
+grafikonjai. Csak ebben a böngészőben maradnak meg.
 
 A chipek fölött a **Hősök Csarnoka** csík az utolsó 20 tartást sorolja
 fel, a legújabbal elöl: a tartót (céhjel vagy a vezető neve), a győztes

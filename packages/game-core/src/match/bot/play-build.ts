@@ -10,6 +10,8 @@ import type {
 import { isGhostId, onHill } from "../ghost.js";
 import type { Participant } from "../simulation.js";
 import { UPKEEP_DROP_SECONDS } from "./rules/drop-upkeep.js";
+import { idleWander } from "./rules/idle-wander.js";
+import { prepare } from "./rules/prepare.js";
 import { markHealth } from "./rules/duck.js";
 import { planPlaced, teamPlan } from "./plan.js";
 import { roleOf, type BotRole } from "./role.js";
@@ -83,6 +85,28 @@ export function playBuild(
       front === undefined ? context.foeCentroid : centroid(foes, front),
     );
   });
+}
+
+/**
+ * `play-build` before the start (#3910), at the same pace: prepare
+ * where it may, else wander about the bubble.
+ */
+export function prepareInBubble(
+  behaviour: PlayBuild,
+  cursor: BehaviourCursor,
+  context: BehaviourContext,
+  secondsLeft: number | null,
+): BehaviourIntent {
+  const hold = (thinks: number) =>
+    reactionSeconds(behaviour.reaction, context.seed, context.self.id, thinks);
+  // Its wait runs every tick, not only as it thinks.
+  cursor.wanderSeconds -= context.dt;
+  return paced(
+    hold,
+    cursor,
+    context,
+    () => prepare(context, secondsLeft) ?? idleWander(context, cursor),
+  );
 }
 
 /**

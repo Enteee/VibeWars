@@ -1,12 +1,19 @@
 import { describe, expect, it } from "vitest";
 
 import { totalCost } from "./attributes.js";
-import { SKILL_BAR_SLOTS, validatePlayerBuild } from "./build.js";
-import { wieldsFor } from "./equipment/weapons.js";
+import { SKILL_BAR_SLOTS, validatePlayerBuild, type PlayerBuild } from "./build.js";
+import { getWeapon, wieldsFor } from "./equipment/weapons.js";
+import { botRole } from "./match/bot/role.js";
 import { PROFESSIONS } from "./professions.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "./ruleset.js";
 import { IMPLEMENTED_SKILLS, getSkill } from "./skills/catalog.js";
-import { STARTER_BUILDS, pickBuildFrom, pickStarterBuild } from "./starter-builds.js";
+import {
+  SOLO_FOE_BUILDS,
+  STARTER_BUILDS,
+  pickBuildFrom,
+  pickSoloFoeBuild,
+  pickStarterBuild,
+} from "./starter-builds.js";
 
 const RULES = MINIMAL_GW_INSPIRED_PVP_V1.attributes;
 const IMPLEMENTED = new Set(IMPLEMENTED_SKILLS.map((skill) => skill.id));
@@ -79,7 +86,7 @@ describe("pickStarterBuild (#852)", () => {
     for (const build of STARTER_BUILDS) {
       const not = { ...build, name: "Kaelen Ashvale" };
       for (const r of [0, 0.2, 0.4, 0.6, 0.8, 0.9999999]) {
-        const picked = pickStarterBuild(() => r, not);
+        const picked = pickStarterBuild(() => r, [not]);
         expect([picked.primaryProfession, picked.secondaryProfession]).not.toEqual([
           not.primaryProfession,
           not.secondaryProfession,
@@ -90,6 +97,39 @@ describe("pickStarterBuild (#852)", () => {
 
   it("still picks a build when the one it is told not to is the only one", () => {
     const only = STARTER_BUILDS.slice(0, 1);
-    expect(pickBuildFrom(only, () => 0.5, only[0])).toBe(only[0]);
+    expect(pickBuildFrom(only, () => 0.5, only)).toBe(only[0]);
+  });
+});
+
+describe("SOLO_FOE_BUILDS (#3888)", () => {
+  const roleOfBuild = (build: PlayerBuild) => {
+    const weapon = getWeapon(build.equipment.weaponSets[0].mainHand.weaponId);
+    const bar = build.skillBar.flatMap((id) => {
+      const skill = id === null ? undefined : getSkill(id);
+      return skill === undefined ? [] : [skill];
+    });
+    return botRole(bar, weapon?.range ?? 0);
+  };
+
+  it("holds starter builds, none a bot plays as a healer", () => {
+    expect(SOLO_FOE_BUILDS.length).toBeGreaterThan(0);
+    for (const build of SOLO_FOE_BUILDS) {
+      expect(STARTER_BUILDS, build.name).toContain(build);
+      expect(roleOfBuild(build), build.name).not.toBe("healer");
+    }
+  });
+
+  it("leaves out the pure-heal Monk, and only the healers", () => {
+    const wordOfHealing = (build: PlayerBuild) => build.name.startsWith("Word of Healing (");
+    expect(STARTER_BUILDS.some(wordOfHealing)).toBe(true);
+    expect(SOLO_FOE_BUILDS.some(wordOfHealing)).toBe(false);
+    const healers = STARTER_BUILDS.filter((build) => roleOfBuild(build) === "healer");
+    expect(SOLO_FOE_BUILDS.length + healers.length).toBe(STARTER_BUILDS.length);
+  });
+
+  it("pickSoloFoeBuild never picks a healer", () => {
+    for (let i = 0; i < 100; i++) {
+      expect(roleOfBuild(pickSoloFoeBuild(() => i / 100))).not.toBe("healer");
+    }
   });
 });

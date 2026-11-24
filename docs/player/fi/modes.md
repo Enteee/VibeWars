@@ -34,7 +34,7 @@ saa ääriviivoitetun nuolen näytön reunaan: teline tai pyhäkkö omistajansa
 värissä, harmaana, jos se ei ole kenenkään, alttari kultaisena. Pelaajan
 täytetty nuoli piirtyy sen päälle.
 
-Ottelu alkaa kaikki pidettyinä lähtöpaikkansa lähellä: voit kävellä muutaman askeleen, mutta et taistella etkä käyttää taitoja. Ylhäällä oleva rivi laskee pelaajat, jotka ovat ladanneet ottelun. Kun kaikki ovat ladanneet, se laskee 10 sekuntia ja ottelu alkaa, ja sen kello sen mukana. Pelaajaa, joka ei ole ladannut 20 sekunnin jälkeen, ei odoteta: lähtölaskenta alkaa ilman häntä, ja hän voi silti liittyä myöhemmin.
+Ottelu alkaa kaikki pidettyinä lähtöpaikkansa lähellä: voit kävellä muutaman askeleen ja valmistautua taidoilla, jotka kohdistat itseesi ja liittolaisiisi, kuten lumouksilla, asennoilla ja parannuksilla, mutta et voi hyökätä etkä käyttää taitoa viholliseen. Energia ja terveys palautuvat odottaessasi, ja myös botit valmistautuvat. Lähtöpaikkasi ympärillä hohtava seinä näyttää, kuinka pitkälle voit kävellä. Ylhäällä oleva rivi laskee pelaajat, jotka ovat ladanneet ottelun. Kun kaikki ovat ladanneet, se laskee 10 sekuntia ja ottelu alkaa, ja sen kello sen mukana. Pelaajaa, joka ei ole ladannut 20 sekunnin jälkeen, ei odoteta: lähtölaskenta alkaa ilman häntä, ja hän voi silti liittyä myöhemmin.
 
 ## Tuho
 
@@ -504,6 +504,15 @@ ryhmä, josta mitään ei ole painettu, päästää kaikki läpi. Koko on suurin
 tiimi botit mukaan lukien, joten 3v2-Isännöity peli ei sovi mihinkään
 kokoon. Sirut pysyvät sellaisina kuin jätit ne, kunnes sivu ladataan
 uudelleen.
+
+**Omat ottelut**, sirujen jälkeen, näyttää sen sijaan omat ottelusi:
+viimeiset 50, jotka tämä selain on säilyttänyt nykyiselle
+pelaaja-avaimellesi, uusin ensin, minkä ikäisinä tahansa ja julkaistuina
+tai ei, myös Elite Zaishen Battlen. Laji ja Koko suodattavat niitä yhä,
+ja oma tiimisi on merkitty **Sinä**. Avaa yksi, niin saat kolme
+välilehteä: **Buildit**, sen tiimit ja Kloonaa kuten yllä; **Tilastot**,
+pistetaulukko, jonka sen loppupaneeli näytti; ja **Kaavio**, sen
+kaaviot. Ne säilyvät vain tässä selaimessa.
 
 Sirujen yläpuolella **Sankarien sali** -nauha luettelee viimeiset 20 hallintakautta, uusin ensin: hallitsija (kiltatunnus tai johtajan nimi), voittaneen tiimin pelaajat, milloin uusin voitto päättyi ja, kahdesta voitosta alkaen, montako peräkkäin. Hallintakausi on yhden hallitsijan katkeamaton Salin voittojen sarja. Nauha lukee tämän sivun kirjaukset, ei välitä siruista, ja on piilossa, kun mikään niistä ei ole Salin voitto. Kuten jokainen kirjaus, se on sitä, mitä kunkin ottelun isäntä ilmoitti, eikä mikään tarkista sitä.
 

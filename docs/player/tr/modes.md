@@ -34,7 +34,7 @@ ekran dışındaki ya da HUD'ın altındaki bir hedef, ekranın kenarında
 kimsenin değilse gri, sunak ise altın renginde. Bir oyuncunun dolu oku
 onun üstüne çizilir.
 
-Bir maç, herkes doğma noktasının yakınında tutularak açılır: birkaç adım yürüyebilirsin ama dövüşemez ya da beceri kullanamazsın. Üstteki bir satır maçı yüklemiş oyuncuları sayar. Herkes yükleyince 10 saniye geri sayar ve maç başlar, saati de onunla. 20 saniye sonra hâlâ yüklememiş bir oyuncu beklenmez: geri sayım onsuz başlar ve o yine de sonradan katılabilir.
+Bir maç, herkes doğma noktasının yakınında tutularak açılır: birkaç adım yürüyebilir ve kendine ve müttefiklerine tılsımlar, duruşlar ve iyileştirmeler gibi becerilerle hazırlanabilirsin, ama saldıramaz ya da bir düşmana beceri kullanamazsın. Beklerken Enerji ve Can yenilenir, botlar da hazırlanır. Doğma noktanın çevresindeki parıldayan bir duvar, ne kadar uzağa gidebileceğini gösterir. Üstteki bir satır maçı yüklemiş oyuncuları sayar. Herkes yükleyince 10 saniye geri sayar ve maç başlar, saati de onunla. 20 saniye sonra hâlâ yüklememiş bir oyuncu beklenmez: geri sayım onsuz başlar ve o yine de sonradan katılabilir.
 
 ## İmha
 
@@ -534,6 +534,15 @@ istediğin kadarına bas; bir maç, basılı bir türe ve basılı bir boyuta
 uyuyorsa görünür; hiçbirine basılmamış bir grup hepsini geçirir. Boyut,
 botlar dahil en büyük takımdır, yani 3v2'lik bir Özel Oyun hiçbir boyuta
 uymaz. Çipler, sayfa yeniden yüklenene kadar bıraktığın gibi kalır.
+
+Çiplerden sonra gelen **Maçlarım** ise kendi maçlarını listeler: bu
+tarayıcının mevcut oyuncu anahtarın için sakladığı son 50 maç, en yenisi
+önce, ne kadar eski olursa olsun, yayımlanmış olsun ya da olmasın, bir
+Elite Zaishen Battle da. Tür ve Boyut onları yine filtreler, takımın da
+**Sen** ile işaretlenir. Birini açınca üç sekme çıkar: **Buildler**,
+takımları ve yukarıdaki gibi Kopyala; **İstatistikler**, bitiş panelinin
+gösterdiği skor tablosu; ve **Diyagram**, grafikleri. Yalnızca bu
+tarayıcıda saklanırlar.
 
 Çiplerin üstünde **Kahramanlar Salonu** şeridi son 20 tutuşu, en yenisi
 başta, listeler: tutan (bir lonca etiketi ya da liderin adı), kazanan

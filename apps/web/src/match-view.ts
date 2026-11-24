@@ -76,6 +76,7 @@ import { attackCastOf, spellCastOf } from "./render/attack-clock.js";
 import { CREATURE_ARMS } from "./render/creature-arms.js";
 import { CREATURE_DRAWN_RADIUS } from "./render/creature-shape.js";
 import type { GoalMark } from "./render/goal-mark.js";
+import { spawnBubbleContact, type SpawnBubble } from "./render/spawn-bubble.js";
 import type { TutorialProp } from "./render/tutorial-props.js";
 import type { SwitchTarget } from "./render/switch-link.js";
 import { frameTiming, snapshotCadence } from "./render/frame-timing.js";
@@ -132,6 +133,7 @@ import { chartRoster, chartUsable, renderMatchCharts } from "./ui/match-charts.j
 import { renderSummary, summaryTables, type SummaryTable } from "./ui/match-summary.js";
 import { flashSlot, slotFlashes } from "./ui/skill-slot-state.js";
 import { endLineSetter, type EndLine } from "./ui/end-line.js";
+import { captureEvents } from "./capture-events.js";
 import { setToastHost, toast } from "./ui/kit.js";
 import { signedText } from "./ui/player-label.js";
 import type { MatchRecordFields } from "./storage/match-history.js";
@@ -480,6 +482,7 @@ export function toArenaSnapshot(
     strokes: [],
     // Only the tutorial sets a goal (#3221).
     goals: [],
+    spawnBubble: heldIn(match),
     actors: match.players.map((player) => {
       const statuses = player.statuses.map((status) => status.id);
       // Rings and condition cues for what the statuses already say (#1117,
@@ -565,6 +568,17 @@ export function toArenaSnapshot(
     }),
   };
 }
+
+/** Your spawn bubble (#3909) while the match holds you in it; a watcher has none. */
+function heldIn(match: MatchSnapshot): SpawnBubble | undefined {
+  const spawn = match.preMatch?.spawns.find(({ id }) => id === match.selfSessionId);
+  return spawn === undefined
+    ? undefined
+    : { centre: { x: spawn.x, y: spawn.y }, layer: spawn.layer };
+}
+
+/** Whether this tab has said why its spawn bubble holds you (#3909): once a session. */
+let heldToldThisSession = false;
 
 /** Whether a key press is someone typing, which no match key may steal. */
 function isTyping(target: EventTarget | null): boolean {
@@ -1061,9 +1075,13 @@ export async function startMatchView(
     callbacks.onConnectionChange?.(state);
   });
 
+  const captured = captureEvents(location.search);
   viewed.onCombat((message) => {
     if (latestMatch === undefined) {
       return;
+    }
+    for (const event of message.events) {
+      captured?.push({ t: performance.now(), kind: event.kind, skillId: message.skillId });
     }
     if (viewport !== undefined) {
       showCombatFeedback(viewport.scene, message, latestMatch, structure.ground);
@@ -1154,6 +1172,17 @@ export async function startMatchView(
       toast(objective.text);
       sounds.play(objective.side === "ours" ? "objective-ours" : "objective-theirs");
     }
+    // The first time you meet your spawn bubble's wall, say why (#3909).
+    const held = heldIn(match);
+    if (
+      !heldToldThisSession &&
+      held !== undefined &&
+      self !== undefined &&
+      spawnBubbleContact(held.centre, self) !== undefined
+    ) {
+      heldToldThisSession = true;
+      toast(t("hud.preMatchHeld"));
+    }
     if (match.phase === "finished" && !finished && outcomeArrived(viewed.map.id, match)) {
       finished = true;
       callbacks.onFinished?.({
@@ -1242,6 +1271,11 @@ export async function startMatchView(
     const marks = `${String(latestArena.pings.length)}/${String(latestArena.strokes.length)}`;
     if (parent.dataset.calls !== marks) {
       parent.dataset.calls = marks;
+    }
+    // For the e2e specs: whether your spawn bubble is drawn (#3909).
+    const bubble = viewport?.scene.spawnBubbleShown() === true;
+    if (bubble !== (parent.dataset.spawnBubble !== undefined)) {
+      parent.toggleAttribute("data-spawn-bubble", bubble);
     }
 
     if (seat === undefined) {
@@ -1408,6 +1442,7 @@ export async function startMatchView(
           endReason: match.endReason,
           summary: match.summary,
           clearSeconds: match.clearSeconds ?? null,
+          teams: match.teams,
         },
         viewed.map.teamCount,
       );
@@ -1418,6 +1453,7 @@ export async function startMatchView(
             teamCount: viewed.map.teamCount,
             selfId: viewed.selfSessionId,
             selfTeam: self.team,
+            durationSeconds: Math.round(match.elapsedSeconds),
             bots: match.players.filter((player) => player.bot).map((player) => player.sessionId),
             ended,
             chart: match.chart ?? null,
@@ -1437,6 +1473,7 @@ export async function startMatchView(
       partyWindow.dispose();
       compass.dispose();
       delete parent.dataset.called;
+      delete parent.dataset.spawnBubble;
       delete parent.dataset.calls;
       parent.style.removeProperty("--hud-height");
       parent.style.removeProperty("--chat-beside-hud-width");

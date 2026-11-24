@@ -34,7 +34,7 @@ seta contornada na borda da tela: o suporte ou um santuário na cor do
 dono, cinza se não for de ninguém, e o altar em dourado. A seta preenchida
 de um jogador é desenhada por cima.
 
-Uma partida abre com todos retidos perto do seu ponto de surgimento: você pode dar alguns passos, mas não lutar nem usar habilidades. Uma linha no topo conta os jogadores que carregaram a partida. Quando todos carregam, ela conta 10 segundos e a partida começa, e o seu relógio com ela. Um jogador que não carregou após 20 segundos não é esperado: a contagem começa sem ele, e ele ainda pode entrar depois.
+Uma partida abre com todos retidos perto do seu ponto de surgimento: você pode dar alguns passos e se preparar com habilidades em você e nos seus aliados, como encantamentos, posturas e curas, mas não pode atacar nem usar uma habilidade em um inimigo. Energia e vida se regeneram enquanto você espera, e os bots também se preparam. Uma parede cintilante em volta do seu ponto de surgimento mostra até onde você pode ir. Uma linha no topo conta os jogadores que carregaram a partida. Quando todos carregam, ela conta 10 segundos e a partida começa, e o seu relógio com ela. Um jogador que não carregou após 20 segundos não é esperado: a contagem começa sem ele, e ele ainda pode entrar depois.
 
 ## Aniquilação
 
@@ -469,6 +469,15 @@ sem nenhum pressionado deixa tudo passar. O tamanho é o da maior equipe,
 com bots incluídos, então uma Partida Hospedada 3v2 não se encaixa em
 nenhum tamanho. Os chips ficam como você os deixou até a página
 recarregar.
+
+**Minhas partidas**, depois dos chips, lista em vez disso as suas
+próprias partidas: as últimas 50 que este navegador guardou para sua
+chave de jogador atual, da mais nova para a mais antiga, de qualquer
+idade, publicadas ou não, uma Batalha dos Zaishen de Elite também. Tipo
+e Tamanho continuam filtrando, e sua equipe é marcada com **Você**. Abra
+uma para ver três abas: **Builds**, as equipes com Clonar como acima;
+**Estatísticas**, a tabela de placar que o painel final mostrou; e
+**Diagrama**, os gráficos. Elas ficam guardadas só neste navegador.
 
 Acima dos filtros, a faixa **Salão dos Heróis** lista os últimos 20 domínios, do mais recente ao mais antigo: quem domina (uma tag de guilda ou o nome do líder), as pessoas da equipe vencedora, quando a vitória mais recente terminou e, a partir de duas vitórias, quantas seguidas. Um domínio é uma sequência ininterrupta de vitórias no Salão de quem domina. A faixa lê os registros desta página, ignora os filtros e fica oculta se nenhum for uma vitória no Salão. Como todo registro, é o que o host de cada partida informou, e nada o verifica.
 

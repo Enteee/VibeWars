@@ -56,8 +56,13 @@ export function rerun(replay: MatchReplay, map: HostMap, matchRules: MatchRules)
         return;
       case "start":
         return;
+      case "countdown":
+        countdownEnds = input[0] + input[2];
+        return;
     }
   };
+  // The tick the countdown ends at, once it has begun (#3910).
+  let countdownEnds: number | undefined;
   let next = 0;
   const applyDue = (): void => {
     for (let input = replay.inputs[next]; input !== undefined && input[0] <= sim.tick;) {
@@ -71,7 +76,10 @@ export function rerun(replay: MatchReplay, map: HostMap, matchRules: MatchRules)
     if (start !== undefined && sim.tick >= start) {
       sim.step(TICK_SECONDS);
     } else {
-      sim.stepHeld(TICK_SECONDS);
+      sim.stepHeld(
+        TICK_SECONDS,
+        countdownEnds === undefined ? null : (countdownEnds - sim.tick) * TICK_SECONDS,
+      );
     }
   }
   applyDue();
