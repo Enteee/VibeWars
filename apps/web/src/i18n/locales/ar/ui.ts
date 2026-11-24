@@ -723,6 +723,7 @@ export default {
   "hud.outcomeVictory": "نصر",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (ميت)",
+  "hud.preMatchHeld": "تبقى قرب نقطة ظهورك حتى تبدأ المباراة.",
   "hud.preMatchStartingAnyway":
     "بانتظار اللاعبين: {joined}/{expected}، تبدأ على أي حال خلال {seconds} ث",
   "hud.preMatchStartsIn": "تبدأ المباراة خلال {seconds}",

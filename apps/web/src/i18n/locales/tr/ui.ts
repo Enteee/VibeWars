@@ -632,6 +632,7 @@ export default {
   "hud.outcomeVictory": "Zafer",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (ölü)",
+  "hud.preMatchHeld": "Maç başlayana kadar doğma noktanın yakınında tutulursun.",
   "hud.preMatchStartingAnyway":
     "Oyuncular bekleniyor: {joined}/{expected}, {seconds} sn içinde yine de başlıyor",
   "hud.preMatchStartsIn": "Maç {seconds} içinde başlıyor",

@@ -684,6 +684,7 @@ export default {
   "hud.outcomeVictory": "Vítězství",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (mrtvý)",
+  "hud.preMatchHeld": "Do začátku zápasu zůstáváš u svého startovního bodu.",
   "hud.preMatchStartingAnyway": "Čeká se na hráče: {joined}/{expected}, začne i tak za {seconds} s",
   "hud.preMatchStartsIn": "Zápas začne za {seconds}",
   "hud.preMatchWaiting": "Čeká se na hráče: {joined}/{expected}",

@@ -661,6 +661,7 @@ export default {
   "hud.outcomeVictory": "ניצחון",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (מת)",
+  "hud.preMatchHeld": "אתה מוחזק ליד נקודת ההופעה שלך עד שהמשחק מתחיל.",
   "hud.preMatchStartingAnyway":
     "ממתינים לשחקנים: {joined}/{expected}, מתחילים בכל זאת בעוד {seconds} ש׳",
   "hud.preMatchStartsIn": "המשחק מתחיל בעוד {seconds}",

@@ -585,6 +585,7 @@ export default {
   "hud.outcomeVictory": "승리",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (사망)",
+  "hud.preMatchHeld": "경기가 시작될 때까지 시작 지점 근처에 머뭅니다.",
   "hud.preMatchStartingAnyway": "플레이어 대기 중: {joined}/{expected}, {seconds}초 후 그대로 시작",
   "hud.preMatchStartsIn": "{seconds} 후 경기 시작",
   "hud.preMatchWaiting": "플레이어 대기 중: {joined}/{expected}",

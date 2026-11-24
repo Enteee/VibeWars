@@ -582,6 +582,7 @@ export default {
   "hud.outcomeVictory": "Chiến thắng",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (đã chết)",
+  "hud.preMatchHeld": "Bạn bị giữ gần điểm xuất phát cho đến khi trận đấu bắt đầu.",
   "hud.preMatchStartingAnyway":
     "Đang chờ người chơi: {joined}/{expected}, vẫn bắt đầu sau {seconds} giây",
   "hud.preMatchStartsIn": "Trận đấu bắt đầu sau {seconds}",
