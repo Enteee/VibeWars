@@ -369,6 +369,19 @@ async function editor(browser, url) {
 }
 
 /**
+ * Wait out the pre-match hold: the countdown shows, then goes, and the
+ * spawn bubble fades. What is filmed after this is the live match.
+ *
+ * @param {import("@playwright/test").Page} page
+ */
+async function waitLive(page) {
+  const hold = page.locator(".hud-pre-match");
+  await hold.filter({ hasText: /Match starts in/ }).waitFor({ timeout: 90_000 });
+  await hold.waitFor({ state: "hidden", timeout: 90_000 });
+  await sleep(2500);
+}
+
+/**
  * A map, from above and walked across.
  *
  * @param {import("@playwright/test").Browser} browser
@@ -380,7 +393,7 @@ async function mapScene(browser, url, mapId) {
   await startMatch(scene.page, mapId);
   scene.marks.matchStart = scene.now();
   step = `pan ${mapId}`;
-  await sleep(4000);
+  await waitLive(scene.page);
   scene.marks.pan = scene.now();
   await scene.page.mouse.move(960, 540);
   await scene.page.keyboard.down("KeyW");
@@ -439,6 +452,7 @@ async function friends(browser, url) {
   scene.marks.ready = scene.now();
   await page.getByRole("button", { name: "start match" }).click();
   await page.locator("#viewport canvas:not(.compass)").waitFor({ timeout: 90_000 });
+  await page.locator(".hud-pre-match", { hasText: /Match starts in/ }).waitFor({ timeout: 90_000 });
   scene.marks.countdown = scene.now();
   await sleep(4000);
   const { events, timeOrigin } = await pageEvents(page);
@@ -483,6 +497,7 @@ async function ranked(browser, url) {
   await page.locator(".mode-rail").waitFor();
   step = "match in the look";
   await startMatch(page, MAPS[0] ?? "");
+  await waitLive(page);
   // Wheel in on the hero, the camera's centre, and walk: the cape is the subject.
   await page.mouse.move(960, 540);
   await page.mouse.wheel(0, -400);

@@ -239,10 +239,7 @@ function timeline() {
     });
   }
   const friends = scene("friends");
-  const copy = friends.marks.copy ?? 0;
   const friendsFile = path.join(CAPTURE, "friends.webm");
-  // The invite, then the second player joining and the match counting in.
-  pieces.push({ scene: "friends", src: friendsFile, from: copy + 0.5, to: copy + 2.5, speed: 1 });
   const joined = friends.marks.joined ?? 0;
   const ready = friends.marks.ready ?? joined;
   const countdown = friends.marks.countdown ?? ready;
@@ -250,7 +247,7 @@ function timeline() {
     scene: "friends",
     src: friendsFile,
     from: joined - 0.3,
-    to: joined + 1.7,
+    to: joined + 2.2,
     speed: 1,
   });
   pieces.push({ scene: "friends", src: friendsFile, from: ready - 0.8, to: ready + 0.7, speed: 1 });
