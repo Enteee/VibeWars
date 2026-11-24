@@ -695,6 +695,7 @@ export default {
   "hud.refusalInvalidTargetSpirit": "Duha se ne može ciljati.",
   "hud.refusalInvalidTargetUnenchantable": "Ta se meta ne može začarati.",
   "hud.refusalInvalidTargetWall": "Zid može pogoditi samo vještina koja nanosi štetu.",
+  "hud.refusalWallBeforeStart": "Nijedan zid ne može se pogoditi prije početka meča.",
   "hud.refusalInvalidTargetUntargetable": "Tvoje čarolije ne mogu ciljati tog neprijatelja.",
   "hud.refusalNeedsWeapon": "Treba: {weapon}.",
   "hud.refusalNoAnimalToCharm": "Ovdje nema životinje za pripitomljavanje.",

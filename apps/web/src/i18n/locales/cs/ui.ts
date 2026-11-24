@@ -713,6 +713,7 @@ export default {
   "hud.refusalInvalidTargetSpirit": "Ducha nelze zaměřit.",
   "hud.refusalInvalidTargetUnenchantable": "Tento cíl nelze očarovat.",
   "hud.refusalInvalidTargetWall": "Zeď zasáhne jen dovednost, která způsobuje zranění.",
+  "hud.refusalWallBeforeStart": "Před začátkem zápasu nelze zasáhnout žádnou zeď.",
   "hud.refusalInvalidTargetUntargetable": "Tvá kouzla tohoto nepřítele nemohou zaměřit.",
   "hud.refusalNeedsWeapon": "Vyžaduje {weapon}.",
   "hud.refusalNoAnimalToCharm": "Není tu žádné zvíře k ochočení.",

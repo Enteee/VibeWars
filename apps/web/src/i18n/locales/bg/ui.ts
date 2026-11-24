@@ -665,6 +665,7 @@ export default {
   "hud.refusalInvalidTargetSpirit": "Не можеш да целиш дух.",
   "hud.refusalInvalidTargetUnenchantable": "Тази цел не може да бъде омагьосана.",
   "hud.refusalInvalidTargetWall": "Само умение, което нанася щети, може да удари стена.",
+  "hud.refusalWallBeforeStart": "Не можеш да удряш стени преди началото на мача.",
   "hud.refusalInvalidTargetUntargetable": "Заклинанията ти не могат да целят този враг.",
   "hud.refusalNeedsWeapon": "Изисква {weapon}.",
   "hud.refusalNoAnimalToCharm": "Тук няма животно за опитомяване.",

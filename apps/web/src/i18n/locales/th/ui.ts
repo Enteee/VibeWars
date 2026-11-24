@@ -612,6 +612,7 @@ export default {
   "hud.refusalInvalidTargetSpirit": "เล็งวิญญาณไม่ได้",
   "hud.refusalInvalidTargetUnenchantable": "เป้าหมายนี้รับมนตร์เสริมไม่ได้",
   "hud.refusalInvalidTargetWall": "มีเพียงสกิลที่สร้างความเสียหายเท่านั้นที่โจมตีกำแพงได้",
+  "hud.refusalWallBeforeStart": "ยังโจมตีกำแพงไม่ได้จนกว่าการแข่งขันจะเริ่ม",
   "hud.refusalInvalidTargetUntargetable": "เวทของคุณเล็งศัตรูตัวนี้ไม่ได้",
   "hud.refusalNeedsWeapon": "ต้องใช้ {weapon}",
   "hud.refusalNoAnimalToCharm": "ไม่มีสัตว์ให้ฝึกที่นี่",

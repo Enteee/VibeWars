@@ -662,6 +662,7 @@ export const en = {
   "hud.refusalInvalidTargetSpirit": "Cannot target a spirit.",
   "hud.refusalInvalidTargetUnenchantable": "That target cannot be enchanted.",
   "hud.refusalInvalidTargetWall": "Only a skill that deals damage can strike a wall.",
+  "hud.refusalWallBeforeStart": "No wall can be struck before the match starts.",
   "hud.refusalInvalidTargetUntargetable": "Your spells cannot target that foe.",
   "hud.refusalNeedsWeapon": "Needs {weapon}.",
   "hud.refusalNoAnimalToCharm": "There is no animal to charm here.",

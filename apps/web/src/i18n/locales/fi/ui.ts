@@ -671,6 +671,7 @@ export default {
   "hud.refusalInvalidTargetSpirit": "Henkeen ei voi kohdistaa.",
   "hud.refusalInvalidTargetUnenchantable": "Tähän kohteeseen ei voi käyttää lumousta.",
   "hud.refusalInvalidTargetWall": "Vain vahinkoa tekevä taito voi iskeä muuriin.",
+  "hud.refusalWallBeforeStart": "Muuria ei voi lyödä ennen ottelun alkua.",
   "hud.refusalInvalidTargetUntargetable": "Loitsusi eivät voi kohdistua tähän viholliseen.",
   "hud.refusalNeedsWeapon": "Vaatii: {weapon}.",
   "hud.refusalNoAnimalToCharm": "Täällä ei ole kesytettävää eläintä.",

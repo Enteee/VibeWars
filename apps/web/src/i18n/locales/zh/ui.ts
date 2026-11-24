@@ -607,6 +607,7 @@ export default {
   "hud.refusalInvalidTargetSpirit": "无法以灵体为目标。",
   "hud.refusalInvalidTargetUnenchantable": "该目标无法被附魔。",
   "hud.refusalInvalidTargetWall": "只有造成伤害的技能才能攻击墙壁。",
+  "hud.refusalWallBeforeStart": "比赛开始前不能攻击墙壁。",
   "hud.refusalInvalidTargetUntargetable": "你的法术无法以该敌人为目标。",
   "hud.refusalNeedsWeapon": "需要 {weapon}。",
   "hud.refusalNoAnimalToCharm": "此处没有可魅惑的动物。",

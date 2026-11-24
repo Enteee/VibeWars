@@ -661,6 +661,7 @@ export default {
   "hud.refusalInvalidTargetSpirit": "Kan inte sikta på en ande.",
   "hud.refusalInvalidTargetUnenchantable": "Målet kan inte förtrollas.",
   "hud.refusalInvalidTargetWall": "Bara en färdighet som gör skada kan träffa en mur.",
+  "hud.refusalWallBeforeStart": "Ingen mur kan träffas innan matchen börjar.",
   "hud.refusalInvalidTargetUntargetable": "Dina besvärjelser kan inte sikta på den fienden.",
   "hud.refusalNeedsWeapon": "Kräver {weapon}.",
   "hud.refusalNoAnimalToCharm": "Det finns inget djur att tämja här.",

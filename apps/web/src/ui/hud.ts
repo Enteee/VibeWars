@@ -527,6 +527,7 @@ const REFUSALS: Readonly<Record<ActivationRejection, MessageKey>> = {
   "cannot-use-signets": "hud.refusalCannotUseSignets",
   "invalid-target-untargetable": "hud.refusalInvalidTargetUntargetable",
   "invalid-target-wall": "hud.refusalInvalidTargetWall",
+  "wall-before-start": "hud.refusalWallBeforeStart",
   "invalid-target-unenchantable": "hud.refusalInvalidTargetUnenchantable",
   "no-spells": "hud.refusalNoSpells",
   "hands-full": "hud.refusalHandsFull",

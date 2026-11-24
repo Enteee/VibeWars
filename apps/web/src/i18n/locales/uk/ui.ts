@@ -717,6 +717,7 @@ export default {
   "hud.refusalInvalidTargetSpirit": "Не можна вибрати духа.",
   "hud.refusalInvalidTargetUnenchantable": "Цю ціль не можна зачарувати.",
   "hud.refusalInvalidTargetWall": "Вдарити стіну може лише вміння, що завдає шкоди.",
+  "hud.refusalWallBeforeStart": "До початку матчу стіни бити не можна.",
   "hud.refusalInvalidTargetUntargetable": "Твої закляття не можуть вибрати цього ворога.",
   "hud.refusalNeedsWeapon": "Потрібно: {weapon}.",
   "hud.refusalNoAnimalToCharm": "Тут немає звіра, якого можна приручити.",

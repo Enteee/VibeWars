@@ -666,6 +666,7 @@ export default {
   "hud.refusalInvalidTargetUnenchantable": "Dieses Ziel kann nicht verzaubert werden.",
   "hud.refusalInvalidTargetWall":
     "Nur eine Fertigkeit, die Schaden verursacht, kann eine Mauer treffen.",
+  "hud.refusalWallBeforeStart": "Vor dem Spielbeginn kann keine Mauer getroffen werden.",
   "hud.refusalInvalidTargetUntargetable": "Deine Zauber können diesen Gegner nicht treffen.",
   "hud.refusalNeedsWeapon": "Braucht {weapon}.",
   "hud.refusalNoAnimalToCharm": "Hier gibt es kein Tier zum Zähmen.",

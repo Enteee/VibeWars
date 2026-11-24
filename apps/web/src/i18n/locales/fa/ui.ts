@@ -660,6 +660,7 @@ export default {
   "hud.refusalInvalidTargetSpirit": "نمی‌شود روح را هدف گرفت.",
   "hud.refusalInvalidTargetUnenchantable": "این هدف را نمی‌شود افسون کرد.",
   "hud.refusalInvalidTargetWall": "فقط مهارتی که آسیب می‌زند می‌تواند به دیوار ضربه بزند.",
+  "hud.refusalWallBeforeStart": "پیش از شروع مسابقه نمی‌توان به هیچ دیواری ضربه زد.",
   "hud.refusalInvalidTargetUntargetable": "طلسم‌هایت نمی‌توانند این دشمن را هدف بگیرند.",
   "hud.refusalNeedsWeapon": "نیازمند {weapon}.",
   "hud.refusalNoAnimalToCharm": "اینجا حیوانی برای رام کردن نیست.",

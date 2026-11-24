@@ -660,6 +660,7 @@ export default {
   "hud.refusalInvalidTargetSpirit": "Kan ikke vælge en ånd.",
   "hud.refusalInvalidTargetUnenchantable": "Det mål kan ikke fortrylles.",
   "hud.refusalInvalidTargetWall": "Kun en evne, der giver skade, kan ramme en mur.",
+  "hud.refusalWallBeforeStart": "Ingen mur kan rammes, før kampen starter.",
   "hud.refusalInvalidTargetUntargetable": "Dine besværgelser kan ikke ramme den fjende.",
   "hud.refusalNeedsWeapon": "Kræver {weapon}.",
   "hud.refusalNoAnimalToCharm": "Der er intet dyr at tæmme her.",

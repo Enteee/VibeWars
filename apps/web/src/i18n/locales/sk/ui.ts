@@ -715,6 +715,7 @@ export default {
   "hud.refusalInvalidTargetSpirit": "Ducha nemožno zamerať.",
   "hud.refusalInvalidTargetUnenchantable": "Tento cieľ nemožno očarovať.",
   "hud.refusalInvalidTargetWall": "Múr zasiahne iba schopnosť, ktorá spôsobuje zranenie.",
+  "hud.refusalWallBeforeStart": "Pred začiatkom zápasu nemožno zasiahnuť žiadny múr.",
   "hud.refusalInvalidTargetUntargetable": "Tvoje kúzla nemôžu zamerať tohto nepriateľa.",
   "hud.refusalNeedsWeapon": "Vyžaduje: {weapon}.",
   "hud.refusalNoAnimalToCharm": "Nie je tu žiadne zviera na skrotenie.",

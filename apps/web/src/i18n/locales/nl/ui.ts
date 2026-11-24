@@ -660,6 +660,7 @@ export default {
   "hud.refusalInvalidTargetSpirit": "Je kunt geen geest kiezen.",
   "hud.refusalInvalidTargetUnenchantable": "Dat doelwit kan niet betoverd worden.",
   "hud.refusalInvalidTargetWall": "Alleen een vaardigheid die schade doet kan een muur raken.",
+  "hud.refusalWallBeforeStart": "Voor het begin van de wedstrijd kun je geen muur raken.",
   "hud.refusalInvalidTargetUntargetable": "Je spreuken kunnen die vijand niet raken.",
   "hud.refusalNeedsWeapon": "Vereist {weapon}.",
   "hud.refusalNoAnimalToCharm": "Hier is geen dier om te temmen.",

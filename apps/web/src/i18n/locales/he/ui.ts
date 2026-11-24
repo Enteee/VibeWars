@@ -691,6 +691,7 @@ export default {
   "hud.refusalInvalidTargetSpirit": "אי אפשר לכוון לרוח.",
   "hud.refusalInvalidTargetUnenchantable": "אי אפשר להטיל הקסם על המטרה הזו.",
   "hud.refusalInvalidTargetWall": "רק מיומנות שגורמת נזק יכולה לפגוע בחומה.",
+  "hud.refusalWallBeforeStart": "אי אפשר לפגוע בחומה לפני שהמשחק מתחיל.",
   "hud.refusalInvalidTargetUntargetable": "הלחשים שלך לא יכולים לכוון לאויב הזה.",
   "hud.refusalNeedsWeapon": "דורש {weapon}.",
   "hud.refusalNoAnimalToCharm": "אין כאן חיה לאילוף.",

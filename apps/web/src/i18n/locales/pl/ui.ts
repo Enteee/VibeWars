@@ -717,6 +717,7 @@ export default {
   "hud.refusalInvalidTargetSpirit": "Nie można wybrać ducha.",
   "hud.refusalInvalidTargetUnenchantable": "Tego celu nie można zaczarować.",
   "hud.refusalInvalidTargetWall": "Tylko umiejętność zadająca obrażenia może uderzyć w mur.",
+  "hud.refusalWallBeforeStart": "Przed rozpoczęciem meczu nie można uderzyć w żaden mur.",
   "hud.refusalInvalidTargetUntargetable": "Twoje czary nie mogą objąć tego wroga.",
   "hud.refusalNeedsWeapon": "Wymaga: {weapon}.",
   "hud.refusalNoAnimalToCharm": "Nie ma tu zwierzęcia do oswojenia.",

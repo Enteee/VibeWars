@@ -668,6 +668,7 @@ export default {
   "hud.refusalInvalidTargetSpirit": "Δεν γίνεται να στοχεύσεις πνεύμα.",
   "hud.refusalInvalidTargetUnenchantable": "Αυτός ο στόχος δεν δέχεται μάγεμα.",
   "hud.refusalInvalidTargetWall": "Μόνο μια ικανότητα που προκαλεί ζημιά μπορεί να χτυπήσει τοίχο.",
+  "hud.refusalWallBeforeStart": "Κανένας τοίχος δεν χτυπιέται πριν ξεκινήσει ο αγώνας.",
   "hud.refusalInvalidTargetUntargetable":
     "Τα ξόρκια σου δεν μπορούν να στοχεύσουν αυτόν τον εχθρό.",
   "hud.refusalNeedsWeapon": "Χρειάζεται: {weapon}.",

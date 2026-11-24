@@ -186,4 +186,28 @@ describe("breakable walls (#3031)", () => {
     run(weak, 3);
     expect(weak.get("walker")?.position.x).toBeGreaterThan(450);
   });
+  it("is out of bounds while held before the start, to a skill and an arrow alike (#3931)", () => {
+    const sim = arena([
+      caster("hexer", "elementalist.mind-freeze", "elementalist.water-magic"),
+      fighter("ranger", 0, RANGER, vec2(300, 300), { behaviour: undefined }),
+      FOE,
+    ]);
+    sim.stepHeld(DT, null);
+    sim.setTarget("hexer", TARGET);
+    expect(sim.requestSkill("hexer", 0)?.check).toEqual({
+      ok: false,
+      reason: "wall-before-start",
+    });
+    sim.requestAttack("ranger", TARGET);
+    for (let t = 0; t < 6; t += DT) {
+      sim.stepHeld(DT, null);
+    }
+    expect(health(sim)).toBe(300);
+
+    // Once the match is on, the same skill strikes it.
+    sim.step(DT);
+    expect(sim.requestSkill("hexer", 0)?.check.ok).toBe(true);
+    run(sim, 3);
+    expect(health(sim) ?? 300).toBeLessThan(300);
+  });
 });

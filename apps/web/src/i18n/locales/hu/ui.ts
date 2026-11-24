@@ -665,6 +665,7 @@ export default {
   "hud.refusalInvalidTargetSpirit": "Szellemet nem célozhatsz.",
   "hud.refusalInvalidTargetUnenchantable": "Erre a célpontra nem tehető bűbáj.",
   "hud.refusalInvalidTargetWall": "Falat csak sebzést okozó képesség találhat el.",
+  "hud.refusalWallBeforeStart": "A meccs kezdete előtt egyetlen falat sem lehet eltalálni.",
   "hud.refusalInvalidTargetUntargetable": "A varázslataid nem célozhatják ezt az ellenséget.",
   "hud.refusalNeedsWeapon": "Kell: {weapon}.",
   "hud.refusalNoAnimalToCharm": "Itt nincs megszelídíthető állat.",

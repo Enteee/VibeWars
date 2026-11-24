@@ -614,6 +614,7 @@ export default {
   "hud.refusalInvalidTargetSpirit": "정령을 대상으로 할 수 없어요.",
   "hud.refusalInvalidTargetUnenchantable": "그 대상에게는 인챈트를 걸 수 없어요.",
   "hud.refusalInvalidTargetWall": "피해를 주는 스킬만 벽을 칠 수 있어요.",
+  "hud.refusalWallBeforeStart": "경기가 시작되기 전에는 벽을 칠 수 없어요.",
   "hud.refusalInvalidTargetUntargetable": "그 적은 주문의 대상이 될 수 없어요.",
   "hud.refusalNeedsWeapon": "{weapon}이(가) 필요해요.",
   "hud.refusalNoAnimalToCharm": "여기에는 길들일 동물이 없어요.",

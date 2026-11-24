@@ -619,6 +619,7 @@ export default {
   "hud.refusalInvalidTargetSpirit": "スピリットはターゲットにできません。",
   "hud.refusalInvalidTargetUnenchantable": "そのターゲットにはエンチャントできません。",
   "hud.refusalInvalidTargetWall": "壁を攻撃できるのはダメージを与えるスキルだけです。",
+  "hud.refusalWallBeforeStart": "試合開始前は壁を攻撃できません。",
   "hud.refusalInvalidTargetUntargetable": "その敵にはスペルをターゲットできません。",
   "hud.refusalNeedsWeapon": "{weapon}が必要です。",
   "hud.refusalNoAnimalToCharm": "ここに魅了できる動物はいません。",

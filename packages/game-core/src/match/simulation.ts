@@ -1327,6 +1327,7 @@ const TARGET_REJECTIONS: ReadonlySet<ActivationRejection> = new Set([
   "invalid-target-untargetable",
   "invalid-target-unenchantable",
   "no-spells",
+  "wall-before-start",
 ]);
 
 /** How a step toward a waypoint went; see `#stepToward`. */
@@ -4931,6 +4932,16 @@ export class MatchSimulation {
     // could take off.
     if (skill.type === "attack" && this.carriesBundle(record.id)) {
       return { ok: false, reason: "hands-full" };
+    }
+    // Held before the start, a wall is out of bounds (#3931): the bubbles
+    // keep foes out of reach, not walls, and a spell would strike one at
+    // once. Any other refusal of the skill at a wall comes first.
+    if (
+      this.#held &&
+      wall !== undefined &&
+      (check.ok || check.reason === "out-of-range" || check.reason === "no-line-of-sight")
+    ) {
+      return { ok: false, reason: "wall-before-start" };
     }
     // Any other refusal first; then a corpse skill needs a fresh corpse in
     // reach (#466), or nothing is paid. A well does without, at a price

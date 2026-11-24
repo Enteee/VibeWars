@@ -662,6 +662,7 @@ export default {
   "hud.refusalInvalidTargetSpirit": "Ruh hedef alınamaz.",
   "hud.refusalInvalidTargetUnenchantable": "Bu hedefe tılsım yapılamaz.",
   "hud.refusalInvalidTargetWall": "Duvara yalnızca hasar veren bir yetenek vurabilir.",
+  "hud.refusalWallBeforeStart": "Maç başlamadan hiçbir duvara vurulamaz.",
   "hud.refusalInvalidTargetUntargetable": "Büyülerin bu düşmanı hedef alamaz.",
   "hud.refusalNeedsWeapon": "Gerekli: {weapon}.",
   "hud.refusalNoAnimalToCharm": "Burada evcilleştirilecek hayvan yok.",

@@ -697,6 +697,7 @@ export default {
   "hud.refusalInvalidTargetSpirit": "No se puede apuntar a un espíritu.",
   "hud.refusalInvalidTargetUnenchantable": "Ese objetivo no se puede encantar.",
   "hud.refusalInvalidTargetWall": "Solo una habilidad que inflige daño puede golpear un muro.",
+  "hud.refusalWallBeforeStart": "No se puede golpear ningún muro antes de que empiece la partida.",
   "hud.refusalInvalidTargetUntargetable": "Tus hechizos no pueden apuntar a ese enemigo.",
   "hud.refusalNeedsWeapon": "Requiere {weapon}.",
   "hud.refusalNoAnimalToCharm": "Aquí no hay ningún animal que domesticar.",

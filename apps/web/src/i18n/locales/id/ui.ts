@@ -617,6 +617,8 @@ export default {
   "hud.refusalInvalidTargetSpirit": "Tidak bisa menarget roh.",
   "hud.refusalInvalidTargetUnenchantable": "Target itu tidak bisa diberi Berkah.",
   "hud.refusalInvalidTargetWall": "Hanya skill yang memberi damage yang bisa menghantam dinding.",
+  "hud.refusalWallBeforeStart":
+    "Tidak ada dinding yang bisa diserang sebelum pertandingan dimulai.",
   "hud.refusalInvalidTargetUntargetable": "Mantramu tidak bisa menarget musuh itu.",
   "hud.refusalNeedsWeapon": "Butuh {weapon}.",
   "hud.refusalNoAnimalToCharm": "Tidak ada hewan untuk dijinakkan di sini.",

@@ -699,6 +699,7 @@ export default {
   "hud.refusalInvalidTargetUnenchantable": "Cette cible ne peut pas être enchantée.",
   "hud.refusalInvalidTargetWall":
     "Seule une compétence qui inflige des dégâts peut frapper un mur.",
+  "hud.refusalWallBeforeStart": "Aucun mur ne peut être frappé avant le début du match.",
   "hud.refusalInvalidTargetUntargetable": "Tes sorts ne peuvent pas cibler cet ennemi.",
   "hud.refusalNeedsWeapon": "Requiert : {weapon}.",
   "hud.refusalNoAnimalToCharm": "Aucun animal à charmer ici.",
