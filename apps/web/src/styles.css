@@ -9665,6 +9665,44 @@ body:has(> .splash) #app {
   }
 }
 
+/* The match's buttons, top right, take a finger too (#3889): they sit
+   beside the HUD, not in it, so the HUD's own rules miss them. Leave and
+   its yes and no grow inside their box, which drops its top and bottom
+   edge so that row is 44 px too. The compass goes down under the taller
+   rows, a little closer than with a mouse, to stay out of an upright
+   phone's middle; and on a phone the scoreboard and target keep clear of
+   the wider second row: four 44 px buttons and three gaps. */
+@media (pointer: coarse) {
+  :root {
+    --compass-top: calc(0.6rem + 2 * 44px + 0.4rem + 0.2rem + var(--build-banner-space, 0px));
+  }
+
+  .hud-mute,
+  .hud-help,
+  .hud-music,
+  .hud-options,
+  .hud-fullscreen {
+    width: 44px;
+    height: 44px;
+  }
+
+  .hud-leave {
+    height: auto;
+    border-block: none;
+  }
+
+  .hud-leave button {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
+
+@media (pointer: coarse) and (width <= 30rem) {
+  :root {
+    --hud-top-width: calc(100vw - max(var(--compass-size), 4 * 44px + 1.2rem) - 2rem);
+  }
+}
+
 @media (pointer: coarse) and (width > 700px) {
   .paper-doll {
     grid-template-columns: minmax(9rem, 16rem) 1fr;

@@ -386,7 +386,7 @@ for (const [held, device, free] of [
     test("every control is a finger's size, and no key's hint shows (#3889)", async ({ page }) => {
       await phoneMatch(page, phone, undefined, true);
       const small = await page
-        .locator(".hud button, #topbar button")
+        .locator(".hud button, .hud-controls button, #topbar button")
         .filter({ visible: true })
         .evaluateAll(
           (nodes, target) =>
