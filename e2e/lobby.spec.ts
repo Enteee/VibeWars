@@ -49,7 +49,7 @@ async function openMenu(page: Page, playerName: string): Promise<void> {
 
 /** Quit the match with the HUD's leave button, which asks first (#160). */
 async function leaveMatch(page: Page): Promise<void> {
-  const leave = await hudMenuRow(page, ".hud-leave");
+  const leave = await hudMenuRow(page, "leave");
   await leave.getByRole("button", { name: "leave match" }).click();
   await leave.getByRole("button", { name: "yes" }).click();
 }

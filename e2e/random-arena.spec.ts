@@ -282,7 +282,7 @@ test("a ranked 1v1 ends in a receipt both players published, which holds (#3680)
       });
     }
     // The leave question says what leaving costs.
-    const aliceLeave = await hudMenuRow(alice, ".hud-leave");
+    const aliceLeave = await hudMenuRow(alice, "leave");
     await aliceLeave.getByRole("button", { name: "leave match" }).click();
     await expect(aliceLeave).toContainText("counts as a loss");
     await aliceLeave.getByRole("button", { name: "no" }).click();
@@ -366,7 +366,7 @@ async function meetInMatch(alice: Page, bob: Page): Promise<void> {
 }
 
 async function leaveMatch(page: Page): Promise<void> {
-  const leave = await hudMenuRow(page, ".hud-leave");
+  const leave = await hudMenuRow(page, "leave");
   await leave.getByRole("button", { name: "leave match" }).click();
   await leave.getByRole("button", { name: "yes" }).click();
 }

@@ -194,7 +194,7 @@ test("#1766: two parties of two queue for Team Arena, meet, and play their own b
 
     // Out of the match, Bea is back in Ann's lobby, out of the queue.
     await bea.bringToFront();
-    const beaLeave = await hudMenuRow(bea, ".hud-leave");
+    const beaLeave = await hudMenuRow(bea, "leave");
     await press(bea, beaLeave.getByRole("button", { name: "leave match" }));
     await press(bea, beaLeave.getByRole("button", { name: "yes" }));
     await expect((await lobbyWindow(bea)).locator(".topbar-leave")).toBeVisible();
@@ -295,7 +295,7 @@ test("#3815: a Team Arena party that wins queues again with the same team, with 
     // Cid's side leaves: on an Annihilation map, a side with nobody left is beaten.
     for (const page of [cid, dot]) {
       await page.bringToFront();
-      const leave = await hudMenuRow(page, ".hud-leave");
+      const leave = await hudMenuRow(page, "leave");
       await press(page, leave.getByRole("button", { name: "leave match" }));
       await press(page, leave.getByRole("button", { name: "yes" }));
     }

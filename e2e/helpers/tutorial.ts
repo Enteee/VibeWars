@@ -773,7 +773,7 @@ export function learnTests(mapId: string): void {
     // leads into the menu quest (#3540), and the menu never offers it again.
     await expect(page.locator(".hud-scoreboard")).toBeVisible({ timeout: 30_000 });
     await expect(page.locator(".tutorial-frame[data-mark]")).toHaveCount(0);
-    const leave = await hudMenuRow(page, ".hud-leave");
+    const leave = await hudMenuRow(page, "leave");
     await leave.getByRole("button", { name: "leave match" }).click();
     await leave.getByRole("button", { name: "yes" }).click();
     await expect(page.locator(".screen-rail")).toBeVisible({ timeout: 15_000 });

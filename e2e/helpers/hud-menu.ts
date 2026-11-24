@@ -1,5 +1,8 @@
 import type { Locator, Page } from "@playwright/test";
 
+/** The match's buttons, each a control in the HUD's corner. */
+export type HudRow = "leave" | "mute" | "help" | "options" | "fullscreen" | "music";
+
 /**
  * The match's corner control that shows once `page` is in a match: the
  * leave button. Specs wait on it rather than on a named button, so a
@@ -10,10 +13,9 @@ export function hudCorner(page: Page): Locator {
 }
 
 /**
- * The match's button `selector` names: `.hud-leave`, `.hud-mute`,
- * `.hud-help`, `.hud-options`, `.hud-fullscreen` or `.hud-music`, made
- * ready to press.
+ * The match's button `row`, ready to press. #3923 folds the buttons into
+ * one ☰ and makes this open it first.
  */
-export function hudMenuRow(page: Page, selector: string): Promise<Locator> {
-  return Promise.resolve(page.locator(selector));
+export function hudMenuRow(page: Page, row: HudRow): Promise<Locator> {
+  return Promise.resolve(page.locator(`.hud-${row}`));
 }
