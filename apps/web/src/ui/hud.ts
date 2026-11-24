@@ -45,6 +45,7 @@ import {
   chainMarkIcon,
   helpIcon,
   isEliteSkill,
+  leaveIcon,
   professionIcon,
   settingsIcon,
   skillBadgeHtml,
@@ -1659,6 +1660,14 @@ export interface LeaveControl {
 export function renderLeave(hud: HudElements, onLeave: () => void, ranked: boolean): LeaveControl {
   let answers: readonly HTMLButtonElement[] = [];
   let left = false;
+  // The door the row starts with (#3956), asking or not: the question then
+  // sits where the label did.
+  const leaveImage = (): HTMLImageElement => {
+    const image = document.createElement("img");
+    image.src = leaveIcon();
+    image.alt = "";
+    return image;
+  };
   const button = (label: string, onClick: () => void): HTMLButtonElement => {
     const node = document.createElement("button");
     node.type = "button";
@@ -1678,7 +1687,7 @@ export function renderLeave(hud: HudElements, onLeave: () => void, ranked: boole
       });
       const no = button(t("hud.leaveNo"), control.close);
       answers = [yes, no];
-      hud.leave.replaceChildren(question, yes, no);
+      hud.leave.replaceChildren(leaveImage(), question, yes, no);
       no.focus();
     },
     close: () => {
@@ -1689,11 +1698,15 @@ export function renderLeave(hud: HudElements, onLeave: () => void, ranked: boole
         focused.blur();
       }
       // A phone shows only "leave" (#1297); the rest stays in its name.
-      const leave = button(t("hud.leave"), control.open);
+      const leave = button("", control.open);
+      const label = document.createElement("span");
+      label.className = "hud-menu-label";
+      label.textContent = t("hud.leave");
       const extra = document.createElement("span");
       extra.className = "hud-leave-extra";
       extra.textContent = t("hud.leaveExtra");
-      leave.append(extra);
+      label.append(extra);
+      leave.append(leaveImage(), label);
       hud.leave.replaceChildren(leave);
     },
     isOpen: () => {

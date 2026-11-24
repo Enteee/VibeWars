@@ -490,6 +490,36 @@ for (const [held, device] of [
   });
 }
 
+test.describe("the match's ☰ on a touch phone on its side, Leave's row (#3956)", () => {
+  test.use(PIXEL_8A_LANDSCAPE);
+
+  test("Leave starts with its door, and asking keeps the door and the question at the other rows' inset", async ({
+    page,
+  }) => {
+    await phoneMatch(page, PIXEL_8A_LANDSCAPE.viewport, undefined, true);
+    const leave = await hudMenuRow(page, "leave");
+    const help = page.locator(".hud-menu .hud-help");
+    const left = async (locator: ReturnType<Page["locator"]>): Promise<number> =>
+      (await locator.boundingBox())?.x ?? Number.NaN;
+    const door = leave.locator("img");
+    await expect(door).toHaveAttribute("src", /ui\/leave\.svg$/);
+    expect(Math.abs((await left(door)) - (await left(help.locator("img"))))).toBeLessThanOrEqual(2);
+
+    await leave.getByRole("button").click();
+    const question = leave.locator(":scope > span");
+    await expect(question).toContainText("leave?");
+    // The list may widen for the question: the other rows are measured again.
+    const helpIcon = await left(help.locator("img"));
+    const helpLabel = await left(help.locator(".hud-menu-label"));
+    expect(Math.abs((await left(leave.locator(":scope > img"))) - helpIcon)).toBeLessThanOrEqual(2);
+    expect(Math.abs((await left(question)) - helpLabel)).toBeLessThanOrEqual(2);
+
+    await leave.getByRole("button", { name: "no" }).click();
+    await expect(leave.getByRole("button", { name: "no" })).toHaveCount(0);
+    await expect(leave.locator("img")).toHaveAttribute("src", /ui\/leave\.svg$/);
+  });
+});
+
 test.describe("a 360 px touch phone (#3778)", () => {
   test.use({ ...PIXEL_8A_PORTRAIT, viewport: { width: 360, height: 740 } });
 

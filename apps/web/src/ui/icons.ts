@@ -267,6 +267,11 @@ export function lobbyIcon(): string {
   return iconUrl("ui", "lobby");
 }
 
+/** The ☰ menu's Leave (#3956): a door, an arrow going out of it. */
+export function leaveIcon(): string {
+  return iconUrl("ui", "leave");
+}
+
 /** The [?] of the top bar and the HUD: the player docs (#1257). */
 export function helpIcon(): string {
   return iconUrl("ui", "help");

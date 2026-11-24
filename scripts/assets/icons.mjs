@@ -242,6 +242,12 @@ const ui = {
     `<path d="M9 21.5V2.5h12v19" ${stroke(C.ink, 2)}/>` +
     `<path d="M21 2.5L16 5v14.5l5 2z" fill="${C.ink}"/>` +
     `<path d="M1.5 12H13M9.5 8.5L13 12l-3.5 3.5" ${stroke(C.ink, 2.2)}/>`,
+  // An empty door frame, no door in it, an arrow going out of it toward the
+  // leading edge: leave the match (#3956). Unlike lobby-open's, the arrow
+  // leaves, and nothing hangs in the frame.
+  leave: () =>
+    `<path d="M10 21.5V2.5h11v19" ${stroke(C.ink, 2)}/>` +
+    `<path d="M17 12H2.5M6 8.5L2.5 12 6 15.5" ${stroke(C.ink, 2.2)}/>`,
 };
 
 // ---------------------------------------------------------------------------

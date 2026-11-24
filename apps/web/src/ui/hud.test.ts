@@ -35,6 +35,7 @@ import {
   moraleLabel,
   muteButtonState,
   refreshSkillBar,
+  renderLeave,
   scoreboardParts,
   scoreboardText,
   objectiveScoreToast,
@@ -2179,5 +2180,68 @@ describe("a click on the target frame calls its target (#2737)", () => {
     expect(isCallableTarget({ ...self, dead: true }, foe)).toBe(false);
     expect(isCallableTarget(self, undefined)).toBe(false);
     expect(isCallableTarget(undefined, foe)).toBe(false);
+  });
+});
+
+/** Just enough of an element for Leave's row (#3956), asking and not. */
+class LeaveNode {
+  src = "";
+  alt = "";
+  className = "";
+  textContent = "";
+  children: LeaveNode[] = [];
+
+  readonly tagName: string;
+
+  constructor(tagName: string) {
+    this.tagName = tagName;
+  }
+
+  readonly addEventListener = (): void => undefined;
+  readonly focus = (): void => undefined;
+  contains(): boolean {
+    return false;
+  }
+
+  append(...children: LeaveNode[]): void {
+    this.children.push(...children);
+  }
+
+  replaceChildren(...children: LeaveNode[]): void {
+    this.children = children;
+  }
+}
+
+describe("renderLeave (#3956)", () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("starts the row with the leave door, closed and asking", () => {
+    vi.stubGlobal("document", {
+      createElement: (tag: string) => new LeaveNode(tag.toUpperCase()),
+      activeElement: null,
+    });
+    vi.stubGlobal("HTMLElement", LeaveNode);
+    const leave = new LeaveNode("DIV");
+    const control = renderLeave({ leave } as unknown as HudElements, () => undefined, false);
+
+    const [button] = leave.children;
+    expect(leave.children).toHaveLength(1);
+    const [icon, label] = button?.children ?? [];
+    expect(icon?.tagName).toBe("IMG");
+    expect(icon?.src).toMatch(/ui\/leave\.svg$/);
+    expect(icon?.alt).toBe("");
+    expect(label?.textContent).toBe(t("hud.leave"));
+
+    control.open();
+    const [door, question, yes, no] = leave.children;
+    expect(door?.tagName).toBe("IMG");
+    expect(door?.src).toMatch(/ui\/leave\.svg$/);
+    expect(question?.textContent).toBe(t("hud.leaveQuestion"));
+    expect([yes?.textContent, no?.textContent]).toEqual([t("hud.leaveYes"), t("hud.leaveNo")]);
+
+    control.close();
+    expect(leave.children[0]?.children[0]?.src).toMatch(/ui\/leave\.svg$/);
   });
 });
