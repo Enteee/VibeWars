@@ -10,7 +10,7 @@ Geçirme; ![GvG](../../../apps/web/public/icons/mode/gvg.svg) **GvG** ise Lonca 
 ama asla Lonca Savaşı, Kalıntı Koşusu, Tepenin Kralı ya da Nokta Ele
 Geçirme seçmez. Takım Arenası her maç için haritalarından birini çeker,
 Kahramanların Yükselişi ilk haritasında başlar ve kurucunun seçmesine
-yalnızca Özel Oyun izin verir. Başka hiçbir modun ekranı sıradaki haritayı
+yalnızca Özel Oyun izin verir; kurucu lobinin en üstünde, takımların üzerinde seçer. Başka hiçbir modun ekranı sıradaki haritayı
 söylemez: maç, yüklenirken onu gösterir.
 
 Katı ağların arkasındaki iki oyuncu bir kuyrukta birbiriyle eşleşemez, bu yüzden kuyruk yalnızca seninle eşleşebilecek oyuncuları sayar ve bunu söyler. **Ayarlar → relay (TURN)** altındaki bir relay yardımcı olur.

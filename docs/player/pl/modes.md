@@ -8,7 +8,7 @@ Wyścig relikwii, Król wzgórza i Punkty kontrolne, a ![GvG](../../../apps/web/
 prywatna** oferuje każdą mapę. ![Arena losowa](../../../apps/web/public/icons/mode/random-arena.svg) **Arena losowa** wybiera mapę za ciebie, a z nią tryb,
 ale nigdy Bitwę gildii, Wyścig relikwii, Króla wzgórza ani Punkty kontrolne. Arena
 drużynowa losuje jedną ze swoich map na każdy mecz, Szczyt Bohaterów zaczyna od
-pierwszej mapy, a tylko Gra prywatna pozwala hostowi wybierać. Ekran żadnego innego
+pierwszej mapy, a tylko Gra prywatna pozwala hostowi wybierać, na górze lobby nad drużynami. Ekran żadnego innego
 trybu nie podaje, która mapa będzie następna: mecz pokazuje ją podczas wczytywania.
 
 Dwóch graczy za restrykcyjnymi sieciami nie może zostać ze sobą dobranych w kolejce, więc kolejka liczy tylko graczy, z którymi możesz zostać dobrany, i to mówi. Pomaga przekaźnik w **Opcje → przekaźnik (TURN)**.

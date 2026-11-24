@@ -83,14 +83,26 @@ test("a hosted lobby fits the phone, for its host and its guest (#3776)", async 
   await namePlayer(host, "Host");
   const invite = await hostLobby(host);
   await expectFitsPhone(host, "lobby, host");
+  // The map heads the lobby, above the first team (#3926).
+  await expectMapAboveTeams(host);
   await guest.goto("./");
   await expect(guest.locator(".mode-rail")).toBeVisible();
   await namePlayer(guest, "Guest");
   await joinFriend(guest, invite);
   await expect(guest.locator(".lobby-panel")).toBeVisible();
   await expectFitsPhone(guest, "lobby, guest");
+  await expectMapAboveTeams(guest);
   await context.close();
 });
+
+/** A Hosted Game's map row shows above the lobby's first team, inside the screen (#3926). */
+async function expectMapAboveTeams(page: Page): Promise<void> {
+  const map = await page.locator(".lobby-panel > .lobby-map").boundingBox();
+  const team = await page.locator(".lobby-team").first().boundingBox();
+  expect(map, "map row shown").not.toBeNull();
+  expect((map?.y ?? 0) + (map?.height ?? 0)).toBeLessThanOrEqual(team?.y ?? 0);
+  expect((map?.x ?? 0) + (map?.width ?? 0)).toBeLessThanOrEqual(page.viewportSize()?.width ?? 0);
+}
 
 /**
  * Tap on `page` brought to the front: two pages share one window, and the

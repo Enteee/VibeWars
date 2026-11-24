@@ -10,7 +10,7 @@ a ![Csapataréna](../../../apps/web/public/icons/mode/team-arena.svg) **Csapatar
 Céhcsatát, Ereklyefutamot, A domb urát vagy Pontfoglalást. A
 Csapataréna minden meccsre kisorsolja egy pályáját, a Hősök Útja az
 első pályáján kezdődik, és csak a Saját játékban választhat a
-házigazda. Más mód képernyője nem írja ki, melyik pálya következik: a
+házigazda, a lobbi tetején a csapatok fölött. Más mód képernyője nem írja ki, melyik pálya következik: a
 meccs a betöltéskor mutatja meg.
 
 Két szigorú hálózat mögötti játékos nem kerülhet össze a sorban, ezért a sor csak azokat a játékosokat számolja, akikkel összekerülhetsz, és ezt meg is mondja. Segít egy relay az **Opciók → relay (TURN)** alatt.

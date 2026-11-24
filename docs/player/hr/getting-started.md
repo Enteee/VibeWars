@@ -157,7 +157,7 @@ igrat ćeš ga od sljedećeg meča.
 načina: **Timska arena** karte Uništenja, Broja ubojstava i Uništenja sa svećenikom,
 **Uspon heroja** karte Utrke za relikvijom, Kralja brda i Zauzimanja
 točaka, a **GvG** kartu Bitke cehova. **Igra s domaćinom** nudi svaku
-kartu. Tvoji **Timski sastavi** nalaze se samo u **Uređivaču timova**, a prije sobe
+kartu, a njezin domaćin bira jednu na vrhu sobe, iznad timova. Tvoji **Timski sastavi** nalaze se samo u **Uređivaču timova**, a prije sobe
 ne biraš nijedan. U **Igri s domaćinom**, kad domaćin pokrene, soba
 otvara [Timsku sobu](modes.md#timska-soba): tamo predloži timski sastav,
 klikni karticu, koja prikazuje oružja i vještine svakog člana, da glasaš

@@ -562,11 +562,18 @@ describe("lobbyPanel: the map (#1994)", () => {
     },
     { id: "ember-pits", size: "small", mode: "kill-count", teamSizes: [4] },
   ] as const;
-  /** The map part of the host's bar in `mode`, on Crossroads. */
+  /** The map rows heading the lobby's body (#3926): none, or one. */
+  const mapRows = (shown: LobbySnapshot): FakeElement[] =>
+    (lobbyPanel(shown, callbacks, undefined, maps).body as unknown as FakeElement).children.filter(
+      (child) => child.className === "lobby-map",
+    );
+  /** The map row of the host's lobby in `mode`, on Crossroads. */
   const mapPart = (mode: LobbySnapshot["mode"]): FakeElement => {
-    const shown = { ...snapshot("waiting"), mode, mapId: "arena-crossroads" };
-    const [part] = lobbyPanel(shown, callbacks, undefined, maps).status;
-    return part as unknown as FakeElement;
+    const [part] = mapRows({ ...snapshot("waiting"), mode, mapId: "arena-crossroads" });
+    if (part === undefined) {
+      throw new Error("no map row");
+    }
+    return part;
   };
   const selects = (part: FakeElement): FakeElement[] =>
     part.children.filter((child) => child.tagName === "select");
@@ -583,6 +590,19 @@ describe("lobbyPanel: the map (#1994)", () => {
 
   it("lets only a Hosted Game's host pick it", () => {
     expect(selects(mapPart("hosted-game"))).toHaveLength(1);
+  });
+
+  it("heads the lobby, above the teams, and is not in the bar (#3926)", () => {
+    const shown = {
+      ...snapshot("waiting"),
+      mode: "hosted-game",
+      mapId: "arena-crossroads",
+    } as const;
+    const panel = lobbyPanel(shown, callbacks, undefined, maps);
+    const classes = (panel.body as unknown as FakeElement).children.map((child) => child.className);
+    expect(classes[0]).toBe("lobby-map");
+    expect(classes.indexOf("lobby-map")).toBeLessThan(classes.indexOf("lobby-teams"));
+    expect(panel).not.toHaveProperty("status");
   });
 
   it("labels the host's picker Map:, as a guest's map reads (#3626)", () => {
@@ -607,15 +627,16 @@ describe("lobbyPanel: the map (#1994)", () => {
       "ember-pits",
     ]);
     const twos = { ...snapshot("waiting"), mapId: "arena-crossroads", teamSize: 2 };
-    const [part] = lobbyPanel(twos, callbacks, undefined, maps).status;
-    // Crossroads alone: nothing to pick.
+    const [part] = mapRows(twos);
+    // Crossroads alone: nothing to pick, but still named.
+    expect(part?.textContent).toBe("Map: Crossroads (small)");
     expect(selects(part as unknown as FakeElement)).toEqual([]);
   });
 
   it("shows no map outside a Hosted Game: the match says it (#3925)", () => {
     for (const mode of ["random-arena", "team-arena", "heroes-ascent", "gvg"] as const) {
       const shown = { ...snapshot("waiting"), mode, mapId: "arena-crossroads", ascentRound: null };
-      expect(lobbyPanel(shown, callbacks, undefined, maps).status).toEqual([]);
+      expect(mapRows(shown)).toEqual([]);
     }
   });
 
@@ -626,7 +647,7 @@ describe("lobbyPanel: the map (#1994)", () => {
       mapId: "arena-crossroads",
       isHost: false,
     } as const;
-    const [part] = lobbyPanel(shown, callbacks, undefined, maps).status;
+    const [part] = mapRows(shown);
     expect(selects(part as unknown as FakeElement)).toEqual([]);
     expect(part?.textContent).toBe("Map: Crossroads (small)");
   });

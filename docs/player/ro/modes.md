@@ -9,7 +9,7 @@ puncte, iar ![GvG](../../../apps/web/public/icons/mode/gvg.svg) **GvG** Bătăli
 aleatorie** alege o hartă pentru tine și, odată cu ea, modul, dar niciodată o Bătălie
 de bresle, o Cursă a relicvelor, Regele dealului sau Capturare de puncte. Arena de
 echipe trage la sorți una dintre hărțile ei pentru fiecare meci, Ascensiunea Eroilor
-începe de la prima ei hartă și doar un Joc găzduit îi permite gazdei să aleagă.
+începe de la prima ei hartă și doar un Joc găzduit îi permite gazdei să aleagă, în partea de sus a lobby-ului deasupra echipelor.
 Ecranul niciunui alt mod nu spune ce hartă urmează: meciul o arată în timp ce se
 încarcă.
 

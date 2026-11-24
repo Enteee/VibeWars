@@ -9,7 +9,7 @@ Zauzimanje točaka, a ![GvG](../../../apps/web/public/icons/mode/gvg.svg) **GvG*
 svaku kartu. ![Nasumična arena](../../../apps/web/public/icons/mode/random-arena.svg) **Nasumična arena** bira kartu umjesto tebe, a s njom i način,
 ali nikad Bitku cehova, Utrku za relikvijom, Kralja brda ili Zauzimanje
 točaka. Timska arena za svaki meč izvlači jednu od svojih karata, Uspon heroja
-počinje na svojoj prvoj karti, a samo Igra s domaćinom dopušta domaćinu da bira.
+počinje na svojoj prvoj karti, a samo Igra s domaćinom dopušta domaćinu da bira, na vrhu sobe iznad timova.
 Zaslon nijednog drugog načina ne kaže koja karta slijedi: meč je prikazuje
 dok se učitava.
 

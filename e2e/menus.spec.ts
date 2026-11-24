@@ -416,13 +416,13 @@ test("#1525: the rail switches screens and keeps the last; each mode hosts on it
   );
 
   // Outside a Hosted Game no screen shows the map: the match says it (#3925).
-  await expect(page.locator("#topbar .lobby-map")).toHaveCount(0);
+  await expect(page.locator(".lobby-map")).toHaveCount(0);
   for (const mode of ["Heroes' Ascent", "Team Arena", "Random Arena"] as const) {
     await openRail(page, mode);
     await expect(page.locator(`.mode-rail-entry[aria-label="${mode}"]`)).toHaveAttribute(
       "aria-pressed",
       "true",
     );
-    await expect(page.locator("#topbar .lobby-map")).toHaveCount(0);
+    await expect(page.locator(".lobby-map")).toHaveCount(0);
   }
 });

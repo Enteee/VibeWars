@@ -9,7 +9,7 @@ tư tế, ![Đỉnh Anh Hùng](../../../apps/web/public/icons/mode/heroes-ascent
 nhiên** chọn bản đồ cho bạn, và kèm theo đó là chế độ, nhưng không bao giờ là
 Chiến Bang, Vận chuyển thánh tích, Vua đồi hay Chiếm điểm. Đấu trường đội
 bốc một bản đồ của nó cho mỗi trận, Đỉnh Anh Hùng bắt đầu ở bản đồ đầu tiên
-của nó, và chỉ Trận tự tạo cho chủ phòng chọn. Màn hình của các chế độ khác
+của nó, và chỉ Trận tự tạo cho chủ phòng chọn, ở đầu sảnh phía trên các đội. Màn hình của các chế độ khác
 không ghi bản đồ nào đến tiếp theo: trận hiện bản đồ đó khi đang tải.
 
 Hai người chơi sau mạng nghiêm ngặt không thể được ghép với nhau trong hàng chờ, nên hàng chờ chỉ đếm những người chơi có thể ghép với bạn, và cho bạn biết. Một relay trong **Tùy chọn → Relay (TURN)** sẽ giúp ích.

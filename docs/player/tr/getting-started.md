@@ -165,7 +165,7 @@ itibaren onunla oynarsın.
 modun haritalarını sunar: **Takım Arenası** İmha, Leş Sayısı ve Rahip
 İmhası haritalarını, **Kahramanların Yükselişi** Kalıntı Koşusu, Tepenin
 Kralı ve Nokta Ele Geçirme haritalarını, **GvG** ise Lonca Savaşı'nınkileri.
-**Özel Oyun** her haritayı sunar. **Takım Dizilimleri** yalnızca **Takım
+**Özel Oyun** her haritayı sunar ve kurucusu lobinin en üstünde, takımların üzerinde birini seçer. **Takım Dizilimleri** yalnızca **Takım
 Oluşturucu**'dadır ve lobiden önce hiçbirini seçmezsin. **Özel Oyun**'da
 kurucu başlatınca lobi [Takım Lobisi](modes.md#takım-lobisi)'ni açar:
 orada bir Takım Dizilimi öner, birine oy vermek için her üyenin

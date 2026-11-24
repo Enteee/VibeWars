@@ -9,7 +9,7 @@ spiller: ![Holdarena](../../../apps/web/public/icons/mode/team-arena.svg) **Hold
 arena** vælger en bane for dig, og dermed spiltilstanden, men aldrig en
 Laugskamp, et Relikvieløb, Kongen af bakken eller Erobring. Holdarena
 trækker en af sine baner til hver kamp, Heltenes opstigning starter på
-sin første bane, og kun et Værtsspil lader værten vælge.
+sin første bane, og kun et Værtsspil lader værten vælge, øverst i lobbyen over holdene.
 Ingen anden spiltilstands skærm siger, hvilken bane der står for tur: kampen
 viser den, mens den indlæses.
 

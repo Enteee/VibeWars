@@ -10,7 +10,7 @@ Roi de la colline et Points de capture, et ![GvG](../../../apps/web/public/icons
 une carte pour toi, et avec elle le mode, mais jamais une Bataille de guilde,
 une Course aux reliques, un Roi de la colline ou des Points de capture. L'Arène
 d'équipe tire une de ses cartes à chaque match, l'Ascension des héros commence
-sur sa première carte, et seule une Partie hébergée laisse l'hôte choisir.
+sur sa première carte, et seule une Partie hébergée laisse l'hôte choisir, en haut du salon au-dessus des équipes.
 L'écran d'aucun autre mode n'indique quelle carte vient ensuite : le match
 l'affiche pendant son chargement.
 

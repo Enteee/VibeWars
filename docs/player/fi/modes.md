@@ -10,7 +10,7 @@ Kiltataistelu. ![Isännöity peli](../../../apps/web/public/icons/mode/hosted-ga
 mutta ei koskaan Kiltataistelua, Reliikkijuoksua, Kukkulan kuningasta
 eikä Valtauspisteitä. Tiimiareena arpoo jokaiseen otteluun yhden
 kartoistaan, Sankarien nousu alkaa ensimmäiseltä kartaltaan, ja vain
-Isännöity peli antaa isännän valita. Minkään muun pelitilan näkymä ei
+Isännöity peli antaa isännän valita, aulan yläosassa tiimien yläpuolella. Minkään muun pelitilan näkymä ei
 kerro, mikä kartta on seuraavana: ottelu näyttää sen latautuessaan.
 
 Kahta tiukkojen verkkojen takana olevaa pelaajaa ei voi yhdistää toisiinsa jonossa, joten jono laskee vain pelaajat, joiden kanssa sinut voi yhdistää, ja kertoo sen. Relay kohdassa **Asetukset → relay (TURN)** auttaa.

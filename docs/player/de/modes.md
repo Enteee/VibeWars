@@ -8,7 +8,7 @@ Reliktlauf, King of the Hill und Punkte erobern, und ![GvG](../../../apps/web/pu
 Spiel** bietet jede Karte. Eine ![Zufallsarena](../../../apps/web/public/icons/mode/random-arena.svg) **Zufallsarena** wählt eine Karte für dich und damit den Modus,
 aber nie eine Gildenschlacht, einen Reliktlauf, King of the Hill oder Punkte erobern. Die
 Teamarena lost für jedes Match eine ihrer Karten aus, der Aufstieg der Helden beginnt auf seiner
-ersten Karte, und nur in einem Gehosteten Spiel wählt der Host. Der Bildschirm keines anderen
+ersten Karte, und nur in einem Gehosteten Spiel wählt der Host, oben in der Lobby über den Teams. Der Bildschirm keines anderen
 Modus sagt, welche Karte als Nächstes kommt: Das Match zeigt sie, während es lädt.
 
 Zwei Spieler hinter strengen Netzwerken können in einer Warteschlange nicht zueinander finden. Die Warteschlange zählt deshalb nur Spieler, die mit dir spielen können, und sagt es dir. Ein Relay unter **Optionen → Relay (TURN)** hilft.

@@ -10,7 +10,7 @@ Batalla de gremios. ![Partida alojada](../../../apps/web/public/icons/mode/hoste
 aleatoria** elige un mapa por ti, y con él el modo, pero nunca una Batalla de
 gremios, una Carrera de reliquias, Rey de la colina ni Puntos de captura. Arena
 por equipos sortea uno de sus mapas en cada partida, Ascenso de los Héroes
-empieza en su primer mapa, y solo una Partida alojada deja elegir al anfitrión.
+empieza en su primer mapa, y solo una Partida alojada deja elegir al anfitrión, en lo alto de la sala encima de los equipos.
 La pantalla de ningún otro modo indica qué mapa viene después: la partida lo
 muestra mientras carga.
 

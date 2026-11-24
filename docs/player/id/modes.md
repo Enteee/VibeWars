@@ -9,7 +9,7 @@ Rebut Titik, dan ![GvG](../../../apps/web/public/icons/mode/gvg.svg) **GvG** Per
 semua peta. ![Arena Acak](../../../apps/web/public/icons/mode/random-arena.svg) **Arena Acak** memilihkan peta untukmu, dan sekaligus modenya,
 tapi tidak pernah Perang Guild, Lari Relik, Raja Bukit atau Rebut
 Titik. Arena Tim mengundi salah satu petanya untuk setiap laga, Pendakian Pahlawan
-dimulai di peta pertamanya, dan hanya Game Host yang membiarkan host memilih.
+dimulai di peta pertamanya, dan hanya Game Host yang membiarkan host memilih, di bagian atas lobi di atas tim.
 Layar mode lain tidak menyebutkan peta mana yang berikutnya: laga
 menampilkannya saat dimuat.
 

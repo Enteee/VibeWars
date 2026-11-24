@@ -188,9 +188,8 @@ export function mapLabel(map: LobbyMap): string {
   return t("lobby.mapLabel", { name: mapName(map.id), size: qualifier });
 }
 
-/** The lobby's part of a mode screen (#1526): the bar's map and buttons, and what goes under them. */
+/** The lobby's part of a mode screen (#1526): the bar's buttons, and what goes under them. */
 export interface LobbyPanel {
-  readonly status: readonly HTMLElement[];
   readonly actions: readonly HTMLElement[];
   readonly queueAction: HTMLElement | undefined;
   readonly body: HTMLElement;
@@ -198,9 +197,9 @@ export interface LobbyPanel {
 
 /**
  * The lobby on a mode screen (#1526, ADR-0041): Ready and Start for the
- * bar, and a Hosted Game's map (#3925), and below, both team rosters with each player's
- * character and ready state, and who Start is waiting for. The code is
- * the title bar's.
+ * bar, and below, a Hosted Game's map above the teams (#3926), both team
+ * rosters with each player's character and ready state, and who Start is
+ * waiting for. The code is the title bar's.
  */
 export function lobbyPanel(
   snapshot: LobbySnapshot,
@@ -269,6 +268,11 @@ export function lobbyPanel(
     actions.push(start);
   }
 
+  // The map heads the lobby (#3926): what the teams are about to play.
+  if (mapPart !== undefined) {
+    panel.appendChild(mapPart);
+  }
+
   if (notice !== undefined) {
     panel.appendChild(h("div", "screen-problem", notice));
   }
@@ -301,7 +305,7 @@ export function lobbyPanel(
     panel.appendChild(h("div", "screen-info lobby-running", controls.running));
   }
 
-  return { status: mapPart === undefined ? [] : [mapPart], actions, queueAction, body: panel };
+  return { actions, queueAction, body: panel };
 }
 
 /**

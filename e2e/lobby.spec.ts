@@ -372,14 +372,39 @@ test("the status bar says nothing in a lobby, which the title bar names, on any 
   await expect(page.locator("#status")).toBeHidden();
 });
 
-test("the lobby's bar puts its status on a second row from 721 to 1200 px, nothing overlapping (#1368)", async ({
-  page,
-}) => {
+test("the lobby's bar fits from 700 to 1201 px, nothing overlapping (#1368)", async ({ page }) => {
   await hostLobby(page, "Host");
-  // More than one map, so the host's bar carries the select, its widest part.
-  await expect(page.locator(".lobby-map select")).toBeVisible();
   for (const width of [700, 721, 800, 940, 1100, 1201]) {
-    await expectTopbarFits(page, width, "#topbar > :not(.topbar-status), #topbar .lobby-map");
+    await expectTopbarFits(page, width, "#topbar > :not(.topbar-status)");
+  }
+});
+
+test("a Hosted Game's map heads the lobby, above the teams; the guest sees the host's pick (#3926)", async ({
+  browser,
+}) => {
+  const { context, pages } = await openPeers(browser, 2);
+  const [host, guest] = pages as [Page, Page];
+  try {
+    const invite = await hostLobby(host, "Host");
+    await joinLobby(guest, "Guest", invite);
+    for (const page of [host, guest]) {
+      await expect(page.locator("#topbar .lobby-map")).toHaveCount(0);
+      // The first thing in the lobby, the teams under it.
+      await expect(page.locator(".lobby-panel > :first-child")).toHaveClass("lobby-map");
+      await expect(page.locator(".lobby-panel > .lobby-map ~ .lobby-teams")).toBeVisible();
+    }
+    await expect(guest.locator(".lobby-panel > .lobby-map select")).toHaveCount(0);
+    const picker = host.locator(".lobby-panel > .lobby-map select");
+    const guestMap = guest.locator(".lobby-panel > .lobby-map");
+    // The guest's label reads as the host's option does.
+    const named = async (): Promise<string> =>
+      `Map: ${await picker.locator("option:checked").innerText()}`;
+    await expect(guestMap).toHaveText(await named());
+    const other = picker.locator("option:not(:checked)").first();
+    await picker.selectOption((await other.getAttribute("value")) ?? "");
+    await expect(guestMap).toHaveText(await named());
+  } finally {
+    await context.close();
   }
 });
 

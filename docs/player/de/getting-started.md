@@ -155,7 +155,7 @@ Charakter; wählst du einen anderen, spielst du ihn ab dem nächsten Match.
 **Teamarena**, **Aufstieg der Helden** und **GvG** bieten nur die Karten dieses Modus an:
 **Teamarena** die für Vernichtung, Kill-Zähler und Priestervernichtung, **Aufstieg der
 Helden** die für Reliktlauf, King of the Hill und Punkte erobern und **GvG** die der
-Gildenschlacht. **Gehostetes Spiel** bietet jede Karte. Deine **Team-Builds** liegen nur
+Gildenschlacht. **Gehostetes Spiel** bietet jede Karte, und sein Host wählt eine oben in der Lobby, über den Teams. Deine **Team-Builds** liegen nur
 im **Team-Editor**, und du wählst keinen vor der Lobby. Bei **Gehostetes Spiel** öffnet die
 Lobby beim Start des Hosts die [Team-Lobby](modes.md#team-lobby): Schlage dort einen
 Team-Build vor, klick auf eine Karte, die die Waffen und Skills jedes Mitglieds zeigt, um

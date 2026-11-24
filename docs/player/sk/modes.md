@@ -9,7 +9,7 @@ Dobývanie bodov a ![GvG](../../../apps/web/public/icons/mode/gvg.svg) **GvG** C
 každú mapu. ![Náhodná aréna](../../../apps/web/public/icons/mode/random-arena.svg) **Náhodná aréna** vyberie mapu za teba a s ňou aj režim,
 ale nikdy Cechovú bitku, Beh s relikviou, Kráľa kopca ani Dobývanie
 bodov. Tímová aréna vylosuje jednu zo svojich máp pre každý zápas, Výstup hrdinov
-začína na svojej prvej mape a len vo Vlastnej hre vyberá hostiteľ.
+začína na svojej prvej mape a len vo Vlastnej hre vyberá hostiteľ, hore v lobby nad tímami.
 Obrazovka žiadneho iného režimu neuvádza, ktorá mapa príde na rad: zápas
 ju ukáže pri načítaní.
 

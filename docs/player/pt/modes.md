@@ -11,7 +11,7 @@ mapas. Uma ![Arena Aleatória](../../../apps/web/public/icons/mode/random-arena.
 modo, mas nunca uma Batalha de Guildas, uma Corrida da Relíquia, Rei da
 Colina ou Captura de Pontos. A Arena de Equipes sorteia um dos seus mapas
 a cada partida, a Ascensão dos Heróis começa no primeiro mapa dela, e só
-uma Partida Hospedada deixa o host escolher. A tela de nenhum outro modo
+uma Partida Hospedada deixa o host escolher, no topo da sala acima das equipes. A tela de nenhum outro modo
 diz qual mapa vem a seguir: a partida o mostra enquanto carrega.
 
 Dois jogadores atrás de redes restritas não podem ser pareados entre si numa fila, então a fila conta só os jogadores que podem ser pareados com você, e diz isso. Um relay em **Opções → relay (TURN)** ajuda.

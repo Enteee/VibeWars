@@ -9,7 +9,7 @@ Capture Points, and ![GvG](../../apps/web/public/icons/mode/gvg.svg) **GvG** the
 every map. A ![Random Arena](../../apps/web/public/icons/mode/random-arena.svg) **Random Arena** picks a map for you, and with it the mode,
 but never a Guild Battle, a Relic Run, King of the Hill or Capture
 Points. Team Arena draws one of its maps for each match, Heroes' Ascent
-starts on its first map, and only a Hosted Game lets the host pick.
+starts on its first map, and only a Hosted Game lets the host pick, at the top of the lobby above the teams.
 No other mode's screen says which map comes next: the match shows it
 as it loads.
 

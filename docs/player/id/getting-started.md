@@ -160,7 +160,7 @@ memainkannya mulai laga berikutnya.
 mode itu: **Arena Tim** peta Pemusnahan, Hitung Kill dan Pemusnahan Pendeta,
 **Pendakian Pahlawan** peta Lari Relik, Raja Bukit dan Rebut
 Titik, dan **GvG** peta Perang Guild. **Game Host** menawarkan semua
-peta. **Build Tim**-mu hanya ada di **Pembuat Tim**, dan kamu tidak memilih
+peta, dan host-nya memilih satu di bagian atas lobi, di atas tim. **Build Tim**-mu hanya ada di **Pembuat Tim**, dan kamu tidak memilih
 satu pun sebelum lobi. Di **Game Host**, saat host memulai, lobi
 membuka [Lobi Tim](modes.md#lobi-tim): usulkan Build Tim di sana,
 klik sebuah kartu, yang menampilkan senjata dan skill setiap anggota, untuk memilih

@@ -155,7 +155,7 @@ Joacă personajul ales acolo; dacă alegi altul, joci cu el de la meciul următo
 **Arenă de echipe**, **Ascensiunea Eroilor** și **GvG** oferă doar hărțile acelui mod:
 **Arenă de echipe** hărțile de Anihilare, Număr de ucideri și Anihilare cu preot,
 **Ascensiunea Eroilor** hărțile de Cursa relicvelor, Regele dealului și Capturare de
-puncte, iar **GvG** pe cele de Bătălie de bresle. **Joc găzduit** oferă toate hărțile.
+puncte, iar **GvG** pe cele de Bătălie de bresle. **Joc găzduit** oferă toate hărțile, iar gazda lui alege una în partea de sus a lobby-ului, deasupra echipelor.
 **Buildurile tale de echipă** sunt doar la **Constructor de echipe** și nu alegi niciunul
 înainte de lobby. La **Joc găzduit**, când gazda pornește, lobby-ul deschide
 [Lobby-ul de echipă](modes.md#lobby-de-echipă): propune acolo un Build de echipă, dă clic
