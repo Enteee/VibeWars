@@ -33,7 +33,8 @@ jobs:
     # ci.yml's e2e-shard, each repeating its own tests five times (six shards
     # still overran the 45 min step timeout, #3820). SHARDS must equal the
     # length of the matrix list: a mismatch skips or duplicates tests. Shard 1
-    # is the tutorial spec, one unsplittable group of ~10 min, x5 (about 48 min).
+    # holds the largest unsplittable group (a tutorial learn spec, ~10 min), x5
+    # (about 48 min).
     timeout-minutes: 75
     strategy:
       fail-fast: false
