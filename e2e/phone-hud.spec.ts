@@ -1,4 +1,4 @@
-import { expect, test, type Page } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 
 import { key } from "./keys.js";
 import { hudMenuRow } from "./helpers/hud-menu.js";
@@ -486,6 +486,31 @@ for (const [held, device] of [
       await page.keyboard.press("Escape");
       await expect(menu).toBeHidden();
       await expect(toggle).toHaveAttribute("aria-expanded", "false");
+    });
+
+    test("Leave's question keeps the rows' inset: its icon and words start where Help's do (#3956)", async ({
+      page,
+    }) => {
+      await phoneMatch(page, device.viewport, undefined, true);
+      const leave = await hudMenuRow(page, "leave");
+      const help = await hudMenuRow(page, "help");
+      const left = async (part: Locator): Promise<number> =>
+        (await part.boundingBox())?.x ?? Number.NaN;
+      // Help's icon and name, measured again each time: the list is as wide
+      // as its widest row, so the question can move every row.
+      const expectInset = async (icon: Locator, words: Locator): Promise<void> => {
+        const helpIcon = await left(help.locator("img"));
+        const helpLabel = await left(help.locator(".hud-menu-label"));
+        expect(Math.abs((await left(icon)) - helpIcon)).toBeLessThanOrEqual(2);
+        expect(Math.abs((await left(words)) - helpLabel)).toBeLessThanOrEqual(2);
+      };
+      await expectInset(leave.locator("img"), leave.locator("button > span"));
+
+      await leave.getByRole("button").click();
+      await expect(leave).toContainText("leave?");
+      await expectInset(leave.locator(":scope > img"), leave.locator(":scope > span"));
+      await leave.getByRole("button", { name: "no" }).click();
+      await expect(leave.locator("button img")).toHaveCount(1);
     });
   });
 }
