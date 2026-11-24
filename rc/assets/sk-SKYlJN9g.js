@@ -1,0 +1,19 @@
+var e=`# Pomoc
+
+Stránky okna Pomoc v hre, v poradí, v akom ich zobrazuje výber stránky. Každá
+stránka v tomto priečinku je tu uvedená práve raz.
+
+- [Začíname](getting-started.md)
+- [Ovládanie](controls.md)
+- [Základy boja](combat-basics.md)
+- [Schopnosti a buildy](skills-and-builds.md)
+- [Výbava](equipment.md)
+- [Režimy](modes.md)
+- [Hodnotenie](ranking.md)
+- [Kozmetika](cosmetics.md)
+- [Prvky sveta](world-elements.md)
+- [Boti](bots.md)
+- [Slovník pojmov](glossary.md)
+- [Podpor VibeWars](support.md)
+`;export{e as default};
+//# sourceMappingURL=sk-SKYlJN9g.js.map
