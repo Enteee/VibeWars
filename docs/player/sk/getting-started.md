@@ -240,4 +240,4 @@ IP adresu.
   v sekcii ovládanie; predvoľba VibeWars dáva schopnosti na Q W E R a A S D F a
   pohyb na šípky. Všetky sú v [Ovládaní](controls.md).
 
-Tlačidlo [?] vpravo hore znova otvorí túto Pomoc, aj v zápase.
+Tlačidlo [?] vpravo hore znova otvorí túto Pomoc; v zápase je v **☰**, vpravo hore.

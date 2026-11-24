@@ -7,6 +7,7 @@ import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../packages/game-core/src/ruleset.js
 import { STORAGE_NAMESPACE } from "./helpers/base.js";
 import { projection } from "./camera.js";
 import { key, skillKey } from "./keys.js";
+import { hudMenuRow } from "./helpers/hud-menu.js";
 import { joinFriend } from "./helpers/menu.js";
 import {
   hostLobby,
@@ -236,7 +237,7 @@ async function startLobbyMatch(
 
 /** Leave by the button, which leaves for good: a closed page is held for its reconnection. */
 async function leaveMatch(page: Page): Promise<void> {
-  const leave = page.locator(".hud-leave");
+  const leave = await hudMenuRow(page, ".hud-leave");
   await leave.getByRole("button", { name: "leave match" }).click();
   await leave.getByRole("button", { name: "yes" }).click();
   await expect(page.locator(".hud-bar-health")).toHaveCount(0);
@@ -294,6 +295,7 @@ test("a match renders the arena and a populated HUD", async ({ page }) => {
   // The compass (#1056): top right, under the match buttons.
   await expect(page.locator(".compass")).toBeVisible();
   const compass = await box(".compass");
+  // ☰ alone while its list is closed (#3923).
   const controls = await box(".hud-controls");
   expect(compass.y).toBeGreaterThan(controls.y + controls.height);
   expect(1280 - (compass.x + compass.width)).toBeLessThan(30);
@@ -328,7 +330,7 @@ test("hovering a slot shows its tooltip at the host's ranks, above the bar (#485
 
 test("#2012: in full screen, hovering a slot still shows its tooltip", async ({ page }) => {
   await startSoloMatch(page);
-  await page.locator(".hud-fullscreen").click();
+  await (await hudMenuRow(page, ".hud-fullscreen")).click();
   // The whole document, so the tooltip hung off <body> is in the top layer.
   await expect
     .poll(() => page.evaluate(() => document.fullscreenElement === document.documentElement))
@@ -344,7 +346,8 @@ test("#2012: in full screen, hovering a slot still shows its tooltip", async ({ 
 
 test("M mutes and unmutes the combat sounds", async ({ page }) => {
   await startSoloMatch(page);
-  const mute = page.getByRole("button", { name: "Mute sounds" });
+  // M mutes with ☰'s list closed, its row hidden (#3923).
+  const mute = page.locator(".hud-mute");
   await expect(mute).toHaveAttribute("aria-pressed", "false");
   await page.keyboard.press(key("mute"));
   await expect(mute).toHaveAttribute("aria-pressed", "true");
@@ -651,7 +654,7 @@ test("Esc cancels the attack; leaving the match is a button that asks first (#16
   // Esc no longer leaves: still in the match.
   await expect(page.locator(".hud-bar-health")).toBeVisible();
 
-  const leave = page.locator(".hud-leave");
+  const leave = await hudMenuRow(page, ".hud-leave");
   await leave.getByRole("button", { name: "leave match" }).click();
   await expect(leave).toContainText("leave?");
   await leave.getByRole("button", { name: "no" }).click();
@@ -667,7 +670,7 @@ test("F10, Tab, Enter on yes leaves the match without a mouse (#221)", async ({ 
   const opponent = await page.context().newPage();
   await startLobbyMatch(page, [opponent]);
   // The HUD, which comes with the match view and its keys (#454: no "in match").
-  await expect(page.locator(".hud-leave")).toBeVisible();
+  await expect(page.locator(".hud-menu-toggle")).toBeVisible();
   const leave = page.locator(".hud-leave");
 
   await page.keyboard.press("F10");
@@ -685,7 +688,7 @@ test("F10 then Esc says no, and the attack goes on (#221)", async ({ page }) => 
   const opponent = await page.context().newPage();
   await startLobbyMatch(page, [opponent]);
   // The HUD, which comes with the match view and its keys (#454: no "in match").
-  await expect(page.locator(".hud-leave")).toBeVisible();
+  await expect(page.locator(".hud-menu-toggle")).toBeVisible();
   const attacking = page.locator(".hud-attacking");
   const leave = page.locator(".hud-leave");
 
@@ -702,6 +705,43 @@ test("F10 then Esc says no, and the attack goes on (#221)", async ({ page }) => 
   await expect(leave.getByRole("button", { name: "leave match (F10)" })).toBeVisible();
   await expect(page.locator(".hud-bar-health")).toBeVisible();
   // Esc answered the question; it did not also cancel the attack.
+  await expect(attacking).toBeVisible();
+  await opponent.close();
+});
+
+test("on a desktop the match's buttons are in ☰; F10 asks in it, M mutes without it (#3923)", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 720 });
+  const opponent = await page.context().newPage();
+  await startLobbyMatch(page, [opponent]);
+  const toggle = page.locator(".hud-menu-toggle");
+  const menu = page.locator(".hud-menu");
+  await expect(toggle).toBeVisible();
+  await expect(menu).toBeHidden();
+
+  // M mutes, and the list stays shut.
+  const mute = page.locator(".hud-mute");
+  await expect(mute).toHaveAttribute("aria-pressed", "false");
+  await page.keyboard.press(key("mute"));
+  await expect(mute).toHaveAttribute("aria-pressed", "true");
+  await expect(menu).toBeHidden();
+
+  // F10 opens the list and asks in Leave's row; F10 again stops asking.
+  await page.keyboard.press("F10");
+  await expect(menu).toBeVisible();
+  await expect(toggle).toHaveAttribute("aria-expanded", "true");
+  await expect(menu.locator(".hud-leave")).toContainText("leave?");
+  await page.keyboard.press("F10");
+  await expect(menu.getByRole("button", { name: "leave match (F10)" })).toBeVisible();
+
+  // Esc puts the list away, and does not also cancel the attack.
+  const attacking = page.locator(".hud-attacking");
+  await page.keyboard.press(key("attack"));
+  await expect(attacking).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(menu).toBeHidden();
+  await expect(toggle).toHaveAttribute("aria-expanded", "false");
   await expect(attacking).toBeVisible();
   await opponent.close();
 });
@@ -1148,7 +1188,7 @@ test("⚙ opens Options over the match: Esc closes it, and the attack and the ma
 
   const clock = page.locator(".hud-scoreboard");
   const before = (await clock.textContent()) ?? "";
-  await page.locator(".hud-options").click();
+  await (await hudMenuRow(page, ".hud-options")).click();
   const options = page.getByRole("dialog", { name: "Options" });
   await expect(options).toBeVisible();
   // Not paused: the clock runs under it.
@@ -1164,6 +1204,7 @@ test("⚙ opens Options over the match: Esc closes it, and the attack and the ma
   const afterEsc = (await clock.textContent()) ?? "";
   await expect(clock).not.toHaveText(afterEsc);
   await expect(attacking).toBeVisible();
-  await expect(page.locator(".hud-options")).toBeFocused();
+  // Its row went with ☰'s list, so focus goes back to ☰ (#3923).
+  await expect(page.locator(".hud-menu-toggle")).toBeFocused();
   await opponent.close();
 });

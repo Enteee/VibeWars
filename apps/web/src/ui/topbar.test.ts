@@ -13,10 +13,9 @@ import {
   putsMoreAway,
   showJoin,
   type StatusElement,
-  TOPBAR_FOLD_GLYPH,
 } from "./topbar.js";
 import { LOBBY_ICON } from "./icons.js";
-import { MORE_ACTIONS_GLYPH } from "./kit.js";
+import { MORE_ACTIONS_GLYPH, TOPBAR_FOLD_GLYPH } from "./kit.js";
 
 const toasts: string[] = [];
 

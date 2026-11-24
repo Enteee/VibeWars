@@ -1,6 +1,7 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
 import type { LanguageCode } from "../apps/web/src/i18n/languages.js";
+import { hudMenuRow } from "./helpers/hud-menu.js";
 import { lobbyWindow, openRail } from "./helpers/menu.js";
 import { OVERLAY_VIEWPORTS, clickTopbarIcon, expectCloseAtTopRight } from "./helpers/overlay.js";
 import { startSoloMatch } from "./helpers/peers.js";
@@ -96,7 +97,7 @@ test("the HUD's [?] opens Help over a match; Esc closes it and gives focus back 
   await page.goto("./");
   await startSoloMatch(page);
   await expect(page.locator("#topbar")).toBeHidden();
-  await page.locator(".hud-help").click();
+  await (await hudMenuRow(page, ".hud-help")).click();
   const help = page.getByRole("dialog", { name: "Help" });
   await expect(help).toBeVisible();
   await expect(help.locator(".help-page h1")).toHaveText("Getting started");
@@ -106,7 +107,8 @@ test("the HUD's [?] opens Help over a match; Esc closes it and gives focus back 
 
   await page.keyboard.press("Escape");
   await expect(help).toHaveCount(0);
-  await expect(page.locator(".hud-help")).toBeFocused();
+  // Its row went with ☰'s list, so focus goes back to ☰ (#3923).
+  await expect(page.locator(".hud-menu-toggle")).toBeFocused();
 });
 
 test("Help, not the menu, says peers see your IP address (#541, #1442)", async ({ page }) => {

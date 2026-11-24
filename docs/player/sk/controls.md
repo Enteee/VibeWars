@@ -86,7 +86,8 @@ Na telefóne alebo tablete, v zápase aj na cvičisku:
 Mimo zápasu sú na hornej lište **[?]** (táto Pomoc), **⚙** (Nastavenia),
 **Lobby** (tvoj pozývací odkaz, Pripojiť sa k lobby, Otvorené/Zatvorené, Odísť a kto je v tvojom lobby; odznak ich spočíta),
 **♪** (hudba: čo hrá a ako nahlas), stlmenie zvuku a celá obrazovka. V zápase sú tie isté tlačidlá,
-okrem Lobby, vpravo hore na obrazovke. V úzkom okne sa tieto ikony a
+okrem Lobby, v **☰** vpravo hore na obrazovke, spolu s **Odísť**;
+**M** stále stlmí zvuk a **F10** stále odíde aj bez neho. V úzkom okne sa tieto ikony a
 ostatné tlačidlá obrazovky zbalia do **☰**; vonku zostane len jej hlavné tlačidlo.
 ⚙ otvorí Nastavenia ako okno pod lištou, obrazovka zostáva za ním; Esc, × alebo kliknutie mimo ho zatvorí.
 [?] otvorí Pomoc rovnako, ako okno pod ním s výberom stránky hore; zápas za ním beží ďalej.

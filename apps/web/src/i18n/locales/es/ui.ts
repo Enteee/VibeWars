@@ -643,6 +643,7 @@ export default {
   "hud.leaveRanked": "¿salir? Cuenta como derrota",
   "hud.leaveYes": "sí",
   "hud.lordPercent": "Señor {percent}%",
+  "hud.menu": "Menú",
   "hud.moraleBoostOurs": "¡Bonus de moral! +{percent}%",
   "hud.moraleBoostTheirs": "Bonus de moral enemigo",
   "hud.music": "Música",

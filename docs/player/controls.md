@@ -86,7 +86,8 @@ On a phone or a tablet, in a match and in the Training Ground:
 Outside a match, the top bar holds **[?]** (this Help), **⚙** (Options),
 **Lobby** (your invite link, Join lobby, Open/Closed, Leave, and who is in your lobby; its badge counts them),
 **♪** (music: what plays, and how loud), the sound mute and fullscreen. In a match the same buttons,
-but Lobby, sit at the top right of the screen. In a narrow window, these icons and
+but Lobby, are in **☰** at the top right of the screen, together with **Leave**;
+**M** still mutes and **F10** still leaves without it. In a narrow window, these icons and
 the screen's other buttons fold into **☰**; only its main button stays out.
 ⚙ opens Options as a window under the bar, the screen still behind it; Esc, × or a click outside closes it.
 [?] opens Help the same way, as a window under it with a page picker on top; a match keeps running behind it.

@@ -4,6 +4,7 @@ import { BUILD_FORMAT_VERSION } from "../../apps/web/src/storage/build-transfer.
 import { TEAM_FORMAT_VERSION } from "../../apps/web/src/storage/team-transfer.js";
 import { STARTER_BUILDS } from "../../packages/game-core/src/starter-builds.js";
 import { projection } from "../camera.js";
+import { hudMenuRow } from "./hud-menu.js";
 
 /**
  * A map whose ground is layer 0, and one whose ground is layer 1 (#3248):
@@ -772,7 +773,7 @@ export function learnTests(mapId: string): void {
     // leads into the menu quest (#3540), and the menu never offers it again.
     await expect(page.locator(".hud-scoreboard")).toBeVisible({ timeout: 30_000 });
     await expect(page.locator(".tutorial-frame[data-mark]")).toHaveCount(0);
-    const leave = page.locator(".hud-leave");
+    const leave = await hudMenuRow(page, ".hud-leave");
     await leave.getByRole("button", { name: "leave match" }).click();
     await leave.getByRole("button", { name: "yes" }).click();
     await expect(page.locator(".screen-rail")).toBeVisible({ timeout: 15_000 });

@@ -247,5 +247,5 @@ tu dirección IP.
   Q W E R y A S D F y el movimiento en las flechas. Están todas en
   [Controles](controls.md).
 
-El botón [?], arriba a la derecha, vuelve a abrir esta Ayuda, también en una
-partida.
+El botón [?], arriba a la derecha, vuelve a abrir esta Ayuda; en una partida
+está en **☰**, arriba a la derecha.

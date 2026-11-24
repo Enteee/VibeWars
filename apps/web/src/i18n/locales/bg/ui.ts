@@ -611,6 +611,7 @@ export default {
   "hud.leaveRanked": "напускане? Брои се за загуба",
   "hud.leaveYes": "да",
   "hud.lordPercent": "Лорд {percent}%",
+  "hud.menu": "Меню",
   "hud.moraleBoostOurs": "Прилив на морал! +{percent}%",
   "hud.moraleBoostTheirs": "Прилив на морал при врага",
   "hud.music": "Музика",

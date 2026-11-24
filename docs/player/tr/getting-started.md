@@ -250,4 +250,4 @@ görür.
   ve ok tuşlarıyla hareket ettirir. Hepsi [Kontroller](controls.md)
   sayfasındadır.
 
-Sağ üstteki [?] düğmesi bu Yardım'ı yeniden açar, maçta da.
+Sağ üstteki [?] düğmesi bu Yardım'ı yeniden açar; maçta sağ üstteki **☰** içindedir.

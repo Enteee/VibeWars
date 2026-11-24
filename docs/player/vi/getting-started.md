@@ -239,4 +239,4 @@ trận của bạn thấy địa chỉ IP của bạn.
   mục Điều khiển; mẫu VibeWars đặt kỹ năng trên Q W E R và A S D F và di chuyển
   bằng các phím mũi tên. Tất cả đều có trong [Điều khiển](controls.md).
 
-Nút [?], góc trên bên phải, mở lại trang Hỗ trợ này, kể cả trong trận.
+Nút [?], góc trên bên phải, mở lại trang Hỗ trợ này; trong trận, nút này nằm trong **☰**, góc trên bên phải.

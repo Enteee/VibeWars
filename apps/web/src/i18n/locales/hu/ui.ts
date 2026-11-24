@@ -611,6 +611,7 @@ export default {
   "hud.leaveRanked": "kilépsz? Vereségnek számít",
   "hud.leaveYes": "igen",
   "hud.lordPercent": "Céhúr {percent}%",
+  "hud.menu": "Menü",
   "hud.moraleBoostOurs": "Morálnövelés! +{percent}%",
   "hud.moraleBoostTheirs": "Ellenséges morálnövelés",
   "hud.music": "Zene",

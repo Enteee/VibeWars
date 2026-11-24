@@ -554,6 +554,7 @@ export default {
   "hud.leaveRanked": "离开？将计为失败",
   "hud.leaveYes": "是",
   "hud.lordPercent": "领主 {percent}%",
+  "hud.menu": "菜单",
   "hud.moraleBoostOurs": "士气提升！+{percent}%",
   "hud.moraleBoostTheirs": "敌方士气提升",
   "hud.music": "音乐",

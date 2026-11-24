@@ -617,6 +617,7 @@ export default {
   "hud.leaveRanked": "poistu? Lasketaan tappioksi",
   "hud.leaveYes": "kyllä",
   "hud.lordPercent": "Killanherra {percent}%",
+  "hud.menu": "Valikko",
   "hud.moraleBoostOurs": "Moraalinnousu! +{percent}%",
   "hud.moraleBoostTheirs": "Vihollisen moraalinnousu",
   "hud.music": "Musiikki",

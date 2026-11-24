@@ -660,6 +660,7 @@ export default {
   "hud.leaveRanked": "выйти? Засчитывается как поражение",
   "hud.leaveYes": "да",
   "hud.lordPercent": "Лорд {percent}%",
+  "hud.menu": "Меню",
   "hud.moraleBoostOurs": "Прилив морали! +{percent}%",
   "hud.moraleBoostTheirs": "Прилив морали у врага",
   "hud.music": "Музыка",

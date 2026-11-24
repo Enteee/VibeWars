@@ -641,6 +641,7 @@ export default {
   "hud.leaveRanked": "napustiti? Računa se kao poraz",
   "hud.leaveYes": "da",
   "hud.lordPercent": "Gospodar {percent}%",
+  "hud.menu": "Izbornik",
   "hud.moraleBoostOurs": "Podizanje morala! +{percent}%",
   "hud.moraleBoostTheirs": "Neprijateljsko podizanje morala",
   "hud.music": "Glazba",

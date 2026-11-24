@@ -563,6 +563,7 @@ export default {
   "hud.leaveRanked": "keluar? Dihitung kalah",
   "hud.leaveYes": "ya",
   "hud.lordPercent": "Penguasa {percent}%",
+  "hud.menu": "Menu",
   "hud.moraleBoostOurs": "Dorongan Moral! +{percent}%",
   "hud.moraleBoostTheirs": "Dorongan Moral musuh",
   "hud.music": "Musik",

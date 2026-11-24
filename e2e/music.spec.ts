@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 
 import { expect, test, type Page } from "@playwright/test";
 
+import { hudMenuRow } from "./helpers/hud-menu.js";
 import { joinFriend, openRail } from "./helpers/menu.js";
 import { OVERLAY_VIEWPORTS, clickTopbarIcon, expectCloseAtTopRight } from "./helpers/overlay.js";
 import { hostLobby, openPeers, startSoloMatch } from "./helpers/peers.js";
@@ -394,7 +395,7 @@ test("keys typed in the beat editor reach no skill in a match (#373)", async ({ 
   await startSoloMatch(page);
   const effects = page.getByRole("list", { name: "your effects" }).getByRole("listitem");
   await expect(effects).toHaveCount(0);
-  await page.locator(".hud-music").click();
+  await (await hudMenuRow(page, ".hud-music")).click();
   await page.getByRole("button", { name: "Edit what plays" }).click();
   const editor = page.getByRole("dialog", { name: /^Beat editor: / });
   await editor.locator(".cm-content").click();
@@ -417,7 +418,7 @@ test("in the HUD ♪ popover, pinning a track narrows neither its row nor its bu
   await page.goto("./");
   await startSoloMatch(page);
   await expect(page.locator(".hud-bar-health .hud-bar-label")).toContainText("hp");
-  await page.locator(".hud-music").click();
+  await (await hudMenuRow(page, ".hud-music")).click();
   const popover = page.locator(".hud-jukebox");
   const pinned = popover.locator(".jukebox-row", { hasText: "Ember Deep" });
   await pinned.getByRole("button", { name: "pin" }).click();
@@ -504,7 +505,7 @@ test("the now-playing toast at a match start covers none of the HUD (#372)", asy
     page.evaluate(() => (window as { toastBox?: Box }).toastBox ?? null);
   await expect.poll(toastBox, { timeout: 5_000 }).not.toBeNull();
   const box = await toastBox();
-  for (const part of [".hud-skills", ".hud-bar-health", ".hud-scoreboard", ".hud-mute"]) {
+  for (const part of [".hud-skills", ".hud-bar-health", ".hud-scoreboard", ".hud-menu-toggle"]) {
     const other = await page.locator(part).boundingBox();
     expect(other, part).not.toBeNull();
     if (box !== null && other !== null) {

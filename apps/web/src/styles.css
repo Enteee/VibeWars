@@ -4930,22 +4930,61 @@ body:has(> .splash) #menu-background::after {
 }
 
 /*
- * The match's buttons, top right, as one cluster (#454): leave and mute on
- * top, Options, fullscreen and music under them, music under mute.
+ * The match's buttons, top right (#454), folded into one ☰ (#3923). Its
+ * list drops under it, against the screen's edge, a row each: the icon
+ * and its name. Opaque, over the map and the target frame; it scrolls
+ * rather than reach down to the chat or the skill bar.
  */
 .hud-controls {
+  --hud-menu-toggle-size: 2.2rem;
+  --hud-menu-floor: 0.6rem;
+
   position: absolute;
   top: calc(0.6rem + var(--build-banner-space, 0px));
   right: 0.9rem;
+  z-index: 15;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
   gap: 0.4rem;
 }
 
-.hud-controls-row {
+.hud-menu-toggle {
+  display: grid;
+  place-items: center;
+  width: var(--hud-menu-toggle-size);
+  height: var(--hud-menu-toggle-size);
+  padding: 0;
+  background: rgb(14 17 22 / 85%);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.hud-menu-toggle:hover,
+.hud-menu-toggle:focus-visible,
+.hud-menu-toggle[aria-expanded="true"] {
+  border-color: var(--accent);
+}
+
+.hud-menu {
   display: flex;
-  gap: 0.4rem;
+  flex-direction: column;
+  min-width: 12rem;
+  max-height: calc(
+    100dvh - 1rem - var(--hud-menu-toggle-size) - var(--build-banner-space, 0px) -
+      var(--hud-menu-floor)
+  );
+  overflow-y: auto;
+  padding: 0.25rem;
+  background: rgb(14 17 22);
+  border: 1px solid var(--line);
+}
+
+.hud-menu[hidden] {
+  display: none;
 }
 
 .hud-mute,
@@ -4953,13 +4992,17 @@ body:has(> .splash) #menu-background::after {
 .hud-music,
 .hud-options,
 .hud-fullscreen {
-  display: grid;
-  place-items: center;
-  width: 2.2rem;
-  height: 2.2rem;
-  padding: 0;
-  background: rgb(14 17 22 / 85%);
-  border: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: 2.2rem;
+  padding: 0 0.5rem;
+  background: transparent;
+  border: 1px solid transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.85rem;
+  text-align: start;
   cursor: pointer;
 }
 
@@ -4967,13 +5010,10 @@ body:has(> .splash) #menu-background::after {
 .hud-mute:focus-visible,
 .hud-help:hover,
 .hud-help:focus-visible,
-.hud-help[aria-expanded="true"],
 .hud-music:hover,
 .hud-music:focus-visible,
-.hud-music[aria-expanded="true"],
 .hud-options:hover,
 .hud-options:focus-visible,
-.hud-options[aria-expanded="true"],
 .hud-fullscreen:hover,
 .hud-fullscreen:focus-visible {
   border-color: var(--accent);
@@ -4983,9 +5023,45 @@ body:has(> .splash) #menu-background::after {
   display: none;
 }
 
-.hud-controls img {
+.hud-menu img {
+  flex: none;
   width: 24px;
   height: 24px;
+}
+
+/* The first row (#160): "leave match (F10)", which asks before it leaves,
+   its question and yes and no in the row. */
+.hud-leave {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 2.2rem;
+  font-size: 0.85rem;
+}
+
+.hud-leave button {
+  padding: 0.15rem 0.5rem;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  font: inherit;
+  cursor: pointer;
+}
+
+/* Alone, it is a row like the others. */
+.hud-leave button:only-child {
+  flex: 1;
+  align-self: stretch;
+  padding: 0 0.5rem;
+  background: transparent;
+  border-color: transparent;
+  text-align: start;
+}
+
+.hud-leave button:hover,
+.hud-leave button:focus-visible {
+  border-color: var(--accent);
 }
 
 .hud-jukebox {
@@ -5014,32 +5090,6 @@ body:has(> .splash) #menu-background::after {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-
-/* Left of the mute button; asks before it leaves (#160). */
-.hud-leave {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  height: 2.2rem;
-  padding: 0 0.5rem;
-  background: rgb(14 17 22 / 85%);
-  border: 1px solid var(--line);
-  font-size: 0.85rem;
-}
-
-.hud-leave button {
-  padding: 0.15rem 0.5rem;
-  background: var(--panel);
-  border: 1px solid var(--line);
-  color: var(--ink);
-  font: inherit;
-  cursor: pointer;
-}
-
-.hud-leave button:hover,
-.hud-leave button:focus-visible {
-  border-color: var(--accent);
 }
 
 .hud-attacking {
@@ -7889,26 +7939,14 @@ body:has(#screens[style*="none"]) .now-playing {
 
 /*
  * A phone in a match (#1297): the centred scoreboard and target frame are
- * wider than the room left of the match buttons. So "leave" loses
- * " match (F10)", which stays in its name; the scoreboard and target go
- * under the first row of buttons, left, clear of the second and the
- * compass; and the toast takes the top left corner they leave, on one line.
- * Clear of the second row too (#1306): four 2.2rem buttons and three gaps
- * are 10rem, wider than the compass on a phone. The target frame's bar and
- * effects shrink to that room, less its padding, border and chain mark.
+ * wider than the room left of the compass. So they go under ☰ (#3923),
+ * left, clear of the compass; and the toast takes the top left corner
+ * they leave, on one line. The target frame's bar and effects shrink to
+ * that room, less its padding, border and chain mark.
  */
 @media (width <= 30rem) {
   :root {
-    --hud-top-width: calc(100vw - max(var(--compass-size), 10rem) - 2rem);
-  }
-
-  .hud-leave-extra {
-    position: absolute;
-    width: 1px;
-    height: 1px;
-    overflow: hidden;
-    clip-path: inset(50%);
-    white-space: nowrap;
+    --hud-top-width: calc(100vw - var(--compass-size) - 2rem);
   }
 
   /* Fitted against the right-hand compass: the same side in every language. */
@@ -9694,30 +9732,26 @@ body:has(> .splash) #app {
   }
 }
 
-/* The match's buttons, top right, take a finger too (#3889): they sit
-   beside the HUD, not in it, so the HUD's own rules miss them. Leave and
-   its yes and no grow inside their box, which drops its top and bottom
-   edge so that row is 44 px too. The compass goes down under the taller
-   rows, a little closer than with a mouse, to stay out of an upright
-   phone's middle; and on a phone the scoreboard and target keep clear of
-   the wider second row: four 44 px buttons and three gaps. */
+/* The match's ☰ and its list take a finger too (#3889, #3923): they sit
+   beside the HUD, not in it, so the HUD's own rules miss them. Leave's
+   yes and no grow inside their row. The compass stays a little lower
+   than with a mouse, out of an upright phone's middle. */
 @media (pointer: coarse) {
   :root {
     --compass-top: calc(0.6rem + 2 * 44px + 0.4rem + 0.2rem + var(--build-banner-space, 0px));
   }
 
+  .hud-controls {
+    --hud-menu-toggle-size: 44px;
+  }
+
+  .hud-leave,
   .hud-mute,
   .hud-help,
   .hud-music,
   .hud-options,
   .hud-fullscreen {
-    width: 44px;
-    height: 44px;
-  }
-
-  .hud-leave {
-    height: auto;
-    border-block: none;
+    min-height: 44px;
   }
 
   .hud-leave button {
@@ -9726,9 +9760,11 @@ body:has(> .splash) #app {
   }
 }
 
-@media (pointer: coarse) and (width <= 30rem) {
-  :root {
-    --hud-top-width: calc(100vw - max(var(--compass-size), 4 * 44px + 1.2rem) - 2rem);
+/* A phone on its side (#3923): the list scrolls short of the skill bar
+   and your bars, which take the bottom of the screen. */
+@media (pointer: coarse) and (height <= 30rem) {
+  .hud-controls {
+    --hud-menu-floor: 7rem;
   }
 }
 

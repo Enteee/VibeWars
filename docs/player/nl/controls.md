@@ -85,7 +85,8 @@ Op een telefoon of tablet, in een match en op het trainingsveld:
 Buiten een match staan in de bovenste balk **[?]** (deze Help), **⚙** (Opties),
 **Lobby** (je uitnodigingslink, Lobby binnengaan, Open/Gesloten, Verlaten, en wie er in je lobby zit; de badge telt ze),
 **♪** (muziek: wat er speelt, en hoe hard), geluid dempen en volledig scherm. In een match staan dezelfde knoppen,
-behalve Lobby, rechtsboven in het scherm. In een smal venster klappen deze pictogrammen en
+behalve Lobby, in **☰** rechtsboven in het scherm, samen met **Verlaten**;
+**M** dempt nog steeds en **F10** verlaat de match nog steeds zonder. In een smal venster klappen deze pictogrammen en
 de andere knoppen van het scherm in tot **☰**; alleen de hoofdknop blijft staan.
 ⚙ opent Opties als venster onder de balk, met het scherm er nog achter; Esc, × of een klik erbuiten sluit het.
 [?] opent Help op dezelfde manier, als venster eronder met een paginakiezer bovenaan; een match loopt erachter door.

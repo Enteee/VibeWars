@@ -608,6 +608,7 @@ export const en = {
   "hud.leaveRanked": "leave? It counts as a loss",
   "hud.leaveYes": "yes",
   "hud.lordPercent": "Lord {percent}%",
+  "hud.menu": "Menu",
   "hud.moraleBoostOurs": "Morale boost! +{percent}%",
   "hud.moraleBoostTheirs": "Enemy morale boost",
   "hud.music": "Music",

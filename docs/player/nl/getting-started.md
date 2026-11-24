@@ -245,4 +245,4 @@ Online spelen is peer-to-peer: de andere spelers in je match zien je IP-adres.
   A S D F en beweegt met de pijltjestoetsen. Ze staan allemaal in
   [Besturing](controls.md).
 
-De knop [?], rechtsboven, opent deze Help opnieuw, ook in een match.
+De knop [?], rechtsboven, opent deze Help opnieuw; in een match zit hij in **☰**, rechtsboven.

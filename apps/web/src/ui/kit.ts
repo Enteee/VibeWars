@@ -907,6 +907,12 @@ export function loadLine(
 /** The glyph on a screen's more-actions toggle (#1902). */
 export const MORE_ACTIONS_GLYPH = "⋯";
 
+/**
+ * The glyph on the top bar's fold on a phone (#3886): ☰, so it does not
+ * look like an editor's own ⋯ beside it. A match's menu wears it too (#3923).
+ */
+export const TOPBAR_FOLD_GLYPH = "☰";
+
 /** A screen's ⋯ (#1902): everything it does besides Save. */
 export interface MoreMenu {
   /** The ⋯ button, which an inline confirmation from the menu hangs off. */

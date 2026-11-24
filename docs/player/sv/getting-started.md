@@ -246,4 +246,4 @@ IP-adress.
   under Kontroller; förvalet VibeWars lägger förmågorna på Q W E R och A S D F
   och rörelsen på piltangenterna. Alla finns i [Kontroller](controls.md).
 
-Knappen [?] uppe till höger öppnar den här Hjälpen igen, även i en match.
+Knappen [?] uppe till höger öppnar den här Hjälpen igen; i en match sitter den i **☰**, uppe till höger.

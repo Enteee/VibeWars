@@ -614,6 +614,7 @@ export default {
   "hud.leaveRanked": "αποχώρηση; Μετράει ως ήττα",
   "hud.leaveYes": "ναι",
   "hud.lordPercent": "Άρχοντας {percent}%",
+  "hud.menu": "Μενού",
   "hud.moraleBoostOurs": "Ενίσχυση ηθικού! +{percent}%",
   "hud.moraleBoostTheirs": "Εχθρική ενίσχυση ηθικού",
   "hud.music": "Μουσική",

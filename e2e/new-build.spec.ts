@@ -1,6 +1,7 @@
 import { expect, test, type Locator } from "@playwright/test";
 
 import { en } from "../apps/web/src/i18n/en.js";
+import { hudMenuRow } from "./helpers/hud-menu.js";
 import { hostLobby, startSoloMatch } from "./helpers/peers.js";
 
 /**
@@ -77,12 +78,12 @@ test("on a phone the banner makes room: nothing at the top hides under it, its b
   await startSoloMatch(page);
   await below(".hud-top");
   await below(".hud-controls");
-  // The compass sits under the match buttons, so it moves down with them.
+  // The compass sits under the match's ☰, so it moves down with it.
   await below(".compass", page.locator(".hud-controls"));
-  // So does the ♪ jukebox, which opens under them.
-  await page.locator(".hud-music").click();
+  // So does the ♪ jukebox, which opens under it; its row shut ☰'s list (#3923).
+  await (await hudMenuRow(page, ".hud-music")).click();
   await below(".hud-jukebox", page.locator(".hud-controls"));
-  await page.locator(".hud-music").click();
+  await page.keyboard.press("Escape");
   await expect(page.locator(".hud-jukebox")).toHaveCount(0);
 
   await banner.getByRole("button", { name: "Not now" }).click();

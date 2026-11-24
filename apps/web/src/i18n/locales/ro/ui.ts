@@ -643,6 +643,7 @@ export default {
   "hud.leaveRanked": "ieși? Contează ca înfrângere",
   "hud.leaveYes": "da",
   "hud.lordPercent": "Lord {percent}%",
+  "hud.menu": "Meniu",
   "hud.moraleBoostOurs": "Impuls de moral! +{percent}%",
   "hud.moraleBoostTheirs": "Impuls de moral inamic",
   "hud.music": "Muzică",

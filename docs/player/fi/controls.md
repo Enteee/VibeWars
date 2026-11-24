@@ -92,7 +92,8 @@ Puhelimella tai tabletilla, ottelussa ja harjoituskentällä:
 Ottelun ulkopuolella yläpalkissa ovat **[?]** (tämä Ohje), **⚙** (Asetukset),
 **Aula** (kutsulinkkisi, Liity aulaan, Avoin/Suljettu, Poistu ja aulasi jäsenet; sen merkki laskee heidät),
 **♪** (musiikki: mitä soi ja kuinka kovaa), äänen mykistys ja koko näyttö. Ottelussa samat painikkeet
-Aulaa lukuun ottamatta ovat näytön oikeassa yläkulmassa. Kapeassa ikkunassa nämä kuvakkeet ja
+Aulaa lukuun ottamatta ovat näytön oikeassa yläkulmassa **☰**-valikossa
+yhdessä **Poistu**-painikkeen kanssa; **M** mykistää yhä ja **F10** poistuu yhä ilman sitä. Kapeassa ikkunassa nämä kuvakkeet ja
 näkymän muut painikkeet taittuvat **☰**-valikkoon; vain sen pääpainike jää näkyviin.
 ⚙ avaa Asetukset ikkunana palkin alle, näkymä yhä sen takana; Esc, × tai napsautus ikkunan ulkopuolelle sulkee sen.
 [?] avaa Ohjeen samalla tavalla, ikkunana sen alle, ylimpänä sivuvalitsin; ottelu jatkuu sen takana.

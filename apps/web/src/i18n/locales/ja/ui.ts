@@ -565,6 +565,7 @@ export default {
   "hud.leaveRanked": "退出しますか? 敗北扱いになります",
   "hud.leaveYes": "はい",
   "hud.lordPercent": "ロード {percent}%",
+  "hud.menu": "メニュー",
   "hud.moraleBoostOurs": "モラルブースト! +{percent}%",
   "hud.moraleBoostTheirs": "敵のモラルブースト",
   "hud.music": "音楽",
