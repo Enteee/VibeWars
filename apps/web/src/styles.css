@@ -9576,8 +9576,8 @@ body:has(> .splash) #app {
    no text is under 12 px. A match's own HUD is outside #screens. The
    editors' × and paper-doll spots sit on a slot's corner, where 44 px
    would cover the slot: the editors' touch layout (#3777) sizes them.
-   The Training Ground's bar is sized as the HUD's (#3887): a finger,
-   unless eight do not fit the phone's width. */
+   The Training Ground's bar is sized as the HUD's (#3887), a finger
+   unless the screen is narrower than eight (#3927). */
 @media (pointer: coarse) {
   :is(#topbar, #screens)
     :is(
@@ -9600,6 +9600,12 @@ body:has(> .splash) #app {
   :is(#topbar, #screens) label:has(> input:is([type="checkbox"], [type="radio"])) {
     min-block-size: 44px;
     min-inline-size: 44px;
+  }
+
+  /* The Training Ground's weapon sets, a finger each, keep their grid
+     wide enough to hold them side by side (#3927). */
+  .training-skills > .weapon-sets {
+    grid-template-columns: repeat(2, max-content);
   }
 
   /* A card's corner buttons are a finger tall now: the card keeps room
@@ -9995,6 +10001,26 @@ body:has(> .splash) #app {
     height: min(44px, calc((var(--skill-row-room) - 7 * 4px) / 8));
   }
 
+  /* The Training Ground's eight stay a finger wide (#3927), the panel
+     collapsed or expanded: narrower than eight of them and their gaps
+     (380 px), the bar reaches out over its panel's padding to the
+     screen's edges, then its gaps give way, and only on a screen
+     narrower than eight fingers (352 px) do they shrink. */
+  .editor-layout.has-training > .training.is-expanded {
+    padding-inline: 0.9rem;
+    border-inline: 0;
+  }
+
+  .editor-layout.has-training > .training > .training-skills {
+    margin-inline: max(-0.9rem, min(0px, (100vw - 1.8rem - 380px) / 2));
+    column-gap: clamp(0px, (100vw - 8 * 44px) / 7, 4px);
+  }
+
+  .editor-layout.has-training > .training .training-skill {
+    width: min(44px, 100cqi / 8);
+    height: min(44px, 100cqi / 8);
+  }
+
   /* Over the bar's left end, a row of its own: the panel has no bars
      beside it to stand by. Finger-wide, the four sets lie in one line,
      which keeps the bar a screen's height up, clear of the chat's icon. */
@@ -10024,6 +10050,37 @@ body:has(> .splash) #app {
 
   [dir="rtl"] .hud-bars {
     margin-inline: 0 calc(2 * 44px + 4px + 8px);
+  }
+}
+
+/* Expanded on a phone (#3927), held either way, the skill bar takes a
+   row of its own, the whole width: beside the meter it had no room for
+   its eight, and upright none at all. */
+@media (pointer: coarse) and ((width <= 30rem) or (height <= 30rem)) {
+  .editor-layout.has-training > .training.is-expanded {
+    grid-template-areas:
+      "controls controls"
+      "stage stage"
+      "hint message"
+      "vitals meter"
+      "skills skills";
+  }
+
+  /* Upright, one column: beside the meter, the vitals and the hint had
+     none of the width left. */
+  @media (width <= 30rem) {
+    .editor-layout.has-training > .training.is-expanded {
+      grid-template-columns: minmax(0, 1fr);
+      grid-template-rows: auto minmax(0, 1fr) auto auto auto auto auto;
+      grid-template-areas:
+        "controls"
+        "stage"
+        "hint"
+        "message"
+        "vitals"
+        "meter"
+        "skills";
+    }
   }
 }
 
