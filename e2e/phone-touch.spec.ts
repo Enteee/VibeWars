@@ -82,6 +82,8 @@ async function takeControl(page: Page, canvas: Locator): Promise<void> {
   }
   await page.touchscreen.tap(box.x + 8, box.y + 8);
   await expect(page.locator(".training")).toHaveClass(/is-armed/);
+  // A phone is told the gestures, not keys it does not have (#3962).
+  await expect(page.locator(".training-hint")).toContainText("tap a skill to cast");
 }
 
 /**

@@ -28,6 +28,7 @@ import {
   tapIntents,
 } from "../input/mouse-intents.js";
 import { attachKeyboardMoveInput } from "../input/keyboard-move.js";
+import { isTouchOnly } from "../input/touch-only.js";
 import { loadLayoutLabeller, type KeyLabeller } from "../input/key-labels.js";
 import {
   SKILL_ACTIONS,
@@ -946,7 +947,11 @@ export function createTrainingPanel(): TrainingPanel {
 
   const onStageFocus = (): void => {
     root.classList.add("is-armed");
-    hint.textContent = armedHint(keymap, keyLabel);
+    hint.textContent = armedHint(
+      keymap,
+      keyLabel,
+      isTouchOnly((query) => matchMedia(query).matches),
+    );
   };
 
   const onStageBlur = (): void => {
@@ -1023,7 +1028,11 @@ export function createTrainingPanel(): TrainingPanel {
       paintSkills(session.connection.skillBar);
     }
     if (root.classList.contains("is-armed")) {
-      hint.textContent = armedHint(keymap, keyLabel);
+      hint.textContent = armedHint(
+        keymap,
+        keyLabel,
+        isTouchOnly((query) => matchMedia(query).matches),
+      );
     }
   });
   // A double right click on an enemy attacks it, as Space would (#298, #438).
