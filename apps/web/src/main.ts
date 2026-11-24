@@ -619,8 +619,11 @@ async function main(): Promise<void> {
   let matchMode: LobbyMode | undefined;
   /** `match` is a queued party's warmup (#3899): kept nowhere, its end no news. */
   let matchWarmup = false;
-  /** A warmup gave way to a found match (#3899): said once that match is entered. */
-  let warmupFound = false;
+  /**
+   * The found lobby a warmup gave way to (#3899): said once its match is
+   * entered. Kept by lobby, as the queue has ended by then.
+   */
+  let warmupFoundIn: LobbyConnection | undefined;
   /**
    * A warmup's line over its match (#3899): the top bar is hidden there
    * (#454), so the queue's ring, its flyout and Leave Queue come with it.
@@ -697,6 +700,8 @@ async function main(): Promise<void> {
         teams: number | undefined;
         /** Its match is over: whoever leaves it first is no news. */
         finished: boolean;
+        /** It has played a warmup (#3899), so its found match says the warmups are over. */
+        warmedUp: boolean;
         /** The Heroes' Ascent round its lobby queued at (#1996); `null` in other modes. */
         readonly ascentRound: number | null;
         /** The round its match plays: a later one when it skipped ahead (#2687). */
@@ -2329,6 +2334,7 @@ async function main(): Promise<void> {
       partyClosed: undefined,
       teams: undefined,
       finished: false,
+      warmedUp: false,
       ascentRound: snapshot.ascentRound,
       playedRound: snapshot.ascentRound,
       groupMapId: undefined,
@@ -2405,8 +2411,11 @@ async function main(): Promise<void> {
           if (current.party.getSnapshot().isHost) {
             current.party.endWarmup();
           }
+          // The host's end of the warmup may have closed this tab's already.
+          if (current.warmedUp) {
+            warmupFoundIn = joined;
+          }
           if (match !== undefined && matchWarmup) {
-            warmupFound = true;
             void dropWarmupView();
           }
           current.parked = { hosted, entrant, name, look };
@@ -2506,7 +2515,6 @@ async function main(): Promise<void> {
       return;
     }
     teamQueue = undefined;
-    warmupFound = false;
     clearInterval(ending.timer);
     stopTeamFlash?.();
     stopTeamFlash = undefined;
@@ -3364,8 +3372,11 @@ async function main(): Promise<void> {
     matchFinished = false;
     matchMode = from.getSnapshot().mode;
     matchWarmup = from.getSnapshot().warmup;
-    const found = warmupFound;
-    warmupFound = false;
+    if (matchWarmup && teamQueue !== undefined) {
+      teamQueue.warmedUp = true;
+    }
+    const found = warmupFoundIn === from;
+    warmupFoundIn = undefined;
     // The menu quest's closing line goes as its match is found (#3544).
     menuQuest?.stop();
     menuQuest = undefined;
