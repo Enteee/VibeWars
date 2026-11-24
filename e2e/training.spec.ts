@@ -1132,7 +1132,7 @@ test("(26) left click walks, even onto a dummy, and never targets; right click t
   await page.mouse.click(moved.x, moved.y, { button: "right" });
   await page.mouse.move(1, 1);
   await expect.poll(() => shownNames(page)).toEqual([LADDER_IDS[0]]);
-  await expect(page.locator(".training-attacking")).not.toContainText("attacking");
+  await expect(page.locator(".training-attacking")).toBeHidden();
 });
 
 test("(27) a right click on the ground moves nobody and keeps the target (#438)", async ({
@@ -1725,10 +1725,10 @@ test("(43) Esc stops the attack and keeps the target, then a second Esc clears i
   await page.keyboard.press("Tab");
   await expect.poll(() => shownNames(page)).toHaveLength(1);
   await page.keyboard.press(key("attack"));
-  await expect(attacking).toContainText("attacking");
+  await expect(attacking).toBeVisible();
 
   await page.keyboard.press("Escape");
-  await expect(attacking).not.toContainText("attacking");
+  await expect(attacking).toBeHidden();
   await expect.poll(() => shownNames(page)).toHaveLength(1);
   await expect(page.locator(".training")).toHaveClass(/is-armed/);
 
@@ -1920,7 +1920,7 @@ test("(47) under Show names, a right click on a name only targets it; a left cli
   await expect.poll(() => shownNames(page)).toEqual(["ranged"]);
   // Long enough for an attack, or a walk, to have started.
   await page.waitForTimeout(1000);
-  await expect(page.locator(".training-attacking")).not.toContainText("attacking");
+  await expect(page.locator(".training-attacking")).toBeHidden();
   expect(await stage.getAttribute("data-positions")).toBe(before);
 
   // One Shift+left click on the name attacks at once.
