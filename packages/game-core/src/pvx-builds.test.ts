@@ -190,10 +190,12 @@ describe("the PvX team builds (#2555)", () => {
       const random = seeded(seed);
       const team = pickStarterTeam(random, size);
       if (team === undefined) throw new Error("no team");
-      expect(pickStarterTeam(random, size, team)?.name).not.toBe(team.name);
-      expect(pickStarterTeam(() => 0, size, team)?.name).not.toBe(team.name);
+      expect(pickStarterTeam(random, size, [team])?.name).not.toBe(team.name);
+      expect(pickStarterTeam(() => 0, size, [team])?.name).not.toBe(team.name);
       const solo = pickSoloTeam(() => 0, size);
-      expect(pickSoloTeam(() => 0, size, solo)?.name).not.toBe(solo?.name);
+      expect(pickSoloTeam(() => 0, size, solo === undefined ? [] : [solo])?.name).not.toBe(
+        solo?.name,
+      );
     }
   });
 });

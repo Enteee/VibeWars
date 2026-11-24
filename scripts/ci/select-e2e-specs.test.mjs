@@ -176,11 +176,11 @@ describe("the plan under the real budget", () => {
     const yml = fs.readFileSync(".github/workflows/e2e-repeat.yml", "utf8");
     const job = yml.slice(yml.indexOf("\n  e2e-repeat:"));
     expect(/timeout-minutes: (\d+)/.exec(job)?.[1]).toBe(String(JOB_TIMEOUT_MINUTES));
-    expect(MAX_SPEC_SECONDS).toBe(1400);
+    expect(MAX_SPEC_SECONDS).toBe(1200);
   });
 
   it("refuses a spec too long for one job, naming it", () => {
-    expect(() => planJobs({ "huge.spec.ts": 1401 }, 10, SECONDS_PER_JOB, MAX_JOBS)).toThrow(
+    expect(() => planJobs({ "huge.spec.ts": 1201 }, 10, SECONDS_PER_JOB, MAX_JOBS)).toThrow(
       /huge\.spec\.ts.*split the spec/,
     );
   });

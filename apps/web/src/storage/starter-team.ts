@@ -122,7 +122,7 @@ export async function rerollStarterTeam(
   now: number,
 ): Promise<StoredTeam> {
   // By name, so a team of PvX solo builds (#2555) is not drawn again either.
-  const starter = pickStarterTeam(random, current.size, current);
+  const starter = pickStarterTeam(random, current.size, [current]);
   if (starter === undefined) {
     return current;
   }
