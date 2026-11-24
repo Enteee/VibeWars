@@ -573,6 +573,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       const loaded = awaited.size === 0 && unready() === 0;
       if (loaded || pre.ticks >= ticksOf(times.joinTimeoutSeconds)) {
         pre = { phase: "countdown", ticks: 0 };
+        logInput([sim.tick, "countdown", ticksOf(times.countdownSeconds)]);
       }
     }
     if (pre?.phase === "countdown" && times !== null) {
@@ -580,9 +581,14 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
         pre = null;
       }
     }
-    if (pre !== null) {
+    if (pre !== null && times !== null) {
+      // The countdown's seconds left, as the bots prepare for them (#3910).
+      const secondsLeft =
+        pre.phase === "countdown"
+          ? (ticksOf(times.countdownSeconds) - pre.ticks) * TICK_SECONDS
+          : null;
       pre.ticks += 1;
-      return sim.stepHeld(TICK_SECONDS);
+      return sim.stepHeld(TICK_SECONDS, secondsLeft);
     }
     if (!startLogged) {
       startLogged = true;

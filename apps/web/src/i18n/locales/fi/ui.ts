@@ -638,6 +638,7 @@ export default {
   "hud.preMatchStartingAnyway":
     "Odotetaan pelaajia: {joined}/{expected}, alkaa silti {seconds} s kuluttua",
   "hud.preMatchStartsIn": "Ottelu alkaa {seconds} kuluttua",
+  "hud.preMatchSelfAllyOnly": "Ennen alkua: vain taitoja itseesi tai liittolaisiin.",
   "hud.preMatchWaiting": "Odotetaan pelaajia: {joined}/{expected}",
   "hud.priest": "pappi",
   "hud.priestDead": "pappi (kuollut)",

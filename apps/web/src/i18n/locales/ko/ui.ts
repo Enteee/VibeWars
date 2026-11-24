@@ -581,6 +581,7 @@ export default {
   "hud.preMatchHeld": "경기가 시작될 때까지 시작 지점 근처에 머뭅니다.",
   "hud.preMatchStartingAnyway": "플레이어 대기 중: {joined}/{expected}, {seconds}초 후 그대로 시작",
   "hud.preMatchStartsIn": "{seconds} 후 경기 시작",
+  "hud.preMatchSelfAllyOnly": "시작 전: 자신이나 아군에게 쓰는 스킬만 가능합니다.",
   "hud.preMatchWaiting": "플레이어 대기 중: {joined}/{expected}",
   "hud.priest": "사제",
   "hud.priestDead": "사제 (사망)",

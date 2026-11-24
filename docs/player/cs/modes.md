@@ -16,7 +16,7 @@ Každá mapa je dělaná pro určité velikosti týmů a režim hraje jen mapu d
 
 V Bitvě cechů, Běhu s relikvií, Králi kopce nebo Dobývání bodů dostane cíl mimo obrazovku nebo pod HUD obrysovou šipku na okraji obrazovky: stojan nebo svatyně v barvě vlastníka, šedá, když nepatří nikomu, oltář zlatě. Plná šipka hráče se vykreslí přes ni.
 
-Zápas začíná se všemi drženými u jejich startu: můžeš udělat pár kroků, ale nemůžeš bojovat ani používat dovednosti. Třpytivá stěna kolem tvého startu ukazuje, kam až můžeš dojít. Řádek nahoře počítá hráče, kterým se zápas načetl. Jakmile se načte všem, odpočítá 10 sekund a zápas začne, a s ním i jeho čas. Na hráče, kterému se zápas nenačetl ani po 20 sekundách, se nečeká: odpočet začne bez něj a připojit se může i později.
+Zápas začíná se všemi drženými u jejich startu: můžeš udělat pár kroků a připravit se dovednostmi na sebe a své spojence, jako jsou očarování, postoje a léčení, ale nemůžeš útočit ani použít dovednost na nepřítele. Energie a zdraví se během čekání obnovují a boti se připravují také. Třpytivá stěna kolem tvého startu ukazuje, kam až můžeš dojít. Řádek nahoře počítá hráče, kterým se zápas načetl. Jakmile se načte všem, odpočítá 10 sekund a zápas začne, a s ním i jeho čas. Na hráče, kterému se zápas nenačetl ani po 20 sekundách, se nečeká: odpočet začne bez něj a připojit se může i později.
 
 ## Vyhlazení
 

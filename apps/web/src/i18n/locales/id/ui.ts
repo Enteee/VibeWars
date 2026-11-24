@@ -584,6 +584,7 @@ export default {
   "hud.preMatchStartingAnyway":
     "Menunggu pemain: {joined}/{expected}, tetap dimulai dalam {seconds} dtk",
   "hud.preMatchStartsIn": "Pertandingan dimulai dalam {seconds}",
+  "hud.preMatchSelfAllyOnly": "Sebelum mulai: hanya skill pada dirimu atau sekutu.",
   "hud.preMatchWaiting": "Menunggu pemain: {joined}/{expected}",
   "hud.priest": "pendeta",
   "hud.priestDead": "pendeta (tewas)",

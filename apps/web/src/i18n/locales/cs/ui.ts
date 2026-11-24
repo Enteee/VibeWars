@@ -680,6 +680,7 @@ export default {
   "hud.preMatchHeld": "Do začátku zápasu zůstáváš u svého startovního bodu.",
   "hud.preMatchStartingAnyway": "Čeká se na hráče: {joined}/{expected}, začne i tak za {seconds} s",
   "hud.preMatchStartsIn": "Zápas začne za {seconds}",
+  "hud.preMatchSelfAllyOnly": "Před začátkem: jen dovednosti na sebe nebo spojence.",
   "hud.preMatchWaiting": "Čeká se na hráče: {joined}/{expected}",
   "hud.priest": "kněz",
   "hud.priestDead": "kněz (mrtvý)",

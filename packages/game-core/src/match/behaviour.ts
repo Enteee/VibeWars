@@ -4,7 +4,7 @@ import type { Projectile } from "../skills/projectile.js";
 import type { StatusId } from "../skills/status.js";
 import { effectiveMaxHealth } from "../skills/tick.js";
 import { distance, dot, normalize, sub, vec2, ZERO, type Vec2 } from "../vec2.js";
-import { guard, playBuild } from "./bot/play-build.js";
+import { guard, playBuild, prepareInBubble } from "./bot/play-build.js";
 import type { FlankPlace, HoldPlace } from "./bot/plan.js";
 import type { PlanOverride } from "./bot/stalemate.js";
 import type { BreakableField } from "./breakables.js";
@@ -336,6 +336,12 @@ export interface BehaviourCursor {
         readonly routedAt: number;
       }
     | undefined;
+  /** `play-build` before the start (#3910): seconds until it wanders next. */
+  wanderSeconds: number;
+  /** `play-build` before the start: how many wanders it has rolled, for the next roll. */
+  wanders: number;
+  /** `play-build` before the start: where it is wandering to, until there. */
+  wanderTo: Vec2 | undefined;
 }
 
 export interface BehaviourContext {
@@ -385,6 +391,11 @@ export interface BehaviourContext {
   readonly seed: number;
   /** The match second this think happens at (#3138). */
   readonly now: number;
+  /**
+   * Held before the start (#3910): the countdown's seconds left, `null`
+   * while it waits for the players; `undefined` once under way.
+   */
+  readonly preMatch: { readonly secondsLeft: number | null } | undefined;
   /** Spots on the decks above the ground (#3141), in map order; `[]` on a flat map. */
   readonly highGround: readonly HighGroundSpot[];
   /** Spots behind walls and under decks (#3369), on every layer, in map order; see `coverSpots`. */
@@ -530,6 +541,9 @@ export function createCursor(): BehaviourCursor {
     duck: undefined,
     duckReadyAt: 0,
     lever: undefined,
+    wanderSeconds: 0,
+    wanders: 0,
+    wanderTo: undefined,
   };
 }
 
@@ -608,6 +622,12 @@ export function decide(
   cursor: BehaviourCursor,
   context: BehaviourContext,
 ): BehaviourIntent {
+  // Before the start, a bot prepares and wanders (#3910); nothing else acts.
+  if (context.preMatch !== undefined) {
+    return behaviour.kind === "play-build"
+      ? prepareInBubble(behaviour, cursor, context, context.preMatch.secondsLeft)
+      : STAND_STILL;
+  }
   switch (behaviour.kind) {
     case "idle":
       return STAND_STILL;

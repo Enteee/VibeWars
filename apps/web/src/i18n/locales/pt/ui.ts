@@ -664,6 +664,7 @@ export default {
   "hud.preMatchStartingAnyway":
     "Aguardando jogadores: {joined}/{expected}, começa mesmo assim em {seconds} s",
   "hud.preMatchStartsIn": "A partida começa em {seconds}",
+  "hud.preMatchSelfAllyOnly": "Antes do início: só habilidades em você ou em aliados.",
   "hud.preMatchWaiting": "Aguardando jogadores: {joined}/{expected}",
   "hud.priest": "sacerdote",
   "hud.priestDead": "sacerdote (morto)",

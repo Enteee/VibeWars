@@ -579,6 +579,7 @@ export default {
   "hud.preMatchHeld": "คุณจะถูกจำกัดให้อยู่ใกล้จุดเกิดจนกว่าการแข่งขันจะเริ่ม",
   "hud.preMatchStartingAnyway": "กำลังรอผู้เล่น: {joined}/{expected} จะเริ่มอยู่ดีใน {seconds} วิ",
   "hud.preMatchStartsIn": "การแข่งขันเริ่มใน {seconds}",
+  "hud.preMatchSelfAllyOnly": "ก่อนเริ่ม: ใช้ได้เฉพาะสกิลกับตัวเองหรือพันธมิตร",
   "hud.preMatchWaiting": "กำลังรอผู้เล่น: {joined}/{expected}",
   "hud.priest": "นักบวช",
   "hud.priestDead": "นักบวช (ตาย)",

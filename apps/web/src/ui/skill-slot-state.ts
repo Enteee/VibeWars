@@ -9,6 +9,7 @@ import {
   isResurrectionSkill,
   isSpell,
   isWeaponId,
+  preMatchAllowed,
   preventsAttacks,
   preventsResurrection,
   preventsShoutsAndChants,
@@ -240,6 +241,19 @@ export function silenced(skillBar: readonly (SkillSlot | null)[], self: PlayerSn
         (noShouts && (skill.type === "shout" || skill.type === "chant")) ||
         (noSignets && skill.type === "signet"))
     );
+  });
+}
+
+/**
+ * Which slots hold a skill refused before the start (#3910): any not only
+ * for the caster or its allies, while `held`. The same check the host
+ * makes (`preMatchAllowed`), so the dimmed slot and the refusal agree.
+ * A hint, not a gate.
+ */
+export function heldBack(skillBar: readonly (SkillSlot | null)[], held: boolean): boolean[] {
+  return skillBar.map((slot) => {
+    const skill = slot === null ? undefined : getSkill(slot.id);
+    return held && skill !== undefined && !preMatchAllowed(skill);
   });
 }
 
