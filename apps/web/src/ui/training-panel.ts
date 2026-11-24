@@ -39,6 +39,7 @@ import {
 } from "../input/keymap.js";
 import { loadKeymap } from "../input/keymap-preference.js";
 import { skillSlotForKeyDown } from "../input/skill-keys.js";
+import { isTouchOnly } from "../input/touch-only.js";
 import { weaponSetIntent } from "../input/weapon-set-keys.js";
 import { attachNameReveal } from "../input/name-reveal.js";
 import { closestTarget, nextTabTarget, selfTargetIntent } from "../input/tab-target.js";
@@ -176,6 +177,14 @@ const TAKES_KEYBOARD = "input, textarea, select, [contenteditable]:not([contente
  */
 const EXPAND_ICON = iconSvg("M1 5V1h4M11 1h4v4M15 11v4h-4M5 15H1v-4");
 const COLLAPSE_ICON = iconSvg("M5 1v4H1M15 5h-4V1M11 15v-4h4M1 11h4v4");
+
+/**
+ * Whether this device is touch-only now (#3962): read at each paint, so a
+ * mouse plugged in shows keys the next time the arena is armed.
+ */
+function touchOnly(): boolean {
+  return isTouchOnly((query) => matchMedia(query).matches);
+}
 
 function iconSvg(path: string): string {
   return (
@@ -946,7 +955,7 @@ export function createTrainingPanel(): TrainingPanel {
 
   const onStageFocus = (): void => {
     root.classList.add("is-armed");
-    hint.textContent = armedHint(keymap, keyLabel);
+    hint.textContent = armedHint(keymap, keyLabel, touchOnly());
   };
 
   const onStageBlur = (): void => {
@@ -1023,7 +1032,7 @@ export function createTrainingPanel(): TrainingPanel {
       paintSkills(session.connection.skillBar);
     }
     if (root.classList.contains("is-armed")) {
-      hint.textContent = armedHint(keymap, keyLabel);
+      hint.textContent = armedHint(keymap, keyLabel, touchOnly());
     }
   });
   // A double right click on an enemy attacks it, as Space would (#298, #438).

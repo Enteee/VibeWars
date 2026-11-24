@@ -3,7 +3,7 @@ import { breakableIdOf, type TrainingScenario } from "@vibewars/game-core";
 import { t } from "../i18n/index.js";
 import type { EscapeIntent } from "../input/attack-key.js";
 import type { KeyLabeller } from "../input/key-labels.js";
-import { actionLabel, codeLabel, type KeyAction, type Keymap } from "../input/keymap.js";
+import { actionLabel, type KeyAction, type Keymap } from "../input/keymap.js";
 import type { StoredCharacter } from "../storage/schema.js";
 
 /**
@@ -39,8 +39,18 @@ const ARROW_CODES = ["ArrowUp", "ArrowLeft", "ArrowDown", "ArrowRight"];
 /**
  * The hint under an armed arena, from the keymap (#302): "WASD move ·
  * 1–8 cast · …" by default, Classic, "arrows move · Q–F cast · …" in VibeWars.
+ * On a `touch`-only device (#3962) it names the gestures instead, and the
+ * keymap does not matter: a phone has no keys to press.
  */
-export function armedHint(keymap: Keymap, label: KeyLabeller = codeLabel): string {
+export function armedHint(keymap: Keymap, label: KeyLabeller, touch: boolean): string {
+  if (touch) {
+    return [
+      t("training.touchHintWalk"),
+      t("training.touchHintCast"),
+      t("training.touchHintTarget"),
+      t("training.touchHintLook"),
+    ].join(" · ");
+  }
   const moves = (["move-up", "move-left", "move-down", "move-right"] as const).map(
     (action) => keymap[action][0],
   );
