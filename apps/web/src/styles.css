@@ -9906,6 +9906,19 @@ body:has(> .splash) #app {
     height: min(44px, calc((var(--skill-row-room) - 7 * 4px) / 8));
   }
 
+  /* The Training Ground's eight stay a finger wide (#3927): narrower than
+     eight of them and their gaps (380 px), the bar reaches out over its
+     panel's padding to the screen's edges, and then its gaps give way. */
+  .editor-layout.has-training > .training:not(.is-expanded) > .training-skills {
+    margin-inline: max(-0.9rem, min(0px, (100vw - 1.8rem - 380px) / 2));
+    column-gap: clamp(0px, (100vw - 8 * 44px) / 7, 4px);
+  }
+
+  .editor-layout.has-training > .training:not(.is-expanded) .training-skill {
+    width: 44px;
+    height: 44px;
+  }
+
   /* Over the bar's left end, a row of its own: the panel has no bars
      beside it to stand by. Finger-wide, the four sets lie in one line,
      which keeps the bar a screen's height up, clear of the chat's icon. */

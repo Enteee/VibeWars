@@ -187,7 +187,7 @@ test("a saved character goes into a team member by tap and Put here (#3876)", as
 });
 
 // The Pixel 8a; a height where the bar's own place is under the icon; a
-// narrow phone, where eight fingers do not fit and the slots shrink.
+// narrow phone, where eight fingers fit only once the gaps give way (#3927).
 for (const viewport of [
   { width: 412, height: 915 },
   { width: 412, height: 800 },

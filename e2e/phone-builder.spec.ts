@@ -95,7 +95,11 @@ async function offences(page: Page, what: string): Promise<string[]> {
   return out;
 }
 
-/** The builder's four states in one language: everything it found wrong. */
+/**
+ * The builder in one language, new and empty, its bar filled, its
+ * training ground expanded, and saved and opened again: everything it
+ * found wrong.
+ */
 async function audit(
   browser: Browser,
   device: (typeof DEVICES)[number]["device"],
@@ -109,9 +113,23 @@ async function audit(
   await page.locator(".play-card-new").tap();
   await expect(page.locator("input.editor-name")).toBeVisible();
   const out = await offences(page, `${locale}, new`);
+  // A full bar: every slot has its ×, every name its length.
   await chooseProfession(page, "primary", "elementalist");
-  await expect(page.locator(".training canvas")).toBeVisible();
-  out.push(...(await offences(page, `${locale}, new, training`)));
+  await page.locator(".skill-library button.skill-group-header").first().tap();
+  for (let filled = 0; filled < 8; filled += 1) {
+    await page
+      .locator(".skill-library .skill-box:not(.is-elite) .skill-box-equip:visible")
+      .first()
+      .tap();
+  }
+  await expect(page.locator(".editor-skills .skill-slot-clear")).toHaveCount(8);
+  out.push(...(await offences(page, `${locale}, filled`)));
+  const expand = page.locator(".training-expand");
+  await expand.tap();
+  await expect(page.locator(".training.is-expanded")).toBeVisible();
+  out.push(...(await offences(page, `${locale}, expanded`)));
+  await expand.tap();
+  await expect(page.locator(".training.is-expanded")).toHaveCount(0);
   await page.locator("input.editor-name").fill("Thumbs");
   // Save is the way out (#1902): back on the roster, Edit opens it again.
   await page.locator("#topbar button.primary").tap();
