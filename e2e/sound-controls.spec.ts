@@ -1,5 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 
+import { hudMenuRow } from "./helpers/hud-menu.js";
 import { startSoloMatch } from "./helpers/peers.js";
 
 /**
@@ -39,20 +40,21 @@ test("music muted in the top bar shows muted in the HUD popover, and mute all fo
 
   await startSoloMatch(page);
   await expect(page.locator(".hud-bar-health .hud-bar-label")).toContainText("hp");
-  await page.locator(".hud-music").click();
+  await (await hudMenuRow(page, "music")).click();
   const popover = page.locator(".hud-jukebox");
   await expect(popover).toBeVisible();
   await expect(popover.getByLabel("Mute music")).toBeChecked();
   await expect(popover.getByLabel("Mute all")).not.toBeChecked();
 
   // The HUD's own mute button and the popover's Mute all are one setting.
-  await page.locator(".hud-mute").click();
-  await expect(page.locator(".hud-mute")).toHaveAttribute("aria-pressed", "true");
-  await page.locator(".hud-music").click();
+  const hudMute = await hudMenuRow(page, "mute");
+  await hudMute.click();
+  await expect(hudMute).toHaveAttribute("aria-pressed", "true");
+  await (await hudMenuRow(page, "music")).click();
   await expect(popover).toBeVisible();
   await expect(popover.getByLabel("Mute all")).toBeChecked();
   await popover.getByLabel("Mute all").uncheck();
-  await expect(page.locator(".hud-mute")).toHaveAttribute("aria-pressed", "false");
+  await expect(hudMute).toHaveAttribute("aria-pressed", "false");
 });
 
 test("the top bar's mute and the HUD's are one setting (#454)", async ({ page }) => {
@@ -64,7 +66,7 @@ test("the top bar's mute and the HUD's are one setting (#454)", async ({ page })
 
   await startSoloMatch(page);
   await expect(page.locator("#topbar")).toBeHidden();
-  const hudMute = page.locator(".hud-mute");
+  const hudMute = await hudMenuRow(page, "mute");
   await expect(hudMute).toHaveAttribute("aria-pressed", "true");
   await hudMute.click();
   await expect(hudMute).toHaveAttribute("aria-pressed", "false");
