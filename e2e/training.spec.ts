@@ -7,6 +7,8 @@ import {
   codeLabel,
   type Keymap,
 } from "../apps/web/src/input/keymap.js";
+import arUi from "../apps/web/src/i18n/locales/ar/ui.js";
+import deUi from "../apps/web/src/i18n/locales/de/ui.js";
 import { DEFAULT_STEP, zoomFor } from "../apps/web/src/render/camera-rig.js";
 import { STORAGE_NAMESPACE } from "./helpers/base.js";
 import { chooseProfession, professionField } from "./helpers/professions.js";
@@ -1942,3 +1944,57 @@ test("on a laptop the arena never runs under the chat's icon, at the top or the 
     await underChatIcon(page, ".editor-layout :is(button, input, select, label, span)"),
   ).toEqual([]);
 });
+
+for (const { locale, ui } of [
+  { locale: "de-DE", ui: deUi },
+  { locale: "ar", ui: arUi },
+]) {
+  test.describe(`the editor at 380 px in ${locale} (#3907)`, () => {
+    test.use({ locale, viewport: { width: 380, height: 720 } });
+
+    test("nothing under the arena moves as attacking starts and stops, and a pip lands", async ({
+      page,
+    }) => {
+      await page.goto("./");
+      await page
+        .locator(".mode-rail")
+        .getByRole("button", { name: ui["rail.characters"], exact: true })
+        .click();
+      await page.getByRole("button", { name: ui["menu.newCharacter"], exact: true }).click();
+      await expect(page.locator(".training canvas")).toBeVisible();
+      await page.locator("select.training-scenario").selectOption("weapon-dps");
+      const attacking = page.locator(".training-attacking");
+      await expect(attacking).toBeHidden();
+      await takeControl(page);
+      // Every top the attribute list takes, frame by frame, once armed (its
+      // keys hint shown): attacking alone must move nothing.
+      await page.evaluate(() => {
+        const tops = new Set<number>();
+        Object.assign(window, { attributeTops: tops });
+        const list = document.querySelector(".editor-attributes");
+        const sample = (): void => {
+          if (list !== null) {
+            tops.add(list.getBoundingClientRect().top + window.scrollY);
+          }
+          requestAnimationFrame(sample);
+        };
+        sample();
+      });
+      await page.keyboard.press(key("attack"));
+      await expect(attacking).toBeVisible();
+      await expect(attacking).toHaveText(ui["training.attacking"]);
+      // Esc cancels the attack first.
+      await page.keyboard.press("Escape");
+      await expect(attacking).toBeHidden();
+      const tops = await page.evaluate(() =>
+        Array.from((window as unknown as { attributeTops: Set<number> }).attributeTops),
+      );
+      expect(tops, "the attribute list keeps one top").toHaveLength(1);
+
+      const row = page.locator(".editor-attribute").first();
+      await row.locator('.attribute-pip[data-pip="1"]').click();
+      // The rank first, any bonus from gear after it ("1 +1").
+      await expect(row.locator(".editor-attribute-rank")).toHaveText(/^1\b/);
+    });
+  });
+}
