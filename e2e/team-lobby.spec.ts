@@ -6,6 +6,7 @@ import { PROFESSIONS } from "../packages/game-core/src/professions.js";
 import { STARTER_BUILDS } from "../packages/game-core/src/starter-builds.js";
 import { joinFriend, openRail } from "./helpers/menu.js";
 import { hostLobby, openPeers, proposeTeam, setTeamSize } from "./helpers/peers.js";
+import { PIXEL_8A_LANDSCAPE } from "./helpers/phone.js";
 import { namePlayer } from "./helpers/player.js";
 
 /**
@@ -39,11 +40,11 @@ async function paste(target: Locator, text: string): Promise<void> {
  * is spelled out: `team-transfer.ts` pulls in the UI, which e2e cannot
  * type, and a stale one fails the paste out loud.
  */
-function fourCode(): string {
+function fourCode(name = "Four"): string {
   return JSON.stringify({
     format: "vibewars.team",
     formatVersion: TEAM_FORMAT_VERSION,
-    name: "Four",
+    name,
     size: 4,
     members: FOUR.map((build) => ({
       format: "vibewars.character",
@@ -160,6 +161,83 @@ test("#1460: two players and a bot propose, vote, take seats and play the claime
       "data-skill-id",
       FOUR[1]?.skillBar[0] ?? "",
     );
+  } finally {
+    await context.close();
+  }
+});
+
+test("#3929: on a phone, someone's proposal keeps the open drawer where it was scrolled", async ({
+  browser,
+}) => {
+  test.setTimeout(120_000);
+  const context = await browser.newContext(PIXEL_8A_LANDSCAPE);
+  const host = await context.newPage();
+  const guest = await context.newPage();
+
+  try {
+    // More Team Builds than the drawer shows at once; the pages share them.
+    for (let i = 1; i <= 10; i += 1) {
+      await host.goto("./");
+      await openRail(host, "Team Builder");
+      await expect(host.getByRole("button", { name: "New team build", exact: true })).toBeVisible();
+      await paste(host.locator(".screen"), fourCode(`Four ${String(i)}`));
+      await host.getByRole("button", { name: "Save", exact: true }).click();
+      await expect(host.locator(".toast")).toHaveText("Saved");
+    }
+
+    await nameOnMenu(host, "Host");
+    const code = await hostLobby(host, { size: 4 });
+    await nameOnMenu(guest, "Guest");
+    await joinFriend(guest, code);
+    await expect(guest.locator(".lobby-panel")).toBeVisible();
+    for (const page of [host, guest]) {
+      await page.bringToFront();
+      await page.getByRole("button", { name: "join team 1" }).click();
+    }
+    await expect(host.locator(".lobby-panel")).toContainText("Guest");
+    for (const page of [host, guest]) {
+      await page.bringToFront();
+      await page.getByRole("button", { name: "Ready", exact: true }).click();
+    }
+    await host.bringToFront();
+    await host.getByRole("button", { name: "start match" }).click();
+    for (const page of [host, guest]) {
+      await expect(page.locator(".team-lobby-stage")).toHaveText("Choose a team build");
+    }
+
+    // The host opens the drawer and scrolls down its list of builds.
+    await host.getByRole("button", { name: "Your Team Builds", exact: true }).click();
+    const drawer = host.getByRole("complementary", { name: "Your Team Builds" });
+    const body = drawer.locator(".team-lobby-drawer-body");
+    await expect(drawer.getByRole("button", { name: "Four 10", exact: true })).toHaveCount(1);
+    expect(
+      await body.evaluate((element) => element.scrollHeight - element.clientHeight),
+    ).toBeGreaterThanOrEqual(100);
+    await body.evaluate((element) => {
+      element.scrollTop = element.scrollHeight;
+    });
+    await expect
+      .poll(() => body.evaluate((element) => element.scrollTop))
+      .toBeGreaterThanOrEqual(100);
+    const scrolled = await body.evaluate((element) => element.scrollTop);
+
+    // The guest's proposal arrives in the host's snapshot: the drawer stays
+    // open where it was, rather than drawn again from its top.
+    await guest.bringToFront();
+    await proposeTeam(guest, "Four 1");
+    await host.bringToFront();
+    await expect(host.locator(".team-lobby-proposals .play-card")).toHaveCount(1);
+    await expect(drawer).toBeVisible();
+    const after = await body.evaluate((element) => element.scrollTop);
+    expect(Math.abs(after - scrolled)).toBeLessThanOrEqual(1);
+
+    // The host proposes from down the list; the drawer closes as before.
+    await drawer.getByRole("button", { name: "Four 10", exact: true }).click();
+    await drawer.getByRole("button", { name: "Propose this build", exact: true }).click();
+    await expect(drawer).toBeHidden();
+    for (const page of [host, guest]) {
+      await expect(page.locator(".team-lobby-proposals .play-card")).toHaveCount(2);
+    }
   } finally {
     await context.close();
   }

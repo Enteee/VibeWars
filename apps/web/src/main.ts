@@ -158,11 +158,12 @@ import {
 } from "./ui/lobby-screen.js";
 import { setRelayStatus } from "./ui/relay-status.js";
 import {
+  mountTeamLobbyScreen,
   proposableTeams,
-  renderTeamLobbyScreen,
   soloCharacterKey,
   soloEntries,
   type SoloEntry,
+  type TeamLobbyScreen,
 } from "./ui/team-lobby-screen.js";
 import { createNowPlayingToast, nowPlayingText } from "./ui/now-playing.js";
 import {
@@ -603,6 +604,8 @@ async function main(): Promise<void> {
   let followsLobby = false;
   /** Whether the Team Lobby screen is up (#1460). */
   let teamLobbyShown = false;
+  /** The Team Lobby, mounted once while it is up (#3929). */
+  let teamLobbyScreen: TeamLobbyScreen | undefined;
   /** The party the rail was last drawn for: a builder's rail redraws only when its locks change. */
   let drawnParty = "";
   /** The rail entry last drawn: a guest's mode screen follows its host's (#1526). */
@@ -927,6 +930,8 @@ async function main(): Promise<void> {
     matchesScreen = undefined;
     followsLobby = false;
     teamLobbyShown = false;
+    teamLobbyScreen?.dispose();
+    teamLobbyScreen = undefined;
     dismissToast();
     closeBeatEditor();
     notices.leave();
@@ -2683,13 +2688,11 @@ async function main(): Promise<void> {
       teamPicks.proposed = undefined;
     }
     proposeSolo(joined, snapshot, teamPicks);
-    renderTeamLobbyScreen(
-      screenRoot,
-      snapshot,
-      teamPicks.teams,
-      teamPicks.proposed,
-      { entries: teamPicks.solo, picked: teamPicks.soloKey },
-      {
+    // Mounted once, then updated in place (ADR-0030); drawn again only
+    // after another screen took the root.
+    if (teamLobbyScreen?.shown() !== true) {
+      teamLobbyScreen?.dispose();
+      teamLobbyScreen = mountTeamLobbyScreen(screenRoot, {
         onVote: (proposerId) => {
           lobby?.vote(proposerId);
         },
@@ -2701,9 +2704,15 @@ async function main(): Promise<void> {
         onLeave: () => {
           void leaveLobby();
         },
-      },
-      lobbyNotice,
-    );
+      });
+    }
+    teamLobbyScreen.update({
+      snapshot,
+      teams: teamPicks.teams,
+      proposedTeamId: teamPicks.proposed,
+      solo: { entries: teamPicks.solo, picked: teamPicks.soloKey },
+      notice: lobbyNotice,
+    });
   };
 
   /**
