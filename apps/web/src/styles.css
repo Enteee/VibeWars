@@ -1314,6 +1314,11 @@ body {
   border-radius: 1px;
 }
 
+/* A set's number, in its key's place where there are no keys (#3889). */
+.weapon-set-number {
+  display: none;
+}
+
 /* The skills, the weapon sets hung off their left end (#489): the skill
    bar stays centred, as GW1's. */
 .hud-skill-row {
@@ -1403,7 +1408,8 @@ body {
   height: 10px;
 }
 
-.weapon-set-key {
+.weapon-set-key,
+.weapon-set-number {
   position: absolute;
   top: 0;
   left: 0;
@@ -9452,6 +9458,22 @@ body:has(> .splash) #app {
     flex-wrap: nowrap;
   }
 
+  /* The weapon sets take a finger too (#3889): a row of four left of the
+     bar, where two by two would hang below the screen. */
+  .hud .weapon-sets {
+    grid-template-columns: repeat(4, 44px);
+  }
+
+  .hud .weapon-set {
+    width: 44px;
+    height: 44px;
+  }
+
+  .hud .weapon-set-off {
+    width: 20px;
+    height: 20px;
+  }
+
   .hud-target {
     box-sizing: border-box;
     min-width: 0;
@@ -9672,8 +9694,9 @@ body:has(> .splash) #app {
   }
 
   /* No room left of the bar: the weapon sets stand over its left end,
-     beside your bars, which give them their width. The skill row reads
-     left to right in every language, so these sides are physical. */
+     two by two, beside your bars, which give them their width. The skill
+     row reads left to right in every language, so these sides are
+     physical. */
   .hud-skill-row > .weapon-sets {
     top: auto;
     right: auto;
@@ -9681,12 +9704,69 @@ body:has(> .splash) #app {
     left: 0;
   }
 
+  .hud .weapon-sets {
+    grid-template-columns: repeat(2, 44px);
+  }
+
   .hud-bars {
-    margin-inline-start: calc(48px + 8px);
+    margin-inline-start: calc(2 * 44px + 4px + 8px);
   }
 
   [dir="rtl"] .hud-bars {
-    margin-inline: 0 calc(48px + 8px);
+    margin-inline: 0 calc(2 * 44px + 4px + 8px);
+  }
+}
+
+/* Touch alone, as `input/touch-only.ts` judges it (#3889): no keys to
+   hint at. A set shows its number instead; "leave" is its word alone.
+   A touch laptop with a trackpad keeps its hints. */
+@media (pointer: coarse) and (hover: none) and (not (any-pointer: fine)) {
+  .hud .hud-skill-key,
+  .hud .weapon-set-key,
+  .hud-leave-extra {
+    display: none;
+  }
+
+  .hud .weapon-set-number {
+    display: block;
+  }
+}
+
+/* The match's buttons, top right, take a finger too (#3889): they sit
+   beside the HUD, not in it, so the HUD's own rules miss them. Leave and
+   its yes and no grow inside their box, which drops its top and bottom
+   edge so that row is 44 px too. The compass goes down under the taller
+   rows, a little closer than with a mouse, to stay out of an upright
+   phone's middle; and on a phone the scoreboard and target keep clear of
+   the wider second row: four 44 px buttons and three gaps. */
+@media (pointer: coarse) {
+  :root {
+    --compass-top: calc(0.6rem + 2 * 44px + 0.4rem + 0.2rem + var(--build-banner-space, 0px));
+  }
+
+  .hud-mute,
+  .hud-help,
+  .hud-music,
+  .hud-options,
+  .hud-fullscreen {
+    width: 44px;
+    height: 44px;
+  }
+
+  .hud-leave {
+    height: auto;
+    border-block: none;
+  }
+
+  .hud-leave button {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}
+
+@media (pointer: coarse) and (width <= 30rem) {
+  :root {
+    --hud-top-width: calc(100vw - max(var(--compass-size), 4 * 44px + 1.2rem) - 2rem);
   }
 }
 

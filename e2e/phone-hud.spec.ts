@@ -296,6 +296,9 @@ for (const phone of PHONES) {
     await expectApart(page, { absent: await soloAbsent(page) });
     // "leave" alone on a phone, but still named in full.
     await expect(page.getByRole("button", { name: "leave match (F10)" })).toBeVisible();
+    // A mouse keeps its keys' hints (#3889).
+    await expect(page.locator(".hud-skill-key").first()).toBeVisible();
+    await expect(page.locator(".weapon-set-key").first()).toBeVisible();
   });
 
   test(`on a ${size} phone with the new-version banner up, they still do not (#1297, #1306)`, async ({
@@ -378,6 +381,34 @@ for (const [held, device, free] of [
       await toggle.click();
       await expect(panel).toBeHidden();
       await expect(toggle).toHaveAttribute("aria-expanded", "false");
+    });
+
+    test("every control is a finger's size, and no key's hint shows (#3889)", async ({ page }) => {
+      await phoneMatch(page, phone, undefined, true);
+      const small = await page
+        .locator(".hud button, .hud-controls button, #topbar button")
+        .filter({ visible: true })
+        .evaluateAll(
+          (nodes, target) =>
+            nodes.flatMap((node) => {
+              const { width, height } = node.getBoundingClientRect();
+              return width < target || height < target
+                ? [`${node.getAttribute("class") ?? ""} ${String(width)}x${String(height)}`]
+                : [];
+            }),
+          TOUCH_TARGET,
+        );
+      expect(small, "buttons under a finger's size").toEqual([]);
+      await expect(
+        page.locator(".hud-skill-key, .weapon-set-key").filter({ visible: true }),
+      ).toHaveCount(0);
+      await expect(page.locator(".hud-leave button")).not.toContainText("F10", {
+        useInnerText: true,
+      });
+      // Each weapon set is told apart by its number instead (#3889).
+      await expect(page.locator(".hud .weapon-set")).toHaveText(["1", "2", "3", "4"], {
+        useInnerText: true,
+      });
     });
 
     test("a chat line shows nowhere over the arena while the chat is closed", async ({ page }) => {
