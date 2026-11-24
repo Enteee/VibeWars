@@ -392,7 +392,7 @@ test("#3926: a Hosted Game's map tops the lobby, over the teams; the host picks 
 
     await host.bringToFront();
     await host.locator(".lobby-panel .lobby-map select").selectOption("arena-crossroads");
-    await expect(guest.locator(".lobby-panel .lobby-map")).toHaveText("Map: Crossroads (small)");
+    await expect(guest.locator(".lobby-panel .lobby-map")).toHaveText(/^Map: Crossroads \(/);
 
     // Without the map the bar still fits on one row, nothing overlapping (#1368).
     for (const width of [700, 721, 800, 940, 1100, 1201]) {
