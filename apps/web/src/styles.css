@@ -7881,6 +7881,28 @@ body:has(#screens[style*="none"]) .now-playing {
   display: none;
 }
 
+/* A phone's menu (#3934): every corner is a screen's content or the chat,
+   so the toast shows centred under the top bar, however many rows that
+   bar takes, for the few seconds it is up. A match keeps its corner. */
+@media (pointer: coarse) and ((width <= 30rem) or (height <= 30rem)) {
+  #topbar {
+    anchor-name: --topbar;
+  }
+
+  body:has(#screens:not([style*="none"])) .now-playing {
+    top: calc(2.9rem + var(--build-banner-space, 0px));
+    top: calc(anchor(--topbar bottom) + 0.4rem);
+    bottom: auto;
+    inset-inline: 0;
+    width: fit-content;
+    max-width: calc(100vw - 2 * var(--chat-inset));
+    margin-inline: auto;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
 /*
  * A phone in a match (#1297): the centred scoreboard and target frame are
  * wider than the room left of the match buttons. So "leave" loses
@@ -8315,6 +8337,24 @@ body:has(#screens[style*="none"]) .now-playing {
   /* What a screen leaves clear at its bottom for the closed chat's icon
      (#3887): its size, its offset, and a gap. */
   --chat-reserve: calc(var(--chat-toggle-size) + var(--chat-inset) + 0.5rem);
+}
+
+/* A finger's icon on every screen (#3934), not only in a match, and the
+   reserve with it. Every screen's end scrolls clear of it: the shared
+   scrollers leave the reserve, so the editor's own (#3887) gives way. */
+@media (pointer: coarse) {
+  :root {
+    --chat-toggle-size: 44px;
+  }
+
+  #screens,
+  .rail-body {
+    padding-bottom: var(--chat-reserve);
+  }
+
+  .editor-layout {
+    padding-bottom: 0;
+  }
 }
 
 .chat {
@@ -9480,8 +9520,6 @@ body:has(> .splash) #app {
 
   #viewport > .chat .chat-toggle {
     position: relative;
-    width: 44px;
-    height: 44px;
     padding: 0.5rem;
   }
 
