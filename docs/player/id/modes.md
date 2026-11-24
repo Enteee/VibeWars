@@ -9,7 +9,7 @@ Rebut Titik, dan ![GvG](../../../apps/web/public/icons/mode/gvg.svg) **GvG** Per
 semua peta. ![Arena Acak](../../../apps/web/public/icons/mode/random-arena.svg) **Arena Acak** memilihkan peta untukmu, dan sekaligus modenya,
 tapi tidak pernah Perang Guild, Lari Relik, Raja Bukit atau Rebut
 Titik. Arena Tim mengundi salah satu petanya untuk setiap laga, Pendakian Pahlawan
-dimulai di peta pertamanya, dan hanya Game Host yang membiarkan host memilih.
+dimulai di peta pertamanya, dan hanya Game Host yang membiarkan host memilih, di daftar Peta di atas tim.
 Layar mode lain tidak menyebutkan peta mana yang berikutnya: laga
 menampilkannya saat dimuat.
 
@@ -289,8 +289,8 @@ dan party yang pemainnya sebanyak ukurannya tidak menerima siapa pun lagi ("Part
 penuh."). Dua party hanya pernah bertemu pada ukuran yang sama, dan jendela ikon
 antrean di bilah atas menyebutkannya: "Arena Tim 2v2". Di Game Host, host mengatur
 ukuran tim dengan panah-panahnya, 1v1 sampai 8v8, sebelum Lobi Tim,
-dan kedua sisi bermain persis sebanyak itu; Lobi Tim tidak menampilkan Ukuran tim. Tamu melihat ukuran milik host, terkunci. Daftar peta host
-hanya menampilkan peta yang dibuat untuk ukuran itu, dan ukuran yang tidak cocok dengan peta
+dan kedua sisi bermain persis sebanyak itu; Lobi Tim tidak menampilkan Ukuran tim. Tamu melihat ukuran milik host, terkunci. Daftar peta host,
+di atas tim, hanya menampilkan peta yang dibuat untuk ukuran itu, dan ukuran yang tidak cocok dengan peta
 memindahkan lobi ke peta pertama yang cocok. Ukurannya tidak pernah di bawah jumlah pemain
 satu sisi, dan sisi yang pemainnya sebanyak ukuran tim tidak menerima
 siapa pun lagi. Laga 1v1 menampilkan semua karaktermu, anggota tim diberi label dengan

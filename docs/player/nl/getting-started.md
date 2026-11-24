@@ -163,7 +163,7 @@ speel je dat vanaf de volgende match.
 modus: **Team Arena** de Annihilation-, Kill Count- en
 Priest Annihilation-maps, **Heroes' Ascent** de Relic Run-, King of the Hill- en
 Capture Points-maps, en **GvG** die van de Guild Battle. **Gehost spel** biedt
-elke map. Je **Teambuilds** staan alleen op **Teambouwer**, en je kiest er geen
+elke map, en de host ervan kiest er een boven de teams. Je **Teambuilds** staan alleen op **Teambouwer**, en je kiest er geen
 voor de lobby. Als de host bij **Gehost spel** start, opent de lobby de
 [Teamlobby](modes.md#teamlobby): stel daar een Teambuild voor, klik op een
 kaart, die de wapens en skills van elk lid toont, om erop te stemmen, en klik

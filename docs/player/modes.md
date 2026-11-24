@@ -9,7 +9,8 @@ Capture Points, and ![GvG](../../apps/web/public/icons/mode/gvg.svg) **GvG** the
 every map. A ![Random Arena](../../apps/web/public/icons/mode/random-arena.svg) **Random Arena** picks a map for you, and with it the mode,
 but never a Guild Battle, a Relic Run, King of the Hill or Capture
 Points. Team Arena draws one of its maps for each match, Heroes' Ascent
-starts on its first map, and only a Hosted Game lets the host pick.
+starts on its first map, and only a Hosted Game lets the host pick, in
+the Map list above the teams.
 No other mode's screen says which map comes next: the match shows it
 as it loads.
 
@@ -293,8 +294,8 @@ and a party with as many players as its size takes nobody more ("Party
 is full"). Two parties only ever meet at the same size, and the queue
 icon's window in the top bar names it: "Team Arena 2v2". In a Hosted Game the host sets
 the team size with its arrows, 1v1 to 8v8, before the Team Lobby,
-and both sides play exactly that many; the Team Lobby shows no Team size. A guest sees the host's, locked. The host's map list
-shows only maps made for that size, and a size the map does not suit
+and both sides play exactly that many; the Team Lobby shows no Team size. A guest sees the host's, locked. The host's map list,
+above the teams, shows only maps made for that size, and a size the map does not suit
 moves the lobby to the first map that does. It never goes below a side's
 players, and a side that has as many players as the team size takes
 nobody more. A 1v1 lists all your characters, team members labelled with

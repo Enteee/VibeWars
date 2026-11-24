@@ -11,7 +11,7 @@ mapas. Uma ![Arena Aleatória](../../../apps/web/public/icons/mode/random-arena.
 modo, mas nunca uma Batalha de Guildas, uma Corrida da Relíquia, Rei da
 Colina ou Captura de Pontos. A Arena de Equipes sorteia um dos seus mapas
 a cada partida, a Ascensão dos Heróis começa no primeiro mapa dela, e só
-uma Partida Hospedada deixa o host escolher. A tela de nenhum outro modo
+uma Partida Hospedada deixa o host escolher, na lista Mapa acima das equipes. A tela de nenhum outro modo
 diz qual mapa vem a seguir: a partida o mostra enquanto carrega.
 
 Dois jogadores atrás de redes restritas não podem ser pareados entre si numa fila, então a fila conta só os jogadores que podem ser pareados com você, e diz isso. Um relay em **Opções → relay (TURN)** ajuda.
@@ -303,7 +303,7 @@ encontram no mesmo tamanho, e a janela do ícone de fila na barra superior
 o mostra: "Arena de Equipes 2v2". Em uma Partida Hospedada, o host define
 o tamanho com as setas, de 1v1 a 8v8, antes da Sala de Equipe, e os dois
 lados jogam exatamente esse número; a Sala de Equipe não mostra Tamanho.
-Um convidado vê o do host, travado. A lista de mapas do host mostra só
+Um convidado vê o do host, travado. A lista de mapas do host, acima das equipes, mostra só
 mapas feitos para esse tamanho, e um tamanho que não serve ao mapa move a
 sala para o primeiro mapa que sirva. Ele nunca fica abaixo dos jogadores
 de um lado, e um lado com tantos jogadores quanto o tamanho da equipe não

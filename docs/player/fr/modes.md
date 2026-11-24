@@ -10,7 +10,7 @@ Roi de la colline et Points de capture, et ![GvG](../../../apps/web/public/icons
 une carte pour toi, et avec elle le mode, mais jamais une Bataille de guilde,
 une Course aux reliques, un Roi de la colline ou des Points de capture. L'Arène
 d'équipe tire une de ses cartes à chaque match, l'Ascension des héros commence
-sur sa première carte, et seule une Partie hébergée laisse l'hôte choisir.
+sur sa première carte, et seule une Partie hébergée laisse l'hôte choisir, dans la liste Carte au-dessus des équipes.
 L'écran d'aucun autre mode n'indique quelle carte vient ensuite : le match
 l'affiche pendant son chargement.
 
@@ -307,7 +307,7 @@ nomme : « Arène d'équipe 2v2 ». En Partie hébergée, l'hôte fixe la taille
 d'équipe avec ses flèches, de 1v1 à 8v8, avant le Salon d'équipe, et les deux
 camps jouent exactement ce nombre ; le Salon d'équipe n'affiche pas de Taille
 d'équipe. Un invité voit celle de l'hôte, verrouillée. La liste de cartes de
-l'hôte n'affiche que les cartes faites pour cette taille, et une taille qui ne
+l'hôte, au-dessus des équipes, n'affiche que les cartes faites pour cette taille, et une taille qui ne
 convient pas à la carte fait passer le salon à la première carte qui convient.
 Elle ne descend jamais sous le nombre de joueurs d'un camp, et un camp qui a
 autant de joueurs que la taille d'équipe n'accepte plus personne. Un 1v1 liste

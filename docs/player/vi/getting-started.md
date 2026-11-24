@@ -156,7 +156,7 @@ một mình trong sảnh: hãy rời tổ đội, hoặc chơi Trận tự tạo
 **Đấu trường đội**, **Đỉnh Anh Hùng** và **GvG** chỉ cung cấp bản đồ của
 chế độ đó: **Đấu trường đội** các bản đồ Hủy diệt, Đếm hạ gục và Diệt tư tế,
 **Đỉnh Anh Hùng** các bản đồ Vận chuyển thánh tích, Vua đồi và Chiếm điểm,
-còn **GvG** các bản đồ Chiến Bang. **Trận tự tạo** cung cấp mọi bản đồ.
+còn **GvG** các bản đồ Chiến Bang. **Trận tự tạo** cung cấp mọi bản đồ, và chủ phòng chọn một bản đồ phía trên các đội.
 **Build đội** của bạn chỉ nằm ở **Tạo Đội**, và bạn không chọn build nào
 trước khi vào sảnh. Ở **Trận tự tạo**, khi chủ phòng bắt đầu, sảnh mở
 [Sảnh Đội](modes.md#sảnh-đội): đề xuất một Build đội ở đó, nhấn vào một

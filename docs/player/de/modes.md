@@ -8,7 +8,7 @@ Reliktlauf, King of the Hill und Punkte erobern, und ![GvG](../../../apps/web/pu
 Spiel** bietet jede Karte. Eine ![Zufallsarena](../../../apps/web/public/icons/mode/random-arena.svg) **Zufallsarena** wählt eine Karte für dich und damit den Modus,
 aber nie eine Gildenschlacht, einen Reliktlauf, King of the Hill oder Punkte erobern. Die
 Teamarena lost für jedes Match eine ihrer Karten aus, der Aufstieg der Helden beginnt auf seiner
-ersten Karte, und nur in einem Gehosteten Spiel wählt der Host. Der Bildschirm keines anderen
+ersten Karte, und nur in einem Gehosteten Spiel wählt der Host, in der Liste Karte über den Teams. Der Bildschirm keines anderen
 Modus sagt, welche Karte als Nächstes kommt: Das Match zeigt sie, während es lädt.
 
 Zwei Spieler hinter strengen Netzwerken können in einer Warteschlange nicht zueinander finden. Die Warteschlange zählt deshalb nur Spieler, die mit dir spielen können, und sagt es dir. Ein Relay unter **Optionen → Relay (TURN)** hilft.
@@ -246,7 +246,7 @@ anfangs 4v4. Eine Gruppe wählt nie eine Größe unter ihrer Spielerzahl, und ei
 Größe nimmt niemanden mehr auf („Die Gruppe ist voll.“). Zwei Gruppen treffen sich immer nur bei gleicher Größe, und das
 Fenster des Warteschlangen-Symbols in der oberen Leiste nennt sie: „Teamarena 2v2“. In einem Gehosteten Spiel stellt der
 Host die Teamgröße vor der Team-Lobby mit ihren Pfeilen ein, 1v1 bis 8v8, und beide Seiten spielen genau so viele; die
-Team-Lobby zeigt keine Teamgröße. Ein Gast sieht die des Hosts, gesperrt. Die Kartenliste des Hosts zeigt nur Karten
+Team-Lobby zeigt keine Teamgröße. Ein Gast sieht die des Hosts, gesperrt. Die Kartenliste des Hosts über den Teams zeigt nur Karten
 für diese Größe, und eine Größe, zu der die Karte nicht passt, verschiebt die Lobby auf die erste passende Karte. Sie
 fällt nie unter die Spielerzahl einer Seite, und eine Seite mit so vielen Spielern wie die Teamgröße nimmt niemanden mehr
 auf. Ein 1v1 listet alle deine Charaktere auf, Teammitglieder mit ihrem Team beschriftet: Klick auf einen, um ihn zu
