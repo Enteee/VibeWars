@@ -31,7 +31,7 @@ nằm ngoài màn hình hoặc dưới HUD có một mũi tên viền ở mép m
 hoặc đền mang màu của chủ sở hữu, xám nếu chưa thuộc về ai, tế đàn màu vàng.
 Mũi tên đặc của người chơi được vẽ đè lên nó.
 
-Trận đấu mở đầu với mỗi đội bị giữ cùng nhau trong khu vực xuất phát của mình: bạn có thể đi bất cứ đâu bên trong khu vực đó và chuẩn bị bằng kỹ năng lên bản thân và đồng minh, như phù phép, tư thế và hồi máu, nhưng không thể tấn công hay dùng kỹ năng lên địch. Năng lượng và Máu hồi lại trong lúc chờ, và bot cũng chuẩn bị. Một bức tường lấp lánh quanh khu vực xuất phát của đội bạn cho bạn thấy mình đi được bao xa. Một dòng ở trên cùng đếm số người chơi đã tải xong trận. Khi mọi người đã tải xong, nó đếm ngược 10 giây rồi trận đấu bắt đầu, cùng với đồng hồ của trận. Người chơi chưa tải xong sau 20 giây sẽ không được chờ: đếm ngược bắt đầu mà không có họ, và họ vẫn có thể vào sau.
+Trận đấu mở đầu với mỗi đội bị giữ cùng nhau trong khu vực xuất phát của mình: bạn có thể đi bất cứ đâu bên trong khu vực đó và dùng bất kỳ kỹ năng nào, nên hãy chuẩn bị phù phép, tư thế, linh hồn hoặc kết giới trước khi cổng mở; đội kia bị giữ ở xa trong khu vực xuất phát của riêng họ. Năng lượng và Máu hồi lại trong lúc chờ, và bot cũng chuẩn bị. Một bức tường lấp lánh quanh khu vực xuất phát của đội bạn cho bạn thấy mình đi được bao xa. Một dòng ở trên cùng đếm số người chơi đã tải xong trận. Khi mọi người đã tải xong, nó đếm ngược 10 giây rồi trận đấu bắt đầu, cùng với đồng hồ của trận. Người chơi chưa tải xong sau 20 giây sẽ không được chờ: đếm ngược bắt đầu mà không có họ, và họ vẫn có thể vào sau.
 
 ## Hủy diệt
 

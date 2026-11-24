@@ -89,7 +89,6 @@ import {
   paintKnockdown,
   midAction,
   slotAffordable,
-  heldBack,
   silenced,
   wrongWeapon,
 } from "./skill-slot-state.js";
@@ -535,7 +534,6 @@ const REFUSALS: Readonly<Record<ActivationRejection, MessageKey>> = {
   "flag-on-stand": "hud.refusalFlagOnStand",
   "no-flag-carried": "hud.refusalNoFlagCarried",
   "not-your-relic": "hud.refusalNotYourRelic",
-  "pre-match": "hud.preMatchSelfAllyOnly",
 };
 
 /** Where an attack's refusal differs from a cast's: it is about the weapon, not a skill. */
@@ -2268,10 +2266,6 @@ export function updateHud(
   const far = outOfRange(skillBar, self, target, companion, walls);
   const unwielded = wrongWeapon(skillBar, self);
   const barred = silenced(skillBar, self);
-  const heldSlots = heldBack(
-    skillBar,
-    match !== undefined && (match.phase === "waiting" || match.phase === "countdown"),
-  );
   const lit = midAction(skillBar);
   hud.slotTips.casting(fill?.slot);
   hud.slotTips.refresh();
@@ -2296,8 +2290,6 @@ export function updateHud(
     );
     button.classList.toggle("is-wrong-weapon", unwielded[index] === true);
     button.classList.toggle("is-silenced", barred[index] === true);
-    // Greyed in the spawn until the start: one not only for self or allies (#3910).
-    button.classList.toggle("is-held", heldSlots[index] === true);
     button.classList.toggle("is-mid-action", lit[index] === true);
     // An echo's copy drains its strip as its time runs out (#1154).
     if (now !== undefined) {

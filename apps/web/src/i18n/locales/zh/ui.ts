@@ -574,7 +574,6 @@ export default {
   "hud.preMatchHeld": "比赛开始前，你会被限制在出生点附近。",
   "hud.preMatchStartingAnyway": "等待玩家：{joined}/{expected}，{seconds} 秒后仍将开始",
   "hud.preMatchStartsIn": "比赛将在 {seconds} 后开始",
-  "hud.preMatchSelfAllyOnly": "开始前：只能对自己或盟友使用技能。",
   "hud.preMatchWaiting": "等待玩家：{joined}/{expected}",
   "hud.priest": "祭司",
   "hud.priestDead": "祭司（阵亡）",

@@ -627,7 +627,6 @@ export default {
   "hud.preMatchStartingAnyway":
     "Wachten op spelers: {joined}/{expected}, start toch over {seconds} s",
   "hud.preMatchStartsIn": "Wedstrijd begint over {seconds}",
-  "hud.preMatchSelfAllyOnly": "Voor de start: alleen vaardigheden op jezelf of bondgenoten.",
   "hud.preMatchWaiting": "Wachten op spelers: {joined}/{expected}",
   "hud.priest": "priester",
   "hud.priestDead": "priester (dood)",

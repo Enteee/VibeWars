@@ -720,7 +720,6 @@ export default {
   "hud.preMatchStartingAnyway":
     "بانتظار اللاعبين: {joined}/{expected}، تبدأ على أي حال خلال {seconds} ث",
   "hud.preMatchStartsIn": "تبدأ المباراة خلال {seconds}",
-  "hud.preMatchSelfAllyOnly": "قبل البداية: مهارات على نفسك أو حلفائك فقط.",
   "hud.preMatchWaiting": "بانتظار اللاعبين: {joined}/{expected}",
   "hud.priest": "كاهن",
   "hud.priestDead": "كاهن (ميت)",

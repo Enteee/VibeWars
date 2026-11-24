@@ -4810,12 +4810,6 @@ body:has(> .splash) #menu-background::after {
   pointer-events: none;
 }
 
-/* Held in the spawn (#3818): a skill refused until the start, greyed (#3910). */
-.hud-skill.is-held {
-  filter: grayscale(1);
-  opacity: 0.55;
-}
-
 /* A line a flag away from home, under the scoreboard (#1226). */
 /* A watcher is told how late what it sees is (#480). */
 .hud-watching {

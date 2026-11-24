@@ -1,11 +1,11 @@
 import { energyCostOf } from "../../../skills/activation.js";
-import { preMatchAllowed } from "../../../skills/pre-match.js";
 import { resolveMagnitude } from "../../../skills/scaling.js";
 import type { StatusId } from "../../../skills/status.js";
 import type { Skill, SkillEffect } from "../../../skills/types.js";
 import { distance } from "../../../vec2.js";
 import type { BehaviourContext, BehaviourIntent } from "../../behaviour.js";
 import type { Participant } from "../../simulation.js";
+import { worthPrecasting } from "./precast.js";
 import { NOTHING, skillsOf } from "./shared.js";
 
 /** The share of its maximum Energy a bot keeps for the start (#3910). */
@@ -100,7 +100,7 @@ export function prepare(
   const floor = PREP_ENERGY_FLOOR * combatant.maxEnergy;
   for (const skill of skillsOf(self)) {
     if (
-      !preMatchAllowed(skill) ||
+      !worthPrecasting(skill) ||
       skill.cost?.kind === "adrenaline" ||
       combatant.energy - energyCostOf(skill, combatant) < floor
     ) {

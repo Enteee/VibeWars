@@ -629,7 +629,6 @@ export default {
   "hud.preMatchStartingAnyway":
     "Oyuncular bekleniyor: {joined}/{expected}, {seconds} sn içinde yine de başlıyor",
   "hud.preMatchStartsIn": "Maç {seconds} içinde başlıyor",
-  "hud.preMatchSelfAllyOnly": "Başlamadan önce: yalnızca kendine veya müttefiklere beceriler.",
   "hud.preMatchWaiting": "Oyuncular bekleniyor: {joined}/{expected}",
   "hud.priest": "rahip",
   "hud.priestDead": "rahip (ölü)",

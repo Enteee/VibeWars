@@ -627,7 +627,6 @@ export default {
   "hud.preMatchStartingAnyway":
     "Venter på spillere: {joined}/{expected}, starter alligevel om {seconds} s",
   "hud.preMatchStartsIn": "Kampen starter om {seconds}",
-  "hud.preMatchSelfAllyOnly": "Før starten: kun færdigheder på dig selv eller allierede.",
   "hud.preMatchWaiting": "Venter på spillere: {joined}/{expected}",
   "hud.priest": "præst",
   "hud.priestDead": "præst (død)",

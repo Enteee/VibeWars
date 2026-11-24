@@ -16,8 +16,6 @@ export { CastState, resolvedBar } from "./cast-state.js";
 
 export { IMPLEMENTED_SKILLS, MAINTAINED_STATUSES, SKILLS_BY_ID, getSkill } from "./catalog.js";
 
-export { preMatchAllowed } from "./pre-match.js";
-
 export type { GroundReach } from "./ground-reach.js";
 export { groundReach } from "./ground-reach.js";
 

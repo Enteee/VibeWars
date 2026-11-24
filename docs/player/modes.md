@@ -30,7 +30,7 @@ objective off screen or under the HUD gets an outlined arrow at the
 screen edge: the stand or a shrine in its owner's colour, grey for
 nobody's, the altar in gold. A player's filled arrow draws over it.
 
-A match opens with each team held together in its start area: you can walk anywhere inside it and prepare with skills on yourself and your allies, such as enchantments, stances and heals, but you cannot attack or use a skill on a foe. Energy and Health regenerate while you wait, and bots prepare too. A shimmering wall around your team's start area shows how far you can go. A line at the top counts the players who have loaded the match. Once everyone has loaded, it counts down 10 seconds and the match starts, and its clock with it. A player who has not loaded after 20 seconds is not waited for: the countdown starts without them, and they can still join later.
+A match opens with each team held together in its start area: you can walk anywhere inside it and use any skill, so prepare enchantments, stances, spirits or wards before the doors open; the other team is held far away in its own start area. Energy and Health regenerate while you wait, and bots prepare too. A shimmering wall around your team's start area shows how far you can go. A line at the top counts the players who have loaded the match. Once everyone has loaded, it counts down 10 seconds and the match starts, and its clock with it. A player who has not loaded after 20 seconds is not waited for: the countdown starts without them, and they can still join later.
 
 ## Annihilation
 

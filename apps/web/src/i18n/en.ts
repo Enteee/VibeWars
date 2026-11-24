@@ -629,7 +629,6 @@ export const en = {
   "hud.preMatchStartingAnyway":
     "Waiting for players: {joined}/{expected}, starting anyway in {seconds} s",
   "hud.preMatchStartsIn": "Match starts in {seconds}",
-  "hud.preMatchSelfAllyOnly": "Before the start: only skills on yourself or allies.",
   "hud.preMatchWaiting": "Waiting for players: {joined}/{expected}",
   "hud.priest": "priest",
   "hud.priestDead": "priest (dead)",

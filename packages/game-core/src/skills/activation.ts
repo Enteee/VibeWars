@@ -117,10 +117,7 @@ export type ActivationRejection =
   | "no-flag-carried"
   // Space on a foe's relic at its spawn (#1374); a return with a relic
   // in hand is `"hands-full"`.
-  | "not-your-relic"
-  // Before the start, a skill not only for the caster or its allies
-  // (#3910): checked by the simulation, which knows it is held.
-  | "pre-match";
+  | "not-your-relic";
 
 export type ActivationCheck =
   { readonly ok: true } | { readonly ok: false; readonly reason: ActivationRejection };

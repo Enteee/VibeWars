@@ -33,7 +33,7 @@ konturpil vid skärmkanten: stället eller en helgedom i ägarens färg,
 grå om ingen äger den, altaret i guld. En spelares fyllda pil ritas
 ovanpå.
 
-En match börjar med varje lag fasthållet tillsammans i sitt startområde: du kan gå var som helst inom det och förbereda dig med färdigheter på dig själv och dina allierade, som förtrollningar, ställningar och helningar, men du kan inte anfalla eller använda en färdighet på en fiende. Energi och hälsa återhämtar sig medan du väntar, och bottar förbereder sig också. En skimrande vägg runt ditt lags startområde visar hur långt du kan gå. En rad överst räknar spelarna som har läst in matchen. När alla har läst in den räknar den ner 10 sekunder och matchen börjar, och dess klocka med den. En spelare som inte har läst in den efter 20 sekunder väntar man inte på: nedräkningen börjar utan dem, och de kan fortfarande ansluta senare.
+En match börjar med varje lag fasthållet tillsammans i sitt startområde: du kan gå var som helst inom det och använda vilken färdighet som helst, så förbered förtrollningar, ställningar, andar eller skydd innan portarna öppnas; det andra laget hålls långt borta i sitt eget startområde. Energi och hälsa återhämtar sig medan du väntar, och bottar förbereder sig också. En skimrande vägg runt ditt lags startområde visar hur långt du kan gå. En rad överst räknar spelarna som har läst in matchen. När alla har läst in den räknar den ner 10 sekunder och matchen börjar, och dess klocka med den. En spelare som inte har läst in den efter 20 sekunder väntar man inte på: nedräkningen börjar utan dem, och de kan fortfarande ansluta senare.
 
 ## Förintelse
 

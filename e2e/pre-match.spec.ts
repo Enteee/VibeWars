@@ -78,11 +78,7 @@ test("#3818: both in, the match counts 10 s down with everyone held in the spawn
         // Above 1 s, so the host runs the real countdown, not the e2e
         // build's (#3855): it fails should ?pre-match=real be lost.
         await expect(line).toHaveText(/^Match starts in ([2-9]|10)$/);
-        // Only skills on yourself or allies go (#3910): Fireball is greyed,
-        // Armor of Earth is not, and it lands.
-        const slots = host.locator(".hud-skills .hud-skill");
-        await expect(slots.nth(0)).toHaveClass(/\bis-held\b/);
-        await expect(slots.nth(4)).not.toHaveClass(/\bis-held\b/);
+        // Any skill goes while held (#3931): Armor of Earth lands.
         await host.keyboard.press(ARMOR_OF_EARTH);
         const effects = host.getByRole("list", { name: "your effects" });
         await expect(
@@ -94,7 +90,6 @@ test("#3818: both in, the match counts 10 s down with everyone held in the spawn
         // Checked together: a loaded runner spends seconds on each, and the
         // countdown does not wait for them.
         await Promise.all([
-          expect(slots.nth(0)).toHaveClass(/\bis-held\b/),
           // Your own spawn bubble stands while held (#3909).
           expect(host.locator("#viewport")).toHaveAttribute("data-spawn-bubble", ""),
           // Walked into its wall, the hero is told why (#3909).
@@ -123,9 +118,8 @@ test("#3818: both in, the match counts 10 s down with everyone held in the spawn
       })(),
     ]);
 
-    // Started: the line goes, the bar wakes, and the key held all along walks.
+    // Started: the line goes, and the key held all along walks.
     await waitForMatchStart([host, guest]);
-    await expect(host.locator(".hud-skills .hud-skill.is-held")).toHaveCount(0);
     // The bubble fades with the start, and leaves nothing behind (#3909).
     await expect(host.locator("#viewport")).not.toHaveAttribute("data-spawn-bubble");
     const speed = MINIMAL_GW_INSPIRED_PVP_V1.movement.maxSpeedUnitsPerSecond;

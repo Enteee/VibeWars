@@ -684,7 +684,6 @@ export default {
   "hud.preMatchStartingAnyway":
     "Oczekiwanie na graczy: {joined}/{expected}, start mimo to za {seconds} s",
   "hud.preMatchStartsIn": "Mecz zaczyna się za {seconds}",
-  "hud.preMatchSelfAllyOnly": "Przed startem: tylko umiejętności na siebie lub sojuszników.",
   "hud.preMatchWaiting": "Oczekiwanie na graczy: {joined}/{expected}",
   "hud.priest": "kapłan",
   "hud.priestDead": "kapłan (nie żyje)",

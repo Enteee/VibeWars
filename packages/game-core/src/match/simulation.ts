@@ -116,7 +116,6 @@ import {
   type ActivationCheck,
   type ActivationRejection,
 } from "../skills/activation.js";
-import { preMatchAllowed } from "../skills/pre-match.js";
 import {
   adrenalineLossIn,
   adrenalinePools,
@@ -3892,7 +3891,8 @@ export class MatchSimulation {
       return { skillId: skill.id, check: { ok: true } };
     }
 
-    // Held before the start, nobody picks a foe: none can be cast at (#3910).
+    // Held before the start, nobody picks a foe: the nearest is held in its
+    // own bubble, far out of reach, and walking at it only meets the edge.
     if (skill.target === "single-enemy" && record.targetId === undefined && !this.#held) {
       const team = record.combatant.team;
       record.targetId = nearestLiving(
@@ -4890,10 +4890,6 @@ export class MatchSimulation {
     key: string = skill.id,
     isCasting: boolean = record.combatant.cast.isCasting,
   ): ActivationCheck {
-    // Held before the start, only a skill for the caster or its allies (#3910).
-    if (this.#held && !preMatchAllowed(skill)) {
-      return { ok: false, reason: "pre-match" };
-    }
     // A pet skill acts on the pet, whatever was asked (#1046).
     const targetedId = isCompanionRule(skill.target) ? this.#companionOf(record)?.id : targetId;
     const target = targetedId === undefined ? undefined : this.#participants.get(targetedId);
