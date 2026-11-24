@@ -851,7 +851,6 @@ export default {
   "lobby.leaveTeamLabel": "Opustit tým {team}",
   "lobby.map": "Mapa:",
   "lobby.mapLabel": "{name} ({size})",
-  "lobby.mapRandom": "Mapa: náhodná (Týmová aréna)",
   "lobby.mapShown": "Mapa: {map}",
   "lobby.matchRunning": "Zápas ještě běží. Lobby se znovu otevře, až skončí.",
   "lobby.modeNameCapturePoints": "Dobývání bodů",

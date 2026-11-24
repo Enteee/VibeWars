@@ -788,7 +788,6 @@ export default {
   "lobby.leaveTeamLabel": "Forlad hold {team}",
   "lobby.map": "Bane:",
   "lobby.mapLabel": "{name} ({size})",
-  "lobby.mapRandom": "Bane: tilfældig (Holdarena)",
   "lobby.mapShown": "Bane: {map}",
   "lobby.matchRunning": "En kamp er stadig i gang. Lobbyen åbner igen, når den er slut.",
   "lobby.modeNameCapturePoints": "Erobring",

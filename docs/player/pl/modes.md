@@ -1,6 +1,6 @@
 # Tryby
 
-Każda mapa gra w jednym trybie, a lobby podaje go pod nazwą mapy. Tryby to pozycje
+Każda mapa gra w jednym trybie. Tryby to pozycje
 paska po lewej stronie ekranu głównego. Nikt nie wybiera trybu mapy, ale pozycja
 paska, z której hostujesz, decyduje, w jakich trybach grają mapy jej lobby: ![Arena drużynowa](../../../apps/web/public/icons/mode/team-arena.svg) **Arena
 drużynowa** Anihilacja, Licznik zabójstw i Anihilacja kapłana, ![Szczyt Bohaterów](../../../apps/web/public/icons/mode/heroes-ascent.svg) **Szczyt Bohaterów**
@@ -8,7 +8,8 @@ Wyścig relikwii, Król wzgórza i Punkty kontrolne, a ![GvG](../../../apps/web/
 prywatna** oferuje każdą mapę. ![Arena losowa](../../../apps/web/public/icons/mode/random-arena.svg) **Arena losowa** wybiera mapę za ciebie, a z nią tryb,
 ale nigdy Bitwę gildii, Wyścig relikwii, Króla wzgórza ani Punkty kontrolne. Arena
 drużynowa losuje jedną ze swoich map na każdy mecz, Szczyt Bohaterów zaczyna od
-pierwszej mapy, a tylko Gra prywatna pozwala hostowi wybierać.
+pierwszej mapy, a tylko Gra prywatna pozwala hostowi wybierać. Ekran żadnego innego
+trybu nie podaje, która mapa będzie następna: mecz pokazuje ją podczas wczytywania.
 
 Dwóch graczy za restrykcyjnymi sieciami nie może zostać ze sobą dobranych w kolejce, więc kolejka liczy tylko graczy, z którymi możesz zostać dobrany, i to mówi. Pomaga przekaźnik w **Opcje → przekaźnik (TURN)**.
 

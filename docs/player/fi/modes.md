@@ -1,7 +1,6 @@
 # Pelitilat
 
-Jokainen kartta pelaa yhtä pelitilaa, ja aula kertoo sen kartan nimen
-alla. Pelitilat ovat päänäkymän vasemmassa reunassa olevan palkin
+Jokainen kartta pelaa yhtä pelitilaa. Pelitilat ovat päänäkymän vasemmassa reunassa olevan palkin
 kohdat. Kukaan ei valitse kartan pelitilaa, mutta palkin kohta, josta
 isännöit, valitsee pelitilat, joita sen aulan kartat pelaavat:
 ![Tiimiareena](../../../apps/web/public/icons/mode/team-arena.svg) **Tiimiareena** Tuho, Tappolaskenta ja Pappituho, ![Sankarien nousu](../../../apps/web/public/icons/mode/heroes-ascent.svg) **Sankarien nousu**
@@ -11,7 +10,8 @@ Kiltataistelu. ![Isännöity peli](../../../apps/web/public/icons/mode/hosted-ga
 mutta ei koskaan Kiltataistelua, Reliikkijuoksua, Kukkulan kuningasta
 eikä Valtauspisteitä. Tiimiareena arpoo jokaiseen otteluun yhden
 kartoistaan, Sankarien nousu alkaa ensimmäiseltä kartaltaan, ja vain
-Isännöity peli antaa isännän valita.
+Isännöity peli antaa isännän valita. Minkään muun pelitilan näkymä ei
+kerro, mikä kartta on seuraavana: ottelu näyttää sen latautuessaan.
 
 Kahta tiukkojen verkkojen takana olevaa pelaajaa ei voi yhdistää toisiinsa jonossa, joten jono laskee vain pelaajat, joiden kanssa sinut voi yhdistää, ja kertoo sen. Relay kohdassa **Asetukset → relay (TURN)** auttaa.
 

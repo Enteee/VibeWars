@@ -852,7 +852,6 @@ export default {
   "lobby.leaveTeamLabel": "Выйти из команды {team}",
   "lobby.map": "Карта:",
   "lobby.mapLabel": "{name} ({size})",
-  "lobby.mapRandom": "Карта: случайная (Командная арена)",
   "lobby.mapShown": "Карта: {map}",
   "lobby.matchRunning": "Матч ещё идёт. Лобби откроется, когда он закончится.",
   "lobby.modeNameCapturePoints": "Захват точек",

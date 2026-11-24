@@ -745,7 +745,6 @@ export default {
   "lobby.leaveTeamLabel": "Keluar dari tim {team}",
   "lobby.map": "Peta:",
   "lobby.mapLabel": "{name} ({size})",
-  "lobby.mapRandom": "Peta: acak (Arena Tim)",
   "lobby.mapShown": "Peta: {map}",
   "lobby.matchRunning": "Masih ada pertandingan berjalan. Lobi dibuka lagi setelah selesai.",
   "lobby.modeNameCapturePoints": "Rebut Titik",

@@ -747,7 +747,6 @@ export default {
   "lobby.leaveTeamLabel": "チーム{team}を離脱",
   "lobby.map": "マップ:",
   "lobby.mapLabel": "{name} ({size})",
-  "lobby.mapRandom": "マップ: ランダム (チームアリーナ)",
   "lobby.mapShown": "マップ: {map}",
   "lobby.matchRunning": "マッチがまだ進行中です。終了するとロビーが再度開きます。",
   "lobby.modeNameCapturePoints": "拠点制圧",

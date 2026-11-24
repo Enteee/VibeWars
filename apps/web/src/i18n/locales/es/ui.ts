@@ -833,7 +833,6 @@ export default {
   "lobby.leaveTeamLabel": "Salir del equipo {team}",
   "lobby.map": "Mapa:",
   "lobby.mapLabel": "{name} ({size})",
-  "lobby.mapRandom": "Mapa: aleatorio (Arena por equipos)",
   "lobby.mapShown": "Mapa: {map}",
   "lobby.matchRunning": "Aún hay una partida en curso. La sala se abrirá de nuevo cuando termine.",
   "lobby.modeNameCapturePoints": "Puntos de captura",

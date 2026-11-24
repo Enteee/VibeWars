@@ -740,7 +740,6 @@ export default {
   "lobby.leaveTeamLabel": "Rời đội {team}",
   "lobby.map": "Bản đồ:",
   "lobby.mapLabel": "{name} ({size})",
-  "lobby.mapRandom": "Bản đồ: ngẫu nhiên (Đấu trường đội)",
   "lobby.mapShown": "Bản đồ: {map}",
   "lobby.matchRunning": "Trận đấu vẫn đang diễn ra. Sảnh sẽ mở lại khi trận kết thúc.",
   "lobby.modeNameCapturePoints": "Chiếm điểm",

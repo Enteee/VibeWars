@@ -1,6 +1,6 @@
 # Chế độ
 
-Mỗi bản đồ chơi một chế độ, và sảnh ghi chế độ đó dưới tên bản đồ. Các chế
+Mỗi bản đồ chơi một chế độ. Các chế
 độ là các mục trên thanh bên trái màn hình chính. Không ai chọn chế độ của
 một bản đồ, nhưng mục trên thanh mà bạn làm chủ phòng từ đó sẽ chọn các chế
 độ mà bản đồ của sảnh chơi: ![Đấu trường đội](../../../apps/web/public/icons/mode/team-arena.svg) **Đấu trường đội** Hủy diệt, Đếm hạ gục và Diệt
@@ -9,7 +9,8 @@ tư tế, ![Đỉnh Anh Hùng](../../../apps/web/public/icons/mode/heroes-ascent
 nhiên** chọn bản đồ cho bạn, và kèm theo đó là chế độ, nhưng không bao giờ là
 Chiến Bang, Vận chuyển thánh tích, Vua đồi hay Chiếm điểm. Đấu trường đội
 bốc một bản đồ của nó cho mỗi trận, Đỉnh Anh Hùng bắt đầu ở bản đồ đầu tiên
-của nó, và chỉ Trận tự tạo cho chủ phòng chọn.
+của nó, và chỉ Trận tự tạo cho chủ phòng chọn. Màn hình của các chế độ khác
+không ghi bản đồ nào đến tiếp theo: trận hiện bản đồ đó khi đang tải.
 
 Hai người chơi sau mạng nghiêm ngặt không thể được ghép với nhau trong hàng chờ, nên hàng chờ chỉ đếm những người chơi có thể ghép với bạn, và cho bạn biết. Một relay trong **Tùy chọn → Relay (TURN)** sẽ giúp ích.
 

@@ -793,7 +793,6 @@ export default {
   "lobby.leaveTeamLabel": "Напусни отбор {team}",
   "lobby.map": "Карта:",
   "lobby.mapLabel": "{name} ({size})",
-  "lobby.mapRandom": "Карта: случайна (Отборна арена)",
   "lobby.mapShown": "Карта: {map}",
   "lobby.matchRunning": "Още тече мач. Лобито се отваря отново, когато свърши.",
   "lobby.modeNameCapturePoints": "Превземане на точки",

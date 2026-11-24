@@ -790,7 +790,6 @@ export const en = {
   "lobby.leaveTeamLabel": "Leave team {team}",
   "lobby.map": "Map:",
   "lobby.mapLabel": "{name} ({size})",
-  "lobby.mapRandom": "Map: random (Team Arena)",
   "lobby.mapShown": "Map: {map}",
   "lobby.matchRunning": "A match is still running. The lobby opens again when it ends.",
   "lobby.modeNameCapturePoints": "Capture Points",

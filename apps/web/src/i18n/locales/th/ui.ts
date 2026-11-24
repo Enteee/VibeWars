@@ -740,7 +740,6 @@ export default {
   "lobby.leaveTeamLabel": "ออกจากทีม {team}",
   "lobby.map": "แมป:",
   "lobby.mapLabel": "{name} ({size})",
-  "lobby.mapRandom": "แมป: สุ่ม (อารีนาทีม)",
   "lobby.mapShown": "แมป: {map}",
   "lobby.matchRunning": "แมตช์ยังเล่นอยู่ ล็อบบี้จะเปิดอีกครั้งเมื่อจบ",
   "lobby.modeNameCapturePoints": "ยึดจุด",
