@@ -2216,9 +2216,22 @@ body:has(> .splash) #menu-background::after {
   padding: 1.2rem 1.5rem 2rem;
 }
 
+/* The heading, after the drawer's toggle where the rail is one (#3924). */
+.rail-head {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: -0.6rem;
+}
+
 .rail-title {
-  margin: 0 0 -0.6rem;
+  margin: 0;
   font-size: 1.05rem;
+}
+
+.rail-drawer-toggle,
+.rail-drawer-scrim {
+  display: none;
 }
 
 /* Who is in this lobby (#1526), in the top bar's Lobby window (#2385). */
@@ -9568,6 +9581,88 @@ body:has(> .splash) #app {
   .paper-doll-hotspot {
     min-block-size: 44px;
     min-inline-size: 44px;
+  }
+}
+
+/* Upright, the rail is a drawer (#3924): off the screen's start, it
+   slides in over a dim from the toggle before the heading, which shows
+   the screen's own icon. Its width and entries are the phone's rail's.
+   The chat sits at the screen's edge again. */
+@media (pointer: coarse) and (width <= 30rem) {
+  .screen.screen-rail {
+    position: relative;
+  }
+
+  .screen-rail > .mode-rail {
+    position: absolute;
+    inset-block: 0;
+    inset-inline-start: 0;
+    z-index: 2;
+    width: 92px;
+    visibility: hidden;
+    transform: translateX(-100%);
+    transition:
+      transform 200ms ease-out,
+      visibility 200ms;
+  }
+
+  .screen-rail > .mode-rail:dir(rtl) {
+    transform: translateX(100%);
+  }
+
+  .screen-rail.is-drawer-open > .mode-rail {
+    visibility: visible;
+    transform: none;
+  }
+
+  .rail-drawer-scrim {
+    display: block;
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: rgb(0 0 0 / 55%);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 200ms;
+  }
+
+  .screen-rail.is-drawer-open > .rail-drawer-scrim {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .screen .rail-drawer-toggle {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    gap: 0.15rem;
+    padding: 0 0.4rem;
+    color: var(--accent);
+  }
+
+  .rail-drawer-toggle::after {
+    content: "";
+    width: 0.45rem;
+    height: 0.45rem;
+    border-block-end: 2px solid currentcolor;
+    border-inline-end: 2px solid currentcolor;
+    transform: rotate(-45deg);
+  }
+
+  .rail-drawer-toggle:dir(rtl)::after {
+    transform: rotate(45deg);
+  }
+
+  #app:has(.screen-rail) > .chat {
+    inset-inline-start: var(--chat-inset);
+  }
+}
+
+@media (pointer: coarse) and (width <= 30rem) and (prefers-reduced-motion: reduce) {
+  .screen-rail > .mode-rail,
+  .rail-drawer-scrim {
+    transition: none;
   }
 }
 

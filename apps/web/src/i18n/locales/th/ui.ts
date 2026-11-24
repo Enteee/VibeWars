@@ -1021,6 +1021,7 @@ export default {
   "rail.matchesShort": "แมตช์",
   "rail.modes": "โหมด",
   "rail.noTeamSizeHere": "ขนาดทีมใช้กับโหมดทีมและทีมบิลด์",
+  "rail.open": "โหมด",
   "rail.randomArena": "อารีนาสุ่ม",
   "rail.randomArenaShort": "สุ่ม",
   "rail.smallerTeam": "ทีมเล็กลง",

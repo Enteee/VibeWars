@@ -22,6 +22,7 @@ boyutla açılır (GvG 8v8 ile). Onun altında karakterlerini yaptığın
 yaptığın ![Takım Oluşturucu](../../../apps/web/public/icons/mode/teams.svg) **Takım Oluşturucu**, ardından da kurucularının bildirdiği
 şekliyle [biten maçları](modes.md#maç-kayıtları) ve kendi maçlarını gösteren ![Maçlar](../../../apps/web/public/icons/mode/matches.svg) **Maçlar**
 yer alır. Oyun en son kullandığın ekranda açılır.
+Dik tutulan bir telefonda şerit, ekranın sol üstündeki, geçerli modun simgesini gösteren düğmenin arkasına gizlenir.
 
 ## Karakter oluştur
 

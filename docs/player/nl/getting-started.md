@@ -21,6 +21,7 @@ Elk scherm onthoudt zijn eigen grootte, en opent op een grootte die het speelt
 en ![Teambouwer](../../../apps/web/public/icons/mode/teams.svg) **Teambouwer**, waar je je [Teambuilds](skills-and-builds.md#teambuilds)
 maakt, en dan ![Matches](../../../apps/web/public/icons/mode/matches.svg) **Matches**, de [afgelopen matches](modes.md#matchrecords) zoals
 hun hosts ze melden, en die van jezelf. Het spel opent op het scherm dat je het laatst gebruikte.
+Op een rechtop gehouden telefoon zit de balk weggestopt achter de knop linksboven in het scherm, die het pictogram van de huidige modus toont.
 
 ## Maak een personage
 

@@ -1089,6 +1089,7 @@ export default {
   "rail.matchesShort": "Ottelut",
   "rail.modes": "Tilat",
   "rail.noTeamSizeHere": "Tiimin koko koskee tiimitiloja ja tiimibuildeja",
+  "rail.open": "Tilat",
   "rail.randomArena": "Satunnaisareena",
   "rail.randomArenaShort": "Arvottu",
   "rail.smallerTeam": "Pienempi tiimi",

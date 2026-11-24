@@ -22,6 +22,7 @@ baust, und der ![Team-Editor](../../../apps/web/public/icons/mode/teams.svg) **T
 [Team-Builds](skills-and-builds.md#team-builds) baust, dann ![Matches](../../../apps/web/public/icons/mode/matches.svg) **Matches**, die
 [beendeten Matches](modes.md#match-berichte), wie ihre Hosts sie melden, und deine eigenen. Das Spiel
 öffnet mit dem, den du zuletzt genutzt hast.
+Auf einem hochkant gehaltenen Handy steckt die Leiste hinter der Schaltfläche oben links auf dem Bildschirm, die das Symbol des aktuellen Modus zeigt.
 
 ## Einen Charakter bauen
 

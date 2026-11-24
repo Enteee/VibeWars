@@ -1140,6 +1140,7 @@ export default {
   "rail.matchesShort": "Meciuri",
   "rail.modes": "Moduri",
   "rail.noTeamSizeHere": "Mărimea echipei e pentru moduri de echipă și builduri de echipă",
+  "rail.open": "Moduri",
   "rail.randomArena": "Arenă aleatorie",
   "rail.randomArenaShort": "Aleator",
   "rail.smallerTeam": "Echipă mai mică",

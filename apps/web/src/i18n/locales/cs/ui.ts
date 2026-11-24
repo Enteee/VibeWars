@@ -1173,6 +1173,7 @@ export default {
   "rail.matchesShort": "Zápasy",
   "rail.modes": "Režimy",
   "rail.noTeamSizeHere": "Velikost týmu platí pro týmové režimy a Týmové buildy",
+  "rail.open": "Režimy",
   "rail.randomArena": "Náhodná aréna",
   "rail.randomArenaShort": "Náhodná",
   "rail.smallerTeam": "Menší tým",

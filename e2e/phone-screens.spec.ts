@@ -3,7 +3,12 @@ import { expect, test, type Locator, type Page } from "@playwright/test";
 import { joinFriend, openRail, type RailLabel } from "./helpers/menu.js";
 import { clickTopbarIcon } from "./helpers/overlay.js";
 import { copyInvite, hostLobby, openPeers, openToFriends, setTeamSize } from "./helpers/peers.js";
-import { PIXEL_8A_PORTRAIT, expectFitsPhone } from "./helpers/phone.js";
+import {
+  PIXEL_8A_LANDSCAPE,
+  PIXEL_8A_PORTRAIT,
+  TOUCH_TARGET,
+  expectFitsPhone,
+} from "./helpers/phone.js";
 import { namePlayer } from "./helpers/player.js";
 import { bringStarter } from "./helpers/starter.js";
 
@@ -19,8 +24,64 @@ test.use(PIXEL_8A_PORTRAIT);
 /** The menu on the phone, which opens straight to it (#3782). */
 async function openPhone(page: Page, url = "./"): Promise<void> {
   await page.goto(url);
-  await expect(page.locator(".mode-rail")).toBeVisible();
+  await expect(page.locator(".rail-title")).toBeVisible();
 }
+
+/** `locator`'s box is a finger's at least (#3776). */
+async function expectFingerSized(locator: Locator, what: string): Promise<void> {
+  const box = await locator.boundingBox();
+  expect(box?.width ?? 0, `${what} wide`).toBeGreaterThanOrEqual(TOUCH_TARGET);
+  expect(box?.height ?? 0, `${what} tall`).toBeGreaterThanOrEqual(TOUCH_TARGET);
+}
+
+test("upright, the rail is a drawer behind a finger-wide toggle (#3924)", async ({ page }) => {
+  await openPhone(page);
+  const toggle = page.locator(".rail-drawer-toggle");
+  const rail = page.locator(".mode-rail");
+  const scrim = page.locator(".rail-drawer-scrim");
+  await expect(rail).toBeHidden();
+  await expectFingerSized(toggle, "toggle");
+
+  await toggle.tap();
+  await expect(toggle).toHaveAttribute("aria-expanded", "true");
+  await expect(rail).toBeVisible();
+  await expect(rail.locator('[aria-pressed="true"]')).toBeFocused();
+  for (const entry of await rail.locator(".mode-rail-entry").all()) {
+    await expectFingerSized(entry, (await entry.getAttribute("aria-label")) ?? "entry");
+  }
+  // A tap on the dim puts it away, and the focus goes back to the toggle.
+  await scrim.tap();
+  await expect(rail).toBeHidden();
+  await expect(toggle).toHaveAttribute("aria-expanded", "false");
+  await expect(toggle).toBeFocused();
+
+  // An entry switches the screen and puts the drawer away.
+  await toggle.tap();
+  await rail.getByRole("button", { name: "Team Builder", exact: true }).tap();
+  await expect(page.locator(".rail-title")).toHaveText("Team Builder");
+  await expect(rail).toBeHidden();
+
+  // The size stepper does not: you step sizes and look.
+  await toggle.tap();
+  const shown = rail.locator(".mode-rail-size-value");
+  const before = (await shown.textContent()) ?? "";
+  await rail.getByRole("button", { name: "Smaller team" }).tap();
+  await expect(shown).not.toHaveText(before);
+  await expect(rail).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(rail).toBeHidden();
+  await expectFitsPhone(page, "menu, drawer put away");
+});
+
+test.describe("on its side", () => {
+  test.use(PIXEL_8A_LANDSCAPE);
+
+  test("the rail stays a rail, with no drawer toggle (#3924)", async ({ page }) => {
+    await openPhone(page);
+    await expect(page.locator(".mode-rail")).toBeVisible();
+    await expect(page.locator(".rail-drawer-toggle")).toBeHidden();
+  });
+});
 
 test("a phone opens straight to the menu, with no keyboard-and-mouse notice (#3782)", async ({
   page,

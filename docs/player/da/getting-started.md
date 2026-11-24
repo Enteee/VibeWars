@@ -23,6 +23,7 @@ Derunder er ![Figureditor](../../../apps/web/public/icons/mode/characters.svg) *
 [Holdbuilds](skills-and-builds.md#holdbuilds), og derefter ![Kampe](../../../apps/web/public/icons/mode/matches.svg) **Kampe**, de
 [afsluttede kampe](modes.md#kampregistreringer), som deres værter
 rapporterer dem, og dine egne. Spillet åbner på den, du brugte sidst.
+På en telefon, der holdes oprejst, er listen gemt bag knappen øverst til venstre på skærmen, som viser ikonet for den aktuelle type.
 
 ## Lav en figur
 

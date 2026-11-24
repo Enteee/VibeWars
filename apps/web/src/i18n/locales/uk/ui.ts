@@ -1179,6 +1179,7 @@ export default {
   "rail.matchesShort": "Матчі",
   "rail.modes": "Режими",
   "rail.noTeamSizeHere": "Розмір команди — лише для командних режимів і командних білдів",
+  "rail.open": "Режими",
   "rail.randomArena": "Випадкова арена",
   "rail.randomArenaShort": "Випадкова",
   "rail.smallerTeam": "Менша команда",

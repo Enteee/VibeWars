@@ -1031,6 +1031,7 @@ export default {
   "rail.matchesShort": "マッチ",
   "rail.modes": "モード",
   "rail.noTeamSizeHere": "チーム人数はチームモードとチームビルドで設定できます",
+  "rail.open": "モード",
   "rail.randomArena": "ランダムアリーナ",
   "rail.randomArenaShort": "ランダム",
   "rail.smallerTeam": "人数を減らす",
