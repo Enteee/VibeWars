@@ -742,7 +742,6 @@ export default {
   "lobby.leaveTeamLabel": "{team} 팀 나가기",
   "lobby.map": "맵:",
   "lobby.mapLabel": "{name} ({size})",
-  "lobby.mapRandom": "맵: 무작위 (팀 아레나)",
   "lobby.mapShown": "맵: {map}",
   "lobby.matchRunning": "아직 매치가 진행 중이에요. 끝나면 로비가 다시 열려요.",
   "lobby.modeNameCapturePoints": "거점 점령",

@@ -1,6 +1,6 @@
 # Modes
 
-Each map plays one mode, and the lobby says which under the map's name.
+Each map plays one mode.
 The modes are the entries of the rail on the left of the main screen.
 Nobody picks a map's mode, but the rail entry you host from picks the
 modes its lobby's maps play: ![Team Arena](../../apps/web/public/icons/mode/team-arena.svg) **Team Arena** Annihilation, Kill Count and
@@ -10,6 +10,8 @@ every map. A ![Random Arena](../../apps/web/public/icons/mode/random-arena.svg) 
 but never a Guild Battle, a Relic Run, King of the Hill or Capture
 Points. Team Arena draws one of its maps for each match, Heroes' Ascent
 starts on its first map, and only a Hosted Game lets the host pick.
+No other mode's screen says which map comes next: the match shows it
+as it loads.
 
 Two players behind strict networks cannot be matched with each other in a queue, so the queue counts only players who can match you, and says so. A relay in **Options → Relay (TURN)** helps.
 

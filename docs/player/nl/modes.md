@@ -1,6 +1,6 @@
 # Modi
 
-Elke map speelt één modus, en de lobby zegt welke onder de naam van de map. De
+Elke map speelt één modus. De
 modi zijn de items van de balk links op het hoofdscherm. Niemand kiest de modus
 van een map, maar het balkitem waarvandaan je host, kiest de modi die de maps van
 zijn lobby spelen: ![Team Arena](../../../apps/web/public/icons/mode/team-arena.svg) **Team Arena** Annihilation, Kill Count en Priest
@@ -9,7 +9,8 @@ en ![GvG](../../../apps/web/public/icons/mode/gvg.svg) **GvG** de Guild Battle. 
 kiest een map voor je, en daarmee de modus, maar nooit een Guild Battle, een
 Relic Run, King of the Hill of Capture Points. Team Arena trekt voor elke match
 een van zijn maps, Heroes' Ascent begint op zijn eerste map, en alleen bij een
-Gehost spel kiest de host.
+Gehost spel kiest de host. Het scherm van geen enkele andere modus zegt welke
+map hierna komt: de match toont hem tijdens het laden.
 
 Twee spelers achter strikte netwerken kunnen in een wachtrij niet met elkaar gekoppeld worden, dus de wachtrij telt alleen spelers met wie je gekoppeld kunt worden, en zegt dat. Een relay in **Opties → relay (TURN)** helpt.
 

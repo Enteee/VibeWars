@@ -823,7 +823,6 @@ export default {
   "lobby.leaveTeamLabel": "Izađi iz tima {team}",
   "lobby.map": "Karta:",
   "lobby.mapLabel": "{name} ({size})",
-  "lobby.mapRandom": "Karta: nasumična (Timska arena)",
   "lobby.mapShown": "Karta: {map}",
   "lobby.matchRunning": "Meč je još u tijeku. Soba se ponovno otvara kad završi.",
   "lobby.modeNameCapturePoints": "Zauzimanje točaka",

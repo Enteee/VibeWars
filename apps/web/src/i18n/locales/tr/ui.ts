@@ -790,7 +790,6 @@ export default {
   "lobby.leaveTeamLabel": "{team} takımından ayrıl",
   "lobby.map": "Harita:",
   "lobby.mapLabel": "{name} ({size})",
-  "lobby.mapRandom": "Harita: rastgele (Takım Arenası)",
   "lobby.mapShown": "Harita: {map}",
   "lobby.matchRunning": "Bir maç hâlâ sürüyor. Bitince lobi yeniden açılır.",
   "lobby.modeNameCapturePoints": "Nokta Ele Geçirme",

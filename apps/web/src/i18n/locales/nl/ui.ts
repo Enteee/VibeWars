@@ -788,7 +788,6 @@ export default {
   "lobby.leaveTeamLabel": "Team {team} verlaten",
   "lobby.map": "Map:",
   "lobby.mapLabel": "{name} ({size})",
-  "lobby.mapRandom": "Map: willekeurig (Team Arena)",
   "lobby.mapShown": "Map: {map}",
   "lobby.matchRunning": "Er loopt nog een match. De lobby gaat weer open als die voorbij is.",
   "lobby.modeNameCapturePoints": "Capture Points",

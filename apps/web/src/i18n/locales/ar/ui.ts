@@ -895,7 +895,6 @@ export default {
   "lobby.leaveTeamLabel": "مغادرة الفريق {team}",
   "lobby.map": "الخريطة:",
   "lobby.mapLabel": "{name} ({size})",
-  "lobby.mapRandom": "الخريطة: عشوائية (ساحة الفرق)",
   "lobby.mapShown": "الخريطة: {map}",
   "lobby.matchRunning": "ما زالت هناك مباراة جارية. تُفتح الردهة مجددًا عند انتهائها.",
   "lobby.modeNameCapturePoints": "نقاط السيطرة",

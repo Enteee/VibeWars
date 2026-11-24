@@ -788,7 +788,6 @@ export default {
   "lobby.leaveTeamLabel": "خروج از تیم {team}",
   "lobby.map": "نقشه:",
   "lobby.mapLabel": "{name} ({size})",
-  "lobby.mapRandom": "نقشه: تصادفی (آرنای تیمی)",
   "lobby.mapShown": "نقشه: {map}",
   "lobby.matchRunning": "مسابقه‌ای هنوز در جریان است. لابی پس از پایانش دوباره باز می‌شود.",
   "lobby.modeNameCapturePoints": "تسخیر نقاط",

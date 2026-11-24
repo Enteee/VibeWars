@@ -1,6 +1,6 @@
 # Modos
 
-Cada mapa joga um modo, e a sala diz qual embaixo do nome do mapa. Os
+Cada mapa joga um modo. Os
 modos são as entradas da barra à esquerda da tela principal. Ninguém
 escolhe o modo de um mapa, mas a entrada da barra de onde você hospeda
 escolhe os modos que os mapas da sala jogam: ![Arena de Equipes](../../../apps/web/public/icons/mode/team-arena.svg) **Arena de Equipes**
@@ -11,7 +11,8 @@ mapas. Uma ![Arena Aleatória](../../../apps/web/public/icons/mode/random-arena.
 modo, mas nunca uma Batalha de Guildas, uma Corrida da Relíquia, Rei da
 Colina ou Captura de Pontos. A Arena de Equipes sorteia um dos seus mapas
 a cada partida, a Ascensão dos Heróis começa no primeiro mapa dela, e só
-uma Partida Hospedada deixa o host escolher.
+uma Partida Hospedada deixa o host escolher. A tela de nenhum outro modo
+diz qual mapa vem a seguir: a partida o mostra enquanto carrega.
 
 Dois jogadores atrás de redes restritas não podem ser pareados entre si numa fila, então a fila conta só os jogadores que podem ser pareados com você, e diz isso. Um relay em **Opções → relay (TURN)** ajuda.
 

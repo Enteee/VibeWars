@@ -799,7 +799,6 @@ export default {
   "lobby.leaveTeamLabel": "Poistu tiimistä {team}",
   "lobby.map": "Kartta:",
   "lobby.mapLabel": "{name} ({size})",
-  "lobby.mapRandom": "Kartta: satunnainen (tiimiareena)",
   "lobby.mapShown": "Kartta: {map}",
   "lobby.matchRunning": "Ottelu on vielä käynnissä. Aula avautuu taas, kun se päättyy.",
   "lobby.modeNameCapturePoints": "Valtauspisteet",

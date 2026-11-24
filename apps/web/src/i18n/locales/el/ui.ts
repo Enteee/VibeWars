@@ -798,7 +798,6 @@ export default {
   "lobby.leaveTeamLabel": "Έξοδος από την ομάδα {team}",
   "lobby.map": "Χάρτης:",
   "lobby.mapLabel": "{name} ({size})",
-  "lobby.mapRandom": "Χάρτης: τυχαίος (Αρένα Ομάδων)",
   "lobby.mapShown": "Χάρτης: {map}",
   "lobby.matchRunning": "Ένας αγώνας είναι ακόμη σε εξέλιξη. Το λόμπι ανοίγει ξανά όταν τελειώσει.",
   "lobby.modeNameCapturePoints": "Κατάληψη σημείων",
