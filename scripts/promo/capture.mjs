@@ -404,6 +404,9 @@ async function friends(browser, url) {
   const { page, context } = scene;
   step = "lobby";
   await openRail(page, "Hosted Game");
+  // 1v1: a side of one each, so two players are a full match.
+  await page.getByRole("button", { name: "Smaller team" }).click();
+  await page.getByRole("button", { name: "Smaller team" }).click();
   await sleep(1500);
   scene.marks.copy = scene.now();
   const lobby = page.locator("#topbar .topbar-lobby-button");
@@ -426,15 +429,26 @@ async function friends(browser, url) {
     .locator(".lobby-panel", { hasText: /Spectating:.+,/ })
     .first()
     .waitFor();
-  await sleep(2500);
+  await sleep(1500);
+  step = "friends ready";
+  await guest.getByRole("button", { name: "join team 2" }).click();
+  await guest.getByRole("button", { name: "Ready", exact: true }).click();
+  await page.bringToFront();
+  await page.getByRole("button", { name: "join team 1" }).click();
+  await page.getByRole("button", { name: "Ready", exact: true }).click();
+  scene.marks.ready = scene.now();
+  await page.getByRole("button", { name: "start match" }).click();
+  await page.locator("#viewport canvas:not(.compass)").waitFor({ timeout: 90_000 });
+  scene.marks.countdown = scene.now();
+  await sleep(4000);
   const { events, timeOrigin } = await pageEvents(page);
   await closeScene(scene, "friends", events, timeOrigin);
 }
 
 /**
  * Ranked: the match end panel with its charts (the e2e fixture's fixed
- * summary), then a character in the Training Ground wearing what a top
- * player has earned: the cosmetics' unlock facts are seeded into this
+ * summary), then a match with the character wearing what a top
+ * player has earned, zoomed on the cape: the cosmetics' unlock facts are seeded into this
  * context's storage, as a fetched leaderboard would leave them.
  *
  * @param {import("@playwright/test").Browser} browser
@@ -467,28 +481,17 @@ async function ranked(browser, url) {
   });
   await page.goto(`${url}?capture`);
   await page.locator(".mode-rail").waitFor();
-  await openRail(page, "Character Builder");
-  await page.getByRole("button", { name: "new character" }).click();
-  await page.locator("input.editor-name").waitFor();
-  await paste(page, BUILD_CODE);
-  await page.locator(".toast", { hasText: "Imported" }).waitFor();
-  await page.locator(".toast").waitFor({ state: "detached", timeout: 15_000 });
-  step = "training ground";
-  await page.getByRole("button", { name: "expand training ground" }).click();
-  const stage = page.getByLabel("training arena");
-  await stage.waitFor();
-  const box = await stage.boundingBox();
-  if (box === null) {
-    throw new Error("the training arena has no box");
-  }
-  await page.mouse.click(box.x + box.width / 2, box.y + box.height - 20);
-  await page.mouse.wheel(0, -240);
-  await sleep(500);
-  await page.keyboard.press("KeyC");
+  step = "match in the look";
+  await startMatch(page, MAPS[0] ?? "");
+  // Wheel in on the hero, the camera's centre, and walk: the cape is the subject.
+  await page.mouse.move(960, 540);
+  await page.mouse.wheel(0, -400);
+  await sleep(800);
   scene.marks.cape = scene.now();
-  await walk(page, "KeyD", 2500);
-  await walk(page, "KeyW", 1500);
-  await walk(page, "KeyA", 2500);
+  await page.keyboard.down("KeyA");
+  await sleep(1500);
+  await page.keyboard.up("KeyA");
+  await walk(page, "KeyW", 2000);
   const { events, timeOrigin } = await pageEvents(page);
   await closeScene(scene, "ranked", events, timeOrigin);
 }

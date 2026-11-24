@@ -106,7 +106,7 @@ function onsets(file) {
 /**
  * One piece of the timeline, rendered to its own file at `width`x`height`.
  *
- * @param {{ src: string, from: number, to: number, speed: number }} cut
+ * @param {{ src: string, from: number, to: number, speed: number, zoom?: number }} cut
  * @param {number} width
  * @param {number} height
  * @param {string} file
@@ -115,6 +115,8 @@ function renderCut(cut, width, height, file) {
   const portrait = height > width;
   // 9:16 takes the middle of the 16:9 frame, where the camera keeps the action.
   const crop = portrait ? "crop=ih*9/16:ih," : "";
+  // A zoom is a centre crop of the frame (the camera keeps the hero there).
+  const zoom = cut.zoom === undefined ? "" : `crop=iw/${String(cut.zoom)}:ih/${String(cut.zoom)},`;
   execFileSync("ffmpeg", [
     "-v",
     "error",
@@ -126,7 +128,7 @@ function renderCut(cut, width, height, file) {
     "-i",
     cut.src,
     "-vf",
-    `${crop}scale=${String(width)}:${String(height)},setpts=${String(1 / cut.speed)}*PTS,fps=${String(FPS)}`,
+    `${crop}${zoom}scale=${String(width)}:${String(height)},setpts=${String(1 / cut.speed)}*PTS,fps=${String(FPS)}`,
     "-an",
     "-c:v",
     "libx264",
@@ -186,13 +188,14 @@ function renderCard(lines, length, width, height, file, dir) {
  * or a card, with the length each takes, and where the interrupt falls.
  */
 function timeline() {
-  /** @type {({ scene: string, src: string, from: number, to: number, speed: number } | { scene: string, card: string[], length: number })[]} */
+  /** @type {({ scene: string, src: string, from: number, to: number, speed: number, zoom?: number } | { scene: string, card: string[], length: number })[]} */
   const pieces = [];
   const fight = scene("fight");
   const fightFile = path.join(CAPTURE, "fight.webm");
   const fightLength = seconds(fightFile);
-  const start = fight.marks.matchStart ?? 0;
-  pieces.push({ scene: "cold", src: fightFile, from: start + 2, to: start + 6, speed: 1 });
+  // The cold open is the first seconds after the countdown, with no banner over it.
+  const start = fight.marks.fightStart ?? fight.marks.matchStart ?? 0;
+  pieces.push({ scene: "cold", src: fightFile, from: start + 0.3, to: start + 4.3, speed: 1 });
 
   const editorFile = path.join(CAPTURE, "editor.webm");
   const editor = scene("editor");
@@ -237,12 +240,26 @@ function timeline() {
   }
   const friends = scene("friends");
   const copy = friends.marks.copy ?? 0;
+  const friendsFile = path.join(CAPTURE, "friends.webm");
+  // The invite, then the second player joining and the match counting in.
+  pieces.push({ scene: "friends", src: friendsFile, from: copy + 0.5, to: copy + 2.5, speed: 1 });
+  const joined = friends.marks.joined ?? 0;
+  const ready = friends.marks.ready ?? joined;
+  const countdown = friends.marks.countdown ?? ready;
   pieces.push({
     scene: "friends",
-    src: path.join(CAPTURE, "friends.webm"),
-    from: copy - 0.5,
-    to: copy + 6.5,
-    speed: 7 / 6,
+    src: friendsFile,
+    from: joined - 0.3,
+    to: joined + 1.7,
+    speed: 1,
+  });
+  pieces.push({ scene: "friends", src: friendsFile, from: ready - 0.8, to: ready + 0.7, speed: 1 });
+  pieces.push({
+    scene: "friends",
+    src: friendsFile,
+    from: countdown,
+    to: countdown + 2.5,
+    speed: 1,
   });
   if (fs.existsSync(path.join(CAPTURE, "ranked.webm"))) {
     const ranked = scene("ranked");
@@ -251,9 +268,9 @@ function timeline() {
     const cape = ranked.marks.cape ?? 0;
     // The end panel, then the look it earned.
     pieces.push({ scene: "ranked", src, from: panel + 1, to: panel + 3.5, speed: 1 });
-    pieces.push({ scene: "ranked", src, from: cape + 0.3, to: cape + 3.8, speed: 1 });
+    pieces.push({ scene: "ranked", src, from: cape + 0.3, to: cape + 3.8, speed: 1, zoom: 2.5 });
   }
-  pieces.push({ scene: "end", card: END, length: 5 });
+  pieces.push({ scene: "end", card: END, length: 4 });
   const length = pieces.reduce((sum, piece) => sum + pieceSeconds(piece), 0);
   return { pieces, hitAt, length };
 }
@@ -342,7 +359,7 @@ function assemble(plan, width, height, name, musicStart) {
       "-vf",
       draws.join(","),
       "-af",
-      `afade=t=in:d=0.5,afade=t=out:st=${String(at - 1.5)}:d=1.5`,
+      `loudnorm=I=-14:TP=-1,afade=t=in:d=0.5,afade=t=out:st=${String(at - 1.5)}:d=1.5`,
       "-t",
       String(at),
       "-c:v",
