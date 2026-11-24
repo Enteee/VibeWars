@@ -30,7 +30,7 @@ cilj izvan zaslona ili pod HUD-om dobiva obrubljenu strelicu na
 rubu zaslona: stalak ili svetište u boji vlasnika, sivo za
 ničije, oltar zlatan. Ispunjena strelica igrača crta se preko nje.
 
-Meč počinje sa svima zadržanima blizu njihova mjesta pojavljivanja: možeš napraviti nekoliko koraka, ali ne i boriti se ni koristiti vještine. Redak na vrhu broji igrače koji su učitali meč. Kad ga svi učitaju, odbrojava 10 sekundi i meč počinje, a s njim i njegov sat. Na igrača koji ga nije učitao nakon 20 sekundi ne čeka se: odbrojavanje počinje bez njega, a on se i dalje može pridružiti kasnije.
+Meč počinje sa svima zadržanima blizu njihova mjesta pojavljivanja: možeš napraviti nekoliko koraka, ali ne i boriti se ni koristiti vještine. Svjetlucavi zid oko tvog mjesta pojavljivanja pokazuje dokle možeš ići. Redak na vrhu broji igrače koji su učitali meč. Kad ga svi učitaju, odbrojava 10 sekundi i meč počinje, a s njim i njegov sat. Na igrača koji ga nije učitao nakon 20 sekundi ne čeka se: odbrojavanje počinje bez njega, a on se i dalje može pridružiti kasnije.
 
 ## Uništenje
 
@@ -462,6 +462,15 @@ pritisni bilo koliko njih, a meč se prikazuje ako odgovara jednoj pritisnutoj v
 pritisnutoj veličini; skupina bez pritisnutih pušta sve. Veličina je
 najveći tim, s botovima, pa Igra s domaćinom 3v2 ne odgovara nijednoj veličini.
 Oznake ostaju kako si ih ostavio dok se stranica ponovno ne učita.
+
+**Moji mečevi**, iza oznaka, umjesto toga prikazuje tvoje vlastite
+mečeve: zadnjih 50 koje je ovaj preglednik sačuvao za tvoj trenutni
+ključ igrača, najnovije prvo, bilo koje starosti, objavljene ili ne, i
+Elite Zaishen Battle. Vrsta i Veličina i dalje ih filtriraju, a tvoj tim
+je označen s **Ti**. Otvori jedan za tri kartice: **Buildovi**, njegovi
+timovi s Kloniraj kao gore; **Statistika**, tablica bodova koju je
+pokazala njegova završna ploča; i **Dijagram**, njegovi grafikoni.
+Čuvaju se samo u ovom pregledniku.
 
 Iznad filtara traka **Dvorana junaka** prikazuje zadnjih 20 nizova, od najnovijeg: držatelja (oznaka ceha ili ime vođe), ljude iz pobjedničkog tima, kada je završila najnovija pobjeda i, od dvije pobjede, koliko ih je zaredom. Niz je neprekinuti slijed pobjeda u Dvorani jednog držatelja. Traka čita zapise s ove stranice, zanemaruje filtre i skrivena je kada nijedan od njih nije pobjeda u Dvorani. Kao i svaki zapis, to je ono što je prijavio domaćin svakog meča, i ništa to ne provjerava.
 

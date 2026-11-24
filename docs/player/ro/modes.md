@@ -31,7 +31,7 @@ puncte, un obiectiv din afara ecranului sau de sub HUD primește o săgeată con
 la marginea ecranului: suportul sau un sanctuar în culoarea proprietarului, gri dacă
 nu e al nimănui, altarul în auriu. Săgeata plină a unui jucător se desenează peste ea.
 
-Un meci începe cu toți ținuți lângă locul lor de apariție: poți face câțiva pași, dar nu poți lupta sau folosi abilități. Un rând sus numără jucătorii care au încărcat meciul. Când l-au încărcat toți, numără invers 10 secunde și meciul începe, iar odată cu el și ceasul său. Un jucător care nu l-a încărcat după 20 de secunde nu este așteptat: numărătoarea începe fără el și se poate alătura și mai târziu.
+Un meci începe cu toți ținuți lângă locul lor de apariție: poți face câțiva pași, dar nu poți lupta sau folosi abilități. Un zid sclipitor în jurul locului tău de apariție arată până unde poți merge. Un rând sus numără jucătorii care au încărcat meciul. Când l-au încărcat toți, numără invers 10 secunde și meciul începe, iar odată cu el și ceasul său. Un jucător care nu l-a încărcat după 20 de secunde nu este așteptat: numărătoarea începe fără el și se poate alătura și mai târziu.
 
 ## Anihilare
 
@@ -488,6 +488,15 @@ oricâte, iar un meci apare dacă se potrivește cu un tip apăsat și cu o măr
 grup fără niciun buton apăsat lasă totul să treacă. Mărimea este cea mai mare echipă,
 inclusiv boții, așa că un Joc găzduit 3v2 nu se potrivește niciunei mărimi. Butoanele
 rămân cum le-ai lăsat până se reîncarcă pagina.
+
+**Meciurile mele**, după butoane, arată în schimb meciurile tale:
+ultimele 50 păstrate de acest browser pentru cheia ta de jucător
+actuală, cele mai noi primele, oricât de vechi, publicate sau nu,
+inclusiv un Elite Zaishen Battle. Tip și Mărime le filtrează în
+continuare, iar echipa ta e marcată cu **Tu**. Deschide unul pentru trei
+file: **Builduri**, echipele lui cu Clonează ca mai sus; **Statistici**,
+tabelul de scoruri arătat de panoul lui de final; și **Diagramă**,
+graficele lui. Sunt păstrate doar în acest browser.
 
 Deasupra butoanelor, banda **Sala Eroilor** arată ultimele 20 de dețineri, cele mai noi primele: deținătorul (un tag de breaslă sau numele liderului), jucătorii echipei câștigătoare, când s-a încheiat cea mai nouă victorie și, de la două victorii în sus, câte la rând. O deținere este un șir neîntrerupt de victorii în Sală ale aceluiași deținător. Banda citește înregistrările de pe această pagină, ignoră butoanele și este ascunsă când niciuna dintre ele nu este o victorie în Sală. Ca orice înregistrare, arată ce a raportat gazda fiecărui meci, și nimic nu verifică asta.
 

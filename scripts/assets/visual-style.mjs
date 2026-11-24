@@ -176,6 +176,51 @@ ${body(190, 170)}
 <g font-family="DejaVu Sans, sans-serif" font-size="11" fill="#d7dee8"><text x="62" y="40">up: handle stands</text><text x="215" y="40">down: handle lies</text></g>`,
 );
 
+// ---- spawn bubble: a low curtain at the hold's edge, brightest where you touch it ----
+/** The curtain's arc `lift` px up, between `from` and `to` degrees, round (180, 270) at 162 px. */
+const bubbleArc = (
+  /** @type {number} */ from,
+  /** @type {number} */ to,
+  /** @type {number} */ lift,
+) => {
+  const at = (/** @type {number} */ deg) => {
+    const a = (deg * Math.PI) / 180;
+    return `${(180 + 162 * Math.cos(a)).toFixed(1)},${(270 + 162 * Math.sin(a) - lift).toFixed(1)}`;
+  };
+  return { start: at(from), end: at(to) };
+};
+/** One band of the curtain from `low` to `high` px up, over the arc. */
+const bubbleBand = (
+  /** @type {number} */ from,
+  /** @type {number} */ to,
+  /** @type {number} */ low,
+  /** @type {number} */ high,
+  /** @type {number} */ opacity,
+) => {
+  const bottom = bubbleArc(from, to, low);
+  const top = bubbleArc(to, from, high);
+  return `<path d="M${bottom.start} A162,162 0 0 1 ${bottom.end} L${top.start} A162,162 0 0 0 ${top.end} Z" fill="#eef6ff" fill-opacity="${opacity.toFixed(3)}"/>`;
+};
+let bubble = "";
+// Five slices one body tall (80 px), faintest at the top: 0.15 at rest.
+for (let level = 0; level < 5; level += 1)
+  bubble += bubbleBand(190, 350, level * 16, (level + 1) * 16, 0.15 * (1 - level / 5));
+// The arc you touch, ±45° round you, up to 0.6.
+for (let level = 0; level < 5; level += 1)
+  bubble += bubbleBand(240, 300, level * 16, (level + 1) * 16, 0.45 * (1 - level / 5));
+// A shimmer band on its way up.
+bubble += bubbleBand(190, 350, 40, 46, 0.08);
+files["spawn-bubble.svg"] = svg(
+  "",
+  `${floor()}
+${bubble}
+<path d="M${bubbleArc(190, 350, 0).start} A162,162 0 0 1 ${bubbleArc(190, 350, 0).end}" fill="none" stroke="#1b2029" stroke-opacity="0.5" stroke-width="4"/>
+<path d="M${bubbleArc(190, 350, 0).start} A162,162 0 0 1 ${bubbleArc(190, 350, 0).end}" fill="none" stroke="#eef6ff" stroke-opacity="0.9" stroke-width="2"/>
+${body(180, 140)}
+<circle cx="180" cy="68" r="20" fill="none" stroke="#eef6ff" stroke-opacity="0.6" stroke-width="2"/>
+<g font-family="DejaVu Sans, sans-serif" font-size="11" fill="#d7dee8"><text x="12" y="200">rest: 0.15</text><text x="230" y="30">bump: a ripple, 0.3 s</text><text x="250" y="200">rim: 2 lines</text></g>`,
+);
+
 // ---- the scene sheets: 2.5D as it should look, lit, with height, walls and materials ----
 const SW = 720;
 const SH = 440;

@@ -105,18 +105,18 @@ function soloTeam(random: () => number, size: number, first: number): StarterTea
 }
 
 /**
- * A starter team of `size` members by `random` ([0, 1)), never the one
- * named like `not`, so a reroll always changes it; `undefined` when there
+ * A starter team of `size` members by `random` ([0, 1)), never one
+ * named like any of `not`, so a reroll always changes it; `undefined` when there
  * is none of that size (#2109). A size no PvX team serves, or whose
- * only one is `not`, gets `pickSoloTeam`.
+ * only ones are `not`, gets `pickSoloTeam`.
  */
 export function pickStarterTeam(
   random: () => number,
   size: number,
-  not?: Pick<StarterTeam, "name">,
+  not: readonly Pick<StarterTeam, "name">[] = [],
 ): StarterTeam | undefined {
   const pool = STARTER_TEAMS.filter(
-    (team) => team.members.length === size && team.name !== not?.name,
+    (team) => team.members.length === size && !not.some(({ name }) => name === team.name),
   );
   if (pool.length > 0) {
     return pool[indexBy(random, pool.length)];
@@ -132,12 +132,12 @@ export function pickStarterTeam(
 export function pickSoloTeam(
   random: () => number,
   size: number,
-  not?: Pick<StarterTeam, "name">,
+  not: readonly Pick<StarterTeam, "name">[] = [],
 ): StarterTeam | undefined {
   const first = indexBy(random, STARTER_BUILDS.length);
   for (let step = 0; step < STARTER_BUILDS.length; step++) {
     const team = soloTeam(random, size, (first + step) % STARTER_BUILDS.length);
-    if (team !== undefined && team.name !== not?.name) {
+    if (team !== undefined && !not.some(({ name }) => name === team.name)) {
       return team;
     }
   }

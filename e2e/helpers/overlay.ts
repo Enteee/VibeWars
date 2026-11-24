@@ -42,3 +42,45 @@ export async function expectCloseAtTopRight(page: Page, dialog: Locator): Promis
   ).toHaveCount(own);
   return close;
 }
+
+/**
+ * Which of `selector`'s elements show under the closed chat's icon, bottom
+ * left (#3887), as the part of each that an ancestor's overflow leaves
+ * visible: its class names, for the failure to read.
+ */
+export async function underChatIcon(page: Page, selector: string): Promise<string[]> {
+  return page.evaluate((selector) => {
+    const icon = document.querySelector(".chat-toggle")?.getBoundingClientRect();
+    if (icon === undefined) throw new Error("no chat icon");
+    const under: string[] = [];
+    for (const node of document.querySelectorAll(selector)) {
+      let { left, top, right, bottom } = node.getBoundingClientRect();
+      for (let up = node.parentElement; up !== null; up = up.parentElement) {
+        if (getComputedStyle(up).overflow === "visible") continue;
+        const clip = up.getBoundingClientRect();
+        left = Math.max(left, clip.left);
+        top = Math.max(top, clip.top);
+        right = Math.min(right, clip.right);
+        bottom = Math.min(bottom, clip.bottom);
+      }
+      const overlaps =
+        left < icon.right && right > icon.left && top < icon.bottom && bottom > icon.top;
+      if (right > left && bottom > top && overlaps) under.push(node.className);
+    }
+    return under;
+  }, selector);
+}
+
+/** Scroll the screen that holds `selector` to its end, as far as it goes. */
+export async function scrollToEnd(page: Page, selector: string): Promise<void> {
+  await page.locator(selector).evaluate((node) => {
+    for (let up = node.parentElement; up !== null; up = up.parentElement) {
+      const overflow = getComputedStyle(up).overflowY;
+      if (overflow === "auto" || overflow === "scroll") {
+        up.scrollTop = up.scrollHeight;
+        return;
+      }
+    }
+    throw new Error("nothing scrolls");
+  });
+}

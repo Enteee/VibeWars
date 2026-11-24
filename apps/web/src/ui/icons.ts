@@ -277,11 +277,6 @@ export function leaderboardIcon(): string {
   return iconUrl("ui", "leaderboard");
 }
 
-/** The bar's Match history (#3848): a clock whose ring runs back round. */
-export function matchHistoryIcon(): string {
-  return iconUrl("ui", "match-history");
-}
-
 /** The fullscreen toggle (#454): what the window is now, not what a click does. */
 export function fullscreenIcon(fullscreen: boolean): string {
   return iconUrl("ui", fullscreen ? "fullscreen-exit" : "fullscreen");

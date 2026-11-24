@@ -20,7 +20,7 @@ pamięta swój i otwiera się na rozmiarze, którym gra (GvG na 8v8). Niżej są
 tworzysz swoje postacie, i ![Kreator drużyn](../../../apps/web/public/icons/mode/teams.svg) **Kreator drużyn**, gdzie tworzysz swoje
 [Buildy drużyn](skills-and-builds.md#buildy-drużyn), a następnie
 ![Mecze](../../../apps/web/public/icons/mode/matches.svg) **Mecze**, [ukończone mecze](modes.md#zapisy-meczów) w takiej postaci, w jakiej
-zgłaszają je hosty. Gra otwiera się na
+zgłaszają je hosty, oraz twoje własne. Gra otwiera się na
 tym, którego używałeś ostatnio.
 
 ## Stwórz postać
@@ -91,7 +91,7 @@ Naciśnij pozycję legendy, aby ukryć lub pokazać jej linię. Na telefonie wyk
 są pod wynikami, które pokazują ciebie i dwie inne osoby, dopóki nie wybierzesz
 **Pokaż wszystko**.
 
-**Historia meczów** na górnym pasku pokazuje twoich ostatnich 50 meczów, od najnowszego: otwórz jeden, by znów zobaczyć jego wyniki i wykresy. Są przechowywane tylko w tej przeglądarce. **Moje mecze** pokazuje tylko te rozegrane z twoim obecnym kluczem gracza.
+**Moje mecze** na stronie [Mecze](modes.md#zapisy-meczów) pokazuje twoich ostatnich 50 meczów, od najnowszego: otwórz jeden, by zobaczyć jego buildy, a w **Statystyki** i **Wykres** znów jego wyniki i wykresy. Są przechowywane tylko w tej przeglądarce, dla twojego obecnego klucza gracza.
 
 ## Hostuj mecz lub dołącz
 

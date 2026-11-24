@@ -32,7 +32,7 @@ mål uden for skærmen eller under HUD'en en pil med omrids ved
 skærmkanten: standen eller en helligdom i ejerens farve, grå hvis ingen
 ejer den, alteret i guld. En spillers udfyldte pil tegnes oven på den.
 
-En kamp åbner med alle holdt nær deres startsted: du kan gå et par skridt, men ikke kæmpe eller bruge færdigheder. En linje øverst tæller de spillere, der har indlæst kampen. Når alle har indlæst den, tæller den 10 sekunder ned, og kampen starter, og dens ur med den. Der ventes ikke på en spiller, der ikke har indlæst kampen efter 20 sekunder: nedtællingen starter uden dem, og de kan stadig komme med senere.
+En kamp åbner med alle holdt nær deres startsted: du kan gå et par skridt, men ikke kæmpe eller bruge færdigheder. En glitrende væg omkring dit startsted viser, hvor langt du kan gå. En linje øverst tæller de spillere, der har indlæst kampen. Når alle har indlæst den, tæller den 10 sekunder ned, og kampen starter, og dens ur med den. Der ventes ikke på en spiller, der ikke har indlæst kampen efter 20 sekunder: nedtællingen starter uden dem, og de kan stadig komme med senere.
 
 ## Udslettelse
 
@@ -499,6 +499,14 @@ Helte, violet GvG, grøn Vært. Over listen filtrerer chips den efter
 alle igennem. Størrelsen er det største hold, bots medregnet, så et 3v2
 Værtsspil passer ikke til nogen størrelse. Chipsene bliver, som du
 efterlod dem, indtil siden genindlæses.
+
+**Mine kampe**, efter chipsene, viser i stedet dine egne kampe: de
+seneste 50, som denne browser har gemt for din nuværende spillernøgle,
+nyeste først, uanset alder og om de er offentliggjort eller ej, også en
+Elite Zaishen Battle. Type og Antal filtrerer dem stadig, og dit hold er
+markeret **Dig**. Åbn en for tre faner: **Builds**, dens hold med Klon
+som ovenfor; **Statistik**, pointtabellen, som dens slutpanel viste; og
+**Diagram**, dens diagrammer. De gemmes kun i denne browser.
 
 Over chipsene viser **Heltenes Hal**-striben de seneste 20 besiddelser, nyeste først: holderen (et laugsmærke eller lederens navn), det vindende holds folk, hvornår den nyeste sejr sluttede og, fra to sejre og op, hvor mange i træk. En besiddelse er en ubrudt række af sejre i Hallen af én holder. Striben læser registreringerne på denne side, ignorerer chipsene og er skjult, når ingen af dem er en sejr i Hallen. Som enhver registrering er den, hvad hver kamps vært rapporterede, og intet tjekker den.
 

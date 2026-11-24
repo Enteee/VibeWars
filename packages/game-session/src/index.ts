@@ -164,7 +164,7 @@ export {
   recordTemplate,
   validateMatchRecord,
 } from "./match-record.js";
-export type { MatchRecord, MatchRecordPlayer, MatchRecordTeam } from "./match-record.js";
+export type { MatchRecord } from "./match-record.js";
 export {
   MAX_REPLAY_CHARS,
   MAX_REPLAY_INPUTS,

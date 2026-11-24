@@ -21,7 +21,7 @@ kokonsa ja avautuu koossa, jota se pelaa (GvG koossa 8v8). Sen alla ovat ![Hahmo
 teet hahmosi, ja ![Tiimieditori](../../../apps/web/public/icons/mode/teams.svg) **Tiimieditori**, jossa teet
 [tiimibuildisi](skills-and-builds.md#tiimibuildit), sitten
 ![Ottelut](../../../apps/web/public/icons/mode/matches.svg) **Ottelut**, [päättyneet ottelut](modes.md#ottelukirjaukset) sellaisina kuin
-niiden isännät ne ilmoittavat. Peli avautuu siinä näkymässä, jota
+niiden isännät ne ilmoittavat, ja omasi. Peli avautuu siinä näkymässä, jota
 käytit viimeksi.
 
 ## Luo hahmo
@@ -99,7 +99,7 @@ Tabilla lukeaksesi, mitä tapahtui. Paina selitteen kohtaa piilottaaksesi tai
 näyttääksesi sen viivan. Puhelimessa kaaviot ovat pisteiden alla, ja pisteet
 näyttävät sinut ja kaksi muuta, kunnes painat **Näytä kaikki**.
 
-Yläpalkin **Otteluhistoria** näyttää viimeiset 50 otteluasi uusin ensin: avaa yksi nähdäksesi sen pisteet ja kaaviot uudelleen. Ne säilyvät vain tässä selaimessa. **Omat ottelut** näyttää vain ne, jotka pelasit nykyisellä pelaaja-avaimellasi.
+**Omat ottelut** [Ottelut](modes.md#ottelukirjaukset)-sivulla näyttää viimeiset 50 otteluasi uusin ensin: avaa yksi nähdäksesi sen buildit ja kohdissa **Tilastot** ja **Kaavio** sen pisteet ja kaaviot uudelleen. Ne säilyvät vain tässä selaimessa, nykyiselle pelaaja-avaimellesi.
 
 ## Isännöi ottelu tai liity siihen
 

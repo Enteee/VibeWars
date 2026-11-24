@@ -21,7 +21,7 @@ um tamanho que ela joga (GvG em 8v8). Mais abaixo ficam ![Criador de Personagem]
 Personagem**, onde você faz seus personagens, e ![Criador de Equipes](../../../apps/web/public/icons/mode/teams.svg) **Criador de Equipes**,
 onde você faz suas [Builds de Equipe](skills-and-builds.md#builds-de-equipe),
 e depois ![Partidas](../../../apps/web/public/icons/mode/matches.svg) **Partidas**, as [partidas terminadas](modes.md#registros-de-partidas),
-como os hosts as informam. O jogo abre na última que você usou.
+como os hosts as informam, e as suas. O jogo abre na última que você usou.
 
 ## Crie um personagem
 
@@ -100,7 +100,7 @@ aconteceu. Pressione um item da legenda para ocultar ou mostrar sua linha. No
 celular, os gráficos ficam abaixo das pontuações, que mostram você e mais dois
 até **Mostrar tudo**.
 
-**Histórico de partidas**, na barra superior, lista suas últimas 50 partidas, da mais nova para a mais antiga: abra uma para ver de novo o placar e os gráficos. Elas ficam guardadas só neste navegador. **Minhas partidas** mostra só as jogadas com sua chave de jogador atual.
+**Minhas partidas**, na página [Partidas](modes.md#registros-de-partidas), lista suas últimas 50 partidas, da mais nova para a mais antiga: abra uma para ver as builds e, em **Estatísticas** e **Diagrama**, de novo o placar e os gráficos. Elas ficam guardadas só neste navegador, para sua chave de jogador atual.
 
 ## Hospedar ou entrar em uma partida
 

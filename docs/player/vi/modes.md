@@ -31,7 +31,7 @@ nằm ngoài màn hình hoặc dưới HUD có một mũi tên viền ở mép m
 hoặc đền mang màu của chủ sở hữu, xám nếu chưa thuộc về ai, tế đàn màu vàng.
 Mũi tên đặc của người chơi được vẽ đè lên nó.
 
-Trận đấu mở đầu với mọi người bị giữ gần điểm xuất hiện của mình: bạn có thể đi vài bước, nhưng không thể chiến đấu hay dùng kỹ năng. Một dòng ở trên cùng đếm số người chơi đã tải xong trận. Khi mọi người đã tải xong, nó đếm ngược 10 giây rồi trận đấu bắt đầu, cùng với đồng hồ của trận. Người chơi chưa tải xong sau 20 giây sẽ không được chờ: đếm ngược bắt đầu mà không có họ, và họ vẫn có thể vào sau.
+Trận đấu mở đầu với mọi người bị giữ gần điểm xuất hiện của mình: bạn có thể đi vài bước, nhưng không thể chiến đấu hay dùng kỹ năng. Một bức tường lấp lánh quanh điểm xuất hiện cho bạn thấy mình đi được bao xa. Một dòng ở trên cùng đếm số người chơi đã tải xong trận. Khi mọi người đã tải xong, nó đếm ngược 10 giây rồi trận đấu bắt đầu, cùng với đồng hồ của trận. Người chơi chưa tải xong sau 20 giây sẽ không được chờ: đếm ngược bắt đầu mà không có họ, và họ vẫn có thể vào sau.
 
 ## Hủy diệt
 
@@ -465,6 +465,14 @@ một trận hiện ra nếu nó khớp với một loại được bấm và m�
 không có nút nào được bấm thì cho tất cả đi qua. Cỡ là đội lớn nhất, tính cả
 bot, nên Trận tự tạo 3v2 không khớp cỡ nào. Các nút chọn giữ nguyên như bạn để
 cho đến khi trang được tải lại.
+
+**Trận của tôi**, sau các nút chọn, thay vào đó liệt kê các trận của chính
+bạn: 50 trận gần nhất mà trình duyệt này giữ cho khóa người chơi hiện tại của
+bạn, mới nhất trước, cũ bao lâu cũng được, đã công bố hay chưa, kể cả Elite
+Zaishen Battle. Loại và Cỡ vẫn lọc chúng, và đội của bạn được đánh dấu
+**Bạn**. Mở một trận để thấy ba thẻ: **Build**, các đội của nó với Chép như
+trên; **Thống kê**, bảng điểm mà bảng kết thúc của nó đã hiện; và **Biểu đồ**,
+các biểu đồ của nó. Chúng chỉ được lưu trong trình duyệt này.
 
 Phía trên các nút chọn, dải **Đại sảnh Anh hùng** liệt kê 20 lần giữ gần nhất, mới nhất trước: đội giữ (một tag Bang hoặc tên trưởng tổ đội), những người trong đội thắng, thời điểm trận thắng mới nhất kết thúc và, từ hai trận thắng trở lên, bao nhiêu trận liên tiếp. Một lần giữ là chuỗi thắng Đại sảnh không gián đoạn của một đội giữ. Dải này đọc các bản ghi trên trang này, bỏ qua các nút chọn, và bị ẩn khi không có bản ghi nào là trận thắng Đại sảnh. Như mọi bản ghi, nó là những gì chủ phòng của mỗi trận báo lại, và không có gì kiểm tra nó.
 

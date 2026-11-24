@@ -20,7 +20,7 @@ o ține minte pe a lui și se deschide la o mărime pe care o joacă (GvG la 8v8
 jos sunt ![Constructor de personaje](../../../apps/web/public/icons/mode/characters.svg) **Constructor de personaje**, unde îți faci personajele, și ![Constructor de echipe](../../../apps/web/public/icons/mode/teams.svg) **Constructor
 de echipe**, unde îți faci [Buildurile de echipă](skills-and-builds.md#builduri-de-echipă),
 apoi ![Meciuri](../../../apps/web/public/icons/mode/matches.svg) **Meciuri**, [meciurile terminate](modes.md#înregistrări-de-meciuri) așa cum
-le raportează gazdele lor. Jocul se deschide pe cel folosit ultima dată.
+le raportează gazdele lor, și pe ale tale. Jocul se deschide pe cel folosit ultima dată.
 
 ## Creează un personaj
 
@@ -96,7 +96,7 @@ Apasă o intrare din legendă ca să ascunzi sau să arăți linia ei. Pe telefo
 graficele stau sub scoruri, care te arată pe tine și pe încă doi până la
 **Arată tot**.
 
-**Istoricul meciurilor** din bara de sus îți arată ultimele 50 de meciuri, cele mai noi primele: deschide unul ca să-i revezi scorurile și graficele. Sunt păstrate doar în acest browser. **Meciurile mele** le arată doar pe cele jucate cu cheia ta de jucător actuală.
+**Meciurile mele** de pe pagina [Meciuri](modes.md#înregistrări-de-meciuri) îți arată ultimele 50 de meciuri, cele mai noi primele: deschide unul ca să-i vezi buildurile și, la **Statistici** și **Diagramă**, să-i revezi scorurile și graficele. Sunt păstrate doar în acest browser, pentru cheia ta de jucător actuală.
 
 ## Găzduiește un meci sau intră într-unul
 

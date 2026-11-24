@@ -21,7 +21,7 @@ and opens at a size it plays (GvG at 8v8). Below that are ![Character Builder](.
 make your characters, and ![Team Builder](../../apps/web/public/icons/mode/teams.svg) **Team Builder**, where you make your
 [Team Builds](skills-and-builds.md#team-builds), then
 ![Matches](../../apps/web/public/icons/mode/matches.svg) **Matches**, the [finished matches](modes.md#match-records) as their
-hosts report them. The game opens on the
+hosts report them, and your own. The game opens on the
 one you used last.
 
 ## Make a character
@@ -96,7 +96,7 @@ to read what happened. Press a legend entry to hide or show its line. On a
 phone the charts sit under the scores, which show you and two others until
 **Show all**.
 
-**Match history** in the top bar lists your last 50 matches, newest first: open one to see its scores and charts again. They are kept in this browser only. **My matches** shows only the ones played with your current player key.
+**My matches** on the [Matches](modes.md#match-records) page lists your last 50 matches, newest first: open one for its builds, and under **Stats** and **Diagram** its scores and charts again. They are kept in this browser only, for your current player key.
 
 ## Host or join a match
 
