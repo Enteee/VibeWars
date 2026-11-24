@@ -529,6 +529,17 @@ What it does not defend against:
   client that lies early only starts its own match unseen; one that never
   sends it holds the wait no longer than `joinTimeoutSeconds`, as one that
   never joins already can.
+- Held before the start (#3817, #3930, #3931), the simulation, not the
+  client, keeps every body inside its team's bubble: the hull of its
+  side's server-assigned spawns grown by `SPAWN_BUBBLE_RADIUS`, clamped
+  every held tick. Any skill may be used there, so the bubbles are what
+  keeps a foe out of reach: `team-bubbles.test.ts` checks that on every
+  shipped map no two teams' bubbles come within the longest reach of any
+  skill or weapon. Breakable walls are not covered by that distance, so a
+  skill at a wall is refused while held (`wall-before-start`), and a plain
+  attack is dropped. The held wait has no fixed end while it waits for
+  players, so anything a client can do in it must stay harmless however
+  long it lasts.
 - The key gate (#1681, ADR-0043, `keyGated`) runs under `LobbyHost` and
   `joinLobby` on every transport. The host sends a new peer a
   `key-challenge` nonce and nothing else, and ignores everything but its
