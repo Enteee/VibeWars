@@ -38,6 +38,7 @@ import {
   isShortcut,
 } from "../input/keymap.js";
 import { loadKeymap } from "../input/keymap-preference.js";
+import { isTouchOnly } from "../input/touch-only.js";
 import { skillSlotForKeyDown } from "../input/skill-keys.js";
 import { weaponSetIntent } from "../input/weapon-set-keys.js";
 import { attachNameReveal } from "../input/name-reveal.js";
@@ -218,6 +219,11 @@ interface Session {
   readonly music: MatchMusic;
   /** An illegal build: the clock stops and the overlay says why (#3822). */
   parked: boolean;
+}
+
+/** Read at each paint, so a mouse plugged in shows keys the next time (#3962). */
+function touchOnly(): boolean {
+  return isTouchOnly((query) => matchMedia(query).matches);
 }
 
 export function createTrainingPanel(): TrainingPanel {
@@ -946,7 +952,7 @@ export function createTrainingPanel(): TrainingPanel {
 
   const onStageFocus = (): void => {
     root.classList.add("is-armed");
-    hint.textContent = armedHint(keymap, keyLabel);
+    hint.textContent = armedHint(keymap, keyLabel, touchOnly());
   };
 
   const onStageBlur = (): void => {
@@ -1023,7 +1029,7 @@ export function createTrainingPanel(): TrainingPanel {
       paintSkills(session.connection.skillBar);
     }
     if (root.classList.contains("is-armed")) {
-      hint.textContent = armedHint(keymap, keyLabel);
+      hint.textContent = armedHint(keymap, keyLabel, touchOnly());
     }
   });
   // A double right click on an enemy attacks it, as Space would (#298, #438).

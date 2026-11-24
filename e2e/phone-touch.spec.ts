@@ -154,6 +154,8 @@ test("a tap on a skill slot casts it on the target", async ({ page }) => {
   test.setTimeout(90_000);
   const canvas = await openTraining(page);
   await takeControl(page, canvas);
+  // A phone is told its gestures, not keys it does not have (#3962).
+  await expect(page.locator(".training-hint")).toContainText("tap a skill to cast");
   const dummy = await walkNearDummy(page, canvas);
   await tapWorld(page, canvas, dummy);
   await expect(stage(page)).toHaveAttribute("data-target", "dummy");
