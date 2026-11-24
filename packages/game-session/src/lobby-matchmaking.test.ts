@@ -463,6 +463,41 @@ describe("a party lobby's matchmaking (#1766)", () => {
     expect(host.connection.getSnapshot().players.filter((player) => player.bot)).toEqual([]);
   });
 
+  it("found before the first warmup, plays none: end-warmup leaves no warmup to come (#3899)", async () => {
+    const { lobby, party } = await keyedPair();
+    const [host] = party as [Member, Member];
+    lobby.lobby.advance(10);
+    await settle();
+    host.connection.endWarmup();
+    await settle();
+    lobby.lobby.advance(WARMUP_AFTER_MS / 1000);
+    await settle();
+
+    expect(lobby.matches).toHaveLength(0);
+    expect(party.map(phaseOf)).toEqual(["queued", "queued"]);
+  });
+
+  it("found in the gap between two warmups, plays no next one (#3899)", async () => {
+    const matches: FakeMatch[] = [];
+    const { lobby, party } = await keyedPair(() => {
+      const match = fakeMatch();
+      matches.push(match);
+      return match;
+    });
+    const [host] = party as [Member, Member];
+    host.connection.startWarmup();
+    await settle();
+    matches[0]?.finish(1);
+    await lobby.step(1);
+    host.connection.endWarmup();
+    await settle();
+    lobby.lobby.advance(WARMUP_GAP_MS / 1000);
+    await settle();
+
+    expect(matches).toHaveLength(1);
+    expect(party.map(phaseOf)).toEqual(["queued", "queued"]);
+  });
+
   it("takes the party out of the queue on Leave the queue mid-warmup (#3899)", async () => {
     const { party } = await keyedPair();
     const [host] = party as [Member, Member];

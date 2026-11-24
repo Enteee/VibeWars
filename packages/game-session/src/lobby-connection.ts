@@ -166,7 +166,7 @@ export interface LobbyConnection {
   leaveQueue(): void;
   /** Host only (#3899): the queued party plays a warmup against bots, here, still queued. */
   startWarmup(): void;
-  /** Host only (#3899): the warmup on ends with no result, as the party's match is found. */
+  /** Host only (#3899): the party's match is found: the warmup on ends with no result, and none comes after. */
   endWarmup(): void;
   /**
    * The party is queued (#1766): this member's `key`, fresh, which signs

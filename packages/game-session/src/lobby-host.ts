@@ -2736,8 +2736,12 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
         leaveQueue();
       } else if (command.kind === "start-warmup") {
         startWarmup();
-      } else if (command.kind === "end-warmup" && warmup) {
-        dropWarmup();
+      } else if (command.kind === "end-warmup") {
+        // Found: no warmup now, and none to come, nor in the gap before the next.
+        queueing.warmupAt = undefined;
+        if (warmup) {
+          dropWarmup();
+        }
         broadcast();
       }
       return;
