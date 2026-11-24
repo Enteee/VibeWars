@@ -6,7 +6,7 @@ import { PROFESSIONS } from "../packages/game-core/src/professions.js";
 import { STARTER_BUILDS } from "../packages/game-core/src/starter-builds.js";
 import { joinFriend, openRail } from "./helpers/menu.js";
 import { hostLobby, openPeers, proposeTeam, setTeamSize } from "./helpers/peers.js";
-import { PIXEL_8A_PORTRAIT } from "./helpers/phone.js";
+import { PIXEL_8A_LANDSCAPE } from "./helpers/phone.js";
 import { namePlayer } from "./helpers/player.js";
 
 /**
@@ -170,7 +170,7 @@ test("#3929: on a phone, proposing keeps the Team Lobby where it was scrolled", 
   browser,
 }) => {
   test.setTimeout(60_000);
-  const context = await browser.newContext(PIXEL_8A_PORTRAIT);
+  const context = await browser.newContext(PIXEL_8A_LANDSCAPE);
   const host = await context.newPage();
   const guest = await context.newPage();
   const screens = host.locator("#screens");
@@ -202,11 +202,15 @@ test("#3929: on a phone, proposing keeps the Team Lobby where it was scrolled", 
       await expect(page.locator(".team-lobby-stage")).toHaveText("Choose a team build");
     }
 
-    // The guest's card makes the vote taller than the phone; the host scrolls down to it.
+    // On its side the phone is shorter than the vote (upright, one card
+    // still fits); the host scrolls down to the guest's card.
     await guest.bringToFront();
     await proposeTeam(guest, "Four");
     await host.bringToFront();
     await expect(host.locator(".team-lobby-proposals .play-card")).toHaveCount(1);
+    expect(
+      await screens.evaluate((element) => element.scrollHeight - element.clientHeight),
+    ).toBeGreaterThan(0);
     await screens.evaluate((element) => {
       element.scrollTop = element.scrollHeight;
     });
