@@ -222,7 +222,7 @@ async function startMatch(page, mapId) {
   await openRail(page, "Hosted Game");
   await page.getByRole("button", { name: "Larger team" }).click();
   await page.getByRole("button", { name: /^Join/ }).first().click();
-  await page.locator("#topbar select").selectOption(mapId);
+  await page.locator(".lobby-map select").selectOption(mapId);
   await page.getByRole("button", { name: "Ready", exact: true }).click();
   await page.getByRole("button", { name: "Start match" }).click();
   step = "team lobby";
