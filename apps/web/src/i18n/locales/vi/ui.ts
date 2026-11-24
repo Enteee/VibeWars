@@ -61,6 +61,21 @@ export default {
 
   "buildEditor.addWeapon": "Thêm vũ khí",
   "buildEditor.armor": "Giáp",
+  "buildEditor.attributeEffect.critical-strikes":
+    "+{percent}% tỉ lệ chí mạng, +{energy} Năng lượng mỗi đòn chí mạng",
+  "buildEditor.attributeEffect.divine-favor": "Phép của Monk lên đồng minh hồi thêm +{heal}",
+  "buildEditor.attributeEffect.energy-storage": "+{energy} Năng lượng tối đa",
+  "buildEditor.attributeEffect.expertise":
+    "kỹ năng tấn công, nghi thức, kỹ năng chạm và kỹ năng Ranger tốn ít hơn {percent}% Năng lượng",
+  "buildEditor.attributeEffect.fast-casting": "Phép và ấn ký thi triển nhanh hơn {percent}%",
+  "buildEditor.attributeEffect.leadership":
+    "tối đa {max} Năng lượng mỗi hiệu lệnh, {perAlly} mỗi đồng minh chịu ảnh hưởng",
+  "buildEditor.attributeEffect.mysticism": "Phù phép của Dervish tốn ít hơn {percent}% Năng lượng",
+  "buildEditor.attributeEffect.soul-reaping":
+    "+{energy} Năng lượng khi có ai đó gần bên chết ({triggers} mỗi {seconds} giây)",
+  "buildEditor.attributeEffect.spawning-power":
+    "sinh vật +{percent}% Máu, phép vũ khí kéo dài thêm {percent}%",
+  "buildEditor.attributeEffect.strength": "kỹ năng tấn công xuyên {percent}% giáp",
   "buildEditor.back": "Quay lại",
   "buildEditor.bothHandsFull": "cả hai tay đã bận",
   "buildEditor.budgetSegment": { other: "{attribute}: {count} điểm" },
@@ -567,6 +582,7 @@ export default {
   "hud.outcomeVictory": "Chiến thắng",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (đã chết)",
+  "hud.preMatchHeld": "Bạn bị giữ gần điểm xuất phát cho đến khi trận đấu bắt đầu.",
   "hud.preMatchStartingAnyway":
     "Đang chờ người chơi: {joined}/{expected}, vẫn bắt đầu sau {seconds} giây",
   "hud.preMatchStartsIn": "Trận đấu bắt đầu sau {seconds}",
@@ -1588,17 +1604,13 @@ export default {
   "tutorial.look.praise": "Nó đây rồi! Đường vòng qua trận chiến của ta.",
   "tutorial.offer": "Mới đến? Người hướng dẫn sẽ chỉ bạn những điều cơ bản.",
   "tutorial.offerTitle": "Lần đầu?",
+  "tutorial.ping.called": "Tôi đi đây. Gặp nhau ở chỗ các lối nhập lại.",
   "tutorial.ping.hint": "Ping con đường bạn muốn đi.",
   "tutorial.ping.how":
     "Nhấp chuột giữa lên mặt đất, nhấp vào la bàn, hoặc kéo trên la bàn để vẽ một đường.",
   "tutorial.ping.intro": "Trái hay phải? Bạn quyết định.",
-  "tutorial.ping.pocket": "Cảnh đẹp đấy. Nhưng sai đường rồi.",
   "tutorial.ping.praise": "Chọn hay lắm. Tiến lên.",
-  "tutorial.ramp.hint": "Lên cả hai đợt bậc tới dấu trên sàn cao.",
-  "tutorial.ramp.how": "Nhấp vào sàn cao. Đường đi tự leo bậc giúp bạn.",
-  "tutorial.ramp.intro": "Bậc thang nối các tầng. Bước lên, chúng đưa bạn lên.",
-  "tutorial.ramp.landing": "Thêm một đợt bậc nữa.",
-  "tutorial.ramp.praise": "Đất cao. Kẻ thù bên dưới khó với tới bạn.",
+  "tutorial.ping.view": "Cảnh đẹp đấy.",
   "tutorial.rats.again": "Thử một kỹ năng khác với con này.",
   "tutorial.rats.big":
     "Con to đấy. Đánh nó đến khi {bash} sáng lên, rồi quật ngã nó và dùng {crush}.",
@@ -1615,18 +1627,15 @@ export default {
   "tutorial.stepIn.praise": "Cùng nhau. Nín thở nào.",
   "tutorial.touch.callHow": "Chạm vào một con chuột, rồi chạm thanh mục tiêu để gọi nó.",
   "tutorial.touch.callT": "Đúng rồi. Giờ bạn đang nhắm mục tiêu đã gọi.",
-  "tutorial.touch.climbHint": "Lên gờ đá, rồi xuống lại bên cạnh nó.",
-  "tutorial.touch.climbHow": "Chạm vào gờ đá, rồi chạm mặt đất bên cạnh.",
-  "tutorial.touch.climbPraise": "Lên rồi lại xuống. Giờ bạn đã biết đọc địa hình.",
-  "tutorial.touch.climbTip": "Mẹo: chạm vào gờ đá luôn chọn mặt trên của nó.",
-  "tutorial.touch.climbUnder": "Giờ xuống lại, bên cạnh gờ đá.",
+  "tutorial.touch.climbHow": "Chạm chỗ muốn đứng. Nhấn giữ sẽ chọn mặt đất bên dưới.",
+  "tutorial.touch.climbTip": "Mẹo: nhấn giữ sẽ chọn mặt đất dưới gờ đá.",
+  "tutorial.touch.climbUnder": "Nhấn giữ. Vòng nét đứt ở bên dưới bạn.",
   "tutorial.touch.healHint":
     "Chạm vào tên tôi trong danh sách nhóm trước. Chạm Tổ đội nếu danh sách đang đóng.",
   "tutorial.touch.healHow":
     "Chạm Tổ đội nếu danh sách đang đóng, rồi chạm tên tôi, rồi chạm kỹ năng đang sáng.",
   "tutorial.touch.look": "Chụm hai ngón để thu phóng. Kéo một ngón để nhìn quanh.",
   "tutorial.touch.pingHow": "Chạm vào la bàn, hoặc kéo trên đó để vẽ một đường.",
-  "tutorial.touch.rampHow": "Chạm vào sàn cao. Đường đi tự leo bậc giúp bạn.",
   "tutorial.touch.ratsHow": "Chạm vào một con chuột để chọn nó.",
   "tutorial.touch.tunnelHow": "Chạm vào bậc đi xuống, rồi vào dấu ở quá đầu bên kia.",
   "tutorial.touch.walk": "Chạm mặt đất để đi tới đó.",

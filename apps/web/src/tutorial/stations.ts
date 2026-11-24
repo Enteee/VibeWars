@@ -78,10 +78,10 @@ export const ZONE_STATUSES = ["mired", "burning", "crippled"] as const;
 export type ZoneStatus = (typeof ZONE_STATUSES)[number];
 
 /**
- * The world a station runs in (#3247): the battlefield it starts on, the
- * canyon past the teleporter, or the canyon's second map (#3316).
+ * The world a station runs in (#3247): the battlefield it starts on, or
+ * the canyon past the teleporter, one map (#3792).
  */
-export type TutorialWorldName = "battlefield" | "canyon" | "canyon-2";
+export type TutorialWorldName = "battlefield" | "canyon";
 
 /** What a station points at: a mark on the ground, or a HUD element by its selector. */
 export type StationHighlight =
@@ -406,7 +406,7 @@ export function ratsStation(
   const crush = slotOf(skillBar, RAT_SKILLS.crush);
   return {
     id: "rats",
-    world: "canyon-2",
+    world: "canyon",
     lines: {
       intro: "tutorial.rats.intro",
       hint: "tutorial.rats.hint",
@@ -452,21 +452,14 @@ function shapeCentre(shape: Shape): Vec2 {
 }
 
 /**
- * Station 9 (playbook §9), on the canyon's second map: up onto `ledge`,
+ * Station 9 (playbook §9), in the canyon: up onto `ledge`,
  * on `upper`, then down to the ground under it, on `lower`. The mark is
  * on the ledge until the player has stood on it, then under its middle;
  * the cursor's rings teach the rest. Any way down counts, but one that was
- * no Alt walk gets the tip, once. Done under the ledge, after it.
- * On `touch` there is no Alt, and a tap on the ledge picks its top
- * (#3782): done back on `lower` anywhere, and the mark stays on the ledge.
+ * no Alt walk (or long-press, #3878) gets the tip, once. Done under the
+ * ledge, after it.
  */
-export function climbStation(
-  ledge: Shape,
-  stairs: Shape,
-  upper: number,
-  lower: number,
-  touch = false,
-): Station {
+export function climbStation(ledge: Shape, stairs: Shape, upper: number, lower: number): Station {
   const centre = shapeCentre(ledge);
   /** The player has stood on the ledge; then has come down, and whether by an Alt walk. */
   let up = false;
@@ -485,17 +478,14 @@ export function climbStation(
   };
   return {
     id: "climb",
-    world: "canyon-2",
+    world: "canyon",
     lines: {
       intro: "tutorial.climb.intro",
       hint: "tutorial.climb.hint",
       praise: "tutorial.climb.praise",
       how: "tutorial.climb.how",
     },
-    highlight: (view) =>
-      touch && look(view).up
-        ? undefined
-        : { kind: "ground", at: centre, layer: look(view).up ? lower : upper },
+    highlight: (view) => ({ kind: "ground", at: centre, layer: look(view).up ? lower : upper }),
     asides: [
       { line: "tutorial.climb.under", when: (view) => look(view).up },
       {
@@ -506,46 +496,12 @@ export function climbStation(
         },
       },
     ],
-    done: (view) =>
-      look(view).up && view.selfLayer === lower && (touch || pointInShape(view.self, ledge)),
+    done: (view) => look(view).up && view.selfLayer === lower && pointInShape(view.self, ledge),
   };
 }
 
 /**
- * Station 10 (playbook §10), on the canyon's second map: up two flights of
- * stairs to the mark on the high deck, at `mark` on `layer`. A click on the
- * deck walks the whole way, so there is nothing new to press. Standing on
- * `landing`, on its layer between, gets one line once: on that layer
- * elsewhere, as on station 9's ledge, it does not. Done on the mark.
- */
-export function rampStation(
-  mark: Vec2,
-  layer: number,
-  landing: Shape,
-  landingLayer: number,
-): Station {
-  return {
-    id: "ramp",
-    world: "canyon-2",
-    lines: {
-      intro: "tutorial.ramp.intro",
-      hint: "tutorial.ramp.hint",
-      praise: "tutorial.ramp.praise",
-      how: "tutorial.ramp.how",
-    },
-    highlight: { kind: "ground", at: mark, layer },
-    asides: [
-      {
-        line: "tutorial.ramp.landing",
-        when: (view) => view.selfLayer === landingLayer && pointInShape(view.self, landing),
-      },
-    ],
-    done: (view) => onMark(view, mark, layer),
-  };
-}
-
-/**
- * Station 11 (playbook §11), on the canyon's second map: through the
+ * Station 11 (playbook §11), in the canyon: through the
  * `tunnel` on `under`, beneath the guard asleep on top, to the mark at
  * `mark` on `above`. Each half of it, west and east of its middle, latches
  * once the player has stood in it underground, in either order. Done on
@@ -568,7 +524,7 @@ export function tunnelStation(tunnel: Shape, under: number, above: number, mark:
   };
   return {
     id: "tunnel",
-    world: "canyon-2",
+    world: "canyon",
     lines: {
       intro: "tutorial.tunnel.intro",
       hint: "tutorial.tunnel.hint",
@@ -594,7 +550,7 @@ export function callStation(): Station {
   let struck = false;
   return {
     id: "call",
-    world: "canyon-2",
+    world: "canyon",
     lines: {
       intro: "tutorial.call.intro",
       hint: "tutorial.call.hint",
@@ -602,7 +558,8 @@ export function callStation(): Station {
       how: "tutorial.call.how",
     },
     keys: ["target-called"],
-    highlight: { kind: "hud", element: ".party-window" },
+    // The target bar, which both its lines name (#3884), as the wall station does.
+    highlight: { kind: "hud", element: ".hud-target" },
     asides: [
       { line: "tutorial.call.t", when: (view) => view.calledTargeted },
       { line: "tutorial.call.other", when: (view) => view.calledLost },
@@ -614,53 +571,66 @@ export function callStation(): Station {
   };
 }
 
-/** Which way a ping at station 13 (#3332) calls: the east branch, the pocket, or neither. */
-export type PingBranch = "east" | "pocket";
+/** Which arm of the junction a ping at station 13 (#3332, #3792) calls, round its rock island. */
+export type PingBranch = "north" | "south";
+
+/** Station 13's junction, as `pingStation` reads it: where it splits, its arms' marks, the rejoin. */
+export interface Junction {
+  readonly fork: Vec2;
+  readonly layer: number;
+  readonly north: Vec2;
+  readonly south: Vec2;
+  /** Where the arms meet again, east of the island: the station's mark. */
+  readonly rejoin: Vec2;
+  /** The bay off the south arm, where the parasol and deck chair stand. */
+  readonly bay: Vec2;
+}
 
 /**
- * The branch a ping at `at` calls, from the fork at `fork`: the one whose
- * end it is nearer, as long as it is nearer that end than the fork is. A
- * ping behind the player, or back past the fork, calls neither.
+ * The arm a ping at `at` calls, from the junction's `fork`: the one whose
+ * mark it is nearer, as long as it is nearer that mark than the fork is.
+ * A ping behind the player, back past the fork, or at the rejoin calls
+ * neither.
  */
-export function pingBranch(at: Vec2, fork: Vec2, east: Vec2, pocket: Vec2): PingBranch | undefined {
+export function pingBranch(at: Vec2, fork: Vec2, north: Vec2, south: Vec2): PingBranch | undefined {
   const far = (from: Vec2, to: Vec2): number => Math.hypot(from.x - to.x, from.y - to.y);
-  const branch = far(at, east) <= far(at, pocket) ? "east" : "pocket";
-  const end = branch === "east" ? east : pocket;
+  const branch = far(at, north) <= far(at, south) ? "north" : "south";
+  const end = branch === "north" ? north : south;
   return far(at, end) < far(fork, end) ? branch : undefined;
 }
 
 /** How far east of the fork the player walks, unpinged, before station 13 says its hint again. */
 export const PAST_THE_FORK = 300;
-/** How near the pocket the tutor counts as in it, for its line there. */
-const IN_THE_POCKET = 150;
+/** How near the bay the tutor passes for its line on the view there. */
+export const BY_THE_BAY = 320;
 
 /**
- * Station 13 (playbook §13), at the canyon's fork: ping a branch, and
- * the tutor follows. The compass is lit. A ping on the pocket first sends
- * the tutor in, once, to a parasol and a line, and back; a ping on the
- * east branch sends it to `eastSide`, past the fork, and then no pocket
- * ping counts. A ping on neither, or a walk east unpinged, gets the hint
- * once each. Done once the east branch is called and the tutor stands at
- * `eastSide`.
+ * Station 13 (playbook §13), at the canyon's junction (#3792): ping an
+ * arm, and the tutor walks it. The compass is lit. The first arm called
+ * is the tutor's; the player may walk either. Passing the bay off the
+ * south arm, the tutor says one line on the view. The call heard, the
+ * tutor says so once and points at the rejoin; the hint is not said again
+ * on the walk there. A ping on neither arm, or a walk east unpinged, gets
+ * the hint once each. Done once an arm is called and the player stands on
+ * the rejoin mark.
  */
-export function pingStation(fork: Vec2, east: Vec2, pocket: Vec2, eastSide: Vec2): Station {
-  /** The east branch has been called, and the pocket: once true, they stay true. */
-  let eastCalled = false;
-  let pocketCalled = false;
+export function pingStation(junction: Junction): Station {
+  const { fork, layer, north, south, rejoin, bay } = junction;
+  /** An arm has been called: once true, it stays true. */
+  let called = false;
   /** A ping has called neither: once true, it stays true. */
   let strayPing = false;
   const look = (view: TutorialView): void => {
     if (view.lastPing === undefined) {
       return;
     }
-    const branch = pingBranch(view.lastPing, fork, east, pocket);
-    eastCalled ||= branch === "east";
-    pocketCalled ||= branch === "pocket" && !eastCalled;
-    strayPing ||= branch === undefined;
+    const branch = pingBranch(view.lastPing, fork, north, south);
+    called ||= branch !== undefined;
+    strayPing ||= branch === undefined && !called;
   };
   return {
     id: "ping",
-    world: "canyon-2",
+    world: "canyon",
     lines: {
       intro: "tutorial.ping.intro",
       hint: "tutorial.ping.hint",
@@ -668,17 +638,21 @@ export function pingStation(fork: Vec2, east: Vec2, pocket: Vec2, eastSide: Vec2
       how: "tutorial.ping.how",
     },
     highlight: { kind: "hud", element: ".compass" },
-    mark: () => fork,
+    mark: (view) => {
+      look(view);
+      return called ? rejoin : fork;
+    },
+    reaction: {
+      line: "tutorial.ping.called",
+      when: (view) => {
+        look(view);
+        return called;
+      },
+    },
     asides: [
       {
-        line: "tutorial.ping.pocket",
-        when: (view) => {
-          look(view);
-          return (
-            pocketCalled &&
-            Math.hypot(view.tutor.x - pocket.x, view.tutor.y - pocket.y) <= IN_THE_POCKET
-          );
-        },
+        line: "tutorial.ping.view",
+        when: (view) => Math.hypot(view.tutor.x - bay.x, view.tutor.y - bay.y) <= BY_THE_BAY,
       },
       {
         line: "tutorial.ping.hint",
@@ -689,14 +663,12 @@ export function pingStation(fork: Vec2, east: Vec2, pocket: Vec2, eastSide: Vec2
       },
       {
         line: "tutorial.ping.hint",
-        when: (view) => !eastCalled && view.self.x > fork.x + PAST_THE_FORK,
+        when: (view) => !called && view.self.x > fork.x + PAST_THE_FORK,
       },
     ],
     done: (view) => {
       look(view);
-      return (
-        eastCalled && Math.hypot(view.tutor.x - eastSide.x, view.tutor.y - eastSide.y) <= MARK_REACH
-      );
+      return called && onMark(view, rejoin, layer);
     },
   };
 }
@@ -712,7 +684,7 @@ export const GATE_REACH = 80;
 export function gateStation(gate: Vec2, layer: number): Station {
   return {
     id: "gate",
-    world: "canyon-2",
+    world: "canyon",
     lines: {
       intro: "tutorial.gate.intro",
       hint: "tutorial.gate.hint",

@@ -61,6 +61,22 @@ export default {
 
   "buildEditor.addWeapon": "Добавить оружие",
   "buildEditor.armor": "Броня",
+  "buildEditor.attributeEffect.critical-strikes":
+    "+{percent}% шанс критического удара, +{energy} энергии за критический удар",
+  "buildEditor.attributeEffect.divine-favor": "заклинания Monk на союзников лечат +{heal}",
+  "buildEditor.attributeEffect.energy-storage": "+{energy} к максимальной энергии",
+  "buildEditor.attributeEffect.expertise":
+    "атакующие навыки, ритуалы, навыки касания и навыки Ranger стоят на {percent}% меньше энергии",
+  "buildEditor.attributeEffect.fast-casting":
+    "заклинания и печати применяются на {percent}% быстрее",
+  "buildEditor.attributeEffect.leadership":
+    "до {max} энергии за клич, {perAlly} за каждого затронутого союзника",
+  "buildEditor.attributeEffect.mysticism": "зачарования Dervish стоят на {percent}% меньше энергии",
+  "buildEditor.attributeEffect.soul-reaping":
+    "+{energy} энергии, когда кто-то рядом умирает ({triggers} за {seconds} с)",
+  "buildEditor.attributeEffect.spawning-power":
+    "существа +{percent}% здоровья, заклинания оружия длятся на {percent}% дольше",
+  "buildEditor.attributeEffect.strength": "атакующие навыки: {percent}% пробития брони",
   "buildEditor.back": "Назад",
   "buildEditor.bothHandsFull": "обе руки заняты",
   "buildEditor.budgetSegment": {
@@ -668,6 +684,7 @@ export default {
   "hud.outcomeVictory": "Победа",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (мёртв)",
+  "hud.preMatchHeld": "До начала матча вы остаётесь рядом с точкой появления.",
   "hud.preMatchStartingAnyway":
     "Ожидание игроков: {joined}/{expected}, начнётся в любом случае через {seconds} с",
   "hud.preMatchStartsIn": "Матч начнётся через {seconds}",
@@ -1802,16 +1819,12 @@ export default {
   "tutorial.look.praise": "Вот он! Наш путь в обход битвы.",
   "tutorial.offer": "Впервые здесь? Наставник покажет основы.",
   "tutorial.offerTitle": "Впервые?",
+  "tutorial.ping.called": "Иду. Встретимся там, где тропы сходятся.",
   "tutorial.ping.hint": "Отметь путь, которым хочешь пойти.",
   "tutorial.ping.how": "Щёлкни колёсиком по земле, щёлкни по компасу или проведи по компасу линию.",
   "tutorial.ping.intro": "Налево или направо? Решать тебе.",
-  "tutorial.ping.pocket": "Красивый вид. Но не туда.",
   "tutorial.ping.praise": "Хороший выбор. Вперёд.",
-  "tutorial.ramp.hint": "Вверх по обоим пролётам к метке на высокой площадке.",
-  "tutorial.ramp.how": "Кликни по высокой площадке. Путь сам пройдёт по ступеням.",
-  "tutorial.ramp.intro": "Ступени соединяют уровни. Ступай, и они поднимут тебя.",
-  "tutorial.ramp.landing": "Ещё один пролёт.",
-  "tutorial.ramp.praise": "Высота. Врагам снизу трудно до тебя добраться.",
+  "tutorial.ping.view": "Красивый вид.",
   "tutorial.rats.again": "Попробуй на этой другой навык.",
   "tutorial.rats.big": "Крупная. Бей её, пока {bash} не загорится, потом сбей с ног и бей {crush}.",
   "tutorial.rats.hint": "Используй против крыс два разных навыка.",
@@ -1827,18 +1840,15 @@ export default {
   "tutorial.stepIn.praise": "Вместе. Задержи дыхание.",
   "tutorial.touch.callHow": "Коснись крысы, затем панели цели, чтобы отметить её.",
   "tutorial.touch.callT": "Вот так. Теперь ты на отмеченной цели.",
-  "tutorial.touch.climbHint": "Наверх на уступ, потом снова вниз рядом с ним.",
-  "tutorial.touch.climbHow": "Коснись уступа, затем земли рядом с ним.",
-  "tutorial.touch.climbPraise": "Вверх и снова вниз. Теперь ты читаешь местность.",
-  "tutorial.touch.climbTip": "Совет: касание уступа всегда выбирает его верх.",
-  "tutorial.touch.climbUnder": "Теперь обратно вниз, рядом с уступом.",
+  "tutorial.touch.climbHow": "Коснись, где встать. Долгое нажатие выбирает землю внизу.",
+  "tutorial.touch.climbTip": "Совет: долгое нажатие выбирает землю под уступом.",
+  "tutorial.touch.climbUnder": "Нажми и держи. Пунктирный круг — под тобой.",
   "tutorial.touch.healHint":
     "Сначала коснись моего имени в списке отряда. Коснись «Группа», если список закрыт.",
   "tutorial.touch.healHow":
     "Если список закрыт, коснись «Группа», затем моего имени, затем светящегося навыка.",
   "tutorial.touch.look": "Щипок меняет масштаб. Веди одним пальцем, чтобы осмотреться.",
   "tutorial.touch.pingHow": "Коснись компаса или проведи по нему линию.",
-  "tutorial.touch.rampHow": "Коснись высокой площадки. Путь сам пройдёт по ступеням.",
   "tutorial.touch.ratsHow": "Коснись крысы, чтобы выбрать её.",
   "tutorial.touch.tunnelHow": "Коснись ступеней вниз, затем метки за дальним концом.",
   "tutorial.touch.walk": "Коснись земли, чтобы пойти туда.",

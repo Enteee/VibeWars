@@ -80,6 +80,7 @@ Sur un téléphone ou une tablette, en match et sur le terrain d'entraînement :
   l'attaquer. Une touche juste à côté d'un personnage le trouve quand même.
   Une touche sur toi-même fait marcher jusqu'à cet endroit, ou cible le
   socle du drapeau ou le levier sur lequel tu te tiens.
+- **Appuie longuement** pour marcher jusqu'au sol sous une corniche ou un pont, comme Alt+clic.
 - **Fais glisser** un doigt pour regarder autour de toi ; relâche et la vue
   revient vers toi en douceur. **Pince** pour zoomer.
 - **Touche** une compétence de la barre pour l'utiliser sur ta cible.
@@ -91,7 +92,7 @@ Hors match, la barre du haut contient **[?]** (cette Aide), **⚙** (Options),
 salon ; sa pastille les compte), **♪** (la musique : ce qui joue, et à quel
 volume), la coupure du son et le plein écran. En match, les mêmes boutons,
 sauf Salon, sont en haut à droite de l'écran. Dans une fenêtre étroite, ces
-icônes et les autres boutons de l'écran se replient dans **⋯** ; seul son
+icônes et les autres boutons de l'écran se replient dans **☰** ; seul son
 bouton principal reste visible. ⚙ ouvre les Options dans une fenêtre sous la
 barre, l'écran restant derrière ; Esc, × ou un clic à l'extérieur la ferme.
 [?] ouvre l'Aide de la même façon, dans une fenêtre sous lui avec un sélecteur de page en haut ; un match continue derrière.

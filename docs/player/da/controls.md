@@ -76,6 +76,7 @@ På en telefon eller en tablet, i en kamp og på træningsbanen:
   Tryk hurtigt på den samme fjende igen for at angribe den. Et tryk lige
   ved siden af en karakter finder den stadig. Et tryk på dig selv går til
   det sted eller vælger den flagstand eller det håndtag, du står på.
+- **Tryk og hold** for at gå til jorden under en afsats eller bro, som Alt+klik.
 - **Træk** med én finger for at se dig omkring; slip, og billedet glider
   tilbage til dig. **Knib** for at zoome.
 - **Tryk** på en evne på bjælken for at bruge den på dit mål.
@@ -86,7 +87,7 @@ Uden for en kamp rummer topbjælken **[?]** (denne Hjælp), **⚙** (Valg),
 **Lobby** (dit invitationslink, Deltag i lobby, Åben/Lukket, Forlad, og hvem der er i din lobby; mærket tæller dem),
 **♪** (musik: hvad der spiller, og hvor højt), lyd fra og fuld skærm. I en kamp sidder de samme knapper,
 undtagen Lobby, øverst til højre på skærmen. I et smalt vindue foldes disse ikoner og
-skærmens andre knapper ind i **⋯**; kun dens hovedknap bliver ude.
+skærmens andre knapper ind i **☰**; kun dens hovedknap bliver ude.
 ⚙ åbner Valg som et vindue under bjælken, med skærmen stadig bagved; Esc, × eller et klik udenfor lukker det.
 [?] åbner Hjælp på samme måde, som et vindue under den med en sidevælger øverst; en kamp kører videre bagved.
 Hjælp lukkes med vinduets ×, Esc, et klik udenfor eller endnu et tryk på [?].

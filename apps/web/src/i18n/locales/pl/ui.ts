@@ -62,6 +62,22 @@ export default {
 
   "buildEditor.addWeapon": "Dodaj broń",
   "buildEditor.armor": "Pancerz",
+  "buildEditor.attributeEffect.critical-strikes":
+    "+{percent}% szansy na trafienie krytyczne, +{energy} Energii za trafienie krytyczne",
+  "buildEditor.attributeEffect.divine-favor": "czary Mnicha na sojuszników leczą +{heal}",
+  "buildEditor.attributeEffect.energy-storage": "+{energy} maksymalnej Energii",
+  "buildEditor.attributeEffect.expertise":
+    "umiejętności ataku, rytuały, umiejętności dotyku i umiejętności Łowcy kosztują {percent}% mniej Energii",
+  "buildEditor.attributeEffect.fast-casting": "czary i sygnety rzucane są {percent}% szybciej",
+  "buildEditor.attributeEffect.leadership":
+    "do {max} Energii za okrzyk, {perAlly} za każdego objętego sojusznika",
+  "buildEditor.attributeEffect.mysticism":
+    "zaczarowania Derwisza kosztują {percent}% mniej Energii",
+  "buildEditor.attributeEffect.soul-reaping":
+    "+{energy} Energii, gdy ktoś w pobliżu zginie ({triggers} na {seconds} s)",
+  "buildEditor.attributeEffect.spawning-power":
+    "istoty +{percent}% Zdrowia, czary broni trwają {percent}% dłużej",
+  "buildEditor.attributeEffect.strength": "umiejętności ataku: {percent}% przebicia pancerza",
   "buildEditor.back": "Wstecz",
   "buildEditor.bothHandsFull": "obie ręce zajęte",
   "buildEditor.budgetSegment": {
@@ -671,6 +687,7 @@ export default {
   "hud.outcomeVictory": "Zwycięstwo",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (nie żyje)",
+  "hud.preMatchHeld": "Do początku meczu pozostajesz przy swoim punkcie startowym.",
   "hud.preMatchStartingAnyway":
     "Oczekiwanie na graczy: {joined}/{expected}, start mimo to za {seconds} s",
   "hud.preMatchStartsIn": "Mecz zaczyna się za {seconds}",
@@ -1811,17 +1828,13 @@ export default {
   "tutorial.look.praise": "Jest! Nasza droga wokół walki.",
   "tutorial.offer": "Nowy? Twój nauczyciel pokaże ci podstawy.",
   "tutorial.offerTitle": "Pierwszy raz?",
+  "tutorial.ping.called": "Już idę. Spotkajmy się tam, gdzie ścieżki się łączą.",
   "tutorial.ping.hint": "Wskaż drogę, którą chcesz iść.",
   "tutorial.ping.how":
     "Kliknij kółkiem w ziemię, kliknij kompas albo przeciągnij po kompasie, by narysować linię.",
   "tutorial.ping.intro": "W lewo czy w prawo? Ty decydujesz.",
-  "tutorial.ping.pocket": "Ładny widok. Ale zła droga.",
   "tutorial.ping.praise": "Dobry wybór. Naprzód.",
-  "tutorial.ramp.hint": "W górę po obu schodach do znacznika na wysokiej platformie.",
-  "tutorial.ramp.how": "Kliknij wysoką platformę. Ścieżka sama poprowadzi po schodach.",
-  "tutorial.ramp.intro": "Schody łączą poziomy. Wejdź na nie, a wyniosą cię w górę.",
-  "tutorial.ramp.landing": "Jeszcze jedne schody.",
-  "tutorial.ramp.praise": "Wysoki teren. Wrogom z dołu trudno cię dosięgnąć.",
+  "tutorial.ping.view": "Ładny widok.",
   "tutorial.rats.again": "Spróbuj innej umiejętności na tym.",
   "tutorial.rats.big": "Duży. Bij go, aż {bash} się zaświeci, potem go powal i użyj {crush}.",
   "tutorial.rats.hint": "Użyj na szczurach dwóch różnych umiejętności.",
@@ -1837,18 +1850,15 @@ export default {
   "tutorial.stepIn.praise": "Razem. Wstrzymaj oddech.",
   "tutorial.touch.callHow": "Dotknij szczura, potem paska celu, by go wskazać.",
   "tutorial.touch.callT": "Właśnie tak. Teraz celujesz we wskazany cel.",
-  "tutorial.touch.climbHint": "Wejdź na półkę, a potem zejdź obok niej.",
-  "tutorial.touch.climbHow": "Dotknij półki, potem ziemi obok niej.",
-  "tutorial.touch.climbPraise": "W górę i znów w dół. Już umiesz czytać teren.",
-  "tutorial.touch.climbTip": "Wskazówka: dotknięcie półki zawsze wybiera jej szczyt.",
-  "tutorial.touch.climbUnder": "Teraz zejdź z powrotem, obok półki.",
+  "tutorial.touch.climbHow": "Dotknij, gdzie stanąć. Przytrzymanie wybiera ziemię pod spodem.",
+  "tutorial.touch.climbTip": "Wskazówka: przytrzymanie wybiera ziemię pod półką.",
+  "tutorial.touch.climbUnder": "Przytrzymaj palec. Przerywany krąg jest pod tobą.",
   "tutorial.touch.healHint":
     "Najpierw dotknij mojego imienia na liście drużyny. Dotknij Grupa, jeśli lista jest zamknięta.",
   "tutorial.touch.healHow":
     "Dotknij Grupa, jeśli lista jest zamknięta, potem mojego imienia, potem świecącej umiejętności.",
   "tutorial.touch.look": "Uszczypnij, by przybliżyć. Przeciągnij jednym palcem, by się rozejrzeć.",
   "tutorial.touch.pingHow": "Dotknij kompasu albo przeciągnij po nim, by narysować linię.",
-  "tutorial.touch.rampHow": "Dotknij wysokiej platformy. Ścieżka sama poprowadzi po schodach.",
   "tutorial.touch.ratsHow": "Dotknij szczura, by go namierzyć.",
   "tutorial.touch.tunnelHow": "Dotknij stopni w dół, potem znacznika za drugim końcem.",
   "tutorial.touch.walk": "Dotknij ziemi, by tam pójść.",

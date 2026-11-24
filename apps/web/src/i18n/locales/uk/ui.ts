@@ -63,6 +63,23 @@ export default {
 
   "buildEditor.addWeapon": "Додати зброю",
   "buildEditor.armor": "Броня",
+  "buildEditor.attributeEffect.critical-strikes":
+    "+{percent}% шанс критичного удару, +{energy} енергії за критичний удар",
+  "buildEditor.attributeEffect.divine-favor": "закляття Monk на союзників лікують +{heal}",
+  "buildEditor.attributeEffect.energy-storage": "+{energy} до максимальної енергії",
+  "buildEditor.attributeEffect.expertise":
+    "атакувальні вміння, ритуали, вміння дотику та вміння Ranger коштують на {percent}% менше енергії",
+  "buildEditor.attributeEffect.fast-casting":
+    "закляття та печатки застосовуються на {percent}% швидше",
+  "buildEditor.attributeEffect.leadership":
+    "до {max} енергії за вигук, {perAlly} за кожного зачепленого союзника",
+  "buildEditor.attributeEffect.mysticism":
+    "зачарування Dervish коштують на {percent}% менше енергії",
+  "buildEditor.attributeEffect.soul-reaping":
+    "+{energy} енергії, коли хтось поруч гине ({triggers} за {seconds} с)",
+  "buildEditor.attributeEffect.spawning-power":
+    "істоти +{percent}% здоров'я, закляття зброї тривають на {percent}% довше",
+  "buildEditor.attributeEffect.strength": "атакувальні вміння: {percent}% пробиття броні",
   "buildEditor.back": "Назад",
   "buildEditor.bothHandsFull": "обидві руки зайняті",
   "buildEditor.budgetSegment": {
@@ -670,6 +687,7 @@ export default {
   "hud.outcomeVictory": "Перемога",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (мертвий)",
+  "hud.preMatchHeld": "До початку матчу ви залишаєтеся біля точки появи.",
   "hud.preMatchStartingAnyway":
     "Очікування гравців: {joined}/{expected}, почнеться все одно за {seconds} с",
   "hud.preMatchStartsIn": "Матч почнеться за {seconds}",
@@ -1808,17 +1826,13 @@ export default {
   "tutorial.look.praise": "Ось він! Наш шлях в обхід битви.",
   "tutorial.offer": "Вперше тут? Наставник покаже основи.",
   "tutorial.offerTitle": "Вперше?",
+  "tutorial.ping.called": "Іду. Зустрінемося там, де стежки сходяться.",
   "tutorial.ping.hint": "Познач шлях, яким хочеш піти.",
   "tutorial.ping.how":
     "Клацни коліщатком по землі, клацни по компасу або проведи по компасу лінію.",
   "tutorial.ping.intro": "Ліворуч чи праворуч? Вирішуй ти.",
-  "tutorial.ping.pocket": "Гарний краєвид. Але не туди.",
   "tutorial.ping.praise": "Добрий вибір. Уперед.",
-  "tutorial.ramp.hint": "Угору обома прольотами до мітки на високому майданчику.",
-  "tutorial.ramp.how": "Клікни на високий майданчик. Шлях сам пройде сходами.",
-  "tutorial.ramp.intro": "Сходи з'єднують рівні. Ступай, і вони піднімуть тебе.",
-  "tutorial.ramp.landing": "Ще один проліт.",
-  "tutorial.ramp.praise": "Висота. Ворогам знизу важко тебе дістати.",
+  "tutorial.ping.view": "Гарний краєвид.",
   "tutorial.rats.again": "Спробуй на цьому іншу навичку.",
   "tutorial.rats.big":
     "Великий. Бий його, доки {bash} не засвітиться, тоді збий з ніг і бий {crush}.",
@@ -1835,11 +1849,9 @@ export default {
   "tutorial.stepIn.praise": "Разом. Затримай подих.",
   "tutorial.touch.callHow": "Торкнися щура, потім панелі цілі, щоб позначити його.",
   "tutorial.touch.callT": "Саме так. Тепер ти на позначеній цілі.",
-  "tutorial.touch.climbHint": "Нагору на виступ, потім знову вниз поруч із ним.",
-  "tutorial.touch.climbHow": "Торкнися виступу, потім землі поруч із ним.",
-  "tutorial.touch.climbPraise": "Угору й знову вниз. Тепер ти читаєш місцевість.",
-  "tutorial.touch.climbTip": "Порада: дотик до виступу завжди обирає його верх.",
-  "tutorial.touch.climbUnder": "Тепер назад униз, поруч із виступом.",
+  "tutorial.touch.climbHow": "Торкнися, де стати. Довге натискання обирає землю внизу.",
+  "tutorial.touch.climbTip": "Порада: довге натискання обирає землю під виступом.",
+  "tutorial.touch.climbUnder": "Натисни й тримай. Пунктирне коло — під тобою.",
   "tutorial.touch.healHint":
     "Спершу торкнися мого імені у списку загону. Торкнися «Загін», якщо список закрито.",
   "tutorial.touch.healHow":
@@ -1847,7 +1859,6 @@ export default {
   "tutorial.touch.look":
     "Зведи чи розведи пальці для масштабу. Тягни одним пальцем, щоб роззирнутися.",
   "tutorial.touch.pingHow": "Торкнися компаса або проведи по ньому лінію.",
-  "tutorial.touch.rampHow": "Торкнися високого майданчика. Шлях сам пройде сходами.",
   "tutorial.touch.ratsHow": "Торкнися щура, щоб вибрати його.",
   "tutorial.touch.tunnelHow": "Торкнися сходів униз, потім позначки за дальнім кінцем.",
   "tutorial.touch.walk": "Торкнися землі, щоб піти туди.",

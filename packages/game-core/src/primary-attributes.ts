@@ -33,8 +33,8 @@ export const EXPERTISE_COST_CUT_PER_RANK = 0.04;
 /**
  * What `skill`'s energy cost comes to with this rank of Expertise (#528):
  * 4% less a rank, rounded once, never below 0, for an attack skill, a
- * ritual of any profession (#1100) or any Ranger skill. Any other skill's
- * cost stands.
+ * ritual of any profession (#1100), a touch skill (#3880) or any Ranger
+ * skill. Any other skill's cost stands.
  */
 export function expertiseEnergyCost(rank: number, skill: Skill, cost: number): number {
   if (!expertiseCuts(skill)) {
@@ -43,12 +43,13 @@ export function expertiseEnergyCost(rank: number, skill: Skill, cost: number): n
   return Math.max(0, Math.round(cost * (1 - EXPERTISE_COST_CUT_PER_RANK * rank)));
 }
 
-/** Whether Expertise cuts `skill`'s cost: an attack, a ritual or a Ranger skill. */
+/** Whether Expertise cuts `skill`'s cost: an attack, a ritual, a touch skill or a Ranger skill. */
 function expertiseCuts(skill: Skill): boolean {
   return (
     skill.type === "attack" ||
     skill.type === "nature-ritual" ||
     skill.type === "binding-ritual" ||
+    skill.touch === true ||
     skill.profession === "ranger"
   );
 }
@@ -60,12 +61,13 @@ export const STRENGTH_ATTRIBUTE = "warrior.strength";
 export const STRENGTH_PENETRATION_PER_RANK = 0.01;
 
 /**
- * An attack skill's armor penetration with this rank of Strength (#528):
- * 1% a rank, unless the weapon has penetration of its own, which stands
- * instead; the two do not add.
+ * An attack skill's armor penetration with this rank of Strength (#528,
+ * #3880): 1% a rank, or the weapon's own penetration if that is higher;
+ * the two do not add. GW1 lets Strength stand unless the skill has a
+ * higher amount, so a hornbow's 10% loses to Strength 12.
  */
 export function strengthArmorPenetration(rank: number, weaponPenetration: number): number {
-  return weaponPenetration > 0 ? weaponPenetration : STRENGTH_PENETRATION_PER_RANK * rank;
+  return Math.max(weaponPenetration, STRENGTH_PENETRATION_PER_RANK * rank);
 }
 
 /** The Mesmer's primary. */
@@ -82,23 +84,11 @@ export function fastCastingSpeed(rank: number): number {
   return 2 ** (-rank / 15);
 }
 
-/** Share of a signet's activation each rank of Fast Casting takes off (#1100). */
-export const FAST_CASTING_SIGNET_CUT_PER_RANK = 0.03;
-
 /**
- * What Fast Casting multiplies a signet's activation by: 3% less a rank,
- * linear, ×0.64 at rank 12. Never below 0, for ranks no build reaches.
- */
-export function fastCastingSignetSpeed(rank: number): number {
-  return Math.max(0, 1 - FAST_CASTING_SIGNET_CUT_PER_RANK * rank);
-}
-
-/**
- * What Fast Casting multiplies this spell's or signet's activation by:
- * a spell's by GW1's 2^(−rank/15), ×0.574 at rank 12, still shrinking
- * above it; a signet's by 3% less a rank, ×0.64 at rank 12 (#1100). Every
- * Mesmer spell or signet, and another profession's whose base activation
- * is 2 s or more; 1 for anything else.
+ * What Fast Casting multiplies this spell's or signet's activation by
+ * (#1100, #3880): GW1's 2^(−rank/15) for both, ×0.574 at rank 12, still
+ * shrinking above it. Every Mesmer spell or signet, and another
+ * profession's whose base activation is 2 s or more; 1 for anything else.
  */
 export function fastCastingMultiplier(rank: number, skill: Skill): number {
   if (!isSpell(skill.type) && skill.type !== "signet") {
@@ -110,7 +100,7 @@ export function fastCastingMultiplier(rank: number, skill: Skill): number {
   ) {
     return 1;
   }
-  return skill.type === "signet" ? fastCastingSignetSpeed(rank) : fastCastingSpeed(rank);
+  return fastCastingSpeed(rank);
 }
 
 /** The Monk's primary. */
@@ -118,7 +108,7 @@ export const DIVINE_FAVOR_ATTRIBUTE = "monk.divine-favor";
 
 /**
  * The extra heal Divine Favor gives the ally a Monk spell is cast on, the
- * caster included (#529): floor(3.2 × rank), +38 at rank 12. 0 for any
+ * caster included (#529): 3.2 × rank rounded, +38 at rank 12. 0 for any
  * other skill, and for a Monk spell cast at a foe. Twice that for a spell
  * that doubles it (#1754), as Healing Touch, or while the caster is under a
  * status that doubles it for the spell's attribute (`statusDoubles`,
@@ -136,10 +126,13 @@ export function divineFavorBonusHeal(
   return divineFavorHeal(rank) * (skill.divineFavorDoubled === true || statusDoubles ? 2 : 1);
 }
 
-/** Divine Favor's extra heal for a spell it applies to: floor(3.2 × rank). */
+/**
+ * Divine Favor's extra heal for a spell it applies to: 3.2 × rank, rounded
+ * to the nearest (#3880), as GW1's 10 / 26 / 42 at ranks 3 / 8 / 13.
+ */
 export function divineFavorHeal(rank: number): number {
-  // 3.2 × rank in whole numbers, so no float lands a hair under an integer.
-  return Math.floor((16 * rank) / 5);
+  // 3.2 × rank in whole numbers, so no float lands a hair off a half.
+  return Math.round((16 * rank) / 5);
 }
 
 /** The Necromancer's primary. */
@@ -172,12 +165,16 @@ export function soulReapingTrigger(
 /** The Paragon's primary. */
 export const LEADERSHIP_ATTRIBUTE = "paragon.leadership";
 
+/** Energy Leadership gives for each ally a shout or chant affected (#3880). */
+export const LEADERSHIP_ENERGY_PER_ALLY = 2;
+
 /**
- * Energy Leadership gives for one shout (#625): 1 for each ally it
- * affected, the shouter included, up to 1 for every 2 ranks.
+ * Energy Leadership gives for one shout (#625, #3880): 2 for each ally it
+ * affected, up to 1 for every 2 ranks. The shouter counts: GW1's wiki
+ * ("Ally") counts each player as their own ally.
  */
 export function leadershipEnergy(rank: number, alliesAffected: number): number {
-  return Math.min(alliesAffected, Math.floor(rank / 2));
+  return Math.min(LEADERSHIP_ENERGY_PER_ALLY * alliesAffected, Math.floor(rank / 2));
 }
 
 /** The Elementalist's primary. */
@@ -206,6 +203,21 @@ export function spawningPowerMultiplier(rank: number): number {
   return 1 + SPAWNING_POWER_BONUS_PER_RANK * rank;
 }
 
+/**
+ * A weapon spell's duration with this rank of its caster's Spawning Power
+ * (#3880): GW1 rounds it to a whole second, a half down, so 30 s at rank
+ * 0.9 lasts 31 s, not 31.08. At rank 0 the duration stands as it is.
+ */
+export function spawningPowerDuration(rank: number, seconds: number): number {
+  if (rank <= 0) {
+    return seconds;
+  }
+  // In hundredths, so a half lands on a half: 37.5 s at 16 is 61.5, not
+  // 61.50000000000001.
+  const percent = 100 + 100 * SPAWNING_POWER_BONUS_PER_RANK * rank;
+  return Math.ceil((seconds * percent) / 100 - 0.5);
+}
+
 /** A summoned creature's max health with this rank of its summoner's, rounded once. */
 export function spawningPowerHealth(rank: number, health: number): number {
   return Math.round(health * spawningPowerMultiplier(rank));
@@ -214,11 +226,11 @@ export function spawningPowerHealth(rank: number, health: number): number {
 /** The Dervish's primary. */
 export const MYSTICISM_ATTRIBUTE = "dervish.mysticism";
 
-/** Share of a Dervish enchantment's energy cost each rank of Mysticism takes off. */
+/**
+ * Share of a Dervish enchantment's energy cost each rank of Mysticism
+ * takes off. GW1's armor while enchanted is PvE only, so not here (#3880).
+ */
 export const MYSTICISM_COST_CUT_PER_RANK = 0.04;
-
-/** Armor each rank of Mysticism gives its bearer while enchanted. */
-export const MYSTICISM_ARMOR_PER_RANK = 1;
 
 /**
  * What `skill`'s energy cost comes to with this rank of Mysticism (#874):
@@ -232,64 +244,80 @@ export function mysticismEnergyCost(rank: number, skill: Skill, cost: number): n
   return Math.max(0, Math.round(cost * (1 - MYSTICISM_COST_CUT_PER_RANK * rank)));
 }
 
-/** The armor Mysticism gives an enchanted bearer at this rank (#874): +1 a rank. */
-export function mysticismArmor(rank: number): number {
-  return MYSTICISM_ARMOR_PER_RANK * rank;
-}
-
 /** A share in [0, 1] as a whole percentage, for a readout. */
-function percent(share: number): string {
-  return `${String(Math.round(share * 100))}%`;
+function percent(share: number): number {
+  return Math.round(share * 100);
 }
 
 /**
- * What a primary attribute does at `rank`, in one line, for the build
- * editor (#531): "spells cast 43% faster". Every number comes from the
- * function the simulation uses. `undefined` at rank 0, and for an
- * attribute with no effect of its own: every secondary.
+ * What a primary attribute does at one rank (#531, #3893): which effect,
+ * with its numbers, which the build editor words in the player's language.
+ * Percentages are whole percents.
  */
-export function describePrimaryAttribute(attributeId: string, rank: number): string | undefined {
+export type PrimaryAttributeEffect =
+  | { readonly kind: "fast-casting"; readonly percent: number }
+  | { readonly kind: "expertise"; readonly percent: number }
+  | { readonly kind: "strength"; readonly percent: number }
+  | { readonly kind: "divine-favor"; readonly heal: number }
+  | { readonly kind: "critical-strikes"; readonly percent: number; readonly energy: number }
+  | {
+      readonly kind: "soul-reaping";
+      readonly energy: number;
+      readonly triggers: number;
+      readonly seconds: number;
+    }
+  | { readonly kind: "energy-storage"; readonly energy: number }
+  | { readonly kind: "leadership"; readonly max: number; readonly perAlly: number }
+  | { readonly kind: "spawning-power"; readonly percent: number }
+  | { readonly kind: "mysticism"; readonly percent: number };
+
+/**
+ * What a primary attribute does at `rank`, for the build editor (#531):
+ * fast casting at 43%. Every number comes from the function the
+ * simulation uses. `undefined` at rank 0, and for an attribute with no
+ * effect of its own: every secondary.
+ */
+export function primaryAttributeEffect(
+  attributeId: string,
+  rank: number,
+): PrimaryAttributeEffect | undefined {
   if (rank <= 0) {
     return undefined;
   }
   switch (attributeId) {
     case FAST_CASTING_ATTRIBUTE:
-      return (
-        `spells cast ${percent(1 - fastCastingSpeed(rank))} faster, ` +
-        `signets ${percent(1 - fastCastingSignetSpeed(rank))} faster`
-      );
+      return { kind: "fast-casting", percent: percent(1 - fastCastingSpeed(rank)) };
     case EXPERTISE_ATTRIBUTE:
-      return `attack skills, rituals and Ranger skills cost ${percent(EXPERTISE_COST_CUT_PER_RANK * rank)} less energy`;
+      return { kind: "expertise", percent: percent(EXPERTISE_COST_CUT_PER_RANK * rank) };
     case STRENGTH_ATTRIBUTE:
-      return `attack skills ${percent(strengthArmorPenetration(rank, 0))} armor penetration`;
+      return { kind: "strength", percent: percent(strengthArmorPenetration(rank, 0)) };
     case DIVINE_FAVOR_ATTRIBUTE:
-      return `Monk spells on allies heal +${String(divineFavorHeal(rank))}`;
+      return { kind: "divine-favor", heal: divineFavorHeal(rank) };
     case CRITICAL_STRIKES_ATTRIBUTE:
-      return (
-        `+${percent(CRITICAL_STRIKES_CHANCE_PER_RANK * rank)} critical chance, ` +
-        `+${String(criticalStrikesEnergy(rank))} energy per critical`
-      );
+      return {
+        kind: "critical-strikes",
+        percent: percent(CRITICAL_STRIKES_CHANCE_PER_RANK * rank),
+        energy: criticalStrikesEnergy(rank),
+      };
     case SOUL_REAPING_ATTRIBUTE:
-      return (
-        `+${String(soulReapingEnergy(rank))} energy when someone nearby dies ` +
-        `(${String(SOUL_REAPING_MAX_TRIGGERS)} per ${String(SOUL_REAPING_WINDOW_SECONDS)} s)`
-      );
+      return {
+        kind: "soul-reaping",
+        energy: soulReapingEnergy(rank),
+        triggers: SOUL_REAPING_MAX_TRIGGERS,
+        seconds: SOUL_REAPING_WINDOW_SECONDS,
+      };
     case ENERGY_STORAGE_ATTRIBUTE:
-      return `+${String(energyStorageBonus(rank))} maximum energy`;
+      return { kind: "energy-storage", energy: energyStorageBonus(rank) };
     case LEADERSHIP_ATTRIBUTE:
-      return (
-        `up to ${String(leadershipEnergy(rank, Number.POSITIVE_INFINITY))} energy per shout, ` +
-        "1 per ally affected"
-      );
-    case SPAWNING_POWER_ATTRIBUTE: {
-      const more = percent(spawningPowerMultiplier(rank) - 1);
-      return `creatures +${more} Health, weapon spells last ${more} longer`;
-    }
+      return {
+        kind: "leadership",
+        max: leadershipEnergy(rank, Number.POSITIVE_INFINITY),
+        perAlly: LEADERSHIP_ENERGY_PER_ALLY,
+      };
+    case SPAWNING_POWER_ATTRIBUTE:
+      return { kind: "spawning-power", percent: percent(spawningPowerMultiplier(rank) - 1) };
     case MYSTICISM_ATTRIBUTE:
-      return (
-        `Dervish enchantments cost ${percent(MYSTICISM_COST_CUT_PER_RANK * rank)} less energy, ` +
-        `+${String(mysticismArmor(rank))} armor while enchanted`
-      );
+      return { kind: "mysticism", percent: percent(MYSTICISM_COST_CUT_PER_RANK * rank) };
     default:
       return undefined;
   }

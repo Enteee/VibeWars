@@ -82,6 +82,7 @@ Puhelimella tai tabletilla, ottelussa ja harjoituskentällä:
   kimppuun. Napautus aivan hahmon vierestä löytää sen silti. Napautus itseesi
   kävelee sille kohdalle tai kohdistaa lipputelineeseen tai vipuun, jonka
   päällä seisot.
+- **Paina pitkään** kävelläksesi maahan reunan tai sillan alle, kuten Alt+napsautuksella.
 - **Vedä** yhdellä sormella katsoaksesi ympärillesi; päästä irti, ja näkymä
   liukuu takaisin luoksesi. **Nipistä** zoomataksesi.
 - **Napauta** palkin taitoa käyttääksesi sitä kohteeseesi.
@@ -92,7 +93,7 @@ Ottelun ulkopuolella yläpalkissa ovat **[?]** (tämä Ohje), **⚙** (Asetukset
 **Aula** (kutsulinkkisi, Liity aulaan, Avoin/Suljettu, Poistu ja aulasi jäsenet; sen merkki laskee heidät),
 **♪** (musiikki: mitä soi ja kuinka kovaa), äänen mykistys ja koko näyttö. Ottelussa samat painikkeet
 Aulaa lukuun ottamatta ovat näytön oikeassa yläkulmassa. Kapeassa ikkunassa nämä kuvakkeet ja
-näkymän muut painikkeet taittuvat **⋯**-valikkoon; vain sen pääpainike jää näkyviin.
+näkymän muut painikkeet taittuvat **☰**-valikkoon; vain sen pääpainike jää näkyviin.
 ⚙ avaa Asetukset ikkunana palkin alle, näkymä yhä sen takana; Esc, × tai napsautus ikkunan ulkopuolelle sulkee sen.
 [?] avaa Ohjeen samalla tavalla, ikkunana sen alle, ylimpänä sivuvalitsin; ottelu jatkuu sen takana.
 Ohje sulkeutuu sen ×:llä, Escillä, napsautuksella ikkunan ulkopuolelle tai painamalla [?] uudelleen.

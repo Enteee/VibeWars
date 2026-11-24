@@ -61,6 +61,21 @@ export default {
 
   "buildEditor.addWeapon": "Tambah senjata",
   "buildEditor.armor": "Armor",
+  "buildEditor.attributeEffect.critical-strikes":
+    "+{percent}% peluang serangan kritis, +{energy} Energi per serangan kritis",
+  "buildEditor.attributeEffect.divine-favor": "Mantra Monk pada sekutu menyembuhkan +{heal}",
+  "buildEditor.attributeEffect.energy-storage": "+{energy} Energi maksimum",
+  "buildEditor.attributeEffect.expertise":
+    "skill serangan, ritual, skill sentuhan, dan skill Ranger memakan Energi {percent}% lebih sedikit",
+  "buildEditor.attributeEffect.fast-casting": "Mantra dan Segel dirapal {percent}% lebih cepat",
+  "buildEditor.attributeEffect.leadership":
+    "hingga {max} Energi per teriakan, {perAlly} per sekutu yang terkena",
+  "buildEditor.attributeEffect.mysticism": "Berkah Dervish memakan Energi {percent}% lebih sedikit",
+  "buildEditor.attributeEffect.soul-reaping":
+    "+{energy} Energi saat seseorang di dekat mati ({triggers} per {seconds} dtk)",
+  "buildEditor.attributeEffect.spawning-power":
+    "makhluk +{percent}% Darah, Mantra Senjata bertahan {percent}% lebih lama",
+  "buildEditor.attributeEffect.strength": "skill serangan {percent}% penetrasi armor",
   "buildEditor.back": "Kembali",
   "buildEditor.bothHandsFull": "kedua tangan penuh",
   "buildEditor.budgetSegment": { other: "{attribute}: {count} poin" },
@@ -572,6 +587,7 @@ export default {
   "hud.outcomeVictory": "Menang",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (tewas)",
+  "hud.preMatchHeld": "Kamu tertahan di dekat titik munculmu sampai pertandingan dimulai.",
   "hud.preMatchStartingAnyway":
     "Menunggu pemain: {joined}/{expected}, tetap dimulai dalam {seconds} dtk",
   "hud.preMatchStartsIn": "Pertandingan dimulai dalam {seconds}",
@@ -1605,17 +1621,13 @@ export default {
   "tutorial.look.praise": "Itu dia! Jalan kita memutari pertempuran.",
   "tutorial.offer": "Baru di sini? Gurumu akan menunjukkan dasarnya.",
   "tutorial.offerTitle": "Pertama kali?",
+  "tutorial.ping.called": "Aku jalan. Kita bertemu di tempat jalan bertemu.",
   "tutorial.ping.hint": "Ping jalan yang ingin kamu tempuh.",
   "tutorial.ping.how":
     "Klik roda di tanah, klik kompas, atau seret di kompas untuk menggambar garis.",
   "tutorial.ping.intro": "Kiri atau kanan? Kamu yang tentukan.",
-  "tutorial.ping.pocket": "Pemandangan bagus. Tapi salah jalan.",
   "tutorial.ping.praise": "Pilihan bagus. Lanjut.",
-  "tutorial.ramp.hint": "Naiki kedua tangga ke tanda di dek tinggi.",
-  "tutorial.ramp.how": "Klik dek tinggi. Jalurmu menaiki tangga untukmu.",
-  "tutorial.ramp.intro": "Tangga menghubungkan lapisan. Melangkahlah, dan ia membawamu naik.",
-  "tutorial.ramp.landing": "Satu tangga lagi.",
-  "tutorial.ramp.praise": "Tanah tinggi. Musuh di bawah sulit menjangkaumu.",
+  "tutorial.ping.view": "Pemandangan bagus.",
   "tutorial.rats.again": "Coba skill lain pada yang ini.",
   "tutorial.rats.big": "Yang besar. Pukul sampai {bash} menyala, lalu jatuhkan dan pakai {crush}.",
   "tutorial.rats.hint": "Gunakan dua skill berbeda pada tikus-tikus itu.",
@@ -1631,18 +1643,15 @@ export default {
   "tutorial.stepIn.praise": "Bersama. Tahan napasmu.",
   "tutorial.touch.callHow": "Ketuk tikus, lalu ketuk bilah target untuk menandainya.",
   "tutorial.touch.callT": "Begitu. Sekarang kamu mengincar sasaran yang ditandai.",
-  "tutorial.touch.climbHint": "Naik ke tepian, lalu turun lagi di sampingnya.",
-  "tutorial.touch.climbHow": "Ketuk tepiannya, lalu ketuk tanah di sampingnya.",
-  "tutorial.touch.climbPraise": "Naik dan turun lagi. Sekarang kamu bisa membaca medan.",
-  "tutorial.touch.climbTip": "Tips: ketukan pada tepian selalu memilih bagian atasnya.",
-  "tutorial.touch.climbUnder": "Sekarang turun lagi, di samping tepian.",
+  "tutorial.touch.climbHow": "Ketuk tempat berdiri. Tekan lama memilih tanah di bawahnya.",
+  "tutorial.touch.climbTip": "Tips: tekan lama memilih tanah di bawah tepian.",
+  "tutorial.touch.climbUnder": "Tekan lama. Lingkaran putus-putus ada di bawahmu.",
   "tutorial.touch.healHint":
     "Ketuk namaku di daftar regu dulu. Ketuk Party kalau daftarnya tertutup.",
   "tutorial.touch.healHow":
     "Ketuk Party kalau daftarnya tertutup, lalu namaku, lalu skill yang menyala.",
   "tutorial.touch.look": "Cubit untuk zoom. Seret satu jari untuk melihat.",
   "tutorial.touch.pingHow": "Ketuk kompas, atau seret di atasnya untuk menggambar garis.",
-  "tutorial.touch.rampHow": "Ketuk dek tinggi. Jalurmu menaiki tangga untukmu.",
   "tutorial.touch.ratsHow": "Ketuk tikus untuk membidiknya.",
   "tutorial.touch.tunnelHow": "Ketuk tangga turun, lalu tanda di balik ujung satunya.",
   "tutorial.touch.walk": "Ketuk tanah untuk berjalan ke sana.",

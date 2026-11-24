@@ -63,6 +63,22 @@ export default {
 
   "buildEditor.addWeapon": "Wapen toevoegen",
   "buildEditor.armor": "Pantser",
+  "buildEditor.attributeEffect.critical-strikes":
+    "+{percent}% kans op een voltreffer, +{energy} energie per voltreffer",
+  "buildEditor.attributeEffect.divine-favor": "Monnik-spreuken op bondgenoten genezen +{heal}",
+  "buildEditor.attributeEffect.energy-storage": "+{energy} maximale energie",
+  "buildEditor.attributeEffect.expertise":
+    "aanvalsskills, rituelen, aanraakskills en Jager-skills kosten {percent}% minder energie",
+  "buildEditor.attributeEffect.fast-casting":
+    "spreuken en zegels worden {percent}% sneller uitgesproken",
+  "buildEditor.attributeEffect.leadership":
+    "tot {max} energie per kreet, {perAlly} per getroffen bondgenoot",
+  "buildEditor.attributeEffect.mysticism": "Derwisj-betoveringen kosten {percent}% minder energie",
+  "buildEditor.attributeEffect.soul-reaping":
+    "+{energy} energie als iemand in de buurt sterft ({triggers} per {seconds} s)",
+  "buildEditor.attributeEffect.spawning-power":
+    "wezens +{percent}% gezondheid, wapenspreuken duren {percent}% langer",
+  "buildEditor.attributeEffect.strength": "aanvalsskills {percent}% pantserpenetratie",
   "buildEditor.back": "Terug",
   "buildEditor.bothHandsFull": "beide handen vol",
   "buildEditor.budgetSegment": {
@@ -614,6 +630,7 @@ export default {
   "hud.outcomeVictory": "Overwinning",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (dood)",
+  "hud.preMatchHeld": "Je blijft bij je startpunt tot de wedstrijd begint.",
   "hud.preMatchStartingAnyway":
     "Wachten op spelers: {joined}/{expected}, start toch over {seconds} s",
   "hud.preMatchStartsIn": "Wedstrijd begint over {seconds}",
@@ -1686,17 +1703,13 @@ export default {
   "tutorial.look.praise": "Daar is hij! Onze weg om het gevecht heen.",
   "tutorial.offer": "Nieuw hier? Je leraar laat je de basis zien.",
   "tutorial.offerTitle": "Eerste keer?",
+  "tutorial.ping.called": "Ik ga. We zien elkaar waar de paden samenkomen.",
   "tutorial.ping.hint": "Ping de kant die je op wilt.",
   "tutorial.ping.how":
     "Klik met het wiel op de grond, klik op het kompas, of sleep over het kompas om een lijn te tekenen.",
   "tutorial.ping.intro": "Links of rechts? Jij beslist.",
-  "tutorial.ping.pocket": "Mooi uitzicht. Maar verkeerde kant.",
   "tutorial.ping.praise": "Goed gekozen. Verder.",
-  "tutorial.ramp.hint": "Beide trappen op naar de markering op het hoge platform.",
-  "tutorial.ramp.how": "Klik op het hoge platform. Je route neemt de treden voor je.",
-  "tutorial.ramp.intro": "Trappen verbinden lagen. Loop erop en ze dragen je omhoog.",
-  "tutorial.ramp.landing": "Nog één trap.",
-  "tutorial.ramp.praise": "Hoge grond. Vijanden beneden bereiken je moeilijk.",
+  "tutorial.ping.view": "Mooi uitzicht.",
   "tutorial.rats.again": "Probeer een andere vaardigheid op deze.",
   "tutorial.rats.big":
     "Een grote. Sla hem tot {bash} oplicht, sla hem dan neer en gebruik {crush}.",
@@ -1713,18 +1726,15 @@ export default {
   "tutorial.stepIn.praise": "Samen. Houd je adem in.",
   "tutorial.touch.callHow": "Tik op een rat en dan op de doelbalk om hem af te roepen.",
   "tutorial.touch.callT": "Zo is het. Nu zit je op het afgeroepen doel.",
-  "tutorial.touch.climbHint": "Op de richel, en dan ernaast weer omlaag.",
-  "tutorial.touch.climbHow": "Tik op de richel en dan op de grond ernaast.",
-  "tutorial.touch.climbPraise": "Op en weer neer. Nu kun je het terrein lezen.",
-  "tutorial.touch.climbTip": "Tip: een tik op een richel kiest altijd de bovenkant.",
-  "tutorial.touch.climbUnder": "Nu weer omlaag, naast de richel.",
+  "tutorial.touch.climbHow": "Tik waar je wilt staan. Lang indrukken kiest de grond eronder.",
+  "tutorial.touch.climbTip": "Tip: lang indrukken kiest de grond onder een richel.",
+  "tutorial.touch.climbUnder": "Druk lang. De gestippelde ring ligt onder je.",
   "tutorial.touch.healHint":
     "Tik eerst op mijn naam in de groepslijst. Tik op Groep als de lijst dicht is.",
   "tutorial.touch.healHow":
     "Tik op Groep als de lijst dicht is, dan op mijn naam en dan op de oplichtende skill.",
   "tutorial.touch.look": "Knijp om te zoomen. Sleep met één vinger om rond te kijken.",
   "tutorial.touch.pingHow": "Tik op het kompas, of sleep erover om een lijn te tekenen.",
-  "tutorial.touch.rampHow": "Tik op het hoge platform. Je route neemt de treden voor je.",
   "tutorial.touch.ratsHow": "Tik op een rat om hem te kiezen.",
   "tutorial.touch.tunnelHow":
     "Tik op de treden omlaag, dan op de markering voorbij het andere eind.",

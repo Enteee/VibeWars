@@ -51,6 +51,8 @@ for (const [width, height] of [
     await expect(summary).toBeVisible();
     const panels = summary.locator(".match-summary-panel");
     await expect(panels).toHaveCount(3);
+    // The party window would cover the right end of 'Their team' (#3890).
+    await expect(page.locator(".party-dock")).toHaveCSS("visibility", "hidden");
 
     const banner = await box(page.locator(".hud-result"));
     const line = await box(page.locator(".hud-end-line"));
@@ -181,5 +183,16 @@ test("a lost match's countdown stops: the line says so, and its one button goes 
   await line.getByRole("button", { name: "Stop" }).click();
   await expect(line).toContainText("Countdown stopped");
   await expect(buttons).toHaveText(["Back to lobby"]);
+  await expect(line.getByRole("button", { name: "Stop" })).toHaveCount(0);
+});
+
+test("?summary-fixture=win is the same end as a VICTORY, its countdown with no Stop (#3916)", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await page.goto("./?summary-fixture=win");
+  await expect(page.locator(".hud-result")).toHaveText("Victory (time)");
+  const line = page.locator(".hud-end-line");
+  await expect(line).toContainText("Back to lobby in 9 s");
   await expect(line.getByRole("button", { name: "Stop" })).toHaveCount(0);
 });

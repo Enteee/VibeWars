@@ -1,6 +1,7 @@
 import { vec2, type Vec2 } from "@vibewars/game-core";
 import { describe, expect, it } from "vitest";
 
+import { en } from "../i18n/en.js";
 import { KEYMAP_PRESETS } from "../input/keymap.js";
 
 import {
@@ -13,7 +14,6 @@ import {
   breakWallStation,
   callStation,
   climbStation,
-  rampStation,
   dodgeStation,
   gateStation,
   GATE_REACH,
@@ -26,9 +26,12 @@ import {
   skillSlot,
   stepInStation,
   tunnelStation,
+  walkStation,
+  type Station,
   type TutorialView,
 } from "./stations.js";
-import { ASIDE_MS, createTutorialRunner } from "./tutorial-runner.js";
+import { touchLine } from "./touch-lines.js";
+import { ASIDE_MS, HINT_REPEAT_MS, createTutorialRunner } from "./tutorial-runner.js";
 import { PLAYER_PROFESSION, houseBuild } from "./tutorial-world.js";
 
 const PAD = vec2(500, -900);
@@ -309,8 +312,8 @@ describe("ratsStation (#3316)", () => {
     expect(station.done(view({ ratsAlive: 0, skillsOnRats: two, extraRat: true }))).toBe(true);
   });
 
-  it("runs on the canyon's second map, and shows the targeting keys", () => {
-    expect(station.world).toBe("canyon-2");
+  it("runs in the canyon, and shows the targeting keys", () => {
+    expect(station.world).toBe("canyon");
     expect(station.keys).toEqual(["target-next", "target-closest"]);
   });
 
@@ -419,76 +422,6 @@ describe("climbStation (#3323)", () => {
       "tutorial.climb.praise",
     ]);
   });
-
-  it("on touch is done back down beside the ledge, its mark gone once up (#3782)", () => {
-    const station = climbStation(LEDGE, STAIRS, UPPER, LOWER, true);
-    if (typeof station.highlight !== "function") {
-      throw new Error("a climb station's mark moves");
-    }
-    expect(station.done(view(BESIDE))).toBe(false);
-    expect(station.highlight(view(BESIDE))).toEqual({ kind: "ground", at: MIDDLE, layer: UPPER });
-    expect(station.done(view(ON_LEDGE))).toBe(false);
-    expect(station.highlight(view(ON_LEDGE))).toBeUndefined();
-    expect(station.done(view(BESIDE))).toBe(true);
-  });
-});
-
-describe("rampStation (#3325)", () => {
-  const MARK = vec2(1980, 1610);
-  const DECK = 3;
-  const LANDING = 2;
-  const LANDING_FOOTPRINT = { kind: "rect", x: 2260, y: 1480, width: 180, height: 160 } as const;
-  /** Station 9's ledge, on the landing's layer. */
-  const ON_LEDGE = { self: vec2(3600, 1890), selfLayer: LANDING };
-  const BELOW = { self: vec2(2000, 2100), selfLayer: 1 };
-  const ON_LANDING = { self: vec2(2350, 1560), selfLayer: LANDING };
-  const ON_MARK = { self: MARK, selfLayer: DECK };
-
-  it("is done on the mark on the high deck", () => {
-    expect(rampStation(MARK, DECK, LANDING_FOOTPRINT, LANDING).done(view(ON_MARK))).toBe(true);
-  });
-
-  it("is not done at the same x and y on a layer below", () => {
-    const station = rampStation(MARK, DECK, LANDING_FOOTPRINT, LANDING);
-    expect(station.done(view({ self: MARK, selfLayer: LANDING }))).toBe(false);
-    expect(station.done(view({ self: MARK, selfLayer: 1 }))).toBe(false);
-  });
-
-  it("marks the high deck on its layer", () => {
-    expect(rampStation(MARK, DECK, LANDING_FOOTPRINT, LANDING).highlight).toEqual({
-      kind: "ground",
-      at: MARK,
-      layer: DECK,
-    });
-  });
-
-  it("says one more flight once, the first time on the landing", () => {
-    const runner = createTutorialRunner(
-      [rampStation(MARK, DECK, LANDING_FOOTPRINT, LANDING)],
-      () => KEYMAP_PRESETS.classic,
-    );
-    const looks = [BELOW, ON_LANDING, BELOW, ON_LANDING, ON_MARK];
-    expect(looks.map((over, at) => runner.tick(view(over), at * ASIDE_MS).say?.key)).toEqual([
-      "tutorial.ramp.intro",
-      "tutorial.ramp.landing",
-      undefined,
-      undefined,
-      "tutorial.ramp.praise",
-    ]);
-  });
-
-  it("says nothing on the landing's layer off the landing, as on station 9's ledge", () => {
-    const runner = createTutorialRunner(
-      [rampStation(MARK, DECK, LANDING_FOOTPRINT, LANDING)],
-      () => KEYMAP_PRESETS.classic,
-    );
-    const looks = [ON_LEDGE, ON_LEDGE, ON_LANDING];
-    expect(looks.map((over, at) => runner.tick(view(over), at * ASIDE_MS).say?.key)).toEqual([
-      "tutorial.ramp.intro",
-      undefined,
-      "tutorial.ramp.landing",
-    ]);
-  });
 });
 
 describe("tunnelStation (#3326)", () => {
@@ -564,8 +497,8 @@ describe("callStation (#3331)", () => {
     expect(callStation().done(view({ calledId: "tutorial-tutor" }))).toBe(false);
   });
 
-  it("lights the party window", () => {
-    expect(callStation().highlight).toEqual({ kind: "hud", element: ".party-window" });
+  it("lights the target bar, which its lines name (#3884)", () => {
+    expect(callStation().highlight).toEqual({ kind: "hud", element: ".hud-target" });
   });
 
   it("says T finds the call once, the first time the player uses it", () => {
@@ -599,64 +532,85 @@ describe("callStation (#3331)", () => {
   });
 });
 
-describe("pingStation (#3332)", () => {
-  // As on the canyon: the pocket south-east of the fork, the east end as far east.
-  const FORK = vec2(0, 0);
-  const POCKET = vec2(400, 400);
-  const EAST = vec2(Math.hypot(400, 400), 0);
-  const EAST_SIDE = vec2(200, 0);
-  const station = (): ReturnType<typeof pingStation> => pingStation(FORK, EAST, POCKET, EAST_SIDE);
-  const ON_EAST = vec2(450, 20);
-  const ON_POCKET = vec2(380, 420);
+describe("pingStation (#3332, #3792)", () => {
+  // As on the canyon: two arms round an island east of the fork, rejoining past it, a bay south.
+  const JUNCTION = {
+    fork: vec2(0, 0),
+    layer: GROUND,
+    north: vec2(550, -285),
+    south: vec2(550, 285),
+    rejoin: vec2(1250, 0),
+    bay: vec2(620, 480),
+  };
+  const station = (): ReturnType<typeof pingStation> => pingStation(JUNCTION);
+  const ON_NORTH = vec2(520, -260);
+  const ON_SOUTH = vec2(560, 300);
+  const ON_REJOIN = { self: JUNCTION.rejoin };
 
-  it("calls the branch whose end a ping is nearer, and neither from behind the fork", () => {
-    expect(pingBranch(ON_EAST, FORK, EAST, POCKET)).toBe("east");
-    expect(pingBranch(vec2(150, 0), FORK, EAST, POCKET)).toBe("east");
-    expect(pingBranch(ON_POCKET, FORK, EAST, POCKET)).toBe("pocket");
-    expect(pingBranch(vec2(-300, 0), FORK, EAST, POCKET)).toBeUndefined();
-    expect(pingBranch(vec2(0, -400), FORK, EAST, POCKET)).toBeUndefined();
+  it("calls the arm whose mark a ping is nearer, and neither from behind the fork or at the rejoin", () => {
+    const { fork, north, south, rejoin } = JUNCTION;
+    expect(pingBranch(ON_NORTH, fork, north, south)).toBe("north");
+    expect(pingBranch(vec2(200, -60), fork, north, south)).toBe("north");
+    expect(pingBranch(ON_SOUTH, fork, north, south)).toBe("south");
+    expect(pingBranch(vec2(-300, 0), fork, north, south)).toBeUndefined();
+    expect(pingBranch(rejoin, fork, north, south)).toBeUndefined();
   });
 
-  it("lights the compass, with the fork marked beside it", () => {
+  it("lights the compass, with the fork marked beside it until an arm is called, then the rejoin", () => {
     const ping = station();
     expect(ping.highlight).toEqual({ kind: "hud", element: ".compass" });
-    expect(ping.mark?.(view())).toEqual(FORK);
+    expect(ping.mark?.(view())).toEqual(JUNCTION.fork);
+    ping.done(view({ lastPing: ON_SOUTH }));
+    expect(ping.mark?.(view())).toEqual(JUNCTION.rejoin);
   });
 
-  it("is not done on a pocket ping: the tutor goes in, says its line there once, and it waits", () => {
+  it("is done on the rejoin by either arm once one is called, and not before", () => {
+    for (const arm of [ON_NORTH, ON_SOUTH]) {
+      const ping = station();
+      expect(ping.done(view(ON_REJOIN))).toBe(false);
+      expect(ping.done(view({ lastPing: arm }))).toBe(false);
+      expect(ping.done(view(ON_REJOIN))).toBe(true);
+      expect(ping.done(view({ ...ON_REJOIN, selfLayer: GROUND + 1 }))).toBe(false);
+    }
+  });
+
+  it("holds an arm's call through a later stray ping", () => {
+    const ping = station();
+    ping.done(view({ lastPing: ON_NORTH }));
+    expect(ping.done(view({ ...ON_REJOIN, lastPing: vec2(-300, 0) }))).toBe(true);
+  });
+
+  it("says its line on the view once, as the tutor passes the bay", () => {
     const runner = createTutorialRunner([station()], () => KEYMAP_PRESETS.classic);
     const looks: Partial<TutorialView>[] = [
       {},
-      { lastPing: ON_POCKET, tutor: vec2(100, 100) },
-      { lastPing: ON_POCKET, tutor: vec2(330, 400) },
-      { lastPing: ON_POCKET, tutor: vec2(330, 400) },
-      { lastPing: ON_POCKET, tutor: FORK },
+      { lastPing: ON_SOUTH, tutor: vec2(200, 100) },
+      { lastPing: ON_SOUTH, tutor: JUNCTION.south },
+      { lastPing: ON_SOUTH, tutor: JUNCTION.south },
     ];
     expect(looks.map((over, at) => runner.tick(view(over), at * ASIDE_MS).say?.key)).toEqual([
       "tutorial.ping.intro",
-      undefined,
-      "tutorial.ping.pocket",
-      undefined,
+      "tutorial.ping.called",
+      "tutorial.ping.view",
       undefined,
     ]);
   });
 
-  it("is done once the east branch is called and the tutor stands past the fork, a pocket ping first or not", () => {
-    for (const first of [undefined, ON_POCKET]) {
-      const ping = station();
-      expect(ping.done(view({ lastPing: first }))).toBe(false);
-      expect(ping.done(view({ lastPing: ON_EAST, tutor: FORK }))).toBe(false);
-      expect(ping.done(view({ lastPing: ON_EAST, tutor: EAST_SIDE }))).toBe(true);
+  it("says the call was heard once, then no hint on the walk to the rejoin", () => {
+    const runner = createTutorialRunner([station()], () => KEYMAP_PRESETS.classic);
+    const said: (string | undefined)[] = [runner.tick(view(), 0).say?.key];
+    // Called at 1 s, then 30 s on the north arm, a look a second, nowhere near the rejoin.
+    for (let at = 1; at <= 31; at += 1) {
+      said.push(runner.tick(view({ lastPing: ON_NORTH, self: ON_NORTH }), at * 1000).say?.key);
     }
+    expect(31_000).toBeGreaterThan(HINT_REPEAT_MS * 2);
+    expect(said.filter((key) => key !== undefined)).toEqual([
+      "tutorial.ping.intro",
+      "tutorial.ping.called",
+    ]);
   });
 
-  it("holds the east call through a later pocket ping", () => {
-    const ping = station();
-    expect(ping.done(view({ lastPing: ON_EAST, tutor: FORK }))).toBe(false);
-    expect(ping.done(view({ lastPing: ON_POCKET, tutor: EAST_SIDE }))).toBe(true);
-  });
-
-  it("counts a ping far from both branches for neither, and says the hint once for it", () => {
+  it("counts a ping far from both arms for neither, and says the hint once for it", () => {
     const ping = station();
     const runner = createTutorialRunner([ping], () => KEYMAP_PRESETS.classic);
     const far = vec2(-300, 0);
@@ -666,20 +620,20 @@ describe("pingStation (#3332)", () => {
       "tutorial.ping.hint",
       undefined,
     ]);
-    expect(ping.done(view({ lastPing: far, tutor: EAST_SIDE }))).toBe(false);
+    expect(ping.done(view({ ...ON_REJOIN, lastPing: far }))).toBe(false);
   });
 
   it("says the hint once when the player walks on east unpinged, and waits", () => {
     const ping = station();
     const runner = createTutorialRunner([ping], () => KEYMAP_PRESETS.classic);
-    const past = { self: vec2(FORK.x + 350, 0) };
+    const past = { self: vec2(JUNCTION.fork.x + 350, 0) };
     const looks: Partial<TutorialView>[] = [{}, past, past];
     expect(looks.map((over, at) => runner.tick(view(over), at * ASIDE_MS).say?.key)).toEqual([
       "tutorial.ping.intro",
       "tutorial.ping.hint",
       undefined,
     ]);
-    expect(ping.done(view({ ...past, tutor: EAST_SIDE }))).toBe(false);
+    expect(ping.done(view(ON_REJOIN))).toBe(false);
   });
 });
 
@@ -701,9 +655,47 @@ describe("gateStation (#3334)", () => {
     expect(station.done(view({ self: GATE, selfLayer: LAYER + 1 }))).toBe(false);
   });
 
-  it("points at the gate, on the canyon's second map", () => {
+  it("points at the gate, in the canyon", () => {
     const station = gateStation(GATE, LAYER);
     expect(station.highlight).toEqual({ kind: "ground", at: GATE, layer: LAYER });
-    expect(station.world).toBe("canyon-2");
+    expect(station.world).toBe("canyon");
+  });
+});
+
+describe("a station whose how line names the target bar lights it (#3884)", () => {
+  const box = { kind: "rect", x: 0, y: 0, width: 100, height: 100 } as const;
+  const at = vec2(0, 0);
+  const junction = { fork: at, layer: GROUND, north: at, south: at, rejoin: at, bay: at };
+  const stations = [
+    walkStation(at, GROUND),
+    lookStation(at),
+    stepInStation(at, GROUND),
+    dodgeStation(at, GROUND),
+    breakWallStation(at, 400),
+    healStation("tutor", 7),
+    badGroundStation(at, GROUND),
+    ratsStation(at, { runner: "rat-1", big: "rat-2" }, houseBuild(PLAYER_PROFESSION).skillBar),
+    climbStation(box, box, 2, 1),
+    tunnelStation(box, 0, 1, at),
+    callStation(),
+    pingStation(junction),
+    gateStation(at, GROUND),
+  ];
+  /** Its how line, on a desktop or by touch, names the target bar. */
+  const namesTargetBar = (station: Station): boolean =>
+    [station.lines.how, touchLine(station.lines.how, true)].some((key) => {
+      const line = en[key];
+      return typeof line === "string" && line.includes("target bar");
+    });
+  const naming = stations.filter(namesTargetBar);
+
+  it("finds the call station's lines", () => {
+    expect(naming.map((station) => station.id)).toContain("call");
+  });
+
+  it.each(naming)("$id", (station) => {
+    const highlight =
+      typeof station.highlight === "function" ? station.highlight(view()) : station.highlight;
+    expect(highlight).toEqual({ kind: "hud", element: ".hud-target" });
   });
 });

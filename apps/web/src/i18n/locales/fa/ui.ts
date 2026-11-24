@@ -61,6 +61,21 @@ export default {
 
   "buildEditor.addWeapon": "افزودن سلاح",
   "buildEditor.armor": "زره",
+  "buildEditor.attributeEffect.critical-strikes":
+    "+{percent}% شانس ضربهٔ بحرانی، +{energy} انرژی به ازای هر ضربهٔ بحرانی",
+  "buildEditor.attributeEffect.divine-favor": "طلسم‌های Monk روی متحدان +{heal} درمان می‌کنند",
+  "buildEditor.attributeEffect.energy-storage": "+{energy} حداکثر انرژی",
+  "buildEditor.attributeEffect.expertise":
+    "مهارت‌های حمله، آیین‌ها، مهارت‌های لمسی و مهارت‌های Ranger {percent}% انرژی کمتری می‌گیرند",
+  "buildEditor.attributeEffect.fast-casting": "طلسم‌ها و مهرها {percent}% سریع‌تر اجرا می‌شوند",
+  "buildEditor.attributeEffect.leadership":
+    "تا {max} انرژی به ازای هر فریاد، {perAlly} به ازای هر متحد تحت تأثیر",
+  "buildEditor.attributeEffect.mysticism": "افسون‌های Dervish {percent}% انرژی کمتری می‌گیرند",
+  "buildEditor.attributeEffect.soul-reaping":
+    "+{energy} انرژی وقتی کسی در نزدیکی می‌میرد ({triggers} در هر {seconds} ثانیه)",
+  "buildEditor.attributeEffect.spawning-power":
+    "موجودات +{percent}% سلامتی، طلسم‌های سلاح {percent}% بیشتر دوام می‌آورند",
+  "buildEditor.attributeEffect.strength": "مهارت‌های حمله: {percent}% نفوذ در زره",
   "buildEditor.back": "بازگشت",
   "buildEditor.bothHandsFull": "هر دو دست پر است",
   "buildEditor.budgetSegment": {
@@ -615,6 +630,7 @@ export default {
   "hud.outcomeVictory": "پیروزی",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (مرده)",
+  "hud.preMatchHeld": "تا شروع مسابقه نزدیک نقطهٔ شروع خود نگه داشته می‌شوید.",
   "hud.preMatchStartingAnyway":
     "در انتظار بازیکنان: {joined}/{expected}، در هر صورت تا {seconds} ثانیه دیگر شروع می‌شود",
   "hud.preMatchStartsIn": "مسابقه تا {seconds} دیگر شروع می‌شود",
@@ -1676,17 +1692,13 @@ export default {
   "tutorial.look.praise": "آنجاست! راه ما برای دور زدن نبرد.",
   "tutorial.offer": "تازه آمده‌ای؟ معلمت اصول را نشانت می‌دهد.",
   "tutorial.offerTitle": "اولین بار؟",
+  "tutorial.ping.called": "راه افتادم. جایی که راه‌ها به هم می‌رسند می‌بینمت.",
   "tutorial.ping.hint": "راهی را که می‌خواهی بروی پینگ کن.",
   "tutorial.ping.how":
     "با چرخ ماوس روی زمین کلیک کن، روی قطب‌نما کلیک کن، یا روی قطب‌نما بکش تا خطی بکشی.",
   "tutorial.ping.intro": "چپ یا راست؟ تو تصمیم بگیر.",
-  "tutorial.ping.pocket": "منظرهٔ قشنگی است. ولی راه اشتباه است.",
   "tutorial.ping.praise": "انتخاب خوبی بود. به پیش.",
-  "tutorial.ramp.hint": "از هر دو ردیف پله بالا برو تا نشان روی سکوی بلند.",
-  "tutorial.ramp.how": "روی سکوی بلند کلیک کن. مسیرت خودش از پله‌ها می‌گذرد.",
-  "tutorial.ramp.intro": "پله‌ها لایه‌ها را به هم وصل می‌کنند. رویشان برو تا بالا ببرندت.",
-  "tutorial.ramp.landing": "یک ردیف پله‌ی دیگر.",
-  "tutorial.ramp.praise": "زمین بلند. دشمنانِ پایین سخت به تو می‌رسند.",
+  "tutorial.ping.view": "منظرهٔ قشنگی است.",
   "tutorial.rats.again": "روی این یکی مهارت دیگری را امتحان کن.",
   "tutorial.rats.big":
     "یک موش بزرگ. آن‌قدر بزنش تا {bash} روشن شود، بعد زمینش بزن و {crush} را بزن.",
@@ -1703,17 +1715,15 @@ export default {
   "tutorial.stepIn.praise": "با هم. نفست را نگه دار.",
   "tutorial.touch.callHow": "یک موش را لمس کن، بعد نوار هدف را تا اعلامش کنی.",
   "tutorial.touch.callT": "همین است. حالا روی هدف اعلام‌شده‌ای.",
-  "tutorial.touch.climbHint": "برو روی لبه، بعد دوباره کنارش پایین بیا.",
-  "tutorial.touch.climbHow": "لبه را لمس کن، بعد زمینِ کنارش را.",
-  "tutorial.touch.climbPraise": "بالا و دوباره پایین. حالا زمین را می‌خوانی.",
-  "tutorial.touch.climbTip": "نکته: لمس لبه همیشه بالای آن را انتخاب می‌کند.",
-  "tutorial.touch.climbUnder": "حالا برگرد پایین، کنار لبه.",
+  "tutorial.touch.climbHow":
+    "جایی را که می‌خواهی بایستی لمس کن. نگه‌داشتنِ انگشت زمینِ زیرش را انتخاب می‌کند.",
+  "tutorial.touch.climbTip": "نکته: نگه‌داشتنِ انگشت زمینِ زیرِ لبه را انتخاب می‌کند.",
+  "tutorial.touch.climbUnder": "انگشتت را نگه دار. حلقه‌ی خط‌چین زیر توست.",
   "tutorial.touch.healHint":
     "اول نامم را در فهرست گروه لمس کن. اگر فهرست بسته است، گروه را لمس کن.",
   "tutorial.touch.healHow": "اگر فهرست بسته است گروه را لمس کن، بعد نامم را، بعد مهارتِ درخشان را.",
   "tutorial.touch.look": "دو انگشت را جمع و باز کن تا بزرگ‌نمایی شود. با یک انگشت بکش تا نگاه کنی.",
   "tutorial.touch.pingHow": "قطب‌نما را لمس کن، یا رویش بکش تا خطی بکشی.",
-  "tutorial.touch.rampHow": "سکوی بلند را لمس کن. مسیرت خودش از پله‌ها می‌گذرد.",
   "tutorial.touch.ratsHow": "یک موش را لمس کن تا هدفش بگیری.",
   "tutorial.touch.tunnelHow": "پله‌های پایین را لمس کن، بعد نشانهٔ آن سرِ تونل را.",
   "tutorial.touch.walk": "زمین را لمس کن تا به آنجا بروی.",

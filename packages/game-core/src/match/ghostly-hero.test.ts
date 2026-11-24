@@ -173,7 +173,7 @@ describe("the Ghostly Hero (#2689)", () => {
     expect(get(sim, "x").combatant.morale).toBe(10);
   });
 
-  it("credits a minion's team for a ghost that bleeds out after the minion is gone", () => {
+  it("credits a minion's team for a ghost that burns out after the minion is gone", () => {
     const sim = ascent(minion("m", "x", 1));
     const ghost = get(sim, GHOST_0);
     expect(applyIntent(sim, "m", { kind: "attack", targetId: GHOST_0 })).toBeNull();
@@ -183,7 +183,7 @@ describe("the Ghostly Hero (#2689)", () => {
     stepUntil(sim, () => sim.get("m") === undefined, 1);
     // Then the ghost dies to a degen, which has no dealer.
     ghost.combatant.health = 1;
-    ghost.combatant.statuses.apply("bleeding", 10, "a", NO_RANKS);
+    ghost.combatant.statuses.apply("burning", 10, "a", NO_RANKS);
     stepUntil(sim, () => ghost.combatant.dead, 5);
     expect(get(sim, "x").combatant.morale).toBe(10);
     expect(get(sim, "y").combatant.morale).toBe(10);

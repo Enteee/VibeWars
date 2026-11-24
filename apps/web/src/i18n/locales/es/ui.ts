@@ -62,6 +62,24 @@ export default {
 
   "buildEditor.addWeapon": "Añadir arma",
   "buildEditor.armor": "Armadura",
+  "buildEditor.attributeEffect.critical-strikes":
+    "+{percent}% de probabilidad de golpe crítico, +{energy} de energía por crítico",
+  "buildEditor.attributeEffect.divine-favor": "los hechizos de Monje sobre aliados curan +{heal}",
+  "buildEditor.attributeEffect.energy-storage": "+{energy} de energía máxima",
+  "buildEditor.attributeEffect.expertise":
+    "las habilidades de ataque, rituales, de toque y de Guardabosques cuestan un {percent}% menos de energía",
+  "buildEditor.attributeEffect.fast-casting":
+    "hechizos y sellos se lanzan un {percent}% más rápido",
+  "buildEditor.attributeEffect.leadership":
+    "hasta {max} de energía por grito, {perAlly} por aliado afectado",
+  "buildEditor.attributeEffect.mysticism":
+    "los encantamientos de Derviche cuestan un {percent}% menos de energía",
+  "buildEditor.attributeEffect.soul-reaping":
+    "+{energy} de energía cuando alguien cercano muere ({triggers} cada {seconds} s)",
+  "buildEditor.attributeEffect.spawning-power":
+    "criaturas +{percent}% de salud, los hechizos de arma duran un {percent}% más",
+  "buildEditor.attributeEffect.strength":
+    "habilidades de ataque: {percent}% de penetración de armadura",
   "buildEditor.back": "Atrás",
   "buildEditor.bothHandsFull": "ambas manos ocupadas",
   "buildEditor.budgetSegment": {
@@ -649,6 +667,7 @@ export default {
   "hud.outcomeVictory": "Victoria",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (muerto)",
+  "hud.preMatchHeld": "Permaneces cerca de tu punto de aparición hasta que empiece la partida.",
   "hud.preMatchStartingAnyway":
     "Esperando jugadores: {joined}/{expected}, empieza de todos modos en {seconds} s",
   "hud.preMatchStartsIn": "La partida empieza en {seconds}",
@@ -1776,17 +1795,13 @@ export default {
   "tutorial.look.praise": "¡Ahí está! Nuestro camino alrededor de la lucha.",
   "tutorial.offer": "¿Eres nuevo? Tu tutor te enseñará lo básico.",
   "tutorial.offerTitle": "¿Primera vez?",
+  "tutorial.ping.called": "Voy. Nos vemos donde se unen los caminos.",
   "tutorial.ping.hint": "Marca el camino que quieres seguir.",
   "tutorial.ping.how":
     "Haz clic con la rueda en el suelo, haz clic en la brújula o arrastra sobre la brújula para trazar una línea.",
   "tutorial.ping.intro": "¿Izquierda o derecha? Tú decides.",
-  "tutorial.ping.pocket": "Bonitas vistas. Pero no es por aquí.",
   "tutorial.ping.praise": "Buena elección. Adelante.",
-  "tutorial.ramp.hint": "Sube los dos tramos de escalera hasta la marca de la plataforma alta.",
-  "tutorial.ramp.how": "Haz clic en la plataforma alta. Tu camino sube los escalones por ti.",
-  "tutorial.ramp.intro": "Las escaleras unen niveles. Pisa y te llevan arriba.",
-  "tutorial.ramp.landing": "Un tramo más.",
-  "tutorial.ramp.praise": "Terreno elevado. A los enemigos de abajo les cuesta alcanzarte.",
+  "tutorial.ping.view": "Bonitas vistas.",
   "tutorial.rats.again": "Prueba otra habilidad con esta.",
   "tutorial.rats.big": "Uno grande. Golpéalo hasta que {bash} se ilumine, derríbalo y usa {crush}.",
   "tutorial.rats.hint": "Usa dos habilidades distintas con las ratas.",
@@ -1802,18 +1817,15 @@ export default {
   "tutorial.stepIn.praise": "Juntos. Contén la respiración.",
   "tutorial.touch.callHow": "Toca una rata y luego la barra de objetivo para marcarla.",
   "tutorial.touch.callT": "Eso es. Ahora vas a por el objetivo marcado.",
-  "tutorial.touch.climbHint": "Sube a la cornisa y luego baja a su lado.",
-  "tutorial.touch.climbHow": "Toca la cornisa y luego el suelo a su lado.",
-  "tutorial.touch.climbPraise": "Arriba y abajo otra vez. Ya sabes leer el terreno.",
-  "tutorial.touch.climbTip": "Consejo: tocar una cornisa siempre elige su parte de arriba.",
-  "tutorial.touch.climbUnder": "Ahora baja otra vez, junto a la cornisa.",
+  "tutorial.touch.climbHow": "Toca donde quieras estar. Mantener pulsado elige el suelo de debajo.",
+  "tutorial.touch.climbTip": "Consejo: mantener pulsado elige el suelo bajo una cornisa.",
+  "tutorial.touch.climbUnder": "Mantén pulsado. El anillo discontinuo está debajo de ti.",
   "tutorial.touch.healHint":
     "Primero toca mi nombre en la lista del grupo. Toca Grupo si la lista está cerrada.",
   "tutorial.touch.healHow":
     "Toca Grupo si la lista está cerrada, luego mi nombre y luego la habilidad que brilla.",
   "tutorial.touch.look": "Pellizca para hacer zoom. Arrastra un dedo para mirar.",
   "tutorial.touch.pingHow": "Toca la brújula o arrastra sobre ella para trazar una línea.",
-  "tutorial.touch.rampHow": "Toca la plataforma alta. Tu camino sube los escalones por ti.",
   "tutorial.touch.ratsHow": "Toca una rata para seleccionarla.",
   "tutorial.touch.tunnelHow": "Toca los escalones de bajada y luego la marca tras el otro extremo.",
   "tutorial.touch.walk": "Toca el suelo para caminar hasta allí.",

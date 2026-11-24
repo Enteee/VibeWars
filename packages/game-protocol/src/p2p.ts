@@ -898,6 +898,20 @@ export interface WirePreMatch {
    * is announced.
    */
   readonly secondsLeft: number | null;
+  /**
+   * Where each body is held (#3909): the centre of its spawn bubble, of
+   * radius `SPAWN_BUBBLE_RADIUS`, so a client can draw its own.
+   */
+  readonly spawns: readonly WireSpawn[];
+}
+
+/** One body's spawn bubble centre (#3909), by its player id. */
+export interface WireSpawn {
+  readonly id: string;
+  readonly x: number;
+  readonly y: number;
+  /** The map layer it spawned on (ADR-0051), whose height it is drawn at. */
+  readonly layer: number;
 }
 
 /**
@@ -2877,11 +2891,24 @@ function parsePreMatch(value: unknown): WirePreMatch | undefined {
     return undefined;
   }
   const { joined, expected, secondsLeft } = raw;
+  const spawns = parseArray(raw.spawns, MAX_WIRE_ACTORS, parseSpawn);
   return isCount(joined) &&
     isCount(expected) &&
     joined <= expected &&
-    (secondsLeft === null || isCount(secondsLeft))
-    ? { joined, expected, secondsLeft }
+    (secondsLeft === null || isCount(secondsLeft)) &&
+    spawns !== undefined
+    ? { joined, expected, secondsLeft, spawns }
+    : undefined;
+}
+
+function parseSpawn(value: unknown): WireSpawn | undefined {
+  const raw = fields(value);
+  return raw !== undefined &&
+    isString(raw.id) &&
+    isNumber(raw.x) &&
+    isNumber(raw.y) &&
+    isLayer(raw.layer)
+    ? { id: raw.id, x: raw.x, y: raw.y, layer: raw.layer }
     : undefined;
 }
 

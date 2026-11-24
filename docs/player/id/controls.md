@@ -74,6 +74,7 @@ Di ponsel atau tablet, di pertandingan dan di area latihan:
   Ketuk musuh yang sama lagi, dengan cepat, untuk menyerangnya. Ketukan tepat
   di samping karakter tetap menemukannya. Ketukan pada dirimu berjalan ke
   titik itu, atau menargetkan tiang bendera atau tuas yang kamu pijak.
+- **Tekan lama** untuk berjalan ke tanah di bawah tepian atau jembatan, seperti Alt+klik.
 - **Seret** satu jari untuk melihat sekeliling; lepaskan dan tampilan
   meluncur kembali padamu. **Cubit** untuk zoom.
 - **Ketuk** skill di bar untuk menggunakannya pada targetmu.
@@ -84,7 +85,7 @@ Di luar laga, bilah atas berisi **[?]** (Bantuan ini), **⚙** (Opsi),
 **Lobi** (link undanganmu, Gabung lobi, Buka/Tertutup, Keluar, dan siapa saja yang ada di lobimu; lencananya menghitung jumlah mereka),
 **♪** (musik: apa yang diputar, dan seberapa keras), tombol bisu suara dan layar penuh. Di dalam laga tombol-tombol yang sama,
 kecuali Lobi, ada di kanan atas layar. Di jendela yang sempit, ikon-ikon ini dan
-tombol-tombol lain di layar terlipat ke dalam **⋯**; hanya tombol utamanya yang tetap di luar.
+tombol-tombol lain di layar terlipat ke dalam **☰**; hanya tombol utamanya yang tetap di luar.
 ⚙ membuka Opsi sebagai jendela di bawah bilah, dengan layar tetap di belakangnya; Esc, × atau klik di luarnya menutupnya.
 [?] membuka Bantuan dengan cara yang sama, sebagai jendela di bawahnya dengan pemilih halaman di atas; laga tetap berjalan di belakangnya.
 Bantuan ditutup dengan ×-nya, Esc, klik di luarnya, atau menekan [?] sekali lagi.

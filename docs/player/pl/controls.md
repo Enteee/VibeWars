@@ -77,6 +77,7 @@ Na telefonie lub tablecie, w meczu i na poligonie:
   iść. Szybko dotknij ponownie tego samego wroga, aby go zaatakować.
   Dotknięcie tuż obok postaci nadal ją znajduje. Dotknięcie siebie prowadzi
   w to miejsce albo obiera na cel stojak flagi lub dźwignię, na której stoisz.
+- **Przytrzymaj** palec, by pójść na ziemię pod półką lub mostem, jak Alt+klik.
 - **Przeciągnij** jednym palcem, aby się rozejrzeć; puść, a widok powoli
   wraca do ciebie. **Ściągnij palce**, aby przybliżać.
 - **Dotknij** umiejętności na pasku, aby użyć jej na swoim celu.
@@ -87,7 +88,7 @@ Poza meczem górny pasek zawiera **[?]** (tę Pomoc), **⚙** (Opcje),
 **Lobby** (twój link z zaproszeniem, Dołącz do lobby, Otwarte/Zamknięte, Opuść i to, kto jest w twoim lobby; plakietka liczy te osoby),
 **♪** (muzyka: co gra i jak głośno), wyciszenie dźwięku oraz pełny ekran. W meczu te same przyciski,
 poza Lobby, są w prawym górnym rogu ekranu. W wąskim oknie te ikony oraz
-pozostałe przyciski ekranu chowają się pod **⋯**; na wierzchu zostaje tylko główny przycisk.
+pozostałe przyciski ekranu chowają się pod **☰**; na wierzchu zostaje tylko główny przycisk.
 ⚙ otwiera Opcje jako okno pod paskiem, z ekranem wciąż widocznym za nim; zamyka je Esc, × lub kliknięcie poza oknem.
 [?] otwiera Pomoc tak samo, jako okno pod nim z wyborem strony u góry; mecz toczy się za nim dalej.
 Pomoc zamyka jej ×, Esc, kliknięcie poza oknem lub ponowne naciśnięcie [?].

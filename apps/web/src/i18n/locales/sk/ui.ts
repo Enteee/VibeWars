@@ -62,6 +62,22 @@ export default {
 
   "buildEditor.addWeapon": "Pridať zbraň",
   "buildEditor.armor": "Brnenie",
+  "buildEditor.attributeEffect.critical-strikes":
+    "+{percent} % šanca na kritický zásah, +{energy} energie za kritický zásah",
+  "buildEditor.attributeEffect.divine-favor": "kúzla Mnícha na spojencov liečia +{heal}",
+  "buildEditor.attributeEffect.energy-storage": "+{energy} maximálnej energie",
+  "buildEditor.attributeEffect.expertise":
+    "útočné schopnosti, rituály, dotykové schopnosti a schopnosti Hraničiara stoja o {percent} % menej energie",
+  "buildEditor.attributeEffect.fast-casting":
+    "kúzla a pečate sa zosielajú o {percent} % rýchlejšie",
+  "buildEditor.attributeEffect.leadership":
+    "až {max} energie za pokrik, {perAlly} za každého zasiahnutého spojenca",
+  "buildEditor.attributeEffect.mysticism": "očarovania Derviša stoja o {percent} % menej energie",
+  "buildEditor.attributeEffect.soul-reaping":
+    "+{energy} energie, keď niekto nablízku zomrie ({triggers} za {seconds} s)",
+  "buildEditor.attributeEffect.spawning-power":
+    "stvorenia +{percent} % zdravia, zbraňové kúzla trvajú o {percent} % dlhšie",
+  "buildEditor.attributeEffect.strength": "útočné schopnosti: {percent} % prierazu brnenia",
   "buildEditor.back": "Späť",
   "buildEditor.bothHandsFull": "obe ruky plné",
   "buildEditor.budgetSegment": {
@@ -669,6 +685,7 @@ export default {
   "hud.outcomeVictory": "Víťazstvo",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (mŕtvy)",
+  "hud.preMatchHeld": "Do začiatku zápasu zostávaš pri svojom štartovom bode.",
   "hud.preMatchStartingAnyway":
     "Čaká sa na hráčov: {joined}/{expected}, začne aj tak o {seconds} s",
   "hud.preMatchStartsIn": "Zápas začne o {seconds}",
@@ -1801,17 +1818,13 @@ export default {
   "tutorial.look.praise": "Tu je! Naša cesta okolo boja.",
   "tutorial.offer": "Si tu nový? Tvoj učiteľ ti ukáže základy.",
   "tutorial.offerTitle": "Prvýkrát?",
+  "tutorial.ping.called": "Už idem. Stretneme sa, kde sa cesty spoja.",
   "tutorial.ping.hint": "Označ cestu, kadiaľ chceš ísť.",
   "tutorial.ping.how":
     "Klikni kolieskom na zem, klikni na kompas alebo ťahaj po kompase a nakresli čiaru.",
   "tutorial.ping.intro": "Doľava, alebo doprava? Rozhodni ty.",
-  "tutorial.ping.pocket": "Pekný výhľad. Ale zlá cesta.",
   "tutorial.ping.praise": "Dobrá voľba. Ideme ďalej.",
-  "tutorial.ramp.hint": "Hore po oboch schodiskách k značke na vysokej plošine.",
-  "tutorial.ramp.how": "Klikni na vysokú plošinu. Cesta vedie po schodoch sama.",
-  "tutorial.ramp.intro": "Schody spájajú poschodia. Vstúp na ne a vynesú ťa hore.",
-  "tutorial.ramp.landing": "Ešte jedno schodisko.",
-  "tutorial.ramp.praise": "Vyvýšené miesto. Nepriatelia zdola sa k tebe ťažko dostanú.",
+  "tutorial.ping.view": "Pekný výhľad.",
   "tutorial.rats.again": "Skús na túto inú zručnosť.",
   "tutorial.rats.big": "Veľký. Bi ho, kým sa {bash} nerozsvieti, potom ho zvaľ a použi {crush}.",
   "tutorial.rats.hint": "Použi na potkany dve rôzne zručnosti.",
@@ -1827,18 +1840,15 @@ export default {
   "tutorial.stepIn.praise": "Spolu. Zadrž dych.",
   "tutorial.touch.callHow": "Ťukni na potkana, potom na lištu cieľa, aby si ho označil.",
   "tutorial.touch.callT": "Presne tak. Teraz mieriš na označený cieľ.",
-  "tutorial.touch.climbHint": "Hore na rímsu, potom zas dole vedľa nej.",
-  "tutorial.touch.climbHow": "Ťukni na rímsu, potom na zem vedľa nej.",
-  "tutorial.touch.climbPraise": "Hore a zas dole. Teraz už terén vieš čítať.",
-  "tutorial.touch.climbTip": "Tip: ťuknutie na rímsu vždy vyberie jej vrch.",
-  "tutorial.touch.climbUnder": "Teraz zas dole, vedľa rímsy.",
+  "tutorial.touch.climbHow": "Ťukni, kam sa postaviť. Podržanie vyberie zem pod tým.",
+  "tutorial.touch.climbTip": "Tip: podržanie vyberie zem pod rímsou.",
+  "tutorial.touch.climbUnder": "Podrž prst. Prerušovaný kruh je pod tebou.",
   "tutorial.touch.healHint":
     "Najprv ťukni na moje meno v zozname družiny. Ak je zoznam zatvorený, ťukni na Družina.",
   "tutorial.touch.healHow":
     "Ak je zoznam zatvorený, ťukni na Družina, potom na moje meno a potom na žiariacu zručnosť.",
   "tutorial.touch.look": "Približuj roztiahnutím prstov. Ťahaj jedným prstom a rozhliadni sa.",
   "tutorial.touch.pingHow": "Ťukni na kompas alebo po ňom ťahaj a nakresli čiaru.",
-  "tutorial.touch.rampHow": "Ťukni na vysokú plošinu. Cesta vedie po schodoch sama.",
   "tutorial.touch.ratsHow": "Ťukni na potkana a zameraj ho.",
   "tutorial.touch.tunnelHow": "Ťukni na schody dolu, potom na značku za druhým koncom.",
   "tutorial.touch.walk": "Ťukni na zem a dôjdi tam.",

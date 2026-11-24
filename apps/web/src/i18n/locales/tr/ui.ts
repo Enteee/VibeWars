@@ -62,6 +62,21 @@ export default {
 
   "buildEditor.addWeapon": "Silah ekle",
   "buildEditor.armor": "Zırh",
+  "buildEditor.attributeEffect.critical-strikes":
+    "+%{percent} kritik vuruş şansı, kritik vuruş başına +{energy} Enerji",
+  "buildEditor.attributeEffect.divine-favor": "Monk büyüleri müttefikleri +{heal} iyileştirir",
+  "buildEditor.attributeEffect.energy-storage": "+{energy} maksimum Enerji",
+  "buildEditor.attributeEffect.expertise":
+    "saldırı becerileri, ritüeller, dokunma becerileri ve Ranger becerileri %{percent} daha az Enerji harcar",
+  "buildEditor.attributeEffect.fast-casting": "büyüler ve mühürler %{percent} daha hızlı yapılır",
+  "buildEditor.attributeEffect.leadership":
+    "haykırış başına en fazla {max} Enerji, etkilenen müttefik başına {perAlly}",
+  "buildEditor.attributeEffect.mysticism": "Dervish tılsımları %{percent} daha az Enerji harcar",
+  "buildEditor.attributeEffect.soul-reaping":
+    "yakında biri öldüğünde +{energy} Enerji ({seconds} sn'de {triggers})",
+  "buildEditor.attributeEffect.spawning-power":
+    "yaratıklar +%{percent} Can, silah büyüleri %{percent} daha uzun sürer",
+  "buildEditor.attributeEffect.strength": "saldırı becerileri %{percent} zırh delme",
   "buildEditor.back": "Geri",
   "buildEditor.bothHandsFull": "iki el de dolu",
   "buildEditor.budgetSegment": {
@@ -617,6 +632,7 @@ export default {
   "hud.outcomeVictory": "Zafer",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (ölü)",
+  "hud.preMatchHeld": "Maç başlayana kadar doğma noktanın yakınında tutulursun.",
   "hud.preMatchStartingAnyway":
     "Oyuncular bekleniyor: {joined}/{expected}, {seconds} sn içinde yine de başlıyor",
   "hud.preMatchStartsIn": "Maç {seconds} içinde başlıyor",
@@ -1681,17 +1697,13 @@ export default {
   "tutorial.look.praise": "İşte orada! Savaşın etrafından yolumuz.",
   "tutorial.offer": "Yeni misin? Öğretmenin sana temelleri gösterecek.",
   "tutorial.offerTitle": "İlk kez mi?",
+  "tutorial.ping.called": "Yoldayım. Yolların birleştiği yerde buluşalım.",
   "tutorial.ping.hint": "Gitmek istediğin yolu işaretle.",
   "tutorial.ping.how":
     "Zemine tekerlekle tıkla, pusulaya tıkla ya da pusulada sürükleyip bir çizgi çiz.",
   "tutorial.ping.intro": "Sol mu sağ mı? Sen karar ver.",
-  "tutorial.ping.pocket": "Güzel manzara. Ama yanlış yol.",
   "tutorial.ping.praise": "İyi seçim. İleri.",
-  "tutorial.ramp.hint": "İki kat merdiveni çıkıp yüksek terastaki işarete git.",
-  "tutorial.ramp.how": "Yüksek terasa tıkla. Yolun basamakları senin için çıkar.",
-  "tutorial.ramp.intro": "Basamaklar katmanları birleştirir. Üstüne yürü, seni yukarı taşır.",
-  "tutorial.ramp.landing": "Bir kat daha.",
-  "tutorial.ramp.praise": "Yüksek zemin. Aşağıdaki düşmanlar sana zor ulaşır.",
+  "tutorial.ping.view": "Güzel manzara.",
   "tutorial.rats.again": "Bunda başka bir yetenek dene.",
   "tutorial.rats.big":
     "Büyük bir tane. {bash} yanana kadar vur, sonra onu yere ser ve {crush} kullan.",
@@ -1708,17 +1720,14 @@ export default {
   "tutorial.stepIn.praise": "Birlikte. Nefesini tut.",
   "tutorial.touch.callHow": "Bir sıçana dokun, sonra çağırmak için hedef çubuğuna dokun.",
   "tutorial.touch.callT": "İşte bu. Artık çağrılan hedeftesin.",
-  "tutorial.touch.climbHint": "Çıkıntıya çık, sonra yanına geri in.",
-  "tutorial.touch.climbHow": "Çıkıntıya dokun, sonra yanındaki zemine dokun.",
-  "tutorial.touch.climbPraise": "Yukarı ve yine aşağı. Artık zemini okuyorsun.",
-  "tutorial.touch.climbTip": "İpucu: çıkıntıya dokunmak hep üstünü seçer.",
-  "tutorial.touch.climbUnder": "Şimdi çıkıntının yanına geri in.",
+  "tutorial.touch.climbHow": "Duracağın yere dokun. Basılı tutmak alttaki zemini seçer.",
+  "tutorial.touch.climbTip": "İpucu: basılı tutmak çıkıntının altındaki zemini seçer.",
+  "tutorial.touch.climbUnder": "Basılı tut. Kesikli halka altında.",
   "tutorial.touch.healHint": "Önce grup listesinde adıma dokun. Liste kapalıysa Grup'a dokun.",
   "tutorial.touch.healHow": "Liste kapalıysa Grup'a dokun, sonra adıma, sonra parlayan beceriye.",
   "tutorial.touch.look":
     "Yakınlaştırmak için iki parmakla sıkıştır. Bakmak için tek parmakla sürükle.",
   "tutorial.touch.pingHow": "Pusulaya dokun ya da üzerinde sürükleyip bir çizgi çiz.",
-  "tutorial.touch.rampHow": "Yüksek terasa dokun. Yolun basamakları senin için çıkar.",
   "tutorial.touch.ratsHow": "Hedeflemek için bir fareye dokun.",
   "tutorial.touch.tunnelHow": "Aşağı inen basamaklara, sonra öbür ucun ötesindeki işarete dokun.",
   "tutorial.touch.walk": "Oraya yürümek için zemine dokun.",

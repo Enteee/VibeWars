@@ -76,6 +76,7 @@ Na telefóne alebo tablete, v zápase aj na cvičisku:
   rýchlym ťuknutím na toho istého nepriateľa naňho zaútočíš. Ťuknutie tesne
   vedľa postavy ju stále nájde. Ťuknutie na seba ťa dovedie na to miesto
   alebo zameria stojan na vlajku či páku, na ktorej stojíš.
+- **Podrž** prst a dôjdeš na zem pod rímsou alebo mostom, ako Alt+klik.
 - **Ťahom** jedným prstom sa obzeráš; po pustení sa pohľad plynule vráti
   k tebe. **Stiahnutím** prstov približuješ.
 - **Ťuknutím** na schopnosť na lište ju použiješ na svoj cieľ.
@@ -86,7 +87,7 @@ Mimo zápasu sú na hornej lište **[?]** (táto Pomoc), **⚙** (Nastavenia),
 **Lobby** (tvoj pozývací odkaz, Pripojiť sa k lobby, Otvorené/Zatvorené, Odísť a kto je v tvojom lobby; odznak ich spočíta),
 **♪** (hudba: čo hrá a ako nahlas), stlmenie zvuku a celá obrazovka. V zápase sú tie isté tlačidlá,
 okrem Lobby, vpravo hore na obrazovke. V úzkom okne sa tieto ikony a
-ostatné tlačidlá obrazovky zbalia do **⋯**; vonku zostane len jej hlavné tlačidlo.
+ostatné tlačidlá obrazovky zbalia do **☰**; vonku zostane len jej hlavné tlačidlo.
 ⚙ otvorí Nastavenia ako okno pod lištou, obrazovka zostáva za ním; Esc, × alebo kliknutie mimo ho zatvorí.
 [?] otvorí Pomoc rovnako, ako okno pod ním s výberom stránky hore; zápas za ním beží ďalej.
 Pomoc sa zatvára svojím krížikom ×, klávesom Esc, kliknutím mimo alebo ďalším stlačením [?].

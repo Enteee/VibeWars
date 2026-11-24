@@ -8,9 +8,7 @@ import type { MessageKey } from "../i18n/index.js";
 const TOUCH_LINES: Partial<Readonly<Record<MessageKey, MessageKey>>> = {
   "tutorial.call.how": "tutorial.touch.callHow",
   "tutorial.call.t": "tutorial.touch.callT",
-  "tutorial.climb.hint": "tutorial.touch.climbHint",
   "tutorial.climb.how": "tutorial.touch.climbHow",
-  "tutorial.climb.praise": "tutorial.touch.climbPraise",
   "tutorial.climb.tip": "tutorial.touch.climbTip",
   "tutorial.climb.under": "tutorial.touch.climbUnder",
   "tutorial.dodge.how": "tutorial.touch.walk",
@@ -20,7 +18,6 @@ const TOUCH_LINES: Partial<Readonly<Record<MessageKey, MessageKey>>> = {
   "tutorial.heal.how": "tutorial.touch.healHow",
   "tutorial.look.how": "tutorial.touch.look",
   "tutorial.ping.how": "tutorial.touch.pingHow",
-  "tutorial.ramp.how": "tutorial.touch.rampHow",
   "tutorial.rats.how": "tutorial.touch.ratsHow",
   "tutorial.stepIn.how": "tutorial.touch.walk",
   "tutorial.tunnel.how": "tutorial.touch.tunnelHow",

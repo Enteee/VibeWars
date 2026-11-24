@@ -34,18 +34,20 @@ Když jsi **sražený**, chvíli se nemůžeš hýbat, útočit ani použít dov
 
 **Stavy** ti škodí, dokud nevyprší nebo je někdo neodstraní:
 
-| Stav                                                                                                | Co dělá                                          |
-| --------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
-| ![Krvácení](../../../apps/web/public/icons/status/bleeding.svg) **Krvácení**                        | ubírá zdraví                                     |
-| ![Hoření](../../../apps/web/public/icons/status/burning.svg) **Hoření**                             | rychle ubírá zdraví                              |
-| ![Otrava](../../../apps/web/public/icons/status/poison.svg) **Otrava**                              | ubírá zdraví                                     |
-| ![Nemoc](../../../apps/web/public/icons/status/disease.svg) **Nemoc**                               | ubírá zdraví a šíří se na každého vedle tebe     |
-| ![Ochromení](../../../apps/web/public/icons/status/crippled.svg) **Ochromení**                      | pohybuješ se poloviční rychlostí                 |
-| ![Slepota](../../../apps/web/public/icons/status/blind.svg) **Slepota**                             | většina tvých útoků mine                         |
-| ![Slabost](../../../apps/web/public/icons/status/weakness.svg) **Slabost**                          | tvoje zbraň zasahuje mnohem slaběji              |
-| ![Popraskané brnění](../../../apps/web/public/icons/status/cracked-armor.svg) **Popraskané brnění** | méně brnění                                      |
-| ![Hluboká rána](../../../apps/web/public/icons/status/deep-wound.svg) **Hluboká rána**              | méně maximálního zdraví a léčení funguje méně    |
-| ![Omámení](../../../apps/web/public/icons/status/dazed.svg) **Omámení**                             | kouzla se sesílají pomalu; každý útok je přeruší |
+| Stav                                                                                                | Co dělá                                               |
+| --------------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| ![Krvácení](../../../apps/web/public/icons/status/bleeding.svg) **Krvácení**                        | ubírá zdraví                                          |
+| ![Hoření](../../../apps/web/public/icons/status/burning.svg) **Hoření**                             | rychle ubírá zdraví                                   |
+| ![Otrava](../../../apps/web/public/icons/status/poison.svg) **Otrava**                              | ubírá zdraví                                          |
+| ![Nemoc](../../../apps/web/public/icons/status/disease.svg) **Nemoc**                               | ubírá zdraví a šíří se na stejný druh těla vedle tebe |
+| ![Ochromení](../../../apps/web/public/icons/status/crippled.svg) **Ochromení**                      | pohybuješ se poloviční rychlostí                      |
+| ![Slepota](../../../apps/web/public/icons/status/blind.svg) **Slepota**                             | většina tvých útoků mine                              |
+| ![Slabost](../../../apps/web/public/icons/status/weakness.svg) **Slabost**                          | tvoje zbraň zasahuje mnohem slaběji                   |
+| ![Popraskané brnění](../../../apps/web/public/icons/status/cracked-armor.svg) **Popraskané brnění** | méně brnění                                           |
+| ![Hluboká rána](../../../apps/web/public/icons/status/deep-wound.svg) **Hluboká rána**              | méně maximálního zdraví a léčení funguje méně         |
+| ![Omámení](../../../apps/web/public/icons/status/dazed.svg) **Omámení**                             | kouzla se sesílají pomalu; každý útok je přeruší      |
+
+Přisluhovači (kromě Masového golema), přízraky a duchové nekrvácejí, neotráví se ani neonemocní a duchové nedostanou žádné prokletí ani stav kromě **Hoření**.
 
 ![Prokletí](../../../apps/web/public/icons/skill-type/hex.svg) **Prokletí** na tebe sesílají nepřátelé, ![Očarování](../../../apps/web/public/icons/skill-type/enchantment.svg) **očarování** ty sám nebo tvoji spojenci. Každé odstraňuje vlastní druh dovedností. Některá očarování jsou **udržovaná**: trvají, dokud je neukončíš, a za jejich běhu stojí jeden pip energie. Ukončíš ho dvojklikem na jeho ikonu.
 

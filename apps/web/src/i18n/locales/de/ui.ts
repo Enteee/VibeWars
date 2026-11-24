@@ -63,6 +63,22 @@ export default {
 
   "buildEditor.addWeapon": "Waffe hinzufügen",
   "buildEditor.armor": "Rüstung",
+  "buildEditor.attributeEffect.critical-strikes":
+    "+{percent}% kritische Trefferchance, +{energy} Energie pro kritischem Treffer",
+  "buildEditor.attributeEffect.divine-favor": "Mönch-Zauber auf Verbündete heilen +{heal}",
+  "buildEditor.attributeEffect.energy-storage": "+{energy} maximale Energie",
+  "buildEditor.attributeEffect.expertise":
+    "Angriffs-Skills, Rituale, Berührungs-Skills und Waldläufer-Skills kosten {percent}% weniger Energie",
+  "buildEditor.attributeEffect.fast-casting": "Zauber und Siegel wirken {percent}% schneller",
+  "buildEditor.attributeEffect.leadership":
+    "bis zu {max} Energie pro Schrei, {perAlly} pro betroffenem Verbündeten",
+  "buildEditor.attributeEffect.mysticism":
+    "Derwisch-Verzauberungen kosten {percent}% weniger Energie",
+  "buildEditor.attributeEffect.soul-reaping":
+    "+{energy} Energie, wenn jemand in der Nähe stirbt ({triggers} pro {seconds} s)",
+  "buildEditor.attributeEffect.spawning-power":
+    "Kreaturen +{percent}% Leben, Waffenzauber halten {percent}% länger",
+  "buildEditor.attributeEffect.strength": "Angriffs-Skills {percent}% Rüstungsdurchdringung",
   "buildEditor.back": "Zurück",
   "buildEditor.bothHandsFull": "beide Hände voll",
   "buildEditor.budgetSegment": {
@@ -618,6 +634,7 @@ export default {
   "hud.outcomeVictory": "Sieg",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (tot)",
+  "hud.preMatchHeld": "Du bleibst bis zum Matchbeginn bei deinem Startpunkt.",
   "hud.preMatchStartingAnyway":
     "Warte auf Spieler: {joined}/{expected}, Start trotzdem in {seconds} s",
   "hud.preMatchStartsIn": "Match startet in {seconds}",
@@ -1703,17 +1720,13 @@ export default {
   "tutorial.look.praise": "Da ist er! Unser Weg um die Schlacht herum.",
   "tutorial.offer": "Neu hier? Dein Lehrer zeigt dir, wie es geht.",
   "tutorial.offerTitle": "Zum ersten Mal hier?",
+  "tutorial.ping.called": "Bin unterwegs. Wir treffen uns, wo die Wege zusammenlaufen.",
   "tutorial.ping.hint": "Pinge den Weg, den du gehen willst.",
   "tutorial.ping.how":
     "Klick mit dem Mausrad auf den Boden, klick auf den Kompass oder zieh auf dem Kompass eine Linie.",
   "tutorial.ping.intro": "Links oder rechts? Du entscheidest.",
-  "tutorial.ping.pocket": "Schöne Aussicht. Aber falscher Weg.",
   "tutorial.ping.praise": "Gute Wahl. Weiter.",
-  "tutorial.ramp.hint": "Beide Treppen hinauf zur Markierung auf der hohen Plattform.",
-  "tutorial.ramp.how": "Klick auf die hohe Plattform. Dein Weg nimmt die Stufen für dich.",
-  "tutorial.ramp.intro": "Stufen verbinden Ebenen. Geh drauf, und sie tragen dich hinauf.",
-  "tutorial.ramp.landing": "Noch eine Treppe.",
-  "tutorial.ramp.praise": "Hoher Grund. Feinde unten erreichen dich nur schwer.",
+  "tutorial.ping.view": "Schöne Aussicht.",
   "tutorial.rats.again": "Versuch bei dieser eine andere Fertigkeit.",
   "tutorial.rats.big":
     "Ein großer. Schlag zu, bis {bash} aufleuchtet, dann wirf ihn um und nimm {crush}.",
@@ -1730,18 +1743,15 @@ export default {
   "tutorial.stepIn.praise": "Zusammen. Halt die Luft an.",
   "tutorial.touch.callHow": "Tipp eine Ratte an, dann die Zielleiste, um sie auszurufen.",
   "tutorial.touch.callT": "Genau so. Jetzt bist du am ausgerufenen Ziel.",
-  "tutorial.touch.climbHint": "Rauf auf den Vorsprung, dann daneben wieder runter.",
-  "tutorial.touch.climbHow": "Tipp auf den Vorsprung, dann auf den Boden daneben.",
-  "tutorial.touch.climbPraise": "Rauf und wieder runter. Jetzt liest du das Gelände.",
-  "tutorial.touch.climbTip": "Tipp: Ein Tippen auf einen Vorsprung wählt immer seine Oberseite.",
-  "tutorial.touch.climbUnder": "Jetzt wieder runter, neben den Vorsprung.",
+  "tutorial.touch.climbHow": "Tipp, wo du stehen willst. Gedrückt halten wählt den Boden darunter.",
+  "tutorial.touch.climbTip": "Tipp: Gedrückt halten wählt den Boden unter einem Vorsprung.",
+  "tutorial.touch.climbUnder": "Halte gedrückt. Der gestrichelte Ring liegt unter dir.",
   "tutorial.touch.healHint":
     "Tipp zuerst meinen Namen in der Gruppenliste an. Tipp auf Gruppe, falls die Liste zu ist.",
   "tutorial.touch.healHow":
     "Tipp auf Gruppe, falls die Liste zu ist, dann auf meinen Namen und dann auf den leuchtenden Skill.",
   "tutorial.touch.look": "Mit zwei Fingern zoomen. Mit einem Finger ziehen, um dich umzusehen.",
   "tutorial.touch.pingHow": "Tipp auf den Kompass oder zieh darauf eine Linie.",
-  "tutorial.touch.rampHow": "Tipp auf die hohe Plattform. Dein Weg nimmt die Stufen für dich.",
   "tutorial.touch.ratsHow": "Tipp eine Ratte an, um sie ins Ziel zu nehmen.",
   "tutorial.touch.tunnelHow":
     "Tipp auf die Stufen hinab, dann auf die Markierung hinter dem anderen Ende.",

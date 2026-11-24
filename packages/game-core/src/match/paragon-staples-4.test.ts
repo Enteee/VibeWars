@@ -288,8 +288,8 @@ describe('"Never Give Up!" (#1677)', () => {
       get(sim, id).combatant.energy = 100;
     }
     const events = used(sim, 0);
-    // Then Leadership's 2, for the allies the shout reached.
-    expect(gained(events, "c")).toEqual([8, 2]);
+    // Then Leadership's 4, 2 for each ally the shout reached (#3880).
+    expect(gained(events, "c")).toEqual([8, 4]);
     expect(gained(events, "hurt")).toEqual([8]);
     expect(gained(events, "fine")).toEqual([]);
   });

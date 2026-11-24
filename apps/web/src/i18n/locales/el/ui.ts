@@ -64,6 +64,23 @@ export default {
 
   "buildEditor.addWeapon": "Προσθήκη όπλου",
   "buildEditor.armor": "Πανοπλία",
+  "buildEditor.attributeEffect.critical-strikes":
+    "+{percent}% πιθανότητα κρίσιμου χτυπήματος, +{energy} Ενέργεια ανά κρίσιμο χτύπημα",
+  "buildEditor.attributeEffect.divine-favor": "τα ξόρκια Monk σε συμμάχους θεραπεύουν +{heal}",
+  "buildEditor.attributeEffect.energy-storage": "+{energy} μέγιστη Ενέργεια",
+  "buildEditor.attributeEffect.expertise":
+    "οι ικανότητες επίθεσης, οι τελετές, οι ικανότητες αφής και οι ικανότητες Ranger κοστίζουν {percent}% λιγότερη Ενέργεια",
+  "buildEditor.attributeEffect.fast-casting":
+    "τα ξόρκια και οι σφραγίδες εκτελούνται {percent}% ταχύτερα",
+  "buildEditor.attributeEffect.leadership":
+    "έως {max} Ενέργεια ανά κραυγή, {perAlly} ανά σύμμαχο που επηρεάζεται",
+  "buildEditor.attributeEffect.mysticism":
+    "τα μαγέματα Dervish κοστίζουν {percent}% λιγότερη Ενέργεια",
+  "buildEditor.attributeEffect.soul-reaping":
+    "+{energy} Ενέργεια όταν κάποιος κοντά πεθαίνει ({triggers} ανά {seconds} δ)",
+  "buildEditor.attributeEffect.spawning-power":
+    "πλάσματα +{percent}% Υγεία, τα ξόρκια όπλου διαρκούν {percent}% περισσότερο",
+  "buildEditor.attributeEffect.strength": "ικανότητες επίθεσης: {percent}% διάτρηση πανοπλίας",
   "buildEditor.back": "Πίσω",
   "buildEditor.bothHandsFull": "γεμάτα χέρια",
   "buildEditor.budgetSegment": {
@@ -621,6 +638,7 @@ export default {
   "hud.outcomeVictory": "Νίκη",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (νεκρός)",
+  "hud.preMatchHeld": "Μένεις κοντά στο σημείο εμφάνισής σου μέχρι να αρχίσει ο αγώνας.",
   "hud.preMatchStartingAnyway":
     "Αναμονή παικτών: {joined}/{expected}, ξεκινά ούτως ή άλλως σε {seconds} δ",
   "hud.preMatchStartsIn": "Ο αγώνας ξεκινά σε {seconds}",
@@ -1705,17 +1723,13 @@ export default {
   "tutorial.look.praise": "Να τος! Ο δρόμος μας γύρω από τη μάχη.",
   "tutorial.offer": "Νέος εδώ; Ο δάσκαλός σου θα σου δείξει τα βασικά.",
   "tutorial.offerTitle": "Πρώτη φορά;",
+  "tutorial.ping.called": "Έρχομαι. Θα βρεθούμε εκεί που ενώνονται τα μονοπάτια.",
   "tutorial.ping.hint": "Σημάδεψε τον δρόμο που θέλεις.",
   "tutorial.ping.how":
     "Κλικ με τη ροδέλα στο έδαφος, κλικ στην πυξίδα ή σύρε πάνω στην πυξίδα για να τραβήξεις γραμμή.",
   "tutorial.ping.intro": "Αριστερά ή δεξιά; Εσύ αποφασίζεις.",
-  "tutorial.ping.pocket": "Ωραία θέα. Λάθος δρόμος όμως.",
   "tutorial.ping.praise": "Καλή επιλογή. Συνεχίζουμε.",
-  "tutorial.ramp.hint": "Ανέβα και τις δύο σκάλες ως το σημάδι στην ψηλή εξέδρα.",
-  "tutorial.ramp.how": "Κάνε κλικ στην ψηλή εξέδρα. Η διαδρομή σου παίρνει τα σκαλιά για σένα.",
-  "tutorial.ramp.intro": "Τα σκαλιά ενώνουν επίπεδα. Περπάτα πάνω τους και σε ανεβάζουν.",
-  "tutorial.ramp.landing": "Μία σκάλα ακόμα.",
-  "tutorial.ramp.praise": "Ψηλό έδαφος. Οι εχθροί από κάτω δύσκολα σε φτάνουν.",
+  "tutorial.ping.view": "Ωραία θέα.",
   "tutorial.rats.again": "Δοκίμασε άλλη ικανότητα σε αυτόν.",
   "tutorial.rats.big":
     "Μεγάλος. Χτύπα τον μέχρι να ανάψει το {bash}, ρίξ' τον κάτω και μετά {crush}.",
@@ -1732,18 +1746,17 @@ export default {
   "tutorial.stepIn.praise": "Μαζί. Κράτα την ανάσα σου.",
   "tutorial.touch.callHow": "Άγγιξε έναν αρουραίο, μετά τη μπάρα στόχου για να τον δηλώσεις.",
   "tutorial.touch.callT": "Αυτό είναι. Τώρα είσαι στον δηλωμένο στόχο.",
-  "tutorial.touch.climbHint": "Πάνω στο πεζούλι, μετά πάλι κάτω δίπλα του.",
-  "tutorial.touch.climbHow": "Άγγιξε το πεζούλι, μετά το έδαφος δίπλα του.",
-  "tutorial.touch.climbPraise": "Πάνω και πάλι κάτω. Τώρα διαβάζεις το έδαφος.",
-  "tutorial.touch.climbTip": "Συμβουλή: ένα άγγιγμα σε πεζούλι διαλέγει πάντα την κορυφή του.",
-  "tutorial.touch.climbUnder": "Τώρα πάλι κάτω, δίπλα στο πεζούλι.",
+  "tutorial.touch.climbHow":
+    "Άγγιξε όπου θες να σταθείς. Το παρατεταμένο πάτημα διαλέγει το έδαφος από κάτω.",
+  "tutorial.touch.climbTip":
+    "Συμβουλή: το παρατεταμένο πάτημα διαλέγει το έδαφος κάτω από ένα πεζούλι.",
+  "tutorial.touch.climbUnder": "Πάτα παρατεταμένα. Ο διακεκομμένος κύκλος είναι από κάτω σου.",
   "tutorial.touch.healHint":
     "Άγγιξε πρώτα το όνομά μου στη λίστα της ομάδας. Άγγιξε Παρέα αν η λίστα είναι κλειστή.",
   "tutorial.touch.healHow":
     "Άγγιξε Παρέα αν η λίστα είναι κλειστή, μετά το όνομά μου και μετά την ικανότητα που λάμπει.",
   "tutorial.touch.look": "Τσίμπησε για ζουμ. Σύρε ένα δάχτυλο για να κοιτάξεις.",
   "tutorial.touch.pingHow": "Άγγιξε την πυξίδα ή σύρε πάνω της για να τραβήξεις γραμμή.",
-  "tutorial.touch.rampHow": "Άγγιξε την ψηλή εξέδρα. Η διαδρομή σου παίρνει τα σκαλιά για σένα.",
   "tutorial.touch.ratsHow": "Άγγιξε έναν αρουραίο για να τον στοχεύσεις.",
   "tutorial.touch.tunnelHow": "Άγγιξε τα σκαλιά κάτω, μετά το σημάδι πέρα από την άλλη άκρη.",
   "tutorial.touch.walk": "Άγγιξε το έδαφος για να περπατήσεις εκεί.",

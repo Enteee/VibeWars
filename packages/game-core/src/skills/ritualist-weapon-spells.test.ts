@@ -218,7 +218,7 @@ describe("Weapon of Quickening (#975)", () => {
     });
   });
 
-  it("lasts 4% longer a rank of its caster's Spawning Power: 21 × 1.48 s at 12 (#1098)", () => {
+  it("lasts 4% longer a rank of its caster's Spawning Power: 21 × 1.48 s, rounded to 31, at 12 (#1098, #3880)", () => {
     const caster = makeCombatant({
       id: "caster",
       energy: 60,
@@ -229,7 +229,7 @@ describe("Weapon of Quickening (#975)", () => {
     });
     const target = ally();
     use(caster, "ritualist.weapon-of-quickening", target);
-    expect(target.statuses.get("weapon-of-quickening")?.remainingSeconds).toBeCloseTo(21 * 1.48, 9);
+    expect(target.statuses.get("weapon-of-quickening")?.remainingSeconds).toBe(31);
     // A status that is no weapon spell, from the same caster, stands.
     use(caster, "ranger.troll-unguent", target);
     expect(target.statuses.get("regeneration")?.remainingSeconds).toBe(13);

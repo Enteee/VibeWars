@@ -92,6 +92,19 @@ export function tapIntents(
 }
 
 /**
+ * What a long-press on a touch screen sends (#3878): the touch Alt+click,
+ * a walk to the surface under the one drawn at `world`. It never targets,
+ * over a body too.
+ */
+export function longPressIntents(
+  snapshot: MatchSnapshot,
+  arena: ArenaSnapshot,
+  world: Vec2,
+): ClientIntent[] {
+  return primaryClickIntents(snapshot, arena, world, false, true);
+}
+
+/**
  * What a left click sends (#438): a walk to the surface drawn at `world`,
  * or with `below` (Alt, #2831) the one under it; over a tunnel, the
  * level your body is on first (#3234). With `shift` (Show

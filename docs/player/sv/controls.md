@@ -77,6 +77,7 @@ På en telefon eller surfplatta, i en match och på träningsplatsen:
   aldrig. Tryck snabbt på samma fiende igen för att attackera den. Ett tryck
   strax bredvid en karaktär hittar den ändå. Ett tryck på dig själv går till
   den platsen, eller väljer det flaggställe eller den spak du står på.
+- **Tryck och håll** för att gå till marken under en avsats eller bro, som Alt+klick.
 - **Dra** med ett finger för att se dig omkring; släpp, så glider vyn
   tillbaka till dig. **Nyp** för att zooma.
 - **Tryck** på en förmåga i fältet för att använda den på ditt mål.
@@ -87,7 +88,7 @@ Utanför en match innehåller den övre raden **[?]** (den här Hjälpen), **⚙
 **Lobby** (din inbjudningslänk, Gå med i lobby, Öppen/Stängd, Lämna, och vilka som är i din lobby; dess märke räknar dem),
 **♪** (musik: vad som spelas, och hur högt), ljudavstängning och helskärm. I en match sitter samma knappar,
 utom Lobby, uppe till höger på skärmen. I ett smalt fönster viks de här ikonerna och
-skärmens andra knappar in i **⋯**; bara dess huvudknapp står kvar utanför.
+skärmens andra knappar in i **☰**; bara dess huvudknapp står kvar utanför.
 ⚙ öppnar Alternativ som ett fönster under raden, med skärmen kvar bakom; Esc, × eller ett klick utanför stänger det.
 [?] öppnar Hjälp på samma sätt, som ett fönster under den med en sidväljare överst; en match fortsätter bakom.
 Hjälp stängs med fönstrets ×, Esc, ett klick utanför, eller ett nytt tryck på [?].

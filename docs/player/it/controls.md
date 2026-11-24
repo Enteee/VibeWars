@@ -55,13 +55,14 @@ Su un telefono o un tablet, in partita e nel campo di allenamento:
   appena accanto a un personaggio lo trova comunque. Un tocco su te stesso
   cammina fino a quel punto, oppure bersaglia la base bandiera o la leva su
   cui ti trovi.
+- **Tieni premuto** per camminare fino al terreno sotto una sporgenza o un ponte, come Alt+clic.
 - **Trascina** un dito per guardarti intorno; rilascia e la visuale torna su
   di te. **Pizzica** per zoomare.
 - **Tocca** un'abilità nella barra per usarla sul tuo bersaglio.
 
 ## La barra superiore
 
-Fuori dalla partita, la barra superiore contiene **[?]** (questo Aiuto), **⚙** (Opzioni), **Lobby** (il tuo link d'invito, Entra in una lobby, Aperta/Chiusa, Esci e chi c'è nella tua lobby; il badge li conta), **♪** (musica: cosa suona e a che volume), il silenzioso e lo schermo intero. In partita gli stessi pulsanti, tranne Lobby, stanno in alto a destra. In una finestra stretta, queste icone e gli altri pulsanti della schermata si raccolgono in **⋯**; resta fuori solo il pulsante principale. ⚙ apre Opzioni in una finestra sotto la barra, con la schermata ancora dietro; Esc, × o un clic fuori la chiudono. [?] apre Aiuto allo stesso modo, in una finestra sotto di esso con un selettore di pagina in alto; la partita continua dietro. Aiuto si chiude con la sua ×, con Esc, con un clic fuori o premendo di nuovo [?].
+Fuori dalla partita, la barra superiore contiene **[?]** (questo Aiuto), **⚙** (Opzioni), **Lobby** (il tuo link d'invito, Entra in una lobby, Aperta/Chiusa, Esci e chi c'è nella tua lobby; il badge li conta), **♪** (musica: cosa suona e a che volume), il silenzioso e lo schermo intero. In partita gli stessi pulsanti, tranne Lobby, stanno in alto a destra. In una finestra stretta, queste icone e gli altri pulsanti della schermata si raccolgono in **☰**; resta fuori solo il pulsante principale. ⚙ apre Opzioni in una finestra sotto la barra, con la schermata ancora dietro; Esc, × o un clic fuori la chiudono. [?] apre Aiuto allo stesso modo, in una finestra sotto di esso con un selettore di pagina in alto; la partita continua dietro. Aiuto si chiude con la sua ×, con Esc, con un clic fuori o premendo di nuovo [?].
 
 **Condividi un beat con la tua lobby.** Nell'editor del beat (♪, poi **Modifica**), **Condividi in lobby** invia ciò che hai scritto, salvato o no, a tutti gli altri in una lobby che ospiti o a cui ti sei unito tramite link (mai in una trovata dalla coda; al massimo 8 KB, una condivisione ogni dieci secondi). Vedono un badge su ♪, e in **Condivisi con te** nella sua finestra una riga per giocatore, "Ann · Ember Deep", con **Avvia**. Non parte nulla finché non premi Avvia, e solo fuori dalla partita; **Torna alla mia musica** riporta alla tua. Un beat condiviso non viene mai salvato: sparisce quando lasci la lobby o ricarichi.
 

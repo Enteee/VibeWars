@@ -63,6 +63,22 @@ export default {
 
   "buildEditor.addWeapon": "Tilføj våben",
   "buildEditor.armor": "Rustning",
+  "buildEditor.attributeEffect.critical-strikes":
+    "+{percent}% chance for kritisk træf, +{energy} energi pr. kritisk træf",
+  "buildEditor.attributeEffect.divine-favor": "Monk-besværgelser på allierede heler +{heal}",
+  "buildEditor.attributeEffect.energy-storage": "+{energy} maksimal energi",
+  "buildEditor.attributeEffect.expertise":
+    "angrebsevner, ritualer, berøringsevner og Ranger-evner koster {percent}% mindre energi",
+  "buildEditor.attributeEffect.fast-casting":
+    "besværgelser og signeter kastes {percent}% hurtigere",
+  "buildEditor.attributeEffect.leadership":
+    "op til {max} energi pr. råb, {perAlly} pr. berørt allieret",
+  "buildEditor.attributeEffect.mysticism": "Dervish-fortryllelser koster {percent}% mindre energi",
+  "buildEditor.attributeEffect.soul-reaping":
+    "+{energy} energi, når nogen i nærheden dør ({triggers} pr. {seconds} s)",
+  "buildEditor.attributeEffect.spawning-power":
+    "væsner +{percent}% liv, våbenbesværgelser varer {percent}% længere",
+  "buildEditor.attributeEffect.strength": "angrebsevner {percent}% rustningsgennemtrængning",
   "buildEditor.back": "Tilbage",
   "buildEditor.bothHandsFull": "begge hænder optaget",
   "buildEditor.budgetSegment": {
@@ -614,6 +630,7 @@ export default {
   "hud.outcomeVictory": "Sejr",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (død)",
+  "hud.preMatchHeld": "Du holdes nær dit startpunkt, indtil kampen begynder.",
   "hud.preMatchStartingAnyway":
     "Venter på spillere: {joined}/{expected}, starter alligevel om {seconds} s",
   "hud.preMatchStartsIn": "Kampen starter om {seconds}",
@@ -1673,17 +1690,13 @@ export default {
   "tutorial.look.praise": "Der er den! Vores vej uden om kampen.",
   "tutorial.offer": "Ny her? Din læremester viser dig det grundlæggende.",
   "tutorial.offerTitle": "Første gang?",
+  "tutorial.ping.called": "Jeg går nu. Vi mødes, hvor stierne løber sammen.",
   "tutorial.ping.hint": "Ping den vej, du vil gå.",
   "tutorial.ping.how":
     "Klik med hjulet på jorden, klik på kompasset, eller træk på kompasset for at tegne en linje.",
   "tutorial.ping.intro": "Venstre eller højre? Du bestemmer.",
-  "tutorial.ping.pocket": "Flot udsigt. Men forkert vej.",
   "tutorial.ping.praise": "Godt valgt. Videre.",
-  "tutorial.ramp.hint": "Op ad begge trapper til mærket på den høje platform.",
-  "tutorial.ramp.how": "Klik på den høje platform. Din vej tager trapperne for dig.",
-  "tutorial.ramp.intro": "Trapper forbinder lag. Gå ud på dem, så bærer de dig op.",
-  "tutorial.ramp.landing": "Én trappe mere.",
-  "tutorial.ramp.praise": "Højt terræn. Fjender nedenfor har svært ved at nå dig.",
+  "tutorial.ping.view": "Flot udsigt.",
   "tutorial.rats.again": "Prøv en anden færdighed på den her.",
   "tutorial.rats.big": "En stor. Slå den, til {bash} lyser op, slå den så omkuld og brug {crush}.",
   "tutorial.rats.hint": "Brug to forskellige færdigheder på rotterne.",
@@ -1699,18 +1712,15 @@ export default {
   "tutorial.stepIn.praise": "Sammen. Hold vejret.",
   "tutorial.touch.callHow": "Tryk på en rotte, og så på målbjælken for at kalde den.",
   "tutorial.touch.callT": "Sådan. Nu er du på det kaldte mål.",
-  "tutorial.touch.climbHint": "Op på afsatsen, og så ned igen ved siden af.",
-  "tutorial.touch.climbHow": "Tryk på afsatsen, og så på jorden ved siden af.",
-  "tutorial.touch.climbPraise": "Op og ned igen. Nu kan du læse terrænet.",
-  "tutorial.touch.climbTip": "Tip: et tryk på en afsats vælger altid toppen.",
-  "tutorial.touch.climbUnder": "Nu ned igen, ved siden af afsatsen.",
+  "tutorial.touch.climbHow": "Tryk, hvor du vil stå. Tryk og hold vælger jorden nedenunder.",
+  "tutorial.touch.climbTip": "Tip: tryk og hold vælger jorden under en afsats.",
+  "tutorial.touch.climbUnder": "Tryk og hold. Den stiplede ring er under dig.",
   "tutorial.touch.healHint":
     "Tryk først på mit navn i gruppelisten. Tryk på Gruppe, hvis listen er lukket.",
   "tutorial.touch.healHow":
     "Tryk på Gruppe, hvis listen er lukket, så på mit navn og så på den lysende evne.",
   "tutorial.touch.look": "Knib for at zoome. Træk med én finger for at se dig om.",
   "tutorial.touch.pingHow": "Tryk på kompasset, eller træk på det for at tegne en linje.",
-  "tutorial.touch.rampHow": "Tryk på den høje platform. Din vej tager trapperne for dig.",
   "tutorial.touch.ratsHow": "Tryk på en rotte for at vælge den.",
   "tutorial.touch.tunnelHow": "Tryk på trinene ned, så på mærket bag den anden ende.",
   "tutorial.touch.walk": "Tryk på jorden for at gå derhen.",

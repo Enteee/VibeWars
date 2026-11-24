@@ -146,7 +146,7 @@ describe("StatusSet.useNextSkill (#1483)", () => {
       ["chorus-of-restoration", "paragon.anthem-of-flame", SIGNET],
     ];
     for (const [id, yes, no] of kinds) {
-      const set = new StatusSet();
+      const set = new StatusSet("fleshy");
       set.apply(id, 10, "p", NO_RANKS);
       expect(set.useNextSkill(skill(no), new Set()).answered, `${id} ${no}`).toEqual([]);
       expect(set.useNextSkill(skill(yes), new Set()).ended, `${id} ${yes}`).toEqual([id]);
@@ -155,7 +155,7 @@ describe("StatusSet.useNextSkill (#1483)", () => {
   });
 
   it("with a count of 5 answers any five skills, then ends", () => {
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     set.apply("song-of-purification", 20, "p", NO_RANKS);
     for (const id of [SPELL, SIGNET, SHOUT, ATTACK]) {
       expect(set.useNextSkill(skill(id), new Set()).ended).toEqual([]);
@@ -165,7 +165,7 @@ describe("StatusSet.useNextSkill (#1483)", () => {
   });
 
   it("leaves one the skill put on its own user", () => {
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     set.apply("chorus-of-restoration", 10, "p", NO_RANKS);
     const spared = new Set<StatusId>(["chorus-of-restoration"]);
     expect(set.useNextSkill(skill("paragon.chorus-of-restoration"), spared).answered).toEqual([]);

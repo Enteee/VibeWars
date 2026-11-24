@@ -67,6 +67,21 @@ export const en = {
 
   "buildEditor.addWeapon": "Add a weapon",
   "buildEditor.armor": "Armor",
+  "buildEditor.attributeEffect.critical-strikes":
+    "+{percent}% critical chance, +{energy} energy per critical",
+  "buildEditor.attributeEffect.divine-favor": "Monk spells on allies heal +{heal}",
+  "buildEditor.attributeEffect.energy-storage": "+{energy} maximum energy",
+  "buildEditor.attributeEffect.expertise":
+    "attack skills, rituals, touch skills and Ranger skills cost {percent}% less energy",
+  "buildEditor.attributeEffect.fast-casting": "spells and signets cast {percent}% faster",
+  "buildEditor.attributeEffect.leadership":
+    "up to {max} energy per shout, {perAlly} per ally affected",
+  "buildEditor.attributeEffect.mysticism": "Dervish enchantments cost {percent}% less energy",
+  "buildEditor.attributeEffect.soul-reaping":
+    "+{energy} energy when someone nearby dies ({triggers} per {seconds} s)",
+  "buildEditor.attributeEffect.spawning-power":
+    "creatures +{percent}% Health, weapon spells last {percent}% longer",
+  "buildEditor.attributeEffect.strength": "attack skills {percent}% armor penetration",
   "buildEditor.back": "Back",
   "buildEditor.bothHandsFull": "both hands full",
   "buildEditor.budgetSegment": {
@@ -617,6 +632,7 @@ export const en = {
   "hud.outcomeVictory": "Victory",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (dead)",
+  "hud.preMatchHeld": "You are held near your spawn until the match starts.",
   "hud.preMatchStartingAnyway":
     "Waiting for players: {joined}/{expected}, starting anyway in {seconds} s",
   "hud.preMatchStartsIn": "Match starts in {seconds}",
@@ -1676,17 +1692,13 @@ export const en = {
   "tutorial.look.praise": "There it is! Our way around the fight.",
   "tutorial.offer": "New here? Your tutor can show you the ropes.",
   "tutorial.offerTitle": "First time?",
+  "tutorial.ping.called": "On my way. Meet me where the paths join.",
   "tutorial.ping.hint": "Ping the way you want to go.",
   "tutorial.ping.how":
     "Wheel-click the ground, click the compass, or drag on the compass to draw a line.",
   "tutorial.ping.intro": "Left or right? You call it.",
-  "tutorial.ping.pocket": "Nice view. Wrong way, though.",
   "tutorial.ping.praise": "Good call. Onward.",
-  "tutorial.ramp.hint": "Up both flights of steps to the mark on the high deck.",
-  "tutorial.ramp.how": "Click the high deck. Your path takes the steps for you.",
-  "tutorial.ramp.intro": "Steps join layers. Walk on, and they carry you up.",
-  "tutorial.ramp.landing": "One more flight.",
-  "tutorial.ramp.praise": "High ground. Foes below can't easily reach you.",
+  "tutorial.ping.view": "Nice view.",
   "tutorial.rats.again": "Try a different skill on this one.",
   "tutorial.rats.big":
     "A big one. Hit it until {bash} lights up, then knock it down and use {crush}.",
@@ -1703,18 +1715,15 @@ export const en = {
   "tutorial.stepIn.praise": "Together. Hold your breath.",
   "tutorial.touch.callHow": "Tap a rat, then tap the target bar to call it.",
   "tutorial.touch.callT": "That's it. Now you're on the called one.",
-  "tutorial.touch.climbHint": "Onto the ledge, then back down beside it.",
-  "tutorial.touch.climbHow": "Tap the ledge, then tap the ground beside it.",
-  "tutorial.touch.climbPraise": "Up and down again. You read the ground now.",
-  "tutorial.touch.climbTip": "Tip: a tap on a ledge always picks its top.",
-  "tutorial.touch.climbUnder": "Now back down, beside the ledge.",
+  "tutorial.touch.climbHow": "Tap where to stand. Press and hold picks the ground below.",
+  "tutorial.touch.climbTip": "Tip: press and hold picks the ground under a ledge.",
+  "tutorial.touch.climbUnder": "Press and hold. The dashed ring is below you.",
   "tutorial.touch.healHint":
     "Tap my name in the party list first. Tap Party if the list is closed.",
   "tutorial.touch.healHow":
     "Tap Party if the list is closed, then my name, then the glowing skill.",
   "tutorial.touch.look": "Pinch to zoom. Drag one finger to look.",
   "tutorial.touch.pingHow": "Tap the compass, or drag on it to draw a line.",
-  "tutorial.touch.rampHow": "Tap the high deck. Your path takes the steps for you.",
   "tutorial.touch.ratsHow": "Tap a rat to target it.",
   "tutorial.touch.tunnelHow": "Tap the steps down, then the mark past the far end.",
   "tutorial.touch.walk": "Tap the ground to walk there.",

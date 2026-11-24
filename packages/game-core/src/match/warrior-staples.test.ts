@@ -166,7 +166,7 @@ function damageTo(events: readonly CombatEvent[], targetId: string): number[] {
 
 describe("remove-status with a statusId (#1549)", () => {
   it("takes only that status, and only if its category matches", () => {
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     set.apply("crippled", 10, "f", NO_RANKS);
     set.apply("bleeding", 10, "f", NO_RANKS);
     expect(set.removeByCategory("hex", 1, undefined, "crippled")).toEqual([]);
@@ -180,7 +180,7 @@ describe("remove-status with a statusId (#1549)", () => {
 describe("a bearer-blocks trigger bound to melee (#1549)", () => {
   /** The statuses whose triggers a block by `blocker` of `kind` fired, Riposte also on. */
   function fired(blocker: "bonettis-defense" | "riposte", kind: "melee" | "projectile") {
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     set.apply("bonettis-defense", 10, "w", NO_RANKS);
     set.apply("riposte", 8, "w", NO_RANKS);
     set.recordBlock(blocker, "f", kind);
@@ -216,7 +216,7 @@ describe("Flail (#1549)", () => {
         },
       ],
     });
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     set.apply("flail", 12, "w", NO_RANKS);
     const modifiers = aggregateModifiers(set.active);
     expect(modifiers.attackDurationMultiplier).toBe(0.67);

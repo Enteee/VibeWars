@@ -20,6 +20,7 @@ import { createDoubleClick } from "../input/double-click.js";
 import {
   calledTargetIntent,
   callTargetCall,
+  longPressIntents,
   middleClickAction,
   pingCall,
   primaryClickIntents,
@@ -1145,6 +1146,19 @@ export function createTrainingPanel(): TrainingPanel {
         performance.now(),
         slop,
       );
+      for (const intent of intents) {
+        session.connection.sendIntent(intent);
+        if (intent.kind === "walk-to") {
+          created.scene.showWalkMarker(world);
+        }
+      }
+    });
+    // A long-press walks to the ground below, as Alt+click (#3878).
+    follow.onLongPress((world) => {
+      if (session === undefined || !armedBeforeClick) {
+        return;
+      }
+      const intents = longPressIntents(session.connection.getSnapshot(), latestArena, world);
       for (const intent of intents) {
         session.connection.sendIntent(intent);
         if (intent.kind === "walk-to") {

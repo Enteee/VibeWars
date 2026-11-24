@@ -75,6 +75,7 @@ Op een telefoon of tablet, in een match en op het trainingsveld:
   Tik snel nog eens op dezelfde vijand om hem aan te vallen. Een tik net
   naast een personage vindt het toch. Een tik op jezelf loopt naar die plek,
   of kiest de vlaggenstandaard of hendel waarop je staat.
+- **Druk lang** om naar de grond onder een richel of brug te lopen, zoals met Alt+klik.
 - **Sleep** met één vinger om rond te kijken; laat los en het beeld glijdt
   terug naar jou. **Knijp** om te zoomen.
 - **Tik** op een skill op de balk om hem op je doel te gebruiken.
@@ -85,7 +86,7 @@ Buiten een match staan in de bovenste balk **[?]** (deze Help), **⚙** (Opties)
 **Lobby** (je uitnodigingslink, Lobby binnengaan, Open/Gesloten, Verlaten, en wie er in je lobby zit; de badge telt ze),
 **♪** (muziek: wat er speelt, en hoe hard), geluid dempen en volledig scherm. In een match staan dezelfde knoppen,
 behalve Lobby, rechtsboven in het scherm. In een smal venster klappen deze pictogrammen en
-de andere knoppen van het scherm in tot **⋯**; alleen de hoofdknop blijft staan.
+de andere knoppen van het scherm in tot **☰**; alleen de hoofdknop blijft staan.
 ⚙ opent Opties als venster onder de balk, met het scherm er nog achter; Esc, × of een klik erbuiten sluit het.
 [?] opent Help op dezelfde manier, als venster eronder met een paginakiezer bovenaan; een match loopt erachter door.
 Help sluit met zijn ×, Esc, een klik erbuiten, of nog een druk op [?].

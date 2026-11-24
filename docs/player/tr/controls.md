@@ -79,6 +79,7 @@ Telefonda veya tablette, maçta ve eğitim alanında:
   yürütmez. Saldırmak için aynı düşmana hızlıca tekrar dokun. Bir karakterin
   hemen yanına dokunmak da onu bulur. Kendine dokunmak o noktaya yürütür ya
   da üzerinde durduğun bayrak direğini veya kolu hedef alır.
+- **Basılı tut**: çıkıntının ya da köprünün altındaki zemine yürürsün, Alt+tıklama gibi.
 - Etrafına bakmak için tek parmakla **sürükle**; bırakınca görünüm sana
   doğru kayarak döner. Yakınlaştırmak için **parmaklarını sıkıştır**.
 - Hedefinde kullanmak için çubuktaki bir yeteneğe **dokun**.
@@ -90,7 +91,7 @@ Maç dışında üst çubukta **[?]** (bu Yardım), **⚙** (Ayarlar), **Lobi**
 olduğu; rozeti onları sayar), **♪** (müzik: ne çaldığı ve ne kadar
 yüksek), ses kapatma ve tam ekran bulunur. Maçta, Lobi dışındaki aynı
 düğmeler ekranın sağ üstündedir. Dar bir pencerede bu simgeler ve
-ekranın diğer düğmeleri **⋯** içine katlanır; yalnızca ana düğmesi
+ekranın diğer düğmeleri **☰** içine katlanır; yalnızca ana düğmesi
 dışarıda kalır. ⚙, Ayarlar'ı çubuğun altında bir pencere olarak açar,
 ekran arkasında kalır; Esc, × ya da dışarıya bir tık onu kapatır. [?] da Yardım'ı aynı
 şekilde, altında, en üstte sayfa seçicisi olan bir pencere olarak açar; maç

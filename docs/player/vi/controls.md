@@ -81,6 +81,7 @@ Trên điện thoại hoặc máy tính bảng, trong trận và ở sân tập:
   cùng kẻ địch đó, thật nhanh, để tấn công nó. Chạm ngay cạnh một nhân vật vẫn
   tìm ra nhân vật đó. Chạm vào chính mình sẽ đi tới điểm đó, hoặc nhắm bệ cờ
   hay cần gạt bạn đang đứng.
+- **Nhấn giữ** để đi tới mặt đất dưới gờ đá hoặc cây cầu, như Alt+nhấp.
 - **Kéo** một ngón tay để nhìn quanh; thả ra và góc nhìn trượt về lại phía bạn.
   **Chụm** hai ngón để thu phóng.
 - **Chạm** vào một kỹ năng trên thanh để dùng nó lên mục tiêu của bạn.
@@ -92,7 +93,7 @@ chọn), **Sảnh** (link mời, Vào sảnh, Mở/Đóng, Rời, và những ai
 sảnh của bạn; huy hiệu số của nó đếm số người), **♪** (nhạc: cái gì đang
 phát, và to bao nhiêu), nút tắt âm thanh và toàn màn hình. Trong trận, cũng
 các nút đó, trừ Sảnh, nằm ở góc trên bên phải màn hình. Trong cửa sổ hẹp, các
-biểu tượng này và các nút khác của màn hình được gộp vào **⋯**; chỉ nút chính
+biểu tượng này và các nút khác của màn hình được gộp vào **☰**; chỉ nút chính
 của nó còn ở ngoài. ⚙ mở Tùy chọn thành một cửa sổ dưới thanh, màn hình vẫn
 ở phía sau; Esc, × hoặc nhấn ra ngoài sẽ đóng nó. [?] mở Hỗ trợ theo cùng
 cách, thành một cửa sổ dưới nó với bộ chọn trang ở trên cùng; trận vẫn tiếp

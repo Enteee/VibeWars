@@ -256,7 +256,7 @@ describe("Rising Bile (#2321)", () => {
 
 describe("ignoresReapplication (#2321)", () => {
   it("leaves a status that ignores it as it is, and refreshes one that does not", () => {
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     set.apply("rising-bile", 20, "a", NO_RANKS);
     set.advance(5, false);
     expect(set.apply("rising-bile", 20, "b", NO_RANKS)).toBe(false);
@@ -279,7 +279,7 @@ describe("held-seconds (#2321)", () => {
   });
 
   it("is carried on the ended record, whole seconds", () => {
-    const set = new StatusSet();
+    const set = new StatusSet("fleshy");
     set.apply("rising-bile", 20, "a", NO_RANKS);
     set.drainChanges();
     set.advance(3.9, false);

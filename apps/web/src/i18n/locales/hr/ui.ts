@@ -63,6 +63,21 @@ export default {
 
   "buildEditor.addWeapon": "Dodaj oružje",
   "buildEditor.armor": "Oklop",
+  "buildEditor.attributeEffect.critical-strikes":
+    "+{percent}% šanse za kritični pogodak, +{energy} energije po kritičnom pogotku",
+  "buildEditor.attributeEffect.divine-favor": "čarolije Redovnika na saveznike liječe +{heal}",
+  "buildEditor.attributeEffect.energy-storage": "+{energy} maksimalne energije",
+  "buildEditor.attributeEffect.expertise":
+    "vještine napada, rituali, vještine dodira i vještine Lovca troše {percent}% manje energije",
+  "buildEditor.attributeEffect.fast-casting": "čarolije i pečati bacaju se {percent}% brže",
+  "buildEditor.attributeEffect.leadership":
+    "do {max} energije po poviku, {perAlly} po pogođenom savezniku",
+  "buildEditor.attributeEffect.mysticism": "začaranja Derviša troše {percent}% manje energije",
+  "buildEditor.attributeEffect.soul-reaping":
+    "+{energy} energije kad netko u blizini umre ({triggers} po {seconds} s)",
+  "buildEditor.attributeEffect.spawning-power":
+    "stvorenja +{percent}% zdravlja, čarolije oružja traju {percent}% dulje",
+  "buildEditor.attributeEffect.strength": "vještine napada: {percent}% probijanja oklopa",
   "buildEditor.back": "Natrag",
   "buildEditor.bothHandsFull": "obje ruke su zauzete",
   "buildEditor.budgetSegment": {
@@ -650,6 +665,7 @@ export default {
   "hud.outcomeVictory": "Pobjeda",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (mrtav)",
+  "hud.preMatchHeld": "Držiš se blizu svoje početne točke dok meč ne počne.",
   "hud.preMatchStartingAnyway":
     "Čeka se igrače: {joined}/{expected}, počinje svejedno za {seconds} s",
   "hud.preMatchStartsIn": "Meč počinje za {seconds}",
@@ -1749,17 +1765,13 @@ export default {
   "tutorial.look.praise": "Evo ga! Naš put oko bitke.",
   "tutorial.offer": "Novi si? Tvoj učitelj pokazat će ti osnove.",
   "tutorial.offerTitle": "Prvi put?",
+  "tutorial.ping.called": "Krećem. Nađimo se gdje se putevi spajaju.",
   "tutorial.ping.hint": "Označi put kojim želiš ići.",
   "tutorial.ping.how":
     "Klikni kotačićem na tlo, klikni na kompas ili povuci po kompasu da nacrtaš crtu.",
   "tutorial.ping.intro": "Lijevo ili desno? Ti odlučuješ.",
-  "tutorial.ping.pocket": "Lijep pogled. Ali krivi put.",
   "tutorial.ping.praise": "Dobar izbor. Naprijed.",
-  "tutorial.ramp.hint": "Gore oba stubišta do oznake na visokoj platformi.",
-  "tutorial.ramp.how": "Klikni visoku platformu. Put sam ide stubama.",
-  "tutorial.ramp.intro": "Stube povezuju razine. Stani na njih i odnijet će te gore.",
-  "tutorial.ramp.landing": "Još jedno stubište.",
-  "tutorial.ramp.praise": "Visok teren. Neprijatelji dolje teško te dosegnu.",
+  "tutorial.ping.view": "Lijep pogled.",
   "tutorial.rats.again": "Probaj drugu vještinu na ovom.",
   "tutorial.rats.big":
     "Veliki. Udaraj ga dok {bash} ne zasvijetli, zatim ga obori i upotrijebi {crush}.",
@@ -1776,18 +1788,15 @@ export default {
   "tutorial.stepIn.praise": "Zajedno. Zadrži dah.",
   "tutorial.touch.callHow": "Dodirni štakora, pa traku mete da ga označiš.",
   "tutorial.touch.callT": "Tako je. Sad ciljaš označenu metu.",
-  "tutorial.touch.climbHint": "Gore na izbočinu, pa opet dolje pokraj nje.",
-  "tutorial.touch.climbHow": "Dodirni izbočinu, pa tlo pokraj nje.",
-  "tutorial.touch.climbPraise": "Gore i opet dolje. Sad znaš čitati teren.",
-  "tutorial.touch.climbTip": "Savjet: dodir izbočine uvijek bira njezin vrh.",
-  "tutorial.touch.climbUnder": "Sad opet dolje, pokraj izbočine.",
+  "tutorial.touch.climbHow": "Dodirni gdje želiš stajati. Dugi pritisak bira tlo ispod.",
+  "tutorial.touch.climbTip": "Savjet: dugi pritisak bira tlo ispod izbočine.",
+  "tutorial.touch.climbUnder": "Pritisni i drži. Isprekidani krug je ispod tebe.",
   "tutorial.touch.healHint":
     "Prvo dodirni moje ime na popisu skupine. Dodirni Grupa ako je popis zatvoren.",
   "tutorial.touch.healHow":
     "Dodirni Grupa ako je popis zatvoren, zatim moje ime, pa vještinu koja svijetli.",
   "tutorial.touch.look": "Raširi prste za zum. Povuci jednim prstom da se osvrneš.",
   "tutorial.touch.pingHow": "Dodirni kompas ili povuci po njemu da nacrtaš crtu.",
-  "tutorial.touch.rampHow": "Dodirni visoku platformu. Put sam ide stubama.",
   "tutorial.touch.ratsHow": "Dodirni štakora da ga naciljaš.",
   "tutorial.touch.tunnelHow": "Dodirni stepenice dolje, zatim oznaku iza drugog kraja.",
   "tutorial.touch.walk": "Dodirni tlo da odeš onamo.",

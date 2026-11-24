@@ -63,6 +63,24 @@ export default {
 
   "buildEditor.addWeapon": "Fegyver hozzáadása",
   "buildEditor.armor": "Páncél",
+  "buildEditor.attributeEffect.critical-strikes":
+    "+{percent}% kritikus találati esély, +{energy} energia kritikus találatonként",
+  "buildEditor.attributeEffect.divine-favor":
+    "a Monk varázslatai a szövetségeseken +{heal} gyógyítást adnak",
+  "buildEditor.attributeEffect.energy-storage": "+{energy} maximális energia",
+  "buildEditor.attributeEffect.expertise":
+    "a támadó készségek, rítusok, érintéses készségek és Ranger készségek {percent}%-kal kevesebb energiába kerülnek",
+  "buildEditor.attributeEffect.fast-casting":
+    "a varázslatok és pecsétek {percent}%-kal gyorsabban hatnak",
+  "buildEditor.attributeEffect.leadership":
+    "legfeljebb {max} energia kiáltásonként, {perAlly} minden érintett szövetségesért",
+  "buildEditor.attributeEffect.mysticism":
+    "a Dervish bűbájai {percent}%-kal kevesebb energiába kerülnek",
+  "buildEditor.attributeEffect.soul-reaping":
+    "+{energy} energia, ha valaki a közelben meghal ({triggers} / {seconds} mp)",
+  "buildEditor.attributeEffect.spawning-power":
+    "lények +{percent}% életerő, a fegyvervarázslatok {percent}%-kal tovább tartanak",
+  "buildEditor.attributeEffect.strength": "támadó készségek: {percent}% páncélátütés",
   "buildEditor.back": "Vissza",
   "buildEditor.bothHandsFull": "mindkét kéz foglalt",
   "buildEditor.budgetSegment": {
@@ -617,6 +635,7 @@ export default {
   "hud.outcomeVictory": "Győzelem",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (halott)",
+  "hud.preMatchHeld": "A meccs kezdetéig a kezdőpontod közelében maradsz.",
   "hud.preMatchStartingAnyway":
     "Várakozás a játékosokra: {joined}/{expected}, {seconds} mp múlva mindenképp indul",
   "hud.preMatchStartsIn": "A meccs {seconds} múlva kezdődik",
@@ -1687,17 +1706,13 @@ export default {
   "tutorial.look.praise": "Ott van! Az utunk a harc mellett.",
   "tutorial.offer": "Új vagy? A tanítód megmutatja az alapokat.",
   "tutorial.offerTitle": "Először jársz itt?",
+  "tutorial.ping.called": "Indulok. Ott találkozunk, ahol az utak összefutnak.",
   "tutorial.ping.hint": "Jelöld meg, merre mennél.",
   "tutorial.ping.how":
     "Kattints a görgővel a földre, kattints az iránytűre, vagy húzz vonalat az iránytűn.",
   "tutorial.ping.intro": "Balra vagy jobbra? Te döntesz.",
-  "tutorial.ping.pocket": "Szép kilátás. De rossz irány.",
   "tutorial.ping.praise": "Jó választás. Tovább.",
-  "tutorial.ramp.hint": "Fel mindkét lépcsősoron a magas terasz jeléig.",
-  "tutorial.ramp.how": "Kattints a magas teraszra. Az utad magától veszi a lépcsőket.",
-  "tutorial.ramp.intro": "A lépcsők szinteket kötnek össze. Lépj rájuk, és felvisznek.",
-  "tutorial.ramp.landing": "Még egy lépcsősor.",
-  "tutorial.ramp.praise": "Magaslat. A lenti ellenségek nehezen érnek el.",
+  "tutorial.ping.view": "Szép kilátás.",
   "tutorial.rats.again": "Próbálj ki egy másik képességet ezen.",
   "tutorial.rats.big":
     "Egy nagy. Üsd, amíg a {bash} fel nem villan, aztán döntsd le, és jöhet a {crush}.",
@@ -1714,18 +1729,16 @@ export default {
   "tutorial.stepIn.praise": "Együtt. Tartsd vissza a lélegzeted.",
   "tutorial.touch.callHow": "Koppints egy patkányra, aztán a célpontsávra, hogy kijelöld.",
   "tutorial.touch.callT": "Ez az. Most a kijelölt célponton vagy.",
-  "tutorial.touch.climbHint": "Fel a párkányra, aztán vissza le mellé.",
-  "tutorial.touch.climbHow": "Koppints a párkányra, aztán a mellette lévő talajra.",
-  "tutorial.touch.climbPraise": "Fel és újra le. Most már olvasod a terepet.",
-  "tutorial.touch.climbTip": "Tipp: a párkányra koppintás mindig a tetejét választja.",
-  "tutorial.touch.climbUnder": "Most vissza le, a párkány mellé.",
+  "tutorial.touch.climbHow":
+    "Koppints oda, ahol állni akarsz. A hosszú nyomás az alatta lévő talajt választja.",
+  "tutorial.touch.climbTip": "Tipp: a hosszú nyomás a párkány alatti talajt választja.",
+  "tutorial.touch.climbUnder": "Nyomd hosszan. A szaggatott kör alattad van.",
   "tutorial.touch.healHint":
     "Előbb koppints a nevemre a csapatlistában. Koppints az Osztag gombra, ha a lista zárva van.",
   "tutorial.touch.healHow":
     "Ha a lista zárva van, koppints az Osztag gombra, aztán a nevemre, aztán a világító készségre.",
   "tutorial.touch.look": "Csippents a nagyításhoz. Húzd egy ujjal a körülnézéshez.",
   "tutorial.touch.pingHow": "Koppints az iránytűre, vagy húzz rajta vonalat.",
-  "tutorial.touch.rampHow": "Koppints a magas teraszra. Az utad magától veszi a lépcsőket.",
   "tutorial.touch.ratsHow": "Koppints egy patkányra, hogy megcélozd.",
   "tutorial.touch.tunnelHow": "Koppints a lefelé vezető lépcsőre, aztán a túlsó vég mögötti jelre.",
   "tutorial.touch.walk": "Koppints a talajra, hogy odasétálj.",

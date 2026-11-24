@@ -80,6 +80,7 @@ En un móvil o una tableta, en una partida y en el campo de entrenamiento:
   justo al lado de un personaje lo encuentra igualmente. Un toque sobre ti
   camina hasta ese punto, o selecciona la base de bandera o la palanca en la
   que estás.
+- **Mantén pulsado** para caminar al suelo bajo una cornisa o un puente, como Alt+clic.
 - **Arrastra** un dedo para mirar alrededor; suéltalo y la vista vuelve a ti
   deslizándose. **Pellizca** para hacer zoom.
 - **Toca** una habilidad de la barra para usarla sobre tu objetivo.
@@ -92,7 +93,7 @@ está en tu sala; su insignia los cuenta), **♪** (música: qué suena y a qué
 volumen), silenciar el sonido y pantalla completa. En una partida, los mismos
 botones, menos Sala, están arriba a la derecha de la pantalla. En una ventana
 estrecha, estos iconos y los demás botones de la pantalla se pliegan en
-**⋯**; solo su botón principal se queda fuera. ⚙ abre Opciones como una
+**☰**; solo su botón principal se queda fuera. ⚙ abre Opciones como una
 ventana bajo la barra, con la pantalla aún detrás; Esc, × o un clic fuera la
 cierran. [?] abre la Ayuda igual, como una
 ventana bajo él con un selector de página arriba; la partida sigue detrás. La

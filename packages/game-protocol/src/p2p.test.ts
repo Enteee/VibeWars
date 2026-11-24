@@ -286,6 +286,12 @@ const minion: WirePlayer = {
   signet: null,
 };
 
+/** Two bodies held in their spawn bubbles (#3909). */
+const spawns = [
+  { id: "p1", x: -40, y: 12.5, layer: 0 },
+  { id: "p2", x: 40, y: -12.5, layer: 1 },
+];
+
 const snapshot: WireSnapshotPart = {
   tick: 42,
   elapsedSeconds: 2.1,
@@ -1065,12 +1071,20 @@ const VALID: readonly [string, (value: unknown) => unknown, unknown][] = [
   [
     "snapshot waiting for players (#3818)",
     parseWireSnapshotPart,
-    { ...snapshot, phase: "waiting", preMatch: { joined: 3, expected: 4, secondsLeft: null } },
+    {
+      ...snapshot,
+      phase: "waiting",
+      preMatch: { joined: 3, expected: 4, secondsLeft: null, spawns },
+    },
   ],
   [
     "snapshot counting down (#3818)",
     parseWireSnapshotPart,
-    { ...snapshot, phase: "countdown", preMatch: { joined: 4, expected: 4, secondsLeft: 7 } },
+    {
+      ...snapshot,
+      phase: "countdown",
+      preMatch: { joined: 4, expected: 4, secondsLeft: 7, spawns },
+    },
   ],
   ["refused", parseCastRefused, refused],
   ["refused attack", parseCastRefused, { kind: "attack", reason: "no-weapon" }],
@@ -2039,12 +2053,51 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
   [
     "snapshot with more joined than expected",
     parseWireSnapshotPart,
-    { ...snapshot, preMatch: { joined: 5, expected: 4, secondsLeft: null } },
+    { ...snapshot, preMatch: { joined: 5, expected: 4, secondsLeft: null, spawns } },
   ],
   [
     "snapshot with a fractional countdown",
     parseWireSnapshotPart,
-    { ...snapshot, preMatch: { joined: 4, expected: 4, secondsLeft: 2.5 } },
+    { ...snapshot, preMatch: { joined: 4, expected: 4, secondsLeft: 2.5, spawns } },
+  ],
+  [
+    "snapshot without spawns (#3909)",
+    parseWireSnapshotPart,
+    { ...snapshot, preMatch: { joined: 4, expected: 4, secondsLeft: 7 } },
+  ],
+  [
+    "snapshot with a spawn of no place (#3909)",
+    parseWireSnapshotPart,
+    {
+      ...snapshot,
+      preMatch: { joined: 4, expected: 4, secondsLeft: 7, spawns: [{ id: "p1", x: 0, layer: 0 }] },
+    },
+  ],
+  [
+    "snapshot with a spawn of no id (#3909)",
+    parseWireSnapshotPart,
+    {
+      ...snapshot,
+      preMatch: {
+        joined: 4,
+        expected: 4,
+        secondsLeft: 7,
+        spawns: [{ id: 3, x: 0, y: 0, layer: 0 }],
+      },
+    },
+  ],
+  [
+    "snapshot with a spawn on a fractional layer (#3909)",
+    parseWireSnapshotPart,
+    {
+      ...snapshot,
+      preMatch: {
+        joined: 4,
+        expected: 4,
+        secondsLeft: 7,
+        spawns: [{ id: "p1", x: 0, y: 0, layer: 0.5 }],
+      },
+    },
   ],
   ["snapshot with team 2 winning", parseWireSnapshotPart, { ...snapshot, winningTeam: 2 }],
   ["snapshot ended by host-left", parseWireSnapshotPart, { ...snapshot, endReason: "host-left" }],

@@ -147,7 +147,7 @@ export {
 
 export * from "./equipment/index.js";
 
-export { describePrimaryAttribute } from "./primary-attributes.js";
+export { primaryAttributeEffect, type PrimaryAttributeEffect } from "./primary-attributes.js";
 
 export type { BuildProblem, PlayerBuild, SkillBar } from "./build.js";
 export {
@@ -163,7 +163,13 @@ export {
 } from "./build.js";
 export type { JoinLoadout, JoinRefusal } from "./join-loadout.js";
 export { loadoutOf, resolveJoinLoadout } from "./join-loadout.js";
-export { STARTER_BUILDS, pickBuildFrom, pickStarterBuild } from "./starter-builds.js";
+export {
+  SOLO_FOE_BUILDS,
+  STARTER_BUILDS,
+  pickBuildFrom,
+  pickSoloFoeBuild,
+  pickStarterBuild,
+} from "./starter-builds.js";
 export { ELITE_ZAISHEN_MAP, drawZaishen, zaishenMoraleBoost } from "./elite-zaishen.js";
 export {
   ATTRIBUTE_IDS,

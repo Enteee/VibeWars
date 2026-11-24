@@ -62,6 +62,22 @@ export default {
 
   "buildEditor.addWeapon": "Lisää ase",
   "buildEditor.armor": "Panssari",
+  "buildEditor.attributeEffect.critical-strikes":
+    "+{percent}% kriittisen osuman mahdollisuus, +{energy} energiaa per kriittinen osuma",
+  "buildEditor.attributeEffect.divine-favor": "Monkin loitsut liittolaisiin parantavat +{heal}",
+  "buildEditor.attributeEffect.energy-storage": "+{energy} enimmäisenergiaa",
+  "buildEditor.attributeEffect.expertise":
+    "hyökkäystaidot, riitit, kosketustaidot ja Ranger-taidot maksavat {percent}% vähemmän energiaa",
+  "buildEditor.attributeEffect.fast-casting": "loitsut ja sinetit loitsitaan {percent}% nopeammin",
+  "buildEditor.attributeEffect.leadership":
+    "enintään {max} energiaa per huuto, {perAlly} per vaikutettu liittolainen",
+  "buildEditor.attributeEffect.mysticism":
+    "Dervishin lumoukset maksavat {percent}% vähemmän energiaa",
+  "buildEditor.attributeEffect.soul-reaping":
+    "+{energy} energiaa, kun joku lähellä kuolee ({triggers} per {seconds} s)",
+  "buildEditor.attributeEffect.spawning-power":
+    "olennot +{percent}% terveyttä, aseloitsut kestävät {percent}% pidempään",
+  "buildEditor.attributeEffect.strength": "hyökkäystaidot: {percent}% panssarin läpäisy",
   "buildEditor.back": "Takaisin",
   "buildEditor.bothHandsFull": "molemmat kädet täynnä",
   "buildEditor.budgetSegment": {
@@ -625,6 +641,7 @@ export default {
   "hud.outcomeVictory": "Voitto",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (kuollut)",
+  "hud.preMatchHeld": "Pysyt aloituspisteesi lähellä, kunnes ottelu alkaa.",
   "hud.preMatchStartingAnyway":
     "Odotetaan pelaajia: {joined}/{expected}, alkaa silti {seconds} s kuluttua",
   "hud.preMatchStartsIn": "Ottelu alkaa {seconds} kuluttua",
@@ -1692,16 +1709,12 @@ export default {
   "tutorial.look.praise": "Siinä se on! Tiemme taistelun ohi.",
   "tutorial.offer": "Uusi täällä? Opettajasi näyttää perusteet.",
   "tutorial.offerTitle": "Ensimmäinen kerta?",
+  "tutorial.ping.called": "Matkalla. Tavataan siellä, missä polut yhtyvät.",
   "tutorial.ping.hint": "Merkitse suunta, johon haluat mennä.",
   "tutorial.ping.how": "Napsauta maata rullalla, napsauta kompassia tai vedä kompassilla viiva.",
   "tutorial.ping.intro": "Vasemmalle vai oikealle? Sinä päätät.",
-  "tutorial.ping.pocket": "Hieno näköala. Mutta väärä suunta.",
   "tutorial.ping.praise": "Hyvä valinta. Eteenpäin.",
-  "tutorial.ramp.hint": "Ylös molemmat portaat korkean tasanteen merkille.",
-  "tutorial.ramp.how": "Napsauta korkeaa tasannetta. Reittisi kulkee portaat puolestasi.",
-  "tutorial.ramp.intro": "Portaat yhdistävät kerroksia. Astu niille, niin ne nostavat sinut ylös.",
-  "tutorial.ramp.landing": "Vielä yksi porras.",
-  "tutorial.ramp.praise": "Korkea maasto. Alhaalla olevat viholliset tavoittavat sinut vaivoin.",
+  "tutorial.ping.view": "Hieno näköala.",
   "tutorial.rats.again": "Kokeile tähän eri taitoa.",
   "tutorial.rats.big": "Iso. Lyö sitä, kunnes {bash} syttyy, kaada se ja käytä sitten {crush}.",
   "tutorial.rats.hint": "Käytä rottiin kahta eri taitoa.",
@@ -1717,18 +1730,15 @@ export default {
   "tutorial.stepIn.praise": "Yhdessä. Pidätä hengitystä.",
   "tutorial.touch.callHow": "Napauta rottaa ja sitten kohdepalkkia merkitäksesi sen.",
   "tutorial.touch.callT": "Juuri noin. Nyt olet merkityn kohteen kimpussa.",
-  "tutorial.touch.climbHint": "Ylös reunalle, sitten taas alas sen viereen.",
-  "tutorial.touch.climbHow": "Napauta reunaa ja sitten maata sen vieressä.",
-  "tutorial.touch.climbPraise": "Ylös ja taas alas. Nyt osaat lukea maastoa.",
-  "tutorial.touch.climbTip": "Vinkki: reunan napautus valitsee aina sen yläpinnan.",
-  "tutorial.touch.climbUnder": "Nyt takaisin alas, reunan viereen.",
+  "tutorial.touch.climbHow": "Napauta, mihin haluat seistä. Pitkä painallus valitsee maan alta.",
+  "tutorial.touch.climbTip": "Vinkki: pitkä painallus valitsee maan reunan alta.",
+  "tutorial.touch.climbUnder": "Paina pitkään. Katkoviivarengas on allasi.",
   "tutorial.touch.healHint":
     "Napauta ensin nimeäni ryhmän luettelossa. Napauta Ryhmä, jos luettelo on kiinni.",
   "tutorial.touch.healHow":
     "Napauta Ryhmä, jos luettelo on kiinni, sitten nimeäni ja sitten hehkuvaa taitoa.",
   "tutorial.touch.look": "Nipistä zoomataksesi. Vedä yhdellä sormella katsoaksesi.",
   "tutorial.touch.pingHow": "Napauta kompassia tai vedä sillä viiva.",
-  "tutorial.touch.rampHow": "Napauta korkeaa tasannetta. Reittisi kulkee portaat puolestasi.",
   "tutorial.touch.ratsHow": "Napauta rottaa valitaksesi sen.",
   "tutorial.touch.tunnelHow": "Napauta portaita alas, sitten merkkiä toisen pään takana.",
   "tutorial.touch.walk": "Napauta maata kävelläksesi sinne.",

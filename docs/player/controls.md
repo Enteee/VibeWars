@@ -76,6 +76,7 @@ On a phone or a tablet, in a match and in the Training Ground:
   again, quickly, to attack it. A tap just beside a character still finds
   it. A tap on yourself walks to that spot, or targets the flag stand or
   lever you stand on.
+- **Press and hold** to walk to the ground under a ledge or bridge, as Alt+click.
 - **Drag** one finger to look around; let go and the view glides back to
   you. **Pinch** to zoom.
 - **Tap** a skill on the bar to use it on your target.
@@ -86,7 +87,7 @@ Outside a match, the top bar holds **[?]** (this Help), **⚙** (Options),
 **Lobby** (your invite link, Join lobby, Open/Closed, Leave, and who is in your lobby; its badge counts them),
 **♪** (music: what plays, and how loud), the sound mute and fullscreen. In a match the same buttons,
 but Lobby, sit at the top right of the screen. In a narrow window, these icons and
-the screen's other buttons fold into **⋯**; only its main button stays out.
+the screen's other buttons fold into **☰**; only its main button stays out.
 ⚙ opens Options as a window under the bar, the screen still behind it; Esc, × or a click outside closes it.
 [?] opens Help the same way, as a window under it with a page picker on top; a match keeps running behind it.
 Help closes with its ×, Esc, a click outside, or another press of [?].

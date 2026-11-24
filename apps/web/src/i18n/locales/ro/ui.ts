@@ -63,6 +63,23 @@ export default {
 
   "buildEditor.addWeapon": "Adaugă o armă",
   "buildEditor.armor": "Armură",
+  "buildEditor.attributeEffect.critical-strikes":
+    "+{percent}% șansă de lovitură critică, +{energy} Energie per lovitură critică",
+  "buildEditor.attributeEffect.divine-favor": "vrăjile de Monk asupra aliaților vindecă +{heal}",
+  "buildEditor.attributeEffect.energy-storage": "+{energy} Energie maximă",
+  "buildEditor.attributeEffect.expertise":
+    "abilitățile de atac, ritualurile, abilitățile de atingere și abilitățile de Ranger costă cu {percent}% mai puțină Energie",
+  "buildEditor.attributeEffect.fast-casting":
+    "vrăjile și sigiliile se lansează cu {percent}% mai repede",
+  "buildEditor.attributeEffect.leadership":
+    "până la {max} Energie per strigăt, {perAlly} per aliat afectat",
+  "buildEditor.attributeEffect.mysticism":
+    "farmecele de Dervish costă cu {percent}% mai puțină Energie",
+  "buildEditor.attributeEffect.soul-reaping":
+    "+{energy} Energie când cineva din apropiere moare ({triggers} la {seconds} s)",
+  "buildEditor.attributeEffect.spawning-power":
+    "creaturi +{percent}% Viață, vrăjile de armă durează cu {percent}% mai mult",
+  "buildEditor.attributeEffect.strength": "abilitățile de atac: {percent}% penetrare a armurii",
   "buildEditor.back": "Înapoi",
   "buildEditor.bothHandsFull": "ambele mâini ocupate",
   "buildEditor.budgetSegment": {
@@ -650,6 +667,7 @@ export default {
   "hud.outcomeVictory": "Victorie",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (mort)",
+  "hud.preMatchHeld": "Rămâi lângă punctul tău de start până începe meciul.",
   "hud.preMatchStartingAnyway":
     "Se așteaptă jucătorii: {joined}/{expected}, începe oricum în {seconds} s",
   "hud.preMatchStartsIn": "Meciul începe în {seconds}",
@@ -1764,17 +1782,13 @@ export default {
   "tutorial.look.praise": "Iată-l! Drumul nostru pe lângă luptă.",
   "tutorial.offer": "Ești nou? Tutorele tău îți arată elementele de bază.",
   "tutorial.offerTitle": "Prima dată?",
+  "tutorial.ping.called": "Pornesc. Ne vedem unde se unesc cărările.",
   "tutorial.ping.hint": "Semnalează drumul pe care vrei să mergi.",
   "tutorial.ping.how":
     "Clic cu rotița pe sol, clic pe busolă sau trage pe busolă ca să desenezi o linie.",
   "tutorial.ping.intro": "Stânga sau dreapta? Tu decizi.",
-  "tutorial.ping.pocket": "Frumoasă priveliște. Dar e drumul greșit.",
   "tutorial.ping.praise": "Bună alegere. Înainte.",
-  "tutorial.ramp.hint": "Urcă ambele șiruri de trepte până la semnul de pe platforma înaltă.",
-  "tutorial.ramp.how": "Dă clic pe platforma înaltă. Drumul urcă treptele pentru tine.",
-  "tutorial.ramp.intro": "Treptele leagă straturile. Pășește și te urcă.",
-  "tutorial.ramp.landing": "Încă un șir de trepte.",
-  "tutorial.ramp.praise": "Teren înalt. Dușmanii de jos greu te ajung.",
+  "tutorial.ping.view": "Frumoasă priveliște.",
   "tutorial.rats.again": "Încearcă altă abilitate pe acesta.",
   "tutorial.rats.big":
     "Unul mare. Lovește-l până se aprinde {bash}, apoi doboară-l și folosește {crush}.",
@@ -1791,18 +1805,15 @@ export default {
   "tutorial.stepIn.praise": "Împreună. Ține-ți respirația.",
   "tutorial.touch.callHow": "Atinge un șobolan, apoi bara țintei ca să-l semnalezi.",
   "tutorial.touch.callT": "Exact. Acum ești pe ținta semnalată.",
-  "tutorial.touch.climbHint": "Urcă pe cornișă, apoi coboară iar lângă ea.",
-  "tutorial.touch.climbHow": "Atinge cornișa, apoi pământul de lângă ea.",
-  "tutorial.touch.climbPraise": "Sus și iar jos. Acum știi să citești terenul.",
-  "tutorial.touch.climbTip": "Sfat: o atingere pe cornișă alege mereu partea de sus.",
-  "tutorial.touch.climbUnder": "Acum coboară înapoi, lângă cornișă.",
+  "tutorial.touch.climbHow": "Atinge unde vrei să stai. Apăsarea lungă alege pământul de dedesubt.",
+  "tutorial.touch.climbTip": "Sfat: apăsarea lungă alege pământul de sub o cornișă.",
+  "tutorial.touch.climbUnder": "Apasă lung. Cercul punctat e sub tine.",
   "tutorial.touch.healHint":
     "Mai întâi atinge numele meu în lista grupului. Atinge Grup dacă lista e închisă.",
   "tutorial.touch.healHow":
     "Atinge Grup dacă lista e închisă, apoi numele meu, apoi abilitatea care strălucește.",
   "tutorial.touch.look": "Ciupește ca să faci zoom. Trage cu un deget ca să privești.",
   "tutorial.touch.pingHow": "Atinge busola sau trage pe ea ca să desenezi o linie.",
-  "tutorial.touch.rampHow": "Atinge platforma înaltă. Drumul urcă treptele pentru tine.",
   "tutorial.touch.ratsHow": "Atinge un șobolan ca să-l țintești.",
   "tutorial.touch.tunnelHow": "Atinge treptele în jos, apoi semnul de dincolo de capătul celălalt.",
   "tutorial.touch.walk": "Atinge solul ca să mergi acolo.",

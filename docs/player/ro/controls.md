@@ -77,6 +77,7 @@ Pe un telefon sau o tabletă, într-un meci și pe terenul de antrenament:
   chiar lângă un personaj îl găsește totuși. O atingere pe tine însuți merge
   până în acel loc sau ține în țintă suportul de steag ori maneta pe care
   stai.
+- **Apasă lung** ca să mergi pe pământul de sub o cornișă sau un pod, ca Alt+clic.
 - **Trage** cu un deget ca să te uiți în jur; ridică degetul și vederea
   alunecă înapoi la tine. **Ciupește** ca să dai zoom.
 - **Atinge** o abilitate de pe bară ca s-o folosești pe ținta ta.
@@ -87,7 +88,7 @@ Pe un telefon sau o tabletă, într-un meci și pe terenul de antrenament:
 **Lobby** (linkul tău de invitație, Intră într-un lobby, Deschis/Închis, Ieși și cine e în lobby-ul tău; insigna îi numără),
 **♪** (muzică: ce se aude și cât de tare), oprirea sunetului și ecranul complet. Într-un meci aceleași butoane,
 în afară de Lobby, stau în dreapta sus pe ecran. Într-o fereastră îngustă, aceste pictograme și
-celelalte butoane ale ecranului se strâng în **⋯**; doar butonul principal rămâne afară.
+celelalte butoane ale ecranului se strâng în **☰**; doar butonul principal rămâne afară.
 ⚙ deschide Opțiunile ca fereastră sub bară, cu ecranul încă în spate; Esc, × sau un clic în afară o închide.
 [?] deschide Ajutorul la fel, ca fereastră sub el cu un selector de pagină sus; meciul continuă în spate.
 Ajutorul se închide cu propriul ×, cu Esc, cu un clic în afară sau apăsând din nou [?].

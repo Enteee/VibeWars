@@ -80,3 +80,75 @@ test("a phone puts its character in the team by tap and Put here (#3876)", async
   await expect(pick).toHaveAttribute("aria-pressed", "false");
   await expect(panel).toContainText("Fill the team");
 });
+
+/** On station 9's ledge, as `tutorial.spec`'s ON_THE_LEDGE: a tap here picks the deck. */
+const ON_THE_LEDGE = { x: 3850, y: 1830 };
+/** Screen px a tap goes sideways from the camera's centre at most, inside a Pixel 8a's width. */
+const REACH_PX = 160;
+/** Screen px a tap goes up at most: the tutor's lines sit over the arena above that. */
+const CLEAR_ABOVE_PX = 100;
+
+test("a phone climbs down under the ledge with a long-press (#3878)", async ({ page }) => {
+  // From the stairs' foot, up and down again on a loaded runner.
+  test.setTimeout(300_000);
+  await page.goto("./?menu-background=bench-flat&tutorial-station=9");
+  const frame = page.locator(".tutorial-frame");
+  await expect(frame).toHaveCount(1, { timeout: 30_000 });
+  await expect(frame).toHaveAttribute("data-mark", /^-?\d+,-?\d+$/);
+  const [ledgeX = 0, ledgeY = 0] = ((await frame.getAttribute("data-mark")) ?? "")
+    .split(",")
+    .map(Number);
+  const stage = page.locator("#viewport");
+  const canvas = page.locator("#viewport canvas:not(.compass)");
+  /** Where `point` is on the page, a stride toward it at most, clear of the tutor's lines. */
+  const toward = async (point: { x: number; y: number }): Promise<{ x: number; y: number }> => {
+    const view = await projection(stage, canvas);
+    const there = view.onPage(point);
+    const mid = await canvas.evaluate((element) => {
+      const box = element.getBoundingClientRect();
+      return { x: box.left + box.width / 2, y: box.top + box.height / 2 };
+    });
+    const dx = there.x - mid.x;
+    const dy = there.y - mid.y;
+    const reach = Math.min(
+      1,
+      REACH_PX / Math.max(Math.abs(dx), 1),
+      CLEAR_ABOVE_PX / Math.max(-dy, 1),
+    );
+    return { x: mid.x + dx * reach, y: mid.y + dy * reach };
+  };
+
+  // Up by taps, a stride at a time, until the mark goes under the ledge.
+  const upper = (await frame.getAttribute("data-mark-layer")) ?? "";
+  await expect(async () => {
+    if ((await frame.getAttribute("data-mark-layer")) !== upper) {
+      return;
+    }
+    const at = await toward(ON_THE_LEDGE);
+    await page.touchscreen.tap(at.x, at.y);
+    await expect(frame).not.toHaveAttribute("data-mark-layer", upper, { timeout: 3_000 });
+  }).toPass({ timeout: 180_000 });
+  await expect(frame.locator(".tutorial-how")).toHaveText(
+    "Tap where to stand. Press and hold picks the ground below.",
+  );
+
+  // Held still 600 ms on the mark: the walk goes under the ledge, not onto it.
+  const said = frame.locator(".tutorial-said");
+  // The praise stands 2.5 s only, then station 10's intro: either is past the climb.
+  const climbed = /Two layers, one spot\. You read the ground now\.|Steps join layers\./;
+  const cdp = await page.context().newCDPSession(page);
+  await expect(async () => {
+    if (climbed.test((await said.textContent()) ?? "")) {
+      return;
+    }
+    const at = await toward({ x: ledgeX, y: ledgeY });
+    await cdp.send("Input.dispatchTouchEvent", {
+      type: "touchStart",
+      touchPoints: [{ ...at, id: 0 }],
+    });
+    await page.waitForTimeout(600);
+    await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+    await expect(said).toHaveText(climbed, { timeout: 10_000 });
+  }).toPass({ timeout: 90_000 });
+  await cdp.detach();
+});

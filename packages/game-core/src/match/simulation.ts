@@ -179,6 +179,7 @@ import {
   STATUS_DEFINITIONS,
   StatusSet,
   type ActiveStatus,
+  type BodyTrait,
   type Outbreak,
   type StatusChange,
   type StatusDefinition,
@@ -2131,6 +2132,17 @@ export class MatchSimulation {
 
   public get(id: string): Participant | undefined {
     return this.#participants.get(id);
+  }
+
+  /**
+   * Where `id` is held before the start (#3909): its spawn bubble's centre,
+   * on the layer it spawned on, as `#holdInBubble` holds it.
+   */
+  public heldAt(id: string): { readonly at: Vec2; readonly layer: number } | undefined {
+    const record = this.#participants.get(id);
+    return record === undefined
+      ? undefined
+      : { at: record.spawn, layer: record.spec.layer ?? this.#ground };
   }
 
   /** A participant's net pips as they stand (#504): what the next tick applies, natural regeneration included. */
@@ -4799,7 +4811,8 @@ export class MatchSimulation {
 
   /**
    * Spreading statuses (#765), once everyone has acted: every living
-   * combatant adjacent to a living bearer, on either team, catches it for
+   * combatant of the bearer's own kind of body (#3881, `bodyType`)
+   * adjacent to a living bearer, on either team, catches it for
    * as long as the bearer has left, once per outbreak. Who carries what
    * is read before anyone catches anything, so one caught this step
    * spreads from the next, and in the participants' fixed order, so the
@@ -4832,6 +4845,7 @@ export class MatchSimulation {
         // Immune (#1455): not caught, and free to catch it once that ends.
         if (
           outbreak.infected.has(other.id) ||
+          bodyType(other) !== bodyType(record) ||
           !sharesFloor(other.floors, floorOf(record.layer)) ||
           distance(record.position, other.position) > AREA_ADJACENT ||
           other.combatant.statuses.isImmuneTo(status.id)
@@ -5461,10 +5475,10 @@ export class MatchSimulation {
   }
 
   /**
-   * Leadership's energy for a shout or a chant (#625, #758): one for
-   * each ally it reached, the shouter included, however many events each got, up to
-   * the rank's cap. Pushed onto the shout's own events, so its log entry
-   * carries the gain.
+   * Leadership's energy for a shout or a chant (#625, #758, #3880): two
+   * for each ally it reached, the shouter included, however many events
+   * each got, up to the rank's cap. Pushed onto the shout's own events, so
+   * its log entry carries the gain.
    */
   #gainLeadershipEnergy(record: ParticipantRecord, events: CombatEvent[]): void {
     const team = record.combatant.team;
@@ -10166,7 +10180,9 @@ export class MatchSimulation {
   /**
    * Soul Reaping (#530): every living Necromancer within spirit range of
    * `victim` gains its rank in energy, up to its maximum, at most 3 times
-   * in any 15 s. The victim's own rank does nothing: it is dead.
+   * in any 15 s. The victim's own rank does nothing: it is dead. A death
+   * while the Necromancer is at maximum energy gives nothing and does not
+   * use up one of the 3 (#3880), as in GW1.
    */
   #reapSoul(victim: ParticipantRecord): void {
     for (const record of this.#participants.values()) {
@@ -10175,7 +10191,8 @@ export class MatchSimulation {
       if (
         rank <= 0 ||
         combatant.dead ||
-        !distanceWithinRange(record.position, victim.position, RANGE_SPIRIT)
+        !distanceWithinRange(record.position, victim.position, RANGE_SPIRIT) ||
+        combatant.energy >= effectiveMaxEnergy(combatant)
       ) {
         continue;
       }
@@ -11622,7 +11639,7 @@ export class MatchSimulation {
 
   #combatant(spec: ParticipantSpec): Combatant {
     const maxHealth = spec.maxHealth ?? this.#ruleset.combat.baseHealth;
-    const statuses = new StatusSet(this.#spentStatuses);
+    const statuses = new StatusSet(bodyTrait(spec.creature), this.#spentStatuses);
     return {
       id: spec.id,
       health: maxHealth * (spec.startHealthFraction ?? 1),
@@ -11657,7 +11674,27 @@ export class MatchSimulation {
   }
 }
 
-/** A body's type, as Edge of Extinction reads it (#1886): a creature's kind, or `"character"`. */
+/**
+ * A body's type, a creature's kind or `"character"`: what Edge of
+ * Extinction reads (#1886), and who catches Disease from whom (#3881).
+ */
 function bodyType(record: ParticipantRecord): CreatureKind | "character" {
   return record.creature?.kind ?? "character";
+}
+
+/**
+ * What a body is made of (#3881), GW1's *Fleshy*: a spirit is a spirit, a
+ * minion but the Flesh Golem and a ghost are not fleshy, and everyone else is.
+ */
+function bodyTrait(creature: Creature | undefined): BodyTrait {
+  switch (creature?.kind) {
+    case "spirit":
+      return "spirit";
+    case "minion":
+      return creature.look === "flesh-golem" ? "fleshy" : "non-fleshy";
+    case "ghostly-hero":
+      return "non-fleshy";
+    default:
+      return "fleshy";
+  }
 }

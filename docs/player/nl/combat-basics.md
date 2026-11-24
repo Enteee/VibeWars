@@ -62,18 +62,20 @@ behalve een ![Kreet](../../../apps/web/public/icons/skill-type/shout.svg) **kree
 
 **Condities** doen je pijn tot ze aflopen of verwijderd worden:
 
-| Conditie                                                                                            | Wat het doet                                               |
-| --------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- |
-| ![Bloeding](../../../apps/web/public/icons/status/bleeding.svg) **Bloeding**                        | onttrekt Gezondheid                                        |
-| ![Brandend](../../../apps/web/public/icons/status/burning.svg) **Brandend**                         | onttrekt snel Gezondheid                                   |
-| ![Vergif](../../../apps/web/public/icons/status/poison.svg) **Vergif**                              | onttrekt Gezondheid                                        |
-| ![Ziekte](../../../apps/web/public/icons/status/disease.svg) **Ziekte**                             | onttrekt Gezondheid, en springt over op wie naast je staat |
-| ![Verlamd](../../../apps/web/public/icons/status/crippled.svg) **Verlamd**                          | je beweegt op halve snelheid                               |
-| ![Blind](../../../apps/web/public/icons/status/blind.svg) **Blind**                                 | de meeste aanvallen missen                                 |
-| ![Zwakte](../../../apps/web/public/icons/status/weakness.svg) **Zwakte**                            | je wapen slaat veel zwakker                                |
-| ![Gebarsten pantser](../../../apps/web/public/icons/status/cracked-armor.svg) **Gebarsten pantser** | minder pantser                                             |
-| ![Diepe wond](../../../apps/web/public/icons/status/deep-wound.svg) **Diepe wond**                  | minder maximale Gezondheid, en genezing werkt minder       |
-| ![Versuft](../../../apps/web/public/icons/status/dazed.svg) **Versuft**                             | spreuken casten traag; elke aanval onderbreekt ze          |
+| Conditie                                                                                            | Wat het doet                                                             |
+| --------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| ![Bloeding](../../../apps/web/public/icons/status/bleeding.svg) **Bloeding**                        | onttrekt Gezondheid                                                      |
+| ![Brandend](../../../apps/web/public/icons/status/burning.svg) **Brandend**                         | onttrekt snel Gezondheid                                                 |
+| ![Vergif](../../../apps/web/public/icons/status/poison.svg) **Vergif**                              | onttrekt Gezondheid                                                      |
+| ![Ziekte](../../../apps/web/public/icons/status/disease.svg) **Ziekte**                             | onttrekt Gezondheid, en springt over op hetzelfde soort lichaam naast je |
+| ![Verlamd](../../../apps/web/public/icons/status/crippled.svg) **Verlamd**                          | je beweegt op halve snelheid                                             |
+| ![Blind](../../../apps/web/public/icons/status/blind.svg) **Blind**                                 | de meeste aanvallen missen                                               |
+| ![Zwakte](../../../apps/web/public/icons/status/weakness.svg) **Zwakte**                            | je wapen slaat veel zwakker                                              |
+| ![Gebarsten pantser](../../../apps/web/public/icons/status/cracked-armor.svg) **Gebarsten pantser** | minder pantser                                                           |
+| ![Diepe wond](../../../apps/web/public/icons/status/deep-wound.svg) **Diepe wond**                  | minder maximale Gezondheid, en genezing werkt minder                     |
+| ![Versuft](../../../apps/web/public/icons/status/dazed.svg) **Versuft**                             | spreuken casten traag; elke aanval onderbreekt ze                        |
+
+Dienaren (behalve de Vleesgolem), geesten en spirits bloeden niet, raken niet vergiftigd en worden niet ziek, en spirits krijgen geen vloek en geen toestand behalve **Brandend**.
 
 ![Vloek](../../../apps/web/public/icons/skill-type/hex.svg) **Vloeken** worden door vijanden op je gecast; ![Betovering](../../../apps/web/public/icons/skill-type/enchantment.svg) **betoveringen** door jezelf of
 je bondgenoten. Elk wordt verwijderd door een eigen soort skill. Sommige

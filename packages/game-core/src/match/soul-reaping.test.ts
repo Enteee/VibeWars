@@ -94,6 +94,17 @@ describe("Soul Reaping (#530)", () => {
     expect(kill(match, "f1")).toBe(100);
   });
 
+  it("does not use up a trigger on a death while at maximum energy (#3880)", () => {
+    const match = withNecromancer(...NEARBY);
+    get(match, "n").combatant.energy = 100;
+    expect(kill(match, "f1")).toBe(100);
+    expect(get(match, "n").combatant.soulReapingTriggers).toEqual([]);
+    get(match, "n").combatant.energy = 0;
+    expect(kill(match, "f2")).toBe(12);
+    expect(kill(match, "a1")).toBe(24);
+    expect(kill(match, "a2")).toBe(36);
+  });
+
   it("triggers 3 times in 15 s: a 4th death gives nothing, one after the first's 15 s does", () => {
     const match = withNecromancer(...NEARBY);
     expect(kill(match, "f1")).toBe(12);

@@ -64,6 +64,23 @@ export default {
 
   "buildEditor.addWeapon": "Ajouter une arme",
   "buildEditor.armor": "Armure",
+  "buildEditor.attributeEffect.critical-strikes":
+    "+{percent}% de chances de coup critique, +{energy} énergie par coup critique",
+  "buildEditor.attributeEffect.divine-favor": "les sorts de Moine sur les alliés soignent +{heal}",
+  "buildEditor.attributeEffect.energy-storage": "+{energy} énergie maximale",
+  "buildEditor.attributeEffect.expertise":
+    "compétences d'attaque, rituels, compétences de contact et compétences de Rôdeur : {percent}% d'énergie en moins",
+  "buildEditor.attributeEffect.fast-casting": "sorts et sceaux lancés {percent}% plus vite",
+  "buildEditor.attributeEffect.leadership":
+    "jusqu'à {max} énergie par cri, {perAlly} par allié affecté",
+  "buildEditor.attributeEffect.mysticism":
+    "les enchantements de Derviche coûtent {percent}% d'énergie en moins",
+  "buildEditor.attributeEffect.soul-reaping":
+    "+{energy} énergie quand quelqu'un meurt à proximité ({triggers} par {seconds} s)",
+  "buildEditor.attributeEffect.spawning-power":
+    "créatures +{percent}% santé, les sorts d'arme durent {percent}% plus longtemps",
+  "buildEditor.attributeEffect.strength":
+    "compétences d'attaque : {percent}% de pénétration d'armure",
   "buildEditor.back": "Retour",
   "buildEditor.bothHandsFull": "les deux mains prises",
   "buildEditor.budgetSegment": {
@@ -651,6 +668,7 @@ export default {
   "hud.outcomeVictory": "Victoire",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (mort)",
+  "hud.preMatchHeld": "Vous restez près de votre point d'apparition jusqu'au début du match.",
   "hud.preMatchStartingAnyway":
     "En attente des joueurs : {joined}/{expected}, début quand même dans {seconds} s",
   "hud.preMatchStartsIn": "Le match commence dans {seconds}",
@@ -1777,18 +1795,13 @@ export default {
   "tutorial.look.praise": "Le voilà ! Notre chemin autour du combat.",
   "tutorial.offer": "Nouveau ? Ton tuteur va te montrer les bases.",
   "tutorial.offerTitle": "Première fois ?",
+  "tutorial.ping.called": "J'y vais. On se retrouve là où les chemins se rejoignent.",
   "tutorial.ping.hint": "Signale le chemin que tu veux prendre.",
   "tutorial.ping.how":
     "Clic molette sur le sol, clic sur la boussole, ou glisse sur la boussole pour tracer une ligne.",
   "tutorial.ping.intro": "À gauche ou à droite ? À toi de voir.",
-  "tutorial.ping.pocket": "Jolie vue. Mais mauvais chemin.",
   "tutorial.ping.praise": "Bien vu. En avant.",
-  "tutorial.ramp.hint":
-    "Monte les deux volées de marches jusqu'à la marque sur la plate-forme haute.",
-  "tutorial.ramp.how": "Clique sur la plate-forme haute. Ton chemin prend les marches pour toi.",
-  "tutorial.ramp.intro": "Les marches relient les niveaux. Avance, elles te montent.",
-  "tutorial.ramp.landing": "Encore une volée.",
-  "tutorial.ramp.praise": "Position haute. Les ennemis d'en bas t'atteignent mal.",
+  "tutorial.ping.view": "Jolie vue.",
   "tutorial.rats.again": "Essaie une autre compétence sur celui-ci.",
   "tutorial.rats.big":
     "Un gros. Frappe-le jusqu'à ce que {bash} s'allume, renverse-le, puis {crush}.",
@@ -1805,18 +1818,15 @@ export default {
   "tutorial.stepIn.praise": "Ensemble. Retiens ton souffle.",
   "tutorial.touch.callHow": "Touche un rat, puis la barre de cible pour le désigner.",
   "tutorial.touch.callT": "C'est ça. Tu vises maintenant la cible désignée.",
-  "tutorial.touch.climbHint": "Monte sur la corniche, puis redescends à côté.",
-  "tutorial.touch.climbHow": "Touche la corniche, puis le sol à côté.",
-  "tutorial.touch.climbPraise": "Monté, redescendu. Tu sais lire le terrain.",
-  "tutorial.touch.climbTip": "Astuce : toucher une corniche choisit toujours son sommet.",
-  "tutorial.touch.climbUnder": "Maintenant redescends, à côté de la corniche.",
+  "tutorial.touch.climbHow": "Touche où te placer. Un appui long choisit le sol en dessous.",
+  "tutorial.touch.climbTip": "Astuce : un appui long choisit le sol sous une corniche.",
+  "tutorial.touch.climbUnder": "Appuie longuement. Le cercle en pointillés est sous toi.",
   "tutorial.touch.healHint":
     "Touche d'abord mon nom dans la liste du groupe. Touche Groupe si la liste est fermée.",
   "tutorial.touch.healHow":
     "Touche Groupe si la liste est fermée, puis mon nom, puis la compétence qui brille.",
   "tutorial.touch.look": "Pince pour zoomer. Glisse un doigt pour regarder.",
   "tutorial.touch.pingHow": "Touche la boussole, ou glisse dessus pour tracer une ligne.",
-  "tutorial.touch.rampHow": "Touche la plate-forme haute. Ton chemin prend les marches pour toi.",
   "tutorial.touch.ratsHow": "Touche un rat pour le cibler.",
   "tutorial.touch.tunnelHow":
     "Touche les marches qui descendent, puis la marque après l'autre bout.",

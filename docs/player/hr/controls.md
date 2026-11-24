@@ -74,6 +74,7 @@ Na telefonu ili tabletu, u meču i na poligonu za vježbu:
   istog neprijatelja da ga napadneš. Dodir tik uz lik ga svejedno nalazi.
   Dodir na sebe hoda do tog mjesta ili cilja stalak za zastavu ili polugu na
   kojoj stojiš.
+- **Pritisni i drži** da hodaš do tla ispod izbočine ili mosta, kao Alt+klik.
 - **Povuci** jednim prstom za razgledavanje; pusti i pogled klizi natrag
   k tebi. **Stisni** prste za zumiranje.
 - **Dodirni** vještinu na traci da je upotrijebiš na svoju metu.
@@ -84,7 +85,7 @@ Izvan meča gornja traka sadrži **[?]** (ova Pomoć), **⚙** (Opcije),
 **Soba** (tvoja pozivnica, Uđi u sobu, Otvoreno/Zatvoreno, Izađi i tko je u tvojoj sobi; značka ih broji),
 **♪** (glazba: što svira i koliko glasno), isključivanje zvuka i cijeli zaslon. U meču su isti gumbi,
 osim Sobe, gore desno na zaslonu. U uskom prozoru te se ikone i
-ostali gumbi zaslona sklapaju u **⋯**; vani ostaje samo glavni gumb.
+ostali gumbi zaslona sklapaju u **☰**; vani ostaje samo glavni gumb.
 ⚙ otvara Opcije kao prozor ispod trake, a zaslon ostaje iza njega; zatvaraju ga Esc, × ili klik izvan njega.
 [?] otvara Pomoć na isti način, kao prozor ispod njega s biračem stranica na vrhu; meč se iza njega nastavlja.
 Pomoć se zatvara svojim ×, s Esc, klikom izvan nje ili ponovnim pritiskom na [?].

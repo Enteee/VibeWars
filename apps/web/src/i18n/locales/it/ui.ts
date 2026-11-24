@@ -63,6 +63,25 @@ export default {
 
   "buildEditor.addWeapon": "Aggiungi arma",
   "buildEditor.armor": "Armatura",
+  "buildEditor.attributeEffect.critical-strikes":
+    "+{percent}% di probabilità di colpo critico, +{energy} Energia per colpo critico",
+  "buildEditor.attributeEffect.divine-favor":
+    "gli incantesimi da Monaco sugli alleati curano +{heal}",
+  "buildEditor.attributeEffect.energy-storage": "+{energy} Energia massima",
+  "buildEditor.attributeEffect.expertise":
+    "abilità di attacco, rituali, abilità a contatto e abilità da Ranger costano il {percent}% di Energia in meno",
+  "buildEditor.attributeEffect.fast-casting":
+    "incantesimi e sigilli si lanciano il {percent}% più velocemente",
+  "buildEditor.attributeEffect.leadership":
+    "fino a {max} Energia per grido, {perAlly} per alleato coinvolto",
+  "buildEditor.attributeEffect.mysticism":
+    "gli incantamenti da Derviscio costano il {percent}% di Energia in meno",
+  "buildEditor.attributeEffect.soul-reaping":
+    "+{energy} Energia quando qualcuno muore nelle vicinanze ({triggers} ogni {seconds} s)",
+  "buildEditor.attributeEffect.spawning-power":
+    "creature +{percent}% Salute, gli incantesimi su arma durano il {percent}% in più",
+  "buildEditor.attributeEffect.strength":
+    "abilità di attacco: {percent}% di penetrazione dell'armatura",
   "buildEditor.back": "Indietro",
   "buildEditor.bothHandsFull": "entrambe le mani occupate",
   "buildEditor.budgetSegment": {
@@ -651,6 +670,7 @@ export default {
   "hud.outcomeVictory": "Vittoria",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (morto)",
+  "hud.preMatchHeld": "Resti vicino al tuo punto di partenza finché la partita non inizia.",
   "hud.preMatchStartingAnyway":
     "In attesa dei giocatori: {joined}/{expected}, inizia comunque tra {seconds} s",
   "hud.preMatchStartsIn": "La partita inizia tra {seconds}",
@@ -1764,17 +1784,13 @@ export default {
   "tutorial.look.praise": "Eccolo! La nostra via attorno alla battaglia.",
   "tutorial.offer": "Nuovo qui? Il tuo tutor ti mostrerà le basi.",
   "tutorial.offerTitle": "Prima volta?",
+  "tutorial.ping.called": "Arrivo. Ci vediamo dove i sentieri si uniscono.",
   "tutorial.ping.hint": "Segnala la strada che vuoi prendere.",
   "tutorial.ping.how":
     "Clic con la rotellina sul terreno, clic sulla bussola o trascina sulla bussola per tracciare una linea.",
   "tutorial.ping.intro": "Sinistra o destra? Decidi tu.",
-  "tutorial.ping.pocket": "Bella vista. Ma è la strada sbagliata.",
   "tutorial.ping.praise": "Ottima scelta. Avanti.",
-  "tutorial.ramp.hint": "Su per entrambe le rampe fino al segno sulla piattaforma alta.",
-  "tutorial.ramp.how": "Clicca la piattaforma alta. Il percorso sale i gradini per te.",
-  "tutorial.ramp.intro": "I gradini uniscono i livelli. Salici e ti portano su.",
-  "tutorial.ramp.landing": "Ancora una rampa.",
-  "tutorial.ramp.praise": "Terreno alto. I nemici di sotto faticano a raggiungerti.",
+  "tutorial.ping.view": "Bella vista.",
   "tutorial.rats.again": "Prova un'altra abilità su questo.",
   "tutorial.rats.big":
     "Uno grosso. Colpiscilo finché {bash} si accende, poi atterralo e usa {crush}.",
@@ -1791,18 +1807,16 @@ export default {
   "tutorial.stepIn.praise": "Insieme. Trattieni il respiro.",
   "tutorial.touch.callHow": "Tocca un ratto, poi la barra del bersaglio per segnalarlo.",
   "tutorial.touch.callT": "Esatto. Ora punti il bersaglio segnalato.",
-  "tutorial.touch.climbHint": "Sali sulla sporgenza, poi riscendi accanto.",
-  "tutorial.touch.climbHow": "Tocca la sporgenza, poi il terreno accanto.",
-  "tutorial.touch.climbPraise": "Su e di nuovo giù. Ora sai leggere il terreno.",
-  "tutorial.touch.climbTip": "Suggerimento: toccare una sporgenza sceglie sempre la cima.",
-  "tutorial.touch.climbUnder": "Ora riscendi, accanto alla sporgenza.",
+  "tutorial.touch.climbHow": "Tocca dove stare. Una pressione lunga sceglie il terreno sotto.",
+  "tutorial.touch.climbTip":
+    "Suggerimento: una pressione lunga sceglie il terreno sotto una sporgenza.",
+  "tutorial.touch.climbUnder": "Tieni premuto. Il cerchio tratteggiato è sotto di te.",
   "tutorial.touch.healHint":
     "Prima tocca il mio nome nella lista del gruppo. Tocca Gruppo se la lista è chiusa.",
   "tutorial.touch.healHow":
     "Tocca Gruppo se la lista è chiusa, poi il mio nome, poi l'abilità che brilla.",
   "tutorial.touch.look": "Pizzica per lo zoom. Trascina un dito per guardare.",
   "tutorial.touch.pingHow": "Tocca la bussola, o trascina sopra per tracciare una linea.",
-  "tutorial.touch.rampHow": "Tocca la piattaforma alta. Il percorso sale i gradini per te.",
   "tutorial.touch.ratsHow": "Tocca un ratto per selezionarlo.",
   "tutorial.touch.tunnelHow": "Tocca i gradini in discesa, poi il segno oltre l'altra estremità.",
   "tutorial.touch.walk": "Tocca il terreno per camminare lì.",
