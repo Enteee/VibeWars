@@ -175,10 +175,15 @@ a ta: `2 echipe caută`. Doar gazda are acolo **Ieși din coadă**. Dacă închi
 fila, grupul iese imediat din coadă. Când apare altă echipă la coada aceluiași mod,
 joci cu ea pe una dintre hărțile modului, fiecare parte cu buildurile ei, și te
 întorci apoi în lobby. Gazda poate ieși oricând din coadă, din fereastra cercului; un invitat care
-pleacă scoate tot grupul din ea. După 10 s în coadă, gazda poate
-apăsa și **Joacă contra boților** în fereastra cercului: un meci în propriul lobby contra unei echipe
-presetate aleatorii de boți, cu excepția [Ascensiunii Eroilor](modes.md#ascensiunea-eroilor),
-care așteaptă o echipă de la runda ta.
+pleacă scoate tot grupul din ea. Cât timp nu vine altă echipă, fereastra cercului
+și lobby-ul tău numără invers 30 s până la o **încălzire**: un meci în propriul lobby
+contra unei echipe presetate aleatorii de boți. Nu contează pentru nimic, nici rating,
+nici Istoricul meciurilor, iar tu rămâi tot timpul în coadă: o etichetă din meci îți
+spune asta. O încălzire urmează după alta până se găsește o echipă; atunci încălzirea
+se termină imediat și treci la meciul tău. În loc să aștepte, gazda poate apăsa
+**Începe încălzirea acum** în fereastra cercului. Nu există încălziri la
+[Ascensiunea Eroilor](modes.md#ascensiunea-eroilor), care așteaptă o echipă de la
+runda ta.
 
 ![Arenă de echipe: săgețile pentru mărimea echipei la baza barei și echipa lobby-ului tău, căreia i te alături](../img/team-arena-1.png)
 

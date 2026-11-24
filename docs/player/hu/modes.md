@@ -348,6 +348,9 @@ választott méret, a többiben 8), akárhányan is vannak az osztagban; a
 helyeket, amelyeket senki sem foglal el, botok játsszák.
 Amíg sorban áll, böngészheted a többi módot: az osztag megtartja a
 módját és a méretét, amíg el nem hagyja a sort.
+A Csapatarénában és a GvG-ben az osztag, amely 30 mp-et várt, bemelegítő
+meccseket játszik botok ellen, továbbra is sorban, amíg csapat nem akad
+([bemelegítések](getting-started.md#meccs-indítása-vagy-csatlakozás)).
 Minden szakasz 30 másodpercig tart, és korábban véget ér, ha a
 Csapatlobbiban mindenki kész. A szavazás és a hely elfoglalása késznek
 jelöl.

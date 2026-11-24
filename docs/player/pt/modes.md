@@ -316,7 +316,9 @@ só do próprio lado, do tamanho da equipe do modo (o tamanho escolhido na
 Arena de Equipes, 8 nos outros), não importa quantos estejam no grupo; os
 bots jogam nos assentos que ninguém pegar.
 Enquanto está na fila, você pode ver os outros modos: o grupo mantém o
-modo e o tamanho até sair da fila.
+modo e o tamanho até sair da fila. Em Arena de Equipes e GvG, um grupo
+que esperou 30 s joga aquecimentos contra bots, ainda na fila, até uma
+equipe ser encontrada ([aquecimentos](getting-started.md#hospedar-ou-entrar-em-uma-partida)).
 Cada etapa dura 30 segundos e termina antes quando todos na Sala de
 Equipe estiverem prontos. Votar e pegar um assento marcam você como pronto.
 

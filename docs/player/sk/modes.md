@@ -306,7 +306,9 @@ v Tímovej aréne, Výstupe hrdinov alebo GvG) dostane tímové lobby len svojej
 strany, také veľké ako tím režimu (v Tímovej aréne vybraná veľkosť, inak 8),
 nech je v družine koľkokoľvek hráčov; miesta, ktoré nikto nezaberie, hrajú boti.
 Kým je vo fronte, môžeš si prezerať ostatné režimy: družina si ponecháva
-režim a veľkosť, kým neopustí frontu.
+režim a veľkosť, kým neopustí frontu. V Tímovej aréne a GvG hrá družina,
+ktorá čakala 30 s, rozcvičky proti botom, stále vo fronte, kým sa nenájde
+tím ([rozcvičky](getting-started.md#hostiť-zápas-alebo-sa-pripojiť)).
 Každá fáza trvá 30 sekúnd a skončí skôr, len čo sú všetci v tímovom
 lobby pripravení. Hlasovanie a zabratie miesta ťa označia ako pripraveného.
 

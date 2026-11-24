@@ -181,11 +181,15 @@ hur många lag som söker, ert inräknat: `2 lag söker`. Bara värden har
 ett annat köande lag i samma läge dyker upp spelar ni mot dem på en av
 lägets kartor, varje sida med sina egna builds, och kommer sedan tillbaka
 till er lobby. Värden kan lämna från ringens fönster när som helst; en
-gäst som lämnar tar hela gruppen ur kön. Efter 10 s i kön kan värden
-också trycka på **Spela mot bottar** i ringens fönster: en match i er
-egen lobby mot ett slumpat förvalt lag av bottar,
-utom i [Heroes' Ascent](modes.md#heroes-ascent), som väntar på ett
-lag i er runda.
+gäst som lämnar tar hela gruppen ur kön. Så länge inget annat lag dyker
+upp räknar ringens fönster och er lobby ner 30 s till en **uppvärmning**:
+en match i er egen lobby mot ett slumpat förvalt lag av bottar. Den räknas
+inte, ingen rating och ingen Matchhistorik, och ni står kvar i kön hela
+tiden: en etikett i matchen säger det. Den ena uppvärmningen följer på den
+andra tills ett lag hittas; då slutar uppvärmningen direkt och ni går till
+er match. Värden kan trycka på **Starta uppvärmning nu** i ringens fönster
+i stället för att vänta. Det finns inga uppvärmningar i
+[Heroes' Ascent](modes.md#heroes-ascent), som väntar på ett lag i er runda.
 
 ![Lagarena: pilarna för lagstorlek längst ner i listen och din lobbys lag att gå med i](../img/team-arena-1.png)
 

@@ -207,6 +207,47 @@ test("#1766: two parties of two queue for Team Arena, meet, and play their own b
   }
 });
 
+test("#3899: a queued party warms up against bots, and goes to its match once another team queues", async ({
+  browser,
+}) => {
+  test.setTimeout(150_000);
+  const { context, pages } = await openPeers(browser, 4);
+  const [ann, bea, cid, dot] = pages as [Page, Page, Page, Page];
+
+  try {
+    await formParty([ann, bea], ["Ann", "Bea"]);
+    await runTeamLobby([ann, bea]);
+    // Every member is told the warmup is coming; only the host may start it now.
+    await expect(bea.locator(".lobby-warmup")).toContainText("Warmup match against bots in");
+    await ann.locator("#topbar .topbar-queue").click();
+    const flyout = ann.locator("#topbar .queue-window");
+    await expect(flyout).toContainText("Warmup match against bots in");
+    await flyout.getByRole("button", { name: "Start warmup now" }).click();
+
+    // A warmup: the party's own match against bots, still in the queue.
+    for (const page of [ann, bea]) {
+      await expect(page.locator(".hud-warmup")).toContainText(
+        "Warmup — still in the queue for Team Arena 4v4",
+        { timeout: 25_000 },
+      );
+    }
+
+    // Another party queues: the warmup ends at once, and all four meet.
+    await formParty([cid, dot], ["Cid", "Dot"]);
+    await runTeamLobby([cid, dot]);
+    for (const page of [ann, bea]) {
+      await expect(page.locator(".hud-warmup")).toHaveCount(0, { timeout: 60_000 });
+    }
+    for (const page of [ann, bea, cid, dot]) {
+      await expect(page.locator(".hud-skills .hud-skill").first()).toBeAttached({
+        timeout: 40_000,
+      });
+    }
+  } finally {
+    await context.close();
+  }
+});
+
 test("#2107: a Team Arena leader picks 2v2, and the party queues for Team Arena 2v2", async ({
   browser,
 }) => {

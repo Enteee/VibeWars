@@ -169,10 +169,15 @@ szukających drużyn, wliczając twoją: `2 drużyny szukają`. Tylko host ma ta
 **Opuść kolejkę**. Zamknięcie karty hosta natychmiast usuwa grupę z kolejki. Gdy
 pojawi się inna drużyna w kolejce tego samego trybu, gracie przeciw niej na jednej
 z map trybu, każda strona ze swoimi buildami, a potem wracacie do lobby. Host może opuścić kolejkę w oknie pierścienia w dowolnej chwili; gość, który wychodzi, zabiera z niej
-całą grupę. Po 10 s w kolejce host może też nacisnąć w oknie pierścienia **Graj z
-botami**: mecz we własnym lobby przeciw losowej gotowej drużynie botów,
-oprócz [Szczytu Bohaterów](modes.md#szczyt-bohaterów), który czeka na drużynę na twojej
-rundzie.
+całą grupę. Dopóki nie pojawi się inna drużyna, okno pierścienia i twoje lobby
+odliczają 30 s do **rozgrzewki**: meczu we własnym lobby przeciw losowej gotowej
+drużynie botów. Nie liczy się do niczego, nie daje rankingu ani wpisu w Historii
+meczów, a ty przez cały czas zostajesz w kolejce: mówi o tym etykieta w meczu.
+Jedna rozgrzewka następuje po drugiej, dopóki nie znajdzie się drużyna; wtedy
+rozgrzewka od razu się kończy i przechodzisz do swojego meczu. Zamiast czekać,
+host może nacisnąć w oknie pierścienia **Zacznij rozgrzewkę teraz**. Na
+[Szczycie Bohaterów](modes.md#szczyt-bohaterów) nie ma rozgrzewek: tam czeka się
+na drużynę na twojej rundzie.
 
 ![Arena drużynowa: strzałki rozmiaru drużyny u dołu paska i drużyna twojego lobby, do której dołączasz](../img/team-arena-1.png)
 

@@ -187,10 +187,15 @@ sekmesini kapatmak grubu hemen sıradan çıkarır. Aynı modda sıradaki
 başka bir takım çıkınca, onlarla modun haritalarından birinde, her taraf
 kendi dizilimleriyle oynarsın ve ardından lobine dönersin. Kurucu
 halkanın penceresinden istediği an çıkabilir; çıkan bir misafir bütün
-grubu sıradan çıkarır. Sırada 10 sn geçtikten sonra kurucu halkanın
-penceresinde **Botlara karşı oyna**'ya da basabilir: kendi lobinde rastgele hazır bir
-bot takımına karşı bir maç; ancak senin turundaki bir takımı bekleyen
-[Kahramanların Yükselişi](modes.md#kahramanların-yükselişi) hariç.
+grubu sıradan çıkarır. Başka bir takım gelmediği sürece halkanın penceresi
+ve lobin bir **ısınma** için 30 sn geri sayar: kendi lobinde rastgele hazır
+bir bot takımına karşı bir maç. Hiçbir şeye sayılmaz, ne puan ne Maç
+geçmişi, ve bu sürenin tamamında sırada kalırsın: maçtaki bir etiket de
+bunu söyler. Bir takım bulunana kadar ısınmalar birbirini izler; sonra
+ısınma hemen biter ve maçına geçersin. Kurucu beklemek yerine halkanın
+penceresinde **Isınmayı şimdi başlat**'a basabilir. Senin turundaki bir
+takımı bekleyen [Kahramanların Yükselişi](modes.md#kahramanların-yükselişi)
+modunda ısınma yoktur.
 
 ![Takım Arenası: rayın altındaki takım boyutu okları ve katılacağın lobinin takımı](../img/team-arena-1.png)
 

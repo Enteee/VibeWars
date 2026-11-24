@@ -326,7 +326,10 @@ egen side, lige så stor som spiltilstandens hold (Holdarenas valgte
 størrelse, 8 for de andre), uanset hvor mange der er i gruppen; bots
 spiller de pladser, ingen tager.
 Mens den står i kø, kan du kigge på de andre spiltilstande: gruppen
-beholder sin spiltilstand og størrelse, indtil den forlader køen.
+beholder sin spiltilstand og størrelse, indtil den forlader køen. I
+Holdarena og GvG spiller en gruppe, der har ventet 30 s, opvarmninger mod
+bots, stadig i køen, indtil et hold er fundet
+([opvarmninger](getting-started.md#vær-vært-for-eller-deltag-i-en-kamp)).
 Hvert trin varer 30 sekunder og slutter tidligt, så snart alle i
 Holdlobbyen er klar. At stemme og at tage en plads markerer dig som klar.
 

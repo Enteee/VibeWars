@@ -304,7 +304,9 @@ on Team Arena, Heroes' Ascent or GvG) gets a Team Lobby of its own side
 only, as big as the mode's team (Team Arena's picked size, 8 for the others)
 however many are in the party; bots play the seats nobody claims.
 While it is queued you may browse the other modes: the party keeps its
-mode and size until it leaves the queue.
+mode and size until it leaves the queue. In Team Arena and GvG, a party
+that has waited 30 s plays warmups against bots, still in the queue, until
+a team is found ([warmups](getting-started.md#host-or-join-a-match)).
 Each stage lasts 30 seconds and ends early once everyone in the Team
 Lobby is ready. Voting and taking a seat mark you ready.
 

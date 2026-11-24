@@ -298,7 +298,9 @@ echipe, Ascensiunea Eroilor sau GvG) primește un Lobby de echipă doar al păr�
 mărimea echipei modului (mărimea aleasă la Arenă de echipe, 8 la celelalte), indiferent
 câți sunt în grup; boții ocupă locurile pe care nu le revendică nimeni. Cât timp e la
 coadă, poți răsfoi celelalte moduri: grupul își păstrează modul și mărimea până iese din
-coadă. Fiecare etapă durează 30 de secunde și se încheie mai devreme când toți cei din
+coadă. La Arenă de echipe și GvG, un grup care a așteptat 30 s joacă încălziri contra
+boților, tot la coadă, până se găsește o echipă
+([încălziri](getting-started.md#găzduiește-un-meci-sau-intră-într-unul)). Fiecare etapă durează 30 de secunde și se încheie mai devreme când toți cei din
 Lobby-ul de echipă sunt gata. Votul și ocuparea unui loc te marchează ca fiind gata.
 
 ![Arenă de echipe: săgețile pentru mărimea echipei la baza barei și echipa lobby-ului tău, căreia i te alături](../img/team-arena-1.png)

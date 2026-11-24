@@ -300,7 +300,10 @@ xếp hàng ([Tìm trận](getting-started.md#tạo-hoặc-vào-trận) ở Đ�
 bằng đội của chế độ (cỡ đã chọn của Đấu trường đội, 8 với các chế độ khác)
 bất kể tổ đội có bao nhiêu người; bot chơi các chỗ không ai nhận. Trong lúc
 xếp hàng, bạn có thể xem các chế độ khác: tổ đội giữ chế độ và cỡ của mình
-cho đến khi rời hàng chờ. Mỗi giai đoạn kéo dài 30 giây và kết thúc sớm khi
+cho đến khi rời hàng chờ. Ở Đấu trường đội và GvG, một tổ đội đã chờ 30
+giây sẽ chơi các trận khởi động với bot, vẫn trong hàng chờ, cho đến khi
+tìm thấy một đội ([khởi động](getting-started.md#tạo-hoặc-vào-trận)).
+Mỗi giai đoạn kéo dài 30 giây và kết thúc sớm khi
 mọi người trong Sảnh Đội đã sẵn sàng. Bỏ phiếu và nhận chỗ sẽ đánh dấu bạn
 sẵn sàng.
 

@@ -178,12 +178,16 @@ Tímovej aréne aj počtom hľadajúcich tímov vrátane tvojho: `2 tímy hľada
 **Opustiť frontu** tam má len hostiteľ. Zatvorením karty hostiteľa družina
 okamžite opustí frontu. Keď sa objaví iný tím vo fronte toho istého režimu,
 hráte proti nemu na jednej z máp režimu, každá strana so svojimi buildmi, a
-potom sa vrátite do svojho lobby. Hostiteľ môže kedykoľvek opustiť frontu v okne krúžku; hosť, ktorý odíde, vyradí z fronty celú družinu. Po
-10 s vo fronte môže hostiteľ v okne krúžku stlačiť aj
-**Hrať proti botom**: zápas vo vlastnom lobby proti náhodnému
-prednastavenému tímu botov,
-okrem [Výstupu hrdinov](modes.md#výstup-hrdinov), ktorý čaká na tím
-vo vašom kole.
+potom sa vrátite do svojho lobby. Hostiteľ môže kedykoľvek opustiť frontu v okne krúžku; hosť, ktorý odíde, vyradí z fronty celú družinu. Kým
+nepríde žiadny iný tím, okno krúžku aj vaše lobby odpočítavajú 30 s do
+**rozcvičky**: zápasu vo vlastnom lobby proti náhodnému prednastavenému
+tímu botov. Nič sa za ňu nezapočítava, žiadne hodnotenie ani História
+zápasov, a celý čas zostávate vo fronte: hovorí to aj štítok v zápase.
+Rozcvičky idú jedna za druhou, kým sa nenájde tím; potom sa rozcvička
+okamžite skončí a idete do svojho zápasu. Hostiteľ môže v okne krúžku
+stlačiť **Začať rozcvičku hneď** a nečakať. Vo
+[Výstupe hrdinov](modes.md#výstup-hrdinov), ktorý čaká na tím vo vašom
+kole, rozcvičky nie sú.
 
 ![Tímová aréna: šípky veľkosti tímu dole na lište a tím tvojho lobby, ku ktorému sa pridáš](../img/team-arena-1.png)
 
