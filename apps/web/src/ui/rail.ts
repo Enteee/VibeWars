@@ -544,6 +544,8 @@ export function railScreen(
     }
   };
   const tell = (event: DrawerEvent): void => {
+    // A hand slides the drawer; a turn of the phone puts it away at once.
+    panel.classList.toggle("is-drawer-sliding", event.kind !== "layout");
     const next = drawerNext(open, event);
     if (next.open === open && next.focus === "none") {
       return;

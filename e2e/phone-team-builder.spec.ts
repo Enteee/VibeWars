@@ -1,5 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 
+import { showRail } from "./helpers/menu.js";
 import { PIXEL_8A_LANDSCAPE, PIXEL_8A_PORTRAIT, TOUCH_TARGET } from "./helpers/phone.js";
 
 /**
@@ -20,6 +21,8 @@ const DEVICES = [
 /** A new team build open in the team builder, in the browser's language. */
 async function newTeam(page: Page): Promise<void> {
   await page.goto("./");
+  // Upright, the rail is a drawer (#3924).
+  await showRail(page);
   await page.locator('.mode-rail [data-entry="teams"]').tap();
   await page.locator('[data-tutorial="team-new"]').tap();
   await expect(page.locator(".team-grid .team-row").first()).toBeVisible();

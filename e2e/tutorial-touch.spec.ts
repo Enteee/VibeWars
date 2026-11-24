@@ -69,8 +69,7 @@ test("a phone puts its character in the team by tap and Put here (#3876)", async
   await expect(stepper).toHaveClass(/tutorial-pulse/);
   await stepper.getByRole("button", { name: "Smaller team" }).tap();
   await expect(stepper).toContainText("2v2");
-  // The stepper leaves the drawer open; its dim puts it away, through the lock.
-  await page.locator(".rail-drawer-scrim").tap();
+  // The coach's next target is out of the drawer: focus going to it puts the drawer away.
   await expect(page.locator(".mode-rail")).toBeHidden();
   await target("team-new").tap();
   await expect(page.locator(".team-grid .team-row")).toHaveCount(2);

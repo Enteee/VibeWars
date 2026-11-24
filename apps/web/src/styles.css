@@ -9770,10 +9770,6 @@ body:has(> .splash) #app {
     width: 92px;
     visibility: hidden;
     transform: translateX(-100%);
-    /* Hidden once it has slid out; shown at once, so an entry takes focus. */
-    transition:
-      transform 200ms ease-out,
-      visibility 0s 200ms;
   }
 
   .screen-rail > .mode-rail:dir(rtl) {
@@ -9783,6 +9779,17 @@ body:has(> .splash) #app {
   .screen-rail.is-drawer-open > .mode-rail {
     visibility: visible;
     transform: none;
+  }
+
+  /* A hand slides it, a turn of the phone does not: hidden once it has
+     slid out, shown at once, so an entry takes focus. */
+  .screen-rail.is-drawer-sliding > .mode-rail {
+    transition:
+      transform 200ms ease-out,
+      visibility 0s 200ms;
+  }
+
+  .screen-rail.is-drawer-sliding.is-drawer-open > .mode-rail {
     transition: transform 200ms ease-out;
   }
 
@@ -9794,6 +9801,9 @@ body:has(> .splash) #app {
     background: rgb(0 0 0 / 55%);
     opacity: 0;
     pointer-events: none;
+  }
+
+  .screen-rail.is-drawer-sliding > .rail-drawer-scrim {
     transition: opacity 200ms;
   }
 
@@ -9831,8 +9841,9 @@ body:has(> .splash) #app {
 }
 
 @media (pointer: coarse) and (width <= 30rem) and (prefers-reduced-motion: reduce) {
-  .screen-rail > .mode-rail,
-  .rail-drawer-scrim {
+  .screen-rail.is-drawer-sliding > .mode-rail,
+  .screen-rail.is-drawer-sliding.is-drawer-open > .mode-rail,
+  .screen-rail.is-drawer-sliding > .rail-drawer-scrim {
     transition: none;
   }
 }

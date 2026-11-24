@@ -1,6 +1,6 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
-import { joinFriend, openRail, type RailLabel } from "./helpers/menu.js";
+import { joinFriend, openRail, showRail, type RailLabel } from "./helpers/menu.js";
 import { clickTopbarIcon } from "./helpers/overlay.js";
 import { copyInvite, hostLobby, openPeers, openToFriends, setTeamSize } from "./helpers/peers.js";
 import {
@@ -145,7 +145,7 @@ test("a hosted lobby fits the phone, for its host and its guest (#3776)", async 
   const invite = await hostLobby(host);
   await expectFitsPhone(host, "lobby, host");
   await guest.goto("./");
-  await expect(guest.locator(".mode-rail")).toBeVisible();
+  await expect(guest.locator(".rail-drawer-toggle")).toBeVisible();
   await namePlayer(guest, "Guest");
   await joinFriend(guest, invite);
   await expect(guest.locator(".lobby-panel")).toBeVisible();
@@ -178,7 +178,7 @@ test("a party's Team Lobby and its Team Arena queue fit the phone (#3776)", asyn
   await openToFriends(leader);
   const invite = await copyInvite(leader);
   await member.goto("./");
-  await expect(member.locator(".mode-rail")).toBeVisible();
+  await expect(member.locator(".rail-drawer-toggle")).toBeVisible();
   await namePlayer(member, "Member");
   await joinFriend(member, invite);
   await expect(member.locator(".lobby-panel")).toContainText("Leader");
@@ -258,8 +258,9 @@ async function expectTwoRowTopbar(page: Page, what: string, editor: boolean): Pr
   }
 }
 
-/** The rail entry `entry` in any language: `openRail` goes by the English name. */
+/** The rail entry `entry` in any language, the drawer opened first: `openRail` goes by the English name. */
 async function openEntry(page: Page, entry: string): Promise<void> {
+  await showRail(page);
   const choice = page.locator(`.mode-rail [data-entry="${entry}"]`);
   await choice.click();
   await expect(choice).toHaveAttribute("aria-pressed", "true");
