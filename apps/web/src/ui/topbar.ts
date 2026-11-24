@@ -17,6 +17,7 @@ import {
   shareLine,
   type OwnIcon,
   type ShownBar,
+  TOPBAR_FOLD_GLYPH,
 } from "./kit.js";
 import { copyInviteLink } from "./lobby-screen.js";
 import { lobbyWindowBody, type RailParty } from "./lobby-window.js";
@@ -94,12 +95,6 @@ export function partyJoinsNotice(party: number): string {
  * (#707): a join may take up to 20 s, which should not look like a hang.
  */
 export const CONNECTING_NOTICE_MS = 3000;
-
-/**
- * The glyph on the bar's fold on a phone (#3886): ☰, so it does not look
- * like an editor's own ⋯ beside it.
- */
-export const TOPBAR_FOLD_GLYPH = "☰";
 
 /**
  * The lobby's controls, which the Lobby window mounts (#2385), and the

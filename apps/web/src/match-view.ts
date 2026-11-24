@@ -97,6 +97,7 @@ import {
   flashMessage,
   flashTargetCast,
   renderLeave,
+  attachHudMenu,
   renderKeyLabels,
   renderMute,
   refreshSkillBar,
@@ -859,6 +860,8 @@ export async function startMatchView(
   const jukebox = attachJukeboxPopover(hud.music, parent, true);
   // Esc cancels an attack now, so leaving is a button that asks first (#160).
   const leave = renderLeave(hud, callbacks.onLeave, options.kind === "play" && options.ranked);
+  // Leave and the rest under one ☰ (#3923).
+  const menu = attachHudMenu(hud, leave);
   // Options over the match (#454), a window like the music's (#2386): the
   // match goes on underneath.
   const optionsWindow = attachOptionsWindow(hud.options, parent, signet);
@@ -926,6 +929,8 @@ export async function startMatchView(
         if (leave.isOpen()) {
           leave.close();
         } else {
+          // The question asks in ☰'s list (#3923), so the list opens first.
+          menu.open();
           leave.open();
         }
       }
@@ -958,6 +963,13 @@ export async function startMatchView(
       isHelpOpen() ||
       (event.key === "Escape" && event.defaultPrevented)
     ) {
+      return;
+    }
+    // Esc puts ☰'s list away (#3923), and only that: no attack is cancelled.
+    if (event.key === "Escape" && menu.isOpen()) {
+      event.preventDefault();
+      event.stopPropagation();
+      menu.close();
       return;
     }
     if (seat === undefined) {
@@ -1227,6 +1239,8 @@ export async function startMatchView(
       panel.classList.add("hud-summary");
       // Nothing is cast any more, and the summary reaches down to the bar (#3790).
       hud.root.classList.add("is-ended");
+      // The summary takes the screen: no list left hanging over it (#3923).
+      menu.close();
       summary = { tables, panel, charts: false };
     }
     // Training sends none, and a host may never send it: then the table stays alone.
@@ -1529,6 +1543,7 @@ export async function startMatchView(
       jukebox.dispose();
       optionsWindow.dispose();
       helpWindow.dispose();
+      menu.dispose();
       detachFullscreen();
       hud.controls.remove();
       void viewport?.destroy();

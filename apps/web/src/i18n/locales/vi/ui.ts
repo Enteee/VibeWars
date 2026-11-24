@@ -558,6 +558,7 @@ export default {
   "hud.leaveRanked": "rời đi? Tính là thua",
   "hud.leaveYes": "có",
   "hud.lordPercent": "Lãnh chúa {percent}%",
+  "hud.menu": "Trình đơn",
   "hud.moraleBoostOurs": "Tăng sĩ khí! +{percent}%",
   "hud.moraleBoostTheirs": "Địch tăng sĩ khí",
   "hud.music": "Nhạc",

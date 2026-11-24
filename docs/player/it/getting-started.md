@@ -87,4 +87,4 @@ Il gioco online è peer to peer: gli altri giocatori della tua partita vedono il
 - Le tue otto abilità sono da **1** a **8**, a partire dallo slot 1. Puoi anche cliccare su un'abilità nella barra per usarla.
 - **Esc** annulla ciò che stai facendo. Ogni tasto si può cambiare in **Opzioni**, nella sezione comandi; il preset VibeWars mette le abilità su Q W E R e A S D F e muove con i tasti freccia. Li trovi tutti in [Comandi](controls.md).
 
-Il pulsante [?], in alto a destra, riapre questo Aiuto, anche in partita.
+Il pulsante [?], in alto a destra, riapre questo Aiuto; in partita sta in **☰**, in alto a destra.

@@ -237,4 +237,4 @@ Online spielst du Peer-to-Peer: Die anderen Spieler in deinem Match sehen deine 
   Q W E R und A S D F und läuft mit den Pfeiltasten. Alle stehen unter
   [Steuerung](controls.md).
 
-Der Knopf [?] oben rechts öffnet diese Hilfe wieder, auch im Match.
+Der Knopf [?] oben rechts öffnet diese Hilfe wieder; im Match liegt er unter **☰**, oben rechts.

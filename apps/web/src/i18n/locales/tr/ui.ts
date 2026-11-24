@@ -608,6 +608,7 @@ export default {
   "hud.leaveRanked": "ayrıl? Yenilgi sayılır",
   "hud.leaveYes": "evet",
   "hud.lordPercent": "Lord %{percent}",
+  "hud.menu": "Menü",
   "hud.moraleBoostOurs": "Moral Artışı! +%{percent}",
   "hud.moraleBoostTheirs": "Düşmana Moral Artışı",
   "hud.music": "Müzik",

@@ -47,6 +47,7 @@ test("music muted in the top bar shows muted in the HUD popover, and mute all fo
   await expect(popover.getByLabel("Mute all")).not.toBeChecked();
 
   // The HUD's own mute button and the popover's Mute all are one setting.
+  // Opening ☰'s list puts the popover away, so ♪ opens it again (#3923).
   const hudMute = await hudMenuRow(page, "mute");
   await hudMute.click();
   await expect(hudMute).toHaveAttribute("aria-pressed", "true");
@@ -68,7 +69,7 @@ test("the top bar's mute and the HUD's are one setting (#454)", async ({ page })
   await expect(page.locator("#topbar")).toBeHidden();
   const hudMute = await hudMenuRow(page, "mute");
   await expect(hudMute).toHaveAttribute("aria-pressed", "true");
-  await hudMute.click();
+  await (await hudMenuRow(page, "mute")).click();
   await expect(hudMute).toHaveAttribute("aria-pressed", "false");
   await expect(barMute).toHaveAttribute("aria-pressed", "false");
 });

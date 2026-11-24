@@ -251,4 +251,4 @@ alamat IP-mu.
   A S D F dan bergerak dengan tombol panah. Semuanya ada di
   [Kontrol](controls.md).
 
-Tombol [?], di kanan atas, membuka Bantuan ini lagi, juga di dalam laga.
+Tombol [?], di kanan atas, membuka Bantuan ini lagi; di dalam laga tombol ini ada di **☰**, di kanan atas.

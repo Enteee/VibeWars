@@ -107,7 +107,8 @@ test("the HUD's [?] opens Help over a match; Esc closes it and gives focus back 
 
   await page.keyboard.press("Escape");
   await expect(help).toHaveCount(0);
-  await expect(page.locator(".hud-help")).toBeFocused();
+  // Its row went with ☰'s list, so focus goes back to ☰ (#3923).
+  await expect(page.locator(".hud-menu-toggle")).toBeFocused();
 });
 
 test("Help, not the menu, says peers see your IP address (#541, #1442)", async ({ page }) => {

@@ -91,7 +91,8 @@ Fuera de una partida, la barra superior tiene **[?]** (esta Ayuda), **⚙**
 (Opciones), **Sala** (tu enlace de invitación, Unirse a una sala, Abierta/Cerrada, Salir y quién
 está en tu sala; su insignia los cuenta), **♪** (música: qué suena y a qué
 volumen), silenciar el sonido y pantalla completa. En una partida, los mismos
-botones, menos Sala, están arriba a la derecha de la pantalla. En una ventana
+botones, menos Sala, están en **☰** arriba a la derecha de la pantalla, junto con
+**Salir**; **M** sigue silenciando y **F10** sigue saliendo sin él. En una ventana
 estrecha, estos iconos y los demás botones de la pantalla se pliegan en
 **☰**; solo su botón principal se queda fuera. ⚙ abre Opciones como una
 ventana bajo la barra, con la pantalla aún detrás; Esc, × o un clic fuera la

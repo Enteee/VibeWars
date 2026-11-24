@@ -661,6 +661,7 @@ export default {
   "hud.leaveRanked": "odísť? Počíta sa ako prehra",
   "hud.leaveYes": "áno",
   "hud.lordPercent": "Pán {percent} %",
+  "hud.menu": "Ponuka",
   "hud.moraleBoostOurs": "Posila morálky! +{percent} %",
   "hud.moraleBoostTheirs": "Nepriateľská posila morálky",
   "hud.music": "Hudba",

@@ -233,4 +233,4 @@ Gra online jest peer-to-peer: inni gracze w twoim meczu widzą twój adres IP.
   sekcji sterowanie; układ VibeWars umieszcza umiejętności na Q W E R i A S D F,
   a ruch na strzałkach. Wszystkie są w [Sterowaniu](controls.md).
 
-Przycisk [?] w prawym górnym rogu ponownie otwiera tę Pomoc, także w meczu.
+Przycisk [?] w prawym górnym rogu ponownie otwiera tę Pomoc; w meczu jest w **☰**, w prawym górnym rogu.

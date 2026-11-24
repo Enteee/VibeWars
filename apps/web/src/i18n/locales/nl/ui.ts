@@ -606,6 +606,7 @@ export default {
   "hud.leaveRanked": "verlaten? Telt als verlies",
   "hud.leaveYes": "ja",
   "hud.lordPercent": "Heer {percent}%",
+  "hud.menu": "Menu",
   "hud.moraleBoostOurs": "Moraalboost! +{percent}%",
   "hud.moraleBoostTheirs": "Moraalboost vijand",
   "hud.music": "Muziek",

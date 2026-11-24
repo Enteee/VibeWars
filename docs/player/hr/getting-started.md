@@ -245,4 +245,4 @@ IP adresu.
   pod kontrole; predložak VibeWars stavlja vještine na Q W E R i A S D F i
   kretanje na strelice. Sve su navedene u [Kontrolama](controls.md).
 
-Gumb [?] gore desno ponovno otvara ovu Pomoć, i u meču.
+Gumb [?] gore desno ponovno otvara ovu Pomoć; u meču je u **☰**, gore desno.

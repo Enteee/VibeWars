@@ -505,7 +505,7 @@ test("the now-playing toast at a match start covers none of the HUD (#372)", asy
     page.evaluate(() => (window as { toastBox?: Box }).toastBox ?? null);
   await expect.poll(toastBox, { timeout: 5_000 }).not.toBeNull();
   const box = await toastBox();
-  for (const part of [".hud-skills", ".hud-bar-health", ".hud-scoreboard", ".hud-mute"]) {
+  for (const part of [".hud-skills", ".hud-bar-health", ".hud-scoreboard", ".hud-menu-toggle"]) {
     const other = await page.locator(part).boundingBox();
     expect(other, part).not.toBeNull();
     if (box !== null && other !== null) {

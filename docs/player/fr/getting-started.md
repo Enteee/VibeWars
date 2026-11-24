@@ -261,4 +261,4 @@ adresse IP.
   **commandes** ; le profil VibeWars met les compétences sur Q W E R et A S D F
   et le déplacement sur les flèches. Tout est dans [Commandes](controls.md).
 
-Le bouton [?], en haut à droite, rouvre cette Aide, en match aussi.
+Le bouton [?], en haut à droite, rouvre cette Aide ; en match, il est dans **☰**, en haut à droite.

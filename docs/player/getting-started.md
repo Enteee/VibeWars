@@ -253,4 +253,4 @@ IP address.
   and A S D F and moves with the arrow keys. All of them are in
   [Controls](controls.md).
 
-The [?] button, top right, opens this Help again, in a match too.
+The [?] button, top right, opens this Help again; in a match it is in **☰**, top right.

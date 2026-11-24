@@ -257,5 +257,5 @@ IP-osoitteesi.
   Q W E R ja A S D F ja liikkeen nuolinäppäimiin. Kaikki ne löytyvät sivulta
   [Ohjaus](controls.md).
 
-[?]-painike oikeassa yläkulmassa avaa tämän Ohjeen uudelleen, myös
-ottelussa.
+[?]-painike oikeassa yläkulmassa avaa tämän Ohjeen uudelleen; ottelussa se
+on **☰**-valikossa oikeassa yläkulmassa.

@@ -239,4 +239,4 @@ Jocul online este peer-to-peer: ceilalți jucători din meciul tău îți văd a
   Comenzi; presetarea VibeWars pune abilitățile pe Q W E R și A S D F și
   mișcarea pe săgeți. Toate sunt în [Comenzi](controls.md).
 
-Butonul [?], din dreapta sus, deschide din nou acest Ajutor, și într-un meci.
+Butonul [?], din dreapta sus, deschide din nou acest Ajutor; într-un meci e în **☰**, în dreapta sus.

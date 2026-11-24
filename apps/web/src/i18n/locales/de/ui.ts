@@ -610,6 +610,7 @@ export default {
   "hud.leaveRanked": "verlassen? Zählt als Niederlage",
   "hud.leaveYes": "ja",
   "hud.lordPercent": "Lord {percent}%",
+  "hud.menu": "Menü",
   "hud.moraleBoostOurs": "Moralschub! +{percent}%",
   "hud.moraleBoostTheirs": "Moralschub beim Gegner",
   "hud.music": "Musik",

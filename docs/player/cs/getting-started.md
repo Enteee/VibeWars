@@ -87,4 +87,4 @@ Online hra je peer to peer: ostatní hráči v tvém zápase vidí tvoji IP adre
 - Tvých osm dovedností je na **1** až **8**, první je pozice 1. Dovednost použiješ i kliknutím na liště.
 - **Esc** zruší, co právě děláš. Každou klávesu můžeš změnit v **Možnostech**, v sekci ovládání; předvolba VibeWars dá dovednosti na Q W E R a A S D F a pohyb na šipky. Všechny jsou v [Ovládání](controls.md).
 
-Tlačítko [?] vpravo nahoře otevře tuto Nápovědu znovu, i v zápase.
+Tlačítko [?] vpravo nahoře otevře tuto Nápovědu znovu; v zápase je v **☰**, vpravo nahoře.

@@ -663,6 +663,7 @@ export default {
   "hud.leaveRanked": "вийти? Зараховується як поразка",
   "hud.leaveYes": "так",
   "hud.lordPercent": "Лорд {percent}%",
+  "hud.menu": "Меню",
   "hud.moraleBoostOurs": "Бойовий дух! +{percent}%",
   "hud.moraleBoostTheirs": "Бойовий дух ворога",
   "hud.music": "Музика",

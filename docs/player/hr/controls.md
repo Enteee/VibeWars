@@ -84,7 +84,8 @@ Na telefonu ili tabletu, u meču i na poligonu za vježbu:
 Izvan meča gornja traka sadrži **[?]** (ova Pomoć), **⚙** (Opcije),
 **Soba** (tvoja pozivnica, Uđi u sobu, Otvoreno/Zatvoreno, Izađi i tko je u tvojoj sobi; značka ih broji),
 **♪** (glazba: što svira i koliko glasno), isključivanje zvuka i cijeli zaslon. U meču su isti gumbi,
-osim Sobe, gore desno na zaslonu. U uskom prozoru te se ikone i
+osim Sobe, u **☰** gore desno na zaslonu, zajedno s **Izađi**;
+**M** i dalje isključuje zvuk, a **F10** i dalje izlazi i bez njega. U uskom prozoru te se ikone i
 ostali gumbi zaslona sklapaju u **☰**; vani ostaje samo glavni gumb.
 ⚙ otvara Opcije kao prozor ispod trake, a zaslon ostaje iza njega; zatvaraju ga Esc, × ili klik izvan njega.
 [?] otvara Pomoć na isti način, kao prozor ispod njega s biračem stranica na vrhu; meč se iza njega nastavlja.

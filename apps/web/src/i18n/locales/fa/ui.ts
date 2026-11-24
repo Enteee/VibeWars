@@ -606,6 +606,7 @@ export default {
   "hud.leaveRanked": "خروج؟ باخت حساب می‌شود",
   "hud.leaveYes": "بله",
   "hud.lordPercent": "ارباب {percent}%",
+  "hud.menu": "منو",
   "hud.moraleBoostOurs": "تقویت روحیه! +{percent}%",
   "hud.moraleBoostTheirs": "تقویت روحیهٔ دشمن",
   "hud.music": "موسیقی",

@@ -637,6 +637,7 @@ export default {
   "hud.leaveRanked": "לעזוב? נחשב כהפסד",
   "hud.leaveYes": "כן",
   "hud.lordPercent": "לורד {percent}%",
+  "hud.menu": "תפריט",
   "hud.moraleBoostOurs": "חיזוק מורל! +{percent}%",
   "hud.moraleBoostTheirs": "חיזוק מורל לאויב",
   "hud.music": "מוזיקה",

@@ -699,6 +699,7 @@ export default {
   "hud.leaveRanked": "مغادرة؟ تُحتسب خسارة",
   "hud.leaveYes": "نعم",
   "hud.lordPercent": "السيد {percent}%",
+  "hud.menu": "قائمة",
   "hud.moraleBoostOurs": "رفع المعنويات! +{percent}%",
   "hud.moraleBoostTheirs": "رفع معنويات العدو",
   "hud.music": "الموسيقى",

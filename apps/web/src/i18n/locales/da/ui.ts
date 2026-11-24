@@ -606,6 +606,7 @@ export default {
   "hud.leaveRanked": "forlad? Det tæller som et nederlag",
   "hud.leaveYes": "ja",
   "hud.lordPercent": "Herre {percent}%",
+  "hud.menu": "Menu",
   "hud.moraleBoostOurs": "Moralløft! +{percent}%",
   "hud.moraleBoostTheirs": "Fjendens moralløft",
   "hud.music": "Musik",

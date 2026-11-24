@@ -260,5 +260,5 @@ seu endereço IP.
   **Opções**, em controles; o perfil VibeWars coloca as habilidades em Q W E R e
   A S D F e anda com as setas. Todas estão em [Controles](controls.md).
 
-O botão [?], no canto superior direito, abre esta Ajuda de novo, também
-em uma partida.
+O botão [?], no canto superior direito, abre esta Ajuda de novo; em uma
+partida, ele fica em **☰**, no canto superior direito.

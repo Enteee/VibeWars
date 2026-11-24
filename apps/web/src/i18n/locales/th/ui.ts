@@ -559,6 +559,7 @@ export default {
   "hud.leaveRanked": "ออก? นับเป็นแพ้",
   "hud.leaveYes": "ใช่",
   "hud.lordPercent": "ลอร์ด {percent}%",
+  "hud.menu": "เมนู",
   "hud.moraleBoostOurs": "บูสต์ขวัญกำลังใจ! +{percent}%",
   "hud.moraleBoostTheirs": "ศัตรูได้บูสต์ขวัญกำลังใจ",
   "hud.music": "เพลง",

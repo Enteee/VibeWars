@@ -819,6 +819,37 @@ describe("carriedBundle (#1225, #1374)", () => {
     expect(hud.dropFlag.hidden).toBe(true);
   });
 
+  it("folds the match's buttons into ☰'s list, in its order, shut (#3923)", () => {
+    vi.stubGlobal("document", { createElement: () => new FakeNode() });
+    const hud = createHud(
+      new FakeNode() as unknown as HTMLElement,
+      () => undefined,
+      () => undefined,
+      () => undefined,
+    );
+    vi.unstubAllGlobals();
+    const controls = hud.controls as unknown as FakeNode;
+    const menu = hud.menu as unknown as FakeNode;
+    expect(controls.children).toEqual([hud.menuToggle, hud.menu]);
+    expect(menu.hidden).toBe(true);
+    expect(menu.children.map((row) => row.className)).toEqual([
+      "hud-leave",
+      "hud-mute",
+      "hud-help",
+      "hud-options",
+      "hud-fullscreen",
+      "hud-music",
+    ]);
+    expect(menu.children).toEqual([
+      hud.leave,
+      hud.mute,
+      hud.help,
+      hud.options,
+      hud.fullscreen,
+      hud.music,
+    ]);
+  });
+
   it("shows the scoreboard, unless told not to, as the tutorial does (#3221)", () => {
     vi.stubGlobal("document", { createElement: () => new FakeNode() });
     const make = (inMatch?: boolean): HudElements =>

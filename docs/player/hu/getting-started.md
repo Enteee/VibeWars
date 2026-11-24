@@ -273,5 +273,5 @@ Az online játék peer to peer: a meccsed többi játékosa látja az IP-címede
   A S D F billentyűkre teszi a készségeket, és a nyílbillentyűkkel mozog.
   Mindegyik megtalálható az [Irányítás](controls.md) oldalon.
 
-A jobb felső sarokban lévő [?] gomb újra megnyitja ezt a Súgót, meccs
-közben is.
+A jobb felső sarokban lévő [?] gomb újra megnyitja ezt a Súgót; meccs
+közben a **☰** mögött van, jobb fent.

@@ -253,4 +253,4 @@ IP-adresse.
   i Styring; forvalget VibeWars lægger evner på Q W E R og A S D F og bevæger
   dig med piletasterne. De står alle under [Styring](controls.md).
 
-Knappen [?] øverst til højre åbner denne Hjælp igen, også i en kamp.
+Knappen [?] øverst til højre åbner denne Hjælp igen; i en kamp sidder den i **☰**, øverst til højre.

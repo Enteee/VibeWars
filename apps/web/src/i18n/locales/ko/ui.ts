@@ -561,6 +561,7 @@ export default {
   "hud.leaveRanked": "나가시겠습니까? 패배로 처리됩니다",
   "hud.leaveYes": "네",
   "hud.lordPercent": "로드 {percent}%",
+  "hud.menu": "메뉴",
   "hud.moraleBoostOurs": "사기 상승! +{percent}%",
   "hud.moraleBoostTheirs": "적 사기 상승",
   "hud.music": "음악",
