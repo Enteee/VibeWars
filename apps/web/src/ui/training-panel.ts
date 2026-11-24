@@ -292,7 +292,9 @@ export function createTrainingPanel(): TrainingPanel {
   // Overcast's grey band, after the fill and under the label (#461).
   const energyOvercast = overcastBandElement();
   energy.fill.after(energyOvercast);
-  const attacking = h("span", "training-attacking");
+  // Its own line, worded always and only shown while attacking: the row
+  // keeps one height whatever the locale's word for it (#3907).
+  const attacking = h("span", "training-attacking", t("training.attacking"));
   const vitals = h("div", "training-vitals");
   vitals.append(health.root, energy.root, attacking);
 
@@ -586,7 +588,11 @@ export function createTrainingPanel(): TrainingPanel {
     renderOvercastBand(energyOvercast, self.overcast, self.maxEnergy);
     renderPips(health.pips, self.healthPips);
     renderPips(energy.pips, self.energyPips);
-    setText(attacking, self.attackTargetSessionId === undefined ? "" : t("training.attacking"));
+    setStyle(
+      attacking.style,
+      "visibility",
+      self.attackTargetSessionId === undefined ? "hidden" : "visible",
+    );
     renderWeaponSets(weaponSets, session?.connection.weaponSets);
     const slots = session?.connection.skillBar ?? [];
     if (changedSlots(paintedSkills, slots).length > 0) {
