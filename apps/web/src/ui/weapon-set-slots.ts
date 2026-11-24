@@ -9,7 +9,8 @@ import { offhandIcon, weaponIcon, type GearIcon } from "./icons.js";
 /**
  * The four weapon-set slots at the skill bar's left end (#489), on the
  * match HUD and the Training Ground alike: each set's weapon, its
- * off-hand smaller, and its key. A click is the key.
+ * off-hand smaller, and its key, or its number on a touch screen. A
+ * click is the key.
  */
 
 /** Four empty slots, set 1 first, two by two. */
@@ -30,7 +31,7 @@ export function weaponSetSlots(onSwap: (set: number) => void): HTMLElement {
     slot.addEventListener("click", () => {
       onSwap(index);
     });
-    slot.innerHTML = `<span class="weapon-set-icons"></span><span class="weapon-set-key"></span>`;
+    slot.innerHTML = `<span class="weapon-set-icons"></span><span class="weapon-set-key"></span><span class="weapon-set-number" aria-hidden="true">${String(index + 1)}</span>`;
   }
   return root;
 }
