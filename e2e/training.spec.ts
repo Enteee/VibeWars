@@ -1953,6 +1953,7 @@ for (const { locale, ui } of [
     test.use({ locale, viewport: { width: 380, height: 720 } });
 
     test("attacking and stopping move nothing below them", async ({ page }) => {
+      test.slow();
       await page.goto("./");
       await page
         .locator(".mode-rail")
@@ -1985,6 +1986,16 @@ for (const { locale, ui } of [
       await page.keyboard.press(key("attack"));
       await expect(attacking).toBeVisible();
       await sample();
+      // Past the rows the log shows, so its growth would have moved the list.
+      await expect
+        .poll(
+          async () => {
+            samples.push(await offset());
+            return await page.locator(".training-log-row").count();
+          },
+          { timeout: 40_000, intervals: [100] },
+        )
+        .toBeGreaterThanOrEqual(12);
       // The first Esc stops the attack and keeps the arena (#1151).
       await page.keyboard.press("Escape");
       await expect(attacking).toBeHidden();

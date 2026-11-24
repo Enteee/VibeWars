@@ -5418,6 +5418,12 @@ body:has(> .splash) #menu-background::after {
     position: static;
     max-height: none;
   }
+
+  /* One height, so a hit's row never pushes the editor below down (#3907). */
+  .editor-layout.has-training > .training:not(.is-expanded) .training-log-rows {
+    flex: none;
+    height: 8rem;
+  }
 }
 
 @media (width <= 52rem) {
@@ -5907,13 +5913,25 @@ body.has-expanded-training #screens {
   font-size: 0.8rem;
 }
 
+/* One line each, so a number growing as you hit never wraps a row and
+   pushes the editor below down (#3907). */
 .training-meter-label {
   color: var(--ink-dim);
+  white-space: nowrap;
 }
 
 .training-meter-value {
   margin: 0;
   text-align: end;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* A phone: two to a row, so the longest label and value still fit on one. */
+@media (width <= 52rem) {
+  .training:not(.is-expanded) .training-meter {
+    grid-template-columns: repeat(2, auto 1fr);
+  }
 }
 
 .training-log {
