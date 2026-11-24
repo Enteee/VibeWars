@@ -4,7 +4,7 @@ import { expect, test, type Page } from "@playwright/test";
 
 import { projection } from "./camera.js";
 import { joinFriend } from "./helpers/menu.js";
-import { hostLobby, playOwnTeams, startSoloMatch } from "./helpers/peers.js";
+import { hostLobby, playOwnTeams } from "./helpers/peers.js";
 import { bringStarter, starterKey } from "./helpers/starter.js";
 import { key } from "./keys.js";
 
@@ -35,11 +35,21 @@ async function rightEdge(page: Page): Promise<Buffer> {
 test("an enchanted body wears a ring, and loses it when the enchantment ends (#1117)", async ({
   page,
 }) => {
-  // Armor Boost lasts 30 s, and the ring has to go with it.
+  // Armor Boost lasts 30 s, and the ring has to go with it. A foe who
+  // stands still, not a side of bots: one would walk over and hex you
+  // before it ends, and the strip with it.
   test.setTimeout(90_000);
+  const foe = await page.context().newPage();
   await bringStarter(page, ARMORED);
-  await page.goto("./");
-  await startSoloMatch(page);
+  const code = await hostLobby(page);
+  await foe.goto("./");
+  await joinFriend(foe, code);
+  await foe.getByRole("button", { name: "join team 2" }).click();
+  await foe.getByRole("button", { name: "Ready", exact: true }).click();
+  await page.getByRole("button", { name: "join team 1" }).click();
+  await page.getByRole("button", { name: "Ready", exact: true }).click();
+  await page.getByRole("button", { name: "start match" }).click();
+  await playOwnTeams([{ page }, { page: foe }]);
   const effects = page.getByRole("list", { name: "your effects" });
   const icon = effects.getByRole("listitem").filter({ has: page.getByAltText("Armor Boost") });
   const before = await rightEdge(page);
