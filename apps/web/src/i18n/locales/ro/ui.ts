@@ -664,7 +664,6 @@ export default {
   "hud.preMatchStartingAnyway":
     "Se așteaptă jucătorii: {joined}/{expected}, începe oricum în {seconds} s",
   "hud.preMatchStartsIn": "Meciul începe în {seconds}",
-  "hud.preMatchSelfAllyOnly": "Înainte de start: doar abilități pe tine sau pe aliați.",
   "hud.preMatchWaiting": "Se așteaptă jucătorii: {joined}/{expected}",
   "hud.priest": "preot",
   "hud.priestDead": "preot (mort)",
@@ -698,6 +697,7 @@ export default {
   "hud.refusalInvalidTargetSpirit": "Nu poți ținti un spirit.",
   "hud.refusalInvalidTargetUnenchantable": "Ținta nu poate primi farmece.",
   "hud.refusalInvalidTargetWall": "Doar o abilitate care provoacă daune poate lovi un zid.",
+  "hud.refusalWallBeforeStart": "Niciun zid nu poate fi lovit înainte de începerea meciului.",
   "hud.refusalInvalidTargetUntargetable": "Vrăjile tale nu pot ținti acest inamic.",
   "hud.refusalNeedsWeapon": "Necesită {weapon}.",
   "hud.refusalNoAnimalToCharm": "Nu e niciun animal de îmblânzit aici.",

@@ -629,7 +629,6 @@ export const en = {
   "hud.preMatchStartingAnyway":
     "Waiting for players: {joined}/{expected}, starting anyway in {seconds} s",
   "hud.preMatchStartsIn": "Match starts in {seconds}",
-  "hud.preMatchSelfAllyOnly": "Before the start: only skills on yourself or allies.",
   "hud.preMatchWaiting": "Waiting for players: {joined}/{expected}",
   "hud.priest": "priest",
   "hud.priestDead": "priest (dead)",
@@ -663,6 +662,7 @@ export const en = {
   "hud.refusalInvalidTargetSpirit": "Cannot target a spirit.",
   "hud.refusalInvalidTargetUnenchantable": "That target cannot be enchanted.",
   "hud.refusalInvalidTargetWall": "Only a skill that deals damage can strike a wall.",
+  "hud.refusalWallBeforeStart": "No wall can be struck before the match starts.",
   "hud.refusalInvalidTargetUntargetable": "Your spells cannot target that foe.",
   "hud.refusalNeedsWeapon": "Needs {weapon}.",
   "hud.refusalNoAnimalToCharm": "There is no animal to charm here.",

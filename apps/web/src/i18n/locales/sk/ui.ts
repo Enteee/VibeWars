@@ -682,7 +682,6 @@ export default {
   "hud.preMatchStartingAnyway":
     "Čaká sa na hráčov: {joined}/{expected}, začne aj tak o {seconds} s",
   "hud.preMatchStartsIn": "Zápas začne o {seconds}",
-  "hud.preMatchSelfAllyOnly": "Pred začiatkom: len zručnosti na seba alebo spojencov.",
   "hud.preMatchWaiting": "Čaká sa na hráčov: {joined}/{expected}",
   "hud.priest": "kňaz",
   "hud.priestDead": "kňaz (mŕtvy)",
@@ -716,6 +715,7 @@ export default {
   "hud.refusalInvalidTargetSpirit": "Ducha nemožno zamerať.",
   "hud.refusalInvalidTargetUnenchantable": "Tento cieľ nemožno očarovať.",
   "hud.refusalInvalidTargetWall": "Múr zasiahne iba schopnosť, ktorá spôsobuje zranenie.",
+  "hud.refusalWallBeforeStart": "Pred začiatkom zápasu nemožno zasiahnuť žiadny múr.",
   "hud.refusalInvalidTargetUntargetable": "Tvoje kúzla nemôžu zamerať tohto nepriateľa.",
   "hud.refusalNeedsWeapon": "Vyžaduje: {weapon}.",
   "hud.refusalNoAnimalToCharm": "Nie je tu žiadne zviera na skrotenie.",

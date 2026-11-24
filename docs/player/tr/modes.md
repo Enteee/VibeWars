@@ -34,7 +34,7 @@ ekran dışındaki ya da HUD'ın altındaki bir hedef, ekranın kenarında
 kimsenin değilse gri, sunak ise altın renginde. Bir oyuncunun dolu oku
 onun üstüne çizilir.
 
-Bir maç, her takım kendi başlangıç alanında bir arada tutularak açılır: bu alanın içinde istediğin yere yürüyebilir ve kendine ve müttefiklerine tılsımlar, duruşlar ve iyileştirmeler gibi becerilerle hazırlanabilirsin, ama saldıramaz ya da bir düşmana beceri kullanamazsın. Beklerken Enerji ve Can yenilenir, botlar da hazırlanır. Takımının başlangıç alanının çevresindeki parıldayan bir duvar, ne kadar uzağa gidebileceğini gösterir. Üstteki bir satır maçı yüklemiş oyuncuları sayar. Herkes yükleyince 10 saniye geri sayar ve maç başlar, saati de onunla. 20 saniye sonra hâlâ yüklememiş bir oyuncu beklenmez: geri sayım onsuz başlar ve o yine de sonradan katılabilir.
+Bir maç, her takım kendi başlangıç alanında bir arada tutularak açılır: bu alanın içinde istediğin yere yürüyebilir ve her beceriyi kullanabilirsin, o yüzden kapılar açılmadan önce tılsımlarını, duruşlarını, ruhlarını ya da korumalarını hazırla; öteki takım uzakta, kendi başlangıç alanında tutulur. Beklerken Enerji ve Can yenilenir, botlar da hazırlanır. Takımının başlangıç alanının çevresindeki parıldayan bir duvar, ne kadar uzağa gidebileceğini gösterir. Üstteki bir satır maçı yüklemiş oyuncuları sayar. Herkes yükleyince 10 saniye geri sayar ve maç başlar, saati de onunla. 20 saniye sonra hâlâ yüklememiş bir oyuncu beklenmez: geri sayım onsuz başlar ve o yine de sonradan katılabilir.
 
 ## İmha
 

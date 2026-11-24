@@ -664,7 +664,6 @@ export default {
   "hud.preMatchStartingAnyway":
     "Aguardando jogadores: {joined}/{expected}, começa mesmo assim em {seconds} s",
   "hud.preMatchStartsIn": "A partida começa em {seconds}",
-  "hud.preMatchSelfAllyOnly": "Antes do início: só habilidades em você ou em aliados.",
   "hud.preMatchWaiting": "Aguardando jogadores: {joined}/{expected}",
   "hud.priest": "sacerdote",
   "hud.priestDead": "sacerdote (morto)",
@@ -698,6 +697,7 @@ export default {
   "hud.refusalInvalidTargetSpirit": "Não é possível mirar em um espírito.",
   "hud.refusalInvalidTargetUnenchantable": "Esse alvo não pode ser encantado.",
   "hud.refusalInvalidTargetWall": "Só uma habilidade que causa dano pode atingir um muro.",
+  "hud.refusalWallBeforeStart": "Nenhum muro pode ser atingido antes do início da partida.",
   "hud.refusalInvalidTargetUntargetable": "Seus feitiços não podem mirar nesse inimigo.",
   "hud.refusalNeedsWeapon": "Requer {weapon}.",
   "hud.refusalNoAnimalToCharm": "Não há animal para domar aqui.",

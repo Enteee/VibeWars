@@ -116,7 +116,6 @@ import {
   type ActivationCheck,
   type ActivationRejection,
 } from "../skills/activation.js";
-import { preMatchAllowed } from "../skills/pre-match.js";
 import {
   adrenalineLossIn,
   adrenalinePools,
@@ -1328,6 +1327,7 @@ const TARGET_REJECTIONS: ReadonlySet<ActivationRejection> = new Set([
   "invalid-target-untargetable",
   "invalid-target-unenchantable",
   "no-spells",
+  "wall-before-start",
 ]);
 
 /** How a step toward a waypoint went; see `#stepToward`. */
@@ -3892,7 +3892,8 @@ export class MatchSimulation {
       return { skillId: skill.id, check: { ok: true } };
     }
 
-    // Held before the start, nobody picks a foe: none can be cast at (#3910).
+    // Held before the start, nobody picks a foe: the nearest is held in its
+    // own bubble, far out of reach, and walking at it only meets the edge.
     if (skill.target === "single-enemy" && record.targetId === undefined && !this.#held) {
       const team = record.combatant.team;
       record.targetId = nearestLiving(
@@ -4418,10 +4419,12 @@ export class MatchSimulation {
   /**
    * One tick before the match starts (#3817): everyone may walk, by keys
    * or a click, anywhere in its team's bubble (#3930), and prepare
-   * (#3910): a skill only for the caster or its allies goes off, and
+   * (#3910): any skill goes off under the normal rules (#3931), and
    * energy, health, recharges, casts, statuses and upkeep run, as bots
-   * do. Nothing else runs: no attack, adrenaline, zone, projectile,
-   * creature, map element or score. The tick counts; the match clock
+   * do. A projectile, ground effect or creature a skill makes waits,
+   * unaged, until the start; a plain attack is still dropped. Nothing
+   * else runs: no adrenaline, zone, map element or score. The tick
+   * counts; the match clock
    * does not. `secondsLeft` is the countdown's, `null` while it waits
    * for the players. Once `step` has run, or the match is over, it does
    * nothing.
@@ -4890,10 +4893,6 @@ export class MatchSimulation {
     key: string = skill.id,
     isCasting: boolean = record.combatant.cast.isCasting,
   ): ActivationCheck {
-    // Held before the start, only a skill for the caster or its allies (#3910).
-    if (this.#held && !preMatchAllowed(skill)) {
-      return { ok: false, reason: "pre-match" };
-    }
     // A pet skill acts on the pet, whatever was asked (#1046).
     const targetedId = isCompanionRule(skill.target) ? this.#companionOf(record)?.id : targetId;
     const target = targetedId === undefined ? undefined : this.#participants.get(targetedId);
@@ -4933,6 +4932,16 @@ export class MatchSimulation {
     // could take off.
     if (skill.type === "attack" && this.carriesBundle(record.id)) {
       return { ok: false, reason: "hands-full" };
+    }
+    // Held before the start, a wall is out of bounds (#3931): the bubbles
+    // keep foes out of reach, not walls, and a spell would strike one at
+    // once. Any other refusal of the skill at a wall comes first.
+    if (
+      this.#held &&
+      wall !== undefined &&
+      (check.ok || check.reason === "out-of-range" || check.reason === "no-line-of-sight")
+    ) {
+      return { ok: false, reason: "wall-before-start" };
     }
     // Any other refusal first; then a corpse skill needs a fresh corpse in
     // reach (#466), or nothing is paid. A well does without, at a price

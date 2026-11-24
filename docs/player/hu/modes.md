@@ -34,7 +34,7 @@ képernyő szélén: a zászlótartó vagy egy szentély a birtokosa színében,
 szürkén, ha senkié, az oltár aranyszínben. Egy játékos kitöltött nyila
 fölé rajzolódik.
 
-A meccs úgy indul, hogy minden csapat együtt van tartva a kezdőterületén: bárhová mehetsz azon belül, és felkészülhetsz önmagadra és a szövetségeseidre használt képességekkel, például bűbájokkal, állásokkal és gyógyításokkal, de nem támadhatsz, és ellenségre sem használhatsz képességet. Az Energia és az Életerő várakozás közben töltődik, és a botok is felkészülnek. A csapatod kezdőterülete körüli csillámló fal mutatja, meddig mehetsz. Egy sor fent számolja azokat a játékosokat, akiknél betöltött a meccs. Ha mindenkinél betöltött, 10 másodpercet visszaszámol, és a meccs elindul, vele az órája is. Arra a játékosra, akinél 20 másodperc után sem töltött be, nem várnak: a visszaszámlálás nélküle indul, és később még csatlakozhat.
+A meccs úgy indul, hogy minden csapat együtt van tartva a kezdőterületén: bárhová mehetsz azon belül, és bármilyen képességet használhatsz, így a kapuk kinyílása előtt készítsd elő a bűbájokat, állásokat, szellemeket vagy védőköröket; a másik csapat messze, a saját kezdőterületén van tartva. Az Energia és az Életerő várakozás közben töltődik, és a botok is felkészülnek. A csapatod kezdőterülete körüli csillámló fal mutatja, meddig mehetsz. Egy sor fent számolja azokat a játékosokat, akiknél betöltött a meccs. Ha mindenkinél betöltött, 10 másodpercet visszaszámol, és a meccs elindul, vele az órája is. Arra a játékosra, akinél 20 másodperc után sem töltött be, nem várnak: a visszaszámlálás nélküle indul, és később még csatlakozhat.
 
 ## Megsemmisítés
 

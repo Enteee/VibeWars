@@ -667,7 +667,6 @@ export default {
   "hud.preMatchStartingAnyway":
     "In attesa dei giocatori: {joined}/{expected}, inizia comunque tra {seconds} s",
   "hud.preMatchStartsIn": "La partita inizia tra {seconds}",
-  "hud.preMatchSelfAllyOnly": "Prima dell'inizio: solo abilità su te stesso o sugli alleati.",
   "hud.preMatchWaiting": "In attesa dei giocatori: {joined}/{expected}",
   "hud.priest": "sacerdote",
   "hud.priestDead": "sacerdote (morto)",
@@ -701,6 +700,7 @@ export default {
   "hud.refusalInvalidTargetSpirit": "Non puoi bersagliare uno spirito.",
   "hud.refusalInvalidTargetUnenchantable": "Quel bersaglio non può ricevere incantamenti.",
   "hud.refusalInvalidTargetWall": "Solo un'abilità che infligge danni può colpire un muro.",
+  "hud.refusalWallBeforeStart": "Nessun muro può essere colpito prima dell'inizio della partita.",
   "hud.refusalInvalidTargetUntargetable": "I tuoi incantesimi non possono bersagliare quel nemico.",
   "hud.refusalNeedsWeapon": "Richiede {weapon}.",
   "hud.refusalNoAnimalToCharm": "Qui non ci sono animali da ammansire.",

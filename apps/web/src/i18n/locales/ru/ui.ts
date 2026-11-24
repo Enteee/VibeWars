@@ -681,7 +681,6 @@ export default {
   "hud.preMatchStartingAnyway":
     "Ожидание игроков: {joined}/{expected}, начнётся в любом случае через {seconds} с",
   "hud.preMatchStartsIn": "Матч начнётся через {seconds}",
-  "hud.preMatchSelfAllyOnly": "До начала: только умения на себя или союзников.",
   "hud.preMatchWaiting": "Ожидание игроков: {joined}/{expected}",
   "hud.priest": "жрец",
   "hud.priestDead": "жрец (мёртв)",
@@ -715,6 +714,7 @@ export default {
   "hud.refusalInvalidTargetSpirit": "Духа нельзя выбрать целью.",
   "hud.refusalInvalidTargetUnenchantable": "Эту цель нельзя зачаровать.",
   "hud.refusalInvalidTargetWall": "Ударить стену может только умение, наносящее урон.",
+  "hud.refusalWallBeforeStart": "До начала матча стены бить нельзя.",
   "hud.refusalInvalidTargetUntargetable": "Твои заклинания не действуют на этого врага.",
   "hud.refusalNeedsWeapon": "Нужно: {weapon}.",
   "hud.refusalNoAnimalToCharm": "Здесь нет животного для приручения.",

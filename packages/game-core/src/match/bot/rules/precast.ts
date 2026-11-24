@@ -1,15 +1,21 @@
-import { findStatusDefinition, type StatusId } from "./status.js";
-import type { Skill, SkillEffect, SkillType, TargetRule, UnconditionalEffect } from "./types.js";
+import { findStatusDefinition, type StatusId } from "../../../skills/status.js";
+import type {
+  Skill,
+  SkillEffect,
+  SkillType,
+  TargetRule,
+  UnconditionalEffect,
+} from "../../../skills/types.js";
 
-/** The targets a skill may have before the start (#3910): the caster or an ally. */
-const PRE_MATCH_TARGETS: ReadonlySet<TargetRule> = new Set([
+/** The targets of a skill a bot precasts (#3910): the caster or an ally. */
+const PRECAST_TARGETS: ReadonlySet<TargetRule> = new Set([
   "self",
   "single-ally",
   "single-other-ally",
 ]);
 
-/** The skill types never used before the start (#3910), whatever their effects. */
-const PRE_MATCH_REFUSED_TYPES: ReadonlySet<SkillType> = new Set(["attack", "hex", "ward", "well"]);
+/** The skill types a bot never precasts (#3910), whatever their effects. */
+const NEVER_PRECAST_TYPES: ReadonlySet<SkillType> = new Set(["attack", "hex", "ward", "well"]);
 
 /**
  * Whether each effect kind keeps to the caster and the ally it is cast on
@@ -75,7 +81,7 @@ const KEEPS_TO_ALLIES: Readonly<Record<UnconditionalEffect["kind"], boolean>> = 
   "create-ground-effect": false,
 };
 
-/** Whether `statusId` is a hex: never put on anyone before the start. */
+/** Whether `statusId` is a hex: never precast on anyone. */
 function isHex(statusId: StatusId): boolean {
   return findStatusDefinition(statusId)?.category === "hex";
 }
@@ -95,17 +101,18 @@ function keepsToAllies(effect: SkillEffect): boolean {
 }
 
 /**
- * Whether `skill` may be used before the start (#3910, operator Q171),
- * in the spawn bubble: only on the caster or an ally, never an attack,
- * a hex, a ward or a well, never over an area that reaches foes, and
- * with no effect that harms, takes from or reaches past its allies, or
- * summons. Read from the skill's data alone.
+ * Whether a bot precasts `skill` in the spawn bubble (#3910): only on
+ * the caster or an ally, never an attack, a hex, a ward or a well, never
+ * over an area that reaches foes, and with no effect that harms, takes
+ * from or reaches past its allies, or summons. Read from the skill's
+ * data alone. The bot's choice, not a game rule: before the start any
+ * skill may be used (#3931).
  */
-export function preMatchAllowed(skill: Skill): boolean {
+export function worthPrecasting(skill: Skill): boolean {
   const area = skill.area;
   return (
-    PRE_MATCH_TARGETS.has(skill.target) &&
-    !PRE_MATCH_REFUSED_TYPES.has(skill.type) &&
+    PRECAST_TARGETS.has(skill.target) &&
+    !NEVER_PRECAST_TYPES.has(skill.type) &&
     skill.attack === undefined &&
     skill.petAttack === undefined &&
     skill.projectile === undefined &&

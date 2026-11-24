@@ -594,6 +594,45 @@ describe("the Team Lobby's body (#1460)", () => {
     expect(rows()[1]?.has("is-proposed")).toBe(true);
   });
 
+  it("keeps the pressed card's button the same element through a tick or an unchanged snapshot (#3945)", () => {
+    /** The pressed card's button under `region`, of a fresh snapshot each time. */
+    const pressedIn = (root: FakeElement, region: string): FakeElement | undefined => {
+      const pressed = (root.all(region)[0]?.all("play-card-open") ?? []).filter(
+        (open) => open.attributes.get("aria-pressed") === "true",
+      );
+      expect(pressed).toHaveLength(1);
+      return pressed[0];
+    };
+    const ticked = (shown: LobbySnapshot, secondsLeft: number): LobbySnapshot => ({
+      ...shown,
+      teamLobby: shown.teamLobby === null ? null : { ...shown.teamLobby, secondsLeft },
+    });
+
+    // A 1v1: the picked character, entries drawn again from the same saves.
+    const characters = [saved("kai", "Kai"), saved("lin", "Lin")];
+    const soloOf = (): SoloChoice => ({
+      entries: soloEntries(characters, []),
+      picked: soloCharacterKey("lin"),
+    });
+    const soloLobby = () => lobby("eli", "vote", { ...voteSide([proposal("eli", [])]), size: 1 });
+    const solo = body(soloLobby(), [], undefined, soloOf());
+    const lin = pressedIn(solo, "team-lobby-solo");
+    refresh(ticked(soloLobby(), 21), [], undefined, soloOf());
+    expect(pressedIn(solo, "team-lobby-solo")).toBe(lin);
+    refresh(ticked(soloLobby(), 21), [], undefined, soloOf());
+    expect(pressedIn(solo, "team-lobby-solo")).toBe(lin);
+
+    // A vote: the card Aria voted for.
+    const voteLobby = () =>
+      lobby("aria", "vote", voteSide([proposal("brann", ["brann", "aria"]), proposal("cass", [])]));
+    const vote = body(voteLobby());
+    const brann = pressedIn(vote, "team-lobby-proposals");
+    refresh(ticked(voteLobby(), 21));
+    expect(pressedIn(vote, "team-lobby-proposals")).toBe(brann);
+    refresh(ticked(voteLobby(), 21));
+    expect(pressedIn(vote, "team-lobby-proposals")).toBe(brann);
+  });
+
   it("marks your proposal, whose button withdraws it (#1862, #2116)", () => {
     const shown = body(
       lobby("aria", "vote", voteSide([])),

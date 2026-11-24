@@ -627,7 +627,6 @@ export default {
   "hud.preMatchStartingAnyway":
     "Wachten op spelers: {joined}/{expected}, start toch over {seconds} s",
   "hud.preMatchStartsIn": "Wedstrijd begint over {seconds}",
-  "hud.preMatchSelfAllyOnly": "Voor de start: alleen vaardigheden op jezelf of bondgenoten.",
   "hud.preMatchWaiting": "Wachten op spelers: {joined}/{expected}",
   "hud.priest": "priester",
   "hud.priestDead": "priester (dood)",
@@ -661,6 +660,7 @@ export default {
   "hud.refusalInvalidTargetSpirit": "Je kunt geen geest kiezen.",
   "hud.refusalInvalidTargetUnenchantable": "Dat doelwit kan niet betoverd worden.",
   "hud.refusalInvalidTargetWall": "Alleen een vaardigheid die schade doet kan een muur raken.",
+  "hud.refusalWallBeforeStart": "Voor het begin van de wedstrijd kun je geen muur raken.",
   "hud.refusalInvalidTargetUntargetable": "Je spreuken kunnen die vijand niet raken.",
   "hud.refusalNeedsWeapon": "Vereist {weapon}.",
   "hud.refusalNoAnimalToCharm": "Hier is geen dier om te temmen.",
