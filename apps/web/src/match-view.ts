@@ -279,8 +279,8 @@ export interface MatchView {
   record(): MatchRecordFields | undefined;
   /** Shows `line` over the result, or none. */
   setEndLine(line: EndLine | undefined): void;
-  /** A warmup's label under the score (#3899), `text`, kept up until set to none. */
-  setLabel(text: string | undefined): void;
+  /** A warmup's line under the score (#3899), `line`, kept up until set to none. */
+  setLabel(line: HTMLElement | undefined): void;
   /** What the camera shows (#3222), or nothing before its first frame or without a canvas. */
   camera(): CameraLook | undefined;
   dispose(): Promise<void>;
@@ -1387,7 +1387,7 @@ export async function startMatchView(
 
   /** The end line (#1997), made the first time it is set. */
   const setEndLine = endLineSetter(hud.end);
-  /** The warmup's label (#3899), made the first time it is set. */
+  /** The warmup's line (#3899), while one is set. */
   let label: HTMLElement | undefined;
 
   return {
@@ -1429,18 +1429,15 @@ export async function startMatchView(
     },
     camera: () => camera?.look(),
     setEndLine,
-    setLabel(text) {
-      if (text === undefined) {
-        label?.remove();
-        label = undefined;
+    setLabel(line) {
+      if (line === label) {
         return;
       }
-      if (label === undefined) {
-        label = document.createElement("div");
-        label.className = "hud-warmup";
-        hud.top.insertBefore(label, hud.carriers);
+      label?.remove();
+      label = line;
+      if (line !== undefined) {
+        hud.top.insertBefore(line, hud.carriers);
       }
-      label.textContent = text;
     },
     async dispose(): Promise<void> {
       // Order matters: stop listening before tearing down, so a late

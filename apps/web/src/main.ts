@@ -11,6 +11,7 @@ import {
 } from "@vibewars/game-session";
 
 import type { NostrQueue } from "./net/transport/nostr-queue.js";
+import { endsTeamQueue, historyModeOf } from "./net/team-queue.js";
 import { watchRecords } from "./net/transport/index.js";
 import { leaderboard } from "./net/leaderboard.js";
 import { isTouchOnly } from "./input/touch-only.js";
@@ -213,7 +214,12 @@ import {
 } from "./ui/team-play.js";
 import { mountTopbar, paintStatus, type StatusState } from "./ui/topbar.js";
 import { closeTopbarPopover, isTopbarPopoverOpen } from "./ui/topbar-popover.js";
-import { queueStatus, type QueueStatusInput } from "./ui/queue-popover.js";
+import {
+  queueButton,
+  queueStatus,
+  type QueueButton,
+  type QueueStatusInput,
+} from "./ui/queue-popover.js";
 import { rankLineElement, standingOf, type Standing } from "./ui/leaderboard-window.js";
 import { duplicateTeam, newTeam, replaceMember, teamCharacter } from "./ui/team-builder.js";
 import {
@@ -613,6 +619,13 @@ async function main(): Promise<void> {
   let matchMode: LobbyMode | undefined;
   /** `match` is a queued party's warmup (#3899): kept nowhere, its end no news. */
   let matchWarmup = false;
+  /**
+   * A warmup's line over its match (#3899): the top bar is hidden there
+   * (#454), so the queue's ring, its flyout and Leave Queue come with it.
+   */
+  let warmupLine:
+    | { readonly element: HTMLElement; readonly text: HTMLElement; readonly queue: QueueButton }
+    | undefined;
   /** The lobby's chat (#479), for as long as the lobby: on its screen, then over its match. */
   let chat: ChatPanel | undefined;
   /**
@@ -2248,17 +2261,34 @@ async function main(): Promise<void> {
     }
   };
 
-  /** A warmup's label over its match (#3899): the queue it is still in, and how long. */
+  /** A warmup's line over its match (#3899): the queue it is still in, how long, and its flyout. */
   const paintWarmup = (): void => {
     if (match === undefined || !matchWarmup) {
       return;
     }
-    const status = queueStatus(queueInput(), Date.now());
-    match.setLabel(
-      status === undefined
-        ? undefined
-        : t("queue.warmupRunning", { queue: status.title, waited: status.waited }),
-    );
+    const input = queueInput();
+    const status = queueStatus(input, Date.now());
+    if (status === undefined) {
+      match.setLabel(undefined);
+      return;
+    }
+    if (warmupLine === undefined) {
+      const element = document.createElement("div");
+      element.className = "hud-warmup";
+      const queue = queueButton(element, leaveAnyQueue, () => {
+        lobby?.startWarmup();
+      });
+      const text = document.createElement("span");
+      queue.element.append(text);
+      element.append(queue.element);
+      warmupLine = { element, text, queue };
+    }
+    warmupLine.queue.setQueue(input);
+    warmupLine.text.textContent = t("queue.warmupRunning", {
+      queue: status.title,
+      waited: status.waited,
+    });
+    match.setLabel(warmupLine.element);
   };
 
   /**
@@ -2269,12 +2299,13 @@ async function main(): Promise<void> {
    */
   const syncTeamQueue = (party: LobbyConnection): void => {
     const snapshot = party.getSnapshot();
-    // A warmup is still the same queueing (#3899).
     const nonce = snapshot.queueNonce;
     const current = teamQueue;
     if (current !== undefined) {
-      // In its match, the party lobby is its host's to put back.
-      if (current.party !== party || current.nonce === nonce || current.parked !== undefined) {
+      if (
+        current.party !== party ||
+        !endsTeamQueue(current.nonce, current.parked !== undefined, snapshot)
+      ) {
         return;
       }
       endTeamQueue();
@@ -2997,8 +3028,8 @@ async function main(): Promise<void> {
    */
   const keepInHistory = (leaving: MatchView): void => {
     const record = leaving.record();
-    // A warmup counts for nothing (#3899).
-    if (record === undefined || matchMode === undefined || matchWarmup) {
+    const mode = historyModeOf(matchMode, matchWarmup);
+    if (record === undefined || mode === undefined) {
       return;
     }
     matchHistory
@@ -3006,7 +3037,7 @@ async function main(): Promise<void> {
         id: crypto.randomUUID(),
         endedAt: Date.now(),
         pubkey: playerKey.pubkey,
-        mode: matchMode,
+        mode,
         ...record,
       })
       .catch((error: unknown) => {
@@ -3308,6 +3339,8 @@ async function main(): Promise<void> {
     }
     match = undefined;
     matchWarmup = false;
+    warmupLine?.queue.dispose();
+    warmupLine = undefined;
     hallWatch.resume();
     await leaving.dispose();
     leaveScreen();
@@ -3344,6 +3377,11 @@ async function main(): Promise<void> {
           // in a match (#454).
           onConnectionChange: (state) => {
             const notice = matchEndedNotice(state);
+            if (notice !== undefined && matchWarmup) {
+              // A warmup ended early (#3899): the party, still queued, is fine.
+              void exitMatch();
+              return;
+            }
             if (notice !== undefined) {
               // The host is gone: the arena is frozen for good, so there
               // is nothing to stay for.

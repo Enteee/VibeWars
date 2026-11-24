@@ -1202,8 +1202,11 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       // The caller's to report; the lobby only has to stay usable.
       void room.leave();
       rankedRound = undefined;
-      // A warmup that cannot start leaves the party queued (#3899), with no other.
+      // A warmup that cannot start leaves the party queued (#3899), to try again later.
       phase = warmup ? "queued" : "waiting";
+      if (warmup && queueing !== undefined) {
+        queueing.warmupAt = clockMs() + WARMUP_AFTER_MS;
+      }
       warmup = false;
       // Back as before the vote (#2086): no retry adds a second set of
       // bots, and nobody stays ready to start the same failure again.
@@ -1651,15 +1654,29 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     start(assigned);
   };
 
-  /** A warmup on is over with no result (#3899): its room left, its bots gone, the party still queued. */
+  /**
+   * A warmup on is over with no result (#3899): its bots gone, the party
+   * still queued. One that finished drains as any match does; one cut
+   * short tells its players it ended, as `close` does, not a lost host.
+   */
   const dropWarmup = (): void => {
     if (!warmup) {
       return;
     }
     warmup = false;
     if (match !== undefined) {
-      void match.room.leave();
+      const over = match;
       match = undefined;
+      if (over.host.phase === "finished" || over.host.abandoned) {
+        if (over.host.draining) {
+          over.host.retire();
+          draining.push(over);
+        } else {
+          void over.room.leave();
+        }
+      } else {
+        void over.host.close("host-left");
+      }
     }
     phase = "queued";
     dropCodedBots();

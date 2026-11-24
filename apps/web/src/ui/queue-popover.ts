@@ -169,6 +169,8 @@ function randomDetail(state: QueueState | undefined): string | undefined {
 export interface QueueButton {
   readonly element: HTMLButtonElement;
   readonly setQueue: (input: QueueStatusInput | undefined) => void;
+  /** Its flyout shut, and its listeners gone, for one that goes before the page (#3899). */
+  dispose(): void;
 }
 
 /**
@@ -191,7 +193,7 @@ export function queueButton(
   let input: QueueStatusInput | undefined;
   /** The open flyout's repaint; none while it is shut. */
   let paint: (() => void) | undefined;
-  attachTopbarPopover(element, parent, (close) => {
+  const popover = attachTopbarPopover(element, parent, (close) => {
     const panel = h("div", "screen queue-window");
     panel.setAttribute("aria-label", t("queue.inQueue"));
     panel.tabIndex = -1;
@@ -257,6 +259,9 @@ export function queueButton(
       }
       element.hidden = false;
       paint?.();
+    },
+    dispose: () => {
+      popover.dispose();
     },
   };
 }

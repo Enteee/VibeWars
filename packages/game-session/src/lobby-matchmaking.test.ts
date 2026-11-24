@@ -76,7 +76,11 @@ async function partyLobby(
 interface FakeMatch {
   readonly phase: "active" | "finished";
   readonly winningTeam: 0 | 1 | null;
-  readonly draining: false;
+  /** Still sending its end, until a test says otherwise. */
+  draining: boolean;
+  /** How it was let go: retired to drain, or closed as `close` does. */
+  readonly retired: boolean;
+  readonly closed: boolean;
   advance(): void;
   retire(): void;
   close(): Promise<void>;
@@ -87,6 +91,8 @@ interface FakeMatch {
 function fakeMatch(): FakeMatch {
   let phase: "active" | "finished" = "active";
   let winner: 0 | 1 | null = null;
+  let retired = false;
+  let closed = false;
   return {
     get phase() {
       return phase;
@@ -95,9 +101,20 @@ function fakeMatch(): FakeMatch {
       return winner;
     },
     draining: false,
+    get retired() {
+      return retired;
+    },
+    get closed() {
+      return closed;
+    },
     advance: () => undefined,
-    retire: () => undefined,
-    close: () => Promise.resolve(),
+    retire: () => {
+      retired = true;
+    },
+    close: () => {
+      closed = true;
+      return Promise.resolve();
+    },
     finish(winningTeam) {
       phase = "finished";
       winner = winningTeam;
@@ -400,6 +417,34 @@ describe("a party lobby's matchmaking (#1766)", () => {
     await settle();
     expect(party.map(phaseOf)).toEqual(["in-match", "in-match"]);
     expect(matches).toHaveLength(2);
+  });
+
+  it("drains a finished warmup as any match, so its players get the end (#3899)", async () => {
+    const match = fakeMatch();
+    const { lobby, party } = await keyedPair(() => match);
+    const [host] = party as [Member, Member];
+    host.connection.startWarmup();
+    await settle();
+    match.draining = true;
+    match.finish(1);
+    await lobby.step(1);
+
+    expect(party.map(phaseOf)).toEqual(["queued", "queued"]);
+    expect(match.retired).toBe(true);
+    expect(match.closed).toBe(false);
+  });
+
+  it("closes a warmup cut short, so its players see it end, not a lost host (#3899)", async () => {
+    const match = fakeMatch();
+    const { party } = await keyedPair(() => match);
+    const [host] = party as [Member, Member];
+    host.connection.startWarmup();
+    await settle();
+    host.connection.endWarmup();
+    await settle();
+
+    expect(match.closed).toBe(true);
+    expect(match.retired).toBe(false);
   });
 
   it("ends a warmup with no result on the host's word, still queued (#3899)", async () => {

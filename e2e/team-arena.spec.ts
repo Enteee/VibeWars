@@ -210,7 +210,7 @@ test("#1766: two parties of two queue for Team Arena, meet, and play their own b
 test("#3899: a queued party warms up against bots, and goes to its match once another team queues", async ({
   browser,
 }) => {
-  test.setTimeout(150_000);
+  test.setTimeout(240_000);
   const { context, pages } = await openPeers(browser, 4);
   const [ann, bea, cid, dot] = pages as [Page, Page, Page, Page];
 
@@ -232,6 +232,10 @@ test("#3899: a queued party warms up against bots, and goes to its match once an
       );
     }
 
+    // A minute of warmups: the ticket's heartbeat runs on under a match,
+    // well past its 15 s expiry, or the other party never meets this one.
+    await ann.waitForTimeout(60_000);
+
     // Another party queues: the warmup ends at once, and all four meet.
     await formParty([cid, dot], ["Cid", "Dot"]);
     await runTeamLobby([cid, dot]);
@@ -242,6 +246,44 @@ test("#3899: a queued party warms up against bots, and goes to its match once an
       await expect(page.locator(".hud-skills .hud-skill").first()).toBeAttached({
         timeout: 40_000,
       });
+    }
+  } finally {
+    await context.close();
+  }
+});
+
+test("#3899: over a warmup, the queue's flyout leaves the queue, and the party is back in its lobby, fine", async ({
+  browser,
+}) => {
+  test.setTimeout(90_000);
+  const { context, pages } = await openPeers(browser, 2);
+  const [ann, bea] = pages as [Page, Page];
+
+  try {
+    await formParty([ann, bea], ["Ann", "Bea"]);
+    await runTeamLobby([ann, bea]);
+    await ann.locator("#topbar .topbar-queue").click();
+    await ann
+      .locator("#topbar .queue-window")
+      .getByRole("button", { name: "Start warmup now" })
+      .click();
+    const line = ann.locator(".hud-warmup .topbar-queue");
+    await expect(line).toContainText("Warmup — still in the queue", { timeout: 25_000 });
+
+    // The top bar is hidden in a match (#454): the warmup's line opens the flyout.
+    await line.click();
+    await ann
+      .locator(".hud-warmup .queue-window")
+      .getByRole("button", { name: "Leave Queue" })
+      .click();
+    for (const page of [ann, bea]) {
+      await expect(page.locator(".hud-warmup")).toHaveCount(0, { timeout: 15_000 });
+      await expect(page.locator("#topbar .topbar-queue")).toBeHidden();
+      // The warmup was closed, not lost: nobody is told the host left.
+      await expect(page.locator("#topbar .topbar-status")).not.toHaveAttribute(
+        "data-state",
+        "error",
+      );
     }
   } finally {
     await context.close();
