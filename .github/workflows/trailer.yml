@@ -1,0 +1,116 @@
+name: Trailer
+
+# Builds the promo cuts (#3811) and attaches them to an existing v0.N.0
+# release (#3922). Never on push or pull request, never a required check.
+#
+# Two jobs, so the write token never meets repository code: `build` runs the
+# capture with a read-only token; `publish` holds contents: write and runs
+# nothing but this file's shell over the built artifact. The workflow never
+# creates or edits a release: that is the release manager's job.
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag to attach the cuts to, for example v0.12.0. It must already be published.
+        type: string
+        required: true
+
+permissions:
+  contents: read
+
+env:
+  TAG: ${{ github.event_name == 'release' && github.event.release.tag_name || inputs.tag }}
+
+concurrency:
+  group: trailer-${{ github.event_name == 'release' && github.event.release.tag_name || inputs.tag }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Check the tag
+        run: |
+          if ! [[ "$TAG" =~ ^v0\.[0-9]+\.0$ ]]; then
+            echo "::error::'$TAG' is not a v0.N.0 release tag"
+            exit 1
+          fi
+
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          ref: refs/tags/${{ env.TAG }}
+          persist-credentials: false
+
+      - uses: ./.github/actions/devenv
+
+      - name: Build the workspace packages
+        run: devenv shell -- pnpm -r --filter "./packages/**" run build
+
+      # ffmpeg-headless is in devenv, so Playwright's own encoder is not
+      # downloaded: point it at the devenv one (scripts/promo/README.md).
+      - name: Point Playwright's video encoder at ffmpeg
+        run: |
+          mkdir -p ~/.cache/ms-playwright/ffmpeg-1011
+          ln -sf "$(devenv shell -- which ffmpeg)" ~/.cache/ms-playwright/ffmpeg-1011/ffmpeg-linux
+
+      - name: Capture the scenes
+        run: devenv shell -- pnpm run promo:capture
+
+      - name: Assemble the cuts
+        run: devenv shell -- pnpm run promo:assemble
+
+      - name: Check both cuts exist
+        run: |
+          for f in out/promo/vibewars-trailer-16x9.mp4 out/promo/vibewars-trailer-9x16.mp4; do
+            if [ ! -s "$f" ]; then
+              echo "::error::$f is missing or empty"
+              exit 1
+            fi
+            ls -l "$f"
+          done
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: trailer
+          path: |
+            out/promo/vibewars-trailer-16x9.mp4
+            out/promo/vibewars-trailer-9x16.mp4
+          if-no-files-found: error
+          retention-days: 1
+
+  publish:
+    name: publish
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # Runs no repository code: no checkout, no devenv, no pnpm.
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: trailer
+          path: ${{ runner.temp }}/trailer
+
+      - name: Attach the cuts to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DIR: ${{ runner.temp }}/trailer
+        run: |
+          if ! gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null; then
+            echo "::error::release $TAG does not exist; this workflow never creates one"
+            exit 1
+          fi
+          gh release upload "$TAG" --repo "$GITHUB_REPOSITORY" --clobber \
+            "$DIR/vibewars-trailer-16x9.mp4" "$DIR/vibewars-trailer-9x16.mp4"
+          {
+            echo "### Trailer cuts attached to $TAG"
+            for cut in 16x9 9x16; do
+              echo "- https://github.com/$GITHUB_REPOSITORY/releases/download/$TAG/vibewars-trailer-$cut.mp4"
+            done
+          } >> "$GITHUB_STEP_SUMMARY"
