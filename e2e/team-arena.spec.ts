@@ -3,6 +3,7 @@ import { expect, test, type Locator, type Page } from "@playwright/test";
 import { BUILD_FORMAT_VERSION } from "../apps/web/src/storage/build-transfer.js";
 import { TEAM_FORMAT_VERSION } from "../apps/web/src/storage/team-transfer.js";
 import { STARTER_BUILDS } from "../packages/game-core/src/starter-builds.js";
+import { hudMenuRow } from "./helpers/hud-menu.js";
 import { joinFriend, lobbyWindow, openRail, shutLobbyWindow } from "./helpers/menu.js";
 import {
   copyInvite,
@@ -192,8 +193,10 @@ test("#1766: two parties of two queue for Team Arena, meet, and play their own b
     await expect(ann.locator(".party-row-name")).toContainText(["Bea"]);
 
     // Out of the match, Bea is back in Ann's lobby, out of the queue.
-    await press(bea, bea.locator(".hud-leave").getByRole("button", { name: "leave match" }));
-    await press(bea, bea.locator(".hud-leave").getByRole("button", { name: "yes" }));
+    await bea.bringToFront();
+    const beaLeave = await hudMenuRow(bea, ".hud-leave");
+    await press(bea, beaLeave.getByRole("button", { name: "leave match" }));
+    await press(bea, beaLeave.getByRole("button", { name: "yes" }));
     await expect((await lobbyWindow(bea)).locator(".topbar-leave")).toBeVisible();
     await shutLobbyWindow(bea);
     await expect(bea.locator(".lobby-panel")).toContainText("Ann");
@@ -291,7 +294,8 @@ test("#3815: a Team Arena party that wins queues again with the same team, with 
 
     // Cid's side leaves: on an Annihilation map, a side with nobody left is beaten.
     for (const page of [cid, dot]) {
-      const leave = page.locator(".hud-leave");
+      await page.bringToFront();
+      const leave = await hudMenuRow(page, ".hud-leave");
       await press(page, leave.getByRole("button", { name: "leave match" }));
       await press(page, leave.getByRole("button", { name: "yes" }));
     }
