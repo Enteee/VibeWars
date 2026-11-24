@@ -503,10 +503,7 @@ async function ranked(browser, url) {
   await page.mouse.wheel(0, -400);
   await sleep(800);
   scene.marks.cape = scene.now();
-  await page.keyboard.down("KeyA");
-  await sleep(1500);
-  await page.keyboard.up("KeyA");
-  await walk(page, "KeyW", 2000);
+  await walk(page, "KeyD", 3500);
   const { events, timeOrigin } = await pageEvents(page);
   await closeScene(scene, "ranked", events, timeOrigin);
 }
