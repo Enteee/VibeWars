@@ -63,6 +63,22 @@ export default {
 
   "buildEditor.addWeapon": "Wapen toevoegen",
   "buildEditor.armor": "Pantser",
+  "buildEditor.attributeEffect.critical-strikes":
+    "+{percent}% kans op een voltreffer, +{energy} energie per voltreffer",
+  "buildEditor.attributeEffect.divine-favor": "Monnik-spreuken op bondgenoten genezen +{heal}",
+  "buildEditor.attributeEffect.energy-storage": "+{energy} maximale energie",
+  "buildEditor.attributeEffect.expertise":
+    "aanvalsskills, rituelen, aanraakskills en Jager-skills kosten {percent}% minder energie",
+  "buildEditor.attributeEffect.fast-casting":
+    "spreuken en zegels worden {percent}% sneller uitgesproken",
+  "buildEditor.attributeEffect.leadership":
+    "tot {max} energie per kreet, {perAlly} per getroffen bondgenoot",
+  "buildEditor.attributeEffect.mysticism": "Derwisj-betoveringen kosten {percent}% minder energie",
+  "buildEditor.attributeEffect.soul-reaping":
+    "+{energy} energie als iemand in de buurt sterft ({triggers} per {seconds} s)",
+  "buildEditor.attributeEffect.spawning-power":
+    "wezens +{percent}% gezondheid, wapenspreuken duren {percent}% langer",
+  "buildEditor.attributeEffect.strength": "aanvalsskills {percent}% pantserpenetratie",
   "buildEditor.back": "Terug",
   "buildEditor.bothHandsFull": "beide handen vol",
   "buildEditor.budgetSegment": {
@@ -614,6 +630,7 @@ export default {
   "hud.outcomeVictory": "Overwinning",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (dood)",
+  "hud.preMatchHeld": "Je blijft bij je startpunt tot de wedstrijd begint.",
   "hud.preMatchStartingAnyway":
     "Wachten op spelers: {joined}/{expected}, start toch over {seconds} s",
   "hud.preMatchStartsIn": "Wedstrijd begint over {seconds}",

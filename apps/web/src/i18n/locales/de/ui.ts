@@ -63,6 +63,22 @@ export default {
 
   "buildEditor.addWeapon": "Waffe hinzufügen",
   "buildEditor.armor": "Rüstung",
+  "buildEditor.attributeEffect.critical-strikes":
+    "+{percent}% kritische Trefferchance, +{energy} Energie pro kritischem Treffer",
+  "buildEditor.attributeEffect.divine-favor": "Mönch-Zauber auf Verbündete heilen +{heal}",
+  "buildEditor.attributeEffect.energy-storage": "+{energy} maximale Energie",
+  "buildEditor.attributeEffect.expertise":
+    "Angriffs-Skills, Rituale, Berührungs-Skills und Waldläufer-Skills kosten {percent}% weniger Energie",
+  "buildEditor.attributeEffect.fast-casting": "Zauber und Siegel wirken {percent}% schneller",
+  "buildEditor.attributeEffect.leadership":
+    "bis zu {max} Energie pro Schrei, {perAlly} pro betroffenem Verbündeten",
+  "buildEditor.attributeEffect.mysticism":
+    "Derwisch-Verzauberungen kosten {percent}% weniger Energie",
+  "buildEditor.attributeEffect.soul-reaping":
+    "+{energy} Energie, wenn jemand in der Nähe stirbt ({triggers} pro {seconds} s)",
+  "buildEditor.attributeEffect.spawning-power":
+    "Kreaturen +{percent}% Leben, Waffenzauber halten {percent}% länger",
+  "buildEditor.attributeEffect.strength": "Angriffs-Skills {percent}% Rüstungsdurchdringung",
   "buildEditor.back": "Zurück",
   "buildEditor.bothHandsFull": "beide Hände voll",
   "buildEditor.budgetSegment": {
@@ -618,6 +634,7 @@ export default {
   "hud.outcomeVictory": "Sieg",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (tot)",
+  "hud.preMatchHeld": "Du bleibst bis zum Matchbeginn bei deinem Startpunkt.",
   "hud.preMatchStartingAnyway":
     "Warte auf Spieler: {joined}/{expected}, Start trotzdem in {seconds} s",
   "hud.preMatchStartsIn": "Match startet in {seconds}",

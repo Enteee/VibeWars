@@ -63,6 +63,21 @@ export default {
 
   "buildEditor.addWeapon": "Dodaj oružje",
   "buildEditor.armor": "Oklop",
+  "buildEditor.attributeEffect.critical-strikes":
+    "+{percent}% šanse za kritični pogodak, +{energy} energije po kritičnom pogotku",
+  "buildEditor.attributeEffect.divine-favor": "čarolije Redovnika na saveznike liječe +{heal}",
+  "buildEditor.attributeEffect.energy-storage": "+{energy} maksimalne energije",
+  "buildEditor.attributeEffect.expertise":
+    "vještine napada, rituali, vještine dodira i vještine Lovca troše {percent}% manje energije",
+  "buildEditor.attributeEffect.fast-casting": "čarolije i pečati bacaju se {percent}% brže",
+  "buildEditor.attributeEffect.leadership":
+    "do {max} energije po poviku, {perAlly} po pogođenom savezniku",
+  "buildEditor.attributeEffect.mysticism": "začaranja Derviša troše {percent}% manje energije",
+  "buildEditor.attributeEffect.soul-reaping":
+    "+{energy} energije kad netko u blizini umre ({triggers} po {seconds} s)",
+  "buildEditor.attributeEffect.spawning-power":
+    "stvorenja +{percent}% zdravlja, čarolije oružja traju {percent}% dulje",
+  "buildEditor.attributeEffect.strength": "vještine napada: {percent}% probijanja oklopa",
   "buildEditor.back": "Natrag",
   "buildEditor.bothHandsFull": "obje ruke su zauzete",
   "buildEditor.budgetSegment": {
@@ -650,6 +665,7 @@ export default {
   "hud.outcomeVictory": "Pobjeda",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (mrtav)",
+  "hud.preMatchHeld": "Držiš se blizu svoje početne točke dok meč ne počne.",
   "hud.preMatchStartingAnyway":
     "Čeka se igrače: {joined}/{expected}, počinje svejedno za {seconds} s",
   "hud.preMatchStartsIn": "Meč počinje za {seconds}",

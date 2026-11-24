@@ -63,6 +63,24 @@ export default {
 
   "buildEditor.addWeapon": "Fegyver hozzáadása",
   "buildEditor.armor": "Páncél",
+  "buildEditor.attributeEffect.critical-strikes":
+    "+{percent}% kritikus találati esély, +{energy} energia kritikus találatonként",
+  "buildEditor.attributeEffect.divine-favor":
+    "a Monk varázslatai a szövetségeseken +{heal} gyógyítást adnak",
+  "buildEditor.attributeEffect.energy-storage": "+{energy} maximális energia",
+  "buildEditor.attributeEffect.expertise":
+    "a támadó készségek, rítusok, érintéses készségek és Ranger készségek {percent}%-kal kevesebb energiába kerülnek",
+  "buildEditor.attributeEffect.fast-casting":
+    "a varázslatok és pecsétek {percent}%-kal gyorsabban hatnak",
+  "buildEditor.attributeEffect.leadership":
+    "legfeljebb {max} energia kiáltásonként, {perAlly} minden érintett szövetségesért",
+  "buildEditor.attributeEffect.mysticism":
+    "a Dervish bűbájai {percent}%-kal kevesebb energiába kerülnek",
+  "buildEditor.attributeEffect.soul-reaping":
+    "+{energy} energia, ha valaki a közelben meghal ({triggers} / {seconds} mp)",
+  "buildEditor.attributeEffect.spawning-power":
+    "lények +{percent}% életerő, a fegyvervarázslatok {percent}%-kal tovább tartanak",
+  "buildEditor.attributeEffect.strength": "támadó készségek: {percent}% páncélátütés",
   "buildEditor.back": "Vissza",
   "buildEditor.bothHandsFull": "mindkét kéz foglalt",
   "buildEditor.budgetSegment": {
@@ -617,6 +635,7 @@ export default {
   "hud.outcomeVictory": "Győzelem",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (halott)",
+  "hud.preMatchHeld": "A meccs kezdetéig a kezdőpontod közelében maradsz.",
   "hud.preMatchStartingAnyway":
     "Várakozás a játékosokra: {joined}/{expected}, {seconds} mp múlva mindenképp indul",
   "hud.preMatchStartsIn": "A meccs {seconds} múlva kezdődik",

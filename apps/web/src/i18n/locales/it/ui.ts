@@ -63,6 +63,25 @@ export default {
 
   "buildEditor.addWeapon": "Aggiungi arma",
   "buildEditor.armor": "Armatura",
+  "buildEditor.attributeEffect.critical-strikes":
+    "+{percent}% di probabilità di colpo critico, +{energy} Energia per colpo critico",
+  "buildEditor.attributeEffect.divine-favor":
+    "gli incantesimi da Monaco sugli alleati curano +{heal}",
+  "buildEditor.attributeEffect.energy-storage": "+{energy} Energia massima",
+  "buildEditor.attributeEffect.expertise":
+    "abilità di attacco, rituali, abilità a contatto e abilità da Ranger costano il {percent}% di Energia in meno",
+  "buildEditor.attributeEffect.fast-casting":
+    "incantesimi e sigilli si lanciano il {percent}% più velocemente",
+  "buildEditor.attributeEffect.leadership":
+    "fino a {max} Energia per grido, {perAlly} per alleato coinvolto",
+  "buildEditor.attributeEffect.mysticism":
+    "gli incantamenti da Derviscio costano il {percent}% di Energia in meno",
+  "buildEditor.attributeEffect.soul-reaping":
+    "+{energy} Energia quando qualcuno muore nelle vicinanze ({triggers} ogni {seconds} s)",
+  "buildEditor.attributeEffect.spawning-power":
+    "creature +{percent}% Salute, gli incantesimi su arma durano il {percent}% in più",
+  "buildEditor.attributeEffect.strength":
+    "abilità di attacco: {percent}% di penetrazione dell'armatura",
   "buildEditor.back": "Indietro",
   "buildEditor.bothHandsFull": "entrambe le mani occupate",
   "buildEditor.budgetSegment": {
@@ -651,6 +670,7 @@ export default {
   "hud.outcomeVictory": "Vittoria",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (morto)",
+  "hud.preMatchHeld": "Resti vicino al tuo punto di partenza finché la partita non inizia.",
   "hud.preMatchStartingAnyway":
     "In attesa dei giocatori: {joined}/{expected}, inizia comunque tra {seconds} s",
   "hud.preMatchStartsIn": "La partita inizia tra {seconds}",

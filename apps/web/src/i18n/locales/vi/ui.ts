@@ -61,6 +61,21 @@ export default {
 
   "buildEditor.addWeapon": "Thêm vũ khí",
   "buildEditor.armor": "Giáp",
+  "buildEditor.attributeEffect.critical-strikes":
+    "+{percent}% tỉ lệ chí mạng, +{energy} Năng lượng mỗi đòn chí mạng",
+  "buildEditor.attributeEffect.divine-favor": "Phép của Monk lên đồng minh hồi thêm +{heal}",
+  "buildEditor.attributeEffect.energy-storage": "+{energy} Năng lượng tối đa",
+  "buildEditor.attributeEffect.expertise":
+    "kỹ năng tấn công, nghi thức, kỹ năng chạm và kỹ năng Ranger tốn ít hơn {percent}% Năng lượng",
+  "buildEditor.attributeEffect.fast-casting": "Phép và ấn ký thi triển nhanh hơn {percent}%",
+  "buildEditor.attributeEffect.leadership":
+    "tối đa {max} Năng lượng mỗi hiệu lệnh, {perAlly} mỗi đồng minh chịu ảnh hưởng",
+  "buildEditor.attributeEffect.mysticism": "Phù phép của Dervish tốn ít hơn {percent}% Năng lượng",
+  "buildEditor.attributeEffect.soul-reaping":
+    "+{energy} Năng lượng khi có ai đó gần bên chết ({triggers} mỗi {seconds} giây)",
+  "buildEditor.attributeEffect.spawning-power":
+    "sinh vật +{percent}% Máu, phép vũ khí kéo dài thêm {percent}%",
+  "buildEditor.attributeEffect.strength": "kỹ năng tấn công xuyên {percent}% giáp",
   "buildEditor.back": "Quay lại",
   "buildEditor.bothHandsFull": "cả hai tay đã bận",
   "buildEditor.budgetSegment": { other: "{attribute}: {count} điểm" },
@@ -567,6 +582,7 @@ export default {
   "hud.outcomeVictory": "Chiến thắng",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (đã chết)",
+  "hud.preMatchHeld": "Bạn bị giữ gần điểm xuất phát cho đến khi trận đấu bắt đầu.",
   "hud.preMatchStartingAnyway":
     "Đang chờ người chơi: {joined}/{expected}, vẫn bắt đầu sau {seconds} giây",
   "hud.preMatchStartsIn": "Trận đấu bắt đầu sau {seconds}",

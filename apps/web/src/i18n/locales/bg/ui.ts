@@ -61,6 +61,23 @@ export default {
 
   "buildEditor.addWeapon": "Добави оръжие",
   "buildEditor.armor": "Броня",
+  "buildEditor.attributeEffect.critical-strikes":
+    "+{percent}% шанс за критичен удар, +{energy} енергия за критичен удар",
+  "buildEditor.attributeEffect.divine-favor": "заклинанията на Monk върху съюзници лекуват +{heal}",
+  "buildEditor.attributeEffect.energy-storage": "+{energy} максимална енергия",
+  "buildEditor.attributeEffect.expertise":
+    "атакуващите умения, ритуалите, уменията с докосване и уменията на Ranger струват с {percent}% по-малко енергия",
+  "buildEditor.attributeEffect.fast-casting":
+    "заклинанията и печатите се правят с {percent}% по-бързо",
+  "buildEditor.attributeEffect.leadership":
+    "до {max} енергия на вик, {perAlly} за всеки засегнат съюзник",
+  "buildEditor.attributeEffect.mysticism":
+    "омагьосванията на Dervish струват с {percent}% по-малко енергия",
+  "buildEditor.attributeEffect.soul-reaping":
+    "+{energy} енергия, когато някой наблизо умре ({triggers} на {seconds} s)",
+  "buildEditor.attributeEffect.spawning-power":
+    "създания +{percent}% здраве, заклинанията в оръжие траят с {percent}% по-дълго",
+  "buildEditor.attributeEffect.strength": "атакуващи умения: {percent}% пробиване на броня",
   "buildEditor.back": "Назад",
   "buildEditor.bothHandsFull": "и двете ръце са заети",
   "buildEditor.budgetSegment": {
@@ -618,6 +635,7 @@ export default {
   "hud.outcomeVictory": "Победа",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (мъртъв)",
+  "hud.preMatchHeld": "Задържан си близо до началната си точка, докато мачът започне.",
   "hud.preMatchStartingAnyway":
     "Изчакване на играчи: {joined}/{expected}, започва все пак след {seconds} с",
   "hud.preMatchStartsIn": "Мачът започва след {seconds}",

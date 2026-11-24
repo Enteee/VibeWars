@@ -9,6 +9,7 @@ import {
   MINIMAL_GW_INSPIRED_PVP_V1,
   accessibleAttributeIds,
   getSkill,
+  primaryAttributeEffect,
   primaryAttributeOf,
   type EquippedRune,
 } from "@vibewars/game-core";
@@ -21,6 +22,7 @@ import type { StoredCharacter } from "../storage/schema.js";
 import {
   budgetSegments,
   canRaise,
+  describeEffect,
   describeProfessionChange,
   editorProblems,
   followTip,
@@ -704,5 +706,22 @@ describe("followTip (#1932)", () => {
       followTip(emptied.tooltip, { anchor: { isConnected: true }, describe: () => undefined }),
     ).toBeUndefined();
     expect(emptied.tip.shown).toBe(false);
+  });
+});
+
+describe("describeEffect (#3893)", () => {
+  it("words a primary attribute's effect, in English as game-core used to", () => {
+    const effect = primaryAttributeEffect("mesmer.fast-casting", 12);
+    expect(effect).toBeDefined();
+    if (effect !== undefined) {
+      expect(describeEffect(effect)).toBe("spells and signets cast 43% faster");
+    }
+  });
+
+  it("fills every number a line has", () => {
+    const effect = primaryAttributeEffect("necromancer.soul-reaping", 12);
+    expect(effect && describeEffect(effect)).toBe(
+      "+12 energy when someone nearby dies (3 per 15 s)",
+    );
   });
 });

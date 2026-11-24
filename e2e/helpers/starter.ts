@@ -40,10 +40,10 @@ async function paste(target: Locator, text: string): Promise<void> {
 }
 
 /**
- * Save the starter build `name` as a character and pick it; on the menu
- * after, at `url`.
+ * Paste the starter build `name` into a new character's editor, unsaved:
+ * its Training Ground (#2) beside it, at `url`.
  */
-export async function bringStarter(page: Page, name: string, url = "./"): Promise<void> {
+export async function importStarter(page: Page, name: string, url = "./"): Promise<void> {
   const build = starter(name);
   await page.goto(url);
   await openRail(page, "Character Builder");
@@ -58,6 +58,14 @@ export async function bringStarter(page: Page, name: string, url = "./"): Promis
   });
   await paste(page.locator(".editor"), shared);
   await expect(page.locator(".toast")).toHaveText(`Imported ${name}`);
+}
+
+/**
+ * Save the starter build `name` as a character and pick it; on the menu
+ * after, at `url`.
+ */
+export async function bringStarter(page: Page, name: string, url = "./"): Promise<void> {
+  await importStarter(page, name, url);
   await page.getByRole("button", { name: "Save", exact: true }).click();
   // Saving returns to Character Builder; a click on the card on Random
   // Arena picks who to play. Newest first, should two share the name.

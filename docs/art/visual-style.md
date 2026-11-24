@@ -466,6 +466,31 @@ lift shows its top end and nothing of it lands in the gap. On a flat map
 the hung grid is left out. The study SVG is drawn in
 `scripts/assets/visual-style.mjs`.
 
+### Spawn bubble
+
+Before the match starts you are held within `SPAWN_BUBBLE_RADIUS` (81) of
+your spawn, and a **low curtain** shows where: a wall one body tall (40
+units) standing up from the deck at that radius, not a decal on it. Neutral
+near-white `#eef6ff`, neither the help blue or green nor a warm harm. Only
+your own bubble is drawn; a watcher sees none.
+
+- **Rest:** opacity 0.15 at its foot, fading out upward in five slices.
+- **Near:** over your last 20 units to the edge it rises to 0.6, on the arc
+  you face it from only: all of it straight ahead, half at 45°, none from 90°.
+- **Rim:** a solid line on the ground, 2 lines wide over a dark `#1b2029`
+  one (§6 rule 1), never under 2 css px on a phone.
+- **Shimmer:** three bands climb it every 2.4 s, faintest near the top.
+- **Bump:** pulled back by it, a ring ripples out at the contact point for
+  0.3 s. Reduced motion keeps the brightening, and drops the shimmer's climb
+  and the ripple.
+- **Start:** it fades out over 0.3 s, and nothing is left.
+
+![spawn bubble](visual-style/spawn-bubble.svg)
+
+Recipe (#3909): `spawn-bubble.ts` `spawnBubbleCommands` gives the quads
+and rings; `arena-scene.ts` `drawSpawnBubble` draws them at the goal-mark
+depth of the spawn's layer, over the floor and under every body.
+
 Every SVG here is made by `scripts/assets/visual-style.mjs`; regenerate with
 `node scripts/assets/visual-style.mjs`.
 

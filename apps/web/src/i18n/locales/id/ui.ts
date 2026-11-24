@@ -61,6 +61,21 @@ export default {
 
   "buildEditor.addWeapon": "Tambah senjata",
   "buildEditor.armor": "Armor",
+  "buildEditor.attributeEffect.critical-strikes":
+    "+{percent}% peluang serangan kritis, +{energy} Energi per serangan kritis",
+  "buildEditor.attributeEffect.divine-favor": "Mantra Monk pada sekutu menyembuhkan +{heal}",
+  "buildEditor.attributeEffect.energy-storage": "+{energy} Energi maksimum",
+  "buildEditor.attributeEffect.expertise":
+    "skill serangan, ritual, skill sentuhan, dan skill Ranger memakan Energi {percent}% lebih sedikit",
+  "buildEditor.attributeEffect.fast-casting": "Mantra dan Segel dirapal {percent}% lebih cepat",
+  "buildEditor.attributeEffect.leadership":
+    "hingga {max} Energi per teriakan, {perAlly} per sekutu yang terkena",
+  "buildEditor.attributeEffect.mysticism": "Berkah Dervish memakan Energi {percent}% lebih sedikit",
+  "buildEditor.attributeEffect.soul-reaping":
+    "+{energy} Energi saat seseorang di dekat mati ({triggers} per {seconds} dtk)",
+  "buildEditor.attributeEffect.spawning-power":
+    "makhluk +{percent}% Darah, Mantra Senjata bertahan {percent}% lebih lama",
+  "buildEditor.attributeEffect.strength": "skill serangan {percent}% penetrasi armor",
   "buildEditor.back": "Kembali",
   "buildEditor.bothHandsFull": "kedua tangan penuh",
   "buildEditor.budgetSegment": { other: "{attribute}: {count} poin" },
@@ -572,6 +587,7 @@ export default {
   "hud.outcomeVictory": "Menang",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (tewas)",
+  "hud.preMatchHeld": "Kamu tertahan di dekat titik munculmu sampai pertandingan dimulai.",
   "hud.preMatchStartingAnyway":
     "Menunggu pemain: {joined}/{expected}, tetap dimulai dalam {seconds} dtk",
   "hud.preMatchStartsIn": "Pertandingan dimulai dalam {seconds}",

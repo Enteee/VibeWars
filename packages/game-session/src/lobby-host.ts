@@ -4,7 +4,7 @@ import {
   MORALE_FLOOR,
   STARTER_BUILDS,
   getProfession,
-  pickStarterBuild,
+  pickSoloFoeBuild,
   pickStarterTeam,
   parsePlayerBuild,
   validatePlayerBuild,
@@ -1353,10 +1353,11 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
   /**
    * A preset team of `size` at random from the lobby's RNG (#2148): its
    * name, and its builds in slot order under its members' job names.
-   * Size 1 has no preset team: one starter build, and no name. A queued
-   * party's foe side is of size 0, and plays none. Never one of `not`,
-   * the other sides' presets (#3891): another team name, or for size 1 a
-   * build of other professions, so no bot's name is on two sides.
+   * Size 1 has no preset team: one starter build, never a healer
+   * (#3888), and no name. A queued party's foe side is of size 0,
+   * and plays none. Never one of `not`, the other sides' presets
+   * (#3891): another team name, or for size 1 a build of other
+   * professions, so no bot's name is on two sides.
    */
   const presetTeamFor = (size: number, not: readonly PresetTeam[] = []): PresetTeam => {
     if (size === 0) {
@@ -1366,7 +1367,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       return {
         name: null,
         builds: [
-          pickStarterBuild(
+          pickSoloFoeBuild(
             random,
             not.flatMap(({ builds }) => builds),
           ),

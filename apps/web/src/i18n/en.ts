@@ -67,6 +67,21 @@ export const en = {
 
   "buildEditor.addWeapon": "Add a weapon",
   "buildEditor.armor": "Armor",
+  "buildEditor.attributeEffect.critical-strikes":
+    "+{percent}% critical chance, +{energy} energy per critical",
+  "buildEditor.attributeEffect.divine-favor": "Monk spells on allies heal +{heal}",
+  "buildEditor.attributeEffect.energy-storage": "+{energy} maximum energy",
+  "buildEditor.attributeEffect.expertise":
+    "attack skills, rituals, touch skills and Ranger skills cost {percent}% less energy",
+  "buildEditor.attributeEffect.fast-casting": "spells and signets cast {percent}% faster",
+  "buildEditor.attributeEffect.leadership":
+    "up to {max} energy per shout, {perAlly} per ally affected",
+  "buildEditor.attributeEffect.mysticism": "Dervish enchantments cost {percent}% less energy",
+  "buildEditor.attributeEffect.soul-reaping":
+    "+{energy} energy when someone nearby dies ({triggers} per {seconds} s)",
+  "buildEditor.attributeEffect.spawning-power":
+    "creatures +{percent}% Health, weapon spells last {percent}% longer",
+  "buildEditor.attributeEffect.strength": "attack skills {percent}% armor penetration",
   "buildEditor.back": "Back",
   "buildEditor.bothHandsFull": "both hands full",
   "buildEditor.budgetSegment": {
@@ -617,6 +632,7 @@ export const en = {
   "hud.outcomeVictory": "Victory",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (dead)",
+  "hud.preMatchHeld": "You are held near your spawn until the match starts.",
   "hud.preMatchStartingAnyway":
     "Waiting for players: {joined}/{expected}, starting anyway in {seconds} s",
   "hud.preMatchStartsIn": "Match starts in {seconds}",

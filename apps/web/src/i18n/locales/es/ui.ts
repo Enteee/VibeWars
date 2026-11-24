@@ -62,6 +62,24 @@ export default {
 
   "buildEditor.addWeapon": "Añadir arma",
   "buildEditor.armor": "Armadura",
+  "buildEditor.attributeEffect.critical-strikes":
+    "+{percent}% de probabilidad de golpe crítico, +{energy} de energía por crítico",
+  "buildEditor.attributeEffect.divine-favor": "los hechizos de Monje sobre aliados curan +{heal}",
+  "buildEditor.attributeEffect.energy-storage": "+{energy} de energía máxima",
+  "buildEditor.attributeEffect.expertise":
+    "las habilidades de ataque, rituales, de toque y de Guardabosques cuestan un {percent}% menos de energía",
+  "buildEditor.attributeEffect.fast-casting":
+    "hechizos y sellos se lanzan un {percent}% más rápido",
+  "buildEditor.attributeEffect.leadership":
+    "hasta {max} de energía por grito, {perAlly} por aliado afectado",
+  "buildEditor.attributeEffect.mysticism":
+    "los encantamientos de Derviche cuestan un {percent}% menos de energía",
+  "buildEditor.attributeEffect.soul-reaping":
+    "+{energy} de energía cuando alguien cercano muere ({triggers} cada {seconds} s)",
+  "buildEditor.attributeEffect.spawning-power":
+    "criaturas +{percent}% de salud, los hechizos de arma duran un {percent}% más",
+  "buildEditor.attributeEffect.strength":
+    "habilidades de ataque: {percent}% de penetración de armadura",
   "buildEditor.back": "Atrás",
   "buildEditor.bothHandsFull": "ambas manos ocupadas",
   "buildEditor.budgetSegment": {
@@ -649,6 +667,7 @@ export default {
   "hud.outcomeVictory": "Victoria",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (muerto)",
+  "hud.preMatchHeld": "Permaneces cerca de tu punto de aparición hasta que empiece la partida.",
   "hud.preMatchStartingAnyway":
     "Esperando jugadores: {joined}/{expected}, empieza de todos modos en {seconds} s",
   "hud.preMatchStartsIn": "La partida empieza en {seconds}",

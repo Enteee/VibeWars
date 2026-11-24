@@ -48,6 +48,7 @@ import type {
   RenderableStand,
 } from "./flag-objects.js";
 import type { GoalMark } from "./goal-mark.js";
+import type { SpawnBubble } from "./spawn-bubble.js";
 import { harmsViewer } from "./ground-effect-look.js";
 import { LYING_WIDTH } from "./lying-pose.js";
 import { nearestWithin, pickAt, type ClickableKind, type DrawnClickable } from "./pick.js";
@@ -662,6 +663,8 @@ export interface ArenaSnapshot {
   readonly strokes: readonly RenderableStroke[];
   /** Goals on the ground that only you see (#3221), such as the tutorial's walk mark. */
   readonly goals: readonly GoalMark[];
+  /** Your spawn bubble while you are held in it before the start (#3909); `undefined` once started, or for a watcher. */
+  readonly spawnBubble: SpawnBubble | undefined;
 }
 
 /** One segment of a line drawn on the compass (#2391), in world units. */
@@ -697,6 +700,7 @@ export const EMPTY_SNAPSHOT: ArenaSnapshot = {
   pings: [],
   strokes: [],
   goals: [],
+  spawnBubble: undefined,
 };
 
 /** `snapshot` with your team's calls on it (#443). */

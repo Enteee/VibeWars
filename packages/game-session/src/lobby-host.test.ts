@@ -1,5 +1,6 @@
 import {
   ANNIHILATION_MATCH_RULES,
+  SOLO_FOE_BUILDS,
   STARTER_BUILDS,
   STARTER_TEAMS,
   type StarterTeam,
@@ -1619,7 +1620,7 @@ describe("a Team Lobby (#1458)", () => {
     const { lobby } = await teamLobby([], [0], draws(0.999), undefined, undefined, 1);
     await begin(lobby);
     await timeOut(lobby);
-    const build = STARTER_BUILDS.at(-1);
+    const build = SOLO_FOE_BUILDS.at(-1);
     const [seat0] = [...(lobby.matches[0]?.plan.seats.values() ?? [])];
     expect(seat0?.build?.primaryProfession).toBe(build?.primaryProfession);
   });
@@ -1640,6 +1641,26 @@ describe("a Team Lobby (#1458)", () => {
           names(1).filter((name) => names(0).includes(name)),
           `${String(size)} at ${String(draw)}`,
         ).toEqual([]);
+      }
+    }
+  });
+
+  it("never gives a side of one's bot a healer's bar (#3888)", async () => {
+    const bars = SOLO_FOE_BUILDS.map((build) => build.skillBar);
+    // The draws that would land on a healer among all the starter builds.
+    const healers = STARTER_BUILDS.flatMap((build, i) =>
+      SOLO_FOE_BUILDS.includes(build) ? [] : [(i + 0.5) / STARTER_BUILDS.length],
+    );
+    expect(healers.length).toBeGreaterThan(0);
+    for (const r of [0, 0.999, ...healers]) {
+      // Both sides play a preset: the host's, then the empty one's.
+      const { lobby } = await teamLobby([], [0], draws(r, r), undefined, undefined, 1);
+      await begin(lobby);
+      await timeOut(lobby);
+      const seats = [...(lobby.matches[0]?.plan.seats.values() ?? [])];
+      expect(seats).toHaveLength(2);
+      for (const seat of seats) {
+        expect(bars, String(r)).toContainEqual(seat.build?.skillBar);
       }
     }
   });

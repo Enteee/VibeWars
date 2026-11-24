@@ -61,6 +61,21 @@ export default {
 
   "buildEditor.addWeapon": "הוסף נשק",
   "buildEditor.armor": "שריון",
+  "buildEditor.attributeEffect.critical-strikes":
+    "+{percent}% סיכוי למכה קריטית, +{energy} אנרגיה לכל מכה קריטית",
+  "buildEditor.attributeEffect.divine-favor": "לחשי Monk על בני ברית מרפאים +{heal}",
+  "buildEditor.attributeEffect.energy-storage": "+{energy} אנרגיה מרבית",
+  "buildEditor.attributeEffect.expertise":
+    "מיומנויות התקפה, טקסים, מיומנויות מגע ומיומנויות Ranger עולות {percent}% פחות אנרגיה",
+  "buildEditor.attributeEffect.fast-casting": "לחשים וחותמות מוטלים מהר יותר ב-{percent}%",
+  "buildEditor.attributeEffect.leadership":
+    "עד {max} אנרגיה לכל קריאה, {perAlly} לכל בן ברית מושפע",
+  "buildEditor.attributeEffect.mysticism": "הקסמים של Dervish עולים {percent}% פחות אנרגיה",
+  "buildEditor.attributeEffect.soul-reaping":
+    "+{energy} אנרגיה כשמישהו בקרבת מקום מת ({triggers} לכל {seconds} שנ׳)",
+  "buildEditor.attributeEffect.spawning-power":
+    "יצורים +{percent}% חיים, לחשי נשק נמשכים {percent}% יותר",
+  "buildEditor.attributeEffect.strength": "מיומנויות התקפה: {percent}% חדירת שריון",
   "buildEditor.back": "חזרה",
   "buildEditor.bothHandsFull": "שתי הידיים תפוסות",
   "buildEditor.budgetSegment": {
@@ -646,6 +661,7 @@ export default {
   "hud.outcomeVictory": "ניצחון",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (מת)",
+  "hud.preMatchHeld": "אתה מוחזק ליד נקודת ההופעה שלך עד שהמשחק מתחיל.",
   "hud.preMatchStartingAnyway":
     "ממתינים לשחקנים: {joined}/{expected}, מתחילים בכל זאת בעוד {seconds} ש׳",
   "hud.preMatchStartsIn": "המשחק מתחיל בעוד {seconds}",

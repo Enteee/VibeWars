@@ -61,6 +61,21 @@ export default {
 
   "buildEditor.addWeapon": "افزودن سلاح",
   "buildEditor.armor": "زره",
+  "buildEditor.attributeEffect.critical-strikes":
+    "+{percent}% شانس ضربهٔ بحرانی، +{energy} انرژی به ازای هر ضربهٔ بحرانی",
+  "buildEditor.attributeEffect.divine-favor": "طلسم‌های Monk روی متحدان +{heal} درمان می‌کنند",
+  "buildEditor.attributeEffect.energy-storage": "+{energy} حداکثر انرژی",
+  "buildEditor.attributeEffect.expertise":
+    "مهارت‌های حمله، آیین‌ها، مهارت‌های لمسی و مهارت‌های Ranger {percent}% انرژی کمتری می‌گیرند",
+  "buildEditor.attributeEffect.fast-casting": "طلسم‌ها و مهرها {percent}% سریع‌تر اجرا می‌شوند",
+  "buildEditor.attributeEffect.leadership":
+    "تا {max} انرژی به ازای هر فریاد، {perAlly} به ازای هر متحد تحت تأثیر",
+  "buildEditor.attributeEffect.mysticism": "افسون‌های Dervish {percent}% انرژی کمتری می‌گیرند",
+  "buildEditor.attributeEffect.soul-reaping":
+    "+{energy} انرژی وقتی کسی در نزدیکی می‌میرد ({triggers} در هر {seconds} ثانیه)",
+  "buildEditor.attributeEffect.spawning-power":
+    "موجودات +{percent}% سلامتی، طلسم‌های سلاح {percent}% بیشتر دوام می‌آورند",
+  "buildEditor.attributeEffect.strength": "مهارت‌های حمله: {percent}% نفوذ در زره",
   "buildEditor.back": "بازگشت",
   "buildEditor.bothHandsFull": "هر دو دست پر است",
   "buildEditor.budgetSegment": {
@@ -615,6 +630,7 @@ export default {
   "hud.outcomeVictory": "پیروزی",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (مرده)",
+  "hud.preMatchHeld": "تا شروع مسابقه نزدیک نقطهٔ شروع خود نگه داشته می‌شوید.",
   "hud.preMatchStartingAnyway":
     "در انتظار بازیکنان: {joined}/{expected}، در هر صورت تا {seconds} ثانیه دیگر شروع می‌شود",
   "hud.preMatchStartsIn": "مسابقه تا {seconds} دیگر شروع می‌شود",

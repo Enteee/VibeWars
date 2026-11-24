@@ -18,6 +18,7 @@ import { decodeTemplateCode, type TemplateBuild } from "./template-code.js";
 import { PROFESSIONS, primaryAttributeOf } from "./professions.js";
 import { PVX_SOLO, type PvxBuild } from "./pvx-builds.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "./ruleset.js";
+import { botRole } from "./match/bot/role.js";
 import { getSkill } from "./skills/catalog.js";
 import type { AttackWeaponClass } from "./skills/types.js";
 
@@ -208,6 +209,27 @@ export function pickStarterBuild(
   not: readonly PlayerBuild[] = [],
 ): PlayerBuild {
   return pickBuildFrom(STARTER_BUILDS, random, not);
+}
+
+/**
+ * The starter builds a lone bot may play (#3888): none a bot would play
+ * as a healer, who outheals one player's damage and draws every 1v1.
+ */
+export const SOLO_FOE_BUILDS: readonly PlayerBuild[] = STARTER_BUILDS.filter((build) => {
+  const bar = build.skillBar.flatMap((id) => {
+    const skill = id === null ? undefined : getSkill(id);
+    return skill === undefined ? [] : [skill];
+  });
+  const weapon = getWeapon(build.equipment.weaponSets[0].mainHand.weaponId);
+  return weapon === undefined || botRole(bar, weapon.range) !== "healer";
+});
+
+/** `pickStarterBuild` for a size-1 bot: never a healer (#3888), and not of `not`'s professions. */
+export function pickSoloFoeBuild(
+  random: () => number,
+  not: readonly PlayerBuild[] = [],
+): PlayerBuild {
+  return pickBuildFrom(SOLO_FOE_BUILDS, random, not);
 }
 
 function sameProfessions(a: PlayerBuild, b: PlayerBuild): boolean {

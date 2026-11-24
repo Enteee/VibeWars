@@ -62,6 +62,22 @@ export default {
 
   "buildEditor.addWeapon": "Dodaj broń",
   "buildEditor.armor": "Pancerz",
+  "buildEditor.attributeEffect.critical-strikes":
+    "+{percent}% szansy na trafienie krytyczne, +{energy} Energii za trafienie krytyczne",
+  "buildEditor.attributeEffect.divine-favor": "czary Mnicha na sojuszników leczą +{heal}",
+  "buildEditor.attributeEffect.energy-storage": "+{energy} maksymalnej Energii",
+  "buildEditor.attributeEffect.expertise":
+    "umiejętności ataku, rytuały, umiejętności dotyku i umiejętności Łowcy kosztują {percent}% mniej Energii",
+  "buildEditor.attributeEffect.fast-casting": "czary i sygnety rzucane są {percent}% szybciej",
+  "buildEditor.attributeEffect.leadership":
+    "do {max} Energii za okrzyk, {perAlly} za każdego objętego sojusznika",
+  "buildEditor.attributeEffect.mysticism":
+    "zaczarowania Derwisza kosztują {percent}% mniej Energii",
+  "buildEditor.attributeEffect.soul-reaping":
+    "+{energy} Energii, gdy ktoś w pobliżu zginie ({triggers} na {seconds} s)",
+  "buildEditor.attributeEffect.spawning-power":
+    "istoty +{percent}% Zdrowia, czary broni trwają {percent}% dłużej",
+  "buildEditor.attributeEffect.strength": "umiejętności ataku: {percent}% przebicia pancerza",
   "buildEditor.back": "Wstecz",
   "buildEditor.bothHandsFull": "obie ręce zajęte",
   "buildEditor.budgetSegment": {
@@ -671,6 +687,7 @@ export default {
   "hud.outcomeVictory": "Zwycięstwo",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (nie żyje)",
+  "hud.preMatchHeld": "Do początku meczu pozostajesz przy swoim punkcie startowym.",
   "hud.preMatchStartingAnyway":
     "Oczekiwanie na graczy: {joined}/{expected}, start mimo to za {seconds} s",
   "hud.preMatchStartsIn": "Mecz zaczyna się za {seconds}",

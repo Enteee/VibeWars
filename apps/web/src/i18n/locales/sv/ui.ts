@@ -61,6 +61,22 @@ export default {
 
   "buildEditor.addWeapon": "Lägg till vapen",
   "buildEditor.armor": "Rustning",
+  "buildEditor.attributeEffect.critical-strikes":
+    "+{percent} % chans till kritisk träff, +{energy} energi per kritisk träff",
+  "buildEditor.attributeEffect.divine-favor": "Monk-besvärjelser på allierade helar +{heal}",
+  "buildEditor.attributeEffect.energy-storage": "+{energy} maximal energi",
+  "buildEditor.attributeEffect.expertise":
+    "attackförmågor, ritualer, beröringsförmågor och Ranger-förmågor kostar {percent} % mindre energi",
+  "buildEditor.attributeEffect.fast-casting": "besvärjelser och sigill kastas {percent} % snabbare",
+  "buildEditor.attributeEffect.leadership":
+    "upp till {max} energi per rop, {perAlly} per påverkad allierad",
+  "buildEditor.attributeEffect.mysticism":
+    "Dervish-förtrollningar kostar {percent} % mindre energi",
+  "buildEditor.attributeEffect.soul-reaping":
+    "+{energy} energi när någon i närheten dör ({triggers} per {seconds} s)",
+  "buildEditor.attributeEffect.spawning-power":
+    "varelser +{percent} % hälsa, vapenbesvärjelser varar {percent} % längre",
+  "buildEditor.attributeEffect.strength": "attackförmågor {percent} % rustningsgenomträngning",
   "buildEditor.back": "Tillbaka",
   "buildEditor.bothHandsFull": "båda händerna upptagna",
   "buildEditor.budgetSegment": {
@@ -615,6 +631,7 @@ export default {
   "hud.outcomeVictory": "Seger",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (död)",
+  "hud.preMatchHeld": "Du hålls nära din startpunkt tills matchen börjar.",
   "hud.preMatchStartingAnyway":
     "Väntar på spelare: {joined}/{expected}, startar ändå om {seconds} s",
   "hud.preMatchStartsIn": "Matchen börjar om {seconds}",

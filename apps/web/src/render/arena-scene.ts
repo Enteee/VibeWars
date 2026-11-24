@@ -253,6 +253,12 @@ import {
   type GoalMark,
 } from "./goal-mark.js";
 import {
+  spawnBubbleCommands,
+  spawnBubbleContact,
+  spawnBubbleFade,
+  type SpawnBubble,
+} from "./spawn-bubble.js";
+import {
   GROUND_COLOUR,
   GROUND_DASH,
   GROUND_GAP,
@@ -973,6 +979,19 @@ export class ArenaScene extends Phaser.Scene {
    */
   private goals = new Map<string, { mark: GoalMark; goneAt: number | undefined }>();
   private readonly goalGraphics = new Map<number, Phaser.GameObjects.Graphics>();
+  /**
+   * Your spawn bubble (#3909), with when it left the snapshot, so it fades
+   * at the start; and your last bump against it, for its ripple.
+   */
+  private spawnBubble:
+    | {
+        bubble: SpawnBubble;
+        goneAt: number | undefined;
+        touching: boolean;
+        bump: { readonly angle: number; readonly at: number } | undefined;
+      }
+    | undefined;
+  private spawnBubbleGraphics: Phaser.GameObjects.Graphics | undefined;
   /** Scenery the simulation does not know (#3326), lying on the walls of its layer. */
   private props: readonly TutorialProp[] = [];
   /** The props' graphics, one per wall-top depth. */
@@ -1276,6 +1295,7 @@ export class ArenaScene extends Phaser.Scene {
       this.drawPing(g, ping);
     }
     this.drawGoals();
+    this.drawSpawnBubble();
     this.drawStand();
     this.drawAltar(g);
     for (const point of this.snapshot.capturePoints) {
@@ -2218,6 +2238,76 @@ export class ArenaScene extends Phaser.Scene {
     g.fillCircle(x, head, PING_HEAD_RADIUS);
     g.lineStyle(1.5, BODY_EDGE, 1);
     g.strokeCircle(x, head, PING_HEAD_RADIUS);
+  }
+
+  /**
+   * Your spawn bubble (#3909) on its layer, over the floor and under the
+   * bodies, so it never hides one. Once gone from the snapshot it fades
+   * out, then its graphics go. A step onto its edge is a bump.
+   */
+  private drawSpawnBubble(): void {
+    const current = this.snapshot.spawnBubble;
+    if (current !== undefined) {
+      this.spawnBubble = {
+        touching: false,
+        bump: undefined,
+        ...this.spawnBubble,
+        bubble: current,
+        goneAt: undefined,
+      };
+    } else if (this.spawnBubble !== undefined && this.spawnBubble.goneAt === undefined) {
+      this.spawnBubble.goneAt = this.now;
+    }
+    const held = this.spawnBubble;
+    const fade = spawnBubbleFade(held?.goneAt === undefined ? undefined : this.now - held.goneAt);
+    if (held === undefined || fade <= 0) {
+      this.spawnBubble = undefined;
+      this.spawnBubbleGraphics?.destroy();
+      this.spawnBubbleGraphics = undefined;
+      return;
+    }
+    const { centre, layer } = held.bubble;
+    const self = this.drawnActors.find(({ team }) => team === "self");
+    const contact =
+      self === undefined || held.goneAt !== undefined
+        ? undefined
+        : spawnBubbleContact(centre, self.position);
+    if (contact !== undefined && !held.touching) {
+      held.bump = { angle: contact, at: this.now };
+    }
+    held.touching = contact !== undefined;
+    const depth = renderOrder({ kind: "goal-mark", layer });
+    const g = (this.spawnBubbleGraphics ??= this.add.graphics());
+    g.clear().setDepth(depth);
+    g.save();
+    g.translateCanvas(0, -elevationOf(layer, this.snapshot.structure.ground));
+    for (const command of spawnBubbleCommands(
+      centre,
+      self?.position,
+      this.now,
+      held.bump === undefined
+        ? undefined
+        : { angle: held.bump.angle, seconds: this.now - held.bump.at },
+      this.reducedMotion,
+      fade,
+      1 / (this.view?.zoom ?? 1),
+    )) {
+      if (command.kind === "quad") {
+        const [a, b, c, d] = command.points;
+        g.fillStyle(command.colour, command.alpha);
+        g.fillTriangle(a.x, a.y, b.x, b.y, c.x, c.y);
+        g.fillTriangle(a.x, a.y, c.x, c.y, d.x, d.y);
+      } else {
+        g.lineStyle(command.width, command.colour, command.alpha);
+        g.strokeCircle(command.at.x, command.at.y, command.radius);
+      }
+    }
+    g.restore();
+  }
+
+  /** Whether your spawn bubble (#3909) is in the scene, for the e2e specs. */
+  public spawnBubbleShown(): boolean {
+    return this.spawnBubbleGraphics !== undefined;
   }
 
   /**

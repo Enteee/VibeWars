@@ -61,6 +61,21 @@ export default {
 
   "buildEditor.addWeapon": "เพิ่มอาวุธ",
   "buildEditor.armor": "เกราะ",
+  "buildEditor.attributeEffect.critical-strikes":
+    "+{percent}% โอกาสคริติคอล, +{energy} พลังงานต่อคริติคอล",
+  "buildEditor.attributeEffect.divine-favor": "เวทของ Monk ที่ใช้กับพันธมิตรฟื้นพลังชีวิต +{heal}",
+  "buildEditor.attributeEffect.energy-storage": "+{energy} พลังงานสูงสุด",
+  "buildEditor.attributeEffect.expertise":
+    "สกิลโจมตี พิธี สกิลสัมผัส และสกิล Ranger ใช้พลังงานน้อยลง {percent}%",
+  "buildEditor.attributeEffect.fast-casting": "เวทและตราผนึกร่ายเร็วขึ้น {percent}%",
+  "buildEditor.attributeEffect.leadership":
+    "สูงสุด {max} พลังงานต่อการตะโกน, {perAlly} ต่อพันธมิตรที่ได้รับผล",
+  "buildEditor.attributeEffect.mysticism": "มนตร์เสริมของ Dervish ใช้พลังงานน้อยลง {percent}%",
+  "buildEditor.attributeEffect.soul-reaping":
+    "+{energy} พลังงานเมื่อมีใครตายใกล้ๆ ({triggers} ครั้งต่อ {seconds} วินาที)",
+  "buildEditor.attributeEffect.spawning-power":
+    "สิ่งมีชีวิต +{percent}% พลังชีวิต, เวทอาวุธอยู่นานขึ้น {percent}%",
+  "buildEditor.attributeEffect.strength": "สกิลโจมตีเจาะเกราะ {percent}%",
   "buildEditor.back": "ย้อนกลับ",
   "buildEditor.bothHandsFull": "มือเต็มทั้งสองข้าง",
   "buildEditor.budgetSegment": { other: "{attribute}: {count} แต้ม" },
@@ -568,6 +583,7 @@ export default {
   "hud.outcomeVictory": "ชนะ",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (ตาย)",
+  "hud.preMatchHeld": "คุณจะถูกจำกัดให้อยู่ใกล้จุดเกิดจนกว่าการแข่งขันจะเริ่ม",
   "hud.preMatchStartingAnyway": "กำลังรอผู้เล่น: {joined}/{expected} จะเริ่มอยู่ดีใน {seconds} วิ",
   "hud.preMatchStartsIn": "การแข่งขันเริ่มใน {seconds}",
   "hud.preMatchWaiting": "กำลังรอผู้เล่น: {joined}/{expected}",

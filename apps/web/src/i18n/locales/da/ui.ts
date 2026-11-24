@@ -63,6 +63,22 @@ export default {
 
   "buildEditor.addWeapon": "Tilføj våben",
   "buildEditor.armor": "Rustning",
+  "buildEditor.attributeEffect.critical-strikes":
+    "+{percent}% chance for kritisk træf, +{energy} energi pr. kritisk træf",
+  "buildEditor.attributeEffect.divine-favor": "Monk-besværgelser på allierede heler +{heal}",
+  "buildEditor.attributeEffect.energy-storage": "+{energy} maksimal energi",
+  "buildEditor.attributeEffect.expertise":
+    "angrebsevner, ritualer, berøringsevner og Ranger-evner koster {percent}% mindre energi",
+  "buildEditor.attributeEffect.fast-casting":
+    "besværgelser og signeter kastes {percent}% hurtigere",
+  "buildEditor.attributeEffect.leadership":
+    "op til {max} energi pr. råb, {perAlly} pr. berørt allieret",
+  "buildEditor.attributeEffect.mysticism": "Dervish-fortryllelser koster {percent}% mindre energi",
+  "buildEditor.attributeEffect.soul-reaping":
+    "+{energy} energi, når nogen i nærheden dør ({triggers} pr. {seconds} s)",
+  "buildEditor.attributeEffect.spawning-power":
+    "væsner +{percent}% liv, våbenbesværgelser varer {percent}% længere",
+  "buildEditor.attributeEffect.strength": "angrebsevner {percent}% rustningsgennemtrængning",
   "buildEditor.back": "Tilbage",
   "buildEditor.bothHandsFull": "begge hænder optaget",
   "buildEditor.budgetSegment": {
@@ -614,6 +630,7 @@ export default {
   "hud.outcomeVictory": "Sejr",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (død)",
+  "hud.preMatchHeld": "Du holdes nær dit startpunkt, indtil kampen begynder.",
   "hud.preMatchStartingAnyway":
     "Venter på spillere: {joined}/{expected}, starter alligevel om {seconds} s",
   "hud.preMatchStartsIn": "Kampen starter om {seconds}",

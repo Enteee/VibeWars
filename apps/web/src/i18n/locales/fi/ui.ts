@@ -62,6 +62,22 @@ export default {
 
   "buildEditor.addWeapon": "Lisää ase",
   "buildEditor.armor": "Panssari",
+  "buildEditor.attributeEffect.critical-strikes":
+    "+{percent}% kriittisen osuman mahdollisuus, +{energy} energiaa per kriittinen osuma",
+  "buildEditor.attributeEffect.divine-favor": "Monkin loitsut liittolaisiin parantavat +{heal}",
+  "buildEditor.attributeEffect.energy-storage": "+{energy} enimmäisenergiaa",
+  "buildEditor.attributeEffect.expertise":
+    "hyökkäystaidot, riitit, kosketustaidot ja Ranger-taidot maksavat {percent}% vähemmän energiaa",
+  "buildEditor.attributeEffect.fast-casting": "loitsut ja sinetit loitsitaan {percent}% nopeammin",
+  "buildEditor.attributeEffect.leadership":
+    "enintään {max} energiaa per huuto, {perAlly} per vaikutettu liittolainen",
+  "buildEditor.attributeEffect.mysticism":
+    "Dervishin lumoukset maksavat {percent}% vähemmän energiaa",
+  "buildEditor.attributeEffect.soul-reaping":
+    "+{energy} energiaa, kun joku lähellä kuolee ({triggers} per {seconds} s)",
+  "buildEditor.attributeEffect.spawning-power":
+    "olennot +{percent}% terveyttä, aseloitsut kestävät {percent}% pidempään",
+  "buildEditor.attributeEffect.strength": "hyökkäystaidot: {percent}% panssarin läpäisy",
   "buildEditor.back": "Takaisin",
   "buildEditor.bothHandsFull": "molemmat kädet täynnä",
   "buildEditor.budgetSegment": {
@@ -625,6 +641,7 @@ export default {
   "hud.outcomeVictory": "Voitto",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (kuollut)",
+  "hud.preMatchHeld": "Pysyt aloituspisteesi lähellä, kunnes ottelu alkaa.",
   "hud.preMatchStartingAnyway":
     "Odotetaan pelaajia: {joined}/{expected}, alkaa silti {seconds} s kuluttua",
   "hud.preMatchStartsIn": "Ottelu alkaa {seconds} kuluttua",

@@ -245,52 +245,79 @@ export function mysticismEnergyCost(rank: number, skill: Skill, cost: number): n
 }
 
 /** A share in [0, 1] as a whole percentage, for a readout. */
-function percent(share: number): string {
-  return `${String(Math.round(share * 100))}%`;
+function percent(share: number): number {
+  return Math.round(share * 100);
 }
 
 /**
- * What a primary attribute does at `rank`, in one line, for the build
- * editor (#531): "spells cast 43% faster". Every number comes from the
- * function the simulation uses. `undefined` at rank 0, and for an
- * attribute with no effect of its own: every secondary.
+ * What a primary attribute does at one rank (#531, #3893): which effect,
+ * with its numbers, which the build editor words in the player's language.
+ * Percentages are whole percents.
  */
-export function describePrimaryAttribute(attributeId: string, rank: number): string | undefined {
+export type PrimaryAttributeEffect =
+  | { readonly kind: "fast-casting"; readonly percent: number }
+  | { readonly kind: "expertise"; readonly percent: number }
+  | { readonly kind: "strength"; readonly percent: number }
+  | { readonly kind: "divine-favor"; readonly heal: number }
+  | { readonly kind: "critical-strikes"; readonly percent: number; readonly energy: number }
+  | {
+      readonly kind: "soul-reaping";
+      readonly energy: number;
+      readonly triggers: number;
+      readonly seconds: number;
+    }
+  | { readonly kind: "energy-storage"; readonly energy: number }
+  | { readonly kind: "leadership"; readonly max: number; readonly perAlly: number }
+  | { readonly kind: "spawning-power"; readonly percent: number }
+  | { readonly kind: "mysticism"; readonly percent: number };
+
+/**
+ * What a primary attribute does at `rank`, for the build editor (#531):
+ * fast casting at 43%. Every number comes from the function the
+ * simulation uses. `undefined` at rank 0, and for an attribute with no
+ * effect of its own: every secondary.
+ */
+export function primaryAttributeEffect(
+  attributeId: string,
+  rank: number,
+): PrimaryAttributeEffect | undefined {
   if (rank <= 0) {
     return undefined;
   }
   switch (attributeId) {
     case FAST_CASTING_ATTRIBUTE:
-      return `spells and signets cast ${percent(1 - fastCastingSpeed(rank))} faster`;
+      return { kind: "fast-casting", percent: percent(1 - fastCastingSpeed(rank)) };
     case EXPERTISE_ATTRIBUTE:
-      return `attack skills, rituals, touch skills and Ranger skills cost ${percent(EXPERTISE_COST_CUT_PER_RANK * rank)} less energy`;
+      return { kind: "expertise", percent: percent(EXPERTISE_COST_CUT_PER_RANK * rank) };
     case STRENGTH_ATTRIBUTE:
-      return `attack skills ${percent(strengthArmorPenetration(rank, 0))} armor penetration`;
+      return { kind: "strength", percent: percent(strengthArmorPenetration(rank, 0)) };
     case DIVINE_FAVOR_ATTRIBUTE:
-      return `Monk spells on allies heal +${String(divineFavorHeal(rank))}`;
+      return { kind: "divine-favor", heal: divineFavorHeal(rank) };
     case CRITICAL_STRIKES_ATTRIBUTE:
-      return (
-        `+${percent(CRITICAL_STRIKES_CHANCE_PER_RANK * rank)} critical chance, ` +
-        `+${String(criticalStrikesEnergy(rank))} energy per critical`
-      );
+      return {
+        kind: "critical-strikes",
+        percent: percent(CRITICAL_STRIKES_CHANCE_PER_RANK * rank),
+        energy: criticalStrikesEnergy(rank),
+      };
     case SOUL_REAPING_ATTRIBUTE:
-      return (
-        `+${String(soulReapingEnergy(rank))} energy when someone nearby dies ` +
-        `(${String(SOUL_REAPING_MAX_TRIGGERS)} per ${String(SOUL_REAPING_WINDOW_SECONDS)} s)`
-      );
+      return {
+        kind: "soul-reaping",
+        energy: soulReapingEnergy(rank),
+        triggers: SOUL_REAPING_MAX_TRIGGERS,
+        seconds: SOUL_REAPING_WINDOW_SECONDS,
+      };
     case ENERGY_STORAGE_ATTRIBUTE:
-      return `+${String(energyStorageBonus(rank))} maximum energy`;
+      return { kind: "energy-storage", energy: energyStorageBonus(rank) };
     case LEADERSHIP_ATTRIBUTE:
-      return (
-        `up to ${String(leadershipEnergy(rank, Number.POSITIVE_INFINITY))} energy per shout, ` +
-        `${String(LEADERSHIP_ENERGY_PER_ALLY)} per ally affected`
-      );
-    case SPAWNING_POWER_ATTRIBUTE: {
-      const more = percent(spawningPowerMultiplier(rank) - 1);
-      return `creatures +${more} Health, weapon spells last ${more} longer`;
-    }
+      return {
+        kind: "leadership",
+        max: leadershipEnergy(rank, Number.POSITIVE_INFINITY),
+        perAlly: LEADERSHIP_ENERGY_PER_ALLY,
+      };
+    case SPAWNING_POWER_ATTRIBUTE:
+      return { kind: "spawning-power", percent: percent(spawningPowerMultiplier(rank) - 1) };
     case MYSTICISM_ATTRIBUTE:
-      return `Dervish enchantments cost ${percent(MYSTICISM_COST_CUT_PER_RANK * rank)} less energy`;
+      return { kind: "mysticism", percent: percent(MYSTICISM_COST_CUT_PER_RANK * rank) };
     default:
       return undefined;
   }
