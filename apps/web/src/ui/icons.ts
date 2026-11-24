@@ -272,6 +272,11 @@ export function helpIcon(): string {
   return iconUrl("ui", "help");
 }
 
+/** The ☰'s Leave row (#3956): an empty door frame, an arrow going out. */
+export function leaveIcon(): string {
+  return iconUrl("ui", "leave");
+}
+
 /** The bar's Leaderboard (#3575): a cup. */
 export function leaderboardIcon(): string {
   return iconUrl("ui", "leaderboard");
