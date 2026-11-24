@@ -3343,6 +3343,9 @@ async function main(): Promise<void> {
     }
   };
 
+  /** Whether a match is entered, or being entered: read after an await. */
+  const inMatch = (): boolean => match !== undefined || enteringMatch;
+
   /** Out of a warmup's match (#3899), quietly: nothing kept, the party lobby, still queued, under it. */
   const dropWarmupView = async (): Promise<void> => {
     const leaving = match;
@@ -3354,9 +3357,14 @@ async function main(): Promise<void> {
     warmupLine?.queue.dispose();
     warmupLine = undefined;
     hallWatch.resume();
-    await leaving.dispose();
-    leaveScreen();
     enteringMatch = false;
+    await leaving.dispose();
+    // The found match may have been entered meanwhile: its screen, and its
+    // toast, are not the warmup's to leave.
+    if (inMatch()) {
+      return;
+    }
+    leaveScreen();
   };
 
   const enterMatch = async (
