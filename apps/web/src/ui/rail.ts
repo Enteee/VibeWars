@@ -480,7 +480,9 @@ function watchDrawer(): void {
     if (!(target instanceof Element) || drawerListener === undefined) {
       return;
     }
-    if (target.closest(`#${RAIL_ID}, #${DRAWER_TOGGLE_ID}`) === null) {
+    // A press that redrew what it hit, like the size stepper redrawing
+    // the rail, is no press outside: its target has left the page.
+    if (target.isConnected && target.closest(`#${RAIL_ID}, #${DRAWER_TOGGLE_ID}`) === null) {
       drawerListener({
         kind: "press-outside",
         onScrim: target.closest(".rail-drawer-scrim") !== null,
@@ -531,10 +533,10 @@ export function railScreen(
   panel.append(rail, scrim, body);
 
   let open = false;
-  const paint = (): void => {
+  // `shown` is the rail drawn now: a new team size swaps one in (setTeamSize).
+  const paint = (shown: Element): void => {
     panel.classList.toggle("is-drawer-open", open);
     toggle.setAttribute("aria-expanded", String(open));
-    const shown = panel.querySelector(".mode-rail") ?? rail;
     if (open) {
       shown.removeAttribute(TUCKED_BEHIND);
     } else {
@@ -547,14 +549,14 @@ export function railScreen(
       return;
     }
     open = next.open;
-    paint();
+    paint(panel.querySelector(".mode-rail") ?? rail);
     if (next.focus === "entry") {
       panel.querySelector<HTMLElement>('.mode-rail [aria-pressed="true"]')?.focus();
     } else if (next.focus === "toggle") {
       toggle.focus();
     }
   };
-  paint();
+  paint(rail);
   // An entry's own click switches the screen first; this one, bubbling
   // after it, puts the drawer away.
   panel.addEventListener("click", (event) => {

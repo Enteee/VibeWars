@@ -20,6 +20,8 @@ export type RailLabel =
  */
 export async function showRail(page: Page): Promise<boolean> {
   const toggle = page.locator(".rail-drawer-toggle");
+  // The screen drawn first: one or the other is in view.
+  await expect(page.locator(".mode-rail").or(toggle).first()).toBeVisible();
   if (!(await toggle.isVisible()) || (await toggle.getAttribute("aria-expanded")) === "true") {
     return false;
   }
@@ -31,7 +33,10 @@ export async function showRail(page: Page): Promise<boolean> {
 /** Open `label`'s screen from the rail, as a player would. */
 export async function openRail(page: Page, label: RailLabel): Promise<void> {
   await showRail(page);
-  const entry = page.locator(".mode-rail").getByRole("button", { name: label, exact: true });
+  // Hidden too: the click puts a drawer away.
+  const entry = page
+    .locator(".mode-rail")
+    .getByRole("button", { name: label, exact: true, includeHidden: true });
   await entry.click();
   await expect(entry).toHaveAttribute("aria-pressed", "true");
 }

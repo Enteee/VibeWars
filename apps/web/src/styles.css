@@ -9601,9 +9601,10 @@ body:has(> .splash) #app {
     width: 92px;
     visibility: hidden;
     transform: translateX(-100%);
+    /* Hidden once it has slid out; shown at once, so an entry takes focus. */
     transition:
       transform 200ms ease-out,
-      visibility 200ms;
+      visibility 0s 200ms;
   }
 
   .screen-rail > .mode-rail:dir(rtl) {
@@ -9613,6 +9614,7 @@ body:has(> .splash) #app {
   .screen-rail.is-drawer-open > .mode-rail {
     visibility: visible;
     transform: none;
+    transition: transform 200ms ease-out;
   }
 
   .rail-drawer-scrim {
