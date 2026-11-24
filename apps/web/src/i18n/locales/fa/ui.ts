@@ -630,6 +630,7 @@ export default {
   "hud.outcomeVictory": "پیروزی",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (مرده)",
+  "hud.preMatchHeld": "تا شروع مسابقه نزدیک نقطهٔ شروع خود نگه داشته می‌شوید.",
   "hud.preMatchStartingAnyway":
     "در انتظار بازیکنان: {joined}/{expected}، در هر صورت تا {seconds} ثانیه دیگر شروع می‌شود",
   "hud.preMatchStartsIn": "مسابقه تا {seconds} دیگر شروع می‌شود",

@@ -256,6 +256,7 @@ export type {
   WireMatchPhase,
   WirePreMatch,
   WireRelic,
+  WireSpawn,
   WireStand,
   JsonValue,
   WireSkillBar,

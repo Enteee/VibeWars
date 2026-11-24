@@ -630,6 +630,7 @@ export default {
   "hud.outcomeVictory": "Sejr",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (død)",
+  "hud.preMatchHeld": "Du holdes nær dit startpunkt, indtil kampen begynder.",
   "hud.preMatchStartingAnyway":
     "Venter på spillere: {joined}/{expected}, starter alligevel om {seconds} s",
   "hud.preMatchStartsIn": "Kampen starter om {seconds}",

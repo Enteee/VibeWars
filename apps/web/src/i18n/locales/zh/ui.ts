@@ -578,6 +578,7 @@ export default {
   "hud.outcomeVictory": "胜利",
   "hud.outcomeWithReason": "{result}（{reason}）",
   "hud.pipDead": "{name}（阵亡）",
+  "hud.preMatchHeld": "比赛开始前，你会被限制在出生点附近。",
   "hud.preMatchStartingAnyway": "等待玩家：{joined}/{expected}，{seconds} 秒后仍将开始",
   "hud.preMatchStartsIn": "比赛将在 {seconds} 后开始",
   "hud.preMatchWaiting": "等待玩家：{joined}/{expected}",

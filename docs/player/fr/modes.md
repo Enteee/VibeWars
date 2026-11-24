@@ -33,7 +33,7 @@ détourée au bord de l'écran : le socle ou un sanctuaire à la couleur de son
 propriétaire, gris s'il n'est à personne, l'autel en or. La flèche pleine d'un
 joueur s'affiche par-dessus.
 
-Un match s'ouvre avec tout le monde retenu près de son point d'apparition : tu peux faire quelques pas, mais pas combattre ni utiliser de compétences. Une ligne en haut compte les joueurs qui ont chargé le match. Une fois que tout le monde a chargé, elle décompte 10 secondes et le match commence, et son chrono avec lui. Un joueur qui n'a pas chargé après 20 secondes n'est pas attendu : le décompte commence sans lui, et il peut encore rejoindre plus tard.
+Un match s'ouvre avec tout le monde retenu près de son point d'apparition : tu peux faire quelques pas, mais pas combattre ni utiliser de compétences. Un mur chatoyant autour de ton point d'apparition montre jusqu'où tu peux aller. Une ligne en haut compte les joueurs qui ont chargé le match. Une fois que tout le monde a chargé, elle décompte 10 secondes et le match commence, et son chrono avec lui. Un joueur qui n'a pas chargé après 20 secondes n'est pas attendu : le décompte commence sans lui, et il peut encore rejoindre plus tard.
 
 ## Annihilation
 

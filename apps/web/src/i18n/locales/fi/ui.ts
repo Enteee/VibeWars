@@ -641,6 +641,7 @@ export default {
   "hud.outcomeVictory": "Voitto",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (kuollut)",
+  "hud.preMatchHeld": "Pysyt aloituspisteesi lähellä, kunnes ottelu alkaa.",
   "hud.preMatchStartingAnyway":
     "Odotetaan pelaajia: {joined}/{expected}, alkaa silti {seconds} s kuluttua",
   "hud.preMatchStartsIn": "Ottelu alkaa {seconds} kuluttua",

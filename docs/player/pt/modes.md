@@ -34,7 +34,7 @@ seta contornada na borda da tela: o suporte ou um santuário na cor do
 dono, cinza se não for de ninguém, e o altar em dourado. A seta preenchida
 de um jogador é desenhada por cima.
 
-Uma partida abre com todos retidos perto do seu ponto de surgimento: você pode dar alguns passos, mas não lutar nem usar habilidades. Uma linha no topo conta os jogadores que carregaram a partida. Quando todos carregam, ela conta 10 segundos e a partida começa, e o seu relógio com ela. Um jogador que não carregou após 20 segundos não é esperado: a contagem começa sem ele, e ele ainda pode entrar depois.
+Uma partida abre com todos retidos perto do seu ponto de surgimento: você pode dar alguns passos, mas não lutar nem usar habilidades. Uma parede cintilante em volta do seu ponto de surgimento mostra até onde você pode ir. Uma linha no topo conta os jogadores que carregaram a partida. Quando todos carregam, ela conta 10 segundos e a partida começa, e o seu relógio com ela. Um jogador que não carregou após 20 segundos não é esperado: a contagem começa sem ele, e ele ainda pode entrar depois.
 
 ## Aniquilação
 

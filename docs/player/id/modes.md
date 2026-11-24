@@ -30,7 +30,7 @@ sasaran yang di luar layar atau tertutup HUD mendapat panah bergaris tepi di
 tepi layar: tiang atau kuil dalam warna pemiliknya, abu-abu kalau
 belum dimiliki siapa pun, altar dalam warna emas. Panah terisi milik pemain digambar di atasnya.
 
-Pertandingan dibuka dengan semua orang ditahan di dekat titik munculnya: kamu bisa berjalan beberapa langkah, tetapi tidak bisa bertarung atau memakai skill. Satu baris di atas menghitung pemain yang sudah selesai memuat pertandingan. Begitu semua selesai memuat, baris itu menghitung mundur 10 detik dan pertandingan dimulai, beserta jamnya. Pemain yang belum selesai memuat setelah 20 detik tidak ditunggu: hitung mundur dimulai tanpanya, dan ia masih bisa bergabung nanti.
+Pertandingan dibuka dengan semua orang ditahan di dekat titik munculnya: kamu bisa berjalan beberapa langkah, tetapi tidak bisa bertarung atau memakai skill. Dinding berkilau di sekitar titik munculmu menunjukkan seberapa jauh kamu bisa pergi. Satu baris di atas menghitung pemain yang sudah selesai memuat pertandingan. Begitu semua selesai memuat, baris itu menghitung mundur 10 detik dan pertandingan dimulai, beserta jamnya. Pemain yang belum selesai memuat setelah 20 detik tidak ditunggu: hitung mundur dimulai tanpanya, dan ia masih bisa bergabung nanti.
 
 ## Pemusnahan
 
