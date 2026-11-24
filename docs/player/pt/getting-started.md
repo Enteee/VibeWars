@@ -189,10 +189,15 @@ incluindo a sua: `2 equipes
 buscando`. Só o host tem **Sair da fila** ali. Fechar a aba do host tira
 o grupo da fila na hora. Quando aparece outra equipe na fila do mesmo
 modo, vocês jogam em um dos mapas do modo, cada lado com suas builds, e
-voltam à sua sala depois. O host pode sair da fila pela janela do anel a qualquer momento; um convidado que sai tira todo o grupo dela. Depois
-de 10 s na fila, o host também pode pressionar
-**Jogar contra bots** na janela do anel: uma partida na sua própria sala contra uma equipe
-predefinida aleatória de bots, exceto em
+voltam à sua sala depois. O host pode sair da fila pela janela do anel a qualquer momento; um convidado que sai tira todo o grupo dela. Enquanto
+nenhuma outra equipe aparece, a janela do anel e a sua sala fazem uma contagem
+regressiva de 30 s até um **aquecimento**: uma partida na sua própria sala
+contra uma equipe predefinida aleatória de bots. Ele não conta para nada, nem
+classificação nem Histórico de partidas, e você continua na fila o tempo todo: um
+rótulo na partida avisa isso. Um aquecimento segue o outro até uma equipe ser
+encontrada; então o aquecimento termina na hora e você vai para a sua partida.
+Em vez de esperar, o host pode pressionar **Começar aquecimento agora** na
+janela do anel. Não há aquecimentos em
 [Ascensão dos Heróis](modes.md#ascensão-dos-heróis), que espera uma
 equipe da sua rodada.
 

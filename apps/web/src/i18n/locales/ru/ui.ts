@@ -858,7 +858,6 @@ export default {
   "lobby.modeNameKingOfTheHill": "Царь горы",
   "lobby.modeNameRelicRun": "Гонка за реликвией",
   "lobby.notReady": "Не готов",
-  "lobby.playBots": "Играть с ботами",
   "lobby.ready": "Готов",
   "lobby.readyJoinATeam": "Сначала войди в команду.",
   "lobby.readyMatchStarted": "Матч уже начался.",
@@ -1123,7 +1122,13 @@ export default {
   "queue.sameTeamIn": "Победа: следующий матч той же командой через {seconds} с",
   "queue.newTeamIn": "Состав группы изменился: выберите команду заново через {seconds} с",
   "queue.now": "Сейчас",
-  "queue.playBotsIn": "Играть с ботами ({seconds} с)",
+  "queue.warmupIn":
+    "Другой команды пока нет. Разминочный матч против ботов через {seconds} с. Он не засчитывается, и вы остаётесь в очереди.",
+  "queue.warmupNow": "Начать разминку сейчас",
+  "queue.warmupRunning": "Разминка — всё ещё в очереди на {queue} (ожидание {waited})",
+  "queue.warmupOver": "Матч найден — разминка окончена",
+  "queue.warmupNext":
+    "Разминка окончена: {outcome}. Следующая разминка через 3 с, вы всё ещё в очереди.",
   "queue.queueAgain": "Ещё раз",
   "queue.randomArena": "Случайная арена {size}",
   "queue.rankedCancelled": "Рейтинговый матч отменён: игрок не подтвердил.",

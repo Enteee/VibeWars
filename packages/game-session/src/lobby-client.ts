@@ -747,6 +747,7 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
     teamLobby: state.teamLobby,
     proposalBuilds: new Map(proposalBuilds),
     queueNonce: state.queueNonce,
+    warmup: state.warmup,
     ascentRound: state.ascentRound,
     ascentLock: state.ascentLock,
     teamKept: state.teamKept,
@@ -777,7 +778,8 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
 
   /** A new queueing (#1766) is a new party: its key, consent and answer start over. */
   const noteQueueing = (state: WireLobbyState): void => {
-    const nonce = state.phase === "queued" ? state.queueNonce : null;
+    // A warmup is still the same queueing (#3899).
+    const nonce = state.queueNonce;
     if (nonce === (queueing?.nonce ?? null)) {
       return;
     }
@@ -838,8 +840,11 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
       leaveQueue() {
         send({ kind: "leave-queue" });
       },
-      playAgainstBots() {
-        send({ kind: "play-bots" });
+      startWarmup() {
+        send({ kind: "start-warmup" });
+      },
+      endWarmup() {
+        send({ kind: "end-warmup" });
       },
       queueParty(key) {
         if (hostId !== undefined && !closed && queueing !== undefined && partyKey === undefined) {

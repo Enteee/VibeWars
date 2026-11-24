@@ -68,8 +68,8 @@ export interface TopbarCallbacks {
   readonly onRemoveMember: (id: string) => void;
   /** The queue flyout's Leave Queue (#2743): out of whichever queue this tab is in. */
   readonly onLeaveQueue: () => void;
-  /** The queue flyout's Play against bots (#3547): the host's party fights bots instead. */
-  readonly onPlayBots: () => void;
+  /** The queue flyout's Start warmup now (#3899): the host's party plays bots, still queued. */
+  readonly onStartWarmup: () => void;
 }
 
 /** The lobby the bar names (#1526): this tab's own, or the one it joined. */
@@ -512,7 +512,7 @@ export function mountTopbar(
   attachHelpWindow(help);
 
   // Left of Help while in any queue (#2743).
-  const queue = queueButton(bar, callbacks.onLeaveQueue, callbacks.onPlayBots);
+  const queue = queueButton(bar, callbacks.onLeaveQueue, callbacks.onStartWarmup);
 
   // The top 100, and where this player stands (#3575).
   const leaderboard = leaderboardButton(bar, leaderboardStore, pubkey);

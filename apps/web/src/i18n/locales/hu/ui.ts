@@ -799,7 +799,6 @@ export default {
   "lobby.modeNameKingOfTheHill": "A domb ura",
   "lobby.modeNameRelicRun": "Ereklyefutam",
   "lobby.notReady": "Nem kész",
-  "lobby.playBots": "Játék botok ellen",
   "lobby.ready": "Kész",
   "lobby.readyJoinATeam": "Előbb lépj be egy csapatba.",
   "lobby.readyMatchStarted": "A meccs már elkezdődött.",
@@ -1038,7 +1037,13 @@ export default {
   "queue.sameTeamIn": "Nyertetek: következő meccs ugyanazzal a csapattal {seconds} mp múlva",
   "queue.newTeamIn": "A csapatotok megváltozott: válasszatok újra csapatot {seconds} mp múlva",
   "queue.now": "Most",
-  "queue.playBotsIn": "Játék botok ellen ({seconds} mp)",
+  "queue.warmupIn":
+    "Még nincs másik csapat. Bemelegítő meccs botok ellen {seconds} mp múlva. Nem számít, és a sorban maradsz.",
+  "queue.warmupNow": "Bemelegítés indítása most",
+  "queue.warmupRunning": "Bemelegítés — még sorban: {queue} ({waited} várakozás)",
+  "queue.warmupOver": "Meccs megvan — vége a bemelegítésnek",
+  "queue.warmupNext":
+    "Vége a bemelegítésnek: {outcome}. Következő bemelegítés 3 mp múlva, még sorban vagy.",
   "queue.queueAgain": "Újra sorba",
   "queue.randomArena": "Véletlen Aréna {size}",
   "queue.rankedCancelled": "Rangsorolt meccs törölve: egy játékos nem erősített meg.",

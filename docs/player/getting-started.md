@@ -181,10 +181,14 @@ host's tab takes the party out of the queue at once. When another
 queued team of the same mode turns up, you play them on one of the
 mode's maps, each side with its own builds, and come back to your lobby
 afterwards. The host can leave from the ring's window at any time; a guest who leaves takes the whole
-party out of it. After 10 s in the queue, the host can also press
-**Play against bots** in the ring's window: a match in your own lobby against a
-random preset team of bots,
-except in [Heroes' Ascent](modes.md#heroes-ascent), which waits for a
+party out of it. While no other team comes, the ring's window and your
+lobby count down 30 s to a **warmup**: a match in your own lobby against
+a random preset team of bots. It counts for nothing, no rating and no
+Match history, and you stay in the queue the whole time: a label in the
+match says so. One warmup follows another until a team is found; then
+the warmup ends at once and you go to your match. The host can press
+**Start warmup now** in the ring's window rather than wait. There are no
+warmups in [Heroes' Ascent](modes.md#heroes-ascent), which waits for a
 team at your round.
 
 ![Team Arena: the Team size arrows at the foot of the rail, and your lobby's team to join](img/team-arena-1.png)

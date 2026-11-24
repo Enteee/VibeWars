@@ -85,6 +85,7 @@ function snapshot(selfTeam: 0 | 1, countdownSeconds: number | null): LobbySnapsh
     countdownSeconds,
     teamLobby: null,
     queueNonce: null,
+    warmup: false,
     ascentRound: null,
     ascentLock: null,
     teamKept: null,

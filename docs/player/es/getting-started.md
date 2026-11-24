@@ -183,9 +183,14 @@ buscando`. Ahí solo el anfitrión tiene **Salir de la cola**. Si se cierra la
 pestaña del anfitrión, el grupo sale de la cola al instante. Cuando aparece
 otro equipo en cola del mismo modo, jugáis contra él en uno de los mapas del
 modo, cada bando con sus builds, y luego volvéis a tu sala. El anfitrión puede salir desde la ventana del anillo en cualquier momento; un invitado que se va saca
-de la cola a todo el grupo. Tras 10 s en la cola, el anfitrión también puede
-pulsar **Jugar contra bots** en la ventana del anillo: una partida en tu propia sala
-contra un equipo predefinido de bots al azar, excepto en
+de la cola a todo el grupo. Mientras no llega otro equipo, la ventana del anillo
+y tu sala cuentan 30 s hasta un **calentamiento**: una partida en tu propia sala
+contra un equipo predefinido de bots al azar. No cuenta para nada, ni puntuación
+ni Historial de partidas, y sigues en la cola todo el tiempo: una etiqueta en la
+partida lo indica. Un calentamiento sigue a otro hasta que se encuentra un
+equipo; entonces el calentamiento termina al instante y vas a tu partida. El
+anfitrión puede pulsar **Empezar calentamiento ya** en la ventana del anillo en
+vez de esperar. No hay calentamientos en
 [Ascenso de los Héroes](modes.md#ascenso-de-los-héroes), que espera a un
 equipo de tu ronda.
 

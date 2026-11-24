@@ -901,7 +901,6 @@ export default {
   "lobby.modeNameKingOfTheHill": "ملك التل",
   "lobby.modeNameRelicRun": "سباق الآثار",
   "lobby.notReady": "غير جاهز",
-  "lobby.playBots": "العب ضد البوتات",
   "lobby.ready": "جاهز",
   "lobby.readyJoinATeam": "انضم إلى فريق أولًا.",
   "lobby.readyMatchStarted": "بدأت المباراة بالفعل.",
@@ -1177,7 +1176,13 @@ export default {
   "queue.sameTeamIn": "لقد فزت: المباراة التالية بالفريق نفسه بعد {seconds} ث",
   "queue.newTeamIn": "تغيّرت مجموعتك: اختر فريقك من جديد بعد {seconds} ث",
   "queue.now": "الآن",
-  "queue.playBotsIn": "العب ضد البوتات ({seconds} ث)",
+  "queue.warmupIn":
+    "لا يوجد فريق آخر بعد. مباراة إحماء ضد الروبوتات بعد {seconds} ث. لا تُحتسب، وتبقى في قائمة الانتظار.",
+  "queue.warmupNow": "ابدأ الإحماء الآن",
+  "queue.warmupRunning": "إحماء — ما زلت في قائمة انتظار {queue} (انتظرت {waited})",
+  "queue.warmupOver": "تم العثور على مباراة — انتهى الإحماء",
+  "queue.warmupNext":
+    "انتهى الإحماء: {outcome}. الإحماء التالي بعد 3 ث، وما زلت في قائمة الانتظار.",
   "queue.queueAgain": "طابور مجددًا",
   "queue.randomArena": "الساحة العشوائية {size}",
   "queue.rankedCancelled": "أُلغيت المباراة المصنّفة: لاعب لم يؤكد.",

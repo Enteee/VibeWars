@@ -804,7 +804,6 @@ export default {
   "lobby.modeNameKingOfTheHill": "Βασιλιάς του λόφου",
   "lobby.modeNameRelicRun": "Κούρσα κειμηλίου",
   "lobby.notReady": "Μη έτοιμος",
-  "lobby.playBots": "Παίξε με bots",
   "lobby.ready": "Έτοιμος",
   "lobby.readyJoinATeam": "Μπες πρώτα σε μια ομάδα.",
   "lobby.readyMatchStarted": "Ο αγώνας έχει ήδη ξεκινήσει.",
@@ -1045,7 +1044,13 @@ export default {
   "queue.sameTeamIn": "Νικήσατε: επόμενος αγώνας με την ίδια ομάδα σε {seconds} δ",
   "queue.newTeamIn": "Η ομάδα σας άλλαξε: διαλέξτε ξανά ομάδα σε {seconds} δ",
   "queue.now": "Τώρα",
-  "queue.playBotsIn": "Παίξε με bots ({seconds} δ)",
+  "queue.warmupIn":
+    "Καμία άλλη ομάδα ακόμα. Αγώνας προθέρμανσης με bots σε {seconds} δ. Δεν μετράει και μένεις στην ουρά.",
+  "queue.warmupNow": "Ξεκίνα προθέρμανση τώρα",
+  "queue.warmupRunning": "Προθέρμανση — ακόμα στην ουρά για {queue} ({waited} αναμονή)",
+  "queue.warmupOver": "Βρέθηκε αγώνας — η προθέρμανση τελείωσε",
+  "queue.warmupNext":
+    "Η προθέρμανση τελείωσε: {outcome}. Επόμενη προθέρμανση σε 3 δ, ακόμα στην ουρά.",
   "queue.queueAgain": "Ξανά στην ουρά",
   "queue.randomArena": "Τυχαία Αρένα {size}",
   "queue.rankedCancelled": "Ο βαθμολογημένος αγώνας ακυρώθηκε: ένας παίκτης δεν επιβεβαίωσε.",

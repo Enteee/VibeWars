@@ -837,7 +837,6 @@ export default {
   "lobby.modeNameKingOfTheHill": "Roi de la colline",
   "lobby.modeNameRelicRun": "Course aux reliques",
   "lobby.notReady": "Pas prêt",
-  "lobby.playBots": "Jouer contre des bots",
   "lobby.ready": "Prêt",
   "lobby.readyJoinATeam": "Rejoins d'abord une équipe.",
   "lobby.readyMatchStarted": "Le match a déjà commencé.",
@@ -1098,7 +1097,13 @@ export default {
   "queue.sameTeamIn": "Victoire : prochain match avec la même équipe dans {seconds} s",
   "queue.newTeamIn": "Votre groupe a changé : choisissez à nouveau votre équipe dans {seconds} s",
   "queue.now": "Maintenant",
-  "queue.playBotsIn": "Jouer contre des bots ({seconds} s)",
+  "queue.warmupIn":
+    "Pas encore d'autre équipe. Match d'échauffement contre des bots dans {seconds} s. Il ne compte pas, et vous restez dans la file.",
+  "queue.warmupNow": "Lancer l'échauffement",
+  "queue.warmupRunning": "Échauffement — toujours dans la file pour {queue} ({waited} d'attente)",
+  "queue.warmupOver": "Match trouvé — échauffement terminé",
+  "queue.warmupNext":
+    "Échauffement terminé : {outcome}. Prochain échauffement dans 3 s, toujours dans la file.",
   "queue.queueAgain": "Relancer la file",
   "queue.randomArena": "Arène aléatoire {size}",
   "queue.rankedCancelled": "Match classé annulé : un joueur n’a pas confirmé.",

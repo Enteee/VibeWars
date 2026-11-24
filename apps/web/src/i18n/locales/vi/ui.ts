@@ -746,7 +746,6 @@ export default {
   "lobby.modeNameKingOfTheHill": "Vua đồi",
   "lobby.modeNameRelicRun": "Vận chuyển thánh tích",
   "lobby.notReady": "Chưa sẵn sàng",
-  "lobby.playBots": "Đấu với bot",
   "lobby.ready": "Sẵn sàng",
   "lobby.readyJoinATeam": "Hãy vào một đội trước.",
   "lobby.readyMatchStarted": "Trận đấu đã bắt đầu.",
@@ -981,7 +980,13 @@ export default {
   "queue.sameTeamIn": "Bạn đã thắng: trận tiếp theo với cùng đội sau {seconds} giây",
   "queue.newTeamIn": "Nhóm của bạn đã thay đổi: chọn lại đội sau {seconds} giây",
   "queue.now": "Ngay",
-  "queue.playBotsIn": "Đấu với bot ({seconds} s)",
+  "queue.warmupIn":
+    "Chưa có đội khác. Trận khởi động với bot sau {seconds} giây. Trận này không tính, và bạn vẫn ở trong hàng chờ.",
+  "queue.warmupNow": "Khởi động ngay",
+  "queue.warmupRunning": "Khởi động — vẫn trong hàng chờ {queue} (đã chờ {waited})",
+  "queue.warmupOver": "Đã tìm thấy trận — hết khởi động",
+  "queue.warmupNext":
+    "Hết khởi động: {outcome}. Trận khởi động tiếp theo sau 3 giây, vẫn trong hàng chờ.",
   "queue.queueAgain": "Xếp lại",
   "queue.randomArena": "Đấu trường ngẫu nhiên {size}",
   "queue.rankedCancelled": "Trận xếp hạng bị hủy: một người chơi không xác nhận.",

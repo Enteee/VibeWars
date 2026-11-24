@@ -334,6 +334,9 @@ muissa 8) riippumatta siitä, montako ryhmässä on; botit pelaavat paikat,
 joita kukaan ei lunasta.
 Kun ryhmä on jonossa, voit selata muita pelitiloja: ryhmä säilyttää
 pelitilansa ja kokonsa, kunnes se poistuu jonosta.
+Tiimiareenassa ja GvG:ssä ryhmä, joka on odottanut 30 s, pelaa lämmittelyjä
+botteja vastaan, yhä jonossa, kunnes tiimi löytyy
+([lämmittelyt](getting-started.md#isännöi-ottelu-tai-liity-siihen)).
 Jokainen vaihe kestää 30 sekuntia ja päättyy aikaisemmin, kun kaikki
 tiimiaulassa ovat valmiita. Äänestäminen ja paikan ottaminen merkitsevät
 sinut valmiiksi.

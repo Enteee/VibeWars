@@ -187,11 +187,15 @@ omasi mukaan lukien: `2 tiimiä etsii`. Vain isännällä on siellä
 heti. Kun toinen saman pelitilan jonottava tiimi ilmaantuu, pelaatte sitä
 vastaan yhdellä pelitilan kartoista, kumpikin puoli omilla
 buildeillaan, ja palaatte sen jälkeen aulaasi. Isäntä voi poistua renkaan ikkunasta milloin tahansa; vieras, joka poistuu, vie koko
-ryhmän pois jonosta. Kun jonossa on oltu 10 s, isäntä voi myös painaa
-renkaan ikkunasta **Pelaa botteja vastaan**: ottelu omassa aulassasi
-satunnaista valmista bottitiimiä vastaan,
-paitsi [Sankarien nousussa](modes.md#sankarien-nousu), joka odottaa
-tiimiä sinun kierrokseltasi.
+ryhmän pois jonosta. Niin kauan kuin muuta tiimiä ei tule, renkaan ikkuna
+ja aulasi laskevat 30 s **lämmittelyyn**: ottelu omassa aulassasi
+satunnaista valmista bottitiimiä vastaan. Se ei vaikuta mihinkään, ei
+luokitukseen eikä Otteluhistoriaan, ja pysytte jonossa koko ajan: ottelun
+merkintä kertoo sen. Lämmittelyt seuraavat toisiaan, kunnes tiimi löytyy;
+silloin lämmittely päättyy heti ja siirrytte otteluunne. Isäntä voi painaa
+renkaan ikkunasta **Aloita lämmittely nyt** odottamisen sijaan.
+[Sankarien nousussa](modes.md#sankarien-nousu) ei ole lämmittelyjä, koska
+se odottaa tiimiä sinun kierrokseltasi.
 
 ![Tiimiareena: tiimin koon nuolet palkin alaosassa ja aulasi tiimi, johon liittyä](../img/team-arena-1.png)
 

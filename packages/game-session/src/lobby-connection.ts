@@ -84,8 +84,10 @@ export interface LobbySnapshot {
    * in the claim. A proposal not here yet shows its balls only.
    */
   readonly proposalBuilds: ReadonlyMap<string, readonly WireProposalBuild[]>;
-  /** While `phase` is `"queued"` (#1766), this queueing's nonce; `null` otherwise. */
+  /** While the party is queued (#1766), a warmup too (#3899), this queueing's nonce; `null` otherwise. */
   readonly queueNonce: string | null;
+  /** The match on is a queued party's warmup against bots (#3899): it counts for nothing. */
+  readonly warmup: boolean;
   /** While `phase` is `"queued"` in Heroes' Ascent (#1996), the party's round; `null` otherwise. */
   readonly ascentRound: number | null;
   /** A Heroes' Ascent run's slots, once its party queued (#2539); `null` otherwise. */
@@ -162,8 +164,10 @@ export interface LobbyConnection {
   findMatch(ascentRound: number | null, again: boolean): void;
   /** Host only (#1766): the queued party back in its lobby. */
   leaveQueue(): void;
-  /** Host only (#1766): the queued party plays against bots, here. */
-  playAgainstBots(): void;
+  /** Host only (#3899): the queued party plays a warmup against bots, here, still queued. */
+  startWarmup(): void;
+  /** Host only (#3899): the party's match is found: the warmup on ends with no result, and none comes after. */
+  endWarmup(): void;
   /**
    * The party is queued (#1766): this member's `key`, fresh, which signs
    * its consent to the party, once per queueing. The answer comes through

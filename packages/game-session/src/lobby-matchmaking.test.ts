@@ -9,7 +9,7 @@ import { describe, expect, it } from "vitest";
 import { openLobby, type Member, type TestLobby } from "./lobby-harness.test-support.js";
 import type { MatchPlan } from "./lobby-host.js";
 import type { MatchHost } from "./match-host.js";
-import { PARTY_CONSENT_MS } from "./lobby-host.js";
+import { PARTY_CONSENT_MS, WARMUP_AFTER_MS, WARMUP_GAP_MS } from "./lobby-host.js";
 import { settle } from "./match-harness.test-support.js";
 import { admissionDigest, partyGroupId, type VerifyTicketSig } from "./queue-admission.js";
 import type { TicketKey } from "./queue-client.js";
@@ -46,14 +46,18 @@ async function landed(): Promise<void> {
   }
 }
 
-/** A party lobby of `mode`, Team Arena's by default, of the host and `guests`. */
+/**
+ * A party lobby of `mode`, Team Arena's by default, of the host and
+ * `guests`; its matches `match`, or each a fresh one `match` makes.
+ */
 async function partyLobby(
   guests: readonly string[],
   mode: LobbyMode = "team-arena",
-  match?: FakeMatch,
+  match?: FakeMatch | (() => FakeMatch),
 ): Promise<{ lobby: TestLobby; party: Member[] }> {
+  const next = typeof match === "function" ? match : () => match;
   const lobby = await openLobby({
-    ...(match === undefined ? {} : { startMatch: () => match as unknown as MatchHost }),
+    ...(match === undefined ? {} : { startMatch: () => next() as unknown as MatchHost }),
     teamLobby: true,
     matchmaking: { roomId: ROOM_ID, verifyTicketSig, newNonce: () => NONCE },
   });
@@ -72,7 +76,11 @@ async function partyLobby(
 interface FakeMatch {
   readonly phase: "active" | "finished";
   readonly winningTeam: 0 | 1 | null;
-  readonly draining: false;
+  /** Still sending its end, until a test says otherwise. */
+  draining: boolean;
+  /** How it was let go: retired to drain, or closed as `close` does. */
+  readonly retired: boolean;
+  readonly closed: boolean;
   advance(): void;
   retire(): void;
   close(): Promise<void>;
@@ -83,6 +91,8 @@ interface FakeMatch {
 function fakeMatch(): FakeMatch {
   let phase: "active" | "finished" = "active";
   let winner: 0 | 1 | null = null;
+  let retired = false;
+  let closed = false;
   return {
     get phase() {
       return phase;
@@ -91,9 +101,20 @@ function fakeMatch(): FakeMatch {
       return winner;
     },
     draining: false,
+    get retired() {
+      return retired;
+    },
+    get closed() {
+      return closed;
+    },
     advance: () => undefined,
-    retire: () => undefined,
-    close: () => Promise.resolve(),
+    retire: () => {
+      retired = true;
+    },
+    close: () => {
+      closed = true;
+      return Promise.resolve();
+    },
     finish(winningTeam) {
       phase = "finished";
       winner = winningTeam;
@@ -125,6 +146,17 @@ async function queue(lobby: TestLobby, ascentRound: number | null = null): Promi
     await settle();
   }
   await landed();
+}
+
+/** The host and Ann, queued in Team Arena with both keys sent, so the party stays queued. */
+async function keyedPair(match?: () => FakeMatch): Promise<{ lobby: TestLobby; party: Member[] }> {
+  const run = await partyLobby(["Ann"], "team-arena", match);
+  const [host, ann] = run.party as [Member, Member];
+  await queue(run.lobby);
+  ann.connection.queueParty(keyOf(GUEST_KEY));
+  host.connection.queueParty(keyOf(HOST_KEY));
+  await landed();
+  return run;
 }
 
 /** Every answer `who` gets to its key, as it gets them. */
@@ -327,13 +359,18 @@ describe("a party lobby's matchmaking (#1766)", () => {
     ).toBeNull();
   });
 
-  it("plays against bots in its own lobby: the party's seats, bots in the free ones (Q191)", async () => {
-    const { lobby, party } = await partyLobby(["Ann"]);
-    await queue(lobby);
-    lobby.host.connection.playAgainstBots();
+  it("plays a warmup once queued 30 s: the party's seats, bots in the free ones, still queued (#3899)", async () => {
+    const { lobby, party } = await keyedPair();
+    lobby.lobby.advance(WARMUP_AFTER_MS / 1000 - 1);
     await settle();
+    expect(party.map(phaseOf)).toEqual(["queued", "queued"]);
+    expect(lobby.matches).toHaveLength(0);
 
+    lobby.lobby.advance(1);
+    await settle();
     expect(party.map(phaseOf)).toEqual(["in-match", "in-match"]);
+    expect(party.map((who) => who.connection.getSnapshot().warmup)).toEqual([true, true]);
+    expect(party.map((who) => who.connection.getSnapshot().queueNonce)).toEqual([NONCE, NONCE]);
     const seats = [...(lobby.matches[0]?.plan.seats.values() ?? [])];
     expect(seats.filter((seat) => seat.team === 0).map((seat) => seat.bot)).toEqual([
       false,
@@ -346,6 +383,131 @@ describe("a party lobby's matchmaking (#1766)", () => {
     expect(seats.filter((seat) => seat.team === 1).map((seat) => seat.build?.name)).toEqual(
       pickStarterTeam(() => 0.5, 4)?.members.map(({ name }) => name),
     );
+  });
+
+  it("starts a warmup at once on the host's word, never on a guest's (#3899)", async () => {
+    const { lobby, party } = await keyedPair();
+    const [host, ann] = party as [Member, Member];
+    ann.connection.startWarmup();
+    await settle();
+    expect(phaseOf(host)).toBe("queued");
+
+    host.connection.startWarmup();
+    await settle();
+    expect(phaseOf(host)).toBe("in-match");
+    expect(lobby.matches).toHaveLength(1);
+  });
+
+  it("plays the next warmup a moment after one ends, with no vote and the same queueing (#3899)", async () => {
+    const matches: FakeMatch[] = [];
+    const { lobby, party } = await keyedPair(() => {
+      const match = fakeMatch();
+      matches.push(match);
+      return match;
+    });
+    const [host] = party as [Member, Member];
+    host.connection.startWarmup();
+    await settle();
+    matches[0]?.finish(1);
+    await lobby.step(1);
+
+    expect(party.map(phaseOf)).toEqual(["queued", "queued"]);
+    expect(host.connection.getSnapshot()).toMatchObject({ warmup: false, queueNonce: NONCE });
+    lobby.lobby.advance(WARMUP_GAP_MS / 1000);
+    await settle();
+    expect(party.map(phaseOf)).toEqual(["in-match", "in-match"]);
+    expect(matches).toHaveLength(2);
+  });
+
+  it("drains a finished warmup as any match, so its players get the end (#3899)", async () => {
+    const match = fakeMatch();
+    const { lobby, party } = await keyedPair(() => match);
+    const [host] = party as [Member, Member];
+    host.connection.startWarmup();
+    await settle();
+    match.draining = true;
+    match.finish(1);
+    await lobby.step(1);
+
+    expect(party.map(phaseOf)).toEqual(["queued", "queued"]);
+    expect(match.retired).toBe(true);
+    expect(match.closed).toBe(false);
+  });
+
+  it("closes a warmup cut short, so its players see it end, not a lost host (#3899)", async () => {
+    const match = fakeMatch();
+    const { party } = await keyedPair(() => match);
+    const [host] = party as [Member, Member];
+    host.connection.startWarmup();
+    await settle();
+    host.connection.endWarmup();
+    await settle();
+
+    expect(match.closed).toBe(true);
+    expect(match.retired).toBe(false);
+  });
+
+  it("ends a warmup with no result on the host's word, still queued (#3899)", async () => {
+    const { party } = await keyedPair();
+    const [host, ann] = party as [Member, Member];
+    host.connection.startWarmup();
+    await settle();
+    ann.connection.endWarmup();
+    await settle();
+    expect(phaseOf(host)).toBe("in-match");
+
+    host.connection.endWarmup();
+    await settle();
+    expect(party.map(phaseOf)).toEqual(["queued", "queued"]);
+    expect(host.connection.getSnapshot()).toMatchObject({ warmup: false, queueNonce: NONCE });
+    expect(host.connection.getSnapshot().players.filter((player) => player.bot)).toEqual([]);
+  });
+
+  it("found before the first warmup, plays none: end-warmup leaves no warmup to come (#3899)", async () => {
+    const { lobby, party } = await keyedPair();
+    const [host] = party as [Member, Member];
+    lobby.lobby.advance(10);
+    await settle();
+    host.connection.endWarmup();
+    await settle();
+    lobby.lobby.advance(WARMUP_AFTER_MS / 1000);
+    await settle();
+
+    expect(lobby.matches).toHaveLength(0);
+    expect(party.map(phaseOf)).toEqual(["queued", "queued"]);
+  });
+
+  it("found in the gap between two warmups, plays no next one (#3899)", async () => {
+    const matches: FakeMatch[] = [];
+    const { lobby, party } = await keyedPair(() => {
+      const match = fakeMatch();
+      matches.push(match);
+      return match;
+    });
+    const [host] = party as [Member, Member];
+    host.connection.startWarmup();
+    await settle();
+    matches[0]?.finish(1);
+    await lobby.step(1);
+    host.connection.endWarmup();
+    await settle();
+    lobby.lobby.advance(WARMUP_GAP_MS / 1000);
+    await settle();
+
+    expect(matches).toHaveLength(1);
+    expect(party.map(phaseOf)).toEqual(["queued", "queued"]);
+  });
+
+  it("takes the party out of the queue on Leave the queue mid-warmup (#3899)", async () => {
+    const { party } = await keyedPair();
+    const [host] = party as [Member, Member];
+    host.connection.startWarmup();
+    await settle();
+    host.connection.leaveQueue();
+    await settle();
+
+    expect(party.map(phaseOf)).toEqual(["waiting", "waiting"]);
+    expect(host.connection.getSnapshot()).toMatchObject({ warmup: false, queueNonce: null });
   });
 });
 
@@ -387,9 +549,14 @@ describe("a Heroes' Ascent party's round (#1996)", () => {
     expect(arena.party.map(phaseOf)).toEqual(["waiting", "waiting"]);
   });
 
-  it("never plays against bots: it waits for a side at its round", async () => {
+  it("never plays a warmup: it waits for a side at its round (#3899)", async () => {
     const { lobby, party } = await ascentQueued(["Ann"]);
-    lobby.host.connection.playAgainstBots();
+    const [host, ann] = party as [Member, Member];
+    ann.connection.queueParty(keyOf(GUEST_KEY));
+    host.connection.queueParty(keyOf(HOST_KEY));
+    await landed();
+    host.connection.startWarmup();
+    lobby.lobby.advance(WARMUP_AFTER_MS / 1000);
     await settle();
 
     expect(party.map(phaseOf)).toEqual(["queued", "queued"]);

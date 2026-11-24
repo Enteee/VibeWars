@@ -319,7 +319,9 @@ i Lagarena, Heroes' Ascent eller GvG) får en laglobby med bara sin egen
 sida, lika stor som lägets lag (Lagarenas valda storlek, 8 för de andra)
 oavsett hur många som är i gruppen; bottar spelar platserna som ingen tar.
 Medan den står i kö får du bläddra bland de andra lägena: gruppen behåller
-sitt läge och sin storlek tills den lämnar kön.
+sitt läge och sin storlek tills den lämnar kön. I Lagarena och GvG spelar
+en grupp som har väntat 30 s uppvärmningar mot bottar, fortfarande i kön,
+tills ett lag hittas ([uppvärmningar](getting-started.md#var-värd-för-eller-gå-med-i-en-match)).
 Varje steg varar 30 sekunder och slutar tidigt när alla i laglobbyn är
 redo. Att rösta och ta en plats gör dig redo.
 

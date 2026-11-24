@@ -1,5 +1,5 @@
 import type { LobbyMode, QueueMode } from "@vibewars/game-protocol";
-import type { QueueState } from "@vibewars/game-session";
+import { WARMUP_AFTER_MS, type QueueState } from "@vibewars/game-session";
 
 import { t } from "../i18n/index.js";
 import { button, h } from "./kit.js";
@@ -15,8 +15,15 @@ import { isVaultRound, vaultLines } from "./vault-screen.js";
  * where they like; the icon says so and its flyout leaves it.
  */
 
-/** How long a host's team-mode queue waits before it may play bots instead (Q191). */
-export const PLAY_BOTS_AFTER_MS = 10_000;
+/**
+ * The line saying a warmup against bots is coming (#3899), for a party
+ * of `mode` queued `waitedMs`: none once it is due, nor in Heroes'
+ * Ascent, which waits for a side at its round (#1996).
+ */
+export function warmupLine(mode: LobbyMode, waitedMs: number): string | undefined {
+  const seconds = Math.ceil((WARMUP_AFTER_MS - waitedMs) / 1000);
+  return mode === "heroes-ascent" || seconds <= 0 ? undefined : t("queue.warmupIn", { seconds });
+}
 
 /** The queue this tab is in, as the flyout shows it. */
 export type QueueStatusInput =
@@ -41,8 +48,8 @@ export type QueueStatusInput =
       /** Teams the queue last heard searching; `undefined` until it says. */
       readonly teams: number | undefined;
       readonly isHost: boolean;
-      /** Whether this host may play bots in this mode instead of waiting. */
-      readonly playBots: boolean;
+      /** The party is in a warmup (#3899): none starts now, it is on. */
+      readonly warmup: boolean;
       /** Who holds the Hall of Heroes (#2701), as the Vault says; `undefined` for nobody. */
       readonly hallHolder: SignedName | undefined;
       /** Where this player stands (#3575); `undefined` for a side a bot fills. */
@@ -63,8 +70,10 @@ export interface QueueStatus {
   readonly notice?: string;
   /** Leave Queue, or a guest's word that only the host can. */
   readonly leave: "button" | "host-only";
-  /** Play against bots, for a host who may: seconds until it is enabled, 0 once it is. */
-  readonly playBots?: { readonly inSeconds: number };
+  /** Before the first warmup (#3899): when it comes. Every member's. */
+  readonly warmupLine?: string;
+  /** Start warmup now (#3899): a host's, outside Heroes' Ascent and a warmup. */
+  readonly warmupNow?: true;
 }
 
 /** The flyout for `input` at `now`; none without a queue. */
@@ -99,14 +108,17 @@ function unratedStatus(input: QueueStatusInput, now: number): QueueStatus {
     return { title: vault.title, waited: vault.countdown, detail: vault.holder, leave };
   }
   const status = teamStatus(input, waited, leave);
-  if (!input.isHost || !input.playBots) {
-    return status;
-  }
-  const inSeconds = Math.max(0, Math.ceil((PLAY_BOTS_AFTER_MS - (now - input.since)) / 1000));
-  return { ...status, playBots: { inSeconds } };
+  const line = input.warmup ? undefined : warmupLine(input.mode, now - input.since);
+  return {
+    ...status,
+    ...(line === undefined ? {} : { warmupLine: line }),
+    ...(input.isHost && !input.warmup && input.mode !== "heroes-ascent"
+      ? { warmupNow: true as const }
+      : {}),
+  };
 }
 
-/** A team mode's flyout outside the Vault, without its bots button. */
+/** A team mode's flyout outside the Vault, without its warmup. */
 function teamStatus(
   input: Extract<QueueStatusInput, { kind: "team" }>,
   waited: string,
@@ -157,17 +169,19 @@ function randomDetail(state: QueueState | undefined): string | undefined {
 export interface QueueButton {
   readonly element: HTMLButtonElement;
   readonly setQueue: (input: QueueStatusInput | undefined) => void;
+  /** Its flyout shut, and its listeners gone, for one that goes before the page (#3899). */
+  dispose(): void;
 }
 
 /**
  * The queue icon, its flyout dropping into `parent`: the queue, the time
- * waited, ticking, Play against bots for a host, which `onPlayBots` does,
- * and Leave Queue, which `onLeave` does.
+ * waited, ticking, Start warmup now for a host, which `onStartWarmup`
+ * does, and Leave Queue, which `onLeave` does.
  */
 export function queueButton(
   parent: HTMLElement,
   onLeave: () => void,
-  onPlayBots: () => void,
+  onStartWarmup: () => void,
 ): QueueButton {
   const element = document.createElement("button");
   element.type = "button";
@@ -179,7 +193,7 @@ export function queueButton(
   let input: QueueStatusInput | undefined;
   /** The open flyout's repaint; none while it is shut. */
   let paint: (() => void) | undefined;
-  attachTopbarPopover(element, parent, (close) => {
+  const popover = attachTopbarPopover(element, parent, (close) => {
     const panel = h("div", "screen queue-window");
     panel.setAttribute("aria-label", t("queue.inQueue"));
     panel.tabIndex = -1;
@@ -188,16 +202,17 @@ export function queueButton(
     const rating = h("div", "queue-window-rating");
     const detail = h("div", "queue-window-detail");
     const notice = h("p", "queue-window-notice");
-    const playBots = button(t("lobby.playBots"), "primary queue-play-bots", () => {
+    const warmup = h("p", "queue-window-warmup");
+    const warmupNow = button(t("queue.warmupNow"), "primary queue-warmup-now", () => {
       close();
-      onPlayBots();
+      onStartWarmup();
     });
     const hostOnly = h("p", "queue-window-host-only", t("queue.hostOnly"));
     const leave = button(t("queue.leaveQueue"), "", () => {
       close();
       onLeave();
     });
-    panel.append(title, waited, rating, playBots, detail, notice, hostOnly, leave);
+    panel.append(title, waited, rating, warmup, warmupNow, detail, notice, hostOnly, leave);
     paint = () => {
       const status = queueStatus(input, Date.now());
       if (status === undefined) {
@@ -211,13 +226,9 @@ export function queueButton(
       detail.hidden = status.detail === undefined;
       notice.textContent = status.notice ?? "";
       notice.hidden = status.notice === undefined;
-      playBots.hidden = status.playBots === undefined;
-      if (status.playBots !== undefined) {
-        const { inSeconds } = status.playBots;
-        playBots.disabled = inSeconds > 0;
-        playBots.textContent =
-          inSeconds > 0 ? t("queue.playBotsIn", { seconds: inSeconds }) : t("lobby.playBots");
-      }
+      warmup.textContent = status.warmupLine ?? "";
+      warmup.hidden = status.warmupLine === undefined;
+      warmupNow.hidden = status.warmupNow === undefined;
       hostOnly.hidden = status.leave !== "host-only";
       leave.hidden = status.leave !== "button";
     };
@@ -248,6 +259,9 @@ export function queueButton(
       }
       element.hidden = false;
       paint?.();
+    },
+    dispose: () => {
+      popover.dispose();
     },
   };
 }

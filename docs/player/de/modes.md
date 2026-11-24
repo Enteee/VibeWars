@@ -257,7 +257,8 @@ Aufstieg der Helden oder in GvG) bekommt eine Team-Lobby nur für ihre eigene Se
 (die gewählte Größe der Teamarena, 8 bei den anderen), egal wie viele in der Gruppe sind; Bots spielen die Plätze, die
 niemand nimmt.
 Während sie wartet, kannst du die anderen Modi ansehen: Die Gruppe behält ihren Modus und ihre Größe, bis sie die
-Warteschlange verlässt.
+Warteschlange verlässt. In der Teamarena und in GvG spielt eine Gruppe, die 30 s gewartet hat, Aufwärmmatches gegen
+Bots, weiter in der Warteschlange, bis ein Team gefunden ist ([Aufwärmen](getting-started.md#match-hosten-oder-beitreten)).
 Jede Phase dauert 30 Sekunden und endet früher, sobald alle in der Team-Lobby bereit sind. Abstimmen und einen Platz nehmen macht dich bereit.
 
 ![Teamarena: die Pfeile der Teamgröße unten in der Leiste und das Team deiner Lobby zum Beitreten](../img/team-arena-1.png)

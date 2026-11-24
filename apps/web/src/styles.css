@@ -671,8 +671,9 @@ body {
   letter-spacing: normal;
 }
 
-/* The queue's flyout (#2743), as the Lobby window. */
-#topbar .queue-window {
+/* The queue's flyout (#2743), as the Lobby window; over a warmup, under its line (#3899). */
+#topbar .queue-window,
+.hud-warmup .queue-window {
   position: absolute;
   top: calc(100% + 0.3rem);
   inset-inline-end: 0.5rem;
@@ -4947,6 +4948,51 @@ body:has(> .splash) #menu-background::after {
   font-size: 0.85rem;
   white-space: nowrap;
   pointer-events: none;
+}
+
+/* A warmup's line under the score (#3899): still queued, this match counts
+   for nothing. The top bar is hidden in a match (#454), so the line is the
+   queue's ring, and opens its flyout, Leave Queue in it. */
+.hud-warmup {
+  position: relative;
+  pointer-events: auto;
+}
+
+.hud-warmup > .topbar-queue {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 1.8rem;
+  padding: 0.1rem 0.6rem;
+  background: rgb(14 17 22 / 85%);
+  border: 1px solid var(--line);
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.hud-warmup > .topbar-queue:hover,
+.hud-warmup > .topbar-queue:focus-visible,
+.hud-warmup > .topbar-queue[aria-expanded="true"] {
+  border-color: var(--accent);
+}
+
+.hud-warmup > .topbar-queue[hidden] {
+  display: none;
+}
+
+/* Centred under the line, either way the text runs (#2655). */
+.hud-warmup .queue-window {
+  inset-inline: 0;
+  margin-inline: auto;
+}
+
+@media (pointer: coarse) {
+  .hud-warmup > .topbar-queue {
+    min-height: 44px;
+  }
 }
 
 .hud-carriers {
