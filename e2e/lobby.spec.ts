@@ -22,7 +22,6 @@ import {
   openToFriends,
   playHouseTeams,
   playOwnTeams,
-  saveSoloTeam,
   setTeamSize,
 } from "./helpers/peers.js";
 import { PIXEL_8A_PORTRAIT } from "./helpers/phone.js";
@@ -69,31 +68,21 @@ async function joinLobby(page: Page, playerName: string, invite: string): Promis
 }
 
 /**
- * Host on team 1, guest on team 2 unless `guestTeam` says, both ready, and
- * the host starts; each side proposes a Team Build as big as its players
- * (#1525), or a side of one its active character (#2141), so no bot plays
- * beside them (#2029). A side nobody is on plays a random preset team, as
- * many as the other.
+ * A 1v1: host on team 1, guest on team 2, both ready, and the host starts;
+ * each plays its active character (#2141), so no bot plays (#2029).
  * On Crossroads, an Annihilation map: a quitter wipes their side and ends
  * the match, and the scoreboard counts the living (#846).
  */
-async function startTwoPlayerMatch(host: Page, guest: Page, guestTeam = 2): Promise<string> {
+async function startTwoPlayerMatch(host: Page, guest: Page): Promise<string> {
   await openMenu(host, "Host");
-  const team = guestTeam === 1 ? await saveSoloTeam(host, 2) : undefined;
-  const invite = await hostFromMenu(host, {
-    size: guestTeam === 1 ? 2 : 1,
-    map: "arena-crossroads",
-  });
+  const invite = await hostFromMenu(host, { map: "arena-crossroads" });
   await joinLobby(guest, "Guest", invite);
   await host.getByRole("button", { name: "join team 1" }).click();
-  await guest.getByRole("button", { name: `join team ${String(guestTeam)}` }).click();
+  await guest.getByRole("button", { name: "join team 2" }).click();
   await host.getByRole("button", { name: "Ready", exact: true }).click();
   await guest.getByRole("button", { name: "Ready", exact: true }).click();
   await host.getByRole("button", { name: "start match" }).click();
-  await playOwnTeams([
-    { page: host, team },
-    { page: guest, team, seat: guestTeam === 1 ? 1 : 0 },
-  ]);
+  await playOwnTeams([{ page: host }, { page: guest }]);
   return invite;
 }
 
@@ -525,11 +514,30 @@ test("a player who quits early is told the match still runs, until it ends", asy
   // Back from a running match, the lobby used to look open and say "in
   // match" in the status bar, while the host refused every click (#200).
   // Teammates: a 1v1 quitter wipes their team, which ends the match (#846).
-  const { context, pages } = await openPeers(browser, 2);
-  const [host, guest] = pages as [Page, Page];
+  // Their foes are two players who stand still, not bots: two bots wipe a
+  // guest alone before it can leave, and end the match first (#3960).
+  // Four pages draw four arenas.
+  test.slow();
+  const { context, pages } = await openPeers(browser, 4);
+  const [host, guest, ...foes] = pages as [Page, Page, Page, Page];
 
   try {
-    await startTwoPlayerMatch(host, guest, 1);
+    await openMenu(host, "Host");
+    const invite = await hostFromMenu(host, { size: 2, map: "arena-crossroads" });
+    await joinLobby(guest, "Guest", invite);
+    for (const [index, foe] of foes.entries()) {
+      await joinLobby(foe, `Foe ${String(index + 1)}`, invite);
+    }
+    await host.getByRole("button", { name: "join team 1" }).click();
+    await guest.getByRole("button", { name: "join team 1" }).click();
+    for (const foe of foes) {
+      await foe.getByRole("button", { name: "join team 2" }).click();
+    }
+    for (const page of pages) {
+      await page.getByRole("button", { name: "Ready", exact: true }).click();
+    }
+    await host.getByRole("button", { name: "start match" }).click();
+    await playHouseTeams(pages, [0, 1, 0, 1]);
     await expect(host.locator("#viewport canvas:not(.compass)")).toBeVisible();
     await expect(guest.locator("#viewport canvas:not(.compass)")).toBeVisible();
 
