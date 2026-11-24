@@ -13,8 +13,11 @@ import { mountQueueScreen, stoppedEndLine, teamEndLine } from "./queue-screen.js
  * over no arena, from a fixed three-team 8v8 summary with the names that
  * are hardest to fit, so a spec can measure the layout at any viewport
  * without playing a match. A player's build never loads this module.
+ * `outcome` is your side's: `?summary-fixture=win` is a VICTORY (#3916).
  */
-export function mountSummaryFixture(parent: HTMLElement): void {
+export function mountSummaryFixture(parent: HTMLElement, outcome: "win" | "loss"): void {
+  const won = outcome === "win";
+  const winningTeam = won ? 0 : 1;
   // Nothing here is a match: the HUD's controls do nothing.
   const noop = (): void => undefined;
   const hud = createHud(parent, noop, noop, noop);
@@ -26,10 +29,10 @@ export function mountSummaryFixture(parent: HTMLElement): void {
     placeEnd(hud);
   }).observe(hud.top);
   hud.result.style.display = "";
-  hud.result.textContent = describeOutcome(1, "time", 0, []);
-  // Lost, so its countdown can be stopped (#3847), as main.ts does it.
+  hud.result.textContent = describeOutcome(winningTeam, "time", 0, []);
+  // Lost, its countdown can be stopped (#3847), as main.ts does it; won, not.
   const setEndLine = endLineSetter(hud.end);
-  const counting = teamEndLine("lobby", 9, null, null, false);
+  const counting = teamEndLine("lobby", 9, null, null, won);
   setEndLine({
     text: counting.text,
     button: counting.button,
@@ -45,7 +48,7 @@ export function mountSummaryFixture(parent: HTMLElement): void {
           },
   });
   const bots = new Set(FIXTURE.filter((row) => row.signet === null).map((row) => row.id));
-  const tables = summaryTables(FIXTURE, "p0-0", 0, 1, bots);
+  const tables = summaryTables(FIXTURE, "p0-0", 0, winningTeam, bots);
   const summary = renderSummary(hud.end, tables);
   summary.classList.add("hud-summary");
   hud.root.classList.add("is-ended");
