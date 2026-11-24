@@ -2140,6 +2140,17 @@ export class MatchSimulation {
     return this.#participants.get(id);
   }
 
+  /**
+   * Where `id` is held before the start (#3909): its spawn bubble's centre,
+   * on the layer it spawned on, as `#holdInBubble` holds it.
+   */
+  public heldAt(id: string): { readonly at: Vec2; readonly layer: number } | undefined {
+    const record = this.#participants.get(id);
+    return record === undefined
+      ? undefined
+      : { at: record.spawn, layer: record.spec.layer ?? this.#ground };
+  }
+
   /** A participant's net pips as they stand (#504): what the next tick applies, natural regeneration included. */
   public pips(participant: Participant): NetPips {
     return netPips(

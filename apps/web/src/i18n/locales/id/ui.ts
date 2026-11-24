@@ -587,6 +587,7 @@ export default {
   "hud.outcomeVictory": "Menang",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (tewas)",
+  "hud.preMatchHeld": "Kamu tertahan di dekat titik munculmu sampai pertandingan dimulai.",
   "hud.preMatchStartingAnyway":
     "Menunggu pemain: {joined}/{expected}, tetap dimulai dalam {seconds} dtk",
   "hud.preMatchStartsIn": "Pertandingan dimulai dalam {seconds}",

@@ -638,6 +638,7 @@ export default {
   "hud.outcomeVictory": "Νίκη",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (νεκρός)",
+  "hud.preMatchHeld": "Μένεις κοντά στο σημείο εμφάνισής σου μέχρι να αρχίσει ο αγώνας.",
   "hud.preMatchStartingAnyway":
     "Αναμονή παικτών: {joined}/{expected}, ξεκινά ούτως ή άλλως σε {seconds} δ",
   "hud.preMatchStartsIn": "Ο αγώνας ξεκινά σε {seconds}",

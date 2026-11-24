@@ -667,6 +667,7 @@ export default {
   "hud.outcomeVictory": "Victorie",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (mort)",
+  "hud.preMatchHeld": "Rămâi lângă punctul tău de start până începe meciul.",
   "hud.preMatchStartingAnyway":
     "Se așteaptă jucătorii: {joined}/{expected}, începe oricum în {seconds} s",
   "hud.preMatchStartsIn": "Meciul începe în {seconds}",

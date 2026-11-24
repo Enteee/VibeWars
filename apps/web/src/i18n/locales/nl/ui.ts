@@ -630,6 +630,7 @@ export default {
   "hud.outcomeVictory": "Overwinning",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (dood)",
+  "hud.preMatchHeld": "Je blijft bij je startpunt tot de wedstrijd begint.",
   "hud.preMatchStartingAnyway":
     "Wachten op spelers: {joined}/{expected}, start toch over {seconds} s",
   "hud.preMatchStartsIn": "Wedstrijd begint over {seconds}",

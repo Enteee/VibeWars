@@ -667,6 +667,7 @@ export default {
   "hud.outcomeVictory": "Vitória",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (morto)",
+  "hud.preMatchHeld": "Você fica perto do seu ponto de surgimento até a partida começar.",
   "hud.preMatchStartingAnyway":
     "Aguardando jogadores: {joined}/{expected}, começa mesmo assim em {seconds} s",
   "hud.preMatchStartsIn": "A partida começa em {seconds}",

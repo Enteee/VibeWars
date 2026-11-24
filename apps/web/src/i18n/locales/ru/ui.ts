@@ -684,6 +684,7 @@ export default {
   "hud.outcomeVictory": "Победа",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (мёртв)",
+  "hud.preMatchHeld": "До начала матча вы остаётесь рядом с точкой появления.",
   "hud.preMatchStartingAnyway":
     "Ожидание игроков: {joined}/{expected}, начнётся в любом случае через {seconds} с",
   "hud.preMatchStartsIn": "Матч начнётся через {seconds}",

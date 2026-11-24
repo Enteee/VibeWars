@@ -589,6 +589,7 @@ export default {
   "hud.outcomeVictory": "勝利",
   "hud.outcomeWithReason": "{result} ({reason})",
   "hud.pipDead": "{name} (死亡)",
+  "hud.preMatchHeld": "試合が始まるまで、出現地点の近くから動けません。",
   "hud.preMatchStartingAnyway": "プレイヤー待機中: {joined}/{expected}、{seconds}秒後に開始します",
   "hud.preMatchStartsIn": "試合開始まで {seconds}",
   "hud.preMatchSelfAllyOnly": "開始前：自分か味方へのスキルのみ使えます。",

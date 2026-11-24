@@ -91,12 +91,43 @@ test("#3818: both in, the match counts 10 s down with everyone held in the spawn
         // Up from team 1's first spawn on Ember Pits is open ground onto
         // the middle lane: held from now until the hero has walked.
         await host.keyboard.down(key("move-up"));
+        // Checked together: a loaded runner spends seconds on each, and the
+        // countdown does not wait for them.
+        await Promise.all([
+          expect(slots.nth(0)).toHaveClass(/\bis-held\b/),
+          // Your own spawn bubble stands while held (#3909).
+          expect(host.locator("#viewport")).toHaveAttribute("data-spawn-bubble", ""),
+          // Walked into its wall, the hero is told why (#3909).
+          expect(
+            host.getByRole("status").filter({
+              hasText: "You are held near your spawn until the match starts.",
+            }),
+          ).toBeVisible(),
+          // A picture of it on Ember Pits, round the hero, goes with the
+          // report for the eye: no pixel is asserted.
+          (async () => {
+            const box = await host.locator("#viewport").boundingBox();
+            if (box !== null) {
+              await host.screenshot({
+                path: test.info().outputPath("spawn-bubble.png"),
+                clip: {
+                  x: box.x + box.width / 2 - 240,
+                  y: box.y + box.height / 2 - 200,
+                  width: 480,
+                  height: 320,
+                },
+              });
+            }
+          })(),
+        ]);
       })(),
     ]);
 
     // Started: the line goes, the bar wakes, and the key held all along walks.
     await waitForMatchStart([host, guest]);
     await expect(host.locator(".hud-skills .hud-skill.is-held")).toHaveCount(0);
+    // The bubble fades with the start, and leaves nothing behind (#3909).
+    await expect(host.locator("#viewport")).not.toHaveAttribute("data-spawn-bubble");
     const speed = MINIMAL_GW_INSPIRED_PVP_V1.movement.maxSpeedUnitsPerSecond;
     // The first held sample is the hero in its spawn: before it, the page
     // was still in the lobby.
