@@ -21,8 +21,9 @@ export const AREA_NEARBY = 81;
 /** "In the area". */
 export const AREA_IN_THE_AREA = 109;
 /**
- * How far a participant may walk from its spawn while the match waits to
- * start (#3817): a nearby step either way, and no further.
+ * How far past its team's spawns a participant may walk while the match
+ * waits to start (#3817): the margin round the team bubble (#3930), a
+ * nearby step out from the outermost spawns, and no further.
  */
 export const SPAWN_BUBBLE_RADIUS = AREA_NEARBY;
 /**

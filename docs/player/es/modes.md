@@ -33,7 +33,7 @@ perfilada en el borde de la pantalla: la base de bandera o un santuario en el
 color de su dueño, gris si no es de nadie, y el altar en dorado. La flecha
 rellena de un jugador se dibuja encima.
 
-Una partida empieza con todos retenidos cerca de su punto de aparición: puedes dar unos pasos y prepararte con habilidades sobre ti y tus aliados, como encantamientos, posturas y curaciones, pero no puedes atacar ni usar una habilidad sobre un enemigo. La energía y la salud se regeneran mientras esperas, y los bots también se preparan. Un muro reluciente alrededor de tu punto de aparición muestra hasta dónde puedes llegar. Una línea arriba cuenta los jugadores que han cargado la partida. Cuando la han cargado todos, cuenta 10 segundos hacia atrás y la partida empieza, y su reloj con ella. A un jugador que no la ha cargado tras 20 segundos no se le espera: la cuenta atrás empieza sin él, y aún puede unirse después.
+Una partida empieza con cada equipo retenido junto en su zona de inicio: puedes moverte por cualquier parte de ella y prepararte con habilidades sobre ti y tus aliados, como encantamientos, posturas y curaciones, pero no puedes atacar ni usar una habilidad sobre un enemigo. La energía y la salud se regeneran mientras esperas, y los bots también se preparan. Un muro reluciente alrededor de la zona de inicio de tu equipo muestra hasta dónde puedes llegar. Una línea arriba cuenta los jugadores que han cargado la partida. Cuando la han cargado todos, cuenta 10 segundos hacia atrás y la partida empieza, y su reloj con ella. A un jugador que no la ha cargado tras 20 segundos no se le espera: la cuenta atrás empieza sin él, y aún puede unirse después.
 
 ## Aniquilación
 

@@ -30,7 +30,7 @@ ekranem lub pod interfejsem dostaje konturową strzałkę przy krawędzi ekranu:
 lub kapliczka w kolorze właściciela, szara, gdy nie ma właściciela, ołtarz w złocie.
 Wypełniona strzałka gracza rysuje się na niej.
 
-Mecz zaczyna się od zatrzymania wszystkich przy ich punkcie odrodzenia: możesz zrobić kilka kroków i przygotować się umiejętnościami na siebie i swoich sojuszników, takimi jak zaczarowania, postawy i leczenie, ale nie możesz atakować ani używać umiejętności na wrogu. Energia i Zdrowie odnawiają się, gdy czekasz, a boty też się przygotowują. Migocząca ściana wokół twojego punktu odrodzenia pokazuje, jak daleko możesz zajść. Wiersz u góry liczy graczy, którzy wczytali mecz. Gdy wczytają go wszyscy, odlicza 10 sekund i mecz się zaczyna, a z nim jego zegar. Na gracza, który nie wczytał go po 20 sekundach, się nie czeka: odliczanie zaczyna się bez niego, a on wciąż może dołączyć później.
+Mecz zaczyna się od zatrzymania każdej drużyny razem w jej strefie startowej: możesz chodzić po niej, gdzie chcesz, i przygotować się umiejętnościami na siebie i swoich sojuszników, takimi jak zaczarowania, postawy i leczenie, ale nie możesz atakować ani używać umiejętności na wrogu. Energia i Zdrowie odnawiają się, gdy czekasz, a boty też się przygotowują. Migocząca ściana wokół strefy startowej twojej drużyny pokazuje, jak daleko możesz zajść. Wiersz u góry liczy graczy, którzy wczytali mecz. Gdy wczytają go wszyscy, odlicza 10 sekund i mecz się zaczyna, a z nim jego zegar. Na gracza, który nie wczytał go po 20 sekundach, się nie czeka: odliczanie zaczyna się bez niego, a on wciąż może dołączyć później.
 
 ## Anihilacja
 

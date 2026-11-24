@@ -468,15 +468,19 @@ the hung grid is left out. The study SVG is drawn in
 
 ### Spawn bubble
 
-Before the match starts you are held within `SPAWN_BUBBLE_RADIUS` (81) of
-your spawn, and a **low curtain** shows where: a wall one body tall (40
-units) standing up from the deck at that radius, not a decal on it. Neutral
-near-white `#eef6ff`, neither the help blue or green nor a warm harm. Only
-your own bubble is drawn; a watcher sees none.
+Before the match starts your team is held in one bubble (#3930): the
+convex hull of its spawns grown by `SPAWN_BUBBLE_RADIUS` (81), a circle
+for a team of one, a capsule for two, a rounded polygon for more. A **low
+curtain** shows where: a wall one body tall (40 units) standing up from the
+deck along the team's outline, not a decal on it. Neutral near-white
+`#eef6ff`, neither the help blue or green nor a warm harm. Only your own
+team's bubble is drawn, at your spawn's layer; a watcher sees none.
 
 - **Rest:** opacity 0.15 at its foot, fading out upward in five slices.
-- **Near:** over your last 20 units to the edge it rises to 0.6, on the arc
-  you face it from only: all of it straight ahead, half at 45°, none from 90°.
+- **Near:** over your last 20 units to the edge it rises to 0.6, on the
+  stretch you face it from only: all of it straight ahead, half at 45°, none
+  from 90°, measured as round a lone spawn's circle, so along a straight
+  side too.
 - **Rim:** a solid line on the ground, 2 lines wide over a dark `#1b2029`
   one (§6 rule 1), never under 2 css px on a phone.
 - **Shimmer:** three bands climb it every 2.4 s, faintest near the top.
@@ -487,8 +491,8 @@ your own bubble is drawn; a watcher sees none.
 
 ![spawn bubble](visual-style/spawn-bubble.svg)
 
-Recipe (#3909): `spawn-bubble.ts` `spawnBubbleCommands` gives the quads
-and rings; `arena-scene.ts` `drawSpawnBubble` draws them at the goal-mark
+Recipe (#3909, #3930): `team-bubble.ts` `teamBubbleOutline` gives the
+outline, `spawn-bubble.ts` `spawnBubbleCommands` the quads, rim and ripple; `arena-scene.ts` `drawSpawnBubble` draws them at the goal-mark
 depth of the spawn's layer, over the floor and under every body.
 
 Every SVG here is made by `scripts/assets/visual-style.mjs`; regenerate with

@@ -32,7 +32,7 @@ mål uden for skærmen eller under HUD'en en pil med omrids ved
 skærmkanten: standen eller en helligdom i ejerens farve, grå hvis ingen
 ejer den, alteret i guld. En spillers udfyldte pil tegnes oven på den.
 
-En kamp åbner med alle holdt nær deres startsted: du kan gå et par skridt og forberede dig med færdigheder på dig selv og dine allierede, såsom fortryllelser, kampstillinger og helbredelser, men du kan ikke angribe eller bruge en færdighed på en fjende. Energi og liv regenererer, mens du venter, og bots forbereder sig også. En glitrende væg omkring dit startsted viser, hvor langt du kan gå. En linje øverst tæller de spillere, der har indlæst kampen. Når alle har indlæst den, tæller den 10 sekunder ned, og kampen starter, og dens ur med den. Der ventes ikke på en spiller, der ikke har indlæst kampen efter 20 sekunder: nedtællingen starter uden dem, og de kan stadig komme med senere.
+En kamp åbner med hvert hold holdt samlet i sit startområde: du kan gå overalt inden for det og forberede dig med færdigheder på dig selv og dine allierede, såsom fortryllelser, kampstillinger og helbredelser, men du kan ikke angribe eller bruge en færdighed på en fjende. Energi og liv regenererer, mens du venter, og bots forbereder sig også. En glitrende væg omkring dit holds startområde viser, hvor langt du kan gå. En linje øverst tæller de spillere, der har indlæst kampen. Når alle har indlæst den, tæller den 10 sekunder ned, og kampen starter, og dens ur med den. Der ventes ikke på en spiller, der ikke har indlæst kampen efter 20 sekunder: nedtællingen starter uden dem, og de kan stadig komme med senere.
 
 ## Udslettelse
 

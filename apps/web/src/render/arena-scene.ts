@@ -988,7 +988,7 @@ export class ArenaScene extends Phaser.Scene {
         bubble: SpawnBubble;
         goneAt: number | undefined;
         touching: boolean;
-        bump: { readonly angle: number; readonly at: number } | undefined;
+        bump: { readonly on: Vec2; readonly at: number } | undefined;
       }
     | undefined;
   private spawnBubbleGraphics: Phaser.GameObjects.Graphics | undefined;
@@ -2266,14 +2266,14 @@ export class ArenaScene extends Phaser.Scene {
       this.spawnBubbleGraphics = undefined;
       return;
     }
-    const { centre, layer } = held.bubble;
+    const { bubble, layer } = held.bubble;
     const self = this.drawnActors.find(({ team }) => team === "self");
     const contact =
       self === undefined || held.goneAt !== undefined
         ? undefined
-        : spawnBubbleContact(centre, self.position);
+        : spawnBubbleContact(bubble, self.position);
     if (contact !== undefined && !held.touching) {
-      held.bump = { angle: contact, at: this.now };
+      held.bump = { on: contact, at: this.now };
     }
     held.touching = contact !== undefined;
     const depth = renderOrder({ kind: "goal-mark", layer });
@@ -2282,12 +2282,10 @@ export class ArenaScene extends Phaser.Scene {
     g.save();
     g.translateCanvas(0, -elevationOf(layer, this.snapshot.structure.ground));
     for (const command of spawnBubbleCommands(
-      centre,
+      bubble,
       self?.position,
       this.now,
-      held.bump === undefined
-        ? undefined
-        : { angle: held.bump.angle, seconds: this.now - held.bump.at },
+      held.bump === undefined ? undefined : { at: held.bump.on, seconds: this.now - held.bump.at },
       this.reducedMotion,
       fade,
       1 / (this.view?.zoom ?? 1),
@@ -2297,6 +2295,18 @@ export class ArenaScene extends Phaser.Scene {
         g.fillStyle(command.colour, command.alpha);
         g.fillTriangle(a.x, a.y, b.x, b.y, c.x, c.y);
         g.fillTriangle(a.x, a.y, c.x, c.y, d.x, d.y);
+      } else if (command.kind === "rim") {
+        g.lineStyle(command.width, command.colour, command.alpha);
+        g.beginPath();
+        for (const [index, point] of command.points.entries()) {
+          if (index === 0) {
+            g.moveTo(point.x, point.y);
+          } else {
+            g.lineTo(point.x, point.y);
+          }
+        }
+        g.closePath();
+        g.strokePath();
       } else {
         g.lineStyle(command.width, command.colour, command.alpha);
         g.strokeCircle(command.at.x, command.at.y, command.radius);
