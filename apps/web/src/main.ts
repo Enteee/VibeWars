@@ -3414,8 +3414,12 @@ async function main(): Promise<void> {
             if (matchWarmup) {
               // Said once, and the next warmup comes on its own (#3899).
               const { winningTeam, endReason, selfTeam, aggression } = finished;
-              // After the screen change, whose leaveScreen dismisses any toast.
+              // After the screen change, whose leaveScreen dismisses any toast;
+              // not over the found match's own, should it have come meanwhile.
               void exitMatch().then(() => {
+                if (teamQueue?.parked !== undefined) {
+                  return;
+                }
                 toast(
                   t("queue.warmupNext", {
                     outcome: describeOutcome(winningTeam, endReason, selfTeam, aggression),
