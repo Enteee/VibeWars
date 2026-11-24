@@ -1,7 +1,6 @@
 import { readFileSync } from "node:fs";
 
 import { expect, test, type Page } from "@playwright/test";
-import { hudMenuRow } from "./helpers/hud-menu.js";
 
 import { hudMenuRow } from "./helpers/hud-menu.js";
 import { joinFriend, openRail } from "./helpers/menu.js";
