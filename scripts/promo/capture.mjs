@@ -459,7 +459,7 @@ async function ranked(browser, url) {
   const { page } = scene;
   step = "end panel";
   scene.marks.panel = scene.now();
-  await page.goto(`${url}?summary-fixture`);
+  await page.goto(`${url}?summary-fixture=win`);
   await sleep(4500);
   step = "seed cosmetics";
   await page.evaluate(() => {
