@@ -36,14 +36,14 @@ async function paste(target: Locator, text: string): Promise<void> {
   }, text);
 }
 
-/** A team code of four starter builds, as Share writes one (see team-lobby.spec.ts). */
-function quadCode(): string {
+/** A team code of `members`, as Share writes one (see team-lobby.spec.ts). */
+function teamCode(name: string, members: readonly (typeof STARTER_BUILDS)[number][]): string {
   return JSON.stringify({
     format: "vibewars.team",
     formatVersion: TEAM_FORMAT_VERSION,
-    name: "Quad",
-    size: 4,
-    members: QUAD.map((build) => ({
+    name,
+    size: members.length,
+    members: members.map((build) => ({
       format: "vibewars.character",
       formatVersion: BUILD_FORMAT_VERSION,
       ...build,
@@ -81,10 +81,10 @@ async function formParty(
   await expect(guest.locator(".lobby-panel")).toContainText("The host starts matchmaking");
 }
 
-/** `leader` proposes the saved Quad, and both vote for it, which readies them (#2872). */
-async function voteQuad(leader: Page, member: Page): Promise<void> {
+/** `leader` proposes the saved `team`, and both vote for it, which readies them (#2872). */
+async function voteTeam(leader: Page, member: Page, team: string): Promise<void> {
   await leader.bringToFront();
-  await proposeTeam(leader, "Quad");
+  await proposeTeam(leader, team);
   const card = leader.locator(".team-lobby-proposals .play-card-open").first();
   // A click can land on the card just as the list redraws, and be lost
   // (#3935); a vote is never taken back, so pressing again is safe.
@@ -159,12 +159,12 @@ test("#1766: two parties of two queue for Team Arena, meet, and play their own b
     await ann.goto("./");
     await openRail(ann, "Team Builder");
     await expect(ann.getByRole("button", { name: "New team build", exact: true })).toBeVisible();
-    await paste(ann.locator(".screen"), quadCode());
+    await paste(ann.locator(".screen"), teamCode("Quad", QUAD));
     await ann.getByRole("button", { name: "Save", exact: true }).click();
     await expect(ann.locator(".toast")).toHaveText("Saved");
 
     await formParty([ann, bea], ["Ann", "Bea"]);
-    await runTeamLobby([ann, bea], () => voteQuad(ann, bea));
+    await runTeamLobby([ann, bea], () => voteTeam(ann, bea, "Quad"));
     // The queue is the top bar's icon's (#2743).
     for (const page of [ann, bea]) {
       await expect(page.locator("#topbar .topbar-queue")).toBeVisible();
@@ -178,7 +178,7 @@ test("#1766: two parties of two queue for Team Arena, meet, and play their own b
 
     // The other party votes for the Quad too, so no stage runs its clock (#2872).
     await formParty([cid, dot], ["Cid", "Dot"]);
-    await runTeamLobby([cid, dot], () => voteQuad(cid, dot));
+    await runTeamLobby([cid, dot], () => voteTeam(cid, dot, "Quad"));
 
     // Met, the queued lobby counts down five seconds before the match
     // starts (QUEUED_COUNTDOWN_SECONDS), then four pages boot an arena
@@ -281,8 +281,19 @@ test("#3899: over a warmup, the queue's flyout leaves the queue, and the party i
   const [ann, bea] = pages as [Page, Page];
 
   try {
+    // Two pages draw the warmup at once: 2v2 keeps it to two bots, and
+    // the party's votes end the vote stage rather than its 30 s.
+    await ann.goto("./");
+    await openRail(ann, "Team Builder");
+    await expect(ann.getByRole("button", { name: "New team build", exact: true })).toBeVisible();
+    await paste(ann.locator(".screen"), teamCode("Duo", QUAD.slice(0, 2)));
+    await ann.getByRole("button", { name: "Save", exact: true }).click();
+    await expect(ann.locator(".toast")).toHaveText("Saved");
     await formParty([ann, bea], ["Ann", "Bea"]);
-    await runTeamLobby([ann, bea]);
+    await ann.bringToFront();
+    await setTeamSize(ann, 2);
+    await expectTeamSize(bea, 2, { locked: true });
+    await runTeamLobby([ann, bea], () => voteTeam(ann, bea, "Duo"), 2);
     await press(ann, ann.locator("#topbar .topbar-queue"));
     await press(
       ann,
