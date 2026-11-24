@@ -23,6 +23,8 @@
     "sfx:render": "node scripts/assets/render-sfx.mjs",
     "music:check": "pnpm --filter @vibewars/web run music:check",
     "readme:shots": "node scripts/readme-shots.mjs",
+    "promo:capture": "node scripts/promo/capture.mjs",
+    "promo:assemble": "node scripts/promo/assemble.mjs",
     "share:image": "node scripts/share-image.mjs",
     "test:e2e": "playwright test",
     "bench:ticks": "BENCH_TICKS=400 vitest run packages/game-core/src/tools/tick-bench.test.ts packages/game-maps/src/map-bench.test.ts",

@@ -1,0 +1,10 @@
+{
+  "title": "VibeWars",
+  "end": ["VibeWars", "enteee.github.io/VibeWars", "Free. Open. Fun."],
+  "captions": [
+    { "scene": "editor", "text": "Your build is the game." },
+    { "scene": "fight", "text": "Read the cast. Break it." },
+    { "scene": "friends", "text": "Play with friends." },
+    { "scene": "ranked", "text": "Earn the look. Never the advantage." }
+  ]
+}
