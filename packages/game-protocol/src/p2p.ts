@@ -1269,7 +1269,8 @@ export interface MatchRecordPlayer {
   readonly bot: boolean;
   /**
    * The public player key the host reports for this seat (#2739), which
-   * draws the player's signet; `null` exactly for a bot. A host can
+   * draws the player's signet; `null` for a bot, and in `ended` for a
+   * human the host knows no key of (a published record has one). A host can
    * attach any key to a name, so it proves nothing.
    */
   readonly pubkey: string | null;
@@ -3340,8 +3341,8 @@ function parseRecordPlayer(value: unknown): MatchRecordPlayer | undefined {
     isNullableString(raw.guildTag) &&
     typeof raw.bot === "boolean" &&
     (pubkey === null || isTicketId(pubkey)) &&
-    // A bot, and only a bot, has no key.
-    (pubkey === null) === raw.bot &&
+    // A bot has no key; a human the host knows no key of has none either.
+    (pubkey === null || !raw.bot) &&
     typeof raw.template === "string" &&
     raw.template.length <= MAX_TEMPLATE_LENGTH
     ? {

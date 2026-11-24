@@ -2536,11 +2536,6 @@ const MALFORMED: readonly [string, (value: unknown) => unknown, unknown][] = [
     { ...ended, teams: [{ players: [{ ...recordPlayer, bot: true }] }, ended.teams[1]] },
   ],
   [
-    "ended with a player without one (#3903)",
-    parseWireEnded,
-    { ...ended, teams: [{ players: [{ ...recordPlayer, pubkey: null }] }, ended.teams[1]] },
-  ],
-  [
     "ended with a template past GW1's longest (#3903)",
     parseWireEnded,
     {
@@ -3360,6 +3355,14 @@ describe("the P2P validators (#82)", () => {
         players: [player],
       },
     );
+  });
+
+  it("accept an ended with a human the host knows no key of (#3903)", () => {
+    const keyless = {
+      ...ended,
+      teams: [{ players: [{ ...recordPlayer, pubkey: null }] }, ...ended.teams.slice(1)],
+    };
+    expect(parseWireEnded(keyless)).toEqual(keyless);
   });
 
   it("accept a masterless body on MASTERLESS_WIRE_TEAM (#2092)", () => {
