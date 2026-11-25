@@ -88,7 +88,7 @@ export const DECK_LIP = 0xffffff;
  * every biome. The light map multiplies over it too, so a darker floor
  * ends near black on a dark biome at dusk, whatever lights the map.
  */
-export const PIT_FLOOR_SHADE = 0.25;
+export const PIT_FLOOR_SHADE = 0.2;
 
 /**
  * A pit (#2973): its floor, and a tunnel's (#3329), `PIT_FLOOR_SHADE`
