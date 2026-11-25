@@ -138,7 +138,9 @@ async function expectPlays(
 test("#1766: two parties of two queue for Team Arena, meet, and play their own builds with two bots each", async ({
   browser,
 }) => {
-  test.setTimeout(120_000);
+  // Cid's party forming can outlast Ann's 30 s before a warmup (#3899),
+  // and the match then waits for that warmup to give way.
+  test.setTimeout(180_000);
   const { context, pages } = await openPeers(browser, 4);
   const [ann, bea, cid, dot] = pages as [Page, Page, Page, Page];
   // Each page's console, said when the match fails to show (#2777).
@@ -179,6 +181,10 @@ test("#1766: two parties of two queue for Team Arena, meet, and play their own b
     // The other party votes for the Quad too, so no stage runs its clock (#2872).
     await formParty([cid, dot], ["Cid", "Dot"]);
     await runTeamLobby([cid, dot], () => voteTeam(cid, dot, "Quad"));
+    // Ann's party may have warmed up against bots while Cid's voted
+    // (#3899): its warmup HUD plays the same builds, so wait it out.
+    await inRealMatch(ann);
+    await inRealMatch(bea);
 
     // Met, the queued lobby counts down five seconds before the match
     // starts (QUEUED_COUNTDOWN_SECONDS), then four pages boot an arena
@@ -364,7 +370,6 @@ async function seedTicketKeys(page: Page, seed: number): Promise<void> {
   `);
 }
 
-/** The first skill on `page`'s bar, once its match is up. */
 /**
  * Wait until `page`'s warmup against bots (#3899) has given way to the
  * match: a party that queued first plays one while the other votes.
@@ -373,6 +378,7 @@ async function inRealMatch(page: Page): Promise<void> {
   await expect(page.locator(".hud-warmup")).toHaveCount(0, { timeout: 60_000 });
 }
 
+/** The first skill on `page`'s bar, once its match is up. */
 async function firstSkill(page: Page): Promise<string | null> {
   const skill = page.locator(".hud-skills .hud-skill").first();
   // Met, the countdown and four arenas booting outlast expect's 15 s
@@ -419,10 +425,9 @@ test("#3815: a Team Arena party that wins queues again with the same team, with 
     for (const page of [ann, bea]) {
       await inRealMatch(page);
     }
-    const [annSkill, beaSkill] = [await firstSkill(ann), await firstSkill(bea)];
+    const builds = [await firstSkill(ann), await firstSkill(bea)];
     await firstSkill(cid);
     await firstSkill(dot);
-    const builds = [annSkill, beaSkill];
 
     // Cid's side leaves: on an Annihilation map, a side with nobody left is beaten.
     for (const page of [cid, dot]) {
