@@ -6,7 +6,13 @@ import {
 } from "../audio/music-preference.js";
 import { VOLUME_RAMP_SECONDS } from "../audio/volume-ramp.js";
 import { beatEdits, editStoppedNotice, type BeatEditStore } from "./beat-edits.js";
-import { directMusic, type Intensity, type MusicMode, type MusicState } from "./director.js";
+import {
+  directMusic,
+  pickMenuTrack,
+  type Intensity,
+  type MusicMode,
+  type MusicState,
+} from "./director.js";
 import { MENU_DEPTH, SPLASH_TRACK, type MenuScreen } from "./fixed-tracks.js";
 import {
   intensityOverride,
@@ -52,8 +58,14 @@ export interface MusicFollower {
    * state: a new track lands on the next phrase, or the next cycle (#2530).
    */
   follow(state: MusicState, landOn: LandOn): void;
-  /** The menus' music, as deep as `screen` is (#1993); the song already playing goes on. */
+  /**
+   * The menus' music, as deep as `screen` is (#1993). Arriving from the
+   * splash, a match or a result is a new visit, with a new song (#3996);
+   * within a visit the song already playing goes on.
+   */
   menu(screen: MenuScreen): void;
+  /** This visit to the menus' song, which the builder's Training Ground keeps (#2020, #3996). */
+  menuTrack(): string | null;
   /**
    * The splash screen's theme (#2884), under the same rules as any screen's
    * song. With a `startAtEpochMs`, its first beat lands there (#2936), and
@@ -106,6 +118,7 @@ export function createMusicFollower(
   now: () => number,
   override: IntensityOverrideStore,
   edits: Pick<BeatEditStore, "get" | "remove">,
+  random: () => number = Math.random,
 ): MusicFollower {
   let preference = saved.preference;
   let muted = saved.muted;
@@ -127,6 +140,9 @@ export function createMusicFollower(
   };
   /** The menu the player is on, to redirect when the mode changes. */
   let onScreen: MenuScreen | null = null;
+  /** Where the music last was (`MusicState.context`), and this visit to the menus' song (#3996). */
+  let context: string | null = null;
+  let menuTrackId: string | null = null;
 
   // A hung or flooding edit would do it again on every load: it goes.
   // A shipped track that did it is the next play's to try again.
@@ -206,6 +222,7 @@ export function createMusicFollower(
   };
 
   const follow = (state: MusicState, landOn: LandOn): void => {
+    context = state.context;
     directed = state.trackId;
     play(landOn === "cycle" ? "on-cycle" : "on-phrase");
     intensity = state.intensity;
@@ -232,6 +249,7 @@ export function createMusicFollower(
       {
         screen: "splash",
         menuDepth: null,
+        menuTrackId: null,
         mapId: null,
         matchSeed: null,
         result: null,
@@ -259,6 +277,7 @@ export function createMusicFollower(
       follow(state, "phrase");
       return false;
     }
+    context = state.context;
     directed = state.trackId;
     splashHeard = onHeard;
     // Timed even if it is already loaded.
@@ -271,11 +290,15 @@ export function createMusicFollower(
   };
 
   const menu = (name: MenuScreen): void => {
+    if (context !== "menu") {
+      menuTrackId = pickMenuTrack(menuTrackId, random);
+    }
     follow(
       directMusic(
         {
           screen: "menu",
           menuDepth: MENU_DEPTH[name],
+          menuTrackId,
           mapId: null,
           matchSeed: null,
           result: null,
@@ -305,6 +328,7 @@ export function createMusicFollower(
       follow(state, landOn);
     },
     menu,
+    menuTrack: () => menuTrackId,
     splash,
     sting(id) {
       const track = tracks.find((candidate) => candidate.id === playingId);

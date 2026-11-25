@@ -128,6 +128,7 @@ const TRACKS: readonly TrackChoice[] = [
   { id: "hall-of-champions", moods: ["epic"], layers: 4 },
   { id: "victors-hymn", moods: ["triumphant"], layers: 4 },
   { id: "first-light", moods: ["atmospheric"], layers: 2 },
+  { id: "quiet-hearth", moods: ["atmospheric"], layers: 2 },
 ];
 
 function setup(
@@ -152,6 +153,7 @@ function setup(
   const music = attachMatchMusic(connection, {
     screen,
     menuDepth: screen === "training" ? 1 : null,
+    menuTrackId: screen === "training" ? "quiet-hearth" : null,
     mode: () => mode,
     tracks: TRACKS,
     onChange: (state, landOn) => {
@@ -292,7 +294,7 @@ describe("attachMatchMusic", () => {
     at(0, snapshot({ allyHealth: 10 }));
     at(DIRECT_INTERVAL_MS, snapshot({ allyHealth: 10, finished: 0 }));
     expect(changes.at(-1)).toEqual(
-      expect.objectContaining({ trackId: "first-light", intensity: 1, context: "menu" }),
+      expect.objectContaining({ trackId: "quiet-hearth", intensity: 1, context: "menu" }),
     );
   });
 
@@ -302,6 +304,7 @@ describe("attachMatchMusic", () => {
       {
         screen: "menu",
         menuDepth: 1,
+        menuTrackId: "quiet-hearth",
         mapId: null,
         matchSeed: null,
         result: null,
