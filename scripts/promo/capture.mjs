@@ -623,17 +623,17 @@ async function waitLive(page) {
 async function waitLiveStepped(page, stepper) {
   const hold = page.locator(".hud-pre-match");
   const limit = frames(90_000);
-  let counted = false;
+  let last = "";
   for (let i = 0; i < limit; i += 1) {
     await stepper.steps(1);
-    const shown = await hold.filter({ hasText: /Match starts in/ }).count();
-    counted ||= shown > 0;
-    if (counted && shown === 0 && !(await hold.isVisible())) {
+    // The banner is gone once the match is live, whether or not a frame saw its countdown.
+    if (!(await hold.isVisible())) {
       await stepper.steps(frames(2500));
       return;
     }
+    last = (await hold.textContent()) ?? "";
   }
-  throw new Error("the pre-match countdown never finished");
+  throw new Error(`the pre-match hold never ended; the banner said "${last}"`);
 }
 
 /**
