@@ -47,8 +47,8 @@ import { isInvulnerable, isSpell, type Combatant, type Skill } from "./types.js"
  *
  * Health per second (#975, Spirit Light Weapon), and a moving bearer's
  * (#921, "Fall Back!"), and one `nearSpirit`'s (#1064, the simulation
- * knows where spirits stand), is a heal, not pips: outside the clamp,
- * scaled by `healingMultiplier`, and added to the same change, so one
+ * knows where spirits stand), is regeneration, not pips: outside the
+ * clamp, and added to the same change, so one
  * tick emits one damage or heal event. A Guild Lord loses no more than
  * its per-second cap lets through (#1223).
  */
@@ -67,10 +67,9 @@ export function advanceStatuses(
   const pips = netPips(combatant, naturalPips, 0).health;
   const modifiers = aggregateModifiers(combatant.statuses.active);
   const perSecond =
-    (modifiers.healthPerSecond +
-      (combatant.moving ? modifiers.healthPerSecondWhileMoving : 0) +
-      (nearSpirit ? modifiers.healthPerSecondNearSpirit : 0)) *
-    modifiers.healingMultiplier;
+    modifiers.healthPerSecond +
+    (combatant.moving ? modifiers.healthPerSecondWhileMoving : 0) +
+    (nearSpirit ? modifiers.healthPerSecondNearSpirit : 0);
   if (pips !== 0 || perSecond !== 0) {
     const change = (pips * HEALTH_PER_PIP + perSecond) * dt;
     // Degeneration takes nothing from an invulnerable body (#1208); regeneration still heals.

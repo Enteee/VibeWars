@@ -134,6 +134,7 @@ const INCENDIARY_BLAST = {
 /** Mist Form's heal (#1951): 210% of the spell's cost, under 80% Health. */
 const MIST_FORM_HEAL = {
   kind: "heal",
+  received: "heal",
   amount: { flat: 2.1 },
   perUsedSkillEnergy: true,
   onlyBelowHealthFraction: 0.8,
@@ -490,7 +491,7 @@ export const ELEMENTALIST_STATUSES: Readonly<Record<ElementalistStatusId, Status
         target: "bearer",
         effects: [
           { kind: "energy-gain", amount: { flat: 1 } },
-          { kind: "heal", amount: { flat: 3.6 }, perUsedSkillEnergy: true },
+          { kind: "heal", received: "heal", amount: { flat: 3.6 }, perUsedSkillEnergy: true },
         ],
         skillId: "elementalist.aura-of-restoration",
       },
@@ -509,12 +510,14 @@ export const ELEMENTALIST_STATUSES: Readonly<Record<ElementalistStatusId, Status
         effects: [
           {
             kind: "heal",
+            received: "heal",
             amount: {
               scaling: { attributeId: "elementalist.energy-storage", atZero: 30, atTwelve: 90 },
             },
           },
           {
             kind: "heal",
+            received: "heal",
             amount: {
               scaling: { attributeId: "elementalist.energy-storage", atZero: 1.5, atTwelve: 3.5 },
             },
@@ -660,7 +663,7 @@ export const ELEMENTALIST_STATUSES: Readonly<Record<ElementalistStatusId, Status
         target: "bearer",
         effects: [
           { kind: "energy-gain", amount: { flat: 0 }, per: etherRenewalPer(3) },
-          { kind: "heal", amount: { flat: 0 }, per: etherRenewalPer(17) },
+          { kind: "heal", received: "gain", amount: { flat: 0 }, per: etherRenewalPer(17) },
         ],
         skillId: "elementalist.ether-renewal",
       },

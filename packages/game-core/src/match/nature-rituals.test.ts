@@ -359,7 +359,7 @@ describe("nature rituals 1 (#1745)", () => {
     expect(weaponSnapshotOf(warrior).damageType).toBe("slashing");
   });
 
-  it("Predatory Season: heals 20% weaker, and each hit heals its attacker 5 of that", () => {
+  it("Predatory Season: heals 20% weaker, and each hit gains its attacker a whole 5 (#3999)", () => {
     const sim = match(spec("w", 0, vec2(260, 0), { equipment: AXE, startHealthFraction: 0.5 }));
     ritual(sim, "ranger.predatory-season");
     const w = get(sim, "w").combatant;
@@ -369,7 +369,7 @@ describe("nature rituals 1 (#1745)", () => {
     const hits = events.filter((event) => event.kind === "damage" && event.targetId === "f");
     const heals = events.filter((event) => event.kind === "heal" && event.targetId === "w");
     expect(hits.length).toBeGreaterThan(0);
-    expect(heals).toEqual(hits.map(() => ({ kind: "heal", targetId: "w", amount: 4 })));
+    expect(heals).toEqual(hits.map(() => ({ kind: "heal", targetId: "w", amount: 5 })));
   });
 
   it("describes each aura", () => {

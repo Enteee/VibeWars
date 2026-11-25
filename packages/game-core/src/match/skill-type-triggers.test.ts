@@ -190,7 +190,7 @@ describe("Soul Bind (#1913)", () => {
     bearer.statuses.apply("soul-bind", 30, "n", NO_RANKS);
     bearer.statuses.drainChanges();
     const heal = (amount: number) =>
-      applyEffects([{ kind: "heal", amount: { flat: amount } }], {
+      applyEffects([{ kind: "heal", received: "heal", amount: { flat: amount } }], {
         caster: healer,
         target: bearer,
         rng: createRng(1),
@@ -202,6 +202,23 @@ describe("Soul Bind (#1913)", () => {
     expect(bearer.statuses.drainChanges().map(({ kind }) => kind)).toEqual([]);
     heal(1);
     expect(bearer.statuses.drainChanges().map(({ kind }) => kind)).toEqual(["healed-by-skill"]);
+  });
+
+  it("a Health gain, as Song of Restoration's, is no heal by a skill (#3999)", () => {
+    const bearer = makeCombatant({ id: "a", team: 0 });
+    bearer.health = 100;
+    bearer.statuses.apply("soul-bind", 30, "n", NO_RANKS);
+    bearer.statuses.drainChanges();
+    applyEffects([{ kind: "heal", received: "gain", amount: { flat: 50 } }], {
+      caster: bearer,
+      target: bearer,
+      rng: createRng(1),
+      rules: RULES.combat,
+      surroundings: new Map(),
+      usedSkill: undefined,
+    });
+    expect(bearer.health).toBe(150);
+    expect(bearer.statuses.drainChanges().map(({ kind }) => kind)).toEqual([]);
   });
 });
 

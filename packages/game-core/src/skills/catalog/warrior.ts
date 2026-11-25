@@ -432,9 +432,11 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
     companion: undefined,
     petAttack: undefined,
     projectile: undefined,
+    // A heal, though the text says "gain": the wiki's bug (#3999).
     effects: [
       {
         kind: "heal",
+        received: "heal",
         amount: { scaling: { attributeId: "warrior.tactics", atZero: 82, atTwelve: 154 } },
       },
     ],
@@ -3276,6 +3278,7 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
     effects: [
       {
         kind: "heal",
+        received: "gain",
         recipient: "caster",
         amount: { flat: 0 },
         per: {
@@ -5317,6 +5320,7 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
       { kind: "disable-own-skills", which: "types", types: ["signet"], seconds: { flat: 12 } },
       {
         kind: "heal",
+        received: "heal",
         amount: { scaling: { attributeId: "warrior.strength", atZero: 50, atTwelve: 98 } },
       },
       {

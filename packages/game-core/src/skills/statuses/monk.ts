@@ -102,6 +102,7 @@ export type MonkStatusId =
  */
 const SHIELD_GUARDIAN_HEAL: HealEffect = {
   kind: "heal",
+  received: "heal",
   amount: { scaling: { attributeId: "monk.protection-prayers", atZero: 10, atTwelve: 30 } },
 };
 const SHIELD_GUARDIAN_HEALS: readonly SkillEffect[] = [
@@ -122,12 +123,14 @@ const SHIELD_GUARDIAN_HEALS: readonly SkillEffect[] = [
  */
 const VIGOROUS_SPIRIT_HEAL: HealEffect = {
   kind: "heal",
+  received: "heal",
   amount: { scaling: { attributeId: "monk.healing-prayers", atZero: 5, atTwelve: 17 } },
 };
 
 /** Healing Seed's heal (#2286), to its bearer and, by the splash, which skips its centre, to each ally beside it. */
 const HEALING_SEED_HEAL: HealEffect = {
   kind: "heal",
+  received: "gain",
   amount: { scaling: { attributeId: "monk.healing-prayers", atZero: 3, atTwelve: 24.6 } },
 };
 
@@ -149,6 +152,7 @@ export const MONK_STATUSES: Readonly<Record<MonkStatusId, StatusDefinition>> = {
         effects: [
           {
             kind: "heal",
+            received: "heal",
             amount: {
               scaling: { attributeId: "monk.healing-prayers", atZero: 30, atTwelve: 102 },
             },
@@ -199,7 +203,7 @@ export const MONK_STATUSES: Readonly<Record<MonkStatusId, StatusDefinition>> = {
     triggers: [
       {
         on: "ends",
-        effects: [{ kind: "heal", amount: { flat: 41 } }],
+        effects: [{ kind: "heal", received: "heal", amount: { flat: 41 } }],
         target: "bearer",
         skillId: "monk.shielding-hands",
       },
@@ -302,6 +306,7 @@ export const MONK_STATUSES: Readonly<Record<MonkStatusId, StatusDefinition>> = {
         effects: [
           {
             kind: "heal",
+            received: "gain",
             amount: { scaling: { attributeId: "monk.healing-prayers", atZero: 2, atTwelve: 14 } },
           },
         ],
@@ -353,6 +358,7 @@ export const MONK_STATUSES: Readonly<Record<MonkStatusId, StatusDefinition>> = {
         effects: [
           {
             kind: "heal",
+            received: "heal",
             amount: { scaling: { attributeId: "monk.divine-favor", atZero: 30, atTwelve: 150 } },
           },
         ],
@@ -375,6 +381,7 @@ export const MONK_STATUSES: Readonly<Record<MonkStatusId, StatusDefinition>> = {
         effects: [
           {
             kind: "heal",
+            received: "heal",
             amount: {
               scaling: { attributeId: "monk.protection-prayers", atZero: 30, atTwelve: 78 },
             },
@@ -450,7 +457,7 @@ export const MONK_STATUSES: Readonly<Record<MonkStatusId, StatusDefinition>> = {
             hits: "party",
             radius: Number.POSITIVE_INFINITY,
             maxTargets: undefined,
-            effects: [{ kind: "heal", amount: { flat: 41 } }],
+            effects: [{ kind: "heal", received: "heal", amount: { flat: 41 } }],
           },
         ],
         target: "bearer",
@@ -670,6 +677,7 @@ export const MONK_STATUSES: Readonly<Record<MonkStatusId, StatusDefinition>> = {
         effects: [
           {
             kind: "heal",
+            received: "heal",
             amount: { scaling: { attributeId: "monk.divine-favor", atZero: 26, atTwelve: 197.2 } },
           },
         ],
@@ -689,6 +697,7 @@ export const MONK_STATUSES: Readonly<Record<MonkStatusId, StatusDefinition>> = {
         effects: [
           {
             kind: "heal",
+            received: "heal",
             amount: { scaling: { attributeId: "monk.healing-prayers", atZero: 5, atTwelve: 29 } },
           },
         ],
@@ -888,6 +897,7 @@ export const MONK_STATUSES: Readonly<Record<MonkStatusId, StatusDefinition>> = {
         effects: [
           {
             kind: "heal" as const,
+            received: "heal" as const,
             amount: { scaling: { attributeId: "monk.divine-favor", atZero: 15, atTwelve: 51 } },
           },
         ],
@@ -992,6 +1002,7 @@ export const MONK_STATUSES: Readonly<Record<MonkStatusId, StatusDefinition>> = {
         effects: [
           {
             kind: "heal",
+            received: "gain",
             amount: { scaling: { attributeId: "monk.divine-favor", atZero: 30, atTwelve: 102 } },
           },
         ],
@@ -1083,6 +1094,7 @@ export const MONK_STATUSES: Readonly<Record<MonkStatusId, StatusDefinition>> = {
       effects: [
         {
           kind: "heal" as const,
+          received: "heal" as const,
           amount: { scaling: { attributeId: "monk.divine-favor", atZero: 20, atTwelve: 84 } },
         },
       ],
@@ -1105,6 +1117,7 @@ export const MONK_STATUSES: Readonly<Record<MonkStatusId, StatusDefinition>> = {
             effects: [
               {
                 kind: "heal",
+                received: "heal",
                 amount: {
                   scaling: { attributeId: "monk.healing-prayers", atZero: 5, atTwelve: 41 },
                 },
