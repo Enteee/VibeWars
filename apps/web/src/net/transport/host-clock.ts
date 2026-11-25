@@ -4,6 +4,7 @@
  * so a long stall runs at most `MAX_CATCH_UP_SECONDS` of match in one go
  * rather than a burst of ticks.
  */
+import { captureClock } from "../../capture-clock.js";
 
 /** The most match time one beat may run: 10 ticks. */
 export const MAX_CATCH_UP_SECONDS = 0.5;
@@ -34,6 +35,10 @@ export function startHostClock(
   onTick: (seconds: number) => void,
   deps: { createWorker(): WorkerLike } = { createWorker: createClockWorker },
 ): () => void {
+  // `?capture=step` (#4006): the capture script beats the clock, frame by frame.
+  if (captureClock.stepping) {
+    return captureClock.onHostTick(onTick);
+  }
   const worker = deps.createWorker();
   let stopped = false;
   worker.onmessage = (event) => {

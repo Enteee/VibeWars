@@ -2,6 +2,7 @@ import type Phaser from "phaser";
 
 import { vec2, type Vec2 } from "@vibewars/game-core";
 
+import { captureClock, now } from "../capture-clock.js";
 import type { ArenaScene } from "./arena-scene.js";
 import { ARENA_BACKGROUND } from "./arena-palette.js";
 import {
@@ -213,8 +214,20 @@ export async function createArenaViewport(
     });
   }
 
+  // `?capture=step` (#4006): the capture script drives every frame, so
+  // Phaser's own loop stays asleep.
+  const stopCapture = captureClock.stepping
+    ? captureClock.onFrame((time, delta) => {
+        game.step(time, delta);
+      })
+    : undefined;
+  if (captureClock.stepping) {
+    game.loop.sleep();
+  }
   const wake = (): void => {
-    game.loop.wake();
+    if (!captureClock.stepping) {
+      game.loop.wake();
+    }
   };
   game.scale.on(Phaser.Scale.Events.RESIZE, wake);
 
@@ -379,7 +392,7 @@ export async function createArenaViewport(
       }
       // A pointer event's timeStamp is on performance.now()'s clock: the
       // hover ring turns to the ground below as the hold passes long-press.
-      scene.setHeldBelow(() => gesture.heldLong(performance.now()));
+      scene.setHeldBelow(() => gesture.heldLong(now()));
       return () => {
         for (const type of FINGER_TYPES) {
           canvas.removeEventListener(type, onTouch);
@@ -451,6 +464,9 @@ export async function createArenaViewport(
       game.destroy(true);
       // A held loop steps again, so that it gets to the destroy.
       wake();
+      void destroyed.then(() => {
+        stopCapture?.();
+      });
       return destroyed;
     },
   };
