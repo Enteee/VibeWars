@@ -204,7 +204,7 @@ describe("Soul Bind (#1913)", () => {
     expect(bearer.statuses.drainChanges().map(({ kind }) => kind)).toEqual(["healed-by-skill"]);
   });
 
-  it("a Health gain, as Healing Signet's, is no heal by a skill (#3999)", () => {
+  it("a Health gain, as Song of Restoration's, is no heal by a skill (#3999)", () => {
     const bearer = makeCombatant({ id: "a", team: 0 });
     bearer.health = 100;
     bearer.statuses.apply("soul-bind", 30, "n", NO_RANKS);

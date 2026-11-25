@@ -432,10 +432,11 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
     companion: undefined,
     petAttack: undefined,
     projectile: undefined,
+    // A heal, though the text says "gain": the wiki's bug (#3999).
     effects: [
       {
         kind: "heal",
-        received: "gain",
+        received: "heal",
         amount: { scaling: { attributeId: "warrior.tactics", atZero: 82, atTwelve: 154 } },
       },
     ],
