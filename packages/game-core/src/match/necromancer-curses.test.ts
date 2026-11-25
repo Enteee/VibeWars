@@ -132,7 +132,7 @@ function healed(statuses: readonly StatusId[]): number {
   for (const id of statuses) {
     target.statuses.apply(id, 30, "n", NO_RANKS);
   }
-  const events = applyEffects([{ kind: "heal", amount: { flat: 100 } }], {
+  const events = applyEffects([{ kind: "heal", received: "heal", amount: { flat: 100 } }], {
     caster: makeCombatant({ id: "c" }),
     target,
     rng: createRng(1),

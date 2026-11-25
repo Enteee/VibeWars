@@ -150,6 +150,9 @@ in
           set -euo pipefail
           export PATH=${pkgs.nodejs_24}/bin:$PATH
           ${pkgs.pnpm_10}/bin/pnpm exec tsc --build tsconfig.build.json
+          # One process lints every staged file, so it needs the same heap
+          # headroom the whole-repo run once did (run 45653597158 ran out).
+          export NODE_OPTIONS=--max-old-space-size=6144
           exec ${config.git-hooks.hooks.eslint.package}/bin/eslint --fix "$@"
         ''
       );

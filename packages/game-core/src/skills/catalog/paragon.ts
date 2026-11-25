@@ -1771,9 +1771,11 @@ export const PARAGON_SKILLS: readonly Skill[] = [
     // "You gain 30...66...75 Health. For each ally within earshot, you
     // also gain +10...18...20 Health (maximum 140 Health)." The caster is
     // one of those allies, as GW1 counts it, and 140 caps the whole heal.
+    // A heal, though the text says "gain": the wiki's bug (#3999).
     effects: [
       {
         kind: "heal",
+        received: "heal",
         amount: { scaling: { attributeId: "paragon.leadership", atZero: 30, atTwelve: 66 } },
         perAlly: {
           amount: { scaling: { attributeId: "paragon.leadership", atZero: 10, atTwelve: 18 } },
@@ -2433,6 +2435,7 @@ export const PARAGON_SKILLS: readonly Skill[] = [
     effects: [
       {
         kind: "heal",
+        received: "heal",
         amount: { scaling: { attributeId: "paragon.motivation", atZero: 40, atTwelve: 88 } },
       },
       {
@@ -2441,6 +2444,7 @@ export const PARAGON_SKILLS: readonly Skill[] = [
         effects: [
           {
             kind: "heal",
+            received: "heal",
             amount: { scaling: { attributeId: "paragon.motivation", atZero: 40, atTwelve: 88 } },
             recipient: "caster",
           },
@@ -2996,6 +3000,7 @@ export const PARAGON_SKILLS: readonly Skill[] = [
     effects: [
       {
         kind: "heal",
+        received: "gain",
         amount: { scaling: { attributeId: "paragon.command", atZero: 5, atTwelve: 41 } },
       },
       {

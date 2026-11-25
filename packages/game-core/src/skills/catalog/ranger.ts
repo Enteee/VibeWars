@@ -894,6 +894,7 @@ export const RANGER_SKILLS: readonly Skill[] = [
     effects: [
       {
         kind: "heal",
+        received: "heal",
         amount: {
           scaling: { attributeId: "ranger.beast-mastery", atZero: 20, atTwelve: 87 },
         },
@@ -4419,6 +4420,7 @@ export const RANGER_SKILLS: readonly Skill[] = [
         effects: [
           {
             kind: "heal",
+            received: "heal",
             amount: { scaling: { attributeId: "ranger.beast-mastery", atZero: 30, atTwelve: 102 } },
             recipient: "caster",
           },
@@ -4430,6 +4432,7 @@ export const RANGER_SKILLS: readonly Skill[] = [
         effects: [
           {
             kind: "heal",
+            received: "heal",
             amount: { scaling: { attributeId: "ranger.beast-mastery", atZero: 30, atTwelve: 102 } },
             recipient: "companion",
           },
@@ -5076,6 +5079,7 @@ export const RANGER_SKILLS: readonly Skill[] = [
     effects: [
       {
         kind: "heal",
+        received: "gain",
         amount: { scaling: { attributeId: "ranger.beast-mastery", atZero: 5, atTwelve: 41 } },
         recipient: "caster",
       },
@@ -5343,10 +5347,12 @@ export const RANGER_SKILLS: readonly Skill[] = [
         effects: [
           {
             kind: "heal",
+            received: "heal",
             amount: { scaling: { attributeId: "ranger.beast-mastery", atZero: 25, atTwelve: 121 } },
           },
           {
             kind: "heal",
+            received: "heal",
             amount: { scaling: { attributeId: "ranger.beast-mastery", atZero: 25, atTwelve: 121 } },
             recipient: "caster",
           },
@@ -6121,6 +6127,7 @@ export const RANGER_SKILLS: readonly Skill[] = [
             effects: [
               {
                 kind: "heal",
+                received: "heal",
                 amount: {
                   scaling: { attributeId: "ranger.wilderness-survival", atZero: 15, atTwelve: 51 },
                 },

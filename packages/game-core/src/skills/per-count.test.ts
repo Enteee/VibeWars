@@ -140,6 +140,7 @@ describe("a count's amount (#1760)", () => {
       applyEffect(
         {
           kind: "heal",
+          received: "heal",
           amount: { flat: 0 },
           per: {
             count: { kind: "statuses", on: "target", categories: ["hex"] },

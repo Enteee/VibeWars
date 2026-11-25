@@ -248,6 +248,7 @@ export const RITUALIST_STATUSES: Readonly<Record<RitualistStatusId, StatusDefini
         effects: [
           {
             kind: "heal",
+            received: "gain",
             amount: {
               scaling: { attributeId: "ritualist.spawning-power", atZero: 5, atTwelve: 41 },
             },
@@ -310,6 +311,7 @@ export const RITUALIST_STATUSES: Readonly<Record<RitualistStatusId, StatusDefini
             effects: [
               {
                 kind: "heal",
+                received: "gain",
                 amount: {
                   scaling: { attributeId: "ritualist.spawning-power", atZero: 5, atTwelve: 41 },
                 },
@@ -335,13 +337,13 @@ export const RITUALIST_STATUSES: Readonly<Record<RitualistStatusId, StatusDefini
       {
         on: "ends",
         effects: [
-          { kind: "heal", amount: { flat: 80 } },
+          { kind: "heal", received: "heal", amount: { flat: 80 } },
           {
             kind: "splash",
             hits: "party",
             radius: Number.POSITIVE_INFINITY,
             maxTargets: undefined,
-            effects: [{ kind: "heal", amount: { flat: 80 } }],
+            effects: [{ kind: "heal", received: "heal", amount: { flat: 80 } }],
           },
         ],
         target: "bearer",
@@ -358,7 +360,7 @@ export const RITUALIST_STATUSES: Readonly<Record<RitualistStatusId, StatusDefini
     triggers: [
       {
         on: "ends",
-        effects: [{ kind: "heal", amount: { flat: 244 } }],
+        effects: [{ kind: "heal", received: "gain", amount: { flat: 244 } }],
         target: "bearer",
         skillId: "ritualist.generous-was-tsungrai",
       },
@@ -930,6 +932,7 @@ export const RITUALIST_STATUSES: Readonly<Record<RitualistStatusId, StatusDefini
       effects: [
         {
           kind: "heal",
+          received: "heal",
           amount: {
             scaling: { attributeId: "ritualist.restoration-magic", atZero: 3, atTwelve: 8.6 },
           },
