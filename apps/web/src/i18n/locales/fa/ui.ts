@@ -564,6 +564,11 @@ export default {
   "help.licences": "مجوزهای شخص ثالث",
   "help.pages": "صفحات راهنما",
   "help.source": "کد منبع",
+  "help.trailer": "تریلر",
+  "help.trailerDownload": "دانلود",
+  "help.trailerInfo": "{seconds} ثانیه، حدود {mb} مگابایت",
+  "help.trailerOffline": "تریلر به اتصال اینترنت نیاز دارد.",
+  "help.trailerVertical": "نسخهٔ گوشی (عمودی)",
   "help.version": "VibeWars {release} · بیلد {build}",
 
   "hud.aggression": "تهاجم {ours} مقابل {theirs}",

@@ -566,6 +566,11 @@ export default {
   "help.licences": "Üçüncü taraf lisansları",
   "help.pages": "yardım sayfaları",
   "help.source": "Kaynak kodu",
+  "help.trailer": "Fragman",
+  "help.trailerDownload": "İndir",
+  "help.trailerInfo": "{seconds} sn, yaklaşık {mb} MB",
+  "help.trailerOffline": "Fragman için internet bağlantısı gerekir.",
+  "help.trailerVertical": "Telefon sürümü (dikey)",
   "help.version": "VibeWars {release} · yapı {build}",
 
   "hud.aggression": "sald {ours} - {theirs}",

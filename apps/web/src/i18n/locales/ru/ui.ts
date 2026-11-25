@@ -618,6 +618,11 @@ export default {
   "help.licences": "Сторонние лицензии",
   "help.pages": "страницы помощи",
   "help.source": "Исходный код",
+  "help.trailer": "Трейлер",
+  "help.trailerDownload": "Скачать",
+  "help.trailerInfo": "{seconds} с, около {mb} МБ",
+  "help.trailerOffline": "Для трейлера нужно подключение к интернету.",
+  "help.trailerVertical": "Версия для телефона (вертикальная)",
   "help.version": "VibeWars {release} · сборка {build}",
 
   "hud.aggression": "агр {ours} – {theirs}",

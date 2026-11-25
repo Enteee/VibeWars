@@ -568,6 +568,11 @@ export default {
   "help.licences": "Lizenzen von Drittanbietern",
   "help.pages": "Hilfeseiten",
   "help.source": "Quellcode",
+  "help.trailer": "Trailer",
+  "help.trailerDownload": "Herunterladen",
+  "help.trailerInfo": "{seconds} s, etwa {mb} MB",
+  "help.trailerOffline": "Der Trailer braucht eine Internetverbindung.",
+  "help.trailerVertical": "Handyversion (hochkant)",
   "help.version": "VibeWars {release} · Build {build}",
 
   "hud.aggression": "Agg {ours} : {theirs}",

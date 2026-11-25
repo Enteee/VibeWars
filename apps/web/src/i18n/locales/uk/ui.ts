@@ -621,6 +621,11 @@ export default {
   "help.licences": "Ліцензії сторонніх розробників",
   "help.pages": "сторінки довідки",
   "help.source": "Вихідний код",
+  "help.trailer": "Трейлер",
+  "help.trailerDownload": "Завантажити",
+  "help.trailerInfo": "{seconds} с, близько {mb} МБ",
+  "help.trailerOffline": "Для трейлера потрібне з’єднання з інтернетом.",
+  "help.trailerVertical": "Версія для телефона (вертикальна)",
   "help.version": "VibeWars {release} · збірка {build}",
 
   "hud.aggression": "агр {ours} : {theirs}",

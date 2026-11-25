@@ -519,6 +519,11 @@ export default {
   "help.licences": "서드파티 라이선스",
   "help.pages": "도움말 페이지",
   "help.source": "소스 코드",
+  "help.trailer": "트레일러",
+  "help.trailerDownload": "다운로드",
+  "help.trailerInfo": "{seconds}초, 약 {mb}MB",
+  "help.trailerOffline": "트레일러를 보려면 인터넷 연결이 필요합니다.",
+  "help.trailerVertical": "휴대폰용 (세로)",
   "help.version": "VibeWars {release} · 빌드 {build}",
 
   "hud.aggression": "공세 {ours} : {theirs}",

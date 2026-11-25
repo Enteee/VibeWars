@@ -569,6 +569,11 @@ export default {
   "help.licences": "Лицензи на трети страни",
   "help.pages": "страници с помощ",
   "help.source": "Изходен код",
+  "help.trailer": "Трейлър",
+  "help.trailerDownload": "Изтегляне",
+  "help.trailerInfo": "{seconds} с, около {mb} MB",
+  "help.trailerOffline": "Трейлърът изисква интернет връзка.",
+  "help.trailerVertical": "Версия за телефон (вертикална)",
   "help.version": "VibeWars {release} · билд {build}",
 
   "hud.aggression": "агр {ours} с/у {theirs}",

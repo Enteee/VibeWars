@@ -618,6 +618,11 @@ export default {
   "help.licences": "Licence třetích stran",
   "help.pages": "stránky nápovědy",
   "help.source": "Zdrojový kód",
+  "help.trailer": "Trailer",
+  "help.trailerDownload": "Stáhnout",
+  "help.trailerInfo": "{seconds} s, asi {mb} MB",
+  "help.trailerOffline": "Trailer potřebuje připojení k internetu.",
+  "help.trailerVertical": "Verze pro telefon (na výšku)",
   "help.version": "VibeWars {release} · build {build}",
 
   "hud.aggression": "agr {ours} : {theirs}",

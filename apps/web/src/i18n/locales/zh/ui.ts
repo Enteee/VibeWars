@@ -512,6 +512,11 @@ export default {
   "help.licences": "第三方许可",
   "help.pages": "帮助页面",
   "help.source": "源代码",
+  "help.trailer": "预告片",
+  "help.trailerDownload": "下载",
+  "help.trailerInfo": "{seconds} 秒，约 {mb} MB",
+  "help.trailerOffline": "观看预告片需要联网。",
+  "help.trailerVertical": "手机版（竖屏）",
   "help.version": "VibeWars {release} · 构建 {build}",
 
   "hud.aggression": "攻势 {ours} : {theirs}",

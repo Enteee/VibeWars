@@ -566,6 +566,11 @@ export const en = {
   "help.licences": "Third-party licences",
   "help.pages": "help pages",
   "help.source": "Source code",
+  "help.trailer": "Trailer",
+  "help.trailerDownload": "Download",
+  "help.trailerInfo": "{seconds} s, about {mb} MB",
+  "help.trailerOffline": "The trailer needs an internet connection.",
+  "help.trailerVertical": "Phone version (vertical)",
   "help.version": "VibeWars {release} · build {build}",
 
   "hud.aggression": "agg {ours} v {theirs}",
