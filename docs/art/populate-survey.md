@@ -95,7 +95,7 @@ units. A prop is one of three classes:
 | bones, banner, cairn     | all                                                    |  40 to 60 | decoration, flat on the ground                                | no                              | banner: ripple, 5 s  |
 | cinders / ash drift      | volcanic                                               |       120 | decoration, flat                                              | optional ember `fire-`          | drift, 5 s           |
 
-13 kinds, of which 3 are wall-looks (`boulder`, `ruin`, stacked `crates`).
+The table has 12 rows; bones, banner and cairn share one, so the kit is **14 kinds**. The `DecorKind` enum has **13**: `ruin` exists only as a wall look, while `boulder` and `crates` are both a decoration (small) and a wall look (cover).
 Per biome a map draws from 4 to 6 kinds, not all.
 
 **What draws over bodies.** Nothing flat does. Tall decoration (column, tree,
@@ -126,7 +126,7 @@ decor: [
   `variant` are written by the placement tool, so none is optional. `id` is
   a name for sight-line callouts (§6) and review diffs, as overhangs, decks,
   zones and lights have.
-- `DecorKind` is a closed enum, the kit's kinds **minus** the wall-looks.
+- `DecorKind` is a closed enum, the kit's kinds **minus** the kinds that are only a wall look (`ruin`).
 - **Cover is not decor.** A blocking boulder or ruin is a `walls` entry with a
   **required** `look: "plain" | "boulder" | "ruin" | "crates"` on every wall
   (no default: absent-means-plain is the banned absent-field default), so the
@@ -156,8 +156,14 @@ Graphics are re-rendered every frame (hiding every Graphics took a layered
 map from 6.4× to 4.8× a flat map per walked frame on SwiftShader), and
 Graphics tessellation is a named cost. The only optimisation is
 `graphics-cull.ts` (`StaticGraphicsCull`), so decor is culled per frame the
-way walls are, and **budgeted by shapes on screen, not per map**. Decor must
-not be textured (no Images, no render targets: textured area is the cost).
+way walls are, and **budgeted by shapes on screen, not per map**.
+
+**Draw form is not decided here.** Spike #3977 (sprite-stacked bodies and
+props) is testing the other option, textured sprite stacks, and its ADR
+decides how decor is drawn. What follows is the vector-Graphics proposal and
+the **fallback** if the spike rejects stacking; textures are not ruled out,
+and ADR-0054's warning (textured area is the cost on SwiftShader) is the bar
+a stacked form has to beat. Build card #1 (§7) waits for that ADR.
 
 **Baseline today** (top-level shapes per map: walls, water, decks, overhangs,
 transitions, paving, zones, pits, tunnels; each is a polygon of a few to a
@@ -231,7 +237,7 @@ only, so balance is untouched while the look improves.
 
 ## 7. Next cards (one map each, `area:maps`)
 
-1. Schema + renderer: `decor` field, the kit's first six kinds, the placement
+1. (after spike #3977's ADR) Schema + renderer: `decor` field, the kit's first six kinds, the placement
    tool (architect's ADR first).
 2. `ashen-courtyard`, 3. `hall-of-heroes-*` (one arena), 4. `cinder-sanctum`, 5. `jungle-ruins`, 6. `wardens-gallery`, then the rest by the table's
    rank. The ranked arenas (`arena-*`, `ember-pits`, `canthan-terraces`) get
