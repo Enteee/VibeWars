@@ -37,6 +37,8 @@ import { parseArgs } from "node:util";
 
 import { chromium } from "@playwright/test";
 
+/* global document -- in page.evaluate, which runs in the page */
+
 const PORT = 4321;
 const MEDIA = path.join(import.meta.dirname, "..", "docs", "media");
 const { values: options } = parseArgs({ options: { url: { type: "string" } } });
@@ -289,7 +291,36 @@ async function matchShots(page, dir) {
  */
 async function heightsShot(page, dir) {
   await startMatch(page, "broken-tower");
-  await walk(page, "KeyD", 6000);
+  step = "heights walk";
+  // The map is 5400 × 2800 and the seat is in the west block (x 480..600) or
+  // the east one (x 4824..4944). Both sides have a cellar mouth with a torch
+  // and a lit stair 830 u in: the west torch at (1370, 1310), the east one at
+  // (4054, 1310) (packages/game-maps/maps/broken-tower/map.json). The camera
+  // follows the player, so walk toward the nearer one until it is in frame.
+  const cameraX = async () => {
+    const camera = await page.evaluate(
+      () => document.getElementById("viewport")?.dataset.camera ?? "",
+    );
+    return Number(camera.split(",")[0]);
+  };
+  const start = await cameraX();
+  if (Number.isNaN(start)) {
+    throw new Error("heights shot: the stage has no camera position");
+  }
+  const west = start < 2700;
+  const torchX = west ? 1370 : 4054;
+  for (let stepCount = 0; stepCount < 20; stepCount += 1) {
+    const x = await cameraX();
+    if (Math.abs(x - torchX) < 250) {
+      break;
+    }
+    await walk(page, x < torchX ? "KeyD" : "KeyA", 500);
+  }
+  await sleep(1000);
+  const x = await cameraX();
+  if (!(Math.abs(x - torchX) < 250)) {
+    throw new Error(`heights shot: the walk ended off the map, at x ${String(x)}`);
+  }
   step = "heights shot";
   await page.screenshot({ path: path.join(dir, "readme-heights.png") });
 }
