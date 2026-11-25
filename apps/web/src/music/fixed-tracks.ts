@@ -1,11 +1,11 @@
 /**
- * What Auto plays (#1993): one song for every menu, deeper menus louder,
- * and one song per map, the same every match. Results go by mood instead
+ * What Auto plays (#1993): one of three calm songs for every menu, deeper
+ * menus louder, and one song per map, the same every match. Results go by mood instead
  * (`map-moods.ts`).
  */
 
-/** Every menu screen's song. */
-export const MENU_TRACK = "first-light";
+/** The menus' songs: each visit to the menus plays one (#3996). */
+export const MENU_TRACKS: readonly string[] = ["first-light", "quiet-hearth", "still-water"];
 
 /** The splash screen's song (#2884): the game's own theme. */
 export const SPLASH_TRACK = "vibe-wars";

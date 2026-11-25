@@ -723,6 +723,7 @@ export function createTrainingPanel(): TrainingPanel {
         screen: "training",
         // Every editor the panel sits in is as deep as the Character Builder.
         menuDepth: MENU_DEPTH["character-builder"],
+        menuTrackId: music().menuTrack(),
         mode: () => music().mode(),
         tracks: TRACKS,
         onChange: (state, landOn) => {

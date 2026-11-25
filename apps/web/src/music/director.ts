@@ -1,6 +1,6 @@
 import { seedFromString } from "@vibewars/game-core";
 
-import { MENU_TRACK, SPLASH_TRACK, mapTrack } from "./fixed-tracks.js";
+import { MENU_TRACKS, SPLASH_TRACK, mapTrack } from "./fixed-tracks.js";
 import { moodsFor } from "./map-moods.js";
 import type { Mood } from "./mood.js";
 
@@ -46,6 +46,8 @@ export interface MusicInput {
   readonly screen: "splash" | "menu" | "training" | "match" | "result";
   /** Menu and training: how deep in the menus the player is (#1993). */
   readonly menuDepth: 0 | 1 | null;
+  /** Menu and training: the song this visit to the menus picked (#3996). */
+  readonly menuTrackId: string | null;
   /** Training and match only. */
   readonly mapId: string | null;
   /** The map id and the match's start; a rematch gets a new one. */
@@ -152,14 +154,28 @@ function pick(tracks: readonly TrackChoice[], seed: string): TrackChoice | undef
   return tracks.length === 0 ? undefined : tracks[seedFromString(seed) % tracks.length];
 }
 
-/** Auto's song: fixed on a menu and a map (#1993), by mood for a result. */
+/**
+ * A new visit to the menus' song (#3996): one of `menuTracks` (`MENU_TRACKS`),
+ * never `previous`, the last visit's, unless it is the only one.
+ */
+export function pickMenuTrack(
+  previous: string | null,
+  random: () => number,
+  menuTracks: readonly string[] = MENU_TRACKS,
+): string | null {
+  const others = menuTracks.filter((trackId) => trackId !== previous);
+  const from = others.length > 0 ? others : menuTracks;
+  return from[Math.floor(random() * from.length)] ?? null;
+}
+
+/** Auto's song: the visit's on a menu (#3996), fixed on a map (#1993), by mood for a result. */
 function autoTrack(input: MusicInput, seed: string, tracks: readonly TrackChoice[]): string | null {
   switch (input.screen) {
     case "splash":
       return SPLASH_TRACK;
     case "menu":
     case "training":
-      return MENU_TRACK;
+      return input.menuTrackId;
     case "match":
       return mapTrack(input.mapId ?? "");
     case "result":
