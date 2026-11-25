@@ -343,6 +343,49 @@ describe("previously uncovered branches", () => {
     expect(b.position).toEqual(vec2(200, 0));
   });
 
+  it("stays dead as many steps after a hit as after a condition tick (#4075)", () => {
+    /** Steps `b` stays dead, from the step it dies in to the one it rises in. */
+    const stepsDead = (sim: MatchSimulation): number => {
+      const b = participant(sim, "b");
+      let died: number | undefined;
+      for (let step = 1; step < Math.round(30 / DT); step += 1) {
+        sim.step(DT);
+        if (died === undefined && b.combatant.dead) {
+          died = step;
+        } else if (died !== undefined && !b.combatant.dead) {
+          return step - died;
+        }
+      }
+      throw new Error("b never died and rose again");
+    };
+    const hit = duel(MATCH);
+    participant(hit, "b").combatant.health = 1;
+    hit.setTarget("a", "b");
+    hit.requestSkill("a", 0);
+    const tick = duel(MATCH);
+    const b = participant(tick, "b");
+    b.combatant.statuses.apply("burning", 10, "a", NO_RANKS);
+    b.combatant.health = 0.2;
+
+    expect(stepsDead(hit)).toBe(Math.round(MATCH.respawnSeconds / DT));
+    expect(stepsDead(tick)).toBe(Math.round(MATCH.respawnSeconds / DT));
+  });
+
+  it("raises a body dead at 3 s on a 5 s wave at 5 s, not a step sooner (#4075)", () => {
+    const sim = duel({ ...MATCH, respawnSeconds: 5, respawnOnWave: true });
+    const b = participant(sim, "b");
+    stepFor(sim, 3 - DT);
+    b.combatant.statuses.apply("burning", 10, "a", NO_RANKS);
+    b.combatant.health = 0.2;
+    sim.step(DT);
+    expect(b.combatant.dead).toBe(true);
+    stepFor(sim, 2 - DT);
+    expect(b.combatant.dead).toBe(true);
+    sim.step(DT);
+    expect(b.combatant.dead).toBe(false);
+    expect(sim.elapsedSeconds).toBeCloseTo(5, 9);
+  });
+
   it("a degeneration death cancels the cast, credits the other team and schedules a respawn", () => {
     const sim = duel(MATCH);
     const a = participant(sim, "a");

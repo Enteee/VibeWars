@@ -290,7 +290,7 @@ function armedArena(played: TrainingScenario, seed: string, weapon: Weapon): Mat
 }
 
 describe("time-to-kill, headless (#111)", () => {
-  it("dies to the player's sword, and is back at full health 2 s later", () => {
+  it("dies to the player's sword, and is back at full health exactly 2 s later (#4075)", () => {
     const sim = armedArena(scenario("time-to-kill"), "ttk", WEAPONS.sword);
     expect(sim.requestAttack("player", "dummy")).toEqual({ ok: true });
     let diedAt: number | undefined;
@@ -299,14 +299,15 @@ describe("time-to-kill, headless (#111)", () => {
       sim.step(DT);
       const dummy = sim.get("dummy")?.combatant;
       if (diedAt === undefined && dummy?.dead === true) {
-        diedAt = i * DT;
+        diedAt = i;
       } else if (diedAt !== undefined && dummy?.dead === false) {
-        backAt = i * DT;
+        backAt = i;
         expect(dummy.health).toBe(RULES.combat.baseHealth);
       }
     }
     expect(diedAt).toBeDefined();
-    expect((backAt ?? Infinity) - (diedAt ?? 0)).toBeCloseTo(2, 1);
+    // Counted in steps, so no float sum creeps in.
+    expect((backAt ?? Infinity) - (diedAt ?? 0)).toBe(Math.round(2 / DT));
   });
 });
 

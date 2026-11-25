@@ -894,6 +894,13 @@ export interface Participant {
   interact: { readonly targetId: string; unreachableSeconds: number } | undefined;
   targetId: string | undefined;
   respawnInSeconds: number;
+  /**
+   * The tick of the step its last death fell in (#4075). That step does
+   * not count down `respawnInSeconds`, whether the death came before the
+   * countdown or after it, so every cause of death lasts as long. Read
+   * only while dead.
+   */
+  diedAtTick: number;
   /** The match second from which it may take a teleport again (#3030). */
   teleportReadyAt: number;
   /**
@@ -2211,6 +2218,7 @@ export class MatchSimulation {
       pendingSkill: undefined,
       targetId: undefined,
       respawnInSeconds: 0,
+      diedAtTick: 0,
       spec,
       behaviour: spec.behaviour,
       cursor: createCursor(),
@@ -4522,8 +4530,12 @@ export class MatchSimulation {
       recoverOvercast(record.combatant, this.#ruleset.resources.overcastRecoveryPerSecond, dt);
 
       if (record.combatant.dead) {
-        record.respawnInSeconds -= dt;
-        if (record.respawnInSeconds <= 0) {
+        // The step it died in does not count (#4075); a sum of steps that
+        // is the respawn time to within rounding is the respawn time.
+        if (record.diedAtTick !== this.#tick) {
+          record.respawnInSeconds -= dt;
+        }
+        if (record.respawnInSeconds <= SWING_EPSILON) {
           this.#reset(record, "respawn");
         }
         continue;
@@ -9867,6 +9879,7 @@ export class MatchSimulation {
       }
       const victim = this.#participants.get(event.targetId);
       if (victim !== undefined) {
+        victim.diedAtTick = this.#tick;
         victim.combatant.attack = undefined;
         victim.pendingSkill = undefined;
         victim.combatant.cast.cancelCast();
