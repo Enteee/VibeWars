@@ -12,7 +12,7 @@ import {
   targetRuleAllows,
   type ActivationRequest,
 } from "./activation.js";
-import { getSkill } from "./catalog.js";
+import { getSkill, SKILLS_BY_ID } from "./catalog.js";
 import { makeCombatant } from "./testing.js";
 import type { Skill } from "./types.js";
 
@@ -599,6 +599,53 @@ describe("hasAftercast (#317)", () => {
   it("never follows an attack skill, or an instant one like a shout", () => {
     expect(hasAftercast({ ...SPELL, type: "attack" })).toBe(false);
     expect(hasAftercast({ ...SPELL, type: "skill", activationSeconds: 0 })).toBe(false);
+  });
+});
+
+describe("hasAftercast, GW1's exceptions (#3998)", () => {
+  function skill(id: string): Skill {
+    const found = getSkill(id);
+    if (found === undefined) {
+      throw new Error(`no skill ${id}`);
+    }
+    return found;
+  }
+
+  /** Whether a shadow-step effect is anywhere in `value`, nested ones too. */
+  function shadowSteps(value: unknown): boolean {
+    if (Array.isArray(value)) {
+      return value.some(shadowSteps);
+    }
+    if (typeof value !== "object" || value === null) {
+      return false;
+    }
+    return "kind" in value && value.kind === "shadow-step"
+      ? true
+      : Object.values(value).some(shadowSteps);
+  }
+
+  it("a Core preparation and Verata's Gaze have none; a Factions preparation and Inspirational Speech do", () => {
+    expect(hasAftercast(skill("ranger.apply-poison"))).toBe(false);
+    expect(hasAftercast(skill("necromancer.veratas-gaze"))).toBe(false);
+    expect(hasAftercast(skill("ranger.seeking-arrows"))).toBe(true);
+    expect(hasAftercast(skill("paragon.inspirational-speech"))).toBe(true);
+  });
+
+  it("a shadow step that does not exclusively target a foe has none, but Ride the Lightning", () => {
+    const steps = [...SKILLS_BY_ID.values()].filter((s) => shadowSteps(s.effects));
+    expect(steps.length).toBeGreaterThan(0);
+    for (const step of steps) {
+      const expected =
+        step.id === "elementalist.ride-the-lightning" ||
+        (step.target === "single-enemy" && step.activationSeconds > 0);
+      expect(hasAftercast(step), step.id).toBe(expected);
+    }
+  });
+
+  it("every preparation decides its own, as GW1's campaign does", () => {
+    for (const prep of [...SKILLS_BY_ID.values()].filter((s) => s.type === "preparation")) {
+      expect(prep.aftercast, prep.id).toBeTypeOf("boolean");
+    }
   });
 });
 

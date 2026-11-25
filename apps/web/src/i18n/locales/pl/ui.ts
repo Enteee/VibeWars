@@ -437,6 +437,7 @@ export default {
   "cosmetics.item.trailStarlight": "Ślad blasku gwiazd",
   "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Zablokowane",
+  "cosmetics.previewing": "Podgląd: {name}",
   "cosmetics.none": "Brak",
   "cosmetics.note":
     "Tylko dla wyglądu: żaden kosmetyk nie zmienia rozgrywki. Zdobywa się je rankingowymi zwycięstwami w publicznej tabeli wyników i są wspólne dla wszystkich twoich postaci.",

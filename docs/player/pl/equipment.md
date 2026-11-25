@@ -15,6 +15,7 @@ Klasycznym). Zmiana czeka, aż skończy się rzucanie lub zamach, który właśn
 trwa; ruch lub Esc zmienia od razu. Nie ma czasu odnowienia. Twoje ataki,
 umiejętności wymagające określonej broni i maksymalna Energia zawsze zależą od
 zestawu w ręku.
+Staff ma 10 własnej Energii, a Focus 6 lub 12, gdy spełnisz jego wymaganie.
 
 Broń wymaga rangi 9 swojego atrybutu: poniżej zadaje jedną trzecią swoich obrażeń,
 a edytor informuje o tym na czerwono. ![Sword](../../../apps/web/public/icons/weapon/sword.svg) **Sword** to zawsze Swordsmanship, ale ![Staff](../../../apps/web/public/icons/weapon/staff.svg) **Staff**,

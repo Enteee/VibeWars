@@ -58,6 +58,8 @@ Text vedle řady (na telefonu pod ní) jmenuje vzorek, na který ukazuješ nebo 
 se získává. Zamčený vzorek je ztlumený, s malým zámkem. Tvá volba platí hned. Ostatní hráči ji uvidí
 od příští lobby, do které vstoupíš.
 
+Nad řádky má tvá postava na sobě tvůj vzhled a stojí, chodí a máchá zbraní, takže auru, stopu i stopu zbraně vidíš v pohybu. Podrž vzorek a vyzkoušíš si ho, i zamčený: řádek říká, co si prohlížíš, a dokud je zamčený, čím se získává. Pusť na získané položce a budeš ji nosit. Pusť na zamčené nebo sjeď ze vzorku a nic se nezmění. Na klávesnici podrž na vzorku mezerník.
+
 ## Kosmetika ostatních hráčů
 
 Ostatní hráči vidí tvou kosmetiku, jen když jejich kopie žebříčku ukazuje, že jsi ji získal.

@@ -19,6 +19,7 @@ export type {
 export {
   ANIMATED_DECOR_KINDS,
   DECOR_KINDS,
+  ELEVATION_STEP,
   MAX_ANIMATED_DECOR,
   MAX_DECOR,
   MapValidationError,

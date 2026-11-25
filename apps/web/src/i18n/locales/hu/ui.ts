@@ -406,6 +406,7 @@ export default {
   "cosmetics.item.trailStarlight": "Csillagfény nyom",
   "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Zárolva",
+  "cosmetics.previewing": "Előnézet: {name}",
   "cosmetics.none": "Nincs",
   "cosmetics.note":
     "Csak a külső miatt: egyik kozmetikum sem változtat a játékon. Rangsorolt győzelmekkel szerezhetők a nyilvános ranglistán, és minden karaktered osztozik rajtuk.",

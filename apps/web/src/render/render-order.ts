@@ -10,6 +10,8 @@
  * tunnel or a pit's near lip draws as a deck of the ground's layer.
  */
 
+import { ELEVATION_STEP } from "@vibewars/game-maps/schema";
+
 /** A body's parts on one character band, in the order they draw. */
 export type CharacterPart = "body" | "glyph" | "marks" | "bar";
 
@@ -305,9 +307,6 @@ export const CHARACTER_BANDS = 4;
 export function characterBand(layer: number, layerCount: number): number {
   return layerCount === 1 ? 1 : layer;
 }
-
-/** World units a layer lifts what stands on it: presentation only (ADR-0051). */
-export const ELEVATION_STEP = 56;
 
 /** How long a body takes to settle at a new layer's height, in seconds. */
 export const ELEVATION_EASE_SECONDS = 0.15;

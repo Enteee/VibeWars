@@ -15,6 +15,8 @@ Klasické). Výmena počká, kým sa dokončí zoslanie alebo švih, v ktorom pr
 pohyb alebo Esc vymení okamžite. Nie je tu žiadne čakanie. Tvoje útoky,
 schopnosti, ktoré vyžadujú určitú zbraň, a tvoja maximálna energia sa riadia
 sadou, ktorú držíš v ruke.
+Palica má 10 vlastnej energie a ohnisko 6, alebo 12, keď splníš jeho
+požiadavku.
 
 Zbraň vyžaduje hodnosť 9 vo svojom atribúte: pod ňou zasahuje za tretinu
 svojho poškodenia a editor to povie červenou. ![Meč](../../../apps/web/public/icons/weapon/sword.svg) **Meč** je vždy

@@ -405,6 +405,7 @@ export default {
   "cosmetics.item.trailStarlight": "Stjärnljusspår",
   "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Låst",
+  "cosmetics.previewing": "Förhandsvisning: {name}",
   "cosmetics.none": "Ingen",
   "cosmetics.note":
     "Bara för utseendet: ingen kosmetik ändrar hur något spelar. Tjänas in med rankade vinster på den offentliga topplistan och delas av alla dina karaktärer.",

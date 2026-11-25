@@ -4,7 +4,7 @@ import { ANIMATED_DECOR_KINDS, type DecorKind } from "@vibewars/game-maps/schema
 import type { DecorColours } from "./arena-palette.js";
 
 /**
- * Map decor (#4013, ADR-0059): braziers, crates, trees and fern tufts,
+ * Map decor (#4013, ADR-0060): braziers, crates, trees and fern tufts,
  * scenery nobody bumps into. Each is a few vector shapes with
  * a lit top, a shaded side and a contact shadow, the light from the
  * north-west (docs/art/visual-style.md). Phaser-free: the scene paints the
@@ -66,9 +66,9 @@ export const DECOR_SWAY = 2;
 const SHADOW = 0x000000;
 const SHADOW_ALPHA = 0.28;
 
-const TRUNK_HEIGHT = 34;
+const TRUNK_HEIGHT = 48;
 const TRUNK_WIDTH = 6;
-const CROWN_RADIUS = 24;
+const CROWN_RADIUS = 36;
 const CRATE_SIZE = 22;
 const CRATE_HEIGHT = 15;
 const FROND_LENGTH = 17;

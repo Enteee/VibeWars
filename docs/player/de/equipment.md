@@ -14,6 +14,7 @@ Im Match wechselst du die Sets mit **1 bis 4** (**F1 bis F4** bei den Klassisch-
 Ein Wechsel wartet, bis das Wirken oder der Schlag, in dem du gerade bist, fertig ist;
 Laufen oder Esc wechselt sofort. Es gibt keine Abklingzeit. Deine Angriffe, die Skills,
 die eine bestimmte Waffe brauchen, und deine maximale Energie folgen dem Set in der Hand.
+Ein Staff hat 10 eigene Energie, ein Focus 6, oder 12, sobald du seine Anforderung erfüllst.
 
 Eine Waffe braucht Rang 9 in ihrem Attribut: Darunter macht sie nur ein Drittel ihres
 Schadens, und der Editor sagt das in Rot. Ein ![Sword](../../../apps/web/public/icons/weapon/sword.svg) **Sword** ist immer Swordsmanship, aber ein

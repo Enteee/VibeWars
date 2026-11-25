@@ -1,5 +1,4 @@
 import { AREA_ADJACENT } from "../../distances.js";
-import { gw1EnergyScaled } from "../../ruleset.js";
 import type { StatusDefinition } from "../status.js";
 import { KNOCKDOWN_SECONDS } from "../types.js";
 import { define } from "./define.js";
@@ -223,15 +222,21 @@ export const WARRIOR_STATUSES: Readonly<Record<WarriorStatusId, StatusDefinition
   }),
   // "For 5...35 seconds, you gain 3 Energy each time you hit with a melee
   // attack. Warrior's Endurance cannot raise your Energy above 10...25"
-  // (PvP, #1359): 22, its rank-12 value, scaled to the pool (#1395): 55 of
-  // 50, as 22 sat against GW1's 20. A bow or a thrown spear gains none.
+  // (PvP, #1359), on GW1's own pool (#3986). A bow or a thrown spear gains
+  // none.
   "warriors-endurance": define("warriors-endurance", "Warrior's Endurance", "stance", {
     profession: "warrior",
     triggers: [
       {
         on: "bearer-hits",
         weapon: "melee",
-        effects: [{ kind: "energy-gain", amount: { flat: 3 }, upTo: gw1EnergyScaled(22) }],
+        effects: [
+          {
+            kind: "energy-gain",
+            amount: { flat: 3 },
+            upTo: { scaling: { attributeId: "warrior.strength", atZero: 10, atTwelve: 22 } },
+          },
+        ],
         target: "bearer",
         skillId: "warrior.warriors-endurance",
       },

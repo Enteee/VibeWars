@@ -18,6 +18,8 @@ hogy befejeződjön a varázslás vagy suhintás, amelyben éppen vagy; a
 mozgás vagy az Esc azonnal vált. Nincs várakozási idő. A támadásaid, a
 bizonyos fegyvert igénylő készségek és a maximális Energiád mind a
 kézben lévő készletet követik.
+A varázsbotban 10 saját Energia van, a fókuszban 6, vagy 12, ha
+teljesíted a követelményét.
 
 Egy fegyverhez 9-es szint kell a tulajdonságában: ez alatt a
 sebzésének csak harmadával talál, és a szerkesztő ezt pirossal jelzi.

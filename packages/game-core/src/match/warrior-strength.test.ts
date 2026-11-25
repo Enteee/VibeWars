@@ -264,7 +264,7 @@ describe("Warrior's Endurance (#1359)", () => {
    * `w` takes up Warrior's Endurance at `energy` of `maxEnergy`, then
    * swings at `t` until it has hit `hits` times.
    */
-  function hitsFrom(weapon: Wielded, energy: number, hits: number, maxEnergy = 50): number {
+  function hitsFrom(weapon: Wielded, energy: number, hits: number, maxEnergy = 30): number {
     const sim = arena(`endurance-${weapon}`, weapon);
     const w = combatant(sim, "w");
     use(sim, WARRIORS_ENDURANCE);
@@ -283,16 +283,16 @@ describe("Warrior's Endurance (#1359)", () => {
     return w.energy;
   }
 
-  it("a sword hit from 40 of 50 Energy gives the full 3 (#1395)", () => {
-    expect(hitsFrom("sword", 40, 1)).toBe(43);
+  it("a sword hit from 15 Energy gives the full 3", () => {
+    expect(hitsFrom("sword", 15, 1)).toBe(18);
   });
 
-  it("with energy runes, a hit from 54 takes it to 55, not 57", () => {
-    expect(hitsFrom("sword", 54, 1, 60)).toBe(55);
+  it("at Strength 12 the cap is 22: a hit from 21 gives 1, not 3 (#3986)", () => {
+    expect(hitsFrom("sword", 21, 1)).toBe(22);
   });
 
-  it("with energy runes, a hit above 55 gives nothing", () => {
-    expect(hitsFrom("sword", 58, 1, 60)).toBe(58);
+  it("a hit above the cap of 22 gives nothing", () => {
+    expect(hitsFrom("sword", 25, 1)).toBe(25);
   });
 
   it("a bow hit gains nothing", () => {

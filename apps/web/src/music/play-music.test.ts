@@ -27,7 +27,19 @@ const tracks = [
     layers: 4,
     key: "E phrygian",
   },
+  {
+    id: "quiet-hearth",
+    title: "Quiet Hearth",
+    source: "c",
+    phraseCycles: 8,
+    moods: ["atmospheric" as const],
+    layers: 2,
+    key: "G major",
+  },
 ];
+
+/** A new menu visit picks the first menu song it may (#3996). */
+const FIRST = (): number => 0;
 
 /** No track is edited. */
 const NO_EDITS = { get: () => undefined, remove: () => undefined };
@@ -112,6 +124,7 @@ describe("the splash theme (#2936)", () => {
       () => 0,
       createIntensityOverride(),
       NO_EDITS,
+      FIRST,
     );
 
   it("loads it for the time asked, and says once when it is heard", () => {
@@ -147,6 +160,7 @@ describe("createMusicFollower", () => {
       () => 0,
       createIntensityOverride(),
       NO_EDITS,
+      FIRST,
     );
     music.setMuted(false);
     expect(calls).toEqual([
@@ -164,6 +178,7 @@ describe("createMusicFollower", () => {
       () => 0,
       createIntensityOverride(),
       NO_EDITS,
+      FIRST,
     );
     calls.length = 0;
     music.follow(state("clash-of-standards", 0), "phrase");
@@ -187,12 +202,13 @@ describe("createMusicFollower", () => {
       () => 0,
       createIntensityOverride(),
       NO_EDITS,
+      FIRST,
     );
     music.menu("main");
     expect(calls.at(-1)).toEqual(["crossfadeTo", [tracks[0], "phrase"]]);
   });
 
-  it("lands a match's first track on the next cycle, a menu's on the phrase (#2530)", () => {
+  it("lands a match's first track on the next cycle, a menu's on the phrase (#2530), a new visit's another (#3996)", () => {
     const { player, calls } = recording();
     const music = createMusicFollower(
       player,
@@ -201,6 +217,7 @@ describe("createMusicFollower", () => {
       () => 0,
       createIntensityOverride(),
       NO_EDITS,
+      FIRST,
     );
     music.menu("main");
     music.follow(state("clash-of-standards", 0), "cycle");
@@ -208,7 +225,35 @@ describe("createMusicFollower", () => {
     expect(calls.filter(([call]) => call === "crossfadeTo")).toEqual([
       ["crossfadeTo", [tracks[0], "phrase"]],
       ["crossfadeTo", [tracks[1], "cycle"]],
-      ["crossfadeTo", [tracks[0], "phrase"]],
+      ["crossfadeTo", [tracks[2], "phrase"]],
+    ]);
+  });
+
+  it("keeps a visit's menu song through the Training Ground, and picks again after the splash or a result (#3996)", () => {
+    const { player, calls } = recording();
+    const music = createMusicFollower(
+      player,
+      tracks,
+      saved(false),
+      () => 0,
+      createIntensityOverride(),
+      NO_EDITS,
+      FIRST,
+    );
+    music.splash(null, () => undefined);
+    music.menu("main");
+    expect(music.menuTrack()).toBe("first-light");
+    music.menu("character-builder");
+    // The builder's Training Ground is a menu context (#2020).
+    music.follow({ ...state("first-light", 1), context: "menu" }, "phrase");
+    music.menu("character-builder");
+    expect(music.menuTrack()).toBe("first-light");
+    music.follow({ ...state(null, 0), context: "result-victory" }, "phrase");
+    music.menu("main");
+    expect(music.menuTrack()).toBe("quiet-hearth");
+    expect(calls.filter(([call]) => call === "crossfadeTo").at(-1)).toEqual([
+      "crossfadeTo",
+      [tracks[2], "phrase"],
     ]);
   });
 
@@ -221,6 +266,7 @@ describe("createMusicFollower", () => {
       () => 0,
       createIntensityOverride(),
       NO_EDITS,
+      FIRST,
     );
     music.menu("main");
     music.menu("character-builder");
@@ -241,6 +287,7 @@ describe("createMusicFollower", () => {
       () => 0,
       createIntensityOverride(),
       NO_EDITS,
+      FIRST,
     );
     music.setPreference({ ...preference, musicMuted: true });
     music.setMuted(true);
@@ -265,6 +312,7 @@ describe("createMusicFollower", () => {
       () => 0,
       createIntensityOverride(),
       NO_EDITS,
+      FIRST,
     );
     music.menu("main");
     calls.length = 0;
@@ -291,6 +339,7 @@ describe("createMusicFollower", () => {
       () => 0,
       createIntensityOverride(),
       NO_EDITS,
+      FIRST,
     );
     music.menu("main");
     music.follow(state("clash-of-standards", 1), "phrase");
@@ -308,6 +357,7 @@ describe("createMusicFollower", () => {
       () => 0,
       createIntensityOverride(),
       NO_EDITS,
+      FIRST,
     );
     music.menu("main");
     calls.length = 0;
@@ -377,6 +427,7 @@ describe("createMusicFollower", () => {
       () => 0,
       createIntensityOverride(),
       NO_EDITS,
+      FIRST,
     );
     music.follow(state("first-light", 0), "phrase");
     calls.length = 0;
@@ -398,6 +449,7 @@ describe("createMusicFollower", () => {
       () => 0,
       createIntensityOverride(),
       NO_EDITS,
+      FIRST,
     );
     let changes = 0;
     const off = music.onChange(() => {
@@ -579,6 +631,7 @@ describe("createMusicFollower", () => {
       () => 0,
       createIntensityOverride(),
       NO_EDITS,
+      FIRST,
     );
     music.follow(state("first-light", 0), "phrase");
     // The arena's track is wanted, still crossfading in: its key, not the menu's.
@@ -599,6 +652,7 @@ describe("createMusicFollower", () => {
       () => 0,
       createIntensityOverride(),
       NO_EDITS,
+      FIRST,
     );
     music.follow(state("first-light", 0), "phrase");
     music.preview("clash-of-standards");
@@ -622,6 +676,7 @@ describe("createMusicFollower", () => {
       () => 0,
       createIntensityOverride(),
       NO_EDITS,
+      FIRST,
     );
     music.follow(state(null, 0), "phrase");
     music.sting("first-blood");

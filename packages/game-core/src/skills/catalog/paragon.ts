@@ -3277,6 +3277,8 @@ export const PARAGON_SKILLS: readonly Skill[] = [
     losesAllAdrenaline: true,
     overcast: 0,
     activationSeconds: 0,
+    // GW1 Aftercast delay: one of the skills without an activation time that has it.
+    aftercast: true,
     rechargeSeconds: 10,
     range: RANGE_SPELL,
     target: "single-other-ally",
@@ -3353,6 +3355,8 @@ export const PARAGON_SKILLS: readonly Skill[] = [
     cost: { kind: "energy", amount: 5 },
     overcast: 0,
     activationSeconds: 0,
+    // GW1 Aftercast delay: one of the skills without an activation time that has it.
+    aftercast: true,
     rechargeSeconds: 20,
     range: RANGE_SPELL,
     target: "self",

@@ -2,7 +2,9 @@
 
 ## 체력과 에너지
 
-**체력** 500, **에너지** 50으로 시작해요. 룬과 사기가 둘 다 바꿔요. 스킬은
+**체력** 500, **에너지** 20으로 시작하고, 방어구가 에너지를 더해 줘요. Warrior는
+0, Ranger, Assassin, Dervish는 5, 나머지는 모두 10이에요. Staff는 들고 있는 동안
+10을 더 줘요. 룬과 사기가 둘 다 바꿔요. 스킬은
 에너지를 소모하고, 에너지는 저절로 천천히 차올라요. ![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior**와 ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon**이 가장
 느리게, ![Ranger](../../../apps/web/public/icons/profession/ranger.svg) **Ranger**가 조금 더 빠르게, 나머지는 모두 가장 빠르게 회복해요.
 

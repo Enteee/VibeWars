@@ -3,7 +3,7 @@ import {
   MatchSimulation,
   type Vec2,
 } from "@vibewars/game-core";
-import type { MapData } from "@vibewars/game-maps/schema";
+import { ELEVATION_STEP, type MapData } from "@vibewars/game-maps/schema";
 import { mapSimulationFields } from "@vibewars/game-maps/match-fields";
 import { describe, expect, it, vi } from "vitest";
 
@@ -16,7 +16,7 @@ import {
 import { standingDraw, type Occluder } from "./layer-surfaces.js";
 import { OVERHANG_FADED_ALPHA, type OverhangBody, type OverhangCover } from "./overhang-art.js";
 import { recordingGraphics, type RecordingGraphics } from "./recording-graphics.js";
-import { characterBand, ELEVATION_STEP, renderOrder, type RenderItem } from "./render-order.js";
+import { characterBand, renderOrder, type RenderItem } from "./render-order.js";
 import { coversOutline, hiddenSpots, type GateBody, type PaintedFill } from "./visibility-gate.js";
 
 // Phaser probes for a browser when it loads: the scene needs a base class,

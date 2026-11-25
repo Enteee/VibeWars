@@ -58,6 +58,13 @@ const polygonWallSchema = z.object({
 /** An area: a wall's outline, a deck's footprint or a transition's area (ADR-0051). */
 const shapeSchema = z.discriminatedUnion("kind", [rectWallSchema, polygonWallSchema]);
 
+/**
+ * World units a layer lifts what stands on it (ADR-0051): presentation,
+ * but a pit's floor draws one step below its footprint, so its art has
+ * to fit inside the map (#3997).
+ */
+export const ELEVATION_STEP = 56;
+
 /** A discrete layer (ADR-0051): the map's `groundLayer` is the ground; its `layers` bounds it. */
 const layerSchema = z.number().int().nonnegative();
 
@@ -453,7 +460,7 @@ const pavingSchema = z.object({
   area: waterSchema.shape.area,
 });
 
-/** What a decor prop is drawn as (#4013): scenery, never cover (ADR-0059). */
+/** What a decor prop is drawn as (#4013): scenery, never cover (ADR-0060). */
 export const DECOR_KINDS = ["brazier", "crates", "tree", "fern"] as const;
 
 /** A decor kind (#4013). */
@@ -1690,6 +1697,14 @@ export const mapDataSchema = z
     };
     map.pits.forEach((pit, index) => {
       belowGround("pits", pit, index);
+      // The floor and its lip draw one step south of the footprint (#3997).
+      if (pit.footprint.y + pit.footprint.height + ELEVATION_STEP > map.height) {
+        context.addIssue({
+          code: "custom",
+          path: ["pits", index, "footprint"],
+          message: `${map.id}: pit ${pit.id} ends less than ${String(ELEVATION_STEP)} above the south edge, so its floor draws past the map`,
+        });
+      }
     });
     map.tunnels.forEach((tunnel, index) => {
       belowGround("tunnels", tunnel, index);

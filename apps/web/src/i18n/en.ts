@@ -406,6 +406,7 @@ export const en = {
   "cosmetics.item.trailStarlight": "Starlight trail",
   "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Locked",
+  "cosmetics.previewing": "Previewing: {name}",
   "cosmetics.none": "None",
   "cosmetics.note":
     "Purely for looks: no cosmetic changes how anything plays. Earned with ranked wins on the public leaderboard, shared by all your characters.",

@@ -4176,8 +4176,10 @@ function perCountNoun(say: Say, count: CountRule): string {
 }
 
 /** Warrior's Endurance's cap (#1359): ", never above 55". */
-function upToText(say: Say, effect: EnergyGainEffect): string {
-  return effect.upTo === undefined ? "" : say.words.neverAbove({ upTo: String(effect.upTo) });
+function upToText(say: Say, effect: EnergyGainEffect, ranks: ReadonlyMap<string, number>): string {
+  return effect.upTo === undefined
+    ? ""
+    : say.words.neverAbove({ upTo: shown(describeMagnitude(effect.upTo, ranks)) });
 }
 
 /**
@@ -4319,7 +4321,7 @@ function describeEffect(
       });
       return {
         // A target's gain counts too (#2472).
-        text: `${withPerText(say, text, effect.amount, effect.per, ranks, effect.toTarget === true ? { alone: gains, unit: say.words.energy6(), onTarget: say.words.onThem() } : { alone: say.words.gain2(), unit: say.words.energy6(), onTarget: say.words.onTargetFoe() })}${upToText(say, effect)}`,
+        text: `${withPerText(say, text, effect.amount, effect.per, ranks, effect.toTarget === true ? { alone: gains, unit: say.words.energy6(), onTarget: say.words.onThem() } : { alone: say.words.gain2(), unit: say.words.energy6(), onTarget: say.words.onTargetFoe() })}${upToText(say, effect, ranks)}`,
         magnitude,
       };
     }

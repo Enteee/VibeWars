@@ -437,6 +437,7 @@ export default {
   "cosmetics.item.trailStarlight": "Зоряний слід",
   "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Закрито",
+  "cosmetics.previewing": "Попередній перегляд: {name}",
   "cosmetics.none": "Немає",
   "cosmetics.note":
     "Лише для вигляду: жодна косметика не впливає на гру. Заробляється рейтинговими перемогами в публічній таблиці лідерів і спільна для всіх твоїх персонажів.",

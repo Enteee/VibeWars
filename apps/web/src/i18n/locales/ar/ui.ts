@@ -455,6 +455,7 @@ export default {
   "cosmetics.item.trailStarlight": "أثر ضوء النجوم",
   "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "مقفل",
+  "cosmetics.previewing": "معاينة: {name}",
   "cosmetics.none": "لا شيء",
   "cosmetics.note":
     "للمظهر فقط: لا تغيّر أي زينة طريقة اللعب. تُكتسب بالانتصارات المصنّفة في لوحة المتصدرين العامة، وتشترك فيها كل شخصياتك.",

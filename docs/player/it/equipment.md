@@ -6,7 +6,7 @@ La parte **Equipaggiamento** dell'editor delle build contiene armi e armatura. T
 
 Porti fino a **quattro set di armi**, ognuno con un'arma e, se l'arma lascia libera una mano, una mano secondaria come uno ![Shield](../../../apps/web/public/icons/offhand/shield.svg) **Shield** o un ![Focus](../../../apps/web/public/icons/offhand/focus.svg) **Focus**. Il set 1 è quello con cui inizi; gli altri possono restare vuoti.
 
-In partita cambi set con **da 1 a 4** (**da F1 a F4** con i tasti Classico). Un cambio aspetta la fine del lancio o del colpo in corso; muoverti o premere Esc cambia subito. Non c'è tempo di attesa. I tuoi attacchi, le abilità che richiedono una certa arma e la tua Energia massima seguono il set in mano.
+In partita cambi set con **da 1 a 4** (**da F1 a F4** con i tasti Classico). Un cambio aspetta la fine del lancio o del colpo in corso; muoverti o premere Esc cambia subito. Non c'è tempo di attesa. I tuoi attacchi, le abilità che richiedono una certa arma e la tua Energia massima seguono il set in mano. Uno Staff ha 10 di Energia propria, e un Focus 6, o 12 quando ne soddisfi il requisito.
 
 Un'arma richiede il grado 9 nel suo attributo: sotto, fa un terzo dei danni, e l'editor lo dice in rosso. Una ![Sword](../../../apps/web/public/icons/weapon/sword.svg) **Sword** è sempre Swordsmanship, ma ![Staff](../../../apps/web/public/icons/weapon/staff.svg) **Staff**, ![Wand](../../../apps/web/public/icons/weapon/wand.svg) **Wand**, Shield o Focus sono fatti per un attributo a tua scelta: clicca sulla sua mano nella figura (**6** per l'arma, **7** per la mano secondaria) e scegline uno.
 

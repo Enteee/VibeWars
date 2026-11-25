@@ -374,6 +374,7 @@ export default {
   "cosmetics.item.trailStarlight": "รอยแสงดาว",
   "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "ล็อกอยู่",
+  "cosmetics.previewing": "กำลังดูตัวอย่าง: {name}",
   "cosmetics.none": "ไม่มี",
   "cosmetics.note":
     "เพื่อความสวยงามเท่านั้น: ไอเทมตกแต่งไม่เปลี่ยนการเล่นใด ๆ ได้มาจากการชนะแมตช์จัดอันดับบนกระดานผู้นำสาธารณะ และใช้ร่วมกันทุกตัวละครของคุณ",

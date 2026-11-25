@@ -14,6 +14,8 @@ Dalam laga, ganti set dengan **1 sampai 4** (**F1 sampai F4** di tombol Klasik).
 Pergantian menunggu rapalan atau ayunan yang sedang berjalan selesai; bergerak atau Esc
 langsung mengganti. Tidak ada cooldown. Seranganmu, skill yang butuh
 senjata tertentu, dan Energi maksimummu semuanya mengikuti set yang sedang dipegang.
+Staff menyimpan 10 Energi sendiri, dan focus 6, atau 12 setelah kamu memenuhi
+syaratnya.
 
 Sebuah senjata butuh peringkat 9 di atributnya: di bawah itu, pukulannya hanya sepertiga
 damage-nya, dan editor menyatakannya dengan warna merah. ![Pedang](../../../apps/web/public/icons/weapon/sword.svg) **Pedang** selalu
