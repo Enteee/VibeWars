@@ -123,7 +123,7 @@ export function domeLayer(radius: number, index: number, out: DomeLayer): DomeLa
   out.x = -DOME_LEAN * lift;
   out.y = -lift;
   out.radius = radius * Math.sqrt(1 - t * t);
-  out.alpha = 0.05 + 0.04 * t;
+  out.alpha = 0.035 + 0.03 * t;
   return out;
 }
 
