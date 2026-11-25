@@ -15,6 +15,8 @@ export const VIGNETTE = { alpha: 0.6, clear: 1 / 3 } as const;
 const TEXTURE = "vignette";
 /** The texture's side in pixels: the ramp is smooth, so stretched it shows no steps. */
 const TEXTURE_SIZE = 128;
+/** Enough stops that the smooth ramp shows no bands. */
+const GRADIENT_STOPS = 24;
 
 /**
  * How dark the vignette is at `(x, y)` of a view `width` by `height`: 0 in
@@ -24,7 +26,11 @@ const TEXTURE_SIZE = 128;
 export function vignetteAlpha(x: number, y: number, width: number, height: number): number {
   const across = (2 * x) / width - 1;
   const down = (2 * y) / height - 1;
-  const out = Math.hypot(across, down) / Math.SQRT2;
+  return alphaOut(Math.hypot(across, down) / Math.SQRT2);
+}
+
+/** How dark the vignette is `out` of the way from the centre to a corner, 0 to 1. */
+function alphaOut(out: number): number {
   const ramp = Math.min(1, Math.max(0, (out - VIGNETTE.clear) / (1 - VIGNETTE.clear)));
   return VIGNETTE.alpha * ramp * ramp * (3 - 2 * ramp);
 }
@@ -65,14 +71,21 @@ function paintTexture(textures: Phaser.Textures.TextureManager): void {
   if (canvas === null) {
     throw new Error("vignette: could not create its texture");
   }
-  const pixels = canvas.context.createImageData(TEXTURE_SIZE, TEXTURE_SIZE);
-  for (let y = 0; y < TEXTURE_SIZE; y += 1) {
-    for (let x = 0; x < TEXTURE_SIZE; x += 1) {
-      const alpha = vignetteAlpha(x + 0.5, y + 0.5, TEXTURE_SIZE, TEXTURE_SIZE);
-      // The colour is black: only the alpha channel is written.
-      pixels.data[(y * TEXTURE_SIZE + x) * 4 + 3] = Math.round(alpha * 0xff);
-    }
+  // A circle to the corners of a square: stretched over the view, the ramp `vignetteAlpha` draws.
+  const middle = TEXTURE_SIZE / 2;
+  const gradient = canvas.context.createRadialGradient(
+    middle,
+    middle,
+    0,
+    middle,
+    middle,
+    middle * Math.SQRT2,
+  );
+  for (let stop = 0; stop <= GRADIENT_STOPS; stop += 1) {
+    const out = stop / GRADIENT_STOPS;
+    gradient.addColorStop(out, `rgba(0,0,0,${String(alphaOut(out))})`);
   }
-  canvas.context.putImageData(pixels, 0, 0);
+  canvas.context.fillStyle = gradient;
+  canvas.context.fillRect(0, 0, TEXTURE_SIZE, TEXTURE_SIZE);
   canvas.refresh();
 }

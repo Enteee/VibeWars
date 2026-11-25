@@ -30,6 +30,8 @@ import {
   stageShadows,
   sunShadowTint,
   TUNNEL_GLOW_CAP,
+  FIRE_GLOW,
+  glowOf,
   tunnelGlow,
   tunnelLightCover,
   type LightMapBox,
@@ -805,6 +807,26 @@ describe("LightingPass", () => {
       expect(faded.length).toBeLessThan(images.length);
       expect(before.every((alpha) => alpha === 1)).toBe(true);
       expect(faded.some(({ key }) => key.endsWith("-glow"))).toBe(false);
+    });
+  });
+
+  describe("fires (#4057)", () => {
+    const BRAZIER = { ...light("brazier-west", 0, 0), colour: 0xffbe6e, intensity: 0.8 };
+    const COLD = { ...light("cold-north", 0, 0), colour: 0x9fc4ff };
+
+    it("add a warm pool at the mock's warmth; other lights none", () => {
+      expect(glowOf(BRAZIER, false)).toBeCloseTo(0.8 * FIRE_GLOW, 9);
+      expect(glowOf(COLD, false)).toBe(0);
+      expect(glowOf(COLD, true)).toBe(tunnelGlow(COLD.intensity));
+    });
+
+    it("add their pools adding over a map with no tunnels", () => {
+      const { scene, images } = fakeScene();
+      const lit = { ...BASE, lights: [BRAZIER, COLD] };
+      new LightingPass(scene).show(lit, { ...STRUCTURE, layerCount: 2 }, [], 400, 400, false);
+      const glows = images.filter(({ key }) => key.endsWith("-glow"));
+      expect(glows.length).toBeGreaterThan(0);
+      expect(glows.every(({ blendMode }) => blendMode === ADD)).toBe(true);
     });
   });
 });

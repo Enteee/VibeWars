@@ -196,9 +196,9 @@ export function multiplyColour(colour: number, tint: number): number {
 /** The warm hue of a fire's pool on the gothic floor (#4057), the mock's `0xffbe6e`. */
 export const FIRE_LIGHT_COLOUR = 0xffbe6e;
 /** How much brighter a fire burns than its map says (#4057): a pool reads on the darker floor of #4056. */
-export const FIRE_LIGHT_GAIN = 1.3;
+export const FIRE_LIGHT_GAIN = 1.4;
 /** How much further a fire's pool reaches than its map says (#4057). */
-export const FIRE_LIGHT_REACH = 1.15;
+export const FIRE_LIGHT_REACH = 1.5;
 
 const FIRE_PREFIXES = ["torch-", "fire-", "brazier-"];
 

@@ -19,6 +19,7 @@ import {
 import {
   SURFACE_LIGHT_FLOOR,
   flickerAt,
+  isFireLight,
   lightAt,
   multiplyColour,
   tintOf,
@@ -68,6 +69,24 @@ export function tunnelGlow(intensity: number): number {
 /** Whether `layer` is the tunnels' (#3350): its lights add a warm pool too. */
 export function glowsOn(structure: MapStructure, layer: number): boolean {
   return structure.tunnels.length > 0 && layer === structure.ground - 1;
+}
+
+/**
+ * A fire adds a warm pool over the lit floor on any layer (#4057), this much
+ * of its intensity at the heart: the gothic mock's 0.35 warmth, so a pool
+ * reads on the dark floor where multiplying alone could only darken it.
+ */
+export const FIRE_GLOW = 0.35;
+
+/**
+ * What `light` adds at the heart of its warm pool, 0 to 1: every light on
+ * the tunnels' layer (#3350), a fire on any other (#4057), nothing else.
+ */
+export function glowOf(light: LightsOf, onTunnels: boolean): number {
+  if (onTunnels) {
+    return tunnelGlow(light.intensity);
+  }
+  return isFireLight(light) ? Math.max(light.intensity, 0) * FIRE_GLOW : 0;
 }
 
 /** What the budget still allows, best first. */
@@ -907,15 +926,19 @@ export class LightingPass {
       painter.destroy();
     }
 
-    const glowKey = glowsOn(structure, layer)
-      ? this.buildGlow(
-          `lighting-${String(nextLightingId)}-glow`,
-          extent,
-          [...steady, ...flickering],
-          shadowed,
-          outsideKey,
-        )
-      : undefined;
+    const onTunnels = glowsOn(structure, layer);
+    const glowing = [...steady, ...flickering].filter((light) => glowOf(light, onTunnels) > 0);
+    const glowKey =
+      glowing.length > 0
+        ? this.buildGlow(
+            `lighting-${String(nextLightingId)}-glow`,
+            extent,
+            glowing,
+            onTunnels,
+            shadowed,
+            outsideKey,
+          )
+        : undefined;
 
     const lift = elevationOf(layer, structure.ground);
     const shownImages: { image: Phaser.GameObjects.Image; box: LightMapBox }[] = [];
@@ -1062,25 +1085,25 @@ export class LightingPass {
   }
 
   /**
-   * The warm pools `lights` add on the tunnels' layer (#3350): black but
-   * for each light at `tunnelGlow` of its intensity, drawn adding over
-   * the lit floor, so a torch lifts it past its unlit tone. Steady:
-   * a pool does not flicker.
+   * The warm pools `lights` add (#3350, #4057): black but for each light
+   * at `glowOf` it, drawn adding over the lit floor, so a torch lifts it
+   * past its unlit tone. Steady: a pool does not flicker.
    */
   private buildGlow(
     key: string,
     extent: LightMapBox,
     lights: readonly LightsOf[],
+    onTunnels: boolean,
     shadowed: ReadonlyMap<string, string>,
     outsideKey: string | undefined,
   ): string {
     const glow = this.scene.textures.addDynamicTexture(key, extent.width, extent.height);
     if (glow === null) {
-      throw new Error("lighting: could not create a tunnel's glow");
+      throw new Error("lighting: could not create a warm glow");
     }
     glow.fill(0x000000, 1);
     for (const light of lights) {
-      this.stampLight(glow, extent, light, tunnelGlow(light.intensity), shadowed.get(light.id));
+      this.stampLight(glow, extent, light, glowOf(light, onTunnels), shadowed.get(light.id));
     }
     if (outsideKey !== undefined) {
       glow.erase(outsideKey, glow.width / 2, glow.height / 2);

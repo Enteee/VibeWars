@@ -170,7 +170,9 @@ scenery, with no collision.
 
 In the gothic look (#4057) every fire burns the same warm `#ffbe6e`,
 `FIRE_LIGHT_GAIN` brighter and `FIRE_LIGHT_REACH` wider than its map says,
-so a pool reads on the dark floor (`warmFireLights`, `lighting-model.ts`).
+so a pool reads on the dark floor (`warmFireLights`, `lighting-model.ts`),
+and adds a warm pool over the lit floor at `FIRE_GLOW` 0.35 of its
+intensity, as a tunnel's lights do (`glowOf`, `lighting-pass.ts`).
 A fire is a `torch-`, `fire-` or `brazier-` light that is red at heart: a
 teal brazier burns magic and keeps its colour. A fire's colour in the map is
 not shown; its intensity and radius still set the pool.
