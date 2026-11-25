@@ -31,8 +31,9 @@ export type GameToHost =
    */
   | ({ readonly type: "load"; readonly startAtEpochMs: number | null } & HostTrack)
   /**
-   * Switch to this track on the playing one's next phrase boundary, or on
-   * its next cycle, fading over `cycles`.
+   * Switch to this track (ADR-0058): the playing one fades out over
+   * `cycles` to a bar, the phrase's if it is close and `landOn` allows,
+   * and this one starts there, fading in over `cycles`.
    */
   | ({
       readonly type: "crossfadeTo";

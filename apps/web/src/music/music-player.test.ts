@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { t } from "../i18n/index.js";
 import type { GameToHost, HostToGame } from "./host-protocol.js";
 import {
-  CROSSFADE_CYCLES,
+  SWITCH_FADE_CYCLES,
   HOST_MESSAGES_PER_SECOND,
   HEARTBEAT_MS,
   HEARTBEAT_TIMEOUT_MS,
@@ -111,7 +111,7 @@ describe("createMusicPlayer", () => {
       { type: "setIntensity", level: 2 },
       {
         type: "crossfadeTo",
-        cycles: CROSSFADE_CYCLES,
+        cycles: SWITCH_FADE_CYCLES,
         landOn: "cycle",
         trackId: "ashen-fields",
         source: track.source,

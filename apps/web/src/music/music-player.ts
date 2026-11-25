@@ -109,8 +109,8 @@ export interface MusicPlayerDeps {
   readonly audioStress: number | null;
 }
 
-/** A track switch fades over this many cycles (#366 §3.1). */
-export const CROSSFADE_CYCLES = 2;
+/** A track switch fades the old track out over this many cycles, then the new one in (ADR-0058). */
+export const SWITCH_FADE_CYCLES = 1;
 /** How often the watchdog pings the host. */
 export const HEARTBEAT_MS = 1_000;
 /** A ping unanswered for this long means the host is hung, by a pattern or anything else. */
@@ -350,7 +350,7 @@ export function createMusicPlayer(deps: MusicPlayerDeps): MusicPlayer {
     crossfadeTo(track, landOn) {
       // A fresh host has nothing to fade from; it plays the track at once.
       trackFailed = false;
-      send({ type: "crossfadeTo", cycles: CROSSFADE_CYCLES, landOn, ...trackMessage(track) });
+      send({ type: "crossfadeTo", cycles: SWITCH_FADE_CYCLES, landOn, ...trackMessage(track) });
     },
     setIntensity(level) {
       intensity = level;

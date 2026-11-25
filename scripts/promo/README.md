@@ -25,8 +25,13 @@ workspace packages built (`pnpm -r --filter "./packages/**" run build`).
 - **Music.** Playwright records no sound. An init script, in every frame
   including the sandboxed music host, tees the music bus into a
   `MediaRecorder`; the take is one continuous recording of the fight scene
-  (`music.webm`), no game code involved. `assemble` finds its beat from
-  the onsets and starts it so a beat lands on the interrupt's frame.
+  (`music.webm`), no game code involved. A second init script notes each
+  track the host reports playing, and the fight's `musicSettled` mark is
+  where the last switch (menu to match) has faded in. `assemble` uses the
+  take only from there: one song under the whole cut, which changes only
+  through the fades at its ends (ADR-0058). It finds the beat from the
+  onsets after that mark and starts the music so a beat lands on the
+  interrupt's frame.
 - **Captions** are `captions.json`, English only, drawn by ffmpeg in the
   system's bold sans. They are not `t()` strings.
 - **Fixture.** Every scene starts in a fresh browser context: no real

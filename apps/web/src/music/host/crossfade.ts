@@ -1,6 +1,6 @@
 import * as core from "@strudel/core";
 
-import { fadeGain } from "./transitions.js";
+import type { Envelope } from "./transitions.js";
 
 /**
  * Marks the one silent event that changes the tempo on a switch's
@@ -20,22 +20,17 @@ export function isTempoMark(value: unknown): boolean {
   return record(value)?.[TEMPO_MARK] === true;
 }
 
-/** A side of a crossfade: louder or quieter by cycle. */
-function faded(
-  pattern: core.Pattern,
-  from: number,
-  cycles: number,
-  side: "in" | "out",
-): core.Pattern {
+/** `pattern` as loud as `gain` says at each note's onset, on the scheduler's clock. */
+export function withGain(pattern: core.Pattern, gain: Envelope): core.Pattern {
   return pattern.withHap((hap) => {
-    const begin = hap.wholeOrPart().begin.valueOf();
+    const level = gain(hap.wholeOrPart().begin.valueOf());
     return hap.withValue((value) => {
       const fields = record(value);
       if (fields === null) {
         return value;
       }
       const velocity = typeof fields.velocity === "number" ? fields.velocity : 1;
-      return { ...fields, velocity: velocity * fadeGain(begin, from, cycles, side) };
+      return { ...fields, velocity: velocity * level };
     });
   });
 }
@@ -45,7 +40,7 @@ const TAIL_SECONDS = 0.01;
 /** The shortest release superdough plays, and its default. */
 const MIN_RELEASE_SECONDS = 0.01;
 
-/** The tempo either side of a switch, in cycles per second: up to its boundary, and from it. */
+/** The tempo either side of a switch, in cycles per second: up to its landing, and from it. */
 export interface SwitchTempo {
   readonly before: number;
   readonly after: number;
@@ -58,23 +53,13 @@ export interface SwitchTempo {
 export type Rings = (fields: Readonly<Record<string, unknown>>) => boolean;
 
 /**
- * The outgoing side of a switch, silent by `until` (#3530): a note that
- * would still sound then, by its hold and release, is shortened to end in
- * time, and one starting at or after it is dropped. A long pad started
- * just before the fade would otherwise ring for seconds past it.
+ * The outgoing side of a switch, silent by `until` (#3530), at its own
+ * tempo `cps` to the end (#3983): a note that would still sound then, by
+ * its hold and release, is shortened to end in time, and one starting at
+ * or after it is dropped. A long pad started just before the fade would
+ * otherwise ring for seconds past it.
  */
-function bounded(
-  pattern: core.Pattern,
-  from: number,
-  until: number,
-  tempo: SwitchTempo,
-  rings: Rings,
-): core.Pattern {
-  /** Seconds from `cycle` to `until`, the tempo changing on `from`. */
-  const secondsLeft = (cycle: number): number =>
-    cycle < from
-      ? (from - cycle) / tempo.before + (until - from) / tempo.after
-      : (until - cycle) / tempo.after;
+function bounded(pattern: core.Pattern, until: number, cps: number, rings: Rings): core.Pattern {
   return new core.Pattern((state) =>
     pattern.query(state).flatMap((hap) => {
       if (hap.whole === undefined) {
@@ -88,8 +73,7 @@ function bounded(
       if (fields === null) {
         return [hap];
       }
-      const cps = begin < from ? tempo.before : tempo.after;
-      const room = secondsLeft(begin) - TAIL_SECONDS;
+      const room = (until - begin) / cps - TAIL_SECONDS;
       const hold = hap.duration.valueOf() / cps;
       const ringing = rings(fields);
       const release = Math.max(
@@ -120,32 +104,35 @@ function bounded(
   );
 }
 
+/** One side of a switch: a track placed on the scheduler's clock, and how loud it is. */
+export interface SwitchSide {
+  readonly pattern: core.Pattern;
+  readonly gain: Envelope;
+}
+
 /**
- * `playing` fading out and `incoming`, started on cycle `from`, fading in
- * over `cycles`, with the tempo changing from `tempo.before` to
- * `tempo.after` exactly on `from`. Nothing of `playing` sounds past the
- * fade: its notes are shortened to end by then.
+ * A switch (#3983): `outgoing` playing, at its own tempo, until `lands`,
+ * by when its gain must have fallen to 0, and `incoming` from `lands` on.
+ * The tempo changes from `tempo.before` to `tempo.after` exactly on
+ * `lands`, while nothing of the outgoing sounds: no song is ever played
+ * at another's tempo.
  */
 export function crossfade(
-  playing: core.Pattern,
-  incoming: core.Pattern,
-  from: number,
-  cycles: number,
+  outgoing: SwitchSide,
+  incoming: SwitchSide,
+  lands: number,
   tempo: SwitchTempo,
   rings: Rings,
 ): core.Pattern {
-  const until = from + cycles;
   // A `cps` on an event changes the scheduler's tempo on its onset.
   const mark = core
     .pure({ [TEMPO_MARK]: true, cps: tempo.after })
-    .filterHaps((hap) => hap.wholeOrPart().begin.valueOf() === from);
+    .filterHaps((hap) => hap.wholeOrPart().begin.valueOf() === lands);
   return core.stack(
-    faded(bounded(playing, from, until, tempo, rings), from, cycles, "out"),
-    faded(
-      incoming.late(from).filterHaps((hap) => hap.wholeOrPart().begin.valueOf() >= from),
-      from,
-      cycles,
-      "in",
+    withGain(bounded(outgoing.pattern, lands, tempo.before, rings), outgoing.gain),
+    withGain(
+      incoming.pattern.filterHaps((hap) => hap.wholeOrPart().begin.valueOf() >= lands),
+      incoming.gain,
     ),
     // Last, so it is the last event of its slot.
     mark,

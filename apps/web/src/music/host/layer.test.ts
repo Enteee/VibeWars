@@ -45,3 +45,39 @@ describe("layer", () => {
     expect(old.queryArc(7, 8)).toHaveLength(0);
   });
 });
+
+describe("layer gain (#3983)", () => {
+  /** The velocity of each note in `[from, until)`, in order. */
+  const velocities = (levels: LevelChange[], from: number, until: number): number[] => {
+    const layer = makeLayer(
+      () => levels,
+      () => ({ origin: 0 }),
+    );
+    return layer(1, pure({ s: "pad" }).fast(2))
+      .queryArc(from, until)
+      .map((hap) => (hap.value as { velocity: number }).velocity);
+  };
+
+  it("fades a layer in over a cycle, equal power, from the change that reaches it", () => {
+    const levels: LevelChange[] = [
+      { from: 0, level: 0 },
+      { from: 20, level: 1 },
+    ];
+    // The note on the change itself is at gain 0, and left out.
+    const [half, full] = velocities(levels, 20, 21.5);
+    expect(half).toBeCloseTo(Math.SQRT1_2);
+    expect(full).toBe(1);
+    expect(velocities(levels, 19, 20.5)).toEqual([]);
+  });
+
+  it("fades a layer out over a cycle the other way", () => {
+    const levels: LevelChange[] = [
+      { from: 0, level: 1 },
+      { from: 30, level: 0 },
+    ];
+    const [start, half, ...after] = velocities(levels, 30, 32);
+    expect(start).toBe(1);
+    expect(half).toBeCloseTo(Math.SQRT1_2);
+    expect(after).toEqual([]);
+  });
+});
