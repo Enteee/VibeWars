@@ -62,3 +62,4 @@ rewriting history.
 | [0054](0054-no-baked-band-chunks.md)          | Static map art stays live; it is not baked into chunk images    |
 | [0055](0055-ranked-receipts.md)               | Ranked play: a public ledger of receipts every player signs     |
 | [0056](0056-cosmetics.md)                     | Cosmetics are earned on the public ledger, never in the sim     |
+| [0058](0058-music-transitions.md)             | Music changes by fading at its own tempo; one song per trailer  |

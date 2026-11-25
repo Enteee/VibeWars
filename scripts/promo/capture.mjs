@@ -27,6 +27,8 @@ import { parseArgs } from "node:util";
 
 import { chromium } from "@playwright/test";
 
+import { musicSettled } from "./plan.mjs";
+
 const PORT = 4322;
 const ROOT = path.join(import.meta.dirname, "..", "..");
 const OUT = path.join(ROOT, "out", "promo", "capture");
@@ -83,6 +85,25 @@ const AUDIO_TAP = `(() => {
     }
     return connect.call(this, destination, ...rest);
   };
+})();`;
+
+/**
+ * Runs in the game's page: every track the music host reports playing
+ * (#3983), with when it is heard and its tempo. A switch's fade-in ends a
+ * cycle after that; the cut's music starts after the last one.
+ */
+const SWITCH_TAP = `(() => {
+  if (window !== window.top) {
+    return;
+  }
+  const switches = [];
+  Object.defineProperty(window, "__musicSwitches", { value: switches });
+  addEventListener("message", (event) => {
+    const data = event.data;
+    if (data && data.type === "playing" && typeof data.heardAtEpochMs === "number") {
+      switches.push({ heardAtEpochMs: data.heardAtEpochMs, cps: data.cps });
+    }
+  });
 })();`;
 
 /**
@@ -160,6 +181,7 @@ async function openScene(browser, name, url) {
     permissions: ["clipboard-read", "clipboard-write"],
   });
   await context.addInitScript(AUDIO_TAP);
+  await context.addInitScript(SWITCH_TAP);
   await context.addInitScript(FRAME_LOG);
   const startedAt = Date.now();
   const page = await context.newPage();
@@ -339,6 +361,7 @@ async function fight(browser, url) {
     const music = await musicTake(scene.page);
     if (music !== undefined) {
       scene.marks.musicStart = (music.startedAt - scene.startedAt) / 1000;
+      scene.marks.musicSettled = musicSettled(await musicSwitches(scene.page), music.startedAt);
       fs.mkdirSync(OUT, { recursive: true });
       fs.writeFileSync(path.join(OUT, "music.webm"), Buffer.from(music.base64, "base64"));
     }
@@ -351,6 +374,18 @@ async function fight(browser, url) {
     );
   }
   throw new Error(`no fight with an interrupt and music in ${String(FIGHT_TRIES)} tries`);
+}
+
+/**
+ * The switches the music host reported in `page`, from `SWITCH_TAP`.
+ *
+ * @param {import("@playwright/test").Page} page
+ * @returns {Promise<{ heardAtEpochMs: number, cps: number }[]>}
+ */
+async function musicSwitches(page) {
+  return /** @type {{ heardAtEpochMs: number, cps: number }[]} */ (
+    await page.evaluate("globalThis.__musicSwitches ?? []")
+  );
 }
 
 /**
