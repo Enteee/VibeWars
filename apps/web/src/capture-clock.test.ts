@@ -20,23 +20,23 @@ describe("createCaptureClock", () => {
     expect(clock.now()).toBe(250);
   });
 
-  it("moves now() by exactly frames x 1000/30 and ignores the real clock", async () => {
+  it("moves now() by exactly frames x 1000/20 and ignores the real clock", async () => {
     const clock = createCaptureClock("?capture=step", () => 1000, noWait);
     await clock.step(3);
-    expect(clock.now()).toBeCloseTo(1100, 9);
+    expect(clock.now()).toBeCloseTo(1150, 9);
   });
 
-  it("ticks the host 1/30 s per frame, then draws the frame", async () => {
+  it("ticks the host 1/20 s per frame, then draws the frame", async () => {
     const clock = createCaptureClock("?capture=step", () => 0, noWait);
     const seen: string[] = [];
     clock.onHostTick((seconds) => seen.push(`tick ${seconds.toFixed(5)}`));
     clock.onFrame((time, delta) => seen.push(`frame ${time.toFixed(2)} ${delta.toFixed(2)}`));
     await clock.step(2);
     expect(seen).toEqual([
-      "tick 0.03333",
-      "frame 33.33 33.33",
-      "tick 0.03333",
-      "frame 66.67 33.33",
+      "tick 0.05000",
+      "frame 50.00 50.00",
+      "tick 0.05000",
+      "frame 100.00 50.00",
     ]);
   });
 

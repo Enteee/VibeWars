@@ -164,7 +164,7 @@ async function serve() {
 }
 
 /** Frames per second of a stepped scene, as `capture-clock.ts`. */
-const FPS = 30;
+const FPS = 20;
 
 /**
  * A stepped scene's recorder (#4006): each frame is one `__captureStep(1)`
@@ -441,7 +441,7 @@ async function liveClick(locator) {
  * @param {import("@playwright/test").Page} page
  * @param {string} key
  * @param {number} ms
- * @param {Stepper} [stepper]  frames instead of wall time: held for exactly `ms` x 30 / 1000 of them
+ * @param {Stepper} [stepper]  frames instead of wall time: held for exactly `ms` x 20 / 1000 of them
  */
 async function walk(page, key, ms, stepper) {
   await page.keyboard.down(key);

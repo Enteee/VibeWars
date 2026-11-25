@@ -10,8 +10,8 @@
  * loop when there is no arena).
  */
 
-/** Frames per second of the recording. */
-export const CAPTURE_FPS = 30;
+/** Frames per second of the recording: the sim's tick rate, so every frame moves. */
+export const CAPTURE_FPS = 20;
 const FRAME_MS = 1000 / CAPTURE_FPS;
 
 type Tick = (seconds: number) => void;
@@ -22,7 +22,7 @@ export interface CaptureClock {
   readonly stepping: boolean;
   /** Milliseconds: `performance.now()`, or the virtual time when stepping. */
   now(): number;
-  /** The host's clock beat; returns the stop. Called with 1/30 s per frame. */
+  /** The host's clock beat; returns the stop. Called with 1/20 s per frame. */
   onHostTick(tick: Tick): () => void;
   /** The page's frame driver; returns the stop. Called once per frame, after the host ticks. */
   onFrame(frame: Frame): () => void;

@@ -21,8 +21,8 @@ workspace packages built (`pnpm -r --filter "./packages/**" run build`).
 - **Stepped frames (#4006).** The map and fight scenes open with
   `?capture=step` (`apps/web/src/capture-clock.ts`): game time moves only
   when the script calls `window.__captureStep(1)`, which advances the host
-  by 1/30 s and draws one frame; the script then screenshots the viewport
-  into ffmpeg (`image2pipe`, 30 fps VP9). The video is smooth however slow
+  by 1/20 s (the sim tick, so no frame repeats) and draws one frame; the script then screenshots the viewport
+  into ffmpeg (`image2pipe`, 20 fps VP9; assemble blends it up to 30). The video is smooth however slow
   the host renders (software GL: 3 to 8 fps). `walk` and the waits count
   frames; event times are virtual. The lobby runs in real time with the
   clock pumped, and the video starts at the match canvas. The editor,
