@@ -18,12 +18,13 @@ export type WaterPart = "surface" | "ripples";
 
 /** An effect zone's parts (#3052): its painted ground, then its moving marks and edge. */
 export type ZonePart = "ground" | "marks";
+/** A decor prop's parts (#4013): its shadow, its low strokes, then what stands tall. */
+export type DecorPart = "shadow" | "low" | "tall";
 /**
  * The ground grain's steps (#3484): the outline into the stencil, the
  * grain through it, the outline out, then the grid and the outline's
  * edge over the grain.
  */
-export type DecorPart = "shadow" | "low" | "tall";
 export type GrainPart = "stencil" | "grain" | "release" | "lines";
 /** The grain on a patch of ground redrawn over a tunnel or a pit (#3484), then its grid. */
 export type PatchGrainPart = "grain" | "lines";

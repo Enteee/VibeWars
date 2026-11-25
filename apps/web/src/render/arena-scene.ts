@@ -808,10 +808,6 @@ export class ArenaScene extends Phaser.Scene {
     }
   >();
   /**
-   * Each overhang (#3293) and arch top (#3312) as drawn, and where it
-   * hangs: faded while a body is under it.
-   */
-  /**
    * Each decor prop that moves (#4013): a brazier's flame, a tree's
    * crown, a fern's fronds, each its own graphics, redrawn every frame.
    * A tree is in `coversDrawn` too, so it fades as an overhang does.
@@ -823,6 +819,10 @@ export class ArenaScene extends Phaser.Scene {
     readonly tint: number | undefined;
     readonly lift: number;
   }[] = [];
+  /**
+   * Each overhang (#3293) and arch top (#3312) as drawn, and where it
+   * hangs: faded while a body is under it.
+   */
   private coversDrawn: {
     readonly cover: OverhangCover;
     readonly graphics: Phaser.GameObjects.Graphics;
@@ -6291,7 +6291,6 @@ function phaserPainter(g: Phaser.GameObjects.Graphics): Painter {
   return painter;
 }
 
-/** Begins a path along `points` on `g`, to fill or stroke: closed, unless `closed` is false. */
 /** A decor prop's strokes (#4013), lifted to its layer, each but a flame in `tint`. */
 function paintDecor(
   g: Phaser.GameObjects.Graphics,
@@ -6323,6 +6322,7 @@ function paintDecor(
   g.restore();
 }
 
+/** Begins a path along `points` on `g`, to fill or stroke: closed, unless `closed` is false. */
 function tracePath(g: Phaser.GameObjects.Graphics, points: readonly Point[], closed = true): void {
   const [first, ...rest] = points;
   g.beginPath();
