@@ -14,7 +14,13 @@ export type {
   Vec2Data,
   Wall,
 } from "./schema.js";
-export { MapValidationError, TEAM_SIZES_ALL, mapDataSchema, validateMapData } from "./schema.js";
+export {
+  ELEVATION_STEP,
+  MapValidationError,
+  TEAM_SIZES_ALL,
+  mapDataSchema,
+  validateMapData,
+} from "./schema.js";
 
 export { allWallSegments, wallToSegments } from "./geometry.js";
 export { sizeClass, type SizeClass } from "./size-class.js";
