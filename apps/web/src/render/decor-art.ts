@@ -66,9 +66,9 @@ export const DECOR_SWAY = 2;
 const SHADOW = 0x000000;
 const SHADOW_ALPHA = 0.28;
 
-const TRUNK_HEIGHT = 34;
+const TRUNK_HEIGHT = 48;
 const TRUNK_WIDTH = 6;
-const CROWN_RADIUS = 24;
+const CROWN_RADIUS = 36;
 const CRATE_SIZE = 22;
 const CRATE_HEIGHT = 15;
 const FROND_LENGTH = 17;
