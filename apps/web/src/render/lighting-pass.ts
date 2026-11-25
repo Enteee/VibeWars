@@ -489,6 +489,16 @@ export interface FlickerRegion {
   readonly lights: readonly LightsOf[];
 }
 
+/** Whether a circle at `x, y` of `radius` meets `box`. */
+function circleMeets(
+  { x, y, radius }: { readonly x: number; readonly y: number; readonly radius: number },
+  box: LightMapBox,
+): boolean {
+  const dx = x - Math.min(Math.max(x, box.x), box.x + box.width);
+  const dy = y - Math.min(Math.max(y, box.y), box.y + box.height);
+  return dx * dx + dy * dy < radius * radius;
+}
+
 function overlaps(a: LightMapBox, b: LightMapBox): boolean {
   return a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
 }
@@ -502,8 +512,11 @@ export interface LightMapCells {
   readonly flat: readonly LightMapBox[];
   /** Where light varies, shown from the light map's texture. */
   readonly textured: readonly LightMapBox[];
-  /** Where a light reaches, so the warm pools are not black (#3350). */
-  readonly lit: readonly LightMapBox[];
+  /**
+   * Where a warm pool reaches (#3350, #4057): the cells its circle meets,
+   * not its box, as the rest of the pool's texture is black and adds nothing.
+   */
+  readonly glow: readonly LightMapBox[];
 }
 
 /**
@@ -552,6 +565,14 @@ export function lightMapCells(
       ]),
     ),
   );
+  const onTunnels = glowsOn(structure, layer);
+  const pools = [...steady, ...flickering]
+    .filter((light) => glowOf(light, onTunnels) > 0)
+    .map(({ position, radius }) => ({
+      x: position.x * LIGHT_MAP_SCALE - extent.x,
+      y: position.y * LIGHT_MAP_SCALE - extent.y,
+      radius: radius * LIGHT_MAP_SCALE + MARK_MARGIN,
+    }));
   const casters = stageShadows(stage) ? shadowCasters(walls, structure, layer) : [];
   const ground = layer === structure.ground;
   const shapes = [
@@ -583,7 +604,9 @@ export function lightMapCells(
   return {
     flat: cover.flatMap((box) => split(box, plain)),
     textured: cover.flatMap((box) => split(box, (cell) => !plain(cell))),
-    lit: cover.flatMap((box) => split(box, (cell) => reach.some((mark) => overlaps(mark, cell)))),
+    glow: cover.flatMap((box) =>
+      split(box, (cell) => pools.some((pool) => circleMeets(pool, cell))),
+    ),
   };
 }
 
@@ -926,10 +949,11 @@ export class LightingPass {
       painter.destroy();
     }
 
+    const cells = lightMapCells(lighting, structure, this.walls, layer, extent, this.stage);
     const onTunnels = glowsOn(structure, layer);
     const glowing = [...steady, ...flickering].filter((light) => glowOf(light, onTunnels) > 0);
     const glowKey =
-      glowing.length > 0
+      cells.glow.length > 0
         ? this.buildGlow(
             `lighting-${String(nextLightingId)}-glow`,
             extent,
@@ -961,7 +985,6 @@ export class LightingPass {
         return image;
       };
     const image = imageOf(shownKey, Phaser.BlendModes.MULTIPLY);
-    const cells = lightMapCells(lighting, structure, this.walls, layer, extent, this.stage);
     // Where the map is one colour, that colour multiplied flat, untextured (#3524).
     const flat = this.scene.add
       .graphics()
@@ -980,7 +1003,7 @@ export class LightingPass {
     // where no light reaches they are black, and add nothing.
     cells.textured.forEach(image);
     if (glowKey !== undefined) {
-      cells.lit.forEach(imageOf(glowKey, Phaser.BlendModes.ADD));
+      cells.glow.forEach(imageOf(glowKey, Phaser.BlendModes.ADD));
     }
     // The ground's light over a tunnel fades with its cover (#3329).
     const tunnels = new Map(
