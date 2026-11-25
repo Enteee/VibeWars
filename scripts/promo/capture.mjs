@@ -45,6 +45,21 @@ const FIGHT_MS = 150_000;
 const MAPS = ["broken-tower", "arena-canyon", "ember-pits"];
 
 /**
+ * Every animation frame the page gets, as `performance.now()` ms, on
+ * `window.__frames`: how smooth the capture ran (#3980). Like the audio tap,
+ * it is the capture's own and no game code is involved.
+ */
+const FRAME_LOG = `(() => {
+  const frames = [];
+  Object.defineProperty(window, "__frames", { value: frames });
+  const tick = (t) => {
+    frames.push(t);
+    requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+})();`;
+
+/**
  * Runs in every frame before its scripts, the sandboxed music host's
  * included: when the music bus's limiter is wired to the speakers, the
  * same signal also goes to a recorder. `window.__music` hands the take
@@ -144,6 +159,7 @@ async function openScene(browser, name, url) {
     permissions: ["clipboard-read", "clipboard-write"],
   });
   await context.addInitScript(AUDIO_TAP);
+  await context.addInitScript(FRAME_LOG);
   const startedAt = Date.now();
   const page = await context.newPage();
   page.setDefaultTimeout(20_000);
@@ -166,6 +182,8 @@ async function openScene(browser, name, url) {
  * @param {number} timeOrigin  `performance.timeOrigin` of the page that saw them
  */
 async function closeScene(scene, name, events, timeOrigin) {
+  const frames = await frameStats(scene.page);
+  console.log(`${name}: frame intervals ${JSON.stringify(frames)}`);
   const video = scene.page.video();
   await scene.context.close();
   fs.mkdirSync(OUT, { recursive: true });
@@ -177,9 +195,31 @@ async function closeScene(scene, name, events, timeOrigin) {
   }));
   fs.writeFileSync(
     path.join(OUT, `${name}.json`),
-    JSON.stringify({ events: seen, marks: scene.marks }, null, 1),
+    JSON.stringify({ events: seen, marks: scene.marks, frames }, null, 1),
   );
   console.log(`${name}: ${String(seen.length)} events, marks ${JSON.stringify(scene.marks)}`);
+}
+
+/**
+ * The page's frame intervals in ms: median, 95th percentile, longest, and
+ * how many frames it drew.
+ *
+ * @param {import("@playwright/test").Page} page
+ */
+async function frameStats(page) {
+  /** @type {number[]} */
+  const times = await page.evaluate(() => {
+    /** @type {unknown} */
+    const frames = Reflect.get(globalThis, "__frames");
+    return Array.isArray(frames) ? frames.map(Number) : [];
+  });
+  const gaps = times
+    .slice(1)
+    .map((t, i) => t - (times[i] ?? t))
+    .sort((a, b) => a - b);
+  const at = (/** @type {number} */ q) =>
+    Math.round((gaps[Math.floor(q * (gaps.length - 1))] ?? 0) * 10) / 10;
+  return { count: times.length, p50: at(0.5), p95: at(0.95), max: at(1) };
 }
 
 /**
