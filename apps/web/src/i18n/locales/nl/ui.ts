@@ -404,6 +404,7 @@ export default {
   "cosmetics.item.trailStarlight": "Sterrenlichtspoor",
   "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Vergrendeld",
+  "cosmetics.previewing": "Voorbeeld: {name}",
   "cosmetics.none": "Geen",
   "cosmetics.note":
     "Puur voor het uiterlijk: geen enkele cosmetic verandert hoe iets speelt. Verdiend met gerankte zeges op de openbare ranglijst en gedeeld door al je personages.",
@@ -1650,7 +1651,6 @@ export default {
     "Heroes' Ascent is een reeks maps, 8 tegen 8, tegen teams in jouw ronde. Win en je gaat door naar de volgende map, tot aan de Hal der Helden; verlies en je begint opnieuw.",
   "tutorial.menu.modes.hostedGame":
     "Een Gehost spel is je eigen lobby: stuur vrienden de uitnodigingslink en kies de map en de teamgrootte. Bots spelen elke plek die niemand inneemt.",
-  "tutorial.menu.modes.open": "Open de verlichte modus aan de zijkant.",
   "tutorial.menu.modes.randomArena":
     "Random Arena is het snelste gevecht: je eigen personage, in een team van vreemden, 1v1, 2v2 of 4v4. De map wordt voor je geloot, en elke plek is een echte speler.",
   "tutorial.menu.modes.teamArena":

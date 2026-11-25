@@ -406,6 +406,7 @@ export default {
   "cosmetics.item.trailStarlight": "Csillagfény nyom",
   "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Zárolva",
+  "cosmetics.previewing": "Előnézet: {name}",
   "cosmetics.none": "Nincs",
   "cosmetics.note":
     "Csak a külső miatt: egyik kozmetikum sem változtat a játékon. Rangsorolt győzelmekkel szerezhetők a nyilvános ranglistán, és minden karaktered osztozik rajtuk.",
@@ -1653,7 +1654,6 @@ export default {
     "A Hősök Útja pályák sorozata, 8 a 8 ellen, a te körödben lévő csapatok ellen. Ha nyersz, a következő pályára lépsz, egészen a Hősök Csarnokáig; ha veszítesz, elölről kezded.",
   "tutorial.menu.modes.hostedGame":
     "A Saját játék a saját lobbid: küldd el a barátaidnak a meghívó linket, és válaszd ki a pályát és a csapatméretet. Minden helyen, amit senki sem foglal el, botok játszanak.",
-  "tutorial.menu.modes.open": "Nyisd meg oldalt a kivilágított játékmódot.",
   "tutorial.menu.modes.randomArena":
     "A Véletlen Aréna a leggyorsabb harc: a saját karaktered idegenekből álló csapatban, 1v1, 2v2 vagy 4v4. A pályát kisorsolják neked, és minden helyen valódi játékos áll.",
   "tutorial.menu.modes.teamArena":

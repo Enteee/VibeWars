@@ -437,6 +437,7 @@ export default {
   "cosmetics.item.trailStarlight": "Ślad blasku gwiazd",
   "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Zablokowane",
+  "cosmetics.previewing": "Podgląd: {name}",
   "cosmetics.none": "Brak",
   "cosmetics.note":
     "Tylko dla wyglądu: żaden kosmetyk nie zmienia rozgrywki. Zdobywa się je rankingowymi zwycięstwami w publicznej tabeli wyników i są wspólne dla wszystkich twoich postaci.",
@@ -1775,7 +1776,6 @@ export default {
     "Szczyt Bohaterów to seria map, 8 na 8, przeciw drużynom z twojej rundy. Gdy wygrasz, przechodzisz na następną mapę, aż do Sali Bohaterów; gdy przegrasz, zaczynasz od nowa.",
   "tutorial.menu.modes.hostedGame":
     "Gra prywatna to twoje własne lobby: wyślij znajomym link z zaproszeniem i wybierz mapę oraz rozmiar drużyny. Boty grają na każdym miejscu, którego nikt nie zajmie.",
-  "tutorial.menu.modes.open": "Otwórz podświetlony tryb z boku.",
   "tutorial.menu.modes.randomArena":
     "Arena losowa to najszybsza walka: twoja własna postać w drużynie z nieznajomymi, 1v1, 2v2 lub 4v4. Mapa jest losowana za ciebie, a każde miejsce to prawdziwy gracz.",
   "tutorial.menu.modes.teamArena":

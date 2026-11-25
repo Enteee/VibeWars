@@ -427,6 +427,7 @@ export default {
   "cosmetics.item.trailStarlight": "Traînée de lumière stellaire",
   "cosmetics.detail": "{name} : {requirement}",
   "cosmetics.locked": "Verrouillé",
+  "cosmetics.previewing": "Aperçu : {name}",
   "cosmetics.none": "Aucun",
   "cosmetics.note":
     "Purement esthétique : aucun cosmétique ne change la façon de jouer. Ils s'obtiennent par des victoires classées au classement public et sont partagés par tous tes personnages.",
@@ -1741,7 +1742,6 @@ export default {
     "L'Ascension des héros est une suite de cartes, 8 contre 8, contre des équipes de ton tour. Gagne et tu passes à la carte suivante, jusqu'au Hall des héros ; perds et tu recommences.",
   "tutorial.menu.modes.hostedGame":
     "Une Partie hébergée est ton propre salon : envoie le lien d'invitation à tes amis, et choisis la carte et la taille d'équipe. Des bots jouent chaque place que personne ne prend.",
-  "tutorial.menu.modes.open": "Ouvre le mode allumé sur le côté.",
   "tutorial.menu.modes.randomArena":
     "L'Arène aléatoire est le combat le plus rapide : ton propre personnage, dans une équipe d'inconnus, en 1v1, 2v2 ou 4v4. La carte est tirée pour toi, et chaque place est un vrai joueur.",
   "tutorial.menu.modes.teamArena":

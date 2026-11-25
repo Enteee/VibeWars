@@ -128,6 +128,7 @@ import { attachFullscreenButton, fullscreenTarget } from "./ui/fullscreen.js";
 import { attachHelpWindow, isHelpOpen } from "./ui/help-screen.js";
 import { attachJukeboxPopover } from "./ui/jukebox.js";
 import { attachOptionsWindow, isOptionsWindowOpen } from "./ui/options-screen.js";
+import type { OptionsOwner } from "./ui/options-sections.js";
 import { createPartyWindow } from "./ui/party-window.js";
 import { attachReconnectCountdown, mountReconnectOverlay } from "./ui/reconnect-overlay.js";
 import { chartRoster, chartUsable, renderMatchCharts } from "./ui/match-charts.js";
@@ -626,12 +627,12 @@ function animationFrames(handler: (deltaSeconds: number) => void): () => void {
   };
 }
 
-/** `signet` is the player key's, for the Options window over the match (#3235). */
+/** `owner` is whose Options window it is, over the match (#3235, #3989). */
 export async function startMatchView(
   parent: HTMLElement,
   callbacks: MatchViewCallbacks,
   options: MatchViewOptions,
-  signet: number,
+  owner: OptionsOwner,
 ): Promise<MatchView> {
   // With no WebGL there is no arena, said plainly where it would be
   // (#655). The match itself goes on: the HUD still shows it, and a host
@@ -864,7 +865,7 @@ export async function startMatchView(
   const menu = attachHudMenu(hud, leave);
   // Options over the match (#454), a window like the music's (#2386): the
   // match goes on underneath.
-  const optionsWindow = attachOptionsWindow(hud.options, parent, signet);
+  const optionsWindow = attachOptionsWindow(hud.options, parent, owner);
   // Help over the match too (#1257), the same way.
   const helpWindow = attachHelpWindow(hud.help);
   const detachFullscreen = attachFullscreenButton(hud.fullscreen, fullscreenTarget());

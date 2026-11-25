@@ -404,6 +404,7 @@ export default {
   "cosmetics.item.trailStarlight": "Stjernelysspor",
   "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Låst",
+  "cosmetics.previewing": "Forhåndsvisning: {name}",
   "cosmetics.none": "Ingen",
   "cosmetics.note":
     "Kun for udseendet: ingen kosmetik ændrer, hvordan noget spiller. Optjenes med rangerede sejre på den offentlige rangliste og deles af alle dine figurer.",
@@ -1637,7 +1638,6 @@ export default {
     "Heltenes opstigning er en række baner, 8 mod 8, mod hold i din runde. Vinder du, går du videre til næste bane, helt op til Heltenes Hal; taber du, starter du forfra.",
   "tutorial.menu.modes.hostedGame":
     "Et værtsspil er din egen lobby: send venner invitationslinket, og vælg bane og holdstørrelse. Bots spiller hver plads, ingen tager.",
-  "tutorial.menu.modes.open": "Åbn den oplyste spillemåde i siden.",
   "tutorial.menu.modes.randomArena":
     "Tilfældig arena er den hurtigste kamp: din egen figur på et hold af fremmede, 1v1, 2v2 eller 4v4. Banen trækkes for dig, og hver plads er en rigtig spiller.",
   "tutorial.menu.modes.teamArena":

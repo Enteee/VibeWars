@@ -176,30 +176,36 @@ export function canvasPainter(context: CanvasRenderingContext2D): Painter {
 }
 
 /**
- * The primary profession's glyph inside the body (#1037), as the arena
- * draws it: `glyph` filled with the body's edge colour, its alpha kept,
- * as Phaser's fill tint does, at 60 %, centred and `BODY_GLYPH_SIZE` wide.
+ * The primary profession's glyph as the arena tints it (#1037): `glyph`
+ * filled with the body's edge colour, its alpha kept, as Phaser's fill
+ * tint does, `pixels` wide; `undefined` with no 2D context.
  */
-function paintBodyGlyph(
-  context: CanvasRenderingContext2D,
-  body: StandingBody,
+export function tintedGlyph(
   glyph: HTMLImageElement,
-  ratio: number,
-): void {
-  const pixels = Math.round(BODY_GLYPH_SIZE * ratio);
+  pixels: number,
+): HTMLCanvasElement | undefined {
   const tinted = document.createElement("canvas");
   tinted.width = pixels;
   tinted.height = pixels;
   const tint = tinted.getContext("2d");
   if (tint === null) {
-    return;
+    return undefined;
   }
   tint.drawImage(glyph, 0, 0, pixels, pixels);
   tint.globalCompositeOperation = "source-in";
   tint.fillStyle = cssColour(BODY_EDGE);
   tint.fillRect(0, 0, pixels, pixels);
+  return tinted;
+}
+
+/** `tinted`, a `tintedGlyph`, inside `body` as the arena draws it: at 60 %, centred, `BODY_GLYPH_SIZE` wide. */
+export function drawBodyGlyph(
+  context: CanvasRenderingContext2D,
+  body: Pick<StandingBody, "x" | "y">,
+  tinted: HTMLCanvasElement,
+): void {
   context.save();
-  context.globalAlpha = BODY_GLYPH_ALPHA;
+  context.globalAlpha *= BODY_GLYPH_ALPHA;
   const half = BODY_GLYPH_SIZE / 2;
   context.drawImage(tinted, body.x - half, body.y - half, BODY_GLYPH_SIZE, BODY_GLYPH_SIZE);
   context.restore();
@@ -246,8 +252,10 @@ export function createCharacterFigure(
   const paint = (glyph: HTMLImageElement | undefined): void => {
     context.clearRect(0, 0, width, height);
     paintFigure(painter, body, () => {
-      if (glyph !== undefined) {
-        paintBodyGlyph(context, body, glyph, ratio);
+      const tinted =
+        glyph === undefined ? undefined : tintedGlyph(glyph, Math.round(BODY_GLYPH_SIZE * ratio));
+      if (tinted !== undefined) {
+        drawBodyGlyph(context, body, tinted);
       }
     });
   };
@@ -262,7 +270,7 @@ export function createCharacterFigure(
 }
 
 /** The profession's icon, decoded; `undefined` if it cannot load, and the figure stays bare. */
-async function loadGlyph(profession: ProfessionId): Promise<HTMLImageElement | undefined> {
+export async function loadGlyph(profession: ProfessionId): Promise<HTMLImageElement | undefined> {
   const image = new Image();
   image.src = professionIcon(profession);
   try {

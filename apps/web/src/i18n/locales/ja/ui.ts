@@ -380,6 +380,7 @@ export default {
   "cosmetics.item.trailStarlight": "星明かりの足跡",
   "cosmetics.detail": "{name}：{requirement}",
   "cosmetics.locked": "ロック中",
+  "cosmetics.previewing": "プレビュー中：{name}",
   "cosmetics.none": "なし",
   "cosmetics.note":
     "見た目だけの要素です。どのコスメティックもプレイには影響しません。公開ランキングのランク戦勝利で獲得でき、すべてのキャラクターで共有されます。",
@@ -1567,7 +1568,6 @@ export default {
     "ヒーローズアセントは8対8で、同じラウンドのチームと戦いながらマップを勝ち進む。勝てば次のマップへ進み、英雄の間を目指す。負ければ最初からやり直しだ。",
   "tutorial.menu.modes.hostedGame":
     "ホストゲームは自分だけのロビーだ。フレンドに招待リンクを送り、マップとチーム人数を選ぼう。誰も入らない枠はボットがプレイする。",
-  "tutorial.menu.modes.open": "横で光っているモードを開こう。",
   "tutorial.menu.modes.randomArena":
     "ランダムアリーナはいちばん手軽な戦いだ。自分のキャラクターで、知らない人とチームを組む。1v1、2v2、4v4のどれか。マップは抽選で、全枠が本物のプレイヤーだ。",
   "tutorial.menu.modes.teamArena":

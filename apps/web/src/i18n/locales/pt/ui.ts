@@ -426,6 +426,7 @@ export default {
   "cosmetics.item.trailStarlight": "Rastro de luz estelar",
   "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Bloqueado",
+  "cosmetics.previewing": "Pré-visualização: {name}",
   "cosmetics.none": "Nenhum",
   "cosmetics.note":
     "Puramente estético: nenhum cosmético muda a forma de jogar. Ganham-se com vitórias ranqueadas na tabela de líderes pública e são partilhados por todas as tuas personagens.",
@@ -1721,7 +1722,6 @@ export default {
     "Ascensão dos Heróis é uma sequência de mapas, 8 contra 8, contra equipes da sua rodada. Vença e avance para o próximo mapa, até o Salão dos Heróis; perca e comece de novo.",
   "tutorial.menu.modes.hostedGame":
     "Uma Partida Hospedada é a sua própria sala: envie o link de convite aos amigos e escolha o mapa e o tamanho da equipe. Bots jogam em cada vaga que ninguém ocupar.",
-  "tutorial.menu.modes.open": "Abra o modo aceso na lateral.",
   "tutorial.menu.modes.randomArena":
     "Arena Aleatória é a luta mais rápida: seu próprio personagem, numa equipe de desconhecidos, 1v1, 2v2 ou 4v4. O mapa é sorteado para você, e cada vaga é um jogador de verdade.",
   "tutorial.menu.modes.teamArena":

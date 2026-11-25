@@ -378,6 +378,7 @@ export default {
   "cosmetics.item.trailStarlight": "Jejak cahaya bintang",
   "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Terkunci",
+  "cosmetics.previewing": "Pratinjau: {name}",
   "cosmetics.none": "Tidak ada",
   "cosmetics.note":
     "Murni tampilan: tidak ada kosmetik yang mengubah cara bermain. Didapat dari kemenangan peringkat di papan peringkat publik, dan dipakai bersama oleh semua karaktermu.",
@@ -1570,7 +1571,6 @@ export default {
     "Pendakian Pahlawan adalah rangkaian peta, 8 lawan 8, melawan tim di babakmu. Menang, dan kamu lanjut ke peta berikutnya, sampai Aula Pahlawan; kalah, dan kamu mulai lagi.",
   "tutorial.menu.modes.hostedGame":
     "Game Host adalah lobimu sendiri: kirim link undangan ke teman, lalu pilih peta dan ukuran tim. Bot mengisi setiap tempat yang tidak diambil siapa pun.",
-  "tutorial.menu.modes.open": "Buka mode yang menyala di samping.",
   "tutorial.menu.modes.randomArena":
     "Arena Acak adalah pertarungan tercepat: karaktermu sendiri, dalam tim orang asing, 1v1, 2v2, atau 4v4. Peta diundi untukmu, dan setiap tempat adalah pemain sungguhan.",
   "tutorial.menu.modes.teamArena":
