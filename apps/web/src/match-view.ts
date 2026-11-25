@@ -840,6 +840,7 @@ export async function startMatchView(
   const matchMusic = attachMatchMusic(viewed, {
     screen: "match",
     menuDepth: null,
+    menuTrackId: null,
     mode: () => music().mode(),
     tracks: TRACKS,
     onChange: (state, landOn) => {

@@ -10,6 +10,36 @@
     "phraseCycles": 8
   },
   {
+    "id": "quiet-hearth",
+    "title": "Quiet Hearth",
+    "moods": ["atmospheric", "melancholy"],
+    "bpm": 72,
+    "key": "G major",
+    "colour": [],
+    "layers": 2,
+    "phraseCycles": 8
+  },
+  {
+    "id": "still-water",
+    "title": "Still Water",
+    "moods": ["atmospheric", "mysterious"],
+    "bpm": 64,
+    "key": "A aeolian",
+    "colour": [],
+    "layers": 2,
+    "phraseCycles": 8
+  },
+  {
+    "id": "lantern-road",
+    "title": "Lantern Road",
+    "moods": ["atmospheric", "adventurous"],
+    "bpm": 68,
+    "key": "F major",
+    "colour": [],
+    "layers": 2,
+    "phraseCycles": 8
+  },
+  {
     "id": "ashen-fields",
     "title": "Ashen Fields",
     "moods": ["melancholy", "atmospheric"],
