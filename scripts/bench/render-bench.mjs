@@ -108,8 +108,12 @@ const WARMUP_LOAD_SECONDS = 5;
 const WARMUP_MIN_MS = 45_000;
 /** After that, until two windows in a row agree within this much, of their mean. */
 const WARMUP_TOLERANCE = 0.05;
-/** The warm-up ends here, settled or not; not settled fails the run. */
-const WARMUP_CAP_MS = 75_000;
+/**
+ * The warm-up ends here, settled or not; not settled fails the run. 75 s left
+ * about four windows past `WARMUP_MIN_MS`, so one noisy window sank the shard
+ * with exit 75 on many PRs (#4036). The warm-up is discarded: only time changes.
+ */
+const WARMUP_CAP_MS = 150_000;
 /** After a map page closes, before the next calibration window: its renderer winds down (#3243). */
 const CALIBRATION_SETTLE_MS = 1500;
 const SECONDS = Number(process.env.BENCH_SECONDS ?? 5);
