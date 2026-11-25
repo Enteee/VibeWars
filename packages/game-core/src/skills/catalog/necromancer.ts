@@ -788,6 +788,8 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
     cost: { kind: "energy", amount: 5 },
     overcast: 0,
     activationSeconds: 1,
+    // GW1 Aftercast delay: an exception, "Verata's Gaze", has none.
+    aftercast: false,
     rechargeSeconds: 5,
     range: RANGE_SPELL,
     target: "enemy-minion",
@@ -4487,6 +4489,8 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
     cost: { kind: "energy", amount: 5 },
     overcast: 0,
     activationSeconds: 1,
+    // GW1 Aftercast delay: "Shadow steps that do not exclusively target a foe" have none.
+    aftercast: false,
     rechargeSeconds: 0,
     range: RANGE_SPELL,
     target: "self",

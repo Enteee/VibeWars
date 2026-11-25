@@ -4745,6 +4745,8 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
     cost: { kind: "energy", amount: 5 },
     overcast: 0,
     activationSeconds: 0.75,
+    // GW1 Aftercast delay: an exception, "Shove", has none.
+    aftercast: false,
     rechargeSeconds: 10,
     // "Target touched foe."
     touch: true,
@@ -6010,6 +6012,8 @@ export const WARRIOR_SKILLS: readonly Skill[] = [
     cost: { kind: "energy", amount: 5 },
     overcast: 0,
     activationSeconds: 0.75,
+    // GW1 Aftercast delay: an exception, "Grapple", has none.
+    aftercast: false,
     rechargeSeconds: 8,
     // "Target touched foe."
     touch: true,

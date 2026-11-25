@@ -600,6 +600,22 @@ describe("hasAftercast (#317)", () => {
     expect(hasAftercast({ ...SPELL, type: "attack" })).toBe(false);
     expect(hasAftercast({ ...SPELL, type: "skill", activationSeconds: 0 })).toBe(false);
   });
+
+  it("keeps GW1's named exceptions both ways (#3998)", () => {
+    const of = (id: string): boolean => {
+      const skill = getSkill(id);
+      if (skill === undefined) {
+        throw new Error(`no ${id}`);
+      }
+      return hasAftercast(skill);
+    };
+    // A Core preparation has none; a Factions one keeps it.
+    expect(of("ranger.apply-poison")).toBe(false);
+    expect(of("ranger.seeking-arrows")).toBe(true);
+    expect(of("necromancer.veratas-gaze")).toBe(false);
+    // Instant, yet followed by one.
+    expect(of("paragon.inspirational-speech")).toBe(true);
+  });
 });
 
 describe("canActivate, an attack skill's weapon (ADR-0029)", () => {

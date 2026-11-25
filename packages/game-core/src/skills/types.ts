@@ -2401,6 +2401,12 @@ export interface Skill {
   readonly overcast: number;
   /** Cast time in seconds. `0` is instant. */
   readonly activationSeconds: number;
+  /**
+   * GW1's named exception to the aftercast its type gives it (#3998), as
+   * Apply Poison's none or Inspirational Speech's ¾ s: see `hasAftercast`.
+   * Absent: its type decides.
+   */
+  readonly aftercast?: boolean;
   readonly rechargeSeconds: number;
   /**
    * GW1's "only recharges when you gain a morale boost" (#474): used, it is

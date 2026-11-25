@@ -660,6 +660,8 @@ export const RANGER_SKILLS: readonly Skill[] = [
     cost: { kind: "energy", amount: 15 },
     overcast: 0,
     activationSeconds: 2,
+    // GW1 Aftercast delay: "Ranger preparations from Prophecies or Core" have none.
+    aftercast: false,
     rechargeSeconds: 12,
     range: RANGE_SPELL,
     target: "self",
@@ -2030,6 +2032,8 @@ export const RANGER_SKILLS: readonly Skill[] = [
     cost: { kind: "energy", amount: 5 },
     overcast: 0,
     activationSeconds: 2,
+    // GW1 Aftercast delay: "Ranger preparations from Prophecies or Core" have none.
+    aftercast: false,
     rechargeSeconds: 12,
     range: RANGE_SPELL,
     target: "self",
@@ -2057,6 +2061,8 @@ export const RANGER_SKILLS: readonly Skill[] = [
     cost: { kind: "energy", amount: 10 },
     overcast: 0,
     activationSeconds: 2,
+    // GW1 Aftercast delay: "Ranger preparations from Prophecies or Core" have none.
+    aftercast: false,
     rechargeSeconds: 12,
     range: RANGE_SPELL,
     target: "self",
@@ -2976,6 +2982,8 @@ export const RANGER_SKILLS: readonly Skill[] = [
     cost: { kind: "energy", amount: 10 },
     overcast: 0,
     activationSeconds: 2,
+    // GW1 Aftercast delay: only "Ranger preparations from Prophecies or Core" have none, so this one keeps it.
+    aftercast: true,
     rechargeSeconds: 15,
     range: RANGE_SPELL,
     target: "self",
@@ -3011,6 +3019,8 @@ export const RANGER_SKILLS: readonly Skill[] = [
     cost: { kind: "energy", amount: 10 },
     overcast: 0,
     activationSeconds: 2,
+    // GW1 Aftercast delay: only "Ranger preparations from Prophecies or Core" have none, so this one keeps it.
+    aftercast: true,
     rechargeSeconds: 12,
     range: RANGE_SPELL,
     target: "self",
@@ -3038,6 +3048,8 @@ export const RANGER_SKILLS: readonly Skill[] = [
     cost: { kind: "energy", amount: 5 },
     overcast: 0,
     activationSeconds: 2,
+    // GW1 Aftercast delay: "Ranger preparations from Prophecies or Core" have none.
+    aftercast: false,
     rechargeSeconds: 12,
     range: RANGE_SPELL,
     target: "self",
@@ -3068,6 +3080,8 @@ export const RANGER_SKILLS: readonly Skill[] = [
     cost: { kind: "energy", amount: 5 },
     overcast: 0,
     activationSeconds: 2,
+    // GW1 Aftercast delay: "Ranger preparations from Prophecies or Core" have none.
+    aftercast: false,
     rechargeSeconds: 12,
     range: RANGE_SPELL,
     target: "self",
@@ -4960,6 +4974,8 @@ export const RANGER_SKILLS: readonly Skill[] = [
     cost: { kind: "energy", amount: 5 },
     overcast: 0,
     activationSeconds: 2,
+    // GW1 Aftercast delay: only "Ranger preparations from Prophecies or Core" have none, so this one keeps it.
+    aftercast: true,
     rechargeSeconds: 12,
     range: RANGE_SPELL,
     target: "self",
@@ -5358,6 +5374,8 @@ export const RANGER_SKILLS: readonly Skill[] = [
     cost: { kind: "energy", amount: 5 },
     overcast: 0,
     activationSeconds: 2,
+    // GW1 Aftercast delay: only "Ranger preparations from Prophecies or Core" have none, so this one keeps it.
+    aftercast: true,
     rechargeSeconds: 12,
     range: RANGE_SPELL,
     target: "self",
@@ -5396,6 +5414,8 @@ export const RANGER_SKILLS: readonly Skill[] = [
     cost: { kind: "energy", amount: 5 },
     overcast: 0,
     activationSeconds: 2,
+    // GW1 Aftercast delay: only "Ranger preparations from Prophecies or Core" have none, so this one keeps it.
+    aftercast: true,
     rechargeSeconds: 12,
     range: RANGE_SPELL,
     target: "self",
@@ -5475,6 +5495,8 @@ export const RANGER_SKILLS: readonly Skill[] = [
     cost: { kind: "energy", amount: 5 },
     overcast: 0,
     activationSeconds: 1,
+    // GW1 Aftercast delay: "Ranger preparations from Prophecies or Core" have none.
+    aftercast: false,
     rechargeSeconds: 24,
     range: RANGE_SPELL,
     target: "self",
@@ -5926,6 +5948,8 @@ export const RANGER_SKILLS: readonly Skill[] = [
     cost: { kind: "energy", amount: 10 },
     overcast: 0,
     activationSeconds: 2,
+    // GW1 Aftercast delay: only "Ranger preparations from Prophecies or Core" have none, so this one keeps it.
+    aftercast: true,
     rechargeSeconds: 12,
     range: RANGE_SPELL,
     target: "self",
@@ -5953,6 +5977,8 @@ export const RANGER_SKILLS: readonly Skill[] = [
     cost: { kind: "energy", amount: 5 },
     overcast: 0,
     activationSeconds: 2,
+    // GW1 Aftercast delay: only "Ranger preparations from Prophecies or Core" have none, so this one keeps it.
+    aftercast: true,
     rechargeSeconds: 12,
     range: RANGE_SPELL,
     target: "self",
@@ -5988,6 +6014,8 @@ export const RANGER_SKILLS: readonly Skill[] = [
     cost: { kind: "energy", amount: 15 },
     overcast: 0,
     activationSeconds: 2,
+    // GW1 Aftercast delay: "Ranger preparations from Prophecies or Core" have none.
+    aftercast: false,
     rechargeSeconds: 24,
     range: RANGE_SPELL,
     target: "self",
@@ -6327,6 +6355,8 @@ export const RANGER_SKILLS: readonly Skill[] = [
     cost: { kind: "energy", amount: 15 },
     overcast: 0,
     activationSeconds: 0,
+    // GW1 Aftercast delay: one of the "skills without activation times" that have it.
+    aftercast: true,
     rechargeSeconds: 20,
     range: RANGE_SPELL,
     target: "self",

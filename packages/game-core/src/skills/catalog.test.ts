@@ -8,7 +8,7 @@ import { WEAPONS } from "../equipment/weapons.js";
 import { getAttribute } from "../professions.js";
 import { createRng } from "../rng.js";
 import { vec2 } from "../vec2.js";
-import { canActivate, payCost } from "./activation.js";
+import { canActivate, hasAftercast, payCost } from "./activation.js";
 import { CastState } from "./cast-state.js";
 import { IMPLEMENTED_SKILLS, getSkill } from "./catalog.js";
 import { computeCoverage, formatCoverage } from "./coverage.js";
@@ -33,6 +33,29 @@ describe("skill catalog integrity", () => {
   it("has no duplicate skill ids", () => {
     const ids = IMPLEMENTED_SKILLS.map((s) => s.id);
     expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it("has GW1's aftercast exceptions: non-foe shadow steps have none, every preparation says (#3998)", () => {
+    const steps = (value: unknown): boolean =>
+      Array.isArray(value)
+        ? value.some(steps)
+        : typeof value === "object" && value !== null
+          ? (value as { kind?: unknown }).kind === "shadow-step" || Object.values(value).some(steps)
+          : false;
+    for (const skill of IMPLEMENTED_SKILLS) {
+      // "Shadow steps that do not exclusively target a foe, except for Ride the Lightning."
+      if (
+        steps(skill) &&
+        skill.target !== "single-enemy" &&
+        skill.id !== "elementalist.ride-the-lightning"
+      ) {
+        expect(hasAftercast(skill), skill.id).toBe(false);
+      }
+      // Only Core and Prophecies ones have none: each new one decides.
+      if (skill.type === "preparation") {
+        expect(skill.aftercast, skill.id).toBeTypeOf("boolean");
+      }
+    }
   });
 
   it("gives every skill a non-empty name and a positive range", () => {

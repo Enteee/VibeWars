@@ -622,7 +622,9 @@ export function usableMidAction(skill: Skill): boolean {
  * Whether `skill` is followed by GW1's aftercast when it goes off (#317):
  * one with an activation time, unless it is an attack skill, whose timing
  * is the weapon's. Instant skills, like GW1's shouts and stances, have none.
+ * GW1's wiki, Aftercast delay, names exceptions both ways (#3998), as
+ * Core preparations' none and Inspirational Speech's ¾ s: `skill.aftercast`.
  */
 export function hasAftercast(skill: Skill): boolean {
-  return skill.type !== "attack" && skill.activationSeconds > 0;
+  return skill.aftercast ?? (skill.type !== "attack" && skill.activationSeconds > 0);
 }

@@ -1388,6 +1388,8 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
     cost: { kind: "energy", amount: 5 },
     overcast: 0,
     activationSeconds: 0.25,
+    // GW1 Aftercast delay: "Shadow steps that do not exclusively target a foe" have none.
+    aftercast: false,
     rechargeSeconds: 15,
     range: RANGE_SPELL,
     target: "self",
@@ -1422,6 +1424,8 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
     cost: { kind: "energy", amount: 5 },
     overcast: 0,
     activationSeconds: 0.25,
+    // GW1 Aftercast delay: "Shadow steps that do not exclusively target a foe" have none.
+    aftercast: false,
     rechargeSeconds: 10,
     range: RANGE_SPELL,
     target: "self",
@@ -1467,6 +1471,8 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
     cost: { kind: "energy", amount: 5 },
     overcast: 0,
     activationSeconds: 0.25,
+    // GW1 Aftercast delay: "Shadow steps that do not exclusively target a foe" have none.
+    aftercast: false,
     rechargeSeconds: 20,
     range: RANGE_SPELL,
     target: "single-other-ally",
@@ -2955,6 +2961,8 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
     cost: { kind: "energy", amount: 5 },
     overcast: 0,
     activationSeconds: 0.25,
+    // GW1 Aftercast delay: "Shadow steps that do not exclusively target a foe" have none.
+    aftercast: false,
     rechargeSeconds: 10,
     range: RANGE_SPELL,
     target: "single-other-ally",
@@ -3020,6 +3028,8 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
     cost: { kind: "energy", amount: 5 },
     overcast: 0,
     activationSeconds: 0.25,
+    // GW1 Aftercast delay: "Shadow steps that do not exclusively target a foe" have none.
+    aftercast: false,
     rechargeSeconds: 15,
     range: RANGE_SPELL,
     target: "single-other-ally",
@@ -3141,6 +3151,8 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
     cost: { kind: "energy", amount: 5 },
     overcast: 0,
     activationSeconds: 0.25,
+    // GW1 Aftercast delay: "Shadow steps that do not exclusively target a foe" have none.
+    aftercast: false,
     rechargeSeconds: 8,
     range: RANGE_SPELL,
     target: "allied-spirit",
@@ -3169,6 +3181,8 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
     cost: { kind: "energy", amount: 5 },
     overcast: 0,
     activationSeconds: 0.25,
+    // GW1 Aftercast delay: "Shadow steps that do not exclusively target a foe" have none.
+    aftercast: false,
     rechargeSeconds: 10,
     range: RANGE_SPELL,
     target: "allied-summoned-creature",
@@ -4494,6 +4508,8 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
     cost: { kind: "energy", amount: 5 },
     overcast: 0,
     activationSeconds: 1,
+    // GW1 Aftercast delay: an exception, "Scorpion Wire", has none.
+    aftercast: false,
     rechargeSeconds: 10,
     range: RANGE_SPELL / 2,
     target: "single-enemy",
