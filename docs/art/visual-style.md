@@ -198,7 +198,11 @@ outlines, and the noise fill on a map without one.
 ## 4. Outline and texture
 
 - **A body** has a 1.5 to 2.5 px dark outline (`#0b0f14`) so it parts from any
-  floor. **A wall** and a prop have a 2 px dark outline. **A zone** has a hard
+  floor. A standing body is a stacked figure (ADR-0057, `sprite-stack.ts`):
+  helmeted and caped, 1 px outline `#08080a`, shaded dark at its feet to full
+  colour at its cap, its robe in friend or foe colour, its profession glyph
+  on a dark badge disc on top. Creatures and fallen bodies stay discs.
+  **A wall** and a prop have a 2 px dark outline. **A zone** has a hard
   bright edge, 2 lines wide, never softer than its fill.
 - **No fill is flat** (a zone's is not: `zone-painter.ts`, #3052; nor a layered
   map's floor: `ground-dressing.ts`, #3484; nor a wall top on a map with an
