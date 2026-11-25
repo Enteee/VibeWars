@@ -21,6 +21,7 @@
     "dist"
   ],
   "scripts": {
+    "lint": "eslint .",
     "build": "tsc --build tsconfig.build.json",
     "clean": "rm -rf dist *.tsbuildinfo"
   }
