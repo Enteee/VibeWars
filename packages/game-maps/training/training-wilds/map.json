@@ -85,7 +85,7 @@
         "height": 60
       },
       "uphill": "w",
-      "look": "ramp",
+      "look": "rough-steps",
       "lift": null
     },
     {
@@ -100,7 +100,7 @@
         "height": 110
       },
       "uphill": "n",
-      "look": "ramp",
+      "look": "rough-steps",
       "lift": null
     }
   ],
@@ -365,11 +365,41 @@
       "kind": "spring",
       "layer": 1,
       "area": {
-        "kind": "rect",
-        "x": 80,
-        "y": 150,
-        "width": 80,
-        "height": 80
+        "kind": "polygon",
+        "points": [
+          {
+            "x": 99,
+            "y": 147
+          },
+          {
+            "x": 139,
+            "y": 152
+          },
+          {
+            "x": 159,
+            "y": 170
+          },
+          {
+            "x": 162,
+            "y": 209
+          },
+          {
+            "x": 141,
+            "y": 232
+          },
+          {
+            "x": 101,
+            "y": 227
+          },
+          {
+            "x": 79,
+            "y": 211
+          },
+          {
+            "x": 78,
+            "y": 169
+          }
+        ]
       }
     },
     {
@@ -377,11 +407,41 @@
       "kind": "grove",
       "layer": 1,
       "area": {
-        "kind": "rect",
-        "x": 60,
-        "y": 480,
-        "width": 80,
-        "height": 80
+        "kind": "polygon",
+        "points": [
+          {
+            "x": 79,
+            "y": 481
+          },
+          {
+            "x": 119,
+            "y": 478
+          },
+          {
+            "x": 143,
+            "y": 500
+          },
+          {
+            "x": 138,
+            "y": 539
+          },
+          {
+            "x": 121,
+            "y": 557
+          },
+          {
+            "x": 81,
+            "y": 561
+          },
+          {
+            "x": 58,
+            "y": 541
+          },
+          {
+            "x": 62,
+            "y": 499
+          }
+        ]
       }
     },
     {
@@ -781,7 +841,7 @@
   "lighting": {
     "ambient": {
       "colour": 8357544,
-      "intensity": 0.35
+      "intensity": 0.42
     },
     "indoorAmbient": {
       "colour": 5924488,
@@ -798,7 +858,7 @@
     ],
     "sun": {
       "directionDeg": 315,
-      "elevationDeg": 25,
+      "elevationDeg": 35,
       "colour": 16758906,
       "intensity": 0.5
     },
@@ -862,6 +922,30 @@
         "colour": 16756832,
         "intensity": 0.6,
         "flicker": 0.2
+      },
+      {
+        "id": "fire-basin",
+        "position": {
+          "x": 490,
+          "y": 600
+        },
+        "layer": 0,
+        "radius": 180,
+        "colour": 16748608,
+        "intensity": 0.9,
+        "flicker": 0.3
+      },
+      {
+        "id": "pool-glow",
+        "position": {
+          "x": 660,
+          "y": 652
+        },
+        "layer": 0,
+        "radius": 150,
+        "colour": 11593968,
+        "intensity": 0.6,
+        "flicker": 0
       }
     ]
   },
