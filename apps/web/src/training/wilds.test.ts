@@ -1,6 +1,7 @@
 import {
   MatchSimulation,
   TRAINING_SCENARIOS,
+  ZONE_RULES,
   applyIntent,
   breakableTargetId,
   scenarioParticipants,
@@ -86,9 +87,11 @@ describe("Training Wilds (#3024)", () => {
         (map.zones ?? []).find((each) => each.id === id),
         id,
       );
-      if (zone.area.kind !== "rect") throw new Error(`${id} is no rect`);
+      const corners = shapeVertices(zone.area);
+      const mean = (axis: "x" | "y") =>
+        corners.reduce((sum, corner) => sum + corner[axis], 0) / corners.length;
       return {
-        spawn: { x: zone.area.x + zone.area.width / 2, y: zone.area.y + zone.area.height / 2 },
+        spawn: { x: mean("x"), y: mean("y") },
         layer: zone.layer,
       };
     };
@@ -201,6 +204,18 @@ describe("Training Wilds (#3024)", () => {
     expect(map.water?.length).toBeGreaterThan(0);
     expect(map.lighting?.sun).toBeDefined();
     expect(map.lighting?.lights.length).toBeLessThanOrEqual(16);
+  });
+
+  it("lights its basin from inside, so the hollow reads below the dusk (#3993)", () => {
+    const lights = map.lighting?.lights ?? [];
+    expect(lights.some(({ layer }) => layer === 0)).toBe(true);
+  });
+
+  it("draws each harmless patch as ground, not a tile: no rect (#3993)", () => {
+    // Harmful zones stay rect: each corner is a bot walk-graph node (MAX_HARMFUL_ZONE_POINTS).
+    const harmless = (map.zones ?? []).filter(({ kind }) => !ZONE_RULES[kind].harmful);
+    expect(harmless.length).toBeGreaterThan(0);
+    for (const zone of harmless) expect(zone.area.kind, zone.id).not.toBe("rect");
   });
 
   it("draws each pit inside the map, its floor one step below its footprint (#3992)", () => {
