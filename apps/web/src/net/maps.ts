@@ -6,6 +6,7 @@ import {
   shrinesOf,
   type MapShrine,
 } from "@vibewars/game-maps/match-fields";
+import { pointInShape } from "@vibewars/game-maps/geometry";
 import type { GateLook, MapData } from "@vibewars/game-maps/schema";
 import { bundledMaps } from "./bundled-maps.js";
 import { linkTargets, type SwitchTarget } from "../render/switch-link.js";
@@ -467,6 +468,10 @@ export function structureOf(map: MapData): LoadedStructure {
               rotation,
               scale,
               variant,
+              wading: water.some(
+                (body) =>
+                  body.depth === "shallow" && body.layer === layer && pointInShape(at, body.area),
+              ),
             })),
             dropOffs: map.dropOffs,
             pits: map.pits,

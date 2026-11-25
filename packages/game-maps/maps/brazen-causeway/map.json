@@ -1823,7 +1823,416 @@
     }
   ],
   "ghostLevel": 20,
-  "decor": [],
+  "decor": [
+    {
+      "id": "tree-1",
+      "kind": "tree",
+      "at": {
+        "x": 1738,
+        "y": 2623
+      },
+      "layer": 1,
+      "rotation": 276,
+      "scale": 0.96,
+      "variant": 2
+    },
+    {
+      "id": "tree-2",
+      "kind": "tree",
+      "at": {
+        "x": 1444,
+        "y": 437
+      },
+      "layer": 1,
+      "rotation": 275,
+      "scale": 1.01,
+      "variant": 0
+    },
+    {
+      "id": "tree-3",
+      "kind": "tree",
+      "at": {
+        "x": 1614,
+        "y": 212
+      },
+      "layer": 1,
+      "rotation": 208,
+      "scale": 1.22,
+      "variant": 0
+    },
+    {
+      "id": "fern-1",
+      "kind": "fern",
+      "at": {
+        "x": 1332,
+        "y": 1132
+      },
+      "layer": 1,
+      "rotation": 145,
+      "scale": 0.97,
+      "variant": 0
+    },
+    {
+      "id": "fern-2",
+      "kind": "fern",
+      "at": {
+        "x": 328,
+        "y": 915
+      },
+      "layer": 1,
+      "rotation": 162,
+      "scale": 1.13,
+      "variant": 3
+    },
+    {
+      "id": "fern-3",
+      "kind": "fern",
+      "at": {
+        "x": 4215,
+        "y": 1078
+      },
+      "layer": 1,
+      "rotation": 215,
+      "scale": 0.89,
+      "variant": 1
+    },
+    {
+      "id": "fern-4",
+      "kind": "fern",
+      "at": {
+        "x": 1058,
+        "y": 953
+      },
+      "layer": 1,
+      "rotation": 220,
+      "scale": 0.92,
+      "variant": 0
+    },
+    {
+      "id": "reed-1",
+      "kind": "reed",
+      "at": {
+        "x": 4310,
+        "y": 289
+      },
+      "layer": 1,
+      "rotation": 227,
+      "scale": 0.9,
+      "variant": 1
+    },
+    {
+      "id": "reed-2",
+      "kind": "reed",
+      "at": {
+        "x": 1839,
+        "y": 277
+      },
+      "layer": 1,
+      "rotation": 165,
+      "scale": 1.19,
+      "variant": 3
+    },
+    {
+      "id": "reed-3",
+      "kind": "reed",
+      "at": {
+        "x": 2656,
+        "y": 773
+      },
+      "layer": 1,
+      "rotation": 162,
+      "scale": 0.92,
+      "variant": 1
+    },
+    {
+      "id": "reed-4",
+      "kind": "reed",
+      "at": {
+        "x": 3112,
+        "y": 770
+      },
+      "layer": 1,
+      "rotation": 228,
+      "scale": 1.09,
+      "variant": 0
+    },
+    {
+      "id": "reed-5",
+      "kind": "reed",
+      "at": {
+        "x": 2792,
+        "y": 2136
+      },
+      "layer": 1,
+      "rotation": 265,
+      "scale": 1.12,
+      "variant": 1
+    },
+    {
+      "id": "reed-6",
+      "kind": "reed",
+      "at": {
+        "x": 3383,
+        "y": 2144
+      },
+      "layer": 1,
+      "rotation": 116,
+      "scale": 0.87,
+      "variant": 0
+    },
+    {
+      "id": "reed-7",
+      "kind": "reed",
+      "at": {
+        "x": 1554,
+        "y": 2502
+      },
+      "layer": 1,
+      "rotation": 154,
+      "scale": 0.84,
+      "variant": 0
+    },
+    {
+      "id": "reed-8",
+      "kind": "reed",
+      "at": {
+        "x": 4687,
+        "y": 619
+      },
+      "layer": 1,
+      "rotation": 269,
+      "scale": 0.77,
+      "variant": 1
+    },
+    {
+      "id": "reed-9",
+      "kind": "reed",
+      "at": {
+        "x": 1986,
+        "y": 264
+      },
+      "layer": 1,
+      "rotation": 98,
+      "scale": 1.08,
+      "variant": 2
+    },
+    {
+      "id": "crates-1",
+      "kind": "crates",
+      "at": {
+        "x": 3084,
+        "y": 2071
+      },
+      "layer": 1,
+      "rotation": 223,
+      "scale": 0.76,
+      "variant": 1
+    },
+    {
+      "id": "crates-2",
+      "kind": "crates",
+      "at": {
+        "x": 1592,
+        "y": 1069
+      },
+      "layer": 1,
+      "rotation": 268,
+      "scale": 1.18,
+      "variant": 0
+    },
+    {
+      "id": "crates-3",
+      "kind": "crates",
+      "at": {
+        "x": 4035,
+        "y": 2375
+      },
+      "layer": 1,
+      "rotation": 23,
+      "scale": 1.15,
+      "variant": 3
+    },
+    {
+      "id": "crates-4",
+      "kind": "crates",
+      "at": {
+        "x": 5082,
+        "y": 2195
+      },
+      "layer": 1,
+      "rotation": 304,
+      "scale": 1.02,
+      "variant": 1
+    },
+    {
+      "id": "crates-5",
+      "kind": "crates",
+      "at": {
+        "x": 4766,
+        "y": 1425
+      },
+      "layer": 1,
+      "rotation": 228,
+      "scale": 1.02,
+      "variant": 3
+    },
+    {
+      "id": "crates-6",
+      "kind": "crates",
+      "at": {
+        "x": 1341,
+        "y": 361
+      },
+      "layer": 1,
+      "rotation": 67,
+      "scale": 1.22,
+      "variant": 0
+    },
+    {
+      "id": "crates-7",
+      "kind": "crates",
+      "at": {
+        "x": 1449,
+        "y": 1863
+      },
+      "layer": 1,
+      "rotation": 116,
+      "scale": 1,
+      "variant": 1
+    },
+    {
+      "id": "crates-8",
+      "kind": "crates",
+      "at": {
+        "x": 1238,
+        "y": 1409
+      },
+      "layer": 1,
+      "rotation": 119,
+      "scale": 1,
+      "variant": 0
+    },
+    {
+      "id": "crates-9",
+      "kind": "crates",
+      "at": {
+        "x": 4128,
+        "y": 568
+      },
+      "layer": 1,
+      "rotation": 50,
+      "scale": 1.07,
+      "variant": 1
+    },
+    {
+      "id": "crates-10",
+      "kind": "crates",
+      "at": {
+        "x": 4185,
+        "y": 551
+      },
+      "layer": 1,
+      "rotation": 63,
+      "scale": 0.96,
+      "variant": 0
+    },
+    {
+      "id": "crates-11",
+      "kind": "crates",
+      "at": {
+        "x": 4721,
+        "y": 798
+      },
+      "layer": 1,
+      "rotation": 238,
+      "scale": 1.08,
+      "variant": 0
+    },
+    {
+      "id": "crates-12",
+      "kind": "crates",
+      "at": {
+        "x": 4737,
+        "y": 1192
+      },
+      "layer": 1,
+      "rotation": 238,
+      "scale": 0.9,
+      "variant": 3
+    },
+    {
+      "id": "crates-13",
+      "kind": "crates",
+      "at": {
+        "x": 954,
+        "y": 434
+      },
+      "layer": 1,
+      "rotation": 258,
+      "scale": 1.14,
+      "variant": 0
+    },
+    {
+      "id": "crates-14",
+      "kind": "crates",
+      "at": {
+        "x": 4425,
+        "y": 233
+      },
+      "layer": 1,
+      "rotation": 208,
+      "scale": 0.88,
+      "variant": 1
+    },
+    {
+      "id": "crates-15",
+      "kind": "crates",
+      "at": {
+        "x": 1168,
+        "y": 431
+      },
+      "layer": 1,
+      "rotation": 97,
+      "scale": 0.81,
+      "variant": 0
+    },
+    {
+      "id": "crates-16",
+      "kind": "crates",
+      "at": {
+        "x": 4186,
+        "y": 2485
+      },
+      "layer": 1,
+      "rotation": 356,
+      "scale": 0.85,
+      "variant": 3
+    },
+    {
+      "id": "crates-17",
+      "kind": "crates",
+      "at": {
+        "x": 4626,
+        "y": 2473
+      },
+      "layer": 1,
+      "rotation": 282,
+      "scale": 0.78,
+      "variant": 0
+    },
+    {
+      "id": "crates-18",
+      "kind": "crates",
+      "at": {
+        "x": 1345,
+        "y": 647
+      },
+      "layer": 1,
+      "rotation": 176,
+      "scale": 0.87,
+      "variant": 3
+    }
+  ],
   "gates": [
     {
       "id": "west-bronze-gate",
