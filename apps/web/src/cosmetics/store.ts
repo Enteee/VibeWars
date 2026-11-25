@@ -1,9 +1,9 @@
 /**
  * This browser's cosmetics (ADR-0056), kept beside its player key and so
- * shared by all its characters: what is picked per slot, the key's last
- * known leaderboard facts, so a failed fetch still draws your own, and
- * whether other players' cosmetics are shown. A stored record of any
- * other shape is deleted, not read (ADR-0016): the picks start empty.
+ * shared by all its characters: what is picked per slot, and the key's
+ * last known leaderboard facts, so a failed fetch still draws your own.
+ * A stored record of any other shape is deleted, not read (ADR-0016):
+ * the picks start empty.
  */
 
 import { STORAGE_NAMESPACE } from "../storage/namespace.js";
