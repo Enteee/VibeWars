@@ -5,6 +5,7 @@ import { decorCommands, decorShadow, type MapDecor } from "./decor-art.js";
 import {
   DECOR_TEXTURE_MAX_SIDE,
   DECOR_TEXTURE_SCALE,
+  DecorTextureKeys,
   decorBounds,
   packDecor,
   type DecorRect,
@@ -122,5 +123,18 @@ describe("packDecor (#4017)", () => {
 
   it("makes no sheet for no props", () => {
     expect(packDecor([])).toEqual({ sheets: [], slots: [] });
+  });
+});
+
+describe("DecorTextureKeys", () => {
+  it("removes every key it made when dropped, and makes none twice", () => {
+    const keys = new DecorTextureKeys("decor");
+    const made = [keys.next(), keys.next(), keys.next()];
+    expect(new Set(made).size).toBe(3);
+    const removed: string[] = [];
+    keys.drop((key) => removed.push(key));
+    expect(removed).toEqual(made);
+    expect(keys.size).toBe(0);
+    expect(made).not.toContain(keys.next());
   });
 });

@@ -125,3 +125,38 @@ export function packDecor(
   }
   return { sheets, slots };
 }
+
+/**
+ * The keys of the sheets baked for one map, so all of them go when the
+ * map is drawn again or the scene shuts down, and none outlives its match.
+ */
+export class DecorTextureKeys {
+  /** Sheets made by every scene so far: the texture manager is the game's, not a scene's. */
+  private static made = 0;
+  private readonly keys: string[] = [];
+  private readonly prefix: string;
+
+  constructor(prefix: string) {
+    this.prefix = prefix;
+  }
+
+  /** A key no sheet of this scene has had, now held until `drop`. */
+  next(): string {
+    const key = `${this.prefix}-${String(DecorTextureKeys.made)}`;
+    DecorTextureKeys.made += 1;
+    this.keys.push(key);
+    return key;
+  }
+
+  /** Each key held, given to `remove`, and none held after. */
+  drop(remove: (key: string) => void): void {
+    for (const key of this.keys.splice(0)) {
+      remove(key);
+    }
+  }
+
+  /** How many sheets are held. */
+  get size(): number {
+    return this.keys.length;
+  }
+}
