@@ -1,3 +1,4 @@
+import fs from "node:fs";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -99,5 +100,17 @@ describe("captions (#3811)", () => {
       "Earn the look. Never",
       "the advantage.",
     ]);
+  });
+
+  it("fits the longest caption in a 9:16 frame at 0.6 em a glyph", () => {
+    const box = captionBox(1080, 1920);
+    /** @type {unknown} */
+    const raw = JSON.parse(fs.readFileSync(new URL("captions.json", import.meta.url), "utf8"));
+    const longest = /** @type {{ captions: { text: string }[] }} */ (raw);
+    for (const { text } of longest.captions) {
+      for (const line of wrap(text, box.maxChars)) {
+        expect(line.length * 0.6 * box.fontSize).toBeLessThanOrEqual(1080);
+      }
+    }
   });
 });

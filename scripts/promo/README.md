@@ -33,7 +33,8 @@ workspace packages built (`pnpm -r --filter "./packages/**" run build`).
   onsets after that mark and starts the music so a beat lands on the
   interrupt's frame.
 - **Captions** are `captions.json`, English only, drawn by ffmpeg in the
-  system's bold sans. They are not `t()` strings.
+  system's bold monospace, the wordmark's face, in its blue (#59c2ff); the name
+  is blue "Vibe" and red "Wars". They are not `t()` strings.
 - **Fixture.** Every scene starts in a fresh browser context: no real
   player's data.
 
