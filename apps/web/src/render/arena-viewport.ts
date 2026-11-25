@@ -2,7 +2,7 @@ import type Phaser from "phaser";
 
 import { vec2, type Vec2 } from "@vibewars/game-core";
 
-import { captureClock, now } from "../capture-clock.js";
+import { captureClock } from "../capture-clock.js";
 import type { ArenaScene } from "./arena-scene.js";
 import { ARENA_BACKGROUND } from "./arena-palette.js";
 import {
@@ -392,7 +392,7 @@ export async function createArenaViewport(
       }
       // A pointer event's timeStamp is on performance.now()'s clock: the
       // hover ring turns to the ground below as the hold passes long-press.
-      scene.setHeldBelow(() => gesture.heldLong(now()));
+      scene.setHeldBelow(() => gesture.heldLong(performance.now()));
       return () => {
         for (const type of FINGER_TYPES) {
           canvas.removeEventListener(type, onTouch);
