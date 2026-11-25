@@ -402,7 +402,16 @@ import {
   steadyLighting,
   type LightSample,
 } from "./lighting-model.js";
-import { WATER_ART, waterArtKey, type WaterPainter } from "./water-painter.js";
+import { liquidCells, tiledCells } from "./liquid-cells.js";
+import {
+  WATER_ART,
+  WATER_CELLS,
+  waterArtKey,
+  waterSurface,
+  type CellLayer,
+  type WaterArt,
+  type WaterPainter,
+} from "./water-painter.js";
 import { waterPieces, waterShapeOf, type WaterPiece, type WaterShape } from "./water-shape.js";
 import { SPIRE_LOOK, ZONE_EDGE_WIDTH, ZONE_LOOK, strikeEdgeScale } from "./zone-look.js";
 import { HAZARD_ART, hazardKindOf, pathMotionAt, phaseProgressAt } from "./hazard-marks.js";
@@ -551,6 +560,19 @@ interface WaterOverTunnel {
   readonly ripples: Phaser.GameObjects.Graphics;
   readonly painter: WaterPainter;
 }
+
+/** The liquid cells over the water (#4058), built with its shapes: their sprites drift every frame. */
+interface WaterCells {
+  readonly shapes: readonly WaterSplit[];
+  readonly objects: readonly Phaser.GameObjects.GameObject[];
+  readonly layers: readonly {
+    readonly sprite: Phaser.GameObjects.TileSprite;
+    readonly layer: CellLayer;
+  }[];
+}
+
+/** The liquid cells' texture (#4058), painted once per game. */
+const WATER_CELLS_TILE = "liquid-cells-water";
 
 const TARGET_RING = 0xffd866;
 /** The `condition` orange: your team's called foe wears its chevron (#443). */
@@ -872,6 +894,8 @@ export class ArenaScene extends Phaser.Scene {
    * index: faded with its cover.
    */
   private readonly waterOverTunnels = new Map<number, WaterOverTunnel>();
+  /** The cells drifting over the water that is not over a tunnel (#4058), if any. */
+  private waterCells: WaterCells | undefined;
   /** The ripples on each layer's water, drawn every frame. */
   private readonly rippleGraphics = new Map<
     number,
@@ -4015,10 +4039,12 @@ export class ArenaScene extends Phaser.Scene {
           pieces.length === 1 ? this.waterPainter(surface) : this.piecePainter(surface, piece),
           { ...shape, outline: piece.outline, ripples: piece.ripples },
           line,
+          { wall: pitWall(palette), lip: palette.wallTop, outline: palette.wallStroke },
         );
         surface.restore();
       }
     }
+    this.buildWaterCells(ground);
     this.drawPits(next.structure, line, palette);
     const lifts: { readonly frame: LiftFrame; readonly upperLayer: number }[] = [];
     for (const transition of next.structure.transitions) {
@@ -5615,6 +5641,13 @@ export class ArenaScene extends Phaser.Scene {
 
   /** The water's ripples (#2984), at render time; still under reduced motion. */
   private drawRipples(): void {
+    const seconds = this.reducedMotion ? 0 : this.now;
+    for (const { sprite, layer } of this.waterCells?.layers ?? []) {
+      sprite.setTilePosition(
+        (layer.drift.x * seconds) / layer.scale,
+        (layer.drift.y * seconds) / layer.scale,
+      );
+    }
     for (const { graphics } of this.rippleGraphics.values()) {
       graphics.clear();
     }
@@ -6161,14 +6194,107 @@ export class ArenaScene extends Phaser.Scene {
 
   /** `g` as a piece of water draws through it (#3350): its shore stroked, never a cut edge. */
   private piecePainter(g: Phaser.GameObjects.Graphics, piece: WaterPiece): WaterPainter {
-    return {
-      ...this.waterPainter(g),
-      strokeOutline: () => {
-        for (const [a, b] of piece.shore) {
-          g.lineBetween(a.x, a.y, b.x, b.y);
+    return { ...this.waterPainter(g), shore: () => piece.shore };
+  }
+
+  /**
+   * The liquid cells over the water (#4058), built when its shapes change:
+   * per layer and depth, two tiled layers of the cells' texture, added
+   * over the surface and held to it by the stencil, as the wall tops'
+   * texture is. Water over a tunnel fades with its cover and has none.
+   */
+  private buildWaterCells(ground: number): void {
+    if (this.waterCells?.shapes === this.waterShapes) {
+      return;
+    }
+    for (const object of this.waterCells?.objects ?? []) {
+      object.destroy();
+    }
+    const key = this.waterCellsTile();
+    const objects: Phaser.GameObjects.GameObject[] = [];
+    const layers: { sprite: Phaser.GameObjects.TileSprite; layer: CellLayer }[] = [];
+    const groups = new Map<
+      string,
+      { layer: number; art: WaterArt; outlines: (readonly Vec2[])[] }
+    >();
+    for (const { shape, pieces } of this.waterShapes) {
+      const art = WATER_ART[waterArtKey(shape.depth)];
+      const lift = elevationOf(shape.layer, ground);
+      const id = `${String(shape.layer)} ${shape.depth}`;
+      const group = groups.get(id) ?? { layer: shape.layer, art, outlines: [] };
+      groups.set(id, group);
+      for (const piece of pieces) {
+        if (piece.tunnel === undefined) {
+          group.outlines.push(
+            waterSurface(art, piece.outline, piece.shore).map(({ x, y }) => ({ x, y: y - lift })),
+          );
         }
-      },
-    };
+      }
+    }
+    for (const { layer, art, outlines } of groups.values()) {
+      const box = boxOfPoints(...outlines);
+      if (box === undefined) {
+        continue;
+      }
+      const depth = renderOrder({ kind: "water", layer, part: "cells" });
+      const [x, y] = [Math.floor(box.left) - 1, Math.floor(box.top) - 1];
+      const [w, h] = [Math.ceil(box.right) + 1 - x, Math.ceil(box.bottom) + 1 - y];
+      const region = (value: number, fill: (g: Phaser.GameObjects.Graphics) => void): void => {
+        const g = this.make.graphics({}, false);
+        g.fillStyle(0xffffff, 1);
+        fill(g);
+        objects.push(
+          this.add
+            .stencil(0, 0, [g], { stencilLayerMode: "clearRegion", stencilClearValue: value })
+            .setDepth(depth),
+        );
+      };
+      region(1, (g) => g.fillRect(x, y, w, h));
+      region(0, (g) => {
+        for (const points of outlines) {
+          this.fillShape(g, { kind: "polygon", points });
+        }
+      });
+      for (const cell of art.cells) {
+        const sprite = this.add
+          .tileSprite(x, y, w, h, key)
+          .setOrigin(0, 0)
+          .setTileScale(cell.scale)
+          .setTint(art.look.cell)
+          .setAlpha(art.look.cellAlpha)
+          .setBlendMode(Phaser.BlendModes.ADD)
+          .setDepth(depth);
+        objects.push(sprite);
+        layers.push({ sprite, layer: cell });
+      }
+      region(0, (g) => g.fillRect(x, y, w, h));
+    }
+    this.waterCells = { shapes: this.waterShapes, objects, layers };
+  }
+
+  /** The liquid cells' texture (#4058): black cells, white gaps, tinted where it is used. */
+  private waterCellsTile(): string {
+    if (!this.textures.exists(WATER_CELLS_TILE)) {
+      const { size } = WATER_CELLS;
+      const texture = this.textures.createCanvas(WATER_CELLS_TILE, size, size);
+      if (texture === null) {
+        throw new Error("water: could not create the liquid cells' tile");
+      }
+      const { context } = texture;
+      context.fillStyle = "#ffffff";
+      context.fillRect(0, 0, size, size);
+      context.fillStyle = "#000000";
+      for (const cell of tiledCells(liquidCells(WATER_CELLS), size)) {
+        context.beginPath();
+        for (const { x, y } of cell) {
+          context.lineTo(x, y);
+        }
+        context.closePath();
+        context.fill();
+      }
+      texture.refresh();
+    }
+    return WATER_CELLS_TILE;
   }
 
   /** `g` as water draws through it: outlines filled as triangles, as a wall's are. */
@@ -6179,10 +6305,10 @@ export class ArenaScene extends Phaser.Scene {
       fillOutline: (outline) => {
         this.fillShape(g, { kind: "polygon", points: outline });
       },
-      strokeOutline: (outline) => {
-        this.strokeShape(g, { kind: "polygon", points: outline });
-      },
       lineBetween: (x1, y1, x2, y2) => g.lineBetween(x1, y1, x2, y2),
+      strokeEllipse: (x, y, width, height) => g.strokeEllipse(x, y, width, height),
+      shore: (outline) =>
+        outline.map((a, k) => [a, outline[(k + 1) % outline.length] ?? a] as const),
     };
   }
 
