@@ -52,9 +52,13 @@ Okvir amblema tanak je rub oko amblema na tvom plaštu ceha. Nikad ne prekriva, 
 
 ## Kako je nositi
 
-Otvori Opcije i odaberi **Kozmetika**. Svako mjesto navodi svoje predmete, svaki označen kao
-dostupan ili zaključan, uz ono čime se zarađuje. Tvoj izbor vrijedi odmah. Drugi igrači ga vide od
-sljedećeg predvorja kojem se pridružiš.
+Otvori Opcije i odaberi **Kozmetika**. Svako mjesto je jedan red uzoraka, svaki mala slika svog
+predmeta; prvi, prazan prekrižen krug, znači da ne nosiš ništa. Odabrani uzorak ima plavi prsten.
+Tekst pokraj reda (ispod njega na mobitelu) imenuje uzorak na koji pokazuješ ili koji je u fokusu, i
+čime se zarađuje. Zaključan uzorak je zatamnjen, s malim lokotom. Tvoj izbor vrijedi odmah. Drugi
+igrači ga vide od sljedećeg predvorja kojem se pridružiš.
+
+Iznad redova tvoj lik nosi tvoj izgled te stoji, hoda i zamahuje, pa se aura, trag i trag oružja vide u pokretu. Pritisni i drži uzorak da ga isprobaš, čak i zaključan: redak kaže što pregledavaš i, dok je zaključan, čime se zarađuje. Pusti na zarađenom predmetu da ga nosiš. Pusti na zaključanom ili kliži s uzorka i ništa se ne mijenja. Tipkovnicom drži razmaknicu na uzorku.
 
 ## Kozmetika drugih igrača
 

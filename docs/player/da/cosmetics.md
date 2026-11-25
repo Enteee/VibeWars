@@ -53,9 +53,13 @@ En emblemramme er en tynd kant rundt om emblemet på din laugskappe. Den dækker
 
 ## Sådan bærer du det
 
-Åbn Valg, og vælg **Kosmetik**. Hver plads viser sine genstande, hver markeret som brugbar eller
-låst, med hvad der optjener den. Dit valg gælder med det samme. Andre spillere ser det fra den
-næste lobby, du går ind i.
+Åbn Valg, og vælg **Kosmetik**. Hver plads er én række prøver, hver et lille billede af sin
+genstand; den første, en tom overstreget cirkel, betyder, at du ikke bærer noget. Den valgte prøve
+har en blå ring. Teksten ved siden af rækken (under den på en telefon) navngiver den prøve, du peger
+på eller har fokus på, og hvad der optjener den. En låst prøve er nedtonet, med en lille hængelås.
+Dit valg gælder med det samme. Andre spillere ser det fra den næste lobby, du går ind i.
+
+Over rækkerne bærer din karakter dit look og står, går og svinger, så auraen, sporet og våbensporet ses i bevægelse. Tryk og hold på en prøve for at prøve den, også en låst: linjen siger, hvad du forhåndsviser, og mens den er låst, hvad der optjener den. Slip på en optjent ting for at bære den. Slip på en låst, eller glid væk fra prøven, og intet ændres. Med tastatur holder du mellemrum nede på en prøve.
 
 ## Se andre spilleres kosmetik
 

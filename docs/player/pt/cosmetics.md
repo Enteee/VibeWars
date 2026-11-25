@@ -54,9 +54,14 @@ Uma moldura do emblema é uma borda fina à volta do emblema da tua capa de guil
 
 ## Como usá-los
 
-Abre Opções e escolhe **Cosméticos**. Cada espaço lista os seus itens, cada um marcado como
-disponível ou bloqueado, com o que o desbloqueia. A tua escolha aplica-se de imediato. Os outros
-jogadores veem-na a partir do próximo lobby em que entrares.
+Abre Opções e escolhe **Cosméticos**. Cada espaço é uma fila de amostras, cada qual uma pequena
+imagem do seu item; a primeira, um círculo vazio riscado, não veste nada. A amostra escolhida tem um
+anel azul. A linha ao lado da fila (por baixo, num telemóvel) indica a amostra para que apontas ou
+que tens em foco, e o que a desbloqueia. Uma amostra bloqueada aparece esbatida, com um pequeno
+cadeado. A tua escolha aplica-se de imediato. Os outros jogadores veem-na a partir do próximo lobby
+em que entrares.
+
+Acima das filas, a tua personagem veste o teu visual e fica parada, anda e golpeia, para veres a aura, o rasto e o rasto da arma em movimento. Mantém premida uma amostra para a experimentar, mesmo bloqueada: a linha diz o que estás a pré-visualizar e, enquanto estiver bloqueada, o que a desbloqueia. Larga num item conquistado para o usar. Larga num bloqueado, ou desliza para fora da amostra, e nada muda. Com teclado, mantém Espaço premido numa amostra.
 
 ## Ver os cosméticos de outros jogadores
 

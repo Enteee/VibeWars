@@ -23,6 +23,12 @@ export const TUCKED_BEHIND = "data-tucked-behind";
  */
 export const PUTS_AWAY = "data-puts-away";
 
+/**
+ * On something drawn over a drawer that a press on leaves it open, as
+ * the tutorial coach, whose bubble's Got it walks the rail's modes (#3990).
+ */
+export const DRAWER_INSIDE = "data-drawer-inside";
+
 export function h(tag: string, className?: string, text?: string): HTMLElement {
   const node = document.createElement(tag);
   if (className !== undefined) {

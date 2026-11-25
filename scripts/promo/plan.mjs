@@ -137,7 +137,8 @@ export function captionBox(width, height) {
     fontSize: Math.round((portrait ? width : height) * (portrait ? 0.065 : 0.07)),
     // Centre line of the text, as a fraction of the frame's height.
     y: Math.round(height * (portrait ? 0.74 : 0.86)),
-    maxChars: portrait ? 22 : 48,
+    // A monospace glyph is 0.6 em: 16 of them fill 0.9 of a portrait frame.
+    maxChars: portrait ? 16 : 36,
   };
 }
 

@@ -424,7 +424,9 @@ export default {
   "cosmetics.item.trailFrost": "Rastro de escarcha",
   "cosmetics.item.trailMoss": "Rastro de musgo",
   "cosmetics.item.trailStarlight": "Rastro de luz estelar",
+  "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Bloqueado",
+  "cosmetics.previewing": "Vista previa: {name}",
   "cosmetics.none": "Ninguno",
   "cosmetics.note":
     "Solo estético: ningún cosmético cambia cómo se juega. Se ganan con victorias clasificatorias en la clasificación pública y los comparten todos tus personajes.",
@@ -1738,7 +1740,6 @@ export default {
     "Ascenso de los Héroes es una serie de mapas, 8 contra 8, contra equipos de tu ronda. Si ganas, pasas al siguiente mapa, hasta el Salón de los héroes; si pierdes, empiezas de nuevo.",
   "tutorial.menu.modes.hostedGame":
     "Una Partida alojada es tu propia sala: envía a tus amigos el enlace de invitación y elige el mapa y el tamaño del equipo. Los bots ocupan cada plaza que nadie toma.",
-  "tutorial.menu.modes.open": "Abre el modo iluminado del lateral.",
   "tutorial.menu.modes.randomArena":
     "Arena aleatoria es la lucha más rápida: tu propio personaje, en un equipo de desconocidos, 1v1, 2v2 o 4v4. El mapa se sortea por ti, y cada plaza es un jugador real.",
   "tutorial.menu.modes.teamArena":
@@ -1802,10 +1803,8 @@ export default {
   "tutorial.heal.ow": "¡Ay! La roca me dio. ¿Me echas una mano?",
   "tutorial.heal.praise": "¡Mucho mejor, gracias! También sabes curar.",
   "tutorial.learn": "Aprender a jugar",
-  "tutorial.look.hint":
-    "Aleja la vista y arrástrala hacia el norte. ¡Encuentra el teletransportador!",
-  "tutorial.look.how":
-    "La rueda del ratón hace zoom. Mantén el botón derecho y arrastra para mirar.",
+  "tutorial.look.hint": "Arrastra la vista hacia el norte. ¡Encuentra el teletransportador!",
+  "tutorial.look.how": "Mantén el botón derecho y arrastra para mirar.",
   "tutorial.look.intro":
     "Quizá este teletransportador nos lleve alrededor del campo de batalla. ¡Mira al norte!",
   "tutorial.look.praise": "¡Ahí está! Nuestro camino alrededor de la lucha.",
@@ -1840,7 +1839,7 @@ export default {
     "Primero toca mi nombre en la lista del grupo. Toca Grupo si la lista está cerrada.",
   "tutorial.touch.healHow":
     "Toca Grupo si la lista está cerrada, luego mi nombre y luego la habilidad que brilla.",
-  "tutorial.touch.look": "Pellizca para hacer zoom. Arrastra un dedo para mirar.",
+  "tutorial.touch.look": "Arrastra un dedo para mirar.",
   "tutorial.touch.pingHow": "Toca la brújula o arrastra sobre ella para trazar una línea.",
   "tutorial.touch.ratsHow": "Toca una rata para seleccionarla.",
   "tutorial.touch.tunnelHow": "Toca los escalones de bajada y luego la marca tras el otro extremo.",

@@ -368,7 +368,9 @@ export default {
   "cosmetics.item.trailFrost": "霜冻足迹",
   "cosmetics.item.trailMoss": "苔藓足迹",
   "cosmetics.item.trailStarlight": "星光足迹",
+  "cosmetics.detail": "{name}：{requirement}",
   "cosmetics.locked": "未解锁",
+  "cosmetics.previewing": "预览：{name}",
   "cosmetics.none": "无",
   "cosmetics.note":
     "纯外观：任何装扮都不会影响玩法。通过公开排行榜上的排位胜场获得，你的所有角色共享。",
@@ -1520,7 +1522,6 @@ export default {
     "英雄之路是一连串地图，8对8，对手是与你同一轮的队伍。赢了就进入下一张地图，一路打到英雄大厅；输了就从头再来。",
   "tutorial.menu.modes.hostedGame":
     "自建游戏是你自己的大厅：把邀请链接发给好友，再选好地图和队伍人数。没人占的位置都由机器人来玩。",
-  "tutorial.menu.modes.open": "打开侧边亮起的模式。",
   "tutorial.menu.modes.randomArena":
     "随机竞技场是最快的战斗：用你自己的角色，和陌生人组队，1v1、2v2或4v4。地图随机抽取，每个位置都是真人玩家。",
   "tutorial.menu.modes.teamArena":
@@ -1576,8 +1577,8 @@ export default {
   "tutorial.heal.ow": "哎哟！被石头砸中了。帮我一下？",
   "tutorial.heal.praise": "好多了，谢谢！你也会治疗呢。",
   "tutorial.learn": "学习游戏",
-  "tutorial.look.hint": "缩小视野,再把视角向北拖动。找到传送门!",
-  "tutorial.look.how": "鼠标滚轮缩放。按住右键拖动来环顾四周。",
+  "tutorial.look.hint": "把视角向北拖动。找到传送门!",
+  "tutorial.look.how": "按住右键拖动来环顾四周。",
   "tutorial.look.intro": "也许这个传送门能带我们绕过战场。往北看!",
   "tutorial.look.praise": "在那儿!我们绕过战斗的路。",
   "tutorial.offer": "新来的?你的导师会教你基础。",
@@ -1608,7 +1609,7 @@ export default {
   "tutorial.touch.climbUnder": "长按。虚线圆环在你下方。",
   "tutorial.touch.healHint": "先在队伍列表里点按我的名字。如果列表关着，先点按“小队”。",
   "tutorial.touch.healHow": "如果列表关着，先点按“小队”，再点按我的名字，然后点按发光的技能。",
-  "tutorial.touch.look": "双指捏合缩放。单指拖动环顾四周。",
+  "tutorial.touch.look": "单指拖动环顾四周。",
   "tutorial.touch.pingHow": "点按罗盘，或在罗盘上拖动画一条线。",
   "tutorial.touch.ratsHow": "点按老鼠即可选中它。",
   "tutorial.touch.tunnelHow": "点按下行的台阶，再点按另一端外的标记。",

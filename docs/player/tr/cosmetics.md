@@ -53,9 +53,14 @@ Amblem çerçevesi, lonca pelerinindeki amblemin çevresinde ince bir kenardır.
 
 ## Nasıl kullanılır
 
-Ayarlar'ı aç ve **Kozmetikler** bölümünü seç. Her yuva kendi öğelerini listeler; her biri
-kullanılabilir ya da kilitli olarak işaretlenir ve neyle kazanıldığı yazar. Seçimin hemen geçerli
-olur. Diğer oyuncular onu katıldığın bir sonraki lobiden itibaren görür.
+Ayarlar'ı aç ve **Kozmetikler** bölümünü seç. Her yuva tek sıra örnekten oluşur; her biri öğesinin
+küçük bir resmidir. İlki, üstü çizili boş bir daire, hiçbir şey giymemek demektir. Seçtiğin örneğin
+etrafında mavi bir halka olur. Sıranın yanındaki satır (telefonda altındaki) üzerine geldiğin ya da
+odakladığın örneğin adını ve neyle kazanıldığını yazar. Kilitli bir örnek soluk görünür ve üzerinde
+küçük bir asma kilit olur. Seçimin hemen geçerli olur. Diğer oyuncular onu katıldığın bir sonraki
+lobiden itibaren görür.
+
+Sıraların üstünde karakterin görünümünü giyer; durur, yürür ve savurur, böylece aura, iz ve silah izi hareket halinde görünür. Denemek için bir örneğe basılı tut, kilitli olsa bile: satır neyi önizlediğini ve kilitliyken onu neyin kazandırdığını söyler. Kazanılmış bir öğede bırakırsan onu giyersin. Kilitli bir öğede bırakırsan ya da örneğin dışına kaydırırsan hiçbir şey değişmez. Klavyeyle bir örnekte Boşluk tuşunu basılı tut.
 
 ## Diğer oyuncuların kozmetiklerini görmek
 

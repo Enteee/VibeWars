@@ -402,7 +402,9 @@ export default {
   "cosmetics.item.trailFrost": "Frostspor",
   "cosmetics.item.trailMoss": "Mosspor",
   "cosmetics.item.trailStarlight": "Stjernelysspor",
+  "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Låst",
+  "cosmetics.previewing": "Forhåndsvisning: {name}",
   "cosmetics.none": "Ingen",
   "cosmetics.note":
     "Kun for udseendet: ingen kosmetik ændrer, hvordan noget spiller. Optjenes med rangerede sejre på den offentlige rangliste og deles af alle dine figurer.",
@@ -1636,7 +1638,6 @@ export default {
     "Heltenes opstigning er en række baner, 8 mod 8, mod hold i din runde. Vinder du, går du videre til næste bane, helt op til Heltenes Hal; taber du, starter du forfra.",
   "tutorial.menu.modes.hostedGame":
     "Et værtsspil er din egen lobby: send venner invitationslinket, og vælg bane og holdstørrelse. Bots spiller hver plads, ingen tager.",
-  "tutorial.menu.modes.open": "Åbn den oplyste spillemåde i siden.",
   "tutorial.menu.modes.randomArena":
     "Tilfældig arena er den hurtigste kamp: din egen figur på et hold af fremmede, 1v1, 2v2 eller 4v4. Banen trækkes for dig, og hver plads er en rigtig spiller.",
   "tutorial.menu.modes.teamArena":
@@ -1699,8 +1700,8 @@ export default {
   "tutorial.heal.ow": "Av! Stenen ramte mig. Lidt hjælp?",
   "tutorial.heal.praise": "Meget bedre, tak! Du kan også hele.",
   "tutorial.learn": "Lær at spille",
-  "tutorial.look.hint": "Zoom ud, og træk så udsynet mod nord. Find teleporten!",
-  "tutorial.look.how": "Musehjulet zoomer. Hold højre knap nede og træk for at se dig om.",
+  "tutorial.look.hint": "Træk udsynet mod nord. Find teleporten!",
+  "tutorial.look.how": "Hold højre knap nede og træk for at se dig om.",
   "tutorial.look.intro": "Måske kan denne teleport føre os uden om slagmarken. Kig mod nord!",
   "tutorial.look.praise": "Der er den! Vores vej uden om kampen.",
   "tutorial.offer": "Ny her? Din læremester viser dig det grundlæggende.",
@@ -1734,7 +1735,7 @@ export default {
     "Tryk først på mit navn i gruppelisten. Tryk på Gruppe, hvis listen er lukket.",
   "tutorial.touch.healHow":
     "Tryk på Gruppe, hvis listen er lukket, så på mit navn og så på den lysende evne.",
-  "tutorial.touch.look": "Knib for at zoome. Træk med én finger for at se dig om.",
+  "tutorial.touch.look": "Træk med én finger for at se dig om.",
   "tutorial.touch.pingHow": "Tryk på kompasset, eller træk på det for at tegne en linje.",
   "tutorial.touch.ratsHow": "Tryk på en rotte for at vælge den.",
   "tutorial.touch.tunnelHow": "Tryk på trinene ned, så på mærket bag den anden ende.",
