@@ -404,6 +404,7 @@ export default {
   "cosmetics.item.trailStarlight": "Sterrenlichtspoor",
   "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Vergrendeld",
+  "cosmetics.previewing": "Voorbeeld: {name}",
   "cosmetics.none": "Geen",
   "cosmetics.note":
     "Puur voor het uiterlijk: geen enkele cosmetic verandert hoe iets speelt. Verdiend met gerankte zeges op de openbare ranglijst en gedeeld door al je personages.",

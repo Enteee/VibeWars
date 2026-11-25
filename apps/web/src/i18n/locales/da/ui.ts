@@ -404,6 +404,7 @@ export default {
   "cosmetics.item.trailStarlight": "Stjernelysspor",
   "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Låst",
+  "cosmetics.previewing": "Forhåndsvisning: {name}",
   "cosmetics.none": "Ingen",
   "cosmetics.note":
     "Kun for udseendet: ingen kosmetik ændrer, hvordan noget spiller. Optjenes med rangerede sejre på den offentlige rangliste og deles af alle dine figurer.",

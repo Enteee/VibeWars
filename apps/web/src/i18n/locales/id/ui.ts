@@ -378,6 +378,7 @@ export default {
   "cosmetics.item.trailStarlight": "Jejak cahaya bintang",
   "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Terkunci",
+  "cosmetics.previewing": "Pratinjau: {name}",
   "cosmetics.none": "Tidak ada",
   "cosmetics.note":
     "Murni tampilan: tidak ada kosmetik yang mengubah cara bermain. Didapat dari kemenangan peringkat di papan peringkat publik, dan dipakai bersama oleh semua karaktermu.",

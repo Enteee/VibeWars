@@ -403,6 +403,7 @@ export default {
   "cosmetics.item.trailStarlight": "Yıldız ışığı izi",
   "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Kilitli",
+  "cosmetics.previewing": "Önizleme: {name}",
   "cosmetics.none": "Yok",
   "cosmetics.note":
     "Yalnızca görünüş için: hiçbir kozmetik oynanışı değiştirmez. Herkese açık lider tablosunda dereceli galibiyetlerle kazanılır ve tüm karakterlerin tarafından paylaşılır.",

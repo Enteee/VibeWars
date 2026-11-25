@@ -373,6 +373,7 @@ export default {
   "cosmetics.item.trailStarlight": "Vệt ánh sao",
   "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Đã khóa",
+  "cosmetics.previewing": "Đang xem trước: {name}",
   "cosmetics.none": "Không",
   "cosmetics.note":
     "Chỉ để làm đẹp: không vật phẩm trang trí nào thay đổi lối chơi. Nhận được nhờ thắng trận xếp hạng trên bảng xếp hạng công khai, dùng chung cho mọi nhân vật của bạn.",

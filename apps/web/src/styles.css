@@ -2020,6 +2020,11 @@ body:has(> .splash) #menu-background::after {
   height: 44px;
   padding: 0;
   border-radius: 6px;
+  /* A held swatch previews (#3989): no text selection or callout from a long press. */
+  user-select: none;
+  -webkit-touch-callout: none;
+  /* The pane scrolls up and down from a swatch; a held finger's sideways drift does not pan. */
+  touch-action: pan-y;
 }
 
 .screen button.cosmetics-swatch[aria-pressed="true"] {
@@ -2224,6 +2229,35 @@ body:has(> .splash) #menu-background::after {
 
 .cosmetics-note {
   color: var(--ink-dim);
+}
+
+/* The figure wearing the shown look (#3989), its nameplate above it, as in the lobby. */
+.cosmetics-preview {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  margin: 0 auto 0.6rem;
+  width: 160px;
+}
+
+.cosmetics-preview-plate {
+  min-height: 2.4em;
+  display: flex;
+  align-items: flex-end;
+  text-align: center;
+}
+
+.cosmetics-preview-figure {
+  display: block;
+  width: 160px;
+  height: 200px;
+}
+
+@media (max-width: 479px) {
+  .cosmetics-preview-figure {
+    height: 120px;
+  }
 }
 
 /* A player's hero rank beside their name (#2702). */

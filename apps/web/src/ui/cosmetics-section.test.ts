@@ -2,11 +2,21 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { COSMETIC_CATALOG, type CosmeticEntry } from "../cosmetics/catalog.js";
 import { createCosmeticsStore, type CosmeticsStore } from "../cosmetics/store.js";
+import { t } from "../i18n/index.js";
+import type { WornCosmetics } from "../cosmetics/selection.js";
+import type { CosmeticsPreview } from "./cosmetics-preview.js";
 import {
+  HOLD_MS,
+  NO_PRESS,
   cosmeticsSection,
+  previewPress,
   requirementText,
+  shownLook,
   swatchStyle,
+  type PressEvent,
+  type PressState,
   type SwatchCape,
+  type SwatchItem,
 } from "./cosmetics-section.js";
 import { FakeElement, type FakeEvent } from "./fake-dom.test-support.js";
 
@@ -22,11 +32,43 @@ function emptyStore(): CosmeticsStore {
   });
 }
 
-/** The section mounted over `store`, the player wearing `cape`. */
+/** What the last mounted section's figure wears, and how often it replayed a spawn and dissolve. */
+const figure: { look: () => WornCosmetics; replays: number } = { look: () => ({}), replays: 0 };
+
+/** The section mounted over `store`, the player wearing `cape`; its figure a stub. */
 function mounted(store: CosmeticsStore, cape: SwatchCape | null = CAPE): FakeElement {
   const container = new FakeElement();
-  cosmeticsSection(store, () => cape).mount(container as unknown as HTMLElement);
+  figure.replays = 0;
+  cosmeticsSection(store, () => cape, {
+    look: () => Promise.resolve(undefined),
+    preview: (look): CosmeticsPreview => {
+      figure.look = look;
+      return {
+        element: new FakeElement() as unknown as HTMLElement,
+        start: () => undefined,
+        stop: () => undefined,
+        replayReactions: () => {
+          figure.replays += 1;
+        },
+      };
+    },
+  }).mount(container as unknown as HTMLElement);
   return container;
+}
+
+/** A pointer event of the first finger on `target`, at `x`. */
+function pointer(target: FakeElement, type: string, x = 0): void {
+  const event = {
+    pointerId: 1,
+    button: 0,
+    clientX: x,
+    clientY: 0,
+    target,
+    preventDefault: () => undefined,
+  };
+  for (const listener of target.listeners.get(type) ?? []) {
+    listener(event as unknown as FakeEvent);
+  }
 }
 
 /** `slot`'s row as mounted. */
@@ -91,7 +133,7 @@ describe("Options > Cosmetics (#3577, #3988)", () => {
     expect(slotOf(container, "flame").all("cosmetics-swatch")).toHaveLength(2);
   });
 
-  it("disables a locked swatch, and dims it with a lock, unless it is picked", () => {
+  it("marks a locked swatch aria-disabled, not disabled, and dims it with a lock, unless it is picked", () => {
     const store = emptyStore();
     const entry = firstOf("aura");
     const swatchOf = (): FakeElement | undefined =>
@@ -99,11 +141,13 @@ describe("Options > Cosmetics (#3577, #3988)", () => {
         .all("cosmetics-swatch")
         .find((swatch) => swatch.dataset.item === entry.id);
     // No leaderboard entry known: everything is still to earn.
-    expect(swatchOf()?.disabled).toBe(true);
+    // Not `disabled`: it still takes the press that previews it (#3989).
+    expect(swatchOf()?.disabled).toBe(false);
+    expect(swatchOf()?.getAttribute("aria-disabled")).toBe("true");
     expect(swatchOf()?.all("cosmetics-swatch-lock")).toHaveLength(1);
     // Picked while earned, then lost: still picked, still unpickable anew.
     store.pick("aura", entry.id);
-    expect(swatchOf()?.disabled).toBe(false);
+    expect(swatchOf()?.getAttribute("aria-disabled")).toBeNull();
     expect(swatchOf()?.classList.contains("locked")).toBe(true);
     expect(swatchOf()?.getAttribute("aria-pressed")).toBe("true");
   });
@@ -172,7 +216,7 @@ describe("Options > Cosmetics (#3577, #3988)", () => {
     expect(detail?.textContent).toBe(none?.getAttribute("aria-label"));
   });
 
-  it("is one tab stop per row, the arrows moving along it past locked swatches", () => {
+  it("is one tab stop per row, the arrows moving along it, locked swatches too (#3989)", () => {
     const store = emptyStore();
     const entry = firstOf("frame");
     store.pick("frame", entry.id);
@@ -185,10 +229,11 @@ describe("Options > Cosmetics (#3577, #3988)", () => {
       throw new Error("no frame row");
     }
     expect(swatches.filter((swatch) => swatch.tabIndex === 0)).toEqual([picked]);
-    // Every other frame is locked: right from the picked one wraps to None.
+    // The next frame is locked, and focused all the same: held Space previews it.
+    const next = swatches[swatches.indexOf(picked) + 1] ?? none;
     press(row, picked, "ArrowRight");
-    expect(swatches.filter((swatch) => swatch.tabIndex === 0)).toEqual([none]);
-    press(row, none, "ArrowLeft");
+    expect(swatches.filter((swatch) => swatch.tabIndex === 0)).toEqual([next]);
+    press(row, next, "ArrowLeft");
     expect(swatches.filter((swatch) => swatch.tabIndex === 0)).toEqual([picked]);
   });
 
@@ -206,5 +251,165 @@ describe("Options > Cosmetics (#3577, #3988)", () => {
       throw new Error("no trim emblem frame");
     }
     expect(swatchStyle(trim, CAPE).colours["--swatch"]).toBe("#c0a060");
+  });
+});
+
+describe("a swatch press (#3989)", () => {
+  /** Earned: everything but `locked`. */
+  const rules = { unlocked: (item: SwatchItem) => item !== "locked" };
+  /** `events` stepped from no press: what was previewed and picked at each. */
+  function run(events: readonly PressEvent[]): {
+    previews: ({ item: SwatchItem } | null)[];
+    picks: ({ item: SwatchItem } | null)[];
+    state: PressState;
+  } {
+    let state = NO_PRESS;
+    const previews: ({ item: SwatchItem } | null)[] = [];
+    const picks: ({ item: SwatchItem } | null)[] = [];
+    for (const event of events) {
+      const outcome = previewPress(state, event, rules);
+      state = outcome.state;
+      previews.push(outcome.preview);
+      picks.push(outcome.pick);
+    }
+    return { previews, picks, state };
+  }
+
+  it("previews a held earned item, and picks it on release; its click after is swallowed", () => {
+    const { previews, picks, state } = run([
+      { kind: "down", item: "earned" },
+      { kind: "held" },
+      { kind: "up" },
+      { kind: "click", item: "earned" },
+    ]);
+    expect(previews[1]).toEqual({ item: "earned" });
+    expect(picks).toEqual([null, null, { item: "earned" }, null]);
+    expect(state).toEqual(NO_PRESS);
+  });
+
+  it("previews a held locked item, and lets it go on release, picking nothing", () => {
+    const { previews, picks, state } = run([
+      { kind: "down", item: "locked" },
+      { kind: "held" },
+      { kind: "up" },
+      { kind: "click", item: "locked" },
+    ]);
+    expect(previews[1]).toEqual({ item: "locked" });
+    expect(picks.every((pick) => pick === null)).toBe(true);
+    expect(state.pressing).toBeNull();
+  });
+
+  it("picks nothing when the held press leaves its swatch or is cancelled", () => {
+    for (const end of ["leave", "cancel"] as const) {
+      const { picks, state } = run([
+        { kind: "down", item: "earned" },
+        { kind: "held" },
+        { kind: end },
+        { kind: "up" },
+      ]);
+      expect(picks.every((pick) => pick === null)).toBe(true);
+      expect(state.pressing).toBeNull();
+    }
+  });
+
+  it("picks an earned item clicked, and neither picks nor previews a locked one", () => {
+    expect(run([{ kind: "click", item: "earned" }]).picks).toEqual([{ item: "earned" }]);
+    const locked = run([
+      { kind: "down", item: "locked" },
+      { kind: "up" },
+      { kind: "click", item: "locked" },
+    ]);
+    expect(locked.picks.every((pick) => pick === null)).toBe(true);
+    expect(locked.previews.every((preview) => preview === null)).toBe(true);
+    // None is a swatch like the rest.
+    expect(run([{ kind: "click", item: undefined }]).picks).toEqual([{ item: undefined }]);
+  });
+
+  it("shows the choice with the held item on top, None baring its slot", () => {
+    const aura = firstOf("aura");
+    const frame = firstOf("frame");
+    const choice: WornCosmetics = { frame };
+    expect(shownLook(choice, null)).toBe(choice);
+    expect(shownLook(choice, { slot: "aura", item: aura.id })).toEqual({ frame, aura });
+    expect(shownLook(choice, { slot: "frame", item: undefined })).toEqual({});
+  });
+});
+
+describe("Options > Cosmetics, held (#3989)", () => {
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.stubGlobal("document", { createElement: () => new FakeElement(), activeElement: null });
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+  });
+
+  it("previews a locked item on the figure while held, says so, and keeps the choice", () => {
+    const store = emptyStore();
+    const entry = firstOf("aura");
+    const group = slotOf(mounted(store), "aura");
+    const swatch = group.all("cosmetics-swatch").find((each) => each.dataset.item === entry.id);
+    const detail = group.all("cosmetics-detail")[0];
+    if (swatch === undefined) {
+      throw new Error("no aura swatch");
+    }
+    pointer(swatch, "pointerdown");
+    vi.advanceTimersByTime(HOLD_MS);
+    expect(figure.look().aura).toBe(entry);
+    expect(detail?.textContent).toContain(`Previewing: ${t(entry.name)}`);
+    expect(detail?.textContent).toContain(requirementText(entry));
+    pointer(swatch, "pointerup");
+    swatch.click();
+    expect(figure.look().aura).toBeUndefined();
+    expect(store.choice().aura).toBeUndefined();
+  });
+
+  it("lets a keyboard click pick after a held press picked and redrew the rows", () => {
+    const store = emptyStore();
+    store.pick("frame", firstOf("frame").id);
+    store.pick("title", firstOf("title").id);
+    const container = mounted(store);
+    const frameNone = slotOf(container, "frame").all("cosmetics-swatch")[0];
+    if (frameNone === undefined) {
+      throw new Error("no frame swatches");
+    }
+    pointer(frameNone, "pointerdown");
+    vi.advanceTimersByTime(HOLD_MS);
+    // The pick redraws the rows: the click after it reaches no swatch.
+    pointer(frameNone, "pointerup");
+    expect(store.choice().frame).toBeUndefined();
+    // Enter on a swatch is a click with no pointer behind it.
+    slotOf(container, "title").all("cosmetics-swatch")[0]?.click();
+    expect(store.choice().title).toBeUndefined();
+  });
+
+  it("lets a short press on a locked swatch pick and preview nothing", () => {
+    const store = emptyStore();
+    const group = slotOf(mounted(store), "frame");
+    const [none, locked] = group.all("cosmetics-swatch");
+    if (none === undefined || locked === undefined) {
+      throw new Error("no frame swatches");
+    }
+    pointer(locked, "pointerdown");
+    pointer(locked, "pointerup");
+    locked.click();
+    expect(store.choice().frame).toBeUndefined();
+    expect(figure.look().frame).toBeUndefined();
+  });
+
+  it("replays the dissolve and spawn when one is held", () => {
+    const entry = firstOf("spawn");
+    const swatch = slotOf(mounted(emptyStore()), "spawn")
+      .all("cosmetics-swatch")
+      .find((each) => each.dataset.item === entry.id);
+    if (swatch === undefined) {
+      throw new Error("no spawn swatch");
+    }
+    pointer(swatch, "pointerdown");
+    vi.advanceTimersByTime(HOLD_MS);
+    expect(figure.replays).toBe(1);
+    pointer(swatch, "pointercancel");
+    expect(figure.look().spawn).toBeUndefined();
   });
 });
