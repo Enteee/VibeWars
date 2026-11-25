@@ -404,6 +404,7 @@ export default {
   "cosmetics.item.trailStarlight": "رد نور ستارگان",
   "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "قفل",
+  "cosmetics.previewing": "پیش‌نمایش: {name}",
   "cosmetics.none": "هیچ",
   "cosmetics.note":
     "فقط برای ظاهر: هیچ آرایه‌ای روی روند بازی اثر ندارد. با بردهای رتبه‌بندی در جدول رده‌بندی عمومی به دست می‌آید و بین همهٔ شخصیت‌هایت مشترک است.",

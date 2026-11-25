@@ -426,6 +426,7 @@ export default {
   "cosmetics.item.trailStarlight": "Urmă de lumina stelelor",
   "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Blocat",
+  "cosmetics.previewing": "Previzualizare: {name}",
   "cosmetics.none": "Niciunul",
   "cosmetics.note":
     "Doar de aspect: niciun element cosmetic nu schimbă jocul. Se câștigă cu victorii clasate în clasamentul public și sunt comune tuturor personajelor tale.",

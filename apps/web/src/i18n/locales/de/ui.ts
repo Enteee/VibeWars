@@ -408,6 +408,7 @@ export default {
   "cosmetics.item.trailStarlight": "Sternenlichtspur",
   "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Gesperrt",
+  "cosmetics.previewing": "Vorschau: {name}",
   "cosmetics.none": "Keine",
   "cosmetics.note":
     "Rein optisch: Keine Kosmetik verändert, wie sich etwas spielt. Verdient mit gewerteten Siegen in der öffentlichen Rangliste, gilt für alle deine Charaktere.",

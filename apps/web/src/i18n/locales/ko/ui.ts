@@ -376,6 +376,7 @@ export default {
   "cosmetics.item.trailStarlight": "별빛 흔적",
   "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "잠김",
+  "cosmetics.previewing": "미리 보기: {name}",
   "cosmetics.none": "없음",
   "cosmetics.note":
     "순수하게 외형용입니다. 어떤 치장 아이템도 플레이에 영향을 주지 않습니다. 공개 리더보드의 랭크 승리로 얻으며, 모든 캐릭터가 함께 씁니다.",

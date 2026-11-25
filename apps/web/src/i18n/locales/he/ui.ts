@@ -420,6 +420,7 @@ export default {
   "cosmetics.item.trailStarlight": "עקבות אור כוכבים",
   "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "נעול",
+  "cosmetics.previewing": "תצוגה מקדימה: {name}",
   "cosmetics.none": "ללא",
   "cosmetics.note":
     "למראה בלבד: שום פריט קוסמטי לא משנה את המשחק. מושגים בניצחונות מדורגים בטבלת המובילים הציבורית, ומשותפים לכל הדמויות שלך.",

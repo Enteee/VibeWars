@@ -424,6 +424,7 @@ export default {
   "cosmetics.item.trailStarlight": "Trag zvjezdane svjetlosti",
   "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Zaključano",
+  "cosmetics.previewing": "Pregled: {name}",
   "cosmetics.none": "Ništa",
   "cosmetics.note":
     "Samo za izgled: nijedna kozmetika ne mijenja igru. Osvaja se rangiranim pobjedama na javnoj ljestvici i dijele je svi tvoji likovi.",

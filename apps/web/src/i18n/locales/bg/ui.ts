@@ -409,6 +409,7 @@ export default {
   "cosmetics.item.trailStarlight": "Звездна следа",
   "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Заключено",
+  "cosmetics.previewing": "Преглед: {name}",
   "cosmetics.none": "Няма",
   "cosmetics.note":
     "Само за външния вид: никоя козметика не променя играта. Печелят се с класирани победи в публичната класация и са общи за всичките ти герои.",

@@ -429,6 +429,7 @@ export default {
   "cosmetics.item.trailStarlight": "Scia di luce stellare",
   "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Bloccato",
+  "cosmetics.previewing": "Anteprima: {name}",
   "cosmetics.none": "Nessuno",
   "cosmetics.note":
     "Solo estetica: nessun cosmetico cambia il modo di giocare. Si ottengono con vittorie classificate nella classifica pubblica e sono condivisi da tutti i tuoi personaggi.",

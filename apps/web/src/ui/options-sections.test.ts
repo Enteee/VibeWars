@@ -5,10 +5,13 @@ import { availableLanguages } from "../i18n/languages.js";
 import { STORAGE_NAMESPACE } from "../storage/namespace.js";
 import { FakeElement } from "./fake-dom.test-support.js";
 import { languageSection, setLanguageBusy } from "./language-section.js";
-import { optionsSections } from "./options-sections.js";
+import { optionsSections, type OptionsOwner } from "./options-sections.js";
+
+/** A player with no character yet. */
+const OWNER: OptionsOwner = { signet: 0, figure: () => Promise.resolve(undefined) };
 
 /** This build's sections, as Options lists them. */
-const SECTIONS = optionsSections(availableLanguages(), 0);
+const SECTIONS = optionsSections(availableLanguages(), OWNER);
 
 describe("optionsSections (#423)", () => {
   it("opens on Player (#1513), and no two sections share an id", () => {
@@ -48,8 +51,8 @@ describe("Options > Language (#2648)", () => {
   };
 
   it("is hidden with English alone, and after Player with a second language", () => {
-    expect(optionsSections(["en"], 0).map((section) => section.id)).not.toContain("language");
-    const sections = optionsSections(["en", "de"], 0);
+    expect(optionsSections(["en"], OWNER).map((section) => section.id)).not.toContain("language");
+    const sections = optionsSections(["en", "de"], OWNER);
     expect(sections[1]?.id).toBe("language");
     expect(sections[1]?.title).toBe(t("options.language"));
   });

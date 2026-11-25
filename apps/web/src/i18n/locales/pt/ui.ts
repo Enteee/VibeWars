@@ -426,6 +426,7 @@ export default {
   "cosmetics.item.trailStarlight": "Rastro de luz estelar",
   "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Bloqueado",
+  "cosmetics.previewing": "Pré-visualização: {name}",
   "cosmetics.none": "Nenhum",
   "cosmetics.note":
     "Puramente estético: nenhum cosmético muda a forma de jogar. Ganham-se com vitórias ranqueadas na tabela de líderes pública e são partilhados por todas as tuas personagens.",
