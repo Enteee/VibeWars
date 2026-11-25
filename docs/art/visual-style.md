@@ -57,8 +57,9 @@ it came too near the friend blue. Open water is the shared deep water look. The 
 is drawn in a darker, greyer grade of its biome, so each biome keeps its hues
 and reads like the mock's stone hall (`gothic-world.webp`, #3977). `grade` in
 `arena-palette.ts` takes HSL lightness `L` to `value · (0.5 + contrast · (L − 0.5))`, clamped,
-and scales chroma by `saturation` (`GOTHIC_GRADE`: value 0.94, contrast 1.08,
-saturation 0.6). `value · contrast` is above 1, so two tones never end closer
+and scales chroma by `saturation` in the darks, rising smoothly to whole
+between lightness 0.45 and 0.75, so light warm tones like sand stay warm
+(`GOTHIC_GRADE`: value 0.94, contrast 1.08, saturation 0.6). `value · contrast` is above 1, so two tones never end closer
 together than they began: the darks sink and the lit faces hold, and snow
 stays pale. Tones below about `#0a0a0a` go to black. It is calibrated
 once, on the hall (floor `#26303f` lands within six points of the mock's `#3a3834`, wall top

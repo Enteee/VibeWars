@@ -15,6 +15,7 @@ import {
   BIOME,
   BREAKABLE_WALL_LOOK,
   breakableLook,
+  GOTHIC_GRADE,
   grade,
   materialsOf,
   PIT_FLOOR_SHADE,
@@ -369,6 +370,28 @@ describe("grade (#4056)", () => {
         lightness(light) - lightness(dark),
       );
     }
+  });
+
+  it("keeps a light sand tone.s chroma and hue, and still greys a dark tone by saturation", () => {
+    /** Chroma, 0 to 1, and hue in degrees. */
+    const chromaHue = (colour: number): { chroma: number; hue: number } => {
+      const [r, g, b] = [(colour >> 16) / 255, ((colour >> 8) & 0xff) / 255, (colour & 0xff) / 255];
+      const high = Math.max(r, g, b);
+      const chroma = high - Math.min(r, g, b);
+      const sector =
+        high === r
+          ? ((g - b) / chroma + 6) % 6
+          : high === g
+            ? (b - r) / chroma + 2
+            : (r - g) / chroma + 4;
+      return { chroma, hue: sector * 60 };
+    };
+    const sand = chromaHue(0xd8c08e);
+    const gradedSand = chromaHue(grade(0xd8c08e));
+    expect(gradedSand.chroma).toBeGreaterThanOrEqual(0.85 * sand.chroma);
+    expect(Math.abs(gradedSand.hue - sand.hue)).toBeLessThanOrEqual(3);
+    const dark = chromaHue(0x4a3a28);
+    expect(chromaHue(grade(0x4a3a28)).chroma).toBeCloseTo(GOTHIC_GRADE.saturation * dark.chroma, 2);
   });
 
   it("lands the hall's floor and wall top within six points of the gothic mock", () => {

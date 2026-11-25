@@ -16,12 +16,18 @@ export function shade(colour: number, share: number): number {
 /**
  * The Grim gothic grade (#4056, docs/art/visual-style.md §1): every world
  * material's lightness pushed away from mid-grey by `contrast` and scaled
- * by `value`, and its saturation (its chroma) scaled by `saturation`, so each biome keeps
- * its hues, darker and greyer. Calibrated once, on the hall: its floor and
+ * by `value`, and its chroma scaled by `saturation` in the darks, rising to
+ * whole from `chromaKept`'s low to its high lightness, so each biome keeps its
+ * hues, its darks greyer and its light warm tones (sand) as warm. Calibrated once, on the hall: its floor and
  * wall top land within six points of the mock's 0x3a3834 and 0x5e5a54. Hazards, gameplay
  * marks, water, decor and bodies are never graded (§6).
  */
-export const GOTHIC_GRADE = { value: 0.94, saturation: 0.6, contrast: 1.08 } as const;
+export const GOTHIC_GRADE = {
+  value: 0.94,
+  saturation: 0.6,
+  contrast: 1.08,
+  chromaKept: { low: 0.45, high: 0.75 },
+} as const;
 
 /** `colour` in the gothic grade: black stays black, and lighter is always lighter. */
 export function grade(colour: number): number {
@@ -45,8 +51,13 @@ export function grade(colour: number): number {
     0,
     Math.min(1, GOTHIC_GRADE.value * (0.5 + GOTHIC_GRADE.contrast * (lightness - 0.5))),
   );
-  // Its chroma, not its HSL saturation, is scaled: a darkened tone grows no brighter hue.
-  const reach = Math.min(chroma * GOTHIC_GRADE.saturation, 2 * Math.min(l, 1 - l)) / 2;
+  // Its chroma, not its HSL saturation, is scaled, so a darkened tone grows no brighter hue;
+  // a light one keeps more of it (smoothstep), so sand stays sand.
+  const { low: from, high: to } = GOTHIC_GRADE.chromaKept;
+  const rise = Math.max(0, Math.min(1, (lightness - from) / (to - from)));
+  const kept =
+    GOTHIC_GRADE.saturation + (1 - GOTHIC_GRADE.saturation) * rise * rise * (3 - 2 * rise);
+  const reach = Math.min(chroma * kept, 2 * Math.min(l, 1 - l)) / 2;
   // Back from hue, saturation and lightness, as CSS does.
   const channel = (n: number): number => {
     const k = (n + hue * 2) % 12;
