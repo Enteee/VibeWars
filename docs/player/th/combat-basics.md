@@ -3,7 +3,8 @@
 ## พลังชีวิตและพลังงาน
 
 คุณเริ่มด้วย **พลังชีวิต** 480 และ **พลังงาน** 20 และชุดเกราะเพิ่มพลังงานให้: Warrior ไม่ได้เพิ่ม
-Ranger, Assassin หรือ Dervish ได้ 5 คนอื่นๆ ได้ 10 ชุดเกราะของ Dervish ยังเพิ่มพลังชีวิตอีก 25 ไม้เท้าเพิ่มให้อีก 10 ขณะที่ถืออยู่
+Ranger, Assassin หรือ Dervish ได้ 5 คนอื่นๆ ได้ 10 ไม้เท้าเพิ่มให้อีก 10 ขณะที่ถืออยู่
+ชุดเกราะของ Dervish ยังเพิ่มพลังชีวิตอีก 25
 รูนและขวัญกำลังใจเปลี่ยนค่าทั้งสองได้
 สกิลใช้พลังงาน และพลังงานจะฟื้นขึ้นเองอย่างช้าๆ ![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior**
 และ ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** ฟื้นช้าที่สุด ![Ranger](../../../apps/web/public/icons/profession/ranger.svg) **Ranger** เร็วขึ้นหน่อย ส่วนคนอื่นๆ ฟื้นเร็วที่สุด

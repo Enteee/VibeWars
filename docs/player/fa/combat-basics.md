@@ -3,8 +3,8 @@
 ## سلامتی و انرژی
 
 با 480 **سلامتی** و 20 **انرژی** شروع می‌کنی، و زره‌ات به انرژی اضافه می‌کند:
-هیچ برای Warrior، 5 برای Ranger، Assassin یا Dervish، و 10 برای بقیه. زره Dervish همچنین 25 سلامتی اضافه می‌کند. عصا تا وقتی
-آن را در دست داری 10 دیگر اضافه می‌کند. رون‌ها و روحیه هر دو را تغییر می‌دهند. مهارت‌ها انرژی مصرف می‌کنند، و انرژی خودش، آهسته، برمی‌گردد. ![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warriorها**
+هیچ برای Warrior، 5 برای Ranger، Assassin یا Dervish، و 10 برای بقیه. عصا تا وقتی
+آن را در دست داری 10 دیگر اضافه می‌کند. زره Dervish همچنین 25 سلامتی اضافه می‌کند. رون‌ها و روحیه هر دو را تغییر می‌دهند. مهارت‌ها انرژی مصرف می‌کنند، و انرژی خودش، آهسته، برمی‌گردد. ![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warriorها**
 و ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragonها** از همه کندتر آن را بازمی‌یابند، ![Ranger](../../../apps/web/public/icons/profession/ranger.svg) **Rangerها** کمی سریع‌تر، و بقیه از همه
 سریع‌تر.
 

@@ -3,8 +3,8 @@
 ## חיים ואנרגיה
 
 אתה מתחיל עם 480 **חיים** ו-20 **אנרגיה**, והשריון שלך מוסיף אנרגיה: כלום
-ל-Warrior, 5 ל-Ranger, ל-Assassin או ל-Dervish, ו-10 לכל השאר. השריון של Dervish מוסיף גם 25 חיים. Staff מוסיף
-עוד 10 כל עוד אתה מחזיק בו. רונות ומורל משנים את שניהם. מיומנויות עולות אנרגיה, והיא חוזרת מעצמה, לאט. ![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warriors**
+ל-Warrior, 5 ל-Ranger, ל-Assassin או ל-Dervish, ו-10 לכל השאר. Staff מוסיף
+עוד 10 כל עוד אתה מחזיק בו. השריון של Dervish מוסיף גם 25 חיים. רונות ומורל משנים את שניהם. מיומנויות עולות אנרגיה, והיא חוזרת מעצמה, לאט. ![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warriors**
 ו-![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragons** מחדשים אותה הכי לאט, ![Ranger](../../../apps/web/public/icons/profession/ranger.svg) **Rangers** קצת יותר מהר, וכל השאר הכי
 מהר.
 

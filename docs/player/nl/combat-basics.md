@@ -4,7 +4,7 @@
 
 Je begint met 480 **Gezondheid** en 20 **Energie**, en je harnas voegt Energie toe:
 niets voor een Krijger, 5 voor een Jager, een Sluipmoordenaar of een Derwisj, 10 voor
-alle anderen. Het harnas van een Derwisj geeft ook 25 Gezondheid. Een Staff geeft er 10 bij zolang je hem vasthoudt. Runen en moraal
+alle anderen. Een Staff geeft er 10 bij zolang je hem vasthoudt. Het harnas van een Derwisj geeft ook 25 Gezondheid. Runen en moraal
 veranderen beide. Skills kosten Energie, en die komt vanzelf langzaam terug. ![Krijger](../../../apps/web/public/icons/profession/warrior.svg) **Krijgers** en
 ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragons** krijgen hem het traagst terug, ![Jager](../../../apps/web/public/icons/profession/ranger.svg) **Jagers** iets sneller, alle anderen het
 snelst.

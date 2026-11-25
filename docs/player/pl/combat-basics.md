@@ -4,7 +4,7 @@
 
 Zaczynasz z 480 **Zdrowia** i 20 **Energii**, a zbroja dodaje Energię: nic
 dla Wojownika, 5 dla Łowcy, Skrytobójcy lub Derwisza, 10 dla wszystkich
-pozostałych. Zbroja Derwisza dodaje też 25 Zdrowia. Staff dodaje kolejne 10, dopóki go trzymasz. Runy i morale
+pozostałych. Staff dodaje kolejne 10, dopóki go trzymasz. Zbroja Derwisza dodaje też 25 Zdrowia. Runy i morale
 zmieniają obie wartości. Umiejętności kosztują Energię, a ta wraca sama, powoli. ![Wojownik](../../../apps/web/public/icons/profession/warrior.svg) **Wojownik**
 i ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** odzyskują ją najwolniej, ![Łowca](../../../apps/web/public/icons/profession/ranger.svg) **Łowca** trochę szybciej, a wszyscy pozostali
 najszybciej.

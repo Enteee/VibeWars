@@ -4,8 +4,8 @@
 
 Empiezas con 480 de **salud** y 20 de **energía**, y tu armadura añade
 energía: nada para un Guerrero, 5 para un Guardabosques, un Asesino o un
-Derviche, 10 para todos los demás. La armadura de un Derviche añade además 25 de salud. Un Staff añade 10 más mientras lo
-empuñas. Las runas y la moral cambian ambas. Las habilidades cuestan energía, y esta vuelve sola, despacio.
+Derviche, 10 para todos los demás. Un Staff añade 10 más mientras lo
+empuñas. La armadura de un Derviche añade además 25 de salud. Las runas y la moral cambian ambas. Las habilidades cuestan energía, y esta vuelve sola, despacio.
 Los ![Guerrero](../../../apps/web/public/icons/profession/warrior.svg) **Guerreros** y los ![Paragón](../../../apps/web/public/icons/profession/paragon.svg) **Paragones** la recuperan más lento, los ![Guardabosques](../../../apps/web/public/icons/profession/ranger.svg) **Guardabosques** algo más
 rápido y todos los demás, lo más rápido.
 
