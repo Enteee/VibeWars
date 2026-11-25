@@ -15,7 +15,7 @@ import { getSkill } from "../skills/catalog.js";
 import { effectiveArmor, mitigate, skillDamage } from "../skills/damage.js";
 import { describeSkill } from "../skills/describe.js";
 import type { CombatEvent } from "../skills/effects.js";
-import { NO_RANKS, aggregateModifiers, type StatusId } from "../skills/status.js";
+import { NO_RANKS, type StatusId } from "../skills/status.js";
 import { chargeAdrenaline, makeCombatant } from "../skills/testing.js";
 import { advanceStatuses } from "../skills/tick.js";
 import type { Combatant, Skill } from "../skills/types.js";
@@ -265,14 +265,14 @@ describe('"Fall Back!" (#921)', () => {
     expect(healed(false)).toBe(0);
   });
 
-  it("is a heal: Deep Wound cuts it, and it stops at full health", () => {
+  // "Gain 13 Health per second": a gain, so Deep Wound does not cut it
+  // (#3999).
+  it("is a gain: Deep Wound leaves it whole, and it stops at full health", () => {
     const bearer = makeCombatant({ id: "a", health: 100, maxHealth: 500, moving: true });
     bearer.statuses.apply("fall-back", 9, "p", NO_RANKS);
     bearer.statuses.apply("deep-wound", 9, "foe", NO_RANKS);
-    const reduced = 13 * aggregateModifiers(bearer.statuses.active).healingMultiplier;
-    expect(reduced).toBeLessThan(13);
     advanceStatuses(bearer, 1, 0);
-    expect(bearer.health).toBeCloseTo(100 + reduced);
+    expect(bearer.health).toBeCloseTo(113);
 
     const full = makeCombatant({ id: "b", health: 495, maxHealth: 500, moving: true });
     full.statuses.apply("fall-back", 9, "p", NO_RANKS);
@@ -858,11 +858,12 @@ describe("Song of Restoration (#999)", () => {
     expect(singing(match, "p")).toBe(false);
   });
 
-  it("is a heal, so a Deep Wound cuts it by 20%", () => {
+  // "Gains 97 Health" (#3999).
+  it("is a gain, so a Deep Wound leaves it whole", () => {
     const match = sung(12, (m) => {
       get(m, "near").combatant.statuses.apply("deep-wound", 20, "foe", NO_RANKS);
     });
-    expect(uses(match, "near", 0)).toBeCloseTo(97 * 0.8);
+    expect(uses(match, "near", 0)).toBe(97);
   });
 
   it("heals once for an attack skill, though it is an attack too", () => {

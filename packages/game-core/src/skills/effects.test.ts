@@ -21,7 +21,7 @@ import { chainAllows } from "./chain.js";
 import { effectiveMaxEnergy } from "./overcast.js";
 import { NO_RANKS, HEALTH_PER_PIP, getStatusDefinition, type StatusId } from "./status.js";
 import { makeCombatant } from "./testing.js";
-import { advanceStatuses, effectiveMaxHealth } from "./tick.js";
+import { advanceStatuses, effectiveMaxHealth, healingMultiplierOf } from "./tick.js";
 import { vec2 } from "../vec2.js";
 import type {
   Combatant,
@@ -100,12 +100,15 @@ describe("damage or life steal from a foe (#1022)", () => {
     expect(offenders()).toEqual([]);
   });
 
-  it("gives the reversed amount whole under Mark of Death (#3999): a gain, not a heal", () => {
+  // "Gains that amount of Health", but the wiki's anomaly: it is healing
+  // (#3999).
+  it("heals the reversed amount, so Mark of Death cuts it (#3999)", () => {
     const target = makeCombatant({ id: "target", health: 200, maxHealth: 480 });
     target.statuses.apply("mark-of-death", 10, "foe", NO_RANKS);
     target.statuses.apply("reversal-of-fortune", 8, "monk", NO_RANKS);
     applyDamage(target, 10, "fire", false, [], undefined);
-    expect(target.health).toBe(210);
+    expect(healingMultiplierOf(target)).toBeLessThan(1);
+    expect(target.health).toBeCloseTo(200 + 10 * healingMultiplierOf(target));
   });
 });
 

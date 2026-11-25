@@ -546,8 +546,9 @@ function reverse(target: Combatant, amount: number, events: CombatEvent[]): bool
     return false;
   }
   events.push({ kind: "status-expired", targetId: target.id, statusId: reversal.id });
-  // "Gains that amount of Health instead" (#3999).
-  applyHeal(target, Math.min(amount, reversal.cap), events, "gain");
+  // Healing, though the text says "gains": the wiki's anomaly for
+  // Reversal of Fortune and Life Sheath (#3999).
+  applyHeal(target, Math.min(amount, reversal.cap), events, "heal");
   return true;
 }
 
