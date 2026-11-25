@@ -5,6 +5,8 @@
  */
 
 export type {
+  Decor,
+  DecorKind,
   MapData,
   MapLighting,
   TeamSize,
@@ -15,9 +17,14 @@ export type {
   Wall,
 } from "./schema.js";
 export {
+  ANIMATED_DECOR_KINDS,
+  DECOR_KINDS,
   ELEVATION_STEP,
+  MAX_ANIMATED_DECOR,
+  MAX_DECOR,
   MapValidationError,
   TEAM_SIZES_ALL,
+  decorRefusal,
   mapDataSchema,
   validateMapData,
 } from "./schema.js";

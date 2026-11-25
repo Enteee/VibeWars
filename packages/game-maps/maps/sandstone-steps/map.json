@@ -927,6 +927,7 @@
     }
   ],
   "objectives": [],
+  "decor": [],
   "gates": [
     {
       "id": "under-pass-gate-west",

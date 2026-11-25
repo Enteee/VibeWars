@@ -271,7 +271,13 @@ async function hostedMap(page, mapId) {
 }
 
 /** The per-frame passes #3368 times, as `pass-timing.ts` names them. */
-const PASSES = ["cutAwayTunnels", "drawHiddenOutlines", "fadeOverhangs", "lighting"];
+const PASSES = [
+  "cutAwayTunnels",
+  "drawHiddenOutlines",
+  "drawMovingDecor",
+  "fadeOverhangs",
+  "lighting",
+];
 
 /**
  * Zero the page's pass timings, or read them and zero them: the mean ms a

@@ -449,7 +449,8 @@ export function structureOf(map: MapData): LoadedStructure {
       map.atmosphere === undefined &&
       map.paving === undefined &&
       water.length === 0 &&
-      zones.length === 0
+      zones.length === 0 &&
+      map.decor.length === 0
         ? FLAT_STRUCTURE
         : {
             layerCount: map.layers,
@@ -459,6 +460,14 @@ export function structureOf(map: MapData): LoadedStructure {
             ground: map.groundLayer,
             ...placedDecks(mapDecks(map)),
             overhangs: map.overhangs,
+            decor: map.decor.map(({ kind, at, layer, rotation, scale, variant }) => ({
+              kind,
+              at,
+              layer,
+              rotation,
+              scale,
+              variant,
+            })),
             dropOffs: map.dropOffs,
             pits: map.pits,
             tunnels: map.tunnels,

@@ -36,5 +36,6 @@
     { "team": 1, "layer": 0, "position": { "x": 1400, "y": 300 } }
   ],
   "objectives": [],
+  "decor": [],
   "gates": []
 }

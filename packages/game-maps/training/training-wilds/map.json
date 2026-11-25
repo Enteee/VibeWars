@@ -575,6 +575,7 @@
       }
     }
   ],
+  "decor": [],
   "gates": [
     {
       "id": "side-room-door",

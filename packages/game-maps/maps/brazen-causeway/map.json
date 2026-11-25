@@ -1823,6 +1823,7 @@
     }
   ],
   "ghostLevel": 20,
+  "decor": [],
   "gates": [
     {
       "id": "west-bronze-gate",

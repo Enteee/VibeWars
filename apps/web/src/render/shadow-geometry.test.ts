@@ -159,6 +159,7 @@ const STRUCTURE: MapStructure = {
   dropOffs: [],
   downDecks: [],
   overhangs: [],
+  decor: [],
   decks: [{ layer: 1, footprint: BRIDGE, look: "platform", switched: null }],
   transitions: [],
   water: [],

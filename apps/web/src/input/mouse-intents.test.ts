@@ -403,6 +403,7 @@ describe("clicks with Show names held (#2738)", () => {
       dropOffs: [],
       downDecks: [],
       overhangs: [],
+      decor: [],
       decks: [{ layer: 1, footprint: deck, look: "platform" as const, switched: null }],
       transitions: [],
       water: [],
@@ -432,6 +433,7 @@ describe("clicks with Show names held (#2738)", () => {
     dropOffs: [],
     downDecks: [],
     overhangs: [],
+    decor: [],
     decks: [
       {
         layer: 2,

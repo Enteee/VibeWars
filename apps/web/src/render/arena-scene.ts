@@ -80,6 +80,7 @@ import {
   type ArenaPalette,
   breakableLook,
   type BreakableLook,
+  type DecorColours,
   type MapLook,
   materialsOf,
   pavingPalette,
@@ -316,6 +317,15 @@ import {
 } from "./lighting-pass.js";
 import { bodyUnder, overhangAlpha, paintOverhang, type OverhangCover } from "./overhang-art.js";
 import {
+  animatedDecor,
+  decorCommands,
+  decorOutline,
+  decorShadow,
+  tallDecor,
+  type DecorCommand,
+  type MapDecor,
+} from "./decor-art.js";
+import {
   DECK_ART,
   FADING_TOP_LOOKS,
   SWITCHED_DECK_ART,
@@ -485,6 +495,8 @@ const BEACON_BOLT_GLOW = 0x79c0ff;
 const BEACON_BOLT_CORE = 0xf0f6ff;
 /** How far apart the side face's stacked outlines lay, in world units: where its top still ends. */
 const SIDE_FACE_SLICE = 2;
+/** How far outside the view a moving decor prop is still redrawn (#4013): a crown reaches this far. */
+const DECOR_VIEW_MARGIN = 80;
 /** The cell, world units, a fill leaves out where a deck covers it (#3162), and how far past the deck's edge. */
 const SHOWN_FILL_CELL = 32;
 const SHOWN_FILL_MARGIN = 2;
@@ -795,6 +807,18 @@ export class ArenaScene extends Phaser.Scene {
       readonly lines: Phaser.GameObjects.Graphics;
     }
   >();
+  /**
+   * Each decor prop that moves (#4013): a brazier's flame, a tree's
+   * crown, a fern's fronds, each its own graphics, redrawn every frame.
+   * A tree is in `coversDrawn` too, so it fades as an overhang does.
+   */
+  private decorMoving: {
+    readonly prop: MapDecor;
+    readonly graphics: Phaser.GameObjects.Graphics;
+    readonly colours: DecorColours;
+    readonly tint: number | undefined;
+    readonly lift: number;
+  }[] = [];
   /**
    * Each overhang (#3293) and arch top (#3312) as drawn, and where it
    * hangs: faded while a body is under it.
@@ -1346,6 +1370,9 @@ export class ArenaScene extends Phaser.Scene {
     const fadeAt = passStart();
     this.fadeOverhangs(dt);
     passEnd("fadeOverhangs", fadeAt);
+    const decorAt = passStart();
+    this.drawMovingDecor(view);
+    passEnd("drawMovingDecor", decorAt);
     const outlineAt = passStart();
     this.drawHiddenOutlines();
     passEnd("drawHiddenOutlines", outlineAt);
@@ -3999,6 +4026,13 @@ export class ArenaScene extends Phaser.Scene {
       graphics.destroy();
     }
     this.coversDrawn = [];
+    for (const { prop, graphics } of this.decorMoving) {
+      // A moving tall prop went with the covers.
+      if (!tallDecor(prop.kind)) {
+        graphics.destroy();
+      }
+    }
+    this.decorMoving = [];
     for (const graphics of [...this.decksOverTunnels.values()].flat()) {
       graphics.destroy();
     }
@@ -4149,6 +4183,7 @@ export class ArenaScene extends Phaser.Scene {
     this.mapOccluders = occludersOf(next.walls, next.structure);
     this.occluders = seenFrom(this.mapOccluders, this.viewerTunnels);
     this.drawnMap = next;
+    this.drawDecor(next.structure);
     this.staticCull.capture([
       ...(this.floorGraphics === undefined ? [] : [this.floorGraphics]),
       ...(this.floorLines === undefined ? [] : [this.floorLines]),
@@ -4371,6 +4406,72 @@ export class ArenaScene extends Phaser.Scene {
   }
 
   private readonly liftOf = (id: string): number => this.elevations.get(id) ?? 0;
+
+  /**
+   * The map's decor (#4013), lit where each prop stands, at its layer's
+   * height: every shadow, and each still short prop, on its layer's
+   * shared graphics; a tall one alone, so it fades off a body as an
+   * overhang does; a moving one alone, redrawn by `drawMovingDecor`.
+   */
+  private drawDecor(structure: MapStructure): void {
+    const colours = materialsOf(structure).decor;
+    for (const prop of structure.decor) {
+      const lift = elevationOf(prop.layer, structure.ground);
+      const tint = this.tintAt(prop.at, prop.layer);
+      const band = characterBand(prop.layer, structure.layerCount);
+      const shadow = this.structureAt({ kind: "decor", layer: prop.layer, band, part: "shadow" });
+      paintDecor(shadow, [decorShadow(prop)], undefined, lift);
+      const tall = tallDecor(prop.kind);
+      const moving = animatedDecor(prop.kind);
+      if (!tall && !moving) {
+        const low = this.structureAt({ kind: "decor", layer: prop.layer, band, part: "low" });
+        paintDecor(low, decorCommands(prop, colours, 0, true), tint, lift);
+        continue;
+      }
+      const graphics = this.add
+        .graphics()
+        .setDepth(
+          renderOrder({ kind: "decor", layer: prop.layer, band, part: tall ? "tall" : "low" }),
+        );
+      paintDecor(graphics, decorCommands(prop, colours, this.now, this.reducedMotion), tint, lift);
+      if (tall) {
+        this.coversDrawn.push({
+          cover: { layer: prop.layer + 1, outline: decorOutline(prop), top: lift },
+          graphics,
+          tunnel: undefined,
+          overhang: 1,
+        });
+      }
+      if (moving) {
+        this.decorMoving.push({ prop, graphics, colours, tint, lift });
+      }
+    }
+  }
+
+  /**
+   * Each moving prop in `view` as it is now (#4013); one out of it is not
+   * redrawn, and one under reduced motion is left as drawn, at its mean.
+   */
+  private drawMovingDecor(view: Box): void {
+    if (this.reducedMotion) {
+      return;
+    }
+    for (const { prop, graphics, colours, tint, lift } of this.decorMoving) {
+      const { x } = prop.at;
+      const y = prop.at.y - lift;
+      const seen =
+        x > view.left - DECOR_VIEW_MARGIN &&
+        x < view.right + DECOR_VIEW_MARGIN &&
+        y > view.top - DECOR_VIEW_MARGIN &&
+        y < view.bottom + DECOR_VIEW_MARGIN * 2;
+      graphics.setVisible(seen);
+      if (!seen) {
+        continue;
+      }
+      graphics.clear();
+      paintDecor(graphics, decorCommands(prop, colours, this.now, false), tint, lift);
+    }
+  }
 
   /**
    * The map's awnings, lean-tos and canopies (#3293): each its own
@@ -6188,6 +6289,37 @@ function phaserPainter(g: Phaser.GameObjects.Graphics): Painter {
     painters.set(g, painter);
   }
   return painter;
+}
+
+/** A decor prop's strokes (#4013), lifted to its layer, each but a flame in `tint`. */
+function paintDecor(
+  g: Phaser.GameObjects.Graphics,
+  commands: readonly DecorCommand[],
+  tint: number | undefined,
+  lift: number,
+): void {
+  const lit = (colour: number, glow: boolean): number =>
+    tint === undefined || glow ? colour : multiplyColour(colour, tint);
+  g.save();
+  g.translateCanvas(0, -lift);
+  for (const command of commands) {
+    switch (command.kind) {
+      case "poly":
+        g.fillStyle(lit(command.colour, command.glow), command.alpha);
+        tracePath(g, command.points);
+        g.fillPath();
+        break;
+      case "ellipse":
+        g.fillStyle(lit(command.colour, command.glow), command.alpha);
+        g.fillEllipse(command.at.x, command.at.y, command.rx * 2, command.ry * 2);
+        break;
+      case "line":
+        g.lineStyle(command.width, lit(command.colour, false), command.alpha);
+        g.lineBetween(command.from.x, command.from.y, command.to.x, command.to.y);
+        break;
+    }
+  }
+  g.restore();
 }
 
 /** Begins a path along `points` on `g`, to fill or stroke: closed, unless `closed` is false. */

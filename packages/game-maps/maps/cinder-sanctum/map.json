@@ -1398,6 +1398,7 @@
       }
     }
   ],
+  "decor": [],
   "gates": [
     {
       "id": "passage-north-door",

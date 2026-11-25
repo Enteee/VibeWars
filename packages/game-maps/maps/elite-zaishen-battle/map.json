@@ -1061,6 +1061,7 @@
       }
     }
   ],
+  "decor": [],
   "gates": [
     {
       "id": "north-portcullis",

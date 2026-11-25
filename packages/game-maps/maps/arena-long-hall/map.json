@@ -629,6 +629,7 @@
       }
     }
   ],
+  "decor": [],
   "gates": [
     {
       "id": "crypt-west-portcullis",
