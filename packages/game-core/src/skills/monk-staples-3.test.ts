@@ -296,6 +296,7 @@ describe("Vigorous Spirit (#1039)", () => {
         effects: [
           {
             kind: "heal",
+            received: "heal",
             amount: { scaling: { attributeId: "monk.healing-prayers", atZero: 5, atTwelve: 17 } },
           },
         ],
