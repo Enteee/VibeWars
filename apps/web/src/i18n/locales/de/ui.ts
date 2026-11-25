@@ -1536,7 +1536,7 @@ export default {
     "Was ein Wirken wirklich bewirkt: bei 60 Rüstung genau die Zahl aus dem Tooltip.",
   "training.scenario.time-to-kill.label": "Zeit bis zum Kill",
   "training.scenario.time-to-kill.teaches":
-    "Dein Dauerschaden: wie lange ein Zauberwirker mit 500 Leben durchhält, immer wieder.",
+    "Dein Dauerschaden: wie lange ein Zauberwirker mit 480 Leben durchhält, immer wieder.",
   "training.scenario.physical-vs-elemental.label": "Physisch gegen elementar",
   "training.scenario.physical-vs-elemental.teaches":
     "Dass Rüstung auf eine Schadensart antwortet: Krieger und Unerschütterliche Insignie dämpfen ein Schwert, aber keinen Feuerball; ein Waldläufer dämpft einen Feuerball, aber kein Schwert.",
@@ -1545,7 +1545,7 @@ export default {
     "Dass Zustände eine Todesuhr sind: Blutung, Vergiftung und Brennen ziehen 20 Leben pro Sekunde ab, mehr geht nicht, und weitere frischen auf, statt sich zu stapeln.",
   "training.scenario.condition-removal.label": "Zustandsentfernung",
   "training.scenario.condition-removal.teaches":
-    "Dass eine Zustandsentfernung nur nimmt, was sie verspricht: Ein Verbündeter bei 200 von 500 trägt fünf Zustände, und Tiefe Wunde darunter nimmt beim Auftreffen 100 und deckelt deine Heilung bei 400.",
+    "Dass eine Zustandsentfernung nur nimmt, was sie verspricht: Ein Verbündeter bei 192 von 480 trägt fünf Zustände, und Tiefe Wunde darunter nimmt beim Auftreffen 96 und deckelt deine Heilung bei 384.",
   "training.scenario.armor-ladder.label": "Rüstungsleiter",
   "training.scenario.armor-ladder.teaches":
     "Die Schadensminderungskurve: derselbe Treffer gegen 40 bis 104 Rüstung, nebeneinander.",

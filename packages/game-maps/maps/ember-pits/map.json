@@ -1239,7 +1239,242 @@
       }
     }
   ],
-  "decor": [],
+  "decor": [
+    {
+      "id": "cinders-1",
+      "kind": "cinders",
+      "at": { "x": 1450, "y": 1731 },
+      "layer": 1,
+      "rotation": 169,
+      "scale": 1.16,
+      "variant": 2
+    },
+    {
+      "id": "cinders-2",
+      "kind": "cinders",
+      "at": { "x": 1341, "y": 1085 },
+      "layer": 1,
+      "rotation": 207,
+      "scale": 0.98,
+      "variant": 0
+    },
+    {
+      "id": "cinders-3",
+      "kind": "cinders",
+      "at": { "x": 2225, "y": 1906 },
+      "layer": 1,
+      "rotation": 322,
+      "scale": 1.03,
+      "variant": 2
+    },
+    {
+      "id": "cinders-4",
+      "kind": "cinders",
+      "at": { "x": 1553, "y": 139 },
+      "layer": 1,
+      "rotation": 230,
+      "scale": 0.89,
+      "variant": 3
+    },
+    {
+      "id": "cinders-5",
+      "kind": "cinders",
+      "at": { "x": 1931, "y": 1932 },
+      "layer": 1,
+      "rotation": 280,
+      "scale": 1.05,
+      "variant": 0
+    },
+    {
+      "id": "cinders-6",
+      "kind": "cinders",
+      "at": { "x": 951, "y": 2016 },
+      "layer": 1,
+      "rotation": 207,
+      "scale": 0.95,
+      "variant": 0
+    },
+    {
+      "id": "cinders-7",
+      "kind": "cinders",
+      "at": { "x": 790, "y": 1195 },
+      "layer": 1,
+      "rotation": 269,
+      "scale": 0.91,
+      "variant": 3
+    },
+    {
+      "id": "cinders-8",
+      "kind": "cinders",
+      "at": { "x": 1975, "y": 1128 },
+      "layer": 1,
+      "rotation": 112,
+      "scale": 0.85,
+      "variant": 1
+    },
+    {
+      "id": "cinders-9",
+      "kind": "cinders",
+      "at": { "x": 1453, "y": 730 },
+      "layer": 1,
+      "rotation": 357,
+      "scale": 0.92,
+      "variant": 2
+    },
+    {
+      "id": "cinders-10",
+      "kind": "cinders",
+      "at": { "x": 3054, "y": 1336 },
+      "layer": 1,
+      "rotation": 181,
+      "scale": 1.21,
+      "variant": 2
+    },
+    {
+      "id": "cinders-11",
+      "kind": "cinders",
+      "at": { "x": 2438, "y": 2000 },
+      "layer": 1,
+      "rotation": 53,
+      "scale": 1.22,
+      "variant": 1
+    },
+    {
+      "id": "cinders-12",
+      "kind": "cinders",
+      "at": { "x": 2363, "y": 1745 },
+      "layer": 1,
+      "rotation": 110,
+      "scale": 0.95,
+      "variant": 1
+    },
+    {
+      "id": "cinders-13",
+      "kind": "cinders",
+      "at": { "x": 1201, "y": 2052 },
+      "layer": 1,
+      "rotation": 67,
+      "scale": 0.91,
+      "variant": 1
+    },
+    {
+      "id": "cinders-14",
+      "kind": "cinders",
+      "at": { "x": 1676, "y": 721 },
+      "layer": 1,
+      "rotation": 67,
+      "scale": 1.14,
+      "variant": 3
+    },
+    {
+      "id": "cinders-15",
+      "kind": "cinders",
+      "at": { "x": 558, "y": 227 },
+      "layer": 1,
+      "rotation": 350,
+      "scale": 0.86,
+      "variant": 1
+    },
+    {
+      "id": "cinders-16",
+      "kind": "cinders",
+      "at": { "x": 1980, "y": 1602 },
+      "layer": 1,
+      "rotation": 130,
+      "scale": 0.98,
+      "variant": 0
+    },
+    {
+      "id": "cinders-17",
+      "kind": "cinders",
+      "at": { "x": 2861, "y": 302 },
+      "layer": 1,
+      "rotation": 69,
+      "scale": 0.81,
+      "variant": 3
+    },
+    {
+      "id": "cinders-18",
+      "kind": "cinders",
+      "at": { "x": 1657, "y": 1993 },
+      "layer": 1,
+      "rotation": 134,
+      "scale": 1.13,
+      "variant": 0
+    },
+    {
+      "id": "cinders-19",
+      "kind": "cinders",
+      "at": { "x": 2092, "y": 339 },
+      "layer": 1,
+      "rotation": 187,
+      "scale": 1.19,
+      "variant": 1
+    },
+    {
+      "id": "cinders-20",
+      "kind": "cinders",
+      "at": { "x": 2563, "y": 231 },
+      "layer": 1,
+      "rotation": 261,
+      "scale": 1.21,
+      "variant": 0
+    },
+    {
+      "id": "cinders-21",
+      "kind": "cinders",
+      "at": { "x": 2944, "y": 1768 },
+      "layer": 1,
+      "rotation": 243,
+      "scale": 0.98,
+      "variant": 0
+    },
+    {
+      "id": "cinders-22",
+      "kind": "cinders",
+      "at": { "x": 1753, "y": 1174 },
+      "layer": 1,
+      "rotation": 302,
+      "scale": 0.87,
+      "variant": 2
+    },
+    {
+      "id": "cinders-23",
+      "kind": "cinders",
+      "at": { "x": 348, "y": 791 },
+      "layer": 1,
+      "rotation": 292,
+      "scale": 0.78,
+      "variant": 2
+    },
+    {
+      "id": "cinders-24",
+      "kind": "cinders",
+      "at": { "x": 727, "y": 1897 },
+      "layer": 1,
+      "rotation": 322,
+      "scale": 1.02,
+      "variant": 1
+    },
+    {
+      "id": "cinders-25",
+      "kind": "cinders",
+      "at": { "x": 1887, "y": 406 },
+      "layer": 1,
+      "rotation": 253,
+      "scale": 0.99,
+      "variant": 3
+    },
+    {
+      "id": "cinders-26",
+      "kind": "cinders",
+      "at": { "x": 343, "y": 288 },
+      "layer": 1,
+      "rotation": 99,
+      "scale": 1.25,
+      "variant": 1
+    }
+  ],
   "gates": [],
   "switches": [
     {

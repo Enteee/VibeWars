@@ -51,13 +51,42 @@ describe("decor art (#4013)", () => {
     }
   });
 
-  it("casts every shadow toward +x +y, from the north-west light", () => {
-    for (const kind of DECOR_KINDS) {
+  it("casts every standing prop's shadow toward +x +y, from the north-west light", () => {
+    for (const kind of DECOR_KINDS.filter((kind) => kind !== "cinders")) {
       const shadow = decorShadow(prop(kind));
       expect(shadow.kind).toBe("ellipse");
       if (shadow.kind === "ellipse") {
         expect(shadow.at.x).toBeGreaterThan(400);
         expect(shadow.at.y).toBeGreaterThan(300);
+      }
+    }
+  });
+
+  it("lays a cinder drift's scorch flat under it, 120 u across at scale 1 (#4018)", () => {
+    const shadow = decorShadow(prop("cinders"));
+    expect(shadow).toMatchObject({ kind: "ellipse", at: { x: 400, y: 300 } });
+    const { decor } = BIOME.volcanic;
+    const xs = decorCommands({ ...prop("cinders"), rotation: 0 }, decor, 0, true).flatMap(
+      (command) =>
+        command.kind === "ellipse" ? [command.at.x - command.rx, command.at.x + command.rx] : [],
+    );
+    expect(Math.max(...xs) - Math.min(...xs)).toBeCloseTo(120, -1);
+  });
+
+  it("keeps a cinder drift's embers small and inside it, the ash never glowing (#4018)", () => {
+    const { decor } = BIOME.volcanic;
+    for (const variant of [0, 1, 2, 3]) {
+      for (const command of decorCommands(prop("cinders", variant), decor, 0, false)) {
+        if (command.kind !== "ellipse") {
+          throw new Error("a drift is drawn in ellipses");
+        }
+        const ash = [decor.ash, decor.ashLit, decor.ashShade].includes(command.colour);
+        expect(command.glow).toBe(!ash);
+        if (command.glow) {
+          expect(command.rx).toBeLessThanOrEqual(3);
+          expect(Math.abs(command.at.x - 400)).toBeLessThan(60);
+          expect(Math.abs(command.at.y - 300)).toBeLessThan(30);
+        }
       }
     }
   });

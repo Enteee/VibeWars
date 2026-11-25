@@ -1530,7 +1530,7 @@ export default {
     "Mitä yksi loitsu oikeasti tekee: 60 panssarilla täsmälleen työkaluvihjeen luku.",
   "training.scenario.time-to-kill.label": "Aika tappoon",
   "training.scenario.time-to-kill.teaches":
-    "Jatkuva vahinkotehosi: kuinka kauan 500 terveyden loitsija kestää, yhä uudelleen.",
+    "Jatkuva vahinkotehosi: kuinka kauan 480 terveyden loitsija kestää, yhä uudelleen.",
   "training.scenario.physical-vs-elemental.label": "Fyysinen vai elementaalinen",
   "training.scenario.physical-vs-elemental.teaches":
     "Että panssari vastaa vahinkotyyppiin: Warrior ja Stalwart Insignia vaimentavat miekkaa mutta eivät Fireballia, Ranger vaimentaa Fireballia mutta ei miekkaa.",
@@ -1539,7 +1539,7 @@ export default {
     "Että vaivat ovat tappokello: Bleeding, Poison ja Burning vievät 20 terveyttä sekunnissa, enemmän ei ole, ja uusi lisäys uusii keston eikä kasaannu.",
   "training.scenario.condition-removal.label": "Vaivojen poisto",
   "training.scenario.condition-removal.teaches":
-    "Että vaivanpoisto vie vain sen, minkä se lupaa: liittolaisella, jolla on 200 terveyttä 500:sta, on viisi vaivaa, ja niiden joukossa Deep Wound vie osuessaan 100 ja rajaa parannuksesi 400:aan.",
+    "Että vaivanpoisto vie vain sen, minkä se lupaa: liittolaisella, jolla on 192 terveyttä 480:sta, on viisi vaivaa, ja niiden joukossa Deep Wound vie osuessaan 96 ja rajaa parannuksesi 384:aan.",
   "training.scenario.armor-ladder.label": "Panssaritikkaat",
   "training.scenario.armor-ladder.teaches":
     "Lieventämiskäyrä: sama isku 40:stä 104:ään panssaria vastaan rinnakkain.",

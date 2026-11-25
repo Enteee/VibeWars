@@ -1427,7 +1427,7 @@ export default {
     "Một lần dùng phép thực sự gây ra gì: ở 60 giáp, đúng bằng con số trong chú giải.",
   "training.scenario.time-to-kill.label": "Thời gian hạ gục",
   "training.scenario.time-to-kill.teaches":
-    "Sát thương duy trì của bạn: một pháp sư 500 máu trụ được bao lâu, lặp đi lặp lại.",
+    "Sát thương duy trì của bạn: một pháp sư 480 máu trụ được bao lâu, lặp đi lặp lại.",
   "training.scenario.physical-vs-elemental.label": "Vật lý và nguyên tố",
   "training.scenario.physical-vs-elemental.teaches":
     "Giáp ứng với từng loại sát thương: Warrior và Stalwart giảm đòn kiếm chứ không giảm Fireball, Ranger giảm Fireball chứ không giảm đòn kiếm.",
@@ -1436,7 +1436,7 @@ export default {
     "Dị trạng là đồng hồ đếm ngược tới cái chết: Bleeding, Poison và Burning rút 20 máu mỗi giây, mức cao nhất có thể, và thêm nữa chỉ làm mới thời gian chứ không cộng dồn.",
   "training.scenario.condition-removal.label": "Gỡ dị trạng",
   "training.scenario.condition-removal.teaches":
-    "Gỡ dị trạng chỉ gỡ đúng thứ nó ghi: một đồng minh còn 200 trên 500 máu mang năm dị trạng, trong đó Deep Wound lấy 100 máu ngay khi dính và giới hạn lượng hồi máu của bạn ở 400.",
+    "Gỡ dị trạng chỉ gỡ đúng thứ nó ghi: một đồng minh còn 192 trên 480 máu mang năm dị trạng, trong đó Deep Wound lấy 96 máu ngay khi dính và giới hạn lượng hồi máu của bạn ở 384.",
   "training.scenario.armor-ladder.label": "Thang giáp",
   "training.scenario.armor-ladder.teaches":
     "Đường cong giảm sát thương: cùng một đòn đánh vào 40 đến 104 giáp, đặt cạnh nhau.",

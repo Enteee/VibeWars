@@ -11,6 +11,7 @@ import {
   NO_PIECE_ARMOR,
   NO_PIECE_REDUCTION,
   armorEnergyFor,
+  armorHealthFor,
   armorPieces,
   baseArmorFor,
   baseEnergyPipsFor,
@@ -415,10 +416,14 @@ export function resolveLoadout(input: LoadoutInput, rules: CombatRules): Resolve
 
   // Energy Storage (#532) adds to the maximum like Attunement does, once
   // at join; only an Elementalist primary holds its rank. The armor's
-  // energy is the primary profession's (#3986).
+  // energy (#3986) and health (#4002) are the primary profession's.
   const shared: SharedGear = {
     baseArmor: baseArmorFor(input.primaryProfession),
-    health: rules.baseHealth + runes.healthDelta + runes.insigniaHealth,
+    health:
+      rules.baseHealth +
+      armorHealthFor(input.primaryProfession) +
+      runes.healthDelta +
+      runes.insigniaHealth,
     baseEnergyPips: baseEnergyPipsFor(input.primaryProfession),
     energyDelta:
       armorEnergyFor(input.primaryProfession) +
@@ -447,6 +452,7 @@ export function resolveLoadout(input: LoadoutInput, rules: CombatRules): Resolve
 
 /** Maximum health, part by part: insignia apart from runes, though both sit on armor. */
 export interface HealthSources {
+  /** The character's own, its armor's included (a Dervish's +25, #4002). */
   readonly base: number;
   readonly runes: number;
   readonly insignia: number;
@@ -469,9 +475,10 @@ export function healthSources(
     return undefined;
   }
   const runes = totalRunes(input.equipment, input.primaryProfession);
-  const shared = rules.baseHealth + runes.healthDelta + runes.insigniaHealth;
+  const base = rules.baseHealth + armorHealthFor(input.primaryProfession);
+  const shared = base + runes.healthDelta + runes.insigniaHealth;
   return {
-    base: rules.baseHealth,
+    base,
     runes: runes.healthDelta,
     insignia: runes.insigniaHealth,
     mods: held.maxHealth - shared,

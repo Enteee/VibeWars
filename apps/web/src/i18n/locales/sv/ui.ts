@@ -1513,7 +1513,7 @@ export default {
     "Vad ett enda kast faktiskt gör: vid 60 i rustning exakt siffran i beskrivningen.",
   "training.scenario.time-to-kill.label": "Tid till död",
   "training.scenario.time-to-kill.teaches":
-    "Din uthålliga skada: hur länge en besvärjare med 500 hälsa håller, om och om igen.",
+    "Din uthålliga skada: hur länge en besvärjare med 480 hälsa håller, om och om igen.",
   "training.scenario.physical-vs-elemental.label": "Fysisk mot elementär",
   "training.scenario.physical-vs-elemental.teaches":
     "Att rustning svarar mot en skadetyp: en Warrior med Stalwart dämpar ett svärd men inte en Fireball, en Ranger dämpar en Fireball men inte ett svärd.",
@@ -1522,7 +1522,7 @@ export default {
     "Att åkommor är en dödsklocka: Bleeding, Poison och Burning dränerar 20 hälsa i sekunden, mer går inte, och fler förnyar i stället för att staplas.",
   "training.scenario.condition-removal.label": "Borttagning av åkommor",
   "training.scenario.condition-removal.teaches":
-    "Att en borttagning tar bort bara det den säger: en allierad på 200 av 500 bär fem åkommor, och Deep Wound bland dem tar 100 när den landar och begränsar dina läkningar till 400.",
+    "Att en borttagning tar bort bara det den säger: en allierad på 192 av 480 bär fem åkommor, och Deep Wound bland dem tar 96 när den landar och begränsar dina läkningar till 384.",
   "training.scenario.armor-ladder.label": "Rustningsstege",
   "training.scenario.armor-ladder.teaches":
     "Mildringskurvan: samma träff mot 40 till 104 i rustning, sida vid sida.",

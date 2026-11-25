@@ -323,7 +323,7 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
     knobs: [],
     // Both mortal, back 2 s after each death. The loaded one renews its
     // own three before they run out: 3 + 4 + 7 pips, held at MAX_PIPS (10),
-    // so it dies in 25 s untouched, and whatever the player adds to it
+    // so it dies in 24 s untouched, and whatever the player adds to it
     // only refreshes what it has.
     dummies: [
       {
@@ -356,7 +356,7 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
     // An ally, mortal, that keeps its five conditions on itself: each
     // renewed every 10 s for 12, so one the player removes is back within
     // 10 s, and the rest never lapse. Bleeding drains it, so it needs
-    // healing too; 2 s after a death it is back at 200.
+    // healing too; 2 s after a death it is back at 192.
     dummies: [
       {
         ...target("ally", "Afflicted ally", vec2(300, 210), 60),

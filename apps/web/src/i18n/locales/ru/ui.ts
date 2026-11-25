@@ -1639,7 +1639,7 @@ export default {
     "Что на самом деле делает одно применение: при броне 60 — ровно число из подсказки.",
   "training.scenario.time-to-kill.label": "Время убийства",
   "training.scenario.time-to-kill.teaches":
-    "Твой постоянный урон: сколько живёт заклинатель с 500 здоровья, раз за разом.",
+    "Твой постоянный урон: сколько живёт заклинатель с 480 здоровья, раз за разом.",
   "training.scenario.physical-vs-elemental.label": "Физический и стихийный",
   "training.scenario.physical-vs-elemental.teaches":
     "Что броня отвечает типу урона: Warrior со Stalwart гасит меч, но не Fireball, а Ranger гасит Fireball, но не меч.",
@@ -1648,7 +1648,7 @@ export default {
     "Что состояния — это таймер смерти: Bleeding, Poison и Burning отнимают 20 здоровья в секунду, больше не бывает, а новые обновляют длительность, а не складываются.",
   "training.scenario.condition-removal.label": "Снятие состояний",
   "training.scenario.condition-removal.teaches":
-    "Что снятие состояния убирает только то, что написано: у союзника 200 из 500 и пять состояний, а Deep Wound среди них отнимает 100 при наложении и ограничивает твоё лечение до 400.",
+    "Что снятие состояния убирает только то, что написано: у союзника 192 из 480 и пять состояний, а Deep Wound среди них отнимает 96 при наложении и ограничивает твоё лечение до 384.",
   "training.scenario.armor-ladder.label": "Лестница брони",
   "training.scenario.armor-ladder.teaches":
     "Кривая смягчения: один и тот же удар по броне от 40 до 104, бок о бок.",

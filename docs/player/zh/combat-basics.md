@@ -2,7 +2,7 @@
 
 ## 生命和能量
 
-你一开始有 500 **生命** 和 20 **能量**，护甲会增加能量：Warrior 不加，Ranger、Assassin 或 Dervish 加 5，其他所有人加 10。手持法杖时再加 10。符文和士气会改变这两者。技能消耗能量，而能量会自行缓慢恢复。![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior** 和 ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** 恢复得最慢，![Ranger](../../../apps/web/public/icons/profession/ranger.svg) **Ranger** 稍快，其他所有人最快。
+你一开始有 480 **生命** 和 20 **能量**，护甲会增加能量：Warrior 不加，Ranger、Assassin 或 Dervish 加 5，其他所有人加 10。手持法杖时再加 10。Dervish 的护甲还会增加 25 生命。符文和士气会改变这两者。技能消耗能量，而能量会自行缓慢恢复。![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior** 和 ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** 恢复得最慢，![Ranger](../../../apps/web/public/icons/profession/ranger.svg) **Ranger** 稍快，其他所有人最快。
 
 你的条上的箭头是 **pip**：每一个都代表生命或能量每秒一点一点地恢复或流失。![Bleeding](../../../apps/web/public/icons/status/bleeding.svg) **Bleeding**、![Burning](../../../apps/web/public/icons/status/burning.svg) **Burning** 和 ![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison** 会使生命流失；Regeneration 和治疗法术会增加生命。脱离战斗 5 秒后，你的生命会开始自行恢复，脱离战斗越久恢复越快。
 

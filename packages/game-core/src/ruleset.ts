@@ -172,7 +172,9 @@ export const MINIMAL_GW_INSPIRED_PVP_V1: Ruleset = Object.freeze({
     // is left (#3984).
     criticalBaseChance: 0.01,
     criticalChancePerRank: 0.01,
-    baseHealth: 500,
+    // GW1 wiki ("Health"): "… up to a maximum of 480 health at level
+    // 20". A Dervish's armor adds 25 on top (#4002).
+    baseHealth: 480,
     // GW1 wiki ("Energy"): "All professions … have an innate capacity of
     // 20 energy". Armor and the weapon in hand add the rest (#3986).
     baseEnergy: 20,
