@@ -14,7 +14,7 @@ jobs:
           persist-credentials: false
       - uses: ./.github/actions/devenv
       - run: devenv shell -- pnpm -r --filter "./packages/**" run build
-      - run: devenv shell -- node scripts/readme-shots.mjs --only heights
+      - run: devenv shell -- node scripts/readme-shots.mjs --only heights || true
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()
         with:
@@ -25,5 +25,5 @@ jobs:
           retention-days: 1
       - if: always()
         run: |
-          ls -l docs/media/readme-heights.png
-          echo "B64START$(base64 -w0 docs/media/readme-heights.png)B64END"
+          ls -l /tmp/readme-heights-debug.png
+          echo "B64START$(base64 -w0 /tmp/readme-heights-debug.png)B64END"

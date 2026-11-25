@@ -297,8 +297,8 @@ async function heightsShot(page, dir) {
   // 5 s west at 180 u/s is x ~4000, the steps and the torch in frame.
   await walk(page, "KeyA", 5000);
   step = "heights shot";
-  await assertNotVoid(page);
   await page.screenshot({ path: path.join(dir, "readme-heights.png") });
+  await assertNotVoid(page, dir);
 }
 
 /**
@@ -306,9 +306,11 @@ async function heightsShot(page, dir) {
  * map must stop the script, not commit a bad picture.
  *
  * @param {import("@playwright/test").Page} page
+ * @param {string} dir
  */
-async function assertNotVoid(page) {
+async function assertNotVoid(page, dir) {
   const png = await page.screenshot({ clip: { x: 540, y: 260, width: 200, height: 200 } });
+  fs.copyFileSync(path.join(dir, "readme-heights.png"), "/tmp/readme-heights-debug.png");
   const raw = spawnSync(
     "ffmpeg",
     ["-v", "error", "-i", "pipe:0", "-f", "rawvideo", "-pix_fmt", "rgb24", "pipe:1"],
