@@ -572,6 +572,11 @@ export default {
   "help.licences": "Άδειες τρίτων",
   "help.pages": "σελίδες βοήθειας",
   "help.source": "Πηγαίος κώδικας",
+  "help.trailer": "Τρέιλερ",
+  "help.trailerDownload": "Λήψη",
+  "help.trailerInfo": "{seconds} δευτ., περίπου {mb} MB",
+  "help.trailerOffline": "Το τρέιλερ χρειάζεται σύνδεση στο διαδίκτυο.",
+  "help.trailerVertical": "Έκδοση για κινητό (κάθετη)",
   "help.version": "VibeWars {release} · build {build}",
 
   "hud.aggression": "επιθ. {ours} κατά {theirs}",

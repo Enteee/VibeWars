@@ -575,6 +575,11 @@ export default {
   "help.licences": "Kolmansien osapuolten lisenssit",
   "help.pages": "ohjesivut",
   "help.source": "Lähdekoodi",
+  "help.trailer": "Traileri",
+  "help.trailerDownload": "Lataa",
+  "help.trailerInfo": "{seconds} s, noin {mb} Mt",
+  "help.trailerOffline": "Traileri tarvitsee internetyhteyden.",
+  "help.trailerVertical": "Puhelinversio (pystysuora)",
   "help.version": "VibeWars {release} · koontiversio {build}",
 
   "hud.aggression": "agg {ours} – {theirs}",

@@ -565,6 +565,11 @@ export default {
   "help.licences": "Tredjepartslicenser",
   "help.pages": "hjälpsidor",
   "help.source": "Källkod",
+  "help.trailer": "Trailer",
+  "help.trailerDownload": "Ladda ned",
+  "help.trailerInfo": "{seconds} s, cirka {mb} MB",
+  "help.trailerOffline": "Trailern kräver en internetanslutning.",
+  "help.trailerVertical": "Mobilversion (stående)",
   "help.version": "VibeWars {release} · build {build}",
 
   "hud.aggression": "agg {ours} mot {theirs}",

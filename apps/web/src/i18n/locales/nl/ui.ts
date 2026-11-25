@@ -564,6 +564,11 @@ export default {
   "help.licences": "Licenties van derden",
   "help.pages": "helppagina's",
   "help.source": "Broncode",
+  "help.trailer": "Trailer",
+  "help.trailerDownload": "Downloaden",
+  "help.trailerInfo": "{seconds} s, ongeveer {mb} MB",
+  "help.trailerOffline": "De trailer heeft een internetverbinding nodig.",
+  "help.trailerVertical": "Telefoonversie (staand)",
   "help.version": "VibeWars {release} · build {build}",
 
   "hud.aggression": "agr {ours} v {theirs}",

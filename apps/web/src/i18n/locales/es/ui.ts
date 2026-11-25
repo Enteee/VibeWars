@@ -601,6 +601,11 @@ export default {
   "help.licences": "Licencias de terceros",
   "help.pages": "páginas de ayuda",
   "help.source": "Código fuente",
+  "help.trailer": "Tráiler",
+  "help.trailerDownload": "Descargar",
+  "help.trailerInfo": "{seconds} s, unos {mb} MB",
+  "help.trailerOffline": "El tráiler necesita conexión a internet.",
+  "help.trailerVertical": "Versión para móvil (vertical)",
   "help.version": "VibeWars {release} · versión {build}",
 
   "hud.aggression": "agr {ours} v {theirs}",

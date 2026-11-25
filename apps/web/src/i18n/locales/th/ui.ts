@@ -517,6 +517,11 @@ export default {
   "help.licences": "สัญญาอนุญาตบุคคลที่สาม",
   "help.pages": "หน้าช่วยเหลือ",
   "help.source": "ซอร์สโค้ด",
+  "help.trailer": "ตัวอย่างเกม",
+  "help.trailerDownload": "ดาวน์โหลด",
+  "help.trailerInfo": "{seconds} วินาที ประมาณ {mb} MB",
+  "help.trailerOffline": "ตัวอย่างเกมต้องใช้การเชื่อมต่ออินเทอร์เน็ต",
+  "help.trailerVertical": "เวอร์ชันโทรศัพท์ (แนวตั้ง)",
   "help.version": "VibeWars {release} · บิลด์ {build}",
 
   "hud.aggression": "agg {ours} : {theirs}",

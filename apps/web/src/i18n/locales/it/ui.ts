@@ -604,6 +604,11 @@ export default {
   "help.licences": "Licenze di terze parti",
   "help.pages": "pagine di aiuto",
   "help.source": "Codice sorgente",
+  "help.trailer": "Trailer",
+  "help.trailerDownload": "Scarica",
+  "help.trailerInfo": "{seconds} s, circa {mb} MB",
+  "help.trailerOffline": "Il trailer richiede una connessione a Internet.",
+  "help.trailerVertical": "Versione per telefono (verticale)",
   "help.version": "VibeWars {release} · build {build}",
 
   "hud.aggression": "agg {ours} v {theirs}",

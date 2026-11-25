@@ -569,6 +569,11 @@ export default {
   "help.licences": "Külső licencek",
   "help.pages": "súgóoldalak",
   "help.source": "Forráskód",
+  "help.trailer": "Előzetes",
+  "help.trailerDownload": "Letöltés",
+  "help.trailerInfo": "{seconds} mp, kb. {mb} MB",
+  "help.trailerOffline": "Az előzeteshez internetkapcsolat kell.",
+  "help.trailerVertical": "Telefonos változat (álló)",
   "help.version": "VibeWars {release} · build {build}",
 
   "hud.aggression": "agr {ours} vs {theirs}",

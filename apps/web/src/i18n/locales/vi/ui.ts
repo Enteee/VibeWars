@@ -516,6 +516,11 @@ export default {
   "help.licences": "Giấy phép bên thứ ba",
   "help.pages": "trang hỗ trợ",
   "help.source": "Mã nguồn",
+  "help.trailer": "Trailer",
+  "help.trailerDownload": "Tải xuống",
+  "help.trailerInfo": "{seconds} giây, khoảng {mb} MB",
+  "help.trailerOffline": "Trailer cần kết nối internet.",
+  "help.trailerVertical": "Bản cho điện thoại (dọc)",
   "help.version": "VibeWars {release} · build {build}",
 
   "hud.aggression": "hung hăng {ours} vs {theirs}",

@@ -602,6 +602,11 @@ export default {
   "help.licences": "Licences tierces",
   "help.pages": "pages d'aide",
   "help.source": "Code source",
+  "help.trailer": "Bande-annonce",
+  "help.trailerDownload": "Télécharger",
+  "help.trailerInfo": "{seconds} s, environ {mb} Mo",
+  "help.trailerOffline": "La bande-annonce nécessite une connexion Internet.",
+  "help.trailerVertical": "Version téléphone (verticale)",
   "help.version": "VibeWars {release} · build {build}",
 
   "hud.aggression": "agr {ours} vs {theirs}",

@@ -657,6 +657,11 @@ export default {
   "help.licences": "تراخيص الأطراف الثالثة",
   "help.pages": "صفحات المساعدة",
   "help.source": "الشيفرة المصدرية",
+  "help.trailer": "العرض الترويجي",
+  "help.trailerDownload": "تنزيل",
+  "help.trailerInfo": "{seconds} ث، نحو {mb} ميغابايت",
+  "help.trailerOffline": "يحتاج العرض الترويجي إلى اتصال بالإنترنت.",
+  "help.trailerVertical": "نسخة الهاتف (عمودية)",
   "help.version": "VibeWars {release} · بناء {build}",
 
   "hud.aggression": "عدوان {ours} ضد {theirs}",
