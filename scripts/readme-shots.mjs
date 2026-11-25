@@ -345,16 +345,17 @@ function assertNotVoid(png) {
   if (raw.status !== 0 || bytes.length < 3) {
     throw new Error(`heights shot: the void check could not read the frame: ${String(raw.stderr)}`);
   }
-  const first = [bytes[0], bytes[1], bytes[2]];
-  let same = 0;
+  /** @type {Map<number, number>} */
+  const counts = new Map();
   for (let at = 0; at + 2 < bytes.length; at += 3) {
-    if (bytes[at] === first[0] && bytes[at + 1] === first[1] && bytes[at + 2] === first[2]) {
-      same += 1;
-    }
+    const colour = bytes.readUIntBE(at, 3);
+    counts.set(colour, (counts.get(colour) ?? 0) + 1);
   }
-  if (same > (bytes.length / 3) * 0.9) {
+  const pixels = bytes.length / 3;
+  const same = Math.max(...counts.values());
+  if (same > pixels / 2) {
     throw new Error(
-      `heights shot: the walk ended off the map (${String(same)} of ${String(bytes.length / 3)} px alike)`,
+      `heights shot: the walk ended off the map (${String(same)} of ${String(pixels)} px alike)`,
     );
   }
 }
