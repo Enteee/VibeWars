@@ -6,7 +6,7 @@ The operator approved **grim gothic, dark** on 2026-11-25 for the whole of epic 
 
 ![Grim gothic, 2× the middle of the scene](gothic-zoom.webp)
 
-Mockups only, drawn with canvas 2D at game scale (a body has a 12 px radius). Every style drew the same scene: 7 bodies, walls, columns, a tree, a brazier, crates, a pool, a fire area, a ward dome, a fireball and arrows. The code and the other styles' shots are on `bot/developer@2/issue-3977-spike`, in `docs/art/spikes/3977-sprite-stacking/preview/styles/`: open `styled.html?style=gothic` (`&s=2` for 2×) to redraw it, and `styles.js` holds the `gothic` preset's numbers.
+Mockups only, drawn with canvas 2D at game scale (a body has a 12 px radius). The team colours in them are not adopted: bodies keep `visual-style.md` §1's friend and foe colours (ADR-0057). Every style drew the same scene: 7 bodies, walls, columns, a tree, a brazier, crates, a pool, a fire area, a ward dome, a fireball and arrows. The code and the other styles' shots are on `bot/developer@2/issue-3977-spike`, in `docs/art/spikes/3977-sprite-stacking/preview/styles/`: open `styled.html?style=gothic` (`&s=2` for 2×) to redraw it, and `styles.js` holds the `gothic` preset's numbers.
 
 The styles that were weighed:
 
@@ -33,10 +33,6 @@ Yes. The usual sprite-stacking pipeline is **voxel models exported as slices**, 
 
 People keep AI art consistent with one fixed palette, applied by quantising every export as a build step. They also use one light direction, one grid size, reference images and a style LoRA. Seeds alone do not do it. Purely AI-generated output is not copyrightable (US Copyright Office, 2025), so an open repo cannot really license it, and each asset should record where it came from.
 
-**Recommendation:**
-
-- Commit small `.vox` sources (a few KB each) and one shared palette, and have a build step turn them into a slice atlas. The art then lives as data in the repo, and every build makes the same atlas.
-- Model the ~16 looks and ~20 props by hand in MagicaVoxel or Goxel, optionally from AI concept images.
-- Keep code-drawn slices only for parametric things: team tint, animation offsets and effects.
+**Not chosen.** ADR-0057 decides that slices are generated from our own geometry, in code, and baked per look at match start: one source, deterministic, team colours and poses as parameters, and no hand-kept art to fall out of step. A voxel pipeline (`.vox` sources, a shared palette, a build step to a slice atlas) is the usual alternative, and is what to revisit if code-drawn slices cannot reach the gothic look. It would need a new ADR.
 
 Sources: MagicaVoxel sprite-stacking guide (medium.com/@avsnoopy), spritestack.io, docs.pixel-composer.com (Slice Stack), replicate.com/blog (Retro Diffusion), copyright.gov/ai, huggingface.co/tencent/Hunyuan3D-2 (licence).

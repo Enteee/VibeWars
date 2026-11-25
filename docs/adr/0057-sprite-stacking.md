@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed (2026-11-25); the art style, grim gothic, approved by the operator (2026-11-25). Issue #3977, the spike of epic #3974. Builds on ADR-0051 (discrete layers), ADR-0052 (map lighting), ADR-0054 (no baked chunks) and ADR-0056 (cosmetics).
+Proposed (2026-11-25); the art style, grim gothic, approved by the operator on 2026-11-25 (relayed by the manager at 16:14: "go with the DARKER gothic style"; the scope, all of #3974, is operator question Q190, recorded in #4056). Issue #3977, the spike of epic #3974. Builds on ADR-0051 (discrete layers), ADR-0052 (map lighting), ADR-0054 (no baked chunks) and ADR-0056 (cosmetics).
 
 ## Context
 
@@ -62,7 +62,7 @@ This is a decision about small images, not the large ones ADR-0054 rejected. ADR
 
 **The art direction is grim gothic, dark: the `gothic` preset of the spike's `styles.js`, approved by the operator on 2026-11-25 for the whole of epic #3974.** The spike mocked up five art styles at game scale (painterly, low-poly, pixel art, grim gothic and voxel; the mockups are on `bot/developer@2/issue-3977-spike`, `preview/styles/`, and [`styles/README.md`](../art/spikes/3977-sprite-stacking/styles/README.md) lists them). The operator picked grim gothic, saw a lighter variant of it, and chose the dark one. Bodies, world elements, skills, ground effects and water all follow it:
 
-- **Palette:** dark and desaturated: flagstone floor `#3a3834`, walls `#5e5a54`, columns `#8a847a`, near-black water `#0e2228`. Team colours stay the brightest thing on screen, steel blue `#46607e` and blood red `#7a2a2a`, each with a pale trim.
+- **Palette:** dark and desaturated: flagstone floor `#3a3834`, walls `#5e5a54`, columns `#8a847a`, near-black water `#0e2228`. The mock's steel blue and blood red team colours are not adopted: on the dark floor its red measures 1.22:1, too close for friend and foe. Bodies keep `visual-style.md` §1's friend `#59c2ff` and foe `#ff7b72`, which the dark world makes stand out more, not less.
 - **Shading:** high contrast between the lit top and the dark lower slices, ambient occlusion where a body meets the ground, and a 1 px near-black outline `#08080a` on the silhouette.
 - **Figures:** helmeted, with a visor and a cape, about 18 sides a slice.
 - **Light:** a strong vignette at the screen edge and warm pools of light around fires and braziers, the ADR-0052 lights doing the work.
@@ -72,7 +72,7 @@ This is a decision about small images, not the large ones ADR-0054 rejected. ADR
 
 ![Grim gothic, 2× the middle of the scene](../art/spikes/3977-sprite-stacking/styles/gothic-zoom.webp)
 
-The team-colour contrast in `visual-style.md` still holds: a dark look must not darken the team colours into the floor. Where this palette and `visual-style.md` disagree, the follow-up that builds the look updates `visual-style.md` in the same PR.
+The grade darkens the world, never the actors: bodies, team colours, gameplay marks, hazards and the HUD keep their colours and their §6 contrast. Where this palette and `visual-style.md` disagree, the follow-up that builds the look updates `visual-style.md` in the same PR.
 
 **World elements: restyled to the gothic preview, not stacked.** A crate or pillar does not turn, so it gains nothing from slices: the stacked crate in the turning sheet looks no more solid than today's cover and costs 14 polygons where today's costs a few. Walls, columns, trees, braziers, crates, water, ground effects and skill visuals instead take the gothic palette, outline and light of the preview, drawn the way map art is drawn today (ADR-0051, `map-2-5d`). Follow-up cards of #3974 do that, one kind of element per card, each against the preview. The bench and glyph gates above are for bodies only.
 
