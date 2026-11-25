@@ -4750,7 +4750,7 @@ export class MatchSimulation {
 
   /**
    * Spreading statuses (#765), once everyone has acted: every living
-   * combatant of the bearer's own kind of body (#3881, `bodyType`)
+   * combatant of the bearer's own species (#3881, `speciesOf`)
    * adjacent to a living bearer, on either team, catches it for
    * as long as the bearer has left, once per outbreak. Who carries what
    * is read before anyone catches anything, so one caught this step
@@ -4784,7 +4784,7 @@ export class MatchSimulation {
         // Immune (#1455): not caught, and free to catch it once that ends.
         if (
           outbreak.infected.has(other.id) ||
-          bodyType(other) !== bodyType(record) ||
+          speciesOf(other) !== speciesOf(record) ||
           !sharesFloor(other.floors, floorOf(record.layer)) ||
           distance(record.position, other.position) > AREA_ADJACENT ||
           other.combatant.statuses.isImmuneTo(status.id)
@@ -10044,7 +10044,7 @@ export class MatchSimulation {
     victim: ParticipantRecord,
     rule: Extract<ArrivedDeathInRange, { kind: "damage-same-type" }>,
   ): CombatEvent[] {
-    const type = bodyType(victim);
+    const species = speciesOf(victim);
     const effect: SkillEffect = {
       kind: "damage",
       amount: { flat: rule.damage },
@@ -10057,7 +10057,7 @@ export class MatchSimulation {
       if (
         combatant.dead ||
         other.creature?.kind === "spirit" ||
-        bodyType(other) !== type ||
+        speciesOf(other) !== species ||
         combatant.health >= rule.belowHealthFraction * effectiveMaxHealth(combatant) ||
         !sharesFloor(other.floors, floorOf(spirit.layer)) ||
         !distanceWithinRange(spirit.position, other.position, RANGE_NATURE_RITUAL)
@@ -11762,11 +11762,36 @@ export class MatchSimulation {
 }
 
 /**
- * A body's type, a creature's kind or `"character"`: what Edge of
- * Extinction reads (#1886), and who catches Disease from whom (#3881).
+ * A body's GW1 species (#4000): what Edge of Extinction reads, "all
+ * creatures of the same type" (#1886), and who catches Disease from whom,
+ * "creatures of the same kind" (#3881). A player and a map's priest, Guild
+ * Lord and guard are all Human; every minion, the Flesh Golem too, Undead.
  */
-function bodyType(record: ParticipantRecord): CreatureKind | "character" {
-  return record.creature?.kind ?? "character";
+export type Species = "human" | "undead" | "beast" | "rat" | "spirit" | "ghost";
+
+/** `record`'s species (#4000): see `Species`. */
+function speciesOf(record: ParticipantRecord): Species {
+  const creature = record.creature;
+  if (creature === undefined) {
+    return "human";
+  }
+  switch (creature.kind) {
+    case "priest":
+    case "guild-lord":
+    case "guard":
+      return "human";
+    case "minion":
+      return "undead";
+    case "pet":
+      return "beast";
+    case "critter":
+      // The tutorial's rats are the only critters; any other animal is a beast, as a pet.
+      return creature.look === "rat" ? "rat" : "beast";
+    case "spirit":
+      return "spirit";
+    case "ghostly-hero":
+      return "ghost";
+  }
 }
 
 /**
