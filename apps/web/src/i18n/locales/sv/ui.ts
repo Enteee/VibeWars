@@ -416,7 +416,6 @@ export default {
     one: "{count} rankad vinst",
     other: "{count} rankade vinster",
   },
-  "cosmetics.showOthers": "Visa andra spelares kosmetik",
   "cosmetics.slot.aura": "Markaura",
   "cosmetics.slot.cape": "Mantelmönster",
   "cosmetics.slot.dissolve": "Dödsupplösning",

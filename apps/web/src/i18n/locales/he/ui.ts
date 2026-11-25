@@ -433,7 +433,6 @@ export default {
     two: "{count} ניצחונות מדורגים",
     other: "{count} ניצחונות מדורגים",
   },
-  "cosmetics.showOthers": "הצגת פריטים קוסמטיים של שחקנים אחרים",
   "cosmetics.slot.aura": "הילת קרקע",
   "cosmetics.slot.cape": "דוגמת גלימה",
   "cosmetics.slot.dissolve": "התפוגגות במוות",

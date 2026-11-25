@@ -417,7 +417,6 @@ export const en = {
     one: "{count} ranked win",
     other: "{count} ranked wins",
   },
-  "cosmetics.showOthers": "Show other players' cosmetics",
   "cosmetics.slot.aura": "Ground aura",
   "cosmetics.slot.cape": "Cape pattern",
   "cosmetics.slot.dissolve": "Death dissolve",

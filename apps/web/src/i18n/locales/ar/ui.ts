@@ -474,7 +474,6 @@ export default {
     many: "{count} فوزًا مصنّفًا",
     other: "{count} فوز مصنّف",
   },
-  "cosmetics.showOthers": "إظهار زينة اللاعبين الآخرين",
   "cosmetics.slot.aura": "هالة أرضية",
   "cosmetics.slot.cape": "نقش العباءة",
   "cosmetics.slot.dissolve": "تلاشي الموت",

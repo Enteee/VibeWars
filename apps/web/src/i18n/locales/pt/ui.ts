@@ -439,7 +439,6 @@ export default {
     many: "{count} vitórias ranqueadas",
     other: "{count} vitórias ranqueadas",
   },
-  "cosmetics.showOthers": "Mostrar cosméticos de outros jogadores",
   "cosmetics.slot.aura": "Aura no chão",
   "cosmetics.slot.cape": "Padrão da capa",
   "cosmetics.slot.dissolve": "Dissolução na morte",

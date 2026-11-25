@@ -59,6 +59,4 @@ nästa lobby du går med i.
 
 ## Se andra spelares kosmetik
 
-Andra spelare ser din kosmetik bara om deras kopia av topplistan visar att du har tjänat in den. För
-att se alla med standardutseendet, slå av **Visa andra spelares kosmetik** i Alternativ under
-**Kosmetik**.
+Andra spelare ser din kosmetik bara om deras kopia av topplistan visar att du har tjänat in den.

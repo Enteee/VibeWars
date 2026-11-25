@@ -60,6 +60,5 @@ jogadores veem-na a partir do próximo lobby em que entrares.
 
 ## Ver os cosméticos de outros jogadores
 
-Os outros jogadores só veem os teus cosméticos se a cópia deles da tabela de líderes mostrar que
-os obtiveste. Para ver todos com o visual predefinido, desliga **Mostrar cosméticos de outros
-jogadores** em Opções, em **Cosméticos**.
+Os outros jogadores só veem os teus cosméticos se a cópia deles da tabela de líderes mostrar que os
+obtiveste.

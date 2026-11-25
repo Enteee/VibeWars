@@ -60,5 +60,4 @@ volgende lobby waar je in gaat.
 ## Cosmetics van andere spelers zien
 
 Andere spelers zien je cosmetics alleen als hun kopie van de ranglijst laat zien dat je ze verdiend
-hebt. Om iedereen in het standaarduiterlijk te zien, zet je **Cosmetics van andere spelers tonen**
-uit in Opties onder **Cosmetics**.
+hebt.

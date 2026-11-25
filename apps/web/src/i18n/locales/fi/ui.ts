@@ -423,7 +423,6 @@ export default {
     one: "{count} rankattu voitto",
     other: "{count} rankattua voittoa",
   },
-  "cosmetics.showOthers": "Näytä muiden pelaajien kosmetiikka",
   "cosmetics.slot.aura": "Maa-aura",
   "cosmetics.slot.cape": "Viitan kuvio",
   "cosmetics.slot.dissolve": "Kuoleman haihtuminen",

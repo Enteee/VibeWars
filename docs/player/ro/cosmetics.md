@@ -59,5 +59,4 @@ o văd începând cu următorul lobby în care intri.
 ## Elementele cosmetice ale altor jucători
 
 Ceilalți jucători îți văd elementele cosmetice doar dacă copia lor a clasamentului arată că le-ai
-obținut. Ca să-i vezi pe toți cu aspectul implicit, dezactivează **Arată elementele cosmetice ale
-altor jucători** în Opțiuni, la **Cosmetice**.
+obținut.

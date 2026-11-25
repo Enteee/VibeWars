@@ -419,7 +419,6 @@ export default {
     one: "{count} gewerteter Sieg",
     other: "{count} gewertete Siege",
   },
-  "cosmetics.showOthers": "Kosmetik anderer Spieler anzeigen",
   "cosmetics.slot.aura": "Bodenaura",
   "cosmetics.slot.cape": "Umhangmuster",
   "cosmetics.slot.dissolve": "Todesauflösung",

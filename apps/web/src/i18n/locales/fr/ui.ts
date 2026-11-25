@@ -440,7 +440,6 @@ export default {
     many: "{count} victoires classées",
     other: "{count} victoires classées",
   },
-  "cosmetics.showOthers": "Afficher les cosmétiques des autres joueurs",
   "cosmetics.slot.aura": "Aura au sol",
   "cosmetics.slot.cape": "Motif de cape",
   "cosmetics.slot.dissolve": "Dissolution à la mort",

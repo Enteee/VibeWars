@@ -415,7 +415,6 @@ export default {
     one: "{count} برد رتبه‌بندی",
     other: "{count} برد رتبه‌بندی",
   },
-  "cosmetics.showOthers": "نمایش آرایه‌های بازیکنان دیگر",
   "cosmetics.slot.aura": "هاله زمینی",
   "cosmetics.slot.cape": "نقش شنل",
   "cosmetics.slot.dissolve": "محو شدن مرگ",

@@ -60,5 +60,4 @@ see it from the next lobby you join.
 ## Seeing other players' cosmetics
 
 Other players see your cosmetics only if their copy of the leaderboard shows you
-earned them. To see everyone in the default look, turn off **Show other players'
-cosmetics** in Options under **Cosmetics**.
+earned them.

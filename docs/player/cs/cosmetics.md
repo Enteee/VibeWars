@@ -59,5 +59,3 @@ lobby, do které vstoupíš.
 ## Kosmetika ostatních hráčů
 
 Ostatní hráči vidí tvou kosmetiku, jen když jejich kopie žebříčku ukazuje, že jsi ji získal.
-Chceš-li vidět všechny ve výchozím vzhledu, vypni **Zobrazovat kosmetiku ostatních hráčů** v
-Možnostech v části **Kosmetika**.

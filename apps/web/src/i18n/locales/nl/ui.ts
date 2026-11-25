@@ -415,7 +415,6 @@ export default {
     one: "{count} gerankte zege",
     other: "{count} gerankte zeges",
   },
-  "cosmetics.showOthers": "Cosmetics van andere spelers tonen",
   "cosmetics.slot.aura": "Grondaura",
   "cosmetics.slot.cape": "Capepatroon",
   "cosmetics.slot.dissolve": "Doodsoplossing",

@@ -452,7 +452,6 @@ export default {
     many: "{count} rankingowych wygranych",
     other: "{count} rankingowej wygranej",
   },
-  "cosmetics.showOthers": "Pokazuj kosmetyki innych graczy",
   "cosmetics.slot.aura": "Aura na ziemi",
   "cosmetics.slot.cape": "Wzór peleryny",
   "cosmetics.slot.dissolve": "Rozpad po śmierci",

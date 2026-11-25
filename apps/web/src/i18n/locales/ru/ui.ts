@@ -449,7 +449,6 @@ export default {
     many: "{count} рейтинговых побед",
     other: "{count} рейтинговой победы",
   },
-  "cosmetics.showOthers": "Показывать косметику других игроков",
   "cosmetics.slot.aura": "Аура под ногами",
   "cosmetics.slot.cape": "Узор плаща",
   "cosmetics.slot.dissolve": "Растворение при смерти",

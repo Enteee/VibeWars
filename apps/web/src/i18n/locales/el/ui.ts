@@ -423,7 +423,6 @@ export default {
     one: "{count} βαθμολογημένη νίκη",
     other: "{count} βαθμολογημένες νίκες",
   },
-  "cosmetics.showOthers": "Εμφάνιση διακοσμητικών άλλων παικτών",
   "cosmetics.slot.aura": "Αύρα εδάφους",
   "cosmetics.slot.cape": "Σχέδιο κάπας",
   "cosmetics.slot.dissolve": "Διάλυση θανάτου",

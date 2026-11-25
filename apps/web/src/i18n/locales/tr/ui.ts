@@ -414,7 +414,6 @@ export default {
     one: "{count} dereceli galibiyet",
     other: "{count} dereceli galibiyet",
   },
-  "cosmetics.showOthers": "Diğer oyuncuların kozmetiklerini göster",
   "cosmetics.slot.aura": "Zemin aurası",
   "cosmetics.slot.cape": "Pelerin deseni",
   "cosmetics.slot.dissolve": "Ölüm çözülmesi",

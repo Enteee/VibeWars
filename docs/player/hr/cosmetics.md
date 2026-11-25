@@ -58,6 +58,4 @@ sljedećeg predvorja kojem se pridružiš.
 
 ## Kozmetika drugih igrača
 
-Drugi igrači vide tvoju kozmetiku samo ako njihova kopija ljestvice pokazuje da si je zaradio. Da
-vidiš sve u zadanom izgledu, isključi **Prikaži kozmetiku drugih igrača** u Opcijama pod
-**Kozmetika**.
+Drugi igrači vide tvoju kozmetiku samo ako njihova kopija ljestvice pokazuje da si je zaradio.

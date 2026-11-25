@@ -452,7 +452,6 @@ export default {
     many: "{count} рейтингових перемог",
     other: "{count} рейтингової перемоги",
   },
-  "cosmetics.showOthers": "Показувати косметику інших гравців",
   "cosmetics.slot.aura": "Аура під ногами",
   "cosmetics.slot.cape": "Візерунок плаща",
   "cosmetics.slot.dissolve": "Розчинення при смерті",

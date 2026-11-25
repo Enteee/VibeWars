@@ -382,7 +382,6 @@ export default {
   "cosmetics.requires.wins": {
     other: "{count} trận thắng xếp hạng",
   },
-  "cosmetics.showOthers": "Hiện trang trí của người chơi khác",
   "cosmetics.slot.aura": "Hào quang mặt đất",
   "cosmetics.slot.cape": "Họa tiết áo choàng",
   "cosmetics.slot.dissolve": "Tan biến khi chết",
