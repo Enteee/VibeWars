@@ -4750,7 +4750,7 @@ export class MatchSimulation {
 
   /**
    * Spreading statuses (#765), once everyone has acted: every living
-   * combatant of the bearer's own kind of body (#3881, `bodyType`)
+   * combatant of the bearer's own species (#3881, #4000, `speciesOf`)
    * adjacent to a living bearer, on either team, catches it for
    * as long as the bearer has left, once per outbreak. Who carries what
    * is read before anyone catches anything, so one caught this step
@@ -4784,7 +4784,7 @@ export class MatchSimulation {
         // Immune (#1455): not caught, and free to catch it once that ends.
         if (
           outbreak.infected.has(other.id) ||
-          bodyType(other) !== bodyType(record) ||
+          speciesOf(other) !== speciesOf(record) ||
           !sharesFloor(other.floors, floorOf(record.layer)) ||
           distance(record.position, other.position) > AREA_ADJACENT ||
           other.combatant.statuses.isImmuneTo(status.id)
@@ -10035,7 +10035,7 @@ export class MatchSimulation {
   }
 
   /**
-   * Edge of Extinction (#1886): every living body of `victim`'s type in
+   * Edge of Extinction (#1886): every living body of `victim`'s species (#4000) in
    * `spirit`'s range, below its share of maximum Health, takes the
    * damage, typeless, from the spirit.
    */
@@ -10044,7 +10044,7 @@ export class MatchSimulation {
     victim: ParticipantRecord,
     rule: Extract<ArrivedDeathInRange, { kind: "damage-same-type" }>,
   ): CombatEvent[] {
-    const type = bodyType(victim);
+    const species = speciesOf(victim);
     const effect: SkillEffect = {
       kind: "damage",
       amount: { flat: rule.damage },
@@ -10057,7 +10057,7 @@ export class MatchSimulation {
       if (
         combatant.dead ||
         other.creature?.kind === "spirit" ||
-        bodyType(other) !== type ||
+        speciesOf(other) !== species ||
         combatant.health >= rule.belowHealthFraction * effectiveMaxHealth(combatant) ||
         !sharesFloor(other.floors, floorOf(spirit.layer)) ||
         !distanceWithinRange(spirit.position, other.position, RANGE_NATURE_RITUAL)
@@ -11762,11 +11762,61 @@ export class MatchSimulation {
 }
 
 /**
- * A body's type, a creature's kind or `"character"`: what Edge of
- * Extinction reads (#1886), and who catches Disease from whom (#3881).
+ * A body's species (#4000), GW1's *Species*: who catches Disease from whom
+ * (#3881, "contagious between creatures of the same kind"), and whom Edge
+ * of Extinction hits (#1886, "all creatures of the same type"). Players,
+ * priests, Guild Lords and guards are all Human; every minion is Undead,
+ * the Flesh Golem too; every pet is one beast.
  */
-function bodyType(record: ParticipantRecord): CreatureKind | "character" {
-  return record.creature?.kind ?? "character";
+type Species = "human" | "undead" | "beast" | "rat" | "spirit" | "ghost";
+
+function speciesOf(record: ParticipantRecord): Species {
+  const { creature } = record;
+  if (creature === undefined) {
+    return "human";
+  }
+  switch (creature.kind) {
+    case "priest":
+    case "guild-lord":
+    case "guard":
+      return "human";
+    case "minion":
+      return "undead";
+    case "pet":
+      return "beast";
+    case "spirit":
+      return "spirit";
+    case "ghostly-hero":
+      return "ghost";
+    case "critter":
+      return lookSpecies(creature.look);
+  }
+}
+
+/** The species a look is of: a critter's, which only its look tells (#4000). */
+function lookSpecies(look: CreatureLook): Species {
+  switch (look) {
+    case "rat":
+      return "rat";
+    case "beast":
+      return "beast";
+    case "bone-minion":
+    case "bone-horror":
+    case "bone-fiend":
+    case "vampiric-horror":
+    case "flesh-golem":
+    case "shambling-horror":
+    case "jagged-horror":
+      return "undead";
+    case "spirit":
+      return "spirit";
+    case "priest":
+    case "guild-lord":
+    case "guard":
+      return "human";
+    case "ghostly-hero":
+      return "ghost";
+  }
 }
 
 /**

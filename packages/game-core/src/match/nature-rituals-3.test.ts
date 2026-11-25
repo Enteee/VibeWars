@@ -15,6 +15,7 @@ import { vec2, type Vec2 } from "../vec2.js";
 import {
   MatchSimulation,
   type CreatureKind,
+  type CreatureLook,
   type Participant,
   type ParticipantSpec,
 } from "./simulation.js";
@@ -76,13 +77,20 @@ function spec(id: string, team: number, spawn: Vec2, extra?: Partial<Participant
 }
 
 /** A body of `kind` on `team`, owned by `owner`, as a summon would leave it. */
-function creatureSpec(id: string, team: number, spawn: Vec2, kind: CreatureKind, owner: string) {
+function creatureSpec(
+  id: string,
+  team: number,
+  spawn: Vec2,
+  kind: CreatureKind,
+  owner: string | undefined,
+  look: CreatureLook = "bone-minion",
+) {
   return spec(id, team, spawn, {
     skillBar: [],
     creature: {
       ownerId: owner,
       kind,
-      look: "bone-minion",
+      look,
       name: id,
       expiresInSeconds: Number.POSITIVE_INFINITY,
       ageSeconds: 0,
@@ -210,6 +218,22 @@ describe("Edge of Extinction (#1886)", () => {
     const events = kill(sim, "dies");
     expect(damageTo(events, "other")).toBe(43);
     expect(damageTo(events, "low")).toBe(0);
+  });
+
+  it("a guard is Human (#4000): its death hits a player, and a player's death hits it", () => {
+    const sim = match(
+      creatureSpec("guard", 1, vec2(300, 0), "guard", undefined, "guard"),
+      spec("low", 1, vec2(400, 0)),
+      creatureSpec("priest", 1, vec2(300, 100), "priest", undefined, "priest"),
+    );
+    ritual(sim, "ranger.edge-of-extinction");
+    hurt(sim, "low", 0.5);
+    hurt(sim, "priest", 0.5);
+    let events = kill(sim, "guard");
+    expect(damageTo(events, "low")).toBe(43);
+    expect(damageTo(events, "priest")).toBe(43);
+    events = kill(sim, "low");
+    expect(damageTo(events, "priest")).toBe(43);
   });
 
   it("a death it causes fires it again", () => {

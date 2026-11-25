@@ -365,3 +365,35 @@ describe("Disease spreads to the same kind of body (#3881)", () => {
     expect(get(match, "spirit").statuses.has("burning")).toBe(true);
   });
 });
+
+describe("Disease spreads within a species (#4000)", () => {
+  it("a diseased guard infects the player beside it; a diseased player infects a priest", () => {
+    const match = standing([
+      creature("guard", vec2(270, 0), "guard", "guard"),
+      body("w", 1, vec2(300, 0)),
+      body("far", 1, vec2(600, 0)),
+      creature("priest", vec2(630, 0), "priest", "priest"),
+    ]);
+    get(match, "guard").statuses.apply("disease", 10, "guard", NO_RANKS);
+    get(match, "far").statuses.apply("disease", 10, "far", NO_RANKS);
+    const log = stepFor(match, DT);
+    expect(spreads(log)).toEqual([
+      { kind: "status-spread", targetId: "w", fromId: "guard", statusId: "disease" },
+      { kind: "status-spread", targetId: "priest", fromId: "far", statusId: "disease" },
+    ]);
+  });
+
+  it("a Guild Lord catches it from a player; a pet beside them does not", () => {
+    const match = standing([
+      body("w", 1, vec2(300, 0)),
+      creature("lord", vec2(330, 0), "guild-lord", "guild-lord"),
+      creature("pet", vec2(300, 30), "pet", "beast"),
+    ]);
+    get(match, "w").statuses.apply("disease", 10, "w", NO_RANKS);
+    const log = stepFor(match, DT);
+    expect(spreads(log)).toEqual([
+      { kind: "status-spread", targetId: "lord", fromId: "w", statusId: "disease" },
+    ]);
+    expect(get(match, "pet").statuses.has("disease")).toBe(false);
+  });
+});
