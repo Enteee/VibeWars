@@ -62,7 +62,7 @@ rewriting history.
 | [0054](0054-no-baked-band-chunks.md)          | Static map art stays live; it is not baked into chunk images       |
 | [0055](0055-ranked-receipts.md)               | Ranked play: a public ledger of receipts every player signs        |
 | [0056](0056-cosmetics.md)                     | Cosmetics are earned on the public ledger, never in the sim        |
-| [0057](0057-sprite-stacking.md)               | Bodies are sprite-stacked, baked per heading; props are not        |
+| [0057](0057-sprite-stacking.md)               | Gothic art; bodies sprite-stacked and baked per heading            |
 | [0058](0058-music-transitions.md)             | Music changes by fading at its own tempo; one song per trailer     |
 | [0059](0059-gw1-energy-pool.md)               | The energy pool is GW1's: 20, plus armor and staff, per profession |
 | [0060](0060-map-decor.md)                     | Map decor is renderer-only data; cover is a wall, never decor      |

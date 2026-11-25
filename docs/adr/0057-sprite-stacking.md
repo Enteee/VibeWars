@@ -1,4 +1,4 @@
-# ADR-0057: Bodies are sprite-stacked from their own geometry and baked per heading; props are not
+# ADR-0057: The art is grim gothic; bodies are sprite-stacked and baked per heading, world elements are restyled, not stacked
 
 ## Status
 
@@ -60,7 +60,7 @@ This is a decision about small images, not the large ones ADR-0054 rejected. ADR
 
 **The profession glyph rides on top of the stack.** It is the exception to "ground marks stay flat". It is a flat badge on the top slice, centred on the body's vertical axis rather than the head's forward offset, not turned with `facing`, drawn after every slice so nothing on the body covers it: the same glyph, tint and size as today, with its dark outline for contrast on any team colour. The ground marks stay flat because they must line up with the footprint and the hit test. The glyph says _who_, not _where_, so a fixed offset over the centre costs no alignment. Over the head is where conditions and the self ring go, and a glyph there piles up with them; beside the health bar fails for bodies that show no bar, and the eye tracks the body, not the bar.
 
-**The look is grim gothic, dark, approved by the operator on 2026-11-25.** The spike mocked up five art styles at game scale (painterly, low-poly, pixel art, grim gothic and voxel; on `bot/developer@2/issue-3977-spike`, `preview/styles/`). The operator picked grim gothic, saw a lighter variant of it, and chose the dark one. Stacked bodies and the world around them follow it:
+**The art direction is grim gothic, dark: the `gothic` preset of the spike's `styles.js`, approved by the operator on 2026-11-25 for the whole of epic #3974.** The spike mocked up five art styles at game scale (painterly, low-poly, pixel art, grim gothic and voxel; the mockups are on `bot/developer@2/issue-3977-spike`, `preview/styles/`, and [`styles/README.md`](../art/spikes/3977-sprite-stacking/styles/README.md) lists them). The operator picked grim gothic, saw a lighter variant of it, and chose the dark one. Bodies, world elements, skills, ground effects and water all follow it:
 
 - **Palette:** dark and desaturated: flagstone floor `#3a3834`, walls `#5e5a54`, columns `#8a847a`, near-black water `#0e2228`. Team colours stay the brightest thing on screen, steel blue `#46607e` and blood red `#7a2a2a`, each with a pale trim.
 - **Shading:** high contrast between the lit top and the dark lower slices, ambient occlusion where a body meets the ground, and a 1 px near-black outline `#08080a` on the silhouette.
@@ -68,13 +68,13 @@ This is a decision about small images, not the large ones ADR-0054 rejected. ADR
 - **Light:** a strong vignette at the screen edge and warm pools of light around fires and braziers, the ADR-0052 lights doing the work.
 - **The glyph** sits in a dark disc over the head, which is the badge disc the Consequences below ask the follow-up to try first.
 
-![Grim gothic, at game zoom](../art/spikes/3977-sprite-stacking/style-gothic-world.webp)
+![Grim gothic, at game zoom](../art/spikes/3977-sprite-stacking/styles/gothic-world.webp)
 
-![Grim gothic, 2× the middle of the scene](../art/spikes/3977-sprite-stacking/style-gothic-zoom.webp)
+![Grim gothic, 2× the middle of the scene](../art/spikes/3977-sprite-stacking/styles/gothic-zoom.webp)
 
 The team-colour contrast in `visual-style.md` still holds: a dark look must not darken the team colours into the floor. Where this palette and `visual-style.md` disagree, the follow-up that builds the look updates `visual-style.md` in the same PR.
 
-**Props: no.** A crate or pillar does not turn, and map art (ADR-0051, `map-2-5d`) already draws cover with lit faces and height. The stacked crate in the turning sheet looks no more solid than today's cover and costs 14 polygons where today's costs a few. Props stay as they are.
+**World elements: restyled to the gothic preview, not stacked.** A crate or pillar does not turn, so it gains nothing from slices: the stacked crate in the turning sheet looks no more solid than today's cover and costs 14 polygons where today's costs a few. Walls, columns, trees, braziers, crates, water, ground effects and skill visuals instead take the gothic palette, outline and light of the preview, drawn the way map art is drawn today (ADR-0051, `map-2-5d`). Follow-up cards of #3974 do that, one kind of element per card, each against the preview. The bench and glyph gates above are for bodies only.
 
 ## Considered
 
