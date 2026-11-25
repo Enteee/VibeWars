@@ -2,7 +2,7 @@
 
 ## Santé et énergie
 
-Tu commences avec 500 de **santé** et 20 d'**énergie**, et ton armure ajoute
+Tu commences avec 480 de **santé** et 20 d'**énergie**, et ton armure ajoute
 de l'énergie : rien pour un Guerrier, 5 pour un Rôdeur, un Assassin ou un
 Derviche, 10 pour tous les autres. Un Staff ajoute 10 de plus tant que tu le
 tiens. Les runes et le moral modifient les deux. Les compétences coûtent de l'énergie, qui revient

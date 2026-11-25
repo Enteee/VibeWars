@@ -2,7 +2,7 @@
 
 ## Salud y energía
 
-Empiezas con 500 de **salud** y 20 de **energía**, y tu armadura añade
+Empiezas con 480 de **salud** y 20 de **energía**, y tu armadura añade
 energía: nada para un Guerrero, 5 para un Guardabosques, un Asesino o un
 Derviche, 10 para todos los demás. Un Staff añade 10 más mientras lo
 empuñas. Las runas y la moral cambian ambas. Las habilidades cuestan energía, y esta vuelve sola, despacio.

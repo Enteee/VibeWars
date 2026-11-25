@@ -1645,7 +1645,7 @@ export default {
     "Що насправді робить одне вміння: при 60 броні — рівно число з підказки.",
   "training.scenario.time-to-kill.label": "Час до вбивства",
   "training.scenario.time-to-kill.teaches":
-    "Ваша стала шкода: скільки протримається заклинач із 500 здоров'я, знову і знову.",
+    "Ваша стала шкода: скільки протримається заклинач із 480 здоров'я, знову і знову.",
   "training.scenario.physical-vs-elemental.label": "Фізична проти стихійної",
   "training.scenario.physical-vs-elemental.teaches":
     "Що броня діє проти типу шкоди: Warrior і Stalwart пом'якшують меч, але не Fireball, а Ranger пом'якшує Fireball, але не меч.",

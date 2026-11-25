@@ -1599,7 +1599,7 @@ export default {
     "Ce face de fapt o singură lansare: la 60 armură, exact numărul din descriere.",
   "training.scenario.time-to-kill.label": "Timp de ucidere",
   "training.scenario.time-to-kill.teaches":
-    "Daunele tale susținute: cât rezistă un vrăjitor cu 500 viață, iar și iar.",
+    "Daunele tale susținute: cât rezistă un vrăjitor cu 480 viață, iar și iar.",
   "training.scenario.physical-vs-elemental.label": "Fizic vs elemental",
   "training.scenario.physical-vs-elemental.teaches":
     "Că armura răspunde unui tip de daune: un Warrior cu Stalwart atenuează o sabie, nu un Fireball; un Ranger atenuează un Fireball, nu o sabie.",

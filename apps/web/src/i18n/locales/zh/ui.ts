@@ -1406,7 +1406,7 @@ export default {
     "一次施法的真实效果：在 60 护甲下，正好是提示中的数字。",
   "training.scenario.time-to-kill.label": "击杀时间",
   "training.scenario.time-to-kill.teaches":
-    "你的持续输出：一个 500 生命的施法者能撑多久，一次又一次。",
+    "你的持续输出：一个 480 生命的施法者能撑多久，一次又一次。",
   "training.scenario.physical-vs-elemental.label": "物理与元素",
   "training.scenario.physical-vs-elemental.teaches":
     "护甲针对伤害类型：Warrior 和 Stalwart 能减轻剑击而不能减轻 Fireball，Ranger 能减轻 Fireball 而不能减轻剑击。",

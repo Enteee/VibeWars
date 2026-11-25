@@ -2,7 +2,7 @@
 
 ## Vida e energia
 
-Você começa com 500 de **vida** e 20 de **energia**, e sua armadura soma
+Você começa com 480 de **vida** e 20 de **energia**, e sua armadura soma
 energia: nada para um Guerreiro, 5 para um Patrulheiro, um Assassino ou um
 Dervixe, 10 para todos os outros. Um cajado soma mais 10 enquanto você o
 segura. Runas e moral mudam as duas. Habilidades custam energia, e ela volta sozinha, devagar.

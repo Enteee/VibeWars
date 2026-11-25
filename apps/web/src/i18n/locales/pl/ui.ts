@@ -1648,7 +1648,7 @@ export default {
     "Co naprawdę robi jedno rzucenie: przy 60 pancerza dokładnie liczba z podpowiedzi.",
   "training.scenario.time-to-kill.label": "Czas zabicia",
   "training.scenario.time-to-kill.teaches":
-    "Twoje stałe obrażenia: ile wytrzymuje czarodziej z 500 zdrowia, raz za razem.",
+    "Twoje stałe obrażenia: ile wytrzymuje czarodziej z 480 zdrowia, raz za razem.",
   "training.scenario.physical-vs-elemental.label": "Fizyczne a żywiołowe",
   "training.scenario.physical-vs-elemental.teaches":
     "Że pancerz odpowiada na rodzaj obrażeń: Wojownik z Niezłomną Insygnią tłumi miecz, ale nie Kulę Ognia, a Łowca tłumi Kulę Ognia, ale nie miecz.",

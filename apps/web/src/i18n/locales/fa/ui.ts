@@ -1512,7 +1512,7 @@ export default {
     "یک اجرا واقعاً چه می‌کند: در زره 60، دقیقاً همان عدد راهنما.",
   "training.scenario.time-to-kill.label": "زمان کشتن",
   "training.scenario.time-to-kill.teaches":
-    "خروجی پایدارت: یک جادوگر با 500 سلامتی چقدر دوام می‌آورد، بارها و بارها.",
+    "خروجی پایدارت: یک جادوگر با 480 سلامتی چقدر دوام می‌آورد، بارها و بارها.",
   "training.scenario.physical-vs-elemental.label": "فیزیکی در برابر عنصری",
   "training.scenario.physical-vs-elemental.teaches":
     "اینکه زره به نوع آسیب پاسخ می‌دهد: Warrior و Stalwart شمشیر را کند می‌کنند نه Fireball را، Ranger Fireball را کند می‌کند نه شمشیر را.",

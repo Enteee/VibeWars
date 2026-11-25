@@ -1588,7 +1588,7 @@ export default {
     "Što jedno bacanje stvarno čini: uz 60 oklopa, točno broj iz opisa.",
   "training.scenario.time-to-kill.label": "Vrijeme do ubojstva",
   "training.scenario.time-to-kill.teaches":
-    "Tvoja trajna šteta: koliko dugo izdrži bacač sa 500 zdravlja, iznova i iznova.",
+    "Tvoja trajna šteta: koliko dugo izdrži bacač sa 480 zdravlja, iznova i iznova.",
   "training.scenario.physical-vs-elemental.label": "Fizičko protiv elementalnog",
   "training.scenario.physical-vs-elemental.teaches":
     "Da oklop odgovara na vrstu štete: Ratnik s Oznakom postojanih ublažava mač, a ne Vatrenu loptu; Lovac ublažava Vatrenu loptu, a ne mač.",

@@ -2,7 +2,7 @@
 
 ## Health and energy
 
-You start with 500 **Health** and 20 **Energy**, and your armor adds to the
+You start with 480 **Health** and 20 **Energy**, and your armor adds to the
 Energy: nothing for a Warrior, 5 for a Ranger, an Assassin or a Dervish,
 10 for everyone else. A staff adds 10 more while you hold it. Runes and
 morale change both. Skills cost Energy, and it comes back by itself, slowly. ![Warrior](../../apps/web/public/icons/profession/warrior.svg) **Warriors**

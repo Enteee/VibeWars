@@ -1513,7 +1513,7 @@ export default {
     "Vad ett enda kast faktiskt gör: vid 60 i rustning exakt siffran i beskrivningen.",
   "training.scenario.time-to-kill.label": "Tid till död",
   "training.scenario.time-to-kill.teaches":
-    "Din uthålliga skada: hur länge en besvärjare med 500 hälsa håller, om och om igen.",
+    "Din uthålliga skada: hur länge en besvärjare med 480 hälsa håller, om och om igen.",
   "training.scenario.physical-vs-elemental.label": "Fysisk mot elementär",
   "training.scenario.physical-vs-elemental.teaches":
     "Att rustning svarar mot en skadetyp: en Warrior med Stalwart dämpar ett svärd men inte en Fireball, en Ranger dämpar en Fireball men inte ett svärd.",

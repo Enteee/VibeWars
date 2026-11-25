@@ -1639,7 +1639,7 @@ export default {
     "Что на самом деле делает одно применение: при броне 60 — ровно число из подсказки.",
   "training.scenario.time-to-kill.label": "Время убийства",
   "training.scenario.time-to-kill.teaches":
-    "Твой постоянный урон: сколько живёт заклинатель с 500 здоровья, раз за разом.",
+    "Твой постоянный урон: сколько живёт заклинатель с 480 здоровья, раз за разом.",
   "training.scenario.physical-vs-elemental.label": "Физический и стихийный",
   "training.scenario.physical-vs-elemental.teaches":
     "Что броня отвечает типу урона: Warrior со Stalwart гасит меч, но не Fireball, а Ranger гасит Fireball, но не меч.",

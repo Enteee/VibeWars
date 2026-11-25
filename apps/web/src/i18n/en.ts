@@ -1514,7 +1514,7 @@ export const en = {
     "What one cast actually does: at 60 armor, the tooltip's number exactly.",
   "training.scenario.time-to-kill.label": "Time to kill",
   "training.scenario.time-to-kill.teaches":
-    "Your sustained output: how long a 500-health caster lasts, again and again.",
+    "Your sustained output: how long a 480-health caster lasts, again and again.",
   "training.scenario.physical-vs-elemental.label": "Physical vs elemental",
   "training.scenario.physical-vs-elemental.teaches":
     "That armor answers to a damage type: a Warrior and Stalwart blunt a sword and not a Fireball, a Ranger blunts a Fireball and not a sword.",

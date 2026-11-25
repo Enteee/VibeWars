@@ -1611,7 +1611,7 @@ export default {
     "Ce que fait vraiment une incantation : à 60 d'armure, exactement le chiffre de l'infobulle.",
   "training.scenario.time-to-kill.label": "Temps pour tuer",
   "training.scenario.time-to-kill.teaches":
-    "Tes dégâts soutenus : combien de temps tient un lanceur de sorts à 500 de santé, encore et encore.",
+    "Tes dégâts soutenus : combien de temps tient un lanceur de sorts à 480 de santé, encore et encore.",
   "training.scenario.physical-vs-elemental.label": "Physique contre élémentaire",
   "training.scenario.physical-vs-elemental.teaches":
     "Que l'armure répond à un type de dégâts : un Guerrier avec l'Insigne vaillant amortit une épée et pas une Boule de feu, un Rôdeur amortit une Boule de feu et pas une épée.",

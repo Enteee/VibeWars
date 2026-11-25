@@ -1525,7 +1525,7 @@ export default {
     "Mit tesz valójában egy varázslás: 60 páncélnál pontosan a leírásban álló szám.",
   "training.scenario.time-to-kill.label": "Ölési idő",
   "training.scenario.time-to-kill.teaches":
-    "A folyamatos sebzésed: meddig bír ki egy 500 életerejű varázsló, újra és újra.",
+    "A folyamatos sebzésed: meddig bír ki egy 480 életerejű varázsló, újra és újra.",
   "training.scenario.physical-vs-elemental.label": "Fizikai kontra elemi",
   "training.scenario.physical-vs-elemental.teaches":
     "Hogy a páncél sebzéstípusra felel: egy Warrior Stalwart Insigniával tompítja a kardot, de a Fireballt nem, egy Ranger tompítja a Fireballt, de a kardot nem.",

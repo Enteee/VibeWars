@@ -1536,7 +1536,7 @@ export default {
     "Was ein Wirken wirklich bewirkt: bei 60 Rüstung genau die Zahl aus dem Tooltip.",
   "training.scenario.time-to-kill.label": "Zeit bis zum Kill",
   "training.scenario.time-to-kill.teaches":
-    "Dein Dauerschaden: wie lange ein Zauberwirker mit 500 Leben durchhält, immer wieder.",
+    "Dein Dauerschaden: wie lange ein Zauberwirker mit 480 Leben durchhält, immer wieder.",
   "training.scenario.physical-vs-elemental.label": "Physisch gegen elementar",
   "training.scenario.physical-vs-elemental.teaches":
     "Dass Rüstung auf eine Schadensart antwortet: Krieger und Unerschütterliche Insignie dämpfen ein Schwert, aber keinen Feuerball; ein Waldläufer dämpft einen Feuerball, aber kein Schwert.",

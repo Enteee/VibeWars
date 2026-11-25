@@ -2,7 +2,7 @@
 
 ## Máu và năng lượng
 
-Bạn bắt đầu với 500 **Máu** và 20 **Năng lượng**, và giáp cộng thêm Năng lượng:
+Bạn bắt đầu với 480 **Máu** và 20 **Năng lượng**, và giáp cộng thêm Năng lượng:
 không có gì cho Warrior, 5 cho Ranger, Assassin hoặc Dervish, 10 cho mọi lớp
 khác. Staff cộng thêm 10 khi bạn cầm nó. Rune và sĩ khí thay đổi cả hai. Kỹ năng tốn Năng lượng, và nó tự hồi lại, chậm rãi. ![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior** và
 ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** hồi chậm nhất, ![Ranger](../../../apps/web/public/icons/profession/ranger.svg) **Ranger** nhanh hơn một chút, mọi lớp khác nhanh nhất.

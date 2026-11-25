@@ -2,7 +2,7 @@
 
 ## Életerő és energia
 
-500 **Életerővel** és 20 **Energiával** kezdesz, és a páncélod Energiát ad
+480 **Életerővel** és 20 **Energiával** kezdesz, és a páncélod Energiát ad
 hozzá: Warriornak semmit, Rangernek, Assassinnak vagy Dervishnek 5-öt,
 mindenki másnak 10-et. A varázsbot további 10-et ad, amíg a kezedben tartod.
 A rúnák és a morál mindkettőt módosítják. A készségek Energiába kerülnek, és az magától

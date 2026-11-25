@@ -2362,12 +2362,12 @@ test("a rune picked for an armor piece shows what it costs (#2059)", async ({ pa
   await newCharacter(page);
 
   const health = stat(page, "health");
-  await expect(health).toHaveText("500");
+  await expect(health).toHaveText("480");
 
   await pickForPiece(page, "head", "Superior Rune of Swordsmanship");
   await expect(armorRow(page, "head")).toContainText("Superior Rune of Swordsmanship");
   // +3 Swordsmanship, paid for with 75 health — both halves on screen.
-  await expect(health).toHaveText("425");
+  await expect(health).toHaveText("405");
   await expect(page.locator(".gear-stats")).toContainText("+3");
 });
 

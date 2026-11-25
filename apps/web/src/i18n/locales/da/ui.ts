@@ -1511,7 +1511,7 @@ export default {
     "Hvad én kastning faktisk gør: ved 60 rustning præcis tallet i værktøjstippet.",
   "training.scenario.time-to-kill.label": "Tid til drab",
   "training.scenario.time-to-kill.teaches":
-    "Din vedvarende skade: hvor længe en caster med 500 liv holder, igen og igen.",
+    "Din vedvarende skade: hvor længe en caster med 480 liv holder, igen og igen.",
   "training.scenario.physical-vs-elemental.label": "Fysisk mod elementar",
   "training.scenario.physical-vs-elemental.teaches":
     "At rustning svarer til en skadetype: en Warrior og Stalwart Insignia dæmper et sværd og ikke en Fireball, en Ranger dæmper en Fireball og ikke et sværd.",

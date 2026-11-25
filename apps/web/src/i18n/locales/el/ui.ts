@@ -1538,7 +1538,7 @@ export default {
     "Τι κάνει πραγματικά μία εκτέλεση: με 60 πανοπλία, ακριβώς τον αριθμό της επεξήγησης.",
   "training.scenario.time-to-kill.label": "Χρόνος εξόντωσης",
   "training.scenario.time-to-kill.teaches":
-    "Η σταθερή σου απόδοση: πόσο αντέχει ένας μάγος με 500 υγεία, ξανά και ξανά.",
+    "Η σταθερή σου απόδοση: πόσο αντέχει ένας μάγος με 480 υγεία, ξανά και ξανά.",
   "training.scenario.physical-vs-elemental.label": "Φυσική έναντι στοιχειακής",
   "training.scenario.physical-vs-elemental.teaches":
     "Ότι η πανοπλία απαντά σε τύπο ζημιάς: ένας Warrior και το Stalwart Insignia μετριάζουν ένα σπαθί και όχι ένα Fireball, ένας Ranger μετριάζει ένα Fireball και όχι ένα σπαθί.",

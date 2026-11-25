@@ -1521,7 +1521,7 @@ export default {
     "Wat één cast echt doet: bij 60 pantser precies het getal uit de tooltip.",
   "training.scenario.time-to-kill.label": "Tijd tot doden",
   "training.scenario.time-to-kill.teaches":
-    "Je volgehouden schade: hoe lang een caster met 500 gezondheid het uithoudt, keer op keer.",
+    "Je volgehouden schade: hoe lang een caster met 480 gezondheid het uithoudt, keer op keer.",
   "training.scenario.physical-vs-elemental.label": "Fysiek tegen elementair",
   "training.scenario.physical-vs-elemental.teaches":
     "Dat pantser hoort bij een schadesoort: een Krijger met Standvastig insigne vangt een zwaard op maar geen Vuurbal, een Jager vangt een Vuurbal op maar geen zwaard.",

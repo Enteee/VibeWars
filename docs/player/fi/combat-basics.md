@@ -2,7 +2,7 @@
 
 ## Terveys ja energia
 
-Aloitat 500 **terveydellä** ja 20 **energialla**, ja panssarisi lisää
+Aloitat 480 **terveydellä** ja 20 **energialla**, ja panssarisi lisää
 energiaa: Warriorille ei mitään, Rangerille, Assassinille tai Dervishille 5,
 kaikille muille 10. Sauva lisää vielä 10, kun pidät sitä kädessä. Riimut ja
 moraali muuttavat molempia. Taidot maksavat energiaa, ja se palautuu itsestään,

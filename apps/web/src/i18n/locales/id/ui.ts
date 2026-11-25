@@ -1443,7 +1443,7 @@ export default {
     "Apa yang sebenarnya dilakukan satu cast: pada armor 60, tepat angka di tooltip.",
   "training.scenario.time-to-kill.label": "Waktu membunuh",
   "training.scenario.time-to-kill.teaches":
-    "Damage berkelanjutanmu: berapa lama caster dengan 500 Darah bertahan, lagi dan lagi.",
+    "Damage berkelanjutanmu: berapa lama caster dengan 480 Darah bertahan, lagi dan lagi.",
   "training.scenario.physical-vs-elemental.label": "Fisik vs elemental",
   "training.scenario.physical-vs-elemental.teaches":
     "Bahwa armor menjawab jenis damage: Warrior dengan Stalwart Insignia meredam pedang tapi tidak Fireball, Ranger meredam Fireball tapi tidak pedang.",

@@ -1431,7 +1431,7 @@ export default {
     "시전 한 번이 실제로 하는 일: 방어력 60에서 툴팁의 숫자 그대로.",
   "training.scenario.time-to-kill.label": "처치 시간",
   "training.scenario.time-to-kill.teaches":
-    "지속 화력: 체력 500의 캐스터가 얼마나 버티는지, 몇 번이고.",
+    "지속 화력: 체력 480의 캐스터가 얼마나 버티는지, 몇 번이고.",
   "training.scenario.physical-vs-elemental.label": "물리 대 원소",
   "training.scenario.physical-vs-elemental.teaches":
     "방어력은 피해 유형에 따라 작용해요: Warrior와 Stalwart Insignia는 검을 막지만 Fireball은 못 막고, Ranger는 Fireball을 막지만 검은 못 막아요.",

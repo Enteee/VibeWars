@@ -2,7 +2,7 @@
 
 ## Здраве и енергия
 
-Започваш с 500 **здраве** и 20 **енергия**, а бронята ти добавя енергия: нищо за Warrior, 5 за Ranger, Assassin или Dervish, 10 за всички останали. Тоягата добавя още 10, докато я държиш. Руните и моралът променят и двете. Уменията струват енергия, а тя се връща сама, бавно. ![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior** и ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** си я възстановяват най-бавно, ![Ranger](../../../apps/web/public/icons/profession/ranger.svg) **Ranger** малко по-бързо, всички останали най-бързо.
+Започваш с 480 **здраве** и 20 **енергия**, а бронята ти добавя енергия: нищо за Warrior, 5 за Ranger, Assassin или Dervish, 10 за всички останали. Тоягата добавя още 10, докато я държиш. Руните и моралът променят и двете. Уменията струват енергия, а тя се връща сама, бавно. ![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior** и ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** си я възстановяват най-бавно, ![Ranger](../../../apps/web/public/icons/profession/ranger.svg) **Ranger** малко по-бързо, всички останали най-бързо.
 
 Стрелките на лентите ти са **пипове**: всяка е здраве или енергия, които се връщат или изтичат, по малко всяка секунда. ![Bleeding](../../../apps/web/public/icons/status/bleeding.svg) **Bleeding**, ![Burning](../../../apps/web/public/icons/status/burning.svg) **Burning** и ![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison** изтощават здравето; Regeneration и лечебните заклинания го добавят. Ако си извън битка 5 секунди, здравето ти започва да се връща само, толкова по-бързо, колкото по-дълго стоиш настрана.
 

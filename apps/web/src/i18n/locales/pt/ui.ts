@@ -1592,7 +1592,7 @@ export default {
     "O que um lançamento faz de verdade: com 60 de armadura, exatamente o número da dica.",
   "training.scenario.time-to-kill.label": "Tempo para abater",
   "training.scenario.time-to-kill.teaches":
-    "Seu dano sustentado: quanto dura um conjurador com 500 de vida, de novo e de novo.",
+    "Seu dano sustentado: quanto dura um conjurador com 480 de vida, de novo e de novo.",
   "training.scenario.physical-vs-elemental.label": "Físico vs elemental",
   "training.scenario.physical-vs-elemental.teaches":
     "Que a armadura responde a um tipo de dano: um Guerreiro com Insígnia Robusta amortece uma espada e não uma Bola de Fogo, um Patrulheiro amortece uma Bola de Fogo e não uma espada.",

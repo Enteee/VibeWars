@@ -2,7 +2,7 @@
 
 ## Hälsa och energi
 
-Du börjar med 500 **Hälsa** och 20 **Energi**, och din rustning lägger till
+Du börjar med 480 **Hälsa** och 20 **Energi**, och din rustning lägger till
 energi: inget för en Warrior, 5 för en Ranger, en Assassin eller en Dervish,
 10 för alla andra. En stav ger 10 till medan du håller den. Runor och moral
 ändrar båda. Förmågor kostar energi, och den kommer tillbaka av sig själv,

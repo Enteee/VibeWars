@@ -1519,7 +1519,7 @@ export default {
     "Какво всъщност прави едно изричане: при 60 броня точно числото от подсказката.",
   "training.scenario.time-to-kill.label": "Време за убийство",
   "training.scenario.time-to-kill.teaches":
-    "Твоите постоянни щети: колко издържа заклинател с 500 здраве, отново и отново.",
+    "Твоите постоянни щети: колко издържа заклинател с 480 здраве, отново и отново.",
   "training.scenario.physical-vs-elemental.label": "Физически срещу стихийни",
   "training.scenario.physical-vs-elemental.teaches":
     "Че бронята отговаря на вид щети: Warrior и Stalwart Insignia омекотяват меч, но не Fireball, а Ranger омекотява Fireball, но не меч.",

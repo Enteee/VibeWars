@@ -1446,7 +1446,7 @@ export default {
     "1回の詠唱が実際に与えるもの: 防御力60なら、ツールチップの数値そのまま。",
   "training.scenario.time-to-kill.label": "撃破時間",
   "training.scenario.time-to-kill.teaches":
-    "持続火力: ヘルス500のキャスターが何秒もつか、何度でも。",
+    "持続火力: ヘルス480のキャスターが何秒もつか、何度でも。",
   "training.scenario.physical-vs-elemental.label": "物理 対 属性",
   "training.scenario.physical-vs-elemental.teaches":
     "防御力はダメージの種類ごとに効く: WarriorとStalwart Insigniaは剣を軽減してもFireballは軽減せず、RangerはFireballを軽減しても剣は軽減しない。",

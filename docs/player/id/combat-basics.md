@@ -2,7 +2,7 @@
 
 ## Darah dan energi
 
-Kamu mulai dengan 500 **Darah** dan 20 **Energi**, dan armormu menambah Energi:
+Kamu mulai dengan 480 **Darah** dan 20 **Energi**, dan armormu menambah Energi:
 tidak ada untuk Warrior, 5 untuk Ranger, Assassin, atau Dervish, 10 untuk yang
 lain. Staff menambah 10 lagi selama kamu memegangnya. Rune dan moral mengubah
 keduanya. Skill memakan Energi, dan Energi pulih dengan sendirinya, perlahan. ![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior**

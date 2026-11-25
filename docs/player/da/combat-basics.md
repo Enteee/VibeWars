@@ -2,7 +2,7 @@
 
 ## Liv og energi
 
-Du starter med 500 **Liv** og 20 **Energi**, og din rustning lægger energi
+Du starter med 480 **Liv** og 20 **Energi**, og din rustning lægger energi
 oveni: intet for en Warrior, 5 for en Ranger, en Assassin eller en Dervish,
 10 for alle andre. En stav giver 10 mere, mens du holder den. Runer og moral
 ændrer begge. Evner koster energi, og den kommer langsomt tilbage af sig selv.

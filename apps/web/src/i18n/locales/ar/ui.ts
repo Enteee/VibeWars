@@ -1714,7 +1714,7 @@ export default {
   "training.scenario.target-dummy.teaches":
     "ما تفعله رمية واحدة فعلًا: عند درع 60، الرقم الذي في التلميح تمامًا.",
   "training.scenario.time-to-kill.label": "زمن القتل",
-  "training.scenario.time-to-kill.teaches": "ناتجك المستمر: كم يصمد ساحر بصحة 500، مرة بعد مرة.",
+  "training.scenario.time-to-kill.teaches": "ناتجك المستمر: كم يصمد ساحر بصحة 480، مرة بعد مرة.",
   "training.scenario.physical-vs-elemental.label": "مادي مقابل عنصري",
   "training.scenario.physical-vs-elemental.teaches":
     "أن الدرع يستجيب لنوع الضرر: Warrior و Stalwart يخففان السيف لا Fireball، و Ranger يخفف Fireball لا السيف.",

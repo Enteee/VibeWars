@@ -1427,7 +1427,7 @@ export default {
     "Một lần dùng phép thực sự gây ra gì: ở 60 giáp, đúng bằng con số trong chú giải.",
   "training.scenario.time-to-kill.label": "Thời gian hạ gục",
   "training.scenario.time-to-kill.teaches":
-    "Sát thương duy trì của bạn: một pháp sư 500 máu trụ được bao lâu, lặp đi lặp lại.",
+    "Sát thương duy trì của bạn: một pháp sư 480 máu trụ được bao lâu, lặp đi lặp lại.",
   "training.scenario.physical-vs-elemental.label": "Vật lý và nguyên tố",
   "training.scenario.physical-vs-elemental.teaches":
     "Giáp ứng với từng loại sát thương: Warrior và Stalwart giảm đòn kiếm chứ không giảm Fireball, Ranger giảm Fireball chứ không giảm đòn kiếm.",

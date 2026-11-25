@@ -1517,7 +1517,7 @@ export default {
     "Tek bir büyünün gerçekte ne yaptığı: 60 zırhta, ipucundaki sayının tam kendisi.",
   "training.scenario.time-to-kill.label": "Öldürme süresi",
   "training.scenario.time-to-kill.teaches":
-    "Sürekli hasarın: 500 canlı bir büyücü ne kadar dayanıyor, tekrar tekrar.",
+    "Sürekli hasarın: 480 canlı bir büyücü ne kadar dayanıyor, tekrar tekrar.",
   "training.scenario.physical-vs-elemental.label": "Fiziksel ve elementel",
   "training.scenario.physical-vs-elemental.teaches":
     "Zırhın hasar türüne göre işlediği: Warrior ve Stalwart kılıcı yumuşatır ama Fireball'u değil, Ranger Fireball'u yumuşatır ama kılıcı değil.",

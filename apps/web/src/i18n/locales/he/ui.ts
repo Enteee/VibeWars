@@ -1582,7 +1582,7 @@ export default {
     "מה הטלה אחת עושה באמת: בשריון 60, בדיוק המספר שבחלונית.",
   "training.scenario.time-to-kill.label": "זמן להריגה",
   "training.scenario.time-to-kill.teaches":
-    "התפוקה המתמשכת שלך: כמה זמן מטיל עם 500 חיים שורד, שוב ושוב.",
+    "התפוקה המתמשכת שלך: כמה זמן מטיל עם 480 חיים שורד, שוב ושוב.",
   "training.scenario.physical-vs-elemental.label": "פיזי מול יסודי",
   "training.scenario.physical-vs-elemental.teaches":
     "ששריון עונה לסוג נזק: Warrior ו-Stalwart מקהים חרב ולא Fireball, Ranger מקהה Fireball ולא חרב.",

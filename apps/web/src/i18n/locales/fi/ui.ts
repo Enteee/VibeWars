@@ -1530,7 +1530,7 @@ export default {
     "Mitä yksi loitsu oikeasti tekee: 60 panssarilla täsmälleen työkaluvihjeen luku.",
   "training.scenario.time-to-kill.label": "Aika tappoon",
   "training.scenario.time-to-kill.teaches":
-    "Jatkuva vahinkotehosi: kuinka kauan 500 terveyden loitsija kestää, yhä uudelleen.",
+    "Jatkuva vahinkotehosi: kuinka kauan 480 terveyden loitsija kestää, yhä uudelleen.",
   "training.scenario.physical-vs-elemental.label": "Fyysinen vai elementaalinen",
   "training.scenario.physical-vs-elemental.teaches":
     "Että panssari vastaa vahinkotyyppiin: Warrior ja Stalwart Insignia vaimentavat miekkaa mutta eivät Fireballia, Ranger vaimentaa Fireballia mutta ei miekkaa.",

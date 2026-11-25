@@ -1638,7 +1638,7 @@ export default {
     "Čo naozaj urobí jedno zoslanie: pri brnení 60 presne číslo z popisu.",
   "training.scenario.time-to-kill.label": "Čas na zabitie",
   "training.scenario.time-to-kill.teaches":
-    "Tvoje trvalé poškodenie: ako dlho vydrží kúzelník s 500 zdravia, znova a znova.",
+    "Tvoje trvalé poškodenie: ako dlho vydrží kúzelník s 480 zdravia, znova a znova.",
   "training.scenario.physical-vs-elemental.label": "Fyzické vs. živelné",
   "training.scenario.physical-vs-elemental.teaches":
     "Že brnenie odpovedá na typ poškodenia: Bojovník s Vytrvalou insígniou tlmí meč, no nie Ohnivú guľu, Hraničiar tlmí Ohnivú guľu, no nie meč.",

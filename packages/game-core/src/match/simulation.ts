@@ -785,7 +785,7 @@ export interface ParticipantSpec {
   readonly layer?: number;
   /** Where it faces at the start and after every reset, in radians (`atan2`, 0 = +x). */
   readonly facing: number;
-  /** Defaults to the ruleset's base health. */
+  /** Defaults to the ruleset's base health: a bare body, no armor (a character's is `resolveLoadout`'s). */
   readonly maxHealth?: number;
   /** Defaults to the ruleset's base energy: a bare pool, with no armor or weapon (#3986). */
   readonly maxEnergy?: number;

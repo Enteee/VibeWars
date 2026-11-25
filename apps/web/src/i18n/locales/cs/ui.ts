@@ -1634,7 +1634,7 @@ export default {
     "Co jedno seslání skutečně udělá: při 60 brnění přesně číslo z popisku.",
   "training.scenario.time-to-kill.label": "Čas do zabití",
   "training.scenario.time-to-kill.teaches":
-    "Tvůj trvalý výkon: jak dlouho vydrží sesílatel s 500 zdraví, znovu a znovu.",
+    "Tvůj trvalý výkon: jak dlouho vydrží sesílatel s 480 zdraví, znovu a znovu.",
   "training.scenario.physical-vs-elemental.label": "Fyzické vs. živelné",
   "training.scenario.physical-vs-elemental.teaches":
     "Že brnění odpovídá typu poškození: Válečník a Neochvějná insignie tlumí meč, ne Ohnivou kouli; Hraničář tlumí Ohnivou kouli, ne meč.",

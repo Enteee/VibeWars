@@ -1600,7 +1600,7 @@ export default {
     "Cosa fa davvero un lancio: con 60 di armatura, esattamente il numero del tooltip.",
   "training.scenario.time-to-kill.label": "Tempo per uccidere",
   "training.scenario.time-to-kill.teaches":
-    "Il tuo danno sostenuto: quanto dura un incantatore con 500 di Salute, ancora e ancora.",
+    "Il tuo danno sostenuto: quanto dura un incantatore con 480 di Salute, ancora e ancora.",
   "training.scenario.physical-vs-elemental.label": "Fisico contro elementale",
   "training.scenario.physical-vs-elemental.teaches":
     "Che l'armatura risponde a un tipo di danno: un Guerriero con Insegna robusta attutisce una spada ma non una Palla di fuoco, un Ranger attutisce una Palla di fuoco ma non una spada.",

@@ -1609,7 +1609,7 @@ export default {
     "Lo que hace de verdad un lanzamiento: con 60 de armadura, justo el número de la descripción.",
   "training.scenario.time-to-kill.label": "Tiempo para matar",
   "training.scenario.time-to-kill.teaches":
-    "Tu daño sostenido: cuánto aguanta un lanzador de 500 de salud, una y otra vez.",
+    "Tu daño sostenido: cuánto aguanta un lanzador de 480 de salud, una y otra vez.",
   "training.scenario.physical-vs-elemental.label": "Físico contra elemental",
   "training.scenario.physical-vs-elemental.teaches":
     "Que la armadura responde a un tipo de daño: un Guerrero con Insignia incondicional amortigua una espada y no una Bola de fuego; un Guardabosques amortigua una Bola de fuego y no una espada.",

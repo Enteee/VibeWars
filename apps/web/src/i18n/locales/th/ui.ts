@@ -1420,7 +1420,7 @@ export default {
     "การร่ายหนึ่งครั้งทำอะไรได้จริง: ที่เกราะ 60 ได้ตัวเลขตรงกับในคำอธิบายพอดี",
   "training.scenario.time-to-kill.label": "เวลาสังหาร",
   "training.scenario.time-to-kill.teaches":
-    "ดาเมจต่อเนื่องของคุณ: ผู้ร่ายเวทพลังชีวิต 500 อยู่ได้นานแค่ไหน ซ้ำแล้วซ้ำเล่า",
+    "ดาเมจต่อเนื่องของคุณ: ผู้ร่ายเวทพลังชีวิต 480 อยู่ได้นานแค่ไหน ซ้ำแล้วซ้ำเล่า",
   "training.scenario.physical-vs-elemental.label": "กายภาพกับธาตุ",
   "training.scenario.physical-vs-elemental.teaches":
     "เกราะตอบสนองต่อประเภทดาเมจ: Warrior และ Stalwart ลดดาเมจดาบแต่ไม่ลด Fireball ส่วน Ranger ลด Fireball แต่ไม่ลดดาบ",

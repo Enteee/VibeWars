@@ -2,7 +2,7 @@
 
 ## Can ve enerji
 
-500 **Can** ve 20 **Enerji** ile başlarsın ve zırhın Enerji ekler:
+480 **Can** ve 20 **Enerji** ile başlarsın ve zırhın Enerji ekler:
 Warrior için hiç, Ranger, Assassin ya da Dervish için 5, diğer herkes
 için 10. Asa, elinde tuttuğun sürece 10 daha ekler. Rünler ve moral ikisini de
 değiştirir. Beceriler Enerji harcar ve Enerji kendiliğinden, yavaşça
