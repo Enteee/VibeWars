@@ -470,6 +470,10 @@ let drawerListener: ((event: DrawerEvent) => void) | undefined;
 let drawerWatched = false;
 /** The entry whose drawer is open: a redraw of its screen, as a lobby's new size, keeps it open. */
 let drawerOpenOn: RailEntry | undefined;
+/** The drawn rail screen, whose drawer `drawerListener` is; gone once another screen replaces it. */
+let drawerPanel: Element | undefined;
+/** The menu quest opened the drawer with no rail screen shown: the next one drawn opens it (#3990). */
+let drawerOpenOnDraw = false;
 
 /**
  * A press anywhere but the drawer and its toggle puts it away, and so
@@ -505,12 +509,18 @@ function watchDrawer(): void {
 
 /**
  * Opens the drawn rail screen's drawer, where the rail is one (#3990), so
- * the menu quest's modes step can light its entries in turn. The focus
- * stays where it is.
+ * the menu quest's modes step can light its entries in turn; with none
+ * shown yet, as a launch still reading its characters, the next one drawn.
+ * The focus stays where it is.
  */
 export function openRailDrawer(): void {
-  if (matchMedia(DRAWER_QUERY).matches) {
+  if (!matchMedia(DRAWER_QUERY).matches) {
+    return;
+  }
+  if (drawerPanel?.isConnected === true) {
     drawerListener?.({ kind: "open" });
+  } else {
+    drawerOpenOnDraw = true;
   }
 }
 
@@ -547,7 +557,8 @@ export function railScreen(
   scrim.setAttribute(PUTS_AWAY, "");
   panel.append(rail, scrim, body);
 
-  let open = drawerOpenOn === active;
+  let open = drawerOpenOnDraw || drawerOpenOn === active;
+  drawerOpenOnDraw = false;
   drawerOpenOn = open ? active : undefined;
   // `shown` is the rail drawn now: a new team size swaps one in (setTeamSize).
   const paint = (shown: Element): void => {
@@ -610,6 +621,7 @@ export function railScreen(
     }
   });
   drawerListener = tell;
+  drawerPanel = panel;
   watchDrawer();
   root.replaceChildren(panel);
   return body;

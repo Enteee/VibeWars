@@ -241,6 +241,7 @@ export function mountCoachOverlay(
 ): CoachOverlay {
   const doc = root.ownerDocument;
   const coach = h("div", "coach");
+  coach.setAttribute(DRAWER_INSIDE, "");
   const dim = coach.appendChild(h("div", "coach-dim"));
   const hole = coach.appendChild(h("div", "coach-hole"));
   hole.hidden = true;
@@ -255,7 +256,6 @@ export function mountCoachOverlay(
     }),
   );
   const panel = coach.appendChild(h("aside", "coach-panel"));
-  panel.setAttribute(DRAWER_INSIDE, "");
   const panelTitle = panel.appendChild(h("h2", "coach-panel-title"));
   panelTitle.id = "coach-panel-title";
   panel.setAttribute("aria-labelledby", panelTitle.id);

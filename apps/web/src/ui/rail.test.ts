@@ -12,6 +12,7 @@ import {
   loadTeamSize,
   onTeamSizeChange,
   modeRail,
+  openRailDrawer,
   redrawModeRail,
   redrawsOnLobbyChange,
   railScreen,
@@ -550,6 +551,19 @@ describe("the rail's drawer on an upright phone (#3924)", () => {
     expect(again?.classes.has("is-drawer-open")).toBe(true);
     expect(toggleOf(again)?.attributes.get("aria-expanded")).toBe("true");
     expect(drawn("gvg")?.classes.has("is-drawer-open")).toBe(false);
+    expect(drawn("hosted-game")?.classes.has("is-drawer-open")).toBe(false);
+  });
+
+  it("opens for the menu quest on the next screen drawn, when none is shown yet (#3990)", () => {
+    vi.stubGlobal("matchMedia", () => ({ matches: true, addEventListener: () => undefined }));
+    const drawn = (entry: "gvg" | "hosted-game"): FakeElement | undefined => {
+      const root = new FakeElement("div");
+      railScreen(root as unknown as HTMLElement, entry, () => undefined);
+      return root.children[0];
+    };
+    openRailDrawer();
+    expect(drawn("gvg")?.classes.has("is-drawer-open")).toBe(true);
+    // Once: choosing another entry draws it put away.
     expect(drawn("hosted-game")?.classes.has("is-drawer-open")).toBe(false);
   });
 
