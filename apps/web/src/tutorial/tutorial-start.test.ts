@@ -47,13 +47,14 @@ const VIEWPORT = { width: 1000, height: 700 };
 const START = vec2(2000, 2000);
 const anywhere = (at: Vec2): Vec2 => at;
 const always = (): boolean => true;
+const straight = (at: Vec2): number => Math.hypot(at.x - START.x, at.y - START.y);
 /** How far north a point may be and still show, from the view's step and pan. */
 const northEdge = (step: number, pan: number): number =>
   VIEWPORT.height / 2 / zoomFor(step, VIEWPORT) - pan;
 
 describe("teleporterSpot (#3222)", () => {
   it("stands out of the default view, and in it after a drag to the leash at the default zoom", () => {
-    const spot = teleporterSpot(START, VIEWPORT, anywhere, always);
+    const spot = teleporterSpot(START, VIEWPORT, anywhere, always, straight);
     const rise = START.y - spot.y;
     expect(spot.x).toBe(START.x);
     expect(rise - northEdge(DEFAULT_STEP, 0)).toBeGreaterThanOrEqual(TELEPORTER_MARGIN);
@@ -73,7 +74,7 @@ describe("teleporterSpot (#3222)", () => {
 
   it("steps aside from ground that is not open", () => {
     const { near, far } = teleporterReach(VIEWPORT);
-    const spot = teleporterSpot(START, VIEWPORT, anywhere, (at) => at.x !== START.x);
+    const spot = teleporterSpot(START, VIEWPORT, anywhere, (at) => at.x !== START.x, straight);
     expect(spot.x).not.toBe(START.x);
     expect(START.y - spot.y).toBeGreaterThanOrEqual(near);
     expect(START.y - spot.y).toBeLessThanOrEqual(far);
@@ -84,13 +85,42 @@ describe("teleporterSpot (#3222)", () => {
   it("takes the open spot farthest north when no ground in reach is open", () => {
     const shelf = 200;
     expect(shelf).toBeLessThan(teleporterReach(VIEWPORT).near);
-    const spot = teleporterSpot(START, VIEWPORT, anywhere, (at) => START.y - at.y <= shelf);
+    const spot = teleporterSpot(
+      START,
+      VIEWPORT,
+      anywhere,
+      (at) => START.y - at.y <= shelf,
+      straight,
+    );
     expect(spot).toEqual(vec2(START.x, START.y - shelf));
+  });
+
+  // QA (#3970): on Crossroads a deck north of the mark has no ground under
+  // it, and the walk round it is shorter to the west: the pad goes there.
+  it("takes the spot in reach with the shortest walk", () => {
+    const west = START.x - 160;
+    const walk = (at: Vec2): number => straight(at) + 4 * Math.abs(at.x - west);
+    const spot = teleporterSpot(START, VIEWPORT, anywhere, always, walk);
+    expect(spot.x).toBe(west);
+    expect(START.y - spot.y).toBeGreaterThanOrEqual(teleporterReach(VIEWPORT).near);
+  });
+
+  it("skips a spot the walk does not reach", () => {
+    const spot = teleporterSpot(START, VIEWPORT, anywhere, always, (at) =>
+      at.x === START.x ? undefined : straight(at),
+    );
+    expect(spot.x).not.toBe(START.x);
   });
 
   it("takes the farthest standable point north on a map too small for the span", () => {
     const top = START.y - 300;
-    const spot = teleporterSpot(START, VIEWPORT, (at) => vec2(at.x, Math.max(top, at.y)), always);
+    const spot = teleporterSpot(
+      START,
+      VIEWPORT,
+      (at) => vec2(at.x, Math.max(top, at.y)),
+      always,
+      straight,
+    );
     expect(spot).toEqual(vec2(START.x, top));
   });
 });

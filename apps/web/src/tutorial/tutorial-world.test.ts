@@ -3,6 +3,7 @@ import {
   createPathFinder,
   getSkill,
   validatePlayerBuild,
+  type Vec2,
 } from "@vibewars/game-core";
 import { describe, expect, it } from "vitest";
 
@@ -32,6 +33,7 @@ import {
 } from "./tutorial-world.js";
 
 const TICK = 1 / MINIMAL_GW_INSPIRED_PVP_V1.tickRateHz;
+const WALK_SPEED = MINIMAL_GW_INSPIRED_PVP_V1.movement.maxSpeedUnitsPerSecond;
 /** The card's rule (#3221): no foe nearer the pair than this. */
 const FOE_RULE = 600;
 const SECONDS = 120;
@@ -272,6 +274,37 @@ describe("tutorialWorld (#3221)", () => {
     }
     expect(picked.layer).toBe(ground);
     expect(reached).toBe(true);
+  });
+
+  // QA (#3970): on Crossroads the pad stood straight north of the mark,
+  // behind the raised deck, and the walk round the deck was a long detour.
+  // From the mark, the pad is at most half again the straight line away.
+  it.each(teamArenaMapIds(8))("walks the player from the mark to the pad on %s", (mapId) => {
+    const { simulation, mark, teleporter, ground } = tutorialWorld(
+      mapId,
+      8,
+      "teleporter",
+      "monk",
+      VIEWPORT,
+    );
+    const walk = (to: Vec2, seconds: number): boolean => {
+      simulation.walkTo(SELF_ID, to, ground);
+      for (let t = 0; t < seconds; t += TICK) {
+        simulation.step(TICK);
+        const self = simulation.get(SELF_ID);
+        if (
+          self?.layer === ground &&
+          Math.hypot(self.position.x - to.x, self.position.y - to.y) <= MARK_REACH
+        ) {
+          return true;
+        }
+      }
+      return false;
+    };
+    expect(walk(mark, 10)).toBe(true);
+    // At walking speed, a straight walk and a little for the bodies about.
+    const straight = Math.hypot(teleporter.x - mark.x, teleporter.y - mark.y);
+    expect(walk(teleporter, (straight * 1.5) / WALK_SPEED)).toBe(true);
   });
 });
 

@@ -5,6 +5,7 @@ import {
   PROFESSIONS,
   createRng,
   STARTER_BUILDS,
+  createPathFinder,
   getSkill,
   loadoutOf,
   loadoutSpec,
@@ -350,7 +351,21 @@ export function tutorialWorld(
   const standable = (at: Vec2): Vec2 => nearestStandable(graph, at);
   // Measured from the mark, where the player stands when they look
   // (#3970): the look counts only while it is the current station.
-  const teleporter = teleporterSpot(mark, viewport, standable, open);
+  const paths = createPathFinder(graph);
+  const walk = (to: Vec2): number | undefined => {
+    const path = paths.find(mark, to);
+    if (path === undefined) {
+      return undefined;
+    }
+    let length = 0;
+    let from = mark;
+    for (const point of path) {
+      length += Math.hypot(point.x - from.x, point.y - from.y);
+      from = point;
+    }
+    return length;
+  };
+  const teleporter = teleporterSpot(mark, viewport, standable, open, walk);
   const besidePad = standable(vec2(teleporter.x + BESIDE_PAD.x, teleporter.y + BESIDE_PAD.y));
   // The tutor walks in from the row behind, moved as far.
   const behind = splashSpawn(graph, map, fight, 0, teamSize + 1);
