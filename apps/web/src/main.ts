@@ -198,6 +198,7 @@ import {
   loadTeamSize,
   saveTeamSize,
   onTeamSizeChange,
+  openRailDrawer,
   railParty,
   redrawModeRail,
   redrawsOnLobbyChange,
@@ -3670,6 +3671,7 @@ async function main(): Promise<void> {
       from,
       touch: isTouchOnly((query) => matchMedia(query).matches),
       coach: (callbacks) => mountCoachOverlay(document.body, callbacks),
+      openRail: openRailDrawer,
       onEnd: () => {
         if (menuQuest === quest) {
           menuQuest = undefined;

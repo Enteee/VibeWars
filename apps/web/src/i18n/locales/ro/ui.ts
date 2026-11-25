@@ -1728,7 +1728,6 @@ export default {
     "Ascensiunea Eroilor e un șir de hărți, 8 contra 8, contra echipelor din runda ta. Dacă câștigi, treci la harta următoare, până la Sala Eroilor; dacă pierzi, o iei de la capăt.",
   "tutorial.menu.modes.hostedGame":
     "Un Joc găzduit e propriul tău lobby: trimite prietenilor linkul de invitație și alege harta și mărimea echipei. Boții joacă fiecare loc pe care nu-l ia nimeni.",
-  "tutorial.menu.modes.open": "Deschide modul luminat de pe margine.",
   "tutorial.menu.modes.randomArena":
     "Arena aleatorie e cea mai rapidă luptă: propriul tău personaj, într-o echipă de străini, 1v1, 2v2 sau 4v4. Harta se trage la sorți pentru tine, și fiecare loc e un jucător real.",
   "tutorial.menu.modes.teamArena":

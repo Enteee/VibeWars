@@ -403,42 +403,36 @@ describe("the modes step (#3543)", () => {
   const shown = (screen: MenuQuestScreen): MenuQuestEvent => ({ kind: "screen-shown", screen });
   const MODES = ["random-arena", "team-arena", "heroes-ascent", "gvg", "hosted-game"] as const;
 
-  it("follows the team step, and opens then explains the rail's five modes, in its order", () => {
+  it("follows the team step, and lights the rail's five modes in turn, in its order (#3990)", () => {
     const step = menuQuestStep("modes");
     expect(MENU_QUEST_STEPS.map(({ id }) => id).slice(-3, -1)).toEqual(["team", "modes"]);
     expect(step.beats.map((beat) => [beat.kind, beatTarget(beat, NO_MENU_QUEST_EVENTS)])).toEqual(
-      MODES.flatMap((mode) => [
-        ["do", `rail-${mode}`],
-        ["explain", `mode-${mode}`],
-      ]),
+      MODES.map((mode) => ["explain", `rail-${mode}`]),
     );
   });
 
-  it("waits for each mode's screen, then its Got it, and goes on to the arena after the fifth", () => {
+  it("goes on with each Got it alone, on any screen, and to the arena after the fifth (#3990)", () => {
     let cursor: MenuQuestCursor | "done" = resumeMenuQuest("modes");
-    let state = fold([shown("teams")]);
+    const state = fold([shown("teams")]);
     for (const [at, mode] of MODES.entries()) {
       if (cursor === "done") {
         throw new Error(`done before ${mode}`);
       }
-      expect(advanceMenuQuest(cursor, state, false)).toEqual({ step: "modes", beat: 2 * at });
-      state = foldMenuQuestEvent(state, shown(mode));
-      const read = advanceMenuQuest(cursor, state, false);
-      expect(read).toEqual({ step: "modes", beat: 2 * at + 1 });
-      cursor = read === "done" ? read : advanceMenuQuest(read, state, true);
+      expect(advanceMenuQuest(cursor, state, false)).toEqual({ step: "modes", beat: at });
+      cursor = advanceMenuQuest(cursor, state, true);
     }
     expect(cursor).toEqual({ step: "arena", beat: 0 });
   });
 
-  it("counts the mode already shown: its entry does nothing when clicked", () => {
-    const state = fold([shown("random-arena")]);
+  it("stays on its mode when the player opens another from the rail (#3990)", () => {
+    const state = fold([shown("gvg")]);
     expect(advanceMenuQuest(resumeMenuQuest("modes"), state, false)).toEqual({
       step: "modes",
-      beat: 1,
+      beat: 0,
     });
   });
 
-  it("lists the five modes, each ticked once the quest is past opening it", () => {
+  it("lists the five modes, each ticked once the quest is past its beat", () => {
     const labels = menuQuestChecklist(resumeMenuQuest("modes"), NO_MENU_QUEST_EVENTS);
     expect(labels.map(({ label }) => label)).toEqual([
       "rail.randomArena",
@@ -448,21 +442,19 @@ describe("the modes step (#3543)", () => {
       "rail.hostedGame",
     ]);
     expect(labels.every(({ done }) => !done)).toBe(true);
-    const third = menuQuestChecklist({ step: "modes", beat: 5 }, NO_MENU_QUEST_EVENTS);
-    expect(third.map(({ done }) => done)).toEqual([true, true, true, false, false]);
+    const fourth = menuQuestChecklist({ step: "modes", beat: 3 }, NO_MENU_QUEST_EVENTS);
+    expect(fourth.map(({ done }) => done)).toEqual([true, true, true, false, false]);
   });
 
   it("skips a mode the rail does not show", () => {
     const step = modesStep(["random-arena", "gvg"]);
-    expect(step.beats.map((beat) => beatTarget(beat, NO_MENU_QUEST_EVENTS))).toEqual([
-      "rail-random-arena",
-      "mode-random-arena",
-      "rail-gvg",
-      "mode-gvg",
+    expect(step.beats.map((beat) => [beat.kind, beatTarget(beat, NO_MENU_QUEST_EVENTS)])).toEqual([
+      ["explain", "rail-random-arena"],
+      ["explain", "rail-gvg"],
     ]);
     expect(step.checklist).toEqual([
       { label: "rail.randomArena", beat: 0 },
-      { label: "rail.gvg", beat: 2 },
+      { label: "rail.gvg", beat: 1 },
     ]);
   });
 });

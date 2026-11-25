@@ -1730,7 +1730,6 @@ export default {
     "L'Ascesa degli Eroi è una serie di mappe, 8 contro 8, contro squadre del tuo turno. Vinci e passi alla mappa successiva, fino alla Sala degli eroi; perdi e ricominci da capo.",
   "tutorial.menu.modes.hostedGame":
     "Una Partita ospitata è la tua lobby: manda agli amici il link d'invito, e scegli la mappa e la dimensione della squadra. I bot giocano ogni posto che nessuno prende.",
-  "tutorial.menu.modes.open": "Apri la modalità illuminata sul lato.",
   "tutorial.menu.modes.randomArena":
     "L'Arena casuale è lo scontro più rapido: il tuo personaggio, in una squadra di sconosciuti, 1v1, 2v2 o 4v4. La mappa viene sorteggiata per te, e ogni posto è un giocatore vero.",
   "tutorial.menu.modes.teamArena":
