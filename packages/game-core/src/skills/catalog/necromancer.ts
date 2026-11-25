@@ -55,6 +55,7 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
       { kind: "sacrifice-health", percentOfMax: 10 },
       {
         kind: "heal",
+        received: "heal",
         amount: {
           scaling: { attributeId: "necromancer.blood-magic", atZero: 30, atTwelve: 90 },
         },
@@ -708,6 +709,7 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
         effects: [
           {
             kind: "heal",
+            received: "heal",
             amount: {
               scaling: { attributeId: "necromancer.death-magic", atZero: 30, atTwelve: 98.8 },
             },
@@ -1022,6 +1024,7 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
         effects: [
           {
             kind: "heal",
+            received: "heal",
             amount: {
               scaling: { attributeId: "necromancer.death-magic", atZero: 10, atTwelve: 82 },
             },
@@ -2826,6 +2829,7 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
         effects: [
           {
             kind: "heal",
+            received: "gain",
             amount: {
               scaling: { attributeId: "necromancer.death-magic", atZero: 30, atTwelve: 126 },
             },
@@ -2867,6 +2871,7 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
         effects: [
           {
             kind: "heal",
+            received: "gain",
             amount: {
               scaling: { attributeId: "necromancer.soul-reaping", atZero: 10, atTwelve: 82 },
             },
@@ -4508,6 +4513,7 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
       { kind: "shadow-step", to: "corpse" },
       {
         kind: "heal",
+        received: "gain",
         amount: {
           scaling: { attributeId: "necromancer.death-magic", atZero: 25, atTwelve: 85 },
         },

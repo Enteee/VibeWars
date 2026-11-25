@@ -377,6 +377,7 @@ export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition
           },
           {
             kind: "heal",
+            received: "gain",
             amount: { scaling: { attributeId: "dervish.mysticism", atZero: 0, atTwelve: 24 } },
           },
         ],
@@ -424,6 +425,7 @@ export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition
         effects: [
           {
             kind: "heal",
+            received: "heal",
             amount: { scaling: { attributeId: "dervish.mysticism", atZero: 5, atTwelve: 41 } },
           },
         ],
@@ -628,7 +630,7 @@ export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition
     triggers: [
       {
         on: "ends",
-        effects: [{ kind: "heal", amount: { flat: 175 } }],
+        effects: [{ kind: "heal", received: "heal", amount: { flat: 175 } }],
         target: "bearer",
         skillId: "dervish.vital-boon",
       },
@@ -705,6 +707,7 @@ export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition
         effects: [
           {
             kind: "heal",
+            received: "heal",
             amount: { scaling: { attributeId: "dervish.mysticism", atZero: 50, atTwelve: 170 } },
           },
         ],
@@ -732,6 +735,7 @@ export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition
         effects: [
           {
             kind: "heal",
+            received: "heal",
             amount: { scaling: { attributeId: "dervish.mysticism", atZero: 30, atTwelve: 126 } },
           },
         ],
@@ -792,6 +796,7 @@ export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition
         effects: [
           {
             kind: "heal",
+            received: "gain",
             amount: { flat: 0 },
             per: {
               count: { kind: "statuses", on: "caster", categories: ["enchantment"] },

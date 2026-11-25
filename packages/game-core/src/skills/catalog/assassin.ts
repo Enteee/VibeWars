@@ -523,6 +523,7 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
         effects: [
           {
             kind: "heal",
+            received: "heal",
             recipient: "caster",
             amount: { scaling: { attributeId: "assassin.shadow-arts", atZero: 65, atTwelve: 173 } },
           },
@@ -1405,6 +1406,7 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
     effects: [
       {
         kind: "heal",
+        received: "heal",
         recipient: "caster",
         amount: { scaling: { attributeId: "assassin.shadow-arts", atZero: 30, atTwelve: 126 } },
       },
@@ -1494,6 +1496,7 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
         effects: [
           {
             kind: "heal",
+            received: "gain",
             recipient: "caster",
             amount: { scaling: { attributeId: "assassin.shadow-arts", atZero: 40, atTwelve: 112 } },
           },
@@ -3095,6 +3098,7 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
     effects: [
       {
         kind: "heal",
+        received: "gain",
         recipient: "caster",
         amount: { flat: 0 },
         per: {

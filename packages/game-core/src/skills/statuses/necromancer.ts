@@ -169,7 +169,7 @@ export const NECROMANCER_STATUSES: Readonly<Record<NecromancerStatusId, StatusDe
     triggers: [
       {
         on: "ends",
-        effects: [{ kind: "heal", amount: { flat: 102 } }],
+        effects: [{ kind: "heal", received: "heal", amount: { flat: 102 } }],
         target: "source",
         skillId: "necromancer.parasitic-bond",
       },
@@ -539,7 +539,7 @@ export const NECROMANCER_STATUSES: Readonly<Record<NecromancerStatusId, StatusDe
     triggers: [
       {
         on: "ends",
-        effects: [{ kind: "heal", amount: { flat: 160 } }],
+        effects: [{ kind: "heal", received: "gain", amount: { flat: 160 } }],
         target: "bearer",
         skillId: "necromancer.blood-renewal",
       },
@@ -1132,6 +1132,7 @@ export const NECROMANCER_STATUSES: Readonly<Record<NecromancerStatusId, StatusDe
         effects: [
           {
             kind: "heal",
+            received: "gain",
             amount: {
               scaling: { attributeId: "necromancer.blood-magic", atZero: 5, atTwelve: 17 },
             },
@@ -1151,6 +1152,7 @@ export const NECROMANCER_STATUSES: Readonly<Record<NecromancerStatusId, StatusDe
             effects: [
               {
                 kind: "heal",
+                received: "heal",
                 amount: {
                   scaling: { attributeId: "necromancer.blood-magic", atZero: 20, atTwelve: 84 },
                 },

@@ -117,6 +117,7 @@ export const PARAGON_STATUSES: Readonly<Record<ParagonStatusId, StatusDefinition
         effects: [
           {
             kind: "heal",
+            received: "gain",
             amount: { scaling: { attributeId: "paragon.motivation", atZero: 45, atTwelve: 97 } },
           },
         ],
@@ -171,7 +172,7 @@ export const PARAGON_STATUSES: Readonly<Record<ParagonStatusId, StatusDefinition
     nextSkill: {
       which: "spell",
       count: 1,
-      effects: [{ kind: "heal", amount: { flat: 78 } }],
+      effects: [{ kind: "heal", received: "gain", amount: { flat: 78 } }],
       skillId: "paragon.aria-of-restoration",
     },
   }),
@@ -182,7 +183,7 @@ export const PARAGON_STATUSES: Readonly<Record<ParagonStatusId, StatusDefinition
     nextSkill: {
       which: "shout-or-chant",
       count: 1,
-      effects: [{ kind: "heal", amount: { flat: 78 } }],
+      effects: [{ kind: "heal", received: "heal", amount: { flat: 78 } }],
       skillId: "paragon.chorus-of-restoration",
     },
   }),
@@ -388,6 +389,7 @@ export const PARAGON_STATUSES: Readonly<Record<ParagonStatusId, StatusDefinition
         effects: [
           {
             kind: "heal",
+            received: "heal",
             amount: { scaling: { attributeId: "paragon.motivation", atZero: 15, atTwelve: 63 } },
           },
         ],
@@ -497,7 +499,7 @@ export const PARAGON_STATUSES: Readonly<Record<ParagonStatusId, StatusDefinition
     triggers: [
       {
         on: "bearer-fatal-damage-negated",
-        effects: [{ kind: "heal", amount: { flat: 164 } }],
+        effects: [{ kind: "heal", received: "heal", amount: { flat: 164 } }],
         target: "bearer",
         skillId: "paragon.angelic-bond",
       },
@@ -568,6 +570,7 @@ export const PARAGON_STATUSES: Readonly<Record<ParagonStatusId, StatusDefinition
         effects: [
           {
             kind: "heal",
+            received: "gain",
             amount: { scaling: { attributeId: "paragon.motivation", atZero: 15, atTwelve: 63 } },
           },
         ],

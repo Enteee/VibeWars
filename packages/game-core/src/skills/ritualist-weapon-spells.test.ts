@@ -93,12 +93,14 @@ describe("Spirit Light Weapon (#975)", () => {
     expect(target.health).toBe(healed);
   });
 
-  it("is a heal: Deep Wound scales it, Bleeding nets against it in one event a tick", () => {
+  // "Gains 21 Health per second": a gain, so Deep Wound leaves it whole
+  // (#3999).
+  it("is a gain: Deep Wound leaves it whole, Bleeding nets against it in one event a tick", () => {
     const wounded = ally();
     wounded.statuses.apply("spirit-light-weapon", 10, "rt", NO_RANKS);
     wounded.statuses.apply("deep-wound", 10, "foe", NO_RANKS);
     advanceStatuses(wounded, 1, 0);
-    expect(wounded.health).toBeCloseTo(100 + 21 * 0.8, 9);
+    expect(wounded.health).toBeCloseTo(121, 9);
 
     const bled = ally();
     bled.statuses.apply("spirit-light-weapon", 10, "rt", NO_RANKS);
