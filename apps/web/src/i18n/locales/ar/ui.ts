@@ -453,6 +453,7 @@ export default {
   "cosmetics.item.trailFrost": "أثر الصقيع",
   "cosmetics.item.trailMoss": "أثر الطحلب",
   "cosmetics.item.trailStarlight": "أثر ضوء النجوم",
+  "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "مقفل",
   "cosmetics.none": "لا شيء",
   "cosmetics.note":

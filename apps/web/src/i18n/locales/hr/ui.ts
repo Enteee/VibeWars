@@ -422,6 +422,7 @@ export default {
   "cosmetics.item.trailFrost": "Trag mraza",
   "cosmetics.item.trailMoss": "Trag mahovine",
   "cosmetics.item.trailStarlight": "Trag zvjezdane svjetlosti",
+  "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Zaključano",
   "cosmetics.none": "Ništa",
   "cosmetics.note":

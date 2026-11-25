@@ -406,6 +406,7 @@ export default {
   "cosmetics.item.trailFrost": "Frostspur",
   "cosmetics.item.trailMoss": "Moosspur",
   "cosmetics.item.trailStarlight": "Sternenlichtspur",
+  "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Gesperrt",
   "cosmetics.none": "Keine",
   "cosmetics.note":

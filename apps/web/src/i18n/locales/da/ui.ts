@@ -402,6 +402,7 @@ export default {
   "cosmetics.item.trailFrost": "Frostspor",
   "cosmetics.item.trailMoss": "Mosspor",
   "cosmetics.item.trailStarlight": "Stjernelysspor",
+  "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Låst",
   "cosmetics.none": "Ingen",
   "cosmetics.note":

@@ -371,6 +371,7 @@ export default {
   "cosmetics.item.trailFrost": "Vệt sương giá",
   "cosmetics.item.trailMoss": "Vệt rêu",
   "cosmetics.item.trailStarlight": "Vệt ánh sao",
+  "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Đã khóa",
   "cosmetics.none": "Không",
   "cosmetics.note":

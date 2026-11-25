@@ -407,6 +407,7 @@ export default {
   "cosmetics.item.trailFrost": "Ледена следа",
   "cosmetics.item.trailMoss": "Мъхова следа",
   "cosmetics.item.trailStarlight": "Звездна следа",
+  "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Заключено",
   "cosmetics.none": "Няма",
   "cosmetics.note":

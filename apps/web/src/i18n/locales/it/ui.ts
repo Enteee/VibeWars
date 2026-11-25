@@ -427,6 +427,7 @@ export default {
   "cosmetics.item.trailFrost": "Scia di brina",
   "cosmetics.item.trailMoss": "Scia di muschio",
   "cosmetics.item.trailStarlight": "Scia di luce stellare",
+  "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Bloccato",
   "cosmetics.none": "Nessuno",
   "cosmetics.note":

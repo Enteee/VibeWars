@@ -53,9 +53,12 @@ Ein Wappenrahmen ist ein dünner Rand um das Wappen auf deinem Gildenumhang. Er 
 
 ## Wie du sie trägst
 
-Öffne Optionen und wähle **Kosmetik**. Jeder Platz listet seine Gegenstände, jeweils als tragbar
-oder gesperrt markiert, mit dem, was ihn freischaltet. Deine Wahl gilt sofort. Andere Spieler
-sehen sie ab der nächsten Lobby, der du beitrittst.
+Öffne Optionen und wähle **Kosmetik**. Jeder Platz ist eine Reihe von Mustern, jedes ein kleines
+Bild seines Gegenstands; das erste, ein leerer durchgestrichener Kreis, bedeutet, nichts zu tragen.
+Das gewählte Muster hat einen blauen Ring. Die Zeile neben der Reihe (auf dem Handy darunter) nennt
+das Muster, auf das du zeigst oder das den Fokus hat, und was es freischaltet. Ein gesperrtes Muster
+ist abgedunkelt, mit einem kleinen Vorhängeschloss. Deine Wahl gilt sofort. Andere Spieler sehen sie
+ab der nächsten Lobby, der du beitrittst.
 
 ## Kosmetik anderer Spieler sehen
 

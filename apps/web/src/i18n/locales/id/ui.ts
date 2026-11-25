@@ -376,6 +376,7 @@ export default {
   "cosmetics.item.trailFrost": "Jejak embun beku",
   "cosmetics.item.trailMoss": "Jejak lumut",
   "cosmetics.item.trailStarlight": "Jejak cahaya bintang",
+  "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Terkunci",
   "cosmetics.none": "Tidak ada",
   "cosmetics.note":
