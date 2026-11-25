@@ -272,6 +272,8 @@ export const MESMER_STATUSES: Readonly<Record<MesmerStatusId, StatusDefinition>>
   // PvP: "you have +3 armor for each signet you have equipped. Whenever you
   // use a signet, you gain 5...60 Health" (#2438): one stack a signet,
   // counted as it lands; the heal at the bearer's Inspiration Magic.
+  // A heal for all its "gain" (#3999): the wiki's Healing page names it
+  // an exception, worded as health gain but healing all the same.
   "mantra-of-signets": define("mantra-of-signets", "Mantra of Signets", "stance", {
     profession: "mesmer",
     armorModifier: 3,
@@ -282,7 +284,7 @@ export const MESMER_STATUSES: Readonly<Record<MesmerStatusId, StatusDefinition>>
         effects: [
           {
             kind: "heal",
-            received: "gain",
+            received: "heal",
             amount: {
               scaling: { attributeId: "mesmer.inspiration-magic", atZero: 5, atTwelve: 49 },
             },

@@ -4041,7 +4041,8 @@ export const MONK_SKILLS: readonly Skill[] = [
     // "Target ally is healed for 20...120. All party members in earshot of
     // your target gain Health equal to the Divine Favor bonus from this
     // spell. Your Smiting Prayers are disabled for 20 seconds" (#2311). The
-    // target's own bonus is the cast's, once.
+    // target's own bonus is the cast's, once. The party's "gain" is healing
+    // all the same (#3999): the wiki's Healing page names it an exception.
     effects: [
       {
         kind: "heal",
@@ -4053,7 +4054,7 @@ export const MONK_SKILLS: readonly Skill[] = [
         hits: "party",
         radius: AREA_EARSHOT,
         maxTargets: undefined,
-        effects: [{ kind: "heal", received: "gain", amount: { flat: 0 }, divineFavorBonus: true }],
+        effects: [{ kind: "heal", received: "heal", amount: { flat: 0 }, divineFavorBonus: true }],
       },
       {
         kind: "disable-own-skills",

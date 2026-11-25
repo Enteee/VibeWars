@@ -435,6 +435,23 @@ describe("deep wound (#764)", () => {
     expect(target.health).toBeCloseTo(221, 9);
   });
 
+  it("scales Mantra of Signets' and Healing Burst's party 'gain': the wiki's exceptions (#3999)", () => {
+    const target = woundedAt(200);
+    target.statuses.apply("deep-wound", 20, "caster", NO_RANKS);
+    const [mantra] = getStatusDefinition("mantra-of-signets").triggers.flatMap(
+      (trigger) => trigger.effects,
+    );
+    expect(mantra).toMatchObject({ kind: "heal", received: "heal" });
+    if (mantra?.kind === "heal") {
+      applyEffect(mantra, context(makeCombatant({ id: "caster" }), target));
+    }
+    expect(target.health).toBe(204);
+    const party = getSkill("monk.healing-burst")?.effects.flatMap((effect) =>
+      effect.kind === "splash" ? effect.effects : [],
+    );
+    expect(party).toEqual([expect.objectContaining({ kind: "heal", received: "heal" })]);
+  });
+
   it("leaves regeneration pips at full strength", () => {
     const target = woundedAt(200);
     target.statuses.apply("deep-wound", 20, "caster", NO_RANKS);

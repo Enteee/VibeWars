@@ -2120,37 +2120,31 @@ export function applyEffect(
       }
       // Healer's Covenant's "heal 20% less" (#1761); the favor bonus as
       // the cast's own (#2446).
-      const main = ownHeal(
-        perEnergyLost(
-          effect,
-          healAmount(
+      const heal =
+        ownHeal(
+          perEnergyLost(
             effect,
-            caster,
-            target,
-            context,
+            healAmount(
+              effect,
+              caster,
+              target,
+              context,
+              earlier,
+              context.usedSkill,
+              context.ranksFrom ?? caster,
+            ),
+            lostBy,
             earlier,
-            context.usedSkill,
-            context.ranksFrom ?? caster,
           ),
-          lostBy,
-          earlier,
-        ),
-        context.own,
-      );
-      // The Divine Favor bonus is healing even beside a gain (#3999):
-      // scaled here, so the sum goes through as a gain.
-      const bonus = ownFavorHeal(favorBonus(effect, caster, healed, context.skillId), context.own);
-      const heal = main + bonus;
+          context.own,
+        ) + ownFavorHeal(favorBonus(effect, caster, healed, context.skillId), context.own);
       // Soul Bind's "whenever target foe is healed by a skill" (#1913),
-      // at full Health too: the heal counts, not the Health it gained.
-      if (heal > 0) {
+      // at full Health too: the heal counts, not the Health it gained. A
+      // gain is no heal (#3999, the wiki's Soul Bind).
+      if (heal > 0 && effect.received === "heal") {
         healed.statuses.recordHealedBySkill(caster.id);
       }
-      if (effect.received === "heal") {
-        applyHeal(healed, heal, events, "heal");
-      } else {
-        applyHeal(healed, main + bonus * healingMultiplierOf(healed), events, "gain");
-      }
+      applyHeal(healed, heal, events, effect.received);
       return events;
     }
 
