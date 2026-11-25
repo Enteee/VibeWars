@@ -601,6 +601,11 @@ export default {
   "help.licences": "Licențe terțe",
   "help.pages": "pagini de ajutor",
   "help.source": "Cod sursă",
+  "help.trailer": "Trailer",
+  "help.trailerDownload": "Descarcă",
+  "help.trailerInfo": "{seconds} s, circa {mb} MB",
+  "help.trailerOffline": "Trailerul necesită o conexiune la internet.",
+  "help.trailerVertical": "Versiune pentru telefon (verticală)",
   "help.version": "VibeWars {release} · versiunea {build}",
 
   "hud.aggression": "agr {ours} v {theirs}",

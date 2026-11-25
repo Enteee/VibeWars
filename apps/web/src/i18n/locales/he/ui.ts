@@ -595,6 +595,11 @@ export default {
   "help.licences": "רישיונות צד שלישי",
   "help.pages": "דפי עזרה",
   "help.source": "קוד מקור",
+  "help.trailer": "טריילר",
+  "help.trailerDownload": "הורדה",
+  "help.trailerInfo": "{seconds} שנ׳, כ-{mb} MB",
+  "help.trailerOffline": "הטריילר דורש חיבור לאינטרנט.",
+  "help.trailerVertical": "גרסה לטלפון (אנכית)",
   "help.version": "VibeWars {release} · בנייה {build}",
 
   "hud.aggression": "תוק׳ {ours} מול {theirs}",

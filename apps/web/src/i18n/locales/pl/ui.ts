@@ -621,6 +621,11 @@ export default {
   "help.licences": "Licencje zewnętrzne",
   "help.pages": "strony pomocy",
   "help.source": "Kod źródłowy",
+  "help.trailer": "Zwiastun",
+  "help.trailerDownload": "Pobierz",
+  "help.trailerInfo": "{seconds} s, około {mb} MB",
+  "help.trailerOffline": "Zwiastun wymaga połączenia z internetem.",
+  "help.trailerVertical": "Wersja na telefon (pionowa)",
   "help.version": "VibeWars {release} · kompilacja {build}",
 
   "hud.aggression": "agr {ours} v {theirs}",

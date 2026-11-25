@@ -599,6 +599,11 @@ export default {
   "help.licences": "Licence trećih strana",
   "help.pages": "stranice pomoći",
   "help.source": "Izvorni kôd",
+  "help.trailer": "Trailer",
+  "help.trailerDownload": "Preuzmi",
+  "help.trailerInfo": "{seconds} s, oko {mb} MB",
+  "help.trailerOffline": "Traileru je potrebna internetska veza.",
+  "help.trailerVertical": "Verzija za mobitel (okomita)",
   "help.version": "VibeWars {release} · verzija {build}",
 
   "hud.aggression": "agr {ours} : {theirs}",

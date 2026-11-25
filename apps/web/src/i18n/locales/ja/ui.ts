@@ -523,6 +523,11 @@ export default {
   "help.licences": "サードパーティのライセンス",
   "help.pages": "ヘルプページ",
   "help.source": "ソースコード",
+  "help.trailer": "トレーラー",
+  "help.trailerDownload": "ダウンロード",
+  "help.trailerInfo": "{seconds}秒、約{mb} MB",
+  "help.trailerOffline": "トレーラーの再生にはインターネット接続が必要です。",
+  "help.trailerVertical": "スマホ版（縦）",
   "help.version": "VibeWars {release} · ビルド {build}",
 
   "hud.aggression": "攻勢 {ours} : {theirs}",

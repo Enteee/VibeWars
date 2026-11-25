@@ -521,6 +521,11 @@ export default {
   "help.licences": "Lisensi pihak ketiga",
   "help.pages": "halaman bantuan",
   "help.source": "Kode sumber",
+  "help.trailer": "Trailer",
+  "help.trailerDownload": "Unduh",
+  "help.trailerInfo": "{seconds} dtk, sekitar {mb} MB",
+  "help.trailerOffline": "Trailer memerlukan koneksi internet.",
+  "help.trailerVertical": "Versi ponsel (vertikal)",
   "help.version": "VibeWars {release} · build {build}",
 
   "hud.aggression": "agr {ours} vs {theirs}",

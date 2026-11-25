@@ -105,7 +105,7 @@ function wears(sim: MatchSimulation, id: string, statusId: StatusId): boolean {
 }
 
 describe("Winnowing (#1064)", () => {
-  it("plants one spirit where its Ranger stands: 210 Health, armor 51, 198 s", () => {
+  it("plants one spirit where its Ranger stands: 160 Health, armor 50, 198 s", () => {
     const sim = match();
     ritual(sim, WINNOWING);
     const [spirit, ...others] = spirits(sim);
@@ -117,8 +117,8 @@ describe("Winnowing (#1064)", () => {
       skillId: WINNOWING,
     });
     expect(spirit?.position).toEqual(vec2(0, 0));
-    expect(spirit?.combatant.maxHealth).toBe(210);
-    expect(spirit?.combatant.equipment).toEqual(unarmedResolvedEquipment(51));
+    expect(spirit?.combatant.maxHealth).toBe(160);
+    expect(spirit?.combatant.equipment).toEqual(unarmedResolvedEquipment(50));
     // Planted at the tick its cast ended, half a second and a tick ago.
     expect(spirit?.creature?.expiresInSeconds).toBeCloseTo(197.5 - DT, 5);
   });
@@ -527,11 +527,11 @@ describe("Recuperation (#1064)", () => {
         ({ text }) => text,
       );
     expect(lines(RECUPERATION, "ritualist.restoration-magic")).toEqual([
-      "Summons 1 Recuperation (210 Health, lasts 39 seconds)",
+      "Summons 1 Recuperation (160 Health, lasts 39 seconds)",
       "Non-spirit allies in its range: +3 Health regeneration",
     ]);
     expect(lines(WINNOWING, "ranger.wilderness-survival")).toEqual([
-      "Summons 1 Winnowing (210 Health, lasts 198 seconds)",
+      "Summons 1 Winnowing (160 Health, lasts 198 seconds)",
       "Non-spirit creatures in its range: take +4 from physical damage",
     ]);
   });
@@ -555,30 +555,30 @@ describe("Spawning Power (#1098)", () => {
     });
   }
 
-  it("gives a Ritualist's spirit 4% more Health a rank: 311 at 12, 210 at 0", () => {
+  it("gives a Ritualist's spirit 4% more Health a rank: 237 at 12, 160 at 0", () => {
     const strong = summoner(12);
     ritual(strong, RECUPERATION);
-    expect(spirits(strong)[0]?.combatant.maxHealth).toBe(311);
+    expect(spirits(strong)[0]?.combatant.maxHealth).toBe(237);
     const plain = summoner(0);
     ritual(plain, RECUPERATION);
-    expect(spirits(plain)[0]?.combatant.maxHealth).toBe(210);
+    expect(spirits(plain)[0]?.combatant.maxHealth).toBe(160);
   });
 
-  it("is the summoner's: a Ranger's Winnowing gets it, an R/Rt with none gets 210", () => {
+  it("is the summoner's: a Ranger's Winnowing gets it, an R/Rt with none gets 160", () => {
     const rtR = summoner(12);
     ritual(rtR, WINNOWING);
-    expect(spirits(rtR)[0]?.combatant.maxHealth).toBe(311);
+    expect(spirits(rtR)[0]?.combatant.maxHealth).toBe(237);
     const rRt = match();
     ritual(rRt, RECUPERATION);
-    expect(spirits(rRt)[0]?.combatant.maxHealth).toBe(210);
+    expect(spirits(rRt)[0]?.combatant.maxHealth).toBe(160);
   });
 
-  it("leaves a charmed pet alone (#1144): the same summoner's wolf has 480, its spirit 311", () => {
+  it("leaves a charmed pet alone (#1144): the same summoner's wolf has 480, its spirit 237", () => {
     const sim = summoner(12, { skillBar: [RECUPERATION, "ranger.charm-animal"] });
     const pet = [...sim.participants()].find((p) => p.creature?.kind === "pet");
     expect(pet?.combatant.maxHealth).toBe(480);
     ritual(sim, RECUPERATION);
-    expect(spirits(sim)[0]?.combatant.maxHealth).toBe(311);
+    expect(spirits(sim)[0]?.combatant.maxHealth).toBe(237);
   });
 
   it("leaves the spirit's lifetime alone", () => {
@@ -602,8 +602,8 @@ describe("Spawning Power (#1098)", () => {
         EN_WORDS,
         EN_NAMES,
       ).effects[0]?.text;
-    expect(line(12)).toBe("Summons 1 Recuperation (311 Health (210), lasts 39 seconds)");
-    expect(line(0)).toBe("Summons 1 Recuperation (210 Health, lasts 39 seconds)");
+    expect(line(12)).toBe("Summons 1 Recuperation (237 Health (160), lasts 39 seconds)");
+    expect(line(0)).toBe("Summons 1 Recuperation (160 Health, lasts 39 seconds)");
   });
 });
 
@@ -714,26 +714,51 @@ function skillOf(id: string) {
   return found;
 }
 
-describe("a spirit's Health by whole level (#1917)", () => {
-  /** The Health `skillId`'s spirit has at `rank` of the attribute it scales with. */
-  function healthAt(skillId: string, rank: number): number {
+describe("a spirit's Health and armor by whole level (#1917, #3978)", () => {
+  /** The `stat` of `skillId`'s spirit at `rank` of the attribute it scales with. */
+  function statAt(skillId: string, stat: "maxHealth" | "armor", rank: number): number {
     const summon = getSkill(skillId)?.effects.find((effect) => effect.kind === "summon");
     if (summon?.kind !== "summon") {
       throw new Error(`${skillId} summons nothing`);
     }
-    const health = summon.creature.maxHealth;
-    if (!("byLevel" in health)) {
-      throw new Error(`${skillId}'s spirit has no level`);
+    const magnitude = summon.creature[stat];
+    if (!("byLevel" in magnitude)) {
+      throw new Error(`${skillId}'s spirit has no level for ${stat}`);
     }
-    return resolveMagnitudeAtRanks(health, new Map([[health.byLevel.level.attributeId, rank]]));
+    return resolveMagnitudeAtRanks(
+      magnitude,
+      new Map([[magnitude.byLevel.level.attributeId, rank]]),
+    );
   }
 
-  it("steps Winnowing's spirit by GW1's level 1...10: 50 + 20 per level", () => {
-    // Levels 1, 2, 8 and 10: never the straight line's 245 at 15.
-    expect([0, 1, 12, 15].map((rank) => healthAt(WINNOWING, rank))).toEqual([70, 90, 210, 250]);
+  /** The Health `skillId`'s spirit has at `rank`. */
+  function healthAt(skillId: string, rank: number): number {
+    return statAt(skillId, "maxHealth", rank);
+  }
+
+  /** The armor `skillId`'s spirit has at `rank`. */
+  function armorAt(skillId: string, rank: number): number {
+    return statAt(skillId, "armor", rank);
+  }
+
+  it("steps Winnowing's spirit by GW1's level 1...10: 20 per level, armor 2 + 6 per level", () => {
+    // Levels 1, 2, 8 and 10: never the straight line's 195 at 15.
+    expect([0, 1, 12, 15].map((rank) => healthAt(WINNOWING, rank))).toEqual([20, 40, 160, 200]);
+    expect([0, 1, 12, 15].map((rank) => armorAt(WINNOWING, rank))).toEqual([8, 14, 50, 62]);
   });
 
-  it("gives a Ritualist spirit 210 at 12, not the unrounded 214", () => {
-    expect(healthAt("ritualist.displacement", 12)).toBe(210);
+  it("gives a Ritualist spirit 160 at 12, not the unrounded 164", () => {
+    expect(healthAt("ritualist.displacement", 12)).toBe(160);
   });
+
+  it.each([WINNOWING, "ritualist.displacement"])(
+    "%s, a level 1...10 spirit: 20 / 8 at 0, 160 / 50 at 12, 200 / 62 at 15",
+    (skillId) => {
+      expect([0, 12, 15].map((rank) => [healthAt(skillId, rank), armorAt(skillId, rank)])).toEqual([
+        [20, 8],
+        [160, 50],
+        [200, 62],
+      ]);
+    },
+  );
 });

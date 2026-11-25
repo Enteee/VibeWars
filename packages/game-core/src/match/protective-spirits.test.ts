@@ -116,24 +116,24 @@ function packet(amount: number, source: "weapon" | "skill"): DamagePacket {
 
 describe("the four spirits' numbers (#1265)", () => {
   // Rank 0...15 is GW1's a...b, so 12 is four fifths of the way; health
-  // is 50 + 20 per whole level (#1917).
+  // is 20 per whole level, armor 2 + 6 per level (#3978).
   it.each([
-    [SHELTER, 0, 70, 30],
-    [SHELTER, 12, 190, 54],
-    [SHELTER, 15, 210, 60],
-    [UNION, 0, 70, 30],
-    [UNION, 12, 190, 54],
-    [UNION, 15, 210, 60],
-    [DISPLACEMENT, 0, 70, 30],
-    [DISPLACEMENT, 12, 210, 54],
-    [DISPLACEMENT, 15, 250, 60],
-    [EARTHBIND, 0, 70, 15],
-    [EARTHBIND, 12, 210, 39],
-    [EARTHBIND, 15, 250, 45],
-  ])("%s at Communing %i: %i Health, %i s", (id, rank, health, seconds) => {
+    [SHELTER, 0, 20, 8, 30],
+    [SHELTER, 12, 140, 44, 54],
+    [SHELTER, 15, 160, 50, 60],
+    [UNION, 0, 20, 8, 30],
+    [UNION, 12, 140, 44, 54],
+    [UNION, 15, 160, 50, 60],
+    [DISPLACEMENT, 0, 20, 8, 30],
+    [DISPLACEMENT, 12, 160, 50, 54],
+    [DISPLACEMENT, 15, 200, 62, 60],
+    [EARTHBIND, 0, 20, 8, 15],
+    [EARTHBIND, 12, 160, 50, 39],
+    [EARTHBIND, 15, 200, 62, 45],
+  ])("%s at Communing %i: %i Health, armor %i, %i s", (id, rank, health, armor, seconds) => {
     const planted = ritual(match(rank), id);
     expect(planted.combatant.maxHealth).toBe(health);
-    expect(planted.combatant.equipment.baseArmor).toBe(51);
+    expect(planted.combatant.equipment.baseArmor).toBe(armor);
     expect(planted.combatant.attack).toBeUndefined();
     // Planted a few ticks ago.
     expect(planted.creature?.expiresInSeconds).toBeLessThan(seconds);
@@ -182,7 +182,7 @@ describe("Shelter (#1265)", () => {
       200,
     );
     expect(paid(stepFor(sim, DT), shelter.id, "shelter")).toEqual([]);
-    expect(shelter.combatant.health).toBe(190 - 51);
+    expect(shelter.combatant.health).toBe(140 - 51);
   });
 });
 
@@ -228,8 +228,8 @@ describe("Displacement (#1265)", () => {
     expect(blocked / 400).toBeLessThan(0.8);
 
     const log = stepFor(sim, DT);
-    // 210 Health: three blocks, and the fourth takes what is left.
-    expect(paid(log, displacement.id, "displacement")).toEqual([60, 60, 60, 30]);
+    // 160 Health: two blocks, and the third takes what is left.
+    expect(paid(log, displacement.id, "displacement")).toEqual([60, 60, 40]);
     expect(displacement.combatant.dead).toBe(true);
     stepFor(sim, DT * 2);
     expect(ally.statuses.has("displacement")).toBe(false);

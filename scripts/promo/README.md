@@ -47,6 +47,12 @@ the release, so the URL 404s until then:
 
 `https://github.com/Enteee/VibeWars/releases/download/<tag>/vibewars-trailer-16x9.mp4`
 
+The game's Help > Trailer page (#3835) plays the cuts on **v0.12.0**,
+uploaded there by `trailer.yml` (#3922). A re-cut re-runs the workflow for
+that tag, so the page's URLs never change. Its length, size and poster
+(`apps/web/public/promo/trailer-poster.webp`) are read from the 16:9 cut by
+hand: update `apps/web/src/ui/trailer-section.ts` when a re-cut changes them.
+
 ## Playwright's video encoder
 
 `recordVideo` looks for its own ffmpeg at
