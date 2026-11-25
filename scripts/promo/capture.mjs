@@ -11,7 +11,7 @@
  *   music.webm     the music of a real-time run of the fight, one continuous take, tapped
  *                  inside the music host (see `AUDIO_TAP`); the music bed
  *
- *   --scene <name>  shoot one scene: fight, editor, map-<id>, friends, ranked
+ *   --scene <name>  shoot one scene: fight, editor, act-<name>, friends, ranked
  *   --url <url>     use a client served there, built with
  *                   VITE_VIBEWARS_TRANSPORT=broadcast and VITE_VIBEWARS_SPLASH=off
  *
@@ -27,6 +27,7 @@ import { parseArgs } from "node:util";
 
 import { chromium } from "@playwright/test";
 
+import { advance, cycleSkills, waitEvent } from "./actions.mjs";
 import { musicSettled } from "./plan.mjs";
 
 const PORT = 4322;
@@ -44,7 +45,22 @@ const NAME = "Aria Stormveil";
 const FIGHT_TRIES = 5;
 /** The longest a fight is watched for its interrupt, ms. */
 const FIGHT_MS = 150_000;
-const MAPS = ["broken-tower", "arena-canyon", "ember-pits"];
+/** The ranked scene's map. */
+const RANKED_MAP = "broken-tower";
+/** A shot is tried this often before the run fails (#3982). */
+const SCENE_TRIES = 5;
+/** The longest an action shot waits for its event, ms. */
+const ACTION_MS = 60_000;
+/** @typedef {{ kind: string, skillId: string }} Combat */
+/**
+ * The action shots: the map, and the event that starts each.
+ * @type {Record<string, { map: string, wanted: (event: Combat) => boolean }>}
+ */
+const ACTIONS = {
+  cast: { map: "arena-canyon", wanted: (e) => e.kind === "damage" && e.skillId !== "" },
+  heal: { map: "ember-pits", wanted: (e) => e.kind === "heal" && e.skillId !== "" },
+  ramp: { map: "broken-tower", wanted: (e) => e.kind === "damage" },
+};
 
 /**
  * Runs in every frame before its scripts, the sandboxed music host's
@@ -637,28 +653,46 @@ async function waitLiveStepped(page, stepper) {
 }
 
 /**
- * A map, from above and walked across.
+ * An action shot (#3982): the match is fast-forwarded past the countdown,
+ * the player advances and casts until `wanted` shows among the combat
+ * events, and the shot's start (`marks.action`) is that event's time.
+ * Retried like `fight`: bots are random, so a run may never produce it.
  *
  * @param {import("@playwright/test").Browser} browser
  * @param {string} url
+ * @param {string} name  the scene, `act-<name>`
  * @param {string} mapId
+ * @param {(event: { kind: string, skillId: string }) => boolean} wanted
  */
-async function mapScene(browser, url, mapId) {
-  const scene = await openScene(browser, `map-${mapId}`, url, "stepped");
-  const frame = stepper(scene.page);
-  scene.stepper = frame;
-  await startMatch(scene.page, mapId, { stepper: frame, name: `map-${mapId}` });
-  scene.marks.matchStart = scene.now();
-  step = `pan ${mapId}`;
-  await waitLiveStepped(scene.page, frame);
-  scene.marks.pan = scene.now();
-  await scene.page.mouse.move(960, 540);
-  await scene.page.keyboard.down("KeyW");
-  await frame.steps(frames(4000));
-  await scene.page.keyboard.up("KeyW");
-  await walk(scene.page, "KeyD", 4000, frame);
-  const { events, timeOrigin } = await pageEvents(scene.page);
-  await closeScene(scene, `map-${mapId}`, events, timeOrigin);
+async function actionScene(browser, url, name, mapId, wanted) {
+  const id = `act-${name}`;
+  for (let attempt = 1; attempt <= SCENE_TRIES; attempt += 1) {
+    const scene = await openScene(browser, id, url, "stepped");
+    const frame = stepper(scene.page);
+    scene.stepper = frame;
+    await startMatch(scene.page, mapId, { stepper: frame, name: id });
+    scene.marks.matchStart = scene.now();
+    step = id;
+    await waitLiveStepped(scene.page, frame);
+    await scene.page.mouse.move(960, 540);
+    const hit = await waitEvent(scene.page, frame, wanted, ACTION_MS, async () => {
+      await advance(scene.page, frame, 1500);
+      await cycleSkills(scene.page, frame);
+    });
+    if (hit !== undefined) {
+      const seen = await pageEvents(scene.page);
+      scene.marks.action = (hit.t - frame.origin()) / 1000;
+      // The shot's two seconds, played out.
+      await frame.steps(frames(2000));
+      const after = await pageEvents(scene.page);
+      await closeScene(scene, id, after.events, seen.timeOrigin);
+      return;
+    }
+    const { events, timeOrigin } = await pageEvents(scene.page);
+    await closeScene(scene, id, events, timeOrigin);
+    console.error(`${id} try ${String(attempt)}: no event`);
+  }
+  throw new Error(`${id}: no event in ${String(SCENE_TRIES)} tries`);
 }
 
 /**
@@ -753,7 +787,7 @@ async function ranked(browser, url) {
   await page.goto(`${url}?capture`);
   await page.locator(".mode-rail").waitFor();
   step = "match in the look";
-  await startMatch(page, MAPS[0] ?? "");
+  await startMatch(page, RANKED_MAP);
   await waitLive(page);
   // Wheel in on the hero, the camera's centre, and walk: the cape is the subject.
   await page.mouse.move(960, 540);
@@ -765,7 +799,7 @@ async function ranked(browser, url) {
   await closeScene(scene, "ranked", events, timeOrigin);
 }
 
-/** The scenes by name; a `map-<id>` is made from `MAPS`. */
+/** The scenes by name; an `act-<name>` is made from `ACTIONS`. */
 /** @type {Record<string, (browser: import("@playwright/test").Browser, url: string) => Promise<void>>} */
 const SCENES = {
   fight,
@@ -773,10 +807,10 @@ const SCENES = {
   friends,
   ranked,
   ...Object.fromEntries(
-    MAPS.map((id) => [
-      `map-${id}`,
+    Object.entries(ACTIONS).map(([name, shot]) => [
+      `act-${name}`,
       (/** @type {import("@playwright/test").Browser} */ b, /** @type {string} */ u) =>
-        mapScene(b, u, id),
+        actionScene(b, u, name, shot.map, shot.wanted),
     ]),
   ),
 };
