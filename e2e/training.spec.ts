@@ -445,7 +445,9 @@ test("Heights draws its water: the deep pond darker than the floor, a puddle pal
     await walkTo(page, canvas, hop);
   }
   // Map coordinates from training-heights/map.json: the pond's middle, the east puddle's.
-  const [pond, northFloor] = await waterAndFloor(930, 330, 0, -130);
+  // The pond lies in torch-east-door's and fire-east-hearth's warm pools (#4057), so
+  // the floor is the pond mirrored across the line through both: as far from each.
+  const [pond, northFloor] = await waterAndFloor(907, 124, 23, 76);
   expect(pond).toBeLessThan(northFloor);
   // West of the puddle: south of it is the east pit, sunk and darker (#2973).
   // West of the pit first: the puddle is further than the stage shows.
