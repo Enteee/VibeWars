@@ -365,6 +365,25 @@ describe("Options > Cosmetics, held (#3989)", () => {
     expect(store.choice().aura).toBeUndefined();
   });
 
+  it("lets a keyboard click pick after a held press picked and redrew the rows", () => {
+    const store = emptyStore();
+    store.pick("frame", firstOf("frame").id);
+    store.pick("title", firstOf("title").id);
+    const container = mounted(store);
+    const frameNone = slotOf(container, "frame").all("cosmetics-swatch")[0];
+    if (frameNone === undefined) {
+      throw new Error("no frame swatches");
+    }
+    pointer(frameNone, "pointerdown");
+    vi.advanceTimersByTime(HOLD_MS);
+    // The pick redraws the rows: the click after it reaches no swatch.
+    pointer(frameNone, "pointerup");
+    expect(store.choice().frame).toBeUndefined();
+    // Enter on a swatch is a click with no pointer behind it.
+    slotOf(container, "title").all("cosmetics-swatch")[0]?.click();
+    expect(store.choice().title).toBeUndefined();
+  });
+
   it("lets a short press on a locked swatch pick and preview nothing", () => {
     const store = emptyStore();
     const group = slotOf(mounted(store), "frame");

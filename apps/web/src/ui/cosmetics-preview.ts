@@ -179,12 +179,17 @@ export function createCosmeticsPreview(
   let shown: FigureLook | undefined;
   let glyph: HTMLImageElement | undefined;
   let tinted: { readonly pixels: number; readonly canvas: HTMLCanvasElement } | undefined;
-  void figure.then(async (known) => {
-    shown = known;
-    if (known !== undefined) {
-      glyph = await loadGlyph(known.primary);
-    }
-  });
+  figure
+    .then(async (known) => {
+      shown = known;
+      if (known !== undefined) {
+        glyph = await loadGlyph(known.primary);
+      }
+    })
+    .catch((error: unknown) => {
+      // No glyph, the figure goes without its profession mark: not worth more than a warning.
+      console.warn("[web] could not load the preview's glyph", error);
+    });
 
   const trails = new FootstepTrails();
   const cape = newCapeMotion();

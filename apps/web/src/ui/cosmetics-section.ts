@@ -298,11 +298,8 @@ function slotPicker(
     }
     if (outcome.preview !== null) {
       detail.textContent = swatch.previewing;
-      // A swipe that starts on a swatch scrolls the page; a held one does not.
-      row.style.touchAction = "none";
       onPreview(outcome.preview);
     } else if (outcome.state.pressing === null) {
-      row.style.touchAction = "";
       if (event.kind !== "click") {
         presses.pointer = undefined;
         restore();
@@ -539,6 +536,14 @@ export function cosmeticsSection(
         slots,
       );
       const draw = (): void => {
+        // The rows drawn again end any press on the old ones: a pick's click lands on no swatch.
+        if (presses.timer !== undefined) {
+          clearTimeout(presses.timer);
+        }
+        presses.state = NO_PRESS;
+        presses.pointer = undefined;
+        presses.timer = undefined;
+        held = null;
         // A keyboard pick redraws the row under focus: focus comes back to its picked swatch.
         const active = document.activeElement;
         const focusedSlot = groups.find((group) => active !== null && group.contains(active))

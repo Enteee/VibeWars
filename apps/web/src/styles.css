@@ -2023,6 +2023,8 @@ body:has(> .splash) #menu-background::after {
   /* A held swatch previews (#3989): no text selection or callout from a long press. */
   user-select: none;
   -webkit-touch-callout: none;
+  /* The pane scrolls up and down from a swatch; a held finger's sideways drift does not pan. */
+  touch-action: pan-y;
 }
 
 .screen button.cosmetics-swatch[aria-pressed="true"] {
