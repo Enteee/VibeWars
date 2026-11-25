@@ -18,6 +18,7 @@ import {
   actorAtPoint,
   healthFraction,
   nameLabelBottom,
+  overheadRise,
   nameShown,
   nameTagBox,
   spiritRingAlpha,
@@ -44,6 +45,7 @@ import {
   type Rect,
   type RenderableActor,
 } from "./arena-snapshot.js";
+import { STACK_GLYPH_TINT, stackBadge, stackOverheadRise } from "./sprite-stack.js";
 import { PROFESSION_GLYPH_SIZE } from "./arena-atlas.js";
 import { LYING_WIDTH } from "./lying-pose.js";
 import { recordBreakable } from "./breakable-objects.js";
@@ -658,11 +660,22 @@ describe("nameLabelBottom", () => {
     );
   });
 
+  it("rises over a standing figure and its badge, never a flat body (ADR-0057, #4031)", () => {
+    expect(overheadRise(actor("a", 100, 100))).toBe(stackOverheadRise(14));
+    // Clear of the badge's top, where the glyph rides.
+    expect(14 + overheadRise(actor("a", 100, 100))).toBeGreaterThan(
+      stackBadge(14).rise + stackBadge(14).radius,
+    );
+    expect(overheadRise(actor("a", 100, 100, 14, { dead: true }))).toBe(0);
+    expect(overheadRise(actor("a", 100, 100, 14, { knockedDown: true }))).toBe(0);
+    expect(overheadRise(actor("a", 100, 100, 10, { creatureLook: "beast" }))).toBe(0);
+  });
+
   it("keeps the gap over the cast bar the same on screen at every zoom (#456)", () => {
     const living = actor("a", 100, 100);
     for (const zoom of [0.26, 0.65, 1]) {
       // The cast bar's top scales with the world; the gap above it does not.
-      const gap = (100 - 14 - 19 - nameLabelBottom(living, zoom)) * zoom;
+      const gap = (100 - 14 - overheadRise(living) - 19 - nameLabelBottom(living, zoom)) * zoom;
       expect(gap).toBeCloseTo(3, 9);
     }
   });
@@ -1032,15 +1045,15 @@ describe("nameplateLayout (#281)", () => {
 });
 
 describe("bodyGlyphLayout (#1037)", () => {
-  it("centres a 13 u glyph on a living body, in edge at 60 %", () => {
+  it("puts a 13 u glyph on a standing figure's badge, pale and opaque (ADR-0057)", () => {
     const layout = bodyGlyphLayout(actor("m", 200, 100, 14, { profession: "monk" }));
     expect(layout).toEqual({
       glyph: { kind: "profession", profession: "monk" },
       x: 200,
-      y: 100,
+      y: 100 - stackBadge(14).rise,
       size: 13,
-      tint: BODY_EDGE,
-      alpha: 0.6,
+      tint: STACK_GLYPH_TINT,
+      alpha: 1,
     });
     expect(BODY_GLYPH_SIZE).toBe(13);
     expect(BODY_GLYPH_ALPHA).toBe(0.6);
