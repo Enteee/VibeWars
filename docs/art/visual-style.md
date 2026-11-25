@@ -218,7 +218,11 @@ outlines, and the noise fill on a map without one.
 ## 4. Outline and texture
 
 - **A body** has a 1.5 to 2.5 px dark outline (`#0b0f14`) so it parts from any
-  floor. **A wall top**, a deck edge and a cover cap have a 1 px gothic outline,
+  floor. A standing body is a stacked figure (ADR-0057, `sprite-stack.ts`):
+  helmeted and caped, 1 px outline `#08080a`, shaded dark at its feet to full
+  colour at its cap, its robe in friend or foe colour, its profession glyph
+  on a dark badge disc on top. Creatures and fallen bodies stay discs.
+  **A wall top**, a deck edge and a cover cap have a 1 px gothic outline,
   `WALL_STROKE` `#08080a`, in every biome (#4056); a prop has a 2 px dark outline. **A zone** has a hard
   bright edge, 2 lines wide, never softer than its fill.
 - **No fill is flat** (a zone's is not: `zone-painter.ts`, #3052; nor a layered

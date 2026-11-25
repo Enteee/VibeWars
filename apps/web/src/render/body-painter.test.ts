@@ -9,6 +9,7 @@ import {
   FORM_AURA_COLOUR,
   ashCape,
   formAuraBreath,
+  paintFigureGround,
   paintFormAura,
   paintStandingBody,
   type EmblemFrameLook,
@@ -149,6 +150,17 @@ describe("paintStandingBody (#1250)", () => {
     paintStandingBody(body.painter, BODY, marks.painter);
     expect([...body.calls, ...marks.calls]).toEqual(paint(BODY));
     expect(marks.calls.length).toBeGreaterThan(0);
+  });
+});
+
+describe("paintFigureGround (ADR-0057, #4031)", () => {
+  it("leaves only the self rim on the ground: the figure is an atlas image", () => {
+    const self = recorder();
+    paintFigureGround(self.painter, BODY);
+    expect(self.calls).toEqual(["lineStyle(2, 14147304, 1)", "strokeCircle(100, 50, 12)"]);
+    const enemy = recorder();
+    paintFigureGround(enemy.painter, { ...BODY, team: "enemy" });
+    expect(enemy.calls).toEqual([]);
   });
 });
 

@@ -13,7 +13,7 @@
 import { ELEVATION_STEP } from "@vibewars/game-maps/schema";
 
 /** A body's parts on one character band, in the order they draw. */
-export type CharacterPart = "body" | "glyph" | "marks" | "bar";
+export type CharacterPart = "body" | "figure" | "badge" | "glyph" | "marks" | "bar";
 
 /** A body of water's parts (#2984): its fill and shore, then the ripples on it. */
 export type WaterPart = "surface" | "ripples";
@@ -127,7 +127,21 @@ const DECOR: Record<DecorPart, number> = { shadow: 0.62, low: 0.7, tall: 2.07 };
  * included, so a hit never hides it (#3292); still in its band, so a deck
  * over the body covers its bar too.
  */
-const CHARACTER_PART: Record<CharacterPart, number> = { body: 1, glyph: 1.2, marks: 1.4, bar: 1.5 };
+const CHARACTER_PART: Record<CharacterPart, number> = {
+  body: 1,
+  figure: 1.05,
+  badge: 1.15,
+  glyph: 1.2,
+  marks: 1.4,
+  bar: 1.5,
+};
+
+/**
+ * How far up its band's `figure` depth a stacked figure stands, by how far
+ * down the arena its feet are (ADR-0057): the nearer one covers the one
+ * behind it, and none reaches its band's badges.
+ */
+export const FIGURE_DEPTH_SPAN = 0.05;
 /**
  * Ground water sits on the floor and under the ward and trap circles
  * (#2984), so they stay readable on it; water on a deck sits on that deck
