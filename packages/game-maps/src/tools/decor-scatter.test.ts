@@ -47,7 +47,19 @@ describe("decor scatter (#4013)", () => {
   });
 
   it("places no brazier without a brazier- light beside it", () => {
-    expect(scatterDecor(map, { ...request, kind: "brazier" }).decor).toEqual([]);
+    const unlit = {
+      ...map,
+      lighting: map.lighting && {
+        ...map.lighting,
+        lights: map.lighting.lights.filter((light) => !light.id.startsWith("brazier-")),
+      },
+    };
+    expect(scatterDecor(unlit, { ...request, kind: "brazier" }).decor).toEqual([]);
+    const { decor } = scatterDecor(map, { ...request, kind: "brazier" });
+    expect(decor.length).toBeGreaterThan(0);
+    for (const prop of decor) {
+      expect(decorRefusal(map, prop)).toBeUndefined();
+    }
   });
 
   it("reads a rect and a polygon", () => {

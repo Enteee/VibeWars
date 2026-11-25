@@ -1,4 +1,4 @@
-import type { Vec2 } from "@vibewars/game-core";
+import { MINIMAL_GW_INSPIRED_PVP_V1 as RULESET, type Vec2 } from "@vibewars/game-core";
 import { ANIMATED_DECOR_KINDS, type DecorKind } from "@vibewars/game-maps/schema";
 
 import type { DecorColours } from "./arena-palette.js";
@@ -172,22 +172,27 @@ export function decorShadow(prop: MapDecor): DecorCommand {
 }
 
 /**
- * Where a tall prop is drawn, in its floor's coordinates: what a body
- * must stand in for the prop to fade off it. Empty for a short one.
+ * Where a tall prop is drawn, in its floor's coordinates, widened by a
+ * body's radius and its sway: what a body must stand in for the prop to
+ * fade off it, so none is half under it unfaded. Empty for a short one.
  */
 export function decorOutline(prop: MapDecor): readonly Vec2[] {
   if (!tallDecor(prop.kind)) {
     return [];
   }
   const { at, scale: s } = prop;
-  const half = (prop.kind === "tree" ? CROWN_RADIUS : COLUMN_RADIUS) * s;
+  const reach = RULESET.collision.playerRadius + DECOR_SWAY;
+  // A crown's side lobes reach 1.45 of its radius out; a plinth, 1.35 out and 0.75 down.
+  const tree = prop.kind === "tree";
+  const half = (tree ? CROWN_RADIUS * 1.45 : COLUMN_RADIUS * 1.35) * s + reach;
   const top =
-    (prop.kind === "tree" ? TRUNK_HEIGHT + CROWN_RADIUS * 1.8 : COLUMN_HEIGHT + COLUMN_RADIUS) * s;
+    (tree ? TRUNK_HEIGHT + CROWN_RADIUS * 1.8 : COLUMN_HEIGHT + COLUMN_RADIUS) * s + reach;
+  const bottom = (tree ? 4 : COLUMN_RADIUS * 0.75) * s + reach;
   return [
     { x: at.x - half, y: at.y - top },
     { x: at.x + half, y: at.y - top },
-    { x: at.x + half, y: at.y + 4 * s },
-    { x: at.x - half, y: at.y + 4 * s },
+    { x: at.x + half, y: at.y + bottom },
+    { x: at.x - half, y: at.y + bottom },
   ];
 }
 
