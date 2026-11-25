@@ -100,6 +100,7 @@ export const captureClock: CaptureClock = createCaptureClock(
 if (captureClock.stepping && typeof window !== "undefined") {
   Object.assign(window, {
     __captureStep: (count: number) => captureClock.step(count),
+    __captureNow: () => captureClock.now(),
   });
 }
 

@@ -8,7 +8,7 @@
  *   <scene>.webm   what the screen showed
  *   <scene>.json   `{ events, marks }`: the combat events (`?capture`, seconds
  *                  of the video) and named moments, for `assemble.mjs`
- *   music.webm     the music of the fight scene, one continuous take, tapped
+ *   music.webm     the music of a real-time run of the fight, one continuous take, tapped
  *                  inside the music host (see `AUDIO_TAP`); the music bed
  *
  *   --scene <name>  shoot one scene: fight, editor, map-<id>, friends, ranked
@@ -163,6 +163,103 @@ async function serve() {
   throw new Error(`the client did not come up at ${url}; is the port taken?`);
 }
 
+/** Frames per second of a stepped scene, as `capture-clock.ts`. */
+const FPS = 30;
+
+/**
+ * A stepped scene's recorder (#4006): each frame is one `__captureStep(1)`
+ * of the page, then a PNG of the viewport piped into ffmpeg, so the video
+ * is smooth however slowly the host draws. Before `start`, frames are
+ * stepped but not recorded (the match loading).
+ *
+ * @typedef {{
+ *   seconds(): number,
+ *   origin(): number,
+ *   start(file: string): Promise<void>,
+ *   steps(count: number): Promise<void>,
+ *   pump(): () => Promise<void>,
+ *   stop(): Promise<void>,
+ * }} Stepper
+ */
+
+/**
+ * @param {import("@playwright/test").Page} page
+ * @returns {Stepper}
+ */
+function stepper(page) {
+  /** @type {import("node:child_process").ChildProcessWithoutNullStreams | undefined} */
+  let ffmpeg;
+  /** @type {Promise<void> | undefined} */
+  let exited;
+  let recorded = 0;
+  let origin = 0;
+  return {
+    seconds: () => recorded / FPS,
+    origin: () => origin,
+    async start(file) {
+      origin = Number(await page.evaluate("globalThis.__captureNow()"));
+      fs.mkdirSync(path.dirname(file), { recursive: true });
+      ffmpeg = spawn(
+        "ffmpeg",
+        ["-y", "-loglevel", "error", "-f", "image2pipe", "-framerate", String(FPS), "-i", "-"]
+          .concat(["-c:v", "libvpx-vp9", "-b:v", "0", "-crf", "32", "-deadline", "realtime"])
+          .concat(["-cpu-used", "8", "-pix_fmt", "yuv420p", file]),
+        { stdio: ["pipe", "ignore", "inherit"] },
+      );
+      const child = ffmpeg;
+      exited = new Promise((resolve, reject) => {
+        child.on("error", reject);
+        child.on("close", (code) => {
+          if (code === 0) {
+            resolve();
+          } else {
+            reject(new Error(`ffmpeg exited ${String(code)}`));
+          }
+        });
+      });
+    },
+    async steps(count) {
+      for (let i = 0; i < count; i += 1) {
+        await page.evaluate("globalThis.__captureStep(1)");
+        const child = ffmpeg;
+        if (child !== undefined) {
+          const png = await page.screenshot({ type: "png" });
+          await new Promise((resolve, reject) => {
+            child.stdin.write(png, (error) => {
+              if (error) {
+                reject(error);
+              } else {
+                resolve(undefined);
+              }
+            });
+          });
+          recorded += 1;
+        }
+      }
+    },
+    /** Steps unrecorded frames back to back, for the lobby; the returned stop waits for the last. */
+    pump() {
+      const run = { on: true };
+      const loop = (async () => {
+        while (run.on) {
+          await page.evaluate("globalThis.__captureStep(1)");
+        }
+      })();
+      return async () => {
+        run.on = false;
+        await loop;
+      };
+    },
+    async stop() {
+      ffmpeg?.stdin.end();
+      await exited;
+    },
+  };
+}
+
+/** Frames for `ms` of match time. */
+const frames = (/** @type {number} */ ms) => Math.round((ms * FPS) / 1000);
+
 /**
  * A scene: a fresh, recorded context with one page on the menu, so no
  * scene inherits another's lobby or character.
@@ -170,29 +267,50 @@ async function serve() {
  * @param {import("@playwright/test").Browser} browser
  * @param {string} url
  * @param {string} name
+ * @param {"video" | "stepped" | "none"} [mode]  recorded by the browser; frame-stepped (#4006); or not recorded
  */
-async function openScene(browser, name, url) {
+async function openScene(browser, name, url, mode = "video") {
+  const stepped = mode === "stepped";
   const dir = path.join(OUT, `${name}-video`);
   fs.rmSync(dir, { recursive: true, force: true });
   const context = await browser.newContext({
     viewport: SIZE,
     deviceScaleFactor: 1,
-    ...(process.env.PROMO_NO_VIDEO === undefined ? { recordVideo: { dir, size: SIZE } } : {}),
+    ...(process.env.PROMO_NO_VIDEO === undefined && mode === "video"
+      ? { recordVideo: { dir, size: SIZE } }
+      : {}),
     permissions: ["clipboard-read", "clipboard-write"],
   });
   await context.addInitScript(AUDIO_TAP);
   await context.addInitScript(SWITCH_TAP);
-  await context.addInitScript(FRAME_LOG);
+  if (mode === "video") {
+    await context.addInitScript(FRAME_LOG);
+  }
   const startedAt = Date.now();
   const page = await context.newPage();
   page.setDefaultTimeout(20_000);
-  await page.goto(`${url}?capture`);
+  await page.goto(`${url}?capture${stepped ? "=step" : ""}`);
   await page.locator(".mode-rail").waitFor();
   /** @type {Record<string, number>} */
   const marks = {};
-  /** Seconds into the video, now. */
-  const now = () => (Date.now() - startedAt) / 1000;
-  return { context, page, dir, marks, now, startedAt };
+  /** @type {Stepper | undefined} */
+  let stepper;
+  /** Seconds into the video, now: frames recorded when stepped, else the wall clock. */
+  const now = () => (stepper === undefined ? (Date.now() - startedAt) / 1000 : stepper.seconds());
+  return {
+    context,
+    page,
+    dir,
+    marks,
+    now,
+    startedAt,
+    get stepper() {
+      return stepper;
+    },
+    set stepper(value) {
+      stepper = value;
+    },
+  };
 }
 
 /**
@@ -206,6 +324,8 @@ async function openScene(browser, name, url) {
  */
 async function closeScene(scene, name, events, timeOrigin) {
   const video = scene.page.video();
+  const stepped = scene.stepper;
+  await stepped?.stop();
   /** @type {number[]} */
   const frames = await scene.page
     .evaluate(() => {
@@ -226,9 +346,13 @@ async function closeScene(scene, name, events, timeOrigin) {
   fs.mkdirSync(OUT, { recursive: true });
   await video?.saveAs(path.join(OUT, `${name}.webm`));
   fs.rmSync(scene.dir, { recursive: true, force: true });
+  // Stepped: event times are the page's virtual clock; the video starts at its `origin`.
   const seen = events.map((event) => ({
     ...event,
-    t: (timeOrigin + event.t - scene.startedAt) / 1000,
+    t:
+      stepped === undefined
+        ? (timeOrigin + event.t - scene.startedAt) / 1000
+        : (event.t - stepped.origin()) / 1000,
   }));
   fs.writeFileSync(
     path.join(OUT, `${name}.json`),
@@ -269,10 +393,15 @@ async function openRail(page, label) {
  * A Hosted Game on `mapId`, 8 a side, the host in a seat (as
  * `readme-shots.mjs` does it); resolves when the match canvas is up.
  *
+ * A stepped scene's lobby runs in real time with its clock pumped, then
+ * recording starts at the match canvas.
+ *
  * @param {import("@playwright/test").Page} page
  * @param {string} mapId
+ * @param {{ stepper: Stepper, name: string } | undefined} [stepped]
  */
-async function startMatch(page, mapId) {
+async function startMatch(page, mapId, stepped) {
+  const stopPump = stepped?.stepper.pump();
   step = "hosted game";
   await openRail(page, "Hosted Game");
   await page.getByRole("button", { name: "Larger team" }).click();
@@ -290,6 +419,8 @@ async function startMatch(page, mapId) {
   await liveClick(seats.first());
   step = "match";
   await page.locator("#viewport canvas:not(.compass)").waitFor({ timeout: 90_000 });
+  await stopPump?.();
+  await stepped?.stepper.start(path.join(OUT, `${stepped.name}.webm`));
 }
 
 /**
@@ -310,10 +441,11 @@ async function liveClick(locator) {
  * @param {import("@playwright/test").Page} page
  * @param {string} key
  * @param {number} ms
+ * @param {Stepper} [stepper]  frames instead of wall time: held for exactly `ms` x 30 / 1000 of them
  */
-async function walk(page, key, ms) {
+async function walk(page, key, ms, stepper) {
   await page.keyboard.down(key);
-  await sleep(ms);
+  await (stepper === undefined ? sleep(ms) : stepper.steps(frames(ms)));
   await page.keyboard.up(key);
 }
 
@@ -329,7 +461,8 @@ async function pageEvents(page) {
 
 /**
  * The fight, and the cold open before it: the Gallery's raise, then a
- * fight watched until it has an interrupt, with the music taken beside it.
+ * fight watched until it has an interrupt. Frame-stepped (#4006), so the
+ * video is smooth; the music is another, real-time run (`fightMusic`).
  * Retried: a match with no interrupt is no use to the cut.
  *
  * @param {import("@playwright/test").Browser} browser
@@ -337,43 +470,75 @@ async function pageEvents(page) {
  */
 async function fight(browser, url) {
   for (let attempt = 1; attempt <= FIGHT_TRIES; attempt += 1) {
-    const scene = await openScene(browser, "fight", url);
-    await startMatch(scene.page, "wardens-gallery");
+    const scene = await openScene(browser, "fight", url, "stepped");
+    const frame = stepper(scene.page);
+    scene.stepper = frame;
+    await startMatch(scene.page, "wardens-gallery", { stepper: frame, name: "fight" });
     scene.marks.matchStart = scene.now();
     step = "fight";
     // Heroes are held for the raise; Space takes the nearest foe on and keeps at it.
-    await sleep(20_000);
+    await frame.steps(frames(20_000));
     scene.marks.fightStart = scene.now();
     await scene.page.keyboard.down("KeyW");
-    await walk(scene.page, "KeyD", 3000);
+    await walk(scene.page, "KeyD", 3000, frame);
     await scene.page.keyboard.up("KeyW");
-    const deadline = Date.now() + FIGHT_MS;
+    let watched = 0;
     let seen = await pageEvents(scene.page);
-    while (Date.now() < deadline && !seen.events.some((e) => e.kind === "interrupted" && e.t > 0)) {
+    while (watched < FIGHT_MS && !seen.events.some((e) => e.kind === "interrupted" && e.t > 0)) {
       await scene.page.keyboard.press("Space");
-      await sleep(2000);
+      await frame.steps(frames(2000));
+      watched += 2000;
       seen = await pageEvents(scene.page);
     }
     // A little more, so the cut has an aftermath.
-    await sleep(6000);
+    await frame.steps(frames(6000));
     seen = await pageEvents(scene.page);
-    const kinds = new Set(seen.events.map((event) => event.kind));
-    const music = await musicTake(scene.page);
-    if (music !== undefined) {
-      scene.marks.musicStart = (music.startedAt - scene.startedAt) / 1000;
-      scene.marks.musicSettled = musicSettled(await musicSwitches(scene.page), music.startedAt);
-      fs.mkdirSync(OUT, { recursive: true });
-      fs.writeFileSync(path.join(OUT, "music.webm"), Buffer.from(music.base64, "base64"));
-    }
+    const interrupted = seen.events.some((event) => event.kind === "interrupted");
     await closeScene(scene, "fight", seen.events, seen.timeOrigin);
-    if (kinds.has("interrupted") && music !== undefined) {
+    if (interrupted) {
+      await fightMusic(browser, url);
       return;
     }
-    console.error(
-      `fight try ${String(attempt)}: ${kinds.has("interrupted") ? "no music" : "no interrupt"}`,
-    );
+    console.error(`fight try ${String(attempt)}: no interrupt`);
   }
-  throw new Error(`no fight with an interrupt and music in ${String(FIGHT_TRIES)} tries`);
+  throw new Error(`no fight with an interrupt in ${String(FIGHT_TRIES)} tries`);
+}
+
+/**
+ * The music of the fight, taken in real time in a run of its own: audio
+ * cannot be stepped. Its `musicSettled` mark goes into `fight.json`; the
+ * assembly aligns the take's beat to the plan, not to this run's video.
+ *
+ * @param {import("@playwright/test").Browser} browser
+ * @param {string} url
+ */
+async function fightMusic(browser, url) {
+  for (let attempt = 1; attempt <= FIGHT_TRIES; attempt += 1) {
+    const scene = await openScene(browser, "fight-music", url, "none");
+    await startMatch(scene.page, "wardens-gallery");
+    step = "fight music";
+    await sleep(20_000);
+    for (let i = 0; i < 8; i += 1) {
+      await scene.page.keyboard.press("Space");
+      await sleep(2000);
+    }
+    const music = await musicTake(scene.page);
+    const switches = await musicSwitches(scene.page);
+    await scene.context.close();
+    if (music !== undefined) {
+      fs.writeFileSync(path.join(OUT, "music.webm"), Buffer.from(music.base64, "base64"));
+      const file = path.join(OUT, "fight.json");
+      /** @type {unknown} */
+      const raw = JSON.parse(fs.readFileSync(file, "utf8"));
+      const shot = /** @type {{ marks: Record<string, number> }} */ (raw);
+      shot.marks.musicSettled = musicSettled(switches, music.startedAt);
+      fs.writeFileSync(file, JSON.stringify(shot, null, 1));
+      console.log(`fight music: settled at ${String(shot.marks.musicSettled)} s`);
+      return;
+    }
+    console.error(`fight music try ${String(attempt)}: no music`);
+  }
+  throw new Error(`no music take in ${String(FIGHT_TRIES)} tries`);
 }
 
 /**
@@ -450,6 +615,28 @@ async function waitLive(page) {
 }
 
 /**
+ * `waitLive` for a stepped scene: the countdown runs in frames.
+ *
+ * @param {import("@playwright/test").Page} page
+ * @param {Stepper} stepper
+ */
+async function waitLiveStepped(page, stepper) {
+  const hold = page.locator(".hud-pre-match");
+  const limit = frames(90_000);
+  let counted = false;
+  for (let i = 0; i < limit; i += 1) {
+    await stepper.steps(1);
+    const shown = await hold.filter({ hasText: /Match starts in/ }).count();
+    counted ||= shown > 0;
+    if (counted && shown === 0 && !(await hold.isVisible())) {
+      await stepper.steps(frames(2500));
+      return;
+    }
+  }
+  throw new Error("the pre-match countdown never finished");
+}
+
+/**
  * A map, from above and walked across.
  *
  * @param {import("@playwright/test").Browser} browser
@@ -457,17 +644,19 @@ async function waitLive(page) {
  * @param {string} mapId
  */
 async function mapScene(browser, url, mapId) {
-  const scene = await openScene(browser, `map-${mapId}`, url);
-  await startMatch(scene.page, mapId);
+  const scene = await openScene(browser, `map-${mapId}`, url, "stepped");
+  const frame = stepper(scene.page);
+  scene.stepper = frame;
+  await startMatch(scene.page, mapId, { stepper: frame, name: `map-${mapId}` });
   scene.marks.matchStart = scene.now();
   step = `pan ${mapId}`;
-  await waitLive(scene.page);
+  await waitLiveStepped(scene.page, frame);
   scene.marks.pan = scene.now();
   await scene.page.mouse.move(960, 540);
   await scene.page.keyboard.down("KeyW");
-  await sleep(4000);
+  await frame.steps(frames(4000));
   await scene.page.keyboard.up("KeyW");
-  await walk(scene.page, "KeyD", 4000);
+  await walk(scene.page, "KeyD", 4000, frame);
   const { events, timeOrigin } = await pageEvents(scene.page);
   await closeScene(scene, `map-${mapId}`, events, timeOrigin);
 }

@@ -18,14 +18,24 @@ company heavy pnpm run promo:assemble    # cuts   -> out/promo/
 transport and the splash off, as `readme:shots` does, and needs the
 workspace packages built (`pnpm -r --filter "./packages/**" run build`).
 
+- **Stepped frames (#4006).** The map and fight scenes open with
+  `?capture=step` (`apps/web/src/capture-clock.ts`): game time moves only
+  when the script calls `window.__captureStep(1)`, which advances the host
+  by 1/30 s and draws one frame; the script then screenshots the viewport
+  into ffmpeg (`image2pipe`, 30 fps VP9). The video is smooth however slow
+  the host renders (software GL: 3 to 8 fps). `walk` and the waits count
+  frames; event times are virtual. The lobby runs in real time with the
+  clock pumped, and the video starts at the match canvas. The editor,
+  friends and ranked scenes have no playfield movement and stay on
+  `recordVideo`.
 - **Events.** `?capture` makes the match view list its combat events on
   `window.__capture` (`apps/web/src/capture-events.ts`); the cut slows and
   centres on the interrupt, the rez and the ward from it. The flag does
   nothing else. The fight is retried up to five times until it has an interrupt.
 - **Music.** Playwright records no sound. An init script, in every frame
   including the sandboxed music host, tees the music bus into a
-  `MediaRecorder`; the take is one continuous recording of the fight scene
-  (`music.webm`), no game code involved. A second init script notes each
+  `MediaRecorder`; the take is one continuous recording of a real-time run of the fight
+  (`fightMusic`, its own match: audio cannot be stepped; `music.webm`), no game code involved. A second init script notes each
   track the host reports playing, and the fight's `musicSettled` mark is
   where the last switch (menu to match) has faded in. `assemble` uses the
   take only from there: one song under the whole cut, which changes only
