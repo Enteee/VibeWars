@@ -1784,8 +1784,8 @@ export default {
   "tutorial.heal.ow": "Ai! A pedra me acertou. Uma ajudinha?",
   "tutorial.heal.praise": "Muito melhor, obrigado! Você também sabe curar.",
   "tutorial.learn": "Aprender a jogar",
-  "tutorial.look.hint": "Afasta o zoom e arrasta a vista para norte. Encontra o teletransportador!",
-  "tutorial.look.how": "A roda do rato faz zoom. Mantém o botão direito e arrasta para olhar.",
+  "tutorial.look.hint": "Arrasta a vista para norte. Encontra o teletransportador!",
+  "tutorial.look.how": "Mantém o botão direito e arrasta para olhar.",
   "tutorial.look.intro":
     "Talvez este teletransportador nos leve à volta do campo de batalha. Olha para norte!",
   "tutorial.look.praise": "Ali está! O nosso caminho à volta da luta.",
@@ -1820,7 +1820,7 @@ export default {
     "Primeiro toque no meu nome na lista do grupo. Toque em Grupo se a lista estiver fechada.",
   "tutorial.touch.healHow":
     "Toque em Grupo se a lista estiver fechada, depois no meu nome e depois na habilidade que brilha.",
-  "tutorial.touch.look": "Use dois dedos para zoom. Arraste um dedo para olhar.",
+  "tutorial.touch.look": "Arraste um dedo para olhar.",
   "tutorial.touch.pingHow": "Toque na bússola ou arraste nela para traçar uma linha.",
   "tutorial.touch.ratsHow": "Toque num rato para selecioná-lo.",
   "tutorial.touch.tunnelHow": "Toque nos degraus que descem, depois na marca após a outra ponta.",
