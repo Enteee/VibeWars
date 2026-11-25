@@ -77,7 +77,7 @@ describe("nothing on a pit's floor hides under its lip (#3081)", () => {
     if (wilds === undefined) {
       return;
     }
-    const sunk = { kind: "rect", x: 390, y: 728, width: 80, height: 52 } as const;
+    const sunk = { kind: "rect", x: 390, y: 678, width: 80, height: 52 } as const;
     expect(underTheLip(wilds, [{ name: "sunk", layer: 0, points: shapeOutline(sunk) }])).toEqual([
       "training-wilds: sunk",
     ]);

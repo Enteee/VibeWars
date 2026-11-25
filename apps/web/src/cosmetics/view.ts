@@ -26,7 +26,7 @@ export function seenCosmetics(seat: SeatWorn | undefined): WornCosmetics {
   if (seat.playerPubkey === ownPubkey) {
     return ownLook();
   }
-  return visibleCosmetics(seat, leaderboard.current(), cosmeticsStore.showOthers());
+  return visibleCosmetics(seat, leaderboard.current());
 }
 
 /** What you see yourself wear: in a match, training too, whatever your seat was sent. */

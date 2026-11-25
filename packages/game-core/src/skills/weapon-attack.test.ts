@@ -32,6 +32,7 @@ import {
   resolveSwing,
   swingProgress,
   weaponSnapshotOf,
+  type WeaponSnapshot,
 } from "./weapon-attack.js";
 import type { Combatant, Skill, Surroundings } from "./types.js";
 import { NO_RANKS, STATUS_DEFINITIONS } from "./status.js";
@@ -973,9 +974,9 @@ describe("critical hits (#533)", () => {
       new Map(),
     );
 
-  it.each([0, 9, 12, 15])("crits at 1%% plus 1.37%% a rank of mastery, at rank %i", (rank) => {
+  it.each([0, 9, 12, 15])("crits at 1%% plus 1%% a rank of mastery, at rank %i", (rank) => {
     const sword = attacker(WEAPONS.sword, "warrior.swordsmanship", rank);
-    const chance = 0.01 + 0.0137 * rank;
+    const chance = 0.01 + 0.01 * rank;
     expect(criticalChance(weaponSnapshotOf(sword), RULES)).toBeCloseTo(chance, 9);
 
     const rng = createRng(rank + 100);
@@ -994,8 +995,66 @@ describe("critical hits (#533)", () => {
   it("gives a caster weapon and fists the base chance only", () => {
     const wand = attacker(WEAPONS.wand, "elementalist.fire-magic", 12);
     const fists = attacker(WEAPONS.unarmed, undefined);
-    expect(criticalChance(weaponSnapshotOf(wand), RULES)).toBe(0.01);
-    expect(criticalChance(weaponSnapshotOf(fists), RULES)).toBe(0.01);
+    expect(criticalChance(weaponSnapshotOf(wand), RULES)).toBeCloseTo(0.01, 9);
+    expect(criticalChance(weaponSnapshotOf(fists), RULES)).toBeCloseTo(0.01, 9);
+  });
+
+  describe("combining sources (#3984)", () => {
+    /** Daggers at mastery 12 and Critical Strikes at `criticalStrikes`, with statuses giving `skills`. */
+    const daggers = (criticalStrikes: number, skills: Partial<WeaponSnapshot> = {}) => ({
+      ...weaponSnapshotOf(
+        makeCombatant({
+          id: "attacker",
+          equipment: wielding(WEAPONS.daggers, "assassin.dagger-mastery"),
+          attributeRanks: new Map([
+            ["assassin.dagger-mastery", 12],
+            ["assassin.critical-strikes", criticalStrikes],
+          ]),
+        }),
+      ),
+      ...skills,
+    });
+
+    it("crits at 13% with mastery 12 and nothing else", () => {
+      expect(criticalChance(daggers(0), RULES)).toBeCloseTo(0.13, 9);
+    });
+
+    it("multiplies the base, Critical Strikes and the skills, as GW1 does", () => {
+      expect(criticalChance(daggers(12, { criticalChanceBonus: 0.13 }), RULES)).toBeCloseTo(
+        1 - 0.87 * 0.88 * 0.87,
+        9,
+      );
+    });
+
+    it("adds the skills among themselves inside the product", () => {
+      expect(criticalChance(daggers(0, { criticalChanceBonus: 0.13 + 0.05 }), RULES)).toBeCloseTo(
+        1 - 0.87 * (1 - 0.18),
+        9,
+      );
+      expect(
+        criticalChance(daggers(0, { criticalChanceBonus: 0.13 }), RULES, undefined, 0.05),
+      ).toBeCloseTo(1 - 0.87 * (1 - 0.18), 9);
+    });
+
+    it("adds the versus-still bonus to the skills, only against a still victim", () => {
+      const snapshot = daggers(0, {
+        criticalChanceBonus: 0.05,
+        criticalChanceBonusVersusStill: 0.13,
+      });
+      expect(criticalChance(snapshot, RULES, { moving: false })).toBeCloseTo(
+        1 - 0.87 * (1 - 0.18),
+        9,
+      );
+      expect(criticalChance(snapshot, RULES, { moving: true })).toBeCloseTo(
+        1 - 0.87 * (1 - 0.05),
+        9,
+      );
+    });
+
+    it("always crits with skills of +100% or more", () => {
+      expect(criticalChance(daggers(0, { criticalChanceBonus: 1 }), RULES)).toBe(1);
+      expect(criticalChance(daggers(12, { criticalChanceBonus: 1.5 }), RULES)).toBe(1);
+    });
   });
 
   it("hits for the maximum times √2 times the attribute, instead of rolling", () => {
@@ -1116,8 +1175,8 @@ describe("critical hits (#533)", () => {
     /** No double strike, no rolled crit: only an exposed victim crits. */
     const single = fixed(0.99);
 
-    it("adds 1% a rank to the crit chance", () => {
-      expect(criticalChance(weaponSnapshotOf(assassin(12)), RULES)).toBeCloseTo(0.2944, 9);
+    it("crits 1% a rank of the blows mastery does not", () => {
+      expect(criticalChance(weaponSnapshotOf(assassin(12)), RULES)).toBeCloseTo(1 - 0.87 * 0.88, 9);
     });
 
     it("gives 2 energy a crit at rank 12, as an energy-gain", () => {

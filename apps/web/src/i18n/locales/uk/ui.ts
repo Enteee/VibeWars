@@ -435,6 +435,7 @@ export default {
   "cosmetics.item.trailFrost": "Морозний слід",
   "cosmetics.item.trailMoss": "Моховий слід",
   "cosmetics.item.trailStarlight": "Зоряний слід",
+  "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Закрито",
   "cosmetics.none": "Немає",
   "cosmetics.note":
@@ -452,7 +453,6 @@ export default {
     many: "{count} рейтингових перемог",
     other: "{count} рейтингової перемоги",
   },
-  "cosmetics.showOthers": "Показувати косметику інших гравців",
   "cosmetics.slot.aura": "Аура під ногами",
   "cosmetics.slot.cape": "Візерунок плаща",
   "cosmetics.slot.dissolve": "Розчинення при смерті",
@@ -621,6 +621,11 @@ export default {
   "help.licences": "Ліцензії сторонніх розробників",
   "help.pages": "сторінки довідки",
   "help.source": "Вихідний код",
+  "help.trailer": "Трейлер",
+  "help.trailerDownload": "Завантажити",
+  "help.trailerInfo": "{seconds} с, близько {mb} МБ",
+  "help.trailerOffline": "Для трейлера потрібне з’єднання з інтернетом.",
+  "help.trailerVertical": "Версія для телефона (вертикальна)",
   "help.version": "VibeWars {release} · збірка {build}",
 
   "hud.aggression": "агр {ours} : {theirs}",
@@ -1767,7 +1772,6 @@ export default {
     "Сходження героїв — це низка мап, 8 на 8, проти команд твого раунду. Переможеш — переходиш на наступну мапу, аж до Залу героїв; програєш — починаєш спочатку.",
   "tutorial.menu.modes.hostedGame":
     "Власна гра — це твоє власне лобі: надішли друзям посилання-запрошення та обери мапу й розмір команди. Боти займають кожне місце, яке ніхто не взяв.",
-  "tutorial.menu.modes.open": "Відкрий підсвічений режим збоку.",
   "tutorial.menu.modes.randomArena":
     "Випадкова арена — найшвидший бій: твій власний персонаж у команді з незнайомцями, 1v1, 2v2 або 4v4. Мапа випадає навмання, і на кожному місці живий гравець.",
   "tutorial.menu.modes.teamArena":
@@ -1831,9 +1835,8 @@ export default {
   "tutorial.heal.ow": "Ой! Мене влучив камінь. Допоможеш?",
   "tutorial.heal.praise": "Набагато краще, дякую! Ти й лікувати вмієш.",
   "tutorial.learn": "Навчитися грати",
-  "tutorial.look.hint": "Віддали огляд, потім потягни його на північ. Знайди телепорт!",
-  "tutorial.look.how":
-    "Коліщатко миші змінює масштаб. Затисни праву кнопку й тягни, щоб роззирнутися.",
+  "tutorial.look.hint": "Потягни огляд на північ. Знайди телепорт!",
+  "tutorial.look.how": "Затисни праву кнопку й тягни, щоб роззирнутися.",
   "tutorial.look.intro": "Може, цей телепорт виведе нас в обхід поля бою. Поглянь на північ!",
   "tutorial.look.praise": "Ось він! Наш шлях в обхід битви.",
   "tutorial.offer": "Вперше тут? Наставник покаже основи.",
@@ -1868,8 +1871,7 @@ export default {
     "Спершу торкнися мого імені у списку загону. Торкнися «Загін», якщо список закрито.",
   "tutorial.touch.healHow":
     "Якщо список закрито, торкнися «Загін», потім мого імені, потім вміння, що світиться.",
-  "tutorial.touch.look":
-    "Зведи чи розведи пальці для масштабу. Тягни одним пальцем, щоб роззирнутися.",
+  "tutorial.touch.look": "Тягни одним пальцем, щоб роззирнутися.",
   "tutorial.touch.pingHow": "Торкнися компаса або проведи по ньому лінію.",
   "tutorial.touch.ratsHow": "Торкнися щура, щоб вибрати його.",
   "tutorial.touch.tunnelHow": "Торкнися сходів униз, потім позначки за дальнім кінцем.",

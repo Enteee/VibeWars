@@ -112,17 +112,18 @@ function sum(events: readonly CombatEvent[], kind: CombatEvent["kind"], targetId
 }
 
 describe("the spirits' numbers at rank 12 (#1550)", () => {
+  // 20 Health per whole level, armor 2 + 6 per level (#3978).
   it.each([
-    [BLOODSONG, 190, 126],
-    [ANGUISH, 170, 39],
-    [WANDERLUST, 190, 54],
-    [SOOTHING, 190, 39],
-    [DESTRUCTION, 210, 30],
-    [LIFE, 210, 20],
-  ])("%s: %i Health, %i s", (id, health, seconds) => {
+    [BLOODSONG, 140, 44, 126],
+    [ANGUISH, 120, 38, 39],
+    [WANDERLUST, 140, 44, 54],
+    [SOOTHING, 140, 44, 39],
+    [DESTRUCTION, 160, 50, 30],
+    [LIFE, 160, 50, 20],
+  ])("%s: %i Health, armor %i, %i s", (id, health, armor, seconds) => {
     const planted = ritual(match(), id);
     expect(planted.combatant.maxHealth).toBe(health);
-    expect(planted.combatant.equipment.baseArmor).toBe(51);
+    expect(planted.combatant.equipment.baseArmor).toBe(armor);
     expect(planted.creature?.expiresInSeconds).toBeLessThan(seconds);
     expect(planted.creature?.expiresInSeconds).toBeCloseTo(seconds, 0);
   });

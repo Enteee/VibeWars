@@ -404,6 +404,7 @@ export default {
   "cosmetics.item.trailFrost": "Dér nyom",
   "cosmetics.item.trailMoss": "Moha nyom",
   "cosmetics.item.trailStarlight": "Csillagfény nyom",
+  "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Zárolva",
   "cosmetics.none": "Nincs",
   "cosmetics.note":
@@ -417,7 +418,6 @@ export default {
     one: "{count} rangsorolt győzelem",
     other: "{count} rangsorolt győzelem",
   },
-  "cosmetics.showOthers": "Más játékosok kozmetikumainak megjelenítése",
   "cosmetics.slot.aura": "Talajaura",
   "cosmetics.slot.cape": "Köpenyminta",
   "cosmetics.slot.dissolve": "Halálkori szertefoszlás",
@@ -569,6 +569,11 @@ export default {
   "help.licences": "Külső licencek",
   "help.pages": "súgóoldalak",
   "help.source": "Forráskód",
+  "help.trailer": "Előzetes",
+  "help.trailerDownload": "Letöltés",
+  "help.trailerInfo": "{seconds} mp, kb. {mb} MB",
+  "help.trailerOffline": "Az előzeteshez internetkapcsolat kell.",
+  "help.trailerVertical": "Telefonos változat (álló)",
   "help.version": "VibeWars {release} · build {build}",
 
   "hud.aggression": "agr {ours} vs {theirs}",
@@ -1648,7 +1653,6 @@ export default {
     "A Hősök Útja pályák sorozata, 8 a 8 ellen, a te körödben lévő csapatok ellen. Ha nyersz, a következő pályára lépsz, egészen a Hősök Csarnokáig; ha veszítesz, elölről kezded.",
   "tutorial.menu.modes.hostedGame":
     "A Saját játék a saját lobbid: küldd el a barátaidnak a meghívó linket, és válaszd ki a pályát és a csapatméretet. Minden helyen, amit senki sem foglal el, botok játszanak.",
-  "tutorial.menu.modes.open": "Nyisd meg oldalt a kivilágított játékmódot.",
   "tutorial.menu.modes.randomArena":
     "A Véletlen Aréna a leggyorsabb harc: a saját karaktered idegenekből álló csapatban, 1v1, 2v2 vagy 4v4. A pályát kisorsolják neked, és minden helyen valódi játékos áll.",
   "tutorial.menu.modes.teamArena":
@@ -1711,9 +1715,8 @@ export default {
   "tutorial.heal.ow": "Jaj! Eltalált a kő. Segítesz egy kicsit?",
   "tutorial.heal.praise": "Sokkal jobb, köszönöm! Gyógyítani is tudsz.",
   "tutorial.learn": "Tanulj meg játszani",
-  "tutorial.look.hint": "Kicsinyíts, aztán húzd a nézetet északra. Keresd meg a teleportot!",
-  "tutorial.look.how":
-    "Az egérgörgő nagyít. Tartsd lenyomva a jobb gombot, és húzd a körülnézéshez.",
+  "tutorial.look.hint": "Húzd a nézetet északra. Keresd meg a teleportot!",
+  "tutorial.look.how": "Tartsd lenyomva a jobb gombot, és húzd a körülnézéshez.",
   "tutorial.look.intro": "Talán ez a teleport elvisz minket a csatatér mellett. Nézz északra!",
   "tutorial.look.praise": "Ott van! Az utunk a harc mellett.",
   "tutorial.offer": "Új vagy? A tanítód megmutatja az alapokat.",
@@ -1749,7 +1752,7 @@ export default {
     "Előbb koppints a nevemre a csapatlistában. Koppints az Osztag gombra, ha a lista zárva van.",
   "tutorial.touch.healHow":
     "Ha a lista zárva van, koppints az Osztag gombra, aztán a nevemre, aztán a világító készségre.",
-  "tutorial.touch.look": "Csippents a nagyításhoz. Húzd egy ujjal a körülnézéshez.",
+  "tutorial.touch.look": "Húzd egy ujjal a körülnézéshez.",
   "tutorial.touch.pingHow": "Koppints az iránytűre, vagy húzz rajta vonalat.",
   "tutorial.touch.ratsHow": "Koppints egy patkányra, hogy megcélozd.",
   "tutorial.touch.tunnelHow": "Koppints a lefelé vezető lépcsőre, aztán a túlsó vég mögötti jelre.",

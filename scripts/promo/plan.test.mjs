@@ -1,6 +1,15 @@
+import fs from "node:fs";
 import { describe, expect, it } from "vitest";
 
-import { beatGrid, captionBox, cutSeconds, fightCuts, musicOffset, wrap } from "./plan.mjs";
+import {
+  beatGrid,
+  captionBox,
+  cutSeconds,
+  fightCuts,
+  musicOffset,
+  musicSettled,
+  wrap,
+} from "./plan.mjs";
 
 /**
  * @param {number} t
@@ -50,9 +59,30 @@ describe("beats (#3811)", () => {
 
   it("puts a beat on the frame the music must hit", () => {
     const grid = { period: 0.5, phase: 0.2 };
-    const offset = musicOffset(grid, 14.1);
+    const offset = musicOffset(grid, 14.1, 0);
     expect(offset).toBeGreaterThanOrEqual(0);
     // The beat at music time `offset + 14.1` is on the grid.
+    expect(((offset + 14.1 - grid.phase) / grid.period) % 1).toBeCloseTo(0, 5);
+  });
+});
+
+describe("the music slice (#3983)", () => {
+  it("contains no switch: it starts after the last one has faded in, still on the beat", () => {
+    const takeStartedAt = 1_000_000;
+    // The menu's track, then the match's, 20 s into the take at 72 BPM.
+    const switches = [
+      { heardAtEpochMs: takeStartedAt + 300, cps: 0.5 },
+      { heardAtEpochMs: takeStartedAt + 20_000, cps: 0.3 },
+    ];
+    const settled = musicSettled(switches, takeStartedAt);
+    const grid = { period: 0.8333, phase: 20.1 };
+    const offset = musicOffset(grid, 14.1, settled);
+    for (const { heardAtEpochMs, cps } of switches) {
+      // A switch sounds from its fade-out, a cycle before it lands, to a cycle after.
+      const heard = (heardAtEpochMs - takeStartedAt) / 1000;
+      expect(heard + 1 / cps).toBeLessThanOrEqual(offset);
+    }
+    expect(offset - settled).toBeLessThan(grid.period);
     expect(((offset + 14.1 - grid.phase) / grid.period) % 1).toBeCloseTo(0, 5);
   });
 });
@@ -70,5 +100,17 @@ describe("captions (#3811)", () => {
       "Earn the look. Never",
       "the advantage.",
     ]);
+  });
+
+  it("fits the longest caption in a 9:16 frame at 0.6 em a glyph", () => {
+    const box = captionBox(1080, 1920);
+    /** @type {unknown} */
+    const raw = JSON.parse(fs.readFileSync(new URL("captions.json", import.meta.url), "utf8"));
+    const longest = /** @type {{ captions: { text: string }[] }} */ (raw);
+    for (const { text } of longest.captions) {
+      for (const line of wrap(text, box.maxChars)) {
+        expect(line.length * 0.6 * box.fontSize).toBeLessThanOrEqual(1080);
+      }
+    }
   });
 });

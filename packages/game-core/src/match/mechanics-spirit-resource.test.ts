@@ -195,8 +195,8 @@ describe("Gaze of Fury (#1947)", () => {
     expect(fury?.creature?.ownerId).toBe("r");
     expect(fury?.creature?.name).toBe("Fury");
     expect(fury?.position).toEqual(vec2(300, 0));
-    // Level 8: 50 + 20 per level (#1917).
-    expect(fury?.combatant.maxHealth).toBe(210);
+    // Level 8: 20 Health per level (#3978).
+    expect(fury?.combatant.maxHealth).toBe(160);
     const mainHand = fury?.combatant.equipment.mainHand;
     expect((mainHand?.weapon.damageMax ?? 0) * (mainHand?.creatureDamageScale ?? 0)).toBeCloseTo(
       17,

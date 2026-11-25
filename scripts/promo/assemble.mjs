@@ -7,8 +7,10 @@
  *   vibewars-trailer-9x16.mp4   1080x1920, the middle of each frame
  *
  * Not part of CI. Needs ffmpeg and ffprobe (the devenv has them). Captions
- * are `captions.json`. The music is the one take of the fight scene, laid
- * so a beat falls on the frame of the interrupt (`plan.mjs`).
+ * are `captions.json`. The music is the one take of the fight scene, from
+ * after its last track switch, so one song plays under the whole cut and
+ * changes only through its fades in and out (#3983). It is laid so a beat
+ * falls on the frame of the interrupt (`plan.mjs`).
  */
 import { execFileSync, spawnSync } from "node:child_process";
 import fs from "node:fs";
@@ -59,10 +61,46 @@ function seconds(file) {
   );
 }
 
-/** The bold sans the system has: the game's own font stack is the player's. */
+const FRIEND = "0x59c2ff";
+const FOE = "0xff7b72";
+
+/**
+ * The bold monospace the system has: the game's own font stack starts with
+ * `ui-monospace`, so this is the face its wordmark has on Linux.
+ */
 function fontFile() {
-  const found = spawnSync("fc-match", ["-f", "%{file}", "sans-serif:bold"]).stdout.toString();
-  return found === "" ? "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf" : found;
+  // Without fc-match, spawnSync reports an error and leaves stdout null.
+  const match = spawnSync("fc-match", ["-f", "%{file}", "monospace:bold"]);
+  const found = match.error === undefined ? match.stdout.toString() : "";
+  const file = found === "" ? "/usr/share/fonts/truetype/dejavu/DejaVuSansMono-Bold.ttf" : found;
+  if (!fs.existsSync(file)) {
+    throw new Error(`no bold monospace font at ${file}: install the dejavu-fonts package`);
+  }
+  return file;
+}
+
+/**
+ * The drawtext filters for one centred line. The name, exactly `VibeWars`,
+ * is two-coloured like the game's wordmark: all of it in the foe's red, then
+ * "Vibe" in the friend's blue over the same glyphs (monospace, so "Vibe" is
+ * half the width and ends at the middle).
+ *
+ * @param {{ file: string, text: string, size: number, y: number, color: string, border?: number, enable?: string }} line
+ */
+function drawLine({ file, text, size, y, color, border = 0, enable }) {
+  fs.writeFileSync(file, text);
+  const base = `fontfile=${fontFile()}:fontsize=${String(size)}:y=${String(y)}`;
+  const outline = border > 0 ? `:borderw=${String(border)}:bordercolor=0x0b0f14` : "";
+  const when = enable === undefined ? "" : `:enable='${enable}'`;
+  if (text !== "VibeWars") {
+    return [`drawtext=${base}:textfile=${file}:fontcolor=${color}${outline}:x=(w-text_w)/2${when}`];
+  }
+  const vibe = `${file}.vibe`;
+  fs.writeFileSync(vibe, "Vibe");
+  return [
+    `drawtext=${base}:textfile=${file}:fontcolor=${FOE}${outline}:x=(w-text_w)/2${when}`,
+    `drawtext=${base}:textfile=${vibe}:fontcolor=${FRIEND}:x=w/2-text_w${when}`,
+  ];
 }
 
 /**
@@ -154,12 +192,14 @@ function renderCut(cut, width, height, file) {
  */
 function renderCard(lines, length, width, height, file, dir) {
   const box = captionBox(width, height);
-  const filters = lines.map((line, i) => {
+  const filters = lines.flatMap((line, i) => {
     const textfile = path.join(dir, `card-${path.basename(file)}-${String(i)}.txt`);
-    fs.writeFileSync(textfile, line);
-    const size = Math.round(box.fontSize * (i === 0 ? 2.2 : 1));
+    // A glyph is 0.6 em wide: shrink a line that would not fit the frame.
+    const wanted = Math.round(box.fontSize * (i === 0 ? 2.2 : 1));
+    const size = Math.min(wanted, Math.floor((width * 0.9) / (0.6 * line.length)));
     const y = Math.round(height * 0.38 + i * box.fontSize * 2.2);
-    return `drawtext=fontfile=${fontFile()}:textfile=${textfile}:fontcolor=white:fontsize=${String(size)}:x=(w-text_w)/2:y=${String(y)}`;
+    const color = i === 0 ? FRIEND : i === 1 ? "white" : FOE;
+    return drawLine({ file: textfile, text: line, size, y, color });
   });
   execFileSync("ffmpeg", [
     "-v",
@@ -328,13 +368,18 @@ function assemble(plan, width, height, name, musicStart) {
       const title = caption.scene === "cold";
       lines.forEach((line, i) => {
         const textfile = path.join(dir, `cap-${String(draws.length)}.txt`);
-        fs.writeFileSync(textfile, line);
         const size = title ? box.fontSize * 2 : box.fontSize;
         const y = title ? Math.round(height * 0.42) : box.y + i * Math.round(size * 1.2);
         draws.push(
-          `drawtext=fontfile=${fontFile()}:textfile=${textfile}:fontcolor=white:fontsize=${String(size)}` +
-            `:borderw=${String(Math.round(size / 12))}:bordercolor=0x0b0f14:x=(w-text_w)/2:y=${String(y)}` +
-            `:enable='between(t,${String(span.at + 0.3)},${String(span.at + span.length - 0.3)})'`,
+          ...drawLine({
+            file: textfile,
+            text: line,
+            size,
+            y,
+            color: FRIEND,
+            border: Math.round(size / 12),
+            enable: `between(t,${String(span.at + 0.3)},${String(span.at + span.length - 0.3)})`,
+          }),
         );
       });
     }
@@ -384,11 +429,16 @@ function assemble(plan, width, height, name, musicStart) {
 
 fs.mkdirSync(OUT, { recursive: true });
 const plan = timeline();
-const grid = beatGrid(onsets(path.join(CAPTURE, "music.webm")));
-if (grid === undefined) {
-  throw new Error("no beat found in the music take");
+// One song under the cut: the take from after its last switch (#3983).
+const settled = scene("fight").marks.musicSettled;
+if (settled === undefined) {
+  throw new Error("the fight capture has no musicSettled mark; shoot it again");
 }
-const start = musicOffset(grid, plan.hitAt);
+const grid = beatGrid(onsets(path.join(CAPTURE, "music.webm")).filter((t) => t >= settled));
+if (grid === undefined) {
+  throw new Error("no beat found in the music take after its last switch");
+}
+const start = musicOffset(grid, plan.hitAt, settled);
 const musicLength = seconds(path.join(CAPTURE, "music.webm"));
 if (musicLength < start + plan.length) {
   throw new Error(

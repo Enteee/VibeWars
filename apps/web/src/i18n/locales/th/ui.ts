@@ -372,6 +372,7 @@ export default {
   "cosmetics.item.trailFrost": "รอยน้ำค้างแข็ง",
   "cosmetics.item.trailMoss": "รอยมอส",
   "cosmetics.item.trailStarlight": "รอยแสงดาว",
+  "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "ล็อกอยู่",
   "cosmetics.none": "ไม่มี",
   "cosmetics.note":
@@ -383,7 +384,6 @@ export default {
   "cosmetics.requires.wins": {
     other: "ชนะจัดอันดับ {count} ครั้ง",
   },
-  "cosmetics.showOthers": "แสดงของตกแต่งของผู้เล่นอื่น",
   "cosmetics.slot.aura": "ออร่าบนพื้น",
   "cosmetics.slot.cape": "ลายผ้าคลุม",
   "cosmetics.slot.dissolve": "การสลายเมื่อตาย",
@@ -517,6 +517,11 @@ export default {
   "help.licences": "สัญญาอนุญาตบุคคลที่สาม",
   "help.pages": "หน้าช่วยเหลือ",
   "help.source": "ซอร์สโค้ด",
+  "help.trailer": "ตัวอย่างเกม",
+  "help.trailerDownload": "ดาวน์โหลด",
+  "help.trailerInfo": "{seconds} วินาที ประมาณ {mb} MB",
+  "help.trailerOffline": "ตัวอย่างเกมต้องใช้การเชื่อมต่ออินเทอร์เน็ต",
+  "help.trailerVertical": "เวอร์ชันโทรศัพท์ (แนวตั้ง)",
   "help.version": "VibeWars {release} · บิลด์ {build}",
 
   "hud.aggression": "agg {ours} : {theirs}",
@@ -1538,7 +1543,6 @@ export default {
     "สู่ยอดวีรชนคือการสู้ต่อเนื่องหลายแมป 8 ต่อ 8 กับทีมในรอบเดียวกับคุณ ชนะแล้วได้ไปแมปถัดไปจนถึงโถงวีรบุรุษ แพ้แล้วต้องเริ่มใหม่",
   "tutorial.menu.modes.hostedGame":
     "เกมที่โฮสต์คือล็อบบี้ของคุณเอง: ส่งลิงก์เชิญให้เพื่อน แล้วเลือกแมปและขนาดทีม บอตจะเล่นทุกที่ที่ไม่มีใครเข้า",
-  "tutorial.menu.modes.open": "เปิดโหมดที่สว่างอยู่ด้านข้าง",
   "tutorial.menu.modes.randomArena":
     "อารีนาสุ่มคือการต่อสู้ที่เร็วที่สุด: ตัวละครของคุณเองในทีมกับคนแปลกหน้า 1v1, 2v2 หรือ 4v4 แมปจะถูกสุ่มให้ และทุกที่คือผู้เล่นจริง",
   "tutorial.menu.modes.teamArena":
@@ -1597,8 +1601,8 @@ export default {
   "tutorial.heal.ow": "โอ๊ย! หินหล่นใส่ ช่วยหน่อยได้ไหม?",
   "tutorial.heal.praise": "ดีขึ้นเยอะเลย ขอบคุณ! เธอรักษาได้ด้วยนะ",
   "tutorial.learn": "เรียนวิธีเล่น",
-  "tutorial.look.hint": "ซูมออก แล้วลากมุมมองไปทางเหนือ หาเครื่องเทเลพอร์ตให้เจอ!",
-  "tutorial.look.how": "ล้อเมาส์ใช้ซูม กดปุ่มขวาค้างแล้วลากเพื่อมองไปรอบๆ",
+  "tutorial.look.hint": "ลากมุมมองไปทางเหนือ หาเครื่องเทเลพอร์ตให้เจอ!",
+  "tutorial.look.how": "กดปุ่มขวาค้างแล้วลากเพื่อมองไปรอบๆ",
   "tutorial.look.intro": "บางทีเครื่องเทเลพอร์ตนี้อาจพาเราอ้อมสนามรบได้ ลองมองไปทางเหนือ!",
   "tutorial.look.praise": "นั่นไง! ทางอ้อมการต่อสู้ของเรา",
   "tutorial.offer": "มาใหม่หรือ? ผู้สอนจะสอนพื้นฐานให้",
@@ -1630,7 +1634,7 @@ export default {
   "tutorial.touch.healHint": "แตะชื่อของฉันในรายชื่อปาร์ตี้ก่อน ถ้ารายชื่อปิดอยู่ ให้แตะ ปาร์ตี้",
   "tutorial.touch.healHow":
     "ถ้ารายชื่อปิดอยู่ ให้แตะ ปาร์ตี้ แล้วแตะชื่อของฉัน แล้วแตะสกิลที่เรืองแสง",
-  "tutorial.touch.look": "จีบนิ้วเพื่อซูม ลากนิ้วเดียวเพื่อมองไปรอบๆ",
+  "tutorial.touch.look": "ลากนิ้วเดียวเพื่อมองไปรอบๆ",
   "tutorial.touch.pingHow": "แตะเข็มทิศ หรือลากบนเข็มทิศเพื่อวาดเส้น",
   "tutorial.touch.ratsHow": "แตะหนูเพื่อเล็งมัน",
   "tutorial.touch.tunnelHow": "แตะบันไดลง แล้วแตะเครื่องหมายเลยปลายอีกด้าน",

@@ -9,7 +9,7 @@ import {
   RANGE_SPELL,
 } from "../../distances.js";
 import { KNOCKDOWN_SECONDS, type Skill, type SkillType, type StateCondition } from "../types.js";
-import { RANGE_LONG, WOLF, spiritHealth } from "./shared.js";
+import { RANGE_LONG, WOLF, spiritBody } from "./shared.js";
 
 /** Melandru's Shot's "a foe that is moving or knocked down" (#1539). */
 const MOVING_OR_KNOCKED_DOWN: StateCondition = {
@@ -1217,8 +1217,8 @@ export const RANGER_SKILLS: readonly Skill[] = [
     petAttack: undefined,
     // "Create a level 1...8...10 Spirit. Non-spirit creatures within range
     // take 4 additional damage whenever they take physical damage. This
-    // Spirit dies after 30...198...240 seconds." A level-8 spirit: 50 + 20
-    // per level, armor 51.
+    // Spirit dies after 30...198...240 seconds." A level-8 spirit: 20 Health
+    // and 2 + 6 armor per level.
     effects: [
       {
         kind: "summon",
@@ -1227,8 +1227,7 @@ export const RANGER_SKILLS: readonly Skill[] = [
           kind: "spirit",
           look: "spirit",
           name: "Winnowing",
-          maxHealth: spiritHealth("ranger.wilderness-survival", [1, 10]),
-          armor: { flat: 51 },
+          ...spiritBody("ranger.wilderness-survival", [1, 10]),
           attack: undefined,
           durationSeconds: {
             scaling: { attributeId: "ranger.wilderness-survival", atZero: 30, atTwelve: 198 },
@@ -1657,7 +1656,7 @@ export const RANGER_SKILLS: readonly Skill[] = [
     // Infuriating Heat (PvP), 3466: "Create a level 1...10 spirit.
     // Non-spirit creatures within its range gain adrenaline 33...66% as
     // fast. This spirit dies after 30...120 seconds." A level-8 spirit, as
-    // Winnowing's: 50 + 20 per level, armor 51.
+    // Winnowing's: 20 Health and 2 + 6 armor per level.
     effects: [
       {
         kind: "summon",
@@ -1666,8 +1665,7 @@ export const RANGER_SKILLS: readonly Skill[] = [
           kind: "spirit",
           look: "spirit",
           name: "Infuriating Heat",
-          maxHealth: spiritHealth("ranger.expertise", [1, 10]),
-          armor: { flat: 51 },
+          ...spiritBody("ranger.expertise", [1, 10]),
           attack: undefined,
           durationSeconds: {
             scaling: { attributeId: "ranger.expertise", atZero: 30, atTwelve: 102 },
@@ -3169,8 +3167,8 @@ export const RANGER_SKILLS: readonly Skill[] = [
     projectile: undefined,
     effects: [],
   },
-  // Nature rituals 1 (#1745): each a level-8 spirit, as Winnowing's (50 +
-  // 20 per level, armor 51), whose aura reaches non-spirits of both teams.
+  // Nature rituals 1 (#1745): each a level-8 spirit, as Winnowing's (20 Health
+  // and 2 + 6 armor per level), whose aura reaches non-spirits of both teams.
   {
     id: "ranger.fertile-season",
     name: "Fertile Season",
@@ -3204,8 +3202,7 @@ export const RANGER_SKILLS: readonly Skill[] = [
           kind: "spirit",
           look: "spirit",
           name: "Fertile Season",
-          maxHealth: spiritHealth("ranger.beast-mastery", [1, 10]),
-          armor: { flat: 51 },
+          ...spiritBody("ranger.beast-mastery", [1, 10]),
           attack: undefined,
           durationSeconds: {
             scaling: { attributeId: "ranger.beast-mastery", atZero: 15, atTwelve: 75 },
@@ -3257,8 +3254,7 @@ export const RANGER_SKILLS: readonly Skill[] = [
           kind: "spirit",
           look: "spirit",
           name: "Quickening Zephyr",
-          maxHealth: spiritHealth("ranger.wilderness-survival", [1, 10]),
-          armor: { flat: 51 },
+          ...spiritBody("ranger.wilderness-survival", [1, 10]),
           attack: undefined,
           durationSeconds: {
             scaling: { attributeId: "ranger.wilderness-survival", atZero: 15, atTwelve: 75 },
@@ -3309,8 +3305,7 @@ export const RANGER_SKILLS: readonly Skill[] = [
           kind: "spirit",
           look: "spirit",
           name: "Frozen Soil",
-          maxHealth: spiritHealth("ranger.wilderness-survival", [1, 10]),
-          armor: { flat: 51 },
+          ...spiritBody("ranger.wilderness-survival", [1, 10]),
           attack: undefined,
           durationSeconds: {
             scaling: { attributeId: "ranger.wilderness-survival", atZero: 30, atTwelve: 150 },
@@ -3361,8 +3356,7 @@ export const RANGER_SKILLS: readonly Skill[] = [
           kind: "spirit",
           look: "spirit",
           name: "Muddy Terrain",
-          maxHealth: spiritHealth("ranger.wilderness-survival", [1, 10]),
-          armor: { flat: 51 },
+          ...spiritBody("ranger.wilderness-survival", [1, 10]),
           attack: undefined,
           durationSeconds: {
             scaling: { attributeId: "ranger.wilderness-survival", atZero: 30, atTwelve: 150 },
@@ -3413,8 +3407,7 @@ export const RANGER_SKILLS: readonly Skill[] = [
           kind: "spirit",
           look: "spirit",
           name: "Conflagration",
-          maxHealth: spiritHealth("ranger.wilderness-survival", [1, 10]),
-          armor: { flat: 51 },
+          ...spiritBody("ranger.wilderness-survival", [1, 10]),
           attack: undefined,
           durationSeconds: {
             scaling: { attributeId: "ranger.wilderness-survival", atZero: 30, atTwelve: 198 },
@@ -3466,8 +3459,7 @@ export const RANGER_SKILLS: readonly Skill[] = [
           kind: "spirit",
           look: "spirit",
           name: "Predatory Season",
-          maxHealth: spiritHealth("ranger.beast-mastery", [1, 10]),
-          armor: { flat: 51 },
+          ...spiritBody("ranger.beast-mastery", [1, 10]),
           attack: undefined,
           durationSeconds: {
             scaling: { attributeId: "ranger.beast-mastery", atZero: 30, atTwelve: 198 },
@@ -3518,8 +3510,7 @@ export const RANGER_SKILLS: readonly Skill[] = [
           kind: "spirit",
           look: "spirit",
           name: "Winter",
-          maxHealth: spiritHealth("ranger.wilderness-survival", [1, 10]),
-          armor: { flat: 51 },
+          ...spiritBody("ranger.wilderness-survival", [1, 10]),
           attack: undefined,
           durationSeconds: {
             scaling: { attributeId: "ranger.wilderness-survival", atZero: 30, atTwelve: 198 },
@@ -3573,8 +3564,7 @@ export const RANGER_SKILLS: readonly Skill[] = [
           kind: "spirit",
           look: "spirit",
           name: "Edge of Extinction",
-          maxHealth: spiritHealth("ranger.beast-mastery", [1, 10]),
-          armor: { flat: 51 },
+          ...spiritBody("ranger.beast-mastery", [1, 10]),
           attack: undefined,
           durationSeconds: {
             scaling: { attributeId: "ranger.beast-mastery", atZero: 30, atTwelve: 198 },
@@ -3633,8 +3623,7 @@ export const RANGER_SKILLS: readonly Skill[] = [
           kind: "spirit",
           look: "spirit",
           name: "Pestilence",
-          maxHealth: spiritHealth("ranger.wilderness-survival", [1, 10]),
-          armor: { flat: 51 },
+          ...spiritBody("ranger.wilderness-survival", [1, 10]),
           attack: undefined,
           durationSeconds: {
             scaling: { attributeId: "ranger.wilderness-survival", atZero: 30, atTwelve: 150 },
@@ -3686,8 +3675,7 @@ export const RANGER_SKILLS: readonly Skill[] = [
           kind: "spirit",
           look: "spirit",
           name: "Energizing Wind",
-          maxHealth: spiritHealth("ranger.beast-mastery", [1, 6]),
-          armor: { flat: 51 },
+          ...spiritBody("ranger.beast-mastery", [1, 6]),
           attack: undefined,
           durationSeconds: {
             scaling: { attributeId: "ranger.beast-mastery", atZero: 1, atTwelve: 48.2 },
@@ -3739,8 +3727,7 @@ export const RANGER_SKILLS: readonly Skill[] = [
           kind: "spirit",
           look: "spirit",
           name: "Primal Echoes",
-          maxHealth: spiritHealth("ranger.beast-mastery", [1, 10]),
-          armor: { flat: 51 },
+          ...spiritBody("ranger.beast-mastery", [1, 10]),
           attack: undefined,
           durationSeconds: {
             scaling: { attributeId: "ranger.beast-mastery", atZero: 30, atTwelve: 198 },
@@ -3791,8 +3778,7 @@ export const RANGER_SKILLS: readonly Skill[] = [
           kind: "spirit",
           look: "spirit",
           name: "Roaring Winds",
-          maxHealth: spiritHealth("ranger.wilderness-survival", [1, 10]),
-          armor: { flat: 51 },
+          ...spiritBody("ranger.wilderness-survival", [1, 10]),
           attack: undefined,
           durationSeconds: {
             scaling: { attributeId: "ranger.wilderness-survival", atZero: 30, atTwelve: 150 },
@@ -3844,8 +3830,7 @@ export const RANGER_SKILLS: readonly Skill[] = [
           kind: "spirit",
           look: "spirit",
           name: "Quicksand",
-          maxHealth: spiritHealth("ranger.wilderness-survival", [1, 10]),
-          armor: { flat: 51 },
+          ...spiritBody("ranger.wilderness-survival", [1, 10]),
           attack: undefined,
           durationSeconds: {
             scaling: { attributeId: "ranger.wilderness-survival", atZero: 30, atTwelve: 150 },
@@ -3897,8 +3882,7 @@ export const RANGER_SKILLS: readonly Skill[] = [
           kind: "spirit",
           look: "spirit",
           name: "Famine",
-          maxHealth: spiritHealth("ranger.wilderness-survival", [1, 10]),
-          armor: { flat: 51 },
+          ...spiritBody("ranger.wilderness-survival", [1, 10]),
           attack: undefined,
           durationSeconds: {
             scaling: { attributeId: "ranger.wilderness-survival", atZero: 30, atTwelve: 150 },
@@ -3952,8 +3936,7 @@ export const RANGER_SKILLS: readonly Skill[] = [
           kind: "spirit",
           look: "spirit",
           name: "Lacerate",
-          maxHealth: spiritHealth("ranger.beast-mastery", [1, 10]),
-          armor: { flat: 51 },
+          ...spiritBody("ranger.beast-mastery", [1, 10]),
           attack: undefined,
           durationSeconds: {
             scaling: { attributeId: "ranger.beast-mastery", atZero: 30, atTwelve: 198 },
@@ -4014,8 +3997,7 @@ export const RANGER_SKILLS: readonly Skill[] = [
           kind: "spirit",
           look: "spirit",
           name: "Symbiosis",
-          maxHealth: spiritHealth("ranger.beast-mastery", [1, 10]),
-          armor: { flat: 51 },
+          ...spiritBody("ranger.beast-mastery", [1, 10]),
           attack: undefined,
           durationSeconds: {
             scaling: { attributeId: "ranger.beast-mastery", atZero: 30, atTwelve: 198 },
@@ -4067,8 +4049,7 @@ export const RANGER_SKILLS: readonly Skill[] = [
           kind: "spirit",
           look: "spirit",
           name: "Favorable Winds",
-          maxHealth: spiritHealth("ranger.marksmanship", [1, 10]),
-          armor: { flat: 51 },
+          ...spiritBody("ranger.marksmanship", [1, 10]),
           attack: undefined,
           durationSeconds: {
             scaling: { attributeId: "ranger.marksmanship", atZero: 30, atTwelve: 198 },
@@ -4120,8 +4101,7 @@ export const RANGER_SKILLS: readonly Skill[] = [
           kind: "spirit",
           look: "spirit",
           name: "Brambles",
-          maxHealth: spiritHealth("ranger.wilderness-survival", [1, 10]),
-          armor: { flat: 51 },
+          ...spiritBody("ranger.wilderness-survival", [1, 10]),
           attack: undefined,
           durationSeconds: {
             scaling: { attributeId: "ranger.wilderness-survival", atZero: 30, atTwelve: 198 },
@@ -4173,8 +4153,7 @@ export const RANGER_SKILLS: readonly Skill[] = [
           kind: "spirit",
           look: "spirit",
           name: "Tranquility",
-          maxHealth: spiritHealth("ranger.wilderness-survival", [1, 10]),
-          armor: { flat: 51 },
+          ...spiritBody("ranger.wilderness-survival", [1, 10]),
           attack: undefined,
           durationSeconds: {
             scaling: { attributeId: "ranger.wilderness-survival", atZero: 15, atTwelve: 99 },
@@ -4225,8 +4204,7 @@ export const RANGER_SKILLS: readonly Skill[] = [
           kind: "spirit",
           look: "spirit",
           name: "Toxicity",
-          maxHealth: spiritHealth("ranger.beast-mastery", [1, 10]),
-          armor: { flat: 51 },
+          ...spiritBody("ranger.beast-mastery", [1, 10]),
           attack: undefined,
           durationSeconds: {
             scaling: { attributeId: "ranger.beast-mastery", atZero: 30, atTwelve: 150 },
@@ -4278,8 +4256,7 @@ export const RANGER_SKILLS: readonly Skill[] = [
           kind: "spirit",
           look: "spirit",
           name: "Greater Conflagration",
-          maxHealth: spiritHealth("ranger.wilderness-survival", [1, 10]),
-          armor: { flat: 51 },
+          ...spiritBody("ranger.wilderness-survival", [1, 10]),
           attack: undefined,
           durationSeconds: {
             scaling: { attributeId: "ranger.wilderness-survival", atZero: 30, atTwelve: 198 },
@@ -6409,8 +6386,7 @@ export const RANGER_SKILLS: readonly Skill[] = [
           kind: "spirit",
           look: "spirit",
           name: "Nature's Renewal",
-          maxHealth: spiritHealth("ranger.wilderness-survival", [1, 10]),
-          armor: { flat: 51 },
+          ...spiritBody("ranger.wilderness-survival", [1, 10]),
           attack: undefined,
           durationSeconds: {
             scaling: { attributeId: "ranger.wilderness-survival", atZero: 30, atTwelve: 198 },
@@ -6462,8 +6438,7 @@ export const RANGER_SKILLS: readonly Skill[] = [
           kind: "spirit",
           look: "spirit",
           name: "Equinox",
-          maxHealth: spiritHealth("ranger.wilderness-survival", [1, 10]),
-          armor: { flat: 51 },
+          ...spiritBody("ranger.wilderness-survival", [1, 10]),
           attack: undefined,
           durationSeconds: {
             scaling: { attributeId: "ranger.wilderness-survival", atZero: 30, atTwelve: 198 },

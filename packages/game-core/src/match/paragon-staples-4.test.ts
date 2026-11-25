@@ -3,13 +3,13 @@ import { describe, expect, it } from "vitest";
 import { AREA_EARSHOT, RANGE_SPELL } from "../distances.js";
 import { unarmedResolvedEquipment, type ResolvedEquipment } from "../equipment/resolve.js";
 import { WEAPONS, type Weapon } from "../equipment/weapons.js";
-import { createRng } from "../rng.js";
+import { createRng, type SimulationRng } from "../rng.js";
 import { ADRENALINE_PER_STRIKE, MINIMAL_GW_INSPIRED_PVP_V1, type Ruleset } from "../ruleset.js";
 import { fillPools } from "../skills/adrenaline.js";
 import { getSkill } from "../skills/catalog.js";
 import type { CombatEvent } from "../skills/effects.js";
 import { NO_RANKS, aggregateModifiers, type StatusId } from "../skills/status.js";
-import { makeCombatant, strikesOf } from "../skills/testing.js";
+import { makeCombatant, strikesOf, withStatusDefinitions } from "../skills/testing.js";
 import type { Combatant, Skill } from "../skills/types.js";
 import { resolveSwing } from "../skills/weapon-attack.js";
 import { vec2, type Vec2 } from "../vec2.js";
@@ -25,8 +25,8 @@ import { MatchSimulation, type Participant, type ParticipantSpec } from "./simul
 const RULES = MINIMAL_GW_INSPIRED_PVP_V1;
 const DT = 1 / RULES.tickRateHz;
 /**
- * A blow with no mastery crits 34% of the time: exactly always under "Go
- * for the Eyes!"'s 66%.
+ * A blow with no mastery crits 34% of the time, and under "Go for the
+ * Eyes!"'s 66% 1 − 0.66 × 0.34 ≈ 78% of the time (#3984).
  */
 const CRIT_34: Ruleset = { ...RULES, combat: { ...RULES.combat, criticalBaseChance: 0.34 } };
 
@@ -195,7 +195,7 @@ describe('"Go for the Eyes!" (#1677)', () => {
   });
 
   /** An unskilled swordsman under it swings at a dummy: whether the blow crits. */
-  function swingUnder(status: boolean, seed: number) {
+  function swingUnder(status: boolean, rng: SimulationRng) {
     const attacker = makeCombatant({
       id: "a",
       equipment: wielding(WEAPONS.sword, "warrior.swordsmanship"),
@@ -213,7 +213,7 @@ describe('"Go for the Eyes!" (#1677)', () => {
         creature: undefined,
       },
       surroundings: new Map(),
-      rng: createRng(seed),
+      rng,
       rules: CRIT_34.combat,
       exposed: () => false,
     }).events;
@@ -223,40 +223,49 @@ describe('"Go for the Eyes!" (#1677)', () => {
     };
   }
 
-  it("the swing that ends it crits, every time, at 34% + 66%", () => {
-    for (let seed = 1; seed <= 10; seed += 1) {
-      expect(swingUnder(true, seed), String(seed)).toEqual({ critical: true, still: false });
-    }
+  it("the swing that ends it has its 66%: a roll of 0.7 crits under it, and not without", () => {
+    /** Every roll comes up 0.7: above the bare 34%, below the 78% under it. */
+    const rolls = (): SimulationRng => Object.assign(createRng(1), { nextFloat: () => 0.7 });
+    expect(swingUnder(true, rolls())).toEqual({ critical: true, still: false });
+    expect(swingUnder(false, rolls())).toEqual({ critical: false, still: false });
   });
 
   it("without it, the same swings crit only sometimes", () => {
-    const crits = Array.from({ length: 10 }, (_, i) => swingUnder(false, i + 1).critical);
+    const crits = Array.from(
+      { length: 10 },
+      (_, i) => swingUnder(false, createRng(i + 1)).critical,
+    );
     expect(crits).toContain(false);
   });
 
   it("an arrow released under it crits, and ends it", () => {
-    for (let round = 0; round < 5; round += 1) {
-      const sim = new MatchSimulation({
-        seed: `eyes-${String(round)}`,
-        ruleset: CRIT_34,
-        participants: [
-          spec("r", 0, vec2(0, 0), { equipment: wielding(WEAPONS.flatbow, "ranger.marksmanship") }),
-          spec("t", 1, vec2(300, 0), { maxHealth: 1e6 }),
-        ],
-      });
-      const ranger = get(sim, "r").combatant;
-      ranger.statuses.apply("go-for-the-eyes", 10, "c", NO_RANKS);
-      expect(sim.requestAttack("r", "t")?.ok).toBe(true);
-      let hit: CombatEvent | undefined;
-      for (let i = 0; i < 5 * RULES.tickRateHz && hit === undefined; i += 1) {
-        hit = sim
-          .step(DT)
-          .log.flatMap((entry) => entry.events)
-          .find((event) => event.kind === "damage" && event.targetId === "t");
+    // At +100% it alone crits every arrow it reaches, whatever the base.
+    withStatusDefinitions({ "go-for-the-eyes": { criticalChanceBonus: 1 } }, () => {
+      for (let round = 0; round < 5; round += 1) {
+        const sim = new MatchSimulation({
+          seed: `eyes-${String(round)}`,
+          ruleset: CRIT_34,
+          participants: [
+            spec("r", 0, vec2(0, 0), {
+              equipment: wielding(WEAPONS.flatbow, "ranger.marksmanship"),
+            }),
+            spec("t", 1, vec2(300, 0), { maxHealth: 1e6 }),
+          ],
+        });
+        const ranger = get(sim, "r").combatant;
+        ranger.statuses.apply("go-for-the-eyes", 10, "c", NO_RANKS);
+        expect(sim.requestAttack("r", "t")?.ok).toBe(true);
+        let hit: CombatEvent | undefined;
+        for (let i = 0; i < 5 * RULES.tickRateHz && hit === undefined; i += 1) {
+          hit = sim
+            .step(DT)
+            .log.flatMap((entry) => entry.events)
+            .find((event) => event.kind === "damage" && event.targetId === "t");
+        }
+        expect(hit).toMatchObject({ kind: "damage", critical: true });
+        expect(ranger.statuses.has("go-for-the-eyes")).toBe(false);
       }
-      expect(hit).toMatchObject({ kind: "damage", critical: true });
-      expect(ranger.statuses.has("go-for-the-eyes")).toBe(false);
-    }
+    });
   });
 
   it("with no attack, it runs out after 10 s", () => {

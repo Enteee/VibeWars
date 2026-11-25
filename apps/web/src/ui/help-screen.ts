@@ -5,6 +5,7 @@ import { h, overlayClose } from "./kit.js";
 import { mountLicences } from "./licences-section.js";
 import { helpDocPages, playerDocTargets, renderPlayerDoc, type DocNode } from "./player-docs.js";
 import { attachTopbarPopover, closeTopbarPopover } from "./topbar-popover.js";
+import { mountTrailer } from "./trailer-section.js";
 
 /**
  * Help (#1257): the player docs of `docs/player/`, as a window that drops
@@ -14,9 +15,17 @@ import { attachTopbarPopover, closeTopbarPopover } from "./topbar-popover.js";
  * picker on top chooses the page; a link to another page switches page in
  * place.
  *
- * After the docs, the third-party licences have a page of their own
- * (#2559), drawn by code rather than from markdown.
+ * After the docs, the trailer (#3835) and the third-party licences (#2559)
+ * have pages of their own, drawn by code rather than from markdown.
  */
+
+/** The trailer page, first after the docs: not a doc page either. */
+const TRAILER_PAGE = {
+  id: "trailer",
+  get title() {
+    return t("help.trailer");
+  },
+};
 
 /** The licences page, after the docs: not a doc page, so not in `helpDocPages()`. */
 const LICENCES_PAGE = {
@@ -102,7 +111,7 @@ function helpPanel(
   picker.className = "help-picker";
   picker.setAttribute("aria-label", t("help.pages"));
   const pages = helpDocPages();
-  for (const page of [...pages, LICENCES_PAGE]) {
+  for (const page of [...pages, TRAILER_PAGE, LICENCES_PAGE]) {
     const option = document.createElement("option");
     option.value = page.id;
     option.textContent = page.title;
@@ -125,7 +134,11 @@ function helpPanel(
 
   const targets = playerDocTargets();
   const show = (id: string, anchor?: string): void => {
-    if (id === LICENCES_PAGE.id) {
+    if (id === TRAILER_PAGE.id) {
+      pane.dataset.page = TRAILER_PAGE.id;
+      pane.replaceChildren();
+      mountTrailer(pane);
+    } else if (id === LICENCES_PAGE.id) {
       pane.dataset.page = LICENCES_PAGE.id;
       pane.replaceChildren();
       mountLicences(pane);

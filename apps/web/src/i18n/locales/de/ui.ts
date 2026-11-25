@@ -406,6 +406,7 @@ export default {
   "cosmetics.item.trailFrost": "Frostspur",
   "cosmetics.item.trailMoss": "Moosspur",
   "cosmetics.item.trailStarlight": "Sternenlichtspur",
+  "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Gesperrt",
   "cosmetics.none": "Keine",
   "cosmetics.note":
@@ -419,7 +420,6 @@ export default {
     one: "{count} gewerteter Sieg",
     other: "{count} gewertete Siege",
   },
-  "cosmetics.showOthers": "Kosmetik anderer Spieler anzeigen",
   "cosmetics.slot.aura": "Bodenaura",
   "cosmetics.slot.cape": "Umhangmuster",
   "cosmetics.slot.dissolve": "Todesauflösung",
@@ -568,6 +568,11 @@ export default {
   "help.licences": "Lizenzen von Drittanbietern",
   "help.pages": "Hilfeseiten",
   "help.source": "Quellcode",
+  "help.trailer": "Trailer",
+  "help.trailerDownload": "Herunterladen",
+  "help.trailerInfo": "{seconds} s, etwa {mb} MB",
+  "help.trailerOffline": "Der Trailer braucht eine Internetverbindung.",
+  "help.trailerVertical": "Handyversion (hochkant)",
   "help.version": "VibeWars {release} · Build {build}",
 
   "hud.aggression": "Agg {ours} : {theirs}",
@@ -1660,7 +1665,6 @@ export default {
     "Aufstieg der Helden ist eine Folge von Karten, 8 gegen 8, gegen Teams in deiner Runde. Gewinnst du, geht es weiter zur nächsten Karte, bis hinauf zur Halle der Helden; verlierst du, fängst du von vorn an.",
   "tutorial.menu.modes.hostedGame":
     "Ein Gehostetes Spiel ist deine eigene Lobby: Schick Freunden den Einladungslink und wähle Karte und Teamgröße. Bots spielen jeden Platz, den niemand nimmt.",
-  "tutorial.menu.modes.open": "Öffne an der Seite die leuchtende Spielart.",
   "tutorial.menu.modes.randomArena":
     "Die Zufallsarena ist der schnellste Kampf: dein eigener Charakter in einem Team aus Fremden, 1v1, 2v2 oder 4v4. Die Karte wird für dich ausgelost, und jeder Platz ist ein echter Spieler.",
   "tutorial.menu.modes.teamArena":
@@ -1725,8 +1729,8 @@ export default {
   "tutorial.heal.ow": "Au! Der Stein hat mich erwischt. Hilfst du mir?",
   "tutorial.heal.praise": "Viel besser, danke! Du kannst auch heilen.",
   "tutorial.learn": "Spielen lernen",
-  "tutorial.look.hint": "Zoom heraus, dann zieh die Ansicht nach Norden. Finde den Teleporter!",
-  "tutorial.look.how": "Das Mausrad zoomt. Halte die rechte Taste und zieh, um dich umzusehen.",
+  "tutorial.look.hint": "Zieh die Ansicht nach Norden. Finde den Teleporter!",
+  "tutorial.look.how": "Halte die rechte Taste und zieh, um dich umzusehen.",
   "tutorial.look.intro":
     "Vielleicht führt uns dieser Teleporter um das Schlachtfeld herum. Schau nach Norden!",
   "tutorial.look.praise": "Da ist er! Unser Weg um die Schlacht herum.",
@@ -1762,7 +1766,7 @@ export default {
     "Tipp zuerst meinen Namen in der Gruppenliste an. Tipp auf Gruppe, falls die Liste zu ist.",
   "tutorial.touch.healHow":
     "Tipp auf Gruppe, falls die Liste zu ist, dann auf meinen Namen und dann auf den leuchtenden Skill.",
-  "tutorial.touch.look": "Mit zwei Fingern zoomen. Mit einem Finger ziehen, um dich umzusehen.",
+  "tutorial.touch.look": "Mit einem Finger ziehen, um dich umzusehen.",
   "tutorial.touch.pingHow": "Tipp auf den Kompass oder zieh darauf eine Linie.",
   "tutorial.touch.ratsHow": "Tipp eine Ratte an, um sie ins Ziel zu nehmen.",
   "tutorial.touch.tunnelHow":

@@ -402,6 +402,7 @@ export default {
   "cosmetics.item.trailFrost": "Vorstspoor",
   "cosmetics.item.trailMoss": "Mosspoor",
   "cosmetics.item.trailStarlight": "Sterrenlichtspoor",
+  "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Vergrendeld",
   "cosmetics.none": "Geen",
   "cosmetics.note":
@@ -415,7 +416,6 @@ export default {
     one: "{count} gerankte zege",
     other: "{count} gerankte zeges",
   },
-  "cosmetics.showOthers": "Cosmetics van andere spelers tonen",
   "cosmetics.slot.aura": "Grondaura",
   "cosmetics.slot.cape": "Capepatroon",
   "cosmetics.slot.dissolve": "Doodsoplossing",
@@ -564,6 +564,11 @@ export default {
   "help.licences": "Licenties van derden",
   "help.pages": "helppagina's",
   "help.source": "Broncode",
+  "help.trailer": "Trailer",
+  "help.trailerDownload": "Downloaden",
+  "help.trailerInfo": "{seconds} s, ongeveer {mb} MB",
+  "help.trailerOffline": "De trailer heeft een internetverbinding nodig.",
+  "help.trailerVertical": "Telefoonversie (staand)",
   "help.version": "VibeWars {release} · build {build}",
 
   "hud.aggression": "agr {ours} v {theirs}",
@@ -1645,7 +1650,6 @@ export default {
     "Heroes' Ascent is een reeks maps, 8 tegen 8, tegen teams in jouw ronde. Win en je gaat door naar de volgende map, tot aan de Hal der Helden; verlies en je begint opnieuw.",
   "tutorial.menu.modes.hostedGame":
     "Een Gehost spel is je eigen lobby: stuur vrienden de uitnodigingslink en kies de map en de teamgrootte. Bots spelen elke plek die niemand inneemt.",
-  "tutorial.menu.modes.open": "Open de verlichte modus aan de zijkant.",
   "tutorial.menu.modes.randomArena":
     "Random Arena is het snelste gevecht: je eigen personage, in een team van vreemden, 1v1, 2v2 of 4v4. De map wordt voor je geloot, en elke plek is een echte speler.",
   "tutorial.menu.modes.teamArena":
@@ -1708,8 +1712,8 @@ export default {
   "tutorial.heal.ow": "Au! De steen raakte me. Een beetje hulp?",
   "tutorial.heal.praise": "Veel beter, dank je! Jij kunt ook genezen.",
   "tutorial.learn": "Leer spelen",
-  "tutorial.look.hint": "Zoom uit en sleep het beeld naar het noorden. Vind de teleporter!",
-  "tutorial.look.how": "Het muiswiel zoomt. Houd de rechterknop vast en sleep om rond te kijken.",
+  "tutorial.look.hint": "Sleep het beeld naar het noorden. Vind de teleporter!",
+  "tutorial.look.how": "Houd de rechterknop vast en sleep om rond te kijken.",
   "tutorial.look.intro":
     "Misschien brengt deze teleporter ons om het slagveld heen. Kijk naar het noorden!",
   "tutorial.look.praise": "Daar is hij! Onze weg om het gevecht heen.",
@@ -1745,7 +1749,7 @@ export default {
     "Tik eerst op mijn naam in de groepslijst. Tik op Groep als de lijst dicht is.",
   "tutorial.touch.healHow":
     "Tik op Groep als de lijst dicht is, dan op mijn naam en dan op de oplichtende skill.",
-  "tutorial.touch.look": "Knijp om te zoomen. Sleep met één vinger om rond te kijken.",
+  "tutorial.touch.look": "Sleep met één vinger om rond te kijken.",
   "tutorial.touch.pingHow": "Tik op het kompas, of sleep erover om een lijn te tekenen.",
   "tutorial.touch.ratsHow": "Tik op een rat om hem te kiezen.",
   "tutorial.touch.tunnelHow":

@@ -403,6 +403,7 @@ export default {
   "cosmetics.item.trailFrost": "Frostspår",
   "cosmetics.item.trailMoss": "Mosspår",
   "cosmetics.item.trailStarlight": "Stjärnljusspår",
+  "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Låst",
   "cosmetics.none": "Ingen",
   "cosmetics.note":
@@ -416,7 +417,6 @@ export default {
     one: "{count} rankad vinst",
     other: "{count} rankade vinster",
   },
-  "cosmetics.showOthers": "Visa andra spelares kosmetik",
   "cosmetics.slot.aura": "Markaura",
   "cosmetics.slot.cape": "Mantelmönster",
   "cosmetics.slot.dissolve": "Dödsupplösning",
@@ -565,6 +565,11 @@ export default {
   "help.licences": "Tredjepartslicenser",
   "help.pages": "hjälpsidor",
   "help.source": "Källkod",
+  "help.trailer": "Trailer",
+  "help.trailerDownload": "Ladda ned",
+  "help.trailerInfo": "{seconds} s, cirka {mb} MB",
+  "help.trailerOffline": "Trailern kräver en internetanslutning.",
+  "help.trailerVertical": "Mobilversion (stående)",
   "help.version": "VibeWars {release} · build {build}",
 
   "hud.aggression": "agg {ours} mot {theirs}",
@@ -1633,7 +1638,6 @@ export default {
     "Heroes' Ascent är en rad kartor, 8 mot 8, mot lag i din omgång. Vinner du går du vidare till nästa karta, ända upp till Hjältarnas sal; förlorar du börjar du om.",
   "tutorial.menu.modes.hostedGame":
     "Ett eget spel är din egen lobby: skicka inbjudningslänken till vänner och välj karta och lagstorlek. Bottar spelar varje plats som ingen tar.",
-  "tutorial.menu.modes.open": "Öppna det tända spelsättet längs sidan.",
   "tutorial.menu.modes.randomArena":
     "Slumparena är den snabbaste striden: din egen karaktär, i ett lag av främlingar, 1v1, 2v2 eller 4v4. Kartan lottas åt dig, och varje plats är en riktig spelare.",
   "tutorial.menu.modes.teamArena":
@@ -1696,8 +1700,8 @@ export default {
   "tutorial.heal.ow": "Aj! Stenen träffade mig. Lite hjälp?",
   "tutorial.heal.praise": "Mycket bättre, tack! Du kan hela också.",
   "tutorial.learn": "Lär dig spela",
-  "tutorial.look.hint": "Zooma ut och dra sedan vyn norrut. Hitta teleportern!",
-  "tutorial.look.how": "Mushjulet zoomar. Håll in höger knapp och dra för att se dig om.",
+  "tutorial.look.hint": "Dra vyn norrut. Hitta teleportern!",
+  "tutorial.look.how": "Håll in höger knapp och dra för att se dig om.",
   "tutorial.look.intro": "Kanske tar den här teleportern oss runt slagfältet. Titta norrut!",
   "tutorial.look.praise": "Där är den! Vår väg runt striden.",
   "tutorial.offer": "Ny här? Din lärare visar dig grunderna.",
@@ -1731,7 +1735,7 @@ export default {
     "Tryck först på mitt namn i grupplistan. Tryck på Grupp om listan är stängd.",
   "tutorial.touch.healHow":
     "Tryck på Grupp om listan är stängd, sedan på mitt namn och sedan på den lysande förmågan.",
-  "tutorial.touch.look": "Nyp för att zooma. Dra med ett finger för att se dig om.",
+  "tutorial.touch.look": "Dra med ett finger för att se dig om.",
   "tutorial.touch.pingHow": "Tryck på kompassen eller dra på den för att rita en linje.",
   "tutorial.touch.ratsHow": "Tryck på en råtta för att välja den.",
   "tutorial.touch.tunnelHow": "Tryck på stegen ner, sedan på märket bortom andra änden.",

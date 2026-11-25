@@ -376,6 +376,7 @@ export default {
   "cosmetics.item.trailFrost": "Jejak embun beku",
   "cosmetics.item.trailMoss": "Jejak lumut",
   "cosmetics.item.trailStarlight": "Jejak cahaya bintang",
+  "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Terkunci",
   "cosmetics.none": "Tidak ada",
   "cosmetics.note":
@@ -387,7 +388,6 @@ export default {
   "cosmetics.requires.wins": {
     other: "{count} kemenangan peringkat",
   },
-  "cosmetics.showOthers": "Tampilkan kosmetik pemain lain",
   "cosmetics.slot.aura": "Aura tanah",
   "cosmetics.slot.cape": "Corak jubah",
   "cosmetics.slot.dissolve": "Pelarutan kematian",
@@ -521,6 +521,11 @@ export default {
   "help.licences": "Lisensi pihak ketiga",
   "help.pages": "halaman bantuan",
   "help.source": "Kode sumber",
+  "help.trailer": "Trailer",
+  "help.trailerDownload": "Unduh",
+  "help.trailerInfo": "{seconds} dtk, sekitar {mb} MB",
+  "help.trailerOffline": "Trailer memerlukan koneksi internet.",
+  "help.trailerVertical": "Versi ponsel (vertikal)",
   "help.version": "VibeWars {release} · build {build}",
 
   "hud.aggression": "agr {ours} vs {theirs}",
@@ -1565,7 +1570,6 @@ export default {
     "Pendakian Pahlawan adalah rangkaian peta, 8 lawan 8, melawan tim di babakmu. Menang, dan kamu lanjut ke peta berikutnya, sampai Aula Pahlawan; kalah, dan kamu mulai lagi.",
   "tutorial.menu.modes.hostedGame":
     "Game Host adalah lobimu sendiri: kirim link undangan ke teman, lalu pilih peta dan ukuran tim. Bot mengisi setiap tempat yang tidak diambil siapa pun.",
-  "tutorial.menu.modes.open": "Buka mode yang menyala di samping.",
   "tutorial.menu.modes.randomArena":
     "Arena Acak adalah pertarungan tercepat: karaktermu sendiri, dalam tim orang asing, 1v1, 2v2, atau 4v4. Peta diundi untukmu, dan setiap tempat adalah pemain sungguhan.",
   "tutorial.menu.modes.teamArena":
@@ -1627,8 +1631,8 @@ export default {
   "tutorial.heal.ow": "Aduh! Batu itu mengenaiku. Bantu sedikit?",
   "tutorial.heal.praise": "Jauh lebih baik, terima kasih! Kamu juga bisa menyembuhkan.",
   "tutorial.learn": "Belajar bermain",
-  "tutorial.look.hint": "Perkecil tampilan, lalu seret ke utara. Temukan teleporternya!",
-  "tutorial.look.how": "Roda mouse untuk zoom. Tahan tombol kanan dan seret untuk melihat.",
+  "tutorial.look.hint": "Seret tampilan ke utara. Temukan teleporternya!",
+  "tutorial.look.how": "Tahan tombol kanan dan seret untuk melihat.",
   "tutorial.look.intro":
     "Mungkin teleporter ini membawa kita memutari medan perang. Lihat ke utara!",
   "tutorial.look.praise": "Itu dia! Jalan kita memutari pertempuran.",
@@ -1663,7 +1667,7 @@ export default {
     "Ketuk namaku di daftar regu dulu. Ketuk Party kalau daftarnya tertutup.",
   "tutorial.touch.healHow":
     "Ketuk Party kalau daftarnya tertutup, lalu namaku, lalu skill yang menyala.",
-  "tutorial.touch.look": "Cubit untuk zoom. Seret satu jari untuk melihat.",
+  "tutorial.touch.look": "Seret satu jari untuk melihat.",
   "tutorial.touch.pingHow": "Ketuk kompas, atau seret di atasnya untuk menggambar garis.",
   "tutorial.touch.ratsHow": "Ketuk tikus untuk membidiknya.",
   "tutorial.touch.tunnelHow": "Ketuk tangga turun, lalu tanda di balik ujung satunya.",

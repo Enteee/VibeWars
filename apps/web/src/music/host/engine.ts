@@ -23,15 +23,20 @@ import {
 } from "../host-protocol.js";
 import { samplesBaseUrl } from "../music-urls.js";
 import {
+  fadingIn,
+  fadingOut,
+  FULL,
   levelAt,
   nextCycle,
   planSwitch,
   scheduleLevel,
   switchLanding,
+  type Envelope,
   type LevelChange,
 } from "./transitions.js";
 import { busGate, FADE_OUT_SECONDS, STOP_RAMP_SECONDS, type BusGate } from "./bus-gate.js";
-import { crossfade, isTempoMark, overTrack, type Rings } from "./crossfade.js";
+import { crossfade, isTempoMark, overTrack, withGain, type Rings } from "./crossfade.js";
+import { duck, STING_ORBIT } from "./duck.js";
 import { dropLate } from "./late-notes.js";
 import { catchUpTick, leadClock } from "./lead-clock.js";
 import { firstBeatDelay } from "./first-beat.js";
@@ -52,9 +57,9 @@ import { workerTimers } from "./worker-timers.js";
  * palette or Strudel's synths.
  *
  * A track's source is evaluated here, never played straight through the
- * REPL, so that a switch can be planned: the new pattern starts on the
- * playing track's next phrase boundary, the two crossfade, and only then
- * does the new one play alone. A source that fails to evaluate, or to
+ * REPL, so that a switch can be planned (ADR-0058): the playing track
+ * fades out at its own tempo to one of its bars, and the new one starts
+ * there, at its own tempo, fading in. A source that fails to evaluate, or to
  * query, leaves what was playing alone and reports `error`.
  */
 
@@ -99,6 +104,8 @@ const LATE_MARGIN_SECONDS = 0.01;
  * slack for an audio thread the OS schedules late on a busy machine.
  */
 const MUSIC_LATENCY_SECONDS = 0.5;
+/** A beat, as the stings count them (#2523): a quarter cycle. */
+const BEATS_PER_CYCLE = 4;
 /** A track as it plays: its pattern, unshifted, and where it started. */
 interface Playing {
   readonly trackId: string;
@@ -107,21 +114,17 @@ interface Playing {
   readonly cps: number;
   /** The cycle its cycle 0 plays on. */
   readonly clock: TrackClock;
+  /** How loud it is: fading in after a switch, full otherwise. */
+  readonly gain: Envelope;
 }
 
-/** A switch to `next`, landing at `next.clock.origin` and fading until `until`. */
+/** A switch to `next`: the playing track fades out from `fadesFrom`, `next` starts on `lands` and fades in until `until`. */
 interface Switch {
   readonly next: Playing;
+  readonly fadesFrom: number;
+  readonly lands: number;
   readonly until: number;
   announced: boolean;
-}
-
-/** A switch to `track` waiting for the one fading to land. */
-interface HeldSwitch {
-  readonly track: HostTrack;
-  readonly cycles: number;
-  readonly landOn: LandOn;
-  readonly askedAt: number;
 }
 
 /** A sting as it plays (#2523): placed in cycles, silent outside its own. */
@@ -194,8 +197,6 @@ export async function startEngine(): Promise<void> {
   const underruns = createUnderrunProbe(context);
   /** The bus limiter, made with the bus once the first track plays. */
   let limiter: DynamicsCompressorNode | undefined;
-  /** A switch asked for during a fade, started when it lands (#3530): the latest wins. */
-  let held: HeldSwitch | undefined;
   const measurement = createMeasurement(
     (stats) => {
       post({ type: "stats", ...stats });
@@ -217,6 +218,12 @@ export async function startEngine(): Promise<void> {
     () => context.currentTime,
     LATE_MARGIN_SECONDS,
     () => measurement.meter,
+  );
+  // A sting ducks the track's orbits, never its own (#3983).
+  const stingDuck = duck(() =>
+    Object.entries(getSuperdoughAudioController().nodes)
+      .filter(([orbit]) => Number(orbit) !== STING_ORBIT)
+      .map(([, node]) => node.output.gain),
   );
   const schedulerTime = leadClock(
     () => context.currentTime,
@@ -254,14 +261,22 @@ export async function startEngine(): Promise<void> {
     clearInterval: (id) => {
       timers.clearInterval(id);
     },
-    defaultOutput: (hap, deadline, duration, cps, t) =>
-      isTempoMark(hap.value) ? undefined : output(hap, deadline, duration, cps, t),
+    defaultOutput: (hap, deadline, duration, cps, t) => {
+      if (isTempoMark(hap.value)) {
+        return undefined;
+      }
+      if (record(hap.value)?.orbit === STING_ORBIT) {
+        stingDuck.note(t, duration, 1 / (BEATS_PER_CYCLE * cps));
+      }
+      return output(hap, deadline, duration, cps, t);
+    },
   });
   const scheduler = repl.scheduler;
   /** The end of what the scheduler has queried. Nothing before it can change. */
   const position = (): number => scheduler.lastEnd;
 
-  let levels: LevelChange[] = [];
+  // The first change is settled: a layer fades only on the ones after it.
+  let levels: LevelChange[] = [{ from: 0, level: 0 }];
   /** What the last evaluated source asked for with `setcpm`. */
   let requestedCps: number | undefined;
   // Read through a function: the source sets it, which the compiler cannot see.
@@ -503,12 +518,18 @@ export async function startEngine(): Promise<void> {
       if (!core.isPattern(evaluated.pattern)) {
         return;
       }
-      pattern = evaluated.pattern;
+      // On an orbit of its own, so that it ducks the track and not itself.
+      pattern = evaluated.pattern.withHap((hap) =>
+        hap.withValue((value) => {
+          const fields = record(value);
+          return fields === null ? value : { ...fields, orbit: STING_ORBIT };
+        }),
+      );
       pattern.queryArc(0, cycles);
     } catch {
       return;
     }
-    const from = stingStart(position(), switching?.next.clock.origin);
+    const from = stingStart(position(), switching?.lands);
     const until = from + cycles;
     const next = startingIn(pattern.late(from), from, until);
     // A sting still playing gives way from this one's start.
@@ -556,9 +577,6 @@ export async function startEngine(): Promise<void> {
     startAtEpochMs: number | null,
     askedAt: number,
   ): Promise<void> => {
-    // At once, before any await: a switch held before this load must not
-    // land after it (#3530).
-    held = undefined;
     const { pattern, cps, clock } = await compile(track.source, track.phraseCycles);
     await ensureAudio();
     if (startAtEpochMs !== null) {
@@ -581,17 +599,30 @@ export async function startEngine(): Promise<void> {
     switching = undefined;
     // A sting belongs to the music it was played over.
     sting = undefined;
-    playing = { trackId: track.trackId, pattern, phraseCycles: track.phraseCycles, cps, clock };
+    playing = {
+      trackId: track.trackId,
+      pattern,
+      phraseCycles: track.phraseCycles,
+      cps,
+      clock,
+      gain: FULL,
+    };
     pins.reset();
     await schedule(placedAt(pattern, clock.origin));
     announce(playing);
     heard("load", askedAt, 0);
   };
 
+  /** What the scheduler plays of `track` alone: placed on its clock, at its level. */
+  const alone = (track: Playing): core.Pattern =>
+    withGain(placedAt(track.pattern, track.clock.origin), track.gain);
+
   /**
-   * Switch to `track` on the playing track's next phrase boundary, or on
-   * its next cycle, with both playing for `cycles` while one fades out and
-   * the other in.
+   * Switch to `track` (#3983): the playing track fades out over `cycles`
+   * at its own tempo, to silence on one of its bars, the next phrase
+   * boundary if it is close and the next bar when a match starts. There
+   * the tempo changes, and `track` starts on its downbeat and fades in
+   * over `cycles`. The newest request wins, whenever it comes.
    */
   const crossfadeTo = async (
     track: HostTrack,
@@ -604,44 +635,83 @@ export async function startEngine(): Promise<void> {
       await load(track, null, askedAt);
       return;
     }
+    const target = switching?.next ?? playing;
+    if (target.trackId === track.trackId) {
+      return;
+    }
+    // Compiled before the switch is planned: nothing moves between the
+    // plan and the schedule but the scheduler's clock.
+    let compiled =
+      track.trackId === playing.trackId
+        ? undefined
+        : await compile(track.source, track.phraseCycles);
     const plan = planSwitch(
       {
         playing: playing.trackId,
         ...(switching === undefined
           ? {}
-          : { switching: { next: switching.next.trackId, from: switching.next.clock.origin } }),
+          : {
+              switching: {
+                next: switching.next.trackId,
+                fadesFrom: switching.fadesFrom,
+                lands: switching.lands,
+              },
+            }),
       },
       track.trackId,
       position(),
     );
-    held = plan === "hold" ? { track, cycles, landOn, askedAt } : undefined;
-    if (plan === "keep" || plan === "hold") {
+    if (plan === "keep") {
       return;
     }
-    const outgoing = placedAt(playing.pattern, playing.clock.origin);
     if (plan === "cancel") {
       switching = undefined;
-      await schedule(outgoing);
+      await schedule(alone(playing));
       return;
     }
-    const { pattern, cps, clock } = await compile(track.source, track.phraseCycles);
-    // A switch still planned is replaced: this one lands where it would have.
-    const current = plan === "replace" ? (switching?.next ?? playing) : playing;
-    const from = switchLanding(landOn, position(), current.clock.origin, current.phraseCycles);
-    clock.origin = from;
-    const next: Playing = {
-      trackId: track.trackId,
-      pattern,
-      phraseCycles: track.phraseCycles,
-      cps,
-      clock,
-    };
-    const until = from + cycles;
-    switching = { next, until, announced: false };
-    heard("switch", askedAt, (from - position()) / scheduler.cps);
-    // Only the playing track fades out, never a replaced switch.
+    if (plan === "restart" && switching !== undefined) {
+      // The track fading in is the one that fades out now, from where it got to.
+      playing = switching.next;
+      switching = undefined;
+      // Back to the track it replaced: that one starts again, as any other.
+      compiled ??= await compile(track.source, track.phraseCycles);
+    }
+    const outgoing = playing;
+    // A retarget keeps the fade-out under way; anything else plans its own.
+    const lands =
+      plan === "retarget" && switching !== undefined
+        ? switching.lands
+        : switchLanding(landOn, position(), outgoing.clock.origin, outgoing.phraseCycles, cycles);
+    const fadesFrom = lands - cycles;
+    const gain = fadingIn(lands, cycles);
+    let next: Playing;
+    if (compiled === undefined) {
+      // Back to the playing track: it fades in again where it is.
+      next = { ...outgoing, gain };
+    } else {
+      compiled.clock.origin = lands;
+      next = {
+        trackId: track.trackId,
+        pattern: compiled.pattern,
+        phraseCycles: track.phraseCycles,
+        cps: compiled.cps,
+        clock: compiled.clock,
+        gain,
+      };
+    }
+    switching = { next, fadesFrom, lands, until: lands + cycles, announced: false };
+    heard("switch", askedAt, (lands - position()) / scheduler.cps);
     await schedule(
-      crossfade(outgoing, pattern, from, cycles, { before: playing.cps, after: cps }, rings),
+      crossfade(
+        {
+          pattern: placedAt(outgoing.pattern, outgoing.clock.origin),
+          gain: fadingOut(outgoing.gain, fadesFrom, cycles),
+        },
+        { pattern: placedAt(next.pattern, next.clock.origin), gain },
+        lands,
+        { before: outgoing.cps, after: next.cps },
+        rings,
+      ),
     );
   };
 
@@ -655,9 +725,8 @@ export async function startEngine(): Promise<void> {
   };
 
   /**
-   * Land a planned switch: announce it on its boundary, then play the new
-   * track alone, and start the switch held while it faded. Drop a sting
-   * that has ended.
+   * Land a planned switch: announce it on its landing, then play the new
+   * track alone once its fade-in ends. Drop a sting that has ended.
    */
   timers.setInterval(() => {
     if (sting !== undefined && position() >= sting.until) {
@@ -668,7 +737,7 @@ export async function startEngine(): Promise<void> {
     if (planned === undefined) {
       return;
     }
-    if (!planned.announced && position() >= planned.next.clock.origin) {
+    if (!planned.announced && position() >= planned.lands) {
       planned.announced = true;
       announce(planned.next);
     }
@@ -676,17 +745,7 @@ export async function startEngine(): Promise<void> {
       switching = undefined;
       playing = planned.next;
       pins.reset();
-      void schedule(planned.next.pattern.late(planned.next.clock.origin));
-      // `held` is read when its turn comes, not now: a load or an evaluate
-      // queued before it clears it, and an older switch must not land after
-      // a newer message (#3530).
-      enqueue(async () => {
-        const waiting = held;
-        held = undefined;
-        if (waiting !== undefined) {
-          await crossfadeTo(waiting.track, waiting.cycles, waiting.landOn, waiting.askedAt);
-        }
-      });
+      void schedule(alone(planned.next));
     }
   }, SWITCH_POLL_MS);
 
@@ -702,12 +761,12 @@ export async function startEngine(): Promise<void> {
         // From the top: a stopped scheduler counts cycles from 0 again.
         if (playing !== undefined && !scheduler.started) {
           playing.clock.origin = 0;
+          playing = { ...playing, gain: FULL };
           scheduler.setCps(playing.cps);
           await schedule(playing.pattern);
         }
         return;
       case "stop":
-        held = undefined;
         await fadeOut(FADE_OUT_SECONDS);
         if (switching !== undefined) {
           playing = switching.next;
@@ -734,8 +793,7 @@ export async function startEngine(): Promise<void> {
           const { pattern, cps, clock } = await compile(message.source, track.phraseCycles);
           clock.origin = track.clock.origin;
           switching = undefined;
-          held = undefined;
-          playing = { ...track, pattern, cps, clock };
+          playing = { ...track, pattern, cps, clock, gain: FULL };
           pins.reset();
           scheduler.setCps(cps);
           await schedule(pattern.late(clock.origin));

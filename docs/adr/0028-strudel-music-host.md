@@ -8,6 +8,9 @@ behind the numbers is commit
 on branch `bot/developer-2/issue-368-spike`. It is not merged. Step 4 (the
 host card) lifts from it.
 
+Superseded in part by ADR-0058: a track switch no longer overlaps two
+songs at one tempo.
+
 ## Context
 
 VibeWars wants music that feels like Guild Wars 1, in three ways:

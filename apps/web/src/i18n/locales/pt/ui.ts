@@ -424,6 +424,7 @@ export default {
   "cosmetics.item.trailFrost": "Rastro de geada",
   "cosmetics.item.trailMoss": "Rastro de musgo",
   "cosmetics.item.trailStarlight": "Rastro de luz estelar",
+  "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Bloqueado",
   "cosmetics.none": "Nenhum",
   "cosmetics.note":
@@ -439,7 +440,6 @@ export default {
     many: "{count} vitórias ranqueadas",
     other: "{count} vitórias ranqueadas",
   },
-  "cosmetics.showOthers": "Mostrar cosméticos de outros jogadores",
   "cosmetics.slot.aura": "Aura no chão",
   "cosmetics.slot.cape": "Padrão da capa",
   "cosmetics.slot.dissolve": "Dissolução na morte",
@@ -601,6 +601,11 @@ export default {
   "help.licences": "Licenças de terceiros",
   "help.pages": "páginas de ajuda",
   "help.source": "Código-fonte",
+  "help.trailer": "Trailer",
+  "help.trailerDownload": "Transferir",
+  "help.trailerInfo": "{seconds} s, cerca de {mb} MB",
+  "help.trailerOffline": "O trailer precisa de uma ligação à internet.",
+  "help.trailerVertical": "Versão para telemóvel (vertical)",
   "help.version": "VibeWars {release} · build {build}",
 
   "hud.aggression": "agr {ours} x {theirs}",
@@ -1716,7 +1721,6 @@ export default {
     "Ascensão dos Heróis é uma sequência de mapas, 8 contra 8, contra equipes da sua rodada. Vença e avance para o próximo mapa, até o Salão dos Heróis; perca e comece de novo.",
   "tutorial.menu.modes.hostedGame":
     "Uma Partida Hospedada é a sua própria sala: envie o link de convite aos amigos e escolha o mapa e o tamanho da equipe. Bots jogam em cada vaga que ninguém ocupar.",
-  "tutorial.menu.modes.open": "Abra o modo aceso na lateral.",
   "tutorial.menu.modes.randomArena":
     "Arena Aleatória é a luta mais rápida: seu próprio personagem, numa equipe de desconhecidos, 1v1, 2v2 ou 4v4. O mapa é sorteado para você, e cada vaga é um jogador de verdade.",
   "tutorial.menu.modes.teamArena":
@@ -1779,8 +1783,8 @@ export default {
   "tutorial.heal.ow": "Ai! A pedra me acertou. Uma ajudinha?",
   "tutorial.heal.praise": "Muito melhor, obrigado! Você também sabe curar.",
   "tutorial.learn": "Aprender a jogar",
-  "tutorial.look.hint": "Afasta o zoom e arrasta a vista para norte. Encontra o teletransportador!",
-  "tutorial.look.how": "A roda do rato faz zoom. Mantém o botão direito e arrasta para olhar.",
+  "tutorial.look.hint": "Arrasta a vista para norte. Encontra o teletransportador!",
+  "tutorial.look.how": "Mantém o botão direito e arrasta para olhar.",
   "tutorial.look.intro":
     "Talvez este teletransportador nos leve à volta do campo de batalha. Olha para norte!",
   "tutorial.look.praise": "Ali está! O nosso caminho à volta da luta.",
@@ -1815,7 +1819,7 @@ export default {
     "Primeiro toque no meu nome na lista do grupo. Toque em Grupo se a lista estiver fechada.",
   "tutorial.touch.healHow":
     "Toque em Grupo se a lista estiver fechada, depois no meu nome e depois na habilidade que brilha.",
-  "tutorial.touch.look": "Use dois dedos para zoom. Arraste um dedo para olhar.",
+  "tutorial.touch.look": "Arraste um dedo para olhar.",
   "tutorial.touch.pingHow": "Toque na bússola ou arraste nela para traçar uma linha.",
   "tutorial.touch.ratsHow": "Toque num rato para selecioná-lo.",
   "tutorial.touch.tunnelHow": "Toque nos degraus que descem, depois na marca após a outra ponta.",

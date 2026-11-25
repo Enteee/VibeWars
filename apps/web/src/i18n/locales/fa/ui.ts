@@ -402,6 +402,7 @@ export default {
   "cosmetics.item.trailFrost": "رد یخبندان",
   "cosmetics.item.trailMoss": "رد خزه",
   "cosmetics.item.trailStarlight": "رد نور ستارگان",
+  "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "قفل",
   "cosmetics.none": "هیچ",
   "cosmetics.note":
@@ -415,7 +416,6 @@ export default {
     one: "{count} برد رتبه‌بندی",
     other: "{count} برد رتبه‌بندی",
   },
-  "cosmetics.showOthers": "نمایش آرایه‌های بازیکنان دیگر",
   "cosmetics.slot.aura": "هاله زمینی",
   "cosmetics.slot.cape": "نقش شنل",
   "cosmetics.slot.dissolve": "محو شدن مرگ",
@@ -564,6 +564,11 @@ export default {
   "help.licences": "مجوزهای شخص ثالث",
   "help.pages": "صفحات راهنما",
   "help.source": "کد منبع",
+  "help.trailer": "تریلر",
+  "help.trailerDownload": "دانلود",
+  "help.trailerInfo": "{seconds} ثانیه، حدود {mb} مگابایت",
+  "help.trailerOffline": "تریلر به اتصال اینترنت نیاز دارد.",
+  "help.trailerVertical": "نسخهٔ گوشی (عمودی)",
   "help.version": "VibeWars {release} · بیلد {build}",
 
   "hud.aggression": "تهاجم {ours} مقابل {theirs}",
@@ -1635,7 +1640,6 @@ export default {
     "عروج قهرمانان رشته‌ای از نقشه‌هاست، 8 به 8، در برابر تیم‌های هم‌دور تو. اگر ببری به نقشهٔ بعدی می‌روی، تا تالار قهرمانان؛ اگر ببازی از نو شروع می‌کنی.",
   "tutorial.menu.modes.hostedGame":
     "بازی میزبانی‌شده لابی خود توست: لینک دعوت را برای دوستانت بفرست و نقشه و اندازهٔ تیم را برگزین. بات‌ها هر جایی را که کسی نگیرد بازی می‌کنند.",
-  "tutorial.menu.modes.open": "حالت روشن را در کنار باز کن.",
   "tutorial.menu.modes.randomArena":
     "آرنای تصادفی سریع‌ترین نبرد است: شخصیت خودت، در تیمی از غریبه‌ها، 1v1، 2v2 یا 4v4. نقشه برایت قرعه‌کشی می‌شود و هر جا یک بازیکن واقعی است.",
   "tutorial.menu.modes.teamArena":
@@ -1697,8 +1701,8 @@ export default {
   "tutorial.heal.ow": "آخ! سنگ به من خورد. کمکی می‌کنی؟",
   "tutorial.heal.praise": "خیلی بهتر شد، ممنون! تو شفادهنده هم هستی.",
   "tutorial.learn": "بازی را یاد بگیر",
-  "tutorial.look.hint": "دید را کوچک کن، بعد آن را به شمال بکش. تله‌پورت را پیدا کن!",
-  "tutorial.look.how": "چرخ ماوس بزرگ‌نمایی می‌کند. دکمهٔ راست را نگه دار و بکش تا نگاه کنی.",
+  "tutorial.look.hint": "دید را به شمال بکش. تله‌پورت را پیدا کن!",
+  "tutorial.look.how": "دکمهٔ راست را نگه دار و بکش تا نگاه کنی.",
   "tutorial.look.intro": "شاید این تله‌پورت ما را از کنار میدان نبرد ببرد. به شمال نگاه کن!",
   "tutorial.look.praise": "آنجاست! راه ما برای دور زدن نبرد.",
   "tutorial.offer": "تازه آمده‌ای؟ معلمت اصول را نشانت می‌دهد.",
@@ -1733,7 +1737,7 @@ export default {
   "tutorial.touch.healHint":
     "اول نامم را در فهرست گروه لمس کن. اگر فهرست بسته است، گروه را لمس کن.",
   "tutorial.touch.healHow": "اگر فهرست بسته است گروه را لمس کن، بعد نامم را، بعد مهارتِ درخشان را.",
-  "tutorial.touch.look": "دو انگشت را جمع و باز کن تا بزرگ‌نمایی شود. با یک انگشت بکش تا نگاه کنی.",
+  "tutorial.touch.look": "با یک انگشت بکش تا نگاه کنی.",
   "tutorial.touch.pingHow": "قطب‌نما را لمس کن، یا رویش بکش تا خطی بکشی.",
   "tutorial.touch.ratsHow": "یک موش را لمس کن تا هدفش بگیری.",
   "tutorial.touch.tunnelHow": "پله‌های پایین را لمس کن، بعد نشانهٔ آن سرِ تونل را.",

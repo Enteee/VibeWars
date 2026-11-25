@@ -245,10 +245,10 @@ describe("Way of the Assassin: criticalChanceBonusWeapon (#2275)", () => {
           makeCombatant({ id: "a", equipment, attributeRanks: ranked(rank) }),
           "way-of-the-assassin",
         );
-        expect(criticalChance(weaponSnapshotOf(sin), RULES.combat) - before).toBeCloseTo(
-          held ? bonus : 0,
-          9,
-        );
+        // Of the blows nothing else crits, it crits its share (#3984).
+        expect(
+          (criticalChance(weaponSnapshotOf(sin), RULES.combat) - before) / (1 - before),
+        ).toBeCloseTo(held ? bonus : 0, 9);
         expect(attackDurationSeconds(sin, 1)).toBeCloseTo(held ? multiplier : 1, 9);
       }
     },

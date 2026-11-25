@@ -418,6 +418,7 @@ export default {
   "cosmetics.item.trailFrost": "עקבות כפור",
   "cosmetics.item.trailMoss": "עקבות טחב",
   "cosmetics.item.trailStarlight": "עקבות אור כוכבים",
+  "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "נעול",
   "cosmetics.none": "ללא",
   "cosmetics.note":
@@ -433,7 +434,6 @@ export default {
     two: "{count} ניצחונות מדורגים",
     other: "{count} ניצחונות מדורגים",
   },
-  "cosmetics.showOthers": "הצגת פריטים קוסמטיים של שחקנים אחרים",
   "cosmetics.slot.aura": "הילת קרקע",
   "cosmetics.slot.cape": "דוגמת גלימה",
   "cosmetics.slot.dissolve": "התפוגגות במוות",
@@ -595,6 +595,11 @@ export default {
   "help.licences": "רישיונות צד שלישי",
   "help.pages": "דפי עזרה",
   "help.source": "קוד מקור",
+  "help.trailer": "טריילר",
+  "help.trailerDownload": "הורדה",
+  "help.trailerInfo": "{seconds} שנ׳, כ-{mb} MB",
+  "help.trailerOffline": "הטריילר דורש חיבור לאינטרנט.",
+  "help.trailerVertical": "גרסה לטלפון (אנכית)",
   "help.version": "VibeWars {release} · בנייה {build}",
 
   "hud.aggression": "תוק׳ {ours} מול {theirs}",
@@ -1695,7 +1700,6 @@ export default {
     "עליית הגיבורים היא סדרת מפות, 8 מול 8, מול קבוצות בסיבוב שלכם. נצחו ותעברו למפה הבאה, עד היכל הגיבורים; הפסידו ותתחילו מחדש.",
   "tutorial.menu.modes.hostedGame":
     "משחק מאורח הוא הלובי שלכם: שלחו לחברים את קישור ההזמנה, ובחרו את המפה ואת גודל הקבוצה. בוטים משחקים בכל מקום שאף אחד לא תופס.",
-  "tutorial.menu.modes.open": "פתחו את דרך המשחק המוארת בצד.",
   "tutorial.menu.modes.randomArena":
     "זירה אקראית היא הקרב המהיר ביותר: הדמות שלכם, בקבוצה של זרים, 1v1, 2v2 או 4v4. המפה מוגרלת בשבילכם, וכל מקום הוא שחקן אמיתי.",
   "tutorial.menu.modes.teamArena":
@@ -1756,8 +1760,8 @@ export default {
   "tutorial.heal.ow": "אוי! הסלע פגע בי. קצת עזרה?",
   "tutorial.heal.praise": "הרבה יותר טוב, תודה! אתה גם מרפא.",
   "tutorial.learn": "ללמוד לשחק",
-  "tutorial.look.hint": "התרחק, ואז גרור את המבט צפונה. מצא את השוגר!",
-  "tutorial.look.how": "גלגלת העכבר מתקרבת ומתרחקת. החזק את הכפתור הימני וגרור כדי להסתכל.",
+  "tutorial.look.hint": "גרור את המבט צפונה. מצא את השוגר!",
+  "tutorial.look.how": "החזק את הכפתור הימני וגרור כדי להסתכל.",
   "tutorial.look.intro": "אולי השוגר הזה יוביל אותנו מסביב לשדה הקרב. הבט צפונה!",
   "tutorial.look.praise": "הנה הוא! הדרך שלנו מסביב לקרב.",
   "tutorial.offer": "חדש כאן? המורה שלך יראה לך את הבסיס.",
@@ -1788,7 +1792,7 @@ export default {
   "tutorial.touch.climbUnder": "לחץ לחיצה ארוכה. הטבעת המקווקוות נמצאת מתחתיך.",
   "tutorial.touch.healHint": "קודם גע בשם שלי ברשימת הקבוצה. גע בחבורה אם הרשימה סגורה.",
   "tutorial.touch.healHow": "גע בחבורה אם הרשימה סגורה, אחר כך בשם שלי, ואז במיומנות הזוהרת.",
-  "tutorial.touch.look": "צבוט כדי להתקרב. גרור באצבע אחת כדי להסתכל.",
+  "tutorial.touch.look": "גרור באצבע אחת כדי להסתכל.",
   "tutorial.touch.pingHow": "גע במצפן, או גרור עליו כדי לצייר קו.",
   "tutorial.touch.ratsHow": "גע בחולדה כדי לסמן אותה.",
   "tutorial.touch.tunnelHow": "גע במדרגות למטה, ואז בסימן שמעבר לקצה השני.",

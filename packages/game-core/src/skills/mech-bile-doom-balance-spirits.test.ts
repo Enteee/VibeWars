@@ -414,8 +414,8 @@ describe("Grenth's Balance (#2321)", () => {
 
 describe("Nature's Renewal (#2321)", () => {
   it.each([
-    [12, 1.7, 210, 198],
-    [0, 1.5, 70, 30],
+    [12, 1.7, 160, 198],
+    [0, 1.5, 20, 30],
   ])(
     "at Wilderness Survival %i: enchantments and hexes x%f, a %i-Health spirit for %i s",
     (rank, multiplier, health, seconds) => {

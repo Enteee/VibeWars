@@ -345,10 +345,11 @@ describe("Ghostly Haste (#2504)", () => {
 });
 
 describe("Way of the Master (#2504)", () => {
+  /** The share of the blows nothing else crit that the stance crits (#3984). */
   const bonus = (bearer: Combatant): number => {
     const bare = criticalChance(weaponSnapshotOf(bearer), RULES);
     wearing(bearer, "way-of-the-master", bearer.attributeRanks.get("assassin.critical-strikes"));
-    return criticalChance(weaponSnapshotOf(bearer), RULES) - bare;
+    return (criticalChance(weaponSnapshotOf(bearer), RULES) - bare) / (1 - bare);
   };
 
   it.each([

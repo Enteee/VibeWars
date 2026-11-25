@@ -424,6 +424,7 @@ export default {
   "cosmetics.item.trailFrost": "Urmă de brumă",
   "cosmetics.item.trailMoss": "Urmă de mușchi",
   "cosmetics.item.trailStarlight": "Urmă de lumina stelelor",
+  "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Blocat",
   "cosmetics.none": "Niciunul",
   "cosmetics.note":
@@ -439,7 +440,6 @@ export default {
     few: "{count} victorii clasate",
     other: "{count} de victorii clasate",
   },
-  "cosmetics.showOthers": "Arată elementele cosmetice ale altor jucători",
   "cosmetics.slot.aura": "Aură la sol",
   "cosmetics.slot.cape": "Model de pelerină",
   "cosmetics.slot.dissolve": "Destrămare la moarte",
@@ -601,6 +601,11 @@ export default {
   "help.licences": "Licențe terțe",
   "help.pages": "pagini de ajutor",
   "help.source": "Cod sursă",
+  "help.trailer": "Trailer",
+  "help.trailerDownload": "Descarcă",
+  "help.trailerInfo": "{seconds} s, circa {mb} MB",
+  "help.trailerOffline": "Trailerul necesită o conexiune la internet.",
+  "help.trailerVertical": "Versiune pentru telefon (verticală)",
   "help.version": "VibeWars {release} · versiunea {build}",
 
   "hud.aggression": "agr {ours} v {theirs}",
@@ -1723,7 +1728,6 @@ export default {
     "Ascensiunea Eroilor e un șir de hărți, 8 contra 8, contra echipelor din runda ta. Dacă câștigi, treci la harta următoare, până la Sala Eroilor; dacă pierzi, o iei de la capăt.",
   "tutorial.menu.modes.hostedGame":
     "Un Joc găzduit e propriul tău lobby: trimite prietenilor linkul de invitație și alege harta și mărimea echipei. Boții joacă fiecare loc pe care nu-l ia nimeni.",
-  "tutorial.menu.modes.open": "Deschide modul luminat de pe margine.",
   "tutorial.menu.modes.randomArena":
     "Arena aleatorie e cea mai rapidă luptă: propriul tău personaj, într-o echipă de străini, 1v1, 2v2 sau 4v4. Harta se trage la sorți pentru tine, și fiecare loc e un jucător real.",
   "tutorial.menu.modes.teamArena":
@@ -1786,9 +1790,8 @@ export default {
   "tutorial.heal.ow": "Au! M-a lovit piatra. Mă ajuți puțin?",
   "tutorial.heal.praise": "Mult mai bine, mulțumesc! Știi și să vindeci.",
   "tutorial.learn": "Învață să joci",
-  "tutorial.look.hint": "Micșorează, apoi trage imaginea spre nord. Găsește teleportorul!",
-  "tutorial.look.how":
-    "Rotița mouse-ului face zoom. Ține apăsat butonul drept și trage ca să privești.",
+  "tutorial.look.hint": "Trage imaginea spre nord. Găsește teleportorul!",
+  "tutorial.look.how": "Ține apăsat butonul drept și trage ca să privești.",
   "tutorial.look.intro":
     "Poate acest teleportor ne duce pe lângă câmpul de luptă. Privește spre nord!",
   "tutorial.look.praise": "Iată-l! Drumul nostru pe lângă luptă.",
@@ -1824,7 +1827,7 @@ export default {
     "Mai întâi atinge numele meu în lista grupului. Atinge Grup dacă lista e închisă.",
   "tutorial.touch.healHow":
     "Atinge Grup dacă lista e închisă, apoi numele meu, apoi abilitatea care strălucește.",
-  "tutorial.touch.look": "Ciupește ca să faci zoom. Trage cu un deget ca să privești.",
+  "tutorial.touch.look": "Trage cu un deget ca să privești.",
   "tutorial.touch.pingHow": "Atinge busola sau trage pe ea ca să desenezi o linie.",
   "tutorial.touch.ratsHow": "Atinge un șobolan ca să-l țintești.",
   "tutorial.touch.tunnelHow": "Atinge treptele în jos, apoi semnul de dincolo de capătul celălalt.",

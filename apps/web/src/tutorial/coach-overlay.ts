@@ -1,5 +1,5 @@
 import { t } from "../i18n/index.js";
-import { button, h, inlineConfirm, PUTS_AWAY, TUCKED_BEHIND } from "../ui/kit.js";
+import { button, DRAWER_INSIDE, h, inlineConfirm, PUTS_AWAY, TUCKED_BEHIND } from "../ui/kit.js";
 
 /**
  * The menu quest's coach (#3540): the menu dimmed but for a lit cut-out
@@ -241,6 +241,7 @@ export function mountCoachOverlay(
 ): CoachOverlay {
   const doc = root.ownerDocument;
   const coach = h("div", "coach");
+  coach.setAttribute(DRAWER_INSIDE, "");
   const dim = coach.appendChild(h("div", "coach-dim"));
   const hole = coach.appendChild(h("div", "coach-hole"));
   hole.hidden = true;
