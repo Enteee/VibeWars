@@ -190,7 +190,7 @@ describe("Soul Bind (#1913)", () => {
     bearer.statuses.apply("soul-bind", 30, "n", NO_RANKS);
     bearer.statuses.drainChanges();
     const heal = (amount: number) =>
-      applyEffects([{ kind: "heal", amount: { flat: amount } }], {
+      applyEffects([{ kind: "heal", received: "heal", amount: { flat: amount } }], {
         caster: healer,
         target: bearer,
         rng: createRng(1),

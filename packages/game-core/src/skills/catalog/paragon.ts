@@ -1774,6 +1774,7 @@ export const PARAGON_SKILLS: readonly Skill[] = [
     effects: [
       {
         kind: "heal",
+        received: "gain",
         amount: { scaling: { attributeId: "paragon.leadership", atZero: 30, atTwelve: 66 } },
         perAlly: {
           amount: { scaling: { attributeId: "paragon.leadership", atZero: 10, atTwelve: 18 } },
@@ -2433,6 +2434,7 @@ export const PARAGON_SKILLS: readonly Skill[] = [
     effects: [
       {
         kind: "heal",
+        received: "heal",
         amount: { scaling: { attributeId: "paragon.motivation", atZero: 40, atTwelve: 88 } },
       },
       {
@@ -2441,6 +2443,7 @@ export const PARAGON_SKILLS: readonly Skill[] = [
         effects: [
           {
             kind: "heal",
+            received: "heal",
             amount: { scaling: { attributeId: "paragon.motivation", atZero: 40, atTwelve: 88 } },
             recipient: "caster",
           },
@@ -2996,6 +2999,7 @@ export const PARAGON_SKILLS: readonly Skill[] = [
     effects: [
       {
         kind: "heal",
+        received: "gain",
         amount: { scaling: { attributeId: "paragon.command", atZero: 5, atTwelve: 41 } },
       },
       {

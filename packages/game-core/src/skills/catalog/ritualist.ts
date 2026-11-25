@@ -74,6 +74,7 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
     effects: [
       {
         kind: "heal",
+        received: "heal",
         amount: {
           scaling: { attributeId: "ritualist.restoration-magic", atZero: 20, atTwelve: 96 },
         },
@@ -114,6 +115,7 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
       },
       {
         kind: "heal",
+        received: "heal",
         amount: {
           scaling: { attributeId: "ritualist.restoration-magic", atZero: 60, atTwelve: 156 },
         },
@@ -148,6 +150,7 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
     effects: [
       {
         kind: "heal",
+        received: "heal",
         amount: {
           scaling: { attributeId: "ritualist.restoration-magic", atZero: 15, atTwelve: 51 },
         },
@@ -158,6 +161,7 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
         effects: [
           {
             kind: "heal",
+            received: "heal",
             amount: {
               scaling: { attributeId: "ritualist.restoration-magic", atZero: 15, atTwelve: 63 },
             },
@@ -388,6 +392,7 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
     effects: [
       {
         kind: "heal",
+        received: "heal",
         amount: {
           scaling: { attributeId: "ritualist.restoration-magic", atZero: 15, atTwelve: 68 },
         },
@@ -920,6 +925,7 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
     effects: [
       {
         kind: "heal",
+        received: "heal",
         amount: {
           scaling: { attributeId: "ritualist.spawning-power", atZero: 30, atTwelve: 198 },
         },
@@ -1038,6 +1044,7 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
       { kind: "destroy-allied-spirits", radius: AREA_NEARBY },
       {
         kind: "heal",
+        received: "heal",
         perDestroyedSpirit: true,
         amount: {
           scaling: { attributeId: "ritualist.spawning-power", atZero: 50, atTwelve: 90 },
@@ -2581,6 +2588,7 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
         effects: [
           {
             kind: "heal",
+            received: "gain",
             amount: {
               scaling: { attributeId: "ritualist.channeling-magic", atZero: 20, atTwelve: 56 },
             },
@@ -3030,6 +3038,7 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
     effects: [
       {
         kind: "heal",
+        received: "heal",
         amount: {
           scaling: { attributeId: "ritualist.restoration-magic", atZero: 10, atTwelve: 82 },
         },
@@ -3070,6 +3079,7 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
     effects: [
       {
         kind: "heal",
+        received: "heal",
         amount: {
           scaling: { attributeId: "ritualist.restoration-magic", atZero: 15, atTwelve: 75 },
         },
@@ -3080,6 +3090,7 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
         effects: [
           {
             kind: "heal",
+            received: "heal",
             amount: {
               scaling: { attributeId: "ritualist.restoration-magic", atZero: 15, atTwelve: 75 },
             },
@@ -4162,6 +4173,7 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
           { kind: "energy-gain", amount: { flat: 7 } },
           {
             kind: "heal",
+            received: "gain",
             amount: {
               scaling: { attributeId: "ritualist.channeling-magic", atZero: 5, atTwelve: 41 },
             },

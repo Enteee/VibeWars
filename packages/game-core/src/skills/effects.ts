@@ -78,6 +78,7 @@ import {
   type SkillContext,
   type EffectCondition,
   type HealEffect,
+  type HealReceived,
   type InterruptEffect,
   type Magnitude,
   type PerCount,
@@ -481,7 +482,7 @@ function landDamage(
   }
   // Angelic Protection (#2503): what takes the last second over its cap
   // is healed at once, after the packet answered everything it answers.
-  applyHeal(target, target.statuses.damageOverCap(applied), events);
+  applyHeal(target, target.statuses.damageOverCap(applied), events, "heal");
 }
 
 /**
@@ -545,7 +546,8 @@ function reverse(target: Combatant, amount: number, events: CombatEvent[]): bool
     return false;
   }
   events.push({ kind: "status-expired", targetId: target.id, statusId: reversal.id });
-  applyHeal(target, Math.min(amount, reversal.cap), events);
+  // "Gains that amount of Health instead" (#3999).
+  applyHeal(target, Math.min(amount, reversal.cap), events, "gain");
   return true;
 }
 
@@ -580,7 +582,7 @@ function turnToHealing(target: Combatant, amount: number, events: CombatEvent[])
   if (cap === undefined) {
     return false;
   }
-  applyHeal(target, Math.min(amount, cap), events);
+  applyHeal(target, Math.min(amount, cap), events, "heal");
   return true;
 }
 
@@ -637,16 +639,21 @@ function healAmount(
 }
 
 /**
- * A heal from a skill: weakened by the target's healing reduction (deep
- * wound), and clamped so it never exceeds the effective maximum health.
- * The dead stay dead.
+ * Health from a skill: a `heal` weakened by the target's healing
+ * reduction (deep wound), a `gain` not (#3999), and either clamped so it
+ * never exceeds the effective maximum health. The dead stay dead.
  */
-function applyHeal(target: Combatant, amount: number, events: CombatEvent[]): void {
+function applyHeal(
+  target: Combatant,
+  amount: number,
+  events: CombatEvent[],
+  received: HealReceived,
+): void {
   if (amount <= 0 || target.dead) {
     return;
   }
   const applied = Math.min(
-    amount * healingMultiplierOf(target),
+    received === "heal" ? amount * healingMultiplierOf(target) : amount,
     effectiveMaxHealth(target) - target.health,
   );
   if (applied <= 0) {
@@ -2113,30 +2120,37 @@ export function applyEffect(
       }
       // Healer's Covenant's "heal 20% less" (#1761); the favor bonus as
       // the cast's own (#2446).
-      const heal =
-        ownHeal(
-          perEnergyLost(
+      const main = ownHeal(
+        perEnergyLost(
+          effect,
+          healAmount(
             effect,
-            healAmount(
-              effect,
-              caster,
-              target,
-              context,
-              earlier,
-              context.usedSkill,
-              context.ranksFrom ?? caster,
-            ),
-            lostBy,
+            caster,
+            target,
+            context,
             earlier,
+            context.usedSkill,
+            context.ranksFrom ?? caster,
           ),
-          context.own,
-        ) + ownFavorHeal(favorBonus(effect, caster, healed, context.skillId), context.own);
+          lostBy,
+          earlier,
+        ),
+        context.own,
+      );
+      // The Divine Favor bonus is healing even beside a gain (#3999):
+      // scaled here, so the sum goes through as a gain.
+      const bonus = ownFavorHeal(favorBonus(effect, caster, healed, context.skillId), context.own);
+      const heal = main + bonus;
       // Soul Bind's "whenever target foe is healed by a skill" (#1913),
       // at full Health too: the heal counts, not the Health it gained.
       if (heal > 0) {
         healed.statuses.recordHealedBySkill(caster.id);
       }
-      applyHeal(healed, heal, events);
+      if (effect.received === "heal") {
+        applyHeal(healed, heal, events, "heal");
+      } else {
+        applyHeal(healed, main + bonus * healingMultiplierOf(healed), events, "gain");
+      }
       return events;
     }
 
@@ -2342,6 +2356,7 @@ export function applyEffect(
         target,
         Math.round((lost * resolveMagnitude(effect.healPercent, caster)) / 100),
         events,
+        "heal",
       );
       return events;
     }
@@ -2518,7 +2533,13 @@ export function applyEffect(
         }
       }
       if (effect.healPerCondition !== undefined && moved.length > 0) {
-        applyHeal(caster, resolveMagnitude(effect.healPerCondition, caster) * moved.length, events);
+        // "You gain N Health for each condition" (#3999).
+        applyHeal(
+          caster,
+          resolveMagnitude(effect.healPerCondition, caster) * moved.length,
+          events,
+          "gain",
+        );
       }
       return events;
     }
@@ -2921,7 +2942,7 @@ export function applyEffect(
       if (heal > 0) {
         target.statuses.recordHealedBySkill(caster.id);
       }
-      applyHeal(target, heal, events);
+      applyHeal(target, heal, events, "heal");
       return events;
     }
 
@@ -3105,7 +3126,7 @@ export function applyEffect(
         target.team === MASTERLESS_TEAM &&
         context.surroundings.get(target.id)?.creature?.kind === "minion"
       ) {
-        applyHeal(target, resolveMagnitude(effect.heal, caster), events);
+        applyHeal(target, resolveMagnitude(effect.heal, caster), events, "heal");
       }
       return events;
     case "recharge-faster":
@@ -4174,6 +4195,7 @@ export function resolveSkillEffects(
         own,
       ),
       events,
+      "heal",
     );
   }
   return {

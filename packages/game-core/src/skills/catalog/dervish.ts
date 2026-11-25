@@ -395,6 +395,7 @@ export const DERVISH_SKILLS: readonly Skill[] = [
       },
       {
         kind: "heal",
+        received: "heal",
         amount: { scaling: { attributeId: "dervish.earth-prayers", atZero: 30, atTwelve: 126 } },
       },
       {
@@ -433,6 +434,7 @@ export const DERVISH_SKILLS: readonly Skill[] = [
     effects: [
       {
         kind: "heal",
+        received: "gain",
         recipient: "caster",
         amount: { scaling: { attributeId: "dervish.wind-prayers", atZero: 80, atTwelve: 136 } },
       },
@@ -609,6 +611,7 @@ export const DERVISH_SKILLS: readonly Skill[] = [
         effects: [
           {
             kind: "heal",
+            received: "gain",
             recipient: "caster",
             amount: {
               scaling: { attributeId: "dervish.scythe-mastery", atZero: 30, atTwelve: 70 },
@@ -2583,6 +2586,7 @@ export const DERVISH_SKILLS: readonly Skill[] = [
     effects: [
       {
         kind: "heal",
+        received: "heal",
         amount: { scaling: { attributeId: "dervish.wind-prayers", atZero: 50, atTwelve: 146 } },
       },
     ],
@@ -2617,6 +2621,7 @@ export const DERVISH_SKILLS: readonly Skill[] = [
     effects: [
       {
         kind: "heal",
+        received: "heal",
         amount: { scaling: { attributeId: "dervish.wind-prayers", atZero: 5, atTwelve: 53 } },
       },
       {
@@ -2628,6 +2633,7 @@ export const DERVISH_SKILLS: readonly Skill[] = [
         effects: [
           {
             kind: "heal",
+            received: "heal",
             amount: { scaling: { attributeId: "dervish.wind-prayers", atZero: 5, atTwelve: 53 } },
           },
         ],
@@ -2662,6 +2668,7 @@ export const DERVISH_SKILLS: readonly Skill[] = [
     effects: [
       {
         kind: "heal",
+        received: "heal",
         amount: { scaling: { attributeId: "dervish.mysticism", atZero: 5, atTwelve: 41 } },
         ofCasterHealth: { max: 300 },
       },
@@ -2872,6 +2879,7 @@ export const DERVISH_SKILLS: readonly Skill[] = [
     effects: [
       {
         kind: "heal",
+        received: "heal",
         amount: { flat: 0 },
         per: {
           count: { kind: "statuses", on: "caster", categories: ["enchantment"] },
@@ -3178,6 +3186,7 @@ export const DERVISH_SKILLS: readonly Skill[] = [
       onRelease: [
         {
           kind: "heal",
+          received: "gain",
           recipient: "caster",
           amount: { scaling: { attributeId: "dervish.scythe-mastery", atZero: 10, atTwelve: 18 } },
         },
@@ -3188,6 +3197,7 @@ export const DERVISH_SKILLS: readonly Skill[] = [
           effects: [
             {
               kind: "heal",
+              received: "gain",
               recipient: "caster",
               amount: {
                 scaling: { attributeId: "dervish.scythe-mastery", atZero: 10, atTwelve: 26 },

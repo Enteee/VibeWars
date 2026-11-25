@@ -99,6 +99,14 @@ describe("damage or life steal from a foe (#1022)", () => {
     applyEffect(hit, ctx);
     expect(offenders()).toEqual([]);
   });
+
+  it("gives the reversed amount whole under Mark of Death (#3999): a gain, not a heal", () => {
+    const target = makeCombatant({ id: "target", health: 200, maxHealth: 480 });
+    target.statuses.apply("mark-of-death", 10, "foe", NO_RANKS);
+    target.statuses.apply("reversal-of-fortune", 8, "monk", NO_RANKS);
+    applyDamage(target, 10, "fire", false, [], undefined);
+    expect(target.health).toBe(210);
+  });
 });
 
 describe("Symbiotic Bond's redirect (#1108)", () => {
@@ -317,27 +325,27 @@ describe("heal effect", () => {
   it("restores health", () => {
     const target = makeCombatant({ id: "target", team: 1, health: 300 });
     const ctx = context(makeCombatant({ id: "caster" }), target);
-    applyEffect({ kind: "heal", amount: { flat: 100 } }, ctx);
+    applyEffect({ kind: "heal", received: "heal", amount: { flat: 100 } }, ctx);
     expect(target.health).toBe(400);
   });
 
   it("never exceeds maximum health", () => {
     const target = makeCombatant({ id: "target", team: 1, health: 480 });
     const ctx = context(makeCombatant({ id: "caster" }), target);
-    const events = applyEffect({ kind: "heal", amount: { flat: 100 } }, ctx);
+    const events = applyEffect({ kind: "heal", received: "heal", amount: { flat: 100 } }, ctx);
     expect(target.health).toBe(500);
     expect(events).toContainEqual({ kind: "heal", targetId: "target", amount: 20 });
   });
 
   it("emits nothing when already at full health", () => {
     const ctx = context();
-    expect(applyEffect({ kind: "heal", amount: { flat: 100 } }, ctx)).toEqual([]);
+    expect(applyEffect({ kind: "heal", received: "heal", amount: { flat: 100 } }, ctx)).toEqual([]);
   });
 
   it("cannot resurrect a dead target", () => {
     const target = makeCombatant({ id: "target", team: 1, health: 0, dead: true });
     const ctx = context(makeCombatant({ id: "caster" }), target);
-    expect(applyEffect({ kind: "heal", amount: { flat: 100 } }, ctx)).toEqual([]);
+    expect(applyEffect({ kind: "heal", received: "heal", amount: { flat: 100 } }, ctx)).toEqual([]);
     expect(target.health).toBe(0);
     expect(target.dead).toBe(true);
   });
@@ -400,12 +408,31 @@ describe("deep wound (#764)", () => {
     const target = woundedAt(200);
     target.statuses.apply("deep-wound", 20, "caster", NO_RANKS);
     const ctx = context(makeCombatant({ id: "caster" }), target);
-    const events = applyEffect({ kind: "heal", amount: { flat: 100 } }, ctx);
+    const events = applyEffect({ kind: "heal", received: "heal", amount: { flat: 100 } }, ctx);
     expect(target.health).toBe(280);
     expect(events).toContainEqual({ kind: "heal", targetId: "target", amount: 80 });
     target.health = 350;
-    applyEffect({ kind: "heal", amount: { flat: 100 } }, ctx);
+    applyEffect({ kind: "heal", received: "heal", amount: { flat: 100 } }, ctx);
     expect(target.health).toBe(384);
+  });
+
+  it("leaves a Health gain whole (#3999): 'gains N Health' is not healing", () => {
+    const target = woundedAt(200);
+    target.statuses.apply("deep-wound", 20, "caster", NO_RANKS);
+    const events = applyEffect(
+      { kind: "heal", received: "gain", amount: { flat: 100 } },
+      context(makeCombatant({ id: "caster" }), target),
+    );
+    expect(target.health).toBe(300);
+    expect(events).toContainEqual({ kind: "heal", targetId: "target", amount: 100 });
+  });
+
+  it("leaves Health regeneration whole (#3999)", () => {
+    const target = woundedAt(200);
+    target.statuses.apply("deep-wound", 20, "caster", NO_RANKS);
+    target.statuses.apply("spirit-light-weapon", 20, "caster", NO_RANKS);
+    advanceStatuses(target, 1, 0);
+    expect(target.health).toBeCloseTo(221, 9);
   });
 
   it("leaves regeneration pips at full strength", () => {
@@ -683,6 +710,7 @@ describe("energy-loss effect (#793)", () => {
   it("heals perEnergyLost: 3 lost, 3 times the amount; none lost, no heal (#1627)", () => {
     const heal: SkillEffect = {
       kind: "heal",
+      received: "heal",
       amount: { flat: 56 },
       recipient: "caster",
       perEnergyLost: true,
@@ -809,7 +837,7 @@ describe("applyEffects", () => {
     const events = applyEffects(
       [
         { kind: "sacrifice-health", percentOfMax: 10 },
-        { kind: "heal", amount: { flat: 100 } },
+        { kind: "heal", received: "heal", amount: { flat: 100 } },
       ],
       ctx,
     );
@@ -1152,7 +1180,7 @@ describe("if effects (#521)", () => {
     const caster = makeCombatant({ id: "caster", health: 100 });
     const target = makeCombatant({ id: "target", team: 1, health: 100 });
     const events = applyEffect(
-      { kind: "heal", recipient: "caster", amount: { flat: 40 } },
+      { kind: "heal", received: "heal", recipient: "caster", amount: { flat: 40 } },
       { surroundings: new Map(), caster, target, rng: createRng(1), rules },
     );
     expect(events).toEqual([{ kind: "heal", targetId: "caster", amount: 40 }]);
@@ -1164,6 +1192,7 @@ describe("state conditions (#794)", () => {
   const rules = MINIMAL_GW_INSPIRED_PVP_V1.combat;
   const heal = (flat: number): UnconditionalEffect => ({
     kind: "heal",
+    received: "heal",
     amount: { flat },
   });
   /** Heals 10, and 100 more if `condition` holds. */
@@ -1716,7 +1745,7 @@ describe("an invulnerable target (#1208)", () => {
   it("is healed by an ally as ever, and says nothing of invulnerability (#1233)", () => {
     const ally = makeCombatant({ id: "target", team: 0, health: 100, invulnerableRemaining: 3 });
     const events = applyEffect(
-      { kind: "heal", amount: { flat: 50 } },
+      { kind: "heal", received: "heal", amount: { flat: 50 } },
       context(makeCombatant({ id: "caster" }), ally),
     );
     expect(events.some(({ kind }) => kind === "invulnerable")).toBe(false);
@@ -1741,6 +1770,7 @@ describe("removing by what an earlier removal took (#1205)", () => {
     }) as const;
   const healPerEnchantment = {
     kind: "heal",
+    received: "heal",
     amount: { flat: 50 },
     perRemoved: "enchantment",
   } as const;
@@ -1963,6 +1993,7 @@ describe("perUsedSkillEnergy (#1614)", () => {
         { kind: "energy-gain", amount: { flat: 0.3 }, perUsedSkillEnergy: true },
         {
           kind: "heal",
+          received: "heal",
           amount: { flat: 3.6 },
           recipient: "caster",
           perUsedSkillEnergy: true,
@@ -2037,6 +2068,7 @@ describe("healing for a removed status of one id (#2453)", () => {
   const removeOne = { kind: "remove-status", category: "condition", count: 1 } as const;
   const healIfBurning = {
     kind: "heal",
+    received: "heal",
     amount: { flat: 82 },
     perRemoved: "condition",
     perRemovedStatusId: "burning",
@@ -2063,7 +2095,12 @@ describe("healing for a removed status of one id (#2453)", () => {
   });
 
   it("leaves a heal per removed category as it was", () => {
-    const perCondition = { kind: "heal", amount: { flat: 82 }, perRemoved: "condition" } as const;
+    const perCondition = {
+      kind: "heal",
+      received: "heal",
+      amount: { flat: 82 },
+      perRemoved: "condition",
+    } as const;
     expect(heals(applyEffects([removeOne, perCondition], sufferingFrom("bleeding")))).toEqual([
       { kind: "heal", targetId: "ally", amount: 82 },
     ]);

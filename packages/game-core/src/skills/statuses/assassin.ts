@@ -88,7 +88,7 @@ export const ASSASSIN_STATUSES: Readonly<Record<AssassinStatusId, StatusDefiniti
           {
             kind: "if",
             condition: { kind: "target-attacking" },
-            effects: [{ kind: "heal", amount: { flat: 88 } }],
+            effects: [{ kind: "heal", received: "gain", amount: { flat: 88 } }],
           },
         ],
         target: "bearer",

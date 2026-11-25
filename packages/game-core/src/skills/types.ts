@@ -268,9 +268,18 @@ export interface PerCount {
   readonly max: Magnitude | undefined;
 }
 
+/** Healing, or Health gain, as GW1 tells them apart (#3999). */
+export type HealReceived = "heal" | "gain";
+
 export interface HealEffect {
   readonly kind: "heal";
   readonly amount: Magnitude;
+  /**
+   * How the GW1 text gives it (#3999): "is healed for" is `heal`, which
+   * the healed one's healing modifiers (Deep Wound, Mark of Death, Life
+   * Attunement…) scale; "gains N Health" is `gain`, which they do not.
+   */
+  readonly received: HealReceived;
   /**
    * `caster`: the caster is healed, as Drain Enchantment's "you gain N
    * Health" (#521). `companion`: the caster's living pet, Companionship's

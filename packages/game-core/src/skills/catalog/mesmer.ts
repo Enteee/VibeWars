@@ -261,6 +261,7 @@ export const MESMER_SKILLS: readonly Skill[] = [
           },
           {
             kind: "heal",
+            received: "gain",
             recipient: "caster",
             amount: {
               scaling: { attributeId: "mesmer.inspiration-magic", atZero: 40, atTwelve: 104 },
@@ -2066,6 +2067,7 @@ export const MESMER_SKILLS: readonly Skill[] = [
       { kind: "energy-loss", amount: { flat: 3 } },
       {
         kind: "heal",
+        received: "heal",
         amount: { scaling: { attributeId: "mesmer.inspiration-magic", atZero: 20, atTwelve: 56 } },
         recipient: "caster",
         perEnergyLost: true,
@@ -4410,7 +4412,7 @@ export const MESMER_SKILLS: readonly Skill[] = [
       {
         kind: "if",
         condition: { kind: "target-has-status", statusId: "illusion-of-pain" },
-        effects: [{ kind: "heal", amount: ILLUSION_OF_PAIN_HEAL }],
+        effects: [{ kind: "heal", received: "heal", amount: ILLUSION_OF_PAIN_HEAL }],
       },
       { kind: "apply-status", statusId: "illusion-of-pain", durationSeconds: { flat: 8 } },
     ],

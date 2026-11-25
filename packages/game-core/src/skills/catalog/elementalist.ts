@@ -5100,6 +5100,7 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
             effects: [
               {
                 kind: "heal",
+                received: "heal",
                 amount: {
                   scaling: { attributeId: "elementalist.fire-magic", atZero: 20, atTwelve: 68 },
                 },
@@ -6452,6 +6453,7 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
       },
       {
         kind: "heal",
+        received: "gain",
         amount: { flat: 0 },
         per: { count: { kind: "overcast" }, amount: { flat: 5 }, max: undefined },
       },

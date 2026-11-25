@@ -2960,13 +2960,16 @@ export class MatchSimulation {
       if (pick === undefined) {
         continue;
       }
-      const events = applyEffects([{ kind: "heal", amount: { flat: pulse.heal } }], {
-        caster: record.combatant,
-        target: pick.combatant,
-        rng: this.#rng,
-        rules: this.#ruleset.combat,
-        surroundings: this.#participants,
-      });
+      const events = applyEffects(
+        [{ kind: "heal", received: "heal", amount: { flat: pulse.heal } }],
+        {
+          caster: record.combatant,
+          target: pick.combatant,
+          rng: this.#rng,
+          rules: this.#ruleset.combat,
+          surroundings: this.#participants,
+        },
+      );
       this.#logFired([{ sourceId: record.id, skillId: record.creature.skillId, events }]);
     }
   }
@@ -3322,7 +3325,7 @@ export class MatchSimulation {
               }
             : burst.effect === "damage"
               ? { kind: "damage", amount: { flat: amount }, type: "typeless", armorPenetration: 0 }
-              : { kind: "heal", amount: { flat: amount } };
+              : { kind: "heal", received: "heal", amount: { flat: amount } };
       const events: CombatEvent[] = [];
       for (const other of this.#participants.values()) {
         const ally = other.combatant.team === spirit.combatant.team;

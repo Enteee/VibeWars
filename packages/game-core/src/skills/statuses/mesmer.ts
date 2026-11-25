@@ -282,6 +282,7 @@ export const MESMER_STATUSES: Readonly<Record<MesmerStatusId, StatusDefinition>>
         effects: [
           {
             kind: "heal",
+            received: "gain",
             amount: {
               scaling: { attributeId: "mesmer.inspiration-magic", atZero: 5, atTwelve: 49 },
             },
@@ -718,6 +719,7 @@ export const MESMER_STATUSES: Readonly<Record<MesmerStatusId, StatusDefinition>>
         effects: [
           {
             kind: "heal",
+            received: "gain",
             amount: {
               scaling: { attributeId: "mesmer.illusion-magic", atZero: 50, atTwelve: 202 },
             },
@@ -1096,7 +1098,7 @@ export const MESMER_STATUSES: Readonly<Record<MesmerStatusId, StatusDefinition>>
     triggers: [
       {
         on: "ends",
-        effects: [{ kind: "heal", amount: ILLUSION_OF_PAIN_HEAL }],
+        effects: [{ kind: "heal", received: "heal", amount: ILLUSION_OF_PAIN_HEAL }],
         target: "bearer",
         skillId: "mesmer.illusion-of-pain",
       },
