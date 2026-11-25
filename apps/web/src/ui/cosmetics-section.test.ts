@@ -66,6 +66,7 @@ describe("Options > Cosmetics (#3577, #3988)", () => {
   });
   afterEach(() => {
     vi.unstubAllGlobals();
+    vi.restoreAllMocks();
   });
 
   it("offers the emblem frame only to a player with a guild cape for it to frame (#3581)", () => {
@@ -128,6 +129,47 @@ describe("Options > Cosmetics (#3577, #3988)", () => {
     expect(swatch?.getAttribute("aria-label")).toBe(detail?.textContent);
     swatch?.fire("blur");
     expect(detail?.textContent).toBe("None");
+  });
+
+  it("keeps focus on the row picked from the keyboard, on the swatch now picked", () => {
+    const page: { activeElement: FakeElement | null; createElement: () => FakeElement } = {
+      activeElement: null,
+      createElement: () => new FakeElement(),
+    };
+    vi.stubGlobal("document", page);
+    vi.spyOn(FakeElement.prototype, "focus").mockImplementation(function (this: FakeElement) {
+      page.activeElement = this;
+    });
+    const store = emptyStore();
+    store.pick("frame", firstOf("frame").id);
+    const container = mounted(store);
+    const none = slotOf(container, "frame").all("cosmetics-swatch")[0];
+    none?.focus();
+    // Space or Enter on a focused swatch is its click.
+    none?.click();
+    const picked = slotOf(container, "frame").all("cosmetics-swatch")[0];
+    expect(picked).not.toBe(none);
+    expect(picked?.getAttribute("aria-pressed")).toBe("true");
+    expect(page.activeElement).toBe(picked);
+  });
+
+  it("names the swatch with focus, not the picked one, when the pointer leaves another", () => {
+    const page: { activeElement: FakeElement | null; createElement: () => FakeElement } = {
+      activeElement: null,
+      createElement: () => new FakeElement(),
+    };
+    vi.stubGlobal("document", page);
+    const group = slotOf(mounted(emptyStore()), "aura");
+    const [none, focused, hovered] = group.all("cosmetics-swatch");
+    const detail = group.all("cosmetics-detail")[0];
+    page.activeElement = focused ?? null;
+    hovered?.fire("pointerenter");
+    expect(detail?.textContent).toBe(hovered?.getAttribute("aria-label"));
+    hovered?.fire("pointerleave");
+    expect(detail?.textContent).toBe(focused?.getAttribute("aria-label"));
+    page.activeElement = null;
+    hovered?.fire("pointerleave");
+    expect(detail?.textContent).toBe(none?.getAttribute("aria-label"));
   });
 
   it("is one tab stop per row, the arrows moving along it past locked swatches", () => {

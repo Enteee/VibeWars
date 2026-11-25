@@ -177,8 +177,10 @@ function slotPicker(
     const show = (): void => {
       detail.textContent = swatch.detail;
     };
+    // Back to the swatch with focus, if the row has it, else the picked one.
     const hide = (): void => {
-      detail.textContent = pickedDetail;
+      const focused = buttons.find((each) => each === document.activeElement);
+      detail.textContent = focused?.getAttribute("aria-label") ?? pickedDetail;
     };
     button.addEventListener("pointerenter", show);
     button.addEventListener("focus", show);
@@ -255,16 +257,24 @@ export function cosmeticsSection(
       return t("options.cosmetics");
     },
     mount: (container) => {
+      let groups: HTMLElement[] = [];
       const draw = (): void => {
+        // A keyboard pick redraws the row under focus: focus comes back to its picked swatch.
+        const active = document.activeElement;
+        const focusedSlot = groups.find((group) => active !== null && group.contains(active))
+          ?.dataset.slot;
         const worn = cape();
         // The rows close together, not spaced as the pane's sections are.
         const slots = h("div", "cosmetics-slots");
-        slots.append(
-          ...COSMETIC_SLOTS.filter((slot) => slot !== "emblemFrame" || worn !== null).map((slot) =>
-            slotPicker(store, slot, worn),
-          ),
+        groups = COSMETIC_SLOTS.filter((slot) => slot !== "emblemFrame" || worn !== null).map(
+          (slot) => slotPicker(store, slot, worn),
         );
+        slots.append(...groups);
         container.replaceChildren(h("p", "cosmetics-note", t("cosmetics.note")), slots);
+        const group = groups.find((each) => each.dataset.slot === focusedSlot);
+        Array.from(group?.querySelectorAll<HTMLElement>(".cosmetics-swatch") ?? [])
+          .find((swatch) => swatch.tabIndex === 0)
+          ?.focus();
       };
       draw();
       return store.onChange(draw);
