@@ -60,6 +60,13 @@ phone) names the swatch you point at or focus, and what earns it. A locked
 swatch is dimmed, with a small padlock. Your choice applies at once. Other
 players see it from the next lobby you join.
 
+Above the rows, your character wears your look and stands, walks and swings, so
+the aura, trail and weapon trail show as they move. Press and hold a swatch to
+try it on, even a locked one: the line says what you are previewing and, while
+it is locked, what earns it. Let go on an earned item to wear it. Let go on a
+locked one, or slide off the swatch, and nothing changes. With a keyboard, hold
+Space on a swatch.
+
 ## Seeing other players' cosmetics
 
 Other players see your cosmetics only if their copy of the leaderboard shows you

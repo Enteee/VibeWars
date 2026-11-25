@@ -59,6 +59,8 @@ regel naast de rij (eronder op een telefoon) noemt het staal waar je naar wijst 
 en waarmee je het verdient. Een vergrendeld staal is gedimd, met een klein hangslot. Je keuze geldt
 meteen. Andere spelers zien hem vanaf de volgende lobby waar je in gaat.
 
+Boven de rijen draagt je personage jouw look en staat, loopt en slaat, zodat je de aura, het spoor en het wapenspoor in beweging ziet. Houd een staal ingedrukt om het te passen, ook een vergrendeld staal: de regel zegt wat je bekijkt en, zolang het vergrendeld is, waarmee je het verdient. Laat los op een verdiend item om het te dragen. Laat los op een vergrendeld item, of schuif van het staal af, en er verandert niets. Met een toetsenbord houd je de spatiebalk ingedrukt op een staal.
+
 ## Cosmetics van andere spelers zien
 
 Andere spelers zien je cosmetics alleen als hun kopie van de ranglijst laat zien dat je ze verdiend

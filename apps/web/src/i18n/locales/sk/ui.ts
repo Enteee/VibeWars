@@ -435,6 +435,7 @@ export default {
   "cosmetics.item.trailStarlight": "Hviezdna stopa",
   "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Zamknuté",
+  "cosmetics.previewing": "Náhľad: {name}",
   "cosmetics.none": "Žiadne",
   "cosmetics.note":
     "Čisto na ozdobu: žiadna kozmetika nemení, ako sa hrá. Získava sa hodnotenými výhrami v rebríčku a zdieľajú ju všetky tvoje postavy.",
@@ -1827,8 +1828,9 @@ export default {
   "tutorial.heal.ow": "Au! Trafil ma kameň. Pomôžeš mi?",
   "tutorial.heal.praise": "Oveľa lepšie, vďaka! Vieš aj liečiť.",
   "tutorial.learn": "Nauč sa hrať",
-  "tutorial.look.hint": "Potiahni pohľad na sever. Nájdi teleport!",
-  "tutorial.look.how": "Drž pravé tlačidlo a ťahaj, aby si sa rozhliadol.",
+  "tutorial.look.hint": "Oddiaľ pohľad a potom ho potiahni na sever. Nájdi teleport!",
+  "tutorial.look.how":
+    "Koliesko myši približuje. Drž pravé tlačidlo a ťahaj, aby si sa rozhliadol.",
   "tutorial.look.intro": "Možno nás tento teleport dostane okolo bojiska. Pozri sa na sever!",
   "tutorial.look.praise": "Tu je! Naša cesta okolo boja.",
   "tutorial.offer": "Si tu nový? Tvoj učiteľ ti ukáže základy.",
@@ -1862,7 +1864,7 @@ export default {
     "Najprv ťukni na moje meno v zozname družiny. Ak je zoznam zatvorený, ťukni na Družina.",
   "tutorial.touch.healHow":
     "Ak je zoznam zatvorený, ťukni na Družina, potom na moje meno a potom na žiariacu zručnosť.",
-  "tutorial.touch.look": "Ťahaj jedným prstom a rozhliadni sa.",
+  "tutorial.touch.look": "Približuj roztiahnutím prstov. Ťahaj jedným prstom a rozhliadni sa.",
   "tutorial.touch.pingHow": "Ťukni na kompas alebo po ňom ťahaj a nakresli čiaru.",
   "tutorial.touch.ratsHow": "Ťukni na potkana a zameraj ho.",
   "tutorial.touch.tunnelHow": "Ťukni na schody dolu, potom na značku za druhým koncom.",

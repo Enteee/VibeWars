@@ -267,7 +267,7 @@ export function learnTests(mapId: string): void {
     // A walk, a drag and a walk in a sim that runs no faster than the page
     // draws: a loaded runner takes most of a minute (#3222).
     test.setTimeout(240_000);
-    const { frame, stage, hasSaid } = await learn(page, mapId, 1);
+    const { frame, hasSaid } = await learn(page, mapId, 1);
     await expect(frame.locator(".tutorial-said")).toHaveText(
       "This war never ends. Walk with me; I have an idea.",
     );
@@ -295,33 +295,20 @@ export function learnTests(mapId: string): void {
       await expect.poll(() => hasSaid(stride), { timeout: 5_000 }).toBe(true);
     }).toPass({ timeout: 30_000 });
 
-    // Station 2 (#3222): a right-drag north to the leash finds it, no wheel (#3970).
+    // Station 2 (#3222): one wheel notch out, then a right-drag north to the leash.
     await expect
       .poll(() => hasSaid("Maybe this teleporter gets us around the battlefield. Look north!"), {
         timeout: 10_000,
       })
       .toBe(true);
     await expect(frame).not.toHaveAttribute("data-mark", /.+/);
-    // Walking is locked while it runs (#3970): W held does not move the view's centre.
-    const camera = async (): Promise<readonly number[]> =>
-      ((await stage.getAttribute("data-camera")) ?? "").split(",").map(Number);
-    let settled: readonly number[] = [];
-    await expect(async () => {
-      settled = await camera();
-      await page.waitForTimeout(300);
-      expect(await camera()).toEqual(settled);
-    }).toPass({ timeout: 10_000 });
-    await page.keyboard.down("KeyW");
-    await page.waitForTimeout(500);
-    await page.keyboard.up("KeyW");
-    await page.waitForTimeout(300);
-    expect(await camera()).toEqual(settled);
     const box = await page.locator("#viewport canvas:not(.compass)").boundingBox();
     if (box === null) {
       throw new Error("no canvas");
     }
     const centre = { x: box.x + box.width / 2, y: box.y + box.height / 2 };
     await page.mouse.move(centre.x, centre.y);
+    await page.mouse.wheel(0, 100);
     await page.mouse.down({ button: "right" });
     await page.mouse.move(centre.x, box.y + 1, { steps: 10 });
     await expect.poll(() => hasSaid("There it is! Our way around the fight.")).toBe(true);

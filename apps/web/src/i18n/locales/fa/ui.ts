@@ -404,6 +404,7 @@ export default {
   "cosmetics.item.trailStarlight": "رد نور ستارگان",
   "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "قفل",
+  "cosmetics.previewing": "پیش‌نمایش: {name}",
   "cosmetics.none": "هیچ",
   "cosmetics.note":
     "فقط برای ظاهر: هیچ آرایه‌ای روی روند بازی اثر ندارد. با بردهای رتبه‌بندی در جدول رده‌بندی عمومی به دست می‌آید و بین همهٔ شخصیت‌هایت مشترک است.",
@@ -1702,8 +1703,8 @@ export default {
   "tutorial.heal.ow": "آخ! سنگ به من خورد. کمکی می‌کنی؟",
   "tutorial.heal.praise": "خیلی بهتر شد، ممنون! تو شفادهنده هم هستی.",
   "tutorial.learn": "بازی را یاد بگیر",
-  "tutorial.look.hint": "دید را به شمال بکش. تله‌پورت را پیدا کن!",
-  "tutorial.look.how": "دکمهٔ راست را نگه دار و بکش تا نگاه کنی.",
+  "tutorial.look.hint": "دید را کوچک کن، بعد آن را به شمال بکش. تله‌پورت را پیدا کن!",
+  "tutorial.look.how": "چرخ ماوس بزرگ‌نمایی می‌کند. دکمهٔ راست را نگه دار و بکش تا نگاه کنی.",
   "tutorial.look.intro": "شاید این تله‌پورت ما را از کنار میدان نبرد ببرد. به شمال نگاه کن!",
   "tutorial.look.praise": "آنجاست! راه ما برای دور زدن نبرد.",
   "tutorial.offer": "تازه آمده‌ای؟ معلمت اصول را نشانت می‌دهد.",
@@ -1738,7 +1739,7 @@ export default {
   "tutorial.touch.healHint":
     "اول نامم را در فهرست گروه لمس کن. اگر فهرست بسته است، گروه را لمس کن.",
   "tutorial.touch.healHow": "اگر فهرست بسته است گروه را لمس کن، بعد نامم را، بعد مهارتِ درخشان را.",
-  "tutorial.touch.look": "با یک انگشت بکش تا نگاه کنی.",
+  "tutorial.touch.look": "دو انگشت را جمع و باز کن تا بزرگ‌نمایی شود. با یک انگشت بکش تا نگاه کنی.",
   "tutorial.touch.pingHow": "قطب‌نما را لمس کن، یا رویش بکش تا خطی بکشی.",
   "tutorial.touch.ratsHow": "یک موش را لمس کن تا هدفش بگیری.",
   "tutorial.touch.tunnelHow": "پله‌های پایین را لمس کن، بعد نشانهٔ آن سرِ تونل را.",

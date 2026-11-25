@@ -380,6 +380,7 @@ export default {
   "cosmetics.item.trailStarlight": "星明かりの足跡",
   "cosmetics.detail": "{name}：{requirement}",
   "cosmetics.locked": "ロック中",
+  "cosmetics.previewing": "プレビュー中：{name}",
   "cosmetics.none": "なし",
   "cosmetics.note":
     "見た目だけの要素です。どのコスメティックもプレイには影響しません。公開ランキングのランク戦勝利で獲得でき、すべてのキャラクターで共有されます。",
@@ -1630,8 +1631,8 @@ export default {
   "tutorial.heal.ow": "痛っ！岩に当たった。ちょっと助けて？",
   "tutorial.heal.praise": "ずっと楽になった、ありがとう！回復もできるね。",
   "tutorial.learn": "遊び方を学ぶ",
-  "tutorial.look.hint": "視点を北へドラッグしろ。テレポーターを探せ!",
-  "tutorial.look.how": "右ボタンを押したままドラッグで見回す。",
+  "tutorial.look.hint": "ズームアウトして、視点を北へドラッグしろ。テレポーターを探せ!",
+  "tutorial.look.how": "マウスホイールでズーム。右ボタンを押したままドラッグで見回す。",
   "tutorial.look.intro": "このテレポーターなら戦場を回り込めるかもしれない。北を見ろ!",
   "tutorial.look.praise": "あったぞ!戦いを回り込む道だ。",
   "tutorial.offer": "初めて? 師匠が基本を教えてくれます。",
@@ -1665,7 +1666,7 @@ export default {
     "まずパーティリストで私の名前をタップして。リストが閉じていたら「パーティー」をタップ。",
   "tutorial.touch.healHow":
     "リストが閉じていたら「パーティー」をタップして、私の名前、光るスキルの順にタップ。",
-  "tutorial.touch.look": "指一本でドラッグして見回す。",
+  "tutorial.touch.look": "ピンチでズーム。指一本でドラッグして見回す。",
   "tutorial.touch.pingHow": "コンパスをタップするか、その上をドラッグして線を引こう。",
   "tutorial.touch.ratsHow": "ネズミをタップしてターゲットしよう。",
   "tutorial.touch.tunnelHow": "下りの階段をタップし、反対側の先の印をタップ。",

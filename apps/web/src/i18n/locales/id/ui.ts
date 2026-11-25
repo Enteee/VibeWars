@@ -378,6 +378,7 @@ export default {
   "cosmetics.item.trailStarlight": "Jejak cahaya bintang",
   "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Terkunci",
+  "cosmetics.previewing": "Pratinjau: {name}",
   "cosmetics.none": "Tidak ada",
   "cosmetics.note":
     "Murni tampilan: tidak ada kosmetik yang mengubah cara bermain. Didapat dari kemenangan peringkat di papan peringkat publik, dan dipakai bersama oleh semua karaktermu.",
@@ -1632,8 +1633,8 @@ export default {
   "tutorial.heal.ow": "Aduh! Batu itu mengenaiku. Bantu sedikit?",
   "tutorial.heal.praise": "Jauh lebih baik, terima kasih! Kamu juga bisa menyembuhkan.",
   "tutorial.learn": "Belajar bermain",
-  "tutorial.look.hint": "Seret tampilan ke utara. Temukan teleporternya!",
-  "tutorial.look.how": "Tahan tombol kanan dan seret untuk melihat.",
+  "tutorial.look.hint": "Perkecil tampilan, lalu seret ke utara. Temukan teleporternya!",
+  "tutorial.look.how": "Roda mouse untuk zoom. Tahan tombol kanan dan seret untuk melihat.",
   "tutorial.look.intro":
     "Mungkin teleporter ini membawa kita memutari medan perang. Lihat ke utara!",
   "tutorial.look.praise": "Itu dia! Jalan kita memutari pertempuran.",
@@ -1668,7 +1669,7 @@ export default {
     "Ketuk namaku di daftar regu dulu. Ketuk Party kalau daftarnya tertutup.",
   "tutorial.touch.healHow":
     "Ketuk Party kalau daftarnya tertutup, lalu namaku, lalu skill yang menyala.",
-  "tutorial.touch.look": "Seret satu jari untuk melihat.",
+  "tutorial.touch.look": "Cubit untuk zoom. Seret satu jari untuk melihat.",
   "tutorial.touch.pingHow": "Ketuk kompas, atau seret di atasnya untuk menggambar garis.",
   "tutorial.touch.ratsHow": "Ketuk tikus untuk membidiknya.",
   "tutorial.touch.tunnelHow": "Ketuk tangga turun, lalu tanda di balik ujung satunya.",

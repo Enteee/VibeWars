@@ -93,6 +93,7 @@ import {
   openIndexedDbStore,
   type KeyValueStore,
 } from "./storage/repository.js";
+import { capeLook } from "./render/cape-shape.js";
 import { ReplayStore } from "./storage/replays.js";
 import { MatchHistoryStore } from "./storage/match-history.js";
 import { cloneCharacter } from "./storage/clone-character.js";
@@ -128,6 +129,7 @@ import {
   type BuildEditorView,
 } from "./ui/build-editor.js";
 import { setLanguageBusy } from "./ui/language-section.js";
+import { lookOfCharacter } from "./ui/character-card.js";
 import { mountChat, type ChatPanel } from "./ui/chat.js";
 import { openRelayPrompt } from "./ui/relay-prompt.js";
 import { openGuildLinkPrompt } from "./ui/guild-link-prompt.js";
@@ -180,6 +182,7 @@ import {
   type MenuCallbacks,
 } from "./ui/menu.js";
 import { dismissToast, toast } from "./ui/kit.js";
+import type { OptionsOwner } from "./ui/options-sections.js";
 import { signedText, signetOf } from "./ui/player-label.js";
 import { createScreenNotices } from "./screen-notices.js";
 import { createScreenTurns, type ScreenTurn } from "./screen-turns.js";
@@ -506,6 +509,24 @@ async function main(): Promise<void> {
     notices.add(t("app.framedRelayLink"));
   }
   const characters = new CharacterRepository(store);
+  // Whose Options these are (#3235): Cosmetics wears the character Random Arena queues as (#3989).
+  const ownOptions: OptionsOwner = {
+    signet: ownSignet,
+    figure: async () => {
+      const id = loadActiveCharacterId();
+      try {
+        const character = id === undefined ? undefined : await characters.load(id);
+        const { guildCape } = playerGuild();
+        return character === undefined
+          ? undefined
+          : lookOfCharacter(character, guildCape === null ? undefined : capeLook(guildCape));
+      } catch (error) {
+        // Unreadable, the figure is the bare body: not worth more than a warning.
+        console.warn("[web] could not load the selected character", error);
+        return undefined;
+      }
+    },
+  };
   // The last matches' replays (#3572), for a dispute later; nothing shows them yet.
   const replays = new ReplayStore(store);
   const keepReplay = (recorded: RecordedReplay): void => {
@@ -993,7 +1014,7 @@ async function main(): Promise<void> {
         lobby?.startWarmup();
       },
     },
-    ownSignet,
+    ownOptions,
     playerKey.pubkey,
   );
   // Once a visit (#3575): the menu's rank and a queue's rating read it.
@@ -3332,7 +3353,7 @@ async function main(): Promise<void> {
           selfSessionId: from.selfSessionId,
           connect: () => observeMatchFor(from, watch),
         },
-        ownSignet,
+        ownOptions,
       );
       hallWatch.pause();
       setStatus("", "online");
@@ -3504,7 +3525,7 @@ async function main(): Promise<void> {
             connectMatchFor(from, start, name, entrant.guild, entrant.build, keepReplay),
           ranked: rankedSigned,
         },
-        ownSignet,
+        ownOptions,
       );
       hallWatch.pause();
       // Said by the match about to begin, never by the next one.
@@ -3702,7 +3723,7 @@ async function main(): Promise<void> {
         mapId,
         teamSize,
         tutorProfession: drawTutorProfession(Math.random),
-        signet: ownSignet,
+        owner: ownOptions,
         firstStation: tutorialFirstStation(),
         onEnd: (end) => {
           tutorialRun = undefined;

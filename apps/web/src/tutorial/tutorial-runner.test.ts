@@ -37,6 +37,8 @@ import {
 const MARK = vec2(200, 100);
 const CAMERA = {
   selfLayer: 0,
+  zoomedOut: false,
+  lookDragged: false,
   inView: () => false,
   rockfallDodges: 0,
   hitBy: undefined,
@@ -220,7 +222,7 @@ describe("the tutorial runner", () => {
       0,
       label,
     );
-    const looked = { ...ON_MARK, inView: () => true };
+    const looked = { ...ON_MARK, zoomedOut: true, lookDragged: true, inView: () => true };
     const dodged = { ...looked, self: goal, rockfallDodges: DODGES_NEEDED };
     const broken = { ...dodged, wallHealth: 0, wallTargeted: true };
     const healed = { tutorHit: true, tutorTargeted: true, energySpent: true, healedTutor: true };

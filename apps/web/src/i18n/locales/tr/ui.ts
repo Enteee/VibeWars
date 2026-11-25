@@ -403,6 +403,7 @@ export default {
   "cosmetics.item.trailStarlight": "Yıldız ışığı izi",
   "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Kilitli",
+  "cosmetics.previewing": "Önizleme: {name}",
   "cosmetics.none": "Yok",
   "cosmetics.note":
     "Yalnızca görünüş için: hiçbir kozmetik oynanışı değiştirmez. Herkese açık lider tablosunda dereceli galibiyetlerle kazanılır ve tüm karakterlerin tarafından paylaşılır.",
@@ -1705,8 +1706,9 @@ export default {
   "tutorial.heal.ow": "Ah! Kaya bana çarptı. Biraz yardım?",
   "tutorial.heal.praise": "Çok daha iyi, teşekkürler! Sen iyileştirebiliyorsun da.",
   "tutorial.learn": "Oynamayı öğren",
-  "tutorial.look.hint": "Görüşü kuzeye sürükle. Işınlayıcıyı bul!",
-  "tutorial.look.how": "Sağ tuşu basılı tutup sürükleyerek etrafa bak.",
+  "tutorial.look.hint": "Uzaklaştır, sonra görüşü kuzeye sürükle. Işınlayıcıyı bul!",
+  "tutorial.look.how":
+    "Fare tekerleği yakınlaştırır. Sağ tuşu basılı tutup sürükleyerek etrafa bak.",
   "tutorial.look.intro":
     "Belki bu ışınlayıcı bizi savaş alanının etrafından dolaştırır. Kuzeye bak!",
   "tutorial.look.praise": "İşte orada! Savaşın etrafından yolumuz.",
@@ -1740,7 +1742,8 @@ export default {
   "tutorial.touch.climbUnder": "Basılı tut. Kesikli halka altında.",
   "tutorial.touch.healHint": "Önce grup listesinde adıma dokun. Liste kapalıysa Grup'a dokun.",
   "tutorial.touch.healHow": "Liste kapalıysa Grup'a dokun, sonra adıma, sonra parlayan beceriye.",
-  "tutorial.touch.look": "Bakmak için tek parmakla sürükle.",
+  "tutorial.touch.look":
+    "Yakınlaştırmak için iki parmakla sıkıştır. Bakmak için tek parmakla sürükle.",
   "tutorial.touch.pingHow": "Pusulaya dokun ya da üzerinde sürükleyip bir çizgi çiz.",
   "tutorial.touch.ratsHow": "Hedeflemek için bir fareye dokun.",
   "tutorial.touch.tunnelHow": "Aşağı inen basamaklara, sonra öbür ucun ötesindeki işarete dokun.",

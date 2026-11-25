@@ -404,6 +404,7 @@ export default {
   "cosmetics.item.trailStarlight": "Stjernelysspor",
   "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Låst",
+  "cosmetics.previewing": "Forhåndsvisning: {name}",
   "cosmetics.none": "Ingen",
   "cosmetics.note":
     "Kun for udseendet: ingen kosmetik ændrer, hvordan noget spiller. Optjenes med rangerede sejre på den offentlige rangliste og deles af alle dine figurer.",
@@ -1700,8 +1701,8 @@ export default {
   "tutorial.heal.ow": "Av! Stenen ramte mig. Lidt hjælp?",
   "tutorial.heal.praise": "Meget bedre, tak! Du kan også hele.",
   "tutorial.learn": "Lær at spille",
-  "tutorial.look.hint": "Træk udsynet mod nord. Find teleporten!",
-  "tutorial.look.how": "Hold højre knap nede og træk for at se dig om.",
+  "tutorial.look.hint": "Zoom ud, og træk så udsynet mod nord. Find teleporten!",
+  "tutorial.look.how": "Musehjulet zoomer. Hold højre knap nede og træk for at se dig om.",
   "tutorial.look.intro": "Måske kan denne teleport føre os uden om slagmarken. Kig mod nord!",
   "tutorial.look.praise": "Der er den! Vores vej uden om kampen.",
   "tutorial.offer": "Ny her? Din læremester viser dig det grundlæggende.",
@@ -1735,7 +1736,7 @@ export default {
     "Tryk først på mit navn i gruppelisten. Tryk på Gruppe, hvis listen er lukket.",
   "tutorial.touch.healHow":
     "Tryk på Gruppe, hvis listen er lukket, så på mit navn og så på den lysende evne.",
-  "tutorial.touch.look": "Træk med én finger for at se dig om.",
+  "tutorial.touch.look": "Knib for at zoome. Træk med én finger for at se dig om.",
   "tutorial.touch.pingHow": "Tryk på kompasset, eller træk på det for at tegne en linje.",
   "tutorial.touch.ratsHow": "Tryk på en rotte for at vælge den.",
   "tutorial.touch.tunnelHow": "Tryk på trinene ned, så på mærket bag den anden ende.",

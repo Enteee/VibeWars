@@ -3,20 +3,17 @@ import {
   createPathFinder,
   getSkill,
   validatePlayerBuild,
-  type Vec2,
 } from "@vibewars/game-core";
 import { describe, expect, it } from "vitest";
 
 import { toRenderableWall } from "../match-view.js";
 import { hostMap, mapStructure, teamArenaMapIds } from "../net/maps.js";
 import type { RenderableWall } from "../render/arena-snapshot.js";
-import { DEFAULT_STEP, zoomFor } from "../render/camera-rig.js";
 import { pickSurface } from "../render/layer-surfaces.js";
 import { ELEVATION_STEP } from "../render/render-order.js";
 import { splashGraph, splashSpawn } from "../ui/splash-fight.js";
 
 import { MARK_REACH } from "./stations.js";
-import { teleporterReach } from "./tutorial-start.js";
 import {
   PLAYER_PROFESSION,
   SELF_ID,
@@ -33,14 +30,11 @@ import {
 } from "./tutorial-world.js";
 
 const TICK = 1 / MINIMAL_GW_INSPIRED_PVP_V1.tickRateHz;
-const WALK_SPEED = MINIMAL_GW_INSPIRED_PVP_V1.movement.maxSpeedUnitsPerSecond;
 /** The card's rule (#3221): no foe nearer the pair than this. */
 const FOE_RULE = 600;
 const SECONDS = 120;
 /** The PR screenshot's canvas (#3222). */
 const VIEWPORT = { width: 1000, height: 700 };
-/** An upright phone (#3970). */
-const PHONE = { width: 412, height: 915 };
 /** How long, and how wide, the mark stays clear of every body but the pair. */
 const MARK_SECONDS = 30;
 const MARK_CLEAR = 150;
@@ -196,33 +190,6 @@ describe("tutorialWorld (#3221)", () => {
     },
   );
 
-  // #3970: the look is done the moment the pad shows, so it must not show
-  // from where the walk to the mark leaves the player. On these two no
-  // ground in reach north is open, so it stands in view as it always has.
-  const inViewAnyway = new Set(["arena-canyon", "jungle-ruins"]);
-  it.each(teamArenaMapIds(8).filter((mapId) => !inViewAnyway.has(mapId)))(
-    "stands the teleporter out of the default view from the mark on %s",
-    (mapId) => {
-      for (const viewport of [VIEWPORT, PHONE]) {
-        const { mark, teleporter } = tutorialWorld(mapId, 8, "teleporter", "monk", viewport);
-        const half = viewport.height / 2 / zoomFor(DEFAULT_STEP, viewport);
-        expect(mark.y - teleporter.y).toBeGreaterThan(half);
-      }
-    },
-  );
-
-  // #3970: and a right-drag to the leash from the mark shows it, at the
-  // default zoom, on every map.
-  it.each(teamArenaMapIds(8))(
-    "stands the teleporter in a drag's reach of the mark on %s",
-    (mapId) => {
-      for (const viewport of [VIEWPORT, PHONE]) {
-        const { mark, teleporter } = tutorialWorld(mapId, 8, "teleporter", "monk", viewport);
-        expect(mark.y - teleporter.y).toBeLessThanOrEqual(teleporterReach(viewport).far);
-      }
-    },
-  );
-
   // CI (#3222): on Crossroads, whose ground is its layer 1, a flat world
   // refused every walk that named it, the player's click and the tutor's.
   it.each(teamArenaMapIds(8))(
@@ -274,37 +241,6 @@ describe("tutorialWorld (#3221)", () => {
     }
     expect(picked.layer).toBe(ground);
     expect(reached).toBe(true);
-  });
-
-  // QA (#3970): on Crossroads the pad stood straight north of the mark,
-  // behind the raised deck, and the walk round the deck was a long detour.
-  // From the mark, the pad is at most half again the straight line away.
-  it.each(teamArenaMapIds(8))("walks the player from the mark to the pad on %s", (mapId) => {
-    const { simulation, mark, teleporter, ground } = tutorialWorld(
-      mapId,
-      8,
-      "teleporter",
-      "monk",
-      VIEWPORT,
-    );
-    const walk = (to: Vec2, seconds: number): boolean => {
-      simulation.walkTo(SELF_ID, to, ground);
-      for (let t = 0; t < seconds; t += TICK) {
-        simulation.step(TICK);
-        const self = simulation.get(SELF_ID);
-        if (
-          self?.layer === ground &&
-          Math.hypot(self.position.x - to.x, self.position.y - to.y) <= MARK_REACH
-        ) {
-          return true;
-        }
-      }
-      return false;
-    };
-    expect(walk(mark, 10)).toBe(true);
-    // At walking speed, a straight walk and a little for the bodies about.
-    const straight = Math.hypot(teleporter.x - mark.x, teleporter.y - mark.y);
-    expect(walk(teleporter, (straight * 1.5) / WALK_SPEED)).toBe(true);
   });
 });
 

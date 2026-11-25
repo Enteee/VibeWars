@@ -23,6 +23,7 @@ import { copyInviteLink } from "./lobby-screen.js";
 import { lobbyWindowBody, type RailParty } from "./lobby-window.js";
 import { loadPlayerName } from "./player-section.js";
 import { attachOptionsWindow } from "./options-screen.js";
+import type { OptionsOwner } from "./options-sections.js";
 import { queueButton, type QueueStatusInput } from "./queue-popover.js";
 import { attachTopbarPopover } from "./topbar-popover.js";
 
@@ -488,13 +489,13 @@ function part(bar: HTMLElement, selector: string): HTMLElement {
 
 /**
  * Fill the bar's global icons and hand its slots to `screenBar` (#1272);
- * they live as long as the page. `signet` is the player key's, for Options (#3235),
+ * they live as long as the page. `owner` is whose Options they are (#3235, #3989),
  * and `pubkey` the key itself, for its row on the Leaderboard (#3575).
  */
 export function mountTopbar(
   bar: HTMLElement,
   callbacks: TopbarCallbacks,
-  signet: number,
+  owner: OptionsOwner,
   pubkey: string,
 ): Topbar {
   const actions = part(bar, ".topbar-actions");
@@ -513,7 +514,7 @@ export function mountTopbar(
   const leaderboard = leaderboardButton(bar, leaderboardStore, pubkey);
 
   const options = iconButton("topbar-options", t("topbar.options"), settingsIcon());
-  attachOptionsWindow(options, bar, signet, callbacks.onOptionsClosed);
+  attachOptionsWindow(options, bar, owner, callbacks.onOptionsClosed);
 
   // The bar's join status, right before the global icons, on every menu
   // screen that asks for it; the lobby's own controls are the Lobby

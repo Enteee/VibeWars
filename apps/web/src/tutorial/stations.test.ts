@@ -40,6 +40,8 @@ const view = (over: Partial<TutorialView> = {}): TutorialView => ({
   self: vec2(0, 0),
   selfLayer: GROUND,
   tutor: vec2(40, 0),
+  zoomedOut: false,
+  lookDragged: false,
   inView: () => false,
   rockfallDodges: 0,
   hitBy: undefined,
@@ -71,21 +73,20 @@ const sees =
     point.x === target.x && point.y === target.y;
 
 describe("lookStation (#3222)", () => {
-  it("is done the moment the teleporter is on screen, however it got there (#3970)", () => {
-    const station = lookStation(PAD);
-    expect(station.done(view())).toBe(false);
-    expect(station.done(view({ inView: sees(PAD) }))).toBe(true);
-  });
-
-  it("is not done while the teleporter is off screen, whatever else is on it", () => {
-    const station = lookStation(PAD);
-    expect(station.done(view({ inView: sees(vec2(0, -900)) }))).toBe(false);
+  it("is done only once a zoom-out, a right-drag and the teleporter on screen have all happened", () => {
+    const all = { zoomedOut: true, lookDragged: true, inView: sees(PAD) };
+    for (const missing of ["zoomedOut", "lookDragged", "inView"] as const) {
+      const station = lookStation(PAD);
+      const short = missing === "inView" ? { inView: () => false } : { [missing]: false };
+      expect(station.done(view({ ...all, ...short }))).toBe(false);
+    }
+    expect(lookStation(PAD).done(view(all))).toBe(true);
   });
 
   it("remembers the teleporter was seen, though the view has glided back since", () => {
     const station = lookStation(PAD);
-    expect(station.done(view({ inView: sees(PAD) }))).toBe(true);
-    expect(station.done(view())).toBe(true);
+    expect(station.done(view({ zoomedOut: true, inView: sees(PAD) }))).toBe(false);
+    expect(station.done(view({ zoomedOut: true, lookDragged: true }))).toBe(true);
   });
 
   it("points at no one place", () => {
