@@ -306,7 +306,7 @@ describe("time-to-kill, headless (#111)", () => {
       }
     }
     expect(diedAt).toBeDefined();
-    expect((backAt ?? Infinity) - (diedAt ?? 0)).toBeCloseTo(2, 1);
+    expect(Math.round(((backAt ?? Infinity) - (diedAt ?? 0)) / DT)).toBe(2 / DT);
   });
 });
 

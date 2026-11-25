@@ -380,6 +380,52 @@ describe("previously uncovered branches", () => {
     expect(stepFor(sim, 2).filter((entry) => entry.cause === "skill")).toEqual([]);
   });
 
+  // A Fireball lands before the countdown, a burn's tick inside it: the
+  // step either dies in is not one it lies dead through (#4075).
+  describe.each([
+    ["a hit", (sim: MatchSimulation) => sim.requestSkill("a", 0)],
+    [
+      "a condition",
+      (sim: MatchSimulation) =>
+        participant(sim, "b").combatant.statuses.apply("burning", 10, "a", NO_RANKS),
+    ],
+  ])("killed by %s", (_cause, kill) => {
+    /** The match second `b` dies at and the one it rises at. */
+    function deathAndRise(rules: MatchRules, before: number): [number, number] {
+      const sim = duel(rules);
+      const b = participant(sim, "b");
+      sim.setTarget("a", "b");
+      stepFor(sim, before);
+      b.combatant.health = 0.2;
+      kill(sim);
+      let diedAt: number | undefined;
+      for (let i = 0; i < Math.round(30 / DT); i += 1) {
+        const { elapsedSeconds } = sim.step(DT);
+        if (diedAt === undefined && b.combatant.dead) {
+          diedAt = elapsedSeconds;
+        } else if (diedAt !== undefined && !b.combatant.dead) {
+          return [diedAt, elapsedSeconds];
+        }
+      }
+      throw new Error("b never died and rose");
+    }
+
+    it("lies dead exactly respawnSeconds", () => {
+      const [diedAt, roseAt] = deathAndRise(MATCH, 1);
+      expect(Math.round((roseAt - diedAt) / DT)).toBe(Math.round(MATCH.respawnSeconds / DT));
+    });
+
+    it("rises on the wave step itself", () => {
+      const [diedAt, roseAt] = deathAndRise(
+        { ...MATCH, respawnSeconds: 5, respawnOnWave: true },
+        2.5,
+      );
+      expect(diedAt).toBeGreaterThan(2.5);
+      expect(diedAt).toBeLessThan(5);
+      expect(roseAt).toBeCloseTo(5, 9);
+    });
+  });
+
   it("living bodies block, corpses do not", () => {
     const sim = duel();
     const a = participant(sim, "a");
