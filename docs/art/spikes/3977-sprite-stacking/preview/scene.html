@@ -1,0 +1,22 @@
+<!doctype html><html><body style="margin:0"><canvas id="c" width="800" height="500"></canvas>
+<script src="lib.js"></script><script src="badge.js"></script><script src="world.js"></script><script>
+const g=document.getElementById("c").getContext("2d");const ph=+(new URLSearchParams(location.search).get("ph")||0);
+const SC=+(new URLSearchParams(location.search).get("s")||1); g.canvas.width=800*SC;g.canvas.height=500*SC;g.scale(SC,SC);
+floor(g,800,500);
+pool(g,[{x:40,y:330},{x:200,y:310},{x:250,y:380},{x:210,y:470},{x:70,y:480},{x:20,y:410}],10);
+fireAoe(g,560,330,55,ph);
+ward(g,300,250,50);
+const teams=[[0x3f8fd8,0xa8d4f5],[0xd85a50,0xf5b0a0]];
+const objs=[];
+objs.push({y:70,d:()=>wall(g,[{x:0,y:40},{x:520,y:40},{x:520,y:70},{x:0,y:70}],26)});
+objs.push({y:200,d:()=>wall(g,[{x:690,y:40},{x:720,y:40},{x:720,y:200},{x:690,y:200}],26)});
+objs.push({y:150,d:()=>column(g,180,150,15,46)});objs.push({y:150,d:()=>column(g,440,150,15,46)});
+objs.push({y:120,d:()=>tree(g,620,120,40,ph)});
+objs.push({y:270,d:()=>brazier(g,90,250,ph)});
+objs.push({y:440,d:()=>crate(g,700,440,22,0.3)});objs.push({y:470,d:()=>crate(g,745,465,18,-0.2)});
+const bodies=[[260,330,0.2,0,0,1],[300,370,-0.4,0,1,0],[250,410,0.5,0,2,0],[470,300,Math.PI,1,0,0],[500,390,Math.PI-0.4,1,1,1],[600,420,Math.PI+0.5,1,2,0],[380,210,-1.2,0,1,0]];
+bodies.forEach(([x,y,f,t,k,lean])=>objs.push({y,d:()=>paint(g,x,y,12,f,teams[t][0],teams[t][1],body(lean?0:Math.sin(ph+x)*0.8,lean),k)}));
+objs.sort((a,b)=>a.y-b.y).forEach(o=>o.d());
+fireball(g,380,330,18,1,-0.1); arrow(g,410,380,16,0.1); arrow(g,350,280,16,0.3);
+window.done=true;
+</script></body></html>
