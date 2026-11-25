@@ -291,11 +291,32 @@ async function matchShots(page, dir) {
  */
 async function heightsShot(page, dir) {
   await startMatch(page, "broken-tower");
-  // The host sits in team 2's block, east of the map (x ~4900, y ~1360). The
-  // nearest stair and torch are the east cellar mouth's: torch (4054,1310),
-  // steps (3894..4034, 1337), the cellar mouth below the hill's raised side.
-  // 5 s west at 180 u/s is x ~4000, the steps and the torch in frame.
-  await walk(page, "KeyA", 5000);
+  // The host sits in either team's block, one end of the map (x ~540 or
+  // ~4880), and the camera's `data-camera` is where the hero stands. Walk to
+  // the near cellar mouth: west torch (1370,1310) with steps (1390..1530,
+  // 1337), east torch (4054,1310) with steps (3894..4034, 1337). The hero
+  // stops 120 u short of the steps, which lie ahead with the torch above.
+  const stage = page.locator("#viewport");
+  const camera = async () => {
+    const at = (await stage.getAttribute("data-camera"))?.split(",").map(Number);
+    if (at?.[0] === undefined || Number.isNaN(at[0])) {
+      throw new Error("heights shot: the camera has no position");
+    }
+    return at[0];
+  };
+  const west = (await camera()) < 2700;
+  const key = west ? "KeyD" : "KeyA";
+  const stopAt = west ? 1270 : 4154;
+  await page.keyboard.down(key);
+  for (let poll = 0; poll < 100; poll += 1) {
+    const x = await camera();
+    if (west ? x >= stopAt : x <= stopAt) {
+      break;
+    }
+    await sleep(100);
+  }
+  await page.keyboard.up(key);
+  await sleep(600);
   step = "heights shot";
   await page.screenshot({ path: path.join(dir, "readme-heights.png") });
   await assertNotVoid(page, dir);
