@@ -37,6 +37,7 @@ import type { AttackCast, SpellCast } from "./attack-clock.js";
 import type { ConditionCue } from "./body-conditions.js";
 import type { RenderableBreakable } from "./breakable-objects.js";
 import type { CapeLook } from "./cape-shape.js";
+import type { MapDecor } from "./decor-art.js";
 import type { RenderablePing } from "./call-marks.js";
 import { FOE_COLOUR, FRIEND_COLOUR } from "./colour-wheel.js";
 import type {
@@ -275,6 +276,8 @@ export interface MapStructure {
   readonly downDecks: readonly MapDeck[];
   /** Its awnings, lean-tos and canopies (#3293): over bodies, never walked. */
   readonly overhangs: readonly MapOverhang[];
+  /** Its columns, braziers, crates and trees (#4013): scenery, walked through. */
+  readonly decor: readonly MapDecor[];
   /** Stretches of a raised edge you step off onto `layer - 1`, never climb (#3069). */
   readonly dropOffs: readonly {
     readonly layer: number;
@@ -309,6 +312,7 @@ export const FLAT_STRUCTURE: MapStructure = {
   dropOffs: [],
   downDecks: [],
   overhangs: [],
+  decor: [],
   pits: [],
   tunnels: [],
   transitions: [],

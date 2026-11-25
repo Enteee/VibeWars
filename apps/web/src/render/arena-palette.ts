@@ -764,6 +764,56 @@ function overhangColours(tones: BiomeTones): Record<OverhangLook, OverhangLookCo
   };
 }
 
+/**
+ * A biome's decor colours (#4013): dressed stone for columns, its wood for
+ * crates and trunks, its plants for crowns and ferns, its rock for spikes,
+ * each with the lit and the shaded face of a north-west light. Iron and
+ * fire are the same everywhere.
+ */
+export interface DecorColours {
+  readonly stone: number;
+  readonly stoneLit: number;
+  readonly stoneShade: number;
+  readonly wood: number;
+  readonly woodLit: number;
+  readonly woodShade: number;
+  readonly bark: number;
+  readonly barkShade: number;
+  readonly plant: number;
+  readonly plantLit: number;
+  readonly plantShade: number;
+  readonly spikeLit: number;
+  readonly spikeShade: number;
+  readonly iron: number;
+  readonly ironShade: number;
+  readonly ember: number;
+  readonly flame: number;
+  readonly flameCore: number;
+}
+
+function decorColours(tones: BiomeTones): DecorColours {
+  return {
+    stone: tones.stone,
+    stoneLit: mix(tones.stone, 0xffffff, 0.22),
+    stoneShade: shade(tones.stone, 0.38),
+    wood: tones.wood,
+    woodLit: mix(tones.wood, tones.stone, 0.35),
+    woodShade: shade(tones.wood, 0.42),
+    bark: shade(tones.wood, 0.2),
+    barkShade: shade(tones.wood, 0.5),
+    plant: tones.plant,
+    plantLit: mix(tones.plant, 0xf0f0a0, 0.25),
+    plantShade: shade(tones.plant, 0.42),
+    spikeLit: mix(tones.rock, tones.stone, 0.5),
+    spikeShade: shade(tones.rock, 0.35),
+    iron: 0x4a4a52,
+    ironShade: 0x26262c,
+    ember: 0xe0662a,
+    flame: 0xffa040,
+    flameCore: 0xfff0a0,
+  };
+}
+
 /** A map's materials (#3172): its arena's colours, and each deck, transition and paving look's. */
 export interface BiomeMaterials {
   readonly palette: ArenaPalette;
@@ -773,6 +823,7 @@ export interface BiomeMaterials {
   readonly overhang: Record<OverhangLook, OverhangLookColours>;
   readonly dressing: GroundDressingTones;
   readonly breakable: BreakableLook;
+  readonly decor: DecorColours;
 }
 
 function lookColours<
@@ -867,6 +918,7 @@ function biomeMaterials(biome: Biome, tones: BiomeTones, tiled: boolean): BiomeM
     overhang: overhangColours(tones),
     dressing: dressingTones(tones, ...GROUND_MARKS[biome](tones)),
     breakable: breakableLookOf(biome, tones),
+    decor: decorColours(tones),
   };
 }
 

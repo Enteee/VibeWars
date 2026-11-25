@@ -23,6 +23,7 @@ export type ZonePart = "ground" | "marks";
  * grain through it, the outline out, then the grid and the outline's
  * edge over the grain.
  */
+export type DecorPart = "shadow" | "low" | "tall";
 export type GrainPart = "stencil" | "grain" | "release" | "lines";
 /** The grain on a patch of ground redrawn over a tunnel or a pit (#3484), then its grid. */
 export type PatchGrainPart = "grain" | "lines";
@@ -45,6 +46,12 @@ export type RenderItem =
   | { readonly kind: "lit-ground-effect" }
   | { readonly kind: "light-mark"; readonly layer: number }
   | { readonly kind: "goal-mark"; readonly layer: number }
+  | {
+      readonly kind: "decor";
+      readonly layer: number;
+      readonly band: number;
+      readonly part: DecorPart;
+    }
   | { readonly kind: "character"; readonly band: number; readonly part: CharacterPart }
   | { readonly kind: "wall"; readonly layer: number }
   | { readonly kind: "wall-texture"; readonly layer: number }
@@ -105,6 +112,13 @@ const LIGHT_MARK = 0.8;
  * torches, which never dim it, under whoever walks onto it.
  */
 const GOAL_MARK = 0.9;
+/**
+ * Decor (#4013): its shadow and a short prop (a crate, a fern, a brazier)
+ * on its layer's floor, lit as a wall is, under its torches, goals and
+ * whoever walks through it; a tall one (a column, a tree) over its
+ * band's bodies, as a wall top is, and faded off them as an overhang is.
+ */
+const DECOR: Record<DecorPart, number> = { shadow: 0.62, low: 0.7, tall: 2.07 };
 /**
  * A body's health bar over its band's marks, hit marks and swing arcs
  * included, so a hit never hides it (#3292); still in its band, so a deck
@@ -232,6 +246,8 @@ export function renderOrder(item: RenderItem): number {
       return item.layer * LAYER_STACK + LIGHT_MARK;
     case "goal-mark":
       return item.layer * LAYER_STACK + GOAL_MARK;
+    case "decor":
+      return (item.part === "tall" ? item.band : item.layer) * LAYER_STACK + DECOR[item.part];
     case "terrain":
       return 0;
     case "character":

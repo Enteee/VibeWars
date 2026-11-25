@@ -10,6 +10,7 @@
 export const TIMED_PASSES = [
   "cutAwayTunnels",
   "drawHiddenOutlines",
+  "drawMovingDecor",
   "fadeOverhangs",
   "lighting",
 ] as const;
