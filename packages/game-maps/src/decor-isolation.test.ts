@@ -5,11 +5,22 @@ import { loadMap } from "./loader.js";
 import { mapSimulationFields } from "./match-fields.js";
 import { mapNavGraphs } from "./nav-graphs.js";
 
-describe("decor (#4013)", () => {
+/** The maps with decor (#4013, #4017). */
+const DECORATED = [
+  "ashen-courtyard",
+  "hall-of-heroes-capture",
+  "hall-of-heroes-king",
+  "hall-of-heroes-relic",
+  "wardens-gallery",
+  "elite-zaishen-battle",
+  "sunken-bastion",
+];
+
+describe.each(DECORATED)("decor on %s (#4013)", (mapId) => {
   // Decor is scenery: only the renderer reads it. A map with its props and
   // the same map without them must give the simulation and the bots the
   // same world, wall for wall and node for node.
-  const map = loadMap("ashen-courtyard");
+  const map = loadMap(mapId);
   const bare = { ...map, decor: [] };
   const radius = MINIMAL_GW_INSPIRED_PVP_V1.collision.playerRadius;
 
@@ -26,5 +37,13 @@ describe("decor (#4013)", () => {
     expect(mapNavGraphs(map, radius, { harmful: true })).toEqual(
       mapNavGraphs(bare, radius, { harmful: true }),
     );
+  });
+});
+
+describe("Hall of Heroes decor (#4017)", () => {
+  it("is the same in all three modes, which share one arena", () => {
+    const capture = loadMap("hall-of-heroes-capture").decor;
+    expect(loadMap("hall-of-heroes-king").decor).toEqual(capture);
+    expect(loadMap("hall-of-heroes-relic").decor).toEqual(capture);
   });
 });

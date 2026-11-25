@@ -953,7 +953,98 @@
     }
   ],
   "objectives": [],
-  "decor": [],
+  "decor": [
+    {
+      "id": "brazier-1",
+      "kind": "brazier",
+      "at": { "x": 1049, "y": 1205 },
+      "layer": 1,
+      "rotation": 18,
+      "scale": 0.87,
+      "variant": 1
+    },
+    {
+      "id": "brazier-2",
+      "kind": "brazier",
+      "at": { "x": 1671, "y": 745 },
+      "layer": 1,
+      "rotation": 18,
+      "scale": 0.87,
+      "variant": 1
+    },
+    {
+      "id": "fern-1",
+      "kind": "fern",
+      "at": { "x": 1037, "y": 854 },
+      "layer": 1,
+      "rotation": 246,
+      "scale": 0.92,
+      "variant": 0
+    },
+    {
+      "id": "fern-2",
+      "kind": "fern",
+      "at": { "x": 1683, "y": 1096 },
+      "layer": 1,
+      "rotation": 246,
+      "scale": 0.92,
+      "variant": 0
+    },
+    {
+      "id": "fern-3",
+      "kind": "fern",
+      "at": { "x": 546, "y": 641 },
+      "layer": 1,
+      "rotation": 46,
+      "scale": 0.99,
+      "variant": 1
+    },
+    {
+      "id": "fern-4",
+      "kind": "fern",
+      "at": { "x": 2174, "y": 1309 },
+      "layer": 1,
+      "rotation": 46,
+      "scale": 0.99,
+      "variant": 1
+    },
+    {
+      "id": "crates-1",
+      "kind": "crates",
+      "at": { "x": 988, "y": 679 },
+      "layer": 1,
+      "rotation": 235,
+      "scale": 1.06,
+      "variant": 0
+    },
+    {
+      "id": "crates-2",
+      "kind": "crates",
+      "at": { "x": 1732, "y": 1271 },
+      "layer": 1,
+      "rotation": 235,
+      "scale": 1.06,
+      "variant": 0
+    },
+    {
+      "id": "crates-3",
+      "kind": "crates",
+      "at": { "x": 334, "y": 669 },
+      "layer": 1,
+      "rotation": 169,
+      "scale": 0.95,
+      "variant": 1
+    },
+    {
+      "id": "crates-4",
+      "kind": "crates",
+      "at": { "x": 2386, "y": 1281 },
+      "layer": 1,
+      "rotation": 169,
+      "scale": 0.95,
+      "variant": 1
+    }
+  ],
   "gates": [],
   "switches": [
     {
@@ -1185,6 +1276,24 @@
         "colour": 16756832,
         "intensity": 0.95,
         "flicker": 0.2
+      },
+      {
+        "id": "brazier-decor-1",
+        "position": { "x": 1049, "y": 1189 },
+        "layer": 1,
+        "radius": 170,
+        "colour": 16752704,
+        "intensity": 0.85,
+        "flicker": 0.3
+      },
+      {
+        "id": "brazier-decor-2",
+        "position": { "x": 1671, "y": 729 },
+        "layer": 1,
+        "radius": 170,
+        "colour": 16752704,
+        "intensity": 0.85,
+        "flicker": 0.3
       }
     ]
   },
