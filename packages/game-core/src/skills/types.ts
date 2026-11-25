@@ -382,7 +382,7 @@ export interface EnergyGainToCaster {
    * Endurance's "cannot raise your Energy above 10...25". A recipient
    * already above gains nothing and loses nothing. Absent: its maximum.
    */
-  readonly upTo?: number;
+  readonly upTo?: Magnitude;
   /**
    * Per point of the base energy cost of the skill the trigger answers,
    * rounded half up (#1614): Fire Attunement's "30% of the base Energy

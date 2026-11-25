@@ -15,6 +15,8 @@ tangenterna). Ett byte väntar tills kastningen eller svingen du är mitt i
 är klar; att röra dig eller Esc byter direkt. Det finns ingen nedkylning.
 Dina attacker, förmågorna som kräver ett visst vapen och din maximala
 energi följer alla setet du har i händerna.
+En stav har 10 egen energi, och ett fokus 6, eller 12 när du uppfyller
+dess krav.
 
 Ett vapen kräver rang 9 i sitt attribut: under det träffar det med en
 tredjedel av sin skada, och redigeraren säger det i rött. Ett ![Svärd](../../../apps/web/public/icons/weapon/sword.svg) **svärd** är

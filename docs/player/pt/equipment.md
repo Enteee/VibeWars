@@ -15,6 +15,8 @@ do perfil Clássico). A troca espera a conjuração ou o golpe em andamento
 terminar; andar ou Esc troca na hora. Não há tempo de espera. Seus
 ataques, as habilidades que precisam de certa arma e sua energia máxima
 seguem o conjunto em mãos.
+Um cajado tem 10 de energia própria, e um foco 6, ou 12 quando você
+cumpre o requisito dele.
 
 Uma arma precisa de nível 9 no atributo dela: abaixo disso, ela causa um
 terço do dano, e o editor avisa em vermelho. Uma ![Espada](../../../apps/web/public/icons/weapon/sword.svg) **espada** é sempre

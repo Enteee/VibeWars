@@ -14,6 +14,8 @@ Wissel in een match van set met **1 tot 4** (**F1 tot F4** bij de Klassiek-toets
 Een wissel wacht tot de cast of zwaai waar je in zit klaar is; bewegen of Esc
 wisselt meteen. Er is geen cooldown. Je aanvallen, de skills die een bepaald
 wapen nodig hebben en je maximale Energie volgen allemaal de set in je hand.
+Een Staff heeft 10 eigen Energie, en een Focus 6, of 12 zodra je aan zijn eis
+voldoet.
 
 Een wapen heeft rang 9 in zijn attribuut nodig: daaronder doet het een derde van
 zijn schade, en de editor zegt dat in rood. Een ![Sword](../../../apps/web/public/icons/weapon/sword.svg) **Sword** is altijd Swordsmanship,
