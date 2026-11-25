@@ -1559,11 +1559,11 @@ GW1 PvP (#473). Only a primary can hold its rank, and runes count.
   Mysticism gives none here (#3880).
 - **Spawning Power** (Ritualist). A creature you summon, of any
   profession (spirits and minions, not a charmed pet), has 4% more
-  Health a rank, rounded once: a spirit of 210 has 311 at rank 12. A
+  Health a rank, rounded once: a spirit of 160 has 237 at rank 12. A
   weapon spell you put on anyone, yourself included, lasts 4% longer a
   rank, rounded to a whole second, a half down (#3880): Weapon of
   Quickening 31 s instead of 21 s. A spirit's lifetime is unchanged. The
-  tooltip shows both, the base in brackets: "311 Health (210)", "31s
+  tooltip shows both, the base in brackets: "237 Health (160)", "31s
   (21s)" (#1098).
 
 The build editor says under a primary's row what it does at its rank
@@ -1642,14 +1642,14 @@ spirit of the same skill on your side within the new one's range, as an
 expiry, not a death. A foe's spirit of that skill lives on.
 
 **Winnowing** (Ranger, Wilderness Survival, nature ritual, 5 energy,
-2 s, 60 s recharge) plants a spirit of 210 Health (more with Spawning
-Power) and armor 51 for 198 s:
+2 s, 60 s recharge) plants a spirit of 160 Health (more with Spawning
+Power) and armor 50 for 198 s:
 every body in its range takes 4 more from each physical hit it takes,
 before armor. A hit that "deals only" its number, as Concussion Shot's,
 takes the 4 too: it is on the one hit, not on the attack.
 **Recuperation** (Ritualist, Restoration Magic, binding ritual, 25
-energy, 3 s, 45 s recharge) plants one of 210 Health (more with Spawning
-Power) and armor 51 for 39 s: your side in its range gains +3 Health regeneration.
+energy, 3 s, 45 s recharge) plants one of 160 Health (more with Spawning
+Power) and armor 50 for 39 s: your side in its range gains +3 Health regeneration.
 
 **Attacking spirits** (#1239, Ritualist, Communing, binding rituals,
 30 s recharge) project nothing; each shoots the nearest living foe
@@ -1657,12 +1657,12 @@ within spirit range (850) and in sight, a piercing shot every 2 s that
 can miss to blindness, be blocked or be dodged like an arrow. It never
 walks: a foe that leaves its range or sight is let go for the next
 nearest. Its damage is its stated number, linear in Communing (rank 0
-to 15 is GW1's range), against armor 60. At Communing 12, armor 51:
-**Pain** (5 energy, 1½ s) 182 Health, 126 s, hits for 25.
-**Shadowsong** (15 energy, 2 s) 150 Health, 30 s, hits for 17 and
-blinds for 5 s. **Dissonance** (25 energy, 2 s) 182 Health, 22 s, hits
+to 15 is GW1's range), against armor 60. At Communing 12:
+**Pain** (5 energy, 1½ s) 140 Health, armor 44, 126 s, hits for 25.
+**Shadowsong** (15 energy, 2 s) 100 Health, armor 32, 30 s, hits for 17 and
+blinds for 5 s. **Dissonance** (25 energy, 2 s) 140 Health, armor 44, 22 s, hits
 for 17 and interrupts whatever its target is activating, any skill.
-**Disenchantment** (25 energy, 3 s) 182 Health, 35 s, hits for 17 and
+**Disenchantment** (25 energy, 3 s) 140 Health, armor 44, 35 s, hits for 17 and
 strips the target's most recent enchantment. A missed or blocked shot
 does none of it.
 
@@ -1670,16 +1670,16 @@ does none of it.
 45 s recharge) attack nothing. Each projects one status over spirit
 range and pays for every outcome it changes with its own Health: plain
 health loss, no armor, which can kill it; dead, it pays nothing and its
-aura is gone the next step. At Communing 12, armor 51:
-**Shelter** (25 energy, 5 s) 182 Health, 54 s: no single attack, a
+aura is gone the next step. At Communing 12:
+**Shelter** (25 energy, 5 s) 140 Health, armor 44, 54 s: no single attack, a
 weapon blow or an attack skill's with its bonus, takes more than 10% of
 an ally's max Health, after everything else; spells, life steal and
 degeneration are not capped. 51 each time it takes something off.
-**Union** (15 energy, 3 s) 182 Health, 54 s: −15 from every hit and
+**Union** (15 energy, 3 s) 140 Health, armor 44, 54 s: −15 from every hit and
 every life steal on an ally, and 15 each time, a hit it zeroes too.
-**Displacement** (15 energy, 3 s) 214 Health, 54 s: a 75% chance to
+**Displacement** (15 energy, 3 s) 160 Health, armor 50, 54 s: a 75% chance to
 block, combined with the ally's other blocks as any are; 60 for each
-block that was its own. **Earthbind** (15 energy, 3 s) 214 Health,
+block that was its own. **Earthbind** (15 energy, 3 s) 160 Health, armor 50,
 39 s: a foe in range knocked down stays down at least 3 s; 30 per
 knockdown, one already as long included, none for one prevented.
 
