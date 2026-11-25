@@ -300,13 +300,14 @@ describe("elementalDamageTakenAs (#1745)", () => {
 
 describe("nature rituals 1 (#1745)", () => {
   it.each(RITUALS)(
-    "%s plants a 210 Health spirit whose aura both teams wear and spirits do not",
+    "%s plants a 160 Health, armor 50 spirit whose aura both teams wear and spirits do not",
     (skillId, statusId, lives) => {
       const sim = match();
       ritual(sim, skillId);
       const [spirit, ...others] = spirits(sim);
       expect(others).toEqual([]);
-      expect(spirit?.combatant.maxHealth).toBe(210);
+      expect(spirit?.combatant.maxHealth).toBe(160);
+      expect(spirit?.combatant.equipment.baseArmor).toBe(50);
       expect(spirit?.creature?.expiresInSeconds).toBeCloseTo(lives - 0.5 - DT, 5);
       expect(["r", "a", "f"].map((id) => get(sim, id).combatant.statuses.has(statusId))).toEqual([
         true,

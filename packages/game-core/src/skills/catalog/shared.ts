@@ -300,20 +300,22 @@ export const WOLF: CreatureTemplate = {
 };
 
 /**
- * A spirit's Health (#1917): GW1's "level a...b spirit", its level at ranks
- * 0 and 15, gives the level at 12 unrounded, a + 0.8 (b − a), so the level
- * is whole at every rank, and Health 50 + 20 per level.
+ * A spirit's Health and armor (#1917, #3978): GW1's "level a...b spirit",
+ * its level at ranks 0 and 15, gives the level at 12 unrounded,
+ * a + 0.8 (b − a), so the level is whole at every rank. The wiki's
+ * `Spirit` "Health and armor" table: Health 20 per level and armor
+ * 2 + 6 per level (level 1: 20 / 8, level 8: 160 / 50, level 10: 200 / 62).
+ * Both from one level, so the two can never disagree. No spirit in the
+ * corpus is level 0 at rank 0.
  */
-export function spiritHealth(
+export function spiritBody(
   attributeId: string,
   [atZero, atFifteen]: readonly [atZero: number, atFifteen: number],
-): Magnitude {
+): { readonly maxHealth: Magnitude; readonly armor: Magnitude } {
+  const level = { attributeId, atZero, atTwelve: atZero + 0.8 * (atFifteen - atZero) };
   return {
-    byLevel: {
-      level: { attributeId, atZero, atTwelve: atZero + 0.8 * (atFifteen - atZero) },
-      atLevelZero: 50,
-      perLevel: 20,
-    },
+    maxHealth: { byLevel: { level, atLevelZero: 0, perLevel: 20 } },
+    armor: { byLevel: { level, atLevelZero: 2, perLevel: 6 } },
   };
 }
 
@@ -321,8 +323,8 @@ export function spiritHealth(
  * A binding ritual's attacking spirit (#1239), as Pain: it stands where
  * it was made and shoots the nearest foe within spirit range, a blow
  * every 2 s (house tuning: GW1 publishes none) for its stated damage,
- * linear in `attributeId` (#1550), Communing for most. Health from its
- * `levels` (#1917); armor 51, as every other spirit's.
+ * linear in `attributeId` (#1550), Communing for most. Health and armor
+ * from its `levels` (#3978).
  */
 export function attackingSpirit(
   name: string,
@@ -336,8 +338,7 @@ export function attackingSpirit(
     kind: "spirit",
     look: "spirit",
     name,
-    maxHealth: spiritHealth(attributeId, levels),
-    armor: { flat: 51 },
+    ...spiritBody(attributeId, levels),
     attack: {
       attributeId,
       damageMin: damage.atTwelve,
@@ -366,8 +367,8 @@ export function attackingSpirit(
 /**
  * A protective spirit (#1265): it attacks nothing and projects `statusId`
  * on whoever `affects` in its range, paying for every outcome it
- * changes with its own health. Health from its `levels` (#1917), armor
- * 51; its duration linear in `attributeId` (#1550).
+ * changes with its own health. Health and armor from its `levels`
+ * (#3978); its duration linear in `attributeId` (#1550).
  */
 export function protectiveSpirit(
   name: string,
@@ -381,8 +382,7 @@ export function protectiveSpirit(
     kind: "spirit",
     look: "spirit",
     name,
-    maxHealth: spiritHealth(attributeId, levels),
-    armor: { flat: 51 },
+    ...spiritBody(attributeId, levels),
     attack: undefined,
     durationSeconds: { scaling: { attributeId, ...duration } },
     behaviour: { kind: "idle" },
