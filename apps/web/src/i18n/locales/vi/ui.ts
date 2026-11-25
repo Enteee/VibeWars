@@ -1614,8 +1614,8 @@ export default {
   "tutorial.heal.ow": "Ối! Tảng đá trúng tôi rồi. Giúp chút nhé?",
   "tutorial.heal.praise": "Đỡ hơn nhiều rồi, cảm ơn! Bạn cũng biết chữa trị đấy.",
   "tutorial.learn": "Học chơi",
-  "tutorial.look.hint": "Thu nhỏ, rồi kéo khung nhìn về phía bắc. Tìm cổng dịch chuyển!",
-  "tutorial.look.how": "Con lăn chuột để phóng to thu nhỏ. Giữ nút phải và kéo để nhìn quanh.",
+  "tutorial.look.hint": "Kéo khung nhìn về phía bắc. Tìm cổng dịch chuyển!",
+  "tutorial.look.how": "Giữ nút phải và kéo để nhìn quanh.",
   "tutorial.look.intro":
     "Có lẽ cổng dịch chuyển này đưa ta vòng qua chiến trường. Nhìn về phía bắc!",
   "tutorial.look.praise": "Nó đây rồi! Đường vòng qua trận chiến của ta.",
@@ -1651,7 +1651,7 @@ export default {
     "Chạm vào tên tôi trong danh sách nhóm trước. Chạm Tổ đội nếu danh sách đang đóng.",
   "tutorial.touch.healHow":
     "Chạm Tổ đội nếu danh sách đang đóng, rồi chạm tên tôi, rồi chạm kỹ năng đang sáng.",
-  "tutorial.touch.look": "Chụm hai ngón để thu phóng. Kéo một ngón để nhìn quanh.",
+  "tutorial.touch.look": "Kéo một ngón để nhìn quanh.",
   "tutorial.touch.pingHow": "Chạm vào la bàn, hoặc kéo trên đó để vẽ một đường.",
   "tutorial.touch.ratsHow": "Chạm vào một con chuột để chọn nó.",
   "tutorial.touch.tunnelHow": "Chạm vào bậc đi xuống, rồi vào dấu ở quá đầu bên kia.",
