@@ -1,8 +1,9 @@
 import { OUTSIDE_KINDS, type OutsideKind } from "@vibewars/game-maps/schema";
 import { describe, expect, it } from "vitest";
 
+import { OUTSIDE_LOOK } from "./arena-palette.js";
+
 import {
-  OUTSIDE_LOOK,
   OUTSIDE_MARGIN,
   OUTSIDE_TILE,
   type OutsidePainter,

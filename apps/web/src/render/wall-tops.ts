@@ -2,7 +2,8 @@ import type { Vec2 } from "@vibewars/game-core";
 import type { OutsideKind } from "@vibewars/game-maps/schema";
 
 import type { Box } from "./layer-surfaces.js";
-import { OUTSIDE_LOOK, type OutsidePainter, paintOutsideTile } from "./outside-land.js";
+import { OUTSIDE_LOOK } from "./arena-palette.js";
+import { type OutsidePainter, paintOutsideTile } from "./outside-land.js";
 
 /**
  * The top of a wall inside an outlined map (#3808,

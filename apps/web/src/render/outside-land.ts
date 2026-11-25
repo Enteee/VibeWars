@@ -1,6 +1,7 @@
 import type { Vec2 } from "@vibewars/game-core";
 import type { OutsideKind } from "@vibewars/game-maps/schema";
 
+import { OUTSIDE_LOOK } from "./arena-palette.js";
 import { boxUnder, type CellBox, coverBoxes } from "./cell-cover.js";
 import { type HazardPainter, hash, paintRock } from "./hazard-marks.js";
 
@@ -28,37 +29,6 @@ export interface EdgePainter {
   lineStyle(width: number, colour: number, alpha: number): void;
   strokeOutline(outline: readonly Vec2[]): void;
 }
-
-/** Each kind's colours, from the study. None is danger orange, acid green or friend blue. */
-export const OUTSIDE_LOOK = {
-  cliff: {
-    base: 0x2d3748,
-    grain: [0x252e3c, 0x343f52],
-    streak: 0x4a5a70,
-    lip: 0xa9bbd0,
-    deep: 0x0b0f14,
-  },
-  rock: { base: 0x3f3c37, grain: [0x36332f, 0x4a4640], crevice: 0x14120f, rim: 0xb4ad9f },
-  forest: {
-    base: 0x1c2a1f,
-    grain: [0x18241a, 0x223226],
-    shadow: 0x0e1610,
-    canopy: 0x2c4a2e,
-    lit: 0x3f6a3d,
-    spot: 0x5f8c55,
-  },
-  "deep-water": { base: 0x18304a, grain: [0x152a40, 0x1c3754], ripple: 0x2f5878, shore: 0x8fb8d6 },
-  // Its warmth is a dull ember, far below danger orange: the crust is cold enough to stand beside.
-  basalt: {
-    base: 0x161312,
-    grain: [0x110f0e, 0x1e1a18],
-    top: 0x3a3431,
-    lit: 0x4a4340,
-    crack: 0x0c0a09,
-    ember: 0x6e3018,
-    ash: 0x8c827a,
-  },
-} as const;
 
 /** Paints one tile of `kind` at the origin, `OUTSIDE_TILE` square; it repeats without a seam. */
 export function paintOutsideTile(painter: OutsidePainter, kind: OutsideKind): void {

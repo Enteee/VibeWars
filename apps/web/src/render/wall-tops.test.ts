@@ -2,7 +2,8 @@ import type { Vec2 } from "@vibewars/game-core";
 import { OUTSIDE_KINDS } from "@vibewars/game-maps/schema";
 import { describe, expect, it } from "vitest";
 
-import { OUTSIDE_LOOK, OUTSIDE_TILE, type OutsidePainter } from "./outside-land.js";
+import { OUTSIDE_LOOK } from "./arena-palette.js";
+import { OUTSIDE_TILE, type OutsidePainter } from "./outside-land.js";
 import {
   WALL_TOP_WASH,
   boxOfPoints,
