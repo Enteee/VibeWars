@@ -383,8 +383,8 @@ test("Wilds: a double right click on the lever opens the side room's door, and y
 test("Heights draws its water: the deep pond darker than the floor, a puddle paler (#2985)", async ({
   page,
 }) => {
-  // A walk and a wait for a still camera (#721).
-  test.setTimeout(60_000);
+  // Walks, each with a wait for a still camera (#721), round the pond and back (#4057).
+  test.setTimeout(90_000);
   // Water ripples never settle unless motion is reduced (#2984).
   await page.emulateMedia({ reducedMotion: "reduce" });
   const canvas = await openTraining(page);
@@ -452,7 +452,8 @@ test("Heights draws its water: the deep pond darker than the floor, a puddle pal
   const [pond, northFloor] = await waterAndFloor(907, 124, 23, 76);
   expect(pond).toBeLessThan(northFloor);
   // West of the puddle: south of it is the east pit, sunk and darker (#2973).
-  // West of the pit first: the puddle is further than the stage shows.
+  // Back by the pond's middle, then west of the pit: the puddle is further than the stage shows.
+  await walkTo(page, canvas, { x: 930, y: 330 });
   await walkTo(page, canvas, { x: 930, y: 560 });
   const [puddle, westFloor] = await waterAndFloor(990, 715, 80, 0);
   expect(puddle).toBeGreaterThan(westFloor);
