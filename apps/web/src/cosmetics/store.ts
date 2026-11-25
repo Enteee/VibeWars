@@ -1,9 +1,9 @@
 /**
  * This browser's cosmetics (ADR-0056), kept beside its player key and so
- * shared by all its characters: what is picked per slot, the key's last
- * known leaderboard facts, so a failed fetch still draws your own, and
- * whether other players' cosmetics are shown. A stored record of any
- * other shape is deleted, not read (ADR-0016): the picks start empty.
+ * shared by all its characters: what is picked per slot, and the key's
+ * last known leaderboard facts, so a failed fetch still draws your own.
+ * A stored record of any other shape is deleted, not read (ADR-0016):
+ * the picks start empty.
  */
 
 import { STORAGE_NAMESPACE } from "../storage/namespace.js";
@@ -13,7 +13,6 @@ import type { CosmeticChoice } from "./selection.js";
 import type { UnlockFacts } from "./unlocks.js";
 
 const COSMETICS_KEY = `${STORAGE_NAMESPACE}.cosmetics`;
-const SHOW_OTHERS_KEY = `${STORAGE_NAMESPACE}.showCosmetics`;
 
 interface Stored {
   readonly choice: CosmeticChoice;
@@ -62,9 +61,6 @@ export interface CosmeticsStore {
   readonly lastFacts: () => UnlockFacts | undefined;
   /** Remember `facts` from a fetched leaderboard. */
   readonly rememberFacts: (facts: UnlockFacts | undefined) => void;
-  /** Whether other players' cosmetics are drawn: on by default. */
-  readonly showOthers: () => boolean;
-  readonly setShowOthers: (show: boolean) => void;
   /** Called on every change; returns its unsubscribe. */
   readonly onChange: (handler: () => void) => () => void;
 }
@@ -111,7 +107,6 @@ export function createCosmeticsStore(
     return parsed;
   };
   let stored = load();
-  let show = read(SHOW_OTHERS_KEY) !== "false";
   const save = (next: Stored): void => {
     stored = next;
     write(COSMETICS_KEY, JSON.stringify(next));
@@ -137,14 +132,6 @@ export function createCosmeticsStore(
         facts === undefined ? null : { wins: facts.wins, streak: facts.streak, rank: facts.rank };
       if (JSON.stringify(next) !== JSON.stringify(stored.facts)) {
         save({ ...stored, facts: next });
-      }
-    },
-    showOthers: () => show,
-    setShowOthers: (next) => {
-      show = next;
-      write(SHOW_OTHERS_KEY, String(next));
-      for (const handler of handlers) {
-        handler();
       }
     },
     onChange: (handler) => {

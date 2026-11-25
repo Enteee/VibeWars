@@ -98,35 +98,32 @@ const drawn = new WeakMap<
   {
     readonly pubkey: string;
     readonly board: Leaderboard | undefined;
-    readonly showOthers: boolean;
     readonly worn: WornCosmetics;
   }
 >();
 
 /**
  * What a viewer draws of another seat (ADR-0056 §3): its selection only
- * if `showOthers`, its signature holds for its key, and the viewer's
- * `board` shows the key earned each item. Anything else is the default.
+ * if its signature holds for its key and the viewer's `board` shows the
+ * key earned each item. Anything else is the default.
  * Asked every frame, it works it out again only when one of them changes.
  */
 export function visibleCosmetics(
   seat: { readonly playerPubkey: string; readonly cosmetics: WireCosmetics } | undefined,
   board: Leaderboard | undefined,
-  showOthers: boolean,
 ): WornCosmetics {
   if (seat === undefined) {
     return DEFAULT_LOOK;
   }
   const { playerPubkey: pubkey, cosmetics } = seat;
   const last = drawn.get(cosmetics);
-  if (last?.pubkey === pubkey && last.board === board && last.showOthers === showOthers) {
+  if (last?.pubkey === pubkey && last.board === board) {
     return last.worn;
   }
-  const worn =
-    showOthers && verifySelection(pubkey, cosmetics)
-      ? wornOf(cosmetics.ids, factsOf(board, pubkey))
-      : DEFAULT_LOOK;
-  drawn.set(cosmetics, { pubkey, board, showOthers, worn });
+  const worn = verifySelection(pubkey, cosmetics)
+    ? wornOf(cosmetics.ids, factsOf(board, pubkey))
+    : DEFAULT_LOOK;
+  drawn.set(cosmetics, { pubkey, board, worn });
   return worn;
 }
 

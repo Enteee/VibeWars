@@ -433,6 +433,7 @@ export default {
   "cosmetics.item.trailFrost": "Mrazivá stopa",
   "cosmetics.item.trailMoss": "Machová stopa",
   "cosmetics.item.trailStarlight": "Hviezdna stopa",
+  "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Zamknuté",
   "cosmetics.none": "Žiadne",
   "cosmetics.note":
@@ -450,7 +451,6 @@ export default {
     many: "{count} hodnotené výhry",
     other: "{count} hodnotených výhier",
   },
-  "cosmetics.showOthers": "Zobrazovať kozmetiku ostatných hráčov",
   "cosmetics.slot.aura": "Aura na zemi",
   "cosmetics.slot.cape": "Vzor plášťa",
   "cosmetics.slot.dissolve": "Rozplynutie pri smrti",
@@ -1827,9 +1827,8 @@ export default {
   "tutorial.heal.ow": "Au! Trafil ma kameň. Pomôžeš mi?",
   "tutorial.heal.praise": "Oveľa lepšie, vďaka! Vieš aj liečiť.",
   "tutorial.learn": "Nauč sa hrať",
-  "tutorial.look.hint": "Oddiaľ pohľad a potom ho potiahni na sever. Nájdi teleport!",
-  "tutorial.look.how":
-    "Koliesko myši približuje. Drž pravé tlačidlo a ťahaj, aby si sa rozhliadol.",
+  "tutorial.look.hint": "Potiahni pohľad na sever. Nájdi teleport!",
+  "tutorial.look.how": "Drž pravé tlačidlo a ťahaj, aby si sa rozhliadol.",
   "tutorial.look.intro": "Možno nás tento teleport dostane okolo bojiska. Pozri sa na sever!",
   "tutorial.look.praise": "Tu je! Naša cesta okolo boja.",
   "tutorial.offer": "Si tu nový? Tvoj učiteľ ti ukáže základy.",
@@ -1863,7 +1862,7 @@ export default {
     "Najprv ťukni na moje meno v zozname družiny. Ak je zoznam zatvorený, ťukni na Družina.",
   "tutorial.touch.healHow":
     "Ak je zoznam zatvorený, ťukni na Družina, potom na moje meno a potom na žiariacu zručnosť.",
-  "tutorial.touch.look": "Približuj roztiahnutím prstov. Ťahaj jedným prstom a rozhliadni sa.",
+  "tutorial.touch.look": "Ťahaj jedným prstom a rozhliadni sa.",
   "tutorial.touch.pingHow": "Ťukni na kompas alebo po ňom ťahaj a nakresli čiaru.",
   "tutorial.touch.ratsHow": "Ťukni na potkana a zameraj ho.",
   "tutorial.touch.tunnelHow": "Ťukni na schody dolu, potom na značku za druhým koncom.",

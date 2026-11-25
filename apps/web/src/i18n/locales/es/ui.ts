@@ -424,6 +424,7 @@ export default {
   "cosmetics.item.trailFrost": "Rastro de escarcha",
   "cosmetics.item.trailMoss": "Rastro de musgo",
   "cosmetics.item.trailStarlight": "Rastro de luz estelar",
+  "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Bloqueado",
   "cosmetics.none": "Ninguno",
   "cosmetics.note":
@@ -439,7 +440,6 @@ export default {
     many: "{count} victorias clasificatorias",
     other: "{count} victorias clasificatorias",
   },
-  "cosmetics.showOthers": "Mostrar los cosméticos de otros jugadores",
   "cosmetics.slot.aura": "Aura de suelo",
   "cosmetics.slot.cape": "Diseño de capa",
   "cosmetics.slot.dissolve": "Disolución al morir",
@@ -1803,10 +1803,8 @@ export default {
   "tutorial.heal.ow": "¡Ay! La roca me dio. ¿Me echas una mano?",
   "tutorial.heal.praise": "¡Mucho mejor, gracias! También sabes curar.",
   "tutorial.learn": "Aprender a jugar",
-  "tutorial.look.hint":
-    "Aleja la vista y arrástrala hacia el norte. ¡Encuentra el teletransportador!",
-  "tutorial.look.how":
-    "La rueda del ratón hace zoom. Mantén el botón derecho y arrastra para mirar.",
+  "tutorial.look.hint": "Arrastra la vista hacia el norte. ¡Encuentra el teletransportador!",
+  "tutorial.look.how": "Mantén el botón derecho y arrastra para mirar.",
   "tutorial.look.intro":
     "Quizá este teletransportador nos lleve alrededor del campo de batalla. ¡Mira al norte!",
   "tutorial.look.praise": "¡Ahí está! Nuestro camino alrededor de la lucha.",
@@ -1841,7 +1839,7 @@ export default {
     "Primero toca mi nombre en la lista del grupo. Toca Grupo si la lista está cerrada.",
   "tutorial.touch.healHow":
     "Toca Grupo si la lista está cerrada, luego mi nombre y luego la habilidad que brilla.",
-  "tutorial.touch.look": "Pellizca para hacer zoom. Arrastra un dedo para mirar.",
+  "tutorial.touch.look": "Arrastra un dedo para mirar.",
   "tutorial.touch.pingHow": "Toca la brújula o arrastra sobre ella para trazar una línea.",
   "tutorial.touch.ratsHow": "Toca una rata para seleccionarla.",
   "tutorial.touch.tunnelHow": "Toca los escalones de bajada y luego la marca tras el otro extremo.",

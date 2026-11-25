@@ -1,8 +1,8 @@
 // jungle-veil - D dorian, 76 bpm. mood: mysterious, atmospheric.
-// Deep under the canopy, something is watching. A low harp keeps a slow,
-// steady walk; a recorder calls four notes (up a third, back a step, up to the
+// Deep under the canopy, something is watching. A harp keeps a slow,
+// steady walk; a low bowed voice calls four notes (up a third, back a step, up to the
 // fifth) and the jungle answers. Level 1 adds a pizzicato ripple and a ticking
-// frame drum, level 2 the taiko and a harp that doubles the call below.
+// frame drum, level 2 the taiko and a harp that doubles the call above.
 // Eight sections of eight cycles (3m22s before it repeats): the call climbs,
 // sinks into the undergrowth, turns back on itself and comes home, and the
 // last chord, A minor, leads back into the first.
@@ -20,18 +20,18 @@ let voice = arrange([8, call], [8, call.add(2)], [8, call.rev()], [8, call.add(-
   [8, call.add(2).rev()], [8, call], [8, call.add(-3).rev()], [8, call])
 
 stack(
-  // 0: the walk - a low harp on every beat - a dim chord, and the call
-  note(P.rootNotes(2)).s("harp").struct("x x x x").gain(.42).lpf(900).room(.7).roomsize(6).orbit(2),
+  // 0: the walk - a harp on every beat - a dim chord, and the call, low and bowed
+  note(P.rootNotes(3)).s("harp").struct("x x x x").gain(.42).lpf(900).room(.7).roomsize(6).orbit(2),
   chord(P).voicing().mode("below:a4")
     .s("triangle").attack(1.2).clip(1).release(1.5).gain(.1).lpf(900).room(.7).roomsize(6).orbit(2),
-  n(voice).scale("d4:dorian")
-    .s("recorder").gain(.55).attack(.1).release(.8).lpf(2400).room(.7).roomsize(6).orbit(2),
+  n(voice).scale("d2:dorian")
+    .s("sawtooth").gain(.5).attack(.25).release(1.4).lpf(700).vib("4.5:.1").room(.7).roomsize(6).orbit(2),
   // 1: the canopy stirs - a pizzicato ripple, a frame drum ticking off the beat
   layer(1, stack(
     n("0 ~ 2 1 ~ 2 3 ~").chord(P).voicing().mode("above:d3")
       .s("pizz").gain(.38).room(.7).roomsize(6).orbit(2),
     s("~ frame:2 ~ frame:2 ~ frame:2 ~ frame:2").gain(.22).pan(.35))),
-  // 2: the taiko, and the harp doubling the call an octave below
+  // 2: the taiko, and the harp doubling the call an octave above
   layer(2, stack(
     s("taiko:1 ~ ~ ~ ~ taiko:0 ~ ~").gain(.4).lpf(600).room(.4),
     n(voice).scale("d3:dorian").s("harp").gain(.25).room(.7).roomsize(6).orbit(2)))

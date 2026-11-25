@@ -1,15 +1,23 @@
 import {
   MatchSimulation,
   TRAINING_SCENARIOS,
+  ZONE_RULES,
   applyIntent,
   breakableTargetId,
   scenarioParticipants,
   switchTargetId,
 } from "@vibewars/game-core";
-import { allWallSegments } from "@vibewars/game-maps/geometry";
+import {
+  allWallSegments,
+  shapesOverlap,
+  shapesOverlapInterior,
+  shapeVertices,
+} from "@vibewars/game-maps/geometry";
 import { matchLayers, matchZones } from "@vibewars/game-maps/layers";
 import { describe, expect, it } from "vitest";
 
+import { shapeOutline } from "../render/layer-surfaces.js";
+import { ELEVATION_STEP } from "../render/render-order.js";
 import { newCharacter } from "../ui/build-editor.js";
 import { TRAINING_MAPS } from "./maps.js";
 import { SELF_ID, setupScenario } from "./scenario-setup.js";
@@ -79,9 +87,11 @@ describe("Training Wilds (#3024)", () => {
         (map.zones ?? []).find((each) => each.id === id),
         id,
       );
-      if (zone.area.kind !== "rect") throw new Error(`${id} is no rect`);
+      const corners = shapeVertices(zone.area);
+      const mean = (axis: "x" | "y") =>
+        corners.reduce((sum, corner) => sum + corner[axis], 0) / corners.length;
       return {
-        spawn: { x: zone.area.x + zone.area.width / 2, y: zone.area.y + zone.area.height / 2 },
+        spawn: { x: mean("x"), y: mean("y") },
         layer: zone.layer,
       };
     };
@@ -142,6 +152,28 @@ describe("Training Wilds (#3024)", () => {
     expect(bears(SELF_ID, "poison")).toBe(false);
   });
 
+  it("sets no zone on a transition as it is drawn, its raised end lifted (#3994)", () => {
+    for (const transition of map.transitions) {
+      const corners = shapeVertices(transition.area);
+      const xs = corners.map(({ x }) => x);
+      const ys = corners.map(({ y }) => y);
+      const lift = ELEVATION_STEP * Math.max(0, transition.to - map.groundLayer);
+      const top = Math.min(...ys) - lift;
+      const drawn = {
+        kind: "rect",
+        x: Math.min(...xs),
+        y: top,
+        width: Math.max(...xs) - Math.min(...xs),
+        height: Math.max(...ys) - top,
+      } as const;
+      for (const zone of map.zones ?? []) {
+        if (zone.layer === transition.from || zone.layer === transition.to) {
+          expect(shapesOverlap(drawn, zone.area), `${transition.id} / ${zone.id}`).toBe(false);
+        }
+      }
+    }
+  });
+
   it("walks from one team's spawn to the other's", () => {
     const [west, east] = map.spawnPoints;
     const from = loaded(west, "a spawn").position;
@@ -172,6 +204,37 @@ describe("Training Wilds (#3024)", () => {
     expect(map.water?.length).toBeGreaterThan(0);
     expect(map.lighting?.sun).toBeDefined();
     expect(map.lighting?.lights.length).toBeLessThanOrEqual(16);
+  });
+
+  it("lights its basin from inside, so the hollow reads below the dusk (#3993)", () => {
+    const lights = map.lighting?.lights ?? [];
+    expect(lights.some(({ layer }) => layer === 0)).toBe(true);
+  });
+
+  it("draws each harmless patch as ground, not a tile: no rect (#3993)", () => {
+    // Harmful zones stay rect: each corner is a bot walk-graph node (MAX_HARMFUL_ZONE_POINTS).
+    const harmless = (map.zones ?? []).filter(({ kind }) => !ZONE_RULES[kind].harmful);
+    expect(harmless.length).toBeGreaterThan(0);
+    for (const zone of harmless) expect(zone.area.kind, zone.id).not.toBe("rect");
+  });
+
+  it("draws each pit inside the map, its floor one step below its footprint (#3992)", () => {
+    for (const pit of map.pits) {
+      const bottom = Math.max(...shapeOutline(pit.footprint).map(({ y }) => y));
+      expect(bottom + ELEVATION_STEP, pit.id).toBeLessThanOrEqual(map.height);
+    }
+  });
+
+  it("keeps the ground's zones out of the pit they would hang over (#3992)", () => {
+    for (const pit of map.pits) {
+      for (const zone of map.zones ?? []) {
+        if (zone.layer >= map.groundLayer) {
+          expect(shapesOverlapInterior(zone.area, pit.footprint), `${pit.id} / ${zone.id}`).toBe(
+            false,
+          );
+        }
+      }
+    }
   });
 
   describe("reaches every element on foot from the spawn (#3049)", () => {

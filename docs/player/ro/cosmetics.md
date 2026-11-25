@@ -52,12 +52,13 @@ O ramă de emblemă este o margine subțire în jurul emblemei de pe pelerina br
 
 ## Cum le porți
 
-Deschide Opțiuni și alege **Cosmetice**. Fiecare loc își listează elementele, fiecare marcat ca
-disponibil sau blocat, cu ceea ce îl deblochează. Alegerea ta se aplică imediat. Ceilalți jucători
-o văd începând cu următorul lobby în care intri.
+Deschide Opțiuni și alege **Cosmetice**. Fiecare loc este un rând de mostre, fiecare o mică imagine
+a elementului său; prima, un cerc gol tăiat, înseamnă să nu porți nimic. Mostra aleasă are un inel
+albastru. Textul de lângă rând (sub el pe telefon) numește mostra spre care arăți sau care are
+focusul, și ce o deblochează. O mostră blocată e estompată, cu un mic lacăt. Alegerea ta se aplică
+imediat. Ceilalți jucători o văd începând cu următorul lobby în care intri.
 
 ## Elementele cosmetice ale altor jucători
 
 Ceilalți jucători îți văd elementele cosmetice doar dacă copia lor a clasamentului arată că le-ai
-obținut. Ca să-i vezi pe toți cu aspectul implicit, dezactivează **Arată elementele cosmetice ale
-altor jucători** în Opțiuni, la **Cosmetice**.
+obținut.

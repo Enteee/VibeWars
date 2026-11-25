@@ -53,12 +53,14 @@ Ramka herbu to cienka obwódka wokół herbu na twoim płaszczu gildii. Nigdy ni
 
 ## Jak je nosić
 
-Otwórz Opcje i wybierz **Kosmetyki**. Każde miejsce wymienia swoje przedmioty, każdy oznaczony jako
-dostępny albo zablokowany, wraz z tym, za co się go zdobywa. Twój wybór działa od razu. Inni gracze
-widzą go od następnego lobby, do którego dołączysz.
+Otwórz Opcje i wybierz **Kosmetyki**. Każde miejsce to jeden rząd próbek, każda to mały obrazek
+swojego przedmiotu; pierwsza, pusty przekreślony okrąg, oznacza, że nic nie nosisz. Wybrana próbka
+ma niebieski pierścień. Tekst obok rzędu (pod nim na telefonie) podaje nazwę próbki, na którą
+wskazujesz lub która ma fokus, i to, za co się ją zdobywa. Zablokowana próbka jest przyciemniona, z
+małą kłódką. Twój wybór działa od razu. Inni gracze widzą go od następnego lobby, do którego
+dołączysz.
 
 ## Kosmetyki innych graczy
 
 Inni gracze widzą twoje kosmetyki tylko wtedy, gdy ich kopia tabeli wyników pokazuje, że je
-zdobyłeś. Aby widzieć wszystkich w domyślnym wyglądzie, wyłącz **Pokazuj kosmetyki innych graczy**
-w Opcjach w sekcji **Kosmetyki**.
+zdobyłeś.

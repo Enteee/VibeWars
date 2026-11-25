@@ -53,12 +53,12 @@ En emblemram är en tunn kant runt emblemet på din gillesmantel. Den täcker, f
 
 ## Så bär du den
 
-Öppna Alternativ och välj **Kosmetik**. Varje plats listar sina föremål, vart och ett markerat som
-användbart eller låst, med vad som låser upp det. Ditt val gäller direkt. Andra spelare ser det från
-nästa lobby du går med i.
+Öppna Alternativ och välj **Kosmetik**. Varje plats är en rad med rutor, var och en en liten bild av
+sitt föremål; den första, en tom överstruken cirkel, betyder att du inte bär något. Den valda rutan
+har en blå ring. Texten bredvid raden (under den på en telefon) namnger rutan du pekar på eller har
+fokus på, och vad som låser upp den. En låst ruta är nedtonad, med ett litet hänglås. Ditt val
+gäller direkt. Andra spelare ser det från nästa lobby du går med i.
 
 ## Se andra spelares kosmetik
 
-Andra spelare ser din kosmetik bara om deras kopia av topplistan visar att du har tjänat in den. För
-att se alla med standardutseendet, slå av **Visa andra spelares kosmetik** i Alternativ under
-**Kosmetik**.
+Andra spelare ser din kosmetik bara om deras kopia av topplistan visar att du har tjänat in den.

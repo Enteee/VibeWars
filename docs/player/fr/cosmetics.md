@@ -54,12 +54,14 @@ Un cadre d’emblème est une fine bordure autour de l’emblème de ta cape de 
 
 ## Les porter
 
-Ouvre Options et choisis **Cosmétiques**. Chaque emplacement liste ses objets, chacun marqué comme
-portable ou verrouillé, avec ce qui le débloque. Ton choix s’applique aussitôt. Les autres joueurs
-le voient à partir du prochain lobby que tu rejoins.
+Ouvre Options et choisis **Cosmétiques**. Chaque emplacement est une rangée de vignettes, chacune
+une petite image de son objet. La première, un cercle vide barré, ne porte rien. La vignette choisie
+a un anneau bleu. La ligne à côté de la rangée (en dessous sur un téléphone) nomme la vignette que
+tu pointes ou qui a le focus, et ce qui la débloque. Une vignette verrouillée est grisée, avec un
+petit cadenas. Ton choix s’applique aussitôt. Les autres joueurs le voient à partir du prochain
+lobby que tu rejoins.
 
 ## Voir les cosmétiques des autres joueurs
 
 Les autres joueurs ne voient tes cosmétiques que si leur copie du classement montre que tu les as
-obtenus. Pour voir tout le monde avec l’apparence par défaut, désactive **Afficher les cosmétiques
-des autres joueurs** dans Options, sous **Cosmétiques**.
+obtenus.
