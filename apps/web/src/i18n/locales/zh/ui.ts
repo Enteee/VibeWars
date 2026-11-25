@@ -1520,7 +1520,6 @@ export default {
     "英雄之路是一连串地图，8对8，对手是与你同一轮的队伍。赢了就进入下一张地图，一路打到英雄大厅；输了就从头再来。",
   "tutorial.menu.modes.hostedGame":
     "自建游戏是你自己的大厅：把邀请链接发给好友，再选好地图和队伍人数。没人占的位置都由机器人来玩。",
-  "tutorial.menu.modes.open": "打开侧边亮起的模式。",
   "tutorial.menu.modes.randomArena":
     "随机竞技场是最快的战斗：用你自己的角色，和陌生人组队，1v1、2v2或4v4。地图随机抽取，每个位置都是真人玩家。",
   "tutorial.menu.modes.teamArena":

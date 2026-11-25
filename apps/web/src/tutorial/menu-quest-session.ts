@@ -61,6 +61,8 @@ export interface MenuQuestOptions {
   readonly touch: boolean;
   /** The coach to show it on; `onSkip` once Skip tutorial is confirmed. */
   readonly coach: (callbacks: { readonly onSkip: () => void }) => CoachOverlay;
+  /** Opens the rail's drawer, where it is one: the modes step lights its entries (#3990). */
+  readonly openRail: () => void;
   readonly onEnd: (end: "done" | "skipped") => void;
 }
 
@@ -119,6 +121,11 @@ export function startMenuQuest(options: MenuQuestOptions): MenuQuestSession {
           : undefined,
     });
   };
+  const enter = (step: MenuQuestStepId): void => {
+    if (step === "modes") {
+      options.openRail();
+    }
+  };
   const advance = (gotIt: boolean): void => {
     if (over) {
       return;
@@ -131,11 +138,13 @@ export function startMenuQuest(options: MenuQuestOptions): MenuQuestSession {
     // A step is only ever entered at its first beat: that is where it resumes.
     if (next !== cursor && next.beat === 0) {
       saveTutorialRecord(`menu:${next.step}`);
+      enter(next.step);
     }
     cursor = next;
     show();
   };
   saveTutorialRecord(`menu:${cursor.step}`);
+  enter(cursor.step);
   show();
   return {
     event: (event) => {

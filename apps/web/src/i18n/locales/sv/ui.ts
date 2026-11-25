@@ -1637,7 +1637,6 @@ export default {
     "Heroes' Ascent är en rad kartor, 8 mot 8, mot lag i din omgång. Vinner du går du vidare till nästa karta, ända upp till Hjältarnas sal; förlorar du börjar du om.",
   "tutorial.menu.modes.hostedGame":
     "Ett eget spel är din egen lobby: skicka inbjudningslänken till vänner och välj karta och lagstorlek. Bottar spelar varje plats som ingen tar.",
-  "tutorial.menu.modes.open": "Öppna det tända spelsättet längs sidan.",
   "tutorial.menu.modes.randomArena":
     "Slumparena är den snabbaste striden: din egen karaktär, i ett lag av främlingar, 1v1, 2v2 eller 4v4. Kartan lottas åt dig, och varje plats är en riktig spelare.",
   "tutorial.menu.modes.teamArena":

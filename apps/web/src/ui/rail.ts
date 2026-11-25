@@ -9,7 +9,7 @@ import {
   type TeamBuildSize,
   type TeamSize,
 } from "../storage/schema.js";
-import { button, h, PUTS_AWAY, TUCKED_BEHIND } from "./kit.js";
+import { button, DRAWER_INSIDE, h, PUTS_AWAY, TUCKED_BEHIND } from "./kit.js";
 import type { RailParty } from "./lobby-window.js";
 
 /**
@@ -425,6 +425,7 @@ const DRAWER_QUERY = "(pointer: coarse) and (width <= 30rem)";
 /** What happens to the drawer (#3924). */
 export type DrawerEvent =
   | { readonly kind: "toggle" }
+  | { readonly kind: "open" }
   | { readonly kind: "entry"; readonly locked: boolean }
   | { readonly kind: "escape" }
   | { readonly kind: "press-outside"; readonly onScrim: boolean }
@@ -436,11 +437,12 @@ export type DrawerFocus = "entry" | "toggle" | "none";
 
 /**
  * The drawer after `event`, `open` before it (#3924): it opens and
- * closes on its toggle; choosing an entry, Esc, a press outside it, the
- * focus leaving it or the layout changing put it away. Nothing else in
- * it does: the size stepper leaves it open, to step and look. Opening focuses the shown entry;
- * closing gives the focus back to the toggle, unless an entry was chosen
- * or the press was on something else, which takes it.
+ * closes on its toggle, and opens for the menu quest (#3990); choosing an
+ * entry, Esc, a press outside it, the focus leaving it or the layout
+ * changing put it away. Nothing else in it does: the size stepper leaves
+ * it open, to step and look. The toggle opening it focuses the shown
+ * entry; closing gives the focus back to the toggle, unless an entry was
+ * chosen or the press was on something else, which takes it.
  */
 export function drawerNext(
   open: boolean,
@@ -449,6 +451,8 @@ export function drawerNext(
   switch (event.kind) {
     case "toggle":
       return { open: !open, focus: open ? "toggle" : "entry" };
+    case "open":
+      return { open: true, focus: "none" };
     case "entry":
       return event.locked ? { open, focus: "none" } : { open: false, focus: "none" };
     case "escape":
@@ -484,7 +488,10 @@ function watchDrawer(): void {
     }
     // A press that redrew what it hit, like the size stepper redrawing
     // the rail, is no press outside: its target has left the page.
-    if (target.isConnected && target.closest(`#${RAIL_ID}, #${DRAWER_TOGGLE_ID}`) === null) {
+    if (
+      target.isConnected &&
+      target.closest(`#${RAIL_ID}, #${DRAWER_TOGGLE_ID}, [${DRAWER_INSIDE}]`) === null
+    ) {
       drawerListener({
         kind: "press-outside",
         onScrim: target.closest(".rail-drawer-scrim") !== null,
@@ -494,6 +501,17 @@ function watchDrawer(): void {
   matchMedia(DRAWER_QUERY).addEventListener("change", () => {
     drawerListener?.({ kind: "layout" });
   });
+}
+
+/**
+ * Opens the drawn rail screen's drawer, where the rail is one (#3990), so
+ * the menu quest's modes step can light its entries in turn. The focus
+ * stays where it is.
+ */
+export function openRailDrawer(): void {
+  if (matchMedia(DRAWER_QUERY).matches) {
+    drawerListener?.({ kind: "open" });
+  }
 }
 
 /**
@@ -524,11 +542,6 @@ export function railScreen(
   toggle.appendChild(icon);
   const title = h("h2", "rail-title", railLabel(active));
   head.append(toggle, title);
-  // What the menu quest's modes step explains a mode beside (#3543): its
-  // heading, so the lock keeps the screen's own controls out of reach.
-  if (isModeEntry(active)) {
-    title.setAttribute("data-tutorial", `mode-${active}`);
-  }
   const rail = modeRail(active, onSwitch);
   const scrim = h("div", "rail-drawer-scrim");
   scrim.setAttribute(PUTS_AWAY, "");

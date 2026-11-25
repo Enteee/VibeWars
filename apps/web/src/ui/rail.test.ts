@@ -556,6 +556,9 @@ describe("the rail's drawer on an upright phone (#3924)", () => {
   it("goes away on an entry, Esc, a press outside, the focus leaving or a turn of the phone", () => {
     expect(drawerNext(false, { kind: "toggle" })).toEqual({ open: true, focus: "entry" });
     expect(drawerNext(true, { kind: "toggle" })).toEqual({ open: false, focus: "toggle" });
+    // The menu quest opens it to light its entries (#3990), the focus left on its coach.
+    expect(drawerNext(false, { kind: "open" })).toEqual({ open: true, focus: "none" });
+    expect(drawerNext(true, { kind: "open" })).toEqual({ open: true, focus: "none" });
     // The chosen screen takes the focus; a guest's locked mode chooses nothing.
     expect(drawerNext(true, { kind: "entry", locked: false })).toEqual({
       open: false,

@@ -1,7 +1,8 @@
-import { expect, test, type Locator } from "@playwright/test";
+import { expect, test, type Locator, type Page } from "@playwright/test";
 
 import { openLibraryGroup } from "./helpers/library.js";
 import { openRail } from "./helpers/menu.js";
+import { PIXEL_8A_PORTRAIT } from "./helpers/phone.js";
 import { professionField } from "./helpers/professions.js";
 import { FLAT_MAP, duoCode, pastTheSplash } from "./helpers/tutorial.js";
 
@@ -244,41 +245,18 @@ test.describe("the menu quest (#3540)", () => {
     await expect(panel).toContainText("Know where to fight.");
   });
 
-  test("opens and explains the five modes from the rail, locked (#3543)", async ({ page }) => {
+  test("lights the five modes on the rail in turn, Got it alone, the screen kept (#3990)", async ({
+    page,
+  }) => {
     await page.goto(`./?menu-background=${FLAT_MAP}&tutorial-menu=modes`);
     const panel = page.locator(".coach-panel");
-    const bubble = page.locator(".coach-bubble");
     await expect(panel).toContainText("Know where to fight.");
-    const target = (id: string): Locator => page.locator(`[data-tutorial~="${id}"]`);
-    const ticked = panel.locator(`li[aria-checked="true"]`);
-
-    const modes = [
-      ["random-arena", "Random Arena is the quickest fight"],
-      ["team-arena", "Team Arena is your party"],
-      ["heroes-ascent", "Heroes' Ascent is a run of maps"],
-      ["gvg", "GvG is guild against guild"],
-      ["hosted-game", "A Hosted Game is your own lobby"],
-    ] as const;
-    for (const [at, [mode, line]] of modes.entries()) {
-      // Already on Random Arena, the first beat is past: its entry does nothing.
-      if (at > 0) {
-        await expect(target(`rail-${mode}`)).toHaveClass(/tutorial-pulse/);
-        await target(`rail-${mode}`).click();
-      }
-      await expect(target(`mode-${mode}`)).toHaveClass(/tutorial-pulse/);
-      await expect(bubble).toContainText(line);
-      await expect(ticked).toHaveCount(at + 1);
-      if (mode === "team-arena") {
-        // Find a match is dimmed: a click on it queues nothing.
-        await page.locator("#topbar .lobby-find").click({ force: true });
-        await expect(page.locator(".team-lobby-stage")).toHaveCount(0);
-        await expect(page.locator("#topbar .topbar-queue")).toBeHidden();
-      }
-      await bubble.getByRole("button", { name: "Got it" }).click();
-    }
-    // On to the arena step (#3544).
+    const screen = await page.locator(".screen").getAttribute("class");
+    await walkModes(page);
+    // On to the arena step (#3544), on the screen the step began on.
     await expect(panel).toContainText("Prove your team in a 2v2 Team Arena match.");
-    await expect(target("rail-team-arena")).toHaveClass(/tutorial-pulse/);
+    await expect(page.locator('[data-tutorial~="rail-team-arena"]')).toHaveClass(/tutorial-pulse/);
+    expect(await page.locator(".screen").getAttribute("class")).toBe(screen);
   });
 
   test("queues a team of two for Team Arena, then lifts and is done (#3544)", async ({ page }) => {
@@ -395,5 +373,43 @@ test.describe("the menu quest (#3540)", () => {
     await expect(page.locator(".screen-rail")).toBeVisible();
     await expect(page.locator(".coach")).toHaveCount(0);
     await expect(page.locator(".tutorial-offer")).toHaveCount(0);
+  });
+});
+
+/** The modes step (#3990): each mode lit on the rail with its line, and passed with Got it alone. */
+async function walkModes(page: Page): Promise<void> {
+  const panel = page.locator(".coach-panel");
+  const bubble = page.locator(".coach-bubble");
+  const ticked = panel.locator(`li[aria-checked="true"]`);
+  const modes = [
+    ["random-arena", "Random Arena is the quickest fight"],
+    ["team-arena", "Team Arena is your party"],
+    ["heroes-ascent", "Heroes' Ascent is a run of maps"],
+    ["gvg", "GvG is guild against guild"],
+    ["hosted-game", "A Hosted Game is your own lobby"],
+  ] as const;
+  for (const [at, [mode, line]] of modes.entries()) {
+    await expect(page.locator(`[data-tutorial~="rail-${mode}"]`)).toHaveClass(/tutorial-pulse/);
+    await expect(bubble).toContainText(line);
+    await expect(ticked).toHaveCount(at);
+    await bubble.getByRole("button", { name: "Got it" }).click();
+  }
+}
+
+test.describe("the menu quest on a phone (#3990)", () => {
+  test.use(PIXEL_8A_PORTRAIT);
+
+  test("opens the rail's drawer for the modes step, and Got it leaves it open", async ({
+    page,
+  }) => {
+    await page.goto(`./?menu-background=${FLAT_MAP}&tutorial-menu=modes`);
+    await expect(page.locator(".coach-panel")).toContainText("Know where to fight.");
+    const toggle = page.locator(".rail-drawer-toggle");
+    await expect(toggle).toHaveAttribute("aria-expanded", "true");
+    await walkModes(page);
+    await expect(page.locator(".coach-panel")).toContainText(
+      "Prove your team in a 2v2 Team Arena match.",
+    );
+    await expect(toggle).toHaveAttribute("aria-expanded", "true");
   });
 });

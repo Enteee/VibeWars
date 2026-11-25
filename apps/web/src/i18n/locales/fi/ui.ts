@@ -1655,7 +1655,6 @@ export default {
     "Sankarien nousu on sarja karttoja, 8 vastaan 8, oman kierroksesi tiimejä vastaan. Voita, niin pääset seuraavalle kartalle, aina Sankarien saliin asti; häviä, niin aloitat alusta.",
   "tutorial.menu.modes.hostedGame":
     "Isännöity peli on oma aulasi: lähetä kavereille kutsulinkki ja valitse kartta ja tiimin koko. Botit pelaavat jokaisen paikan, jota kukaan ei ota.",
-  "tutorial.menu.modes.open": "Avaa sivussa korostettu pelitapa.",
   "tutorial.menu.modes.randomArena":
     "Satunnaisareena on nopein taistelu: oma hahmosi tuntemattomien tiimissä, 1v1, 2v2 tai 4v4. Kartta arvotaan sinulle, ja jokainen paikka on oikea pelaaja.",
   "tutorial.menu.modes.teamArena":

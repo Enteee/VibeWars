@@ -1738,7 +1738,6 @@ export default {
     "Ascenso de los Héroes es una serie de mapas, 8 contra 8, contra equipos de tu ronda. Si ganas, pasas al siguiente mapa, hasta el Salón de los héroes; si pierdes, empiezas de nuevo.",
   "tutorial.menu.modes.hostedGame":
     "Una Partida alojada es tu propia sala: envía a tus amigos el enlace de invitación y elige el mapa y el tamaño del equipo. Los bots ocupan cada plaza que nadie toma.",
-  "tutorial.menu.modes.open": "Abre el modo iluminado del lateral.",
   "tutorial.menu.modes.randomArena":
     "Arena aleatoria es la lucha más rápida: tu propio personaje, en un equipo de desconocidos, 1v1, 2v2 o 4v4. El mapa se sortea por ti, y cada plaza es un jugador real.",
   "tutorial.menu.modes.teamArena":

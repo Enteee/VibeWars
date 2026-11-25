@@ -1,5 +1,5 @@
 import { t } from "../i18n/index.js";
-import { button, h, inlineConfirm, PUTS_AWAY, TUCKED_BEHIND } from "../ui/kit.js";
+import { button, DRAWER_INSIDE, h, inlineConfirm, PUTS_AWAY, TUCKED_BEHIND } from "../ui/kit.js";
 
 /**
  * The menu quest's coach (#3540): the menu dimmed but for a lit cut-out
@@ -255,6 +255,7 @@ export function mountCoachOverlay(
     }),
   );
   const panel = coach.appendChild(h("aside", "coach-panel"));
+  panel.setAttribute(DRAWER_INSIDE, "");
   const panelTitle = panel.appendChild(h("h2", "coach-panel-title"));
   panelTitle.id = "coach-panel-title";
   panel.setAttribute("aria-labelledby", panelTitle.id);
