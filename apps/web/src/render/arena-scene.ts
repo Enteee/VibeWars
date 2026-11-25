@@ -6,6 +6,7 @@ import {
   ALTAR_REACH_UNITS,
   CAPTURE_REACH_UNITS,
   GATE_PLATE_REACH_UNITS,
+  getSkill,
   isStatusId,
   isWeaponId,
   ZONE_RULES,
@@ -260,11 +261,15 @@ import {
   type SpawnBubble,
 } from "./spawn-bubble.js";
 import {
-  GROUND_COLOUR,
+  GROUND_ART_LOOK,
   GROUND_DASH,
   GROUND_GAP,
   GROUND_STROKES,
   GROUND_STROKE_WIDTH,
+  WARD_DOME_COLOUR,
+  WARD_HIGHLIGHT_ALPHA,
+  artEdgeAlpha,
+  groundArt,
   groundLook,
   groundMotion,
   overlapsOf,
@@ -275,6 +280,16 @@ import {
   type Swirl,
   type Wisp,
 } from "./ground-effect-look.js";
+import {
+  DOME_LAYERS,
+  FLAME_LAYERS,
+  domeHighlight,
+  domeLayer,
+  flameDisc,
+  flameTongues,
+  type DomeLayer,
+  type FlameDisc,
+} from "./ground-effect-art.js";
 import {
   DEATH_SECONDS,
   DUST_SECONDS as DEATH_DUST_SECONDS,
@@ -1120,6 +1135,8 @@ export class ArenaScene extends Phaser.Scene {
   private readonly streak: Streak = { x1: 0, y1: 0, x2: 0, y2: 0, alpha: 0 };
   private readonly swirl: Swirl = { radius: 0, from: 0, to: 0, alpha: 0 };
   private readonly wisp: Wisp = { x: 0, y1: 0, y2: 0, alpha: 0 };
+  private readonly flameDisc: FlameDisc = { x: 0, y: 0, radius: 0, colour: 0, alpha: 0 };
+  private readonly domeLayer: DomeLayer = { x: 0, y: 0, radius: 0, alpha: 0 };
   private readonly corner = { x: 0, y: 0 };
   private readonly nextCorner = { x: 0, y: 0 };
 
@@ -3706,9 +3723,10 @@ export class ArenaScene extends Phaser.Scene {
   }
 
   /**
-   * One skill area (#3283) at (`x`, `y`): a violet pool, under an edge
-   * dashed where it can hurt your side and solid where it cannot, wide
-   * as it lands and thin as it ends; a storm's swirls or a well's wisps
+   * One skill area (#3283) at (`x`, `y`): a pool in its art's colour
+   * (#4054), under an edge dashed where it can hurt your side and solid
+   * where it cannot, wide as it lands and thin as it ends; a fire area's
+   * flames, a ward's dome, or a plain storm's swirls or a well's wisps
    * inside; the owner's pip at the icon's corner.
    */
   private drawGroundEffect(
@@ -3725,11 +3743,13 @@ export class ArenaScene extends Phaser.Scene {
       age: effect.durationSeconds - remaining,
       remaining,
     });
+    const art = groundArt(getSkill(effect.skillId));
+    const colours = GROUND_ART_LOOK[art];
     const phase = cuePhase(String(effect.id));
     const breath = poolBreath(this.now, phase, this.reducedMotion);
-    g.fillStyle(GROUND_COLOUR, stackedPoolAlpha(look.poolAlpha * breath, overlaps));
+    g.fillStyle(colours.pool, stackedPoolAlpha(look.poolAlpha * breath, overlaps));
     g.fillCircle(x, y, effect.radius);
-    g.lineStyle(look.edgeWidth, GROUND_COLOUR, look.edgeAlpha);
+    g.lineStyle(look.edgeWidth, colours.edge, artEdgeAlpha(art, look));
     if (look.dashed) {
       for (const arc of dashedCircle(effect.radius, GROUND_DASH, GROUND_GAP)) {
         g.beginPath();
@@ -3739,22 +3759,68 @@ export class ArenaScene extends Phaser.Scene {
     } else {
       g.strokeCircle(x, y, effect.radius);
     }
-    const motion = groundMotion(effect.skillId);
+    // What stands over the pool fades with its edge as the area ends.
+    const fade = look.edgeAlpha / GROUND_ART_LOOK.plain.edgeAlpha;
+    if (art === "fire") {
+      this.drawFlames(g, effect, x, y, fade);
+    } else if (art === "ward") {
+      this.drawDome(g, effect.radius, x, y, fade);
+    }
+    const motion = art === "plain" ? groundMotion(effect.skillId) : undefined;
     for (let index = 0; motion !== undefined && index < GROUND_STROKES; index += 1) {
       if (motion === "swirl") {
         const s = swirl(effect.radius, index, this.now, phase, this.reducedMotion, this.swirl);
-        g.lineStyle(GROUND_STROKE_WIDTH, GROUND_COLOUR, s.alpha);
+        g.lineStyle(GROUND_STROKE_WIDTH, colours.edge, s.alpha);
         g.beginPath();
         g.arc(x, y, s.radius, s.from, s.to);
         g.strokePath();
       } else {
         const w = wisp(effect.radius, index, this.now, phase, this.reducedMotion, this.wisp);
-        g.lineStyle(GROUND_STROKE_WIDTH, GROUND_COLOUR, w.alpha);
+        g.lineStyle(GROUND_STROKE_WIDTH, colours.edge, w.alpha);
         g.lineBetween(x + w.x, y + w.y1, x + w.x, y + w.y2);
       }
     }
     g.fillStyle(teamColour(effect.owner), 1);
     g.fillCircle(x + GROUND_ICON_SIZE / 2, y - GROUND_ICON_SIZE / 2, OWNER_PIP_RADIUS);
+  }
+
+  /** A fire area's tongues (#4054), each a stack of discs, farthest first; still under reduced motion. */
+  private drawFlames(
+    g: Phaser.GameObjects.Graphics,
+    effect: RenderableGroundEffect,
+    x: number,
+    y: number,
+    fade: number,
+  ): void {
+    for (const tongue of flameTongues(effect.id, effect.radius)) {
+      for (let layer = 0; layer < FLAME_LAYERS; layer += 1) {
+        const disc = flameDisc(tongue, layer, this.now, this.reducedMotion, this.flameDisc);
+        g.fillStyle(disc.colour, disc.alpha * fade);
+        g.fillCircle(x + disc.x, y + disc.y, disc.radius);
+      }
+    }
+  }
+
+  /**
+   * A ward's dome (#4054): stacked circles rising over it, then a white
+   * highlight on its upper left. It is on the ground's graphics, so it
+   * stands behind whoever is inside it.
+   */
+  private drawDome(
+    g: Phaser.GameObjects.Graphics,
+    radius: number,
+    x: number,
+    y: number,
+    fade: number,
+  ): void {
+    for (let index = 0; index < DOME_LAYERS; index += 1) {
+      const layer = domeLayer(radius, index, this.domeLayer);
+      g.fillStyle(WARD_DOME_COLOUR, layer.alpha * fade);
+      g.fillCircle(x + layer.x, y + layer.y, layer.radius);
+    }
+    const highlight = domeHighlight(radius);
+    g.fillStyle(0xffffff, WARD_HIGHLIGHT_ALPHA * fade);
+    g.fillEllipse(x + highlight.x, y + highlight.y, highlight.width, highlight.height);
   }
 
   /** The graphics the wards on `layer`'s decks draw to, made the first time one does. */
