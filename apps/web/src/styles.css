@@ -5666,8 +5666,9 @@ body:has(> .splash) #menu-background::after {
 
 /* A phone, upright (#3777): one column, where the library would come a
    screen of gear after the bar it fills. The editor's sections join the
-   column, so the bar sits right above the library and stays in view while
-   it scrolls; the gear comes last. */
+   column, so the bar sits right above the library; the gear comes last.
+   The bar scrolls with the page, so it never covers what is under it
+   (Q175, #3952). */
 @media (width <= 52rem) {
   .editor-layout,
   .editor-layout.has-training {
@@ -5682,31 +5683,22 @@ body:has(> .splash) #menu-background::after {
   }
 
   .editor-layout > .editor > .editor-skills {
-    position: sticky;
-    top: 0;
-    z-index: 2;
     order: 1;
-    padding-block: 0.4rem;
-    background: var(--bg);
   }
 
-  /* Pinned, the bar is kept short: one line a name, and the cost left to
-     the library and the tooltip. */
-  .editor-layout .skill-slot-cost {
-    display: none;
-  }
-
+  /* The slots are narrow: one line a name. */
   .editor-layout .skill-slot-name {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
   }
 
-  /* What is left under the top bar and the pinned bar. */
+  /* The bar's top and the library fit one screen together, the page
+     scrolled to the bar. */
   .editor-layout > .skill-library {
     position: static;
     order: 2;
-    height: calc(100dvh - 25rem);
+    height: min(calc(100dvh - 12rem), 36rem);
     min-height: 18rem;
   }
 

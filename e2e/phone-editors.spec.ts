@@ -91,17 +91,23 @@ for (const [held, device] of [
   });
 }
 
-test("upright, the bar stays in view above the list while the page scrolls (#3777)", async ({
-  page,
-}) => {
+test("upright, the bar scrolls with the page and covers nothing (#3952)", async ({ page }) => {
   await newCharacter(page);
   await page.locator(".skill-library button.skill-group-header").first().tap();
   const bar = page.locator(".editor-skills");
   // The training panel above it has drawn, so nothing moves the bar after.
   await expect(page.locator(".editor-attributes")).toBeVisible();
   await expect(page.locator(".training canvas")).toBeVisible();
-  // Scroll whatever scrolls the screen past where a bar that is not
-  // sticky would have left it.
+  // Not pinned, the bar has room for each slot's cost (Q175).
+  await page
+    .locator(".skill-library .skill-box:not(.is-elite) .skill-box-equip:visible")
+    .first()
+    .tap();
+  const slot = bar.locator(".skill-slot:not(.is-empty)").first();
+  await expect(slot).toBeVisible();
+  await expect(slot.locator(".skill-slot-cost")).toBeVisible();
+  // Scroll whatever scrolls the screen until the gear's first control is
+  // at its top, where a pinned bar would sit over it.
   const scroll = await bar.evaluate((node) => {
     let scroller = node.parentElement;
     while (scroller !== null) {
@@ -110,28 +116,25 @@ test("upright, the bar stays in view above the list while the page scrolls (#377
       if (scrolls && scroller.scrollHeight > scroller.clientHeight) break;
       scroller = scroller.parentElement;
     }
-    if (scroller === null) return null;
+    const control = document.querySelector(".editor-gear button");
+    if (scroller === null || control === null) return null;
     scroller.scrollTop = 0;
-    // A sticky bar pins inside the scroller's padding.
-    const top =
-      scroller.getBoundingClientRect().top + parseFloat(getComputedStyle(scroller).paddingTop);
-    const needed = node.getBoundingClientRect().bottom - top;
-    scroller.scrollTop = needed + 50;
-    return { top, needed, scrolled: scroller.scrollTop };
+    const top = scroller.getBoundingClientRect().top;
+    scroller.scrollTop = control.getBoundingClientRect().top - top;
+    const box = control.getBoundingClientRect();
+    return { top, x: box.left + box.width / 2, y: box.top + box.height / 2 };
   });
   expect(scroll).not.toBeNull();
   const box = await bar.boundingBox();
   expect(box).not.toBeNull();
   if (scroll !== null && box !== null) {
-    expect(scroll.scrolled).toBeGreaterThan(scroll.needed);
-    // The whole bar is pinned to the top of the screen, drawn over the
-    // library scrolling under it.
-    expect(Math.abs(box.y - scroll.top)).toBeLessThanOrEqual(1);
-    const onTop = await page.evaluate(
+    // It went up with the page, and the gear under it is what a tap hits.
+    expect(box.y + box.height).toBeLessThanOrEqual(scroll.top + 1);
+    const covered = await page.evaluate(
       ({ x, y }) => document.elementFromPoint(x, y)?.closest(".editor-skills") !== null,
-      { x: box.x + box.width / 2, y: box.y + box.height / 2 },
+      { x: scroll.x, y: scroll.y },
     );
-    expect(onTop).toBe(true);
+    expect(covered).toBe(false);
   }
 });
 
