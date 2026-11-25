@@ -1415,7 +1415,7 @@ export default {
     "异常状态是死亡倒计时：Bleeding、Poison 和 Burning 每秒流失 20 点生命，这已是上限，再次施加只会刷新时间而不会叠加。",
   "training.scenario.condition-removal.label": "移除异常状态",
   "training.scenario.condition-removal.teaches":
-    "移除异常状态只移除它写明的那些：一名生命 200/500 的队友身上有五种异常状态，其中的 Deep Wound 生效时立即扣除 100 点生命，并将你的治疗上限压到 400。",
+    "移除异常状态只移除它写明的那些：一名生命 192/480 的队友身上有五种异常状态，其中的 Deep Wound 生效时立即扣除 96 点生命，并将你的治疗上限压到 384。",
   "training.scenario.armor-ladder.label": "护甲阶梯",
   "training.scenario.armor-ladder.teaches": "减伤曲线：同一击分别打在 40 到 104 护甲上，并排对比。",
   "training.scenario.healing-throughput.label": "治疗量",

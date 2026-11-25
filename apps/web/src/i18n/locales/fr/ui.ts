@@ -1620,7 +1620,7 @@ export default {
     "Que les altérations sont un compte à rebours : Saignement, Poison et Brûlure drainent 20 de santé par seconde, le maximum possible, et en ajouter rafraîchit au lieu de cumuler.",
   "training.scenario.condition-removal.label": "Retrait d'altérations",
   "training.scenario.condition-removal.teaches":
-    "Qu'un retrait d'altération n'enlève que ce qu'il annonce : un allié à 200 sur 500 porte cinq altérations, dont Blessure profonde, qui retire 100 à l'application et plafonne tes soins à 400.",
+    "Qu'un retrait d'altération n'enlève que ce qu'il annonce : un allié à 192 sur 480 porte cinq altérations, dont Blessure profonde, qui retire 96 à l'application et plafonne tes soins à 384.",
   "training.scenario.armor-ladder.label": "Échelle d'armure",
   "training.scenario.armor-ladder.teaches":
     "La courbe d'atténuation : le même coup contre 40 à 104 d'armure, côte à côte.",

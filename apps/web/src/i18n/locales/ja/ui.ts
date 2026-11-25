@@ -1455,7 +1455,7 @@ export default {
     "状態異常は死へのカウントダウン: Bleeding、Poison、Burningで毎秒20ヘルスが削れ、これが上限。重ねても累積せず、効果時間が更新されるだけ。",
   "training.scenario.condition-removal.label": "状態異常の解除",
   "training.scenario.condition-removal.teaches":
-    "状態異常の解除は書かれたものしか取り除かない: 500中200の味方が状態異常を5つ抱え、その中のDeep Woundはかかった瞬間に100を奪い、回復の上限を400にする。",
+    "状態異常の解除は書かれたものしか取り除かない: 480中192の味方が状態異常を5つ抱え、その中のDeep Woundはかかった瞬間に96を奪い、回復の上限を384にする。",
   "training.scenario.armor-ladder.label": "防御力の段階",
   "training.scenario.armor-ladder.teaches":
     "軽減カーブ: 同じ一撃を防御力40から104まで並べて比べる。",

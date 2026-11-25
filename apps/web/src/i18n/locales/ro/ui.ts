@@ -1608,7 +1608,7 @@ export default {
     "Că afecțiunile sunt un ceas al morții: Bleeding, Poison și Burning scurg 20 viață pe secundă, maximul posibil, iar aplicarea altora le reîmprospătează, nu le cumulează.",
   "training.scenario.condition-removal.label": "Eliminarea afecțiunilor",
   "training.scenario.condition-removal.teaches":
-    "Că o eliminare de afecțiune scoate doar ce spune: un aliat la 200 din 500 poartă cinci afecțiuni, iar Deep Wound printre ele ia 100 când se aplică și îți limitează vindecările la 400.",
+    "Că o eliminare de afecțiune scoate doar ce spune: un aliat la 192 din 480 poartă cinci afecțiuni, iar Deep Wound printre ele ia 96 când se aplică și îți limitează vindecările la 384.",
   "training.scenario.armor-ladder.label": "Scara armurii",
   "training.scenario.armor-ladder.teaches":
     "Curba de atenuare: aceeași lovitură contra 40 până la 104 armură, una lângă alta.",

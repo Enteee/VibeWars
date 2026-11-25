@@ -1520,7 +1520,7 @@ export default {
     "At tilstande er et dødsur: Bleeding, Poison og Burning dræner 20 liv i sekundet, det højeste der findes, og flere fornyer i stedet for at stable.",
   "training.scenario.condition-removal.label": "Fjernelse af tilstande",
   "training.scenario.condition-removal.teaches":
-    "At en tilstandsfjernelse kun tager det, den siger: en allieret på 200 af 500 bærer fem tilstande, og Deep Wound blandt dem tager 100, når den rammer, og sætter loftet for dine helbredelser til 400.",
+    "At en tilstandsfjernelse kun tager det, den siger: en allieret på 192 af 480 bærer fem tilstande, og Deep Wound blandt dem tager 96, når den rammer, og sætter loftet for dine helbredelser til 384.",
   "training.scenario.armor-ladder.label": "Rustningsstige",
   "training.scenario.armor-ladder.teaches":
     "Afbødningskurven: det samme slag mod 40 til 104 rustning, side om side.",

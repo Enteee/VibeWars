@@ -1597,7 +1597,7 @@ export default {
     "Da su stanja odbrojavanje do smrti: Krvarenje, Otrov i Gorenje odnose 20 zdravlja u sekundi, najviše što postoji, a dodavanje novih osvježava umjesto da se zbraja.",
   "training.scenario.condition-removal.label": "Uklanjanje stanja",
   "training.scenario.condition-removal.teaches":
-    "Da uklanjanje stanja skida samo ono što piše: saveznik na 200 od 500 nosi pet stanja, među njima Duboku ranu, koja pri nanošenju odnosi 100 i ograničava tvoja liječenja na 400.",
+    "Da uklanjanje stanja skida samo ono što piše: saveznik na 192 od 480 nosi pet stanja, među njima Duboku ranu, koja pri nanošenju odnosi 96 i ograničava tvoja liječenja na 384.",
   "training.scenario.armor-ladder.label": "Ljestvica oklopa",
   "training.scenario.armor-ladder.teaches":
     "Krivulja ublažavanja: isti udarac protiv 40 do 104 oklopa, jedan uz drugi.",

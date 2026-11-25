@@ -1643,7 +1643,7 @@ export default {
     "Že stavy jsou odpočet ke smrti: Krvácení, Otrava a Hoření ubírají 20 zdraví za sekundu, víc nejde, a další je jen obnoví, nesčítají se.",
   "training.scenario.condition-removal.label": "Odstranění stavů",
   "training.scenario.condition-removal.teaches":
-    "Že odstranění stavu sundá jen to, co slibuje: spojenec na 200 z 500 nese pět stavů a Hluboká rána mezi nimi při dopadu ubere 100 a omezí tvé léčení na 400.",
+    "Že odstranění stavu sundá jen to, co slibuje: spojenec na 192 z 480 nese pět stavů a Hluboká rána mezi nimi při dopadu ubere 96 a omezí tvé léčení na 384.",
   "training.scenario.armor-ladder.label": "Žebříček brnění",
   "training.scenario.armor-ladder.teaches":
     "Křivka zmírnění: stejný zásah proti 40 až 104 brnění, vedle sebe.",

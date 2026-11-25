@@ -1526,7 +1526,7 @@ export default {
     "Rahatsızlıkların bir ölüm saati olduğu: Bleeding, Poison ve Burning saniyede 20 can eritir, bu en yüksek değerdir; yenisini eklemek üst üste binmez, süreyi tazeler.",
   "training.scenario.condition-removal.label": "Rahatsızlık kaldırma",
   "training.scenario.condition-removal.teaches":
-    "Rahatsızlık kaldırmanın yalnızca yazdığını kaldırdığı: 500 canın 200'ündeki bir müttefikte beş rahatsızlık var; aralarındaki Deep Wound bindiği anda 100 can alır ve iyileştirmelerini 400'de sınırlar.",
+    "Rahatsızlık kaldırmanın yalnızca yazdığını kaldırdığı: 480 canın 192'ündeki bir müttefikte beş rahatsızlık var; aralarındaki Deep Wound bindiği anda 96 can alır ve iyileştirmelerini 384'de sınırlar.",
   "training.scenario.armor-ladder.label": "Zırh merdiveni",
   "training.scenario.armor-ladder.teaches":
     "Hafifletme eğrisi: aynı vuruş 40 ile 104 arası zırha karşı, yan yana.",

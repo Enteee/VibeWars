@@ -1530,7 +1530,7 @@ export default {
     "Dat condities een doodsklok zijn: Bloeding, Vergif en Brandend kosten 20 gezondheid per seconde, het maximum, en meer toevoegen ververst in plaats van stapelt.",
   "training.scenario.condition-removal.label": "Condities verwijderen",
   "training.scenario.condition-removal.teaches":
-    "Dat een conditieverwijdering alleen weghaalt wat erop staat: een bondgenoot op 200 van 500 heeft vijf condities, en Diepe wond daartussen kost 100 bij het landen en beperkt je genezing tot 400.",
+    "Dat een conditieverwijdering alleen weghaalt wat erop staat: een bondgenoot op 192 van 480 heeft vijf condities, en Diepe wond daartussen kost 96 bij het landen en beperkt je genezing tot 384.",
   "training.scenario.armor-ladder.label": "Pantserladder",
   "training.scenario.armor-ladder.teaches":
     "De mitigatiecurve: dezelfde klap tegen 40 tot 104 pantser, naast elkaar.",

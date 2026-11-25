@@ -1618,7 +1618,7 @@ export default {
     "Que las condiciones son una cuenta atrás: Sangrado, Veneno y Quemadura drenan 20 de salud por segundo, el máximo posible, y añadir más renueva en vez de acumular.",
   "training.scenario.condition-removal.label": "Eliminación de condiciones",
   "training.scenario.condition-removal.teaches":
-    "Que una eliminación de condiciones quita solo lo que dice: un aliado con 200 de 500 lleva cinco condiciones, entre ellas Herida profunda, que quita 100 al aplicarse y limita tus curaciones a 400.",
+    "Que una eliminación de condiciones quita solo lo que dice: un aliado con 192 de 480 lleva cinco condiciones, entre ellas Herida profunda, que quita 96 al aplicarse y limita tus curaciones a 384.",
   "training.scenario.armor-ladder.label": "Escalera de armadura",
   "training.scenario.armor-ladder.teaches":
     "La curva de mitigación: el mismo golpe contra 40 a 104 de armadura, lado a lado.",

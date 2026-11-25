@@ -1534,7 +1534,7 @@ export default {
     "Hogy a kórok visszaszámlálást indítanak: a Bleeding, a Poison és a Burning másodpercenként 20 életerőt szív el, ennél több nincs, és újabbak hozzáadása frissít, nem halmoz.",
   "training.scenario.condition-removal.label": "Kóreltávolítás",
   "training.scenario.condition-removal.teaches":
-    "Hogy egy kóreltávolítás csak azt veszi le, amit ír: egy 500-ból 200 életerejű szövetségesen öt kór van, köztük Deep Wound, amely felkerülésekor 100-at levesz, és 400-ban korlátozza a gyógyításaidat.",
+    "Hogy egy kóreltávolítás csak azt veszi le, amit ír: egy 480-ból 192 életerejű szövetségesen öt kór van, köztük Deep Wound, amely felkerülésekor 96-at levesz, és 384-ban korlátozza a gyógyításaidat.",
   "training.scenario.armor-ladder.label": "Páncéllétra",
   "training.scenario.armor-ladder.teaches":
     "A csillapítási görbe: ugyanaz a találat 40-től 104 páncélig, egymás mellett.",

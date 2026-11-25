@@ -1601,7 +1601,7 @@ export default {
     "Que condições são um relógio de morte: Sangramento, Veneno e Queimadura drenam 20 de vida por segundo, o máximo possível, e aplicar mais renova em vez de acumular.",
   "training.scenario.condition-removal.label": "Remoção de condições",
   "training.scenario.condition-removal.teaches":
-    "Que uma remoção de condição tira só o que diz: um aliado com 200 de 500 carrega cinco condições, e Ferida Profunda entre elas tira 100 ao ser aplicada e limita suas curas a 400.",
+    "Que uma remoção de condição tira só o que diz: um aliado com 192 de 480 carrega cinco condições, e Ferida Profunda entre elas tira 96 ao ser aplicada e limita suas curas a 384.",
   "training.scenario.armor-ladder.label": "Escada de armadura",
   "training.scenario.armor-ladder.teaches":
     "A curva de mitigação: o mesmo golpe contra 40 a 104 de armadura, lado a lado.",

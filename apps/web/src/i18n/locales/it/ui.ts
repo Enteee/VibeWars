@@ -1609,7 +1609,7 @@ export default {
     "Che le condizioni sono un conto alla rovescia: Sanguinamento, Veleno e Bruciatura tolgono 20 di Salute al secondo, il massimo possibile, e aggiungerne altre rinnova invece di sommare.",
   "training.scenario.condition-removal.label": "Rimozione delle condizioni",
   "training.scenario.condition-removal.teaches":
-    "Che una rimozione toglie solo quello che dice: un alleato a 200 su 500 ha cinque condizioni, e tra queste Ferita profonda toglie 100 quando arriva e limita le tue cure a 400.",
+    "Che una rimozione toglie solo quello che dice: un alleato a 192 su 480 ha cinque condizioni, e tra queste Ferita profonda toglie 96 quando arriva e limita le tue cure a 384.",
   "training.scenario.armor-ladder.label": "Scala dell'armatura",
   "training.scenario.armor-ladder.teaches":
     "La curva di mitigazione: lo stesso colpo contro armatura da 40 a 104, fianco a fianco.",

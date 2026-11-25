@@ -1440,7 +1440,7 @@ export default {
     "상태이상은 죽음의 시계예요: Bleeding, Poison, Burning이 초당 체력 20을 깎는데 이게 최대치이고, 더 걸어도 쌓이지 않고 갱신돼요.",
   "training.scenario.condition-removal.label": "상태이상 제거",
   "training.scenario.condition-removal.teaches":
-    "상태이상 제거는 적힌 것만 없애요: 500 중 200인 아군이 상태이상 다섯 개를 지니고 있고, 그중 Deep Wound는 걸릴 때 100을 깎고 치유를 400으로 제한해요.",
+    "상태이상 제거는 적힌 것만 없애요: 480 중 192인 아군이 상태이상 다섯 개를 지니고 있고, 그중 Deep Wound는 걸릴 때 96을 깎고 치유를 384로 제한해요.",
   "training.scenario.armor-ladder.label": "방어력 단계",
   "training.scenario.armor-ladder.teaches":
     "경감 곡선: 같은 공격을 방어력 40부터 104까지 나란히 비교해요.",

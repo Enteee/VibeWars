@@ -1647,7 +1647,7 @@ export default {
     "Že neduhy sú hodiny smrti: Krvácanie, Jed a Horenie uberajú 20 zdravia za sekundu, viac sa nedá, a ďalšie ich obnovia namiesto sčítania.",
   "training.scenario.condition-removal.label": "Odstraňovanie neduhov",
   "training.scenario.condition-removal.teaches":
-    "Že odstránenie neduhu zoberie len to, čo hovorí: spojenec na 200 z 500 nesie päť neduhov a Hlboká rana medzi nimi zoberie 100 pri dopade a obmedzí tvoje liečenie na 400.",
+    "Že odstránenie neduhu zoberie len to, čo hovorí: spojenec na 192 z 480 nesie päť neduhov a Hlboká rana medzi nimi zoberie 96 pri dopade a obmedzí tvoje liečenie na 384.",
   "training.scenario.armor-ladder.label": "Rebríček brnenia",
   "training.scenario.armor-ladder.teaches":
     "Krivka zmiernenia: ten istý zásah proti brneniu 40 až 104, vedľa seba.",

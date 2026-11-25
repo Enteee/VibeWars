@@ -1522,7 +1522,7 @@ export default {
     "Att åkommor är en dödsklocka: Bleeding, Poison och Burning dränerar 20 hälsa i sekunden, mer går inte, och fler förnyar i stället för att staplas.",
   "training.scenario.condition-removal.label": "Borttagning av åkommor",
   "training.scenario.condition-removal.teaches":
-    "Att en borttagning tar bort bara det den säger: en allierad på 200 av 500 bär fem åkommor, och Deep Wound bland dem tar 100 när den landar och begränsar dina läkningar till 400.",
+    "Att en borttagning tar bort bara det den säger: en allierad på 192 av 480 bär fem åkommor, och Deep Wound bland dem tar 96 när den landar och begränsar dina läkningar till 384.",
   "training.scenario.armor-ladder.label": "Rustningsstege",
   "training.scenario.armor-ladder.teaches":
     "Mildringskurvan: samma träff mot 40 till 104 i rustning, sida vid sida.",

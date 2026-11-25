@@ -306,10 +306,10 @@ describe("time-to-kill, headless (#111)", () => {
       }
     }
     expect(diedAt).toBeDefined();
-    // In ticks: a death resolved before the step's respawn countdown starts
-    // counting in that step, one after it in the next, so 2 s is 39 or 40.
+    // In ticks, exactly: the sword's last hit lands before the step's
+    // respawn countdown, which so counts the dying step as its first.
     const ticks = Math.round(((backAt ?? Infinity) - (diedAt ?? 0)) / DT);
-    expect(Math.abs(ticks - Math.round(2 / DT))).toBeLessThanOrEqual(1);
+    expect(ticks).toBe(Math.round(2 / DT) - 1);
   });
 });
 
