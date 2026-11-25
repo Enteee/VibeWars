@@ -59,6 +59,8 @@ har en blå ring. Teksten ved siden af rækken (under den på en telefon) navngi
 på eller har fokus på, og hvad der optjener den. En låst prøve er nedtonet, med en lille hængelås.
 Dit valg gælder med det samme. Andre spillere ser det fra den næste lobby, du går ind i.
 
+Over rækkerne bærer din karakter dit look og står, går og svinger, så auraen, sporet og våbensporet ses i bevægelse. Tryk og hold på en prøve for at prøve den, også en låst: linjen siger, hvad du forhåndsviser, og mens den er låst, hvad der optjener den. Slip på en optjent ting for at bære den. Slip på en låst, eller glid væk fra prøven, og intet ændres. Med tastatur holder du mellemrum nede på en prøve.
+
 ## Se andre spilleres kosmetik
 
 Andre spillere ser kun din kosmetik, hvis deres kopi af ranglisten viser, at du har optjent den.
