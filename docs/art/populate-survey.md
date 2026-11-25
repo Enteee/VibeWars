@@ -116,27 +116,33 @@ For the architect to turn into a schema card and an ADR; a sketch, not code.
 
 ```text
 decor: [
-  { kind: DecorKind, at: { x, y }, layer, rotation?: deg, scale?: 0.75..1.5, variant?: 0..3 },
+  { id, kind: DecorKind, at: { x, y }, layer, rotation: deg, scale: 0.75..1.5, variant: 0..3 },
   ...
-]            // required, may be empty, as `gates`; max ~120 per map
+]            // required, may be empty, as `gates`; `.max(120)`
 ```
 
-- `DecorKind` is a closed enum, the 13 kinds above, **minus** the three
-  wall-looks.
-- **Cover is not decor.** A blocking boulder or ruin is a `walls` entry with
-  a new optional `look` (`"rock" | "boulder" | "ruin" | "crates"`, default the
-  current plain wall), so the sim, the nav graph, bots and the visibility gate
-  already see it. Decor never reaches the sim: it is renderer-only, like
-  `ground-dressing.ts`,
-  (the schema field is still validated and checksummed with the map).
+- **Every field is required**, as the map schema does everywhere
+  (`.nullable()` where a value can be absent). `rotation`, `scale` and
+  `variant` are written by the placement tool, so none is optional. `id` is
+  a name for sight-line callouts (§6) and review diffs, as overhangs, decks,
+  zones and lights have.
+- `DecorKind` is a closed enum, the kit's kinds **minus** the wall-looks.
+- **Cover is not decor.** A blocking boulder or ruin is a `walls` entry with a
+  **required** `look: "plain" | "boulder" | "ruin" | "crates"` on every wall
+  (no default: absent-means-plain is the banned absent-field default), so the
+  sim, the nav graph, bots and the visibility gate already see it. The schema
+  card rewrites every map file in the same PR. `"rock"` is dropped: it would
+  not differ from `plain`. Decor never reaches the sim: it is renderer-only,
+  like `ground-dressing.ts`.
+- **Caps are schema rules:** `decor.max(120)`, and a refinement that at most
+  16 entries are animated kinds.
 - **Light** stays in `lighting.lights`; a `brazier` decor entry only draws the
-  stand and flame, and the schema's refinement checks a `brazier-` light lies
-  within 40 u of one (so art and light cannot drift).
+  stand and flame, and a refinement checks a `brazier-` light lies within
+  40 u of one (so art and light cannot drift).
 - `layer` is the layer it stands on; `scale` and `rotation` give a map variety
   without more kinds; `variant` picks one of up to 4 pre-drawn shapes.
 - Validation: inside `bounds`, not inside a wall, deep water or pit of its
-  layer, not within a spawn bubble. These are the same tests the survey
-  uses.
+  layer, not within a spawn bubble. These are the same tests the survey uses.
 - Authoring: a map-tool command scatters a kind into an empty region (seeded)
   and writes the entries, so data is stable and reviewable; hand edits stay
   possible.
@@ -210,8 +216,10 @@ Regenerate: `node scripts/assets/populate-mockups.mjs`.
 ![cinder-sanctum](populate/mockup-cinder-sanctum.svg)
 ![jungle-ruins](populate/mockup-jungle-ruins.svg)
 
-The props are flat sketches of the _direction_ (shape, scale, spacing, light),
-not final art; the final shapes are one build card per biome.
+The props are flat sketches of the _direction_ (shape, scale, spacing, light).
+**The build cards must not ship them.** Final art meets
+[`visual-style.md`](visual-style.md) and the 2.5D rule: a lit top and a
+shaded side, a contact shadow, light from the north-west.
 
 ## 6. Cover and sight lines
 
@@ -226,4 +234,5 @@ only, so balance is untouched while the look improves.
 1. Schema + renderer: `decor` field, the kit's first six kinds, the placement
    tool (architect's ADR first).
 2. `ashen-courtyard`, 3. `hall-of-heroes-*` (one arena), 4. `cinder-sanctum`, 5. `jungle-ruins`, 6. `wardens-gallery`, then the rest by the table's
-   rank.
+   rank. The ranked arenas (`arena-*`, `ember-pits`, `canthan-terraces`) get
+   decoration only, no new cover (§6), on the first cards.
