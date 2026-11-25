@@ -257,15 +257,16 @@ describe("a returning status's end (#1826)", () => {
     );
   });
 
-  it("keeps its own point when a shorter recast leaves it on; a longer one replaces it unended", () => {
+  it("keeps its own point when a lower recast leaves it on; one at its rank replaces it unended", () => {
     const foe = makeCombatant({ id: "foe" });
-    foe.statuses.apply("shadow-fang", 10, "sin", NO_RANKS, vec2(1, 2));
-    foe.statuses.apply("shadow-fang", 5, "other", NO_RANKS, vec2(5, 6));
+    foe.statuses.apply("shadow-fang", 10, "sin", new Map([["shadow-arts", 12]]), vec2(1, 2));
+    foe.statuses.apply("shadow-fang", 15, "other", new Map([["shadow-arts", 8]]), vec2(5, 6));
     expect(foe.statuses.get("shadow-fang")).toEqual(
       expect.objectContaining({ sourceId: "sin", returnPoint: vec2(1, 2) }),
     );
     foe.statuses.drainChanges();
-    foe.statuses.apply("shadow-fang", 15, "other", NO_RANKS, vec2(5, 6));
+    // Shorter, but at its rank: newly cast (#3981).
+    foe.statuses.apply("shadow-fang", 5, "other", new Map([["shadow-arts", 12]]), vec2(5, 6));
     expect(foe.statuses.drainChanges().filter((change) => change.kind === "ended")).toEqual([]);
     expect(foe.statuses.get("shadow-fang")).toEqual(
       expect.objectContaining({ sourceId: "other", returnPoint: vec2(5, 6) }),

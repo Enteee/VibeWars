@@ -1427,6 +1427,11 @@ export function closestOwnMinion(
   return nearestFirst(minions, at)[0];
 }
 
+/** The attribute of the skill `context` is of, for the ranks a status keeps (#3981). */
+function skillAttributeOf(context: SkillContext): string | undefined {
+  return context.skillId === undefined ? undefined : getSkill(context.skillId)?.attributeId;
+}
+
 /**
  * Where `caster` stands now, for a returning status it puts up to take it
  * back to when it ends (#1826). The simulation moves a shadow step's caster
@@ -2413,7 +2418,7 @@ export function applyEffect(
             ? caster.equipment.spellMods.enchantmentDurationScale
             : 1),
         caster.id,
-        statusRanks(effect.statusId, context.ranksFrom ?? caster),
+        statusRanks(effect.statusId, context.ranksFrom ?? caster, skillAttributeOf(context)),
         events,
         context.surroundings,
         castSpot(context, caster),
@@ -2596,7 +2601,7 @@ export function applyEffect(
         effect.statusId,
         caster.id,
         caster.nextMaintainSeq,
-        statusRanks(effect.statusId, context.ranksFrom ?? caster),
+        statusRanks(effect.statusId, context.ranksFrom ?? caster, skillAttributeOf(context)),
         castSpot(context, caster),
         // The ally a caster wears it for (#1930), as Recall's.
         bearer === target ? null : (target?.id ?? null),
@@ -2817,7 +2822,7 @@ export function applyEffect(
         effect.statusId,
         effect.durationSeconds * (context.own?.durationMultiplier ?? 1),
         caster.id,
-        statusRanks(effect.statusId, context.ranksFrom ?? caster),
+        statusRanks(effect.statusId, context.ranksFrom ?? caster, skillAttributeOf(context)),
         events,
         context.surroundings,
         castSpot(context, caster),
@@ -2846,7 +2851,7 @@ export function applyEffect(
         resolveMagnitude(effect.durationSeconds, context.ranksFrom ?? caster) *
           (context.own?.durationMultiplier ?? 1),
         caster.id,
-        statusRanks(effect.statusId, context.ranksFrom ?? caster),
+        statusRanks(effect.statusId, context.ranksFrom ?? caster, skillAttributeOf(context)),
         events,
         context.surroundings,
         castSpot(context, caster),

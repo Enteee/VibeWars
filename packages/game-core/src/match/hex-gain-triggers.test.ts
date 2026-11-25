@@ -17,6 +17,7 @@ const DEFILE_DEFENSES = "necromancer.defile-defenses";
 const SCOURGE_ENCHANTMENT = "monk.scourge-enchantment";
 const HEX_BREAKER = "mesmer.hex-breaker";
 const ICE_SPIKES = "elementalist.ice-spikes";
+const PRAYERS_12: ReadonlyMap<string, number> = new Map([["protection-prayers", 12]]);
 
 const AXE: ResolvedEquipment = {
   ...unarmedResolvedEquipment(RULES.combat.armorReferenceLevel),
@@ -132,8 +133,12 @@ describe("Soul Barbs (#1403)", () => {
     bearer.statuses.apply("guardian", 10, "ally", NO_RANKS);
     expect(damageBy(stepFor(match, 0.5), SOUL_BARBS, "b")).toEqual([27]);
 
-    // Shorter than what runs: a refresh that changes nothing is no gain.
-    bearer.statuses.apply("guardian", 2, "ally", NO_RANKS);
+    // A shorter recast at the same rank is newly cast (#3981), so a gain.
+    bearer.statuses.apply("guardian", 2, "ally", PRAYERS_12);
+    expect(damageBy(stepFor(match, 0.5), SOUL_BARBS, "b")).toEqual([27]);
+
+    // A lower one is refused: a refresh that changes nothing is no gain.
+    bearer.statuses.apply("guardian", 10, "ally", new Map([["protection-prayers", 8]]));
     expect(damageBy(stepFor(match, 0.5), SOUL_BARBS, "b")).toEqual([]);
   });
 
