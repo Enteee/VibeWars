@@ -9,6 +9,7 @@ import {
 import type { GateLook, MapData } from "@vibewars/game-maps/schema";
 import { bundledMaps } from "./bundled-maps.js";
 import { linkTargets, type SwitchTarget } from "../render/switch-link.js";
+import { warmFireLights } from "../render/lighting-model.js";
 import arenaCanyon from "@vibewars/game-maps/maps/arena-canyon/map.json" with { type: "json" };
 import arenaCrossroads from "@vibewars/game-maps/maps/arena-crossroads/map.json" with { type: "json" };
 import arenaLongHall from "@vibewars/game-maps/maps/arena-long-hall/map.json" with { type: "json" };
@@ -474,7 +475,7 @@ export function structureOf(map: MapData): LoadedStructure {
             transitions: map.transitions,
             water,
             zones,
-            ...(map.lighting === undefined ? {} : { lighting: map.lighting }),
+            ...(map.lighting === undefined ? {} : { lighting: warmFireLights(map.lighting) }),
             ...(map.atmosphere === undefined ? {} : { atmosphere: map.atmosphere }),
             ...(map.paving === undefined ? {} : { paving: map.paving }),
           },

@@ -430,6 +430,15 @@ describe("atmosphere's place in the order (#3032)", () => {
     expect(renderOrder({ kind: "weather" })).toBeLessThan(renderOrder({ kind: "hidden-outline" }));
     expect(renderOrder({ kind: "weather" })).toBeLessThan(renderOrder({ kind: "ui" }));
   });
+
+  it("draws the vignette over the ground and under every gameplay layer (#4057)", () => {
+    const vignette = renderOrder({ kind: "vignette" });
+    expect(vignette).toBeGreaterThan(renderOrder({ kind: "cosmetic-ground", layer: 0 }));
+    expect(vignette).toBeGreaterThan(renderOrder({ kind: "paving", layer: 0 }));
+    expect(vignette).toBeLessThan(renderOrder({ kind: "ground-effect", layer: 0 }));
+    expect(vignette).toBeLessThan(renderOrder({ kind: "zone", layer: 0, part: "ground" }));
+    expect(vignette).toBeLessThan(renderOrder({ kind: "character", band: 0, part: "body" }));
+  });
 });
 
 describe("paving's place in the order (#3210)", () => {
