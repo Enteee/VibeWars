@@ -6044,9 +6044,12 @@ export class ArenaScene extends Phaser.Scene {
   private shutdown(): void {
     this.lightingPass?.destroy();
     this.lightingPass = undefined;
-    this.game.renderer.off(Phaser.Renderer.Events.RESTORE_WEBGL, this.rebuildStackAtlas);
-    this.stackAtlas?.destroy();
-    this.stackAtlas = undefined;
+    // `create` listens for a restored context while it holds an atlas.
+    if (this.stackAtlas !== undefined) {
+      this.game.renderer.off(Phaser.Renderer.Events.RESTORE_WEBGL, this.rebuildStackAtlas);
+      this.stackAtlas.destroy();
+      this.stackAtlas = undefined;
+    }
     this.dropOutside();
     this.dropGrain();
     this.dropZoneGrounds();
