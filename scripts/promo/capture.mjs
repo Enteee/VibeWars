@@ -85,6 +85,22 @@ const AUDIO_TAP = `(() => {
   };
 })();`;
 
+/**
+ * Runs in every frame: the interval between animation frames, ms, into
+ * `window.__frames`, so a scene's frame pacing can be told from the recorder's.
+ */
+const FRAME_LOG = `(() => {
+  const frames = [];
+  Reflect.set(window, "__frames", frames);
+  let last = performance.now();
+  const tick = (now) => {
+    frames.push(now - last);
+    last = now;
+    requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+})();`;
+
 let step = "start";
 
 /** @returns {Promise<{ url: string, stop: () => void }>} */
@@ -140,10 +156,11 @@ async function openScene(browser, name, url) {
   const context = await browser.newContext({
     viewport: SIZE,
     deviceScaleFactor: 1,
-    recordVideo: { dir, size: SIZE },
+    ...(process.env.PROMO_NO_VIDEO === undefined ? { recordVideo: { dir, size: SIZE } } : {}),
     permissions: ["clipboard-read", "clipboard-write"],
   });
   await context.addInitScript(AUDIO_TAP);
+  await context.addInitScript(FRAME_LOG);
   const startedAt = Date.now();
   const page = await context.newPage();
   page.setDefaultTimeout(20_000);
@@ -167,6 +184,22 @@ async function openScene(browser, name, url) {
  */
 async function closeScene(scene, name, events, timeOrigin) {
   const video = scene.page.video();
+  /** @type {number[]} */
+  const frames = await scene.page
+    .evaluate(() => {
+      /** @type {unknown} */
+      const log = Reflect.get(globalThis, "__frames");
+      return Array.isArray(log) ? log.map(Number) : [];
+    })
+    .catch(() => []);
+  if (frames.length > 0) {
+    const sorted = [...frames].sort((a, b) => a - b);
+    const at = (/** @type {number} */ q) =>
+      (sorted[Math.floor(q * (sorted.length - 1))] ?? 0).toFixed(1);
+    console.log(
+      `${name} rAF ms: n=${String(frames.length)} p50=${at(0.5)} p95=${at(0.95)} max=${at(1)} over40=${String(frames.filter((f) => f > 40).length)}`,
+    );
+  }
   await scene.context.close();
   fs.mkdirSync(OUT, { recursive: true });
   await video?.saveAs(path.join(OUT, `${name}.webm`));
