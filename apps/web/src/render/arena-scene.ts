@@ -571,6 +571,47 @@ interface WaterCells {
   }[];
 }
 
+/** Prototype B (#4058): animated Worley cells in a fragment shader, `?water-shader`. */
+const WATER_SHADER = new URLSearchParams(globalThis.location?.search ?? "").has("water-shader");
+const WORLEY_FRAGMENT = `
+#pragma phaserTemplate(shaderName)
+#pragma phaserTemplate(fragmentDefine)
+precision mediump float;
+uniform float uTime;
+uniform vec2 uOrigin;
+uniform vec2 uSize;
+uniform vec3 uTint;
+uniform float uAlpha;
+varying vec2 outTexCoord;
+vec2 hash(vec2 p) {
+  p = vec2(dot(p, vec2(127.1, 311.7)), dot(p, vec2(269.5, 183.3)));
+  return fract(sin(p) * 43758.5453);
+}
+float edge(vec2 p, float t) {
+  vec2 i = floor(p);
+  vec2 f = fract(p);
+  float f1 = 8.0;
+  float f2 = 8.0;
+  for (int y = -1; y <= 1; y++) {
+    for (int x = -1; x <= 1; x++) {
+      vec2 g = vec2(float(x), float(y));
+      vec2 o = 0.5 + 0.4 * sin(t + 6.2831 * hash(i + g));
+      float d = length(g + o - f);
+      if (d < f1) { f2 = f1; f1 = d; } else if (d < f2) { f2 = d; }
+    }
+  }
+  return f2 - f1;
+}
+void main() {
+  vec2 world = uOrigin + vec2(outTexCoord.x, 1.0 - outTexCoord.y) * uSize;
+  float a = edge(world / 64.0, uTime * 0.25);
+  float b = edge(world / 41.0 + 7.3, uTime * 0.18);
+  float band = (a < 0.05 ? 1.0 : (a < 0.12 ? 0.45 : 0.0)) + (b < 0.05 ? 0.7 : (b < 0.12 ? 0.3 : 0.0));
+  float k = min(band, 1.0) * uAlpha;
+  gl_FragColor = vec4(uTint * k, k);
+}
+`;
+
 /** The liquid cells' texture (#4058), painted once per game. */
 const WATER_CELLS_TILE = "liquid-cells-water";
 
@@ -6255,6 +6296,37 @@ export class ArenaScene extends Phaser.Scene {
           this.fillShape(g, { kind: "polygon", points });
         }
       });
+      if (WATER_SHADER) {
+        const tint = art.look.cell;
+        const shader = this.add
+          .shader(
+            {
+              name: "water-worley",
+              fragmentSource: WORLEY_FRAGMENT,
+              setupUniforms: (setUniform: (name: string, value: unknown) => void) => {
+                setUniform("uTime", this.reducedMotion ? 0 : this.now);
+                setUniform("uOrigin", [x, y]);
+                setUniform("uSize", [w, h]);
+                setUniform("uTint", [
+                  ((tint >> 16) & 0xff) / 255,
+                  ((tint >> 8) & 0xff) / 255,
+                  (tint & 0xff) / 255,
+                ]);
+                setUniform("uAlpha", art.look.cellAlpha);
+              },
+            },
+            x,
+            y,
+            w,
+            h,
+          )
+          .setOrigin(0, 0)
+          .setBlendMode(Phaser.BlendModes.ADD)
+          .setDepth(depth);
+        objects.push(shader);
+        region(0, (g) => g.fillRect(x, y, w, h));
+        continue;
+      }
       for (const cell of art.cells) {
         const sprite = this.add
           .tileSprite(x, y, w, h, key)
