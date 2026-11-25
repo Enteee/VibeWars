@@ -10,6 +10,7 @@ import {
 import arUi from "../apps/web/src/i18n/locales/ar/ui.js";
 import deUi from "../apps/web/src/i18n/locales/de/ui.js";
 import { DEFAULT_STEP, zoomFor } from "../apps/web/src/render/camera-rig.js";
+import { vignetteAlpha } from "../apps/web/src/render/vignette.js";
 import { STORAGE_NAMESPACE } from "./helpers/base.js";
 import { chooseProfession, professionField } from "./helpers/professions.js";
 import { startSoloMatch } from "./helpers/peers.js";
@@ -391,11 +392,18 @@ test("Heights draws its water: the deep pond darker than the floor, a puddle pal
   await expect(page.locator(".training-log")).toContainText("── Heights ──");
   await takeControl(page);
   await wholeMap(page);
-  /** The mean of R, G and B in an 8 px square round `world` on the ground. */
+  /**
+   * The mean of R, G and B in an 8 px square round `world` on the ground,
+   * the vignette (#4057) undone: it darkens by where on the view, not by
+   * what is drawn there.
+   */
   const brightness = async (world: { readonly x: number; readonly y: number }): Promise<number> => {
     const at = (await trainingView(page, canvas)).onPage(world);
+    const box = await canvas.boundingBox();
+    if (box === null) throw new Error("no canvas");
+    const vignette = vignetteAlpha(at.x - box.x, at.y - box.y, box.width, box.height);
     const shot = await page.screenshot({ clip: { x: at.x - 4, y: at.y - 4, width: 8, height: 8 } });
-    return page.evaluate(async (png) => {
+    const mean = await page.evaluate(async (png) => {
       const image = new Image();
       image.src = `data:image/png;base64,${png}`;
       await image.decode();
@@ -407,12 +415,12 @@ test("Heights draws its water: the deep pond darker than the floor, a puddle pal
       const rgb = Array.from(data).filter((_, at) => at % 4 !== 3);
       return rgb.reduce((sum, value) => sum + value, 0) / rgb.length;
     }, shot.toString("base64"));
+    return mean / (1 - vignette);
   };
   /**
    * Standing at `x, y`: the water `dx, dy` away from you and the floor as
-   * far the other way. The view follows you
-   * (#721) and darkens towards its edges, so only samples as far from its
-   * centre compare.
+   * far the other way. The view follows you (#721) and its light falls off
+   * from the centre, so only samples as far from it compare.
    */
   const waterAndFloor = async (
     x: number,
