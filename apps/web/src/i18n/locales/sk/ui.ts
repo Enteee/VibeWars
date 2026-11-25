@@ -1765,7 +1765,6 @@ export default {
     "Výstup hrdinov je séria máp, 8 na 8, proti tímom v tvojom kole. Vyhráš a postupuješ na ďalšiu mapu, až do Siene hrdinov; prehráš a začínaš odznova.",
   "tutorial.menu.modes.hostedGame":
     "Vlastná hra je tvoja vlastná lobby: pošli priateľom pozývací odkaz a vyber mapu a veľkosť tímu. Boti hrajú každé miesto, ktoré nikto nezaberie.",
-  "tutorial.menu.modes.open": "Otvor zvýraznený spôsob hry na boku.",
   "tutorial.menu.modes.randomArena":
     "Náhodná aréna je najrýchlejší boj: tvoja vlastná postava v tíme s cudzími hráčmi, 1v1, 2v2 alebo 4v4. Mapa sa ti vylosuje a každé miesto je skutočný hráč.",
   "tutorial.menu.modes.teamArena":
