@@ -25,5 +25,7 @@ jobs:
           retention-days: 1
       - if: always()
         run: |
-          ls -l /tmp/readme-heights-debug.png
-          echo "B64START$(base64 -w0 /tmp/readme-heights-debug.png)B64END"
+          ls -l /tmp/readme-heights-debug.png docs/media/readme-heights.png
+          devenv shell -- ffmpeg -v error -y -i /tmp/readme-heights-debug.png -vf scale=800:-1 -q:v 4 /tmp/d.jpg
+          ls -l /tmp/d.jpg
+          base64 -w 200 /tmp/d.jpg | sed 's/^/B64 /'
