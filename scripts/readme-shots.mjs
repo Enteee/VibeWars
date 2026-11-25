@@ -40,7 +40,7 @@ import { chromium } from "@playwright/test";
 const PORT = 4321;
 const MEDIA = path.join(import.meta.dirname, "..", "docs", "media");
 const { values: options } = parseArgs({
-  options: { url: { type: "string" }, only: { type: "string" } },
+  options: { url: { type: "string" } },
 });
 
 /**
@@ -419,11 +419,8 @@ try {
   step = "open the client";
   await page.goto(url);
   await page.locator(".mode-rail").waitFor();
-  const heightsOnly = options.only === "heights";
-  if (!heightsOnly) {
-    await editorAndTraining(page, dir);
-    await matchShots(page, dir);
-  }
+  await editorAndTraining(page, dir);
+  await matchShots(page, dir);
   const second = await browser.newContext({
     viewport: { width: 1280, height: 720 },
     deviceScaleFactor: 1,
@@ -433,16 +430,14 @@ try {
   await page2.goto(url);
   await page2.locator(".mode-rail").waitFor();
   await heightsShot(page2, dir);
-  const shots = heightsOnly
-    ? ["readme-heights.png"]
-    : [
-        "readme-match.png",
-        "readme-map.png",
-        "readme-heights.png",
-        "readme-editor.png",
-        "readme-training.png",
-        "readme-menu.png",
-      ];
+  const shots = [
+    "readme-match.png",
+    "readme-map.png",
+    "readme-heights.png",
+    "readme-editor.png",
+    "readme-training.png",
+    "readme-menu.png",
+  ];
   for (const shot of shots) {
     fs.copyFileSync(path.join(dir, shot), path.join(MEDIA, shot));
     if (/match|map|heights/.test(shot)) {
