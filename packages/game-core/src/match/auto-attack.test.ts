@@ -1171,6 +1171,69 @@ describe("aftercast (#317)", () => {
   });
 });
 
+describe("GW1's aftercast exceptions (#3998)", () => {
+  const AFTERCAST = RULES.combat.aftercastSeconds;
+
+  /** A ranger and paragon with Fireball, Apply Poison and Inspirational Speech. */
+  function caster(id: string, spawn: Vec2): ParticipantSpec {
+    return {
+      id,
+      team: 0,
+      skillBar: [FIREBALL, "ranger.apply-poison", "paragon.inspirational-speech"],
+      attributeRanks: new Map([["elementalist.fire-magic", 12]]),
+      equipment: unarmedResolvedEquipment(RULES.combat.armorReferenceLevel),
+      maxEnergy: 1000,
+      spawn,
+      facing: 0,
+    };
+  }
+
+  it("Apply Poison has none: the ranger walks the first tick after it goes off", () => {
+    const match = sim(caster("a", vec2(0, 0)), dummy("d", vec2(300, 0)));
+    match.requestSkill("a", 1);
+    while (get(match, "a").combatant.cast.isCasting) {
+      match.step(DT);
+    }
+    expect(get(match, "a").combatant.cast.inAftercast).toBe(false);
+    match.setInputDirection("a", vec2(0, 1));
+    match.step(DT);
+    expect(get(match, "a").position.y).toBeGreaterThan(0);
+  });
+
+  it("Inspirational Speech, instant, waits out an aftercast in the queue, then holds its own", () => {
+    const match = sim(
+      caster("a", vec2(0, 0)),
+      { ...dummy("b", vec2(0, 50)), team: 0 },
+      dummy("d", vec2(300, 0)),
+    );
+    match.setTarget("a", "d");
+    match.requestSkill("a", 0);
+    while (get(match, "a").combatant.cast.isCasting) {
+      match.step(DT);
+    }
+    expect(get(match, "a").combatant.cast.inAftercast).toBe(true);
+    match.setTarget("a", "b");
+    expect(match.requestSkill("a", 2)).toEqual({
+      skillId: "paragon.inspirational-speech",
+      check: { ok: true },
+      queued: true,
+    });
+    while (get(match, "a").combatant.cast.queuedSlot !== undefined) {
+      match.step(DT);
+    }
+    // An instant resolves the step after it is taken.
+    while (get(match, "a").combatant.cast.isCasting) {
+      match.step(DT);
+    }
+    let ticks = 0;
+    while (get(match, "a").combatant.cast.inAftercast) {
+      match.step(DT);
+      ticks += 1;
+    }
+    expect(ticks * DT).toBeCloseTo(AFTERCAST, 6);
+  });
+});
+
 describe("the skill queue during an activation (#1722)", () => {
   const AFTERCAST = RULES.combat.aftercastSeconds;
 

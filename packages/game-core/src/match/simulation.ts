@@ -4122,10 +4122,11 @@ export class MatchSimulation {
     // skill, which takes its weapon's, waits for it to end, as in GW1
     // (#317): checked now, so one that could never go off is refused at
     // once, and tried again for real when it fires. An instant goes off at
-    // once.
+    // once, unless it has an aftercast of its own, as Inspirational
+    // Speech: GW1 queues it (#3998).
     if (
       record.combatant.cast.inAftercast &&
-      (skill.activationSeconds > 0 || skill.attack !== undefined)
+      (skill.activationSeconds > 0 || skill.attack !== undefined || hasAftercast(skill))
     ) {
       record.combatant.cast.queue(slot);
       return { skillId: skill.id, check, queued: true };
