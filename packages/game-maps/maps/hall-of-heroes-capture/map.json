@@ -646,6 +646,7 @@
       "position": { "x": 1370, "y": 3280 }
     }
   ],
+  "decor": [],
   "gates": [
     {
       "id": "north-east-crypt-door",

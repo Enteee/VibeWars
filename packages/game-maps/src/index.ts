@@ -5,6 +5,8 @@
  */
 
 export type {
+  Decor,
+  DecorKind,
   MapData,
   MapLighting,
   TeamSize,
@@ -14,7 +16,17 @@ export type {
   Vec2Data,
   Wall,
 } from "./schema.js";
-export { MapValidationError, TEAM_SIZES_ALL, mapDataSchema, validateMapData } from "./schema.js";
+export {
+  ANIMATED_DECOR_KINDS,
+  DECOR_KINDS,
+  MAX_ANIMATED_DECOR,
+  MAX_DECOR,
+  MapValidationError,
+  TEAM_SIZES_ALL,
+  decorRefusal,
+  mapDataSchema,
+  validateMapData,
+} from "./schema.js";
 
 export { allWallSegments, wallToSegments } from "./geometry.js";
 export { sizeClass, type SizeClass } from "./size-class.js";

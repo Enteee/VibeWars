@@ -1525,6 +1525,7 @@
     }
   ],
   "ghostLevel": 20,
+  "decor": [],
   "gates": [
     {
       "id": "west-culvert-gate",

@@ -635,6 +635,7 @@
     { "kind": "relic-spawn", "layer": 1, "team": 2, "position": { "x": 830, "y": 2745 } },
     { "kind": "altar", "layer": 3, "position": { "x": 2500, "y": 2200 } }
   ],
+  "decor": [],
   "gates": [
     {
       "id": "north-east-crypt-door",

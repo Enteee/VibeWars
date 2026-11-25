@@ -1425,6 +1425,7 @@
     }
   ],
   "objectives": [],
+  "decor": [],
   "gates": [
     {
       "id": "sluice-gate-west",

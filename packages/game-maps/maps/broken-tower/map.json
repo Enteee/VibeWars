@@ -1534,6 +1534,7 @@
       }
     }
   ],
+  "decor": [],
   "gates": [
     {
       "id": "cellar-west-door",

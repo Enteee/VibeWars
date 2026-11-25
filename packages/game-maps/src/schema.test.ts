@@ -9,6 +9,9 @@ import { MATCH_MODES, circleIntersectsSegment, hasLineOfSight } from "@vibewars/
 import { allWallSegments } from "./geometry.js";
 import {
   DECK_LOOKS,
+  DECOR_KINDS,
+  MAX_ANIMATED_DECOR,
+  MAX_DECOR,
   MAX_AFTER_CROSSINGS,
   MAX_FOG_BANKS,
   MAX_LIGHTS,
@@ -67,6 +70,7 @@ const validMap = {
   ],
   spawnPoints: [{ team: 0, layer: 0, position: { x: 50, y: 50 } }],
   gates: [],
+  decor: [],
   objectives: [],
 };
 
@@ -1896,6 +1900,126 @@ describe("paving (#3210)", () => {
       Array.from({ length: count }, (_, at) => road({ id: `road-${String(at)}` }));
     accepts(pavings(MAX_PAVING));
     refuses(pavings(MAX_PAVING + 1), /paving: /);
+  });
+});
+
+describe("decor (#4013)", () => {
+  const room = {
+    ...validMap,
+    width: 2000,
+    height: 2000,
+    walls: [
+      ...validMap.walls,
+      { kind: "rect", layer: 0, x: 1400, y: 1400, width: 200, height: 200 },
+    ],
+    water: [
+      {
+        id: "pond",
+        layer: 0,
+        depth: "deep",
+        area: { kind: "rect", x: 400, y: 1400, width: 200, height: 200 },
+      },
+    ],
+  };
+  const prop = (overrides: object = {}) => ({
+    id: "column",
+    kind: "column",
+    at: { x: 1000, y: 1000 },
+    layer: 0,
+    rotation: 0,
+    scale: 1,
+    variant: 0,
+    ...overrides,
+  });
+  const brazierLight = {
+    id: "brazier-a",
+    position: { x: 1030, y: 1000 },
+    layer: 0,
+    radius: 140,
+    colour: 0xffaa55,
+    intensity: 1,
+    flicker: 0.4,
+  };
+  const lit = (lights: unknown[]) => ({
+    ambient: { colour: 0x8090a0, intensity: 0.8 },
+    indoorAmbient: { colour: 0x8090a0, intensity: 0.8 },
+    indoor: [],
+    lights,
+  });
+  const accepts = (decor: unknown[], extra: object = {}): void => {
+    expect(() => validateMapData({ ...room, ...extra, decor })).not.toThrow();
+  };
+  const refuses = (decor: unknown[], message: RegExp, extra: object = {}): void => {
+    expect(() => validateMapData({ ...room, ...extra, decor })).toThrow(message);
+  };
+  const many = (count: number, kind: string): unknown[] =>
+    Array.from({ length: count }, (_, at) =>
+      prop({ id: `${kind}-${String(at)}`, kind, at: { x: 700 + (at % 12) * 50, y: 700 + at * 5 } }),
+    );
+
+  it("is required, and may be empty", () => {
+    const { decor: _decor, ...without } = validMap;
+    expect(() => validateMapData(without)).toThrow(/decor/);
+    expect(validateMapData(validMap).decor).toEqual([]);
+  });
+
+  it("takes every kind, turned, scaled and varied", () => {
+    accepts(
+      DECOR_KINDS.filter((kind) => kind !== "brazier").map((kind, at) =>
+        prop({
+          id: kind,
+          kind,
+          at: { x: 800 + at * 60, y: 900 },
+          rotation: 359.5,
+          scale: 1.5,
+          variant: 3,
+        }),
+      ),
+    );
+  });
+
+  it("refuses a used id, a layer the map has not, and a scale, turn or variant out of range", () => {
+    refuses([prop(), prop()], /decor\.1\.id: decor id column is used twice/);
+    refuses([prop({ layer: 1 })], /decor\.0\.layer: layer 1/);
+    refuses([prop({ scale: 0.5 })], /decor\.0\.scale/);
+    refuses([prop({ rotation: 360 })], /decor\.0\.rotation/);
+    refuses([prop({ variant: 4 })], /decor\.0\.variant/);
+    refuses([prop({ kind: "ruin" })], /decor\.0\.kind/);
+  });
+
+  it("refuses a prop off the map, in a wall, in deep water or in a spawn bubble", () => {
+    refuses(
+      [prop({ at: { x: 2100, y: 1000 } })],
+      /decor\.0\.at: decor column is off its layer's floor/,
+    );
+    refuses([prop({ at: { x: 1500, y: 1500 } })], /decor\.0\.at: decor column is in a wall/);
+    refuses([prop({ at: { x: 500, y: 1500 } })], /decor\.0\.at: decor column is in deep water/);
+    refuses(
+      [prop({ at: { x: 200, y: 200 } })],
+      /decor\.0\.at: decor column is within 300 of a spawn point/,
+    );
+  });
+
+  it(`holds at most ${String(MAX_DECOR)} props, ${String(MAX_ANIMATED_DECOR)} of them moving`, () => {
+    accepts(many(MAX_DECOR, "crates"));
+    refuses(many(MAX_DECOR + 1, "crates"), /decor: /);
+    accepts(many(MAX_ANIMATED_DECOR, "fern"));
+    refuses(
+      many(MAX_ANIMATED_DECOR + 1, "tree"),
+      new RegExp(`decor\\.${String(MAX_ANIMATED_DECOR)}\\.kind: at most`),
+    );
+  });
+
+  it("refuses a brazier without a brazier- light beside it on its layer", () => {
+    const brazier = prop({ id: "fire", kind: "brazier" });
+    accepts([brazier], { lighting: lit([brazierLight]) });
+    refuses([brazier], /decor\.0: brazier fire needs a brazier- light/);
+    refuses([brazier], /decor\.0: brazier fire needs/, {
+      lighting: lit([{ ...brazierLight, id: "torch-a" }]),
+    });
+    refuses([brazier], /decor\.0: brazier fire needs/, {
+      lighting: lit([{ ...brazierLight, position: { x: 1041, y: 1000 } }]),
+    });
   });
 });
 
