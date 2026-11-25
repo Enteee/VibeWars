@@ -12,15 +12,15 @@ for (const [name, query] of [["today", ""], ["stacked", "&stack"]] as const) {
   test(`fight ${name}`, async ({ page }) => {
     test.setTimeout(120_000);
     await page.setViewportSize({ width: 2400, height: 1500 });
-    await page.goto(`./?splash&menu-background${query}`);
+    await page.goto(`./?splash&menu-background=arena-crossroads${query}`);
     for (const wait of [16, 24, 32]) {
       await page.waitForTimeout(8_000);
-      await page.screenshot({ path: `/tmp/3977-fight-${name}-${wait}.png`, clip: { x: 800, y: 500, width: 800, height: 500 } });
+      await page.screenshot({ path: `/tmp/3977-fight-${name}-${wait}.png` });
     }
     await page.evaluate((svg) => {
       document.body.insertAdjacentHTML("beforeend", svg);
       document.documentElement.style.filter = "url(#deutan)";
     }, DEUTAN);
-    await page.screenshot({ path: `/tmp/3977-fight-${name}-deutan.png`, clip: { x: 800, y: 500, width: 800, height: 500 } });
+    await page.screenshot({ path: `/tmp/3977-fight-${name}-deutan.png` });
   });
 }
