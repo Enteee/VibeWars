@@ -20,7 +20,7 @@ export function shade(colour: number, share: number): number {
  * whole from `chromaKept`'s low to its high lightness, so each biome keeps its
  * hues, its darks greyer and its light warm tones (sand) as warm. Calibrated once, on the hall: its floor and
  * wall top land within six points of the mock's 0x3a3834 and 0x5e5a54. Hazards, gameplay
- * marks, water, decor and bodies are never graded (§6).
+ * marks, water, fire and bodies are never graded (§6).
  */
 export const GOTHIC_GRADE = {
   value: 0.94,
@@ -859,17 +859,19 @@ function overhangColours(tones: BiomeTones): Record<OverhangLook, OverhangLookCo
 }
 
 /**
- * A biome's decor colours (#4013): its wood for crates and trunks, its
- * plants for crowns and ferns, its stone burnt to ash for a cinder drift
- * (#4018), each with the lit and the shaded face of a north-west light.
- * Iron and fire are the same everywhere.
+ * A biome's decor colours (#4013), in the gothic look (#4059): the mock's
+ * hall colours tinted by what each is made of. Crates, barrels and trunks
+ * are its wood, a crown and a fern its plants, a cinder drift (#4018) its
+ * stone burnt to ash. Iron and fire are the same everywhere.
  */
 export interface DecorColours {
+  /** A crate's or a barrel's planks, the dark bands round them, and the lines across a lid. */
   readonly wood: number;
-  readonly woodLit: number;
-  readonly woodShade: number;
-  readonly bark: number;
-  readonly barkShade: number;
+  readonly woodBand: number;
+  readonly plank: number;
+  readonly trunk: number;
+  /** A crown's four blobs, from the darkest, lowest one to the lightest, on top. */
+  readonly leaves: readonly number[];
   readonly plant: number;
   readonly plantLit: number;
   readonly plantShade: number;
@@ -877,31 +879,42 @@ export interface DecorColours {
   readonly ashLit: number;
   readonly ashShade: number;
   readonly iron: number;
-  readonly ironShade: number;
+  readonly coals: number;
+  /** Fire, never graded: a cinder's glow, its brighter spark, and a flame from its foot to its tip. */
   readonly ember: number;
-  readonly flame: number;
-  readonly flameCore: number;
+  readonly spark: number;
+  readonly flame: readonly number[];
 }
+
+/** How many tones a brazier's flame is stacked in, from its foot to its tip (#4059). */
+const FLAME_TONES = 5;
 
 function decorColours(tones: BiomeTones): DecorColours {
   return {
-    wood: tones.wood,
-    woodLit: mix(tones.wood, tones.stone, 0.35),
-    woodShade: shade(tones.wood, 0.42),
-    bark: shade(tones.wood, 0.2),
-    barkShade: shade(tones.wood, 0.5),
+    wood: tint(0x5a4030, "wood", tones),
+    woodBand: tint(0x4a3020, "wood", tones),
+    plank: tint(0x5a3a1e, "wood", tones),
+    trunk: tint(0x30241c, "wood", tones),
+    leaves: [0, 1, 2, 3].map((k) => tint(mix(0x1c2a1c, 0x4a5a34, k / 3), "plant", tones)),
     plant: tones.plant,
     plantLit: mix(tones.plant, 0xf0f0a0, 0.25),
     plantShade: shade(tones.plant, 0.42),
     ash: mix(tones.ground, tones.stone, 0.4),
     ashLit: mix(tones.ground, tones.stone, 0.6),
     ashShade: mix(tones.ground, tones.stone, 0.15),
-    iron: 0x4a4a52,
-    ironShade: 0x26262c,
+    iron: 0x5a5450,
+    coals: 0x2a1a10,
     ember: 0xe0662a,
-    flame: 0xffa040,
-    flameCore: 0xfff0a0,
+    spark: 0xffa040,
+    flame: Array.from({ length: FLAME_TONES }, (_, k) =>
+      mix(0xd8401a, 0xffe890, k / (FLAME_TONES - 1)),
+    ),
   };
+}
+
+/** Decor in the gothic grade (#4059), but its fire: a flame is a light, and stays one. */
+function gradeDecor(decor: DecorColours): DecorColours {
+  return { ...gradeAll(decor), ember: decor.ember, spark: decor.spark, flame: decor.flame };
 }
 
 /** A map's materials (#3172): its arena's colours, and each deck, transition and paving look's. */
@@ -1018,7 +1031,7 @@ export function ungradedMaterials(biome: Biome): BiomeMaterials {
   return tintedMaterials(biome, BIOME_TONES[biome], TILED_GROUND[biome]);
 }
 
-/** Every material in the gothic grade, here and only here; decor is its own card's (#4056). */
+/** Every material in the gothic grade (#4056), decor too (#4059), here and only here. */
 function biomeMaterials(biome: Biome, tones: BiomeTones, tiled: boolean): BiomeMaterials {
   const { palette, deck, transition, paving, overhang, dressing, breakable, decor } =
     tintedMaterials(biome, tones, tiled);
@@ -1030,7 +1043,7 @@ function biomeMaterials(biome: Biome, tones: BiomeTones, tiled: boolean): BiomeM
     overhang: gradeEach(overhang),
     dressing: gradeAll(dressing),
     breakable: gradeBreakable(breakable),
-    decor,
+    decor: gradeDecor(decor),
   };
 }
 

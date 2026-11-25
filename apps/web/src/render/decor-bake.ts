@@ -57,6 +57,7 @@ export function decorBounds(commands: readonly DecorCommand[], lift: number): De
   for (const command of commands) {
     switch (command.kind) {
       case "poly":
+      case "outline":
         for (const point of command.points) {
           take(point.x, point.y, MARGIN);
         }
