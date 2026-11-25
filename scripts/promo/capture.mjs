@@ -819,4 +819,6 @@ try {
 } finally {
   await browser?.close();
   served?.stop();
+  // A failed stepped scene leaves its ffmpeg open on a pipe: leaving ends it.
+  process.exit(process.exitCode ?? 0);
 }
