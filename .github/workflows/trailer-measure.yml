@@ -8,6 +8,10 @@ jobs:
   m:
     runs-on: ubuntu-latest
     timeout-minutes: 40
+    strategy:
+      fail-fast: false
+      matrix:
+        v: [base, small, gpuflags, novideo]
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
         with:
@@ -17,8 +21,15 @@ jobs:
       - run: |
           mkdir -p ~/.cache/ms-playwright/ffmpeg-1011
           ln -sf "$(devenv shell -- which ffmpeg | tail -n 1)" ~/.cache/ms-playwright/ffmpeg-1011/ffmpeg-linux
-      - run: nproc; free -m | head -2
-      - run: devenv shell -- node scripts/promo/capture.mjs --scene map-ember-pits
-      - run: |
-          devenv shell -- ffprobe -v error -select_streams v -show_entries frame=pts_time -of csv=p=0 out/promo/capture/map-ember-pits.webm | tail -n +1 > /tmp/pts.txt
-          awk 'NR>1{d=($1-p)*1000; print d} {p=$1}' /tmp/pts.txt | sort -n | awk '{a[NR]=$1} END{print "recorded frames",NR+1,"p50",a[int(NR*0.5)],"p95",a[int(NR*0.95)],"max",a[NR]}'
+      - name: variant
+        env:
+          V: ${{ matrix.v }}
+        run: |
+          f=scripts/promo/capture.mjs
+          case "$V" in
+            small) sed -i 's/width: 1920, height: 1080/width: 1280, height: 720/' $f ;;
+            gpuflags) sed -i 's|args: \["--no-sandbox",|args: ["--no-sandbox", "--use-angle=swiftshader", "--enable-unsafe-swiftshader", "--ignore-gpu-blocklist", "--enable-gpu-rasterization",|' $f ;;
+            novideo) sed -i '/recordVideo:/d' $f ;;
+          esac
+          git diff --stat
+      - run: devenv shell -- node scripts/promo/capture.mjs --scene map-ember-pits 2>&1 | grep -E "frame intervals|failed|rror" | head
