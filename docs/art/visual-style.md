@@ -66,8 +66,12 @@ once, on the hall (floor `#26303f` lands within six points of the mock's `#3a383
 `#4b5a70` on `#5e5a54`), and the same constants apply to every biome. The
 tables here are the tones before the grade. It is applied in one place, where
 `biomeMaterials` and `FLAT` are built, and to the land outside a map
-(`OUTSIDE_LOOK`). Hazards, gameplay marks, water, decor, a breakable wall's
-crack glow and bodies are never graded (§6).
+(`OUTSIDE_LOOK`). Decor is graded too (#4059), except its fire. Hazards, gameplay
+marks, water, fire, a breakable wall's crack glow and bodies are never graded (§6).
+
+**Decor in the gothic look** (#4059): every prop has a 1 px `#08080a` outline
+round its top, and its sides darken toward the ground (contrast 0.75, AO 0.5),
+so its cap is its lightest part. It stays darker and quieter than a body.
 
 **Overhangs** (#3293) are roofs nobody stands on. They hang at their layer's
 height over whoever is under them, with a thin eave below their front edge and

@@ -6434,6 +6434,11 @@ export function paintDecor(
         g.lineStyle(command.width, lit(command.colour, false), command.alpha);
         g.lineBetween(command.from.x, command.from.y, command.to.x, command.to.y);
         break;
+      case "outline":
+        g.lineStyle(command.width, lit(command.colour, false), command.alpha);
+        tracePath(g, command.points);
+        g.strokePath();
+        break;
     }
   }
   g.restore();

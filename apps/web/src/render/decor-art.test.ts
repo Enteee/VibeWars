@@ -1,7 +1,7 @@
 import { DECOR_KINDS } from "@vibewars/game-maps/schema";
 import { describe, expect, it } from "vitest";
 
-import { BIOME } from "./arena-palette.js";
+import { BIOME, grade, ungradedMaterials } from "./arena-palette.js";
 import {
   DECOR_SWAY,
   animatedDecor,
@@ -24,10 +24,16 @@ const prop = (kind: MapDecor["kind"], variant = 0): MapDecor => ({
   variant,
 });
 
+/** How light `colour` is, 0 to 255: its channels' mean. */
+function lightness(colour: number): number {
+  return (((colour >> 16) & 0xff) + ((colour >> 8) & 0xff) + (colour & 0xff)) / 3;
+}
+
 /** Every coordinate a stroke has. */
 function numbers(command: DecorCommand): number[] {
   switch (command.kind) {
     case "poly":
+    case "outline":
       return command.points.flatMap(({ x, y }) => [x, y]);
     case "ellipse":
       return [command.at.x, command.at.y, command.rx, command.ry];
@@ -77,8 +83,11 @@ describe("decor art (#4013)", () => {
     const { decor } = BIOME.volcanic;
     for (const variant of [0, 1, 2, 3]) {
       for (const command of decorCommands(prop("cinders", variant), decor, 0, false)) {
+        if (command.kind === "outline") {
+          continue;
+        }
         if (command.kind !== "ellipse") {
-          throw new Error("a drift is drawn in ellipses");
+          throw new Error("a drift is drawn in ellipses and its outline");
         }
         const ash = [decor.ash, decor.ashLit, decor.ashShade].includes(command.colour);
         expect(command.glow).toBe(!ash);
@@ -133,5 +142,70 @@ describe("decor art (#4013)", () => {
       expect(Math.min(...outline.map(({ y }) => y))).toBeLessThan(300 - 60);
       expect(Math.max(...outline.map(({ y }) => y))).toBeGreaterThan(300);
     }
+  });
+});
+
+describe("decor in the gothic look (#4059)", () => {
+  it("outlines every kind's top, every variant, in 1 px of near-black", () => {
+    for (const kind of DECOR_KINDS) {
+      for (const variant of [0, 1, 2, 3]) {
+        const outlines = decorCommands(prop(kind, variant), BIOME.hall.decor, 0, true).filter(
+          (command) => command.kind === "outline",
+        );
+        expect(outlines.length, `${kind} ${String(variant)}`).toBeGreaterThan(0);
+        for (const command of outlines) {
+          expect(command).toMatchObject({ colour: 0x08080a, width: 1, alpha: 1 });
+        }
+      }
+    }
+  });
+
+  it("grades every decor colour but its fire, which stays a light", () => {
+    for (const [biome, materials] of Object.entries(BIOME)) {
+      const { decor: before } = ungradedMaterials(biome as keyof typeof BIOME);
+      const { decor } = materials;
+      expect(decor.wood, biome).toBe(grade(before.wood));
+      expect(decor.trunk, biome).toBe(grade(before.trunk));
+      expect(decor.leaves, biome).toEqual(before.leaves.map(grade));
+      expect(decor.iron, biome).toBe(grade(before.iron));
+      expect(decor.ash, biome).toBe(grade(before.ash));
+      expect(decor.flame, biome).toEqual(before.flame);
+      expect(decor.ember, biome).toBe(before.ember);
+    }
+  });
+
+  it("grades a crown from its dark, low blob to its light one on top", () => {
+    const leaves = BIOME.wilds.decor.leaves;
+    expect(leaves).toHaveLength(4);
+    for (let k = 1; k < leaves.length; k++) {
+      expect(lightness(leaves[k] ?? 0)).toBeGreaterThan(lightness(leaves[k - 1] ?? 0));
+    }
+  });
+
+  it("darkens a crate's side toward the ground, its lid the lightest", () => {
+    const { decor } = BIOME.hall;
+    const polys = decorCommands(prop("crates"), decor, 0, true).flatMap((command) =>
+      command.kind === "poly" && command.colour !== decor.woodBand ? [command] : [],
+    );
+    const lowest = polys.reduce((low, command) =>
+      Math.max(...command.points.map(({ y }) => y)) > Math.max(...low.points.map(({ y }) => y))
+        ? command
+        : low,
+    );
+    const lid = polys.at(-1);
+    expect(lid?.colour).toBe(decor.wood);
+    expect(lightness(lowest.colour)).toBeLessThan(lightness(decor.wood) * 0.7);
+  });
+
+  it("stacks a brazier's flame from deep red at its foot to pale gold at its tip", () => {
+    const { decor } = BIOME.hall;
+    const flame = decorCommands(prop("brazier"), decor, 0, true).filter(
+      (command) => command.kind === "poly" && command.glow,
+    );
+    expect(flame.map((command) => (command.kind === "poly" ? command.colour : 0))).toEqual(
+      decor.flame,
+    );
+    expect(decor.flame[0]).toBe(0xd8401a);
+    expect(decor.flame.at(-1)).toBe(0xffe890);
   });
 });
