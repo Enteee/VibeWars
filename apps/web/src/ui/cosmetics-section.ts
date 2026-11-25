@@ -103,17 +103,8 @@ export function cosmeticsSection(
     },
     mount: (container) => {
       const draw = (): void => {
-        const field = h("label", "sound-toggle cosmetics-show-others");
-        const show = document.createElement("input");
-        show.type = "checkbox";
-        show.checked = store.showOthers();
-        show.addEventListener("change", () => {
-          store.setShowOthers(show.checked);
-        });
-        field.append(show, h("span", undefined, t("cosmetics.showOthers")));
         container.replaceChildren(
           h("p", "cosmetics-note", t("cosmetics.note")),
-          field,
           ...COSMETIC_SLOTS.filter((slot) => slot !== "emblemFrame" || wearsCape()).map((slot) =>
             slotPicker(store, slot),
           ),

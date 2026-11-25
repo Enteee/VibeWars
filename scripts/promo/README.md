@@ -25,8 +25,13 @@ workspace packages built (`pnpm -r --filter "./packages/**" run build`).
 - **Music.** Playwright records no sound. An init script, in every frame
   including the sandboxed music host, tees the music bus into a
   `MediaRecorder`; the take is one continuous recording of the fight scene
-  (`music.webm`), no game code involved. `assemble` finds its beat from
-  the onsets and starts it so a beat lands on the interrupt's frame.
+  (`music.webm`), no game code involved. A second init script notes each
+  track the host reports playing, and the fight's `musicSettled` mark is
+  where the last switch (menu to match) has faded in. `assemble` uses the
+  take only from there: one song under the whole cut, which changes only
+  through the fades at its ends (ADR-0058). It finds the beat from the
+  onsets after that mark and starts the music so a beat lands on the
+  interrupt's frame.
 - **Captions** are `captions.json`, English only, drawn by ffmpeg in the
   system's bold sans. They are not `t()` strings.
 - **Fixture.** Every scene starts in a fresh browser context: no real
@@ -41,6 +46,12 @@ It builds the commit it runs from (a release event: the tag; a hand run: the bra
 the release, so the URL 404s until then:
 
 `https://github.com/Enteee/VibeWars/releases/download/<tag>/vibewars-trailer-16x9.mp4`
+
+The game's Help > Trailer page (#3835) plays the cuts on **v0.12.0**,
+uploaded there by `trailer.yml` (#3922). A re-cut re-runs the workflow for
+that tag, so the page's URLs never change. Its length, size and poster
+(`apps/web/public/promo/trailer-poster.webp`) are read from the 16:9 cut by
+hand: update `apps/web/src/ui/trailer-section.ts` when a re-cut changes them.
 
 ## Playwright's video encoder
 

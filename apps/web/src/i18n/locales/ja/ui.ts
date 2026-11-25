@@ -389,7 +389,6 @@ export default {
   "cosmetics.requires.wins": {
     other: "ランク戦{count}勝",
   },
-  "cosmetics.showOthers": "他のプレイヤーのコスメティックを表示",
   "cosmetics.slot.aura": "足元のオーラ",
   "cosmetics.slot.cape": "ケープの模様",
   "cosmetics.slot.dissolve": "死亡時の消散",
@@ -523,6 +522,11 @@ export default {
   "help.licences": "サードパーティのライセンス",
   "help.pages": "ヘルプページ",
   "help.source": "ソースコード",
+  "help.trailer": "トレーラー",
+  "help.trailerDownload": "ダウンロード",
+  "help.trailerInfo": "{seconds}秒、約{mb} MB",
+  "help.trailerOffline": "トレーラーの再生にはインターネット接続が必要です。",
+  "help.trailerVertical": "スマホ版（縦）",
   "help.version": "VibeWars {release} · ビルド {build}",
 
   "hud.aggression": "攻勢 {ours} : {theirs}",

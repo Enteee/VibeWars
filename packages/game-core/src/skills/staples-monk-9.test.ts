@@ -432,3 +432,32 @@ describe("Monk staples' tooltips (#2286)", () => {
     );
   });
 });
+
+describe("Aegis recast by rank (#3981)", () => {
+  /** Monks `hi` at Protection Prayers 12 and `lo` at 3, side by side. */
+  function monks() {
+    return new MatchSimulation({
+      seed: "aegis-recast",
+      participants: [
+        spec("hi", 0, vec2(0, 0), [AEGIS], new Map([["monk.protection-prayers", 12]])),
+        spec("lo", 0, vec2(0, 30), [AEGIS], new Map([["monk.protection-prayers", 3]])),
+      ],
+    });
+  }
+
+  it("a rank-3 Aegis over a rank-12 one is refused: the longer one runs on", () => {
+    const match = monks();
+    cast(match, "hi", 0, "hi");
+    cast(match, "lo", 0, "lo");
+    const aegis = get(match, "hi").statuses.get("aegis");
+    expect(aegis?.sourceId).toBe("hi");
+    expect(aegis?.remainingSeconds).toBeGreaterThan(7.8);
+  });
+
+  it("a rank-12 Aegis over a rank-3 one replaces it", () => {
+    const match = monks();
+    cast(match, "lo", 0, "lo");
+    cast(match, "hi", 0, "hi");
+    expect(get(match, "lo").statuses.get("aegis")?.sourceId).toBe("hi");
+  });
+});

@@ -387,7 +387,6 @@ export default {
   "cosmetics.requires.wins": {
     other: "{count} kemenangan peringkat",
   },
-  "cosmetics.showOthers": "Tampilkan kosmetik pemain lain",
   "cosmetics.slot.aura": "Aura tanah",
   "cosmetics.slot.cape": "Corak jubah",
   "cosmetics.slot.dissolve": "Pelarutan kematian",
@@ -521,6 +520,11 @@ export default {
   "help.licences": "Lisensi pihak ketiga",
   "help.pages": "halaman bantuan",
   "help.source": "Kode sumber",
+  "help.trailer": "Trailer",
+  "help.trailerDownload": "Unduh",
+  "help.trailerInfo": "{seconds} dtk, sekitar {mb} MB",
+  "help.trailerOffline": "Trailer memerlukan koneksi internet.",
+  "help.trailerVertical": "Versi ponsel (vertikal)",
   "help.version": "VibeWars {release} · build {build}",
 
   "hud.aggression": "agr {ours} vs {theirs}",

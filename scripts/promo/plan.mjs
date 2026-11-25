@@ -95,16 +95,33 @@ export function beatGrid(onsets) {
 }
 
 /**
+ * Where in the music take the last switch has faded in (#3983), seconds:
+ * a cycle of its track after it is first heard. The cut's music starts
+ * after it, so the trailer has one song and no switch inside it.
+ *
+ * @param {readonly { heardAtEpochMs: number, cps: number }[]} switches what the host reported playing
+ * @param {number} takeStartedAt epoch ms the take started
+ */
+export function musicSettled(switches, takeStartedAt) {
+  let settled = 0;
+  for (const { heardAtEpochMs, cps } of switches) {
+    settled = Math.max(settled, (heardAtEpochMs - takeStartedAt) / 1000 + 1 / cps);
+  }
+  return settled;
+}
+
+/**
  * Where to start the music so a beat falls at `at` on the timeline: the
- * first offset `>= 0` that puts a beat there.
+ * first offset at or after `earliest` that puts a beat there.
  *
  * @param {{ period: number, phase: number }} grid
  * @param {number} at timeline seconds of the frame the beat must hit
+ * @param {number} earliest take seconds the music may start from: after its last switch
  */
-export function musicOffset(grid, at) {
+export function musicOffset(grid, at, earliest) {
   // A beat sits at phase + k * period in the music; it must sit at `at`.
-  const offset = (grid.phase - at) % grid.period;
-  return offset < 0 ? offset + grid.period : offset;
+  const past = (grid.phase - at - earliest) % grid.period;
+  return earliest + (past < 0 ? past + grid.period : past);
 }
 
 /**

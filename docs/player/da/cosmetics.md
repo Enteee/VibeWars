@@ -60,5 +60,3 @@ næste lobby, du går ind i.
 ## Se andre spilleres kosmetik
 
 Andre spillere ser kun din kosmetik, hvis deres kopi af ranglisten viser, at du har optjent den.
-For at se alle med standardudseendet skal du slå **Vis andre spilleres kosmetik** fra i Valg under
-**Kosmetik**.

@@ -8,7 +8,7 @@ import {
   RANGE_SPIRIT,
 } from "../../distances.js";
 import { KNOCKDOWN_SECONDS, type CreatureTemplate, type DeathBurst, type Skill } from "../types.js";
-import { attackingSpirit, protectiveSpirit, spiritHealth } from "./shared.js";
+import { attackingSpirit, protectiveSpirit, spiritBody } from "./shared.js";
 
 export const RITUALIST_SKILLS: readonly Skill[] = [
   {
@@ -461,7 +461,7 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
     petAttack: undefined,
     // PvP: "Create a level 1...8...10 Spirit. Non-Spirit allies within its
     // range gain +1...3...3 Health regeneration. This Spirit dies after
-    // 15...39...45 seconds." A level-8 spirit: 50 + 20 per level, armor 51.
+    // 15...39...45 seconds." A level-8 spirit: 20 Health and 2 + 6 armor per level.
     effects: [
       {
         kind: "summon",
@@ -470,8 +470,7 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
           kind: "spirit",
           look: "spirit",
           name: "Recuperation",
-          maxHealth: spiritHealth("ritualist.restoration-magic", [1, 10]),
-          armor: { flat: 51 },
+          ...spiritBody("ritualist.restoration-magic", [1, 10]),
           attack: undefined,
           durationSeconds: {
             scaling: { attributeId: "ritualist.restoration-magic", atZero: 15, atTwelve: 39 },
@@ -3168,8 +3167,7 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
           kind: "spirit",
           look: "spirit",
           name: "Agony",
-          maxHealth: spiritHealth("ritualist.channeling-magic", [1, 8]),
-          armor: { flat: 51 },
+          ...spiritBody("ritualist.channeling-magic", [1, 8]),
           attack: undefined,
           durationSeconds: {
             scaling: { attributeId: "ritualist.channeling-magic", atZero: 30, atTwelve: 78 },
@@ -3556,8 +3554,7 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
       kind: "spirit",
       look: "spirit",
       name: "Preservation",
-      maxHealth: spiritHealth("ritualist.restoration-magic", [1, 10]),
-      armor: { flat: 51 },
+      ...spiritBody("ritualist.restoration-magic", [1, 10]),
       attack: undefined,
       durationSeconds: { flat: 90 },
       pulse: {
@@ -3666,8 +3663,7 @@ export const RITUALIST_SKILLS: readonly Skill[] = [
       kind: "spirit",
       look: "spirit",
       name: "Empowerment",
-      maxHealth: spiritHealth("ritualist.spawning-power", [1, 10]),
-      armor: { flat: 51 },
+      ...spiritBody("ritualist.spawning-power", [1, 10]),
       attack: undefined,
       durationSeconds: {
         scaling: { attributeId: "ritualist.spawning-power", atZero: 15, atTwelve: 51 },
@@ -4293,8 +4289,8 @@ function bindingRitual(ritual: {
 
 /**
  * A level 1...10 spirit that does nothing while it lives and bursts as it
- * leaves (#1550): Destruction's and Life's, 214 Health at 12 in
- * `attributeId`, armor 51, for `seconds` flat.
+ * leaves (#1550): Destruction's and Life's, 160 Health and armor 50 at
+ * 12 in `attributeId`, for `seconds` flat.
  */
 function burstingSpirit(
   name: string,
@@ -4306,8 +4302,7 @@ function burstingSpirit(
     kind: "spirit",
     look: "spirit",
     name,
-    maxHealth: spiritHealth(attributeId, [1, 10]),
-    armor: { flat: 51 },
+    ...spiritBody(attributeId, [1, 10]),
     attack: undefined,
     durationSeconds: { flat: seconds },
     behaviour: { kind: "idle" },

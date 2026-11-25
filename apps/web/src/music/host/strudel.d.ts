@@ -24,6 +24,7 @@ declare module "@strudel/core" {
     filterHaps(test: (hap: Hap) => boolean): Pattern;
     withHap(func: (hap: Hap) => Hap): Pattern;
     late(cycles: number): Pattern;
+    fast(factor: number): Pattern;
   }
   /** The scheduler `webaudioRepl` makes; the host's tests drive one directly. */
   export class Cyclist {
@@ -106,5 +107,7 @@ declare module "@strudel/webaudio" {
   export function getSound(s: string): { readonly data: { readonly type?: string } } | undefined;
   export function getSuperdoughAudioController(): {
     readonly output: { readonly destinationGain: GainNode };
+    /** Each orbit in use, by its number: its effects, and its output into `output`. */
+    readonly nodes: Readonly<Record<string, { readonly output: GainNode }>>;
   };
 }

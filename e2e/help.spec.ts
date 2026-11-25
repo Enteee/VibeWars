@@ -169,6 +169,34 @@ test("Help's last page is the third-party licences, not Options' (#2559)", async
   await expect(page.locator('.options-entry[data-section="licences"]')).toHaveCount(0);
 });
 
+test("Help's Trailer page, first after the docs, fetches nothing from GitHub until Play (#3835)", async ({
+  page,
+}) => {
+  const github: string[] = [];
+  await page.route(/^https:\/\/([a-z.-]+\.)?github(usercontent)?\.com\//, (route) => {
+    github.push(route.request().url());
+    return route.abort();
+  });
+  await page.goto("./");
+  await page.locator(".topbar-help").click();
+  const help = page.getByRole("dialog", { name: "Help" });
+  await expect(picker(help).locator("option").nth(-2)).toHaveText("Trailer");
+  await picker(help).selectOption({ label: "Trailer" });
+  await expect(help.locator(".help-page")).toHaveAttribute("data-page", "trailer");
+  const video = help.locator("video.trailer-video");
+  await expect(video).toBeVisible();
+  await expect(video).toHaveAttribute("preload", "none");
+  const url =
+    "https://github.com/Enteee/VibeWars/releases/download/v0.12.0/vibewars-trailer-16x9.mp4";
+  await expect(video).toHaveAttribute("src", url);
+  await expect(help.getByRole("link", { name: "Download" })).toHaveAttribute("href", url);
+  await expect(help.getByRole("link", { name: "Phone version (vertical)" })).toHaveAttribute(
+    "href",
+    /vibewars-trailer-9x16\.mp4$/,
+  );
+  expect(github).toEqual([]);
+});
+
 test("Help lists the third-party licences, each with its full text (#1235)", async ({ page }) => {
   const help = await openLicences(page);
   const corpus = help.locator('.licence-entry[data-licence="gw-skilldata"]');

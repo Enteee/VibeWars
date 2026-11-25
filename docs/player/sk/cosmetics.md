@@ -59,6 +59,4 @@ najbližšej lobby, do ktorej vstúpiš.
 
 ## Kozmetika ostatných hráčov
 
-Ostatní hráči vidia tvoju kozmetiku, len ak ich kópia rebríčka ukazuje, že si ju získal. Ak chceš
-vidieť všetkých v predvolenom vzhľade, vypni **Zobrazovať kozmetiku ostatných hráčov** v
-Nastaveniach v časti **Kozmetika**.
+Ostatní hráči vidia tvoju kozmetiku, len ak ich kópia rebríčka ukazuje, že si ju získal.

@@ -371,7 +371,7 @@ describe("in a match (#1540)", () => {
       (participant: Participant) => participant.creature?.kind === "spirit",
     );
     expect(spirits).toHaveLength(1);
-    expect(spirits[0]?.combatant.maxHealth).toBe(210);
+    expect(spirits[0]?.combatant.maxHealth).toBe(160);
     expect(spirits[0]?.creature?.expiresInSeconds).toBeCloseTo(101.5 - DT, 5);
     for (const id of ["c", "a", "f", "far"]) {
       expect(get(sim, id).statuses.has("infuriating-heat"), id).toBe(true);

@@ -82,8 +82,10 @@ export interface CombatRules {
   /** What base damage is multiplied by when a weapon's requirement is unmet. */
   readonly unmetRequirementMultiplier: number;
   /**
-   * A weapon blow's chance to crit (#533): this, plus
+   * A weapon blow's base chance to crit (#533): this, plus
    * `criticalChancePerRank` per rank in the weapon's mastery attribute.
+   * GW1 multiplies it with Critical Strikes' chance and the skills' sum
+   * (#3984, wiki "Critical hit"): `1 − (1 − base)(1 − cs)(1 − skills)`.
    */
   readonly criticalBaseChance: number;
   readonly criticalChancePerRank: number;
@@ -164,11 +166,12 @@ export const MINIMAL_GW_INSPIRED_PVP_V1: Ruleset = Object.freeze({
     // enough that nobody carries a hammer "for fun" on a caster, mild
     // enough that it is a trade-off rather than a lockout.
     unmetRequirementMultiplier: 1 / 3,
-    // Measured in GW1 by players, not a published formula: about 1% at
-    // rank 0, rising 1.37% a rank. GW1 adds the attacker's level against
-    // the target's; with no levels here, only the rank is left.
+    // GW1's wiki ("Critical hit"): a level 20 attacker against a level 20
+    // foe crits at about its mastery rank in percent, always above it. 1%
+    // and 1% a rank gives 13% at 12. With no levels here, only the rank
+    // is left (#3984).
     criticalBaseChance: 0.01,
-    criticalChancePerRank: 0.0137,
+    criticalChancePerRank: 0.01,
     baseHealth: 500,
     baseEnergy: 50,
     minimumMaxHealth: 100,

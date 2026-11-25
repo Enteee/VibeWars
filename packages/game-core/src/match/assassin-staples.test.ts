@@ -388,11 +388,15 @@ describe("Critical Eye (#988)", () => {
     const attacker = makeCombatant({ id: "a", energy: 0 });
     const before = criticalChance(weaponSnapshotOf(attacker), RULES.combat);
     attacker.statuses.apply("critical-eye", 30, "a", NO_RANKS);
-    expect(criticalChance(weaponSnapshotOf(attacker), RULES.combat)).toBeCloseTo(before + 0.13, 9);
+    // It crits 13% of the blows nothing else did (#3984).
+    expect(criticalChance(weaponSnapshotOf(attacker), RULES.combat)).toBeCloseTo(
+      1 - (1 - before) * (1 - 0.13),
+      9,
+    );
     expect(
       criticalChance(weaponSnapshotOf(attacker), {
         ...RULES.combat,
-        criticalBaseChance: 0.95,
+        criticalBaseChance: 1.05,
       }),
     ).toBe(1);
 

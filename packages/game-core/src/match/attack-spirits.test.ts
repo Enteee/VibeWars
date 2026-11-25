@@ -104,32 +104,38 @@ function damaged(events: readonly CombatEvent[], targetId: string): number {
 
 describe("the four spirits' numbers (#1239)", () => {
   // Rank 0...15 is GW1's a...b, so 12 is four fifths of the way; Health
-  // is 50 + 20 per whole level (#1917).
+  // is 20 per whole level, armor 2 + 6 per level (#3978).
   it.each([
-    [PAIN, 0, 70, 30, 5],
-    [PAIN, 12, 190, 126, 25],
-    [PAIN, 15, 210, 150, 30],
-    [SHADOWSONG, 0, 70, 30, 5],
-    [SHADOWSONG, 12, 150, 30, 17],
-    [SHADOWSONG, 15, 170, 30, 20],
-    [DISSONANCE, 0, 70, 10, 5],
-    [DISSONANCE, 12, 190, 22, 17],
-    [DISSONANCE, 15, 210, 25, 20],
-    [DISENCHANTMENT, 0, 70, 15, 5],
-    [DISENCHANTMENT, 12, 190, 35, 17],
-    [DISENCHANTMENT, 15, 210, 40, 20],
-  ])("%s at Communing %i: %i Health, %i s, hits for %i", (id, rank, health, seconds, damage) => {
-    const sim = match([], rank);
-    const planted = ritual(sim, id);
-    expect(planted.combatant.maxHealth).toBe(health);
-    expect(planted.combatant.equipment.baseArmor).toBe(51);
-    // Planted a few ticks ago.
-    expect(planted.creature?.expiresInSeconds).toBeLessThan(seconds);
-    expect(planted.creature?.expiresInSeconds).toBeCloseTo(seconds, 0);
-    const { mainHand } = planted.combatant.equipment;
-    expect(mainHand.weapon.damageMax * (mainHand.creatureDamageScale ?? 0)).toBeCloseTo(damage, 9);
-    expect(mainHand.weapon.range).toBe(RANGE_SPIRIT);
-  });
+    [PAIN, 0, 20, 8, 30, 5],
+    [PAIN, 12, 140, 44, 126, 25],
+    [PAIN, 15, 160, 50, 150, 30],
+    [SHADOWSONG, 0, 20, 8, 30, 5],
+    [SHADOWSONG, 12, 100, 32, 30, 17],
+    [SHADOWSONG, 15, 120, 38, 30, 20],
+    [DISSONANCE, 0, 20, 8, 10, 5],
+    [DISSONANCE, 12, 140, 44, 22, 17],
+    [DISSONANCE, 15, 160, 50, 25, 20],
+    [DISENCHANTMENT, 0, 20, 8, 15, 5],
+    [DISENCHANTMENT, 12, 140, 44, 35, 17],
+    [DISENCHANTMENT, 15, 160, 50, 40, 20],
+  ])(
+    "%s at Communing %i: %i Health, armor %i, %i s, hits for %i",
+    (id, rank, health, armor, seconds, damage) => {
+      const sim = match([], rank);
+      const planted = ritual(sim, id);
+      expect(planted.combatant.maxHealth).toBe(health);
+      expect(planted.combatant.equipment.baseArmor).toBe(armor);
+      // Planted a few ticks ago.
+      expect(planted.creature?.expiresInSeconds).toBeLessThan(seconds);
+      expect(planted.creature?.expiresInSeconds).toBeCloseTo(seconds, 0);
+      const { mainHand } = planted.combatant.equipment;
+      expect(mainHand.weapon.damageMax * (mainHand.creatureDamageScale ?? 0)).toBeCloseTo(
+        damage,
+        9,
+      );
+      expect(mainHand.weapon.range).toBe(RANGE_SPIRIT);
+    },
+  );
 });
 
 describe("an attacking spirit (#1239)", () => {

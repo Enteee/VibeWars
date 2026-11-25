@@ -61,5 +61,4 @@ melihatnya mulai dari lobi berikutnya yang kamu masuki.
 ## Melihat kosmetik pemain lain
 
 Pemain lain hanya melihat kosmetikmu jika salinan papan peringkat mereka menunjukkan bahwa kamu
-mendapatkannya. Untuk melihat semua orang dengan tampilan bawaan, matikan **Tampilkan kosmetik
-pemain lain** di Opsi pada bagian **Kosmetik**.
+mendapatkannya.

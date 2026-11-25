@@ -59,6 +59,5 @@ la vedono dalla prossima lobby in cui entri.
 
 ## Vedere i cosmetici degli altri giocatori
 
-Gli altri giocatori vedono i tuoi cosmetici solo se la loro copia della classifica mostra che li
-hai ottenuti. Per vedere tutti con l’aspetto predefinito, disattiva **Mostra i cosmetici degli
-altri giocatori** in Opzioni, sotto **Cosmetici**.
+Gli altri giocatori vedono i tuoi cosmetici solo se la loro copia della classifica mostra che li hai
+ottenuti.

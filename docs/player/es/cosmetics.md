@@ -61,5 +61,4 @@ jugadores la ven a partir del siguiente lobby al que te unas.
 ## Ver los cosméticos de otros jugadores
 
 Los demás jugadores solo ven tus cosméticos si su copia de la clasificación muestra que los
-conseguiste. Para ver a todos con el aspecto predeterminado, desactiva **Mostrar los cosméticos de
-otros jugadores** en Opciones, dentro de **Cosméticos**.
+conseguiste.

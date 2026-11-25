@@ -7,8 +7,10 @@
  *   vibewars-trailer-9x16.mp4   1080x1920, the middle of each frame
  *
  * Not part of CI. Needs ffmpeg and ffprobe (the devenv has them). Captions
- * are `captions.json`. The music is the one take of the fight scene, laid
- * so a beat falls on the frame of the interrupt (`plan.mjs`).
+ * are `captions.json`. The music is the one take of the fight scene, from
+ * after its last track switch, so one song plays under the whole cut and
+ * changes only through its fades in and out (#3983). It is laid so a beat
+ * falls on the frame of the interrupt (`plan.mjs`).
  */
 import { execFileSync, spawnSync } from "node:child_process";
 import fs from "node:fs";
@@ -384,11 +386,16 @@ function assemble(plan, width, height, name, musicStart) {
 
 fs.mkdirSync(OUT, { recursive: true });
 const plan = timeline();
-const grid = beatGrid(onsets(path.join(CAPTURE, "music.webm")));
-if (grid === undefined) {
-  throw new Error("no beat found in the music take");
+// One song under the cut: the take from after its last switch (#3983).
+const settled = scene("fight").marks.musicSettled;
+if (settled === undefined) {
+  throw new Error("the fight capture has no musicSettled mark; shoot it again");
 }
-const start = musicOffset(grid, plan.hitAt);
+const grid = beatGrid(onsets(path.join(CAPTURE, "music.webm")).filter((t) => t >= settled));
+if (grid === undefined) {
+  throw new Error("no beat found in the music take after its last switch");
+}
+const start = musicOffset(grid, plan.hitAt, settled);
 const musicLength = seconds(path.join(CAPTURE, "music.webm"));
 if (musicLength < start + plan.length) {
   throw new Error(
