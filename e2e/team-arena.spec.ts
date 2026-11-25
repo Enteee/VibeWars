@@ -124,26 +124,37 @@ async function runTeamLobby(
   await press(guest, guest.locator(".team-lobby-seat").nth(1));
 }
 
-/** From now on, `page` keeps the text of every toast it shows, for `toastsOf`. */
+/**
+ * On every page it loads from now on, `page` keeps the text of every
+ * toast it shows, for `toastsOf`, and whether a warmup match (#3899)
+ * began on it, for `inRealMatch`: a warmup's line can go before its
+ * match does.
+ */
 async function keepToasts(page: Page): Promise<void> {
-  await page.evaluate(() => {
-    const seen: string[] = [];
-    (window as { toasts?: readonly string[] }).toasts = seen;
+  await page.addInitScript(() => {
+    const kept: { toasts: string[]; warmedUp: boolean } = { toasts: [], warmedUp: false };
+    (window as { kept?: typeof kept }).kept = kept;
     new MutationObserver((records) => {
       for (const record of records) {
         for (const node of record.addedNodes) {
-          if (node instanceof HTMLElement && node.classList.contains("toast")) {
-            seen.push(node.textContent);
+          if (!(node instanceof HTMLElement)) {
+            continue;
+          }
+          if (node.classList.contains("toast")) {
+            kept.toasts.push(node.textContent);
+          }
+          if (node.matches(".hud-warmup") || node.querySelector(".hud-warmup") !== null) {
+            kept.warmedUp = true;
           }
         }
       }
-    }).observe(document.body, { childList: true, subtree: true });
+    }).observe(document, { childList: true, subtree: true });
   });
 }
 
 /** The toasts `page` has shown since `keepToasts`. */
 function toastsOf(page: Page): Promise<readonly string[]> {
-  return page.evaluate(() => (window as { toasts?: readonly string[] }).toasts ?? []);
+  return page.evaluate(() => (window as { kept?: { toasts: string[] } }).kept?.toasts ?? []);
 }
 
 /** `page` plays `build`: its skill bar's first skill is the build's. */
@@ -165,6 +176,10 @@ test("#1766: two parties of two queue for Team Arena, meet, and play their own b
   test.setTimeout(180_000);
   const { context, pages } = await openPeers(browser, 4);
   const [ann, bea, cid, dot] = pages as [Page, Page, Page, Page];
+  // Ann's party queues first, so it may warm up (#3899): its pages keep watch.
+  for (const page of [ann, bea]) {
+    await keepToasts(page);
+  }
   // Each page's console, said when the match fails to show (#2777).
   const consoles: string[] = [];
   for (const [who, page] of [
@@ -251,6 +266,10 @@ test("#3899: a queued party warms up against bots, and goes to its match once an
   test.setTimeout(240_000);
   const { context, pages } = await openPeers(browser, 4);
   const [ann, bea, cid, dot] = pages as [Page, Page, Page, Page];
+  // Ann's party queues first, so it may warm up (#3899): its pages keep watch.
+  for (const page of [ann, bea]) {
+    await keepToasts(page);
+  }
 
   try {
     await formParty([ann, bea], ["Ann", "Bea"]);
@@ -281,7 +300,9 @@ test("#3899: a queued party warms up against bots, and goes to its match once an
     // a toast's 5 s, on a page that may boot it behind another in front,
     // so each page keeps every toast it shows (#3968).
     for (const page of [ann, bea]) {
-      await keepToasts(page);
+      await expect
+        .poll(() => toastsOf(page), { timeout: 60_000 })
+        .toContain("Match found — warmup over");
     }
     await inRealMatch([ann, bea], cid);
     for (const page of [ann, bea, cid, dot]) {
@@ -289,9 +310,6 @@ test("#3899: a queued party warms up against bots, and goes to its match once an
       await expect(page.locator(".hud-skills .hud-skill").first()).toBeAttached({
         timeout: 40_000,
       });
-    }
-    for (const page of [ann, bea]) {
-      await expect.poll(() => toastsOf(page)).toContain("Match found — warmup over");
     }
   } finally {
     await context.close();
@@ -400,7 +418,25 @@ async function inRealMatch(pages: readonly Page[], foe: Page): Promise<void> {
   await foe.bringToFront();
   await expect(foe.locator(".hud-skills .hud-skill").first()).toBeAttached({ timeout: 40_000 });
   for (const page of pages) {
+    // Found, a warmup loses its line before its match is dropped (#3968):
+    // a page that warmed up is in the match once that match says so.
+    const warmedUp = await page.evaluate(
+      () => (window as { kept?: { warmedUp: boolean } }).kept?.warmedUp === true,
+    );
+    if (warmedUp) {
+      await expect
+        .poll(() => toastsOf(page), { timeout: 60_000 })
+        .toContain("Match found — warmup over");
+    }
     await expect(page.locator(".hud-warmup")).toHaveCount(0, { timeout: 60_000 });
+    // The next match starts over: its warmup, its toast.
+    await page.evaluate(() => {
+      const kept = (window as { kept?: { toasts: string[]; warmedUp: boolean } }).kept;
+      if (kept !== undefined) {
+        kept.toasts.length = 0;
+        kept.warmedUp = false;
+      }
+    });
   }
 }
 
@@ -423,6 +459,10 @@ test("#3815: a Team Arena party that wins queues again with the same team, with 
   test.setTimeout(420_000);
   const { context, pages } = await openPeers(browser, 4);
   const [ann, bea, cid, dot] = pages as [Page, Page, Page, Page];
+  // Ann's party queues first, so it may warm up (#3899): its pages keep watch.
+  for (const page of [ann, bea]) {
+    await keepToasts(page);
+  }
   // Two humans a side is ranked: each needs a key of its own.
   for (const page of pages) {
     await ownPlayerKey(page);
