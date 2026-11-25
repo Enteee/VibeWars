@@ -17,10 +17,10 @@ import { chromium } from "@playwright/test";
  *   pits: { footprint: Shape }[], tunnels: { footprint: Shape }[],
  *   decks: { layer: number, footprint: Shape }[], transitions: { area: Shape }[],
  *   dropOffs: { from: Pt, to: Pt }[], walls: Wall[], gates: { wall: Wall }[],
- *   water?: { depth: string, area: Shape }[], zones?: { area: Shape }[],
+ *   water?: { layer: number, depth: string, area: Shape }[], zones?: { layer: number, area: Shape }[],
  *   paving?: { area: Shape }[], breakables?: { wall: Wall }[],
  *   overhangs?: { footprint: Shape }[], teleports?: { from: { area: Shape } }[],
- *   objectives?: { position?: Pt, area?: Shape }[],
+ *   objectives?: { layer: number, position?: Pt, area?: Shape }[],
  *   switches?: { position: Pt }[], spawnPoints: { team: number, position: Pt }[],
  *   lighting?: { lights: { id: string, position: Pt, radius: number }[] },
  * }} MapData
