@@ -39,7 +39,9 @@ import { chromium } from "@playwright/test";
 
 const PORT = 4321;
 const MEDIA = path.join(import.meta.dirname, "..", "docs", "media");
-const { values: options } = parseArgs({ options: { url: { type: "string" } } });
+const { values: options } = parseArgs({
+  options: { url: { type: "string" }, only: { type: "string" } },
+});
 
 /**
  * The Elementalist/Mesmer starter build as a GW1 template code (#494): the
@@ -289,9 +291,44 @@ async function matchShots(page, dir) {
  */
 async function heightsShot(page, dir) {
   await startMatch(page, "broken-tower");
-  await walk(page, "KeyD", 6000);
+  // The host sits in team 2's block, east of the map (x ~4900, y ~1360). The
+  // nearest stair and torch are the east cellar mouth's: torch (4054,1310),
+  // steps (3894..4034, 1337), the cellar mouth below the hill's raised side.
+  // 5 s west at 180 u/s is x ~4000, the steps and the torch in frame.
+  await walk(page, "KeyA", 5000);
   step = "heights shot";
+  await assertNotVoid(page);
   await page.screenshot({ path: path.join(dir, "readme-heights.png") });
+}
+
+/**
+ * Fail when the frame's centre is mostly the void: a walk that ended off the
+ * map must stop the script, not commit a bad picture.
+ *
+ * @param {import("@playwright/test").Page} page
+ */
+async function assertNotVoid(page) {
+  const png = await page.screenshot({ clip: { x: 540, y: 260, width: 200, height: 200 } });
+  const raw = spawnSync(
+    "ffmpeg",
+    ["-v", "error", "-i", "pipe:0", "-f", "rawvideo", "-pix_fmt", "rgb24", "pipe:1"],
+    { input: png },
+  );
+  const bytes = raw.stdout;
+  const first = [bytes[0], bytes[1], bytes[2]];
+  let same = 0;
+  for (let at = 0; at + 2 < bytes.length; at += 3) {
+    if (
+      Math.abs((bytes[at] ?? 0) - (first[0] ?? 0)) < 6 &&
+      Math.abs((bytes[at + 1] ?? 0) - (first[1] ?? 0)) < 6 &&
+      Math.abs((bytes[at + 2] ?? 0) - (first[2] ?? 0)) < 6
+    ) {
+      same += 1;
+    }
+  }
+  if (same > bytes.length / 3 / 2) {
+    throw new Error("heights shot: the walk ended off the map");
+  }
 }
 
 /**
@@ -361,8 +398,11 @@ try {
   step = "open the client";
   await page.goto(url);
   await page.locator(".mode-rail").waitFor();
-  await editorAndTraining(page, dir);
-  await matchShots(page, dir);
+  const heightsOnly = options.only === "heights";
+  if (!heightsOnly) {
+    await editorAndTraining(page, dir);
+    await matchShots(page, dir);
+  }
   const second = await browser.newContext({
     viewport: { width: 1280, height: 720 },
     deviceScaleFactor: 1,
@@ -372,14 +412,16 @@ try {
   await page2.goto(url);
   await page2.locator(".mode-rail").waitFor();
   await heightsShot(page2, dir);
-  const shots = [
-    "readme-match.png",
-    "readme-map.png",
-    "readme-heights.png",
-    "readme-editor.png",
-    "readme-training.png",
-    "readme-menu.png",
-  ];
+  const shots = heightsOnly
+    ? ["readme-heights.png"]
+    : [
+        "readme-match.png",
+        "readme-map.png",
+        "readme-heights.png",
+        "readme-editor.png",
+        "readme-training.png",
+        "readme-menu.png",
+      ];
   for (const shot of shots) {
     fs.copyFileSync(path.join(dir, shot), path.join(MEDIA, shot));
     if (/match|map|heights/.test(shot)) {

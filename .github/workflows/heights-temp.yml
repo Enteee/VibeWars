@@ -1,0 +1,25 @@
+name: HeightsTemp
+on:
+  push:
+    branches: ["bot/cicd-engineer@2/readme-heights"]
+permissions:
+  contents: read
+jobs:
+  m:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          persist-credentials: false
+      - uses: ./.github/actions/devenv
+      - run: devenv shell -- pnpm -r --filter "./packages/**" run build
+      - run: devenv shell -- node scripts/readme-shots.mjs --only heights
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        if: always()
+        with:
+          name: heights
+          path: |
+            docs/media/readme-heights.png
+            /tmp/readme-shots-failure.png
+          retention-days: 1
