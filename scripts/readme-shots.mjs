@@ -308,34 +308,43 @@ async function heightsShot(page, dir) {
   const key = west ? "KeyD" : "KeyA";
   const stopAt = west ? 1270 : 4154;
   await page.keyboard.down(key);
-  for (let poll = 0; poll < 100; poll += 1) {
-    const x = await camera();
-    if (west ? x >= stopAt : x <= stopAt) {
-      break;
-    }
+  let x = await camera();
+  for (let poll = 0; poll < 100 && (west ? x < stopAt : x > stopAt); poll += 1) {
     await sleep(100);
+    x = await camera();
   }
   await page.keyboard.up(key);
+  if (west ? x < stopAt : x > stopAt) {
+    throw new Error(
+      `heights shot: the hero never reached x=${String(stopAt)}, stopped at ${String(x)}`,
+    );
+  }
   await sleep(600);
   step = "heights shot";
-  await page.screenshot({ path: path.join(dir, "readme-heights.png") });
-  await assertNotVoid(page);
+  const shot = await page.screenshot();
+  assertNotVoid(shot);
+  fs.writeFileSync(path.join(dir, "readme-heights.png"), shot);
 }
 
 /**
  * Fail when the frame's centre is mostly the void: a walk that ended off the
  * map must stop the script, not commit a bad picture.
  *
- * @param {import("@playwright/test").Page} page
+ * @param {Buffer} png the whole 1280x720 frame
  */
-async function assertNotVoid(page) {
-  const png = await page.screenshot({ clip: { x: 540, y: 260, width: 200, height: 200 } });
+function assertNotVoid(png) {
   const raw = spawnSync(
     "ffmpeg",
-    ["-v", "error", "-i", "pipe:0", "-f", "rawvideo", "-pix_fmt", "rgb24", "pipe:1"],
-    { input: png },
+    [
+      ...["-v", "error", "-i", "pipe:0", "-vf", "crop=200:200:540:260"],
+      ...["-f", "rawvideo", "-pix_fmt", "rgb24", "pipe:1"],
+    ],
+    { input: png, maxBuffer: 1 << 20 },
   );
   const bytes = raw.stdout;
+  if (raw.status !== 0 || bytes.length < 3) {
+    throw new Error(`heights shot: the void check could not read the frame: ${String(raw.stderr)}`);
+  }
   const first = [bytes[0], bytes[1], bytes[2]];
   let same = 0;
   for (let at = 0; at + 2 < bytes.length; at += 3) {
