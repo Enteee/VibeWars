@@ -1609,7 +1609,7 @@ export default {
     "Lo que hace de verdad un lanzamiento: con 60 de armadura, justo el número de la descripción.",
   "training.scenario.time-to-kill.label": "Tiempo para matar",
   "training.scenario.time-to-kill.teaches":
-    "Tu daño sostenido: cuánto aguanta un lanzador de 500 de salud, una y otra vez.",
+    "Tu daño sostenido: cuánto aguanta un lanzador de 480 de salud, una y otra vez.",
   "training.scenario.physical-vs-elemental.label": "Físico contra elemental",
   "training.scenario.physical-vs-elemental.teaches":
     "Que la armadura responde a un tipo de daño: un Guerrero con Insignia incondicional amortigua una espada y no una Bola de fuego; un Guardabosques amortigua una Bola de fuego y no una espada.",
@@ -1618,7 +1618,7 @@ export default {
     "Que las condiciones son una cuenta atrás: Sangrado, Veneno y Quemadura drenan 20 de salud por segundo, el máximo posible, y añadir más renueva en vez de acumular.",
   "training.scenario.condition-removal.label": "Eliminación de condiciones",
   "training.scenario.condition-removal.teaches":
-    "Que una eliminación de condiciones quita solo lo que dice: un aliado con 200 de 500 lleva cinco condiciones, entre ellas Herida profunda, que quita 100 al aplicarse y limita tus curaciones a 400.",
+    "Que una eliminación de condiciones quita solo lo que dice: un aliado con 192 de 480 lleva cinco condiciones, entre ellas Herida profunda, que quita 96 al aplicarse y limita tus curaciones a 384.",
   "training.scenario.armor-ladder.label": "Escalera de armadura",
   "training.scenario.armor-ladder.teaches":
     "La curva de mitigación: el mismo golpe contra 40 a 104 de armadura, lado a lado.",

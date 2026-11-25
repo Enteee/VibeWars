@@ -1714,7 +1714,7 @@ export default {
   "training.scenario.target-dummy.teaches":
     "ما تفعله رمية واحدة فعلًا: عند درع 60، الرقم الذي في التلميح تمامًا.",
   "training.scenario.time-to-kill.label": "زمن القتل",
-  "training.scenario.time-to-kill.teaches": "ناتجك المستمر: كم يصمد ساحر بصحة 500، مرة بعد مرة.",
+  "training.scenario.time-to-kill.teaches": "ناتجك المستمر: كم يصمد ساحر بصحة 480، مرة بعد مرة.",
   "training.scenario.physical-vs-elemental.label": "مادي مقابل عنصري",
   "training.scenario.physical-vs-elemental.teaches":
     "أن الدرع يستجيب لنوع الضرر: Warrior و Stalwart يخففان السيف لا Fireball، و Ranger يخفف Fireball لا السيف.",
@@ -1723,7 +1723,7 @@ export default {
     "أن العلل ساعة قتل: النزيف والسم والحرق تستنزف معًا 20 صحة في الثانية، وهو الحد الأقصى، وإضافة المزيد تجدّدها ولا تراكمها.",
   "training.scenario.condition-removal.label": "إزالة العلل",
   "training.scenario.condition-removal.teaches":
-    "أن إزالة العلّة لا تزيل إلا ما تذكره: حليف عند 200 من 500 يحمل خمس علل، والجرح العميق بينها يأخذ 100 لحظة وقوعه ويحدّ علاجك عند 400.",
+    "أن إزالة العلّة لا تزيل إلا ما تذكره: حليف عند 192 من 480 يحمل خمس علل، والجرح العميق بينها يأخذ 96 لحظة وقوعه ويحدّ علاجك عند 384.",
   "training.scenario.armor-ladder.label": "سلّم الدروع",
   "training.scenario.armor-ladder.teaches":
     "منحنى التخفيف: الضربة نفسها على درع من 40 إلى 104، جنبًا إلى جنب.",

@@ -2041,7 +2041,7 @@ less than 5 s after a resurrection. Every death gives each living
 member of the other team with negative morale 2% back, up to 0; a
 morale boost adds to a whole team, dead or alive, up to +10%. Morale
 scales the base maximum health and energy, before equipment: at −15%, a
-base of 500 health is 425, plus what runes add. It lasts through a
+base of 480 health is 408, plus what runes add. It lasts through a
 respawn. Your HUD shows it next to the health bar ("−15%"), and nothing
 at 0.
 

@@ -1431,7 +1431,7 @@ export default {
     "시전 한 번이 실제로 하는 일: 방어력 60에서 툴팁의 숫자 그대로.",
   "training.scenario.time-to-kill.label": "처치 시간",
   "training.scenario.time-to-kill.teaches":
-    "지속 화력: 체력 500의 캐스터가 얼마나 버티는지, 몇 번이고.",
+    "지속 화력: 체력 480의 캐스터가 얼마나 버티는지, 몇 번이고.",
   "training.scenario.physical-vs-elemental.label": "물리 대 원소",
   "training.scenario.physical-vs-elemental.teaches":
     "방어력은 피해 유형에 따라 작용해요: Warrior와 Stalwart Insignia는 검을 막지만 Fireball은 못 막고, Ranger는 Fireball을 막지만 검은 못 막아요.",
@@ -1440,7 +1440,7 @@ export default {
     "상태이상은 죽음의 시계예요: Bleeding, Poison, Burning이 초당 체력 20을 깎는데 이게 최대치이고, 더 걸어도 쌓이지 않고 갱신돼요.",
   "training.scenario.condition-removal.label": "상태이상 제거",
   "training.scenario.condition-removal.teaches":
-    "상태이상 제거는 적힌 것만 없애요: 500 중 200인 아군이 상태이상 다섯 개를 지니고 있고, 그중 Deep Wound는 걸릴 때 100을 깎고 치유를 400으로 제한해요.",
+    "상태이상 제거는 적힌 것만 없애요: 480 중 192인 아군이 상태이상 다섯 개를 지니고 있고, 그중 Deep Wound는 걸릴 때 96을 깎고 치유를 384로 제한해요.",
   "training.scenario.armor-ladder.label": "방어력 단계",
   "training.scenario.armor-ladder.teaches":
     "경감 곡선: 같은 공격을 방어력 40부터 104까지 나란히 비교해요.",

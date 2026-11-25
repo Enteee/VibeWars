@@ -1588,7 +1588,7 @@ export default {
     "Što jedno bacanje stvarno čini: uz 60 oklopa, točno broj iz opisa.",
   "training.scenario.time-to-kill.label": "Vrijeme do ubojstva",
   "training.scenario.time-to-kill.teaches":
-    "Tvoja trajna šteta: koliko dugo izdrži bacač sa 500 zdravlja, iznova i iznova.",
+    "Tvoja trajna šteta: koliko dugo izdrži bacač sa 480 zdravlja, iznova i iznova.",
   "training.scenario.physical-vs-elemental.label": "Fizičko protiv elementalnog",
   "training.scenario.physical-vs-elemental.teaches":
     "Da oklop odgovara na vrstu štete: Ratnik s Oznakom postojanih ublažava mač, a ne Vatrenu loptu; Lovac ublažava Vatrenu loptu, a ne mač.",
@@ -1597,7 +1597,7 @@ export default {
     "Da su stanja odbrojavanje do smrti: Krvarenje, Otrov i Gorenje odnose 20 zdravlja u sekundi, najviše što postoji, a dodavanje novih osvježava umjesto da se zbraja.",
   "training.scenario.condition-removal.label": "Uklanjanje stanja",
   "training.scenario.condition-removal.teaches":
-    "Da uklanjanje stanja skida samo ono što piše: saveznik na 200 od 500 nosi pet stanja, među njima Duboku ranu, koja pri nanošenju odnosi 100 i ograničava tvoja liječenja na 400.",
+    "Da uklanjanje stanja skida samo ono što piše: saveznik na 192 od 480 nosi pet stanja, među njima Duboku ranu, koja pri nanošenju odnosi 96 i ograničava tvoja liječenja na 384.",
   "training.scenario.armor-ladder.label": "Ljestvica oklopa",
   "training.scenario.armor-ladder.teaches":
     "Krivulja ublažavanja: isti udarac protiv 40 do 104 oklopa, jedan uz drugi.",

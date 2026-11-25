@@ -1648,7 +1648,7 @@ export default {
     "Co naprawdę robi jedno rzucenie: przy 60 pancerza dokładnie liczba z podpowiedzi.",
   "training.scenario.time-to-kill.label": "Czas zabicia",
   "training.scenario.time-to-kill.teaches":
-    "Twoje stałe obrażenia: ile wytrzymuje czarodziej z 500 zdrowia, raz za razem.",
+    "Twoje stałe obrażenia: ile wytrzymuje czarodziej z 480 zdrowia, raz za razem.",
   "training.scenario.physical-vs-elemental.label": "Fizyczne a żywiołowe",
   "training.scenario.physical-vs-elemental.teaches":
     "Że pancerz odpowiada na rodzaj obrażeń: Wojownik z Niezłomną Insygnią tłumi miecz, ale nie Kulę Ognia, a Łowca tłumi Kulę Ognia, ale nie miecz.",
@@ -1657,7 +1657,7 @@ export default {
     "Że dolegliwości to zegar śmierci: Krwawienie, Zatrucie i Podpalenie zabierają 20 zdrowia na sekundę, najwięcej, ile się da, a ponowne nałożenie odświeża je zamiast kumulować.",
   "training.scenario.condition-removal.label": "Usuwanie dolegliwości",
   "training.scenario.condition-removal.teaches":
-    "Że usunięcie dolegliwości zdejmuje tylko to, co obiecuje: sojusznik z 200 z 500 zdrowia ma pięć dolegliwości, a Głęboka Rana wśród nich zabiera 100 przy nałożeniu i ogranicza twoje leczenie do 400.",
+    "Że usunięcie dolegliwości zdejmuje tylko to, co obiecuje: sojusznik z 192 z 480 zdrowia ma pięć dolegliwości, a Głęboka Rana wśród nich zabiera 96 przy nałożeniu i ogranicza twoje leczenie do 384.",
   "training.scenario.armor-ladder.label": "Drabina pancerza",
   "training.scenario.armor-ladder.teaches":
     "Krzywa redukcji: to samo trafienie przeciw pancerzowi od 40 do 104, obok siebie.",

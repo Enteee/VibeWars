@@ -330,19 +330,19 @@ describe("networked combat (P2P)", () => {
     a.sendIntent({ kind: "use-skill", slot: FIREBALL });
     await until(
       match,
-      () => (playerIn(a.getSnapshot(), b.selfSessionId)?.health ?? 590) < 590,
+      () => (playerIn(a.getSnapshot(), b.selfSessionId)?.health ?? 570) < 570,
       "the target to take damage",
     );
 
     // Both are the Elementalist/Mesmer starter build. Fire Magic 12, the
     // head's minor rune and its headgear (#1140) make 14: 7 + 7 * 14 = 105
     // before mitigation. The target's armor is an elementalist's 60 (a focus
-    // adds none), so the curve leaves it at 105. Its health is 500 + 50 (superior Vigor)
+    // adds none), so the curve leaves it at 105. Its health is 480 + 50 (superior Vigor)
     // + 15 + 10 + 3 * 5 (Survivor on chest, legs and the other three) =
-    // 590. Spelled out, not derived, so a change to either the curve or
+    // 570. Spelled out, not derived, so a change to either the curve or
     // the build fails loudly.
-    expect(playerIn(a.getSnapshot(), b.selfSessionId)?.maxHealth).toBe(590);
-    expect(playerIn(a.getSnapshot(), b.selfSessionId)?.health).toBe(590 - 105);
+    expect(playerIn(a.getSnapshot(), b.selfSessionId)?.maxHealth).toBe(570);
+    expect(playerIn(a.getSnapshot(), b.selfSessionId)?.health).toBe(570 - 105);
   });
 
   it("deducts energy when a skill is cast", async () => {
@@ -1259,7 +1259,7 @@ describe("the match summary (#1057)", () => {
     a.sendIntent({ kind: "use-skill", slot: FIREBALL });
     await until(
       match,
-      () => (playerIn(a.getSnapshot(), b.selfSessionId)?.health ?? 590) < 590,
+      () => (playerIn(a.getSnapshot(), b.selfSessionId)?.health ?? 570) < 570,
       "the target to take damage",
     );
   }

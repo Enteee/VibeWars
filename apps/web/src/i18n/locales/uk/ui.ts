@@ -1645,7 +1645,7 @@ export default {
     "Що насправді робить одне вміння: при 60 броні — рівно число з підказки.",
   "training.scenario.time-to-kill.label": "Час до вбивства",
   "training.scenario.time-to-kill.teaches":
-    "Ваша стала шкода: скільки протримається заклинач із 500 здоров'я, знову і знову.",
+    "Ваша стала шкода: скільки протримається заклинач із 480 здоров'я, знову і знову.",
   "training.scenario.physical-vs-elemental.label": "Фізична проти стихійної",
   "training.scenario.physical-vs-elemental.teaches":
     "Що броня діє проти типу шкоди: Warrior і Stalwart пом'якшують меч, але не Fireball, а Ranger пом'якшує Fireball, але не меч.",
@@ -1654,7 +1654,7 @@ export default {
     "Що стани — це годинник смерті: Bleeding, Poison і Burning забирають 20 здоров'я на секунду, це максимум, а новий стан оновлює тривалість, а не складається.",
   "training.scenario.condition-removal.label": "Зняття станів",
   "training.scenario.condition-removal.teaches":
-    "Що зняття стану знімає лише те, що вказано: союзник із 200 з 500 здоров'я має п'ять станів, і Deep Wound серед них одразу забирає 100 і обмежує ваше лікування до 400.",
+    "Що зняття стану знімає лише те, що вказано: союзник із 192 з 480 здоров'я має п'ять станів, і Deep Wound серед них одразу забирає 96 і обмежує ваше лікування до 384.",
   "training.scenario.armor-ladder.label": "Драбина броні",
   "training.scenario.armor-ladder.teaches":
     "Крива зниження шкоди: той самий удар по броні від 40 до 104, поруч.",

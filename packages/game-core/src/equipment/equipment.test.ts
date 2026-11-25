@@ -425,6 +425,19 @@ describe("runes that do not stack, and where max health comes from (#3822)", () 
       resolveLoadout(input, rules).weaponSets[0].maxHealth,
     );
   });
+
+  it("starts from GW1's 480; a Dervish's armor adds 25, and runes add on top (#4002)", () => {
+    const vitae = [universal("vitae", "minor")];
+    expect(resolve("warrior", []).weaponSets[0].maxHealth).toBe(480);
+    expect(resolve("dervish", []).weaponSets[0].maxHealth).toBe(505);
+    expect(resolve("dervish", vitae).weaponSets[0].maxHealth).toBe(515);
+    const sources = healthSources(
+      loadoutInput("dervish", []),
+      MINIMAL_GW_INSPIRED_PVP_V1.combat,
+      0,
+    );
+    expect(sources?.base).toBe(505);
+  });
 });
 
 describe("what a weapon deals (#761)", () => {
