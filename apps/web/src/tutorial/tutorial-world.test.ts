@@ -15,6 +15,7 @@ import { ELEVATION_STEP } from "../render/render-order.js";
 import { splashGraph, splashSpawn } from "../ui/splash-fight.js";
 
 import { MARK_REACH } from "./stations.js";
+import { teleporterReach } from "./tutorial-start.js";
 import {
   PLAYER_PROFESSION,
   SELF_ID,
@@ -36,6 +37,8 @@ const FOE_RULE = 600;
 const SECONDS = 120;
 /** The PR screenshot's canvas (#3222). */
 const VIEWPORT = { width: 1000, height: 700 };
+/** An upright phone (#3970). */
+const PHONE = { width: 412, height: 915 };
 /** How long, and how wide, the mark stays clear of every body but the pair. */
 const MARK_SECONDS = 30;
 const MARK_CLEAR = 150;
@@ -198,9 +201,23 @@ describe("tutorialWorld (#3221)", () => {
   it.each(teamArenaMapIds(8).filter((mapId) => !inViewAnyway.has(mapId)))(
     "stands the teleporter out of the default view from the mark on %s",
     (mapId) => {
-      const { mark, teleporter } = tutorialWorld(mapId, 8, "teleporter", "monk", VIEWPORT);
-      const half = VIEWPORT.height / 2 / zoomFor(DEFAULT_STEP, VIEWPORT);
-      expect(mark.y - teleporter.y).toBeGreaterThan(half);
+      for (const viewport of [VIEWPORT, PHONE]) {
+        const { mark, teleporter } = tutorialWorld(mapId, 8, "teleporter", "monk", viewport);
+        const half = viewport.height / 2 / zoomFor(DEFAULT_STEP, viewport);
+        expect(mark.y - teleporter.y).toBeGreaterThan(half);
+      }
+    },
+  );
+
+  // #3970: and a right-drag to the leash from the mark shows it, at the
+  // default zoom, on every map.
+  it.each(teamArenaMapIds(8))(
+    "stands the teleporter in a drag's reach of the mark on %s",
+    (mapId) => {
+      for (const viewport of [VIEWPORT, PHONE]) {
+        const { mark, teleporter } = tutorialWorld(mapId, 8, "teleporter", "monk", viewport);
+        expect(mark.y - teleporter.y).toBeLessThanOrEqual(teleporterReach(viewport).far);
+      }
     },
   );
 
