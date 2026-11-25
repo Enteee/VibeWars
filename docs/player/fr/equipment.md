@@ -16,6 +16,8 @@ Classique). Un changement attend la fin de l'incantation ou du geste en
 cours ; bouger ou Esc change tout de suite. Il n'y a pas de temps de
 recharge. Tes attaques, les compétences qui exigent une certaine arme et ton
 énergie maximale suivent toutes le set en main.
+Un Staff contient 10 d'énergie à lui, et un Focus 6, ou 12 dès que tu
+remplis sa condition.
 
 Une arme requiert le rang 9 dans son attribut : en dessous, elle frappe pour
 un tiers de ses dégâts, et l'éditeur le dit en rouge. Une ![Sword](../../../apps/web/public/icons/weapon/sword.svg) **Sword** est toujours

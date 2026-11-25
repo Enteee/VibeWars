@@ -15,6 +15,8 @@ Clásico). El cambio espera a que termine el lanzamiento o golpe en curso;
 moverte o Esc cambia al instante. No hay tiempo de espera. Tus ataques, las
 habilidades que requieren cierta arma y tu energía máxima siguen al set que
 tienes en la mano.
+Un Staff tiene 10 de energía propia, y un Focus 6, o 12 cuando cumples su
+requisito.
 
 Un arma necesita rango 9 en su atributo: por debajo golpea con un tercio de
 su daño, y el editor lo avisa en rojo. Una ![Sword](../../../apps/web/public/icons/weapon/sword.svg) **Sword** siempre es de Swordsmanship,

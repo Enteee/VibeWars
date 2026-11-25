@@ -787,7 +787,7 @@ export interface ParticipantSpec {
   readonly facing: number;
   /** Defaults to the ruleset's base health. */
   readonly maxHealth?: number;
-  /** Defaults to the ruleset's base energy. */
+  /** Defaults to the ruleset's base energy: a bare pool, with no armor or weapon (#3986). */
   readonly maxEnergy?: number;
   /** Energy regeneration before statuses, in pips. Defaults to 0: none, as a dummy needs. */
   readonly baseEnergyPips?: number;

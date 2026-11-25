@@ -1,5 +1,6 @@
 import {
   NO_UPGRADES,
+  ARMOR_ENERGY_BY_PROFESSION,
   ARMOR_SLOTS,
   INSIGNIAS,
   MINIMAL_GW_INSPIRED_PVP_V1,
@@ -437,7 +438,8 @@ describe("the gear summary", () => {
     // the Monk default, a Wand with a Focus (#614).
     const summary = firstSummary(setOffhand(setWeapon(monk(), 0, "wand"), 0, null));
     expect(summary.maxHealth).toBe(BASE_HEALTH);
-    expect(summary.maxEnergy).toBe(BASE_ENERGY);
+    // A Monk's armor adds its energy to the pool (#3986).
+    expect(summary.maxEnergy).toBe(BASE_ENERGY + ARMOR_ENERGY_BY_PROFESSION.monk);
     expect(summary.armor).toBe(60);
     expect(summary.weaponName).toBe("Wand");
   });
