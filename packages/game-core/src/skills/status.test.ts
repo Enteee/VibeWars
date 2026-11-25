@@ -17,6 +17,7 @@ import {
   getStatusDefinition,
   nextSkillAnswers,
   ownSkillBoost,
+  recastReplaces,
   scaledStatAttributes,
   type BodyTrait,
   type StatusId,
@@ -530,6 +531,77 @@ describe("StatusSet apply/remove", () => {
       { id: "guardian", sourceSkillId: undefined },
       { id: "armor-boost", sourceSkillId: "elementalist.armor-of-earth" },
     ]);
+  });
+});
+
+describe("StatusSet recast of a hex or an enchantment by rank (#3981)", () => {
+  const protection = (rank: number): ReadonlyMap<string, number> =>
+    new Map([["monk.protection-prayers", rank]]);
+  const curses = (rank: number): ReadonlyMap<string, number> =>
+    new Map([["necromancer.curses", rank]]);
+
+  it("replaces an enchantment recast at the same rank, even for less time", () => {
+    const set = new StatusSet("fleshy");
+    set.apply("vital-blessing", 10, "a", protection(12));
+    expect(set.apply("vital-blessing", 6, "b", protection(12), null, "monk.vital-blessing")).toBe(
+      false,
+    );
+    const status = set.get("vital-blessing");
+    expect(status?.remainingSeconds).toBe(6);
+    expect(status?.sourceId).toBe("b");
+    expect(status?.sourceSkillId).toBe("monk.vital-blessing");
+  });
+
+  it("replaces one recast at a higher rank, at its values", () => {
+    const set = new StatusSet("fleshy");
+    set.apply("vital-blessing", 10, "a", protection(8));
+    set.apply("vital-blessing", 6, "b", protection(12));
+    expect(set.get("vital-blessing")?.remainingSeconds).toBe(6);
+    expect(aggregateModifiers(set.active).maxHealthBonus).toBe(168);
+  });
+
+  it("leaves one recast at a lower rank as it is, even for longer", () => {
+    const set = new StatusSet("fleshy");
+    set.apply("vital-blessing", 10, "a", protection(12));
+    expect(set.apply("vital-blessing", 30, "b", protection(8))).toBe(false);
+    const status = set.get("vital-blessing");
+    expect(status?.remainingSeconds).toBe(10);
+    expect(status?.sourceId).toBe("a");
+    expect(status?.ranks.get("monk.protection-prayers")).toBe(12);
+  });
+
+  it("gives a hex to a second caster at an equal rank", () => {
+    const set = new StatusSet("fleshy");
+    set.apply("barbs", 20, "a", curses(12));
+    set.apply("barbs", 5, "b", curses(12));
+    expect(set.get("barbs")?.sourceId).toBe("b");
+    expect(set.get("barbs")?.remainingSeconds).toBe(5);
+  });
+
+  it("tells its gain again, as newly cast: Soul Barbs answers", () => {
+    const set = new StatusSet("fleshy");
+    set.apply("soul-barbs", 20, "n", NO_RANKS);
+    set.apply("barbs", 20, "a", curses(12));
+    set.drainChanges();
+    set.apply("barbs", 5, "b", curses(12));
+    expect(set.drainChanges().some((change) => change.kind === "gained-hex-or-enchantment")).toBe(
+      true,
+    );
+  });
+
+  it("keeps the longer of two conditions, whatever their order", () => {
+    const set = new StatusSet("fleshy");
+    set.apply("bleeding", 10, "a", NO_RANKS);
+    set.apply("bleeding", 4, "b", NO_RANKS);
+    expect(set.get("bleeding")?.remainingSeconds).toBe(10);
+    expect(set.get("bleeding")?.sourceId).toBe("a");
+  });
+
+  it("compares the ranks its stats scale in, and replaces one that has none", () => {
+    expect(recastReplaces("barbs", curses(12), curses(12))).toBe(true);
+    expect(recastReplaces("barbs", curses(12), curses(13))).toBe(true);
+    expect(recastReplaces("barbs", curses(12), curses(11))).toBe(false);
+    expect(recastReplaces("mending", NO_RANKS, NO_RANKS)).toBe(true);
   });
 });
 

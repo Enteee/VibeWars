@@ -25,7 +25,9 @@
  * Re-application does not stack duration (GW1-style): the longer of the
  * existing and incoming duration wins. That single rule is why a spammed
  * short condition cannot out-last one well-timed long one. An exclusive
- * category (`EXCLUSIVE_CATEGORIES`) is the exception: one at a time.
+ * category (`EXCLUSIVE_CATEGORIES`) is the exception: one at a time. A
+ * hex or an enchantment is the other (#3981): recast at the same or a
+ * higher rank it is newly cast, and at a lower one nothing changes.
  */
 
 import { RANGE_SPELL } from "../distances.js";
@@ -100,6 +102,14 @@ export const EXCLUSIVE_CATEGORIES: ReadonlySet<StatusCategory> = new Set([
   "item",
   "form",
 ]);
+
+/**
+ * The categories a recast replaces by rank, not by duration (#3981): GW1's
+ * `Enchantment` notes, "If the current attribute rank is the same or
+ * higher than the original, the enchantment will behave as if newly cast
+ * at that value", and hexes alike.
+ */
+const RECAST_BY_RANK: ReadonlySet<StatusCategory> = new Set(["hex", "enchantment"]);
 
 export type StatusId =
   | CommonStatusId
@@ -359,6 +369,21 @@ export function scaledStatAttributes(id: StatusId): readonly string[] {
     attributes.add(definition.attribute);
   }
   return [...attributes];
+}
+
+/**
+ * Whether a recast of `id` at `incoming` ranks replaces the one up at
+ * `existing` (#3981): when no attribute its stats scale in is lower. One
+ * with no scaled stat is always replaced.
+ */
+export function recastReplaces(
+  id: StatusId,
+  existing: ReadonlyMap<string, number>,
+  incoming: ReadonlyMap<string, number>,
+): boolean {
+  return scaledStatAttributes(id).every(
+    (attributeId) => (incoming.get(attributeId) ?? 0) >= (existing.get(attributeId) ?? 0),
+  );
 }
 
 /** Every `scaling.attributeId` anywhere in `value`, into `into`. */
@@ -3680,7 +3705,10 @@ export class StatusSet {
   /**
    * Apply (or refresh) a status. Durations do not stack — the longer of
    * the existing and incoming duration wins, so re-applying a shorter
-   * one never shortens a longer one already running. In an exclusive
+   * one never shortens a longer one already running. A hex or an
+   * enchantment is replaced outright by a recast at the same or a higher
+   * rank, even a shorter one, its source and ranks the new ones, and a
+   * lower-rank recast leaves it as it is (#3981). In an exclusive
    * category the new one replaces every one of its category, itself
    * included, at the incoming duration (a stance, #523).
    *
@@ -3720,11 +3748,20 @@ export class StatusSet {
         ? appliedSeconds * this.#chantShoutDurationMultiplier()
         : appliedSeconds;
     const exclusive = EXCLUSIVE_CATEGORIES.has(definition.category);
+    const replaced = this.#statuses.get(id);
+    // A hex or an enchantment recast by rank (#3981): a lower one is
+    // refused outright, its duration, source, ranks and counters as they were.
+    const byRank = replaced !== undefined && RECAST_BY_RANK.has(definition.category);
+    if (byRank && !recastReplaces(id, replaced.ranks, ranks)) {
+      return false;
+    }
     // A recast that replaces it: its source does not return (#1826), but
     // from where the new one does, when that one keeps its spot (#1930).
     let returnsTo = returnPoint;
-    const replaced = this.#statuses.get(id);
-    if (replaced !== undefined && (exclusive || replaced.remainingSeconds < durationSeconds)) {
+    if (
+      replaced !== undefined &&
+      (exclusive || byRank || replaced.remainingSeconds < durationSeconds)
+    ) {
       if (definition.returnsSource?.recastKeepsPoint === true && replaced.returnPoint !== null) {
         returnsTo = replaced.returnPoint;
       }
@@ -3740,7 +3777,7 @@ export class StatusSet {
     // A re-application is the newest, whichever duration wins: removal
     // takes the newest first (`removeByCategory`).
     this.#statuses.delete(id);
-    if (existing !== undefined && existing.remainingSeconds >= durationSeconds) {
+    if (!byRank && existing !== undefined && existing.remainingSeconds >= durationSeconds) {
       existing.outbreak = outbreak;
       // A recast signet starts its count again (#1916), never adds to it.
       existing.attacksMadeLeft = definition.endsAfterAttackCount;
