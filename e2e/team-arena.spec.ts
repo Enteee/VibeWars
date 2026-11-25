@@ -124,6 +124,28 @@ async function runTeamLobby(
   await press(guest, guest.locator(".team-lobby-seat").nth(1));
 }
 
+/** From now on, `page` keeps the text of every toast it shows, for `toastsOf`. */
+async function keepToasts(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    const seen: string[] = [];
+    (window as { toasts?: readonly string[] }).toasts = seen;
+    new MutationObserver((records) => {
+      for (const record of records) {
+        for (const node of record.addedNodes) {
+          if (node instanceof HTMLElement && node.classList.contains("toast")) {
+            seen.push(node.textContent);
+          }
+        }
+      }
+    }).observe(document.body, { childList: true, subtree: true });
+  });
+}
+
+/** The toasts `page` has shown since `keepToasts`. */
+function toastsOf(page: Page): Promise<readonly string[]> {
+  return page.evaluate(() => (window as { toasts?: readonly string[] }).toasts ?? []);
+}
+
 /** `page` plays `build`: its skill bar's first skill is the build's. */
 async function expectPlays(
   page: Page,
@@ -256,21 +278,21 @@ test("#3899: a queued party warms up against bots, and goes to its match once an
     await formParty([cid, dot], ["Cid", "Dot"]);
     await runTeamLobby([cid, dot]);
     // The party is told, in its match, that the warmup gave way to it:
-    // a toast's 5 s, so watched for from before the match starts.
-    const told = Promise.all(
-      [ann, bea].map((page) =>
-        expect(page.locator(".toast")).toHaveText("Match found — warmup over", {
-          timeout: 60_000,
-        }),
-      ),
-    );
+    // a toast's 5 s, on a page that may boot it behind another in front,
+    // so each page keeps every toast it shows (#3968).
+    for (const page of [ann, bea]) {
+      await keepToasts(page);
+    }
     await inRealMatch([ann, bea], cid);
     for (const page of [ann, bea, cid, dot]) {
+      await page.bringToFront();
       await expect(page.locator(".hud-skills .hud-skill").first()).toBeAttached({
         timeout: 40_000,
       });
     }
-    await told;
+    for (const page of [ann, bea]) {
+      await expect.poll(() => toastsOf(page)).toContain("Match found — warmup over");
+    }
   } finally {
     await context.close();
   }
