@@ -53,12 +53,13 @@ Khung huy hiệu là một viền mảnh quanh huy hiệu trên áo choàng hộ
 
 ## Cách trang bị
 
-Mở Tùy chọn và chọn **Trang trí**. Mỗi ô liệt kê vật phẩm của nó, mỗi món được đánh dấu là dùng
-được hoặc đã khóa, kèm điều kiện để nhận. Lựa chọn của bạn có hiệu lực ngay. Người chơi khác thấy
-nó từ sảnh tiếp theo mà bạn tham gia.
+Mở Tùy chọn và chọn **Trang trí**. Mỗi ô là một hàng mẫu, mỗi mẫu là một hình nhỏ của vật phẩm; mẫu
+đầu tiên, một vòng tròn trống bị gạch chéo, nghĩa là không trang bị gì. Mẫu bạn chọn có vòng xanh
+lam. Dòng bên cạnh hàng (bên dưới trên điện thoại) cho biết tên mẫu bạn trỏ vào hoặc đang lấy tiêu
+điểm, kèm điều kiện để nhận. Mẫu bị khóa sẽ mờ đi, kèm một ổ khóa nhỏ. Lựa chọn của bạn có hiệu lực
+ngay. Người chơi khác thấy nó từ sảnh tiếp theo mà bạn tham gia.
 
 ## Xem trang trí của người chơi khác
 
 Người chơi khác chỉ thấy trang trí của bạn nếu bản sao bảng xếp hạng của họ cho thấy bạn đã nhận
-được chúng. Để thấy mọi người với giao diện mặc định, tắt **Hiện trang trí của người chơi khác**
-trong Tùy chọn, mục **Trang trí**.
+được chúng.

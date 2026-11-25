@@ -19,7 +19,7 @@
       "footprint": {
         "kind": "rect",
         "x": 360,
-        "y": 560,
+        "y": 510,
         "width": 380,
         "height": 230
       }
@@ -80,12 +80,12 @@
       "area": {
         "kind": "rect",
         "x": 360,
-        "y": 580,
+        "y": 530,
         "width": 110,
         "height": 60
       },
       "uphill": "w",
-      "look": "ramp",
+      "look": "rough-steps",
       "lift": null
     },
     {
@@ -95,12 +95,12 @@
       "area": {
         "kind": "rect",
         "x": 640,
-        "y": 560,
+        "y": 510,
         "width": 80,
         "height": 110
       },
       "uphill": "n",
-      "look": "ramp",
+      "look": "rough-steps",
       "lift": null
     }
   ],
@@ -294,8 +294,8 @@
         "kind": "rect",
         "x": 560,
         "y": 320,
-        "width": 80,
-        "height": 220
+        "width": 76,
+        "height": 190
       }
     },
     {
@@ -331,9 +331,9 @@
       "area": {
         "kind": "rect",
         "x": 430,
-        "y": 40,
+        "y": 10,
         "width": 80,
-        "height": 80
+        "height": 76
       }
     },
     {
@@ -343,7 +343,7 @@
       "area": {
         "kind": "rect",
         "x": 390,
-        "y": 650,
+        "y": 600,
         "width": 90,
         "height": 68
       }
@@ -355,7 +355,7 @@
       "area": {
         "kind": "rect",
         "x": 490,
-        "y": 590,
+        "y": 540,
         "width": 100,
         "height": 80
       }
@@ -365,11 +365,41 @@
       "kind": "spring",
       "layer": 1,
       "area": {
-        "kind": "rect",
-        "x": 80,
-        "y": 150,
-        "width": 80,
-        "height": 80
+        "kind": "polygon",
+        "points": [
+          {
+            "x": 99,
+            "y": 147
+          },
+          {
+            "x": 139,
+            "y": 152
+          },
+          {
+            "x": 159,
+            "y": 170
+          },
+          {
+            "x": 162,
+            "y": 209
+          },
+          {
+            "x": 141,
+            "y": 232
+          },
+          {
+            "x": 101,
+            "y": 227
+          },
+          {
+            "x": 79,
+            "y": 211
+          },
+          {
+            "x": 78,
+            "y": 169
+          }
+        ]
       }
     },
     {
@@ -377,11 +407,41 @@
       "kind": "grove",
       "layer": 1,
       "area": {
-        "kind": "rect",
-        "x": 60,
-        "y": 480,
-        "width": 80,
-        "height": 80
+        "kind": "polygon",
+        "points": [
+          {
+            "x": 79,
+            "y": 481
+          },
+          {
+            "x": 119,
+            "y": 478
+          },
+          {
+            "x": 143,
+            "y": 500
+          },
+          {
+            "x": 138,
+            "y": 539
+          },
+          {
+            "x": 121,
+            "y": 557
+          },
+          {
+            "x": 81,
+            "y": 561
+          },
+          {
+            "x": 58,
+            "y": 541
+          },
+          {
+            "x": 62,
+            "y": 499
+          }
+        ]
       }
     },
     {
@@ -391,7 +451,7 @@
       "area": {
         "kind": "rect",
         "x": 492,
-        "y": 676,
+        "y": 626,
         "width": 86,
         "height": 50
       }
@@ -747,31 +807,31 @@
         "points": [
           {
             "x": 600,
-            "y": 680
+            "y": 630
           },
           {
             "x": 680,
-            "y": 676
+            "y": 626
           },
           {
             "x": 728,
-            "y": 690
+            "y": 640
           },
           {
             "x": 730,
-            "y": 712
+            "y": 662
           },
           {
             "x": 700,
-            "y": 728
+            "y": 678
           },
           {
             "x": 620,
-            "y": 728
+            "y": 678
           },
           {
             "x": 592,
-            "y": 708
+            "y": 658
           }
         ]
       }
@@ -780,7 +840,7 @@
   "lighting": {
     "ambient": {
       "colour": 8357544,
-      "intensity": 0.35
+      "intensity": 0.42
     },
     "indoorAmbient": {
       "colour": 5924488,
@@ -797,7 +857,7 @@
     ],
     "sun": {
       "directionDeg": 315,
-      "elevationDeg": 25,
+      "elevationDeg": 35,
       "colour": 16758906,
       "intensity": 0.5
     },
@@ -861,6 +921,30 @@
         "colour": 16756832,
         "intensity": 0.6,
         "flicker": 0.2
+      },
+      {
+        "id": "fire-basin",
+        "position": {
+          "x": 490,
+          "y": 600
+        },
+        "layer": 0,
+        "radius": 180,
+        "colour": 16748608,
+        "intensity": 0.9,
+        "flicker": 0.3
+      },
+      {
+        "id": "pool-glow",
+        "position": {
+          "x": 660,
+          "y": 652
+        },
+        "layer": 0,
+        "radius": 150,
+        "colour": 11593968,
+        "intensity": 0.6,
+        "flicker": 0
       }
     ]
   },
@@ -871,7 +955,7 @@
         "area": {
           "kind": "rect",
           "x": 560,
-          "y": 630,
+          "y": 580,
           "width": 170,
           "height": 140
         }

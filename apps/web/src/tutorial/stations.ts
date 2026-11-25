@@ -4,21 +4,17 @@ import type { Shape } from "@vibewars/game-maps/schema";
 
 import type { MessageKey } from "../i18n/index.js";
 import type { KeyAction } from "../input/keymap.js";
+import { LOOK_STATION } from "./movement-lock.js";
 
 /**
  * What a station's check reads (#3218): where the player and the tutor
- * stand, and what the camera has done (#3222). `zoomedOut` and
- * `lookDragged` latch for the run: once true, they stay true.
+ * stand, and what the camera shows (#3222).
  */
 export interface TutorialView {
   readonly self: Vec2;
   /** The layer the player's body is on: a mark is stood on from its own layer. */
   readonly selfLayer: number;
   readonly tutor: Vec2;
-  /** The view has been wider than the default step. */
-  readonly zoomedOut: boolean;
-  /** The view has been dragged with the right button. */
-  readonly lookDragged: boolean;
   /** Whether `point`, on the ground, is on screen now. */
   readonly inView: (point: Vec2) => boolean;
   /** The rockfalls dodged so far in the canyon (#3247): it only grows. */
@@ -170,14 +166,15 @@ export function walkStation(mark: Vec2, layer: number): Station {
 }
 
 /**
- * Station 2 (playbook §2): zoom out, drag the view, and find the
- * teleporter north of the pair. The wheel and the right button have no
- * key in the keymap, so the lines name the mouse.
+ * Station 2 (playbook §2): find the teleporter north of the pair. It is
+ * done the moment it comes into view (#3970), by a drag, the wheel or a
+ * pinch alike. The right button has no key in the keymap, so the lines
+ * name the mouse. The session locks walking while it runs.
  */
 export function lookStation(teleporter: Vec2): Station {
   let seen = false;
   return {
-    id: "look",
+    id: LOOK_STATION,
     world: "battlefield",
     lines: {
       intro: "tutorial.look.intro",
@@ -189,7 +186,7 @@ export function lookStation(teleporter: Vec2): Station {
     done: (view) => {
       // Seen at some moment, not only while the drag is held.
       seen ||= view.inView(teleporter);
-      return seen && view.zoomedOut && view.lookDragged;
+      return seen;
     },
   };
 }
