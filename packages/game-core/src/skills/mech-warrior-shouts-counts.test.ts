@@ -197,8 +197,11 @@ describe('"Fear Me!" (#2320)', () => {
       const still = foe("still");
       const moving = foe("moving");
       moving.moving = true;
-      expect(criticalChance(snapshot, RULES, still) - criticalChance(snapshot, RULES, moving)).toBe(
+      // Of the blows nothing else crits, it crits its share (#3984).
+      const otherwise = criticalChance(snapshot, RULES, moving);
+      expect((criticalChance(snapshot, RULES, still) - otherwise) / (1 - otherwise)).toBeCloseTo(
         crit,
+        9,
       );
     },
   );

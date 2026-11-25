@@ -16,8 +16,6 @@ export const PEAK_HEALTH_FRACTION = 0.25;
 export const HIT_WINDOW_MS = 5_000;
 /** Calm needed to fall one level. */
 export const FALL_STEP_MS = 8_000;
-/** The least time level 3 is held once reached. */
-export const PEAK_HOLD_MS = 6_000;
 
 export type Intensity = 0 | 1 | 2 | 3;
 
@@ -208,7 +206,8 @@ function chooseTrack(
  * What plays next. The track follows the context and the mode only, and
  * is the same for the same match, so a snapshot never changes it.
  * Intensity rises at once, falls one level per `FALL_STEP_MS` of calm, and
- * holds level 3 at least `PEAK_HOLD_MS`; a new context starts afresh.
+ * a new context starts afresh. The host climbs a rise one level a cycle
+ * (ADR-0058).
  */
 export function directMusic(
   input: MusicInput,
@@ -229,12 +228,11 @@ export function directMusic(
   // Each step counts from when it was due, not when it was seen, so a fall
   // keeps time however often this is called, and a long gap falls far.
   while (intensity > target) {
-    const hold = intensity === 3 ? Math.max(FALL_STEP_MS, PEAK_HOLD_MS) : FALL_STEP_MS;
-    if (now - intensitySinceMs < hold) {
+    if (now - intensitySinceMs < FALL_STEP_MS) {
       break;
     }
     intensity = ONE_LOWER[intensity];
-    intensitySinceMs += hold;
+    intensitySinceMs += FALL_STEP_MS;
   }
   return { trackId, intensity, intensitySinceMs, context };
 }

@@ -338,12 +338,14 @@ function modDamageOf(
 /**
  * The chance a blow of this snapshot crits (#533): the base chance plus a
  * share per rank in the weapon's mastery, the attribute its requirement
- * names, plus Critical Strikes' (#606). A caster weapon's nominated
- * attribute is no mastery, and fists have none, so both crit at the base
- * chance and Critical Strikes'. Statuses add theirs (#988), all of it at
- * most 1; one only against a still foe (#2320) when a `victim` is given
- * and is not moving. `versusSource` is what the victim's statuses give
- * their source (#2502), `sourceAttacksOn`'s.
+ * names, then Critical Strikes' (#606), then the skills'. A caster
+ * weapon's nominated attribute is no mastery, and fists have none, so
+ * both crit at the base chance. Statuses add theirs (#988); one only
+ * against a still foe (#2320) when a `victim` is given and is not moving.
+ * `versusSource` is what the victim's statuses give their source
+ * (#2502), `sourceAttacksOn`'s. The skills add among themselves, but the
+ * three sources multiply, as GW1's do (#3984): each crits a share of
+ * what the others did not, `1 − (1 − base)(1 − cs)(1 − skills)`.
  */
 export function criticalChance(
   snapshot: WeaponSnapshot,
@@ -352,15 +354,14 @@ export function criticalChance(
   versusSource = 0,
 ): number {
   const mastery = snapshot.mainHand.weapon.requirement.kind === "fixed" ? snapshot.rank : 0;
-  return Math.min(
-    1,
-    rules.criticalBaseChance +
-      rules.criticalChancePerRank * mastery +
-      CRITICAL_STRIKES_CHANCE_PER_RANK * snapshot.criticalStrikes +
-      snapshot.criticalChanceBonus +
-      (victim !== undefined && !victim.moving ? snapshot.criticalChanceBonusVersusStill : 0) +
-      versusSource,
-  );
+  const base = rules.criticalBaseChance + rules.criticalChancePerRank * mastery;
+  const criticalStrikes = CRITICAL_STRIKES_CHANCE_PER_RANK * snapshot.criticalStrikes;
+  const skills =
+    snapshot.criticalChanceBonus +
+    (victim !== undefined && !victim.moving ? snapshot.criticalChanceBonusVersusStill : 0) +
+    versusSource;
+  const missed = (chance: number): number => 1 - Math.min(1, Math.max(0, chance));
+  return 1 - missed(base) * missed(criticalStrikes) * missed(skills);
 }
 
 /**

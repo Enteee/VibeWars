@@ -1206,16 +1206,21 @@ Ground's "Dodge the Fireball" drills it.
 
 **Critical hits.** Any weapon blow can crit: a swing, each blow of a
 double strike, each cleave victim, an attack skill, a landing shot.
-Spells and degeneration never do. The chance is 1% plus 1.37% per rank
-in the weapon's mastery (the attribute its requirement names; caster
-weapons and fists get only the 1%). A crit skips the damage roll and
+Spells and degeneration never do. The base chance is 1% plus 1% per
+rank in the weapon's mastery (the attribute its requirement names;
+caster weapons and fists get only the 1%), 13% at 12. Critical Strikes
+and skills combine with it as GW1's do (#3984): skills add among
+themselves, but the base, Critical Strikes and the skills multiply,
+each critting its share of the blows the others did not:
+1 − (1 − base)(1 − Critical Strikes)(1 − skills). Daggers 12, Critical
+Strikes 12 and Critical Eye crit 1 − 0.87 × 0.88 × 0.87 ≈ 33%. A crit skips the damage roll and
 hits for the weapon's maximum times √2 (a scythe's times 1.1), after
 the attribute and an unmet requirement; an attack skill's bonus is
 added unmultiplied. A melee blow at a target that is moving with its
 back to you (facing more than 90° away) always crits. A crit floats
 larger, with a "!", and the log says "a critical hit".
 **Critical Eye** (Assassin, Critical Strikes, 5 energy, instant, 30 s
-recharge, #988) adds 13% to the chance for 30 s, all of it capped at
+recharge, #988) adds 13% to the skills' share for 30 s, capped at
 100%, and gives 1 more energy on each crit, beside Critical Strikes'.
 It is a skill effect, so no strip removes it. An arrow keeps the crit
 chance it was loosed with, but the extra energy is read as it lands.

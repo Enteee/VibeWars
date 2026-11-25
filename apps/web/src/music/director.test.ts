@@ -2,7 +2,6 @@ import { describe, expect, it } from "vitest";
 
 import {
   FALL_STEP_MS,
-  PEAK_HOLD_MS,
   directMusic,
   targetIntensity,
   type MusicInput,
@@ -286,8 +285,8 @@ describe("directMusic: intensity over time", () => {
     expect(levels[times.indexOf(2 * FALL_STEP_MS)]).toBe(0);
   });
 
-  it("holds level 3 at least 6 s", () => {
-    const levels = calmFrom(PEAK, [PEAK_HOLD_MS - 1, Math.max(PEAK_HOLD_MS, FALL_STEP_MS)]);
+  it("falls from level 3 as from any other, after FALL_STEP_MS of calm", () => {
+    const levels = calmFrom(PEAK, [FALL_STEP_MS - 1, FALL_STEP_MS]);
     expect(levels).toEqual([3, 2]);
   });
 

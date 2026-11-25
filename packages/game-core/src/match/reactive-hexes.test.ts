@@ -492,6 +492,28 @@ describe("the Necromancer's curses are cast as their hexes (#935)", () => {
   });
 });
 
+describe("a hex recast at an equal rank is the newer caster's (#3981)", () => {
+  it("Spiteful Spirit from a second Necromancer, shorter, credits its damage to that one", () => {
+    const match = new MatchSimulation({
+      seed: "recast-by-rank",
+      participants: [fighter("a", vec2(0, 0)), necro("n", vec2(300, 0)), necro("n2", vec2(0, 300))],
+    });
+    // The first one has far longer to run than the second one's 22 s.
+    get(match, "a").statuses.apply("spiteful-spirit", 60, "n", NO_RANKS);
+    match.setTarget("n2", "a");
+    expect(match.requestSkill("n2", 0)?.check).toEqual({ ok: true });
+    stepFor(match, 3);
+    const hex = get(match, "a").statuses.get("spiteful-spirit");
+    expect(hex?.sourceId).toBe("n2");
+    expect(hex?.remainingSeconds).toBeLessThanOrEqual(22);
+    match.setTarget("a", "n");
+    expect(match.requestSkill("a", 2)?.check).toEqual({ ok: true });
+    const entries = triggered(stepFor(match, 2.5), SPITEFUL_SPIRIT);
+    expect(damageTo(entries, "a")).toEqual([39]);
+    expect(entries.map((entry) => entry.sourceId)).toEqual(["n2"]);
+  });
+});
+
 describe("Spiteful Spirit (#935)", () => {
   /**
    * Bearer `a` with ally `b` beside it and ally `far` at twice adjacent;

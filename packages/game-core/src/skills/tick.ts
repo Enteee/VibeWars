@@ -414,14 +414,23 @@ export function rankOf(holder: RankHolder, asked: string): number {
 
 /**
  * `source`'s ranks for `statusId` as it lands (#1976): `rankOf` in each
- * attribute its scaled stats name, the `ranks` the status keeps.
+ * attribute its scaled stats name, and in `skillAttributeId`, that of the
+ * skill that puts it on, the `ranks` the status keeps. A recast compares
+ * them (#3981): Aegis scales nothing itself, its duration is its skill's.
  */
-export function statusRanks(statusId: StatusId, source: RankHolder): ReadonlyMap<string, number> {
-  const attributes = scaledStatAttributes(statusId);
-  if (attributes.length === 0) {
+export function statusRanks(
+  statusId: StatusId,
+  source: RankHolder,
+  skillAttributeId?: string,
+): ReadonlyMap<string, number> {
+  const attributes = new Set(scaledStatAttributes(statusId));
+  if (skillAttributeId !== undefined) {
+    attributes.add(skillAttributeId);
+  }
+  if (attributes.size === 0) {
     return NO_RANKS;
   }
-  return new Map(attributes.map((attributeId) => [attributeId, rankOf(source, attributeId)]));
+  return new Map([...attributes].map((attributeId) => [attributeId, rankOf(source, attributeId)]));
 }
 
 /**
