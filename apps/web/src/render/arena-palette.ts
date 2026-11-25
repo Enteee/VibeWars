@@ -84,12 +84,19 @@ export const DECK_TINT = { colour: 0x0d131c, alpha: 0.55 };
 export const DECK_LIP = 0xffffff;
 
 /**
- * A pit (#2973): its floor, and a tunnel's (#3329), 45 % darker than the
- * ground, in the biome's tone, so the light in it warms a floor and not a
- * void.
+ * How much darker a pit's floor is than the ground (#4037), one value for
+ * every biome. The light map multiplies over it too, so a darker floor
+ * ends near black on a dark biome at dusk, whatever lights the map.
+ */
+export const PIT_FLOOR_SHADE = 0.25;
+
+/**
+ * A pit (#2973): its floor, and a tunnel's (#3329), `PIT_FLOOR_SHADE`
+ * darker than the ground, in the biome's tone, so the light in it warms a
+ * floor and not a void.
  */
 export function pitFloor(palette: ArenaPalette): number {
-  return shade(palette.floor ?? ARENA_BACKGROUND, 0.45);
+  return shade(palette.floor ?? ARENA_BACKGROUND, PIT_FLOOR_SHADE);
 }
 /** Its far wall: the biome's rock, darker still. */
 export function pitWall(palette: ArenaPalette): number {
