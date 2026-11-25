@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed (2026-11-25). Issue #3977, the spike of epic #3974. Builds on ADR-0051 (discrete layers), ADR-0052 (map lighting), ADR-0054 (no baked chunks) and ADR-0056 (cosmetics).
+Proposed (2026-11-25); the art style, grim gothic, approved by the operator (2026-11-25). Issue #3977, the spike of epic #3974. Builds on ADR-0051 (discrete layers), ADR-0052 (map lighting), ADR-0054 (no baked chunks) and ADR-0056 (cosmetics).
 
 ## Context
 
@@ -59,6 +59,20 @@ This is a decision about small images, not the large ones ADR-0054 rejected. ADR
 **Gated on the threat read, which the spike failed.** In the 8v8 stacked shot the glyph on the top slice does not read. On the red team by the fountain it is a dark smudge on the head, often merged with the head's outline or under a bar, and not one profession can be named, where the same frame drawn today shows every glyph crisply. A threat readable in a fraction of a second is one of the things this decision has to keep. So, like the crowd bench, it is a gate: the follow-up must show the glyph reading at match zoom, today against stacked in the same frame, before it switches the look on. If it does not read, the look waits.
 
 **The profession glyph rides on top of the stack.** It is the exception to "ground marks stay flat". It is a flat badge on the top slice, centred on the body's vertical axis rather than the head's forward offset, not turned with `facing`, drawn after every slice so nothing on the body covers it: the same glyph, tint and size as today, with its dark outline for contrast on any team colour. The ground marks stay flat because they must line up with the footprint and the hit test. The glyph says _who_, not _where_, so a fixed offset over the centre costs no alignment. Over the head is where conditions and the self ring go, and a glyph there piles up with them; beside the health bar fails for bodies that show no bar, and the eye tracks the body, not the bar.
+
+**The look is grim gothic, dark, approved by the operator on 2026-11-25.** The spike mocked up five art styles at game scale (painterly, low-poly, pixel art, grim gothic and voxel; on `bot/developer@2/issue-3977-spike`, `preview/styles/`). The operator picked grim gothic, saw a lighter variant of it, and chose the dark one. Stacked bodies and the world around them follow it:
+
+- **Palette:** dark and desaturated: flagstone floor `#3a3834`, walls `#5e5a54`, columns `#8a847a`, near-black water `#0e2228`. Team colours stay the brightest thing on screen, steel blue `#46607e` and blood red `#7a2a2a`, each with a pale trim.
+- **Shading:** high contrast between the lit top and the dark lower slices, ambient occlusion where a body meets the ground, and a 1 px near-black outline `#08080a` on the silhouette.
+- **Figures:** helmeted, with a visor and a cape, about 18 sides a slice.
+- **Light:** a strong vignette at the screen edge and warm pools of light around fires and braziers, the ADR-0052 lights doing the work.
+- **The glyph** sits in a dark disc over the head, which is the badge disc the Consequences below ask the follow-up to try first.
+
+![Grim gothic, at game zoom](../art/spikes/3977-sprite-stacking/style-gothic-world.webp)
+
+![Grim gothic, 2× the middle of the scene](../art/spikes/3977-sprite-stacking/style-gothic-zoom.webp)
+
+The team-colour contrast in `visual-style.md` still holds: a dark look must not darken the team colours into the floor. Where this palette and `visual-style.md` disagree, the follow-up that builds the look updates `visual-style.md` in the same PR.
 
 **Props: no.** A crate or pillar does not turn, and map art (ADR-0051, `map-2-5d`) already draws cover with lit faces and height. The stacked crate in the turning sheet looks no more solid than today's cover and costs 14 polygons where today's costs a few. Props stay as they are.
 
