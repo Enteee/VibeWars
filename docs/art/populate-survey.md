@@ -143,18 +143,60 @@ decor: [
 
 ## 4. Performance
 
-Static decoration is flat Graphics fills like the map's walls, which ADR-0054
-found cheap on software GL; textured sprites are not (#3506). So props are
-**vector shapes batched into the map's static layer**, drawn once per
-`drawMap`, not per frame. Only animated props (sway, flicker, banners) are
-per-frame, and lights are already capped (`MAX_LIGHTS`).
+Numbers below are counted from the map files and the code, not benchmarked.
 
-At ~8 props per M u² of empty ground the busiest map needs about **78 props**
-(`hall-of-heroes-*`), the median about 50, a duel arena 3 to 5. At ≤ 12
-primitive shapes each that is under 1000 shapes in the static layer, and the
-animated subset is below 15 % of them. We propose a hard cap of **120 decor
-per map** and **16 animated**. perf-sec-qa and lead-dev confirm the budget in
-review against `apps/web/src/render` timings; nothing here was benchmarked.
+**Decor is live Graphics, like walls.** ADR-0054 keeps static map art live:
+Graphics are re-rendered every frame (hiding every Graphics took a layered
+map from 6.4× to 4.8× a flat map per walked frame on SwiftShader), and
+Graphics tessellation is a named cost. The only optimisation is
+`graphics-cull.ts` (`StaticGraphicsCull`), so decor is culled per frame the
+way walls are, and **budgeted by shapes on screen, not per map**. Decor must
+not be textured (no Images, no render targets: textured area is the cost).
+
+**Baseline today** (top-level shapes per map: walls, water, decks, overhangs,
+transitions, paving, zones, pits, tunnels; each is a polygon of a few to a
+few dozen vertices): busiest `moss-vale` 89, `hollow-deep` 79,
+`ashen-courtyard` and `brazen-causeway` 70; `hall-of-heroes-*` 57;
+`arena-long-hall` (ADR-0054's worst case, 3 layers) 53; median 55; smallest
+`frozen-crossing` 33.
+
+**Decor against it.** At the study's ~8 per M u² the busiest maps need ~78 props
+(`hall-of-heroes-*`, `cinder-sanctum` ~55); the proposed cap stays 120 per
+map. At up to 12 primitives each, 78 props is up to ~940 shapes: **about 16
+times the 57 of `hall-of-heroes`**, far more than "a few percent", if every
+prop were drawn. So:
+
+- a prop is **at most 4 primitives** (body, shadow, lit top, one detail); the
+  mockups' glyphs are 3 to 5; at 4, 78 props is ~310 shapes, 5× today's 57,
+  but each is a tiny polygon (4 to 8 vertices) against walls of dozens;
+- only the props **inside the view** are drawn (culled like walls), a fraction
+  of the map's; the view shows a fraction of the 8 to 10 M u² ground of the
+  big maps, so on screen it is a fraction of those counts;
+- the build card #1 (§7) **benches before it merges**: walked frame time on
+  `arena-long-hall` and `hall-of-heroes-capture` on SwiftShader, with the
+  full decor of those two maps, against today. Gate: no more than +10 % per
+  walked frame, and the 4.5× walked target ADR-0054 moved to its follow-up
+  card must not get farther away. If the gate fails, the decor cap per map
+  drops until it holds; nothing here claims it fits yet.
+
+**Lights.** A light-casting decor (`brazier`, `fire`, ember) is a
+`lighting.lights` entry; `MAX_LIGHTS` is 32 (`schema.ts:408`) and the light
+map is textured area. Lights today per map run from 7 (`ember-pits`) to 22
+(`ashen-courtyard`), median 14; `arena-long-hall` has 20. Headroom is
+therefore 10 to 25, smallest on `ashen-courtyard` (10), `arena-long-hall`
+(12) and `guild-hall-isle` (15). **Cap for light-casting decor: the lesser
+of 4 and the map's headroom, minus 2 kept spare**, so ashen-courtyard may add
+4, none ever exceeds 4. A light that is not needed for the read (ambient
+fire in a far corner) is a flat glow shape, not a light.
+
+**Animated props.** A swaying Graphics is redrawn and re-tessellated every
+frame. The cap is **16 animated shapes per frame on screen** (not 16 props:
+a sway of one 4-primitive tree is 4), counted after culling. Under reduced
+motion (`still`) they stop and hold their mean pose, so the animated cost is
+zero; the static cost is unchanged. Flame flicker is a light parameter
+(`flickerAt`), not a redraw of the shape.
+
+perf-sec-qa confirms the bench method in review of build card #1.
 
 ## 5. Mockups
 
