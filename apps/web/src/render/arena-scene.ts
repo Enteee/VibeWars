@@ -346,6 +346,7 @@ import {
   type DecorCommand,
   type MapDecor,
 } from "./decor-art.js";
+import { DECOR_TEXTURE_SCALE, DecorTextureKeys, decorBounds, packDecor } from "./decor-bake.js";
 import {
   DECK_ART,
   FADING_TOP_LOOKS,
@@ -845,6 +846,19 @@ export class ArenaScene extends Phaser.Scene {
     readonly tint: number | undefined;
     readonly lift: number;
   }[] = [];
+  /**
+   * The still decor baked (#4017): every shadow and each still short
+   * prop, an image of its sheet each, and what they were baked from, so
+   * a redraw that changes neither (a zoom) keeps them.
+   */
+  private decorBaked:
+    | {
+        readonly structure: MapStructure;
+        readonly lighting: MapLighting | undefined;
+        readonly images: readonly Phaser.GameObjects.Image[];
+      }
+    | undefined;
+  private readonly decorSheets = new DecorTextureKeys("decor");
   /**
    * Each overhang (#3293) and arch top (#3312) as drawn, and where it
    * hangs: faded while a body is under it.
@@ -4378,7 +4392,7 @@ export class ArenaScene extends Phaser.Scene {
     this.mapOccluders = occludersOf(next.walls, next.structure);
     this.occluders = seenFrom(this.mapOccluders, this.viewerTunnels);
     this.drawnMap = next;
-    this.drawDecor(next.structure);
+    this.drawDecor(next.structure, next.lighting);
     this.staticCull.capture([
       ...(this.floorGraphics === undefined ? [] : [this.floorGraphics]),
       ...(this.floorLines === undefined ? [] : [this.floorLines]),
@@ -4604,23 +4618,36 @@ export class ArenaScene extends Phaser.Scene {
 
   /**
    * The map's decor (#4013), lit where each prop stands, at its layer's
-   * height: every shadow, and each still short prop, on its layer's
-   * shared graphics; a tall one alone, so it fades off a body as an
-   * overhang does; a moving one alone, redrawn by `drawMovingDecor`.
+   * height: every shadow, and each still short prop, baked by
+   * `bakeDecor`; a tall one alone, so it fades off a body as an overhang
+   * does; a moving one alone, redrawn by `drawMovingDecor`. A moving one
+   * stays live under reduced motion too: that can be turned off mid-match.
    */
-  private drawDecor(structure: MapStructure): void {
+  private drawDecor(structure: MapStructure, lighting: MapLighting | undefined): void {
     const colours = materialsOf(structure).decor;
+    const baked = this.decorBaked;
+    const rebake = baked?.structure !== structure || baked.lighting !== lighting;
+    if (rebake) {
+      this.dropDecorBake();
+    }
+    // Kept from the last redraw (a zoom), the still props are not painted again.
+    const still = rebake ? new Map<number, BakedDecor[]>() : undefined;
+    const bake = (depth: number, entry: () => BakedDecor): void => {
+      if (still !== undefined) {
+        still.set(depth, [...(still.get(depth) ?? []), entry()]);
+      }
+    };
     for (const prop of structure.decor) {
       const lift = elevationOf(prop.layer, structure.ground);
       const tint = this.tintAt(prop.at, prop.layer);
       const band = characterBand(prop.layer, structure.layerCount);
-      const shadow = this.structureAt({ kind: "decor", layer: prop.layer, band, part: "shadow" });
-      paintDecor(shadow, [decorShadow(prop)], undefined, lift);
+      const shadow = renderOrder({ kind: "decor", layer: prop.layer, band, part: "shadow" });
+      bake(shadow, () => ({ commands: [decorShadow(prop)], tint: undefined, lift }));
       const tall = tallDecor(prop.kind);
       const moving = animatedDecor(prop.kind);
       if (!tall && !moving) {
-        const low = this.structureAt({ kind: "decor", layer: prop.layer, band, part: "low" });
-        paintDecor(low, decorCommands(prop, colours, 0, true), tint, lift);
+        const low = renderOrder({ kind: "decor", layer: prop.layer, band, part: "low" });
+        bake(low, () => ({ commands: decorCommands(prop, colours, 0, true), tint, lift }));
         continue;
       }
       const graphics = this.add
@@ -4641,6 +4668,72 @@ export class ArenaScene extends Phaser.Scene {
         this.decorMoving.push({ prop, graphics, colours, tint, lift });
       }
     }
+    if (still !== undefined) {
+      this.decorBaked = {
+        structure,
+        lighting,
+        images: [...still].flatMap(([depth, entries]) => this.bakeDecor(depth, entries)),
+      };
+    }
+  }
+
+  /**
+   * `entries` painted once, packed onto sheets of at most
+   * `DECOR_TEXTURE_MAX_SIDE` px, and an image of each where it was
+   * painted, at `depth`: what a graphics would have drawn, at no cost per
+   * frame. The sheets' keys are held by `decorSheets`.
+   */
+  private bakeDecor(depth: number, entries: readonly BakedDecor[]): Phaser.GameObjects.Image[] {
+    const scale = DECOR_TEXTURE_SCALE;
+    const rects = entries.map(({ commands, lift }) => decorBounds(commands, lift));
+    const { sheets, slots } = packDecor(rects, scale);
+    const keys = sheets.map(({ width, height }, sheet) => {
+      const key = this.decorSheets.next();
+      const texture = this.textures.addDynamicTexture(key, width, height, false);
+      if (texture === null) {
+        throw new Error(`decor: sheet ${key} exists`);
+      }
+      const painter = this.make.graphics({}, false).setScale(scale);
+      entries.forEach(({ commands, tint, lift }, at) => {
+        const [rect, slot] = [rects[at], slots[at]];
+        if (rect === undefined || slot?.sheet !== sheet) {
+          return;
+        }
+        painter.save();
+        painter.translateCanvas(slot.left / scale - rect.x, slot.top / scale - rect.y);
+        paintDecor(painter, commands, tint, lift);
+        painter.restore();
+        texture.add(at, 0, slot.left, slot.top, slot.width, slot.height);
+      });
+      texture.draw(painter, 0, 0).render();
+      painter.destroy();
+      return key;
+    });
+    return entries.flatMap((_, at) => {
+      const [rect, slot] = [rects[at], slots[at]];
+      const key = slot === undefined ? undefined : keys[slot.sheet];
+      if (rect === undefined || key === undefined) {
+        return [];
+      }
+      return [
+        this.add
+          .image(rect.x, rect.y, key, at)
+          .setOrigin(0, 0)
+          .setScale(1 / scale)
+          .setDepth(depth),
+      ];
+    });
+  }
+
+  /** Drops the still decor baked last, and its sheets. */
+  private dropDecorBake(): void {
+    for (const image of this.decorBaked?.images ?? []) {
+      image.destroy();
+    }
+    this.decorBaked = undefined;
+    this.decorSheets.drop((key) => {
+      this.textures.remove(key);
+    });
   }
 
   /**
@@ -6055,6 +6148,7 @@ export class ArenaScene extends Phaser.Scene {
     this.dropZoneGrounds();
     this.dropWallTextures();
     this.dropPaving();
+    this.dropDecorBake();
     this.leverFlips.clear();
     this.footsteps.clear();
     this.alt?.dispose();
@@ -6503,8 +6597,18 @@ function phaserPainter(g: Phaser.GameObjects.Graphics): Painter {
   return painter;
 }
 
-/** A decor prop's strokes (#4013), lifted to its layer, each but a flame in `tint`. */
-function paintDecor(
+/** A still decor prop's strokes to bake (#4017), as `paintDecor` takes them. */
+export interface BakedDecor {
+  readonly commands: readonly DecorCommand[];
+  readonly tint: number | undefined;
+  readonly lift: number;
+}
+
+/**
+ * A decor prop's strokes (#4013), lifted to its layer, each but a flame in
+ * `tint`. Exported for the visibility gate, which records what is baked.
+ */
+export function paintDecor(
   g: Phaser.GameObjects.Graphics,
   commands: readonly DecorCommand[],
   tint: number | undefined,

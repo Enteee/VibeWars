@@ -13,6 +13,87 @@ export function shade(colour: number, share: number): number {
   return channel(16) | channel(8) | channel(0);
 }
 
+/**
+ * The Grim gothic grade (#4056, docs/art/visual-style.md §1): every world
+ * material's lightness pushed away from mid-grey by `contrast` and scaled
+ * by `value`, and its chroma scaled by `saturation` in the darks, rising to
+ * whole from `chromaKept`'s low to its high lightness, so each biome keeps its
+ * hues, its darks greyer and its light warm tones (sand) as warm. Calibrated once, on the hall: its floor and
+ * wall top land within six points of the mock's 0x3a3834 and 0x5e5a54. Hazards, gameplay
+ * marks, water, decor and bodies are never graded (§6).
+ */
+export const GOTHIC_GRADE = {
+  value: 0.94,
+  saturation: 0.6,
+  contrast: 1.08,
+  chromaKept: { low: 0.45, high: 0.75 },
+} as const;
+
+/** `colour` in the gothic grade: black stays black, and lighter is always lighter. */
+export function grade(colour: number): number {
+  const r = ((colour >> 16) & 0xff) / 255;
+  const g = ((colour >> 8) & 0xff) / 255;
+  const b = (colour & 0xff) / 255;
+  const high = Math.max(r, g, b);
+  const low = Math.min(r, g, b);
+  const lightness = (high + low) / 2;
+  const chroma = high - low;
+  const hue =
+    chroma === 0
+      ? 0
+      : high === r
+        ? ((g - b) / chroma + 6) % 6
+        : high === g
+          ? (b - r) / chroma + 2
+          : (r - g) / chroma + 4;
+  // value · contrast > 1, so two tones end further apart than they began: darker, never flatter.
+  const l = Math.max(
+    0,
+    Math.min(1, GOTHIC_GRADE.value * (0.5 + GOTHIC_GRADE.contrast * (lightness - 0.5))),
+  );
+  // Its chroma, not its HSL saturation, is scaled, so a darkened tone grows no brighter hue;
+  // a light one keeps more of it (smoothstep), so sand stays sand.
+  const { low: from, high: to } = GOTHIC_GRADE.chromaKept;
+  const rise = Math.max(0, Math.min(1, (lightness - from) / (to - from)));
+  const kept =
+    GOTHIC_GRADE.saturation + (1 - GOTHIC_GRADE.saturation) * rise * rise * (3 - 2 * rise);
+  const reach = Math.min(chroma * kept, 2 * Math.min(l, 1 - l)) / 2;
+  // Back from hue, saturation and lightness, as CSS does.
+  const channel = (n: number): number => {
+    const k = (n + hue * 2) % 12;
+    return Math.round((l - reach * Math.max(-1, Math.min(k - 3, 9 - k, 1))) * 255);
+  };
+  return (channel(0) << 16) | (channel(8) << 8) | channel(4);
+}
+
+/** A look's colours: each one, a pair of them, or `undefined` where there is none. */
+type GradedColours<Look> = {
+  readonly [Slot in keyof Look]: number | readonly number[] | undefined;
+};
+
+/** `colours`, each in the gothic grade. */
+function gradeAll<Look extends GradedColours<Look>>(colours: Look): Look {
+  return Object.fromEntries(
+    Object.entries<number | readonly number[] | undefined>(colours).map(([slot, colour]) => [
+      slot,
+      colour === undefined
+        ? undefined
+        : typeof colour === "number"
+          ? grade(colour)
+          : colour.map(grade),
+    ]),
+  ) as Look;
+}
+
+/** Each look of `looks` in the gothic grade. */
+function gradeEach<Look extends string, LookColours extends GradedColours<LookColours>>(
+  looks: Record<Look, LookColours>,
+): Record<Look, LookColours> {
+  return Object.fromEntries(
+    (Object.keys(looks) as Look[]).map((look) => [look, gradeAll(looks[look])]),
+  ) as Record<Look, LookColours>;
+}
+
 /** The arena's static colours. */
 export interface ArenaPalette {
   /** The ground's fill; `undefined` leaves the scene's background showing. */
@@ -32,16 +113,22 @@ export interface ArenaPalette {
   readonly rampChevron: number;
 }
 
-export const WALL_STROKE = 0x3b4759;
+/** The gothic outline (#4056, visual-style §4): round every wall top, deck edge and cover cap, in every biome. */
+export const WALL_STROKE = 0x08080a;
 /** The scene's background, past the arena: the ground of a flat map, which has no floor fill. */
-export const ARENA_BACKGROUND = 0x0e1116;
+export const ARENA_BACKGROUND = 0x0a0b0d;
 
-const FLAT: ArenaPalette = {
+/** `palette` in the gothic grade, outlined in `WALL_STROKE`. */
+function gradePalette(palette: ArenaPalette): ArenaPalette {
+  return { ...gradeAll(palette), wallStroke: WALL_STROKE };
+}
+
+const FLAT: ArenaPalette = gradePalette({
   floor: undefined,
   grid: 0x1a212c,
   wallTop: 0x202836,
   wallFace: 0x202836,
-  wallLit: WALL_STROKE,
+  wallLit: 0x3b4759,
   wallStroke: WALL_STROKE,
   support: 0x202836,
   deckTop: 0x2c3648,
@@ -50,7 +137,7 @@ const FLAT: ArenaPalette = {
   rampTop: 0x262f3f,
   rampPanel: 0x262f3f,
   rampChevron: 0x4a5a72,
-};
+});
 
 /** Direction D: docs/art/art-direction.md, "2.5D: Graphic layers". */
 const GRAPHIC_LAYERS: ArenaPalette = {
@@ -619,7 +706,7 @@ const PALETTE_MATERIAL: Record<keyof ArenaPalette, Material> = {
   wallTop: "rock",
   wallFace: "rock",
   wallLit: "rock",
-  wallStroke: "rock",
+  wallStroke: "kept",
   support: "rock",
   deckTop: "stone",
   plank: "stone",
@@ -773,8 +860,9 @@ function overhangColours(tones: BiomeTones): Record<OverhangLook, OverhangLookCo
 
 /**
  * A biome's decor colours (#4013): its wood for crates and trunks, its
- * plants for crowns and ferns, each with the lit and the shaded face of a north-west light. Iron and
- * fire are the same everywhere.
+ * plants for crowns and ferns, its stone burnt to ash for a cinder drift
+ * (#4018), each with the lit and the shaded face of a north-west light.
+ * Iron and fire are the same everywhere.
  */
 export interface DecorColours {
   readonly wood: number;
@@ -785,6 +873,9 @@ export interface DecorColours {
   readonly plant: number;
   readonly plantLit: number;
   readonly plantShade: number;
+  readonly ash: number;
+  readonly ashLit: number;
+  readonly ashShade: number;
   readonly iron: number;
   readonly ironShade: number;
   readonly ember: number;
@@ -802,6 +893,9 @@ function decorColours(tones: BiomeTones): DecorColours {
     plant: tones.plant,
     plantLit: mix(tones.plant, 0xf0f0a0, 0.25),
     plantShade: shade(tones.plant, 0.42),
+    ash: mix(tones.ground, tones.stone, 0.4),
+    ashLit: mix(tones.ground, tones.stone, 0.6),
+    ashShade: mix(tones.ground, tones.stone, 0.15),
     iron: 0x4a4a52,
     ironShade: 0x26262c,
     ember: 0xe0662a,
@@ -904,7 +998,8 @@ const GROUND_MARKS: Record<Biome, (tones: BiomeTones) => readonly [mark: number,
     cavern: (tones) => [mix(tones.ground, tones.rock, 0.55), mix(tones.ground, tones.earth, 0.6)],
   };
 
-function biomeMaterials(biome: Biome, tones: BiomeTones, tiled: boolean): BiomeMaterials {
+/** A biome's materials tinted from the hall's by `tones`, before the gothic grade. */
+function tintedMaterials(biome: Biome, tones: BiomeTones, tiled: boolean): BiomeMaterials {
   const palette = tintAll(GRAPHIC_LAYERS, (slot) => PALETTE_MATERIAL[slot], tones);
   return {
     palette: tiled ? palette : { ...palette, grid: undefined },
@@ -915,6 +1010,27 @@ function biomeMaterials(biome: Biome, tones: BiomeTones, tiled: boolean): BiomeM
     dressing: dressingTones(tones, ...GROUND_MARKS[biome](tones)),
     breakable: breakableLookOf(biome, tones),
     decor: decorColours(tones),
+  };
+}
+
+/** A biome's materials, before the gothic grade: what its test compares against (#4056). */
+export function ungradedMaterials(biome: Biome): BiomeMaterials {
+  return tintedMaterials(biome, BIOME_TONES[biome], TILED_GROUND[biome]);
+}
+
+/** Every material in the gothic grade, here and only here; decor is its own card's (#4056). */
+function biomeMaterials(biome: Biome, tones: BiomeTones, tiled: boolean): BiomeMaterials {
+  const { palette, deck, transition, paving, overhang, dressing, breakable, decor } =
+    tintedMaterials(biome, tones, tiled);
+  return {
+    palette: gradePalette(palette),
+    deck: gradeEach(deck),
+    transition: gradeEach(transition),
+    paving: gradeEach(paving),
+    overhang: gradeEach(overhang),
+    dressing: gradeAll(dressing),
+    breakable: gradeBreakable(breakable),
+    decor,
   };
 }
 
@@ -1075,12 +1191,20 @@ function breakableLookOf(biome: Biome, tones: BiomeTones): BreakableLook {
   }
 }
 
+/** `look` in the gothic grade, but for the glow in its cracks: that tells how hurt it is (§6). */
+function gradeBreakable(look: BreakableLook): BreakableLook {
+  const { courses, glow, ...colours } = look;
+  return { courses, glow, ...gradeAll(colours) };
+}
+
 /**
  * The material a map's breakable walls are (#3370), under its Ascent act's
  * rock (#3618): a map of one layer's are stone whatever its biome.
  */
+const FLAT_BREAKABLE = gradeBreakable(BREAKABLE_WALL_LOOK);
+
 export function breakableLook(map: MapLook & { readonly layerCount: number }): BreakableLook {
-  return map.layerCount > 1 ? materialsOf(map).breakable : BREAKABLE_WALL_LOOK;
+  return map.layerCount > 1 ? materialsOf(map).breakable : FLAT_BREAKABLE;
 }
 
 /** Paving on a map of one layer (#3210): laid in the flat palette's tones, on the scene's background. */
@@ -1099,3 +1223,38 @@ export function pavingPalette(
 ): Record<StonePavingLook, PavingLookColours> {
   return map.layerCount > 1 ? materialsOf(map).paving : FLAT_PAVING;
 }
+
+/**
+ * The colours of each kind of land outside a map (#3066), from the study, in
+ * the gothic grade (#4056); deep water is the water card's. None is danger
+ * orange, acid green or friend blue.
+ */
+export const OUTSIDE_LOOK = {
+  cliff: gradeAll({
+    base: 0x2d3748,
+    grain: [0x252e3c, 0x343f52],
+    streak: 0x4a5a70,
+    lip: 0xa9bbd0,
+    deep: 0x0b0f14,
+  }),
+  rock: gradeAll({ base: 0x3f3c37, grain: [0x36332f, 0x4a4640], crevice: 0x14120f, rim: 0xb4ad9f }),
+  forest: gradeAll({
+    base: 0x1c2a1f,
+    grain: [0x18241a, 0x223226],
+    shadow: 0x0e1610,
+    canopy: 0x2c4a2e,
+    lit: 0x3f6a3d,
+    spot: 0x5f8c55,
+  }),
+  "deep-water": { base: 0x18304a, grain: [0x152a40, 0x1c3754], ripple: 0x2f5878, shore: 0x8fb8d6 },
+  // Its warmth is a dull ember, far below danger orange: the crust is cold enough to stand beside.
+  basalt: gradeAll({
+    base: 0x161312,
+    grain: [0x110f0e, 0x1e1a18],
+    top: 0x3a3431,
+    lit: 0x4a4340,
+    crack: 0x0c0a09,
+    ember: 0x6e3018,
+    ash: 0x8c827a,
+  }),
+};

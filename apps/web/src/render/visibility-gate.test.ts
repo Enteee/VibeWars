@@ -5,6 +5,7 @@ import {
 } from "@vibewars/game-core";
 import { ELEVATION_STEP, type MapData } from "@vibewars/game-maps/schema";
 import { mapSimulationFields } from "@vibewars/game-maps/match-fields";
+import type Phaser from "phaser";
 import { describe, expect, it, vi } from "vitest";
 
 import {
@@ -13,6 +14,7 @@ import {
   type MapStructure,
   type RenderableWall,
 } from "./arena-snapshot.js";
+import type { BakedDecor } from "./arena-scene.js";
 import { standingDraw, type Occluder } from "./layer-surfaces.js";
 import { OVERHANG_FADED_ALPHA, type OverhangBody, type OverhangCover } from "./overhang-art.js";
 import { recordingGraphics, type RecordingGraphics } from "./recording-graphics.js";
@@ -40,7 +42,7 @@ vi.mock("phaser", async () => {
   return { default: { Scene: Object, Geom: { Polygon: { Earcut } }, Math: { Vector2 } } };
 });
 
-const { ArenaScene, outsideTriangles } = await import("./arena-scene.js");
+const { ArenaScene, outsideTriangles, paintDecor } = await import("./arena-scene.js");
 const { gateWalls, toRenderableWall } = await import("../match-view.js");
 const { ARENA_MAPS, breakableDescriptors, gateDescriptor, mapStructure, wallDescriptor } =
   await import("../net/maps.js");
@@ -74,6 +76,7 @@ interface GatedScene {
   structureAt(item: RenderItem): RecordingGraphics;
   drawMap(): void;
   drawPaving(): void;
+  bakeDecor(depth: number, entries: readonly BakedDecor[]): readonly unknown[];
 }
 
 /** `map` drawn by the scene's own map drawing: every fill it painted, and its occluders. */
@@ -99,6 +102,15 @@ function paint(
   scene.textures = { exists: () => true };
   // Roads are a canvas texture on their layer's ground, not a Graphics fill: not recorded.
   scene.drawPaving = () => undefined;
+  // Still decor is baked into a texture (#4017): recorded as a graphics at its depth would paint it.
+  scene.bakeDecor = (depth, entries) => {
+    const g = graphics().setDepth(depth);
+    g.what = "decor";
+    for (const { commands, tint, lift } of entries) {
+      paintDecor(g as unknown as Phaser.GameObjects.Graphics, commands, tint, lift);
+    }
+    return [];
+  };
   scene.arena = { width: map.width, height: map.height };
   scene.snapshot = { ...scene.snapshot, walls, structure, breakables: [], lifts: [] };
   scene.floorGraphics = graphics().setDepth(renderOrder({ kind: "floor" }));

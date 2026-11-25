@@ -460,8 +460,8 @@ const pavingSchema = z.object({
   area: waterSchema.shape.area,
 });
 
-/** What a decor prop is drawn as (#4013): scenery, never cover (ADR-0060). */
-export const DECOR_KINDS = ["brazier", "crates", "tree", "fern"] as const;
+/** What a decor prop is drawn as (#4013, #4018): scenery, never cover (ADR-0060). */
+export const DECOR_KINDS = ["brazier", "crates", "tree", "fern", "cinders"] as const;
 
 /** A decor kind (#4013). */
 export type DecorKind = (typeof DECOR_KINDS)[number];
