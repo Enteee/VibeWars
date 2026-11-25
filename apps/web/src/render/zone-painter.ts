@@ -166,10 +166,86 @@ function crack(random: () => number, outline: readonly Vec2[], start: Vec2): Vec
   return points;
 }
 
+/** Most world units a rect zone's corner is rounded by (#4037). */
+const ZONE_CORNER_RADIUS = 10;
+/** A rect zone's corner radius, as a share of its short side. */
+const ZONE_CORNER_SHARE = 0.2;
+/** A rect zone with a shorter side than this keeps its square corners. */
+const ZONE_ROUNDED_MIN_SIDE = 30;
+/** Points on each rounded corner's arc, its two ends included. */
+const ZONE_CORNER_POINTS = 4;
+/** World units of a zone's relief band, inside its edge (#4037). */
+const ZONE_RELIEF_BAND = 6;
+/** Where the light comes from: the north-west, as on the spire's obelisk. */
+const TO_SUN = { x: -Math.SQRT1_2, y: -Math.SQRT1_2 };
+
+/**
+ * `area` as a zone with a ground is drawn (#4037): a rect with its corners
+ * rounded, so it reads as a patch of ground and not a tile; a polygon, and
+ * a rect too small to round, as it is. Only ever inside `area`, so what
+ * hurts is what is seen, to within a few units at the corners. Render
+ * only: the gameplay area stays the rect.
+ */
+export function drawnOutline(area: RenderableShape): RenderableShape {
+  if (area.kind === "polygon" || Math.min(area.width, area.height) < ZONE_ROUNDED_MIN_SIDE) {
+    return area;
+  }
+  const radius = Math.min(
+    ZONE_CORNER_RADIUS,
+    ZONE_CORNER_SHARE * Math.min(area.width, area.height),
+  );
+  const right = area.x + area.width;
+  const bottom = area.y + area.height;
+  // Each corner's arc centre and the angle it starts from, clockwise on screen.
+  const corners = [
+    { x: area.x + radius, y: area.y + radius, from: Math.PI },
+    { x: right - radius, y: area.y + radius, from: Math.PI * 1.5 },
+    { x: right - radius, y: bottom - radius, from: 0 },
+    { x: area.x + radius, y: bottom - radius, from: Math.PI * 0.5 },
+  ];
+  const points = corners.flatMap(({ x, y, from }) =>
+    Array.from({ length: ZONE_CORNER_POINTS }, (_, at) => {
+      const angle = from + ((Math.PI / 2) * at) / (ZONE_CORNER_POINTS - 1);
+      return { x: x + Math.cos(angle) * radius, y: y + Math.sin(angle) * radius };
+    }),
+  );
+  return { kind: "polygon", points };
+}
+
+/** One edge of an outline, and how squarely it faces the sun from outside: 1 towards, -1 away. */
+export interface ReliefEdge {
+  readonly from: Vec2;
+  readonly to: Vec2;
+  readonly outward: Vec2;
+  readonly facing: number;
+}
+
+/** `outline`'s edges, each with its outward normal, whichever way the outline winds. */
+export function reliefEdges(outline: readonly Vec2[]): readonly ReliefEdge[] {
+  let twiceArea = 0;
+  outline.forEach((from, at) => {
+    const to = outline[(at + 1) % outline.length] ?? from;
+    twiceArea += from.x * to.y - to.x * from.y;
+  });
+  const winding = twiceArea >= 0 ? 1 : -1;
+  return outline.flatMap((from, at) => {
+    const to = outline[(at + 1) % outline.length] ?? from;
+    const length = Math.hypot(to.x - from.x, to.y - from.y);
+    if (length === 0) {
+      return [];
+    }
+    const outward = {
+      x: (winding * (to.y - from.y)) / length,
+      y: (winding * -(to.x - from.x)) / length,
+    };
+    return [{ from, to, outward, facing: outward.x * TO_SUN.x + outward.y * TO_SUN.y }];
+  });
+}
+
 /** `zone`'s art, the `index`th on its map; `undefined` for a hazard, which is its mark. */
 export function zoneArtOf(zone: MapZone, index: number): ZoneArt | undefined {
   const painter = ZONE_LOOK[zone.kind].painter;
-  return painter === "hazard" ? undefined : groundArtOf(painter, zone.area, index);
+  return painter === "hazard" ? undefined : groundArtOf(painter, drawnOutline(zone.area), index);
 }
 
 /**
@@ -517,6 +593,62 @@ export function paintZoneGround(canvas: ZoneCanvas, art: ZoneArt, scale: number)
     }
   }
   canvas.restore();
+}
+
+/**
+ * A zone's relief (#4037), onto the canvas its ground is painted on: a
+ * band inside its edge, dark under the lip on the side towards the sun
+ * and lit on the far side, as a slight dip catches the light. Clipped by
+ * the outline, as the ground is.
+ */
+export function paintZoneRelief(canvas: ZoneCanvas, art: ZoneArt, scale: number): void {
+  const { left, top } = art.bounds;
+  canvas.save();
+  canvas.setTransform(scale, 0, 0, scale, -left * scale, -top * scale);
+  polyline(canvas, art.outline);
+  canvas.closePath();
+  canvas.clip();
+  canvas.lineCap = "butt";
+  // Three strokes on the edge, each half inside it: darkest at the lip, soft inwards.
+  for (const share of [1, 0.6, 0.25]) {
+    canvas.lineWidth = 2 * ZONE_RELIEF_BAND * share;
+    for (const { from, to, facing } of reliefEdges(art.outline)) {
+      if (Math.abs(facing) < 0.05) {
+        continue;
+      }
+      canvas.strokeStyle = facing > 0 ? "#000000" : "#ffffff";
+      canvas.globalAlpha = (facing > 0 ? 0.16 : 0.08) * Math.abs(facing);
+      polyline(canvas, [from, to]);
+      canvas.stroke();
+    }
+  }
+  canvas.globalAlpha = 1;
+  canvas.restore();
+}
+
+/**
+ * A zone's soft drop shadow (#4037), just outside the edges of `outline`
+ * that face away from the sun; drawn each frame under the zone's edge,
+ * `line` 1 CSS px in world units.
+ */
+export function paintZoneShadow(
+  painter: ZoneMotionPainter,
+  outline: readonly Vec2[],
+  line: number,
+): void {
+  for (const { from, to, outward, facing } of reliefEdges(outline)) {
+    if (facing > -0.05) {
+      continue;
+    }
+    const away = 1.5 * line;
+    painter.lineStyle(2 * line, 0x000000, 0.3 * -facing);
+    painter.lineBetween(
+      from.x + outward.x * away,
+      from.y + outward.y * away,
+      to.x + outward.x * away,
+      to.y + outward.y * away,
+    );
+  }
 }
 
 /** The texture's alpha at render time `seconds`: it breathes by its look's `pulse`, down from its mean. */
