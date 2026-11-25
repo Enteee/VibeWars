@@ -83,11 +83,7 @@ jobs:
       - name: Format check
         run: devenv shell -- pnpm run format:check
 
-      # Type-aware eslint over the whole repo outgrew node's default heap
-      # (run 45587566945 aborted with exit 134, out of memory), so give it room.
       - name: Lint
-        env:
-          NODE_OPTIONS: --max-old-space-size=6144
         run: devenv shell -- pnpm run lint
 
       - name: Typecheck
