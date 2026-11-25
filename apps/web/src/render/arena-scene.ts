@@ -4435,21 +4435,24 @@ export class ArenaScene extends Phaser.Scene {
     if (rebake) {
       this.dropDecorBake();
     }
-    const still = new Map<number, BakedDecor[]>();
-    const bake = (depth: number, entry: BakedDecor): void => {
-      still.set(depth, [...(still.get(depth) ?? []), entry]);
+    // Kept from the last redraw (a zoom), the still props are not painted again.
+    const still = rebake ? new Map<number, BakedDecor[]>() : undefined;
+    const bake = (depth: number, entry: () => BakedDecor): void => {
+      if (still !== undefined) {
+        still.set(depth, [...(still.get(depth) ?? []), entry()]);
+      }
     };
     for (const prop of structure.decor) {
       const lift = elevationOf(prop.layer, structure.ground);
       const tint = this.tintAt(prop.at, prop.layer);
       const band = characterBand(prop.layer, structure.layerCount);
       const shadow = renderOrder({ kind: "decor", layer: prop.layer, band, part: "shadow" });
-      bake(shadow, { commands: [decorShadow(prop)], tint: undefined, lift });
+      bake(shadow, () => ({ commands: [decorShadow(prop)], tint: undefined, lift }));
       const tall = tallDecor(prop.kind);
       const moving = animatedDecor(prop.kind);
       if (!tall && !moving) {
         const low = renderOrder({ kind: "decor", layer: prop.layer, band, part: "low" });
-        bake(low, { commands: decorCommands(prop, colours, 0, true), tint, lift });
+        bake(low, () => ({ commands: decorCommands(prop, colours, 0, true), tint, lift }));
         continue;
       }
       const graphics = this.add
@@ -4470,7 +4473,7 @@ export class ArenaScene extends Phaser.Scene {
         this.decorMoving.push({ prop, graphics, colours, tint, lift });
       }
     }
-    if (rebake) {
+    if (still !== undefined) {
       this.decorBaked = {
         structure,
         lighting,
