@@ -39,7 +39,9 @@ import { chromium } from "@playwright/test";
 
 const PORT = 4321;
 const MEDIA = path.join(import.meta.dirname, "..", "docs", "media");
-const { values: options } = parseArgs({ options: { url: { type: "string" } } });
+const { values: options } = parseArgs({
+  options: { url: { type: "string" } },
+});
 
 /**
  * The Elementalist/Mesmer starter build as a GW1 template code (#494): the
@@ -289,9 +291,63 @@ async function matchShots(page, dir) {
  */
 async function heightsShot(page, dir) {
   await startMatch(page, "broken-tower");
-  await walk(page, "KeyD", 6000);
+  // The host sits in either team's block, one end of the map (x ~540 or
+  // ~4880), and the camera's `data-camera` is where the hero stands. Walk to
+  // the near cellar mouth: west torch (1370,1310) with steps (1390..1530,
+  // 1337), east torch (4054,1310) with steps (3894..4034, 1337). The hero
+  // stops 120 u short of the steps, which lie ahead with the torch above.
+  const stage = page.locator("#viewport");
+  const camera = async () => {
+    const at = (await stage.getAttribute("data-camera"))?.split(",").map(Number);
+    if (at?.[0] === undefined || Number.isNaN(at[0])) {
+      throw new Error("heights shot: the camera has no position");
+    }
+    return at[0];
+  };
+  const west = (await camera()) < 2700;
+  const key = west ? "KeyD" : "KeyA";
+  const stopAt = west ? 1270 : 4154;
+  await page.keyboard.down(key);
+  for (let poll = 0; poll < 100; poll += 1) {
+    const x = await camera();
+    if (west ? x >= stopAt : x <= stopAt) {
+      break;
+    }
+    await sleep(100);
+  }
+  await page.keyboard.up(key);
+  await sleep(600);
   step = "heights shot";
   await page.screenshot({ path: path.join(dir, "readme-heights.png") });
+  await assertNotVoid(page);
+}
+
+/**
+ * Fail when the frame's centre is mostly the void: a walk that ended off the
+ * map must stop the script, not commit a bad picture.
+ *
+ * @param {import("@playwright/test").Page} page
+ */
+async function assertNotVoid(page) {
+  const png = await page.screenshot({ clip: { x: 540, y: 260, width: 200, height: 200 } });
+  const raw = spawnSync(
+    "ffmpeg",
+    ["-v", "error", "-i", "pipe:0", "-f", "rawvideo", "-pix_fmt", "rgb24", "pipe:1"],
+    { input: png },
+  );
+  const bytes = raw.stdout;
+  const first = [bytes[0], bytes[1], bytes[2]];
+  let same = 0;
+  for (let at = 0; at + 2 < bytes.length; at += 3) {
+    if (bytes[at] === first[0] && bytes[at + 1] === first[1] && bytes[at + 2] === first[2]) {
+      same += 1;
+    }
+  }
+  if (same > (bytes.length / 3) * 0.9) {
+    throw new Error(
+      `heights shot: the walk ended off the map (${String(same)} of ${String(bytes.length / 3)} px alike)`,
+    );
+  }
 }
 
 /**
