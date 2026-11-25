@@ -406,6 +406,7 @@ export default {
   "cosmetics.item.trailFrost": "Frostspur",
   "cosmetics.item.trailMoss": "Moosspur",
   "cosmetics.item.trailStarlight": "Sternenlichtspur",
+  "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Gesperrt",
   "cosmetics.none": "Keine",
   "cosmetics.note":
@@ -1729,8 +1730,8 @@ export default {
   "tutorial.heal.ow": "Au! Der Stein hat mich erwischt. Hilfst du mir?",
   "tutorial.heal.praise": "Viel besser, danke! Du kannst auch heilen.",
   "tutorial.learn": "Spielen lernen",
-  "tutorial.look.hint": "Zoom heraus, dann zieh die Ansicht nach Norden. Finde den Teleporter!",
-  "tutorial.look.how": "Das Mausrad zoomt. Halte die rechte Taste und zieh, um dich umzusehen.",
+  "tutorial.look.hint": "Zieh die Ansicht nach Norden. Finde den Teleporter!",
+  "tutorial.look.how": "Halte die rechte Taste und zieh, um dich umzusehen.",
   "tutorial.look.intro":
     "Vielleicht führt uns dieser Teleporter um das Schlachtfeld herum. Schau nach Norden!",
   "tutorial.look.praise": "Da ist er! Unser Weg um die Schlacht herum.",
@@ -1766,7 +1767,7 @@ export default {
     "Tipp zuerst meinen Namen in der Gruppenliste an. Tipp auf Gruppe, falls die Liste zu ist.",
   "tutorial.touch.healHow":
     "Tipp auf Gruppe, falls die Liste zu ist, dann auf meinen Namen und dann auf den leuchtenden Skill.",
-  "tutorial.touch.look": "Mit zwei Fingern zoomen. Mit einem Finger ziehen, um dich umzusehen.",
+  "tutorial.touch.look": "Mit einem Finger ziehen, um dich umzusehen.",
   "tutorial.touch.pingHow": "Tipp auf den Kompass oder zieh darauf eine Linie.",
   "tutorial.touch.ratsHow": "Tipp eine Ratte an, um sie ins Ziel zu nehmen.",
   "tutorial.touch.tunnelHow":

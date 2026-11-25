@@ -6,7 +6,12 @@ import {
   scenarioParticipants,
   switchTargetId,
 } from "@vibewars/game-core";
-import { allWallSegments, shapesOverlapInterior } from "@vibewars/game-maps/geometry";
+import {
+  allWallSegments,
+  shapesOverlap,
+  shapesOverlapInterior,
+  shapeVertices,
+} from "@vibewars/game-maps/geometry";
 import { matchLayers, matchZones } from "@vibewars/game-maps/layers";
 import { ELEVATION_STEP } from "@vibewars/game-maps/schema";
 import { describe, expect, it } from "vitest";
@@ -142,6 +147,28 @@ describe("Training Wilds (#3024)", () => {
     }
     expect(bears("in-gas-spout", "poison")).toBe(true);
     expect(bears(SELF_ID, "poison")).toBe(false);
+  });
+
+  it("sets no zone on a transition as it is drawn, its raised end lifted (#3994)", () => {
+    for (const transition of map.transitions) {
+      const corners = shapeVertices(transition.area);
+      const xs = corners.map(({ x }) => x);
+      const ys = corners.map(({ y }) => y);
+      const lift = ELEVATION_STEP * Math.max(0, transition.to - map.groundLayer);
+      const top = Math.min(...ys) - lift;
+      const drawn = {
+        kind: "rect",
+        x: Math.min(...xs),
+        y: top,
+        width: Math.max(...xs) - Math.min(...xs),
+        height: Math.max(...ys) - top,
+      } as const;
+      for (const zone of map.zones ?? []) {
+        if (zone.layer === transition.from || zone.layer === transition.to) {
+          expect(shapesOverlap(drawn, zone.area), `${transition.id} / ${zone.id}`).toBe(false);
+        }
+      }
+    }
   });
 
   it("walks from one team's spawn to the other's", () => {

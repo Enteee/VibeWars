@@ -427,6 +427,7 @@ export default {
   "cosmetics.item.trailFrost": "Scia di brina",
   "cosmetics.item.trailMoss": "Scia di muschio",
   "cosmetics.item.trailStarlight": "Scia di luce stellare",
+  "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Bloccato",
   "cosmetics.none": "Nessuno",
   "cosmetics.note":
@@ -1792,9 +1793,8 @@ export default {
   "tutorial.heal.ow": "Ahi! La roccia mi ha preso. Mi dai una mano?",
   "tutorial.heal.praise": "Molto meglio, grazie! Sai anche curare.",
   "tutorial.learn": "Impara a giocare",
-  "tutorial.look.hint": "Allontana la vista, poi trascinala a nord. Trova il teletrasporto!",
-  "tutorial.look.how":
-    "La rotella del mouse fa lo zoom. Tieni premuto il tasto destro e trascina per guardare.",
+  "tutorial.look.hint": "Trascina la vista a nord. Trova il teletrasporto!",
+  "tutorial.look.how": "Tieni premuto il tasto destro e trascina per guardare.",
   "tutorial.look.intro":
     "Forse questo teletrasporto ci porta oltre il campo di battaglia. Guarda a nord!",
   "tutorial.look.praise": "Eccolo! La nostra via attorno alla battaglia.",
@@ -1831,7 +1831,7 @@ export default {
     "Prima tocca il mio nome nella lista del gruppo. Tocca Gruppo se la lista è chiusa.",
   "tutorial.touch.healHow":
     "Tocca Gruppo se la lista è chiusa, poi il mio nome, poi l'abilità che brilla.",
-  "tutorial.touch.look": "Pizzica per lo zoom. Trascina un dito per guardare.",
+  "tutorial.touch.look": "Trascina un dito per guardare.",
   "tutorial.touch.pingHow": "Tocca la bussola, o trascina sopra per tracciare una linea.",
   "tutorial.touch.ratsHow": "Tocca un ratto per selezionarlo.",
   "tutorial.touch.tunnelHow": "Tocca i gradini in discesa, poi il segno oltre l'altra estremità.",

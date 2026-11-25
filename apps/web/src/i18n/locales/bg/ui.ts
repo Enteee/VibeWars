@@ -407,6 +407,7 @@ export default {
   "cosmetics.item.trailFrost": "Ледена следа",
   "cosmetics.item.trailMoss": "Мъхова следа",
   "cosmetics.item.trailStarlight": "Звездна следа",
+  "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Заключено",
   "cosmetics.none": "Няма",
   "cosmetics.note":
@@ -1707,9 +1708,8 @@ export default {
   "tutorial.heal.ow": "Ох! Камъкът ме удари. Ще помогнеш ли?",
   "tutorial.heal.praise": "Много по-добре, благодаря! Ти си и лечител.",
   "tutorial.learn": "Научи се да играеш",
-  "tutorial.look.hint": "Отдалечи изгледа, после го плъзни на север. Намери телепорта!",
-  "tutorial.look.how":
-    "Колелцето на мишката мащабира. Задръж десния бутон и плъзни, за да огледаш.",
+  "tutorial.look.hint": "Плъзни изгледа на север. Намери телепорта!",
+  "tutorial.look.how": "Задръж десния бутон и плъзни, за да огледаш.",
   "tutorial.look.intro":
     "Може би този телепорт ще ни изведе около бойното поле. Погледни на север!",
   "tutorial.look.praise": "Ето го! Пътят ни около битката.",
@@ -1745,7 +1745,7 @@ export default {
     "Първо докосни името ми в списъка на групата. Докосни Група, ако списъкът е затворен.",
   "tutorial.touch.healHow":
     "Докосни Група, ако списъкът е затворен, после името ми, после светещото умение.",
-  "tutorial.touch.look": "Щипни, за да мащабираш. Плъзни с един пръст, за да огледаш.",
+  "tutorial.touch.look": "Плъзни с един пръст, за да огледаш.",
   "tutorial.touch.pingHow": "Докосни компаса или плъзни по него, за да начертаеш линия.",
   "tutorial.touch.ratsHow": "Докосни плъх, за да се прицелиш в него.",
   "tutorial.touch.tunnelHow": "Докосни стъпалата надолу, после знака отвъд другия край.",

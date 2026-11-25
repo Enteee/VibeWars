@@ -432,6 +432,7 @@ export default {
   "cosmetics.item.trailFrost": "Mrazivá stopa",
   "cosmetics.item.trailMoss": "Mechová stopa",
   "cosmetics.item.trailStarlight": "Hvězdná stopa",
+  "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Zamčeno",
   "cosmetics.none": "Žádné",
   "cosmetics.note":
@@ -1820,8 +1821,8 @@ export default {
   "tutorial.heal.ow": "Au! Trefil mě kámen. Pomůžeš mi?",
   "tutorial.heal.praise": "Mnohem lépe, díky! Umíš i léčit.",
   "tutorial.learn": "Nauč se hrát",
-  "tutorial.look.hint": "Oddal pohled a pak ho táhni na sever. Najdi teleport!",
-  "tutorial.look.how": "Kolečko myši přibližuje. Drž pravé tlačítko a táhni, ať se rozhlédneš.",
+  "tutorial.look.hint": "Táhni pohled na sever. Najdi teleport!",
+  "tutorial.look.how": "Drž pravé tlačítko a táhni, ať se rozhlédneš.",
   "tutorial.look.intro": "Možná nás tenhle teleport dostane kolem bojiště. Podívej se na sever!",
   "tutorial.look.praise": "Tady je! Naše cesta kolem bitvy.",
   "tutorial.offer": "Jsi tu nový? Tvůj učitel ti ukáže základy.",
@@ -1855,7 +1856,7 @@ export default {
     "Nejdřív klepni na mé jméno v seznamu družiny. Když je seznam zavřený, klepni na Skupina.",
   "tutorial.touch.healHow":
     "Když je seznam zavřený, klepni na Skupina, pak na mé jméno a pak na zářící dovednost.",
-  "tutorial.touch.look": "Přibližuj roztažením prstů. Táhni jedním prstem a rozhlédni se.",
+  "tutorial.touch.look": "Táhni jedním prstem a rozhlédni se.",
   "tutorial.touch.pingHow": "Klepni na kompas, nebo po něm táhni a nakresli čáru.",
   "tutorial.touch.ratsHow": "Klepni na krysu a zaměř ji.",
   "tutorial.touch.tunnelHow": "Klepni na schody dolů, pak na značku za druhým koncem.",
