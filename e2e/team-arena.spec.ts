@@ -172,8 +172,10 @@ test("#1766: two parties of two queue for Team Arena, meet, and play their own b
   browser,
 }) => {
   // Cid's party forming can outlast Ann's 30 s before a warmup (#3899),
-  // and the match then waits for that warmup to give way.
-  test.setTimeout(180_000);
+  // and the match then waits for that warmup to give way: up to 40 s for
+  // the foe's bar and a 60 s toast poll, then four arenas booting at 25 s
+  // each and the leave. On a loaded runner that is past 180 s (#3968).
+  test.setTimeout(300_000);
   const { context, pages } = await openPeers(browser, 4);
   const [ann, bea, cid, dot] = pages as [Page, Page, Page, Page];
   // Ann's party queues first, so it may warm up (#3899): its pages keep watch.
