@@ -766,8 +766,9 @@ function overhangColours(tones: BiomeTones): Record<OverhangLook, OverhangLookCo
 
 /**
  * A biome's decor colours (#4013): its wood for crates and trunks, its
- * plants for crowns and ferns, each with the lit and the shaded face of a north-west light. Iron and
- * fire are the same everywhere.
+ * plants for crowns and ferns, its stone burnt to ash for a cinder drift
+ * (#4018), each with the lit and the shaded face of a north-west light.
+ * Iron and fire are the same everywhere.
  */
 export interface DecorColours {
   readonly wood: number;
@@ -778,6 +779,9 @@ export interface DecorColours {
   readonly plant: number;
   readonly plantLit: number;
   readonly plantShade: number;
+  readonly ash: number;
+  readonly ashLit: number;
+  readonly ashShade: number;
   readonly iron: number;
   readonly ironShade: number;
   readonly ember: number;
@@ -795,6 +799,9 @@ function decorColours(tones: BiomeTones): DecorColours {
     plant: tones.plant,
     plantLit: mix(tones.plant, 0xf0f0a0, 0.25),
     plantShade: shade(tones.plant, 0.42),
+    ash: mix(tones.ground, tones.stone, 0.4),
+    ashLit: mix(tones.ground, tones.stone, 0.6),
+    ashShade: mix(tones.ground, tones.stone, 0.15),
     iron: 0x4a4a52,
     ironShade: 0x26262c,
     ember: 0xe0662a,

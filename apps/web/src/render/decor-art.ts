@@ -4,9 +4,9 @@ import { ANIMATED_DECOR_KINDS, type DecorKind } from "@vibewars/game-maps/schema
 import type { DecorColours } from "./arena-palette.js";
 
 /**
- * Map decor (#4013, ADR-0060): braziers, crates, trees and fern tufts,
- * scenery nobody bumps into. Each is a few vector shapes with
- * a lit top, a shaded side and a contact shadow, the light from the
+ * Map decor (#4013, ADR-0060): braziers, crates, trees, fern tufts and
+ * cinder drifts (#4018), scenery nobody bumps into. Each is a few vector
+ * shapes with a lit top, a shaded side and a contact shadow, the light from the
  * north-west (docs/art/visual-style.md). Phaser-free: the scene paints the
  * commands, in its light, so the looks and the motion are tested without it.
  */
@@ -75,6 +75,10 @@ const FROND_LENGTH = 17;
 const BRAZIER_RADIUS = 11;
 const BRAZIER_HEIGHT = 15;
 const FLAME_HEIGHT = 15;
+/** Half a cinder drift's width: 120 u across at scale 1 (#4018). */
+const CINDER_RADIUS = 60;
+/** How many embers glow in a drift, the most. */
+const CINDER_EMBERS = 10;
 
 /** Whether `kind` moves while idle: a flame flickers, a crown or a frond sways. */
 export function animatedDecor(kind: DecorKind): boolean {
@@ -122,7 +126,7 @@ function noise(prop: MapDecor, tick: number): number {
  * sine, each prop on its own phase. Held at its mean, upright, when `still`.
  */
 export function decorSway(prop: MapDecor, now: number, still: boolean): number {
-  if (still || !animatedDecor(prop.kind) || prop.kind === "brazier") {
+  if (still || (prop.kind !== "tree" && prop.kind !== "fern")) {
     return 0;
   }
   const period = prop.kind === "tree" ? TREE_SWAY_SECONDS : FERN_SWAY_SECONDS;
@@ -142,8 +146,16 @@ export function brazierFlicker(prop: MapDecor, now: number, still: boolean): num
 export function decorShadow(prop: MapDecor): DecorCommand {
   const { at, scale: s } = prop;
   const tree = prop.kind === "tree";
-  const height = tree ? TRUNK_HEIGHT + CROWN_RADIUS : CRATE_HEIGHT;
-  const foot = tree ? CROWN_RADIUS : prop.kind === "crates" ? CRATE_SIZE * 0.8 : BRAZIER_RADIUS;
+  // A drift lies flat: its shadow is the scorch under it, cast nowhere.
+  const flat = prop.kind === "cinders";
+  const height = tree ? TRUNK_HEIGHT + CROWN_RADIUS : flat ? 0 : CRATE_HEIGHT;
+  const foot = tree
+    ? CROWN_RADIUS
+    : flat
+      ? CINDER_RADIUS * 0.85
+      : prop.kind === "crates"
+        ? CRATE_SIZE * 0.8
+        : BRAZIER_RADIUS;
   const reach = height * 0.3 * s;
   return ellipse(
     { x: at.x + reach, y: at.y + reach * 0.45 },
@@ -394,6 +406,50 @@ function brazier(prop: MapDecor, c: DecorColours, flicker: number): DecorCommand
 }
 
 /**
+ * A cinder drift (#4018): flat heaps of ash, the north-west one lit, and
+ * a few embers glowing in it, some bright, some dying. Still: it is drawn
+ * the same at every moment. Grey and dim on purpose: it carries no light,
+ * and nothing about it is a fire zone's orange sheet or rim.
+ */
+function cinders(prop: MapDecor, c: DecorColours): DecorCommand[] {
+  const { at, scale: s, rotation, variant } = prop;
+  const r = CINDER_RADIUS * s;
+  // Heaps along the drift's axis, a radius out at each end, flattened by the view.
+  const heaps = [
+    { dx: -0.42, dy: 0.1, rx: 0.58, colour: c.ashShade, alpha: 0.55 },
+    { dx: 0.38 - variant * 0.04, dy: 0.05, rx: 0.62, colour: c.ashShade, alpha: 0.55 },
+    { dx: 0, dy: 0, rx: 0.62, colour: c.ash, alpha: 0.7 },
+    { dx: -0.2 + variant * 0.08, dy: -0.12, rx: 0.34, colour: c.ashLit, alpha: 0.6 },
+  ];
+  // A point along the drift's axis, on the ground: flattened by the view as the heaps are.
+  const onAxis = (along: number): Vec2 => {
+    const point = turned(at, along, 0, rotation);
+    return { x: point.x, y: at.y + (point.y - at.y) * 0.5 };
+  };
+  const drawn = heaps.map(({ dx, dy, rx, colour, alpha }) => {
+    const centre = onAxis(dx * r);
+    return ellipse({ x: centre.x, y: centre.y + dy * r }, rx * r, rx * r * 0.5, colour, alpha);
+  });
+  const count = CINDER_EMBERS - (variant % 3);
+  const embers = Array.from({ length: count }, (_, k): DecorCommand => {
+    const along = (noise(prop, k + 1) * 2 - 1) * 0.75;
+    const across = (noise(prop, k + 11) * 2 - 1) * 0.2;
+    const glow = noise(prop, k + 21);
+    const centre = onAxis(along * r);
+    return ellipse(
+      { x: centre.x, y: centre.y + across * r },
+      // An ember is an ember at any size of drift.
+      1.4 + glow * 1.6,
+      (1.4 + glow * 1.6) * 0.7,
+      k % 3 === 0 ? c.flame : c.ember,
+      0.35 + glow * 0.55,
+      true,
+    );
+  });
+  return [...drawn, ...embers];
+}
+
+/**
  * How `prop` is drawn at `now`, its shadow apart (`decorShadow`): a
  * still prop the same at every `now`, a moving one held at its mean when
  * `still` (reduced motion).
@@ -413,5 +469,7 @@ export function decorCommands(
       return fern(prop, colours, decorSway(prop, now, still));
     case "brazier":
       return brazier(prop, colours, brazierFlicker(prop, now, still));
+    case "cinders":
+      return cinders(prop, colours);
   }
 }
