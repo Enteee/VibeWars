@@ -1970,8 +1970,14 @@ body:has(> .splash) #menu-background::after {
 /* Options > Cosmetics (#3577, #3988): a row of swatches per slot, its
    name before it (above it on a phone), the swatch hovered, focused or
    picked named after it. A swatch draws its item from `swatchStyle`. */
+.cosmetics-slots {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
 .cosmetics-slot {
-  margin: 0.4rem 0 0;
+  margin: 0;
   border: 0;
   padding: 0;
 }

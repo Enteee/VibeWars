@@ -257,12 +257,14 @@ export function cosmeticsSection(
     mount: (container) => {
       const draw = (): void => {
         const worn = cape();
-        container.replaceChildren(
-          h("p", "cosmetics-note", t("cosmetics.note")),
+        // The rows close together, not spaced as the pane's sections are.
+        const slots = h("div", "cosmetics-slots");
+        slots.append(
           ...COSMETIC_SLOTS.filter((slot) => slot !== "emblemFrame" || worn !== null).map((slot) =>
             slotPicker(store, slot, worn),
           ),
         );
+        container.replaceChildren(h("p", "cosmetics-note", t("cosmetics.note")), slots);
       };
       draw();
       return store.onChange(draw);
