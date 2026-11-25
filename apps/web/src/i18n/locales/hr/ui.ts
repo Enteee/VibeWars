@@ -437,7 +437,6 @@ export default {
     few: "{count} rangirane pobjede",
     other: "{count} rangiranih pobjeda",
   },
-  "cosmetics.showOthers": "Prikaži kozmetiku drugih igrača",
   "cosmetics.slot.aura": "Aura na tlu",
   "cosmetics.slot.cape": "Uzorak plašta",
   "cosmetics.slot.dissolve": "Rasplinuće pri smrti",

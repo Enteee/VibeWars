@@ -389,7 +389,6 @@ export default {
   "cosmetics.requires.wins": {
     other: "ランク戦{count}勝",
   },
-  "cosmetics.showOthers": "他のプレイヤーのコスメティックを表示",
   "cosmetics.slot.aura": "足元のオーラ",
   "cosmetics.slot.cape": "ケープの模様",
   "cosmetics.slot.dissolve": "死亡時の消散",

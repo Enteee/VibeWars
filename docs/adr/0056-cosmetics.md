@@ -39,10 +39,9 @@ There is no server to say who earned what. ADR-0055's leaderboard is public, rep
 3. **The viewer decides.** A client draws another player's item only when all of these hold:
    - the signature verifies for that seat's key;
    - the item is in this build's catalog;
-   - that key's entry in the viewer's leaderboard copy unlocks it;
-   - the viewer has not turned off "Show other players' cosmetics" in Options (it is on by default).
+   - that key's entry in the viewer's leaderboard copy unlocks it.
 
-   Anything else is drawn as the default, quietly. Your own selection is always drawn for you.
+   Anything else is drawn as the default, quietly. Your own selection is always drawn for you. A viewer can no longer hide other players' cosmetics: the "Show other players' cosmetics" option was removed by #3987, operator.
 
 4. **Readability is a rule of the catalog, not a review taste.** Every catalog entry passes `checkCosmetic(entry)` in a test:
    - It is drawn under body rings, condition marks, telegraphs and call marks, never over them.

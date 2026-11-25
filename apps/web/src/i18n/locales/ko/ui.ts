@@ -385,7 +385,6 @@ export default {
   "cosmetics.requires.wins": {
     other: "랭크 {count}승",
   },
-  "cosmetics.showOthers": "다른 플레이어의 치장 표시",
   "cosmetics.slot.aura": "바닥 오라",
   "cosmetics.slot.cape": "망토 무늬",
   "cosmetics.slot.dissolve": "사망 소멸",

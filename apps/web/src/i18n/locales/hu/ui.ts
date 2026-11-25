@@ -417,7 +417,6 @@ export default {
     one: "{count} rangsorolt győzelem",
     other: "{count} rangsorolt győzelem",
   },
-  "cosmetics.showOthers": "Más játékosok kozmetikumainak megjelenítése",
   "cosmetics.slot.aura": "Talajaura",
   "cosmetics.slot.cape": "Köpenyminta",
   "cosmetics.slot.dissolve": "Halálkori szertefoszlás",

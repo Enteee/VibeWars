@@ -61,5 +61,4 @@ csatlakozol.
 ## Más játékosok kozmetikumainak megtekintése
 
 Más játékosok csak akkor látják a kozmetikumaidat, ha a ranglista náluk lévő példánya szerint
-megszerezted őket. Ha mindenkit az alapértelmezett kinézetben szeretnél látni, kapcsold ki a **Más
-játékosok kozmetikumainak megjelenítése** beállítást az Opciókban, a **Kozmetikumok** alatt.
+megszerezted őket.

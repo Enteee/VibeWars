@@ -383,7 +383,6 @@ export default {
   "cosmetics.requires.wins": {
     other: "ชนะจัดอันดับ {count} ครั้ง",
   },
-  "cosmetics.showOthers": "แสดงของตกแต่งของผู้เล่นอื่น",
   "cosmetics.slot.aura": "ออร่าบนพื้น",
   "cosmetics.slot.cape": "ลายผ้าคลุม",
   "cosmetics.slot.dissolve": "การสลายเมื่อตาย",

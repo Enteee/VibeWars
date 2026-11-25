@@ -60,5 +60,4 @@ widzą go od następnego lobby, do którego dołączysz.
 ## Kosmetyki innych graczy
 
 Inni gracze widzą twoje kosmetyki tylko wtedy, gdy ich kopia tabeli wyników pokazuje, że je
-zdobyłeś. Aby widzieć wszystkich w domyślnym wyglądzie, wyłącz **Pokazuj kosmetyki innych graczy**
-w Opcjach w sekcji **Kosmetyki**.
+zdobyłeś.

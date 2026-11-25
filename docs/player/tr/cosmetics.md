@@ -60,5 +60,4 @@ olur. Diğer oyuncular onu katıldığın bir sonraki lobiden itibaren görür.
 ## Diğer oyuncuların kozmetiklerini görmek
 
 Diğer oyuncular kozmetiklerini ancak lider tablosunun kendi kopyaları onları kazandığını
-gösteriyorsa görür. Herkesi varsayılan görünümde görmek için Ayarlar'da **Kozmetikler** altında
-**Diğer oyuncuların kozmetiklerini göster** seçeneğini kapat.
+gösteriyorsa görür.

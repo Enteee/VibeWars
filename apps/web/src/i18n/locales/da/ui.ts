@@ -415,7 +415,6 @@ export default {
     one: "{count} rangeret sejr",
     other: "{count} rangerede sejre",
   },
-  "cosmetics.showOthers": "Vis andre spilleres kosmetik",
   "cosmetics.slot.aura": "Jordaura",
   "cosmetics.slot.cape": "Kappemønster",
   "cosmetics.slot.dissolve": "Dødsopløsning",

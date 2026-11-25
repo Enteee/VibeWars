@@ -387,7 +387,6 @@ export default {
   "cosmetics.requires.wins": {
     other: "{count} kemenangan peringkat",
   },
-  "cosmetics.showOthers": "Tampilkan kosmetik pemain lain",
   "cosmetics.slot.aura": "Aura tanah",
   "cosmetics.slot.cape": "Corak jubah",
   "cosmetics.slot.dissolve": "Pelarutan kematian",

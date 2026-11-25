@@ -61,5 +61,4 @@ pelaajat näkevät sen seuraavasta aulasta alkaen, johon liityt.
 ## Muiden pelaajien kosmetiikan näkeminen
 
 Muut pelaajat näkevät kosmetiikkasi vain, jos heidän kopionsa tulostaulusta näyttää, että olet
-ansainnut sen. Jos haluat nähdä kaikki oletusulkoasussa, kytke **Näytä muiden pelaajien
-kosmetiikka** pois Asetuksista kohdasta **Kosmetiikka**.
+ansainnut sen.

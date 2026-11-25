@@ -379,7 +379,6 @@ export default {
   "cosmetics.requires.wins": {
     other: "排位 {count} 胜",
   },
-  "cosmetics.showOthers": "显示其他玩家的装扮",
   "cosmetics.slot.aura": "地面光环",
   "cosmetics.slot.cape": "披风图案",
   "cosmetics.slot.dissolve": "死亡消散",

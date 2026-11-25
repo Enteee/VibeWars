@@ -439,7 +439,6 @@ export default {
     few: "{count} victorii clasate",
     other: "{count} de victorii clasate",
   },
-  "cosmetics.showOthers": "Arată elementele cosmetice ale altor jucători",
   "cosmetics.slot.aura": "Aură la sol",
   "cosmetics.slot.cape": "Model de pelerină",
   "cosmetics.slot.dissolve": "Destrămare la moarte",

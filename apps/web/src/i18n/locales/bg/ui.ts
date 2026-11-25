@@ -420,7 +420,6 @@ export default {
     one: "{count} класирана победа",
     other: "{count} класирани победи",
   },
-  "cosmetics.showOthers": "Показвай козметиката на другите играчи",
   "cosmetics.slot.aura": "Аура по земята",
   "cosmetics.slot.cape": "Шарка на наметалото",
   "cosmetics.slot.dissolve": "Разпадане при смърт",

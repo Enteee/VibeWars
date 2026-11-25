@@ -60,5 +60,4 @@ sehen sie ab der nächsten Lobby, der du beitrittst.
 ## Kosmetik anderer Spieler sehen
 
 Andere Spieler sehen deine Kosmetik nur, wenn ihre Kopie der Rangliste zeigt, dass du sie verdient
-hast. Um alle im Standardaussehen zu sehen, schalte **Kosmetik anderer Spieler anzeigen** in
-Optionen unter **Kosmetik** aus.
+hast.

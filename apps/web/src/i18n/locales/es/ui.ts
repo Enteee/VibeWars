@@ -439,7 +439,6 @@ export default {
     many: "{count} victorias clasificatorias",
     other: "{count} victorias clasificatorias",
   },
-  "cosmetics.showOthers": "Mostrar los cosméticos de otros jugadores",
   "cosmetics.slot.aura": "Aura de suelo",
   "cosmetics.slot.cape": "Diseño de capa",
   "cosmetics.slot.dissolve": "Disolución al morir",

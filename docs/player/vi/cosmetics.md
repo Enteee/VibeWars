@@ -60,5 +60,4 @@ nó từ sảnh tiếp theo mà bạn tham gia.
 ## Xem trang trí của người chơi khác
 
 Người chơi khác chỉ thấy trang trí của bạn nếu bản sao bảng xếp hạng của họ cho thấy bạn đã nhận
-được chúng. Để thấy mọi người với giao diện mặc định, tắt **Hiện trang trí của người chơi khác**
-trong Tùy chọn, mục **Trang trí**.
+được chúng.

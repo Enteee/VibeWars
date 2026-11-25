@@ -450,7 +450,6 @@ export default {
     many: "{count} hodnotené výhry",
     other: "{count} hodnotených výhier",
   },
-  "cosmetics.showOthers": "Zobrazovať kozmetiku ostatných hráčov",
   "cosmetics.slot.aura": "Aura na zemi",
   "cosmetics.slot.cape": "Vzor plášťa",
   "cosmetics.slot.dissolve": "Rozplynutie pri smrti",

@@ -191,35 +191,31 @@ describe("a cosmetic selection (ADR-0056)", () => {
 
   it("shows another seat what its board says it earned", () => {
     const seat = { playerPubkey: key.pubkey, cosmetics: signed };
-    const worn = visibleCosmetics(seat, boardWith(key.pubkey, TIERS[2]), true);
+    const worn = visibleCosmetics(seat, boardWith(key.pubkey, TIERS[2]));
     expect(worn.frame?.id).toBe("frame-rose");
     expect(worn.title?.id).toBe("title-contender");
     // Five wins earn the title but not the rose frame.
-    expect(visibleCosmetics(seat, boardWith(key.pubkey, TIERS[1]), true)).toEqual({
+    expect(visibleCosmetics(seat, boardWith(key.pubkey, TIERS[1]))).toEqual({
       title: entry("title-contender"),
     });
   });
 
-  it("draws the default for a selection signed by another key, an unlisted key, or with others hidden", () => {
+  it("draws the default for a selection signed by another key, an unlisted key, or a broken signature", () => {
     const board = boardWith(key.pubkey, TIERS[5]);
-    expect(
-      visibleCosmetics({ playerPubkey: other.pubkey, cosmetics: signed }, board, true),
-    ).toEqual({});
-    expect(
-      visibleCosmetics({ playerPubkey: key.pubkey, cosmetics: signed }, undefined, true),
-    ).toEqual({});
-    expect(visibleCosmetics({ playerPubkey: key.pubkey, cosmetics: signed }, board, false)).toEqual(
+    expect(visibleCosmetics({ playerPubkey: other.pubkey, cosmetics: signed }, board)).toEqual({});
+    expect(visibleCosmetics({ playerPubkey: key.pubkey, cosmetics: signed }, undefined)).toEqual(
       {},
     );
+    const forged = { ...signed, at: signed.at + 1 };
+    expect(visibleCosmetics({ playerPubkey: key.pubkey, cosmetics: forged }, board)).toEqual({});
   });
 
   it("works a seat out once a board, not once a frame", () => {
     const seat = { playerPubkey: key.pubkey, cosmetics: signed };
     const board = boardWith(key.pubkey, TIERS[2]);
-    const worn = visibleCosmetics(seat, board, true);
-    expect(visibleCosmetics({ ...seat }, board, true)).toBe(worn);
-    expect(visibleCosmetics(seat, boardWith(key.pubkey, TIERS[1]), true)).not.toBe(worn);
-    expect(visibleCosmetics(seat, board, false)).toEqual({});
+    const worn = visibleCosmetics(seat, board);
+    expect(visibleCosmetics({ ...seat }, board)).toBe(worn);
+    expect(visibleCosmetics(seat, boardWith(key.pubkey, TIERS[1]))).not.toBe(worn);
   });
 
   it("finds a key in a board of thousands", () => {
@@ -259,13 +255,6 @@ describe("the cosmetics store (ADR-0056)", () => {
     const next = createCosmeticsStore(storage);
     expect(next.choice()).toEqual({ frame: "frame-jade" });
     expect(next.lastFacts()).toEqual(facts(7, null, 1));
-  });
-
-  it("shows others' cosmetics until told not to", () => {
-    const storage = memory();
-    expect(createCosmeticsStore(storage).showOthers()).toBe(true);
-    createCosmeticsStore(storage).setShowOthers(false);
-    expect(createCosmeticsStore(storage).showOthers()).toBe(false);
   });
 
   it("deletes a stored record of another shape rather than reading it (ADR-0016)", () => {
