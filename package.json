@@ -29,6 +29,7 @@
     "test:e2e": "playwright test",
     "bench:ticks": "BENCH_TICKS=400 vitest run packages/game-core/src/tools/tick-bench.test.ts packages/game-maps/src/map-bench.test.ts",
     "bench:bots": "BENCH_BOTS=1 vitest run packages/game-core/src/tools/bot-bench.test.ts",
+    "decor:scatter": "tsc --build tsconfig.build.json && node packages/game-maps/dist/tools/decor-scatter.js",
     "bench:balance": "BENCH_BALANCE=1 vitest run packages/game-maps/src/tools/map-balance.test.ts",
     "docs:diagrams": "node scripts/docs/diagrams.mjs",
     "bench:ranking": "BENCH_RANKING=1 vitest run packages/ranking/src/rate.test.ts",

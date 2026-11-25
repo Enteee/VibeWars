@@ -2013,11 +2013,11 @@ describe("decor (#4013)", () => {
   it("refuses a brazier without a brazier- light beside it on its layer", () => {
     const brazier = prop({ id: "fire", kind: "brazier" });
     accepts([brazier], { lighting: lit([brazierLight]) });
-    refuses([brazier], /decor\.0: brazier fire needs a brazier- light/);
-    refuses([brazier], /decor\.0: brazier fire needs/, {
+    refuses([brazier], /decor\.0\.at: decor fire needs a brazier- light/);
+    refuses([brazier], /decor\.0\.at: decor fire needs/, {
       lighting: lit([{ ...brazierLight, id: "torch-a" }]),
     });
-    refuses([brazier], /decor\.0: brazier fire needs/, {
+    refuses([brazier], /decor\.0\.at: decor fire needs/, {
       lighting: lit([{ ...brazierLight, position: { x: 1041, y: 1000 } }]),
     });
   });

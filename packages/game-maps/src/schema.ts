@@ -962,12 +962,13 @@ export type Decor = z.infer<typeof decorSchema>;
 /**
  * Why a decor prop may not stand where it is (#4013), or undefined: off
  * its layer's floor (outside the bounds, in a pit, off every deck), in a
- * wall or deep water of its layer, or within a spawn bubble. The schema
- * and the scatter tool ask the same question.
+ * wall or deep water of its layer, within a spawn bubble, or a brazier
+ * without its `brazier-` light beside it. The schema and the scatter tool
+ * ask the same question.
  */
 export function decorRefusal(
-  map: LayeredMap & Pick<MapData, "water" | "spawnPoints">,
-  prop: Pick<Decor, "at" | "layer">,
+  map: LayeredMap & Pick<MapData, "water" | "spawnPoints" | "lighting">,
+  prop: Pick<Decor, "at" | "layer" | "kind">,
 ): string | undefined {
   const { at, layer } = prop;
   const inside = at.x >= 0 && at.y >= 0 && at.x <= map.width && at.y <= map.height;
@@ -985,7 +986,18 @@ export function decorRefusal(
     (spawn) =>
       Math.hypot(spawn.position.x - at.x, spawn.position.y - at.y) <= DECOR_SPAWN_CLEARANCE,
   );
-  return near ? `is within ${String(DECOR_SPAWN_CLEARANCE)} of a spawn point` : undefined;
+  if (near) {
+    return `is within ${String(DECOR_SPAWN_CLEARANCE)} of a spawn point`;
+  }
+  const lit = (map.lighting?.lights ?? []).some(
+    (light) =>
+      light.id.startsWith("brazier-") &&
+      light.layer === layer &&
+      Math.hypot(light.position.x - at.x, light.position.y - at.y) <= BRAZIER_LIGHT_REACH,
+  );
+  return prop.kind === "brazier" && !lit
+    ? `needs a brazier- light within ${String(BRAZIER_LIGHT_REACH)} on its layer`
+    : undefined;
 }
 
 /** Points along a drop-off, `DROP_OFF_SAMPLE` apart, ends included. */
@@ -2196,19 +2208,6 @@ export const mapDataSchema = z
         if (animated === MAX_ANIMATED_DECOR + 1) {
           issue(["kind"], `at most ${String(MAX_ANIMATED_DECOR)} decor props may move`);
         }
-      }
-      const lit = (map.lighting?.lights ?? []).some(
-        (light) =>
-          light.id.startsWith("brazier-") &&
-          light.layer === prop.layer &&
-          Math.hypot(light.position.x - prop.at.x, light.position.y - prop.at.y) <=
-            BRAZIER_LIGHT_REACH,
-      );
-      if (prop.kind === "brazier" && !lit) {
-        issue(
-          [],
-          `brazier ${prop.id} needs a brazier- light within ${String(BRAZIER_LIGHT_REACH)} on its layer`,
-        );
       }
     });
   });
