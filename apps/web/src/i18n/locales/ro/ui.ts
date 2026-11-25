@@ -424,6 +424,7 @@ export default {
   "cosmetics.item.trailFrost": "Urmă de brumă",
   "cosmetics.item.trailMoss": "Urmă de mușchi",
   "cosmetics.item.trailStarlight": "Urmă de lumina stelelor",
+  "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Blocat",
   "cosmetics.none": "Niciunul",
   "cosmetics.note":

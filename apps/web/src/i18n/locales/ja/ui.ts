@@ -378,6 +378,7 @@ export default {
   "cosmetics.item.trailFrost": "霜の足跡",
   "cosmetics.item.trailMoss": "苔の足跡",
   "cosmetics.item.trailStarlight": "星明かりの足跡",
+  "cosmetics.detail": "{name}：{requirement}",
   "cosmetics.locked": "ロック中",
   "cosmetics.none": "なし",
   "cosmetics.note":

@@ -403,6 +403,7 @@ export default {
   "cosmetics.item.trailFrost": "Frostspår",
   "cosmetics.item.trailMoss": "Mosspår",
   "cosmetics.item.trailStarlight": "Stjärnljusspår",
+  "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Låst",
   "cosmetics.none": "Ingen",
   "cosmetics.note":

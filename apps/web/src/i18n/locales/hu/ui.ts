@@ -404,6 +404,7 @@ export default {
   "cosmetics.item.trailFrost": "Dér nyom",
   "cosmetics.item.trailMoss": "Moha nyom",
   "cosmetics.item.trailStarlight": "Csillagfény nyom",
+  "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Zárolva",
   "cosmetics.none": "Nincs",
   "cosmetics.note":

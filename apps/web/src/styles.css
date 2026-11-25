@@ -1967,36 +1967,253 @@ body:has(> .splash) #menu-background::after {
   }
 }
 
-/* Options > Cosmetics (#3577): one picker per slot. */
+/* Options > Cosmetics (#3577, #3988): a row of swatches per slot, its
+   name before it (above it on a phone), the swatch hovered, focused or
+   picked named after it. A swatch draws its item from `swatchStyle`. */
 .cosmetics-slot {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-  margin: 0.8rem 0 0;
+  margin: 0.4rem 0 0;
   border: 0;
   padding: 0;
 }
 
+/* Floated, a legend is laid out as any other box: beside the row. */
 .cosmetics-slot legend {
-  margin-bottom: 0.3rem;
-  color: var(--ink-dim);
-}
-
-.cosmetics-item {
+  float: inline-start;
+  width: 10rem;
+  min-height: 44px;
+  padding: 0;
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.1rem;
-}
-
-.cosmetics-item[aria-pressed="true"] {
-  outline: 2px solid var(--ink);
-}
-
-.cosmetics-item-detail,
-.cosmetics-item-locked {
-  font-size: 0.8em;
+  align-items: center;
   color: var(--ink-dim);
+}
+
+.cosmetics-line {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.2rem 0.8rem;
+}
+
+.cosmetics-row {
+  display: flex;
+  gap: 6px;
+}
+
+.cosmetics-detail {
+  flex: 1 1 12rem;
+  margin: 0;
+  font-size: 0.85em;
+  color: var(--ink-dim);
+}
+
+.screen button.cosmetics-swatch {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border-radius: 6px;
+}
+
+.screen button.cosmetics-swatch[aria-pressed="true"] {
+  border-color: var(--friend);
+  box-shadow: 0 0 0 1px var(--friend);
+}
+
+.screen button.cosmetics-swatch.locked {
+  opacity: 0.4;
+}
+
+.cosmetics-swatch-art {
+  position: relative;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+}
+
+/* None: an empty circle, struck through. */
+.cosmetics-swatch[data-kind="none"] .cosmetics-swatch-art {
+  border: 2px solid var(--ink-dim);
+  background: linear-gradient(
+    45deg,
+    transparent calc(50% - 1px),
+    var(--ink-dim) calc(50% - 1px) calc(50% + 1px),
+    transparent calc(50% + 1px)
+  );
+}
+
+/* A name plate's frame: a ring. */
+.cosmetics-swatch[data-kind="frame"] .cosmetics-swatch-art {
+  border: 4px solid var(--swatch);
+}
+
+/* A title: "Aa" in its colour and glow. */
+.cosmetics-swatch[data-kind="title"] .cosmetics-swatch-art {
+  display: grid;
+  place-items: center;
+  color: var(--swatch);
+  font-weight: 700;
+  text-shadow: 0 0 4px var(--swatch-glow);
+}
+
+.cosmetics-swatch[data-kind="title"] .cosmetics-swatch-art::before {
+  content: "Aa";
+}
+
+/* The win-streak flame: a teardrop, point up. */
+.cosmetics-swatch[data-kind="flame"] .cosmetics-swatch-art {
+  width: 18px;
+  height: 18px;
+  border-radius: 0 50% 50%;
+  transform: rotate(45deg) translate(2px, 2px);
+  background: radial-gradient(circle at 65% 65%, #fff8 0 20%, var(--swatch) 55%);
+}
+
+/* A ground aura: a soft ring with a spark on it. */
+.cosmetics-swatch[data-kind="aura"] .cosmetics-swatch-art {
+  background: radial-gradient(circle, transparent 40%, var(--swatch) 55% 65%, transparent 75%);
+}
+
+.cosmetics-swatch[data-kind="aura"] .cosmetics-swatch-art::before {
+  content: "";
+  position: absolute;
+  top: 1px;
+  left: 50%;
+  width: 5px;
+  height: 5px;
+  margin-left: -2.5px;
+  border-radius: 50%;
+  background: #fff;
+}
+
+/* A footstep trail: motes in a line, fading. */
+.cosmetics-swatch[data-kind="trail"] .cosmetics-swatch-art {
+  border-radius: 0;
+  background:
+    radial-gradient(circle at 15% 75%, var(--swatch) 0 3px, transparent 4px),
+    radial-gradient(circle at 50% 50%, var(--swatch) 0 3px, transparent 4px),
+    radial-gradient(circle at 85% 25%, var(--swatch) 0 3px, transparent 4px);
+}
+
+.cosmetics-swatch[data-kind="trail"] .cosmetics-swatch-art::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(45deg, var(--panel), transparent 60%);
+}
+
+/* A weapon trail: a wave, as a swing's arc. */
+.cosmetics-swatch[data-kind="swing"] .cosmetics-swatch-art {
+  border: 4px solid transparent;
+  border-top-color: var(--swatch);
+  border-right-color: var(--swatch);
+  transform: rotate(-20deg);
+}
+
+/* A cape: its pattern in the player's own cape's cloth and trim. */
+.cosmetics-swatch[data-kind="cape"] .cosmetics-swatch-art {
+  width: 24px;
+  height: 28px;
+  border-radius: 2px 2px 8px 8px;
+  border: 1px solid var(--swatch-trim);
+  background: var(--swatch);
+}
+
+.cosmetics-swatch[data-variant="stripes"] .cosmetics-swatch-art {
+  background: repeating-linear-gradient(90deg, var(--swatch) 0 4px, var(--swatch-trim) 4px 8px);
+}
+
+.cosmetics-swatch[data-variant="chevrons"] .cosmetics-swatch-art {
+  background:
+    linear-gradient(135deg, var(--swatch-trim) 25%, transparent 25%) 0 0 / 8px 8px,
+    linear-gradient(225deg, var(--swatch-trim) 25%, transparent 25%) 0 0 / 8px 8px,
+    var(--swatch);
+}
+
+.cosmetics-swatch[data-variant="quarters"] .cosmetics-swatch-art {
+  background: conic-gradient(
+    var(--swatch) 0 25%,
+    var(--swatch-trim) 0 50%,
+    var(--swatch) 0 75%,
+    var(--swatch-trim) 0
+  );
+}
+
+.cosmetics-swatch[data-kind="cape"][data-variant="stars"] .cosmetics-swatch-art {
+  background:
+    radial-gradient(circle, var(--swatch-trim) 0 1.5px, transparent 2px) 0 0 / 8px 8px,
+    var(--swatch);
+}
+
+/* A spawn-in style: motes gathering to a bright core. */
+.cosmetics-swatch[data-kind="spawn"] .cosmetics-swatch-art {
+  background:
+    radial-gradient(circle, #fff 0 3px, var(--swatch) 4px 6px, transparent 7px),
+    radial-gradient(circle at 50% 8%, var(--swatch) 0 2px, transparent 3px),
+    radial-gradient(circle at 92% 50%, var(--swatch) 0 2px, transparent 3px),
+    radial-gradient(circle at 50% 92%, var(--swatch) 0 2px, transparent 3px),
+    radial-gradient(circle at 8% 50%, var(--swatch) 0 2px, transparent 3px);
+}
+
+/* A death dissolve: a body's disc, crumbling upward into motes. */
+.cosmetics-swatch[data-kind="dissolve"] .cosmetics-swatch-art {
+  border-radius: 0;
+  background:
+    radial-gradient(circle at 50% 100%, var(--swatch) 0 9px, transparent 10px),
+    radial-gradient(circle at 25% 45%, var(--swatch) 0 2px, transparent 3px),
+    radial-gradient(circle at 60% 30%, var(--swatch) 0 2px, transparent 3px),
+    radial-gradient(circle at 80% 10%, var(--swatch) 0 1.5px, transparent 2.5px);
+}
+
+/* An emblem frame: a square ring, a stud off each corner with studs. */
+.cosmetics-swatch[data-kind="emblemFrame"] .cosmetics-swatch-art {
+  width: 22px;
+  height: 22px;
+  border-radius: 0;
+  border: 3px solid var(--swatch);
+}
+
+.cosmetics-swatch[data-kind="emblemFrame"][data-variant="studs"] .cosmetics-swatch-art {
+  box-shadow:
+    -5px -5px 0 -2px var(--swatch),
+    5px -5px 0 -2px var(--swatch),
+    -5px 5px 0 -2px var(--swatch),
+    5px 5px 0 -2px var(--swatch);
+}
+
+/* Locked: a small padlock in the corner, its shackle drawn over it. */
+.cosmetics-swatch-lock {
+  position: absolute;
+  inset-inline-end: 2px;
+  bottom: 2px;
+  width: 9px;
+  height: 7px;
+  border-radius: 1px;
+  background: var(--ink);
+}
+
+.cosmetics-swatch-lock::before {
+  content: "";
+  position: absolute;
+  bottom: 6px;
+  left: 1.5px;
+  width: 6px;
+  height: 5px;
+  border: 1.5px solid var(--ink);
+  border-bottom: 0;
+  border-radius: 3px 3px 0 0;
+  box-sizing: border-box;
+}
+
+/* A phone: the slot's name above its row. */
+@media (width <= 30rem) {
+  .cosmetics-slot legend {
+    float: none;
+    width: auto;
+    min-height: 0;
+    margin-bottom: 0.2rem;
+  }
 }
 
 .cosmetics-note {

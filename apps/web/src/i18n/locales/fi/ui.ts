@@ -410,6 +410,7 @@ export default {
   "cosmetics.item.trailFrost": "Huurrejälki",
   "cosmetics.item.trailMoss": "Sammaljälki",
   "cosmetics.item.trailStarlight": "Tähtivalojälki",
+  "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Lukittu",
   "cosmetics.none": "Ei mitään",
   "cosmetics.note":

@@ -401,6 +401,7 @@ export default {
   "cosmetics.item.trailFrost": "Ayaz izi",
   "cosmetics.item.trailMoss": "Yosun izi",
   "cosmetics.item.trailStarlight": "Yıldız ışığı izi",
+  "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Kilitli",
   "cosmetics.none": "Yok",
   "cosmetics.note":

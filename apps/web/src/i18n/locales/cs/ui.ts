@@ -432,6 +432,7 @@ export default {
   "cosmetics.item.trailFrost": "Mrazivá stopa",
   "cosmetics.item.trailMoss": "Mechová stopa",
   "cosmetics.item.trailStarlight": "Hvězdná stopa",
+  "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Zamčeno",
   "cosmetics.none": "Žádné",
   "cosmetics.note":

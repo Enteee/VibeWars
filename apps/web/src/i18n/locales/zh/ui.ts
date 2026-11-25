@@ -368,6 +368,7 @@ export default {
   "cosmetics.item.trailFrost": "霜冻足迹",
   "cosmetics.item.trailMoss": "苔藓足迹",
   "cosmetics.item.trailStarlight": "星光足迹",
+  "cosmetics.detail": "{name}：{requirement}",
   "cosmetics.locked": "未解锁",
   "cosmetics.none": "无",
   "cosmetics.note":

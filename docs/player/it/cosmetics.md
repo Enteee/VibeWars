@@ -53,9 +53,11 @@ Una cornice dell’emblema è un bordo sottile attorno all’emblema del tuo man
 
 ## Come indossarli
 
-Apri Opzioni e scegli **Cosmetici**. Ogni slot elenca i suoi oggetti, ciascuno segnato come
-indossabile o bloccato, con ciò che lo fa ottenere. La tua scelta vale subito. Gli altri giocatori
-la vedono dalla prossima lobby in cui entri.
+Apri Opzioni e scegli **Cosmetici**. Ogni slot è una fila di campioni, ciascuno una piccola immagine
+del suo oggetto; il primo, un cerchio vuoto barrato, non indossa nulla. Il campione scelto ha un
+anello blu. La riga accanto alla fila (sotto, su un telefono) nomina il campione che punti o che ha
+il focus, e ciò che lo fa ottenere. Un campione bloccato è attenuato, con un piccolo lucchetto. La
+tua scelta vale subito. Gli altri giocatori la vedono dalla prossima lobby in cui entri.
 
 ## Vedere i cosmetici degli altri giocatori
 

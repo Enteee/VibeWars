@@ -372,6 +372,7 @@ export default {
   "cosmetics.item.trailFrost": "รอยน้ำค้างแข็ง",
   "cosmetics.item.trailMoss": "รอยมอส",
   "cosmetics.item.trailStarlight": "รอยแสงดาว",
+  "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "ล็อกอยู่",
   "cosmetics.none": "ไม่มี",
   "cosmetics.note":

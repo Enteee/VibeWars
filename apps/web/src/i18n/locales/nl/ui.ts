@@ -402,6 +402,7 @@ export default {
   "cosmetics.item.trailFrost": "Vorstspoor",
   "cosmetics.item.trailMoss": "Mosspoor",
   "cosmetics.item.trailStarlight": "Sterrenlichtspoor",
+  "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Vergrendeld",
   "cosmetics.none": "Geen",
   "cosmetics.note":

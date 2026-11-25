@@ -402,6 +402,7 @@ export default {
   "cosmetics.item.trailFrost": "رد یخبندان",
   "cosmetics.item.trailMoss": "رد خزه",
   "cosmetics.item.trailStarlight": "رد نور ستارگان",
+  "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "قفل",
   "cosmetics.none": "هیچ",
   "cosmetics.note":

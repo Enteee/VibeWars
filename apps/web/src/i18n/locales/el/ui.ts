@@ -410,6 +410,7 @@ export default {
   "cosmetics.item.trailFrost": "Ίχνος παγετού",
   "cosmetics.item.trailMoss": "Ίχνος βρύων",
   "cosmetics.item.trailStarlight": "Ίχνος αστροφεγγιάς",
+  "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Κλειδωμένο",
   "cosmetics.none": "Κανένα",
   "cosmetics.note":

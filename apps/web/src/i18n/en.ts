@@ -404,6 +404,7 @@ export const en = {
   "cosmetics.item.trailFrost": "Frost trail",
   "cosmetics.item.trailMoss": "Moss trail",
   "cosmetics.item.trailStarlight": "Starlight trail",
+  "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Locked",
   "cosmetics.none": "None",
   "cosmetics.note":

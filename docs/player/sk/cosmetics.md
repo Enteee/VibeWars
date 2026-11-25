@@ -53,9 +53,11 @@ Rámik znaku je tenký okraj okolo znaku na tvojom cechovom plášti. Znak nikdy
 
 ## Ako ju nosiť
 
-Otvor Nastavenia a vyber **Kozmetika**. Každý slot uvádza svoje predmety, každý označený ako
-nositeľný alebo zamknutý, a za čo sa získava. Tvoja voľba platí hneď. Ostatní hráči ju uvidia od
-najbližšej lobby, do ktorej vstúpiš.
+Otvor Nastavenia a vyber **Kozmetika**. Každý slot je jeden rad vzoriek, každá je malý obrázok
+svojho predmetu; prvá, prázdny prečiarknutý kruh, znamená nenosiť nič. Zvolená vzorka má modrý
+krúžok. Text vedľa radu (na telefóne pod ním) pomenúva vzorku, na ktorú ukazuješ alebo ktorá má
+fokus, a za čo sa získava. Zamknutá vzorka je stlmená, s malým zámkom. Tvoja voľba platí hneď.
+Ostatní hráči ju uvidia od najbližšej lobby, do ktorej vstúpiš.
 
 ## Kozmetika ostatných hráčov
 
