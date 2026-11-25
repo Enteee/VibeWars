@@ -755,7 +755,7 @@ export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
     dummies: [
       { ...target("in-embers", "In the embers (60 armor)", vec2(600, 400), 60), layer: 1 },
       { ...target("in-lava", "In the lava (60 armor)", vec2(360, 130), 60), layer: 1 },
-      { ...target("in-fog", "In the fog (60 armor)", vec2(465, 85), 60), layer: 1 },
+      { ...target("in-fog", "In the fog (60 armor)", vec2(450, 70), 60), layer: 1 },
       { ...target("in-mire", "In the mire (60 armor)", vec2(435, 634), 60), layer: 0 },
       { ...target("in-swamp", "In the swamp (60 armor)", vec2(520, 575), 60), layer: 0 },
       {

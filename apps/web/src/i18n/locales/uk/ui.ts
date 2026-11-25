@@ -435,6 +435,7 @@ export default {
   "cosmetics.item.trailFrost": "Морозний слід",
   "cosmetics.item.trailMoss": "Моховий слід",
   "cosmetics.item.trailStarlight": "Зоряний слід",
+  "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Закрито",
   "cosmetics.none": "Немає",
   "cosmetics.note":
@@ -1835,9 +1836,8 @@ export default {
   "tutorial.heal.ow": "Ой! Мене влучив камінь. Допоможеш?",
   "tutorial.heal.praise": "Набагато краще, дякую! Ти й лікувати вмієш.",
   "tutorial.learn": "Навчитися грати",
-  "tutorial.look.hint": "Віддали огляд, потім потягни його на північ. Знайди телепорт!",
-  "tutorial.look.how":
-    "Коліщатко миші змінює масштаб. Затисни праву кнопку й тягни, щоб роззирнутися.",
+  "tutorial.look.hint": "Потягни огляд на північ. Знайди телепорт!",
+  "tutorial.look.how": "Затисни праву кнопку й тягни, щоб роззирнутися.",
   "tutorial.look.intro": "Може, цей телепорт виведе нас в обхід поля бою. Поглянь на північ!",
   "tutorial.look.praise": "Ось він! Наш шлях в обхід битви.",
   "tutorial.offer": "Вперше тут? Наставник покаже основи.",
@@ -1872,8 +1872,7 @@ export default {
     "Спершу торкнися мого імені у списку загону. Торкнися «Загін», якщо список закрито.",
   "tutorial.touch.healHow":
     "Якщо список закрито, торкнися «Загін», потім мого імені, потім вміння, що світиться.",
-  "tutorial.touch.look":
-    "Зведи чи розведи пальці для масштабу. Тягни одним пальцем, щоб роззирнутися.",
+  "tutorial.touch.look": "Тягни одним пальцем, щоб роззирнутися.",
   "tutorial.touch.pingHow": "Торкнися компаса або проведи по ньому лінію.",
   "tutorial.touch.ratsHow": "Торкнися щура, щоб вибрати його.",
   "tutorial.touch.tunnelHow": "Торкнися сходів униз, потім позначки за дальнім кінцем.",

@@ -331,9 +331,9 @@
       "area": {
         "kind": "rect",
         "x": 430,
-        "y": 40,
+        "y": 10,
         "width": 80,
-        "height": 80
+        "height": 76
       }
     },
     {

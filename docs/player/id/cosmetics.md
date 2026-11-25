@@ -54,9 +54,12 @@ Bingkai lambang adalah garis tipis di sekeliling lambang pada jubah guild-mu. Bi
 
 ## Memakainya
 
-Buka Opsi dan pilih **Kosmetik**. Setiap slot mencantumkan itemnya, masing-masing ditandai dapat
-dipakai atau terkunci, beserta cara mendapatkannya. Pilihanmu langsung berlaku. Pemain lain
-melihatnya mulai dari lobi berikutnya yang kamu masuki.
+Buka Opsi dan pilih **Kosmetik**. Setiap slot berupa satu baris contoh, masing-masing gambar kecil
+itemnya; yang pertama, lingkaran kosong bercoret, berarti tidak memakai apa pun. Contoh yang kamu
+pilih diberi cincin biru. Baris di samping deretan itu (di bawahnya pada ponsel) menyebut nama
+contoh yang kamu tunjuk atau fokuskan, beserta cara mendapatkannya. Contoh yang terkunci tampak
+redup, dengan gembok kecil. Pilihanmu langsung berlaku. Pemain lain melihatnya mulai dari lobi
+berikutnya yang kamu masuki.
 
 ## Melihat kosmetik pemain lain
 

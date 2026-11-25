@@ -53,9 +53,11 @@ Een embleemlijst is een dunne rand rond het embleem op je gildemantel. Hij bedek
 
 ## Ze dragen
 
-Open Opties en kies **Cosmetics**. Elk vak toont zijn items, elk gemarkeerd als draagbaar of
-vergrendeld, met wat het oplevert. Je keuze geldt meteen. Andere spelers zien hem vanaf de
-volgende lobby waar je in gaat.
+Open Opties en kies **Cosmetics**. Elk vak is één rij stalen, elk een klein plaatje van zijn item;
+de eerste, een lege doorgestreepte cirkel, draagt niets. Het gekozen staal heeft een blauwe ring. De
+regel naast de rij (eronder op een telefoon) noemt het staal waar je naar wijst of dat focus heeft,
+en waarmee je het verdient. Een vergrendeld staal is gedimd, met een klein hangslot. Je keuze geldt
+meteen. Andere spelers zien hem vanaf de volgende lobby waar je in gaat.
 
 ## Cosmetics van andere spelers zien
 
