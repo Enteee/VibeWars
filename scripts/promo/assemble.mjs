@@ -69,7 +69,9 @@ const FOE = "0xff7b72";
  * `ui-monospace`, so this is the face its wordmark has on Linux.
  */
 function fontFile() {
-  const found = spawnSync("fc-match", ["-f", "%{file}", "monospace:bold"]).stdout.toString();
+  // Without fc-match, spawnSync reports an error and leaves stdout null.
+  const match = spawnSync("fc-match", ["-f", "%{file}", "monospace:bold"]);
+  const found = match.error === undefined ? match.stdout.toString() : "";
   const file = found === "" ? "/usr/share/fonts/truetype/dejavu/DejaVuSansMono-Bold.ttf" : found;
   if (!fs.existsSync(file)) {
     throw new Error(`no bold monospace font at ${file}: install the dejavu-fonts package`);
