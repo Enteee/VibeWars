@@ -1,9 +1,16 @@
 import { MAX_LIGHTS, type MapLighting } from "@vibewars/game-maps/schema";
 import { describe, expect, it } from "vitest";
 
-import type { MapZone } from "./arena-snapshot.js";
+import type { MapZone, RenderableGroundEffect } from "./arena-snapshot.js";
 import type { RenderableTeleport } from "./flag-objects.js";
-import { ZONE_LIGHT_MAX_RADIUS, teleportLights, withZoneLights, zoneLights } from "./zone-light.js";
+import { FIRE_LIGHT_COLOUR } from "./lighting-model.js";
+import {
+  ZONE_LIGHT_MAX_RADIUS,
+  fireAreaLights,
+  teleportLights,
+  withZoneLights,
+  zoneLights,
+} from "./zone-light.js";
 
 const lava: MapZone = {
   kind: "molten",
@@ -90,8 +97,8 @@ describe("a zone's own light (#3052)", () => {
   });
 
   it("adds them after the map's own, and leaves a map with none as it is", () => {
-    expect(withZoneLights(LIGHTING, [mire], [])).toBe(LIGHTING);
-    const lit = withZoneLights(LIGHTING, [lava], []);
+    expect(withZoneLights(LIGHTING, [mire], [], [])).toBe(LIGHTING);
+    const lit = withZoneLights(LIGHTING, [lava], [], []);
     expect(lit.lights).toHaveLength(1);
     expect(lit.ambient).toBe(LIGHTING.ambient);
   });
@@ -113,9 +120,56 @@ describe("a portal's own light (#3030)", () => {
   });
 
   it("comes after the zones' lights, and stops at MAX_LIGHTS", () => {
-    const lit = withZoneLights(LIGHTING, [lava], [portal("east", true)]);
+    const lit = withZoneLights(LIGHTING, [lava], [portal("east", true)], []);
     expect(lit.lights.map((light) => light.id)).toEqual(["zone-0", "teleport-east"]);
     expect(teleportLights([portal("east", true)], MAX_LIGHTS)).toEqual([]);
-    expect(withZoneLights(LIGHTING, [], [portal("east", false)])).toBe(LIGHTING);
+    expect(withZoneLights(LIGHTING, [], [portal("east", false)], [])).toBe(LIGHTING);
+  });
+});
+
+const fire = (id: number): RenderableGroundEffect => ({
+  id,
+  skillId: "elementalist.fire-storm",
+  position: { x: 300, y: 400 },
+  layer: 1,
+  radius: 40,
+  reach: "foes",
+  owner: "enemy",
+  dashed: true,
+  endsAt: 10,
+  durationSeconds: 10,
+});
+
+describe("a fire area's own light (#4054)", () => {
+  it("burns warm at the area's centre, on its layer, as wide as the area", () => {
+    expect(fireAreaLights([fire(7)], 0)).toEqual([
+      {
+        id: "fire-area-7",
+        position: { x: 300, y: 400 },
+        layer: 1,
+        radius: 40,
+        colour: FIRE_LIGHT_COLOUR,
+        intensity: 0.8,
+        flicker: 0.25,
+      },
+    ]);
+  });
+
+  it("is named a fire's, so it burns as one (ADR-0052)", () => {
+    expect(fireAreaLights([fire(7)], 0)[0]?.id.startsWith("fire-")).toBe(true);
+  });
+
+  it("comes after the portals' lights, and goes dark past MAX_LIGHTS", () => {
+    const lit = withZoneLights(LIGHTING, [lava], [portal("east", true)], [fire(1), fire(2)]);
+    expect(lit.lights.map((light) => light.id)).toEqual([
+      "zone-0",
+      "teleport-east",
+      "fire-area-1",
+      "fire-area-2",
+    ]);
+    expect(fireAreaLights([fire(1), fire(2)], MAX_LIGHTS - 1).map((light) => light.id)).toEqual([
+      "fire-area-1",
+    ]);
+    expect(fireAreaLights([fire(1)], MAX_LIGHTS)).toEqual([]);
   });
 });

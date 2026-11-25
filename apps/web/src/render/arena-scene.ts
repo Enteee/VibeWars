@@ -945,14 +945,16 @@ export class ArenaScene extends Phaser.Scene {
     | { readonly zones: readonly MapZone[]; readonly grounds: readonly (ZoneGround | undefined)[] }
     | undefined;
   /**
-   * The map's lighting with its zones' lights (#3052) and its portals'
-   * (#3030), made when any of them changes: `portals` is which are on.
+   * The map's lighting with its zones' lights (#3052), its portals'
+   * (#3030) and its fire areas' (#4054), made when any of them changes:
+   * `portals` is which are on, `burning` which fire areas burn.
    */
   private zoneLit:
     | {
         readonly lighting: MapLighting;
         readonly zones: readonly MapZone[];
         readonly portals: string;
+        readonly burning: string;
         readonly lit: MapLighting;
       }
     | undefined;
@@ -3539,14 +3541,23 @@ export class ArenaScene extends Phaser.Scene {
     if (lighting === undefined) {
       return this.lightingPass?.allowed(undefined);
     }
-    const { teleports } = this.snapshot;
+    const { teleports, groundEffects } = this.snapshot;
     const portals = teleports.map((teleport) => (teleport.on ? "1" : "0")).join("");
+    const fires = groundEffects.filter((effect) => groundArt(getSkill(effect.skillId)) === "fire");
+    const burning = fires.map((fire) => String(fire.id)).join(",");
     if (
       this.zoneLit?.lighting !== lighting ||
       this.zoneLit.zones !== zones ||
-      this.zoneLit.portals !== portals
+      this.zoneLit.portals !== portals ||
+      this.zoneLit.burning !== burning
     ) {
-      this.zoneLit = { lighting, zones, portals, lit: withZoneLights(lighting, zones, teleports) };
+      this.zoneLit = {
+        lighting,
+        zones,
+        portals,
+        burning,
+        lit: withZoneLights(lighting, zones, teleports, fires),
+      };
     }
     return this.lightingPass?.allowed(this.zoneLit.lit);
   }

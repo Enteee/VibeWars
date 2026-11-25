@@ -2,10 +2,11 @@ import { polygonCentre } from "@vibewars/game-core";
 import { MAX_LIGHTS, type MapLighting } from "@vibewars/game-maps/schema";
 
 import { TELEPORT_MARK_LOOK } from "./arena-palette.js";
-import type { MapZone } from "./arena-snapshot.js";
+import type { MapZone, RenderableGroundEffect } from "./arena-snapshot.js";
 import type { RenderableTeleport } from "./flag-objects.js";
 import type { LightsOf } from "./lighting-pass.js";
 import { shapeOutline } from "./layer-surfaces.js";
+import { FIRE_LIGHT_COLOUR } from "./lighting-model.js";
 import { ZONE_LOOK, zoneCentroid } from "./zone-look.js";
 
 /** A zone light's id: never a torch's or a fire's, so it stands no mark. */
@@ -95,17 +96,46 @@ export function teleportLights(
 }
 
 /**
- * `lighting` with its zones' lights and its portals' after the map's own;
- * itself when they cast none.
+ * A fire area's light (#4054): named `fire-`, a fire's (ADR-0052). The
+ * scene adds it, not the map, so it stands no mark: marks come from the
+ * map's own lights alone.
+ */
+const FIRE_AREA_LIGHT_PREFIX = "fire-area-";
+const FIRE_AREA_LIGHT = { intensity: 0.8, flicker: 0.25 };
+
+/**
+ * The warm light each of `fires` casts (#4054): at its centre, on its
+ * layer, as wide as the area. Render only, as a zone's; past `MAX_LIGHTS`
+ * with `lit` already lit, the rest go dark, the last in order first.
+ */
+export function fireAreaLights(
+  fires: readonly RenderableGroundEffect[],
+  lit: number,
+): readonly LightsOf[] {
+  return fires.slice(0, Math.max(0, MAX_LIGHTS - lit)).map((fire) => ({
+    id: `${FIRE_AREA_LIGHT_PREFIX}${String(fire.id)}`,
+    position: fire.position,
+    layer: fire.layer,
+    radius: fire.radius,
+    colour: FIRE_LIGHT_COLOUR,
+    intensity: FIRE_AREA_LIGHT.intensity,
+    flicker: FIRE_AREA_LIGHT.flicker,
+  }));
+}
+/**
+ * `lighting` with its zones' lights, its portals' and its fire areas'
+ * after the map's own; itself when they cast none.
  */
 export function withZoneLights(
   lighting: MapLighting,
   zones: readonly MapZone[],
   teleports: readonly RenderableTeleport[],
+  fires: readonly RenderableGroundEffect[],
 ): MapLighting {
   const lights = zoneLights(zones, lighting.lights.length);
   const portals = teleportLights(teleports, lighting.lights.length + lights.length);
-  return lights.length + portals.length === 0
+  const burning = fireAreaLights(fires, lighting.lights.length + lights.length + portals.length);
+  return lights.length + portals.length + burning.length === 0
     ? lighting
-    : { ...lighting, lights: [...lighting.lights, ...lights, ...portals] };
+    : { ...lighting, lights: [...lighting.lights, ...lights, ...portals, ...burning] };
 }
