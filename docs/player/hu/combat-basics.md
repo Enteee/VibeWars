@@ -4,7 +4,7 @@
 
 480 **Életerővel** és 20 **Energiával** kezdesz, és a páncélod Energiát ad
 hozzá: Warriornak semmit, Rangernek, Assassinnak vagy Dervishnek 5-öt,
-mindenki másnak 10-et. A varázsbot további 10-et ad, amíg a kezedben tartod.
+mindenki másnak 10-et. A Dervish páncélja 25 Életerőt is ad. A varázsbot további 10-et ad, amíg a kezedben tartod.
 A rúnák és a morál mindkettőt módosítják. A készségek Energiába kerülnek, és az magától
 töltődik vissza, lassan. A ![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior** és a ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** nyeri vissza a
 leglassabban, a ![Ranger](../../../apps/web/public/icons/profession/ranger.svg) **Ranger** kicsit gyorsabban, mindenki más a leggyorsabban.

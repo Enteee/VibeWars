@@ -3,7 +3,7 @@
 ## الصحة والطاقة
 
 تبدأ بـ 480 **صحة** و20 **طاقة**، ودرعك يضيف إلى الطاقة: لا شيء للـ Warrior،
-و5 للـ Ranger أو Assassin أو Dervish، و10 لكل من سواهم. ويضيف الـ Staff
+و5 للـ Ranger أو Assassin أو Dervish، و10 لكل من سواهم. ودرع الـ Dervish يضيف أيضًا 25 صحة. ويضيف الـ Staff
 10 أخرى ما دمت تحمله. والرونات والمعنويات تغيّر كلتيهما.
 تكلّف المهارات طاقة، وهي تعود من تلقاء نفسها ببطء. يستعيدها ![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior**
 و![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** أبطأ من غيرهما، و![Ranger](../../../apps/web/public/icons/profession/ranger.svg) **Ranger** أسرع قليلًا، والجميع غيرهم أسرع.

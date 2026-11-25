@@ -4,7 +4,7 @@
 
 Kamu mulai dengan 480 **Darah** dan 20 **Energi**, dan armormu menambah Energi:
 tidak ada untuk Warrior, 5 untuk Ranger, Assassin, atau Dervish, 10 untuk yang
-lain. Staff menambah 10 lagi selama kamu memegangnya. Rune dan moral mengubah
+lain. Armor Dervish juga menambah 25 Darah. Staff menambah 10 lagi selama kamu memegangnya. Rune dan moral mengubah
 keduanya. Skill memakan Energi, dan Energi pulih dengan sendirinya, perlahan. ![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior**
 dan ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** memulihkannya paling lambat, ![Ranger](../../../apps/web/public/icons/profession/ranger.svg) **Ranger** sedikit lebih cepat, sisanya
 paling cepat.

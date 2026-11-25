@@ -4,7 +4,7 @@
 
 Du starter med 480 **Liv** og 20 **Energi**, og din rustning lægger energi
 oveni: intet for en Warrior, 5 for en Ranger, en Assassin eller en Dervish,
-10 for alle andre. En stav giver 10 mere, mens du holder den. Runer og moral
+10 for alle andre. En Dervish' rustning giver også 25 Liv. En stav giver 10 mere, mens du holder den. Runer og moral
 ændrer begge. Evner koster energi, og den kommer langsomt tilbage af sig selv.
 ![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warriors** og ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragons** får den langsomst tilbage, ![Ranger](../../../apps/web/public/icons/profession/ranger.svg) **Rangers** lidt hurtigere,
 alle andre hurtigst.

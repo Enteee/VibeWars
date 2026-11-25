@@ -4,7 +4,7 @@
 
 480 **Can** ve 20 **Enerji** ile başlarsın ve zırhın Enerji ekler:
 Warrior için hiç, Ranger, Assassin ya da Dervish için 5, diğer herkes
-için 10. Asa, elinde tuttuğun sürece 10 daha ekler. Rünler ve moral ikisini de
+için 10. Dervish'in zırhı ayrıca 25 Can ekler. Asa, elinde tuttuğun sürece 10 daha ekler. Rünler ve moral ikisini de
 değiştirir. Beceriler Enerji harcar ve Enerji kendiliğinden, yavaşça
 geri gelir. ![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior'lar** ve ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon'lar** onu en yavaş, ![Ranger](../../../apps/web/public/icons/profession/ranger.svg) **Ranger'lar** biraz
 daha hızlı, diğer herkes en hızlı geri kazanır.

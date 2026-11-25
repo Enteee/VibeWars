@@ -2,7 +2,7 @@
 
 ## Zdraví a energie
 
-Začínáš s 480 **zdraví** a 20 **energie** a zbroj ti energii přidává: Válečníkovi nic, Hraničáři, Zabijákovi nebo Dervišovi 5, všem ostatním 10. Hůl přidá dalších 10, dokud ji držíš. Runy a morálka mění obojí. Dovednosti stojí energii a ta se sama pomalu vrací. ![Válečník](../../../apps/web/public/icons/profession/warrior.svg) **Válečník** a ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** ji získávají nejpomaleji, ![Hraničář](../../../apps/web/public/icons/profession/ranger.svg) **Hraničář** o něco rychleji, všichni ostatní nejrychleji.
+Začínáš s 480 **zdraví** a 20 **energie** a zbroj ti energii přidává: Válečníkovi nic, Hraničáři, Zabijákovi nebo Dervišovi 5, všem ostatním 10. Zbroj Derviše přidává i 25 zdraví. Hůl přidá dalších 10, dokud ji držíš. Runy a morálka mění obojí. Dovednosti stojí energii a ta se sama pomalu vrací. ![Válečník](../../../apps/web/public/icons/profession/warrior.svg) **Válečník** a ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** ji získávají nejpomaleji, ![Hraničář](../../../apps/web/public/icons/profession/ranger.svg) **Hraničář** o něco rychleji, všichni ostatní nejrychleji.
 
 Šipky na tvých ukazatelích jsou **pipy**: každá znamená zdraví nebo energii, která se každou sekundu trochu vrací nebo ubývá. ![Krvácení](../../../apps/web/public/icons/status/bleeding.svg) **Krvácení**, ![Hoření](../../../apps/web/public/icons/status/burning.svg) **Hoření** a ![Otrava](../../../apps/web/public/icons/status/poison.svg) **Otrava** ubírají zdraví; Regeneration a léčivá kouzla ho přidávají. Když jsi 5 sekund mimo boj, začne se ti zdraví vracet samo, tím rychleji, čím déle mimo boj zůstaneš.
 

@@ -4,7 +4,7 @@
 
 Você começa com 480 de **vida** e 20 de **energia**, e sua armadura soma
 energia: nada para um Guerreiro, 5 para um Patrulheiro, um Assassino ou um
-Dervixe, 10 para todos os outros. Um cajado soma mais 10 enquanto você o
+Dervixe, 10 para todos os outros. A armadura de um Dervixe também soma 25 de vida. Um cajado soma mais 10 enquanto você o
 segura. Runas e moral mudam as duas. Habilidades custam energia, e ela volta sozinha, devagar.
 ![Guerreiro](../../../apps/web/public/icons/profession/warrior.svg) **Guerreiros** e ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragons** recuperam mais devagar, ![Patrulheiro](../../../apps/web/public/icons/profession/ranger.svg) **Patrulheiros** um pouco mais rápido,
 e todos os outros mais rápido ainda.
