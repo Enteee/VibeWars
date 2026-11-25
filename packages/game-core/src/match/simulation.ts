@@ -894,6 +894,11 @@ export interface Participant {
   interact: { readonly targetId: string; unreachableSeconds: number } | undefined;
   targetId: string | undefined;
   respawnInSeconds: number;
+  /**
+   * The tick of the step it last died in (#4075): that step does not
+   * count down its respawn, so every cause of death lies as long.
+   */
+  diedAtTick: number;
   /** The match second from which it may take a teleport again (#3030). */
   teleportReadyAt: number;
   /**
@@ -1163,6 +1168,9 @@ function degenerationSources(combatant: Combatant): {
     sources.size === 1 ? [...sources][0] : undefined;
   return { draining: only(draining), healing: only(healing) };
 }
+
+/** How far short of zero a respawn countdown may stop and still rise: dt sums drift (#4075). */
+const RESPAWN_EPSILON = 1e-9;
 
 /** How far short of its interval a swing or a flight may be and still land; see `#advanceAttack`. */
 const SWING_EPSILON = 1e-9;
@@ -2211,6 +2219,7 @@ export class MatchSimulation {
       pendingSkill: undefined,
       targetId: undefined,
       respawnInSeconds: 0,
+      diedAtTick: 0,
       spec,
       behaviour: spec.behaviour,
       cursor: createCursor(),
@@ -4522,8 +4531,14 @@ export class MatchSimulation {
       recoverOvercast(record.combatant, this.#ruleset.resources.overcastRecoveryPerSecond, dt);
 
       if (record.combatant.dead) {
+        // The step it died in is not one it lies dead through (#4075),
+        // whether a hit before this loop or a request since the last step
+        // killed it: a request carries the last step's tick.
+        if (record.diedAtTick === this.#tick) {
+          continue;
+        }
         record.respawnInSeconds -= dt;
-        if (record.respawnInSeconds <= 0) {
+        if (record.respawnInSeconds <= RESPAWN_EPSILON) {
           this.#reset(record, "respawn");
         }
         continue;
@@ -9910,6 +9925,7 @@ export class MatchSimulation {
           victim.combatant.statuses.active.some(({ id }) => getStatusDefinition(id).noDeathPenalty);
         victim.combatant.statuses.endAll();
         victim.armedAttack = undefined;
+        victim.diedAtTick = this.#tick;
         this.#clearChainMarks(victim);
         victim.combatant.cast.clearOverrides();
         dropEndedCopyPools(victim.combatant);
