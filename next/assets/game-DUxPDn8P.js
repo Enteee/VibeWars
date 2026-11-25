@@ -1,2 +1,0 @@
-import{$ as e}from"./main-CfXW8d96.js";var t=e;export{t as default};
-//# sourceMappingURL=game-DUxPDn8P.js.map
