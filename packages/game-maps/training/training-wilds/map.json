@@ -840,7 +840,7 @@
   "lighting": {
     "ambient": {
       "colour": 8357544,
-      "intensity": 0.35
+      "intensity": 0.42
     },
     "indoorAmbient": {
       "colour": 5924488,
@@ -857,7 +857,7 @@
     ],
     "sun": {
       "directionDeg": 315,
-      "elevationDeg": 25,
+      "elevationDeg": 35,
       "colour": 16758906,
       "intensity": 0.5
     },
@@ -929,9 +929,9 @@
           "y": 600
         },
         "layer": 0,
-        "radius": 150,
+        "radius": 180,
         "colour": 16748608,
-        "intensity": 0.7,
+        "intensity": 0.9,
         "flicker": 0.3
       },
       {
@@ -943,7 +943,7 @@
         "layer": 0,
         "radius": 150,
         "colour": 11593968,
-        "intensity": 0.5,
+        "intensity": 0.6,
         "flicker": 0
       }
     ]
