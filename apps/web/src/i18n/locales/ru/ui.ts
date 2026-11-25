@@ -434,6 +434,7 @@ export default {
   "cosmetics.item.trailStarlight": "Звёздный след",
   "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Закрыто",
+  "cosmetics.previewing": "Предпросмотр: {name}",
   "cosmetics.none": "Нет",
   "cosmetics.note":
     "Только для вида: никакая косметика не влияет на игру. Зарабатывается рейтинговыми победами в публичной таблице лидеров и общая для всех твоих персонажей.",

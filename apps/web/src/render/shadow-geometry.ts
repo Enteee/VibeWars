@@ -1,11 +1,10 @@
 import { pointInPolygon, type Vec2 } from "@vibewars/game-core";
-import type { MapLighting } from "@vibewars/game-maps/schema";
+import { ELEVATION_STEP, type MapLighting } from "@vibewars/game-maps/schema";
 
 import { DECK_SHADOW, DECK_TINT, OVERHANG_SHADE } from "./arena-palette.js";
 import type { MapStructure, RenderableShape, RenderableWall } from "./arena-snapshot.js";
 import { shapeOutline } from "./layer-surfaces.js";
 import { isIndoors } from "./lighting-model.js";
-import { ELEVATION_STEP } from "./render-order.js";
 
 /**
  * The hard shadows of a lit arena (#2988, ADR-0052), as polygons whose

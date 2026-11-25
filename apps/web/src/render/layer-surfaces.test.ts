@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { pointInPolygon, type Uphill, type Vec2 } from "@vibewars/game-core";
+import { ELEVATION_STEP } from "@vibewars/game-maps/schema";
 
 import {
   actorAtPoint,
@@ -47,7 +48,6 @@ import {
 import { mapStructure } from "../net/maps.js";
 
 import { atRest } from "./pick.test-support.js";
-import { ELEVATION_STEP } from "./render-order.js";
 
 const bridge = { kind: "rect", x: 100, y: 100, width: 200, height: 100 } as const;
 const BRIDGE: MapStructure = {

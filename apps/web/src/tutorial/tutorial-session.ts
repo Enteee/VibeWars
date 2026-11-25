@@ -16,6 +16,7 @@ import { t } from "../i18n/index.js";
 import { loadKeymap } from "../input/keymap-preference.js";
 import { isTouchOnly } from "../input/touch-only.js";
 import { startMatchView, type MatchView } from "../match-view.js";
+import type { OptionsOwner } from "../ui/options-sections.js";
 import type { GoalMark } from "../render/goal-mark.js";
 import type { MistGateProp, ParasolProp, SleeperProp } from "../render/tutorial-props.js";
 import {
@@ -153,8 +154,8 @@ export interface TutorialSessionOptions {
   readonly teamSize: number;
   /** Drawn by the caller for each run (Q69), so a test can pin it. */
   readonly tutorProfession: ProfessionId;
-  /** The player key's, for the Options window over it (#3235). */
-  readonly signet: number;
+  /** Whose Options window it is, over it (#3235, #3989). */
+  readonly owner: OptionsOwner;
   /** The index of the station it starts at: 0 but in an e2e build's seeded start (#3383). */
   readonly firstStation: number;
   /** Once, as it ends by itself, by Skip tutorial or by Leave; never after `stop`. */
@@ -390,7 +391,7 @@ export async function startTutorialSession(
           },
         },
         { kind: "play", connect: () => Promise.resolve(connection), ranked: false },
-        options.signet,
+        options.owner,
       );
     }
     return startMatchView(
@@ -422,7 +423,7 @@ export async function startTutorialSession(
           },
         },
       },
-      options.signet,
+      options.owner,
     );
   };
 

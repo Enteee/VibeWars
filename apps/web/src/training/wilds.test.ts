@@ -14,10 +14,10 @@ import {
   shapeVertices,
 } from "@vibewars/game-maps/geometry";
 import { matchLayers, matchZones } from "@vibewars/game-maps/layers";
+import { ELEVATION_STEP } from "@vibewars/game-maps/schema";
 import { describe, expect, it } from "vitest";
 
 import { shapeOutline } from "../render/layer-surfaces.js";
-import { ELEVATION_STEP } from "../render/render-order.js";
 import { newCharacter } from "../ui/build-editor.js";
 import { TRAINING_MAPS } from "./maps.js";
 import { SELF_ID, setupScenario } from "./scenario-setup.js";

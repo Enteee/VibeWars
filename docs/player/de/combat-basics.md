@@ -2,8 +2,10 @@
 
 ## Leben und Energie
 
-Du startest mit 500 **Leben** und 50 **Energie**; Runen und Moral verändern
-beides. Skills kosten Energie, und sie kommt langsam von selbst zurück. ![Krieger](../../../apps/web/public/icons/profession/warrior.svg) **Krieger**
+Du startest mit 500 **Leben** und 20 **Energie**, und deine Rüstung gibt Energie dazu:
+nichts für einen Krieger, 5 für einen Waldläufer, eine Assassine oder einen Derwisch,
+10 für alle anderen. Ein Staff gibt 10 mehr, solange du ihn hältst. Runen und Moral
+verändern beides. Skills kosten Energie, und sie kommt langsam von selbst zurück. ![Krieger](../../../apps/web/public/icons/profession/warrior.svg) **Krieger**
 und ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** regenerieren sie am langsamsten, ![Waldläufer](../../../apps/web/public/icons/profession/ranger.svg) **Waldläufer** etwas schneller, alle anderen
 am schnellsten.
 

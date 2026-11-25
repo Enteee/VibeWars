@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { ELEVATION_STEP } from "@vibewars/game-maps/schema";
+
 import { BIOME } from "./arena-palette.js";
 import {
   OVERHANG_FADED_ALPHA,
@@ -11,7 +13,6 @@ import {
   type OverhangCover,
 } from "./overhang-art.js";
 import { recordingGraphics } from "./recording-graphics.js";
-import { ELEVATION_STEP } from "./render-order.js";
 
 /** An awning of layer 1 over 100..200 × 100..200, on a map whose ground is 0. */
 const AWNING: OverhangCover = {

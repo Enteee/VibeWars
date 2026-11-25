@@ -42,6 +42,8 @@ export interface MatchMusicOptions {
   readonly screen: "training" | "match";
   /** Training only: the depth of the editor it sits in (#2020); a match passes `null`. */
   readonly menuDepth: 0 | 1 | null;
+  /** Training only: the menu visit's song, which it keeps (#3996); a match passes `null`. */
+  readonly menuTrackId: string | null;
   /** Asked on every snapshot, so a mode the player changes mid-match applies at once. */
   readonly mode: () => MusicMode;
   readonly tracks: readonly TrackChoice[];
@@ -67,7 +69,13 @@ function fromSnapshot(
   teamSize: number | null,
 ): Omit<
   MusicInput,
-  "mapId" | "matchSeed" | "menuDepth" | "hitsDealtLast5s" | "hitsTakenLast5s" | "nowMs"
+  | "mapId"
+  | "matchSeed"
+  | "menuDepth"
+  | "menuTrackId"
+  | "hitsDealtLast5s"
+  | "hitsTakenLast5s"
+  | "nowMs"
 > {
   const self = snapshot.players.find((p) => p.sessionId === snapshot.selfSessionId);
   const finished = snapshot.phase === "finished";
@@ -205,7 +213,16 @@ function sameMusic(a: MusicState, b: MusicState): boolean {
 export function attachMatchMusic(
   /** A seat, or a watcher's match (#480). */
   connection: Pick<MatchConnection, "map" | "selfSessionId" | "onCombat">,
-  { screen, menuDepth, mode, tracks, onChange, onSting, now = Date.now }: MatchMusicOptions,
+  {
+    screen,
+    menuDepth,
+    menuTrackId,
+    mode,
+    tracks,
+    onChange,
+    onSting,
+    now = Date.now,
+  }: MatchMusicOptions,
 ): MatchMusic {
   const mapId = connection.map.id;
   // The Training Ground is a menu (#2020): Shuffle seeds it as one, by context.
@@ -277,6 +294,7 @@ export function attachMatchMusic(
         mapId,
         matchSeed,
         menuDepth,
+        menuTrackId,
         hitsDealtLast5s: recent(dealt, at),
         hitsTakenLast5s: recent(taken, at),
         nowMs: at,

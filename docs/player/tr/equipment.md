@@ -15,6 +15,8 @@ F4'e**). Değişim, içinde olduğun yapımın ya da savuruşun bitmesini
 bekler; hareket etmek ya da Esc hemen değiştirir. Bekleme süresi yoktur.
 Saldırıların, belirli bir silah gerektiren becerilerin ve en yüksek
 Enerjin elindeki seti izler.
+Asanın kendi 10 Enerjisi vardır, odağın 6, ya da gereksinimini
+karşıladığında 12.
 
 Bir silah, niteliğinde 9. seviye ister: altında hasarının üçte biriyle
 vurur ve editör bunu kırmızıyla söyler. ![Kılıç](../../../apps/web/public/icons/weapon/sword.svg) **Kılıç** her zaman

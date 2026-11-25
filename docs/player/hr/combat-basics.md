@@ -2,8 +2,9 @@
 
 ## Zdravlje i energija
 
-Počinješ s 500 **zdravlja** i 50 **energije**; rune i moral mijenjaju
-oboje. Vještine troše energiju, a ona se vraća sama od sebe, polako. ![Ratnik](../../../apps/web/public/icons/profession/warrior.svg) **Ratnici**
+Počinješ s 500 **zdravlja** i 20 **energije**, a oklop ti dodaje energiju:
+Ratniku ništa, Lovcu, Asasinu ili Dervišu 5, svima ostalima 10. Staff dodaje
+još 10 dok ga držiš. Rune i moral mijenjaju oboje. Vještine troše energiju, a ona se vraća sama od sebe, polako. ![Ratnik](../../../apps/web/public/icons/profession/warrior.svg) **Ratnici**
 i ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragoni** obnavljaju je najsporije, ![Lovac](../../../apps/web/public/icons/profession/ranger.svg) **Lovci** malo brže, svi ostali
 najbrže.
 

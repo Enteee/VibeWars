@@ -2,8 +2,9 @@
 
 ## Zdravie a energia
 
-Začínaš s 500 **zdravia** a 50 **energie**; runy a morálka menia obe
-hodnoty. Schopnosti stoja energiu a tá sa pomaly vracia sama. ![Bojovník](../../../apps/web/public/icons/profession/warrior.svg) **Bojovníci**
+Začínaš s 500 **zdravia** a 20 **energie** a brnenie ti pridáva energiu:
+Bojovníkovi nič, Hraničiarovi, Vrahovi alebo Dervišovi 5, všetkým ostatným 10.
+Palica pridá ďalších 10, kým ju držíš. Runy a morálka menia obe hodnoty. Schopnosti stoja energiu a tá sa pomaly vracia sama. ![Bojovník](../../../apps/web/public/icons/profession/warrior.svg) **Bojovníci**
 a ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragoni** ju získavajú najpomalšie, ![Hraničiar](../../../apps/web/public/icons/profession/ranger.svg) **Hraničiari** o niečo rýchlejšie, všetci
 ostatní najrýchlejšie.
 

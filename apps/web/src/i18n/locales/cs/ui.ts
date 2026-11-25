@@ -434,6 +434,7 @@ export default {
   "cosmetics.item.trailStarlight": "Hvězdná stopa",
   "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Zamčeno",
+  "cosmetics.previewing": "Náhled: {name}",
   "cosmetics.none": "Žádné",
   "cosmetics.note":
     "Čistě na ozdobu: žádná kosmetika nemění, jak se hraje. Získává se hodnocenými výhrami ve veřejném žebříčku a sdílí ji všechny tvé postavy.",

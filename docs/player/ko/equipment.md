@@ -14,6 +14,8 @@
 있는 시전이나 휘두르기가 끝날 때까지 기다려요. 이동하거나 Esc를 누르면 바로
 바뀌어요. 쿨다운은 없어요. 공격, 특정 무기가 필요한 스킬, 최대 에너지는 모두 손에
 든 세트를 따라가요.
+Staff는 자체로 에너지 10을, Focus는 6을 가지고 있고, 요구 조건을 채우면 12가
+돼요.
 
 무기는 그 속성이 랭크 9 이상이어야 해요. 그보다 낮으면 피해가 3분의 1만 들어가고,
 편집기가 빨간색으로 알려 줘요. ![Sword](../../../apps/web/public/icons/weapon/sword.svg) **Sword**는 항상 Swordsmanship이지만, ![Staff](../../../apps/web/public/icons/weapon/staff.svg) **Staff**, ![Wand](../../../apps/web/public/icons/weapon/wand.svg) **Wand**,

@@ -61,6 +61,8 @@ enfocas, y lo que la consigue. Una muestra bloqueada aparece atenuada, con un pe
 elección se aplica al instante. Los demás jugadores la ven a partir del siguiente lobby al que te
 unas.
 
+Sobre las filas, tu personaje lleva tu aspecto y se queda quieto, camina y golpea, para que el aura, el rastro y la estela del arma se vean en movimiento. Mantén pulsada una muestra para probártela, aunque esté bloqueada: la línea dice qué estás previsualizando y, mientras esté bloqueada, qué la consigue. Suelta sobre un objeto conseguido para llevarlo. Suelta sobre uno bloqueado, o desliza fuera de la muestra, y no cambia nada. Con teclado, mantén Espacio sobre una muestra.
+
 ## Ver los cosméticos de otros jugadores
 
 Los demás jugadores solo ven tus cosméticos si su copia de la clasificación muestra que los

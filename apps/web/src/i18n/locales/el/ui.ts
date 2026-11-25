@@ -412,6 +412,7 @@ export default {
   "cosmetics.item.trailStarlight": "Ίχνος αστροφεγγιάς",
   "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Κλειδωμένο",
+  "cosmetics.previewing": "Προεπισκόπηση: {name}",
   "cosmetics.none": "Κανένα",
   "cosmetics.note":
     "Καθαρά για την εμφάνιση: κανένα διακοσμητικό δεν αλλάζει το παιχνίδι. Κερδίζονται με βαθμολογημένες νίκες στον δημόσιο πίνακα κατάταξης και ισχύουν για όλους τους χαρακτήρες σου.",

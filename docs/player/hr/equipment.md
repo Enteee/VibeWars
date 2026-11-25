@@ -14,6 +14,7 @@ U meču mijenjaj komplete s **1 do 4** (**F1 do F4** u Klasičnim tipkama).
 Zamjena čeka da završi bacanje ili zamah u tijeku; kretanje ili Esc
 mijenjaju odmah. Nema vremena hlađenja. Tvoji napadi, vještine kojima treba
 određeno oružje i tvoja najveća energija slijede komplet u ruci.
+Staff ima 10 vlastite energije, a Focus 6, ili 12 kad ispuniš njegov uvjet.
 
 Oružje traži razinu 9 u svom atributu: ispod toga pogađa za trećinu
 svoje štete, a uređivač to kaže crveno. ![Sword](../../../apps/web/public/icons/weapon/sword.svg) **Sword** je uvijek

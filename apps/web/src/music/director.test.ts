@@ -3,18 +3,21 @@ import { describe, expect, it } from "vitest";
 import {
   FALL_STEP_MS,
   directMusic,
+  pickMenuTrack,
   targetIntensity,
   type MusicInput,
   type MusicMode,
   type MusicState,
   type TrackChoice,
 } from "./director.js";
-import { MAP_TRACKS } from "./fixed-tracks.js";
+import { MAP_TRACKS, MENU_TRACKS } from "./fixed-tracks.js";
 import { TRACKS as SHIPPED } from "./tracks/index.js";
 
 /** The epic's example tracks (#366 §3.5), with plausible moods, primary first. */
 const TRACKS: readonly TrackChoice[] = [
   { id: "first-light", moods: ["atmospheric", "adventurous"], layers: 2 },
+  { id: "quiet-hearth", moods: ["atmospheric", "melancholy"], layers: 2 },
+  { id: "still-water", moods: ["atmospheric", "mysterious"], layers: 2 },
   { id: "ashen-fields", moods: ["melancholy", "atmospheric"], layers: 4 },
   { id: "northern-pass", moods: ["adventurous"], layers: 4 },
   { id: "hall-of-champions", moods: ["epic", "triumphant"], layers: 4 },
@@ -31,6 +34,7 @@ function input(over: Partial<MusicInput> = {}): MusicInput {
   return {
     screen: "match",
     menuDepth: null,
+    menuTrackId: null,
     mapId: "guild-hall-isle",
     matchSeed: "guild-hall-isle:1",
     result: null,
@@ -73,29 +77,33 @@ function calmFrom(start: Partial<MusicInput>, times: readonly number[]): number[
 }
 
 describe("directMusic: track choice", () => {
-  it("plays first-light on every menu, as loud as it is deep (#1993)", () => {
+  it("plays the visit's song on every menu, as loud as it is deep (#1993, #3996)", () => {
     for (const menuDepth of [0, 1] as const) {
-      const [state] = run([{ screen: "menu", menuDepth, mapId: null, matchSeed: null }]);
-      expect(state).toMatchObject({ trackId: "first-light", intensity: menuDepth });
+      const [state] = run([
+        { screen: "menu", menuDepth, menuTrackId: "still-water", mapId: null, matchSeed: null },
+      ]);
+      expect(state).toMatchObject({ trackId: "still-water", intensity: menuDepth });
     }
   });
 
-  it("keeps first-light from a menu into the Training Ground and back (#2020)", () => {
+  it("keeps the visit's song from a menu into the Training Ground and back (#2020)", () => {
+    const visit: Partial<MusicInput> = { menuTrackId: "quiet-hearth" };
     const states = run([
-      { screen: "menu", menuDepth: 1, mapId: null, matchSeed: null },
+      { screen: "menu", menuDepth: 1, mapId: null, matchSeed: null, ...visit },
       {
         screen: "training",
         menuDepth: 1,
+        ...visit,
         mapId: "training-hall",
         matchSeed: "training-hall:1",
         ...FIGHTING,
       },
-      { screen: "menu", menuDepth: 1, mapId: null, matchSeed: null },
+      { screen: "menu", menuDepth: 1, mapId: null, matchSeed: null, ...visit },
     ]);
     expect(states.map((state) => [state.context, state.trackId])).toEqual([
-      ["menu", "first-light"],
-      ["menu", "first-light"],
-      ["menu", "first-light"],
+      ["menu", "quiet-hearth"],
+      ["menu", "quiet-hearth"],
+      ["menu", "quiet-hearth"],
     ]);
   });
 
@@ -324,6 +332,7 @@ describe("directMusic: menus (#1993)", () => {
   const menu = (menuDepth: 0 | 1, nowMs: number): Partial<MusicInput> => ({
     screen: "menu",
     menuDepth,
+    menuTrackId: "first-light",
     mapId: null,
     matchSeed: null,
     nowMs,
@@ -341,5 +350,36 @@ describe("directMusic: menus (#1993)", () => {
     expect(run([menu(1, 0)], pinned)[0]).toMatchObject({ trackId: "ember-deep", intensity: 1 });
     const single: TrackChoice[] = [{ id: "first-light", moods: ["atmospheric"], layers: 1 }];
     expect(run([menu(1, 0)], AUTO, single)[0]?.intensity).toBe(0);
+  });
+});
+
+describe("pickMenuTrack (#3996)", () => {
+  it("never picks the last visit's song, over many visits", () => {
+    let seed = 7;
+    const random = (): number => {
+      seed = (seed * 16807) % 2147483647;
+      return seed / 2147483647;
+    };
+    let previous: string | null = null;
+    const heard = new Set<string>();
+    for (let visit = 0; visit < 60; visit++) {
+      const next = pickMenuTrack(previous, random);
+      expect(next).not.toBeNull();
+      expect(next).not.toBe(previous);
+      heard.add(next ?? "");
+      previous = next;
+    }
+    expect(heard).toEqual(new Set(MENU_TRACKS));
+  });
+
+  it("picks from the other songs by `random`, any of them on a first visit", () => {
+    expect(pickMenuTrack(null, () => 0)).toBe(MENU_TRACKS[0]);
+    expect(pickMenuTrack("first-light", () => 0)).toBe("quiet-hearth");
+    expect(pickMenuTrack("first-light", () => 0.99)).toBe("lantern-road");
+    expect(pickMenuTrack("quiet-hearth", () => 0.5)).toBe("still-water");
+  });
+
+  it("always picks the one song when only one is configured", () => {
+    expect(pickMenuTrack("first-light", () => 0.5, ["first-light"])).toBe("first-light");
   });
 });

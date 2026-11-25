@@ -1591,7 +1591,8 @@ describe("Energy Storage (#532)", () => {
     ).weaponSets[0].maxEnergy;
   }
 
-  const base = MINIMAL_GW_INSPIRED_PVP_V1.combat.baseEnergy;
+  // 20, the Elementalist armor's 10 and the staff's 10 (#3986).
+  const base = 40;
 
   it("adds 3 maximum energy a rank: +36 at 12, nothing at 0", () => {
     expect(maxEnergyAt(0)).toBe(base);
@@ -1610,6 +1611,52 @@ describe("Energy Storage (#532)", () => {
   it("adds to Rune of Attunement, neither replacing the other", () => {
     const attunement = { kind: "universal", runeId: "attunement", tier: "minor" } as const;
     expect(maxEnergyAt(12, attunement)).toBe(base + 36 + 2);
+  });
+});
+
+describe("the energy pool is GW1's, per profession (#3986)", () => {
+  const SWORD_SET: WeaponSet = {
+    mainHand: { weaponId: "sword", requirementAttributeId: null, upgrades: NO_UPGRADES },
+    offHand: null,
+  };
+  const STAFF_SET: WeaponSet = {
+    mainHand: { weaponId: "staff", requirementAttributeId: null, upgrades: NO_UPGRADES },
+    offHand: null,
+  };
+  function pools(
+    primaryProfession: ProfessionId,
+    weaponSets: BuildEquipment["weaponSets"],
+    allocatedRanks: ReadonlyMap<string, number> = new Map(),
+  ): (number | undefined)[] {
+    return resolveLoadout(
+      {
+        primaryProfession,
+        secondaryProfession: undefined,
+        allocatedRanks,
+        equipment: { weaponSets, armor: bareArmorSet() },
+      },
+      MINIMAL_GW_INSPIRED_PVP_V1.combat,
+    ).weaponSets.map((set) => set?.maxEnergy);
+  }
+
+  it("starts from 20 and adds the armor's: Warrior 0, Ranger and Assassin 5, Monk and Paragon 10", () => {
+    const bare = (profession: ProfessionId) => pools(profession, [SWORD_SET, null, null, null])[0];
+    expect(bare("warrior")).toBe(20);
+    expect(bare("ranger")).toBe(25);
+    expect(bare("assassin")).toBe(25);
+    expect(bare("dervish")).toBe(25);
+    expect(bare("monk")).toBe(30);
+    expect(bare("paragon")).toBe(30);
+  });
+
+  it("a staff adds 10 while held: an Elementalist at Energy Storage 12 has 76, 66 on a sword", () => {
+    const [staff, sword] = pools(
+      "elementalist",
+      [STAFF_SET, SWORD_SET, null, null],
+      new Map([["elementalist.energy-storage", 12]]),
+    );
+    expect(staff).toBe(76);
+    expect(sword).toBe(66);
   });
 });
 
@@ -1748,7 +1795,8 @@ describe("weapon sets (#489, ADR-0036)", () => {
     });
     const [focus, staff, empty, again] = caster.weaponSets;
     expect(empty).toBeNull();
-    expect(focus.maxEnergy).toBe((staff?.maxEnergy ?? 0) + 12);
+    // The focus's +12 against the staff's inherent +10 (#3986).
+    expect(focus.maxEnergy).toBe((staff?.maxEnergy ?? 0) + 2);
     expect(again).toEqual(focus);
     // Superior: +3, counted once however many sets or runes.
     expect(caster.attributeRanks.get("elementalist.fire-magic")).toBe(12);

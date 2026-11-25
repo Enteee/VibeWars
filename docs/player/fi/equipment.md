@@ -15,6 +15,8 @@ Ottelussa vaihda sarjaa näppäimillä **1–4** (Klassinen-näppäimillä
 päättyy; liikkuminen tai Esc vaihtaa heti. Jäähdytysaikaa ei ole.
 Hyökkäyksesi, tiettyä asetta vaativat taidot ja enimmäisenergiasi
 seuraavat kaikki kädessä olevaa sarjaa.
+Sauvassa on 10 omaa energiaa, ja fokuksessa 6, tai 12, kun täytät sen
+vaatimuksen.
 
 Ase vaatii ominaisuudessaan tason 9: sen alapuolella se osuu kolmasosalla
 vahingostaan, ja editori kertoo sen punaisella. ![Miekka](../../../apps/web/public/icons/weapon/sword.svg) **Miekka** on aina

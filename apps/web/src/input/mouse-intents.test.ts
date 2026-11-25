@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { vec2 } from "@vibewars/game-core";
+import { ELEVATION_STEP } from "@vibewars/game-maps/schema";
 import type { MatchSnapshot, PlayerSnapshot } from "@vibewars/game-session";
 
 import {
@@ -8,7 +9,6 @@ import {
   type RenderableActor,
 } from "../render/arena-snapshot.js";
 import { atRest } from "../render/pick.test-support.js";
-import { ELEVATION_STEP } from "../render/render-order.js";
 import { createDoubleClick } from "./double-click.js";
 import {
   calledTargetIntent,

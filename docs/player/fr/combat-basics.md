@@ -2,8 +2,10 @@
 
 ## Santé et énergie
 
-Tu commences avec 500 de **santé** et 50 d'**énergie** ; les runes et le
-moral modifient les deux. Les compétences coûtent de l'énergie, qui revient
+Tu commences avec 500 de **santé** et 20 d'**énergie**, et ton armure ajoute
+de l'énergie : rien pour un Guerrier, 5 pour un Rôdeur, un Assassin ou un
+Derviche, 10 pour tous les autres. Un Staff ajoute 10 de plus tant que tu le
+tiens. Les runes et le moral modifient les deux. Les compétences coûtent de l'énergie, qui revient
 toute seule, lentement. Les ![Guerrier](../../../apps/web/public/icons/profession/warrior.svg) **Guerriers** et les ![Parangon](../../../apps/web/public/icons/profession/paragon.svg) **Parangons** la récupèrent le plus
 lentement, les ![Rôdeur](../../../apps/web/public/icons/profession/ranger.svg) **Rôdeurs** un peu plus vite, tous les autres le plus vite.
 

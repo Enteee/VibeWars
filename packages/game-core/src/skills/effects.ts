@@ -879,6 +879,17 @@ function perEnergyLost(
 }
 
 /**
+ * The energy a gain never takes its recipient above, at the caster's
+ * ranks (#3986): Warrior's Endurance's 10...25. None: no cap but the
+ * maximum.
+ */
+function upToFor(effect: { readonly upTo?: Magnitude }, caster: RankHolder): number {
+  return effect.upTo === undefined
+    ? Number.POSITIVE_INFINITY
+    : resolveMagnitude(effect.upTo, caster);
+}
+
+/**
  * `amount` at the caster's ranks, or with `perUsedSkillEnergy`, per point
  * of the base energy cost of the skill the trigger answers, rounded half
  * up (#1614): Fire Attunement's 30% of a 15-energy spell is 5. No energy
@@ -2144,7 +2155,7 @@ export function applyEffect(
               earlier,
             ),
             events,
-            effect.upTo,
+            upToFor(effect, caster),
           );
         }
         return events;
@@ -2179,7 +2190,7 @@ export function applyEffect(
           earlier,
         ),
         events,
-        effect.upTo,
+        upToFor(effect, caster),
       );
       return events;
     }

@@ -2,6 +2,7 @@ import { FLAT_STRUCTURE } from "./arena-snapshot.js";
 import { describe, expect, it } from "vitest";
 
 import { CREATURE_LOOKS, vec2 } from "@vibewars/game-core";
+import { ELEVATION_STEP } from "@vibewars/game-maps/schema";
 
 import {
   AREA_FLASH_SECONDS,
@@ -56,7 +57,7 @@ import {
 } from "./flag-objects.js";
 import { pickAt, type DrawnClickable } from "./pick.js";
 import { atRest } from "./pick.test-support.js";
-import { ELEVATION_STEP, elevationOf } from "./render-order.js";
+import { elevationOf } from "./render-order.js";
 
 describe("beaconBoltPoints (#2694)", () => {
   it("starts and ends exactly on its ends, and keeps its shape", () => {

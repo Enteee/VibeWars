@@ -412,6 +412,7 @@ export default {
   "cosmetics.item.trailStarlight": "Tähtivalojälki",
   "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Lukittu",
+  "cosmetics.previewing": "Esikatselu: {name}",
   "cosmetics.none": "Ei mitään",
   "cosmetics.note":
     "Pelkkää ulkonäköä: mikään kosmetiikka ei muuta pelaamista. Ansaitaan rankatuilla voitoilla julkisella tulostaululla, ja ne ovat kaikkien hahmojesi yhteisiä.",

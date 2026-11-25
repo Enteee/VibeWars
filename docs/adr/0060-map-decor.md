@@ -1,4 +1,4 @@
-# ADR-0059: Map decor is renderer-only data on the map
+# ADR-0060: Map decor is renderer-only data on the map
 
 ## Status
 

@@ -15,6 +15,8 @@ Trong trận, đổi bộ bằng **1 đến 4** (**F1 đến F4** với phím Cl
 Esc sẽ đổi ngay. Không có thời gian chờ. Đòn tấn công của bạn, các kỹ năng
 cần một loại vũ khí nhất định, và Năng lượng tối đa của bạn đều theo bộ đang
 cầm trên tay.
+Staff tự chứa 10 Năng lượng, còn Focus 6, hoặc 12 khi bạn đáp ứng yêu cầu
+của nó.
 
 Vũ khí cần cấp 9 ở thuộc tính của nó: dưới mức đó, nó chỉ gây một phần ba
 sát thương, và trình sửa báo điều này bằng chữ đỏ. ![Sword](../../../apps/web/public/icons/weapon/sword.svg) **Sword** luôn thuộc
