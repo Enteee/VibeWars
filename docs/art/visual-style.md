@@ -53,6 +53,22 @@ stays mid-grey so the friend blue keeps its contrast. The ice is the study's
 `#7d8a94` with a little less blue, because the hall's blue grid tinted from
 it came too near the friend blue. Open water is the shared deep water look. The marsh biome (#3434, Blackwater Ford) keeps the wilds' dark ground a little cooler, with dry olive reed and silt; its tones are all low chroma and well away from the friend blue, the foe red and the nature green; open water is the shared look. The jungle biome (#3436, Jungle Ruins) is a dark wet floor with mossy grey stone, olive vine and clay; all low chroma, so the nature green and the friend blue stay the loudest things. The coast biome (#3445, Guild Hall Isle) is wet sand and grey rock with dry olive plants beside a deep teal sea; no tone is near the friend blue, the foe red or the nature green. The cavern biome (#3444, The Hollow Deep) is a cold slate under a thin ceiling, its decks dressed slate `#8a909c`; the only colour is the violet glow `#8a6fc9` of its pools, and that is light, never a ground, wall or deck tone, because it sits within a hand's width of the magic violet. No tone is near the friend blue (~200°), the foe red (~5°) or the nature green (~110°).
 
+**The gothic grade** (#4056, Grim gothic, operator Q190): every world material
+is drawn in a darker, greyer grade of its biome, so each biome keeps its hues
+and reads like the mock's stone hall (`gothic-world.webp`, #3977). `grade` in
+`arena-palette.ts` takes HSL lightness `L` to `value · (0.5 + contrast · (L − 0.5))`, clamped,
+and scales chroma by `saturation` in the darks, rising smoothly to whole
+between lightness 0.45 and 0.75, so light warm tones like sand stay warm
+(`GOTHIC_GRADE`: value 0.94, contrast 1.08, saturation 0.6). `value · contrast` is above 1, so two tones never end closer
+together than they began: the darks sink and the lit faces hold, and snow
+stays pale. Tones below about `#0a0a0a` go to black. It is calibrated
+once, on the hall (floor `#26303f` lands within six points of the mock's `#3a3834`, wall top
+`#4b5a70` on `#5e5a54`), and the same constants apply to every biome. The
+tables here are the tones before the grade. It is applied in one place, where
+`biomeMaterials` and `FLAT` are built, and to the land outside a map
+(`OUTSIDE_LOOK`). Hazards, gameplay marks, water, decor, a breakable wall's
+crack glow and bodies are never graded (§6).
+
 **Overhangs** (#3293) are roofs nobody stands on. They hang at their layer's
 height over whoever is under them, with a thin eave below their front edge and
 a soft double shade on the ground. Each biome tints the three looks from its own
@@ -198,7 +214,8 @@ outlines, and the noise fill on a map without one.
 ## 4. Outline and texture
 
 - **A body** has a 1.5 to 2.5 px dark outline (`#0b0f14`) so it parts from any
-  floor. **A wall** and a prop have a 2 px dark outline. **A zone** has a hard
+  floor. **A wall top**, a deck edge and a cover cap have a 1 px gothic outline,
+  `WALL_STROKE` `#08080a`, in every biome (#4056); a prop has a 2 px dark outline. **A zone** has a hard
   bright edge, 2 lines wide, never softer than its fill.
 - **No fill is flat** (a zone's is not: `zone-painter.ts`, #3052; nor a layered
   map's floor: `ground-dressing.ts`, #3484; nor a wall top on a map with an
