@@ -375,7 +375,7 @@ describe("pickMenuTrack (#3996)", () => {
   it("picks from the other songs by `random`, any of them on a first visit", () => {
     expect(pickMenuTrack(null, () => 0)).toBe(MENU_TRACKS[0]);
     expect(pickMenuTrack("first-light", () => 0)).toBe("quiet-hearth");
-    expect(pickMenuTrack("first-light", () => 0.99)).toBe("still-water");
+    expect(pickMenuTrack("first-light", () => 0.99)).toBe("lantern-road");
     expect(pickMenuTrack("quiet-hearth", () => 0.5)).toBe("still-water");
   });
 

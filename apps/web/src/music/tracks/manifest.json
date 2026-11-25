@@ -30,6 +30,16 @@
     "phraseCycles": 8
   },
   {
+    "id": "lantern-road",
+    "title": "Lantern Road",
+    "moods": ["atmospheric", "adventurous"],
+    "bpm": 68,
+    "key": "F major",
+    "colour": [],
+    "layers": 2,
+    "phraseCycles": 8
+  },
+  {
     "id": "ashen-fields",
     "title": "Ashen Fields",
     "moods": ["melancholy", "atmospheric"],
