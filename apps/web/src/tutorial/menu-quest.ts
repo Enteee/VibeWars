@@ -165,9 +165,10 @@ const MODE_LINES: Readonly<Record<LobbyMode, MessageKey>> = {
 };
 
 /**
- * The modes step (#3543): for each of `modes`, in order, the player opens
- * it from the rail, then reads what it is beside its heading. The list
- * ticks a mode once its screen was opened.
+ * The modes step (#3543): for each of `modes`, in rail order, the coach
+ * lights its rail entry and says what it is, and Got it goes on to the
+ * next (#3990). The screen never changes. The list ticks a mode once its
+ * beat is passed.
  */
 export function modesStep(modes: readonly LobbyMode[]): {
   readonly id: "modes";
@@ -178,23 +179,12 @@ export function modesStep(modes: readonly LobbyMode[]): {
   return {
     id: "modes",
     title: "tutorial.menu.modes.title",
-    beats: modes.flatMap((mode): MenuBeat[] => [
-      {
-        kind: "do",
-        target: `rail-${mode}`,
-        line: "tutorial.menu.modes.open",
-        objectives: [
-          {
-            id: mode,
-            label: railItemLabel(mode),
-            // Already there counts: a click on the shown entry does nothing.
-            done: (state) => state.screen === mode,
-          },
-        ],
-      },
-      { kind: "explain", target: `mode-${mode}`, line: MODE_LINES[mode] },
-    ]),
-    checklist: modes.map((mode, at) => ({ label: railItemLabel(mode), beat: 2 * at })),
+    beats: modes.map((mode): MenuBeat => ({
+      kind: "explain",
+      target: `rail-${mode}`,
+      line: MODE_LINES[mode],
+    })),
+    checklist: modes.map((mode, at) => ({ label: railItemLabel(mode), beat: at })),
   };
 }
 

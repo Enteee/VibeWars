@@ -424,6 +424,7 @@ export default {
   "cosmetics.item.trailStarlight": "Trag zvjezdane svjetlosti",
   "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Zaključano",
+  "cosmetics.previewing": "Pregled: {name}",
   "cosmetics.none": "Ništa",
   "cosmetics.note":
     "Samo za izgled: nijedna kozmetika ne mijenja igru. Osvaja se rangiranim pobjedama na javnoj ljestvici i dijele je svi tvoji likovi.",
@@ -1713,7 +1714,6 @@ export default {
     "Uspon heroja je niz karata, 8 na 8, protiv timova u tvom krugu. Pobijediš li, ideš na sljedeću kartu, sve do Dvorane junaka; izgubiš li, počinješ ispočetka.",
   "tutorial.menu.modes.hostedGame":
     "Igra s domaćinom tvoja je vlastita soba: pošalji prijateljima pozivnicu i odaberi kartu i veličinu tima. Botovi igraju svako mjesto koje nitko ne zauzme.",
-  "tutorial.menu.modes.open": "Otvori osvijetljeni način igre sa strane.",
   "tutorial.menu.modes.randomArena":
     "Nasumična arena najbrža je borba: tvoj vlastiti lik u timu nepoznatih, 1v1, 2v2 ili 4v4. Karta se izvlači za tebe, a svako mjesto pravi je igrač.",
   "tutorial.menu.modes.teamArena":

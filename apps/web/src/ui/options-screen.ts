@@ -1,7 +1,7 @@
 import { t } from "../i18n/index.js";
 import { availableLanguages } from "../i18n/languages.js";
 import { overlayClose } from "./kit.js";
-import { optionsSections } from "./options-sections.js";
+import { optionsSections, type OptionsOwner } from "./options-sections.js";
 import { attachTopbarPopover } from "./topbar-popover.js";
 
 /**
@@ -64,16 +64,16 @@ let windowOpen = false;
  * the Lobby's and the music's, and the screen or match under it goes on.
  * Its ×, Esc or a click outside closes it, except while Controls waits for
  * a key: Esc then cancels only that wait. `onClose` hears every way it closes.
- * `signet` is the player key's, for the Player section (#3235).
+ * `owner` is whose Options they are: the Player section and Cosmetics read it (#3235, #3989).
  */
 export function attachOptionsWindow(
   trigger: HTMLButtonElement,
   parent: HTMLElement,
-  signet: number,
+  owner: OptionsOwner,
   onClose?: () => void,
 ): { dispose(): void } {
   return attachTopbarPopover(trigger, parent, (close) => {
-    const options = optionsPanel(close, signet);
+    const options = optionsPanel(close, owner);
     options.panel.classList.add("screen", "options-screen", "options-window");
     options.panel.setAttribute("aria-label", t("options.label"));
     // A press inside keeps the focus, and so Esc, in the window.
@@ -102,7 +102,7 @@ export function isOptionsWindowOpen(): boolean {
 /** The Options frame and its sections. */
 function optionsPanel(
   close: () => void,
-  signet: number,
+  owner: OptionsOwner,
 ): {
   readonly panel: HTMLElement;
   readonly dispose: () => void;
@@ -120,7 +120,7 @@ function optionsPanel(
   body.append(nav, pane);
   panel.appendChild(body);
 
-  const sections = optionsSections(availableLanguages(), signet);
+  const sections = optionsSections(availableLanguages(), owner);
   const switcher = new SectionSwitcher<HTMLElement>(pane, (container) => {
     container.replaceChildren();
   });

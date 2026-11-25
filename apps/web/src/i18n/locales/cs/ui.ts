@@ -434,6 +434,7 @@ export default {
   "cosmetics.item.trailStarlight": "Hvězdná stopa",
   "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Zamčeno",
+  "cosmetics.previewing": "Náhled: {name}",
   "cosmetics.none": "Žádné",
   "cosmetics.note":
     "Čistě na ozdobu: žádná kosmetika nemění, jak se hraje. Získává se hodnocenými výhrami ve veřejném žebříčku a sdílí ji všechny tvé postavy.",
@@ -1759,7 +1760,6 @@ export default {
     "Výstup hrdinů je série map, 8 na 8, proti týmům ve tvém kole. Vyhraješ a postupuješ na další mapu, až do Síně hrdinů; prohraješ a začínáš znovu.",
   "tutorial.menu.modes.hostedGame":
     "Vlastní hra je tvoje vlastní lobby: pošli přátelům odkaz s pozvánkou a vyber mapu a velikost týmu. Boti hrají každé místo, které nikdo nezabere.",
-  "tutorial.menu.modes.open": "Otevři zvýrazněný způsob hry na straně.",
   "tutorial.menu.modes.randomArena":
     "Náhodná aréna je nejrychlejší boj: tvoje vlastní postava v týmu s cizími hráči, 1v1, 2v2 nebo 4v4. Mapa se ti vylosuje a každé místo je skutečný hráč.",
   "tutorial.menu.modes.teamArena":

@@ -373,6 +373,7 @@ export default {
   "cosmetics.item.trailStarlight": "Vệt ánh sao",
   "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Đã khóa",
+  "cosmetics.previewing": "Đang xem trước: {name}",
   "cosmetics.none": "Không",
   "cosmetics.note":
     "Chỉ để làm đẹp: không vật phẩm trang trí nào thay đổi lối chơi. Nhận được nhờ thắng trận xếp hạng trên bảng xếp hạng công khai, dùng chung cho mọi nhân vật của bạn.",
@@ -1550,7 +1551,6 @@ export default {
     "Đỉnh Anh Hùng là chuỗi bản đồ, 8 đấu 8, gặp các đội cùng vòng với bạn. Thắng thì bạn sang bản đồ kế tiếp, lên tới Đại sảnh Anh hùng; thua thì bạn bắt đầu lại.",
   "tutorial.menu.modes.hostedGame":
     "Trận tự tạo là sảnh riêng của bạn: gửi link mời cho bạn bè, rồi chọn bản đồ và cỡ đội. Bot sẽ chơi mọi chỗ không ai nhận.",
-  "tutorial.menu.modes.open": "Mở chế độ đang sáng ở bên cạnh.",
   "tutorial.menu.modes.randomArena":
     "Đấu trường ngẫu nhiên là trận nhanh nhất: nhân vật của chính bạn, trong một đội toàn người lạ, 1v1, 2v2 hoặc 4v4. Bản đồ được bốc thăm cho bạn, và mọi chỗ đều là người chơi thật.",
   "tutorial.menu.modes.teamArena":

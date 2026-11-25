@@ -406,6 +406,7 @@ export const en = {
   "cosmetics.item.trailStarlight": "Starlight trail",
   "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Locked",
+  "cosmetics.previewing": "Previewing: {name}",
   "cosmetics.none": "None",
   "cosmetics.note":
     "Purely for looks: no cosmetic changes how anything plays. Earned with ranked wins on the public leaderboard, shared by all your characters.",
@@ -1640,7 +1641,6 @@ export const en = {
     "Heroes' Ascent is a run of maps, 8 a side, against teams at your round. Win and you move on to the next map, up to the Hall of Heroes; lose and you start again.",
   "tutorial.menu.modes.hostedGame":
     "A Hosted Game is your own lobby: send friends the invite link, and pick the map and the team size. Bots play every place nobody takes.",
-  "tutorial.menu.modes.open": "Open the lit mode on the rail.",
   "tutorial.menu.modes.randomArena":
     "Random Arena is the quickest fight: your own character, in a team of strangers, 1v1, 2v2 or 4v4. The map is drawn for you, and every place is a real player.",
   "tutorial.menu.modes.teamArena":

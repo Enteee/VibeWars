@@ -61,6 +61,8 @@ tu pointes ou qui a le focus, et ce qui la débloque. Une vignette verrouillée 
 petit cadenas. Ton choix s’applique aussitôt. Les autres joueurs le voient à partir du prochain
 lobby que tu rejoins.
 
+Au-dessus des rangées, ton personnage porte ton apparence : il attend, marche et frappe, pour que l'aura, la trace et la traînée d'arme se voient en mouvement. Maintiens une pastille appuyée pour l'essayer, même verrouillée : la ligne dit ce que tu prévisualises et, tant qu'elle est verrouillée, ce qui la débloque. Relâche sur un objet obtenu pour le porter. Relâche sur un objet verrouillé, ou glisse hors de la pastille, et rien ne change. Au clavier, maintiens Espace sur une pastille.
+
 ## Voir les cosmétiques des autres joueurs
 
 Les autres joueurs ne voient tes cosmétiques que si leur copie du classement montre que tu les as

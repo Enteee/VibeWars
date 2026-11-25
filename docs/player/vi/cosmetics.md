@@ -59,6 +59,8 @@ lam. Dòng bên cạnh hàng (bên dưới trên điện thoại) cho biết tê
 điểm, kèm điều kiện để nhận. Mẫu bị khóa sẽ mờ đi, kèm một ổ khóa nhỏ. Lựa chọn của bạn có hiệu lực
 ngay. Người chơi khác thấy nó từ sảnh tiếp theo mà bạn tham gia.
 
+Phía trên các hàng, nhân vật của bạn mặc diện mạo của bạn, đứng, đi và vung vũ khí, để bạn thấy hào quang, dấu chân và vệt vũ khí khi chuyển động. Nhấn giữ một mẫu để thử, kể cả mẫu đang khóa: dòng chữ cho biết bạn đang xem trước gì và, khi còn khóa, cách để nhận được. Thả tay trên vật phẩm đã nhận để mặc. Thả trên vật phẩm đang khóa, hoặc trượt ra khỏi mẫu, thì không có gì thay đổi. Với bàn phím, giữ Space trên một mẫu.
+
 ## Xem trang trí của người chơi khác
 
 Người chơi khác chỉ thấy trang trí của bạn nếu bản sao bảng xếp hạng của họ cho thấy bạn đã nhận

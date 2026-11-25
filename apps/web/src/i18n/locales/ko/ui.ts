@@ -376,6 +376,7 @@ export default {
   "cosmetics.item.trailStarlight": "별빛 흔적",
   "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "잠김",
+  "cosmetics.previewing": "미리 보기: {name}",
   "cosmetics.none": "없음",
   "cosmetics.note":
     "순수하게 외형용입니다. 어떤 치장 아이템도 플레이에 영향을 주지 않습니다. 공개 리더보드의 랭크 승리로 얻으며, 모든 캐릭터가 함께 씁니다.",
@@ -1554,7 +1555,6 @@ export default {
     "영웅의 승천은 8대8로 같은 라운드의 팀과 맵을 이어 가며 싸웁니다. 이기면 다음 맵으로 나아가 영웅의 전당까지 오르고, 지면 처음부터 다시 시작합니다.",
   "tutorial.menu.modes.hostedGame":
     "호스트 게임은 나만의 로비입니다: 친구에게 초대 링크를 보내고 맵과 팀 규모를 고르세요. 아무도 들어오지 않은 자리는 봇이 플레이합니다.",
-  "tutorial.menu.modes.open": "옆에서 빛나는 모드를 여세요.",
   "tutorial.menu.modes.randomArena":
     "랜덤 아레나는 가장 빠른 전투입니다: 내 캐릭터로 낯선 사람들과 팀을 이뤄 1v1, 2v2 또는 4v4로 싸웁니다. 맵은 무작위로 정해지고, 모든 자리가 실제 플레이어입니다.",
   "tutorial.menu.modes.teamArena":

@@ -61,6 +61,8 @@ contoh yang kamu tunjuk atau fokuskan, beserta cara mendapatkannya. Contoh yang 
 redup, dengan gembok kecil. Pilihanmu langsung berlaku. Pemain lain melihatnya mulai dari lobi
 berikutnya yang kamu masuki.
 
+Di atas baris, karaktermu memakai tampilanmu dan berdiri, berjalan, serta mengayun, sehingga aura, jejak, dan jejak senjata terlihat saat bergerak. Tekan lama sebuah contoh untuk mencobanya, bahkan yang terkunci: baris itu menyebut apa yang sedang kamu pratinjau dan, selama masih terkunci, cara mendapatkannya. Lepaskan pada item yang sudah didapat untuk memakainya. Lepaskan pada item terkunci, atau geser keluar dari contoh, dan tidak ada yang berubah. Dengan keyboard, tahan Spasi pada sebuah contoh.
+
 ## Melihat kosmetik pemain lain
 
 Pemain lain hanya melihat kosmetikmu jika salinan papan peringkat mereka menunjukkan bahwa kamu

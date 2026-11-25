@@ -61,6 +61,8 @@ johon osoitat tai joka on kohdistettuna, sekä sen, millä sen ansaitsee. Lukitt
 himmennetty, ja siinä on pieni riippulukko. Valintasi tulee voimaan heti. Muut pelaajat näkevät sen
 seuraavasta aulasta alkaen, johon liityt.
 
+Rivien yläpuolella hahmosi pitää ulkoasuasi ja seisoo, kävelee ja lyö, joten aura, jälki ja aseen jälki näkyvät liikkeessä. Pidä näytettä painettuna kokeillaksesi sitä, lukittuakin: rivi kertoo, mitä esikatselet, ja niin kauan kuin se on lukittu, millä sen ansaitsee. Päästä irti ansaitun esineen kohdalla pukeaksesi sen. Päästä irti lukitun kohdalla tai liu'uta pois näytteeltä, eikä mikään muutu. Näppäimistöllä pidä välilyöntiä pohjassa näytteen kohdalla.
+
 ## Muiden pelaajien kosmetiikan näkeminen
 
 Muut pelaajat näkevät kosmetiikkasi vain, jos heidän kopionsa tulostaulusta näyttää, että olet

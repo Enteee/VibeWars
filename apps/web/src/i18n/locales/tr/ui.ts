@@ -403,6 +403,7 @@ export default {
   "cosmetics.item.trailStarlight": "Yıldız ışığı izi",
   "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Kilitli",
+  "cosmetics.previewing": "Önizleme: {name}",
   "cosmetics.none": "Yok",
   "cosmetics.note":
     "Yalnızca görünüş için: hiçbir kozmetik oynanışı değiştirmez. Herkese açık lider tablosunda dereceli galibiyetlerle kazanılır ve tüm karakterlerin tarafından paylaşılır.",
@@ -1643,7 +1644,6 @@ export default {
     "Kahramanların Yükselişi, kendi turundaki takımlara karşı 8'e 8 oynanan bir harita dizisidir. Kazanırsan sıradaki haritaya, ta Kahramanlar Salonu'na kadar ilerlersin; kaybedersen baştan başlarsın.",
   "tutorial.menu.modes.hostedGame":
     "Özel Oyun kendi lobindir: arkadaşlarına davet bağlantısını gönder, haritayı ve takım boyutunu seç. Kimsenin almadığı her yerde botlar oynar.",
-  "tutorial.menu.modes.open": "Yandaki ışıklı modu aç.",
   "tutorial.menu.modes.randomArena":
     "Rastgele Arena en hızlı dövüştür: kendi karakterinle, yabancılardan oluşan bir takımda, 1v1, 2v2 ya da 4v4. Harita senin için çekilir ve her yerde gerçek bir oyuncu vardır.",
   "tutorial.menu.modes.teamArena":
