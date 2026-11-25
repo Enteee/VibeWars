@@ -52,9 +52,11 @@ Rámeček znaku je tenký okraj kolem znaku na tvém cechovním plášti. Znak n
 
 ## Jak ji nosit
 
-Otevři Možnosti a vyber **Kosmetika**. Každý slot uvádí své předměty, každý označený jako
-nositelný nebo zamčený, a za co se získává. Tvá volba platí hned. Ostatní hráči ji uvidí od příští
-lobby, do které vstoupíš.
+Otevři Možnosti a vyber **Kosmetika**. Každý slot je jedna řada vzorků, každý je malý obrázek svého
+předmětu; první, prázdný přeškrtnutý kruh, znamená nenosit nic. Zvolený vzorek má modrý kroužek.
+Text vedle řady (na telefonu pod ní) jmenuje vzorek, na který ukazuješ nebo který má fokus, a za co
+se získává. Zamčený vzorek je ztlumený, s malým zámkem. Tvá volba platí hned. Ostatní hráči ji uvidí
+od příští lobby, do které vstoupíš.
 
 ## Kosmetika ostatních hráčů
 

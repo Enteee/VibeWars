@@ -410,6 +410,7 @@ export default {
   "cosmetics.item.trailFrost": "Huurrejälki",
   "cosmetics.item.trailMoss": "Sammaljälki",
   "cosmetics.item.trailStarlight": "Tähtivalojälki",
+  "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Lukittu",
   "cosmetics.none": "Ei mitään",
   "cosmetics.note":
@@ -1719,8 +1720,8 @@ export default {
   "tutorial.heal.ow": "Auts! Kivi osui minuun. Autatko vähän?",
   "tutorial.heal.praise": "Paljon parempi, kiitos! Osaat myös parantaa.",
   "tutorial.learn": "Opettele pelaamaan",
-  "tutorial.look.hint": "Loitonna ja vedä näkymää pohjoiseen. Löydä teleportti!",
-  "tutorial.look.how": "Hiiren rulla zoomaa. Pidä oikeaa painiketta ja vedä katsoaksesi.",
+  "tutorial.look.hint": "Vedä näkymää pohjoiseen. Löydä teleportti!",
+  "tutorial.look.how": "Pidä oikeaa painiketta ja vedä katsoaksesi.",
   "tutorial.look.intro": "Ehkä tämä teleportti vie meidät taistelukentän ohi. Katso pohjoiseen!",
   "tutorial.look.praise": "Siinä se on! Tiemme taistelun ohi.",
   "tutorial.offer": "Uusi täällä? Opettajasi näyttää perusteet.",
@@ -1753,7 +1754,7 @@ export default {
     "Napauta ensin nimeäni ryhmän luettelossa. Napauta Ryhmä, jos luettelo on kiinni.",
   "tutorial.touch.healHow":
     "Napauta Ryhmä, jos luettelo on kiinni, sitten nimeäni ja sitten hehkuvaa taitoa.",
-  "tutorial.touch.look": "Nipistä zoomataksesi. Vedä yhdellä sormella katsoaksesi.",
+  "tutorial.touch.look": "Vedä yhdellä sormella katsoaksesi.",
   "tutorial.touch.pingHow": "Napauta kompassia tai vedä sillä viiva.",
   "tutorial.touch.ratsHow": "Napauta rottaa valitaksesi sen.",
   "tutorial.touch.tunnelHow": "Napauta portaita alas, sitten merkkiä toisen pään takana.",

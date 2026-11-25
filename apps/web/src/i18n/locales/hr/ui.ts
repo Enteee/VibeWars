@@ -422,6 +422,7 @@ export default {
   "cosmetics.item.trailFrost": "Trag mraza",
   "cosmetics.item.trailMoss": "Trag mahovine",
   "cosmetics.item.trailStarlight": "Trag zvjezdane svjetlosti",
+  "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Zaključano",
   "cosmetics.none": "Ništa",
   "cosmetics.note":
@@ -1774,8 +1775,8 @@ export default {
   "tutorial.heal.ow": "Au! Pogodio me kamen. Malo pomoći?",
   "tutorial.heal.praise": "Puno bolje, hvala! Znaš i liječiti.",
   "tutorial.learn": "Nauči igrati",
-  "tutorial.look.hint": "Odzumiraj, pa povuci pogled prema sjeveru. Pronađi teleporter!",
-  "tutorial.look.how": "Kotačić miša zumira. Drži desnu tipku i povuci da se osvrneš.",
+  "tutorial.look.hint": "Povuci pogled prema sjeveru. Pronađi teleporter!",
+  "tutorial.look.how": "Drži desnu tipku i povuci da se osvrneš.",
   "tutorial.look.intro": "Možda nas ovaj teleporter odvede oko bojišta. Pogledaj na sjever!",
   "tutorial.look.praise": "Evo ga! Naš put oko bitke.",
   "tutorial.offer": "Novi si? Tvoj učitelj pokazat će ti osnove.",
@@ -1810,7 +1811,7 @@ export default {
     "Prvo dodirni moje ime na popisu skupine. Dodirni Grupa ako je popis zatvoren.",
   "tutorial.touch.healHow":
     "Dodirni Grupa ako je popis zatvoren, zatim moje ime, pa vještinu koja svijetli.",
-  "tutorial.touch.look": "Raširi prste za zum. Povuci jednim prstom da se osvrneš.",
+  "tutorial.touch.look": "Povuci jednim prstom da se osvrneš.",
   "tutorial.touch.pingHow": "Dodirni kompas ili povuci po njemu da nacrtaš crtu.",
   "tutorial.touch.ratsHow": "Dodirni štakora da ga naciljaš.",
   "tutorial.touch.tunnelHow": "Dodirni stepenice dolje, zatim oznaku iza drugog kraja.",

@@ -5,6 +5,7 @@ import {
   PROFESSIONS,
   createRng,
   STARTER_BUILDS,
+  createPathFinder,
   getSkill,
   loadoutOf,
   loadoutSpec,
@@ -324,7 +325,7 @@ function openPlaces(
  * The first-time tutorial's fight (#3218, #3221): the menu's bots on
  * `mapId`, the foes held off the pair, the player inward from their side's
  * spawn under open sky, and the tutor, a `tutorProfession`, walking in
- * from the row behind. The teleporter (#3222) stands north of the player,
+ * from the row behind. The teleporter (#3222) stands north of the mark,
  * just past the default view on a canvas of `viewport`.
  */
 export function tutorialWorld(
@@ -348,7 +349,23 @@ export function tutorialWorld(
   const open = openAround((at) => !inOpenView(structure, walls, at));
   const [spawn, post, mark] = openPlaces(graph, inwardStart(edge, map.descriptor, HALF_VIEW), open);
   const standable = (at: Vec2): Vec2 => nearestStandable(graph, at);
-  const teleporter = teleporterSpot(spawn, viewport, standable, open);
+  // Measured from the mark, where the player stands when they look
+  // (#3970): the look counts only while it is the current station.
+  const paths = createPathFinder(graph);
+  const walk = (to: Vec2): number | undefined => {
+    const path = paths.find(mark, to);
+    if (path === undefined) {
+      return undefined;
+    }
+    let length = 0;
+    let from = mark;
+    for (const point of path) {
+      length += Math.hypot(point.x - from.x, point.y - from.y);
+      from = point;
+    }
+    return length;
+  };
+  const teleporter = teleporterSpot(mark, viewport, standable, open, walk);
   const besidePad = standable(vec2(teleporter.x + BESIDE_PAD.x, teleporter.y + BESIDE_PAD.y));
   // The tutor walks in from the row behind, moved as far.
   const behind = splashSpawn(graph, map, fight, 0, teamSize + 1);

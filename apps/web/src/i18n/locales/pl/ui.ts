@@ -435,6 +435,7 @@ export default {
   "cosmetics.item.trailFrost": "Ślad szronu",
   "cosmetics.item.trailMoss": "Ślad mchu",
   "cosmetics.item.trailStarlight": "Ślad blasku gwiazd",
+  "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Zablokowane",
   "cosmetics.none": "Brak",
   "cosmetics.note":
@@ -1836,9 +1837,8 @@ export default {
   "tutorial.heal.ow": "Au! Trafił mnie kamień. Pomożesz trochę?",
   "tutorial.heal.praise": "Dużo lepiej, dzięki! Umiesz też leczyć.",
   "tutorial.learn": "Naucz się grać",
-  "tutorial.look.hint": "Oddal widok, a potem przeciągnij go na północ. Znajdź teleporter!",
-  "tutorial.look.how":
-    "Kółko myszy przybliża. Przytrzymaj prawy przycisk i przeciągnij, by się rozejrzeć.",
+  "tutorial.look.hint": "Przeciągnij widok na północ. Znajdź teleporter!",
+  "tutorial.look.how": "Przytrzymaj prawy przycisk i przeciągnij, by się rozejrzeć.",
   "tutorial.look.intro": "Może ten teleporter przeprowadzi nas wokół pola bitwy. Spójrz na północ!",
   "tutorial.look.praise": "Jest! Nasza droga wokół walki.",
   "tutorial.offer": "Nowy? Twój nauczyciel pokaże ci podstawy.",
@@ -1872,7 +1872,7 @@ export default {
     "Najpierw dotknij mojego imienia na liście drużyny. Dotknij Grupa, jeśli lista jest zamknięta.",
   "tutorial.touch.healHow":
     "Dotknij Grupa, jeśli lista jest zamknięta, potem mojego imienia, potem świecącej umiejętności.",
-  "tutorial.touch.look": "Uszczypnij, by przybliżyć. Przeciągnij jednym palcem, by się rozejrzeć.",
+  "tutorial.touch.look": "Przeciągnij jednym palcem, by się rozejrzeć.",
   "tutorial.touch.pingHow": "Dotknij kompasu albo przeciągnij po nim, by narysować linię.",
   "tutorial.touch.ratsHow": "Dotknij szczura, by go namierzyć.",
   "tutorial.touch.tunnelHow": "Dotknij stopni w dół, potem znacznika za drugim końcem.",
