@@ -1163,7 +1163,12 @@ swing, nor start another cast. A move held through it walks the moment
 it ends. A skill with an activation time, or an attack skill, pressed during it
 waits and starts the tick it ends (a later press replaces it; a move or Esc drops it); an
 instant skill goes off at once. A cancelled or interrupted cast has no
-aftercast.
+aftercast. GW1's named exceptions (#3998) are a skill's own `aftercast`:
+Core and Prophecies preparations (Apply Poison and the like), Verata's
+Gaze, Shove, Grapple, Scorpion Wire and every Shadow Step that does not
+only target a foe, but Ride the Lightning, have none; Inspirational
+Speech, Burning Shield and Feral Aggression, instant, have one, and wait
+for an aftercast as a cast does.
 
 **Ranged weapons fire projectiles** (bows, spears, wands, staves). The
 shot is aimed where the target will be if it keeps moving as it has over

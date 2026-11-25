@@ -12,7 +12,7 @@ import {
   targetRuleAllows,
   type ActivationRequest,
 } from "./activation.js";
-import { getSkill } from "./catalog.js";
+import { getSkill, SKILLS_BY_ID } from "./catalog.js";
 import { makeCombatant } from "./testing.js";
 import type { Skill } from "./types.js";
 
@@ -599,6 +599,39 @@ describe("hasAftercast (#317)", () => {
   it("never follows an attack skill, or an instant one like a shout", () => {
     expect(hasAftercast({ ...SPELL, type: "attack" })).toBe(false);
     expect(hasAftercast({ ...SPELL, type: "skill", activationSeconds: 0 })).toBe(false);
+  });
+
+  it("keeps GW1's named exceptions both ways (#3998)", () => {
+    const aftercastOf = (id: string): boolean => {
+      const skill = getSkill(id);
+      if (skill === undefined) {
+        throw new Error(`${id} is not in the catalog`);
+      }
+      return hasAftercast(skill);
+    };
+    expect(aftercastOf("ranger.apply-poison")).toBe(false);
+    expect(aftercastOf("necromancer.veratas-gaze")).toBe(false);
+    expect(aftercastOf("ranger.seeking-arrows")).toBe(true);
+    expect(aftercastOf("paragon.inspirational-speech")).toBe(true);
+  });
+
+  it("spares a shadow step that does not only target a foe, but Ride the Lightning (#3998)", () => {
+    const steps = [...SKILLS_BY_ID.values()].filter(
+      (skill) =>
+        skill.target !== "single-enemy" &&
+        skill.effects.some((effect) => effect.kind === "shadow-step"),
+    );
+    expect(steps.length).toBeGreaterThan(1);
+    for (const skill of steps) {
+      expect(hasAftercast(skill), skill.id).toBe(skill.id === "elementalist.ride-the-lightning");
+    }
+  });
+
+  it("makes every preparation decide its aftercast (#3998)", () => {
+    const undecided = [...SKILLS_BY_ID.values()]
+      .filter((skill) => skill.type === "preparation" && skill.aftercast === undefined)
+      .map((skill) => skill.id);
+    expect(undecided).toEqual([]);
   });
 });
 

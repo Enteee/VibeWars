@@ -105,8 +105,8 @@ as if it had been used, as in GW1. Before, it could be cast again at once.
 
 - ~~A ranged attack skill lands at the hit, with no flight~~ (it flies
   since #416, its bonus and riders landing with the arrow).
-- ~~No crits~~ (attack skills crit since #490, #533), no evade; no
-  per-skill aftercast overrides. Block came with #534: a blocked attack
+- ~~No crits~~ (attack skills crit since #490, #533), no evade; ~~no
+  per-skill aftercast overrides~~ (GW1's named exceptions since #3998). Block came with #534: a blocked attack
   skill is paid for and does only its `onBlocked`.
 
 ## Consequences

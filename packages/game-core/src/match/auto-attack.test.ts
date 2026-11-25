@@ -25,6 +25,8 @@ const ARMOR_OF_EARTH = "elementalist.armor-of-earth";
 const SEVER_ARTERY = "warrior.sever-artery";
 const BACKBREAKER = "warrior.backbreaker";
 const ORISON = "monk.orison-of-healing";
+const APPLY_POISON = "ranger.apply-poison";
+const BURNING_SHIELD = "paragon.burning-shield";
 
 function wielding(weapon: Weapon, attributeId: string): ResolvedEquipment {
   return {
@@ -1168,6 +1170,57 @@ describe("aftercast (#317)", () => {
     match.cancelAction("a");
     stepFor(match, AFTERCAST + DT);
     expect(get(match, "a").combatant.cast.isCasting).toBe(false);
+  });
+
+  /** Armor of Earth, a Core preparation and an instant with an aftercast (#3998). */
+  function excepted(id: string): ParticipantSpec {
+    return {
+      ...swordsman(id, vec2(0, 0)),
+      skillBar: [ARMOR_OF_EARTH, APPLY_POISON, BURNING_SHIELD],
+      attributeRanks: new Map([
+        ["elementalist.earth-magic", 12],
+        ["ranger.wilderness-survival", 12],
+        ["paragon.leadership", 12],
+      ]),
+    };
+  }
+
+  it("a Core preparation has none: the ranger walks the tick after Apply Poison (#3998)", () => {
+    const match = sim(excepted("a"), dummy("d", vec2(300, 0)));
+    match.requestSkill("a", 1);
+    while (get(match, "a").combatant.cast.isCasting) {
+      match.step(DT);
+    }
+    expect(get(match, "a").combatant.cast.inAftercast).toBe(false);
+    match.setInputDirection("a", vec2(0, 1));
+    match.step(DT);
+    expect(get(match, "a").position.y).toBeGreaterThan(0);
+  });
+
+  it("an instant with one waits for an aftercast, then has its own (#3998)", () => {
+    const match = sim(excepted("a"), dummy("d", vec2(300, 0)));
+    match.requestSkill("a", 0);
+    stepFor(match, 0.75);
+    expect(get(match, "a").combatant.cast.inAftercast).toBe(true);
+    expect(match.requestSkill("a", 2)).toEqual({
+      skillId: BURNING_SHIELD,
+      check: { ok: true },
+      queued: true,
+    });
+    // Begun the tick the aftercast ends, it goes off the next, as instants do.
+    while (
+      get(match, "a").combatant.cast.queuedSlot !== undefined ||
+      get(match, "a").combatant.cast.isCasting
+    ) {
+      match.step(DT);
+    }
+    expect(get(match, "a").combatant.cast.inAftercast).toBe(true);
+    let ticks = 0;
+    while (get(match, "a").combatant.cast.inAftercast) {
+      match.step(DT);
+      ticks += 1;
+    }
+    expect(ticks * DT).toBeCloseTo(AFTERCAST, 6);
   });
 });
 
