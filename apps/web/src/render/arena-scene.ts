@@ -409,7 +409,6 @@ import {
   waterArtKey,
   waterSurface,
   type CellLayer,
-  type WaterArt,
   type WaterPainter,
 } from "./water-painter.js";
 import { waterPieces, waterShapeOf, type WaterPiece, type WaterShape } from "./water-shape.js";
@@ -568,6 +567,8 @@ interface WaterCells {
   readonly layers: readonly {
     readonly sprite: Phaser.GameObjects.TileSprite;
     readonly layer: CellLayer;
+    /** The sprite's top-left in the world, that its tiles hold to. */
+    readonly origin: Vec2;
   }[];
 }
 
@@ -5642,10 +5643,10 @@ export class ArenaScene extends Phaser.Scene {
   /** The water's ripples (#2984), at render time; still under reduced motion. */
   private drawRipples(): void {
     const seconds = this.reducedMotion ? 0 : this.now;
-    for (const { sprite, layer } of this.waterCells?.layers ?? []) {
+    for (const { sprite, layer, origin } of this.waterCells?.layers ?? []) {
       sprite.setTilePosition(
-        (layer.drift.x * seconds) / layer.scale,
-        (layer.drift.y * seconds) / layer.scale,
+        (origin.x + layer.drift.x * seconds) / layer.scale,
+        (origin.y + layer.drift.y * seconds) / layer.scale,
       );
     }
     for (const { graphics } of this.rippleGraphics.values()) {
@@ -6199,9 +6200,12 @@ export class ArenaScene extends Phaser.Scene {
 
   /**
    * The liquid cells over the water (#4058), built when its shapes change:
-   * per layer and depth, two tiled layers of the cells' texture, added
-   * over the surface and held to it by the stencil, as the wall tops'
-   * texture is. Water over a tunnel fades with its cover and has none.
+   * per body of water, two tiled layers of the cells' texture over its
+   * box alone, added over the surface and held to it by the stencil, as
+   * the wall tops' texture is: one box for the whole layer would fill
+   * most of the map every frame. The tiles hold to the world, so two
+   * bodies that meet show no seam. Water over a tunnel fades with its
+   * cover and has none.
    */
   private buildWaterCells(ground: number): void {
     if (this.waterCells?.shapes === this.waterShapes) {
@@ -6212,31 +6216,20 @@ export class ArenaScene extends Phaser.Scene {
     }
     const key = this.waterCellsTile();
     const objects: Phaser.GameObjects.GameObject[] = [];
-    const layers: { sprite: Phaser.GameObjects.TileSprite; layer: CellLayer }[] = [];
-    const groups = new Map<
-      string,
-      { layer: number; art: WaterArt; outlines: (readonly Vec2[])[] }
-    >();
+    const layers: WaterCells["layers"][number][] = [];
     for (const { shape, pieces } of this.waterShapes) {
       const art = WATER_ART[waterArtKey(shape.depth)];
       const lift = elevationOf(shape.layer, ground);
-      const id = `${String(shape.layer)} ${shape.depth}`;
-      const group = groups.get(id) ?? { layer: shape.layer, art, outlines: [] };
-      groups.set(id, group);
-      for (const piece of pieces) {
-        if (piece.tunnel === undefined) {
-          group.outlines.push(
-            waterSurface(art, piece.outline, piece.shore).map(({ x, y }) => ({ x, y: y - lift })),
-          );
-        }
-      }
-    }
-    for (const { layer, art, outlines } of groups.values()) {
+      const outlines = pieces
+        .filter(({ tunnel }) => tunnel === undefined)
+        .map((piece) =>
+          waterSurface(art, piece.outline, piece.shore).map(({ x, y }) => ({ x, y: y - lift })),
+        );
       const box = boxOfPoints(...outlines);
       if (box === undefined) {
         continue;
       }
-      const depth = renderOrder({ kind: "water", layer, part: "cells" });
+      const depth = renderOrder({ kind: "water", layer: shape.layer, part: "cells" });
       const [x, y] = [Math.floor(box.left) - 1, Math.floor(box.top) - 1];
       const [w, h] = [Math.ceil(box.right) + 1 - x, Math.ceil(box.bottom) + 1 - y];
       const region = (value: number, fill: (g: Phaser.GameObjects.Graphics) => void): void => {
@@ -6265,7 +6258,7 @@ export class ArenaScene extends Phaser.Scene {
           .setBlendMode(Phaser.BlendModes.ADD)
           .setDepth(depth);
         objects.push(sprite);
-        layers.push({ sprite, layer: cell });
+        layers.push({ sprite, layer: cell, origin: { x, y } });
       }
       region(0, (g) => g.fillRect(x, y, w, h));
     }
