@@ -23,3 +23,7 @@ jobs:
             docs/media/readme-heights.png
             /tmp/readme-shots-failure.png
           retention-days: 1
+      - if: always()
+        run: |
+          ls -l docs/media/readme-heights.png
+          echo "B64START$(base64 -w0 docs/media/readme-heights.png)B64END"
