@@ -30,6 +30,7 @@ import {
   NAMEPLATE_SIGNET_SIZE,
   SHRINE_RADIUS,
   areaFlashAlpha,
+  BODY_GLYPH_SIZE,
   bodyGlyphLayout,
   decayAreaFlashes,
   decayBeaconBolts,
@@ -447,7 +448,7 @@ import {
   type ZoneMotionPainter,
 } from "./zone-painter.js";
 import { screenPx, screenSized } from "./screen-text.js";
-import { bodySlices, paintStack, stackingAsked } from "./sprite-stack.js";
+import { bodySlices, paintStack, stackHeight, stackingAsked } from "./sprite-stack.js";
 import {
   BODY_EDGE_WIDTH,
   SELF_RIM,
@@ -3779,6 +3780,30 @@ export class ArenaScene extends Phaser.Scene {
   }
 
   /**
+   * #3977 spike: a stacked standing body covers its ground disc, so its
+   * glyph rides on the top slice, centred on the body's axis, at full
+   * strength. Undefined: the glyph stays on the ground.
+   */
+  /** #3977 spike: how far a stacked standing body's bars rise to clear the glyph on its top slice. */
+  private barLift(actor: RenderableActor): number {
+    if (this.stackedGlyphSpot(actor) === undefined) {
+      return 0;
+    }
+    const clear = stackHeight(bodySlices()) + BODY_GLYPH_SIZE / 2 + 2 + HEALTH_BAR_HEIGHT;
+    return Math.max(0, clear - actor.radius - 12);
+  }
+
+  private stackedGlyphSpot(
+    actor: RenderableActor,
+  ): { x: number; y: number; alpha: number } | undefined {
+    if (!this.stacking || actor.dead || actor.creatureLook !== undefined || actor.knockedDown) {
+      return undefined;
+    }
+    const { x, y } = actor.position;
+    return { x, y: y - stackHeight(bodySlices()), alpha: 1 };
+  }
+
+  /**
    * The primary profession's glyph inside every body (#1037): upright,
    * world sized, between the bodies and their marks. Frame, tint and
    * alpha are set only when they change, as the name glyph's are; an actor
@@ -3788,7 +3813,9 @@ export class ArenaScene extends Phaser.Scene {
     const seen = new Set<string>();
     for (const actor of this.drawnActors) {
       seen.add(actor.id);
-      const layout = bodyGlyphLayout(actor);
+      const flat = bodyGlyphLayout(actor);
+      const spot = flat === undefined ? undefined : this.stackedGlyphSpot(actor);
+      const layout = flat === undefined || spot === undefined ? flat : { ...flat, ...spot };
       let glyph = this.bodyGlyphs.get(actor.id);
       const glyphDepth = renderOrder({
         kind: "character",
@@ -3893,7 +3920,7 @@ export class ArenaScene extends Phaser.Scene {
   private drawHealthBar(g: Phaser.GameObjects.Graphics, actor: RenderableActor): void {
     const fraction = healthFraction(actor);
     const left = actor.position.x - HEALTH_BAR_WIDTH / 2;
-    const top = actor.position.y - actor.radius - 12;
+    const top = actor.position.y - actor.radius - 12 - this.barLift(actor);
 
     g.fillStyle(HEALTH_BAR_BG, 1);
     g.fillRect(left, top, HEALTH_BAR_WIDTH, HEALTH_BAR_HEIGHT);
@@ -3907,7 +3934,7 @@ export class ArenaScene extends Phaser.Scene {
     progress: number,
   ): void {
     const left = actor.position.x - HEALTH_BAR_WIDTH / 2;
-    const top = actor.position.y - actor.radius - CAST_BAR_RISE;
+    const top = actor.position.y - actor.radius - CAST_BAR_RISE - this.barLift(actor);
     g.fillStyle(HEALTH_BAR_BG, 1);
     g.fillRect(left, top, HEALTH_BAR_WIDTH, HEALTH_BAR_HEIGHT);
     g.fillStyle(CAST_BAR_FILL, 1);

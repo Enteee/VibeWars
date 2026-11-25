@@ -5,17 +5,22 @@ test("sheet", async ({ page }) => {
   await page.setViewportSize({ width: 800, height: 500 });
   await page.goto("./?stack");
   await page.waitForFunction(() => "__stackSheet" in window);
-  await page.evaluate(() => (window as unknown as { __stackSheet: () => void }).__stackSheet());
+  await page.evaluate(() => {
+    (window as unknown as { __stackSheet: () => void }).__stackSheet();
+  });
   await page.locator("#stack-sheet").screenshot({ path: "/tmp/3977-sheet.png" });
 });
-for (const [name, query] of [["today", ""], ["stacked", "&stack"]] as const) {
+for (const [name, query] of [
+  ["today", ""],
+  ["stacked", "&stack"],
+] as const) {
   test(`fight ${name}`, async ({ page }) => {
-    test.setTimeout(120_000);
+    test.setTimeout(180_000);
     await page.setViewportSize({ width: 2400, height: 1500 });
     await page.goto(`./?splash&menu-background=arena-crossroads${query}`);
-    for (const wait of [16, 24, 32]) {
+    for (const wait of [8, 16, 24, 32, 40, 48, 56]) {
       await page.waitForTimeout(8_000);
-      await page.screenshot({ path: `/tmp/3977-fight-${name}-${wait}.png` });
+      await page.screenshot({ path: `/tmp/3977-fight-${name}-${String(wait)}.png` });
     }
     await page.evaluate((svg) => {
       document.body.insertAdjacentHTML("beforeend", svg);
