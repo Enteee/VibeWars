@@ -212,6 +212,23 @@ describe("Edge of Extinction (#1886)", () => {
     expect(damageTo(events, "low")).toBe(0);
   });
 
+  it("a dying guard hits a player, and a dying player a priest: both are Human (#4000)", () => {
+    const sim = match(
+      spec("low", 1, vec2(400, 0)),
+      creatureSpec("guard", 1, vec2(300, 0), "guard", "low"),
+      creatureSpec("priest", 1, vec2(300, 100), "priest", "low"),
+      creatureSpec("pet", 1, vec2(500, 0), "pet", "low"),
+    );
+    ritual(sim, "ranger.edge-of-extinction");
+    hurt(sim, "low", 0.5);
+    hurt(sim, "priest", 0.5);
+    hurt(sim, "pet", 0.5);
+    const events = kill(sim, "guard");
+    expect(damageTo(events, "low")).toBe(43);
+    expect(damageTo(events, "priest")).toBe(43);
+    expect(damageTo(events, "pet")).toBe(0);
+  });
+
   it("a death it causes fires it again", () => {
     const sim = match(
       spec("dies", 1, vec2(300, 0)),
