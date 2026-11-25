@@ -39,7 +39,14 @@ vi.mock("phaser", async () => {
       this.y = y;
     }
   }
-  return { default: { Scene: Object, Geom: { Polygon: { Earcut } }, Math: { Vector2 } } };
+  return {
+    default: {
+      Scene: Object,
+      BlendModes: { ADD: 1 },
+      Geom: { Polygon: { Earcut } },
+      Math: { Vector2 },
+    },
+  };
 });
 
 const { ArenaScene, outsideTriangles, paintDecor } = await import("./arena-scene.js");
