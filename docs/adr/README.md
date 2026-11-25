@@ -63,3 +63,4 @@ rewriting history.
 | [0055](0055-ranked-receipts.md)               | Ranked play: a public ledger of receipts every player signs     |
 | [0056](0056-cosmetics.md)                     | Cosmetics are earned on the public ledger, never in the sim     |
 | [0058](0058-music-transitions.md)             | Music changes by fading at its own tempo; one song per trailer  |
+| [0059](0059-map-decor.md)                     | Map decor is renderer-only data; cover is a wall, never decor   |
