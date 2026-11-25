@@ -6,13 +6,13 @@ import {
   type Vec2,
 } from "@vibewars/game-core";
 import { describe, expect, it } from "vitest";
+import { ELEVATION_STEP } from "@vibewars/game-maps/schema";
 
 import { toRenderableWall } from "../match-view.js";
 import { hostMap, mapStructure, teamArenaMapIds } from "../net/maps.js";
 import type { RenderableWall } from "../render/arena-snapshot.js";
 import { DEFAULT_STEP, zoomFor } from "../render/camera-rig.js";
 import { pickSurface } from "../render/layer-surfaces.js";
-import { ELEVATION_STEP } from "../render/render-order.js";
 import { splashGraph, splashSpawn } from "../ui/splash-fight.js";
 
 import { MARK_REACH } from "./stations.js";

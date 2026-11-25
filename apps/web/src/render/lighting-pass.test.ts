@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { pointInPolygon, type Uphill, type Vec2 } from "@vibewars/game-core";
-import type { MapLighting } from "@vibewars/game-maps/schema";
+import { ELEVATION_STEP, type MapLighting } from "@vibewars/game-maps/schema";
 
 import { arenaPalette } from "./arena-palette.js";
 import type { MapStructure } from "./arena-snapshot.js";
@@ -35,7 +35,6 @@ import {
   type LightMapBox,
 } from "./lighting-pass.js";
 import { shapeOutline } from "./layer-surfaces.js";
-import { ELEVATION_STEP } from "./render-order.js";
 
 // Phaser probes for a browser when it loads: only its constants are read here.
 vi.mock("phaser", () => ({

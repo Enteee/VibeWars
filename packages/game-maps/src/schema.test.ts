@@ -9,6 +9,7 @@ import { MATCH_MODES, circleIntersectsSegment, hasLineOfSight } from "@vibewars/
 import { allWallSegments } from "./geometry.js";
 import {
   DECK_LOOKS,
+  ELEVATION_STEP,
   MAX_AFTER_CROSSINGS,
   MAX_FOG_BANKS,
   MAX_LIGHTS,
@@ -2035,6 +2036,21 @@ describe("below the ground: pits and tunnels (#2973)", () => {
       /tunnels\.0: tunnel tunnel touches no pit/,
     );
     accepts({ pits: [westPit, eastPit], tunnels: [tunnel] });
+  });
+
+  it("refuses a pit whose floor, one step below it, draws past the south edge (#3997)", () => {
+    const reaching = (bottom: number) => ({
+      pits: heights.pits.map((pit, index) =>
+        index === 0
+          ? { ...pit, footprint: { ...pit.footprint, height: bottom - pit.footprint.y } }
+          : pit,
+      ),
+    });
+    refuses(
+      reaching(heights.height),
+      /pits\.0\.footprint: training-heights: pit west-pit ends less than 56 above the south edge/,
+    );
+    accepts(reaching(heights.height - ELEVATION_STEP));
   });
 
   it("refuses a pit ramp whose high edge is off its pit's edge, or that climbs the wrong way", () => {

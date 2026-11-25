@@ -1,12 +1,13 @@
 import { describe, expect, it } from "vitest";
 
+import { ELEVATION_STEP } from "@vibewars/game-maps/schema";
+
 import {
   characterBand,
   DROP_FALL_SECONDS,
   easeElevation,
   fallLift,
   ELEVATION_EASE_SECONDS,
-  ELEVATION_STEP,
   elevationOf,
   renderOrder,
   type RenderItem,
