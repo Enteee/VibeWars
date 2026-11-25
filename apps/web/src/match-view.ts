@@ -136,6 +136,7 @@ import { renderSummary, summaryTables, type SummaryTable } from "./ui/match-summ
 import { flashSlot, slotFlashes } from "./ui/skill-slot-state.js";
 import { endLineSetter, type EndLine } from "./ui/end-line.js";
 import { captureEvents } from "./capture-events.js";
+import { captureClock, now } from "./capture-clock.js";
 import { setToastHost, toast } from "./ui/kit.js";
 import { signedText } from "./ui/player-label.js";
 import type { MatchRecordFields } from "./storage/match-history.js";
@@ -616,9 +617,16 @@ function isTyping(target: EventTarget | null): boolean {
 function animationFrames(handler: (deltaSeconds: number) => void): () => void {
   let last: number | undefined;
   let request = 0;
-  const step = (now: number): void => {
-    handler(last === undefined ? 0 : (now - last) / 1000);
-    last = now;
+  const frame = (timeMs: number): void => {
+    handler(last === undefined ? 0 : (timeMs - last) / 1000);
+    last = timeMs;
+  };
+  // `?capture=step` (#4006): the capture script drives the frames.
+  if (captureClock.stepping) {
+    return captureClock.onFrame(frame);
+  }
+  const step = (timeMs: number): void => {
+    frame(timeMs);
     request = requestAnimationFrame(step);
   };
   request = requestAnimationFrame(step);
@@ -1111,7 +1119,7 @@ export async function startMatchView(
       return;
     }
     for (const event of message.events) {
-      captured?.push({ t: performance.now(), kind: event.kind, skillId: message.skillId });
+      captured?.push({ t: now(), kind: event.kind, skillId: message.skillId });
     }
     if (viewport !== undefined) {
       showCombatFeedback(viewport.scene, message, latestMatch, structure.ground);
@@ -1155,7 +1163,7 @@ export async function startMatchView(
       }
     | undefined;
   const stats = frameTiming();
-  const cadence = stats === undefined ? undefined : snapshotCadence(stats, () => performance.now());
+  const cadence = stats === undefined ? undefined : snapshotCadence(stats, () => now());
   const onFrame = (deltaSeconds: number): void => {
     const match = viewed.getSnapshot();
     if (match === undefined) {
@@ -1406,7 +1414,7 @@ export async function startMatchView(
       latestArena,
       world,
       doubleClick,
-      performance.now(),
+      now(),
       nameReveal.held(),
     );
     for (const intent of intents) {
@@ -1419,14 +1427,7 @@ export async function startMatchView(
     if (seat === undefined || latestArena === undefined) {
       return;
     }
-    const intents = tapIntents(
-      seat.getSnapshot(),
-      latestArena,
-      world,
-      doubleClick,
-      performance.now(),
-      slop,
-    );
+    const intents = tapIntents(seat.getSnapshot(), latestArena, world, doubleClick, now(), slop);
     for (const intent of intents) {
       seat.sendIntent(intent);
       if (intent.kind === "walk-to") {

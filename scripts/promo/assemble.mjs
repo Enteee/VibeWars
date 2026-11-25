@@ -166,7 +166,7 @@ function renderCut(cut, width, height, file) {
     "-i",
     cut.src,
     "-vf",
-    `${crop}${zoom}scale=${String(width)}:${String(height)},setpts=${String(1 / cut.speed)}*PTS,fps=${String(FPS)}`,
+    `${crop}${zoom}scale=${String(width)}:${String(height)},setpts=${String(1 / cut.speed)}*PTS,framerate=fps=${String(FPS)}`,
     "-an",
     "-c:v",
     "libx264",
