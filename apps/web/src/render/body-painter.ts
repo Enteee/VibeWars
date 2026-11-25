@@ -132,6 +132,21 @@ export function paintBodyDisc(painter: Painter, body: StandingBody): void {
 }
 
 /**
+ * What a stacked figure (ADR-0057) leaves on the ground under it: the self
+ * rim on your own, and a swing's ribbon (#3579). The figure itself, its
+ * cape included, is an atlas image the scene draws over these.
+ */
+export function paintFigureGround(painter: Painter, body: StandingBody): void {
+  if (body.team === "self") {
+    painter.lineStyle(2, SELF_RIM, 1);
+    painter.strokeCircle(body.x, body.y, body.r - 2);
+  }
+  if (body.swingTrail !== undefined) {
+    paintSwingRibbon(painter, body.swingTrail.ribbon, body.swingTrail.colour);
+  }
+}
+
+/**
  * The cape (#1422, #1699) under the disc, which covers its root: the cloth, its
  * pattern in the trim's colour and the emblem's field over it (#3579), an
  * emblem frame round the emblem's grid (#3581), its `edge` outline, the trim

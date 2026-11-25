@@ -11,6 +11,7 @@ import arUi from "../apps/web/src/i18n/locales/ar/ui.js";
 import deUi from "../apps/web/src/i18n/locales/de/ui.js";
 import { DEFAULT_STEP, zoomFor } from "../apps/web/src/render/camera-rig.js";
 import { vignetteAlpha } from "../apps/web/src/render/vignette.js";
+import { stackOverheadRise } from "../apps/web/src/render/sprite-stack.js";
 import { STORAGE_NAMESPACE } from "./helpers/base.js";
 import { chooseProfession, professionField } from "./helpers/professions.js";
 import { startSoloMatch } from "./helpers/peers.js";
@@ -776,7 +777,8 @@ async function shownNames(page: Page): Promise<string[]> {
 /**
  * The band a dummy's name is drawn in, as a screenshot: 11 px text at
  * every zoom (#456), whose bottom sits 3 px over the cast bar's top, 19
- * world units over the body's 14 radius (`nameLabelBottom`). Labels are
+ * world units over the body's 14 radius and its stacked figure's rise
+ * (ADR-0057, `nameLabelBottom`). Labels are
  * Phaser text, not DOM, so a pixel diff is the only way to see one.
  */
 async function nameBand(
@@ -784,7 +786,10 @@ async function nameBand(
   canvas: Locator,
   dummy: { readonly x: number; readonly y: number },
 ): Promise<Buffer> {
-  const bar = (await trainingView(page, canvas)).onPage({ x: dummy.x, y: dummy.y - 14 - 19 });
+  const bar = (await trainingView(page, canvas)).onPage({
+    x: dummy.x,
+    y: dummy.y - 14 - stackOverheadRise(14) - 19,
+  });
   return page.screenshot({ clip: { x: bar.x - 40, y: bar.y - 3 - 20, width: 80, height: 22 } });
 }
 
@@ -1924,10 +1929,10 @@ test("(47) under Show names, a right click on a name only targets it; a left cli
   const before = await stage.getAttribute("data-positions");
 
   // The bow-range dummy's name: its bottom 3 px over the cast bar's top,
-  // 19 world units over the body's 14 radius (`nameBand`); 11 px text.
+  // 19 world units over the body's 14 radius and its figure (`nameBand`); 11 px text.
   await page.keyboard.down(key("show-names"));
   const view = await trainingView(page, canvas);
-  const bottom = view.onPage({ x: 480, y: 210 - 14 - 19 });
+  const bottom = view.onPage({ x: 480, y: 210 - 14 - stackOverheadRise(14) - 19 });
   const name = { x: bottom.x, y: bottom.y - 3 - 6 };
   await page.mouse.dblclick(name.x, name.y, { button: "right" });
   await page.keyboard.up(key("show-names"));

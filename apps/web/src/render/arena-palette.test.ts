@@ -403,7 +403,7 @@ describe("grade (#4056)", () => {
     );
   });
 
-  it("puts every material of every biome through the grade once, but decor and the crack glow", () => {
+  it("puts every material of every biome through the grade once, but fire and the crack glow", () => {
     /** `value` with every colour in it graded. */
     const graded = (value: unknown): unknown =>
       typeof value === "number"
@@ -424,7 +424,12 @@ describe("grade (#4056)", () => {
           courses: breakable.courses,
           glow: breakable.glow,
         },
-        decor,
+        decor: {
+          ...(graded(decor) as object),
+          ember: decor.ember,
+          spark: decor.spark,
+          flame: decor.flame,
+        },
       });
     }
   });

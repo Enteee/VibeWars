@@ -1,6 +1,7 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
 import { CAST_BADGE_SIZE, castBadgeLayout } from "../apps/web/src/render/cast-badge.js";
+import { stackOverheadRise } from "../apps/web/src/render/sprite-stack.js";
 import { projection } from "./camera.js";
 import { startSoloMatch } from "./helpers/peers.js";
 import { bringStarter, starterKey } from "./helpers/starter.js";
@@ -37,7 +38,8 @@ async function badgeClip(page: Page): Promise<{
     .toBe(true);
   const view = await projection(stage, page.locator("#viewport canvas:not(.compass)"));
   const [x = 0, y = 0] = self.split(",").map(Number);
-  const centre = castBadgeLayout(x, y, RADIUS);
+  // Over your stacked figure, not a flat disc (ADR-0057).
+  const centre = castBadgeLayout(x, y - stackOverheadRise(RADIUS), RADIUS);
   const half = CAST_BADGE_SIZE / 2;
   const from = view.onPage({ x: centre.x - half, y: centre.y - half });
   const to = view.onPage({ x: centre.x + half, y: centre.y + half });

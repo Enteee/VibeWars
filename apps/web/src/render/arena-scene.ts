@@ -43,6 +43,8 @@ import {
   SPIRIT_RING_WIDTH,
   spiritRingAlpha,
   nameplateLayout,
+  isStackedFigure,
+  overheadRise,
   placeFloatingText,
   signetTextureKey,
   swingFlashAlpha,
@@ -67,8 +69,27 @@ import {
   fallLift,
   elevationOf,
   renderOrder,
+  FIGURE_DEPTH_SPAN,
   type RenderItem,
 } from "./render-order.js";
+import {
+  STACK_BADGE_FILL,
+  STACK_BADGE_RIM,
+  stackBadge,
+  stackOverheadRise,
+  stackPose,
+} from "./sprite-stack.js";
+import {
+  STACK_BAKE_RADIUS,
+  STACK_BAKE_SCALE,
+  STACK_FRAME_FEET_X,
+  STACK_FRAME_FEET_Y,
+  STACK_FRAME_HEIGHT,
+  STACK_FRAME_WIDTH,
+  StackAtlas,
+  type BakeContext,
+  type StackLook,
+} from "./stack-atlas.js";
 import {
   ARENA_BACKGROUND,
   DECK_LIP,
@@ -468,6 +489,7 @@ import {
   paintBodyDisc,
   paintBodyMarks,
   paintFormAura,
+  paintFigureGround,
   paintStandingBody,
   paintWeaponMark,
   type Painter,
@@ -792,6 +814,8 @@ export class ArenaScene extends Phaser.Scene {
   /** What moves on the floor, and the bodies, under the body glyphs. */
   private bands: readonly {
     readonly body: Phaser.GameObjects.Graphics;
+    /** The glyph badges on top of its stacked figures (ADR-0057). */
+    readonly badge: Phaser.GameObjects.Graphics;
     readonly marks: Phaser.GameObjects.Graphics;
     readonly bar: Phaser.GameObjects.Graphics;
   }[] = [];
@@ -1089,6 +1113,21 @@ export class ArenaScene extends Phaser.Scene {
   private signetsAdding = new Set<string>();
   /** The primary profession's glyph inside each body, one pooled image per actor (#1037). */
   private bodyGlyphs = new Map<string, Phaser.GameObjects.Image>();
+  /** Every look's stacked figure, baked once a match (ADR-0057, #4031). */
+  private stackAtlas: StackAtlas | undefined;
+  /** The atlas's canvas texture now, and how many it has had. */
+  private stackTexture = "";
+  private stackTextures = 0;
+  /** Whether the roster's looks are baked: at the first snapshot with bodies in it. */
+  private rosterBaked = false;
+  /** One image per standing body drawn as a figure, by actor id. */
+  private bodyFigures = new Map<string, Phaser.GameObjects.Image>();
+  /** The figures this frame draws, gathered as their bodies are drawn. */
+  private figures: {
+    readonly actor: RenderableActor;
+    readonly frame: string;
+    readonly band: number;
+  }[] = [];
   /** The casting skill's type badge by each cast bar, one pooled image per actor (#1125). */
   private castBadges = new Map<string, Phaser.GameObjects.Image>();
   /** Status ids the server sent that this client has no icon for. */
@@ -1176,7 +1215,62 @@ export class ArenaScene extends Phaser.Scene {
   /** Replace the snapshot to draw on the next frame. */
   public setSnapshot(snapshot: ArenaSnapshot): void {
     this.snapshot = snapshot;
+    this.bakeRoster();
   }
+
+  /**
+   * Bake every look on the roster into the figure atlas (ADR-0057), once,
+   * at match start: never on a body's first draw, so no look hitches a
+   * frame mid-fight. One that turns up later bakes off the frame path.
+   */
+  private bakeRoster(): void {
+    const atlas = this.stackAtlas;
+    if (atlas === undefined || this.rosterBaked || this.snapshot.actors.length === 0) {
+      return;
+    }
+    this.rosterBaked = true;
+    atlas.bake(this.snapshot.actors.filter(isStackedFigure).map((actor) => this.stackLook(actor)));
+  }
+
+  /** What `actor`'s figure is painted in: its team's colour and its cape (ADR-0056). */
+  private stackLook(actor: RenderableActor): StackLook {
+    const look = actor.cosmetics.cape?.look;
+    return {
+      body: teamColour(actor.team),
+      cape:
+        actor.cape === undefined
+          ? undefined
+          : { look: actor.cape, pattern: look?.kind === "cape" ? look.pattern : undefined },
+    };
+  }
+
+  /** A canvas texture for the figure atlas, `width` × `height`: a new key every time. */
+  private stackSurface(width: number, height: number) {
+    this.stackTextures += 1;
+    const key = `stack-atlas-${String(this.stackTextures)}`;
+    const texture = this.textures.createCanvas(key, width, height);
+    if (texture === null) {
+      throw new Error(`[arena] could not make the figure atlas ${key}`);
+    }
+    this.stackTexture = key;
+    const context: BakeContext = texture.context;
+    return {
+      context,
+      addFrame: (name: string, x: number, y: number, w: number, h: number) => {
+        texture.add(name, 0, x, y, w, h);
+      },
+      refresh: () => {
+        texture.refresh();
+      },
+      destroy: () => {
+        this.textures.remove(key);
+      },
+    };
+  }
+
+  private readonly rebuildStackAtlas = (): void => {
+    this.stackAtlas?.rebuild();
+  };
 
   /** Replace the props to draw from the next frame: none clears them. */
   public setProps(props: readonly TutorialProp[]): void {
@@ -1250,6 +1344,14 @@ export class ArenaScene extends Phaser.Scene {
     this.groundGraphics = this.add.graphics().setDepth(GROUND_DEPTH);
     this.lightingPass = new LightingPass(this);
     this.vignette = new Vignette(this);
+    this.stackAtlas = new StackAtlas(
+      (width, height) => this.stackSurface(width, height),
+      (bake) => {
+        setTimeout(bake, 0);
+      },
+    );
+    this.game.renderer.on(Phaser.Renderer.Events.RESTORE_WEBGL, this.rebuildStackAtlas);
+    this.bakeRoster();
     this.alt = trackAlt(window);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.shutdown();
@@ -1265,6 +1367,7 @@ export class ArenaScene extends Phaser.Scene {
     this.mapGraphics = this.add.graphics().setDepth(MAP_DEPTH);
     this.bands = Array.from({ length: CHARACTER_BANDS }, (_, band) => ({
       body: this.add.graphics().setDepth(renderOrder({ kind: "character", band, part: "body" })),
+      badge: this.add.graphics().setDepth(renderOrder({ kind: "character", band, part: "badge" })),
       marks: this.add.graphics().setDepth(renderOrder({ kind: "character", band, part: "marks" })),
       bar: this.add.graphics().setDepth(renderOrder({ kind: "character", band, part: "bar" })),
     }));
@@ -1288,8 +1391,9 @@ export class ArenaScene extends Phaser.Scene {
     if (effects === undefined || floor === undefined) {
       return;
     }
-    for (const { body, marks: bandMarks, bar } of this.bands) {
+    for (const { body, badge, marks: bandMarks, bar } of this.bands) {
       body.clear();
+      badge.clear();
       bandMarks.clear();
       bar.clear();
     }
@@ -1376,6 +1480,7 @@ export class ArenaScene extends Phaser.Scene {
       }
     }
     this.drawProps();
+    this.figures.length = 0;
     for (const actor of this.drawnActors) {
       const band = this.bandOf(actor.layer);
       if (band !== undefined) {
@@ -1421,6 +1526,7 @@ export class ArenaScene extends Phaser.Scene {
       this.drawImpact(impact);
     }
     this.drawShoutChevrons();
+    this.updateBodyFigures();
     this.updateBodyGlyphs();
     this.updateCastBadges();
     this.updateProjectiles(time / 1000);
@@ -2010,7 +2116,8 @@ export class ArenaScene extends Phaser.Scene {
     const lift = recordFlag(this.recording, flag, this.snapshot.structure.ground, marks.depth);
     const x = flag.position.x;
     const y = flag.position.y - lift;
-    const foot = y - (flag.carried ? FLAG_CARRIED_LIFT : 0);
+    // A carrier is a standing figure: the flag stands over its badge (ADR-0057).
+    const foot = y - (flag.carried ? FLAG_CARRIED_LIFT + stackOverheadRise(STACK_BAKE_RADIUS) : 0);
     const top = foot - FLAG_POLE;
     marks.lineStyle(3, BODY_EDGE, 1);
     marks.lineBetween(x, foot, x, top);
@@ -2913,23 +3020,42 @@ export class ArenaScene extends Phaser.Scene {
       this.drawLyingBody(g, marks, actor);
     } else {
       const frame = this.weaponFrame(actor);
-      paintStandingBody(
-        phaserPainter(g),
-        {
-          x,
-          y,
-          r: actor.radius,
-          facing: actor.facing,
-          team: actor.team,
-          weaponId: actor.weaponId,
-          offhandId: actor.offhandId,
-          frame,
-          cape: this.wornCape(actor),
-          tint: this.bodyTint(actor),
-          swingTrail: this.swingTrail(actor, frame),
-        },
-        phaserPainter(marks),
+      const body: StandingBody = {
+        x,
+        y,
+        r: actor.radius,
+        facing: actor.facing,
+        team: actor.team,
+        weaponId: actor.weaponId,
+        offhandId: actor.offhandId,
+        frame,
+        cape: this.wornCape(actor),
+        tint: this.bodyTint(actor),
+        swingTrail: this.swingTrail(actor, frame),
+      };
+      const figure = this.stackAtlas?.frame(
+        this.stackLook(actor),
+        actor.facing,
+        stackPose(
+          this.trackMotion(actor) !== undefined,
+          actor.castProgress !== undefined,
+          this.now,
+          this.reducedMotion,
+        ),
       );
+      if (figure === undefined) {
+        // Its look is still baking: the flat disc until it is (ADR-0057).
+        paintStandingBody(phaserPainter(g), body, phaserPainter(marks));
+      } else {
+        paintFigureGround(phaserPainter(g), body);
+        paintBodyMarks(phaserPainter(marks), body);
+        this.drawFigureBadge(band.badge, actor);
+        this.figures.push({
+          actor,
+          frame: figure,
+          band: characterBand(actor.layer, this.snapshot.structure.layerCount),
+        });
+      }
       this.drawCastGlow(marks, actor, frame);
     }
     // On the body layer, after the body and its self rim: every mark draws over the rings.
@@ -3772,6 +3898,69 @@ export class ArenaScene extends Phaser.Scene {
   }
 
   /**
+   * The stacked figure of every standing body drawn this frame (ADR-0057):
+   * one atlas image each, its feet on the body's centre, tinted by the
+   * light there (ADR-0052), the nearer over the one behind; an actor no
+   * longer drawn as one hides its image, and one that left takes it along.
+   */
+  private updateBodyFigures(): void {
+    const shown = new Set<string>();
+    const scale = 1 / STACK_BAKE_SCALE;
+    const depthPerY = this.arena.height > 0 ? FIGURE_DEPTH_SPAN / this.arena.height : 0;
+    for (const { actor, frame, band } of this.figures) {
+      shown.add(actor.id);
+      let image = this.bodyFigures.get(actor.id);
+      if (image === undefined) {
+        image = this.add
+          .image(0, 0, this.stackTexture, frame)
+          .setOrigin(
+            STACK_FRAME_FEET_X / STACK_FRAME_WIDTH,
+            STACK_FRAME_FEET_Y / STACK_FRAME_HEIGHT,
+          );
+        this.bodyFigures.set(actor.id, image);
+      }
+      if (image.texture.key !== this.stackTexture) {
+        image.setTexture(this.stackTexture, frame);
+      } else if (image.frame.name !== frame) {
+        image.setFrame(frame);
+      }
+      const size = (scale * actor.radius) / STACK_BAKE_RADIUS;
+      const { x, y } = actor.position;
+      const depth = renderOrder({ kind: "character", band, part: "figure" });
+      image
+        .setDisplaySize(STACK_FRAME_WIDTH * size, STACK_FRAME_HEIGHT * size)
+        .setPosition(x, y)
+        .setDepth(depth + Math.min(Math.max(y * depthPerY, 0), FIGURE_DEPTH_SPAN * 0.99))
+        .setTint(this.bodyTint(actor) ?? 0xffffff)
+        .setVisible(true);
+    }
+    for (const [id, image] of this.bodyFigures) {
+      if (shown.has(id)) {
+        continue;
+      }
+      if (this.drawnActors.some((actor) => actor.id === id)) {
+        image.setVisible(false);
+      } else {
+        image.destroy();
+        this.bodyFigures.delete(id);
+      }
+    }
+  }
+
+  /** The dark disc the glyph rides on, on top of `actor`'s figure (ADR-0057). */
+  private drawFigureBadge(g: Phaser.GameObjects.Graphics, actor: RenderableActor): void {
+    if (actor.profession === undefined) {
+      return;
+    }
+    const { x, y } = actor.position;
+    const badge = stackBadge(actor.radius);
+    g.fillStyle(STACK_BADGE_RIM, 1);
+    g.fillCircle(x, y - badge.rise, badge.radius + 1);
+    g.fillStyle(STACK_BADGE_FILL, 1);
+    g.fillCircle(x, y - badge.rise, badge.radius);
+  }
+
+  /**
    * The primary profession's glyph inside every body (#1037): upright,
    * world sized, between the bodies and their marks. Frame, tint and
    * alpha are set only when they change, as the name glyph's are; an actor
@@ -3851,7 +4040,11 @@ export class ArenaScene extends Phaser.Scene {
       if (badge.frame.name !== frame) {
         badge.setFrame(frame);
       }
-      const centre = castBadgeLayout(actor.position.x, actor.position.y, actor.radius);
+      const centre = castBadgeLayout(
+        actor.position.x,
+        actor.position.y - overheadRise(actor),
+        actor.radius,
+      );
       badge
         .setDisplaySize(CAST_BADGE_SIZE, CAST_BADGE_SIZE)
         .setPosition(centre.x, centre.y)
@@ -3886,7 +4079,7 @@ export class ArenaScene extends Phaser.Scene {
   private drawHealthBar(g: Phaser.GameObjects.Graphics, actor: RenderableActor): void {
     const fraction = healthFraction(actor);
     const left = actor.position.x - HEALTH_BAR_WIDTH / 2;
-    const top = actor.position.y - actor.radius - 12;
+    const top = actor.position.y - actor.radius - overheadRise(actor) - 12;
 
     g.fillStyle(HEALTH_BAR_BG, 1);
     g.fillRect(left, top, HEALTH_BAR_WIDTH, HEALTH_BAR_HEIGHT);
@@ -3900,7 +4093,7 @@ export class ArenaScene extends Phaser.Scene {
     progress: number,
   ): void {
     const left = actor.position.x - HEALTH_BAR_WIDTH / 2;
-    const top = actor.position.y - actor.radius - CAST_BAR_RISE;
+    const top = actor.position.y - actor.radius - overheadRise(actor) - CAST_BAR_RISE;
     g.fillStyle(HEALTH_BAR_BG, 1);
     g.fillRect(left, top, HEALTH_BAR_WIDTH, HEALTH_BAR_HEIGHT);
     g.fillStyle(CAST_BAR_FILL, 1);
@@ -5950,6 +6143,12 @@ export class ArenaScene extends Phaser.Scene {
     this.lightingPass = undefined;
     this.vignette?.destroy();
     this.vignette = undefined;
+    // `create` listens for a restored context while it holds an atlas.
+    if (this.stackAtlas !== undefined) {
+      this.game.renderer.off(Phaser.Renderer.Events.RESTORE_WEBGL, this.rebuildStackAtlas);
+      this.stackAtlas.destroy();
+      this.stackAtlas = undefined;
+    }
     this.dropOutside();
     this.dropGrain();
     this.dropZoneGrounds();
@@ -6439,6 +6638,11 @@ export function paintDecor(
       case "line":
         g.lineStyle(command.width, lit(command.colour, false), command.alpha);
         g.lineBetween(command.from.x, command.from.y, command.to.x, command.to.y);
+        break;
+      case "outline":
+        g.lineStyle(command.width, lit(command.colour, false), command.alpha);
+        tracePath(g, command.points);
+        g.strokePath();
         break;
     }
   }

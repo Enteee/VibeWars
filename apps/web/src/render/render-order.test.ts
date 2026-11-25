@@ -7,6 +7,7 @@ import {
   DROP_FALL_SECONDS,
   easeElevation,
   fallLift,
+  FIGURE_DEPTH_SPAN,
   ELEVATION_EASE_SECONDS,
   elevationOf,
   renderOrder,
@@ -75,6 +76,14 @@ describe("renderOrder (#2810, section 8: 12)", () => {
     expect(renderOrder(character(0))).toBeLessThan(glyph);
     expect(glyph).toBeLessThan(marks);
     expect(marks).toBeLessThan(renderOrder({ kind: "wall", layer: 0 }));
+  });
+
+  it("draws a stacked figure over its ground marks, then its badge, then its glyph (ADR-0057)", () => {
+    const part = (p: "figure" | "badge" | "glyph"): number =>
+      renderOrder({ kind: "character", band: 0, part: p });
+    expect(renderOrder(character(0))).toBeLessThan(part("figure"));
+    expect(part("figure") + FIGURE_DEPTH_SPAN).toBeLessThan(part("badge"));
+    expect(part("badge")).toBeLessThan(part("glyph"));
   });
 
   it("lights a layer over its surfaces and under whoever stands on it (#2987)", () => {
