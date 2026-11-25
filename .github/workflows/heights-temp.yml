@@ -1,7 +1,7 @@
 name: HeightsTemp
 on:
   push:
-    branches: ["bot/cicd-engineer@2/readme-heights"]
+    branches: ["bot/cicd-engineer@2/readme-heights2"]
 permissions:
   contents: read
 jobs:
