@@ -6386,14 +6386,17 @@ function phaserPainter(g: Phaser.GameObjects.Graphics): Painter {
 }
 
 /** A still decor prop's strokes to bake (#4017), as `paintDecor` takes them. */
-interface BakedDecor {
+export interface BakedDecor {
   readonly commands: readonly DecorCommand[];
   readonly tint: number | undefined;
   readonly lift: number;
 }
 
-/** A decor prop's strokes (#4013), lifted to its layer, each but a flame in `tint`. */
-function paintDecor(
+/**
+ * A decor prop's strokes (#4013), lifted to its layer, each but a flame in
+ * `tint`. Exported for the visibility gate, which records what is baked.
+ */
+export function paintDecor(
   g: Phaser.GameObjects.Graphics,
   commands: readonly DecorCommand[],
   tint: number | undefined,
