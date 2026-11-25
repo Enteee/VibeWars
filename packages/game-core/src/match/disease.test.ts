@@ -323,6 +323,21 @@ describe("Disease spreads to the same kind of body (#3881)", () => {
     expect(get(match, "pet").statuses.has("disease")).toBe(false);
   });
 
+  it("a diseased guard infects the character beside it, and that character a priest: all Human (#4000)", () => {
+    const match = standing([
+      creature("guard", vec2(270, 0), "guard", "guard"),
+      body("w", 1, vec2(300, 0)),
+      creature("priest", vec2(330, 0), "priest", "priest"),
+    ]);
+    get(match, "guard").statuses.apply("disease", 10, "w", NO_RANKS);
+    expect(spreads(stepFor(match, DT))).toEqual([
+      { kind: "status-spread", targetId: "w", fromId: "guard", statusId: "disease" },
+    ]);
+    expect(spreads(stepFor(match, DT))).toEqual([
+      { kind: "status-spread", targetId: "priest", fromId: "w", statusId: "disease" },
+    ]);
+  });
+
   it("two adjacent pets pass it between themselves, and not to a character beside them", () => {
     const match = standing([
       body("w", 1, vec2(270, 0)),

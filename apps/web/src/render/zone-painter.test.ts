@@ -5,7 +5,10 @@ import type { MapZone } from "./arena-snapshot.js";
 import { shoreDistance } from "./water-shape.js";
 import { ZONE_LOOK } from "./zone-look.js";
 import {
+  drawnOutline,
   paintZoneMotion,
+  paintZoneShadow,
+  reliefEdges,
   ZONE_DRIFT,
   zoneArtOf,
   zoneGroundAlpha,
@@ -141,6 +144,90 @@ describe("a zone's painted ground (#3052)", () => {
     paintZoneMotion(painted.painter, art, 1, 0, true);
     const outlines = painted.calls.filter(([name]) => name === "fillOutline");
     expect(outlines.length).toBeGreaterThan(0);
-    expect(art.centroid).toEqual({ x: 160, y: 145 });
+    // Its rounded corners (#4037) move the centroid by a rounding error at most.
+    expect(art.centroid.x).toBeCloseTo(160, 9);
+    expect(art.centroid.y).toBeCloseTo(145, 9);
+  });
+});
+
+describe("a zone's drawn outline and relief (#4037)", () => {
+  const areaOf = (points: readonly { x: number; y: number }[]): number =>
+    Math.abs(
+      points.reduce((sum, from, at) => {
+        const to = points[(at + 1) % points.length] ?? from;
+        return sum + from.x * to.y - to.x * from.y;
+      }, 0) / 2,
+    );
+  const rect = { kind: "rect", x: 50, y: 70, width: 100, height: 100 } as const;
+
+  it("rounds a rect's corners, only ever inside it, losing at most 3 % of a 100 × 100 zone", () => {
+    const drawn = drawnOutline(rect);
+    if (drawn.kind !== "polygon") {
+      throw new Error("a rect zone is drawn as a polygon");
+    }
+    expect(drawn.points.length).toBeGreaterThan(4);
+    for (const { x, y } of drawn.points) {
+      expect(x).toBeGreaterThanOrEqual(rect.x - 1e-9);
+      expect(x).toBeLessThanOrEqual(rect.x + rect.width + 1e-9);
+      expect(y).toBeGreaterThanOrEqual(rect.y - 1e-9);
+      expect(y).toBeLessThanOrEqual(rect.y + rect.height + 1e-9);
+    }
+    // No corner is left square.
+    expect(drawn.points).not.toContainEqual({ x: rect.x, y: rect.y });
+    expect(areaOf(drawn.points)).toBeGreaterThanOrEqual(0.97 * rect.width * rect.height);
+  });
+
+  it("leaves a polygon, and a rect too small to round, as they are", () => {
+    const polygon = {
+      kind: "polygon",
+      points: [
+        { x: 0, y: 0 },
+        { x: 80, y: 10 },
+        { x: 40, y: 60 },
+      ],
+    } as const;
+    expect(drawnOutline(polygon)).toBe(polygon);
+    const small = { kind: "rect", x: 0, y: 0, width: 200, height: 29 } as const;
+    expect(drawnOutline(small)).toBe(small);
+  });
+
+  it("paints a zone with a ground by its rounded outline, a hazard not at all", () => {
+    const art = zoneArtOf(square("grove"), 0);
+    expect(art?.outline.length).toBeGreaterThan(4);
+    expect(zoneArtOf(square("rockfall"), 0)).toBeUndefined();
+  });
+
+  it("faces the north-west edges towards the sun, whichever way the outline winds", () => {
+    const clockwise = [
+      { x: 0, y: 0 },
+      { x: 10, y: 0 },
+      { x: 10, y: 10 },
+      { x: 0, y: 10 },
+    ];
+    for (const outline of [clockwise, [...clockwise].reverse()]) {
+      const facings = reliefEdges(outline).map(({ from, to, facing }) => ({
+        side: from.y === 0 && to.y === 0 ? "north" : from.x === 10 && to.x === 10 ? "east" : "",
+        facing,
+      }));
+      expect(facings.find(({ side }) => side === "north")?.facing).toBeGreaterThan(0);
+      expect(facings.find(({ side }) => side === "east")?.facing).toBeLessThan(0);
+    }
+  });
+
+  it("casts its shadow just outside the edges away from the sun", () => {
+    const { painter, calls } = recorder();
+    const art = zoneArtOf(square("grove"), 0);
+    if (art === undefined) {
+      throw new Error("a grove has a ground");
+    }
+    paintZoneShadow(painter, art.outline, 1);
+    const lines = calls.filter(([name]) => name === "lineBetween");
+    expect(lines.length).toBeGreaterThan(0);
+    for (const [, x1, y1, x2, y2] of lines as [string, number, number, number, number][]) {
+      // Off its north and west edges, and outside it.
+      expect(Math.min(x1, x2)).toBeGreaterThan(100);
+      expect(Math.min(y1, y2)).toBeGreaterThan(100);
+      expect(pointInPolygon({ x: (x1 + x2) / 2, y: (y1 + y2) / 2 }, art.outline)).toBe(false);
+    }
   });
 });

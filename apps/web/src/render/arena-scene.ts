@@ -450,6 +450,8 @@ import { dashedCircle } from "./dashed-circle.js";
 import {
   groundArtOf,
   paintZoneGround,
+  paintZoneRelief,
+  paintZoneShadow,
   paintZoneMotion,
   zoneArtOf,
   zoneGroundAlpha,
@@ -5668,11 +5670,17 @@ export class ArenaScene extends Phaser.Scene {
         });
       }
       const edgeScale = ZONE_RULES[zone.kind].trigger === "strike" ? strikeEdgeScale(phase) : 1;
+      // A zone with a ground is drawn by its rounded outline, its shadow under its edge (#4037).
+      const drawn: RenderableShape =
+        painted === undefined ? zone.area : { kind: "polygon", points: painted.art.outline };
+      if (painted !== undefined) {
+        paintZoneShadow(this.zoneMotionPainter(g), painted.art.outline, line);
+      }
       // A boulder's edge stays faint: the rock is what is seen coming.
       g.lineStyle(ZONE_EDGE_WIDTH * edgeScale * line, look.edge, hazard === "boulder" ? 0.4 : 1);
-      this.strokeShape(g, zone.area);
+      this.strokeShape(g, drawn);
       if (zone.kind === "draining-spire") {
-        this.drawSpire(g, zone.area, line);
+        this.drawSpire(g, drawn, line);
       }
       g.restore();
     }
@@ -5794,7 +5802,7 @@ export class ArenaScene extends Phaser.Scene {
         return undefined;
       }
       const depth = renderOrder({ kind: "zone", layer: zone.layer, part: "ground" });
-      return { art, ...this.paintGround(art, 0, depth) };
+      return { art, ...this.paintGround(art, 0, depth, true) };
     });
     this.zoneGrounds = { zones, grounds };
     return grounds;
@@ -5802,13 +5810,14 @@ export class ArenaScene extends Phaser.Scene {
 
   /**
    * `art`'s still ground painted once onto a canvas texture of its own,
-   * as an image `lift` world units up at `depth`: a zone's, or lava
-   * paving's (#3245).
+   * as an image `lift` world units up at `depth`: a zone's, with its
+   * `relief` (#4037), or lava paving's (#3245), without.
    */
   private paintGround(
     art: ZoneArt,
     lift: number,
     depth: number,
+    relief: boolean,
   ): { readonly image: Phaser.GameObjects.Image; readonly key: string } {
     const { width, height } = art.bounds;
     const scale = Math.min(ZONE_TEXTURE_SCALE, ZONE_TEXTURE_MAX_SIDE / Math.max(1, width, height));
@@ -5823,6 +5832,9 @@ export class ArenaScene extends Phaser.Scene {
       throw new Error("zones: could not create a zone's ground");
     }
     paintZoneGround(texture.context, art, scale);
+    if (relief) {
+      paintZoneRelief(texture.context, art, scale);
+    }
     texture.refresh();
     const image = this.add
       .image(art.bounds.left, art.bounds.top - lift, key)
@@ -5875,6 +5887,7 @@ export class ArenaScene extends Phaser.Scene {
           groundArtOf("lava", paving.area, index),
           elevationOf(paving.layer, structure.ground),
           renderOrder({ kind: "paving", layer: paving.layer }),
+          false,
         ),
       );
     const covers = structure.tunnels.flatMap((tunnel, at) =>

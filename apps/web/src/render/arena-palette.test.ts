@@ -10,11 +10,13 @@ import { describe, expect, it } from "vitest";
 
 import {
   ACT_TONES,
+  ARENA_BACKGROUND,
   arenaPalette,
   BIOME,
   BREAKABLE_WALL_LOOK,
   breakableLook,
   materialsOf,
+  PIT_FLOOR_SHADE,
   pitFloor,
   pitWall,
   shade,
@@ -113,11 +115,23 @@ describe("BIOME", () => {
   });
 
   it("sinks a pit in the biome's own tones, the hall's as they were (#3329)", () => {
-    expect(pitFloor(BIOME.hall.palette)).toBe(shade(0x26303f, 0.45));
+    expect(pitFloor(BIOME.hall.palette)).toBe(shade(0x26303f, PIT_FLOOR_SHADE));
     expect(pitWall(BIOME.hall.palette)).toBe(shade(0x4b5a70, 0.6));
     const warm = (colour: number): boolean => colour >> 16 > (colour & 0xff);
     expect(warm(pitFloor(BIOME.desert.palette))).toBe(true);
     expect(warm(pitWall(BIOME.desert.palette))).toBe(true);
+  });
+
+  it("lights a pit's floor enough to read, still darker than the ground at its lip (#4037)", () => {
+    const luma = (colour: number): number =>
+      0.2126 * (colour >> 16) + 0.7152 * ((colour >> 8) & 0xff) + 0.0722 * (colour & 0xff);
+    for (const biome of BIOMES) {
+      const { palette } = BIOME[biome];
+      const floor = palette.floor ?? ARENA_BACKGROUND;
+      expect(pitFloor(palette)).toBe(shade(floor, PIT_FLOOR_SHADE));
+      expect(luma(pitFloor(palette))).toBeGreaterThanOrEqual(0.6 * luma(floor));
+      expect(luma(pitFloor(palette))).toBeLessThanOrEqual(0.85 * luma(floor));
+    }
   });
 
   it("draws the wilds green, and keeps the hall's dressed stone", () => {
