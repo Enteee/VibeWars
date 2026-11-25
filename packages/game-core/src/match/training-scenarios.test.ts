@@ -306,7 +306,10 @@ describe("time-to-kill, headless (#111)", () => {
       }
     }
     expect(diedAt).toBeDefined();
-    expect((backAt ?? Infinity) - (diedAt ?? 0)).toBeCloseTo(2, 1);
+    // In ticks: a death resolved before the step's respawn countdown starts
+    // counting in that step, one after it in the next, so 2 s is 39 or 40.
+    const ticks = Math.round(((backAt ?? Infinity) - (diedAt ?? 0)) / DT);
+    expect(Math.abs(ticks - Math.round(2 / DT))).toBeLessThanOrEqual(1);
   });
 });
 
@@ -382,7 +385,7 @@ describe("physical-vs-elemental, headless (#111)", () => {
 });
 
 describe("condition-pressure, headless (#111)", () => {
-  it("the loaded dummy loses 20 health a second and dies in 25 s; the clean one loses none", () => {
+  it("the loaded dummy loses 20 health a second and dies in 24 s; the clean one loses none", () => {
     const sim = arena(scenario("condition-pressure"), "conditions");
     const health = (id: string): number => sim.get(id)?.combatant.health ?? NaN;
     const max = RULES.combat.baseHealth;
@@ -399,7 +402,7 @@ describe("condition-pressure, headless (#111)", () => {
         diedAt = (i + 1) * DT;
       }
     }
-    expect(diedAt).toBeCloseTo(25, 0);
+    expect(diedAt).toBeCloseTo(max / 20, 0);
   });
 });
 
@@ -459,7 +462,7 @@ describe("condition-removal, headless (#111)", () => {
     expect(conditions()).toBe(5);
   });
 
-  it("heals stop at 400, deep wound's cap", () => {
+  it("heals stop at 384, deep wound's cap", () => {
     const sim = monkArena();
     sim.setTarget("player", "ally");
     let most = 0;
@@ -468,10 +471,12 @@ describe("condition-removal, headless (#111)", () => {
       sim.step(DT);
       most = Math.max(most, sim.get("ally")?.combatant.health ?? 0);
     }
-    // The heal stops at 400 (#764); the ally's bleeding, −3 pips, takes its
-    // tick off in the same step, after the heal and before the reading.
-    expect(most).toBeLessThanOrEqual(400);
-    expect(most).toBeCloseTo(400 - 3 * HEALTH_PER_PIP * DT, 9);
+    // The heal stops at 80% of 480 (#764); the ally's bleeding, −3 pips,
+    // takes its tick off in the same step, after the heal and before the
+    // reading.
+    const cap = 0.8 * RULES.combat.baseHealth;
+    expect(most).toBeLessThanOrEqual(cap);
+    expect(most).toBeCloseTo(cap - 3 * HEALTH_PER_PIP * DT, 9);
   });
 });
 

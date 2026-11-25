@@ -330,7 +330,7 @@ describe("networked combat (P2P)", () => {
     a.sendIntent({ kind: "use-skill", slot: FIREBALL });
     await until(
       match,
-      () => (playerIn(a.getSnapshot(), b.selfSessionId)?.health ?? 590) < 590,
+      () => (playerIn(a.getSnapshot(), b.selfSessionId)?.health ?? 570) < 570,
       "the target to take damage",
     );
 
@@ -1259,7 +1259,7 @@ describe("the match summary (#1057)", () => {
     a.sendIntent({ kind: "use-skill", slot: FIREBALL });
     await until(
       match,
-      () => (playerIn(a.getSnapshot(), b.selfSessionId)?.health ?? 590) < 590,
+      () => (playerIn(a.getSnapshot(), b.selfSessionId)?.health ?? 570) < 570,
       "the target to take damage",
     );
   }
