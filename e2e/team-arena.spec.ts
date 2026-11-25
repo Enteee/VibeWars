@@ -183,8 +183,7 @@ test("#1766: two parties of two queue for Team Arena, meet, and play their own b
     await runTeamLobby([cid, dot], () => voteTeam(cid, dot, "Quad"));
     // Ann's party may have warmed up against bots while Cid's voted
     // (#3899): its warmup HUD plays the same builds, so wait it out.
-    await inRealMatch(ann);
-    await inRealMatch(bea);
+    await inRealMatch([ann, bea], cid);
 
     // Met, the queued lobby counts down five seconds before the match
     // starts (QUEUED_COUNTDOWN_SECONDS), then four pages boot an arena
@@ -256,9 +255,7 @@ test("#3899: a queued party warms up against bots, and goes to its match once an
     // Another party queues: the warmup ends at once, and all four meet.
     await formParty([cid, dot], ["Cid", "Dot"]);
     await runTeamLobby([cid, dot]);
-    for (const page of [ann, bea]) {
-      await inRealMatch(page);
-    }
+    await inRealMatch([ann, bea], cid);
     // The party is told, in its match, that the warmup gave way to it:
     // a toast's 5 s, so watched for from before the match starts.
     const told = Promise.all(
@@ -371,11 +368,18 @@ async function seedTicketKeys(page: Page, seed: number): Promise<void> {
 }
 
 /**
- * Wait until `page`'s warmup against bots (#3899) has given way to the
+ * Wait until `pages`' warmup against bots (#3899) has given way to the
  * match: a party that queued first plays one while the other votes.
+ * `foe`'s party queued second, so it never warms up: its bar proves the
+ * match is up. Without it, no warmup line yet would pass for one gone.
  */
-async function inRealMatch(page: Page): Promise<void> {
-  await expect(page.locator(".hud-warmup")).toHaveCount(0, { timeout: 60_000 });
+async function inRealMatch(pages: readonly Page[], foe: Page): Promise<void> {
+  // As the #3899 warmup test: the match can follow the warmup ending.
+  await foe.bringToFront();
+  await expect(foe.locator(".hud-skills .hud-skill").first()).toBeAttached({ timeout: 40_000 });
+  for (const page of pages) {
+    await expect(page.locator(".hud-warmup")).toHaveCount(0, { timeout: 60_000 });
+  }
 }
 
 /** The first skill on `page`'s bar, once its match is up. */
@@ -422,11 +426,8 @@ test("#3815: a Team Arena party that wins queues again with the same team, with 
     }
     // Ann's party warms up while Cid's votes: its bar is the warmup's
     // until all four are in the match (#3968).
-    for (const page of [ann, bea]) {
-      await inRealMatch(page);
-    }
+    await inRealMatch([ann, bea], cid);
     const builds = [await firstSkill(ann), await firstSkill(bea)];
-    await firstSkill(cid);
     await firstSkill(dot);
 
     // Cid's side leaves: on an Annihilation map, a side with nobody left is beaten.
@@ -460,10 +461,7 @@ test("#3815: a Team Arena party that wins queues again with the same team, with 
 
     // Met again (Cid only ever plays this one), each of Ann's party plays
     // the build and seat it played before: in the match, not a warmup.
-    for (const page of [ann, bea]) {
-      await inRealMatch(page);
-    }
-    await firstSkill(cid);
+    await inRealMatch([ann, bea], cid);
     expect([await firstSkill(ann), await firstSkill(bea)]).toEqual(builds);
     await expect(ann.locator(".party-row-name")).toContainText(["Bea"]);
   } finally {
