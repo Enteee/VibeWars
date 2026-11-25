@@ -1,12 +1,6 @@
 import { vec2, type Vec2 } from "@vibewars/game-core";
 
-import {
-  DEFAULT_STEP,
-  VIEW_STEPS,
-  clampToLeash,
-  zoomFor,
-  type Size,
-} from "../render/camera-rig.js";
+import { DEFAULT_STEP, clampToLeash, zoomFor, type Size } from "../render/camera-rig.js";
 
 /** How far past the view's edge the teleporter keeps, out of it or in it (#3222). */
 export const TELEPORTER_MARGIN = 100;
@@ -53,18 +47,14 @@ export function inwardStart(
 /**
  * How far north of the player the teleporter may stand (#3222), on a
  * canvas of `viewport`: `near` is out of the default view by
- * `TELEPORTER_MARGIN`; `far` is in view by as much after one wheel
- * notch out and a right-drag up to the leash.
+ * `TELEPORTER_MARGIN`; `far` is in view by as much after a right-drag
+ * up to the leash at the default zoom (#3970), so the wheel is optional.
  */
 export function teleporterReach(viewport: Size): { readonly near: number; readonly far: number } {
-  const half = (step: number): number => viewport.height / 2 / zoomFor(step, viewport);
-  const wide = Math.min(VIEW_STEPS.length - 1, DEFAULT_STEP + 1);
-  const leash = -clampToLeash(vec2(0, Number.NEGATIVE_INFINITY), viewport, zoomFor(wide, viewport))
-    .y;
-  return {
-    near: half(DEFAULT_STEP) + TELEPORTER_MARGIN,
-    far: leash + half(wide) - TELEPORTER_MARGIN,
-  };
+  const zoom = zoomFor(DEFAULT_STEP, viewport);
+  const half = viewport.height / 2 / zoom;
+  const leash = -clampToLeash(vec2(0, Number.NEGATIVE_INFINITY), viewport, zoom).y;
+  return { near: half + TELEPORTER_MARGIN, far: leash + half - TELEPORTER_MARGIN };
 }
 
 /**

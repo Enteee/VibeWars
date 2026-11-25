@@ -1711,9 +1711,8 @@ export default {
   "tutorial.heal.ow": "Jaj! Eltalált a kő. Segítesz egy kicsit?",
   "tutorial.heal.praise": "Sokkal jobb, köszönöm! Gyógyítani is tudsz.",
   "tutorial.learn": "Tanulj meg játszani",
-  "tutorial.look.hint": "Kicsinyíts, aztán húzd a nézetet északra. Keresd meg a teleportot!",
-  "tutorial.look.how":
-    "Az egérgörgő nagyít. Tartsd lenyomva a jobb gombot, és húzd a körülnézéshez.",
+  "tutorial.look.hint": "Húzd a nézetet északra. Keresd meg a teleportot!",
+  "tutorial.look.how": "Tartsd lenyomva a jobb gombot, és húzd a körülnézéshez.",
   "tutorial.look.intro": "Talán ez a teleport elvisz minket a csatatér mellett. Nézz északra!",
   "tutorial.look.praise": "Ott van! Az utunk a harc mellett.",
   "tutorial.offer": "Új vagy? A tanítód megmutatja az alapokat.",
@@ -1749,7 +1748,7 @@ export default {
     "Előbb koppints a nevemre a csapatlistában. Koppints az Osztag gombra, ha a lista zárva van.",
   "tutorial.touch.healHow":
     "Ha a lista zárva van, koppints az Osztag gombra, aztán a nevemre, aztán a világító készségre.",
-  "tutorial.touch.look": "Csippents a nagyításhoz. Húzd egy ujjal a körülnézéshez.",
+  "tutorial.touch.look": "Húzd egy ujjal a körülnézéshez.",
   "tutorial.touch.pingHow": "Koppints az iránytűre, vagy húzz rajta vonalat.",
   "tutorial.touch.ratsHow": "Koppints egy patkányra, hogy megcélozd.",
   "tutorial.touch.tunnelHow": "Koppints a lefelé vezető lépcsőre, aztán a túlsó vég mögötti jelre.",

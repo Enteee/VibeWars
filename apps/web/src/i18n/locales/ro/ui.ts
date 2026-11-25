@@ -1786,9 +1786,8 @@ export default {
   "tutorial.heal.ow": "Au! M-a lovit piatra. Mă ajuți puțin?",
   "tutorial.heal.praise": "Mult mai bine, mulțumesc! Știi și să vindeci.",
   "tutorial.learn": "Învață să joci",
-  "tutorial.look.hint": "Micșorează, apoi trage imaginea spre nord. Găsește teleportorul!",
-  "tutorial.look.how":
-    "Rotița mouse-ului face zoom. Ține apăsat butonul drept și trage ca să privești.",
+  "tutorial.look.hint": "Trage imaginea spre nord. Găsește teleportorul!",
+  "tutorial.look.how": "Ține apăsat butonul drept și trage ca să privești.",
   "tutorial.look.intro":
     "Poate acest teleportor ne duce pe lângă câmpul de luptă. Privește spre nord!",
   "tutorial.look.praise": "Iată-l! Drumul nostru pe lângă luptă.",
@@ -1824,7 +1823,7 @@ export default {
     "Mai întâi atinge numele meu în lista grupului. Atinge Grup dacă lista e închisă.",
   "tutorial.touch.healHow":
     "Atinge Grup dacă lista e închisă, apoi numele meu, apoi abilitatea care strălucește.",
-  "tutorial.touch.look": "Ciupește ca să faci zoom. Trage cu un deget ca să privești.",
+  "tutorial.touch.look": "Trage cu un deget ca să privești.",
   "tutorial.touch.pingHow": "Atinge busola sau trage pe ea ca să desenezi o linie.",
   "tutorial.touch.ratsHow": "Atinge un șobolan ca să-l țintești.",
   "tutorial.touch.tunnelHow": "Atinge treptele în jos, apoi semnul de dincolo de capătul celălalt.",

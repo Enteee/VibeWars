@@ -1708,8 +1708,8 @@ export default {
   "tutorial.heal.ow": "Au! De steen raakte me. Een beetje hulp?",
   "tutorial.heal.praise": "Veel beter, dank je! Jij kunt ook genezen.",
   "tutorial.learn": "Leer spelen",
-  "tutorial.look.hint": "Zoom uit en sleep het beeld naar het noorden. Vind de teleporter!",
-  "tutorial.look.how": "Het muiswiel zoomt. Houd de rechterknop vast en sleep om rond te kijken.",
+  "tutorial.look.hint": "Sleep het beeld naar het noorden. Vind de teleporter!",
+  "tutorial.look.how": "Houd de rechterknop vast en sleep om rond te kijken.",
   "tutorial.look.intro":
     "Misschien brengt deze teleporter ons om het slagveld heen. Kijk naar het noorden!",
   "tutorial.look.praise": "Daar is hij! Onze weg om het gevecht heen.",
@@ -1745,7 +1745,7 @@ export default {
     "Tik eerst op mijn naam in de groepslijst. Tik op Groep als de lijst dicht is.",
   "tutorial.touch.healHow":
     "Tik op Groep als de lijst dicht is, dan op mijn naam en dan op de oplichtende skill.",
-  "tutorial.touch.look": "Knijp om te zoomen. Sleep met één vinger om rond te kijken.",
+  "tutorial.touch.look": "Sleep met één vinger om rond te kijken.",
   "tutorial.touch.pingHow": "Tik op het kompas, of sleep erover om een lijn te tekenen.",
   "tutorial.touch.ratsHow": "Tik op een rat om hem te kiezen.",
   "tutorial.touch.tunnelHow":

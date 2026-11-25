@@ -1,13 +1,7 @@
 import { vec2, type Vec2 } from "@vibewars/game-core";
 import { describe, expect, it } from "vitest";
 
-import {
-  DEFAULT_STEP,
-  clampToLeash,
-  createCameraRig,
-  wheelNotch,
-  zoomFor,
-} from "../render/camera-rig.js";
+import { DEFAULT_STEP, clampToLeash, zoomFor } from "../render/camera-rig.js";
 
 import {
   TELEPORTER_MARGIN,
@@ -58,15 +52,23 @@ const northEdge = (step: number, pan: number): number =>
   VIEWPORT.height / 2 / zoomFor(step, VIEWPORT) - pan;
 
 describe("teleporterSpot (#3222)", () => {
-  it("stands out of the default view, and in it after one notch out and a drag to the leash", () => {
+  it("stands out of the default view, and in it after a drag to the leash at the default zoom", () => {
     const spot = teleporterSpot(START, VIEWPORT, anywhere, always);
     const rise = START.y - spot.y;
     expect(spot.x).toBe(START.x);
     expect(rise - northEdge(DEFAULT_STEP, 0)).toBeGreaterThanOrEqual(TELEPORTER_MARGIN);
-    const wide = wheelNotch(createCameraRig(), 1).step;
-    const zoom = zoomFor(wide, VIEWPORT);
+    const zoom = zoomFor(DEFAULT_STEP, VIEWPORT);
     const leash = clampToLeash(vec2(0, Number.NEGATIVE_INFINITY), VIEWPORT, zoom).y;
-    expect(northEdge(wide, leash) - rise).toBeGreaterThanOrEqual(TELEPORTER_MARGIN);
+    expect(northEdge(DEFAULT_STEP, leash) - rise).toBeGreaterThanOrEqual(TELEPORTER_MARGIN);
+  });
+
+  // #3970: a drag alone finds it, on a desktop and on a phone held upright.
+  it.each([
+    { width: 1280, height: 720 },
+    { width: 412, height: 915 },
+  ])("leaves room between near and far at the default zoom on $width×$height", (viewport) => {
+    const { near, far } = teleporterReach(viewport);
+    expect(near).toBeLessThan(far);
   });
 
   it("steps aside from ground that is not open", () => {

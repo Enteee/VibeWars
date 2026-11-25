@@ -9,6 +9,7 @@ import { describe, expect, it } from "vitest";
 import { toRenderableWall } from "../match-view.js";
 import { hostMap, mapStructure, teamArenaMapIds } from "../net/maps.js";
 import type { RenderableWall } from "../render/arena-snapshot.js";
+import { DEFAULT_STEP, zoomFor } from "../render/camera-rig.js";
 import { pickSurface } from "../render/layer-surfaces.js";
 import { ELEVATION_STEP } from "../render/render-order.js";
 import { splashGraph, splashSpawn } from "../ui/splash-fight.js";
@@ -187,6 +188,19 @@ describe("tutorialWorld (#3221)", () => {
       const paths = createPathFinder(splashGraph(map));
       expect(paths.find(self.position, teleporter)).toBeDefined();
       expect(paths.find(self.position, besidePad)).toBeDefined();
+    },
+  );
+
+  // #3970: the look is done the moment the pad shows, so it must not show
+  // from where the walk to the mark leaves the player. On these two no
+  // ground in reach north is open, so it stands in view as it always has.
+  const inViewAnyway = new Set(["arena-canyon", "jungle-ruins"]);
+  it.each(teamArenaMapIds(8).filter((mapId) => !inViewAnyway.has(mapId)))(
+    "stands the teleporter out of the default view from the mark on %s",
+    (mapId) => {
+      const { mark, teleporter } = tutorialWorld(mapId, 8, "teleporter", "monk", VIEWPORT);
+      const half = VIEWPORT.height / 2 / zoomFor(DEFAULT_STEP, VIEWPORT);
+      expect(mark.y - teleporter.y).toBeGreaterThan(half);
     },
   );
 
