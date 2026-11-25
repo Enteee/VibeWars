@@ -425,6 +425,7 @@ export default {
   "cosmetics.item.trailFrost": "Traînée de givre",
   "cosmetics.item.trailMoss": "Traînée de mousse",
   "cosmetics.item.trailStarlight": "Traînée de lumière stellaire",
+  "cosmetics.detail": "{name} : {requirement}",
   "cosmetics.locked": "Verrouillé",
   "cosmetics.none": "Aucun",
   "cosmetics.note":

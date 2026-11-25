@@ -435,6 +435,7 @@ export default {
   "cosmetics.item.trailFrost": "Морозний слід",
   "cosmetics.item.trailMoss": "Моховий слід",
   "cosmetics.item.trailStarlight": "Зоряний слід",
+  "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Закрито",
   "cosmetics.none": "Немає",
   "cosmetics.note":

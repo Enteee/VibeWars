@@ -1,20 +1,24 @@
+import type { WireCape } from "@vibewars/game-protocol";
+
 import {
   COSMETIC_CATALOG,
   COSMETIC_SLOTS,
   type CosmeticEntry,
+  type CosmeticLook,
   type CosmeticSlot,
 } from "../cosmetics/catalog.js";
 import { cosmeticsStore, type CosmeticsStore } from "../cosmetics/store.js";
 import { isUnlocked } from "../cosmetics/unlocks.js";
-import { t, type MessageKey } from "../i18n/index.js";
+import { locale, t, type MessageKey } from "../i18n/index.js";
+import { LANGUAGES } from "../i18n/languages.js";
 import { h } from "./kit.js";
 import type { OptionsSection } from "./options-sections.js";
 import { playerGuild } from "./player-section.js";
 
 /**
- * Options > Cosmetics (ADR-0056, #3577): one picker per slot, each item
- * wearable or locked with what earns it, and whether other players'
- * cosmetics are drawn. A pick applies at once and is kept per key, for
+ * Options > Cosmetics (ADR-0056, #3577): one row of swatches per slot
+ * (#3988), each item wearable or locked with what earns it, said on the
+ * line under the row. A pick applies at once and is kept per key, for
  * every character. Locked is read off your last known leaderboard entry.
  */
 
@@ -43,58 +47,209 @@ export function requirementText(entry: CosmeticEntry): string {
   return t("cosmetics.requires.streak", { count: requires.streakAtLeast });
 }
 
-/** One slot's picker: None, then each item, the picked one pressed. */
-function slotPicker(store: CosmeticsStore, slot: CosmeticSlot): HTMLElement {
+/** The cape a swatch draws a pattern or a trim frame in: the player's own. */
+export type SwatchCape = Pick<WireCape, "main" | "trim">;
+
+/** A cape's colours for a player with none, as a cape's are spelt: a plain grey cloth. */
+const PLAIN_CAPE: SwatchCape = { main: "6b6f78", trim: "c9ccd2" };
+
+/**
+ * How a swatch draws `entry` (#3988), in CSS: `kind` picks the drawing
+ * (a ring, a flame, a wave…), `variant` a cape's pattern, a spawn or
+ * dissolve's motif or an emblem frame's studs, and `colours` the custom
+ * properties it is drawn in, `--swatch` always.
+ */
+export interface SwatchStyle {
+  readonly kind: CosmeticLook["kind"];
+  readonly variant: string | null;
+  readonly colours: Readonly<Record<string, string>>;
+}
+
+/** `colour`, 0xRRGGBB, as CSS spells it. */
+function css(colour: number): string {
+  return `#${colour.toString(16).padStart(6, "0")}`;
+}
+
+/** The swatch of `entry`, a cape's in `cape`'s colours. */
+export function swatchStyle(entry: CosmeticEntry, cape: SwatchCape | null): SwatchStyle {
+  const { look } = entry;
+  const worn = cape ?? PLAIN_CAPE;
+  switch (look.kind) {
+    case "title":
+      return {
+        kind: look.kind,
+        variant: null,
+        colours: { "--swatch": css(look.colour), "--swatch-glow": css(look.glow) },
+      };
+    case "cape":
+      return {
+        kind: look.kind,
+        variant: look.pattern,
+        colours: { "--swatch": `#${worn.main}`, "--swatch-trim": `#${worn.trim}` },
+      };
+    case "spawn":
+    case "dissolve":
+      return { kind: look.kind, variant: look.motif, colours: { "--swatch": css(look.colour) } };
+    case "emblemFrame":
+      return {
+        kind: look.kind,
+        variant: look.studs ? "studs" : null,
+        colours: {
+          "--swatch": look.colour === "trim" ? `#${worn.trim}` : css(look.colour),
+        },
+      };
+    default:
+      return { kind: look.kind, variant: null, colours: { "--swatch": css(look.colour) } };
+  }
+}
+
+/** One swatch: what it draws, what it says, and whether it may be picked. */
+interface Swatch {
+  readonly id: string | undefined;
+  readonly style: SwatchStyle | null;
+  readonly detail: string;
+  readonly locked: boolean;
+}
+
+/** What the detail line says of `entry`: its name, what earns it, and whether that is still to come. */
+function detailOf(entry: CosmeticEntry, locked: boolean): string {
+  const said = t("cosmetics.detail", { name: t(entry.name), requirement: requirementText(entry) });
+  return locked ? `${said} · ${t("cosmetics.locked")}` : said;
+}
+
+/**
+ * One slot's row: None, then a swatch per item, the picked one pressed.
+ * The line under it names the swatch hovered or focused, else the
+ * picked one. The row is one tab stop; the arrow keys move along it.
+ */
+function slotPicker(
+  store: CosmeticsStore,
+  slot: CosmeticSlot,
+  cape: SwatchCape | null,
+): HTMLElement {
   const group = h("fieldset", "cosmetics-slot");
   group.dataset.slot = slot;
   group.appendChild(h("legend", undefined, t(SLOT_LABEL[slot])));
   const facts = store.lastFacts();
   const picked = store.choice()[slot];
-  const option = (
-    id: string | undefined,
-    label: string,
-    detail: string | undefined,
-    locked: boolean,
-  ) => {
+  const swatches: Swatch[] = [
+    { id: undefined, style: null, detail: t("cosmetics.none"), locked: false },
+    ...COSMETIC_CATALOG.filter((entry) => entry.slot === slot).map((entry) => {
+      const locked = !isUnlocked(entry, facts);
+      return {
+        id: entry.id,
+        style: swatchStyle(entry, cape),
+        detail: detailOf(entry, locked),
+        locked,
+      };
+    }),
+  ];
+  const row = h("div", "cosmetics-row");
+  row.setAttribute("role", "toolbar");
+  row.setAttribute("aria-label", t(SLOT_LABEL[slot]));
+  const detail = h("p", "cosmetics-detail");
+  const pickedDetail =
+    (swatches.find((swatch) => swatch.id === picked) ?? swatches[0])?.detail ?? "";
+  detail.textContent = pickedDetail;
+  const buttons = swatches.map((swatch) => {
     const button = document.createElement("button");
-    button.className = "cosmetics-item";
+    button.className = "cosmetics-swatch";
     button.type = "button";
-    button.dataset.item = id ?? "none";
-    button.setAttribute("aria-pressed", String(id === picked));
-    button.classList.toggle("locked", locked);
+    button.dataset.item = swatch.id ?? "none";
+    button.dataset.kind = swatch.style?.kind ?? "none";
+    const variant = swatch.style?.variant ?? null;
+    if (variant !== null) {
+      button.dataset.variant = variant;
+    }
+    for (const [name, value] of Object.entries(swatch.style?.colours ?? {})) {
+      button.style.setProperty(name, value);
+    }
+    button.setAttribute("aria-pressed", String(swatch.id === picked));
+    button.setAttribute("aria-label", swatch.detail);
+    button.title = swatch.detail;
+    button.classList.toggle("locked", swatch.locked);
     // A locked item stays picked if it was (you lost Top 100), but cannot be newly picked.
-    button.disabled = locked && id !== picked;
-    button.appendChild(h("span", "cosmetics-item-name", label));
-    if (detail !== undefined) {
-      button.appendChild(h("span", "cosmetics-item-detail", detail));
+    button.disabled = swatch.locked && swatch.id !== picked;
+    button.appendChild(h("span", "cosmetics-swatch-art"));
+    if (swatch.locked) {
+      button.appendChild(h("span", "cosmetics-swatch-lock"));
     }
-    if (locked) {
-      button.appendChild(h("span", "cosmetics-item-locked", t("cosmetics.locked")));
-    }
+    const show = (): void => {
+      detail.textContent = swatch.detail;
+    };
+    // Back to the swatch with focus, if the row has it, else the picked one.
+    const hide = (): void => {
+      const focused = buttons.find((each) => each === document.activeElement);
+      detail.textContent = focused?.getAttribute("aria-label") ?? pickedDetail;
+    };
+    button.addEventListener("pointerenter", show);
+    button.addEventListener("focus", show);
+    button.addEventListener("pointerleave", hide);
+    button.addEventListener("blur", hide);
     button.addEventListener("click", () => {
-      store.pick(slot, id);
+      store.pick(slot, swatch.id);
     });
+    row.appendChild(button);
     return button;
-  };
-  group.appendChild(option(undefined, t("cosmetics.none"), undefined, false));
-  for (const entry of COSMETIC_CATALOG) {
-    if (entry.slot === slot) {
-      group.appendChild(
-        option(entry.id, t(entry.name), requirementText(entry), !isUnlocked(entry, facts)),
-      );
+  });
+  // A roving tab stop: the picked swatch, or None if the picked one is gone.
+  const stop = Math.max(
+    0,
+    swatches.findIndex((swatch) => swatch.id === picked),
+  );
+  buttons.forEach((button, index) => {
+    button.tabIndex = index === stop ? 0 : -1;
+  });
+  row.addEventListener("keydown", (event) => {
+    const step = arrowStep(event.key);
+    if (step === 0) {
+      return;
     }
-  }
+    event.preventDefault();
+    // A locked swatch cannot be focused: the arrows pass it by.
+    const enabled = buttons.filter((button) => !button.disabled);
+    const at = Math.max(
+      0,
+      enabled.findIndex((button) => button === event.target),
+    );
+    const next = enabled[(at + step + enabled.length) % enabled.length];
+    if (next === undefined) {
+      return;
+    }
+    for (const button of buttons) {
+      button.tabIndex = button === next ? 0 : -1;
+    }
+    next.focus();
+  });
+  // The detail ends the row while there is room for it, and goes under it on a phone.
+  const line = h("div", "cosmetics-line");
+  line.append(row, detail);
+  group.appendChild(line);
   return group;
+}
+
+/** How far `key` moves along a row: in a right-to-left language the row is mirrored. */
+function arrowStep(key: string | undefined): number {
+  const mirrored = LANGUAGES.find((language) => language.code === locale())?.rtl === true;
+  switch (key) {
+    case "ArrowRight":
+      return mirrored ? -1 : 1;
+    case "ArrowLeft":
+      return mirrored ? 1 : -1;
+    default:
+      return 0;
+  }
 }
 
 /**
  * The section over `store`: the page's own by default, a test's own in a
- * test. The emblem frame's picker (#3581) shows only while `wearsCape`
- * says you have a guild cape for it to frame.
+ * test. `cape` is the player's guild cape, `null` for none: the cape
+ * patterns are drawn in its colours, and the emblem frame's row (#3581)
+ * shows only while there is a cape for it to frame.
  */
 export function cosmeticsSection(
   store: CosmeticsStore = cosmeticsStore,
-  wearsCape: () => boolean = () => playerGuild().guildCape !== null,
+  cape: () => SwatchCape | null = () => playerGuild().guildCape,
 ): OptionsSection {
   return {
     id: "cosmetics",
@@ -102,13 +257,24 @@ export function cosmeticsSection(
       return t("options.cosmetics");
     },
     mount: (container) => {
+      let groups: HTMLElement[] = [];
       const draw = (): void => {
-        container.replaceChildren(
-          h("p", "cosmetics-note", t("cosmetics.note")),
-          ...COSMETIC_SLOTS.filter((slot) => slot !== "emblemFrame" || wearsCape()).map((slot) =>
-            slotPicker(store, slot),
-          ),
+        // A keyboard pick redraws the row under focus: focus comes back to its picked swatch.
+        const active = document.activeElement;
+        const focusedSlot = groups.find((group) => active !== null && group.contains(active))
+          ?.dataset.slot;
+        const worn = cape();
+        // The rows close together, not spaced as the pane's sections are.
+        const slots = h("div", "cosmetics-slots");
+        groups = COSMETIC_SLOTS.filter((slot) => slot !== "emblemFrame" || worn !== null).map(
+          (slot) => slotPicker(store, slot, worn),
         );
+        slots.append(...groups);
+        container.replaceChildren(h("p", "cosmetics-note", t("cosmetics.note")), slots);
+        const group = groups.find((each) => each.dataset.slot === focusedSlot);
+        Array.from(group?.querySelectorAll<HTMLElement>(".cosmetics-swatch") ?? [])
+          .find((swatch) => swatch.tabIndex === 0)
+          ?.focus();
       };
       draw();
       return store.onChange(draw);

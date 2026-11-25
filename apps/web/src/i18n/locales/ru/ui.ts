@@ -432,6 +432,7 @@ export default {
   "cosmetics.item.trailFrost": "Морозный след",
   "cosmetics.item.trailMoss": "Моховой след",
   "cosmetics.item.trailStarlight": "Звёздный след",
+  "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Закрыто",
   "cosmetics.none": "Нет",
   "cosmetics.note":

@@ -418,6 +418,7 @@ export default {
   "cosmetics.item.trailFrost": "עקבות כפור",
   "cosmetics.item.trailMoss": "עקבות טחב",
   "cosmetics.item.trailStarlight": "עקבות אור כוכבים",
+  "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "נעול",
   "cosmetics.none": "ללא",
   "cosmetics.note":

@@ -53,10 +53,12 @@ A címerkeret vékony szegély a céhköpenyed címere körül. Soha nem takarja
 
 ## Viselésük
 
-Nyisd meg az Opciókat, és válaszd a **Kozmetikumok** részt. Minden hely felsorolja a tárgyait,
-mindegyiket viselhetőként vagy zároltként jelölve, azzal együtt, mivel szerezhető meg. A
-választásod azonnal érvényes. Más játékosok a következő lobbitól kezdve látják, amelyhez
-csatlakozol.
+Nyisd meg az Opciókat, és válaszd a **Kozmetikumok** részt. Minden hely egy sornyi mintából áll,
+mindegyik a tárgya kis képe; az első, egy üres áthúzott kör, azt jelenti, hogy semmit sem viselsz. A
+kiválasztott mintát kék gyűrű jelöli. A sor melletti szöveg (telefonon alatta) megnevezi a mintát,
+amelyre mutatsz vagy amelyen a fókusz van, és hogy mivel szerezhető meg. A zárolt minta halványabb,
+rajta egy kis lakattal. A választásod azonnal érvényes. Más játékosok a következő lobbitól kezdve
+látják, amelyhez csatlakozol.
 
 ## Más játékosok kozmetikumainak megtekintése
 

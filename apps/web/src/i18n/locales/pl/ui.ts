@@ -435,6 +435,7 @@ export default {
   "cosmetics.item.trailFrost": "Ślad szronu",
   "cosmetics.item.trailMoss": "Ślad mchu",
   "cosmetics.item.trailStarlight": "Ślad blasku gwiazd",
+  "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Zablokowane",
   "cosmetics.none": "Brak",
   "cosmetics.note":

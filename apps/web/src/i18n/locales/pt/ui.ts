@@ -424,6 +424,7 @@ export default {
   "cosmetics.item.trailFrost": "Rastro de geada",
   "cosmetics.item.trailMoss": "Rastro de musgo",
   "cosmetics.item.trailStarlight": "Rastro de luz estelar",
+  "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Bloqueado",
   "cosmetics.none": "Nenhum",
   "cosmetics.note":

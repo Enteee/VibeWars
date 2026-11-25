@@ -374,6 +374,7 @@ export default {
   "cosmetics.item.trailFrost": "서리 흔적",
   "cosmetics.item.trailMoss": "이끼 흔적",
   "cosmetics.item.trailStarlight": "별빛 흔적",
+  "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "잠김",
   "cosmetics.none": "없음",
   "cosmetics.note":
