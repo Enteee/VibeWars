@@ -6,7 +6,7 @@
 
 Neseš až **čtyři sady zbraní**, každou se zbraní a, pokud zbraň nechá ruku volnou, s věcí do druhé ruky, například ![Štít](../../../apps/web/public/icons/offhand/shield.svg) **štítem** nebo ![Fokus](../../../apps/web/public/icons/offhand/focus.svg) **fokusem**. Sada 1 je ta, se kterou začínáš; ostatní mohou zůstat prázdné.
 
-V zápase přepínáš sady klávesami **1 až 4** (**F1 až F4** v klasických klávesách). Výměna počká na dokončení probíhajícího sesílání nebo máchnutí; pohyb nebo Esc vymění okamžitě. Nemá žádnou prodlevu. Tvoje útoky, dovednosti vyžadující určitou zbraň a tvoje maximální energie se řídí sadou v ruce.
+V zápase přepínáš sady klávesami **1 až 4** (**F1 až F4** v klasických klávesách). Výměna počká na dokončení probíhajícího sesílání nebo máchnutí; pohyb nebo Esc vymění okamžitě. Nemá žádnou prodlevu. Tvoje útoky, dovednosti vyžadující určitou zbraň a tvoje maximální energie se řídí sadou v ruce. Hůl má 10 vlastní energie a fokus 6, nebo 12, jakmile splníš jeho požadavek.
 
 Zbraň vyžaduje hodnost 9 ve svém atributu: pod ní zasahuje za třetinu svého poškození a editor to řekne červeně. ![Meč](../../../apps/web/public/icons/weapon/sword.svg) **Meč** je vždy Swordsmanship, ale ![Hůl](../../../apps/web/public/icons/weapon/staff.svg) **hůl**, ![Hůlka](../../../apps/web/public/icons/weapon/wand.svg) **hůlka**, štít nebo fokus se dělá pro atribut, který si zvolíš: klikni na příslušnou ruku na figuríně (**6** pro zbraň, **7** pro věc do druhé ruky) a jeden vyber.
 

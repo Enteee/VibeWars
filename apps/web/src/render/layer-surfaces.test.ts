@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { pointInPolygon, type Uphill, type Vec2 } from "@vibewars/game-core";
+import { ELEVATION_STEP } from "@vibewars/game-maps/schema";
 
 import {
   actorAtPoint,
@@ -47,7 +48,6 @@ import {
 import { mapStructure } from "../net/maps.js";
 
 import { atRest } from "./pick.test-support.js";
-import { ELEVATION_STEP } from "./render-order.js";
 
 const bridge = { kind: "rect", x: 100, y: 100, width: 200, height: 100 } as const;
 const BRIDGE: MapStructure = {
@@ -61,6 +61,7 @@ const BRIDGE: MapStructure = {
   dropOffs: [],
   downDecks: [],
   overhangs: [],
+  decor: [],
   decks: [{ layer: 1, footprint: bridge, look: "platform", switched: null }],
   transitions: [],
   water: [],
@@ -249,6 +250,7 @@ describe("a click on a ramp (#2972)", () => {
     dropOffs: [],
     downDecks: [],
     overhangs: [],
+    decor: [],
     decks: [
       { layer: 1, footprint: rect(200, 100, 200, 100), look: "platform", switched: null },
       { layer: 2, footprint: rect(260, -100, 80, 100), look: "platform", switched: null },
@@ -377,6 +379,7 @@ describe("a body under a raised ramp (#2975)", () => {
     dropOffs: [],
     downDecks: [],
     overhangs: [],
+    decor: [],
     decks: [
       {
         layer: 1,
@@ -614,6 +617,7 @@ describe("liftAt (#2958)", () => {
     dropOffs: [],
     downDecks: [],
     overhangs: [],
+    decor: [],
     decks: [deck(1, 420, 250, 360, 200), deck(2, 520, 60, 160, 110)],
     transitions: [
       ramp(0, 1, [300, 250, 140, 200], "e"),

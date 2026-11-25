@@ -8,7 +8,7 @@ import {
   type StatusId,
   type Vec2,
 } from "@vibewars/game-core";
-import type { MapDescriptor } from "@vibewars/game-protocol";
+import type { ClientIntent, MapDescriptor } from "@vibewars/game-protocol";
 import { NO_GUILD } from "@vibewars/game-session";
 
 import { skillName } from "../i18n/game-names.js";
@@ -16,6 +16,7 @@ import { t } from "../i18n/index.js";
 import { loadKeymap } from "../input/keymap-preference.js";
 import { isTouchOnly } from "../input/touch-only.js";
 import { startMatchView, type MatchView } from "../match-view.js";
+import type { OptionsOwner } from "../ui/options-sections.js";
 import type { GoalMark } from "../render/goal-mark.js";
 import type { MistGateProp, ParasolProp, SleeperProp } from "../render/tutorial-props.js";
 import {
@@ -28,7 +29,6 @@ import {
 import { mountSkipTutorial } from "./tutorial-offer.js";
 import { hudTarget } from "./hud-target.js";
 import { touchLine } from "./touch-lines.js";
-import { DEFAULT_STEP } from "../render/camera-rig.js";
 
 import {
   BAD_GROUND,
@@ -88,6 +88,7 @@ import {
   type TutorialWorldName,
   type ZoneStatus,
 } from "./stations.js";
+import { LOOK_STATION, lockedIntent } from "./movement-lock.js";
 import { PRAISE_MS, createTutorialRunner, type TutorLine } from "./tutorial-runner.js";
 import {
   SELF_ID,
@@ -153,8 +154,8 @@ export interface TutorialSessionOptions {
   readonly teamSize: number;
   /** Drawn by the caller for each run (Q69), so a test can pin it. */
   readonly tutorProfession: ProfessionId;
-  /** The player key's, for the Options window over it (#3235). */
-  readonly signet: number;
+  /** Whose Options window it is, over it (#3235, #3989). */
+  readonly owner: OptionsOwner;
   /** The index of the station it starts at: 0 but in an e2e build's seeded start (#3383). */
   readonly firstStation: number;
   /** Once, as it ends by itself, by Skip tutorial or by Leave; never after `stop`. */
@@ -218,8 +219,10 @@ export async function startTutorialSession(
       { primary: tutorBuild.primaryProfession, secondary: tutorBuild.secondaryProfession },
     ],
   ]);
-  const connect = (world: MatchSimulation, descriptor: MapDescriptor): LocalMatchConnection =>
-    createLocalConnection({
+  /** The station the last beat ran. */
+  let running: string | undefined;
+  const connect = (world: MatchSimulation, descriptor: MapDescriptor): LocalMatchConnection => {
+    const connection = createLocalConnection({
       simulation: world,
       selfId: SELF_ID,
       map: descriptor,
@@ -228,6 +231,17 @@ export async function startTutorialSession(
       guildOf: () => NO_GUILD,
       professionsOf: (id) => professions.get(id) ?? NO_PROFESSIONS,
     });
+    // Walking is locked by the station running (#3970), so it lifts with
+    // it: no flag is left behind for a skip or a leave to clear.
+    const send = connection.sendIntent.bind(connection);
+    return Object.assign(connection, {
+      sendIntent: (intent: ClientIntent): void => {
+        if (!lockedIntent(running, intent)) {
+          send(intent);
+        }
+      },
+    });
+  };
   const portal: GoalMark = {
     id: "tutorial-teleporter",
     kind: "portal",
@@ -283,9 +297,6 @@ export async function startTutorialSession(
   let ended = false;
   let view: MatchView | undefined;
   let request = 0;
-  // What the camera has done this run (#3222): once true, they stay true.
-  let zoomedOut = false;
-  let lookDragged = false;
   let tutorSent = false;
   let swapping = false;
   let rockfallDodges = 0;
@@ -319,8 +330,6 @@ export async function startTutorialSession(
   let atFork: PingTutor | undefined;
   // Station 14's (#3334): the tutor has been sent on to the gate.
   let gateSent = false;
-  /** The station the last beat ran. */
-  let running: string | undefined;
   /** The HUD element pulsing now, if any. */
   let pulsing: Element | undefined;
   const pulse = (element: Element | undefined): void => {
@@ -382,7 +391,7 @@ export async function startTutorialSession(
           },
         },
         { kind: "play", connect: () => Promise.resolve(connection), ranked: false },
-        options.signet,
+        options.owner,
       );
     }
     return startMatchView(
@@ -414,7 +423,7 @@ export async function startTutorialSession(
           },
         },
       },
-      options.signet,
+      options.owner,
     );
   };
 
@@ -579,9 +588,6 @@ export async function startTutorialSession(
     }
     const self = world.get(SELF_ID);
     const tutor = world.get(TUTOR_ID);
-    const look = view?.camera();
-    zoomedOut ||= look !== undefined && look.step > DEFAULT_STEP;
-    lookDragged ||= look?.panning === true;
     const tally =
       self === undefined
         ? undefined
@@ -640,8 +646,6 @@ export async function startTutorialSession(
           self: self.position,
           selfLayer: self.layer,
           tutor: tutor.position,
-          zoomedOut,
-          lookDragged,
           inView,
           rockfallDodges,
           hitBy: tally?.hit === true ? "rockfall" : undefined,
@@ -668,6 +672,10 @@ export async function startTutorialSession(
         },
         now,
       );
+      // The look station halts a walk still under way from the one before (#3970).
+      if (beat.station === LOOK_STATION && running !== LOOK_STATION) {
+        connection.sendIntent({ kind: "stop" });
+      }
       running = beat.station;
       highlight = beat.highlight;
       besideHud = beat.mark;

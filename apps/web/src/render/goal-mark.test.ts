@@ -65,6 +65,7 @@ describe("a goal mark under a deck (#3342)", () => {
     dropOffs: [],
     downDecks: [],
     overhangs: [],
+    decor: [],
     decks: [{ layer: 1, footprint: bridge, look: "platform", switched: null }],
     transitions: [],
     water: [],

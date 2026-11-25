@@ -575,6 +575,7 @@
     { "kind": "resurrection-shrine", "layer": 1, "team": 0, "position": { "x": 620, "y": 1250 } },
     { "kind": "resurrection-shrine", "layer": 1, "team": 1, "position": { "x": 4580, "y": 1250 } }
   ],
+  "decor": [],
   "gates": [
     {
       "id": "north-west-undercroft-gate",

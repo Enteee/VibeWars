@@ -299,14 +299,15 @@ describe("Zealous Sweep (#977)", () => {
       throw new Error("no dervish");
     }
     match.setTarget("d", "target");
-    self.energy = 20;
+    // Room below the bare pool of 20 for the 9 it gains (#3986).
+    self.energy = 10;
     expect(match.requestSkill("d", 0)?.check).toEqual({ ok: true });
     const log: CombatEvent[] = [];
     for (let i = 0; i < 40 && !log.some((event) => event.kind === "damage"); i += 1) {
       log.push(...match.step(DT).log.flatMap((entry) => entry.events));
     }
     expect(struck(log).sort()).toEqual(["near1", "near2", "target"]);
-    expect(self.energy).toBe(20 - 5 + 9);
+    expect(self.energy).toBe(10 - 5 + 9);
     expect(strikesOf(self, "dervish.heart-of-fury")).toBe(4);
   });
 });

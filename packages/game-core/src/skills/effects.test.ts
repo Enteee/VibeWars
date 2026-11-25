@@ -445,7 +445,7 @@ describe("energy-gain effect", () => {
   });
 
   it("never takes energy above upTo, and from above it neither gains nor loses (#1359)", () => {
-    const gain: SkillEffect = { kind: "energy-gain", amount: { flat: 3 }, upTo: 22 };
+    const gain: SkillEffect = { kind: "energy-gain", amount: { flat: 3 }, upTo: { flat: 22 } };
     const below = makeCombatant({ id: "caster", energy: 20 });
     expect(applyEffect(gain, context(below))).toEqual([
       { kind: "energy-gain", targetId: "caster", amount: 2 },

@@ -553,6 +553,7 @@
       }
     }
   ],
+  "decor": [],
   "gates": [
     {
       "id": "west-gatehouse-door",

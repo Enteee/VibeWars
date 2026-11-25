@@ -1848,6 +1848,7 @@
       }
     }
   ],
+  "decor": [],
   "gates": [
     {
       "id": "north-gate",

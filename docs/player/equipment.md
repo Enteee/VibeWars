@@ -13,7 +13,9 @@ one you start with; the others may stay empty.
 In a match, swap sets with **1 to 4** (**F1 to F4** in the Classic keys).
 A swap waits for the cast or swing you are in to finish; moving or Esc
 swaps at once. There is no cooldown. Your attacks, the skills that need a
-certain weapon, and your maximum Energy all follow the set in hand.
+certain weapon, and your maximum Energy all follow the set in hand. A staff
+holds 10 Energy of its own, and a focus 6, or 12 once you meet its
+requirement.
 
 A weapon needs rank 9 in its attribute: below that it hits for a third of
 its damage, and the editor says so in red. A ![Sword](../../apps/web/public/icons/weapon/sword.svg) **sword** is always

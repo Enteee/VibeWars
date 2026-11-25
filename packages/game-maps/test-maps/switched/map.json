@@ -257,6 +257,7 @@
     }
   ],
   "objectives": [],
+  "decor": [],
   "gates": [
     {
       "id": "secret-door",

@@ -10,6 +10,8 @@
  * tunnel or a pit's near lip draws as a deck of the ground's layer.
  */
 
+import { ELEVATION_STEP } from "@vibewars/game-maps/schema";
+
 /** A body's parts on one character band, in the order they draw. */
 export type CharacterPart = "body" | "glyph" | "marks" | "bar";
 
@@ -18,6 +20,8 @@ export type WaterPart = "surface" | "ripples";
 
 /** An effect zone's parts (#3052): its painted ground, then its moving marks and edge. */
 export type ZonePart = "ground" | "marks";
+/** A decor prop's parts (#4013): its shadow, its low strokes, then what stands tall. */
+export type DecorPart = "shadow" | "low" | "tall";
 /**
  * The ground grain's steps (#3484): the outline into the stencil, the
  * grain through it, the outline out, then the grid and the outline's
@@ -45,6 +49,12 @@ export type RenderItem =
   | { readonly kind: "lit-ground-effect" }
   | { readonly kind: "light-mark"; readonly layer: number }
   | { readonly kind: "goal-mark"; readonly layer: number }
+  | {
+      readonly kind: "decor";
+      readonly layer: number;
+      readonly band: number;
+      readonly part: DecorPart;
+    }
   | { readonly kind: "character"; readonly band: number; readonly part: CharacterPart }
   | { readonly kind: "wall"; readonly layer: number }
   | { readonly kind: "wall-texture"; readonly layer: number }
@@ -105,6 +115,13 @@ const LIGHT_MARK = 0.8;
  * torches, which never dim it, under whoever walks onto it.
  */
 const GOAL_MARK = 0.9;
+/**
+ * Decor (#4013): its shadow and a short prop (a crate, a fern, a brazier)
+ * on its layer's floor, lit as a wall is, under its torches, goals and
+ * whoever walks through it; a tall one (a tree) over its
+ * band's bodies, as a wall top is, and faded off them as an overhang is.
+ */
+const DECOR: Record<DecorPart, number> = { shadow: 0.62, low: 0.7, tall: 2.07 };
 /**
  * A body's health bar over its band's marks, hit marks and swing arcs
  * included, so a hit never hides it (#3292); still in its band, so a deck
@@ -232,6 +249,8 @@ export function renderOrder(item: RenderItem): number {
       return item.layer * LAYER_STACK + LIGHT_MARK;
     case "goal-mark":
       return item.layer * LAYER_STACK + GOAL_MARK;
+    case "decor":
+      return (item.part === "tall" ? item.band : item.layer) * LAYER_STACK + DECOR[item.part];
     case "terrain":
       return 0;
     case "character":
@@ -288,9 +307,6 @@ export const CHARACTER_BANDS = 4;
 export function characterBand(layer: number, layerCount: number): number {
   return layerCount === 1 ? 1 : layer;
 }
-
-/** World units a layer lifts what stands on it: presentation only (ADR-0051). */
-export const ELEVATION_STEP = 56;
 
 /** How long a body takes to settle at a new layer's height, in seconds. */
 export const ELEVATION_EASE_SECONDS = 0.15;

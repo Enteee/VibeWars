@@ -523,6 +523,7 @@
     { "kind": "resurrection-shrine", "layer": 1, "team": 0, "position": { "x": 700, "y": 1000 } },
     { "kind": "resurrection-shrine", "layer": 1, "team": 1, "position": { "x": 4700, "y": 1000 } }
   ],
+  "decor": [],
   "gates": [
     {
       "id": "north-west-trench-gate",

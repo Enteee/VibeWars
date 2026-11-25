@@ -2,7 +2,9 @@
 
 ## Viață și Energie
 
-Începi cu 500 de **Viață** și 50 de **Energie**; runele și moralul le schimbă pe
+Începi cu 500 de **Viață** și 20 de **Energie**, iar armura îți adaugă Energie:
+nimic pentru un Warrior, 5 pentru un Ranger, un Assassin sau un Dervish, 10 pentru
+toți ceilalți. Un Staff mai adaugă 10 cât timp îl ții. Runele și moralul le schimbă pe
 amândouă. Abilitățile costă Energie, iar ea revine de la sine, încet. ![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior**
 și ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** o recuperează cel mai încet, ![Ranger](../../../apps/web/public/icons/profession/ranger.svg) **Ranger** puțin mai repede, toți ceilalți
 cel mai repede.

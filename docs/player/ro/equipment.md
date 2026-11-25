@@ -14,6 +14,8 @@ cu care începi; celelalte pot rămâne goale.
 O schimbare așteaptă să se termine lansarea sau lovitura în curs; mișcarea sau
 Esc schimbă imediat. Nu există timp de așteptare. Atacurile tale, abilitățile
 care cer o anumită armă și Energia ta maximă urmează toate setul din mână.
+Un Staff are 10 Energie proprie, iar un Focus 6, sau 12 odată ce îi îndeplinești
+cerința.
 
 O armă cere rangul 9 la atributul ei: sub acesta lovește cu o treime din daune,
 iar editorul îți spune asta cu roșu. O ![Sword](../../../apps/web/public/icons/weapon/sword.svg) **Sword** ține mereu de Swordsmanship, dar un

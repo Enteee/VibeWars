@@ -53,9 +53,19 @@ An emblem frame is a thin border round the emblem on your guild cape. It never c
 
 ## Wearing them
 
-Open Options and pick **Cosmetics**. Each slot lists its items, each marked as
-wearable or locked, with what earns it. Your choice applies at once. Other players
-see it from the next lobby you join.
+Open Options and pick **Cosmetics**. Each slot is one row of swatches, each a
+small picture of its item; the first, an empty circle struck through, wears
+nothing. Your pick has a blue ring. The line beside the row (under it on a
+phone) names the swatch you point at or focus, and what earns it. A locked
+swatch is dimmed, with a small padlock. Your choice applies at once. Other
+players see it from the next lobby you join.
+
+Above the rows, your character wears your look and stands, walks and swings, so
+the aura, trail and weapon trail show as they move. Press and hold a swatch to
+try it on, even a locked one: the line says what you are previewing and, while
+it is locked, what earns it. Let go on an earned item to wear it. Let go on a
+locked one, or slide off the swatch, and nothing changes. With a keyboard, hold
+Space on a swatch.
 
 ## Seeing other players' cosmetics
 

@@ -58,6 +58,13 @@ const polygonWallSchema = z.object({
 /** An area: a wall's outline, a deck's footprint or a transition's area (ADR-0051). */
 const shapeSchema = z.discriminatedUnion("kind", [rectWallSchema, polygonWallSchema]);
 
+/**
+ * World units a layer lifts what stands on it (ADR-0051): presentation,
+ * but a pit's floor draws one step below its footprint, so its art has
+ * to fit inside the map (#3997).
+ */
+export const ELEVATION_STEP = 56;
+
 /** A discrete layer (ADR-0051): the map's `groundLayer` is the ground; its `layers` bounds it. */
 const layerSchema = z.number().int().nonnegative();
 
@@ -451,6 +458,43 @@ const pavingSchema = z.object({
   layer: layerSchema,
   look: z.enum(["cobbles", "flagstones", "dirt", "lava"]),
   area: waterSchema.shape.area,
+});
+
+/** What a decor prop is drawn as (#4013): scenery, never cover (ADR-0060). */
+export const DECOR_KINDS = ["brazier", "crates", "tree", "fern"] as const;
+
+/** A decor kind (#4013). */
+export type DecorKind = (typeof DECOR_KINDS)[number];
+
+/** The kinds that move while idle (#4013): a flame flickers, a tree or a fern sways. */
+export const ANIMATED_DECOR_KINDS: readonly DecorKind[] = ["brazier", "tree", "fern"];
+
+/** The most decor props on a map (#4013). */
+export const MAX_DECOR = 120;
+
+/** The most animated decor props on a map (#4013). */
+export const MAX_ANIMATED_DECOR = 16;
+
+/** How far from every spawn point a decor prop stands (#4013), clear of the spawn bubble. */
+export const DECOR_SPAWN_CLEARANCE = 300;
+
+/** How near a brazier its `brazier-` light stands (#4013), so art and light cannot drift. */
+export const BRAZIER_LIGHT_REACH = 40;
+
+/**
+ * A prop on one layer's floor (#4013): drawn by the renderer, walked
+ * through by everyone. Only the renderer reads it, never the simulation.
+ */
+const decorSchema = z.object({
+  id: z.string().min(1),
+  kind: z.enum(DECOR_KINDS),
+  at: vec2Schema,
+  layer: layerSchema,
+  /** Degrees, clockwise from east. */
+  rotation: z.number().min(0).lt(360),
+  scale: z.number().min(0.75).max(1.5),
+  /** Which of the kind's drawn shapes it takes. */
+  variant: z.number().int().min(0).max(3),
 });
 
 /** The most fog banks on a map (#3032). */
@@ -919,6 +963,50 @@ function onFloor(map: LayeredMap, point: Vec2Data, layer: number): boolean {
   return floors.some((floor) => pointInShape(point, floor));
 }
 
+/** A decor prop (#4013). */
+export type Decor = z.infer<typeof decorSchema>;
+
+/**
+ * Why a decor prop may not stand where it is (#4013), or undefined: off
+ * its layer's floor (outside the bounds, in a pit, off every deck), in a
+ * wall or deep water of its layer, within a spawn bubble, or a brazier
+ * without its `brazier-` light beside it. The schema and the scatter tool
+ * ask the same question.
+ */
+export function decorRefusal(
+  map: LayeredMap & Pick<MapData, "water" | "spawnPoints" | "lighting">,
+  prop: Pick<Decor, "at" | "layer" | "kind">,
+): string | undefined {
+  const { at, layer } = prop;
+  const inside = at.x >= 0 && at.y >= 0 && at.x <= map.width && at.y <= map.height;
+  if (!inside || !onFloor(map, at, layer)) {
+    return "is off its layer's floor";
+  }
+  if (map.walls.some((wall) => wall.layer === layer && pointInShape(at, wall))) {
+    return "is in a wall";
+  }
+  const deep = (map.water ?? []).filter((body) => body.depth === "deep" && body.layer === layer);
+  if (deep.some((body) => pointInShape(at, body.area))) {
+    return "is in deep water";
+  }
+  const near = map.spawnPoints.some(
+    (spawn) =>
+      Math.hypot(spawn.position.x - at.x, spawn.position.y - at.y) <= DECOR_SPAWN_CLEARANCE,
+  );
+  if (near) {
+    return `is within ${String(DECOR_SPAWN_CLEARANCE)} of a spawn point`;
+  }
+  const lit = (map.lighting?.lights ?? []).some(
+    (light) =>
+      light.id.startsWith("brazier-") &&
+      light.layer === layer &&
+      Math.hypot(light.position.x - at.x, light.position.y - at.y) <= BRAZIER_LIGHT_REACH,
+  );
+  return prop.kind === "brazier" && !lit
+    ? `needs a brazier- light within ${String(BRAZIER_LIGHT_REACH)} on its layer`
+    : undefined;
+}
+
 /** Points along a drop-off, `DROP_OFF_SAMPLE` apart, ends included. */
 function alongDropOff({ from, to }: DropOff): Vec2Data[] {
   const steps = Math.max(1, Math.ceil(Math.hypot(to.x - from.x, to.y - from.y) / DROP_OFF_SAMPLE));
@@ -1072,6 +1160,8 @@ export const mapDataSchema = z
     atmosphere: atmosphereSchema.optional(),
     /** Its paved surfaces (#3210): only the renderer reads them; without it, the map has none. */
     paving: z.array(pavingSchema).max(MAX_PAVING).optional(),
+    /** Required, may be empty, as `gates` (#4013): its props. Only the renderer reads them. */
+    decor: z.array(decorSchema).max(MAX_DECOR),
   })
   .superRefine((map, context) => {
     if (map.teams !== 2 && TWO_TEAM_MODES.includes(map.mode)) {
@@ -1607,6 +1697,14 @@ export const mapDataSchema = z
     };
     map.pits.forEach((pit, index) => {
       belowGround("pits", pit, index);
+      // The floor and its lip draw one step south of the footprint (#3997).
+      if (pit.footprint.y + pit.footprint.height + ELEVATION_STEP > map.height) {
+        context.addIssue({
+          code: "custom",
+          path: ["pits", index, "footprint"],
+          message: `${map.id}: pit ${pit.id} ends less than ${String(ELEVATION_STEP)} above the south edge, so its floor draws past the map`,
+        });
+      }
     });
     map.tunnels.forEach((tunnel, index) => {
       belowGround("tunnels", tunnel, index);
@@ -2102,6 +2200,29 @@ export const mapDataSchema = z
           path: ["paving", index, "area"],
           message: `paving ${paving.id} is outside the map`,
         });
+      }
+    });
+
+    const decorIds = new Set<string>();
+    let animated = 0;
+    map.decor.forEach((prop, index) => {
+      const issue = (path: (string | number)[], message: string): void => {
+        context.addIssue({ code: "custom", path: ["decor", index, ...path], message });
+      };
+      layerInRange(prop.layer, ["decor", index, "layer"]);
+      if (decorIds.has(prop.id)) {
+        issue(["id"], `decor id ${prop.id} is used twice`);
+      }
+      decorIds.add(prop.id);
+      const refusal = decorRefusal(map, prop);
+      if (refusal !== undefined) {
+        issue(["at"], `decor ${prop.id} ${refusal}`);
+      }
+      if (ANIMATED_DECOR_KINDS.includes(prop.kind)) {
+        animated += 1;
+        if (animated === MAX_ANIMATED_DECOR + 1) {
+          issue(["kind"], `at most ${String(MAX_ANIMATED_DECOR)} decor props may move`);
+        }
       }
     });
   });

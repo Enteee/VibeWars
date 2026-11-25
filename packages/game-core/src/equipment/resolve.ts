@@ -10,6 +10,7 @@ import {
   INHERENT_ARMOR_BY_PROFESSION,
   NO_PIECE_ARMOR,
   NO_PIECE_REDUCTION,
+  armorEnergyFor,
   armorPieces,
   baseArmorFor,
   baseEnergyPipsFor,
@@ -413,12 +414,16 @@ export function resolveLoadout(input: LoadoutInput, rules: CombatRules): Resolve
     attributeId === undefined ? 0 : (attributeRanks.get(attributeId) ?? 0);
 
   // Energy Storage (#532) adds to the maximum like Attunement does, once
-  // at join; only an Elementalist primary holds its rank.
+  // at join; only an Elementalist primary holds its rank. The armor's
+  // energy is the primary profession's (#3986).
   const shared: SharedGear = {
     baseArmor: baseArmorFor(input.primaryProfession),
     health: rules.baseHealth + runes.healthDelta + runes.insigniaHealth,
     baseEnergyPips: baseEnergyPipsFor(input.primaryProfession),
-    energyDelta: runes.energyDelta + energyStorageBonus(rankOf(ENERGY_STORAGE_ATTRIBUTE)),
+    energyDelta:
+      armorEnergyFor(input.primaryProfession) +
+      runes.energyDelta +
+      energyStorageBonus(rankOf(ENERGY_STORAGE_ATTRIBUTE)),
     conditionalArmor: INHERENT_ARMOR_BY_PROFESSION[input.primaryProfession],
     ...pieceInsigniasOf(input.equipment, input.primaryProfession),
     flatPhysicalReduction: runes.flatPhysicalReduction,
@@ -481,7 +486,7 @@ interface SharedGear {
   readonly baseEnergyPips: number;
   /** Before a shield's bonus. */
   readonly baseArmor: number;
-  /** Before a focus's bonus. */
+  /** Armor's, runes' and Energy Storage's; before the weapon's and a focus's. */
   readonly energyDelta: number;
   readonly conditionalArmor: readonly ConditionalArmor[];
   readonly pieceArmor: PieceArmor;
@@ -501,7 +506,8 @@ function resolveWeaponSet(
   const resolvedWeapon = resolveWeapon(weapon, set.mainHand.requirementAttributeId, rankOf);
 
   let baseArmor = shared.baseArmor;
-  let energyDelta = shared.energyDelta;
+  // A staff's inherent energy is the set's, as a focus's is (#3986).
+  let energyDelta = shared.energyDelta + (weapon?.energy ?? 0);
   let offhandId: OffhandId | undefined;
   // Each mod with its item's attribute (#2011): Adept's "of the item's attribute".
   const mods: { readonly mod: WeaponMod; readonly itemAttribute: string | undefined }[] = wornMods(

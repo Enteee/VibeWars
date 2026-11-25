@@ -131,6 +131,28 @@ export function baseEnergyPipsFor(profession: ProfessionId): number {
   return BASE_ENERGY_PIPS_BY_PROFESSION[profession];
 }
 
+/**
+ * Energy the armor adds to the pool, by primary profession (GW1, #3986):
+ * the "<Profession> armor" pages, "Basic … armor provides … extra energy".
+ * Armor is profession-locked here, so this is a table, as the pips are.
+ */
+export const ARMOR_ENERGY_BY_PROFESSION: Readonly<Record<ProfessionId, number>> = Object.freeze({
+  warrior: 0,
+  ranger: 5,
+  assassin: 5,
+  dervish: 5,
+  paragon: 10,
+  monk: 10,
+  necromancer: 10,
+  mesmer: 10,
+  elementalist: 10,
+  ritualist: 10,
+});
+
+export function armorEnergyFor(profession: ProfessionId): number {
+  return ARMOR_ENERGY_BY_PROFESSION[profession];
+}
+
 /** One of the five pieces, as a build stores it. */
 export interface ArmorPiece {
   readonly insigniaId: InsigniaId | null;

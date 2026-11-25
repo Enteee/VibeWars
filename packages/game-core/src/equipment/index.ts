@@ -48,6 +48,7 @@ export type {
   PieceReduction,
 } from "./armor.js";
 export {
+  ARMOR_ENERGY_BY_PROFESSION,
   BASE_ARMOR_BY_PROFESSION,
   BASE_ENERGY_PIPS_BY_PROFESSION,
   HEADGEAR_BONUS,
@@ -55,6 +56,7 @@ export {
   INHERENT_ARMOR_BY_PROFESSION,
   NO_PIECE_ARMOR,
   NO_PIECE_REDUCTION,
+  armorEnergyFor,
   armorPieces,
   bareArmorSet,
   baseArmorFor,

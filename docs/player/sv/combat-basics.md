@@ -2,8 +2,10 @@
 
 ## Hälsa och energi
 
-Du börjar med 500 **Hälsa** och 50 **Energi**; runor och moral ändrar
-båda. Förmågor kostar energi, och den kommer tillbaka av sig själv,
+Du börjar med 500 **Hälsa** och 20 **Energi**, och din rustning lägger till
+energi: inget för en Warrior, 5 för en Ranger, en Assassin eller en Dervish,
+10 för alla andra. En stav ger 10 till medan du håller den. Runor och moral
+ändrar båda. Förmågor kostar energi, och den kommer tillbaka av sig själv,
 långsamt. ![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior** och ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** återfår den långsammast, ![Ranger](../../../apps/web/public/icons/profession/ranger.svg) **Ranger** lite
 snabbare, alla andra snabbast.
 

@@ -54,9 +54,14 @@ Tunnuksen kehys on ohut reunus kiltaviittasi tunnuksen ympärillä. Se ei koskaa
 
 ## Käyttäminen
 
-Avaa Asetukset ja valitse **Kosmetiikka**. Jokainen paikka luettelee esineensä, kukin merkittynä
-käytettäväksi tai lukituksi, sekä sen, millä sen ansaitsee. Valintasi tulee voimaan heti. Muut
-pelaajat näkevät sen seuraavasta aulasta alkaen, johon liityt.
+Avaa Asetukset ja valitse **Kosmetiikka**. Jokainen paikka on yksi rivi näytteitä, kukin pieni kuva
+esineestään; ensimmäinen, tyhjä yliviivattu ympyrä, tarkoittaa, ettei käytä mitään. Valitulla
+näytteellä on sininen rengas. Rivin vieressä oleva teksti (puhelimessa sen alla) nimeää näytteen,
+johon osoitat tai joka on kohdistettuna, sekä sen, millä sen ansaitsee. Lukittu näyte on
+himmennetty, ja siinä on pieni riippulukko. Valintasi tulee voimaan heti. Muut pelaajat näkevät sen
+seuraavasta aulasta alkaen, johon liityt.
+
+Rivien yläpuolella hahmosi pitää ulkoasuasi ja seisoo, kävelee ja lyö, joten aura, jälki ja aseen jälki näkyvät liikkeessä. Pidä näytettä painettuna kokeillaksesi sitä, lukittuakin: rivi kertoo, mitä esikatselet, ja niin kauan kuin se on lukittu, millä sen ansaitsee. Päästä irti ansaitun esineen kohdalla pukeaksesi sen. Päästä irti lukitun kohdalla tai liu'uta pois näytteeltä, eikä mikään muutu. Näppäimistöllä pidä välilyöntiä pohjassa näytteen kohdalla.
 
 ## Muiden pelaajien kosmetiikan näkeminen
 

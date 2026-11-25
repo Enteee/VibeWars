@@ -634,6 +634,7 @@
     { "kind": "ghost-spawn", "layer": 1, "team": 2, "position": { "x": 1128.5, "y": 3384.4 } },
     { "kind": "altar", "layer": 3, "position": { "x": 2500, "y": 2200 } }
   ],
+  "decor": [],
   "gates": [
     {
       "id": "north-east-crypt-door",

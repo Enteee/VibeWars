@@ -114,6 +114,12 @@ export interface Weapon {
   readonly projectileSpeed: number | undefined;
   /** What a hit does besides its damage, a spirit's (#1239); none for a player's weapon. */
   readonly onHit: readonly OnHitEffect[];
+  /**
+   * Energy the weapon adds to its wielder's pool while held (GW1 wiki,
+   * "Energy", #3986): a staff's inherent +10. A wand and every martial
+   * weapon have none; the martial "+5" is an inscription.
+   */
+  readonly energy: number;
   /** Fraction of the target's armor ignored, 0..1. */
   readonly armorPenetration: number;
   /** Foes adjacent to the target also struck. Scythes cleave; nothing else does. */
@@ -157,6 +163,7 @@ function martial(
     criticalMultiplier: Math.SQRT2,
     doubleStrike: undefined,
     onHit: [],
+    energy: 0,
   };
   return Object.freeze({ ...base, ...overrides });
 }
@@ -211,6 +218,7 @@ const UNARMED: Weapon = Object.freeze({
   criticalMultiplier: Math.SQRT2,
   doubleStrike: undefined,
   onHit: [],
+  energy: 0,
 } satisfies Weapon);
 
 /**
@@ -331,6 +339,7 @@ export const WEAPONS: Readonly<Record<WeaponId, Weapon>> = Object.freeze({
     criticalMultiplier: Math.SQRT2,
     doubleStrike: undefined,
     onHit: [],
+    energy: 0,
   } satisfies Weapon),
 
   staff: Object.freeze({
@@ -349,6 +358,8 @@ export const WEAPONS: Readonly<Record<WeaponId, Weapon>> = Object.freeze({
     criticalMultiplier: Math.SQRT2,
     doubleStrike: undefined,
     onHit: [],
+    // "A staff has an inherent +10 energy" (GW1 wiki, "Energy", #3986).
+    energy: 10,
   } satisfies Weapon),
 
   // The five bows differ only in interval, reach and how long the arrow

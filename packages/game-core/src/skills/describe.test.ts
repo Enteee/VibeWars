@@ -1066,9 +1066,13 @@ describe("attack skills (#417)", () => {
     expect(describeStatus("endure-pain", undefined, EN_WORDS, EN_NAMES)).toBe(
       "+90...258 maximum health",
     );
+    // The cap is Strength's, 10...25 (#3986).
     expect(describeStatus("warriors-endurance", undefined, EN_WORDS, EN_NAMES)).toBe(
-      "whenever you hit with a melee attack: gain 3 energy, never above 55",
+      "whenever you hit with a melee attack: gain 3 energy, never above 10",
     );
+    expect(
+      describeStatus("warriors-endurance", new Map([["warrior.strength", 12]]), EN_WORDS, EN_NAMES),
+    ).toBe("whenever you hit with a melee attack: gain 3 energy, never above 22");
     expect(describeStatus("hundred-blades", undefined, EN_WORDS, EN_NAMES)).toBe(
       "adjacent foes take 26 slashing damage whenever you attack with a sword",
     );

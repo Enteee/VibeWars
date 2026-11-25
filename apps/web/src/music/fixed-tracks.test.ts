@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 
 import { describe, expect, it } from "vitest";
 
-import { MAP_TRACKS, MENU_TRACK } from "./fixed-tracks.js";
+import { MAP_TRACKS, MENU_TRACKS } from "./fixed-tracks.js";
 import { TRACKS } from "./tracks/index.js";
 
 const MAPS = path.resolve(
@@ -38,10 +38,12 @@ describe("fixed tracks (#1993)", () => {
     }
   });
 
-  it("names only tracks the manifest ships, the menu's too", () => {
+  it("names only tracks the manifest ships, the menus' too", () => {
     for (const [mapId, trackId] of MAP_TRACKS) {
       expect(shipped.has(trackId), `${mapId}: ${trackId}`).toBe(true);
     }
-    expect(shipped.has(MENU_TRACK)).toBe(true);
+    for (const trackId of MENU_TRACKS) {
+      expect(shipped.has(trackId), trackId).toBe(true);
+    }
   });
 });

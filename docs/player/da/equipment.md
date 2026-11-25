@@ -15,6 +15,8 @@ taster). Et skift venter på, at det kast eller sving, du er i gang med,
 bliver færdigt; at bevæge sig eller Esc skifter med det samme. Der er
 ingen nedkøling. Dine angreb, de evner, der kræver et bestemt våben, og
 din maksimale energi følger alle det sæt, du har i hånden.
+En stav har 10 energi i sig selv, og et fokus 6, eller 12, når du opfylder
+dets krav.
 
 Et våben kræver rang 9 i sin attribut: under det rammer det med en
 tredjedel af sin skade, og editoren siger det med rødt. Et ![Sværd](../../../apps/web/public/icons/weapon/sword.svg) **sværd** er altid

@@ -1711,6 +1711,7 @@
       }
     }
   ],
+  "decor": [],
   "gates": [
     {
       "id": "root-gate-west",
