@@ -447,6 +447,7 @@ import {
   type ZoneMotionPainter,
 } from "./zone-painter.js";
 import { screenPx, screenSized } from "./screen-text.js";
+import { bodySlices, paintStack, stackingAsked } from "./sprite-stack.js";
 import {
   BODY_EDGE_WIDTH,
   SELF_RIM,
@@ -781,6 +782,9 @@ export class ArenaScene extends Phaser.Scene {
   }[] = [];
   /** The static structure, one object per place in `renderOrder`. */
   private readonly structureGraphics = new Map<number, Phaser.GameObjects.Graphics>();
+  /** #3977 spike: `?stack` draws stacked bodies; each body's last spot and stride phase. */
+  private readonly stacking = stackingAsked(window.location.search);
+  private readonly strides = new Map<string, { x: number; y: number; phase: number }>();
   /**
    * The ground over each tunnel (#3234) and its seam over the paving
    * (#3236), by its index: both faded while the local body is in it.
@@ -2831,6 +2835,52 @@ export class ArenaScene extends Phaser.Scene {
    * glyphs (#1037), and its health bar over those (#3292). In a clump a neighbour's weapon now crosses your
    * body: the weapon is the more urgent read.
    */
+  /** #3977 spike: a standing body as a sprite stack, its marks on the ground ring. */
+  private drawStackedBody(
+    g: Phaser.GameObjects.Graphics,
+    marks: Phaser.GameObjects.Graphics,
+    actor: RenderableActor,
+    frame: StandingBody["frame"],
+  ): void {
+    const { x, y } = actor.position;
+    const last = this.strides.get(actor.id) ?? { x, y, phase: 0 };
+    const moved = Math.hypot(x - last.x, y - last.y);
+    const phase = last.phase + moved / actor.radius;
+    this.strides.set(actor.id, { x, y, phase });
+    const stride = moved > 0.05 ? Math.sin(phase * 1.6) : 0;
+    const lean = actor.castProgress === undefined ? 0 : 1;
+    const tint = this.bodyTint(actor);
+    if (actor.team === "self") {
+      g.lineStyle(2, SELF_RIM, 1);
+      g.strokeCircle(x, y, actor.radius + 1);
+    }
+    paintStack(
+      phaserPainter(g),
+      {
+        x,
+        y,
+        r: actor.radius,
+        facing: actor.facing,
+        colour: teamColour(actor.team),
+        tint,
+        edge: BODY_EDGE,
+      },
+      bodySlices(stride, lean),
+    );
+    paintBodyMarks(phaserPainter(marks), {
+      x,
+      y,
+      r: actor.radius,
+      facing: actor.facing,
+      team: actor.team,
+      weaponId: actor.weaponId,
+      offhandId: actor.offhandId,
+      frame,
+      cape: undefined,
+      tint,
+    });
+  }
+
   private drawActor(band: (typeof this.bands)[number], actor: RenderableActor): void {
     const { body: g, marks, bar } = band;
     const { x, y } = actor.position;
@@ -2866,23 +2916,27 @@ export class ArenaScene extends Phaser.Scene {
       this.drawLyingBody(g, marks, actor);
     } else {
       const frame = this.weaponFrame(actor);
-      paintStandingBody(
-        phaserPainter(g),
-        {
-          x,
-          y,
-          r: actor.radius,
-          facing: actor.facing,
-          team: actor.team,
-          weaponId: actor.weaponId,
-          offhandId: actor.offhandId,
-          frame,
-          cape: this.wornCape(actor),
-          tint: this.bodyTint(actor),
-          swingTrail: this.swingTrail(actor, frame),
-        },
-        phaserPainter(marks),
-      );
+      if (this.stacking) {
+        this.drawStackedBody(g, marks, actor, frame);
+      } else {
+        paintStandingBody(
+          phaserPainter(g),
+          {
+            x,
+            y,
+            r: actor.radius,
+            facing: actor.facing,
+            team: actor.team,
+            weaponId: actor.weaponId,
+            offhandId: actor.offhandId,
+            frame,
+            cape: this.wornCape(actor),
+            tint: this.bodyTint(actor),
+            swingTrail: this.swingTrail(actor, frame),
+          },
+          phaserPainter(marks),
+        );
+      }
       this.drawCastGlow(marks, actor, frame);
     }
     // On the body layer, after the body and its self rim: every mark draws over the rings.

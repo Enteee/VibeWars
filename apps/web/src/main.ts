@@ -234,6 +234,8 @@ import { toPlayerBuild } from "./storage/build-validation.js";
 import { recordAscentWin } from "./storage/fame.js";
 import { STORAGE_NAMESPACE } from "./storage/namespace.js";
 import { startSplashFight } from "./ui/splash-fight.js";
+import { stackingAsked } from "./render/sprite-stack.js";
+import { showStackSheet } from "./render/sprite-stack-sheet.js";
 import { createMenuBackground } from "./ui/menu-background.js";
 import { hostedChoice, pinnedChoice } from "./ui/menu-background-choice.js";
 import { watchHall } from "./ui/vault-screen.js";
@@ -3874,3 +3876,8 @@ main().catch((error: unknown) => {
   setStatus("failed to start", "error");
   console.error("[web] boot failed", error);
 });
+
+// #3977 spike only: the stacked look's sheet, for the ADR's screenshots.
+if (stackingAsked(window.location.search)) {
+  Object.assign(window, { __stackSheet: showStackSheet });
+}

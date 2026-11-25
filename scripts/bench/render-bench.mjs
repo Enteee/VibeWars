@@ -649,7 +649,7 @@ try {
   const mapWindow = async (/** @type {string} */ mapId, /** @type {number} */ seconds) => {
     const page = await browser.newPage({ viewport });
     try {
-      await page.goto(url);
+      await page.goto(process.env.BENCH_STACK === undefined ? url : `${url}?stack`); // #3977 spike
       return await measure(page, mapId, seconds);
     } finally {
       const session = await page.context().newCDPSession(page);
@@ -730,7 +730,7 @@ try {
   for (const mapId of noisy ? [] : [...mapsToMeasure(), FLAT_BASELINE]) {
     const match = await browser.newPage({ viewport });
     try {
-      await match.goto(`${url}?frametiming`);
+      await match.goto(`${url}?frametiming${process.env.BENCH_STACK === undefined ? "" : "&stack"}`); // #3977 spike
       const run = await follow(match, mapId);
       /** @type {(times: number[]) => number} */
       const sum = (times) => times.reduce((total, time) => total + time, 0);
