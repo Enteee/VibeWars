@@ -37,7 +37,25 @@ function lockFile() {
 function running(marker) {
   const child = spawn(process.execPath, ["-e", "setTimeout(() => {}, 30000)", marker]);
   cleanups.push(() => child.kill());
-  return child.pid ?? 0;
+  const pid = child.pid ?? 0;
+  // spawn() returns before the child has exec'd, and until then
+  // /proc/<pid>/cmdline is still the forked parent's. Wait until the marker
+  // shows, or a loaded runner makes takeLock see a holder that is not the
+  // daemon (#4067).
+  const deadline = Date.now() + 10_000;
+  for (;;) {
+    try {
+      if (fs.readFileSync(`/proc/${String(pid)}/cmdline`, "utf8").includes(marker)) {
+        return pid;
+      }
+    } catch {
+      /* not there yet */
+    }
+    if (Date.now() > deadline) {
+      throw new Error(`pid ${String(pid)} never showed ${marker} in its command line`);
+    }
+    Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 10);
+  }
 }
 
 describe("takeLock (#23)", () => {
