@@ -55,6 +55,17 @@ export function fadeGain(cycle: number, from: number, cycles: number, side: "in"
 /** How loud a track is at a cycle of the scheduler's clock, 0 to 1. */
 export type Envelope = (cycle: number) => number;
 
+/**
+ * How loud a note from `begin` for `duration` cycles plays under `envelope`: the louder
+ * of its level at its onset and at its midpoint. A note on a fade-in's
+ * first beat would be silent at its onset, and a pad as long as the fade
+ * would not fade at all; at its midpoint it enters part way (#3983). A
+ * fade-out keeps the onset's level.
+ */
+export function noteGain(envelope: Envelope, begin: number, duration: number): number {
+  return Math.max(envelope(begin), envelope(begin + duration / 2));
+}
+
 /** A track at full level. */
 export const FULL: Envelope = () => 1;
 
@@ -170,6 +181,25 @@ export function levelAt(changes: readonly LevelChange[], cycle: number): MusicLe
  * first change is where the schedule starts, already settled.
  */
 export function layerGain(changes: readonly LevelChange[], n: number, cycle: number): number {
+  return layerAt(changes, n, cycle).gain;
+}
+
+/**
+ * Whether a note starting on `cycle` belongs to the layer that plays from
+ * intensity `n`: the layer is on there, or still fading out. A note that
+ * starts before its layer comes in stays out, even if it would still be
+ * sounding once it has.
+ */
+export function layerHeard(changes: readonly LevelChange[], n: number, cycle: number): boolean {
+  const { on, gain } = layerAt(changes, n, cycle);
+  return on || gain > 0;
+}
+
+function layerAt(
+  changes: readonly LevelChange[],
+  n: number,
+  cycle: number,
+): { readonly on: boolean; readonly gain: number } {
   let on = n <= 0;
   /** The fade under way: its start and level there; none for a settled layer. */
   let since = -Infinity;
@@ -197,5 +227,5 @@ export function layerGain(changes: readonly LevelChange[], n: number, cycle: num
       since = change.from;
     }
   }
-  return gainAt(cycle);
+  return { on, gain: gainAt(cycle) };
 }

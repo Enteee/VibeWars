@@ -76,9 +76,12 @@ Hidden-tab suspend and the 0.2 s mute and volume ramps are unchanged.
   screen that needs it faster is named here, not special-cased in code.
 - The keys of the two songs still meet only across silence, so they no
   longer clash, but nothing matches them either.
-- Levels are per note, at its onset: a long note started before a fade
-  keeps the level it started with. The tracks' notes are short enough
-  that a fade over a cycle is heard as smooth.
+- Levels are per note, not per sample: a note plays at the louder of its
+  level at its onset and at its midpoint. On a fade-in that is the
+  midpoint, so the downbeat a song or layer enters on is heard, and a
+  cycle-long pad enters at about 0.7 instead of a cycle late; on a
+  fade-out it is the onset. A note that starts before its layer comes
+  in stays out. A note is not faded while it sounds.
 - The duck reaches into superdough's orbits, a surface `strudel.d.ts`
   now declares. An orbit a track first uses during a duck is not ducked.
 - A trailer capture without the `musicSettled` mark is refused; it is

@@ -48,12 +48,17 @@ describe("layer", () => {
 
 describe("layer gain (#3983)", () => {
   /** The velocity of each note in `[from, until)`, in order. */
-  const velocities = (levels: LevelChange[], from: number, until: number): number[] => {
+  const velocities = (
+    levels: LevelChange[],
+    from: number,
+    until: number,
+    perCycle = 2,
+  ): number[] => {
     const layer = makeLayer(
       () => levels,
       () => ({ origin: 0 }),
     );
-    return layer(1, pure({ s: "pad" }).fast(2))
+    return layer(1, pure({ s: "pad" }).fast(perCycle))
       .queryArc(from, until)
       .map((hap) => (hap.value as { velocity: number }).velocity);
   };
@@ -63,11 +68,32 @@ describe("layer gain (#3983)", () => {
       { from: 0, level: 0 },
       { from: 20, level: 1 },
     ];
-    // The note on the change itself is at gain 0, and left out.
-    const [half, full] = velocities(levels, 20, 21.5);
-    expect(half).toBeCloseTo(Math.SQRT1_2);
+    // Each note at its midpoint: a quarter and three quarters into the fade.
+    const [first, second, full] = velocities(levels, 20, 21.5);
+    expect(first).toBeCloseTo(Math.sin(Math.PI / 8));
+    expect(second).toBeCloseTo(Math.sin((3 * Math.PI) / 8));
     expect(full).toBe(1);
-    expect(velocities(levels, 19, 20.5)).toEqual([]);
+    expect(velocities(levels, 19, 20)).toEqual([]);
+  });
+
+  it("keeps the downbeat a layer enters on, and fades a cycle-long pad in from it", () => {
+    const levels: LevelChange[] = [
+      { from: 0, level: 0 },
+      { from: 20, level: 1 },
+    ];
+    const [pad, next] = velocities(levels, 20, 22, 1);
+    expect(pad).toBeCloseTo(Math.SQRT1_2);
+    expect(next).toBe(1);
+    const [eighth] = velocities(levels, 20, 20.125, 8);
+    expect(eighth).toBeGreaterThan(0);
+  });
+
+  it("leaves out a note that starts before its layer comes in", () => {
+    const levels: LevelChange[] = [
+      { from: 0, level: 0 },
+      { from: 20.5, level: 1 },
+    ];
+    expect(velocities(levels, 20, 20.5, 1)).toEqual([]);
   });
 
   it("fades a layer out over a cycle the other way", () => {

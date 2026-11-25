@@ -67,7 +67,7 @@ export function duck(params: () => readonly GainParam[]): Duck {
       shape = { at, from, holdUntil, release: beatSeconds };
       for (const param of params()) {
         param.cancelScheduledValues(at);
-        param.setValueAtTime(from, at);
+        param.linearRampToValueAtTime(from, at);
         param.linearRampToValueAtTime(DUCK_GAIN, at + DUCK_ATTACK_SECONDS);
         param.setValueAtTime(DUCK_GAIN, holdUntil);
         param.linearRampToValueAtTime(1, holdUntil + beatSeconds);

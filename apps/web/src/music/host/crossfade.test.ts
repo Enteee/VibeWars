@@ -132,9 +132,9 @@ describe("a switch (#3983)", () => {
     for (const event of incoming) {
       expect(event.t).toBeCloseTo(landing + (event.begin - 4) / fast, 1);
     }
+    // Each note at its midpoint, so the downbeat is heard.
     expect(incoming.map((event) => event.velocity)).toEqual([
-      0,
-      ...[1, 2, 3].map((beat) => expect.closeTo(Math.sin((beat * Math.PI) / 8))),
+      ...[1, 3, 5, 7].map((eighth) => expect.closeTo(Math.sin((eighth * Math.PI) / 16))),
       1,
       1,
     ]);
@@ -224,7 +224,16 @@ describe("a switch's outgoing side (#3530)", () => {
     const incoming = core.pure({ s: "new", release: 3 }).fast(2);
     const notes = sounding(switched(core.silence, incoming, 4, 1, tempo), "new");
     expect(notes.map((note) => note.begin).slice(0, 4)).toEqual([4, 4.5, 5, 5.5]);
-    expect(notes[1]?.value).toEqual({ s: "new", release: 3, velocity: Math.sin(Math.PI / 4) });
+    expect(notes[0]?.value).toEqual({
+      s: "new",
+      release: 3,
+      velocity: expect.closeTo(Math.sin(Math.PI / 8)),
+    });
+    expect(notes[1]?.value).toEqual({
+      s: "new",
+      release: 3,
+      velocity: expect.closeTo(Math.sin((3 * Math.PI) / 8)),
+    });
     expect(notes[2]?.value).toEqual({ s: "new", release: 3, velocity: 1 });
   });
 });

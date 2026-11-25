@@ -1,6 +1,6 @@
 import * as core from "@strudel/core";
 
-import type { Envelope } from "./transitions.js";
+import { noteGain, type Envelope } from "./transitions.js";
 
 /**
  * Marks the one silent event that changes the tempo on a switch's
@@ -20,10 +20,10 @@ export function isTempoMark(value: unknown): boolean {
   return record(value)?.[TEMPO_MARK] === true;
 }
 
-/** `pattern` as loud as `gain` says at each note's onset, on the scheduler's clock. */
+/** `pattern` as loud as `gain` says for each note (see `noteGain`), on the scheduler's clock. */
 export function withGain(pattern: core.Pattern, gain: Envelope): core.Pattern {
   return pattern.withHap((hap) => {
-    const level = gain(hap.wholeOrPart().begin.valueOf());
+    const level = noteGain(gain, hap.wholeOrPart().begin.valueOf(), hap.duration.valueOf());
     return hap.withValue((value) => {
       const fields = record(value);
       if (fields === null) {

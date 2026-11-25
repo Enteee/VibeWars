@@ -26,7 +26,7 @@ function timeline(): GainParam & { at(time: number): number } {
           since = event.time;
           continue;
         }
-        if (event.kind === "ramp") {
+        if (event.kind === "ramp" && since !== -Infinity) {
           return level + ((event.value - level) * (time - since)) / (event.time - since);
         }
         break;
@@ -81,6 +81,22 @@ describe("sting duck (#3983)", () => {
     ducking.note(1, 0.3, 0.25);
     ducking.note(1.2, 0.3, 0.25);
     ducking.note(1.85, 0.1, 0.25);
+    const step = 1 / 48_000;
+    let previous = param.at(0.9);
+    let largest = 0;
+    for (let time = 0.9; time < 3; time += step) {
+      const level = param.at(time);
+      largest = Math.max(largest, Math.abs(level - previous));
+      previous = level;
+    }
+    expect(largest).toBeLessThan(0.01);
+  });
+
+  it("does not step up when a note lands in the middle of a release", () => {
+    const param = timeline();
+    const ducking = duck(() => [param]);
+    ducking.note(1, 0.1, 1);
+    ducking.note(1.6, 0.1, 1);
     const step = 1 / 48_000;
     let previous = param.at(0.9);
     let largest = 0;
