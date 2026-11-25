@@ -135,7 +135,8 @@ decor: [
   not differ from `plain`. Decor never reaches the sim: it is renderer-only,
   like `ground-dressing.ts`.
 - **Caps are schema rules:** `decor.max(120)`, and a refinement that at most
-  16 entries are animated kinds.
+  4 entries are animated kinds (at most 16 animated shapes, at ≤ 4
+  primitives each).
 - **Light** stays in `lighting.lights`; a `brazier` decor entry only draws the
   stand and flame, and a refinement checks a `brazier-` light lies within
   40 u of one (so art and light cannot drift).
@@ -189,21 +190,26 @@ prop were drawn. So:
   full decor of those two maps, against today. Gate: no more than +10 % per
   walked frame, and the 4.5× walked target ADR-0054 moved to its follow-up
   card must not get farther away. If the gate fails, the decor cap per map
-  drops until it holds; nothing here claims it fits yet.
+  drops until it holds; nothing here claims it fits yet. Method (perf-sec-qa):
+  PR head and its merge-base measured in the same job on the same runner
+  (main's bench does not run, so an old number is no baseline); mean **and
+  p95** walked-frame ms, the gate applies to both; the existing route plus a
+  walk through the map's densest decor area; both normal and `still` motion.
 
 **Lights.** A light-casting decor (`brazier`, `fire`, ember) is a
 `lighting.lights` entry; `MAX_LIGHTS` is 32 (`schema.ts:408`) and the light
 map is textured area. Lights today per map run from 7 (`ember-pits`) to 22
 (`ashen-courtyard`), median 14; `arena-long-hall` has 20. Headroom is
 therefore 10 to 25, smallest on `ashen-courtyard` (10), `arena-long-hall`
-(12) and `guild-hall-isle` (15). **Cap for light-casting decor: the lesser
-of 4 and the map's headroom, minus 2 kept spare**, so ashen-courtyard may add
+(12) and `guild-hall-isle` (15). **Cap for light-casting decor:
+`min(4, headroom - 2)`** (2 lights kept spare), so ashen-courtyard may add
 4, none ever exceeds 4. A light that is not needed for the read (ambient
 fire in a far corner) is a flat glow shape, not a light.
 
 **Animated props.** A swaying Graphics is redrawn and re-tessellated every
-frame. The cap is **16 animated shapes per frame on screen** (not 16 props:
-a sway of one 4-primitive tree is 4), counted after culling. Under reduced
+frame. The cap is **4 animated entries per map**, enforced by the schema. At
+≤ 4 primitives per prop that is at most 16 animated shapes per frame even
+with all in view; culling only lowers it. Under reduced
 motion (`still`) they stop and hold their mean pose, so the animated cost is
 zero; the static cost is unchanged. Flame flicker is a light parameter
 (`flickerAt`), not a redraw of the shape.
