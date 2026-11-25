@@ -6,6 +6,7 @@
   "type": "module",
   "description": "Browser client: HTML/CSS shell around a Phaser game viewport.",
   "scripts": {
+    "lint": "eslint .",
     "build": "node ../../scripts/assets/render-sfx.mjs && tsc --build tsconfig.build.json && vite build",
     "dev": "node ../../scripts/assets/render-sfx.mjs && tsc --build ../../packages/game-session/tsconfig.build.json ../../packages/game-maps/tsconfig.build.json ../../packages/game-data/tsconfig.build.json && vite",
     "music:check": "node scripts/music/check.mjs",
