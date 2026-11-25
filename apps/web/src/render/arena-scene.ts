@@ -495,6 +495,8 @@ const BEACON_BOLT_GLOW = 0x79c0ff;
 const BEACON_BOLT_CORE = 0xf0f6ff;
 /** How far apart the side face's stacked outlines lay, in world units: where its top still ends. */
 const SIDE_FACE_SLICE = 2;
+/** How far outside the view a moving decor prop is still redrawn (#4013): a crown reaches this far. */
+const DECOR_VIEW_MARGIN = 80;
 /** The cell, world units, a fill leaves out where a deck covers it (#3162), and how far past the deck's edge. */
 const SHOWN_FILL_CELL = 32;
 const SHOWN_FILL_MARGIN = 2;
@@ -1369,7 +1371,7 @@ export class ArenaScene extends Phaser.Scene {
     this.fadeOverhangs(dt);
     passEnd("fadeOverhangs", fadeAt);
     const decorAt = passStart();
-    this.drawMovingDecor();
+    this.drawMovingDecor(view);
     passEnd("drawMovingDecor", decorAt);
     const outlineAt = passStart();
     this.drawHiddenOutlines();
@@ -4446,12 +4448,26 @@ export class ArenaScene extends Phaser.Scene {
     }
   }
 
-  /** Each moving prop as it is now (#4013); left as drawn, at its mean, under reduced motion. */
-  private drawMovingDecor(): void {
+  /**
+   * Each moving prop in `view` as it is now (#4013); one out of it is not
+   * redrawn, and one under reduced motion is left as drawn, at its mean.
+   */
+  private drawMovingDecor(view: Box): void {
     if (this.reducedMotion) {
       return;
     }
     for (const { prop, graphics, colours, tint, lift } of this.decorMoving) {
+      const { x } = prop.at;
+      const y = prop.at.y - lift;
+      const seen =
+        x > view.left - DECOR_VIEW_MARGIN &&
+        x < view.right + DECOR_VIEW_MARGIN &&
+        y > view.top - DECOR_VIEW_MARGIN &&
+        y < view.bottom + DECOR_VIEW_MARGIN * 2;
+      graphics.setVisible(seen);
+      if (!seen) {
+        continue;
+      }
       graphics.clear();
       paintDecor(graphics, decorCommands(prop, colours, this.now, false), tint, lift);
     }
