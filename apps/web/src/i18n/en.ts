@@ -404,6 +404,7 @@ export const en = {
   "cosmetics.item.trailFrost": "Frost trail",
   "cosmetics.item.trailMoss": "Moss trail",
   "cosmetics.item.trailStarlight": "Starlight trail",
+  "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Locked",
   "cosmetics.none": "None",
   "cosmetics.note":
@@ -1639,7 +1640,6 @@ export const en = {
     "Heroes' Ascent is a run of maps, 8 a side, against teams at your round. Win and you move on to the next map, up to the Hall of Heroes; lose and you start again.",
   "tutorial.menu.modes.hostedGame":
     "A Hosted Game is your own lobby: send friends the invite link, and pick the map and the team size. Bots play every place nobody takes.",
-  "tutorial.menu.modes.open": "Open the lit mode on the rail.",
   "tutorial.menu.modes.randomArena":
     "Random Arena is the quickest fight: your own character, in a team of strangers, 1v1, 2v2 or 4v4. The map is drawn for you, and every place is a real player.",
   "tutorial.menu.modes.teamArena":
@@ -1701,8 +1701,8 @@ export const en = {
   "tutorial.heal.ow": "Ow! The rock got me. A little help?",
   "tutorial.heal.praise": "Much better, thank you! You're a healer too.",
   "tutorial.learn": "Learn to play",
-  "tutorial.look.hint": "Zoom out, then drag the view north. Find the teleporter!",
-  "tutorial.look.how": "The mouse wheel zooms. Hold the right button and drag to look.",
+  "tutorial.look.hint": "Drag the view north. Find the teleporter!",
+  "tutorial.look.how": "Hold the right button and drag to look.",
   "tutorial.look.intro": "Maybe this teleporter gets us around the battlefield. Look north!",
   "tutorial.look.praise": "There it is! Our way around the fight.",
   "tutorial.offer": "New here? Your tutor can show you the ropes.",
@@ -1737,7 +1737,7 @@ export const en = {
     "Tap my name in the party list first. Tap Party if the list is closed.",
   "tutorial.touch.healHow":
     "Tap Party if the list is closed, then my name, then the glowing skill.",
-  "tutorial.touch.look": "Pinch to zoom. Drag one finger to look.",
+  "tutorial.touch.look": "Drag one finger to look.",
   "tutorial.touch.pingHow": "Tap the compass, or drag on it to draw a line.",
   "tutorial.touch.ratsHow": "Tap a rat to target it.",
   "tutorial.touch.tunnelHow": "Tap the steps down, then the mark past the far end.",

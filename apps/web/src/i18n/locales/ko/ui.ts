@@ -374,6 +374,7 @@ export default {
   "cosmetics.item.trailFrost": "서리 흔적",
   "cosmetics.item.trailMoss": "이끼 흔적",
   "cosmetics.item.trailStarlight": "별빛 흔적",
+  "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "잠김",
   "cosmetics.none": "없음",
   "cosmetics.note":
@@ -1553,7 +1554,6 @@ export default {
     "영웅의 승천은 8대8로 같은 라운드의 팀과 맵을 이어 가며 싸웁니다. 이기면 다음 맵으로 나아가 영웅의 전당까지 오르고, 지면 처음부터 다시 시작합니다.",
   "tutorial.menu.modes.hostedGame":
     "호스트 게임은 나만의 로비입니다: 친구에게 초대 링크를 보내고 맵과 팀 규모를 고르세요. 아무도 들어오지 않은 자리는 봇이 플레이합니다.",
-  "tutorial.menu.modes.open": "옆에서 빛나는 모드를 여세요.",
   "tutorial.menu.modes.randomArena":
     "랜덤 아레나는 가장 빠른 전투입니다: 내 캐릭터로 낯선 사람들과 팀을 이뤄 1v1, 2v2 또는 4v4로 싸웁니다. 맵은 무작위로 정해지고, 모든 자리가 실제 플레이어입니다.",
   "tutorial.menu.modes.teamArena":
@@ -1613,8 +1613,8 @@ export default {
   "tutorial.heal.ow": "아야! 바위에 맞았어. 좀 도와줄래?",
   "tutorial.heal.praise": "훨씬 낫다, 고마워! 치유도 할 줄 아는구나.",
   "tutorial.learn": "플레이 배우기",
-  "tutorial.look.hint": "축소한 뒤 시야를 북쪽으로 끌어. 순간이동기를 찾아!",
-  "tutorial.look.how": "마우스 휠로 확대/축소해. 오른쪽 버튼을 누른 채 끌어서 둘러봐.",
+  "tutorial.look.hint": "시야를 북쪽으로 끌어. 순간이동기를 찾아!",
+  "tutorial.look.how": "오른쪽 버튼을 누른 채 끌어서 둘러봐.",
   "tutorial.look.intro": "이 순간이동기로 전장을 돌아갈 수 있을지도 몰라. 북쪽을 봐!",
   "tutorial.look.praise": "저기 있다! 전투를 돌아가는 길이야.",
   "tutorial.offer": "처음인가요? 스승이 기본을 알려 줄 거예요.",
@@ -1645,7 +1645,7 @@ export default {
   "tutorial.touch.climbUnder": "길게 누르세요. 점선 고리는 아래쪽이에요.",
   "tutorial.touch.healHint": "먼저 파티 목록에서 내 이름을 탭해. 목록이 닫혀 있으면 파티를 탭해.",
   "tutorial.touch.healHow": "목록이 닫혀 있으면 파티를 탭하고, 내 이름, 빛나는 스킬 순서로 탭해.",
-  "tutorial.touch.look": "두 손가락으로 확대/축소해. 한 손가락으로 끌어서 둘러봐.",
+  "tutorial.touch.look": "한 손가락으로 끌어서 둘러봐.",
   "tutorial.touch.pingHow": "나침반을 탭하거나, 그 위를 드래그해 선을 그어.",
   "tutorial.touch.ratsHow": "쥐를 탭해서 지정해.",
   "tutorial.touch.tunnelHow": "내려가는 계단을 탭한 뒤, 반대편 끝 너머의 표시를 탭해.",

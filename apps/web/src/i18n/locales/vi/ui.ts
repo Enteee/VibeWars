@@ -371,6 +371,7 @@ export default {
   "cosmetics.item.trailFrost": "Vệt sương giá",
   "cosmetics.item.trailMoss": "Vệt rêu",
   "cosmetics.item.trailStarlight": "Vệt ánh sao",
+  "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Đã khóa",
   "cosmetics.none": "Không",
   "cosmetics.note":
@@ -1549,7 +1550,6 @@ export default {
     "Đỉnh Anh Hùng là chuỗi bản đồ, 8 đấu 8, gặp các đội cùng vòng với bạn. Thắng thì bạn sang bản đồ kế tiếp, lên tới Đại sảnh Anh hùng; thua thì bạn bắt đầu lại.",
   "tutorial.menu.modes.hostedGame":
     "Trận tự tạo là sảnh riêng của bạn: gửi link mời cho bạn bè, rồi chọn bản đồ và cỡ đội. Bot sẽ chơi mọi chỗ không ai nhận.",
-  "tutorial.menu.modes.open": "Mở chế độ đang sáng ở bên cạnh.",
   "tutorial.menu.modes.randomArena":
     "Đấu trường ngẫu nhiên là trận nhanh nhất: nhân vật của chính bạn, trong một đội toàn người lạ, 1v1, 2v2 hoặc 4v4. Bản đồ được bốc thăm cho bạn, và mọi chỗ đều là người chơi thật.",
   "tutorial.menu.modes.teamArena":
@@ -1613,8 +1613,8 @@ export default {
   "tutorial.heal.ow": "Ối! Tảng đá trúng tôi rồi. Giúp chút nhé?",
   "tutorial.heal.praise": "Đỡ hơn nhiều rồi, cảm ơn! Bạn cũng biết chữa trị đấy.",
   "tutorial.learn": "Học chơi",
-  "tutorial.look.hint": "Thu nhỏ, rồi kéo khung nhìn về phía bắc. Tìm cổng dịch chuyển!",
-  "tutorial.look.how": "Con lăn chuột để phóng to thu nhỏ. Giữ nút phải và kéo để nhìn quanh.",
+  "tutorial.look.hint": "Kéo khung nhìn về phía bắc. Tìm cổng dịch chuyển!",
+  "tutorial.look.how": "Giữ nút phải và kéo để nhìn quanh.",
   "tutorial.look.intro":
     "Có lẽ cổng dịch chuyển này đưa ta vòng qua chiến trường. Nhìn về phía bắc!",
   "tutorial.look.praise": "Nó đây rồi! Đường vòng qua trận chiến của ta.",
@@ -1650,7 +1650,7 @@ export default {
     "Chạm vào tên tôi trong danh sách nhóm trước. Chạm Tổ đội nếu danh sách đang đóng.",
   "tutorial.touch.healHow":
     "Chạm Tổ đội nếu danh sách đang đóng, rồi chạm tên tôi, rồi chạm kỹ năng đang sáng.",
-  "tutorial.touch.look": "Chụm hai ngón để thu phóng. Kéo một ngón để nhìn quanh.",
+  "tutorial.touch.look": "Kéo một ngón để nhìn quanh.",
   "tutorial.touch.pingHow": "Chạm vào la bàn, hoặc kéo trên đó để vẽ một đường.",
   "tutorial.touch.ratsHow": "Chạm vào một con chuột để chọn nó.",
   "tutorial.touch.tunnelHow": "Chạm vào bậc đi xuống, rồi vào dấu ở quá đầu bên kia.",

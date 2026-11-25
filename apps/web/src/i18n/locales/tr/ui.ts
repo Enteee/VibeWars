@@ -401,6 +401,7 @@ export default {
   "cosmetics.item.trailFrost": "Ayaz izi",
   "cosmetics.item.trailMoss": "Yosun izi",
   "cosmetics.item.trailStarlight": "Yıldız ışığı izi",
+  "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Kilitli",
   "cosmetics.none": "Yok",
   "cosmetics.note":
@@ -1642,7 +1643,6 @@ export default {
     "Kahramanların Yükselişi, kendi turundaki takımlara karşı 8'e 8 oynanan bir harita dizisidir. Kazanırsan sıradaki haritaya, ta Kahramanlar Salonu'na kadar ilerlersin; kaybedersen baştan başlarsın.",
   "tutorial.menu.modes.hostedGame":
     "Özel Oyun kendi lobindir: arkadaşlarına davet bağlantısını gönder, haritayı ve takım boyutunu seç. Kimsenin almadığı her yerde botlar oynar.",
-  "tutorial.menu.modes.open": "Yandaki ışıklı modu aç.",
   "tutorial.menu.modes.randomArena":
     "Rastgele Arena en hızlı dövüştür: kendi karakterinle, yabancılardan oluşan bir takımda, 1v1, 2v2 ya da 4v4. Harita senin için çekilir ve her yerde gerçek bir oyuncu vardır.",
   "tutorial.menu.modes.teamArena":
@@ -1704,9 +1704,8 @@ export default {
   "tutorial.heal.ow": "Ah! Kaya bana çarptı. Biraz yardım?",
   "tutorial.heal.praise": "Çok daha iyi, teşekkürler! Sen iyileştirebiliyorsun da.",
   "tutorial.learn": "Oynamayı öğren",
-  "tutorial.look.hint": "Uzaklaştır, sonra görüşü kuzeye sürükle. Işınlayıcıyı bul!",
-  "tutorial.look.how":
-    "Fare tekerleği yakınlaştırır. Sağ tuşu basılı tutup sürükleyerek etrafa bak.",
+  "tutorial.look.hint": "Görüşü kuzeye sürükle. Işınlayıcıyı bul!",
+  "tutorial.look.how": "Sağ tuşu basılı tutup sürükleyerek etrafa bak.",
   "tutorial.look.intro":
     "Belki bu ışınlayıcı bizi savaş alanının etrafından dolaştırır. Kuzeye bak!",
   "tutorial.look.praise": "İşte orada! Savaşın etrafından yolumuz.",
@@ -1740,8 +1739,7 @@ export default {
   "tutorial.touch.climbUnder": "Basılı tut. Kesikli halka altında.",
   "tutorial.touch.healHint": "Önce grup listesinde adıma dokun. Liste kapalıysa Grup'a dokun.",
   "tutorial.touch.healHow": "Liste kapalıysa Grup'a dokun, sonra adıma, sonra parlayan beceriye.",
-  "tutorial.touch.look":
-    "Yakınlaştırmak için iki parmakla sıkıştır. Bakmak için tek parmakla sürükle.",
+  "tutorial.touch.look": "Bakmak için tek parmakla sürükle.",
   "tutorial.touch.pingHow": "Pusulaya dokun ya da üzerinde sürükleyip bir çizgi çiz.",
   "tutorial.touch.ratsHow": "Hedeflemek için bir fareye dokun.",
   "tutorial.touch.tunnelHow": "Aşağı inen basamaklara, sonra öbür ucun ötesindeki işarete dokun.",

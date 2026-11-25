@@ -425,6 +425,7 @@ export default {
   "cosmetics.item.trailFrost": "Traînée de givre",
   "cosmetics.item.trailMoss": "Traînée de mousse",
   "cosmetics.item.trailStarlight": "Traînée de lumière stellaire",
+  "cosmetics.detail": "{name} : {requirement}",
   "cosmetics.locked": "Verrouillé",
   "cosmetics.none": "Aucun",
   "cosmetics.note":
@@ -1740,7 +1741,6 @@ export default {
     "L'Ascension des héros est une suite de cartes, 8 contre 8, contre des équipes de ton tour. Gagne et tu passes à la carte suivante, jusqu'au Hall des héros ; perds et tu recommences.",
   "tutorial.menu.modes.hostedGame":
     "Une Partie hébergée est ton propre salon : envoie le lien d'invitation à tes amis, et choisis la carte et la taille d'équipe. Des bots jouent chaque place que personne ne prend.",
-  "tutorial.menu.modes.open": "Ouvre le mode allumé sur le côté.",
   "tutorial.menu.modes.randomArena":
     "L'Arène aléatoire est le combat le plus rapide : ton propre personnage, dans une équipe d'inconnus, en 1v1, 2v2 ou 4v4. La carte est tirée pour toi, et chaque place est un vrai joueur.",
   "tutorial.menu.modes.teamArena":
@@ -1804,8 +1804,8 @@ export default {
   "tutorial.heal.ow": "Aïe ! Le rocher m'a eu. Un peu d'aide ?",
   "tutorial.heal.praise": "Bien mieux, merci ! Tu sais soigner aussi.",
   "tutorial.learn": "Apprendre à jouer",
-  "tutorial.look.hint": "Dézoome, puis fais glisser la vue vers le nord. Trouve le téléporteur !",
-  "tutorial.look.how": "La molette zoome. Maintiens le bouton droit et fais glisser pour regarder.",
+  "tutorial.look.hint": "Fais glisser la vue vers le nord. Trouve le téléporteur !",
+  "tutorial.look.how": "Maintiens le bouton droit et fais glisser pour regarder.",
   "tutorial.look.intro":
     "Ce téléporteur pourrait nous faire contourner le champ de bataille. Regarde au nord !",
   "tutorial.look.praise": "Le voilà ! Notre chemin autour du combat.",
@@ -1841,7 +1841,7 @@ export default {
     "Touche d'abord mon nom dans la liste du groupe. Touche Groupe si la liste est fermée.",
   "tutorial.touch.healHow":
     "Touche Groupe si la liste est fermée, puis mon nom, puis la compétence qui brille.",
-  "tutorial.touch.look": "Pince pour zoomer. Glisse un doigt pour regarder.",
+  "tutorial.touch.look": "Glisse un doigt pour regarder.",
   "tutorial.touch.pingHow": "Touche la boussole, ou glisse dessus pour tracer une ligne.",
   "tutorial.touch.ratsHow": "Touche un rat pour le cibler.",
   "tutorial.touch.tunnelHow":

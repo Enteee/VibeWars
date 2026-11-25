@@ -453,6 +453,7 @@ export default {
   "cosmetics.item.trailFrost": "أثر الصقيع",
   "cosmetics.item.trailMoss": "أثر الطحلب",
   "cosmetics.item.trailStarlight": "أثر ضوء النجوم",
+  "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "مقفل",
   "cosmetics.none": "لا شيء",
   "cosmetics.note":
@@ -1834,7 +1835,6 @@ export default {
     "صعود الأبطال سلسلة من الخرائط، 8 مقابل 8، ضد فرق في جولتك نفسها. إن فزت تنتقل إلى الخريطة التالية حتى قاعة الأبطال؛ وإن خسرت تبدأ من جديد.",
   "tutorial.menu.modes.hostedGame":
     "المباراة المستضافة ردهتك الخاصة: أرسل رابط الدعوة إلى أصدقائك، واختر الخريطة وحجم الفريق. تلعب البوتات كل مكان لا يشغله أحد.",
-  "tutorial.menu.modes.open": "افتح طريقة اللعب المضيئة على الجانب.",
   "tutorial.menu.modes.randomArena":
     "الساحة العشوائية أسرع قتال: شخصيتك أنت، في فريق من الغرباء، 1v1 أو 2v2 أو 4v4. تُختار الخريطة لك، وكل مكان يشغله لاعب حقيقي.",
   "tutorial.menu.modes.teamArena":
@@ -1892,8 +1892,8 @@ export default {
   "tutorial.heal.ow": "آخ! أصابني الحجر. أتساعدني قليلًا؟",
   "tutorial.heal.praise": "أفضل بكثير، شكرًا! أنت معالج أيضًا.",
   "tutorial.learn": "تعلّم اللعب",
-  "tutorial.look.hint": "صغّر العرض، ثم اسحبه نحو الشمال. جد البوابة!",
-  "tutorial.look.how": "عجلة الفأرة تكبّر وتصغّر. اضغط الزر الأيمن واسحب لتنظر.",
+  "tutorial.look.hint": "اسحب العرض نحو الشمال. جد البوابة!",
+  "tutorial.look.how": "اضغط الزر الأيمن واسحب لتنظر.",
   "tutorial.look.intro": "ربما تأخذنا هذه البوابة حول ساحة المعركة. انظر شمالًا!",
   "tutorial.look.praise": "ها هي! طريقنا حول القتال.",
   "tutorial.offer": "جديد هنا؟ معلّمك سيريك الأساسيات.",
@@ -1925,7 +1925,7 @@ export default {
   "tutorial.touch.climbUnder": "اضغط مطوّلًا. الحلقة المتقطعة تحتك.",
   "tutorial.touch.healHint": "المس اسمي في قائمة الفريق أولًا. المس الفرقة إن كانت القائمة مغلقة.",
   "tutorial.touch.healHow": "المس الفرقة إن كانت القائمة مغلقة، ثم اسمي، ثم المهارة المتوهجة.",
-  "tutorial.touch.look": "اقرص للتكبير. اسحب بإصبع واحد لتنظر.",
+  "tutorial.touch.look": "اسحب بإصبع واحد لتنظر.",
   "tutorial.touch.pingHow": "المس البوصلة، أو اسحب عليها لترسم خطًا.",
   "tutorial.touch.ratsHow": "المس جرذًا لتستهدفه.",
   "tutorial.touch.tunnelHow": "المس الدرج نازلًا، ثم العلامة بعد الطرف الآخر.",

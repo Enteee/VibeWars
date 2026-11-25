@@ -54,9 +54,12 @@ Un marco del emblema es un borde fino alrededor del emblema de tu capa de clan. 
 
 ## Cómo llevarlos
 
-Abre Opciones y elige **Cosméticos**. Cada ranura muestra sus objetos, cada uno marcado como
-disponible o bloqueado, con lo que lo consigue. Tu elección se aplica al instante. Los demás
-jugadores la ven a partir del siguiente lobby al que te unas.
+Abre Opciones y elige **Cosméticos**. Cada ranura es una fila de muestras, cada una un pequeño
+dibujo de su objeto; la primera, un círculo vacío tachado, no lleva nada. La muestra elegida tiene
+un anillo azul. La línea junto a la fila (debajo, en un móvil) nombra la muestra que señalas o
+enfocas, y lo que la consigue. Una muestra bloqueada aparece atenuada, con un pequeño candado. Tu
+elección se aplica al instante. Los demás jugadores la ven a partir del siguiente lobby al que te
+unas.
 
 ## Ver los cosméticos de otros jugadores
 
