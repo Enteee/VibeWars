@@ -4,8 +4,8 @@ import { ANIMATED_DECOR_KINDS, type DecorKind } from "@vibewars/game-maps/schema
 import type { DecorColours } from "./arena-palette.js";
 
 /**
- * Map decor (#4013, ADR-0059): columns, braziers, crates, spikes, trees and
- * fern tufts, scenery nobody bumps into. Each is a few vector shapes with
+ * Map decor (#4013, ADR-0059): braziers, crates, trees and fern tufts,
+ * scenery nobody bumps into. Each is a few vector shapes with
  * a lit top, a shaded side and a contact shadow, the light from the
  * north-west (docs/art/visual-style.md). Phaser-free: the scene paints the
  * commands, in its light, so the looks and the motion are tested without it.
@@ -52,7 +52,7 @@ export type DecorCommand =
     };
 
 /** The kinds drawn over a body, and faded off one as an overhang is. */
-export const TALL_DECOR_KINDS: readonly DecorKind[] = ["column", "tree"];
+export const TALL_DECOR_KINDS: readonly DecorKind[] = ["tree"];
 
 /** How often a brazier's flame changes shape, in seconds. */
 export const BRAZIER_FLICKER_SECONDS = 0.066;
@@ -66,15 +66,11 @@ export const DECOR_SWAY = 2;
 const SHADOW = 0x000000;
 const SHADOW_ALPHA = 0.28;
 
-const COLUMN_RADIUS = 13;
-const COLUMN_HEIGHT = 72;
 const TRUNK_HEIGHT = 34;
 const TRUNK_WIDTH = 6;
 const CROWN_RADIUS = 24;
 const CRATE_SIZE = 22;
 const CRATE_HEIGHT = 15;
-const SPIKE_WIDTH = 8;
-const SPIKE_HEIGHT = 20;
 const FROND_LENGTH = 17;
 const BRAZIER_RADIUS = 11;
 const BRAZIER_HEIGHT = 15;
@@ -145,22 +141,9 @@ export function brazierFlicker(prop: MapDecor, now: number, still: boolean): num
  */
 export function decorShadow(prop: MapDecor): DecorCommand {
   const { at, scale: s } = prop;
-  const height =
-    prop.kind === "column"
-      ? COLUMN_HEIGHT * (prop.variant === 1 ? 0.6 : 1)
-      : prop.kind === "tree"
-        ? TRUNK_HEIGHT + CROWN_RADIUS
-        : prop.kind === "crates" || prop.kind === "brazier"
-          ? CRATE_HEIGHT
-          : SPIKE_HEIGHT / 2;
-  const foot =
-    prop.kind === "column"
-      ? COLUMN_RADIUS
-      : prop.kind === "tree"
-        ? CROWN_RADIUS
-        : prop.kind === "crates"
-          ? CRATE_SIZE * 0.8
-          : BRAZIER_RADIUS;
+  const tree = prop.kind === "tree";
+  const height = tree ? TRUNK_HEIGHT + CROWN_RADIUS : CRATE_HEIGHT;
+  const foot = tree ? CROWN_RADIUS : prop.kind === "crates" ? CRATE_SIZE * 0.8 : BRAZIER_RADIUS;
   const reach = height * 0.3 * s;
   return ellipse(
     { x: at.x + reach, y: at.y + reach * 0.45 },
@@ -182,93 +165,16 @@ export function decorOutline(prop: MapDecor): readonly Vec2[] {
   }
   const { at, scale: s } = prop;
   const reach = RULESET.collision.playerRadius + DECOR_SWAY;
-  // A crown's side lobes reach 1.45 of its radius out; a plinth, 1.35 out and 0.75 down.
-  const tree = prop.kind === "tree";
-  const half = (tree ? CROWN_RADIUS * 1.45 : COLUMN_RADIUS * 1.35) * s + reach;
-  const top =
-    (tree ? TRUNK_HEIGHT + CROWN_RADIUS * 1.8 : COLUMN_HEIGHT + COLUMN_RADIUS) * s + reach;
-  const bottom = (tree ? 4 : COLUMN_RADIUS * 0.75) * s + reach;
+  // A crown's side lobes reach 1.45 of its radius out.
+  const half = CROWN_RADIUS * 1.45 * s + reach;
+  const top = (TRUNK_HEIGHT + CROWN_RADIUS * 1.8) * s + reach;
+  const bottom = 4 * s + reach;
   return [
     { x: at.x - half, y: at.y - top },
     { x: at.x + half, y: at.y - top },
     { x: at.x + half, y: at.y + bottom },
     { x: at.x - half, y: at.y + bottom },
   ];
-}
-
-/** A stone column: a plinth, a lit and a shaded flank, a lit cap; broken off short as variant 1. */
-function column(prop: MapDecor, c: DecorColours): DecorCommand[] {
-  const { at, scale: s, variant } = prop;
-  const r = COLUMN_RADIUS * s;
-  const h = COLUMN_HEIGHT * s * (variant === 1 ? 0.6 : 1);
-  const top = at.y - h;
-  const commands: DecorCommand[] = [
-    ellipse({ x: at.x, y: at.y + r * 0.1 }, r * 1.35, r * 0.62, c.stoneShade),
-    ellipse(at, r * 1.25, r * 0.55, c.stone),
-    poly(
-      [
-        { x: at.x - r, y: top },
-        { x: at.x - r / 3, y: top },
-        { x: at.x - r / 3, y: at.y },
-        { x: at.x - r, y: at.y },
-      ],
-      c.stoneLit,
-    ),
-    poly(
-      [
-        { x: at.x - r / 3, y: top },
-        { x: at.x + r / 3, y: top },
-        { x: at.x + r / 3, y: at.y },
-        { x: at.x - r / 3, y: at.y },
-      ],
-      c.stone,
-    ),
-    poly(
-      [
-        { x: at.x + r / 3, y: top },
-        { x: at.x + r, y: top },
-        { x: at.x + r, y: at.y },
-        { x: at.x + r / 3, y: at.y },
-      ],
-      c.stoneShade,
-    ),
-  ];
-  if (variant === 2) {
-    // Fluted: a groove down each flank.
-    for (const dx of [-r * 0.66, 0, r * 0.66]) {
-      commands.push({
-        kind: "line",
-        from: { x: at.x + dx, y: top + r * 0.5 },
-        to: { x: at.x + dx, y: at.y - r * 0.3 },
-        width: Math.max(1, s),
-        colour: c.stoneShade,
-        alpha: 0.6,
-      });
-    }
-  }
-  if (variant === 1) {
-    // Broken: a jagged lit stump instead of a cap.
-    commands.push(
-      poly(
-        [
-          { x: at.x - r, y: top },
-          { x: at.x - r / 2, y: top - r * 0.5 },
-          { x: at.x, y: top - r * 0.1 },
-          { x: at.x + r / 2, y: top - r * 0.6 },
-          { x: at.x + r, y: top },
-          { x: at.x, y: top + r * 0.45 },
-        ],
-        c.stoneLit,
-      ),
-    );
-  } else {
-    const cap = variant === 3 ? 1.45 : 1.2;
-    commands.push(
-      ellipse({ x: at.x, y: top + r * 0.12 }, r * cap, r * 0.55, c.stoneShade),
-      ellipse({ x: at.x, y: top }, r * cap, r * 0.5, c.stoneLit),
-    );
-  }
-  return commands;
 }
 
 /** A tree: a trunk, and a crown of three clumps, the north-west one lit; a pine as variant 3. */
@@ -412,32 +318,6 @@ function crates(prop: MapDecor, c: DecorColours): DecorCommand[] {
   ];
 }
 
-/** A cluster of three to five rock spikes, each lit on its west flank. */
-function spike(prop: MapDecor, c: DecorColours): DecorCommand[] {
-  const { at, scale: s, rotation, variant } = prop;
-  const count = 3 + (variant % 3);
-  const commands: DecorCommand[] = [];
-  const spikes = Array.from({ length: count }, (_, k) => {
-    const spot = k === 0 ? at : turned(at, SPIKE_WIDTH * 1.2 * s, 0, rotation + (k * 360) / count);
-    return { spot, height: SPIKE_HEIGHT * s * (k === 0 ? 1.2 : 0.65 + 0.1 * (k % 3)) };
-  }).sort((a, b) => a.spot.y - b.spot.y);
-  for (const { spot, height } of spikes) {
-    const half = (SPIKE_WIDTH * s) / 2;
-    const tip = { x: spot.x + half * 0.2, y: spot.y - height };
-    commands.push(
-      poly(
-        [tip, { x: spot.x - half, y: spot.y }, { x: spot.x, y: spot.y + half * 0.4 }],
-        c.spikeLit,
-      ),
-      poly(
-        [tip, { x: spot.x, y: spot.y + half * 0.4 }, { x: spot.x + half, y: spot.y }],
-        c.spikeShade,
-      ),
-    );
-  }
-  return commands;
-}
-
 /** A fern tuft: fronds from its heart, those facing north-west lit, their tips swaying. */
 function fern(prop: MapDecor, c: DecorColours, sway: number): DecorCommand[] {
   const { at, scale: s, rotation, variant } = prop;
@@ -525,14 +405,10 @@ export function decorCommands(
   still: boolean,
 ): readonly DecorCommand[] {
   switch (prop.kind) {
-    case "column":
-      return column(prop, colours);
     case "tree":
       return tree(prop, colours, decorSway(prop, now, still));
     case "crates":
       return crates(prop, colours);
-    case "spike":
-      return spike(prop, colours);
     case "fern":
       return fern(prop, colours, decorSway(prop, now, still));
     case "brazier":

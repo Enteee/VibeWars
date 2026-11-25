@@ -454,7 +454,7 @@ const pavingSchema = z.object({
 });
 
 /** What a decor prop is drawn as (#4013): scenery, never cover (ADR-0059). */
-export const DECOR_KINDS = ["column", "brazier", "crates", "spike", "tree", "fern"] as const;
+export const DECOR_KINDS = ["brazier", "crates", "tree", "fern"] as const;
 
 /** A decor kind (#4013). */
 export type DecorKind = (typeof DECOR_KINDS)[number];

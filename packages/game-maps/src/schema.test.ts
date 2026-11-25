@@ -1922,8 +1922,8 @@ describe("decor (#4013)", () => {
     ],
   };
   const prop = (overrides: object = {}) => ({
-    id: "column",
-    kind: "column",
+    id: "crates",
+    kind: "crates",
     at: { x: 1000, y: 1000 },
     layer: 0,
     rotation: 0,
@@ -1979,7 +1979,7 @@ describe("decor (#4013)", () => {
   });
 
   it("refuses a used id, a layer the map has not, and a scale, turn or variant out of range", () => {
-    refuses([prop(), prop()], /decor\.1\.id: decor id column is used twice/);
+    refuses([prop(), prop()], /decor\.1\.id: decor id crates is used twice/);
     refuses([prop({ layer: 1 })], /decor\.0\.layer: layer 1/);
     refuses([prop({ scale: 0.5 })], /decor\.0\.scale/);
     refuses([prop({ rotation: 360 })], /decor\.0\.rotation/);
@@ -1990,13 +1990,13 @@ describe("decor (#4013)", () => {
   it("refuses a prop off the map, in a wall, in deep water or in a spawn bubble", () => {
     refuses(
       [prop({ at: { x: 2100, y: 1000 } })],
-      /decor\.0\.at: decor column is off its layer's floor/,
+      /decor\.0\.at: decor crates is off its layer's floor/,
     );
-    refuses([prop({ at: { x: 1500, y: 1500 } })], /decor\.0\.at: decor column is in a wall/);
-    refuses([prop({ at: { x: 500, y: 1500 } })], /decor\.0\.at: decor column is in deep water/);
+    refuses([prop({ at: { x: 1500, y: 1500 } })], /decor\.0\.at: decor crates is in a wall/);
+    refuses([prop({ at: { x: 500, y: 1500 } })], /decor\.0\.at: decor crates is in deep water/);
     refuses(
       [prop({ at: { x: 200, y: 200 } })],
-      /decor\.0\.at: decor column is within 300 of a spawn point/,
+      /decor\.0\.at: decor crates is within 300 of a spawn point/,
     );
   });
 

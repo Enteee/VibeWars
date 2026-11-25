@@ -765,15 +765,11 @@ function overhangColours(tones: BiomeTones): Record<OverhangLook, OverhangLookCo
 }
 
 /**
- * A biome's decor colours (#4013): dressed stone for columns, its wood for
- * crates and trunks, its plants for crowns and ferns, its rock for spikes,
- * each with the lit and the shaded face of a north-west light. Iron and
+ * A biome's decor colours (#4013): its wood for crates and trunks, its
+ * plants for crowns and ferns, each with the lit and the shaded face of a north-west light. Iron and
  * fire are the same everywhere.
  */
 export interface DecorColours {
-  readonly stone: number;
-  readonly stoneLit: number;
-  readonly stoneShade: number;
   readonly wood: number;
   readonly woodLit: number;
   readonly woodShade: number;
@@ -782,8 +778,6 @@ export interface DecorColours {
   readonly plant: number;
   readonly plantLit: number;
   readonly plantShade: number;
-  readonly spikeLit: number;
-  readonly spikeShade: number;
   readonly iron: number;
   readonly ironShade: number;
   readonly ember: number;
@@ -793,9 +787,6 @@ export interface DecorColours {
 
 function decorColours(tones: BiomeTones): DecorColours {
   return {
-    stone: tones.stone,
-    stoneLit: mix(tones.stone, 0xffffff, 0.22),
-    stoneShade: shade(tones.stone, 0.38),
     wood: tones.wood,
     woodLit: mix(tones.wood, tones.stone, 0.35),
     woodShade: shade(tones.wood, 0.42),
@@ -804,8 +795,6 @@ function decorColours(tones: BiomeTones): DecorColours {
     plant: tones.plant,
     plantLit: mix(tones.plant, 0xf0f0a0, 0.25),
     plantShade: shade(tones.plant, 0.42),
-    spikeLit: mix(tones.rock, tones.stone, 0.5),
-    spikeShade: shade(tones.rock, 0.35),
     iron: 0x4a4a52,
     ironShade: 0x26262c,
     ember: 0xe0662a,

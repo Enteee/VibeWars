@@ -187,7 +187,7 @@ derived geometry (wall segments, spawn points by team). Annihilation plays on
 own maps (`ember-pits`, `jungle-ruins`, `broken-tower`, `scarred-earth`,
 `threefold-keep`, `hall-of-heroes-king`, `hall-of-heroes-relic`, `hall-of-heroes-capture`, `guild-hall-isle`).
 Map geometry is original (brief §41) — see ADR-0006 for the format.
-Decor (`decor`: columns, braziers, trees…) is renderer-only data on the map;
+Decor (`decor`: braziers, crates, trees, ferns) is renderer-only data on the map;
 nothing in the sim reads it (ADR-0059).
 
 Elevation is planned as a discrete `layer` beside `x` and `y`, with no Z

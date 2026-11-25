@@ -116,7 +116,7 @@ const GOAL_MARK = 0.9;
 /**
  * Decor (#4013): its shadow and a short prop (a crate, a fern, a brazier)
  * on its layer's floor, lit as a wall is, under its torches, goals and
- * whoever walks through it; a tall one (a column, a tree) over its
+ * whoever walks through it; a tall one (a tree) over its
  * band's bodies, as a wall top is, and faded off them as an overhang is.
  */
 const DECOR: Record<DecorPart, number> = { shadow: 0.62, low: 0.7, tall: 2.07 };

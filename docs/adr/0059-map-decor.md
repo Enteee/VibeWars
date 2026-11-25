@@ -6,11 +6,11 @@ Accepted (2026-11-25). Issue #4013, epic #3976, following the populate study (`d
 
 ## Context
 
-The populate survey found large stretches of empty floor on most maps: walls, floor and lights, and nothing between them. A map needs props (columns, braziers, crates, trees, ferns) that make a place read as a place. They must change nothing in play: the simulation is server-authoritative and deterministic, and a prop that a body could bump into, hide behind or path around is a balance change on every map it lands on.
+The populate survey found large stretches of empty floor on most maps: walls, floor and lights, and nothing between them. A map needs props (braziers, crates, trees, ferns) that make a place read as a place. They must change nothing in play: the simulation is server-authoritative and deterministic, and a prop that a body could bump into, hide behind or path around is a balance change on every map it lands on.
 
 ## Decision
 
-**Decor is a required `decor` array on every map document**, beside `gates`. An entry is `id`, `kind`, `at`, `layer`, `rotation` in degrees, `scale` in [0.75, 1.5] and `variant` in [0, 3]. The kinds are `column`, `brazier`, `crates`, `spike`, `tree` and `fern`. A map without the field fails validation, so saved and custom maps from before it are discarded (CLAUDE.md, ADR-0016).
+**Decor is a required `decor` array on every map document**, beside `gates`. An entry is `id`, `kind`, `at`, `layer`, `rotation` in degrees, `scale` in [0.75, 1.5] and `variant` in [0, 3]. The kinds are `brazier`, `crates`, `tree` and `fern`. Nothing that reads as solid or as harmful is decor: a column must block and a spike must hurt (operator, Q185), so each is a wall look or a hazard under its own card, never walk-through scenery. A map without the field fails validation, so saved and custom maps from before it are discarded (CLAUDE.md, ADR-0016).
 
 **Nothing but the renderer reads it.** `game-core`, the sim, the nav graphs and the bots never see `decor`. A test holds that the nav graph and the sim's wall set are identical with and without it. Decor is part of the map, so the map's content hash changes with it.
 
@@ -18,7 +18,7 @@ The populate survey found large stretches of empty floor on most maps: walls, fl
 
 **Drawn as vector shapes, not sprites.** `apps/web/src/render/decor-art.ts` draws one function per kind: a contact shadow toward +x +y, a lit flank toward the north-west light, a shaded flank, a lit top. The colours come from the biome palette, so one kind reads right in a hall or a jungle. Static props are painted into the map's static layer once per `drawMap`, sorted with the existing depth rule. No textures: ADR-0054 and #3506 measured their cost.
 
-**Animated kinds are capped and cheap.** A brazier's flame changes every 66 ms, a tree sways over 5 s and a fern over 3 s, at most 2 px each way. They draw in a small per-frame layer, culled to the view, and hold at their mean under reduced motion. Tall kinds (`column`, `tree`) fade off a body with the overhang fade (`OVERHANG_FADE_SECONDS`, `OVERHANG_FADED_ALPHA`), not a copy of it.
+**Animated kinds are capped and cheap.** A brazier's flame changes every 66 ms, a tree sways over 5 s and a fern over 3 s, at most 2 px each way. They draw in a small per-frame layer, culled to the view, and hold at their mean under reduced motion. The tall kind (`tree`) fades off a body with the overhang fade (`OVERHANG_FADE_SECONDS`, `OVERHANG_FADED_ALPHA`), not a copy of it.
 
 **The caps.** At most `MAX_DECOR` = 120 props on a map, and `MAX_ANIMATED_DECOR` = 16 of the animated kinds. The schema's refinements reject, each with a path to the entry: a duplicate id; a prop off its layer's floor (outside the bounds or over a pit), inside a wall of its layer, in deep water of its layer, or within 300 u of a spawn point; and a brazier without a light whose id starts `brazier-` within 40 u on its layer. A brazier's glow is a map light (ADR-0052), never self-lit.
 

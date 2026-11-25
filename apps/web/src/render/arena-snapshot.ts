@@ -276,7 +276,7 @@ export interface MapStructure {
   readonly downDecks: readonly MapDeck[];
   /** Its awnings, lean-tos and canopies (#3293): over bodies, never walked. */
   readonly overhangs: readonly MapOverhang[];
-  /** Its columns, braziers, crates and trees (#4013): scenery, walked through. */
+  /** Its braziers, crates, trees and ferns (#4013): scenery, walked through. */
   readonly decor: readonly MapDecor[];
   /** Stretches of a raised edge you step off onto `layer - 1`, never climb (#3069). */
   readonly dropOffs: readonly {
