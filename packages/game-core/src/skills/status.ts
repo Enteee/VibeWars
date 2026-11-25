@@ -372,18 +372,16 @@ export function scaledStatAttributes(id: StatusId): readonly string[] {
 }
 
 /**
- * Whether a recast of `id` at `incoming` ranks replaces the one up at
- * `existing` (#3981): when no attribute its stats scale in is lower. One
- * with no scaled stat is always replaced.
+ * Whether a recast at `incoming` ranks replaces the one up at `existing`
+ * (#3981): when no attribute both name is lower. They name the ones its
+ * stats scale in and its skill's (`statusRanks`), so Aegis compares its
+ * Protection Prayers; one that names none is always replaced.
  */
 export function recastReplaces(
-  id: StatusId,
   existing: ReadonlyMap<string, number>,
   incoming: ReadonlyMap<string, number>,
 ): boolean {
-  return scaledStatAttributes(id).every(
-    (attributeId) => (incoming.get(attributeId) ?? 0) >= (existing.get(attributeId) ?? 0),
-  );
+  return [...existing].every(([attributeId, rank]) => (incoming.get(attributeId) ?? rank) >= rank);
 }
 
 /** Every `scaling.attributeId` anywhere in `value`, into `into`. */
@@ -3752,7 +3750,7 @@ export class StatusSet {
     // A hex or an enchantment recast by rank (#3981): a lower one is
     // refused outright, its duration, source, ranks and counters as they were.
     const byRank = replaced !== undefined && RECAST_BY_RANK.has(definition.category);
-    if (byRank && !recastReplaces(id, replaced.ranks, ranks)) {
+    if (byRank && !recastReplaces(replaced.ranks, ranks)) {
       return false;
     }
     // A recast that replaces it: its source does not return (#1826), but

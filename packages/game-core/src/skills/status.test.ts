@@ -597,11 +597,12 @@ describe("StatusSet recast of a hex or an enchantment by rank (#3981)", () => {
     expect(set.get("bleeding")?.sourceId).toBe("a");
   });
 
-  it("compares the ranks its stats scale in, and replaces one that has none", () => {
-    expect(recastReplaces("barbs", curses(12), curses(12))).toBe(true);
-    expect(recastReplaces("barbs", curses(12), curses(13))).toBe(true);
-    expect(recastReplaces("barbs", curses(12), curses(11))).toBe(false);
-    expect(recastReplaces("mending", NO_RANKS, NO_RANKS)).toBe(true);
+  it("compares the ranks both name, and replaces one that names none", () => {
+    expect(recastReplaces(curses(12), curses(12))).toBe(true);
+    expect(recastReplaces(curses(12), curses(13))).toBe(true);
+    expect(recastReplaces(curses(12), curses(11))).toBe(false);
+    expect(recastReplaces(NO_RANKS, curses(0))).toBe(true);
+    expect(recastReplaces(curses(12), NO_RANKS)).toBe(true);
   });
 });
 
