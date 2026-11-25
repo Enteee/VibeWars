@@ -56,11 +56,12 @@ it came too near the friend blue. Open water is the shared deep water look. The 
 **The gothic grade** (#4056, Grim gothic, operator Q190): every world material
 is drawn in a darker, greyer grade of its biome, so each biome keeps its hues
 and reads like the mock's stone hall (`gothic-world.webp`, #3977). `grade` in
-`arena-palette.ts` takes HSL lightness `L` to `value · 0.5 · (L / 0.5)^contrast`
-and scales chroma by `saturation` (`GOTHIC_GRADE`: value 0.87, contrast 0.75,
-saturation 0.6). Black stays black and the palest tone tops out near
-`#bbbbbb`, so nothing on the ground is brighter than a signal. It is calibrated
-once, on the hall (floor `#26303f` lands on the mock's `#3a3834`, wall top
+`arena-palette.ts` takes HSL lightness `L` to `value · (0.5 + contrast · (L − 0.5))`, clamped,
+and scales chroma by `saturation` (`GOTHIC_GRADE`: value 0.94, contrast 1.08,
+saturation 0.6). `value · contrast` is above 1, so two tones never end closer
+together than they began: the darks sink and the lit faces hold, and snow
+stays pale. Tones below about `#0a0a0a` go to black. It is calibrated
+once, on the hall (floor `#26303f` lands within six points of the mock's `#3a3834`, wall top
 `#4b5a70` on `#5e5a54`), and the same constants apply to every biome. The
 tables here are the tones before the grade. It is applied in one place, where
 `biomeMaterials` and `FLAT` are built, and to the land outside a map

@@ -15,13 +15,13 @@ export function shade(colour: number, share: number): number {
 
 /**
  * The Grim gothic grade (#4056, docs/art/visual-style.md §1): every world
- * material's lightness bent around mid-grey by `contrast` and scaled by
- * `value`, and its saturation (its chroma) scaled by `saturation`, so each biome keeps
+ * material's lightness pushed away from mid-grey by `contrast` and scaled
+ * by `value`, and its saturation (its chroma) scaled by `saturation`, so each biome keeps
  * its hues, darker and greyer. Calibrated once, on the hall: its floor and
- * wall top land on the mock's 0x3a3834 and 0x5e5a54. Hazards, gameplay
+ * wall top land within six points of the mock's 0x3a3834 and 0x5e5a54. Hazards, gameplay
  * marks, water, decor and bodies are never graded (§6).
  */
-export const GOTHIC_GRADE = { value: 0.87, saturation: 0.6, contrast: 0.75 } as const;
+export const GOTHIC_GRADE = { value: 0.94, saturation: 0.6, contrast: 1.08 } as const;
 
 /** `colour` in the gothic grade: black stays black, and lighter is always lighter. */
 export function grade(colour: number): number {
@@ -40,8 +40,12 @@ export function grade(colour: number): number {
         : high === g
           ? (b - r) / chroma + 2
           : (r - g) / chroma + 4;
-  const l = GOTHIC_GRADE.value * 0.5 * (lightness / 0.5) ** GOTHIC_GRADE.contrast;
-  // Its chroma, not its HSL saturation, is scaled: a pale tone pulled toward mid-grey grows no brighter hue.
+  // value · contrast > 1, so two tones end further apart than they began: darker, never flatter.
+  const l = Math.max(
+    0,
+    Math.min(1, GOTHIC_GRADE.value * (0.5 + GOTHIC_GRADE.contrast * (lightness - 0.5))),
+  );
+  // Its chroma, not its HSL saturation, is scaled: a darkened tone grows no brighter hue.
   const reach = Math.min(chroma * GOTHIC_GRADE.saturation, 2 * Math.min(l, 1 - l)) / 2;
   // Back from hue, saturation and lightness, as CSS does.
   const channel = (n: number): number => {
@@ -1169,16 +1173,16 @@ function breakableLookOf(biome: Biome, tones: BiomeTones): BreakableLook {
   }
 }
 
-/**
- * The material a map's breakable walls are (#3370), under its Ascent act's
- * rock (#3618): a map of one layer's are stone whatever its biome.
- */
 /** `look` in the gothic grade, but for the glow in its cracks: that tells how hurt it is (§6). */
 function gradeBreakable(look: BreakableLook): BreakableLook {
   const { courses, glow, ...colours } = look;
   return { courses, glow, ...gradeAll(colours) };
 }
 
+/**
+ * The material a map's breakable walls are (#3370), under its Ascent act's
+ * rock (#3618): a map of one layer's are stone whatever its biome.
+ */
 const FLAT_BREAKABLE = gradeBreakable(BREAKABLE_WALL_LOOK);
 
 export function breakableLook(map: MapLook & { readonly layerCount: number }): BreakableLook {

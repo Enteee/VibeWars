@@ -359,6 +359,18 @@ describe("grade (#4056)", () => {
     }
   });
 
+  it("pulls two tones no closer together, so the hall.s lit wall stands off its floor as before", () => {
+    for (const [dark, light] of [
+      [0x26303f, 0xa9bbd0],
+      [0x26303f, 0x4b5a70],
+      [0x202020, 0xe0e0e0],
+    ] as const) {
+      expect(lightness(grade(light)) - lightness(grade(dark))).toBeGreaterThanOrEqual(
+        lightness(light) - lightness(dark),
+      );
+    }
+  });
+
   it("lands the hall's floor and wall top within six points of the gothic mock", () => {
     expect(Math.abs(lightness(BIOME.hall.palette.floor ?? 0) - lightness(0x3a3834))).toBeLessThan(
       0.06,
