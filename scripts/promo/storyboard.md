@@ -5,8 +5,9 @@ the scene fast-forwards past the countdown and the walk, and marks its start
 only when its event happens (`window.__capture`), never after a fixed sleep.
 Bots are random, so each scene retries (as `fight` does) on its event and
 fails loudly after its tries. Today's three map shots are 2.7 s of a lone
-walk; they become the four action shots below, 2.0 s each, so the trailer
-grows by about 0 s (12 s of maps becomes 8 s, the rest goes to the fight).
+walk; they become the four action shots below, 2.0 s each, so the maps
+go from 8.1 s to 8.0 s and the trailer keeps its length (the earlier draft
+said 12 s of maps; that was wrong). Three shots at 2.7 s would be 8.1 s.
 
 All cuts: 16x9 and the 9x16 centre crop. The action is always at the screen
 centre, so the crop loses nothing: the camera follows the player, and each
