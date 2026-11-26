@@ -1,0 +1,68 @@
+var e=`# 戦闘の基本
+
+## ヘルスとエナジー
+
+あなたは480の**ヘルス**と20の**エナジー**で始まり、防具がエナジーを加えます。Warriorは0、Ranger、Assassin、Dervishは5、それ以外の全員は10です。杖は手に持っている間、さらに10を加えます。Dervishの防具はヘルスも25加えます。ルーンとモラルは両方を変化させます。スキルはエナジーを消費し、エナジーはゆっくりと自然に回復します。![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior**と![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon**は回復が最も遅く、![Ranger](../../../apps/web/public/icons/profession/ranger.svg) **Ranger**は少し速く、それ以外の全員が最も速く回復します。
+
+バーの矢印は**ピップ**です。1つ1つが、毎秒少しずつ回復していく、または減っていくヘルスやエナジーを表します。![Bleeding](../../../apps/web/public/icons/status/bleeding.svg) **Bleeding**、![Burning](../../../apps/web/public/icons/status/burning.svg) **Burning**、![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison**はヘルスを減らし、Regenerationや回復スペルはヘルスを増やします。5秒間戦闘から離れていると、ヘルスは自然に回復し始め、離れている時間が長いほど速くなります。
+
+## アドレナリン
+
+![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior**、![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon**などは、エナジーの代わりに**アドレナリン**を消費するスキルを持っています。そのようなスキルはそれぞれ個別にチャージされます。武器による攻撃を当てるたびに、そのすべてに1ストライクずつ加わり、大きな一撃を受けたときも同様です。1つを使うと、それは空になり、ほかのスキルから1ストライクずつ減ります。25秒間戦闘から離れていると、すべて空になります。
+
+## スキルを使う
+
+スキルは**詠唱**に少し時間がかかることがあり、その後、再び使えるようになるまで**リチャージ**の時間が必要です。ターゲットが射程外なら、まずそこへ歩いていきます。移動するかEscを押すと詠唱はキャンセルされます。エナジーは失われますが、スキルはリチャージに入りません。詠唱時間のあるスキルの後には、![攻撃スキル](../../../apps/web/public/icons/skill-type/attack.svg) **攻撃スキル**を除き、何もできない短い間があります。
+
+別のスキルを使っている最中やその間に押したスキルは、**予約**されます。それが次に発動し、発動するまでそのスロットが脈打ちます。待てるのは1つだけで、別のスキルを押すとそれに置き換わります。移動、Esc、中断、ダウンで予約は取り消されます。
+
+![シャウト](../../../apps/web/public/icons/skill-type/shout.svg) **シャウト**と![スタンス](../../../apps/web/public/icons/skill-type/stance.svg) **スタンス**は予約されません。別のスキルを詠唱中でも、その間でも、ダウン中でも、すぐに発動します。詠唱はそのまま続きます。このように使った場合は、射程まで歩いていくことはなく、射程外なら使用を拒否されます。
+
+## 中断とダウン
+
+**中断**は、敵が詠唱している最中のスキルを止めます。敵のエナジーは消費され、スキルはリチャージに入ります。中断の中には、しばらくそのスキルを使えなくするものもあります。中断が早すぎても遅すぎても、何も起きません。
+
+職業ごとにスキルを使う音が違います。ターゲットの音に耳を澄ませましょう。
+
+ほとんどの中断は、振りかぶった通常攻撃も止めます。その一撃は当たらず、振りはやり直しになります。まだターゲットに向かって歩いている敵には、中断するものがありません。カードに「スキル」や「スペル」と書かれた中断は、通常攻撃には効きません。
+
+Mantra of Concentrationなど一部の![スタンス](../../../apps/web/public/icons/skill-type/stance.svg) **スタンス**は、あなたに向けられた中断を防ぎます。ダウンを防ぐスタンスはありません。
+
+**ダウン**すると、しばらく移動も攻撃もスキルの使用もできません。ただし![シャウト](../../../apps/web/public/icons/skill-type/shout.svg) **シャウト**とスタンスは例外です。進行中の詠唱は失敗します。
+
+## 状態異常、呪い、エンチャント
+
+**状態異常**は、時間切れになるか除去されるまであなたを苦しめます。
+
+| 状態異常                                                                                    | 効果                                             |
+| ------------------------------------------------------------------------------------------- | ------------------------------------------------ |
+| ![Bleeding](../../../apps/web/public/icons/status/bleeding.svg) **Bleeding**                | ヘルスが減る                                     |
+| ![Burning](../../../apps/web/public/icons/status/burning.svg) **Burning**                   | ヘルスが速く減る                                 |
+| ![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison**                      | ヘルスが減る                                     |
+| ![Disease](../../../apps/web/public/icons/status/disease.svg) **Disease**                   | ヘルスが減り、隣にいる同じ種類の体にうつる       |
+| ![Crippled](../../../apps/web/public/icons/status/crippled.svg) **Crippled**                | 移動速度が半分になる                             |
+| ![Blind](../../../apps/web/public/icons/status/blind.svg) **Blind**                         | 攻撃のほとんどが外れる                           |
+| ![Weakness](../../../apps/web/public/icons/status/weakness.svg) **Weakness**                | 武器の攻撃がかなり弱くなる                       |
+| ![Cracked Armor](../../../apps/web/public/icons/status/cracked-armor.svg) **Cracked Armor** | 防御力が下がる                                   |
+| ![Deep Wound](../../../apps/web/public/icons/status/deep-wound.svg) **Deep Wound**          | 最大ヘルスが下がり、回復の効果も下がる           |
+| ![Dazed](../../../apps/web/public/icons/status/dazed.svg) **Dazed**                         | スペルの詠唱が遅くなり、どんな攻撃でも中断される |
+
+ミニオン（フレッシュゴーレムを除く）、ゴースト、スピリットは出血せず、毒にも病気にもかからない。スピリットは呪いを受けず、**Burning** 以外の状態異常も受けない。
+
+![呪い](../../../apps/web/public/icons/skill-type/hex.svg) **呪い**は敵があなたにかけるもの、![エンチャント](../../../apps/web/public/icons/skill-type/enchantment.svg) **エンチャント**はあなた自身や味方がかけるものです。それぞれ専用の種類のスキルで除去されます。一部のエンチャントは**維持**されます。自分で終わらせるまで続き、続く間はエナジーのピップを1つ消費します。終わらせるには、そのアイコンをダブルクリックするか、アイコンにフォーカスしてEnterまたはDeleteを押します。
+
+いくつかのスキルは、エンチャントがかかっている間は効果がなくなり、エンチャントがなくなると再び効果を発揮します。「次のN回の攻撃」の間続くスキルは、すべての攻撃を数えます。そのため、外れても防がれても、当たったときと同じように1回分を消費します。
+
+## 防御力とダメージ
+
+![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior**と![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon**は最も多くの防具を身に着け、![Ranger](../../../apps/web/public/icons/profession/ranger.svg) **Ranger**、![Assassin](../../../apps/web/public/icons/profession/assassin.svg) **Assassin**、![Dervish](../../../apps/web/public/icons/profession/dervish.svg) **Dervish**はそれより少なく、術者は最も少なく身に着けます。防御力は、武器、元素、混沌、闇のダメージを小さくします。神聖、影、種類なしのダメージ、ヘルスの減少、生命力の吸収は防御力を無視します。クリティカルになるのは武器による攻撃だけです。一部のエンチャントは、それを受けた者をクリティカルヒットに対して無敵にします。
+
+## 死亡、蘇生、モラル
+
+ほとんどのモードでは、死んだ者は、味方がResurrection Signet（誰でも持てます）のようなスキルで**蘇生**させるまで倒れたままです。死者がウェーブごとに、あるいは自然に戻ってくるモードもあります。[モード](modes.md)を参照してください。
+
+死亡中は、スコアボードの下の行が復帰までの秒数をカウントダウンするか、蘇生を待つよう表示します。パーティーウィンドウには、倒れた味方それぞれの横に同じカウントが表示されます。
+
+死ぬたびに**モラル**が15%下がり、最低-60%になります。それに伴い、最大ヘルスと最大エナジーも減ります。チームが敵を1人倒すごとに2%ずつ取り戻し、0まで回復します。ギルドバトルでは、旗台を確保するとそれを超えて、最大+10%まで上がります。
+`;export{e as default};
+//# sourceMappingURL=combat-basics-DqhnZ4d-.js.map
