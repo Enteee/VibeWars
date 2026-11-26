@@ -63,6 +63,7 @@ import {
   type MapDeck,
   type MapStructure,
 } from "../render/arena-snapshot.js";
+import { BARE_REFERENCE } from "../render/whole-screen-passes.js";
 import { TRAINING_MAPS } from "../training/maps.js";
 import { TUTORIAL_CANYON } from "../tutorial/canyon-map.js";
 
@@ -483,6 +484,7 @@ export function structureOf(map: MapData): LoadedStructure {
             ...(map.lighting === undefined ? {} : { lighting: warmFireLights(map.lighting) }),
             ...(map.atmosphere === undefined ? {} : { atmosphere: map.atmosphere }),
             ...(map.paving === undefined ? {} : { paving: map.paving }),
+            ...(BARE_REFERENCE && map.id === benchReference.id ? { bare: true } : {}),
           },
     wallLayers: map.walls.map((wall) => wall.layer),
     gateLayers: map.gates.map((gate) => gate.wall.layer),
