@@ -66,7 +66,7 @@ export const LIQUID_ZONES = ["lava", "mud", "foul-water", "tainted-water", "spri
 export type LiquidZoneId = (typeof LIQUID_ZONES)[number];
 
 /** Lava's cells (#4062): few and large, split by wide molten gaps. */
-export const LAVA_CELLS: LiquidCellsOptions = { seed: 4062, sites: 12, gap: 14, size: 512 };
+export const LAVA_CELLS: LiquidCellsOptions = { seed: 4062, sites: 12, gap: 10, size: 512 };
 /** Mud's cells: thick, with dark seams. */
 export const MUD_CELLS: LiquidCellsOptions = { seed: 4063, sites: 14, gap: 10, size: 512 };
 /** Foul water's cells: water's, with narrower gaps than lava's. */
@@ -116,9 +116,9 @@ export const ZONE_CELLS: Record<LiquidZoneId, ZoneCellsLook> = {
     cells: LAVA_CELLS,
     scale: LAVA_CELL_SCALE,
     passes: [
-      { where: "cells", colour: "#120806", alpha: 0.45, blend: "multiply" },
-      { where: "gaps", colour: PALETTE.lava.mid, alpha: 0.7, blend: "lighter" },
-      { where: "gaps", colour: PALETTE.lava.accent, alpha: 0.45, blend: "lighter" },
+      { where: "cells", colour: "#120806", alpha: 0.55, blend: "multiply" },
+      { where: "gaps", colour: PALETTE.lava.mid, alpha: 0.5, blend: "lighter" },
+      { where: "gaps", colour: PALETTE.lava.accent, alpha: 0.35, blend: "lighter" },
     ],
   },
   mud: {
