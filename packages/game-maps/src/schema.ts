@@ -460,14 +460,14 @@ const pavingSchema = z.object({
   area: waterSchema.shape.area,
 });
 
-/** What a decor prop is drawn as (#4013, #4018): scenery, never cover (ADR-0060). */
-export const DECOR_KINDS = ["brazier", "crates", "tree", "fern", "cinders"] as const;
+/** What a decor prop is drawn as (#4013, #4018, #4019): scenery, never cover (ADR-0060). */
+export const DECOR_KINDS = ["brazier", "crates", "tree", "fern", "cinders", "reed"] as const;
 
 /** A decor kind (#4013). */
 export type DecorKind = (typeof DECOR_KINDS)[number];
 
-/** The kinds that move while idle (#4013): a flame flickers, a tree or a fern sways. */
-export const ANIMATED_DECOR_KINDS: readonly DecorKind[] = ["brazier", "tree", "fern"];
+/** The kinds that move while idle (#4013): a flame flickers, a tree, a fern or a reed sways. */
+export const ANIMATED_DECOR_KINDS: readonly DecorKind[] = ["brazier", "tree", "fern", "reed"];
 
 /** The most decor props on a map (#4013). */
 export const MAX_DECOR = 120;

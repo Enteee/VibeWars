@@ -1,11 +1,11 @@
 import { MINIMAL_GW_INSPIRED_PVP_V1 as RULESET, type Vec2 } from "@vibewars/game-core";
 import { ANIMATED_DECOR_KINDS, type DecorKind } from "@vibewars/game-maps/schema";
 
-import type { DecorColours } from "./arena-palette.js";
+import { WATER_LOOK, type DecorColours } from "./arena-palette.js";
 
 /**
- * Map decor (#4013, ADR-0060): braziers, crates, trees, fern tufts and
- * cinder drifts (#4018), scenery nobody bumps into. Each is a few vector
+ * Map decor (#4013, ADR-0060): braziers, crates, trees, fern tufts,
+ * cinder drifts (#4018) and reed clumps (#4019), scenery nobody bumps into. Each is a few vector
  * shapes in the gothic look (#4059): a dark outline round its top, its
  * sides darkening to the ground, a contact shadow, the light from the
  * north-west (docs/art/visual-style.md). Phaser-free: the scene paints the
@@ -22,6 +22,8 @@ export interface MapDecor {
   readonly rotation: number;
   readonly scale: number;
   readonly variant: number;
+  /** Whether it stands in shallow water (#4019): a reed's foot is drawn under the water's tint. */
+  readonly wading: boolean;
 }
 
 /** One stroke of a prop, in world units, on its layer's floor. */
@@ -65,10 +67,11 @@ export const TALL_DECOR_KINDS: readonly DecorKind[] = ["tree"];
 
 /** How often a brazier's flame changes shape, in seconds. */
 export const BRAZIER_FLICKER_SECONDS = 0.066;
-/** How long a tree's sway and a fern's take, there and back, in seconds. */
+/** How long a tree's sway, a fern's and a reed's take, there and back, in seconds. */
 export const TREE_SWAY_SECONDS = 5;
 export const FERN_SWAY_SECONDS = 3;
-/** How far a crown or a frond sways each way, in world units. */
+export const REED_SWAY_SECONDS = 3;
+/** How far a crown, a frond or a reed's tip sways each way, in world units. */
 export const DECOR_SWAY = 2;
 
 /** A contact shadow, cast toward +x +y, the way every shadow on the map falls. */
@@ -84,6 +87,11 @@ const FROND_LENGTH = 17;
 const BRAZIER_RADIUS = 11;
 const BRAZIER_HEIGHT = 15;
 const FLAME_HEIGHT = 15;
+/** Half a reed clump's width, 50 u across at scale 1 (#4019), and how tall its tallest blade stands. */
+const REED_RADIUS = 25;
+const REED_HEIGHT = 30;
+/** How many blades a clump has, the fewest; a variant adds up to three. */
+const REED_BLADES = 7;
 /** Half a cinder drift's width: 120 u across at scale 1 (#4018). */
 const CINDER_RADIUS = 60;
 /** How many embers glow in a drift, the most. */
@@ -106,7 +114,7 @@ const DECOR_AO = 0.5;
 /** How many bands a prop's side darkens in, from its cap down to its foot. */
 const SIDE_BANDS = 4;
 
-/** Whether `kind` moves while idle: a flame flickers, a crown or a frond sways. */
+/** Whether `kind` moves while idle: a flame flickers, a crown, a frond or a reed sways. */
 export function animatedDecor(kind: DecorKind): boolean {
   return ANIMATED_DECOR_KINDS.includes(kind);
 }
@@ -147,15 +155,22 @@ function noise(prop: MapDecor, tick: number): number {
   return (h >>> 0) / 0x100000000;
 }
 
+/** How long each swaying kind's sway takes, there and back, in seconds. */
+const SWAY_SECONDS: Partial<Record<DecorKind, number>> = {
+  tree: TREE_SWAY_SECONDS,
+  fern: FERN_SWAY_SECONDS,
+  reed: REED_SWAY_SECONDS,
+};
+
 /**
- * How far a prop's crown or fronds lean east now, in world units: a slow
- * sine, each prop on its own phase. Held at its mean, upright, when `still`.
+ * How far a prop's crown, fronds or blades lean east now, in world units:
+ * a slow sine, each prop on its own phase. Held at its mean, upright, when `still`.
  */
 export function decorSway(prop: MapDecor, now: number, still: boolean): number {
-  if (still || (prop.kind !== "tree" && prop.kind !== "fern")) {
+  const period = SWAY_SECONDS[prop.kind];
+  if (still || period === undefined) {
     return 0;
   }
-  const period = prop.kind === "tree" ? TREE_SWAY_SECONDS : FERN_SWAY_SECONDS;
   const phase = noise(prop, 0) * Math.PI * 2;
   return Math.sin((now / period) * Math.PI * 2 + phase) * DECOR_SWAY;
 }
@@ -174,14 +189,17 @@ export function decorShadow(prop: MapDecor): DecorCommand {
   const tree = prop.kind === "tree";
   // A drift lies flat: its shadow is the scorch under it, cast nowhere.
   const flat = prop.kind === "cinders";
-  const height = tree ? TRUNK_HEIGHT + CROWN_RADIUS : flat ? 0 : CRATE_HEIGHT;
+  const reed = prop.kind === "reed";
+  const height = tree ? TRUNK_HEIGHT + CROWN_RADIUS : flat ? 0 : reed ? REED_HEIGHT : CRATE_HEIGHT;
   const foot = tree
     ? CROWN_RADIUS
     : flat
       ? CINDER_RADIUS * 0.85
       : prop.kind === "crates"
         ? CRATE_SIZE * 0.8
-        : BRAZIER_RADIUS;
+        : reed
+          ? REED_RADIUS * 0.6
+          : BRAZIER_RADIUS;
   const reach = height * 0.3 * s;
   return ellipse(
     { x: at.x + reach, y: at.y + reach * 0.45 },
@@ -526,6 +544,79 @@ function cinders(prop: MapDecor, c: DecorColours): DecorCommand[] {
 }
 
 /**
+ * A reed clump (#4019): thin blades fanning up from a tight foot, the
+ * north-west ones lit, over one dark silhouette of them all, so the clump
+ * is outlined and its blades are not; a seed head or two, outlined, on the
+ * tallest. Their tips sway `sway`. Wading, its foot is drawn under shallow
+ * water's own tint and a ripple, so it stands in the water, not on it.
+ */
+function reed(prop: MapDecor, c: DecorColours, sway: number): DecorCommand[] {
+  const { at, scale: s, variant, wading } = prop;
+  const count = REED_BLADES + (variant % 4);
+  const r = REED_RADIUS * s;
+  const blades = Array.from({ length: count }, (_, k) => {
+    // Spread across the clump's width; back ones first, so the front is drawn over them.
+    const across = ((k + 0.5) / count) * 2 - 1 + (noise(prop, k + 31) - 0.5) * 0.3;
+    const foot = { x: at.x + across * r * 0.35, y: at.y - noise(prop, k + 41) * r * 0.2 };
+    const height = REED_HEIGHT * s * (0.6 + 0.4 * noise(prop, k + 51));
+    const tip = {
+      x: foot.x + across * r * 0.75 + sway * (height / (REED_HEIGHT * s)),
+      y: foot.y - height,
+    };
+    return { foot, tip, height, across };
+  }).sort((a, b) => a.foot.y - b.foot.y);
+  const half = Math.max(1.2, 2 * s);
+  /** A blade's outline, `grow` wider all round. */
+  const blade = ({ foot, tip }: { foot: Vec2; tip: Vec2 }, grow: number): Vec2[] => {
+    const mid = { x: (foot.x + tip.x) / 2, y: (foot.y + tip.y) / 2 };
+    const w = half + grow;
+    return [
+      { x: foot.x - w, y: foot.y },
+      { x: mid.x - w * 0.7, y: mid.y },
+      { x: tip.x, y: tip.y - grow },
+      { x: mid.x + w * 0.7, y: mid.y },
+      { x: foot.x + w, y: foot.y },
+    ];
+  };
+  const heads = [...blades].sort((a, b) => b.height - a.height).slice(0, variant >= 2 ? 2 : 1);
+  return [
+    ...blades.map((one) => poly(blade(one, OUTLINE_WIDTH), OUTLINE)),
+    ...blades.map((one) =>
+      poly(
+        blade(one, 0),
+        one.across < -0.3 ? c.plantLit : one.across > 0.3 ? c.plantShade : c.plant,
+      ),
+    ),
+    ...heads.flatMap(({ foot, tip }) =>
+      outlinedEllipse(
+        { x: foot.x + (tip.x - foot.x) * 0.8, y: foot.y + (tip.y - foot.y) * 0.8 },
+        2.2 * s,
+        5 * s,
+        c.wood,
+      ),
+    ),
+    ...(wading ? waterline(at, r) : []),
+  ];
+}
+
+/** Shallow water's tint over a wading prop's foot, and the front half of a ripple round it. */
+function waterline(at: Vec2, r: number): DecorCommand[] {
+  const look = WATER_LOOK.shallow;
+  const front = ring(at, r * 0.7, r * 0.24).slice(0, RING_POINTS / 2 + 1);
+  return [
+    ellipse({ x: at.x, y: at.y - r * 0.04 }, r * 0.5, r * 0.16, look.fill, look.fillAlpha),
+    ...front.slice(1).map((to, k): DecorCommand => ({
+      kind: "line",
+      from: front[k] ?? to,
+      to,
+      width: OUTLINE_WIDTH,
+      colour: look.ripple,
+      alpha: look.rippleAlpha,
+    })),
+  ];
+}
+
+/**
  * How `prop` is drawn at `now`, its shadow apart (`decorShadow`): a
  * still prop the same at every `now`, a moving one held at its mean when
  * `still` (reduced motion).
@@ -547,5 +638,7 @@ export function decorCommands(
       return brazier(prop, colours, brazierFlicker(prop, now, still));
     case "cinders":
       return cinders(prop, colours);
+    case "reed":
+      return reed(prop, colours, decorSway(prop, now, still));
   }
 }
