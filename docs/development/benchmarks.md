@@ -349,7 +349,7 @@ not stand for.
 
 A layered map's frame cost in software GL, as a ratio to a frozen
 reference map drawn the same way on the same run. CI gates it at
-`BENCH_MAX_RATIO=2.6` on pull requests that touch the renderer or the
+`BENCH_MAX_RATIO=2.65` on pull requests that touch the renderer or the
 maps (#3157, #3190, #3243, #3255), in its own `render bench` job of `ci.yml` (#3382).
 
 **The reference map.** `packages/game-maps/bench/reference-map.json` is a
@@ -399,9 +399,9 @@ old one × the factor, 0.66-0.72 (old × 0.68 gives 1.14, 1.56, 2.12). Within a
 map the runs stay within -7 % / +5 % of the median, except long-hall's 2.40,
 +16 %, on the slowest runner (reference 87 ms).
 
-**The gate since #4129** is each map's worse ratio of two CI runs on the bare
-reference, plus 15 %: 2.6 for the 23 maps up to broken-tower (2.25), and a
-ceiling of its own for the five heavier ones. Between the two runs a map moved
+**The gate since #4129** is each map's worst ratio of three CI runs on the bare
+reference, plus 15 %: 2.65 for the 23 maps up to broken-tower (2.29), and a
+ceiling of its own for the five heavier ones. Across the three runs a map moved
 by up to 11 % (tutorial-canyon by 26 %, far under the gate).
 
 The gate before kept the headroom of long-hall, the map nearest it: after #3254 it
@@ -419,8 +419,8 @@ differ by over 20 %.
 **Ceilings.** `scripts/bench/ceilings.mjs` lists maps that are over or
 near the gate for a known reason, each gated at its own ratio and tied to the perf
 issue that will cut it. Elonian-plateau, cinder-sanctum, hollow-deep,
-brazen-causeway and long-hall are listed (2.95-3.4) until #4130 makes the
+brazen-causeway and long-hall are listed (3.1-3.45) until #4130 makes the
 whole-screen passes cheaper. A listed map that measures at or under the gate ÷ 1.25
-(2.08 at 2.6) fails as stale, so its entry is deleted when its issue
+(2.12 at 2.65) fails as stale, so its entry is deleted when its issue
 lands. The margin keeps a map just under the gate from flaking: long-hall
 measured 2.99-3.45 before #3254.
