@@ -878,6 +878,14 @@ export interface DecorColours {
   readonly ash: number;
   readonly ashLit: number;
   readonly ashShade: number;
+  /** A boulder's or a cairn's stone: its body, the light on its north-west facet, its shaded foot. */
+  readonly rock: number;
+  readonly rockLit: number;
+  readonly rockShade: number;
+  /** Old bone, and a banner's cloth and the shade in its folds. */
+  readonly bone: number;
+  readonly cloth: number;
+  readonly clothShade: number;
   readonly iron: number;
   readonly coals: number;
   /** Fire, never graded: a cinder's glow, its brighter spark, and a flame from its foot to its tip. */
@@ -902,6 +910,12 @@ function decorColours(tones: BiomeTones): DecorColours {
     ash: mix(tones.ground, tones.stone, 0.4),
     ashLit: mix(tones.ground, tones.stone, 0.6),
     ashShade: mix(tones.ground, tones.stone, 0.15),
+    rock: tones.rock,
+    rockLit: mix(tones.rock, 0xf0ece0, 0.22),
+    rockShade: shade(tones.rock, 0.4),
+    bone: mix(0xc8bea4, tones.ground, 0.2),
+    cloth: 0x6e2222,
+    clothShade: shade(0x6e2222, 0.4),
     iron: 0x5a5450,
     coals: 0x2a1a10,
     ember: 0xe0662a,

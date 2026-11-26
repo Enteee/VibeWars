@@ -63,15 +63,20 @@ export type DecorCommand =
     };
 
 /** The kinds drawn over a body, and faded off one as an overhang is. */
-export const TALL_DECOR_KINDS: readonly DecorKind[] = ["tree"];
+export const TALL_DECOR_KINDS: readonly DecorKind[] = ["tree", "dead-tree"];
 
 /** How often a brazier's flame changes shape, in seconds. */
 export const BRAZIER_FLICKER_SECONDS = 0.066;
-/** How long a tree's sway, a fern's and a reed's take, there and back, in seconds. */
+/**
+ * How long a tree's sway, a fern's, a reed's and a dead tree's take, and a
+ * banner's ripple (#4020), there and back, in seconds.
+ */
 export const TREE_SWAY_SECONDS = 5;
 export const FERN_SWAY_SECONDS = 3;
 export const REED_SWAY_SECONDS = 3;
-/** How far a crown, a frond or a reed's tip sways each way, in world units. */
+export const DEAD_TREE_SWAY_SECONDS = 4;
+export const BANNER_RIPPLE_SECONDS = 5;
+/** How far a crown, a frond, a reed's tip, a bare branch or a banner's hem sways each way, in world units. */
 export const DECOR_SWAY = 2;
 
 /** A contact shadow, cast toward +x +y, the way every shadow on the map falls. */
@@ -96,6 +101,18 @@ const REED_BLADES = 7;
 const CINDER_RADIUS = 60;
 /** How many embers glow in a drift, the most. */
 const CINDER_EMBERS = 10;
+/** Half a boulder cluster's width (#4020): 60 u across at scale 1, under 100 u at the largest, so never cover. */
+const ROCK_RADIUS = 30;
+/** Half a dead tree's reach, 50 u across at scale 1 (#4020), and how tall its trunk stands. */
+const DEAD_TREE_RADIUS = 25;
+const DEAD_TREE_HEIGHT = 58;
+/** Half the width of a scatter of bones and of a cairn (#4020), 50 u and 44 u across at scale 1. */
+const BONES_RADIUS = 25;
+const CAIRN_RADIUS = 22;
+/** A banner's cloth, 40 u wide at scale 1 (#4020), its pole's height and the cloth's drop. */
+const BANNER_WIDTH = 40;
+const BANNER_HEIGHT = 46;
+const BANNER_DROP = 26;
 /** Where a crate's two dark bands run, as shares of its height up its side, and how tall each is. */
 const CRATE_BANDS = [0.15, 0.6];
 const CRATE_BAND = 0.1;
@@ -160,6 +177,8 @@ const SWAY_SECONDS: Partial<Record<DecorKind, number>> = {
   tree: TREE_SWAY_SECONDS,
   fern: FERN_SWAY_SECONDS,
   reed: REED_SWAY_SECONDS,
+  "dead-tree": DEAD_TREE_SWAY_SECONDS,
+  banner: BANNER_RIPPLE_SECONDS,
 };
 
 /**
@@ -181,25 +200,31 @@ export function brazierFlicker(prop: MapDecor, now: number, still: boolean): num
 }
 
 /**
+ * How tall each kind stands, which sets how far its shadow reaches, and
+ * how wide its foot is. A drift, bones and a cairn lie flat: their shadow
+ * is the dark under them, cast nowhere.
+ */
+const SHADOW_SIZE: Record<DecorKind, { readonly height: number; readonly foot: number }> = {
+  tree: { height: TRUNK_HEIGHT + CROWN_RADIUS, foot: CROWN_RADIUS },
+  cinders: { height: 0, foot: CINDER_RADIUS * 0.85 },
+  crates: { height: CRATE_HEIGHT, foot: CRATE_SIZE * 0.8 },
+  reed: { height: REED_HEIGHT, foot: REED_RADIUS * 0.6 },
+  brazier: { height: CRATE_HEIGHT, foot: BRAZIER_RADIUS },
+  fern: { height: CRATE_HEIGHT, foot: BRAZIER_RADIUS },
+  rock: { height: ROCK_RADIUS * 0.6, foot: ROCK_RADIUS * 0.85 },
+  "dead-tree": { height: DEAD_TREE_HEIGHT, foot: DEAD_TREE_RADIUS * 0.4 },
+  bones: { height: 0, foot: BONES_RADIUS * 0.8 },
+  cairn: { height: 0, foot: CAIRN_RADIUS * 0.9 },
+  banner: { height: BANNER_HEIGHT, foot: BANNER_WIDTH * 0.15 },
+};
+
+/**
  * The shadow a prop casts on its floor: drawn under every body, whatever
  * stands over them, so a tall prop's shadow never fades with it.
  */
 export function decorShadow(prop: MapDecor): DecorCommand {
   const { at, scale: s } = prop;
-  const tree = prop.kind === "tree";
-  // A drift lies flat: its shadow is the scorch under it, cast nowhere.
-  const flat = prop.kind === "cinders";
-  const reed = prop.kind === "reed";
-  const height = tree ? TRUNK_HEIGHT + CROWN_RADIUS : flat ? 0 : reed ? REED_HEIGHT : CRATE_HEIGHT;
-  const foot = tree
-    ? CROWN_RADIUS
-    : flat
-      ? CINDER_RADIUS * 0.85
-      : prop.kind === "crates"
-        ? CRATE_SIZE * 0.8
-        : reed
-          ? REED_RADIUS * 0.6
-          : BRAZIER_RADIUS;
+  const { height, foot } = SHADOW_SIZE[prop.kind];
   const reach = height * 0.3 * s;
   return ellipse(
     { x: at.x + reach, y: at.y + reach * 0.45 },
@@ -211,19 +236,29 @@ export function decorShadow(prop: MapDecor): DecorCommand {
 }
 
 /**
+ * How far a tall prop reaches either side of its foot and above it, at
+ * scale 1: a crown's side lobes 1.45 of its radius out, a dead tree's
+ * branches its radius and a little over its trunk.
+ */
+const TALL_REACH: Partial<Record<DecorKind, { readonly half: number; readonly top: number }>> = {
+  tree: { half: CROWN_RADIUS * 1.45, top: TRUNK_HEIGHT + CROWN_RADIUS * 1.8 },
+  "dead-tree": { half: DEAD_TREE_RADIUS * 1.35, top: DEAD_TREE_HEIGHT * 1.4 },
+};
+
+/**
  * Where a tall prop is drawn, in its floor's coordinates, widened by a
  * body's radius and its sway: what a body must stand in for the prop to
  * fade off it, so none is half under it unfaded. Empty for a short one.
  */
 export function decorOutline(prop: MapDecor): readonly Vec2[] {
-  if (!tallDecor(prop.kind)) {
+  const size = TALL_REACH[prop.kind];
+  if (size === undefined) {
     return [];
   }
   const { at, scale: s } = prop;
   const reach = RULESET.collision.playerRadius + DECOR_SWAY;
-  // A crown's side lobes reach 1.45 of its radius out.
-  const half = CROWN_RADIUS * 1.45 * s + reach;
-  const top = (TRUNK_HEIGHT + CROWN_RADIUS * 1.8) * s + reach;
+  const half = size.half * s + reach;
+  const top = size.top * s + reach;
   const bottom = 4 * s + reach;
   return [
     { x: at.x - half, y: at.y - top },
@@ -599,6 +634,294 @@ function reed(prop: MapDecor, c: DecorColours, sway: number): DecorCommand[] {
   ];
 }
 
+/**
+ * A boulder cluster (#4020): two to four low stones, the back ones first,
+ * each a lumpy outlined silhouette darkening to the ground, its cap in the
+ * rock's colour and its north-west facet lit. Under 100 u across at any
+ * scale, so it reads as scenery, never as the cover a boulder wall is.
+ */
+function rock(prop: MapDecor, c: DecorColours): DecorCommand[] {
+  const { at, scale: s, rotation, variant } = prop;
+  const r = ROCK_RADIUS * s;
+  const stones = [
+    { dx: 0, dy: 0, size: 0.62 },
+    { dx: 0.5, dy: -0.25, size: 0.42 },
+    { dx: -0.55, dy: 0.15, size: 0.36 },
+    { dx: 0.3, dy: 0.4, size: 0.28 },
+  ]
+    .slice(0, 2 + (variant % 3))
+    .map(({ dx, dy, size }) => {
+      const centre = turned(at, dx * r, 0, rotation);
+      return { foot: { x: centre.x, y: at.y + (centre.y - at.y) * 0.5 + dy * r }, size: size * r };
+    })
+    .sort((a, b) => a.foot.y - b.foot.y);
+  return stones.flatMap(({ foot, size }, index) => {
+    const height = size * 0.9;
+    // A lumpy ring: each point's radius jittered, so no two stones are the same oval.
+    const lumps = Array.from({ length: 8 }, (_, k) => 0.8 + noise(prop, index * 8 + k + 61) * 0.35);
+    const edge = (lift: number, shrink: number): Vec2[] =>
+      lumps.map((lump, k) => {
+        const angle = (k / lumps.length) * Math.PI * 2;
+        return {
+          x: foot.x + Math.cos(angle) * size * lump * shrink,
+          y: foot.y - lift + Math.sin(angle) * size * lump * shrink * 0.5,
+        };
+      });
+    const base = edge(0, 1);
+    const cap = edge(height, 0.8);
+    // Its silhouette: the cap's north half over the foot's south half.
+    const silhouette = [
+      ...cap.filter((_, k) => k >= lumps.length / 2),
+      ...base.filter((_, k) => k <= lumps.length / 2),
+    ];
+    const lit = [cap[4], cap[5], cap[6], { x: foot.x - size * 0.1, y: foot.y - height }].filter(
+      (point): point is Vec2 => point !== undefined,
+    );
+    return [
+      poly(silhouette, rising(c.rockShade, 0.5)),
+      poly(
+        base
+          .filter((_, k) => k <= lumps.length / 2)
+          .map(({ x, y }) => ({ x, y: y - height * 0.45 })),
+        rising(c.rock, 0.4),
+      ),
+      poly(cap, c.rock),
+      poly(lit, c.rockLit),
+      outline(silhouette),
+    ];
+  });
+}
+
+/**
+ * A dead tree (#4020): a bare, leaning trunk darkening to its foot, lit on
+ * its west side, and three or four crooked branches tapering from it,
+ * every piece outlined. Its branch tips sway `sway`.
+ */
+function deadTree(prop: MapDecor, c: DecorColours, sway: number): DecorCommand[] {
+  const { at, scale: s, variant } = prop;
+  const h = DEAD_TREE_HEIGHT * s * (variant === 1 ? 0.85 : 1);
+  const w = TRUNK_WIDTH * s * 0.6;
+  const lean = (noise(prop, 71) - 0.5) * 10 * s;
+  const top = { x: at.x + lean + sway * 0.5, y: at.y - h };
+  const trunk = [
+    { x: at.x - w * 1.3, y: at.y },
+    { x: top.x - w * 0.3, y: top.y },
+    { x: top.x + w * 0.3, y: top.y },
+    { x: at.x + w * 1.3, y: at.y },
+  ];
+  const reach = DEAD_TREE_RADIUS * s;
+  const branches = Array.from({ length: 3 + (variant % 2) }, (_, k) => {
+    const up = 0.4 + k * 0.17 + noise(prop, k + 81) * 0.08;
+    const westward = k % 2 === 0;
+    const from = { x: at.x + (top.x - at.x) * up, y: at.y - h * up };
+    const out = reach * (0.8 + noise(prop, k + 91) * 0.35) * (1 - k * 0.12) * (westward ? -1 : 1);
+    const tip = { x: from.x + out + sway, y: from.y - Math.abs(out) * 0.7 };
+    // A crooked limb: it kinks at its elbow, tapering from the trunk to its tip.
+    const elbow = {
+      x: from.x + out * 0.5,
+      y: from.y - Math.abs(out) * (0.15 + noise(prop, k + 101) * 0.2),
+    };
+    const thick = w * (0.9 - k * 0.15);
+    const limb = [
+      { x: from.x, y: from.y - thick },
+      { x: elbow.x, y: elbow.y - thick * 0.6 },
+      tip,
+      { x: elbow.x, y: elbow.y + thick * 0.6 },
+      { x: from.x, y: from.y + thick },
+    ];
+    // A forked twig at the tip, so the limb ends in a claw rather than a stub.
+    const twig = [
+      { x: tip.x - out * 0.05, y: tip.y + thick * 0.2 },
+      { x: tip.x + out * 0.1, y: tip.y - Math.abs(out) * 0.45 },
+      { x: tip.x + out * 0.05, y: tip.y - thick * 0.2 },
+    ];
+    return { limb, twig, westward };
+  });
+  // The east limbs behind the trunk in its shade, the west ones in front of it, lit.
+  const drawn = (west: boolean, colour: number): DecorCommand[] =>
+    branches
+      .filter(({ westward }) => westward === west)
+      .flatMap(({ limb, twig }) => [
+        poly(limb, colour),
+        outline(limb),
+        poly(twig, colour),
+        outline(twig),
+      ]);
+  return [
+    ...drawn(false, scaled(c.trunk, 0.8)),
+    ...side({ x: at.x - w * 1.3, y: at.y }, at, h, scaled(c.trunk, 1.35)),
+    ...side(at, { x: at.x + w * 1.3, y: at.y }, h, c.trunk),
+    outline(trunk),
+    ...drawn(true, scaled(c.trunk, 1.35)),
+  ];
+}
+
+/** One bone from `a` to `b`, `width` thick: a shaft and a knob at each end, outlined. */
+function bone(a: Vec2, b: Vec2, width: number, c: DecorColours): DecorCommand[] {
+  const length = Math.hypot(b.x - a.x, b.y - a.y) || 1;
+  const nx = ((a.y - b.y) / length) * width * 0.5;
+  const ny = ((b.x - a.x) / length) * width * 0.5;
+  const shaft = [
+    { x: a.x + nx, y: a.y + ny },
+    { x: b.x + nx, y: b.y + ny },
+    { x: b.x - nx, y: b.y - ny },
+    { x: a.x - nx, y: a.y - ny },
+  ];
+  return [
+    ...outlinedEllipse(a, width, width * 0.7, c.bone),
+    ...outlinedEllipse(b, width, width * 0.7, c.bone),
+    poly(shaft, c.bone),
+    outline(shaft),
+  ];
+}
+
+/**
+ * A scatter of old bones (#4020), flat on the ground: three to five long
+ * bones at odd angles and, on most, a skull with two dark sockets. Pale
+ * and dull, never lit: nothing in it glows or rings like a shrine.
+ */
+function bones(prop: MapDecor, c: DecorColours): DecorCommand[] {
+  const { at, scale: s, rotation, variant } = prop;
+  const r = BONES_RADIUS * s;
+  const width = Math.max(1.5, 2.4 * s);
+  const count = 3 + (variant % 3);
+  const long = Array.from({ length: count }, (_, k) => {
+    // Spread east to west, so it is as wide as it says, each a little off its place.
+    const along = ((k + 0.5) / count) * 2 - 1 + (noise(prop, k + 111) - 0.5) * 0.3;
+    const foot = { x: at.x + along * r * 0.9, y: at.y + (noise(prop, k + 121) - 0.5) * r * 0.5 };
+    const half = r * (0.3 + noise(prop, k + 131) * 0.2);
+    const angle = rotation + noise(prop, k + 141) * 180;
+    const a = turned(foot, -half, 0, angle);
+    const b = turned(foot, half, 0, angle);
+    // Flattened by the view, as everything on the ground is.
+    return {
+      a: { x: a.x, y: foot.y + (a.y - foot.y) * 0.5 },
+      b: { x: b.x, y: foot.y + (b.y - foot.y) * 0.5 },
+    };
+  }).sort((one, two) => one.a.y + one.b.y - (two.a.y + two.b.y));
+  const commands = long.flatMap(({ a, b }) => bone(a, b, width, c));
+  if (variant !== 3) {
+    const skull = turned(at, r * 0.35, 0, rotation + 90);
+    const head = { x: skull.x, y: at.y + (skull.y - at.y) * 0.5 };
+    const rx = 5 * s;
+    commands.push(
+      ...outlinedEllipse(
+        { x: head.x, y: head.y + rx * 0.5 },
+        rx * 0.6,
+        rx * 0.45,
+        scaled(c.bone, 0.8),
+      ),
+      ...outlinedEllipse(head, rx, rx * 0.8, c.bone),
+      ellipse({ x: head.x - rx * 0.4, y: head.y + rx * 0.05 }, rx * 0.25, rx * 0.22, OUTLINE),
+      ellipse({ x: head.x + rx * 0.4, y: head.y + rx * 0.05 }, rx * 0.25, rx * 0.22, OUTLINE),
+    );
+  }
+  return commands;
+}
+
+/**
+ * A cairn (#4020): three to five flat stones stacked, each smaller than
+ * the one under it and a little off its centre, each a short banded side
+ * under an outlined cap lit on its north-west. Low, grey and unlit, it has
+ * none of a capture point's or a shrine's rings, glow or colour.
+ */
+function cairn(prop: MapDecor, c: DecorColours): DecorCommand[] {
+  const { at, scale: s, variant } = prop;
+  const r = CAIRN_RADIUS * s;
+  const count = 3 + (variant % 3);
+  const commands: DecorCommand[] = [];
+  let lift = 0;
+  for (let k = 0; k < count; k++) {
+    const size = r * (1 - k * 0.2);
+    const thick = size * 0.38;
+    const foot = { x: at.x + (noise(prop, k + 151) - 0.5) * size * 0.3, y: at.y - lift };
+    const ry = size * 0.42;
+    commands.push(
+      ...side({ x: foot.x - size, y: foot.y }, { x: foot.x + size, y: foot.y }, thick, c.rock),
+      ellipse({ x: foot.x, y: foot.y }, size, ry, rising(c.rockShade, 0.3)),
+      ...outlinedEllipse({ x: foot.x, y: foot.y - thick }, size, ry, c.rock),
+      ellipse(
+        { x: foot.x - size * 0.3, y: foot.y - thick - ry * 0.25 },
+        size * 0.5,
+        ry * 0.45,
+        c.rockLit,
+      ),
+    );
+    lift += thick;
+  }
+  return commands;
+}
+
+/**
+ * A banner (#4020): an outlined pole with a crossbar, and a cloth hanging
+ * from it in three folds, lit and shaded in turn, its hem rippling `sway`
+ * east and west, the folds shifting with it.
+ */
+function banner(prop: MapDecor, c: DecorColours, sway: number): DecorCommand[] {
+  const { at, scale: s, variant } = prop;
+  const half = (BANNER_WIDTH * s) / 2;
+  const height = BANNER_HEIGHT * s;
+  const drop = BANNER_DROP * s * (variant === 2 ? 1.2 : 1);
+  const pole = Math.max(1.2, 1.6 * s);
+  const bar = at.y - height;
+  const folds = 3;
+  const commands: DecorCommand[] = [
+    ...side({ x: at.x - pole, y: at.y }, { x: at.x + pole, y: at.y }, height + 4 * s, c.wood),
+    outline([
+      { x: at.x - pole, y: at.y },
+      { x: at.x - pole, y: at.y - height - 4 * s },
+      { x: at.x + pole, y: at.y - height - 4 * s },
+      { x: at.x + pole, y: at.y },
+    ]),
+  ];
+  const hemAt = (share: number): Vec2 => ({
+    x: at.x - half + share * half * 2 + sway,
+    // A tail cut, or a straight hem, by variant; the ripple lifts the hem a little.
+    y:
+      bar +
+      drop * (variant === 1 && Math.abs(share - 0.5) < 0.2 ? 0.75 : 1) +
+      Math.sin(share * Math.PI * 2 + sway) * s,
+  });
+  for (let k = 0; k < folds; k++) {
+    const from = k / folds;
+    const to = (k + 1) / folds;
+    const strip = [
+      { x: at.x - half + from * half * 2, y: bar },
+      { x: at.x - half + to * half * 2, y: bar },
+      hemAt(to),
+      hemAt((from + to) / 2),
+      hemAt(from),
+    ];
+    // The fold that faces north-west catches the light; which one shifts as the cloth ripples.
+    const lit = (k + (sway > 0 ? 1 : 0)) % 2 === 0;
+    commands.push(poly(strip, lit ? c.cloth : c.clothShade));
+  }
+  const cloth = [
+    { x: at.x - half, y: bar },
+    { x: at.x + half, y: bar },
+    ...[1, 5 / 6, 4 / 6, 3 / 6, 2 / 6, 1 / 6, 0].map(hemAt),
+  ];
+  commands.push(
+    outline(cloth),
+    poly(
+      [
+        { x: at.x - half - 2 * s, y: bar - pole },
+        { x: at.x + half + 2 * s, y: bar - pole },
+        { x: at.x + half + 2 * s, y: bar + pole },
+        { x: at.x - half - 2 * s, y: bar + pole },
+      ],
+      c.wood,
+    ),
+    outline([
+      { x: at.x - half - 2 * s, y: bar - pole },
+      { x: at.x + half + 2 * s, y: bar - pole },
+      { x: at.x + half + 2 * s, y: bar + pole },
+      { x: at.x - half - 2 * s, y: bar + pole },
+    ]),
+  );
+  return commands;
+}
+
 /** Shallow water's tint over a wading prop's foot, and the front half of a ripple round it. */
 function waterline(at: Vec2, r: number): DecorCommand[] {
   const look = WATER_LOOK.shallow;
@@ -640,5 +963,15 @@ export function decorCommands(
       return cinders(prop, colours);
     case "reed":
       return reed(prop, colours, decorSway(prop, now, still));
+    case "rock":
+      return rock(prop, colours);
+    case "dead-tree":
+      return deadTree(prop, colours, decorSway(prop, now, still));
+    case "bones":
+      return bones(prop, colours);
+    case "cairn":
+      return cairn(prop, colours);
+    case "banner":
+      return banner(prop, colours, decorSway(prop, now, still));
   }
 }
