@@ -1,0 +1,26 @@
+{
+  "id": "paragon.never-surrender",
+  "name": "\"Never Surrender!\"",
+  "profession": "paragon",
+  "attribute": "Command",
+  "type": "Shout.",
+  "elite": false,
+  "campaign": "Nightfall",
+  "cost": {
+    "kind": "energy",
+    "amount": 5
+  },
+  "overcast": 0,
+  "activationSeconds": 0,
+  "rechargeSeconds": 20,
+  "upkeep": false,
+  "description": "For 10 seconds, all party members within earshot and below 75% Health, gain +1...4...5 Health regeneration.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Paragon/1069-Never_Surrender!",
+    "fetchedAt": "2026-10-27T14:12:23.086Z"
+  },
+  "unmapped": {}
+}

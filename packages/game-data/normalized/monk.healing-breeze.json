@@ -1,0 +1,26 @@
+{
+  "id": "monk.healing-breeze",
+  "name": "Healing Breeze",
+  "profession": "monk",
+  "attribute": "Healing Prayers",
+  "type": "Enchantment Spell.",
+  "elite": false,
+  "campaign": "Core",
+  "cost": {
+    "kind": "energy",
+    "amount": 10
+  },
+  "overcast": 0,
+  "activationSeconds": 1,
+  "rechargeSeconds": 5,
+  "upkeep": false,
+  "description": "For 15 seconds, target ally gains health regeneration of 4...8...9.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Monk/168-Healing_Breeze",
+    "fetchedAt": "2026-10-27T21:33:21.541Z"
+  },
+  "unmapped": {}
+}

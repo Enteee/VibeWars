@@ -1,0 +1,26 @@
+{
+  "id": "paragon.fall-back",
+  "name": "\"Fall Back!\"",
+  "profession": "paragon",
+  "attribute": "Command",
+  "type": "Shout.",
+  "elite": false,
+  "campaign": "Nightfall",
+  "cost": {
+    "kind": "energy",
+    "amount": 10
+  },
+  "overcast": 0,
+  "activationSeconds": 0,
+  "rechargeSeconds": 25,
+  "upkeep": false,
+  "description": "For 4...9...10 seconds, all allies within earshot gain 5...13...15 Health per second while moving and move 33% faster. \"Fall Back!\" ends on an ally affected by this Shout when that ally successfully hits with an attack.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Paragon/1062-Fall_Back!",
+    "fetchedAt": "2026-10-27T14:14:37.869Z"
+  },
+  "unmapped": {}
+}

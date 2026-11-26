@@ -1,0 +1,181 @@
+#!/usr/bin/env node
+/**
+ * `claude-llc doctor` (#864): one table of the company's credentials. Per
+ * credential: the identity it resolves to, its expiry and scopes, where it is
+ * stored, and whether it is the operator's own. It never writes anything and
+ * prints no credential value.
+ */
+import fs from "node:fs";
+import process from "node:process";
+import { fileURLToPath } from "node:url";
+
+import {
+  claudeIdentity,
+  githubIdentity,
+  isOperators,
+  modeOk,
+  paths,
+  pushIdentity,
+  telegramGroupIdentity,
+  telegramIdentity,
+} from "./creds.mjs";
+import { readRunnerCap, runnersOff } from "./runners-state.mjs";
+
+/** @typedef {import("./creds.mjs").Identity} Identity */
+/** @typedef {import("./runners-state.mjs").RunnerCap} RunnerCap */
+
+/**
+ * @typedef {object} Row
+ * @property {string} name
+ * @property {Identity} identity
+ * @property {string} stored
+ * @property {boolean | null} operators `null`: cannot tell, or not applicable
+ * @property {boolean} [applicable] false: never the operator's by construction
+ * @property {string} [off] why the credential is not wanted, said instead of
+ *   `not set up` (#2765)
+ */
+
+/**
+ * @param {Row} row
+ * @returns {string}
+ */
+function describe({ identity, off }) {
+  if (identity.state === "ok") {
+    return identity.who ?? "(logged in, name unknown)";
+  }
+  if (identity.state === "error") {
+    return `error: ${identity.note ?? "unknown"}`;
+  }
+  return off ?? "not set up";
+}
+
+/**
+ * @param {Row} row
+ * @returns {string}
+ */
+function whose(row) {
+  if (row.applicable === false) {
+    return "no";
+  }
+  if (row.identity.state !== "ok") {
+    return "-";
+  }
+  return row.operators === null ? "can't tell" : row.operators ? "YES" : "no";
+}
+
+/**
+ * @param {Row[]} rows
+ * @returns {string}
+ */
+export function renderTable(rows) {
+  const header = ["credential", "identity", "expiry", "scopes", "stored", "operator's"];
+  const body = rows.map((row) => [
+    row.name,
+    describe(row),
+    row.identity.expiry ?? "-",
+    row.identity.scopes ?? "-",
+    row.stored,
+    whose(row),
+  ]);
+  const widths = header.map((h, i) => Math.max(h.length, ...body.map((r) => r[i]?.length ?? 0)));
+  const line = (/** @type {string[]} */ cells) =>
+    cells
+      .map((c, i) => c.padEnd(widths[i] ?? 0))
+      .join("  ")
+      .trimEnd();
+  return [line(header), ...body.map(line)].join("\n");
+}
+
+/**
+ * @param {string} root the credential home
+ * @param {RunnerCap} cap the company's runner cap: whether the runners
+ *   token is wanted at all
+ * @returns {Promise<{ rows: Row[], dir: string }>}
+ */
+export async function collect(root, cap) {
+  const p = paths(root);
+  const off = runnersOff(cap);
+  const operatorGithub = githubIdentity(null);
+  const company = {
+    claude: claudeIdentity(p.claude),
+    github: githubIdentity(p.gh),
+    runners: githubIdentity(p.runnersGh),
+    push: pushIdentity(p.sshKey),
+    telegram: await telegramIdentity(p.telegram),
+    group: await telegramGroupIdentity(p.telegram, p.telegramChat),
+  };
+  /** @type {Row[]} */
+  const rows = [
+    {
+      name: "claude",
+      identity: company.claude,
+      stored: p.claude,
+      operators: isOperators(company.claude.who, claudeIdentity(null).who),
+    },
+    {
+      name: "github api",
+      identity: company.github,
+      stored: p.gh,
+      operators: isOperators(company.github.who, operatorGithub.who),
+    },
+    {
+      name: "github push",
+      identity: company.push,
+      stored: p.ssh,
+      operators: isOperators(company.push.who, operatorGithub.who),
+    },
+    {
+      name: "github runners",
+      identity: company.runners,
+      stored: p.runnersGh,
+      operators: isOperators(company.runners.who, operatorGithub.who),
+      ...(off === null ? {} : { off }),
+    },
+    {
+      name: "telegram",
+      identity: company.telegram,
+      stored: p.telegram,
+      operators: null,
+      applicable: false,
+    },
+    {
+      name: "telegram group",
+      identity: company.group,
+      stored: p.telegramChat,
+      operators: null,
+      applicable: false,
+    },
+  ];
+  return { rows, dir: root };
+}
+
+/**
+ * @param {string} root
+ * @returns {string}
+ */
+export function dirLine(root) {
+  if (!fs.existsSync(root)) {
+    return `credential home ${root}: missing (claude-llc-init creates it)`;
+  }
+  return modeOk(fs.statSync(root))
+    ? `credential home ${root}: present, 0700`
+    : `credential home ${root}: TOO WIDE; chmod 700 it`;
+}
+
+if (process.argv[1] === fileURLToPath(import.meta.url)) {
+  const root = process.env.VIBEWARS_CREDENTIALS;
+  if (root === undefined || root === "") {
+    console.error(
+      "claude-llc doctor: VIBEWARS_CREDENTIALS is not set (run it through claude-llc).",
+    );
+    process.exit(2);
+  }
+  const botRoot = process.env.VIBEWARS_BOT_ROOT;
+  if (botRoot === undefined || botRoot === "") {
+    console.error("claude-llc doctor: VIBEWARS_BOT_ROOT is not set (run it through claude-llc).");
+    process.exit(2);
+  }
+  console.log(dirLine(root));
+  console.log("");
+  console.log(renderTable((await collect(root, readRunnerCap(botRoot))).rows));
+}

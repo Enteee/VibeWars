@@ -1,0 +1,26 @@
+{
+  "id": "ritualist.spirit-light-weapon",
+  "name": "Spirit Light Weapon",
+  "profession": "ritualist",
+  "attribute": "Restoration Magic",
+  "type": "Weapon spell.",
+  "elite": true,
+  "campaign": "Factions",
+  "cost": {
+    "kind": "energy",
+    "amount": 5
+  },
+  "overcast": 0,
+  "activationSeconds": 1,
+  "rechargeSeconds": 5,
+  "upkeep": false,
+  "description": "For 10 seconds, target ally gains 5...21...25 Health per second and an additional 5...21...25 Health per second if that ally is within earshot of a Spirit.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Ritualist/763-Spirit_Light_Weapon",
+    "fetchedAt": "2026-10-27T19:39:07.003Z"
+  },
+  "unmapped": {}
+}

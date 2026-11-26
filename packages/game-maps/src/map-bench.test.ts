@@ -1,0 +1,138 @@
+import {
+  MINIMAL_GW_INSPIRED_PVP_V1,
+  runTickBench,
+  tickStats,
+  type BenchField,
+  type Vec2,
+} from "@vibewars/game-core";
+
+import { describe, expect, it } from "vitest";
+
+import { allWallSegments } from "./geometry.js";
+import { layeredFinder } from "./layered-finder.test-support.js";
+import { mapsIn } from "./maps-in.test-support.js";
+import { loadAllMaps, loadMap } from "./loader.js";
+import type { MapData } from "./schema.js";
+import { timeMatchTicks } from "./tools/map-balance.js";
+
+/**
+ * The tick bench (#542) on an arena (#444): `BENCH_MAP=arena-long-hall
+ * pnpm run bench:ticks`. Always a short smoke run on every arena; the
+ * timed run only when asked for. No timing assertion: CI machines vary.
+ */
+
+declare const process: { readonly env: Readonly<Record<string, string | undefined>> };
+declare const performance: { now(): number };
+declare const console: { log(message: string): void };
+
+const now = (): number => performance.now();
+const WARM_UP = 50;
+const PER_TEAM = 8;
+/** How far apart bodies stand when a spawn takes more than one. */
+const STEP = 40;
+
+/**
+ * `map`'s field for an 8v8: each team's spawns taken in turn, a spawn's
+ * second and later bodies stepped in toward the arena's middle. Even ids
+ * are team 0, odd team 1, each across from its mirror.
+ */
+function mapBenchField(map: MapData): BenchField {
+  const middle = { x: map.width / 2, y: map.height / 2 };
+  const placed = (team: number, k: number): Vec2 => {
+    const spawns = map.spawnPoints.filter((spawn) => spawn.team === team);
+    const spawn = spawns[k % spawns.length]?.position ?? middle;
+    const toward = { x: middle.x - spawn.x, y: middle.y - spawn.y };
+    const length = Math.hypot(toward.x, toward.y) || 1;
+    const out = Math.floor(k / spawns.length) * STEP;
+    return { x: spawn.x + (toward.x / length) * out, y: spawn.y + (toward.y / length) * out };
+  };
+  return {
+    bounds: { width: map.width, height: map.height },
+    walls: allWallSegments(map.walls),
+    spawns: Array.from({ length: 2 * PER_TEAM }, (_, i) => ({
+      id: `p${String(i)}`,
+      team: i % 2,
+      at: placed(i % 2, Math.floor(i / 2)),
+    })),
+  };
+}
+
+describe("the tick bench on an arena (#444)", () => {
+  it.each(loadAllMaps().map((map) => [map.id, map] as const))(
+    "runs an 8v8 on %s, and every fighter moves",
+    (_, map) => {
+      const { moved } = runTickBench({
+        ticks: 40,
+        seed: "bench",
+        now,
+        field: mapBenchField(map),
+        crowd: "fighters",
+      });
+      for (const [id, { from, to }] of moved) {
+        expect(Math.hypot(to.x - from.x, to.y - from.y), id).toBeGreaterThan(0);
+      }
+    },
+  );
+
+  const ticks = Number(process.env.BENCH_TICKS ?? "0");
+  const mapId = process.env.BENCH_MAP ?? "dense";
+  it.runIf(ticks > WARM_UP && mapId !== "dense")(`times ${String(ticks)} ticks on ${mapId}`, () => {
+    const { tickMs } = runTickBench({
+      ticks,
+      seed: "bench",
+      now,
+      field: mapBenchField(loadMap(mapId)),
+      crowd: "fighters",
+    });
+    const { p50, p95, max } = tickStats(tickMs.slice(WARM_UP));
+    console.log(
+      `${mapId}, ticks ${String(WARM_UP)}–${String(ticks)}: p50 ${p50.toFixed(3)} ms, p95 ${p95.toFixed(3)} ms, max ${max.toFixed(3)} ms`,
+    );
+    expect(tickMs).toHaveLength(ticks);
+  });
+});
+
+describe("the host tick on a whole map (#3240)", () => {
+  /**
+   * `BENCH_TICKS=600 BENCH_HOST=arena-canyon,arena-crossroads pnpm run
+   * bench:ticks`: a 4v4 of bots on every layer, structure and objective of
+   * each map, as the host steps it; `BENCH_SIZE=8` for an 8v8 (#3599).
+   * Report-only.
+   */
+  const size = Number(process.env.BENCH_SIZE ?? "4");
+  const ticks = Number(process.env.BENCH_TICKS ?? "0");
+  const ids = (process.env.BENCH_HOST ?? "")
+    .split(",")
+    .map((id) => id.trim())
+    .filter((id) => id !== "");
+
+  it("times a short 4v4 on a layered map", () => {
+    expect(timeMatchTicks(loadMap("arena-crossroads"), 4, 20, now)).toHaveLength(20);
+  });
+
+  it.runIf(ticks > WARM_UP).each(ids)(
+    `times ${String(ticks)} ${String(size)}v${String(size)} ticks on %s`,
+    (id) => {
+      const tickMs = timeMatchTicks(loadMap(id), size, ticks, now);
+      const { p50, p95, max } = tickStats(tickMs.slice(WARM_UP));
+      console.log(
+        `host ${id} ${String(size)}v${String(size)}, ticks ${String(WARM_UP)}–${String(tickMs.length)}: p50 ${p50.toFixed(3)} ms, p95 ${p95.toFixed(3)} ms, max ${max.toFixed(3)} ms`,
+      );
+      expect(tickMs.length).toBeGreaterThan(WARM_UP);
+    },
+  );
+});
+
+describe("the nav graph on every map (#2544)", () => {
+  /** The most wall corners a map's graph may have: what pathing stays cheap at. */
+  const MAX_NODES = 600;
+
+  it.each(
+    [...loadAllMaps(), ...mapsIn("training"), ...mapsIn("tutorial")].map(
+      (map) => [map.id, map] as const,
+    ),
+  )("%s has at most 600 nav nodes", (_, map) => {
+    const finder = layeredFinder(map, MINIMAL_GW_INSPIRED_PVP_V1.collision.playerRadius);
+    expect(finder.nodeCount).toBeLessThanOrEqual(MAX_NODES);
+  });
+});

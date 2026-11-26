@@ -1,0 +1,26 @@
+{
+  "id": "ranger.natural-stride",
+  "name": "Natural Stride",
+  "profession": "ranger",
+  "attribute": "Wilderness Survival",
+  "type": "Stance.",
+  "elite": false,
+  "campaign": "Nightfall",
+  "cost": {
+    "kind": "energy",
+    "amount": 5
+  },
+  "overcast": 0,
+  "activationSeconds": 0,
+  "rechargeSeconds": 12,
+  "upkeep": false,
+  "description": "For 1...7...8 seconds, you run 33% faster and have a 50% chance to block incoming attacks. Natural Stride ends if you become Hexed or Enchanted.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Ranger/826-Natural_Stride",
+    "fetchedAt": "2026-10-27T12:53:21.789Z"
+  },
+  "unmapped": {}
+}

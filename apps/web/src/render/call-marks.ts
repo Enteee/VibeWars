@@ -1,0 +1,64 @@
+import type { Vec2 } from "@vibewars/game-core";
+import { PING_SECONDS } from "@vibewars/game-session";
+
+import { NAME_LABEL_HEIGHT, nameLabelBottom, type RenderableActor } from "./arena-snapshot.js";
+import { screenPx } from "./screen-text.js";
+
+/**
+ * What your team's calls look like in the arena (#443,
+ * docs/art/art-direction.md "Calls and pings"). Plain
+ * geometry, no Phaser, so every shape is tested in Node.
+ *
+ * - The called foe: a `condition` chevron pointing down at it, over its name.
+ * - A ping: a `friend` pin standing on the spot, and a ring that grows from
+ *   it and fades over the ping's life.
+ */
+
+/** A ping on the floor, as the scene draws it. */
+export interface RenderablePing {
+  readonly id: number;
+  readonly position: Vec2;
+  /** Seconds of it left. */
+  readonly remaining: number;
+}
+
+/** The chevron's tip sits this many screen px above the top of the name label. */
+const CHEVRON_GAP = 4;
+const CHEVRON_HALF_WIDTH = 6;
+const CHEVRON_HEIGHT = 6;
+
+/**
+ * The chevron over a called body: left arm, tip, right arm. Its tip clears
+ * the name label, which is screen-sized (#456), at camera `zoom`.
+ */
+export function callChevron(actor: RenderableActor, zoom: number): readonly [Vec2, Vec2, Vec2] {
+  const centre = actor.position;
+  const tipY = nameLabelBottom(actor, zoom) - screenPx(NAME_LABEL_HEIGHT + CHEVRON_GAP, zoom);
+  return [
+    { x: centre.x - CHEVRON_HALF_WIDTH, y: tipY - CHEVRON_HEIGHT },
+    { x: centre.x, y: tipY },
+    { x: centre.x + CHEVRON_HALF_WIDTH, y: tipY - CHEVRON_HEIGHT },
+  ];
+}
+
+/** The pin's head stands this far over the spot, on a needle down to it. */
+export const PING_PIN_HEIGHT = 14;
+export const PING_HEAD_RADIUS = 3.5;
+/** The ring grows from the first radius to the second over the ping's life. */
+const PING_RING_FROM = 6;
+const PING_RING_TO = 26;
+
+/**
+ * The ping's ring with `remaining` seconds left: it grows and fades over
+ * its life. Under reduced motion it holds still and whole until it goes.
+ */
+export function pingRing(
+  remaining: number,
+  reducedMotion: boolean,
+): { readonly radius: number; readonly alpha: number } {
+  if (reducedMotion) {
+    return { radius: PING_RING_FROM, alpha: 1 };
+  }
+  const age = Math.max(0, Math.min(1, 1 - remaining / PING_SECONDS));
+  return { radius: PING_RING_FROM + (PING_RING_TO - PING_RING_FROM) * age, alpha: 1 - age };
+}

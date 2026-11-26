@@ -1,0 +1,841 @@
+<!doctype html><meta charset="utf-8" /><title>#2585 mockups: Matches rows</title>
+<style>
+  :root {
+    --bg: #0e1116;
+    --panel: #161b22;
+    --line: #2b3440;
+    --ink: #d7dee8;
+    --dim: #7d8899;
+    --accent: #59c2ff;
+    --won: #7ee787;
+  }
+  body {
+    margin: 0;
+    padding: 1.5rem;
+    background: #080a0d;
+    color: var(--ink);
+    font:
+      15px system-ui,
+      sans-serif;
+  }
+  h1 {
+    font-size: 1.2rem;
+  }
+  h2 {
+    font-size: 1rem;
+    margin: 2rem 0 0.3rem;
+    color: var(--accent);
+  }
+  p.n {
+    color: var(--dim);
+    margin: 0.2rem 0 0.6rem;
+    max-width: 44rem;
+  }
+  .wrap {
+    max-width: 54rem;
+  }
+  .row {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 0.6rem 0.8rem;
+    margin-bottom: 0.5rem;
+  }
+  .head {
+    display: flex;
+    gap: 0.7rem;
+    align-items: center;
+    margin-bottom: 0.5rem;
+  }
+  .head u {
+    margin-left: auto;
+    color: var(--accent);
+    text-decoration: none;
+  }
+  .tag {
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    padding: 0 0.35rem;
+    font-size: 0.8rem;
+    color: var(--dim);
+  }
+  .dim {
+    color: var(--dim);
+    font-size: 0.85rem;
+  }
+  .host {
+    margin-left: auto;
+    font-size: 0.75rem;
+    color: #ffa657;
+    border: 1px dashed #ffa657;
+    border-radius: 3px;
+    padding: 0 0.35rem;
+  }
+  .head .host + u {
+    margin-left: 0.7rem;
+  }
+  .a {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  .a .side {
+    flex: 1;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 0.4rem 0.5rem;
+  }
+  .side.win,
+  .card.win {
+    border-color: var(--won);
+  }
+  .a b {
+    font-size: 0.85rem;
+  }
+  .win > b,
+  .win b.won,
+  .won {
+    color: var(--won);
+  }
+  .pairs {
+    display: flex;
+    gap: 0.7rem;
+    margin-top: 0.3rem;
+  }
+  .pair {
+    position: relative;
+    display: inline-flex;
+  }
+  .pair i {
+    position: absolute;
+    right: -6px;
+    bottom: -4px;
+    background: var(--panel);
+    border-radius: 50%;
+    display: flex;
+  }
+  .vs {
+    color: var(--dim);
+  }
+  .b {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+  }
+  .icons {
+    display: flex;
+    gap: 0.25rem;
+  }
+  .icons.win {
+    padding: 2px 4px;
+    border-bottom: 2px solid var(--won);
+  }
+  .score {
+    color: var(--won);
+    font-size: 0.8rem;
+  }
+  .grow {
+    flex: 1;
+  }
+  .c {
+    display: flex;
+    gap: 1rem;
+  }
+  .c ul {
+    flex: 1;
+    list-style: none;
+    margin: 0;
+    padding: 0.3rem 0.5rem;
+    border: 1px solid var(--line);
+    border-radius: 4px;
+  }
+  .c li {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    padding: 1px 0;
+  }
+  .c li span {
+    flex: 1;
+  }
+  .c em {
+    font-style: normal;
+    color: var(--dim);
+    font-size: 0.8rem;
+  }
+  .c .h {
+    color: var(--dim);
+    font-size: 0.8rem;
+  }
+  .c .win .h {
+    color: var(--won);
+  }
+  .c ul.win {
+    border-color: var(--won);
+  }
+  .cards {
+    display: flex;
+    gap: 0.6rem;
+  }
+  .card {
+    flex: 1;
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 0.5rem;
+    background: #10151c;
+  }
+  .ct {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    margin-bottom: 0.4rem;
+  }
+  .won {
+    font-size: 0.8rem;
+    margin-left: auto;
+  }
+  .figs {
+    display: flex;
+    gap: 0.5rem;
+  }
+  .fig {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-size: 0.8rem;
+    width: 5.4rem;
+  }
+  .fig small {
+    color: var(--dim);
+    font-size: 0.6rem;
+    white-space: nowrap;
+  }
+  .disc {
+    width: 40px;
+    height: 40px;
+    border: 2px solid;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #0b0e13;
+  }
+  button {
+    margin-top: 0.5rem;
+    background: #1f2a37;
+    color: var(--ink);
+    border: 1px solid var(--accent);
+    border-radius: 4px;
+    padding: 0.2rem 0.8rem;
+  }
+  .card.wide {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 0.4rem;
+  }
+  .card.wide .ct {
+    flex-direction: column;
+    align-items: flex-start;
+    width: 4rem;
+    margin: 0;
+  }
+  .card.wide .figs {
+    flex: 1;
+  }
+  .card.wide button {
+    margin: 0;
+  }
+  .tabs {
+    display: flex;
+    gap: 0.3rem;
+    margin-bottom: 0.4rem;
+  }
+  .tabs span {
+    padding: 0.15rem 0.7rem;
+    border: 1px solid var(--line);
+    border-radius: 4px 4px 0 0;
+    color: var(--dim);
+  }
+  .tabs .on {
+    color: var(--won);
+    border-color: var(--won);
+  }
+</style>
+<h1>#2585 mockups: a Matches row, closed and opened</h1>
+<div class="wrap">
+  <h2>Closed A: Rosters</h2>
+  <p class="n">
+    Two framed teams side by side, one profession icon per player with the secondary as a small
+    badge. Winner framed green. Tallest, clearest who-played-what.
+  </p>
+  <div class="row">
+    <div class="head">
+      <span class="tag">4v4</span
+      ><span class="dim">Crossroads · Kill Count · 12:31 · 2 min ago</span
+      ><span class="host">host-reported</span>
+    </div>
+    <div class="a">
+      <div class="side win">
+        <b>Team 1 · Won</b>
+        <div class="pairs">
+          <span class="pair"
+            ><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="22" height="22">
+              <path d="M9 3h6v6h6v6h-6v6H9v-6H3V9h6z" fill="#9ecbff" /></svg
+            ><i
+              ><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14">
+                <path d="M5 3h14l-5.5 9L19 21H5l5.5-9z" fill="#e87fd0" /></svg></i></span
+          ><span class="pair"
+            ><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="22" height="22">
+              <path d="M4 4h16v7c0 5-4 8-8 10-4-2-8-5-8-10z" fill="#e3b341" /></svg
+            ><i
+              ><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14">
+                <path d="M9 3h6v6h6v6h-6v6H9v-6H3V9h6z" fill="#9ecbff" /></svg></i></span
+          ><span class="pair"
+            ><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="22" height="22">
+              <path
+                d="M12 2l10 10-10 10L2 12zM11 6a1 1 0 0 1 2 0v5h5a1 1 0 0 1 0 2h-5v5a1 1 0 0 1-2 0v-5H6a1 1 0 0 1 0-2h5z"
+                fill="#ff6e5a"
+                fill-rule="evenodd"
+              /></svg
+            ><i
+              ><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14">
+                <path d="M9 3h6v6h6v6h-6v6H9v-6H3V9h6z" fill="#9ecbff" /></svg></i></span
+          ><span class="pair"
+            ><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="22" height="22">
+              <path
+                d="M5 19L18 6"
+                fill="none"
+                stroke="#8fd36b"
+                stroke-width="3"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <path d="M11 4h9v9z" fill="#8fd36b" /></svg
+            ><i
+              ><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14">
+                <path
+                  d="M11.4 2.5A9.5 9.5 0 1 0 21.3 13.7 7.5 7.5 0 0 1 11.4 2.5z"
+                  fill="#c0405e"
+                /></svg></i
+          ></span>
+        </div>
+      </div>
+      <span class="vs">vs</span>
+      <div class="side">
+        <b>Team 2</b>
+        <div class="pairs">
+          <span class="pair"
+            ><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="22" height="22">
+              <path
+                d="M3 4h18L12 21zM9.5 9.5a2.5 2.5 0 1 0 5 0 2.5 2.5 0 1 0-5 0z"
+                fill="#3fb68b"
+                fill-rule="evenodd"
+              /></svg
+            ><i
+              ><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14">
+                <path d="M5 3h14l-5.5 9L19 21H5l5.5-9z" fill="#e87fd0" /></svg></i></span
+          ><span class="pair"
+            ><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="22" height="22">
+              <path
+                d="M3 11l9-8 9 8v4.5l-9-8-9 8zM3 18.5l9-8 9 8V23l-9-8-9 8z"
+                fill="#f0883e"
+              /></svg
+            ><i
+              ><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14">
+                <path d="M4 4h16v7c0 5-4 8-8 10-4-2-8-5-8-10z" fill="#e3b341" /></svg></i></span
+          ><span class="pair"
+            ><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="22" height="22">
+              <path
+                d="M8 3h8v2l-2 2.5c3.5 1.2 5.5 4 5.5 7.5 0 4-3.3 6-7.5 6s-7.5-2-7.5-6c0-3.5 2-6.3 5.5-7.5L8 5z"
+                fill="#a9e5e0"
+              /></svg
+            ><i
+              ><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14">
+                <path d="M9 3h6v6h6v6h-6v6H9v-6H3V9h6z" fill="#9ecbff" /></svg></i></span
+          ><span class="pair"
+            ><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="22" height="22">
+              <g fill="#c9a27e">
+                <path
+                  d="M12 12C10 7 12.5 3 18.5 1.5c-1 3.5-1.5 7.5-3.5 11z"
+                  transform="rotate(0 12 12)"
+                />
+                <path
+                  d="M12 12C10 7 12.5 3 18.5 1.5c-1 3.5-1.5 7.5-3.5 11z"
+                  transform="rotate(120 12 12)"
+                />
+                <path
+                  d="M12 12C10 7 12.5 3 18.5 1.5c-1 3.5-1.5 7.5-3.5 11z"
+                  transform="rotate(240 12 12)"
+                />
+                <circle cx="12" cy="12" r="2.5" />
+              </g></svg
+            ><i
+              ><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14">
+                <path d="M4 4h16v7c0 5-4 8-8 10-4-2-8-5-8-10z" fill="#e3b341" /></svg></i
+          ></span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <h2>Closed B: Scoreboard line</h2>
+  <p class="n">
+    One line per match: primary profession icons only, the winner underlined, WON between. Densest;
+    many rows fit; secondaries and names wait for the open row.
+  </p>
+  <div class="row b">
+    <span class="tag">4v4</span>
+    <span class="icons win"
+      ><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18">
+        <path d="M9 3h6v6h6v6h-6v6H9v-6H3V9h6z" fill="#9ecbff" /></svg
+      ><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18">
+        <path d="M4 4h16v7c0 5-4 8-8 10-4-2-8-5-8-10z" fill="#e3b341" /></svg
+      ><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18">
+        <path
+          d="M12 2l10 10-10 10L2 12zM11 6a1 1 0 0 1 2 0v5h5a1 1 0 0 1 0 2h-5v5a1 1 0 0 1-2 0v-5H6a1 1 0 0 1 0-2h5z"
+          fill="#ff6e5a"
+          fill-rule="evenodd"
+        /></svg
+      ><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18">
+        <path
+          d="M5 19L18 6"
+          fill="none"
+          stroke="#8fd36b"
+          stroke-width="3"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        />
+        <path d="M11 4h9v9z" fill="#8fd36b" /></svg></span
+    ><b class="score">WON</b>
+    <span class="icons"
+      ><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18">
+        <path
+          d="M3 4h18L12 21zM9.5 9.5a2.5 2.5 0 1 0 5 0 2.5 2.5 0 1 0-5 0z"
+          fill="#3fb68b"
+          fill-rule="evenodd"
+        /></svg
+      ><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18">
+        <path d="M3 11l9-8 9 8v4.5l-9-8-9 8zM3 18.5l9-8 9 8V23l-9-8-9 8z" fill="#f0883e" /></svg
+      ><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18">
+        <path
+          d="M8 3h8v2l-2 2.5c3.5 1.2 5.5 4 5.5 7.5 0 4-3.3 6-7.5 6s-7.5-2-7.5-6c0-3.5 2-6.3 5.5-7.5L8 5z"
+          fill="#a9e5e0"
+        /></svg
+      ><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18">
+        <g fill="#c9a27e">
+          <path
+            d="M12 12C10 7 12.5 3 18.5 1.5c-1 3.5-1.5 7.5-3.5 11z"
+            transform="rotate(0 12 12)"
+          />
+          <path
+            d="M12 12C10 7 12.5 3 18.5 1.5c-1 3.5-1.5 7.5-3.5 11z"
+            transform="rotate(120 12 12)"
+          />
+          <path
+            d="M12 12C10 7 12.5 3 18.5 1.5c-1 3.5-1.5 7.5-3.5 11z"
+            transform="rotate(240 12 12)"
+          />
+          <circle cx="12" cy="12" r="2.5" />
+        </g></svg
+    ></span>
+    <span class="dim grow">Crossroads · 12:31 · 2 min ago</span
+    ><span class="host">host-reported</span>
+  </div>
+  <h2>Closed C: Name lists</h2>
+  <p class="n">
+    Names with profession icon and profession initials (primary/secondary). Text first, searchable
+    by eye; tallest.
+  </p>
+  <div class="row">
+    <div class="head">
+      <span class="tag">4v4</span
+      ><span class="dim">Crossroads · Kill Count · 12:31 · 2 min ago</span
+      ><span class="host">host-reported</span>
+    </div>
+    <div class="c">
+      <ul class="win">
+        <li class="h">Team 1 · Won</li>
+        <li>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14">
+            <path d="M9 3h6v6h6v6h-6v6H9v-6H3V9h6z" fill="#9ecbff" /></svg
+          ><span>Aldric</span><em>M/M</em>
+        </li>
+        <li>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14">
+            <path d="M4 4h16v7c0 5-4 8-8 10-4-2-8-5-8-10z" fill="#e3b341" /></svg
+          ><span>Brynn</span><em>W/M</em>
+        </li>
+        <li>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14">
+            <path
+              d="M12 2l10 10-10 10L2 12zM11 6a1 1 0 0 1 2 0v5h5a1 1 0 0 1 0 2h-5v5a1 1 0 0 1-2 0v-5H6a1 1 0 0 1 0-2h5z"
+              fill="#ff6e5a"
+              fill-rule="evenodd"
+            /></svg
+          ><span>Cael</span><em>E/M</em>
+        </li>
+        <li>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14">
+            <path
+              d="M5 19L18 6"
+              fill="none"
+              stroke="#8fd36b"
+              stroke-width="3"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+            <path d="M11 4h9v9z" fill="#8fd36b" /></svg
+          ><span>Dova</span><em>R/A</em>
+        </li>
+      </ul>
+      <ul>
+        <li class="h">Team 2</li>
+        <li>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14">
+            <path
+              d="M3 4h18L12 21zM9.5 9.5a2.5 2.5 0 1 0 5 0 2.5 2.5 0 1 0-5 0z"
+              fill="#3fb68b"
+              fill-rule="evenodd"
+            /></svg
+          ><span>Eska</span><em>N/M</em>
+        </li>
+        <li>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14">
+            <path d="M3 11l9-8 9 8v4.5l-9-8-9 8zM3 18.5l9-8 9 8V23l-9-8-9 8z" fill="#f0883e" /></svg
+          ><span>Fenn</span><em>P/W</em>
+        </li>
+        <li>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14">
+            <path
+              d="M8 3h8v2l-2 2.5c3.5 1.2 5.5 4 5.5 7.5 0 4-3.3 6-7.5 6s-7.5-2-7.5-6c0-3.5 2-6.3 5.5-7.5L8 5z"
+              fill="#a9e5e0"
+            /></svg
+          ><span>Gwyn</span><em>R/M</em>
+        </li>
+        <li>
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="14" height="14">
+            <g fill="#c9a27e">
+              <path
+                d="M12 12C10 7 12.5 3 18.5 1.5c-1 3.5-1.5 7.5-3.5 11z"
+                transform="rotate(0 12 12)"
+              />
+              <path
+                d="M12 12C10 7 12.5 3 18.5 1.5c-1 3.5-1.5 7.5-3.5 11z"
+                transform="rotate(120 12 12)"
+              />
+              <path
+                d="M12 12C10 7 12.5 3 18.5 1.5c-1 3.5-1.5 7.5-3.5 11z"
+                transform="rotate(240 12 12)"
+              />
+              <circle cx="12" cy="12" r="2.5" />
+            </g></svg
+          ><span>Holt</span><em>D/W</em>
+        </li>
+      </ul>
+    </div>
+  </div>
+  <h2>Open A: Side by side</h2>
+  <p class="n">
+    Team Builder's cards for both teams next to each other, each with Clone. Compare at a glance.
+  </p>
+  <div class="row open">
+    <div class="head">
+      <span class="tag">4v4</span
+      ><span class="dim">Crossroads · Kill Count · 12:31 · 2 min ago</span
+      ><span class="host">host-reported</span><u>Close ▴</u>
+    </div>
+    <div class="cards">
+      <div class="card win">
+        <div class="ct"><b>Team 1</b><span class="tag">4v4</span><span class="won">Won</span></div>
+        <div class="figs">
+          <div class="fig">
+            <div class="disc" style="border-color: #9ecbff">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="26" height="26">
+                <path d="M9 3h6v6h6v6h-6v6H9v-6H3V9h6z" fill="#9ecbff" />
+              </svg>
+            </div>
+            <span>Aldric</span><small>monk/mesmer</small>
+          </div>
+          <div class="fig">
+            <div class="disc" style="border-color: #e3b341">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="26" height="26">
+                <path d="M4 4h16v7c0 5-4 8-8 10-4-2-8-5-8-10z" fill="#e3b341" />
+              </svg>
+            </div>
+            <span>Brynn</span><small>warrior/monk</small>
+          </div>
+          <div class="fig">
+            <div class="disc" style="border-color: #ff6e5a">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="26" height="26">
+                <path
+                  d="M12 2l10 10-10 10L2 12zM11 6a1 1 0 0 1 2 0v5h5a1 1 0 0 1 0 2h-5v5a1 1 0 0 1-2 0v-5H6a1 1 0 0 1 0-2h5z"
+                  fill="#ff6e5a"
+                  fill-rule="evenodd"
+                />
+              </svg>
+            </div>
+            <span>Cael</span><small>elementalist/monk</small>
+          </div>
+          <div class="fig">
+            <div class="disc" style="border-color: #8fd36b">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="26" height="26">
+                <path
+                  d="M5 19L18 6"
+                  fill="none"
+                  stroke="#8fd36b"
+                  stroke-width="3"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+                <path d="M11 4h9v9z" fill="#8fd36b" />
+              </svg>
+            </div>
+            <span>Dova</span><small>ranger/assassin</small>
+          </div>
+        </div>
+        <button>Clone</button>
+      </div>
+      <div class="card">
+        <div class="ct"><b>Team 2</b><span class="tag">4v4</span></div>
+        <div class="figs">
+          <div class="fig">
+            <div class="disc" style="border-color: #3fb68b">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="26" height="26">
+                <path
+                  d="M3 4h18L12 21zM9.5 9.5a2.5 2.5 0 1 0 5 0 2.5 2.5 0 1 0-5 0z"
+                  fill="#3fb68b"
+                  fill-rule="evenodd"
+                />
+              </svg>
+            </div>
+            <span>Eska</span><small>necromancer/mesmer</small>
+          </div>
+          <div class="fig">
+            <div class="disc" style="border-color: #f0883e">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="26" height="26">
+                <path d="M3 11l9-8 9 8v4.5l-9-8-9 8zM3 18.5l9-8 9 8V23l-9-8-9 8z" fill="#f0883e" />
+              </svg>
+            </div>
+            <span>Fenn</span><small>paragon/warrior</small>
+          </div>
+          <div class="fig">
+            <div class="disc" style="border-color: #a9e5e0">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="26" height="26">
+                <path
+                  d="M8 3h8v2l-2 2.5c3.5 1.2 5.5 4 5.5 7.5 0 4-3.3 6-7.5 6s-7.5-2-7.5-6c0-3.5 2-6.3 5.5-7.5L8 5z"
+                  fill="#a9e5e0"
+                />
+              </svg>
+            </div>
+            <span>Gwyn</span><small>ritualist/monk</small>
+          </div>
+          <div class="fig">
+            <div class="disc" style="border-color: #c9a27e">
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="26" height="26">
+                <g fill="#c9a27e">
+                  <path
+                    d="M12 12C10 7 12.5 3 18.5 1.5c-1 3.5-1.5 7.5-3.5 11z"
+                    transform="rotate(0 12 12)"
+                  />
+                  <path
+                    d="M12 12C10 7 12.5 3 18.5 1.5c-1 3.5-1.5 7.5-3.5 11z"
+                    transform="rotate(120 12 12)"
+                  />
+                  <path
+                    d="M12 12C10 7 12.5 3 18.5 1.5c-1 3.5-1.5 7.5-3.5 11z"
+                    transform="rotate(240 12 12)"
+                  />
+                  <circle cx="12" cy="12" r="2.5" />
+                </g>
+              </svg>
+            </div>
+            <span>Holt</span><small>dervish/warrior</small>
+          </div>
+        </div>
+        <button>Clone</button>
+      </div>
+    </div>
+  </div>
+  <h2>Open B: Stacked wide</h2>
+  <p class="n">
+    One card per line, figures in a row, Clone at the end. Scales to 8v8 without squeezing.
+  </p>
+  <div class="row open">
+    <div class="head">
+      <span class="tag">4v4</span
+      ><span class="dim">Crossroads · Kill Count · 12:31 · 2 min ago</span
+      ><span class="host">host-reported</span><u>Close ▴</u>
+    </div>
+    <div class="card wide win">
+      <div class="ct"><b>Team 1</b><span class="won">Won</span></div>
+      <div class="figs">
+        <div class="fig">
+          <div class="disc" style="border-color: #9ecbff">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="26" height="26">
+              <path d="M9 3h6v6h6v6h-6v6H9v-6H3V9h6z" fill="#9ecbff" />
+            </svg>
+          </div>
+          <span>Aldric</span><small>monk/mesmer</small>
+        </div>
+        <div class="fig">
+          <div class="disc" style="border-color: #e3b341">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="26" height="26">
+              <path d="M4 4h16v7c0 5-4 8-8 10-4-2-8-5-8-10z" fill="#e3b341" />
+            </svg>
+          </div>
+          <span>Brynn</span><small>warrior/monk</small>
+        </div>
+        <div class="fig">
+          <div class="disc" style="border-color: #ff6e5a">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="26" height="26">
+              <path
+                d="M12 2l10 10-10 10L2 12zM11 6a1 1 0 0 1 2 0v5h5a1 1 0 0 1 0 2h-5v5a1 1 0 0 1-2 0v-5H6a1 1 0 0 1 0-2h5z"
+                fill="#ff6e5a"
+                fill-rule="evenodd"
+              />
+            </svg>
+          </div>
+          <span>Cael</span><small>elementalist/monk</small>
+        </div>
+        <div class="fig">
+          <div class="disc" style="border-color: #8fd36b">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="26" height="26">
+              <path
+                d="M5 19L18 6"
+                fill="none"
+                stroke="#8fd36b"
+                stroke-width="3"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <path d="M11 4h9v9z" fill="#8fd36b" />
+            </svg>
+          </div>
+          <span>Dova</span><small>ranger/assassin</small>
+        </div>
+      </div>
+      <button>Clone</button>
+    </div>
+    <div class="card wide">
+      <div class="ct"><b>Team 2</b></div>
+      <div class="figs">
+        <div class="fig">
+          <div class="disc" style="border-color: #3fb68b">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="26" height="26">
+              <path
+                d="M3 4h18L12 21zM9.5 9.5a2.5 2.5 0 1 0 5 0 2.5 2.5 0 1 0-5 0z"
+                fill="#3fb68b"
+                fill-rule="evenodd"
+              />
+            </svg>
+          </div>
+          <span>Eska</span><small>necromancer/mesmer</small>
+        </div>
+        <div class="fig">
+          <div class="disc" style="border-color: #f0883e">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="26" height="26">
+              <path d="M3 11l9-8 9 8v4.5l-9-8-9 8zM3 18.5l9-8 9 8V23l-9-8-9 8z" fill="#f0883e" />
+            </svg>
+          </div>
+          <span>Fenn</span><small>paragon/warrior</small>
+        </div>
+        <div class="fig">
+          <div class="disc" style="border-color: #a9e5e0">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="26" height="26">
+              <path
+                d="M8 3h8v2l-2 2.5c3.5 1.2 5.5 4 5.5 7.5 0 4-3.3 6-7.5 6s-7.5-2-7.5-6c0-3.5 2-6.3 5.5-7.5L8 5z"
+                fill="#a9e5e0"
+              />
+            </svg>
+          </div>
+          <span>Gwyn</span><small>ritualist/monk</small>
+        </div>
+        <div class="fig">
+          <div class="disc" style="border-color: #c9a27e">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="26" height="26">
+              <g fill="#c9a27e">
+                <path
+                  d="M12 12C10 7 12.5 3 18.5 1.5c-1 3.5-1.5 7.5-3.5 11z"
+                  transform="rotate(0 12 12)"
+                />
+                <path
+                  d="M12 12C10 7 12.5 3 18.5 1.5c-1 3.5-1.5 7.5-3.5 11z"
+                  transform="rotate(120 12 12)"
+                />
+                <path
+                  d="M12 12C10 7 12.5 3 18.5 1.5c-1 3.5-1.5 7.5-3.5 11z"
+                  transform="rotate(240 12 12)"
+                />
+                <circle cx="12" cy="12" r="2.5" />
+              </g>
+            </svg>
+          </div>
+          <span>Holt</span><small>dervish/warrior</small>
+        </div>
+      </div>
+      <button>Clone</button>
+    </div>
+  </div>
+  <h2>Open C: Tabs</h2>
+  <p class="n">
+    One team card at a time with tabs; the least busy, one click more to see the other team.
+  </p>
+  <div class="row open">
+    <div class="head">
+      <span class="tag">4v4</span
+      ><span class="dim">Crossroads · Kill Count · 12:31 · 2 min ago</span
+      ><span class="host">host-reported</span><u>Close ▴</u>
+    </div>
+    <div class="tabs"><span class="on">Team 1 · Won</span><span>Team 2</span></div>
+    <div class="card win">
+      <div class="ct"><b>Team 1</b><span class="tag">4v4</span><span class="won">Won</span></div>
+      <div class="figs">
+        <div class="fig">
+          <div class="disc" style="border-color: #9ecbff">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="26" height="26">
+              <path d="M9 3h6v6h6v6h-6v6H9v-6H3V9h6z" fill="#9ecbff" />
+            </svg>
+          </div>
+          <span>Aldric</span><small>monk/mesmer</small>
+        </div>
+        <div class="fig">
+          <div class="disc" style="border-color: #e3b341">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="26" height="26">
+              <path d="M4 4h16v7c0 5-4 8-8 10-4-2-8-5-8-10z" fill="#e3b341" />
+            </svg>
+          </div>
+          <span>Brynn</span><small>warrior/monk</small>
+        </div>
+        <div class="fig">
+          <div class="disc" style="border-color: #ff6e5a">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="26" height="26">
+              <path
+                d="M12 2l10 10-10 10L2 12zM11 6a1 1 0 0 1 2 0v5h5a1 1 0 0 1 0 2h-5v5a1 1 0 0 1-2 0v-5H6a1 1 0 0 1 0-2h5z"
+                fill="#ff6e5a"
+                fill-rule="evenodd"
+              />
+            </svg>
+          </div>
+          <span>Cael</span><small>elementalist/monk</small>
+        </div>
+        <div class="fig">
+          <div class="disc" style="border-color: #8fd36b">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="26" height="26">
+              <path
+                d="M5 19L18 6"
+                fill="none"
+                stroke="#8fd36b"
+                stroke-width="3"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <path d="M11 4h9v9z" fill="#8fd36b" />
+            </svg>
+          </div>
+          <span>Dova</span><small>ranger/assassin</small>
+        </div>
+      </div>
+      <button>Clone</button>
+    </div>
+  </div>
+</div>

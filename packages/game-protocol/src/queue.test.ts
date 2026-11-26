@@ -1,0 +1,279 @@
+import { describe, expect, it } from "vitest";
+
+import { PROTOCOL_VERSION } from "./protocol-version.js";
+import {
+  ASCENT_ROUNDS,
+  isTeamArena,
+  isTeamQueueMode,
+  parseQueueTicket,
+  QUEUE_MODES,
+  soloQueueTicket,
+  TEAM_ARENA_SIZES,
+  teamQueueModeOf,
+  teamSizeOf,
+  lobbyModeOfQueue,
+  type QueueTicket,
+  type TicketClaim,
+  UNLISTED_CLAIM,
+} from "./queue.js";
+
+/** Every key of `members` claiming an unlisted rating (ADR-0055). */
+const claimsOf = (members: readonly string[]): Record<string, TicketClaim> =>
+  Object.fromEntries(members.map((member) => [member, { rating: UNLISTED_CLAIM, asOf: 0 }]));
+
+const TICKET: QueueTicket = {
+  ticketId: "a".repeat(64),
+  protocol: PROTOCOL_VERSION,
+  mode: "random-arena-4v4",
+  members: ["a".repeat(64)],
+  bots: 0,
+  enteredAt: 1_700_000_000_000,
+  heartbeatAt: 1_700_000_005_000,
+  party: null,
+  ascentRound: null,
+  hardNat: false,
+  holdsHallSince: null,
+  claims: claimsOf(["a".repeat(64)]),
+};
+
+/** A whole 4v4 team, sorted, led by `TICKET`'s id. */
+const PARTY = ["a", "b", "c", "d"].map((digit) => digit.repeat(64)) as [
+  string,
+  string,
+  string,
+  string,
+];
+/** Its proof, in shape: parsing checks no signature. */
+const PROOF = { groupId: "f".repeat(64), consents: PARTY.map(() => "e".repeat(128)) };
+const TEAM: QueueTicket = { ...TICKET, members: PARTY, party: PROOF, claims: claimsOf(PARTY) };
+/** A Team Arena side of three humans and a bot (ADR-0042). */
+const ARENA_SIDE: QueueTicket = {
+  ...TICKET,
+  mode: "team-arena-4v4",
+  members: PARTY.slice(0, 3),
+  claims: claimsOf(PARTY.slice(0, 3)),
+  bots: 1,
+  party: { ...PROOF, consents: PROOF.consents.slice(1) },
+};
+/** One human and seven bots in Heroes' Ascent, at its first round. */
+const LONE_HERO: QueueTicket = { ...TICKET, mode: "heroes-ascent", bots: 7, ascentRound: 0 };
+
+describe("soloQueueTicket (#3241)", () => {
+  it("builds a ticket the parser keeps as it is", () => {
+    const ticket = soloQueueTicket("b".repeat(64), "random-arena-1v1", 1000, false);
+    expect(parseQueueTicket(ticket)).toEqual(ticket);
+  });
+});
+
+describe("parseQueueTicket (#869, #882, #1078)", () => {
+  it("keeps a well-formed ticket, a solo or a whole team", () => {
+    expect(parseQueueTicket({ ...TICKET })).toEqual(TICKET);
+    expect(parseQueueTicket({ ...TEAM })).toEqual(TEAM);
+  });
+
+  it("keeps a team mode's side: its humans and its bots, one human's too (ADR-0042)", () => {
+    expect(parseQueueTicket({ ...ARENA_SIDE })).toEqual(ARENA_SIDE);
+    expect(parseQueueTicket({ ...LONE_HERO })).toEqual(LONE_HERO);
+    const gvg = { ...TEAM, mode: "gvg", bots: 4 };
+    expect(parseQueueTicket(gvg)).toEqual(gvg);
+  });
+
+  it("keeps a side led by its party host, the rest sorted (#1766)", () => {
+    const members = [PARTY[3], PARTY[0], PARTY[1]];
+    const led = { ...ARENA_SIDE, ticketId: PARTY[3], members, claims: claimsOf(members) };
+    expect(parseQueueTicket(led)).toEqual(led);
+  });
+
+  it("keeps a Heroes' Ascent side at each of its rounds (#1996)", () => {
+    for (let round = 0; round < ASCENT_ROUNDS; round += 1) {
+      const hero = { ...LONE_HERO, ascentRound: round };
+      expect(parseQueueTicket(hero)).toEqual(hero);
+    }
+  });
+
+  it.each<[string, unknown]>([
+    ["a Heroes' Ascent side with no round (#1996)", { ...LONE_HERO, ascentRound: null }],
+    ["a Heroes' Ascent side past the Hall", { ...LONE_HERO, ascentRound: ASCENT_ROUNDS }],
+    ["a Heroes' Ascent side far past the Hall", { ...LONE_HERO, ascentRound: 12 }],
+    ["a negative round", { ...LONE_HERO, ascentRound: -1 }],
+    ["a fractional round", { ...LONE_HERO, ascentRound: 1.5 }],
+    ["a round as text", { ...LONE_HERO, ascentRound: "1" }],
+    ["a Team Arena side with a round", { ...ARENA_SIDE, ascentRound: 0 }],
+    ["a Random Arena ticket with a round", { ...TICKET, ascentRound: 1 }],
+    ["a ticket with no round field", (({ ascentRound: _, ...rest }) => rest)(TICKET)],
+  ])("refuses %s", (_, raw) => {
+    expect(parseQueueTicket(raw)).toBeUndefined();
+  });
+
+  it("keeps each member's claim and the leaderboard it was read from (ADR-0055)", () => {
+    const claimed = {
+      ...TEAM,
+      claims: { ...claimsOf(PARTY), [PARTY[2]]: { rating: -40, asOf: 9 } },
+    };
+    expect(parseQueueTicket(claimed)).toEqual(claimed);
+  });
+
+  it.each<[string, unknown]>([
+    ["a member with no claim", { ...TEAM, claims: claimsOf(PARTY.slice(0, 3)) }],
+    ["a claim of a key not a member", { ...TICKET, claims: claimsOf(["b".repeat(64)]) }],
+    ["a claim too many", { ...TICKET, claims: claimsOf(["a".repeat(64), "b".repeat(64)]) }],
+    ["a fractional claim", { ...TICKET, claims: { ["a".repeat(64)]: { rating: 800.5, asOf: 0 } } }],
+    ["a claim as text", { ...TICKET, claims: { ["a".repeat(64)]: { rating: "800", asOf: 0 } } }],
+    ["a bare number for a claim", { ...TICKET, claims: { ["a".repeat(64)]: 800 } }],
+    ["a claim with no asOf", { ...TICKET, claims: { ["a".repeat(64)]: { rating: 800 } } }],
+    [
+      "a claim with a field too many",
+      { ...TICKET, claims: { ["a".repeat(64)]: { rating: 800, asOf: 0, x: 1 } } },
+    ],
+    ["claims that are a list", { ...TICKET, claims: [800] }],
+    ["no claims", { ...TICKET, claims: null }],
+    ["a negative asOf", { ...TICKET, claims: { ["a".repeat(64)]: { rating: 800, asOf: -1 } } }],
+    ["a fractional asOf", { ...TICKET, claims: { ["a".repeat(64)]: { rating: 800, asOf: 0.5 } } }],
+    ["a ticket-wide leaderboardAsOf", { ...TICKET, leaderboardAsOf: 0 }],
+  ])("refuses %s (ADR-0055)", (_, raw) => {
+    expect(parseQueueTicket(raw)).toBeUndefined();
+  });
+
+  it.each<[string, unknown]>([
+    ["not an object", "ticket"],
+    ["null", null],
+    ["an array", [TICKET]],
+    ["a short id", { ...TICKET, ticketId: "a".repeat(63) }],
+    ["an upper-case id", { ...TICKET, ticketId: "A".repeat(64) }],
+    ["a non-hex id", { ...TICKET, ticketId: "g".repeat(64) }],
+    ["a numeric id", { ...TICKET, ticketId: 7 }],
+    ["an empty protocol", { ...TICKET, protocol: "" }],
+    ["a numeric protocol", { ...TICKET, protocol: 3 }],
+    ["an oversize protocol", { ...TICKET, protocol: "p".repeat(65) }],
+    ["an unknown mode", { ...TICKET, mode: "random-arena-3v3" }],
+    ["a party of neither 1 nor the team", { ...TICKET, members: PARTY.slice(0, 2) }],
+    ["a party bigger than the team", { ...TICKET, mode: "random-arena-2v2", members: PARTY }],
+    ["no members", { ...TICKET, members: [] }],
+    ["unsorted members", { ...TICKET, members: [PARTY[0], PARTY[2], PARTY[1], PARTY[3]] }],
+    ["a member twice", { ...TICKET, members: [PARTY[0], PARTY[1], PARTY[1], PARTY[3]] }],
+    ["its leader twice", { ...TICKET, members: [PARTY[0], PARTY[1], PARTY[2], PARTY[0]] }],
+    ["members not led by the id", { ...TICKET, members: [...PARTY.slice(1), "e".repeat(64)] }],
+    ["a solo of another key", { ...TICKET, members: ["b".repeat(64)] }],
+    ["a non-hex member", { ...TICKET, members: [...PARTY.slice(0, 3), "g".repeat(64)] }],
+    ["members that are not a list", { ...TICKET, members: "a".repeat(64) }],
+    ["a NaN enteredAt", { ...TICKET, enteredAt: Number.NaN }],
+    ["a fractional enteredAt", { ...TICKET, enteredAt: 1.5 }],
+    ["a negative heartbeatAt", { ...TICKET, heartbeatAt: -1 }],
+    ["an infinite heartbeatAt", { ...TICKET, heartbeatAt: Number.POSITIVE_INFINITY }],
+    ["a missing field", { ...TICKET, heartbeatAt: undefined }],
+    ["an oversize ticket, padded with a field", { ...TICKET, padding: "x".repeat(10_000) }],
+    ["an undefined party", { ...TICKET, party: undefined }],
+    ["eight fields: no party at all", (({ party: _, ...eight }) => eight)(TICKET)],
+    ["eight fields: no bots at all", (({ bots: _, ...eight }) => eight)(TICKET)],
+    ["eight fields: no hardNat at all (#2090)", (({ hardNat: _, ...eight }) => eight)(TICKET)],
+    ["a hardNat that is not a boolean (#2090)", { ...TICKET, hardNat: "true" }],
+    ["a null hardNat (#2090)", { ...TICKET, hardNat: null }],
+    ["a holdsHallSince that is not a number (#2701)", { ...TICKET, holdsHallSince: "1" }],
+    ["a fractional holdsHallSince (#2701)", { ...TICKET, holdsHallSince: 1.5 }],
+    ["bots in Random Arena", { ...TICKET, bots: 1 }],
+    ["bots in a Random Arena party", { ...TEAM, mode: "random-arena-2v2", bots: 2 }],
+    ["a solo in a team mode", { ...TICKET, mode: "team-arena-4v4" }],
+    ["a side short of a bot", { ...ARENA_SIDE, bots: 0 }],
+    ["a side a bot over", { ...ARENA_SIDE, bots: 2 }],
+    ["a side of bots alone", { ...ARENA_SIDE, members: [], bots: 4, party: null }],
+    ["negative bots", { ...LONE_HERO, bots: -1 }],
+    ["fractional bots", { ...LONE_HERO, bots: 6.5 }],
+    ["bots that are not a number", { ...LONE_HERO, bots: "7" }],
+    ["a one-human side with a party", { ...LONE_HERO, party: PROOF }],
+    ["a team-mode party with none", { ...ARENA_SIDE, party: null }],
+    ["a solo with a party", { ...TICKET, party: PROOF }],
+    ["a party with none", { ...TEAM, party: null }],
+    [
+      "a party with a consent too few",
+      { ...TEAM, party: { ...PROOF, consents: PROOF.consents.slice(1) } },
+    ],
+    [
+      "a party with a consent too many",
+      { ...TEAM, party: { ...PROOF, consents: [...PROOF.consents, "e".repeat(128)] } },
+    ],
+    [
+      "a non-hex consent",
+      { ...TEAM, party: { ...PROOF, consents: [...PROOF.consents.slice(1), "g".repeat(128)] } },
+    ],
+    [
+      "a short consent",
+      { ...TEAM, party: { ...PROOF, consents: [...PROOF.consents.slice(1), "e".repeat(127)] } },
+    ],
+    ["a bad group id", { ...TEAM, party: { ...PROOF, groupId: "F".repeat(64) } }],
+    ["consents that are not a list", { ...TEAM, party: { ...PROOF, consents: "e".repeat(128) } }],
+    ["a party padded with a field", { ...TEAM, party: { ...PROOF, padding: 1 } }],
+    ["a party that is a list", { ...TEAM, party: [PROOF.groupId, PROOF.consents] }],
+  ])("refuses %s", (_, raw) => {
+    expect(parseQueueTicket(raw)).toBeUndefined();
+  });
+});
+
+describe("teamSizeOf", () => {
+  it("is 1, 2 and 4 for Random Arena, 2, 4 and 8 for Team Arena, 8 for the rest", () => {
+    expect([
+      teamSizeOf("random-arena-1v1"),
+      teamSizeOf("random-arena-2v2"),
+      teamSizeOf("random-arena-4v4"),
+      teamSizeOf("team-arena-2v2"),
+      teamSizeOf("team-arena-4v4"),
+      teamSizeOf("team-arena-8v8"),
+      teamSizeOf("heroes-ascent"),
+      teamSizeOf("gvg"),
+    ]).toEqual([1, 2, 4, 2, 4, 8, 8, 8]);
+  });
+});
+
+describe("isTeamArena (#2107)", () => {
+  it("is Team Arena at every size, and no other mode", () => {
+    expect(QUEUE_MODES.filter(isTeamArena)).toEqual([
+      "team-arena-2v2",
+      "team-arena-4v4",
+      "team-arena-8v8",
+    ]);
+  });
+});
+
+describe("teamQueueModeOf (#1766)", () => {
+  it("queues a team mode's lobby, and never a Random Arena's or a Hosted Game's", () => {
+    expect(teamQueueModeOf("heroes-ascent", 8)).toBe("heroes-ascent");
+    expect(teamQueueModeOf("gvg", 8)).toBe("gvg");
+    expect(teamQueueModeOf("random-arena", 4)).toBeUndefined();
+    expect(teamQueueModeOf("hosted-game", 4)).toBeUndefined();
+  });
+
+  it("queues a Team Arena at its size, and at none it does not play (#2107)", () => {
+    expect(TEAM_ARENA_SIZES.map((size) => teamQueueModeOf("team-arena", size))).toEqual([
+      "team-arena-2v2",
+      "team-arena-4v4",
+      "team-arena-8v8",
+    ]);
+    expect(teamQueueModeOf("team-arena", 1)).toBeUndefined();
+    expect(teamQueueModeOf("team-arena", 3)).toBeUndefined();
+  });
+});
+
+describe("isTeamQueueMode (ADR-0042)", () => {
+  it("is Team Arena, Heroes' Ascent and GvG, never Random Arena", () => {
+    expect(isTeamQueueMode("team-arena-2v2")).toBe(true);
+    expect(isTeamQueueMode("team-arena-4v4")).toBe(true);
+    expect(isTeamQueueMode("team-arena-8v8")).toBe(true);
+    expect(isTeamQueueMode("heroes-ascent")).toBe(true);
+    expect(isTeamQueueMode("gvg")).toBe(true);
+    expect(isTeamQueueMode("random-arena-4v4")).toBe(false);
+  });
+});
+
+describe("lobbyModeOfQueue (#2688)", () => {
+  it("plays each queue mode as its lobby mode", () => {
+    expect(QUEUE_MODES.map(lobbyModeOfQueue)).toEqual([
+      "random-arena",
+      "random-arena",
+      "random-arena",
+      "team-arena",
+      "team-arena",
+      "team-arena",
+      "heroes-ascent",
+      "gvg",
+    ]);
+  });
+});

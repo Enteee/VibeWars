@@ -1,0 +1,26 @@
+{
+  "id": "ranger.charm-animal",
+  "name": "Charm Animal",
+  "profession": "ranger",
+  "attribute": "Beast Mastery",
+  "type": "Skill.",
+  "elite": false,
+  "campaign": "Core",
+  "cost": {
+    "kind": "energy",
+    "amount": 10
+  },
+  "overcast": 0,
+  "activationSeconds": 10,
+  "rechargeSeconds": 0,
+  "upkeep": false,
+  "description": "Charm target animal. Once charmed, your animal companion will travel with you whenever you have Charm Animal equipped. You cannot charm an animal that is more than 4 levels above you.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Ranger/80-Charm_Animal",
+    "fetchedAt": "2026-10-28T05:15:50.734Z"
+  },
+  "unmapped": {}
+}

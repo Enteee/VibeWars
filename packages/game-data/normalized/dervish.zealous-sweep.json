@@ -1,0 +1,26 @@
+{
+  "id": "dervish.zealous-sweep",
+  "name": "Zealous Sweep",
+  "profession": "dervish",
+  "attribute": "Scythe Mastery",
+  "type": "Scythe attack.",
+  "elite": false,
+  "campaign": "Eye Of The North",
+  "cost": {
+    "kind": "energy",
+    "amount": 5
+  },
+  "overcast": 0,
+  "activationSeconds": 0,
+  "rechargeSeconds": 10,
+  "upkeep": false,
+  "description": "If this attack hits, you deal +5...17...20 damage. You gain 3 Energy and 1 strike of adrenaline for each foe you hit.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Dervish/1221-Zealous_Sweep",
+    "fetchedAt": "2026-10-27T19:53:18.185Z"
+  },
+  "unmapped": {}
+}

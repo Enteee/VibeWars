@@ -1,0 +1,26 @@
+{
+  "id": "ranger.maiming-strike",
+  "name": "Maiming Strike",
+  "profession": "ranger",
+  "attribute": "Beast Mastery",
+  "type": "Pet attack.",
+  "elite": false,
+  "campaign": "Core",
+  "cost": {
+    "kind": "energy",
+    "amount": 10
+  },
+  "overcast": 0,
+  "activationSeconds": 0,
+  "rechargeSeconds": 5,
+  "upkeep": false,
+  "description": "Your animal companion attempts a maiming strike that deals +5...17...20 damage. If that attack hits that foe becomes Crippled for 3...13...15 seconds.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Ranger/88-Maiming_Strike",
+    "fetchedAt": "2026-10-28T07:27:45.994Z"
+  },
+  "unmapped": {}
+}

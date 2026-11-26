@@ -1,0 +1,34 @@
+{
+  "nudges": [
+    {
+      "id": "groom-backlog",
+      "to": "manager",
+      "everyMinutes": 30,
+      "text": "Groom the Backlog: re-rank by value, finish started features first, add unboarded issues, check No Status."
+    },
+    {
+      "id": "workday",
+      "to": "manager",
+      "everyMinutes": 720,
+      "text": "End of the workday. Summarise the last 12 hours to the operator, list every Blocked card, then run: company reboot --workday"
+    },
+    {
+      "id": "staffing-review",
+      "to": "manager",
+      "everyMinutes": 120,
+      "text": "Staffing review: run `company load`. Hire where a column is backing up (Ready deep → developer; QA deep → qa-tester; In Review deep → a reviewer), fire an employee idle for the whole window, within maxAgents. Then one line to the operator: what you changed and why, or 'no change' and why."
+    },
+    {
+      "id": "kpi-review",
+      "to": "business-analyst",
+      "everyMinutes": 360,
+      "text": "KPI review: read hub/kpis.json and compare with last time. Pick at most three findings that matter (a column backing up, cycle time rising, a role burning the 5 h budget, an employee pinned at 100% CPU or growing memory, GraphQL draining, disk near the hold). Check unclear causes with the role concerned, then send the manager one message: finding, evidence (number and window), suggested action. Nothing worth saying: send nothing."
+    },
+    {
+      "id": "runner-health",
+      "to": "cicd-engineer",
+      "everyMinutes": 60,
+      "text": "Runner health: `company runners`; if 0 up, a reason, or failing jobs, `company runners logs` and the runner's log. Fix what is yours as a card; tell the manager what needs host action."
+    }
+  ]
+}

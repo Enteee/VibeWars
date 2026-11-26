@@ -1,0 +1,298 @@
+import { describe, expect, it } from "vitest";
+
+import { circleIntersectsSegment } from "@vibewars/game-core";
+
+import arenaCanyon from "../maps/arena-canyon/map.json" with { type: "json" };
+import arenaCrossroads from "../maps/arena-crossroads/map.json" with { type: "json" };
+import arenaLongHall from "../maps/arena-long-hall/map.json" with { type: "json" };
+import elonianPlateau from "../maps/elonian-plateau/map.json" with { type: "json" };
+import ashenCourtyard from "../maps/ashen-courtyard/map.json" with { type: "json" };
+import barrowField from "../maps/barrow-field/map.json" with { type: "json" };
+import eliteZaishenBattle from "../maps/elite-zaishen-battle/map.json" with { type: "json" };
+import brokenTower from "../maps/broken-tower/map.json" with { type: "json" };
+import cinderSanctum from "../maps/cinder-sanctum/map.json" with { type: "json" };
+import canthanTerraces from "../maps/canthan-terraces/map.json" with { type: "json" };
+import emberPits from "../maps/ember-pits/map.json" with { type: "json" };
+import frozenCrossing from "../maps/frozen-crossing/map.json" with { type: "json" };
+import guildHallIsle from "../maps/guild-hall-isle/map.json" with { type: "json" };
+import blackwaterFord from "../maps/blackwater-ford/map.json" with { type: "json" };
+import brazenCauseway from "../maps/brazen-causeway/map.json" with { type: "json" };
+import hallOfHeroesCapture from "../maps/hall-of-heroes-capture/map.json" with { type: "json" };
+import hallOfHeroesKing from "../maps/hall-of-heroes-king/map.json" with { type: "json" };
+import hallOfHeroesRelic from "../maps/hall-of-heroes-relic/map.json" with { type: "json" };
+import hollowDeep from "../maps/hollow-deep/map.json" with { type: "json" };
+import mosslitCairns from "../maps/mosslit-cairns/map.json" with { type: "json" };
+import wardensGallery from "../maps/wardens-gallery/map.json" with { type: "json" };
+import jungleRuins from "../maps/jungle-ruins/map.json" with { type: "json" };
+import mossVale from "../maps/moss-vale/map.json" with { type: "json" };
+import sandstoneSteps from "../maps/sandstone-steps/map.json" with { type: "json" };
+import shiverpeakPass from "../maps/shiverpeak-pass/map.json" with { type: "json" };
+import scarredEarth from "../maps/scarred-earth/map.json" with { type: "json" };
+import sunkenBastion from "../maps/sunken-bastion/map.json" with { type: "json" };
+import threefoldKeep from "../maps/threefold-keep/map.json" with { type: "json" };
+import { allWallSegments } from "./geometry.js";
+import { matchLayers } from "./layers.js";
+import { MapNotFoundError, listMapIds, loadAllMaps, loadMap, unseatedTeams } from "./loader.js";
+import { validateMapData } from "./schema.js";
+
+describe("listMapIds", () => {
+  it("includes the bundled arena-crossroads map", () => {
+    expect(listMapIds()).toContain("arena-crossroads");
+  });
+
+  it("never lists a training map: they live in training/, outside maps/", () => {
+    expect(listMapIds()).not.toContain("training-hall");
+    expect(listMapIds()).not.toContain("training-pillars");
+    expect(listMapIds()).not.toContain("training-field");
+  });
+});
+
+describe("the maps the browser imports", () => {
+  it("are the maps the server loads from disk", () => {
+    // The browser imports map JSON directly (#8); the server reads it with
+    // fs. One file, so this only fails if the two ever stop being the same
+    // data, which is the drift to catch.
+    const imported = [
+      arenaCanyon,
+      arenaCrossroads,
+      arenaLongHall,
+      ashenCourtyard,
+      barrowField,
+      blackwaterFord,
+      brazenCauseway,
+      brokenTower,
+      canthanTerraces,
+      cinderSanctum,
+      eliteZaishenBattle,
+      elonianPlateau,
+      emberPits,
+      frozenCrossing,
+      guildHallIsle,
+      hallOfHeroesCapture,
+      hallOfHeroesKing,
+      hallOfHeroesRelic,
+      hollowDeep,
+      jungleRuins,
+      mossVale,
+      mosslitCairns,
+      sandstoneSteps,
+      scarredEarth,
+      shiverpeakPass,
+      sunkenBastion,
+      threefoldKeep,
+      wardensGallery,
+    ].map((raw) => validateMapData(raw));
+    expect(imported.map((map) => map.id)).toEqual(listMapIds());
+    for (const map of imported) {
+      expect(loadMap(map.id)).toEqual(map);
+    }
+  });
+});
+
+describe("loadMap", () => {
+  it("loads and validates arena-crossroads", () => {
+    const map = loadMap("arena-crossroads");
+    expect(map.id).toBe("arena-crossroads");
+    expect(map.width).toBeGreaterThan(0);
+    expect(map.height).toBeGreaterThan(0);
+    expect(map.spawnPoints.length).toBeGreaterThan(0);
+  });
+
+  it("produces walls that convert cleanly to collision segments", () => {
+    const map = loadMap("arena-crossroads");
+    const segments = allWallSegments(map.walls);
+    expect(segments.length).toBeGreaterThan(0);
+    for (const seg of segments) {
+      expect(Number.isFinite(seg.a.x)).toBe(true);
+      expect(Number.isFinite(seg.a.y)).toBe(true);
+      expect(Number.isFinite(seg.b.x)).toBe(true);
+      expect(Number.isFinite(seg.b.y)).toBe(true);
+    }
+  });
+
+  it("has spawn points for at least two teams", () => {
+    const map = loadMap("arena-crossroads");
+    const teams = new Set(map.spawnPoints.map((spawn) => spawn.team));
+    expect(teams.size).toBeGreaterThanOrEqual(2);
+  });
+
+  it("keeps every spawn point within the map bounds", () => {
+    const map = loadMap("arena-crossroads");
+    for (const spawn of map.spawnPoints) {
+      expect(spawn.position.x).toBeGreaterThanOrEqual(0);
+      expect(spawn.position.x).toBeLessThanOrEqual(map.width);
+      expect(spawn.position.y).toBeGreaterThanOrEqual(0);
+      expect(spawn.position.y).toBeLessThanOrEqual(map.height);
+    }
+  });
+
+  it("throws MapNotFoundError for an unknown map id", () => {
+    expect(() => loadMap("no-such-map")).toThrow(MapNotFoundError);
+  });
+});
+
+describe("Broken Tower's lane portcullises (#4079)", () => {
+  const map = loadMap("broken-tower");
+  const plated = map.gates.filter(({ opener }) => opener.kind === "plate");
+  const [west, east] = ["west-lane-portcullis", "east-lane-portcullis"].map((id) =>
+    plated.find((gate) => gate.id === id),
+  );
+  /** `point` turned 180° about the map's centre, (2712, 1392). */
+  const turned = ({ x, y }: { x: number; y: number }) => ({ x: 5424 - x, y: 2784 - y });
+
+  it("has exactly two plate gates: anyone's portcullises on L1", () => {
+    expect(plated).toHaveLength(2);
+    for (const { opener, look, wall } of plated) {
+      expect(opener).toMatchObject({ kind: "plate", team: null });
+      expect(look).toBe("portcullis");
+      expect(wall.layer).toBe(1);
+    }
+  });
+
+  it("turns the west gate and its plate 180° into the east ones", () => {
+    if (west?.opener.kind !== "plate" || east?.opener.kind !== "plate") {
+      throw new Error("broken-tower: a lane portcullis is missing");
+    }
+    if (west.wall.kind !== "rect" || east.wall.kind !== "rect") {
+      throw new Error("broken-tower: a lane portcullis is not a rect");
+    }
+    const { x, y, width, height } = west.wall;
+    expect(east.wall).toMatchObject({ width, height, ...turned({ x: x + width, y: y + height }) });
+    expect(east.opener.plate).toEqual(turned(west.opener.plate));
+  });
+});
+
+describe("unseatedTeams (#2108)", () => {
+  const map = loadMap("arena-crossroads");
+  const spawns = (count: number) =>
+    [0, 1].flatMap((team) =>
+      Array.from({ length: count }, (_, index) => ({
+        team,
+        layer: 0,
+        position: { x: 100 + team * 700, y: 100 + index * 50 },
+      })),
+    );
+
+  it("names each team with fewer spawns than its largest team size", () => {
+    expect(unseatedTeams({ ...map, teamSizes: [4, 8], spawnPoints: spawns(4) })).toEqual([
+      "team 0 has 4 spawns, not the 8 its team sizes need",
+      "team 1 has 4 spawns, not the 8 its team sizes need",
+    ]);
+    expect(unseatedTeams({ ...map, teamSizes: [4, 8], spawnPoints: spawns(8) })).toEqual([]);
+  });
+
+  it("wants two spawns a team even for a 1v1", () => {
+    expect(unseatedTeams({ ...map, teamSizes: [1], spawnPoints: spawns(1) })).toHaveLength(2);
+    expect(unseatedTeams({ ...map, teamSizes: [1], spawnPoints: spawns(2) })).toEqual([]);
+  });
+
+  it("seats every one of a three-team map's teams, a third with no spawn included (#2682)", () => {
+    expect(unseatedTeams({ ...map, teams: 3, teamSizes: [1], spawnPoints: spawns(2) })).toEqual([
+      "team 2 has 0 spawns, not the 2 its team sizes need",
+    ]);
+  });
+});
+
+describe("loadAllMaps", () => {
+  it("loads every bundled map without throwing — a CI-facing validation gate", () => {
+    const maps = loadAllMaps();
+    expect(maps.length).toBeGreaterThan(0);
+    const ids = maps.map((map) => map.id);
+    expect(new Set(ids).size).toBe(ids.length); // no duplicate ids
+  });
+});
+
+/**
+ * Invariants every bundled map must satisfy. These run against the real
+ * `maps/` directory, so adding a broken arena fails CI rather than
+ * shipping a map players get stuck in.
+ */
+describe("every bundled map", () => {
+  const maps = loadAllMaps();
+
+  it("ships more than one arena", () => {
+    expect(maps.length).toBeGreaterThan(1);
+  });
+
+  it("has spawn points for exactly its teams", () => {
+    for (const map of maps) {
+      const teams = new Set(map.spawnPoints.map((spawn) => spawn.team));
+      expect([...teams].sort(), map.id).toEqual([...Array(map.teams).keys()]);
+    }
+  });
+
+  it("seats each team at its largest team size, and at least two (#2108)", () => {
+    for (const map of maps) {
+      expect(unseatedTeams(map), map.id).toEqual([]);
+      for (const team of [0, 1]) {
+        expect(
+          map.spawnPoints.filter((spawn) => spawn.team === team).length,
+          `${map.id} team ${String(team)}`,
+        ).toBeGreaterThanOrEqual(Math.max(2, ...map.teamSizes));
+      }
+    }
+  });
+
+  it("gives both teams the same number of spawn points", () => {
+    for (const map of maps) {
+      const team0 = map.spawnPoints.filter((s) => s.team === 0).length;
+      const team1 = map.spawnPoints.filter((s) => s.team === 1).length;
+      expect(team0, `${map.id} team 0 vs 1`).toBe(team1);
+    }
+  });
+
+  it("keeps every spawn point inside the map bounds", () => {
+    for (const map of maps) {
+      for (const spawn of map.spawnPoints) {
+        expect(spawn.position.x, map.id).toBeGreaterThanOrEqual(0);
+        expect(spawn.position.x, map.id).toBeLessThanOrEqual(map.width);
+        expect(spawn.position.y, map.id).toBeGreaterThanOrEqual(0);
+        expect(spawn.position.y, map.id).toBeLessThanOrEqual(map.height);
+      }
+    }
+  });
+
+  it("never spawns a player inside a wall", () => {
+    // A player who spawns inside geometry is immediately stuck, which is
+    // the single worst map bug and completely invisible until someone
+    // tries to play the map. Only the spawn's own layer's walls count: a
+    // deck spawn stands clear of a wall under it (#3344).
+    const PLAYER_RADIUS = 14;
+    for (const map of maps) {
+      const { walls } = matchLayers(map);
+      for (const spawn of map.spawnPoints) {
+        const segments = walls[spawn.layer];
+        expect(segments, `${map.id} spawn on layer ${String(spawn.layer)}`).toBeDefined();
+        for (const segment of segments ?? []) {
+          expect(
+            circleIntersectsSegment(spawn.position, PLAYER_RADIUS, segment),
+            `${map.id} spawn at (${String(spawn.position.x)}, ${String(spawn.position.y)})`,
+          ).toBe(false);
+        }
+      }
+    }
+  });
+
+  it("separates the two teams' spawns so nobody starts in melee range", () => {
+    for (const map of maps) {
+      const team0 = map.spawnPoints.filter((s) => s.team === 0);
+      const team1 = map.spawnPoints.filter((s) => s.team === 1);
+      for (const a of team0) {
+        for (const b of team1) {
+          const distance = Math.hypot(a.position.x - b.position.x, a.position.y - b.position.y);
+          expect(distance, map.id).toBeGreaterThan(200);
+        }
+      }
+    }
+  });
+
+  it("gives every map but the Hall's three, one place (#2700), a unique, non-empty display name", () => {
+    const names = maps
+      .filter((map) => map.halls !== true || map.mode === "king-of-the-hill")
+      .map((map) => map.name);
+    expect(new Set(names).size).toBe(names.length);
+    for (const name of names) {
+      expect(name.length).toBeGreaterThan(0);
+    }
+  });
+});

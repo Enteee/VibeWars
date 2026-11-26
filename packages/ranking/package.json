@@ -1,0 +1,28 @@
+{
+  "name": "@vibewars/ranking",
+  "version": "0.0.0",
+  "license": "AGPL-3.0-or-later",
+  "private": true,
+  "type": "module",
+  "description": "Ranked receipts (ADR-0055): their types, canonical encoding, digests and validation. Pure: hashing and signature checks are handed in.",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "lint": "eslint .",
+    "build": "tsc --build tsconfig.build.json",
+    "clean": "rm -rf dist *.tsbuildinfo"
+  },
+  "devDependencies": {
+    "@noble/hashes": "2.4.0",
+    "@noble/secp256k1": "3.2.0"
+  }
+}

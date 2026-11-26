@@ -1,0 +1,28 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+
+# Keep the store deterministic and surface accidental phantom dependencies.
+linkWorkspacePackages: true
+saveWorkspaceProtocol: rolling
+strictPeerDependencies: false
+
+# Supply-chain hardening (#107): don't resolve a version younger than a
+# week, don't let a transitive dependency come from git or a tarball URL,
+# and refuse a version published with weaker provenance than its predecessor.
+minimumReleaseAge: 10080
+blockExoticSubdeps: true
+trustPolicy: no-downgrade
+
+# minimatch 10.2.6 has a medium advisory, fixed in 11.0.1 (GHSA-g3hv-75wg-m249,
+# #2416). Dev-only: eslint, @eslint/config-array and typescript-eslint pull it
+# in. Drop this once all three depend on minimatch ^11 themselves.
+overrides:
+  minimatch: ^11.0.1
+
+# picomatch <=4.0.7 has a high ReDoS advisory with no patched release
+# (GHSA-fc5q-39xc-vjpf, #3525). Dev-only: typescript-eslint, vite and vitest -> tinyglobby
+# matches our own globs, never player input. Drop this once picomatch ships a fix.
+auditConfig:
+  ignoreGhsas:
+    - GHSA-fc5q-39xc-vjpf

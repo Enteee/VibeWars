@@ -1,0 +1,215 @@
+import { spawnSync } from "node:child_process";
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+
+import { afterEach, describe, expect, it } from "vitest";
+
+import { tamperedPaths, updateFilesFromMirror } from "./checkout-verify.mjs";
+
+const ENV = {
+  ...process.env,
+  GIT_CONFIG_GLOBAL: "/dev/null",
+  GIT_CONFIG_NOSYSTEM: "1",
+  GIT_AUTHOR_NAME: "a",
+  GIT_AUTHOR_EMAIL: "a@a",
+  GIT_COMMITTER_NAME: "a",
+  GIT_COMMITTER_EMAIL: "a@a",
+};
+
+/**
+ * @param {string[]} args
+ * @param {string} cwd
+ * @param {string} [input]
+ * @returns {string}
+ */
+function git(args, cwd, input) {
+  const result = spawnSync("git", args, { cwd, env: ENV, encoding: "utf8", input });
+  if (result.status !== 0) {
+    throw new Error(`git ${args.join(" ")}: ${result.stderr}`);
+  }
+  return result.stdout.trim();
+}
+
+/** @type {string[]} */
+const dirs = [];
+afterEach(() => {
+  for (const dir of dirs.splice(0)) {
+    fs.rmSync(dir, { recursive: true, force: true });
+  }
+});
+
+/** A host-only mirror and a checkout fast-forwarded to its commit. */
+function setup() {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "verify-test-"));
+  dirs.push(dir);
+  const mirror = path.join(dir, "mirror.git");
+  const up = path.join(dir, "up");
+  const repoDir = path.join(dir, "host");
+  git(["init", "-q", "--bare", "-b", "main", mirror], dir);
+  git(["init", "-q", "-b", "main", up], dir);
+  fs.mkdirSync(path.join(up, "s"));
+  fs.writeFileSync(path.join(up, "s", "f"), "good content\n");
+  fs.writeFileSync(path.join(up, "s", "g"), "x\n");
+  git(["add", "s"], up);
+  git(["commit", "-q", "-m", "1"], up);
+  git(["push", "-q", mirror, "main"], up);
+  const sha = git(["rev-parse", "HEAD"], up);
+  git(["clone", "-q", mirror, repoDir], dir);
+  return { mirror, repoDir, sha, up };
+}
+
+describe("tamperedPaths", () => {
+  it("finds nothing in an honest checkout", () => {
+    const c = setup();
+    expect(tamperedPaths({ mirror: c.mirror, repoDir: c.repoDir, sha: c.sha })).toEqual([]);
+  });
+
+  it("finds a tree object swapped in the checkout's own store", () => {
+    const c = setup();
+    // The merged commit changes s/f; the checkout is still on the first.
+    fs.writeFileSync(path.join(c.up, "s", "f"), "merged content\n");
+    git(["commit", "-qam", "2"], c.up);
+    git(["push", "-q", c.mirror, "main"], c.up);
+    const sha = git(["rev-parse", "HEAD"], c.up);
+    // A jail fetches main, so the commit's objects sit loose in the shared store...
+    git(["fetch", "-q", c.mirror, "main"], c.repoDir);
+    const treeSha = git(["rev-parse", "FETCH_HEAD:s"], c.repoDir);
+    const gSha = git(["rev-parse", "FETCH_HEAD:s/g"], c.repoDir);
+    const evil = git(["hash-object", "-w", "--stdin"], c.repoDir, "evil content\n");
+    const evilTree = git(["mktree"], c.repoDir, `100644 blob ${evil}\tf\n100644 blob ${gSha}\tg\n`);
+    // ...and overwrites the tree object with one naming a blob of its own.
+    const objects = path.join(c.repoDir, ".git", "objects");
+    const loose = path.join(objects, treeSha.slice(0, 2), treeSha.slice(2));
+    fs.chmodSync(loose, 0o644);
+    fs.copyFileSync(path.join(objects, evilTree.slice(0, 2), evilTree.slice(2)), loose);
+    git(["merge", "--ff-only", "-q", sha], c.repoDir);
+    // what the restarter trusted: HEAD is the sha and status is clean
+    expect(git(["rev-parse", "HEAD"], c.repoDir)).toBe(sha);
+    expect(git(["status", "--porcelain"], c.repoDir)).toBe("");
+    expect(fs.readFileSync(path.join(c.repoDir, "s", "f"), "utf8")).toBe("evil content\n");
+    expect(tamperedPaths({ mirror: c.mirror, repoDir: c.repoDir, sha })).toEqual(["s/f"]);
+  });
+
+  it("finds an edited file", () => {
+    const c = setup();
+    fs.writeFileSync(path.join(c.repoDir, "s", "g"), "changed\n");
+    expect(tamperedPaths({ mirror: c.mirror, repoDir: c.repoDir, sha: c.sha })).toEqual(["s/g"]);
+  });
+
+  it("finds a file the commit lacks", () => {
+    const c = setup();
+    fs.writeFileSync(path.join(c.repoDir, "extra.js"), "x\n");
+    expect(tamperedPaths({ mirror: c.mirror, repoDir: c.repoDir, sha: c.sha })).toEqual([
+      "extra.js",
+    ]);
+  });
+
+  it("finds a planted package that a nested .gitignore hides", () => {
+    const c = setup();
+    fs.mkdirSync(path.join(c.repoDir, "zz"));
+    fs.writeFileSync(path.join(c.repoDir, "zz", ".gitignore"), "*\n");
+    fs.writeFileSync(path.join(c.repoDir, "zz", "package.json"), "{}\n");
+    expect(tamperedPaths({ mirror: c.mirror, repoDir: c.repoDir, sha: c.sha })).toContain(
+      "zz/package.json",
+    );
+  });
+
+  it("finds a planted subtree in an ignored directory, written by the merge", () => {
+    const c = setup();
+    fs.writeFileSync(path.join(c.up, ".gitignore"), "node_modules/\n");
+    fs.writeFileSync(path.join(c.up, "s", "f"), "merged content\n");
+    git(["add", "-A"], c.up);
+    git(["commit", "-qm", "2"], c.up);
+    git(["push", "-q", c.mirror, "main"], c.up);
+    const sha = git(["rev-parse", "HEAD"], c.up);
+    git(["fetch", "-q", c.mirror, "main"], c.repoDir);
+    const sTree = git(["rev-parse", "FETCH_HEAD:s"], c.repoDir);
+    const planted = git(["hash-object", "-w", "--stdin"], c.repoDir, "evil\n");
+    const nm = git(["mktree"], c.repoDir, `100644 blob ${planted}\tindex.js\n`);
+    const entries = git(["ls-tree", sTree], c.repoDir);
+    const evilS = git(["mktree"], c.repoDir, `${entries}\n040000 tree ${nm}\tnode_modules\n`);
+    const objects = path.join(c.repoDir, ".git", "objects");
+    const loose = path.join(objects, sTree.slice(0, 2), sTree.slice(2));
+    fs.chmodSync(loose, 0o644);
+    fs.copyFileSync(path.join(objects, evilS.slice(0, 2), evilS.slice(2)), loose);
+    git(["merge", "--ff-only", "-q", sha], c.repoDir);
+    expect(fs.existsSync(path.join(c.repoDir, "s", "node_modules", "index.js"))).toBe(true);
+    expect(tamperedPaths({ mirror: c.mirror, repoDir: c.repoDir, sha })).toContain(
+      "s/node_modules/index.js",
+    );
+  });
+
+  it("does not count the local files Claude Code writes, which the root .gitignore names", () => {
+    const c = setup();
+    const ignore = fs.readFileSync(new URL("../../.gitignore", import.meta.url), "utf8");
+    fs.writeFileSync(path.join(c.up, ".gitignore"), ignore);
+    git(["add", ".gitignore"], c.up);
+    git(["commit", "-qm", "2"], c.up);
+    git(["push", "-q", c.mirror, "main"], c.up);
+    const sha = git(["rev-parse", "HEAD"], c.up);
+    git(["pull", "-q", "--ff-only", c.mirror, "main"], c.repoDir);
+    fs.mkdirSync(path.join(c.repoDir, ".claude"));
+    fs.writeFileSync(path.join(c.repoDir, ".claude", "settings.local.json"), "{}\n");
+    fs.writeFileSync(path.join(c.repoDir, "CLAUDE.local.md"), "x\n");
+    expect(tamperedPaths({ mirror: c.mirror, repoDir: c.repoDir, sha })).toEqual([]);
+  });
+
+  it("finds a deleted file", () => {
+    const c = setup();
+    fs.rmSync(path.join(c.repoDir, "s", "g"));
+    expect(tamperedPaths({ mirror: c.mirror, repoDir: c.repoDir, sha: c.sha })).toEqual(["s/g"]);
+  });
+
+  it("refuses a sha the mirror does not have", () => {
+    const c = setup();
+    expect(tamperedPaths({ ...c, sha: "0".repeat(40) })).toHaveLength(1);
+  });
+});
+
+describe("updateFilesFromMirror", () => {
+  it("writes the mirror's files even when a forged tree is swapped in and then swapped back", () => {
+    const c = setup();
+    const from = c.sha;
+    fs.writeFileSync(path.join(c.up, ".gitignore"), "node_modules/\n");
+    fs.writeFileSync(path.join(c.up, "s", "f"), "merged content\n");
+    git(["add", "-A"], c.up);
+    git(["commit", "-qm", "2"], c.up);
+    git(["push", "-q", c.mirror, "main"], c.up);
+    const to = git(["rev-parse", "HEAD"], c.up);
+    git(["fetch", "-q", c.mirror, "main"], c.repoDir);
+    const sTree = git(["rev-parse", "FETCH_HEAD:s"], c.repoDir);
+    const planted = git(["hash-object", "-w", "--stdin"], c.repoDir, "evil\n");
+    const nm = git(["mktree"], c.repoDir, `100644 blob ${planted}\tindex.js\n`);
+    const entries = git(["ls-tree", sTree], c.repoDir);
+    const evilS = git(["mktree"], c.repoDir, `${entries}\n040000 tree ${nm}\tnode_modules\n`);
+    const objects = path.join(c.repoDir, ".git", "objects");
+    const loose = path.join(objects, sTree.slice(0, 2), sTree.slice(2));
+    const genuine = fs.readFileSync(loose);
+    fs.chmodSync(loose, 0o644);
+    fs.copyFileSync(path.join(objects, evilS.slice(0, 2), evilS.slice(2)), loose);
+
+    expect(updateFilesFromMirror({ mirror: c.mirror, repoDir: c.repoDir, from, to })).toBe(true);
+    // the jail restores the genuine object once the update is done
+    fs.chmodSync(loose, 0o644);
+    fs.writeFileSync(loose, genuine);
+    git(["reset", "-q", "--mixed", to], c.repoDir);
+
+    expect(fs.readFileSync(path.join(c.repoDir, "s", "f"), "utf8")).toBe("merged content\n");
+    expect(fs.existsSync(path.join(c.repoDir, "s", "node_modules"))).toBe(false);
+    expect(git(["status", "--porcelain"], c.repoDir)).toBe("");
+    expect(tamperedPaths({ mirror: c.mirror, repoDir: c.repoDir, sha: to })).toEqual([]);
+  });
+
+  it("refuses over a locally edited file", () => {
+    const c = setup();
+    fs.writeFileSync(path.join(c.up, "s", "f"), "merged content\n");
+    git(["commit", "-qam", "2"], c.up);
+    git(["push", "-q", c.mirror, "main"], c.up);
+    const to = git(["rev-parse", "HEAD"], c.up);
+    fs.writeFileSync(path.join(c.repoDir, "s", "f"), "mine\n");
+    expect(updateFilesFromMirror({ mirror: c.mirror, repoDir: c.repoDir, from: c.sha, to })).toBe(
+      false,
+    );
+  });
+});

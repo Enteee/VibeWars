@@ -1,0 +1,30 @@
+{
+  "id": "training-field",
+  "name": "Training Field",
+  "mode": "annihilation",
+  "teamSizes": [1],
+  "teams": 2,
+  "width": 1400,
+  "height": 900,
+  "bounds": { "kind": "rect" },
+  "layers": 1,
+  "biome": "hall",
+  "ascentAct": null,
+  "groundLayer": 0,
+  "pits": [],
+  "tunnels": [],
+  "decks": [],
+  "overhangs": [],
+  "transitions": [],
+  "dropOffs": [],
+  "walls": [],
+  "decor": [],
+  "gates": [],
+  "objectives": [],
+  "spawnPoints": [
+    { "team": 0, "layer": 0, "position": { "x": 200, "y": 450 } },
+    { "team": 1, "layer": 0, "position": { "x": 400, "y": 250 } },
+    { "team": 1, "layer": 0, "position": { "x": 650, "y": 450 } },
+    { "team": 1, "layer": 0, "position": { "x": 1200, "y": 700 } }
+  ]
+}

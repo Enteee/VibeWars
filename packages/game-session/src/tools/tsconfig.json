@@ -1,0 +1,13 @@
+{
+  "extends": "../../../../tsconfig.base.json",
+  "// ": "The package's Node tools, outside its build: a session sees no Node types (../../tsconfig.json), and these are Node programs.",
+  "compilerOptions": {
+    "noEmit": true,
+    "composite": false,
+    "declaration": false,
+    "declarationMap": false,
+    "types": ["node"],
+    "lib": ["ES2023"]
+  },
+  "include": ["*.ts"]
+}

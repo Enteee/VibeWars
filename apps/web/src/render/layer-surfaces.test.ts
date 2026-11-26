@@ -1,0 +1,1365 @@
+import { describe, expect, it } from "vitest";
+
+import { pointInPolygon, type Uphill, type Vec2 } from "@vibewars/game-core";
+import { ELEVATION_STEP } from "@vibewars/game-maps/schema";
+
+import {
+  actorAtPoint,
+  EMPTY_SNAPSHOT,
+  FLAT_STRUCTURE,
+  type MapStructure,
+  type RenderableActor,
+  type RenderableWall,
+} from "./arena-snapshot.js";
+import {
+  trackAlt,
+  besideDropOff,
+  brokenLip,
+  deckSideLow,
+  hiddenCrop,
+  DECK_SLAB,
+  HIDDEN_DASH,
+  HIDDEN_GAP,
+  type HiddenPiece,
+  deckDrawing,
+  drawnLayerAt,
+  liftAt,
+  occludersOf,
+  overhangAt,
+  plankLines,
+  southFacingEdges,
+  surfacesAt,
+  sweptEdges,
+  WALL_HEIGHT,
+  pickSurface,
+  pitDrawing,
+  TUNNEL_GRATING_STEP,
+  tunnelCover,
+  tunnelOpenings,
+  tunnelSeam,
+  rampDrawing,
+  RING_PATH,
+  traceHiddenOutline,
+  traceHiddenPolyline,
+  seenFrom,
+  shapeOutline,
+  tunnelsHolding,
+} from "./layer-surfaces.js";
+import { mapStructure } from "../net/maps.js";
+
+import { atRest } from "./pick.test-support.js";
+
+const bridge = { kind: "rect", x: 100, y: 100, width: 200, height: 100 } as const;
+const BRIDGE: MapStructure = {
+  layerCount: 2,
+  biome: "hall",
+  ascentAct: null,
+  bounds: { kind: "rect" },
+  ground: 0,
+  pits: [],
+  tunnels: [],
+  dropOffs: [],
+  downDecks: [],
+  overhangs: [],
+  decor: [],
+  decks: [{ layer: 1, footprint: bridge, look: "platform", switched: null }],
+  transitions: [],
+  water: [],
+  zones: [],
+};
+
+function hiddenPieces(x: number, y: number): HiddenPiece[] {
+  const pieces: HiddenPiece[] = [];
+  traceHiddenOutline(RING_PATH, x, y, 14, 0, occludersOf([], BRIDGE), (ax, ay, bx, by) => {
+    pieces.push({ ax, ay, bx, by });
+  });
+  return pieces;
+}
+
+function hiddenSegments(y: number, layer: number): { x: number; y: number }[] {
+  const seen: { x: number; y: number }[] = [];
+  traceHiddenOutline(RING_PATH, 200, y, 10, layer, occludersOf([], BRIDGE), (ax, ay, bx, by) => {
+    seen.push({ x: (ax + bx) / 2, y: (ay + by) / 2 });
+  });
+  return seen;
+}
+
+describe("the surface a click names (#2831)", () => {
+  // The deck draws ELEVATION_STEP above its footprint.
+  const onDeck = { x: 200, y: 150 - ELEVATION_STEP };
+
+  it("is the deck where one is drawn, at the point on it", () => {
+    expect(pickSurface(BRIDGE, [], onDeck, false)).toEqual({ layer: 1, point: { x: 200, y: 150 } });
+  });
+
+  it("is the ground under it with Alt", () => {
+    expect(pickSurface(BRIDGE, [], onDeck, true)).toEqual({ layer: 0, point: onDeck });
+  });
+
+  it("is the ground with Alt from the ground or from the deck (#3546)", () => {
+    expect(pickSurface(BRIDGE, [], onDeck, true, 0)).toEqual({ layer: 0, point: onDeck });
+    expect(pickSurface(BRIDGE, [], onDeck, true, 1)).toEqual({ layer: 0, point: onDeck });
+  });
+
+  it("acts as a plain click where there is nothing below", () => {
+    const open = { x: 10, y: 10 };
+    expect(pickSurface(BRIDGE, [], open, true)).toEqual({ layer: 0, point: open });
+    expect(pickSurface(BRIDGE, [], open, true, 0)).toEqual({ layer: 0, point: open });
+  });
+});
+
+describe("Alt over a support and a tunnel (#3487)", () => {
+  // Blackwater Ford's west culvert: an approach deck, the ground its
+  // support fills, and a tunnel under both.
+  const STACK: MapStructure = {
+    ...BRIDGE,
+    layerCount: 3,
+    ground: 1,
+    tunnels: [{ footprint: { kind: "rect", x: 100, y: 0, width: 100, height: 400 } }],
+    decks: [
+      {
+        layer: 2,
+        footprint: { kind: "rect", x: 0, y: 100, width: 300, height: 100 },
+        look: "platform",
+        switched: null,
+      },
+    ],
+  };
+  const support = { kind: "rect", x: 0, y: 50, width: 300, height: 150 } as const;
+  const SUPPORTS: readonly RenderableWall[] = [{ ...support, layer: 1 }];
+  const world = { x: 150, y: 150 - ELEVATION_STEP };
+  const onGround = { layer: 1, point: world };
+  const inTunnel = { layer: 0, point: { x: 150, y: world.y - ELEVATION_STEP } };
+
+  it("passes the ground a support fills and names the tunnel", () => {
+    expect(pickSurface(STACK, SUPPORTS, world, true)).toEqual(inTunnel);
+    expect(pickSurface(STACK, SUPPORTS, world, true, 1)).toEqual(inTunnel);
+  });
+
+  it("names the open ground over the tunnel, one level down", () => {
+    expect(pickSurface(STACK, [], world, true)).toEqual(onGround);
+  });
+
+  it("names the ground under a support with no tunnel under it, as before", () => {
+    expect(pickSurface({ ...STACK, tunnels: [] }, SUPPORTS, world, true)).toEqual(onGround);
+  });
+
+  it("counts no gate or breakable as filling the ground", () => {
+    const door = { ...support, layer: 1, door: true, look: "door" } as const;
+    const cracked = { ...support, layer: 1, breakable: true } as const;
+    expect(pickSurface(STACK, [door], world, true)).toEqual(onGround);
+    expect(pickSurface(STACK, [cracked], world, true)).toEqual(onGround);
+  });
+
+  it("goes from the deck to the ground over the tunnel, the next level down (#3546)", () => {
+    expect(pickSurface(STACK, [], world, true, 2)).toEqual(onGround);
+  });
+
+  it("leaves a plain click on the deck", () => {
+    expect(pickSurface(STACK, SUPPORTS, world, false)).toEqual({
+      layer: 2,
+      point: { x: 150, y: 150 },
+    });
+  });
+});
+
+describe("a click on what a shallow deck draws (#3476)", () => {
+  const rect = (x: number, y: number, width: number, height: number) =>
+    ({ kind: "rect", x, y, width, height }) as const;
+  // Ashen Courtyard's south rubble: a ruin 64 deep, on a wall of its size,
+  // here with its steps in front of its face.
+  const heap = rect(1200, 2840, 160, 64);
+  const WALLS: readonly RenderableWall[] = [{ ...heap, layer: 0 }];
+  const RUBBLE: MapStructure = {
+    ...BRIDGE,
+    decks: [{ layer: 1, footprint: heap, look: "ruin", switched: null }],
+    transitions: [
+      {
+        from: 0,
+        to: 1,
+        area: rect(1240, 2904, 80, 120),
+        uphill: "n",
+        look: "rough-steps",
+        lift: null,
+      },
+    ],
+  };
+  const deck = RUBBLE.decks[0];
+  if (deck === undefined) {
+    throw new Error("no deck");
+  }
+  const parts = deckDrawing(deck, WALLS, RUBBLE);
+  const drawn = { bottom: Math.max(...parts.map(({ bottom }) => bottom)) };
+  const inHeap = (point: Vec2) => pointInPolygon(point, shapeOutline(heap));
+  const topBottom = heap.y + heap.height - ELEVATION_STEP;
+
+  it.each([
+    ["its top", topBottom - 10],
+    ["its front face", topBottom + 4],
+    ["the rubble at its foot", topBottom + 20],
+    ["the wall it stands on", drawn.bottom - 1],
+  ])("takes the deck on %s, at a point of it", (_, y) => {
+    const picked = pickSurface(RUBBLE, WALLS, { x: 1220, y }, false);
+    expect(picked.layer).toBe(1);
+    expect(inHeap(picked.point)).toBe(true);
+  });
+
+  it("takes the ground just past what it draws", () => {
+    const world = { x: 1220, y: drawn.bottom + 1 };
+    expect(pickSurface(RUBBLE, WALLS, world, false)).toEqual({ layer: 0, point: world });
+    expect(pickSurface(RUBBLE, WALLS, { x: heap.x - 1, y: topBottom + 4 }, false).layer).toBe(0);
+  });
+
+  it("puts the ground second, for Alt", () => {
+    const world = { x: 1220, y: topBottom + 4 };
+    expect(pickSurface(RUBBLE, WALLS, world, true)).toEqual({ layer: 0, point: world });
+  });
+
+  it("leaves a click on the steps in front of its face to the steps", () => {
+    const world = { x: 1280, y: topBottom + 4 };
+    const steps = pickSurface({ ...RUBBLE, decks: [] }, WALLS, world, false);
+    expect(steps.point).not.toEqual(world);
+    expect(pickSurface(RUBBLE, WALLS, world, false)).toEqual(steps);
+  });
+
+  it("hides a body where a click takes it: one sweep for both", () => {
+    expect(parts).toHaveLength(2);
+    for (const part of parts) {
+      expect(occludersOf(WALLS, RUBBLE)).toContainEqual(part);
+    }
+  });
+
+  it("builds its drawing once while the walls stand, for the hover every frame", () => {
+    expect(deckDrawing(deck, WALLS, RUBBLE)).toBe(parts);
+    const fallen: readonly RenderableWall[] = [];
+    expect(deckDrawing(deck, fallen, RUBBLE)).toHaveLength(1);
+  });
+});
+
+describe("a click on a ramp (#2972)", () => {
+  const rect = (x: number, y: number, width: number, height: number) =>
+    ({ kind: "rect", x, y, width, height }) as const;
+  const STAIRS: MapStructure = {
+    layerCount: 3,
+    biome: "hall",
+    ascentAct: null,
+    bounds: { kind: "rect" },
+    ground: 0,
+    pits: [],
+    tunnels: [],
+    dropOffs: [],
+    downDecks: [],
+    overhangs: [],
+    decor: [],
+    decks: [
+      { layer: 1, footprint: rect(200, 100, 200, 100), look: "platform", switched: null },
+      { layer: 2, footprint: rect(260, -100, 80, 100), look: "platform", switched: null },
+    ],
+    transitions: [
+      { from: 0, to: 1, area: rect(100, 100, 120, 100), uphill: "e", look: "ramp", lift: null },
+      { from: 1, to: 2, area: rect(280, 0, 40, 120), uphill: "n", look: "ramp", lift: null },
+    ],
+    water: [],
+    zones: [],
+  };
+  const drawnAt = (point: { x: number; y: number }, layer: number) => ({
+    x: point.x,
+    y: point.y - liftAt(STAIRS, [], point, layer),
+  });
+
+  it("lands where the 0→1 ramp is drawn, its upper half on the upper layer", () => {
+    const point = { x: 180, y: 150 };
+    const picked = pickSurface(STAIRS, [], drawnAt(point, 1), false);
+    expect(picked.layer).toBe(1);
+    expect(picked.point.x).toBeCloseTo(180, 5);
+    expect(picked.point.y).toBeCloseTo(150, 5);
+  });
+
+  it("is the lower layer in the lower half", () => {
+    expect(pickSurface(STAIRS, [], drawnAt({ x: 130, y: 150 }, 0), false).layer).toBe(0);
+  });
+
+  it("lands where the 1→2 ramp is drawn, a slope along y", () => {
+    const point = { x: 300, y: 30 };
+    const picked = pickSurface(STAIRS, [], drawnAt(point, 2), false);
+    expect(picked.layer).toBe(2);
+    expect(picked.point.x).toBeCloseTo(300, 5);
+    expect(picked.point.y).toBeCloseTo(30, 3);
+  });
+
+  it("gives the surface beneath with Alt", () => {
+    const at = drawnAt({ x: 180, y: 150 }, 1);
+    expect(pickSurface(STAIRS, [], at, true)).toEqual({ layer: 0, point: at });
+  });
+});
+
+describe("the hidden part of a body (#2831)", () => {
+  it("is all of a body well under the deck, dashed (#2979)", () => {
+    const shown = hiddenSegments(150, 0).length;
+    expect(shown / 48).toBeCloseTo(HIDDEN_DASH / (HIDDEN_DASH + HIDDEN_GAP), 1);
+  });
+
+  it("is dashes no longer than a dash and a piece, with gaps between (#2979)", () => {
+    const pieces = hiddenPieces(200, 150);
+    const lengthOf = ({ ax, ay, bx, by }: HiddenPiece): number => Math.hypot(bx - ax, by - ay);
+    const piece = Math.max(...pieces.map(lengthOf));
+    const dashes: number[] = [];
+    pieces.forEach((each, at) => {
+      const before = pieces[at - 1];
+      const joined = before?.bx === each.ax && before.by === each.ay;
+      const length = lengthOf(each);
+      if (joined) {
+        dashes[dashes.length - 1] = (dashes.at(-1) ?? 0) + length;
+      } else {
+        dashes.push(length);
+      }
+    });
+    expect(dashes.length).toBeGreaterThan(1);
+    expect(dashes.every((dash) => dash <= HIDDEN_DASH + piece + 1e-9)).toBe(true);
+  });
+
+  it("keeps its dashes to a body that moves, not crawling round it (#2979)", () => {
+    const moved = hiddenPieces(201, 150).map(({ ax, ay, bx, by }) => ({
+      ax: ax - 1,
+      ay,
+      bx: bx - 1,
+      by,
+    }));
+    const here = hiddenPieces(200, 150);
+    expect(moved).toHaveLength(here.length);
+    const rounded = (pieces: readonly HiddenPiece[]): string[] =>
+      pieces.map(({ ax, ay, bx, by }) => [ax, ay, bx, by].map((n) => n.toFixed(6)).join(","));
+    expect(rounded(moved)).toEqual(rounded(here));
+  });
+
+  it("is only the part under the deck's edge", () => {
+    // The deck's face and side reach down to y 200.
+    const seen = hiddenSegments(200, 0);
+    expect(seen.length).toBeGreaterThan(0);
+    expect(seen.length).toBeLessThan(48);
+    expect(seen.every((point) => point.y <= 200)).toBe(true);
+  });
+
+  it("is nothing for a body clear of it, or standing on it", () => {
+    expect(hiddenSegments(400, 0)).toEqual([]);
+    expect(hiddenSegments(150, 1)).toEqual([]);
+  });
+
+  it("is nothing on a map of one layer", () => {
+    expect(occludersOf([], FLAT_STRUCTURE)).toEqual([]);
+  });
+});
+
+describe("a body under a raised ramp (#2975)", () => {
+  // Training Heights' shape: a ground ramp up to the bridge, a raised one up to the platform.
+  const lower = {
+    from: 0,
+    to: 1,
+    area: { kind: "rect", x: 300, y: 350, width: 140, height: 200 },
+    uphill: "e",
+    look: "ramp",
+    lift: null,
+  } as const;
+  const upper = {
+    from: 1,
+    to: 2,
+    area: { kind: "rect", x: 540, y: 250, width: 120, height: 120 },
+    uphill: "n",
+    look: "ramp",
+    lift: null,
+  } as const;
+  const HEIGHTS: MapStructure = {
+    layerCount: 3,
+    biome: "hall",
+    ascentAct: null,
+    bounds: { kind: "rect" },
+    ground: 0,
+    pits: [],
+    tunnels: [],
+    dropOffs: [],
+    downDecks: [],
+    overhangs: [],
+    decor: [],
+    decks: [
+      {
+        layer: 1,
+        footprint: { kind: "rect", x: 420, y: 350, width: 360, height: 200 },
+        look: "platform",
+        switched: null,
+      },
+      {
+        layer: 2,
+        footprint: { kind: "rect", x: 520, y: 160, width: 160, height: 110 },
+        look: "platform",
+        switched: null,
+      },
+    ],
+    transitions: [lower, upper],
+    water: [],
+    zones: [],
+  };
+  const occluders = occludersOf([], HEIGHTS);
+  const slope = rampDrawing(HEIGHTS, upper).slope;
+  const middle = {
+    x: slope.reduce((sum, { x }) => sum + x, 0) / slope.length,
+    y: slope.reduce((sum, { y }) => sum + y, 0) / slope.length,
+  };
+  const hidden = (
+    layer: number,
+    at: { readonly x: number; readonly y: number } = middle,
+  ): number => {
+    let count = 0;
+    traceHiddenOutline(RING_PATH, at.x, at.y, 10, layer, occluders, () => {
+      count += 1;
+    });
+    return count;
+  };
+
+  it("has an occluder for each ramp's slope and its side face, which draws with it (#3251)", () => {
+    const { side } = rampDrawing(HEIGHTS, upper);
+    expect(occluders).toHaveLength(6);
+    expect(occluders.slice(4)).toMatchObject([
+      { outline: slope, hidesThrough: 1, lowLift: 0, exempt: null },
+      { outline: side, hidesThrough: 1, lowLift: 0, exempt: null },
+    ]);
+  });
+
+  it("hides a body on the ground or on the deck it starts from under the slope, not one above (#3178)", () => {
+    expect(hidden(0)).toBeGreaterThan(0);
+    expect(hidden(1)).toBeGreaterThan(0);
+    expect(hidden(2)).toBe(0);
+  });
+
+  // West of the bridge's deck, north of the ground ramp, where its lifted slope is drawn (#3000).
+  const behind = { x: 400, y: 335 };
+
+  it("hides a ground body behind the ground ramp's lifted slope (#3000)", () => {
+    expect(hidden(0, behind)).toBeGreaterThan(0);
+  });
+
+  it("hides neither a ground body on the ground ramp nor a body above it (#3000)", () => {
+    expect(hidden(0, { x: 330, y: 450 })).toBe(0);
+    expect(hidden(1, behind)).toBe(0);
+  });
+
+  it("covers a polyline behind the ground ramp, not one on it (#3000)", () => {
+    const across = (y: number, from: number, to: number) => [
+      { x: from, y },
+      { x: to, y },
+    ];
+    expect(traceHiddenPolyline(across(behind.y, 390, 410), 0, occluders)).not.toHaveLength(0);
+    expect(traceHiddenPolyline(across(450, 310, 360), 0, occluders)).toHaveLength(0);
+  });
+});
+
+describe("the hidden part of a weapon and symbol (#2972)", () => {
+  // The deck draws ELEVATION_STEP above its footprint.
+  const under = 150 - ELEVATION_STEP;
+  const occluders = occludersOf([], BRIDGE);
+  const span = (pieces: readonly { ax: number; bx: number }[]) => ({
+    left: Math.min(...pieces.map(({ ax, bx }) => Math.min(ax, bx))),
+    right: Math.max(...pieces.map(({ ax, bx }) => Math.max(ax, bx))),
+  });
+
+  it("covers only the part of a polyline under a deck", () => {
+    // 136 is 76 along the line, inside its dash from 72 to 77.
+    const line = [
+      { x: 60, y: under },
+      { x: 136, y: under },
+    ];
+    const { left, right } = span(traceHiddenPolyline(line, 0, occluders));
+    expect(left).toBeCloseTo(100, 0);
+    expect(right).toBeCloseTo(136, 0);
+  });
+
+  it("dashes one long straight segment, measured from the line's start (#2979)", () => {
+    const line = [
+      { x: 150, y: under },
+      { x: 190, y: under },
+    ];
+    const pieces = traceHiddenPolyline(line, 0, occluders);
+    const along = (x: number): number => x - 150;
+    expect(pieces.length).toBeGreaterThan(0);
+    for (const { ax, bx } of pieces) {
+      const from = along(Math.min(ax, bx)) % (HIDDEN_DASH + HIDDEN_GAP);
+      expect(from).toBeLessThan(HIDDEN_DASH);
+      expect(from + Math.abs(bx - ax)).toBeLessThanOrEqual(HIDDEN_DASH + 1e-9);
+    }
+    const covered = pieces.reduce((sum, { ax, bx }) => sum + Math.abs(bx - ax), 0);
+    // 40 long: dashes at 0, 9, 18, 27 and 36, the last cut at 40.
+    expect(covered).toBeCloseTo(4 * HIDDEN_DASH + 4, 9);
+  });
+
+  it("covers a polyline wholly under a deck", () => {
+    const line = [
+      { x: 150, y: under },
+      { x: 190, y: under },
+    ];
+    const { left, right } = span(traceHiddenPolyline(line, 0, occluders));
+    expect(left).toBeCloseTo(150, 0);
+    expect(right).toBeCloseTo(190, 0);
+  });
+
+  it("covers nothing clear of a deck, or on a layer it does not hide", () => {
+    const clear = [
+      { x: 20, y: under },
+      { x: 60, y: under },
+    ];
+    const above = [
+      { x: 150, y: under },
+      { x: 190, y: under },
+    ];
+    expect(traceHiddenPolyline(clear, 0, occluders)).toEqual([]);
+    expect(traceHiddenPolyline(above, 1, occluders)).toEqual([]);
+  });
+
+  it("crops a symbol half under the deck to its hidden half", () => {
+    expect(hiddenCrop(100, under, 16, 0, occluders)).toEqual({
+      x: 0.5,
+      y: 0,
+      width: 0.5,
+      height: 1,
+    });
+  });
+
+  it("has no crop for a symbol in the clear", () => {
+    expect(hiddenCrop(40, under, 16, 0, occluders)).toBeUndefined();
+  });
+});
+
+describe("clicking a character on a layered map (#2831)", () => {
+  const actor = (id: string, y: number, layer: number): RenderableActor => ({
+    name: id,
+    nameLead: undefined,
+    guildTag: undefined,
+    heroRank: 0,
+    signet: undefined,
+    cosmetics: {},
+    cape: undefined,
+    bot: false,
+    facing: 0,
+    weaponId: undefined,
+    swingElapsed: 0,
+    swingTotal: 0,
+    attackCast: undefined,
+    spellCast: undefined,
+    offhandId: undefined,
+    profession: undefined,
+    creatureLook: undefined,
+    auraRadius: undefined,
+    team: "enemy",
+    health: 500,
+    maxHealth: 500,
+    exploited: false,
+    knockedDown: false,
+    castProgress: undefined,
+    castType: undefined,
+    statuses: [],
+    enchanted: false,
+    stanced: false,
+    hexed: false,
+    formed: false,
+    cursed: false,
+    invulnerable: false,
+    teleportReadyAt: 0,
+    conditionCues: [],
+    id,
+    layer,
+    dead: false,
+    radius: 10,
+    position: { x: 200, y },
+  });
+
+  it("finds a body on a deck where it is drawn", () => {
+    const arena = atRest({ ...EMPTY_SNAPSHOT, structure: BRIDGE, actors: [actor("up", 150, 1)] });
+    expect(actorAtPoint(arena, { x: 200, y: 150 - ELEVATION_STEP })?.id).toBe("up");
+    expect(actorAtPoint(arena, { x: 200, y: 150 })).toBeUndefined();
+  });
+
+  it("finds a body under a deck through its outline", () => {
+    const arena = atRest({
+      ...EMPTY_SNAPSHOT,
+      structure: BRIDGE,
+      actors: [actor("under", 150, 0)],
+    });
+    expect(actorAtPoint(arena, { x: 205, y: 150 })?.id).toBe("under");
+  });
+});
+
+describe("liftAt (#2958)", () => {
+  const deck = (layer: number, x: number, y: number, width: number, height: number) => ({
+    layer,
+    footprint: { kind: "rect" as const, x, y, width, height },
+    look: "platform" as const,
+    switched: null,
+  });
+  const ramp = (
+    from: number,
+    to: number,
+    [x, y, width, height]: readonly [number, number, number, number],
+    uphill: Uphill,
+  ) => ({
+    from,
+    to,
+    area: { kind: "rect" as const, x, y, width, height },
+    uphill,
+    look: "ramp" as const,
+    lift: null,
+  });
+  const HEIGHTS: MapStructure = {
+    layerCount: 3,
+    biome: "hall",
+    ascentAct: null,
+    bounds: { kind: "rect" },
+    ground: 0,
+    pits: [],
+    tunnels: [],
+    dropOffs: [],
+    downDecks: [],
+    overhangs: [],
+    decor: [],
+    decks: [deck(1, 420, 250, 360, 200), deck(2, 520, 60, 160, 110)],
+    transitions: [
+      ramp(0, 1, [300, 250, 140, 200], "e"),
+      ramp(0, 1, [760, 250, 140, 200], "w"),
+      ramp(1, 2, [540, 150, 120, 120], "n"),
+    ],
+    water: [],
+    zones: [],
+  };
+  const STEP = ELEVATION_STEP;
+  const R = 14;
+
+  it.each([
+    ["west ramp", { x: 300, y: 350 }, { x: 370, y: 350 }, { x: 440, y: 350 }, 0],
+    ["east ramp", { x: 900, y: 350 }, { x: 830, y: 350 }, { x: 760, y: 350 }, 0],
+    ["1 to 2 ramp", { x: 600, y: 270 }, { x: 600, y: 210 }, { x: 600, y: 150 }, 1],
+  ])("%s: low end, midpoint, high end", (_name, low, mid, high, base) => {
+    expect(liftAt(HEIGHTS, [], low, base)).toBeCloseTo(base * STEP);
+    expect(liftAt(HEIGHTS, [], mid, base)).toBeCloseTo((base + 0.5) * STEP);
+    expect(liftAt(HEIGHTS, [], high, base + 1)).toBeCloseTo((base + 1) * STEP);
+  });
+
+  it("does not depend on which of the ramp's layers the body is on", () => {
+    expect(liftAt(HEIGHTS, [], { x: 370, y: 350 }, 1)).toBe(
+      liftAt(HEIGHTS, [], { x: 370, y: 350 }, 0),
+    );
+  });
+
+  it("leaves a layer the ramp does not join at its own height", () => {
+    expect(liftAt(HEIGHTS, [], { x: 600, y: 260 }, 0)).toBe(0);
+  });
+
+  it("is the layer's height off every ramp", () => {
+    expect(liftAt(HEIGHTS, [], { x: 600, y: 400 }, 1)).toBe(STEP);
+    expect(liftAt(HEIGHTS, [], { x: 100, y: 100 }, 0)).toBe(0);
+  });
+
+  it("never steps on a walk from the ground to the deck", () => {
+    const walked = 5;
+    let last = 0;
+    for (let x = 280; x <= 460; x += walked) {
+      const layer = x < 300 ? 0 : 1;
+      const lift = liftAt(HEIGHTS, [], { x, y: 350 }, layer);
+      expect(Math.abs(lift - last)).toBeLessThanOrEqual((walked / 140) * STEP + 1e-9);
+      last = lift;
+    }
+    expect(last).toBe(STEP);
+  });
+
+  it("draws a body on a ramp in the ramp's upper layer, so its deck does not cover it", () => {
+    expect(drawnLayerAt(HEIGHTS, { x: 430, y: 350 }, 0, R)).toBe(1);
+    expect(drawnLayerAt(HEIGHTS, { x: 600, y: 260 }, 0, R)).toBe(0);
+    expect(drawnLayerAt(HEIGHTS, { x: 100, y: 100 }, 0, R)).toBe(0);
+  });
+
+  it("draws a body whose disc reaches a ramp in front of it (#2965)", () => {
+    expect(drawnLayerAt(HEIGHTS, { x: 299, y: 350 }, 0, R)).toBe(1);
+    expect(drawnLayerAt(HEIGHTS, { x: 350, y: 455 }, 0, R)).toBe(1);
+    expect(drawnLayerAt(HEIGHTS, { x: 535, y: 260 }, 1, R)).toBe(2);
+    expect(drawnLayerAt(HEIGHTS, { x: 525, y: 260 }, 1, R)).toBe(1);
+  });
+
+  it("keeps a body under a deck there, in reach of the ramp's high end", () => {
+    expect(drawnLayerAt(HEIGHTS, { x: 446, y: 350 }, 0, R)).toBe(0);
+    expect(drawnLayerAt(HEIGHTS, { x: 530, y: 165 }, 1, R)).toBe(1);
+  });
+
+  it("slopes the drawing from the lower layer's height to the upper's", () => {
+    const [west] = HEIGHTS.transitions;
+    if (west === undefined) throw new Error("no ramp");
+    const drawn = rampDrawing(HEIGHTS, west);
+    expect(drawn.slope).toEqual([
+      { x: 300, y: 250 },
+      { x: 440, y: 250 - STEP },
+      { x: 440, y: 450 - STEP },
+      { x: 300, y: 450 },
+    ]);
+    expect(drawn.side[2]).toEqual({ x: 440, y: 450 });
+    expect(drawn.chevrons).toHaveLength(3);
+  });
+
+  it("makes a deck on a ground wall a slab, and leaves other decks solid", () => {
+    const [bridge, platform] = HEIGHTS.decks;
+    if (bridge === undefined || platform === undefined) throw new Error("no decks");
+    const pillar = { kind: "rect" as const, layer: 0, x: 450, y: 420, width: 24, height: 24 };
+    expect(deckSideLow(bridge, [pillar], 0)).toBe(STEP - DECK_SLAB);
+    expect(deckSideLow(bridge, [], 0)).toBe(0);
+    expect(deckSideLow(platform, [pillar], 0)).toBe(STEP);
+  });
+});
+
+describe("a stair cut into a terrace (#3178)", () => {
+  // Canyon's south-west stairs: from a ledge up south into a terrace that wraps round it.
+  const stairs = {
+    from: 1,
+    to: 2,
+    area: { kind: "rect", x: 580, y: 1500, width: 80, height: 120 },
+    uphill: "s",
+    look: "stairs",
+    lift: null,
+  } as const;
+  const ledge = {
+    layer: 1,
+    footprint: { kind: "rect", x: 560, y: 1380, width: 220, height: 130 },
+    look: "ledge",
+    switched: null,
+  } as const;
+  const terrace = {
+    layer: 2,
+    footprint: {
+      kind: "polygon",
+      points: [
+        { x: 400, y: 1400 },
+        { x: 560, y: 1400 },
+        { x: 560, y: 1510 },
+        { x: 580, y: 1510 },
+        { x: 580, y: 1610 },
+        { x: 660, y: 1610 },
+        { x: 660, y: 1510 },
+        { x: 780, y: 1510 },
+        { x: 780, y: 1400 },
+        { x: 900, y: 1400 },
+        { x: 900, y: 1750 },
+        { x: 400, y: 1750 },
+      ],
+    },
+    look: "terrace",
+    switched: null,
+  } as const;
+  const CUT: MapStructure = {
+    ...FLAT_STRUCTURE,
+    layerCount: 3,
+    decks: [ledge, terrace],
+    transitions: [stairs],
+  };
+  const R = 14;
+
+  it("draws no south side face where the terrace goes on beyond the stair", () => {
+    expect(rampDrawing(CUT, stairs).side).toEqual([]);
+  });
+
+  it("keeps the south side face of a stair with nothing south of it", () => {
+    const open = { ...CUT, decks: [ledge] };
+    expect(rampDrawing(open, stairs).side).toHaveLength(4);
+  });
+
+  it("draws a body at the stair's foot, on it and at its top on the terrace's layer", () => {
+    expect(drawnLayerAt(CUT, { x: 620, y: 1490 }, 1, R)).toBe(2);
+    expect(drawnLayerAt(CUT, { x: 620, y: 1560 }, 1, R)).toBe(2);
+    expect(drawnLayerAt(CUT, { x: 620, y: 1630 }, 2, R)).toBe(2);
+  });
+
+  it("outlines a ledge body the stair's slope covers, never a body on the terrace", () => {
+    const occluders = occludersOf([], CUT);
+    const count = (x: number, y: number, layer: number): number => {
+      let n = 0;
+      traceHiddenOutline(RING_PATH, x, y, R, layer, occluders, () => {
+        n += 1;
+      });
+      return n;
+    };
+    const slope = rampDrawing(CUT, stairs).slope;
+    const middle = {
+      x: slope.reduce((sum, { x }) => sum + x, 0) / slope.length,
+      y: slope.reduce((sum, { y }) => sum + y, 0) / slope.length,
+    };
+    expect(count(middle.x, middle.y, 1)).toBeGreaterThan(0);
+    expect(count(middle.x, middle.y, 2)).toBe(0);
+  });
+});
+
+describe("structures with height", () => {
+  const wall = { kind: "rect" as const, layer: 0, x: 150, y: 400, width: 100, height: 40 };
+  const deck = {
+    layer: 1,
+    footprint: { kind: "rect" as const, x: 420, y: 250, width: 360, height: 200 },
+    look: "platform" as const,
+    switched: null,
+  };
+  const pillar = { kind: "rect" as const, layer: 0, x: 450, y: 420, width: 24, height: 24 };
+  const structure: MapStructure = { ...FLAT_STRUCTURE, layerCount: 2, decks: [deck] };
+  const hiddenAt = (y: number): number => {
+    let pieces = 0;
+    traceHiddenOutline(RING_PATH, 200, y, 10, 0, occludersOf([wall], structure), () => {
+      pieces += 1;
+    });
+    return pieces;
+  };
+
+  it("has a wall cover its own height", () => {
+    const [occluder] = occludersOf([wall], structure);
+    expect([occluder?.lowLift, occluder?.highLift]).toEqual([0, WALL_HEIGHT]);
+  });
+
+  it("has a support cover the ground to its deck's underside", () => {
+    const [occluder] = occludersOf([pillar], structure);
+    expect([occluder?.lowLift, occluder?.highLift]).toEqual([0, ELEVATION_STEP - DECK_SLAB]);
+  });
+
+  it("has a slab deck end where its slab does", () => {
+    expect(occludersOf([pillar], structure)[1]?.bottom).toBe(406);
+  });
+
+  it("hides a body north of a wall within the wall's height, not beyond", () => {
+    expect(hiddenAt(400 - WALL_HEIGHT / 2)).toBeGreaterThan(0);
+    expect(hiddenAt(400 - WALL_HEIGHT - 12)).toBe(0);
+  });
+
+  it("finds the south edges of a shape, whichever way it winds", () => {
+    const south = [{ from: { x: 10, y: 10 }, to: { x: 0, y: 10 } }];
+    expect(southFacingEdges({ kind: "rect", x: 0, y: 0, width: 10, height: 10 })).toEqual(south);
+    const points = [
+      { x: 0, y: 0 },
+      { x: 0, y: 10 },
+      { x: 10, y: 10 },
+      { x: 10, y: 0 },
+    ];
+    expect(southFacingEdges({ kind: "polygon", points })).toEqual([
+      { from: { x: 0, y: 10 }, to: { x: 10, y: 10 } },
+    ]);
+  });
+
+  it("cuts planks to the shape's outline", () => {
+    const points = [
+      { x: 0, y: 0 },
+      { x: 96, y: 0 },
+      { x: 0, y: 96 },
+    ];
+    expect(plankLines({ kind: "polygon", points }, 48)).toEqual([
+      { from: { x: 48, y: 0 }, to: { x: 48, y: 48 } },
+    ]);
+  });
+});
+
+describe("a level under the ground (#2973)", () => {
+  const rect = (x: number, y: number, width: number, height: number) =>
+    ({ kind: "rect", x, y, width, height }) as const;
+  // Training Heights' pit and tunnel: the ground is layer 1, they are layer 0.
+  const SUNK: MapStructure = {
+    ...FLAT_STRUCTURE,
+    layerCount: 3,
+    biome: "hall",
+    ascentAct: null,
+    bounds: { kind: "rect" },
+    ground: 1,
+    pits: [{ footprint: rect(500, 520, 200, 130) }],
+    tunnels: [{ footprint: rect(700, 550, 280, 70) }],
+    downDecks: [],
+    overhangs: [],
+  };
+  const STEP = ELEVATION_STEP;
+  const occluders = occludersOf([], SUNK);
+  // A body on layer 0 draws a step down.
+  const hidden = (x: number, y: number, layer: number): number => {
+    let count = 0;
+    const drawnY = layer === 0 ? y + STEP : y;
+    traceHiddenOutline(RING_PATH, x, drawnY, 10, layer, occluders, () => {
+      count += 1;
+    });
+    return count;
+  };
+
+  it("hides a body in the tunnel, not one on the ground over it", () => {
+    expect(hidden(840, 585, 0)).toBeGreaterThan(0);
+    expect(hidden(840, 585, 1)).toBe(0);
+  });
+
+  it("hides a pit's body behind the near lip, and shows it in the open pit", () => {
+    expect(hidden(600, 640, 0)).toBeGreaterThan(0);
+    expect(hidden(600, 560, 0)).toBe(0);
+  });
+
+  it("names the pit's floor where it is drawn, and nothing above it", () => {
+    const world = { x: 650, y: 600 };
+    expect(surfacesAt(SUNK, [], world)).toEqual([{ layer: 0, point: { x: 650, y: 600 - STEP } }]);
+    expect(pickSurface(SUNK, [], world, true)).toEqual({
+      layer: 0,
+      point: { x: 650, y: 600 - STEP },
+    });
+  });
+
+  it("names the ground over the tunnel, and the tunnel's floor with Alt", () => {
+    const world = { x: 840, y: 610 };
+    expect(pickSurface(SUNK, [], world, false)).toEqual({ layer: 1, point: world });
+    expect(pickSurface(SUNK, [], world, true)).toEqual({
+      layer: 0,
+      point: { x: 840, y: 610 - STEP },
+    });
+  });
+
+  it("names the ground on the near lip, and the pit's floor behind it with Alt", () => {
+    const world = { x: 600, y: 680 };
+    expect(surfacesAt(SUNK, [], world)).toEqual([
+      { layer: 1, point: world },
+      { layer: 0, point: { x: 600, y: 680 - STEP } },
+    ]);
+  });
+
+  it("draws the pit a step down, the tunnel's mouth at the foot of its east wall", () => {
+    const [pit] = SUNK.pits;
+    if (pit === undefined) throw new Error("no pit");
+    const drawn = pitDrawing(SUNK, pit);
+    expect(drawn.floor[0]).toEqual({ x: 500, y: 520 + STEP });
+    expect(drawn.farWall[2]).toEqual({ x: 700, y: 520 + STEP });
+    expect(drawn.mouths).toHaveLength(1);
+    expect(drawn.mouths[0]?.[1]).toEqual({ x: 700, y: 550 + STEP });
+    expect(drawn.mouths[0]?.[2]).toEqual({ x: 700, y: 620 + STEP });
+    expect(drawn.passages).toEqual([]);
+  });
+
+  it("shows a tunnel running on north of a pit as its floor, not a dark mouth (#3329)", () => {
+    // A shaft at the south end of a gallery running north.
+    const shaft: MapStructure = {
+      ...SUNK,
+      pits: [{ footprint: rect(500, 700, 80, 120) }],
+      tunnels: [{ footprint: rect(500, 500, 80, 260) }],
+    };
+    const [pit] = shaft.pits;
+    if (pit === undefined) throw new Error("no pit");
+    const drawn = pitDrawing(shaft, pit);
+    expect(drawn.mouths).toEqual([]);
+    expect(drawn.passages).toEqual([
+      [
+        { x: 500, y: 700 },
+        { x: 580, y: 700 },
+        { x: 580, y: 700 + STEP },
+        { x: 500, y: 700 + STEP },
+      ],
+    ]);
+  });
+
+  it("covers the tunnel and the step south of it, where whoever is in it draws", () => {
+    const [tunnel] = SUNK.tunnels;
+    if (tunnel === undefined) throw new Error("no tunnel");
+    const [cover, ...more] = tunnelCover(SUNK, tunnel);
+    expect(more).toEqual([]);
+    expect(cover?.[0]).toEqual({ x: 700, y: 550 });
+    expect(cover?.[2]).toEqual({ x: 980, y: 620 + STEP });
+  });
+
+  describe("stairs down through the cover (#3329)", () => {
+    const stair = (x: number) =>
+      ({
+        from: 0,
+        to: 1,
+        area: rect(x, 500, 60, 90),
+        uphill: "n",
+        look: "stairs",
+        lift: null,
+      }) as const;
+    // One comes down inside the roof; one only meets its west edge, a mouth outside it.
+    const SHAFT = { ...SUNK, transitions: [stair(800), stair(640)] };
+    const [tunnel] = SHAFT.tunnels;
+    if (tunnel === undefined) throw new Error("no tunnel");
+
+    it("opens the overlap of a stair inside the footprint, and none for one outside it", () => {
+      expect(tunnelOpenings(SHAFT, tunnel)).toEqual([
+        [
+          { x: 800, y: 550 },
+          { x: 860, y: 550 },
+          { x: 860, y: 590 },
+          { x: 800, y: 590 },
+        ],
+      ]);
+      expect(tunnelOpenings({ ...SUNK, transitions: [stair(640)] }, tunnel)).toEqual([]);
+    });
+
+    it("cuts the hole out of the cover, which still covers the rest", () => {
+      const cover = tunnelCover(SHAFT, tunnel);
+      const covered = (x: number, y: number): boolean =>
+        cover.some((piece) => pointInPolygon({ x, y }, piece));
+      expect(covered(830, 570)).toBe(false);
+      expect(covered(830, 600)).toBe(true);
+      expect(covered(750, 570)).toBe(true);
+      expect(covered(900, 570)).toBe(true);
+      expect(covered(830, 620 + STEP - 1)).toBe(true);
+    });
+
+    it("shows a body on the stair through the hole, and still hides one under the roof", () => {
+      const shown = occludersOf([], SHAFT);
+      const count = (x: number, y: number): number => {
+        let hidden = 0;
+        traceHiddenOutline(RING_PATH, x, y + STEP, 4, 0, shown, () => {
+          hidden += 1;
+        });
+        return hidden;
+      };
+      expect(count(830, 560 - STEP)).toBe(0);
+      expect(count(930, 585)).toBeGreaterThan(0);
+    });
+
+    it("rims the hole as the seam, and puts no grating slot in it", () => {
+      // Over the first slot, centred at 780: the hole is 760..820 by 550..590.
+      const seam = tunnelSeam({ ...SUNK, transitions: [stair(760)] }, tunnel, 2);
+      expect(seam.edges).toContainEqual({ from: { x: 758, y: 590 }, to: { x: 822, y: 590 } });
+      expect(seam.edges).toContainEqual({ from: { x: 760, y: 548 }, to: { x: 760, y: 592 } });
+      // The lip runs on the roof's side of the hole's edge.
+      expect(seam.lips).toContainEqual({ from: { x: 762, y: 592 }, to: { x: 818, y: 592 } });
+      const centres = seam.slots.map((slot) => ((slot[0]?.x ?? 0) + (slot[1]?.x ?? 0)) / 2);
+      expect(centres).toEqual([780 + TUNNEL_GRATING_STEP]);
+    });
+
+    it("opens a pit inside the roof, and the step south of a shaft at its end", () => {
+      // A shaft over the gallery's south edge, its stair inside it.
+      const pitted: MapStructure = {
+        ...SUNK,
+        pits: [{ footprint: rect(880, 580, 60, 120) }],
+        transitions: [{ ...stair(880), area: rect(885, 590, 50, 100) }],
+      };
+      // One hole: the stair is in the pit's.
+      expect(tunnelOpenings(pitted, tunnel)).toEqual([
+        [
+          { x: 880, y: 580 },
+          { x: 940, y: 580 },
+          { x: 940, y: 620 + STEP },
+          { x: 880, y: 620 + STEP },
+        ],
+      ]);
+      const cover = tunnelCover(pitted, tunnel);
+      const covered = (x: number, y: number): boolean =>
+        cover.some((piece) => pointInPolygon({ x, y }, piece));
+      // The tunnel's floor seen down the shaft, a step south of the footprint, is not covered.
+      expect(covered(910, 650)).toBe(false);
+      expect(covered(910, 570)).toBe(true);
+    });
+
+    it("draws no edge across an open pit, only round the roof", () => {
+      // A pit across the gallery's west end: its rim, not a seam, is the edge there.
+      const pitted: MapStructure = { ...SUNK, pits: [{ footprint: rect(660, 540, 80, 90) }] };
+      const seam = tunnelSeam(pitted, tunnel, 2);
+      const across = seam.edges.filter(
+        ({ from, to }) => from.x === to.x && from.x === 700 && from.y < 620 && to.y > 550,
+      );
+      expect(across).toEqual([]);
+      expect(seam.edges).toContainEqual({ from: { x: 740, y: 548 }, to: { x: 740, y: 622 } });
+    });
+  });
+
+  it("seams the tunnel's cover with its edge and a grating slot every 120 along it (#3236)", () => {
+    const [tunnel] = SUNK.tunnels;
+    if (tunnel === undefined) throw new Error("no tunnel");
+    const seam = tunnelSeam(SUNK, tunnel, 2);
+    expect(seam.edges).toEqual([
+      { from: { x: 698, y: 550 }, to: { x: 982, y: 550 } },
+      { from: { x: 698, y: 620 }, to: { x: 982, y: 620 } },
+      { from: { x: 700, y: 548 }, to: { x: 700, y: 622 } },
+      { from: { x: 980, y: 548 }, to: { x: 980, y: 622 } },
+    ]);
+    expect(seam.lips[0]).toEqual({ from: { x: 702, y: 552 }, to: { x: 978, y: 552 } });
+    expect(seam.slots).toHaveLength(2);
+    const centres = seam.slots.map((slot) => ((slot[0]?.x ?? 0) + (slot[1]?.x ?? 0)) / 2);
+    expect(centres).toEqual([780, 780 + TUNNEL_GRATING_STEP]);
+    expect(seam.slots[0]?.[0]?.y).toBeCloseTo(585 - 17.5);
+  });
+
+  it("lifts a ramp out of the pit from its floor to the ground", () => {
+    const ramp = {
+      from: 0,
+      to: 1,
+      area: rect(500, 545, 110, 80),
+      uphill: "w",
+      look: "ramp",
+      lift: null,
+    } as const;
+    const withRamp = { ...SUNK, transitions: [ramp] };
+    expect(liftAt(withRamp, [], { x: 610, y: 580 }, 0)).toBeCloseTo(-STEP);
+    expect(liftAt(withRamp, [], { x: 555, y: 580 }, 1)).toBeCloseTo(-STEP / 2);
+    expect(liftAt(SUNK, [], { x: 600, y: 580 }, 0)).toBe(-STEP);
+  });
+});
+
+describe("trackAlt (#3020)", () => {
+  /** An event of `type`, with Alt as given, as a key or pointer event carries it. */
+  const event = (type: string, altKey: boolean): Event =>
+    Object.assign(new Event(type), { altKey });
+
+  it("follows Alt's own key events, with no pointer event between", () => {
+    const target = new EventTarget();
+    const alt = trackAlt(target);
+    expect(alt.held()).toBe(false);
+    target.dispatchEvent(event("keydown", true));
+    expect(alt.held()).toBe(true);
+    target.dispatchEvent(event("keyup", false));
+    expect(alt.held()).toBe(false);
+  });
+
+  it("is not held after the window loses focus", () => {
+    const target = new EventTarget();
+    const alt = trackAlt(target);
+    target.dispatchEvent(event("keydown", true));
+    target.dispatchEvent(new Event("blur"));
+    expect(alt.held()).toBe(false);
+  });
+
+  it("follows a pointer event, for Alt pressed outside the page", () => {
+    const target = new EventTarget();
+    const alt = trackAlt(target);
+    target.dispatchEvent(event("pointermove", true));
+    expect(alt.held()).toBe(true);
+    target.dispatchEvent(event("pointerdown", false));
+    expect(alt.held()).toBe(false);
+  });
+
+  it("follows nothing once disposed", () => {
+    const target = new EventTarget();
+    const alt = trackAlt(target);
+    alt.dispose();
+    target.dispatchEvent(event("keydown", true));
+    expect(alt.held()).toBe(false);
+  });
+});
+
+describe("drop-offs (#3069)", () => {
+  const lip = { layer: 1, from: { x: 100, y: 200 }, to: { x: 200, y: 200 } };
+  const cliff: MapStructure = { ...BRIDGE, dropOffs: [lip] };
+
+  it("breaks the lip into notches either side of the edge, its ends on it", () => {
+    const points = brokenLip(lip.from, lip.to);
+    expect(points).toHaveLength(11);
+    expect(points[0]).toEqual(lip.from);
+    expect(points.at(-1)).toEqual(lip.to);
+    expect(points.every((point) => Math.abs(point.y - 200) <= 3)).toBe(true);
+    expect(new Set(points.map((point) => point.y)).size).toBe(3);
+  });
+
+  it("knows the ground just past a drop-off on its layer, and nowhere else", () => {
+    expect(besideDropOff(cliff, { x: 150, y: 216 }, 1)).toBe(true);
+    expect(besideDropOff(cliff, { x: 150, y: 216 }, 2)).toBe(false);
+    expect(besideDropOff(cliff, { x: 150, y: 300 }, 1)).toBe(false);
+    expect(besideDropOff(BRIDGE, { x: 150, y: 216 }, 1)).toBe(false);
+  });
+});
+
+describe("a lift (#3079)", () => {
+  const lift = {
+    from: 0,
+    to: 1,
+    area: { kind: "rect", x: 680, y: 300, width: 120, height: 100 },
+    uphill: "e",
+    look: "lift",
+    lift: { kind: "lever" },
+  } as const;
+  const structure: MapStructure = { ...FLAT_STRUCTURE, layerCount: 2, transitions: [lift] };
+
+  it("draws a body on it at its platform's height, wherever it stands on it", () => {
+    const halfway = [{ phase: "rising", progress: 0.5 }] as const;
+    expect(liftAt(structure, halfway, { x: 690, y: 350 }, 0)).toBeCloseTo(ELEVATION_STEP / 2);
+    expect(liftAt(structure, halfway, { x: 790, y: 350 }, 0)).toBeCloseTo(ELEVATION_STEP / 2);
+    expect(liftAt(structure, [{ phase: "high", progress: 1 }], { x: 690, y: 350 }, 1)).toBe(
+      ELEVATION_STEP,
+    );
+  });
+
+  it("hides nothing: its platform moves", () => {
+    expect(occludersOf([], structure)).toEqual([]);
+  });
+});
+
+describe("the deck a body stands under (#3078)", () => {
+  it("is the deck over a point under it, and none beside it or on it", () => {
+    expect(overhangAt(BRIDGE, { x: 200, y: 150 }, 0)).toBe(BRIDGE.decks[0]);
+    expect(overhangAt(BRIDGE, { x: 200, y: 250 }, 0)).toBeUndefined();
+    expect(overhangAt(BRIDGE, { x: 200, y: 150 }, 1)).toBeUndefined();
+  });
+
+  it("is one deck under two stacked, so a body is shaded once", () => {
+    const tower = { layer: 2, footprint: bridge, look: "tower", switched: null } as const;
+    const stacked: MapStructure = { ...BRIDGE, layerCount: 3, decks: [...BRIDGE.decks, tower] };
+    expect(overhangAt(stacked, { x: 200, y: 150 }, 0)).toBe(BRIDGE.decks[0]);
+    expect(overhangAt(stacked, { x: 200, y: 150 }, 1)).toBe(tower);
+  });
+
+  it("is none on a map without decks", () => {
+    expect(overhangAt(FLAT_STRUCTURE, { x: 200, y: 150 }, 0)).toBeUndefined();
+  });
+});
+
+describe("the side of a raised column (#3157)", () => {
+  it("is each south-facing edge swept from its foot up to its top (#3162)", () => {
+    expect(sweptEdges(bridge, 0, 30)).toEqual([
+      [
+        { x: 300, y: 200 },
+        { x: 100, y: 200 },
+        { x: 100, y: 170 },
+        { x: 300, y: 170 },
+      ],
+    ]);
+  });
+
+  it("starts a column raised off the ground at its low end", () => {
+    const [first] = sweptEdges(bridge, 10, 30);
+    expect(first?.map(({ y }) => y)).toEqual([190, 190, 170, 170]);
+  });
+
+  it("with the top, covers all the whole column covers, and no more (#3162)", () => {
+    // An L with a notch in its south side and a slanted edge: every kind of corner.
+    const shape = {
+      kind: "polygon" as const,
+      points: [
+        { x: 0, y: 0 },
+        { x: 120, y: 0 },
+        { x: 120, y: 60 },
+        { x: 60, y: 60 },
+        { x: 40, y: 100 },
+        { x: 0, y: 100 },
+      ],
+    };
+    const inside = (outline: readonly Vec2[], { x, y }: Vec2): boolean => {
+      let hit = false;
+      outline.forEach((a, k) => {
+        const b = outline[(k + 1) % outline.length] ?? a;
+        if (a.y > y !== b.y > y && x < a.x + ((y - a.y) / (b.y - a.y)) * (b.x - a.x)) {
+          hit = !hit;
+        }
+      });
+      return hit;
+    };
+    const lifted = (by: number) => shape.points.map(({ x, y }) => ({ x, y: y - by }));
+    const [low, high] = [8, 40];
+    const drawn = [lifted(high), ...sweptEdges(shape, low, high)];
+    for (let y = -50; y <= 110; y += 1.5) {
+      for (let x = -5; x <= 125; x += 1.5) {
+        const point = { x, y };
+        // The column: the shape at some lift between its foot and its top.
+        let column = false;
+        for (let lift = low; lift <= high && !column; lift += 0.25) {
+          column = inside(lifted(lift), point);
+        }
+        expect(
+          drawn.some((piece) => inside(piece, point)),
+          `${String(x)},${String(y)}`,
+        ).toBe(column);
+      }
+    }
+  });
+});
+
+describe("a click over a tunnel (#3234)", () => {
+  // Crossroads' ground is its layer 1; cellar-west and cellar-south run under it.
+  const { structure } = mapStructure("arena-crossroads");
+  const GROUND = 1;
+  const TUNNEL = 0;
+  const STEP = ELEVATION_STEP;
+  // Cellar-west runs north to south, cellar-south west to east.
+  const boxOfTunnel = (at: number): { centre: Vec2; top: number } => {
+    const tunnel = structure.tunnels[at];
+    if (tunnel === undefined) {
+      throw new Error(`no tunnel ${String(at)} on crossroads`);
+    }
+    const outline = shapeOutline(tunnel.footprint);
+    const xs = outline.map(({ x }) => x);
+    const ys = outline.map(({ y }) => y);
+    const top = Math.min(...ys);
+    return {
+      centre: { x: (Math.min(...xs) + Math.max(...xs)) / 2, y: (top + Math.max(...ys)) / 2 },
+      top,
+    };
+  };
+  const west = boxOfTunnel(0);
+  const south = boxOfTunnel(1);
+  // Where a body at the centre of cellar-west draws, a step down.
+  const inWest = west.centre;
+  const world = { x: inWest.x, y: inWest.y + STEP };
+
+  it("goes to the level the body is on: the ground from above, the tunnel from in it", () => {
+    expect(structure.ground).toBe(GROUND);
+    expect(pickSurface(structure, [], world, false, GROUND)).toEqual({
+      layer: GROUND,
+      point: world,
+    });
+    expect(pickSurface(structure, [], world, false, TUNNEL)).toEqual({
+      layer: TUNNEL,
+      point: inWest,
+    });
+    expect(pickSurface(structure, [], world, false)).toEqual({ layer: GROUND, point: world });
+  });
+
+  it("goes down to the tunnel with Alt, and stays in it from in it (#3546)", () => {
+    expect(pickSurface(structure, [], world, true, GROUND)).toEqual({
+      layer: TUNNEL,
+      point: inWest,
+    });
+    expect(pickSurface(structure, [], world, true, TUNNEL)).toEqual({
+      layer: TUNNEL,
+      point: inWest,
+    });
+  });
+
+  it("names the tunnel wherever its cover is drawn, not a step south of it", () => {
+    // Cellar-south's cover starts at its footprint's north edge: the
+    // footprint sunk a step lies wholly south of this point.
+    const { top } = south;
+    const atCover = { x: south.centre.x, y: top + STEP / 2 };
+    expect(pickSurface(structure, [], atCover, true, GROUND)).toEqual({
+      layer: TUNNEL,
+      point: { x: atCover.x, y: top },
+    });
+    expect(pickSurface(structure, [], atCover, false, TUNNEL).layer).toBe(TUNNEL);
+  });
+
+  it("goes to the ground outside every tunnel, from in one", () => {
+    const beside = { x: world.x - 200, y: world.y };
+    expect(pickSurface(structure, [], beside, false, TUNNEL)).toEqual({
+      layer: GROUND,
+      point: beside,
+    });
+  });
+
+  // The ground over a body's own tunnel is cut away; every other still hides.
+  const occluders = occludersOf([], structure);
+  const hidden = (from: Vec2, fromLayer: number, at: Vec2): number => {
+    let count = 0;
+    const seen = seenFrom(occluders, tunnelsHolding(structure, from, fromLayer));
+    traceHiddenOutline(RING_PATH, at.x, at.y + STEP, 10, TUNNEL, seen, () => {
+      count += 1;
+    });
+    return count;
+  };
+  const inSouth = south.centre;
+
+  it("shows a body in the viewer's own tunnel, and hides it from the ground", () => {
+    // South of the streets, which cross cellar-west round its centre, and
+    // north of where cellar-south meets it.
+    const open = { x: inWest.x, y: inWest.y + 150 };
+    expect(hidden(inWest, TUNNEL, open)).toBe(0);
+    expect(hidden(inWest, GROUND, open)).toBeGreaterThan(0);
+  });
+
+  it("still hides a body in the viewer's own tunnel under a road, an image that cannot fade", () => {
+    const roads = (structure.paving ?? []).filter(({ layer }) => layer === GROUND);
+    // The first point along cellar-west whose body draws on a road.
+    const underRoad = Array.from({ length: 70 }, (_, k) => ({
+      x: inWest.x,
+      y: 1200 + 10 * k,
+    })).find((at) =>
+      roads.some(({ area }) => pointInPolygon({ x: at.x, y: at.y + STEP }, shapeOutline(area))),
+    );
+    expect(underRoad).toBeDefined();
+    expect(hidden(inWest, TUNNEL, underRoad ?? inWest)).toBeGreaterThan(0);
+  });
+
+  it("still hides a body in another tunnel from a viewer in one", () => {
+    expect(hidden(inWest, TUNNEL, inSouth)).toBeGreaterThan(0);
+  });
+});

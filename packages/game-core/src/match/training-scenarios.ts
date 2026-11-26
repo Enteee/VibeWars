@@ -1,0 +1,794 @@
+import { INHERENT_ARMOR_BY_PROFESSION, baseEnergyPipsFor } from "../equipment/armor.js";
+import { unarmedResolvedEquipment, type ResolvedEquipment } from "../equipment/resolve.js";
+import { WEAPONS, type WeaponId } from "../equipment/weapons.js";
+import type { MissingMechanic } from "../skills/coverage.js";
+import { vec2, type Vec2 } from "../vec2.js";
+import type { ProfessionId } from "../professions.js";
+import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
+import type { Behaviour, ResetPolicy } from "./behaviour.js";
+import { facingToward } from "./facing.js";
+import type { ParticipantSpec } from "./simulation.js";
+
+/**
+ * The training scenarios (#2 Phase 5), as data.
+ *
+ * Each one sets up a fight that teaches one thing, against dummies that
+ * play by exactly the player's rules (`behaviour.ts`). The editor lists
+ * them, and the training arena builds them with `scenarioParticipants`.
+ *
+ * `mapId` is a string on purpose: `game-core` never imports `game-maps`.
+ * Whoever runs a scenario resolves the geometry and the player's spawn.
+ *
+ * Only scenarios the simulation can run honestly exist. A scenario that
+ * would teach a mechanic `coverage.ts` still lists as missing would teach
+ * something false, and `training-scenarios.test.ts` refuses it.
+ */
+
+/**
+ * What a scenario exercises. Every missing mechanic is in the union too:
+ * claiming one compiles, and the gate test then fails and says why.
+ */
+export type TrainingMechanic =
+  | "spell-damage"
+  | "conditions"
+  | "movement"
+  | "armor"
+  | "interrupts"
+  | "line-of-sight"
+  | "range"
+  | "auto-attacks"
+  | "dodging"
+  | "blocking"
+  | "area-damage"
+  | MissingMechanic;
+
+/** One setting a scenario offers, generated into the editor's sub-controls. */
+export interface TrainingKnob {
+  readonly id: string;
+  readonly label: string;
+  readonly kind: "count" | "toggle" | "rank";
+  readonly min: number;
+  readonly max: number;
+  readonly default: number;
+}
+
+export interface TrainingDummy {
+  readonly id: string;
+  readonly label: string;
+  readonly team: number;
+  readonly position: Vec2;
+  /** The layer it starts, and is reset, on (ADR-0051); its map says which is the ground. */
+  readonly layer: number;
+  /** Base armor, before any status. */
+  readonly armor: number;
+  /** 10000 is "immortal": there is no invulnerable flag. */
+  readonly maxHealth: number;
+  /** Health it starts, and is reset, at, as a fraction of max; without one, full. */
+  readonly startHealthFraction?: number;
+  readonly skillBar: readonly string[];
+  readonly attributeRanks: Readonly<Record<string, number>>;
+  /** Energy regeneration, in pips: its profession's if it casts, else 0. */
+  readonly baseEnergyPips: number;
+  readonly behaviour: Behaviour;
+  /**
+   * What it carries (#162). A weapon whose attribute is fixed, scaling
+   * with that attribute's rank in `attributeRanks`. Without one it is
+   * unarmed.
+   */
+  readonly weapon?: WeaponId;
+  /**
+   * Its guard against physical hits only (#111): armor that counts
+   * against them, as a Stalwart insignia's, and a flat cut off each one
+   * after mitigation, as a Rune of Absorption's.
+   */
+  readonly physicalGuard?: { readonly armor: number; readonly reduction: number };
+  /**
+   * Its primary profession, for the armor that comes with it (#759): a
+   * Warrior's +20 vs physical, a Ranger's +30 vs elemental. Without one,
+   * none.
+   */
+  readonly profession?: ProfessionId;
+  /** When it is put back as it started; without one, never. */
+  readonly reset?: ResetPolicy;
+}
+
+export interface TrainingScenario {
+  readonly id: string;
+  readonly mapId: string;
+  readonly exercises: readonly TrainingMechanic[];
+  readonly knobs: readonly TrainingKnob[];
+  readonly dummies: readonly TrainingDummy[];
+}
+
+/** The player's team. Dummies on any other team are enemies. */
+export const PLAYER_TEAM = 0;
+
+const IMMORTAL = 10000;
+const IDLE: Behaviour = { kind: "idle" };
+
+/** An idle, immortal enemy with nothing on its bar. */
+function target(id: string, label: string, position: Vec2, armor: number): TrainingDummy {
+  return {
+    id,
+    label,
+    team: 1,
+    position,
+    layer: 0,
+    armor,
+    maxHealth: IMMORTAL,
+    skillBar: [],
+    attributeRanks: {},
+    baseEnergyPips: 0,
+    behaviour: IDLE,
+  };
+}
+
+/**
+ * Fireball's cluster (#111): a centre at (380, 210) and four 50 away
+ * round it, all inside its splash (AREA_NEARBY, 81) when the centre is
+ * hit, and bodies apart (two radii, 28) so none is pushed out of place.
+ */
+const CLUSTER_CENTRE = vec2(380, 210);
+const CLUSTER: readonly TrainingDummy[] = [
+  target("centre", "Centre (60 armor)", CLUSTER_CENTRE, 60),
+  target("east", "East (60 armor)", vec2(430, 210), 60),
+  target("north", "North (60 armor)", vec2(380, 160), 60),
+  target("west", "West (60 armor)", vec2(330, 210), 60),
+  target("south", "South (60 armor)", vec2(380, 260), 60),
+];
+
+/**
+ * Barrage's pack (#111): six on a ring 36 round the centre, every one
+ * adjacent to it (AREA_ADJACENT, 40) and 36 from its neighbours. Seven,
+ * so one is spared: with the player, the arena's cap of eight (ADR-0020).
+ */
+const PACK: readonly TrainingDummy[] = [
+  target("centre", "Centre (60 armor)", CLUSTER_CENTRE, 60),
+  ...[
+    vec2(416, 210),
+    vec2(398, 241),
+    vec2(362, 241),
+    vec2(344, 210),
+    vec2(362, 179),
+    vec2(398, 179),
+  ].map((position, i) =>
+    target(`ring-${String(i + 1)}`, `Ring ${String(i + 1)} (60 armor)`, position, 60),
+  ),
+];
+
+/** A dummy's gear: its armor, its profession's and its guard's, and its weapon if it has one. */
+function dummyEquipment(dummy: TrainingDummy): ResolvedEquipment {
+  const guard = dummy.physicalGuard;
+  const inherent =
+    dummy.profession === undefined ? [] : INHERENT_ARMOR_BY_PROFESSION[dummy.profession];
+  const unarmed: ResolvedEquipment =
+    guard === undefined
+      ? { ...unarmedResolvedEquipment(dummy.armor), conditionalArmor: inherent }
+      : {
+          ...unarmedResolvedEquipment(dummy.armor),
+          conditionalArmor: [
+            ...inherent,
+            { amount: guard.armor, conditions: [{ kind: "vs-physical" }] },
+          ],
+          flatPhysicalReduction: guard.reduction,
+        };
+  if (dummy.weapon === undefined) {
+    return unarmed;
+  }
+  const weapon = WEAPONS[dummy.weapon];
+  const { requirement } = weapon;
+  const attributeId = requirement.kind === "fixed" ? requirement.attributeId : undefined;
+  return {
+    ...unarmed,
+    mainHand: {
+      weapon,
+      attributeId,
+      damageType: weapon.damageType,
+      requirementMet:
+        attributeId === undefined || (dummy.attributeRanks[attributeId] ?? 0) >= requirement.rank,
+      creatureDamageScale: undefined,
+    },
+  };
+}
+
+/** An immortal longbow dummy that shoots the player (#111), as dodge-drill's. */
+function archer(id: string, label: string, position: Vec2): TrainingDummy {
+  return {
+    ...target(id, label, position, 60),
+    attributeRanks: { "ranger.marksmanship": 12 },
+    behaviour: { kind: "auto-attack", targeting: { kind: "nearest-enemy" }, reach: undefined },
+    weapon: "longbow",
+  };
+}
+
+/**
+ * An immortal caster that walks to within 250 of the player and burns
+ * them with Fireball whenever it can (#111): survivability's hunter.
+ */
+function hunter(id: string, label: string, position: Vec2): TrainingDummy {
+  return {
+    ...target(id, label, position, 60),
+    skillBar: ["elementalist.fireball"],
+    attributeRanks: { "elementalist.fire-magic": 12 },
+    baseEnergyPips: baseEnergyPipsFor("elementalist"),
+    behaviour: {
+      kind: "parallel",
+      behaviours: [
+        { kind: "chase", targeting: { kind: "nearest-enemy" }, standOffUnits: 250 },
+        {
+          kind: "cast-loop",
+          skillIds: ["elementalist.fireball"],
+          targeting: { kind: "nearest-enemy" },
+          gapSeconds: 0,
+          firstLegal: true,
+        },
+      ],
+    },
+  };
+}
+
+/**
+ * An ally at 150 of 500 for the player to keep alive (#111), and an
+ * immortal caster that burns it with Fireball whenever it can.
+ */
+function patient(id: string, label: string, position: Vec2, armor: number): TrainingDummy {
+  return {
+    ...target(id, label, position, armor),
+    team: PLAYER_TEAM,
+    maxHealth: MINIMAL_GW_INSPIRED_PVP_V1.combat.baseHealth,
+    startHealthFraction: 0.3,
+    reset: { kind: "on-death", afterSeconds: 2 },
+  };
+}
+function burner(id: string, label: string, position: Vec2, patientId: string): TrainingDummy {
+  return {
+    ...target(id, label, position, 60),
+    skillBar: ["elementalist.fireball"],
+    attributeRanks: { "elementalist.fire-magic": 12 },
+    baseEnergyPips: baseEnergyPipsFor("elementalist"),
+    behaviour: {
+      kind: "cast-loop",
+      skillIds: ["elementalist.fireball"],
+      targeting: { kind: "fixed", participantId: patientId },
+      gapSeconds: 0,
+      firstLegal: true,
+    },
+  };
+}
+
+/** Walking a lane from the top of the hall to the bottom and back (#111). */
+function lane(x: number): Behaviour {
+  return { kind: "patrol", waypoints: [vec2(x, 90), vec2(x, 330)], loop: true };
+}
+
+export const TRAINING_SCENARIOS: readonly TrainingScenario[] = [
+  {
+    id: "target-dummy",
+    mapId: "training-hall",
+    exercises: ["spell-damage"],
+    knobs: [],
+    dummies: [target("dummy", "Caster dummy (60 armor)", vec2(380, 210), 60)],
+  },
+  {
+    id: "time-to-kill",
+    mapId: "training-hall",
+    exercises: ["spell-damage", "auto-attacks"],
+    knobs: [],
+    // Mortal, and back at full health 2 s after each death, so the meter
+    // reads kill after kill.
+    dummies: [
+      {
+        ...target("dummy", "Caster dummy (60 armor, mortal)", vec2(380, 210), 60),
+        maxHealth: MINIMAL_GW_INSPIRED_PVP_V1.combat.baseHealth,
+        reset: { kind: "on-death", afterSeconds: 2 },
+      },
+    ],
+  },
+  {
+    id: "physical-vs-elemental",
+    mapId: "training-hall",
+    exercises: ["armor", "auto-attacks", "spell-damage"],
+    knobs: [],
+    // Two warriors at 80 armor, +20 against physical as every Warrior. The
+    // guarded one also wears a Stalwart insignia (+10 against physical) and
+    // a superior Rune of Absorption (3 off each physical hit): a sword
+    // lands softer on it, a Fireball the same. The ranger is 70, +30
+    // against elemental: a Fireball lands softer on it than on either
+    // warrior, a sword harder. 120 apart, wider than Fireball's splash.
+    dummies: [
+      {
+        ...target("bare", "Warrior (80, +20 vs physical)", vec2(380, 90), 80),
+        profession: "warrior",
+      },
+      {
+        ...target(
+          "guarded",
+          "Warrior, Stalwart + Absorption (80, +30 and -3 vs physical)",
+          vec2(380, 210),
+          80,
+        ),
+        profession: "warrior",
+        physicalGuard: { armor: 10, reduction: 3 },
+      },
+      {
+        ...target("ranger", "Ranger (70, +30 vs elemental)", vec2(380, 330), 70),
+        profession: "ranger",
+      },
+    ],
+  },
+  {
+    id: "condition-pressure",
+    mapId: "training-hall",
+    exercises: ["conditions"],
+    knobs: [],
+    // Both mortal, back 2 s after each death. The loaded one renews its
+    // own three before they run out: 3 + 4 + 7 pips, held at MAX_PIPS (10),
+    // so it dies in 24 s untouched, and whatever the player adds to it
+    // only refreshes what it has.
+    dummies: [
+      {
+        ...target("clean", "Clean dummy (mortal)", vec2(380, 150), 60),
+        maxHealth: MINIMAL_GW_INSPIRED_PVP_V1.combat.baseHealth,
+        reset: { kind: "on-death", afterSeconds: 2 },
+      },
+      {
+        ...target("loaded", "Loaded dummy (mortal)", vec2(380, 270), 60),
+        maxHealth: MINIMAL_GW_INSPIRED_PVP_V1.combat.baseHealth,
+        reset: { kind: "on-death", afterSeconds: 2 },
+        behaviour: {
+          kind: "parallel",
+          behaviours: (["bleeding", "poison", "burning"] as const).map((statusId): Behaviour => ({
+            kind: "apply-status-cadence",
+            statusId,
+            durationSeconds: 10,
+            everySeconds: 5,
+            targeting: { kind: "self" },
+          })),
+        },
+      },
+    ],
+  },
+  {
+    id: "condition-removal",
+    mapId: "training-hall",
+    exercises: ["conditions"],
+    knobs: [],
+    // An ally, mortal, that keeps its five conditions on itself: each
+    // renewed every 10 s for 12, so one the player removes is back within
+    // 10 s, and the rest never lapse. Bleeding drains it, so it needs
+    // healing too; 2 s after a death it is back at 192.
+    dummies: [
+      {
+        ...target("ally", "Afflicted ally", vec2(300, 210), 60),
+        team: PLAYER_TEAM,
+        maxHealth: MINIMAL_GW_INSPIRED_PVP_V1.combat.baseHealth,
+        startHealthFraction: 0.4,
+        reset: { kind: "on-death", afterSeconds: 2 },
+        behaviour: {
+          kind: "parallel",
+          behaviours: (["bleeding", "crippled", "blind", "weakness", "deep-wound"] as const).map(
+            (statusId): Behaviour => ({
+              kind: "apply-status-cadence",
+              statusId,
+              durationSeconds: 12,
+              everySeconds: 10,
+              targeting: { kind: "self" },
+            }),
+          ),
+        },
+      },
+    ],
+  },
+  {
+    id: "armor-ladder",
+    mapId: "training-hall",
+    exercises: ["spell-damage", "armor"],
+    knobs: [],
+    // Two columns, every one inside spell range of the player's spawn at
+    // (100, 210), and at least 100 apart: wider than Fireball's splash
+    // (AREA_NEARBY), so each rung takes its own hit and nobody else's.
+    // The armor is set directly: the ladder measures the curve, not the
+    // wards that reach it.
+    dummies: [
+      target("armor-40", "40 armor (below any build)", vec2(360, 90), 40),
+      target("armor-60", "Caster (60)", vec2(360, 210), 60),
+      target("armor-70", "70 armor (Ranger vs physical)", vec2(360, 330), 70),
+      target("armor-80", "Warrior (80)", vec2(460, 90), 80),
+      target("armor-84", "Warded caster (84)", vec2(460, 210), 84),
+      target("armor-104", "Warded warrior (104)", vec2(460, 330), 104),
+    ],
+  },
+  {
+    id: "healing-throughput",
+    mapId: "training-hall",
+    exercises: ["spell-damage", "armor"],
+    knobs: [],
+    // Two allies 120 apart, wider than Fireball's splash, so each takes
+    // only its own caster's. Each is back at 150 2 s after a death.
+    dummies: [
+      patient("monk", "Monk ally (60 armor)", vec2(300, 150), 60),
+      patient("warrior", "Warrior ally (80 armor)", vec2(300, 270), 80),
+      burner("monk-burner", "Burner (on the monk)", vec2(460, 150), "monk"),
+      burner("warrior-burner", "Burner (on the warrior)", vec2(460, 270), "warrior"),
+    ],
+  },
+  {
+    id: "interrupt-timing",
+    mapId: "training-hall",
+    exercises: ["interrupts", "conditions"],
+    knobs: [],
+    dummies: [
+      {
+        id: "unguent",
+        label: "Troll Unguent dummy",
+        team: 1,
+        position: vec2(380, 150),
+        layer: 0,
+        armor: 60,
+        maxHealth: IMMORTAL,
+        skillBar: ["ranger.troll-unguent"],
+        attributeRanks: { "ranger.wilderness-survival": 12 },
+        // A ranger: it casts all session long on its own regeneration.
+        baseEnergyPips: baseEnergyPipsFor("ranger"),
+        behaviour: {
+          kind: "cast-loop",
+          skillIds: ["ranger.troll-unguent"],
+          targeting: { kind: "self" },
+          gapSeconds: 0,
+          firstLegal: true,
+        },
+      },
+      {
+        ...target("dazed", "Dazed Malaise dummy", vec2(380, 270), 60),
+        skillBar: ["necromancer.malaise"],
+        attributeRanks: { "necromancer.curses": 12 },
+        baseEnergyPips: baseEnergyPipsFor("necromancer"),
+        // Kept dazed, hexing the player: Malaise's 2 s cast takes 4, and
+        // an attack that lands stops it. Daze slows spells only, so not
+        // the Unguent, which is a skill.
+        behaviour: {
+          kind: "parallel",
+          behaviours: [
+            {
+              kind: "apply-status-cadence",
+              statusId: "dazed",
+              durationSeconds: 10,
+              everySeconds: 5,
+              targeting: { kind: "self" },
+            },
+            {
+              kind: "cast-loop",
+              skillIds: ["necromancer.malaise"],
+              targeting: { kind: "nearest-enemy" },
+              gapSeconds: 0,
+              firstLegal: true,
+            },
+          ],
+        },
+      },
+    ],
+  },
+  {
+    id: "blind-denial",
+    mapId: "training-hall",
+    exercises: ["auto-attacks", "conditions"],
+    knobs: [],
+    // Two longbows in reach of the spawn at (100, 210), as dodge-drill's
+    // archer. The blind one renews its own Blind before it runs out.
+    dummies: [
+      {
+        ...archer("blinded", "Blinded archer", vec2(480, 150)),
+        behaviour: {
+          kind: "parallel",
+          behaviours: [
+            { kind: "auto-attack", targeting: { kind: "nearest-enemy" }, reach: undefined },
+            {
+              kind: "apply-status-cadence",
+              statusId: "blind",
+              durationSeconds: 10,
+              everySeconds: 5,
+              targeting: { kind: "self" },
+            },
+          ],
+        },
+      },
+      archer("control", "Archer (not blind)", vec2(480, 270)),
+    ],
+  },
+  {
+    id: "kiting-and-cripple",
+    mapId: "training-hall",
+    exercises: ["movement", "conditions"],
+    knobs: [],
+    // Up and down two lanes in spell range of the spawn at (100, 210);
+    // the second keeps itself crippled.
+    dummies: [
+      {
+        ...target("runner", "Runner (60 armor)", vec2(380, 90), 60),
+        behaviour: lane(380),
+      },
+      {
+        ...target("crippled", "Crippled runner (60 armor)", vec2(460, 90), 60),
+        behaviour: {
+          kind: "parallel",
+          behaviours: [
+            lane(460),
+            {
+              kind: "apply-status-cadence",
+              statusId: "crippled",
+              durationSeconds: 10,
+              everySeconds: 5,
+              targeting: { kind: "self" },
+            },
+          ],
+        },
+      },
+    ],
+  },
+  {
+    id: "weapon-dps",
+    mapId: "training-hall",
+    exercises: ["auto-attacks"],
+    knobs: [],
+    // One in melee reach of the spawn at (100, 210), bodies just apart,
+    // and one out at bow range, inside even a shortbow's reach.
+    dummies: [
+      target("melee", "Melee dummy (60 armor)", vec2(136, 210), 60),
+      target("ranged", "Bow-range dummy (60 armor)", vec2(480, 210), 60),
+    ],
+  },
+  {
+    id: "dodge-drill",
+    mapId: "training-hall",
+    exercises: ["dodging"],
+    knobs: [],
+    dummies: [
+      {
+        id: "archer",
+        label: "Longbow dummy",
+        team: 1,
+        position: vec2(500, 210),
+        layer: 0,
+        armor: 60,
+        maxHealth: IMMORTAL,
+        skillBar: [],
+        attributeRanks: { "ranger.marksmanship": 12 },
+        baseEnergyPips: 0,
+        behaviour: { kind: "auto-attack", targeting: { kind: "nearest-enemy" }, reach: undefined },
+        weapon: "longbow",
+      },
+    ],
+  },
+  {
+    id: "obstacles-and-los",
+    mapId: "training-pillars",
+    exercises: ["spell-damage", "line-of-sight", "range"],
+    knobs: [],
+    // From the spawn at (90, 210): one hidden behind the pillar, in
+    // range; one in plain sight past the pillar's south face, 446 away,
+    // past spell range (420).
+    dummies: [
+      target("hidden", "Behind the pillar (60 armor)", vec2(330, 210), 60),
+      target("far", "Out of range (60 armor)", vec2(520, 330), 60),
+    ],
+  },
+  {
+    id: "fireball-dodge",
+    mapId: "training-hall",
+    exercises: ["dodging", "spell-damage"],
+    knobs: [],
+    // Inside Fireball's range of the spawn at (100, 210), far enough that
+    // the flight leaves time to turn.
+    dummies: [
+      {
+        id: "pyro",
+        label: "Fireball dummy",
+        team: 1,
+        position: vec2(480, 210),
+        layer: 0,
+        armor: 60,
+        maxHealth: IMMORTAL,
+        skillBar: ["elementalist.fireball"],
+        attributeRanks: { "elementalist.fire-magic": 12 },
+        // An elementalist: it casts Fireball each time it recharges.
+        baseEnergyPips: baseEnergyPipsFor("elementalist"),
+        behaviour: {
+          kind: "cast-loop",
+          skillIds: ["elementalist.fireball"],
+          targeting: { kind: "nearest-enemy" },
+          gapSeconds: 0,
+          firstLegal: true,
+        },
+      },
+    ],
+  },
+  {
+    id: "block",
+    mapId: "training-hall",
+    exercises: ["auto-attacks", "blocking"],
+    knobs: [],
+    // In melee reach of the spawn at (100, 210), as weapon-dps's.
+    dummies: [
+      {
+        id: "guardian",
+        label: "Guardian dummy (60 armor)",
+        team: 1,
+        position: vec2(136, 210),
+        layer: 0,
+        armor: 60,
+        maxHealth: IMMORTAL,
+        skillBar: ["monk.guardian"],
+        attributeRanks: { "monk.protection-prayers": 12 },
+        // A monk: it keeps Guardian up all session, recasting it as soon
+        // as it recharges, 1 s of every 7 without it.
+        baseEnergyPips: baseEnergyPipsFor("monk"),
+        behaviour: {
+          kind: "cast-loop",
+          skillIds: ["monk.guardian"],
+          targeting: { kind: "self" },
+          gapSeconds: 0,
+          firstLegal: true,
+        },
+      },
+    ],
+  },
+  {
+    id: "survivability",
+    mapId: "training-hall",
+    exercises: ["spell-damage", "armor", "movement"],
+    knobs: [],
+    // Immortal, so only the player's time to die is measured; the player
+    // is back 3 s after each death, as everywhere in training. They start
+    // inside their 250 of the spawn at (100, 210), so they burn at once
+    // and walk only after a player who backs away.
+    dummies: [
+      hunter("hunter-north", "Hunter north", vec2(300, 110)),
+      hunter("hunter-centre", "Hunter centre", vec2(320, 210)),
+      hunter("hunter-south", "Hunter south", vec2(300, 310)),
+    ],
+  },
+  {
+    id: "aoe-cluster",
+    mapId: "training-hall",
+    exercises: ["spell-damage", "area-damage"],
+    knobs: [],
+    // The stragglers stand 120 from the centre, outside its 81.
+    dummies: [
+      ...CLUSTER,
+      target("straggler-north", "Straggler north (60 armor)", vec2(380, 90), 60),
+      target("straggler-south", "Straggler south (60 armor)", vec2(380, 330), 60),
+    ],
+  },
+  {
+    id: "aoe-cap",
+    mapId: "training-hall",
+    exercises: ["auto-attacks", "area-damage"],
+    knobs: [],
+    dummies: PACK,
+  },
+  {
+    id: "aoe-friendly-fire",
+    mapId: "training-hall",
+    exercises: ["spell-damage", "area-damage"],
+    knobs: [],
+    // In the gap between east and south, 49 from the centre: well inside
+    // the splash, and bodies apart from both.
+    dummies: [
+      ...CLUSTER,
+      { ...target("ally", "Ally (60 armor)", vec2(415, 245), 60), team: PLAYER_TEAM },
+    ],
+  },
+  {
+    id: "aoe-line-of-sight",
+    mapId: "training-pillars",
+    exercises: ["spell-damage", "area-damage", "line-of-sight"],
+    knobs: [],
+    // The pillar is 250–290 by 170–250. Hit "front", against its west
+    // face: the two behind its east face are 72 away, inside Fireball's
+    // 81, but the pillar stands between.
+    dummies: [
+      target("front", "In front (60 armor)", vec2(235, 210), 60),
+      target("front-north", "In front, north (60 armor)", vec2(220, 170), 60),
+      target("front-south", "In front, south (60 armor)", vec2(220, 250), 60),
+      target("behind-north", "Behind, north (60 armor)", vec2(305, 190), 60),
+      target("behind-south", "Behind, south (60 armor)", vec2(305, 230), 60),
+    ],
+  },
+  {
+    id: "moving-targets",
+    mapId: "training-field",
+    // Range too: catching the runner, out past spell range, is the lesson.
+    exercises: ["movement", "auto-attacks", "range"],
+    knobs: [],
+    // From the spawn at (200, 450): one walks a 600 by 400 loop in the
+    // middle of the field, one starts 450 away and flees to stay so, and
+    // one walks in with a sword.
+    dummies: [
+      {
+        ...target("patroller", "Patroller (60 armor)", vec2(400, 250), 60),
+        behaviour: {
+          kind: "patrol",
+          waypoints: [vec2(400, 250), vec2(1000, 250), vec2(1000, 650), vec2(400, 650)],
+          loop: true,
+        },
+      },
+      {
+        ...target("runner", "Runner (60 armor)", vec2(650, 450), 60),
+        behaviour: { kind: "keep-away", targeting: { kind: "nearest-enemy" }, distanceUnits: 450 },
+      },
+      {
+        ...target("chaser", "Chaser (60 armor)", vec2(1200, 700), 60),
+        attributeRanks: { "warrior.swordsmanship": 4 },
+        behaviour: { kind: "auto-attack", targeting: { kind: "nearest-enemy" }, reach: undefined },
+        weapon: "sword",
+      },
+    ],
+  },
+  {
+    id: "heights",
+    mapId: "training-heights",
+    exercises: ["auto-attacks", "movement", "range"],
+    knobs: [],
+    dummies: [
+      // The ground is layer 1 (#2973): the pit and the tunnel are under it.
+      { ...target("on-bridge", "On the bridge (60 armor)", vec2(600, 450), 60), layer: 2 },
+      { ...target("under-bridge", "Under the bridge (60 armor)", vec2(600, 450), 60), layer: 1 },
+      { ...target("on-platform", "On the platform (60 armor)", vec2(600, 210), 60), layer: 3 },
+      { ...target("in-pit", "In the pit (60 armor)", vec2(640, 590), 60), layer: 0 },
+      { ...target("in-tunnel", "In the tunnel (60 armor)", vec2(840, 585), 60), layer: 0 },
+    ],
+  },
+  {
+    id: "wilds",
+    mapId: "training-wilds",
+    exercises: ["conditions", "movement"],
+    knobs: [],
+    // In the middle of the scorched strip across the lane (ADR-0053, #3024),
+    // so the burn shows on someone else first; then one in each harmful
+    // patch north and south of the spawn (#3027), each in a spell's reach of it;
+    // then one at the edge of the tainted water (#3028), so a player beside
+    // it sees each skill cost Health; then one in the gas spout (#3029), the
+    // middle of the three timed hazards in the north-west corner, with the
+    // rolling rocks' lane across it. Seven at most (ADR-0020): the spring, grove, spire, vent and
+    // rockfall have none. The ground is layer 1 (#3049): the mire, the swamp
+    // and the tainted water are down in the basin, layer 0.
+    dummies: [
+      { ...target("in-embers", "In the embers (60 armor)", vec2(600, 400), 60), layer: 1 },
+      { ...target("in-lava", "In the lava (60 armor)", vec2(360, 130), 60), layer: 1 },
+      { ...target("in-fog", "In the fog (60 armor)", vec2(450, 70), 60), layer: 1 },
+      { ...target("in-mire", "In the mire (60 armor)", vec2(435, 634), 60), layer: 0 },
+      { ...target("in-swamp", "In the swamp (60 armor)", vec2(520, 575), 60), layer: 0 },
+      {
+        ...target("in-tainted-water", "In the tainted water (60 armor)", vec2(500, 636), 60),
+        layer: 0,
+      },
+      { ...target("in-gas-spout", "In the gas spout (60 armor)", vec2(155, 55), 60), layer: 1 },
+    ],
+  },
+];
+
+export function getTrainingScenario(id: string): TrainingScenario | undefined {
+  return TRAINING_SCENARIOS.find((scenario) => scenario.id === id);
+}
+
+/** A scenario's dummies, ready to add to a `MatchSimulation`, each facing the player at `playerSpawn`. */
+export function scenarioParticipants(
+  scenario: TrainingScenario,
+  playerSpawn: Vec2,
+): ParticipantSpec[] {
+  return scenario.dummies.map((dummy) => ({
+    id: dummy.id,
+    team: dummy.team,
+    skillBar: dummy.skillBar,
+    attributeRanks: new Map(Object.entries(dummy.attributeRanks)),
+    equipment: dummyEquipment(dummy),
+    spawn: dummy.position,
+    layer: dummy.layer,
+    facing: facingToward(dummy.position, playerSpawn),
+    maxHealth: dummy.maxHealth,
+    startHealthFraction: dummy.startHealthFraction,
+    baseEnergyPips: dummy.baseEnergyPips,
+    behaviour: dummy.behaviour,
+    reset: dummy.reset,
+  }));
+}

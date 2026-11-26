@@ -1,0 +1,345 @@
+<!doctype html>
+<meta charset="utf-8" />
+<title>#2014 mockup B: Gear tab</title>
+<style>
+  :root {
+    --bg: #0e1116;
+    --panel: #161b22;
+    --line: #2b3440;
+    --ink: #d7dee8;
+    --dim: #7d8899;
+    --accent: #59c2ff;
+    --warn: #ffa657;
+    --ok: #6fd08c;
+  }
+  * {
+    box-sizing: border-box;
+  }
+  body {
+    margin: 0;
+    padding: 1.2rem;
+    background: #080a0d;
+    color: var(--ink);
+    font:
+      14px system-ui,
+      sans-serif;
+  }
+  h1 {
+    font-size: 1.15rem;
+    margin: 0 0 0.3rem;
+  }
+  h2 {
+    font-size: 0.95rem;
+    color: var(--accent);
+    margin: 1.6rem 0 0.3rem;
+  }
+  p.n {
+    color: var(--dim);
+    margin: 0.2rem 0 0.6rem;
+    max-width: 62rem;
+  }
+  p.n b {
+    color: var(--ink);
+  }
+  .win {
+    width: 1366px;
+    height: 768px;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    display: grid;
+    gap: 8px;
+    padding: 8px;
+    overflow: hidden;
+    position: relative;
+  }
+  .ph {
+    width: 360px;
+    height: 420px;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    padding: 6px;
+    font-size: 12px;
+    overflow: hidden;
+  }
+  .box {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    padding: 8px;
+    min-width: 0;
+  }
+  .box h3 {
+    margin: 0 0 6px;
+    font-size: 11px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--dim);
+    font-weight: 600;
+  }
+  .top {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    padding: 6px 10px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+  }
+  .top b {
+    color: var(--accent);
+  }
+  .top .sp {
+    flex: 1;
+  }
+  .tabs {
+    display: flex;
+    gap: 2px;
+  }
+  .tabs span {
+    padding: 4px 12px;
+    border: 1px solid var(--line);
+    color: var(--dim);
+  }
+  .tabs span.on {
+    color: var(--ink);
+    border-color: var(--accent);
+  }
+  .bar {
+    display: flex;
+    gap: 4px;
+  }
+  .sk {
+    width: 46px;
+    height: 46px;
+    border: 1px solid var(--line);
+    background: #0b0e13;
+    display: grid;
+    place-items: center;
+    font-size: 10px;
+    color: var(--dim);
+    text-align: center;
+    line-height: 1.1;
+  }
+  .sk.e {
+    border-color: #d9b24a;
+    color: #d9b24a;
+  }
+  .attr {
+    display: flex;
+    justify-content: space-between;
+    padding: 2px 0;
+    border-bottom: 1px solid #1f2630;
+  }
+  .attr i {
+    font-style: normal;
+    color: var(--accent);
+  }
+  .chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 7px;
+    border: 1px solid var(--line);
+    background: #0b0e13;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+  .chip.ins {
+    border-color: #59c2ff66;
+  }
+  .chip.run {
+    border-color: #ffa65766;
+  }
+  .chip.mod {
+    border-color: #6fd08c66;
+  }
+  .chip.empty {
+    color: var(--dim);
+    border-style: dashed;
+  }
+  .chip small {
+    color: var(--dim);
+  }
+  .pc {
+    font-weight: 600;
+  }
+  .pop {
+    position: absolute;
+    background: #10151c;
+    border: 1px solid var(--accent);
+    padding: 6px;
+    box-shadow: 0 4px 14px #000a;
+    z-index: 3;
+  }
+  .pop div {
+    padding: 2px 6px;
+  }
+  .pop div.on {
+    background: #59c2ff22;
+    color: var(--accent);
+  }
+  .cap {
+    margin-top: 0.5rem;
+    max-width: 62rem;
+    color: var(--dim);
+  }
+  .cap b {
+    color: var(--ink);
+  }
+  .fig {
+    position: relative;
+    width: 200px;
+    height: 360px;
+    margin: auto;
+  }
+  .fig svg {
+    position: absolute;
+    inset: 0;
+  }
+  .hot {
+    position: absolute;
+    width: 26px;
+    height: 26px;
+    border: 2px solid var(--accent);
+    border-radius: 50%;
+    background: #0e1116cc;
+    display: grid;
+    place-items: center;
+    font-size: 10px;
+    color: var(--accent);
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+  }
+  td,
+  th {
+    padding: 4px 6px;
+    border-bottom: 1px solid #1f2630;
+    text-align: left;
+  }
+  th {
+    color: var(--dim);
+    font-weight: 600;
+    font-size: 11px;
+    text-transform: uppercase;
+  }
+</style>
+<h1>#2014 B: a Gear tab</h1>
+<p class="n">
+  Skills and Gear are tabs of one builder. Gear is a flat page: no scrolling, everything visible,
+  dropdown-free chips.
+</p>
+<h2>1366 × 768 (nothing scrolls)</h2>
+<div class="win" style="grid-template-columns: 1fr 1fr 280px; grid-template-rows: 42px 1fr 80px">
+  <div style="grid-column: 1/4">
+    <div class="top">
+      <b>Elementalist / Monk</b> · “Stormcaller”<span class="sp"></span
+      ><span class="tabs"
+        ><span class="">Skills</span><span class="on">Gear</span
+        ><span class="">Attributes</span></span
+      ><span class="chip">Share ⋯</span><span class="chip">Save</span>
+    </div>
+  </div>
+  <div class="box">
+    <h3>Armor</h3>
+    <div style="margin-bottom: 10px">
+      <div class="pc">Headgear</div>
+      <span class="chip ins">Radiant Insignia</span>
+      <span class="chip run">Rune of Minor Fire Magic</span>
+      <span class="chip" style="border-color: #d9b24a99">Fire Magic +1 ▾</span>
+    </div>
+    <div style="margin-bottom: 10px">
+      <div class="pc">Chest</div>
+      <span class="chip ins">Blessed Insignia</span> <span class="chip run">Rune of Vigor</span>
+    </div>
+    <div style="margin-bottom: 10px">
+      <div class="pc">Gloves</div>
+      <span class="chip ins">Prodigy’s Insignia</span>
+      <span class="chip run">Rune of Minor Air Magic</span>
+    </div>
+    <div style="margin-bottom: 10px">
+      <div class="pc">Leggings</div>
+      <span class="chip ins">Survivor’s Insignia</span>
+      <span class="chip run">Rune of Minor Energy Storage</span>
+    </div>
+    <div style="margin-bottom: 10px">
+      <div class="pc">Boots</div>
+      <span class="chip ins">Wanderer’s Insignia</span>
+      <span class="chip run">Rune of Attunement</span>
+    </div>
+  </div>
+  <div class="box">
+    <h3>Weapon set 1 <small>(2 · 3 · 4)</small></h3>
+    <div class="pc">Fire Staff</div>
+    <div style="margin: 4px 0 14px">
+      <span class="chip mod">Vampiric</span> <span class="chip mod">of Fortitude</span>
+      <span class="chip empty">+ Inscr.</span>
+    </div>
+    <div class="pc">Focus</div>
+    <div style="margin: 4px 0 14px">
+      <span class="chip mod">Vampiric</span> <span class="chip empty">+ Suffix</span>
+      <span class="chip empty">+ Inscr.</span>
+    </div>
+    <h3>Picker (opened by chip)</h3>
+    <div class="pop" style="position: static; width: 260px">
+      <b class="pc">Boots · Rune</b>
+      <div>Minor Fire Magic</div>
+      <div class="on">Attunement</div>
+      <div>Vigor</div>
+      <div>Radiance</div>
+    </div>
+  </div>
+  <div class="box">
+    <h3>Attributes</h3>
+    <div class="attr">Fire Magic<i>12+1+1</i></div>
+    <div class="attr">Energy Storage<i>10+1</i></div>
+    <div class="attr">Air Magic<i>8+1</i></div>
+    <div class="attr">Earth Magic<i>3</i></div>
+    <div class="attr">Water Magic<i>0</i></div>
+    <p class="n" style="font-size: 12px">Points left: 0</p>
+  </div>
+  <div class="box" style="grid-column: 1/4">
+    <h3>Skill bar (always shown)</h3>
+    <div class="bar">
+      <div class="sk">Ward Against</div>
+      <div class="sk e">Meteor</div>
+      <div class="sk">Glyph of</div>
+      <div class="sk">Mind Freeze</div>
+      <div class="sk e">Fire Storm</div>
+      <div class="sk">Mantra of</div>
+      <div class="sk">Lightning Orb</div>
+      <div class="sk">Resurrect</div>
+    </div>
+  </div>
+</div>
+<p class="cap">
+  <b>Idea:</b> give gear its own page; the skill bar stays pinned under both tabs. <b>Fixes:</b> the
+  Skills &amp; Gear box no longer scrolls; room for every weapon-mod slot, with no hidden pickers.
+  <b>Costs:</b> you can’t see the skill list and gear together; one more tab to find; the attribute
+  panel is duplicated or split.
+</p>
+<h2>Phone (360 px)</h2>
+<div class="ph">
+  <div class="tabs" style="margin-bottom: 6px"><span>Skills</span><span class="on">Gear</span></div>
+  <div style="margin-bottom: 6px">
+    <b>Headgear</b><br /><span class="chip ins">Radiant</span>
+    <span class="chip run">Minor Fire Magic</span>
+    <span class="chip" style="border-color: #d9b24a99">Fire Magic +1 ▾</span>
+  </div>
+  <div style="margin-bottom: 6px">
+    <b>Chest</b><br /><span class="chip ins">Blessed</span> <span class="chip run">Vigor</span>
+  </div>
+  <div style="margin-bottom: 6px">
+    <b>Gloves</b><br /><span class="chip ins">Prodigy’s</span>
+    <span class="chip run">Minor Air Magic</span>
+  </div>
+  <div style="margin-bottom: 6px">
+    <b>Leggings</b><br /><span class="chip ins">Survivor’s</span>
+    <span class="chip run">Minor Energy Storage</span>
+  </div>
+  <div style="margin-bottom: 6px">
+    <b>Boots</b><br /><span class="chip ins">Wanderer’s</span>
+    <span class="chip run">Attunement</span>
+  </div>
+  <b>Fire Staff</b> <span class="chip mod">Vampiric</span>
+  <span class="chip mod">of Fortitude</span> <span class="chip empty">+ Inscr.</span>
+</div>

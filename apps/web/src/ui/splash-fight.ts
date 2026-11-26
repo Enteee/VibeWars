@@ -1,0 +1,288 @@
+import {
+  BOT_REACTION,
+  MINIMAL_GW_INSPIRED_PVP_V1 as RULESET,
+  MatchSimulation,
+  STARTER_BUILDS,
+  buildNavGraph,
+  loadoutOf,
+  loadoutSpec,
+  nearestStandable,
+  resolveLoadout,
+  teamIds,
+  vec2,
+  type NavGraph,
+  type ParticipantSpec,
+  type PlayerBuild,
+  type Vec2,
+} from "@vibewars/game-core";
+import { allWallSegments } from "@vibewars/game-maps/geometry";
+import { NO_GUILD } from "@vibewars/game-session";
+
+import { toArenaSnapshot, toRenderableWall } from "../match-view.js";
+import { hostMap, mapStructure } from "../net/maps.js";
+import { createArenaViewport } from "../render/arena-viewport.js";
+import { NO_COVER, VIEW_ASPECT, VIEW_STEPS, zoomFor } from "../render/camera-rig.js";
+import {
+  NO_PROFESSIONS,
+  createLocalConnection,
+  type LocalMatchConnection,
+  type Professions,
+} from "../training/local-connection.js";
+
+/** The widest view step: smaller characters, and the whole fight in frame. */
+const WIDEST_STEP = 3;
+const VIEW_HEIGHT = VIEW_STEPS[WIDEST_STEP].height;
+/** How far outside the view box a body starts, or inside it when still. */
+const OFFSCREEN_MARGIN = 80;
+/** Between two bodies of a side as they walk in. */
+const SPAWN_SPACING = 70;
+/** As a body stands in a map: the sim's own walkable query needs one. */
+const SPAWN_CLEARANCE = 24;
+/** Each team faces into the view from where it enters: right, left, up. */
+const FACING = [0, Math.PI, -Math.PI / 2];
+/** A long frame is not caught up on: a hidden tab costs nothing. */
+const MAX_STEP_SECONDS = 0.1;
+/** Behind the menus it never draws faster (#3119); matches are not capped. */
+const FPS_LIMIT = 30;
+/**
+ * Nobody wins and the clock never runs out: the dead respawn, so no side is
+ * ever wiped out. Annihilation, not kill-count, so that a three-team map
+ * fights too (#3633).
+ */
+export const SPLASH_RULES = {
+  victory: "annihilation",
+  scoreToWin: 1_000_000,
+  timeLimitSeconds: 1_000_000,
+  deathRule: "respawn",
+  respawnSeconds: 3,
+  respawnOnWave: false,
+  deathPenalty: false,
+} as const;
+
+export type SplashMap = NonNullable<ReturnType<typeof hostMap>>;
+
+/** What the fight is on, and whether it moves at all. */
+export interface SplashFightOptions {
+  readonly mapId: string;
+  readonly teamSize: number;
+  /** Reduced motion: drawn once, the teams at their spawns, never stepped. */
+  readonly still: boolean;
+}
+
+function pick<T>(from: readonly T[], random: () => number): T {
+  const picked = from[Math.floor(random() * from.length)];
+  if (picked === undefined) {
+    throw new Error("nothing to pick the splash fight from");
+  }
+  return picked;
+}
+
+/**
+ * Where body `index` of `team` starts: just outside the view box on its
+ * side (left, right, a third team below), or at the map's edge when the
+ * map is smaller than the view, at the nearest place it can stand. A
+ * respawn comes back here, off camera. A `still` fight never walks in, so
+ * it stands just inside the view.
+ */
+export function splashSpawn(
+  graph: NavGraph,
+  map: SplashMap,
+  fight: SplashFightOptions,
+  team: number,
+  index: number,
+): Vec2 {
+  const { width, height } = map.descriptor;
+  const reach =
+    (VIEW_HEIGHT * VIEW_ASPECT) / 2 + (fight.still ? -OFFSCREEN_MARGIN : OFFSCREEN_MARGIN);
+  const along = (index - (fight.teamSize - 1) / 2) * SPAWN_SPACING;
+  if (team === 2) {
+    // A three-team map's third side comes in from below (#3633).
+    const below = VIEW_HEIGHT / 2 + (fight.still ? -OFFSCREEN_MARGIN : OFFSCREEN_MARGIN);
+    return nearestStandable(graph, vec2(width / 2 + along, height / 2 + below));
+  }
+  const x = width / 2 + (team === 0 ? -reach : reach);
+  return nearestStandable(graph, vec2(x, height / 2 + along));
+}
+
+/** Where a body can stand on `map`, for its spawn. */
+export function splashGraph(map: SplashMap): NavGraph {
+  return buildNavGraph(allWallSegments(map.descriptor.walls), map.bounds, SPAWN_CLEARANCE, []);
+}
+
+/** The splash fight's bots, and each one's professions by its id. */
+export interface SplashBots {
+  readonly participants: ParticipantSpec[];
+  /** From the loadout each bot plays, for its snapshot to carry (#3336). */
+  readonly professions: ReadonlyMap<string, Professions>;
+}
+
+/**
+ * The bots of every side the map seats, `fight.teamSize` each, walking in
+ * from their spawns, on builds picked from `buildsOf` their team by `random`.
+ */
+export function splashParticipants(
+  map: SplashMap,
+  fight: SplashFightOptions,
+  graph: NavGraph = splashGraph(map),
+  buildsOf: (team: number) => readonly PlayerBuild[] = () => STARTER_BUILDS,
+  random: () => number = Math.random,
+): SplashBots {
+  const professions = new Map<string, Professions>();
+  const participants = teamIds(map.descriptor.teamCount).flatMap((team) =>
+    Array.from({ length: fight.teamSize }, (_, index) => {
+      const loadout = loadoutOf(pick(buildsOf(team), random));
+      const resolved = resolveLoadout(
+        {
+          primaryProfession: loadout.primaryProfession,
+          secondaryProfession: loadout.secondaryProfession,
+          allocatedRanks: loadout.attributeRanks,
+          equipment: loadout.equipment,
+        },
+        RULESET.combat,
+      );
+      const id = `splash-${String(team)}-${String(index)}`;
+      professions.set(id, {
+        primary: loadout.primaryProfession,
+        secondary: loadout.secondaryProfession,
+      });
+      return {
+        id,
+        team,
+        skillBar: loadout.skillBar,
+        ...loadoutSpec(resolved),
+        spawn: splashSpawn(graph, map, fight, team, index),
+        facing: FACING[team] ?? 0,
+        behaviour: { kind: "play-build", reaction: BOT_REACTION },
+      } satisfies ParticipantSpec;
+    }),
+  );
+  return { participants, professions };
+}
+
+/** A running splash fight. */
+export interface SplashFight {
+  /** What it draws on. */
+  readonly canvas: HTMLCanvasElement;
+  /** Stops everything; resolves once its WebGL context is released. */
+  readonly stop: () => Promise<void>;
+  /** Resolves once its first snapshot has been drawn; never in a hidden tab. */
+  readonly firstFrame: Promise<void>;
+}
+
+/**
+ * The splash fight's simulation on `map`, with its layers as a match has
+ * them (#3222): a bot's walk on a map whose ground is not its lowest layer
+ * names that layer, which a flat world refuses. Its world elements too
+ * (#3407): gates, levers, teleports, breakables and zones, as a match has
+ * them; not its objectives, which `SPLASH_RULES` leave out. With its bots'
+ * professions.
+ */
+export function splashSimulation(
+  map: SplashMap,
+  fight: SplashFightOptions,
+  seed: string,
+): { readonly simulation: MatchSimulation; readonly professions: SplashBots["professions"] } {
+  const { participants, professions } = splashParticipants(map, fight);
+  const simulation = new MatchSimulation({
+    seed,
+    ruleset: RULESET,
+    matchRules: SPLASH_RULES,
+    teamCount: map.descriptor.teamCount,
+    walls: map.walls,
+    gates: map.gates,
+    switches: map.switches,
+    teleports: map.teleports,
+    breakables: map.breakables,
+    switchedDecks: map.switchedDecks,
+    bounds: map.bounds,
+    layers: map.layers,
+    zones: map.zones,
+    participants,
+  });
+  return { simulation, professions };
+}
+
+/**
+ * The splash fight as a match's connection, seen from nobody: no names,
+ * no guilds, and each bot's professions, as a match shows them (#3336).
+ */
+export function splashConnection(
+  map: SplashMap,
+  fight: SplashFightOptions,
+  seed: string,
+): LocalMatchConnection {
+  const { simulation, professions } = splashSimulation(map, fight, seed);
+  return createLocalConnection({
+    simulation,
+    selfId: "splash-nobody",
+    map: map.descriptor,
+    nameOf: () => "",
+    guildOf: () => NO_GUILD,
+    professionsOf: (id) => professions.get(id) ?? NO_PROFESSIONS,
+  });
+}
+
+/**
+ * A silent fight of bots, `teamSize` a side on `mapId`, drawn into
+ * `parent` at no more than 30 fps, seen from nobody, the camera still on
+ * the map's centre. Rejects where the arena cannot be drawn.
+ */
+export async function startSplashFight(
+  parent: HTMLElement,
+  fight: SplashFightOptions,
+): Promise<SplashFight> {
+  const map = hostMap(fight.mapId);
+  if (map === undefined) {
+    throw new Error(`no map ${fight.mapId} for the splash fight`);
+  }
+  const viewport = await createArenaViewport(parent, { fpsLimit: FPS_LIMIT });
+  const connection = splashConnection(map, fight, `splash-${String(Math.random())}`);
+  const { structure, wallLayers } = mapStructure(map.descriptor.id);
+  const walls = map.descriptor.walls.map((wall, at) => toRenderableWall(wall, wallLayers[at] ?? 0));
+  const { width, height } = map.descriptor;
+  viewport.setArenaBounds(width, height);
+  let drawn = (): void => undefined;
+  const firstFrame = new Promise<void>((resolve) => {
+    drawn = resolve;
+  });
+  // A step comes before its frame is drawn, so the one after the first
+  // snapshot's is the first that finds it on screen.
+  let snapshotSet = false;
+  const offFrame = viewport.onFrame((deltaSeconds) => {
+    if (snapshotSet) {
+      drawn();
+      // Under reduced motion the fight is a still picture: drawn, then held (#3157).
+      if (fight.still) {
+        viewport.hold();
+      }
+    }
+    if (!fight.still) {
+      connection.advance(Math.min(deltaSeconds, MAX_STEP_SECONDS));
+    }
+    viewport.setCamera(
+      { x: width / 2, y: height / 2, zoom: zoomFor(WIDEST_STEP, viewport.size()) },
+      NO_COVER,
+    );
+    viewport.scene.setSnapshot(
+      toArenaSnapshot(
+        connection.getSnapshot(),
+        walls,
+        [],
+        undefined,
+        undefined,
+        undefined,
+        structure,
+      ),
+    );
+    snapshotSet = true;
+  });
+  return {
+    canvas: viewport.canvas,
+    firstFrame,
+    stop: () => {
+      offFrame();
+      void connection.disconnect();
+      return viewport.destroy();
+    },
+  };
+}

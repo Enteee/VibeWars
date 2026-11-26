@@ -1,0 +1,467 @@
+# Modos
+
+Cada mapa juega un modo. Los
+modos son las entradas de la barra a la izquierda de la pantalla principal.
+Nadie elige el modo de un mapa, pero la entrada de la barra desde la que alojas
+elige los modos de los mapas de su sala: ![Arena por equipos](../../../apps/web/public/icons/mode/team-arena.svg) **Arena por equipos**, Aniquilación,
+Recuento de bajas y Aniquilación de sacerdote; ![Ascenso de los Héroes](../../../apps/web/public/icons/mode/heroes-ascent.svg) **Ascenso de los Héroes**,
+Carrera de reliquias, Rey de la colina y Puntos de captura; y ![GvG](../../../apps/web/public/icons/mode/gvg.svg) **GvG**, la
+Batalla de gremios. ![Partida alojada](../../../apps/web/public/icons/mode/hosted-game.svg) **Partida alojada** ofrece todos los mapas. Una ![Arena aleatoria](../../../apps/web/public/icons/mode/random-arena.svg) **Arena
+aleatoria** elige un mapa por ti, y con él el modo, pero nunca una Batalla de
+gremios, una Carrera de reliquias, Rey de la colina ni Puntos de captura. Arena
+por equipos sortea uno de sus mapas en cada partida, Ascenso de los Héroes
+empieza en su primer mapa, y solo una Partida alojada deja elegir al anfitrión, en la lista Mapa sobre los equipos.
+La pantalla de ningún otro modo indica qué mapa viene después: la partida lo
+muestra mientras carga.
+
+Dos jugadores detrás de redes estrictas no pueden emparejarse entre sí en una cola, así que la cola cuenta solo a los jugadores que pueden emparejarse contigo, y lo dice. Ayuda un relay en **Opciones → relay (TURN)**.
+
+Cada mapa está hecho para ciertos tamaños de equipo, y un modo solo juega un
+mapa hecho para su tamaño: un 8v8 nunca se amontona en una arena construida
+para un 1v1. El **Tamaño del equipo** de la barra solo pasa por los tamaños que
+juega el modo mostrado.
+
+| Modo                  | Tamaños de equipo | Mapa                                        |
+| --------------------- | ----------------- | ------------------------------------------- |
+| Arena aleatoria       | 1v1, 2v2, 4v4     | se sortea por ti, uno hecho para el tamaño  |
+| Arena por equipos     | 2v2, 4v4, 8v8     | se sortea en cada partida, según el tamaño  |
+| Ascenso de los Héroes | 8v8               | sus mapas en orden, hasta el Hall           |
+| GvG                   | 8v8               | Guild Hall Isle                             |
+| Partida alojada       | cualquiera        | el anfitrión elige uno hecho para el tamaño |
+
+En una Batalla de gremios, una Carrera de reliquias, Rey de la colina o Puntos
+de captura, un objetivo fuera de pantalla o bajo la interfaz recibe una flecha
+perfilada en el borde de la pantalla: la base de bandera o un santuario en el
+color de su dueño, gris si no es de nadie, y el altar en dorado. La flecha
+rellena de un jugador se dibuja encima.
+
+Una partida empieza con cada equipo retenido junto en su zona de inicio: puedes moverte por cualquier parte de ella y usar cualquier habilidad, así que prepara encantamientos, posturas, espíritus o guardas antes de que se abran las puertas; el otro equipo está retenido lejos, en su propia zona de inicio. La energía y la salud se regeneran mientras esperas, y los bots también se preparan. Un muro reluciente alrededor de la zona de inicio de tu equipo muestra hasta dónde puedes llegar. Una línea arriba cuenta los jugadores que han cargado la partida. Cuando la han cargado todos, cuenta 10 segundos hacia atrás y la partida empieza, y su reloj con ella. A un jugador que no la ha cargado tras 20 segundos no se le espera: la cuenta atrás empieza sin él, y aún puede unirse después.
+
+## Aniquilación
+
+**Derrota a todos los enemigos.** Los muertos siguen caídos hasta que un aliado
+los resucita, y cada muerte cuesta moral. Elimina al otro equipo para ganar.
+Tras 8 minutos, gana el equipo con más moral.
+
+Se juega en Canyon, Crossroads y Long Hall, y en dos arenas pequeñas de un
+tamaño parecido al de Canyon: **Sandstone Steps** (1v1, 2600x1940), un pueblo
+desértico en terrazas con un patio de pozo hundido, azoteas sobre sus calles y,
+bajo ellas, un paso inferior cerrado por una palanca; y **Frozen Crossing**
+(2v2, 2600x1940), un río helado entre dos orillas elevadas, que se cruza por
+piedras pasaderas o por un puente de troncos cuyo tablón central se levanta con
+una palanca. Para los equipos más grandes: **Ashen Courtyard** (4v4, 5120x3840),
+un patio amurallado y calcinado con adarves y torres arriba y un patio de pozo
+hundido abajo, cuyo rastrillo de la puerta se maneja desde las murallas; y
+**Moss Vale** (8v8, 5000x2600), un valle en terrazas partido en dos por un
+profundo canal de molino, que solo se cruza por el puente levadizo, el molino y
+el paso inferior que hay debajo. **Canthan Terraces** (1v1, 2400x2100)
+es pequeña pero empinada: arrozales que suben por una ladera hasta una pagoda en
+ruinas, con una alcantarilla inundada debajo que una palanca de compuerta abre
+como tercer camino al centro. **Sunken
+Bastion** (2v2, 2700x1900) es pequeña pero alta: una fortaleza medio inundada
+cuyo foso divide el patio; se cruza por un puente levadizo accionado con una
+palanca en cada orilla, por el adarve a lo largo de la muralla norte o por el
+sótano inundado de debajo. Y para los
+equipos más grandes: **Shiverpeak Pass** (4v4, 5100x3450), un paso de
+montaña nevado partido por un abismo, que se cruza por un puente de cuerda entre
+dos repisas del acantilado, del que tira una palanca en cada repisa, por una
+cueva bajo él o rodeando su extremo una vez rota la pared de hielo que hay allí;
+y **Elonian Plateau** (8v8, 5520x3360), una meseta desértica con
+cuatro mesas alrededor de un cauce seco de cañón: ascensores temporizados
+suben a tres de ellas, un arco natural une las dos del norte y un pasaje
+cruza bajo la cresta central, con una reja que abre una palanca en lo alto.
+
+## Recuento de bajas
+
+**Más bajas en 3 minutos.** Los muertos vuelven a su punto de inicio tras 8
+segundos, y morir no cuesta moral. El primer equipo que llega a 15 bajas gana
+al instante. Al acabar el tiempo, gana quien tenga más bajas; con las mismas
+bajas es un empate.
+
+Se juega en Ember Pits: regueros de lava cruzados por puentes de piedra, un túnel
+de lava, un elevador de palanca a una columna de basalto y respiraderos de vapor,
+para todos los tamaños de equipo.
+
+## Aniquilación de sacerdote
+
+**Derrota a todos los enemigos y a su sacerdote.** Cada equipo tiene un
+sacerdote en un santuario detrás de su punto de inicio. Nunca se mueve ni ataca,
+pero cura a todos los que tenga al lado, también a los enemigos. Cada 2 minutos,
+un equipo cuyo sacerdote sigue vivo recupera a sus muertos en el santuario, con
+salud y energía completas. Mata primero al sacerdote y el otro equipo se quedará
+caído.
+
+Un equipo pierde cuando todos sus jugadores y su sacerdote están muertos. Tras
+12 minutos, gana quien tenga más moral.
+
+Se juega en Jungle Ruins (de 2v2 a 8v8, 5400x2800): ruinas de un templo
+cubiertas de maleza, partidas por un río de la selva. Cruza por un vado, pasa
+por un puente de troncos, sube a la pirámide escalonada del centro o toma el
+pasaje oculto bajo ella cuando una palanca de un patio abra sus puertas; los
+muros de lianas se pueden cortar.
+
+## Batalla de gremios
+
+**Mata al Señor del Gremio enemigo**, 8 contra 8. Cada base está detrás de un
+muro con dos puertas; el Señor del Gremio está al fondo de su sala y dispara con
+un arco a cualquier enemigo que vea. Los guardias protegen cada base: Knights y
+un Bodyguard junto al señor, un Archer al fondo de la sala del señor, y un
+Footman y un Archer en cada puerta. Luchan contra los enemigos cercanos a su
+puesto y vuelven a él. Mientras el Bodyguard siga vivo, su señor recibe un 20%
+menos de daño, así que mátalo primero. Cada 2 minutos, el santuario de cada
+equipo devuelve a sus muertos.
+
+Cada equipo tiene una **bandera** en su base, y la **base de bandera** está en
+el centro. Selecciona tu bandera y pulsa **Space** para cogerla; llévala a la
+base de bandera, selecciónala y pulsa **Space** para plantarla. Quien la lleva
+camina más despacio y no puede atacar ni usar habilidades de ataque; la suelta
+si muere, cambia de armas o pulsa **Soltar bandera** sobre su barra de salud.
+Plantar la tuya en la base de bandera manda a casa la bandera enemiga que
+hubiera allí. Cada 2 minutos que tu bandera esté en la base de bandera, tu
+equipo gana un 10% de moral.
+
+El equipo cuyo Señor del Gremio muere pierde al instante, y también el equipo
+cuyos jugadores están todos muertos con la moral mínima. Tras 28 minutos, gana
+el equipo que hizo más daño al Señor del Gremio enemigo; un empate ahí es una
+derrota para ambos, porque no hay empates.
+
+El marcador muestra la salud de cada Señor del Gremio, primero el tuyo, quién
+controla la base de bandera y cuánto falta para su bonus, cuándo devolverán los
+santuarios a los muertos y, en los últimos 3 minutos, el daño de cada equipo al
+señor enemigo. Debajo, una línea nombra a quien lleva una bandera. Un bonus
+aparece como "¡Bonus de moral! +10%" o "Bonus de moral enemigo". En la brújula,
+♛ marca a cada Señor del Gremio, ⚑ cada bandera y ◎ la base de bandera.
+
+Se juega en Guild Hall Isle (8v8, 6000x2600): una isla en el mar. Cada Guild Lord está en lo alto de una sala, tras una muralla; se sale por la puerta fortificada, por encima de la muralla o por un muelle. La puerta de cada portón se abre con una palanca en la muralla enemiga. El soporte de la bandera está en un estrado en el centro.
+
+## Carrera de reliquias
+
+**Lleva tu reliquia al altar.** Cada equipo tiene una **reliquia** en su base, y
+el **altar** está en el centro, a la misma distancia de ambas bases, por una
+ruta norte o sur; el altar aparece en la brújula como ◆. Selecciona tu reliquia
+y pulsa **Space** para cogerla. Llévala al altar y anotas un punto al instante,
+y la reliquia vuelve a tu base. Cada punto se anuncia, con una fanfarria que
+sube para los tuyos y baja para los suyos. Quien la lleva camina más despacio y
+no puede atacar ni usar habilidades de ataque. Atraviesa a su propio equipo, pero
+un enemigo lo sigue bloqueando. Suelta la reliquia si muere o pulsa **Soltar
+reliquia** sobre su barra de salud, y la reliquia se queda donde cayó hasta que
+alguien llegue. Tu equipo la coge desde ahí. Un enemigo que llegue a ella, con
+las manos vacías, la manda a casa. La reliquia de un enemigo en su base no se
+puede tocar.
+
+Los muertos siguen caídos hasta que un aliado los resucita, y cada muerte cuesta
+moral. Elimina al otro equipo para ganar al instante. Tras 8 minutos gana el
+equipo con más puntos; con los mismos puntos es un empate. Las bajas no puntúan.
+
+El marcador muestra los puntos, primero los tuyos, y el reloj. Debajo, una línea
+por reliquia dice dónde está: `✦ Nombre` si alguien la lleva, `✦ en el suelo` si
+cayó o `✦ en la base`.
+
+Los bots también llevan la reliquia: el más cercano a tu reliquia va a por ella,
+salvo que tú estés a punto de cogerla. Primero va un bot que no esté luchando; si
+todos luchan, el más cercano abandona la lucha por la reliquia, así que un
+bloqueo en el altar nunca detiene la puntuación. Un sanador o un bot muy herido
+solo va si nadie más puede, y nunca desde una lucha. El más cercano a una
+reliquia enemiga caída la manda a casa, y los demás esperan junto al altar. Un
+bot que lleva tu reliquia va directo al altar; los demás solo la dejan para
+luchar contra un enemigo que entre en alcance de hechizo.
+
+Se juega en Broken Tower (4v4 y 8v8, 5400x2800): una torre caída sobre una colina en las tierras altas. Sube por las escaleras de las terrazas de escombros hasta el altar en el muñón de la torre, o ve por la bodega bajo la colina cuando una palanca de la terraza abra sus puertas; los muros de escombros se pueden romper. Junto a cada muro de escombros, un rastrillo se abre mientras alguien está sobre su placa de presión.
+
+### Cinder Sanctum
+
+Aquí la Carrera de reliquias del Ascenso de los Héroes se juega al revés. Cada base tiene la reliquia de su equipo y su Héroe Fantasmal, y no hay altar. **Coge la reliquia enemiga de su base y llévala a tu propio Héroe Fantasmal** para sumar un punto. El fantasma debe estar vivo y no se mueve de su puesto. No puedes llevar tu propia reliquia: si la recoges donde cayó, vuelve a casa. Un equipo con **3 puntos de ventaja gana al instante**. A los 8 minutos gana quien tenga más puntos, y un empate es para el último equipo que puntuó. Cada base resucita a sus muertos, y a su fantasma, cada 2 minutos. Los bots van juntos a por la reliquia enemiga y la traen a casa.
+
+Cinder Sanctum (8v8, 5600x2800) lo juega: un templo en la ladera de un volcán entre dos ríos de lava. Cruza por un puente o por la calzada hasta el santuario sobre su atrio; una palanca en el atrio abre el pasadizo oculto bajo el santuario, y los muros de ceniza se pueden romper. La lava quema.
+
+## Rey de la colina
+
+**Lleva a tu Héroe Fantasmal al altar y mantenlo.** Cada equipo tiene un **Héroe
+Fantasmal** en su base, un fantasma que lucha con un hacha y que nadie juega. El
+**altar** está en el centro, a la misma distancia de ambas bases. En **Threefold
+Keep**, tres equipos (dos si no hay un tercero libre) luchan por él en la torre de
+un recinto amurallado. Como máximo 12 puntos por equipo, y si
+todos los rivales están a -60 % de moral, ganas al instante. **Hall of Heroes** (8v8, 5000x4400), el mapa
+que cierra el Ascenso de los Héroes, es un salón dorado para tres equipos: el
+altar se alza sobre un estrado con pilares y seis escalinatas, en un zócalo con
+una galería entre cada par de bases, y una cripta corre bajo el suelo desde cada
+base hasta el interior del zócalo. Las puertas de las criptas empiezan cerradas,
+y la palanca de cualquier equipo abre las tres.
+Selecciona a tu fantasma con un **clic derecho** y pulsa **Space** para decirle
+que te siga: camina contigo y lucha contra lo mismo que tú. Pulsa Space sobre
+él otra vez y se queda donde está, luchando contra cualquier enemigo que se
+acerque. Si mueres o te vas, se queda. Con tu fantasma seleccionado, su marco
+dice a quién sigue o que se queda. Un aviso dice a quién sigue tu Héroe Fantasmal
+cada vez que cambia, y el nombre sobre su cabeza muestra a su líder.
+
+Tu fantasma tiene 640 de salud, y blande su hacha con **Cyclone Axe**,
+**Disrupting Chop** y **Swift Chop**, tanto si sigue como si se queda. Es más
+fuerte cuanto más alto estés en el Ascenso: nivel 24 en Threefold Keep, 28 en Hall
+of Heroes. **Mata al fantasma del otro equipo** y cada miembro de tu equipo
+obtiene un **bonus de moral de +10%**, que primero elimina una penalización por
+muerte y nunca pasa de +10%. Mátalo otra vez cuando se levante y lo obtienes de
+nuevo.
+
+Llévalo al altar o más allá y sube al altar y se queda en él. Ahí lucha contra
+cualquier enemigo a su lado, pero nunca baja a perseguirlo. Un fantasma en el
+altar lo reclama por sí mismo: 5 segundos quieto, con su barra de lanzamiento
+llenándose, sin luchar. Una interrupción o un derribo cortan la reclamación, y
+empieza de nuevo en cuanto puede. Solo puede reclamar el altar mientras nadie lo
+controle, o mientras el fantasma de quien lo controla esté muerto. Cuando termina
+la reclamación, el altar es de tu equipo.
+
+El equipo que controla el altar anota un punto cada 30 segundos que lo mantiene,
+incluso con su fantasma muerto, hasta que otro equipo lo reclama. Cada punto se
+anuncia, como una reliquia anotada. Un fantasma muerto se levanta en su base 2
+minutos después, quedándose quieto, aquí y en una Carrera de reliquias. En Puntos
+de captura se levanta con la siguiente oleada de la base. En un mapa con
+sacerdotes se levanta en cambio con la siguiente oleada del sacerdote, pero solo
+mientras viva el sacerdote de su equipo. En cualquier otro mapa, un fantasma
+muerto sigue muerto, y su +10% solo se puede obtener una vez. No es un jugador:
+su muerte no cuesta moral y no cuenta para eliminar a un equipo.
+
+Los muertos siguen caídos hasta que un aliado los resucita, y cada muerte cuesta
+moral. Elimina al otro equipo para ganar al instante. Tras 8 minutos gana el
+equipo con más puntos; con los mismos puntos es un empate. Las bajas no puntúan.
+
+El marcador muestra los puntos, primero los tuyos, y luego el altar: `▲` y el
+tiempo hasta el próximo punto de quien lo controla, en su color, o un `▲ —` gris
+mientras nadie lo controla.
+
+Los bots también van a por el altar: mientras tu equipo no lo controla, el más
+cercano a tu Héroe Fantasmal se encarga de él, salvo que tú estés a punto de
+hacerlo; un sanador o un bot muy herido solo va si nadie más puede. Lleva al
+fantasma al altar y le dice que se quede, y los demás esperan junto al altar. Un
+bot que lleva al fantasma no se para a luchar por el camino; los demás solo dejan
+el altar para luchar contra un enemigo que entre en alcance de hechizo. Mientras
+tu equipo no controla el altar, cada bot mata primero al Héroe Fantasmal del otro
+equipo en cuanto esté sobre el altar a su alcance: es el único enemigo que impide
+que tu fantasma lo reclame.
+
+Se juega en Threefold Keep (4v4 y 8v8, 5000x4400): una fortaleza sobre una colina en las alturas, para tres equipos. Sube al adarve por las escaleras junto a tu puerta y cruza una calzada hasta la colina; luego sube al altar en la torre. Una palanca en cada patio abre las cuatro puertas: el paso de tu puerta bajo la muralla, y la cripta, el camino largo bajo la colina.
+
+## Puntos de captura
+
+**Controla los santuarios.** El mapa tiene cinco **santuarios**: uno junto a cada
+base y tres entre medias, el central al descubierto. Colócate en un santuario
+para capturarlo. Cada miembro de tu equipo sobre él es una **marca**, tu Héroe
+Fantasmal cuatro; mascotas, esbirros y espíritus no cuentan. Con cuatro marcas,
+un santuario neutral es tuyo en 8 segundos, con dos en 16, solo en 32; más de
+cuatro no van más rápido. Los enemigos sobre él cancelan tus marcas una por una:
+tres de los tuyos contra dos de ellos lo toman a una marca, en 32 segundos, ocho
+contra dos a cuatro, y marcas iguales lo dejan quieto. Con tres equipos, el más
+fuerte lo mueve según sus marcas menos las de los otros dos juntos; si los otros
+dos lo superan, nadie captura, y un santuario con dueño solo vuelve a neutral. Un
+santuario de otro equipo primero se vacía hasta neutral y luego se llena para
+ti, así que tomarlo tarda el doble. Si te alejas, su progreso se queda donde
+estaba; un santuario tuyo sigue siéndolo hasta que un enemigo lo toma. Los
+santuarios aparecen en la brújula como □ en el color de su dueño.
+
+Cada 30 segundos, cada santuario de tu equipo anota un punto, y un aviso y un
+sonido anuncian lo que anotó cada bando. Cada 60 segundos del reloj de la partida,
+los muertos de tu equipo se levantan en el santuario de tu base con salud y
+energía completas, aunque haya un enemigo ahí, salvo que su moral esté en el
+mínimo. El marcador cuenta atrás hasta la próxima oleada. Cada muerte cuesta
+moral, y un fantasma se levanta en la misma oleada, en su propio sitio. Saca **20
+puntos de ventaja** a todos los demás equipos para ganar al instante. Eliminar a un equipo no termina la partida, pero un equipo cuyos jugadores se han ido todos queda fuera. Tras 8 minutos gana el equipo con más puntos; con los mismos
+puntos, el que controle más santuarios, luego el equipo que estuvo el último por
+delante en solitario, y si ninguno lo estuvo nunca, es un empate. Las bajas no
+puntúan.
+
+Cada santuario es un anillo en el suelo del color de su dueño, gris mientras no es
+de nadie, con un arco alrededor que muestra cuánto le falta a quien lo está
+tomando. El marcador muestra los puntos, primero los tuyos, y el reloj.
+
+Los bots se reparten por los santuarios que tu equipo aún no controla y se quedan
+hasta que se toman. Un enemigo en alcance de hechizo no los aparta: suben a un
+santuario a su alcance y luchan desde él.
+
+Se juega en Scarred Earth (4v4 y 8v8, 5400x2800): un campo de batalla lleno de cráteres al atardecer. Los santuarios están sobre torres de asedio destrozadas, el central en la plataforma de la gran torre, cada uno junto a un cráter; unas palancas en las torres abren dos trincheras bajo el campo, y las empalizadas destrozadas se pueden romper.
+
+En el Ascenso de los Héroes se juega en The Warden's Gallery (8v8, 5200x2500): una galería de esculturas soleada bajo claraboyas. El santuario central está en lo alto del gran pedestal, y cada equipo tiene tres cerca de su vestíbulo, uno sobre un pedestal; unas palancas en el gran pedestal abren dos criptas bajo el suelo, y las estatuas derribadas se pueden romper.
+
+## Sala de equipo
+
+Una sala alojada no empieza la partida cuando todos están listos. Primero abre la
+Sala de equipo, donde cada bando elige una build de equipo y luego se reparte sus
+personajes. En Ascenso de los Héroes y GvG, un bando es tan grande como el equipo
+del modo (8), que el **Tamaño del equipo** de la barra lateral muestra bloqueado.
+En Arena por equipos, el líder del grupo elige 2v2, 4v4 u 8v8 con sus flechas
+mientras el grupo no está en cola, y el resto del grupo lo ve bloqueado. Empieza
+en el último tamaño que el líder eligió en Arena por equipos, 4v4 al principio. Un
+grupo nunca elige un tamaño menor que su número de jugadores, y un grupo con
+tantos jugadores como su tamaño no acepta a nadie más ("El grupo está lleno."). Dos
+grupos solo se enfrentan si tienen el mismo tamaño, y la ventana del icono de cola
+de la barra superior lo indica: "Arena por equipos 2v2". En una Partida alojada, el
+anfitrión fija el tamaño del equipo con sus flechas, de 1v1 a 8v8, antes de la Sala
+de equipo, y ambos bandos juegan exactamente con ese número; la Sala de equipo no
+muestra Tamaño del equipo. Un invitado ve el del anfitrión, bloqueado. La lista de
+mapas del anfitrión, sobre los equipos, solo muestra los hechos para ese tamaño, y un tamaño que no
+encaja con el mapa lleva la sala al primer mapa que encaje. Nunca baja del número
+de jugadores de un bando, y un bando con tantos jugadores como el tamaño del equipo
+no acepta a nadie más. Un 1v1 muestra todos tus personajes, con los miembros de
+equipo etiquetados con su equipo: haz clic en uno para jugarlo, o espera y juega tu
+personaje activo. **Salir** en tu equipo te saca de él sin salir de la sala. Un
+grupo en cola ([Buscar partida](getting-started.md#alojar-o-unirse-a-una-partida)
+en Arena por equipos, Ascenso de los Héroes o GvG) tiene una Sala de equipo solo de
+su propio bando, tan grande como el equipo del modo (el tamaño elegido en Arena por
+equipos, 8 en los demás) aunque el grupo sea menor; los bots juegan los asientos
+que nadie reclama. Mientras está en cola puedes ver los otros modos: el grupo
+conserva su modo y tamaño hasta salir de la cola. En Arena por equipos y GvG, un
+grupo que ha esperado 30 s juega calentamientos contra bots, todavía en cola,
+hasta que se encuentra un equipo
+([calentamientos](getting-started.md#alojar-o-unirse-a-una-partida)). Cada etapa dura 30 segundos y
+termina antes si todos en la Sala de equipo están listos. Votar y tomar un asiento te marcan como listo.
+
+![Arena por equipos: las flechas del tamaño del equipo al pie de la barra y el equipo de tu sala para unirte](../img/team-arena-1.png)
+
+![Tras unirte: estás en tu equipo como anfitrión, aún sin estar listo](../img/team-arena-2.png)
+
+**Votar.** Cualquiera de un bando puede proponer una build de equipo de exactamente
+el tamaño de ese bando, una propuesta cada uno. Tus builds de equipo se abren desde
+la pestaña **Tus builds de equipo** de la derecha: búscalas por nombre, haz clic en
+una para ver sus miembros y luego en **Proponer esta build**; en la tuya, **Retirar
+propuesta**. Esc la cierra. Solo aparecen tus builds de equipo de ese tamaño y sin
+problemas; el panel indica cuántas de otros tamaños deja fuera. Cualquiera puede
+votar una de las propuestas de su bando, incluida la suya. Cada propuesta es una
+carta que muestra a cada miembro con sus armas, con sus habilidades, y las iniciales
+de quien la votó: haz clic en una carta para votar, o en otra para cambiar tu voto; no puedes retirarlo.
+Nada se propone por ti: el menú solo crea y edita builds de equipo. Una propuesta
+nueva sustituye a la anterior, y sus votos vuelven a cero. Gana la más votada. En
+caso de empate decide el voto del capitán: el anfitrión en su bando, y el primero
+en entrar en el otro. Con propuestas y sin votos, se elige una al azar. Sin
+propuestas, el bando juega un equipo predefinido al azar de su tamaño, del tipo con
+el que te hace empezar Creador de equipos; un bando de uno juega una build inicial
+aleatoria. Un grupo en cola cuyo plan de equipo no se acepta (falta un asiento, una
+build ilegal) también juega un equipo predefinido al azar, y se le avisa al abrirse
+la partida. Cada bando sortea el suyo, así que ambos pueden jugar el mismo. Ningún
+bando ve las propuestas, los votos ni la elección del otro.
+
+**Reclamar.** Los personajes de la build elegida son asientos, cada uno con el
+personaje sosteniendo sus armas sobre sus habilidades: haz clic en un asiento libre
+para tomarlo, o en otro libre para cambiar, por orden de llegada, uno cada uno. Quien
+no reclamó nada recibe el primero libre, y los bots juegan el resto, con el nombre
+de su personaje. Entonces empieza la partida, o un grupo en cola entra en la cola.
+
+Quien se va durante la Sala de equipo deja su personaje a un bot, así que el bando
+conserva su tamaño. Quien entre entonces solo observa.
+
+Tras una partida en cola por equipos, los ganadores vuelven a la cola solos tras 20
+segundos, y los perdedores (también en empate) vuelven al menú; la partida de una
+sala con código devuelve a todos a la sala. Un botón bajo el resultado se salta la
+espera o, para los ganadores, sale sin volver a la cola.
+Los ganadores de la Arena por equipos conservan su build de equipo y el puesto de cada jugador para la siguiente partida, sin sala de equipo, salvo que el grupo haya cambiado desde entonces: alguien se fue, está ausente o se unió. Entonces vuelven a elegir su equipo.
+Si tu equipo no ganó, Detener para esa cuenta atrás para que puedas leer el resultado; después el botón te lleva cuando estés listo.
+
+## Ascenso de los Héroes
+
+Un Ascenso de los Héroes en cola son nueve rondas, siempre en este orden: The Hollow Deep (Aniquilación), Blackwater Ford (Aniquilación de sacerdote), Barrow Field (Aniquilación de sacerdote), Cinder
+Sanctum (Carrera de reliquias), Mosslit Cairns (Puntos de captura), The Brazen Causeway (Aniquilación de sacerdote), Threefold Keep (Rey
+de la colina), The Warden's Gallery (Puntos de captura) y luego Hall of Heroes. Mientras buscas un equipo, el icono de la cola en la barra superior dice dónde estás, `Ascenso de los Héroes · ronda 2`, y la ventana de Sala muestra el mapa de esa ronda. Solo te enfrentas a un equipo de
+tu misma ronda, y esperas todo lo que haga falta: ningún bot rellena. La única excepción: desde la ronda 2, un equipo solo en su ronda durante 60 segundos puede adelantarse. Se enfrenta a un equipo que espere en cualquier ronda posterior antes de la Hall, ambos juegan el mapa del equipo más avanzado y el ganador sigue desde allí. Una ronda en
+un mapa hecho para tres equipos espera a tres; dos equipos que hayan esperado 30
+segundos a un tercero juegan entre ellos, y también dos cuyo tercero nunca aparece
+en la sala. Si ganas, tu grupo asciende solo al siguiente mapa tras 20 segundos; si
+ganas en el Hall, te quedas a defenderlo. Si pierdes, o sales de una partida antes
+de que termine, tu próximo Ascenso empieza otra vez en la ronda 1; también si sales
+de la cola o del grupo. Una partida perdida porque se fue su anfitrión conserva tu
+ronda.
+
+El Hall sortea uno de tres modos en cada partida: Rey de la colina, Carrera de reliquias o Puntos de captura, para dos o tres equipos. Con dos, la tercera base queda cerrada, y con ella los puntos de captura de sus dos galerías. Una partida en el Hall dura 11 minutos y ganan los puntos; Puntos de captura también termina antes con una ventaja de 20. Morir no cuesta moral. Los muertos vuelven juntos a su base en cada minuto completo del reloj de la partida, así que un equipo aniquilado no está vencido, pero un equipo cuyos jugadores se han ido todos queda fuera. En Rey de la colina, el equipo que tiene el altar sigue puntuando tras morir su fantasma, hasta que otro equipo lo reclame, y sus muertos vuelven en el altar. Un empate es para el equipo que puntuó por última vez o, en Puntos de captura, para el que logró la última baja.
+
+**La Cámara.** El Hall solo se forma cada 12 minutos según la hora UTC, a las :00, :12, :24, :36 y :48. Hasta entonces tu grupo espera en la Cámara: el icono de la cola muestra el tiempo hasta la próxima apertura y quién controla el Hall. En cada apertura, quien lo controla se enfrenta a un máximo de dos aspirantes, o se enfrentan hasta tres aspirantes si nadie lo controla. Solo participan los grupos que esperaban antes de la apertura, y los que no tengan plaza esperan a la siguiente. Quien lo controla sin rival conserva el Hall y espera, sin que cuente ninguna victoria, y un aspirante solo también espera. Cuando un grupo gana el Hall, todas las partidas abiertas dicen quién lo controla: su líder, o su etiqueta de hermandad si la comparte más de la mitad del grupo.
+
+Tu moral se mantiene durante todo el recorrido: la penalización por muerte o la
+bonificación con la que terminas un mapa ganado es con la que empiezas el siguiente,
+de −60 % a +10 %. Un recorrido que termina, o un jugador que se une a mitad, empieza
+en 0. Tu propia pestaña la recuerda, hasta que la cierres.
+
+El equipo elige una vez, en la Sala de equipo de su primer mapa, y conserva su build
+de equipo y sus asientos el resto del recorrido: tras una victoria vuelve a la cola
+sin votar ni reclamar. Quien se va a mitad libera su asiento pero no su build. Quien
+llega nuevo al grupo entre mapas solo reclama los asientos vacantes (**Libre: build
+Monje**), y juega la build de ese asiento; un asiento vacante que nadie reclama es de
+un bot. Una derrota lo reinicia: el siguiente recorrido vota de nuevo. También si
+sigues a tu anfitrión a otro grupo, cuyo anfitrión no puede responder del recorrido
+anterior. La ronda la recuerda el anfitrión de tu grupo, y solo hasta que cierres la
+pestaña. Una sala de Ascenso de los Héroes a la que entras por código juega el mapa
+de la ronda 1.
+
+Un grupo de menos de 8 entra en la cola con bots en los puestos vacíos, usando su build de equipo, pero un bando siempre tiene al menos un humano, y un equipo de bots nunca es rival. Si el último humano de un bando abandona una partida, ese bando se rinde y su recorrido termina.
+
+**Barrow Field** (8v8, 5400x2600) es una arena del Ascenso que también se elige en una Partida alojada: Aniquilación de sacerdote en un páramo de túmulos funerarios al anochecer, y el sacerdote resucita a sus muertos cada 2 minutos. Sube a un túmulo para tener la altura, o recorre el paso de los túmulos por debajo cuando una palanca en el túmulo lejano abra su puerta. Lleva tu bandera al **Storm Beacon** del centro y golpeará a un enemigo al azar a distancia de oído con 50 de daño de rayo cada 2,5 segundos, hasta que el otro equipo plante allí su bandera. Cada golpe es un rayo del faro a quien alcanza, visible para ambos equipos.
+
+Tres arenas del Ascenso también se eligen en una Partida alojada: **The Hollow Deep** (Aniquilación 8v8, 6200x2400, en una caverna oscura: cruza un puente colgante sobre un abismo, trepa por una cornisa central o toma la cripta bajo ella cuando una palanca en un saliente abra su reja), **Blackwater Ford**
+(Aniquilación de sacerdote 8v8, 5200x2800, en un oscuro vado de río: se cruza vadeando un vado poco profundo,
+por el puente roto sobre sus pilares encima del molino o por una alcantarilla bajo el puente cuando una palanca
+del molino abre su compuerta; el sacerdote resucita a sus muertos cada 2 minutos) y **Mosslit Cairns** (Puntos de captura 8v8, 5400x3000, en cinco colinas de túmulos que brillan con musgo al anochecer: se sube a un túmulo por sus escaleras, se defiende el gran túmulo del centro o se toma el túnel de raíces bajo las colinas del sur cuando una palanca de un túmulo del norte abre sus puertas; los muros de raíces se pueden romper). La cuarta es **The Brazen Causeway** (Aniquilación de sacerdote 8v8, 5600x2800, en una calzada de piedra elevada sobre una marisma al anochecer: se avanza por la calzada cuando una palanca de la torre de la puerta del otro extremo abre su puerta de bronce, se cruza la marisma hasta las escaleras de su centro o uno se escabulle por una alcantarilla bajo ella; el sacerdote resucita a sus muertos cada 2 minutos).
+
+Un mapa puede tener **puertas**: muros que detienen cuerpos, disparos y visión
+mientras están cerradas. Colócate en la placa de presión de una puerta para abrirla.
+Se cierra cuando no queda nadie en la placa, empujando a quien esté en el umbral al
+lado más cercano y deteniendo los disparos que aún la atraviesan, y no se puede abrir
+otra vez durante medio segundo. Una placa del color de un equipo solo responde a ese
+equipo. Los bots se colocan en la placa de su equipo si no hay enemigos cerca.
+
+Cada recorrido empieza con la **Batalla de los Zaishen de élite**, sin cola: tu grupo contra seis Zaishen controlados por bots (2 Monjes, un Elementalista y 3 más). Se libra en una arena ceremonial (8v8, 5400x2400): gradas escalonadas al norte y al sur, estatuas sobre pedestales en el suelo hundido y una cripta bajo cada grada, cuyo rastrillo abre una palanca en la grada de enfrente. El reloj arranca cuando uno de vosotros cruza la línea de salida en el centro de la arena o muere el primer Zaishen, lo que ocurra antes. Si matáis a los seis en menos de 30 segundos, el grupo empieza el recorrido con +10 % de moral; en menos de 60, +8 %; en menos de 80, +6 %; en menos de 100, +4 %; en menos de 120, +2 %; más lento, nada. Si ganáis, el grupo entra solo en la cola de su primer mapa. Si cae todo el grupo, o si queda algún Zaishen vivo al cumplirse el límite de 8 minutos, el recorrido termina.
+
+Cada victoria de un recorrido da **fama**: 1, 2, 3, 4, 6, 8, 12, 16, 20, 24, 28, 32, 36 las trece primeras y luego 40 cada una, con un máximo de 300 al día (el día cambia a las 15:00 UTC). La Batalla de los Zaishen de élite no da fama. Tu fama total fija tu **rango de héroe**, de 1 con 25 de fama a 15 con 100 000, que se muestra como ★ y un número junto a tu nombre. Puedes ver ambos en Opciones > Jugador. Ambos se guardan en tu dispositivo.
+
+## Tres equipos
+
+En una partida de tres equipos, el tercero se dibuja en verde lima, junto al azul de
+tu bando y el rojo del otro, y lleva un ◆ antes de sus etiquetas de nombre, filas de
+puntos y tabla de fin de partida, para que nunca se distinga solo por el color. El
+marcador muestra primero tu equipo y luego los demás en orden, y las tablas de fin de
+partida ponen primero tu equipo y luego el ganador.
+
+## Registros de partidas
+
+Cada partida jugada hasta el final, en cualquier modo y con bots incluidos, la
+publica su anfitrión como registro público de partida en los relays Nostr que usa el
+juego. Cualquiera puede leerlo, y no hay forma de excluirse. Un registro contiene el
+modo, el mapa, cuándo terminó la partida y cuánto duró, quién ganó y por qué, y el
+nombre en el juego, etiqueta de gremio y build de cada jugador (su código de plantilla
+de GW1: profesiones, atributos y barra de habilidades, sin equipo), con los bots
+marcados como bots. También está la clave pública de jugador de cada humano, que
+dibuja su sello, el escudo junto a su nombre; un sello es solo la clave que informó
+el anfitrión de la partida. Tu nombre en el juego y tu clave están en cada registro de
+una partida que juegues, así que cualquiera puede relacionar esas partidas entre sí.
+Nada más que pueda identificarte: ni dirección, ni id de peer, ni sala. Una partida
+que termina porque se fue su anfitrión, o que abandonaron todos, no se publica. Los
+registros los informa el anfitrión, así que un anfitrión puede equivocarse; nada los
+compara con la partida.
+
+Míralos en la página **Partidas**, debajo de Creador de equipos: las 50 más recientes de los últimos 7 días, las
+más nuevas primero, y las nuevas aparecen a medida que se juegan. Una fila es una
+línea: los jugadores de cada equipo como el icono de su profesión principal (pasa el
+ratón para ver el nombre), dos equipos o tres, el ganador subrayado, y el mapa, la
+duración y cuándo. Cada fila lleva la marca **del anfitrión**. Haz clic en una para ver
+los equipos, una pestaña por equipo, primero la del ganador: la carta de equipo.
+**Clonar** copia un equipo de una partida terminada a tus builds de equipo, con la
+build de cada jugador bajo su nombre, y lo abre. En un bando de 1v1, Clonar guarda la build del jugador como un personaje nuevo y lo abre, porque una build de equipo es de 2, 4 u 8.
+
+Cada fila empieza con el icono de su modo, y el icono y el borde izquierdo de la fila
+van en el color del modo: naranja Aleatoria, azul Equipo, dorado Ascenso, violeta GvG,
+verde Alojada. Encima de la lista, unos chips la filtran por **Tipo** (Aleatoria,
+Equipo, Ascenso, GvG, Alojada) y **Tamaño** (1v1, 2v2, 4v4, 8v8): pulsa los que
+quieras, y una partida aparece si encaja con un tipo pulsado y un tamaño pulsado; un
+grupo sin ninguno pulsado deja pasar todo. El tamaño es el del equipo más grande, con
+bots incluidos, así que una Partida alojada de 3v2 no encaja con ningún tamaño. Los
+chips se quedan como los dejaste hasta que se recarga la página.
+
+**Mis partidas**, tras los chips, muestra en cambio tus propias
+partidas: las últimas 50 que este navegador guardó para tu clave de
+jugador actual, de la más nueva a la más antigua, de cualquier
+antigüedad, publicadas o no, también una Batalla de los Zaishen de
+élite. Tipo y Tamaño siguen filtrándolas, y tu equipo va marcado con
+**Tú**. Abre una para ver tres pestañas: **Builds**, sus equipos con
+Clonar como arriba; **Estadísticas**, la tabla de puntuaciones que
+mostró su panel final; y **Diagrama**, sus gráficos. Solo se guardan en
+este navegador.
+
+Encima de los filtros, la franja **Salón de los héroes** muestra los últimos 20 dominios, del más reciente al más antiguo: quien domina (una etiqueta de gremio o el nombre del líder), las personas del equipo ganador, cuándo terminó la victoria más reciente y, desde dos victorias, cuántas seguidas. Un dominio es una racha ininterrumpida de victorias en el Salón de quien domina. La franja lee los registros de esta página, ignora los filtros y se oculta si ninguno es una victoria en el Salón. Como todo registro, es lo que informó el anfitrión de cada partida, y nada lo comprueba.
+
+## Clasificatorias
+
+Una partida de la cola sin bots es clasificatoria: mira [Clasificación](ranking.md).

@@ -1,0 +1,22 @@
+{
+  "id": "common.resurrection-signet",
+  "name": "Resurrection Signet",
+  "profession": "common",
+  "attribute": "No Attribute",
+  "type": "Signet.",
+  "elite": false,
+  "campaign": "Core",
+  "overcast": 0,
+  "activationSeconds": 3,
+  "rechargeSeconds": 0,
+  "upkeep": false,
+  "description": "Resurrect target party member. That party member is returned to life with 100% Health and 25% Energy. This signet only recharges when you gain a morale boost.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Common/0-Resurrection_Signet",
+    "fetchedAt": "2026-10-28T00:51:21.716Z"
+  },
+  "unmapped": {}
+}

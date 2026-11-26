@@ -1,0 +1,15 @@
+[
+  "github.com",
+  "api.github.com",
+  "codeload.github.com",
+  ".githubusercontent.com",
+  ".actions.githubusercontent.com",
+  "ghcr.io",
+  ".blob.core.windows.net",
+  "registry.npmjs.org",
+  "cache.nixos.org",
+  "channels.nixos.org",
+  "nixos.org",
+  "releases.nixos.org",
+  "devenv.cachix.org"
+]

@@ -1,0 +1,26 @@
+{
+  "id": "warrior.hammer-bash",
+  "name": "Hammer Bash",
+  "profession": "warrior",
+  "attribute": "Hammer Mastery",
+  "type": "Hammer attack.",
+  "elite": false,
+  "campaign": "Core",
+  "cost": {
+    "kind": "adrenaline",
+    "amount": 6
+  },
+  "overcast": 0,
+  "activationSeconds": 0,
+  "rechargeSeconds": 0,
+  "upkeep": false,
+  "description": "Lose all adrenaline. If Hammer Bash hits, your target is knocked down.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Warrior/18-Hammer_Bash",
+    "fetchedAt": "2026-10-28T04:26:06.065Z"
+  },
+  "unmapped": {}
+}

@@ -1,0 +1,26 @@
+{
+  "id": "ranger.call-of-protection",
+  "name": "Call of Protection",
+  "profession": "ranger",
+  "attribute": "Beast Mastery",
+  "type": "Shout.",
+  "elite": false,
+  "campaign": "Prophecies",
+  "cost": {
+    "kind": "energy",
+    "amount": 5
+  },
+  "overcast": 0,
+  "activationSeconds": 0,
+  "rechargeSeconds": 90,
+  "upkeep": false,
+  "description": "For 120 seconds, your animal companion has a 5...17...20 base damage reduction.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Ranger/79-Call_of_Protection",
+    "fetchedAt": "2026-10-28T09:13:02.952Z"
+  },
+  "unmapped": {}
+}

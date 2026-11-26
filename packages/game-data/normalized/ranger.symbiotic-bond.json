@@ -1,0 +1,26 @@
+{
+  "id": "ranger.symbiotic-bond",
+  "name": "Symbiotic Bond",
+  "profession": "ranger",
+  "attribute": "Beast Mastery",
+  "type": "Shout.",
+  "elite": false,
+  "campaign": "Prophecies",
+  "cost": {
+    "kind": "energy",
+    "amount": 10
+  },
+  "overcast": 0,
+  "activationSeconds": 0,
+  "rechargeSeconds": 55,
+  "upkeep": false,
+  "description": "For 120...264...300 seconds, your animal companion gains +1...3...3 health regeneration, and half of any physical damage dealt to your animal companion is redirected to you.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Ranger/97-Symbiotic_Bond",
+    "fetchedAt": "2026-10-28T09:13:03.010Z"
+  },
+  "unmapped": {}
+}

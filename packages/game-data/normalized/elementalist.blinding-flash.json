@@ -1,0 +1,26 @@
+{
+  "id": "elementalist.blinding-flash",
+  "name": "Blinding Flash",
+  "profession": "elementalist",
+  "attribute": "Air Magic",
+  "type": "Spell.",
+  "elite": false,
+  "campaign": "Core",
+  "cost": {
+    "kind": "energy",
+    "amount": 10
+  },
+  "overcast": 0,
+  "activationSeconds": 0.75,
+  "rechargeSeconds": 8,
+  "upkeep": false,
+  "description": "Target enemy is blinded for 3...7...8 seconds.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Elementalist/377-Blinding_Flash",
+    "fetchedAt": "2026-10-27T19:53:56.680Z"
+  },
+  "unmapped": {}
+}

@@ -1,0 +1,85 @@
+import { t } from "../i18n/index.js";
+import {
+  relayHosts,
+  saveRelay,
+  saveRelaySharing,
+  type Relay,
+} from "../net/transport/turn-config.js";
+import { button, h, toast } from "./kit.js";
+
+/** How long Use stays disabled after the prompt opens, as a browser's permission prompt does. */
+const ARM_USE_MS = 500;
+
+/** The open prompt's close, so a second link replaces it rather than stacking on it. */
+let closeOpen: (() => void) | undefined;
+
+/**
+ * Asked over the menu when the page was opened from a relay invite link
+ * (#972): a link from someone else never routes the player's traffic until
+ * they say Use. Use also shares it with the player's lobbies, and says so
+ * (#2240). Ignore, or Esc, saves nothing. With a relay already saved it
+ * names both, and replaces only on Use. A second link replaces an open
+ * prompt, Use disabled again, so closing it never uncovers an armed one.
+ */
+export function openRelayPrompt(
+  parent: HTMLElement,
+  offered: Relay,
+  saved: Relay | undefined,
+): void {
+  closeOpen?.();
+  const backdrop = h("div", "relay-prompt-overlay");
+  const panel = h("div", "screen relay-prompt");
+  panel.setAttribute("role", "dialog");
+  panel.setAttribute("aria-modal", "true");
+  panel.setAttribute("aria-label", t("relayPrompt.label"));
+
+  const question =
+    saved === undefined
+      ? t("relayPrompt.question", { relay: relayHosts(offered) })
+      : t("relayPrompt.questionReplace", {
+          relay: relayHosts(offered),
+          saved: relayHosts(saved),
+        });
+  panel.append(
+    h("p", "relay-prompt-question", question),
+    h("p", "screen-subtitle", t("relayPrompt.trust")),
+    // What Use means for the player's lobbies (#2240); Options can untick it.
+    h("p", "screen-subtitle relay-prompt-share", t("relayPrompt.sharing")),
+  );
+
+  const close = (): void => {
+    document.removeEventListener("keydown", onKey, true);
+    backdrop.remove();
+    if (closeOpen === close) {
+      closeOpen = undefined;
+    }
+  };
+  const onKey = (event: KeyboardEvent): void => {
+    if (event.key === "Escape") {
+      event.stopPropagation();
+      close();
+    }
+  };
+  const use = button(t("relayPrompt.use"), "primary relay-prompt-use", () => {
+    saveRelay(offered);
+    saveRelaySharing(true);
+    close();
+    toast(t("relayPrompt.toast", { relay: relayHosts(offered) }));
+  });
+  const ignore = button(t("relayPrompt.ignore"), "relay-prompt-ignore", close);
+  // A page that opens this link mid double-click must not land the second click on Use.
+  use.disabled = true;
+  window.setTimeout(() => {
+    use.disabled = false;
+  }, ARM_USE_MS);
+  const actions = h("div", "menu-row overlay-actions relay-prompt-actions");
+  actions.append(use, ignore);
+  panel.appendChild(actions);
+
+  backdrop.appendChild(panel);
+  parent.appendChild(backdrop);
+  closeOpen = close;
+  document.addEventListener("keydown", onKey, true);
+  // Enter on a link nobody read should not route traffic: focus starts on Ignore.
+  ignore.focus();
+}

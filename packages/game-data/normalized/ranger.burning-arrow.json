@@ -1,0 +1,26 @@
+{
+  "id": "ranger.burning-arrow",
+  "name": "Burning Arrow",
+  "profession": "ranger",
+  "attribute": "Marksmanship",
+  "type": "Bow attack.",
+  "elite": true,
+  "campaign": "Nightfall",
+  "cost": {
+    "kind": "energy",
+    "amount": 10
+  },
+  "overcast": 0,
+  "activationSeconds": 0,
+  "rechargeSeconds": 5,
+  "upkeep": false,
+  "description": "If this attack hits, you strike for +10...26...30 damage and cause Burning for 1...6...7 seconds.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Ranger/818-Burning_Arrow",
+    "fetchedAt": "2026-10-27T21:38:48.133Z"
+  },
+  "unmapped": {}
+}

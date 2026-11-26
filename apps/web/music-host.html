@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <!--
+      The music host (ADR-0028). It runs player-written Strudel, so it only
+      ever runs inside the game's sandboxed iframe; opened on its own it
+      does nothing (src/music/host/guard.ts). This policy is a second wall:
+      Strudel needs eval, a blob Worker for its timers and our own samples,
+      and nothing else, so a pasted pattern cannot reach another host.
+    -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; script-src 'self' 'unsafe-eval' blob: data:; worker-src blob:; connect-src 'self'; media-src 'self' blob: data:; base-uri 'none'; form-action 'none'"
+    />
+    <title>VibeWars music host</title>
+  </head>
+  <body>
+    <script type="module" src="/src/music/host/main.ts"></script>
+  </body>
+</html>

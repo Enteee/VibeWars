@@ -1,0 +1,56 @@
+{
+  "name": "@vibewars/game-maps",
+  "version": "0.0.0",
+  "license": "AGPL-3.0-or-later",
+  "private": true,
+  "type": "module",
+  "description": "Declarative map data and loader/validator (ADR-0006).",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./schema": {
+      "types": "./dist/schema.d.ts",
+      "default": "./dist/schema.js"
+    },
+    "./geometry": {
+      "types": "./dist/geometry.d.ts",
+      "default": "./dist/geometry.js"
+    },
+    "./layers": {
+      "types": "./dist/layers.d.ts",
+      "default": "./dist/layers.js"
+    },
+    "./match-fields": {
+      "types": "./dist/match-fields.d.ts",
+      "default": "./dist/match-fields.js"
+    },
+    "./size-class": {
+      "types": "./dist/size-class.d.ts",
+      "default": "./dist/size-class.js"
+    },
+    "./maps/*": "./maps/*",
+    "./training/*": "./training/*",
+    "./tutorial/*": "./tutorial/*",
+    "./bench/*": "./bench/*"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "maps",
+    "training",
+    "tutorial",
+    "bench"
+  ],
+  "scripts": {
+    "lint": "eslint .",
+    "build": "tsc --build tsconfig.build.json",
+    "clean": "rm -rf dist *.tsbuildinfo"
+  },
+  "dependencies": {
+    "@vibewars/game-core": "workspace:*",
+    "zod": "4.6.7"
+  }
+}

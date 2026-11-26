@@ -1,0 +1,26 @@
+{
+  "id": "dervish.eremites-attack",
+  "name": "Eremite's Attack",
+  "profession": "dervish",
+  "attribute": "Scythe Mastery",
+  "type": "Scythe attack.",
+  "elite": false,
+  "campaign": "Nightfall",
+  "cost": {
+    "kind": "energy",
+    "amount": 5
+  },
+  "overcast": 0,
+  "activationSeconds": 0,
+  "rechargeSeconds": 6,
+  "upkeep": false,
+  "description": "If it hits, this attack deals +1...8...10 damage and removes a Dervish enchantment. If an enchantment is removed, you do an additional +1...8...10 damage and strike all adjacent foes.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Dervish/1025-Eremite's_Attack",
+    "fetchedAt": "2026-10-27T21:59:44.473Z"
+  },
+  "unmapped": {}
+}

@@ -1,0 +1,379 @@
+import { describe, expect, it } from "vitest";
+import { vec2, type FlagField, type RelicField } from "@vibewars/game-core";
+import type { PlayerSnapshot } from "@vibewars/game-session";
+import type { Vec2 } from "@vibewars/game-core";
+
+import {
+  FLAG_PICK_RADIUS,
+  STAND_RADIUS,
+  renderableCapturePoints,
+  renderableGates,
+  renderableSwitches,
+  renderableTeleports,
+  SWITCH_PICK_RADIUS,
+  renderableFlags,
+  renderableRelics,
+  renderableStand,
+  recordFlag,
+  recordStand,
+  recordSwitch,
+  type RenderableFlag,
+  type RenderableStand,
+  type RenderableSwitch,
+} from "./flag-objects.js";
+import { pickAt, type DrawnClickable } from "./pick.js";
+
+/** What a right click picks among `flags` and `stand` drawn on the ground, a flag over the stand. */
+function flagObjectAtPoint(
+  flags: readonly RenderableFlag[],
+  stand: RenderableStand | undefined,
+  point: Vec2,
+): string | undefined {
+  const drawn: DrawnClickable[] = [];
+  if (stand !== undefined) {
+    recordStand(drawn, stand, 0, 0);
+  }
+  for (const flag of flags) {
+    recordFlag(drawn, flag, 0, 1);
+  }
+  return pickAt(drawn, point)?.id;
+}
+
+/** What a right click picks among `switches` drawn on the ground. */
+function switchAtPoint(switches: readonly RenderableSwitch[], point: Vec2): string | undefined {
+  const drawn: DrawnClickable[] = [];
+  for (const lever of switches) {
+    recordSwitch(drawn, lever, 0, 0);
+  }
+  return pickAt(drawn, point)?.id;
+}
+
+/** The Guild Battle's flags as the arena draws and picks them (#1225). */
+
+const FIELD: FlagField = {
+  stand: vec2(1500, 1000),
+  standLayer: 0,
+  spawns: [
+    { team: 0, position: vec2(560, 1000), layer: 0 },
+    { team: 1, position: vec2(2440, 1000), layer: 0 },
+  ],
+};
+
+const carrier = { sessionId: "x", x: 1200, y: 900, layer: 1 } as PlayerSnapshot;
+
+describe("renderableFlags", () => {
+  it("draws each flag where it is, in its side's colour from your team", () => {
+    const flags = renderableFlags(
+      [
+        { team: 0, place: { kind: "spawn" } },
+        { team: 1, place: { kind: "carried", carrierId: "x" } },
+      ],
+      FIELD,
+      [carrier],
+      1,
+    );
+    expect(flags).toEqual([
+      {
+        id: "flag/0",
+        side: "enemy",
+        position: vec2(560, 1000),
+        layer: 0,
+        carried: false,
+        onStand: false,
+      },
+      {
+        id: "flag/1",
+        side: "ally",
+        position: vec2(1200, 900),
+        layer: 1,
+        carried: true,
+        onStand: false,
+      },
+    ]);
+  });
+
+  it("puts a planted flag on the stand, and one dropped where it lies", () => {
+    const flags = renderableFlags(
+      [
+        { team: 0, place: { kind: "stand" } },
+        { team: 1, place: { kind: "ground", position: vec2(10, 20), layer: 2 } },
+      ],
+      { ...FIELD, standLayer: 1 },
+      [],
+      0,
+    );
+    // Each on its own layer (#3634), so it is drawn and picked lifted.
+    expect(flags.map((flag) => [flag.position, flag.layer, flag.onStand])).toEqual([
+      [FIELD.stand, 1, true],
+      [vec2(10, 20), 2, false],
+    ]);
+  });
+
+  it("draws nothing for a carrier not in the snapshot, nor on a map without a stand", () => {
+    const carried = [{ team: 1, place: { kind: "carried", carrierId: "gone" } }] as const;
+    expect(renderableFlags(carried, FIELD, [], 0)).toEqual([]);
+    expect(renderableFlags([{ team: 0, place: { kind: "spawn" } }], undefined, [], 0)).toEqual([]);
+  });
+});
+
+describe("renderableStand", () => {
+  it("is neutral with nobody holding it, and its holder's side once held", () => {
+    expect(
+      renderableStand({ holder: undefined, heldSeconds: 0 }, FIELD, 0)?.holder,
+    ).toBeUndefined();
+    expect(renderableStand({ holder: 1, heldSeconds: 4 }, FIELD, 0)?.holder).toBe("enemy");
+    expect(renderableStand({ holder: 1, heldSeconds: 4 }, FIELD, 1)?.holder).toBe("ally");
+    expect(renderableStand(undefined, undefined, 0)).toBeUndefined();
+    expect(
+      renderableStand({ holder: undefined, heldSeconds: 0 }, { ...FIELD, standLayer: 2 }, 0)?.layer,
+    ).toBe(2);
+  });
+});
+
+describe("renderableRelics (#1374)", () => {
+  const RELICS: RelicField = {
+    altar: vec2(1100, 700),
+    altarLayer: 0,
+    relicTarget: "altar",
+    relicCarry: "own",
+    spawns: [
+      { team: 0, position: vec2(110, 700), layer: 0 },
+      { team: 1, position: vec2(2090, 700), layer: 0 },
+    ],
+  };
+
+  it("draws each relic as a flag where it is, and a right click picks a lying one", () => {
+    const relics = renderableRelics(
+      [
+        { team: 0, place: { kind: "ground", position: vec2(600, 400), layer: 0 } },
+        { team: 1, place: { kind: "carried", carrierId: "x" } },
+      ],
+      RELICS,
+      [carrier],
+      0,
+    );
+    expect(relics).toEqual([
+      {
+        id: "relic/0",
+        side: "ally",
+        position: vec2(600, 400),
+        layer: 0,
+        carried: false,
+        onStand: false,
+      },
+      {
+        id: "relic/1",
+        side: "enemy",
+        position: vec2(1200, 900),
+        layer: 1,
+        carried: true,
+        onStand: false,
+      },
+    ]);
+    expect(flagObjectAtPoint(relics, undefined, vec2(605, 400))).toBe("relic/0");
+    expect(renderableRelics([{ team: 0, place: { kind: "spawn" } }], undefined, [], 0)).toEqual([]);
+  });
+});
+
+describe("flagObjectAtPoint", () => {
+  const stand = renderableStand({ holder: 0, heldSeconds: 0 }, FIELD, 0);
+
+  it("picks a flag lying near the point before the stand", () => {
+    const flags = renderableFlags(
+      [{ team: 0, place: { kind: "ground", position: vec2(1500, 1020), layer: 0 } }],
+      FIELD,
+      [],
+      0,
+    );
+    expect(flagObjectAtPoint(flags, stand, vec2(1500, 1020 + FLAG_PICK_RADIUS - 1))).toBe("flag/0");
+    expect(flagObjectAtPoint(flags, stand, vec2(1500 - STAND_RADIUS + 1, 1000))).toBe("flag-stand");
+    expect(flagObjectAtPoint(flags, stand, vec2(1000, 1000))).toBeUndefined();
+  });
+
+  it("never picks a carried flag or one on the stand: the carrier and the stand are", () => {
+    const flags = renderableFlags(
+      [
+        { team: 0, place: { kind: "stand" } },
+        { team: 1, place: { kind: "carried", carrierId: "x" } },
+      ],
+      FIELD,
+      [carrier],
+      0,
+    );
+    expect(flagObjectAtPoint(flags, stand, vec2(1200, 900))).toBeUndefined();
+    expect(flagObjectAtPoint(flags, stand, FIELD.stand)).toBe("flag-stand");
+  });
+});
+
+describe("Capture Points' shrines as the arena draws them (#1378)", () => {
+  const at = vec2(1100, 700);
+
+  it("tints each by its owner from your team, grey for nobody's", () => {
+    const points = renderableCapturePoints(
+      [
+        { position: at, layer: 0, owner: 1, capturer: 1, progress: 1 },
+        { position: at, layer: 0, owner: null, capturer: null, progress: 0 },
+      ],
+      1,
+    );
+    expect(points.map((point) => point.owner)).toEqual(["ally", undefined]);
+    // A spectator reads team 0 as theirs, as the scoreboard does.
+    expect(
+      renderableCapturePoints(
+        [{ position: at, layer: 0, owner: 1, capturer: 1, progress: 1 }],
+        undefined,
+      )[0]?.owner,
+    ).toBe("enemy");
+  });
+
+  it("rings the capturer's progress, and none on a shrine owned in full or untouched", () => {
+    const [draining, filling, held, untouched] = renderableCapturePoints(
+      [
+        { position: at, layer: 0, owner: 0, capturer: 0, progress: 0.25 },
+        { position: at, layer: 0, owner: null, capturer: 1, progress: 0.6 },
+        { position: at, layer: 0, owner: 0, capturer: 0, progress: 1 },
+        { position: at, layer: 0, owner: null, capturer: null, progress: 0 },
+      ],
+      0,
+    );
+    expect(draining).toMatchObject({ owner: "ally", ring: { side: "ally", fraction: 0.25 } });
+    expect(filling).toMatchObject({ owner: undefined, ring: { side: "enemy", fraction: 0.6 } });
+    expect(held?.ring).toBeUndefined();
+    expect(untouched?.ring).toBeUndefined();
+  });
+});
+
+describe("renderableGates (#2691)", () => {
+  const wall = { kind: "rect", x: 0, y: 0, width: 8, height: 90 } as const;
+  const plate = { x: 50, y: 50 };
+
+  it("says whose plate it is from your side, and whether its gate is open", () => {
+    const gates = [
+      { wall, blocks: "all", opener: { kind: "plate", plate, team: 1 } },
+      { wall, blocks: "all", opener: { kind: "plate", plate, team: null } },
+    ] as const;
+    expect(
+      renderableGates(gates, [0, 0], ["door", "door"], [true, false], 1).map(({ plate, open }) => ({
+        side: plate?.side,
+        open,
+      })),
+    ).toEqual([
+      { side: "ally", open: true },
+      { side: undefined, open: false },
+    ]);
+  });
+
+  it("draws a gate closed before the first snapshot says otherwise", () => {
+    const gate = { wall, blocks: "all", opener: { kind: "plate", plate, team: null } } as const;
+    expect(renderableGates([gate], [0], ["door"], [], 0)[0]?.open).toBe(false);
+  });
+
+  it("gives a switch's gate no plate (#3025), its wall's layer (#3061) and its look (#3068)", () => {
+    expect(
+      renderableGates(
+        [{ wall, blocks: "all", opener: { kind: "switch" } }],
+        [2],
+        ["portcullis"],
+        [true],
+        0,
+      ),
+    ).toEqual([
+      { plate: undefined, open: true, blocks: "all", wall, layer: 2, look: "portcullis" },
+    ]);
+  });
+});
+
+describe("renderableSwitches and switchAtPoint (#3025)", () => {
+  const switches = [
+    { id: "west", layer: 0, position: { x: 100, y: 100 } },
+    { id: "east", layer: 1, position: { x: 400, y: 100 } },
+  ];
+  const NONE = { gates: [], teleports: [], decks: [], lifts: [] };
+
+  it("targets each by its switch- id, up until a snapshot says thrown", () => {
+    expect(renderableSwitches(switches, [false], [], NONE)).toEqual([
+      {
+        id: "switch-west",
+        mark: "west",
+        position: { x: 100, y: 100 },
+        layer: 0,
+        up: false,
+        targets: [],
+      },
+      {
+        id: "switch-east",
+        mark: "east",
+        position: { x: 400, y: 100 },
+        layer: 1,
+        up: true,
+        targets: [],
+      },
+    ]);
+  });
+
+  it("says whether each target is open, on, up or high (#3236)", () => {
+    const at = { position: { x: 0, y: 0 }, outline: [], layer: 0 };
+    const [west] = renderableSwitches(
+      switches,
+      [],
+      [
+        [
+          { ...at, id: "gate", kind: "portcullis", source: "gate", at: 1 },
+          { ...at, id: "portal", kind: "portal", source: "teleport", at: 0 },
+          { ...at, id: "bridge", kind: "bridge", source: "deck", at: 0 },
+          { ...at, id: "lift", kind: "lift", source: "lift", at: 0 },
+        ],
+      ],
+      {
+        gates: [false, true],
+        teleports: [false],
+        decks: [{ up: true }],
+        lifts: [{ phase: "sinking" }],
+      },
+    );
+    expect(west?.targets.map(({ id, on }) => [id, on])).toEqual([
+      ["gate", true],
+      ["portal", false],
+      ["bridge", true],
+      ["lift", false],
+    ]);
+  });
+
+  it("picks the switch under a click, and nothing beside it", () => {
+    const drawn = renderableSwitches(switches, [], [], NONE);
+    expect(switchAtPoint(drawn, { x: 105, y: 96 })).toBe("switch-west");
+    expect(switchAtPoint(drawn, { x: 100, y: 100 + SWITCH_PICK_RADIUS + 1 })).toBeUndefined();
+  });
+});
+
+describe("renderableTeleports (#3030)", () => {
+  const area = {
+    kind: "polygon" as const,
+    points: [
+      { x: 0, y: 0 },
+      { x: 40, y: 0 },
+      { x: 40, y: 40 },
+    ],
+  };
+  const teleports = [
+    { id: "up", from: { layer: 0, area }, to: { layer: 1, position: { x: 500, y: 200 } } },
+    { id: "down", from: { layer: 1, area }, to: { layer: 0, position: { x: 90, y: 90 } } },
+  ];
+
+  it("draws each entry and exit, on only where the snapshot says so", () => {
+    expect(renderableTeleports(teleports, [true])).toEqual([
+      {
+        id: "up",
+        from: { layer: 0, area: area.points },
+        to: { layer: 1, position: { x: 500, y: 200 } },
+        on: true,
+      },
+      {
+        id: "down",
+        from: { layer: 1, area: area.points },
+        to: { layer: 0, position: { x: 90, y: 90 } },
+        on: false,
+      },
+    ]);
+  });
+});

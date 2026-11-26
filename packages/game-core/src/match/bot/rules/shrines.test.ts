@@ -1,0 +1,272 @@
+import { describe, expect, it } from "vitest";
+
+import { distance, vec2, type Vec2 } from "../../../vec2.js";
+import {
+  createCursor,
+  decide,
+  NO_OBJECTIVES,
+  type BehaviourContext,
+  type BotObjectives,
+} from "../../behaviour.js";
+import type { CapturePoint } from "../../capture-points.js";
+import {
+  ANNIHILATION_MATCH_RULES,
+  CAPTURE_POINTS_MATCH_RULES,
+  type MatchRules,
+} from "../../../match-rules.js";
+import { MatchSimulation } from "../../simulation.js";
+import { foeReach } from "./shared.js";
+import {
+  askBot,
+  body,
+  BOT,
+  BOUNDS,
+  contextFor,
+  DT,
+  fighter,
+  match,
+  RANGER,
+  RULESET,
+  WARRIOR,
+} from "./test-support.js";
+
+/** A shrine at `position`, `owner`'s at `progress`; neutral and empty by default. */
+function shrine(position: Vec2, owner: number | null = null, progress = 0): CapturePoint {
+  return { position, layer: 0, owner, capturer: owner, progress };
+}
+
+const playing = (...capturePoints: CapturePoint[]): BotObjectives => ({
+  ...NO_OBJECTIVES,
+  capturePoints,
+});
+
+describe("shrines: Capture Points bots take and hold shrines (#2580)", () => {
+  // The foe is well beyond spell range (420) unless a test says otherwise.
+  const far = (extra: Parameters<typeof body>[3] = {}) => body("foe", 1, vec2(1500, 700), extra);
+
+  it("walks to a shrine on its layer, not the one it stands on (ADR-0051)", () => {
+    const sim = match([body("bot", 0, vec2(100, 100), { behaviour: BOT }), far()]);
+    const deck = { ...shrine(vec2(600, 100)), layer: 1 };
+    expect(askBot(sim, "bot", playing(deck)).moveToLayer).toBe(1);
+  });
+
+  it("does not stand on a shrine on a layer above it (ADR-0051)", () => {
+    const sim = match([body("bot", 0, vec2(100, 100), { behaviour: BOT }), far()]);
+    const deck = { ...shrine(vec2(110, 100)), layer: 1 };
+    expect(askBot(sim, "bot", playing(deck)).moveTo).toEqual(vec2(110, 100));
+  });
+
+  it("stands on a shrine its team does not own, with no foe in reach, to fill it", () => {
+    const sim = match([body("bot", 0, vec2(100, 100), { behaviour: BOT }), far()]);
+    const intent = askBot(sim, "bot", playing(shrine(vec2(110, 100))));
+    expect(intent.moveTo).toBeUndefined();
+    expect(intent.useSkillId).toBeUndefined();
+  });
+
+  it("passes over a shrine it gave up, boxed in on the way, for the next (#3702)", () => {
+    const sim = match([body("bot", 0, vec2(100, 100), { behaviour: BOT }), far()]);
+    const objectives = playing(shrine(vec2(400, 100)), shrine(vec2(100, 600)));
+    const ask = (jammedGoal: BehaviourContext["jammedGoal"]) =>
+      decide(BOT, createCursor(), contextFor(sim, "bot", { objectives, jammedGoal })).moveTo;
+    expect(ask(undefined)).toEqual(vec2(400, 100));
+    expect(ask({ at: vec2(390, 110), layer: 0 })).toEqual(vec2(100, 600));
+    // Given up on another layer: not this one.
+    expect(ask({ at: vec2(400, 100), layer: 1 })).toEqual(vec2(400, 100));
+  });
+
+  it("walks to the one shrine it does not own", () => {
+    const sim = match([body("bot", 0, vec2(100, 100), { behaviour: BOT }), far()]);
+    const intent = askBot(sim, "bot", playing(shrine(vec2(600, 100))));
+    expect(intent.moveTo).toEqual(vec2(600, 100));
+  });
+
+  it("moves on from a shrine its team holds at full to the next", () => {
+    const sim = match([body("bot", 0, vec2(100, 100), { behaviour: BOT }), far()]);
+    const held = shrine(vec2(100, 100), 0, 1);
+    const intent = askBot(sim, "bot", playing(held, shrine(vec2(400, 100))));
+    expect(intent.moveTo).not.toEqual(vec2(100, 600));
+  });
+
+  it("splits two bots over two shrines, the nearer bot keeping its nearest", () => {
+    const sim = match([
+      body("a", 0, vec2(100, 300), { behaviour: BOT }),
+      body("b", 0, vec2(150, 300), { behaviour: BOT }),
+      far(),
+    ]);
+    const objectives = playing(shrine(vec2(400, 100)), shrine(vec2(400, 500)));
+    // Both shrines are as near to each; b is nearer to the first, so a takes the other.
+    expect(askBot(sim, "a", objectives).moveTo).toEqual(vec2(400, 500));
+    expect(askBot(sim, "b", objectives).moveTo).toEqual(vec2(400, 100));
+  });
+
+  it("joins a shrine a teammate holds when every one is taken", () => {
+    const sim = match([
+      body("a", 0, vec2(400, 100), { behaviour: BOT }),
+      body("b", 0, vec2(100, 100), { behaviour: BOT }),
+      far(),
+    ]);
+    expect(askBot(sim, "b", playing(shrine(vec2(400, 100)))).moveTo).toEqual(vec2(400, 100));
+  });
+
+  it("leaves shrines to the fight when a foe is within spell range", () => {
+    const sim = match([
+      body("bot", 0, vec2(100, 100), { behaviour: BOT }),
+      body("foe", 1, vec2(400, 300)),
+    ]);
+    // The fight has it: it never walks off to the shrine.
+    const intent = askBot(sim, "bot", playing(shrine(vec2(100, 600))));
+    expect(intent.moveTo).not.toEqual(vec2(100, 600));
+  });
+
+  describe("a foe behind it on the way (#3749)", () => {
+    // Walking right to the shrine; the foe 300 behind it, in spell range.
+    const goal = shrine(vec2(1200, 300));
+    const scene = (foeAt: Vec2) =>
+      match([
+        body("bot", 0, vec2(700, 300), { behaviour: BOT }),
+        body("mate", 0, vec2(700, 600)),
+        body("foe", 1, foeAt),
+      ]);
+
+    it("keeps walking past one that leaves its team be", () => {
+      expect(askBot(scene(vec2(400, 300)), "bot", playing(goal)).moveTo).toEqual(goal.position);
+    });
+
+    it("fights one that targets a teammate", () => {
+      const sim = scene(vec2(400, 300));
+      sim.setTarget("foe", "mate");
+      expect(askBot(sim, "bot", playing(goal)).moveTo).not.toEqual(goal.position);
+    });
+
+    it("fights one ahead of it, toward the shrine", () => {
+      expect(askBot(scene(vec2(1000, 300)), "bot", playing(goal)).moveTo).not.toEqual(
+        goal.position,
+      );
+    });
+  });
+
+  it("with a foe in spell range, steps onto a shrine in spell range rather than stand off (#2551)", () => {
+    const sim = match([
+      body("bot", 0, vec2(100, 100), { behaviour: BOT }),
+      body("foe", 1, vec2(400, 100)),
+    ]);
+    expect(askBot(sim, "bot", playing(shrine(vec2(100, 400)))).moveTo).toEqual(vec2(100, 400));
+  });
+
+  it("with a foe in spell range shooting at it, still steps onto a shrine in spell range (#2551, #3150)", () => {
+    const sim = match([
+      body("bot", 0, vec2(100, 100), { behaviour: BOT }),
+      fighter("foe", 1, RANGER, vec2(400, 100), { behaviour: undefined }),
+    ]);
+    sim.setTarget("foe", "bot");
+    expect(askBot(sim, "bot", playing(shrine(vec2(100, 400)))).moveTo).toEqual(vec2(100, 400));
+  });
+
+  it("with a foe in spell range, fights from the shrine it stands on (#2551)", () => {
+    const sim = match([
+      body("bot", 0, vec2(100, 100), { behaviour: BOT }),
+      body("foe", 1, vec2(400, 100)),
+    ]);
+    const intent = askBot(sim, "bot", playing(shrine(vec2(110, 100))));
+    expect(intent.targetId).toBe("foe");
+    expect(intent.moveTo).toBeUndefined();
+  });
+
+  it("holds its shrine while a teammate fights a foe beyond its own reach", () => {
+    const sim = match([
+      body("bot", 0, vec2(100, 100), { behaviour: BOT }),
+      body("mate", 0, vec2(1000, 100), { behaviour: BOT }),
+      body("foe", 1, vec2(1300, 100)),
+    ]);
+    sim.setTarget("mate", "foe");
+    const intent = askBot(sim, "bot", playing(shrine(vec2(100, 100))));
+    expect(intent.moveTo).toBeUndefined();
+    expect(intent.targetId).toBeUndefined();
+  });
+
+  it("leaves the rest to close-in when every shrine is its team's", () => {
+    const sim = match([body("bot", 0, vec2(100, 100), { behaviour: BOT }), far()]);
+    const intent = askBot(sim, "bot", playing(shrine(vec2(600, 100), 0, 1)));
+    expect(intent.moveTo).toEqual(vec2(1500, 700));
+  });
+
+  it("in a match, walks to a shrine only when the match is Capture Points", () => {
+    const heading = (matchRules: MatchRules): number => {
+      const sim = new MatchSimulation({
+        seed: "shrines",
+        ruleset: RULESET,
+        bounds: BOUNDS,
+        matchRules,
+        capturePoints: [{ ...vec2(100, 100), layer: 0 }],
+        participants: [body("bot", 0, vec2(100, 400), { behaviour: BOT }), far()],
+      });
+      for (let t = 0; t < 2; t += DT) sim.step(DT);
+      return sim.get("bot")?.position.y ?? Number.NaN;
+    };
+    expect(heading(CAPTURE_POINTS_MATCH_RULES)).toBeLessThan(350);
+    expect(heading(ANNIHILATION_MATCH_RULES)).toBeGreaterThan(400);
+  });
+});
+
+describe("shrines: a lone bot shot at from beyond spell range (#3150)", () => {
+  it("leaves its shrine to fight the shooter, and does not walk back to it", () => {
+    const sim = match([
+      fighter("bot", 0, WARRIOR, vec2(100, 100)),
+      fighter("foe", 1, RANGER, vec2(600, 100), { behaviour: undefined }),
+    ]);
+    const foe = sim.get("foe");
+    if (foe === undefined) throw new Error("no foe");
+    expect(foeReach(new Map(), foe)).toBeGreaterThan(500);
+    sim.setTarget("foe", "bot");
+    const objectives = playing(shrine(vec2(100, 100)));
+    expect(askBot(sim, "bot", objectives).targetId).toBe("foe");
+    // Stepped off towards the shooter, it does not turn back to the shrine.
+    const self = sim.get("bot");
+    if (self === undefined) throw new Error("no bot");
+    self.position = vec2(250, 100);
+    const intent = askBot(sim, "bot", objectives);
+    expect(intent.targetId).toBe("foe");
+    expect(intent.moveTo).not.toEqual(vec2(100, 100));
+  });
+
+  it("still fights a foe within spell range before a shooter past it", () => {
+    const sim = match([
+      fighter("bot", 0, WARRIOR, vec2(100, 100)),
+      fighter("near", 1, WARRIOR, vec2(100, 400), { behaviour: undefined }),
+      fighter("foe", 1, RANGER, vec2(600, 100), { behaviour: undefined }),
+    ]);
+    sim.setTarget("foe", "bot");
+    expect(askBot(sim, "bot").targetId).toBe("near");
+  });
+
+  it("in a match, goes for the shooter without turning back, and hurts it", () => {
+    const sim = new MatchSimulation({
+      seed: "shrines",
+      ruleset: RULESET,
+      bounds: BOUNDS,
+      matchRules: CAPTURE_POINTS_MATCH_RULES,
+      capturePoints: [{ ...vec2(100, 100), layer: 0 }],
+      participants: [
+        fighter("bot", 0, WARRIOR, vec2(100, 100)),
+        fighter("foe", 1, RANGER, vec2(600, 100), { behaviour: undefined }),
+      ],
+    });
+    sim.setTarget("foe", "bot");
+    const full = sim.get("foe")?.combatant.health;
+    const away = () => {
+      const [bot, foe] = [sim.get("bot"), sim.get("foe")];
+      return bot === undefined || foe === undefined
+        ? Number.NaN
+        : distance(bot.position, foe.position);
+    };
+    // No back and forth: it never falls back from the shooter once closer.
+    let closest = away();
+    for (let t = 0; t < 10; t += DT) {
+      sim.step(DT);
+      expect(away()).toBeLessThanOrEqual(closest + 1);
+      closest = Math.min(closest, away());
+    }
+    expect(sim.get("bot")?.targetId).toBe("foe");
+    expect(sim.get("foe")?.combatant.health).toBeLessThan(full ?? 0);
+  });
+});

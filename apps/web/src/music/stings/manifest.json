@@ -1,0 +1,7 @@
+{
+  "match-start": { "cycles": 2 },
+  "first-blood": { "cycles": 1 },
+  "resurrected": { "cycles": 2 },
+  "victory": { "cycles": 4 },
+  "defeat": { "cycles": 4 }
+}

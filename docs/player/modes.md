@@ -1,0 +1,490 @@
+# Modes
+
+Each map plays one mode.
+The modes are the entries of the rail on the left of the main screen.
+Nobody picks a map's mode, but the rail entry you host from picks the
+modes its lobby's maps play: ![Team Arena](../../apps/web/public/icons/mode/team-arena.svg) **Team Arena** Annihilation, Kill Count and
+Priest Annihilation, ![Heroes' Ascent](../../apps/web/public/icons/mode/heroes-ascent.svg) **Heroes' Ascent** Relic Run, King of the Hill and
+Capture Points, and ![GvG](../../apps/web/public/icons/mode/gvg.svg) **GvG** the Guild Battle. ![Hosted Game](../../apps/web/public/icons/mode/hosted-game.svg) **Hosted Game** offers
+every map. A ![Random Arena](../../apps/web/public/icons/mode/random-arena.svg) **Random Arena** picks a map for you, and with it the mode,
+but never a Guild Battle, a Relic Run, King of the Hill or Capture
+Points. Team Arena draws one of its maps for each match, Heroes' Ascent
+starts on its first map, and only a Hosted Game lets the host pick, in
+the Map list above the teams.
+No other mode's screen says which map comes next: the match shows it
+as it loads.
+
+Two players behind strict networks cannot be matched with each other in a queue, so the queue counts only players who can match you, and says so. A relay in **Options → Relay (TURN)** helps.
+
+Every map is made for some team sizes, and a mode only plays a map made
+for its size: an 8v8 never crowds onto an arena built for a 1v1. The
+rail's **Team size** steps only through the sizes the shown mode plays.
+
+| Mode           | Team sizes    | Map                                  |
+| -------------- | ------------- | ------------------------------------ |
+| Random Arena   | 1v1, 2v2, 4v4 | drawn for you, one made for the size |
+| Team Arena     | 2v2, 4v4, 8v8 | drawn for each match, made for size  |
+| Heroes' Ascent | 8v8           | its maps in order, up to the Hall    |
+| GvG            | 8v8           | Guild Hall Isle                      |
+| Hosted Game    | any           | the host picks one made for the size |
+
+In a Guild Battle, a Relic Run, King of the Hill or Capture Points, an
+objective off screen or under the HUD gets an outlined arrow at the
+screen edge: the stand or a shrine in its owner's colour, grey for
+nobody's, the altar in gold. A player's filled arrow draws over it.
+
+A match opens with each team held together in its start area: you can walk anywhere inside it and use any skill, so prepare enchantments, stances, spirits or wards before the doors open; the other team is held far away in its own start area. Energy and Health regenerate while you wait, and bots prepare too. A shimmering wall around your team's start area shows how far you can go. A line at the top counts the players who have loaded the match. Once everyone has loaded, it counts down 10 seconds and the match starts, and its clock with it. A player who has not loaded after 20 seconds is not waited for: the countdown starts without them, and they can still join later.
+
+## Annihilation
+
+**Defeat every foe.** The dead stay down until an ally resurrects them,
+and each death costs morale. Wipe the other team to win. After 8 minutes,
+the team with the most morale left wins.
+
+Canyon, Crossroads and Long Hall play it, and two small arenas about
+Canyon's size: **Sandstone Steps** (1v1, 2600x1940), a terraced desert
+town with a sunken well court, rooftops above its streets and a
+lever-gated under-pass below them; and **Frozen Crossing** (2v2,
+2600x1940), a frozen river between two raised banks, crossed on stepping
+stones or a log bridge whose middle plank a lever raises. For the bigger
+teams: **Ashen Courtyard** (4v4, 5120x3840), a burnt walled courtyard
+with wall-walks and towers above and a sunken well court below, its
+gatehouse portcullis worked from the walls; and **Moss Vale** (8v8,
+5000x2600), a terraced valley cut in two by a deep mill race, crossed
+only at the drawbridge, the mill and the under-pass beneath it.
+**Canthan Terraces** (1v1, 2400x2100) is small but steep: rice paddies
+stepping up a hillside to a ruined pagoda, with a flooded culvert beneath
+that a sluice lever opens as a third way to the centre. **Sunken Bastion**
+(2v2, 2700x1900) is small but tall: a half-flooded fortress whose moat
+splits the courtyard, crossed by a drawbridge worked by a lever on either
+bank, by the wall-walk along the north curtain, or through the flooded
+cellar beneath.
+And for the bigger teams: **Shiverpeak Pass** (4v4, 5100x3450), a
+snowy mountain pass split by a chasm, crossed on a rope bridge between
+two cliff ledges that a lever on either ledge pulls, through a cave
+beneath it, or round its tip once the ice wall there is broken; and
+**Elonian Plateau** (8v8, 5520x3360), a desert
+plateau of four mesas round a dry canyon wash: timed lifts climb three of
+them, a natural arch joins the two in the north, and a passage runs under
+the centre fin, its gate worked by a lever on top.
+
+## Kill Count
+
+**The most kills in 3 minutes.** The dead come back at their spawn after
+8 seconds, and dying costs no morale. The first team to 15 kills wins at
+once. At time, more kills wins; equal kills is a draw.
+
+Ember Pits plays it: lava rills crossed by stone bridges, a lava tube, a
+lever lift up a basalt column and steam vents, for every team size.
+
+## Priest Annihilation
+
+**Defeat every foe and their priest.** Each team has a Priest on a
+shrine behind its spawn. It never moves or attacks, but heals everyone
+next to it, foes too. Every 2 minutes, a team whose priest lives gets its
+dead back on the shrine, at full Health and Energy. Kill the priest first
+and the other team stays down.
+
+A team loses when all its players and its priest are dead. After 12
+minutes the most morale wins.
+
+Jungle Ruins (2v2 to 8v8, 5400x2800) plays it: overgrown temple ruins split
+by a jungle river. Wade a ford, cross a log bridge, climb the stepped pyramid
+in the middle, or take the hidden passage under it once a lever in a court
+opens its doors; vine walls can be cut down.
+
+## Guild Battle
+
+**Kill the enemy Guild Lord**, 8 against 8. Each base sits behind a wall
+with two gates; the Guild Lord stands at the back of its lord room and
+shoots any foe it sees with a bow. Guards hold each base: Knights and a
+Bodyguard by the lord, an Archer at the back of the lord room, a Footman
+and an Archer at each gate. They fight foes near their post and walk back
+to it. While the Bodyguard lives, its lord takes 20% less damage, so kill
+it first. Every 2 minutes, each team's shrine brings its dead back.
+
+Each team has a **flag** in its base, and the **flag stand** is in the
+centre. Target your flag and press **Space** to take it up; carry it to
+the stand, target the stand and press **Space** to plant it. A carrier
+walks slower and cannot attack or use attack skills; it drops the flag
+when it dies, swaps weapons or presses **Drop flag** above its Health bar.
+Planting yours on the stand sends a foe's flag there home.
+Every 2 minutes your flag holds the stand, your team gains 10% morale.
+
+The team whose Guild Lord dies loses at once, and so does a team whose
+players are all dead at the lowest morale. After 28 minutes, the team
+that did the most damage to the enemy Guild Lord wins; a tie there is a
+loss for both, as there are no draws.
+
+The scoreboard shows each Guild Lord's health, yours first, who holds the
+stand and how long until their boost, when the shrines next bring the
+dead back, and, in the last 3 minutes, each team's damage to the enemy
+lord. Under it, a line names whoever carries a flag. A boost pops up as
+"Morale boost! +10%", or "Enemy morale boost". On the compass, ♛ marks
+each Guild Lord, ⚑ each flag and ◎ the stand.
+
+Guild Hall Isle (8v8, 6000x2600) plays it: an island in the sea. Each Guild Lord stands on top of a hall, behind a rampart; the way out is through the gatehouse, over the rampart or along a pier. A gatehouse door opens from a lever on the enemy's rampart. The flag stand is on a dais in the middle.
+
+## Relic Run
+
+**Carry your relic to the altar.** Each team has a **relic** in its
+base, and the **altar** is in the centre, the same run from both bases,
+by a north or a south route; the altar shows on the compass as ◆.
+Target your relic and press **Space** to take it up. Carry it onto the
+altar and you score a point at once, and the relic goes back to your base.
+Every point is announced, with a fanfare that rises for yours and falls
+for theirs. A carrier walks slower and cannot
+attack or use attack skills. It walks through its own team, but a foe
+still blocks it. It drops the relic when it dies or presses
+**Drop relic** above its Health bar, and the relic stays where it fell
+until someone reaches it. Your team takes it up from there. A foe who
+reaches it, with empty hands, sends it home. A foe's relic in its base
+is not yours to touch.
+
+The dead stay down until an ally resurrects them, and each death costs
+morale. Wipe the other team to win at once. After 8 minutes the team
+with more points wins; equal points is a draw. Kills score nothing.
+
+The scoreboard shows the points, yours first, and the clock. Under it, a
+line for each relic says where it is: `✦ Name` on its carrier,
+`✦ dropped` on the ground or `✦ at base`.
+
+Bots run the relic too: the one nearest to your relic fetches it, unless
+you are about to pick it up yourself. A bot out of the fight goes first;
+when all are in it, the nearest leaves it for the relic, so a stand-off
+at the altar never stops the scoring. A healer or a badly hurt bot only
+goes when no one else can, and never from a fight. The one nearest to a
+dropped foe relic sends it home, and the rest wait by the altar. A bot
+carrying your relic walks it straight to the altar; the others leave the
+relic only to fight a foe that comes within spell range.
+
+Broken Tower (4v4 and 8v8, 5400x2800) plays it: a fallen tower on a hill
+in the heights. Climb the rubble terraces by their stairs to the altar on
+the stump, or take the cellar under the hill once a lever on the terrace
+opens its doors; rubble walls can be broken.
+Beside each rubble wall, a portcullis opens while someone stands on its
+plate.
+
+### Cinder Sanctum
+
+Heroes' Ascent's Relic Run is played the other way round here. Each base
+holds its team's relic and its Ghostly Hero, and there is no altar. **Take
+the foe's relic from their base and bring it to your own Ghostly Hero**
+for a point. The ghost must be alive, and it stays at its post. You cannot
+carry your own relic: picking it up where it fell sends it home. A team
+**3 points ahead wins at once**. At 8 minutes the most points win, and a
+tie goes to the last team to score. Each base raises its dead, and its
+ghost, every 2 minutes. Bots go for the foe's relic together and bring it
+home.
+
+Cinder Sanctum (8v8, 5600x2800) plays it: a temple on a volcano flank between two lava rivers. Cross by a bridge or the causeway to the sanctum on its forecourt; a lever on the forecourt opens the hidden passage under the sanctum, and ash walls can be broken. Lava burns.
+
+## King of the Hill
+
+**Lead your Ghostly Hero onto the altar, and hold it.** Each team has a
+**Ghostly Hero** in its base, a ghost that fights with an axe and that
+nobody plays. The **altar** is in the centre, the same walk from both
+bases. On **Threefold Keep**, three teams (two when no third is free) fight for it
+on the tower of a walled keep. At most 12 points a team, and if every foe
+stands at -60% morale you win at once. The **Hall of
+Heroes** (8v8, 5000x4400), the map that ends the Heroes' Ascent, is a
+golden hall for three teams: the altar stands on a pillared dais of six
+stairs, on a plinth with a gallery out between each pair of bases, and a
+crypt runs under the floor from each base up into the plinth. The crypt
+doors start shut, and any team's lever opens all three. Target your ghost with a
+**right-click** and press **Space** to tell it to follow you: it walks
+with you and fights what you fight. Press Space on it again and it
+stays where it stands, fighting any foe who comes near. If you die or
+leave, it stays. With your ghost targeted, its frame says whom it
+follows, or that it stays. A toast says whom your Ghostly Hero follows
+whenever that changes, and its name over its head shows its leader.
+
+Your ghost has 640 Health, and swings its axe with **Cyclone Axe**,
+**Disrupting Chop** and **Swift Chop**, following or staying. It is
+stronger the higher up the Ascent you are: level 24 on Threefold Keep,
+28 in the Hall of Heroes. **Kill the other team's ghost** and every
+member of your team gets a **+10% morale boost**, which first wipes out
+a death penalty and never goes above +10%. Kill it again after it rises
+and you get it again.
+
+Lead it onto or past the altar and it steps onto the altar and keeps
+to it. There it fights any foe beside it, but never steps off after
+one. A ghost on the altar claims it by itself: 5 seconds standing
+still, its cast bar filling, fighting nobody. An interrupt or a knockdown cuts the claim short, and
+it starts again once it can. It may claim the altar only while nobody
+holds it, or while the holder's ghost is dead. When the claim finishes,
+the altar is your team's.
+
+The team that holds the altar scores a point for every 30 seconds it
+keeps it, even while its own ghost is dead, until another team claims
+it. Every point is announced, as a relic scored is. A dead ghost rises
+in its base 2 minutes later, staying put, here and in a Relic Run. In Capture Points it rises with the base's next wave. On a
+map with priests it rises instead with the priest's next wave, but only
+while its team's priest lives. On any other map a dead ghost stays dead,
+and its +10% can be had only once. It is
+no player: its death costs no morale and it does not count toward a
+wipe.
+
+The dead stay down until an ally resurrects them, and each death costs
+morale. Wipe the other team to win at once. After 8 minutes the team
+with more points wins; equal points is a draw. Kills score nothing.
+
+The scoreboard shows the points, yours first, then the altar: `▲` and
+the time to the holder's next point, in the holder's colour, or a grey
+`▲ —` while nobody holds it.
+
+Bots go for the altar too: while your team does not hold it, the one
+nearest to your Ghostly Hero picks it up, unless you are about to pick it
+up yourself; a healer or a badly hurt bot only goes when no one else can.
+It leads the ghost onto the altar and tells it to stay there, and the
+rest wait by the altar. A bot leading the ghost does not stop to fight on
+the way; the others leave the altar only to fight a foe that comes within
+spell range. While your team does not hold the altar, every bot kills the other
+team's Ghostly Hero first once it stands on the altar in their range:
+it is the one foe that keeps your ghost from claiming it.
+
+Threefold Keep (4v4 and 8v8, 5000x4400) plays it: a keep on a hill in the heights, for three teams. Climb the wall-walk by the stairs beside your gate and cross a causeway to the hill, then climb to the altar on the tower. A lever in each court opens all four gates: your gate passage under the wall, and the undercroft, the long way under the hill.
+
+## Capture Points
+
+**Hold the shrines.** The map has five **shrines**: one by each base
+and three between, the centre one out in the open. Stand on a shrine to
+capture it. Each of your team on it is a **pip**, your Ghostly Hero
+four; pets, minions and spirits count none. With four pips a neutral
+shrine is yours in 8 seconds, with two in 16, alone in 32; more than four
+go no faster. Foes on it cancel your pips one for one: three of you
+against two of them take it at one pip, in 32 seconds, eight against
+two at four, and equal pips hold it still. With three teams, the
+strongest moves it by its pips less those of both others together; if
+the other two outnumber it, nobody captures, and a shrine anyone owns is
+only drained back to neutral. A shrine another team owns is first drained to
+neutral, then filled for you, so taking it takes twice as long. Walk
+away and its progress stays where it was; a shrine you own stays yours
+until a foe takes it. The shrines show on the compass as □ in the
+owner's colour.
+
+Every 30 seconds, each shrine your team owns scores a point, and a toast
+and a sound announce what each side scored. Every 60 seconds of match clock, your team's dead rise at your base's shrine with full Health and Energy, even if a foe stands there, unless their morale is at the floor. The scoreboard counts down to the next wave. Each death costs morale, and a ghost rises on the same wave, at its own spot.
+Get **20 points ahead** of every other team to
+win at once. A wipe does not end the match, but a team whose players have all left is out. After 8 minutes the team with more points wins; on equal
+points, the one holding more shrines, then the team that was last ahead
+alone, and if none ever was, it is a draw. Kills score nothing.
+
+Each shrine is a ring on the ground in its owner's colour, grey while
+nobody owns it, with an arc round it showing how far it is toward
+whoever is taking it. The scoreboard shows the points, yours first, and
+the clock.
+
+Bots spread out over the shrines your team does not own yet and stand
+on them until they are taken. A foe in spell range does not draw them
+off: they step onto a shrine in reach and fight from it.
+
+Scarred Earth (4v4 and 8v8, 5400x2800) plays it: a cratered battlefield at dusk. The shrines stand on wrecked siege towers, the centre one on the great tower's deck, each beside a crater; levers on the towers open two trenches under the field, and wrecked palisades can be broken.
+
+In the Heroes' Ascent, The Warden's Gallery (8v8, 5200x2500) plays it: a sunlit sculpture gallery under skylights. The centre shrine stands on the great plinth's top, and each team has three near its vestibule, one on a plinth; levers on the great plinth open two undercrofts under the floor, and toppled statues can be broken.
+
+## Team Lobby
+
+A hosted lobby does not start the match when everyone is ready. It opens the Team Lobby first, where each side picks one Team
+Build together and then splits its characters. In Heroes' Ascent and
+GvG a side is as big as the mode's team (8), which the sidebar's **Team
+size** shows, locked. In Team Arena the party leader picks 2v2, 4v4 or
+8v8 with its arrows while the party is not queued, and the rest of
+the party sees it locked. It starts at the size the leader last picked
+in Team Arena, 4v4 at first. A party never picks a size smaller than its players,
+and a party with as many players as its size takes nobody more ("Party
+is full"). Two parties only ever meet at the same size, and the queue
+icon's window in the top bar names it: "Team Arena 2v2". In a Hosted Game the host sets
+the team size with its arrows, 1v1 to 8v8, before the Team Lobby,
+and both sides play exactly that many; the Team Lobby shows no Team size. A guest sees the host's, locked. The host's map list,
+above the teams, shows only maps made for that size, and a size the map does not suit
+moves the lobby to the first map that does. It never goes below a side's
+players, and a side that has as many players as the team size takes
+nobody more. A 1v1 lists all your characters, team members labelled with
+their team: click one to play it, or wait and play your active character.
+**Leave** on your team
+takes you off it without leaving the lobby.
+A queued party ([Find a match](getting-started.md#host-or-join-a-match)
+on Team Arena, Heroes' Ascent or GvG) gets a Team Lobby of its own side
+only, as big as the mode's team (Team Arena's picked size, 8 for the others)
+however many are in the party; bots play the seats nobody claims.
+While it is queued you may browse the other modes: the party keeps its
+mode and size until it leaves the queue. In Team Arena and GvG, a party
+that has waited 30 s plays warmups against bots, still in the queue, until
+a team is found ([warmups](getting-started.md#host-or-join-a-match)).
+Each stage lasts 30 seconds and ends early once everyone in the Team
+Lobby is ready. Voting and taking a seat mark you ready.
+
+![Team Arena: the Team size arrows at the foot of the rail, and your lobby's team to join](img/team-arena-1.png)
+
+![After Join: you are on your team as its host, not ready yet](img/team-arena-2.png)
+
+**Vote.** Anyone on a side may propose a Team Build of exactly that
+side's size, one proposal each. Your Team Builds open from the **Your
+Team Builds** tab on the right: search them by name, click one to see
+its members, then **Propose this build**; on yours, **Withdraw
+proposal**. Esc closes it. Only your Team Builds of that size and with
+no problems are listed; the drawer says how many of other sizes it
+leaves out. Anyone may vote for one of their
+side's proposals, their own included. Each proposal is a card
+showing each member holding its weapons, with its skills, and the
+initials of who voted for it: click a card to vote, or another to
+change your vote; a vote cannot be taken back. Nothing is proposed for you: the menu only
+makes and edits Team Builds. A new proposal replaces your old one, and
+the votes for it go back to none. The most votes wins. On a tie the captain's
+vote decides: the host on the host's side, the earliest to
+join on the other. With proposals and no votes, one is picked at random.
+With no proposal, the side plays a random preset team of its size, the
+kind Team Builder starts you with; a side of one plays a random starter
+build. A queued party whose team plan is not accepted (a seat missing, an
+illegal build) also plays a random preset team, and is told so as the
+match opens. Each side rolls its own, so both may play the same one.
+Neither side sees the other's proposals, votes or choice.
+
+**Claim.** The chosen build's characters are seats, each the character
+holding its weapons over its skills: click a free seat
+to take it, or another free one to move, first come, first served, one each. Whoever claimed nothing gets the first free one, and
+bots play the rest, under their character's name. Then the match starts, or a queued party
+joins the queue.
+
+Anyone who leaves during the Team Lobby leaves their character to a bot,
+so the side keeps its size. Someone joining then only watches.
+
+After a queued team match, its winners queue again on their own after
+20 seconds, and its losers (a draw too) return to the menu; a coded
+lobby's match returns everyone to the lobby. A button under the result
+skips the wait, or, for winners, leaves without queueing.
+Team Arena winners keep their Team Build and each player's seat for
+that next match, with no Team Lobby, unless the party changed since:
+someone left, went away or joined. Then they pick their team again.
+If your team did not win, Stop halts that countdown so you can read the result; the button then takes you on when you are ready.
+
+## Heroes' Ascent
+
+A queued Heroes' Ascent is a run up GW1's maps, in their order: Elite
+Zaishen Battle, The Underworld, Fetid River, Burial Mounds, Unholy
+Temples, Forgotten Shrines, Golden Gates, The Courtyard, Antechamber,
+(The Vault,) then the Hall of Heroes. Only the maps built so far are in
+it, so today it is nine rounds: The Hollow Deep (Annihilation), Blackwater Ford (Priest Annihilation), Barrow Field (Priest Annihilation), Cinder Sanctum (Relic Run, in Unholy
+Temples' place), Mosslit Cairns (Capture Points, in Forgotten Shrines'),
+The Brazen Causeway (Priest Annihilation), Threefold Keep (King of the Hill), The Warden's Gallery (Capture Points, in Antechamber's), then the Hall of Heroes. While you look for a team, the queue icon in the top bar says where you are, `Heroes' Ascent · round 2`, and the Lobby window shows that round's map.
+You only ever meet a team at the same round, and you wait for one as
+long as it takes: no bots fill in. The one exception: from round 2 on, a team
+alone at its round for 60 seconds may skip ahead. It meets a team waiting at
+any later round before the Hall, both play the later team's map, and the
+winner goes on from there. A round on a map made for three
+teams waits for three; two teams that have waited 30 seconds for a third
+play each other instead, and so do two whose third never shows up in the
+lobby. Win, and your party ascends to the next map on its own after 20
+seconds; win in the Hall, and you stay to defend it. Lose, or leave a match before it ends, and your next Ascent
+starts again at round 1; so does leaving the queue or the party. A match
+lost to its host leaving keeps your round.
+
+The Hall draws one of three modes for each match: King of the Hill, Relic Run or Capture Points, for two or three teams. With two, the third base stays closed, and with it the capture points on its two galleries. A Hall match runs 11 minutes and the most points win; Capture Points also ends early on a lead of 20. Death costs no morale. The dead return together at their base on every full minute of the match clock, so a wiped team is not beaten, but a team whose players have all left is out. In King of the Hill, the team holding the altar keeps scoring after its ghost dies, until another team claims it, and its dead return on the altar. A tie goes to the team that scored last, or in Capture Points to the team with the most recent kill.
+
+**The Vault.** The Hall forms only every 12 minutes on the UTC clock, at :00, :12, :24, :36 and :48. Until then your party waits in the Vault: the queue icon shows the time to the next opening and who holds the Hall. At each opening the holder meets up to two challengers, or up to three challengers meet if nobody holds it. Only parties waiting before the opening take part, and any beyond those seats wait for the next one. A holder with nobody to fight keeps the Hall and waits, with no win counted, and a lone challenger waits too. When a party wins the Hall, every open game says who holds it now: its leader, or its guild tag when more than half the party shares one.
+
+Every run starts with the **Elite Zaishen Battle**, with no queue: your party against six Zaishen played by bots (2 Monks, an Elementalist and 3 others). It is fought in a ceremonial arena (8v8, 5400x2400): tiered stands to the north and south, statues on plinths on the sunken floor, and an undercroft under each stand, its portcullis opened by a lever on the far stand. The clock starts when one of you crosses the start line in the middle of the arena or the first Zaishen dies, whichever comes first. Kill all six in under 30 seconds and the party starts the run at +10% morale; under 60, +8%; under 80, +6%; under 100, +4%; under 120, +2%; slower, nothing. Win and your party queues for its first map on its own. Wipe, or still have a Zaishen alive when the 8-minute limit is reached, and the run is over.
+
+Every win in a run earns **fame**: 1, 2, 3, 4, 6, 8, 12, 16, 20, 24, 28, 32, 36 for the first thirteen, then 40 each, at most 300 a day (the day turns at 15:00 UTC). The Elite Zaishen Battle earns none. Your total fame sets your **hero rank**, from 1 at 25 fame to 15 at 100,000, shown as ★ and a number beside your name. Options > Player shows both. Both are kept on your device.
+
+Your morale carries through the run: the death penalty or boost you end
+a won map with is what you start the next one with, from −60% to +10%.
+A run that ends, or a player who joins mid-run, starts at 0. Your own
+tab remembers it, until you close it.
+
+The team picks once, in the Team Lobby of its first map, and keeps its
+Team Build and seats for the rest of the run: after a win it queues
+again with no vote and no claim. Someone who leaves mid-run frees their
+seat but not its build. A newcomer to the party between maps gets a
+claim of the vacant seats only (**Open: Monk build**), and plays that
+seat's build; a vacant seat nobody claims is a bot's. A loss starts
+over: the next run votes again. So does following your host to another
+party, whose host cannot vouch for the old run. The round is remembered by
+the host of your party, and only until you close the tab. A Heroes'
+Ascent lobby joined by code plays round 1's map.
+
+A party of fewer than 8 queues with bots in its empty seats, using its Team Build, but a side always has at least one human, and no team of bots is ever an opponent. If the last human of a side leaves a match, that side forfeits and its run ends.
+
+**Barrow Field** (8v8, 5400x2600) is an Ascent arena, and a Hosted Game's pick too: Priest
+Annihilation on a moor of burial mounds at dusk, the priest raising its dead every 2 minutes.
+Climb a barrow for the high ground, or walk the barrow way under it once a lever on
+the far barrow opens its gate. Carry your flag
+onto the **Storm Beacon** in the middle and it strikes one random foe within
+earshot of it for 50 lightning damage every 2.5 seconds, until the other team
+plants its flag there. Each strike is a bolt from the beacon to whoever it hit,
+visible to both teams.
+
+Three Ascent arenas are a Hosted Game's pick too: **The Hollow Deep** (8v8, 6200x2400, Annihilation in a dark cavern: cross a rope bridge over a chasm, climb over a mid ledge, or take the undercroft beneath it once a lever on a shelf opens its gate),
+**Blackwater Ford** (8v8, 5200x2800, Priest Annihilation at a dark river
+ford: wade a shallow ford, cross the broken bridge over the mill on its piers,
+or take a culvert under the bridge once a lever on the mill opens its gate;
+the priest raises its dead every 2 minutes) and
+**Mosslit Cairns** (8v8, 5400x3000, Capture Points on five cairn hills
+glowing with moss at dusk: climb a cairn by its stairs, hold the great cairn
+in the middle, or take the root tunnel under the south hills once a lever on
+a north cairn opens its gates; root walls can be broken). A fourth is **The Brazen Causeway** (8v8, 5600x2800, Priest Annihilation on a raised stone causeway over a marsh at dusk: march along the causeway once a lever in the far gatehouse opens its bronze gate, cross the marsh to the stairs at its middle, or slip through a culvert under it; the priest raises its dead every 2 minutes).
+
+A map may have **gates**: walls that stop bodies, shots and sight while
+closed. Stand on a gate's pressure plate to open it. It closes when
+nobody is left on the plate, shoving anyone in the doorway to the nearer
+side and stopping shots still on their way through, and cannot be opened
+again for half a second. A plate in a team's colour answers only to that
+team. Bots stand on their own team's plate when no foe is near.
+
+## Three teams
+
+In a three-team match the third team is drawn lemon-lime, beside the blue
+of your side and the red of the other, and carries a ◆ before its name tags,
+score rows and end-of-match table, so it is never told apart by colour alone.
+The scoreboard reads your team first, then the others in order, and the end-of-match tables put your
+team first, then the winner.
+
+## Match records
+
+Every match that is played to its end, in any mode and bots included,
+is published by its host as a public match record on the Nostr relays
+the game uses. Anyone can read it, and there is no opting out. A record
+holds the mode, the map, when the match ended and how long it ran, who
+won and why, and each player's in-game name, guild tag and build (its
+GW1 template code: professions, attributes and skill bar, no
+equipment), with bots marked as bots. Every human's public player key is
+in it too, and draws their signet, the shield beside their name; a signet
+is only the key the match's host reported. Your in-game name and key are
+in every record of a match you play, so anyone can link those matches to
+each other. Nothing else that could identify you is: no address, no peer
+id, no lobby. A match that ends because its host left, or that everyone
+left, is not published. Records are reported by the host, so a host can
+get one wrong; nothing checks them against the match.
+
+See them on the **Matches** page, below Team Builder: the 50 most recent from the past 7 days,
+newest first, with new ones appearing as they are played. A row is one
+line: each team's players as their primary profession's icon (hover for
+the name), two teams or three, the winner underlined, and the map,
+duration and when. Every row is marked **host-reported**. Click one to
+see the teams, one tab each, the winner's first: the team card. **Clone** copies a team from
+a finished match into your Team Builds, each player's build under
+their name, and opens it. On a 1v1 side, Clone saves the player's build as a new character and opens that, because a Team Build is 2, 4 or 8.
+
+Each row starts with its mode's icon, and the icon and the row's left
+edge are in the mode's colour: orange Random, blue Team, gold Ascent,
+violet GvG, green Hosted. Above the list, chips filter it by **Kind**
+(Random, Team, Ascent, GvG, Hosted) and **Size** (1v1, 2v2, 4v4, 8v8):
+press any number, and a match shows if it fits one pressed kind and one
+pressed size; a group with none pressed lets all through. Size is the
+largest team, bots included, so a 3v2 Hosted Game fits no size. The
+chips stay as you left them until the page reloads.
+
+**My matches**, after the chips, lists your own matches instead: the
+last 50 this browser kept for your current player key, newest first, of
+any age, and published or not, an Elite Zaishen Battle too. Kind and
+Size still filter them, and your team is marked **You**. Open one for
+three tabs: **Builds**, its teams with Clone as above; **Stats**, the
+score table its end panel showed; and **Diagram**, its charts. They are
+kept in this browser only.
+
+Above the chips, the **Hall of Heroes** strip lists the last 20 holds, newest first: the holder (a guild tag or the leader's name), the winning team's people, when the newest win ended and, from two wins on, how many in a row. A hold is an unbroken run of Hall wins by one holder. The strip reads the records on this page, ignores the chips, and is hidden when none of them is a Hall win. Like every record, it is what each match's host reported, and nothing checks it.
+
+## Ranked
+
+A queued match with no bots is ranked: see [Ranking](ranking.md).

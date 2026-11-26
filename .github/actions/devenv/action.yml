@@ -1,0 +1,145 @@
+name: devenv
+description: >-
+  Nix, the devenv CLI pinned by devenv.lock, and the dev shell realised from
+  devenv.nix, with the Nix store and the pnpm store restored from cache.
+  See docs/adr/0021-ci-in-devenv.md.
+
+inputs:
+  save-cache:
+    description: >-
+      Save the Nix store cache at the end of the job. Every job realises the
+      same shell, so one job saving it is enough; the rest only restore.
+    default: "false"
+
+runs:
+  using: composite
+  steps:
+    # Single-user Nix with a store the runner owns: cache-nix-action restores
+    # the store with tar as the runner user, and cannot write into the
+    # root-owned store a multi-user install (cachix/install-nix-action) makes.
+    # Third-party actions are pinned to a commit, not a movable tag.
+    #
+    # It fetches its Nix tarball from a GitHub release with
+    # `curl -sL ... | tar -x -I unzstd`: no `-f`, so an HTTP error page from
+    # the release reaches unzstd, which says "unsupported format" (#2800,
+    # #2909). Fetch the tarball here instead, check it, cache the good file,
+    # and have the action install from that file. The file name is the one the
+    # action builds from the version and system.
+    - name: Cache the Nix archive
+      id: nix-archive
+      uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5.1.0
+      with:
+        path: ${{ runner.temp }}/nix-archives
+        key: nix-archive-5bb6a3b3-2.24.12-${{ runner.arch }}
+
+    - name: Fetch the Nix archive
+      if: steps.nix-archive.outputs.cache-hit != 'true'
+      shell: bash
+      env:
+        ARCHIVES: ${{ runner.temp }}/nix-archives
+      run: |
+        case "$(uname -m)" in
+          x86_64) system=x86_64-linux ;;
+          aarch64) system=aarch64-linux ;;
+          *) echo "::error::no Nix archive for $(uname -m)"; exit 1 ;;
+        esac
+        file="nix-2.24.12-$system.tar.zstd"
+        url="https://github.com/nixbuild/nix-quick-install-action/releases/download/v30/$file"
+        mkdir -p "$ARCHIVES"
+        # Shards start together and hit the same release: spread them out.
+        sleep $((RANDOM % 31))
+        if ! curl -fsSL --retry 6 --retry-all-errors --retry-delay 20 --max-time 120 -o "$ARCHIVES/$file" "$url"; then
+          echo "::error::could not download $url"
+          rm -f "$ARCHIVES/$file"
+          exit 1
+        fi
+        if ! zstd -t "$ARCHIVES/$file"; then
+          echo "::error::$url did not download as a zstd file"
+          rm -f "$ARCHIVES/$file"
+          exit 1
+        fi
+
+    - uses: nixbuild/nix-quick-install-action@5bb6a3b3abe66fd09bbf250dce8ada94f856a703 # v30
+      with:
+        nix_version: 2.24.12
+        nix_archives_url: file://${{ runner.temp }}/nix-archives
+
+    # A company runner pulls the 1.1 GB store cache at ~1 MB/s; the download's
+    # token expires partway ("Failed to restore"), and the half-extracted
+    # store paths it leaves are owned by nobody in the jail, so Nix cannot
+    # chmod them to substitute over them (#2101, runs 41434583044, 41441085541).
+    # Substituting from cache.nixos.org takes about a minute: no cache there.
+    - name: Skip the Nix cache on a company runner
+      shell: bash
+      run: |
+        [ -z "${VIBEWARS_NIX_REGISTRATION:-}" ] || echo "VIBEWARS_COMPANY_RUNNER=1" >> "$GITHUB_ENV"
+
+    - uses: nix-community/cache-nix-action@7df957e333c1e5da7721f60227dbba6d06080569 # v7.0.2
+      if: env.VIBEWARS_COMPANY_RUNNER != '1'
+      with:
+        primary-key: nix-${{ runner.os }}-${{ hashFiles('devenv.nix', 'devenv.lock', 'devenv.yaml', 'nix/**') }}
+        restore-prefixes-first-match: nix-${{ runner.os }}-
+        save: ${{ inputs.save-cache }}
+        # Drop what the shell no longer references before saving, so an old
+        # store does not ride along in every cache generation.
+        gc-max-store-size-linux: 8G
+
+    # On a company runner the jail overlays host store paths the job's fresh
+    # Nix db does not know. Nix then deletes such a path before substituting
+    # it, and its chmod is EPERM (#2101). Register them as valid, and root
+    # them so the cache's gc does not try to delete them either. Hosted
+    # runners have no registration and skip this. After the cache restore, so
+    # a restored db does not drop the registration.
+    - name: Register the jail's store paths
+      shell: bash
+      run: |
+        # Not an `if: env.…`: that context holds only what the workflow sets,
+        # never the runner process's own environment, so it was always false.
+        [ -n "${VIBEWARS_NIX_REGISTRATION:-}" ] || exit 0
+        nix-store --load-db < "$VIBEWARS_NIX_REGISTRATION"
+        mkdir -p /nix/var/nix/gcroots
+        while read -r path; do
+          ln -sfn "$path" "/nix/var/nix/gcroots/vibewars-jail-$(basename "$path")"
+        done < "$VIBEWARS_NIX_STORE_PATHS"
+
+    # The agent tooling (claude-code, bubblewrap, tmux, hub, tg, board) stays
+    # out of CI's shell; see vibewars.claudeBot.enable in nix/claude-bot.nix.
+    # devenv.local.nix is gitignored, so this never reaches a checkout.
+    - name: Leave the agent tooling out of the shell
+      shell: bash
+      run: |
+        printf '%s\n' '{ vibewars.claudeBot.enable = false; }' > devenv.local.nix
+
+    # The CLI comes from the same nixpkgs revision devenv.lock pins, so the
+    # CLI and the devenv modules it evaluates move together on `devenv update`.
+    - name: Install devenv
+      shell: bash
+      run: |
+        rev=$(jq -r .nodes.nixpkgs.locked.rev devenv.lock)
+        # Substituting into the restored store now and then dies on a chmod
+        # of an existing path ("Operation not permitted"); retry rather than
+        # fail the job (#2087).
+        for attempt in 1 2 3; do
+          nix profile install "github:cachix/devenv-nixpkgs/$rev#devenv" && break
+          [ "$attempt" = 3 ] && exit 1
+          echo "::warning::nix profile install failed (attempt $attempt of 3), retrying"
+          sleep 5
+        done
+        devenv version
+
+    - name: Point pnpm at a cacheable store
+      shell: bash
+      run: echo "npm_config_store_dir=$RUNNER_TEMP/pnpm-store" >> "$GITHUB_ENV"
+
+    - uses: actions/cache@caa296126883cff596d87d8935842f9db880ef25 # v5.1.0
+      with:
+        path: ${{ runner.temp }}/pnpm-store
+        key: pnpm-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+        restore-keys: pnpm-${{ runner.os }}-
+
+    # Realises the shell, writes .pre-commit-config.yaml and runs
+    # `pnpm install` (frozen, because CI=true), all once, up front, so the
+    # first real check is not charged for it.
+    - name: Enter the dev shell
+      shell: bash
+      run: devenv shell -- true

@@ -1,0 +1,26 @@
+{
+  "id": "assassin.critical-eye",
+  "name": "Critical Eye",
+  "profession": "assassin",
+  "attribute": "Critical Strikes",
+  "type": "Skill.",
+  "elite": false,
+  "campaign": "Factions",
+  "cost": {
+    "kind": "energy",
+    "amount": 5
+  },
+  "overcast": 0,
+  "activationSeconds": 0,
+  "rechargeSeconds": 30,
+  "upkeep": false,
+  "description": "For 10...30...35 seconds, you have an additional 3...13...15% chance to land a critical hit when attacking. You gain 1 Energy whenever you score a critical hit.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Assassin/637-Critical_Eye",
+    "fetchedAt": "2026-10-27T20:35:16.496Z"
+  },
+  "unmapped": {}
+}

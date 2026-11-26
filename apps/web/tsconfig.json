@@ -1,0 +1,19 @@
+{
+  "extends": "./tsconfig.build.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "rootDir": ".",
+    "composite": false,
+    "declaration": false,
+    "declarationMap": false,
+    "emitDeclarationOnly": false
+  },
+  "include": [
+    "src/**/*.ts",
+    "plugins/**/*.ts",
+    "vite.config.ts",
+    "vite.sfx.config.ts",
+    "sfx-render/**/*.ts"
+  ],
+  "exclude": []
+}

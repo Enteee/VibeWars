@@ -1,0 +1,1006 @@
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+
+import { importSkills, type SkillSpec } from "./importer.js";
+import { writeSkillBundle } from "./generate.js";
+
+/**
+ * The curated skill list for this pass of the pipeline (brief §9: "do not
+ * attempt to implement all skills simultaneously"). Chosen to span
+ * distinct mechanics — attack damage, AoE, heal, condition removal,
+ * interrupt, hex, enchantment, skill-copy — so Sprint 10's engine has a
+ * genuinely varied set to prove itself against, not sixteen damage spells.
+ *
+ * Source: gw-memorial.net (brief §7). Expanding this list (or adding the
+ * Guild Wars Wiki as a second source once it is reachable — see
+ * ADR-0004) is just adding more entries here and re-running `pnpm run
+ * import`.
+ */
+const SKILL_SPECS: readonly SkillSpec[] = [
+  {
+    id: "warrior.swift-chop",
+    profession: "warrior",
+    url: "https://www.gw-memorial.net/skills/Warrior/10-Swift_Chop",
+  },
+  {
+    id: "warrior.whirlwind-attack",
+    profession: "warrior",
+    url: "https://www.gw-memorial.net/skills/Warrior/1247-Whirlwind_Attack",
+  },
+  {
+    id: "warrior.backbreaker",
+    profession: "warrior",
+    url: "https://www.gw-memorial.net/skills/Warrior/11-Backbreaker",
+  },
+  {
+    id: "warrior.hammer-bash",
+    profession: "warrior",
+    url: "https://www.gw-memorial.net/skills/Warrior/18-Hammer_Bash",
+  },
+  {
+    id: "warrior.distracting-blow",
+    profession: "warrior",
+    url: "https://www.gw-memorial.net/skills/Warrior/71-Distracting_Blow",
+  },
+  {
+    id: "warrior.healing-signet",
+    profession: "warrior",
+    url: "https://www.gw-memorial.net/skills/Warrior/65-Healing_Signet",
+  },
+  {
+    id: "warrior.watch-yourself",
+    profession: "warrior",
+    url: "https://www.gw-memorial.net/skills/Warrior/56-Watch_Yourself!",
+  },
+  {
+    id: "monk.contemplation-of-purity",
+    profession: "monk",
+    url: "https://www.gw-memorial.net/skills/Monk/154-Contemplation_of_Purity",
+  },
+  {
+    id: "monk.orison-of-healing",
+    profession: "monk",
+    url: "https://www.gw-memorial.net/skills/Monk/175-Orison_of_Healing",
+  },
+  {
+    id: "monk.guardian",
+    profession: "monk",
+    url: "https://www.gw-memorial.net/skills/Monk/183-Guardian",
+  },
+  {
+    id: "elementalist.fireball",
+    profession: "elementalist",
+    url: "https://www.gw-memorial.net/skills/Elementalist/416-Fireball",
+  },
+  {
+    id: "elementalist.meteor-shower",
+    profession: "elementalist",
+    url: "https://www.gw-memorial.net/skills/Elementalist/425-Meteor_Shower",
+  },
+  {
+    id: "elementalist.armor-of-earth",
+    profession: "elementalist",
+    url: "https://www.gw-memorial.net/skills/Elementalist/394-Armor_of_Earth",
+  },
+  {
+    id: "necromancer.contagion",
+    profession: "necromancer",
+    url: "https://www.gw-memorial.net/skills/Necromancer/876-Contagion",
+  },
+  {
+    id: "necromancer.faintheartedness",
+    profession: "necromancer",
+    url: "https://www.gw-memorial.net/skills/Necromancer/258-Faintheartedness",
+  },
+  {
+    id: "necromancer.weaken-armor",
+    profession: "necromancer",
+    url: "https://www.gw-memorial.net/skills/Necromancer/275-Weaken_Armor",
+  },
+  {
+    id: "necromancer.parasitic-bond",
+    profession: "necromancer",
+    url: "https://www.gw-memorial.net/skills/Necromancer/264-Parasitic_Bond",
+  },
+  {
+    id: "necromancer.rotting-flesh",
+    profession: "necromancer",
+    url: "https://www.gw-memorial.net/skills/Necromancer/291-Rotting_Flesh",
+  },
+  {
+    id: "ranger.broad-head-arrow",
+    profession: "ranger",
+    url: "https://www.gw-memorial.net/skills/Ranger/501-Broad_Head_Arrow",
+  },
+  {
+    id: "ranger.barrage",
+    profession: "ranger",
+    url: "https://www.gw-memorial.net/skills/Ranger/109-Barrage",
+  },
+  {
+    id: "ranger.troll-unguent",
+    profession: "ranger",
+    url: "https://www.gw-memorial.net/skills/Ranger/143-Troll_Unguent",
+  },
+  {
+    id: "mesmer.arcane-echo",
+    profession: "mesmer",
+    url: "https://www.gw-memorial.net/skills/Mesmer/370-Arcane_Echo",
+  },
+  {
+    id: "mesmer.echo",
+    profession: "mesmer",
+    url: "https://www.gw-memorial.net/skills/Mesmer/372-Echo",
+  },
+  {
+    id: "warrior.sprint",
+    profession: "warrior",
+    url: "https://www.gw-memorial.net/skills/Warrior/39-Sprint",
+  },
+  {
+    id: "assassin.dash",
+    profession: "assassin",
+    url: "https://www.gw-memorial.net/skills/Assassin/705-Dash",
+  },
+  {
+    id: "paragon.wild-throw",
+    profession: "paragon",
+    url: "https://www.gw-memorial.net/skills/Paragon/1131-Wild_Throw",
+  },
+  {
+    id: "ranger.apply-poison",
+    profession: "ranger",
+    url: "https://www.gw-memorial.net/skills/Ranger/122-Apply_Poison",
+  },
+  {
+    id: "elementalist.glyph-of-lesser-energy",
+    profession: "elementalist",
+    url: "https://www.gw-memorial.net/skills/Elementalist/452-Glyph_of_Lesser_Energy",
+  },
+  {
+    id: "elementalist.chain-lightning",
+    profession: "elementalist",
+    url: "https://www.gw-memorial.net/skills/Elementalist/378-Chain_Lightning",
+  },
+  {
+    id: "elementalist.lightning-orb",
+    profession: "elementalist",
+    url: "https://www.gw-memorial.net/skills/Elementalist/384-Lightning_Orb",
+  },
+  {
+    id: "necromancer.enfeeble",
+    profession: "necromancer",
+    url: "https://www.gw-memorial.net/skills/Necromancer/256-Enfeeble",
+  },
+  {
+    id: "paragon.anthem-of-flame",
+    profession: "paragon",
+    url: "https://www.gw-memorial.net/skills/Paragon/1084-Anthem_of_Flame",
+  },
+  {
+    id: "paragon.fall-back",
+    profession: "paragon",
+    url: "https://www.gw-memorial.net/skills/Paragon/1062-Fall_Back!",
+  },
+  {
+    id: "paragon.stand-your-ground",
+    profession: "paragon",
+    url: "https://www.gw-memorial.net/skills/Paragon/1070-Stand_Your_Ground!",
+  },
+  {
+    id: "paragon.incoming",
+    profession: "paragon",
+    url: "https://www.gw-memorial.net/skills/Paragon/1066-Incoming!",
+  },
+  {
+    id: "paragon.make-haste",
+    profession: "paragon",
+    url: "https://www.gw-memorial.net/skills/Paragon/1067-Make_Haste!",
+  },
+  {
+    id: "paragon.defensive-anthem",
+    profession: "paragon",
+    url: "https://www.gw-memorial.net/skills/Paragon/1089-Defensive_Anthem",
+  },
+  {
+    id: "paragon.song-of-restoration",
+    profession: "paragon",
+    url: "https://www.gw-memorial.net/skills/Paragon/1115-Song_of_Restoration",
+  },
+  {
+    id: "paragon.spear-of-lightning",
+    profession: "paragon",
+    url: "https://www.gw-memorial.net/skills/Paragon/1126-Spear_of_Lightning",
+  },
+  {
+    id: "paragon.never-surrender",
+    profession: "paragon",
+    url: "https://www.gw-memorial.net/skills/Paragon/1069-Never_Surrender!",
+  },
+  {
+    id: "paragon.leaders-comfort",
+    profession: "paragon",
+    url: "https://www.gw-memorial.net/skills/Paragon/1094-Leader's_Comfort",
+  },
+  {
+    id: "ritualist.weapon-of-warding",
+    profession: "ritualist",
+    url: "https://www.gw-memorial.net/skills/Ritualist/769-Weapon_of_Warding",
+  },
+  {
+    id: "ritualist.mend-body-and-soul",
+    profession: "ritualist",
+    url: "https://www.gw-memorial.net/skills/Ritualist/755-Mend_Body_and_Soul",
+  },
+  {
+    id: "ritualist.spirit-light",
+    profession: "ritualist",
+    url: "https://www.gw-memorial.net/skills/Ritualist/762-Spirit_Light",
+  },
+  {
+    id: "ritualist.wielders-boon",
+    profession: "ritualist",
+    url: "https://www.gw-memorial.net/skills/Ritualist/770-Wielder's_Boon",
+  },
+  {
+    id: "ritualist.spirit-light-weapon",
+    profession: "ritualist",
+    url: "https://www.gw-memorial.net/skills/Ritualist/763-Spirit_Light_Weapon",
+  },
+  {
+    id: "ritualist.weapon-of-quickening",
+    profession: "ritualist",
+    url: "https://www.gw-memorial.net/skills/Ritualist/749-Weapon_of_Quickening",
+  },
+  {
+    id: "ritualist.weapon-of-aggression",
+    profession: "ritualist",
+    url: "https://www.gw-memorial.net/skills/Ritualist/1206-Weapon_of_Aggression",
+  },
+  {
+    id: "ritualist.weapon-of-remedy",
+    profession: "ritualist",
+    url: "https://www.gw-memorial.net/skills/Ritualist/975-Weapon_of_Remedy",
+  },
+  {
+    id: "ritualist.vengeful-weapon",
+    profession: "ritualist",
+    url: "https://www.gw-memorial.net/skills/Ritualist/767-Vengeful_Weapon",
+  },
+  {
+    id: "ritualist.splinter-weapon",
+    profession: "ritualist",
+    url: "https://www.gw-memorial.net/skills/Ritualist/726-Splinter_Weapon",
+  },
+  {
+    id: "ritualist.mending-grip",
+    profession: "ritualist",
+    url: "https://www.gw-memorial.net/skills/Ritualist/1209-Mending_Grip",
+  },
+  {
+    id: "mesmer.power-spike",
+    profession: "mesmer",
+    url: "https://www.gw-memorial.net/skills/Mesmer/320-Power_Spike",
+  },
+  {
+    id: "mesmer.power-block",
+    profession: "mesmer",
+    url: "https://www.gw-memorial.net/skills/Mesmer/318-Power_Block",
+  },
+  {
+    id: "mesmer.power-drain",
+    profession: "mesmer",
+    url: "https://www.gw-memorial.net/skills/Mesmer/367-Power_Drain",
+  },
+  {
+    id: "mesmer.shatter-enchantment",
+    profession: "mesmer",
+    url: "https://www.gw-memorial.net/skills/Mesmer/323-Shatter_Enchantment",
+  },
+  {
+    id: "mesmer.drain-enchantment",
+    profession: "mesmer",
+    url: "https://www.gw-memorial.net/skills/Mesmer/346-Drain_Enchantment",
+  },
+  {
+    id: "monk.mend-condition",
+    profession: "monk",
+    url: "https://www.gw-memorial.net/skills/Monk/189-Mend_Condition",
+  },
+  {
+    id: "monk.mending",
+    profession: "monk",
+    url: "https://www.gw-memorial.net/skills/Monk/174-Mending",
+  },
+  {
+    id: "assassin.jagged-strike",
+    profession: "assassin",
+    url: "https://www.gw-memorial.net/skills/Assassin/658-Jagged_Strike",
+  },
+  {
+    id: "assassin.black-lotus-strike",
+    profession: "assassin",
+    url: "https://www.gw-memorial.net/skills/Assassin/635-Black_Lotus_Strike",
+  },
+  {
+    id: "assassin.fox-fangs",
+    profession: "assassin",
+    url: "https://www.gw-memorial.net/skills/Assassin/654-Fox_Fangs",
+  },
+  {
+    id: "assassin.wild-strike",
+    profession: "assassin",
+    url: "https://www.gw-memorial.net/skills/Assassin/665-Wild_Strike",
+  },
+  {
+    id: "assassin.death-blossom",
+    profession: "assassin",
+    url: "https://www.gw-memorial.net/skills/Assassin/648-Death_Blossom",
+  },
+  {
+    id: "assassin.twisting-fangs",
+    profession: "assassin",
+    url: "https://www.gw-memorial.net/skills/Assassin/644-Twisting_Fangs",
+  },
+  {
+    id: "assassin.horns-of-the-ox",
+    profession: "assassin",
+    url: "https://www.gw-memorial.net/skills/Assassin/657-Horns_of_the_Ox",
+  },
+  {
+    id: "assassin.moebius-strike",
+    profession: "assassin",
+    url: "https://www.gw-memorial.net/skills/Assassin/661-Moebius_Strike",
+  },
+  {
+    id: "assassin.leaping-mantis-sting",
+    profession: "assassin",
+    url: "https://www.gw-memorial.net/skills/Assassin/660-Leaping_Mantis_Sting",
+  },
+  {
+    id: "assassin.jungle-strike",
+    profession: "assassin",
+    url: "https://www.gw-memorial.net/skills/Assassin/659-Jungle_Strike",
+  },
+  {
+    id: "assassin.trampling-ox",
+    profession: "assassin",
+    url: "https://www.gw-memorial.net/skills/Assassin/1199-Trampling_Ox",
+  },
+  {
+    id: "assassin.falling-spider",
+    profession: "assassin",
+    url: "https://www.gw-memorial.net/skills/Assassin/652-Falling_Spider",
+  },
+  {
+    id: "paragon.cruel-spear",
+    profession: "paragon",
+    url: "https://www.gw-memorial.net/skills/Paragon/1119-Cruel_Spear",
+  },
+  {
+    id: "paragon.barbed-spear",
+    profession: "paragon",
+    url: "https://www.gw-memorial.net/skills/Paragon/1117-Barbed_Spear",
+  },
+  {
+    id: "paragon.maiming-spear",
+    profession: "paragon",
+    url: "https://www.gw-memorial.net/skills/Paragon/1233-Maiming_Spear",
+  },
+  {
+    id: "paragon.merciless-spear",
+    profession: "paragon",
+    url: "https://www.gw-memorial.net/skills/Paragon/1123-Merciless_Spear",
+  },
+  {
+    id: "paragon.stunning-strike",
+    profession: "paragon",
+    url: "https://www.gw-memorial.net/skills/Paragon/1127-Stunning_Strike",
+  },
+  {
+    id: "paragon.harriers-toss",
+    profession: "paragon",
+    url: "https://www.gw-memorial.net/skills/Paragon/1122-Harrier's_Toss",
+  },
+  {
+    id: "warrior.sever-artery",
+    profession: "warrior",
+    url: "https://www.gw-memorial.net/skills/Warrior/50-Sever_Artery",
+  },
+  {
+    id: "warrior.eviscerate",
+    profession: "warrior",
+    url: "https://www.gw-memorial.net/skills/Warrior/7-Eviscerate",
+  },
+  {
+    id: "warrior.disrupting-chop",
+    profession: "warrior",
+    url: "https://www.gw-memorial.net/skills/Warrior/6-Disrupting_Chop",
+  },
+  {
+    id: "warrior.executioners-strike",
+    profession: "warrior",
+    url: "https://www.gw-memorial.net/skills/Warrior/8-Executioner's_Strike",
+  },
+  {
+    id: "ranger.punishing-shot",
+    profession: "ranger",
+    url: "https://www.gw-memorial.net/skills/Ranger/119-Punishing_Shot",
+  },
+  {
+    id: "ranger.throw-dirt",
+    profession: "ranger",
+    url: "https://www.gw-memorial.net/skills/Ranger/107-Throw_Dirt",
+  },
+  {
+    id: "necromancer.enfeebling-blood",
+    profession: "necromancer",
+    url: "https://www.gw-memorial.net/skills/Necromancer/257-Enfeebling_Blood",
+  },
+  {
+    id: "monk.word-of-healing",
+    profession: "monk",
+    url: "https://www.gw-memorial.net/skills/Monk/178-Word_of_Healing",
+  },
+  {
+    id: "dervish.mystic-sweep",
+    profession: "dervish",
+    url: "https://www.gw-memorial.net/skills/Dervish/1029-Mystic_Sweep",
+  },
+  {
+    id: "ranger.savage-shot",
+    profession: "ranger",
+    url: "https://www.gw-memorial.net/skills/Ranger/121-Savage_Shot",
+  },
+  {
+    id: "ranger.distracting-shot",
+    profession: "ranger",
+    url: "https://www.gw-memorial.net/skills/Ranger/99-Distracting_Shot",
+  },
+  {
+    id: "mesmer.energy-burn",
+    profession: "mesmer",
+    url: "https://www.gw-memorial.net/skills/Mesmer/311-Energy_Burn",
+  },
+  {
+    id: "mesmer.energy-tap",
+    profession: "mesmer",
+    url: "https://www.gw-memorial.net/skills/Mesmer/349-Energy_Tap",
+  },
+  {
+    id: "mesmer.backfire",
+    profession: "mesmer",
+    url: "https://www.gw-memorial.net/skills/Mesmer/305-Backfire",
+  },
+  {
+    id: "mesmer.empathy",
+    profession: "mesmer",
+    url: "https://www.gw-memorial.net/skills/Mesmer/310-Empathy",
+  },
+  {
+    id: "mesmer.diversion",
+    profession: "mesmer",
+    url: "https://www.gw-memorial.net/skills/Mesmer/309-Diversion",
+  },
+  {
+    id: "monk.restore-life",
+    profession: "monk",
+    url: "https://www.gw-memorial.net/skills/Monk/176-Restore_Life",
+  },
+  {
+    id: "common.resurrection-signet",
+    profession: "common",
+    url: "https://www.gw-memorial.net/skills/Common/0-Resurrection_Signet",
+  },
+  {
+    id: "monk.rebirth",
+    profession: "monk",
+    url: "https://www.gw-memorial.net/skills/Monk/193-Rebirth",
+  },
+  {
+    id: "paragon.signet-of-return",
+    profession: "paragon",
+    url: "https://www.gw-memorial.net/skills/Paragon/1096-Signet_of_Return",
+  },
+  {
+    id: "ritualist.flesh-of-my-flesh",
+    profession: "ritualist",
+    url: "https://www.gw-memorial.net/skills/Ritualist/751-Flesh_of_My_Flesh",
+  },
+  {
+    id: "mesmer.energy-surge",
+    profession: "mesmer",
+    url: "https://www.gw-memorial.net/skills/Mesmer/312-Energy_Surge",
+  },
+  {
+    id: "mesmer.leech-signet",
+    profession: "mesmer",
+    url: "https://www.gw-memorial.net/skills/Mesmer/355-Leech_Signet",
+  },
+  {
+    id: "monk.dwaynas-kiss",
+    profession: "monk",
+    url: "https://www.gw-memorial.net/skills/Monk/164-Dwayna's_Kiss",
+  },
+  {
+    id: "dervish.mystic-regeneration",
+    profession: "dervish",
+    url: "https://www.gw-memorial.net/skills/Dervish/991-Mystic_Regeneration",
+  },
+  {
+    id: "dervish.fleeting-stability",
+    profession: "dervish",
+    url: "https://www.gw-memorial.net/skills/Dervish/989-Fleeting_Stability",
+  },
+  {
+    id: "dervish.heart-of-fury",
+    profession: "dervish",
+    url: "https://www.gw-memorial.net/skills/Dervish/1011-Heart_of_Fury",
+  },
+  {
+    id: "dervish.wounding-strike",
+    profession: "dervish",
+    url: "https://www.gw-memorial.net/skills/Dervish/1036-Wounding_Strike",
+  },
+  {
+    id: "dervish.signet-of-pious-light",
+    profession: "dervish",
+    url: "https://www.gw-memorial.net/skills/Dervish/996-Signet_of_Pious_Light",
+  },
+  {
+    id: "dervish.pious-restoration",
+    profession: "dervish",
+    url: "https://www.gw-memorial.net/skills/Dervish/1052-Pious_Restoration",
+  },
+  {
+    id: "dervish.vow-of-strength",
+    profession: "dervish",
+    url: "https://www.gw-memorial.net/skills/Dervish/1000-Vow_of_Strength",
+  },
+  {
+    id: "dervish.sand-shards",
+    profession: "dervish",
+    url: "https://www.gw-memorial.net/skills/Dervish/994-Sand_Shards",
+  },
+  {
+    id: "dervish.pious-haste",
+    profession: "dervish",
+    url: "https://www.gw-memorial.net/skills/Dervish/1017-Pious_Haste",
+  },
+  {
+    id: "dervish.victorious-sweep",
+    profession: "dervish",
+    url: "https://www.gw-memorial.net/skills/Dervish/1030-Victorious_Sweep",
+  },
+  {
+    id: "dervish.zealous-sweep",
+    profession: "dervish",
+    url: "https://www.gw-memorial.net/skills/Dervish/1221-Zealous_Sweep",
+  },
+  {
+    id: "dervish.mystic-twister",
+    profession: "dervish",
+    url: "https://www.gw-memorial.net/skills/Dervish/1049-Mystic_Twister",
+  },
+  {
+    id: "dervish.eremites-attack",
+    profession: "dervish",
+    url: "https://www.gw-memorial.net/skills/Dervish/1025-Eremite's_Attack",
+  },
+  {
+    id: "dervish.staggering-force",
+    profession: "dervish",
+    url: "https://www.gw-memorial.net/skills/Dervish/997-Staggering_Force",
+  },
+  {
+    id: "dervish.dust-cloak",
+    profession: "dervish",
+    url: "https://www.gw-memorial.net/skills/Dervish/988-Dust_Cloak",
+  },
+  {
+    id: "dervish.aura-of-thorns",
+    profession: "dervish",
+    url: "https://www.gw-memorial.net/skills/Dervish/986-Aura_of_Thorns",
+  },
+  {
+    id: "mesmer.cry-of-frustration",
+    profession: "mesmer",
+    url: "https://www.gw-memorial.net/skills/Mesmer/308-Cry_of_Frustration",
+  },
+  {
+    id: "mesmer.mantra-of-recovery",
+    profession: "mesmer",
+    url: "https://www.gw-memorial.net/skills/Mesmer/327-Mantra_of_Recovery",
+  },
+  {
+    id: "elementalist.ice-spikes",
+    profession: "elementalist",
+    url: "https://www.gw-memorial.net/skills/Elementalist/438-Ice_Spikes",
+  },
+  {
+    id: "elementalist.deep-freeze",
+    profession: "elementalist",
+    url: "https://www.gw-memorial.net/skills/Elementalist/434-Deep_Freeze",
+  },
+  {
+    id: "elementalist.blinding-flash",
+    profession: "elementalist",
+    url: "https://www.gw-memorial.net/skills/Elementalist/377-Blinding_Flash",
+  },
+  {
+    id: "elementalist.shock",
+    profession: "elementalist",
+    url: "https://www.gw-memorial.net/skills/Elementalist/389-Shock",
+  },
+  {
+    id: "elementalist.aftershock",
+    profession: "elementalist",
+    url: "https://www.gw-memorial.net/skills/Elementalist/393-Aftershock",
+  },
+  {
+    id: "elementalist.meteor",
+    profession: "elementalist",
+    url: "https://www.gw-memorial.net/skills/Elementalist/424-Meteor",
+  },
+  {
+    id: "elementalist.water-trident",
+    profession: "elementalist",
+    url: "https://www.gw-memorial.net/skills/Elementalist/447-Water_Trident",
+  },
+  {
+    id: "elementalist.searing-flames",
+    profession: "elementalist",
+    url: "https://www.gw-memorial.net/skills/Elementalist/930-Searing_Flames",
+  },
+  {
+    id: "elementalist.ebon-hawk",
+    profession: "elementalist",
+    url: "https://www.gw-memorial.net/skills/Elementalist/915-Ebon_Hawk",
+  },
+  {
+    id: "elementalist.stoning",
+    profession: "elementalist",
+    url: "https://www.gw-memorial.net/skills/Elementalist/406-Stoning",
+  },
+  {
+    id: "elementalist.lightning-strike",
+    profession: "elementalist",
+    url: "https://www.gw-memorial.net/skills/Elementalist/385-Lightning_Strike",
+  },
+  {
+    id: "elementalist.mind-shock",
+    profession: "elementalist",
+    url: "https://www.gw-memorial.net/skills/Elementalist/388-Mind_Shock",
+  },
+  {
+    id: "elementalist.shard-storm",
+    profession: "elementalist",
+    url: "https://www.gw-memorial.net/skills/Elementalist/443-Shard_Storm",
+  },
+  {
+    id: "elementalist.ward-against-melee",
+    profession: "elementalist",
+    url: "https://www.gw-memorial.net/skills/Elementalist/409-Ward_Against_Melee",
+  },
+  {
+    id: "necromancer.shadow-of-fear",
+    profession: "necromancer",
+    url: "https://www.gw-memorial.net/skills/Necromancer/270-Shadow_of_Fear",
+  },
+  {
+    id: "necromancer.spiteful-spirit",
+    profession: "necromancer",
+    url: "https://www.gw-memorial.net/skills/Necromancer/273-Spiteful_Spirit",
+  },
+  {
+    id: "necromancer.insidious-parasite",
+    profession: "necromancer",
+    url: "https://www.gw-memorial.net/skills/Necromancer/260-Insidious_Parasite",
+  },
+  {
+    id: "necromancer.mark-of-pain",
+    profession: "necromancer",
+    url: "https://www.gw-memorial.net/skills/Necromancer/263-Mark_of_Pain",
+  },
+  {
+    id: "necromancer.animate-bone-horror",
+    profession: "necromancer",
+    url: "https://www.gw-memorial.net/skills/Necromancer/278-Animate_Bone_Horror",
+  },
+  {
+    id: "necromancer.animate-bone-minions",
+    profession: "necromancer",
+    url: "https://www.gw-memorial.net/skills/Necromancer/279-Animate_Bone_Minions",
+  },
+  {
+    id: "necromancer.soul-feast",
+    profession: "necromancer",
+    url: "https://www.gw-memorial.net/skills/Necromancer/292-Soul_Feast",
+  },
+  {
+    id: "necromancer.well-of-suffering",
+    profession: "necromancer",
+    url: "https://www.gw-memorial.net/skills/Necromancer/300-Well_of_Suffering",
+  },
+  {
+    id: "necromancer.vampiric-gaze",
+    profession: "necromancer",
+    url: "https://www.gw-memorial.net/skills/Necromancer/248-Vampiric_Gaze",
+  },
+  {
+    id: "warrior.frenzy",
+    profession: "warrior",
+    url: "https://www.gw-memorial.net/skills/Warrior/73-Frenzy",
+  },
+  {
+    id: "assassin.dark-escape",
+    profession: "assassin",
+    url: "https://www.gw-memorial.net/skills/Assassin/688-Dark_Escape",
+  },
+  {
+    id: "assassin.deaths-charge",
+    profession: "assassin",
+    url: "https://www.gw-memorial.net/skills/Assassin/689-Death's_Charge",
+  },
+  {
+    id: "assassin.shadow-refuge",
+    profession: "assassin",
+    url: "https://www.gw-memorial.net/skills/Assassin/694-Shadow_Refuge",
+  },
+  {
+    id: "assassin.shroud-of-distress",
+    profession: "assassin",
+    url: "https://www.gw-memorial.net/skills/Assassin/698-Shroud_of_Distress",
+  },
+  {
+    id: "assassin.critical-eye",
+    profession: "assassin",
+    url: "https://www.gw-memorial.net/skills/Assassin/637-Critical_Eye",
+  },
+  {
+    id: "ranger.natural-stride",
+    profession: "ranger",
+    url: "https://www.gw-memorial.net/skills/Ranger/826-Natural_Stride",
+  },
+  {
+    id: "ranger.lightning-reflexes",
+    profession: "ranger",
+    url: "https://www.gw-memorial.net/skills/Ranger/102-Lightning_Reflexes",
+  },
+  {
+    id: "ranger.escape",
+    profession: "ranger",
+    url: "https://www.gw-memorial.net/skills/Ranger/101-Escape",
+  },
+  {
+    id: "ranger.pin-down",
+    profession: "ranger",
+    url: "https://www.gw-memorial.net/skills/Ranger/116-Pin_Down",
+  },
+  {
+    id: "ranger.hunters-shot",
+    profession: "ranger",
+    url: "https://www.gw-memorial.net/skills/Ranger/114-Hunter's_Shot",
+  },
+  {
+    id: "ranger.concussion-shot",
+    profession: "ranger",
+    url: "https://www.gw-memorial.net/skills/Ranger/110-Concussion_Shot",
+  },
+  {
+    id: "ranger.crippling-shot",
+    profession: "ranger",
+    url: "https://www.gw-memorial.net/skills/Ranger/111-Crippling_Shot",
+  },
+  {
+    id: "ranger.debilitating-shot",
+    profession: "ranger",
+    url: "https://www.gw-memorial.net/skills/Ranger/148-Debilitating_Shot",
+  },
+  {
+    id: "ranger.burning-arrow",
+    profession: "ranger",
+    url: "https://www.gw-memorial.net/skills/Ranger/818-Burning_Arrow",
+  },
+  {
+    id: "ranger.charm-animal",
+    profession: "ranger",
+    url: "https://www.gw-memorial.net/skills/Ranger/80-Charm_Animal",
+  },
+  {
+    // The PvP page (#1046): 1324 is the PvE version.
+    id: "ranger.comfort-animal",
+    profession: "ranger",
+    url: "https://www.gw-memorial.net/skills/Ranger/81-Comfort_Animal",
+  },
+  {
+    id: "ranger.brutal-strike",
+    profession: "ranger",
+    url: "https://www.gw-memorial.net/skills/Ranger/77-Brutal_Strike",
+  },
+  {
+    id: "ranger.maiming-strike",
+    profession: "ranger",
+    url: "https://www.gw-memorial.net/skills/Ranger/88-Maiming_Strike",
+  },
+  {
+    id: "ranger.disrupting-lunge",
+    profession: "ranger",
+    url: "https://www.gw-memorial.net/skills/Ranger/82-Disrupting_Lunge",
+  },
+  {
+    // The PvP page (#1108): 1323 is the PvE version.
+    id: "ranger.call-of-haste",
+    profession: "ranger",
+    url: "https://www.gw-memorial.net/skills/Ranger/78-Call_of_Haste",
+  },
+  {
+    id: "ranger.call-of-protection",
+    profession: "ranger",
+    url: "https://www.gw-memorial.net/skills/Ranger/79-Call_of_Protection",
+  },
+  {
+    id: "ranger.symbiotic-bond",
+    profession: "ranger",
+    url: "https://www.gw-memorial.net/skills/Ranger/97-Symbiotic_Bond",
+  },
+  {
+    id: "ranger.revive-animal",
+    profession: "ranger",
+    url: "https://www.gw-memorial.net/skills/Ranger/94-Revive_Animal",
+  },
+  {
+    id: "ranger.barbed-trap",
+    profession: "ranger",
+    url: "https://www.gw-memorial.net/skills/Ranger/123-Barbed_Trap",
+  },
+  {
+    id: "ranger.flame-trap",
+    profession: "ranger",
+    url: "https://www.gw-memorial.net/skills/Ranger/127-Flame_Trap",
+  },
+  {
+    id: "monk.symbol-of-wrath",
+    profession: "monk",
+    url: "https://www.gw-memorial.net/skills/Monk/215-Symbol_of_Wrath",
+  },
+  {
+    id: "monk.patient-spirit",
+    profession: "monk",
+    url: "https://www.gw-memorial.net/skills/Monk/1158-Patient_Spirit",
+  },
+  {
+    id: "monk.holy-veil",
+    profession: "monk",
+    url: "https://www.gw-memorial.net/skills/Monk/218-Holy_Veil",
+  },
+  {
+    id: "necromancer.rend-enchantments",
+    profession: "necromancer",
+    url: "https://www.gw-memorial.net/skills/Necromancer/268-Rend_Enchantments",
+  },
+  {
+    id: "necromancer.plague-touch",
+    profession: "necromancer",
+    url: "https://www.gw-memorial.net/skills/Necromancer/303-Plague_Touch",
+  },
+  {
+    id: "warrior.cyclone-axe",
+    profession: "warrior",
+    url: "https://www.gw-memorial.net/skills/Warrior/4-Cyclone_Axe",
+  },
+  {
+    id: "warrior.for-great-justice",
+    profession: "warrior",
+    url: "https://www.gw-memorial.net/skills/Warrior/70-For_Great_Justice!",
+  },
+  {
+    id: "monk.protective-spirit",
+    profession: "monk",
+    url: "https://www.gw-memorial.net/skills/Monk/192-Protective_Spirit",
+  },
+  {
+    id: "monk.infuse-health",
+    profession: "monk",
+    url: "https://www.gw-memorial.net/skills/Monk/172-Infuse_Health",
+  },
+  {
+    id: "monk.heal-other",
+    profession: "monk",
+    url: "https://www.gw-memorial.net/skills/Monk/166-Heal_Other",
+  },
+  {
+    id: "monk.reversal-of-fortune",
+    profession: "monk",
+    url: "https://www.gw-memorial.net/skills/Monk/195-Reversal_of_Fortune",
+  },
+  {
+    id: "monk.smite-hex",
+    profession: "monk",
+    url: "https://www.gw-memorial.net/skills/Monk/213-Smite_Hex",
+  },
+  {
+    id: "monk.restore-condition",
+    profession: "monk",
+    url: "https://www.gw-memorial.net/skills/Monk/194-Restore_Condition",
+  },
+  {
+    id: "monk.remove-hex",
+    profession: "monk",
+    url: "https://www.gw-memorial.net/skills/Monk/223-Remove_Hex",
+  },
+  {
+    id: "monk.dismiss-condition",
+    profession: "monk",
+    url: "https://www.gw-memorial.net/skills/Monk/847-Dismiss_Condition",
+  },
+  {
+    id: "monk.healing-breeze",
+    profession: "monk",
+    url: "https://www.gw-memorial.net/skills/Monk/168-Healing_Breeze",
+  },
+  {
+    id: "monk.heal-party",
+    profession: "monk",
+    url: "https://www.gw-memorial.net/skills/Monk/167-Heal_Party",
+  },
+  {
+    id: "monk.cure-hex",
+    profession: "monk",
+    url: "https://www.gw-memorial.net/skills/Monk/1156-Cure_Hex",
+  },
+  {
+    id: "monk.smite-condition",
+    profession: "monk",
+    url: "https://www.gw-memorial.net/skills/Monk/1164-Smite_Condition",
+  },
+  {
+    id: "monk.mending-touch",
+    profession: "monk",
+    url: "https://www.gw-memorial.net/skills/Monk/849-Mending_Touch",
+  },
+  {
+    id: "monk.vigorous-spirit",
+    profession: "monk",
+    url: "https://www.gw-memorial.net/skills/Monk/177-Vigorous_Spirit",
+  },
+];
+
+function packageRoot(): string {
+  return resolve(dirname(fileURLToPath(import.meta.url)), "..");
+}
+
+async function main(): Promise<void> {
+  const report = await importSkills(SKILL_SPECS, {
+    rawDir: resolve(packageRoot(), "raw/gw-memorial"),
+    normalizedDir: resolve(packageRoot(), "normalized"),
+  });
+
+  console.info(`imported:    ${String(report.imported)}`);
+  console.info(`normalized:  ${String(report.normalized)}`);
+  console.info(`unsupported: ${String(report.unsupported.length)}`);
+  for (const p of report.unsupported) {
+    console.info(`  - ${p.id} (${p.url}): ${p.reason}`);
+  }
+  console.info(`rejected:    ${String(report.rejected.length)}`);
+  for (const p of report.rejected) {
+    console.info(`  - ${p.id} (${p.url}): ${p.reason}`);
+  }
+
+  const generated = writeSkillBundle();
+  console.info(`generated bundle: ${String(generated.skills.length)} skills`);
+  if (generated.rejected.length > 0) {
+    console.error(
+      `generate step rejected ${String(generated.rejected.length)} normalized file(s):`,
+    );
+    for (const r of generated.rejected) {
+      console.error(`  - ${r.file}: ${r.reason}`);
+    }
+    process.exitCode = 1;
+  }
+}
+
+main().catch((error: unknown) => {
+  console.error("import failed:", error);
+  process.exitCode = 1;
+});

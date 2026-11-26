@@ -1,0 +1,388 @@
+<!doctype html>
+<meta charset="utf-8" />
+<title>#1902 mockup: Team Builder and Character Builder button bars</title>
+<style>
+  :root {
+    --bg: #0e1116;
+    --panel: #161b22;
+    --line: #2b3440;
+    --ink: #d7dee8;
+    --dim: #7d8899;
+    --accent: #59c2ff;
+    --warn: #ffa657;
+  }
+  body {
+    margin: 0;
+    padding: 1.5rem;
+    background: #080a0d;
+    color: var(--ink);
+    font:
+      15px system-ui,
+      sans-serif;
+  }
+  h1 {
+    font-size: 1.2rem;
+  }
+  h2 {
+    font-size: 1rem;
+    margin: 2rem 0 0.3rem;
+    color: var(--accent);
+  }
+  p.n {
+    color: var(--dim);
+    margin: 0.2rem 0 0.6rem;
+    max-width: 60rem;
+  }
+  .bar {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    padding: 0.4rem 0.7rem;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    position: relative;
+    margin-bottom: 0.4rem;
+  }
+  .bar.phone {
+    width: 360px;
+  }
+  .crumb {
+    color: var(--dim);
+  }
+  .crumb b {
+    color: var(--ink);
+  }
+  .status {
+    display: flex;
+    gap: 0.7rem;
+    align-items: center;
+    flex: 1;
+    white-space: nowrap;
+  }
+  .chip {
+    color: #7ee787;
+  }
+  .chip.bad {
+    color: #ff7b72;
+  }
+  .bud {
+    color: var(--accent);
+  }
+  .uns {
+    color: var(--warn);
+    font-size: 0.85rem;
+  }
+  .act {
+    display: flex;
+    gap: 0.4rem;
+    position: relative;
+  }
+  button {
+    padding: 0.25rem 0.7rem;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    color: var(--ink);
+    font: inherit;
+  }
+  button.primary {
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  button:disabled {
+    opacity: 0.4;
+  }
+  button.gone {
+    display: none;
+  }
+  .menu {
+    position: absolute;
+    right: 0;
+    top: calc(100% + 0.3rem);
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    padding: 0.4rem;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    box-shadow: 0 6px 20px #000a;
+    z-index: 5;
+    min-width: 9rem;
+  }
+  .menu button {
+    text-align: left;
+  }
+  .pad {
+    height: 7.5rem;
+  }
+  .pad.s {
+    height: 6.5rem;
+  }
+  .cols {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.2rem;
+  }
+  .tag {
+    display: inline-block;
+    font-size: 0.75rem;
+    padding: 0.05rem 0.4rem;
+    border: 1px solid var(--line);
+    color: var(--dim);
+    margin-right: 0.4rem;
+  }
+  .tag.new {
+    color: #7ee787;
+    border-color: #7ee787;
+  }
+  .ghost {
+    text-decoration: line-through;
+    opacity: 0.55;
+  }
+  .glob {
+    display: flex;
+    gap: 0.3rem;
+    padding-left: 0.7rem;
+    margin-left: 0.2rem;
+    border-left: 1px solid var(--line);
+  }
+  .glob button {
+    padding: 0.25rem 0.45rem;
+  }
+  .bar.phone .glob button {
+    padding: 0.25rem 0.3rem;
+  }
+  .bar.phone .glob {
+    gap: 0.15rem;
+    padding-left: 0.3rem;
+  }
+</style>
+<h1>#1902 — one button bar for the Team Builder and the Character Builder</h1>
+<p class="n">
+  Top-bar contents, as <code>screenBar</code> lays them out: breadcrumb, status, actions. The five
+  global buttons (info, settings, music, mute, fullscreen) sit at the far right of the title bar on
+  every screen, after a divider, and never change. Proposal: both screens end with the same two
+  controls, <b>Save</b> (primary) and <b>⋯</b>. No Back or Close button; Save stores and returns to
+  the screen you came from. Esc and browser back leave as today (asking first when unsaved). Share,
+  Duplicate, Delete live under ⋯ on both, in the same order.
+</p>
+
+<h2>Team Builder</h2>
+<p class="n">
+  <span class="tag">today</span>Back on the left; Save, Share, Duplicate, Delete spread across the
+  bar.
+</p>
+<div class="bar">
+  <button>‹ Back</button><span class="crumb">Teams &gt; <b>Frostguard</b></span>
+  <span class="status"><span class="chip">✔ valid</span><span class="uns">● unsaved</span></span>
+  <span class="act"
+    ><button class="primary">Save</button><button>Share</button><button>Duplicate</button
+    ><button>Delete</button></span
+  >
+  <span class="glob"
+    ><button aria-label="info">ⓘ</button><button aria-label="settings">⚙</button
+    ><button aria-label="music">♪</button><button aria-label="mute">🔊</button
+    ><button aria-label="fullscreen">
+      <svg
+        width="14"
+        height="14"
+        viewBox="0 0 14 14"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.6"
+      >
+        <path d="M1 5V1h4M9 1h4v4M13 9v4H9M5 13H1V9" />
+      </svg></button
+  ></span>
+</div>
+<p class="n"><span class="tag new">proposed</span>Unsaved, valid.</p>
+<div class="bar">
+  <span class="crumb">Teams &gt; <b>Frostguard</b></span>
+  <span class="status"><span class="chip">✔ valid</span><span class="uns">● unsaved</span></span>
+  <span class="act"><button class="primary">Save</button><button>⋯</button></span>
+  <span class="glob"
+    ><button aria-label="info">ⓘ</button><button aria-label="settings">⚙</button
+    ><button aria-label="music">♪</button><button aria-label="mute">🔊</button
+    ><button aria-label="fullscreen">
+      <svg
+        width="14"
+        height="14"
+        viewBox="0 0 14 14"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.6"
+      >
+        <path d="M1 5V1h4M9 1h4v4M13 9v4H9M5 13H1V9" />
+      </svg></button
+  ></span>
+</div>
+<p class="n"><span class="tag new">proposed</span>⋯ open.</p>
+<div class="bar">
+  <span class="crumb">Teams &gt; <b>Frostguard</b></span>
+  <span class="status"><span class="chip">✔ valid</span></span>
+  <span class="act"
+    ><button class="primary">Save</button><button>⋯</button>
+    <span class="menu"
+      ><button>Share</button><button>Duplicate</button><button>Delete</button></span
+    ></span
+  >
+  <span class="glob"
+    ><button aria-label="info">ⓘ</button><button aria-label="settings">⚙</button
+    ><button aria-label="music">♪</button><button aria-label="mute">🔊</button
+    ><button aria-label="fullscreen">
+      <svg
+        width="14"
+        height="14"
+        viewBox="0 0 14 14"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.6"
+      >
+        <path d="M1 5V1h4M9 1h4v4M13 9v4H9M5 13H1V9" />
+      </svg></button
+  ></span>
+</div>
+<div class="pad"></div>
+<p class="n">
+  <span class="tag new">proposed</span>Invalid team: Save disabled, hover says why; stays on screen.
+</p>
+<div class="bar">
+  <span class="crumb">Teams &gt; <b>Frostguard</b></span>
+  <span class="status"
+    ><span class="chip bad">✖ 2 problems</span><span class="uns">● unsaved</span></span
+  >
+  <span class="act"
+    ><button class="primary" disabled title="Two members share a name">Save</button
+    ><button>⋯</button></span
+  >
+  <span class="glob"
+    ><button aria-label="info">ⓘ</button><button aria-label="settings">⚙</button
+    ><button aria-label="music">♪</button><button aria-label="mute">🔊</button
+    ><button aria-label="fullscreen">
+      <svg
+        width="14"
+        height="14"
+        viewBox="0 0 14 14"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.6"
+      >
+        <path d="M1 5V1h4M9 1h4v4M13 9v4H9M5 13H1V9" />
+      </svg></button
+  ></span>
+</div>
+
+<h2>Character Builder</h2>
+<p class="n">
+  <span class="tag">today</span>Close on the left; Save and ⋯ (Share, Share as GW1 code, Duplicate,
+  Delete).
+</p>
+<div class="bar">
+  <button>‹ Close</button><span class="crumb">Characters &gt; <b>Aelwyn</b></span>
+  <span class="status"
+    ><span class="bud">Warrior / Monk</span><span class="bud">budget 200/200</span
+    ><span class="chip">✔ valid</span><span class="uns">● unsaved</span></span
+  >
+  <span class="act"><button class="primary">Save</button><button>⋯</button></span>
+  <span class="glob"
+    ><button aria-label="info">ⓘ</button><button aria-label="settings">⚙</button
+    ><button aria-label="music">♪</button><button aria-label="mute">🔊</button
+    ><button aria-label="fullscreen">
+      <svg
+        width="14"
+        height="14"
+        viewBox="0 0 14 14"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.6"
+      >
+        <path d="M1 5V1h4M9 1h4v4M13 9v4H9M5 13H1V9" />
+      </svg></button
+  ></span>
+</div>
+<p class="n">
+  <span class="tag new">proposed</span>Same bar minus Close; ⋯ open, same order as the Team Builder,
+  plus the GW1 code entry.
+</p>
+<div class="bar">
+  <span class="crumb">Characters &gt; <b>Aelwyn</b></span>
+  <span class="status"
+    ><span class="bud">Warrior / Monk</span><span class="bud">budget 200/200</span
+    ><span class="chip">✔ valid</span></span
+  >
+  <span class="act"
+    ><button class="primary">Save</button><button>⋯</button>
+    <span class="menu"
+      ><button>Share</button><button>Share as GW1 code</button><button>Duplicate</button
+      ><button>Delete</button></span
+    ></span
+  >
+  <span class="glob"
+    ><button aria-label="info">ⓘ</button><button aria-label="settings">⚙</button
+    ><button aria-label="music">♪</button><button aria-label="mute">🔊</button
+    ><button aria-label="fullscreen">
+      <svg
+        width="14"
+        height="14"
+        viewBox="0 0 14 14"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.6"
+      >
+        <path d="M1 5V1h4M9 1h4v4M13 9v4H9M5 13H1V9" />
+      </svg></button
+  ></span>
+</div>
+<div class="pad"></div>
+
+<h2>Phone width (360 px)</h2>
+<p class="n">
+  Proposed bars. Breadcrumb shortens to the place; status wraps below its own row is up to the dev,
+  shown here as chips only.
+</p>
+<div class="bar phone">
+  <span class="crumb"><b>Frostguard</b></span
+  ><span class="status"><span class="chip">✔</span><span class="uns">●</span></span>
+  <span class="act"><button class="primary">Save</button><button>⋯</button></span>
+  <span class="glob"
+    ><button aria-label="info">ⓘ</button><button aria-label="settings">⚙</button
+    ><button aria-label="music">♪</button><button aria-label="mute">🔊</button
+    ><button aria-label="fullscreen">
+      <svg
+        width="14"
+        height="14"
+        viewBox="0 0 14 14"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.6"
+      >
+        <path d="M1 5V1h4M9 1h4v4M13 9v4H9M5 13H1V9" />
+      </svg></button
+  ></span>
+</div>
+<div class="bar phone">
+  <span class="crumb"><b>Aelwyn</b></span
+  ><span class="status"><span class="chip">✔</span><span class="uns">●</span></span>
+  <span class="act"><button class="primary">Save</button><button>⋯</button></span>
+  <span class="glob"
+    ><button aria-label="info">ⓘ</button><button aria-label="settings">⚙</button
+    ><button aria-label="music">♪</button><button aria-label="mute">🔊</button
+    ><button aria-label="fullscreen">
+      <svg
+        width="14"
+        height="14"
+        viewBox="0 0 14 14"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.6"
+      >
+        <path d="M1 5V1h4M9 1h4v4M13 9v4H9M5 13H1V9" />
+      </svg></button
+  ></span>
+</div>
+
+<h2>Behaviour</h2>
+<p class="n">
+  Save (valid) → stores, toasts “Saved”, returns to the previous screen. Save (invalid) → disabled,
+  title gives the reason, stays. Esc / browser back → unchanged: asks “Discard changes?” when
+  unsaved. Delete keeps its inline confirm.
+</p>

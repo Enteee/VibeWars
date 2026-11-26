@@ -1,0 +1,26 @@
+{
+  "id": "assassin.falling-spider",
+  "name": "Falling Spider",
+  "profession": "assassin",
+  "attribute": "Dagger Mastery",
+  "type": "Off-hand attack.",
+  "elite": false,
+  "campaign": "Factions",
+  "cost": {
+    "kind": "energy",
+    "amount": 5
+  },
+  "overcast": 0,
+  "activationSeconds": 0,
+  "rechargeSeconds": 8,
+  "upkeep": false,
+  "description": "Must strike a knocked-down foe. If it hits, Falling Spider strikes for +15...31...35 damage and target foe is Poisoned for 5...17...20.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Assassin/652-Falling_Spider",
+    "fetchedAt": "2026-10-27T22:30:30.239Z"
+  },
+  "unmapped": {}
+}

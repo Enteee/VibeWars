@@ -1,0 +1,26 @@
+{
+  "id": "elementalist.aftershock",
+  "name": "Aftershock",
+  "profession": "elementalist",
+  "attribute": "Earth Magic",
+  "type": "Spell.",
+  "elite": false,
+  "campaign": "Core",
+  "cost": {
+    "kind": "energy",
+    "amount": 10
+  },
+  "overcast": 0,
+  "activationSeconds": 0.75,
+  "rechargeSeconds": 10,
+  "upkeep": false,
+  "description": "Nearby foes are struck for 26...85...100 earth damage. Knocked down foes are struck for 10...56...68 additional earth damage.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Elementalist/393-Aftershock",
+    "fetchedAt": "2026-10-27T19:53:56.870Z"
+  },
+  "unmapped": {}
+}

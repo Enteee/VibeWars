@@ -1,0 +1,26 @@
+{
+  "id": "ritualist.weapon-of-quickening",
+  "name": "Weapon of Quickening",
+  "profession": "ritualist",
+  "attribute": "Communing",
+  "type": "Weapon spell.",
+  "elite": true,
+  "campaign": "Factions",
+  "cost": {
+    "kind": "energy",
+    "amount": 5
+  },
+  "overcast": 0,
+  "activationSeconds": 1,
+  "rechargeSeconds": 5,
+  "upkeep": false,
+  "description": "For 5...21...25 seconds, target ally has a Weapon of Quickening, and Spells and Binding Rituals recharge 33% faster.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Ritualist/749-Weapon_of_Quickening",
+    "fetchedAt": "2026-10-27T19:39:07.079Z"
+  },
+  "unmapped": {}
+}

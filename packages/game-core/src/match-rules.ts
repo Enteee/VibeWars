@@ -1,0 +1,744 @@
+/**
+ * Match rules: scoring, time limit and victory conditions (brief §22).
+ *
+ * Pure functions over a plain snapshot so the whole ruleset is testable
+ * headlessly and a future ruleset variant is a different config object
+ * rather than a different code path.
+ */
+
+export interface MatchRules {
+  /**
+   * How a match is won (GW1 modes, #474/#476): `"kill-count"` by kills,
+   * `"annihilation"` by wiping the other team, `"priest-annihilation"` by
+   * wiping it and killing its priest (#1186), or by morale at time;
+   * `"guild-battle"` by killing the foe's Guild Lord (#1222); `"relic-run"`
+   * by relic points at time, or by wiping the other team (#1374);
+   * `"king-of-the-hill"` the same way, by points for holding the altar
+   * (#1377); `"capture-points"` the same, by shrine points (#1378).
+   */
+  readonly victory:
+    | "kill-count"
+    | "annihilation"
+    | "priest-annihilation"
+    | "guild-battle"
+    | "relic-run"
+    | "king-of-the-hill"
+    | "capture-points";
+  /** Kills one team needs to win; only for `"kill-count"`. */
+  readonly scoreToWin: number;
+  /** Match length in seconds; at zero time the lead wins. */
+  readonly timeLimitSeconds: number;
+  /**
+   * How the dead come back (#843): `"respawn"` after `respawnSeconds`, or
+   * `"resurrection-only"`, a corpse until a resurrection or the end of
+   * the match.
+   */
+  readonly deathRule: "respawn" | "resurrection-only";
+  /** Seconds a dead player waits before respawning; only for `"respawn"`. */
+  readonly respawnSeconds: number;
+  /**
+   * Whether the dead return together on the match clock (#2700, GW1's Hall
+   * of Heroes), at the next multiple of `respawnSeconds`, rather than
+   * `respawnSeconds` after each death.
+   */
+  readonly respawnOnWave: boolean;
+  /** Whether a death costs morale, and a foe's death wins some back (#843, GW1). */
+  readonly deathPenalty: boolean;
+  /** A Relic Run won at once by this many points ahead (#2695); without it, only at time. */
+  readonly leadToWin?: number | undefined;
+  /** King of the Hill stops scoring a team at this many points (#2699); without it, no cap. */
+  readonly pointCap?: number | undefined;
+  /** A team wins at once when every foe stands at `MORALE_FLOOR` (#2699); without it, it plays on. */
+  readonly floorWins?: boolean | undefined;
+  /** Of Relic Run teams tied at time, the last to score wins (#2695); without it, a draw. */
+  readonly lastScorerBreaksTie?: boolean | undefined;
+  /** A team all dead is not beaten: its base raises it on the wave (#2695); without it, a wipe loses. */
+  readonly wipeSurvived?: boolean | undefined;
+}
+
+/**
+ * GW1's Kill Count (The Crag): the most kills in 3 minutes, or the first
+ * to 15, with respawn and no death penalty.
+ */
+export const KILL_COUNT_MATCH_RULES: MatchRules = Object.freeze({
+  victory: "kill-count",
+  scoreToWin: 15,
+  timeLimitSeconds: 180,
+  deathRule: "respawn",
+  respawnSeconds: 8,
+  respawnOnWave: false,
+  deathPenalty: false,
+});
+
+/**
+ * GW1's Annihilation: wipe the other team. The dead stay down until
+ * resurrected and pay the death penalty; at 8 minutes the highest total
+ * morale wins (GW1 update 2007-09-27).
+ */
+export const ANNIHILATION_MATCH_RULES: MatchRules = Object.freeze({
+  victory: "annihilation",
+  scoreToWin: KILL_COUNT_MATCH_RULES.scoreToWin,
+  timeLimitSeconds: 480,
+  deathRule: "resurrection-only",
+  respawnSeconds: KILL_COUNT_MATCH_RULES.respawnSeconds,
+  respawnOnWave: false,
+  deathPenalty: true,
+});
+
+/**
+ * GW1's Priest Annihilation (#1186): annihilation with a priest at each
+ * team's shrine, who raises the team's dead every 2 minutes. A team is
+ * beaten once every player and its priest are dead; 12 minutes.
+ */
+export const PRIEST_ANNIHILATION_MATCH_RULES: MatchRules = Object.freeze({
+  ...ANNIHILATION_MATCH_RULES,
+  victory: "priest-annihilation",
+  timeLimitSeconds: 720,
+});
+
+/**
+ * GW1's Guild versus Guild (#1222): kill the enemy Guild Lord. The dead
+ * stay down and pay the death penalty; each base's shrine raises them
+ * every 2 minutes, priest or none. A team all dead at the morale floor
+ * loses; at 28 minutes (the operator's, Q138) the most aggression wins.
+ */
+export const GUILD_BATTLE_MATCH_RULES: MatchRules = Object.freeze({
+  ...ANNIHILATION_MATCH_RULES,
+  victory: "guild-battle",
+  timeLimitSeconds: 1680,
+});
+
+/**
+ * Heroes' Ascent's Relic Run (#1374): carry your relic onto the altar for
+ * a point. The dead stay down and pay the death penalty, a wipe loses at
+ * once, as in annihilation; at 8 minutes the most points win.
+ */
+export const RELIC_RUN_MATCH_RULES: MatchRules = Object.freeze({
+  ...ANNIHILATION_MATCH_RULES,
+  victory: "relic-run",
+  timeLimitSeconds: 480,
+});
+
+/** The lead that ends a Relic Run where the foe's relic is carried (#2695, GW1). */
+export const FOE_RELIC_LEAD_TO_WIN = 3;
+
+/**
+ * The Relic Run where a team carries the foe's relic to its own Ghostly
+ * Hero (#2695, GW1): `FOE_RELIC_LEAD_TO_WIN` points ahead wins at once,
+ * of teams tied at time the last to score wins, and a wipe loses nothing:
+ * the base raises its dead. By its map, not its
+ * mode, so it is not in `MATCH_MODES`.
+ */
+export const FOE_RELIC_RUN_MATCH_RULES: MatchRules = Object.freeze({
+  ...RELIC_RUN_MATCH_RULES,
+  leadToWin: FOE_RELIC_LEAD_TO_WIN,
+  lastScorerBreaksTie: true,
+  wipeSurvived: true,
+});
+
+/**
+ * Heroes' Ascent's King of the Hill (#1377): lead your Ghostly Hero onto
+ * the altar to claim it, and score for holding it. As a Relic Run: the
+ * dead stay down, a wipe loses at once, at 8 minutes the most points win.
+ */
+export const KING_OF_THE_HILL_MATCH_RULES: MatchRules = Object.freeze({
+  ...ANNIHILATION_MATCH_RULES,
+  victory: "king-of-the-hill",
+  timeLimitSeconds: 480,
+});
+
+/**
+ * Threefold Keep (#2699, GW1): King of the Hill, at most 12 points a team,
+ * of teams tied at time the last to score wins, and every foe at
+ * `MORALE_FLOOR` is a win at once.
+ */
+export const THREEFOLD_KEEP_MATCH_RULES: MatchRules = Object.freeze({
+  ...KING_OF_THE_HILL_MATCH_RULES,
+  pointCap: 12,
+  lastScorerBreaksTie: true,
+  floorWins: true,
+});
+
+/**
+ * Heroes' Ascent's Capture Points (#1378, #2690): stand on a shrine to
+ * take it, and every `POINT_TICK_SECONDS` each one a team owns scores it
+ * a point. `CAPTURE_LEAD_TO_WIN` points ahead wins at once; a wipe ends
+ * nothing (#2886); at 8 minutes the most points win, and of teams tied on
+ * them, the one that led last. Each base's shrine raises its team's dead
+ * every `CAPTURE_WAVE_SECONDS` (#2845).
+ */
+export const CAPTURE_POINTS_MATCH_RULES: MatchRules = Object.freeze({
+  ...ANNIHILATION_MATCH_RULES,
+  victory: "capture-points",
+  timeLimitSeconds: 480,
+});
+
+/** The modes the Hall of Heroes draws from (#2700). */
+export type HallsMode = "king-of-the-hill" | "relic-run" | "capture-points";
+
+/** Whether the Hall of Heroes plays `mode` (#2700). */
+export function isHallsMode(mode: MatchMode): mode is HallsMode {
+  return mode === "king-of-the-hill" || mode === "relic-run" || mode === "capture-points";
+}
+
+/** How often the Hall of Heroes forms (#2701): every 12 minutes on the UTC clock, :00, :12 and so on. */
+export const HALL_SLOT_SECONDS = 720;
+
+/** How long after its start a Hall slot can still form (#2701): clients' clocks differ by less than this. */
+export const HALL_SLOT_WINDOW_SECONDS = 30;
+
+/** Whether a Hall slot is open at `nowMs` (#2701). On the epoch, so an hour or a day is no special case. */
+export function hallSlotOpen(nowMs: number): boolean {
+  return nowMs % (HALL_SLOT_SECONDS * 1000) < HALL_SLOT_WINDOW_SECONDS * 1000;
+}
+
+/** When the next Hall slot starts, strictly after `nowMs` (#2701). */
+export function nextHallSlotMs(nowMs: number): number {
+  const slot = HALL_SLOT_SECONDS * 1000;
+  return nowMs - (nowMs % slot) + slot;
+}
+
+/**
+ * A Hall of Heroes match (#2700, GW1): no death penalty, the dead return
+ * every full minute, 11 minutes, so that a full-length one is over before
+ * the next 12-minute slot (#2701).
+ */
+const HALLS_RULES = {
+  timeLimitSeconds: 660,
+  deathRule: "respawn",
+  respawnSeconds: 60,
+  respawnOnWave: true,
+  deathPenalty: false,
+} as const;
+
+/** The Hall of Heroes' rules (#2700), by the mode its map plays. */
+export const HALLS_MATCH_RULES: Readonly<Record<HallsMode, MatchRules>> = Object.freeze({
+  "king-of-the-hill": Object.freeze({ ...KING_OF_THE_HILL_MATCH_RULES, ...HALLS_RULES }),
+  "relic-run": Object.freeze({ ...RELIC_RUN_MATCH_RULES, ...HALLS_RULES }),
+  "capture-points": Object.freeze({ ...CAPTURE_POINTS_MATCH_RULES, ...HALLS_RULES }),
+});
+
+/**
+ * Heroes' Ascent scores held ground every this many seconds: Capture
+ * Points at every multiple of the match clock (#1378, GW1), King of the
+ * Hill for each this long of one unbroken hold (#1377).
+ */
+export const POINT_TICK_SECONDS = 30;
+
+/** Capture Points' shrine points a team needs ahead of every other to win at once (#2690, GW1). */
+export const CAPTURE_LEAD_TO_WIN = 20;
+
+/** A living priest raises its team's dead at every multiple of this, match clock (#1186, GW1). */
+export const PRIEST_WAVE_SECONDS = 120;
+
+/** A Capture Points base's shrine raises its team's dead at every multiple of this, match clock (#2845, GW1). */
+export const CAPTURE_WAVE_SECONDS = 60;
+
+/** Seconds a player a shrine raised takes no damage, health loss, hex or condition (#1208, GW1). */
+export const SHRINE_INVULNERABLE_SECONDS = 5;
+
+/** The modes a map can name (#476): which one a match plays follows from its map alone. */
+export type MatchMode =
+  | "annihilation"
+  | "kill-count"
+  | "priest-annihilation"
+  | "guild-battle"
+  | "relic-run"
+  | "king-of-the-hill"
+  | "capture-points";
+
+/** How many teams a match has (#2682): two, or Heroes' Ascent's three. */
+export type TeamCount = 2 | 3;
+
+/**
+ * The modes only two teams play (#2682): a kill-count kill scores for
+ * the one other team, and a Guild Battle is one guild against another.
+ */
+export const TWO_TEAM_MODES: readonly MatchMode[] = ["kill-count", "guild-battle"];
+
+/** The team ids of a match of `teamCount` teams: 0, 1 and, of three, 2. */
+export function teamIds(teamCount: TeamCount): readonly number[] {
+  return Array.from({ length: teamCount }, (_, team) => team);
+}
+
+/** Each mode's rules, by the name a map gives it. */
+export const MATCH_MODES: Readonly<Record<MatchMode, MatchRules>> = Object.freeze({
+  annihilation: ANNIHILATION_MATCH_RULES,
+  "kill-count": KILL_COUNT_MATCH_RULES,
+  "priest-annihilation": PRIEST_ANNIHILATION_MATCH_RULES,
+  "guild-battle": GUILD_BATTLE_MATCH_RULES,
+  "relic-run": RELIC_RUN_MATCH_RULES,
+  "king-of-the-hill": KING_OF_THE_HILL_MATCH_RULES,
+  "capture-points": CAPTURE_POINTS_MATCH_RULES,
+});
+
+/** How much farther a bow or spear reaches at a lower layer, and less at a higher one (ADR-0051). */
+export const HEIGHT_RANGE_PERCENT = 15;
+/** How much more non-critical damage it deals at a lower layer, and less at a higher one (ADR-0051). */
+export const HEIGHT_DAMAGE_PERCENT = 10;
+
+/** Morale a death costs, in percent, with `deathPenalty` (GW1). */
+export const DEATH_PENALTY_PERCENT = 15;
+/** The lowest morale goes, in percent. */
+export const MORALE_FLOOR = -60;
+/** The highest morale goes, in percent: a boost stops here. */
+export const MORALE_CEILING = 10;
+/** Morale a foe's death gives back to the living, up to 0, in percent. */
+export const KILL_MORALE_PERCENT = 2;
+/** A death this soon after a resurrection costs no morale, in seconds. */
+export const DP_GRACE_AFTER_RES_SECONDS = 5;
+
+/**
+ * A maximum at `morale` percent (GW1): the share applies to the base,
+ * before upgrades, so what equipment adds (`resolved − base`) is
+ * untouched. Floored: −15% of 480 is 408.
+ */
+export function moraleMaximum(base: number, resolved: number, morale: number): number {
+  return Math.floor((base * (100 + morale)) / 100) + (resolved - base);
+}
+
+export type MatchPhase = "active" | "finished";
+
+export interface MatchScore {
+  /**
+   * Kills by team index; a Relic Run's relic points (#1374), King of the
+   * Hill's points for holding the altar (#1377) or Capture Points' shrine
+   * points (#1378) instead.
+   */
+  readonly byTeam: ReadonlyMap<number, number>;
+  /** The team that scored last (#2695); `undefined` before anyone has. */
+  readonly lastScorer?: number | undefined;
+}
+
+/** Every team that had members, as it stands, even with all of them gone (#846). */
+export interface MatchStanding {
+  readonly byTeam: ReadonlyMap<number, TeamStanding>;
+  /** The teams that have made a kill (#2700), latest first: the Halls' Capture Points tie. */
+  readonly recentKillTeams: readonly number[];
+  /** The teams that have scored a relic or an altar point (#2700), latest first: the Halls' other ties. */
+  readonly recentScoringTeams: readonly number[];
+}
+
+/** `recent` with `team` now the latest (#2700): of two in one step, the one simulated last. */
+export function withLatestTeam(recent: readonly number[], team: number): readonly number[] {
+  return [team, ...recent.filter((each) => each !== team)];
+}
+
+export interface TeamStanding {
+  /** Members still in the match, dead or alive, or on the way to it (#2890). */
+  readonly members: number;
+  /** Members alive. */
+  readonly living: number;
+  /** The sum of every member's morale, dead or alive, in percent. */
+  readonly morale: number;
+  /** Whether its priest lives (#1186); `false` for a team that never had one. */
+  readonly priestLives: boolean;
+  /** Whether its Guild Lord lives (#1222); `false` for a team that never had one. */
+  readonly guildLordLives: boolean;
+  /**
+   * Whether it has members and every one is dead at `MORALE_FLOOR` (#1222):
+   * no shrine raises them, so the team has no way back.
+   */
+  readonly beyondRaising: boolean;
+  /**
+   * Damage its members and their creatures dealt to a foe's Guild Lord
+   * (#1222), after armor; degeneration and life stealing are not counted.
+   */
+  readonly aggression: number;
+  /**
+   * When, on the match clock, its Capture Points score last led every
+   * other team's alone (#2690); `undefined` if it never has.
+   */
+  readonly ledAtSeconds: number | undefined;
+  /** How many Capture Points shrines it owns now (#2690): a tie at time goes to the most. */
+  readonly pointsHeld: number;
+  /**
+   * Whether it was beaten, as `teamBeaten` counts it, at an earlier step of
+   * this match (#2682): with three teams the match goes on past the first
+   * beaten team, which stays out whatever happens to it later.
+   */
+  readonly eliminated: boolean;
+}
+
+/**
+ * Why a match ended: kill-count's `"score"` and `"time"`, annihilation's
+ * `"annihilation"` (a team wiped) and `"morale"` (time ran out, or in a
+ * Guild Battle a team all dead at the floor), the Guild Battle's
+ * `"guild-lord"` (a lord slain) and `"aggression"` (time ran out, #1222).
+ */
+export type MatchEndReason =
+  "score" | "time" | "annihilation" | "morale" | "guild-lord" | "aggression";
+
+export interface MatchOutcome {
+  readonly phase: MatchPhase;
+  /**
+   * The winning team, or `undefined` for an unfinished match, a
+   * kill-count draw, or an annihilation match every team lost.
+   */
+  readonly winningTeam: number | undefined;
+  readonly reason: MatchEndReason | undefined;
+}
+
+export const MATCH_IN_PROGRESS: MatchOutcome = Object.freeze({
+  phase: "active",
+  winningTeam: undefined,
+  reason: undefined,
+});
+
+function leader(score: MatchScore): { team: number | undefined; tied: boolean } {
+  let best = -1;
+  let bestTeam: number | undefined;
+  let tied = false;
+
+  for (const [team, points] of score.byTeam) {
+    if (points > best) {
+      best = points;
+      bestTeam = team;
+      tied = false;
+    } else if (points === best) {
+      tied = true;
+    }
+  }
+  return { team: bestTeam, tied };
+}
+
+/** The team with more points than every other, or `undefined` on a tie at the top (#2690). */
+export function soleLeader(score: MatchScore): number | undefined {
+  const { team, tied } = leader(score);
+  return tied ? undefined : team;
+}
+
+/**
+ * Whether `team` is beaten as it stands (#2682, the architect's ruling):
+ * every member dead at once and no living priest, in annihilation, a
+ * Relic Run or King of the Hill; a team that never had a priest has none
+ * living. No kill-count, Guild Battle or Capture Points team is beaten so,
+ * nor a team whose dead respawn (#2700) or whose rules say `wipeSurvived`
+ * (#2695). A Capture Points or Hall of Heroes team whose members have
+ * all left is out (#2890).
+ */
+export function teamBeaten(team: TeamStanding, rules: MatchRules): boolean {
+  if ((rules.victory === "capture-points" || rules.respawnOnWave) && team.members === 0) {
+    return true;
+  }
+  // Every member comes back on their own (#2700), so none is out for good.
+  if (rules.deathRule === "respawn" || rules.wipeSurvived === true) {
+    return false;
+  }
+  switch (rules.victory) {
+    case "annihilation":
+    case "priest-annihilation":
+    case "relic-run":
+    case "king-of-the-hill":
+      return team.living === 0 && !team.priestLives;
+    case "kill-count":
+    case "guild-battle":
+    case "capture-points":
+      return false;
+  }
+}
+
+/** The teams neither beaten now nor eliminated before (#2682). */
+function inPlay(standing: MatchStanding, rules: MatchRules): (readonly [number, TeamStanding])[] {
+  return [...standing.byTeam].filter(([, team]) => !team.eliminated && !teamBeaten(team, rules));
+}
+
+/**
+ * Decide whether the match is over.
+ *
+ * Score is checked before time so that reaching the target on the very
+ * last tick is a score win rather than being reported as a timeout —
+ * which reads wrong to players who just scored the winning kill. A wipe
+ * is checked before time for the same reason.
+ */
+export function evaluateMatch(
+  score: MatchScore,
+  standing: MatchStanding,
+  elapsedSeconds: number,
+  rules: MatchRules,
+): MatchOutcome {
+  switch (rules.victory) {
+    case "kill-count":
+      return evaluateKillCount(score, elapsedSeconds, rules);
+    case "annihilation":
+    case "priest-annihilation":
+      return evaluateAnnihilation(standing, elapsedSeconds, rules);
+    case "guild-battle":
+      return evaluateGuildBattle(standing, elapsedSeconds, rules);
+    case "relic-run":
+    case "king-of-the-hill":
+      return evaluateRelicRun(score, standing, elapsedSeconds, rules);
+    case "capture-points":
+      return evaluateCapturePoints(score, standing, elapsedSeconds, rules);
+  }
+}
+
+function evaluateKillCount(
+  score: MatchScore,
+  elapsedSeconds: number,
+  rules: MatchRules,
+): MatchOutcome {
+  for (const [team, points] of score.byTeam) {
+    if (points >= rules.scoreToWin) {
+      return { phase: "finished", winningTeam: team, reason: "score" };
+    }
+  }
+
+  return evaluateScoreAtTime(score, elapsedSeconds, rules);
+}
+
+/** At time, the most points win, kill-count's and a Relic Run's (#1374). */
+function evaluateScoreAtTime(
+  score: MatchScore,
+  elapsedSeconds: number,
+  rules: MatchRules,
+): MatchOutcome {
+  if (elapsedSeconds >= rules.timeLimitSeconds) {
+    const { team, tied } = leader(score);
+    return {
+      phase: "finished",
+      // A tie at time is a draw, not an arbitrary winner.
+      winningTeam: tied ? undefined : team,
+      reason: "time",
+    };
+  }
+
+  return MATCH_IN_PROGRESS;
+}
+
+/**
+ * Annihilation (GW1): once a team is beaten and at most one team is not,
+ * that one wins; with none left, every team loses. Beaten is every member
+ * dead and, in Priest Annihilation (#1186), its priest too: a wiped team
+ * whose priest lives waits for the wave. A team that never had members is
+ * not in `standing`, so it is never beaten. At time the highest total
+ * morale wins; of the teams tied on it, the one whose priest lives, if it
+ * is the only one; otherwise all lose: GW1's arenas have no draw.
+ */
+function evaluateAnnihilation(
+  standing: MatchStanding,
+  elapsedSeconds: number,
+  rules: MatchRules,
+): MatchOutcome {
+  const standingTeams = inPlay(standing, rules);
+  if (standingTeams.length < standing.byTeam.size && standingTeams.length <= 1) {
+    return { phase: "finished", winningTeam: standingTeams[0]?.[0], reason: "annihilation" };
+  }
+
+  if (elapsedSeconds >= rules.timeLimitSeconds) {
+    // A team already out has no say, however high its morale (#2682).
+    const best = Math.max(...standingTeams.map(([, team]) => team.morale));
+    const leaders = standingTeams.filter(([, team]) => team.morale === best);
+    const withPriest = leaders.filter(([, team]) => team.priestLives);
+    const winner =
+      leaders.length === 1 ? leaders[0] : withPriest.length === 1 ? withPriest[0] : undefined;
+    return { phase: "finished", winningTeam: winner?.[0], reason: "morale" };
+  }
+
+  return MATCH_IN_PROGRESS;
+}
+
+/**
+ * Guild versus Guild (#1222, GW1), in this order: a team whose Guild Lord
+ * died loses; then a team all dead at the morale floor; at time, the most
+ * aggression wins. Whichever rule decides, the one team it leaves wins,
+ * and none left, or a tie at time, every team loses: GW1's arenas have no
+ * draw. A wipe alone decides nothing: the shrine raises the team.
+ */
+function evaluateGuildBattle(
+  standing: MatchStanding,
+  elapsedSeconds: number,
+  rules: MatchRules,
+): MatchOutcome {
+  const teams = [...standing.byTeam];
+  const withLord = teams.filter(([, team]) => team.guildLordLives);
+  if (withLord.length < teams.length) {
+    return { phase: "finished", winningTeam: lone(withLord), reason: "guild-lord" };
+  }
+  const raisable = teams.filter(([, team]) => !team.beyondRaising);
+  if (raisable.length < teams.length) {
+    return { phase: "finished", winningTeam: lone(raisable), reason: "morale" };
+  }
+  if (elapsedSeconds >= rules.timeLimitSeconds) {
+    const best = Math.max(...teams.map(([, team]) => team.aggression));
+    const leaders = teams.filter(([, team]) => team.aggression === best);
+    return { phase: "finished", winningTeam: lone(leaders), reason: "aggression" };
+  }
+  return MATCH_IN_PROGRESS;
+}
+
+/** `rules.leadToWin` points ahead of every other team wins at once (#2695). */
+function evaluateRelicLead(score: MatchScore, rules: MatchRules): MatchOutcome | undefined {
+  const lead = rules.leadToWin;
+  if (lead === undefined) {
+    return undefined;
+  }
+  for (const [team, points] of score.byTeam) {
+    const ahead = [...score.byTeam].every(
+      ([other, theirs]) => other === team || points - theirs >= lead,
+    );
+    if (ahead) {
+      return { phase: "finished", winningTeam: team, reason: "score" };
+    }
+  }
+  return undefined;
+}
+
+/** At time, teams tied on the most points go to the last of them to score (#2695). */
+function evaluateRelicTie(
+  score: MatchScore,
+  elapsedSeconds: number,
+  rules: MatchRules,
+): MatchOutcome | undefined {
+  const last = score.lastScorer;
+  if (
+    rules.lastScorerBreaksTie !== true ||
+    elapsedSeconds < rules.timeLimitSeconds ||
+    last === undefined ||
+    !leader(score).tied ||
+    score.byTeam.get(last) !== Math.max(...score.byTeam.values())
+  ) {
+    return undefined;
+  }
+  return { phase: "finished", winningTeam: last, reason: "time" };
+}
+
+/**
+ * Relic Run (#1374, GW1) and King of the Hill (#1377) alike: a wiped team
+ * with no living priest is out at once, as in annihilation; at time the
+ * most points win, and a tie is a draw, as kill-count's.
+ * No number of points wins early, but a lead can (#2695): `scoreToWin`
+ * is kill-count's.
+ */
+function evaluateRelicRun(
+  score: MatchScore,
+  standing: MatchStanding,
+  elapsedSeconds: number,
+  rules: MatchRules,
+): MatchOutcome {
+  const inGame = scoreInPlay(score, standing, rules);
+  if (rules.respawnOnWave) {
+    return (
+      evaluateWipe(standing, rules) ??
+      evaluateHallsAtTime(inGame, standing.recentScoringTeams, elapsedSeconds, rules)
+    );
+  }
+  return (
+    evaluateWipe(standing, rules) ??
+    evaluateFloorWin(standing, rules) ??
+    evaluateRelicLead(inGame, rules) ??
+    evaluateRelicTie(inGame, elapsedSeconds, rules) ??
+    evaluateScoreAtTime(inGame, elapsedSeconds, rules)
+  );
+}
+
+/**
+ * The Hall of Heroes at time (#2700, GW1): the most points win, of teams
+ * tied on them the one latest in `recent`, whatever a trailing team did
+ * since, and the tie is a draw only if none of them is in it.
+ */
+function evaluateHallsAtTime(
+  score: MatchScore,
+  recent: readonly number[],
+  elapsedSeconds: number,
+  rules: MatchRules,
+): MatchOutcome {
+  if (elapsedSeconds < rules.timeLimitSeconds) {
+    return MATCH_IN_PROGRESS;
+  }
+  const best = Math.max(...score.byTeam.values());
+  const tied = [...score.byTeam].filter(([, points]) => points === best).map(([team]) => team);
+  const winner = tied.length === 1 ? tied[0] : recent.find((team) => tied.includes(team));
+  return { phase: "finished", winningTeam: winner, reason: "time" };
+}
+
+/** The one team in play not at `MORALE_FLOOR` to the last member, with every foe that is (#2699). */
+function evaluateFloorWin(standing: MatchStanding, rules: MatchRules): MatchOutcome | undefined {
+  if (rules.floorWins !== true) {
+    return undefined;
+  }
+  const living = inPlay(standing, rules);
+  const above = living.filter(([, team]) => team.morale > MORALE_FLOOR * team.members);
+  return living.length > 1 && above.length === 1
+    ? { phase: "finished", winningTeam: above[0]?.[0], reason: "morale" }
+    : undefined;
+}
+
+/** The last team in play wins once the others are out; `undefined` while two are in. */
+function evaluateWipe(standing: MatchStanding, rules: MatchRules): MatchOutcome | undefined {
+  const living = inPlay(standing, rules);
+  if (living.length < standing.byTeam.size && living.length <= 1) {
+    return { phase: "finished", winningTeam: living[0]?.[0], reason: "annihilation" };
+  }
+  return undefined;
+}
+
+/** The score of the teams in play: a team already out has no say, however many points it holds (#2682). */
+function scoreInPlay(score: MatchScore, standing: MatchStanding, rules: MatchRules): MatchScore {
+  const inGame = new Set(inPlay(standing, rules).map(([team]) => team));
+  return {
+    byTeam: new Map([...score.byTeam].filter(([team]) => inGame.has(team))),
+    lastScorer: score.lastScorer,
+  };
+}
+
+/**
+ * Capture Points (#1378, #2690, #2886, GW1): a wipe ends nothing;
+ * `CAPTURE_LEAD_TO_WIN` points ahead of every other team wins at once; at time the most points win, of teams tied on them the one
+ * holding the most shrines, and of those the one that led last. Tied teams
+ * none of which ever led alone draw.
+ */
+function evaluateCapturePoints(
+  score: MatchScore,
+  standing: MatchStanding,
+  elapsedSeconds: number,
+  rules: MatchRules,
+): MatchOutcome {
+  const abandoned = evaluateWipe(standing, rules);
+  if (abandoned !== undefined) {
+    return abandoned;
+  }
+  const inGame = scoreInPlay(score, standing, rules);
+  const ranked = [...inGame.byTeam].sort((a, b) => b[1] - a[1]);
+  const [first, second] = ranked;
+  if (first !== undefined && second !== undefined && first[1] - second[1] >= CAPTURE_LEAD_TO_WIN) {
+    return { phase: "finished", winningTeam: first[0], reason: "score" };
+  }
+  if (rules.respawnOnWave) {
+    return evaluateHallsAtTime(inGame, standing.recentKillTeams, elapsedSeconds, rules);
+  }
+  if (elapsedSeconds < rules.timeLimitSeconds || first === undefined) {
+    return MATCH_IN_PROGRESS;
+  }
+  const held = (team: number): number => standing.byTeam.get(team)?.pointsHeld ?? 0;
+  const onPoints = ranked.filter(([, points]) => points === first[1]);
+  const mostHeld = Math.max(...onPoints.map(([team]) => held(team)));
+  const tied = onPoints.filter(([team]) => held(team) === mostHeld);
+  if (tied.length === 1) {
+    return { phase: "finished", winningTeam: tied[0]?.[0], reason: "time" };
+  }
+  const ledAt = (team: number): number => standing.byTeam.get(team)?.ledAtSeconds ?? -1;
+  const latest = Math.max(...tied.map(([team]) => ledAt(team)));
+  const last = tied.filter(([team]) => ledAt(team) === latest);
+  return {
+    phase: "finished",
+    winningTeam: latest >= 0 && last.length === 1 ? last[0]?.[0] : undefined,
+    reason: "time",
+  };
+}
+
+/** The team of the one entry, or `undefined` for none or several. */
+function lone(teams: readonly (readonly [number, TeamStanding])[]): number | undefined {
+  return teams.length === 1 ? teams[0]?.[0] : undefined;
+}
+
+/** Add a point for `team`, a kill or a relic home (#1374): a new score, the input untouched. */
+export function addPoint(score: MatchScore, team: number): MatchScore {
+  const byTeam = new Map(score.byTeam);
+  byTeam.set(team, (byTeam.get(team) ?? 0) + 1);
+  return { byTeam, lastScorer: team };
+}
+
+export function emptyScore(teams: readonly number[]): MatchScore {
+  return { byTeam: new Map(teams.map((team) => [team, 0])) };
+}

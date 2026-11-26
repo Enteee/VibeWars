@@ -1,0 +1,12 @@
+# CodeQL configuration for .github/workflows/codeql.yml (#175). The default
+# query suite; `security-extended` waits until the default one's
+# false-positive rate is known. Tests and build output are not shipped code.
+name: VibeWars CodeQL
+
+paths-ignore:
+  - "**/dist/**"
+  - "**/node_modules/**"
+  - "**/*.test.ts"
+  - "**/*.test.mjs"
+  - "**/*.spec.ts"
+  - playwright-report/**

@@ -1,0 +1,26 @@
+{
+  "id": "paragon.maiming-spear",
+  "name": "Maiming Spear",
+  "profession": "paragon",
+  "attribute": "Spear Mastery",
+  "type": "Spear attack.",
+  "elite": false,
+  "campaign": "Eye Of The North",
+  "cost": {
+    "kind": "energy",
+    "amount": 5
+  },
+  "overcast": 0,
+  "activationSeconds": 0,
+  "rechargeSeconds": 5,
+  "upkeep": false,
+  "description": "If your attack hits a Bleeding foe, that foe is Crippled for 5...17...20 seconds.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Paragon/1233-Maiming_Spear",
+    "fetchedAt": "2026-10-27T22:12:25.173Z"
+  },
+  "unmapped": {}
+}

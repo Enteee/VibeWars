@@ -1,0 +1,17 @@
+{
+  "number": 1,
+  "title": "Remove all backwards compatibility, and instruct the agents never to add it",
+  "state": "closed",
+  "state_reason": "completed",
+  "html_url": "https://github.com/Enteee/VibeWars/issues/1",
+  "node_id": "I_kwDOVVmlTs8AAAABZllU9Q",
+  "user": {
+    "login": "Enteee",
+    "type": "User"
+  },
+  "labels": [],
+  "created_at": "2026-10-24T10:44:57Z",
+  "updated_at": "2026-10-24T14:47:27Z",
+  "closed_at": "2026-10-24T14:47:27Z",
+  "body": "# Remove all backwards compatibility, and instruct the agents never to add it\n\n> Filed as a plan for a single piece of w"
+}

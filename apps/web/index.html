@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="dark" />
+    <title>VibeWars</title>
+    <meta
+      name="description"
+      content="Team arena PvP in the browser. Build a character, send your friends a link, fight in real time. Nothing to install."
+    />
+    <!-- Link preview. og:url, og:image and twitter:image are added at build (plugins/site-meta.ts). -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="VibeWars" />
+    <meta property="og:title" content="VibeWars" />
+    <meta
+      property="og:description"
+      content="Team arena PvP in the browser. Build a character, send your friends a link, fight in real time. Nothing to install."
+    />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="The VibeWars title over a lit arena where two teams fight."
+    />
+    <meta name="twitter:card" content="summary_large_image" />
+    <!-- Vite copies `public/` to the dist root, which the server then serves. -->
+    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+    <link rel="stylesheet" href="/src/styles.css" />
+  </head>
+  <body>
+    <!-- The menu background's fight (#3119): behind the screens, no input. -->
+    <div id="menu-background" aria-hidden="true"></div>
+    <div id="app">
+      <!-- The shown screen's place and controls, then the global icons (#1272). -->
+      <header id="topbar" data-tutorial="topbar">
+        <nav class="topbar-crumbs" aria-label="Where you are">
+          <span
+            class="topbar-crumb is-place wordmark topbar-wordmark"
+            dir="ltr"
+            role="heading"
+            aria-level="1"
+            ><span class="wordmark-vibe">Vibe</span><span class="wordmark-wars">Wars</span></span
+          >
+        </nav>
+        <span class="topbar-back"></span>
+        <span class="topbar-status"></span>
+        <span id="status" class="status" hidden></span>
+        <div class="topbar-tools">
+          <div class="topbar-screen-actions"></div>
+          <div class="topbar-queue-action"></div>
+          <div id="topbar-actions" class="topbar-actions"></div>
+        </div>
+      </header>
+      <!-- Menu / character / team / lobby screens. -->
+      <div id="screens"></div>
+      <!-- The Phaser game viewport; shown only during a match. -->
+      <main id="viewport" aria-label="Game viewport"></main>
+    </div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

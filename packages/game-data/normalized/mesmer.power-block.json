@@ -1,0 +1,26 @@
+{
+  "id": "mesmer.power-block",
+  "name": "Power Block",
+  "profession": "mesmer",
+  "attribute": "Domination Magic",
+  "type": "Spell.",
+  "elite": true,
+  "campaign": "Prophecies",
+  "cost": {
+    "kind": "energy",
+    "amount": 15
+  },
+  "overcast": 0,
+  "activationSeconds": 0.25,
+  "rechargeSeconds": 20,
+  "upkeep": false,
+  "description": "If target foe is casting a Spell or Chant, that skill and all skills of the same attribute are disabled for 1...10...12 seconds and that skill is interrupted.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Mesmer/318-Power_Block",
+    "fetchedAt": "2026-10-27T12:33:02.899Z"
+  },
+  "unmapped": {}
+}

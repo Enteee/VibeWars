@@ -1,0 +1,26 @@
+{
+  "id": "monk.smite-condition",
+  "name": "Smite Condition",
+  "profession": "monk",
+  "attribute": "Smiting Prayers",
+  "type": "Spell.",
+  "elite": false,
+  "campaign": "Eye Of The North",
+  "cost": {
+    "kind": "energy",
+    "amount": 5
+  },
+  "overcast": 0,
+  "activationSeconds": 1,
+  "rechargeSeconds": 7,
+  "upkeep": false,
+  "description": "Remove one Condition from target ally. If a Condition was removed, foes in the area take 10...50...60 damage.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Monk/1164-Smite_Condition",
+    "fetchedAt": "2026-10-27T22:29:48.849Z"
+  },
+  "unmapped": {}
+}

@@ -1,0 +1,401 @@
+import type { CapePattern, CosmeticLook } from "../cosmetics/catalog.js";
+
+import type { AttackFrame } from "./attack-clock.js";
+import {
+  BODY_EDGE,
+  offhandMarkLayout,
+  teamColour,
+  type RenderableActor,
+} from "./arena-snapshot.js";
+import {
+  CAPE_BAND_CASING,
+  CAPE_BAND_WIDTH,
+  capeMotionShape,
+  type CapeBand,
+  type CapeMotion,
+  type CapeShape,
+} from "./cape-motion.js";
+import { capePatternShapes } from "./cape-pattern.js";
+import { emblemFrameShape, type CapeLook, type EmblemPart } from "./cape-shape.js";
+import { paintSwingRibbon, type SwingRibbon } from "./cosmetic-trail.js";
+import { multiplyColour } from "./lighting-model.js";
+import { weaponMarkLayout } from "./weapon-mark.js";
+import type { Point } from "./weapon-mark-geometry.js";
+
+/**
+ * A standing body and the marks on it, drawn once for every surface that
+ * shows one (#1250): the arena through Phaser, the menu's character
+ * figure through a 2D canvas. Both go through `paintStandingBody`, so the
+ * menu cannot drift from what a match draws.
+ */
+
+/** `ink`: the self rim, and the core of every mark. */
+export const SELF_RIM = 0xd7dee8;
+export const BODY_EDGE_WIDTH = 1.5;
+
+/**
+ * The few drawing calls a body needs, in Phaser `Graphics` terms: colours
+ * are 0xRRGGBB, angles radians, a path is begun, traced and then stroked.
+ */
+export interface Painter {
+  fillStyle(colour: number, alpha: number): void;
+  lineStyle(width: number, colour: number, alpha: number): void;
+  fillCircle(x: number, y: number, radius: number): void;
+  strokeCircle(x: number, y: number, radius: number): void;
+  beginPath(): void;
+  moveTo(x: number, y: number): void;
+  lineTo(x: number, y: number): void;
+  arc(x: number, y: number, radius: number, from: number, to: number): void;
+  strokePath(): void;
+  /** Fill one closed polygon, on its own: it does not touch the current path. */
+  fillPoints(points: readonly Point[]): void;
+}
+
+/** What a standing body shows. */
+export interface StandingBody {
+  readonly x: number;
+  readonly y: number;
+  readonly r: number;
+  readonly facing: number;
+  readonly team: RenderableActor["team"];
+  readonly weaponId: string | undefined;
+  readonly offhandId: RenderableActor["offhandId"];
+  /** The weapon mark's pose: `REST_FRAME` unless it is swinging. */
+  readonly frame: AttackFrame;
+  /** The guild cape behind it (#1422) and how it moves (#1699); `undefined` wears none. */
+  readonly cape: WornCape | undefined;
+  /** What the light where it stands multiplies its disc by (ADR-0052). */
+  readonly tint?: number | undefined;
+  /** The weapon trail cosmetic behind a melee swing (#3579), in its colour; `undefined` for none. */
+  readonly swingTrail?: { readonly ribbon: SwingRibbon; readonly colour: number } | undefined;
+}
+
+/** A cape on a body: its look and its motion, which the caller steps. */
+export interface WornCape {
+  readonly look: CapeLook;
+  readonly motion: CapeMotion;
+  /** The cape pattern cosmetic on it (#3579); `undefined` for a plain cape. */
+  readonly pattern: CapePattern | undefined;
+  /** The emblem frame cosmetic round its emblem (#3581); `undefined` for none. */
+  readonly emblemFrame: EmblemFrameLook | undefined;
+}
+
+/** An emblem frame's look (#3581). */
+export type EmblemFrameLook = Extract<CosmeticLook, { readonly kind: "emblemFrame" }>;
+
+/** The cape's outline, as wide as the study draws it, and its trim's. */
+export const CAPE_EDGE_WIDTH = 1.6;
+export const CAPE_TRIM_WIDTH = 1.4;
+
+/**
+ * The cape, the disc, its edge, the self rim on your own, then the
+ * off-hand and the weapon mark on `marks` (the order #275 gives). The arena keeps marks on
+ * a layer of their own, over the body glyphs (#1037); one painter for both
+ * draws no glyph between them.
+ */
+export function paintStandingBody(painter: Painter, body: StandingBody, marks = painter): void {
+  paintBodyDisc(painter, body);
+  paintBodyMarks(marks, body);
+}
+
+/**
+ * The cape, the disc, its edge, the self rim on your own, the cape's band
+ * on the rim, then a swing's ribbon (#3579): what lies under the body glyph.
+ */
+export function paintBodyDisc(painter: Painter, body: StandingBody): void {
+  const { x, y, r, cape } = body;
+  const shape =
+    cape === undefined ? undefined : capeMotionShape(cape.motion, body, cape.look.emblem);
+  if (cape !== undefined && shape !== undefined) {
+    paintCape(painter, shape, cape.look, cape.pattern, cape.emblemFrame);
+  }
+  const team = teamColour(body.team);
+  painter.fillStyle(body.tint === undefined ? team : multiplyColour(team, body.tint), 1);
+  painter.fillCircle(x, y, r);
+  // Centred half its width in, so the edge stays inside the collision
+  // radius (#166) and only touches the self rim inside it.
+  painter.lineStyle(BODY_EDGE_WIDTH, BODY_EDGE, 1);
+  painter.strokeCircle(x, y, r - BODY_EDGE_WIDTH / 2);
+
+  if (body.team === "self") {
+    painter.lineStyle(2, SELF_RIM, 1);
+    painter.strokeCircle(x, y, r - 2);
+  }
+  if (cape !== undefined && shape !== undefined) {
+    paintCapeBand(painter, shape.band, cape.look);
+  }
+  // Last on the body layer, so the rings and condition cues the scene
+  // draws next, and every mark, lie over it (ADR-0056 §4).
+  if (body.swingTrail !== undefined) {
+    paintSwingRibbon(painter, body.swingTrail.ribbon, body.swingTrail.colour);
+  }
+}
+
+/**
+ * What a stacked figure (ADR-0057) leaves on the ground under it: the self
+ * rim on your own, and a swing's ribbon (#3579). The figure itself, its
+ * cape included, is an atlas image the scene draws over these.
+ */
+export function paintFigureGround(painter: Painter, body: StandingBody): void {
+  if (body.team === "self") {
+    painter.lineStyle(2, SELF_RIM, 1);
+    painter.strokeCircle(body.x, body.y, body.r - 2);
+  }
+  if (body.swingTrail !== undefined) {
+    paintSwingRibbon(painter, body.swingTrail.ribbon, body.swingTrail.colour);
+  }
+}
+
+/**
+ * The cape (#1422, #1699) under the disc, which covers its root: the cloth, its
+ * pattern in the trim's colour and the emblem's field over it (#3579), an
+ * emblem frame round the emblem's grid (#3581), its `edge` outline, the trim
+ * along the hem, then the emblem grid in its own colours. Folded, all of it
+ * hides under the disc but the emblem's edge.
+ */
+function paintCape(
+  painter: Painter,
+  shape: CapeShape,
+  cape: CapeLook,
+  pattern: CapePattern | undefined,
+  frame: EmblemFrameLook | undefined,
+): void {
+  painter.fillStyle(cape.main, 1);
+  painter.fillPoints(shape.cloth);
+  if (pattern !== undefined) {
+    painter.fillStyle(cape.trim, 1);
+    for (const piece of capePatternShapes(pattern, shape.tab)) {
+      painter.fillPoints(piece);
+    }
+    if (shape.emblemField.length > 0) {
+      painter.fillStyle(cape.main, 1);
+      painter.fillPoints(shape.emblemField);
+    }
+  }
+  if (frame !== undefined && shape.emblemGrid !== undefined) {
+    painter.fillStyle(frame.colour === "trim" ? cape.trim : frame.colour, 1);
+    for (const quad of emblemFrameShape(shape.emblemGrid, frame.studs)) {
+      painter.fillPoints(quad);
+    }
+  }
+  painter.lineStyle(CAPE_EDGE_WIDTH, BODY_EDGE, 1);
+  tracePoints(painter, shape.cloth, true);
+  painter.lineStyle(CAPE_TRIM_WIDTH, cape.trim, 1);
+  tracePoints(painter, shape.trim, false);
+  paintEmblem(painter, shape.emblem, cape.palette);
+}
+
+/** The band on the rim, over the disc's edge: an `edge` casing under the cape's colour. */
+function paintCapeBand(painter: Painter, band: CapeBand, cape: CapeLook): void {
+  for (const [width, colour] of [
+    [CAPE_BAND_CASING, BODY_EDGE],
+    [CAPE_BAND_WIDTH, cape.main],
+  ] as const) {
+    painter.lineStyle(width, colour, 1);
+    painter.beginPath();
+    painter.arc(band.x, band.y, band.radius, band.from, band.to);
+    painter.strokePath();
+  }
+}
+
+/** An emblem's parts in `colour`: on a cape, and on the designer's buttons (#1422). */
+export function paintEmblem(
+  painter: Painter,
+  parts: readonly EmblemPart[],
+  palette: readonly number[],
+): void {
+  for (const part of parts) {
+    painter.fillStyle(palette[part.pixel - 1] ?? 0, 1);
+    painter.fillPoints(part.points);
+  }
+}
+
+/** Stroke one line through `points`, back to the first if `close`. */
+function tracePoints(painter: Painter, points: readonly Point[], close: boolean): void {
+  const [first, ...rest] = points;
+  if (first === undefined) {
+    return;
+  }
+  painter.beginPath();
+  painter.moveTo(first.x, first.y);
+  for (const point of rest) {
+    painter.lineTo(point.x, point.y);
+  }
+  if (close) {
+    painter.lineTo(first.x, first.y);
+  }
+  painter.strokePath();
+}
+
+/**
+ * A form's cold aura (#3229, docs/art/3191-skill-visuals.md): a pale
+ * glow round the disc, under it, in two soft steps. Faint and not a team
+ * colour, so it never reads as a side.
+ */
+export const FORM_AURA_COLOUR = 0xc8def2;
+/** Each step's reach past the body's edge and its alpha at the full breath. */
+export const FORM_AURA_STEPS: readonly { readonly reach: number; readonly alpha: number }[] = [
+  { reach: 7, alpha: 0.12 },
+  { reach: 3.5, alpha: 0.18 },
+];
+/** One breath in and out, seconds. */
+export const FORM_AURA_BREATH_SECONDS = 2.6;
+/** The breath's low point, a share of the full aura. */
+const FORM_AURA_BREATH_LOW = 0.6;
+
+/**
+ * The aura's strength at `now`, seconds, from its low point to 1: it
+ * breathes, offset by `phase` so two avatars do not breathe as one.
+ * Under reduced motion it holds still, at the full aura.
+ */
+export function formAuraBreath(now: number, phase: number, reducedMotion: boolean): number {
+  if (reducedMotion) {
+    return 1;
+  }
+  const wave = (1 - Math.cos(2 * Math.PI * (now / FORM_AURA_BREATH_SECONDS + phase))) / 2;
+  return FORM_AURA_BREATH_LOW + (1 - FORM_AURA_BREATH_LOW) * wave;
+}
+
+/** The cold aura round a body of drawn radius `r` at `breath` (`formAuraBreath`). */
+export function paintFormAura(
+  painter: Painter,
+  x: number,
+  y: number,
+  r: number,
+  breath: number,
+): void {
+  for (const step of FORM_AURA_STEPS) {
+    painter.fillStyle(FORM_AURA_COLOUR, step.alpha * breath);
+    painter.fillCircle(x, y, r + step.reach);
+  }
+}
+
+/** The grey a form tones a cape towards (#3229). */
+export const ASH = 0x7a7672;
+/** How far towards `ASH`: enough to read as ash, little enough to tell whose. */
+const ASH_SHARE = 0.7;
+
+/** `look` toned to ash for a body in a form (#3229): its colours greyed, its emblem's too. */
+export function ashCape(look: CapeLook): CapeLook {
+  return {
+    main: towardsAsh(look.main),
+    trim: towardsAsh(look.trim),
+    emblem: look.emblem,
+    palette: look.palette.map(towardsAsh),
+  };
+}
+
+function towardsAsh(colour: number): number {
+  let out = 0;
+  for (const shift of [16, 8, 0]) {
+    const from = (colour >> shift) & 0xff;
+    const to = (ASH >> shift) & 0xff;
+    out |= Math.round(from + (to - from) * ASH_SHARE) << shift;
+  }
+  return out;
+}
+
+/** The off-hand, then the weapon mark: what lies over the body glyph. */
+export function paintBodyMarks(painter: Painter, body: StandingBody): void {
+  paintOffhandMark(painter, body);
+  paintWeaponMark(painter, body, body.weaponId, body.frame);
+}
+
+/**
+ * The off-hand mark (#276): an `edge` casing under an `ink` core, like
+ * the weapon mark. The shield is one arc path stroked twice, the focus
+ * one circle per colour.
+ */
+function paintOffhandMark(painter: Painter, body: StandingBody): void {
+  const mark = offhandMarkLayout(body.x, body.y, body.r, body.facing, body.offhandId);
+  if (mark === undefined) {
+    return;
+  }
+  for (const [width, colour] of [
+    [mark.casing, BODY_EDGE],
+    [mark.core, SELF_RIM],
+  ] as const) {
+    painter.lineStyle(width, colour, 1);
+    if (mark.kind === "arc") {
+      painter.beginPath();
+      painter.arc(mark.x, mark.y, mark.radius, mark.from, mark.to);
+      painter.strokePath();
+    } else {
+      painter.strokeCircle(mark.x, mark.y, mark.radius);
+    }
+  }
+}
+
+/**
+ * The weapon mark (#188, #418): a 4 px `edge` casing, then a 2 px `ink` core,
+ * so the line reads on either team's colour. The casing also outlines the
+ * filled shapes, which the core then fills. Bow strings are one extra
+ * pass, thinner: a 3 px casing under a 1 px core. `at` is the body it is
+ * held by, or where a knocked-down body dropped it (#545).
+ */
+export function paintWeaponMark(
+  painter: Painter,
+  at: { readonly x: number; readonly y: number; readonly r: number; readonly facing: number },
+  weaponId: string | undefined,
+  frame: AttackFrame,
+): void {
+  const { strokes, fills, strings, alpha } = weaponMarkLayout(
+    at.x,
+    at.y,
+    at.r,
+    at.facing,
+    weaponId,
+    frame,
+  );
+  if ((strokes.length === 0 && fills.length === 0) || alpha <= 0) {
+    return;
+  }
+  const trace = (points: readonly Point[], close: boolean) => {
+    const [first, ...rest] = points;
+    if (first === undefined) {
+      return;
+    }
+    painter.moveTo(first.x, first.y);
+    for (const point of rest) {
+      painter.lineTo(point.x, point.y);
+    }
+    if (close) {
+      painter.lineTo(first.x, first.y);
+    }
+  };
+
+  painter.lineStyle(4, BODY_EDGE, alpha);
+  painter.beginPath();
+  for (const line of strokes) {
+    trace(line, false);
+  }
+  for (const shape of fills) {
+    trace(shape, true);
+  }
+  painter.strokePath();
+
+  painter.lineStyle(2, SELF_RIM, alpha);
+  painter.beginPath();
+  for (const line of strokes) {
+    trace(line, false);
+  }
+  painter.strokePath();
+  painter.fillStyle(SELF_RIM, alpha);
+  for (const shape of fills) {
+    painter.fillPoints(shape);
+  }
+
+  for (const [width, colour] of strings.length === 0
+    ? []
+    : ([
+        [3, BODY_EDGE],
+        [1, SELF_RIM],
+      ] as const)) {
+    painter.lineStyle(width, colour, alpha);
+    painter.beginPath();
+    for (const line of strings) {
+      trace(line, false);
+    }
+    painter.strokePath();
+  }
+}

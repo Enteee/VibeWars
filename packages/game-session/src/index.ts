@@ -1,0 +1,180 @@
+/**
+ * `@vibewars/game-session`: peer-to-peer match sessions (#15). Pure: no
+ * DOM, no Node, no transport library; a `Transport` is handed in. The
+ * memory transport for tests is `@vibewars/game-session/testing`.
+ */
+
+export { MAX_MESSAGE_BYTES, messageBytes, sizeChecked } from "./transport.js";
+export { packCombat, packMatchChart } from "./combat-batches.js";
+export { packSnapshot, snapshotAssembler } from "./snapshot-parts.js";
+export type { Transport, TransportTrouble } from "./transport.js";
+
+export { NO_CALLS } from "./match-connection.js";
+export { PING_SECONDS, createCallBoard } from "./calls.js";
+export type { CallBoard } from "./calls.js";
+export type {
+  CallsSnapshot,
+  CombatBatchMessage,
+  CombatMessage,
+  ConnectionState,
+  MatchConnection,
+  MatchSnapshot,
+  ObservedSnapshot,
+  MatchSummaryRow,
+  PlayerSnapshot,
+  SeatWorn,
+  ProjectileSnapshot,
+  GroundEffectSnapshot,
+  SkillSlot,
+  SlotRecharge,
+  StatusSnapshot,
+  ArmedAttackSnapshot,
+} from "./match-connection.js";
+export { MESSAGE_BURST, MESSAGES_PER_SECOND, MessageBudget } from "./intent-budget.js";
+export type { DropReport } from "./intent-budget.js";
+export {
+  NO_GUILD,
+  sanitizeCharacterName,
+  sanitizeChatText,
+  sanitizeGuild,
+  sanitizeGuildCape,
+  sanitizeGuildTag,
+  sanitizeName,
+} from "./names.js";
+export type { Guild } from "./names.js";
+export { RECHARGE_TOLERANCE_SECONDS, rechargePredicted, rechargeState } from "./recharge.js";
+export { adrenalineSlots, sameAdrenaline } from "./adrenaline.js";
+export { spawnPoint } from "./spawn-points.js";
+export type { SpawnPoint } from "./spawn-points.js";
+export type { Json } from "./transport.js";
+export { createLocalPeer } from "./local-peer.js";
+export {
+  JOIN_TIMEOUT_SECONDS,
+  OBSERVER_DELAY_SECONDS,
+  PRE_MATCH,
+  PRE_MATCH_COUNTDOWN_SECONDS,
+  PRE_MATCH_E2E,
+  RECONNECT_WINDOW_SECONDS,
+  createMatchHost,
+} from "./match-host.js";
+export type {
+  HostMap,
+  MatchEnding,
+  MatchHost,
+  MatchHostOptions,
+  PlannedSeat,
+  PlannedSeats,
+  PreMatchTimes,
+} from "./match-host.js";
+export {
+  HostLeftError,
+  MatchRefusedError,
+  MatchTimeoutError,
+  connectMatch,
+} from "./match-client.js";
+export type { ConnectMatchOptions, PeerMatchConnection } from "./match-client.js";
+export { connectObserver } from "./match-observer.js";
+export type { ConnectObserverOptions, ObserverConnection } from "./match-observer.js";
+export { generateLobbyCode } from "./lobby-codes.js";
+export { KEY_PROOF_TIMEOUT_MS, keyGated } from "./key-gate.js";
+export { deriveLobbyRoom, publicRoom, type LobbyRoom } from "./lobby-key.js";
+export type {
+  ChatLine,
+  LobbyCharacter,
+  LobbyClosedReason,
+  LobbyConnection,
+  LobbyPlayerSnapshot,
+  LobbySnapshot,
+  MatchStarting,
+  MatchToWatch,
+  PartyPlanSeat,
+} from "./lobby-connection.js";
+export {
+  LOBBY_PROOF_MS,
+  PARTY_CONSENT_MS,
+  PROFILE_INTERVAL_MS,
+  RANKED_RESULT_TIMEOUT_MS,
+  RANKED_START_TIMEOUT_MS,
+  SHARE_INTERVAL_MS,
+  WARMUP_AFTER_MS,
+  canStart,
+  createLobbyHost,
+} from "./lobby-host.js";
+export type {
+  LobbyHost,
+  LobbyHostOptions,
+  LobbyMatchmakingOptions,
+  LobbyReach,
+  MatchPlan,
+  QueuedPlan,
+  RankedHostOptions,
+} from "./lobby-host.js";
+export { RELAY_ADMIT_MS, RELAY_ROOMS_LINGER_MS, createRelayAdmission } from "./relay-admission.js";
+export type { RelayAdmission, RelayAdmissionLobby } from "./relay-admission.js";
+export { LobbyNoAnswerError, LobbyRefusedError, joinLobby } from "./lobby-client.js";
+export type { JoinLobbyOptions, RankedPlay } from "./lobby-client.js";
+export { claimHolds, claimsHold } from "./ranked-claims.js";
+export type { LeaderboardCopy, LeaderboardSource, SeatClaim } from "./ranked-claims.js";
+export { scopeTransport } from "./scoped-transport.js";
+export {
+  WIRE_STATUS_IDS,
+  armedAttackSnapshot,
+  sameSkillBar,
+  skillBarSlots,
+  statusSnapshot,
+  groundEffectSnapshot,
+  respawnIn,
+  wireStatuses,
+  wireWeaponSets,
+} from "./wire.js";
+export {
+  ROOM_PREFIX,
+  formGroups,
+  groupOf,
+  isLive,
+  isRankedGroup,
+  ticketsOf,
+} from "./queue-formation.js";
+export type { FormGroupsInput, FormedGroup } from "./queue-formation.js";
+export { createMemoryBoard } from "./queue-board.js";
+export type { MemoryBoard, QueueBoard, QueueBoardEvent } from "./queue-board.js";
+export { createQueueClient, startingQueueState } from "./queue-client.js";
+export type {
+  QueueClient,
+  QueueClientOptions,
+  QueueParty,
+  QueueState,
+  TicketKey,
+} from "./queue-client.js";
+export type {
+  CosmeticSelection,
+  LobbyProofFields,
+  PlayerKey,
+  VerifyPlayerProof,
+} from "./player-key.js";
+export { decideStayTogether } from "./stay-together.js";
+export type { StayTogetherDecision, StayTogetherInput } from "./stay-together.js";
+export { admissionBytes, admissionDigest, partyGroupId } from "./queue-admission.js";
+export type { AdmissionTag, QueuedSeat, VerifyTicketSig } from "./queue-admission.js";
+export {
+  MATCH_RECORD_VERSION,
+  MAX_RECORD_DURATION_SECONDS,
+  MAX_RECORD_TEAM,
+  RECORD_CLOCK_SKEW_SECONDS,
+  recordTemplate,
+  validateMatchRecord,
+} from "./match-record.js";
+export type { MatchRecord } from "./match-record.js";
+export {
+  MAX_REPLAY_CHARS,
+  MAX_REPLAY_INPUTS,
+  encodeReplay,
+  joinReplay,
+  packReplay,
+  parseReplay,
+  replayHash,
+} from "./replay.js";
+export type { MatchReplay, RecordedReplay, ReplayInput, Sha256 } from "./replay.js";
+export { rerun } from "./replay-run.js";
+export type { Rerun } from "./replay-run.js";
+export type { SeatSetup } from "./match-setup.js";

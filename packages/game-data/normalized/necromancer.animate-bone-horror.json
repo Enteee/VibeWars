@@ -1,0 +1,26 @@
+{
+  "id": "necromancer.animate-bone-horror",
+  "name": "Animate Bone Horror",
+  "profession": "necromancer",
+  "attribute": "Death Magic",
+  "type": "Spell.",
+  "elite": false,
+  "campaign": "Prophecies",
+  "cost": {
+    "kind": "energy",
+    "amount": 5
+  },
+  "overcast": 0,
+  "activationSeconds": 1,
+  "rechargeSeconds": 5,
+  "upkeep": false,
+  "description": "Exploit nearest corpse to animate a level 1...14...17 Bone Horror.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Necromancer/278-Animate_Bone_Horror",
+    "fetchedAt": "2026-10-28T03:34:24.146Z"
+  },
+  "unmapped": {}
+}

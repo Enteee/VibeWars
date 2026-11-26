@@ -1,0 +1,26 @@
+{
+  "id": "assassin.deaths-charge",
+  "name": "Death's Charge",
+  "profession": "assassin",
+  "attribute": "Shadow Arts",
+  "type": "Spell.",
+  "elite": false,
+  "campaign": "Factions",
+  "cost": {
+    "kind": "energy",
+    "amount": 5
+  },
+  "overcast": 0,
+  "activationSeconds": 0.25,
+  "rechargeSeconds": 30,
+  "upkeep": false,
+  "description": "Shadow Step to target foe. If that foe has more Health than you, you are healed for 65...173...200.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Assassin/689-Death's_Charge",
+    "fetchedAt": "2026-10-27T20:35:16.236Z"
+  },
+  "unmapped": {}
+}

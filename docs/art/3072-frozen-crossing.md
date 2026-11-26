@@ -1,0 +1,81 @@
+# Frozen Crossing study (#3276, part of #3072)
+
+Study: `3072-frozen-crossing-plan.png` (outline, layers, routes, world elements, 2600×1940),
+`-layer-0/1/2.png` (one layer's footprints each), `-spawn-team1.png` / `-spawn-team2.png`
+(the default camera, 1100 tall, 16:9, with the team of two). Regenerate with
+`node scripts/assets/3072-frozen-crossing-study.mjs docs/art` (needs inkscape; the SVGs are not
+committed). The PNGs are a guide, not coordinates. The layout is new: today's map is thrown away,
+the place (a frozen river) is kept.
+
+## Rules the study holds
+
+- **The river meanders.** It is not a straight stripe between two mirrored halves: it bends west,
+  then east, then west, an S in y. The numbers below (x, y of every footprint, ramp, stone) are
+  the straight drawing; the map position is x + 170·sin(2π(y − 250)/1450), so the west bank is wide in the
+  north and pinched at the south, the east bank the other way round. Spawns, the ridge outlines and the
+  two banks are placed by hand after that, so no side is a copy of the other.
+
+- **Bounds** 2600×1940 = 5.04 M u² (1× Canyon, 2v2). The ground outline fills 72 % of it, ragged,
+  with `rock` (`OUTSIDE_KINDS`) outside, drawn as boulders and drifted scree.
+- **New biome `snow`, proposed row** for `visual-style.md` §1 (the map's first build PR adds it):
+  ground `#5a5f66` (shaded snow), rock `#4d4a4a`, plant/earth: thaw slush `#6a6a58`. Snow decks
+  `#9ea4ab` (ridge tops `#b4b9be`), river ice `#7d8a94` (a breath cooler than the ground), open water `#34495a`. All
+  low chroma and neutral-to-grey; the river ice has friend `#59c2ff`'s hue (206° against 202°) but not its colour: saturation 10 % against
+  100 %, and an sRGB distance of 126, with the ice 40 % darker (L 0.54 against 0.67), which is why the ice is grey-teal and the water dark, not blue. The other tones are neutral greys at saturation ≤ 10 %.
+  The build PR adds the row and its `arena-palette.test.ts` check; this study adds no code. Decks are kept mid-grey on purpose: near-white snow would wash the friend blue out, so bodies keep their contrast on it.
+- **Layers (3):** L0 river ice, open water, stepping stones and the cave floor; L1 the two banks (a
+  `deck` each, 70 up) and the log bridge; L2 a ridge on each bank (`decks`, 140 up).
+- **Structures (≥ 4):** two banks; four ramps (two down to the ice, two off the stones); two ridge stairs; two ridges; the log
+  bridge (a `bridge` deck at bank height); five stepping stones, 120 wide at a 105 pitch, run edge to edge of the deep band (x 1030..1570; the strip itself is y 1230..1320) and a sixth links the strip north to the band edge at x 1250..1350. Each end meets the bank's 70 u face at a short ramp up (`stone-ramp-w` at (930,1235), `stone-ramp-e` mirrored), both walk-up and walk-down; there is no water between the strip and the ramps or the shelf; the deep band is y 1160..1360, and its water is the band minus the strip and link: three rects, (1030,1160,220×70) and (1350,1160,220×70) north of the strip (y 1160..1230) and (1030,1320,540×40) south of it (y 1320..1360).
+- **Tunnel:** the far-bank cave, 110 wide, from a mouth on the ice at (1570,1500) east under the east
+  bank and out at its south edge at (2000,1710) onto the south lane. Cover shows the seam and
+  grating slots (#3236), as wide as the walkable floor (#3179).
+- **Drop-offs (4):** both ridges to their banks, both banks down to the ice at the south.
+- **Elements:** a brass **lever** on the central shelf at (1300,880); it raises and lowers the
+  log bridge's centre plank section (a `bridge` target), so the north crossing can be cut. A
+  **breakable ice wall** across the central shelf strip at (1180..1420,740): the straight way from
+  the log bridge to the middle is shut until it is broken, so the bridge fight and the middle fight
+  start separate. Zones: `mire` (thaw slush, west south lane) and `scorched` (hearth char, east south
+  lane), one each side, off the main routes. Open water is `water`, deep: impassable except on
+  the stones. Snow fog: low pale ellipses (`#e6eaee`, ≤ 0.2) under bodies, never over them.
+- **Light:** the **Day** row (visual-style §2): sun from the NW, 50°, `#fff1d6` 0.55, ambient
+  `#b0bcd4` 0.45. Torches (`#ffb060`, radius 150) at both cave ends, each spawn brazier, both
+  bridge heads and the lever. Nothing is dim: snow bounces the light; only the cave is dark.
+- **Reduced motion:** torch flicker stops (steady glow), fog drift and water shimmer stop; the
+  lever's plank moves once, not animated in loops.
+
+## Routes and balance (base speed 180 u/s)
+
+Spawns (map positions): T1 (470,1050) and (540,1180) on the west bank, T2 (1920,1300) and (1850,1430) (the spawns are placed on the map, not sheared; the east bank's L1 runs x 1400..2380 at y 1300, so both stand on it, well clear of the water) on the east bank, found by a grid search that evens the routes out.
+The centre is the central shelf, (1300,1000).
+
+| Route (T1 / T2)                                                 | Length        | Walk        |
+| --------------------------------------------------------------- | ------------- | ----------- |
+| ice shelf (ramp down, across the ice)                           | 803 / 778 u   | 4.5 / 4.3 s |
+| stepping stones (over the open water)                           | 979 / 1069 u  | 5.4 / 5.9 s |
+| log bridge (up the bank, over the bridge, through the ice wall) | 1571 / 1490 u | 8.7 / 8.3 s |
+
+The log-bridge time assumes the ice wall is broken (it starts shut). Both teams have the same three routes; all three are within 10 % (ice shelf 3 %, stones 9 %, log bridge 5 %); the bench (#3065) has the final say once the map is built. The east bank is not a mirror of the west: it bulges toward the river in the middle and steps back at the south, and the T2 seats stand further from the water. The sides differ on purpose: the east bank
+holds the cave and a snow-capped ridge (231 k u²); the west a bare rock ridge (213 k u², 8 %
+smaller, within 25 %) and the thaw slush. High ground within half the map of either spawn is its own
+ridge, reached by its own stair; neither is reachable without crossing the middle or the bridge.
+The cave gives the east a flank onto the south lane; the west's matching asset is the bank-edge
+drop on its south lane. **Known risk for the build card:** the cave is an east-only flank, so a 2v2 with a one-sided tunnel needs the bench to watch for it (walks are within 6 %, the flank is not); the build card must measure it, not leave it to later tuning.
+
+## Signature fight
+
+The thaw: the stone strip is a narrow, fast crossing that the ice wall and the lever can shut or open round, so the fight is for the lever and the strip, not for the ridges.
+
+## Canyon lessons, on the plan
+
+- Every deck is reachable up and down by click-to-move (#3177): each ramp has a walk-down; each
+  ridge has a stair and a drop.
+- No body is hidden without an outline (#3178/#3251): the ramps and stairs are open steps; the
+  log bridge has no wall beside it.
+- The cave cover is the walkable floor and nothing wider (#3179). Paving over a tunnel fades with
+  the cutaway (#3272).
+
+## New art needed
+
+The `snow` biome tones (above) and the snow cap look for ridge and bank tops. Ice cracks and the
+log bridge rail are painted from existing deck faces and plank looks. Mechanics are not designed here.

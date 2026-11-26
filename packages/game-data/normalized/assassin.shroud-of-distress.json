@@ -1,0 +1,26 @@
+{
+  "id": "assassin.shroud-of-distress",
+  "name": "Shroud of Distress",
+  "profession": "assassin",
+  "attribute": "Shadow Arts",
+  "type": "Enchantment Spell.",
+  "elite": false,
+  "campaign": "Factions",
+  "cost": {
+    "kind": "energy",
+    "amount": 10
+  },
+  "overcast": 0,
+  "activationSeconds": 1,
+  "rechargeSeconds": 45,
+  "upkeep": false,
+  "description": "For 30...54...60 seconds, if you are below 50% Health, you have a 75% chance to block attacks.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Assassin/698-Shroud_of_Distress",
+    "fetchedAt": "2026-10-27T20:35:16.430Z"
+  },
+  "unmapped": {}
+}

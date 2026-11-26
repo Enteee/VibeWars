@@ -1,0 +1,26 @@
+{
+  "id": "ritualist.mend-body-and-soul",
+  "name": "Mend Body and Soul",
+  "profession": "ritualist",
+  "attribute": "Restoration Magic",
+  "type": "Spell.",
+  "elite": false,
+  "campaign": "Factions",
+  "cost": {
+    "kind": "energy",
+    "amount": 5
+  },
+  "overcast": 0,
+  "activationSeconds": 0.75,
+  "rechargeSeconds": 3,
+  "upkeep": false,
+  "description": "Target ally is healed for 20...96...115 Health. That ally loses one condition for each spirit within earshot.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Ritualist/755-Mend_Body_and_Soul",
+    "fetchedAt": "2026-10-27T17:37:18.329Z"
+  },
+  "unmapped": {}
+}

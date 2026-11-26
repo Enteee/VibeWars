@@ -1,0 +1,26 @@
+{
+  "id": "elementalist.ward-against-melee",
+  "name": "Ward Against Melee",
+  "profession": "elementalist",
+  "attribute": "Earth Magic",
+  "type": "Ward spell.",
+  "elite": false,
+  "campaign": "Core",
+  "cost": {
+    "kind": "energy",
+    "amount": 15
+  },
+  "overcast": 0,
+  "activationSeconds": 1,
+  "rechargeSeconds": 30,
+  "upkeep": false,
+  "description": "You create a Ward Against Melee at your current location. For 5...17...20 seconds, non-spirit allies in this area have a 50% chance to block melee attacks.",
+  "variant": "pvp",
+  "ruleset": "gw1-reference",
+  "source": {
+    "name": "gw-memorial.net",
+    "url": "https://www.gw-memorial.net/skills/Elementalist/409-Ward_Against_Melee",
+    "fetchedAt": "2026-10-28T03:03:07.892Z"
+  },
+  "unmapped": {}
+}
