@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import { WATER_LOOK } from "./arena-palette.js";
 import {
   WATER_ART,
+  RING_PULSE_SECONDS,
   WATER_SUNK,
   insetShore,
   waterArtKey,
@@ -146,5 +147,21 @@ describe("water art (#2984, #4058)", () => {
     expect(rings).toHaveLength(deep.ripples.length);
     expect(ripples(2, false)).not.toEqual(ripples(0, false));
     expect(ripples(2, true)).toEqual(ripples(0, true));
+  });
+
+  it("swells deep water's rings out and back over RING_PULSE_SECONDS, none when still (#4061)", () => {
+    const pulse = (seconds: number, still: boolean): string[] => {
+      const { painter, calls } = recorder();
+      WATER_ART["water-deep"].ripples(painter, deep, 1, seconds, still);
+      return calls.filter((call) => call.startsWith("lineBetween"));
+    };
+    // Four edges a ring, every ring stroked.
+    expect(pulse(0, false)).toHaveLength(4 * WATER_LOOK.deep.rings);
+    expect(pulse(0, true)).toHaveLength(0);
+    expect(pulse(RING_PULSE_SECONDS / 4, false)).not.toEqual(pulse(0, false));
+    expect(pulse(RING_PULSE_SECONDS, false)).toEqual(pulse(0, false));
+    const { painter, calls } = recorder();
+    WATER_ART["water-shallow"].ripples(painter, shallow, 1, 0, false);
+    expect(calls.filter((call) => call.startsWith("lineBetween"))).toHaveLength(0);
   });
 });
