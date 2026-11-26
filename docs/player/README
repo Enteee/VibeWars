@@ -1,7 +1,0 @@
-Images in the player docs (#3556); Help never shows this file.
-
-- A game icon: ![Burning](../../apps/web/public/icons/status/burning.svg), the game's own file; from a language folder, one more ../.
-- An icon followed by bold text, ![Burning](...) **Burning**, is a chip, as the effects bar shows it. Never in a heading.
-- A diagram: ![What it shows](img/<file>) alone in a paragraph is a captioned figure; from a language folder, ../img/<file>.
-- Every image needs alt text, and every path must exist: a docs test fails otherwise.
-- Use no other image source: Help drops it.
