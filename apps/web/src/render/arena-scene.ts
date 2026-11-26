@@ -490,11 +490,10 @@ import {
   paintZoneShadow,
   paintZoneMotion,
   zoneArtOf,
-  zoneCellUvs,
   zoneGroundAlpha,
-  ZONE_CELLS,
+  CAUSTICS_FRAGMENT,
+  ZONE_CAUSTICS,
   type ZoneArt,
-  type ZoneCellLayer,
   type ZoneMotionPainter,
 } from "./zone-painter.js";
 import { screenPx, screenSized } from "./screen-text.js";
@@ -564,14 +563,13 @@ interface ZoneGround {
   readonly art: ZoneArt;
   readonly image: Phaser.GameObjects.Image;
   readonly key: string;
-  /** A liquid's two drifting layers of cells (#4062) over it, or none. */
-  readonly cells: readonly ZoneCells[];
+  /** A liquid's caustics (#4062) over it, or none. */
+  readonly caustics: ZoneCausticsDraw | undefined;
 }
-/** One drifting layer of a liquid zone's cells (#4062): a mesh of its outline, its texture sliding. */
-interface ZoneCells {
-  readonly mesh: Phaser.GameObjects.Mesh2D;
-  readonly layer: ZoneCellLayer;
-  readonly size: number;
+/** A liquid zone's caustics (#4062): its shader, and the time and alpha it draws at next. */
+interface ZoneCausticsDraw {
+  readonly shader: Phaser.GameObjects.Shader;
+  readonly uniforms: { time: number; alpha: number };
 }
 /** The hover marker on a layered map (#2831), its dashes on the ground. */
 const HOVER_RING = 0xd7dee8;
@@ -6018,12 +6016,10 @@ export class ArenaScene extends Phaser.Scene {
         const { left, top } = painted.art.bounds;
         const alpha = zoneGroundAlpha(painted.art, look, this.now, this.reducedMotion);
         painted.image.setPosition(left + moved.x, top + moved.y - lift).setAlpha(alpha);
-        for (const { mesh, layer, size } of painted.cells) {
-          mesh.setPosition(left + moved.x, top + moved.y - lift).setAlpha(alpha * layer.alpha);
-          const uvs = zoneCellUvs(painted.art.outline, layer, size, this.now, this.reducedMotion);
-          uvs.forEach((uv, i) => {
-            mesh.vertices[4 * (i >> 1) + 2 + (i & 1)] = uv;
-          });
+        if (painted.caustics !== undefined) {
+          painted.caustics.shader.setPosition(left + moved.x, top + moved.y - lift);
+          painted.caustics.uniforms.time = this.reducedMotion ? 0 : this.now;
+          painted.caustics.uniforms.alpha = alpha;
         }
         paintZoneMotion(this.zoneMotionPainter(g), painted.art, line, this.now, this.reducedMotion);
       }
@@ -6176,51 +6172,61 @@ export class ArenaScene extends Phaser.Scene {
         return undefined;
       }
       const depth = renderOrder({ kind: "zone", layer: zone.layer, part: "ground" });
-      return {
-        art,
-        ...this.paintGround(art, 0, depth, true),
-        cells: this.zoneCellsOf(art, zone.layer),
-      };
+      const ground = this.paintGround(art, 0, depth, true);
+      return { art, ...ground, caustics: this.zoneCausticsOf(art, zone.layer, ground.key) };
     });
     this.zoneGrounds = { zones, grounds };
     return grounds;
   }
 
   /**
-   * A liquid zone's cells (#4062): per layer, its outline as one mesh over
-   * its ground, the liquid's tile repeating across it, tinted and added.
-   * Drawing moves the texture, not the mesh: no stencil, no per-frame
-   * geometry, the cost #4078 found in masked sprites. None for a non-liquid.
+   * A liquid zone's caustics (#4062): one shader quad over its bounds, its
+   * ground's texture the mask, added. One draw a zone, no stencil and no
+   * per-frame geometry, the cost #4078 found in masked sprites. None for a
+   * non-liquid.
    */
-  private zoneCellsOf(art: ZoneArt, layer: number): readonly ZoneCells[] {
+  private zoneCausticsOf(
+    art: ZoneArt,
+    layer: number,
+    ground: string,
+  ): ZoneCausticsDraw | undefined {
     const liquid = liquidOf(art.painter);
     if (liquid === undefined) {
-      return [];
+      return undefined;
     }
-    const look = ZONE_CELLS[liquid];
-    const key = this.tintedCellsTexture(liquid, look.cells, look.colour);
-    const triangles = Phaser.Geom.Polygon.Earcut(art.outline.flatMap(({ x, y }) => [x, y]));
-    const indices: number[] = [];
-    for (let at = 0; at + 2 < triangles.length; at += 3) {
-      indices.push(triangles[at] ?? 0, triangles[at + 1] ?? 0, triangles[at + 2] ?? 0, 0);
-    }
-    const { left, top } = art.bounds;
-    const depth = renderOrder({ kind: "zone", layer, part: "cells" });
-    return look.layers.map((cellLayer) => {
-      const uvs = zoneCellUvs(art.outline, cellLayer, look.cells.size, 0, true);
-      const vertices = art.outline.flatMap(({ x, y }, i) => [
-        x - left,
-        y - top,
-        uvs[2 * i] ?? 0,
-        uvs[2 * i + 1] ?? 0,
-      ]);
-      const mesh = this.add
-        .mesh2d(left, top, key, vertices, indices)
-        .setBlendMode(Phaser.BlendModes.ADD)
-        .setDepth(depth);
-      mesh.buildOrderedIndices(1, true);
-      return { mesh, layer: cellLayer, size: look.cells.size };
-    });
+    const { colour, cell, strength } = ZONE_CAUSTICS[liquid];
+    const { left, top, width, height } = art.bounds;
+    const uniforms = { time: 0, alpha: 1 };
+    const shader = this.add
+      .shader(
+        {
+          name: "zone-caustics",
+          fragmentSource: CAUSTICS_FRAGMENT,
+          setupUniforms: (
+            setUniform: (name: string, value: number | readonly number[]) => void,
+          ) => {
+            setUniform("uGround", 0);
+            setUniform("uBounds", [left, top, width, height]);
+            setUniform("uCell", cell);
+            setUniform("uTime", uniforms.time);
+            setUniform("uColour", [
+              ((colour >> 16) & 0xff) / 255,
+              ((colour >> 8) & 0xff) / 255,
+              (colour & 0xff) / 255,
+            ]);
+            setUniform("uAlpha", uniforms.alpha * strength);
+          },
+        },
+        left,
+        top,
+        width,
+        height,
+        [ground],
+      )
+      .setOrigin(0, 0)
+      .setBlendMode(Phaser.BlendModes.ADD)
+      .setDepth(renderOrder({ kind: "zone", layer, part: "cells" }));
+    return { shader, uniforms };
   }
 
   /**
@@ -6405,9 +6411,7 @@ export class ArenaScene extends Phaser.Scene {
       if (painted !== undefined) {
         painted.image.destroy();
         this.textures.remove(painted.key);
-        for (const { mesh } of painted.cells) {
-          mesh.destroy();
-        }
+        painted.caustics?.shader.destroy();
       }
     }
     this.zoneGrounds = undefined;
@@ -6585,31 +6589,6 @@ export class ArenaScene extends Phaser.Scene {
       );
     }
     this.waterCells = { shapes: this.waterShapes, images, textures };
-  }
-
-  /**
-   * Liquid zone `id`'s cells in `colour` (#4062): its tile's gaps in the
-   * colour, its cells black, so added they light only the gaps. Made once
-   * per id, uploaded to repeat: a zone's mesh samples it past one tile.
-   */
-  private tintedCellsTexture(id: string, options: LiquidCellsOptions, colour: number): string {
-    const key = `${liquidCellsTileKey(id)}-tinted`;
-    if (this.textures.exists(key)) {
-      return key;
-    }
-    const tile = this.liquidCellsTile(id, options);
-    const texture = this.textures.createCanvas(key, tile.width, tile.height);
-    if (texture === null) {
-      throw new Error("zones: could not tint a liquid's cells");
-    }
-    const { context } = texture;
-    context.drawImage(tile, 0, 0);
-    context.globalCompositeOperation = "multiply";
-    context.fillStyle = `#${colour.toString(16).padStart(6, "0")}`;
-    context.fillRect(0, 0, tile.width, tile.height);
-    texture.refresh();
-    texture.setWrap(Phaser.Textures.WrapMode.REPEAT, Phaser.Textures.WrapMode.REPEAT);
-    return key;
   }
 
   /**

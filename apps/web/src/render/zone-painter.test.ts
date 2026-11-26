@@ -5,16 +5,16 @@ import type { MapZone } from "./arena-snapshot.js";
 import { shoreDistance } from "./water-shape.js";
 import { ZONE_LOOK } from "./zone-look.js";
 import {
+  CAUSTICS_FRAGMENT,
   drawnOutline,
   liquidOf,
   LIQUID_ZONES,
   paintZoneMotion,
   paintZoneShadow,
   reliefEdges,
-  ZONE_CELLS,
+  ZONE_CAUSTICS,
   ZONE_DRIFT,
   zoneArtOf,
-  zoneCellUvs,
   zoneGroundAlpha,
   type ZoneMotionPainter,
 } from "./zone-painter.js";
@@ -257,40 +257,22 @@ describe("a liquid zone's cells (#4062)", () => {
     expect(liquidOf("mud")).toBeUndefined();
   });
 
-  it("orders the cells' scales: foul water's the largest, a spring's the smallest", () => {
-    const scales = LIQUID_ZONES.map((id) => ZONE_CELLS[id].layers[0].scale);
-    expect(scales).toEqual([...scales].sort((a, b) => b - a));
-    expect(new Set(scales).size).toBe(scales.length);
+  it("orders the cells' sizes: foul water's the largest, a spring's the smallest", () => {
+    const cells = LIQUID_ZONES.map((id) => ZONE_CAUSTICS[id].cell);
+    expect(cells).toEqual([...cells].sort((a, b) => b - a));
+    expect(new Set(cells).size).toBe(cells.length);
     expect(LIQUID_ZONES[0]).toBe("foul-water");
     expect(LIQUID_ZONES.at(-1)).toBe("spring");
   });
 
-  it("drifts two layers at different scales, in different directions", () => {
-    for (const id of LIQUID_ZONES) {
-      const [one, two] = ZONE_CELLS[id].layers;
-      expect(one.scale, id).not.toBe(two.scale);
-      const cross = one.drift.x * two.drift.y - one.drift.y * two.drift.x;
-      expect(Math.abs(cross), id).toBeGreaterThan(0);
-    }
+  it("declares exactly the uniforms the scene sets, so none is silently zero", () => {
+    const declared = [...CAUSTICS_FRAGMENT.matchAll(/^uniform \w+ (\w+);$/gm)].map((m) => m[1]);
+    expect(declared.sort()).toEqual(["uAlpha", "uBounds", "uCell", "uColour", "uGround", "uTime"]);
   });
 
-  it("holds the texture to the world, slides it by the drift, and stills it under reduced motion", () => {
-    const layer = { scale: 0.5, drift: { x: 8, y: -4 }, alpha: 1 };
-    const points = [
-      { x: 0, y: 0 },
-      { x: 1024, y: 512 },
-    ];
-    // At rest a point's coordinate is its world position in tiles.
-    expect(zoneCellUvs(points, layer, 512, 0, false)).toEqual([0, 0, 1, 0.5]);
-    // Still motion: no slide, whatever the time.
-    expect(zoneCellUvs(points, layer, 512, 7, true)).toEqual([0, 0, 1, 0.5]);
-    // One second: 8 and -4 world units at 0.5 px each, of a 512 px tile.
-    const [u, v] = zoneCellUvs(points, layer, 512, 1, false);
-    expect(u).toBeCloseTo(-4 / 512);
-    expect(v).toBeCloseTo(-(1 - 2 / 512));
-    // An hour on, the slide stays within one tile: no precision lost to time.
-    const late = zoneCellUvs(points, layer, 512, 3600, false);
-    expect(Math.abs(late[0] ?? 2)).toBeLessThan(1);
-    expect(Math.abs(late[1] ?? 2)).toBeLessThan(1);
+  it("layers two Voronoi patterns at different scales and speeds", () => {
+    const layers = [...CAUSTICS_FRAGMENT.matchAll(/voronoi\(uv[^;]*;/g)].map((m) => m[0]);
+    expect(layers).toHaveLength(2);
+    expect(layers[0]).not.toBe(layers[1]);
   });
 });

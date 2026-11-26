@@ -2,7 +2,6 @@ import { pointInPolygon, type Vec2 } from "@vibewars/game-core";
 
 import { WATER_LOOK } from "./arena-palette.js";
 import type { MapZone, RenderableShape } from "./arena-snapshot.js";
-import type { LiquidCellsOptions } from "./liquid-cells.js";
 import { shapeOutline } from "./layer-surfaces.js";
 import { paintRipples } from "./water-painter.js";
 import { ripplesIn, shoreDistance, type Ripple } from "./water-shape.js";
@@ -62,37 +61,21 @@ const GROUND_ALPHA: Record<Exclude<ZonePainterId, "hazard">, number> = {
 };
 
 /**
- * The liquid zones (#4062): the painters whose ground gets the drifting
- * liquid cells of #4058. Water only: lava and mud are opaque, and keep
+ * The liquid zones (#4062): the painters whose ground gets drifting
+ * Voronoi caustics. Water only: lava and mud are opaque, and keep
  * their own ground.
  */
 export const LIQUID_ZONES = ["foul-water", "tainted-water", "spring"] as const;
 export type LiquidZoneId = (typeof LIQUID_ZONES)[number];
 
-/** One drifting layer of a liquid's cells: texture px to a world unit, world units a second, and how bright. */
-export interface ZoneCellLayer {
-  readonly scale: number;
-  readonly drift: Vec2;
-  readonly alpha: number;
-}
-
 /**
- * A liquid's cells: the tile they come from, the colour its gaps take, and
- * two layers at different scales drifting different ways, so the light
- * network shifts as the reference's does (#4058's option A).
+ * A liquid's caustics (#4062): the colour they add, the world units across
+ * one cell, and how bright they are at full strength.
  */
-export interface ZoneCellsLook {
-  readonly cells: LiquidCellsOptions;
+export interface ZoneCaustics {
   readonly colour: number;
-  readonly layers: readonly [ZoneCellLayer, ZoneCellLayer];
-}
-
-/** Two layers drifting slowly apart, the second's cells the larger, at `alpha` together. */
-function driftingLayers(scale: number, alpha: number): readonly [ZoneCellLayer, ZoneCellLayer] {
-  return [
-    { scale, drift: { x: 6, y: 2.5 }, alpha: 0.6 * alpha },
-    { scale: 0.65 * scale, drift: { x: -3.5, y: 5 }, alpha: 0.5 * alpha },
-  ];
+  readonly cell: number;
+  readonly strength: number;
 }
 
 /** `colour` ("#rrggbb") as 0xRRGGBB. */
@@ -101,55 +84,77 @@ function hex(colour: string): number {
 }
 
 /**
- * Each liquid's cells in its own palette (#4062): texture inside the zone,
- * never a new colour signal. Foul water's cells are the largest, a spring's,
- * clear water's, the smallest.
+ * Each liquid's caustics in its own palette (#4062): texture inside the
+ * zone, never a new colour signal. Foul water's cells are the largest, a
+ * spring's, clear water's, the smallest.
  */
-export const ZONE_CELLS: Record<LiquidZoneId, ZoneCellsLook> = {
-  "foul-water": {
-    cells: { seed: 4064, sites: 15, gap: 6, size: 512 },
-    colour: hex(PALETTE["foul-water"].accent),
-    layers: driftingLayers(0.36, 0.3),
-  },
-  "tainted-water": {
-    cells: { seed: 4065, sites: 15, gap: 6, size: 512 },
-    colour: hex(PALETTE["tainted-water"].accent),
-    layers: driftingLayers(0.34, 0.24),
-  },
-  spring: {
-    cells: { seed: 4066, sites: 15, gap: 7, size: 512 },
-    colour: WATER_LOOK.shallow.cell,
-    layers: driftingLayers(0.3, WATER_LOOK.shallow.cellAlpha),
-  },
+export const ZONE_CAUSTICS: Record<LiquidZoneId, ZoneCaustics> = {
+  "foul-water": { colour: hex(PALETTE["foul-water"].accent), cell: 34, strength: 0.32 },
+  "tainted-water": { colour: hex(PALETTE["tainted-water"].accent), cell: 30, strength: 0.28 },
+  spring: { colour: WATER_LOOK.shallow.cell, cell: 24, strength: 0.6 },
 };
 
-/** `painter`'s liquid, or none: a painter that is not a liquid has no cells. */
+/** `painter`'s liquid, or none: a painter that is not a liquid has no caustics. */
 export function liquidOf(painter: ZonePainterId): LiquidZoneId | undefined {
   return LIQUID_ZONES.find((liquid) => liquid === painter);
 }
 
 /**
- * `layer`'s texture coordinates at each of `points` (world units) at
- * render time `seconds`, for a `size` px tile: u, v pairs. They hold to the
- * world, so two zones of one liquid that meet show no seam, and slide by
- * its drift, wrapped to one tile. Still under reduced motion.
+ * The caustics' fragment shader (#4062), drawn over a liquid zone's bounds:
+ * two Voronoi patterns whose sites wander, drifting different ways at
+ * different speeds; where both are far from a site, at the cells' edges,
+ * the light gathers, sharpened by the cube. Positions are the world's, so
+ * two zones of one liquid that meet show no seam. The zone's ground is the
+ * mask: its alpha keeps the light inside the outline.
+ *
+ * Uniforms: `uGround` the ground's texture, `uBounds` its left, top, width
+ * and height, `uCell` world units a cell, `uTime` seconds (still under
+ * reduced motion), `uColour` and `uAlpha`.
  */
-export function zoneCellUvs(
-  points: readonly Vec2[],
-  layer: ZoneCellLayer,
-  size: number,
-  seconds: number,
-  still: boolean,
-): number[] {
-  const perUnit = layer.scale / size;
-  const t = still ? 0 : seconds;
-  const shift = (speed: number): number => {
-    const moved = speed * t * perUnit;
-    return moved - Math.floor(moved);
-  };
-  const [du, dv] = [shift(layer.drift.x), shift(layer.drift.y)];
-  return points.flatMap(({ x, y }) => [x * perUnit - du, y * perUnit - dv]);
+export const CAUSTICS_FRAGMENT = `
+#pragma phaserTemplate(shaderName)
+#ifdef GL_FRAGMENT_PRECISION_HIGH
+precision highp float;
+#else
+precision mediump float;
+#endif
+varying vec2 outTexCoord;
+uniform sampler2D uGround;
+uniform vec4 uBounds;
+uniform float uCell;
+uniform float uTime;
+uniform vec3 uColour;
+uniform float uAlpha;
+
+vec2 hash2(vec2 p) {
+  return fract(sin(vec2(dot(p, vec2(127.1, 311.7)), dot(p, vec2(269.5, 183.3)))) * 43758.5453);
 }
+
+float voronoi(vec2 x, float t) {
+  vec2 n = floor(x);
+  vec2 f = fract(x);
+  float nearest = 8.0;
+  for (int j = -1; j <= 1; j++) {
+    for (int i = -1; i <= 1; i++) {
+      vec2 g = vec2(float(i), float(j));
+      vec2 o = 0.5 + 0.5 * sin(t + 6.2831 * hash2(n + g));
+      vec2 r = g + o - f;
+      nearest = min(nearest, dot(r, r));
+    }
+  }
+  return sqrt(nearest);
+}
+
+void main() {
+  vec2 world = uBounds.xy + vec2(outTexCoord.x, 1.0 - outTexCoord.y) * uBounds.zw;
+  vec2 uv = world / uCell;
+  float v1 = voronoi(uv + uTime * 0.2, uTime * 1.5);
+  float v2 = voronoi(uv * 1.2 - uTime * 0.15, uTime * 1.2);
+  float light = pow(min(v1, v2), 3.0) * 2.5;
+  float mask = texture2D(uGround, outTexCoord).a * uAlpha;
+  gl_FragColor = vec4(uColour * light * mask, 0.0);
+}
+`;
 
 /** A speck that glows or twinkles on its own beat: an ember, a sparkle, a bubble. */
 export interface ZoneSpeck {
