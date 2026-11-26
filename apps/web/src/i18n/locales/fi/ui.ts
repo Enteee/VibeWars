@@ -10,6 +10,7 @@ export default {
   "app.framedRelayLink": "Avaa relay-linkki omassa välilehdessään. Mitään ei tallennettu.",
   "app.inviteInLobby": "Palaa valikkoon ja avaa kutsulinkki uudelleen.",
   "app.lostMatch": "Yhteys otteluun katkesi.",
+  "app.rejoinFailed": "Otteluun ei voitu palata: paikkaasi ei pidetty.",
   "app.malformedRelayLink": "Relay-linkki ei kelpaa. Mitään ei tallennettu.",
   "app.ownLobby": "Tämä on oma aulasi",
 
@@ -1118,6 +1119,7 @@ export default {
   "recharge.spent": "{skill}, käytetty seuraavaan moraalinnousuun asti",
 
   "reconnect.detail": "Isännän yhteys katkesi. Paikkasi on varattu.",
+  "reconnect.rejoinDetail": "Palautetaan sinut otteluusi. Paikkasi pidetään.",
   "reconnect.seconds": "{seconds} s",
   "reconnect.title": "Yhdistetään uudelleen…",
 

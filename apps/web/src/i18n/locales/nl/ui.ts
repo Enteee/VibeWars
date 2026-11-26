@@ -10,6 +10,7 @@ export default {
   "app.framedRelayLink": "Open de relaylink in een eigen tabblad. Er is niets opgeslagen.",
   "app.inviteInLobby": "Ga terug naar het menu en open de uitnodigingslink opnieuw.",
   "app.lostMatch": "Verbinding met de match verbroken.",
+  "app.rejoinFailed": "Kon niet terug in de match: je plek werd niet vastgehouden.",
   "app.malformedRelayLink": "Die relaylink is ongeldig. Er is niets opgeslagen.",
   "app.ownLobby": "Dat is je eigen lobby",
 
@@ -1108,6 +1109,7 @@ export default {
   "recharge.spent": "{skill}, verbruikt tot een moraalboost",
 
   "reconnect.detail": "De verbinding van de host is weggevallen. Je plek blijft bewaard.",
+  "reconnect.rejoinDetail": "Je wordt teruggezet in je wedstrijd. Je plek wordt vastgehouden.",
   "reconnect.seconds": "{seconds} s",
   "reconnect.title": "Opnieuw verbinden…",
 

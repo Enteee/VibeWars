@@ -10,6 +10,7 @@ export default {
   "app.framedRelayLink": "لینک رله را در زبانهٔ جداگانه باز کن. چیزی ذخیره نشد.",
   "app.inviteInLobby": "به منو برگرد و لینک دعوت را دوباره باز کن.",
   "app.lostMatch": "اتصال به مسابقه قطع شد.",
+  "app.rejoinFailed": "بازگشت به مسابقه ممکن نشد: جایگاه شما نگه داشته نشد.",
   "app.malformedRelayLink": "این لینک رله معتبر نیست. چیزی ذخیره نشد.",
   "app.ownLobby": "این لابی خودت است",
 
@@ -1108,6 +1109,7 @@ export default {
   "recharge.spent": "{skill}، مصرف‌شده تا تقویت روحیه",
 
   "reconnect.detail": "اتصال میزبان قطع شد. جایت نگه داشته شده است.",
+  "reconnect.rejoinDetail": "در حال بازگرداندن تو به مسابقه‌ات. جایگاهت نگه داشته شده است.",
   "reconnect.seconds": "{seconds} ثانیه",
   "reconnect.title": "اتصال دوباره…",
 

@@ -10,6 +10,7 @@ export default {
   "app.framedRelayLink": "Öppna relälänken i en egen flik. Inget sparades.",
   "app.inviteInLobby": "Gå tillbaka till menyn och öppna inbjudningslänken igen.",
   "app.lostMatch": "Anslutningen till matchen bröts.",
+  "app.rejoinFailed": "Kunde inte återansluta till matchen: din plats hölls inte.",
   "app.malformedRelayLink": "Relälänken är ogiltig. Inget sparades.",
   "app.ownLobby": "Det är din egen lobby",
 
@@ -1106,6 +1107,7 @@ export default {
   "recharge.spent": "{skill}, förbrukad till nästa moralhöjning",
 
   "reconnect.detail": "Värdens anslutning bröts. Din plats är reserverad.",
+  "reconnect.rejoinDetail": "Vi sätter tillbaka dig i din match. Din plats hålls.",
   "reconnect.seconds": "{seconds} s",
   "reconnect.title": "Återansluter…",
 

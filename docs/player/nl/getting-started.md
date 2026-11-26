@@ -125,7 +125,8 @@ Verlaten, en een lijst van wie erin zit; de badge telt ze.
   Lobby-venster **Lobby**, en de **Verlaten** daar brengt je terug naar een
   nieuwe lobby van jezelf, met een nieuwe uitnodigingslink. Een link die je
   opent op een lobbyscherm of in een match, vraagt je eerst terug te gaan naar
-  het menu. Valt je verbinding weg, dan wordt je plek 30 seconden vastgehouden.
+  het menu. Valt je verbinding weg, of herlaad of heropen je de pagina, dan
+  wordt je plek 30 seconden vastgehouden en word je er weer op gezet.
 - **Iemand verwijderen:** druk als host op de **×** naast de naam van een
   speler in het Lobby-venster, buiten een match. Die krijgt te horen dat de
   host hem verwijderd heeft, krijgt een nieuwe lobby van zichzelf, en kan niet

@@ -123,8 +123,9 @@ och en lista över vilka som är med; dess märke räknar dem.
   tills du har kommit in. När du är inne säger lobbyfönstret **Lobby**, och
   dess **Lämna** tar dig tillbaka till en ny egen lobby, med en ny
   inbjudningslänk. En länk som öppnas på en lobbys skärm eller i en match
-  ber dig att först gå tillbaka till menyn. Om anslutningen bryts hålls din
-  plats i 30 sekunder.
+  ber dig att först gå tillbaka till menyn. Om anslutningen bryts, eller om
+  du laddar om eller öppnar sidan igen, hålls din plats i 30 sekunder och
+  du sätts tillbaka på den.
 - **Ta bort någon:** som värd trycker du på **×** bredvid en spelares
   namn i lobbyfönstret, utanför en match. Spelaren får veta att värden tog
   bort hen, får en ny egen lobby och kan inte gå med i din igen så länge

@@ -10,6 +10,7 @@ export default {
   "app.framedRelayLink": "릴레이 링크를 별도 탭에서 여세요. 아무것도 저장되지 않았어요.",
   "app.inviteInLobby": "메뉴로 돌아간 뒤 초대 링크를 다시 여세요.",
   "app.lostMatch": "매치 연결이 끊겼어요.",
+  "app.rejoinFailed": "매치에 다시 들어가지 못했어요: 자리가 유지되지 않았어요.",
   "app.malformedRelayLink": "유효하지 않은 릴레이 링크예요. 아무것도 저장되지 않았어요.",
   "app.ownLobby": "내 로비예요",
 
@@ -1049,6 +1050,7 @@ export default {
   "recharge.spent": "{skill}, 사기 상승까지 사용 불가",
 
   "reconnect.detail": "호스트 연결이 끊겼어요. 자리는 유지돼요.",
+  "reconnect.rejoinDetail": "경기로 돌아가는 중입니다. 자리는 유지됩니다.",
   "reconnect.seconds": "{seconds}초",
   "reconnect.title": "다시 연결 중…",
 

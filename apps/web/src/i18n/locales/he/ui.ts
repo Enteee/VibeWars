@@ -10,6 +10,7 @@ export default {
   "app.framedRelayLink": "פתח את קישור ה-relay בכרטיסייה משלו. שום דבר לא נשמר.",
   "app.inviteInLobby": "חזור לתפריט ופתח שוב את קישור ההזמנה.",
   "app.lostMatch": "החיבור למשחק אבד.",
+  "app.rejoinFailed": "לא ניתן לחזור למשחק: המקום שלך לא נשמר.",
   "app.malformedRelayLink": "קישור ה-relay הזה אינו תקין. שום דבר לא נשמר.",
   "app.ownLobby": "זה הלובי שלך",
 
@@ -1169,6 +1170,7 @@ export default {
   "recharge.spent": "{skill}, מנוצל עד חיזוק מורל",
 
   "reconnect.detail": "החיבור של המארח נפל. המקום שלך שמור.",
+  "reconnect.rejoinDetail": "מחזירים אותך למשחק שלך. המקום שלך שמור.",
   "reconnect.seconds": "{seconds} שנ׳",
   "reconnect.title": "מתחבר מחדש…",
 

@@ -10,6 +10,7 @@ export default {
   "app.framedRelayLink": "افتح رابط المرحّل في علامة تبويب مستقلة. لم يُحفظ شيء.",
   "app.inviteInLobby": "ارجع إلى القائمة، ثم افتح رابط الدعوة مرة أخرى.",
   "app.lostMatch": "انقطع الاتصال بالمباراة.",
+  "app.rejoinFailed": "تعذّرت العودة إلى المباراة: لم يُحتفظ بمقعدك.",
   "app.malformedRelayLink": "رابط المرحّل هذا غير صالح. لم يُحفظ شيء.",
   "app.ownLobby": "هذه ردهتك أنت",
 
@@ -1265,6 +1266,7 @@ export default {
   "recharge.spent": "{skill}، مستنفدة حتى رفع المعنويات",
 
   "reconnect.detail": "انقطع اتصال المضيف. مقعدك محجوز.",
+  "reconnect.rejoinDetail": "نعيدك إلى مباراتك. مقعدك محجوز.",
   "reconnect.seconds": "{seconds} ث",
   "reconnect.title": "جارٍ إعادة الاتصال…",
 

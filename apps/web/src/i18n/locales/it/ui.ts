@@ -11,6 +11,7 @@ export default {
     "Apri il link del relay in una scheda separata. Non è stato salvato nulla.",
   "app.inviteInLobby": "Torna al menu, poi apri di nuovo il link d'invito.",
   "app.lostMatch": "Connessione alla partita persa.",
+  "app.rejoinFailed": "Impossibile rientrare nella partita: il tuo posto non è stato tenuto.",
   "app.malformedRelayLink": "Il link del relay non è valido. Non è stato salvato nulla.",
   "app.ownLobby": "Questa è la tua lobby",
 
@@ -1171,6 +1172,7 @@ export default {
   "recharge.spent": "{skill}, esaurita fino a un bonus morale",
 
   "reconnect.detail": "La connessione dell'host è caduta. Il tuo posto è riservato.",
+  "reconnect.rejoinDetail": "Ti stiamo riportando nella tua partita. Il tuo posto è tenuto.",
   "reconnect.seconds": "{seconds} s",
   "reconnect.title": "Riconnessione…",
 

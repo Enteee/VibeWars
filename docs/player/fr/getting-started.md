@@ -129,8 +129,9 @@ Quitter, et la liste de qui s'y trouve ; sa pastille les compte.
   ouvert jusqu'à ce que tu sois entré. Une fois dedans, la fenêtre Salon
   indique **Salon**, et son **Quitter** te ramène à un nouveau salon à toi, avec
   un nouveau lien d'invitation. Un lien ouvert sur l'écran d'un salon ou en
-  match te demande de revenir d'abord au menu. Si ta connexion saute, ta place
-  est gardée 30 secondes.
+  match te demande de revenir d'abord au menu. Si ta connexion saute, ou si tu
+  recharges ou rouvres la page, ta place est gardée 30 secondes et tu y es
+  remis.
 - **Retirer quelqu'un :** en tant qu'hôte, appuie sur le **×** à côté du nom
   d'un joueur dans la fenêtre Salon, hors match. On lui dit que l'hôte l'a
   retiré, il reçoit un nouveau salon à lui, et ne peut pas revenir dans le tien

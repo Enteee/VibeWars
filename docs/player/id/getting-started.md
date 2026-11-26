@@ -123,8 +123,8 @@ Keluar, serta daftar siapa saja yang ada di dalamnya; lencananya menghitung juml
   sampai proses bergabung berhasil. Begitu masuk, jendela Lobi bertuliskan **Lobi**, dan
   tombol **Keluar**-nya membawamu kembali ke lobi baru milikmu sendiri, dengan link
   undangan baru. Link yang dibuka di layar lobi atau di dalam laga memintamu
-  kembali ke menu dulu. Kalau koneksimu terputus, kursimu ditahan
-  selama 30 detik.
+  kembali ke menu dulu. Kalau koneksimu terputus, atau kamu memuat ulang atau membuka
+  lagi halamannya, kursimu ditahan selama 30 detik dan kamu dimasukkan kembali.
 - **Mengeluarkan seseorang:** sebagai host, tekan **×** di samping nama
   pemain di jendela Lobi, di luar laga. Mereka diberi tahu bahwa host mengeluarkan
   mereka, mendapat lobi baru milik sendiri, dan tidak bisa kembali ke lobimu selama lobi itu masih ada.

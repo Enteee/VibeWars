@@ -10,6 +10,7 @@ export default {
   "app.framedRelayLink": "Otevři odkaz na relay ve vlastní kartě. Nic se neuložilo.",
   "app.inviteInLobby": "Vrať se do menu a otevři odkaz s pozvánkou znovu.",
   "app.lostMatch": "Spojení se zápasem bylo ztraceno.",
+  "app.rejoinFailed": "Do zápasu se nepodařilo vrátit: tvoje místo nebylo podrženo.",
   "app.malformedRelayLink": "Tento odkaz na relay není platný. Nic se neuložilo.",
   "app.ownLobby": "To je tvoje vlastní lobby",
 
@@ -1203,6 +1204,7 @@ export default {
   "recharge.spent": "{skill}, vyčerpáno do zvýšení morálky",
 
   "reconnect.detail": "Hostitel ztratil spojení. Tvoje místo zůstává rezervované.",
+  "reconnect.rejoinDetail": "Vracíme tě do tvého zápasu. Tvé místo je drženo.",
   "reconnect.seconds": "{seconds} s",
   "reconnect.title": "Znovu se připojuji…",
 

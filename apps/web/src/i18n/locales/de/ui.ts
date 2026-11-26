@@ -10,6 +10,7 @@ export default {
   "app.framedRelayLink": "Öffne den Relay-Link in einem eigenen Tab. Es wurde nichts gespeichert.",
   "app.inviteInLobby": "Geh zurück ins Menü und öffne den Einladungslink dann noch einmal.",
   "app.lostMatch": "Verbindung zum Match verloren.",
+  "app.rejoinFailed": "Rückkehr ins Match fehlgeschlagen: Dein Platz wurde nicht gehalten.",
   "app.malformedRelayLink": "Dieser Relay-Link ist ungültig. Es wurde nichts gespeichert.",
   "app.ownLobby": "Das ist deine eigene Lobby",
 
@@ -1117,6 +1118,7 @@ export default {
   "recharge.spent": "{skill}, verbraucht bis zum nächsten Moralschub",
 
   "reconnect.detail": "Die Verbindung des Hosts ist abgebrochen. Dein Platz bleibt reserviert.",
+  "reconnect.rejoinDetail": "Du wirst zurück in dein Match gebracht. Dein Platz bleibt reserviert.",
   "reconnect.seconds": "{seconds} s",
   "reconnect.title": "Verbindet neu…",
 

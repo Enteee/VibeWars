@@ -265,4 +265,15 @@ export interface LobbyConnection {
    */
   onPartyProposal(handler: () => void): void;
   disconnect(): Promise<void>;
+  /**
+   * Leave the room without a leave, as a drop does (#4110): the host holds
+   * this seat for the reconnect window, for a page back from a reload.
+   */
+  leaveAsDrop(): Promise<void>;
+  /**
+   * What a page back from a reload needs to take this seat back (#4110):
+   * the host and the seat's token, once the host gave one; never sent to
+   * anyone else.
+   */
+  returnTicket(): { readonly hostId: string; readonly token: string } | undefined;
 }
