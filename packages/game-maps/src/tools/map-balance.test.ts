@@ -2523,6 +2523,20 @@ describe("walks and high ground (#3070)", () => {
       within(walksByRoute(map, altar, 3, { through: [], broken }), 0.1);
     });
 
+    // #4098: each ghost-spawn turned +12° off its team's axis, on a keep whose south-east and
+    // south-west mirror each other, walked team 2's ghost 14 % less to the altar than team 1's,
+    // and team 2 won 46 % of decided 8v8s. The ghost claims the altar, so it is held to 3 %.
+    it("walks each team's spawn and each ghost to the altar within 3 % of the others, gates shut", () => {
+      const ghosts = map.objectives.flatMap((each) =>
+        each.kind === "ghost-spawn"
+          ? [{ team: each.team, layer: each.layer, position: each.position }]
+          : [],
+      );
+      expect(ghosts.map(({ team }) => team).sort()).toEqual([0, 1, 2]);
+      within(walksTo(shut, altar, 3), 0.03);
+      within(walksTo({ ...shut, spawnPoints: ghosts }, altar, 3), 0.03);
+    }, 60_000);
+
     it("brings each team to the tower's rim on its side within 25 % of the others", () => {
       const rim = (team: number) => {
         const angle = ((-90 + 120 * team) * Math.PI) / 180;

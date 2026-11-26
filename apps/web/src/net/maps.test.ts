@@ -548,9 +548,9 @@ describe("hostMap (#476)", () => {
       altar: { x: 2500, y: 2200 },
       altarLayer: 3,
       spawns: [
-        { team: 0, position: { x: 2820, y: 700 }, layer: 1 },
-        { team: 1, position: { x: 3639.04, y: 3227.13 }, layer: 1 },
-        { team: 2, position: { x: 1040.96, y: 2672.87 }, layer: 1 },
+        { team: 0, position: { x: 2339.65, y: 674.4 }, layer: 1 },
+        { team: 1, position: { x: 3901.38, y: 2823.93 }, layer: 1 },
+        { team: 2, position: { x: 1098.62, y: 2823.93 }, layer: 1 },
       ],
     });
     expect(hostMap("broken-tower")?.ghostField).toBeUndefined();
