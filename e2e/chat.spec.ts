@@ -93,13 +93,14 @@ test("keys typed into chat never cast or move (#479)", async ({ page }) => {
   // Every key the default keymap casts or walks with (#4121), so a keymap
   // change cannot leave this test pressing none: slot 5's key, 5 in the
   // classic preset, casts Rending Aura, a self-cast enchantment. A key
-  // that types a character goes into the line; one that does not, an
-  // arrow, is pressed in the box.
+  // that types a letter or digit goes into the line; any other, an arrow
+  // (labelled ↑, one character too, but it types nothing), is pressed in
+  // the box.
   const codes = [
     ...[0, 1, 2, 3, 4, 5, 6, 7].map((slot) => skillKey(slot)),
     ...(["move-up", "move-left", "move-down", "move-right"] as const).map((action) => key(action)),
   ];
-  const typed = codes.filter((code) => codeLabel(code).length === 1);
+  const typed = codes.filter((code) => /^(?:Key|Digit).$/.test(code));
   const line = typed.map((code) => codeLabel(code).toLowerCase()).join("");
   await page.locator("body").press("Enter");
   await expect(page.getByRole("textbox", { name: "chat message" })).toBeFocused();
