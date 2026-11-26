@@ -188,6 +188,22 @@ flame in it (`#ff9040`, `#ffd23d`). A light with no such prefix is a glow
 with no drawn source. Keep a brazier off walk lines, pits and water: it is
 scenery, with no collision.
 
+In the gothic look (#4057) every fire burns the same warm `#ffbe6e`,
+`FIRE_LIGHT_GAIN` brighter and `FIRE_LIGHT_REACH` wider than its map says,
+so a pool reads on the dark floor (`warmFireLights`, `lighting-model.ts`),
+and adds a warm pool over the lit floor at `FIRE_GLOW` 0.35 of its
+intensity, as a tunnel's lights do (`glowOf`, `lighting-pass.ts`).
+A fire is a `torch-`, `fire-` or `brazier-` light that is red at heart: a
+teal brazier burns magic and keeps its colour. A fire's colour in the map is
+not shown; its intensity and radius still set the pool.
+
+The view darkens towards its corners (`vignette.ts`): nothing in the centre
+third, rising to `VIGNETTE.alpha` 0.6 at a corner, black. It follows the
+screen and is drawn over the ground and what is laid on it, under every
+gameplay layer (`renderOrder` `vignette`), so a body, a cue or a zone at the
+edge of the view keeps its colours. Walls, decks and tall decor stand over
+it and keep their light. The HUD is not on the canvas and never darkens.
+
 ## 3. Shadow and height
 
 - **The sun's shadow** is the footprint of what casts it, moved by the sun's

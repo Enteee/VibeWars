@@ -183,6 +183,7 @@ import {
   walkMarkerTicks,
   type WalkMarker,
 } from "./walk-marker.js";
+import { Vignette } from "./vignette.js";
 import { weaponMarkLayout, weaponTipAt } from "./weapon-mark.js";
 import { AttackClock, REST_FRAME, shownFrame, type AttackFrame } from "./attack-clock.js";
 import { CAST_GLOW_CORE, CAST_GLOW_CORE_LIFT, castGlow } from "./cast-beats.js";
@@ -1160,6 +1161,7 @@ export class ArenaScene extends Phaser.Scene {
   private now = 0;
   /** The light maps (ADR-0052); `undefined` until `create`. */
   private lightingPass: LightingPass | undefined;
+  private vignette: Vignette | undefined;
   /** Whether Alt is held, for the hover ring (#3020); a key does not wait for the mouse to move. */
   private alt: AltTracker | undefined;
   /** Whether a finger has been held still long enough to pick the ground below (#3878). */
@@ -1202,6 +1204,7 @@ export class ArenaScene extends Phaser.Scene {
     // `view` as it is.
     const snapped = snapView(view, camera);
     camera.centerOn(snapped.x, snapped.y);
+    this.vignette?.place(snapped, view.zoom, camera);
   }
 
   /** The arena's bounds, which the grid covers and the edge line traces. */
@@ -1363,6 +1366,7 @@ export class ArenaScene extends Phaser.Scene {
     }
     this.groundGraphics = this.add.graphics().setDepth(GROUND_DEPTH);
     this.lightingPass = new LightingPass(this);
+    this.vignette = new Vignette(this);
     this.stackAtlas = new StackAtlas(
       (width, height) => this.stackSurface(width, height),
       (bake) => {
@@ -6162,6 +6166,8 @@ export class ArenaScene extends Phaser.Scene {
   private shutdown(): void {
     this.lightingPass?.destroy();
     this.lightingPass = undefined;
+    this.vignette?.destroy();
+    this.vignette = undefined;
     // `create` listens for a restored context while it holds an atlas.
     if (this.stackAtlas !== undefined) {
       this.game.renderer.off(Phaser.Renderer.Events.RESTORE_WEBGL, this.rebuildStackAtlas);

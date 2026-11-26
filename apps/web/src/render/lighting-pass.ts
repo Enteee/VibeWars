@@ -19,6 +19,7 @@ import {
 import {
   SURFACE_LIGHT_FLOOR,
   flickerAt,
+  isFireLight,
   lightAt,
   multiplyColour,
   tintOf,
@@ -68,6 +69,24 @@ export function tunnelGlow(intensity: number): number {
 /** Whether `layer` is the tunnels' (#3350): its lights add a warm pool too. */
 export function glowsOn(structure: MapStructure, layer: number): boolean {
   return structure.tunnels.length > 0 && layer === structure.ground - 1;
+}
+
+/**
+ * A fire adds a warm pool over the lit floor on any layer (#4057), this much
+ * of its intensity at the heart: the gothic mock's 0.35 warmth, so a pool
+ * reads on the dark floor where multiplying alone could only darken it.
+ */
+export const FIRE_GLOW = 0.35;
+
+/**
+ * What `light` adds at the heart of its warm pool, 0 to 1: every light on
+ * the tunnels' layer (#3350), a fire on any other (#4057), nothing else.
+ */
+export function glowOf(light: LightsOf, onTunnels: boolean): number {
+  if (onTunnels) {
+    return tunnelGlow(light.intensity);
+  }
+  return isFireLight(light) ? Math.max(light.intensity, 0) * FIRE_GLOW : 0;
 }
 
 /** What the budget still allows, best first. */
@@ -470,6 +489,16 @@ export interface FlickerRegion {
   readonly lights: readonly LightsOf[];
 }
 
+/** Whether a circle at `x, y` of `radius` meets `box`. */
+function circleMeets(
+  { x, y, radius }: { readonly x: number; readonly y: number; readonly radius: number },
+  box: LightMapBox,
+): boolean {
+  const dx = x - Math.min(Math.max(x, box.x), box.x + box.width);
+  const dy = y - Math.min(Math.max(y, box.y), box.y + box.height);
+  return dx * dx + dy * dy < radius * radius;
+}
+
 function overlaps(a: LightMapBox, b: LightMapBox): boolean {
   return a.x < b.x + b.width && b.x < a.x + a.width && a.y < b.y + b.height && b.y < a.y + a.height;
 }
@@ -483,8 +512,11 @@ export interface LightMapCells {
   readonly flat: readonly LightMapBox[];
   /** Where light varies, shown from the light map's texture. */
   readonly textured: readonly LightMapBox[];
-  /** Where a light reaches, so the warm pools are not black (#3350). */
-  readonly lit: readonly LightMapBox[];
+  /**
+   * Where a warm pool reaches (#3350, #4057): the cells its circle meets,
+   * not its box, as the rest of the pool's texture is black and adds nothing.
+   */
+  readonly glow: readonly LightMapBox[];
 }
 
 /**
@@ -533,6 +565,14 @@ export function lightMapCells(
       ]),
     ),
   );
+  const onTunnels = glowsOn(structure, layer);
+  const pools = [...steady, ...flickering]
+    .filter((light) => glowOf(light, onTunnels) > 0)
+    .map(({ position, radius }) => ({
+      x: position.x * LIGHT_MAP_SCALE - extent.x,
+      y: position.y * LIGHT_MAP_SCALE - extent.y,
+      radius: radius * LIGHT_MAP_SCALE + MARK_MARGIN,
+    }));
   const casters = stageShadows(stage) ? shadowCasters(walls, structure, layer) : [];
   const ground = layer === structure.ground;
   const shapes = [
@@ -564,7 +604,9 @@ export function lightMapCells(
   return {
     flat: cover.flatMap((box) => split(box, plain)),
     textured: cover.flatMap((box) => split(box, (cell) => !plain(cell))),
-    lit: cover.flatMap((box) => split(box, (cell) => reach.some((mark) => overlaps(mark, cell)))),
+    glow: cover.flatMap((box) =>
+      split(box, (cell) => pools.some((pool) => circleMeets(pool, cell))),
+    ),
   };
 }
 
@@ -907,15 +949,20 @@ export class LightingPass {
       painter.destroy();
     }
 
-    const glowKey = glowsOn(structure, layer)
-      ? this.buildGlow(
-          `lighting-${String(nextLightingId)}-glow`,
-          extent,
-          [...steady, ...flickering],
-          shadowed,
-          outsideKey,
-        )
-      : undefined;
+    const cells = lightMapCells(lighting, structure, this.walls, layer, extent, this.stage);
+    const onTunnels = glowsOn(structure, layer);
+    const glowing = [...steady, ...flickering].filter((light) => glowOf(light, onTunnels) > 0);
+    const glowKey =
+      cells.glow.length > 0
+        ? this.buildGlow(
+            `lighting-${String(nextLightingId)}-glow`,
+            extent,
+            glowing,
+            onTunnels,
+            shadowed,
+            outsideKey,
+          )
+        : undefined;
 
     const lift = elevationOf(layer, structure.ground);
     const shownImages: { image: Phaser.GameObjects.Image; box: LightMapBox }[] = [];
@@ -938,7 +985,6 @@ export class LightingPass {
         return image;
       };
     const image = imageOf(shownKey, Phaser.BlendModes.MULTIPLY);
-    const cells = lightMapCells(lighting, structure, this.walls, layer, extent, this.stage);
     // Where the map is one colour, that colour multiplied flat, untextured (#3524).
     const flat = this.scene.add
       .graphics()
@@ -957,7 +1003,7 @@ export class LightingPass {
     // where no light reaches they are black, and add nothing.
     cells.textured.forEach(image);
     if (glowKey !== undefined) {
-      cells.lit.forEach(imageOf(glowKey, Phaser.BlendModes.ADD));
+      cells.glow.forEach(imageOf(glowKey, Phaser.BlendModes.ADD));
     }
     // The ground's light over a tunnel fades with its cover (#3329).
     const tunnels = new Map(
@@ -1062,25 +1108,25 @@ export class LightingPass {
   }
 
   /**
-   * The warm pools `lights` add on the tunnels' layer (#3350): black but
-   * for each light at `tunnelGlow` of its intensity, drawn adding over
-   * the lit floor, so a torch lifts it past its unlit tone. Steady:
-   * a pool does not flicker.
+   * The warm pools `lights` add (#3350, #4057): black but for each light
+   * at `glowOf` it, drawn adding over the lit floor, so a torch lifts it
+   * past its unlit tone. Steady: a pool does not flicker.
    */
   private buildGlow(
     key: string,
     extent: LightMapBox,
     lights: readonly LightsOf[],
+    onTunnels: boolean,
     shadowed: ReadonlyMap<string, string>,
     outsideKey: string | undefined,
   ): string {
     const glow = this.scene.textures.addDynamicTexture(key, extent.width, extent.height);
     if (glow === null) {
-      throw new Error("lighting: could not create a tunnel's glow");
+      throw new Error("lighting: could not create a warm glow");
     }
     glow.fill(0x000000, 1);
     for (const light of lights) {
-      this.stampLight(glow, extent, light, tunnelGlow(light.intensity), shadowed.get(light.id));
+      this.stampLight(glow, extent, light, glowOf(light, onTunnels), shadowed.get(light.id));
     }
     if (outsideKey !== undefined) {
       glow.erase(outsideKey, glow.width / 2, glow.height / 2);
