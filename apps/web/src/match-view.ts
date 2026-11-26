@@ -1126,7 +1126,12 @@ export async function startMatchView(
       return;
     }
     for (const event of message.events) {
-      captured?.push({ t: now(), kind: event.kind, skillId: message.skillId });
+      captured?.push({
+        t: now(),
+        kind: event.kind,
+        skillId: message.skillId,
+        own: message.casterSessionId === viewed.selfSessionId,
+      });
     }
     if (viewport !== undefined) {
       showCombatFeedback(viewport.scene, message, latestMatch, structure.ground);

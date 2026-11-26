@@ -27,7 +27,7 @@ import { parseArgs } from "node:util";
 
 import { chromium } from "@playwright/test";
 
-import { advance, cycleSkills, waitEvent, walkTo } from "./actions.mjs";
+import { advance, captureState, cycleSkills, waitEvent, walkTo } from "./actions.mjs";
 import { musicSettled } from "./plan.mjs";
 
 const PORT = 4322;
@@ -49,19 +49,36 @@ const FIGHT_MS = 150_000;
 const RANKED_MAP = "broken-tower";
 /** A shot is tried this often before the run fails (#3982). */
 const SCENE_TRIES = 5;
-/** The west plate of Broken Tower (#4079), and its gate's index in the map's `gates`: the plate is at 1890,1480. */
-const WEST_PLATE = { x: 1890, y: 1480 };
+/** @typedef {{ id: string, opener: { kind: string, plate?: { x: number, y: number } } }} GateDef */
+/** @type {unknown} */
+const towerMap = JSON.parse(
+  fs.readFileSync(
+    path.join(
+      import.meta.dirname,
+      "..",
+      "..",
+      "packages",
+      "game-maps",
+      "maps",
+      "broken-tower",
+      "map.json",
+    ),
+    "utf8",
+  ),
+);
+/** Broken Tower's gates, in the order the page's `gatesOpen` reports them (#4079). */
+const TOWER_GATES = /** @type {{ gates: GateDef[] }} */ (towerMap).gates;
 /** The longest an action shot waits for its event, ms. */
 const ACTION_MS = 60_000;
-/** @typedef {{ kind: string, skillId: string }} Combat */
+/** @typedef {{ kind: string, skillId: string, own: boolean }} Combat */
 /**
  * The action shots: the map, and the event that starts each.
  * @type {Record<string, { map: string, wanted: (event: Combat) => boolean }>}
  */
 const ACTIONS = {
-  cast: { map: "arena-canyon", wanted: (e) => e.kind === "damage" && e.skillId !== "" },
-  heal: { map: "ember-pits", wanted: (e) => e.kind === "heal" && e.skillId !== "" },
-  ramp: { map: "broken-tower", wanted: (e) => e.kind === "damage" },
+  cast: { map: "arena-canyon", wanted: (e) => e.own && e.kind === "damage" && e.skillId !== "" },
+  heal: { map: "ember-pits", wanted: (e) => e.own && e.kind === "heal" && e.skillId !== "" },
+  ramp: { map: "broken-tower", wanted: (e) => e.own && e.kind === "damage" },
 };
 
 /**
@@ -664,7 +681,7 @@ async function waitLiveStepped(page, stepper) {
  * @param {string} url
  * @param {string} name  the scene, `act-<name>`
  * @param {string} mapId
- * @param {(event: { kind: string, skillId: string }) => boolean} wanted
+ * @param {(event: Combat) => boolean} wanted
  */
 async function actionScene(browser, url, name, mapId, wanted) {
   const id = `act-${name}`;
@@ -698,7 +715,8 @@ async function actionScene(browser, url, name, mapId, wanted) {
 }
 
 /**
- * The gate shot (#3982, scene 5): Broken Tower's west plate. The player
+ * The gate shot (#3982, scene 5): the plate nearest the player's spawn on
+ * Broken Tower, found by the map's gate ids, not by position in the list. The player
  * walks onto it and the portcullis beside it opens; the shot starts
  * there (`marks.action`). Retried like `actionScene`.
  *
@@ -715,11 +733,31 @@ async function gateScene(browser, url) {
     scene.marks.matchStart = scene.now();
     step = id;
     await waitLiveStepped(scene.page, frame);
+    const start = (await captureState(scene.page)).position;
+    const plates = TOWER_GATES.flatMap((gate, index) =>
+      gate.opener.kind === "plate" && gate.opener.plate !== undefined
+        ? [{ index, plate: gate.opener.plate }]
+        : [],
+    );
+    const own =
+      start === null
+        ? undefined
+        : plates.sort(
+            (a, b) =>
+              Math.hypot(a.plate.x - start.x, a.plate.y - start.y) -
+              Math.hypot(b.plate.x - start.x, b.plate.y - start.y),
+          )[0];
+    if (own === undefined) {
+      const nobody = await pageEvents(scene.page);
+      await closeScene(scene, id, nobody.events, nobody.timeOrigin);
+      console.error(`${id} try ${String(attempt)}: no player or no plate`);
+      continue;
+    }
     const opened = await walkTo(
       scene.page,
       frame,
-      WEST_PLATE,
-      (s) => s.gatesOpen[2] === true,
+      own.plate,
+      (s) => s.gatesOpen[own.index] === true,
       ACTION_MS,
     );
     const seen = await pageEvents(scene.page);

@@ -1,13 +1,14 @@
 /**
  * Input scripts for the trailer's action shots (#3982). Each helper drives
  * the page through the keyboard and steps the frame clock, so the video is
- * smooth; none reads game state, because the match page exposes only its
- * `__capture` combat events. A scene's script is a loop of these until its
+ * smooth. They read the page only through `?capture`: its `__capture` combat
+ * events (each marked `own` when the local player caused it) and `__captureState`
+ * (the player's spot, the gates). A scene's script is a loop of these until its
  * event shows.
  */
 
 /** @typedef {{ steps(count: number): Promise<void> }} Steps */
-/** @typedef {{ t: number, kind: string, skillId: string }} Seen */
+/** @typedef {{ t: number, kind: string, skillId: string, own: boolean }} Seen */
 
 const FPS = 20;
 const frames = (/** @type {number} */ ms) => Math.round((ms * FPS) / 1000);
@@ -16,9 +17,7 @@ const frames = (/** @type {number} */ ms) => Math.round((ms * FPS) / 1000);
 export async function seenEvents(page) {
   return page.evaluate(
     () =>
-      /** @type {{ t: number, kind: string, skillId: string }[]} */ (
-        /** @type {unknown} */ (Reflect.get(globalThis, "__capture")) ?? []
-      ),
+      /** @type {Seen[]} */ (/** @type {unknown} */ (Reflect.get(globalThis, "__capture")) ?? []),
   );
 }
 

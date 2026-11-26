@@ -11,6 +11,8 @@ export interface CaptureEvent {
   readonly kind: string;
   /** The skill that caused it, `""` for a weapon or the world. */
   readonly skillId: string;
+  /** Whether the local seat caused it: the trailer shoots its own player, not any bot. */
+  readonly own: boolean;
 }
 
 /** Whether the page asked to record its events: `?capture`. */
