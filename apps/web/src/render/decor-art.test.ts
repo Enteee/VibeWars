@@ -59,7 +59,8 @@ describe("decor art (#4013)", () => {
   });
 
   it("casts every standing prop's shadow toward +x +y, from the north-west light", () => {
-    for (const kind of DECOR_KINDS.filter((kind) => kind !== "cinders")) {
+    const flat = ["cinders", "bones", "cairn"];
+    for (const kind of DECOR_KINDS.filter((kind) => !flat.includes(kind))) {
       const shadow = decorShadow(prop(kind));
       expect(shadow.kind).toBe("ellipse");
       if (shadow.kind === "ellipse") {
@@ -253,5 +254,122 @@ describe("reeds (#4019)", () => {
     expect(at).toBeGreaterThan(wet.findLastIndex((command) => command.kind === "poly"));
     expect(wet.slice(at + 1).every((command) => command.kind === "line")).toBe(true);
     expect(wet.slice(at + 1)).not.toHaveLength(0);
+  });
+});
+
+describe("wilds kinds (#4020)", () => {
+  const { decor } = BIOME.wilds;
+  /** How far `commands` reach across and up from a foot at (400, 300). */
+  const extent = (commands: readonly DecorCommand[]): { across: number; up: number } => {
+    const points = commands.flatMap((command): { x: number; y: number }[] =>
+      command.kind === "ellipse"
+        ? [
+            { x: command.at.x - command.rx, y: command.at.y - command.ry },
+            { x: command.at.x + command.rx, y: command.at.y + command.ry },
+          ]
+        : command.kind === "line"
+          ? [command.from, command.to]
+          : command.points,
+    );
+    const xs = points.map(({ x }) => x);
+    return {
+      across: Math.max(...xs) - Math.min(...xs),
+      up: 300 - Math.min(...points.map(({ y }) => y)),
+    };
+  };
+  const sized = (kind: MapDecor["kind"], variant: number, scale: number): MapDecor => ({
+    ...prop(kind, variant),
+    scale,
+  });
+
+  it("keeps a boulder cluster under 100 u across at the largest scale, so it is never cover", () => {
+    for (const variant of [0, 1, 2, 3]) {
+      const { across } = extent(decorCommands(sized("rock", variant, 1.5), decor, 0, true));
+      expect(across).toBeLessThan(100);
+      expect(across).toBeGreaterThan(40);
+    }
+    expect(animatedDecor("rock")).toBe(false);
+    expect(tallDecor("rock")).toBe(false);
+  });
+
+  it("lays bones and a cairn flat, 40 to 60 u across, still, their shadow cast nowhere", () => {
+    for (const kind of ["bones", "cairn"] as const) {
+      for (const variant of [0, 1, 2, 3]) {
+        const { across } = extent(decorCommands(prop(kind, variant), decor, 0, true));
+        expect(across, `${kind} ${String(variant)}`).toBeGreaterThanOrEqual(40);
+        expect(across, `${kind} ${String(variant)}`).toBeLessThanOrEqual(60);
+      }
+      expect(animatedDecor(kind)).toBe(false);
+      expect(tallDecor(kind)).toBe(false);
+      const shadow = decorShadow(prop(kind));
+      expect(shadow.kind === "ellipse" && shadow.at).toEqual({ x: 400, y: 300 });
+    }
+  });
+
+  it("never lights a cairn: no glow and no colour of its own, so it is not a shrine", () => {
+    /** How far a colour's channels spread: 0 for a grey. */
+    const chroma = (colour: number): number => {
+      const channels = [(colour >> 16) & 0xff, (colour >> 8) & 0xff, colour & 0xff];
+      return Math.max(...channels) - Math.min(...channels);
+    };
+    const stone = Math.max(chroma(decor.rock), chroma(decor.rockLit), chroma(decor.rockShade));
+    for (const variant of [0, 1, 2, 3]) {
+      for (const command of decorCommands(prop("cairn", variant), decor, 0, true)) {
+        expect(command.kind === "poly" && command.glow).toBe(false);
+        expect(chroma(command.colour)).toBeLessThanOrEqual(stone);
+      }
+    }
+  });
+
+  it("stands a dead tree 50 u across and taller than a body, faded off one inside its outline", () => {
+    for (const variant of [0, 1, 2, 3]) {
+      for (const now of [0, 1, 2, 3]) {
+        const commands = decorCommands(prop("dead-tree", variant), decor, now, false);
+        const { across, up } = extent(commands);
+        expect(across).toBeGreaterThan(30);
+        expect(across).toBeLessThan(65);
+        expect(up).toBeGreaterThan(45);
+        const outline = decorOutline(prop("dead-tree", variant));
+        const xs = outline.map(({ x }) => x);
+        const ys = outline.map(({ y }) => y);
+        for (const command of commands) {
+          if (command.kind === "poly" || command.kind === "outline") {
+            for (const { x, y } of command.points) {
+              expect(x).toBeGreaterThanOrEqual(Math.min(...xs));
+              expect(x).toBeLessThanOrEqual(Math.max(...xs));
+              expect(y).toBeGreaterThanOrEqual(Math.min(...ys));
+            }
+          }
+        }
+      }
+    }
+    expect(tallDecor("dead-tree")).toBe(true);
+  });
+
+  it("sways a dead tree on a 4 s beat and ripples a banner on a 5 s one, both held when still", () => {
+    for (const [kind, period] of [
+      ["dead-tree", 4],
+      ["banner", 5],
+    ] as const) {
+      expect(animatedDecor(kind)).toBe(true);
+      expect(decorSway(prop(kind), 0.9, false)).toBeCloseTo(
+        decorSway(prop(kind), 0.9 + period, false),
+      );
+      for (let now = 0; now < period; now += 0.25) {
+        expect(Math.abs(decorSway(prop(kind), now, false))).toBeLessThanOrEqual(DECOR_SWAY);
+        expect(decorSway(prop(kind), now, true)).toBe(0);
+      }
+    }
+  });
+
+  it("hangs a banner's cloth 40 u wide, below its crossbar, and not tall", () => {
+    const commands = decorCommands(prop("banner"), decor, 0, true);
+    const cloth = commands.filter(
+      (command) =>
+        command.kind === "poly" && [decor.cloth, decor.clothShade].includes(command.colour),
+    );
+    expect(cloth).toHaveLength(3);
+    expect(extent(cloth).across).toBeCloseTo(40, 0);
+    expect(tallDecor("banner")).toBe(false);
   });
 });
