@@ -266,7 +266,7 @@ async function viewedMatch(options: MatchViewOptions): Promise<ViewedMatch> {
       watched.onCombat(handler);
     },
     onConnectionChange: (handler) => {
-      watched.onLost(handler);
+      watched.onConnectionChange(handler);
     },
     disconnect: () => watched.disconnect(),
   };
