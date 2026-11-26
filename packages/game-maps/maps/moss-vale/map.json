@@ -1727,54 +1727,6 @@
       "variant": 2
     },
     {
-      "id": "reed-1",
-      "kind": "reed",
-      "at": {
-        "x": 2745,
-        "y": 2020
-      },
-      "layer": 1,
-      "rotation": 332,
-      "scale": 0.99,
-      "variant": 0
-    },
-    {
-      "id": "reed-2",
-      "kind": "reed",
-      "at": {
-        "x": 2153,
-        "y": 2011
-      },
-      "layer": 1,
-      "rotation": 270,
-      "scale": 0.81,
-      "variant": 3
-    },
-    {
-      "id": "reed-3",
-      "kind": "reed",
-      "at": {
-        "x": 2813,
-        "y": 2015
-      },
-      "layer": 1,
-      "rotation": 99,
-      "scale": 0.86,
-      "variant": 2
-    },
-    {
-      "id": "reed-4",
-      "kind": "reed",
-      "at": {
-        "x": 2868,
-        "y": 2010
-      },
-      "layer": 1,
-      "rotation": 177,
-      "scale": 0.81,
-      "variant": 2
-    },
-    {
       "id": "fern-1",
       "kind": "fern",
       "at": {
