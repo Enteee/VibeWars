@@ -235,7 +235,7 @@ describe("Ethereal Burden (#1870)", () => {
 describe("Sum of All Fears (#1870)", () => {
   it("makes its target move, attack and cast a third slower", () => {
     expect(aggregateModifiers([{ id: "sum-of-all-fears", ranks: NO_RANKS }])).toMatchObject({
-      moveSpeedMultiplier: 0.67,
+      moveSpeedSlow: 0.67,
       attackDurationMultiplier: 1.33,
       castTimeMultiplier: 1.33,
     });

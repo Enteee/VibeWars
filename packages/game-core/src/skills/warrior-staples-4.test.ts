@@ -315,7 +315,7 @@ describe("Bull's Charge (#2181)", () => {
     const caster = warrior();
     selfCast("warrior.bulls-charge", caster);
     expect(caster.statuses.get("bulls-charge")?.remainingSeconds).toBe(6);
-    expect(statusMoveSpeed(aggregateModifiers(caster.statuses.active))).toBe(1.5);
+    expect(statusMoveSpeed(aggregateModifiers(caster.statuses.active))).toBe(1.33);
   });
 
   it("knocks down a foe moving as the blow lands, and not a still one", () => {

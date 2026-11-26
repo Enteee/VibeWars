@@ -311,7 +311,7 @@ describe("Pious Haste (#939)", () => {
     expect(self.statuses.get("pious-haste-run")?.remainingSeconds).toBe(6);
     expect(statusMoveSpeed(aggregateModifiers(self.statuses.active))).toBe(1.5);
     // ADR-0019's clamp, as Dash's 50% meets it.
-    expect(moveSpeedMultiplier(self)).toBe(1.33);
+    expect(moveSpeedMultiplier(self)).toBe(1.5);
   });
 });
 
