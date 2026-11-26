@@ -64,7 +64,7 @@ Výsledková tabule ukazuje body, tvoje jako první, a čas. Pod ní řádek za 
 
 Relikvii nosí i boti: pro tvoji relikvii si dojde ten nejbližší, pokud ji nejdeš zvednout sám. Nejdřív jde bot mimo boj; když jsou všichni v boji, opustí boj kvůli relikvii ten nejbližší, takže patová situace u oltáře nikdy nezastaví bodování. Léčitel nebo těžce zraněný bot jde, jen když nemůže nikdo jiný, a nikdy z boje. Nejbližší k upuštěné nepřátelské relikvii ji pošle domů a ostatní čekají u oltáře. Bot nesoucí tvoji relikvii ji odnese přímo na oltář; ostatní relikvii opustí jen kvůli boji s nepřítelem, který se dostane na dostřel kouzla.
 
-Hraje ho Broken Tower (4v4 a 8v8, 5400x2800): padlá věž na kopci ve vysočině. Vyšplhej po schodech terasami z trosek k oltáři na pahýlu věže, nebo jdi sklepem pod kopcem, jakmile páka na terase otevře jeho dveře; zdi z trosek lze rozbít.
+Hraje ho Broken Tower (4v4 a 8v8, 5400x2800): padlá věž na kopci ve vysočině. Vyšplhej po schodech terasami z trosek k oltáři na pahýlu věže, nebo jdi sklepem pod kopcem, jakmile páka na terase otevře jeho dveře; zdi z trosek lze rozbít. Vedle každé zdi z trosek je padací mříž, která je otevřená, dokud někdo stojí na její nášlapné desce.
 
 ### Cinder Sanctum
 

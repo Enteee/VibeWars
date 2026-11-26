@@ -155,7 +155,7 @@ inamică lăsată o trimite acasă, iar restul așteaptă lângă altar. Un bot 
 relicva ta o duce direct la altar; ceilalți părăsesc relicva doar ca să lupte cu un
 inamic care ajunge la distanță de vrajă.
 
-Se joacă pe Broken Tower (4v4 și 8v8, 5400x2800): un turn prăbușit pe un deal din ținuturile înalte. Urcă pe scările teraselor de dărâmături până la altarul de pe ciotul turnului sau ia-o prin pivnița de sub deal după ce o manetă de pe terasă îi deschide ușile; zidurile de dărâmături pot fi sparte.
+Se joacă pe Broken Tower (4v4 și 8v8, 5400x2800): un turn prăbușit pe un deal din ținuturile înalte. Urcă pe scările teraselor de dărâmături până la altarul de pe ciotul turnului sau ia-o prin pivnița de sub deal după ce o manetă de pe terasă îi deschide ușile; zidurile de dărâmături pot fi sparte. Lângă fiecare zid de dărâmături, o hersă se deschide cât timp cineva stă pe placa ei de presiune.
 
 ### Cinder Sanctum
 

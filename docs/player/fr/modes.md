@@ -171,7 +171,7 @@ autres attendent près de l'autel. Un bot qui porte ta relique va tout droit à
 l'autel ; les autres ne quittent la relique que pour combattre un ennemi qui
 arrive à portée de sort.
 
-Broken Tower le joue (4v4 et 8v8, 5400x2800) : une tour effondrée sur une colline des hauteurs. Gravis les escaliers des terrasses de gravats jusqu'à l'autel sur le moignon de la tour, ou passe par la cave sous la colline dès qu'un levier de la terrasse ouvre ses portes ; les murs de gravats peuvent être brisés.
+Broken Tower le joue (4v4 et 8v8, 5400x2800) : une tour effondrée sur une colline des hauteurs. Gravis les escaliers des terrasses de gravats jusqu'à l'autel sur le moignon de la tour, ou passe par la cave sous la colline dès qu'un levier de la terrasse ouvre ses portes ; les murs de gravats peuvent être brisés. À côté de chaque mur de gravats, une herse s'ouvre tant que quelqu'un se tient sur sa plaque de pression.
 
 ### Cinder Sanctum
 
