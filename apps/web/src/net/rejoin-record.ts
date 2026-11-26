@@ -80,12 +80,13 @@ export function clearRejoinRecord(storage: RecordStorage = localStorage): void {
 
 /**
  * The record a page left, taken: it is deleted as it is read, so only one
- * page tries. A malformed or expired one is no record.
+ * page tries. One whose hold is over is `"expired"`, for the player to be
+ * told once; a malformed one is no record.
  */
 export function takeRejoinRecord(
   nowMs: number,
   storage: RecordStorage = localStorage,
-): RejoinRecord | undefined {
+): RejoinRecord | "expired" | undefined {
   let raw: string | null;
   try {
     raw = storage.getItem(REJOIN_KEY);
@@ -102,5 +103,8 @@ export function takeRejoinRecord(
   } catch {
     record = undefined;
   }
-  return record !== undefined && record.expiresAt > nowMs ? record : undefined;
+  if (record === undefined) {
+    return undefined;
+  }
+  return record.expiresAt > nowMs ? record : "expired";
 }

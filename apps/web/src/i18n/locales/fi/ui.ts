@@ -1119,6 +1119,7 @@ export default {
   "recharge.spent": "{skill}, käytetty seuraavaan moraalinnousuun asti",
 
   "reconnect.detail": "Isännän yhteys katkesi. Paikkasi on varattu.",
+  "reconnect.rejoinDetail": "Palautetaan sinut otteluusi. Paikkasi pidetään.",
   "reconnect.seconds": "{seconds} s",
   "reconnect.title": "Yhdistetään uudelleen…",
 

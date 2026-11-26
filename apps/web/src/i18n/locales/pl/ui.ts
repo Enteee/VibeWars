@@ -1211,6 +1211,7 @@ export default {
   "recharge.spent": "{skill}, zużyta do premii morale",
 
   "reconnect.detail": "Połączenie hosta zostało zerwane. Twoje miejsce jest zarezerwowane.",
+  "reconnect.rejoinDetail": "Przywracamy cię do twojego meczu. Twoje miejsce jest zachowane.",
   "reconnect.seconds": "{seconds} s",
   "reconnect.title": "Ponowne łączenie…",
 

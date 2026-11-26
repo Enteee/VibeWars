@@ -1266,6 +1266,7 @@ export default {
   "recharge.spent": "{skill}، مستنفدة حتى رفع المعنويات",
 
   "reconnect.detail": "انقطع اتصال المضيف. مقعدك محجوز.",
+  "reconnect.rejoinDetail": "نعيدك إلى مباراتك. مقعدك محجوز.",
   "reconnect.seconds": "{seconds} ث",
   "reconnect.title": "جارٍ إعادة الاتصال…",
 

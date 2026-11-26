@@ -1118,6 +1118,7 @@ export default {
   "recharge.spent": "{skill}, verbraucht bis zum nächsten Moralschub",
 
   "reconnect.detail": "Die Verbindung des Hosts ist abgebrochen. Dein Platz bleibt reserviert.",
+  "reconnect.rejoinDetail": "Du wirst zurück in dein Match gebracht. Dein Platz bleibt reserviert.",
   "reconnect.seconds": "{seconds} s",
   "reconnect.title": "Verbindet neu…",
 

@@ -48,10 +48,10 @@ describe("the rejoin record (#4110)", () => {
     expect(takeRejoinRecord(1, storage)).toBeUndefined();
   });
 
-  it("is no record once the window is over, and is deleted", () => {
+  it("is expired once the window is over, to be told once, and is deleted", () => {
     const storage = memoryStorage();
     writeRejoinRecord(seat, 0, storage);
-    expect(takeRejoinRecord(WINDOW_MS, storage)).toBeUndefined();
+    expect(takeRejoinRecord(WINDOW_MS, storage)).toBe("expired");
     expect(storage.items.size).toBe(0);
   });
 

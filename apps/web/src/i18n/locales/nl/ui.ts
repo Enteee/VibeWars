@@ -1109,6 +1109,7 @@ export default {
   "recharge.spent": "{skill}, verbruikt tot een moraalboost",
 
   "reconnect.detail": "De verbinding van de host is weggevallen. Je plek blijft bewaard.",
+  "reconnect.rejoinDetail": "Je wordt teruggezet in je wedstrijd. Je plek wordt vastgehouden.",
   "reconnect.seconds": "{seconds} s",
   "reconnect.title": "Opnieuw verbinden…",
 

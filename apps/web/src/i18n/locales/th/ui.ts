@@ -1047,6 +1047,7 @@ export default {
   "recharge.spent": "{skill}, ใช้ไปแล้วจนกว่าจะได้บูสต์ขวัญกำลังใจ",
 
   "reconnect.detail": "การเชื่อมต่อของโฮสต์หลุด ที่นั่งของคุณยังอยู่",
+  "reconnect.rejoinDetail": "กำลังพาคุณกลับเข้าแมตช์ ที่นั่งของคุณยังถูกเก็บไว้",
   "reconnect.seconds": "{seconds} วิ",
   "reconnect.title": "กำลังเชื่อมต่อใหม่…",
 

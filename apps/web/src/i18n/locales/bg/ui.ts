@@ -1109,6 +1109,7 @@ export default {
   "recharge.spent": "{skill}, изразходвано до прилив на морал",
 
   "reconnect.detail": "Връзката на домакина прекъсна. Мястото ти се пази.",
+  "reconnect.rejoinDetail": "Връщаме те в мача ти. Мястото ти е запазено.",
   "reconnect.seconds": "{seconds} с",
   "reconnect.title": "Свързване отново…",
 

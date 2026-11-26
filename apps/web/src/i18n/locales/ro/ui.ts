@@ -1171,6 +1171,7 @@ export default {
   "recharge.spent": "{skill}, consumată până la un impuls de moral",
 
   "reconnect.detail": "Conexiunea gazdei a căzut. Locul tău e păstrat.",
+  "reconnect.rejoinDetail": "Te readucem în meciul tău. Locul tău este păstrat.",
   "reconnect.seconds": "{seconds} s",
   "reconnect.title": "Reconectare…",
 

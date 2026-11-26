@@ -1172,6 +1172,7 @@ export default {
   "recharge.spent": "{skill}, esaurita fino a un bonus morale",
 
   "reconnect.detail": "La connessione dell'host è caduta. Il tuo posto è riservato.",
+  "reconnect.rejoinDetail": "Ti stiamo riportando nella tua partita. Il tuo posto è tenuto.",
   "reconnect.seconds": "{seconds} s",
   "reconnect.title": "Riconnessione…",
 

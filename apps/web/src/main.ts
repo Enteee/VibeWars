@@ -450,7 +450,8 @@ async function main(): Promise<void> {
   const guildLink = takeGuildLink();
   const lobbyLink = takeLobbyLink();
   // A page back from a reload mid-match (#4110): taken, so only this one tries.
-  const rejoinRecord = takeRejoinRecord(Date.now());
+  const rejoinTaken = takeRejoinRecord(Date.now());
+  const rejoinRecord = rejoinTaken === "expired" ? undefined : rejoinTaken;
   // Every screen reads its text in the player's language (#2648).
   await loadLocale();
   const screenRoot = requireElement("#screens");
@@ -1614,7 +1615,8 @@ async function main(): Promise<void> {
    * the end of the host's hold, it lands on the menu, told once.
    */
   const rejoinMatch = async (record: RejoinRecord): Promise<void> => {
-    const overlay = mountReconnectOverlay(document.body);
+    // The host is fine: it is this page that went (#4110).
+    const overlay = mountReconnectOverlay(document.body, t("reconnect.rejoinDetail"));
     const count = (): void => {
       overlay.show(Math.max(0, Math.ceil((record.expiresAt - Date.now()) / 1000)));
     };
@@ -3787,7 +3789,7 @@ async function main(): Promise<void> {
   let tutorial: TutorialSession | undefined;
   /** A lobby, relay or guild link came with this tab or in it: it is what the player is here for. */
   let linked =
-    rejoinRecord !== undefined ||
+    rejoinTaken !== undefined ||
     lobbyLink.kind === "invite" ||
     relayLink.kind === "config" ||
     guildLink.kind === "guild";
@@ -3938,6 +3940,10 @@ async function main(): Promise<void> {
   } else if (rejoinRecord !== undefined) {
     // Back into the match this tab played before its reload (#4110).
     void rejoinMatch(rejoinRecord);
+  } else if (rejoinTaken === "expired") {
+    // Back after the host's hold ended (#4110): the menu, told once.
+    menuNotice = t("app.rejoinFailed");
+    enterMenu();
   } else if (
     shouldShowSplash({
       forced: new URLSearchParams(window.location.search).has("splash"),

@@ -1119,6 +1119,7 @@ export default {
   "recharge.spent": "{skill}, αναλώθηκε μέχρι την ενίσχυση ηθικού",
 
   "reconnect.detail": "Η σύνδεση του οικοδεσπότη έπεσε. Η θέση σου διατηρείται.",
+  "reconnect.rejoinDetail": "Σε επιστρέφουμε στον αγώνα σου. Η θέση σου κρατιέται.",
   "reconnect.seconds": "{seconds} δ",
   "reconnect.title": "Επανασύνδεση…",
 

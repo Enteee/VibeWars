@@ -1057,6 +1057,7 @@ export default {
   "recharge.spent": "{skill}, habis sampai Dorongan Moral",
 
   "reconnect.detail": "Koneksi host terputus. Tempatmu tetap dijaga.",
+  "reconnect.rejoinDetail": "Mengembalikanmu ke pertandinganmu. Kursimu ditahan.",
   "reconnect.seconds": "{seconds} s",
   "reconnect.title": "Menyambung ulang…",
 

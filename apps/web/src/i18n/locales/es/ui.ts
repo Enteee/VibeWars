@@ -1180,6 +1180,7 @@ export default {
   "recharge.spent": "{skill}, gastada hasta un bonus de moral",
 
   "reconnect.detail": "Se cayó la conexión del anfitrión. Tu puesto se mantiene.",
+  "reconnect.rejoinDetail": "Te devolvemos a tu partida. Tu puesto está reservado.",
   "reconnect.seconds": "{seconds} s",
   "reconnect.title": "Reconectando…",
 

@@ -1112,6 +1112,7 @@ export default {
   "recharge.spent": "{skill}, a következő morálnövelésig elhasználva",
 
   "reconnect.detail": "A házigazda kapcsolata megszakadt. A helyed fenntartva.",
+  "reconnect.rejoinDetail": "Visszaviszünk a meccsedbe. A helyed fenntartva.",
   "reconnect.seconds": "{seconds} mp",
   "reconnect.title": "Újracsatlakozás…",
 

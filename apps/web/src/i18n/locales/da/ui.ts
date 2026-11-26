@@ -1105,6 +1105,7 @@ export default {
   "recharge.spent": "{skill}, brugt indtil et moralløft",
 
   "reconnect.detail": "Værtens forbindelse røg. Din plads holdes.",
+  "reconnect.rejoinDetail": "Vi sætter dig tilbage i din kamp. Din plads holdes.",
   "reconnect.seconds": "{seconds} s",
   "reconnect.title": "Genopretter forbindelse…",
 

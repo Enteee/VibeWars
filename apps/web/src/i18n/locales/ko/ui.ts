@@ -1050,6 +1050,7 @@ export default {
   "recharge.spent": "{skill}, 사기 상승까지 사용 불가",
 
   "reconnect.detail": "호스트 연결이 끊겼어요. 자리는 유지돼요.",
+  "reconnect.rejoinDetail": "경기로 돌아가는 중입니다. 자리는 유지됩니다.",
   "reconnect.seconds": "{seconds}초",
   "reconnect.title": "다시 연결 중…",
 

@@ -1040,6 +1040,7 @@ export default {
   "recharge.spent": "{skill}，需等待士气提升",
 
   "reconnect.detail": "房主连接已断开，你的席位已保留。",
+  "reconnect.rejoinDetail": "正在将你送回比赛。你的位置已保留。",
   "reconnect.seconds": "{seconds} 秒",
   "reconnect.title": "正在重新连接…",
 

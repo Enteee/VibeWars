@@ -1107,6 +1107,7 @@ export default {
   "recharge.spent": "{skill}, förbrukad till nästa moralhöjning",
 
   "reconnect.detail": "Värdens anslutning bröts. Din plats är reserverad.",
+  "reconnect.rejoinDetail": "Vi sätter tillbaka dig i din match. Din plats hålls.",
   "reconnect.seconds": "{seconds} s",
   "reconnect.title": "Återansluter…",
 

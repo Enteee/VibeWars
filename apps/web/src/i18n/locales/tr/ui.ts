@@ -1107,6 +1107,7 @@ export default {
   "recharge.spent": "{skill}, Moral Artışına kadar harcandı",
 
   "reconnect.detail": "Kurucunun bağlantısı koptu. Yerin korunuyor.",
+  "reconnect.rejoinDetail": "Seni maçına geri götürüyoruz. Yerin tutuluyor.",
   "reconnect.seconds": "{seconds} sn",
   "reconnect.title": "Yeniden bağlanıyor…",
 

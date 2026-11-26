@@ -1206,6 +1206,7 @@ export default {
   "recharge.spent": "{skill}, израсходован до прилива морали",
 
   "reconnect.detail": "Связь с хостом прервалась. Твоё место сохранено.",
+  "reconnect.rejoinDetail": "Возвращаем тебя в твой матч. Твоё место сохранено.",
   "reconnect.seconds": "{seconds} с",
   "reconnect.title": "Переподключение…",
 

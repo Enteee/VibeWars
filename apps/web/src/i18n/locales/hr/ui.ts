@@ -1167,6 +1167,7 @@ export default {
   "recharge.spent": "{skill}, potrošeno do podizanja morala",
 
   "reconnect.detail": "Veza domaćina je prekinuta. Tvoje mjesto je sačuvano.",
+  "reconnect.rejoinDetail": "Vraćamo te u tvoj meč. Tvoje mjesto je sačuvano.",
   "reconnect.seconds": "{seconds} s",
   "reconnect.title": "Ponovno povezivanje…",
 

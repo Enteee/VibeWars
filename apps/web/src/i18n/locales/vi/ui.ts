@@ -1049,6 +1049,7 @@ export default {
   "recharge.spent": "{skill}, đã dùng, chờ tăng sĩ khí",
 
   "reconnect.detail": "Chủ phòng mất kết nối. Chỗ của bạn vẫn được giữ.",
+  "reconnect.rejoinDetail": "Đang đưa bạn trở lại trận đấu. Chỗ của bạn vẫn được giữ.",
   "reconnect.seconds": "{seconds} s",
   "reconnect.title": "Đang kết nối lại…",
 

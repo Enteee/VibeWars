@@ -1109,6 +1109,7 @@ export default {
   "recharge.spent": "{skill}، مصرف‌شده تا تقویت روحیه",
 
   "reconnect.detail": "اتصال میزبان قطع شد. جایت نگه داشته شده است.",
+  "reconnect.rejoinDetail": "در حال بازگرداندن تو به مسابقه‌ات. جایگاهت نگه داشته شده است.",
   "reconnect.seconds": "{seconds} ثانیه",
   "reconnect.title": "اتصال دوباره…",
 

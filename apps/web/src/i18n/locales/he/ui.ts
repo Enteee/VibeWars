@@ -1170,6 +1170,7 @@ export default {
   "recharge.spent": "{skill}, מנוצל עד חיזוק מורל",
 
   "reconnect.detail": "החיבור של המארח נפל. המקום שלך שמור.",
+  "reconnect.rejoinDetail": "מחזירים אותך למשחק שלך. המקום שלך שמור.",
   "reconnect.seconds": "{seconds} שנ׳",
   "reconnect.title": "מתחבר מחדש…",
 

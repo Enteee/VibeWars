@@ -1207,6 +1207,7 @@ export default {
   "recharge.spent": "{skill}, vyčerpané do posily morálky",
 
   "reconnect.detail": "Spojenie s hostiteľom sa prerušilo. Tvoje miesto zostáva rezervované.",
+  "reconnect.rejoinDetail": "Vraciame ťa do tvojho zápasu. Tvoje miesto je držané.",
   "reconnect.seconds": "{seconds} s",
   "reconnect.title": "Znovu sa pripája…",
 

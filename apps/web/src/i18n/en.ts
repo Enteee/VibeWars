@@ -1106,6 +1106,7 @@ export const en = {
   "recharge.spent": "{skill}, spent until a morale boost",
 
   "reconnect.detail": "The host's connection dropped. Your seat is held.",
+  "reconnect.rejoinDetail": "Putting you back in your match. Your seat is held.",
   "reconnect.seconds": "{seconds} s",
   "reconnect.title": "Reconnecting…",
 

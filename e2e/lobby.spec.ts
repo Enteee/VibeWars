@@ -530,8 +530,12 @@ test("a guest whose page reloads mid-match is put back in its seat (#4110)", asy
     guest.on("dialog", (dialog) => void dialog.accept());
     await guest.reload();
 
-    // No menu: the countdown, then the same seat in the same match.
+    // No menu: the countdown, then the same seat in the same match. The
+    // host is fine, and the overlay does not say otherwise.
     await expect(guest.locator(".reconnect-overlay")).toBeVisible();
+    await expect(guest.locator(".reconnect-overlay-detail")).toHaveText(
+      "Putting you back in your match. Your seat is held.",
+    );
     await expect(guest.locator(".hud-scoreboard")).toContainText("1 v 1", { timeout: 25_000 });
     await expect(guest.locator(".reconnect-overlay:visible")).toHaveCount(0);
     await expect(guest.locator(".screen-rail")).toHaveCount(0);
@@ -573,6 +577,37 @@ test("a guest back after its seat's hold lands on the menu, told once (#4110)", 
       guest.getByText("Could not rejoin the match: your seat was not held."),
     ).toHaveCount(1, { timeout: 15_000 });
     await expect(guest.locator(".reconnect-overlay:visible")).toHaveCount(0);
+  } finally {
+    await context.close();
+  }
+});
+
+test("a guest back once its seat's hold is over lands on the menu, told once (#4110)", async ({
+  browser,
+}) => {
+  test.slow();
+  const { context, pages } = await openPeers(browser, 2);
+  const [host, guest] = pages as [Page, Page];
+
+  try {
+    await startTwoPlayerMatch(host, guest);
+    guest.on("dialog", (dialog) => void dialog.accept());
+    await guest.goto("about:blank");
+    // The hold over, as after 30 s away, without waiting them out.
+    const name = await rejoinKey(host);
+    await host.evaluate((key) => {
+      const record = JSON.parse(localStorage.getItem(key) ?? "{}") as Record<string, unknown>;
+      localStorage.setItem(key, JSON.stringify({ ...record, expiresAt: Date.now() - 1000 }));
+    }, name);
+
+    await guest.goto("./");
+    await expect(
+      guest.getByText("Could not rejoin the match: your seat was not held."),
+    ).toHaveCount(1);
+    await expect(guest.locator(".reconnect-overlay")).toHaveCount(0);
+    expect(
+      await guest.evaluate(() => Object.keys(localStorage).some((k) => k.endsWith(".rejoin"))),
+    ).toBe(false);
   } finally {
     await context.close();
   }

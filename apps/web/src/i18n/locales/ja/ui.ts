@@ -1057,6 +1057,7 @@ export default {
   "recharge.spent": "{skill}、モラルブーストまで使用不可",
 
   "reconnect.detail": "ホストの接続が切れました。席は確保されています。",
+  "reconnect.rejoinDetail": "試合に戻しています。席は確保されています。",
   "reconnect.seconds": "{seconds}秒",
   "reconnect.title": "再接続中…",
 

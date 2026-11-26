@@ -1164,6 +1164,7 @@ export default {
   "recharge.spent": "{skill}, gasta até um bônus de moral",
 
   "reconnect.detail": "A conexão do host caiu. Sua vaga está garantida.",
+  "reconnect.rejoinDetail": "A colocar-te de volta na tua partida. O teu lugar está reservado.",
   "reconnect.seconds": "{seconds} s",
   "reconnect.title": "Reconectando…",
 

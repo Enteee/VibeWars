@@ -1178,6 +1178,7 @@ export default {
   "recharge.spent": "{skill}, épuisée jusqu'à un bonus de moral",
 
   "reconnect.detail": "La connexion de l'hôte a sauté. Ta place est gardée.",
+  "reconnect.rejoinDetail": "Retour dans ton match. Ta place est gardée.",
   "reconnect.seconds": "{seconds} s",
   "reconnect.title": "Reconnexion…",
 

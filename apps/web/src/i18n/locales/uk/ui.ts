@@ -1211,6 +1211,7 @@ export default {
   "recharge.spent": "{skill}, витрачено до підйому бойового духу",
 
   "reconnect.detail": "З'єднання з хостом обірвалося. Твоє місце збережено.",
+  "reconnect.rejoinDetail": "Повертаємо тебе в твій матч. Твоє місце збережено.",
   "reconnect.seconds": "{seconds} с",
   "reconnect.title": "Перепідключення…",
 
