@@ -1,0 +1,2 @@
+import{ct as e}from"./main-B53M24aY.js";var t=e;export{t as default};
+//# sourceMappingURL=game-U3F_TiNZ.js.map
