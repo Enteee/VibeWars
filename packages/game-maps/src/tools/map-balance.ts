@@ -3,6 +3,7 @@ import {
   MatchSimulation,
   MINIMAL_GW_INSPIRED_PVP_V1,
   STARTER_BUILDS,
+  SUDDEN_DEATH_SECONDS,
   costZone,
   distancePointToSegment,
   loadoutOf,
@@ -66,12 +67,6 @@ const FAIR_SIGMAS = 3;
 const MAX_DRAW_SHARE = 0.25;
 /** Past its time limit, a match ends on its own; the margin only guards against a mode that would not. */
 const TIME_LIMIT_MARGIN_SECONDS = 1;
-/**
- * How long a kill-count match tied at time plays on in sudden death
- * (#4069), which has no limit in the game: the bench stops there and
- * counts it a draw, so every run ends.
- */
-const SUDDEN_DEATH_CAP_SECONDS = 300;
 
 export interface MapBalanceOptions {
   readonly map: MapData;
@@ -282,7 +277,8 @@ function mirrorMatch(
     sim,
     playUntilSeconds:
       rules.timeLimitSeconds +
-      (rules.victory === "kill-count" ? SUDDEN_DEATH_CAP_SECONDS : TIME_LIMIT_MARGIN_SECONDS),
+      (rules.victory === "kill-count" ? SUDDEN_DEATH_SECONDS : 0) +
+      TIME_LIMIT_MARGIN_SECONDS,
   };
 }
 

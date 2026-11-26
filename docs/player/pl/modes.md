@@ -70,7 +70,8 @@ biegnie przejście, którego kratę otwiera dźwignia na górze.
 **Najwięcej zabójstw w 3 minuty.** Polegli wracają na swój spawn po 8 sekundach, a
 śmierć nie kosztuje morale. Pierwsza drużyna z 15 zabójstwami wygrywa od razu. Po
 upływie czasu wygrywa więcej zabójstw; przy równej liczbie jest nagła
-śmierć: bez zegara, a następne zabójstwo wygrywa.
+śmierć: następne zabójstwo wygrywa, a kolejne 5 minut bez
+zabójstwa to remis.
 
 Gra w niego Ember Pits: strumienie lawy z kamiennymi mostami, tunel lawowy, winda
 na dźwignię na bazaltową kolumnę i otwory parowe, dla każdego rozmiaru drużyny.

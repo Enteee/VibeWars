@@ -77,8 +77,8 @@ portin avaa vipu harjanteen päällä.
 **Eniten tappoja 3 minuutissa.** Kuolleet palaavat aloituspaikalleen
 8 sekunnin kuluttua, eikä kuoleminen vie moraalia. Ensimmäinen 15
 tappoon yltävä tiimi voittaa heti. Ajan loppuessa enemmän tappoja
-voittaa; yhtä monta tappoa vie äkkikuolemaan: ei kelloa, ja seuraava
-tappo voittaa.
+voittaa; yhtä monta tappoa vie äkkikuolemaan: seuraava
+tappo voittaa, ja 5 minuuttia lisää ilman tappoa on tasapeli.
 
 Sitä pelaa Ember Pits: laavapuroja kivisiltojen alla, laavatunneli,
 vivulla toimiva hissi basalttipylvään päälle ja höyryaukkoja, kaikille tiimikoille.

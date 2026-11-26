@@ -1227,7 +1227,7 @@ export function scoreboardParts(
   const theirs = foes[0] ?? 1;
   // Rounded up, so the clock reads 0:00 only once time is out.
   const left = timeLimitSeconds === null ? null : Math.ceil(timeLimitSeconds - elapsedSeconds);
-  // A kill-count match still on past its time is tied in sudden death (#4069): no clock.
+  // A kill-count match still on past its time is tied in sudden death (#4069), until its limit.
   const suddenDeath =
     mode === "kill-count" &&
     match.phase === "active" &&

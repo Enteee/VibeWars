@@ -67,8 +67,8 @@ Grat führt ein Gang hindurch, dessen Tor ein Hebel oben öffnet.
 
 **Die meisten Kills in 3 Minuten.** Die Toten kehren nach 8 Sekunden an ihrem Spawn zurück, und
 Sterben kostet keine Moral. Das erste Team mit 15 Kills gewinnt sofort. Bei Zeitablauf gewinnen die
-meisten Kills; bei Gleichstand geht es in den Sudden Death: keine Uhr, und der nächste Kill
-gewinnt.
+meisten Kills; bei Gleichstand geht es in den Sudden Death: der nächste Kill
+gewinnt, und 5 weitere Minuten ohne einen sind ein Unentschieden.
 
 Ember Pits spielt es: Lavarinnen mit Steinbrücken darüber, eine Lavaröhre, ein Hebellift
 eine Basaltsäule hinauf und Dampfschlote, für jede Teamgröße.

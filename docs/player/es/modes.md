@@ -76,7 +76,8 @@ cruza bajo la cresta central, con una reja que abre una palanca en lo alto.
 **Más bajas en 3 minutos.** Los muertos vuelven a su punto de inicio tras 8
 segundos, y morir no cuesta moral. El primer equipo que llega a 15 bajas gana
 al instante. Al acabar el tiempo, gana quien tenga más bajas; con las mismas
-bajas se pasa a muerte súbita: sin reloj, y la siguiente baja gana.
+bajas se pasa a muerte súbita: la siguiente baja gana, y 5 minutos más sin
+ninguna son un empate.
 
 Se juega en Ember Pits: regueros de lava cruzados por puentes de piedra, un túnel
 de lava, un elevador de palanca a una columna de basalto y respiraderos de vapor,

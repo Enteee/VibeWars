@@ -70,7 +70,7 @@ tengah dengan gerbang yang dibuka tuas di atasnya.
 **Kill terbanyak dalam 3 menit.** Yang mati kembali di titik spawn mereka setelah
 8 detik, dan kematian tidak mengurangi moral. Tim pertama yang mencapai 15 kill langsung
 menang. Saat waktu habis, kill lebih banyak menang; kill sama berarti
-sudden death: tanpa batas waktu, dan kill berikutnya menang.
+sudden death: kill berikutnya menang, dan 5 menit lagi tanpa kill berarti seri.
 
 Ember Pits memainkannya: aliran lava yang diseberangi jembatan batu, terowongan lava,
 lift bertuas ke atas tiang basal, dan lubang uap, untuk setiap ukuran tim.
