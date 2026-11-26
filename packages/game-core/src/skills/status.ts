@@ -498,10 +498,18 @@ export interface StatusDefinition {
    */
   readonly spellRechargeFasterNearSpirit: number;
   /**
-   * Armor taken before `armorModifier`s add, never below a floor (#763):
-   * Cracked Armor's −20, not below 60. `undefined`: none.
+   * A penalty in the armor bonus pool (#763, #4085): Cracked Armor's 20.
+   * The pool never takes armor below `ARMOR_PENALTY_FLOOR`, or below core
+   * armor already under it. 0: none.
    */
-  readonly armorReduction: ArmorReduction | undefined;
+  readonly armorReduction: number;
+  /**
+   * GW1's special armor (#4085): this status's armor is added after armor
+   * penetration, outside the +25 bonus cap. Healing Signet's −40, Mantra
+   * of Signets' +3, Barbed Arrows' −40; Shadowy Burden's, which rides its
+   * caster's packets (`DamagePacket.armorModifier`).
+   */
+  readonly specialArmor: boolean;
   /**
    * Movement speed multiplier while active (1 = unaffected), at the
    * caster's rank where it scales (#2428): Burning Speed's 1.30...1.42.
@@ -702,11 +710,17 @@ export interface StatusDefinition {
    */
   readonly elementalDamageDealtAs: DamageType | undefined;
   /**
-   * The least armor penetration the bearer's weapon attacks have (#1519):
-   * Judge's Insight's "+20% armor penetration". It joins the blow's and
-   * Strength's: the highest counts, nothing adds. 0: none.
+   * Base armor penetration of the bearer's weapon attacks (#1519, #4085):
+   * Sundering Weapon's "10% armor penetration". It joins the blow's and
+   * Strength's: the highest counts. 0: none.
    */
   readonly attackArmorPenetration: number;
+  /**
+   * Bonus armor penetration of the bearer's weapon attacks (#4085):
+   * Judge's Insight's "armor penetration +20%", added to the highest
+   * base. 0: none.
+   */
+  readonly attackBonusArmorPenetration: number;
   /**
    * Added to each of the bearer's weapon blows before armor (#1654), a
    * plain swing's or an attack skill's, each blow of a dual attack:
@@ -2735,12 +2749,6 @@ export interface AnsweringTrigger {
 export interface MaxHealthLoss {
   readonly fraction: number;
   readonly cap: number;
-}
-
-/** Armor taken, but never below `floor`, nor any armor already under it (#763). */
-export interface ArmorReduction {
-  readonly amount: number;
-  readonly floor: number;
 }
 
 /** Pips for each enchantment on the bearer, at most `max` of them counted (#845). */
@@ -5214,8 +5222,8 @@ export interface StatusModifiers {
   readonly healthPerSecondNearSpirit: number;
   /** As `spellRechargeFaster`, in earshot of a spirit (#2504). */
   readonly spellRechargeFasterNearSpirit: number;
-  /** The largest armor reduction; `undefined`: none. */
-  readonly armorReduction: ArmorReduction | undefined;
+  /** The largest armor reduction; 0: none. */
+  readonly armorReduction: number;
   /** Every status's speed boost (above 1), multiplied and not yet capped (#4095). */
   readonly moveSpeedBoost: number;
   /** Every status's slow (below 1), multiplied and not yet floored (#4095). */
@@ -5299,6 +5307,8 @@ export interface StatusModifiers {
   readonly criticalChanceBonus: number;
   /** The largest status's (#1519). */
   readonly attackArmorPenetration: number;
+  /** Every status's, summed (#4085). */
+  readonly attackBonusArmorPenetration: number;
   /** Every status's, summed (#988). */
   readonly energyPerCritical: number;
   /** Every status's, summed (#1326). */
@@ -5336,6 +5346,22 @@ export const ATTACK_FASTER_CAP = 0.67;
 
 /** The longest stacked slow-downs make an attack (GW1: DAS caps at −50%, #4095). */
 export const ATTACK_SLOWER_CAP = 1.5;
+
+/**
+ * What `status` adds to its bearer's armor among `statuses` (#4085): its
+ * `armorModifier` at its ranks and stacks, and its `whileUnder` one while
+ * that holds. `aggregateModifiers` sums it; the armor pool weighs each.
+ */
+export function statusArmorModifier(
+  statuses: readonly Pick<ActiveStatus, "id">[],
+  status: Pick<ActiveStatus, "id" | "ranks"> & Partial<Pick<ActiveStatus, "stacks">>,
+): number {
+  const def = getStatusDefinition(status.id);
+  const own = Math.round(statAt(def.armorModifier, status.ranks)) * (status.stacks ?? 1);
+  return def.whileUnder !== undefined && isUnderAnother(statuses, status, def.whileUnder)
+    ? own + Math.round(statAt(def.whileUnder.armorModifier, status.ranks))
+    : own;
+}
 
 /**
  * Whether a status in `statuses` other than `self` is of one of `under`'s
@@ -5398,7 +5424,7 @@ export function aggregateModifiers(
   let healthPerSecond = 0;
   let healthPerSecondNearSpirit = 0;
   let spellRechargeNearSpiritKept = 1;
-  let armorReduction: ArmorReduction | undefined;
+  let armorReduction = 0;
   let moveSpeedBoost = 1;
   let moveSpeedSlow = 1;
   let strongestSlow = 1;
@@ -5458,6 +5484,7 @@ export function aggregateModifiers(
   let damageFromSpiritAttacks = 0;
   let criticalChanceBonus = 0;
   let attackArmorPenetration = 0;
+  let attackBonusArmorPenetration = 0;
   let energyPerCritical = 0;
   let healthPerCritical = 0;
   let ignoresCriticalDamage = false;
@@ -5488,18 +5515,13 @@ export function aggregateModifiers(
       Math.round(statAt(def.energyPips, ranks)) +
       def.energyPipsPerCondition * conditions +
       def.energyPipsPerHex * hexes;
-    armorModifier += Math.round(statAt(def.armorModifier, ranks)) * (status.stacks ?? 1);
+    armorModifier += statusArmorModifier(statuses, status);
     armorWhileStill += def.armorWhileStill;
     healthPerSecondWhileMoving += def.healthPerSecondWhileMoving;
     healthPerSecond += def.healthPerSecond;
     healthPerSecondNearSpirit += def.healthPerSecondNearSpirit;
     spellRechargeNearSpiritKept *= 1 - def.spellRechargeFasterNearSpirit;
-    if (
-      def.armorReduction !== undefined &&
-      (armorReduction === undefined || def.armorReduction.amount > armorReduction.amount)
-    ) {
-      armorReduction = def.armorReduction;
-    }
+    armorReduction = Math.max(armorReduction, def.armorReduction);
     addMoveSpeed(statAt(def.moveSpeedMultiplier, ranks), def.breaksSpeedCap);
     if (enchantments > 0) {
       addMoveSpeed(def.moveSpeedWhileEnchanted, false);
@@ -5560,7 +5582,6 @@ export function aggregateModifiers(
       attackSlower *= Math.max(1, def.whileUnder.attackDurationMultiplier);
       adrenalineGainFaster += def.whileUnder.adrenalineGainFaster;
       healthPips += Math.round(statAt(def.whileUnder.healthPips, ranks));
-      armorModifier += Math.round(statAt(def.whileUnder.armorModifier, ranks));
       attackMissChance = Math.max(attackMissChance, def.whileUnder.attackMissChance);
       addMoveSpeed(def.whileUnder.moveSpeedMultiplier, false);
     }
@@ -5583,6 +5604,7 @@ export function aggregateModifiers(
     damageFromSpiritAttacks += def.damageFromSpiritAttacks;
     criticalChanceBonus += statAt(def.criticalChanceBonus, ranks);
     attackArmorPenetration = Math.max(attackArmorPenetration, def.attackArmorPenetration);
+    attackBonusArmorPenetration += def.attackBonusArmorPenetration;
     energyPerCritical += def.energyPerCritical;
     healthPerCritical += def.healthPerCritical;
     ignoresCriticalDamage ||= def.ignoresCriticalDamage;
@@ -5647,6 +5669,7 @@ export function aggregateModifiers(
     incomingAllySpellCastTimeMultiplier,
     criticalChanceBonus,
     attackArmorPenetration,
+    attackBonusArmorPenetration,
     energyPerCritical,
     healthPerCritical,
     damageFromSpiritAttacks,

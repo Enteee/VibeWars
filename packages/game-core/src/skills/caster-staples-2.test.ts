@@ -127,7 +127,7 @@ describe("Elemental and Physical Resistance (#1872)", () => {
     });
   }
 
-  it("Elemental Resistance: +40 armor against fire, -14 against slashing, for 78 s", () => {
+  it("Elemental Resistance: +40 armor against fire, -14 against slashing down to 60, for 78 s", () => {
     const match = resisting();
     const m = get(match, "m");
     const fire = effectiveArmor(m.combatant, FIRE, "chest");
@@ -135,7 +135,8 @@ describe("Elemental and Physical Resistance (#1872)", () => {
     cast(match, "m", "m");
     expect(m.combatant.statuses.get("elemental-resistance")?.durationSeconds).toBe(78);
     expect(effectiveArmor(m.combatant, FIRE, "chest")).toBe(fire + 40);
-    expect(effectiveArmor(m.combatant, SLASHING, "chest")).toBe(slashing - 14);
+    // A net penalty never takes armor below 60 (#4085): a mesmer's 60 holds.
+    expect(effectiveArmor(m.combatant, SLASHING, "chest")).toBe(Math.max(slashing - 14, 60));
   });
 
   it("Physical Resistance replaces it, and turns the armor round", () => {
@@ -147,7 +148,7 @@ describe("Elemental and Physical Resistance (#1872)", () => {
     cast(match, "m", "m", 1);
     expect(m.combatant.statuses.has("elemental-resistance")).toBe(false);
     expect(m.combatant.statuses.has("physical-resistance")).toBe(true);
-    expect(effectiveArmor(m.combatant, FIRE, "chest")).toBe(fire - 14);
+    expect(effectiveArmor(m.combatant, FIRE, "chest")).toBe(Math.max(fire - 14, 60));
     expect(effectiveArmor(m.combatant, SLASHING, "chest")).toBe(slashing + 40);
   });
 });

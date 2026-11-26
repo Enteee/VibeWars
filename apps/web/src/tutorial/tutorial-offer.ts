@@ -1,14 +1,20 @@
 import { t } from "../i18n/index.js";
 import { button, h } from "../ui/kit.js";
+import { holdFocus } from "../ui/modal-focus.js";
 
 /**
  * The first-time offer (#3218), a card over the background fight: Learn
- * to play or Skip. Either removes it, then calls its own. Returns its
- * removal, for a link that comes meanwhile, which chooses neither.
+ * to play or Skip. Either removes it, then calls its own; Esc is not now,
+ * which removes it and records nothing (#4090). Returns its removal, for
+ * a link that comes meanwhile, which chooses neither.
  */
 export function showTutorialOffer(
   root: HTMLElement,
-  choices: { readonly onLearn: () => void; readonly onSkip: () => void },
+  choices: {
+    readonly onLearn: () => void;
+    readonly onSkip: () => void;
+    readonly onNotNow: () => void;
+  },
 ): () => void {
   const backdrop = h("div", "tutorial-offer-overlay");
   const card = h("div", "screen tutorial-offer");
@@ -16,8 +22,13 @@ export function showTutorialOffer(
   card.setAttribute("aria-modal", "true");
   const title = t("tutorial.offerTitle");
   card.setAttribute("aria-label", title);
-  const choose = (then: () => void) => (): void => {
+  let release = (): void => undefined;
+  const remove = (): void => {
     backdrop.remove();
+    release();
+  };
+  const choose = (then: () => void) => (): void => {
+    remove();
     then();
   };
   const learn = button(t("tutorial.learn"), "primary tutorial-learn", choose(choices.onLearn));
@@ -30,10 +41,8 @@ export function showTutorialOffer(
   );
   backdrop.appendChild(card);
   root.appendChild(backdrop);
-  learn.focus();
-  return () => {
-    backdrop.remove();
-  };
+  release = holdFocus(card, choose(choices.onNotNow));
+  return remove;
 }
 
 /** The Skip tutorial button, in its fixed corner of `parent` on every station. */

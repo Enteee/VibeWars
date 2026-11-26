@@ -265,7 +265,7 @@ describe("the outside's place in the order (#3066)", () => {
 });
 
 describe("water's place in the order (#2984)", () => {
-  const water = (layer: number, part: "surface" | "ripples"): RenderItem => ({
+  const water = (layer: number, part: "surface" | "cells" | "ripples"): RenderItem => ({
     kind: "water",
     layer,
     part,
@@ -275,6 +275,7 @@ describe("water's place in the order (#2984)", () => {
     const items: readonly RenderItem[] = [
       { kind: "floor" },
       water(0, "surface"),
+      water(0, "cells"),
       water(0, "ripples"),
       { kind: "ground-effect", layer: 0 },
       { kind: "terrain" },
@@ -291,6 +292,7 @@ describe("water's place in the order (#2984)", () => {
       { kind: "deck", deckLayer: 1 },
       { kind: "ramp", upperLayer: 1 },
       water(1, "surface"),
+      water(1, "cells"),
       water(1, "ripples"),
       { kind: "lighting", layer: 1 },
       character(1),

@@ -640,6 +640,7 @@ export const ASSASSIN_STATUSES: Readonly<Record<AssassinStatusId, StatusDefiniti
   // "Target foe moves 25% slower and while target foe has no other hexes,
   // that foe has 20...30 less armor against your attacks" (#2502): -28 at 12.
   "shadowy-burden": define("shadowy-burden", "Shadowy Burden", "hex", {
+    specialArmor: true,
     profession: "assassin",
     moveSpeedMultiplier: 0.75,
     sourceAttacks: {

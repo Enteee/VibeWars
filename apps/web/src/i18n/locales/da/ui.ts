@@ -449,7 +449,7 @@ export default {
   "effects.categoryShout": "Råb",
   "effects.categoryStance": "Kampstilling",
   "effects.categoryWeaponSpell": "Våbenbesværgelse",
-  "effects.endHint": "dobbeltklik for at afslutte",
+  "effects.endHint": "dobbeltklik, Enter eller Delete for at afslutte",
   "effects.from": "fra {caster}",
   "effects.inRange": "mens du er inden for rækkevidde",
   "effects.maintained": "vedligeholdt",

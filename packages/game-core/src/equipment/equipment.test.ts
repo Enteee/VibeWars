@@ -38,6 +38,7 @@ import {
   creatureResolvedEquipment,
   effectiveRanks,
   healthSources,
+  listedArmor,
   resolveLoadout,
   unarmedResolvedEquipment,
 } from "./resolve.js";
@@ -1935,17 +1936,18 @@ describe("weapon mods (#2007)", () => {
     expect(after?.baseEnergyPips).toBe(before.baseEnergyPips - 1);
   });
 
-  it("puts typed armor where a hit of that type meets it", () => {
+  it("puts a prefix's and a suffix's armor in the bonus pool, typed where a hit meets it (#4085)", () => {
     const [set] = resolve(
       withSets(sword({ suffix: "of-shelter" }), sword({ suffix: "of-defense" })),
     ).weaponSets;
-    expect(set.equipment.conditionalArmor).toContainEqual({
-      amount: 7,
-      conditions: [{ kind: "vs-physical" }],
-    });
+    expect(set.equipment.bonusArmor).toEqual([
+      { amount: 7, conditions: [{ kind: "vs-physical" }] },
+    ]);
     const plain = resolve(withSets(sword())).weaponSets[0];
     const defense = resolve(withSets(sword({ suffix: "of-defense" }))).weaponSets[0];
-    expect(defense.equipment.baseArmor).toBe(plain.equipment.baseArmor + 5);
+    expect(defense.equipment.baseArmor).toBe(plain.equipment.baseArmor);
+    expect(defense.equipment.bonusArmor).toEqual([{ amount: 5, conditions: [] }]);
+    expect(listedArmor(defense.equipment)).toBe(plain.equipment.baseArmor + 5);
   });
 
   it("multiplies Pure of Heart with a Rune of Purity on Poison", () => {

@@ -30,7 +30,7 @@ export interface WaterShape {
 }
 
 /** World units between ripples, across and down. */
-export const RIPPLE_SPACING = 40;
+export const RIPPLE_SPACING = 72;
 /** A ripple stroke's half length, in world units. */
 export const RIPPLE_HALF_LENGTH = 8;
 /** How far a ripple drifts either side, in world units. */

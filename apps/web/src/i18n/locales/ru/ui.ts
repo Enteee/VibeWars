@@ -488,7 +488,7 @@ export default {
   "effects.categoryShout": "Клич",
   "effects.categoryStance": "Стойка",
   "effects.categoryWeaponSpell": "Заклинание оружия",
-  "effects.endHint": "двойной щелчок — завершить",
+  "effects.endHint": "двойной щелчок, Enter или Delete — завершить",
   "effects.from": "от {caster}",
   "effects.inRange": "пока в зоне действия",
   "effects.maintained": "поддерживается",

@@ -85,8 +85,8 @@ Tjenere (undtagen Kødgolemen), genfærd og ånder bløder ikke, bliver ikke for
 ![Forbandelse](../../../apps/web/public/icons/skill-type/hex.svg) **Forbandelser** kastes på dig af fjender; ![Fortryllelse](../../../apps/web/public/icons/skill-type/enchantment.svg) **fortryllelser** af dig selv
 eller dine allierede. Hver fjernes af sin egen slags evne. Nogle
 fortryllelser er **vedligeholdte**: de varer, indtil du afslutter dem, og
-koster et energi-pip, mens de kører. Dobbeltklik på ikonet for at
-afslutte en.
+koster et energi-pip, mens de kører. Dobbeltklik på ikonet, eller fokuser
+det og tryk på Enter eller Delete, for at afslutte en.
 
 Nogle få evner holder op med at virke, mens du er fortryllet, og virker
 igen, når du ikke er det længere. En evne, der varer i dine "næste N

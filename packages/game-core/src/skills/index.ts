@@ -60,7 +60,6 @@ export { resolveMagnitude, resolveMagnitudeAtRanks, statAt, statAtTwelve } from 
 
 export type {
   ActiveStatus,
-  ArmorReduction,
   BlockRule,
   Outbreak,
   StatusCategory,

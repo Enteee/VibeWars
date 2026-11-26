@@ -277,6 +277,8 @@ export function createHud(
   const carriers = element("div", "hud-carriers", top);
   const end = element("div", "hud-end", parent);
   const result = element("div", "hud-result", end);
+  // The result is announced (#4090); the running score is not, it changes too often.
+  result.setAttribute("role", "status");
   result.style.display = "none";
   // Top right (#454), folded into one ☰ (#3923): the arena keeps the room,
   // and M and F10 still mute and leave without it. Each row is its icon
@@ -317,6 +319,16 @@ export function createHud(
   });
   targetPanel.addEventListener("click", (event) => {
     if (isTargetCallClick(event)) {
+      onCall();
+    }
+  });
+  // Focused, Enter calls it too (#4090).
+  targetPanel.setAttribute("role", "button");
+  targetPanel.tabIndex = 0;
+  targetPanel.addEventListener("keydown", (event) => {
+    if (event.target === targetPanel && event.key === "Enter") {
+      event.preventDefault();
+      event.stopPropagation();
       onCall();
     }
   });

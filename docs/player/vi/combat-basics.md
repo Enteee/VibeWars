@@ -79,7 +79,8 @@ Tay sai (trừ Golem Thịt), hồn ma và linh hồn không chảy máu, không
 ![Nguyền](../../../apps/web/public/icons/skill-type/hex.svg) **Nguyền** do địch thi triển lên bạn; ![Phù phép](../../../apps/web/public/icons/skill-type/enchantment.svg) **Phù phép** do chính bạn hoặc đồng
 minh. Mỗi loại bị gỡ bỏ bằng loại kỹ năng riêng của nó. Một số Phù phép được
 **duy trì**: chúng kéo dài đến khi bạn kết thúc, tốn một vạch Năng lượng khi
-còn hiệu lực. Nhấn đúp vào biểu tượng của nó để kết thúc.
+còn hiệu lực. Nhấn đúp vào biểu tượng của nó, hoặc đưa tiêu điểm vào nó rồi
+nhấn Enter hoặc Delete, để kết thúc.
 
 Một vài kỹ năng ngừng hoạt động khi bạn đang có Phù phép, và hoạt động lại
 khi bạn không còn. Kỹ năng kéo dài cho "N đòn tấn công kế tiếp" của bạn tính

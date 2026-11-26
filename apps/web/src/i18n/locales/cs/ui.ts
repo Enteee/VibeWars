@@ -488,7 +488,7 @@ export default {
   "effects.categoryShout": "Pokřik",
   "effects.categoryStance": "Postoj",
   "effects.categoryWeaponSpell": "Kouzlo zbraně",
-  "effects.endHint": "dvojklikem ukončíš",
+  "effects.endHint": "dvojklikem, Enterem nebo Delete ukončíš",
   "effects.from": "od: {caster}",
   "effects.inRange": "v dosahu",
   "effects.maintained": "udržováno",

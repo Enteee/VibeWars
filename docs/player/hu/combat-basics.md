@@ -89,7 +89,8 @@ Az ![Átok](../../../apps/web/public/icons/skill-type/hex.svg) **átkokat** az e
 vagy a szövetségeseid. Mindegyiket a saját fajta készsége távolítja el.
 Egyes bűbájok **fenntartottak**: addig tartanak, amíg be nem fejezed
 őket, és közben egy Energia-csíkba kerülnek. Kattints duplán az
-ikonjára, hogy befejezd.
+ikonjára, vagy vidd rá a fókuszt, és nyomd meg az Enter vagy a Delete
+billentyűt, hogy befejezd.
 
 Néhány készség leáll, amíg bűbáj van rajtad, és újra működik, amint
 már nincs. Az a készség, amely a „következő N támadásodig” tart, minden

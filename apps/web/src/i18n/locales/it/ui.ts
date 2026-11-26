@@ -480,7 +480,7 @@ export default {
   "effects.categoryShout": "Grido",
   "effects.categoryStance": "Posizione",
   "effects.categoryWeaponSpell": "Incantesimo su arma",
-  "effects.endHint": "doppio clic per terminare",
+  "effects.endHint": "doppio clic, Invio o Canc per terminare",
   "effects.from": "da {caster}",
   "effects.inRange": "finché sei nel raggio",
   "effects.maintained": "mantenuto",

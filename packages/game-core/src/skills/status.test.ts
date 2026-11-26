@@ -91,7 +91,7 @@ describe("status definitions", () => {
         def.healthPerSecondWhileMoving !== 0 ||
         def.healthPerSecond !== 0 ||
         def.healthPerSecondNearSpirit !== 0 ||
-        def.armorReduction !== undefined ||
+        def.armorReduction !== 0 ||
         statAtTwelve(def.moveSpeedMultiplier) !== 1 ||
         def.attackMissChance !== 0 ||
         def.maxHealthLoss !== undefined ||

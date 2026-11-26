@@ -477,7 +477,7 @@ export default {
   "effects.categoryShout": "Strigăt",
   "effects.categoryStance": "Postură",
   "effects.categoryWeaponSpell": "Vrajă de armă",
-  "effects.endHint": "dublu clic pentru a încheia",
+  "effects.endHint": "dublu clic, Enter sau Delete pentru a încheia",
   "effects.from": "de la {caster}",
   "effects.inRange": "cât timp ești în raza sa",
   "effects.maintained": "menținut",

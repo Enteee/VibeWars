@@ -155,6 +155,7 @@ export {
   creatureResolvedEquipment,
   effectiveRanks,
   healthSources,
+  listedArmor,
   resolveLoadout,
   unarmedResolvedEquipment,
 } from "./resolve.js";

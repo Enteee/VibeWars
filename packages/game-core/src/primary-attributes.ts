@@ -61,13 +61,12 @@ export const STRENGTH_ATTRIBUTE = "warrior.strength";
 export const STRENGTH_PENETRATION_PER_RANK = 0.01;
 
 /**
- * An attack skill's armor penetration with this rank of Strength (#528,
- * #3880): 1% a rank, or the weapon's own penetration if that is higher;
- * the two do not add. GW1 lets Strength stand unless the skill has a
- * higher amount, so a hornbow's 10% loses to Strength 12.
+ * An attack skill's base armor penetration from this rank of Strength
+ * (#528, #4085): 1% a rank. The highest base counts, so a skill's own
+ * higher amount wins; a Hornbow's 10% is bonus, and adds to it.
  */
-export function strengthArmorPenetration(rank: number, weaponPenetration: number): number {
-  return Math.max(weaponPenetration, STRENGTH_PENETRATION_PER_RANK * rank);
+export function strengthArmorPenetration(rank: number): number {
+  return STRENGTH_PENETRATION_PER_RANK * rank;
 }
 
 /** The Mesmer's primary. */
@@ -290,7 +289,7 @@ export function primaryAttributeEffect(
     case EXPERTISE_ATTRIBUTE:
       return { kind: "expertise", percent: percent(EXPERTISE_COST_CUT_PER_RANK * rank) };
     case STRENGTH_ATTRIBUTE:
-      return { kind: "strength", percent: percent(strengthArmorPenetration(rank, 0)) };
+      return { kind: "strength", percent: percent(strengthArmorPenetration(rank)) };
     case DIVINE_FAVOR_ATTRIBUTE:
       return { kind: "divine-favor", heal: divineFavorHeal(rank) };
     case CRITICAL_STRIKES_ATTRIBUTE:
