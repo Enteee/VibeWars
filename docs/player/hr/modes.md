@@ -237,7 +237,7 @@ domet čarolije. Dok tvoj tim ne drži oltar, svaki bot prvo ubija Sablasnog her
 drugog tima kad stoji na oltaru u njihovu dometu:
 on je jedini neprijatelj koji sprečava tvoju sablast da ga zauzme.
 
-Threefold Keep ga igra (4v4 i 8v8, 5000x4400): utvrda na brdu u visoravni, za tri tima. Popni se na bedemsku stazu stubama pokraj svojih vrata i prijeđi nasip do brda, zatim se popni do oltara na kuli. Poluga u svakom dvorištu otvara sva četiri vrata: prolaz tvojih vrata ispod zida, i podrum, dugi put ispod brda.
+Threefold Keep ga igra (4v4 i 8v8, 5000x4400): utvrda na brdu u visoravni, za tri tima. Popni se na bedemsku stazu stubama pokraj svojih vrata i prijeđi nasip do brda, zatim se popni do oltara na kuli. Poluga u svakom dvorištu otvara sva troja vrata, prolaze ispod zida.
 
 ## Zauzimanje točaka
 

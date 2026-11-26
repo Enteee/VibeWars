@@ -88,7 +88,7 @@ Výsledková tabule ukazuje body, tvoje jako první, a pak oltář: `▲` a čas
 
 I boti jdou po oltáři: když ho tvůj tým nedrží, tvého Přízračného hrdinu převezme ten nejbližší, pokud ho nejdeš převzít sám; léčitel nebo těžce zraněný bot jde, jen když nemůže nikdo jiný. Dovede ducha na oltář a řekne mu, ať tam zůstane, a ostatní čekají u oltáře. Bot vedoucí ducha se cestou nezastavuje kvůli boji; ostatní oltář opustí jen kvůli boji s nepřítelem, který se dostane na dostřel kouzla. Když tvůj tým oltář nedrží, každý bot nejdřív zabije Přízračného hrdinu druhého týmu, jakmile stojí na oltáři v jejich dosahu: je to jediný nepřítel, který brání tvému duchovi si ho nárokovat.
 
-Hraje ho Threefold Keep (4v4 a 8v8, 5000x4400): tvrz na kopci ve vysočině, pro tři týmy. Vystup po schodech vedle své brány na ochoz hradby a přejdi po hrázi na kopec, pak vyšplhej k oltáři na věži. Páka na každém nádvoří otevře všechny čtyři brány: průchod tvou bránou pod hradbou a podzemí, dlouhou cestu pod kopcem.
+Hraje ho Threefold Keep (4v4 a 8v8, 5000x4400): tvrz na kopci ve vysočině, pro tři týmy. Vystup po schodech vedle své brány na ochoz hradby a přejdi po hrázi na kopec, pak vyšplhej k oltáři na věži. Páka na každém nádvoří otevře všechny tři brány, průchody pod hradbou.
 
 ## Dobývání bodů
 

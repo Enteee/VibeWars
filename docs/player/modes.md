@@ -243,7 +243,7 @@ spell range. While your team does not hold the altar, every bot kills the other
 team's Ghostly Hero first once it stands on the altar in their range:
 it is the one foe that keeps your ghost from claiming it.
 
-Threefold Keep (4v4 and 8v8, 5000x4400) plays it: a keep on a hill in the heights, for three teams. Climb the wall-walk by the stairs beside your gate and cross a causeway to the hill, then climb to the altar on the tower. A lever in each court opens all four gates: your gate passage under the wall, and the undercroft, the long way under the hill.
+Threefold Keep (4v4 and 8v8, 5000x4400) plays it: a keep on a hill in the heights, for three teams. Climb the wall-walk by the stairs beside your gate and cross a causeway to the hill, then climb to the altar on the tower. A lever in each court opens all three gates, the passages under the wall.
 
 ## Capture Points
 

@@ -202,7 +202,7 @@ Zauberreichweite zu kämpfen. Solange dein Team den Altar nicht hält, tötet je
 anderen Teams, sobald er auf dem Altar in ihrer Reichweite steht: Er ist der einzige Gegner, der deinen Geist am
 Einnehmen hindert.
 
-Threefold Keep (4v4 und 8v8, 5000x4400) spielt es: eine Feste auf einem Hügel im Hochland, für drei Teams. Steig über die Treppe neben deinem Tor auf den Wehrgang und überquere einen Damm zum Hügel, dann steig zum Altar auf dem Turm. Ein Hebel in jedem Hof öffnet alle vier Tore: deinen Torgang unter der Mauer und das Gewölbe, den langen Weg unter dem Hügel.
+Threefold Keep (4v4 und 8v8, 5000x4400) spielt es: eine Feste auf einem Hügel im Hochland, für drei Teams. Steig über die Treppe neben deinem Tor auf den Wehrgang und überquere einen Damm zum Hügel, dann steig zum Altar auf dem Turm. Ein Hebel in jedem Hof öffnet alle drei Tore, die Torgänge unter der Mauer.
 
 ## Punkte erobern
 

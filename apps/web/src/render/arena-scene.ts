@@ -185,7 +185,7 @@ import {
   walkMarkerTicks,
   type WalkMarker,
 } from "./walk-marker.js";
-import { Vignette } from "./vignette.js";
+import { deckVignetteTops, Vignette } from "./vignette.js";
 import { weaponMarkLayout, weaponTipAt } from "./weapon-mark.js";
 import { AttackClock, REST_FRAME, shownFrame, type AttackFrame } from "./attack-clock.js";
 import { CAST_GLOW_CORE, CAST_GLOW_CORE_LIFT, castGlow } from "./cast-beats.js";
@@ -4431,6 +4431,7 @@ export class ArenaScene extends Phaser.Scene {
         covers,
       );
     }
+    this.vignette?.setDecks(deckVignetteTops(next.structure));
     this.drawOverhangs(next.structure, next.lighting, line);
     for (const dropOff of next.structure.dropOffs) {
       this.drawDropOff(dropOff, ground, line);

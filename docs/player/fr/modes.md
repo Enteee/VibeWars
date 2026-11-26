@@ -245,7 +245,7 @@ qui arrive à portée de sort. Tant que ton équipe ne tient pas l'autel, chaque
 tue d'abord le Héros fantomatique adverse dès qu'il se tient sur l'autel à sa
 portée : c'est le seul ennemi qui empêche ton fantôme de le prendre.
 
-Threefold Keep le joue (4v4 et 8v8, 5000x4400) : un donjon sur une colline des hauteurs, pour trois équipes. Monte sur le chemin de ronde par l'escalier à côté de ta porte et traverse une chaussée jusqu'à la colline, puis grimpe jusqu'à l'autel sur la tour. Un levier dans chaque cour ouvre les quatre portes : le passage de ta porte sous le rempart, et la crypte, le long chemin sous la colline.
+Threefold Keep le joue (4v4 et 8v8, 5000x4400) : un donjon sur une colline des hauteurs, pour trois équipes. Monte sur le chemin de ronde par l'escalier à côté de ta porte et traverse une chaussée jusqu'à la colline, puis grimpe jusqu'à l'autel sur la tour. Un levier dans chaque cour ouvre les trois portes, les passages sous le rempart.
 
 ## Points de capture
 
