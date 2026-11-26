@@ -381,11 +381,19 @@ test("Wilds: a double right click on the lever opens the side room's door, and y
   await pull(true);
 });
 
-test("Heights draws its water: the deep pond darker than the floor, a puddle paler (#2985)", async ({
-  page,
-}) => {
-  // Walks, each with a wait for a still camera (#721), round the pond and back (#4057).
-  test.setTimeout(90_000);
+/**
+ * Heights opened and walked east from the spawn to the pond's south shore,
+ * reduced motion on: what samples its water against its floor (#2985).
+ */
+async function walkedToHeightsWater(page: Page): Promise<{
+  readonly canvas: Locator;
+  readonly waterAndFloor: (
+    x: number,
+    y: number,
+    dx: number,
+    dy: number,
+  ) => Promise<[number, number]>;
+}> {
   // Water ripples never settle unless motion is reduced (#2984).
   await page.emulateMedia({ reducedMotion: "reduce" });
   const canvas = await openTraining(page);
@@ -418,23 +426,6 @@ test("Heights draws its water: the deep pond darker than the floor, a puddle pal
     }, shot.toString("base64"));
     return mean / (1 - vignette);
   };
-  /**
-   * Standing at `x, y`: the water `dx, dy` away from you and the floor as
-   * far the other way. The view follows you (#721) and its light falls off
-   * from the centre, so only samples as far from it compare.
-   */
-  const waterAndFloor = async (
-    x: number,
-    y: number,
-    dx: number,
-    dy: number,
-  ): Promise<[number, number]> => {
-    await walkTo(page, canvas, { x, y });
-    // A click off the canvas releases the arena and walks nowhere.
-    await expect(page.locator(".training")).toHaveClass(/is-armed/);
-    await page.mouse.move(1, 1);
-    return [await brightness({ x: x + dx, y: y + dy }), await brightness({ x: x - dx, y: y - dy })];
-  };
   // The stage shows less than the map's width: from the spawn, walk east in hops.
   // South of the pits, as drawn one step down (#2973).
   for (const hop of [
@@ -445,16 +436,47 @@ test("Heights draws its water: the deep pond darker than the floor, a puddle pal
   ]) {
     await walkTo(page, canvas, hop);
   }
-  // Map coordinates from training-heights/map.json: the pond's middle, the east puddle's.
+  return {
+    canvas,
+    /**
+     * Standing at `x, y`: the water `dx, dy` away from you and the floor as
+     * far the other way. The view follows you (#721) and its light falls off
+     * from the centre, so only samples as far from it compare.
+     */
+    waterAndFloor: async (x, y, dx, dy) => {
+      await walkTo(page, canvas, { x, y });
+      // A click off the canvas releases the arena and walks nowhere.
+      await expect(page.locator(".training")).toHaveClass(/is-armed/);
+      await page.mouse.move(1, 1);
+      return [
+        await brightness({ x: x + dx, y: y + dy }),
+        await brightness({ x: x - dx, y: y - dy }),
+      ];
+    },
+  };
+}
+
+// Map coordinates from training-heights/map.json: the pond's middle, the east puddle's.
+// Two tests, each with its own budget: one walk round both is too long on a loaded box (#4057).
+
+test("Heights draws its water: the deep pond darker than the floor (#2985)", async ({ page }) => {
+  // A walk and a wait for a still camera (#721).
+  test.setTimeout(60_000);
+  const { canvas, waterAndFloor } = await walkedToHeightsWater(page);
   // The pond lies in torch-east-door's and fire-east-hearth's warm pools (#4057), so
   // the floor is the pond mirrored across the line through both: as far from each.
   // Round the pond's east end first: the door is further than the stage shows.
   await walkTo(page, canvas, { x: 1060, y: 230 });
   const [pond, northFloor] = await waterAndFloor(907, 124, 23, 76);
   expect(pond).toBeLessThan(northFloor);
+});
+
+test("Heights draws its water: a puddle paler than the floor (#2985)", async ({ page }) => {
+  // A walk and a wait for a still camera (#721).
+  test.setTimeout(60_000);
+  const { canvas, waterAndFloor } = await walkedToHeightsWater(page);
   // West of the puddle: south of it is the east pit, sunk and darker (#2973).
-  // Back by the pond's middle, then west of the pit: the puddle is further than the stage shows.
-  await walkTo(page, canvas, { x: 930, y: 330 });
+  // West of the pit first: the puddle is further than the stage shows.
   await walkTo(page, canvas, { x: 930, y: 560 });
   const [puddle, westFloor] = await waterAndFloor(990, 715, 80, 0);
   expect(puddle).toBeGreaterThan(westFloor);
