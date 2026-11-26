@@ -165,7 +165,7 @@ ved alteret. En bot, der bærer din relikvie, går direkte til alteret med
 den; de andre forlader kun relikvien for at kæmpe mod en fjende, der
 kommer inden for besværgelsesrækkevidde.
 
-Broken Tower spiller den (4v4 og 8v8, 5400x2800): et væltet tårn på en bakke i højlandet. Gå op ad murbrokkernes terrasser ad deres trapper til alteret på stubben, eller tag kælderen under bakken, når et håndtag på terrassen åbner dens døre; murbrokvægge kan slås i stykker.
+Broken Tower spiller den (4v4 og 8v8, 5400x2800): et væltet tårn på en bakke i højlandet. Gå op ad murbrokkernes terrasser ad deres trapper til alteret på stubben, eller tag kælderen under bakken, når et håndtag på terrassen åbner dens døre; murbrokvægge kan slås i stykker. Ved siden af hver murbrokvæg åbner et faldgitter sig, mens nogen står på dets trykplade.
 
 ### Cinder Sanctum
 

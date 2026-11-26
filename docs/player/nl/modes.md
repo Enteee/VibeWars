@@ -160,7 +160,7 @@ wacht bij het altaar. Een bot die je relikwie draagt, loopt er recht mee naar he
 altaar; de anderen verlaten het relikwie alleen om te vechten met een vijand die
 binnen spreukbereik komt.
 
-Broken Tower speelt het (4v4 en 8v8, 5400x2800): een omgevallen toren op een heuvel in het hoogland. Klim via de trappen van de puinterrassen naar het altaar op de torenstomp, of neem de kelder onder de heuvel zodra een hendel op het terras de deuren opent; puinmuren kun je stukslaan.
+Broken Tower speelt het (4v4 en 8v8, 5400x2800): een omgevallen toren op een heuvel in het hoogland. Klim via de trappen van de puinterrassen naar het altaar op de torenstomp, of neem de kelder onder de heuvel zodra een hendel op het terras de deuren opent; puinmuren kun je stukslaan. Naast elke puinmuur gaat een valhek open zolang iemand op de drukplaat ervan staat.
 
 ### Cinder Sanctum
 
