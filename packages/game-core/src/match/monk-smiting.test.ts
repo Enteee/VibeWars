@@ -216,15 +216,18 @@ describe("the Monk smiting staples (#1519)", () => {
     });
   });
 
-  it("Judge's Insight: 18 s on an ally, whose attacks deal holy damage at 20% armor penetration", () => {
+  it("Judge's Insight: 18 s on an ally, whose attacks deal holy damage at +20% armor penetration", () => {
     const match = sim();
     cast(match, JUDGES_INSIGHT, "ally", 2.5);
     const ally = get(match, "ally");
     expect(ally.statuses.get("judges-insight")?.durationSeconds).toBe(18);
-    expect(weaponSnapshotOf(ally)).toMatchObject({ damageType: "holy", armorPenetration: 0.2 });
-    expect(weaponSnapshotOf(get(match, "m"))).toMatchObject({ armorPenetration: 0 });
+    expect(weaponSnapshotOf(ally)).toMatchObject({
+      damageType: "holy",
+      bonusArmorPenetration: 0.2,
+    });
+    expect(weaponSnapshotOf(get(match, "m"))).toMatchObject({ bonusArmorPenetration: 0 });
     expect(describeStatus("judges-insight", undefined, EN_WORDS, EN_NAMES)).toBe(
-      "attacks deal holy damage, attacks have 20% armor penetration",
+      "attacks deal holy damage, attacks have +20% armor penetration",
     );
   });
 
