@@ -12,6 +12,7 @@ import {
   zoneOffsetAt,
   zonePhaseAt,
   polygonCentre,
+  pointInPolygon,
   TELEPORT_COOLDOWN_SECONDS,
   type CreatureLook,
   type StatusId,
@@ -108,6 +109,7 @@ import {
   type PavingLookColours,
   type StonePavingLook,
   type WaterLook,
+  WATER_LOOK,
   SWITCH_MARK_LOOK,
 } from "./arena-palette.js";
 import {
@@ -183,6 +185,7 @@ import {
   walkMarkerTicks,
   type WalkMarker,
 } from "./walk-marker.js";
+import { Vignette } from "./vignette.js";
 import { weaponMarkLayout, weaponTipAt } from "./weapon-mark.js";
 import { AttackClock, REST_FRAME, shownFrame, type AttackFrame } from "./attack-clock.js";
 import { CAST_GLOW_CORE, CAST_GLOW_CORE_LIFT, castGlow } from "./cast-beats.js";
@@ -434,6 +437,7 @@ import {
   type WaterPainter,
 } from "./water-painter.js";
 import { waterPieces, waterShapeOf, type WaterPiece, type WaterShape } from "./water-shape.js";
+import { WaterFx, paintWaterFx, type WaterAt } from "./water-fx.js";
 import { SPIRE_LOOK, ZONE_EDGE_WIDTH, ZONE_LOOK, strikeEdgeScale } from "./zone-look.js";
 import { HAZARD_ART, hazardKindOf, pathMotionAt, phaseProgressAt } from "./hazard-marks.js";
 import {
@@ -943,6 +947,8 @@ export class ArenaScene extends Phaser.Scene {
     { readonly graphics: Phaser.GameObjects.Graphics; readonly painter: Painter }
   >();
   private readonly footsteps = new FootstepTrails();
+  /** Wakes and splashes on the water (#4061), drawn with its ripples. */
+  private readonly waterFx = new WaterFx();
   /** Each layer's effect zones (ADR-0053), drawn every frame as they breathe. */
   private readonly zoneGraphics = new Map<number, Phaser.GameObjects.Graphics>();
   /** Fog banks and vents by layer, plumes by band, and the weather over all (#3032). */
@@ -1094,6 +1100,9 @@ export class ArenaScene extends Phaser.Scene {
     {
       image: Phaser.GameObjects.Image;
       to: { x: number; y: number };
+      /** Where it lands on water, unlifted, to splash there (#4061); `undefined` on dry ground. */
+      readonly splash:
+        { readonly x: number; readonly y: number; readonly layer: number } | undefined;
       endedAt: number | undefined;
       /** A flying spell's (#3292): where it left, its trail, and its core's radius. */
       readonly spell:
@@ -1160,6 +1169,7 @@ export class ArenaScene extends Phaser.Scene {
   private now = 0;
   /** The light maps (ADR-0052); `undefined` until `create`. */
   private lightingPass: LightingPass | undefined;
+  private vignette: Vignette | undefined;
   /** Whether Alt is held, for the hover ring (#3020); a key does not wait for the mouse to move. */
   private alt: AltTracker | undefined;
   /** Whether a finger has been held still long enough to pick the ground below (#3878). */
@@ -1202,6 +1212,7 @@ export class ArenaScene extends Phaser.Scene {
     // `view` as it is.
     const snapped = snapView(view, camera);
     camera.centerOn(snapped.x, snapped.y);
+    this.vignette?.place(snapped, view.zoom, camera);
   }
 
   /** The arena's bounds, which the grid covers and the edge line traces. */
@@ -1363,6 +1374,7 @@ export class ArenaScene extends Phaser.Scene {
     }
     this.groundGraphics = this.add.graphics().setDepth(GROUND_DEPTH);
     this.lightingPass = new LightingPass(this);
+    this.vignette = new Vignette(this);
     this.stackAtlas = new StackAtlas(
       (width, height) => this.stackSurface(width, height),
       (bake) => {
@@ -1437,7 +1449,7 @@ export class ArenaScene extends Phaser.Scene {
     this.staticCull.cull(view);
     this.drawLifts();
     this.drawBreakables();
-    this.drawRipples();
+    this.drawRipples(dt);
     this.drawZones();
     this.drawAtmosphere(dt, view);
     for (const graphics of this.zoneGraphics.values()) {
@@ -2804,6 +2816,10 @@ export class ArenaScene extends Phaser.Scene {
         this.projectileImages.set(shot.id, {
           image,
           to: projectileLanding(shot, this.snapshot.structure, this.snapshot.lifts),
+          splash:
+            this.waterAt(shot.to, shot.toLayer) === undefined
+              ? undefined
+              : { x: shot.to.x, y: shot.to.y, layer: shot.toLayer },
           endedAt: undefined,
           spell:
             shot.spell && from !== undefined
@@ -2836,6 +2852,11 @@ export class ArenaScene extends Phaser.Scene {
       }
       if (sent.has(id)) {
         this.endedShots.add(id);
+      }
+      if (shown.endedAt === undefined && shown.splash !== undefined) {
+        // It has just landed, and on water.
+        const { x, y, layer } = shown.splash;
+        this.waterFx.splash(x, y, layer, !fade);
       }
       if (shown.endedAt === undefined && fade) {
         shown.endedAt = now;
@@ -5831,8 +5852,11 @@ export class ArenaScene extends Phaser.Scene {
     this.outside = undefined;
   }
 
-  /** The water's ripples (#2984), at render time; still under reduced motion. */
-  private drawRipples(): void {
+  /**
+   * The water's ripples (#2984), at render time; still under reduced
+   * motion. Over them, the wakes and splashes of the bodies in it (#4061).
+   */
+  private drawRipples(dt: number): void {
     for (const { graphics } of this.rippleGraphics.values()) {
       graphics.clear();
     }
@@ -5858,7 +5882,26 @@ export class ArenaScene extends Phaser.Scene {
         graphics.restore();
       }
     }
+    // Unlifted: a body in water stands on the water's own layer, drawn as it is.
+    this.waterFx.step(this.snapshot.actors, this.waterAt, dt, this.reducedMotion);
+    const { ripple } = WATER_LOOK.shallow;
+    for (const [layer, { graphics }] of this.rippleGraphics) {
+      graphics.save();
+      graphics.translateCanvas(0, -elevationOf(layer, this.snapshot.structure.ground));
+      paintWaterFx(graphics, this.waterFx, layer, line, ripple);
+      graphics.restore();
+    }
   }
+
+  /** The depth of the water at `at` on `layer` (#4061), or `undefined` on dry ground. */
+  private readonly waterAt: WaterAt = (at, layer) => {
+    for (const { shape } of this.waterShapes) {
+      if (shape.layer === layer && pointInPolygon(at, shape.outline)) {
+        return shape.depth;
+      }
+    }
+    return undefined;
+  };
 
   /**
    * Every standing body's ground aura and every footstep trail (ADR-0056
@@ -6162,6 +6205,8 @@ export class ArenaScene extends Phaser.Scene {
   private shutdown(): void {
     this.lightingPass?.destroy();
     this.lightingPass = undefined;
+    this.vignette?.destroy();
+    this.vignette = undefined;
     // `create` listens for a restored context while it holds an atlas.
     if (this.stackAtlas !== undefined) {
       this.game.renderer.off(Phaser.Renderer.Events.RESTORE_WEBGL, this.rebuildStackAtlas);
@@ -6176,6 +6221,7 @@ export class ArenaScene extends Phaser.Scene {
     this.dropDecorBake();
     this.leverFlips.clear();
     this.footsteps.clear();
+    this.waterFx.clear();
     this.alt?.dispose();
     this.alt = undefined;
   }

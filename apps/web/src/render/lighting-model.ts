@@ -1,6 +1,9 @@
 import { pointInPolygon, type Vec2 } from "@vibewars/game-core";
 import type { MapLighting } from "@vibewars/game-maps/schema";
 
+/** One light of a map (ADR-0052). */
+type MapLight = MapLighting["lights"][number];
+
 /** The darkest a body is drawn (ADR-0052): a fighter stays readable in any corner. */
 export const BODY_LIGHT_FLOOR = 0.7;
 /** The darkest a surface is drawn (ADR-0052). */
@@ -188,4 +191,44 @@ export function multiplyColour(colour: number, tint: number): number {
   const channel = (shift: number): number =>
     Math.round((((colour >> shift) & 0xff) * ((tint >> shift) & 0xff)) / 255) << shift;
   return channel(16) | channel(8) | channel(0);
+}
+
+/** The warm hue of a fire's pool on the gothic floor (#4057), the mock's `0xffbe6e`. */
+export const FIRE_LIGHT_COLOUR = 0xffbe6e;
+/** How much brighter a fire burns than its map says (#4057): a pool reads on the darker floor of #4056. */
+export const FIRE_LIGHT_GAIN = 1.4;
+/** How much further a fire's pool reaches than its map says (#4057). */
+export const FIRE_LIGHT_REACH = 1.5;
+
+const FIRE_PREFIXES = ["torch-", "fire-", "brazier-"];
+
+/**
+ * Whether `light` is a fire (#4057): named `torch-`, `fire-` or `brazier-`
+ * (ADR-0052) and red at heart. A teal brazier burns magic, not wood, and
+ * keeps its colour.
+ */
+export function isFireLight(light: MapLight): boolean {
+  const red = (light.colour >> 16) & 0xff;
+  return (
+    FIRE_PREFIXES.some((prefix) => light.id.startsWith(prefix)) &&
+    red >= ((light.colour >> 8) & 0xff) &&
+    red >= (light.colour & 0xff)
+  );
+}
+
+/** `lighting` with every fire in the gothic look's warm colour, brighter and wider (#4057). */
+export function warmFireLights(lighting: MapLighting): MapLighting {
+  return {
+    ...lighting,
+    lights: lighting.lights.map((light) =>
+      isFireLight(light)
+        ? {
+            ...light,
+            colour: FIRE_LIGHT_COLOUR,
+            intensity: Math.min(1, light.intensity * FIRE_LIGHT_GAIN),
+            radius: light.radius * FIRE_LIGHT_REACH,
+          }
+        : light,
+    ),
+  };
 }

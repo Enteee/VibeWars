@@ -437,12 +437,17 @@ test("in the HUD ♪ popover, pinning a track narrows neither its row nor its bu
   for (const width of await widths(".jukebox-pin")) {
     expect(Math.abs(width - pinWidth)).toBeLessThanOrEqual(1);
   }
-  // The title gives way: every button stays on its row's line.
-  for (const row of await popover.locator(".jukebox-row").all()) {
-    const play = await row.locator(".jukebox-play").boundingBox();
-    const pin = await row.locator(".jukebox-pin").boundingBox();
-    expect(play !== null && pin !== null && pin.y < play.y + play.height).toBe(true);
-  }
+  // The title gives way: every button stays on its row's line. Read in one
+  // go, as a match keeps the page busy and each read waits on it.
+  const offLine = await popover.locator(".jukebox-row").evaluateAll(
+    (rows) =>
+      rows.filter((row) => {
+        const play = row.querySelector(".jukebox-play")?.getBoundingClientRect();
+        const pin = row.querySelector(".jukebox-pin")?.getBoundingClientRect();
+        return play === undefined || pin === undefined || pin.top >= play.top + play.height;
+      }).length,
+  );
+  expect(offLine).toBe(0);
 });
 
 test("Off plays nothing after a click, and the music mute survives a reload (#372, #424)", async ({

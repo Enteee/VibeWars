@@ -24,10 +24,14 @@ it. The catalog said Armor of Earth carried "the real movement penalty";
 Three helpers in `skills/tick.ts`, so no game loop reads
 `aggregateModifiers` directly:
 
-- **`moveSpeedMultiplier(c)`**, clamped to [0.25, 1.33], scales the speed
-  `MatchSimulation.advanceMovement` integrates. The clamp lives here and not
-  in `aggregateModifiers`, so each status's own line ("moves at 50% speed")
-  stays true. Nothing reaches either bound today.
+- **`moveSpeedMultiplier(c)`** scales the speed
+  `MatchSimulation.advanceMovement` integrates. Boosts multiply up to
+  +33%, unless a cap-breaker (Dash, Pious Haste, Burning Speed) is faster
+  on its own; snares multiply down to −50%, unless one snare is stronger on
+  its own. The final result, burden and terrain included, is clamped to
+  [0.25, 1.33], or up to the cap-breaker's own boost (#4095). The caps live
+  here and not in `aggregateModifiers`, so each status's own line ("moves
+  at 50% speed") stays true.
 - **`effectiveActivationSeconds(skill, c)`** is what `beginCast` gets.
   Dazed doubles it; an instant skill stays instant. The cast's total is
   synced as `castTotal`, so the cast bar fills over the real cast and not

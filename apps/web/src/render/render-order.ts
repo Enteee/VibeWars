@@ -44,6 +44,7 @@ export type RenderItem =
   | { readonly kind: "fog"; readonly layer: number }
   | { readonly kind: "plume"; readonly band: number }
   | { readonly kind: "weather" }
+  | { readonly kind: "vignette" }
   | { readonly kind: "terrain" }
   | { readonly kind: "lighting"; readonly layer: number }
   | { readonly kind: "lit-ground-effect" }
@@ -166,6 +167,12 @@ const DECK_WATER: Record<WaterPart, number> = { surface: 5.6, cells: 5.65, rippl
 const GROUND_COSMETIC = -1.05;
 const DECK_COSMETIC = 5.75;
 /**
+ * The gothic vignette (#4057): over the ground and what is laid on it,
+ * under the first gameplay layer, so a body or a cue at the edge of the
+ * view keeps its colours while the floor round it darkens.
+ */
+const VIGNETTE = -1.02;
+/**
  * An effect zone (ADR-0053): over its layer's water and lighting, which
  * never darkens it (ADR-0052: what matters to the fight is drawn unlit),
  * and under its torches and whoever stands in it.
@@ -251,6 +258,8 @@ export function renderOrder(item: RenderItem): number {
       return item.band * LAYER_STACK + PLUME;
     case "weather":
       return WEATHER;
+    case "vignette":
+      return VIGNETTE;
     case "cosmetic-ground":
       return item.layer === 0 ? GROUND_COSMETIC : (item.layer - 1) * LAYER_STACK + DECK_COSMETIC;
     case "ground-effect":

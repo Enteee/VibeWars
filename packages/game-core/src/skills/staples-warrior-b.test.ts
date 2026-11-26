@@ -14,6 +14,7 @@ import { NO_RANKS, aggregateModifiers } from "./status.js";
 import { makeCombatant } from "./testing.js";
 import type { Combatant, Skill } from "./types.js";
 import { resolveAttackSkillOutcome, resolveSwing } from "./weapon-attack.js";
+import { statusMoveSpeed } from "./tick.js";
 
 /**
  * Warrior staples (#2316): Charging Strike, Headbutt, Barbarous Slice,
@@ -199,7 +200,7 @@ describe("Charging Strike (#2316)", () => {
       const caster = warrior(ranks);
       cast("warrior.charging-strike", caster);
       expect(caster.statuses.get("charging-strike")?.remainingSeconds).toBe(seconds);
-      expect(aggregateModifiers(caster.statuses.active).moveSpeedMultiplier).toBe(1.33);
+      expect(statusMoveSpeed(aggregateModifiers(caster.statuses.active))).toBe(1.33);
       const [blow] = damageTo(swing(caster, body("f")).events, "f");
       expect(blow).toBe(plainSwing(ranks) + bonus);
       expect(caster.statuses.has("charging-strike")).toBe(false);

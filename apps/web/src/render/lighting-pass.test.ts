@@ -30,6 +30,8 @@ import {
   stageShadows,
   sunShadowTint,
   TUNNEL_GLOW_CAP,
+  FIRE_GLOW,
+  glowOf,
   tunnelGlow,
   tunnelLightCover,
   type LightMapBox,
@@ -807,6 +809,26 @@ describe("LightingPass", () => {
       expect(faded.some(({ key }) => key.endsWith("-glow"))).toBe(false);
     });
   });
+
+  describe("fires (#4057)", () => {
+    const BRAZIER = { ...light("brazier-west", 0, 0), colour: 0xffbe6e, intensity: 0.8 };
+    const COLD = { ...light("cold-north", 0, 0), colour: 0x9fc4ff };
+
+    it("add a warm pool at the mock's warmth; other lights none", () => {
+      expect(glowOf(BRAZIER, false)).toBeCloseTo(0.8 * FIRE_GLOW, 9);
+      expect(glowOf(COLD, false)).toBe(0);
+      expect(glowOf(COLD, true)).toBe(tunnelGlow(COLD.intensity));
+    });
+
+    it("add their pools adding over a map with no tunnels", () => {
+      const { scene, images } = fakeScene();
+      const lit = { ...BASE, lights: [BRAZIER, COLD] };
+      new LightingPass(scene).show(lit, { ...STRUCTURE, layerCount: 2 }, [], 400, 400, false);
+      const glows = images.filter(({ key }) => key.endsWith("-glow"));
+      expect(glows.length).toBeGreaterThan(0);
+      expect(glows.every(({ blendMode }) => blendMode === ADD)).toBe(true);
+    });
+  });
 });
 
 describe("lightMapCells (#3524)", () => {
@@ -874,9 +896,30 @@ describe("lightMapCells (#3524)", () => {
     const extent = lightMapExtent(TUNNELLED, 0, ARENA, ARENA);
     const cells = lightMapCells(LIT, TUNNELLED, [], 0, extent, "full");
     const box = reach(TORCH, extent);
-    expect(cells.lit.length).toBeGreaterThan(0);
-    expect(cells.lit.every((cell) => meets(cell, box))).toBe(true);
-    expect(area(cells.lit)).toBeLessThan(area(lightMapCover(TUNNELLED, [], 0, extent)));
+    expect(cells.glow.length).toBeGreaterThan(0);
+    expect(cells.glow.every((cell) => meets(cell, box))).toBe(true);
+    expect(area(cells.glow)).toBeLessThan(area(lightMapCover(TUNNELLED, [], 0, extent)));
+  });
+
+  it("shows a warm pool off the tunnels only round a fire, and only where its circle meets (#4057)", () => {
+    const BRAZIER = { ...light("brazier-hall", 1, 0), position: { x: 500, y: 500 }, radius: 400 };
+    const extent = lightMapExtent(TUNNELLED, 1, ARENA, ARENA);
+    expect(lightMapCells(LIT, TUNNELLED, [], 1, extent, "full").glow).toEqual([]);
+    const cells = lightMapCells(
+      { ...LIT, lights: [LAMP, BRAZIER] },
+      TUNNELLED,
+      [],
+      1,
+      extent,
+      "full",
+    );
+    // Grown by the 2 px a stamp's smoothing may colour past its edge.
+    const box = reach({ ...BRAZIER, radius: BRAZIER.radius + 4 }, extent);
+    expect(cells.glow.length).toBeGreaterThan(0);
+    expect(cells.glow.every((cell) => meets(cell, box))).toBe(true);
+    // The box's corner is outside the circle, and adds nothing.
+    const corner = { x: box.x + 1, y: box.y + 1 };
+    expect(cells.glow.some((cell) => meets(cell, { ...corner, width: 1, height: 1 }))).toBe(false);
   });
 
   it("marks only the cells a shape meets, not every cell in its box", () => {

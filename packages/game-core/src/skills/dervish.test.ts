@@ -16,6 +16,7 @@ import { chargeAdrenaline, makeCombatant, strikesOf } from "./testing.js";
 import { attackDurationSeconds, resolveAttackSkill } from "./weapon-attack.js";
 import type { Combatant, Skill, SkillEffect } from "./types.js";
 import { EN_NAMES, EN_WORDS } from "./describe-words.js";
+import { statusMoveSpeed } from "./tick.js";
 
 /**
  * The Dervish's enchantments and the skills that spend one (#845), each
@@ -222,7 +223,7 @@ describe("Fleeting Stability (#845)", () => {
     const caster = dervish();
     cast(caster, "dervish.fleeting-stability");
     expect(caster.statuses.get("fleeting-stability")?.remainingSeconds).toBe(9);
-    expect(aggregateModifiers(caster.statuses.active).moveSpeedMultiplier).toBe(1.25);
+    expect(statusMoveSpeed(aggregateModifiers(caster.statuses.active))).toBe(1.25);
 
     const warrior = holding("w", 1, WEAPONS.hammer, "warrior.hammer-mastery");
     const backbreak = (): CombatEvent[] => {

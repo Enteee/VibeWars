@@ -126,11 +126,93 @@ function proceduralWater(depth: MapWater["depth"]): WaterArt {
       }
     },
     ripples(painter, shape, line, seconds, still) {
+      if (look.rings > 0 && !still) {
+        paintRingPulse(painter, shape, line, seconds, look);
+      }
       paintRings(painter, shape.ripples, line, seconds, still, look.ripple, look.rippleAlpha);
     },
   };
 }
 
+/** Seconds deep water's rings take to swell outward and come back (#4061). */
+export const RING_PULSE_SECONDS = 6;
+/** World units a ring's edge swells either way. */
+export const RING_PULSE_REACH = 4;
+/** How many steps of the swell are baked: one world unit apart, too fine to see step. */
+const RING_PULSE_STEPS = 9;
+
+/**
+ * Each ring's edge, stroked along the shore only, at each step of the
+ * swell from `RING_PULSE_REACH` in to as far out: a flat run of
+ * `x1, y1, x2, y2` per ring and step. Baked the first time a piece of
+ * water is drawn, so a frame only picks one.
+ */
+const ringEdges = new WeakMap<readonly Vec2[], readonly (readonly number[])[][]>();
+
+function ringEdgesOf(
+  painter: Pick<WaterPainter, "shore">,
+  shape: WaterShape,
+  look: WaterLook,
+): readonly (readonly number[])[][] {
+  const known = ringEdges.get(shape.outline);
+  if (known !== undefined) {
+    return known;
+  }
+  const shore = painter.shore(shape.outline);
+  const isShore = (a: Vec2, b: Vec2): boolean =>
+    shore.some(([from, to]) => from.x === a.x && from.y === a.y && to.x === b.x && to.y === b.y);
+  const { width, height } = shape.anchor;
+  const wall = look.lip ? WATER_SUNK : 0;
+  const step = Math.max(0, Math.min(width, height) / 2 - wall) / (look.rings + 1);
+  const edges: (readonly number[])[][] = [];
+  for (let ring = 1; ring <= look.rings; ring += 1) {
+    const steps: (readonly number[])[] = [];
+    for (let k = 0; k < RING_PULSE_STEPS; k += 1) {
+      const swell = RING_PULSE_REACH * ((2 * k) / (RING_PULSE_STEPS - 1) - 1);
+      const inset = insetShore(shape.outline, shore, Math.max(0, wall + ring * step - swell));
+      const run: number[] = [];
+      shape.outline.forEach((a, n) => {
+        const b = shape.outline[(n + 1) % shape.outline.length] ?? a;
+        const p = inset[n];
+        const q = inset[(n + 1) % inset.length];
+        if (isShore(a, b) && p !== undefined && q !== undefined) {
+          run.push(p.x, p.y, q.x, q.y);
+        }
+      });
+      steps.push(run);
+    }
+    edges.push(steps);
+  }
+  ringEdges.set(shape.outline, edges);
+  return edges;
+}
+
+/**
+ * Deep water's rings swelling slowly outward and back over
+ * `RING_PULSE_SECONDS` at render time `seconds` (#4061): a pale edge on
+ * each, the inner ones a beat behind the outer, faint enough never to
+ * flash. Still water has none.
+ */
+export function paintRingPulse(
+  painter: Pick<WaterPainter, "shore" | "lineStyle" | "lineBetween">,
+  shape: WaterShape,
+  line: number,
+  seconds: number,
+  look: WaterLook,
+): void {
+  const edges = ringEdgesOf(painter, shape, look);
+  edges.forEach((steps, ring) => {
+    const swell = Math.sin((2 * Math.PI * seconds) / RING_PULSE_SECONDS - ring * 0.6);
+    const run = steps[Math.round(((swell + 1) / 2) * (RING_PULSE_STEPS - 1))];
+    if (run === undefined) {
+      return;
+    }
+    painter.lineStyle(line, look.ripple, look.rippleAlpha * (0.3 + 0.15 * swell));
+    for (let k = 0; k + 3 < run.length; k += 4) {
+      painter.lineBetween(run[k] ?? 0, run[k + 1] ?? 0, run[k + 2] ?? 0, run[k + 3] ?? 0);
+    }
+  });
+}
 /** `shore` stroked `rise` world units up. */
 function strokeShore(
   painter: WaterPainter,

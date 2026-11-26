@@ -18,6 +18,7 @@ import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
 import { EN_NAMES, EN_WORDS } from "../skills/describe-words.js";
+import { statusMoveSpeed } from "../skills/tick.js";
 
 /**
  * The Elementalist Water Magic staples in a match (#1367): the snares,
@@ -139,7 +140,7 @@ function hasFor(match: MatchSimulation, id: string, statusId: string, seconds: n
 
 /** `id`'s summed movement speed multiplier, before the clamp. */
 function speed(match: MatchSimulation, id: string): number {
-  return aggregateModifiers(get(match, id).statuses.active).moveSpeedMultiplier;
+  return statusMoveSpeed(aggregateModifiers(get(match, id).statuses.active));
 }
 
 describe("Ice Prison and Frozen Burst (#1367)", () => {

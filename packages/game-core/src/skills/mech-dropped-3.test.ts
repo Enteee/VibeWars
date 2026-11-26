@@ -14,6 +14,7 @@ import { NO_RANKS, aggregateModifiers, ownSkillBoost, type StatusId } from "./st
 import { makeCombatant } from "./testing.js";
 import type { Skill } from "./types.js";
 import { EN_NAMES, EN_WORDS } from "./describe-words.js";
+import { statusMoveSpeed } from "./tick.js";
 
 /**
  * Dropped leftovers (#2446): Healer's Boon spares the Divine Favor
@@ -401,7 +402,7 @@ describe("Storm Djinn's Haste (#2446)", () => {
 
   it("is 25% faster", () => {
     const e = hasted(50).get("e")?.combatant;
-    expect(aggregateModifiers(e?.statuses.active ?? []).moveSpeedMultiplier).toBe(1.25);
+    expect(statusMoveSpeed(aggregateModifiers(e?.statuses.active ?? []))).toBe(1.25);
   });
 
   it("costs 1 Energy a second while moving, none standing", () => {
