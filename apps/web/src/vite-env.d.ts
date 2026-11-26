@@ -70,3 +70,11 @@ declare const __VIBEWARS_RELEASE__: string;
  * `VIBEWARS_BENCH_REFERENCE=1`; undefined in Node, where nothing stamps it.
  */
 declare const __VIBEWARS_BENCH_REFERENCE__: boolean | undefined;
+
+/**
+ * True only in the build `scripts/bench/render-bench.mjs` makes: its
+ * reference map is drawn with no whole-screen pass (#4129,
+ * `render/whole-screen-passes.ts`). `vite.config.ts` stamps it from
+ * `VIBEWARS_BENCH_BARE_REFERENCE=1`; undefined in Node.
+ */
+declare const __VIBEWARS_BENCH_BARE_REFERENCE__: boolean | undefined;
