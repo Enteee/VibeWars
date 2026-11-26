@@ -27,6 +27,7 @@ import { parseArgs } from "node:util";
 
 import { chromium } from "@playwright/test";
 
+import { getSkill } from "../../packages/game-core/dist/index.js";
 import { advance, captureState, cycleSkills, waitEvent, walkTo } from "./actions.mjs";
 import { musicSettled } from "./plan.mjs";
 
@@ -459,8 +460,11 @@ async function startMatch(page, mapId, stepped, seatLabel) {
     all.map((b) => b.getAttribute("aria-label") ?? ""),
   );
   console.log("seats:", JSON.stringify(labels));
-  const at = seatLabel === undefined ? -1 : labels.findIndex((label) => seatLabel.test(label));
-  await liveClick(seats.nth(Math.max(at, 0)));
+  const at = seatLabel === undefined ? 0 : labels.findIndex((label) => seatLabel.test(label));
+  if (at < 0) {
+    throw new Error(`no seat matches ${String(seatLabel)} among ${JSON.stringify(labels)}`);
+  }
+  await liveClick(seats.nth(at));
   step = "match";
   await page.locator("#viewport canvas:not(.compass)").waitFor({ timeout: 90_000 });
   await stopPump?.();
@@ -711,8 +715,9 @@ async function actionScene(browser, url, name, mapId, wanted) {
     });
     if (hit !== undefined) {
       const seen = await pageEvents(scene.page);
-      // One second earlier: the cast bar fills before the hit lands.
-      scene.marks.action = (hit.t - frame.origin()) / 1000 - 1;
+      // The shot opens where the cast starts: the hit lands when the cast time is up.
+      const castSeconds = getSkill(hit.skillId)?.activationSeconds ?? 0;
+      scene.marks.action = (hit.t - frame.origin()) / 1000 - castSeconds;
       // The shot's two seconds, played out.
       await frame.steps(frames(2000));
       const after = await pageEvents(scene.page);
