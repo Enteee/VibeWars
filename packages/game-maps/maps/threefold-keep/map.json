@@ -1733,7 +1733,458 @@
       }
     }
   ],
-  "decor": [],
+  "decor": [
+    {
+      "id": "rock-1",
+      "kind": "rock",
+      "at": { "x": 2400, "y": 3711 },
+      "layer": 1,
+      "rotation": 151,
+      "scale": 1.09,
+      "variant": 2
+    },
+    {
+      "id": "rock-2",
+      "kind": "rock",
+      "at": { "x": 3262, "y": 2338 },
+      "layer": 1,
+      "rotation": 287,
+      "scale": 1.25,
+      "variant": 0
+    },
+    {
+      "id": "rock-3",
+      "kind": "rock",
+      "at": { "x": 1189, "y": 1778 },
+      "layer": 1,
+      "rotation": 145,
+      "scale": 0.97,
+      "variant": 0
+    },
+    {
+      "id": "rock-4",
+      "kind": "rock",
+      "at": { "x": 3157, "y": 635 },
+      "layer": 1,
+      "rotation": 270,
+      "scale": 0.94,
+      "variant": 1
+    },
+    {
+      "id": "rock-5",
+      "kind": "rock",
+      "at": { "x": 3386, "y": 848 },
+      "layer": 1,
+      "rotation": 191,
+      "scale": 0.83,
+      "variant": 0
+    },
+    {
+      "id": "rock-6",
+      "kind": "rock",
+      "at": { "x": 3763, "y": 1694 },
+      "layer": 1,
+      "rotation": 215,
+      "scale": 0.89,
+      "variant": 1
+    },
+    {
+      "id": "rock-7",
+      "kind": "rock",
+      "at": { "x": 944, "y": 1497 },
+      "layer": 1,
+      "rotation": 220,
+      "scale": 0.92,
+      "variant": 0
+    },
+    {
+      "id": "rock-8",
+      "kind": "rock",
+      "at": { "x": 3109, "y": 1042 },
+      "layer": 1,
+      "rotation": 81,
+      "scale": 0.85,
+      "variant": 1
+    },
+    {
+      "id": "rock-9",
+      "kind": "rock",
+      "at": { "x": 1071, "y": 2253 },
+      "layer": 1,
+      "rotation": 343,
+      "scale": 1.16,
+      "variant": 0
+    },
+    {
+      "id": "rock-10",
+      "kind": "rock",
+      "at": { "x": 1797, "y": 4125 },
+      "layer": 1,
+      "rotation": 329,
+      "scale": 1,
+      "variant": 1
+    },
+    {
+      "id": "rock-11",
+      "kind": "rock",
+      "at": { "x": 2990, "y": 3649 },
+      "layer": 1,
+      "rotation": 206,
+      "scale": 1.12,
+      "variant": 1
+    },
+    {
+      "id": "rock-12",
+      "kind": "rock",
+      "at": { "x": 2016, "y": 116 },
+      "layer": 1,
+      "rotation": 7,
+      "scale": 0.83,
+      "variant": 3
+    },
+    {
+      "id": "rock-13",
+      "kind": "rock",
+      "at": { "x": 1053, "y": 661 },
+      "layer": 1,
+      "rotation": 112,
+      "scale": 0.87,
+      "variant": 1
+    },
+    {
+      "id": "rock-14",
+      "kind": "rock",
+      "at": { "x": 2171, "y": 3827 },
+      "layer": 1,
+      "rotation": 159,
+      "scale": 1.21,
+      "variant": 1
+    },
+    {
+      "id": "rock-15",
+      "kind": "rock",
+      "at": { "x": 3361, "y": 3678 },
+      "layer": 1,
+      "rotation": 269,
+      "scale": 0.77,
+      "variant": 1
+    },
+    {
+      "id": "rock-16",
+      "kind": "rock",
+      "at": { "x": 1938, "y": 3495 },
+      "layer": 1,
+      "rotation": 91,
+      "scale": 1.18,
+      "variant": 2
+    },
+    {
+      "id": "cairn-1",
+      "kind": "cairn",
+      "at": { "x": 4095, "y": 1171 },
+      "layer": 1,
+      "rotation": 213,
+      "scale": 1.15,
+      "variant": 3
+    },
+    {
+      "id": "cairn-2",
+      "kind": "cairn",
+      "at": { "x": 3034, "y": 3624 },
+      "layer": 1,
+      "rotation": 41,
+      "scale": 0.94,
+      "variant": 0
+    },
+    {
+      "id": "cairn-3",
+      "kind": "cairn",
+      "at": { "x": 4262, "y": 2574 },
+      "layer": 1,
+      "rotation": 346,
+      "scale": 1.13,
+      "variant": 0
+    },
+    {
+      "id": "cairn-4",
+      "kind": "cairn",
+      "at": { "x": 3603, "y": 3732 },
+      "layer": 1,
+      "rotation": 23,
+      "scale": 1.15,
+      "variant": 3
+    },
+    {
+      "id": "cairn-5",
+      "kind": "cairn",
+      "at": { "x": 3196, "y": 3593 },
+      "layer": 1,
+      "rotation": 9,
+      "scale": 1.1,
+      "variant": 1
+    },
+    {
+      "id": "cairn-6",
+      "kind": "cairn",
+      "at": { "x": 4255, "y": 2239 },
+      "layer": 1,
+      "rotation": 228,
+      "scale": 1.02,
+      "variant": 3
+    },
+    {
+      "id": "cairn-7",
+      "kind": "cairn",
+      "at": { "x": 1298, "y": 3754 },
+      "layer": 1,
+      "rotation": 336,
+      "scale": 0.78,
+      "variant": 1
+    },
+    {
+      "id": "cairn-8",
+      "kind": "cairn",
+      "at": { "x": 3147, "y": 424 },
+      "layer": 1,
+      "rotation": 169,
+      "scale": 1.02,
+      "variant": 2
+    },
+    {
+      "id": "cairn-9",
+      "kind": "cairn",
+      "at": { "x": 4226, "y": 2353 },
+      "layer": 1,
+      "rotation": 90,
+      "scale": 0.78,
+      "variant": 1
+    },
+    {
+      "id": "cairn-10",
+      "kind": "cairn",
+      "at": { "x": 1198, "y": 568 },
+      "layer": 1,
+      "rotation": 67,
+      "scale": 1.22,
+      "variant": 0
+    },
+    {
+      "id": "dead-tree-1",
+      "kind": "dead-tree",
+      "at": { "x": 595, "y": 2422 },
+      "layer": 1,
+      "rotation": 112,
+      "scale": 0.77,
+      "variant": 2
+    },
+    {
+      "id": "dead-tree-2",
+      "kind": "dead-tree",
+      "at": { "x": 3236, "y": 4152 },
+      "layer": 1,
+      "rotation": 264,
+      "scale": 1.17,
+      "variant": 3
+    },
+    {
+      "id": "dead-tree-3",
+      "kind": "dead-tree",
+      "at": { "x": 2231, "y": 3844 },
+      "layer": 1,
+      "rotation": 254,
+      "scale": 1.12,
+      "variant": 0
+    },
+    {
+      "id": "dead-tree-4",
+      "kind": "dead-tree",
+      "at": { "x": 3686, "y": 893 },
+      "layer": 1,
+      "rotation": 50,
+      "scale": 1.07,
+      "variant": 1
+    },
+    {
+      "id": "dead-tree-5",
+      "kind": "dead-tree",
+      "at": { "x": 1564, "y": 855 },
+      "layer": 1,
+      "rotation": 88,
+      "scale": 1.06,
+      "variant": 2
+    },
+    {
+      "id": "brazier-1",
+      "kind": "brazier",
+      "at": { "x": 1846, "y": 733 },
+      "layer": 1,
+      "rotation": 317,
+      "scale": 1.12,
+      "variant": 0
+    },
+    {
+      "id": "brazier-2",
+      "kind": "brazier",
+      "at": { "x": 2049, "y": 535 },
+      "layer": 1,
+      "rotation": 63,
+      "scale": 0.96,
+      "variant": 0
+    },
+    {
+      "id": "brazier-3",
+      "kind": "brazier",
+      "at": { "x": 1604, "y": 3401 },
+      "layer": 1,
+      "rotation": 101,
+      "scale": 0.78,
+      "variant": 1
+    },
+    {
+      "id": "brazier-4",
+      "kind": "brazier",
+      "at": { "x": 3997, "y": 1191 },
+      "layer": 1,
+      "rotation": 238,
+      "scale": 0.9,
+      "variant": 3
+    },
+    {
+      "id": "banner-1",
+      "kind": "banner",
+      "at": { "x": 538, "y": 1681 },
+      "layer": 1,
+      "rotation": 216,
+      "scale": 1.11,
+      "variant": 1
+    },
+    {
+      "id": "banner-2",
+      "kind": "banner",
+      "at": { "x": 3798, "y": 2270 },
+      "layer": 1,
+      "rotation": 141,
+      "scale": 1.1,
+      "variant": 0
+    },
+    {
+      "id": "banner-3",
+      "kind": "banner",
+      "at": { "x": 1819, "y": 1250 },
+      "layer": 1,
+      "rotation": 49,
+      "scale": 1.24,
+      "variant": 0
+    },
+    {
+      "id": "banner-4",
+      "kind": "banner",
+      "at": { "x": 3982, "y": 1368 },
+      "layer": 1,
+      "rotation": 283,
+      "scale": 1.16,
+      "variant": 3
+    },
+    {
+      "id": "rock-17",
+      "kind": "rock",
+      "at": { "x": 2303, "y": 1614 },
+      "layer": 2,
+      "rotation": 134,
+      "scale": 0.78,
+      "variant": 0
+    },
+    {
+      "id": "rock-18",
+      "kind": "rock",
+      "at": { "x": 2087, "y": 3120 },
+      "layer": 2,
+      "rotation": 254,
+      "scale": 1.02,
+      "variant": 0
+    },
+    {
+      "id": "rock-19",
+      "kind": "rock",
+      "at": { "x": 2355, "y": 1597 },
+      "layer": 2,
+      "rotation": 250,
+      "scale": 0.99,
+      "variant": 0
+    },
+    {
+      "id": "rock-20",
+      "kind": "rock",
+      "at": { "x": 2076, "y": 1229 },
+      "layer": 2,
+      "rotation": 295,
+      "scale": 0.97,
+      "variant": 0
+    },
+    {
+      "id": "rock-21",
+      "kind": "rock",
+      "at": { "x": 3089, "y": 3098 },
+      "layer": 2,
+      "rotation": 190,
+      "scale": 0.98,
+      "variant": 0
+    },
+    {
+      "id": "rock-22",
+      "kind": "rock",
+      "at": { "x": 1554, "y": 2530 },
+      "layer": 2,
+      "rotation": 130,
+      "scale": 0.86,
+      "variant": 1
+    },
+    {
+      "id": "banner-5",
+      "kind": "banner",
+      "at": { "x": 1647, "y": 1689 },
+      "layer": 2,
+      "rotation": 100,
+      "scale": 1.16,
+      "variant": 3
+    },
+    {
+      "id": "banner-6",
+      "kind": "banner",
+      "at": { "x": 1641, "y": 3035 },
+      "layer": 2,
+      "rotation": 194,
+      "scale": 1.1,
+      "variant": 0
+    },
+    {
+      "id": "cairn-11",
+      "kind": "cairn",
+      "at": { "x": 2769, "y": 1149 },
+      "layer": 2,
+      "rotation": 49,
+      "scale": 0.87,
+      "variant": 1
+    },
+    {
+      "id": "cairn-12",
+      "kind": "cairn",
+      "at": { "x": 2113, "y": 3168 },
+      "layer": 2,
+      "rotation": 148,
+      "scale": 0.99,
+      "variant": 3
+    },
+    {
+      "id": "cairn-13",
+      "kind": "cairn",
+      "at": { "x": 1935, "y": 2346 },
+      "layer": 2,
+      "rotation": 9,
+      "scale": 1.12,
+      "variant": 0
+    }
+  ],
   "gates": [
     {
       "id": "north-gate",
@@ -2051,6 +2502,42 @@
         "colour": 16763981,
         "intensity": 0.7,
         "flicker": 0
+      },
+      {
+        "id": "brazier-decor-1",
+        "position": { "x": 1845, "y": 716 },
+        "layer": 1,
+        "radius": 170,
+        "colour": 16752704,
+        "intensity": 0.85,
+        "flicker": 0.3
+      },
+      {
+        "id": "brazier-decor-2",
+        "position": { "x": 2048, "y": 519 },
+        "layer": 1,
+        "radius": 170,
+        "colour": 16752704,
+        "intensity": 0.85,
+        "flicker": 0.3
+      },
+      {
+        "id": "brazier-decor-3",
+        "position": { "x": 1604, "y": 3385 },
+        "layer": 1,
+        "radius": 170,
+        "colour": 16752704,
+        "intensity": 0.85,
+        "flicker": 0.3
+      },
+      {
+        "id": "brazier-decor-4",
+        "position": { "x": 3996, "y": 1175 },
+        "layer": 1,
+        "radius": 170,
+        "colour": 16752704,
+        "intensity": 0.85,
+        "flicker": 0.3
       }
     ]
   },

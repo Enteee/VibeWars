@@ -1534,7 +1534,395 @@
       }
     }
   ],
-  "decor": [],
+  "decor": [
+    {
+      "id": "rock-1",
+      "kind": "rock",
+      "at": { "x": 1020, "y": 953 },
+      "layer": 1,
+      "rotation": 220,
+      "scale": 0.92,
+      "variant": 0
+    },
+    {
+      "id": "rock-2",
+      "kind": "rock",
+      "at": { "x": 2981, "y": 628 },
+      "layer": 1,
+      "rotation": 202,
+      "scale": 1.14,
+      "variant": 2
+    },
+    {
+      "id": "rock-3",
+      "kind": "rock",
+      "at": { "x": 1157, "y": 1434 },
+      "layer": 1,
+      "rotation": 343,
+      "scale": 1.16,
+      "variant": 0
+    },
+    {
+      "id": "rock-4",
+      "kind": "rock",
+      "at": { "x": 631, "y": 758 },
+      "layer": 1,
+      "rotation": 165,
+      "scale": 1.19,
+      "variant": 3
+    },
+    {
+      "id": "rock-5",
+      "kind": "rock",
+      "at": { "x": 3229, "y": 2322 },
+      "layer": 1,
+      "rotation": 206,
+      "scale": 1.12,
+      "variant": 1
+    },
+    {
+      "id": "rock-6",
+      "kind": "rock",
+      "at": { "x": 1137, "y": 421 },
+      "layer": 1,
+      "rotation": 112,
+      "scale": 0.87,
+      "variant": 1
+    },
+    {
+      "id": "rock-7",
+      "kind": "rock",
+      "at": { "x": 2345, "y": 2436 },
+      "layer": 1,
+      "rotation": 159,
+      "scale": 1.21,
+      "variant": 1
+    },
+    {
+      "id": "rock-8",
+      "kind": "rock",
+      "at": { "x": 3277, "y": 2306 },
+      "layer": 1,
+      "rotation": 41,
+      "scale": 0.94,
+      "variant": 0
+    },
+    {
+      "id": "rock-9",
+      "kind": "rock",
+      "at": { "x": 3362, "y": 2411 },
+      "layer": 1,
+      "rotation": 209,
+      "scale": 0.77,
+      "variant": 2
+    },
+    {
+      "id": "rock-10",
+      "kind": "rock",
+      "at": { "x": 3177, "y": 494 },
+      "layer": 1,
+      "rotation": 345,
+      "scale": 1.07,
+      "variant": 1
+    },
+    {
+      "id": "rock-11",
+      "kind": "rock",
+      "at": { "x": 4901, "y": 2195 },
+      "layer": 1,
+      "rotation": 304,
+      "scale": 1.02,
+      "variant": 1
+    },
+    {
+      "id": "rock-12",
+      "kind": "rock",
+      "at": { "x": 3452, "y": 2286 },
+      "layer": 1,
+      "rotation": 9,
+      "scale": 1.1,
+      "variant": 1
+    },
+    {
+      "id": "rock-13",
+      "kind": "rock",
+      "at": { "x": 2844, "y": 765 },
+      "layer": 1,
+      "rotation": 224,
+      "scale": 1.18,
+      "variant": 1
+    },
+    {
+      "id": "rock-14",
+      "kind": "rock",
+      "at": { "x": 1402, "y": 2389 },
+      "layer": 1,
+      "rotation": 336,
+      "scale": 0.78,
+      "variant": 1
+    },
+    {
+      "id": "cairn-1",
+      "kind": "cairn",
+      "at": { "x": 3524, "y": 2589 },
+      "layer": 1,
+      "rotation": 120,
+      "scale": 0.8,
+      "variant": 2
+    },
+    {
+      "id": "cairn-2",
+      "kind": "cairn",
+      "at": { "x": 1476, "y": 1722 },
+      "layer": 1,
+      "rotation": 1,
+      "scale": 1.13,
+      "variant": 2
+    },
+    {
+      "id": "cairn-3",
+      "kind": "cairn",
+      "at": { "x": 3399, "y": 270 },
+      "layer": 1,
+      "rotation": 169,
+      "scale": 1.02,
+      "variant": 2
+    },
+    {
+      "id": "cairn-4",
+      "kind": "cairn",
+      "at": { "x": 2019, "y": 1695 },
+      "layer": 1,
+      "rotation": 279,
+      "scale": 0.81,
+      "variant": 2
+    },
+    {
+      "id": "cairn-5",
+      "kind": "cairn",
+      "at": { "x": 2876, "y": 208 },
+      "layer": 1,
+      "rotation": 278,
+      "scale": 1.02,
+      "variant": 3
+    },
+    {
+      "id": "cairn-6",
+      "kind": "cairn",
+      "at": { "x": 1397, "y": 1863 },
+      "layer": 1,
+      "rotation": 116,
+      "scale": 1,
+      "variant": 1
+    },
+    {
+      "id": "cairn-7",
+      "kind": "cairn",
+      "at": { "x": 2410, "y": 2446 },
+      "layer": 1,
+      "rotation": 254,
+      "scale": 1.12,
+      "variant": 0
+    },
+    {
+      "id": "cairn-8",
+      "kind": "cairn",
+      "at": { "x": 3193, "y": 2519 },
+      "layer": 1,
+      "rotation": 156,
+      "scale": 1.15,
+      "variant": 1
+    },
+    {
+      "id": "dead-tree-1",
+      "kind": "dead-tree",
+      "at": { "x": 1296, "y": 228 },
+      "layer": 1,
+      "rotation": 101,
+      "scale": 0.78,
+      "variant": 1
+    },
+    {
+      "id": "dead-tree-2",
+      "kind": "dead-tree",
+      "at": { "x": 920, "y": 434 },
+      "layer": 1,
+      "rotation": 258,
+      "scale": 1.14,
+      "variant": 0
+    },
+    {
+      "id": "dead-tree-3",
+      "kind": "dead-tree",
+      "at": { "x": 4179, "y": 772 },
+      "layer": 1,
+      "rotation": 114,
+      "scale": 0.99,
+      "variant": 3
+    },
+    {
+      "id": "dead-tree-4",
+      "kind": "dead-tree",
+      "at": { "x": 4036, "y": 2485 },
+      "layer": 1,
+      "rotation": 356,
+      "scale": 0.85,
+      "variant": 3
+    },
+    {
+      "id": "brazier-1",
+      "kind": "brazier",
+      "at": { "x": 1629, "y": 785 },
+      "layer": 1,
+      "rotation": 358,
+      "scale": 1,
+      "variant": 2
+    },
+    {
+      "id": "brazier-2",
+      "kind": "brazier",
+      "at": { "x": 1251, "y": 246 },
+      "layer": 1,
+      "rotation": 312,
+      "scale": 0.75,
+      "variant": 1
+    },
+    {
+      "id": "brazier-3",
+      "kind": "brazier",
+      "at": { "x": 1314, "y": 1736 },
+      "layer": 1,
+      "rotation": 291,
+      "scale": 0.85,
+      "variant": 3
+    },
+    {
+      "id": "brazier-4",
+      "kind": "brazier",
+      "at": { "x": 5096, "y": 1932 },
+      "layer": 1,
+      "rotation": 133,
+      "scale": 1.03,
+      "variant": 0
+    },
+    {
+      "id": "banner-1",
+      "kind": "banner",
+      "at": { "x": 4091, "y": 2336 },
+      "layer": 1,
+      "rotation": 188,
+      "scale": 1.07,
+      "variant": 2
+    },
+    {
+      "id": "banner-2",
+      "kind": "banner",
+      "at": { "x": 2008, "y": 586 },
+      "layer": 1,
+      "rotation": 127,
+      "scale": 0.82,
+      "variant": 3
+    },
+    {
+      "id": "banner-3",
+      "kind": "banner",
+      "at": { "x": 4870, "y": 2056 },
+      "layer": 1,
+      "rotation": 263,
+      "scale": 0.94,
+      "variant": 1
+    },
+    {
+      "id": "rock-15",
+      "kind": "rock",
+      "at": { "x": 2882, "y": 2361 },
+      "layer": 2,
+      "rotation": 2,
+      "scale": 1.18,
+      "variant": 0
+    },
+    {
+      "id": "rock-16",
+      "kind": "rock",
+      "at": { "x": 3525, "y": 755 },
+      "layer": 2,
+      "rotation": 323,
+      "scale": 1.05,
+      "variant": 0
+    },
+    {
+      "id": "rock-17",
+      "kind": "rock",
+      "at": { "x": 3651, "y": 1862 },
+      "layer": 2,
+      "rotation": 105,
+      "scale": 1.23,
+      "variant": 1
+    },
+    {
+      "id": "rock-18",
+      "kind": "rock",
+      "at": { "x": 2845, "y": 447 },
+      "layer": 2,
+      "rotation": 243,
+      "scale": 0.79,
+      "variant": 1
+    },
+    {
+      "id": "rock-19",
+      "kind": "rock",
+      "at": { "x": 2803, "y": 2261 },
+      "layer": 2,
+      "rotation": 300,
+      "scale": 1.02,
+      "variant": 1
+    },
+    {
+      "id": "banner-4",
+      "kind": "banner",
+      "at": { "x": 1672, "y": 1190 },
+      "layer": 2,
+      "rotation": 194,
+      "scale": 1.1,
+      "variant": 0
+    },
+    {
+      "id": "banner-5",
+      "kind": "banner",
+      "at": { "x": 3356, "y": 1658 },
+      "layer": 2,
+      "rotation": 191,
+      "scale": 1.19,
+      "variant": 2
+    },
+    {
+      "id": "cairn-9",
+      "kind": "cairn",
+      "at": { "x": 2208, "y": 1600 },
+      "layer": 2,
+      "rotation": 194,
+      "scale": 1.07,
+      "variant": 1
+    },
+    {
+      "id": "cairn-10",
+      "kind": "cairn",
+      "at": { "x": 1988, "y": 1050 },
+      "layer": 2,
+      "rotation": 272,
+      "scale": 1.24,
+      "variant": 3
+    },
+    {
+      "id": "cairn-11",
+      "kind": "cairn",
+      "at": { "x": 3361, "y": 1744 },
+      "layer": 2,
+      "rotation": 9,
+      "scale": 1.12,
+      "variant": 0
+    }
+  ],
   "gates": [
     {
       "id": "cellar-west-door",
@@ -1887,6 +2275,42 @@
         "colour": 16756832,
         "intensity": 0.85,
         "flicker": 0.2
+      },
+      {
+        "id": "brazier-decor-1",
+        "position": { "x": 1629, "y": 768 },
+        "layer": 1,
+        "radius": 170,
+        "colour": 16752704,
+        "intensity": 0.85,
+        "flicker": 0.3
+      },
+      {
+        "id": "brazier-decor-2",
+        "position": { "x": 1251, "y": 230 },
+        "layer": 1,
+        "radius": 170,
+        "colour": 16752704,
+        "intensity": 0.85,
+        "flicker": 0.3
+      },
+      {
+        "id": "brazier-decor-3",
+        "position": { "x": 1314, "y": 1719 },
+        "layer": 1,
+        "radius": 170,
+        "colour": 16752704,
+        "intensity": 0.85,
+        "flicker": 0.3
+      },
+      {
+        "id": "brazier-decor-4",
+        "position": { "x": 5095, "y": 1916 },
+        "layer": 1,
+        "radius": 170,
+        "colour": 16752704,
+        "intensity": 0.85,
+        "flicker": 0.3
       }
     ]
   },
