@@ -19,6 +19,9 @@ import {
   ownSkillBoost,
   recastReplaces,
   scaledStatAttributes,
+  stackedActivationMultiplier,
+  stackedAdrenalineGainFaster,
+  stackedRechargeFaster,
   type BodyTrait,
   type StatusId,
   type StatusStat,
@@ -1485,7 +1488,7 @@ describe("aggregateModifiers, health per enchantment (#845)", () => {
 describe("aggregateModifiers, while under another status (#1485)", () => {
   it("adds Soldier's Fury's speed and adrenaline only while a chant or a shout is up", () => {
     const alone = aggregateModifiers([{ id: "soldiers-fury", ranks: NO_RANKS }]);
-    expect([alone.attackDurationMultiplier, alone.adrenalineGainFaster]).toEqual([1, 0]);
+    expect([alone.attackDurationMultiplier, alone.adrenalineGainFaster]).toEqual([1, []]);
     expect(alone.armorModifier).toBe(-20);
     for (const under of ["defensive-anthem", "fall-back"] as const) {
       const both = aggregateModifiers([
@@ -1493,7 +1496,7 @@ describe("aggregateModifiers, while under another status (#1485)", () => {
         { id: under, ranks: NO_RANKS },
       ]);
       expect(both.attackDurationMultiplier, under).toBe(0.67);
-      expect(both.adrenalineGainFaster, under).toBeCloseTo(0.33);
+      expect(both.adrenalineGainFaster, under).toEqual([0.33]);
       expect(both.armorModifier, under).toBe(-20);
     }
   });
@@ -1503,7 +1506,7 @@ describe("aggregateModifiers, while under another status (#1485)", () => {
       { id: "soldiers-fury", ranks: NO_RANKS },
       { id: "mending-refrain", ranks: NO_RANKS },
     ]);
-    expect([echoes.attackDurationMultiplier, echoes.adrenalineGainFaster]).toEqual([1, 0]);
+    expect([echoes.attackDurationMultiplier, echoes.adrenalineGainFaster]).toEqual([1, []]);
   });
 });
 
@@ -1533,7 +1536,7 @@ describe("aggregateModifiers", () => {
     expect(mods.attackMissChance).toBe(0);
     expect(mods.maxHealthLoss).toBeUndefined();
     expect(mods.healingMultiplier).toBe(1);
-    expect(mods.castTimeMultiplier).toBe(1);
+    expect(mods.castTimeMultiplier).toEqual([]);
   });
 
   it("sums additive health degeneration from stacked conditions", () => {
@@ -1933,5 +1936,32 @@ describe("StatusSet body traits (#3881)", () => {
     const set = new StatusSet("non-fleshy");
     set.apply("bleeding", 10, "foe", NO_RANKS);
     expect(set.has("bleeding")).toBe(false);
+  });
+});
+
+describe("GW1's effect caps (#4089)", () => {
+  it("multiplies recharge shares, two or more at most halving it", () => {
+    expect(stackedRechargeFaster([0.33])).toBeCloseTo(0.33, 9);
+    expect(stackedRechargeFaster([0.33, 0.33])).toBe(0.5);
+    expect(stackedRechargeFaster([0.75])).toBe(0.75);
+    expect(stackedRechargeFaster([0.2, 0.2, 0.2])).toBeCloseTo(0.488, 9);
+    expect(stackedRechargeFaster([0.33, 0, 0])).toBeCloseTo(0.33, 9);
+    expect(stackedRechargeFaster([])).toBe(0);
+  });
+
+  it("keeps two or more activation factors within ×0.75 and ×2.5", () => {
+    expect(stackedActivationMultiplier([2, 2])).toBe(2.5);
+    expect(stackedActivationMultiplier([2])).toBe(2);
+    expect(stackedActivationMultiplier([0.5, 0.5])).toBe(0.75);
+    expect(stackedActivationMultiplier([0.5, 1, 1])).toBe(0.5);
+    expect(stackedActivationMultiplier([2, 0.5])).toBe(1);
+  });
+
+  it("multiplies adrenaline boosts, two or more within −50% and +100%", () => {
+    expect(stackedAdrenalineGainFaster([0.5, 0.5])).toBe(1);
+    expect(stackedAdrenalineGainFaster([1.5])).toBe(1.5);
+    expect(stackedAdrenalineGainFaster([0.25, 0.25])).toBeCloseTo(0.5625, 9);
+    expect(stackedAdrenalineGainFaster([-0.5, -0.5])).toBe(-0.5);
+    expect(stackedAdrenalineGainFaster([-0.5, 1])).toBe(0);
   });
 });

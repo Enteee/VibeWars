@@ -236,7 +236,7 @@ describe("Shared Burden (#2367)", () => {
     const mods = aggregateModifiers(target.statuses.active);
     expect(statusMoveSpeed(mods)).toBe(0.67);
     expect(mods.attackDurationMultiplier).toBe(1.33);
-    expect(mods.castTimeMultiplier).toBe(1.33);
+    expect(mods.castTimeMultiplier).toEqual([1.33]);
   });
 });
 
