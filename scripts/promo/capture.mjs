@@ -68,6 +68,8 @@ const towerMap = JSON.parse(
 );
 /** Broken Tower's gates, in the order the page's `gatesOpen` reports them (#4079). */
 const TOWER_GATES = /** @type {{ gates: GateDef[] }} */ (towerMap).gates;
+/** The seat an action shot takes: an Elementalist's, for a cast with something to see (#3982). */
+const CASTER_SEAT = /Elementalist|\(E\/|\/E\)/;
 /** The longest an action shot waits for its event, ms. */
 const ACTION_MS = 60_000;
 /** @typedef {{ kind: string, skillId: string, own: boolean }} Combat */
@@ -434,8 +436,9 @@ async function openRail(page, label) {
  * @param {import("@playwright/test").Page} page
  * @param {string} mapId
  * @param {{ stepper: Stepper, name: string } | undefined} [stepped]
+ * @param {RegExp} [seatLabel]  the seat to take, by its label; else the first
  */
-async function startMatch(page, mapId, stepped) {
+async function startMatch(page, mapId, stepped, seatLabel) {
   const stopPump = stepped?.stepper.pump();
   step = "hosted game";
   await openRail(page, "Hosted Game");
@@ -450,8 +453,14 @@ async function startMatch(page, mapId, stepped) {
   await liveClick(page.getByRole("button", { name: "Propose this build" }));
   await liveClick(page.locator(".team-lobby-proposals button").first());
   step = "seat";
-  const seats = page.locator(".team-lobby-seat-free");
-  await liveClick(seats.first());
+  // A seat is a button labelled with its professions; `seatLabel` picks a caster's, else the first.
+  const seats = page.locator("button:has(.team-lobby-seat-free)");
+  const labels = await seats.evaluateAll((all) =>
+    all.map((b) => b.getAttribute("aria-label") ?? ""),
+  );
+  console.log("seats:", JSON.stringify(labels));
+  const at = seatLabel === undefined ? -1 : labels.findIndex((label) => seatLabel.test(label));
+  await liveClick(seats.nth(Math.max(at, 0)));
   step = "match";
   await page.locator("#viewport canvas:not(.compass)").waitFor({ timeout: 90_000 });
   await stopPump?.();
@@ -689,18 +698,21 @@ async function actionScene(browser, url, name, mapId, wanted) {
     const scene = await openScene(browser, id, url, "stepped");
     const frame = stepper(scene.page);
     scene.stepper = frame;
-    await startMatch(scene.page, mapId, { stepper: frame, name: id });
+    await startMatch(scene.page, mapId, { stepper: frame, name: id }, CASTER_SEAT);
     scene.marks.matchStart = scene.now();
     step = id;
     await waitLiveStepped(scene.page, frame);
     await scene.page.mouse.move(960, 540);
+    // Closer, so the bodies are more than a smudge.
+    await scene.page.mouse.wheel(0, -500);
     const hit = await waitEvent(scene.page, frame, wanted, ACTION_MS, async () => {
       await advance(scene.page, frame, 1500);
       await cycleSkills(scene.page, frame);
     });
     if (hit !== undefined) {
       const seen = await pageEvents(scene.page);
-      scene.marks.action = (hit.t - frame.origin()) / 1000;
+      // One second earlier: the cast bar fills before the hit lands.
+      scene.marks.action = (hit.t - frame.origin()) / 1000 - 1;
       // The shot's two seconds, played out.
       await frame.steps(frames(2000));
       const after = await pageEvents(scene.page);

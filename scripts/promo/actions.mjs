@@ -118,6 +118,11 @@ export async function walkTo(page, stepper, target, done, limitMs) {
   try {
     for (let waited = 0; waited < limitMs; waited += 250) {
       const state = await captureState(page);
+      if (waited % 2000 === 0) {
+        console.log(
+          `walkTo ${String(waited)} ms: ${JSON.stringify(state)} -> ${JSON.stringify(target)}`,
+        );
+      }
       if (done(state)) {
         return true;
       }
