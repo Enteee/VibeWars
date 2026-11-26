@@ -491,7 +491,7 @@ export default {
   "effects.categoryShout": "Вигук",
   "effects.categoryStance": "Стійка",
   "effects.categoryWeaponSpell": "Закляття зброї",
-  "effects.endHint": "двічі клікни, щоб завершити",
+  "effects.endHint": "двічі клікни, Enter або Delete, щоб завершити",
   "effects.from": "джерело: {caster}",
   "effects.inRange": "поки в зоні дії",
   "effects.maintained": "підтримується",

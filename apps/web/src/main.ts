@@ -3797,6 +3797,10 @@ async function main(): Promise<void> {
         saveTutorialRecord("skipped");
         enterMenu();
       },
+      onNotNow: () => {
+        closeOffer = undefined;
+        enterMenu();
+      },
     });
   };
   let splash: Splash | undefined;

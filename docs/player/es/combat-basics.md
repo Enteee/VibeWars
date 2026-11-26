@@ -82,8 +82,8 @@ Los esbirros (salvo el Gólem de carne), los fantasmas y los espíritus no sangr
 Los ![Maleficio](../../../apps/web/public/icons/skill-type/hex.svg) **maleficios** te los lanzan los enemigos; los ![Encantamiento](../../../apps/web/public/icons/skill-type/enchantment.svg) **encantamientos**, tú
 o tus aliados. Cada uno se elimina con su propio tipo de habilidad. Algunos
 encantamientos son **mantenidos**: duran hasta que los terminas, y cuestan
-una marca de energía mientras siguen. Haz doble clic en su icono para
-terminar uno.
+una marca de energía mientras siguen. Haz doble clic en su icono, o dale el
+foco y pulsa Enter o Supr, para terminar uno.
 
 Algunas habilidades dejan de funcionar mientras estás encantado, y vuelven
 a funcionar cuando dejas de estarlo. Una habilidad que dura tus "próximos N

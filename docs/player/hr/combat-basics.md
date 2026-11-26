@@ -79,7 +79,8 @@ Sluge (osim Mesnog golema), sablasti i duhovi ne krvare, ne truju se i ne obolij
 ![Urok](../../../apps/web/public/icons/skill-type/hex.svg) **Uroke** na tebe bacaju neprijatelji, a ![Začaranje](../../../apps/web/public/icons/skill-type/enchantment.svg) **začaranja** ti sam ili tvoji
 saveznici. Svako uklanja vlastita vrsta vještine. Neka su začaranja
 **održavana**: traju dok ih ne prekineš i troše jedan pip energije dok
-traju. Dvaput klikni njegovu ikonu da ga prekineš.
+traju. Dvaput klikni njegovu ikonu, ili je fokusiraj i pritisni Enter ili
+Delete, da ga prekineš.
 
 Nekoliko vještina prestaje raditi dok si začaran, a opet rade kad
 više nisi. Vještina koja traje za tvojih "sljedećih N napada" broji svaki

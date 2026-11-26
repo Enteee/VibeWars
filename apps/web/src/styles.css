@@ -4873,6 +4873,12 @@ body:has(> .splash) #menu-background::after {
   outline: none;
 }
 
+/* The keyboard sees where it is (#4090). */
+.team-lobby-drawer-search:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
 .team-lobby-drawer-search[hidden] {
   display: none;
 }
@@ -6089,6 +6095,11 @@ body.has-expanded-training #screens {
   border: 1px solid var(--line);
   outline: none;
   cursor: crosshair;
+}
+
+.training-stage:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
 }
 
 .training.is-armed .training-stage {
@@ -9016,6 +9027,12 @@ body:has(#screens[style*="none"]) .now-playing {
 .chat-input:focus {
   border-color: var(--accent);
   outline: none;
+}
+
+/* The keyboard sees where it is (#4090). */
+.chat-input:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
 }
 
 /* Why Random Arena's Ready is greyed out (#2022). */

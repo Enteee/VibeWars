@@ -454,7 +454,7 @@ export default {
   "effects.categoryShout": "Kiáltás",
   "effects.categoryStance": "Állás",
   "effects.categoryWeaponSpell": "Fegyvervarázslat",
-  "effects.endHint": "dupla kattintás a befejezéshez",
+  "effects.endHint": "dupla kattintás, Enter vagy Delete a befejezéshez",
   "effects.from": "forrás: {caster}",
   "effects.inRange": "amíg a hatósugarában vagy",
   "effects.maintained": "fenntartott",

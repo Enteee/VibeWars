@@ -16,6 +16,7 @@ import { sharedTracks, type SharedTracks } from "../music/shared-tracks.js";
 import { TRACKS, type Track } from "../music/tracks/index.js";
 import type { CodeEditor } from "./code-editor.js";
 import { button, h, overlayClose, shareLine, toast } from "./kit.js";
+import { holdFocus } from "./modal-focus.js";
 
 /**
  * The beat editor (#373, #366 §3.7): the source of a track, edited while
@@ -97,12 +98,12 @@ export function openBeatEditor(trackId: string, deps: BeatEditorDeps = defaultDe
   closeBeatEditor();
   listen(deps.player);
   const { player, edits, override } = deps;
-  const opener = document.activeElement instanceof HTMLElement ? document.activeElement : null;
   const restoreOverride = override.get();
   const evaluations = beatEvaluations(track.id, track.source, edits, shippedHash(track.source));
   let stopped = false;
   let editor: CodeEditor | undefined;
   let closed = false;
+  let release = (): void => undefined;
 
   const panel = h("div", "screen beat-editor");
   panel.setAttribute("role", "dialog");
@@ -318,9 +319,6 @@ export function openBeatEditor(trackId: string, deps: BeatEditorDeps = defaultDe
     } else if (mod && event.key === ".") {
       event.preventDefault();
       stop();
-    } else if (event.key === "Escape") {
-      event.preventDefault();
-      close();
     }
   };
   panel.addEventListener("keydown", onKey);
@@ -343,7 +341,7 @@ export function openBeatEditor(trackId: string, deps: BeatEditorDeps = defaultDe
     window.clearTimeout(sharedTimer);
     editor?.destroy();
     panel.remove();
-    opener?.focus();
+    release();
   }
 
   open = {
@@ -375,6 +373,7 @@ export function openBeatEditor(trackId: string, deps: BeatEditorDeps = defaultDe
   deps.music.edit(track.id);
   override.set(level(Number(slider.value)));
   document.body.appendChild(panel);
+  release = holdFocus(panel, close);
 
   void import("./code-editor.js").then(({ createCodeEditor }) => {
     if (closed) {

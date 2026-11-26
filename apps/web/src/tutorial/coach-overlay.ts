@@ -71,7 +71,8 @@ export interface CoachOverlay {
   show(view: CoachView): void;
   /**
    * The lock lifted and the dim gone, the panel says `line` alone (#3544),
-   * until clicked or `ms` have passed: then the overlay goes, and `onGone`.
+   * until clicked, Esc or Enter, or `ms` have passed: then the overlay goes,
+   * and `onGone`.
    */
   farewell(line: string, ms: number, onGone: () => void): void;
   remove(): void;
@@ -417,6 +418,7 @@ export function mountCoachOverlay(
   follow();
 
   let farewellTimer = 0;
+  let farewellKeys = (): void => undefined;
   const unlock = (): void => {
     cancelAnimationFrame(frame);
     for (const type of POINTER_EVENTS) {
@@ -431,6 +433,7 @@ export function mountCoachOverlay(
   const remove = (): void => {
     removed = true;
     clearTimeout(farewellTimer);
+    farewellKeys();
     unlock();
     coach.remove();
   };
@@ -475,6 +478,18 @@ export function mountCoachOverlay(
         }
       };
       panel.addEventListener("click", gone);
+      // Esc or Enter dismisses it too, and goes no further (#4090).
+      const onKey = (event: KeyboardEvent): void => {
+        if (event.key === "Escape" || event.key === "Enter") {
+          event.preventDefault();
+          event.stopPropagation();
+          gone();
+        }
+      };
+      document.addEventListener("keydown", onKey, true);
+      farewellKeys = () => {
+        document.removeEventListener("keydown", onKey, true);
+      };
       farewellTimer = window.setTimeout(gone, ms);
     },
     remove,

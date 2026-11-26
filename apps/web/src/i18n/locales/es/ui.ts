@@ -477,7 +477,7 @@ export default {
   "effects.categoryShout": "Grito",
   "effects.categoryStance": "Postura",
   "effects.categoryWeaponSpell": "Hechizo de arma",
-  "effects.endHint": "doble clic para terminar",
+  "effects.endHint": "doble clic, Intro o Supr para terminar",
   "effects.from": "de {caster}",
   "effects.inRange": "mientras esté en su alcance",
   "effects.maintained": "mantenido",

@@ -86,7 +86,8 @@ Les ![Maléfice](../../../apps/web/public/icons/skill-type/hex.svg) **maléfices
 par toi ou tes alliés. Chacun est retiré par son propre type de compétence.
 Certains enchantements sont **maintenus** : ils durent jusqu'à ce que tu y
 mettes fin, et coûtent un pip d'énergie tant qu'ils tournent. Double-clique
-sur son icône pour en terminer un.
+sur son icône, ou donne-lui le focus et appuie sur Entrée ou Suppr, pour en
+terminer un.
 
 Quelques compétences cessent de fonctionner quand tu es enchanté, et
 reprennent quand tu ne l'es plus. Une compétence qui dure pour tes

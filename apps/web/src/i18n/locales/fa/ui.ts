@@ -449,7 +449,7 @@ export default {
   "effects.categoryShout": "فریاد",
   "effects.categoryStance": "موضع",
   "effects.categoryWeaponSpell": "طلسم سلاح",
-  "effects.endHint": "برای پایان دو بار کلیک کن",
+  "effects.endHint": "برای پایان دو بار کلیک کن یا Enter یا Delete را بزن",
   "effects.from": "از {caster}",
   "effects.inRange": "تا وقتی در بردش هستی",
   "effects.maintained": "پایدار",
