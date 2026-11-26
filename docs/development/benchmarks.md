@@ -349,7 +349,7 @@ not stand for.
 
 A layered map's frame cost in software GL, as a ratio to a frozen
 reference map drawn the same way on the same run. CI gates it at
-`BENCH_MAX_RATIO=2.7` on pull requests that touch the renderer or the
+`BENCH_MAX_RATIO=2.6` on pull requests that touch the renderer or the
 maps (#3157, #3190, #3243, #3255), in its own `render bench` job of `ci.yml` (#3382).
 
 **The reference map.** `packages/game-maps/bench/reference-map.json` is a
@@ -362,6 +362,20 @@ drawn through the menu background like any map, so whatever bounds a
 runner (fill, geometry, JS) bounds the reference and the maps alike. It
 is frozen: a pull request that edits it re-derives the gate below in the
 same pull request.
+
+**Drawn bare (#4129).** The reference map is drawn with no whole-screen pass:
+none of the vignette (#4057) and its deck tops' (#4070), or whatever else
+`apps/web/src/render/whole-screen-passes.ts` lists. Drawn with them, a cost
+every map pays landed in the calibration as well: #4057 and #4070 raised the
+maps' p50 by 35-50 % and the ratio by 14 %. The bench's build sets
+`VIBEWARS_BENCH_BARE_REFERENCE=1`, and only `bench-reference` is drawn bare.
+`bench-flat`, the follow case's baseline, keeps them: its gate (10×, maps walk
+at 2.4-3.1×) is a guard against a map gone wrong, not a +15 % gate, and
+would not become one.
+
+On scarred-earth, locally, before #4057 (`5cae38b0c^`) and with it
+(`5cae38b0c`), each with the switch: 1.30, 1.30 → 1.68, 1.65, +28 %. A
+cap of 1.30 + 15 % fails it.
 
 **The gate** was 3.5 against a reference that measured 38 to 82 ms; on a
 fast runner the calibration landed on the 30 fps beat (31.7-34.3 ms) and the
@@ -385,7 +399,12 @@ old one × the factor, 0.66-0.72 (old × 0.68 gives 1.14, 1.56, 2.12). Within a
 map the runs stay within -7 % / +5 % of the median, except long-hall's 2.40,
 +16 %, on the slowest runner (reference 87 ms).
 
-The gate keeps the headroom of long-hall, the map nearest it: after #3254 it
+**The gate since #4129** is each map's worse ratio of two CI runs on the bare
+reference, plus 15 %: 2.6 for the 23 maps up to broken-tower (2.25), and a
+ceiling of its own for the five heavier ones. Between the two runs a map moved
+by up to 11 % (tutorial-canyon by 26 %, far under the gate).
+
+The gate before kept the headroom of long-hall, the map nearest it: after #3254 it
 measured 2.71 against 3.5, a factor of 1.29, and 2.07 × 1.29 = 2.67, so 2.7.
 Its worst run, 2.40, is 11 % under. The old rule (1.5 × the highest of canyon
 and crossroads, 1.59 → 2.4) would put that run on the gate.
@@ -399,9 +418,9 @@ differ by over 20 %.
 
 **Ceilings.** `scripts/bench/ceilings.mjs` lists maps that are over or
 near the gate for a known reason, each gated at its own ratio and tied to the perf
-issue that will cut it. None is listed: long-hall's was deleted when its
-issue, #3254, boxed each cluster of flickering lights on its own, which
-took it from 3.24 to 2.71. A listed map that measures at or under the gate ÷ 1.25
-(2.16 at 2.7) fails as stale, so its entry is deleted when its issue
+issue that will cut it. Elonian-plateau, cinder-sanctum, hollow-deep,
+brazen-causeway and long-hall are listed (2.95-3.4) until #4130 makes the
+whole-screen passes cheaper. A listed map that measures at or under the gate ÷ 1.25
+(2.08 at 2.6) fails as stale, so its entry is deleted when its issue
 lands. The margin keeps a map just under the gate from flaking: long-hall
 measured 2.99-3.45 before #3254.
