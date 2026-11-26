@@ -236,7 +236,7 @@ jangkauan mantra. Selama timmu tidak menguasai altar, setiap bot membunuh Pahlaw
 tim lawan lebih dulu begitu hantu itu berdiri di altar dalam jangkauan mereka:
 dialah satu-satunya musuh yang mencegah hantumu merebutnya.
 
-Threefold Keep memainkannya (4v4 dan 8v8, 5000x4400): sebuah keep di atas bukit di dataran tinggi, untuk tiga tim. Naiki jalan di atas tembok lewat tangga di samping gerbangmu lalu seberangi jalan lintas ke bukit, kemudian naik ke altar di atas menara. Sebuah tuas di tiap pelataran membuka keempat gerbang: lorong gerbangmu di bawah tembok, dan ruang bawah tanah, jalan panjang di bawah bukit.
+Threefold Keep memainkannya (4v4 dan 8v8, 5000x4400): sebuah keep di atas bukit di dataran tinggi, untuk tiga tim. Naiki jalan di atas tembok lewat tangga di samping gerbangmu lalu seberangi jalan lintas ke bukit, kemudian naik ke altar di atas menara. Sebuah tuas di tiap pelataran membuka ketiga gerbang, lorong-lorong di bawah tembok.
 
 ## Rebut Titik
 

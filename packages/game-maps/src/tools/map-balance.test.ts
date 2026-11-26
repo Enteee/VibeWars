@@ -2465,8 +2465,9 @@ describe("walks and high ground (#3070)", () => {
     }, 60_000);
   });
 
-  // Threefold Keep (#3443): one piece turned by 120° for three teams, its stairs fitted anew to each
-  // team's axis, so proven by numbers for all three. Every route ends on the altar, up on the tower.
+  // Threefold Keep (#3443, #4098): one piece turned by 120° for three teams, each stair turned with
+  // it to the nearest quarter, since stairs climb north, east, south or west, so proven by numbers
+  // for all three. Every route ends on the altar, up on the tower.
   describe("Threefold Keep", () => {
     const map = loadMap("threefold-keep");
     const shut: MapData = { ...map, walls: [...map.walls, ...map.gates.map(({ wall }) => wall)] };
@@ -2490,11 +2491,7 @@ describe("walks and high ground (#3070)", () => {
     };
     const gate = (team: number): Route => ({
       through: [gateSteps[team] ?? ""],
-      shut: [...wallWalks, "undercroft-stair"],
-    });
-    const undercroft = (): Route => ({
-      through: ["undercroft-stair"],
-      shut: [...wallWalks, ...gateSteps],
+      shut: wallWalks,
     });
     const seconds = MINIMAL_GW_INSPIRED_PVP_V1.movement.maxSpeedUnitsPerSecond;
 
@@ -2502,7 +2499,6 @@ describe("walks and high ground (#3070)", () => {
       ["its gate", map, gate],
       ["its wall-walk's left stair", shut, wallWalk("left")],
       ["its wall-walk's right stair", shut, wallWalk("right")],
-      ["the undercroft", map, undercroft],
     ] as const)(
       "walks each team to the altar by %s within 10 % of the others, in under 25 s",
       (_, on, route) => {
@@ -2512,9 +2508,8 @@ describe("walks and high ground (#3070)", () => {
       },
     );
 
-    it("keeps both wall-walk routes with every gate shut, the gates and the undercroft shut with them", () => {
+    it("keeps both wall-walk routes with every gate shut, the gate routes shut with them", () => {
       expect(() => walksByRoute(shut, altar, 3, gate)).toThrow(/cannot reach/);
-      expect(() => walksByRoute(shut, altar, 3, undercroft)).toThrow(/cannot reach/);
     });
 
     it("keeps the walks within 10 % as loaded, and with the gates open and the palisades broken", () => {
@@ -2522,6 +2517,22 @@ describe("walks and high ground (#3070)", () => {
       const broken = (map.breakables ?? []).map(({ id }) => id);
       within(walksByRoute(map, altar, 3, { through: [], broken }), 0.1);
     });
+
+    // #4098: each ghost-spawn turned +12° off its team's axis, on a keep whose south-east and
+    // south-west mirrored each other, walked team 2's ghost 14 % less to the altar than team 1's,
+    // and team 2 won 46 % of decided 8v8s. The ghost claims the altar, so it is held to 3 %.
+    it("walks each team's spawn and each ghost to the altar within 3 % of the others, gates shut or open", () => {
+      const ghosts = map.objectives.flatMap((each) =>
+        each.kind === "ghost-spawn"
+          ? [{ team: each.team, layer: each.layer, position: each.position }]
+          : [],
+      );
+      expect(ghosts.map(({ team }) => team).sort()).toEqual([0, 1, 2]);
+      within(walksTo(shut, altar, 3), 0.03);
+      within(walksTo({ ...shut, spawnPoints: ghosts }, altar, 3), 0.03);
+      within(walksTo(map, altar, 3), 0.03);
+      within(walksTo({ ...map, spawnPoints: ghosts }, altar, 3), 0.03);
+    }, 60_000);
 
     it("brings each team to the tower's rim on its side within 25 % of the others", () => {
       const rim = (team: number) => {
@@ -2536,16 +2547,15 @@ describe("walks and high ground (#3070)", () => {
 
     // #3688: the undercroft's bay cut into the hill's east side left team 1 a 66 px strip
     // beside the tower on its way to the east stair, where team 2's way to the west was open.
-    it.each(["east", "south", "west"])(
+    it.each(teams)(
       "brings each team up its ward stair and over the hill to the tower's %s stair, two bodies abreast all the way",
       (tower) => {
-        const towers = ["east", "south", "west"];
+        const towers = teams;
         const wards = teams.map((team) => `${team}-ward-stair`);
         const route = (team: number): Route => ({
           through: [wards[team] ?? "", `tower-${tower}-stair`],
           shut: [
             ...wallWalks,
-            "undercroft-stair",
             ...wards.filter((_, other) => other !== team),
             ...towers.filter((other) => other !== tower).map((other) => `tower-${other}-stair`),
           ],

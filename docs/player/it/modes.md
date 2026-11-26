@@ -88,7 +88,7 @@ Il tabellone mostra i punti, i tuoi per primi, poi l'altare: `▲` e il tempo al
 
 Anche i bot puntano all'altare: finché la tua squadra non lo tiene, il più vicino al tuo Eroe spettrale lo prende, a meno che non stia per farlo tu; un guaritore o un bot gravemente ferito va solo se non può andare nessun altro. Guida il fantasma sull'altare e gli dice di restare lì, e gli altri aspettano vicino all'altare. Un bot che guida il fantasma non si ferma a combattere lungo la strada; gli altri lasciano l'altare solo per combattere un nemico che arriva a portata d'incantesimo. Finché la tua squadra non tiene l'altare, ogni bot uccide per primo l'Eroe spettrale dell'altra squadra quando è sull'altare a portata: è l'unico nemico che impedisce al tuo fantasma di conquistarlo.
 
-Ci si gioca su Threefold Keep (4v4 e 8v8, 5000x4400): una rocca su una collina degli altipiani, per tre squadre. Sali sul cammino di ronda per le scale accanto alla tua porta e attraversa una strada rialzata fino alla collina, poi sali all'altare sulla torre. Una leva in ogni cortile apre tutte e quattro le porte: il passaggio della tua porta sotto le mura, e la cripta, la via lunga sotto la collina.
+Ci si gioca su Threefold Keep (4v4 e 8v8, 5000x4400): una rocca su una collina degli altipiani, per tre squadre. Sali sul cammino di ronda per le scale accanto alla tua porta e attraversa una strada rialzata fino alla collina, poi sali all'altare sulla torre. Una leva in ogni cortile apre tutte e tre le porte, i passaggi sotto le mura.
 
 ## Conquista
 

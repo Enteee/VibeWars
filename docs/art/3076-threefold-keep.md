@@ -10,6 +10,13 @@ with three approaches, wall-walks, a tower over the hill, four gates) is kept. L
 one piece turned by 120° (team 1 north, team 2 south-east, team 3 south-west), so every walk below
 is the same for all three teams.
 
+**Since #4098** the built map differs from this study: stairs climb only north, east, south or west,
+so each of the keep's pieces (gate, wall-walk stairs, ward stair, tower stair) is turned with its
+team's axis to the nearest quarter (south-east 90°, south-west 270°), every one on its team's axis;
+north, the one piece not turned, has its spawns set back and its ward stair 120 east, which evens
+out its walks. There is no undercroft and no keep gate: tunnels are rectangles, so no undercroft
+can be the same for all three teams.
+
 ## Rules the study holds
 
 - **Bounds** 5000×4400 = 22.0 M u² (long side 5000 > 4800, short side 4400 ≥ 1800, above the 12.6 M
