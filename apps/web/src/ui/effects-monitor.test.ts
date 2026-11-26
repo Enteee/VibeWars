@@ -151,6 +151,25 @@ describe("effectRows (#834)", () => {
   });
 });
 
+/** A key pressed on an element, as far as its listeners look. */
+interface KeyEvent {
+  readonly key: string;
+  defaultPrevented: boolean;
+  preventDefault(): void;
+  stopPropagation(): void;
+}
+
+function keyEvent(key: string): KeyEvent {
+  return {
+    key,
+    defaultPrevented: false,
+    preventDefault() {
+      this.defaultPrevented = true;
+    },
+    stopPropagation: () => undefined,
+  };
+}
+
 /**
  * Just enough of an element for the monitor, without jsdom: children in
  * order, the moves made, the fill widths written, and a tooltip's lines.
@@ -196,9 +215,9 @@ class FakeElement {
   readonly getBoundingClientRect = () => this.rect;
 
   /** The listeners added, by event. */
-  readonly listeners = new Map<string, () => void>();
+  readonly listeners = new Map<string, (event?: KeyEvent) => void>();
 
-  readonly addEventListener = (type: string, listener: () => void): void => {
+  readonly addEventListener = (type: string, listener: (event?: KeyEvent) => void): void => {
     this.listeners.set(type, listener);
   };
 
@@ -390,6 +409,29 @@ describe("createEffectsMonitor (#834)", () => {
     expect(ended).toEqual([]);
     root.children[1]?.listeners.get("dblclick")?.();
     expect(ended).toEqual([["bob", "mending"]]);
+  });
+
+  it("ends a focused maintained row on Enter or Delete, and lets other keys and rows be (#4090)", () => {
+    const ended: [string, string][] = [];
+    const { monitor, root } = mount(24, (bearerId, statusId) => ended.push([bearerId, statusId]));
+    monitor.update([
+      row("bleeding", 0.5),
+      row("mending", undefined, true, { bearerId: "bob", bearerName: "Bob", endable: true }),
+    ]);
+    const press = (index: number, key: string): KeyEvent => {
+      const event = keyEvent(key);
+      root.children[index]?.listeners.get("keydown")?.(event);
+      return event;
+    };
+    expect(press(0, "Enter").defaultPrevented).toBe(false);
+    expect(press(1, "a").defaultPrevented).toBe(false);
+    expect(ended).toEqual([]);
+    expect(press(1, "Enter").defaultPrevented).toBe(true);
+    expect(press(1, "Delete").defaultPrevented).toBe(true);
+    expect(ended).toEqual([
+      ["bob", "mending"],
+      ["bob", "mending"],
+    ]);
   });
 
   describe("the hover says a double-click ends it (#907)", () => {

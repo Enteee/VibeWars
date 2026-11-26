@@ -87,7 +87,8 @@ Kätyrit (paitsi Lihagolemi), aaveet ja henget eivät vuoda verta, myrkyty tai s
 liittolaisesi. Kumpikin poistetaan omanlaisellaan taidolla. Jotkin
 lumoukset ovat **ylläpidettyjä**: ne kestävät, kunnes lopetat ne, ja
 maksavat energiapipin niin kauan kuin ne ovat päällä. Lopeta sellainen
-kaksoisnapsauttamalla sen kuvaketta.
+kaksoisnapsauttamalla sen kuvaketta tai siirtämällä kohdistuksen siihen ja
+painamalla Enter tai Delete.
 
 Muutama taito lakkaa toimimasta, kun olet lumottu, ja alkaa taas toimia,
 kun et ole. Taito, joka kestää "seuraavat N hyökkäystäsi", laskee jokaisen

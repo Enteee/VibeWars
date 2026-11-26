@@ -86,7 +86,8 @@ Lacaios (exceto o Golem de Carne), fantasmas e espíritos não sangram, não sã
 você ou por aliados. Cada um é removido pelo seu próprio tipo de
 habilidade. Alguns encantamentos são **mantidos**: duram até você
 encerrá-los e custam um pip de energia enquanto duram. Clique duas vezes
-no ícone para encerrar um.
+no ícone, ou coloque o foco nele e pressione Enter ou Delete, para
+encerrar um.
 
 Algumas habilidades param de funcionar enquanto você está encantado e
 voltam quando você não está mais. Uma habilidade que dura seus "próximos

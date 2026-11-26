@@ -85,7 +85,8 @@ Slujitorii (în afară de Golemul de carne), fantomele și spiritele nu sângere
 ![Blestem](../../../apps/web/public/icons/skill-type/hex.svg) **Blestemele** sunt lansate asupra ta de inamici; ![Farmec](../../../apps/web/public/icons/skill-type/enchantment.svg) **farmecele**, de tine sau de
 aliații tăi. Fiecare este eliminat de un tip propriu de abilitate. Unele farmece
 sunt **menținute**: durează până le închei și costă un pip de Energie cât timp
-sunt active. Dublu clic pe pictogramă ca să închei unul.
+sunt active. Dublu clic pe pictogramă sau pune focusul pe ea și apasă Enter
+sau Delete ca să închei unul.
 
 Câteva abilități nu mai funcționează cât timp ești sub un farmec și își reiau
 efectul când nu mai ești. O abilitate care durează pentru „următoarele N atacuri”

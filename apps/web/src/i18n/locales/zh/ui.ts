@@ -413,7 +413,7 @@ export default {
   "effects.categoryShout": "呐喊",
   "effects.categoryStance": "架势",
   "effects.categoryWeaponSpell": "武器法术",
-  "effects.endHint": "双击结束",
+  "effects.endHint": "双击、Enter 或 Delete 结束",
   "effects.from": "来自 {caster}",
   "effects.inRange": "处于其范围内时",
   "effects.maintained": "维持中",

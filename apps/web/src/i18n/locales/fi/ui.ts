@@ -460,7 +460,7 @@ export default {
   "effects.categoryShout": "Huuto",
   "effects.categoryStance": "Asento",
   "effects.categoryWeaponSpell": "Aseloitsu",
-  "effects.endHint": "lopeta kaksoisklikkaamalla",
+  "effects.endHint": "lopeta kaksoisklikkaamalla, Enterillä tai Deletellä",
   "effects.from": "lähde: {caster}",
   "effects.inRange": "kantaman sisällä",
   "effects.maintained": "ylläpidetty",

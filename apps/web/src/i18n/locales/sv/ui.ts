@@ -450,7 +450,7 @@ export default {
   "effects.categoryShout": "Rop",
   "effects.categoryStance": "Ställning",
   "effects.categoryWeaponSpell": "Vapenbesvärjelse",
-  "effects.endHint": "dubbelklicka för att avsluta",
+  "effects.endHint": "dubbelklicka, Enter eller Delete för att avsluta",
   "effects.from": "från {caster}",
   "effects.inRange": "så länge du är inom räckhåll",
   "effects.maintained": "underhållen",
