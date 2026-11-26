@@ -451,7 +451,7 @@ export const en = {
   "effects.categoryShout": "Shout",
   "effects.categoryStance": "Stance",
   "effects.categoryWeaponSpell": "Weapon Spell",
-  "effects.endHint": "double-click to end",
+  "effects.endHint": "double-click, Enter or Delete to end",
   "effects.from": "from {caster}",
   "effects.inRange": "while in its range",
   "effects.maintained": "maintained",

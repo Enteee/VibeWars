@@ -16,12 +16,14 @@ import {
   spawnStyleOf,
 } from "../render/cosmetic-reactions.js";
 import { swingRibbon } from "../render/cosmetic-trail.js";
+import { stackPose } from "../render/sprite-stack.js";
 import { WEAPON_MOTION, type WeaponMotion } from "../render/weapon-pose.js";
 import type { FigureLook } from "./character-card.js";
 import {
   canvasPainter,
   drawBodyGlyph,
   loadGlyph,
+  matchDecor,
   paintFigure,
   tintedGlyph,
 } from "./character-figure.js";
@@ -325,9 +327,11 @@ export function createCosmeticsPreview(
       const made = tintedGlyph(glyph, pixels);
       tinted = made === undefined ? undefined : { pixels, canvas: made };
     }
-    paintFigure(painter, body, () => {
+    const pose = stackPose(beat.kind === "walk", false, clock, still);
+    const decor = matchDecor(body);
+    paintFigure(painter, context, body, pose, decor, () => {
       if (tinted !== undefined) {
-        drawBodyGlyph(context, body, tinted.canvas);
+        drawBodyGlyph(context, decor.badge, tinted.canvas);
       }
     });
     context.globalAlpha = 1;

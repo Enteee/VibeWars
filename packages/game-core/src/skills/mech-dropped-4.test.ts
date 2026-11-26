@@ -12,6 +12,7 @@ import { describeStatus } from "./describe.js";
 import { NO_RANKS, aggregateModifiers } from "./status.js";
 import type { Skill } from "./types.js";
 import { EN_NAMES, EN_WORDS } from "./describe-words.js";
+import { statusMoveSpeed } from "./tick.js";
 
 /**
  * Six from the dropped lists (#2453): Stoneflesh Aura's rank-scaled damage
@@ -221,9 +222,9 @@ describe("Icy Shackles (#2453)", () => {
     const left = foe.statuses.get("icy-shackles")?.remainingSeconds ?? 0;
     expect(left).toBeLessThanOrEqual(seconds);
     expect(left).toBeGreaterThan(seconds - 0.5);
-    expect(aggregateModifiers(foe.statuses.active).moveSpeedMultiplier).toBeCloseTo(0.34);
+    expect(statusMoveSpeed(aggregateModifiers(foe.statuses.active))).toBeCloseTo(0.34);
     foe.statuses.apply("stoneflesh-aura", 10, "f", NO_RANKS);
-    expect(aggregateModifiers(foe.statuses.active).moveSpeedMultiplier).toBeCloseTo(0.1, 2);
+    expect(statusMoveSpeed(aggregateModifiers(foe.statuses.active))).toBeCloseTo(0.1, 2);
   });
 });
 

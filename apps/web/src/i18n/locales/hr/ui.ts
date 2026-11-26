@@ -475,7 +475,7 @@ export default {
   "effects.categoryShout": "Povik",
   "effects.categoryStance": "Stav",
   "effects.categoryWeaponSpell": "Čarolija oružja",
-  "effects.endHint": "dvostruki klik za kraj",
+  "effects.endHint": "dvostruki klik, Enter ili Delete za kraj",
   "effects.from": "izvor: {caster}",
   "effects.inRange": "dok si u dometu",
   "effects.maintained": "održavano",

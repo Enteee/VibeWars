@@ -9,7 +9,7 @@ import { describeSkill } from "../skills/describe.js";
 import { applyDamage, applyEffects, type CombatEvent } from "../skills/effects.js";
 import { NO_RANKS, aggregateModifiers } from "../skills/status.js";
 import { makeCombatant } from "../skills/testing.js";
-import { effectiveActivationSeconds } from "../skills/tick.js";
+import { effectiveActivationSeconds, statusMoveSpeed } from "../skills/tick.js";
 import type { Skill } from "../skills/types.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
@@ -93,7 +93,7 @@ function use(sim: MatchSimulation, skillId: string, targetId = "p"): void {
 }
 
 function speedOf(sim: MatchSimulation, id: string): number {
-  return aggregateModifiers(get(sim, id).combatant.statuses.active).moveSpeedMultiplier;
+  return statusMoveSpeed(aggregateModifiers(get(sim, id).combatant.statuses.active));
 }
 
 describe("Angelic Bond (#1955)", () => {

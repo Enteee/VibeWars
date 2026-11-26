@@ -515,7 +515,7 @@ export default {
   "effects.categoryShout": "صيحة",
   "effects.categoryStance": "وضعية",
   "effects.categoryWeaponSpell": "تعويذة سلاح",
-  "effects.endHint": "انقر مرتين للإنهاء",
+  "effects.endHint": "انقر مرتين أو اضغط Enter أو Delete للإنهاء",
   "effects.from": "من {caster}",
   "effects.inRange": "ضمن نطاقها",
   "effects.maintained": "مستمر",

@@ -449,7 +449,7 @@ export default {
   "effects.categoryShout": "Kreet",
   "effects.categoryStance": "Houding",
   "effects.categoryWeaponSpell": "Wapenspreuk",
-  "effects.endHint": "dubbelklik om te beëindigen",
+  "effects.endHint": "dubbelklik, Enter of Delete om te beëindigen",
   "effects.from": "van {caster}",
   "effects.inRange": "zolang je binnen bereik bent",
   "effects.maintained": "onderhouden",

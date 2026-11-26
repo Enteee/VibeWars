@@ -192,37 +192,62 @@ export function pitWall(palette: ArenaPalette): number {
 /** Where a tunnel leaves a pit: near black, so it reads as a way in. */
 export const TUNNEL_MOUTH = 0x05070a;
 
-/** How a depth of water looks (#2984): line widths are CSS px. */
+/**
+ * How a depth of water looks (#2984, #4058): line widths are CSS px. Deep
+ * water sits a pit wall below the floor behind a stone lip, in the
+ * biome's colours; `rings` fills darken it toward the middle. `cell` tints
+ * the liquid cells' light network over it.
+ */
 export interface WaterLook {
   readonly fill: number;
   readonly fillAlpha: number;
+  readonly rings: number;
+  readonly ring: number;
+  readonly ringAlpha: number;
+  /** Deep water's lip and sunk wall; shallow water's thin shore line. */
+  readonly lip: boolean;
   readonly shore: number;
   readonly shoreWidth: number;
   readonly ripple: number;
   readonly rippleAlpha: number;
+  readonly cell: number;
+  readonly cellAlpha: number;
 }
 
 /**
- * Deep water is dark, opaque and hard-shored: it cannot be walked. Shallow
- * is pale and see-through, its shore soft, the floor showing. They differ
- * by value and shore, not by hue alone (docs/art/art-direction.md).
+ * Deep water is dark, still and opaque, sunk behind a stone lip: it
+ * cannot be walked. Shallow is the same hue, lighter and see-through, the
+ * floor showing, with no lip. They differ by value and edge, not by hue
+ * (docs/art/art-direction.md). The hue is the same in every biome.
  */
 export const WATER_LOOK: Record<"deep" | "shallow", WaterLook> = {
   deep: {
-    fill: 0x0a1320,
+    fill: 0x0e2228,
     fillAlpha: 1,
-    shore: 0xc4dcee,
+    rings: 4,
+    ring: 0x040c10,
+    ringAlpha: 0.3,
+    lip: true,
+    shore: 0x0e2228,
     shoreWidth: 3,
-    ripple: 0x4e6c8a,
-    rippleAlpha: 0.7,
+    ripple: 0xb4d2dc,
+    rippleAlpha: 0.35,
+    cell: 0x3c6a78,
+    cellAlpha: 0.2,
   },
   shallow: {
-    fill: 0x8fb8d6,
-    fillAlpha: 0.3,
-    shore: 0x8fb8d6,
+    fill: 0x5ea8b8,
+    fillAlpha: 0.5,
+    rings: 0,
+    ring: 0x040c10,
+    ringAlpha: 0,
+    lip: false,
+    shore: 0xa8d8e0,
     shoreWidth: 1,
-    ripple: 0xe2f1fc,
-    rippleAlpha: 0.5,
+    ripple: 0xd2ecf2,
+    rippleAlpha: 0.4,
+    cell: 0x8cc0cc,
+    cellAlpha: 0.14,
   },
 };
 
@@ -878,6 +903,14 @@ export interface DecorColours {
   readonly ash: number;
   readonly ashLit: number;
   readonly ashShade: number;
+  /** A boulder's or a cairn's stone: its body, the light on its north-west facet, its shaded foot. */
+  readonly rock: number;
+  readonly rockLit: number;
+  readonly rockShade: number;
+  /** Old bone, and a banner's cloth and the shade in its folds. */
+  readonly bone: number;
+  readonly cloth: number;
+  readonly clothShade: number;
   readonly iron: number;
   readonly coals: number;
   /** Fire, never graded: a cinder's glow, its brighter spark, and a flame from its foot to its tip. */
@@ -902,6 +935,12 @@ function decorColours(tones: BiomeTones): DecorColours {
     ash: mix(tones.ground, tones.stone, 0.4),
     ashLit: mix(tones.ground, tones.stone, 0.6),
     ashShade: mix(tones.ground, tones.stone, 0.15),
+    rock: tones.rock,
+    rockLit: mix(tones.rock, 0xf0ece0, 0.22),
+    rockShade: shade(tones.rock, 0.4),
+    bone: mix(0xc8bea4, tones.ground, 0.2),
+    cloth: 0x6e2222,
+    clothShade: shade(0x6e2222, 0.4),
     iron: 0x5a5450,
     coals: 0x2a1a10,
     ember: 0xe0662a,

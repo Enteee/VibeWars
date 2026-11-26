@@ -1629,7 +1629,476 @@
     }
   ],
   "objectives": [],
-  "decor": [],
+  "decor": [
+    {
+      "id": "tree-1",
+      "kind": "tree",
+      "at": {
+        "x": 1071,
+        "y": 1331
+      },
+      "layer": 1,
+      "rotation": 343,
+      "scale": 1.16,
+      "variant": 0
+    },
+    {
+      "id": "tree-2",
+      "kind": "tree",
+      "at": {
+        "x": 2990,
+        "y": 2156
+      },
+      "layer": 1,
+      "rotation": 206,
+      "scale": 1.12,
+      "variant": 1
+    },
+    {
+      "id": "tree-3",
+      "kind": "tree",
+      "at": {
+        "x": 171,
+        "y": 1726
+      },
+      "layer": 1,
+      "rotation": 228,
+      "scale": 1.09,
+      "variant": 0
+    },
+    {
+      "id": "tree-4",
+      "kind": "tree",
+      "at": {
+        "x": 1938,
+        "y": 2065
+      },
+      "layer": 1,
+      "rotation": 91,
+      "scale": 1.18,
+      "variant": 2
+    },
+    {
+      "id": "tree-5",
+      "kind": "tree",
+      "at": {
+        "x": 3849,
+        "y": 1165
+      },
+      "layer": 1,
+      "rotation": 271,
+      "scale": 0.85,
+      "variant": 1
+    },
+    {
+      "id": "dead-tree-1",
+      "kind": "dead-tree",
+      "at": {
+        "x": 374,
+        "y": 1958
+      },
+      "layer": 1,
+      "rotation": 194,
+      "scale": 0.77,
+      "variant": 3
+    },
+    {
+      "id": "dead-tree-2",
+      "kind": "dead-tree",
+      "at": {
+        "x": 3196,
+        "y": 2123
+      },
+      "layer": 1,
+      "rotation": 9,
+      "scale": 1.1,
+      "variant": 1
+    },
+    {
+      "id": "dead-tree-3",
+      "kind": "dead-tree",
+      "at": {
+        "x": 3263,
+        "y": 2404
+      },
+      "layer": 1,
+      "rotation": 120,
+      "scale": 0.8,
+      "variant": 2
+    },
+    {
+      "id": "fern-1",
+      "kind": "fern",
+      "at": {
+        "x": 1226,
+        "y": 1181
+      },
+      "layer": 1,
+      "rotation": 125,
+      "scale": 0.77,
+      "variant": 0
+    },
+    {
+      "id": "fern-2",
+      "kind": "fern",
+      "at": {
+        "x": 4740,
+        "y": 1919
+      },
+      "layer": 1,
+      "rotation": 113,
+      "scale": 0.87,
+      "variant": 2
+    },
+    {
+      "id": "fern-3",
+      "kind": "fern",
+      "at": {
+        "x": 3326,
+        "y": 2022
+      },
+      "layer": 1,
+      "rotation": 265,
+      "scale": 0.9,
+      "variant": 2
+    },
+    {
+      "id": "rock-1",
+      "kind": "rock",
+      "at": {
+        "x": 4954,
+        "y": 1134
+      },
+      "layer": 1,
+      "rotation": 222,
+      "scale": 0.89,
+      "variant": 1
+    },
+    {
+      "id": "rock-2",
+      "kind": "rock",
+      "at": {
+        "x": 1611,
+        "y": 1231
+      },
+      "layer": 1,
+      "rotation": 56,
+      "scale": 1.24,
+      "variant": 3
+    },
+    {
+      "id": "rock-3",
+      "kind": "rock",
+      "at": {
+        "x": 1900,
+        "y": 1415
+      },
+      "layer": 1,
+      "rotation": 9,
+      "scale": 0.79,
+      "variant": 3
+    },
+    {
+      "id": "rock-4",
+      "kind": "rock",
+      "at": {
+        "x": 3079,
+        "y": 2385
+      },
+      "layer": 1,
+      "rotation": 118,
+      "scale": 1.07,
+      "variant": 2
+    },
+    {
+      "id": "rock-5",
+      "kind": "rock",
+      "at": {
+        "x": 3263,
+        "y": 866
+      },
+      "layer": 1,
+      "rotation": 188,
+      "scale": 1.04,
+      "variant": 0
+    },
+    {
+      "id": "rock-6",
+      "kind": "rock",
+      "at": {
+        "x": 1227,
+        "y": 815
+      },
+      "layer": 1,
+      "rotation": 309,
+      "scale": 1.21,
+      "variant": 0
+    },
+    {
+      "id": "rock-7",
+      "kind": "rock",
+      "at": {
+        "x": 1342,
+        "y": 716
+      },
+      "layer": 1,
+      "rotation": 276,
+      "scale": 0.76,
+      "variant": 3
+    },
+    {
+      "id": "rock-8",
+      "kind": "rock",
+      "at": {
+        "x": 2832,
+        "y": 1482
+      },
+      "layer": 1,
+      "rotation": 269,
+      "scale": 1.2,
+      "variant": 1
+    },
+    {
+      "id": "rock-9",
+      "kind": "rock",
+      "at": {
+        "x": 1015,
+        "y": 1702
+      },
+      "layer": 1,
+      "rotation": 222,
+      "scale": 0.85,
+      "variant": 3
+    },
+    {
+      "id": "rock-10",
+      "kind": "rock",
+      "at": {
+        "x": 3361,
+        "y": 1401
+      },
+      "layer": 1,
+      "rotation": 202,
+      "scale": 1.16,
+      "variant": 3
+    },
+    {
+      "id": "rock-11",
+      "kind": "rock",
+      "at": {
+        "x": 3948,
+        "y": 1061
+      },
+      "layer": 1,
+      "rotation": 356,
+      "scale": 1.2,
+      "variant": 0
+    },
+    {
+      "id": "rock-12",
+      "kind": "rock",
+      "at": {
+        "x": 3596,
+        "y": 1541
+      },
+      "layer": 1,
+      "rotation": 182,
+      "scale": 1.1,
+      "variant": 0
+    },
+    {
+      "id": "rock-13",
+      "kind": "rock",
+      "at": {
+        "x": 3927,
+        "y": 1764
+      },
+      "layer": 1,
+      "rotation": 282,
+      "scale": 0.94,
+      "variant": 3
+    },
+    {
+      "id": "rock-14",
+      "kind": "rock",
+      "at": {
+        "x": 2731,
+        "y": 2514
+      },
+      "layer": 1,
+      "rotation": 121,
+      "scale": 0.79,
+      "variant": 0
+    },
+    {
+      "id": "rock-15",
+      "kind": "rock",
+      "at": {
+        "x": 4139,
+        "y": 824
+      },
+      "layer": 1,
+      "rotation": 138,
+      "scale": 0.97,
+      "variant": 0
+    },
+    {
+      "id": "bones-1",
+      "kind": "bones",
+      "at": {
+        "x": 1060,
+        "y": 1037
+      },
+      "layer": 1,
+      "rotation": 40,
+      "scale": 1.13,
+      "variant": 2
+    },
+    {
+      "id": "bones-2",
+      "kind": "bones",
+      "at": {
+        "x": 2118,
+        "y": 2416
+      },
+      "layer": 1,
+      "rotation": 14,
+      "scale": 1.22,
+      "variant": 2
+    },
+    {
+      "id": "bones-3",
+      "kind": "bones",
+      "at": {
+        "x": 366,
+        "y": 622
+      },
+      "layer": 1,
+      "rotation": 234,
+      "scale": 0.88,
+      "variant": 2
+    },
+    {
+      "id": "bones-4",
+      "kind": "bones",
+      "at": {
+        "x": 160,
+        "y": 1825
+      },
+      "layer": 1,
+      "rotation": 86,
+      "scale": 1.14,
+      "variant": 3
+    },
+    {
+      "id": "bones-5",
+      "kind": "bones",
+      "at": {
+        "x": 1644,
+        "y": 1660
+      },
+      "layer": 1,
+      "rotation": 337,
+      "scale": 1.14,
+      "variant": 2
+    },
+    {
+      "id": "bones-6",
+      "kind": "bones",
+      "at": {
+        "x": 3029,
+        "y": 1428
+      },
+      "layer": 1,
+      "rotation": 19,
+      "scale": 1.18,
+      "variant": 3
+    },
+    {
+      "id": "bones-7",
+      "kind": "bones",
+      "at": {
+        "x": 4661,
+        "y": 480
+      },
+      "layer": 1,
+      "rotation": 193,
+      "scale": 1.25,
+      "variant": 2
+    },
+    {
+      "id": "cairn-1",
+      "kind": "cairn",
+      "at": {
+        "x": 3011,
+        "y": 2231
+      },
+      "layer": 1,
+      "rotation": 247,
+      "scale": 0.85,
+      "variant": 1
+    },
+    {
+      "id": "cairn-2",
+      "kind": "cairn",
+      "at": {
+        "x": 3878,
+        "y": 1885
+      },
+      "layer": 1,
+      "rotation": 248,
+      "scale": 0.91,
+      "variant": 2
+    },
+    {
+      "id": "cairn-3",
+      "kind": "cairn",
+      "at": {
+        "x": 3862,
+        "y": 1239
+      },
+      "layer": 1,
+      "rotation": 152,
+      "scale": 0.83,
+      "variant": 2
+    },
+    {
+      "id": "cairn-4",
+      "kind": "cairn",
+      "at": {
+        "x": 2955,
+        "y": 2315
+      },
+      "layer": 1,
+      "rotation": 236,
+      "scale": 0.93,
+      "variant": 0
+    },
+    {
+      "id": "cairn-5",
+      "kind": "cairn",
+      "at": {
+        "x": 2807,
+        "y": 2274
+      },
+      "layer": 1,
+      "rotation": 148,
+      "scale": 1.08,
+      "variant": 3
+    },
+    {
+      "id": "cairn-6",
+      "kind": "cairn",
+      "at": {
+        "x": 3940,
+        "y": 2373
+      },
+      "layer": 1,
+      "rotation": 4,
+      "scale": 1.22,
+      "variant": 1
+    }
+  ],
   "gates": [],
   "switches": [
     {

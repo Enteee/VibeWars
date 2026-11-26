@@ -165,7 +165,7 @@ yanında bekler. Kalıntını taşıyan bir bot onu doğruca sunağa götürür;
 diğerleri kalıntıyı yalnızca büyü menziline giren bir düşmanla dövüşmek
 için bırakır.
 
-Broken Tower bunu oynatır (4v4 ve 8v8, 5400x2800): yaylalarda bir tepenin üstünde yıkılmış bir kule. Moloz teraslarının merdivenlerinden kule kütüğünün üstündeki sunağa çık ya da terastaki bir kol kapılarını açınca tepenin altındaki mahzenden geç; moloz duvarlar kırılabilir.
+Broken Tower bunu oynatır (4v4 ve 8v8, 5400x2800): yaylalarda bir tepenin üstünde yıkılmış bir kule. Moloz teraslarının merdivenlerinden kule kütüğünün üstündeki sunağa çık ya da terastaki bir kol kapılarını açınca tepenin altındaki mahzenden geç; moloz duvarlar kırılabilir. Her moloz duvarın yanında, biri basınç plakasının üstünde durduğu sürece açık kalan bir demir parmaklık var.
 
 ### Cinder Sanctum
 

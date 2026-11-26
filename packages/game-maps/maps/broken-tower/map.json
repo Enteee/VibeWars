@@ -1567,6 +1567,48 @@
       },
       "blocks": "all",
       "look": "door"
+    },
+    {
+      "id": "west-lane-portcullis",
+      "wall": {
+        "kind": "rect",
+        "x": 1930,
+        "y": 1290,
+        "width": 24,
+        "height": 290,
+        "layer": 1
+      },
+      "opener": {
+        "kind": "plate",
+        "plate": {
+          "x": 1890,
+          "y": 1480
+        },
+        "team": null
+      },
+      "blocks": "all",
+      "look": "portcullis"
+    },
+    {
+      "id": "east-lane-portcullis",
+      "wall": {
+        "kind": "rect",
+        "x": 3470,
+        "y": 1204,
+        "width": 24,
+        "height": 290,
+        "layer": 1
+      },
+      "opener": {
+        "kind": "plate",
+        "plate": {
+          "x": 3534,
+          "y": 1304
+        },
+        "team": null
+      },
+      "blocks": "all",
+      "look": "portcullis"
     }
   ],
   "switches": [
@@ -1821,6 +1863,30 @@
         "colour": 16748608,
         "intensity": 0.8,
         "flicker": 0.35
+      },
+      {
+        "id": "torch-west-lane-portcullis",
+        "position": {
+          "x": 1900,
+          "y": 1420
+        },
+        "layer": 1,
+        "radius": 150,
+        "colour": 16756832,
+        "intensity": 0.85,
+        "flicker": 0.2
+      },
+      {
+        "id": "torch-east-lane-portcullis",
+        "position": {
+          "x": 3524,
+          "y": 1364
+        },
+        "layer": 1,
+        "radius": 150,
+        "colour": 16756832,
+        "intensity": 0.85,
+        "flicker": 0.2
       }
     ]
   },

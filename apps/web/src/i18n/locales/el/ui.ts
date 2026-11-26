@@ -457,7 +457,7 @@ export default {
   "effects.categoryShout": "Κραυγή",
   "effects.categoryStance": "Στάση",
   "effects.categoryWeaponSpell": "Ξόρκι όπλου",
-  "effects.endHint": "διπλό κλικ για τερματισμό",
+  "effects.endHint": "διπλό κλικ, Enter ή Delete για τερματισμό",
   "effects.from": "από {caster}",
   "effects.inRange": "όσο είσαι εντός εμβέλειας",
   "effects.maintained": "συντηρείται",

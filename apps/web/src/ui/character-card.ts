@@ -81,12 +81,12 @@ export function lookOfWire(
 
 /**
  * How big a character card is. `"card"`: the roster's, the figure at
- * `FIGURE_SIZE` over its line and bar. `"row"`: a team's member, one
+ * its box, `FIGURE_BOX`, over its line and bar. `"row"`: a team's member, one
  * line, a smaller figure, then the bar.
  */
 export type CharacterCardSize = "card" | "row";
 
-/** A row's figure, a share of `FIGURE_SIZE`: small enough for a line, big enough that the weapon reads. */
+/** A row's figure, a share of its box: small enough for a line, big enough that the weapon reads. */
 const ROW_FIGURE_SCALE = 0.75;
 
 export interface CharacterFigureCardOptions {

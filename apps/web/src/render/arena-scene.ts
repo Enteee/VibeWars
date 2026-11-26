@@ -107,6 +107,7 @@ import {
   pavingPalette,
   type PavingLookColours,
   type StonePavingLook,
+  type WaterLook,
   SWITCH_MARK_LOOK,
 } from "./arena-palette.js";
 import {
@@ -424,7 +425,15 @@ import {
   steadyLighting,
   type LightSample,
 } from "./lighting-model.js";
-import { WATER_ART, waterArtKey, type WaterPainter } from "./water-painter.js";
+import { liquidCells, tiledCells } from "./liquid-cells.js";
+import {
+  WATER_ART,
+  WATER_CELLS,
+  waterArtKey,
+  waterSurface,
+  type WaterArtKey,
+  type WaterPainter,
+} from "./water-painter.js";
 import { waterPieces, waterShapeOf, type WaterPiece, type WaterShape } from "./water-shape.js";
 import { SPIRE_LOOK, ZONE_EDGE_WIDTH, ZONE_LOOK, strikeEdgeScale } from "./zone-look.js";
 import { HAZARD_ART, hazardKindOf, pathMotionAt, phaseProgressAt } from "./hazard-marks.js";
@@ -574,6 +583,18 @@ interface WaterOverTunnel {
   readonly ripples: Phaser.GameObjects.Graphics;
   readonly painter: WaterPainter;
 }
+
+/** The liquid cells over the water (#4058), baked with its shapes: an image and its texture per body of water. */
+interface WaterCells {
+  readonly shapes: readonly WaterSplit[];
+  readonly images: readonly Phaser.GameObjects.Image[];
+  readonly textures: readonly string[];
+}
+
+/** The liquid cells' texture (#4058), painted once per game. */
+const WATER_CELLS_TILE = "liquid-cells-water";
+/** The longest side, in px, of a body of water's baked cells: a bigger body bakes coarser. */
+const WATER_CELLS_MAX_SIDE = 2048;
 
 const TARGET_RING = 0xffd866;
 /** The `condition` orange: your team's called foe wears its chevron (#443). */
@@ -897,6 +918,8 @@ export class ArenaScene extends Phaser.Scene {
    * index: faded with its cover.
    */
   private readonly waterOverTunnels = new Map<number, WaterOverTunnel>();
+  /** The cells baked into the water that is not over a tunnel (#4058), if any. */
+  private waterCells: WaterCells | undefined;
   /** The ripples on each layer's water, drawn every frame. */
   private readonly rippleGraphics = new Map<
     number,
@@ -4212,10 +4235,12 @@ export class ArenaScene extends Phaser.Scene {
           pieces.length === 1 ? this.waterPainter(surface) : this.piecePainter(surface, piece),
           { ...shape, outline: piece.outline, ripples: piece.ripples },
           line,
+          { wall: pitWall(palette), lip: palette.wallTop, outline: palette.wallStroke },
         );
         surface.restore();
       }
     }
+    this.buildWaterCells(ground);
     this.drawPits(next.structure, line, palette);
     const lifts: { readonly frame: LiftFrame; readonly upperLayer: number }[] = [];
     for (const transition of next.structure.transitions) {
@@ -6367,14 +6392,122 @@ export class ArenaScene extends Phaser.Scene {
 
   /** `g` as a piece of water draws through it (#3350): its shore stroked, never a cut edge. */
   private piecePainter(g: Phaser.GameObjects.Graphics, piece: WaterPiece): WaterPainter {
-    return {
-      ...this.waterPainter(g),
-      strokeOutline: () => {
-        for (const [a, b] of piece.shore) {
-          g.lineBetween(a.x, a.y, b.x, b.y);
+    return { ...this.waterPainter(g), shore: () => piece.shore };
+  }
+
+  /**
+   * The liquid cells over the water (#4058), baked when its shapes change:
+   * per body of water, the texture's two layers drawn once into a canvas
+   * clipped to its surface, added over it as one still image. Drifting
+   * sprites held to the water by stencils cost a frame too much (#4078).
+   * The cells hold to the world, so two bodies that meet show no seam.
+   * Water over a tunnel fades with its cover and has none.
+   */
+  private buildWaterCells(ground: number): void {
+    if (this.waterCells?.shapes === this.waterShapes) {
+      return;
+    }
+    for (const image of this.waterCells?.images ?? []) {
+      image.destroy();
+    }
+    for (const key of this.waterCells?.textures ?? []) {
+      this.textures.remove(key);
+    }
+    const tile = this.waterCellsTile();
+    const tinted = new Map<WaterArtKey, HTMLCanvasElement[]>();
+    const images: Phaser.GameObjects.Image[] = [];
+    const textures: string[] = [];
+    for (const { shape, pieces } of this.waterShapes) {
+      const artKey = waterArtKey(shape.depth);
+      const art = WATER_ART[artKey];
+      const lift = elevationOf(shape.layer, ground);
+      const outlines = pieces
+        .filter(({ tunnel }) => tunnel === undefined)
+        .map((piece) =>
+          waterSurface(art, piece.outline, piece.shore).map(({ x, y }) => ({ x, y: y - lift })),
+        );
+      const box = boxOfPoints(...outlines);
+      if (box === undefined) {
+        continue;
+      }
+      const [x, y] = [Math.floor(box.left) - 1, Math.floor(box.top) - 1];
+      const [w, h] = [Math.ceil(box.right) + 1 - x, Math.ceil(box.bottom) + 1 - y];
+      const resolution = Math.min(1, WATER_CELLS_MAX_SIDE / Math.max(w, h));
+      const key = `${WATER_CELLS_TILE}-${String(textures.length)}`;
+      const texture = this.textures.createCanvas(
+        key,
+        Math.ceil(w * resolution),
+        Math.ceil(h * resolution),
+      );
+      if (texture === null) {
+        throw new Error("water: could not create a body of water's cells");
+      }
+      textures.push(key);
+      const { context } = texture;
+      context.scale(resolution, resolution);
+      context.translate(-x, -y);
+      context.beginPath();
+      for (const points of outlines) {
+        const [first, ...rest] = points;
+        if (first === undefined) {
+          continue;
         }
-      },
-    };
+        context.moveTo(first.x, first.y);
+        for (const { x: px, y: py } of rest) {
+          context.lineTo(px, py);
+        }
+        context.closePath();
+      }
+      context.clip();
+      context.globalCompositeOperation = "lighter";
+      const layers = tinted.get(artKey) ?? art.cells.map(() => tintedCells(tile, art.look));
+      tinted.set(artKey, layers);
+      art.cells.forEach((cell, i) => {
+        const pattern = context.createPattern(layers[i] ?? tile, "repeat");
+        if (pattern === null) {
+          throw new Error("water: could not pattern the liquid cells");
+        }
+        pattern.setTransform(new DOMMatrix().scale(cell.scale));
+        context.fillStyle = pattern;
+        context.fillRect(x, y, w, h);
+      });
+      texture.refresh();
+      images.push(
+        this.add
+          .image(x, y, key)
+          .setOrigin(0, 0)
+          .setScale(1 / resolution)
+          .setBlendMode(Phaser.BlendModes.ADD)
+          .setDepth(renderOrder({ kind: "water", layer: shape.layer, part: "cells" })),
+      );
+    }
+    this.waterCells = { shapes: this.waterShapes, images, textures };
+  }
+
+  /** The liquid cells' texture (#4058): black cells, white gaps, tinted where it is used. */
+  private waterCellsTile(): HTMLCanvasElement {
+    const existing = this.textures.get(WATER_CELLS_TILE);
+    if (existing instanceof Phaser.Textures.CanvasTexture) {
+      return existing.getCanvas();
+    }
+    const { size } = WATER_CELLS;
+    const texture = this.textures.createCanvas(WATER_CELLS_TILE, size, size);
+    if (texture === null) {
+      throw new Error("water: could not create the liquid cells' tile");
+    }
+    const { context } = texture;
+    context.fillStyle = "#ffffff";
+    context.fillRect(0, 0, size, size);
+    context.fillStyle = "#000000";
+    for (const cell of tiledCells(liquidCells(WATER_CELLS), size)) {
+      context.beginPath();
+      for (const { x, y } of cell) {
+        context.lineTo(x, y);
+      }
+      context.closePath();
+      context.fill();
+    }
+    return texture.getCanvas();
   }
 
   /** `g` as water draws through it: outlines filled as triangles, as a wall's are. */
@@ -6385,10 +6518,10 @@ export class ArenaScene extends Phaser.Scene {
       fillOutline: (outline) => {
         this.fillShape(g, { kind: "polygon", points: outline });
       },
-      strokeOutline: (outline) => {
-        this.strokeShape(g, { kind: "polygon", points: outline });
-      },
       lineBetween: (x1, y1, x2, y2) => g.lineBetween(x1, y1, x2, y2),
+      strokeEllipse: (x, y, width, height) => g.strokeEllipse(x, y, width, height),
+      shore: (outline) =>
+        outline.map((a, k) => [a, outline[(k + 1) % outline.length] ?? a] as const),
     };
   }
 
@@ -6734,3 +6867,23 @@ export type {
   RenderableWall,
 } from "./arena-snapshot.js";
 export { EMPTY_SNAPSHOT, actorAtPoint, healthFraction, teamColour } from "./arena-snapshot.js";
+
+/**
+ * The liquid cells' tile in `look`'s cell colour at its alpha (#4058),
+ * premultiplied, as it is added over the water: the black cells add nothing.
+ */
+function tintedCells(tile: HTMLCanvasElement, look: WaterLook): HTMLCanvasElement {
+  const canvas = document.createElement("canvas");
+  [canvas.width, canvas.height] = [tile.width, tile.height];
+  const context = canvas.getContext("2d");
+  if (context === null) {
+    throw new Error("water: could not tint the liquid cells");
+  }
+  const channel = (shift: number): number =>
+    Math.round(((look.cell >> shift) & 0xff) * look.cellAlpha);
+  context.drawImage(tile, 0, 0);
+  context.globalCompositeOperation = "multiply";
+  context.fillStyle = `rgb(${[16, 8, 0].map(channel).join(", ")})`;
+  context.fillRect(0, 0, canvas.width, canvas.height);
+  return canvas;
+}

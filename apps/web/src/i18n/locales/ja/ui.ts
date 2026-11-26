@@ -423,7 +423,7 @@ export default {
   "effects.categoryShout": "シャウト",
   "effects.categoryStance": "スタンス",
   "effects.categoryWeaponSpell": "武器スペル",
-  "effects.endHint": "ダブルクリックで終了",
+  "effects.endHint": "ダブルクリック、Enter または Delete で終了",
   "effects.from": "{caster}より",
   "effects.inRange": "範囲内にいる間",
   "effects.maintained": "維持中",

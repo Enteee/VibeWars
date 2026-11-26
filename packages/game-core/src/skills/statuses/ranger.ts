@@ -314,6 +314,7 @@ export const RANGER_STATUSES: Readonly<Record<RangerStatusId, StatusDefinition>>
   }),
   // "You have -40 armor while activating this skill", as Healing Signet's.
   "barbed-arrows-armor": define("barbed-arrows-armor", "Barbed Arrows", "skill-effect", {
+    specialArmor: true,
     profession: "ranger",
     armorModifier: -40,
   }),

@@ -14,6 +14,7 @@ import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type Participant, type ParticipantSpec } from "./simulation.js";
 import { EN_NAMES, EN_WORDS } from "../skills/describe-words.js";
+import { statusMoveSpeed } from "../skills/tick.js";
 
 /**
  * The Ranger staples 5 (#2133): two preparations, a stance and two bow
@@ -354,9 +355,7 @@ describe("Storm Chaser and elemental damage as one type (#2133)", () => {
   it("moves its bearer 25% faster", () => {
     const sim = match();
     useOnSelf(sim, STORM_CHASER);
-    expect(aggregateModifiers(get(sim, "r").combatant.statuses.active).moveSpeedMultiplier).toBe(
-      1.25,
-    );
+    expect(statusMoveSpeed(aggregateModifiers(get(sim, "r").combatant.statuses.active))).toBe(1.25);
   });
 
   it("a foe's fire gives 4 Energy", () => {

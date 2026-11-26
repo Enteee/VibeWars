@@ -10,7 +10,7 @@ import { describeSkill, describeStatus } from "../skills/describe.js";
 import type { CombatEvent } from "../skills/effects.js";
 import { NO_RANKS, aggregateModifiers, getStatusDefinition, StatusSet } from "../skills/status.js";
 import { makeCombatant } from "../skills/testing.js";
-import { blockChanceOf } from "../skills/tick.js";
+import { blockChanceOf, statusMoveSpeed } from "../skills/tick.js";
 import type { Skill } from "../skills/types.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import { MatchSimulation, type Participant, type ParticipantSpec } from "./simulation.js";
@@ -220,7 +220,7 @@ describe("Flail (#1549)", () => {
     set.apply("flail", 12, "w", NO_RANKS);
     const modifiers = aggregateModifiers(set.active);
     expect(modifiers.attackDurationMultiplier).toBe(0.67);
-    expect(modifiers.moveSpeedMultiplier).toBe(0.67);
+    expect(statusMoveSpeed(modifiers)).toBe(0.67);
   });
 });
 
@@ -338,7 +338,7 @@ describe('"Charge!" (#1549)', () => {
     expect(ally.statuses.has("bleeding")).toBe(true);
     expect(ally.statuses.get("charge")?.durationSeconds).toBe(11);
     expect(get(sim, "w").combatant.statuses.has("charge")).toBe(true);
-    expect(aggregateModifiers(ally.statuses.active).moveSpeedMultiplier).toBe(1.33);
+    expect(statusMoveSpeed(aggregateModifiers(ally.statuses.active))).toBe(1.33);
   });
 });
 
@@ -403,7 +403,7 @@ describe("Enraging Charge (#1549)", () => {
     });
     const bearer = makeCombatant({ id: "w" });
     bearer.statuses.apply("enraging-charge", 13, "w", NO_RANKS);
-    expect(aggregateModifiers(bearer.statuses.active).moveSpeedMultiplier).toBe(1.25);
+    expect(statusMoveSpeed(aggregateModifiers(bearer.statuses.active))).toBe(1.25);
   });
 });
 

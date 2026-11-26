@@ -471,7 +471,7 @@ export default {
   "effects.categoryShout": "קריאה",
   "effects.categoryStance": "עמידה",
   "effects.categoryWeaponSpell": "לחש נשק",
-  "effects.endHint": "לחץ פעמיים כדי לסיים",
+  "effects.endHint": "לחץ פעמיים, Enter או Delete כדי לסיים",
   "effects.from": "מ-{caster}",
   "effects.inRange": "בזמן שהוא בטווח",
   "effects.maintained": "מתמשך",

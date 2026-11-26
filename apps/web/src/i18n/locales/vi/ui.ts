@@ -416,7 +416,7 @@ export default {
   "effects.categoryShout": "Hiệu lệnh",
   "effects.categoryStance": "Thế",
   "effects.categoryWeaponSpell": "Phép vũ khí",
-  "effects.endHint": "nhấn đúp để kết thúc",
+  "effects.endHint": "nhấn đúp, Enter hoặc Delete để kết thúc",
   "effects.from": "từ {caster}",
   "effects.inRange": "khi ở trong tầm",
   "effects.maintained": "duy trì",

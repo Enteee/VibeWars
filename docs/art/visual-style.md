@@ -426,15 +426,34 @@ times the zone's half-diagonal: `zone-light.ts` adds it, the map has none.
 
 ### Water, deep and shallow
 
-Deep is dark with a hard pale shore and sparse ripples: a body cannot be
-seen through it. Shallow is clear, shows the floor, and ripples more. Both
-are scenery under the zone tint.
+Deep is dark, still water you cannot see into. Its fill is `0x0e2228`
+with 4 rings darkening toward the middle, so it reads as deep. Its edge sinks
+into a short pit wall in the floor's pit-wall colour, and a stone lip in the
+biome's wall-top colour stands 3 px proud along the shore. The lip and the
+ripples are what tell it from a pit or a tunnel mouth. Shallow is the same hue,
+lighter and at half alpha, so the floor shows through. It has no lip and no
+sunk wall, only a thin lighter shore line: deep against shallow is gameplay,
+and reads at a glance. The hue is the same in every biome; only the lip takes
+the biome's colour. Both are scenery under the zone tint.
+
+Over both fills lie two layers of liquid cells (#4058): a Voronoi network,
+drawn once at load into a 512 px tile that repeats, tinted per depth, at two
+scales, baked into each body of water once per map. They hold still: drifting,
+they cost too much of a frame (#4078). The gaps between cells are the light.
+Ripples are sparse pale ellipses that drift slowly, never sparkles, and hold
+still under reduced motion.
 
 ![water](visual-style/water.svg)
 
-Recipe (now): `WATER_LOOK.deep` = `{ fill: 0x0a1320, fillAlpha: 1, shore:
-0xc4dcee, shoreWidth: 3, ripple: 0x4e6c8a, rippleAlpha: 0.7 }`;
-`WATER_LOOK.shallow` = fill `0x8fb8d6` at 0.3, shore `0x8fb8d6`.
+Recipe (now): `arena-palette.ts` `WATER_LOOK.deep` = `{ fill: 0x0e2228,
+fillAlpha: 1, rings: 4, ring: 0x040c10, ringAlpha: 0.3, lip: true, ripple:
+0xb4d2dc, rippleAlpha: 0.35, cell: 0x3c6a78, cellAlpha: 0.2 }`;
+`WATER_LOOK.shallow` = fill `0x5ea8b8` at 0.5, shore `0xa8d8e0` 1 px, cells
+`0x8cc0cc` at 0.14. The cells come from `liquid-cells.ts` (seed, site count,
+gap, texture size), which the other liquids reuse. The lip, the sunk wall and
+the rings are `water-painter.ts` `WATER_ART`.
+
+![deep water by shallow on Blackwater Ford](visual-style/water-ford.webp)
 
 ### Toxic fog
 
