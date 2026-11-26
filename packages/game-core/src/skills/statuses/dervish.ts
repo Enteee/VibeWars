@@ -164,10 +164,12 @@ export const DERVISH_STATUSES: Readonly<Record<DervishStatusId, StatusDefinition
   "pious-haste": define("pious-haste", "Pious Haste", "stance", {
     profession: "dervish",
     moveSpeedMultiplier: 1.25,
+    breaksSpeedCap: true,
   }),
   "pious-haste-run": define("pious-haste-run", "Pious Haste (run)", "stance", {
     profession: "dervish",
     moveSpeedMultiplier: 1.5,
+    breaksSpeedCap: true,
   }),
   // "For 30 seconds, your attacks deal earth damage. When this enchantment
   // ends, all nearby foes have Cracked Armor for 1...8...10 seconds" (#1021):

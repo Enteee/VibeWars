@@ -491,7 +491,7 @@ export default {
   "effects.categoryShout": "Okrzyk",
   "effects.categoryStance": "Postawa",
   "effects.categoryWeaponSpell": "Czar broni",
-  "effects.endHint": "kliknij dwukrotnie, aby zakończyć",
+  "effects.endHint": "kliknij dwukrotnie, Enter lub Delete, aby zakończyć",
   "effects.from": "od: {caster}",
   "effects.inRange": "w zasięgu działania",
   "effects.maintained": "podtrzymywane",

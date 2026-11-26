@@ -14,6 +14,7 @@ import type { Combatant, Skill } from "../skills/types.js";
 import { resolveSwing } from "../skills/weapon-attack.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import { MatchSimulation, type Participant, type ParticipantSpec } from "./simulation.js";
+import { statusMoveSpeed } from "../skills/tick.js";
 
 /**
  * Paragon staples 4 (#1677): "Go for the Eyes!", "Never Give Up!", "The
@@ -334,7 +335,7 @@ describe('"It\'s Just a Flesh Wound." (#1677)', () => {
       left: ["its-just-a-flesh-wound"],
     });
     expect(
-      aggregateModifiers([{ id: "its-just-a-flesh-wound", ranks: NO_RANKS }]).moveSpeedMultiplier,
+      statusMoveSpeed(aggregateModifiers([{ id: "its-just-a-flesh-wound", ranks: NO_RANKS }])),
     ).toBe(1.25);
   });
 

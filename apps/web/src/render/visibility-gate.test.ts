@@ -39,7 +39,14 @@ vi.mock("phaser", async () => {
       this.y = y;
     }
   }
-  return { default: { Scene: Object, Geom: { Polygon: { Earcut } }, Math: { Vector2 } } };
+  return {
+    default: {
+      Scene: Object,
+      BlendModes: { ADD: 1 },
+      Geom: { Polygon: { Earcut } },
+      Math: { Vector2 },
+    },
+  };
 });
 
 const { ArenaScene, outsideTriangles, paintDecor } = await import("./arena-scene.js");
@@ -76,6 +83,7 @@ interface GatedScene {
   structureAt(item: RenderItem): RecordingGraphics;
   drawMap(): void;
   drawPaving(): void;
+  buildWaterCells(ground: number): void;
   bakeDecor(depth: number, entries: readonly BakedDecor[]): readonly unknown[];
 }
 
@@ -102,6 +110,8 @@ function paint(
   scene.textures = { exists: () => true };
   // Roads are a canvas texture on their layer's ground, not a Graphics fill: not recorded.
   scene.drawPaving = () => undefined;
+  // The water's cells are baked into a canvas texture and added, lighter, over it (#4058): not recorded.
+  scene.buildWaterCells = () => undefined;
   // Still decor is baked into a texture (#4017): recorded as a graphics at its depth would paint it.
   scene.bakeDecor = (depth, entries) => {
     const g = graphics().setDepth(depth);

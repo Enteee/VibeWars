@@ -417,7 +417,7 @@ export default {
   "effects.categoryShout": "ตะโกน",
   "effects.categoryStance": "ท่าต่อสู้",
   "effects.categoryWeaponSpell": "เวทอาวุธ",
-  "effects.endHint": "ดับเบิลคลิกเพื่อยุติ",
+  "effects.endHint": "ดับเบิลคลิก, Enter หรือ Delete เพื่อยุติ",
   "effects.from": "จาก {caster}",
   "effects.inRange": "ขณะอยู่ในระยะ",
   "effects.maintained": "คงไว้",

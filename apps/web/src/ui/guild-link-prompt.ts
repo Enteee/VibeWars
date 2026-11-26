@@ -2,6 +2,7 @@ import type { WireCape } from "@vibewars/game-protocol";
 
 import { t } from "../i18n/index.js";
 import { button, h, toast } from "./kit.js";
+import { holdFocus } from "./modal-focus.js";
 import { capePreview, playerGuildTag, saveGuildCape, saveGuildTag } from "./player-section.js";
 
 /** How long Join stays disabled after the prompt opens, as the relay link's Use does. */
@@ -41,19 +42,14 @@ export function openGuildLinkPrompt(
   }
   panel.append(ask, h("p", "screen-subtitle", t("guildLink.trust")));
 
+  let release = (): void => undefined;
   const close = (): void => {
-    document.removeEventListener("keydown", onKey, true);
     backdrop.remove();
+    release();
     if (closeOpen === close) {
       closeOpen = undefined;
     }
     onClose();
-  };
-  const onKey = (event: KeyboardEvent): void => {
-    if (event.key === "Escape") {
-      event.stopPropagation();
-      close();
-    }
   };
   const join = button(t("guildLink.join"), "primary guild-link-join", () => {
     saveGuildTag(tag);
@@ -74,7 +70,7 @@ export function openGuildLinkPrompt(
   backdrop.appendChild(panel);
   parent.appendChild(backdrop);
   closeOpen = close;
-  document.addEventListener("keydown", onKey, true);
+  release = holdFocus(panel, close);
   // Enter on a link nobody read should change nothing: focus starts on No.
   decline.focus();
 }

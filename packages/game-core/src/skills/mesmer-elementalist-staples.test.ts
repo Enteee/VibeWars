@@ -173,15 +173,12 @@ describe("Ice Spikes and Deep Freeze (#938)", () => {
     expect(moveSpeedMultiplier(target)).toBeCloseTo(0.34, 9);
   });
 
-  it("on a foe Shard Storm already slows, the slows multiply, down to the 25% floor", () => {
+  it("on a foe Shard Storm already slows, the slows stop at the stronger one's 34% (#4095)", () => {
     const target = foe("target");
     target.statuses.apply("shard-storm", 5, "caster", NO_RANKS);
     use(caster(), "elementalist.deep-freeze", [target]);
-    expect(aggregateModifiers(target.statuses.active).moveSpeedMultiplier).toBeCloseTo(
-      0.34 * 0.34,
-      9,
-    );
-    expect(moveSpeedMultiplier(target)).toBe(0.25);
+    expect(aggregateModifiers(target.statuses.active).moveSpeedSlow).toBeCloseTo(0.34 * 0.34, 9);
+    expect(moveSpeedMultiplier(target)).toBeCloseTo(0.34, 9);
   });
 
   it("neither flies: GW1 drops them from the sky", () => {

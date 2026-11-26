@@ -120,7 +120,7 @@ export interface Weapon {
    * weapon have none; the martial "+5" is an inscription.
    */
   readonly energy: number;
-  /** Fraction of the target's armor ignored, 0..1. */
+  /** Bonus armor penetration on its attacks, 0..1 (#4085): a Hornbow's, added to the highest base. */
   readonly armorPenetration: number;
   /** Foes adjacent to the target also struck. Scythes cleave; nothing else does. */
   readonly cleaveTargets: number;

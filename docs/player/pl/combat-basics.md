@@ -80,7 +80,8 @@ Sługi (poza Golemem z mięsa), zjawy i duchy nie krwawią, nie ulegają zatruci
 ![Klątwa](../../../apps/web/public/icons/skill-type/hex.svg) **Klątwy** rzucają na ciebie wrogowie; ![Zaczarowanie](../../../apps/web/public/icons/skill-type/enchantment.svg) **zaczarowania** ty sam lub twoi
 sojusznicy. Każde z nich usuwa własny rodzaj umiejętności. Niektóre zaczarowania
 są **podtrzymywane**: trwają, dopóki ich nie zakończysz, i kosztują pip Energii,
-gdy działają. Kliknij dwukrotnie ikonę, aby je zakończyć.
+gdy działają. Kliknij dwukrotnie ikonę albo ustaw na niej fokus i naciśnij
+Enter lub Delete, aby je zakończyć.
 
 Kilka umiejętności przestaje działać, gdy jesteś pod zaczarowaniem, i zaczyna
 znów działać, gdy już nie jesteś. Umiejętność, która trwa przez „następne N

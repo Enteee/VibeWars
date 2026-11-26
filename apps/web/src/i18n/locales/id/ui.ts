@@ -421,7 +421,7 @@ export default {
   "effects.categoryShout": "Teriakan",
   "effects.categoryStance": "Kuda-kuda",
   "effects.categoryWeaponSpell": "Mantra Senjata",
-  "effects.endHint": "klik dua kali untuk mengakhiri",
+  "effects.endHint": "klik dua kali, Enter, atau Delete untuk mengakhiri",
   "effects.from": "dari {caster}",
   "effects.inRange": "selama dalam jangkauannya",
   "effects.maintained": "dipertahankan",

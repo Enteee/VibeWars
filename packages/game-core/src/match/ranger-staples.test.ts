@@ -9,7 +9,7 @@ import { describeStatus } from "../skills/describe.js";
 import type { CombatEvent } from "../skills/effects.js";
 import { NO_RANKS, aggregateModifiers, type StatusId } from "../skills/status.js";
 import { makeCombatant } from "../skills/testing.js";
-import { blockChanceOf } from "../skills/tick.js";
+import { blockChanceOf, statusMoveSpeed } from "../skills/tick.js";
 import type { Combatant, Skill } from "../skills/types.js";
 import {
   attackDurationSeconds,
@@ -206,7 +206,7 @@ describe("Lightning Reflexes (#976)", () => {
 describe("Escape (#976)", () => {
   it("moves 33% faster and blocks 75% of attacks", () => {
     const modifiers = aggregateModifiers([{ id: "escape", ranks: NO_RANKS }]);
-    expect(modifiers.moveSpeedMultiplier).toBe(1.33);
+    expect(statusMoveSpeed(modifiers)).toBe(1.33);
     expect(
       blockChanceOf(escaping(WEAPONS.longbow, "ranger.marksmanship"), "melee", false, []),
     ).toBe(0.75);

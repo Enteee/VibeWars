@@ -10,6 +10,7 @@ import { getSkill } from "./catalog.js";
 import { mitigate, skillDamage } from "./damage.js";
 import { applyDamage } from "./effects.js";
 import { NO_RANKS, aggregateModifiers, type StatusId } from "./status.js";
+import { statusMoveSpeed } from "./tick.js";
 
 /**
  * Status numbers that scale with the caster's rank (#2428): Burning
@@ -117,7 +118,7 @@ describe("Burning Speed (#2428)", () => {
       const sim = match("elementalist.burning-speed", FIRE, rank);
       cast(sim, "c", "c");
       const caster = get(sim, "c").combatant;
-      expect(aggregateModifiers(caster.statuses.active).moveSpeedMultiplier).toBeCloseTo(speed);
+      expect(statusMoveSpeed(aggregateModifiers(caster.statuses.active))).toBeCloseTo(speed);
       expect(remaining(sim, "c", "burning")).toBeGreaterThan(0);
       expect(remaining(sim, "foe", "burning")).toBe(0);
       while (caster.statuses.has("burning-speed")) {
@@ -223,6 +224,6 @@ describe("Armor of Earth at its caster's rank (#2428)", () => {
     cast(sim, "c", "c");
     const modifiers = aggregateModifiers(get(sim, "c").combatant.statuses.active);
     expect(modifiers.armorModifier).toBe(armor);
-    expect(modifiers.moveSpeedMultiplier).toBeCloseTo(speed, 2);
+    expect(statusMoveSpeed(modifiers)).toBeCloseTo(speed, 2);
   });
 });

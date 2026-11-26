@@ -49,6 +49,7 @@ import {
   maxHealthLossOf,
   raisedMaxHealth,
   rankOf,
+  statusMoveSpeed,
   statusRanks,
   maintainedEnchantments,
   type RankHolder,
@@ -3345,7 +3346,7 @@ export function stateHolds(
     case "target-foe":
       return target.team !== caster.team;
     case "target-moving-faster":
-      return target.moving && aggregateModifiers(target.statuses.active).moveSpeedMultiplier > 1;
+      return target.moving && statusMoveSpeed(aggregateModifiers(target.statuses.active)) > 1;
     case "target-has-status":
       return target.statuses.has(condition.statusId);
     case "target-lacks-status":

@@ -419,7 +419,7 @@ export default {
   "effects.categoryShout": "외침",
   "effects.categoryStance": "태세",
   "effects.categoryWeaponSpell": "무기 주문",
-  "effects.endHint": "더블클릭으로 종료",
+  "effects.endHint": "더블클릭, Enter 또는 Delete로 종료",
   "effects.from": "{caster}의 효과",
   "effects.inRange": "범위 안에 있는 동안",
   "effects.maintained": "유지 중",

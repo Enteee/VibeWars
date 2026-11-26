@@ -14,6 +14,7 @@ import { NO_RANKS, aggregateModifiers } from "./status.js";
 import { makeCombatant, withStatusDefinitions } from "./testing.js";
 import type { Combatant, Skill } from "./types.js";
 import { resolveAttackSkillOutcome } from "./weapon-attack.js";
+import { statusMoveSpeed } from "./tick.js";
 
 /**
  * Warrior and Necromancer staples (#2406): Primal Rage, Pulverizing
@@ -204,7 +205,7 @@ describe("Primal Rage (#2406)", () => {
       expect(caster.statuses.get("primal-rage")?.remainingSeconds).toBe(seconds);
       const modifiers = aggregateModifiers(caster.statuses.active);
       expect(modifiers.attackDurationMultiplier).toBe(0.67);
-      expect(modifiers.moveSpeedMultiplier).toBe(1.33);
+      expect(statusMoveSpeed(modifiers)).toBe(1.33);
       expect(modifiers.damageTakenMultiplier).toBeCloseTo(taken, 6);
     },
   );

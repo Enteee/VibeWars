@@ -453,7 +453,7 @@ export default {
   "effects.categoryShout": "Schrei",
   "effects.categoryStance": "Haltung",
   "effects.categoryWeaponSpell": "Waffenzauber",
-  "effects.endHint": "Doppelklick zum Beenden",
+  "effects.endHint": "Doppelklick, Enter oder Entf zum Beenden",
   "effects.from": "von {caster}",
   "effects.inRange": "solange in Reichweite",
   "effects.maintained": "aufrechterhalten",

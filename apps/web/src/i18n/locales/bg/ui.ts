@@ -454,7 +454,7 @@ export default {
   "effects.categoryShout": "Вик",
   "effects.categoryStance": "Стойка",
   "effects.categoryWeaponSpell": "Заклинание в оръжие",
-  "effects.endHint": "двоен клик за край",
+  "effects.endHint": "двоен клик, Enter или Delete за край",
   "effects.from": "от {caster}",
   "effects.inRange": "докато си в обхвата му",
   "effects.maintained": "поддържано",

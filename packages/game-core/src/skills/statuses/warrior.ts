@@ -366,6 +366,7 @@ export const WARRIOR_STATUSES: Readonly<Record<WarriorStatusId, StatusDefinition
     ],
   }),
   "healing-signet-armor": define("healing-signet-armor", "Healing Signet", "skill-effect", {
+    specialArmor: true,
     profession: "warrior",
     armorModifier: -40,
   }),

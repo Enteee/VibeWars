@@ -451,7 +451,7 @@ export default {
   "effects.categoryShout": "Haykırış",
   "effects.categoryStance": "Duruş",
   "effects.categoryWeaponSpell": "Silah Büyüsü",
-  "effects.endHint": "bitirmek için çift tıkla",
+  "effects.endHint": "bitirmek için çift tıkla, Enter ya da Delete",
   "effects.from": "kaynak: {caster}",
   "effects.inRange": "menzilindeyken",
   "effects.maintained": "sürdürülüyor",

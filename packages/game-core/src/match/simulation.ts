@@ -200,6 +200,7 @@ import {
   raisedMaxHealth,
   outsideMatch,
   rankOf,
+  statusMoveSpeed,
   statusRanks,
   upkeepPips,
   withRankLoan,
@@ -7162,12 +7163,15 @@ export class MatchSimulation {
   /**
    * `record`'s speed multiplier: its statuses', and a flag or relic
    * carrier's burden (#1225, #1374) with them, clamped together as
-   * statuses are.
+   * statuses are (#4095).
    */
   #speedOf(record: ParticipantRecord): number {
-    const statuses = aggregateModifiers(record.combatant.statuses.active).moveSpeedMultiplier;
+    const modifiers = aggregateModifiers(record.combatant.statuses.active);
     const burden = this.#carriesFlagOrRelic(record.id) ? FLAG_CARRIER_SPEED_MULTIPLIER : 1;
-    return clampMoveSpeed((statuses / burden) * this.#paceAt(record) * this.#waterPaceAt(record));
+    return clampMoveSpeed(
+      (statusMoveSpeed(modifiers) / burden) * this.#paceAt(record) * this.#waterPaceAt(record),
+      modifiers.speedCapBreaker,
+    );
   }
 
   /** `SHALLOW_WATER_PACE` if `record` stands in shallow water on its layer (#3463), or 1. */

@@ -14,7 +14,7 @@ import type { CombatEvent } from "./effects.js";
 import { resolveMagnitudeAtRanks, statAt } from "./scaling.js";
 import { aggregateModifiers, getStatusDefinition, ownSkillBoost, StatusSet } from "./status.js";
 import { makeCombatant } from "./testing.js";
-import { attackDamageDeltaOf } from "./tick.js";
+import { attackDamageDeltaOf, statusMoveSpeed } from "./tick.js";
 import type { Combatant, Magnitude, Skill } from "./types.js";
 import { sourceAttacksOn } from "./weapon-attack.js";
 import { EN_NAMES, EN_WORDS } from "./describe-words.js";
@@ -128,7 +128,7 @@ describe("scaled numbers at rank 0 and rank 12 (#2502)", () => {
       const foe = makeCombatant({ id: "f", team: 1 });
       foe.statuses.apply("shadowy-burden", 13, "a", shadow(rank));
       expect(sourceAttacksOn(foe, "a").armorModifier).toBe(armor);
-      expect(aggregateModifiers(foe.statuses.active).moveSpeedMultiplier).toBeCloseTo(0.75);
+      expect(statusMoveSpeed(aggregateModifiers(foe.statuses.active))).toBeCloseTo(0.75);
     }
   });
 

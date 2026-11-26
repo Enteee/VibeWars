@@ -194,6 +194,58 @@ describe("status modifiers reaching the armor calculation", () => {
   });
 });
 
+describe("GW1's armor calculation, step by step (#4085)", () => {
+  const hit = physical(1);
+  /** `armor`, and the held set's prefix and suffix mods' `bonusArmor`. */
+  const modded = (armor: number, ...bonuses: number[]): Combatant =>
+    defender(armor, {
+      equipment: {
+        ...unarmedResolvedEquipment(armor),
+        bonusArmor: bonuses.map((amount) => ({ amount, conditions: [] })),
+      },
+    });
+
+  it("caps a net bonus at +25: Armor of Earth and Stand Your Ground!, still (step 2)", () => {
+    const warded = defender(60);
+    warded.statuses.apply("armor-boost", 30, "self", NO_RANKS);
+    warded.statuses.apply("stand-your-ground", 10, "self", NO_RANKS);
+    expect(effectiveArmor(warded, hit, "chest")).toBe(60 + 25);
+    // On the move, Stand Your Ground! gives nothing: Armor of Earth's +24 alone.
+    expect(effectiveArmor({ ...warded, moving: true }, hit, "chest")).toBe(60 + 24);
+  });
+
+  it("pools Cracked Armor's −20 with the bonuses: Armor of Earth leaves +4 (step 2)", () => {
+    const cracked = defender(60);
+    cracked.statuses.apply("armor-boost", 30, "self", NO_RANKS);
+    cracked.statuses.apply("cracked-armor", 10, "foe", NO_RANKS);
+    expect(effectiveArmor(cracked, hit, "chest")).toBe(60 + 4);
+  });
+
+  it("adds one bonus over 25 whole, and a weapon mod is one of the pool (step 2)", () => {
+    expect(effectiveArmor(modded(60, 30), hit, "chest")).toBe(90);
+    // Defensive's +5 and Armor of Earth's +24: capped at 25, not 29.
+    const both = modded(60, 5);
+    both.statuses.apply("armor-boost", 30, "self", NO_RANKS);
+    expect(effectiveArmor(both, hit, "chest")).toBe(85);
+  });
+
+  it("pierces core and pool, then adds special armor: Healing Signet's −40 (steps 3, 4)", () => {
+    const signet = defender(100);
+    signet.statuses.apply("healing-signet-armor", 2, "self", NO_RANKS);
+    // 100 × 0.75 − 40.
+    expect(effectiveArmor(signet, physical(1, 0.25), "chest")).toBe(35);
+    // Outside the cap too: Armor of Earth's +24 stays whole beside it.
+    signet.statuses.apply("armor-boost", 30, "self", NO_RANKS);
+    expect(effectiveArmor(signet, hit, "chest")).toBe(100 + 24 - 40);
+  });
+
+  it("ignores all of the armor but special armor at 100% penetration (step 3)", () => {
+    const mantra = defender(80);
+    mantra.statuses.apply("mantra-of-signets", 30, "self", NO_RANKS);
+    expect(effectiveArmor(mantra, physical(1, 1), "chest")).toBe(3);
+  });
+});
+
 describe("damage taken multipliers (#919)", () => {
   it("takes 160% of a packet against Frenzy and halves it against Dark Escape", () => {
     const packet = skillDamage(100, "chaos", 0);
@@ -866,7 +918,7 @@ describe("Cracked Armor (#763)", () => {
     return target;
   }
 
-  it("takes 20 armor, but never below 60", () => {
+  it("takes 20 armor, but never below 60, nor below armor already under it (#4085)", () => {
     const at = (armor: number): number =>
       effectiveArmor(cracked(armor), skillDamage(1, "typeless", 0), "chest");
     expect(at(100)).toBe(80);
@@ -874,12 +926,6 @@ describe("Cracked Armor (#763)", () => {
     expect(at(70)).toBe(60);
     expect(at(60)).toBe(60);
     expect(at(50)).toBe(50);
-  });
-
-  it("is taken before Armor of Earth adds: a cracked 60 caster still reaches 84", () => {
-    const warded = cracked(60);
-    warded.statuses.apply("armor-boost", 30, "self", NO_RANKS);
-    expect(effectiveArmor(warded, skillDamage(1, "typeless", 0), "chest")).toBe(84);
   });
 
   it("counts a typed bonus as armor it can take", () => {
@@ -1242,11 +1288,13 @@ describe("the off-hand a resolved loadout holds (#276)", () => {
 });
 
 describe("skill armor penetration from statuses (#1464)", () => {
-  it("adds to a skill of its profession, at most 1 in all", () => {
+  it("is base penetration: the higher of it and the skill's own counts (#4085)", () => {
     const caster = makeCombatant({ id: "r" });
     caster.statuses.apply("cruel-was-daoshen", 51, "r", NO_RANKS);
-    expect(withSkillArmorPenetration(0.25, caster, "ritualist")).toBeCloseTo(0.35);
-    expect(withSkillArmorPenetration(0.95, caster, "ritualist")).toBe(1);
+    // Armor penetration, base: "only the highest value is used".
+    expect(withSkillArmorPenetration(0.1, caster, "ritualist")).toBe(0.1);
+    expect(withSkillArmorPenetration(0, caster, "ritualist")).toBe(0.1);
+    expect(withSkillArmorPenetration(0.25, caster, "ritualist")).toBe(0.25);
   });
 
   it("adds nothing to another profession's skill, or to a weapon blow, which is no skill's", () => {

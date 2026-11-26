@@ -103,7 +103,11 @@ export const ASSASSIN_STATUSES: Readonly<Record<AssassinStatusId, StatusDefiniti
     block: { chance: 0.75, against: "all" },
     blockBelowHealth: 0.5,
   }),
-  dash: define("dash", "Dash", "stance", { profession: "assassin", moveSpeedMultiplier: 1.5 }),
+  dash: define("dash", "Dash", "stance", {
+    profession: "assassin",
+    moveSpeedMultiplier: 1.5,
+    breaksSpeedCap: true,
+  }),
   // "For 5...13...15 seconds, you move 25% faster and take half damage.
   // Dark Escape ends if you successfully hit with an attack."
   "dark-escape": define("dark-escape", "Dark Escape", "stance", {
@@ -636,6 +640,7 @@ export const ASSASSIN_STATUSES: Readonly<Record<AssassinStatusId, StatusDefiniti
   // "Target foe moves 25% slower and while target foe has no other hexes,
   // that foe has 20...30 less armor against your attacks" (#2502): -28 at 12.
   "shadowy-burden": define("shadowy-burden", "Shadowy Burden", "hex", {
+    specialArmor: true,
     profession: "assassin",
     moveSpeedMultiplier: 0.75,
     sourceAttacks: {

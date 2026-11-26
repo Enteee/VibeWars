@@ -478,7 +478,7 @@ export default {
   "effects.categoryShout": "Cri",
   "effects.categoryStance": "Posture",
   "effects.categoryWeaponSpell": "Sort d'arme",
-  "effects.endHint": "double-clic pour terminer",
+  "effects.endHint": "double-clic, Entrée ou Suppr pour terminer",
   "effects.from": "de {caster}",
   "effects.inRange": "tant qu'à portée",
   "effects.maintained": "maintenu",

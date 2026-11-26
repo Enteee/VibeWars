@@ -80,7 +80,8 @@ Minions (except the Flesh Golem), ghosts and spirits don't bleed, get poisoned o
 ![Hex](../../apps/web/public/icons/skill-type/hex.svg) **Hexes** are cast on you by foes; ![Enchantment](../../apps/web/public/icons/skill-type/enchantment.svg) **enchantments** by yourself or your
 allies. Each is removed by its own kind of skill. Some enchantments are
 **maintained**: they last until you end them, costing an Energy pip while
-they run. Double-click its icon to end one.
+they run. Double-click its icon, or focus it and press Enter or Delete, to
+end one.
 
 A few skills stop working while you are enchanted, and start again once
 you are not. A skill that lasts for your "next N attacks" counts every

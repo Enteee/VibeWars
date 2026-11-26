@@ -31,6 +31,7 @@ import {
   primaryAttributeOf,
   reconcileEquipment,
   healthSources,
+  listedArmor,
   resolveLoadout,
   type ArmorCondition,
   type StatusCategory,
@@ -810,7 +811,7 @@ export function summariseGear(
     healthSources: healthSourcesText(character, set),
     maxEnergy: held.maxEnergy,
     baseEnergyPips: held.baseEnergyPips,
-    armor: held.equipment.baseArmor,
+    armor: listedArmor(held.equipment),
     weaponName: itemName(weapon.id),
     damageRange: `${dealt(weapon.damageMin)}–${dealt(weapon.damageMax)}`,
     attackInterval: t("gearEditor.attackInterval", {
@@ -823,6 +824,7 @@ export function summariseGear(
     attributeBonuses,
     conditionalArmor: [
       ...held.equipment.conditionalArmor.map(armorLine),
+      ...held.equipment.bonusArmor.filter((bonus) => bonus.conditions.length > 0).map(armorLine),
       ...pieceArmorLines(held.equipment.pieceArmor),
       ...pieceReductionLines(held.equipment.pieceReduction),
     ],
