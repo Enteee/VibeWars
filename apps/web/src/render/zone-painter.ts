@@ -62,126 +62,93 @@ const GROUND_ALPHA: Record<Exclude<ZonePainterId, "hazard">, number> = {
 };
 
 /**
- * The liquid zones (#4062): the painters whose ground gets the liquid cells
- * of #4058. Water only: lava and mud are opaque, and keep their own ground.
+ * The liquid zones (#4062): the painters whose ground gets the drifting
+ * liquid cells of #4058. Water only: lava and mud are opaque, and keep
+ * their own ground.
  */
 export const LIQUID_ZONES = ["foul-water", "tainted-water", "spring"] as const;
 export type LiquidZoneId = (typeof LIQUID_ZONES)[number];
 
-/** Foul water's cells (#4062): water's, with narrower gaps than clear water's. */
-export const FOUL_WATER_CELLS: LiquidCellsOptions = { seed: 4064, sites: 15, gap: 6, size: 512 };
-/** Tainted water's cells, as foul water's. */
-export const TAINTED_WATER_CELLS: LiquidCellsOptions = { seed: 4065, sites: 15, gap: 6, size: 512 };
-/** A spring's cells: clear water's (#4058). */
-export const SPRING_CELLS: LiquidCellsOptions = { seed: 4066, sites: 15, gap: 7, size: 512 };
-
-/** Texture px to a world unit, per liquid: foul water's cells are the largest, a spring's the smallest. */
-export const FOUL_WATER_CELL_SCALE = 0.36;
-export const TAINTED_WATER_CELL_SCALE = 0.34;
-export const SPRING_CELL_SCALE = 0.3;
-
-/**
- * One tinted pass of a liquid's cells over its ground: `where` takes
- * `colour` at `alpha`. A `multiply` pass darkens toward it, a `lighter`
- * one adds it, as a glow or as light caught on water.
- */
-export interface ZoneCellPass {
-  readonly where: "cells" | "gaps";
-  readonly colour: string;
+/** One drifting layer of a liquid's cells: texture px to a world unit, world units a second, and how bright. */
+export interface ZoneCellLayer {
+  readonly scale: number;
+  readonly drift: Vec2;
   readonly alpha: number;
-  readonly blend: "multiply" | "lighter";
 }
 
-/** How a liquid's cells look: the tile they come from, its scale, and its passes. */
+/**
+ * A liquid's cells: the tile they come from, the colour its gaps take, and
+ * two layers at different scales drifting different ways, so the light
+ * network shifts as the reference's does (#4058's option A).
+ */
 export interface ZoneCellsLook {
   readonly cells: LiquidCellsOptions;
-  readonly scale: number;
-  readonly passes: readonly ZoneCellPass[];
+  readonly colour: number;
+  readonly layers: readonly [ZoneCellLayer, ZoneCellLayer];
 }
 
-/** `colour` (0xRRGGBB) as CSS. */
-function css(colour: number): string {
-  return `#${colour.toString(16).padStart(6, "0")}`;
+/** Two layers drifting slowly apart, the second's cells the larger, at `alpha` together. */
+function driftingLayers(scale: number, alpha: number): readonly [ZoneCellLayer, ZoneCellLayer] {
+  return [
+    { scale, drift: { x: 6, y: 2.5 }, alpha: 0.6 * alpha },
+    { scale: 0.65 * scale, drift: { x: -3.5, y: 5 }, alpha: 0.5 * alpha },
+  ];
+}
+
+/** `colour` ("#rrggbb") as 0xRRGGBB. */
+function hex(colour: string): number {
+  return Number.parseInt(colour.slice(1), 16);
 }
 
 /**
- * Each liquid's cells in its own palette (#4062). They are texture inside
- * the zone, never a new colour signal: every pass is in the zone's colours.
+ * Each liquid's cells in its own palette (#4062): texture inside the zone,
+ * never a new colour signal. Foul water's cells are the largest, a spring's,
+ * clear water's, the smallest.
  */
 export const ZONE_CELLS: Record<LiquidZoneId, ZoneCellsLook> = {
   "foul-water": {
-    cells: FOUL_WATER_CELLS,
-    scale: FOUL_WATER_CELL_SCALE,
-    passes: [
-      { where: "gaps", colour: PALETTE["foul-water"].accent, alpha: 0.22, blend: "lighter" },
-    ],
+    cells: { seed: 4064, sites: 15, gap: 6, size: 512 },
+    colour: hex(PALETTE["foul-water"].accent),
+    layers: driftingLayers(0.36, 0.3),
   },
   "tainted-water": {
-    cells: TAINTED_WATER_CELLS,
-    scale: TAINTED_WATER_CELL_SCALE,
-    passes: [
-      { where: "gaps", colour: PALETTE["tainted-water"].accent, alpha: 0.16, blend: "lighter" },
-    ],
+    cells: { seed: 4065, sites: 15, gap: 6, size: 512 },
+    colour: hex(PALETTE["tainted-water"].accent),
+    layers: driftingLayers(0.34, 0.24),
   },
   spring: {
-    cells: SPRING_CELLS,
-    scale: SPRING_CELL_SCALE,
-    passes: [
-      {
-        where: "gaps",
-        colour: css(WATER_LOOK.shallow.cell),
-        alpha: WATER_LOOK.shallow.cellAlpha,
-        blend: "lighter",
-      },
-    ],
+    cells: { seed: 4066, sites: 15, gap: 7, size: 512 },
+    colour: WATER_LOOK.shallow.cell,
+    layers: driftingLayers(0.3, WATER_LOOK.shallow.cellAlpha),
   },
 };
 
-/** One pass baked into a repeating image, `pass.colour` where it falls, at `scale` texture px to a world unit. */
-export interface ZoneCellTile {
-  readonly image: CanvasImageSource;
-  readonly pass: ZoneCellPass;
-  readonly scale: number;
+/** `painter`'s liquid, or none: a painter that is not a liquid has no cells. */
+export function liquidOf(painter: ZonePainterId): LiquidZoneId | undefined {
+  return LIQUID_ZONES.find((liquid) => liquid === painter);
 }
 
-/** Bakes `look`'s passes, in order, from liquid `id`'s tile: one image per pass. */
-export type ZoneCellBaker = (id: LiquidZoneId, look: ZoneCellsLook) => readonly CanvasImageSource[];
-
 /**
- * Each liquid's baked passes, made once per liquid id and shared by every
- * zone of it (#4062): a map's many pools of one water bake one set.
- * `bake` makes them; this file stays Phaser- and DOM-free.
+ * `layer`'s texture coordinates at each of `points` (world units) at
+ * render time `seconds`, for a `size` px tile: u, v pairs. They hold to the
+ * world, so two zones of one liquid that meet show no seam, and slide by
+ * its drift, wrapped to one tile. Still under reduced motion.
  */
-export class ZoneCellTiles {
-  private readonly baked = new Map<LiquidZoneId, readonly ZoneCellTile[]>();
-  private readonly bake: ZoneCellBaker;
-
-  constructor(bake: ZoneCellBaker) {
-    this.bake = bake;
-  }
-
-  /** `painter`'s baked passes, or none: a painter that is not a liquid has no cells. */
-  of(painter: ZonePainterId): readonly ZoneCellTile[] {
-    const id = LIQUID_ZONES.find((liquid) => liquid === painter);
-    if (id === undefined) {
-      return [];
-    }
-    const existing = this.baked.get(id);
-    if (existing !== undefined) {
-      return existing;
-    }
-    const look = ZONE_CELLS[id];
-    const images = this.bake(id, look);
-    const made = look.passes.map((pass, i) => {
-      const image = images[i];
-      if (image === undefined) {
-        throw new Error(`zones: ${id}'s cells were baked without pass ${String(i)}`);
-      }
-      return { image, pass, scale: look.scale };
-    });
-    this.baked.set(id, made);
-    return made;
-  }
+export function zoneCellUvs(
+  points: readonly Vec2[],
+  layer: ZoneCellLayer,
+  size: number,
+  seconds: number,
+  still: boolean,
+): number[] {
+  const perUnit = layer.scale / size;
+  const t = still ? 0 : seconds;
+  const shift = (speed: number): number => {
+    const moved = speed * t * perUnit;
+    return moved - Math.floor(moved);
+  };
+  const [du, dv] = [shift(layer.drift.x), shift(layer.drift.y)];
+  return points.flatMap(({ x, y }) => [x * perUnit - du, y * perUnit - dv]);
 }
 
 /** A speck that glows or twinkles on its own beat: an ember, a sparkle, a bubble. */
@@ -450,14 +417,12 @@ export type ZoneCanvas = Pick<
   | "ellipse"
   | "fillRect"
   | "createRadialGradient"
-  | "createPattern"
   | "setTransform"
   | "fillStyle"
   | "strokeStyle"
   | "lineWidth"
   | "lineCap"
   | "globalAlpha"
-  | "globalCompositeOperation"
   | "shadowBlur"
   | "shadowColor"
 >;
@@ -540,12 +505,7 @@ function flecks(
  * world unit, the canvas's corner on the zone's bounds' corner. Clipped by
  * the outline: nothing spills over the edge.
  */
-export function paintZoneGround(
-  canvas: ZoneCanvas,
-  art: ZoneArt,
-  scale: number,
-  cells: ZoneCellTiles,
-): void {
+export function paintZoneGround(canvas: ZoneCanvas, art: ZoneArt, scale: number): void {
   const palette = PALETTE[art.painter];
   const random = seeded(art.seed ^ 0x5bd1e995);
   const { left, top, width, height } = art.bounds;
@@ -556,25 +516,11 @@ export function paintZoneGround(
   canvas.closePath();
   canvas.clip();
   canvas.lineCap = "round";
-  const fillAll = (colour: string | CanvasPattern, alpha: number): void => {
+  const fillAll = (colour: string, alpha: number): void => {
     canvas.globalAlpha = alpha;
     canvas.fillStyle = colour;
     canvas.fillRect(left, top, width, height);
     canvas.globalAlpha = 1;
-  };
-  // A liquid's cells (#4062), baked still over its ground, under its marks.
-  // They hold to the world, so two zones of one liquid that meet show no seam.
-  const cellsOver = (): void => {
-    for (const { image, pass, scale: cellScale } of cells.of(art.painter)) {
-      const pattern = canvas.createPattern(image, "repeat");
-      if (pattern === null) {
-        throw new Error("zones: could not pattern a liquid's cells");
-      }
-      pattern.setTransform({ a: cellScale, b: 0, c: 0, d: cellScale, e: 0, f: 0 });
-      canvas.globalCompositeOperation = pass.blend;
-      fillAll(pattern, pass.alpha);
-    }
-    canvas.globalCompositeOperation = "source-over";
   };
   switch (art.painter) {
     case "lava": {
@@ -657,7 +603,6 @@ export function paintZoneGround(
     case "spring": {
       fillAll(palette.base, 1);
       mottle(canvas, random, art, palette.mid, Math.round(area / 140), [6, 16], 0.55);
-      cellsOver();
       if (art.painter === "foul-water") {
         // Murk below, scum floating on top.
         mottle(canvas, random, art, "#1a2a1c", Math.round(area / 400), [5, 12], 0.5);

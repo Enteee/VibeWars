@@ -484,15 +484,17 @@ import { fillDisc, strokeDisc } from "./disc.js";
 import { dashedCircle } from "./dashed-circle.js";
 import {
   groundArtOf,
+  liquidOf,
   paintZoneGround,
   paintZoneRelief,
   paintZoneShadow,
   paintZoneMotion,
   zoneArtOf,
+  zoneCellUvs,
   zoneGroundAlpha,
-  ZoneCellTiles,
+  ZONE_CELLS,
   type ZoneArt,
-  type ZoneCellPass,
+  type ZoneCellLayer,
   type ZoneMotionPainter,
 } from "./zone-painter.js";
 import { screenPx, screenSized } from "./screen-text.js";
@@ -562,6 +564,14 @@ interface ZoneGround {
   readonly art: ZoneArt;
   readonly image: Phaser.GameObjects.Image;
   readonly key: string;
+  /** A liquid's two drifting layers of cells (#4062) over it, or none. */
+  readonly cells: readonly ZoneCells[];
+}
+/** One drifting layer of a liquid zone's cells (#4062): a mesh of its outline, its texture sliding. */
+interface ZoneCells {
+  readonly mesh: Phaser.GameObjects.Mesh2D;
+  readonly layer: ZoneCellLayer;
+  readonly size: number;
 }
 /** The hover marker on a layered map (#2831), its dashes on the ground. */
 const HOVER_RING = 0xd7dee8;
@@ -982,11 +992,6 @@ export class ArenaScene extends Phaser.Scene {
         readonly overTunnels: ReadonlyMap<number, readonly Phaser.GameObjects.Image[]>;
       }
     | undefined;
-  /** Each liquid zone's cells (#4062), baked once per liquid id and shared by its zones. */
-  private readonly zoneCellTiles = new ZoneCellTiles((id, look) => {
-    const tile = this.liquidCellsTile(id, look.cells);
-    return look.passes.map((pass) => cellPass(tile, pass));
-  });
   /** Each painted zone's ground (#3052), one canvas texture per zone, made when the map changes. */
   private zoneGrounds:
     | { readonly zones: readonly MapZone[]; readonly grounds: readonly (ZoneGround | undefined)[] }
@@ -6011,9 +6016,15 @@ export class ArenaScene extends Phaser.Scene {
       const painted = grounds[index];
       if (painted !== undefined) {
         const { left, top } = painted.art.bounds;
-        painted.image
-          .setPosition(left + moved.x, top + moved.y - lift)
-          .setAlpha(zoneGroundAlpha(painted.art, look, this.now, this.reducedMotion));
+        const alpha = zoneGroundAlpha(painted.art, look, this.now, this.reducedMotion);
+        painted.image.setPosition(left + moved.x, top + moved.y - lift).setAlpha(alpha);
+        for (const { mesh, layer, size } of painted.cells) {
+          mesh.setPosition(left + moved.x, top + moved.y - lift).setAlpha(alpha * layer.alpha);
+          const uvs = zoneCellUvs(painted.art.outline, layer, size, this.now, this.reducedMotion);
+          uvs.forEach((uv, i) => {
+            mesh.vertices[4 * (i >> 1) + 2 + (i & 1)] = uv;
+          });
+        }
         paintZoneMotion(this.zoneMotionPainter(g), painted.art, line, this.now, this.reducedMotion);
       }
       // A timed or moving hazard (#3029) is drawn by its phase on the match
@@ -6165,10 +6176,51 @@ export class ArenaScene extends Phaser.Scene {
         return undefined;
       }
       const depth = renderOrder({ kind: "zone", layer: zone.layer, part: "ground" });
-      return { art, ...this.paintGround(art, 0, depth, true) };
+      return {
+        art,
+        ...this.paintGround(art, 0, depth, true),
+        cells: this.zoneCellsOf(art, zone.layer),
+      };
     });
     this.zoneGrounds = { zones, grounds };
     return grounds;
+  }
+
+  /**
+   * A liquid zone's cells (#4062): per layer, its outline as one mesh over
+   * its ground, the liquid's tile repeating across it, tinted and added.
+   * Drawing moves the texture, not the mesh: no stencil, no per-frame
+   * geometry, the cost #4078 found in masked sprites. None for a non-liquid.
+   */
+  private zoneCellsOf(art: ZoneArt, layer: number): readonly ZoneCells[] {
+    const liquid = liquidOf(art.painter);
+    if (liquid === undefined) {
+      return [];
+    }
+    const look = ZONE_CELLS[liquid];
+    const key = this.tintedCellsTexture(liquid, look.cells, look.colour);
+    const triangles = Phaser.Geom.Polygon.Earcut(art.outline.flatMap(({ x, y }) => [x, y]));
+    const indices: number[] = [];
+    for (let at = 0; at + 2 < triangles.length; at += 3) {
+      indices.push(triangles[at] ?? 0, triangles[at + 1] ?? 0, triangles[at + 2] ?? 0, 0);
+    }
+    const { left, top } = art.bounds;
+    const depth = renderOrder({ kind: "zone", layer, part: "cells" });
+    return look.layers.map((cellLayer) => {
+      const uvs = zoneCellUvs(art.outline, cellLayer, look.cells.size, 0, true);
+      const vertices = art.outline.flatMap(({ x, y }, i) => [
+        x - left,
+        y - top,
+        uvs[2 * i] ?? 0,
+        uvs[2 * i + 1] ?? 0,
+      ]);
+      const mesh = this.add
+        .mesh2d(left, top, key, vertices, indices)
+        .setBlendMode(Phaser.BlendModes.ADD)
+        .setDepth(depth);
+      mesh.buildOrderedIndices(1, true);
+      return { mesh, layer: cellLayer, size: look.cells.size };
+    });
   }
 
   /**
@@ -6194,7 +6246,7 @@ export class ArenaScene extends Phaser.Scene {
     if (texture === null) {
       throw new Error("zones: could not create a zone's ground");
     }
-    paintZoneGround(texture.context, art, scale, this.zoneCellTiles);
+    paintZoneGround(texture.context, art, scale);
     if (relief) {
       paintZoneRelief(texture.context, art, scale);
     }
@@ -6353,6 +6405,9 @@ export class ArenaScene extends Phaser.Scene {
       if (painted !== undefined) {
         painted.image.destroy();
         this.textures.remove(painted.key);
+        for (const { mesh } of painted.cells) {
+          mesh.destroy();
+        }
       }
     }
     this.zoneGrounds = undefined;
@@ -6530,6 +6585,31 @@ export class ArenaScene extends Phaser.Scene {
       );
     }
     this.waterCells = { shapes: this.waterShapes, images, textures };
+  }
+
+  /**
+   * Liquid zone `id`'s cells in `colour` (#4062): its tile's gaps in the
+   * colour, its cells black, so added they light only the gaps. Made once
+   * per id, uploaded to repeat: a zone's mesh samples it past one tile.
+   */
+  private tintedCellsTexture(id: string, options: LiquidCellsOptions, colour: number): string {
+    const key = `${liquidCellsTileKey(id)}-tinted`;
+    if (this.textures.exists(key)) {
+      return key;
+    }
+    const tile = this.liquidCellsTile(id, options);
+    const texture = this.textures.createCanvas(key, tile.width, tile.height);
+    if (texture === null) {
+      throw new Error("zones: could not tint a liquid's cells");
+    }
+    const { context } = texture;
+    context.drawImage(tile, 0, 0);
+    context.globalCompositeOperation = "multiply";
+    context.fillStyle = `#${colour.toString(16).padStart(6, "0")}`;
+    context.fillRect(0, 0, tile.width, tile.height);
+    texture.refresh();
+    texture.setWrap(Phaser.Textures.WrapMode.REPEAT, Phaser.Textures.WrapMode.REPEAT);
+    return key;
   }
 
   /**
@@ -6938,41 +7018,5 @@ function tintedCells(tile: HTMLCanvasElement, look: WaterLook): HTMLCanvasElemen
   context.globalCompositeOperation = "multiply";
   context.fillStyle = `rgb(${[16, 8, 0].map(channel).join(", ")})`;
   context.fillRect(0, 0, canvas.width, canvas.height);
-  return canvas;
-}
-
-/**
- * One pass of a liquid zone's cells (#4062), from the black-cells,
- * white-gaps `tile`: `pass.colour` where it falls, and elsewhere what its
- * blend leaves alone, white under `multiply`, black under `lighter`.
- */
-function cellPass(tile: HTMLCanvasElement, pass: ZoneCellPass): HTMLCanvasElement {
-  const canvas = document.createElement("canvas");
-  [canvas.width, canvas.height] = [tile.width, tile.height];
-  const context = canvas.getContext("2d");
-  if (context === null) {
-    throw new Error("zones: could not bake a liquid's cells");
-  }
-  context.drawImage(tile, 0, 0);
-  if (pass.where === "cells") {
-    // Cells white, gaps black.
-    context.globalCompositeOperation = "difference";
-    context.fillStyle = "#ffffff";
-    context.fillRect(0, 0, canvas.width, canvas.height);
-  }
-  // Now white where the pass falls, black elsewhere.
-  if (pass.blend === "lighter") {
-    context.globalCompositeOperation = "multiply";
-    context.fillStyle = pass.colour;
-    context.fillRect(0, 0, canvas.width, canvas.height);
-  } else {
-    // Black where the pass falls, white elsewhere, then the colour into the black.
-    context.globalCompositeOperation = "difference";
-    context.fillStyle = "#ffffff";
-    context.fillRect(0, 0, canvas.width, canvas.height);
-    context.globalCompositeOperation = "lighten";
-    context.fillStyle = pass.colour;
-    context.fillRect(0, 0, canvas.width, canvas.height);
-  }
   return canvas;
 }

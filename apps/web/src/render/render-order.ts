@@ -19,7 +19,7 @@ export type CharacterPart = "body" | "figure" | "badge" | "glyph" | "marks" | "b
 export type WaterPart = "surface" | "cells" | "ripples";
 
 /** An effect zone's parts (#3052): its painted ground, then its moving marks and edge. */
-export type ZonePart = "ground" | "marks";
+export type ZonePart = "ground" | "cells" | "marks";
 /** A decor prop's parts (#4013): its shadow, its low strokes, then what stands tall. */
 export type DecorPart = "shadow" | "low" | "tall";
 /**
@@ -177,8 +177,8 @@ const VIGNETTE = -1.02;
  * never darkens it (ADR-0052: what matters to the fight is drawn unlit),
  * and under its torches and whoever stands in it.
  */
-const GROUND_ZONE: Record<ZonePart, number> = { ground: 0.53, marks: 0.55 };
-const DECK_ZONE: Record<ZonePart, number> = { ground: 5.83, marks: 5.85 };
+const GROUND_ZONE: Record<ZonePart, number> = { ground: 0.53, cells: 0.54, marks: 0.55 };
+const DECK_ZONE: Record<ZonePart, number> = { ground: 5.83, cells: 5.84, marks: 5.85 };
 /**
  * A fog bank (#3032): over its layer's ground, water, light and zones,
  * under its wards, torches and whoever stands in it, so the haze never
