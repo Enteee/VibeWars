@@ -12,6 +12,7 @@ import {
   spendAdrenaline,
 } from "./adrenaline.js";
 import { getSkill } from "./catalog.js";
+import { NO_RANKS } from "./status.js";
 import { makeCombatant } from "./testing.js";
 import type { Skill } from "./types.js";
 
@@ -84,6 +85,22 @@ describe("gainUnits", () => {
     w.cast.startRecharge(SEVER_ARTERY, 4);
     gainUnits(w, 10, 0);
     expect([...w.adrenaline.values()]).toEqual([10, 0, 10]);
+  });
+
+  it("multiplies two boosts, at most +100% together (#4089)", () => {
+    const w = warrior(0, 0, 0);
+    w.statuses.apply("weapon-of-fury", 10, "r", NO_RANKS);
+    w.statuses.apply("natural-temper", 10, "p", NO_RANKS);
+    gainUnits(w, 10, 0);
+    // 10 × 2 × 1.33 would be 26.
+    expect(w.adrenaline.get(BACKBREAKER)).toBe(20);
+  });
+
+  it("keeps a single boost's own share (#4089)", () => {
+    const w = warrior(0, 0, 0);
+    w.statuses.apply("natural-temper", 10, "p", NO_RANKS);
+    gainUnits(w, 10, 0);
+    expect(w.adrenaline.get(BACKBREAKER)).toBe(13);
   });
 });
 

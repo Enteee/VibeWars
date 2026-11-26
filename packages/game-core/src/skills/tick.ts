@@ -23,6 +23,7 @@ import {
   isUnderAnother,
   ownSkillBoost,
   scaledStatAttributes,
+  stackedActivationMultiplier,
   type ActiveStatus,
   type AttributeDelta,
   type AttributeScope,
@@ -591,8 +592,9 @@ export function attackDamageTypeOf(combatant: Combatant): DamageType | undefined
  * Healing's half while the caster is not enchanted. A spell an ally casts
  * on a `target` under "Help!" (#1955) takes half as long; the target's own
  * and a foe's do not. One its caster cast on a `target` under Stolen Speed
- * (#2459) takes half as long. Last, the seconds a status takes off its own skills
- * of a kind (#1975), never below 0.
+ * (#2459) takes half as long. Two or more of these together stay within
+ * GW1's −25% to +150%; Fast Casting is outside that (#4089). Last, the
+ * seconds a status takes off its own skills of a kind (#1975), never below 0.
  */
 export function effectiveActivationSeconds(skill: Skill, caster: RankHolder): number;
 export function effectiveActivationSeconds(
@@ -608,37 +610,40 @@ export function effectiveActivationSeconds(
   const fastCasting = fastCastingMultiplier(rankOf(caster, FAST_CASTING_ATTRIBUTE), skill);
   const modifiers = aggregateModifiers(caster.statuses.active);
   const own = ownSkillBoost(caster.statuses.active, skill);
-  const slowed =
-    (skill.type === "attack" || skill.type === "pet-attack"
-      ? 1
-      : modifiers.skillActivationMultiplier) *
-    own.activationMultiplier *
-    activationWhileMultiplier(skill, caster);
+  const slowed = [
+    ...(skill.type === "attack" || skill.type === "pet-attack"
+      ? []
+      : modifiers.skillActivationMultiplier),
+    own.activationMultiplier,
+    activationWhileMultiplier(skill, caster),
+  ];
+  // Every factor but Fast Casting's multiplies within GW1's caps (#4089).
   // Jaundiced Gaze's second (#1975), off after every multiplier.
-  const less = (seconds: number): number => Math.max(0, seconds - own.activationSecondsLess);
+  const seconds = (factors: readonly number[]): number =>
+    Math.max(
+      0,
+      skill.activationSeconds * stackedActivationMultiplier(factors) * fastCasting -
+        own.activationSecondsLess,
+    );
   if (!isSpell(skill.type)) {
-    return less(skill.activationSeconds * fastCasting * slowed);
+    return seconds(slowed);
   }
   if (target === undefined) {
-    return less(skill.activationSeconds * modifiers.castTimeMultiplier * slowed * fastCasting);
+    return seconds([...modifiers.castTimeMultiplier, ...slowed]);
   }
   const onTarget = aggregateModifiers(target.statuses.active);
   const fromAlly = target.id !== caster.id && target.team === caster.team;
   // `aggregateModifiers` keeps no source: read each status's own (#2459).
-  const fromSource = target.statuses.active.reduce(
-    (multiplier, { id, sourceId }) =>
-      sourceId === caster.id
-        ? multiplier * getStatusDefinition(id).sourceSpellCastTimeMultiplier
-        : multiplier,
-    1,
+  const fromSource = target.statuses.active.flatMap(({ id, sourceId }) =>
+    sourceId === caster.id ? [getStatusDefinition(id).sourceSpellCastTimeMultiplier] : [],
   );
-  const targeted =
-    (skill.type === "hex" ? onTarget.incomingHexCastTimeMultiplier : 1) *
-    (fromAlly ? onTarget.incomingAllySpellCastTimeMultiplier : 1) *
-    fromSource;
-  return less(
-    skill.activationSeconds * modifiers.castTimeMultiplier * slowed * fastCasting * targeted,
-  );
+  return seconds([
+    ...modifiers.castTimeMultiplier,
+    ...slowed,
+    ...(skill.type === "hex" ? onTarget.incomingHexCastTimeMultiplier : []),
+    ...(fromAlly ? onTarget.incomingAllySpellCastTimeMultiplier : []),
+    ...fromSource,
+  ]);
 }
 
 /** `skill`'s own `activationWhile` multiplier for `caster` now (#1916); 1 without one. */

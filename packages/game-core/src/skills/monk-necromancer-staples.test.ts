@@ -185,12 +185,12 @@ describe("Holy Veil (#944)", () => {
     expect(effectiveActivationSeconds(HEX, necromancer)).toBe(HEX.activationSeconds);
   });
 
-  it("with a dazed caster: four times as long", () => {
+  it("with a dazed caster: 2.5 times as long, GW1's cap (#4089)", () => {
     const veiled = makeCombatant({ id: "veiled" });
     veiled.statuses.maintain("holy-veil", "monk", 0, NO_RANKS);
     const necromancer = makeCombatant({ id: "necromancer", team: 1 });
     necromancer.statuses.apply("dazed", 5, "x", NO_RANKS);
-    expect(effectiveActivationSeconds(HEX, necromancer, veiled)).toBe(4 * HEX.activationSeconds);
+    expect(effectiveActivationSeconds(HEX, necromancer, veiled)).toBe(2.5 * HEX.activationSeconds);
   });
 
   function match(): MatchSimulation {
