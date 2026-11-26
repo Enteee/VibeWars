@@ -15,8 +15,8 @@ import { ELEVATION_STEP } from "@vibewars/game-maps/schema";
 /** A body's parts on one character band, in the order they draw. */
 export type CharacterPart = "body" | "figure" | "badge" | "glyph" | "marks" | "bar";
 
-/** A body of water's parts (#2984): its fill and shore, then the ripples on it. */
-export type WaterPart = "surface" | "ripples";
+/** A body of water's parts (#2984): its fill and shore, its drifting cells (#4058), then the ripples on it. */
+export type WaterPart = "surface" | "cells" | "ripples";
 
 /** An effect zone's parts (#3052): its painted ground, then its moving marks and edge. */
 export type ZonePart = "ground" | "marks";
@@ -156,8 +156,8 @@ const GROUND_PAVING = -1.7;
 const DECK_PAVING = 5.55;
 /** A covered tunnel's seam (#3236): over the paving on the ground above it, under its water. */
 const TUNNEL_SEAM = 5.57;
-const GROUND_WATER: Record<WaterPart, number> = { surface: -1.6, ripples: -1.5 };
-const DECK_WATER: Record<WaterPart, number> = { surface: 5.6, ripples: 5.7 };
+const GROUND_WATER: Record<WaterPart, number> = { surface: -1.6, cells: -1.55, ripples: -1.5 };
+const DECK_WATER: Record<WaterPart, number> = { surface: 5.6, cells: 5.65, ripples: 5.7 };
 /**
  * A ground aura or footstep trail (ADR-0056 §4, #3578): on its layer's
  * floor and water, lit as they are, under every ward, trap, zone, torch
