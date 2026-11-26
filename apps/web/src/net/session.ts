@@ -111,8 +111,12 @@ import { loadRelay } from "./transport/turn-config.js";
  * off before it gives up. The menu says "Connecting…" meanwhile.
  */
 export const JOIN_TIMEOUT_MS = 20_000;
-/** How long a seated player waits for the match host to let them in. */
-const MATCH_TIMEOUT_MS = 10_000;
+/**
+ * How long a seated player waits for the match host to let them in: as
+ * long as a queue's group waits for its seats, as a host that just closed
+ * a warmup can take longer than 10 s to boot the found match (#4127).
+ */
+const MATCH_TIMEOUT_MS = FORMATION_TIMEOUT_MS;
 
 /** What was given cannot be a lobby key, so it was never looked for (#1681). */
 export class NotALobbyKeyError extends Error {
