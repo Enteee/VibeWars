@@ -197,12 +197,15 @@ A fire is a `torch-`, `fire-` or `brazier-` light that is red at heart: a
 teal brazier burns magic and keeps its colour. A fire's colour in the map is
 not shown; its intensity and radius still set the pool.
 
-The view darkens towards its corners (`vignette.ts`): nothing in the centre
-third, rising to `VIGNETTE.alpha` 0.6 at a corner, black. It follows the
-screen and is drawn over the ground and what is laid on it, under every
+The view darkens towards its corners (`vignette-model.ts`): nothing in the
+centre third, rising to `VIGNETTE.alpha` 0.6 at a corner, black. It follows
+the screen and is drawn over the ground and what is laid on it, under every
 gameplay layer (`renderOrder` `vignette`), so a body, a cue or a zone at the
-edge of the view keeps its colours. Walls, decks and tall decor stand over
-it and keep their light. The HUD is not on the canvas and never darkens.
+edge of the view keeps its colours. A raised deck's top darkens as the
+ground beside it does, masked to the deck and drawn just over its cosmetic
+layer (`renderOrder` `deck-vignette`). Fading decks, lowered switched decks,
+walls and tall decor keep their light. The HUD is not on the canvas and
+never darkens.
 
 ## 3. Shadow and height
 
