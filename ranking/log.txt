@@ -1,5 +1,5 @@
-relays reached: 5 of 8
-  ok   wss://cdn.satellite.earth
+relays reached: 4 of 8
+  down wss://cdn.satellite.earth
   ok   wss://relay.degmods.com
   ok   wss://nostr.stakey.net
   ok   wss://nostr.rblb.it
