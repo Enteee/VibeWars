@@ -219,7 +219,7 @@ const SHADOW_SIZE: Record<DecorKind, { readonly height: number; readonly foot: n
   bones: { height: 0, foot: BONES_RADIUS * 0.8 },
   cairn: { height: 0, foot: CAIRN_RADIUS * 0.9 },
   banner: { height: BANNER_HEIGHT, foot: BANNER_WIDTH * 0.15 },
-  snowdrift: { height: 0, foot: SNOWDRIFT_RADIUS * 0.9 },
+  snowdrift: { height: 0, foot: SNOWDRIFT_RADIUS * 0.4 },
 };
 
 /**
@@ -927,33 +927,38 @@ function banner(prop: MapDecor, c: DecorColours, sway: number): DecorCommand[] {
 }
 
 /**
- * A snowdrift (#4022): two or three low mounds along the wind, each with
- * its lee side shaded to the south-east and its crest lit on the
- * north-west, the biggest outlined. Still and matte: no glint, no glow,
- * and no sheet or rim, so it reads as a heap of snow, never as a zone.
+ * A snowdrift (#4022): two or three low mounds drawn out along the wind,
+ * each melting into the ground through a wide, faint lee shade to the
+ * south-east, with broad daylight on its north-west slope, the biggest
+ * in the house outline. No glint, no glow and no sheet or rim, so it
+ * reads as a heap of snow, never as a stone or a zone.
  */
 function snowdrift(prop: MapDecor, c: DecorColours): DecorCommand[] {
   const { at, scale: s, rotation, variant } = prop;
   const r = SNOWDRIFT_RADIUS * s;
   const mounds = [
-    { along: -0.45, size: 0.55 },
-    { along: 0.45 - variant * 0.05, size: 0.5 },
-    { along: 0, size: 0.62 },
+    { along: -0.45, size: 0.52 },
+    { along: 0.45 - variant * 0.05, size: 0.46 },
+    { along: 0, size: 0.6 },
   ].filter((_, k) => variant % 2 === 0 || k !== 1);
   return mounds.flatMap(({ along, size }, index) => {
     const centre = turned(at, along * r, 0, rotation);
     const foot = { x: centre.x, y: at.y + (centre.y - at.y) * 0.5 };
     const rx = size * r;
-    const ry = rx * 0.5;
-    const height = rx * 0.35;
-    const top = { x: foot.x, y: foot.y - height };
-    const biggest = index === mounds.length - 1;
+    const ry = rx * 0.38;
+    const top = { x: foot.x, y: foot.y - rx * 0.22 };
     return [
-      ellipse({ x: foot.x + rx * 0.08, y: foot.y + ry * 0.1 }, rx, ry, c.snowShade),
-      ...(biggest
-        ? outlinedEllipse(top, rx * 0.92, ry * 0.85, c.snow)
-        : [ellipse(top, rx * 0.92, ry * 0.85, c.snow)]),
-      ellipse({ x: top.x - rx * 0.25, y: top.y - ry * 0.25 }, rx * 0.5, ry * 0.4, c.snowLit),
+      ellipse(
+        { x: foot.x + rx * 0.06, y: foot.y + ry * 0.12 },
+        rx * 1.1,
+        ry * 1.2,
+        c.snowShade,
+        0.55,
+      ),
+      ...(index === mounds.length - 1
+        ? outlinedEllipse(top, rx * 0.95, ry * 0.9, c.snow)
+        : [ellipse(top, rx * 0.95, ry * 0.9, c.snow)]),
+      ellipse({ x: top.x - rx * 0.2, y: top.y - ry * 0.2 }, rx * 0.7, ry * 0.6, c.snowLit, 0.7),
     ];
   });
 }
