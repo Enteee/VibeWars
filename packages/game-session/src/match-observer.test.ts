@@ -9,8 +9,8 @@ import {
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { HELLO_RESEND_MS, MatchRefusedError } from "./match-client.js";
-import { NO_CALLS } from "./match-connection.js";
-import { OBSERVER_DELAY_SECONDS, createMatchHost } from "./match-host.js";
+import { NO_CALLS, type ConnectionState } from "./match-connection.js";
+import { OBSERVER_DELAY_SECONDS, RECONNECT_WINDOW_SECONDS, createMatchHost } from "./match-host.js";
 import {
   ARENA,
   TEST_MATCH_ID,
@@ -252,7 +252,7 @@ describe("a match's observers (#480)", () => {
     const { viewer, transport } = await observe(match, "viewer");
     const ends = record(transport, ["ended"]);
     let lost = false;
-    viewer.onLost(() => {
+    viewer.onConnectionChange(() => {
       lost = true;
     });
 
@@ -369,5 +369,103 @@ describe("an observe said again (#1805)", () => {
       await settle();
     }
     expect(heard).toHaveLength(3);
+  });
+});
+
+describe("an observer whose host's peer goes (#4105)", () => {
+  const WINDOW_MS = RECONNECT_WINDOW_SECONDS * 1000;
+
+  beforeEach(() => {
+    vi.useFakeTimers({
+      toFake: ["setTimeout", "clearTimeout", "setInterval", "clearInterval", "Date"],
+    });
+  });
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  /** A watcher of a two-player match, already shown its first frame, and every state it is told. */
+  async function watching() {
+    const { match } = await twoPlayers();
+    const { viewer, transport } = await observe(match, "viewer");
+    await match.step(OBSERVER_DELAY_SECONDS + TICK_SECONDS);
+    expect(viewer.getSnapshot()).toBeDefined();
+    const states: ConnectionState[] = [];
+    viewer.onConnectionChange((state) => {
+      states.push(state);
+    });
+    const sent = vi.spyOn(transport, "send");
+    const observes = (): number => sent.mock.calls.filter(([type]) => type === "observe").length;
+    return { match, viewer, states, observes };
+  }
+
+  it("keeps its last frame, says the observe again when the host is back in the window, and watches on", async () => {
+    const { match, viewer, states, observes } = await watching();
+    const before = viewer.getSnapshot()?.elapsedSeconds ?? 0;
+
+    match.network.partition("viewer", "host");
+    await settle();
+    expect(states).toEqual(["reconnecting"]);
+    await match.step(5);
+    vi.advanceTimersByTime(WINDOW_MS - 1000);
+    expect(viewer.getSnapshot()?.elapsedSeconds).toBe(before);
+
+    match.network.heal();
+    await settle();
+    expect(observes()).toBe(1);
+    expect(states).toEqual(["reconnecting", "online"]);
+    // Answered: said no more.
+    vi.advanceTimersByTime(5 * HELLO_RESEND_MS);
+    expect(observes()).toBe(1);
+
+    // The host let go of it as it went, so the delay fills again first.
+    await match.step(OBSERVER_DELAY_SECONDS + TICK_SECONDS);
+    expect(viewer.getSnapshot()?.elapsedSeconds).toBeGreaterThan(before + 5);
+  });
+
+  it("says one observe at a time however often the host flaps", async () => {
+    const { match, states, observes } = await watching();
+    match.network.stall("viewer", "host");
+    await settle();
+    match.network.blip("viewer", "host");
+    match.network.blip("viewer", "host");
+    await settle();
+    // One said each time it is heard again, and no resend left running.
+    expect(states).toEqual(["reconnecting", "online"]);
+    expect(observes()).toBe(2);
+    vi.advanceTimersByTime(5 * HELLO_RESEND_MS);
+    expect(observes()).toBe(2);
+  });
+
+  it("is lost when the window runs out with no host", async () => {
+    const { match, states, observes } = await watching();
+    match.network.partition("viewer", "host");
+    await settle();
+    vi.advanceTimersByTime(WINDOW_MS);
+    expect(states).toEqual(["reconnecting", "lost"]);
+
+    // Back too late: nothing more is said.
+    match.network.heal();
+    await settle();
+    expect(observes()).toBe(0);
+    expect(states).toEqual(["reconnecting", "lost"]);
+  });
+
+  it("is lost at once, mid-drop too, to an end that says the host left", async () => {
+    const { match, states } = await watching();
+    match.network.stall("viewer", "host");
+    await settle();
+    const ended: WireEnded = {
+      winningTeam: null,
+      endReason: "host-left",
+      summary: [],
+      clearSeconds: null,
+      teams: [{ players: [] }, { players: [] }],
+    };
+    match.hostTransport.send("ended", ended, "viewer");
+    await settle();
+    expect(states).toEqual(["reconnecting", "host-left"]);
+    vi.advanceTimersByTime(WINDOW_MS);
+    expect(states).toEqual(["reconnecting", "host-left"]);
   });
 });

@@ -5,7 +5,7 @@ import { loadMap } from "./loader.js";
 import { mapSimulationFields } from "./match-fields.js";
 import { mapNavGraphs } from "./nav-graphs.js";
 
-/** The maps with decor (#4013, #4017). */
+/** The maps with decor (#4013, #4017, #4021). */
 const DECORATED = [
   "ashen-courtyard",
   "hall-of-heroes-capture",
@@ -14,6 +14,10 @@ const DECORATED = [
   "wardens-gallery",
   "elite-zaishen-battle",
   "sunken-bastion",
+  "threefold-keep",
+  "broken-tower",
+  "hollow-deep",
+  "guild-hall-isle",
 ];
 
 describe.each(DECORATED)("decor on %s (#4013)", (mapId) => {
