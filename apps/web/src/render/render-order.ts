@@ -45,6 +45,7 @@ export type RenderItem =
   | { readonly kind: "plume"; readonly band: number }
   | { readonly kind: "weather" }
   | { readonly kind: "vignette" }
+  | { readonly kind: "deck-vignette"; readonly deckLayer: number }
   | { readonly kind: "terrain" }
   | { readonly kind: "lighting"; readonly layer: number }
   | { readonly kind: "lit-ground-effect" }
@@ -173,6 +174,12 @@ const DECK_COSMETIC = 5.75;
  */
 const VIGNETTE = -1.02;
 /**
+ * The vignette on a layer's deck tops (#4070): over the deck and what is
+ * laid on it, as the ground's is over the ground, under its lighting and
+ * every gameplay layer standing on it.
+ */
+const DECK_VIGNETTE = 5.77;
+/**
  * An effect zone (ADR-0053): over its layer's water and lighting, which
  * never darkens it (ADR-0052: what matters to the fight is drawn unlit),
  * and under its torches and whoever stands in it.
@@ -260,6 +267,8 @@ export function renderOrder(item: RenderItem): number {
       return WEATHER;
     case "vignette":
       return VIGNETTE;
+    case "deck-vignette":
+      return (item.deckLayer - 1) * LAYER_STACK + DECK_VIGNETTE;
     case "cosmetic-ground":
       return item.layer === 0 ? GROUND_COSMETIC : (item.layer - 1) * LAYER_STACK + DECK_COSMETIC;
     case "ground-effect":
