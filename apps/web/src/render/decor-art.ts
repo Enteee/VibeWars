@@ -5,7 +5,8 @@ import { WATER_LOOK, type DecorColours } from "./arena-palette.js";
 
 /**
  * Map decor (#4013, ADR-0060): braziers, crates, trees, fern tufts,
- * cinder drifts (#4018) and reed clumps (#4019), scenery nobody bumps into. Each is a few vector
+ * cinder drifts (#4018), reed clumps (#4019) and snowdrifts (#4022),
+ * scenery nobody bumps into. Each is a few vector
  * shapes in the gothic look (#4059): a dark outline round its top, its
  * sides darkening to the ground, a contact shadow, the light from the
  * north-west (docs/art/visual-style.md). Phaser-free: the scene paints the
@@ -101,6 +102,8 @@ const REED_BLADES = 7;
 const CINDER_RADIUS = 60;
 /** How many embers glow in a drift, the most. */
 const CINDER_EMBERS = 10;
+/** Half a snowdrift's width: 100 u across at scale 1 (#4022). */
+const SNOWDRIFT_RADIUS = 50;
 /** Half a boulder cluster's width (#4020): 60 u across at scale 1, under 100 u at the largest, so never cover. */
 const ROCK_RADIUS = 30;
 /** Half a dead tree's reach, 50 u across at scale 1 (#4020), and how tall its trunk stands. */
@@ -216,6 +219,7 @@ const SHADOW_SIZE: Record<DecorKind, { readonly height: number; readonly foot: n
   bones: { height: 0, foot: BONES_RADIUS * 0.8 },
   cairn: { height: 0, foot: CAIRN_RADIUS * 0.9 },
   banner: { height: BANNER_HEIGHT, foot: BANNER_WIDTH * 0.15 },
+  snowdrift: { height: 0, foot: SNOWDRIFT_RADIUS * 0.9 },
 };
 
 /**
@@ -922,6 +926,38 @@ function banner(prop: MapDecor, c: DecorColours, sway: number): DecorCommand[] {
   return commands;
 }
 
+/**
+ * A snowdrift (#4022): two or three low mounds along the wind, each with
+ * its lee side shaded to the south-east and its crest lit on the
+ * north-west, the biggest outlined. Still and matte: no glint, no glow,
+ * and no sheet or rim, so it reads as a heap of snow, never as a zone.
+ */
+function snowdrift(prop: MapDecor, c: DecorColours): DecorCommand[] {
+  const { at, scale: s, rotation, variant } = prop;
+  const r = SNOWDRIFT_RADIUS * s;
+  const mounds = [
+    { along: -0.45, size: 0.55 },
+    { along: 0.45 - variant * 0.05, size: 0.5 },
+    { along: 0, size: 0.62 },
+  ].filter((_, k) => variant % 2 === 0 || k !== 1);
+  return mounds.flatMap(({ along, size }, index) => {
+    const centre = turned(at, along * r, 0, rotation);
+    const foot = { x: centre.x, y: at.y + (centre.y - at.y) * 0.5 };
+    const rx = size * r;
+    const ry = rx * 0.5;
+    const height = rx * 0.35;
+    const top = { x: foot.x, y: foot.y - height };
+    const biggest = index === mounds.length - 1;
+    return [
+      ellipse({ x: foot.x + rx * 0.08, y: foot.y + ry * 0.1 }, rx, ry, c.snowShade),
+      ...(biggest
+        ? outlinedEllipse(top, rx * 0.92, ry * 0.85, c.snow)
+        : [ellipse(top, rx * 0.92, ry * 0.85, c.snow)]),
+      ellipse({ x: top.x - rx * 0.25, y: top.y - ry * 0.25 }, rx * 0.5, ry * 0.4, c.snowLit),
+    ];
+  });
+}
+
 /** Shallow water's tint over a wading prop's foot, and the front half of a ripple round it. */
 function waterline(at: Vec2, r: number): DecorCommand[] {
   const look = WATER_LOOK.shallow;
@@ -973,5 +1009,7 @@ export function decorCommands(
       return cairn(prop, colours);
     case "banner":
       return banner(prop, colours, decorSway(prop, now, still));
+    case "snowdrift":
+      return snowdrift(prop, colours);
   }
 }

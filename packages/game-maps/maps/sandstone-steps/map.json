@@ -927,7 +927,20 @@
     }
   ],
   "objectives": [],
-  "decor": [],
+  "decor": [
+    {
+      "id": "rock-1",
+      "kind": "rock",
+      "at": {
+        "x": 937,
+        "y": 1623
+      },
+      "layer": 1,
+      "rotation": 168,
+      "scale": 1.15,
+      "variant": 2
+    }
+  ],
   "gates": [
     {
       "id": "under-pass-gate-west",

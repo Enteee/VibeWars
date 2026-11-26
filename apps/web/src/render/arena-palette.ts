@@ -887,7 +887,8 @@ function overhangColours(tones: BiomeTones): Record<OverhangLook, OverhangLookCo
  * A biome's decor colours (#4013), in the gothic look (#4059): the mock's
  * hall colours tinted by what each is made of. Crates, barrels and trunks
  * are its wood, a crown and a fern its plants, a cinder drift (#4018) its
- * stone burnt to ash. Iron and fire are the same everywhere.
+ * stone burnt to ash, a snowdrift (#4022) its ground under snow. Iron and
+ * fire are the same everywhere.
  */
 export interface DecorColours {
   /** A crate's or a barrel's planks, the dark bands round them, and the lines across a lid. */
@@ -903,6 +904,10 @@ export interface DecorColours {
   readonly ash: number;
   readonly ashLit: number;
   readonly ashShade: number;
+  /** A snowdrift's body, the light on its crest, the shade on its lee side (#4022). */
+  readonly snow: number;
+  readonly snowLit: number;
+  readonly snowShade: number;
   /** A boulder's or a cairn's stone: its body, the light on its north-west facet, its shaded foot. */
   readonly rock: number;
   readonly rockLit: number;
@@ -935,6 +940,9 @@ function decorColours(tones: BiomeTones): DecorColours {
     ash: mix(tones.ground, tones.stone, 0.4),
     ashLit: mix(tones.ground, tones.stone, 0.6),
     ashShade: mix(tones.ground, tones.stone, 0.15),
+    snow: mix(tones.ground, 0xe4ecf0, 0.55),
+    snowLit: mix(tones.ground, 0xf4f8fa, 0.75),
+    snowShade: mix(tones.ground, 0x5a6a7c, 0.35),
     rock: tones.rock,
     rockLit: mix(tones.rock, 0xf0ece0, 0.22),
     rockShade: shade(tones.rock, 0.4),
