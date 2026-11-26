@@ -1,4 +1,4 @@
-import { pointInPolygon } from "@vibewars/game-core";
+import { pointInPolygon, ZONE_KINDS } from "@vibewars/game-core";
 import { describe, expect, it } from "vitest";
 
 import type { MapZone } from "./arena-snapshot.js";
@@ -6,13 +6,20 @@ import { shoreDistance } from "./water-shape.js";
 import { ZONE_LOOK } from "./zone-look.js";
 import {
   drawnOutline,
+  LIQUID_ZONES,
+  paintZoneGround,
   paintZoneMotion,
   paintZoneShadow,
   reliefEdges,
+  ZONE_CELLS,
   ZONE_DRIFT,
   zoneArtOf,
+  ZoneCellTiles,
+  type ZoneCanvas,
+  type ZoneCellsLook,
   zoneGroundAlpha,
   type ZoneMotionPainter,
+  type LiquidZoneId,
 } from "./zone-painter.js";
 
 const square = (kind: MapZone["kind"]): MapZone => ({
@@ -229,5 +236,97 @@ describe("a zone's drawn outline and relief (#4037)", () => {
       expect(Math.min(y1, y2)).toBeGreaterThan(100);
       expect(pointInPolygon({ x: (x1 + x2) / 2, y: (y1 + y2) / 2 }, art.outline)).toBe(false);
     }
+  });
+});
+
+/** A canvas that draws nothing and counts the liquid cells' patterns it fills with. */
+function patternCounter(): { readonly canvas: ZoneCanvas; readonly patterns: () => number } {
+  let patterns = 0;
+  const pattern: CanvasPattern = { setTransform: () => undefined };
+  const gradient: CanvasGradient = { addColorStop: () => undefined };
+  const none = (): void => undefined;
+  const canvas: ZoneCanvas = {
+    save: none,
+    restore: none,
+    beginPath: none,
+    moveTo: none,
+    lineTo: none,
+    closePath: none,
+    clip: none,
+    fill: none,
+    stroke: none,
+    arc: none,
+    ellipse: none,
+    fillRect: none,
+    createRadialGradient: () => gradient,
+    createPattern: () => {
+      patterns += 1;
+      return pattern;
+    },
+    setTransform: none,
+    fillStyle: "",
+    strokeStyle: "",
+    lineWidth: 1,
+    lineCap: "butt",
+    globalAlpha: 1,
+    globalCompositeOperation: "source-over",
+    shadowBlur: 0,
+    shadowColor: "",
+  };
+  return { canvas, patterns: () => patterns };
+}
+
+/** Cell tiles whose baker counts its calls, by liquid id. */
+function countingTiles(): {
+  readonly tiles: ZoneCellTiles;
+  readonly baked: Map<LiquidZoneId, number>;
+} {
+  const baked = new Map<LiquidZoneId, number>();
+  const tiles = new ZoneCellTiles((id: LiquidZoneId, look: ZoneCellsLook) => {
+    baked.set(id, (baked.get(id) ?? 0) + 1);
+    return look.passes.map((): ImageBitmap => ({ width: 1, height: 1, close: () => undefined }));
+  });
+  return { tiles, baked };
+}
+
+describe("a liquid zone's cells (#4062)", () => {
+  it("lays cells on every liquid's ground, and on no other", () => {
+    const painted = new Set<string>();
+    for (const kind of ZONE_KINDS) {
+      const art = zoneArtOf(square(kind), 0);
+      if (art === undefined) {
+        continue;
+      }
+      const { canvas, patterns } = patternCounter();
+      paintZoneGround(canvas, art, 1, countingTiles().tiles);
+      const liquid = LIQUID_ZONES.find((id) => id === art.painter);
+      expect(patterns(), kind).toBe(liquid === undefined ? 0 : ZONE_CELLS[liquid].passes.length);
+      if (liquid !== undefined) {
+        painted.add(art.painter);
+      }
+    }
+    expect([...painted].sort()).toEqual([...LIQUID_ZONES].sort());
+  });
+
+  it("orders the cells' scales: lava's the largest, a spring's the smallest", () => {
+    const scales = LIQUID_ZONES.map((id) => ZONE_CELLS[id].scale);
+    expect(scales).toEqual([...scales].sort((a, b) => b - a));
+    expect(new Set(scales).size).toBe(scales.length);
+    expect(LIQUID_ZONES[0]).toBe("lava");
+    expect(LIQUID_ZONES.at(-1)).toBe("spring");
+  });
+
+  it("bakes each liquid's cells once, shared by every zone of it", () => {
+    const { tiles, baked } = countingTiles();
+    for (const index of [0, 1, 2]) {
+      for (const kind of ["molten", "mire", "foul-water", "spring"] as const) {
+        const art = zoneArtOf(square(kind), index);
+        if (art === undefined) {
+          throw new Error(kind);
+        }
+        paintZoneGround(patternCounter().canvas, art, 1, tiles);
+      }
+    }
+    expect(Object.fromEntries(baked)).toEqual({ lava: 1, mud: 1, "foul-water": 1, spring: 1 });
   });
 });

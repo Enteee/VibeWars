@@ -427,7 +427,7 @@ import {
   steadyLighting,
   type LightSample,
 } from "./lighting-model.js";
-import { liquidCells, tiledCells } from "./liquid-cells.js";
+import { liquidCells, tiledCells, type LiquidCellsOptions } from "./liquid-cells.js";
 import {
   WATER_ART,
   WATER_CELLS,
@@ -490,7 +490,9 @@ import {
   paintZoneMotion,
   zoneArtOf,
   zoneGroundAlpha,
+  ZoneCellTiles,
   type ZoneArt,
+  type ZoneCellPass,
   type ZoneMotionPainter,
 } from "./zone-painter.js";
 import { screenPx, screenSized } from "./screen-text.js";
@@ -594,8 +596,10 @@ interface WaterCells {
   readonly textures: readonly string[];
 }
 
-/** The liquid cells' texture (#4058), painted once per game. */
-const WATER_CELLS_TILE = "liquid-cells-water";
+/** Liquid `id`'s cells' texture (#4058, #4062), painted once per game. */
+function liquidCellsTileKey(id: string): string {
+  return `liquid-cells-${id}`;
+}
 /** The longest side, in px, of a body of water's baked cells: a bigger body bakes coarser. */
 const WATER_CELLS_MAX_SIDE = 2048;
 
@@ -978,6 +982,11 @@ export class ArenaScene extends Phaser.Scene {
         readonly overTunnels: ReadonlyMap<number, readonly Phaser.GameObjects.Image[]>;
       }
     | undefined;
+  /** Each liquid zone's cells (#4062), baked once per liquid id and shared by its zones. */
+  private readonly zoneCellTiles = new ZoneCellTiles((id, look) => {
+    const tile = this.liquidCellsTile(id, look.cells);
+    return look.passes.map((pass) => cellPass(tile, pass));
+  });
   /** Each painted zone's ground (#3052), one canvas texture per zone, made when the map changes. */
   private zoneGrounds:
     | { readonly zones: readonly MapZone[]; readonly grounds: readonly (ZoneGround | undefined)[] }
@@ -6185,7 +6194,7 @@ export class ArenaScene extends Phaser.Scene {
     if (texture === null) {
       throw new Error("zones: could not create a zone's ground");
     }
-    paintZoneGround(texture.context, art, scale);
+    paintZoneGround(texture.context, art, scale, this.zoneCellTiles);
     if (relief) {
       paintZoneRelief(texture.context, art, scale);
     }
@@ -6452,7 +6461,7 @@ export class ArenaScene extends Phaser.Scene {
     for (const key of this.waterCells?.textures ?? []) {
       this.textures.remove(key);
     }
-    const tile = this.waterCellsTile();
+    const tile = this.liquidCellsTile("water", WATER_CELLS);
     const tinted = new Map<WaterArtKey, HTMLCanvasElement[]>();
     const images: Phaser.GameObjects.Image[] = [];
     const textures: string[] = [];
@@ -6472,7 +6481,7 @@ export class ArenaScene extends Phaser.Scene {
       const [x, y] = [Math.floor(box.left) - 1, Math.floor(box.top) - 1];
       const [w, h] = [Math.ceil(box.right) + 1 - x, Math.ceil(box.bottom) + 1 - y];
       const resolution = Math.min(1, WATER_CELLS_MAX_SIDE / Math.max(w, h));
-      const key = `${WATER_CELLS_TILE}-${String(textures.length)}`;
+      const key = `${liquidCellsTileKey("water")}-${String(textures.length)}`;
       const texture = this.textures.createCanvas(
         key,
         Math.ceil(w * resolution),
@@ -6523,22 +6532,27 @@ export class ArenaScene extends Phaser.Scene {
     this.waterCells = { shapes: this.waterShapes, images, textures };
   }
 
-  /** The liquid cells' texture (#4058): black cells, white gaps, tinted where it is used. */
-  private waterCellsTile(): HTMLCanvasElement {
-    const existing = this.textures.get(WATER_CELLS_TILE);
+  /**
+   * Liquid `id`'s cells' texture (#4058, #4062), from `options`: black
+   * cells, white gaps, tinted where it is used. Baked once per id: water
+   * and each liquid zone share this one path.
+   */
+  private liquidCellsTile(id: string, options: LiquidCellsOptions): HTMLCanvasElement {
+    const key = liquidCellsTileKey(id);
+    const existing = this.textures.get(key);
     if (existing instanceof Phaser.Textures.CanvasTexture) {
       return existing.getCanvas();
     }
-    const { size } = WATER_CELLS;
-    const texture = this.textures.createCanvas(WATER_CELLS_TILE, size, size);
+    const { size } = options;
+    const texture = this.textures.createCanvas(key, size, size);
     if (texture === null) {
-      throw new Error("water: could not create the liquid cells' tile");
+      throw new Error("liquids: could not create the liquid cells' tile");
     }
     const { context } = texture;
     context.fillStyle = "#ffffff";
     context.fillRect(0, 0, size, size);
     context.fillStyle = "#000000";
-    for (const cell of tiledCells(liquidCells(WATER_CELLS), size)) {
+    for (const cell of tiledCells(liquidCells(options), size)) {
       context.beginPath();
       for (const { x, y } of cell) {
         context.lineTo(x, y);
@@ -6924,5 +6938,41 @@ function tintedCells(tile: HTMLCanvasElement, look: WaterLook): HTMLCanvasElemen
   context.globalCompositeOperation = "multiply";
   context.fillStyle = `rgb(${[16, 8, 0].map(channel).join(", ")})`;
   context.fillRect(0, 0, canvas.width, canvas.height);
+  return canvas;
+}
+
+/**
+ * One pass of a liquid zone's cells (#4062), from the black-cells,
+ * white-gaps `tile`: `pass.colour` where it falls, and elsewhere what its
+ * blend leaves alone, white under `multiply`, black under `lighter`.
+ */
+function cellPass(tile: HTMLCanvasElement, pass: ZoneCellPass): HTMLCanvasElement {
+  const canvas = document.createElement("canvas");
+  [canvas.width, canvas.height] = [tile.width, tile.height];
+  const context = canvas.getContext("2d");
+  if (context === null) {
+    throw new Error("zones: could not bake a liquid's cells");
+  }
+  context.drawImage(tile, 0, 0);
+  if (pass.where === "cells") {
+    // Cells white, gaps black.
+    context.globalCompositeOperation = "difference";
+    context.fillStyle = "#ffffff";
+    context.fillRect(0, 0, canvas.width, canvas.height);
+  }
+  // Now white where the pass falls, black elsewhere.
+  if (pass.blend === "lighter") {
+    context.globalCompositeOperation = "multiply";
+    context.fillStyle = pass.colour;
+    context.fillRect(0, 0, canvas.width, canvas.height);
+  } else {
+    // Black where the pass falls, white elsewhere, then the colour into the black.
+    context.globalCompositeOperation = "difference";
+    context.fillStyle = "#ffffff";
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.globalCompositeOperation = "lighten";
+    context.fillStyle = pass.colour;
+    context.fillRect(0, 0, canvas.width, canvas.height);
+  }
   return canvas;
 }
