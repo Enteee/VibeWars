@@ -1160,7 +1160,7 @@ export type ScoreboardPart =
 /** What the scoreboard reads of the match besides its bodies and clock. */
 export type ScoreboardMatch = Pick<
   MatchSnapshot,
-  "score" | "stand" | "aggression" | "altarHolder" | "altarHeldSeconds"
+  "phase" | "score" | "stand" | "aggression" | "altarHolder" | "altarHeldSeconds"
 >;
 
 /** The clock left at which a Guild Battle shows its aggression (#1226): the last 3 minutes. */
@@ -1227,9 +1227,19 @@ export function scoreboardParts(
   const theirs = foes[0] ?? 1;
   // Rounded up, so the clock reads 0:00 only once time is out.
   const left = timeLimitSeconds === null ? null : Math.ceil(timeLimitSeconds - elapsedSeconds);
+  // A kill-count match still on past its time is tied in sudden death (#4069): no clock.
+  const suddenDeath =
+    mode === "kill-count" &&
+    match.phase === "active" &&
+    timeLimitSeconds !== null &&
+    elapsedSeconds >= timeLimitSeconds;
   const clock: ScoreboardPart = {
     kind: "text",
-    text: left === null ? formatClock(elapsedSeconds) : formatClock(left),
+    text: suddenDeath
+      ? t("hud.suddenDeath")
+      : left === null
+        ? formatClock(elapsedSeconds)
+        : formatClock(left),
   };
   const { score } = match;
   const living: ScoreboardPart = {
@@ -1467,6 +1477,7 @@ function renderEnemyPips(
 /** What the end-of-match line adds for a reason; nothing for a score or a wipe. */
 const OUTCOME_REASONS: Readonly<Record<string, MessageKey>> = {
   time: "hud.outcomeTime",
+  "sudden-death": "hud.outcomeSuddenDeath",
   morale: "hud.outcomeMorale",
   "guild-lord": "hud.outcomeGuildLord",
 };
@@ -1484,7 +1495,8 @@ export function placeEnd(hud: Pick<HudElements, "top" | "end">): void {
 /**
  * The end-of-match line a player reads, from their own team's point of
  * view. An annihilation match nobody won is lost by every team (GW1,
- * #846), and so is a Guild Battle (#1222); only kill-count draws. A
+ * #846), and so is a Guild Battle (#1222); only a Relic Run or King of the
+ * Hill draws, kill-count going to sudden death instead (#4069). A
  * Guild Battle decided at time says both sides' `aggression`, yours first
  * (#1226): short, as every one of these lines fits one line of the banner.
  */

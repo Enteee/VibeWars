@@ -71,7 +71,8 @@ lối đi chạy dưới sống đá ở giữa, cổng của nó mở bằng c�
 
 **Nhiều lượt hạ nhất trong 3 phút.** Người chết trở lại ở điểm xuất phát sau
 8 giây, và chết không tốn sĩ khí. Đội đầu tiên đạt 15 lượt hạ thắng ngay lập
-tức. Khi hết giờ, nhiều lượt hạ hơn sẽ thắng; bằng nhau là hòa.
+tức. Khi hết giờ, nhiều lượt hạ hơn sẽ thắng; bằng nhau thì vào
+sudden death: không tính giờ, và lượt hạ tiếp theo sẽ thắng.
 
 Ember Pits chơi chế độ này: những dòng dung nham có cầu đá bắc qua, một đường hầm
 dung nham, một thang nâng bằng cần gạt lên cột đá bazan và các lỗ phun hơi, cho mọi cỡ đội.

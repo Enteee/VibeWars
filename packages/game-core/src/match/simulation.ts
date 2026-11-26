@@ -1738,6 +1738,8 @@ export class MatchSimulation {
   #relicArrivals: CarriedArrival[] = [];
   #recentKillTeams: readonly number[] = [];
   #recentScoringTeams: readonly number[] = [];
+  /** A kill-count match came to its time limit tied (#4069): it plays on in sudden death. */
+  #suddenDeath = false;
   /** The map's ghost spawns and any altar (#1377, #2689); `undefined` on a map without ghosts. */
   readonly #ghostField: GhostField | undefined;
   /** Who holds the altar (#1377); nobody on a map without a hill. */
@@ -11088,6 +11090,7 @@ export class MatchSimulation {
       byTeam,
       recentKillTeams: this.#recentKillTeams,
       recentScoringTeams: this.#recentScoringTeams,
+      suddenDeath: this.#suddenDeath,
     };
   }
 
@@ -11402,6 +11405,13 @@ export class MatchSimulation {
       this.#matchRules,
     );
     if (outcome.phase !== "finished") {
+      // Tied on kills at time (#4069): from now on, the next lone leader wins in sudden death.
+      if (
+        this.#matchRules.victory === "kill-count" &&
+        this.#elapsedSeconds >= this.#matchRules.timeLimitSeconds
+      ) {
+        this.#suddenDeath = true;
+      }
       return;
     }
     // Only the Elite Zaishen Battle has a start line, and it is won only by

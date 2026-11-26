@@ -58,6 +58,7 @@ export interface MatchRecord {
 const END_REASONS: Readonly<Record<MatchEndReason, true>> = {
   score: true,
   time: true,
+  "sudden-death": true,
   annihilation: true,
   morale: true,
   "guild-lord": true,

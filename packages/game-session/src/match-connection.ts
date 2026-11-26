@@ -188,7 +188,7 @@ export interface MatchSnapshot {
   readonly preMatch: WirePreMatch | null;
   /** The winning team, or `undefined` while active or on a draw. */
   readonly winningTeam: number | undefined;
-  /** "score", "time", "annihilation", "morale", "guild-lord", "aggression", "host-left", or `undefined` while active. */
+  /** "score", "time", "sudden-death", "annihilation", "morale", "guild-lord", "aggression", "host-left", or `undefined` while active. */
   readonly endReason: string | undefined;
   /** Seconds on the Elite Zaishen Battle's clock (#2692), only once it has ended. */
   readonly clearSeconds?: number | undefined;

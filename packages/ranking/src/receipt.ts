@@ -39,6 +39,7 @@ const MAX_ID_LENGTH = 64;
 export const RANKED_END_REASONS = [
   "score",
   "time",
+  "sudden-death",
   "annihilation",
   "morale",
   "guild-lord",

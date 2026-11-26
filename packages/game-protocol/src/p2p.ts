@@ -865,12 +865,13 @@ export interface WireStand {
 }
 
 /**
- * Why a match ended (#846): kill-count's score and time, annihilation's
+ * Why a match ended (#846): kill-count's score, time and sudden death (#4069), annihilation's
  * wipe and morale at time, a Guild Battle's slain lord and aggression (#1222).
  */
 const END_REASONS = [
   "score",
   "time",
+  "sudden-death",
   "annihilation",
   "morale",
   "guild-lord",

@@ -74,7 +74,8 @@ kammen åbner.
 **Flest drab på 3 minutter.** De døde vender tilbage ved deres
 startområde efter 8 sekunder, og at dø koster ingen moral. Det første
 hold med 15 drab vinder med det samme. Når tiden er gået, vinder flest
-drab; lige mange drab er uafgjort.
+drab; lige mange drab går til sudden death: intet ur, og næste drab
+vinder.
 
 Ember Pits spiller den: lavastrømme med stenbroer over, en lavatunnel, en
 løftebane med håndtag op ad en basaltsøjle og dampventiler, til alle holdstørrelser.

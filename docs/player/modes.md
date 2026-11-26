@@ -72,7 +72,8 @@ the centre fin, its gate worked by a lever on top.
 
 **The most kills in 3 minutes.** The dead come back at their spawn after
 8 seconds, and dying costs no morale. The first team to 15 kills wins at
-once. At time, more kills wins; equal kills is a draw.
+once. At time, more kills wins; equal kills go to sudden death: no
+clock, and the next kill wins.
 
 Ember Pits plays it: lava rills crossed by stone bridges, a lava tube, a
 lever lift up a basalt column and steam vents, for every team size.
