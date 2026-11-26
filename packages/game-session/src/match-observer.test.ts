@@ -8,7 +8,7 @@ import {
 } from "@vibewars/game-protocol";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { HELLO_RESEND_MS, MatchRefusedError } from "./match-client.js";
+import { HELLO_RESEND_MS, MatchRefusedError, MatchTimeoutError } from "./match-client.js";
 import { NO_CALLS, type ConnectionState } from "./match-connection.js";
 import { OBSERVER_DELAY_SECONDS, RECONNECT_WINDOW_SECONDS, createMatchHost } from "./match-host.js";
 import {
@@ -449,6 +449,64 @@ describe("an observer whose host's peer goes (#4105)", () => {
     await settle();
     expect(observes()).toBe(0);
     expect(states).toEqual(["reconnecting", "lost"]);
+  });
+
+  it("still watches when the host goes and comes back before `observing`, said again at once (#4115)", async () => {
+    const { match } = await twoPlayers();
+    const transport = match.network.join("viewer");
+    await settle();
+    const sent = vi.spyOn(transport, "send");
+    const observes = (): number => sent.mock.calls.filter(([type]) => type === "observe").length;
+    let failed: unknown;
+    const viewing = connectObserver({
+      transport,
+      hostId: "host",
+      matchId: TEST_MATCH_ID,
+      timeoutMs: 10_000,
+    });
+    viewing.catch((error: unknown) => {
+      failed = error;
+    });
+    match.network.partition("viewer", "host");
+    await settle();
+    vi.advanceTimersByTime(HELLO_RESEND_MS);
+    await settle();
+    expect(failed).toBeUndefined();
+
+    const said = observes();
+    match.network.heal();
+    await settle();
+    expect(observes()).toBe(said + 1);
+    const viewer = await viewing;
+    expect(viewer.delaySeconds).toBe(OBSERVER_DELAY_SECONDS);
+    // Answered: said no more.
+    vi.advanceTimersByTime(5 * HELLO_RESEND_MS);
+    expect(observes()).toBe(said + 1);
+  });
+
+  it("times out, not fails at once, when the host goes before `observing` and stays gone (#4115)", async () => {
+    const { match } = await twoPlayers();
+    const transport = match.network.join("viewer");
+    await settle();
+    let failed: unknown;
+    const viewing = connectObserver({
+      transport,
+      hostId: "host",
+      matchId: TEST_MATCH_ID,
+      timeoutMs: 10_000,
+    });
+    viewing.catch((error: unknown) => {
+      failed = error;
+    });
+    match.network.partition("viewer", "host");
+    await settle();
+    vi.advanceTimersByTime(10_000 - 1);
+    await settle();
+    expect(failed).toBeUndefined();
+    vi.advanceTimersByTime(1);
+    await settle();
+    expect(failed).toBeInstanceOf(MatchTimeoutError);
+    expect(vi.getTimerCount()).toBe(0);
   });
 
   it("is lost at once, mid-drop too, to an end that says the host left", async () => {
