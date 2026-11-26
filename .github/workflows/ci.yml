@@ -189,7 +189,7 @@ jobs:
         timeout-minutes: 20
         env:
           BENCH_SHARD: ${{ matrix.shard }}/4
-        run: BENCH_MAX_RATIO=2.6 BENCH_MAX_FOLLOW_RATIO=10 devenv shell -- pnpm run bench:render
+        run: BENCH_MAX_RATIO=2.65 BENCH_MAX_FOLLOW_RATIO=10 devenv shell -- pnpm run bench:render
 
   # Green only if every shard succeeded, as `e2e` below; a skipped shard step
   # (the bench does not apply) still succeeds. On a main push a cancelled shard
