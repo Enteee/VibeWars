@@ -1619,7 +1619,7 @@
   ],
   "spawnPoints": [
     {
-      "team": 2,
+      "team": 0,
       "layer": 1,
       "position": {
         "x": 2440,
@@ -1627,7 +1627,7 @@
       }
     },
     {
-      "team": 2,
+      "team": 0,
       "layer": 1,
       "position": {
         "x": 2560,
@@ -1635,7 +1635,7 @@
       }
     },
     {
-      "team": 2,
+      "team": 0,
       "layer": 1,
       "position": {
         "x": 2440,
@@ -1643,7 +1643,7 @@
       }
     },
     {
-      "team": 2,
+      "team": 0,
       "layer": 1,
       "position": {
         "x": 2560,
@@ -1651,7 +1651,7 @@
       }
     },
     {
-      "team": 2,
+      "team": 0,
       "layer": 1,
       "position": {
         "x": 2440,
@@ -1659,7 +1659,7 @@
       }
     },
     {
-      "team": 2,
+      "team": 0,
       "layer": 1,
       "position": {
         "x": 2560,
@@ -1667,23 +1667,23 @@
       }
     },
     {
-      "team": 2,
+      "team": 0,
       "layer": 1,
       "position": {
         "x": 2440,
-        "y": 330
-      }
-    },
-    {
-      "team": 2,
-      "layer": 1,
-      "position": {
-        "x": 2560,
         "y": 330
       }
     },
     {
       "team": 0,
+      "layer": 1,
+      "position": {
+        "x": 2560,
+        "y": 330
+      }
+    },
+    {
+      "team": 1,
       "layer": 1,
       "position": {
         "x": 3889.66,
@@ -1691,7 +1691,7 @@
       }
     },
     {
-      "team": 0,
+      "team": 1,
       "layer": 1,
       "position": {
         "x": 3829.66,
@@ -1699,7 +1699,7 @@
       }
     },
     {
-      "team": 0,
+      "team": 1,
       "layer": 1,
       "position": {
         "x": 3976.26,
@@ -1707,7 +1707,7 @@
       }
     },
     {
-      "team": 0,
+      "team": 1,
       "layer": 1,
       "position": {
         "x": 3916.26,
@@ -1715,7 +1715,7 @@
       }
     },
     {
-      "team": 0,
+      "team": 1,
       "layer": 1,
       "position": {
         "x": 4062.86,
@@ -1723,7 +1723,7 @@
       }
     },
     {
-      "team": 0,
+      "team": 1,
       "layer": 1,
       "position": {
         "x": 4002.86,
@@ -1731,7 +1731,7 @@
       }
     },
     {
-      "team": 0,
+      "team": 1,
       "layer": 1,
       "position": {
         "x": 4149.47,
@@ -1739,7 +1739,7 @@
       }
     },
     {
-      "team": 0,
+      "team": 1,
       "layer": 1,
       "position": {
         "x": 4089.47,
@@ -1747,7 +1747,7 @@
       }
     },
     {
-      "team": 1,
+      "team": 2,
       "layer": 1,
       "position": {
         "x": 1170.34,
@@ -1755,7 +1755,7 @@
       }
     },
     {
-      "team": 1,
+      "team": 2,
       "layer": 1,
       "position": {
         "x": 1110.34,
@@ -1763,7 +1763,7 @@
       }
     },
     {
-      "team": 1,
+      "team": 2,
       "layer": 1,
       "position": {
         "x": 1083.74,
@@ -1771,7 +1771,7 @@
       }
     },
     {
-      "team": 1,
+      "team": 2,
       "layer": 1,
       "position": {
         "x": 1023.74,
@@ -1779,7 +1779,7 @@
       }
     },
     {
-      "team": 1,
+      "team": 2,
       "layer": 1,
       "position": {
         "x": 997.14,
@@ -1787,7 +1787,7 @@
       }
     },
     {
-      "team": 1,
+      "team": 2,
       "layer": 1,
       "position": {
         "x": 937.14,
@@ -1795,7 +1795,7 @@
       }
     },
     {
-      "team": 1,
+      "team": 2,
       "layer": 1,
       "position": {
         "x": 910.53,
@@ -1803,7 +1803,7 @@
       }
     },
     {
-      "team": 1,
+      "team": 2,
       "layer": 1,
       "position": {
         "x": 850.53,
@@ -1815,19 +1815,10 @@
     {
       "kind": "ghost-spawn",
       "layer": 1,
-      "team": 2,
-      "position": {
-        "x": 2820,
-        "y": 700
-      }
-    },
-    {
-      "kind": "ghost-spawn",
-      "layer": 1,
       "team": 0,
       "position": {
-        "x": 3639.04,
-        "y": 3227.13
+        "x": 2339.65,
+        "y": 674.4
       }
     },
     {
@@ -1835,8 +1826,17 @@
       "layer": 1,
       "team": 1,
       "position": {
-        "x": 1040.96,
-        "y": 2672.87
+        "x": 3901.38,
+        "y": 2823.93
+      }
+    },
+    {
+      "kind": "ghost-spawn",
+      "layer": 1,
+      "team": 2,
+      "position": {
+        "x": 1098.62,
+        "y": 2823.93
       }
     },
     {
