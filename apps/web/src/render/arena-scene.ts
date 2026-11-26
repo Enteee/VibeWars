@@ -427,7 +427,7 @@ import {
   steadyLighting,
   type LightSample,
 } from "./lighting-model.js";
-import { liquidCells, tiledCells } from "./liquid-cells.js";
+import { liquidCells, tiledCells, type LiquidCellsOptions } from "./liquid-cells.js";
 import {
   WATER_ART,
   WATER_CELLS,
@@ -484,12 +484,15 @@ import { fillDisc, strokeDisc } from "./disc.js";
 import { dashedCircle } from "./dashed-circle.js";
 import {
   groundArtOf,
+  liquidOf,
   paintZoneGround,
   paintZoneRelief,
   paintZoneShadow,
   paintZoneMotion,
   zoneArtOf,
   zoneGroundAlpha,
+  CAUSTICS_FRAGMENT,
+  ZONE_CAUSTICS,
   type ZoneArt,
   type ZoneMotionPainter,
 } from "./zone-painter.js";
@@ -560,6 +563,13 @@ interface ZoneGround {
   readonly art: ZoneArt;
   readonly image: Phaser.GameObjects.Image;
   readonly key: string;
+  /** A liquid's caustics (#4062) over it, or none. */
+  readonly caustics: ZoneCausticsDraw | undefined;
+}
+/** A liquid zone's caustics (#4062): its shader, and the time and alpha it draws at next. */
+interface ZoneCausticsDraw {
+  readonly shader: Phaser.GameObjects.Shader;
+  readonly uniforms: { time: number; alpha: number };
 }
 /** The hover marker on a layered map (#2831), its dashes on the ground. */
 const HOVER_RING = 0xd7dee8;
@@ -594,8 +604,10 @@ interface WaterCells {
   readonly textures: readonly string[];
 }
 
-/** The liquid cells' texture (#4058), painted once per game. */
-const WATER_CELLS_TILE = "liquid-cells-water";
+/** Liquid `id`'s cells' texture (#4058, #4062), painted once per game. */
+function liquidCellsTileKey(id: string): string {
+  return `liquid-cells-${id}`;
+}
 /** The longest side, in px, of a body of water's baked cells: a bigger body bakes coarser. */
 const WATER_CELLS_MAX_SIDE = 2048;
 
@@ -6003,9 +6015,13 @@ export class ArenaScene extends Phaser.Scene {
       const painted = grounds[index];
       if (painted !== undefined) {
         const { left, top } = painted.art.bounds;
-        painted.image
-          .setPosition(left + moved.x, top + moved.y - lift)
-          .setAlpha(zoneGroundAlpha(painted.art, look, this.now, this.reducedMotion));
+        const alpha = zoneGroundAlpha(painted.art, look, this.now, this.reducedMotion);
+        painted.image.setPosition(left + moved.x, top + moved.y - lift).setAlpha(alpha);
+        if (painted.caustics !== undefined) {
+          painted.caustics.shader.setPosition(left + moved.x, top + moved.y - lift);
+          painted.caustics.uniforms.time = this.reducedMotion ? 0 : this.now;
+          painted.caustics.uniforms.alpha = alpha;
+        }
         paintZoneMotion(this.zoneMotionPainter(g), painted.art, line, this.now, this.reducedMotion);
       }
       // A timed or moving hazard (#3029) is drawn by its phase on the match
@@ -6157,10 +6173,61 @@ export class ArenaScene extends Phaser.Scene {
         return undefined;
       }
       const depth = renderOrder({ kind: "zone", layer: zone.layer, part: "ground" });
-      return { art, ...this.paintGround(art, 0, depth, true) };
+      const ground = this.paintGround(art, 0, depth, true);
+      return { art, ...ground, caustics: this.zoneCausticsOf(art, zone.layer, ground.key) };
     });
     this.zoneGrounds = { zones, grounds };
     return grounds;
+  }
+
+  /**
+   * A liquid zone's caustics (#4062): one shader quad over its bounds, its
+   * ground's texture the mask, added. One draw a zone, no stencil and no
+   * per-frame geometry, the cost #4078 found in masked sprites. None for a
+   * non-liquid.
+   */
+  private zoneCausticsOf(
+    art: ZoneArt,
+    layer: number,
+    ground: string,
+  ): ZoneCausticsDraw | undefined {
+    const liquid = liquidOf(art.painter);
+    if (liquid === undefined) {
+      return undefined;
+    }
+    const { colour, cell, strength } = ZONE_CAUSTICS[liquid];
+    const { left, top, width, height } = art.bounds;
+    const uniforms = { time: 0, alpha: 1 };
+    const shader = this.add
+      .shader(
+        {
+          name: "zone-caustics",
+          fragmentSource: CAUSTICS_FRAGMENT,
+          setupUniforms: (
+            setUniform: (name: string, value: number | readonly number[]) => void,
+          ) => {
+            setUniform("uGround", 0);
+            setUniform("uBounds", [left, top, width, height]);
+            setUniform("uCell", cell);
+            setUniform("uTime", uniforms.time);
+            setUniform("uColour", [
+              ((colour >> 16) & 0xff) / 255,
+              ((colour >> 8) & 0xff) / 255,
+              (colour & 0xff) / 255,
+            ]);
+            setUniform("uAlpha", uniforms.alpha * strength);
+          },
+        },
+        left,
+        top,
+        width,
+        height,
+        [ground],
+      )
+      .setOrigin(0, 0)
+      .setBlendMode(Phaser.BlendModes.ADD)
+      .setDepth(renderOrder({ kind: "zone", layer, part: "cells" }));
+    return { shader, uniforms };
   }
 
   /**
@@ -6345,6 +6412,7 @@ export class ArenaScene extends Phaser.Scene {
       if (painted !== undefined) {
         painted.image.destroy();
         this.textures.remove(painted.key);
+        painted.caustics?.shader.destroy();
       }
     }
     this.zoneGrounds = undefined;
@@ -6453,7 +6521,7 @@ export class ArenaScene extends Phaser.Scene {
     for (const key of this.waterCells?.textures ?? []) {
       this.textures.remove(key);
     }
-    const tile = this.waterCellsTile();
+    const tile = this.liquidCellsTile("water", WATER_CELLS);
     const tinted = new Map<WaterArtKey, HTMLCanvasElement[]>();
     const images: Phaser.GameObjects.Image[] = [];
     const textures: string[] = [];
@@ -6473,7 +6541,7 @@ export class ArenaScene extends Phaser.Scene {
       const [x, y] = [Math.floor(box.left) - 1, Math.floor(box.top) - 1];
       const [w, h] = [Math.ceil(box.right) + 1 - x, Math.ceil(box.bottom) + 1 - y];
       const resolution = Math.min(1, WATER_CELLS_MAX_SIDE / Math.max(w, h));
-      const key = `${WATER_CELLS_TILE}-${String(textures.length)}`;
+      const key = `${liquidCellsTileKey("water")}-${String(textures.length)}`;
       const texture = this.textures.createCanvas(
         key,
         Math.ceil(w * resolution),
@@ -6524,22 +6592,27 @@ export class ArenaScene extends Phaser.Scene {
     this.waterCells = { shapes: this.waterShapes, images, textures };
   }
 
-  /** The liquid cells' texture (#4058): black cells, white gaps, tinted where it is used. */
-  private waterCellsTile(): HTMLCanvasElement {
-    const existing = this.textures.get(WATER_CELLS_TILE);
+  /**
+   * Liquid `id`'s cells' texture (#4058, #4062), from `options`: black
+   * cells, white gaps, tinted where it is used. Baked once per id: water
+   * and each liquid zone share this one path.
+   */
+  private liquidCellsTile(id: string, options: LiquidCellsOptions): HTMLCanvasElement {
+    const key = liquidCellsTileKey(id);
+    const existing = this.textures.get(key);
     if (existing instanceof Phaser.Textures.CanvasTexture) {
       return existing.getCanvas();
     }
-    const { size } = WATER_CELLS;
-    const texture = this.textures.createCanvas(WATER_CELLS_TILE, size, size);
+    const { size } = options;
+    const texture = this.textures.createCanvas(key, size, size);
     if (texture === null) {
-      throw new Error("water: could not create the liquid cells' tile");
+      throw new Error("liquids: could not create the liquid cells' tile");
     }
     const { context } = texture;
     context.fillStyle = "#ffffff";
     context.fillRect(0, 0, size, size);
     context.fillStyle = "#000000";
-    for (const cell of tiledCells(liquidCells(WATER_CELLS), size)) {
+    for (const cell of tiledCells(liquidCells(options), size)) {
       context.beginPath();
       for (const { x, y } of cell) {
         context.lineTo(x, y);
