@@ -1,4 +1,9 @@
-import { GUILD_BATTLE_MATCH_RULES, HALLS_MATCH_RULES, MATCH_MODES } from "@vibewars/game-core";
+import {
+  GUILD_BATTLE_MATCH_RULES,
+  HALLS_MATCH_RULES,
+  KILL_COUNT_MATCH_RULES,
+  MATCH_MODES,
+} from "@vibewars/game-core";
 import { MAX_LOBBY_PLAYERS } from "@vibewars/game-protocol";
 import { describe, expect, it } from "vitest";
 
@@ -52,6 +57,25 @@ describe("a match's replay budget (#3572)", () => {
     }
     expect(REPLAY_INPUTS_PER_SEAT_SECOND).toBe(10);
     expect(refused).toBe(0);
+  });
+
+  it("keeps recording a steady player deep into sudden death, and stops a flooder at its share (#4069)", () => {
+    const { timeLimitSeconds } = KILL_COUNT_MATCH_RULES;
+    const budget = new ReplayBudget(8, timeLimitSeconds);
+    // Three inputs a second through the clock and two hours of sudden death.
+    const seconds = timeLimitSeconds + 7200;
+    let refused = 0;
+    for (let sent = 0; sent < 3 * seconds; sent += 1) {
+      if (!budget.take("steady", REPLAY_CHARS_PER_INPUT, sent / 3)) {
+        refused += 1;
+      }
+    }
+    expect(refused).toBe(0);
+    // The full message rate, for as long, overruns at its share.
+    const share = (MAX_REPLAY_CHARS - REPLAY_RESERVE_CHARS) / 8;
+    const spent = admitted(budget, 1000, MESSAGES_PER_SECOND, seconds);
+    expect(spent).toBeLessThanOrEqual(share);
+    expect(spent).toBeGreaterThan(share - 1000);
   });
 
   it("refuses what a slot cannot pay for and spends nothing on it", () => {
