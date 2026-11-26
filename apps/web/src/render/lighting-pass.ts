@@ -407,7 +407,7 @@ export function lightMapCover(
  * under it (#3312), or any deck whose drawn box meets a tunnel's cover,
  * cut away with it (#3352). In doubt, it fades.
  */
-function deckFades(structure: MapStructure, deck: MapStructure["decks"][number]): boolean {
+export function deckFades(structure: MapStructure, deck: MapStructure["decks"][number]): boolean {
   if (FADING_TOP_LOOKS.has(deck.look)) {
     return true;
   }

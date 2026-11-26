@@ -10,7 +10,7 @@ import {
 import arUi from "../apps/web/src/i18n/locales/ar/ui.js";
 import deUi from "../apps/web/src/i18n/locales/de/ui.js";
 import { DEFAULT_STEP, zoomFor } from "../apps/web/src/render/camera-rig.js";
-import { vignetteAlpha } from "../apps/web/src/render/vignette.js";
+import { vignetteAlpha } from "../apps/web/src/render/vignette-model.js";
 import { stackOverheadRise } from "../apps/web/src/render/sprite-stack.js";
 import { STORAGE_NAMESPACE } from "./helpers/base.js";
 import { chooseProfession, professionField } from "./helpers/professions.js";
