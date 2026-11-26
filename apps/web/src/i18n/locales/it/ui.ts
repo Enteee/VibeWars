@@ -11,6 +11,7 @@ export default {
     "Apri il link del relay in una scheda separata. Non è stato salvato nulla.",
   "app.inviteInLobby": "Torna al menu, poi apri di nuovo il link d'invito.",
   "app.lostMatch": "Connessione alla partita persa.",
+  "app.rejoinFailed": "Impossibile rientrare nella partita: il tuo posto non è stato tenuto.",
   "app.malformedRelayLink": "Il link del relay non è valido. Non è stato salvato nulla.",
   "app.ownLobby": "Questa è la tua lobby",
 

@@ -15,6 +15,7 @@ export const en = {
   "app.framedRelayLink": "Open the relay link in its own tab. Nothing was saved.",
   "app.inviteInLobby": "Go back to the menu, then open the invite link again.",
   "app.lostMatch": "Lost the connection to the match.",
+  "app.rejoinFailed": "Could not rejoin the match: your seat was not held.",
   "app.malformedRelayLink": "That relay link is not valid. Nothing was saved.",
   "app.ownLobby": "That is your own lobby",
 

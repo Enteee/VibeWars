@@ -10,6 +10,7 @@ export default {
   "app.framedRelayLink": "Relay bağlantısını kendi sekmesinde aç. Hiçbir şey kaydedilmedi.",
   "app.inviteInLobby": "Menüye dön, sonra davet bağlantısını yeniden aç.",
   "app.lostMatch": "Maçla bağlantı koptu.",
+  "app.rejoinFailed": "Maça geri dönülemedi: yerin tutulmadı.",
   "app.malformedRelayLink": "Bu relay bağlantısı geçersiz. Hiçbir şey kaydedilmedi.",
   "app.ownLobby": "Bu senin lobin",
 

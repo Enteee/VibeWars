@@ -124,7 +124,8 @@ og en liste over, hvem der er i den; mærket tæller dem.
   **Lobby**, og dets **Forlad** tager dig tilbage til en frisk lobby af
   din egen med et nyt invitationslink. Et link, der åbnes på en lobbys
   skærm eller i en kamp, beder dig gå tilbage til menuen først. Hvis din
-  forbindelse ryger, holdes din plads i 30 sekunder.
+  forbindelse ryger, eller du genindlæser eller genåbner siden, holdes
+  din plads i 30 sekunder, og du bliver sat ind på den igen.
 - **Fjern nogen:** som vært trykker du på **×** ud for en spillers navn i
   Lobby-vinduet, uden for en kamp. De får at vide, at værten fjernede
   dem, får en frisk lobby af deres egen og kan ikke komme ind i din igen,

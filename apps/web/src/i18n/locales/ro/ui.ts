@@ -10,6 +10,7 @@ export default {
   "app.framedRelayLink": "Deschide linkul de releu într-o filă proprie. Nu s-a salvat nimic.",
   "app.inviteInLobby": "Întoarce-te la meniu, apoi deschide din nou linkul de invitație.",
   "app.lostMatch": "Conexiunea cu meciul s-a pierdut.",
+  "app.rejoinFailed": "Nu te-ai putut reconecta la meci: locul tău nu a fost păstrat.",
   "app.malformedRelayLink": "Linkul de releu nu este valid. Nu s-a salvat nimic.",
   "app.ownLobby": "Acesta e lobby-ul tău",
 

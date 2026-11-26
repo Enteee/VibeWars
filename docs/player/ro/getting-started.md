@@ -122,7 +122,8 @@ cu cine e în el; insigna îi numără.
   După ce ai intrat, fereastra Lobby spune **Lobby**, iar **Ieși** din ea te duce
   înapoi la un lobby nou al tău, cu un nou link de invitație. Un link deschis pe
   ecranul unui lobby sau într-un meci îți cere să te întorci mai întâi la meniu. Dacă
-  îți cade conexiunea, locul tău e păstrat 30 de secunde.
+  îți cade conexiunea sau reîncarci ori redeschizi pagina, locul tău e păstrat 30 de
+  secunde și ești pus înapoi pe el.
 - **Elimină pe cineva:** ca gazdă, apasă **×** de lângă numele unui jucător în
   fereastra Lobby, în afara unui meci. I se spune că gazda l-a eliminat, primește un
   lobby nou al lui și nu poate reveni în al tău cât timp acesta există.

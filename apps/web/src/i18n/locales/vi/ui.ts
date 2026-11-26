@@ -10,6 +10,7 @@ export default {
   "app.framedRelayLink": "Hãy mở link relay trong tab riêng. Chưa có gì được lưu.",
   "app.inviteInLobby": "Hãy về menu rồi mở lại link mời.",
   "app.lostMatch": "Mất kết nối với trận đấu.",
+  "app.rejoinFailed": "Không thể vào lại trận: chỗ của bạn đã không được giữ.",
   "app.malformedRelayLink": "Link relay này không hợp lệ. Chưa có gì được lưu.",
   "app.ownLobby": "Đây là sảnh của bạn",
 

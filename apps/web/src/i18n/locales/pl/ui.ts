@@ -10,6 +10,7 @@ export default {
   "app.framedRelayLink": "Otwórz link przekaźnika w osobnej karcie. Nic nie zapisano.",
   "app.inviteInLobby": "Wróć do menu i ponownie otwórz link z zaproszeniem.",
   "app.lostMatch": "Utracono połączenie z meczem.",
+  "app.rejoinFailed": "Nie udało się wrócić do meczu: twoje miejsce nie zostało zachowane.",
   "app.malformedRelayLink": "Ten link przekaźnika jest nieprawidłowy. Nic nie zapisano.",
   "app.ownLobby": "To twoje własne lobby",
 

@@ -10,6 +10,7 @@ export default {
   "app.framedRelayLink": "请在单独的标签页中打开中继链接。未保存任何内容。",
   "app.inviteInLobby": "请返回菜单，然后重新打开邀请链接。",
   "app.lostMatch": "与对局的连接已断开。",
+  "app.rejoinFailed": "无法重新加入对局：你的位置没有被保留。",
   "app.malformedRelayLink": "该中继链接无效。未保存任何内容。",
   "app.ownLobby": "这是你自己的大厅",
 

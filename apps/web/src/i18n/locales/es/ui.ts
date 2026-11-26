@@ -10,6 +10,7 @@ export default {
   "app.framedRelayLink": "Abre el enlace del relay en su propia pestaña. No se guardó nada.",
   "app.inviteInLobby": "Vuelve al menú y abre de nuevo el enlace de invitación.",
   "app.lostMatch": "Se perdió la conexión con la partida.",
+  "app.rejoinFailed": "No se pudo volver a la partida: tu puesto no se guardó.",
   "app.malformedRelayLink": "Ese enlace de relay no es válido. No se guardó nada.",
   "app.ownLobby": "Esa es tu propia sala",
 

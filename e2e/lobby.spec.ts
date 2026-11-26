@@ -508,6 +508,76 @@ test("a lobby match shows the score, the clock and both fighters", async ({ brow
   }
 });
 
+/** The key the rejoin record is kept under (#4110), whatever the build's storage namespace. */
+async function rejoinKey(page: Page): Promise<string> {
+  const found = await page.evaluate(() =>
+    Object.keys(localStorage).find((name) => name.endsWith(".rejoin")),
+  );
+  expect(found, "the guest's page should leave a rejoin record").toBeDefined();
+  return found ?? "";
+}
+
+test("a guest whose page reloads mid-match is put back in its seat (#4110)", async ({
+  browser,
+}) => {
+  test.slow();
+  const { context, pages } = await openPeers(browser, 2);
+  const [host, guest] = pages as [Page, Page];
+
+  try {
+    await startTwoPlayerMatch(host, guest);
+    // Closing or reloading still asks first: the player says yes.
+    guest.on("dialog", (dialog) => void dialog.accept());
+    await guest.reload();
+
+    // No menu: the countdown, then the same seat in the same match.
+    await expect(guest.locator(".reconnect-overlay")).toBeVisible();
+    await expect(guest.locator(".hud-scoreboard")).toContainText("1 v 1", { timeout: 25_000 });
+    await expect(guest.locator(".reconnect-overlay:visible")).toHaveCount(0);
+    await expect(guest.locator(".screen-rail")).toHaveCount(0);
+    await expect(host.locator(".hud-scoreboard")).toContainText("1 v 1");
+    // Taken as it was read: no other page tries it.
+    expect(
+      await guest.evaluate(() => Object.keys(localStorage).some((k) => k.endsWith(".rejoin"))),
+    ).toBe(false);
+  } finally {
+    await context.close();
+  }
+});
+
+test("a guest back after its seat's hold lands on the menu, told once (#4110)", async ({
+  browser,
+}) => {
+  test.slow();
+  const { context, pages } = await openPeers(browser, 2);
+  const [host, guest] = pages as [Page, Page];
+
+  try {
+    await startTwoPlayerMatch(host, guest);
+    guest.on("dialog", (dialog) => void dialog.accept());
+    await guest.goto("about:blank");
+    // The hold as good as over, and a seat that does not prove (no test
+    // hook shortens the host's window): the record says so, as one would.
+    const name = await rejoinKey(host);
+    await host.evaluate((key) => {
+      const record = JSON.parse(localStorage.getItem(key) ?? "{}") as Record<string, unknown>;
+      localStorage.setItem(
+        key,
+        JSON.stringify({ ...record, lobbyToken: "not-the-token", expiresAt: Date.now() + 3000 }),
+      );
+    }, name);
+
+    await guest.goto("./");
+    await expect(guest.locator(".reconnect-overlay")).toBeVisible();
+    await expect(
+      guest.getByText("Could not rejoin the match: your seat was not held."),
+    ).toHaveCount(1, { timeout: 15_000 });
+    await expect(guest.locator(".reconnect-overlay:visible")).toHaveCount(0);
+  } finally {
+    await context.close();
+  }
+});
+
 test("a player who quits early is told the match still runs, until it ends", async ({
   browser,
 }) => {

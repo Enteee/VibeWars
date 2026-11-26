@@ -90,6 +90,7 @@ import {
 } from "./transport/index.js";
 import type { NostrQueue } from "./transport/nostr-queue.js";
 import { relayRoomsSwitch } from "./relay-room.js";
+import { type RejoinRecord, writeRejoinRecord } from "./rejoin-record.js";
 import type { RelayHold } from "./transport/relay-offer.js";
 import { receiptCrypto, verifyPlayerProof } from "./transport/player-key.js";
 import { rankedWork } from "./transport/ranked-work.js";
@@ -459,10 +460,41 @@ export async function hostLobby(
   }
 }
 
+/** The match each guest's lobby plays now (#4110), for its page's `pagehide`. */
+const playing = new WeakMap<
+  LobbyConnection,
+  { readonly matchId: string; readonly connection: PeerMatchConnection }
+>();
+
+/**
+ * What a page going away from `lobby`, whose code is `code`, leaves for
+ * the next one to take its seat back (#4110): only while its match runs,
+ * and once the host gave both tokens.
+ */
+function rejoinRecordOf(
+  lobby: LobbyConnection,
+  code: string,
+): Omit<RejoinRecord, "expiresAt"> | undefined {
+  const now = playing.get(lobby);
+  const ticket = lobby.returnTicket();
+  if (now === undefined || ticket === undefined || lobby.watchMatch()?.matchId !== now.matchId) {
+    return undefined;
+  }
+  return {
+    code,
+    hostId: ticket.hostId,
+    matchId: now.matchId,
+    playerId: now.connection.selfSessionId,
+    lobbyToken: ticket.token,
+    matchToken: now.connection.rejoinToken,
+  };
+}
+
 /**
  * Join the lobby `code` names, hosted on another peer's browser; with
  * `queued`, a Random Arena group's lobby in the group's room, `code` the
- * group's id.
+ * group's id. With `rejoin`, a page back from a reload takes its seat
+ * back (#4110), and gives up when the host's hold does.
  */
 export async function joinLobbyByCode(
   code: string,
@@ -471,6 +503,7 @@ export async function joinLobbyByCode(
   playerKey: PlayerKey,
   queued?: QueuedSeat,
   ranked?: RankedPlay,
+  rejoin?: RejoinRecord,
 ): Promise<LobbyConnection> {
   // Refused before any derivation or relay traffic.
   if (queued === undefined && !isLobbyCode(code)) {
@@ -480,10 +513,19 @@ export async function joinLobbyByCode(
     queued === undefined ? await deriveLobbyRoom(code) : publicRoom(queued.group.room);
   // Best effort, as a host's: a page going away frees its seat now, rather
   // than having it held as for a drop (#1764). Added before the room
-  // exists, so it runs before the transport's own pagehide leave.
+  // exists, so it runs before the transport's own pagehide leave. In a
+  // coded lobby's match, the seat is held and the next page takes it
+  // back (#4110); a queued room's is not.
   let joined: LobbyConnection | undefined;
   const onPageHide = (): void => {
-    void joined?.disconnect();
+    const record =
+      joined === undefined || queued !== undefined ? undefined : rejoinRecordOf(joined, code);
+    if (record === undefined) {
+      void joined?.disconnect();
+      return;
+    }
+    writeRejoinRecord(record, Date.now());
+    void joined?.leaveAsDrop();
   };
   window.addEventListener("pagehide", onPageHide);
   const guest = joinGuestRoom(lobbyRoom);
@@ -501,9 +543,13 @@ export async function joinLobbyByCode(
       claim: () => leaderboard.claim(playerKey.pubkey),
       cosmetics: signSelection(playerKey, cosmeticsStore.choice(), Date.now()),
       ...guild,
-      timeoutMs: JOIN_TIMEOUT_MS,
+      timeoutMs:
+        rejoin === undefined ? JOIN_TIMEOUT_MS : Math.max(0, rejoin.expiresAt - Date.now()),
       ...(queued === undefined ? { roomId: lobbyRoom.roomId } : { queued }),
       ...(ranked === undefined ? {} : { ranked }),
+      ...(rejoin === undefined
+        ? {}
+        : { rejoin: { hostId: rejoin.hostId, token: rejoin.lobbyToken } }),
     });
     guest.reached(joined.getSnapshot().hostId);
     joined.onRelayOffers(({ holders }) => {
@@ -1185,14 +1231,19 @@ function wireBuild(build: PlayerBuild | undefined): JsonValue {
   return build === undefined ? null : (JSON.parse(JSON.stringify(build)) as JsonValue);
 }
 
-/** Play the lobby's match `start` announced, as `name` of `guild`, with `build`. */
-export function connectMatchFor(
+/**
+ * Play the lobby's match `start` announced, as `name` of `guild`, with
+ * `build`; with `rejoin`, a page back from a reload takes the seat it
+ * held back (#4110).
+ */
+export async function connectMatchFor(
   lobby: LobbyConnection,
   start: MatchStarting,
   name: string,
   guild: Guild,
   build: PlayerBuild | undefined,
   keepReplay: (recorded: RecordedReplay) => void,
+  rejoin?: RejoinRecord,
 ): Promise<PeerMatchConnection> {
   const hello: PeerHello = {
     protocolVersion: PROTOCOL_VERSION,
@@ -1201,13 +1252,18 @@ export function connectMatchFor(
     build: wireBuild(build),
     rejoin: null,
   };
-  return connectMatch({
+  const connection = await connectMatch({
     transport: start.transport,
     hostId: lobby.getSnapshot().hostId,
     hello,
     timeoutMs: MATCH_TIMEOUT_MS,
     replays: { sha256, keep: keepReplay },
+    ...(rejoin === undefined
+      ? {}
+      : { rejoin: { playerId: rejoin.playerId, token: rejoin.matchToken } }),
   });
+  playing.set(lobby, { matchId: start.matchId, connection });
+  return connection;
 }
 
 /** Watch the lobby's match `watch` names (#480), from no team. */

@@ -10,6 +10,7 @@ export default {
   "app.framedRelayLink": "Otvor odkaz na relé vo vlastnej karte. Nič sa neuložilo.",
   "app.inviteInLobby": "Vráť sa do menu a znova otvor pozývací odkaz.",
   "app.lostMatch": "Spojenie so zápasom sa stratilo.",
+  "app.rejoinFailed": "Do zápasu sa nepodarilo vrátiť: tvoje miesto nebolo podržané.",
   "app.malformedRelayLink": "Tento odkaz na relé je neplatný. Nič sa neuložilo.",
   "app.ownLobby": "To je tvoje vlastné lobby",
 

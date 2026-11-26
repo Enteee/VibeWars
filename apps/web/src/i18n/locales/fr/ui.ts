@@ -10,6 +10,7 @@ export default {
   "app.framedRelayLink": "Ouvre le lien du relais dans son propre onglet. Rien n'a été enregistré.",
   "app.inviteInLobby": "Reviens au menu, puis rouvre le lien d'invitation.",
   "app.lostMatch": "Connexion au match perdue.",
+  "app.rejoinFailed": "Impossible de rejoindre le match : ta place n'a pas été gardée.",
   "app.malformedRelayLink": "Ce lien de relais n'est pas valide. Rien n'a été enregistré.",
   "app.ownLobby": "C'est ton propre salon",
 

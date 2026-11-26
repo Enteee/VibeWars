@@ -10,6 +10,7 @@ export default {
   "app.framedRelayLink": "Otvori poveznicu releja u zasebnoj kartici. Ništa nije spremljeno.",
   "app.inviteInLobby": "Vrati se u izbornik pa ponovno otvori pozivnicu.",
   "app.lostMatch": "Veza s mečem je izgubljena.",
+  "app.rejoinFailed": "Povratak u meč nije uspio: tvoje mjesto nije zadržano.",
   "app.malformedRelayLink": "Ta poveznica releja nije valjana. Ništa nije spremljeno.",
   "app.ownLobby": "To je tvoja soba",
 

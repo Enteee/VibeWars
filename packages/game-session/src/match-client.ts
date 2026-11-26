@@ -246,7 +246,11 @@ interface Recharges {
 }
 
 export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchConnection> {
-  const { transport, hostId, hello, timeoutMs } = options;
+  const { transport, hostId, timeoutMs } = options;
+  const hello: PeerHello =
+    options.rejoin === undefined
+      ? options.hello
+      : { ...options.hello, rejoin: { playerId: options.rejoin.playerId } };
   const unsubscribe: (() => void)[] = [];
   let welcomed: PeerWelcome | undefined;
   let skillBar: WireSkillBar | undefined;

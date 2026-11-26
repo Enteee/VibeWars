@@ -10,6 +10,7 @@ export default {
   "app.framedRelayLink": "Åbn relay-linket i sin egen fane. Intet blev gemt.",
   "app.inviteInLobby": "Gå tilbage til menuen, og åbn invitationslinket igen.",
   "app.lostMatch": "Forbindelsen til kampen blev afbrudt.",
+  "app.rejoinFailed": "Kunne ikke vende tilbage til kampen: din plads blev ikke holdt.",
   "app.malformedRelayLink": "Det relay-link er ikke gyldigt. Intet blev gemt.",
   "app.ownLobby": "Det er din egen lobby",
 

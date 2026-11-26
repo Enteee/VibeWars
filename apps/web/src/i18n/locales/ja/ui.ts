@@ -10,6 +10,7 @@ export default {
   "app.framedRelayLink": "リレーリンクは別のタブで開いてください。何も保存されていません。",
   "app.inviteInLobby": "メニューに戻ってから、招待リンクをもう一度開いてください。",
   "app.lostMatch": "マッチとの接続が切れました。",
+  "app.rejoinFailed": "マッチに戻れませんでした: 席は確保されていませんでした。",
   "app.malformedRelayLink": "このリレーリンクは無効です。何も保存されていません。",
   "app.ownLobby": "自分のロビーです",
 
