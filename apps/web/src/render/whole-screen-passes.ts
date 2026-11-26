@@ -16,13 +16,13 @@ export const WHOLE_SCREEN_PASSES = ["vignette", "deck-vignette"] as const;
 
 export type WholeScreenPass = (typeof WHOLE_SCREEN_PASSES)[number];
 
-const BARE_REFERENCE =
+/**
+ * Whether this is the bench's build, whose reference map is drawn bare.
+ * `structureOf` tells that map by its file's id, never by a literal: the
+ * player build must hold no trace of the bench's maps, sourcemaps included.
+ */
+export const BARE_REFERENCE =
   typeof __VIBEWARS_BENCH_BARE_REFERENCE__ !== "undefined" && __VIBEWARS_BENCH_BARE_REFERENCE__;
-
-/** Whether map `mapId` is drawn bare: the bench's reference map, in the bench's build only. */
-export function drawnBare(mapId: string): boolean {
-  return BARE_REFERENCE && mapId === "bench-reference";
-}
 
 /** The whole-screen passes `structure` is drawn with: none when bare, every one elsewhere. */
 export function wholeScreenPasses(structure: MapStructure): readonly WholeScreenPass[] {

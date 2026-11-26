@@ -1,10 +1,14 @@
 import benchReference from "@vibewars/game-maps/bench/reference-map.json" with { type: "json" };
+import scarredEarth from "@vibewars/game-maps/maps/scarred-earth/map.json" with { type: "json" };
 import { validateMapData } from "@vibewars/game-maps/schema";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { structureOf } from "../net/maps.js";
 import { FLAT_STRUCTURE } from "./arena-snapshot.js";
-import { drawnBare, WHOLE_SCREEN_PASSES, wholeScreenPasses } from "./whole-screen-passes.js";
+import { WHOLE_SCREEN_PASSES, wholeScreenPasses } from "./whole-screen-passes.js";
+
+const reference = validateMapData(benchReference);
+const arena = validateMapData(scarredEarth);
 
 describe("the render bench's bare reference map (#4129)", () => {
   afterEach(() => {
@@ -13,8 +17,7 @@ describe("the render bench's bare reference map (#4129)", () => {
   });
 
   it("is off in a build without VIBEWARS_BENCH_BARE_REFERENCE", () => {
-    expect(drawnBare("bench-reference")).toBe(false);
-    const { structure } = structureOf(validateMapData(benchReference));
+    const { structure } = structureOf(reference);
     expect(structure.bare).toBeUndefined();
     expect(wholeScreenPasses(structure)).toEqual(WHOLE_SCREEN_PASSES);
   });
@@ -22,10 +25,9 @@ describe("the render bench's bare reference map (#4129)", () => {
   it("draws only the reference map bare in the bench's build", async () => {
     vi.stubGlobal("__VIBEWARS_BENCH_BARE_REFERENCE__", true);
     vi.resetModules();
-    const bench = await import("./whole-screen-passes.js");
-    expect(bench.drawnBare("bench-reference")).toBe(true);
-    expect(bench.drawnBare("bench-flat")).toBe(false);
-    expect(bench.drawnBare("scarred-earth")).toBe(false);
+    const bench = await import("../net/maps.js");
+    expect(bench.structureOf(reference).structure.bare).toBe(true);
+    expect(bench.structureOf(arena).structure.bare).toBeUndefined();
   });
 
   it("draws no whole-screen pass on a bare structure, every one elsewhere", () => {
