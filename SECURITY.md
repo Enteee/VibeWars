@@ -504,6 +504,17 @@ What it does not defend against:
   under its peer id is ignored, not refused, so a prober cannot tell the
   seat exists. A peer posing as the host could still relay a token; the
   match layer accepts the same residual.
+- A reloaded or reopened page takes its held seat back under a new peer id
+  (#4110). The host moves an away seat to the new id only when the join
+  carries that seat's lobby token and the same player key, and only after
+  that key's proof; before it, a token match only decides whether a challenge
+  is sent, under the same per-peer budget and proof cap. A join naming a
+  seat whose old page is still connected is ignored, never refused. The
+  match is entered through the rejoin challenge above. To survive the
+  reload, the guest keeps both tokens in `localStorage` for at most the
+  30 s hold, deleted as the next page reads them
+  (`apps/web/src/net/rejoin-record.ts`); that is within "Saves on Pages
+  are not isolated".
 - A peer id is not a credential either way. Trystero's peer id is a string
   the peer itself puts in its signalling, so a modified client can announce
   any id. When the host's peer drops mid-match (#515), a guest answers a
