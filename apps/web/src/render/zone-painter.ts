@@ -1,5 +1,6 @@
 import { pointInPolygon, type Vec2 } from "@vibewars/game-core";
 
+import { WATER_LOOK } from "./arena-palette.js";
 import type { MapZone, RenderableShape } from "./arena-snapshot.js";
 import { shapeOutline } from "./layer-surfaces.js";
 import { paintRipples } from "./water-painter.js";
@@ -58,6 +59,102 @@ const GROUND_ALPHA: Record<Exclude<ZonePainterId, "hazard">, number> = {
   grass: 0.96,
   spire: 1,
 };
+
+/**
+ * The liquid zones (#4062): the painters whose ground gets drifting
+ * Voronoi caustics. Water only: lava and mud are opaque, and keep
+ * their own ground.
+ */
+export const LIQUID_ZONES = ["foul-water", "tainted-water", "spring"] as const;
+export type LiquidZoneId = (typeof LIQUID_ZONES)[number];
+
+/**
+ * A liquid's caustics (#4062): the colour they add, the world units across
+ * one cell, and how bright they are at full strength.
+ */
+export interface ZoneCaustics {
+  readonly colour: number;
+  readonly cell: number;
+  readonly strength: number;
+}
+
+/** `colour` ("#rrggbb") as 0xRRGGBB. */
+function hex(colour: string): number {
+  return Number.parseInt(colour.slice(1), 16);
+}
+
+/**
+ * Each liquid's caustics in its own palette (#4062): texture inside the
+ * zone, never a new colour signal. Foul water's cells are the largest, a
+ * spring's, clear water's, the smallest.
+ */
+export const ZONE_CAUSTICS: Record<LiquidZoneId, ZoneCaustics> = {
+  "foul-water": { colour: hex(PALETTE["foul-water"].accent), cell: 34, strength: 1.3 },
+  "tainted-water": { colour: hex(PALETTE["tainted-water"].accent), cell: 30, strength: 1.1 },
+  spring: { colour: WATER_LOOK.shallow.cell, cell: 24, strength: 0.6 },
+};
+
+/** `painter`'s liquid, or none: a painter that is not a liquid has no caustics. */
+export function liquidOf(painter: ZonePainterId): LiquidZoneId | undefined {
+  return LIQUID_ZONES.find((liquid) => liquid === painter);
+}
+
+/**
+ * The caustics' fragment shader (#4062), drawn over a liquid zone's bounds:
+ * two Voronoi patterns whose sites wander, drifting different ways at
+ * different speeds; where both are far from a site, at the cells' edges,
+ * the light gathers, sharpened by the cube. Positions are the world's, so
+ * two zones of one liquid that meet show no seam. The zone's ground is the
+ * mask: its alpha keeps the light inside the outline.
+ *
+ * Uniforms: `uGround` the ground's texture, `uBounds` its left, top, width
+ * and height, `uCell` world units a cell, `uTime` seconds (still under
+ * reduced motion), `uColour` and `uAlpha`.
+ */
+export const CAUSTICS_FRAGMENT = `
+#pragma phaserTemplate(shaderName)
+#ifdef GL_FRAGMENT_PRECISION_HIGH
+precision highp float;
+#else
+precision mediump float;
+#endif
+varying vec2 outTexCoord;
+uniform sampler2D uGround;
+uniform vec4 uBounds;
+uniform float uCell;
+uniform float uTime;
+uniform vec3 uColour;
+uniform float uAlpha;
+
+vec2 hash2(vec2 p) {
+  return fract(sin(vec2(dot(p, vec2(127.1, 311.7)), dot(p, vec2(269.5, 183.3)))) * 43758.5453);
+}
+
+float voronoi(vec2 x, float t) {
+  vec2 n = floor(x);
+  vec2 f = fract(x);
+  float nearest = 8.0;
+  for (int j = -1; j <= 1; j++) {
+    for (int i = -1; i <= 1; i++) {
+      vec2 g = vec2(float(i), float(j));
+      vec2 o = 0.5 + 0.5 * sin(t + 6.2831 * hash2(n + g));
+      vec2 r = g + o - f;
+      nearest = min(nearest, dot(r, r));
+    }
+  }
+  return sqrt(nearest);
+}
+
+void main() {
+  vec2 world = uBounds.xy + vec2(outTexCoord.x, 1.0 - outTexCoord.y) * uBounds.zw;
+  vec2 uv = world / uCell;
+  float v1 = voronoi(uv + uTime * 0.2, uTime * 1.5);
+  float v2 = voronoi(uv * 1.2 - uTime * 0.15, uTime * 1.2);
+  float light = min(pow(min(v1, v2), 3.0) * 2.5, 1.0);
+  float mask = texture2D(uGround, outTexCoord).a * uAlpha;
+  gl_FragColor = vec4(uColour * light * mask, 0.0);
+}
+`;
 
 /** A speck that glows or twinkles on its own beat: an ember, a sparkle, a bubble. */
 export interface ZoneSpeck {
@@ -273,7 +370,8 @@ export function groundArtOf(
     phase: random(),
     periodSeconds,
   });
-  const watery = painter === "foul-water" || painter === "tainted-water" || painter === "spring";
+  // A spring stays clear (#4062): no ripple lines, no sparkles, only its cells.
+  const murky = painter === "foul-water" || painter === "tainted-water";
   return {
     painter,
     outline,
@@ -291,15 +389,11 @@ export function groundArtOf(
         ? scatter(random, outline, bounds, Math.round(area / 260), 3).map((at) =>
             speck(at, 1 + random() * 1.4, 2 + random() * 2.5),
           )
-        : painter === "spring"
-          ? scatter(random, outline, bounds, Math.round(area / 1100), 6).map((at) =>
-              speck(at, 2 + random(), 2.5 + random() * 2),
+        : painter === "mud"
+          ? scatter(random, outline, bounds, Math.round(area / 1300), 6).map((at) =>
+              speck(at, 2.5 + random() * 1.5, 3 + random() * 2.5),
             )
-          : painter === "mud"
-            ? scatter(random, outline, bounds, Math.round(area / 1300), 6).map((at) =>
-                speck(at, 2.5 + random() * 1.5, 3 + random() * 2.5),
-              )
-            : [],
+          : [],
     puffs:
       painter === "fog"
         ? scatter(random, outline, bounds, Math.round(area / 700), 14 + ZONE_DRIFT).map((at) => ({
@@ -308,7 +402,7 @@ export function groundArtOf(
             phase: random(),
           }))
         : [],
-    ripples: watery ? ripplesIn(outline, ZONE_RIPPLE_SPACING) : [],
+    ripples: murky ? ripplesIn(outline, ZONE_RIPPLE_SPACING) : [],
   };
 }
 
@@ -752,7 +846,7 @@ function paintObelisk(painter: ZoneMotionPainter, foot: Vec2, line: number, glow
 /**
  * `art`'s moving marks at render time `seconds`: lava beads running down
  * its cracks, embers glowing and fading, fog puffs drifting, mud
- * bubbles, ripples, a spring's sparkles, the spire's rings sinking into
+ * bubbles, murky water's ripples, the spire's rings sinking into
  * its obelisk. `line` is 1 CSS px in world units. Under still motion each
  * holds where it is: texture and light stay, drift and flow stop.
  */
@@ -835,20 +929,7 @@ export function paintZoneMotion(
     case "tainted-water":
       paintRipples(painter, art.ripples, line, seconds, still, 0xc8b84a, 0.45);
       break;
-    case "spring": {
-      paintRipples(painter, art.ripples, line, seconds, still, 0xe8faff, 0.6);
-      for (const speck of art.specks) {
-        const twinkle = still
-          ? 0.6
-          : Math.max(0, Math.sin(beat(speck.phase, speck.periodSeconds, seconds, still) * Math.PI));
-        const { x, y } = speck.at;
-        const arm = speck.size * (0.5 + 0.5 * twinkle);
-        painter.lineStyle(line, 0xffffff, twinkle);
-        painter.lineBetween(x - arm, y, x + arm, y);
-        painter.lineBetween(x, y - arm, x, y + arm);
-      }
-      break;
-    }
+    case "spring":
     case "grass":
       break;
     case "spire": {

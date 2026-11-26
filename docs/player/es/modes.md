@@ -238,7 +238,7 @@ tu equipo no controla el altar, cada bot mata primero al Héroe Fantasmal del ot
 equipo en cuanto esté sobre el altar a su alcance: es el único enemigo que impide
 que tu fantasma lo reclame.
 
-Se juega en Threefold Keep (4v4 y 8v8, 5000x4400): una fortaleza sobre una colina en las alturas, para tres equipos. Sube al adarve por las escaleras junto a tu puerta y cruza una calzada hasta la colina; luego sube al altar en la torre. Una palanca en cada patio abre las cuatro puertas: el paso de tu puerta bajo la muralla, y la cripta, el camino largo bajo la colina.
+Se juega en Threefold Keep (4v4 y 8v8, 5000x4400): una fortaleza sobre una colina en las alturas, para tres equipos. Sube al adarve por las escaleras junto a tu puerta y cruza una calzada hasta la colina; luego sube al altar en la torre. Una palanca en cada patio abre las tres puertas, los pasos bajo la muralla.
 
 ## Puntos de captura
 

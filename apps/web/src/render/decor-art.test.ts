@@ -59,7 +59,7 @@ describe("decor art (#4013)", () => {
   });
 
   it("casts every standing prop's shadow toward +x +y, from the north-west light", () => {
-    const flat = ["cinders", "bones", "cairn"];
+    const flat = ["cinders", "bones", "cairn", "snowdrift"];
     for (const kind of DECOR_KINDS.filter((kind) => !flat.includes(kind))) {
       const shadow = decorShadow(prop(kind));
       expect(shadow.kind).toBe("ellipse");
@@ -97,6 +97,34 @@ describe("decor art (#4013)", () => {
           expect(command.rx).toBeLessThanOrEqual(3);
           expect(Math.abs(command.at.x - 400)).toBeLessThan(60);
           expect(Math.abs(command.at.y - 300)).toBeLessThan(30);
+        }
+      }
+    }
+  });
+
+  it("lays a snowdrift flat, 100 u across at scale 1, matte and unlit (#4022)", () => {
+    expect(decorShadow(prop("snowdrift"))).toMatchObject({
+      kind: "ellipse",
+      at: { x: 400, y: 300 },
+    });
+    expect(animatedDecor("snowdrift")).toBe(false);
+    const { decor } = BIOME.snow;
+    for (const variant of [0, 1, 2, 3]) {
+      const commands = decorCommands(
+        { ...prop("snowdrift", variant), rotation: 0 },
+        decor,
+        0,
+        true,
+      );
+      const xs = commands.flatMap((command) =>
+        command.kind === "ellipse" ? [command.at.x - command.rx, command.at.x + command.rx] : [],
+      );
+      expect(Math.max(...xs) - Math.min(...xs)).toBeLessThanOrEqual(105);
+      expect(Math.max(...xs) - Math.min(...xs)).toBeGreaterThan(70);
+      for (const command of commands) {
+        if (command.kind === "ellipse" || command.kind === "poly") {
+          expect(command.glow).toBe(false);
+          expect([decor.snow, decor.snowLit, decor.snowShade]).toContain(command.colour);
         }
       }
     }

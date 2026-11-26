@@ -241,7 +241,7 @@ dostrel kúzla. Kým tvoj tím nedrží oltár, každý bot zabije Prízračnéh
 druhého tímu ako prvého, keď stojí na oltári v ich dosahu:
 je to ten jediný nepriateľ, ktorý tvojmu prízraku bráni si ho nárokovať.
 
-Hrá sa na Threefold Keep (4v4 a 8v8, 5000x4400): pevnosť na kopci vo vysočine, pre tri tímy. Vystúp po schodoch vedľa svojej brány na ochodzu hradieb a prejdi po hrádzi na kopec, potom vyšplhaj k oltáru na veži. Páka na každom nádvorí otvorí všetky štyri brány: priechod tvojou bránou pod hradbou a podzemie, dlhú cestu pod kopcom.
+Hrá sa na Threefold Keep (4v4 a 8v8, 5000x4400): pevnosť na kopci vo vysočine, pre tri tímy. Vystúp po schodoch vedľa svojej brány na ochodzu hradieb a prejdi po hrádzi na kopec, potom vyšplhaj k oltáru na veži. Páka na každom nádvorí otvorí všetky tri brány, priechody pod hradbou.
 
 ## Dobývanie bodov
 

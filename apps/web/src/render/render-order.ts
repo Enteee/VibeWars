@@ -19,7 +19,7 @@ export type CharacterPart = "body" | "figure" | "badge" | "glyph" | "marks" | "b
 export type WaterPart = "surface" | "cells" | "ripples";
 
 /** An effect zone's parts (#3052): its painted ground, then its moving marks and edge. */
-export type ZonePart = "ground" | "marks";
+export type ZonePart = "ground" | "cells" | "marks";
 /** A decor prop's parts (#4013): its shadow, its low strokes, then what stands tall. */
 export type DecorPart = "shadow" | "low" | "tall";
 /**
@@ -45,6 +45,7 @@ export type RenderItem =
   | { readonly kind: "plume"; readonly band: number }
   | { readonly kind: "weather" }
   | { readonly kind: "vignette" }
+  | { readonly kind: "deck-vignette"; readonly deckLayer: number }
   | { readonly kind: "terrain" }
   | { readonly kind: "lighting"; readonly layer: number }
   | { readonly kind: "lit-ground-effect" }
@@ -173,12 +174,18 @@ const DECK_COSMETIC = 5.75;
  */
 const VIGNETTE = -1.02;
 /**
+ * The vignette on a layer's deck tops (#4070): over the deck and what is
+ * laid on it, as the ground's is over the ground, under its lighting and
+ * every gameplay layer standing on it.
+ */
+const DECK_VIGNETTE = 5.77;
+/**
  * An effect zone (ADR-0053): over its layer's water and lighting, which
  * never darkens it (ADR-0052: what matters to the fight is drawn unlit),
  * and under its torches and whoever stands in it.
  */
-const GROUND_ZONE: Record<ZonePart, number> = { ground: 0.53, marks: 0.55 };
-const DECK_ZONE: Record<ZonePart, number> = { ground: 5.83, marks: 5.85 };
+const GROUND_ZONE: Record<ZonePart, number> = { ground: 0.53, cells: 0.54, marks: 0.55 };
+const DECK_ZONE: Record<ZonePart, number> = { ground: 5.83, cells: 5.84, marks: 5.85 };
 /**
  * A fog bank (#3032): over its layer's ground, water, light and zones,
  * under its wards, torches and whoever stands in it, so the haze never
@@ -260,6 +267,8 @@ export function renderOrder(item: RenderItem): number {
       return WEATHER;
     case "vignette":
       return VIGNETTE;
+    case "deck-vignette":
+      return (item.deckLayer - 1) * LAYER_STACK + DECK_VIGNETTE;
     case "cosmetic-ground":
       return item.layer === 0 ? GROUND_COSMETIC : (item.layer - 1) * LAYER_STACK + DECK_COSMETIC;
     case "ground-effect":

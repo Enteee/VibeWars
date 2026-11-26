@@ -5,7 +5,7 @@ import { loadMap } from "./loader.js";
 import { mapSimulationFields } from "./match-fields.js";
 import { mapNavGraphs } from "./nav-graphs.js";
 
-/** The maps with decor (#4013, #4017, #4021). */
+/** The maps with decor (#4013, #4017, #4021, #4022). */
 const DECORATED = [
   "ashen-courtyard",
   "hall-of-heroes-capture",
@@ -18,6 +18,11 @@ const DECORATED = [
   "broken-tower",
   "hollow-deep",
   "guild-hall-isle",
+  "elonian-plateau",
+  "shiverpeak-pass",
+  "frozen-crossing",
+  "arena-canyon",
+  "sandstone-steps",
 ];
 
 describe.each(DECORATED)("decor on %s (#4013)", (mapId) => {

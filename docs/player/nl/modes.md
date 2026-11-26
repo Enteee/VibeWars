@@ -238,7 +238,7 @@ houdt, doodt elke bot eerst de Spookheld van het andere team zodra die binnen hu
 bereik op het altaar staat: dat is de enige vijand die je geest ervan weerhoudt het
 te claimen.
 
-Threefold Keep speelt het (4v4 en 8v8, 5000x4400): een burcht op een heuvel in het hoogland, voor drie teams. Klim via de trap naast je poort de weergang op en steek over een dam naar de heuvel over, en klim dan naar het altaar op de toren. Een hendel op elk binnenhof opent alle vier de poorten: je poortgang onder de muur, en de crypte, de lange weg onder de heuvel.
+Threefold Keep speelt het (4v4 en 8v8, 5000x4400): een burcht op een heuvel in het hoogland, voor drie teams. Klim via de trap naast je poort de weergang op en steek over een dam naar de heuvel over, en klim dan naar het altaar op de toren. Een hendel op elk binnenhof opent alle drie de poorten, de poortgangen onder de muur.
 
 ## Capture Points
 
