@@ -162,6 +162,8 @@ Broken Tower (4v4 and 8v8, 5400x2800) plays it: a fallen tower on a hill
 in the heights. Climb the rubble terraces by their stairs to the altar on
 the stump, or take the cellar under the hill once a lever on the terrace
 opens its doors; rubble walls can be broken.
+Beside each rubble wall, a portcullis opens while someone stands on its
+plate.
 
 ### Cinder Sanctum
 
