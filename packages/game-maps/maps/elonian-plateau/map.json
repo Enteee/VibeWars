@@ -2184,18 +2184,6 @@
       "id": "banner-1",
       "kind": "banner",
       "at": {
-        "x": 3182,
-        "y": 2048
-      },
-      "layer": 1,
-      "rotation": 101,
-      "scale": 0.91,
-      "variant": 1
-    },
-    {
-      "id": "banner-2",
-      "kind": "banner",
-      "at": {
         "x": 2218,
         "y": 620
       },
@@ -2205,19 +2193,7 @@
       "variant": 1
     },
     {
-      "id": "banner-3",
-      "kind": "banner",
-      "at": {
-        "x": 4191,
-        "y": 1744
-      },
-      "layer": 1,
-      "rotation": 337,
-      "scale": 0.85,
-      "variant": 1
-    },
-    {
-      "id": "banner-4",
+      "id": "banner-2",
       "kind": "banner",
       "at": {
         "x": 3101,
@@ -2229,28 +2205,52 @@
       "variant": 2
     },
     {
+      "id": "banner-3",
+      "kind": "banner",
+      "at": {
+        "x": 3375,
+        "y": 2354
+      },
+      "layer": 1,
+      "rotation": 353,
+      "scale": 1.15,
+      "variant": 1
+    },
+    {
+      "id": "banner-4",
+      "kind": "banner",
+      "at": {
+        "x": 4541,
+        "y": 2766
+      },
+      "layer": 1,
+      "rotation": 200,
+      "scale": 0.99,
+      "variant": 1
+    },
+    {
       "id": "banner-5",
       "kind": "banner",
       "at": {
-        "x": 3587,
-        "y": 1497
+        "x": 4687,
+        "y": 2594
       },
       "layer": 1,
-      "rotation": 10,
-      "scale": 0.9,
-      "variant": 3
+      "rotation": 47,
+      "scale": 0.89,
+      "variant": 2
     },
     {
       "id": "banner-6",
       "kind": "banner",
       "at": {
-        "x": 2431,
-        "y": 2032
+        "x": 3891,
+        "y": 991
       },
       "layer": 1,
-      "rotation": 68,
-      "scale": 1.17,
-      "variant": 0
+      "rotation": 114,
+      "scale": 1,
+      "variant": 2
     }
   ],
   "gates": [
