@@ -7130,9 +7130,18 @@ button.skill-group-header > .skill-group-rank {
 }
 
 /* The character figure (#1250): your standing body as a match draws it,
-   weapon and off-hand included, on a canvas of its own. */
+   weapon and off-hand included, on a canvas of its own. Its box is a
+   phone's; a card's grows past the phone layout (#4082). A row and a
+   ball draw their share of it. */
 .character-figure {
+  --figure-box: 48px;
   flex: 0 0 auto;
+}
+
+@media (width > 52rem) {
+  .character-card-body > .character-figure {
+    --figure-box: 64px;
+  }
 }
 
 /* --- gear: weapon, off-hand, armor, runes -------------------------------- */

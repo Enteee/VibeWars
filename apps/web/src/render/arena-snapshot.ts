@@ -1020,7 +1020,7 @@ export function overheadRise(actor: RenderableActor): number {
 const SHIELD_FROM = (45 * Math.PI) / 180;
 const SHIELD_TO = (105 * Math.PI) / 180;
 /** The focus: a ring of radius 1.75 centred 75° left of the facing, at r + 3.5 (#275). */
-const FOCUS_ANGLE = (75 * Math.PI) / 180;
+export const FOCUS_ANGLE = (75 * Math.PI) / 180;
 const FOCUS_RADIUS = 1.75;
 /** Both off-hand marks' centrelines sit this far past the body's edge. */
 const OFFHAND_REACH = 3.5;

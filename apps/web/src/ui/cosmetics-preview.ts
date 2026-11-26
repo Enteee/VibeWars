@@ -23,6 +23,7 @@ import {
   canvasPainter,
   drawBodyGlyph,
   loadGlyph,
+  matchDecor,
   paintFigure,
   tintedGlyph,
 } from "./character-figure.js";
@@ -327,9 +328,10 @@ export function createCosmeticsPreview(
       tinted = made === undefined ? undefined : { pixels, canvas: made };
     }
     const pose = stackPose(beat.kind === "walk", false, clock, still);
-    paintFigure(painter, context, body, pose, () => {
+    const decor = matchDecor(body);
+    paintFigure(painter, context, body, pose, decor, () => {
       if (tinted !== undefined) {
-        drawBodyGlyph(context, body, tinted.canvas);
+        drawBodyGlyph(context, decor.badge, tinted.canvas);
       }
     });
     context.globalAlpha = 1;
