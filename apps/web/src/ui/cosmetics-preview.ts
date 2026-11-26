@@ -16,6 +16,7 @@ import {
   spawnStyleOf,
 } from "../render/cosmetic-reactions.js";
 import { swingRibbon } from "../render/cosmetic-trail.js";
+import { stackPose } from "../render/sprite-stack.js";
 import { WEAPON_MOTION, type WeaponMotion } from "../render/weapon-pose.js";
 import type { FigureLook } from "./character-card.js";
 import {
@@ -325,7 +326,8 @@ export function createCosmeticsPreview(
       const made = tintedGlyph(glyph, pixels);
       tinted = made === undefined ? undefined : { pixels, canvas: made };
     }
-    paintFigure(painter, body, () => {
+    const pose = stackPose(beat.kind === "walk", false, clock, still);
+    paintFigure(painter, context, body, pose, () => {
       if (tinted !== undefined) {
         drawBodyGlyph(context, body, tinted.canvas);
       }
