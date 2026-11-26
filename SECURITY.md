@@ -511,10 +511,11 @@ What it does not defend against:
   is sent, under the same per-peer budget and proof cap. A join naming a
   seat whose old page is still connected is ignored, never refused. The
   match is entered through the rejoin challenge above. To survive the
-  reload, the guest keeps both tokens in `localStorage` for at most the
-  30 s hold, deleted as the next page reads them
-  (`apps/web/src/net/rejoin-record.ts`); that is within "Saves on Pages
-  are not isolated".
+  reload, the guest keeps both tokens in `localStorage`, stamped with the
+  30 s hold's end and deleted as the next page reads them
+  (`apps/web/src/net/rejoin-record.ts`). A record nobody reads stays until
+  the next page load, but past its stamp the host no longer holds the
+  seat; that is within "Saves on Pages are not isolated".
 - A peer id is not a credential either way. Trystero's peer id is a string
   the peer itself puts in its signalling, so a modified client can announce
   any id. When the host's peer drops mid-match (#515), a guest answers a
