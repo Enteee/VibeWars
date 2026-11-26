@@ -3,7 +3,8 @@ import { describe, expect, it, vi } from "vitest";
 import { ELEVATION_STEP } from "@vibewars/game-maps/schema";
 
 import { FLAT_STRUCTURE, type MapStructure } from "./arena-snapshot.js";
-import { deckCrop, deckVignetteTops, VIGNETTE, vignetteAlpha } from "./vignette.js";
+import { deckCrop, VIGNETTE, vignetteAlpha } from "./vignette-model.js";
+import { deckVignetteTops } from "./vignette.js";
 
 // Phaser probes for a browser when it loads: only its constants are read here.
 vi.mock("phaser", () => ({
