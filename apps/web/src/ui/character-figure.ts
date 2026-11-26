@@ -7,16 +7,31 @@ import {
   type ProfessionId,
 } from "@vibewars/game-core";
 
-import { BODY_EDGE, BODY_GLYPH_ALPHA, BODY_GLYPH_SIZE } from "../render/arena-snapshot.js";
+import { BODY_GLYPH_SIZE, teamColour } from "../render/arena-snapshot.js";
 import { REST_FRAME } from "../render/attack-clock.js";
 import { newCapeMotion } from "../render/cape-motion.js";
 import type { CapeLook } from "../render/cape-shape.js";
 import {
-  paintBodyDisc,
   paintBodyMarks,
+  paintFigureGround,
   type Painter,
   type StandingBody,
 } from "../render/body-painter.js";
+import {
+  STACK_BADGE_FILL,
+  STACK_BADGE_RIM,
+  STACK_GLYPH_TINT,
+  headingBucket,
+  stackBadge,
+  stackOverheadRise,
+  type StackPose,
+} from "../render/sprite-stack.js";
+import {
+  STACK_BAKE_RADIUS,
+  STACK_BAKE_SCALE,
+  bakeFigure,
+  type BakeContext,
+} from "../render/stack-atlas.js";
 import { t } from "../i18n/index.js";
 import { toPlayerBuild } from "../storage/build-validation.js";
 import type { TeamCharacter } from "../storage/schema.js";
@@ -27,16 +42,19 @@ import { professionIcon } from "./icons.js";
 /**
  * The character figure (#1250): a character in a list drawn exactly as a
  * match draws your own standing body, with the weapon and off-hand it
- * enters holding, through the arena's own `paintStandingBody`.
+ * enters holding: the arena's stacked figure (ADR-0057), its badge and
+ * marks, from the same slices, never a copy of them (#4032).
  */
 
 const RULES = MINIMAL_GW_INSPIRED_PVP_V1;
-/** The arena's body radius: the figure is drawn at its 1:1 scale. */
+/** The arena's body radius: the figure is drawn at it, then scaled into its box. */
 const BODY_RADIUS = RULES.collision.playerRadius;
 /** Room round the body for its marks: the weapon reaches r + 7.5, its 4 px casing 2 px more. */
 const MARK_ROOM = 10;
-/** Facing right, as the player-mark reference sheet draws a body. */
-const FIGURE_FACING = 0;
+/** Three-quarter, towards you and to the right: the figure shows its face and its weapon. */
+const FIGURE_FACING = Math.PI / 4;
+/** How high the figure reaches over its feet: to its badge's rim, and one unit clear. */
+const FIGURE_TOP = BODY_RADIUS + stackOverheadRise(BODY_RADIUS) + 1;
 
 /** What a character holds in a match: `weaponId` and `offhandId` as the host sends them. */
 export interface CharacterAppearance {
@@ -78,23 +96,27 @@ export function characterAppearance(character: TeamCharacter): CharacterAppearan
   return { weaponId: equipment.mainHand.weapon.id, offhandId: equipment.offhandId };
 }
 
-/** The figure's box: `MARK_ROOM` round the body, which a folded cape's band fits in (#1699). */
+/** The figure's box, pixels: `MARK_ROOM` round a flat body (#1699), the size every list lays out. */
 export const FIGURE_SIZE = {
   width: (BODY_RADIUS + MARK_ROOM) * 2,
   height: (BODY_RADIUS + MARK_ROOM) * 2,
 } as const;
 
+/** Pixels per world unit in the box: the figure, its badge to its marks under its feet, fits its height. */
+export const FIGURE_SCALE = FIGURE_SIZE.height / (FIGURE_TOP + BODY_RADIUS + MARK_ROOM);
+
 /**
- * The figure's body: your own, standing still, wearing `cape` folded,
- * its marks clear of the box's edges.
+ * The figure's body, in world units of a box `FIGURE_SCALE` shrinks to
+ * `FIGURE_SIZE`: your own, standing still, wearing `cape`, its badge and
+ * marks clear of the box's edges.
  */
 export function figureBody(
   appearance: CharacterAppearance,
   cape: CapeLook | undefined,
 ): StandingBody {
   return {
-    x: BODY_RADIUS + MARK_ROOM,
-    y: BODY_RADIUS + MARK_ROOM,
+    x: FIGURE_SIZE.width / FIGURE_SCALE / 2,
+    y: FIGURE_TOP,
     r: BODY_RADIUS,
     facing: FIGURE_FACING,
     team: "self",
@@ -109,9 +131,40 @@ export function figureBody(
   };
 }
 
-/** The figure's body through `painter`: its disc, `paintGlyph` over it, then its marks. */
-export function paintFigure(painter: Painter, body: StandingBody, paintGlyph: () => void): void {
-  paintBodyDisc(painter, body);
+/** What a figure's slices are drawn into: a bake's calls, and a transform to place them. */
+export type FigureContext = BakeContext &
+  Pick<CanvasRenderingContext2D, "save" | "restore" | "translate" | "scale">;
+
+/**
+ * The figure's body as a match draws a standing one (ADR-0057): what
+ * lies on the ground under it through `painter`; its stacked figure in
+ * `pose` at its nearest heading, `body.r` wide, into `context`; the badge
+ * on top, `paintGlyph` on that; then its marks.
+ */
+export function paintFigure(
+  painter: Painter,
+  context: FigureContext,
+  body: StandingBody,
+  pose: StackPose,
+  paintGlyph: () => void,
+): void {
+  paintFigureGround(painter, body);
+  const { cape } = body;
+  const look = {
+    body: teamColour(body.team),
+    cape: cape === undefined ? undefined : { look: cape.look, pattern: cape.pattern },
+  };
+  const size = body.r / (STACK_BAKE_RADIUS * STACK_BAKE_SCALE);
+  context.save();
+  context.translate(body.x, body.y);
+  context.scale(size, size);
+  bakeFigure(context, 0, 0, look, headingBucket(body.facing), pose);
+  context.restore();
+  const badge = stackBadge(body.r);
+  painter.fillStyle(STACK_BADGE_RIM, 1);
+  painter.fillCircle(body.x, body.y - badge.rise, badge.radius + 1);
+  painter.fillStyle(STACK_BADGE_FILL, 1);
+  painter.fillCircle(body.x, body.y - badge.rise, badge.radius);
   paintGlyph();
   paintBodyMarks(painter, body);
 }
@@ -176,8 +229,8 @@ export function canvasPainter(context: CanvasRenderingContext2D): Painter {
 }
 
 /**
- * The primary profession's glyph as the arena tints it (#1037): `glyph`
- * filled with the body's edge colour, its alpha kept, as Phaser's fill
+ * The primary profession's glyph as the arena tints it on a figure's
+ * badge (#1037, ADR-0057): `glyph` filled pale, its alpha kept, as Phaser's fill
  * tint does, `pixels` wide; `undefined` with no 2D context.
  */
 export function tintedGlyph(
@@ -193,22 +246,20 @@ export function tintedGlyph(
   }
   tint.drawImage(glyph, 0, 0, pixels, pixels);
   tint.globalCompositeOperation = "source-in";
-  tint.fillStyle = cssColour(BODY_EDGE);
+  tint.fillStyle = cssColour(STACK_GLYPH_TINT);
   tint.fillRect(0, 0, pixels, pixels);
   return tinted;
 }
 
-/** `tinted`, a `tintedGlyph`, inside `body` as the arena draws it: at 60 %, centred, `BODY_GLYPH_SIZE` wide. */
+/** `tinted`, a `tintedGlyph`, on `body`'s badge as the arena draws it: opaque, centred, `BODY_GLYPH_SIZE` wide. */
 export function drawBodyGlyph(
   context: CanvasRenderingContext2D,
-  body: Pick<StandingBody, "x" | "y">,
+  body: Pick<StandingBody, "x" | "y" | "r">,
   tinted: HTMLCanvasElement,
 ): void {
-  context.save();
-  context.globalAlpha *= BODY_GLYPH_ALPHA;
   const half = BODY_GLYPH_SIZE / 2;
-  context.drawImage(tinted, body.x - half, body.y - half, BODY_GLYPH_SIZE, BODY_GLYPH_SIZE);
-  context.restore();
+  const y = body.y - stackBadge(body.r).rise;
+  context.drawImage(tinted, body.x - half, y - half, BODY_GLYPH_SIZE, BODY_GLYPH_SIZE);
 }
 
 /**
@@ -243,17 +294,17 @@ export function createCharacterFigure(
   if (context === null) {
     return canvas;
   }
-  context.scale(ratio, ratio);
+  context.scale(ratio * FIGURE_SCALE, ratio * FIGURE_SCALE);
   // Phaser joins its strokes round; a canvas's default miter would
   // spike the weapon casing's points past the mark.
   context.lineJoin = "round";
   const body = figureBody(appearance, look.cape);
   const painter = canvasPainter(context);
   const paint = (glyph: HTMLImageElement | undefined): void => {
-    context.clearRect(0, 0, width, height);
-    paintFigure(painter, body, () => {
-      const tinted =
-        glyph === undefined ? undefined : tintedGlyph(glyph, Math.round(BODY_GLYPH_SIZE * ratio));
+    context.clearRect(0, 0, width / FIGURE_SCALE, height / FIGURE_SCALE);
+    paintFigure(painter, context, body, "stand", () => {
+      const pixels = Math.round(BODY_GLYPH_SIZE * ratio * FIGURE_SCALE);
+      const tinted = glyph === undefined ? undefined : tintedGlyph(glyph, pixels);
       if (tinted !== undefined) {
         drawBodyGlyph(context, body, tinted);
       }
