@@ -89,8 +89,8 @@ function hex(colour: string): number {
  * spring's, clear water's, the smallest.
  */
 export const ZONE_CAUSTICS: Record<LiquidZoneId, ZoneCaustics> = {
-  "foul-water": { colour: hex(PALETTE["foul-water"].accent), cell: 34, strength: 0.32 },
-  "tainted-water": { colour: hex(PALETTE["tainted-water"].accent), cell: 30, strength: 0.28 },
+  "foul-water": { colour: hex(PALETTE["foul-water"].accent), cell: 34, strength: 1.3 },
+  "tainted-water": { colour: hex(PALETTE["tainted-water"].accent), cell: 30, strength: 1.1 },
   spring: { colour: WATER_LOOK.shallow.cell, cell: 24, strength: 0.6 },
 };
 
@@ -150,7 +150,7 @@ void main() {
   vec2 uv = world / uCell;
   float v1 = voronoi(uv + uTime * 0.2, uTime * 1.5);
   float v2 = voronoi(uv * 1.2 - uTime * 0.15, uTime * 1.2);
-  float light = pow(min(v1, v2), 3.0) * 2.5;
+  float light = min(pow(min(v1, v2), 3.0) * 2.5, 1.0);
   float mask = texture2D(uGround, outTexCoord).a * uAlpha;
   gl_FragColor = vec4(uColour * light * mask, 0.0);
 }
