@@ -1979,6 +1979,23 @@ describe("decor (#4013)", () => {
     );
   });
 
+  it("lets a reed stand in shallow water, never in deep (#4019)", () => {
+    const reed = (at: { x: number; y: number }) => prop({ id: "reed", kind: "reed", at });
+    const marsh = {
+      water: [
+        ...room.water,
+        {
+          id: "shallows",
+          layer: 0,
+          depth: "shallow",
+          area: { kind: "rect", x: 800, y: 600, width: 200, height: 200 },
+        },
+      ],
+    };
+    accepts([reed({ x: 900, y: 700 })], marsh);
+    refuses([reed({ x: 500, y: 1500 })], /decor\.0\.at: decor reed is in deep water/, marsh);
+  });
+
   it("refuses a used id, a layer the map has not, and a scale, turn or variant out of range", () => {
     refuses([prop(), prop()], /decor\.1\.id: decor id crates is used twice/);
     refuses([prop({ layer: 1 })], /decor\.0\.layer: layer 1/);

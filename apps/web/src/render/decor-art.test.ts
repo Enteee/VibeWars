@@ -1,7 +1,7 @@
 import { DECOR_KINDS } from "@vibewars/game-maps/schema";
 import { describe, expect, it } from "vitest";
 
-import { BIOME, grade, ungradedMaterials } from "./arena-palette.js";
+import { BIOME, WATER_LOOK, grade, ungradedMaterials } from "./arena-palette.js";
 import {
   DECOR_SWAY,
   animatedDecor,
@@ -22,6 +22,7 @@ const prop = (kind: MapDecor["kind"], variant = 0): MapDecor => ({
   rotation: 30,
   scale: 1,
   variant,
+  wading: false,
 });
 
 /** How light `colour` is, 0 to 255: its channels' mean. */
@@ -207,5 +208,50 @@ describe("decor in the gothic look (#4059)", () => {
     );
     expect(decor.flame[0]).toBe(0xd8401a);
     expect(decor.flame.at(-1)).toBe(0xffe890);
+  });
+});
+
+describe("reeds (#4019)", () => {
+  const { decor } = BIOME.marsh;
+  /** Every x a command reaches, an ellipse at its edges. */
+  const xs = (command: DecorCommand): number[] =>
+    command.kind === "ellipse"
+      ? [command.at.x - command.rx, command.at.x + command.rx]
+      : numbers(command).filter((_, k) => k % 2 === 0 && command.kind !== "line");
+
+  it("stands a clump about 50 u across at scale 1, low enough to stay under a crown", () => {
+    for (const variant of [0, 1, 2, 3]) {
+      const commands = decorCommands(prop("reed", variant), decor, 0, true);
+      const across = commands.flatMap(xs);
+      expect(Math.max(...across) - Math.min(...across)).toBeGreaterThan(35);
+      expect(Math.max(...across) - Math.min(...across)).toBeLessThan(65);
+      const ys = commands.flatMap((command) =>
+        command.kind === "poly" ? command.points.map(({ y }) => y) : [],
+      );
+      // 30 u of blade, from a foot up to 5 u behind the clump's.
+      expect(300 - Math.min(...ys)).toBeLessThanOrEqual(35);
+      expect(tallDecor("reed")).toBe(false);
+    }
+  });
+
+  it("sways a reed's tips no further than DECOR_SWAY, on a 3 s beat", () => {
+    for (let now = 0; now < 6; now += 0.1) {
+      expect(Math.abs(decorSway(prop("reed"), now, false))).toBeLessThanOrEqual(DECOR_SWAY);
+    }
+    expect(decorSway(prop("reed"), 0.7, false)).toBeCloseTo(decorSway(prop("reed"), 3.7, false));
+    expect(animatedDecor("reed")).toBe(true);
+  });
+
+  it("draws a wading reed's foot under shallow water's tint and ripple, a dry one's not", () => {
+    const dry = decorCommands(prop("reed"), decor, 0, true);
+    const wet = decorCommands({ ...prop("reed"), wading: true }, decor, 0, true);
+    const tint = (command: DecorCommand): boolean =>
+      command.kind === "ellipse" && command.colour === WATER_LOOK.shallow.fill;
+    expect(dry.some(tint)).toBe(false);
+    // Over the blades: drawn after every one of them.
+    const at = wet.findIndex(tint);
+    expect(at).toBeGreaterThan(wet.findLastIndex((command) => command.kind === "poly"));
+    expect(wet.slice(at + 1).every((command) => command.kind === "line")).toBe(true);
+    expect(wet.slice(at + 1)).not.toHaveLength(0);
   });
 });

@@ -131,6 +131,37 @@ describe("loadMap", () => {
   });
 });
 
+describe("Broken Tower's lane portcullises (#4079)", () => {
+  const map = loadMap("broken-tower");
+  const plated = map.gates.filter(({ opener }) => opener.kind === "plate");
+  const [west, east] = ["west-lane-portcullis", "east-lane-portcullis"].map((id) =>
+    plated.find((gate) => gate.id === id),
+  );
+  /** `point` turned 180° about the map's centre, (2712, 1392). */
+  const turned = ({ x, y }: { x: number; y: number }) => ({ x: 5424 - x, y: 2784 - y });
+
+  it("has exactly two plate gates: anyone's portcullises on L1", () => {
+    expect(plated).toHaveLength(2);
+    for (const { opener, look, wall } of plated) {
+      expect(opener).toMatchObject({ kind: "plate", team: null });
+      expect(look).toBe("portcullis");
+      expect(wall.layer).toBe(1);
+    }
+  });
+
+  it("turns the west gate and its plate 180° into the east ones", () => {
+    if (west?.opener.kind !== "plate" || east?.opener.kind !== "plate") {
+      throw new Error("broken-tower: a lane portcullis is missing");
+    }
+    if (west.wall.kind !== "rect" || east.wall.kind !== "rect") {
+      throw new Error("broken-tower: a lane portcullis is not a rect");
+    }
+    const { x, y, width, height } = west.wall;
+    expect(east.wall).toMatchObject({ width, height, ...turned({ x: x + width, y: y + height }) });
+    expect(east.opener.plate).toEqual(turned(west.opener.plate));
+  });
+});
+
 describe("unseatedTeams (#2108)", () => {
   const map = loadMap("arena-crossroads");
   const spawns = (count: number) =>
