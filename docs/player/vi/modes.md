@@ -232,7 +232,7 @@ Phép. Khi đội bạn không giữ tế đàn, mọi bot hạ Anh hùng Ma c�
 tiên một khi nó đứng trên tế đàn trong tầm của chúng: đó là kẻ địch duy nhất
 ngăn con ma của bạn chiếm tế đàn.
 
-Threefold Keep chơi chế độ này (4v4 và 8v8, 5000x4400): một pháo đài trên ngọn đồi ở vùng cao, cho ba đội. Leo lên lối đi trên tường thành bằng cầu thang cạnh cổng của bạn và băng qua một con đê tới ngọn đồi, rồi leo lên tế đàn trên tháp. Một cần gạt ở mỗi sân mở cả bốn cổng: lối qua cổng của bạn dưới tường thành, và hầm mộ, đường vòng dài dưới ngọn đồi.
+Threefold Keep chơi chế độ này (4v4 và 8v8, 5000x4400): một pháo đài trên ngọn đồi ở vùng cao, cho ba đội. Leo lên lối đi trên tường thành bằng cầu thang cạnh cổng của bạn và băng qua một con đê tới ngọn đồi, rồi leo lên tế đàn trên tháp. Một cần gạt ở mỗi sân mở cả ba cổng, những lối qua dưới tường thành.
 
 ## Chiếm điểm
 

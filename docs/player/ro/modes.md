@@ -231,7 +231,7 @@ inamic care ajunge la distanță de vrajă. Cât timp echipa ta nu deține altar
 bot ucide mai întâi Eroul Fantomatic al celeilalte echipe după ce ajunge pe altar în
 raza lor: este singurul inamic care îți împiedică fantoma să-l revendice.
 
-Se joacă pe Threefold Keep (4v4 și 8v8, 5000x4400): o fortăreață pe un deal din ținuturile înalte, pentru trei echipe. Urcă pe drumul de strajă al zidului pe scările de lângă poarta ta și traversează un dig până la deal, apoi urcă la altarul de pe turn. O pârghie din fiecare curte deschide toate cele patru porți: pasajul porții tale pe sub zid, și cripta, drumul lung pe sub deal.
+Se joacă pe Threefold Keep (4v4 și 8v8, 5000x4400): o fortăreață pe un deal din ținuturile înalte, pentru trei echipe. Urcă pe drumul de strajă al zidului pe scările de lângă poarta ta și traversează un dig până la deal, apoi urcă la altarul de pe turn. O pârghie din fiecare curte deschide toate cele trei porți, pasajele pe sub zid.
 
 ## Capturare de puncte
 

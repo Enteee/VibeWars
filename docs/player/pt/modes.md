@@ -249,7 +249,7 @@ altar, todo bot mata primeiro o Herói Fantasmagórico da outra equipe assim
 que ele estiver no altar ao alcance deles: é o único inimigo que impede
 seu fantasma de tomá-lo.
 
-Threefold Keep joga esse modo (4v4 e 8v8, 5000x4400): uma fortaleza numa colina das terras altas, para três equipes. Suba ao adarve pela escada ao lado do seu portão e atravesse uma calçada até a colina, depois suba até o altar na torre. Uma alavanca em cada pátio abre os quatro portões: a passagem do seu portão sob a muralha, e a cripta, o caminho longo sob a colina.
+Threefold Keep joga esse modo (4v4 e 8v8, 5000x4400): uma fortaleza numa colina das terras altas, para três equipes. Suba ao adarve pela escada ao lado do seu portão e atravesse uma calçada até a colina, depois suba até o altar na torre. Uma alavanca em cada pátio abre os três portões, as passagens sob a muralha.
 
 ## Captura de Pontos
 

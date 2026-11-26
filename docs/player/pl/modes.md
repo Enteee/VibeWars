@@ -223,7 +223,7 @@ ołtarza, każdy bot najpierw zabija Upiornego Bohatera drugiej drużyny, gdy ty
 stanie on na ołtarzu w ich zasięgu: to jedyny wróg, który nie pozwala twojemu duchowi go
 przejąć.
 
-Gra w niego Threefold Keep (4v4 i 8v8, 5000x4400): twierdza na wzgórzu w wyżynach, dla trzech drużyn. Wejdź na chodnik obronny schodami obok swojej bramy i przejdź groblą na wzgórze, a potem wespnij się do ołtarza na wieży. Dźwignia na każdym dziedzińcu otwiera wszystkie cztery bramy: przejście twojej bramy pod murem oraz podziemia, długą drogę pod wzgórzem.
+Gra w niego Threefold Keep (4v4 i 8v8, 5000x4400): twierdza na wzgórzu w wyżynach, dla trzech drużyn. Wejdź na chodnik obronny schodami obok swojej bramy i przejdź groblą na wzgórze, a potem wespnij się do ołtarza na wieży. Dźwignia na każdym dziedzińcu otwiera wszystkie trzy bramy, przejścia pod murem.
 
 ## Punkty kontrolne
 

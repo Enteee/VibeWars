@@ -262,7 +262,7 @@ alttaria, jokainen botti tappaa ensin toisen tiimin aavesankarin, kun
 se seisoo alttarilla niiden kantaman sisällä: se on se yksi vihollinen,
 joka estää aavettasi valtaamasta sitä.
 
-Sitä pelaa Threefold Keep (4v4 ja 8v8, 5000x4400): linnake kukkulalla ylängöllä, kolmelle tiimille. Nouse muurikäytävälle porttisi vieressä olevia portaita ja ylitä pengertie kukkulalle, kiipeä sitten alttarille tornin huipulle. Vipu jokaisella pihalla avaa kaikki neljä porttia: porttikäytäväsi muurin alla sekä holvikellarin, pitkän tien kukkulan alta.
+Sitä pelaa Threefold Keep (4v4 ja 8v8, 5000x4400): linnake kukkulalla ylängöllä, kolmelle tiimille. Nouse muurikäytävälle porttisi vieressä olevia portaita ja ylitä pengertie kukkulalle, kiipeä sitten alttarille tornin huipulle. Vipu jokaisella pihalla avaa kaikki kolme porttia, porttikäytävät muurin alla.
 
 ## Valtauspisteet
 
