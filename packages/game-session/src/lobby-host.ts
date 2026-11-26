@@ -552,6 +552,15 @@ export function carriedMorale(claimed: number): number {
     : 0;
 }
 
+/** `map`, with `from`'s entry under `to` in its place (#4110). */
+function rekey<V>(map: Map<string, V>, from: string, to: string): void {
+  const entries = [...map];
+  map.clear();
+  for (const [key, value] of entries) {
+    map.set(key === from ? to : key, value);
+  }
+}
+
 /**
  * A lobby rejoin token (#2157): 128 fresh random bits as 32 hex digits,
  * never from the seeded `random`, which a peer could predict.
@@ -777,7 +786,14 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
   /** The lobby's clock: the seconds `advance` was given, for the budget. */
   let elapsed = 0;
   let match:
-    { readonly id: string; readonly host: MatchHost; readonly room: Transport } | undefined;
+    | {
+        readonly id: string;
+        readonly host: MatchHost;
+        readonly room: Transport;
+        /** The `match-start` each seated peer was sent: a page back from a reload is sent it again (#4110). */
+        readonly starts: Map<string, WireMatchStart>;
+      }
+    | undefined;
   /**
    * Matches over, still sending their observers the end, which reaches
    * them late (#480). Each room is left once its match has.
@@ -1203,6 +1219,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
           recordReplay: rankedRound !== undefined,
         }),
         room,
+        starts: new Map(),
       };
     } catch {
       // The caller's to report; the lobby only has to stay usable.
@@ -1234,6 +1251,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
           matchId: id,
           teamPlanRejected: rejected.has(seat.team),
         };
+        match.starts.set(peerId, message);
         transport.send("match-start", message, peerId);
       }
     }
@@ -2481,13 +2499,72 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     join.rejoinToken === returning.rejoinToken &&
     join.playerPubkey === returning.playerPubkey;
 
+  /**
+   * The away member `join` may take back from another peer id (#4110): a
+   * reloaded page is a new peer (ADR-0049), so only its token and key
+   * name the seat.
+   */
+  const awayFor = (join: PeerLobbyJoin): Member | undefined =>
+    [...away.keys()]
+      .map((peerId) => peerMember(peerId))
+      .find((member) => member !== undefined && mayReturn(member, join));
+
+  /**
+   * Move `member` to peer id `to` (#4110), in its place in the list, and
+   * everything the lobby keeps by its old one with it: still away, to
+   * come back by the path a drop takes.
+   */
+  const rebind = (member: Member, to: string): Member => {
+    const from = member.id;
+    const moved: Member = { ...member, id: to };
+    const order = [...members.values()];
+    members.clear();
+    for (const each of order) {
+      members.set(each === member ? to : each.id, each === member ? moved : each);
+    }
+    const leftAt = away.get(from);
+    away.delete(from);
+    if (leftAt !== undefined) {
+      away.set(to, leftAt);
+    }
+    relayAdmission.gone(from);
+    forgetForwards(from, true);
+    if (match !== undefined) {
+      rekey(match.starts, from, to);
+    }
+    const swap = (holder: string | null): string | null => (holder === from ? to : holder);
+    if (ascentLock !== undefined) {
+      ascentLock.claimers = ascentLock.claimers.map(swap);
+    }
+    for (const side of teamLobby?.sides ?? []) {
+      rekey(side.proposals, from, to);
+      rekey(side.pending, from, to);
+      rekey(side.votes, from, to);
+      for (const [voter, proposer] of side.votes) {
+        if (proposer === from) {
+          side.votes.set(voter, to);
+        }
+      }
+      if (side.chosen?.proposerId === from) {
+        side.chosen = { ...side.chosen, proposerId: to };
+      }
+      side.claims = side.claims.map(swap);
+    }
+    return moved;
+  };
+
   /** Seat `from`, whose `join` has proved its player key (#2706). */
   const seatProven = (join: PeerLobbyJoin, from: string): void => {
     // Seated while it proved.
     if (members.has(from) && !away.has(from)) {
       return;
     }
-    const returning = members.get(from);
+    const known = members.get(from);
+    const elsewhere = known === undefined ? awayFor(join) : undefined;
+    const returning = elsewhere === undefined ? known : rebind(elsewhere, from);
+    if (returning === undefined && join.rejoinToken !== null) {
+      return;
+    }
     // Back from a drop, it was admitted already: as this peer, on its ticket.
     if (returning !== undefined) {
       // Not refused, which would tell a prober the seat exists.
@@ -2532,6 +2609,11 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       broadcast();
       // A change while it was away may not have reached it.
       tellRelayOffers(from);
+      // A page back from a reload (#4110) has no match: the state first, then its start.
+      const start = elsewhere === undefined ? undefined : match?.starts.get(from);
+      if (start !== undefined) {
+        transport.send("match-start", start, from);
+      }
       return;
     }
     // A key its host removed stays out (#2746), told only after the proof.
@@ -2603,8 +2685,13 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     if (unproven.has(from)) {
       return;
     }
-    const returning = members.get(from);
+    const returning = members.get(from) ?? awayFor(join);
     if (returning !== undefined && !mayReturn(returning, join)) {
+      return;
+    }
+    // A token with no seat away to take (#4110): its old page may not have
+    // dropped yet, and it asks again. Not refused, as for a wrong token.
+    if (returning === undefined && join.rejoinToken !== null) {
       return;
     }
     // A join that would be refused once proven is refused unchallenged:

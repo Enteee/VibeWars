@@ -1246,9 +1246,13 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     tellCosmetics(from);
   });
 
-  /** Whether `peerId` may take `seat`: no bot plays it, and it plays no other seat. */
+  /**
+   * Whether `peerId` may take `seat`: no bot plays it, it plays no other
+   * seat, and no other peer still connected plays it, as a second tab
+   * would (#4110).
+   */
   const claimable = (seat: Seat, peerId: string): boolean => {
-    if (seat.bot) {
+    if (seat.bot || (seat.peerId !== undefined && seat.peerId !== peerId)) {
       return false;
     }
     const current = seatOfPeer.get(peerId);

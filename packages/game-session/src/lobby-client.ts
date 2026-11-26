@@ -83,6 +83,9 @@ import type { TicketKey } from "./queue-client.js";
 
 /** Who a chat line is from when nothing of its name is left to show (#479). */
 const UNNAMED_SPEAKER = "Unnamed";
+
+/** How often a page back from a reload asks its host again (#4110). */
+export const REJOIN_RETRY_MS = 1000;
 /**
  * Shares a host relays to this player a second, at most (#2745): every
  * other member's one in ten seconds, with room for a full lobby's burst.
@@ -182,6 +185,13 @@ export interface JoinLobbyOptions {
    * and the host cancels a ranked match it is seated in.
    */
   readonly ranked?: RankedPlay;
+  /**
+   * A page back from a reload mid-match (#4110): the host that seated it
+   * and the seat's token. The join goes to that host alone, again each
+   * `REJOIN_RETRY_MS` until it answers, as it may not yet have seen the
+   * old page go.
+   */
+  readonly rejoin?: { readonly hostId: string; readonly token: string };
 }
 
 /** What this player plays a ranked match with (ADR-0055, #3573), when its queued group is ranked. */
@@ -318,7 +328,13 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
    * host, only on a return after a drop. `hostId` never changes once set,
    * so a token is never told to another host.
    */
-  let rejoinToken: string | null = null;
+  let rejoinToken: string | null = options.rejoin?.token ?? null;
+  /** The host a page back from a reload joins (#4110), before it has answered. */
+  const returnTo = options.rejoin?.hostId;
+  /** Asks `returnTo` again until it answers. */
+  let retryTimer: unknown;
+  /** A match start that came before any handler did, for the first (#4110). */
+  let unclaimedStart: MatchStarting | undefined;
   // Once the host is known, no other peer in the room is heard or told
   // anything (#1682): Trystero connects every key holder to the guests too.
   const transport =
@@ -617,6 +633,7 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
 
   const stop = (): void => {
     stopped = true;
+    clearInterval(retryTimer);
     rankedWaiting = undefined;
     clearTimeout(closeTimer);
     for (const off of unsubscribe.splice(0)) {
@@ -672,7 +689,7 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
    */
   const sendJoin = (to?: string): void => {
     const token = (): PeerLobbyJoin["rejoinToken"] =>
-      to !== undefined && to === hostId ? rejoinToken : null;
+      to !== undefined && to === (hostId ?? returnTo) ? rejoinToken : null;
     if (proof === undefined) {
       transport.send(
         "lobby-join",
@@ -698,6 +715,13 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
    * prove itself before the join goes to it.
    */
   const knock = (to?: string): void => {
+    // A page back from a reload knocks on its host's door alone (#4110).
+    if (returnTo !== undefined) {
+      if (to === undefined || to === returnTo) {
+        sendJoin(returnTo);
+      }
+      return;
+    }
     if (queued === undefined) {
       sendJoin(to);
     } else {
@@ -904,6 +928,15 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
       },
       onMatchStarting(handler) {
         startingHandlers.push(handler);
+        const start = unclaimedStart;
+        unclaimedStart = undefined;
+        if (
+          start !== undefined &&
+          latest?.phase === "in-match" &&
+          latest.matchId === start.matchId
+        ) {
+          handler(start);
+        }
       },
       watchMatch() {
         return latest?.phase === "in-match" && latest.matchId !== null
@@ -998,6 +1031,20 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
         stop();
         await transport.leave();
       },
+      async leaveAsDrop() {
+        if (left) {
+          return;
+        }
+        left = true;
+        closed = true;
+        stop();
+        await transport.leave();
+      },
+      returnTicket() {
+        return hostId === undefined || rejoinToken === null
+          ? undefined
+          : { hostId, token: rejoinToken };
+      },
     };
 
     unsubscribe.push(
@@ -1065,6 +1112,7 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
           }
           hostId = from;
           latest = state;
+          clearInterval(retryTimer);
           forgetProposals(state);
           noteQueueing(state);
           failJoin = undefined;
@@ -1440,6 +1488,9 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
           teamPlanRejected: start.teamPlanRejected,
           transport: scopeTransport(transport),
         };
+        // A page back from a reload (#4110) is sent its start straight after
+        // the state that lets it in, maybe before anyone listens.
+        unclaimedStart = startingHandlers.length === 0 ? starting : undefined;
         for (const handler of [...startingHandlers]) {
           handler(starting);
         }
@@ -1482,5 +1533,10 @@ export function joinLobby(options: JoinLobbyOptions): Promise<LobbyConnection> {
     );
     // And to those already here, in case their joins were told before now.
     knock();
+    if (returnTo !== undefined) {
+      retryTimer = setInterval(() => {
+        knock();
+      }, REJOIN_RETRY_MS);
+    }
   });
 }

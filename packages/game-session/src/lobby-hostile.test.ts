@@ -12,7 +12,7 @@ import {
   type TestLobby,
 } from "./lobby-harness.test-support.js";
 import { settle } from "./match-harness.test-support.js";
-import { testCosmetics } from "./player-key.test-support.js";
+import { testCosmetics, testPlayerKey } from "./player-key.test-support.js";
 import type { Transport } from "./transport.js";
 
 /**
@@ -247,6 +247,39 @@ describe("lobby host against hostile peers", () => {
     expect(guestRow(lobby)).toEqual([["Guest", null, false, false]]);
     // No state the room was told ever carried a token.
     expect(JSON.stringify(states)).not.toContain(token);
+  });
+
+  it("re-seats a dropped guest under a new peer id for its token and key, telling a wrong one nothing (#4110)", async () => {
+    const lobby = await openLobby();
+    const { id, token } = await droppedGuest(lobby);
+
+    // A reloaded page is a new peer: a wrong token, or the right one under
+    // another key, takes nothing and is told nothing.
+    const otherKey = testPlayerKey();
+    const prober = await provenPeer(lobby, undefined, otherKey);
+    const page = await provenPeer(lobby);
+    await settle();
+    const told: string[] = [];
+    for (const channel of ["lobby-state", "lobby-note", "lobby-seat"] as const) {
+      prober.on(channel, () => told.push(channel));
+    }
+    prober.send(
+      "lobby-join",
+      { ...joinAs("Thief", token ?? null), playerPubkey: otherKey.pubkey },
+      "host",
+    );
+    page.send("lobby-join", joinAs("Thief", "0f".repeat(16)), "host");
+    await settle();
+    expect(guestRow(lobby)).toEqual([["Guest", null, false, true]]);
+    expect(told).toEqual([]);
+
+    // With both, the page has the seat, in its place, under its own id.
+    page.send("lobby-join", joinAs("Guest", token ?? null), "host");
+    await settle();
+    expect(guestRow(lobby)).toEqual([["Guest", null, false, false]]);
+    const ids = lobby.host.connection.getSnapshot().players.map((player) => player.sessionId);
+    expect(ids).toContain(page.selfId);
+    expect(ids).not.toContain(id);
   });
 
   it("ignores a hello for its match from a member it did not seat, and the match plays on", async () => {

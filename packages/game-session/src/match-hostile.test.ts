@@ -696,6 +696,33 @@ describe("a P2P host against peers claiming a dropped player's seat (#593)", () 
     expect(playerIn(watcher.getSnapshot(), dropped.selfSessionId)).toBeDefined();
   });
 
+  it("takes a dropped seat back under a new peer id, and no live one even with its token (#4110)", async () => {
+    // A reloaded page is a new peer: with the token it gets the seat back.
+    const { match, dropped, thief: reloaded, heard } = await droppedSeat();
+    reloaded.send("hello", claim(dropped.selfSessionId), "host");
+    await until(() => heard.challenges.length > 0);
+    const proof: PeerRejoinProof = {
+      playerId: dropped.selfSessionId,
+      proof: await rejoinProof(
+        dropped.rejoinToken,
+        heard.challenges[0]?.nonce ?? "",
+        dropped.selfSessionId,
+        reloaded.selfId,
+      ),
+    };
+    reloaded.send("rejoin-proof", proof, "host");
+    await until(() => heard.welcomes > 0);
+
+    // A second tab, token and all, while that page still plays the seat.
+    const tab = match.network.join();
+    await settle();
+    const tabHeard = overhear(tab);
+    tab.send("hello", claim(dropped.selfSessionId), "host");
+    await until(() => tabHeard.refusals.length > 0);
+    expect(tabHeard.challenges).toEqual([]);
+    expect(tabHeard.refusals).toEqual(["match-full"]);
+  });
+
   it("ignores a proof it never asked for, even a right one", async () => {
     const { match, dropped, thief, heard } = await droppedSeat();
 

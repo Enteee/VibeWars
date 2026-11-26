@@ -49,7 +49,8 @@ import {
   type TestLobby,
 } from "./lobby-harness.test-support.js";
 import { canStart, PROFILE_INTERVAL_MS, type MatchPlan } from "./lobby-host.js";
-import { cryptoTurns, settle, starterBuild, until } from "./match-harness.test-support.js";
+import { cryptoTurns, hello, settle, starterBuild, until } from "./match-harness.test-support.js";
+import { connectMatch } from "./match-client.js";
 import { RECONNECT_WINDOW_SECONDS, type MatchHost } from "./match-host.js";
 import { createMemoryNetwork } from "./memory-transport.js";
 import { testCosmetics, testPlayerKey } from "./player-key.test-support.js";
@@ -852,6 +853,51 @@ describe("playing more than one match in a lobby", () => {
         { name: "Guest", team: 1, ready: false },
       ]);
     }
+  });
+
+  it("puts a page back from a reload into its seat, under its new peer id (#4110)", async () => {
+    const lobby = await openLobby({
+      matchRules: { ...ANNIHILATION_MATCH_RULES, timeLimitSeconds: 600 },
+    });
+    const key = testPlayerKey();
+    const guest = await lobby.join("Guest", null, null, null, key);
+    await seat([lobby.host, guest], [0, 1]);
+    await start(lobby);
+    await play(lobby.host, "Host");
+    const before = await play(guest, "Guest");
+    const ticket = guest.connection.returnTicket();
+    const held = { playerId: before.selfSessionId, token: before.rejoinToken };
+    expect(ticket?.hostId).toBe(lobby.host.connection.getSnapshot().hostId);
+
+    // The page goes without a leave: a drop, and the seat is held.
+    await guest.connection.leaveAsDrop();
+    await settle();
+    await lobby.step(2);
+    const back = await lobby.join("Guest", null, null, null, key, testCosmetics, ticket);
+    await settle();
+    expect(back.transport.selfId).not.toBe(guest.transport.selfId);
+    expect(back.starts).toHaveLength(1);
+    const starting = back.starts[0];
+    if (starting === undefined) {
+      throw new Error("the page was handed no match");
+    }
+    const match = await connectMatch({
+      transport: starting.transport,
+      hostId: back.connection.getSnapshot().hostId,
+      hello: hello({ name: "Guest", rejoin: { playerId: held.playerId } }),
+      timeoutMs: 1000,
+      replays: null,
+      rejoin: held,
+    });
+    expect(match.selfSessionId).toBe(held.playerId);
+    expect(
+      lobby.host.connection
+        .getSnapshot()
+        .players.map(({ sessionId, team, away }) => [sessionId, team, away]),
+    ).toEqual([
+      [lobby.host.transport.selfId, 0, false],
+      [back.transport.selfId, 1, false],
+    ]);
   });
 
   it("lets go of a guest who drops and does not come back, when the match ends (#596)", async () => {

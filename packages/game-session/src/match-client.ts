@@ -141,6 +141,12 @@ export interface ConnectMatchOptions {
    * it and it checks out against its hash; `null` drops it.
    */
   readonly replays: ReplayKeeper | null;
+  /**
+   * A page back from a reload mid-match (#4110): the seat it held and its
+   * token. `hello` asks for that seat, and the challenge is answered with
+   * the token, as after a drop.
+   */
+  readonly rejoin?: { readonly playerId: string; readonly token: string };
 }
 
 /**
@@ -536,6 +542,21 @@ export function connectMatch(options: ConnectMatchOptions): Promise<PeerMatchCon
   });
   fromHost("rejoin-challenge", parsePeerRejoinChallenge, (challenge) => {
     const seat = welcomed;
+    const stored = options.rejoin;
+    // A page back from a reload (#4110): asked once, it stops asking, as a
+    // second hello would spend this nonce.
+    if (seat === undefined && stored?.playerId === challenge.playerId) {
+      clearInterval(helloTimer);
+      void rejoinProof(stored.token, challenge.nonce, stored.playerId, transport.selfId).then(
+        (proof) => {
+          if (!lost && welcomed === undefined) {
+            const message: PeerRejoinProof = { playerId: stored.playerId, proof };
+            transport.send("rejoin-proof", message, hostId);
+          }
+        },
+      );
+      return;
+    }
     if (droppedAt === undefined || lost || challenge.playerId !== seat?.playerId) {
       return;
     }
