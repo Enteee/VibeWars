@@ -520,6 +520,11 @@ export interface StatusDefinition {
    */
   readonly preventsSpeedBoosts: boolean;
   /**
+   * Its `moveSpeedMultiplier` breaks the +33% cap on stacked boosts
+   * (#4095): Dash, Pious Haste and Burning Speed run at their own number.
+   */
+  readonly breaksSpeedCap: boolean;
+  /**
    * Its bearer gains no adrenaline while it holds (#2287): Soothing
    * Images' "cannot gain adrenaline". What it holds already stays.
    */
@@ -5211,7 +5216,14 @@ export interface StatusModifiers {
   readonly spellRechargeFasterNearSpirit: number;
   /** The largest armor reduction; `undefined`: none. */
   readonly armorReduction: ArmorReduction | undefined;
-  readonly moveSpeedMultiplier: number;
+  /** Every status's speed boost (above 1), multiplied and not yet capped (#4095). */
+  readonly moveSpeedBoost: number;
+  /** Every status's slow (below 1), multiplied and not yet floored (#4095). */
+  readonly moveSpeedSlow: number;
+  /** The slowest single status's slow; 1: none (#4095). */
+  readonly strongestSlow: number;
+  /** The fastest `breaksSpeedCap` status's boost; 1: none (#4095). */
+  readonly speedCapBreaker: number;
   readonly attackMissChance: number;
   /** The largest single status's: losses do not add up. */
   readonly maxHealthLoss: MaxHealthLoss | undefined;
@@ -5319,6 +5331,12 @@ export function reducedRecharge(seconds: number, faster: number): number {
 /** The weakest heals get, whatever reduces them (GW1: at most −40%). */
 export const HEALING_MULTIPLIER_FLOOR = 0.6;
 
+/** The shortest stacked speed-ups make an attack (GW1: IAS caps at +33%, #4095). */
+export const ATTACK_FASTER_CAP = 0.67;
+
+/** The longest stacked slow-downs make an attack (GW1: DAS caps at −50%, #4095). */
+export const ATTACK_SLOWER_CAP = 1.5;
+
 /**
  * Whether a status in `statuses` other than `self` is of one of `under`'s
  * categories (#1485) or one of its ids (#1873).
@@ -5353,14 +5371,16 @@ export function isSuppressed(
  * Collapse every active status into one set of modifiers.
  *
  * Additive effects (health and energy pips, armor, attributes) sum;
- * multiplicative ones (move speed, healing, weapon damage, cast time,
+ * multiplicative ones (healing, weapon damage, cast time,
  * damage taken, a hex's cast time on the bearer) multiply; miss chance takes the
  * worst rather than compounding, so two blinding effects cannot push a
  * player past certain failure in a way that feels arbitrary. A maximum
  * health loss and an armor reduction are each the largest single one,
  * a cap on damage per hit the lowest (#936), and healing is floored at `HEALING_MULTIPLIER_FLOOR`.
- * Attack duration is GW1's rule: only the strongest speed-up and the
- * strongest slow-down count, and they multiply. Pips per enchantment
+ * Attack duration is GW1's rule (#4095): speed-ups multiply, capped at
+ * `ATTACK_FASTER_CAP`, slow-downs multiply, capped at `ATTACK_SLOWER_CAP`,
+ * and the two multiply. Move speed comes out in parts, boosts and slows
+ * apart, for `statusMoveSpeed` to cap. Pips per enchantment
  * (#845) count every enchantment in `statuses`, the one giving them
  * included; pips per condition and per hex (#2189) count those in
  * `statuses`. Under a status that bars speed boosts (#1745), only the
@@ -5379,8 +5399,25 @@ export function aggregateModifiers(
   let healthPerSecondNearSpirit = 0;
   let spellRechargeNearSpiritKept = 1;
   let armorReduction: ArmorReduction | undefined;
-  let moveSpeedMultiplier = 1;
+  let moveSpeedBoost = 1;
+  let moveSpeedSlow = 1;
+  let strongestSlow = 1;
+  let speedCapBreaker = 1;
+  // One status's slows together, Icy Shackles' 66% and 90% while enchanted:
+  // a single skill may slow past the snare floor on its own (#4095).
+  let ownSlow = 1;
   const speedBoostsBarred = statuses.some(({ id }) => getStatusDefinition(id).preventsSpeedBoosts);
+  // Under a bar a boost is refused, a slow still lands (#1745, #2453).
+  const addMoveSpeed = (multiplier: number, breaksCap: boolean): void => {
+    const speed = speedBoostsBarred ? Math.min(1, multiplier) : multiplier;
+    if (speed > 1) {
+      moveSpeedBoost *= speed;
+      speedCapBreaker = breaksCap ? Math.max(speedCapBreaker, speed) : speedCapBreaker;
+    } else {
+      moveSpeedSlow *= speed;
+      ownSlow *= speed;
+    }
+  };
   let attackMissChance = 0;
   let maxHealthLoss: MaxHealthLoss | undefined;
   let maxHealthBonus = 0;
@@ -5438,6 +5475,7 @@ export function aggregateModifiers(
       continue;
     }
     const { ranks } = status;
+    ownSlow = 1;
     healthPips += Math.round(statAt(def.healthPips, ranks));
     if (def.healthPipsPerEnchantment !== undefined) {
       const { pips, max } = def.healthPipsPerEnchantment;
@@ -5462,13 +5500,9 @@ export function aggregateModifiers(
     ) {
       armorReduction = def.armorReduction;
     }
-    const moveSpeed = statAt(def.moveSpeedMultiplier, ranks);
-    moveSpeedMultiplier *= speedBoostsBarred ? Math.min(1, moveSpeed) : moveSpeed;
+    addMoveSpeed(statAt(def.moveSpeedMultiplier, ranks), def.breaksSpeedCap);
     if (enchantments > 0) {
-      // Under a bar a boost is refused, a slow still lands (#2453).
-      moveSpeedMultiplier *= speedBoostsBarred
-        ? Math.min(1, def.moveSpeedWhileEnchanted)
-        : def.moveSpeedWhileEnchanted;
+      addMoveSpeed(def.moveSpeedWhileEnchanted, false);
     }
     attackMissChance = Math.max(attackMissChance, def.attackMissChance);
     if (
@@ -5495,8 +5529,8 @@ export function aggregateModifiers(
     castTimeMultiplier *= def.castTimeMultiplier;
     skillActivationMultiplier *= def.skillActivationMultiplier;
     const attackDuration = statAt(def.attackDurationMultiplier, ranks);
-    attackFaster = Math.min(attackFaster, attackDuration);
-    attackSlower = Math.max(attackSlower, attackDuration);
+    attackFaster *= Math.min(1, attackDuration);
+    attackSlower *= Math.max(1, attackDuration);
     projectileSpeedMultiplier *= def.projectileSpeedMultiplier;
     damageTakenMultiplier *= statAt(def.damageTakenMultiplier, ranks);
     damageReduction += Math.round(statAt(def.damageReduction, ranks));
@@ -5522,14 +5556,13 @@ export function aggregateModifiers(
       adrenalineGainFaster += statAt(def.adrenalineGainFaster, ranks);
     }
     if (def.whileUnder !== undefined && isUnderAnother(statuses, status, def.whileUnder)) {
-      attackFaster = Math.min(attackFaster, def.whileUnder.attackDurationMultiplier);
-      attackSlower = Math.max(attackSlower, def.whileUnder.attackDurationMultiplier);
+      attackFaster *= Math.min(1, def.whileUnder.attackDurationMultiplier);
+      attackSlower *= Math.max(1, def.whileUnder.attackDurationMultiplier);
       adrenalineGainFaster += def.whileUnder.adrenalineGainFaster;
       healthPips += Math.round(statAt(def.whileUnder.healthPips, ranks));
       armorModifier += Math.round(statAt(def.whileUnder.armorModifier, ranks));
       attackMissChance = Math.max(attackMissChance, def.whileUnder.attackMissChance);
-      const underSpeed = def.whileUnder.moveSpeedMultiplier;
-      moveSpeedMultiplier *= speedBoostsBarred ? Math.min(1, underSpeed) : underSpeed;
+      addMoveSpeed(def.whileUnder.moveSpeedMultiplier, false);
     }
     if (def.enchantmentRechargeFaster !== undefined) {
       enchantmentRechargeFaster.push(def.enchantmentRechargeFaster);
@@ -5555,6 +5588,7 @@ export function aggregateModifiers(
     ignoresCriticalDamage ||= def.ignoresCriticalDamage;
     preventsCriticals ||= def.preventsCriticals;
     preventsCriticalHits ||= def.preventsCriticalHits;
+    strongestSlow = Math.min(strongestSlow, ownSlow);
   }
 
   return {
@@ -5566,7 +5600,10 @@ export function aggregateModifiers(
     healthPerSecond,
     healthPerSecondNearSpirit,
     armorReduction,
-    moveSpeedMultiplier,
+    moveSpeedBoost,
+    moveSpeedSlow,
+    strongestSlow,
+    speedCapBreaker,
     attackMissChance,
     maxHealthLoss,
     maxHealthBonus,
@@ -5580,7 +5617,8 @@ export function aggregateModifiers(
     attributeSets,
     castTimeMultiplier,
     skillActivationMultiplier,
-    attackDurationMultiplier: attackFaster * attackSlower,
+    attackDurationMultiplier:
+      Math.max(ATTACK_FASTER_CAP, attackFaster) * Math.min(ATTACK_SLOWER_CAP, attackSlower),
     projectileSpeedMultiplier,
     damageTakenMultiplier,
     damageReduction,

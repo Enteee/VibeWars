@@ -15,6 +15,7 @@ import { NO_RANKS, aggregateModifiers, getStatusDefinition } from "./status.js";
 import { makeCombatant, withStatusDefinitions } from "./testing.js";
 import type { Combatant, Skill } from "./types.js";
 import { resolveAttackSkillOutcome, resolveSwing } from "./weapon-attack.js";
+import { statusMoveSpeed } from "./tick.js";
 
 /**
  * Warrior staples 4 (#2181): Tiger Stance, Berserker Stance, Skull Crack,
@@ -314,7 +315,7 @@ describe("Bull's Charge (#2181)", () => {
     const caster = warrior();
     selfCast("warrior.bulls-charge", caster);
     expect(caster.statuses.get("bulls-charge")?.remainingSeconds).toBe(6);
-    expect(aggregateModifiers(caster.statuses.active).moveSpeedMultiplier).toBe(1.5);
+    expect(statusMoveSpeed(aggregateModifiers(caster.statuses.active))).toBe(1.5);
   });
 
   it("knocks down a foe moving as the blow lands, and not a still one", () => {

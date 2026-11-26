@@ -20,6 +20,7 @@ import { NO_RANKS, aggregateModifiers } from "./status.js";
 import { makeCombatant } from "./testing.js";
 import type { Combatant, Skill } from "./types.js";
 import { resolveAttackSkillOutcome, resolveSwing } from "./weapon-attack.js";
+import { statusMoveSpeed } from "./tick.js";
 
 /**
  * Assassin, Ritualist and Dervish staples (#2368): Golden Skull Strike,
@@ -371,7 +372,7 @@ describe("Seeping Wound (#2368)", () => {
   });
 
   it("moves 33% slower", () => {
-    expect(aggregateModifiers([{ id: "seeping-wound", ranks: NO_RANKS }]).moveSpeedMultiplier).toBe(
+    expect(statusMoveSpeed(aggregateModifiers([{ id: "seeping-wound", ranks: NO_RANKS }]))).toBe(
       0.67,
     );
   });
@@ -401,9 +402,9 @@ describe("Shameful Fear (#2368)", () => {
 
   it("moves 10% faster, unless speed boosts are barred", () => {
     const fear = { id: "shameful-fear", ranks: NO_RANKS } as const;
-    expect(aggregateModifiers([fear]).moveSpeedMultiplier).toBeCloseTo(1.1);
+    expect(statusMoveSpeed(aggregateModifiers([fear]))).toBeCloseTo(1.1);
     const mud = { id: "muddy-terrain", ranks: NO_RANKS } as const;
-    expect(aggregateModifiers([fear, mud]).moveSpeedMultiplier).toBeCloseTo(0.9);
+    expect(statusMoveSpeed(aggregateModifiers([fear, mud]))).toBeCloseTo(0.9);
   });
 });
 

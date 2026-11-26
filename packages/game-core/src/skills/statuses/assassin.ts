@@ -103,7 +103,11 @@ export const ASSASSIN_STATUSES: Readonly<Record<AssassinStatusId, StatusDefiniti
     block: { chance: 0.75, against: "all" },
     blockBelowHealth: 0.5,
   }),
-  dash: define("dash", "Dash", "stance", { profession: "assassin", moveSpeedMultiplier: 1.5 }),
+  dash: define("dash", "Dash", "stance", {
+    profession: "assassin",
+    moveSpeedMultiplier: 1.5,
+    breaksSpeedCap: true,
+  }),
   // "For 5...13...15 seconds, you move 25% faster and take half damage.
   // Dark Escape ends if you successfully hit with an attack."
   "dark-escape": define("dark-escape", "Dark Escape", "stance", {

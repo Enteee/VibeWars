@@ -11,7 +11,7 @@ import { describeSkill } from "../skills/describe.js";
 import { applyEffect, type CombatEvent } from "../skills/effects.js";
 import { NO_RANKS, aggregateModifiers, damageTypeTaken, type StatusId } from "../skills/status.js";
 import { makeCombatant } from "../skills/testing.js";
-import { effectiveMaxHealth, moveSpeedMultiplier } from "../skills/tick.js";
+import { effectiveMaxHealth, moveSpeedMultiplier, statusMoveSpeed } from "../skills/tick.js";
 import type { Combatant, Skill } from "../skills/types.js";
 import { landBlow, PLAIN_BLOW, weaponSnapshotOf } from "../skills/weapon-attack.js";
 import { vec2, type Vec2 } from "../vec2.js";
@@ -241,7 +241,7 @@ describe("preventsSpeedBoosts (#1745)", () => {
     muddy.statuses.apply("natural-stride", 8, "m", NO_RANKS);
     expect(moveSpeedMultiplier(muddy)).toBeCloseTo(0.9, 10);
     muddy.statuses.apply("crippled", 8, "f", NO_RANKS);
-    const crippled = aggregateModifiers([{ id: "crippled", ranks: NO_RANKS }]).moveSpeedMultiplier;
+    const crippled = statusMoveSpeed(aggregateModifiers([{ id: "crippled", ranks: NO_RANKS }]));
     expect(moveSpeedMultiplier(muddy)).toBeCloseTo(0.9 * crippled, 10);
   });
 });

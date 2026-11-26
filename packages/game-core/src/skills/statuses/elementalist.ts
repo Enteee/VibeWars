@@ -966,6 +966,7 @@ export const ELEMENTALIST_STATUSES: Readonly<Record<ElementalistStatusId, Status
     moveSpeedMultiplier: {
       scaling: { attributeId: "elementalist.fire-magic", atZero: 1.3, atTwelve: 1.42 },
     },
+    breaksSpeedCap: true,
     triggers: [
       {
         on: "ends",

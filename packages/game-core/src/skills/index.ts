@@ -100,6 +100,7 @@ export {
   maxHealthLossOf,
   maxHealthLossOfStatusIds,
   moveSpeedMultiplier,
+  statusMoveSpeed,
   naturalHealthPips,
   netPips,
   preCapEnergyPips,

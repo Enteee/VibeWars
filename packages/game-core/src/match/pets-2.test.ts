@@ -6,6 +6,7 @@ import { NO_RANKS, aggregateModifiers } from "../skills/status.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type Participant, type ParticipantSpec } from "./simulation.js";
+import { statusMoveSpeed } from "../skills/tick.js";
 
 /**
  * Pets 2 (#1865): effects that reach a Ranger's pet from a skill aimed
@@ -249,7 +250,7 @@ describe("Rampage as One (#1865)", () => {
     stepFor(sim, DT);
     for (const body of [owner, pet]) {
       const modifiers = aggregateModifiers(body.combatant.statuses.active);
-      expect(modifiers.moveSpeedMultiplier).toBe(1.25);
+      expect(statusMoveSpeed(modifiers)).toBe(1.25);
       expect(modifiers.attackDurationMultiplier).toBe(0.67);
     }
     stepFor(sim, 13);
@@ -265,7 +266,7 @@ describe("Run as One (#1865)", () => {
     expect(press(sim, RUN)?.check).toEqual({ ok: true });
     stepFor(sim, DT);
     for (const body of [get(sim, "r"), pet]) {
-      expect(aggregateModifiers(body.combatant.statuses.active).moveSpeedMultiplier).toBe(1.25);
+      expect(statusMoveSpeed(aggregateModifiers(body.combatant.statuses.active))).toBe(1.25);
     }
   });
 

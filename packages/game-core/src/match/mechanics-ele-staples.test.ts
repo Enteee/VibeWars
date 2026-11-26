@@ -7,6 +7,7 @@ import { NO_RANKS, aggregateModifiers, type StatusId } from "../skills/status.js
 import { vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type Participant, type ParticipantSpec } from "./simulation.js";
+import { statusMoveSpeed } from "../skills/tick.js";
 
 /**
  * Elementalist staples (#2166), Air and Water, at rank 12: Blinding
@@ -169,7 +170,7 @@ describe("Teinai's Prison (#2166)", () => {
     const sim = match([TEINAIS_PRISON]);
     cast(sim, 0, "f");
     const foe = get(sim, "f").combatant;
-    expect(aggregateModifiers(foe.statuses.active).moveSpeedMultiplier).toBeCloseTo(0.34);
+    expect(statusMoveSpeed(aggregateModifiers(foe.statuses.active))).toBeCloseTo(0.34);
     expect(aggregateModifiers(foe.statuses.active).healthPips).toBe(0);
     foe.statuses.apply("cracked-armor", 5, "c", NO_RANKS);
     expect(aggregateModifiers(foe.statuses.active).healthPips).toBe(-8);

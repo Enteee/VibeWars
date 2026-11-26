@@ -9,7 +9,7 @@ import { describeSkill, describeStatus } from "../skills/describe.js";
 import { stateHolds, type CombatEvent } from "../skills/effects.js";
 import { NO_RANKS, aggregateModifiers, type StatusId } from "../skills/status.js";
 import { makeCombatant } from "../skills/testing.js";
-import { blockChanceOf } from "../skills/tick.js";
+import { blockChanceOf, statusMoveSpeed } from "../skills/tick.js";
 import type { Skill, StateCondition } from "../skills/types.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
@@ -351,7 +351,7 @@ describe("Dodge (#1539)", () => {
   it("moves 33% faster and blocks 65% of projectiles, no melee blow", () => {
     const bearer = makeCombatant({ id: "r" });
     bearer.statuses.apply("dodge", 10, "r", NO_RANKS);
-    expect(aggregateModifiers(bearer.statuses.active).moveSpeedMultiplier).toBe(1.33);
+    expect(statusMoveSpeed(aggregateModifiers(bearer.statuses.active))).toBe(1.33);
     expect(blockChanceOf(bearer, "projectile", false, [])).toBe(0.65);
     expect(blockChanceOf(bearer, "melee", false, [])).toBe(0);
   });
