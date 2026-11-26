@@ -917,15 +917,6 @@
     {
       "id": "crates-11",
       "kind": "crates",
-      "at": { "x": 3869, "y": 475 },
-      "layer": 2,
-      "rotation": 272,
-      "scale": 1.01,
-      "variant": 2
-    },
-    {
-      "id": "crates-12",
-      "kind": "crates",
       "at": { "x": 1609, "y": 1011 },
       "layer": 2,
       "rotation": 178,
@@ -933,7 +924,7 @@
       "variant": 1
     },
     {
-      "id": "crates-13",
+      "id": "crates-12",
       "kind": "crates",
       "at": { "x": 2553, "y": 1843 },
       "layer": 2,
@@ -942,7 +933,7 @@
       "variant": 3
     },
     {
-      "id": "crates-14",
+      "id": "crates-13",
       "kind": "crates",
       "at": { "x": 3551, "y": 1737 },
       "layer": 2,
@@ -951,35 +942,26 @@
       "variant": 1
     },
     {
+      "id": "crates-14",
+      "kind": "crates",
+      "at": { "x": 2445, "y": 793 },
+      "layer": 2,
+      "rotation": 150,
+      "scale": 0.83,
+      "variant": 2
+    },
+    {
       "id": "crates-15",
       "kind": "crates",
-      "at": { "x": 1453, "y": 970 },
+      "at": { "x": 3648, "y": 1886 },
       "layer": 2,
-      "rotation": 114,
-      "scale": 0.96,
+      "rotation": 82,
+      "scale": 0.99,
       "variant": 0
     },
     {
       "id": "banner-5",
       "kind": "banner",
-      "at": { "x": 3557, "y": 1906 },
-      "layer": 2,
-      "rotation": 90,
-      "scale": 0.78,
-      "variant": 1
-    },
-    {
-      "id": "banner-6",
-      "kind": "banner",
-      "at": { "x": 2395, "y": 1931 },
-      "layer": 2,
-      "rotation": 166,
-      "scale": 0.78,
-      "variant": 1
-    },
-    {
-      "id": "rock-17",
-      "kind": "rock",
       "at": { "x": 2471, "y": 1156 },
       "layer": 2,
       "rotation": 49,
@@ -987,8 +969,8 @@
       "variant": 2
     },
     {
-      "id": "rock-18",
-      "kind": "rock",
+      "id": "banner-6",
+      "kind": "banner",
       "at": { "x": 3621, "y": 653 },
       "layer": 2,
       "rotation": 179,
@@ -996,12 +978,30 @@
       "variant": 3
     },
     {
+      "id": "rock-17",
+      "kind": "rock",
+      "at": { "x": 3580, "y": 1933 },
+      "layer": 2,
+      "rotation": 234,
+      "scale": 1.09,
+      "variant": 1
+    },
+    {
+      "id": "rock-18",
+      "kind": "rock",
+      "at": { "x": 1597, "y": 1686 },
+      "layer": 2,
+      "rotation": 143,
+      "scale": 1.06,
+      "variant": 1
+    },
+    {
       "id": "rock-19",
       "kind": "rock",
-      "at": { "x": 3450, "y": 1810 },
+      "at": { "x": 3581, "y": 1158 },
       "layer": 2,
-      "rotation": 308,
-      "scale": 0.76,
+      "rotation": 256,
+      "scale": 0.98,
       "variant": 2
     }
   ],
