@@ -237,6 +237,15 @@ describe("effectiveActivationSeconds", () => {
     expect(swiftChop?.activationSeconds).toBe(0);
     expect(swiftChop && effectiveActivationSeconds(swiftChop, c)).toBe(0);
   });
+
+  it("stops Dazed and a ×2 hex at ×2.5, GW1's cap (#4089)", () => {
+    const c = makeCombatant({ id: "c" });
+    c.statuses.apply("dazed", 10, "a", NO_RANKS);
+    c.statuses.apply("arcane-conundrum", 10, "a", NO_RANKS);
+    expect(fireball && effectiveActivationSeconds(fireball, c)).toBe(
+      (fireball?.activationSeconds ?? 0) * 2.5,
+    );
+  });
 });
 
 describe("attackMissChanceOf", () => {
@@ -300,6 +309,16 @@ describe("effectiveActivationSeconds with Fast Casting (#527)", () => {
     const c = mesmer();
     c.statuses.apply("dazed", 10, "a", NO_RANKS);
     expect(effectiveActivationSeconds(mesmerHex, c)).toBeCloseTo(1.149, 3);
+  });
+
+  it("multiplies outside the cap (#4089): dazed and a ×2 hex, ×2.5 of its fast cast", () => {
+    const c = mesmer();
+    c.statuses.apply("dazed", 10, "a", NO_RANKS);
+    c.statuses.apply("arcane-conundrum", 10, "a", NO_RANKS);
+    expect(effectiveActivationSeconds(mesmerHex, c)).toBeCloseTo(
+      2.5 * effectiveActivationSeconds(mesmerHex, mesmer()),
+      9,
+    );
   });
 
   it("casts a 3 s Resurrection Signet in 1.72 s at rank 12, dazed or not (#1100, #3880)", () => {

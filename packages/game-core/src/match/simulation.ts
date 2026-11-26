@@ -171,6 +171,7 @@ import {
   preventsAttacks,
   reducedRecharge,
   scaledStatusDuration,
+  stackedRechargeFaster,
   STATUS_DEFINITIONS,
   StatusSet,
   type ActiveStatus,
@@ -3990,10 +3991,10 @@ export class MatchSimulation {
     }
     const { rule } = this.#payForUse(record, skill, key, undefined);
     // Serpent's Quickness (#1539) is any skill's, a pet attack's too.
-    const faster = Math.max(
-      aggregateModifiers(record.combatant.statuses.active).skillRechargeFaster,
+    const faster = stackedRechargeFaster([
+      ...aggregateModifiers(record.combatant.statuses.active).skillRechargeFaster,
       rule.own.rechargeFaster,
-    );
+    ]);
     beginRecharge(
       record.combatant.cast,
       skill,
@@ -5913,33 +5914,33 @@ export class MatchSimulation {
       // Quickening (#1064), read now: one that ends later leaves this
       // recharge as it started. Read after the spell resolved, so Weapon of
       // Quickening cast on yourself already shortens its own. An
-      // enchantment of Avatar of Lyssa's profession (#1455) takes the
-      // larger of its share and the spells'. Serpent's Quickness's share
-      // (#1539) is any skill's: the larger of it and the type's counts.
+      // enchantment of Avatar of Lyssa's profession (#1455) takes its share
+      // too. Serpent's Quickness's share (#1539) is any skill's.
       // Ghostly Haste's (#2504) holds for a spell finished in earshot of a
       // spirit, read now as the rest are.
       const modifiers = aggregateModifiers(record.combatant.statuses.active);
-      const nearSpiritShare =
-        modifiers.spellRechargeFasterNearSpirit !== 0 &&
+      const nearSpiritShares =
+        modifiers.spellRechargeFasterNearSpirit.length > 0 &&
         spiritsWithin(this.#participants.values(), record, AREA_EARSHOT) > 0
           ? modifiers.spellRechargeFasterNearSpirit
-          : 0;
+          : [];
       const enchantmentShares = modifiers.enchantmentRechargeFaster
         .filter(({ profession }) => skill.type === "enchantment" && skill.profession === profession)
         .map(({ share }) => share);
-      const typeFaster = isSpell(skill.type)
-        ? Math.max(modifiers.spellRechargeFaster, nearSpiritShare, ...enchantmentShares)
+      const typeShares = isSpell(skill.type)
+        ? [...modifiers.spellRechargeFaster, ...nearSpiritShares, ...enchantmentShares]
         : skill.type === "binding-ritual"
           ? modifiers.bindingRitualRechargeFaster
-          : 0;
+          : [];
       // A status on the caster's skills of its kind (#1761), as Practiced
       // Stance's preparations, as its use was paid for.
-      const faster = Math.max(
-        modifiers.skillRechargeFaster,
-        typeFaster,
+      // Every source multiplies, two or more at most halving it (#4089).
+      const faster = stackedRechargeFaster([
+        ...modifiers.skillRechargeFaster,
+        ...typeShares,
         cast.rule.own.rechargeFaster,
         cast.rule.rechargeFaster,
-      );
+      ]);
       // A glyph's hold on the spell (#1730): Renewal's 0 over Sacrifice's 30 more.
       // Of Memory's chance (#2011) halves the whole of it.
       beginRecharge(

@@ -749,7 +749,8 @@ export interface StatusDefinition {
    * Multiplier on the activation of every skill the bearer starts that is
    * not an attack skill (#1473): spells, signets, shouts and the rest.
    * Migraine's "takes 100% longer to activate skills" is 2. It stacks with
-   * `castTimeMultiplier`, so Dazed and Migraine make a spell 4× as long.
+   * `castTimeMultiplier`: Dazed and Migraine make a spell 2.5× as long, GW1's
+   * cap (#4089).
    */
   readonly skillActivationMultiplier: number;
   /**
@@ -5208,7 +5209,7 @@ export interface StatusModifiers {
   /** Every status's, summed: health per second near a spirit (#1064). */
   readonly healthPerSecondNearSpirit: number;
   /** As `spellRechargeFaster`, in earshot of a spirit (#2504). */
-  readonly spellRechargeFasterNearSpirit: number;
+  readonly spellRechargeFasterNearSpirit: readonly number[];
   /** The largest armor reduction; `undefined`: none. */
   readonly armorReduction: ArmorReduction | undefined;
   readonly moveSpeedMultiplier: number;
@@ -5232,9 +5233,10 @@ export interface StatusModifiers {
   readonly attributeDeltas: readonly AttributeDelta[];
   /** Every status's `attributeSet`, oldest first (#1929). */
   readonly attributeSets: readonly AttributeSet[];
-  readonly castTimeMultiplier: number;
-  /** Every status's, multiplied (#1473). */
-  readonly skillActivationMultiplier: number;
+  /** Every status's that is not 1, one per status: `stackedActivationMultiplier` combines them (#4089). */
+  readonly castTimeMultiplier: readonly number[];
+  /** As `castTimeMultiplier` (#1473). */
+  readonly skillActivationMultiplier: readonly number[];
   readonly attackDurationMultiplier: number;
   /** Every status's, multiplied (#1742). */
   readonly projectileSpeedMultiplier: number;
@@ -5253,19 +5255,22 @@ export interface StatusModifiers {
   /** Every status's, summed (#936). */
   readonly extraStrikesPerHit: number;
   /**
-   * The share taken off a spell's recharge (#938): several combine as
-   * 1 − Π(1 − f), never more than `MAX_RECHARGE_REDUCTION` (#975).
+   * Every status's share taken off a spell's recharge (#938), one per
+   * status: `stackedRechargeFaster` combines them with the rest (#4089).
    */
-  readonly spellRechargeFaster: number;
+  readonly spellRechargeFaster: readonly number[];
   /** As `spellRechargeFaster`, for a skill of any type (#1539). */
-  readonly skillRechargeFaster: number;
+  readonly skillRechargeFaster: readonly number[];
   /** As `spellRechargeFaster`, for a binding ritual (#1064). */
-  readonly bindingRitualRechargeFaster: number;
-  /** Every status's that reaches all adrenaline, summed (#1455). */
-  readonly adrenalineGainFaster: number;
+  readonly bindingRitualRechargeFaster: readonly number[];
+  /**
+   * Every status's boost that reaches all adrenaline (#1455), one per
+   * source: `stackedAdrenalineGainFaster` combines them (#4089).
+   */
+  readonly adrenalineGainFaster: readonly number[];
   /** What only the bearer's own blows gain faster on top (#2180): `adrenalineGainFasterFrom: "attacks"`. */
-  readonly adrenalineGainFasterFromAttacks: number;
-  /** Every status's (#1455): the recharge takes the largest that applies. */
+  readonly adrenalineGainFasterFromAttacks: readonly number[];
+  /** Every status's (#1455): an enchantment of its profession takes its share. */
   readonly enchantmentRechargeFaster: readonly EnchantmentRechargeFaster[];
   /** Every status's (#1464): a skill takes every share that names its profession. */
   readonly skillArmorPenetration: readonly SkillArmorPenetration[];
@@ -5279,10 +5284,10 @@ export interface StatusModifiers {
   readonly enchantmentsExpireFaster: number;
   /** Every status's, summed (#2373). */
   readonly stancesExpireFaster: number;
-  /** Every status's, multiplied (#944). */
-  readonly incomingHexCastTimeMultiplier: number;
-  /** Every status's, multiplied (#1955). */
-  readonly incomingAllySpellCastTimeMultiplier: number;
+  /** As `castTimeMultiplier` (#944). */
+  readonly incomingHexCastTimeMultiplier: readonly number[];
+  /** As `castTimeMultiplier` (#1955). */
+  readonly incomingAllySpellCastTimeMultiplier: readonly number[];
   /** Every status's, summed (#988). */
   readonly criticalChanceBonus: number;
   /** The largest status's (#1519). */
@@ -5302,10 +5307,62 @@ export interface StatusModifiers {
 }
 
 /**
- * The most recharge reductions together take off (GW1, "Recharge"): they
- * multiply, and never shorten a recharge by more than half.
+ * The most recharge reductions together take off (GW1, Effect_stacking,
+ * "Effect caps"): they multiply, and two or more never shorten a recharge
+ * by more than half. A single one keeps its own share (#4089).
  */
 export const MAX_RECHARGE_REDUCTION = 0.5;
+
+/**
+ * The bounds of an activation time's multiplier from two or more sources
+ * (GW1, Effect_stacking, "Effect caps"): −25% to +150%. A single source
+ * keeps its own; Fast Casting is outside them (#4089).
+ */
+export const MIN_ACTIVATION_MULTIPLIER = 0.75;
+export const MAX_ACTIVATION_MULTIPLIER = 2.5;
+
+/**
+ * The bounds of what two or more adrenaline gain boosts together add (GW1,
+ * Effect_stacking, "Effect caps"): −50% to +100%. A single one keeps its
+ * own (#4089).
+ */
+export const MAX_ADRENALINE_GAIN_FASTER = 1;
+export const MIN_ADRENALINE_GAIN_FASTER = -0.5;
+
+/**
+ * The share `shares` together take off a recharge (#4089): 1 − Π(1 − f),
+ * at most `MAX_RECHARGE_REDUCTION` with two or more. Zeros are no source.
+ */
+export function stackedRechargeFaster(shares: readonly number[]): number {
+  const sources = shares.filter((share) => share !== 0);
+  const faster = 1 - sources.reduce((kept, share) => kept * (1 - share), 1);
+  return sources.length > 1 ? Math.min(MAX_RECHARGE_REDUCTION, faster) : faster;
+}
+
+/**
+ * The product of `multipliers` (#4089), within `MIN_ACTIVATION_MULTIPLIER`
+ * to `MAX_ACTIVATION_MULTIPLIER` with two or more that are not 1.
+ */
+export function stackedActivationMultiplier(multipliers: readonly number[]): number {
+  const sources = multipliers.filter((multiplier) => multiplier !== 1);
+  const product = sources.reduce((total, multiplier) => total * multiplier, 1);
+  return sources.length > 1
+    ? Math.min(MAX_ACTIVATION_MULTIPLIER, Math.max(MIN_ACTIVATION_MULTIPLIER, product))
+    : product;
+}
+
+/**
+ * What `boosts` together add to adrenaline gain (#4089): Π(1 + b) − 1, at
+ * within `MIN_ADRENALINE_GAIN_FASTER` to `MAX_ADRENALINE_GAIN_FASTER` with
+ * two or more. Zeros are no source.
+ */
+export function stackedAdrenalineGainFaster(boosts: readonly number[]): number {
+  const sources = boosts.filter((boost) => boost !== 0);
+  const faster = sources.reduce((total, boost) => total * (1 + boost), 1) - 1;
+  return sources.length > 1
+    ? Math.min(MAX_ADRENALINE_GAIN_FASTER, Math.max(MIN_ADRENALINE_GAIN_FASTER, faster))
+    : faster;
+}
 
 /**
  * A spell's recharge of `seconds`, `faster` shorter (`StatusModifiers.
@@ -5377,7 +5434,7 @@ export function aggregateModifiers(
   let healthPerSecondWhileMoving = 0;
   let healthPerSecond = 0;
   let healthPerSecondNearSpirit = 0;
-  let spellRechargeNearSpiritKept = 1;
+  const spellRechargeFasterNearSpirit: number[] = [];
   let armorReduction: ArmorReduction | undefined;
   let moveSpeedMultiplier = 1;
   const speedBoostsBarred = statuses.some(({ id }) => getStatusDefinition(id).preventsSpeedBoosts);
@@ -5392,8 +5449,8 @@ export function aggregateModifiers(
   let physicalDamageTakenBonus = 0;
   const attributeDeltas: AttributeDelta[] = [];
   const attributeSets: AttributeSet[] = [];
-  let castTimeMultiplier = 1;
-  let skillActivationMultiplier = 1;
+  const castTimeMultiplier: number[] = [];
+  const skillActivationMultiplier: number[] = [];
   let attackFaster = 1;
   let projectileSpeedMultiplier = 1;
   let attackSlower = 1;
@@ -5404,8 +5461,8 @@ export function aggregateModifiers(
   let sacrificeMultiplier = 1;
   let knockdownMinSeconds: number | undefined;
   let extraStrikesPerHit = 0;
-  let adrenalineGainFaster = 0;
-  let adrenalineGainFasterFromAttacks = 0;
+  const adrenalineGainFaster: number[] = [];
+  const adrenalineGainFasterFromAttacks: number[] = [];
   const enchantmentRechargeFaster: EnchantmentRechargeFaster[] = [];
   const skillArmorPenetration: SkillArmorPenetration[] = [];
   let uninterruptible = false;
@@ -5413,11 +5470,11 @@ export function aggregateModifiers(
   let hexesExpireFaster = 0;
   let enchantmentsExpireFaster = 0;
   let stancesExpireFaster = 0;
-  let spellRechargeKept = 1;
-  let skillRechargeKept = 1;
-  let bindingRitualRechargeKept = 1;
-  let incomingHexCastTimeMultiplier = 1;
-  let incomingAllySpellCastTimeMultiplier = 1;
+  const spellRechargeFaster: number[] = [];
+  const skillRechargeFaster: number[] = [];
+  const bindingRitualRechargeFaster: number[] = [];
+  const incomingHexCastTimeMultiplier: number[] = [];
+  const incomingAllySpellCastTimeMultiplier: number[] = [];
   let damageFromSpiritAttacks = 0;
   let criticalChanceBonus = 0;
   let attackArmorPenetration = 0;
@@ -5455,7 +5512,9 @@ export function aggregateModifiers(
     healthPerSecondWhileMoving += def.healthPerSecondWhileMoving;
     healthPerSecond += def.healthPerSecond;
     healthPerSecondNearSpirit += def.healthPerSecondNearSpirit;
-    spellRechargeNearSpiritKept *= 1 - def.spellRechargeFasterNearSpirit;
+    if (def.spellRechargeFasterNearSpirit !== 0) {
+      spellRechargeFasterNearSpirit.push(def.spellRechargeFasterNearSpirit);
+    }
     if (
       def.armorReduction !== undefined &&
       (armorReduction === undefined || def.armorReduction.amount > armorReduction.amount)
@@ -5492,8 +5551,12 @@ export function aggregateModifiers(
     if (def.attributeSet !== undefined) {
       attributeSets.push(def.attributeSet);
     }
-    castTimeMultiplier *= def.castTimeMultiplier;
-    skillActivationMultiplier *= def.skillActivationMultiplier;
+    if (def.castTimeMultiplier !== 1) {
+      castTimeMultiplier.push(def.castTimeMultiplier);
+    }
+    if (def.skillActivationMultiplier !== 1) {
+      skillActivationMultiplier.push(def.skillActivationMultiplier);
+    }
     const attackDuration = statAt(def.attackDurationMultiplier, ranks);
     attackFaster = Math.min(attackFaster, attackDuration);
     attackSlower = Math.max(attackSlower, attackDuration);
@@ -5516,15 +5579,19 @@ export function aggregateModifiers(
       knockdownMinSeconds = def.knockdownMinSeconds;
     }
     extraStrikesPerHit += def.extraStrikesPerHit;
-    if (def.adrenalineGainFasterFrom === "attacks") {
-      adrenalineGainFasterFromAttacks += statAt(def.adrenalineGainFaster, ranks);
-    } else {
-      adrenalineGainFaster += statAt(def.adrenalineGainFaster, ranks);
+    const adrenalineBoost = statAt(def.adrenalineGainFaster, ranks);
+    if (adrenalineBoost !== 0) {
+      (def.adrenalineGainFasterFrom === "attacks"
+        ? adrenalineGainFasterFromAttacks
+        : adrenalineGainFaster
+      ).push(adrenalineBoost);
     }
     if (def.whileUnder !== undefined && isUnderAnother(statuses, status, def.whileUnder)) {
       attackFaster = Math.min(attackFaster, def.whileUnder.attackDurationMultiplier);
       attackSlower = Math.max(attackSlower, def.whileUnder.attackDurationMultiplier);
-      adrenalineGainFaster += def.whileUnder.adrenalineGainFaster;
+      if (def.whileUnder.adrenalineGainFaster !== 0) {
+        adrenalineGainFaster.push(def.whileUnder.adrenalineGainFaster);
+      }
       healthPips += Math.round(statAt(def.whileUnder.healthPips, ranks));
       armorModifier += Math.round(statAt(def.whileUnder.armorModifier, ranks));
       attackMissChance = Math.max(attackMissChance, def.whileUnder.attackMissChance);
@@ -5542,11 +5609,21 @@ export function aggregateModifiers(
     hexesExpireFaster += def.hexesExpireFaster;
     enchantmentsExpireFaster += statAt(def.enchantmentsExpireFaster, ranks);
     stancesExpireFaster += statAt(def.stancesExpireFaster, ranks);
-    spellRechargeKept *= 1 - def.spellRechargeFaster;
-    skillRechargeKept *= 1 - def.skillRechargeFaster;
-    bindingRitualRechargeKept *= 1 - def.bindingRitualRechargeFaster;
-    incomingHexCastTimeMultiplier *= def.incomingHexCastTimeMultiplier;
-    incomingAllySpellCastTimeMultiplier *= def.incomingAllySpellCastTimeMultiplier;
+    if (def.spellRechargeFaster !== 0) {
+      spellRechargeFaster.push(def.spellRechargeFaster);
+    }
+    if (def.skillRechargeFaster !== 0) {
+      skillRechargeFaster.push(def.skillRechargeFaster);
+    }
+    if (def.bindingRitualRechargeFaster !== 0) {
+      bindingRitualRechargeFaster.push(def.bindingRitualRechargeFaster);
+    }
+    if (def.incomingHexCastTimeMultiplier !== 1) {
+      incomingHexCastTimeMultiplier.push(def.incomingHexCastTimeMultiplier);
+    }
+    if (def.incomingAllySpellCastTimeMultiplier !== 1) {
+      incomingAllySpellCastTimeMultiplier.push(def.incomingAllySpellCastTimeMultiplier);
+    }
     damageFromSpiritAttacks += def.damageFromSpiritAttacks;
     criticalChanceBonus += statAt(def.criticalChanceBonus, ranks);
     attackArmorPenetration = Math.max(attackArmorPenetration, def.attackArmorPenetration);
@@ -5589,13 +5666,10 @@ export function aggregateModifiers(
     sacrificeMultiplier,
     knockdownMinSeconds,
     extraStrikesPerHit,
-    spellRechargeFaster: Math.min(MAX_RECHARGE_REDUCTION, 1 - spellRechargeKept),
-    spellRechargeFasterNearSpirit: Math.min(
-      MAX_RECHARGE_REDUCTION,
-      1 - spellRechargeNearSpiritKept,
-    ),
-    skillRechargeFaster: Math.min(MAX_RECHARGE_REDUCTION, 1 - skillRechargeKept),
-    bindingRitualRechargeFaster: Math.min(MAX_RECHARGE_REDUCTION, 1 - bindingRitualRechargeKept),
+    spellRechargeFaster,
+    spellRechargeFasterNearSpirit,
+    skillRechargeFaster,
+    bindingRitualRechargeFaster,
     adrenalineGainFaster,
     adrenalineGainFasterFromAttacks,
     enchantmentRechargeFaster,

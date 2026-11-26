@@ -454,7 +454,7 @@ describe("in a match (#1667)", () => {
       expect(secondsOf(sim, "c", "onslaught")).toBeCloseTo(7, 0);
       const modifiers = aggregateModifiers(get(sim, "c").statuses.active);
       expect(modifiers.attackDurationMultiplier).toBe(0.75);
-      expect(modifiers.adrenalineGainFaster).toBe(0.25);
+      expect(modifiers.adrenalineGainFaster).toEqual([0.25]);
       expect(modifiers.moveSpeedMultiplier).toBe(1);
     });
   });

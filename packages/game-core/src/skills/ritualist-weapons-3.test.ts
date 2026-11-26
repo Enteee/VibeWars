@@ -415,6 +415,6 @@ describe("in a match (#1654)", () => {
     expect(furious.energy).toBeGreaterThan(plain.energy);
     expect(
       aggregateModifiers([{ id: "weapon-of-fury", ranks: NO_RANKS }]).adrenalineGainFaster,
-    ).toBe(1);
+    ).toEqual([1]);
   });
 });
