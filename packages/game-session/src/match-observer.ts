@@ -45,6 +45,8 @@ import { combatMessage, observedSnapshot, playerSnapshots, wear } from "./wire.j
  * The host's peer going is waited out as a player's seat waits it out
  * (#4105): `RECONNECT_WINDOW_SECONDS` for it to be heard again, and then
  * the same observe said again. Past the window, it is the end of it.
+ * Before `observing` it fails nothing (#4115): the observe goes on being
+ * said, at once when the host is heard again, until `timeoutMs`.
  */
 export interface ObserverConnection {
   readonly map: MapDescriptor;
@@ -127,19 +129,19 @@ export function connectObserver(options: ConnectObserverOptions): Promise<Observ
   };
 
   /**
-   * The host's peer went. Before `observing`, the watch fails, as before;
-   * watching, wait the window out. It is measured on the clock, so a
+   * The host's peer went. Before `observing`, only noted, so its return
+   * says the observe at once: the join's own timeout is its window (#4115).
+   * Watching, wait the window out. It is measured on the clock, so a
    * hidden tab's late timer does not stretch it.
    */
   const dropHost = (): void => {
     if (lost || droppedAt !== undefined) {
       return;
     }
+    droppedAt = Date.now();
     if (!settled) {
-      loseHost();
       return;
     }
-    droppedAt = Date.now();
     reconnectTimer = setTimeout(loseHost, RECONNECT_WINDOW_SECONDS * 1000);
     tell("reconnecting");
   };
@@ -218,7 +220,7 @@ export function connectObserver(options: ConnectObserverOptions): Promise<Observ
       if (peerId !== hostId || droppedAt === undefined) {
         return;
       }
-      if (Date.now() - droppedAt >= RECONNECT_WINDOW_SECONDS * 1000) {
+      if (settled && Date.now() - droppedAt >= RECONNECT_WINDOW_SECONDS * 1000) {
         loseHost();
         return;
       }
@@ -312,6 +314,7 @@ export function connectObserver(options: ConnectObserverOptions): Promise<Observ
       }
       teamCount = message.map.teamCount;
       settled = true;
+      droppedAt = undefined;
       clearTimeout(timer);
       clearInterval(observeTimer);
       resolve(connection(message));
