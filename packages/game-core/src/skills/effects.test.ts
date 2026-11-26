@@ -1967,9 +1967,9 @@ describe("uninterruptible and skill armor penetration (#1464)", () => {
     return 500 - foe.health;
   }
 
-  it("adds Cruel's 10% to a Ritualist skill's damage, on top of its own", () => {
+  it("gives a Ritualist skill Cruel's 10%, unless its own is higher (#4085)", () => {
     expect(lightning(0, "ritualist")).toBe(plain(0.1));
-    expect(lightning(0.25, "ritualist")).toBe(plain(0.35));
+    expect(lightning(0.25, "ritualist")).toBe(plain(0.25));
   });
 
   it("adds nothing to another profession's skill, or to what is no skill's", () => {
