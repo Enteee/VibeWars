@@ -11,7 +11,7 @@
  *   music.webm     the music of a real-time run of the fight, one continuous take, tapped
  *                  inside the music host (see `AUDIO_TAP`); the music bed
  *
- *   --scene <name>  shoot one scene: fight, editor, map-<id>, friends, ranked
+ *   --scene <name>  shoot one scene: fight, editor, act-<name>, friends, ranked
  *   --url <url>     use a client served there, built with
  *                   VITE_VIBEWARS_TRANSPORT=broadcast and VITE_VIBEWARS_SPLASH=off
  *
@@ -27,6 +27,8 @@ import { parseArgs } from "node:util";
 
 import { chromium } from "@playwright/test";
 
+import { getSkill } from "../../packages/game-core/dist/index.js";
+import { advance, captureState, cycleSkills, waitEvent, walkTo } from "./actions.mjs";
 import { musicSettled } from "./plan.mjs";
 
 const PORT = 4322;
@@ -44,7 +46,43 @@ const NAME = "Aria Stormveil";
 const FIGHT_TRIES = 5;
 /** The longest a fight is watched for its interrupt, ms. */
 const FIGHT_MS = 150_000;
-const MAPS = ["broken-tower", "arena-canyon", "ember-pits"];
+/** The ranked scene's map. */
+const RANKED_MAP = "broken-tower";
+/** A shot is tried this often before the run fails (#3982). */
+const SCENE_TRIES = 5;
+/** @typedef {{ id: string, opener: { kind: string, plate?: { x: number, y: number } } }} GateDef */
+/** @type {unknown} */
+const towerMap = JSON.parse(
+  fs.readFileSync(
+    path.join(
+      import.meta.dirname,
+      "..",
+      "..",
+      "packages",
+      "game-maps",
+      "maps",
+      "broken-tower",
+      "map.json",
+    ),
+    "utf8",
+  ),
+);
+/** Broken Tower's gates, in the order the page's `gatesOpen` reports them (#4079). */
+const TOWER_GATES = /** @type {{ gates: GateDef[] }} */ (towerMap).gates;
+/** The seat an action shot takes: an Elementalist's, for a cast with something to see (#3982). */
+const CASTER_SEAT = /Elementalist|\(E\/|\/E\)/;
+/** The longest an action shot waits for its event, ms. */
+const ACTION_MS = 60_000;
+/** @typedef {{ kind: string, skillId: string, own: boolean }} Combat */
+/**
+ * The action shots: the map, and the event that starts each.
+ * @type {Record<string, { map: string, wanted: (event: Combat) => boolean }>}
+ */
+const ACTIONS = {
+  cast: { map: "arena-canyon", wanted: (e) => e.own && e.kind === "damage" && e.skillId !== "" },
+  heal: { map: "ember-pits", wanted: (e) => e.own && e.kind === "heal" && e.skillId !== "" },
+  ramp: { map: "broken-tower", wanted: (e) => e.own && e.kind === "damage" },
+};
 
 /**
  * Runs in every frame before its scripts, the sandboxed music host's
@@ -399,8 +437,9 @@ async function openRail(page, label) {
  * @param {import("@playwright/test").Page} page
  * @param {string} mapId
  * @param {{ stepper: Stepper, name: string } | undefined} [stepped]
+ * @param {RegExp} [seatLabel]  the seat to take, by its label; else the first
  */
-async function startMatch(page, mapId, stepped) {
+async function startMatch(page, mapId, stepped, seatLabel) {
   const stopPump = stepped?.stepper.pump();
   step = "hosted game";
   await openRail(page, "Hosted Game");
@@ -415,8 +454,17 @@ async function startMatch(page, mapId, stepped) {
   await liveClick(page.getByRole("button", { name: "Propose this build" }));
   await liveClick(page.locator(".team-lobby-proposals button").first());
   step = "seat";
-  const seats = page.locator(".team-lobby-seat-free");
-  await liveClick(seats.first());
+  // A seat is a button labelled with its professions; `seatLabel` picks a caster's, else the first.
+  const seats = page.locator("button:has(.team-lobby-seat-free)");
+  const labels = await seats.evaluateAll((all) =>
+    all.map((b) => b.getAttribute("aria-label") ?? ""),
+  );
+  console.log("seats:", JSON.stringify(labels));
+  const at = seatLabel === undefined ? 0 : labels.findIndex((label) => seatLabel.test(label));
+  if (at < 0) {
+    throw new Error(`no seat matches ${String(seatLabel)} among ${JSON.stringify(labels)}`);
+  }
+  await liveClick(seats.nth(at));
   step = "match";
   await page.locator("#viewport canvas:not(.compass)").waitFor({ timeout: 90_000 });
   await stopPump?.();
@@ -637,28 +685,110 @@ async function waitLiveStepped(page, stepper) {
 }
 
 /**
- * A map, from above and walked across.
+ * An action shot (#3982): the match is fast-forwarded past the countdown,
+ * the player advances and casts until `wanted` shows among the combat
+ * events, and the shot's start (`marks.action`) is that event's time.
+ * Retried like `fight`: bots are random, so a run may never produce it.
  *
  * @param {import("@playwright/test").Browser} browser
  * @param {string} url
+ * @param {string} name  the scene, `act-<name>`
  * @param {string} mapId
+ * @param {(event: Combat) => boolean} wanted
  */
-async function mapScene(browser, url, mapId) {
-  const scene = await openScene(browser, `map-${mapId}`, url, "stepped");
-  const frame = stepper(scene.page);
-  scene.stepper = frame;
-  await startMatch(scene.page, mapId, { stepper: frame, name: `map-${mapId}` });
-  scene.marks.matchStart = scene.now();
-  step = `pan ${mapId}`;
-  await waitLiveStepped(scene.page, frame);
-  scene.marks.pan = scene.now();
-  await scene.page.mouse.move(960, 540);
-  await scene.page.keyboard.down("KeyW");
-  await frame.steps(frames(4000));
-  await scene.page.keyboard.up("KeyW");
-  await walk(scene.page, "KeyD", 4000, frame);
-  const { events, timeOrigin } = await pageEvents(scene.page);
-  await closeScene(scene, `map-${mapId}`, events, timeOrigin);
+async function actionScene(browser, url, name, mapId, wanted) {
+  const id = `act-${name}`;
+  for (let attempt = 1; attempt <= SCENE_TRIES; attempt += 1) {
+    const scene = await openScene(browser, id, url, "stepped");
+    const frame = stepper(scene.page);
+    scene.stepper = frame;
+    await startMatch(scene.page, mapId, { stepper: frame, name: id }, CASTER_SEAT);
+    scene.marks.matchStart = scene.now();
+    step = id;
+    await waitLiveStepped(scene.page, frame);
+    await scene.page.mouse.move(960, 540);
+    // Closer, so the bodies are more than a smudge.
+    await scene.page.mouse.wheel(0, -500);
+    const hit = await waitEvent(scene.page, frame, wanted, ACTION_MS, async () => {
+      await advance(scene.page, frame, 1500);
+      await cycleSkills(scene.page, frame);
+    });
+    if (hit !== undefined) {
+      const seen = await pageEvents(scene.page);
+      // The shot opens where the cast starts: the hit lands when the cast time is up.
+      const castSeconds = getSkill(hit.skillId)?.activationSeconds ?? 0;
+      scene.marks.action = (hit.t - frame.origin()) / 1000 - castSeconds;
+      // The shot's two seconds, played out.
+      await frame.steps(frames(2000));
+      const after = await pageEvents(scene.page);
+      await closeScene(scene, id, after.events, seen.timeOrigin);
+      return;
+    }
+    const { events, timeOrigin } = await pageEvents(scene.page);
+    await closeScene(scene, id, events, timeOrigin);
+    console.error(`${id} try ${String(attempt)}: no event`);
+  }
+  throw new Error(`${id}: no event in ${String(SCENE_TRIES)} tries`);
+}
+
+/**
+ * The gate shot (#3982, scene 5): the plate nearest the player's spawn on
+ * Broken Tower, found by the map's gate ids, not by position in the list. The player
+ * walks onto it and the portcullis beside it opens; the shot starts
+ * there (`marks.action`). Retried like `actionScene`.
+ *
+ * @param {import("@playwright/test").Browser} browser
+ * @param {string} url
+ */
+async function gateScene(browser, url) {
+  const id = "act-gate";
+  for (let attempt = 1; attempt <= SCENE_TRIES; attempt += 1) {
+    const scene = await openScene(browser, id, url, "stepped");
+    const frame = stepper(scene.page);
+    scene.stepper = frame;
+    await startMatch(scene.page, "broken-tower", { stepper: frame, name: id });
+    scene.marks.matchStart = scene.now();
+    step = id;
+    await waitLiveStepped(scene.page, frame);
+    const start = (await captureState(scene.page)).position;
+    const plates = TOWER_GATES.flatMap((gate, index) =>
+      gate.opener.kind === "plate" && gate.opener.plate !== undefined
+        ? [{ index, plate: gate.opener.plate }]
+        : [],
+    );
+    const own =
+      start === null
+        ? undefined
+        : plates.sort(
+            (a, b) =>
+              Math.hypot(a.plate.x - start.x, a.plate.y - start.y) -
+              Math.hypot(b.plate.x - start.x, b.plate.y - start.y),
+          )[0];
+    if (own === undefined) {
+      const nobody = await pageEvents(scene.page);
+      await closeScene(scene, id, nobody.events, nobody.timeOrigin);
+      console.error(`${id} try ${String(attempt)}: no player or no plate`);
+      continue;
+    }
+    const opened = await walkTo(
+      scene.page,
+      frame,
+      own.plate,
+      (s) => s.gatesOpen[own.index] === true,
+      ACTION_MS,
+    );
+    const seen = await pageEvents(scene.page);
+    if (opened) {
+      scene.marks.action = scene.now();
+      // The shot's two seconds, played out.
+      await frame.steps(frames(2000));
+      await closeScene(scene, id, seen.events, seen.timeOrigin);
+      return;
+    }
+    await closeScene(scene, id, seen.events, seen.timeOrigin);
+    console.error(`${id} try ${String(attempt)}: the gate stayed shut`);
+  }
+  throw new Error(`${id}: no open gate in ${String(SCENE_TRIES)} tries`);
 }
 
 /**
@@ -753,7 +883,7 @@ async function ranked(browser, url) {
   await page.goto(`${url}?capture`);
   await page.locator(".mode-rail").waitFor();
   step = "match in the look";
-  await startMatch(page, MAPS[0] ?? "");
+  await startMatch(page, RANKED_MAP);
   await waitLive(page);
   // Wheel in on the hero, the camera's centre, and walk: the cape is the subject.
   await page.mouse.move(960, 540);
@@ -765,18 +895,19 @@ async function ranked(browser, url) {
   await closeScene(scene, "ranked", events, timeOrigin);
 }
 
-/** The scenes by name; a `map-<id>` is made from `MAPS`. */
+/** The scenes by name; an `act-<name>` is made from `ACTIONS`. */
 /** @type {Record<string, (browser: import("@playwright/test").Browser, url: string) => Promise<void>>} */
 const SCENES = {
   fight,
   editor,
   friends,
   ranked,
+  "act-gate": gateScene,
   ...Object.fromEntries(
-    MAPS.map((id) => [
-      `map-${id}`,
+    Object.entries(ACTIONS).map(([name, shot]) => [
+      `act-${name}`,
       (/** @type {import("@playwright/test").Browser} */ b, /** @type {string} */ u) =>
-        mapScene(b, u, id),
+        actionScene(b, u, name, shot.map, shot.wanted),
     ]),
   ),
 };

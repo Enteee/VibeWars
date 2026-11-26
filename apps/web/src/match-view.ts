@@ -135,7 +135,7 @@ import { chartRoster, chartUsable, renderMatchCharts } from "./ui/match-charts.j
 import { renderSummary, summaryTables, type SummaryTable } from "./ui/match-summary.js";
 import { flashSlot, slotFlashes } from "./ui/skill-slot-state.js";
 import { endLineSetter, type EndLine } from "./ui/end-line.js";
-import { captureEvents } from "./capture-events.js";
+import { captureEvents, exposeCaptureState } from "./capture-events.js";
 import { captureClock, now } from "./capture-clock.js";
 import { setToastHost, toast } from "./ui/kit.js";
 import { signedText } from "./ui/player-label.js";
@@ -1114,12 +1114,24 @@ export async function startMatchView(
   });
 
   const captured = captureEvents(location.search);
+  exposeCaptureState(location.search, () => {
+    const self = latestMatch?.players.find((p) => p.sessionId === viewed.selfSessionId);
+    return {
+      position: self === undefined ? null : { x: self.x, y: self.y },
+      gatesOpen: latestMatch?.gates ?? [],
+    };
+  });
   viewed.onCombat((message) => {
     if (latestMatch === undefined) {
       return;
     }
     for (const event of message.events) {
-      captured?.push({ t: now(), kind: event.kind, skillId: message.skillId });
+      captured?.push({
+        t: now(),
+        kind: event.kind,
+        skillId: message.skillId,
+        own: message.casterSessionId === viewed.selfSessionId,
+      });
     }
     if (viewport !== undefined) {
       showCombatFeedback(viewport.scene, message, latestMatch, structure.ground);

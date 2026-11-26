@@ -11,6 +11,8 @@ export interface CaptureEvent {
   readonly kind: string;
   /** The skill that caused it, `""` for a weapon or the world. */
   readonly skillId: string;
+  /** Whether the local seat caused it: the trailer shoots its own player, not any bot. */
+  readonly own: boolean;
 }
 
 /** Whether the page asked to record its events: `?capture`. */
@@ -30,4 +32,22 @@ export function captureEvents(search: string): CaptureEvent[] | undefined {
   const events: CaptureEvent[] = [];
   Object.assign(window, { __capture: events });
   return events;
+}
+
+/** What the capture script steers by: the local player's spot, and which gates are open. */
+export interface CaptureState {
+  /** The local seat's player; `null` before spawn, or as a watcher. */
+  readonly position: { readonly x: number; readonly y: number } | null;
+  /** The match's gates in map order. */
+  readonly gatesOpen: readonly boolean[];
+}
+
+/**
+ * Expose `window.__captureState()` over `read`, with `?capture` only: the
+ * trailer's script polls it to walk onto a plate and to cut on a gate opening.
+ */
+export function exposeCaptureState(search: string, read: () => CaptureState): void {
+  if (capturing(search)) {
+    Object.assign(window, { __captureState: read });
+  }
 }
