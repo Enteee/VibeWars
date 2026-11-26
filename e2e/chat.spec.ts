@@ -1,10 +1,11 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
+import { codeLabel } from "../apps/web/src/input/keymap.js";
 import { joinFriend } from "./helpers/menu.js";
 import { hostLobby, openPeers, playHouseTeams, startSoloMatch } from "./helpers/peers.js";
 import { namePlayer } from "./helpers/player.js";
 import { bringStarter } from "./helpers/starter.js";
-import { key } from "./keys.js";
+import { key, skillKey } from "./keys.js";
 
 /**
  * Chat (#479): Enter opens the box, Enter sends, and the lobby host
@@ -89,10 +90,26 @@ test("keys typed into chat never cast or move (#479)", async ({ page }) => {
   const stage = page.locator("#viewport");
   await settleCamera(stage, "the camera should settle on the spawn");
   const camera = await stage.getAttribute("data-camera");
-  // Q W E R A S D F are the skill keys; A casts slot 5, Rending Aura,
-  // a self-cast enchantment.
-  await say(page, "aaaa wasd qwer f");
-  await expect(page.getByRole("log")).toContainText("aaaa wasd qwer f");
+  // Every key the default keymap casts or walks with (#4121), so a keymap
+  // change cannot leave this test pressing none: slot 5's key, 5 in the
+  // classic preset, casts Rending Aura, a self-cast enchantment. A key
+  // that types a letter or digit goes into the line; any other, an arrow
+  // (labelled ↑, one character too, but it types nothing), is pressed in
+  // the box.
+  const codes = [
+    ...[0, 1, 2, 3, 4, 5, 6, 7].map((slot) => skillKey(slot)),
+    ...(["move-up", "move-left", "move-down", "move-right"] as const).map((action) => key(action)),
+  ];
+  const typed = codes.filter((code) => /^(?:Key|Digit).$/.test(code));
+  const line = typed.map((code) => codeLabel(code).toLowerCase()).join("");
+  await page.locator("body").press("Enter");
+  await expect(page.getByRole("textbox", { name: "chat message" })).toBeFocused();
+  for (const code of codes.filter((code) => !typed.includes(code))) {
+    await page.keyboard.press(code);
+  }
+  await page.keyboard.type(line);
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("log")).toContainText(line);
   // Past the round trip: a leaked key would have started a skill by now.
   await page.waitForTimeout(1500);
   await expect(page.locator(".hud-skill.is-casting")).toHaveCount(0);
