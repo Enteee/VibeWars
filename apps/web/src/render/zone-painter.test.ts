@@ -81,6 +81,12 @@ describe("a zone's painted ground (#3052)", () => {
     expect(zoneArtOf(square("foul-water"), 0)?.ripples.length).toBeGreaterThan(0);
   });
 
+  it("keeps a spring clear: no ripple lines and no sparkles, only its cells (#4062)", () => {
+    const art = zoneArtOf(square("spring"), 0);
+    expect(art?.ripples).toEqual([]);
+    expect(art?.specks).toEqual([]);
+  });
+
   it("holds every mark still under reduced motion", () => {
     for (const kind of [
       "molten",
@@ -308,18 +314,18 @@ describe("a liquid zone's cells (#4062)", () => {
     expect([...painted].sort()).toEqual([...LIQUID_ZONES].sort());
   });
 
-  it("orders the cells' scales: lava's the largest, a spring's the smallest", () => {
+  it("orders the cells' scales: foul water's the largest, a spring's the smallest", () => {
     const scales = LIQUID_ZONES.map((id) => ZONE_CELLS[id].scale);
     expect(scales).toEqual([...scales].sort((a, b) => b - a));
     expect(new Set(scales).size).toBe(scales.length);
-    expect(LIQUID_ZONES[0]).toBe("lava");
+    expect(LIQUID_ZONES[0]).toBe("foul-water");
     expect(LIQUID_ZONES.at(-1)).toBe("spring");
   });
 
   it("bakes each liquid's cells once, shared by every zone of it", () => {
     const { tiles, baked } = countingTiles();
     for (const index of [0, 1, 2]) {
-      for (const kind of ["molten", "mire", "foul-water", "spring"] as const) {
+      for (const kind of ["foul-water", "spring"] as const) {
         const art = zoneArtOf(square(kind), index);
         if (art === undefined) {
           throw new Error(kind);
@@ -327,6 +333,6 @@ describe("a liquid zone's cells (#4062)", () => {
         paintZoneGround(patternCounter().canvas, art, 1, tiles);
       }
     }
-    expect(Object.fromEntries(baked)).toEqual({ lava: 1, mud: 1, "foul-water": 1, spring: 1 });
+    expect(Object.fromEntries(baked)).toEqual({ "foul-water": 1, spring: 1 });
   });
 });

@@ -61,24 +61,21 @@ const GROUND_ALPHA: Record<Exclude<ZonePainterId, "hazard">, number> = {
   spire: 1,
 };
 
-/** The liquid zones (#4062): the painters whose ground gets the liquid cells of #4058. */
-export const LIQUID_ZONES = ["lava", "mud", "foul-water", "tainted-water", "spring"] as const;
+/**
+ * The liquid zones (#4062): the painters whose ground gets the liquid cells
+ * of #4058. Water only: lava and mud are opaque, and keep their own ground.
+ */
+export const LIQUID_ZONES = ["foul-water", "tainted-water", "spring"] as const;
 export type LiquidZoneId = (typeof LIQUID_ZONES)[number];
 
-/** Lava's cells (#4062): few and large, split by wide molten gaps. */
-export const LAVA_CELLS: LiquidCellsOptions = { seed: 4062, sites: 12, gap: 10, size: 512 };
-/** Mud's cells: thick, with dark seams. */
-export const MUD_CELLS: LiquidCellsOptions = { seed: 4063, sites: 14, gap: 10, size: 512 };
-/** Foul water's cells: water's, with narrower gaps than lava's. */
+/** Foul water's cells (#4062): water's, with narrower gaps than clear water's. */
 export const FOUL_WATER_CELLS: LiquidCellsOptions = { seed: 4064, sites: 15, gap: 6, size: 512 };
 /** Tainted water's cells, as foul water's. */
 export const TAINTED_WATER_CELLS: LiquidCellsOptions = { seed: 4065, sites: 15, gap: 6, size: 512 };
 /** A spring's cells: clear water's (#4058). */
 export const SPRING_CELLS: LiquidCellsOptions = { seed: 4066, sites: 15, gap: 7, size: 512 };
 
-/** Texture px to a world unit, per liquid: lava's cells are the largest, a spring's the smallest. */
-export const LAVA_CELL_SCALE = 0.5;
-export const MUD_CELL_SCALE = 0.42;
+/** Texture px to a world unit, per liquid: foul water's cells are the largest, a spring's the smallest. */
 export const FOUL_WATER_CELL_SCALE = 0.36;
 export const TAINTED_WATER_CELL_SCALE = 0.34;
 export const SPRING_CELL_SCALE = 0.3;
@@ -112,23 +109,6 @@ function css(colour: number): string {
  * the zone, never a new colour signal: every pass is in the zone's colours.
  */
 export const ZONE_CELLS: Record<LiquidZoneId, ZoneCellsLook> = {
-  lava: {
-    cells: LAVA_CELLS,
-    scale: LAVA_CELL_SCALE,
-    passes: [
-      { where: "cells", colour: "#120806", alpha: 0.55, blend: "multiply" },
-      { where: "gaps", colour: PALETTE.lava.mid, alpha: 0.5, blend: "lighter" },
-      { where: "gaps", colour: PALETTE.lava.accent, alpha: 0.35, blend: "lighter" },
-    ],
-  },
-  mud: {
-    cells: MUD_CELLS,
-    scale: MUD_CELL_SCALE,
-    passes: [
-      { where: "cells", colour: PALETTE.mud.mid, alpha: 0.25, blend: "multiply" },
-      { where: "gaps", colour: PALETTE.mud.accent, alpha: 0.55, blend: "multiply" },
-    ],
-  },
   "foul-water": {
     cells: FOUL_WATER_CELLS,
     scale: FOUL_WATER_CELL_SCALE,
@@ -169,7 +149,7 @@ export type ZoneCellBaker = (id: LiquidZoneId, look: ZoneCellsLook) => readonly 
 
 /**
  * Each liquid's baked passes, made once per liquid id and shared by every
- * zone of it (#4062): a volcanic map's many lava pools bake one set.
+ * zone of it (#4062): a map's many pools of one water bake one set.
  * `bake` makes them; this file stays Phaser- and DOM-free.
  */
 export class ZoneCellTiles {
@@ -418,7 +398,8 @@ export function groundArtOf(
     phase: random(),
     periodSeconds,
   });
-  const watery = painter === "foul-water" || painter === "tainted-water" || painter === "spring";
+  // A spring stays clear (#4062): no ripple lines, no sparkles, only its cells.
+  const murky = painter === "foul-water" || painter === "tainted-water";
   return {
     painter,
     outline,
@@ -436,15 +417,11 @@ export function groundArtOf(
         ? scatter(random, outline, bounds, Math.round(area / 260), 3).map((at) =>
             speck(at, 1 + random() * 1.4, 2 + random() * 2.5),
           )
-        : painter === "spring"
-          ? scatter(random, outline, bounds, Math.round(area / 1100), 6).map((at) =>
-              speck(at, 2 + random(), 2.5 + random() * 2),
+        : painter === "mud"
+          ? scatter(random, outline, bounds, Math.round(area / 1300), 6).map((at) =>
+              speck(at, 2.5 + random() * 1.5, 3 + random() * 2.5),
             )
-          : painter === "mud"
-            ? scatter(random, outline, bounds, Math.round(area / 1300), 6).map((at) =>
-                speck(at, 2.5 + random() * 1.5, 3 + random() * 2.5),
-              )
-            : [],
+          : [],
     puffs:
       painter === "fog"
         ? scatter(random, outline, bounds, Math.round(area / 700), 14 + ZONE_DRIFT).map((at) => ({
@@ -453,7 +430,7 @@ export function groundArtOf(
             phase: random(),
           }))
         : [],
-    ripples: watery ? ripplesIn(outline, ZONE_RIPPLE_SPACING) : [],
+    ripples: murky ? ripplesIn(outline, ZONE_RIPPLE_SPACING) : [],
   };
 }
 
@@ -606,7 +583,6 @@ export function paintZoneGround(
       mottle(canvas, random, art, palette.mid, Math.round(area / 120), [6, 16], 0.7);
       mottle(canvas, random, art, "#120806", Math.round(area / 400), [4, 9], 0.6);
       mottle(canvas, random, art, "#ff5a1f", Math.round(area / 700), [5, 10], 0.4);
-      cellsOver();
       for (const line of art.cracks) {
         canvas.shadowColor = "#ff9040";
         canvas.shadowBlur = 6 * scale;
@@ -655,7 +631,6 @@ export function paintZoneGround(
       fillAll(palette.base, 1);
       mottle(canvas, random, art, palette.mid, Math.round(area / 110), [5, 14], 0.6);
       mottle(canvas, random, art, "#7d5a32", Math.round(area / 220), [4, 10], 0.45);
-      cellsOver();
       for (let at = 0; at < Math.max(2, Math.round(area / 1200)); at += 1) {
         const x = left + random() * width;
         const y = top + random() * height;
@@ -921,7 +896,7 @@ function paintObelisk(painter: ZoneMotionPainter, foot: Vec2, line: number, glow
 /**
  * `art`'s moving marks at render time `seconds`: lava beads running down
  * its cracks, embers glowing and fading, fog puffs drifting, mud
- * bubbles, ripples, a spring's sparkles, the spire's rings sinking into
+ * bubbles, murky water's ripples, the spire's rings sinking into
  * its obelisk. `line` is 1 CSS px in world units. Under still motion each
  * holds where it is: texture and light stay, drift and flow stop.
  */
@@ -1004,20 +979,7 @@ export function paintZoneMotion(
     case "tainted-water":
       paintRipples(painter, art.ripples, line, seconds, still, 0xc8b84a, 0.45);
       break;
-    case "spring": {
-      paintRipples(painter, art.ripples, line, seconds, still, 0xe8faff, 0.6);
-      for (const speck of art.specks) {
-        const twinkle = still
-          ? 0.6
-          : Math.max(0, Math.sin(beat(speck.phase, speck.periodSeconds, seconds, still) * Math.PI));
-        const { x, y } = speck.at;
-        const arm = speck.size * (0.5 + 0.5 * twinkle);
-        painter.lineStyle(line, 0xffffff, twinkle);
-        painter.lineBetween(x - arm, y, x + arm, y);
-        painter.lineBetween(x, y - arm, x, y + arm);
-      }
-      break;
-    }
+    case "spring":
     case "grass":
       break;
     case "spire": {
