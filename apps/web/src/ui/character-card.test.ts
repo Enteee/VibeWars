@@ -130,9 +130,12 @@ describe("the character card (#1864)", () => {
     expect(row.text()).toBe("");
     expect(row.title).toBe("Ser Bash, Warrior");
     expect(row.attributes.get("aria-label")).toBe("Ser Bash, Warrior");
-    const width = (element: FakeElement): number =>
-      Number.parseFloat(element.all("character-figure")[0]?.style.width ?? "");
-    expect(width(row)).toBeLessThan(width(card));
+    // Its share of the box the stylesheet picks (#4082).
+    const share = (element: FakeElement): number =>
+      Number.parseFloat(
+        /\* ([\d.]+)\)$/.exec(element.all("character-figure")[0]?.style.width ?? "")?.[1] ?? "",
+      );
+    expect(share(row)).toBeLessThan(share(card));
   });
 
   it("is the bare body for a build the host would refuse", () => {
