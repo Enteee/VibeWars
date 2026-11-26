@@ -491,8 +491,10 @@ test("a refused cast says why, briefly, above the skill bar", async ({ page }) =
   ).not.toHaveCount(0);
   await page.keyboard.press(key("skill-5"));
 
-  await expect(message).toHaveText("That skill is recharging.");
-  await expect(message).toHaveClass(/is-visible/);
+  // Text and visibility in one assertion: the message keeps its text after
+  // it fades, so two checks can see the text and miss the 2 s it shows on
+  // a slow runner (#4124).
+  await expect(page.locator(".hud-message.is-visible")).toHaveText("That skill is recharging.");
   // Gone again on its own, so it never becomes clutter.
   await expect(message).not.toHaveClass(/is-visible/, { timeout: 4000 });
 });
