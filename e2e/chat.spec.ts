@@ -20,6 +20,22 @@ async function openMenu(page: Page, playerName: string): Promise<void> {
   await namePlayer(page, playerName);
 }
 
+/** Wait until the follow camera (#721), and so the hero, stands still. */
+async function settleCamera(stage: Locator, message: string): Promise<void> {
+  let last = "";
+  await expect
+    .poll(
+      async () => {
+        const now = (await stage.getAttribute("data-camera")) ?? "";
+        const settled = now === last && now !== "";
+        last = now;
+        return settled;
+      },
+      { message, intervals: [500], timeout: 15_000 },
+    )
+    .toBe(true);
+}
+
 /** Press Enter where nothing has a use for it, type `text`, and send it. */
 async function say(page: Page, text: string): Promise<void> {
   await page.locator("body").press("Enter");
@@ -65,20 +81,24 @@ test("keys typed into chat never cast or move (#479)", async ({ page }) => {
   await page.goto("./");
   await startSoloMatch(page);
   const effects = page.getByRole("list", { name: "your effects" }).getByRole("listitem");
-  const energy = page.locator(".hud-bar-energy .hud-bar-label");
   await expect(effects).toHaveCount(0);
-  // Full, whatever Energy Storage made the maximum.
-  const full = /^(\d+) \/ \1\b/;
-  await expect(energy).toHaveText(full);
+  // Not the energy bar: the solo foe's Chaos Storm drains it once the foe
+  // is in range, and a slow page gives it the time (#4117). What a leaked
+  // key does instead is start a skill, any of the eight, free ones too,
+  // or walk the hero, and no foe can fake either.
+  const stage = page.locator("#viewport");
+  await settleCamera(stage, "the camera should settle on the spawn");
+  const camera = await stage.getAttribute("data-camera");
   // Q W E R A S D F are the skill keys; A casts slot 5, Rending Aura,
-  // a self-cast enchantment that costs energy as it starts.
+  // a self-cast enchantment.
   await say(page, "aaaa wasd qwer f");
   await expect(page.getByRole("log")).toContainText("aaaa wasd qwer f");
-  // Past the round trip: a leaked key would have spent energy and put
-  // the enchantment on.
+  // Past the round trip: a leaked key would have started a skill by now.
   await page.waitForTimeout(1500);
-  await expect(energy).toHaveText(full);
+  await expect(page.locator(".hud-skill.is-casting")).toHaveCount(0);
+  await expect(page.locator(".hud-skill .recharge-overlay")).toHaveCount(0);
   await expect(effects).toHaveCount(0);
+  await expect(stage).toHaveAttribute("data-camera", camera ?? "");
 });
 
 test("in a match a click under the panel walks, and the box shows only while open (#479)", async ({
@@ -102,20 +122,7 @@ test("in a match a click under the panel walks, and the box shows only while ope
   const stage = page.locator("#viewport");
   // The camera may still be gliding onto the spawn: a click before it
   // settles lands somewhere else on the ground.
-  const settle = async (message: string): Promise<void> => {
-    let last = "";
-    await expect
-      .poll(
-        async () => {
-          const now = (await stage.getAttribute("data-camera")) ?? "";
-          const settled = now === last && now !== "";
-          last = now;
-          return settled;
-        },
-        { message, intervals: [500], timeout: 15_000 },
-      )
-      .toBe(true);
-  };
+  const settle = (message: string): Promise<void> => settleCamera(stage, message);
   const cameraX = async (): Promise<number> =>
     Number(((await stage.getAttribute("data-camera")) ?? "").split(",")[0]);
   await settle("the camera should settle on the spawn");
