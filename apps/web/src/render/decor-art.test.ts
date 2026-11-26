@@ -261,7 +261,7 @@ describe("wilds kinds (#4020)", () => {
   const { decor } = BIOME.wilds;
   /** How far `commands` reach across and up from a foot at (400, 300). */
   const extent = (commands: readonly DecorCommand[]): { across: number; up: number } => {
-    const points = commands.flatMap((command): { x: number; y: number }[] =>
+    const points = commands.flatMap((command): readonly { x: number; y: number }[] =>
       command.kind === "ellipse"
         ? [
             { x: command.at.x - command.rx, y: command.at.y - command.ry },

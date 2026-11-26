@@ -242,7 +242,7 @@ export function decorShadow(prop: MapDecor): DecorCommand {
  */
 const TALL_REACH: Partial<Record<DecorKind, { readonly half: number; readonly top: number }>> = {
   tree: { half: CROWN_RADIUS * 1.45, top: TRUNK_HEIGHT + CROWN_RADIUS * 1.8 },
-  "dead-tree": { half: DEAD_TREE_RADIUS * 1.1, top: DEAD_TREE_HEIGHT * 1.15 },
+  "dead-tree": { half: DEAD_TREE_RADIUS * 1.35, top: DEAD_TREE_HEIGHT * 1.4 },
 };
 
 /**
@@ -711,17 +711,17 @@ function deadTree(prop: MapDecor, c: DecorColours, sway: number): DecorCommand[]
   ];
   const reach = DEAD_TREE_RADIUS * s;
   const branches = Array.from({ length: 3 + (variant % 2) }, (_, k) => {
-    const up = 0.45 + k * 0.17 + noise(prop, k + 81) * 0.08;
+    const up = 0.4 + k * 0.17 + noise(prop, k + 81) * 0.08;
     const westward = k % 2 === 0;
     const from = { x: at.x + (top.x - at.x) * up, y: at.y - h * up };
-    const out = reach * (0.6 + noise(prop, k + 91) * 0.4) * (1 - k * 0.12) * (westward ? -1 : 1);
+    const out = reach * (0.8 + noise(prop, k + 91) * 0.35) * (1 - k * 0.12) * (westward ? -1 : 1);
     const tip = { x: from.x + out + sway, y: from.y - Math.abs(out) * 0.7 };
     // A crooked limb: it kinks at its elbow, tapering from the trunk to its tip.
     const elbow = {
       x: from.x + out * 0.5,
       y: from.y - Math.abs(out) * (0.15 + noise(prop, k + 101) * 0.2),
     };
-    const thick = w * (0.55 - k * 0.08);
+    const thick = w * (0.9 - k * 0.15);
     const limb = [
       { x: from.x, y: from.y - thick },
       { x: elbow.x, y: elbow.y - thick * 0.6 },
@@ -729,13 +729,24 @@ function deadTree(prop: MapDecor, c: DecorColours, sway: number): DecorCommand[]
       { x: elbow.x, y: elbow.y + thick * 0.6 },
       { x: from.x, y: from.y + thick },
     ];
-    return { limb, westward };
+    // A forked twig at the tip, so the limb ends in a claw rather than a stub.
+    const twig = [
+      { x: tip.x - out * 0.05, y: tip.y + thick * 0.2 },
+      { x: tip.x + out * 0.1, y: tip.y - Math.abs(out) * 0.45 },
+      { x: tip.x + out * 0.05, y: tip.y - thick * 0.2 },
+    ];
+    return { limb, twig, westward };
   });
   // The east limbs behind the trunk in its shade, the west ones in front of it, lit.
   const drawn = (west: boolean, colour: number): DecorCommand[] =>
     branches
       .filter(({ westward }) => westward === west)
-      .flatMap(({ limb }) => [poly(limb, colour), outline(limb)]);
+      .flatMap(({ limb, twig }) => [
+        poly(limb, colour),
+        outline(limb),
+        poly(twig, colour),
+        outline(twig),
+      ]);
   return [
     ...drawn(false, scaled(c.trunk, 0.8)),
     ...side({ x: at.x - w * 1.3, y: at.y }, at, h, scaled(c.trunk, 1.35)),
