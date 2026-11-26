@@ -15,6 +15,7 @@ import { resolveAttackSkill, resolveSwing, swingIntervalSeconds } from "../skill
 import { vec2, type Vec2 } from "../vec2.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
 import { EN_NAMES, EN_WORDS } from "../skills/describe-words.js";
+import { statusMoveSpeed } from "../skills/tick.js";
 
 const RULES = MINIMAL_GW_INSPIRED_PVP_V1;
 const DT = 1 / RULES.tickRateHz;
@@ -130,7 +131,7 @@ describe("Dark Escape (#919)", () => {
       },
     ]);
     const modifiers = aggregateModifiers([{ id: "dark-escape", ranks: NO_RANKS }]);
-    expect(modifiers.moveSpeedMultiplier).toBe(1.25);
+    expect(statusMoveSpeed(modifiers)).toBe(1.25);
     expect(modifiers.damageTakenMultiplier).toBe(0.5);
   });
 
@@ -269,9 +270,9 @@ describe("Natural Stride (#919)", () => {
         },
       },
     ]);
-    expect(
-      aggregateModifiers([{ id: "natural-stride", ranks: NO_RANKS }]).moveSpeedMultiplier,
-    ).toBe(1.33);
+    expect(statusMoveSpeed(aggregateModifiers([{ id: "natural-stride", ranks: NO_RANKS }]))).toBe(
+      1.33,
+    );
     const ranger = makeCombatant({ id: "r", health: 1e6, maxHealth: 1e6 });
     ranger.statuses.apply("natural-stride", 1e6, "r", NO_RANKS);
     const sword = makeCombatant({

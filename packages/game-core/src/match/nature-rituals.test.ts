@@ -241,8 +241,8 @@ describe("preventsSpeedBoosts (#1745)", () => {
     muddy.statuses.apply("natural-stride", 8, "m", NO_RANKS);
     expect(moveSpeedMultiplier(muddy)).toBeCloseTo(0.9, 10);
     muddy.statuses.apply("crippled", 8, "f", NO_RANKS);
-    const crippled = aggregateModifiers([{ id: "crippled", ranks: NO_RANKS }]).moveSpeedMultiplier;
-    expect(moveSpeedMultiplier(muddy)).toBeCloseTo(0.9 * crippled, 10);
+    // Muddy Terrain × Crippled would be 0.45; stacked snares floor at −50% (#4095).
+    expect(moveSpeedMultiplier(muddy)).toBe(0.5);
   });
 });
 

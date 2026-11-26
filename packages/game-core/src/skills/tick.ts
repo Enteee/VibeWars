@@ -29,6 +29,7 @@ import {
   type BlockRule,
   type MaxHealthLoss,
   type StatusId,
+  type StatusModifiers,
 } from "./status.js";
 import { isInvulnerable, isSpell, type Combatant, type Skill } from "./types.js";
 
@@ -330,26 +331,46 @@ export function healingMultiplierOf(combatant: Pick<Combatant, "statuses">): num
   return aggregateModifiers(combatant.statuses.active).healingMultiplier;
 }
 
-/** The slowest and fastest a combination of statuses can make anyone move. */
+/** The slowest and fastest anyone moves, statuses, burden and terrain together. */
 const MOVE_SPEED_MIN = 0.25;
 const MOVE_SPEED_MAX = 1.33;
 
+/** The slowest stacked snares make anyone move (GW1: −50%, #4095). */
+const SNARE_FLOOR = 0.5;
+
 /**
- * The bearer's movement speed multiplier, clamped. The clamp lives here,
- * not in `aggregateModifiers`, so each status's own number ("moves at 50%
- * speed") stays what its tooltip says.
+ * The status part of a bearer's speed (#4095), as GW1 stacks it: boosts
+ * multiply up to +33%, unless a cap-breaker (Dash) is faster on its own;
+ * slows multiply down to −50%, unless one slow is stronger on its own
+ * (Deep Freeze). Each status's own number stays what its tooltip says.
  */
+export function statusMoveSpeed(
+  modifiers: Pick<
+    StatusModifiers,
+    "moveSpeedBoost" | "moveSpeedSlow" | "strongestSlow" | "speedCapBreaker"
+  >,
+): number {
+  const boost = Math.max(
+    Math.min(MOVE_SPEED_MAX, modifiers.moveSpeedBoost),
+    modifiers.speedCapBreaker,
+  );
+  const slow = Math.max(modifiers.moveSpeedSlow, Math.min(SNARE_FLOOR, modifiers.strongestSlow));
+  return boost * slow;
+}
+
+/** The bearer's movement speed multiplier: its statuses', clamped. */
 export function moveSpeedMultiplier(combatant: Combatant): number {
-  return clampMoveSpeed(aggregateModifiers(combatant.statuses.active).moveSpeedMultiplier);
+  const modifiers = aggregateModifiers(combatant.statuses.active);
+  return clampMoveSpeed(statusMoveSpeed(modifiers), modifiers.speedCapBreaker);
 }
 
 /**
- * The clamp keeps stacked slows or speed boosts from bringing a player to a
- * standstill or a sprint: Shard Storm and Deep Freeze together reach the
- * floor (#938).
+ * The final clamp, after a carrier's burden and terrain multiply in: never
+ * below `MOVE_SPEED_MIN`, never above `MOVE_SPEED_MAX` or the active
+ * cap-breaker's own boost (#4095), whichever is faster.
  */
-export function clampMoveSpeed(raw: number): number {
-  return Math.min(MOVE_SPEED_MAX, Math.max(MOVE_SPEED_MIN, raw));
+export function clampMoveSpeed(raw: number, speedCapBreaker: number): number {
+  return Math.min(Math.max(MOVE_SPEED_MAX, speedCapBreaker), Math.max(MOVE_SPEED_MIN, raw));
 }
 
 /** What `rankOf` reads of a combatant: a tooltip outside a match passes no statuses. */

@@ -11,7 +11,7 @@ import { describeStatus } from "./describe.js";
 import { applySkillEffects, type CombatEvent } from "./effects.js";
 import { NO_RANKS, aggregateModifiers } from "./status.js";
 import { makeCombatant } from "./testing.js";
-import { moveSpeedMultiplier } from "./tick.js";
+import { moveSpeedMultiplier, statusMoveSpeed } from "./tick.js";
 import { fireTriggers, type FiredTrigger } from "./triggers.js";
 import type { Combatant, Skill, Surroundings } from "./types.js";
 import { attackHitRiders, resolveSwing } from "./weapon-attack.js";
@@ -309,9 +309,9 @@ describe("Pious Haste (#939)", () => {
     expect(self.statuses.has("vow-of-strength")).toBe(false);
     expect(self.statuses.has("pious-haste")).toBe(false);
     expect(self.statuses.get("pious-haste-run")?.remainingSeconds).toBe(6);
-    expect(aggregateModifiers(self.statuses.active).moveSpeedMultiplier).toBe(1.5);
+    expect(statusMoveSpeed(aggregateModifiers(self.statuses.active))).toBe(1.5);
     // ADR-0019's clamp, as Dash's 50% meets it.
-    expect(moveSpeedMultiplier(self)).toBe(1.33);
+    expect(moveSpeedMultiplier(self)).toBe(1.5);
   });
 });
 

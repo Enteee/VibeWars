@@ -9,7 +9,7 @@ import { describeStatus } from "../skills/describe.js";
 import type { CombatEvent } from "../skills/effects.js";
 import { NO_RANKS, aggregateModifiers } from "../skills/status.js";
 import { makeCombatant } from "../skills/testing.js";
-import { blockChanceOf } from "../skills/tick.js";
+import { blockChanceOf, statusMoveSpeed } from "../skills/tick.js";
 import type { Skill } from "../skills/types.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
@@ -400,7 +400,7 @@ describe("Zojun's Haste (#1676)", () => {
   it("moves 33% faster and blocks 65% of projectiles, no melee blow", () => {
     const bearer = makeCombatant({ id: "r" });
     bearer.statuses.apply("zojuns-haste", 10, "r", NO_RANKS);
-    expect(aggregateModifiers(bearer.statuses.active).moveSpeedMultiplier).toBe(1.33);
+    expect(statusMoveSpeed(aggregateModifiers(bearer.statuses.active))).toBe(1.33);
     expect(blockChanceOf(bearer, "projectile", false, [])).toBe(0.65);
     expect(blockChanceOf(bearer, "melee", false, [])).toBe(0);
   });
