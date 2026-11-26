@@ -2510,6 +2510,15 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
       .find((member) => member !== undefined && mayReturn(member, join));
 
   /**
+   * Whether a present member, its old page not yet gone, holds the seat
+   * `join` names by token and key (#4110): the reloaded page asks again
+   * once it drops. Anything else with a token is a fresh join, as one too
+   * late for its hold always was.
+   */
+  const heldLive = (join: PeerLobbyJoin): boolean =>
+    [...members.values()].some((member) => !away.has(member.id) && mayReturn(member, join));
+
+  /**
    * Move `member` to peer id `to` (#4110), in its place in the list, and
    * everything the lobby keeps by its old one with it: still away, to
    * come back by the path a drop takes.
@@ -2562,7 +2571,7 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     const known = members.get(from);
     const elsewhere = known === undefined ? awayFor(join) : undefined;
     const returning = elsewhere === undefined ? known : rebind(elsewhere, from);
-    if (returning === undefined && join.rejoinToken !== null) {
+    if (returning === undefined && heldLive(join)) {
       return;
     }
     // Back from a drop, it was admitted already: as this peer, on its ticket.
@@ -2689,9 +2698,9 @@ export function createLobbyHost(options: LobbyHostOptions): LobbyHost {
     if (returning !== undefined && !mayReturn(returning, join)) {
       return;
     }
-    // A token with no seat away to take (#4110): its old page may not have
-    // dropped yet, and it asks again. Not refused, as for a wrong token.
-    if (returning === undefined && join.rejoinToken !== null) {
+    // A seat its old page still holds (#4110): it asks again once that
+    // page drops. Not refused, as for a wrong token.
+    if (returning === undefined && heldLive(join)) {
       return;
     }
     // A join that would be refused once proven is refused unchallenged:

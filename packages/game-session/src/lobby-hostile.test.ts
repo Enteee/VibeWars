@@ -12,6 +12,7 @@ import {
   type TestLobby,
 } from "./lobby-harness.test-support.js";
 import { settle } from "./match-harness.test-support.js";
+import { RECONNECT_WINDOW_SECONDS } from "./match-host.js";
 import { testCosmetics, testPlayerKey } from "./player-key.test-support.js";
 import type { Transport } from "./transport.js";
 
@@ -254,31 +255,44 @@ describe("lobby host against hostile peers", () => {
     const { id, token } = await droppedGuest(lobby);
 
     // A reloaded page is a new peer: a wrong token, or the right one under
-    // another key, takes nothing and is told nothing.
+    // another key, takes nothing, and is answered as a join with no token.
     const otherKey = testPlayerKey();
     const prober = await provenPeer(lobby, undefined, otherKey);
+    const guesser = await provenPeer(lobby);
     const page = await provenPeer(lobby);
     await settle();
-    const told: string[] = [];
-    for (const channel of ["lobby-state", "lobby-note", "lobby-seat"] as const) {
-      prober.on(channel, () => told.push(channel));
-    }
     prober.send(
       "lobby-join",
       { ...joinAs("Thief", token ?? null), playerPubkey: otherKey.pubkey },
       "host",
     );
-    page.send("lobby-join", joinAs("Thief", "0f".repeat(16)), "host");
+    guesser.send("lobby-join", joinAs("Guesser", "0f".repeat(16)), "host");
     await settle();
-    expect(guestRow(lobby)).toEqual([["Guest", null, false, true]]);
-    expect(told).toEqual([]);
+    expect(guestRow(lobby)).toContainEqual(["Guest", null, false, true]);
+    expect(lobby.host.connection.getSnapshot().players.map((p) => p.sessionId)).toContain(id);
 
     // With both, the page has the seat, in its place, under its own id.
     page.send("lobby-join", joinAs("Guest", token ?? null), "host");
     await settle();
-    expect(guestRow(lobby)).toEqual([["Guest", null, false, false]]);
+    expect(guestRow(lobby)).toContainEqual(["Guest", null, false, false]);
     const ids = lobby.host.connection.getSnapshot().players.map((player) => player.sessionId);
     expect(ids).toContain(page.selfId);
+    expect(ids).not.toContain(id);
+  });
+
+  it("seats a guest back too late for its hold as a fresh join, as before #4110", async () => {
+    const lobby = await openLobby();
+    const { id, token } = await droppedGuest(lobby);
+    await lobby.step(RECONNECT_WINDOW_SECONDS + 1);
+    expect(guestRow(lobby)).toEqual([]);
+
+    // Its seat is gone, and its token with it: still, it is let in.
+    const back = await provenPeer(lobby);
+    back.send("lobby-join", joinAs("Guest", token ?? null), "host");
+    await settle();
+    expect(guestRow(lobby)).toEqual([["Guest", null, false, false]]);
+    const ids = lobby.host.connection.getSnapshot().players.map((player) => player.sessionId);
+    expect(ids).toContain(back.selfId);
     expect(ids).not.toContain(id);
   });
 
