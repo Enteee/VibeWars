@@ -283,8 +283,7 @@ async function matchShots(page, dir) {
 }
 
 /**
- * Broken Tower's heights, in a client of its own: the lobby of the match
- * before is still running in the first.
+ * Broken Tower's heights, in a client of its own, the first one closed.
  *
  * @param {import("@playwright/test").Page} page
  * @param {string} dir
@@ -321,7 +320,8 @@ async function heightsShot(page, dir) {
   }
   await sleep(600);
   step = "heights shot";
-  const shot = await page.screenshot();
+  // A loaded host renders a frame slowly; one generous wait, not a retry (#4104).
+  const shot = await page.screenshot({ timeout: 60_000 });
   assertNotVoid(shot);
   fs.writeFileSync(path.join(dir, "readme-heights.png"), shot);
 }
@@ -429,6 +429,9 @@ try {
   await page.locator(".mode-rail").waitFor();
   await editorAndTraining(page, dir);
   await matchShots(page, dir);
+  // Two matches in one software-rendered Chromium starve the second of
+  // frames under load (#4104): the heights client renders alone.
+  await context.close();
   const second = await browser.newContext({
     viewport: { width: 1280, height: 720 },
     deviceScaleFactor: 1,
