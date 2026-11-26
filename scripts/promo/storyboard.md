@@ -43,7 +43,5 @@ A scene that never sees its event throws, as `fight` does.
 
 ## Decisions (operator, Q192)
 
-1. Pressure plates, not levers. No shipped map has a plate yet, so shot 5
-   needs a map with a plate-opened gate: a map change, its own card
-   (architect). Shot 5 waits for it; the other action shots do not.
+1. Pressure plates, not levers. Broken Tower has them (#4079); shot 5 uses the west plate.
 2. Four 2.0 s shots (8.0 s of maps, the trailer keeps its length).

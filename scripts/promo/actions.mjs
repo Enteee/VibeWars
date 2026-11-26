@@ -84,3 +84,54 @@ export async function advance(page, stepper, ms) {
   await stepper.steps(frames(ms));
   await page.keyboard.up("KeyW");
 }
+
+/**
+ * The page's `__captureState` (`?capture` only): the local player's spot
+ * and which gates are open.
+ *
+ * @param {import("@playwright/test").Page} page
+ * @returns {Promise<{ position: { x: number, y: number } | null, gatesOpen: boolean[] }>}
+ */
+export async function captureState(page) {
+  return page.evaluate(() => {
+    const read = /** @type {unknown} */ (Reflect.get(globalThis, "__captureState"));
+    const none = { position: null, gatesOpen: /** @type {boolean[]} */ ([]) };
+    return typeof read === "function"
+      ? /** @type {typeof none} */ (Reflect.apply(read, globalThis, []))
+      : none;
+  });
+}
+
+/**
+ * Walk onto `target` (world units): the cursor is held off the screen's
+ * centre toward it, W walks to the cursor, and the position read back
+ * closes the loop, so the camera's tilt does not matter. Returns once
+ * `done` says so or `limitMs` has passed.
+ *
+ * @param {import("@playwright/test").Page} page
+ * @param {Steps} stepper
+ * @param {{ x: number, y: number }} target
+ * @param {(state: Awaited<ReturnType<typeof captureState>>) => boolean} done
+ * @param {number} limitMs
+ */
+export async function walkTo(page, stepper, target, done, limitMs) {
+  await page.keyboard.down("KeyW");
+  try {
+    for (let waited = 0; waited < limitMs; waited += 250) {
+      const state = await captureState(page);
+      if (done(state)) {
+        return true;
+      }
+      if (state.position !== null) {
+        const dx = target.x - state.position.x;
+        const dy = target.y - state.position.y;
+        const length = Math.hypot(dx, dy) || 1;
+        await page.mouse.move(960 + (dx / length) * 300, 540 + (dy / length) * 300);
+      }
+      await stepper.steps(frames(250));
+    }
+    return false;
+  } finally {
+    await page.keyboard.up("KeyW");
+  }
+}

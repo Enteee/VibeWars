@@ -23,8 +23,8 @@ const ROOT = path.join(import.meta.dirname, "..", "..");
 const CAPTURE = path.join(ROOT, "out", "promo", "capture");
 const OUT = path.join(ROOT, "out", "promo");
 const FPS = 30;
-/** The action shots in cut order (#3982); the gate shot joins when a map has a plate. */
-const ACTIONS = ["cast", "heal", "ramp"];
+/** The action shots in cut order (#3982). */
+const ACTIONS = ["cast", "gate", "heal", "ramp"];
 /** @type {unknown} */
 const raw = JSON.parse(fs.readFileSync(path.join(import.meta.dirname, "captions.json"), "utf8"));
 const {

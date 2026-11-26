@@ -27,7 +27,7 @@ import { parseArgs } from "node:util";
 
 import { chromium } from "@playwright/test";
 
-import { advance, cycleSkills, waitEvent } from "./actions.mjs";
+import { advance, cycleSkills, waitEvent, walkTo } from "./actions.mjs";
 import { musicSettled } from "./plan.mjs";
 
 const PORT = 4322;
@@ -49,6 +49,8 @@ const FIGHT_MS = 150_000;
 const RANKED_MAP = "broken-tower";
 /** A shot is tried this often before the run fails (#3982). */
 const SCENE_TRIES = 5;
+/** The west plate of Broken Tower (#4079), and its gate's index in the map's `gates`: the plate is at 1890,1480. */
+const WEST_PLATE = { x: 1890, y: 1480 };
 /** The longest an action shot waits for its event, ms. */
 const ACTION_MS = 60_000;
 /** @typedef {{ kind: string, skillId: string }} Combat */
@@ -696,6 +698,45 @@ async function actionScene(browser, url, name, mapId, wanted) {
 }
 
 /**
+ * The gate shot (#3982, scene 5): Broken Tower's west plate. The player
+ * walks onto it and the portcullis beside it opens; the shot starts
+ * there (`marks.action`). Retried like `actionScene`.
+ *
+ * @param {import("@playwright/test").Browser} browser
+ * @param {string} url
+ */
+async function gateScene(browser, url) {
+  const id = "act-gate";
+  for (let attempt = 1; attempt <= SCENE_TRIES; attempt += 1) {
+    const scene = await openScene(browser, id, url, "stepped");
+    const frame = stepper(scene.page);
+    scene.stepper = frame;
+    await startMatch(scene.page, "broken-tower", { stepper: frame, name: id });
+    scene.marks.matchStart = scene.now();
+    step = id;
+    await waitLiveStepped(scene.page, frame);
+    const opened = await walkTo(
+      scene.page,
+      frame,
+      WEST_PLATE,
+      (s) => s.gatesOpen[2] === true,
+      ACTION_MS,
+    );
+    const seen = await pageEvents(scene.page);
+    if (opened) {
+      scene.marks.action = scene.now();
+      // The shot's two seconds, played out.
+      await frame.steps(frames(2000));
+      await closeScene(scene, id, seen.events, seen.timeOrigin);
+      return;
+    }
+    await closeScene(scene, id, seen.events, seen.timeOrigin);
+    console.error(`${id} try ${String(attempt)}: the gate stayed shut`);
+  }
+  throw new Error(`${id}: no open gate in ${String(SCENE_TRIES)} tries`);
+}
+
+/**
  * Play with friends: a Hosted Game lobby, Copy invite link, a second
  * player in another page of the same browser context joining by it, then
  * both ready and the match starting. The guest's page is recorded too and ignored.
@@ -806,6 +847,7 @@ const SCENES = {
   editor,
   friends,
   ranked,
+  "act-gate": gateScene,
   ...Object.fromEntries(
     Object.entries(ACTIONS).map(([name, shot]) => [
       `act-${name}`,

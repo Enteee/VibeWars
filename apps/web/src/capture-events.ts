@@ -31,3 +31,21 @@ export function captureEvents(search: string): CaptureEvent[] | undefined {
   Object.assign(window, { __capture: events });
   return events;
 }
+
+/** What the capture script steers by: the local player's spot, and which gates are open. */
+export interface CaptureState {
+  /** The local seat's player; `null` before spawn, or as a watcher. */
+  readonly position: { readonly x: number; readonly y: number } | null;
+  /** The match's gates in map order. */
+  readonly gatesOpen: readonly boolean[];
+}
+
+/**
+ * Expose `window.__captureState()` over `read`, with `?capture` only: the
+ * trailer's script polls it to walk onto a plate and to cut on a gate opening.
+ */
+export function exposeCaptureState(search: string, read: () => CaptureState): void {
+  if (capturing(search)) {
+    Object.assign(window, { __captureState: read });
+  }
+}
