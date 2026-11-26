@@ -102,10 +102,10 @@ export async function captureState(page) {
 }
 
 /**
- * Walk onto `target` (world units): the cursor is held off the screen's
- * centre toward it, W walks to the cursor, and the position read back
- * closes the loop, so the camera's tilt does not matter. Returns once
- * `done` says so or `limitMs` has passed.
+ * Walk onto `target` (world units) with the move keys: W is north (y
+ * down the map), D east. Each key is held while the target lies that
+ * way by more than a stride, and the position read back closes the
+ * loop. Returns once `done` says so or `limitMs` has passed.
  *
  * @param {import("@playwright/test").Page} page
  * @param {Steps} stepper
@@ -114,7 +114,17 @@ export async function captureState(page) {
  * @param {number} limitMs
  */
 export async function walkTo(page, stepper, target, done, limitMs) {
-  await page.keyboard.down("KeyW");
+  const held = /** @type {Set<string>} */ (new Set());
+  /** @param {string} key @param {boolean} on */
+  const hold = async (key, on) => {
+    if (on && !held.has(key)) {
+      held.add(key);
+      await page.keyboard.down(key);
+    } else if (!on && held.has(key)) {
+      held.delete(key);
+      await page.keyboard.up(key);
+    }
+  };
   try {
     for (let waited = 0; waited < limitMs; waited += 250) {
       const state = await captureState(page);
@@ -127,15 +137,19 @@ export async function walkTo(page, stepper, target, done, limitMs) {
         return true;
       }
       if (state.position !== null) {
-        const dx = target.x - state.position.x;
-        const dy = target.y - state.position.y;
-        const length = Math.hypot(dx, dy) || 1;
-        await page.mouse.move(960 + (dx / length) * 300, 540 + (dy / length) * 300);
+        const wx = target.x - state.position.x;
+        const wy = target.y - state.position.y;
+        await hold("KeyD", wx > 40);
+        await hold("KeyA", wx < -40);
+        await hold("KeyS", wy > 40);
+        await hold("KeyW", wy < -40);
       }
       await stepper.steps(frames(250));
     }
     return false;
   } finally {
-    await page.keyboard.up("KeyW");
+    for (const key of held) {
+      await page.keyboard.up(key);
+    }
   }
 }
