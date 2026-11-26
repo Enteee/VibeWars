@@ -14,11 +14,11 @@ company heavy pnpm run promo:assemble    # cuts   -> out/promo/
 ```
 
 `promo:capture --scene fight` shoots one scene (`fight`, `editor`,
-`map-<id>`, `friends`, `ranked`). It builds the client with the broadcast
+`act-<name>`, `friends`, `ranked`). It builds the client with the broadcast
 transport and the splash off, as `readme:shots` does, and needs the
 workspace packages built (`pnpm -r --filter "./packages/**" run build`).
 
-- **Stepped frames (#4006).** The map and fight scenes open with
+- **Stepped frames (#4006).** The action and fight scenes open with
   `?capture=step` (`apps/web/src/capture-clock.ts`): game time moves only
   when the script calls `window.__captureStep(1)`, which advances the host
   by 1/20 s (the sim tick, so no frame repeats) and draws one frame; the script then screenshots the viewport

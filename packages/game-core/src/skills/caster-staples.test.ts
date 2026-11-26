@@ -237,7 +237,7 @@ describe("Sum of All Fears (#1870)", () => {
     expect(aggregateModifiers([{ id: "sum-of-all-fears", ranks: NO_RANKS }])).toMatchObject({
       moveSpeedSlow: 0.67,
       attackDurationMultiplier: 1.33,
-      castTimeMultiplier: 1.33,
+      castTimeMultiplier: [1.33],
     });
   });
 });

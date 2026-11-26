@@ -230,9 +230,9 @@ describe("skillActivationMultiplier (#1473)", () => {
     expect(effectiveActivationSeconds(skill("warrior.distracting-blow"), migraine)).toBe(0.5);
   });
 
-  it("multiplies with Dazed: a 2 s spell takes 8 s", () => {
+  it("multiplies with Dazed up to GW1's cap (#4089): a 2 s spell takes 5 s", () => {
     expect(effectiveActivationSeconds(skill("mesmer.migraine"), bearer("migraine", "dazed"))).toBe(
-      8,
+      5,
     );
   });
 

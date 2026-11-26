@@ -11,7 +11,7 @@ import { payCost } from "./activation.js";
 import { getSkill } from "./catalog.js";
 import { describeSkill, describeStatus } from "./describe.js";
 import { applySkillEffects, type CombatEvent } from "./effects.js";
-import { NO_RANKS, aggregateModifiers } from "./status.js";
+import { NO_RANKS, aggregateModifiers, stackedActivationMultiplier } from "./status.js";
 import { makeCombatant } from "./testing.js";
 import type { Combatant, Skill } from "./types.js";
 import { EN_NAMES, EN_WORDS } from "./describe-words.js";
@@ -248,16 +248,18 @@ describe("Arcane Conundrum (#1570)", () => {
     expect(beyond.statuses.has("arcane-conundrum")).toBe(false);
   });
 
-  it("doubles spell cast time, and with Dazed makes it 4×", () => {
+  it("doubles spell cast time, and with Dazed makes it 2.5×, GW1's cap (#4089)", () => {
     expect(
       aggregateModifiers([{ id: "arcane-conundrum", ranks: NO_RANKS }]).castTimeMultiplier,
-    ).toBe(2);
+    ).toEqual([2]);
     expect(
-      aggregateModifiers([
-        { id: "arcane-conundrum", ranks: NO_RANKS },
-        { id: "dazed", ranks: NO_RANKS },
-      ]).castTimeMultiplier,
-    ).toBe(4);
+      stackedActivationMultiplier(
+        aggregateModifiers([
+          { id: "arcane-conundrum", ranks: NO_RANKS },
+          { id: "dazed", ranks: NO_RANKS },
+        ]).castTimeMultiplier,
+      ),
+    ).toBe(2.5);
     expect(describeStatus("arcane-conundrum", undefined, EN_WORDS, EN_NAMES)).toBe(
       "spells take 2× as long to cast, its caster gains 6 energy when it ends",
     );
