@@ -24,7 +24,6 @@ import {
   ownSkillBoost,
   scaledStatAttributes,
   type ActiveStatus,
-  type ArmorReduction,
   type AttributeDelta,
   type AttributeScope,
   type BlockRule,
@@ -631,8 +630,8 @@ function activationWhileMultiplier(skill: Skill, caster: RankHolder): number {
   return held === (condition.kind === "caster-has") ? multiplier : 1;
 }
 
-/** The bearer's armor reduction (Cracked Armor, #763); `undefined`: none. */
-export function armorReductionOf(combatant: Combatant): ArmorReduction | undefined {
+/** The bearer's armor reduction (Cracked Armor, #763); 0: none. */
+export function armorReductionOf(combatant: Combatant): number {
   return aggregateModifiers(combatant.statuses.active).armorReduction;
 }
 

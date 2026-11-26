@@ -404,13 +404,13 @@ describe("resolveAttackSkill (ADR-0029)", () => {
       expect(damages(swing(12))).toEqual(damages(swing(0)));
     });
 
-    it("does not add to a hornbow's own 10%: Barrage keeps 10%", () => {
+    it("adds a Hornbow's bonus 10% to Strength's base: Barrage at 12 has 22% (#4085)", () => {
       const target = victim();
       const events = resolve(barrage, strong(WEAPONS.hornbow, "ranger.marksmanship", 12), [target]);
-      expect(damages(events)).toEqual([blowOf(WEAPONS.hornbow, 12, 0.1, target)]);
+      expect(damages(events)).toEqual([blowOf(WEAPONS.hornbow, 12, 0.12 + 0.1, target)]);
     });
 
-    it("yields to Judge's Insight's 20% (#1519): holy, and the highest counts, nothing adds", () => {
+    it("adds Judge's Insight's bonus 20% to Strength's base (#1519, #4085): holy", () => {
       const insightful = (strength: number): Combatant => {
         const attacker = strong(WEAPONS.axe, "warrior.axe-mastery", strength);
         attacker.statuses.apply("judges-insight", 18, "monk", NO_RANKS);
@@ -418,12 +418,12 @@ describe("resolveAttackSkill (ADR-0029)", () => {
       };
       const holy = { ...WEAPONS.axe, damageType: "holy" } as const;
       const target = victim();
-      // 20% beats none, and Strength's 12%: they do not add to 32%.
+      // 20% on no base, and on Strength's 12%: 32%.
       expect(damages(resolve(swiftChop, insightful(0), [target]))).toEqual([
         blowOf(holy, 16, 0.2, target),
       ]);
       expect(damages(resolve(swiftChop, insightful(12), [target]))).toEqual([
-        blowOf(holy, 16, 0.2, target),
+        blowOf(holy, 16, 0.12 + 0.2, target),
       ]);
       expect(blowOf(holy, 16, 0.2, target)).toBeGreaterThan(blowOf(holy, 16, 0, target));
     });
@@ -508,16 +508,24 @@ describe("resolveAttackSkill (ADR-0029)", () => {
       ]);
     });
 
-    it("keeps its own 25% and lightning under Judge's Insight's holy 20% (#1519)", () => {
+    it("keeps lightning under Judge's Insight, whose 20% adds to its own 25% (#1519, #4085)", () => {
       const target = victim();
       const insightful = thrower();
       insightful.statuses.apply("judges-insight", 18, "monk", NO_RANKS);
       expect(damages(resolve(spearOfLightning, insightful, [target]))).toEqual([
-        blowOf("lightning", 0.25, target),
+        blowOf("lightning", 0.25 + 0.2, target),
       ]);
-      // A 5% of its own: Judge's Insight's 20% wins.
       expect(damages(resolve(penetrating(0.05), insightful, [target]))).toEqual([
-        blowOf("lightning", 0.2, target),
+        blowOf("lightning", 0.05 + 0.2, target),
+      ]);
+    });
+
+    it("never ignores more than all of the armor (#4085)", () => {
+      const target = victim();
+      const insightful = thrower();
+      insightful.statuses.apply("judges-insight", 18, "monk", NO_RANKS);
+      expect(damages(resolve(penetrating(0.9), insightful, [target]))).toEqual([
+        blowOf("lightning", 1, target),
       ]);
     });
   });

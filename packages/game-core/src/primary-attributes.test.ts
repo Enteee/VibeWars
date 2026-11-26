@@ -189,13 +189,10 @@ describe("Mysticism (#874)", () => {
 });
 
 describe("strengthArmorPenetration (#528)", () => {
-  it("is 1% a rank, or the weapon's own if higher; the two do not add (#3880)", () => {
-    expect(strengthArmorPenetration(0, 0)).toBe(0);
-    expect(strengthArmorPenetration(12, 0)).toBeCloseTo(0.12);
-    // A hornbow's 10% at Strength 12: Strength's 12% stands.
-    expect(strengthArmorPenetration(12, 0.1)).toBeCloseTo(0.12);
-    expect(strengthArmorPenetration(8, 0.1)).toBe(0.1);
-    expect(strengthArmorPenetration(0, 0.1)).toBe(0.1);
+  it("is 1% a rank of base penetration; a Hornbow's bonus is no part of it (#4085)", () => {
+    expect(strengthArmorPenetration(0)).toBe(0);
+    expect(strengthArmorPenetration(8)).toBeCloseTo(0.08);
+    expect(strengthArmorPenetration(12)).toBeCloseTo(0.12);
   });
 });
 
