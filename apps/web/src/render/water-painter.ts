@@ -43,19 +43,17 @@ export interface WaterEdge {
   readonly outline: number;
 }
 
-/** One drifting layer of the liquid cells' texture over the water (#4058). */
+/** One layer of the liquid cells' texture, baked into the water (#4058). */
 export interface CellLayer {
   /** Texture px to a world unit. */
   readonly scale: number;
-  /** World units a second the layer drifts, across and down. */
-  readonly drift: Vec2;
 }
 
 /**
  * How one kind of water draws. `line` is 1 CSS px in world units;
  * `surface` is drawn once per map, `ripples` every frame at render time
- * `seconds`, held still under reduced motion. `cells` drift over the
- * surface, tinted `look.cell`.
+ * `seconds`, held still under reduced motion. `cells` are baked over
+ * the surface once per map, tinted `look.cell`.
  */
 export interface WaterArt {
   readonly look: WaterLook;
@@ -86,11 +84,8 @@ const LIP_WIDTH = 4;
 /** The liquid cells' texture (#4058), painted once and shared by every water. */
 export const WATER_CELLS: LiquidCellsOptions = { seed: 4058, sites: 15, gap: 7, size: 512 };
 
-/** Two layers at different scales, drifting slowly different ways. */
-const CELL_LAYERS: readonly CellLayer[] = [
-  { scale: 0.5, drift: { x: 2.2, y: 0.8 } },
-  { scale: 0.32, drift: { x: -1.4, y: 1.5 } },
-];
+/** Two layers at different scales, still: drifting, they cost a frame too much (#4078). */
+const CELL_LAYERS: readonly CellLayer[] = [{ scale: 0.5 }, { scale: 0.32 }];
 
 /**
  * Water drawn from its look's colours (#4058). Deep: the far shore's

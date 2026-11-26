@@ -412,11 +412,12 @@ sunk wall, only a thin lighter shore line: deep against shallow is gameplay,
 and reads at a glance. The hue is the same in every biome; only the lip takes
 the biome's colour. Both are scenery under the zone tint.
 
-Over both fills drift two layers of liquid cells (#4058): a Voronoi network,
+Over both fills lie two layers of liquid cells (#4058): a Voronoi network,
 drawn once at load into a 512 px tile that repeats, tinted per depth, at two
-scales drifting slowly in different directions. The gaps between cells are
-the light. Ripples are sparse pale ellipses that drift slowly, never sparkles.
-Reduced motion stills the cells and the ripples.
+scales, baked into each body of water once per map. They hold still: drifting,
+they cost too much of a frame (#4078). The gaps between cells are the light.
+Ripples are sparse pale ellipses that drift slowly, never sparkles, and hold
+still under reduced motion.
 
 ![water](visual-style/water.svg)
 
