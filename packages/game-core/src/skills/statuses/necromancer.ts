@@ -450,8 +450,8 @@ export const NECROMANCER_STATUSES: Readonly<Record<NecromancerStatusId, StatusDe
     endsWhenTriggered: true,
   }),
   // "...target foe suffers -1...3 Health degeneration, and you gain
-  // +1...3 Health regeneration": 3 each, the caster's its own status, so
-  // it lasts its time when the hex is removed early.
+  // +1...3 Health regeneration": 3 each. The caster's half is linked: it
+  // lasts while the hex does and ends with it (#4167).
   "life-siphon": define("life-siphon", "Life Siphon", "hex", {
     endsOnSourceDeath: true,
     casterStatus: "life-siphon-regen",
