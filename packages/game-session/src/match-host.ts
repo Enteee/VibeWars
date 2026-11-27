@@ -1540,8 +1540,15 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
   // A dropped peer heard again is told its seat is held, or that it is
   // gone (#3772); a peer the host never dropped hears nothing.
   transport.onPeerJoin((peerId) => {
-    // An observer heard again watches on, the delay filling again first.
-    if (droppedObservers.delete(peerId) && !retired && !(finished && delayed.length === 0)) {
+    // An observer heard again watches on, the delay filling again first,
+    // if the lobby still has it on no team: the observe handler's gates.
+    if (
+      droppedObservers.delete(peerId) &&
+      !retired &&
+      !(finished && delayed.length === 0) &&
+      !seatOfPeer.has(peerId) &&
+      options.isSpectator(peerId)
+    ) {
       observers.add(peerId);
       return;
     }

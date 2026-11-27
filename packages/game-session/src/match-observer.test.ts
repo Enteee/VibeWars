@@ -438,6 +438,20 @@ describe("an observer whose host's peer goes (#4105)", () => {
     expect(viewer.getSnapshot()?.elapsedSeconds).toBeGreaterThan(before + 5);
   });
 
+  it("is not taken back once the lobby has it as a spectator no more (#4139)", async () => {
+    const spectators = ["viewer"];
+    const { match } = await twoPlayers(spectators);
+    const { viewer } = await observe(match, "viewer");
+    await match.step(OBSERVER_DELAY_SECONDS + TICK_SECONDS);
+    const before = viewer.getSnapshot()?.elapsedSeconds ?? 0;
+
+    spectators.length = 0;
+    match.network.blip("host", "viewer");
+    await settle();
+    await match.step(OBSERVER_DELAY_SECONDS + TICK_SECONDS);
+    expect(viewer.getSnapshot()?.elapsedSeconds).toBe(before);
+  });
+
   it("says one observe at a time however often the host flaps", async () => {
     const { match, states, observes } = await watching();
     match.network.stall("viewer", "host");
