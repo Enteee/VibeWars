@@ -129,7 +129,9 @@ describe("Symbiotic Bond's redirect (#1108)", () => {
     const pet = bonded();
     const events: CombatEvent[] = [];
     applyDamage(pet, 25, "slashing", false, events, undefined);
-    expect(events).toEqual([{ kind: "damage", targetId: "pet", amount: 13, critical: false }]);
+    expect(events).toEqual([
+      { kind: "damage", targetId: "pet", amount: 13, unreduced: 13, critical: false },
+    ]);
     expect(redirected(pet)).toEqual([
       { kind: "redirected-damage", toId: "owner", amount: 12, toClosestMinion: false },
     ]);
@@ -139,7 +141,9 @@ describe("Symbiotic Bond's redirect (#1108)", () => {
     const pet = bonded();
     const events: CombatEvent[] = [];
     applyDamage(pet, 25, "fire", false, events, undefined);
-    expect(events).toEqual([{ kind: "damage", targetId: "pet", amount: 25, critical: false }]);
+    expect(events).toEqual([
+      { kind: "damage", targetId: "pet", amount: 25, unreduced: 25, critical: false },
+    ]);
     expect(redirected(pet)).toEqual([]);
   });
 
@@ -174,7 +178,9 @@ describe("Dark Bond's redirect (#1986)", () => {
     const necromancer = bound();
     const events: CombatEvent[] = [];
     applyDamage(necromancer, 101, "fire", false, events, undefined);
-    expect(events).toEqual([{ kind: "damage", targetId: "n", amount: 26, critical: false }]);
+    expect(events).toEqual([
+      { kind: "damage", targetId: "n", amount: 26, unreduced: 26, critical: false },
+    ]);
     expect(redirected(necromancer)).toEqual([
       { kind: "redirected-damage", toId: "n", amount: 75, toClosestMinion: true },
     ]);
@@ -186,7 +192,9 @@ describe("Dark Bond's redirect (#1986)", () => {
     expect(redirected(necromancer)).toHaveLength(1);
     const events: CombatEvent[] = [];
     applyRedirectedDamage(necromancer, 75, events);
-    expect(events).toEqual([{ kind: "damage", targetId: "n", amount: 75, critical: false }]);
+    expect(events).toEqual([
+      { kind: "damage", targetId: "n", amount: 75, unreduced: 75, critical: false },
+    ]);
     expect(redirected(necromancer)).toEqual([]);
   });
 
@@ -225,6 +233,7 @@ describe("damage effect", () => {
       kind: "damage",
       targetId: "target",
       amount: 100,
+      unreduced: 100,
       critical: false,
     });
   });
@@ -250,6 +259,7 @@ describe("damage effect", () => {
       kind: "damage",
       targetId: "target",
       amount: 30,
+      unreduced: 30,
       critical: false,
     });
   });
@@ -700,7 +710,7 @@ describe("energy-loss effect (#793)", () => {
     const events = applyEffects(effects, context(caster, target));
     expect(events).toEqual([
       { kind: "energy-loss", targetId: "target", amount: 3 },
-      { kind: "damage", targetId: "target", amount: 27, critical: false },
+      { kind: "damage", targetId: "target", amount: 27, unreduced: 27, critical: false },
       { kind: "energy-gain", targetId: "caster", amount: 6 },
     ]);
   });
@@ -927,9 +937,9 @@ describe("applySkillEffects", () => {
 
     expect(events).toEqual([
       { kind: "sacrifice", targetId: "caster", amount: 50 },
-      { kind: "damage", targetId: "a", amount: 30, critical: false },
-      { kind: "damage", targetId: "b", amount: 30, critical: false },
-      { kind: "damage", targetId: "c", amount: 30, critical: false },
+      { kind: "damage", targetId: "a", amount: 30, unreduced: 30, critical: false },
+      { kind: "damage", targetId: "b", amount: 30, unreduced: 30, critical: false },
+      { kind: "damage", targetId: "c", amount: 30, unreduced: 30, critical: false },
       { kind: "energy-gain", targetId: "caster", amount: 5 },
     ]);
     expect(caster.health).toBe(450);
@@ -1187,9 +1197,9 @@ describe("if effects (#521)", () => {
     });
 
     expect(events.filter((event) => event.kind !== "status-removed")).toEqual([
-      { kind: "damage", targetId: "a", amount: 30, critical: false },
+      { kind: "damage", targetId: "a", amount: 30, unreduced: 30, critical: false },
       { kind: "energy-gain", targetId: "caster", amount: 5 },
-      { kind: "damage", targetId: "c", amount: 30, critical: false },
+      { kind: "damage", targetId: "c", amount: 30, unreduced: 30, critical: false },
       { kind: "energy-gain", targetId: "caster", amount: 5 },
     ]);
     expect(b.health).toBe(500);

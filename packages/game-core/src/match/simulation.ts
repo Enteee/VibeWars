@@ -8358,10 +8358,12 @@ export class MatchSimulation {
     }
     const next = damageBreakable(wall, amount);
     this.#breakables[at] = next;
+    const taken = wall.health - next.health;
     events.push({
       kind: "damage",
       targetId: breakableTargetId(wall.id),
-      amount: wall.health - next.health,
+      amount: taken,
+      unreduced: taken,
       critical: false,
     });
     if (!standing(next)) {
@@ -9715,8 +9717,11 @@ export class MatchSimulation {
   /**
    * Taking damage from a foe charges adrenaline too (#827), as in GW1: a
    * warrior under pressure builds it. Each `damage` in `events` that
-   * `source` dealt a living foe gives that foe `floor(100 × amount /
+   * `source` dealt a living foe gives that foe `floor(100 × unreduced /
    * maxHealth)` units, so a hit for a quarter of its health is a strike.
+   * `unreduced` is what the hit took before the flat per-hit cuts, Shielding
+   * Hands's or Shield of Absorption's (#4163): GW1 counts adrenaline
+   * "before damage reduction", so they do not slow it.
    * Called where a skill, a swing, a shot or a spell lands, never for
    * degeneration; an ally's or your own damage, and a lethal hit, give
    * nothing. A `source` gone from the match is no one's foe. A hit for
@@ -9738,7 +9743,7 @@ export class MatchSimulation {
       }
       gainUnits(
         victim.combatant,
-        Math.floor((100 * event.amount) / effectiveMaxHealth(victim.combatant)),
+        Math.floor((100 * event.unreduced) / effectiveMaxHealth(victim.combatant)),
         this.#elapsedSeconds,
         false,
       );

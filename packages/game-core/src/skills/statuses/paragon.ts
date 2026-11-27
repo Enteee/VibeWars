@@ -476,12 +476,14 @@ export const PARAGON_STATUSES: Readonly<Record<ParagonStatusId, StatusDefinition
     profession: "paragon",
     moveSpeedMultiplier: 1.25,
   }),
-  // Focused Anger: "0...150% more adrenaline" (#2158).
+  // Focused Anger: "0...150% more adrenaline" (#2158), from every
+  // source, one of GW1's few that reach past attacks (#4163).
   "focused-anger": define("focused-anger", "Focused Anger", "skill-effect", {
     profession: "paragon",
     adrenalineGainFaster: {
       scaling: { attributeId: "paragon.leadership", atZero: 0, atTwelve: 1.2 },
     },
+    adrenalineGainFasterFrom: "all",
   }),
   // "You gain 33% more adrenaline while not under the effects of an
   // enchantment" (#1916).

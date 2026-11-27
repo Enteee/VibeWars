@@ -319,7 +319,7 @@ describe("castFailures (#484)", () => {
         [
           { kind: "interrupted", targetId: "foe", skillId: "ranger.troll-unguent" },
           { kind: "interrupted", targetId: "me", skillId: "meteor" },
-          { kind: "damage", targetId: "foe", amount: 10, critical: false },
+          { kind: "damage", targetId: "foe", amount: 10, unreduced: 10, critical: false },
           { kind: "cancelled", targetId: "foe", skillId: "unknown" },
         ],
         "foe",
@@ -353,7 +353,7 @@ describe("slotFlashes", () => {
       slotFlashes(
         [
           { kind: "interrupted", targetId: "them", skillId: "meteor" },
-          { kind: "damage", targetId: "me", amount: 10, critical: false },
+          { kind: "damage", targetId: "me", amount: 10, unreduced: 10, critical: false },
           { kind: "cancelled", targetId: "me", skillId: "unknown" },
         ],
         "me",

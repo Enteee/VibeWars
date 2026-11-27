@@ -120,7 +120,7 @@ function hit(caster: string, target: string): CombatMessage {
     weaponId: "",
     attributeId: "",
     doubleStrike: false,
-    events: [{ kind: "damage", targetId: target, amount: 9, critical: false }],
+    events: [{ kind: "damage", targetId: target, amount: 9, unreduced: 9, critical: false }],
   };
 }
 

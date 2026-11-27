@@ -323,7 +323,9 @@ describe("resolveAttackSkill (ADR-0029)", () => {
       createRng(1),
       new Map(),
     );
-    expect(events).toEqual([{ kind: "damage", targetId: "t", amount: expected, critical: false }]);
+    expect(events).toEqual([
+      { kind: "damage", targetId: "t", amount: expected, unreduced: expected, critical: false },
+    ]);
   });
 
   it("adds exactly its bonus at any armor, crit or not (#760)", () => {
@@ -1070,7 +1072,7 @@ describe("critical hits (#533)", () => {
     const events = swingAt(sword, fixed(0));
     const expected = plain(22 * Math.SQRT2 * weaponAttributeMultiplier(9, RULES), WEAPONS.sword);
     expect(events).toEqual([
-      { kind: "damage", targetId: "dummy", amount: expected, critical: true },
+      { kind: "damage", targetId: "dummy", amount: expected, unreduced: expected, critical: true },
     ]);
   });
 
@@ -1110,6 +1112,7 @@ describe("critical hits (#533)", () => {
         kind: "damage",
         targetId: "t",
         amount: plain(28 * Math.SQRT2 * weaponAttributeMultiplier(12, RULES) + 16, WEAPONS.axe),
+        unreduced: plain(28 * Math.SQRT2 * weaponAttributeMultiplier(12, RULES) + 16, WEAPONS.axe),
         critical: true,
       },
     ]);
@@ -1258,7 +1261,9 @@ describe("critical hits (#533)", () => {
         rules: RULES,
       },
     );
-    expect(events).toEqual([{ kind: "damage", targetId: "t", amount: 50, critical: false }]);
+    expect(events).toEqual([
+      { kind: "damage", targetId: "t", amount: 50, unreduced: 50, critical: false },
+    ]);
   });
 });
 

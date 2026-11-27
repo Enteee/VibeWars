@@ -206,7 +206,7 @@ describe("MatchSimulation step", () => {
         // Fireball's splash, centred on b, who stands alone in it.
         area: { x: 200, y: 0, radius: 81 },
         doubleStrike: false,
-        events: [{ kind: "damage", targetId: "b", amount: 91, critical: false }],
+        events: [{ kind: "damage", targetId: "b", amount: 91, unreduced: 91, critical: false }],
       },
     ]);
     // A spell earns no adrenaline, whatever it hits; only attacks do.
@@ -369,6 +369,7 @@ describe("previously uncovered branches", () => {
             kind: "damage",
             targetId: "a",
             amount: expect.closeTo(0.2, 9) as number,
+            unreduced: expect.closeTo(0.2, 9) as number,
             critical: false,
           },
           { kind: "death", targetId: "a" },

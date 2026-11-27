@@ -130,7 +130,7 @@ describe("Natural Healing (#1916)", () => {
 });
 
 describe("Natural Temper (#1916)", () => {
-  /** The units one gain of 100 gives a paragon with Wild Throw, under Natural Temper. */
+  /** The units one attack gain of 100 gives a paragon with Wild Throw, under Natural Temper. */
   function gained(enchanted: boolean): number {
     const paragon = swordsman();
     paragon.adrenaline.set("paragon.wild-throw", 0);
@@ -138,7 +138,7 @@ describe("Natural Temper (#1916)", () => {
     if (enchanted) {
       paragon.statuses.apply(ENCHANTMENT, 10, "m", NO_RANKS);
     }
-    fillPools(paragon, 100);
+    fillPools(paragon, 100, true);
     return paragon.adrenaline.get("paragon.wild-throw") ?? 0;
   }
 

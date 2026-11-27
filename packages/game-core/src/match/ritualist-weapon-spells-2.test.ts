@@ -359,7 +359,7 @@ describe("Splinter Weapon (#1022)", () => {
     const { splashes } = untilSpent(splinter(swordsman("war", vec2(0, 0), 0), vec2(TOUCHING, 0)));
     expect(splashes).toEqual(
       Array.from({ length: 4 }, () => [
-        { kind: "damage", targetId: "near", amount: 25, critical: false },
+        { kind: "damage", targetId: "near", amount: 25, unreduced: 25, critical: false },
       ]),
     );
   });
@@ -379,7 +379,7 @@ describe("Splinter Weapon (#1022)", () => {
     });
     const { splashes } = untilSpent(splinter(archer, vec2(300, 0)));
     expect(splashes[0]).toEqual([
-      { kind: "damage", targetId: "near", amount: 25, critical: false },
+      { kind: "damage", targetId: "near", amount: 25, unreduced: 25, critical: false },
     ]);
   });
 });

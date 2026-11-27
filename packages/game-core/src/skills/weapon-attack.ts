@@ -14,7 +14,12 @@ import type { SimulationRng } from "../rng.js";
 import type { CombatRules } from "../ruleset.js";
 import { distance } from "../vec2.js";
 import { chainAllows, markChain } from "./chain.js";
-import { hitLocationOf, mitigate, weaponAttributeMultiplier, type DamagePacket } from "./damage.js";
+import {
+  hitLocationOf,
+  mitigateHit,
+  weaponAttributeMultiplier,
+  type DamagePacket,
+} from "./damage.js";
 import {
   applyAttackDamage,
   applyDamage,
@@ -810,8 +815,11 @@ export function landBlow(
   };
   // After the crit and damage rolls: the piece it lands on (#1135).
   const location = hitLocationOf(packet, rng);
-  const damage = mitigate(packet, victim, rules, location, rng, surroundings);
-  if (attacker !== undefined && backfires(attacker, damage, packet.type, critical, rng, events)) {
+  const damage = mitigateHit(packet, victim, rules, location, rng, surroundings);
+  if (
+    attacker !== undefined &&
+    backfires(attacker, damage.amount, packet.type, critical, rng, events)
+  ) {
     events.push({ kind: "attack-backfired", targetId: victim.id });
     return critical;
   }

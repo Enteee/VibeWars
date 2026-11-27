@@ -88,7 +88,13 @@ scythe's attack skill that cleaves three foes is one, as its swing is
 nothing, and neither do spells. Taking damage from a foe charges you too
 (#827): every hit, blow or spell, gives `floor(100 × damage ÷ max health)`
 units, so a hit for a quarter of your health is a strike; degeneration,
-sacrifice and a killing blow give nothing. Using an adrenaline skill
+sacrifice and a killing blow give nothing. The damage counted is before
+the flat per-hit cuts (#4163): Shielding Hands, Shield of Absorption or a
+rune take health off the hit but not adrenaline. A hit they take to 0
+gives nothing. A status that makes adrenaline come **faster** (Onslaught,
+Natural Temper, Soldier's Fury, Infuriating Heat) speeds only what your
+blows earn, not damage taken nor a skill's own gain; Focused Anger alone
+speeds every source. Using an adrenaline skill
 empties its own pool and takes one strike from every other, at
 activation, so an interrupted one has still paid; an attack skill that
 lands then earns its strike back like any blow. A skill that says **"Lose
@@ -786,8 +792,8 @@ whenever you lose a Dervish enchantment, you heal 41. "Lose" is any end
 but your death: expiry, a strip, a flash enchantment's own end.
 
 The other three Avatars (#1455) last 74 s too. Avatar of Balthazar: +20
-armor against physical damage, adrenaline 25% faster from every source
-(hits, damage taken, skills), holy attacks; whenever you lose a Dervish
+armor against physical damage, adrenaline 25% faster from your blows
+(#4163), holy attacks; whenever you lose a Dervish
 enchantment, foes nearby burn for 3 s. Avatar of Grenth: you are immune
 to Disease, so one on you ends as it begins, none lands and none spreads
 to you; with a scythe, your attacks deal dark damage and each hit steals
