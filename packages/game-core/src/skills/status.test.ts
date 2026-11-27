@@ -241,7 +241,7 @@ describe("status definitions", () => {
       burning: -7,
       poison: -4,
       disease: -4,
-      faintheartedness: -2,
+      faintheartedness: -3,
       "parasitic-bond": -1,
       fouled: -1,
       refreshed: 3,

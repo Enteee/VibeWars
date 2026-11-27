@@ -558,8 +558,15 @@ describe("headless combat simulation", () => {
     ]);
   });
 
-  it("Malaise hexes a foe at spell range", () => {
-    const necro = actor(makeCombatant({ id: "necro", team: 0 }), ["necromancer.malaise"]);
+  it("Malaise hexes a foe at spell range for its rank-12 29 s", () => {
+    const necro = actor(
+      makeCombatant({
+        id: "necro",
+        team: 0,
+        attributeRanks: new Map([["necromancer.curses", 12]]),
+      }),
+      ["necromancer.malaise"],
+    );
     const foe = actor(makeCombatant({ id: "foe", team: 1 }), [], 300);
 
     expect(tryCast(necro, "necromancer.malaise", foe)).toBeUndefined();
@@ -568,7 +575,7 @@ describe("headless combat simulation", () => {
     }
 
     expect(foe.combatant.statuses.active.map((s) => [s.id, s.remainingSeconds])).toEqual([
-      ["malaise", 24],
+      ["malaise", 29],
     ]);
   });
 

@@ -73,10 +73,10 @@ function lasting(bearer: Combatant, statusId: string): number | undefined {
 }
 
 describe("Faintheartedness", () => {
-  it("degenerates by the caster's Curses, never the bearer's: 0 pips at 0, −2 at 12", () => {
+  it("degenerates by the caster's Curses, never the bearer's: −1 pips at 0, −3 at 12", () => {
     for (const [rank, pips] of [
-      [0, 0],
-      [12, -2],
+      [0, -1],
+      [12, -3],
     ] as const) {
       const necromancer = ranked("n", "necromancer.curses", rank);
       // The bearer's own Curses are the opposite end: they count for nothing.
