@@ -7,7 +7,7 @@ import { distance, dot, normalize, sub, vec2, ZERO, type Vec2 } from "../vec2.js
 import { guard, playBuild, prepareInBubble } from "./bot/play-build.js";
 import type { FlankPlace, HoldPlace } from "./bot/plan.js";
 import type { PlanOverride } from "./bot/stalemate.js";
-import type { BreakableField } from "./breakables.js";
+import { strikePointOf, type BreakableField } from "./breakables.js";
 import type { CapturePoint } from "./capture-points.js";
 import { atObjective } from "./layer-rules.js";
 import type { Gate } from "./gates.js";
@@ -865,9 +865,28 @@ function followAndAttack(
       : context.participants.find(
           (other) => other.id === id && other.combatant.team !== team && !other.combatant.dead,
         );
+  // A standing wall its living owner names (#4220), on `self`'s layer,
+  // its nearest point within `withinUnits` of `from`. Bodies only
+  // otherwise: a summon never picks a wall by itself.
+  const ownerWall = (
+    id: string | undefined,
+    from: Vec2,
+    withinUnits: number,
+  ): string | undefined => {
+    const wall = owner.combatant.dead
+      ? undefined
+      : context.objectives.breakables.find((candidate) => candidate.targetId === id);
+    if (wall?.layer !== self.layer) {
+      return undefined;
+    }
+    return distance(strikePointOf(wall.field, from, 0), from) <= withinUnits
+      ? wall.targetId
+      : undefined;
+  };
   // A spell at a foe is not attacking it: only a weapon attack or an
   // attack skill sets `attack` (#1079).
-  const ownerFoe = livingFoe(owner.combatant.attack?.targetId);
+  const ownerAttacks = owner.combatant.attack?.targetId;
+  const ownerFoe = livingFoe(ownerAttacks);
   const drawnTo = behaviour.drawnTo;
   if (
     drawnTo !== undefined &&
@@ -902,9 +921,14 @@ function followAndAttack(
   if (behaviour.engage === "owner-target") {
     // Guard goes for what its owner attacks, Fight for what its owner
     // has selected, attacking or not (#1110).
-    const foe = mode === "fight" ? livingFoe(owner.targetId) : ownerFoe;
-    if (foe !== undefined && inAggro(foe)) {
-      return { ...STAND_STILL, targetId: foe.id, attackTargetId: foe.id };
+    const named = mode === "fight" ? owner.targetId : ownerAttacks;
+    const foe = livingFoe(named);
+    const struck =
+      foe !== undefined && inAggro(foe)
+        ? foe.id
+        : ownerWall(named, self.position, behaviour.aggroUnits);
+    if (struck !== undefined) {
+      return { ...STAND_STILL, targetId: struck, attackTargetId: struck };
     }
   }
   const attack = self.combatant.attack;
@@ -914,7 +938,10 @@ function followAndAttack(
   if (behaviour.engage === "owner-target-then-nearest") {
     const assisted =
       ownerFoe !== undefined && distance(ownerFoe.position, owner.position) <= behaviour.leashUnits;
-    const foe = assisted ? ownerFoe.id : nearestLiving(self, context.participants, inAggro);
+    const foe = assisted
+      ? ownerFoe.id
+      : (ownerWall(ownerAttacks, owner.position, behaviour.leashUnits) ??
+        nearestLiving(self, context.participants, inAggro));
     if (foe !== undefined) {
       return { ...STAND_STILL, targetId: foe, attackTargetId: foe };
     }

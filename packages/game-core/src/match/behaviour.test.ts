@@ -5,7 +5,14 @@ import { segment, type Segment } from "../geometry.js";
 import { buildNavGraph, createPathFinder } from "../pathing.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { distance, vec2, ZERO, type Vec2 } from "../vec2.js";
-import { createCursor, decide, NO_OBJECTIVES, type Behaviour } from "./behaviour.js";
+import {
+  createCursor,
+  decide,
+  NO_OBJECTIVES,
+  type Behaviour,
+  type BotObjectives,
+} from "./behaviour.js";
+import { breakableTargetId, type BreakableField } from "./breakables.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type CompanionMode, type ParticipantSpec } from "./simulation.js";
 import { NO_RANKS } from "../skills/status.js";
@@ -429,7 +436,12 @@ describe("follow-and-attack (#467)", () => {
     };
   }
 
-  function ask(sim: MatchSimulation, cursor = createCursor(), behaviour = FOLLOW) {
+  function ask(
+    sim: MatchSimulation,
+    cursor = createCursor(),
+    behaviour = FOLLOW,
+    objectives: BotObjectives = NO_OBJECTIVES,
+  ) {
     const self = sim.get("minion");
     if (self === undefined) {
       throw new Error("no minion");
@@ -450,7 +462,7 @@ describe("follow-and-attack (#467)", () => {
       walkable: () => true,
       speedOf: () => 1,
       foeCentroid: undefined,
-      objectives: NO_OBJECTIVES,
+      objectives,
       projectiles: [],
       seed: 0,
       now: 0,
@@ -830,6 +842,96 @@ describe("follow-and-attack (#467)", () => {
         attackTargetId: undefined,
       });
       expect(cursor.returning).toBe(true);
+    });
+  });
+
+  describe("its owner's breakable wall (#4220)", () => {
+    const PET: Behaviour = {
+      kind: "follow-and-attack",
+      drawnTo: undefined,
+      engage: "owner-target",
+      skillIds: [],
+      aggroUnits: 700,
+      leashUnits: 700,
+      heelUnits: 109,
+    };
+    /** A wall across x = 300 to 308, y = -100 to 100, on `layer`. */
+    function wall(layer = 0): BreakableField {
+      const corners = [vec2(300, -100), vec2(308, -100), vec2(308, 100), vec2(300, 100)];
+      return {
+        id: "wall",
+        segments: corners.map((a, at) => ({ a, b: corners[(at + 1) % corners.length] ?? a })),
+        layer,
+        maxHealth: 300,
+      };
+    }
+    const WALL = breakableTargetId("wall");
+
+    /** The owner at the origin and its creature beside it, `wall` standing. */
+    function walled(field = wall()): { sim: MatchSimulation; objectives: BotObjectives } {
+      const sim = new MatchSimulation({
+        seed: "follow",
+        participants: [spec("owner", 0, vec2(0, 0)), minion(vec2(0, 40))],
+        breakables: [field],
+      });
+      const objectives: BotObjectives = {
+        ...NO_OBJECTIVES,
+        breakables: [{ targetId: WALL, field, layer: field.layer, gain: [] }],
+      };
+      return { sim, objectives };
+    }
+
+    function order(sim: MatchSimulation, mode: CompanionMode): void {
+      const creature = sim.get("minion")?.creature;
+      if (creature === undefined) {
+        throw new Error("no creature");
+      }
+      creature.mode = mode;
+    }
+
+    it("on Guard, a pet strikes the wall its owner attacks", () => {
+      const { sim, objectives } = walled();
+      expect(sim.requestAttack("owner", WALL)?.ok).toBe(true);
+      expect(ask(sim, createCursor(), PET, objectives)).toMatchObject({
+        targetId: WALL,
+        attackTargetId: WALL,
+      });
+    });
+
+    it("on Fight, a pet strikes the wall its owner has selected, attacking or not", () => {
+      const { sim, objectives } = walled();
+      order(sim, "fight");
+      expect(sim.setTarget("owner", WALL)).toBe(true);
+      expect(ask(sim, createCursor(), PET, objectives)).toMatchObject({ attackTargetId: WALL });
+    });
+
+    it("on Heel, a pet leaves the wall alone", () => {
+      const { sim, objectives } = walled();
+      order(sim, "heel");
+      sim.requestAttack("owner", WALL);
+      expect(ask(sim, createCursor(), PET, objectives).attackTargetId).toBeUndefined();
+    });
+
+    it("leaves a wall on another layer, or one no longer standing", () => {
+      const other = walled(wall(1));
+      other.sim.requestAttack("owner", WALL);
+      expect(ask(other.sim, createCursor(), PET, other.objectives).attackTargetId).toBeUndefined();
+      const fallen = walled();
+      fallen.sim.requestAttack("owner", WALL);
+      expect(ask(fallen.sim, createCursor(), PET, NO_OBJECTIVES).attackTargetId).toBeUndefined();
+    });
+
+    it("a minion assists its owner's wall attack", () => {
+      const { sim, objectives } = walled();
+      sim.requestAttack("owner", WALL);
+      expect(ask(sim, createCursor(), FOLLOW, objectives)).toMatchObject({
+        attackTargetId: WALL,
+      });
+    });
+
+    it("a minion never picks a wall by itself, only a body", () => {
+      const { sim, objectives } = walled();
+      expect(ask(sim, createCursor(), FOLLOW, objectives).attackTargetId).toBeUndefined();
     });
   });
 

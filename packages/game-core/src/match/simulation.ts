@@ -1895,6 +1895,9 @@ export class MatchSimulation {
     this.#ghostField = options.ghostField;
     this.#capturePoints = initialCapturePoints(options.capturePoints ?? []);
     this.#startLine = options.startLine;
+    // Every lever and wall from the first tick, winning nothing until a
+    // pricing is done: a summon strikes its owner's wall at once (#4220).
+    this.#publishBotWays([], new Map());
     this.#refreshBotObjectives();
     for (const spec of options.participants ?? []) {
       this.add(spec);

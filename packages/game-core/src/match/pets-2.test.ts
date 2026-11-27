@@ -3,7 +3,8 @@ import { describe, expect, it } from "vitest";
 import { unarmedResolvedEquipment } from "../equipment/resolve.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { NO_RANKS, aggregateModifiers } from "../skills/status.js";
-import { vec2, type Vec2 } from "../vec2.js";
+import { distance, vec2, type Vec2 } from "../vec2.js";
+import { breakableTargetId, type BreakableField } from "./breakables.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type Participant, type ParticipantSpec } from "./simulation.js";
 import { statusMoveSpeed } from "../skills/tick.js";
@@ -328,5 +329,58 @@ describe("Savage Pounce and Bestial Mauling (#1865)", () => {
     expect(standing.events).not.toContainEqual(
       expect.objectContaining({ kind: "status-applied", statusId: "dazed" }),
     );
+  });
+});
+
+describe("a pet at its owner's breakable wall (#4220)", () => {
+  /** A wall across x = 100 to 108, y = -200 to 200, that 150 damage fells. */
+  const CORNERS = [vec2(100, -200), vec2(108, -200), vec2(108, 200), vec2(100, 200)];
+  const FIELD: BreakableField = {
+    id: "wall",
+    segments: CORNERS.map((a, at) => ({ a, b: CORNERS[(at + 1) % CORNERS.length] ?? a })),
+    layer: 0,
+    maxHealth: 150,
+  };
+  const WALL = breakableTargetId("wall");
+
+  /** Ranger `r` at the origin with a wolf on Guard, the wall 100 off, a foe far beyond it. */
+  function walled(): MatchSimulation {
+    return new MatchSimulation({
+      seed: "pets-2",
+      participants: [
+        spec("r", 0, vec2(0, 0), {
+          skillBar: [CHARM],
+          attributeRanks: new Map([["ranger.beast-mastery", 12]]),
+        }),
+        spec("a", 1, vec2(900, 0)),
+      ],
+      breakables: [FIELD],
+    });
+  }
+
+  it("bites the wall its owner attacks, and walks back to heel once it falls", () => {
+    const sim = walled();
+    const pet = wolf(sim);
+    expect(sim.requestAttack("r", WALL)?.ok).toBe(true);
+    const log = stepFor(sim, 6);
+    const bitten = log.filter(
+      (entry) =>
+        entry.sourceId === pet.id &&
+        entry.events.some((event) => event.kind === "damage" && event.targetId === WALL),
+    );
+    expect(bitten.length).toBeGreaterThan(0);
+    stepFor(sim, 30);
+    expect(sim.breakables[0]?.health).toBe(0);
+    expect(pet.combatant.attack).toBeUndefined();
+    expect(distance(pet.position, get(sim, "r").position)).toBeLessThan(150);
+  });
+
+  it("on Heel, leaves the wall alone", () => {
+    const sim = walled();
+    const pet = wolf(sim);
+    sim.commandCreature("r", pet.id, { kind: "mode", mode: "heel" });
+    sim.requestAttack("r", WALL);
+    const log = stepFor(sim, 6);
+    expect(log.some((entry) => entry.sourceId === pet.id)).toBe(false);
   });
 });
