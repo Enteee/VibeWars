@@ -171,6 +171,7 @@ import {
   preventsAttacks,
   reducedRecharge,
   scaledStatusDuration,
+  wholeSeconds,
   stackedRechargeFaster,
   STATUS_DEFINITIONS,
   StatusSet,
@@ -4844,7 +4845,10 @@ export class MatchSimulation {
         const had = other.combatant.statuses.has(status.id);
         other.combatant.statuses.catch(
           status.id,
-          scaledStatusDuration(other.combatant, status.id, remainingSeconds),
+          wholeSeconds(
+            remainingSeconds,
+            scaledStatusDuration(other.combatant, status.id, remainingSeconds),
+          ),
           status.sourceId,
           outbreak,
           status.ranks,
@@ -5527,7 +5531,10 @@ export class MatchSimulation {
         const loss = applyStatus(
           target,
           application.statusId,
-          scaledStatusDuration(target, application.statusId, application.durationSeconds),
+          wholeSeconds(
+            application.durationSeconds,
+            scaledStatusDuration(target, application.statusId, application.durationSeconds),
+          ),
           record.id,
           statusRanks(application.statusId, record.combatant),
         );
@@ -9944,6 +9951,10 @@ export class MatchSimulation {
           this.#sparedDeaths.delete(victim.combatant.id) ||
           victim.combatant.statuses.active.some(({ id }) => getStatusDefinition(id).noDeathPenalty);
         victim.combatant.statuses.endAll();
+        // Life Siphon and its kin leave every bearer with their caster (#4165).
+        for (const other of this.#participants.values()) {
+          other.combatant.statuses.endFromDeadSource(victim.combatant.id);
+        }
         victim.armedAttack = undefined;
         victim.diedAtTick = this.#tick;
         this.#clearChainMarks(victim);

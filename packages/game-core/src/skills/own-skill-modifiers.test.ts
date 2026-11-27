@@ -142,7 +142,8 @@ describe("the rule (#1761)", () => {
     landed(GUARDIAN, plain);
     landed(GUARDIAN, aura);
     expect(plain.statuses.get("guardian")?.remainingSeconds).toBe(6);
-    expect(aura.statuses.get("guardian")?.remainingSeconds).toBeCloseTo(7.8);
+    // 6 s × 1.3, rounded (#4165).
+    expect(aura.statuses.get("guardian")?.remainingSeconds).toBe(8);
 
     const full = healed(landed(ORISON, bearer()));
     const covenant = healed(landed(ORISON, bearer("healers-covenant")));

@@ -442,23 +442,27 @@ describe("Chilling Winds (#2311)", () => {
   }
 
   it.each([
-    [12, 1.85],
-    [0, 1.25],
-  ])("at rank %i, the next Water Magic hex lasts ×%d, once", (rank, times) => {
-    const foe = chilledFoe(rank);
-    land(foe, "elementalist.ice-spikes");
-    expect(foe.statuses.get("ice-spikes")?.remainingSeconds).toBeCloseTo(5 * times, 6);
-    foe.statuses.remove("ice-spikes");
-    land(foe, "elementalist.ice-spikes");
-    expect(foe.statuses.get("ice-spikes")?.remainingSeconds).toBe(5);
-    expect(foe.statuses.has("chilling-winds")).toBe(true);
-  });
+    [12, 1.85, 9],
+    [0, 1.25, 6],
+  ])(
+    "at rank %i, the next Water Magic hex lasts ×%d, rounded (#4165), once",
+    (rank, times, seconds) => {
+      const foe = chilledFoe(rank);
+      land(foe, "elementalist.ice-spikes");
+      expect(foe.statuses.get("ice-spikes")?.remainingSeconds).toBe(seconds);
+      expect(seconds).toBe(Math.round(5 * times));
+      foe.statuses.remove("ice-spikes");
+      land(foe, "elementalist.ice-spikes");
+      expect(foe.statuses.get("ice-spikes")?.remainingSeconds).toBe(5);
+      expect(foe.statuses.has("chilling-winds")).toBe(true);
+    },
+  );
 
   it("an Air Magic hex neither lasts longer nor spends it", () => {
     const foe = chilledFoe(12);
     land(foe, "elementalist.lightning-surge");
     land(foe, "elementalist.ice-spikes");
-    expect(foe.statuses.get("ice-spikes")?.remainingSeconds).toBeCloseTo(5 * 1.85, 6);
+    expect(foe.statuses.get("ice-spikes")?.remainingSeconds).toBe(9); // 5 × 1.85, rounded (#4165)
   });
 
   it("says what it lengthens", () => {

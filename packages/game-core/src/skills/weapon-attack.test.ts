@@ -2229,9 +2229,9 @@ describe("martial weapon mods on a hit (#2009)", () => {
     };
     const plain = bleedingFrom(attacker(WEAPONS.sword, "warrior.swordsmanship"));
     expect(plain).toBeGreaterThan(0);
-    expect(bleedingFrom(modded("sword", "barbed", "warrior.swordsmanship"))).toBeCloseTo(
-      plain * 1.33,
-      6,
+    // Rounded to a whole second, as every modified duration is (#4165).
+    expect(bleedingFrom(modded("sword", "barbed", "warrior.swordsmanship"))).toBe(
+      Math.round(plain * 1.33),
     );
   });
 });

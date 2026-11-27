@@ -654,6 +654,12 @@ export interface StatusDefinition {
    */
   readonly killsSourceOnDeath: boolean;
   /**
+   * It ends on every bearer the moment its source dies (#4165): the hexes
+   * the GW1 `Death` page lists, "automatically removed when the caster
+   * dies", such as Life Siphon. Never on a caster-side status.
+   */
+  readonly endsOnSourceDeath: boolean;
+  /**
    * Percentage points of maximum Health and Energy added to what each
    * resurrection the bearer's skill brings back, each capped at 100 (#2479):
    * "We Shall Return!"'s "their fallen allies return with 10...75% more
@@ -4192,6 +4198,21 @@ export class StatusSet {
     this.#end([...this.#statuses.keys()], false, true);
   }
 
+  /**
+   * End every `endsOnSourceDeath` status `sourceId` put on, each recorded
+   * as ended (#4165): what its caster's death does to Life Siphon.
+   */
+  public endFromDeadSource(sourceId: string): void {
+    this.#end(
+      [...this.#statuses.values()]
+        .filter(
+          (status) =>
+            status.sourceId === sourceId && getStatusDefinition(status.id).endsOnSourceDeath,
+        )
+        .map(({ id }) => id),
+    );
+  }
+
   /** End one status by id, recorded as ended (#1022): a trigger that spends it. */
   public end(id: StatusId): void {
     this.#end([id]);
@@ -5202,6 +5223,21 @@ export function scaledStatusDuration(
   const reductions = target.equipment.statusDurationReductions.get(statusId) ?? [];
   const removed = reductions.reduce((sum, r) => sum + Math.round(r * durationSeconds), 0);
   return Math.max(0, durationSeconds - removed);
+}
+
+/**
+ * `base` seconds of a status after its modifiers, `scaled`, rounded to a
+ * whole second (#4165), as the GW1 `Duration` page has it: "Increased or
+ * decreased durations are rounded to a whole number of seconds". Of
+ * Enchanting's ×1.2 makes an 11 s enchantment 13 s. An unmodified
+ * duration keeps its fraction, and one that would round to nothing still
+ * lands for 1 s. A duration reduced to exactly 0 stays 0.
+ */
+export function wholeSeconds(base: number, scaled: number): number {
+  if (scaled === base || scaled <= 0) {
+    return scaled;
+  }
+  return Math.max(1, Math.round(scaled));
 }
 
 /* -------------------------------------------------------------------------- */
