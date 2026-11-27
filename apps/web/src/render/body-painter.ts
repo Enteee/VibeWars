@@ -1,4 +1,4 @@
-import type { CapePattern, CosmeticLook } from "../cosmetics/catalog.js";
+import type { CosmeticLook } from "../cosmetics/catalog.js";
 
 import type { AttackFrame } from "./attack-clock.js";
 import {
@@ -15,7 +15,6 @@ import {
   type CapeMotion,
   type CapeShape,
 } from "./cape-motion.js";
-import { capePatternShapes } from "./cape-pattern.js";
 import { emblemFrameShape, type CapeLook, type EmblemPart } from "./cape-shape.js";
 import { paintSwingRibbon, type SwingRibbon } from "./cosmetic-trail.js";
 import { multiplyColour } from "./lighting-model.js";
@@ -75,8 +74,6 @@ export interface StandingBody {
 export interface WornCape {
   readonly look: CapeLook;
   readonly motion: CapeMotion;
-  /** The cape pattern cosmetic on it (#3579); `undefined` for a plain cape. */
-  readonly pattern: CapePattern | undefined;
   /** The emblem frame cosmetic round its emblem (#3581); `undefined` for none. */
   readonly emblemFrame: EmblemFrameLook | undefined;
 }
@@ -108,7 +105,7 @@ export function paintBodyDisc(painter: Painter, body: StandingBody): void {
   const shape =
     cape === undefined ? undefined : capeMotionShape(cape.motion, body, cape.look.emblem);
   if (cape !== undefined && shape !== undefined) {
-    paintCape(painter, shape, cape.look, cape.pattern, cape.emblemFrame);
+    paintCape(painter, shape, cape.look, cape.emblemFrame);
   }
   const team = teamColour(body.team);
   painter.fillStyle(body.tint === undefined ? team : multiplyColour(team, body.tint), 1);
@@ -162,8 +159,7 @@ export function paintFigureGround(painter: Painter, body: StandingBody): void {
 }
 
 /**
- * The cape (#1422, #1699) under the disc, which covers its root: the cloth, its
- * pattern in the trim's colour and the emblem's field over it (#3579), an
+ * The cape (#1422, #1699) under the disc, which covers its root: the cloth, an
  * emblem frame round the emblem's grid (#3581), its `edge` outline, the trim
  * along the hem, then the emblem grid in its own colours. Folded, all of it
  * hides under the disc but the emblem's edge.
@@ -172,21 +168,10 @@ function paintCape(
   painter: Painter,
   shape: CapeShape,
   cape: CapeLook,
-  pattern: CapePattern | undefined,
   frame: EmblemFrameLook | undefined,
 ): void {
   painter.fillStyle(cape.main, 1);
   painter.fillPoints(shape.cloth);
-  if (pattern !== undefined) {
-    painter.fillStyle(cape.trim, 1);
-    for (const piece of capePatternShapes(pattern, shape.tab)) {
-      painter.fillPoints(piece);
-    }
-    if (shape.emblemField.length > 0) {
-      painter.fillStyle(cape.main, 1);
-      painter.fillPoints(shape.emblemField);
-    }
-  }
   if (frame !== undefined && shape.emblemGrid !== undefined) {
     painter.fillStyle(frame.colour === "trim" ? cape.trim : frame.colour, 1);
     for (const quad of emblemFrameShape(shape.emblemGrid, frame.studs)) {

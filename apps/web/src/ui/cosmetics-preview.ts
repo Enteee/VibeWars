@@ -150,9 +150,6 @@ export function nextBeat(previous: readonly Beat[], random: () => number, swing:
   }
 }
 
-/** A cape for a player with none, so a cape pattern previews on something: plain grey cloth. */
-const PLAIN_CAPE: CapeLook = { main: 0x6b6f78, trim: 0xc9ccd2, emblem: "", palette: [] };
-
 /** What the preview needs from the page; a test's own in a test. */
 export interface PreviewHost {
   readonly requestFrame: (callback: (now: number) => void) => number;
@@ -508,9 +505,8 @@ export function createCosmeticsPreview(
 
 /**
  * The cape `worn` puts on a body whose guild cape is `guild`: the guild's,
- * patterned and framed as worn; with no guild cape, plain grey cloth while
- * a pattern is worn, so it shows, else none. A plain cape has no emblem, so
- * no frame, as the emblem frame's row is not offered without a cape.
+ * framed as worn; none without a guild cape, as the emblem frame's row is
+ * not offered without one.
  * The cape moves as `motion` does.
  */
 function wornCape(
@@ -518,15 +514,9 @@ function wornCape(
   worn: WornCosmetics,
   motion: CapeMotion,
 ): WornCape | undefined {
-  const pattern = worn.cape?.look.kind === "cape" ? worn.cape.look.pattern : undefined;
   const frame = worn.emblemFrame?.look.kind === "emblemFrame" ? worn.emblemFrame.look : undefined;
-  if (guild === undefined && pattern === undefined) {
+  if (guild === undefined) {
     return undefined;
   }
-  return {
-    look: guild ?? PLAIN_CAPE,
-    motion,
-    pattern,
-    emblemFrame: guild === undefined ? undefined : frame,
-  };
+  return { look: guild, motion, emblemFrame: frame };
 }

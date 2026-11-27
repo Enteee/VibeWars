@@ -165,7 +165,6 @@ describe("figureBody (#1250, #4032)", () => {
       bucketFacing(headingBucket(body.facing)),
       body.r,
       tones,
-      undefined,
     )
       .filter((layer) => layer.colour === 0xff00ff)
       .flatMap((layer) => layer.points);
@@ -337,13 +336,11 @@ function recording(at: (x: number, y: number, radius?: number) => void = () => u
 
 /** The colours, bottom to top, of the arena's own slices of a standing figure turned to `facing`. */
 function arenaFills(body: StandingBody): string[] {
-  const worn = body.cape === undefined ? undefined : { look: body.cape.look, pattern: undefined };
   return stackLayers(
     stackSlices("stand"),
     bucketFacing(headingBucket(body.facing)),
     STACK_BAKE_RADIUS * STACK_BAKE_SCALE,
-    stackTones(teamColour(body.team), worn),
-    undefined,
+    stackTones(teamColour(body.team), body.cape?.look),
   ).map((layer) => `#${layer.colour.toString(16).padStart(6, "0")}`);
 }
 

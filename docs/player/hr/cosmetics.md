@@ -11,23 +11,19 @@ ne dijeli: svatko može provjeriti ljestvicu i vidjeti što si zaradio.
 | -------------------------------------------------------------------------------- | --------------------------- |
 | Okvir od žada i titula Izazivač                                                  | 5 rangiranih pobjeda        |
 | Aura mahovine, Trag mahovine, Zamah mahovine                                     | 5 rangiranih pobjeda        |
-| Prugasti plašt                                                                   | 5 rangiranih pobjeda        |
 | Okvir amblema u boji ruba                                                        | 5 rangiranih pobjeda        |
 | Ružičasti okvir i titula Veteran                                                 | 25 rangiranih pobjeda       |
 | Aura žeravice, Trag žeravice, Zamah žeravice                                     | 25 rangiranih pobjeda       |
-| Plašt sa ševronima                                                               | 25 rangiranih pobjeda       |
 | Uzlazna svjetlost, Rasplinuće u pepeo                                            | 25 rangiranih pobjeda       |
 | Aura mraza, Trag mraza, Zamah mraza                                              | 75 rangiranih pobjeda       |
 | Vrtlog lišća, Rasplinuće u maglu                                                 | 75 rangiranih pobjeda       |
 | Željezni okvir amblema                                                           | 75 rangiranih pobjeda       |
 | Tirkizni okvir i titula Vojskovođa                                               | 200 rangiranih pobjeda      |
-| Plašt na četvrtine                                                               | 200 rangiranih pobjeda      |
 | Kiša latica, Rasplinuće u krhotine                                               | 200 rangiranih pobjeda      |
 | Srebrni okvir amblema                                                            | 200 rangiranih pobjeda      |
 | Aura zvjezdane svjetlosti, Trag zvjezdane svjetlosti, Zamah zvjezdane svjetlosti | 500 rangiranih pobjeda      |
 | Kiša zvijezda, Rasplinuće u zvjezdanu prašinu                                    | 500 rangiranih pobjeda      |
 | Okvir orhideje i titula Prvak                                                    | Mjesto u Top 100            |
-| Plašt sa zvijezdama                                                              | Mjesto u Top 100            |
 | Pozlaćeni okvir amblema                                                          | Mjesto u Top 100            |
 | Plamen niza pobjeda                                                              | 3 rangirane pobjede zaredom |
 
@@ -38,9 +34,9 @@ meč, vraćaju se na zadani izgled dok ih ponovno ne zaradiš. Ono što si odabr
 
 Aura na tlu je blagi prsten oko tvojih stopala. Trag koraka ostavlja sitne čestice ondje gdje hodaš, koje nestanu u trenu. Oboje se crta ispod svakog prstena, oznake i upozorenja i nikad nije u boji tima. Ako je u tvom sustavu uključeno smanjeno kretanje, aura miruje i trag se ne crta.
 
-## Na oružju i plaštu
+## Na oružju
 
-Trag oružja je vrpca iza tvog oružja dok napad izbliza pogađa, a blijedi unutar petine sekunde od pogotka. Lukovi, koplja, štapići i palice ga nemaju, i nijedna čarolija ni bacanje ga nikad ne pokazuje. Uzorak plašta stavlja pruge, ševrone, četvrtine ili zvijezde na tvoj plašt ceha u njegovoj vlastitoj boji obruba, a tvoj amblem uvijek ostaje na vrhu, jasan kao na običnom plaštu. Ako je u tvom sustavu uključeno smanjeno kretanje, trag oružja se ne crta.
+Trag oružja je vrpca iza tvog oružja dok napad izbliza pogađa, a blijedi unutar petine sekunde od pogotka. Lukovi, koplja, štapići i palice ga nemaju, i nijedna čarolija ni bacanje ga nikad ne pokazuje. Ako je u tvom sustavu uključeno smanjeno kretanje, trag oružja se ne crta.
 
 ## Povratak i pad
 

@@ -28,7 +28,7 @@ const FRIEND: StackLook = { body: 0x59c2ff, cape: undefined };
 const FOE: StackLook = { body: 0xff7b72, cape: undefined };
 const CAPED: StackLook = {
   body: 0x59c2ff,
-  cape: { look: { main: 0x203040, trim: 0xc0a060, emblem: "", palette: [] }, pattern: "stripes" },
+  cape: { main: 0x203040, trim: 0xc0a060, emblem: "", palette: [] },
 };
 const FRAMES = STACK_BAKED_HEADINGS.length * STACK_POSES.length;
 
@@ -105,7 +105,7 @@ describe("StackAtlas (ADR-0057, #4031)", () => {
     expect(surfaces[0]?.fills).toBeGreaterThan(0);
   });
 
-  it("bakes each distinct look once, a row each; a cape and its pattern make a look", () => {
+  it("bakes each distinct look once, a row each; a cape and its colours make a look", () => {
     const { atlas: made, surfaces } = atlas();
     made.bake([FRIEND, FOE, CAPED, FOE, FRIEND]);
     expect(made.bakedFigures).toBe(3 * FRAMES);
@@ -113,7 +113,7 @@ describe("StackAtlas (ADR-0057, #4031)", () => {
     const rows = new Set(surfaces[0]?.frames.values());
     expect([...rows].sort((a, b) => a - b)).toEqual([0, 1, 2].map((r) => r * STACK_FRAME_HEIGHT));
     expect(
-      stackLookKey({ ...CAPED, cape: CAPED.cape && { ...CAPED.cape, pattern: "stars" } }),
+      stackLookKey({ ...CAPED, cape: CAPED.cape && { ...CAPED.cape, trim: 0xa0a0a0 } }),
     ).not.toBe(stackLookKey(CAPED));
   });
 
@@ -140,7 +140,6 @@ describe("StackAtlas (ADR-0057, #4031)", () => {
           bucketFacing(bucket),
           r,
           stackTones(FRIEND.body, undefined),
-          undefined,
         );
         for (const { x, y } of layers.flatMap((layer) => layer.points)) {
           expect(STACK_FRAME_FEET_X + x - pad).toBeGreaterThanOrEqual(0);

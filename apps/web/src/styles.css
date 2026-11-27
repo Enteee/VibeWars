@@ -2122,41 +2122,6 @@ body:has(> .splash) #menu-background::after {
   transform: rotate(-20deg);
 }
 
-/* A cape: its pattern in the player's own cape's cloth and trim. */
-.cosmetics-swatch[data-kind="cape"] .cosmetics-swatch-art {
-  width: 24px;
-  height: 28px;
-  border-radius: 2px 2px 8px 8px;
-  border: 1px solid var(--swatch-trim);
-  background: var(--swatch);
-}
-
-.cosmetics-swatch[data-variant="stripes"] .cosmetics-swatch-art {
-  background: repeating-linear-gradient(90deg, var(--swatch) 0 4px, var(--swatch-trim) 4px 8px);
-}
-
-.cosmetics-swatch[data-variant="chevrons"] .cosmetics-swatch-art {
-  background:
-    linear-gradient(135deg, var(--swatch-trim) 25%, transparent 25%) 0 0 / 8px 8px,
-    linear-gradient(225deg, var(--swatch-trim) 25%, transparent 25%) 0 0 / 8px 8px,
-    var(--swatch);
-}
-
-.cosmetics-swatch[data-variant="quarters"] .cosmetics-swatch-art {
-  background: conic-gradient(
-    var(--swatch) 0 25%,
-    var(--swatch-trim) 0 50%,
-    var(--swatch) 0 75%,
-    var(--swatch-trim) 0
-  );
-}
-
-.cosmetics-swatch[data-kind="cape"][data-variant="stars"] .cosmetics-swatch-art {
-  background:
-    radial-gradient(circle, var(--swatch-trim) 0 1.5px, transparent 2px) 0 0 / 8px 8px,
-    var(--swatch);
-}
-
 /* A spawn-in style: motes gathering to a bright core. */
 .cosmetics-swatch[data-kind="spawn"] .cosmetics-swatch-art {
   background:

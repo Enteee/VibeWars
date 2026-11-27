@@ -35,7 +35,6 @@ const SLOT_LABEL: Record<CosmeticSlot, MessageKey> = {
   aura: "cosmetics.slot.aura",
   trail: "cosmetics.slot.trail",
   swing: "cosmetics.slot.swing",
-  cape: "cosmetics.slot.cape",
   spawn: "cosmetics.slot.spawn",
   dissolve: "cosmetics.slot.dissolve",
   emblemFrame: "cosmetics.slot.emblemFrame",
@@ -53,7 +52,7 @@ export function requirementText(entry: CosmeticEntry): string {
   return t("cosmetics.requires.streak", { count: requires.streakAtLeast });
 }
 
-/** The cape a swatch draws a pattern or a trim frame in: the player's own. */
+/** The cape a swatch draws a trim frame in: the player's own. */
 export type SwatchCape = Pick<WireCape, "main" | "trim">;
 
 /** A cape's colours for a player with none, as a cape's are spelt: a plain grey cloth. */
@@ -61,8 +60,8 @@ const PLAIN_CAPE: SwatchCape = { main: "6b6f78", trim: "c9ccd2" };
 
 /**
  * How a swatch draws `entry` (#3988), in CSS: `kind` picks the drawing
- * (a ring, a flame, a wave…), `variant` a cape's pattern, a spawn or
- * dissolve's motif or an emblem frame's studs, and `colours` the custom
+ * (a ring, a flame, a wave…), `variant` a spawn or dissolve's
+ * motif or an emblem frame's studs, and `colours` the custom
  * properties it is drawn in, `--swatch` always.
  */
 export interface SwatchStyle {
@@ -86,12 +85,6 @@ export function swatchStyle(entry: CosmeticEntry, cape: SwatchCape | null): Swat
         kind: look.kind,
         variant: null,
         colours: { "--swatch": css(look.colour), "--swatch-glow": css(look.glow) },
-      };
-    case "cape":
-      return {
-        kind: look.kind,
-        variant: look.pattern,
-        colours: { "--swatch": `#${worn.main}`, "--swatch-trim": `#${worn.trim}` },
       };
     case "spawn":
     case "dissolve":
@@ -575,9 +568,8 @@ export interface SectionFigure {
 }
 
 /**
- * The section over `store`, the page's own or a test's. `cape` is the player's guild cape, `null` for none: the cape
- * patterns are drawn in its colours, and the emblem frame's row (#3581)
- * shows only while there is a cape for it to frame. Above the rows,
+ * The section over `store`, the page's own or a test's. `cape` is the player's guild cape, `null` for none: the emblem
+ * frame's swatch is drawn in its trim, and its row (#3581) shows only while there is a cape for it to frame. Above the rows,
  * `figure`'s character wears the shown look (#3989).
  */
 export function cosmeticsSection(
