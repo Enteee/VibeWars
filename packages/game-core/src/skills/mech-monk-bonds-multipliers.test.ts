@@ -95,8 +95,10 @@ describe("Life Bond (#2291)", () => {
   ])("at rank %i, half an attack goes to the monk, %i of it after the reduction", (rank, taken) => {
     const ally = bearing("life-bond", rank);
     const events: CombatEvent[] = [];
-    applyAttackDamage(ally, 100, "slashing", false, events, undefined);
-    expect(events).toEqual([{ kind: "damage", targetId: "a", amount: 50, critical: false }]);
+    applyAttackDamage(ally, { amount: 100, reduced: 0 }, "slashing", false, events, undefined);
+    expect(events).toEqual([
+      { kind: "damage", targetId: "a", amount: 50, unreduced: 50, critical: false },
+    ]);
     expect(redirected(ally)).toEqual([
       { kind: "redirected-damage", toId: "monk", amount: taken, toClosestMinion: false },
     ]);
@@ -105,15 +107,19 @@ describe("Life Bond (#2291)", () => {
   it("an attack of any type is one: fire from a weapon splits too", () => {
     const ally = bearing("life-bond", 12);
     const events: CombatEvent[] = [];
-    applyAttackDamage(ally, 100, "fire", false, events, undefined);
-    expect(events).toEqual([{ kind: "damage", targetId: "a", amount: 50, critical: false }]);
+    applyAttackDamage(ally, { amount: 100, reduced: 0 }, "fire", false, events, undefined);
+    expect(events).toEqual([
+      { kind: "damage", targetId: "a", amount: 50, unreduced: 50, critical: false },
+    ]);
   });
 
   it("a reduction above the share sends nothing, and never heals; the ally is still spared it", () => {
     const ally = bearing("life-bond", 12);
     const events: CombatEvent[] = [];
-    applyAttackDamage(ally, 40, "slashing", false, events, undefined);
-    expect(events).toEqual([{ kind: "damage", targetId: "a", amount: 20, critical: false }]);
+    applyAttackDamage(ally, { amount: 40, reduced: 0 }, "slashing", false, events, undefined);
+    expect(events).toEqual([
+      { kind: "damage", targetId: "a", amount: 20, unreduced: 20, critical: false },
+    ]);
     expect(redirected(ally)).toEqual([]);
   });
 
@@ -121,7 +127,9 @@ describe("Life Bond (#2291)", () => {
     const ally = bearing("life-bond", 12);
     const events: CombatEvent[] = [];
     applyDamage(ally, 100, "piercing", false, events, undefined);
-    expect(events).toEqual([{ kind: "damage", targetId: "a", amount: 100, critical: false }]);
+    expect(events).toEqual([
+      { kind: "damage", targetId: "a", amount: 100, unreduced: 100, critical: false },
+    ]);
     expect(redirected(ally)).toEqual([]);
   });
 

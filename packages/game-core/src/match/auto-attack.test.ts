@@ -16,7 +16,7 @@ import { chargeAdrenaline, strikesOf, withAttackDuration } from "../skills/testi
 import { distance, vec2, type Vec2 } from "../vec2.js";
 import { tallyCombat, type CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
-import { NO_RANKS } from "../skills/status.js";
+import { NO_RANKS, type StatusId } from "../skills/status.js";
 
 const RULES = MINIMAL_GW_INSPIRED_PVP_V1;
 const DT = 1 / RULES.tickRateHz;
@@ -414,9 +414,18 @@ describe("adrenaline from damage taken (#827)", () => {
     return { ...swordsman("v", vec2(40, 0)), team: 1, maxHealth };
   }
 
-  /** The damage of `a`'s first landed swing on `v`, and `v`'s units in each skill after it. */
-  function firstBlow(maxHealth: number): { amount: number; units: number; severArtery: number } {
+  /**
+   * The damage of `a`'s first landed swing on `v`, under `statuses`, and
+   * `v`'s units in each skill after it.
+   */
+  function firstBlow(
+    maxHealth: number,
+    ...statuses: StatusId[]
+  ): { amount: number; units: number; severArtery: number } {
     const match = sim(swordsman("a", vec2(0, 0)), victim(maxHealth));
+    for (const status of statuses) {
+      get(match, "v").combatant.statuses.apply(status, 60, "m", NO_RANKS);
+    }
     match.requestAttack("a", "v");
     for (let i = 0; i < 200; i += 1) {
       for (const entry of swings(match.step(DT).log)) {
@@ -443,6 +452,19 @@ describe("adrenaline from damage taken (#827)", () => {
     });
     expect(firstBlow((4 * amount * 120) / 119).units).toBe(24);
   });
+
+  it.each<StatusId>(["shielding-hands", "shield-of-absorption"])(
+    "%s takes damage off the blow but not the adrenaline it charges (#4163)",
+    (status) => {
+      const { amount } = firstBlow(1e6);
+      const shielded = firstBlow(4 * amount, status);
+      expect(shielded.amount).toBeLessThan(amount);
+      expect(shielded).toMatchObject({
+        units: ADRENALINE_PER_STRIKE,
+        severArtery: ADRENALINE_PER_STRIKE,
+      });
+    },
+  );
 
   it("a lethal blow gives nothing: death leaves the pools empty", () => {
     const { amount } = firstBlow(1e6);

@@ -546,10 +546,11 @@ export const RITUALIST_STATUSES: Readonly<Record<RitualistStatusId, StatusDefini
     ],
   }),
   // Soothing's aura (#1550): "All foes within its range take twice as
-  // long to build adrenaline".
+  // long to build adrenaline": a slowdown on every source (#4163).
   soothing: define("soothing", "Soothing", "skill-effect", {
     profession: "ritualist",
     adrenalineGainFaster: -0.5,
+    adrenalineGainFasterFrom: "all",
   }),
   // "For 8 seconds, the next time target ally takes damage from a foe that
   // damage is limited to 5% of that ally's max Health and that ally steals

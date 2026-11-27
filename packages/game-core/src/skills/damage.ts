@@ -375,14 +375,16 @@ export function castingDamageReduction(target: Combatant): number {
 }
 
 /**
- * How much damage a packet actually does to this target.
- *
- * Rounded once, at the end. Rounding earlier would make a long fight
- * drift away from the arithmetic by a few points per hit.
- * A protective spirit's status that changed the outcome records what its
- * spirit pays (#1265), so this is only for a packet that lands; a bond's
- * caster pays its Energy here (#2187), found in `surroundings`.
+ * What a packet does to its target (#4163): the health it takes, and
+ * what the flat per-hit cuts (Shielding Hands, Shield of Absorption, a
+ * rune) took off it first, which still charges adrenaline as GW1's does.
  */
+export interface MitigatedDamage {
+  readonly amount: number;
+  readonly reduced: number;
+}
+
+/** As `mitigateHit`, the health it takes only. */
 export function mitigate(
   packet: DamagePacket,
   target: Combatant,
@@ -391,8 +393,28 @@ export function mitigate(
   rng: SimulationRng,
   surroundings: Surroundings,
 ): number {
+  return mitigateHit(packet, target, rules, location, rng, surroundings).amount;
+}
+
+/**
+ * How much damage a packet actually does to this target.
+ *
+ * Rounded once, at the end. Rounding earlier would make a long fight
+ * drift away from the arithmetic by a few points per hit.
+ * A protective spirit's status that changed the outcome records what its
+ * spirit pays (#1265), so this is only for a packet that lands; a bond's
+ * caster pays its Energy here (#2187), found in `surroundings`.
+ */
+export function mitigateHit(
+  packet: DamagePacket,
+  target: Combatant,
+  rules: CombatRules,
+  location: HitLocation,
+  rng: SimulationRng,
+  surroundings: Surroundings,
+): MitigatedDamage {
   if (packet.armored + packet.armorIgnoring <= 0) {
-    return 0;
+    return { amount: 0, reduced: 0 };
   }
 
   // Winnowing's +4 (#1064): on the bearer of every physical hit, before
@@ -425,6 +447,7 @@ export function mitigate(
   // (#1827) only while it activates a binding ritual, and Shield of
   // Absorption's (#2190) grows with every packet. Reverse Hex's (#2428)
   // spends itself on the first packet armor left above 0.
+  const unreduced = Math.max(0, Math.round(dealt));
   if (modifiers.damageReduction > 0 && dealt > 0) {
     target.statuses.chargeSources((definition) => statAtTwelve(definition.damageReduction) > 0);
   }
@@ -447,6 +470,7 @@ export function mitigate(
       dealt -= target.equipment.pieceReduction[location];
     }
   }
+  const reduced = unreduced - Math.max(0, Math.round(dealt));
 
   // Protective Spirit (#936), after everything else: no single hit takes
   // more than its share of the target's max health, deep wound's lower
@@ -465,7 +489,7 @@ export function mitigate(
     }
   }
 
-  return Math.max(0, Math.round(dealt));
+  return { amount: Math.max(0, Math.round(dealt)), reduced };
 }
 
 /**

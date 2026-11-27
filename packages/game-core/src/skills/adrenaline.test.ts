@@ -91,7 +91,7 @@ describe("gainUnits", () => {
     const w = warrior(0, 0, 0);
     w.statuses.apply("weapon-of-fury", 10, "r", NO_RANKS);
     w.statuses.apply("natural-temper", 10, "p", NO_RANKS);
-    gainUnits(w, 10, 0);
+    gainUnits(w, 10, 0, true);
     // 10 × 2 × 1.33 would be 26.
     expect(w.adrenaline.get(BACKBREAKER)).toBe(20);
   });
@@ -99,8 +99,23 @@ describe("gainUnits", () => {
   it("keeps a single boost's own share (#4089)", () => {
     const w = warrior(0, 0, 0);
     w.statuses.apply("natural-temper", 10, "p", NO_RANKS);
-    gainUnits(w, 10, 0);
+    gainUnits(w, 10, 0, true);
     expect(w.adrenaline.get(BACKBREAKER)).toBe(13);
+  });
+
+  it("boosts only what attacks earn, unless the boost says all (#4163)", () => {
+    const onslaught = warrior(0, 0, 0);
+    onslaught.statuses.apply("onslaught", 10, "d", NO_RANKS);
+    gainUnits(onslaught, 20, 0);
+    expect(onslaught.adrenaline.get(BACKBREAKER)).toBe(20);
+    gainUnits(onslaught, 20, 0, true);
+    expect(onslaught.adrenaline.get(BACKBREAKER)).toBe(20 + 25);
+
+    // Focused Anger at Leadership 12, +120%, on what is not an attack too.
+    const focused = warrior(0, 0, 0);
+    focused.statuses.apply("focused-anger", 10, "p", new Map([["paragon.leadership", 12]]));
+    gainUnits(focused, 20, 0);
+    expect(focused.adrenaline.get(BACKBREAKER)).toBe(44);
   });
 });
 

@@ -46,17 +46,23 @@ function message(casterSessionId: string, events: CombatMessage["events"]): Comb
 
 describe("soundsForCombat", () => {
   it("cracks for a hit you deal", () => {
-    const hit = message(ME, [{ kind: "damage", targetId: "foe", amount: 9, critical: false }]);
+    const hit = message(ME, [
+      { kind: "damage", targetId: "foe", amount: 9, unreduced: 9, critical: false },
+    ]);
     expect(soundsForCombat(hit, ME, undefined)).toEqual(["hit-dealt"]);
   });
 
   it("thuds for a hit you take", () => {
-    const hit = message("foe", [{ kind: "damage", targetId: ME, amount: 9, critical: false }]);
+    const hit = message("foe", [
+      { kind: "damage", targetId: ME, amount: 9, unreduced: 9, critical: false },
+    ]);
     expect(soundsForCombat(hit, ME, undefined)).toEqual(["hit-taken"]);
   });
 
   it("counts hurting yourself as a hit taken, not one dealt", () => {
-    const hit = message(ME, [{ kind: "damage", targetId: ME, amount: 9, critical: false }]);
+    const hit = message(ME, [
+      { kind: "damage", targetId: ME, amount: 9, unreduced: 9, critical: false },
+    ]);
     expect(soundsForCombat(hit, ME, undefined)).toEqual(["hit-taken"]);
   });
 
@@ -92,7 +98,7 @@ describe("soundsForCombat", () => {
 
   it("is silent for an ally's hit on an enemy, and for every other kind", () => {
     const elsewhere = message("ally", [
-      { kind: "damage", targetId: "foe", amount: 9, critical: false },
+      { kind: "damage", targetId: "foe", amount: 9, unreduced: 9, critical: false },
       { kind: "heal", targetId: "foe", amount: 9 },
       { kind: "interrupted", targetId: "foe", skillId: "x" },
       { kind: "interrupt-missed", targetId: "foe", refusedSkillId: null },
@@ -113,7 +119,7 @@ describe("soundsForCombat", () => {
       weaponId: "",
       attributeId: "",
       doubleStrike: false,
-      events: [{ kind: "damage", targetId: ME, amount: 1, critical: false }],
+      events: [{ kind: "damage", targetId: ME, amount: 1, unreduced: 1, critical: false }],
     };
     const regen: CombatMessage = {
       casterSessionId: ME,
@@ -132,7 +138,7 @@ describe("soundsForCombat", () => {
       attributeId: "",
       doubleStrike: false,
       events: [
-        { kind: "damage", targetId: ME, amount: 1, critical: false },
+        { kind: "damage", targetId: ME, amount: 1, unreduced: 1, critical: false },
         { kind: "death", targetId: ME },
       ],
     };
@@ -149,14 +155,14 @@ describe("soundsForCombat", () => {
       weaponId: "sword",
       attributeId: "",
       doubleStrike: false,
-      events: [{ kind: "damage", targetId: "foe", amount: 12, critical: false }],
+      events: [{ kind: "damage", targetId: "foe", amount: 12, unreduced: 12, critical: false }],
     };
     expect(soundsForCombat(swing, ME, undefined)).toEqual(["hit-dealt"]);
   });
 
   it("plays a kill as a hit and a death", () => {
     const kill = message(ME, [
-      { kind: "damage", targetId: "foe", amount: 90, critical: false },
+      { kind: "damage", targetId: "foe", amount: 90, unreduced: 90, critical: false },
       { kind: "death", targetId: "foe" },
     ]);
     expect(soundsForCombat(kill, ME, snapshot([player(ME), player("foe")]))).toEqual([
@@ -167,12 +173,14 @@ describe("soundsForCombat", () => {
 
   it("adds a crit's transient to a crit you deal or take, once per message (#3366)", () => {
     const dealt = message(ME, [
-      { kind: "damage", targetId: "a", amount: 30, critical: true },
-      { kind: "damage", targetId: "b", amount: 30, critical: true },
+      { kind: "damage", targetId: "a", amount: 30, unreduced: 30, critical: true },
+      { kind: "damage", targetId: "b", amount: 30, unreduced: 30, critical: true },
     ]);
-    const taken = message("foe", [{ kind: "damage", targetId: ME, amount: 30, critical: true }]);
+    const taken = message("foe", [
+      { kind: "damage", targetId: ME, amount: 30, unreduced: 30, critical: true },
+    ]);
     const elsewhere = message("ally", [
-      { kind: "damage", targetId: "foe", amount: 30, critical: true },
+      { kind: "damage", targetId: "foe", amount: 30, unreduced: 30, critical: true },
     ]);
     expect(soundsForCombat(dealt, ME, undefined)).toEqual(["hit-dealt", "crit", "hit-dealt"]);
     expect(soundsForCombat(taken, ME, undefined)).toEqual(["hit-taken", "crit"]);
@@ -319,14 +327,14 @@ describe("deaths and respawns, by whose they are (#3366)", () => {
 describe("hitsForCombat (#370)", () => {
   it("counts damage, interrupts, conditions and hexes, dealt or taken", () => {
     const dealt = message(ME, [
-      { kind: "damage", targetId: "foe", amount: 9, critical: false },
+      { kind: "damage", targetId: "foe", amount: 9, unreduced: 9, critical: false },
       { kind: "interrupted", targetId: "foe", skillId: "heal" },
       { kind: "status-applied", targetId: "foe", statusId: "bleeding", durationSeconds: 5 },
       { kind: "status-applied", targetId: "foe", statusId: "faintheartedness", durationSeconds: 5 },
     ]);
     expect(hitsForCombat(dealt, ME)).toEqual(["dealt", "dealt", "dealt", "dealt"]);
     const taken = message("foe", [
-      { kind: "damage", targetId: ME, amount: 9, critical: false },
+      { kind: "damage", targetId: ME, amount: 9, unreduced: 9, critical: false },
       { kind: "status-applied", targetId: ME, statusId: "crippled", durationSeconds: 5 },
     ]);
     expect(hitsForCombat(taken, ME)).toEqual(["taken", "taken"]);
@@ -347,10 +355,10 @@ describe("hitsForCombat (#370)", () => {
       weaponId: "",
       attributeId: "",
       doubleStrike: false,
-      events: [{ kind: "damage", targetId: ME, amount: 1, critical: false }],
+      events: [{ kind: "damage", targetId: ME, amount: 1, unreduced: 1, critical: false }],
     };
     const elsewhere = message("foe", [
-      { kind: "damage", targetId: "ally", amount: 9, critical: false },
+      { kind: "damage", targetId: "ally", amount: 9, unreduced: 9, critical: false },
     ]);
     for (const m of [friendly, ownBuff, tick, elsewhere]) {
       expect(hitsForCombat(m, ME)).toEqual([]);
@@ -550,7 +558,7 @@ describe("skill type cues (#3297)", () => {
   it("plays a hex and the damage beside it as two cues", () => {
     const both = message("foe", [
       status(ME, "pacifism"),
-      { kind: "damage", targetId: ME, amount: 9, critical: false },
+      { kind: "damage", targetId: ME, amount: 9, unreduced: 9, critical: false },
     ]);
     expect(soundsForCombat(both, ME, undefined)).toEqual(["hex-on", "hit-taken"]);
   });
@@ -837,7 +845,9 @@ describe("castVoices (#3298)", () => {
     const riposte = getSkill("warrior.riposte");
     expect(riposte?.activationSeconds).toBe(0);
     const trigger: CombatMessage = {
-      ...message("foe", [{ kind: "damage", targetId: ME, amount: 20, critical: false }]),
+      ...message("foe", [
+        { kind: "damage", targetId: ME, amount: 20, unreduced: 20, critical: false },
+      ]),
       skillId: "warrior.riposte",
     };
     expect(instantCastVoice(trigger, latest, seat)).toBeUndefined();

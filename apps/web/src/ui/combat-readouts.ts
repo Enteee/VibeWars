@@ -585,7 +585,13 @@ export class StatusTickBatcher {
       } as const;
       const event: CombatEvent =
         open.kind === "damage"
-          ? { kind: open.kind, targetId: open.targetId, amount: open.amount, critical: false }
+          ? {
+              kind: open.kind,
+              targetId: open.targetId,
+              amount: open.amount,
+              unreduced: open.amount,
+              critical: false,
+            }
           : { kind: open.kind, targetId: open.targetId, amount: open.amount };
       const row = combatEventToRow(tickEntry, event, nameOf, isCreature);
       // Degeneration stays tick by tick: a damage run is worth reading.

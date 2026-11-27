@@ -181,13 +181,13 @@ describe("Avatar of Dwayna (#1437)", () => {
 describe("Avatar of Balthazar (#1455)", () => {
   const SKILL = "dervish.avatar-of-balthazar";
 
-  it("gains adrenaline 25% faster, from a hit and from a skill alike", () => {
+  it("gains adrenaline 25% faster from a hit, not from a skill (#4163)", () => {
     const match = avatar(SKILL, "warrior.eviscerate");
     const self = dervish(match);
-    gainUnits(self, 25, match.elapsedSeconds);
+    gainUnits(self, 25, match.elapsedSeconds, true);
     expect(self.adrenaline.get("warrior.eviscerate")).toBe(31);
     fillPools(self, 25);
-    expect(self.adrenaline.get("warrior.eviscerate")).toBe(62);
+    expect(self.adrenaline.get("warrior.eviscerate")).toBe(56);
   });
 
   it("turns attacks holy, and burns the foes nearby whenever it loses a Dervish enchantment", () => {

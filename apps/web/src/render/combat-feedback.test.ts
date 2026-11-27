@@ -136,7 +136,7 @@ describe("beaconBoltFor (#2694)", () => {
     casterSessionId: "",
     cause: "beacon",
     area: { x: 10, y: 20, radius: 300 },
-    events: [{ kind: "damage", targetId: "foe", amount: 27, critical: false }],
+    events: [{ kind: "damage", targetId: "foe", amount: 27, unreduced: 27, critical: false }],
   } as unknown as CombatMessage;
 
   it("runs from the beacon to the body it struck", () => {
@@ -155,7 +155,7 @@ describe("showCombatFeedback", () => {
   it("signs damage with a real minus and heals with a plus, so colour is never needed", () => {
     expect(
       floated([
-        { kind: "damage", targetId: "them", amount: 91.4, critical: false },
+        { kind: "damage", targetId: "them", amount: 91.4, unreduced: 91.4, critical: false },
         { kind: "heal", targetId: "me", amount: 40 },
       ]),
     ).toEqual(["−91", "+40"]);
@@ -201,7 +201,7 @@ describe("showCombatFeedback", () => {
           weaponId: cause === "weapon" ? "sword" : "",
           attributeId: "",
           doubleStrike: false,
-          events: [{ kind: "damage", targetId: "them", amount: 12, critical }],
+          events: [{ kind: "damage", targetId: "them", amount: 12, unreduced: 12, critical }],
         },
         SNAPSHOT,
         0,
@@ -215,9 +215,11 @@ describe("showCombatFeedback", () => {
   });
 
   it('floats a critical hit with a "!" (#533)', () => {
-    expect(floated([{ kind: "damage", targetId: "them", amount: 31.1, critical: true }])).toEqual([
-      "−31!",
-    ]);
+    expect(
+      floated([
+        { kind: "damage", targetId: "them", amount: 31.1, unreduced: 31.1, critical: true },
+      ]),
+    ).toEqual(["−31!"]);
   });
 
   it("starts a number right of the bar, clear of the name (#262)", () => {
@@ -242,8 +244,8 @@ describe("showCombatFeedback", () => {
         attributeId: "",
         doubleStrike: false,
         events: [
-          { kind: "damage", targetId: "them", amount: 30, critical: false },
-          { kind: "damage", targetId: "them", amount: 20, critical: false },
+          { kind: "damage", targetId: "them", amount: 30, unreduced: 30, critical: false },
+          { kind: "damage", targetId: "them", amount: 20, unreduced: 20, critical: false },
         ],
       },
       SNAPSHOT,
@@ -266,13 +268,15 @@ describe("showCombatFeedback", () => {
   });
 
   it("skips events about nobody it can see", () => {
-    expect(floated([{ kind: "damage", targetId: "gone", amount: 5, critical: false }])).toEqual([]);
+    expect(
+      floated([{ kind: "damage", targetId: "gone", amount: 5, unreduced: 5, critical: false }]),
+    ).toEqual([]);
   });
 
   it("floats no degeneration ticks, which the health bar already shows (#54)", () => {
     // Burning and poison together: 11 hp/s, about 1 a tick at 20 Hz.
     const tick: CombatMessage["events"] = [
-      { kind: "damage", targetId: "them", amount: 0.55 * 2, critical: false },
+      { kind: "damage", targetId: "them", amount: 0.55 * 2, unreduced: 0.55 * 2, critical: false },
     ];
     expect(floated(tick, "degeneration")).toEqual([]);
     // Dying of it still says so.
@@ -280,9 +284,9 @@ describe("showCombatFeedback", () => {
       t("combat.floatDefeated"),
     ]);
     // A real hit still floats.
-    expect(floated([{ kind: "damage", targetId: "them", amount: 91, critical: false }])).toEqual([
-      "−91",
-    ]);
+    expect(
+      floated([{ kind: "damage", targetId: "them", amount: 91, unreduced: 91, critical: false }]),
+    ).toEqual(["−91"]);
   });
 
   it("anchors each number to whoever it happened to, so a burst can stack (#54)", () => {
@@ -306,7 +310,7 @@ describe("showCombatFeedback", () => {
         attributeId: "",
         doubleStrike: false,
         events: [
-          { kind: "damage", targetId: "them", amount: 5, critical: false },
+          { kind: "damage", targetId: "them", amount: 5, unreduced: 5, critical: false },
           { kind: "heal", targetId: "me", amount: 5 },
         ],
       },
@@ -339,7 +343,7 @@ describe("a number over a raised body", () => {
         weaponId: "",
         attributeId: "",
         doubleStrike: false,
-        events: [{ kind: "damage", targetId: "them", amount: 10, critical: false }],
+        events: [{ kind: "damage", targetId: "them", amount: 10, unreduced: 10, critical: false }],
       },
       { ...SNAPSHOT, players: raised },
       0,
@@ -421,7 +425,7 @@ describe("swingFlashFor (#161)", () => {
     doubleStrike: false,
     events: [
       kind === "damage"
-        ? { kind, targetId: "them", amount: 30, critical: false }
+        ? { kind, targetId: "them", amount: 30, unreduced: 30, critical: false }
         : { kind, targetId: "them" },
     ],
   });
@@ -602,7 +606,7 @@ describe("hit flash (#3365)", () => {
 
   it("a plain weapon hit flashes the victim and nudges it away", () => {
     const [flash] = flashesFor(
-      [{ kind: "damage", targetId: "them", amount: 10, critical: false }],
+      [{ kind: "damage", targetId: "them", amount: 10, unreduced: 10, critical: false }],
       "weapon",
     );
     expect(flash?.tint).toBe(0.55);
@@ -611,7 +615,7 @@ describe("hit flash (#3365)", () => {
 
   it("a critical hit flashes harder and nudges further", () => {
     const [flash] = flashesFor(
-      [{ kind: "damage", targetId: "them", amount: 10, critical: true }],
+      [{ kind: "damage", targetId: "them", amount: 10, unreduced: 10, critical: true }],
       "weapon",
     );
     expect(flash?.tint).toBe(0.8);
@@ -620,7 +624,7 @@ describe("hit flash (#3365)", () => {
 
   it("a bleeding tick tints and does not nudge", () => {
     const [flash] = flashesFor(
-      [{ kind: "damage", targetId: "them", amount: 1, critical: false }],
+      [{ kind: "damage", targetId: "them", amount: 1, unreduced: 1, critical: false }],
       "degeneration",
     );
     expect(flash?.tint).toBe(0.35);

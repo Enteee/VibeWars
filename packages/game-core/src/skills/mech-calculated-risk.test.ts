@@ -151,6 +151,7 @@ describe("a backfired blow (#2471)", () => {
       kind: "damage",
       targetId: "x",
       amount: lost(kept.victim),
+      unreduced: lost(kept.victim),
       critical: false,
     });
   });

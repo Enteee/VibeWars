@@ -233,7 +233,7 @@ describe("a share of a blow reflected (#1754)", () => {
       {
         sourceId: "m",
         skillId: HOLY_WRATH,
-        events: [{ kind: "damage", targetId: "w", amount: 20, critical: false }],
+        events: [{ kind: "damage", targetId: "w", amount: 20, unreduced: 20, critical: false }],
       },
     ]);
     expect(member(combatants, "w").health).toBe(380);
@@ -280,7 +280,7 @@ describe("a share of a blow reflected (#1754)", () => {
     a.statuses.recordHitByAttack("v", 30, undefined, WEAPONS.sword);
     const events = drain(a, combatants).flatMap((fired) => fired.events);
     expect(events).toEqual([
-      { kind: "damage", targetId: "w", amount: 20, critical: false },
+      { kind: "damage", targetId: "w", amount: 20, unreduced: 20, critical: false },
       { kind: "status-expired", targetId: "a", statusId: "holy-wrath" },
     ]);
     expect(member(combatants, "v").health).toBe(400);
