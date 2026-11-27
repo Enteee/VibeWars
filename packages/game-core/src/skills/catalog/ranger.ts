@@ -403,9 +403,17 @@ export const RANGER_SKILLS: readonly Skill[] = [
     companion: undefined,
     petAttack: undefined,
     projectile: undefined,
-    // "Inflicts Crippled condition (4...14 seconds)" (corpus, PvP 3450):
-    // 12 s, its rank-12 value, when the arrow lands.
-    effects: [{ kind: "apply-status", statusId: "crippled", durationSeconds: { flat: 12 } }],
+    // "Inflicts Crippled condition (4...14 seconds)" (corpus, PvP 3450),
+    // when the arrow lands.
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "crippled",
+        durationSeconds: {
+          scaling: { attributeId: "ranger.marksmanship", atZero: 4, atTwelve: 12 },
+        },
+      },
+    ],
   },
   {
     id: "ranger.debilitating-shot",
@@ -492,9 +500,16 @@ export const RANGER_SKILLS: readonly Skill[] = [
     companion: undefined,
     petAttack: undefined,
     projectile: undefined,
-    // "Inflicts Burning condition (2...8 seconds)": 6.8 s at rank 12,
-    // rounded to 7.
-    effects: [{ kind: "apply-status", statusId: "burning", durationSeconds: { flat: 7 } }],
+    // "Inflicts Burning condition (2...8 seconds)".
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "burning",
+        durationSeconds: {
+          scaling: { attributeId: "ranger.marksmanship", atZero: 2, atTwelve: 6.8 },
+        },
+      },
+    ],
   },
   {
     id: "ranger.throw-dirt",
