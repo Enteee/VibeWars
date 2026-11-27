@@ -1128,7 +1128,7 @@ export const MONK_SKILLS: readonly Skill[] = [
   {
     id: "monk.aegis",
     name: "Aegis",
-    gwId: 2857,
+    gwId: 257,
     type: "enchantment",
     elite: false,
     flash: false,
@@ -1148,7 +1148,7 @@ export const MONK_SKILLS: readonly Skill[] = [
     companion: undefined,
     petAttack: undefined,
     projectile: undefined,
-    // The PvP page (#4169), 257 is the PvE version: "For 1...3 seconds,
+    // The PvP page (#4169), the split of 257: "For 1...3 seconds,
     // target other party member cannot be the target of hostile spells, and
     // attacks against this party member fail": 1...3 is ranks 0...15, so
     // 3 seconds at rank 12, 4 at 19.

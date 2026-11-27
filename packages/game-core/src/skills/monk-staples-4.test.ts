@@ -78,7 +78,7 @@ describe("the ten are the corpus's (#1511)", () => {
   it.each([
     [
       "monk.aegis",
-      2857,
+      257,
       "enchantment",
       false,
       "protection-prayers",
