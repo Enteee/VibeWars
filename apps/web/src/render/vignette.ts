@@ -51,8 +51,9 @@ const UNIT_VIEW: Box = { left: -0.5, top: -0.5, right: 0.5, bottom: 0.5 };
  * view. It follows the camera, so it is placed in world units wherever the
  * camera points. Each deck layer gets them again over its tops (#4070),
  * cut into pieces that do not overlap (`disjointPieces`) and along the
- * cells (`vignetteTriangles`), so ground and decks fall off as one. No stencil: on a software renderer each pass
- * over a deck's box cost a frame more than its shading (#4130).
+ * cells (`vignetteTriangles`), so ground and decks fall off as one. No
+ * stencil: on a software renderer each pass over a deck's box cost a
+ * frame more than its shading (#4130).
  */
 export class Vignette {
   private readonly scene: Phaser.Scene;
