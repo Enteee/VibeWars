@@ -5,7 +5,7 @@ import { NO_RANKS } from "../../../skills/status.js";
 import { distance, vec2 } from "../../../vec2.js";
 import type { MatchSimulation } from "../../simulation.js";
 import kite from "./kite.js";
-import { FINISH_FRACTION, KITE_STEP } from "./shared.js";
+import { ELBOW_DISTANCE, FINISH_FRACTION, KITE_STEP } from "./shared.js";
 import { ELEMENTALIST, RANGER, WARRIOR, fighter, match, ruleFor, slotOf } from "./test-support.js";
 
 function get(sim: MatchSimulation, id: string) {
@@ -15,13 +15,13 @@ function get(sim: MatchSimulation, id: string) {
 }
 
 /**
- * The bot `self` at (600, 400) on team 0, and a foe Warrior 30 east of
+ * The bot `self` at (600, 400) on team 0, and a foe Warrior `gap` east of
  * it swinging at it, Crippled unless `crippled` is false.
  */
-function dived(self: PlayerBuild, crippled = true): MatchSimulation {
+function dived(self: PlayerBuild, crippled = true, gap = 30): MatchSimulation {
   const sim = match([
     fighter("self", 0, self, vec2(600, 400), { behaviour: undefined }),
-    fighter("diver", 1, WARRIOR, vec2(630, 400), { behaviour: undefined }),
+    fighter("diver", 1, WARRIOR, vec2(600 + gap, 400), { behaviour: undefined }),
   ]);
   get(sim, "diver").targetId = "self";
   if (crippled) {
@@ -57,6 +57,19 @@ describe("kite (#4166)", () => {
     expect(kite.decide(ruleFor(sim, "self"))).toBeDefined();
     self.combatant.attack = { targetId: "diver", swingElapsed: 1, unreachableSeconds: 0 };
     expect(kite.decide(ruleFor(sim, "self"))).toBeUndefined();
+  });
+
+  it("walks on to ELBOW_DISTANCE + KITE_STEP while not attacking, never cutting a swing out there", () => {
+    const sim = dived(RANGER, true, ELBOW_DISTANCE + KITE_STEP - 10);
+    expect(kite.decide(ruleFor(sim, "self"))?.moveTo?.x).toBeCloseTo(600 - KITE_STEP);
+    get(sim, "self").combatant.attack = {
+      targetId: "diver",
+      swingElapsed: 0,
+      unreachableSeconds: 0,
+    };
+    expect(kite.decide(ruleFor(sim, "self"))).toBeUndefined();
+    const clear = dived(RANGER, true, ELBOW_DISTANCE + KITE_STEP + 10);
+    expect(kite.decide(ruleFor(clear, "self"))).toBeUndefined();
   });
 
   it("finishes an elbow foe below FINISH_FRACTION", () => {

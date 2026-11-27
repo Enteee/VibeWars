@@ -45,7 +45,7 @@ Un bot cu o vrajă de zonă o aruncă acolo unde trei sau mai mulți inamici sta
 
 Împotriva unei echipe cu abilități de zonă, boții de la distanță și vindecătorii stau departe unii de alții, ca o explozie să nu prindă doi dintre ei. Nu renunță niciodată la adăpost pentru asta.
 
-Un bot la distanță sau un vindecător de care un inamic se apropie prea mult se retrage mai întâi spre cel mai apropiat coechipier din prima linie, dacă e destul de aproape, și luptă acolo.
+Un bot la distanță sau un vindecător de care un inamic se apropie prea mult se retrage mai întâi spre cel mai apropiat coechipier din prima linie, dacă e destul de aproape, și luptă acolo. Un atacator corp la corp încetinit, de exemplu schilodit, nu poate ține pasul, așa că în fața lui botul se retrage în schimb între trageri.
 
 Arcașii și lăncierii ocupă înălțimile când e sigur.
 Un bot asupra căruia se concentrează doi adversari, sau care are sub jumătate din viață și o pierde repede, se ascunde din vederea lor până la trei secunde: după un zid, sub o platformă sau pe înălțimi.

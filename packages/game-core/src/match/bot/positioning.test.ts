@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { PlayerBuild } from "../../build.js";
+import { SKILL_BAR_SLOTS, type PlayerBuild } from "../../build.js";
 import { distance, dot, length, sub, vec2, type Vec2 } from "../../vec2.js";
 import { NO_RANKS } from "../../skills/status.js";
 import type { MatchSimulation } from "../simulation.js";
@@ -217,56 +217,48 @@ describe("a dived caster falls back to its frontliner (#4151)", () => {
 
 describe("a ranger kites a slowed diver (#4166)", () => {
   /**
-   * 1v1: a ranger bot and a warrior, not a bot, chasing it, Crippled if
-   * `crippled`. Over 10 s, how often the warrior was hit and the share
-   * of ticks the ranger stood beyond `ELBOW_DISTANCE` of it.
+   * 1v1: a ranger bot with only its bow, room to back off west, and a
+   * warrior, not a bot, chasing it, Crippled if `crippled`. Over 10 s,
+   * how many shots hit the warrior and the share of ticks the ranger
+   * stood beyond `ELBOW_DISTANCE` of it. Its skills are left off, as a
+   * cast would stand in for the shots being counted.
    */
   function chase(crippled: boolean) {
     const sim = match([
-      fighter("r", 0, RANGER, vec2(600, 400)),
-      fighter("d", 1, WARRIOR, vec2(630, 400), { behaviour: undefined, maxHealth: 1e6 }),
+      fighter("r", 0, RANGER, vec2(1200, 400), {
+        skillBar: new Array<null>(SKILL_BAR_SLOTS).fill(null),
+      }),
+      fighter("d", 1, WARRIOR, vec2(1230, 400), { behaviour: undefined, maxHealth: 1e6 }),
     ]);
-    const get = (id: string) => {
-      const body = sim.get(id);
-      if (body === undefined) throw new Error(`no ${id}`);
-      return body;
-    };
-    const ranger = get("r");
-    const diver = get("d");
+    const ranger = sim.get("r");
+    const diver = sim.get("d");
+    if (ranger === undefined || diver === undefined) throw new Error("no fighters");
     if (crippled) {
       diver.combatant.statuses.apply("crippled", 1e6, "r", NO_RANKS);
     }
     sim.requestAttack("d", "r");
-    let hits = 0;
+    let shots = 0;
     let clear = 0;
     let ticks = 0;
     for (let at = 0; at < 10; at += DT) {
       const before = diver.combatant.health;
       sim.step(DT);
-      hits += diver.combatant.health < before ? 1 : 0;
+      shots += diver.combatant.health < before ? 1 : 0;
       clear += distance(ranger.position, diver.position) > ELBOW_DISTANCE ? 1 : 0;
       ticks += 1;
-      if (crippled && ticks % 6 === 0)
-        console.log(
-          "TR",
-          at.toFixed(2),
-          distance(ranger.position, diver.position).toFixed(0),
-          ranger.combatant.attack?.swingElapsed.toFixed(2),
-          ranger.targetId,
-          ranger.combatant.cast.activeCast?.skillId,
-        );
     }
-    return { hits, clear: clear / ticks };
+    return { shots, clear: clear / ticks };
   }
 
   it("keeps out of a Crippled warrior's reach most of the time, still shooting", () => {
-    const { hits, clear } = chase(true);
-    console.log("DBG", hits, clear, chase(false));
-    expect(hits).toBeGreaterThanOrEqual(3);
+    const { shots, clear } = chase(true);
+    expect(shots).toBeGreaterThanOrEqual(2);
     expect(clear).toBeGreaterThan(0.5);
   });
 
   it("stands and fights a warrior at its own speed", () => {
-    expect(chase(false).clear).toBeLessThanOrEqual(0.5);
+    const { shots, clear } = chase(false);
+    expect(shots).toBeGreaterThanOrEqual(3);
+    expect(clear).toBeLessThanOrEqual(0.5);
   });
 });

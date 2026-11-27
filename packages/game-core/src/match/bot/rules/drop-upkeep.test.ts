@@ -48,6 +48,7 @@ describe("play-build ends its own upkeep when Energy-starved (#2492)", () => {
       sees: () => true,
       seesBetween: () => true,
       walkable: () => true,
+      speedOf: () => 1,
       foeCentroid: undefined,
       objectives: NO_OBJECTIVES,
       projectiles: [],

@@ -45,7 +45,7 @@ En bot med en områdebesværgelse kaster den, hvor tre eller flere fjender står
 
 Mod et hold med områdeskills holder afstandsbots og healere sig fra hinanden, så én eksplosion ikke rammer to af dem. De opgiver aldrig dækning for at gøre det.
 
-En afstandsbot eller healer, som en fjende kommer for tæt på, trækker sig først tilbage til sin nærmeste frontlinjebot, hvis en er tæt nok på, og kæmper der.
+En afstandsbot eller healer, som en fjende kommer for tæt på, trækker sig først tilbage til sin nærmeste frontlinjebot, hvis en er tæt nok på, og kæmper der. En nærkæmper, der er sænket, for eksempel lemlæstet, kan ikke følge med, så over for den trækker botten sig i stedet tilbage mellem skuddene.
 
 Bueskytter og spydkastere indtager det høje terræn, når det er sikkert.
 En bot, som to fjender går efter, eller som har under halvt helbred og hurtigt mister det, dukker sig ud af deres syn i op til tre sekunder: bag en mur, under et dæk eller op på højt terræn.

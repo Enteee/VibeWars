@@ -46,7 +46,7 @@ Un bot con un hechizo de área lo lanza donde tres o más enemigos están juntos
 
 Contra un equipo con habilidades de área, los bots a distancia y los sanadores se mantienen separados, para que una explosión no alcance a dos de ellos. Nunca renuncian a la cobertura para hacerlo.
 
-Un bot a distancia o un sanador al que un enemigo se le acerca demasiado se repliega primero hacia su bot de primera línea más cercano, si hay uno lo bastante cerca, y lucha allí.
+Un bot a distancia o un sanador al que un enemigo se le acerca demasiado se repliega primero hacia su bot de primera línea más cercano, si hay uno lo bastante cerca, y lucha allí. Un atacante cuerpo a cuerpo ralentizado, por ejemplo lisiado, no puede seguirle el ritmo, así que ante él retrocede entre disparos en su lugar.
 
 Los arqueros y lanceros toman el terreno elevado cuando es seguro.
 Un bot al que atacan dos enemigos, o que está por debajo de la mitad de su salud y la pierde rápido, se oculta de su vista hasta tres segundos: tras un muro, bajo una plataforma o en terreno elevado.

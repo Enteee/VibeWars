@@ -42,7 +42,7 @@ Một bot có phép diện rộng sẽ thả nó vào chỗ có từ ba kẻ đ�
 
 Khi gặp đội có kỹ năng diện rộng, bot đánh xa và người hồi máu đứng tách nhau ra, để một vụ nổ không trúng hai người. Chúng không bao giờ bỏ chỗ nấp để làm vậy.
 
-Một bot tầm xa hoặc người hồi máu bị kẻ địch áp sát quá gần sẽ lùi về phía đồng đội tiền tuyến gần nhất trước, nếu có người đủ gần, rồi chiến đấu ở đó.
+Một bot tầm xa hoặc người hồi máu bị kẻ địch áp sát quá gần sẽ lùi về phía đồng đội tiền tuyến gần nhất trước, nếu có người đủ gần, rồi chiến đấu ở đó. Còn kẻ tấn công cận chiến bị làm chậm, ví dụ bị què, không theo kịp, nên trước kẻ đó bot sẽ lùi lại giữa các phát bắn.
 
 Cung thủ và người dùng giáo chiếm chỗ cao khi an toàn.
 Bot bị hai đối thủ dồn đánh, hoặc còn dưới nửa máu và đang mất máu nhanh, sẽ nấp khỏi tầm nhìn của chúng tối đa ba giây: sau tường, dưới sàn hoặc lên chỗ cao.

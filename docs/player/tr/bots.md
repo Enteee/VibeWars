@@ -46,7 +46,7 @@ Alan büyüsü olan bir bot onu üç ya da daha fazla düşmanın bir arada durd
 
 Alan becerileri olan bir takıma karşı menzilli botlar ve şifacılar birbirinden uzak durur, böylece tek bir patlama ikisini birden vurmaz. Bunun için siperden asla vazgeçmezler.
 
-Bir düşmanın fazla yaklaştığı uzak menzilli bir bot ya da şifacı, yeterince yakında biri varsa önce en yakın ön saf takım arkadaşına geri çekilir ve orada savaşır.
+Bir düşmanın fazla yaklaştığı uzak menzilli bir bot ya da şifacı, yeterince yakında biri varsa önce en yakın ön saf takım arkadaşına geri çekilir ve orada savaşır. Yavaşlatılmış, örneğin sakatlanmış bir yakın dövüşçü ise yetişemez; bu yüzden ona karşı bot bunun yerine atışlar arasında geri çekilir.
 
 Okçular ve mızrakçılar güvenli olduğunda yüksek yeri tutar.
 İki rakibin odaklandığı ya da canı yarının altında olup hızla azalan bir bot, en fazla üç saniye onların görüşünden saklanır: bir duvarın arkasına, bir platformun altına ya da yüksek yere.

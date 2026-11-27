@@ -19,7 +19,7 @@ Un bot con un incantesimo ad area lo lancia dove tre o più nemici stanno vicini
 
 Contro una squadra con abilità ad area, i bot a distanza e i guaritori restano separati, così un'esplosione non ne colpisce due. Non rinunciano mai a un riparo per farlo.
 
-Un bot a distanza o un guaritore a cui un nemico si avvicina troppo ripiega prima verso il bot di prima linea più vicino, se ce n'è uno abbastanza vicino, e combatte lì.
+Un bot a distanza o un guaritore a cui un nemico si avvicina troppo ripiega prima verso il bot di prima linea più vicino, se ce n'è uno abbastanza vicino, e combatte lì. Un attaccante in mischia rallentato, per esempio storpiato, non riesce a stargli dietro, quindi contro di lui indietreggia invece tra un colpo e l'altro.
 
 Arcieri e lancieri prendono l'altura quando è sicuro.
 Un bot preso di mira da due avversari, o sotto metà salute e in rapido calo, si toglie dalla loro vista fino a tre secondi: dietro un muro, sotto una piattaforma o sull'altura.

@@ -44,7 +44,7 @@ A bot with an area spell drops it where three or more foes stand together, unles
 
 Against a team with area skills, ranged bots and healers keep apart, so one blast can't catch two of them. They never give up cover to do it.
 
-A ranged bot or healer that a foe comes too close to first falls back to its nearest frontliner, if one is near enough, and fights there.
+A ranged bot or healer that a foe comes too close to first falls back to its nearest frontliner, if one is near enough, and fights there. A melee attacker that is slowed, Crippled for example, can't keep up, so against one it backs away between shots instead.
 
 Archers and spearmen take the high ground when it is safe.
 A bot that two foes focus on, or that is below half health and losing it fast, ducks out of their sight for up to three seconds: behind a wall, under a deck or onto high ground.

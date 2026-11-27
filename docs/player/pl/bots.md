@@ -42,7 +42,7 @@ Bot z czarem obszarowym rzuca go tam, gdzie trzech lub więcej wrogów stoi raze
 
 Przeciw drużynie z umiejętnościami obszarowymi boty dystansowe i uzdrowiciele trzymają się od siebie z dala, by jeden wybuch nie trafił dwóch z nich. Nigdy nie rezygnują przy tym z osłony.
 
-Bot dystansowy lub uzdrowiciel, do którego wróg podejdzie za blisko, najpierw wycofuje się do najbliższego sojusznika z pierwszej linii, jeśli ten jest dość blisko, i tam walczy.
+Bot dystansowy lub uzdrowiciel, do którego wróg podejdzie za blisko, najpierw wycofuje się do najbliższego sojusznika z pierwszej linii, jeśli ten jest dość blisko, i tam walczy. Spowolniony napastnik walczący wręcz, na przykład okaleczony, nie nadąża, więc przed nim bot zamiast tego cofa się między strzałami.
 
 Łucznicy i włócznicy zajmują wzniesienie, gdy jest to bezpieczne.
 Bot, na którym skupiło się dwóch wrogów albo który ma mniej niż połowę zdrowia i szybko je traci, chowa się przed ich wzrokiem na maksymalnie trzy sekundy: za murem, pod pomostem albo na wzniesieniu.

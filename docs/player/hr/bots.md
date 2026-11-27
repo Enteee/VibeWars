@@ -44,7 +44,7 @@ Bot s čarolijom na području baca je tamo gdje tri ili više neprijatelja stoje
 
 Protiv tima s vještinama na području, botovi na daljinu i iscjelitelji drže se razmaknuti, da jedna eksplozija ne pogodi dvojicu. Zaklon zbog toga nikad ne napuštaju.
 
-Bot na daljinu ili iscjelitelj kojemu se neprijatelj previše približi najprije se povlači prema najbližem suborcu iz prve linije, ako je dovoljno blizu, i bori se ondje.
+Bot na daljinu ili iscjelitelj kojemu se neprijatelj previše približi najprije se povlači prema najbližem suborcu iz prve linije, ako je dovoljno blizu, i bori se ondje. Usporeni napadač iz blizine, primjerice osakaćen, ne može ga sustići, pa se pred njim umjesto toga povlači između hitaca.
 
 Strijelci i kopljanici zauzmu uzvisinu kad je to sigurno.
 Bot na kojeg se usredotoče dva protivnika, ili koji ima manje od pola zdravlja i brzo ga gubi, skloni im se s vida do tri sekunde: iza zida, ispod platforme ili na uzvisinu.

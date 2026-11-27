@@ -46,7 +46,7 @@ En bott med en områdesbesvärjelse kastar den där tre eller fler fiender står
 
 Mot ett lag med områdesfärdigheter håller avståndsbottar och helare isär, så att en explosion inte träffar två av dem. De ger aldrig upp skydd för det.
 
-En distansbott eller helare som en fiende kommer för nära drar sig först tillbaka till sin närmaste frontlinjebott, om någon är nära nog, och slåss där.
+En distansbott eller helare som en fiende kommer för nära drar sig först tillbaka till sin närmaste frontlinjebott, om någon är nära nog, och slåss där. En nedsaktad närstridare, till exempel lemlästad, hinner inte med, så mot den backar botten i stället undan mellan skotten.
 
 Bågskyttar och spjutkastare tar höjden när det är säkert.
 En bott som två fiender fokuserar på, eller som har under halva hälsan och tappar den snabbt, gömmer sig från deras syn i upp till tre sekunder: bakom en mur, under ett däck eller på höjden.

@@ -376,11 +376,16 @@ export const REGROUP_MAX_WAIT = 4;
  * is no threat to it, and a spirit never walks.
  */
 export function atElbow(self: Participant, foe: Participant): boolean {
+  return meleeOn(self, foe, ELBOW_DISTANCE);
+}
+
+/** A foe with a melee weapon within `reach` of `self`, on it, as `atElbow` asks (#4166). */
+export function meleeOn(self: Participant, foe: Participant, reach: number): boolean {
   return (
     foe.creature?.kind !== "spirit" &&
     (foe.targetId === self.id || foe.combatant.attack?.targetId === self.id) &&
     foe.combatant.equipment.mainHand.weapon.range <= RANGE_MELEE &&
-    distance(foe.position, self.position) <= ELBOW_DISTANCE
+    distance(foe.position, self.position) <= reach
   );
 }
 
