@@ -450,6 +450,7 @@ describe("Chilling Winds (#2311)", () => {
       const foe = chilledFoe(rank);
       land(foe, "elementalist.ice-spikes");
       expect(foe.statuses.get("ice-spikes")?.remainingSeconds).toBe(seconds);
+      expect(seconds).toBe(Math.round(5 * times));
       foe.statuses.remove("ice-spikes");
       land(foe, "elementalist.ice-spikes");
       expect(foe.statuses.get("ice-spikes")?.remainingSeconds).toBe(5);
