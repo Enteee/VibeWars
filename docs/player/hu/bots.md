@@ -50,7 +50,7 @@ Az a bot, amelynek nyomorító vagy lassító képessége van, a csapat célpont
 
 Területi képességekkel bíró csapat ellen a távolsági botok és a gyógyítók távol tartják magukat egymástól, hogy egy robbanás ne találjon el kettőt közülük. A fedezéket ezért soha nem adják fel.
 
-Ha egy ellenfél túl közel kerül egy távolsági bothoz vagy gyógyítóhoz, az előbb visszahúzódik a legközelebbi frontvonalbeli csapattársához, ha van elég közel, és ott harcol.
+Ha egy ellenfél túl közel kerül egy távolsági bothoz vagy gyógyítóhoz, az előbb visszahúzódik a legközelebbi frontvonalbeli csapattársához, ha van elég közel, és ott harcol. Egy lelassított közelharcos, például megnyomorított, nem tud lépést tartani, ezért vele szemben a bot inkább hátrál a lövések között.
 
 Az íjászok és a dárdások elfoglalják a magaslatot, ha az biztonságos.
 Az a bot, amelyre két ellenfél összpontosít, vagy amelynek az élete fél alatt van és gyorsan fogy, legfeljebb három másodpercre eltűnik a szemük elől: fal mögé, emelvény alá vagy magaslatra.

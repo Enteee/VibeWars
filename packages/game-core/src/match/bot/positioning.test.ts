@@ -1,7 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 
-import type { PlayerBuild } from "../../build.js";
+import { SKILL_BAR_SLOTS, type PlayerBuild } from "../../build.js";
 import { distance, dot, length, sub, vec2, type Vec2 } from "../../vec2.js";
+import { NO_RANKS } from "../../skills/status.js";
 import type { MatchSimulation } from "../simulation.js";
 import fallBack from "./rules/fall-back.js";
 import { ELBOW_DISTANCE, FALL_BACK_NEAR } from "./rules/shared.js";
@@ -211,5 +212,53 @@ describe("a dived caster falls back to its frontliner (#4151)", () => {
       expect(on.peeled).toBeLessThan(off.peeled ?? Number.POSITIVE_INFINITY);
       expect(on.health).toBeGreaterThan(off.health);
     }
+  });
+});
+
+describe("a ranger kites a slowed diver (#4166)", () => {
+  /**
+   * 1v1: a ranger bot with only its bow, room to back off west, and a
+   * warrior, not a bot, chasing it, Crippled if `crippled`. Over 10 s,
+   * how many shots hit the warrior and the share of ticks the ranger
+   * stood beyond `ELBOW_DISTANCE` of it. Its skills are left off, as a
+   * cast would stand in for the shots being counted.
+   */
+  function chase(crippled: boolean) {
+    const sim = match([
+      fighter("r", 0, RANGER, vec2(1200, 400), {
+        skillBar: new Array<null>(SKILL_BAR_SLOTS).fill(null),
+      }),
+      fighter("d", 1, WARRIOR, vec2(1230, 400), { behaviour: undefined, maxHealth: 1e6 }),
+    ]);
+    const ranger = sim.get("r");
+    const diver = sim.get("d");
+    if (ranger === undefined || diver === undefined) throw new Error("no fighters");
+    if (crippled) {
+      diver.combatant.statuses.apply("crippled", 1e6, "r", NO_RANKS);
+    }
+    sim.requestAttack("d", "r");
+    let shots = 0;
+    let clear = 0;
+    let ticks = 0;
+    for (let at = 0; at < 10; at += DT) {
+      const before = diver.combatant.health;
+      sim.step(DT);
+      shots += diver.combatant.health < before ? 1 : 0;
+      clear += distance(ranger.position, diver.position) > ELBOW_DISTANCE ? 1 : 0;
+      ticks += 1;
+    }
+    return { shots, clear: clear / ticks };
+  }
+
+  it("keeps out of a Crippled warrior's reach most of the time, still shooting", () => {
+    const { shots, clear } = chase(true);
+    expect(shots).toBeGreaterThanOrEqual(2);
+    expect(clear).toBeGreaterThan(0.5);
+  });
+
+  it("stands and fights a warrior at its own speed", () => {
+    const { shots, clear } = chase(false);
+    expect(shots).toBeGreaterThanOrEqual(3);
+    expect(clear).toBeLessThanOrEqual(0.5);
   });
 });

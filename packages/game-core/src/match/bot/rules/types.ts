@@ -45,6 +45,8 @@ export interface RuleContext {
   readonly foeReach: (foe: Participant) => number;
   /** Its team's plan this phase (#3831). */
   readonly plan: TeamPlan;
+  /** Any participant's current movement-speed factor, 1 at base (#4166). */
+  readonly speedOf: (participant: Participant) => number;
 }
 
 /** One step of `play-build`'s think: the first rule with an answer decides. */

@@ -20,7 +20,7 @@ Bot s dovedností, která mrzačí nebo zpomaluje, ji použije na nepřítele po
 
 Proti týmu s plošnými skilly se boti na dálku a léčitelé drží od sebe, aby jeden výbuch nezasáhl dva z nich. Krytí kvůli tomu nikdy neopustí.
 
-Bot na dálku nebo léčitel, ke kterému se nepřítel dostane příliš blízko, nejprve ustoupí k nejbližšímu spojenci v první linii, je-li dost blízko, a bojuje tam.
+Bot na dálku nebo léčitel, ke kterému se nepřítel dostane příliš blízko, nejprve ustoupí k nejbližšímu spojenci v první linii, je-li dost blízko, a bojuje tam. Zpomalený útočník na blízko, třeba zmrzačený, nestačí, takže před ním bot místo toho mezi výstřely couvá.
 
 Lučištníci a kopiníci zaujmou vyvýšené místo, když je to bezpečné.
 Bot, na kterého se zaměří dva nepřátelé nebo který má méně než polovinu zdraví a rychle ho ztrácí, se jim až na tři sekundy schová z dohledu: za zeď, pod plošinu nebo na vyvýšené místo.

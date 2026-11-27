@@ -2147,6 +2147,12 @@ export class MatchSimulation {
     return this.#participants.get(id);
   }
 
+  /** `id`'s current movement-speed factor, 1 at base (#4166); an unknown id: 1. */
+  public moveSpeedFactorOf(id: string): number {
+    const record = this.#participants.get(id);
+    return record === undefined ? 1 : this.#speedOf(record);
+  }
+
   /**
    * Where `id` is held before the start (#3909): its spawn, one of the
    * points its team's bubble (#3930) is built round, on the layer it
@@ -5439,6 +5445,7 @@ export class MatchSimulation {
       walkable: (point) =>
         isStandable(this.#graphOn(record.layer), point) &&
         walkIsClear(this.#graphOn(record.layer), record.position, point),
+      speedOf: (participantId) => this.moveSpeedFactorOf(participantId),
       foeCentroid: centroids !== undefined && centroids.foes.count > 0 ? centroids.foes : undefined,
       objectives: this.#botObjectives,
       projectiles: this.#projectiles,

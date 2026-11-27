@@ -381,6 +381,8 @@ export interface BehaviourContext {
   seesBetween(from: Vec2, to: Vec2, fromLayer: number, toLayer: number): boolean;
   /** Whether `self` could walk straight to `point` and stand there (#2545). */
   walkable(point: Vec2): boolean;
+  /** Any participant's current movement-speed factor by id, 1 at base (#4166). */
+  speedOf(participantId: string): number;
   /** Where the living players of every other team stand on average (#2545). */
   readonly foeCentroid: Vec2 | undefined;
   /** What a bot plays for besides the foes (#2542). */
