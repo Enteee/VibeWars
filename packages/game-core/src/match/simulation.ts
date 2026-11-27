@@ -5290,10 +5290,11 @@ export class MatchSimulation {
     // Degeneration its statuses' own regeneration does not cancel is
     // health lost, so natural regeneration stops before it would.
     // A minion's rot (#467) counts as one, and it never regenerates.
+    // So does the held set's: a Vampiric weapon's -1 (#4119).
     const modifiers = aggregateModifiers(record.combatant.statuses.active);
     const rot = creaturePips(record);
     record.outOfCombatSeconds += dt;
-    if (clampPips(modifiers.healthPips + rot) < 0) {
+    if (clampPips(modifiers.healthPips + rot + record.combatant.equipment.healthPips) < 0) {
       record.outOfCombatSeconds = 0;
     }
     const natural = this.#naturalPips(record);
