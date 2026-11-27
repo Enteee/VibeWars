@@ -110,7 +110,7 @@ describe("Blood is Power (#1540)", () => {
 });
 
 describe("Plague Signet (#1540)", () => {
-  it("moves every condition with 180% of the time it had left", () => {
+  it("moves every condition with 180% of the time it had left, rounded (#4165)", () => {
     const necro = makeCombatant({ id: "n", attributeRanks: RANKS });
     const foe = makeCombatant({ id: "f", team: 1 });
     necro.statuses.apply("burning", 4, "x", NO_RANKS);
@@ -118,9 +118,9 @@ describe("Plague Signet (#1540)", () => {
     necro.statuses.apply("crippled", 6, "x", NO_RANKS);
     use(necro, "necromancer.plague-signet", foe);
     expect(necro.statuses.countByCategory("condition")).toBe(0);
-    expect(foe.statuses.get("burning")?.remainingSeconds).toBeCloseTo(7.2, 5);
+    expect(foe.statuses.get("burning")?.remainingSeconds).toBe(7);
     expect(foe.statuses.get("bleeding")?.remainingSeconds).toBeCloseTo(18, 5);
-    expect(foe.statuses.get("crippled")?.remainingSeconds).toBeCloseTo(10.8, 5);
+    expect(foe.statuses.get("crippled")?.remainingSeconds).toBe(11);
   });
 
   it("with no condition on the Necromancer, moves nothing", () => {

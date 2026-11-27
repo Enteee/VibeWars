@@ -2,9 +2,10 @@ import { describe, expect, it } from "vitest";
 
 import { bareArmorSet } from "../equipment/armor.js";
 import { NO_UPGRADES } from "../equipment/mods.js";
-import { resolveLoadout } from "../equipment/resolve.js";
+import { resolveLoadout, unarmedResolvedEquipment } from "../equipment/resolve.js";
 import type { UniversalRuneId } from "../equipment/runes.js";
 import { ARMOR_SLOTS } from "../equipment/types.js";
+import { WEAPONS } from "../equipment/weapons.js";
 import { createRng } from "../rng.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { getSkill } from "./catalog.js";
@@ -190,5 +191,33 @@ describe("condition-duration runes (#464)", () => {
       remainingSeconds: 17.5,
       sourceId: "earlier",
     });
+  });
+});
+
+describe("a duration both sides change (#4165)", () => {
+  it("rounds once, after the caster's lengthening and the taker's shortening", () => {
+    const unarmed = unarmedResolvedEquipment(RULES.armorReferenceLevel);
+    const archer = makeCombatant({
+      id: "caster",
+      equipment: {
+        ...unarmed,
+        mainHand: {
+          weapon: WEAPONS.longbow,
+          attributeId: undefined,
+          damageType: WEAPONS.longbow.damageType,
+          requirementMet: true,
+          creatureDamageScale: undefined,
+        },
+      },
+    });
+    archer.statuses.apply("archers-signet", 20, "caster", NO_RANKS);
+    const target = wearing("target", 1, "purity");
+    applyEffect(
+      { kind: "apply-status", statusId: "poison", durationSeconds: { flat: 5.3 } },
+      { surroundings: new Map(), caster: archer, target, rng: createRng(1), rules: RULES },
+    );
+    // 5.3 s × 2.5 under Archer's Signet is 13.25; Purity takes 20%, 2.65 rounded
+    // to 3, leaving 10.25, which lands as 10.
+    expect(target.statuses.get("poison")?.remainingSeconds).toBe(10);
   });
 });

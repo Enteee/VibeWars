@@ -142,7 +142,8 @@ describe("the rule (#1761)", () => {
     landed(GUARDIAN, plain);
     landed(GUARDIAN, aura);
     expect(plain.statuses.get("guardian")?.remainingSeconds).toBe(6);
-    expect(aura.statuses.get("guardian")?.remainingSeconds).toBeCloseTo(7.8);
+    // 6 s × 1.3, rounded (#4165).
+    expect(aura.statuses.get("guardian")?.remainingSeconds).toBe(8);
 
     const full = healed(landed(ORISON, bearer()));
     const covenant = healed(landed(ORISON, bearer("healers-covenant")));
@@ -441,5 +442,18 @@ describe("scales with its caster's rank (#2158)", () => {
       .effects.map((line) => line.text)
       .join(" | ");
     expect(lines).toContain(text);
+  });
+});
+
+describe("Orison of Healing (#4168)", () => {
+  it("heals 70 at Healing Prayers 12: 'Heal target ally for 30...70...80 Health'", () => {
+    const caster = makeCombatant({
+      id: "m",
+      team: 0,
+      health: 200,
+      maxHealth: 500,
+      attributeRanks: new Map([["monk.healing-prayers", 12]]),
+    });
+    expect(healed(landed(ORISON, caster))).toEqual([70]);
   });
 });

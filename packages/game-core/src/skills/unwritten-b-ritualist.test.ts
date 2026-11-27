@@ -270,16 +270,17 @@ describe("Vocal Was Sogolon (#2500)", () => {
     });
   });
 
+  // 8 s × 1.44 and × 1.2, rounded to whole seconds (#4165).
   it.each([
-    [12, 8 * 1.44],
-    [0, 8 * 1.2],
+    [12, 12],
+    [0, 10],
   ])("at rank %i, For Great Justice! lasts %d s", (rank, seconds) => {
     const sim = match(spec("r", 0, vec2(0, 0), [VOCAL, JUSTICE], rank), spec("x", 1, vec2(900, 0)));
     use(sim, "r", 0, "r", VOCAL);
     sim.setTarget("r", "r");
     expect(sim.requestSkill("r", 1)?.check).toEqual({ ok: true });
     sim.step(DT);
-    expect(get(sim, "r").statuses.get("for-great-justice")?.durationSeconds).toBeCloseTo(seconds);
+    expect(get(sim, "r").statuses.get("for-great-justice")?.durationSeconds).toBe(seconds);
   });
 });
 

@@ -310,10 +310,8 @@ describe("Anguished Was Lingwah (#2502)", () => {
     const r = get(sim, "r").combatant;
     r.cast.startRecharge(BLOODSONG, 30);
     expect(r.cast.isRecharging(DULLED)).toBe(true);
-    // The hex lasts 50% longer: 17 s of Dulled Weapon held for 25.5.
-    expect(get(sim, "x").combatant.statuses.get("dulled-weapon")?.durationSeconds).toBeCloseTo(
-      25.5,
-    );
+    // The hex lasts 50% longer: 17 s of Dulled Weapon held for 25.5, rounded to 26 (#4165).
+    expect(get(sim, "x").combatant.statuses.get("dulled-weapon")?.durationSeconds).toBe(26);
     sim.dropBundle("r");
     stepFor(sim, 0.1);
     expect(r.statuses.has("anguished-was-lingwah")).toBe(false);

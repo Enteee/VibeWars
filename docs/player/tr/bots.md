@@ -78,6 +78,7 @@ ya da dönmek onlara karşı da sana karşı olduğu gibi işe yarar.
 
 Botlar, dolaşmak çok daha uzun değilse yanan zeminin ve diğer zararlı
 alanların çevresinden dolaşır, içinde durdukları alandan da çıkarlar.
+Rakibin kuyu, onlara karşı bir koruma ya da fırtına gibi zararlı bir alanından da çıkar ve kenarından savaşırlar.
 
 Kesintisi olan bir bot onu önemli yapımlar için saklar: önce bir
 diriliş ya da sunağı ele geçiren bir Ghostly Hero, sonra bir
@@ -89,6 +90,15 @@ yaklaşık dörtte birini kaçırır.
 Bir bot, olanlara tepki vermek için insan gibi bir an, saniyenin bir
 kesri kadar süre alır; bu yüzden hızlı bir kesinti ya da geç bir kaçış
 onu alt edebilir.
+
+Takımında kimse bir hedef bildirmemişse, botlarından biri botlarının
+yoğunlaştığı düşmanı tıpkı senin yapacağın gibi bildirir: işareti ve
+botun adını görürsün, böylece sen de katılabilirsin. Bir botun
+bildirimi yalnızca botların nereye gittiğini gösterir; yine de bir
+takım arkadaşını korur ve can çekişen bir düşmanı bitirirler. Senin
+bildirdiğin hedef her zaman kazanır: takımdaki her bot senin hedefine
+yoğunlaşır, hiçbir bot senin bildirdiğinin yerine geçmez ve botlar
+ancak bildirilen hedef öldüğünde ya da gittiğinde yeniden bildirir.
 
 Üç takımlı bir dövüşte botlar aynı anda tek bir düşman takımıyla
 dövüşür: onlara saldıran takımla ya da kimse saldırmıyorken erişimdeki

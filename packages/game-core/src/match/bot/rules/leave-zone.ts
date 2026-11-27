@@ -4,7 +4,7 @@ import type { BehaviourIntent } from "../../behaviour.js";
 import { ghostId } from "../../ghost.js";
 import { carriedRelic } from "../../relics.js";
 import type { Participant } from "../../simulation.js";
-import { harmfulZonesHolding, type MatchZone } from "../../zones.js";
+import { harmAround, harmHolding, type HarmArea } from "../hostile-ground.js";
 import { NOTHING } from "./shared.js";
 import type { BotRule, RuleContext } from "./types.js";
 
@@ -12,12 +12,13 @@ import type { BotRule, RuleContext } from "./types.js";
 export const EXIT_MARGIN = 20;
 
 /**
- * Harmful ground (#3026): a bot standing in it with nothing better to do
- * steps out to the nearest spot outside, as a player would; with a foe in
- * reach, `clear-ground` decides that. A cast, a relic or a ghost it leads
- * keeps it where it is; so does any walk but this rule's own, as a path
- * crosses a zone on purpose when going round is longer, and an objective
- * may lie inside one. It
+ * Harmful ground (#3026), the map's or a foe's ground effect that hits it
+ * (#4193), a well, a ward against it or a storm: a bot standing in it with
+ * nothing better to do steps out to the nearest spot outside, as a player
+ * would; with a foe in reach, `clear-ground` decides that. A cast, a relic
+ * or a ghost it leads keeps it where it is; so does any walk but this
+ * rule's own, as a path crosses a zone on purpose when going round is
+ * longer, and an objective may lie inside one. It
  * comes after every objective rule, so a bot on a shrine or a plate in
  * harmful ground holds it, rather than step out and walk back in on the
  * next think. `rest` yields to it.
@@ -37,7 +38,7 @@ export function zoneExit(
   { context, self, cursor }: RuleContext,
   fits: (exit: Vec2) => boolean = () => true,
 ): BehaviourIntent | undefined {
-  const zones = context.objectives.harmfulZones;
+  const zones = harmAround(context.objectives, self.combatant.team);
   if (
     zones.length === 0 ||
     self.combatant.cast.isCasting ||
@@ -46,11 +47,11 @@ export function zoneExit(
   ) {
     return undefined;
   }
-  const holding = harmfulZonesHolding(zones, self.position, self.layer);
+  const holding = harmHolding(zones, self.position, self.layer);
   if (holding.length === 0) {
     return undefined;
   }
-  const onLayer = zones.filter((zone) => zone.layer === self.layer);
+  const onLayer = zones.filter((area) => area.layer === self.layer);
   const walkingTo = cursor.heldMove.moveTo;
   if (walkingTo !== undefined && !isExit(walkingTo, onLayer)) {
     return undefined;
@@ -76,7 +77,7 @@ function leadsGhost(participants: readonly Participant[], leaderId: string, team
  * Whether `goal` is a spot `nearestExit` gives: out of every zone in
  * `onLayer`, and no farther than `EXIT_MARGIN` past one's edge.
  */
-function isExit(goal: Vec2, onLayer: readonly MatchZone[]): boolean {
+function isExit(goal: Vec2, onLayer: readonly HarmArea[]): boolean {
   return (
     !onLayer.some((zone) => pointInPolygon(goal, zone.polygon)) &&
     onLayer.some(
@@ -92,8 +93,8 @@ function isExit(goal: Vec2, onLayer: readonly MatchZone[]): boolean {
  */
 export function nearestExit(
   position: Vec2,
-  holding: readonly MatchZone[],
-  onLayer: readonly MatchZone[],
+  holding: readonly HarmArea[],
+  onLayer: readonly HarmArea[],
   standable: (point: Vec2) => boolean,
 ): Vec2 | undefined {
   let best: Vec2 | undefined;

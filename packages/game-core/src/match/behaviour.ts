@@ -268,6 +268,8 @@ export interface BehaviourCursor {
   regroupSpent: boolean;
   /** `play-build`, foes of two teams or more: the team it fights, kept while that team still fights (#2685). */
   front: number | undefined;
+  /** `play-build`: the team target its last think chose (#4188), `undefined` before it chose one. */
+  focusId: string | undefined;
   /** `play-build`: the team target it holds its spike skills for (#2631), `undefined` while it holds none. */
   spikeTargetId: string | undefined;
   /** `play-build`: how long it has held them for `spikeTargetId` (#2631). */
@@ -466,10 +468,27 @@ export interface BotObjectives {
   readonly gates: readonly Gate[];
   /** The map's harmful ground (#3026), which a bot steps out of; `[]` on a map without any. */
   readonly harmfulZones: readonly MatchZone[];
+  /**
+   * The live ground effects that hurt someone (#4193): a foe's ward or well
+   * aura, and a pulse with a pulse or an end still to land. A bot of a team
+   * one hits steps out of it as it does `harmfulZones`; `[]` with none.
+   */
+  readonly hostileGround: readonly HostileGround[];
   /** The map's levers (#3138), and what throwing each would win; `[]` on a map without any. */
   readonly levers: readonly BotLever[];
   /** The map's standing breakable walls (#3140), and what each crumbling would win; `[]` on a map without any. */
   readonly breakables: readonly BotBreakable[];
+}
+
+/** A ground effect that hurts the bodies standing in it, as bots read it (#4193). */
+export interface HostileGround {
+  /** Its owner's team. */
+  readonly team: number;
+  /** `foes`: bodies off `team`; `all`: every body, `team`'s too. */
+  readonly hits: "foes" | "all";
+  readonly position: Vec2;
+  readonly layer: number;
+  readonly radius: number;
 }
 
 /** A lever as bots read it (#2542). */
@@ -508,6 +527,7 @@ export const NO_OBJECTIVES: BotObjectives = {
   altarHolder: null,
   gates: [],
   harmfulZones: [],
+  hostileGround: [],
   levers: [],
   breakables: [],
 };
@@ -528,6 +548,7 @@ export function createCursor(): BehaviourCursor {
     regroupSince: undefined,
     regroupSpent: false,
     front: undefined,
+    focusId: undefined,
     spikeTargetId: undefined,
     spikeHeldSeconds: 0,
     spikeReadySeconds: undefined,

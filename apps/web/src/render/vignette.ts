@@ -6,12 +6,12 @@ import type { MapStructure } from "./arena-snapshot.js";
 import { type Box, shapeOutline } from "./layer-surfaces.js";
 import { deckFades } from "./lighting-pass.js";
 import { elevationOf, renderOrder } from "./render-order.js";
-import { alphaOut, deckCrop, TEXTURE_SIZE } from "./vignette-model.js";
-import { boxOfPoints } from "./wall-tops.js";
-
-const TEXTURE = "vignette";
-/** Enough stops that the smooth ramp shows no bands. */
-const GRADIENT_STOPS = 24;
+import {
+  disjointPieces,
+  type VignetteCell,
+  vignetteCells,
+  vignetteTriangles,
+} from "./vignette-model.js";
 
 /**
  * The deck tops the vignette darkens (#4070), by deck layer, as drawn:
@@ -36,142 +36,132 @@ export function deckVignetteTops(
   return tops;
 }
 
-/** One deck layer's vignette: its tops' box, and the image drawn through their stencil. */
+/** One deck layer's vignette: its tops as convex pieces that do not overlap, and what they are drawn in. */
 interface DeckPass {
-  readonly box: Box;
-  readonly image: Phaser.GameObjects.Image;
-  readonly objects: readonly Phaser.GameObjects.GameObject[];
+  readonly pieces: readonly (readonly Vec2[])[];
+  readonly graphics: Phaser.GameObjects.Graphics;
 }
 
+/** The whole view, centred on the origin, one unit a side: the ground pass, scaled to the view. */
+const UNIT_VIEW: Box = { left: -0.5, top: -0.5, right: 0.5, bottom: 0.5 };
+
 /**
- * The vignette over the world and under every gameplay layer (#4057): one
- * texture, painted once, stretched over the view. It follows the camera,
- * so it is placed in world units wherever the camera points. Each deck
- * layer gets the same texture again over its tops (#4070), kept to them by
- * a stencil and cropped to their box, so ground and decks fall off as one.
+ * The vignette over the world and under every gameplay layer (#4057): its
+ * cells (`vignetteCells`), drawn once over a unit view and scaled over the
+ * view. It follows the camera, so it is placed in world units wherever the
+ * camera points. Each deck layer gets them again over its tops (#4070),
+ * cut into pieces that do not overlap (`disjointPieces`) and along the
+ * cells (`vignetteTriangles`), so ground and decks fall off as one. No
+ * stencil: on a software renderer each pass over a deck's box cost a
+ * frame more than its shading (#4130).
  */
 export class Vignette {
   private readonly scene: Phaser.Scene;
-  private readonly image: Phaser.GameObjects.Image;
+  private readonly ground: Phaser.GameObjects.Graphics;
   private decks: DeckPass[] = [];
   private view: Box | undefined;
 
   public constructor(scene: Phaser.Scene) {
     this.scene = scene;
-    paintTexture(scene.textures);
-    this.image = scene.add
-      .image(0, 0, TEXTURE)
-      .setOrigin(0.5)
-      .setDepth(renderOrder({ kind: "vignette" }));
+    this.ground = scene.add.graphics().setDepth(renderOrder({ kind: "vignette" }));
+    fillCells(this.ground, vignetteCells(UNIT_VIEW));
   }
 
   /** Cover the view centred on `centre`, `size` CSS px at `zoom` CSS px per world unit. */
   public place(centre: Vec2, zoom: number, size: { width: number; height: number }): void {
     const [width, height] = [size.width / zoom, size.height / zoom];
-    this.image.setPosition(centre.x, centre.y).setDisplaySize(width, height);
-    this.view = {
+    const view = {
       left: centre.x - width / 2,
       top: centre.y - height / 2,
       right: centre.x + width / 2,
       bottom: centre.y + height / 2,
     };
+    if (
+      view.left === this.view?.left &&
+      view.top === this.view.top &&
+      view.right === this.view.right &&
+      view.bottom === this.view.bottom
+    ) {
+      return;
+    }
+    this.ground.setPosition(centre.x, centre.y).setScale(width, height);
+    this.view = view;
     for (const deck of this.decks) {
-      this.crop(deck);
+      this.shade(deck);
     }
   }
 
   /** Draw the vignette over the view, or not (#4129); its deck tops are `setDecks`'. */
   public setShown(shown: boolean): void {
-    this.image.setVisible(shown);
+    this.ground.setVisible(shown);
   }
 
   /** Darken `tops`, by deck layer, as `deckVignetteTops` gives them; replaces the last ones. */
   public setDecks(tops: ReadonlyMap<number, readonly (readonly Vec2[])[]>): void {
     this.dropDecks();
-    const { add, make } = this.scene;
     for (const [layer, polygons] of tops) {
-      const box = boxOfPoints(...polygons);
-      if (box === undefined) {
-        continue;
-      }
-      const depth = renderOrder({ kind: "deck-vignette", deckLayer: layer });
-      // Shut the box, open the tops, draw, and open the box again: the
-      // stencil never fills more than the box, as the wall tops' does.
-      const region = (value: number, fill: (g: Phaser.GameObjects.Graphics) => void) => {
-        const g = make.graphics({}, false);
-        g.fillStyle(0xffffff, 1);
-        fill(g);
-        return add
-          .stencil(0, 0, [g], { stencilLayerMode: "clearRegion", stencilClearValue: value })
-          .setDepth(depth);
-      };
-      const rect = (g: Phaser.GameObjects.Graphics) =>
-        g.fillRect(box.left, box.top, box.right - box.left, box.bottom - box.top);
-      const shut = region(1, rect);
-      const open = region(0, (g) => {
-        for (const polygon of polygons) {
-          g.fillPoints(
-            polygon.map(({ x, y }) => new Phaser.Math.Vector2(x, y)),
-            true,
-          );
-        }
-      });
-      const image = add.image(0, 0, TEXTURE).setOrigin(0.5).setDepth(depth);
-      const release = region(0, rect);
-      const deck = { box, image, objects: [shut, open, image, release] };
+      const graphics = this.scene.add
+        .graphics()
+        .setDepth(renderOrder({ kind: "deck-vignette", deckLayer: layer }));
+      const deck = { pieces: deckPieces(polygons), graphics };
       this.decks.push(deck);
-      this.crop(deck);
+      this.shade(deck);
     }
   }
 
   public destroy(): void {
     this.dropDecks();
-    this.image.destroy();
+    this.ground.destroy();
   }
 
-  /** Lay `deck`'s image over the view as the full one is, showing only its box. */
-  private crop(deck: DeckPass): void {
-    const crop = this.view === undefined ? undefined : deckCrop(deck.box, this.view);
-    deck.image.setVisible(crop !== undefined);
-    if (crop !== undefined) {
-      deck.image
-        .setPosition(this.image.x, this.image.y)
-        .setDisplaySize(this.image.displayWidth, this.image.displayHeight)
-        .setCrop(crop.x, crop.y, crop.width, crop.height);
+  /** Draw `deck`'s tops shaded for the view as it is now; skip the pass when none is dark. */
+  private shade(deck: DeckPass): void {
+    const triangles = this.view === undefined ? [] : vignetteTriangles(this.view, deck.pieces);
+    deck.graphics.clear();
+    for (const [first, second, third] of triangles) {
+      deck.graphics
+        .fillGradientStyle(0, 0, 0, 0, first.alpha, second.alpha, third.alpha, 0)
+        .fillTriangle(first.x, first.y, second.x, second.y, third.x, third.y);
     }
+    deck.graphics.setVisible(triangles.length > 0);
   }
 
   private dropDecks(): void {
-    for (const object of this.decks.flatMap(({ objects }) => objects)) {
-      object.destroy();
+    for (const { graphics } of this.decks) {
+      graphics.destroy();
     }
     this.decks = [];
   }
 }
 
-function paintTexture(textures: Phaser.Textures.TextureManager): void {
-  if (textures.exists(TEXTURE)) {
-    return;
+/** `cells` into `g`, black, each shading between its corners. */
+function fillCells(g: Phaser.GameObjects.Graphics, cells: readonly VignetteCell[]): void {
+  for (const { box, topLeft, topRight, bottomLeft, bottomRight } of cells) {
+    g.fillGradientStyle(0, 0, 0, 0, topLeft, topRight, bottomLeft, bottomRight).fillRect(
+      box.left,
+      box.top,
+      box.right - box.left,
+      box.bottom - box.top,
+    );
   }
-  const canvas = textures.createCanvas(TEXTURE, TEXTURE_SIZE, TEXTURE_SIZE);
-  if (canvas === null) {
-    throw new Error("vignette: could not create its texture");
+}
+
+/** One deck layer's `tops` as convex pieces that do not overlap, each point of them in one. */
+export function deckPieces(tops: readonly (readonly Vec2[])[]): (readonly Vec2[])[] {
+  return disjointPieces(tops.flatMap(triangulate));
+}
+
+/** `polygon` as triangles, Phaser's earcut's. */
+function triangulate(polygon: readonly Vec2[]): (readonly [Vec2, Vec2, Vec2])[] {
+  const corners = Phaser.Geom.Polygon.Earcut(polygon.flatMap(({ x, y }) => [x, y]));
+  const triangles: (readonly [Vec2, Vec2, Vec2])[] = [];
+  for (let i = 0; i + 2 < corners.length; i += 3) {
+    const [a, b, c] = [corners[i], corners[i + 1], corners[i + 2]].map((index) =>
+      index === undefined ? undefined : polygon[index],
+    );
+    if (a !== undefined && b !== undefined && c !== undefined) {
+      triangles.push([a, b, c]);
+    }
   }
-  // A circle to the corners of a square: stretched over the view, the ramp `vignetteAlpha` draws.
-  const middle = TEXTURE_SIZE / 2;
-  const gradient = canvas.context.createRadialGradient(
-    middle,
-    middle,
-    0,
-    middle,
-    middle,
-    middle * Math.SQRT2,
-  );
-  for (let stop = 0; stop <= GRADIENT_STOPS; stop += 1) {
-    const out = stop / GRADIENT_STOPS;
-    gradient.addColorStop(out, `rgba(0,0,0,${String(alphaOut(out))})`);
-  }
-  canvas.context.fillStyle = gradient;
-  canvas.context.fillRect(0, 0, TEXTURE_SIZE, TEXTURE_SIZE);
-  canvas.refresh();
+  return triangles;
 }

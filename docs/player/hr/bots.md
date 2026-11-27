@@ -74,6 +74,7 @@ na njih kao i na tebe.
 
 Botovi zaobilaze zapaljeno tlo i druga štetna mjesta kad zaobilazak nije
 puno duži, i izlaze iz onog u kojem stoje.
+Izlaze i iz štetnog područja protivnika, poput zdenca, zaštite protiv njih ili oluje, i bore se s njegova ruba.
 
 Bot s prekidom čuva ga za bacanja koja su važna: najprije
 uskrsnuće ili Sablasnog heroja koji zauzima oltar, zatim liječenje ili
@@ -84,6 +85,14 @@ od četiri takva bacanja.
 
 Botu treba ljudski trenutak, djelić sekunde, da reagira na
 ono što se događa, pa ga brz prekid ili kasni izmak mogu nadmudriti.
+
+Kad nitko u tvom timu nema označenu metu, jedan od tvojih botova označi
+neprijatelja na kojeg se tvoji botovi usredotočuju, baš kao što bi ti: vidiš
+oznaku i ime bota, pa se možeš pridružiti. Oznaka bota samo pokazuje kamo
+botovi idu; oni i dalje štite suigrača i dokrajčuju neprijatelja na
+izdisaju. Tvoja oznaka uvijek pobjeđuje: svi botovi u timu usredotoče se na
+tvoju metu, nijedan bot ne zamjenjuje tvoju oznaku, a botovi ponovno
+označavaju tek kad označena meta umre ili nestane.
 
 U borbi tri tima botovi se bore protiv jednog neprijateljskog tima
 odjednom: tima koji ih napada ili, dok ih nitko ne napada, najranjenijeg tima

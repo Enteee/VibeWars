@@ -81,6 +81,7 @@ toimii niille kuten sinullekin.
 
 Botit kiertävät palavan maan ja muut haitalliset alueet, kun kiertotie ei
 ole paljon pidempi, ja astuvat pois alueelta, jolla seisovat.
+Ne astuvat myös pois vastustajan vahingolliselta alueelta, kuten kaivosta, niitä vastaan suunnatusta suojasta tai myrskystä, ja taistelevat sen reunalta.
 
 Keskeytystaidolla varustettu botti säästää sen tärkeitä käyttöjä varten:
 ensin henkiin herättäminen tai alttaria valtaava aavesankari, sitten
@@ -91,6 +92,15 @@ Pelaajan tavoin se missaa noin yhden neljästä tällaisesta käytöstä.
 Botilta kuluu ihmismäinen hetki, sekunnin murto-osa, reagoida
 tapahtumiin, joten nopea keskeytys tai myöhäinen väistö voi päihittää
 sen.
+
+Kun kukaan tiimissäsi ei ole ilmoittanut kohdetta, yksi boteistasi
+ilmoittaa vihollisen, johon botit keskittyvät, aivan kuten sinä
+tekisit: näet merkin ja botin nimen, joten voit liittyä mukaan. Botin
+ilmoitus näyttää vain, minne botit ovat menossa; ne suojaavat silti
+tiimitoveria ja viimeistelevät kuolevan vihollisen. Oma ilmoituksesi
+voittaa aina: jokainen tiimin botti keskittyy kohteeseesi, mikään botti
+ei korvaa ilmoitustasi, ja botit ilmoittavat uudelleen vasta, kun
+ilmoitettu kohde on kuollut tai poissa.
 
 Kolmen tiimin taistelussa botit taistelevat yhtä vihollistiimiä vastaan
 kerrallaan: tiimiä, joka hyökkää niiden kimppuun, tai, kun kukaan ei

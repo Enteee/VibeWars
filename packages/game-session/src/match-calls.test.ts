@@ -13,7 +13,20 @@ import { describe, expect, it } from "vitest";
 
 import { MESSAGE_BURST } from "./intent-budget.js";
 import type { PeerMatchConnection } from "./match-client.js";
-import { TICK_SECONDS, settle, startMatch, type TestMatch } from "./match-harness.test-support.js";
+import {
+  TICK_SECONDS,
+  settle,
+  starterBuild,
+  startMatch,
+  type TestMatch,
+} from "./match-harness.test-support.js";
+import {
+  BOT_CALL_SECONDS,
+  RECONNECT_WINDOW_SECONDS,
+  botCalls,
+  type PlannedSeat,
+} from "./match-host.js";
+import { testCosmetics } from "./player-key.test-support.js";
 import type { Transport } from "./transport.js";
 
 /**
@@ -166,6 +179,112 @@ describe("calls through the P2P host (#443)", () => {
     await settle();
     await match.step(TICK_SECONDS);
     expect(c.connection.getCalls().target?.targetId).toBe(b.connection.selfSessionId);
+  });
+});
+
+describe("bots calling targets (#4188)", () => {
+  const bot = (team: 0 | 1, name: string): [string, PlannedSeat] => [
+    name,
+    {
+      team,
+      name,
+      guildTag: null,
+      heroRank: 0,
+      guildCape: null,
+      bot: true,
+      build: starterBuild("Warrior/Monk"),
+    },
+  ];
+  const human = (peerId: string, team: 0 | 1, key: string): [string, PlannedSeat] => [
+    peerId,
+    {
+      team,
+      name: peerId,
+      guildTag: null,
+      heroRank: 0,
+      guildCape: null,
+      bot: false,
+      playerPubkey: key.repeat(32),
+      startMorale: 0,
+      cosmetics: testCosmetics,
+      build: null,
+    },
+  ];
+
+  /** The local human and bots A and B on team 0, against bots C and D, and `peer-1` if `guest`. */
+  async function botMatch(guest = false) {
+    const match = startMatch({
+      seats: new Map<string, PlannedSeat>([
+        human("host/local", 0, "ab"),
+        bot(0, "Bot B"),
+        bot(0, "Bot A"),
+        bot(1, "Bot C"),
+        bot(1, "Bot D"),
+        ...(guest ? [human("peer-1", 1, "cd")] : []),
+      ]),
+    });
+    const local = await match.joinLocal();
+    const peer = guest ? await match.join() : undefined;
+    await match.step(TICK_SECONDS);
+    return { match, local, peer };
+  }
+
+  async function stepUntil(match: TestMatch, seconds: number, done: () => boolean): Promise<void> {
+    for (let t = 0; t < seconds && !done(); t += TICK_SECONDS) {
+      await match.step(TICK_SECONDS);
+    }
+  }
+
+  /** The session ids of the players `local` sees named `names`. */
+  const idsOf = (local: PeerMatchConnection, names: readonly string[]): string[] =>
+    local
+      .getSnapshot()
+      .players.filter((player) => names.includes(player.name))
+      .map((player) => player.sessionId);
+
+  it("calls a bot's target, with its name, for a team with no call up", async () => {
+    const { match, local } = await botMatch();
+    await stepUntil(match, 5, () => local.getCalls().target !== null);
+    const called = local.getCalls().target;
+    expect(idsOf(local, ["Bot A", "Bot B"])).toContain(called?.callerId);
+    expect(idsOf(local, ["Bot C", "Bot D"])).toContain(called?.targetId);
+  });
+
+  it("never replaces a human's call while its target lives, and calls again once it lapses", async () => {
+    const { match, local, peer } = await botMatch(true);
+    const guestId = peer?.connection.selfSessionId ?? "";
+    const humanCall = { targetId: guestId, callerId: local.selfSessionId };
+    local.sendCall({ kind: "target", targetId: guestId });
+    await settle();
+    await match.step(TICK_SECONDS);
+    expect(local.getCalls().target).toEqual(humanCall);
+    await match.step(2 * BOT_CALL_SECONDS);
+    expect(local.getCalls().target).toEqual(humanCall);
+
+    const bots = idsOf(local, ["Bot A", "Bot B"]);
+    await peer?.transport.leave();
+    await stepUntil(match, RECONNECT_WINDOW_SECONDS + 5, () =>
+      bots.includes(local.getCalls().target?.callerId ?? ""),
+    );
+    expect(bots).toContain(local.getCalls().target?.callerId);
+  });
+
+  it("calls nothing for a team with no bots", async () => {
+    const match = startMatch({
+      seats: new Map<string, PlannedSeat>([human("host/local", 0, "ab"), bot(1, "Bot C")]),
+    });
+    const local = await match.joinLocal();
+    await match.step(5);
+    expect(local.getCalls().target).toBeNull();
+  });
+
+  it("re-calls a new target at most once in BOT_CALL_SECONDS, and at once with none up", () => {
+    const byBot = { targetId: "c", byHuman: false };
+    expect(botCalls(null, "c", 0.5, 1)).toBe(true);
+    expect(botCalls(byBot, "c", undefined, 10)).toBe(false);
+    expect(botCalls(byBot, "d", 1, 1 + BOT_CALL_SECONDS - 0.1)).toBe(false);
+    expect(botCalls(byBot, "d", 1, 1 + BOT_CALL_SECONDS)).toBe(true);
+    expect(botCalls({ targetId: "c", byHuman: true }, "d", undefined, 100)).toBe(false);
   });
 });
 

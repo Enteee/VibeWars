@@ -79,6 +79,7 @@ marche pour eux comme pour toi.
 
 Les bots contournent le sol en feu et les autres zones nocives quand le
 détour n'est pas beaucoup plus long, et sortent de celle où ils se trouvent.
+Ils sortent aussi d'une zone nuisible d'un adversaire, comme un puits, une protection contre eux ou une tempête, et combattent depuis son bord.
 
 Un bot avec une interruption la garde pour les incantations qui comptent :
 d'abord une résurrection ou un Héros fantomatique qui prend l'autel, puis un
@@ -89,6 +90,14 @@ incantations sur quatre.
 
 Un bot prend un temps de réaction humain, une fraction de seconde, face à ce
 qui se passe : une interruption rapide ou une esquive tardive peut le battre.
+
+Quand personne dans ton équipe n'a annoncé de cible, un de tes bots annonce
+l'ennemi sur lequel tes bots se concentrent, comme tu le ferais : tu vois le
+marqueur et le nom du bot, pour pouvoir te joindre à eux. L'annonce d'un bot
+montre seulement où vont les bots ; ils protègent quand même un coéquipier et
+achèvent un ennemi mourant. Ton annonce l'emporte toujours : tous les bots de
+l'équipe se concentrent sur ta cible, aucun bot ne remplace ton annonce, et
+les bots n'annoncent à nouveau qu'une fois sa cible morte ou partie.
 
 Dans un combat à trois équipes, les bots affrontent une équipe ennemie à la
 fois : celle qui les attaque, ou, si personne ne le fait, la plus blessée à
