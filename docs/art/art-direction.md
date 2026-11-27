@@ -500,27 +500,37 @@ name it hides is your target's.
 ### Projectiles
 
 Ranged weapon shots in flight (#161). Each is a sprite on a 32×12 grid,
-pointing along +x, centred on the shot's position. The scene rotates it to
-the heading and tints it to the shooter's team colour (`friend` or `foe`).
-The sprites are white under a `bg` outline, so the tint gives the exact team
-colour and the outline keeps them off the floor. A flying spell (#1176) is
-white and light grey the same way: the grey part stays a darker tone of the
-team colour, so a spell is told from another by its silhouette and a friend
-from a foe by the tint. Element colour is not baked in: it would multiply
-with the team tint and lose the team.
+pointing along +x, centred on the shot's position, in the grim gothic look
+(#4055): a 1 px `#08080a` outline, a darker base and a lit top. The scene
+rotates it to the heading. A shot is two frames, one over the other:
 
-| Sprite          | Weapons                             | Silhouette                                 |
-| --------------- | ----------------------------------- | ------------------------------------------ |
-| `arrow`         | Bows                                | Thin shaft, triangular head, chevron tail  |
-| `spear`         | Spear                               | Thicker shaft, long leaf blade, no tail    |
-| `bolt`          | Wand, staff                         | Round orb with a tapering comet tail       |
-| `fireball`      | Fireball                            | Round head, ragged flame tail              |
-| `lightning-orb` | Lightning Orb                       | Round head, jagged sparks forking back     |
-| `ice-shard`     | Shard Storm                         | Long faceted diamond, a pale top facet     |
-| `water-trident` | Water Trident                       | Shaft, three parallel prongs on a crossbar |
-| `ebon-hawk`     | Ebon Hawk                           | Hooked beak, wings swept back              |
-| `stone`         | Stoning                             | Rough boulder, chips flying off behind     |
-| `thrown-dagger` | Disrupting Dagger, Crippling Dagger | Grey hilt and crossguard, long white blade |
+- **Its own colours**, baked in and never tinted (`icons/projectile/`): the
+  steel of a head or blade, an arrow's `#6a4a2a` shaft with its `#e8d8b0`
+  lit top, a fireball's head from `#e04010` to `#fff0a0`, a lightning orb's
+  blue. A spell is told from another by this and its silhouette.
+- **Its team part** (`icons/projectile-team/`), under it: the fletching, the
+  spear's shaft, the dagger's hilt, a spell's tail, a stone's rim. It is white
+  and light grey, tinted to the shooter's team colour (`friend` or `foe`), so
+  a friend is told from a foe by it. The grey stays a darker tone of the team.
+
+A flying spell glows in its element's colour (`SHOT_GLOW`): one additive
+disc of radius 16 round its head, under both frames. A physical shot (arrow,
+spear, stone, dagger) has none. A shot casts a shadow on the ground under it:
+an arrow, spear or dagger a thin line along its flight, anything else a blob.
+
+| Sprite          | Weapons                             | Silhouette                                       |
+| --------------- | ----------------------------------- | ------------------------------------------------ |
+| `arrow`         | Bows                                | Thin wooden shaft, steel head, team fletching    |
+| `spear`         | Spear                               | Thicker team shaft, steel leaf blade, no tail    |
+| `bolt`          | Wand, staff                         | Violet orb with a tapering team comet tail       |
+| `fireball`      | Fireball                            | Fiery head, ragged team flame tail               |
+| `lightning-orb` | Lightning Orb                       | Blue-white head, jagged team sparks forking back |
+| `ice-shard`     | Shard Storm                         | Long diamond, pale ice top facet, team under it  |
+| `water-trident` | Water Trident                       | Team shaft, three blue prongs on a crossbar      |
+| `ebon-hawk`     | Ebon Hawk                           | Dark hooked beak, team wings swept back          |
+| `stone`         | Stoning                             | Brown boulder in a team rim, team chips behind   |
+| `thrown-dagger` | Disrupting Dagger, Crippling Dagger | Team hilt and crossguard, long steel blade       |
+| `deathly-swarm` | Deathly Swarm                       | Pale green orb, a team swarm behind it           |
 
 Drawn at 32×12 px, over the actors and under the HUD: a shot is
 gameplay information, and the player has to see where it will land in time
@@ -1396,8 +1406,8 @@ generator. Never hand-edit an output file; change the script and re-run.
 | Off-hand   | `apps/web/public/icons/offhand/`    |
 
 Each file is a flat SVG of 150–1,200 bytes with colours baked in, because Phaser
-rasterises SVG textures without CSS. Projectiles are the one exception: white,
-for the scene to tint. In HTML, show one with a plain `<img>`.
+rasterises SVG textures without CSS. A projectile's team part is the one
+exception: white, for the scene to tint. In HTML, show one with a plain `<img>`.
 
 The arena does not load the files one by one: it draws frames of one sheet,
 `icons/atlas/arena.svg` with its frame map, which Vite composes from these

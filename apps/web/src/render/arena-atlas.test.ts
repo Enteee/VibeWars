@@ -28,6 +28,9 @@ import {
   groundFrame,
   professionFrame,
   projectileFrame,
+  projectileTeamFrame,
+  SHOT_GLOW_FRAME,
+  SHOT_GLOW_TEXTURE_SIZE,
   skillTypeFrame,
   statusFrame,
   type AtlasFrame,
@@ -64,7 +67,9 @@ describe("the arena atlas (#1671)", () => {
     }
     for (const sprite of PROJECTILE_SPRITES) {
       expectFrame(projectileFrame(sprite), PROJECTILE_WIDTH, PROJECTILE_HEIGHT);
+      expectFrame(projectileTeamFrame(sprite), PROJECTILE_WIDTH, PROJECTILE_HEIGHT);
     }
+    expectFrame(SHOT_GLOW_FRAME, SHOT_GLOW_TEXTURE_SIZE, SHOT_GLOW_TEXTURE_SIZE);
     for (const skillId of GROUND_EFFECT_SKILLS) {
       expectFrame(groundFrame(skillId), GROUND_ICON_TEXTURE_SIZE, GROUND_ICON_TEXTURE_SIZE);
     }
