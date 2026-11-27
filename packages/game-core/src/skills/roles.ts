@@ -263,7 +263,10 @@ function statusRoles(status: StatusDefinition): readonly SkillRole[] {
     ...(status.pulse?.effects ?? []),
     ...forBearer,
   ];
-  return [...roles, ...riders.flatMap(effectRoles)];
+  // A siphon hex's caster half (#4167): Life Siphon heals its caster.
+  const caster =
+    status.casterStatus === undefined ? [] : statusRoles(getStatusDefinition(status.casterStatus));
+  return [...roles, ...riders.flatMap(effectRoles), ...caster];
 }
 
 /**
