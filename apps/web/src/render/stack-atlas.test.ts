@@ -163,20 +163,22 @@ describe("StackAtlas (ADR-0057, #4031)", () => {
     }
   });
 
-  it("holds sixteen looks in under 16 MB, a row no wider than 4096 px (#4060)", () => {
+  it("holds sixteen looks and every creature in under 18 MB, a row no wider than 4096 px (#4060)", () => {
     const { atlas: made, surfaces } = atlas();
-    made.bake(
-      Array.from({ length: 16 }, (_, i) => ({
+    made.bake([
+      ...Array.from({ length: 16 }, (_, i) => ({
         kind: "body" as const,
         body: 0x100000 * i + 0x40,
         cape: undefined,
       })),
-    );
+      ...CREATURE_LOOKS.map((look) => ({ kind: "creature" as const, look })),
+    ]);
     const surface = surfaces.at(-1);
     expect(surface?.width).toBe(FRAMES * STACK_FRAME_WIDTH);
     expect(surface?.width).toBeLessThanOrEqual(4096);
-    // 72 frames of 44 × 75 a look, 4 bytes a pixel: 15.2 MB for sixteen.
-    expect((surface?.width ?? 0) * (surface?.height ?? 0) * 4).toBeLessThan(16e6);
+    // 72 frames of 44 × 75 a look, 4 bytes a pixel: 15.2 MB for sixteen,
+    // and the creature rows' 2 MB allowance (#4171) on top.
+    expect((surface?.width ?? 0) * (surface?.height ?? 0) * 4).toBeLessThan(18e6);
   });
 
   it("bakes a late look off the frame path, once, and shows nothing baked until then", () => {
@@ -287,15 +289,23 @@ describe("StackAtlas creatures (#4171)", () => {
     expect(queued).toHaveLength(0);
   });
 
-  it("stacks a creature row under the bodies' without rebaking them when it fits", () => {
+  it("stacks a creature row under the bodies' in the same canvas", () => {
     const { atlas: made, surfaces } = atlas();
     made.bake([FRIEND, FOE, SPIRIT]);
-    const surface = surfaces.at(-1);
-    expect(surface?.height).toBe(
-      2 * STACK_FRAME_HEIGHT + (made.frame(SPIRIT, 0, "stand")?.height ?? 0),
-    );
-    expect(surface?.frames.get(stackFrameName(stackLookKey(SPIRIT), 0, "stand"))).toBe(
+    expect(surfaces).toHaveLength(1);
+    expect(surfaces[0]?.frames.get(stackFrameName(stackLookKey(SPIRIT), 0, "stand"))).toBe(
       2 * STACK_FRAME_HEIGHT,
     );
+  });
+
+  it("bakes a creature row summoned after the roster alone, never the bodies again", () => {
+    const { atlas: made, surfaces, queued } = atlas();
+    made.bake([FRIEND, FOE]);
+    expect(made.frame(SPIRIT, 0, "stand")).toBeUndefined();
+    queued[0]?.();
+    expect(surfaces).toHaveLength(1);
+    expect(surfaces[0]?.refreshes).toBe(2);
+    expect(made.bakedFigures).toBe(2 * FRAMES + 1);
+    expect(made.frame(SPIRIT, 0, "stand")).toBeDefined();
   });
 });

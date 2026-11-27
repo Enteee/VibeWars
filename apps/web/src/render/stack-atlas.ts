@@ -1,4 +1,4 @@
-import type { CreatureLook } from "@vibewars/game-core";
+import { CREATURE_LOOKS, type CreatureLook } from "@vibewars/game-core";
 
 import type { CapeLook } from "./cape-shape.js";
 import { CREATURE_DRAWN_RADIUS } from "./creature-shape.js";
@@ -269,6 +269,18 @@ function creatureRow(key: string, look: CreatureLook): StackRow | undefined {
   };
 }
 
+/** Each creature look's row height, pixels, once worked out: 0 for one drawn as a disc. */
+const creatureRowHeights = new Map<CreatureLook, number>();
+
+function creatureRowHeight(look: CreatureLook): number {
+  let height = creatureRowHeights.get(look);
+  if (height === undefined) {
+    height = creatureRow(stackLookKey({ kind: "creature", look }), look)?.height ?? 0;
+    creatureRowHeights.set(look, height);
+  }
+  return height;
+}
+
 /** The row `look` bakes into, or `undefined` for a creature still drawn as a disc. */
 function stackRow(key: string, look: StackLook): StackRow | undefined {
   return look.kind === "body" ? bodyRow(key, look) : creatureRow(key, look.look);
@@ -392,16 +404,27 @@ export class StackAtlas {
   /**
    * Bake the rows not on the surface yet, or all of them on a new one when
    * they no longer fit, or `fresh`: one canvas, one upload. Rows stack
-   * down the canvas, each as tall as its frames.
+   * down the canvas, each as tall as its frames. The canvas keeps room
+   * for every creature row not on it yet (#4171), which a body row never
+   * takes, so a summon's late row bakes alone, never every body's again
+   * mid-fight.
    */
   private build(fresh = false): void {
     const width = Math.max(ATLAS_WIDTH, ...this.rows.map((row) => row.width * row.frames.length));
     const height = this.rows.reduce((sum, row) => sum + row.height, 0);
+    const headroom = CREATURE_LOOKS.filter(
+      (look) => !this.baked.has(stackLookKey({ kind: "creature", look })),
+    ).reduce((sum, look) => sum + creatureRowHeight(look), 0);
     let from = this.surface === undefined || fresh ? 0 : this.filled;
-    if (this.surface === undefined || fresh || height > this.capacity || width > this.width) {
+    if (
+      this.surface === undefined ||
+      fresh ||
+      height + headroom > this.capacity ||
+      width > this.width
+    ) {
       this.surface?.destroy();
       this.width = width;
-      this.capacity = Math.max(height, this.capacity * 2);
+      this.capacity = Math.max(height + headroom, this.capacity * 2);
       this.surface = this.create(this.width, this.capacity);
       from = 0;
     }

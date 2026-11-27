@@ -15,6 +15,7 @@ import {
   polygonCentre,
   pointInPolygon,
   TELEPORT_COOLDOWN_SECONDS,
+  CREATURE_LOOKS,
   type CreatureLook,
   type StatusId,
   type Vec2,
@@ -1320,15 +1321,13 @@ export class ArenaScene extends Phaser.Scene {
       return;
     }
     this.rosterBaked = true;
-    atlas.bake(this.snapshot.actors.filter(isStackedFigure).map((actor) => this.stackLook(actor)));
-    // The creatures on the roster too (#4171), a row per look, never per
-    // team. Not every look: one synchronous bake of them all stalls the
-    // splash fight for seconds. A summon's look bakes when it first draws.
-    atlas.bake(
-      this.snapshot.actors.flatMap((actor): StackLook[] =>
-        actor.creatureLook === undefined ? [] : [{ kind: "creature", look: actor.creatureLook }],
-      ),
-    );
+    // Every creature figure too (#4171), in the same build and upload: a
+    // row per look, never per team, and few frames, so a summon mid-fight
+    // never waits on its bake.
+    atlas.bake([
+      ...this.snapshot.actors.filter(isStackedFigure).map((actor) => this.stackLook(actor)),
+      ...CREATURE_LOOKS.map((look): StackLook => ({ kind: "creature", look })),
+    ]);
   }
 
   /** What `actor`'s figure is painted in: its team's colour and its cape (ADR-0056). */
