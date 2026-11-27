@@ -428,9 +428,9 @@ export default {
   "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Blocat",
   "cosmetics.previewing": "Previzualizare: {name}",
+  "cosmetics.previewPrimary": "Principală",
+  "cosmetics.previewSecondary": "Secundară",
   "cosmetics.none": "Niciunul",
-  "cosmetics.note":
-    "Doar de aspect: niciun element cosmetic nu schimbă jocul. Se câștigă cu victorii clasate în clasamentul public și sunt comune tuturor personajelor tale.",
   "cosmetics.requires.streak": {
     one: "{count} victorie clasată la rând",
     few: "{count} victorii clasate la rând",

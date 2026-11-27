@@ -436,9 +436,9 @@ export default {
   "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Zamčeno",
   "cosmetics.previewing": "Náhled: {name}",
+  "cosmetics.previewPrimary": "Primární",
+  "cosmetics.previewSecondary": "Sekundární",
   "cosmetics.none": "Žádné",
-  "cosmetics.note":
-    "Čistě na ozdobu: žádná kosmetika nemění, jak se hraje. Získává se hodnocenými výhrami ve veřejném žebříčku a sdílí ji všechny tvé postavy.",
   "cosmetics.requires.streak": {
     one: "{count} hodnocená výhra v řadě",
     few: "{count} hodnocené výhry v řadě",

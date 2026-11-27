@@ -59,7 +59,7 @@ anello blu. La riga accanto alla fila (sotto, su un telefono) nomina il campione
 il focus, e ciò che lo fa ottenere. Un campione bloccato è attenuato, con un piccolo lucchetto. La
 tua scelta vale subito. Gli altri giocatori la vedono dalla prossima lobby in cui entri.
 
-Sopra le righe, il tuo personaggio indossa il tuo aspetto e sta fermo, cammina e colpisce, così aura, scia e scia dell'arma si vedono in movimento. Tieni premuto un campione per provarlo, anche bloccato: la riga dice cosa stai visualizzando in anteprima e, finché è bloccato, cosa lo sblocca. Rilascia su un oggetto ottenuto per indossarlo. Rilascia su uno bloccato, o scivola fuori dal campione, e non cambia nulla. Con la tastiera, tieni premuto Spazio su un campione.
+Accanto alle righe (sopra, su un telefono), il tuo personaggio indossa il tuo aspetto e si aggira: cammina, sta fermo, colpisce e lancia incantesimi, così aura, scia e scia dell'arma si vedono in movimento. Resta visibile mentre scorri. I selettori Primaria e Secondaria sotto di esso mostrano l'aspetto su qualsiasi coppia di professioni; cambiano solo l'anteprima, mai il tuo personaggio. Tieni premuto un campione per provarlo, anche bloccato: la riga dice cosa stai visualizzando in anteprima e, finché è bloccato, cosa lo sblocca. Rilascia su un oggetto ottenuto per indossarlo. Rilascia su uno bloccato, o scivola fuori dal campione, e non cambia nulla. Con la tastiera, tieni premuto Spazio su un campione.
 
 ## Vedere i cosmetici degli altri giocatori
 

@@ -410,9 +410,9 @@ export default {
   "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Gesperrt",
   "cosmetics.previewing": "Vorschau: {name}",
+  "cosmetics.previewPrimary": "Primär",
+  "cosmetics.previewSecondary": "Sekundär",
   "cosmetics.none": "Keine",
-  "cosmetics.note":
-    "Rein optisch: Keine Kosmetik verändert, wie sich etwas spielt. Verdient mit gewerteten Siegen in der öffentlichen Rangliste, gilt für alle deine Charaktere.",
   "cosmetics.requires.streak": {
     one: "{count} gewerteter Sieg in Folge",
     other: "{count} gewertete Siege in Folge",

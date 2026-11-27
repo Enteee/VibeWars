@@ -59,7 +59,7 @@ krúžok. Text vedľa radu (na telefóne pod ním) pomenúva vzorku, na ktorú u
 fokus, a za čo sa získava. Zamknutá vzorka je stlmená, s malým zámkom. Tvoja voľba platí hneď.
 Ostatní hráči ju uvidia od najbližšej lobby, do ktorej vstúpiš.
 
-Nad radmi má tvoja postava na sebe tvoj vzhľad a stojí, chodí a máva zbraňou, takže auru, stopu aj stopu zbrane vidíš v pohybe. Podrž vzorku a vyskúšaš si ju, aj zamknutú: riadok hovorí, čo si prezeráš, a kým je zamknutá, čím sa získava. Pusti na získanej položke a budeš ju nosiť. Pusti na zamknutej alebo zíď zo vzorky a nič sa nezmení. Na klávesnici podrž na vzorke medzerník.
+Vedľa radov (na telefóne nad nimi) má tvoja postava na sebe tvoj vzhľad a prechádza sa okolo: chodí, stojí, máva zbraňou a zosiela kúzla, takže auru, stopu aj stopu zbrane vidíš v pohybe. Pri posúvaní zostáva na očiach. Výbery Primárna a Sekundárna pod ňou ukazujú vzhľad na ľubovoľnej dvojici profesií; menia len náhľad, nikdy tvoju postavu. Podrž vzorku a vyskúšaš si ju, aj zamknutú: riadok hovorí, čo si prezeráš, a kým je zamknutá, čím sa získava. Pusti na získanej položke a budeš ju nosiť. Pusti na zamknutej alebo zíď zo vzorky a nič sa nezmení. Na klávesnici podrž na vzorke medzerník.
 
 ## Kozmetika ostatných hráčov
 

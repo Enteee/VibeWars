@@ -408,9 +408,9 @@ export const en = {
   "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Locked",
   "cosmetics.previewing": "Previewing: {name}",
+  "cosmetics.previewPrimary": "Primary",
+  "cosmetics.previewSecondary": "Secondary",
   "cosmetics.none": "None",
-  "cosmetics.note":
-    "Purely for looks: no cosmetic changes how anything plays. Earned with ranked wins on the public leaderboard, shared by all your characters.",
   "cosmetics.requires.streak": {
     one: "{count} ranked win in a row",
     other: "{count} ranked wins in a row",

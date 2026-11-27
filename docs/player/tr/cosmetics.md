@@ -60,7 +60,7 @@ odakladığın örneğin adını ve neyle kazanıldığını yazar. Kilitli bir 
 küçük bir asma kilit olur. Seçimin hemen geçerli olur. Diğer oyuncular onu katıldığın bir sonraki
 lobiden itibaren görür.
 
-Sıraların üstünde karakterin görünümünü giyer; durur, yürür ve savurur, böylece aura, iz ve silah izi hareket halinde görünür. Denemek için bir örneğe basılı tut, kilitli olsa bile: satır neyi önizlediğini ve kilitliyken onu neyin kazandırdığını söyler. Kazanılmış bir öğede bırakırsan onu giyersin. Kilitli bir öğede bırakırsan ya da örneğin dışına kaydırırsan hiçbir şey değişmez. Klavyeyle bir örnekte Boşluk tuşunu basılı tut.
+Sıraların yanında (telefonda üstlerinde) karakterin görünümünü giyer ve ortalıkta dolaşır; yürür, durur, savurur ve büyü yapar, böylece aura, iz ve silah izi hareket halinde görünür. Kaydırırken görünür kalır. Altındaki Birincil ve İkincil seçicileri görünümü herhangi bir meslek çiftinde gösterir; yalnızca önizlemeyi değiştirirler, karakterini asla. Denemek için bir örneğe basılı tut, kilitli olsa bile: satır neyi önizlediğini ve kilitliyken onu neyin kazandırdığını söyler. Kazanılmış bir öğede bırakırsan onu giyersin. Kilitli bir öğede bırakırsan ya da örneğin dışına kaydırırsan hiçbir şey değişmez. Klavyeyle bir örnekte Boşluk tuşunu basılı tut.
 
 ## Diğer oyuncuların kozmetiklerini görmek
 

@@ -414,9 +414,9 @@ export default {
   "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Lukittu",
   "cosmetics.previewing": "Esikatselu: {name}",
+  "cosmetics.previewPrimary": "Ensisijainen",
+  "cosmetics.previewSecondary": "Toissijainen",
   "cosmetics.none": "Ei mitään",
-  "cosmetics.note":
-    "Pelkkää ulkonäköä: mikään kosmetiikka ei muuta pelaamista. Ansaitaan rankatuilla voitoilla julkisella tulostaululla, ja ne ovat kaikkien hahmojesi yhteisiä.",
   "cosmetics.requires.streak": {
     one: "{count} rankattu voitto putkeen",
     other: "{count} rankattua voittoa putkeen",

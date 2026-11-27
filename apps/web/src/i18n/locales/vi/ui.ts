@@ -375,9 +375,9 @@ export default {
   "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Đã khóa",
   "cosmetics.previewing": "Đang xem trước: {name}",
+  "cosmetics.previewPrimary": "Chính",
+  "cosmetics.previewSecondary": "Phụ",
   "cosmetics.none": "Không",
-  "cosmetics.note":
-    "Chỉ để làm đẹp: không vật phẩm trang trí nào thay đổi lối chơi. Nhận được nhờ thắng trận xếp hạng trên bảng xếp hạng công khai, dùng chung cho mọi nhân vật của bạn.",
   "cosmetics.requires.streak": {
     other: "{count} trận thắng xếp hạng liên tiếp",
   },

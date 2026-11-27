@@ -406,9 +406,9 @@ export default {
   "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Låst",
   "cosmetics.previewing": "Forhåndsvisning: {name}",
+  "cosmetics.previewPrimary": "Primær",
+  "cosmetics.previewSecondary": "Sekundær",
   "cosmetics.none": "Ingen",
-  "cosmetics.note":
-    "Kun for udseendet: ingen kosmetik ændrer, hvordan noget spiller. Optjenes med rangerede sejre på den offentlige rangliste og deles af alle dine figurer.",
   "cosmetics.requires.streak": {
     one: "{count} rangeret sejr i træk",
     other: "{count} rangerede sejre i træk",

@@ -58,7 +58,7 @@ albastru. Textul de lângă rând (sub el pe telefon) numește mostra spre care 
 focusul, și ce o deblochează. O mostră blocată e estompată, cu un mic lacăt. Alegerea ta se aplică
 imediat. Ceilalți jucători o văd începând cu următorul lobby în care intri.
 
-Deasupra rândurilor, personajul tău poartă aspectul tău și stă, merge și lovește, ca să vezi aura, urma și urma armei în mișcare. Ține apăsată o mostră ca s-o probezi, chiar și blocată: rândul spune ce previzualizezi și, cât timp e blocată, ce o deblochează. Eliberează pe un obiect câștigat ca să-l porți. Eliberează pe unul blocat sau alunecă de pe mostră și nu se schimbă nimic. Cu tastatura, ține apăsat Space pe o mostră.
+Lângă rânduri (deasupra lor pe telefon), personajul tău poartă aspectul tău și se plimbă: merge, stă, lovește și aruncă vrăji, ca să vezi aura, urma și urma armei în mișcare. Rămâne la vedere cât derulezi. Selectoarele Principală și Secundară de sub el arată aspectul pe orice pereche de profesii; schimbă doar previzualizarea, niciodată personajul tău. Ține apăsată o mostră ca s-o probezi, chiar și blocată: rândul spune ce previzualizezi și, cât timp e blocată, ce o deblochează. Eliberează pe un obiect câștigat ca să-l porți. Eliberează pe unul blocat sau alunecă de pe mostră și nu se schimbă nimic. Cu tastatura, ține apăsat Space pe o mostră.
 
 ## Elementele cosmetice ale altor jucători
 

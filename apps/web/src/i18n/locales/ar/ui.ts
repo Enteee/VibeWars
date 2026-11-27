@@ -457,9 +457,9 @@ export default {
   "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "مقفل",
   "cosmetics.previewing": "معاينة: {name}",
+  "cosmetics.previewPrimary": "الأساسية",
+  "cosmetics.previewSecondary": "الثانوية",
   "cosmetics.none": "لا شيء",
-  "cosmetics.note":
-    "للمظهر فقط: لا تغيّر أي زينة طريقة اللعب. تُكتسب بالانتصارات المصنّفة في لوحة المتصدرين العامة، وتشترك فيها كل شخصياتك.",
   "cosmetics.requires.streak": {
     zero: "{count} فوز مصنّف متتالٍ",
     one: "{count} فوز مصنّف متتالٍ",

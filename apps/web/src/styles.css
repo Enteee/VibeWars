@@ -2227,8 +2227,42 @@ body:has(> .splash) #menu-background::after {
   }
 }
 
-.cosmetics-note {
-  color: var(--ink-dim);
+/* The figure at the side of the rows (#4177), staying in view while they scroll. */
+.cosmetics-layout {
+  display: grid;
+  grid-template-columns: 160px minmax(0, 1fr);
+  gap: 1rem;
+  align-items: start;
+}
+
+.cosmetics-preview-column {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+/* The pane would scroll sideways and so hold the sticky figure fast: Cosmetics never needs it. */
+.options-pane:has(.cosmetics-layout) {
+  overflow-x: visible;
+}
+
+.cosmetics-professions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.cosmetics-professions .field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.cosmetics-professions select {
+  width: 100%;
 }
 
 /* The figure wearing the shown look (#3989), its nameplate above it, as in the lobby. */
@@ -2237,7 +2271,7 @@ body:has(> .splash) #menu-background::after {
   flex-direction: column;
   align-items: center;
   gap: 0.2rem;
-  margin: 0 auto 0.6rem;
+  margin: 0 auto;
   width: 160px;
 }
 
@@ -2257,6 +2291,27 @@ body:has(> .splash) #menu-background::after {
 @media (max-width: 479px) {
   .cosmetics-preview-figure {
     height: 120px;
+  }
+
+  /* On a phone the figure sits on top, the rows scrolling under it. */
+  .cosmetics-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* Stuck over the window's padding too, so no swatch ring peeks out round it. */
+  .cosmetics-preview-column {
+    top: -1rem;
+    margin: -1rem -0.5rem 0;
+    padding: 1rem 0.5rem 0.4rem;
+    background: rgb(14 17 22);
+  }
+
+  .cosmetics-professions {
+    flex-direction: row;
+  }
+
+  .cosmetics-professions .field {
+    flex: 1;
   }
 }
 

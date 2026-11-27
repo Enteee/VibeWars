@@ -439,9 +439,9 @@ export default {
   "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Zablokowane",
   "cosmetics.previewing": "Podgląd: {name}",
+  "cosmetics.previewPrimary": "Główna",
+  "cosmetics.previewSecondary": "Drugorzędna",
   "cosmetics.none": "Brak",
-  "cosmetics.note":
-    "Tylko dla wyglądu: żaden kosmetyk nie zmienia rozgrywki. Zdobywa się je rankingowymi zwycięstwami w publicznej tabeli wyników i są wspólne dla wszystkich twoich postaci.",
   "cosmetics.requires.streak": {
     one: "{count} rankingowa wygrana z rzędu",
     few: "{count} rankingowe wygrane z rzędu",

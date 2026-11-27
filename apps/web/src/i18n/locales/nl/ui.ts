@@ -406,9 +406,9 @@ export default {
   "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "Vergrendeld",
   "cosmetics.previewing": "Voorbeeld: {name}",
+  "cosmetics.previewPrimary": "Primair",
+  "cosmetics.previewSecondary": "Secundair",
   "cosmetics.none": "Geen",
-  "cosmetics.note":
-    "Puur voor het uiterlijk: geen enkele cosmetic verandert hoe iets speelt. Verdiend met gerankte zeges op de openbare ranglijst en gedeeld door al je personages.",
   "cosmetics.requires.streak": {
     one: "{count} gerankte zege op rij",
     other: "{count} gerankte zeges op rij",

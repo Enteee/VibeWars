@@ -376,9 +376,9 @@ export default {
   "cosmetics.detail": "{name}: {requirement}",
   "cosmetics.locked": "ล็อกอยู่",
   "cosmetics.previewing": "กำลังดูตัวอย่าง: {name}",
+  "cosmetics.previewPrimary": "อาชีพหลัก",
+  "cosmetics.previewSecondary": "อาชีพรอง",
   "cosmetics.none": "ไม่มี",
-  "cosmetics.note":
-    "เพื่อความสวยงามเท่านั้น: ไอเทมตกแต่งไม่เปลี่ยนการเล่นใด ๆ ได้มาจากการชนะแมตช์จัดอันดับบนกระดานผู้นำสาธารณะ และใช้ร่วมกันทุกตัวละครของคุณ",
   "cosmetics.requires.streak": {
     other: "ชนะจัดอันดับติดกัน {count} ครั้ง",
   },
