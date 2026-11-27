@@ -948,7 +948,12 @@ test("a spectator presses Watch and follows the match 10 s late, with nothing to
     await expect(watcher.getByRole("button", { name: "Ready", exact: true })).toHaveCount(0);
     await watcher.getByRole("button", { name: "Watch", exact: true }).click();
 
-    await expect(watcher.locator(".hud-watching")).toHaveText("Watching · 10 s delay");
+    // Booting its arena beside two pages that draw a match, the watcher's
+    // page freezes 10-14 s on software GL before it can say observe: Watching
+    // came 10-16 s after the click, locally (#4139; the boot's cost is #4130's).
+    await expect(watcher.locator(".hud-watching")).toHaveText("Watching · 10 s delay", {
+      timeout: 25_000,
+    });
     await expect(watcher.locator(".hud-skills")).toBeHidden();
     await expect(watcher.locator(".hud-bar-health")).toBeHidden();
     // While the delay fills, no empty score, target frame or compass.

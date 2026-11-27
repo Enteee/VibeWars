@@ -41,6 +41,7 @@ herumgestanden hast, spielen sie weiter wie ein Team aus Bots.
 Solange du aktiv bist, kehrt ein Bot, den ein Kampf weit von dir weggezogen hat, zu dir zurück, außer er ist schwer verwundet oder ein Gegner steht direkt bei ihm.
 Ein Frontkämpfer wendet sich gegen einen Gegner, der den Heiler oder die Zauberwirker seines Teams angreift, außer er ist kurz davor, sein eigenes Ziel zu erledigen.
 Ein Bot mit einem Flächenzauber wirkt ihn dort, wo drei oder mehr Gegner beieinanderstehen, außer das Team erledigt gerade einen Gegner oder folgt einem angesagten Ziel.
+Ein Bot mit einem verkrüppelnden oder verlangsamenden Skill setzt ihn gegen einen Gegner direkt bei sich ein oder gegen einen, der den Heiler oder die Zauberwirker seines Teams angreift, noch vor dem Ziel des Teams.
 
 Gegen ein Team mit Flächen-Skills halten Fernkämpfer und Heiler Abstand voneinander, damit eine Explosion nicht zwei von ihnen trifft. Deckung geben sie dafür nie auf.
 

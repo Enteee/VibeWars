@@ -42,6 +42,7 @@ hold af bots ville.
 Mens du er aktiv, går en bot, som en kamp har trukket langt væk fra dig, tilbage til dig, medmindre den er hårdt såret, eller en fjende står lige ved den.
 En frontlinjebot vender sig mod en fjende, der angriber holdets healer eller besværgere, medmindre den er ved at gøre det af med sit eget mål.
 En bot med en områdebesværgelse kaster den, hvor tre eller flere fjender står samlet, medmindre holdet er ved at gøre det af med en fjende eller følger et udråbt mål.
+En bot med en lammende eller sænkende evne bruger den på en fjende ved sin side eller på en, der angriber holdets healer eller troldmænd, før holdets mål.
 
 Mod et hold med områdeskills holder afstandsbots og healere sig fra hinanden, så én eksplosion ikke rammer to af dem. De opgiver aldrig dækning for at gøre det.
 

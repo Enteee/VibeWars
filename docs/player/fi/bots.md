@@ -45,6 +45,7 @@ niin kuin pelkkien bottien tiimi pelaisi.
 Kun olet aktiivinen, botti, jonka taistelu on vetänyt kauas sinusta, kävelee takaisin luoksesi, ellei se ole pahasti haavoittunut tai vihollinen ole aivan sen vieressä.
 Etulinjan botti kääntyy vihollista vastaan, joka hyökkää sen joukkueen parantajan tai loitsijoiden kimppuun, ellei se ole juuri viimeistelemässä omaa kohdettaan.
 Botti, jolla on aluetaika, heittää sen sinne, missä kolme tai useampi vihollinen seisoo yhdessä, ellei joukkue ole viimeistelemässä vihollista tai seuraamassa kuulutettua kohdetta.
+Botti, jolla on rampauttava tai hidastava taito, käyttää sen viereensä tulleeseen viholliseen tai joukkueensa parantajan tai loitsijoiden kimppuun käyvään viholliseen ennen joukkueen kohdetta.
 
 Aluetaitoja käyttävää joukkuetta vastaan kaukotaistelijabotit ja parantajat pysyvät erillään, jotta yksi räjähdys ei osu kahteen. Ne eivät koskaan luovu suojasta sen vuoksi.
 
