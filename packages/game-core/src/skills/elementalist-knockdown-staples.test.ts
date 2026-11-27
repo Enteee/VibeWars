@@ -167,13 +167,13 @@ describe("Aftershock (#985)", () => {
     expect(targets.map(({ id }) => id)).toEqual(["near", "edge"]);
   });
 
-  it("deals 85 earth to a standing foe and 85 + 56 to a knocked-down one", () => {
+  it("deals 71 earth to a standing foe and 71 + 71 to a knocked-down one (#4212)", () => {
     const standing = foe("standing");
     const down = foe("down");
     down.knockdownRemaining = 0.1;
     use(caster(), AFTERSHOCK, standing, down);
-    expect(standing.health).toBe(1000 - elemental(85, "earth", standing));
-    expect(down.health).toBe(1000 - elemental(85, "earth", down) - elemental(56, "earth", down));
+    expect(standing.health).toBe(1000 - elemental(71, "earth", standing));
+    expect(down.health).toBe(1000 - elemental(71, "earth", down) - elemental(71, "earth", down));
   });
 
   it("with no foe nearby, still costs its energy", () => {

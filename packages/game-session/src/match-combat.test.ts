@@ -432,7 +432,7 @@ describe("networked combat (P2P)", () => {
     await target(match, a, b.selfSessionId);
     await target(match, b, a.selfSessionId);
 
-    // Fireball: a 1 s cast, the nuker's only Fire Magic skill.
+    // Fireball: a 1.5 s cast, the nuker's only Fire Magic skill.
     b.sendIntent({ kind: "use-skill", slot: FIREBALL });
     await until(match, () => self(b)?.castingSkillId === "elementalist.fireball", "b's cast");
     a.sendIntent({ kind: "use-skill", slot: 0 });

@@ -84,10 +84,10 @@ describe("cast-loop", () => {
         spec("near", 0, vec2(150, 0)),
       ],
     });
-    const casts = run(sim, 10).filter((entry) => entry.cause === "skill");
-    // Fireball recharges in 7 s: one cast at t=0, released at 1 s, and the
-    // next at 7 s, released at 8 s. Each lands 150 units on, 0.4 s after
-    // its release (#535), and only the landing does damage.
+    const casts = run(sim, 12).filter((entry) => entry.cause === "skill");
+    // Fireball recharges in 7 s from its release: one cast at t=0, released
+    // at 1.5 s (#4212), and the next at 8.5 s, released at 10 s. Each lands
+    // 150 units on, 0.4 s after its release (#535), and only the landing does damage.
     const used = { kind: "skill-used", casterId: "dummy", skillId: FIREBALL, targetId: "near" };
     expect(casts.map((entry) => [entry.sourceId, entry.events[0]])).toEqual([
       ["dummy", used],
@@ -111,7 +111,7 @@ describe("cast-loop", () => {
     expect(dummy.combatant.cast.isCasting).toBe(false);
   });
 
-  // Troll Unguent: 3 s to cast, 10 s recharge. Fireball: 1 s, 7 s. The
+  // Troll Unguent: 3 s to cast, 10 s recharge. Fireball: 1.5 s, 7 s. The
   // first cast begins at the end of tick 1, t=0.05; sixty 0.05 s ticks
   // leave a floating-point sliver of it, so it lands one tick later, at 3.1.
   const inOrder = (gapSeconds: number): (string | number | undefined)[][] => {
@@ -138,20 +138,20 @@ describe("cast-loop", () => {
 
   it("takes skills in order without firstLegal, the next one queued for the end of the aftercast", () => {
     // Troll Unguent resolves at 3.1; its 0.75 s aftercast (#317) holds
-    // Fireball's 1 s cast back until 3.85. The Fireball lands 150 units
+    // Fireball's 1.5 s cast back until 3.85. The Fireball lands 150 units
     // on, 0.4 s after its release (#535).
     expect(inOrder(0)).toEqual([
       ["ranger.troll-unguent", 3.1],
-      [FIREBALL, 4.85],
-      [FIREBALL, 5.25],
+      [FIREBALL, 5.35],
+      [FIREBALL, 5.75],
     ]);
   });
 
   it("waits gapSeconds from the start of one cast to the start of the next", () => {
     expect(inOrder(5)).toEqual([
       ["ranger.troll-unguent", 3.1],
-      [FIREBALL, 6.1],
-      [FIREBALL, 6.5],
+      [FIREBALL, 6.6],
+      [FIREBALL, 7],
     ]);
   });
 });

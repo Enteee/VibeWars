@@ -20,6 +20,8 @@ import { NO_RANKS, type StatusId } from "../skills/status.js";
 
 const RULES = MINIMAL_GW_INSPIRED_PVP_V1;
 const DT = 1 / RULES.tickRateHz;
+/** Fireball's cast (#4212). */
+const FIREBALL_CAST = 1.5;
 const FIREBALL = "elementalist.fireball";
 const ARMOR_OF_EARTH = "elementalist.armor-of-earth";
 const SEVER_ARTERY = "warrior.sever-artery";
@@ -248,10 +250,10 @@ describe("skills and the swing", () => {
     const log = stepFor(match, 4);
     const fireball = log.find((entry) => entry.cause === "skill");
     const hit = swings(log)[0];
-    // Fireball lands 1 s in; no swing while it was cast or in the 0.75 s
+    // Fireball lands 1.5 s in; no swing while it was cast or in the 0.75 s
     // aftercast (#317), then a full one.
-    expect(fireball?.atSeconds).toBeCloseTo(2, 6);
-    const aftercastEnds = 2 + RULES.combat.aftercastSeconds;
+    expect(fireball?.atSeconds).toBeCloseTo(1 + FIREBALL_CAST, 6);
+    const aftercastEnds = 1 + FIREBALL_CAST + RULES.combat.aftercastSeconds;
     expect(Math.abs((hit?.atSeconds ?? 0) - aftercastEnds - 1.33)).toBeLessThanOrEqual(DT);
     expect(get(match, "a").combatant.attack?.targetId).toBe("d");
   });
@@ -273,7 +275,7 @@ describe("skills and the swing", () => {
     match.requestAttack("a", "d");
     match.setTarget("a", "e");
     match.requestSkill("a", 0);
-    const log = stepFor(match, 1 + RULES.combat.aftercastSeconds + 1.5);
+    const log = stepFor(match, FIREBALL_CAST + RULES.combat.aftercastSeconds + 1.5);
 
     // The Fireball's release carries only the use; its landing hits e (#535).
     const [released, landed] = log.filter((entry) => entry.cause === "skill");
@@ -367,8 +369,8 @@ describe("adrenaline (#463)", () => {
     const match = sim(swordsman("a", vec2(0, 0)), dummy("d", vec2(300, 0)));
     match.setTarget("a", "d");
     expect(match.requestSkill("a", 0)?.check).toEqual({ ok: true });
-    // Its 1 s cast, then its flight to d (#535).
-    const log = stepFor(match, 1.1 + fireballFlight(300));
+    // Its 1.5 s cast, then its flight to d (#535).
+    const log = stepFor(match, FIREBALL_CAST + 0.1 + fireballFlight(300));
     expect(
       log.some((entry) => entry.cause === "skill" && entry.events.some((e) => e.kind === "damage")),
     ).toBe(true);
@@ -1025,12 +1027,12 @@ describe("aftercast (#317)", () => {
     match.requestAttack("a", "d");
     match.setTarget("a", "d");
     match.requestSkill("a", 0);
-    const log = stepFor(match, 1 + AFTERCAST + 2);
+    const log = stepFor(match, FIREBALL_CAST + AFTERCAST + 2);
 
     const first = swings(log)[0]?.atSeconds ?? 0;
-    expect(first).toBeGreaterThan(1 + AFTERCAST);
+    expect(first).toBeGreaterThan(FIREBALL_CAST + AFTERCAST);
     expect(
-      Math.abs(first - (1 + AFTERCAST) - WEAPONS.sword.attackIntervalSeconds),
+      Math.abs(first - (FIREBALL_CAST + AFTERCAST) - WEAPONS.sword.attackIntervalSeconds),
     ).toBeLessThanOrEqual(DT);
   });
 
@@ -1108,9 +1110,9 @@ describe("aftercast (#317)", () => {
     expect(ticks * DT).toBeCloseTo(AFTERCAST, 6);
     expect(get(match, "a").combatant.cast.activeCast).toMatchObject({
       skillId: FIREBALL,
-      remainingSeconds: 1,
+      remainingSeconds: FIREBALL_CAST,
     });
-    const log = stepFor(match, 1);
+    const log = stepFor(match, FIREBALL_CAST);
     expect(log.map((entry) => entry.skillId)).toEqual([FIREBALL]);
   });
 
@@ -1118,7 +1120,7 @@ describe("aftercast (#317)", () => {
     const match = sim(swordsman("a", vec2(0, 0)), dummy("d", vec2(300, 0)));
     match.setTarget("a", "d");
     match.requestSkill("a", 0);
-    stepFor(match, 1);
+    stepFor(match, FIREBALL_CAST);
     match.requestSkill("a", 0);
     match.requestSkill("a", 1);
     expect(get(match, "a").combatant.cast.queuedSlot).toBe(1);
@@ -1280,7 +1282,7 @@ describe("the skill queue during an activation (#1722)", () => {
   }
 
   it("a press is queued, paid for nothing, and goes off when the cast and its aftercast end", () => {
-    const match = casting(0.5);
+    const match = casting(1);
     const energy = get(match, "a").combatant.energy;
     expect(match.requestSkill("a", 1)).toEqual({
       skillId: ARMOR_OF_EARTH,
@@ -1310,7 +1312,7 @@ describe("the skill queue during an activation (#1722)", () => {
   });
 
   it("the casting slot pressed again with nothing queued queues nothing (#1733)", () => {
-    const match = casting(0.5);
+    const match = casting(1);
     expect(match.requestSkill("a", 0)).toEqual({ skillId: FIREBALL, check: { ok: true } });
     expect(get(match, "a").combatant.cast.queuedSlot).toBeUndefined();
     // Once the cast is over, a press is used as any other: still recharging.

@@ -125,7 +125,7 @@ describe("describeSkill", () => {
     const described = describeSkill(skill("elementalist.fireball"), undefined, EN_WORDS, EN_NAMES);
 
     expect(described.cost).toBe("10 energy");
-    expect(described.castTime).toBe("1s");
+    expect(described.castTime).toBe("1.5s");
     expect(described.targetText).toBe("One foe, and foes nearby it");
     expect(described.rangeText).toBe(`${String(RANGE_SPELL)} range, ${String(AREA_NEARBY)} radius`);
   });
@@ -962,7 +962,7 @@ describe("attack skills (#417)", () => {
       EN_WORDS,
       EN_NAMES,
     ).effects.map(({ text }) => text);
-    expect(texts.at(-1)).toBe("Deals 85 earth damage; if target is knocked down: +56");
+    expect(texts.at(-1)).toBe("Deals 71 earth damage; if target is knocked down: +71");
   });
 
   it("words Cry of Frustration's splash and Mantra of Recovery's faster spells (#938)", () => {
@@ -1581,7 +1581,7 @@ describe("describeSkill at a primary attribute's rank (#531)", () => {
     ).toBe("10 energy");
     expect(
       describeSkill(fireball, new Map([["mesmer.fast-casting", 12]]), EN_WORDS, EN_NAMES).castTime,
-    ).toBe("1s");
+    ).toBe("1.5s");
   });
 });
 

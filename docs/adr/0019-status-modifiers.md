@@ -74,7 +74,7 @@ and `ArmorContext` go; `equipment/coverage.ts` records the gap as
 
 - Crippled players cover half the ground. A crippled Armor of Earth
   caster moves at 37.5%.
-- A dazed caster's 1 s Fireball takes 2 s, which is more time to
+- A dazed caster's 1.5 s Fireball takes 3 s, which is more time to
   interrupt it.
 - A blinded warrior's Opening Cut is wasted 90% of the time. Blind still
   cannot deny auto-attack damage, because there is none.
