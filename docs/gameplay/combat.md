@@ -158,7 +158,7 @@ before any of their effects. Word of Healing heals 98 more (Healing
 Prayers 12) for an ally below half of its maximum health, a maximum a
 deep wound has lowered; its own heal cannot cancel the bonus. Mystic
 Sweep's blow deals 10 more while you are enchanted, in the same number.
-**Dwayna's Kiss** (#920) heals another ally 51, and 30 more for each
+**Dwayna's Kiss** (#920) heals another ally 56, and 35 more for each
 enchantment and hex on it as the heal lands.
 **Infuse Health** (#936, Healing Prayers, 10 energy, ¼ s, no recharge)
 costs you half your current health, rounded down, and heals another
@@ -173,7 +173,7 @@ Protection Prayers, 5 energy, ¾ s, 2 s) removes every condition from
 another ally and then heals it 58 for each one removed: three are 174.
 A deep wound among them is gone before the heal, so it does not cut it.
 With no condition it heals nothing and still costs its energy.
-**Heal Party** (#1013, Healing Prayers, 15 energy, 1 s, 20 s) heals you
+**Heal Party** (#1013, Healing Prayers, 15 energy, 1 s, 10 s) heals you
 and every living team-mate 66, wherever they stand and through walls:
 your party is your team, without its creatures: no spirit, minion or
 pet. Divine Favor adds to your own heal only, as for every untargeted
