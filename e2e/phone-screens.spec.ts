@@ -33,6 +33,20 @@ async function backToList(page: Page): Promise<void> {
   await page.getByRole("button", { name: "Back to the list", exact: true }).click();
 }
 
+/**
+ * Until a drilled-in page has stopped sliding in (#4216): mid-slide, a
+ * 44 px box is mapped through its transform and reads 43.99.
+ */
+async function drilledIn(page: Page): Promise<void> {
+  await expect
+    .poll(() =>
+      page
+        .locator(".flyout-rail-main")
+        .evaluateAll((mains) => mains.some((main) => main.getAnimations().length > 0)),
+    )
+    .toBe(false);
+}
+
 /** `locator`'s box is a finger's at least (#3776). */
 async function expectFingerSized(locator: Locator, what: string): Promise<void> {
   const box = await locator.boundingBox();
@@ -132,6 +146,7 @@ test("Options, every section, fits the phone, drilled into from a list of 44 px 
     const title = (await entries.nth(i).textContent()) ?? "";
     await entries.nth(i).click();
     await expect(page.locator(".flyout-rail-title")).toHaveText(title);
+    await drilledIn(page);
     await expectFitsPhone(page, `Options: ${title}`);
     await backToList(page);
     await expect(entries.nth(i)).toBeFocused();
@@ -146,6 +161,7 @@ test("Help, every page, fits the phone (#3776)", async ({ page }) => {
   await expectFitsPhone(page, "Help: the list");
   for (let i = 0; i < 14; i += 1) {
     await entries.nth(i).click();
+    await drilledIn(page);
     await expectFitsPhone(page, `Help: ${(await entries.nth(i).getAttribute("data-id")) ?? ""}`);
     await backToList(page);
   }
