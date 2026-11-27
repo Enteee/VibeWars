@@ -1,9 +1,17 @@
 import type { Participant } from "../../simulation.js";
 import type { Skill } from "../../../skills/types.js";
 import type { StatusId } from "../../../skills/status.js";
+import { isAttacking } from "../../../skills/attacking.js";
 import { RANGE_SPELL } from "../../../distances.js";
 import { distance } from "../../../vec2.js";
-import { botUses, projectsToOthers, summonAura, wardedDamageType } from "../skill-intent.js";
+import {
+  botUses,
+  defenceAgainst,
+  projectsToOthers,
+  summonAura,
+  wardedDamageType,
+  type DefenceAgainst,
+} from "../skill-intent.js";
 import { airFirst } from "./setup.js";
 import { HURT_FRACTION, SPIKE_FOES, healthFraction, spiritUp } from "./shared.js";
 import type { BotRule } from "./types.js";
@@ -24,13 +32,16 @@ const heal: BotRule = {
       mayUse(held, held.target === "self" ? self.id : patient.id);
     const spiked = spikedAlly(allies, foes);
     if (spiked !== undefined) {
-      const skill = bar.find(
-        (held) =>
-          botUses(held).includes("defence") &&
-          !laidStatuses(held).some((id) =>
-            (held.target === "self" ? self : spiked).combatant.statuses.has(id),
-          ) &&
-          castable(held, spiked),
+      const skill = matchingDefence(
+        bar.filter(
+          (held) =>
+            botUses(held).includes("defence") &&
+            !laidStatuses(held).some((id) =>
+              (held.target === "self" ? self : spiked).combatant.statuses.has(id),
+            ) &&
+            castable(held, spiked),
+        ),
+        threatOn(spiked, foes),
       );
       if (skill !== undefined) {
         const castOn = skill.target === "self" ? self.id : spiked.id;
@@ -47,15 +58,18 @@ const heal: BotRule = {
       return undefined;
     }
     const patient = hurt;
-    for (const role of ["healing", "defence"] as const) {
-      const skill = bar.find((held) => botUses(held).includes(role) && castable(held, patient));
-      if (skill !== undefined) {
-        const castOn = skill.target === "self" ? self.id : patient.id;
-        // A dear enchantment goes on cheaper with Air of Enchantment first (#1975).
-        return use(airFirst(rule, skill, castOn) ?? skill, castOn);
-      }
+    const skill =
+      bar.find((held) => botUses(held).includes("healing") && castable(held, patient)) ??
+      matchingDefence(
+        bar.filter((held) => botUses(held).includes("defence") && castable(held, patient)),
+        threatOn(patient, foes),
+      );
+    if (skill === undefined) {
+      return undefined;
     }
-    return undefined;
+    const castOn = skill.target === "self" ? self.id : patient.id;
+    // A dear enchantment goes on cheaper with Air of Enchantment first (#1975).
+    return use(airFirst(rule, skill, castOn) ?? skill, castOn);
   },
 };
 
@@ -118,6 +132,58 @@ function spikedAlly(
     }
   }
   return spiked;
+}
+
+/** How many attackers and casters target an ally (#4214). */
+interface Threat {
+  readonly attackers: number;
+  readonly casters: number;
+}
+
+/**
+ * The foes within spell range of `ally` targeting it, as `spikedAlly`
+ * counts them (#4214): an attacker if it is attacking, else a caster.
+ */
+function threatOn(ally: Participant, foes: readonly Participant[]): Threat {
+  let attackers = 0;
+  let casters = 0;
+  for (const foe of foes) {
+    if (foe.targetId === ally.id && distance(foe.position, ally.position) <= RANGE_SPELL) {
+      if (isAttacking(foe.combatant)) {
+        attackers += 1;
+      } else {
+        casters += 1;
+      }
+    }
+  }
+  return { attackers, casters };
+}
+
+/**
+ * The defence skill of `candidates` that fits `threat` (#4214). Under a
+ * threat, none that stops only attacks with no attacker on the ally, or
+ * only spells with no caster. Then the first that stops only what most of
+ * the threat is, a block stance against warriors; on a tie, or with no
+ * threat, the first general one; then bar order.
+ */
+function matchingDefence(candidates: readonly Skill[], threat: Threat): Skill | undefined {
+  const threatened = threat.attackers + threat.casters > 0;
+  const fitting = candidates.filter((held) => {
+    const against = defenceAgainst(held);
+    return (
+      !threatened ||
+      ((against.spells || threat.attackers > 0) && (against.attacks || threat.casters > 0))
+    );
+  });
+  const first = (fits: (against: DefenceAgainst) => boolean): Skill | undefined =>
+    fitting.find((held) => fits(defenceAgainst(held)));
+  const preferred =
+    threat.attackers > threat.casters
+      ? first((against) => against.attacks && !against.spells)
+      : threat.casters > threat.attackers
+        ? first((against) => against.spells && !against.attacks)
+        : first((against) => against.attacks && against.spells);
+  return preferred ?? fitting[0];
 }
 
 /**
