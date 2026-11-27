@@ -43,6 +43,8 @@ Ein Frontkämpfer wendet sich gegen einen Gegner, der den Heiler oder die Zauber
 
 Gegen ein Team mit Flächen-Skills halten Fernkämpfer und Heiler Abstand voneinander, damit eine Explosion nicht zwei von ihnen trifft. Deckung geben sie dafür nie auf.
 
+Ein Fernkämpfer oder Heiler, dem ein Gegner zu nah kommt, weicht zuerst zu seinem nächsten Frontkämpfer zurück, wenn einer nah genug ist, und kämpft dort.
+
 Bogenschützen und Speerwerfer besetzen die Anhöhe, wenn es sicher ist.
 Ein Bot, auf den sich zwei Gegner stürzen oder der unter halber Gesundheit schnell weiter verliert, duckt sich bis zu drei Sekunden aus ihrer Sicht: hinter eine Mauer, unter eine Plattform oder auf eine Anhöhe.
 Ist kein Gegner in der Nähe, legt ein Bot einen Hebel um, der einen kürzeren Weg zu den Gegnern öffnet. Zwei Bots reißen außerdem eine Mauer nieder, die einen viel kürzeren Weg versperrt, indem sie mit ihren Waffen darauf einschlagen.

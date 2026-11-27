@@ -45,6 +45,8 @@ Un bot de primera línea se vuelve contra un enemigo que ataca al sanador o a lo
 
 Contra un equipo con habilidades de área, los bots a distancia y los sanadores se mantienen separados, para que una explosión no alcance a dos de ellos. Nunca renuncian a la cobertura para hacerlo.
 
+Un bot a distancia o un sanador al que un enemigo se le acerca demasiado se repliega primero hacia su bot de primera línea más cercano, si hay uno lo bastante cerca, y lucha allí.
+
 Los arqueros y lanceros toman el terreno elevado cuando es seguro.
 Un bot al que atacan dos enemigos, o que está por debajo de la mitad de su salud y la pierde rápido, se oculta de su vista hasta tres segundos: tras un muro, bajo una plataforma o en terreno elevado.
 Si no hay ningún enemigo cerca, un bot acciona la palanca que abre un camino más corto hacia los enemigos. Dos bots también derriban un muro que oculta un camino mucho más corto, golpeándolo con sus armas.

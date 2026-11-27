@@ -41,6 +41,8 @@ Bot z pierwszej linii odwraca się przeciw wrogowi, który atakuje uzdrowiciela 
 
 Przeciw drużynie z umiejętnościami obszarowymi boty dystansowe i uzdrowiciele trzymają się od siebie z dala, by jeden wybuch nie trafił dwóch z nich. Nigdy nie rezygnują przy tym z osłony.
 
+Bot dystansowy lub uzdrowiciel, do którego wróg podejdzie za blisko, najpierw wycofuje się do najbliższego sojusznika z pierwszej linii, jeśli ten jest dość blisko, i tam walczy.
+
 Łucznicy i włócznicy zajmują wzniesienie, gdy jest to bezpieczne.
 Bot, na którym skupiło się dwóch wrogów albo który ma mniej niż połowę zdrowia i szybko je traci, chowa się przed ich wzrokiem na maksymalnie trzy sekundy: za murem, pod pomostem albo na wzniesieniu.
 Gdy w pobliżu nie ma wroga, bot przestawia dźwignię, która otwiera krótszą drogę do wrogów. Dwa boty burzą też mur, który zasłania znacznie krótszą drogę, uderzając w niego bronią.
