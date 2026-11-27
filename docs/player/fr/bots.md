@@ -47,7 +47,7 @@ Un bot doté d'une compétence qui estropie ou ralentit l'utilise sur un ennemi 
 
 Face à une équipe qui a des compétences de zone, les bots à distance et les soigneurs restent écartés, pour qu'une seule explosion n'en touche pas deux. Ils ne renoncent jamais à un abri pour cela.
 
-Un bot à distance ou un soigneur dont un ennemi s'approche trop se replie d'abord vers son bot de première ligne le plus proche, s'il y en a un assez près, et se bat là.
+Un bot à distance ou un soigneur dont un ennemi s'approche trop se replie d'abord vers son bot de première ligne le plus proche, s'il y en a un assez près, et se bat là. Un attaquant au corps à corps ralenti, estropié par exemple, ne peut pas suivre : face à lui, il recule plutôt entre deux tirs.
 
 Les archers et les lanciers prennent les hauteurs quand c'est sans danger.
 Un bot que deux adversaires prennent pour cible, ou qui est sous la moitié de sa santé et la perd vite, se met hors de leur vue jusqu'à trois secondes : derrière un mur, sous une plateforme ou sur les hauteurs.
