@@ -44,6 +44,7 @@ menetkin. Kun olet seissyt toimettomana jonkin aikaa, ne pelaavat eteenpäin
 niin kuin pelkkien bottien tiimi pelaisi.
 Kun olet aktiivinen, botti, jonka taistelu on vetänyt kauas sinusta, kävelee takaisin luoksesi, ellei se ole pahasti haavoittunut tai vihollinen ole aivan sen vieressä.
 Etulinjan botti kääntyy vihollista vastaan, joka hyökkää sen joukkueen parantajan tai loitsijoiden kimppuun, ellei se ole juuri viimeistelemässä omaa kohdettaan.
+Botti, jolla on aluetaika, heittää sen sinne, missä kolme tai useampi vihollinen seisoo yhdessä, ellei joukkue ole viimeistelemässä vihollista tai seuraamassa kuulutettua kohdetta.
 
 Jousiampujat ja keihäänheittäjät ottavat korkean maaston, kun se on turvallista.
 Botti, johon kaksi vihollista keskittyy tai jonka terveys on alle puolet ja hupenee nopeasti, piiloutuu heidän näkyvistään enintään kolmeksi sekunniksi: muurin taakse, tasanteen alle tai korkealle maastolle.

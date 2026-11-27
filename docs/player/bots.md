@@ -40,6 +40,7 @@ follow where you go. Once you have stood idle a while, they play on as a
 team of bots would.
 While you are active, a bot that a fight drags far from you walks back to you, unless it is badly hurt or a foe is right on it.
 A frontliner turns on a foe that attacks its team's healer or casters, unless it is about to finish its own target.
+A bot with an area spell drops it where three or more foes stand together, unless the team is finishing a foe or following a called target.
 
 Archers and spearmen take the high ground when it is safe.
 A bot that two foes focus on, or that is below half health and losing it fast, ducks out of their sight for up to three seconds: behind a wall, under a deck or onto high ground.

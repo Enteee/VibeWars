@@ -40,6 +40,7 @@ mengikuti ke mana pun kamu pergi. Begitu kamu sudah diam beberapa lama, mereka
 terus bermain seperti tim yang seluruhnya bot.
 Selama kamu aktif, bot yang terseret pertarungan jauh darimu berjalan kembali kepadamu, kecuali ia terluka parah atau ada lawan tepat di dekatnya.
 Bot garis depan berbalik menyerang musuh yang menyerang penyembuh atau perapal mantra timnya, kecuali ia hampir menghabisi targetnya sendiri.
+Bot yang punya mantra area menjatuhkannya di tempat tiga musuh atau lebih berdiri berdekatan, kecuali timnya sedang menghabisi musuh atau mengikuti target yang ditandai.
 
 Pemanah dan pelempar tombak mengambil tempat tinggi saat aman.
 Bot yang diincar dua lawan, atau yang nyawanya di bawah separuh dan cepat berkurang, bersembunyi dari pandangan mereka hingga tiga detik: di balik dinding, di bawah dek, atau di tempat tinggi.
