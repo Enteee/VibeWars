@@ -4192,7 +4192,7 @@ export const ELEMENTALIST_SKILLS: readonly Skill[] = [
     disabledAfterUseSeconds: undefined,
     profession: "elementalist",
     attributeId: "elementalist.water-magic",
-    // The wiki's 10 Energy; the corpus record reads 5.
+    // 5: reduced from 10 on 2026-04-28 (wiki Vapor Blade/Skill history); the main page infobox still reads 10.
     cost: { kind: "energy", amount: 5 },
     overcast: 5,
     activationSeconds: 1.5,
