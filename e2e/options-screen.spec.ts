@@ -80,6 +80,43 @@ test("(1) Skill 1 bound to Z in Controls casts on Z, not its default key, and su
   await expect(cell(page, "skill-1")).toHaveText("Z");
 });
 
+test("(1b) Skill 1 bound to Shift+X in Controls casts on Shift+X, and plain X casts nothing (#4183)", async ({
+  page,
+}) => {
+  await page.setViewportSize(WIDE);
+  await page.goto("./");
+  await openKeys(page);
+  await cell(page, "skill-1").click();
+  await page.keyboard.down("Shift");
+  await expect(cell(page, "skill-1")).toHaveText("Shift + …");
+  await page.keyboard.press("KeyX");
+  await page.keyboard.up("Shift");
+  await expect(cell(page, "skill-1")).toHaveText("Shift + X");
+  await page.keyboard.press("Escape");
+  await expect(page.locator(".options-screen")).toHaveCount(0);
+
+  await openRail(page, "Character Builder");
+  await page.getByRole("button", { name: "new character" }).click();
+  await chooseProfession(page, "primary", "elementalist");
+  await openLibraryGroup(page, "Fire Magic");
+  await page.locator(".skill-box", { hasText: "Fireball" }).locator(".skill-box-equip").click();
+  // The slot's badge is the compact label, as the HUD's.
+  await expect(page.locator(".training-skill").first()).toHaveText("⇧X");
+  await page.locator(".training-stage").click({ position: { x: 12, y: 12 } });
+  await expect(page.locator(".training")).toHaveClass(/is-armed/);
+
+  // Fireball is a 1 s cast; were X Skill 1, its hit would be in the log
+  // well inside this wait.
+  await page.keyboard.press("KeyX");
+  await page.waitForTimeout(2500);
+  await expect(page.locator(".training-log-row", { hasText: "Fireball" })).toHaveCount(0);
+
+  await page.keyboard.press("Shift+KeyX");
+  await expect(page.locator('.training-log-row[data-tone="damage"]').first()).toContainText(
+    "Fireball",
+  );
+});
+
 test("(2) taking a key from another action empties its cell and says so", async ({ page }) => {
   await page.goto("./");
   await openKeys(page);

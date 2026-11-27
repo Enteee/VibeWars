@@ -52,7 +52,7 @@ export function armedHint(keymap: Keymap, label: KeyLabeller, touch: boolean): s
     ].join(" · ");
   }
   const moves = (["move-up", "move-left", "move-down", "move-right"] as const).map(
-    (action) => keymap[action][0],
+    (action) => keymap[action][0]?.code,
   );
   const move = moves.every((code, index) => code === ARROW_CODES[index])
     ? t("training.hintMoveArrows")

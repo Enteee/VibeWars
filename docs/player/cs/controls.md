@@ -2,6 +2,8 @@
 
 Každou klávesu z tabulky níže můžeš změnit v **Možnostech**, v sekci **ovládání**; Esc, Enter, F10 a tlačítka myši jsou pevná. Vyber tam **Předvolbu**, nebo klikni na políčko klávesy a stiskni požadovanou klávesu; klávesa, která už je použitá, přejde na novou akci a obrazovka ti řekne, která o ni přišla. Změny se ukládají okamžitě.
 
+Klávesa může být i kombinace: podrž Shift, Ctrl nebo Alt a stiskni klávesu, třeba **Shift + X**. Pohyb a Ukázat jména berou jen jednu klávesu a prohlížeč si pár kombinací nechává pro sebe, třeba Ctrl + W. Když držíš Shift kvůli jménům, tvoje obyčejné klávesy dál fungují, pokud ta kombinace se Shift sama není k něčemu přiřazená.
+
 ## Klávesy
 
 Výchozí předvolba je **Klasické**, pro ruce zvyklé na GW1. **VibeWars** sesílá levou rukou a pohybuje se šipkami.

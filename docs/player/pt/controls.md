@@ -6,6 +6,12 @@ Toda tecla da tabela abaixo pode ser trocada em **Opções**, em
 quiser; uma tecla já em uso passa para a nova ação, e a tela diz qual
 ação ficou sem ela. As alterações são salvas na hora.
 
+Uma tecla também pode ser uma combinação: segure Shift, Ctrl ou Alt e
+pressione a tecla, como **Shift + X**. Andar e Mostrar nomes aceitam só uma
+tecla, e o navegador reserva algumas combinações para si, como Ctrl + W.
+Segurar Shift para mostrar nomes ainda deixa suas teclas simples
+funcionarem, a menos que essa combinação com Shift esteja atribuída a algo.
+
 ## Teclas
 
 O perfil padrão é **Clássico**, para mãos acostumadas ao GW1. **VibeWars** usa habilidades com a mão esquerda e anda com as setas.

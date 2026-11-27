@@ -351,6 +351,7 @@ export default {
   "controls.browserKey": "{key} pertence ao navegador.",
   "controls.callTarget": "Anunciar seu alvo",
   "controls.cancelAction": "Cancelar ação; de novo: limpar alvo",
+  "controls.combo": "{mods} + {key}",
   "controls.custom": "Personalizado",
   "controls.displacedKeeps": "{key} era {action}; {action} mantém {left}.",
   "controls.displacedNoKey": "{key} era {action}; {action} agora está sem tecla.",
@@ -368,9 +369,10 @@ export default {
   "controls.preset": "Perfil",
   "controls.presetClassic": "Clássico (habilidades 1-8, mover com WASD)",
   "controls.presetVibeWars": "VibeWars (habilidades Q-F, mover com setas)",
+  "controls.noComboHere": "Esta ação aceita uma única tecla.",
   "controls.pressAKey": "pressione uma tecla...",
-  "controls.shortcutRefusal":
-    "Ctrl, Alt e a tecla Windows/Command nunca são usadas: pertencem ao navegador.",
+  "controls.reservedCombo": "{combo} pertence ao navegador.",
+  "controls.shortcutRefusal": "A tecla Windows/Command nunca é usada: pertence ao sistema.",
   "controls.showNames": "Mostrar nomes (segurar)",
   "controls.skill1": "Habilidade 1",
   "controls.skill2": "Habilidade 2",
@@ -390,7 +392,6 @@ export default {
   "controls.weaponSet3": "Conjunto de armas 3",
   "controls.weaponSet4": "Conjunto de armas 4",
   "controls.weaponSets": "Conjuntos de armas",
-  "controls.withShift": "Shift + {key}",
 
   "cosmetics.item.auraEmber": "Aura de brasa",
   "cosmetics.item.auraFrost": "Aura de geada",
@@ -779,9 +780,11 @@ export default {
   "jukebox.stopPreview": "Parar a prévia",
 
   "keys.alt": "Alt",
+  "keys.altShort": "Alt",
   "keys.backspace": "Backspace",
   "keys.capsLock": "CapsLock",
   "keys.control": "Control",
+  "keys.ctrlShort": "Ctrl",
   "keys.delete": "Delete",
   "keys.end": "End",
   "keys.enter": "Enter",
@@ -792,6 +795,7 @@ export default {
   "keys.pageDown": "PageDown",
   "keys.pageUp": "PageUp",
   "keys.shift": "Shift",
+  "keys.shiftShort": "⇧",
   "keys.space": "Space",
   "keys.tab": "Tab",
 

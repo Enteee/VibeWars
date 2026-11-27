@@ -331,6 +331,7 @@ export default {
   "controls.browserKey": "A(z) {key} a böngészőé.",
   "controls.callTarget": "Célpont bemondása",
   "controls.cancelAction": "Művelet megszakítása; újra: célpont törlése",
+  "controls.combo": "{mods} + {key}",
   "controls.custom": "Egyéni",
   "controls.displacedKeeps": "{key} eddig: {action}; {action} megtartja: {left}.",
   "controls.displacedNoKey": "{key} eddig: {action}; {action} most billentyű nélkül maradt.",
@@ -348,9 +349,10 @@ export default {
   "controls.preset": "Előbeállítás",
   "controls.presetClassic": "Klasszikus (1-8 készségek, WASD mozgás)",
   "controls.presetVibeWars": "VibeWars (Q-F készségek, nyilak mozgás)",
+  "controls.noComboHere": "Ehhez a művelethez csak egyetlen billentyű adható.",
   "controls.pressAKey": "nyomj meg egy billentyűt...",
-  "controls.shortcutRefusal":
-    "A Ctrl, az Alt és a Windows/Command billentyű nem használható: ezek a böngészőé.",
+  "controls.reservedCombo": "A(z) {combo} a böngészőé.",
+  "controls.shortcutRefusal": "A Windows/Command billentyű nem használható: a rendszeré.",
   "controls.showNames": "Nevek mutatása (nyomva tartva)",
   "controls.skill1": "Készség 1",
   "controls.skill2": "Készség 2",
@@ -370,7 +372,6 @@ export default {
   "controls.weaponSet3": "3. fegyverkészlet",
   "controls.weaponSet4": "4. fegyverkészlet",
   "controls.weaponSets": "Fegyverkészletek",
-  "controls.withShift": "Shift + {key}",
 
   "cosmetics.item.auraEmber": "Parázs aura",
   "cosmetics.item.auraFrost": "Dér aura",
@@ -747,9 +748,11 @@ export default {
   "jukebox.stopPreview": "Előnézet leállítása",
 
   "keys.alt": "Alt",
+  "keys.altShort": "Alt",
   "keys.backspace": "Backspace",
   "keys.capsLock": "CapsLock",
   "keys.control": "Control",
+  "keys.ctrlShort": "Ctrl",
   "keys.delete": "Delete",
   "keys.end": "End",
   "keys.enter": "Enter",
@@ -760,6 +763,7 @@ export default {
   "keys.pageDown": "PageDown",
   "keys.pageUp": "PageUp",
   "keys.shift": "Shift",
+  "keys.shiftShort": "⇧",
   "keys.space": "Space",
   "keys.tab": "Tab",
 

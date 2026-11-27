@@ -303,6 +303,7 @@ export default {
   "controls.browserKey": "{key} milik browser.",
   "controls.callTarget": "Umumkan targetmu",
   "controls.cancelAction": "Batalkan aksi; sekali lagi: hapus target",
+  "controls.combo": "{mods} + {key}",
   "controls.custom": "Kustom",
   "controls.displacedKeeps": "{key} tadinya {action}; {action} masih punya {left}.",
   "controls.displacedNoKey": "{key} tadinya {action}; {action} kini tanpa tombol.",
@@ -320,9 +321,10 @@ export default {
   "controls.preset": "Preset",
   "controls.presetClassic": "Klasik (skill 1-8, gerak WASD)",
   "controls.presetVibeWars": "VibeWars (skill Q-F, gerak panah)",
+  "controls.noComboHere": "Aksi ini hanya menerima satu tombol.",
   "controls.pressAKey": "tekan tombol...",
-  "controls.shortcutRefusal":
-    "Ctrl, Alt, dan tombol Windows/Command tidak pernah dipakai: itu milik browser.",
+  "controls.reservedCombo": "{combo} milik browser.",
+  "controls.shortcutRefusal": "Tombol Windows/Command tidak pernah dipakai: itu milik sistem.",
   "controls.showNames": "Tampilkan nama (tahan)",
   "controls.skill1": "Skill 1",
   "controls.skill2": "Skill 2",
@@ -342,7 +344,6 @@ export default {
   "controls.weaponSet3": "Set senjata 3",
   "controls.weaponSet4": "Set senjata 4",
   "controls.weaponSets": "Set senjata",
-  "controls.withShift": "Shift + {key}",
 
   "cosmetics.item.auraEmber": "Aura bara",
   "cosmetics.item.auraFrost": "Aura embun beku",
@@ -700,9 +701,11 @@ export default {
   "jukebox.stopPreview": "Setop pratinjau",
 
   "keys.alt": "Alt",
+  "keys.altShort": "Alt",
   "keys.backspace": "Backspace",
   "keys.capsLock": "CapsLock",
   "keys.control": "Control",
+  "keys.ctrlShort": "Ctrl",
   "keys.delete": "Delete",
   "keys.end": "End",
   "keys.enter": "Enter",
@@ -713,6 +716,7 @@ export default {
   "keys.pageDown": "PageDown",
   "keys.pageUp": "PageUp",
   "keys.shift": "Shift",
+  "keys.shiftShort": "⇧",
   "keys.space": "Space",
   "keys.tab": "Tab",
 

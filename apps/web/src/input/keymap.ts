@@ -4,9 +4,10 @@
  * testable without a browser.
  *
  * Bindings are `KeyboardEvent.code` values, the physical key, never
- * `key`: Q W E R / A S D F keeps its hand shape on AZERTY and QWERTZ, and
- * Shift held with Q is still Q. No keymap binds Ctrl, Alt or Meta, so the
- * browser's own shortcuts (Ctrl+W, Ctrl+R) are never the game's (Q36).
+ * `key`: Q W E R / A S D F keeps its hand shape on AZERTY and QWERTZ. A
+ * binding may hold Ctrl, Alt or Shift with its key (#4183), never Meta;
+ * a press with Ctrl or Alt that no binding holds is the browser's, so
+ * its own shortcuts (Ctrl+W, Ctrl+R) still work (Q36).
  *
  * Esc (cancel) and F10 (leave) are not actions here: they stay fixed, so
  * there is always a way to cancel and a way out.
@@ -83,73 +84,138 @@ export const WEAPON_SET_ACTIONS: readonly KeyAction[] = [
   "weapon-set-4",
 ];
 
-/** `KeyboardEvent.code` values; 0-2 per action; no code appears twice in a map. */
-export type Keymap = Readonly<Record<KeyAction, readonly string[]>>;
+/** A modifier a binding may hold with its key (#4183); Meta never. */
+export type Modifier = "ctrl" | "alt" | "shift";
+
+/** The modifiers in the one order a binding lists them, and a label names them. */
+export const MODIFIERS: readonly Modifier[] = ["ctrl", "alt", "shift"];
+
+/**
+ * A key and the modifiers held with it: `code` is a `KeyboardEvent.code`,
+ * `mods` unique, in `MODIFIERS` order, empty for a plain key. Its
+ * identity is both, so Shift+X and X are two keys.
+ */
+export interface KeyBinding {
+  readonly code: string;
+  readonly mods: readonly Modifier[];
+}
+
+/** 0-2 bindings per action; no binding appears twice in a map. */
+export type Keymap = Readonly<Record<KeyAction, readonly KeyBinding[]>>;
+
+/** Plain keys: `code`s with no modifier held. */
+function plain(...codes: string[]): KeyBinding[] {
+  return codes.map((code) => ({ code, mods: [] }));
+}
+
+/** Actions held rather than pressed, which take a single key (#4183). */
+export const SINGLE_KEY_ACTIONS: readonly KeyAction[] = [
+  "move-up",
+  "move-down",
+  "move-left",
+  "move-right",
+  "show-names",
+];
+
+/** Combinations the browser or the OS keeps, which a page never sees (#4183). */
+export const RESERVED_COMBOS: readonly KeyBinding[] = [
+  { code: "KeyW", mods: ["ctrl"] },
+  { code: "KeyT", mods: ["ctrl"] },
+  { code: "KeyN", mods: ["ctrl"] },
+  { code: "KeyQ", mods: ["ctrl"] },
+  { code: "Tab", mods: ["ctrl"] },
+  { code: "Tab", mods: ["ctrl", "shift"] },
+  { code: "KeyW", mods: ["ctrl", "shift"] },
+  { code: "KeyT", mods: ["ctrl", "shift"] },
+  { code: "KeyN", mods: ["ctrl", "shift"] },
+  { code: "KeyQ", mods: ["ctrl", "shift"] },
+  { code: "F4", mods: ["alt"] },
+  { code: "Tab", mods: ["alt"] },
+];
+
+/** Whether `a` and `b` are the same key: one code, one modifier set. */
+export function sameBinding(a: KeyBinding, b: KeyBinding): boolean {
+  return (
+    a.code === b.code &&
+    a.mods.length === b.mods.length &&
+    a.mods.every((mod, i) => mod === b.mods[i])
+  );
+}
+
+/** Whether `binding` is a combination the browser keeps. */
+export function isReservedCombo(binding: KeyBinding): boolean {
+  return RESERVED_COMBOS.some((reserved) => sameBinding(reserved, binding));
+}
+
+/** Whether `code` is a modifier key itself, of either side. */
+export function isModifierCode(code: string): boolean {
+  return /^(?:Shift|Control|Alt|Meta|OS)/.test(code);
+}
 
 /** How many codes one action may have: a key and a second set. */
 export const MAX_CODES_PER_ACTION = 2;
 
 const SHARED = {
-  "target-next": ["Tab"],
-  "target-closest": ["KeyC"],
-  "target-called": ["KeyT"],
-  "target-self": ["KeyG"],
-  attack: ["Space"],
+  "target-next": plain("Tab"),
+  "target-closest": plain("KeyC"),
+  "target-called": plain("KeyT"),
+  "target-self": plain("KeyG"),
+  attack: plain("Space"),
   // The wheel click does both (#443); a key is for a mouse without one,
   // so none is taken from anything else by default.
-  "call-target": [],
-  ping: [],
-  "show-names": ["ShiftLeft", "ShiftRight"],
-  mute: ["KeyM"],
+  "call-target": plain(),
+  ping: plain(),
+  "show-names": plain("ShiftLeft", "ShiftRight"),
+  mute: plain("KeyM"),
   // The Drop button above the health bar does it (#1225); a key is for
   // whoever wants one.
-  "drop-bundle": [],
-} as const satisfies Partial<Keymap>;
+  "drop-bundle": plain(),
+} satisfies Partial<Keymap>;
 
 export const KEYMAP_PRESETS: Readonly<Record<"vibewars" | "classic", Keymap>> = {
   // GW1 muscle memory: skills on the number row, WASD moves.
   classic: {
-    "skill-1": ["Digit1"],
-    "skill-2": ["Digit2"],
-    "skill-3": ["Digit3"],
-    "skill-4": ["Digit4"],
-    "skill-5": ["Digit5"],
-    "skill-6": ["Digit6"],
-    "skill-7": ["Digit7"],
-    "skill-8": ["Digit8"],
-    "move-up": ["KeyW", "ArrowUp"],
-    "move-down": ["KeyS", "ArrowDown"],
-    "move-left": ["KeyA", "ArrowLeft"],
-    "move-right": ["KeyD", "ArrowRight"],
+    "skill-1": plain("Digit1"),
+    "skill-2": plain("Digit2"),
+    "skill-3": plain("Digit3"),
+    "skill-4": plain("Digit4"),
+    "skill-5": plain("Digit5"),
+    "skill-6": plain("Digit6"),
+    "skill-7": plain("Digit7"),
+    "skill-8": plain("Digit8"),
+    "move-up": plain("KeyW", "ArrowUp"),
+    "move-down": plain("KeyS", "ArrowDown"),
+    "move-left": plain("KeyA", "ArrowLeft"),
+    "move-right": plain("KeyD", "ArrowRight"),
     // GW1's own keys (#489): the browser's help and find give way in a match.
-    "weapon-set-1": ["F1"],
-    "weapon-set-2": ["F2"],
-    "weapon-set-3": ["F3"],
-    "weapon-set-4": ["F4"],
+    "weapon-set-1": plain("F1"),
+    "weapon-set-2": plain("F2"),
+    "weapon-set-3": plain("F3"),
+    "weapon-set-4": plain("F4"),
     ...SHARED,
     // F is Yourself in GW1 (#3629); G stays, as in VibeWars.
-    "target-self": ["KeyF", "KeyG"],
+    "target-self": plain("KeyF", "KeyG"),
   },
   // The left hand casts on two rows; the right moves, on the arrows (and,
   // with #310, the mouse).
   vibewars: {
-    "skill-1": ["KeyQ"],
-    "skill-2": ["KeyW"],
-    "skill-3": ["KeyE"],
-    "skill-4": ["KeyR"],
-    "skill-5": ["KeyA"],
-    "skill-6": ["KeyS"],
-    "skill-7": ["KeyD"],
-    "skill-8": ["KeyF"],
-    "move-up": ["ArrowUp"],
-    "move-down": ["ArrowDown"],
-    "move-left": ["ArrowLeft"],
-    "move-right": ["ArrowRight"],
+    "skill-1": plain("KeyQ"),
+    "skill-2": plain("KeyW"),
+    "skill-3": plain("KeyE"),
+    "skill-4": plain("KeyR"),
+    "skill-5": plain("KeyA"),
+    "skill-6": plain("KeyS"),
+    "skill-7": plain("KeyD"),
+    "skill-8": plain("KeyF"),
+    "move-up": plain("ArrowUp"),
+    "move-down": plain("ArrowDown"),
+    "move-left": plain("ArrowLeft"),
+    "move-right": plain("ArrowRight"),
     // The number row is free here (#489): skills sit on QWER and ASDF.
-    "weapon-set-1": ["Digit1"],
-    "weapon-set-2": ["Digit2"],
-    "weapon-set-3": ["Digit3"],
-    "weapon-set-4": ["Digit4"],
+    "weapon-set-1": plain("Digit1"),
+    "weapon-set-2": plain("Digit2"),
+    "weapon-set-3": plain("Digit3"),
+    "weapon-set-4": plain("Digit4"),
     ...SHARED,
   },
 };
@@ -186,18 +252,50 @@ export function isBindable(code: string): boolean {
   );
 }
 
-/** The action `code` is bound to in `map`, if any. */
-export function actionForCode(map: Keymap, code: string): KeyAction | undefined {
-  return KEY_ACTIONS.find((action) => map[action].includes(code));
+/** The action `binding` is on in `map`, if any. */
+export function actionForBinding(map: Keymap, binding: KeyBinding): KeyAction | undefined {
+  return KEY_ACTIONS.find((action) => map[action].some((bound) => sameBinding(bound, binding)));
+}
+
+export type KeyPress = Pick<KeyboardEvent, "code" | "ctrlKey" | "altKey" | "shiftKey" | "metaKey">;
+
+/** The modifiers `press` holds, in `MODIFIERS` order; either side counts. */
+export function modsOf(press: Pick<KeyboardEvent, "ctrlKey" | "altKey" | "shiftKey">): Modifier[] {
+  return MODIFIERS.filter((mod) =>
+    mod === "ctrl" ? press.ctrlKey : mod === "alt" ? press.altKey : press.shiftKey,
+  );
 }
 
 /**
- * Whether a keydown is a browser shortcut: Ctrl, Alt or Meta held. Such a
- * press triggers no action and is never `preventDefault`ed. Shift does
- * not count; it is a game key.
+ * The action a keydown fires (#4183), or `undefined` for none: the one
+ * bound to its code with exactly the modifiers held; else, with Shift
+ * alone held, the one bound to the bare code, so skills still fire while
+ * Shift shows names; else none, so a press with Ctrl or Alt and no
+ * binding for it stays the browser's shortcut. Meta held fires nothing.
  */
-export function isShortcut(event: Pick<KeyboardEvent, "ctrlKey" | "altKey" | "metaKey">): boolean {
-  return event.ctrlKey || event.altKey || event.metaKey;
+export function actionForEvent(map: Keymap, press: KeyPress): KeyAction | undefined {
+  if (press.metaKey) {
+    return undefined;
+  }
+  const mods = modsOf(press);
+  return (
+    actionForBinding(map, { code: press.code, mods }) ??
+    (mods.length === 1 && mods[0] === "shift"
+      ? actionForBinding(map, { code: press.code, mods: [] })
+      : undefined)
+  );
+}
+
+/**
+ * Whether `actionForEvent` found `press`'s action by its bare code with
+ * Shift held, as Shift with Next target's key cycles backwards (#3630).
+ */
+export function isShiftedPlain(map: Keymap, press: KeyPress): boolean {
+  return (
+    press.shiftKey &&
+    !press.metaKey &&
+    actionForBinding(map, { code: press.code, mods: modsOf(press) }) === undefined
+  );
 }
 
 const ARROWS: Readonly<Record<string, string>> = {
@@ -247,24 +345,91 @@ export function codeLabel(code: string): string {
   return word === undefined ? name : t(word);
 }
 
+const MOD_LABELS: Readonly<Record<Modifier, MessageKey>> = {
+  ctrl: "keys.control",
+  alt: "keys.alt",
+  shift: "keys.shift",
+};
+
+const MOD_SHORT_LABELS: Readonly<Record<Modifier, MessageKey>> = {
+  ctrl: "keys.ctrlShort",
+  alt: "keys.altShort",
+  shift: "keys.shiftShort",
+};
+
+/**
+ * A binding's label (#4183): its key's, after its modifiers, as
+ * "Shift + X"; `compact` for a narrow badge, as "⇧X" or "Ctrl X".
+ *
+ * @param label how a code reads; `codeLabel` until the layout is known
+ */
+export function bindingLabel(
+  binding: KeyBinding,
+  compact = false,
+  label: (code: string) => string = codeLabel,
+): string {
+  const key = label(binding.code);
+  if (binding.mods.length === 0) {
+    return key;
+  }
+  if (compact) {
+    const short = binding.mods.map((mod) =>
+      mod === "shift" ? t(MOD_SHORT_LABELS[mod]) : `${t(MOD_SHORT_LABELS[mod])} `,
+    );
+    return `${short.join("")}${key}`;
+  }
+  const mods = binding.mods.map((mod) => t(MOD_LABELS[mod])).join(" + ");
+  return t("controls.combo", { mods, key });
+}
+
 /**
  * The label of the first key bound to `action`, or "" when none is.
  *
  * @param label how a code reads; `codeLabel` until the layout is known
+ * @param compact for a narrow badge, as `bindingLabel`'s
  */
 export function actionLabel(
   map: Keymap,
   action: KeyAction,
   label: (code: string) => string = codeLabel,
+  compact = false,
 ): string {
-  const code = map[action][0];
-  return code === undefined ? "" : label(code);
+  const binding = map[action][0];
+  return binding === undefined ? "" : bindingLabel(binding, compact, label);
+}
+
+/** `value` as a binding `action` may take, else `undefined`: nothing is repaired. */
+function parseBinding(value: unknown, action: KeyAction): KeyBinding | undefined {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) {
+    return undefined;
+  }
+  const { code, mods, ...rest } = value as { code?: unknown; mods?: unknown };
+  if (
+    Object.keys(rest).length > 0 ||
+    typeof code !== "string" ||
+    !isBindable(code) ||
+    !Array.isArray(mods)
+  ) {
+    return undefined;
+  }
+  const kept = MODIFIERS.filter((mod) => (mods as readonly unknown[]).includes(mod));
+  const binding = { code, mods: kept };
+  // Unsorted, repeated or unknown modifiers are as malformed as a missing code.
+  if (
+    kept.length !== mods.length ||
+    kept.some((mod, i) => mods[i] !== mod) ||
+    (kept.length > 0 && (isModifierCode(code) || SINGLE_KEY_ACTIONS.includes(action))) ||
+    isReservedCombo(binding)
+  ) {
+    return undefined;
+  }
+  return binding;
 }
 
 /**
  * A Keymap if `value` is a valid one, else `undefined`: every action
- * present and nothing else, only bindable codes, none twice, at most
- * `MAX_CODES_PER_ACTION` per action. Nothing is repaired.
+ * present and nothing else, only bindable keys and combinations, none
+ * twice, at most `MAX_CODES_PER_ACTION` per action. Nothing is repaired.
  */
 export function parseKeymap(value: unknown): Keymap | undefined {
   if (typeof value !== "object" || value === null || Array.isArray(value)) {
@@ -274,20 +439,21 @@ export function parseKeymap(value: unknown): Keymap | undefined {
   if (entries.length !== KEY_ACTIONS.length) {
     return undefined;
   }
-  const seen = new Set<string>();
-  const map: Partial<Record<KeyAction, readonly string[]>> = {};
-  for (const [action, codes] of entries) {
+  const seen: KeyBinding[] = [];
+  const map: Partial<Record<KeyAction, readonly KeyBinding[]>> = {};
+  for (const [action, bindings] of entries) {
     const known = KEY_ACTIONS.find((candidate) => candidate === action);
-    if (known === undefined || !Array.isArray(codes) || codes.length > MAX_CODES_PER_ACTION) {
+    if (known === undefined || !Array.isArray(bindings) || bindings.length > MAX_CODES_PER_ACTION) {
       return undefined;
     }
-    const kept: string[] = [];
-    for (const code of codes as readonly unknown[]) {
-      if (typeof code !== "string" || !isBindable(code) || seen.has(code)) {
+    const kept: KeyBinding[] = [];
+    for (const value of bindings as readonly unknown[]) {
+      const binding = parseBinding(value, known);
+      if (binding === undefined || seen.some((other) => sameBinding(other, binding))) {
         return undefined;
       }
-      seen.add(code);
-      kept.push(code);
+      seen.push(binding);
+      kept.push(binding);
     }
     map[known] = kept;
   }
@@ -297,33 +463,45 @@ export function parseKeymap(value: unknown): Keymap | undefined {
 /** A rebound keymap, and the action that lost the key to it, if one did. */
 export interface Rebind {
   readonly map: Keymap;
-  readonly displaced?: { readonly action: KeyAction; readonly code: string };
+  readonly displaced?: { readonly action: KeyAction; readonly binding: KeyBinding };
 }
 
 /**
- * Bind `code` to `action`'s cell `index` (0 primary, 1 secondary), moving
- * it off any other action. `code === null` clears. Throws on a
- * non-bindable code: callers check `isBindable` first.
+ * Bind `binding` to `action`'s cell `index` (0 primary, 1 secondary),
+ * moving it off any other action. `binding === null` clears. Throws on
+ * a key that is never bound, or a combination `action` cannot take:
+ * callers check first.
  *
  * A key is never on two actions, so binding a taken one moves it; there
  * is no swap. A cleared primary with a secondary set promotes the
  * secondary, so an action's first key is always its primary.
  */
-export function rebind(map: Keymap, action: KeyAction, index: 0 | 1, code: string | null): Rebind {
-  if (code !== null && !isBindable(code)) {
-    throw new Error(`${code} can never be bound`);
+export function rebind(
+  map: Keymap,
+  action: KeyAction,
+  index: 0 | 1,
+  binding: KeyBinding | null,
+): Rebind {
+  if (
+    binding !== null &&
+    (!isBindable(binding.code) ||
+      (binding.mods.length > 0 &&
+        (isModifierCode(binding.code) || SINGLE_KEY_ACTIONS.includes(action))) ||
+      isReservedCombo(binding))
+  ) {
+    throw new Error(`${binding.mods.join("+")} ${binding.code} can never be bound to ${action}`);
   }
-  const owner = code === null ? undefined : actionForCode(map, code);
-  const next: Record<KeyAction, readonly string[]> = { ...map };
-  if (owner !== undefined) {
-    next[owner] = map[owner].filter((bound) => bound !== code);
+  const owner = binding === null ? undefined : actionForBinding(map, binding);
+  const next: Record<KeyAction, readonly KeyBinding[]> = { ...map };
+  if (owner !== undefined && binding !== null) {
+    next[owner] = map[owner].filter((bound) => !sameBinding(bound, binding));
   }
   const cells = [next[action][0], next[action][1]];
-  cells[index] = code ?? undefined;
-  next[action] = cells.filter((bound): bound is string => bound !== undefined);
-  return owner === undefined || owner === action || code === null
+  cells[index] = binding ?? undefined;
+  next[action] = cells.filter((bound): bound is KeyBinding => bound !== undefined);
+  return owner === undefined || owner === action || binding === null
     ? { map: next }
-    : { map: next, displaced: { action: owner, code } };
+    : { map: next, displaced: { action: owner, binding } };
 }
 
 /** Which preset `map` is, key for key, or `undefined` for a custom one. */
@@ -332,8 +510,14 @@ export function presetOf(map: Keymap): keyof typeof KEYMAP_PRESETS | undefined {
   return names.find((name) =>
     KEY_ACTIONS.every((action) => {
       const preset = KEYMAP_PRESETS[name][action];
-      const codes = map[action];
-      return codes.length === preset.length && codes.every((code, i) => code === preset[i]);
+      const bindings = map[action];
+      return (
+        bindings.length === preset.length &&
+        bindings.every((binding, i) => {
+          const other = preset[i];
+          return other !== undefined && sameBinding(binding, other);
+        })
+      );
     }),
   );
 }

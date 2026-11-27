@@ -359,6 +359,7 @@ export default {
   "controls.browserKey": "{key} patří prohlížeči.",
   "controls.callTarget": "Ohlásit cíl",
   "controls.cancelAction": "Zrušit akci; znovu: zrušit cíl",
+  "controls.combo": "{mods} + {key}",
   "controls.custom": "Vlastní",
   "controls.displacedKeeps": "{key} byla {action}; {action} si nechává {left}.",
   "controls.displacedNoKey": "{key} byla {action}; {action} teď nemá klávesu.",
@@ -376,9 +377,10 @@ export default {
   "controls.preset": "Předvolba",
   "controls.presetClassic": "Klasické (dovednosti 1-8, pohyb WASD)",
   "controls.presetVibeWars": "VibeWars (dovednosti Q-F, pohyb šipkami)",
+  "controls.noComboHere": "Tato akce přijímá jen jednu klávesu.",
   "controls.pressAKey": "stiskni klávesu...",
-  "controls.shortcutRefusal":
-    "Ctrl, Alt a klávesa Windows/Command se nikdy nepoužívají: patří prohlížeči.",
+  "controls.reservedCombo": "{combo} patří prohlížeči.",
+  "controls.shortcutRefusal": "Klávesa Windows/Command se nikdy nepoužívá: patří systému.",
   "controls.showNames": "Ukázat jména (držet)",
   "controls.skill1": "Dovednost 1",
   "controls.skill2": "Dovednost 2",
@@ -398,7 +400,6 @@ export default {
   "controls.weaponSet3": "Sada zbraní 3",
   "controls.weaponSet4": "Sada zbraní 4",
   "controls.weaponSets": "Sady zbraní",
-  "controls.withShift": "Shift + {key}",
 
   "cosmetics.item.auraEmber": "Žhavá aura",
   "cosmetics.item.auraFrost": "Mrazivá aura",
@@ -795,9 +796,11 @@ export default {
   "jukebox.stopPreview": "Zastavit ukázku",
 
   "keys.alt": "Alt",
+  "keys.altShort": "Alt",
   "keys.backspace": "Backspace",
   "keys.capsLock": "CapsLock",
   "keys.control": "Control",
+  "keys.ctrlShort": "Ctrl",
   "keys.delete": "Delete",
   "keys.end": "End",
   "keys.enter": "Enter",
@@ -808,6 +811,7 @@ export default {
   "keys.pageDown": "PageDown",
   "keys.pageUp": "PageUp",
   "keys.shift": "Shift",
+  "keys.shiftShort": "⇧",
   "keys.space": "Space",
   "keys.tab": "Tab",
 

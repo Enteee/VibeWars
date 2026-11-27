@@ -6,6 +6,12 @@ Svaku tipku iz tablice ispod možeš promijeniti u **Opcijama**, pod
 koja je već zauzeta prelazi na novu radnju, a zaslon kaže koja ju je
 izgubila. Promjene se spremaju odmah.
 
+Tipka može biti i kombinacija: drži Shift, Ctrl ili Alt i pritisni tipku,
+npr. **Shift + X**. Kretanje i Prikaži imena primaju samo jednu tipku, a
+preglednik zadržava nekoliko kombinacija za sebe, npr. Ctrl + W. Dok držiš
+Shift za prikaz imena, tvoje obične tipke i dalje rade, osim ako je ta
+kombinacija sa Shiftom sama dodijeljena nečemu.
+
 ## Tipke
 
 Zadani predložak je **Klasično**, za ruke naviknute na GW1. **VibeWars** baca vještine lijevom rukom i kreće se strelicama.

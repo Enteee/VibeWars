@@ -329,6 +329,7 @@ export default {
   "controls.browserKey": "{key} tilhører browseren.",
   "controls.callTarget": "Udpeg dit mål",
   "controls.cancelAction": "Annullér handling; igen: ryd mål",
+  "controls.combo": "{mods} + {key}",
   "controls.custom": "Egen",
   "controls.displacedKeeps": "{key} var {action}; {action} beholder {left}.",
   "controls.displacedNoKey": "{key} var {action}; {action} har nu ingen tast.",
@@ -346,9 +347,10 @@ export default {
   "controls.preset": "Forvalg",
   "controls.presetClassic": "Klassisk (evner 1-8, WASD flytter)",
   "controls.presetVibeWars": "VibeWars (evner Q-F, piletaster flytter)",
+  "controls.noComboHere": "Denne handling tager kun én tast.",
   "controls.pressAKey": "tryk på en tast...",
-  "controls.shortcutRefusal":
-    "Ctrl, Alt og Windows/Command-tasten bruges aldrig: de tilhører browseren.",
+  "controls.reservedCombo": "{combo} tilhører browseren.",
+  "controls.shortcutRefusal": "Windows/Command-tasten bruges aldrig: den tilhører systemet.",
   "controls.showNames": "Vis navne (hold)",
   "controls.skill1": "Evne 1",
   "controls.skill2": "Evne 2",
@@ -368,7 +370,6 @@ export default {
   "controls.weaponSet3": "Våbensæt 3",
   "controls.weaponSet4": "Våbensæt 4",
   "controls.weaponSets": "Våbensæt",
-  "controls.withShift": "Shift + {key}",
 
   "cosmetics.item.auraEmber": "Glødeaura",
   "cosmetics.item.auraFrost": "Frostaura",
@@ -742,9 +743,11 @@ export default {
   "jukebox.stopPreview": "Stop afspilningen",
 
   "keys.alt": "Alt",
+  "keys.altShort": "Alt",
   "keys.backspace": "Backspace",
   "keys.capsLock": "CapsLock",
   "keys.control": "Control",
+  "keys.ctrlShort": "Ctrl",
   "keys.delete": "Delete",
   "keys.end": "End",
   "keys.enter": "Enter",
@@ -755,6 +758,7 @@ export default {
   "keys.pageDown": "PageDown",
   "keys.pageUp": "PageUp",
   "keys.shift": "Shift",
+  "keys.shiftShort": "⇧",
   "keys.space": "Space",
   "keys.tab": "Tab",
 

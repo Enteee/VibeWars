@@ -359,6 +359,7 @@ export default {
   "controls.browserKey": "{key} занята браузером.",
   "controls.callTarget": "Отметить цель",
   "controls.cancelAction": "Отмена действия; ещё раз: сброс цели",
+  "controls.combo": "{mods} + {key}",
   "controls.custom": "Своя",
   "controls.displacedKeeps": "{key} было: {action}; у {action} осталось {left}.",
   "controls.displacedNoKey": "{key} было: {action}; теперь у {action} нет клавиши.",
@@ -376,9 +377,10 @@ export default {
   "controls.preset": "Раскладка",
   "controls.presetClassic": "Классика (навыки 1-8, WASD — движение)",
   "controls.presetVibeWars": "VibeWars (навыки Q-F, стрелки — движение)",
+  "controls.noComboHere": "Это действие принимает только одну клавишу.",
   "controls.pressAKey": "нажми клавишу...",
-  "controls.shortcutRefusal":
-    "Ctrl, Alt и клавиша Windows/Command не используются: они заняты браузером.",
+  "controls.reservedCombo": "{combo} занято браузером.",
+  "controls.shortcutRefusal": "Клавиша Windows/Command не используется: она занята системой.",
   "controls.showNames": "Имена (удержание)",
   "controls.skill1": "Навык 1",
   "controls.skill2": "Навык 2",
@@ -398,7 +400,6 @@ export default {
   "controls.weaponSet3": "Набор оружия 3",
   "controls.weaponSet4": "Набор оружия 4",
   "controls.weaponSets": "Наборы оружия",
-  "controls.withShift": "Shift + {key}",
 
   "cosmetics.item.auraEmber": "Аура углей",
   "cosmetics.item.auraFrost": "Морозная аура",
@@ -796,9 +797,11 @@ export default {
   "jukebox.stopPreview": "Остановить прослушивание",
 
   "keys.alt": "Alt",
+  "keys.altShort": "Alt",
   "keys.backspace": "Backspace",
   "keys.capsLock": "CapsLock",
   "keys.control": "Control",
+  "keys.ctrlShort": "Ctrl",
   "keys.delete": "Delete",
   "keys.end": "End",
   "keys.enter": "Enter",
@@ -809,6 +812,7 @@ export default {
   "keys.pageDown": "PageDown",
   "keys.pageUp": "PageUp",
   "keys.shift": "Shift",
+  "keys.shiftShort": "⇧",
   "keys.space": "Space",
   "keys.tab": "Tab",
 

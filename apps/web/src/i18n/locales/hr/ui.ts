@@ -349,6 +349,7 @@ export default {
   "controls.browserKey": "{key} pripada pregledniku.",
   "controls.callTarget": "Označi svoju metu",
   "controls.cancelAction": "Prekini radnju; ponovno: makni metu",
+  "controls.combo": "{mods} + {key}",
   "controls.custom": "Prilagođeno",
   "controls.displacedKeeps": "{key} je bila tipka za: {action}; {action} zadržava {left}.",
   "controls.displacedNoKey": "{key} je bila tipka za: {action}; {action} sad nema tipku.",
@@ -366,9 +367,10 @@ export default {
   "controls.preset": "Predložak",
   "controls.presetClassic": "Klasično (vještine 1-8, kretanje WASD)",
   "controls.presetVibeWars": "VibeWars (vještine Q-F, kretanje strelicama)",
+  "controls.noComboHere": "Ova radnja prima samo jednu tipku.",
   "controls.pressAKey": "pritisni tipku...",
-  "controls.shortcutRefusal":
-    "Ctrl, Alt i tipka Windows/Command nikad se ne koriste: pripadaju pregledniku.",
+  "controls.reservedCombo": "{combo} pripada pregledniku.",
+  "controls.shortcutRefusal": "Tipka Windows/Command nikad se ne koristi: pripada sustavu.",
   "controls.showNames": "Prikaži imena (drži)",
   "controls.skill1": "Vještina 1",
   "controls.skill2": "Vještina 2",
@@ -388,7 +390,6 @@ export default {
   "controls.weaponSet3": "Komplet oružja 3",
   "controls.weaponSet4": "Komplet oružja 4",
   "controls.weaponSets": "Kompleti oružja",
-  "controls.withShift": "Shift + {key}",
 
   "cosmetics.item.auraEmber": "Aura žeravice",
   "cosmetics.item.auraFrost": "Aura mraza",
@@ -777,9 +778,11 @@ export default {
   "jukebox.stopPreview": "Zaustavi pregled",
 
   "keys.alt": "Alt",
+  "keys.altShort": "Alt",
   "keys.backspace": "Backspace",
   "keys.capsLock": "CapsLock",
   "keys.control": "Control",
+  "keys.ctrlShort": "Ctrl",
   "keys.delete": "Delete",
   "keys.end": "End",
   "keys.enter": "Enter",
@@ -790,6 +793,7 @@ export default {
   "keys.pageDown": "PageDown",
   "keys.pageUp": "PageUp",
   "keys.shift": "Shift",
+  "keys.shiftShort": "⇧",
   "keys.space": "Space",
   "keys.tab": "Tab",
 
