@@ -382,7 +382,7 @@ describe("in flight, and on its caster (#1761)", () => {
 
   it.each([
     ["a spell", "elementalist.shard-storm", "elementalist", "shard-storm", 5],
-    ["an attack skill", "ranger.crippling-shot", "ranger", "crippled", 10],
+    ["an attack skill", "ranger.crippling-shot", "ranger", "crippled", 12],
   ] as const)(
     "%s that flies lands with the boost it was cast with",
     (_, id, profession, status, base) => {

@@ -478,13 +478,13 @@ describe("the four shots (#1008)", () => {
     expect(foe.statuses.get("dazed")?.remainingSeconds).toBeGreaterThan(16);
   });
 
-  it("Crippling Shot cripples for 10 s through Lightning Reflexes, never blocked", () => {
+  it("Crippling Shot cripples for 12 s through Lightning Reflexes, never blocked", () => {
     for (let seed = 0; seed < 10; seed += 1) {
       const match = sim(`unblockable-${String(seed)}`);
       combatant(match, "t").statuses.apply("lightning-reflexes", 1000, "t", NO_RANKS);
       const landed = shoot(match, 1);
       expect(kinds(landed)).toEqual(["damage", "status-applied"]);
-      expect(combatant(match, "t").statuses.get("crippled")?.durationSeconds).toBe(10);
+      expect(combatant(match, "t").statuses.get("crippled")?.durationSeconds).toBe(12);
     }
   });
 
@@ -521,11 +521,11 @@ describe("the four shots (#1008)", () => {
     expect(combatant(drained, "t").energy).toBe(0);
   });
 
-  it("Burning Arrow hits 26 harder than a plain arrow on the same roll, and burns for 6 s", () => {
+  it("Burning Arrow hits 26 harder than a plain arrow on the same roll, and burns for 7 s", () => {
     const burning = sim("same-roll");
     const burnt = shoot(burning, 3);
     expect(kinds(burnt)).toEqual(["damage", "status-applied"]);
-    expect(combatant(burning, "t").statuses.get("burning")?.durationSeconds).toBe(6);
+    expect(combatant(burning, "t").statuses.get("burning")?.durationSeconds).toBe(7);
 
     const plain = sim("same-roll");
     const crippled = shoot(plain, 1);
