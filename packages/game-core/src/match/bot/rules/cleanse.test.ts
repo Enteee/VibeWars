@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import { vec2 } from "../../../vec2.js";
-import type { ParticipantSpec } from "../../simulation.js";
+import { NO_RANKS, type StatusId } from "../../../skills/status.js";
+import type { MatchSimulation, ParticipantSpec } from "../../simulation.js";
 import { DT, MONK, WARRIOR, askBot, fighter, match, skillsUsed } from "./test-support.js";
 
 describe("play-build cleanses (#1189)", () => {
@@ -73,5 +74,62 @@ describe("play-build Recovery (#2491)", () => {
       bleeder("ally"),
     ]);
     expect(skillsUsed(sim, "rit", 2)).toEqual([]);
+  });
+});
+
+describe("play-build cleanse order (#4207)", () => {
+  /** Puts `status` on `id`, as a foe's hex or condition lands. */
+  function lands(sim: MatchSimulation, id: string, status: StatusId): void {
+    sim.get(id)?.combatant.statuses.apply(status, 10, "foe", NO_RANKS);
+  }
+
+  /** A monk with `bar`, an ally near it and one further off, both in range. */
+  function party(bar: readonly string[], nearHealth = 1, farHealth = 1): MatchSimulation {
+    return match([
+      fighter("m", 0, MONK, vec2(400, 400), { skillBar: [...bar] }),
+      fighter("near", 0, WARRIOR, vec2(480, 400), {
+        behaviour: undefined,
+        startHealthFraction: nearHealth,
+      }),
+      fighter("far", 0, WARRIOR, vec2(700, 400), {
+        behaviour: undefined,
+        startHealthFraction: farHealth,
+      }),
+    ]);
+  }
+
+  it("takes Backfire off the far ally before a plain hex off the near one", () => {
+    const sim = party(["monk.remove-hex"]);
+    lands(sim, "near", "diversion");
+    lands(sim, "far", "backfire");
+    expect(askBot(sim, "m")).toMatchObject({ useSkillId: "monk.remove-hex", targetId: "far" });
+  });
+
+  it("takes the costlier punishing hex first: Backfire (119) before Empathy (39)", () => {
+    const sim = party(["monk.remove-hex"]);
+    lands(sim, "near", "empathy");
+    lands(sim, "far", "backfire");
+    expect(askBot(sim, "m")).toMatchObject({ useSkillId: "monk.remove-hex", targetId: "far" });
+  });
+
+  it("without a punishing hex, cleanses the most hurt ally first", () => {
+    const sim = party(["monk.remove-hex"], 0.9, 0.5);
+    lands(sim, "near", "diversion");
+    lands(sim, "far", "diversion");
+    expect(askBot(sim, "m")).toMatchObject({ useSkillId: "monk.remove-hex", targetId: "far" });
+  });
+
+  it("at equal health, cleanses the nearer ally", () => {
+    const sim = party(["monk.remove-hex"]);
+    lands(sim, "near", "diversion");
+    lands(sim, "far", "diversion");
+    expect(askBot(sim, "m")).toMatchObject({ useSkillId: "monk.remove-hex", targetId: "near" });
+  });
+
+  it("skips a Backfired ally its bar cannot help for one with a condition", () => {
+    const sim = party(["monk.mend-condition"]);
+    lands(sim, "near", "backfire");
+    lands(sim, "far", "bleeding");
+    expect(askBot(sim, "m")).toMatchObject({ useSkillId: "monk.mend-condition", targetId: "far" });
   });
 });
