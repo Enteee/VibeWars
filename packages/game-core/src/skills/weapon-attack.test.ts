@@ -807,21 +807,17 @@ describe("block (#534)", () => {
         "warrior.axe-mastery",
         target,
       );
+      const chop = mitigate(
+        skillDamage(16, "typeless", 0),
+        target,
+        RULES,
+        null,
+        createRng(1),
+        new Map(),
+      );
       expect(events).toEqual([
         { kind: "attack-blocked", targetId: "t" },
-        {
-          kind: "damage",
-          targetId: "t",
-          amount: mitigate(
-            skillDamage(16, "typeless", 0),
-            target,
-            RULES,
-            null,
-            createRng(1),
-            new Map(),
-          ),
-          critical: false,
-        },
+        { kind: "damage", targetId: "t", amount: chop, unreduced: chop, critical: false },
         { kind: "status-applied", targetId: "t", statusId: "deep-wound", durationSeconds: 20 },
         // 20% of 500 off current health as it lands (#764), not as damage (#800).
         { kind: "health-lost", targetId: "t", amount: 100, statusId: "deep-wound" },

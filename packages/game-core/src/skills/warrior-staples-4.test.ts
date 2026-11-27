@@ -262,7 +262,7 @@ describe("Berserker Stance (#2181)", () => {
     selfCast("warrior.berserker-stance", caster);
     expect(caster.statuses.get("berserker-stance")?.remainingSeconds).toBe(13);
     expect(aggregateModifiers(caster.statuses.active).attackDurationMultiplier).toBe(0.67);
-    fillPools(caster, ADRENALINE_PER_STRIKE);
+    fillPools(caster, ADRENALINE_PER_STRIKE, true);
     expect(caster.adrenaline.get("warrior.crippling-slash")).toBe(2 * ADRENALINE_PER_STRIKE);
   });
 });
