@@ -841,6 +841,7 @@ describe("follow-and-attack (#467)", () => {
       targetId: undefined,
       useSkillId: undefined,
       attackTargetId: undefined,
+      stopAttack: false,
       applyStatuses: [],
       endUpkeep: undefined,
     });

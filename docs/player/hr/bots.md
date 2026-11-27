@@ -47,6 +47,8 @@ Protiv tima s vještinama na području, botovi na daljinu i iscjelitelji drže s
 
 Bot na daljinu ili iscjelitelj kojemu se neprijatelj previše približi najprije se povlači prema najbližem suborcu iz prve linije, ako je dovoljno blizu, i bori se ondje. Usporeni napadač iz blizine, primjerice osakaćen, ne može ga sustići, pa se pred njim umjesto toga povlači između hitaca.
 
+Bot pod urokom koji kažnjava napadanje ili bacanje čarolija, poput Empathy ili Backfire, prestaje s tim dok urok ne završi.
+
 Strijelci i kopljanici zauzmu uzvisinu kad je to sigurno.
 Bot na kojeg se usredotoče dva protivnika, ili koji ima manje od pola zdravlja i brzo ga gubi, skloni im se s vida do tri sekunde: iza zida, ispod platforme ili na uzvisinu.
 Kad nijedan neprijatelj nije blizu, bot povuče polugu koja otvara kraći put do neprijatelja. Dva bota također sruše zid koji skriva mnogo kraći put, udarajući ga svojim oružjem.

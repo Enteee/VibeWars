@@ -48,6 +48,8 @@ Mod et hold med områdeskills holder afstandsbots og healere sig fra hinanden, s
 
 En afstandsbot eller healer, som en fjende kommer for tæt på, trækker sig først tilbage til sin nærmeste frontlinjebot, hvis en er tæt nok på, og kæmper der. En nærkæmper, der er sænket, for eksempel lemlæstet, kan ikke følge med, så over for den trækker botten sig i stedet tilbage mellem skuddene.
 
+En bot under en forbandelse, der straffer angreb eller besværgelser, såsom Empathy eller Backfire, holder op med det, indtil forbandelsen slutter.
+
 Bueskytter og spydkastere indtager det høje terræn, når det er sikkert.
 En bot, som to fjender går efter, eller som har under halvt helbred og hurtigt mister det, dukker sig ud af deres syn i op til tre sekunder: bag en mur, under et dæk eller op på højt terræn.
 Når ingen fjende er nær, trækker en bot i et håndtag, der åbner en kortere vej til fjenderne. To bots slår også en mur ned, der skjuler en meget kortere vej, ved at slå på den med deres våben.

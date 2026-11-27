@@ -1,5 +1,6 @@
 import { RANGE_SPELL } from "../../distances.js";
-import type { Skill } from "../../skills/types.js";
+import { raisedMaxHealth } from "../../skills/tick.js";
+import { isSpell, type Skill } from "../../skills/types.js";
 import { distance, ZERO, type Vec2 } from "../../vec2.js";
 import type {
   Behaviour,
@@ -24,6 +25,8 @@ import {
   HEALER_PRIORITY,
   HURT_FRACTION,
   NOTHING,
+  PUNISH_KEEP_SELF,
+  PUNISH_SAVE_ALLY,
   foeReach,
   healthFraction,
   reactionSeconds,
@@ -31,7 +34,13 @@ import {
   skillsOf,
 } from "./rules/shared.js";
 import type { RuleContext } from "./rules/types.js";
-import { sacrificesTooMuch } from "./skill-intent.js";
+import { punishments, type Punishments } from "./punish.js";
+import {
+  botUses,
+  removedCategories,
+  removesFromCaster,
+  sacrificesTooMuch,
+} from "./skill-intent.js";
 import { floorOf } from "../layer-rules.js";
 
 /**
@@ -352,6 +361,7 @@ function think(
 ): BehaviourIntent {
   const self = context.self;
   markHealth(cursor, context.now, healthFraction(self));
+  const punished = punishments(self);
   const rule: RuleContext = {
     context,
     self,
@@ -376,6 +386,9 @@ function think(
           context.participants,
         )
       ) {
+        return false;
+      }
+      if (forbidden(self, skill, targetId, punished, context.participants)) {
         return false;
       }
       const check = context.check(skill.id, targetId);
@@ -409,10 +422,63 @@ function think(
       if (intent.endUpkeep !== undefined) {
         cursor.upkeepDropSeconds = UPKEEP_DROP_SECONDS;
       }
-      return intent;
+      return holdAttack(self, intent, punished);
     }
   }
-  return NOTHING;
+  return holdAttack(self, NOTHING, punished);
+}
+
+/**
+ * Under a hex that punishes attacking (#4199), Empathy's: no swing, and
+ * the one running ends.
+ */
+function holdAttack(
+  self: Participant,
+  intent: BehaviourIntent,
+  punished: Punishments,
+): BehaviourIntent {
+  return punished.attacks
+    ? { ...intent, attackTargetId: undefined, stopAttack: self.combatant.attack !== undefined }
+    : intent;
+}
+
+/**
+ * Whether a punishing hex (#4199) bars `skill`: a spell under Backfire,
+ * any skill under Spiteful Spirit, an attack skill under Empathy. Never a
+ * skill that takes a hex off the bot itself, its way out; nor a heal or
+ * protection for an ally below `PUNISH_SAVE_ALLY` while the bot keeps
+ * more than `PUNISH_KEEP_SELF` of its health after paying.
+ */
+function forbidden(
+  self: Participant,
+  skill: Skill,
+  targetId: string | undefined,
+  punished: Punishments,
+  participants: readonly Participant[],
+): boolean {
+  const barred =
+    punished.skills ||
+    (punished.spells && isSpell(skill.type)) ||
+    (punished.attacks && skill.type === "attack");
+  if (!barred) {
+    return false;
+  }
+  if (
+    removedCategories(skill).includes("hex") &&
+    (removesFromCaster(skill) || targetId === self.id)
+  ) {
+    return false;
+  }
+  const ally = participants.find((each) => each.id === targetId);
+  const saves =
+    ally?.combatant.team === self.combatant.team &&
+    healthFraction(ally) < PUNISH_SAVE_ALLY &&
+    botUses(skill).some((use) => use === "healing" || use === "defence");
+  if (!saves) {
+    return true;
+  }
+  const maxHealth = raisedMaxHealth(self.combatant);
+  return maxHealth <= 0 || (self.combatant.health - punished.cost) / maxHealth <= PUNISH_KEEP_SELF;
 }
 
 /**
