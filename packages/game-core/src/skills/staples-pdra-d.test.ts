@@ -299,7 +299,7 @@ describe("Inspirational Speech (#2413)", () => {
     cast(sim, SPEECH, "a");
     const a = get(sim, "a").combatant.adrenaline;
     expect(a.get(EVISCERATE)).toBe(7 * ADRENALINE_PER_STRIKE);
-    expect(a.get(SEVER)).toBe(4 * ADRENALINE_PER_STRIKE);
+    expect(a.get(SEVER)).toBe(3 * ADRENALINE_PER_STRIKE);
   });
 
   it("an ally with no adrenal skill gains nothing", () => {

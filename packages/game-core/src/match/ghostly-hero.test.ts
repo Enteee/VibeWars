@@ -221,7 +221,15 @@ describe("the Ghostly Hero (#2689)", () => {
       chargeAdrenaline(w, skillId);
       expect(applyIntent(sim, "w", { kind: "target", targetSessionId: "x" })).toBeNull();
       expect(applyIntent(sim, "w", { kind: "use-skill", slot })).toBeNull();
-      stepUntil(sim, () => (w.cast.rechargeRemaining.get(skillId) ?? 0) > 0, 3);
+      // Fired: it recharges, or, with no recharge (Disrupting Chop), its
+      // adrenaline is spent.
+      stepUntil(
+        sim,
+        () =>
+          (w.cast.rechargeRemaining.get(skillId) ?? 0) > 0 ||
+          (w.adrenaline.get(skillId) ?? 0) === 0,
+        3,
+      );
     },
   );
 });
