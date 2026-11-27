@@ -231,6 +231,15 @@ channels, as often as they like.
   traffic can make its tick late; filtering that is the network's job.
   _Cheap application-level_ abuse (one peer making the tick slow) is in
   scope and must be defended in the host.
+- **A tied Kill Count match held open (#4069).** A match tied at its time
+  limit goes to sudden death, which has no limit, as in GW1: only the next
+  kill ends it. So one player on a tied team who kites or hides keeps the
+  match, and the host's tab and room, open for as long as they like. The
+  other team's way out is to leave. Accepted (operator, Q194). What an
+  endless match costs the host is bounded: each seat's replay spend is
+  capped at its share of `MAX_REPLAY_CHARS` (`replay-budget.ts`), the
+  match chart at `SAMPLE_CAP` and `EVENT_CAPS`, and the combat log is
+  drained every tick.
 - **Cheating that needs only what a peer is shown.** Every peer gets the
   full match state, including enemy positions, health and casts. An
   aimbot-style helper that reads that state is not prevented. There is no
