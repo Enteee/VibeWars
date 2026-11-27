@@ -41,6 +41,7 @@ spate, și te urmează oriunde mergi. După ce ai stat inactiv de ceva vreme, jo
 mai departe așa cum ar juca o echipă de boți.
 Cât timp ești activ, un bot pe care o luptă l-a tras departe de tine se întoarce la tine, în afară de cazul în care e grav rănit sau are un inamic chiar lângă el.
 Un bot din prima linie se întoarce împotriva unui inamic care atacă vindecătorul sau magicienii echipei sale, doar dacă nu e pe cale să-și termine propria țintă.
+Un bot cu o vrajă de zonă o aruncă acolo unde trei sau mai mulți inamici stau împreună, doar dacă echipa nu termină un inamic sau nu urmează o țintă anunțată.
 
 Împotriva unei echipe cu abilități de zonă, boții de la distanță și vindecătorii stau departe unii de alții, ca o explozie să nu prindă doi dintre ei. Nu renunță niciodată la adăpost pentru asta.
 

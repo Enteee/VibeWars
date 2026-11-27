@@ -42,6 +42,7 @@ fica parado por algum tempo, eles continuam jogando como uma equipe só de
 bots jogaria.
 Enquanto você estiver ativo, um bot que uma luta afastou de você volta para perto de você, a menos que esteja muito ferido ou tenha um inimigo colado nele.
 Um bot da linha de frente se volta contra um inimigo que ataca o curandeiro ou os conjuradores do seu time, a menos que esteja prestes a acabar com o próprio alvo.
+Um bot com um feitiço de área o lança onde três ou mais inimigos estão juntos, a menos que o time esteja acabando com um inimigo ou seguindo um alvo marcado.
 
 Contra uma equipe com habilidades de área, os bots à distância e os curandeiros ficam afastados, para que uma explosão não atinja dois deles. Nunca abrem mão de cobertura para isso.
 

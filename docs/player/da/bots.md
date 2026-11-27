@@ -41,6 +41,7 @@ du går. Når du har stået uvirksom et stykke tid, spiller de videre, som et
 hold af bots ville.
 Mens du er aktiv, går en bot, som en kamp har trukket langt væk fra dig, tilbage til dig, medmindre den er hårdt såret, eller en fjende står lige ved den.
 En frontlinjebot vender sig mod en fjende, der angriber holdets healer eller besværgere, medmindre den er ved at gøre det af med sit eget mål.
+En bot med en områdebesværgelse kaster den, hvor tre eller flere fjender står samlet, medmindre holdet er ved at gøre det af med en fjende eller følger et udråbt mål.
 
 Mod et hold med områdeskills holder afstandsbots og healere sig fra hinanden, så én eksplosion ikke rammer to af dem. De opgiver aldrig dækning for at gøre det.
 

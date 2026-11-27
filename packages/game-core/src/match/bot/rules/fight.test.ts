@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { RANGE_SPELL } from "../../../distances.js";
 import { NO_RANKS, type StatusId } from "../../../skills/status.js";
-import { BOT_REACTION, INSTANT_REACTION, createCursor } from "../../behaviour.js";
+import { BOT_REACTION, INSTANT_REACTION, createCursor, decide } from "../../behaviour.js";
 import { vec2, type Vec2 } from "../../../vec2.js";
 import type { MatchSimulation } from "../../simulation.js";
 import {
@@ -14,6 +14,7 @@ import {
   WARRIOR,
   askBot,
   body,
+  contextFor,
   fighter,
   match,
   ruleFor,
@@ -504,5 +505,49 @@ describe("damage dealers strip the protection off the team's target first (#2634
 
   it("casts in bar order when it doesn't hold its spike skills", () => {
     expect(decideFor(strip(), "a", false)?.useSkillId).toBe(FLARE);
+  });
+});
+
+describe("casters aim area skills at clumped foes (#4147)", () => {
+  const FIREBALL = "elementalist.fireball";
+  const IMMOLATE = "elementalist.immolate";
+
+  /** An elementalist with `skillBar` at (400, 400); `t` alone at (700, 400), three foes together further. */
+  function clumped(skillBar: string[]): MatchSimulation {
+    return match([
+      fighter("m", 0, ELEMENTALIST, vec2(400, 400), { skillBar }),
+      fighter("t", 1, WARRIOR, vec2(700, 400), { behaviour: undefined }),
+      fighter("c0", 1, WARRIOR, vec2(700, 600), { behaviour: undefined }),
+      fighter("c1", 1, WARRIOR, vec2(740, 600), { behaviour: undefined }),
+      fighter("c2", 1, WARRIOR, vec2(700, 640), { behaviour: undefined }),
+    ]);
+  }
+
+  it("casts Fireball at the clump, not the lone team target", () => {
+    expect(fight.decide(ruleFor(clumped([FIREBALL]), "m", { targetId: "t" }))).toMatchObject({
+      useSkillId: FIREBALL,
+      targetId: "c0",
+    });
+  });
+
+  it("casts it at a fixed target: called, a ghost on the altar or being finished", () => {
+    expect(
+      fight.decide(ruleFor(clumped([FIREBALL]), "m", { targetId: "t", targetFixed: true })),
+    ).toMatchObject({ useSkillId: FIREBALL, targetId: "t" });
+  });
+
+  it("casts a single-target spell at the team target", () => {
+    expect(fight.decide(ruleFor(clumped([IMMOLATE]), "m", { targetId: "t" }))).toMatchObject({
+      useSkillId: IMMOLATE,
+      targetId: "t",
+    });
+  });
+
+  it("keeps the target its team called, as play-build tells it", () => {
+    const sim = clumped([FIREBALL]);
+    expect(askBot(sim, "m")).toMatchObject({ useSkillId: FIREBALL, targetId: "c0" });
+    expect(
+      decide(BOT, createCursor(), contextFor(sim, "m", { calledTargetId: "t" })),
+    ).toMatchObject({ useSkillId: FIREBALL, targetId: "t" });
   });
 });
