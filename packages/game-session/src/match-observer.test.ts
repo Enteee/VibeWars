@@ -423,6 +423,35 @@ describe("an observer whose host's peer goes (#4105)", () => {
     expect(viewer.getSnapshot()?.elapsedSeconds).toBeGreaterThan(before + 5);
   });
 
+  it("watches on when only the host saw it go and come back (#4139)", async () => {
+    const { match, viewer, states, observes } = await watching();
+    const before = viewer.getSnapshot()?.elapsedSeconds ?? 0;
+
+    // A page frozen past the transport's timeout, which never saw the host go.
+    match.network.blip("host", "viewer");
+    await settle();
+    expect(states).toEqual([]);
+    expect(observes()).toBe(0);
+
+    // Taken back as it was: the delay fills again, and the stream runs on.
+    await match.step(OBSERVER_DELAY_SECONDS + TICK_SECONDS);
+    expect(viewer.getSnapshot()?.elapsedSeconds).toBeGreaterThan(before + 5);
+  });
+
+  it("is not taken back once the lobby has it as a spectator no more (#4139)", async () => {
+    const spectators = ["viewer"];
+    const { match } = await twoPlayers(spectators);
+    const { viewer } = await observe(match, "viewer");
+    await match.step(OBSERVER_DELAY_SECONDS + TICK_SECONDS);
+    const before = viewer.getSnapshot()?.elapsedSeconds ?? 0;
+
+    spectators.length = 0;
+    match.network.blip("host", "viewer");
+    await settle();
+    await match.step(OBSERVER_DELAY_SECONDS + TICK_SECONDS);
+    expect(viewer.getSnapshot()?.elapsedSeconds).toBe(before);
+  });
+
   it("says one observe at a time however often the host flaps", async () => {
     const { match, states, observes } = await watching();
     match.network.stall("viewer", "host");
