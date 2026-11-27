@@ -356,25 +356,29 @@ const projectile = {
       outlined("M2 6L10 2.2L30 6Z", "#e8f8ff") + '<path d="M10 2.2L30 6L14 4.6Z" fill="#9ad4f0"/>',
     team: "M2 6L10 9.8L30 6Z",
   },
-  // Water trident: blue prongs on a team shaft.
+  // Water trident: three blue prongs pointing forward from a short crossbar,
+  // the centre one longest, each barbed at the tip; a team shaft.
   "water-trident": {
     baked: shadedPath(
       "water-trident",
-      "M20.5 1.2H23V10.8H20.5ZM22 1.2H30V2.8H22ZM22 5.2H31V6.8H22ZM22 9.2H30V10.8H22Z",
+      "M19.5 1.6H21.5V10.4H19.5ZM21 2.3H26.5V3.5H21ZM26.5 1.2L29.5 2.9L26.5 4.6ZM21 5.4H28V6.6H21ZM28 4.2L31.5 6L28 7.8ZM21 8.5H26.5V9.7H21ZM26.5 7.4L29.5 9.1L26.5 10.8Z",
       "#a8e0ff",
       "#2a6aa8",
     ),
-    team: "M2 5.2H21V6.8H2Z",
+    team: "M2 5.2H20V6.8H2Z",
   },
-  // Ebon hawk: a dark body and a gold beak, team wings.
+  // Ebon hawk: a dark body and round head, a gold hooked beak and eye; team
+  // wings.
   "ebon-hawk": {
     baked:
       shadedPath(
         "ebon-hawk",
-        "M12 6C12 4.4 16 4.2 24 5L30 6L24 7C16 7.8 12 7.6 12 6Z",
+        "M12 6C12 4.6 16 4.4 22 4.8C23 3.2 26.6 3 27.8 5C28.2 5.9 27.9 6.9 27 7.5C25.6 8.7 23 8.5 22 7.2C16 7.6 12 7.4 12 6Z",
         "#8a8494",
         "#2a2630",
-      ) + '<path d="M28 5.6L30 6L28 6.4Z" fill="#d8b060"/>',
+      ) +
+      outlined("M27.4 4.4L30.2 5.2L31 6.8L30.2 8L29.8 6.8L27.6 6.9Z", "#d8b060") +
+      '<circle cx="25.6" cy="5.2" r=".7" fill="#f0d890"/>',
     team: "M21 6L9 0.8L3 1.8L13 6L3 10.2L9 11.2Z",
   },
   // Stone: a lit boulder with a team rim, team chips flying off behind it.
