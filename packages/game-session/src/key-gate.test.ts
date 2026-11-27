@@ -102,6 +102,64 @@ describe("a peer dropped while it proved the key, still here (#4222)", () => {
     expect(above).toEqual(["lobby-join"]);
   });
 
+  it("is challenged again at once when its answer comes after the timeout", async () => {
+    const network = createMemoryNetwork();
+    const host = keyGated(network.join("host"), PROOF_KEY, "host");
+    const joined: string[] = [];
+    host.onPeerJoin((peerId) => joined.push(peerId));
+    const late = network.join("late");
+    const got = heard(late);
+    await cryptoTurns();
+    const stale = lastChallenge(got);
+    vi.advanceTimersByTime(KEY_PROOF_TIMEOUT_MS);
+
+    // Its page thawed: the answer to the lapsed challenge brings a fresh one.
+    late.send(
+      "key-proof",
+      { nonce: GUEST_NONCE, mac: await mac("guest", stale, GUEST_NONCE, "late", "host") },
+      "host",
+    );
+    await cryptoTurns();
+    expect(channels(got)).toEqual(["key-challenge", "key-challenge"]);
+    expect(lastChallenge(got)).not.toBe(stale);
+    expect(joined).toEqual([]);
+
+    late.send(
+      "key-proof",
+      {
+        nonce: GUEST_NONCE,
+        mac: await mac("guest", lastChallenge(got), GUEST_NONCE, "late", "host"),
+      },
+      "host",
+    );
+    await until(() => joined.length > 0);
+    expect(joined).toEqual(["late"]);
+  });
+
+  it("answers a host that challenges again while its answer waits, and is in on that one", async () => {
+    const network = createMemoryNetwork();
+    const guest = keyGated(network.join("guest"), PROOF_KEY, "guest", () => "host");
+    const saw: string[] = [];
+    guest.onPeerJoin((peerId) => saw.push(peerId));
+    const host = network.join("host");
+    const got = heard(host);
+    await cryptoTurns();
+    host.send("key-challenge", { nonce: "3c".repeat(16) }, "guest");
+    await cryptoTurns();
+    host.send("key-challenge", { nonce: HOST_NONCE }, "guest");
+    await cryptoTurns();
+    const proofs = got.filter(([channel]) => channel === "key-proof");
+    expect(proofs).toHaveLength(2);
+    const { nonce } = proofs.at(-1)?.[1] as { nonce: string };
+    host.send(
+      "key-proven",
+      { mac: await mac("host", HOST_NONCE, nonce, "guest", "host") },
+      "guest",
+    );
+    await until(() => saw.length > 0);
+    expect(saw).toEqual(["host"]);
+  });
+
   it("is challenged again no sooner than KEY_PROOF_TIMEOUT_MS after its last challenge", async () => {
     const network = createMemoryNetwork();
     const host = keyGated(network.join("host"), PROOF_KEY, "host");

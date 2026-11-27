@@ -31,7 +31,8 @@ import type { Json, Transport } from "./transport.js";
  * and the transport says no join again. Its next message, gated or a
  * `key-ask`, has the host challenge it again, at most once a
  * `KEY_PROOF_TIMEOUT_MS`; a guest whose answer has no `key-proven` in
- * that time asks again. A peer that leaves is forgotten, proven or
+ * that time asks again; a late answer has the host challenge it again at
+ * once, so a page that thawed is in after one round trip. A peer that leaves is forgotten, proven or
  * not: a peer id is the peer's own to choose and shows on the relays, so
  * one coming back proves the key again, and so does the host. A guest
  * challenged again by a host it had proven sees that host leave first;
@@ -281,7 +282,16 @@ export function keyGated(
     }),
     transport.on("key-proof", (data, from) => {
       const peer = peers.get(from);
-      if (side !== "host" || peer?.stage !== "challenged") {
+      if (side !== "host") {
+        return;
+      }
+      if (peer === undefined && !proven(from)) {
+        // An answer that came after its timeout: challenged again now, not
+        // after the guest's own wait for a key-proven (#4222).
+        rechallenge(from);
+        return;
+      }
+      if (peer?.stage !== "challenged") {
         return;
       }
       const proof = parseWireKeyProof(data);
@@ -331,11 +341,12 @@ export function keyGated(
       const asked = parseWireKeyChallenge(data);
       // A host that challenges again has forgotten this guest, as one that
       // saw it leave does: it proves the key again, and so must the host.
+      // So does one that dropped our answer as late (#4222).
       if (
         side !== "guest" ||
         asked === undefined ||
         !mayHost(from) ||
-        (peers.has(from) && !proven(from))
+        (peers.has(from) && !proven(from) && peers.get(from)?.stage !== "answered")
       ) {
         return;
       }
