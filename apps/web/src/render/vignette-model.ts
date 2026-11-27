@@ -103,3 +103,149 @@ export function vignetteCells(view: Box, clip: Box = view): VignetteCell[] {
   }
   return cells;
 }
+
+/** A corner of a shaded triangle, in world units, and how dark it is. */
+export interface ShadedPoint {
+  readonly x: number;
+  readonly y: number;
+  readonly alpha: number;
+}
+
+interface Point {
+  readonly x: number;
+  readonly y: number;
+}
+
+/** Pieces thinner than this, in square world units, are an edge two shapes share: dropped. */
+const SLIVER = 1e-6;
+
+/**
+ * `triangles` cut into convex pieces that do not overlap, covering what
+ * they cover (#4130): two deck tops of one layer can overlap, and without
+ * a stencil the vignette would darken them there twice.
+ */
+export function disjointPieces(triangles: readonly (readonly Point[])[]): Point[][] {
+  const pieces: Point[][] = [];
+  for (const triangle of triangles) {
+    let parts: Point[][] = [[...triangle]];
+    for (const piece of pieces) {
+      parts = parts.flatMap((part) => subtract(part, piece));
+    }
+    pieces.push(...parts);
+  }
+  return pieces;
+}
+
+/**
+ * The convex `pieces` shaded as the vignette over `view` shades the ground
+ * under them (#4130): each cut along `vignetteCells`' cells into
+ * triangles, shaded between their cell's corners, the clear centre left
+ * out. A deck's tops drawn so need no stencil, and only their own pixels
+ * are filled.
+ */
+export function vignetteTriangles(
+  view: Box,
+  pieces: readonly (readonly Point[])[],
+): (readonly [ShadedPoint, ShadedPoint, ShadedPoint])[] {
+  const shaded: (readonly [ShadedPoint, ShadedPoint, ShadedPoint])[] = [];
+  for (const piece of pieces) {
+    const xs = piece.map(({ x }) => x);
+    const ys = piece.map(({ y }) => y);
+    const box = {
+      left: Math.min(...xs),
+      top: Math.min(...ys),
+      right: Math.max(...xs),
+      bottom: Math.max(...ys),
+    };
+    for (const cell of vignetteCells(view, box)) {
+      const [first, ...rest] = clipToBox(piece, cell.box).map((point) => shadeIn(cell, point));
+      if (first === undefined) {
+        continue;
+      }
+      for (let i = 0; i + 1 < rest.length; i += 1) {
+        const [second, third] = [rest[i], rest[i + 1]];
+        if (second !== undefined && third !== undefined) {
+          shaded.push([first, second, third]);
+        }
+      }
+    }
+  }
+  return shaded;
+}
+
+/** `point`, within `cell`, shaded between the cell's corners. */
+function shadeIn(cell: VignetteCell, { x, y }: Point): ShadedPoint {
+  const { box } = cell;
+  const across = box.right === box.left ? 0 : (x - box.left) / (box.right - box.left);
+  const down = box.bottom === box.top ? 0 : (y - box.top) / (box.bottom - box.top);
+  const top = cell.topLeft + (cell.topRight - cell.topLeft) * across;
+  const bottom = cell.bottomLeft + (cell.bottomRight - cell.bottomLeft) * across;
+  return { x, y, alpha: top + (bottom - top) * down };
+}
+
+/** The convex `polygon` cut to `box`; empty when nothing of it is left. */
+export function clipToBox(polygon: readonly Point[], box: Box): Point[] {
+  let points: Point[] = [...polygon];
+  for (const side of [
+    (p: Point) => p.x - box.left,
+    (p: Point) => box.right - p.x,
+    (p: Point) => p.y - box.top,
+    (p: Point) => box.bottom - p.y,
+  ]) {
+    points = halfPlane(points, side);
+  }
+  return area(points) > SLIVER ? points : [];
+}
+
+/**
+ * The convex `polygon` less the convex `hole`, as convex pieces: what lies
+ * beyond each of the hole's edges in turn, the rest carried to the next.
+ */
+function subtract(polygon: Point[], hole: readonly Point[]): Point[][] {
+  const turn = signedArea(hole) > 0 ? 1 : -1;
+  const pieces: Point[][] = [];
+  let rest = polygon;
+  hole.forEach((a, i) => {
+    const b = hole[(i + 1) % hole.length] ?? a;
+    const side = (p: Point) => turn * ((b.x - a.x) * (p.y - a.y) - (b.y - a.y) * (p.x - a.x));
+    const beyond = halfPlane(rest, (p) => -side(p));
+    if (area(beyond) > SLIVER) {
+      pieces.push(beyond);
+    }
+    rest = halfPlane(rest, side);
+  });
+  return area(rest) > SLIVER ? pieces : [polygon];
+}
+
+/** What of the convex `polygon` lies where `side` is not negative (Sutherland-Hodgman). */
+function halfPlane(polygon: readonly Point[], side: (p: Point) => number): Point[] {
+  const kept: Point[] = [];
+  polygon.forEach((point, i) => {
+    const previous = polygon[(i + polygon.length - 1) % polygon.length] ?? point;
+    const [here, before] = [side(point), side(previous)];
+    if (here >= 0 !== before >= 0) {
+      const t = before / (before - here);
+      kept.push({
+        x: previous.x + (point.x - previous.x) * t,
+        y: previous.y + (point.y - previous.y) * t,
+      });
+    }
+    if (here >= 0) {
+      kept.push(point);
+    }
+  });
+  return kept;
+}
+
+function signedArea(polygon: readonly Point[]): number {
+  return (
+    polygon.reduce((sum, { x, y }, i) => {
+      const next = polygon[(i + 1) % polygon.length] ?? { x, y };
+      return sum + x * next.y - next.x * y;
+    }, 0) / 2
+  );
+}
+
+function area(polygon: readonly Point[]): number {
+  return Math.abs(signedArea(polygon));
+}

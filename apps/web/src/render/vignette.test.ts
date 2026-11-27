@@ -1,25 +1,42 @@
 import { describe, expect, it, vi } from "vitest";
 
+import { pointInPolygon } from "@vibewars/game-core";
 import { ELEVATION_STEP } from "@vibewars/game-maps/schema";
 
+import { ARENA_MAPS, structureOf } from "../net/maps.js";
+import { TRAINING_MAPS } from "../training/maps.js";
 import { FLAT_STRUCTURE, type MapStructure } from "./arena-snapshot.js";
 import {
+  clipToBox,
+  disjointPieces,
   VIGNETTE,
   VIGNETTE_GRID,
   type VignetteCell,
   vignetteAlpha,
   vignetteCells,
+  vignetteTriangles,
 } from "./vignette-model.js";
-import { deckVignetteTops } from "./vignette.js";
+import { deckPieces, deckVignetteTops } from "./vignette.js";
 
-// Phaser probes for a browser when it loads: only its constants are read here.
-vi.mock("phaser", () => ({
-  default: {
-    Renderer: { Events: { RESTORE_WEBGL: "restorewebgl" } },
-    BlendModes: { ADD: 1, MULTIPLY: 2 },
-    Math: { Vector2: Object },
-  },
-}));
+// Phaser probes for a browser when it loads: its constants are read here,
+// and the triangulation deck tops are cut by.
+vi.mock("phaser", async () => {
+  const { createRequire } = await import("node:module");
+  const path = await import("node:path");
+  const require = createRequire(import.meta.url);
+  // Phaser's own earcut, which its package does not export by name.
+  const Earcut = require(
+    path.join(path.dirname(require.resolve("phaser/package.json")), "src/geom/polygon/Earcut.js"),
+  ) as (points: readonly number[]) => number[];
+  return {
+    default: {
+      Renderer: { Events: { RESTORE_WEBGL: "restorewebgl" } },
+      BlendModes: { ADD: 1, MULTIPLY: 2 },
+      Geom: { Polygon: { Earcut } },
+      Math: { Vector2: Object },
+    },
+  };
+});
 
 const WIDTH = 1280;
 const HEIGHT = 720;
@@ -173,4 +190,117 @@ describe("the vignette's cells (#4130)", () => {
       ),
     ).toBe(false);
   });
+});
+
+describe("the vignette's deck triangles (#4130)", () => {
+  const view = { left: 0, top: 0, right: WIDTH, bottom: HEIGHT };
+
+  it("shade each corner as the ground's cells shade it", () => {
+    const ground = vignetteCells(view);
+    const shaded = vignetteTriangles(view, [
+      [
+        { x: 900, y: 400 },
+        { x: 1270, y: 450 },
+        { x: 1000, y: 710 },
+      ],
+    ]);
+    expect(shaded.length).toBeGreaterThan(0);
+    for (const { x, y, alpha } of shaded.flat()) {
+      expect(alpha).toBeCloseTo(shadeAt(ground, x, y), 9);
+    }
+  });
+
+  it("cover the triangle's darkened part, and nothing in the clear centre", () => {
+    const area = (points: readonly { x: number; y: number }[]) =>
+      Math.abs(
+        points.reduce((sum, { x, y }, i) => {
+          const next = points[(i + 1) % points.length] ?? { x, y };
+          return sum + x * next.y - next.x * y;
+        }, 0),
+      ) / 2;
+    const corner = [
+      { x: 1100, y: 600 },
+      { x: 1280, y: 600 },
+      { x: 1280, y: 720 },
+    ] as const;
+    expect(vignetteTriangles(view, [corner]).reduce((sum, t) => sum + area(t), 0)).toBeCloseTo(
+      area(corner),
+      6,
+    );
+    const centre = [
+      { x: 600, y: 340 },
+      { x: 680, y: 340 },
+      { x: 640, y: 380 },
+    ] as const;
+    expect(vignetteTriangles(view, [centre])).toEqual([]);
+  });
+
+  it("are cut to a box side by side", () => {
+    const box = { left: 0, top: 0, right: 10, bottom: 10 };
+    expect(
+      clipToBox(
+        [
+          { x: -10, y: 5 },
+          { x: 5, y: 5 },
+          { x: 5, y: -10 },
+        ],
+        box,
+      ),
+    ).toHaveLength(4);
+    expect(
+      clipToBox(
+        [
+          { x: 20, y: 20 },
+          { x: 30, y: 20 },
+          { x: 25, y: 30 },
+        ],
+        box,
+      ),
+    ).toEqual([]);
+  });
+
+  it("come from pieces that cover a layer's tops once, overlapping or not", () => {
+    const square = (left: number, top: number) => [
+      [
+        { x: left, y: top },
+        { x: left + 10, y: top },
+        { x: left + 10, y: top + 10 },
+      ],
+      [
+        { x: left, y: top },
+        { x: left + 10, y: top + 10 },
+        { x: left, y: top + 10 },
+      ],
+    ];
+    const pieces = disjointPieces([...square(0, 0), ...square(5, 5), ...square(30, 0)]);
+    const covered = (x: number, y: number) =>
+      pieces.filter((piece) => pointInPolygon({ x, y }, piece)).length;
+    for (let x = 0.5; x < 40; x += 1) {
+      for (let y = 0.5; y < 15; y += 1) {
+        const inside = (x < 10 && y < 10) || (x > 5 && x < 15 && y > 5) || (x > 30 && y < 10);
+        expect(covered(x, y)).toBe(inside ? 1 : 0);
+      }
+    }
+  });
+
+  // Two tops of one layer can overlap (arena-crossroads' bridges): their pieces must not.
+  it("darken no point of a shipped map's deck tops twice", () => {
+    for (const map of [...ARENA_MAPS, ...TRAINING_MAPS.values()]) {
+      for (const tops of deckVignetteTops(structureOf(map).structure).values()) {
+        const pieces = deckPieces(tops);
+        for (const top of tops) {
+          const xs = top.map(({ x }) => x);
+          const ys = top.map(({ y }) => y);
+          for (let x = Math.min(...xs) + 0.37; x < Math.max(...xs); x += 20) {
+            for (let y = Math.min(...ys) + 0.41; y < Math.max(...ys); y += 20) {
+              const inPieces = pieces.filter((piece) => pointInPolygon({ x, y }, piece)).length;
+              if (pointInPolygon({ x, y }, top)) {
+                expect(inPieces, `${map.id} at ${String(x)},${String(y)}`).toBe(1);
+              }
+            }
+          }
+        }
+      }
+    }
+  }, 30_000);
 });
