@@ -72,7 +72,7 @@ grebena vodi prolaz čija se rešetka otvara polugom na vrhu.
 **Najviše ubojstava u 3 minute.** Mrtvi se vraćaju na svoje polazište nakon
 8 sekundi, a umiranje ne stoji morala. Prvi tim s 15 ubojstava odmah
 pobjeđuje. Na isteku vremena pobjeđuje više ubojstava; jednak broj vodi u iznenadnu
-smrt: sljedeće ubojstvo pobjeđuje, a još 5 minuta bez njega je neriješeno.
+smrt: bez sata, i sljedeće ubojstvo pobjeđuje.
 
 Ember Pits ga igra: potočići lave preko kojih vode kameni mostovi, tunel od
 lave, dizalo na polugu uz bazaltni stup i parni otvori, za svaku veličinu tima.

@@ -73,7 +73,7 @@ middelste rug loopt een gang waarvan een hendel bovenop het hek opent.
 **De meeste kills in 3 minuten.** De doden komen na 8 seconden terug bij hun spawn,
 en doodgaan kost geen moraal. Het eerste team met 15 kills wint meteen. Bij het
 einde van de tijd wint wie meer kills heeft; gelijke kills gaan naar sudden
-death: de volgende kill wint, en nog 5 minuten zonder kill is gelijkspel.
+death: geen klok, en de volgende kill wint.
 
 Ember Pits speelt het: lavageulen met stenen bruggen erover, een lavatunnel, een
 hendellift een basaltzuil op en stoomgaten, voor elke teamgrootte.

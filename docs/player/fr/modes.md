@@ -78,8 +78,8 @@ ouverte par un levier au sommet.
 **Le plus d'éliminations en 3 minutes.** Les morts reviennent à leur point de
 départ après 8 secondes, et mourir ne coûte pas de moral. La première équipe à
 15 éliminations gagne aussitôt. À la fin du temps, le plus d'éliminations gagne ;
-à égalité d'éliminations, on passe en mort subite : la prochaine
-élimination gagne, et 5 minutes de plus sans élimination font un match nul.
+à égalité d'éliminations, on passe en mort subite : plus de chrono, et la
+prochaine élimination gagne.
 
 Ember Pits le joue : des rigoles de lave franchies par des ponts de pierre, un
 tunnel de lave, un monte-charge à levier sur une colonne de basalte et des

@@ -57,13 +57,6 @@ export interface MatchRules {
 }
 
 /**
- * How long a kill-count match tied at time plays on in sudden death
- * (#4069) before it is a draw: one player kiting must not hold a match,
- * and its host, open for ever.
- */
-export const SUDDEN_DEATH_SECONDS = 300;
-
-/**
  * GW1's Kill Count (The Crag): the most kills in 3 minutes, or the first
  * to 15, with respawn and no death penalty.
  */
@@ -485,9 +478,8 @@ export function evaluateMatch(
 
 /**
  * Kill count: the target wins; at time, more kills win. Equal kills at
- * the top go to GW1's sudden death (#4069): the first kill that leaves
- * one team alone on top wins, and `SUDDEN_DEATH_SECONDS` without one is
- * a draw.
+ * the top go to GW1's sudden death (#4069): no clock, and the first kill
+ * that leaves one team alone on top wins.
  */
 function evaluateKillCount(
   score: MatchScore,
@@ -505,9 +497,7 @@ function evaluateKillCount(
   }
   const team = soleLeader(score);
   if (team === undefined) {
-    return elapsedSeconds < rules.timeLimitSeconds + SUDDEN_DEATH_SECONDS
-      ? MATCH_IN_PROGRESS
-      : { phase: "finished", winningTeam: undefined, reason: "time" };
+    return MATCH_IN_PROGRESS;
   }
   return {
     phase: "finished",

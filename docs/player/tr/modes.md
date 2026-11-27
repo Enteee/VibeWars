@@ -75,7 +75,7 @@ uzanır.
 **3 dakikada en çok leş.** Ölüler 8 saniye sonra doğma noktalarında
 geri gelir ve ölmek moral kaybettirmez. 15 leşe ilk ulaşan takım hemen
 kazanır. Süre dolunca daha çok leş kazanır; eşit leşte ani ölüme
-gidilir: sonraki leş kazanır, 5 dakika daha leş olmazsa berabere biter.
+gidilir: süre yoktur ve sonraki leş kazanır.
 
 Ember Pits bunu oynatır: her takım boyutu için, taş köprülerle geçilen lav
 derecikleri, bir lav tüneli, bir bazalt sütuna çıkan kollu asansör ve buhar bacaları.

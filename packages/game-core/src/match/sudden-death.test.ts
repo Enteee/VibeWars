@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { unarmedResolvedEquipment } from "../equipment/resolve.js";
-import { KILL_COUNT_MATCH_RULES, SUDDEN_DEATH_SECONDS, type MatchRules } from "../match-rules.js";
+import { KILL_COUNT_MATCH_RULES, type MatchRules } from "../match-rules.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
 import { NO_RANKS } from "../skills/status.js";
 import { vec2 } from "../vec2.js";
@@ -73,14 +73,5 @@ describe("kill count's sudden death (#4069)", () => {
     kill(sim, "a");
     stepFor(sim, SHORT.timeLimitSeconds);
     expect(sim.outcome).toEqual({ phase: "finished", winningTeam: 1, reason: "time" });
-  });
-
-  it("is a draw when nobody breaks the tie within the sudden death limit", () => {
-    const sim = match();
-    stepFor(sim, SHORT.timeLimitSeconds + SUDDEN_DEATH_SECONDS - 1);
-    expect(sim.phase).toBe("active");
-
-    stepFor(sim, 1);
-    expect(sim.outcome).toEqual({ phase: "finished", winningTeam: undefined, reason: "time" });
   });
 });

@@ -20,7 +20,6 @@ import {
   nextHallSlotMs,
   type MatchScore,
   emptyScore,
-  SUDDEN_DEATH_SECONDS,
   THREEFOLD_KEEP_MATCH_RULES,
   evaluateMatch,
   type MatchRules,
@@ -149,18 +148,7 @@ describe("evaluateMatch", () => {
     it("plays on past the time limit while the kills are tied, never picking a winner", () => {
       expect(evaluateMatch(kills(1, 1), BOTH_ALIVE, 60, RULES)).toBe(MATCH_IN_PROGRESS);
       expect(evaluateMatch(kills(0, 0), BOTH_ALIVE, 60, RULES)).toBe(MATCH_IN_PROGRESS);
-      const last = RULES.timeLimitSeconds + SUDDEN_DEATH_SECONDS - 0.05;
-      expect(evaluateMatch(kills(1, 1), SUDDEN, last, RULES)).toBe(MATCH_IN_PROGRESS);
-    });
-
-    it("is a draw once it has gone on for its limit without a lone leader", () => {
-      const limit = RULES.timeLimitSeconds + SUDDEN_DEATH_SECONDS;
-      expect(evaluateMatch(kills(1, 1), SUDDEN, limit, RULES)).toEqual({
-        phase: "finished",
-        winningTeam: undefined,
-        reason: "time",
-      });
-      expect(evaluateMatch(kills(0, 0), SUDDEN, limit + 3600, RULES).phase).toBe("finished");
+      expect(evaluateMatch(kills(1, 1), SUDDEN, 600, RULES)).toBe(MATCH_IN_PROGRESS);
     });
 
     it("is won by the first kill that leaves one team alone on top", () => {

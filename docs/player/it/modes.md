@@ -30,7 +30,7 @@ centrale, con una grata aperta da una leva in cima.
 
 ## Conta uccisioni
 
-**Più uccisioni in 3 minuti.** I morti tornano al loro spawn dopo 8 secondi, e morire non costa morale. La prima squadra a 15 uccisioni vince subito. Allo scadere del tempo, vince chi ha più uccisioni; a parità si va alla morte improvvisa: la prossima uccisione vince, e altri 5 minuti senza uccisioni sono un pareggio.
+**Più uccisioni in 3 minuti.** I morti tornano al loro spawn dopo 8 secondi, e morire non costa morale. La prima squadra a 15 uccisioni vince subito. Allo scadere del tempo, vince chi ha più uccisioni; a parità si va alla morte improvvisa: senza cronometro, e la prossima uccisione vince.
 
 Ci si gioca su Ember Pits: rivoli di lava attraversati da ponti di pietra, un tunnel di lava, un montacarichi a leva su una colonna di basalto e sfiati di vapore, per ogni dimensione.
 

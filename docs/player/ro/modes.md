@@ -73,8 +73,7 @@ trece un pasaj a cărui poartă o deschide o manetă de sus.
 **Cele mai multe ucideri în 3 minute.** Morții revin la punctul de start după 8
 secunde, iar moartea nu costă moral. Prima echipă care ajunge la 15 ucideri câștigă
 imediat. La expirarea timpului câștigă cele mai multe ucideri; la egalitate de
-ucideri urmează moartea subită: următoarea ucidere câștigă, iar încă 5 minute fără
-ucideri înseamnă egalitate.
+ucideri urmează moartea subită: fără cronometru, iar următoarea ucidere câștigă.
 
 Se joacă pe Ember Pits: pâraie de lavă trecute de poduri de piatră, un tunel de
 lavă, un lift cu manetă pe o coloană de bazalt și guri de abur, pentru orice mărime de echipă.
