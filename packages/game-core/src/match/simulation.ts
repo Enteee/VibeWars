@@ -2009,6 +2009,12 @@ export class MatchSimulation {
     return this.#planOverrides.get(team);
   }
 
+  /** The team target bot `id` last chose (#4188), not a cast aimed aside: `undefined` for one that is not a bot, or has none. */
+  public botTargetOf(id: string): string | undefined {
+    const record = this.#participants.get(id);
+    return record?.behaviour?.kind === "play-build" ? record.cursor.focusId : undefined;
+  }
+
   public get score(): MatchScore {
     return this.#score;
   }

@@ -88,6 +88,15 @@ Ein Bot reagiert wie ein Mensch mit einer kurzen Verzögerung, einem Bruchteil
 einer Sekunde. Eine schnelle Unterbrechung oder ein spätes Ausweichen kann ihn
 also schlagen.
 
+Hat niemand in deinem Team ein Ziel angesagt, sagt einer deiner Bots den Gegner
+an, auf den sich deine Bots konzentrieren, genau wie du es tun würdest: Du
+siehst die Markierung und den Namen des Bots, damit du mitmachen kannst. Die
+Ansage eines Bots zeigt nur, wohin die Bots gehen; sie helfen trotzdem einem
+bedrängten Teamkameraden und erledigen einen sterbenden Gegner. Deine Ansage
+gewinnt immer: Jeder Bot im Team konzentriert sich auf dein Ziel, kein Bot
+ersetzt deine Ansage, und die Bots sagen erst wieder an, wenn ihr Ziel tot oder
+verschwunden ist.
+
 In einem Kampf mit drei Teams kämpfen Bots immer nur gegen ein gegnerisches Team:
 das, das sie angreift, oder, solange das niemand tut, das am stärksten verletzte
 Team in Reichweite. Sie bleiben bei diesem Team, bis ein anderes deutlich mehr

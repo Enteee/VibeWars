@@ -156,6 +156,34 @@ const TICK_SECONDS = 1 / RULESET.tickRateHz;
 export const RECONNECT_WINDOW_SECONDS = 30;
 
 /**
+ * The least time between two of a team's bot calls on live foes (#4188):
+ * a caller switching targets moves the team's focus at most this often.
+ */
+export const BOT_CALL_SECONDS = 3;
+
+/**
+ * Whether a team's bot caller calls `targetId` at match time `now`
+ * (#4188), with `up` the team's call and `calledAt` its bots' last
+ * call. A human's call is never replaced. A bot's is, on a new target,
+ * `BOT_CALL_SECONDS` after the last; with none up, at once.
+ */
+export function botCalls(
+  up: { readonly targetId: string; readonly byHuman: boolean } | null,
+  targetId: string,
+  calledAt: number | undefined,
+  now: number,
+): boolean {
+  if (up === null) {
+    return true;
+  }
+  return (
+    !up.byHuman &&
+    up.targetId !== targetId &&
+    (calledAt === undefined || now - calledAt >= BOT_CALL_SECONDS)
+  );
+}
+
+/**
  * How far behind the match a lobby spectator watches it (#480): long
  * enough that a spectator on voice with a team tells it nothing it could
  * still act on.
@@ -1730,6 +1758,51 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     }
   };
 
+  /** When each team's bots last called a target (#4188). */
+  const botCalledAt = new Map<Team, number>();
+  /**
+   * A team's caller calls its focus, as `botCalls` allows (#4188): its
+   * lowest-id living bot with a live foe for its team target.
+   */
+  const botCall = (team: Team): void => {
+    const now = sim.elapsedSeconds;
+    const up = calls.view(team, now).target;
+    const isLiveEnemy = (targetId: string): boolean =>
+      isAlive(targetId) && sim.get(targetId)?.combatant.team !== team;
+    let caller: { readonly id: string; readonly targetId: string } | undefined;
+    for (const participant of sim.participants()) {
+      const targetId = sim.botTargetOf(participant.id);
+      if (
+        participant.combatant.team === team &&
+        isAlive(participant.id) &&
+        targetId !== undefined &&
+        isLiveEnemy(targetId) &&
+        (caller === undefined || participant.id < caller.id)
+      ) {
+        caller = { id: participant.id, targetId };
+      }
+    }
+    if (
+      caller === undefined ||
+      !botCalls(
+        up === null
+          ? null
+          : { targetId: up.targetId, byHuman: seats.get(up.callerId)?.bot === false },
+        caller.targetId,
+        botCalledAt.get(team),
+        now,
+      )
+    ) {
+      return;
+    }
+    if (
+      calls.call(team, caller.id, { kind: "target", targetId: caller.targetId }, now, isLiveEnemy)
+    ) {
+      botCalledAt.set(team, now);
+      callsDirty.add(team);
+    }
+  };
+
   /** Each team's call as the replay last has it: a stroke changes no target. */
   const calledLogged = new Map<WireTeam, string | null>();
   const tick = (): void => {
@@ -1741,9 +1814,16 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     for (const team of calls.step(sim.elapsedSeconds, isAlive)) {
       callsDirty.add(team);
     }
+    // After the step, so a call on a foe that just died is followed at once.
+    for (const team of [0, 1, 2] as const) {
+      botCall(team);
+    }
     for (const team of callsDirty) {
-      // Its bots fight the called foe (#1193).
-      const target = calls.view(team, sim.elapsedSeconds).target?.targetId;
+      // Its bots fight a human's called foe (#1193). A bot's call shows
+      // their focus and steers nothing (#4188), so they keep peeling,
+      // finishing kills and holding their plan.
+      const up = calls.view(team, sim.elapsedSeconds).target;
+      const target = up !== null && seats.get(up.callerId)?.bot === false ? up.targetId : undefined;
       sim.setCalledTarget(team, target);
       if (calledLogged.get(team) !== (target ?? null)) {
         calledLogged.set(team, target ?? null);

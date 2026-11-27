@@ -90,6 +90,14 @@ En bot bruger et menneskeligt øjeblik, en brøkdel af et sekund, på at
 reagere på det, der sker, så en hurtig afbrydelse eller en sen undvigelse
 kan slå den.
 
+Når ingen på dit hold har udpeget et mål, udpeger en af dine bots den
+fjende, dine bots går efter, ligesom du ville: du ser markøren og
+bottens navn, så du kan være med. Et mål, en bot udpeger, viser kun,
+hvor bots er på vej hen; de beskytter stadig en holdkammerat og gør det
+af med en døende fjende. Et mål, du udpeger, vinder altid: alle bots på
+holdet går efter dit mål, ingen bot erstatter det, og bots udpeger først
+igen, når målet er dødt eller væk.
+
 I en kamp mellem tre hold kæmper bots mod ét fjendehold ad gangen: det
 hold, der angriber dem, eller, mens ingen gør det, det hårdest ramte hold
 inden for rækkevidde. De bliver ved det hold, indtil et andet sætter

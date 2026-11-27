@@ -268,6 +268,8 @@ export interface BehaviourCursor {
   regroupSpent: boolean;
   /** `play-build`, foes of two teams or more: the team it fights, kept while that team still fights (#2685). */
   front: number | undefined;
+  /** `play-build`: the team target its last think chose (#4188), `undefined` before it chose one. */
+  focusId: string | undefined;
   /** `play-build`: the team target it holds its spike skills for (#2631), `undefined` while it holds none. */
   spikeTargetId: string | undefined;
   /** `play-build`: how long it has held them for `spikeTargetId` (#2631). */
@@ -528,6 +530,7 @@ export function createCursor(): BehaviourCursor {
     regroupSince: undefined,
     regroupSpent: false,
     front: undefined,
+    focusId: undefined,
     spikeTargetId: undefined,
     spikeHeldSeconds: 0,
     spikeReadySeconds: undefined,

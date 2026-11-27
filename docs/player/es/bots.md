@@ -90,6 +90,14 @@ Un bot tarda un instante humano, una fracción de segundo, en reaccionar a
 lo que pasa, así que una interrupción rápida o una esquiva tardía pueden
 ganarle.
 
+Cuando nadie de tu equipo tiene un objetivo marcado, uno de tus bots
+marca al enemigo en el que se centran tus bots, igual que harías tú: ves
+el marcador y el nombre del bot, así que puedes unirte. La marca de un
+bot solo muestra adónde van los bots; aun así protegen a un compañero y
+rematan a un enemigo moribundo. Tu marca siempre gana: todos los bots
+del equipo se centran en tu objetivo, ningún bot reemplaza tu marca, y
+los bots solo vuelven a marcar cuando su objetivo ha muerto o se ha ido.
+
 En una lucha de tres equipos, los bots combaten a un equipo enemigo cada
 vez: el que los ataca o, si nadie lo hace, el equipo más herido a su
 alcance. Siguen con ese equipo hasta que otro les eche claramente más

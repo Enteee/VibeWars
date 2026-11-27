@@ -91,6 +91,14 @@ En bot tar ett mänskligt ögonblick, en bråkdel av en sekund, på sig att
 reagera på det som händer, så ett snabbt avbrott eller en sen undanmanöver
 kan slå den.
 
+När ingen i ditt lag har utpekat ett mål, pekar en av dina bottar ut
+fienden som dina bottar går på, precis som du skulle göra: du ser
+markören och bottens namn, så att du kan hänga på. Ett mål som en bott
+pekar ut visar bara vart bottarna är på väg; de skyddar ändå en
+lagkamrat och gör slut på en döende fiende. Ett mål du pekar ut vinner
+alltid: alla bottar i laget går på ditt mål, ingen bott ersätter det,
+och bottarna pekar ut igen först när målet är dött eller borta.
+
 I en strid mellan tre lag slåss bottar mot ett fiendelag i
 taget: laget som attackerar dem, eller, medan ingen gör det, det mest
 skadade laget inom räckhåll. De stannar på det laget tills ett annat
