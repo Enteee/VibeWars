@@ -479,8 +479,7 @@ describe("status modifiers in the match", () => {
     sim.requestSkill("a", 0);
     expect(participant(sim, "a").combatant.cast.activeCast?.totalSeconds).toBe(3);
     expect(stepFor(sim, 2.5)).toEqual([]);
-    // Sixty 0.05 s steps leave a float hair of the 3 s, so it lands a tick on.
-    expect(stepFor(sim, 0.5 + DT).map((entry) => entry.skillId)).toEqual([FIREBALL]);
+    expect(stepFor(sim, 0.5).map((entry) => entry.skillId)).toEqual([FIREBALL]);
   });
 
   it("a Mesmer with Fast Casting 12 lands a 2 s Malaise in 1.15 s (#527)", () => {
