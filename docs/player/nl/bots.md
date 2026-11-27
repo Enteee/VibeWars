@@ -42,6 +42,8 @@ stilstaat, spelen ze verder zoals een team van bots dat zou doen.
 Zolang je actief bent, loopt een bot die een gevecht ver bij je vandaan heeft getrokken terug naar je, tenzij hij zwaargewond is of er een vijand vlak bij hem staat.
 Een frontliniebot keert zich tegen een vijand die de genezer of spreukenwerpers van zijn team aanvalt, tenzij hij op het punt staat zijn eigen doelwit af te maken.
 
+Tegen een team met gebiedsskills houden afstandsbots en genezers afstand van elkaar, zodat één explosie er geen twee raakt. Dekking geven ze daarvoor nooit op.
+
 Boogschutters en speerwerpers nemen de hoge grond in als dat veilig is.
 Een bot waar twee vijanden zich op richten, of die onder de helft van zijn gezondheid zit en die snel verliest, duikt tot drie seconden uit hun zicht: achter een muur, onder een platform of op hoge grond.
 Is er geen vijand in de buurt, dan haalt een bot een hendel over die een kortere weg naar de vijanden opent. Twee bots slaan ook een muur neer die een veel kortere weg verbergt, door er met hun wapens op in te hakken.

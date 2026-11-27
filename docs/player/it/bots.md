@@ -16,6 +16,8 @@ Un bot gioca il ruolo che gli dà la sua build. Chi impugna un'arma da mischia s
 Finché sei attivo, un bot che uno scontro ha trascinato lontano da te torna da te, a meno che non sia gravemente ferito o abbia un nemico addosso.
 Un bot di prima linea si rivolta contro un nemico che attacca il guaritore o gli incantatori della sua squadra, a meno che non stia per finire il proprio bersaglio.
 
+Contro una squadra con abilità ad area, i bot a distanza e i guaritori restano separati, così un'esplosione non ne colpisce due. Non rinunciano mai a un riparo per farlo.
+
 Arcieri e lancieri prendono l'altura quando è sicuro.
 Un bot preso di mira da due avversari, o sotto metà salute e in rapido calo, si toglie dalla loro vista fino a tre secondi: dietro un muro, sotto una piattaforma o sull'altura.
 Se non ci sono nemici vicini, un bot aziona la leva che apre una via più breve verso i nemici. Due bot abbattono anche un muro che nasconde una via molto più breve, colpendolo con le loro armi.

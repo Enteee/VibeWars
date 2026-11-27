@@ -39,6 +39,8 @@ cạnh bạn, hồi máu ở phía sau, và chúng đi theo bạn đến bất c
 Khi bạn còn đang hoạt động, một bot bị trận đánh kéo ra xa bạn sẽ đi bộ quay về với bạn, trừ khi nó bị thương nặng hoặc có kẻ địch ngay sát bên.
 Một bot tiền tuyến sẽ quay sang đánh kẻ địch đang tấn công người hồi máu hoặc pháp sư của đội mình, trừ khi nó sắp hạ gục mục tiêu của chính nó.
 
+Khi gặp đội có kỹ năng diện rộng, bot đánh xa và người hồi máu đứng tách nhau ra, để một vụ nổ không trúng hai người. Chúng không bao giờ bỏ chỗ nấp để làm vậy.
+
 Cung thủ và người dùng giáo chiếm chỗ cao khi an toàn.
 Bot bị hai đối thủ dồn đánh, hoặc còn dưới nửa máu và đang mất máu nhanh, sẽ nấp khỏi tầm nhìn của chúng tối đa ba giây: sau tường, dưới sàn hoặc lên chỗ cao.
 Khi không có kẻ địch nào ở gần, bot sẽ kéo cần gạt mở ra lối đi ngắn hơn tới kẻ địch. Hai bot cũng phá đổ bức tường che một lối đi ngắn hơn nhiều, bằng cách dùng vũ khí đánh vào nó.

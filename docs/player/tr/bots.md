@@ -43,6 +43,8 @@ süre boşta durduğunda, yalnızca botlardan oluşan bir takım nasıl oynarsa
 Sen aktif olduğun sürece, bir çatışmanın senden uzağa sürüklediği bir bot, ağır yaralı değilse ya da hemen yanında bir düşman yoksa sana geri döner.
 Ön saftaki bir bot, takımının şifacısına ya da büyücülerine saldıran bir düşmana döner; kendi hedefini bitirmek üzere değilse.
 
+Alan becerileri olan bir takıma karşı menzilli botlar ve şifacılar birbirinden uzak durur, böylece tek bir patlama ikisini birden vurmaz. Bunun için siperden asla vazgeçmezler.
+
 Okçular ve mızrakçılar güvenli olduğunda yüksek yeri tutar.
 İki rakibin odaklandığı ya da canı yarının altında olup hızla azalan bir bot, en fazla üç saniye onların görüşünden saklanır: bir duvarın arkasına, bir platformun altına ya da yüksek yere.
 Yakında düşman yoksa bot, düşmanlara daha kısa bir yol açan kolu çeker. İki bot ayrıca çok daha kısa bir yolu gizleyen bir duvarı silahlarıyla vurarak yıkar.

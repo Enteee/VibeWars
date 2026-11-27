@@ -43,6 +43,8 @@ equipo de bots.
 Mientras estés activo, un bot al que un combate aleje de ti vuelve contigo, salvo que esté muy herido o tenga un enemigo encima.
 Un bot de primera línea se vuelve contra un enemigo que ataca al sanador o a los lanzadores de su equipo, salvo que esté a punto de rematar a su propio objetivo.
 
+Contra un equipo con habilidades de área, los bots a distancia y los sanadores se mantienen separados, para que una explosión no alcance a dos de ellos. Nunca renuncian a la cobertura para hacerlo.
+
 Los arqueros y lanceros toman el terreno elevado cuando es seguro.
 Un bot al que atacan dos enemigos, o que está por debajo de la mitad de su salud y la pierde rápido, se oculta de su vista hasta tres segundos: tras un muro, bajo una plataforma o en terreno elevado.
 Si no hay ningún enemigo cerca, un bot acciona la palanca que abre un camino más corto hacia los enemigos. Dos bots también derriban un muro que oculta un camino mucho más corto, golpeándolo con sus armas.

@@ -16,6 +16,7 @@ import {
   healthFraction,
   nearestTo,
   reachable,
+  spreadDistance,
 } from "./shared.js";
 import type { BotRule, RuleContext } from "./types.js";
 
@@ -47,6 +48,13 @@ const HIGH_GROUND_ROUTES = 3;
  * foes on it, and only to a spot with at least one fewer, so two equal
  * spots never take turns. A healer commits to the spot it chose (#2615).
  *
+ * Against foes with area skills, a caster or healer keeps
+ * `spreadDistance` from every other living ally (#4142), so one blast
+ * hits one of them. Threat comes first: of the spots the fewest foes can
+ * hit, one with no ally that near beats one with. At its spot, crowded by
+ * an ally earlier in simulation order, it moves to a spot no ally crowds
+ * and no more foes can hit, so of two only the later one steps away.
+ *
  * A bow or a spear reaches farther shooting down (#3141): such a bot
  * takes the high ground above its target when no more foes can hit it
  * there than on the spot it would have taken, and walks up by the stairs.
@@ -71,15 +79,19 @@ const position: BotRule = {
     }
     const target =
       rule.role === "ranged" ? foes.find((foe) => foe.id === rule.targetId) : undefined;
+    const spread = spreadDistance(foes);
     let best: Candidate | undefined;
     if (spot.point === undefined || distance(spot.point, self.position) <= POSITION_SLACK) {
       const here = threatAt(rule, self.position);
       best =
         here < THREAT_MOVE_MIN
           ? undefined
-          : safest(rule, self.position, spot.watched, spot.watchedLayer);
+          : safest(rule, self.position, spot.watched, spot.watchedLayer, spread);
       if (best !== undefined && best.threat > here - 1) {
         best = undefined;
+      }
+      if (best === undefined && crowdedByEarlier(rule, spread)) {
+        best = spreadOut(rule, here, spot.watched, spot.watchedLayer, spread);
       }
       // Above its target already, it stays up there.
       const high =
@@ -96,7 +108,7 @@ const position: BotRule = {
         best = { ...best, point: committed(rule, best.point) };
       }
     } else {
-      best = safest(rule, spot.point, spot.watched, spot.watchedLayer);
+      best = safest(rule, spot.point, spot.watched, spot.watchedLayer, spread);
       const high =
         target === undefined
           ? undefined
@@ -108,6 +120,11 @@ const position: BotRule = {
         return undefined;
       }
       if (rule.role === "healer") {
+        // A kept spot an ally crowds gives way to a fresh one none does.
+        const kept = rule.cursor.coverSpot;
+        if (kept !== undefined && !best.crowded && crowded(rule, kept, spread)) {
+          rule.cursor.coverSpot = undefined;
+        }
         best = { ...best, point: committed(rule, best.point) };
       }
       if (distance(best.point, self.position) <= POSITION_SLACK) {
@@ -197,21 +214,74 @@ interface Candidate {
   readonly point: Vec2;
   /** How many foes can hit it there. */
   readonly threat: number;
+  /** Whether another living ally stands within `spreadDistance` of it (#4142). */
+  readonly crowded: boolean;
 }
 
 /**
  * Of `point` turned by each of `THREAT_ANGLES` about `watched`, the one
- * the fewest foes can hit, first in that order on a tie. One it could
- * not see `watched` from, or stand on, is none; none left: `undefined`.
+ * the fewest foes can hit, then one no ally crowds within `spread`,
+ * first in that order on a tie. One it could not see `watched` from, or
+ * stand on, is none; none left: `undefined`.
  */
 function safest(
   rule: RuleContext,
   point: Vec2,
   watched: Vec2,
   watchedLayer: number,
+  spread: number,
 ): Candidate | undefined {
-  const { context } = rule;
   let best: Candidate | undefined;
+  for (const candidate of candidates(rule, point, watched, watchedLayer, spread)) {
+    if (
+      best === undefined ||
+      candidate.threat < best.threat ||
+      (candidate.threat === best.threat && best.crowded && !candidate.crowded)
+    ) {
+      best = candidate;
+    }
+  }
+  return best;
+}
+
+/**
+ * A crowded bot's way out at its spot (#4142): of its spot turned about
+ * `watched`, the one the fewest foes can hit of those no ally crowds and
+ * no more than `here` foes can hit, first on a tie. None: `undefined`,
+ * and it stays.
+ */
+function spreadOut(
+  rule: RuleContext,
+  here: number,
+  watched: Vec2,
+  watchedLayer: number,
+  spread: number,
+): Candidate | undefined {
+  let best: Candidate | undefined;
+  for (const candidate of candidates(rule, rule.self.position, watched, watchedLayer, spread)) {
+    if (
+      !candidate.crowded &&
+      candidate.threat <= here &&
+      (best === undefined || candidate.threat < best.threat)
+    ) {
+      best = candidate;
+    }
+  }
+  return best;
+}
+
+/**
+ * `point` turned by each of `THREAT_ANGLES` about `watched`, in that
+ * order, leaving out those it could not see `watched` from or stand on.
+ */
+function* candidates(
+  rule: RuleContext,
+  point: Vec2,
+  watched: Vec2,
+  watchedLayer: number,
+  spread: number,
+): Generator<Candidate> {
+  const { context } = rule;
   for (const degrees of THREAT_ANGLES) {
     const candidate = turned(point, watched, degrees);
     if (
@@ -220,12 +290,35 @@ function safest(
     ) {
       continue;
     }
-    const threat = threatAt(rule, candidate);
-    if (best === undefined || threat < best.threat) {
-      best = { point: candidate, threat };
+    yield {
+      point: candidate,
+      threat: threatAt(rule, candidate),
+      crowded: crowded(rule, candidate, spread),
+    };
+  }
+}
+
+/** Whether another living ally stands within `spread` of `point` (#4142). */
+function crowded(rule: RuleContext, point: Vec2, spread: number): boolean {
+  return rule.allies.some(
+    (ally) => ally.id !== rule.self.id && distance(ally.position, point) < spread,
+  );
+}
+
+/**
+ * Whether an ally before it in simulation order stands within `spread`
+ * of it (#4142): of two crowding each other, the later one moves.
+ */
+function crowdedByEarlier({ allies, self }: RuleContext, spread: number): boolean {
+  for (const ally of allies) {
+    if (ally.id === self.id) {
+      return false;
+    }
+    if (distance(ally.position, self.position) < spread) {
+      return true;
     }
   }
-  return best;
+  return false;
 }
 
 /** `point` turned `degrees` about `about`, the left way for a positive turn. */
