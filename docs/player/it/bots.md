@@ -22,6 +22,8 @@ Contro una squadra con abilità ad area, i bot a distanza e i guaritori restano 
 
 Un bot a distanza o un guaritore a cui un nemico si avvicina troppo ripiega prima verso il bot di prima linea più vicino, se ce n'è uno abbastanza vicino, e combatte lì. Un attaccante in mischia rallentato, per esempio storpiato, non riesce a stargli dietro, quindi contro di lui indietreggia invece tra un colpo e l'altro.
 
+Un bot sotto un maleficio che punisce l'attacco o il lancio di incantesimi, come Empathy o Backfire, smette di farlo finché il maleficio non finisce.
+
 Arcieri e lancieri prendono l'altura quando è sicuro.
 Un bot preso di mira da due avversari, o sotto metà salute e in rapido calo, si toglie dalla loro vista fino a tre secondi: dietro un muro, sotto una piattaforma o sull'altura.
 Se non ci sono nemici vicini, un bot aziona la leva che apre una via più breve verso i nemici. Due bot abbattono anche un muro che nasconde una via molto più breve, colpendolo con le loro armi.

@@ -51,6 +51,8 @@ Aluetaitoja käyttävää joukkuetta vastaan kaukotaistelijabotit ja parantajat 
 
 Kaukotaistelija tai parantaja, jonka luo vihollinen tulee liian lähelle, vetäytyy ensin lähimmän etulinjan tiimiläisensä luo, jos tämä on tarpeeksi lähellä, ja taistelee siellä. Hidastettu lähitaistelija, esimerkiksi rampautettu, ei pysy perässä, joten sitä vastaan botti perääntyy sen sijaan laukausten välissä.
 
+Botti, jolla on hyökkäämisestä tai loitsimisesta rankaiseva kirous, kuten Empathy tai Backfire, lopettaa sen, kunnes kirous päättyy.
+
 Jousiampujat ja keihäänheittäjät ottavat korkean maaston, kun se on turvallista.
 Botti, johon kaksi vihollista keskittyy tai jonka terveys on alle puolet ja hupenee nopeasti, piiloutuu heidän näkyvistään enintään kolmeksi sekunniksi: muurin taakse, tasanteen alle tai korkealle maastolle.
 Kun yhtään vihollista ei ole lähellä, botti kääntää vivun, joka avaa lyhyemmän tien vihollisten luo. Kaksi bottia myös murtaa muurin, joka kätkee paljon lyhyemmän tien, lyömällä sitä aseillaan.

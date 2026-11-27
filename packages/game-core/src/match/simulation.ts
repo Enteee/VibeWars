@@ -5499,6 +5499,10 @@ export class MatchSimulation {
       this.#moveInterrupts(record);
     }
     this.setTarget(record.id, intent.targetId);
+    // Only the swing (#4199): the cast, the queue and the walk go on.
+    if (intent.stopAttack) {
+      record.combatant.attack = undefined;
+    }
     // Asked only when the attack wanted is not the one going, as a player
     // presses Space once: a pet switches with its owner (#1046). So is
     // the walk to a relic (#2581).

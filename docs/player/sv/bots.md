@@ -49,6 +49,8 @@ Mot ett lag med områdesfärdigheter håller avståndsbottar och helare isär, s
 
 En distansbott eller helare som en fiende kommer för nära drar sig först tillbaka till sin närmaste frontlinjebott, om någon är nära nog, och slåss där. En nedsaktad närstridare, till exempel lemlästad, hinner inte med, så mot den backar botten i stället undan mellan skotten.
 
+En bot under en förbannelse som straffar anfall eller besvärjelser, som Empathy eller Backfire, slutar med det tills förbannelsen tar slut.
+
 Bågskyttar och spjutkastare tar höjden när det är säkert.
 En bott som två fiender fokuserar på, eller som har under halva hälsan och tappar den snabbt, gömmer sig från deras syn i upp till tre sekunder: bakom en mur, under ett däck eller på höjden.
 När ingen fiende är nära drar en bot i en spak som öppnar en kortare väg till fienderna. Två bottar river också en mur som döljer en mycket kortare väg, genom att slå på den med sina vapen.

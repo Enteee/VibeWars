@@ -262,3 +262,49 @@ describe("a ranger kites a slowed diver (#4166)", () => {
     expect(clear).toBeLessThanOrEqual(0.5);
   });
 });
+
+describe("a bot under Empathy (#4199)", () => {
+  /** A warrior bot swinging at a foe that stands still, and a monk bot ready to heal beside it. */
+  function arena(): MatchSimulation {
+    return match([
+      fighter("w", 0, WARRIOR, vec2(400, 400), { skillBar: [] }),
+      fighter("m", 0, MONK, vec2(380, 450), { skillBar: ["monk.orison-of-healing"] }),
+      fighter("f", 1, WARRIOR, vec2(440, 400), { behaviour: undefined, skillBar: [] }),
+    ]);
+  }
+
+  /** Steps `sim` until `seconds` have passed. */
+  function run(sim: MatchSimulation, seconds: number): void {
+    for (let t = 0; t < seconds - DT / 2; t += DT) sim.step(DT);
+  }
+
+  it("takes no Empathy damage after its first think, and swings again within a think of its end", () => {
+    const sim = arena();
+    run(sim, 1);
+    const warrior = sim.get("w")?.combatant;
+    expect(warrior?.attack?.targetId).toBe("f");
+    warrior?.statuses.apply("empathy", 3, "f", NO_RANKS);
+    run(sim, 0.3);
+    const health = warrior?.health;
+    expect(warrior?.attack).toBeUndefined();
+    run(sim, 2.6);
+    expect(warrior?.health).toBe(health);
+    expect(warrior?.attack).toBeUndefined();
+    // The hex ends at 3 s; a think comes every 0.25 s.
+    run(sim, 0.1 + 0.3);
+    expect(warrior?.attack?.targetId).toBe("f");
+  });
+
+  it("ends a healer's swing and leaves its heal casting", () => {
+    const sim = arena();
+    run(sim, 1);
+    const monk = sim.get("m")?.combatant;
+    expect(monk?.attack?.targetId).toBe("f");
+    const ally = sim.get("w")?.combatant;
+    if (ally !== undefined) ally.health = 100;
+    monk?.statuses.apply("empathy", 10, "f", NO_RANKS);
+    run(sim, 0.3);
+    expect(monk?.attack).toBeUndefined();
+    expect(monk?.cast.activeCast?.skillId).toBe("monk.orison-of-healing");
+  });
+});
