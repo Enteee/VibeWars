@@ -2,15 +2,19 @@ import { describe, expect, it } from "vitest";
 import {
   DOME_LAYERS,
   DOME_RISE,
+  FIRE_GLOW_RINGS,
   FLAME_LAYERS,
   FLAME_TONGUES,
   domeLayer,
+  fireGlowRing,
   flameDisc,
   flameTongues,
   type DomeLayer,
   type FlameDisc,
+  type GlowRing,
 } from "./ground-effect-art.js";
 import { FLAME_BASE_COLOUR, FLAME_TIP_COLOUR } from "./ground-effect-look.js";
+import { FIRE_LIGHT_REACH } from "./lighting-model.js";
 
 const disc = (): FlameDisc => ({ x: 0, y: 0, radius: 0, colour: 0, alpha: 0 });
 const layer = (): DomeLayer => ({ x: 0, y: 0, radius: 0, alpha: 0 });
@@ -55,6 +59,30 @@ describe("flameDisc (#4054)", () => {
       flameDisc(tongue, top, now, reduced, disc());
     expect(at(0.3, false)).not.toEqual(at(0, false));
     expect(at(0.3, true)).toEqual(at(0, true));
+  });
+});
+
+describe("fireGlowRing (#4054)", () => {
+  const fire = { id: 3, radius: 40 };
+  const ring = (index: number, now: number, reducedMotion: boolean): GlowRing =>
+    fireGlowRing(fire, index, now, reducedMotion, { radius: 0, alpha: 0 });
+
+  it("reaches as far as a fire's light, then shrinks ring by ring towards the centre", () => {
+    const radii = Array.from(
+      { length: FIRE_GLOW_RINGS },
+      (_, index) => ring(index, 0, false).radius,
+    );
+    expect(radii[0]).toBeCloseTo(40 * FIRE_LIGHT_REACH);
+    for (let index = 1; index < radii.length; index += 1) {
+      expect(radii[index]).toBeLessThan(radii[index - 1] ?? 0);
+      expect(radii[index]).toBeGreaterThan(0);
+    }
+  });
+
+  it("flickers in time, and holds steady under reduced motion", () => {
+    const alphas = [0, 0.3, 0.6].map((now) => ring(0, now, false).alpha);
+    expect(new Set(alphas).size).toBeGreaterThan(1);
+    expect(ring(0, 0, true).alpha).toBe(ring(0, 0.3, true).alpha);
   });
 });
 

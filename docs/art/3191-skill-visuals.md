@@ -24,7 +24,7 @@ Rules the study holds:
 
   Two kinds of area break the violet rule (#4054, `groundArt` in `ground-effect-look.ts`). A **fire
   area**, a pulse whose damage is all fire (Fire Storm, Meteor Shower), is an orange pool `#ff9640`
-  with nine flickering flame tongues and a warm light. A **ward** is a pale-blue translucent dome over
+  with nine flickering flame tongues and a warm glow. A **ward** is a pale-blue translucent dome over
   its circle, lit from the upper left. Both keep the dashed harm edge, the landing width and the
   ending fade. Hexes, wells and every other area stay violet.
 

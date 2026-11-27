@@ -1,5 +1,6 @@
 import { mixColour } from "./body-reactions.js";
 import { FLAME_BASE_COLOUR, FLAME_TIP_COLOUR } from "./ground-effect-look.js";
+import { FIRE_LIGHT_REACH } from "./lighting-model.js";
 
 /**
  * What a fire area and a ward draw over their pool (#4054, the gothic
@@ -93,6 +94,41 @@ export function flameDisc(
   out.radius = FLAME_BASE_RADIUS * (1 - t) + FLAME_TIP_RADIUS;
   out.colour = mixColour(FLAME_BASE_COLOUR, FLAME_TIP_COLOUR, t);
   out.alpha = FLAME_ALPHA;
+  return out;
+}
+
+/** How many rings a fire area's glow is drawn as, the widest first. */
+export const FIRE_GLOW_RINGS = 5;
+/** The glow's alpha where every ring overlaps, at its centre. */
+const FIRE_GLOW_ALPHA = 0.2;
+/** How much the glow dims as it flickers, and how fast. */
+const FIRE_GLOW_FLICKER = 0.25;
+const FIRE_GLOW_RATE = 4;
+
+/** One ring of a fire area's glow: its radius and its alpha. */
+export interface GlowRing {
+  radius: number;
+  alpha: number;
+}
+
+/**
+ * Ring `ring` of the warm glow round `fire` at `now` seconds: the rings
+ * shrink inwards, so their overlap is brightest at the centre, and reach
+ * past the pool as far as a fire's light does (#4057). The glow flickers
+ * on its own phase, and holds steady under reduced motion.
+ */
+export function fireGlowRing(
+  fire: { readonly id: number; readonly radius: number },
+  ring: number,
+  now: number,
+  reducedMotion: boolean,
+  out: GlowRing,
+): GlowRing {
+  const flicker = reducedMotion
+    ? 1
+    : 1 - FIRE_GLOW_FLICKER * (0.5 + 0.5 * Math.sin(now * FIRE_GLOW_RATE + fire.id));
+  out.radius = fire.radius * FIRE_LIGHT_REACH * (1 - ring / FIRE_GLOW_RINGS);
+  out.alpha = (FIRE_GLOW_ALPHA / FIRE_GLOW_RINGS) * flicker;
   return out;
 }
 

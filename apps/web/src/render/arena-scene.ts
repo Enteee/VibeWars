@@ -308,13 +308,17 @@ import {
 } from "./ground-effect-look.js";
 import {
   DOME_LAYERS,
+  FIRE_GLOW_RINGS,
   FLAME_LAYERS,
   domeHighlight,
   domeLayer,
   flameDisc,
+  fireGlowRing,
   flameTongues,
   type DomeLayer,
   type FlameDisc,
+  type FlameTongue,
+  type GlowRing,
 } from "./ground-effect-art.js";
 import {
   DEATH_SECONDS,
@@ -436,6 +440,7 @@ import {
 import type { DrawnClickable } from "./pick.js";
 import {
   BODY_LIGHT_FLOOR,
+  FIRE_LIGHT_COLOUR,
   bodyTintOf,
   lightAt,
   multiplyColour,
@@ -1011,16 +1016,14 @@ export class ArenaScene extends Phaser.Scene {
     | { readonly zones: readonly MapZone[]; readonly grounds: readonly (ZoneGround | undefined)[] }
     | undefined;
   /**
-   * The map's lighting with its zones' lights (#3052), its portals'
-   * (#3030) and its fire areas' (#4054), made when any of them changes:
-   * `portals` is which are on, `burning` which fire areas burn.
+   * The map's lighting with its zones' lights (#3052) and its portals'
+   * (#3030), made when any of them changes: `portals` is which are on.
    */
   private zoneLit:
     | {
         readonly lighting: MapLighting;
         readonly zones: readonly MapZone[];
         readonly portals: string;
-        readonly burning: string;
         readonly lit: MapLighting;
       }
     | undefined;
@@ -1223,6 +1226,9 @@ export class ArenaScene extends Phaser.Scene {
   private readonly swirl: Swirl = { radius: 0, from: 0, to: 0, alpha: 0 };
   private readonly wisp: Wisp = { x: 0, y1: 0, y2: 0, alpha: 0 };
   private readonly flameDisc: FlameDisc = { x: 0, y: 0, radius: 0, colour: 0, alpha: 0 };
+  private readonly glowRing: GlowRing = { radius: 0, alpha: 0 };
+  /** Each fire area's tongues, by its id: they depend on nothing that changes (#4054). */
+  private readonly flameTongues = new Map<number, readonly FlameTongue[]>();
   private readonly domeLayer: DomeLayer = { x: 0, y: 0, radius: 0, alpha: 0 };
   private readonly corner = { x: 0, y: 0 };
   private readonly nextCorner = { x: 0, y: 0 };
@@ -3724,23 +3730,14 @@ export class ArenaScene extends Phaser.Scene {
     if (lighting === undefined) {
       return this.lightingPass?.allowed(undefined);
     }
-    const { teleports, groundEffects } = this.snapshot;
+    const { teleports } = this.snapshot;
     const portals = teleports.map((teleport) => (teleport.on ? "1" : "0")).join("");
-    const fires = groundEffects.filter((effect) => groundArt(getSkill(effect.skillId)) === "fire");
-    const burning = fires.map((fire) => String(fire.id)).join(",");
     if (
       this.zoneLit?.lighting !== lighting ||
       this.zoneLit.zones !== zones ||
-      this.zoneLit.portals !== portals ||
-      this.zoneLit.burning !== burning
+      this.zoneLit.portals !== portals
     ) {
-      this.zoneLit = {
-        lighting,
-        zones,
-        portals,
-        burning,
-        lit: withZoneLights(lighting, zones, teleports, fires),
-      };
+      this.zoneLit = { lighting, zones, portals, lit: withZoneLights(lighting, zones, teleports) };
     }
     return this.lightingPass?.allowed(this.zoneLit.lit);
   }
@@ -3866,6 +3863,11 @@ export class ArenaScene extends Phaser.Scene {
         }
       }
     }
+    for (const id of this.flameTongues.keys()) {
+      if (!seen.has(id)) {
+        this.flameTongues.delete(id);
+      }
+    }
     this.drawShoutRings(g);
     this.drawSpiritRings(g);
   }
@@ -3941,6 +3943,11 @@ export class ArenaScene extends Phaser.Scene {
     const colours = GROUND_ART_LOOK[art];
     const phase = cuePhase(String(effect.id));
     const breath = poolBreath(this.now, phase, this.reducedMotion);
+    // What stands over the pool fades with its edge as the area ends.
+    const fade = look.edgeAlpha / GROUND_ART_LOOK.plain.edgeAlpha;
+    if (art === "fire") {
+      this.drawFireGlow(g, effect, x, y, fade);
+    }
     g.fillStyle(colours.pool, stackedPoolAlpha(look.poolAlpha * breath, overlaps));
     g.fillCircle(x, y, effect.radius);
     g.lineStyle(look.edgeWidth, colours.edge, artEdgeAlpha(art, look));
@@ -3953,8 +3960,6 @@ export class ArenaScene extends Phaser.Scene {
     } else {
       g.strokeCircle(x, y, effect.radius);
     }
-    // What stands over the pool fades with its edge as the area ends.
-    const fade = look.edgeAlpha / GROUND_ART_LOOK.plain.edgeAlpha;
     if (art === "fire") {
       this.drawFlames(g, effect, x, y, fade);
     } else if (art === "ward") {
@@ -3978,6 +3983,25 @@ export class ArenaScene extends Phaser.Scene {
     g.fillCircle(x + GROUND_ICON_SIZE / 2, y - GROUND_ICON_SIZE / 2, OWNER_PIP_RADIUS);
   }
 
+  /**
+   * A fire area's warm light (#4054): rings drawn under its pool every
+   * frame, not a map light, which would rebuild every light map each time
+   * a fire lands or ends. Still under reduced motion.
+   */
+  private drawFireGlow(
+    g: Phaser.GameObjects.Graphics,
+    effect: RenderableGroundEffect,
+    x: number,
+    y: number,
+    fade: number,
+  ): void {
+    for (let ring = 0; ring < FIRE_GLOW_RINGS; ring += 1) {
+      const glow = fireGlowRing(effect, ring, this.now, this.reducedMotion, this.glowRing);
+      g.fillStyle(FIRE_LIGHT_COLOUR, glow.alpha * fade);
+      g.fillCircle(x, y, glow.radius);
+    }
+  }
+
   /** A fire area's tongues (#4054), each a stack of discs, farthest first; still under reduced motion. */
   private drawFlames(
     g: Phaser.GameObjects.Graphics,
@@ -3986,7 +4010,12 @@ export class ArenaScene extends Phaser.Scene {
     y: number,
     fade: number,
   ): void {
-    for (const tongue of flameTongues(effect.id, effect.radius)) {
+    let tongues = this.flameTongues.get(effect.id);
+    if (tongues === undefined) {
+      tongues = flameTongues(effect.id, effect.radius);
+      this.flameTongues.set(effect.id, tongues);
+    }
+    for (const tongue of tongues) {
       for (let layer = 0; layer < FLAME_LAYERS; layer += 1) {
         const disc = flameDisc(tongue, layer, this.now, this.reducedMotion, this.flameDisc);
         g.fillStyle(disc.colour, disc.alpha * fade);
