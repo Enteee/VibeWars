@@ -163,6 +163,8 @@ import {
   groundFrame,
   professionFrame,
   projectileFrame,
+  projectileTeamFrame,
+  SHOT_GLOW_FRAME,
   skillTypeFrame,
   statusFrame,
   type AtlasMap,
@@ -175,7 +177,12 @@ import {
   projectilePosition,
   projectileCore,
   projectileTrail,
+  LINE_SHADOW,
+  LINE_SHADOW_SPRITES,
   SHOT_CORE_COLOUR,
+  SHOT_GLOW,
+  SHOT_GLOW_ALPHA,
+  SHOT_GLOW_RADIUS,
   SHOT_SHADOW,
   type ShotDot,
   type TrailDot,
@@ -768,6 +775,7 @@ const MAP_DEPTH = renderOrder({ kind: "terrain" });
 const EFFECT_DEPTH = renderOrder({ kind: "effect" });
 const CAST_BADGE_DEPTH = renderOrder({ kind: "cast-badge" });
 const OVERLAY_DEPTH = renderOrder({ kind: "ui" });
+const SHOT_GLOW_DEPTH = renderOrder({ kind: "shot-glow" });
 /** Over every world object, names and numbers included. */
 const EDGE_MARKER_DEPTH = renderOrder({ kind: "edge-marker" });
 /** How far apart the floor's grid lines are, world units. */
@@ -1136,12 +1144,17 @@ export class ArenaScene extends Phaser.Scene {
   private capes = new Map<string, { motion: CapeMotion; x: number; y: number }>();
   /**
    * One sprite per shot, by projectile id: in flight, or ended and fading
-   * at its end point since `endedAt` (scene seconds).
+   * at its end point since `endedAt` (scene seconds). Its baked-colour
+   * `image` lies over `team`, the part tinted to its side (#4055), and a
+   * glowing spell's `glow` lies under both, offset to its head.
    */
   private projectileImages = new Map<
     number,
     {
       image: Phaser.GameObjects.Image;
+      readonly team: Phaser.GameObjects.Image;
+      readonly glow:
+        { readonly image: Phaser.GameObjects.Image; readonly offset: Vec2 } | undefined;
       to: { x: number; y: number };
       /** Where it lands on water, unlifted, to splash there (#4061); `undefined` on dry ground. */
       readonly splash:
@@ -1313,14 +1326,7 @@ export class ArenaScene extends Phaser.Scene {
 
   /** What `actor`'s figure is painted in: its team's colour and its cape (ADR-0056). */
   private stackLook(actor: RenderableActor): StackLook {
-    const look = actor.cosmetics.cape?.look;
-    return {
-      body: teamColour(actor.team),
-      cape:
-        actor.cape === undefined
-          ? undefined
-          : { look: actor.cape, pattern: look?.kind === "cape" ? look.pattern : undefined },
-    };
+    return { body: teamColour(actor.team), cape: actor.cape };
   }
 
   /** A canvas texture for the figure atlas, `width` × `height`: a new key every time. */
@@ -1737,12 +1743,10 @@ export class ArenaScene extends Phaser.Scene {
     if (actor.cape === undefined || motion === undefined) {
       return undefined;
     }
-    const look = actor.cosmetics.cape?.look;
     const frame = actor.cosmetics.emblemFrame?.look;
     return {
       look: actor.cape,
       motion,
-      pattern: look?.kind === "cape" ? look.pattern : undefined,
       emblemFrame: frame?.kind === "emblemFrame" && !actor.formed ? frame : undefined,
     };
   }
@@ -2848,13 +2852,30 @@ export class ArenaScene extends Phaser.Scene {
       }
       flying.add(shot.id);
       if (shown === undefined) {
+        const heading = projectileHeading(shot, this.snapshot.structure, this.snapshot.lifts);
+        const glowColour = shot.spell ? SHOT_GLOW[shot.sprite] : undefined;
+        const glow =
+          glowColour === undefined
+            ? undefined
+            : this.add
+                .image(position.x, position.y, ATLAS, SHOT_GLOW_FRAME)
+                .setDepth(SHOT_GLOW_DEPTH)
+                .setBlendMode(Phaser.BlendModes.ADD)
+                .setTint(glowColour)
+                .setAlpha(SHOT_GLOW_ALPHA);
+        const team = this.add
+          .image(position.x, position.y, ATLAS, projectileTeamFrame(shot.sprite))
+          .setDepth(OVERLAY_DEPTH)
+          .setRotation(heading)
+          .setTint(shot.colour);
         const image = this.add
           .image(position.x, position.y, ATLAS, projectileFrame(shot.sprite))
-          .setDepth(OVERLAY_DEPTH);
-        const heading = projectileHeading(shot, this.snapshot.structure, this.snapshot.lifts);
-        image.setRotation(heading);
-        image.setTint(shot.colour);
+          .setDepth(OVERLAY_DEPTH)
+          .setRotation(heading);
         const scale = image.scaleX;
+        const core = projectileCore(shot.sprite, heading, scale);
+        glow?.setDisplaySize(SHOT_GLOW_RADIUS * 2 * scale, SHOT_GLOW_RADIUS * 2 * scale);
+        glow?.setPosition(position.x + core.offset.x, position.y + core.offset.y);
         const from = projectilePosition(
           shot,
           shot.launchedAt,
@@ -2863,6 +2884,8 @@ export class ArenaScene extends Phaser.Scene {
         );
         this.projectileImages.set(shot.id, {
           image,
+          team,
+          glow: glow === undefined ? undefined : { image: glow, offset: core.offset },
           to: projectileLanding(shot, this.snapshot.structure, this.snapshot.lifts),
           splash:
             this.waterAt(shot.to, shot.toLayer) === undefined
@@ -2874,12 +2897,12 @@ export class ArenaScene extends Phaser.Scene {
               ? {
                   from,
                   trail: projectileTrail(shot.sprite, heading, scale),
-                  core: projectileCore(shot.sprite, heading, scale),
+                  core,
                 }
               : undefined,
         });
       } else {
-        shown.image.setPosition(position.x, position.y);
+        placeShot(shown, position);
       }
       const spell = this.projectileImages.get(shot.id)?.spell;
       if (spell !== undefined && trails !== undefined && !this.reducedMotion) {
@@ -2908,14 +2931,18 @@ export class ArenaScene extends Phaser.Scene {
       }
       if (shown.endedAt === undefined && fade) {
         shown.endedAt = now;
-        shown.image.setPosition(shown.to.x, shown.to.y);
+        placeShot(shown, shown.to);
       }
       const alpha = shown.endedAt === undefined ? undefined : shotFadeAlpha(shown.endedAt, now);
       if (alpha === undefined) {
         shown.image.destroy();
+        shown.team.destroy();
+        shown.glow?.image.destroy();
         this.projectileImages.delete(id);
       } else {
         shown.image.setAlpha(alpha);
+        shown.team.setAlpha(alpha);
+        shown.glow?.image.setAlpha(SHOT_GLOW_ALPHA * alpha);
       }
     }
     for (const { image, spell } of this.projectileImages.values()) {
@@ -2931,27 +2958,34 @@ export class ArenaScene extends Phaser.Scene {
   }
 
   /**
-   * Each flying spell's shadow (#3292): on the ground under it, in the
-   * band of the layer it flies over, so it takes that band's tone and
-   * lies under the bodies there. Gone once the shot lands.
+   * Each shot's shadow (#3292, #4055): on the ground under it, in the band
+   * of the layer it flies over, so it takes that band's tone and lies
+   * under the bodies there. An arrow, spear or dagger casts a line along
+   * its flight, anything else a blob. Gone once the shot lands.
    */
   private drawShotShadows(now: number): void {
     const clock = this.clock.read(now);
     const { structure, lifts } = this.snapshot;
     for (const shot of this.snapshot.projectiles) {
-      if (!shot.spell || this.endedShots.has(shot.id)) {
+      if (this.endedShots.has(shot.id)) {
         continue;
       }
       const position = projectilePosition(shot, clock, structure, lifts);
       const band = this.bandOf(projectileLayer(shot, clock));
-      if (position !== undefined && band !== undefined) {
+      if (position === undefined || band === undefined) {
+        continue;
+      }
+      const x = position.x + SHOT_SHADOW.offset.x;
+      const y = position.y + SHOT_SHADOW.offset.y;
+      if (LINE_SHADOW_SPRITES.has(shot.sprite)) {
+        const heading = projectileHeading(shot, structure, lifts);
+        const dx = Math.cos(heading) * LINE_SHADOW.half;
+        const dy = Math.sin(heading) * LINE_SHADOW.half;
+        band.body.lineStyle(LINE_SHADOW.width, SHOT_SHADOW.colour, SHOT_SHADOW.alpha);
+        band.body.lineBetween(x - dx, y - dy, x + dx, y + dy);
+      } else {
         band.body.fillStyle(SHOT_SHADOW.colour, SHOT_SHADOW.alpha);
-        band.body.fillEllipse(
-          position.x + SHOT_SHADOW.offset.x,
-          position.y + SHOT_SHADOW.offset.y,
-          SHOT_SHADOW.width,
-          SHOT_SHADOW.height,
-        );
+        band.body.fillEllipse(x, y, SHOT_SHADOW.width, SHOT_SHADOW.height);
       }
     }
   }
@@ -7155,4 +7189,18 @@ function tintedCells(tile: HTMLCanvasElement, look: WaterLook): HTMLCanvasElemen
   context.fillStyle = `rgb(${[16, 8, 0].map(channel).join(", ")})`;
   context.fillRect(0, 0, canvas.width, canvas.height);
   return canvas;
+}
+
+/** Move a shot's sprite, its team part and its glow to `at`. */
+function placeShot(
+  shown: {
+    readonly image: Phaser.GameObjects.Image;
+    readonly team: Phaser.GameObjects.Image;
+    readonly glow: { readonly image: Phaser.GameObjects.Image; readonly offset: Vec2 } | undefined;
+  },
+  at: Vec2,
+): void {
+  shown.image.setPosition(at.x, at.y);
+  shown.team.setPosition(at.x, at.y);
+  shown.glow?.image.setPosition(at.x + shown.glow.offset.x, at.y + shown.glow.offset.y);
 }

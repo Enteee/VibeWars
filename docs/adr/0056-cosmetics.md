@@ -56,12 +56,13 @@ There is no server to say who earned what. ADR-0055's leaderboard is public, rep
    - ground aura;
    - footstep trail;
    - weapon trail;
-   - cape pattern;
    - spawn-in style;
    - death dissolve;
    - emblem frame;
    - banner shape;
    - win-streak flame beside the name, shown while the leaderboard's `streak` is ≥ 3.
+
+   Cape pattern removed by operator request (#4219).
 
    Emotes and victory poses, portrait frames and profile backdrops, ping-wheel icons and season medals each need a base feature that does not exist yet (an emote system, a profile, a ping wheel, seasons). Each comes with that feature.
 

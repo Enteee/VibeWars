@@ -12,23 +12,19 @@ obtiveste.
 | ---------------------------------------------------------------- | ------------------------------ |
 | Moldura jade e o título Desafiante                               | 5 vitórias ranqueadas          |
 | Aura de musgo, Rastro de musgo, Golpe de musgo                   | 5 vitórias ranqueadas          |
-| Capa às riscas                                                   | 5 vitórias ranqueadas          |
 | Moldura do emblema na cor do debrum                              | 5 vitórias ranqueadas          |
 | Moldura rosa e o título Veterano                                 | 25 vitórias ranqueadas         |
 | Aura de brasa, Rastro de brasa, Golpe de brasa                   | 25 vitórias ranqueadas         |
-| Capa com divisas                                                 | 25 vitórias ranqueadas         |
 | Luz ascendente, Dissolução em cinzas                             | 25 vitórias ranqueadas         |
 | Aura de geada, Rastro de geada, Golpe de geada                   | 75 vitórias ranqueadas         |
 | Redemoinho de folhas, Dissolução em névoa                        | 75 vitórias ranqueadas         |
 | Moldura do emblema de ferro                                      | 75 vitórias ranqueadas         |
 | Moldura azul-petróleo e o título Senhor da guerra                | 200 vitórias ranqueadas        |
-| Capa esquartelada                                                | 200 vitórias ranqueadas        |
 | Chuva de pétalas, Dissolução em estilhaços                       | 200 vitórias ranqueadas        |
 | Moldura do emblema de prata                                      | 200 vitórias ranqueadas        |
 | Aura de luz estelar, Rastro de luz estelar, Golpe de luz estelar | 500 vitórias ranqueadas        |
 | Chuva de estrelas, Dissolução em poeira estelar                  | 500 vitórias ranqueadas        |
 | Moldura orquídea e o título Campeão                              | Um lugar no Top 100            |
-| Capa estrelada                                                   | Um lugar no Top 100            |
 | Moldura do emblema dourada                                       | Um lugar no Top 100            |
 | Chama de sequência                                               | 3 vitórias ranqueadas seguidas |
 
@@ -40,9 +36,9 @@ continua escolhido.
 
 Uma aura no chão é um anel ténue aos teus pés. Um rastro de passos deixa pequenas partículas por onde andas, que desaparecem num instante. Ambos são desenhados por baixo de cada anel, marca e aviso, e nunca usam uma cor de equipa. Se o teu sistema pedir movimento reduzido, a aura fica parada e nenhum rastro é desenhado.
 
-## Na tua arma e capa
+## Na tua arma
 
-Um rastro da arma é uma fita atrás da tua arma quando um ataque corpo a corpo acerta, e desvanece-se em menos de um quinto de segundo após o golpe. Arcos, lanças, varinhas e cajados não têm nenhum, e nenhum feitiço ou conjuração mostra alguma vez um. Um padrão da capa põe riscas, divisas, quartos ou estrelas na tua capa da guilda na sua própria cor de debrum, e o teu emblema fica sempre por cima, tão nítido como numa capa lisa. Se o teu sistema pedir movimento reduzido, nenhum rastro da arma é desenhado.
+Um rastro da arma é uma fita atrás da tua arma quando um ataque corpo a corpo acerta, e desvanece-se em menos de um quinto de segundo após o golpe. Arcos, lanças, varinhas e cajados não têm nenhum, e nenhum feitiço ou conjuração mostra alguma vez um. Se o teu sistema pedir movimento reduzido, nenhum rastro da arma é desenhado.
 
 ## Voltar e cair
 

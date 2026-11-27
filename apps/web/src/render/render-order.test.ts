@@ -27,6 +27,7 @@ describe("renderOrder (#2810, section 8: 12)", () => {
       { kind: "deck", deckLayer: 1 },
       character(1),
       { kind: "effect" },
+      { kind: "shot-glow" },
       { kind: "ui" },
     ];
     const orders = items.map(renderOrder);

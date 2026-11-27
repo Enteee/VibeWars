@@ -11,23 +11,19 @@ kazanırsın. Kimse onları dağıtmaz: herkes lider tablosuna bakıp ne kazand�
 | ------------------------------------------------------------ | ----------------------------- |
 | Yeşim çerçeve ve Rakip unvanı                                | 5 dereceli galibiyet          |
 | Yosun aurası, Yosun izi, Yosun savuruşu                      | 5 dereceli galibiyet          |
-| Çizgili pelerin                                              | 5 dereceli galibiyet          |
 | Kenar renginde amblem çerçevesi                              | 5 dereceli galibiyet          |
 | Gül çerçeve ve Kıdemli unvanı                                | 25 dereceli galibiyet         |
 | Kor aurası, Kor izi, Kor savuruşu                            | 25 dereceli galibiyet         |
-| Şevronlu pelerin                                             | 25 dereceli galibiyet         |
 | Yükselen ışık, Küle dönüşme                                  | 25 dereceli galibiyet         |
 | Ayaz aurası, Ayaz izi, Ayaz savuruşu                         | 75 dereceli galibiyet         |
 | Yaprak girdabı, Sise dönüşme                                 | 75 dereceli galibiyet         |
 | Demir amblem çerçevesi                                       | 75 dereceli galibiyet         |
 | Camgöbeği çerçeve ve Savaş lordu unvanı                      | 200 dereceli galibiyet        |
-| Dörde bölünmüş pelerin                                       | 200 dereceli galibiyet        |
 | Taç yaprağı yağmuru, Kırıklara dönüşme                       | 200 dereceli galibiyet        |
 | Gümüş amblem çerçevesi                                       | 200 dereceli galibiyet        |
 | Yıldız ışığı aurası, Yıldız ışığı izi, Yıldız ışığı savuruşu | 500 dereceli galibiyet        |
 | Yıldız yağmuru, Yıldız tozuna dönüşme                        | 500 dereceli galibiyet        |
 | Orkide çerçeve ve Şampiyon unvanı                            | İlk 100'de bir yer            |
-| Yıldızlı pelerin                                             | İlk 100'de bir yer            |
 | Yaldızlı amblem çerçevesi                                    | İlk 100'de bir yer            |
 | Galibiyet serisi alevi                                       | Üst üste 3 dereceli galibiyet |
 
@@ -39,9 +35,9 @@ seçili kalır.
 
 Zemin aurası ayaklarının dibinde soluk bir halkadır. Ayak izi yürüdüğün yerde küçük parçacıklar bırakır ve bunlar bir anda solar. İkisi de her halkanın, işaretin ve uyarının altında çizilir ve asla bir takım rengi kullanmaz. Sisteminde azaltılmış hareket açıksa aura yerinde durur ve iz çizilmez.
 
-## Silahında ve pelerininde
+## Silahında
 
-Silah izi, bir yakın dövüş saldırısı isabet ederken silahının arkasında kalan bir şerittir ve isabetten sonra saniyenin beşte biri içinde solar. Yaylar, mızraklar, asalar ve değnekler iz almaz ve hiçbir büyü ya da okuma asla iz göstermez. Pelerin deseni lonca pelerinine kendi kenar renginde çizgiler, şevronlar, çeyrekler ya da yıldızlar koyar ve amblemin her zaman üstte kalır, düz bir pelerindeki kadar net. Sisteminde azaltılmış hareket açıksa silah izi çizilmez.
+Silah izi, bir yakın dövüş saldırısı isabet ederken silahının arkasında kalan bir şerittir ve isabetten sonra saniyenin beşte biri içinde solar. Yaylar, mızraklar, asalar ve değnekler iz almaz ve hiçbir büyü ya da okuma asla iz göstermez. Sisteminde azaltılmış hareket açıksa silah izi çizilmez.
 
 ## Geri dönmek ve düşmek
 

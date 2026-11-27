@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { Leaderboard, LeaderboardEntry } from "../net/leaderboard.js";
 import { loadPlayerKey } from "../net/transport/player-key.js";
 import { DEATH_SECONDS, RESPAWN_SECONDS } from "../render/body-reactions.js";
-import { COSMETIC_CATALOG, cosmeticById, type CosmeticEntry } from "./catalog.js";
+import { COSMETIC_CATALOG, COSMETIC_SLOTS, cosmeticById, type CosmeticEntry } from "./catalog.js";
 import { checkCosmetic } from "./check.js";
 import {
   buildSelection,
@@ -176,6 +176,10 @@ describe("a cosmetic selection (ADR-0056)", () => {
     expect(
       buildSelection(key.pubkey, { title: "title-veteran", frame: "frame-jade" }, 5).ids,
     ).toEqual(["frame-jade", "title-veteran"]);
+  });
+
+  it("has no cape pattern slot, which the operator removed (#4219)", () => {
+    expect(COSMETIC_SLOTS).not.toContain("cape");
   });
 
   it("verifies for its own key and nothing changed", () => {

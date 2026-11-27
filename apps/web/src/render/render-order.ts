@@ -75,6 +75,7 @@ export type RenderItem =
   | { readonly kind: "hidden-outline" }
   | { readonly kind: "effect" }
   | { readonly kind: "cast-badge" }
+  | { readonly kind: "shot-glow" }
   | { readonly kind: "ui" }
   | { readonly kind: "edge-marker" };
 
@@ -235,6 +236,8 @@ const LIFT = 5.6;
 const HIDDEN_OUTLINE = 90;
 const EFFECT = 100;
 const CAST_BADGE = 100.5;
+/** Every flying spell's glow (#4055), together under the shots, so they draw in one additive batch. */
+const SHOT_GLOW = 109.5;
 const UI = 110;
 const EDGE_MARKER = 120;
 
@@ -321,6 +324,8 @@ export function renderOrder(item: RenderItem): number {
       return EFFECT;
     case "cast-badge":
       return CAST_BADGE;
+    case "shot-glow":
+      return SHOT_GLOW;
     case "ui":
       return UI;
     case "edge-marker":

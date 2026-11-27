@@ -871,7 +871,6 @@ async function ranked(browser, url) {
           aura: "aura-starlight",
           trail: "trail-starlight",
           swing: "swing-starlight",
-          cape: "cape-stars",
           emblemFrame: "emblem-frame-gilt",
           frame: "frame-orchid",
           title: "title-champion",

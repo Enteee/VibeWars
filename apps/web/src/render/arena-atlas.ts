@@ -50,6 +50,8 @@ export const GROUND_ICON_TEXTURE_SIZE = 48;
 /** The projectile sprites' grid, pointing along +x. */
 export const PROJECTILE_WIDTH = 32;
 export const PROJECTILE_HEIGHT = 12;
+/** A flying spell's glow (#4055): a white radial falloff the scene tints and adds. */
+export const SHOT_GLOW_TEXTURE_SIZE = 32;
 
 /**
  * The icon file each creature look shows, here so the menus and the sheet
@@ -116,6 +118,13 @@ export function skillTypeFrame(type: string): string {
 export function projectileFrame(sprite: string): string {
   return `projectile/${sprite}`;
 }
+
+/** The part of a shot that is tinted to its side (#4055), under its baked-colour frame. */
+export function projectileTeamFrame(sprite: string): string {
+  return `projectile-team/${sprite}`;
+}
+
+export const SHOT_GLOW_FRAME = "projectile-glow/glow";
 
 export function groundFrame(skillId: string): string {
   return `ground/${skillId}`;

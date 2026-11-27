@@ -600,12 +600,15 @@ describe("networked combat (P2P)", () => {
     );
     expect(a.getAdrenaline()[severArtery]).toBe(ADRENALINE_PER_STRIKE);
 
-    // A message a blow until Sever Artery holds its 4 strikes...
+    // A message a blow until "Watch Yourself!", the dearest, holds its 4
+    // strikes...
+    const watchYourself = slotOf("Warrior/Monk", "warrior.watch-yourself");
     await until(
       match,
-      () => a.getAdrenaline()[severArtery] === 4 * ADRENALINE_PER_STRIKE,
-      "Sever Artery charged",
+      () => a.getAdrenaline()[watchYourself] === 4 * ADRENALINE_PER_STRIKE,
+      "Watch Yourself charged",
     );
+    expect(a.getAdrenaline()[severArtery]).toBe(3 * ADRENALINE_PER_STRIKE);
     expect(toA).toHaveLength(4);
     // ...then more blows change no slot, and only start the loss again.
     await match.step(4);
@@ -619,7 +622,7 @@ describe("networked combat (P2P)", () => {
     // b is sent its own: what the blows it took charged (#827), never a's.
     expect(toB.length).toBeGreaterThan(0);
     expect(toB.at(-1)?.slots).toEqual(b.getAdrenaline());
-    expect(b.getAdrenaline()[severArtery]).toBeLessThan(4 * ADRENALINE_PER_STRIKE);
+    expect(b.getAdrenaline()[severArtery]).toBeLessThan(3 * ADRENALINE_PER_STRIKE);
   });
 
   it("sends each player only the chain marks it placed: a lead, then an off-hand, gone with its target (#916)", async () => {
@@ -686,15 +689,15 @@ describe("networked combat (P2P)", () => {
     await closeDistance(match, a, b.selfSessionId, 300);
     await target(match, a, b.selfSessionId);
 
-    // Sever Artery costs 4 strikes of adrenaline, one per landed attack:
-    // so swing four times first. The adrenaline economy working as designed.
+    // Sever Artery costs 3 strikes of adrenaline, one per landed attack:
+    // so swing three times first. The adrenaline economy working as designed.
     const heard = combatMessages(a);
     a.sendIntent({ kind: "attack", targetId: b.selfSessionId });
     const severArtery = slotOf("Warrior/Monk", "warrior.sever-artery");
     await until(
       match,
-      () => (a.getAdrenaline()[severArtery] ?? 0) >= 4 * ADRENALINE_PER_STRIKE,
-      "adrenaline from landing four hits",
+      () => (a.getAdrenaline()[severArtery] ?? 0) >= 3 * ADRENALINE_PER_STRIKE,
+      "adrenaline from landing three hits",
     );
 
     await closeDistance(match, a, b.selfSessionId, 30);

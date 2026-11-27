@@ -1,3 +1,4 @@
+import type { CapeLook } from "./cape-shape.js";
 import {
   STACK_BAKED_HEADINGS,
   STACK_HEIGHT,
@@ -9,7 +10,6 @@ import {
   stackLayers,
   stackSlices,
   stackTones,
-  type StackCape,
   type StackPose,
 } from "./sprite-stack.js";
 
@@ -24,7 +24,7 @@ import {
 /** What a figure is painted in: its body colour, and the cape it wears. */
 export interface StackLook {
   readonly body: number;
-  readonly cape: StackCape | undefined;
+  readonly cape: CapeLook | undefined;
 }
 
 /** The body radius the bake draws at; a body of another radius scales its image. */
@@ -80,10 +80,7 @@ const css = (colour: number): string => `#${colour.toString(16).padStart(6, "0")
 /** A look's name: its colours, which is all a bake depends on. */
 export function stackLookKey(look: StackLook): string {
   const { cape } = look;
-  const worn =
-    cape === undefined
-      ? ""
-      : `/${css(cape.look.main)}${css(cape.look.trim)}/${cape.pattern ?? "plain"}`;
+  const worn = cape === undefined ? "" : `/${css(cape.main)}${css(cape.trim)}`;
   return `${css(look.body)}${worn}`;
 }
 
@@ -117,7 +114,6 @@ export function bakeFigure(
     bucketFacing(bucket),
     r,
     stackTones(look.body, look.cape),
-    look.cape?.pattern,
   );
   const trace = (points: readonly { readonly x: number; readonly y: number }[]): void => {
     context.beginPath();

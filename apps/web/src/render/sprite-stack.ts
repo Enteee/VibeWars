@@ -1,4 +1,3 @@
-import type { CapePattern } from "../cosmetics/catalog.js";
 import type { CapeLook } from "./cape-shape.js";
 import { mixColour } from "./body-reactions.js";
 import type { Point } from "./weapon-mark-geometry.js";
@@ -237,19 +236,13 @@ export function bucketFacing(bucket: number): number {
   return (bucket * Math.PI * 2) / STACK_HEADINGS;
 }
 
-/** A guild cape (ADR-0056) on a figure: its colours and the pattern cosmetic on it. */
-export interface StackCape {
-  readonly look: CapeLook;
-  readonly pattern: CapePattern | undefined;
-}
-
 /**
  * Every tone of one look: its body colour, and its cape's cloth and trim,
  * or the body colour darkened when it wears none (ADR-0057). The steel
  * takes a quarter of the body colour, as the preset's takes of its accent.
  */
-export function stackTones(body: number, cape: StackCape | undefined): Record<StackTone, number> {
-  const cloth = cape === undefined ? mixColour(body, 0x000000, 0.4) : cape.look.main;
+export function stackTones(body: number, cape: CapeLook | undefined): Record<StackTone, number> {
+  const cloth = cape === undefined ? mixColour(body, 0x000000, 0.4) : cape.main;
   return {
     boot: BOOT,
     trouser: TROUSER,
@@ -257,38 +250,11 @@ export function stackTones(body: number, cape: StackCape | undefined): Record<St
     belt: BELT,
     team: body,
     cape: cloth,
-    trim: cape === undefined ? cloth : cape.look.trim,
+    trim: cape === undefined ? cloth : cape.trim,
     metal: mixColour(STEEL, body, 0.25),
     visor: VISOR,
-    crest: cape === undefined ? body : cape.look.trim,
+    crest: cape === undefined ? body : cape.trim,
   };
-}
-
-/**
- * Whether the `index`th of a cape's `count` back slices, from the hem
- * up, is in its trim: the hem always, as a flat cape's trim runs along
- * it, then the pattern's bands up the back (#3579's patterns, sliced).
- */
-export function capeSliceTrimmed(
-  pattern: CapePattern | undefined,
-  index: number,
-  count: number,
-): boolean {
-  if (index === 0) {
-    return true;
-  }
-  switch (pattern) {
-    case undefined:
-      return false;
-    case "stripes":
-      return index % 2 === 0;
-    case "chevrons":
-      return index % 3 === 0;
-    case "quarters":
-      return index >= count / 2;
-    case "stars":
-      return index % 4 === 0;
-  }
 }
 
 /** `colour` lit to `light`: darker below 1 by `STACK_CONTRAST`, brighter above. */
@@ -315,11 +281,9 @@ export function stackLayers(
   facing: number,
   r: number,
   tones: Record<StackTone, number>,
-  pattern: CapePattern | undefined,
 ): StackLayer[] {
   const cos = Math.cos(facing);
   const sin = Math.sin(facing);
-  const capes = slices.filter((slice) => slice.tone === "cape").length;
   let cape = 0;
   let lift = 0;
   const layers: StackLayer[] = [];
@@ -329,7 +293,8 @@ export function stackLayers(
     }
     let tone = slice.tone;
     if (tone === "cape") {
-      tone = capeSliceTrimmed(pattern, cape, capes) ? "trim" : "cape";
+      // The hem is in the trim, as a flat cape's trim runs along it.
+      tone = cape === 0 ? "trim" : "cape";
       cape += 1;
     }
     const colour = stackShade(tones[tone], slice.light);
