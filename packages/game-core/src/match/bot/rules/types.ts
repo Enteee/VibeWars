@@ -17,6 +17,11 @@ export interface RuleContext {
   readonly allies: readonly Participant[];
   /** The foe to fight, if any is in reach. */
   readonly targetId: string | undefined;
+  /**
+   * Whether `targetId` was called, is a ghost on the altar or is being
+   * finished (#4147): every cast goes to it, never to a clump.
+   */
+  readonly targetFixed: boolean;
   /** `bodies`, nearest to it first. */
   readonly nearestFirst: (bodies: readonly Participant[]) => Participant[];
   /** Whether it may begin `skill` at `targetId` now, walking in if need be. */

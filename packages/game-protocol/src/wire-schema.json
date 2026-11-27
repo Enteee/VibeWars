@@ -7862,6 +7862,7 @@
               { "literal": "host-left" },
               { "literal": "morale" },
               { "literal": "score" },
+              { "literal": "sudden-death" },
               { "literal": "time" }
             ]
           }
@@ -9090,6 +9091,7 @@
                           { "literal": "host-left" },
                           { "literal": "morale" },
                           { "literal": "score" },
+                          { "literal": "sudden-death" },
                           { "literal": "time" }
                         ]
                       }
@@ -9184,6 +9186,7 @@
                     { "literal": "host-left" },
                     { "literal": "morale" },
                     { "literal": "score" },
+                    { "literal": "sudden-death" },
                     { "literal": "time" }
                   ]
                 }
@@ -9444,6 +9447,7 @@
               { "literal": "guild-lord" },
               { "literal": "morale" },
               { "literal": "score" },
+              { "literal": "sudden-death" },
               { "literal": "time" }
             ]
           }
@@ -9937,6 +9941,7 @@
               { "literal": "guild-lord" },
               { "literal": "morale" },
               { "literal": "score" },
+              { "literal": "sudden-death" },
               { "literal": "time" }
             ]
           }

@@ -1060,6 +1060,7 @@ describe("enemyPips (#881)", () => {
 /** The scoreboard's match with these kills, no stand and no aggression. */
 function board(team0: number, team1: number): ScoreboardMatch {
   return {
+    phase: "active",
     score: [team0, team1],
     stand: undefined,
     aggression: [],
@@ -1277,6 +1278,16 @@ describe("scoreboardText (#881)", () => {
     );
     expect(scoreboardText(players, 0, 0, 180, "kill-count", board(0, 0))).toBe("0 – 0 · 3:00");
   });
+
+  it("reads sudden death for a clock while a tied Kill Count plays on past its time (#4069)", () => {
+    const sudden = `3 – 3 · ${t("hud.suddenDeath")}`;
+    expect(scoreboardText(players, 0, 180, 180, "kill-count", board(3, 3))).toBe(sudden);
+    expect(scoreboardText(players, 0, 241.5, 180, "kill-count", board(3, 3))).toBe(sudden);
+    const over = { ...board(4, 3), phase: "finished" as const };
+    expect(scoreboardText(players, 0, 180, 180, "kill-count", over)).toBe("4 – 3 · 0:00");
+    // A Relic Run has no sudden death: its clock stops at 0:00.
+    expect(scoreboardText(players, 0, 480, 480, "relic-run", board(2, 2))).toBe("2 – 2 · 0:00");
+  });
 });
 
 describe("the Guild Battle scoreboard (#1226)", () => {
@@ -1452,6 +1463,15 @@ describe("describeOutcome", () => {
       t("hud.outcomeWithReason", { result: t("hud.outcomeVictory"), reason: t("hud.outcomeTime") }),
     );
     expect(describeOutcome(1, "score", 1, [])).toBe(t("hud.outcomeVictory"));
+  });
+
+  it("notes a Kill Count won in sudden death (#4069)", () => {
+    expect(describeOutcome(0, "sudden-death", 0, [])).toBe(
+      t("hud.outcomeWithReason", {
+        result: t("hud.outcomeVictory"),
+        reason: t("hud.outcomeSuddenDeath"),
+      }),
+    );
   });
 
   it("falls back to naming the team for a spectator with no team of their own", () => {

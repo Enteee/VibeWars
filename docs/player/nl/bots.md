@@ -41,6 +41,7 @@ achter je, en ze volgen je waar je ook heen gaat. Zodra je een tijdje
 stilstaat, spelen ze verder zoals een team van bots dat zou doen.
 Zolang je actief bent, loopt een bot die een gevecht ver bij je vandaan heeft getrokken terug naar je, tenzij hij zwaargewond is of er een vijand vlak bij hem staat.
 Een frontliniebot keert zich tegen een vijand die de genezer of spreukenwerpers van zijn team aanvalt, tenzij hij op het punt staat zijn eigen doelwit af te maken.
+Een bot met een gebiedsspreuk werpt die waar drie of meer vijanden bij elkaar staan, tenzij het team een vijand aan het afmaken is of een aangewezen doelwit volgt.
 
 Tegen een team met gebiedsskills houden afstandsbots en genezers afstand van elkaar, zodat één explosie er geen twee raakt. Dekking geven ze daarvoor nooit op.
 

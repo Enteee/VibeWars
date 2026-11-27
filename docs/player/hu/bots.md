@@ -45,6 +45,7 @@ ideje tétlenül állsz, úgy játszanak tovább, ahogy egy csak botokból áll�
 csapat tenné.
 Amíg aktív vagy, az a bot, amelyet egy harc messzire sodort tőled, visszajön hozzád, hacsak nem súlyosan sebesült, vagy nem áll közvetlenül mellette egy ellenfél.
 Egy frontvonalbeli bot ráfordul arra az ellenfélre, amely a csapata gyógyítóját vagy varázslóit támadja, hacsak nem éppen a saját célpontját készül végezni.
+A területi varázslattal rendelkező bot oda veti, ahol három vagy több ellenfél áll együtt, hacsak a csapat nem éppen végez egy ellenféllel vagy egy kijelölt célpontot követ.
 
 Területi képességekkel bíró csapat ellen a távolsági botok és a gyógyítók távol tartják magukat egymástól, hogy egy robbanás ne találjon el kettőt közülük. A fedezéket ezért soha nem adják fel.
 

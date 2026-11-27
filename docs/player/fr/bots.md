@@ -42,6 +42,7 @@ suivent où que tu ailles. Une fois que tu es resté inactif un moment, ils
 continuent à jouer comme le ferait une équipe de bots.
 Tant que tu es actif, un bot qu'un combat a entraîné loin de toi revient vers toi, sauf s'il est gravement blessé ou si un ennemi est collé à lui.
 Un bot de première ligne se retourne contre un ennemi qui attaque le soigneur ou les lanceurs de sorts de son équipe, sauf s'il est sur le point d'achever sa propre cible.
+Un bot qui a un sort de zone le lance là où trois ennemis ou plus se tiennent ensemble, sauf si l'équipe achève un ennemi ou suit une cible annoncée.
 
 Face à une équipe qui a des compétences de zone, les bots à distance et les soigneurs restent écartés, pour qu'une seule explosion n'en touche pas deux. Ils ne renoncent jamais à un abri pour cela.
 

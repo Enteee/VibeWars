@@ -42,6 +42,7 @@ süre boşta durduğunda, yalnızca botlardan oluşan bir takım nasıl oynarsa
 öyle oynamaya devam ederler.
 Sen aktif olduğun sürece, bir çatışmanın senden uzağa sürüklediği bir bot, ağır yaralı değilse ya da hemen yanında bir düşman yoksa sana geri döner.
 Ön saftaki bir bot, takımının şifacısına ya da büyücülerine saldıran bir düşmana döner; kendi hedefini bitirmek üzere değilse.
+Alan büyüsü olan bir bot onu üç ya da daha fazla düşmanın bir arada durduğu yere bırakır; takım bir düşmanı bitirmiyor ya da çağrılmış bir hedefi izlemiyorsa.
 
 Alan becerileri olan bir takıma karşı menzilli botlar ve şifacılar birbirinden uzak durur, böylece tek bir patlama ikisini birden vurmaz. Bunun için siperden asla vazgeçmezler.
 

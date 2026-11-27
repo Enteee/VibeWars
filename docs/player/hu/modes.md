@@ -77,7 +77,8 @@ fenti kar nyitja.
 **A legtöbb ölés 3 perc alatt.** A halottak 8 másodperc után
 visszatérnek a kezdőpontjukon, és a halál nem kerül morálba. Az első
 csapat, amely eléri a 15 ölést, azonnal nyer. Az idő végén a több ölés
-nyer; egyenlő ölésszám döntetlen.
+nyer; egyenlő ölésszámnál hirtelen halál jön: nincs óra, és a
+következő ölés nyer.
 
 Az Ember Pits játssza: lávaerek kőhidakkal, egy lávaalagút, egy karral
 indítható lift egy bazaltoszlop tetejére és gőzkürtők, minden csapatmérethez.

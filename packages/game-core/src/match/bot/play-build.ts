@@ -69,12 +69,14 @@ export function playBuild(
     const foes = livingFoes(context);
     const front = foeFront(context, foes, cursor.front);
     cursor.front = front;
+    const target = teamTarget(context, cursor, foes, front, behaviour.escort !== false);
     return think(
       context,
       cursor,
       foes,
       livingMembers(context),
-      teamTarget(context, cursor, foes, front, behaviour.escort !== false),
+      target.id,
+      target.fixed,
       roleOf(context.self),
       behaviour.spikeHold !== false,
       behaviour.escort !== false,
@@ -159,6 +161,7 @@ export function guard(
         foes,
         allies,
         weakest(self, foes)?.id,
+        false,
         undefined,
         false,
         false,
@@ -340,6 +343,7 @@ function think(
   foes: readonly Participant[],
   allies: readonly Participant[],
   targetId: string | undefined,
+  targetFixed: boolean,
   role: BotRole | undefined,
   spikeHold: boolean,
   escort: boolean,
@@ -354,6 +358,7 @@ function think(
     foes,
     allies,
     targetId,
+    targetFixed,
     nearestFirst: (bodies) =>
       [...bodies].sort(
         (a, b) => distance(a.position, self.position) - distance(b.position, self.position),
@@ -409,6 +414,16 @@ function think(
 }
 
 /**
+ * The foe a bot fights, and whether it is `fixed` (#4147): called, a
+ * ghost on the altar or a kill being finished, so not one an area skill
+ * leaves for a clump of foes.
+ */
+interface TeamTarget {
+  readonly id: string | undefined;
+  readonly fixed: boolean;
+}
+
+/**
  * The foe the team called (#1193), while it is alive; else, in King of the
  * Hill, a foe's ghost on an altar the team does not hold (#2600); else,
  * for a frontline bot, a foe diving its healer or casters (#4141,
@@ -431,14 +446,14 @@ function teamTarget(
   all: readonly Participant[],
   front: number | undefined,
   escorts: boolean,
-): string | undefined {
+): TeamTarget {
   const called = all.find((foe) => foe.id === context.calledTargetId);
   if (called !== undefined) {
-    return called.id;
+    return { id: called.id, fixed: true };
   }
   const ghost = foeGhostOnAltar(context, all);
   if (ghost !== undefined) {
-    return ghost.id;
+    return { id: ghost.id, fixed: true };
   }
   const foes = front === undefined ? all : all.filter((foe) => foe.combatant.team === front);
   const self = context.self;
@@ -448,7 +463,7 @@ function teamTarget(
   const inRange = near.length > 0 ? near : foes.filter((foe) => shoots(context, reach, foe, self));
   const diver = peelTarget(context, cursor, all, inRange);
   if (diver !== undefined) {
-    return diver.id;
+    return { id: diver.id, fixed: false };
   }
   const teams = heldTarget(context, foes, inRange);
   const held =
@@ -470,19 +485,19 @@ function teamTarget(
       ? undefined
       : teams;
   if (held !== undefined && healthFraction(held) < FINISH_FRACTION) {
-    return held.id;
+    return { id: held.id, fixed: true };
   }
   const dying = weakest(self, inRange);
   if (dying !== undefined && healthFraction(dying) < FINISH_FRACTION) {
-    return dying.id;
+    return { id: dying.id, fixed: true };
   }
   if (
     held !== undefined &&
     (inRange.length === 0 || distance(held.position, self.position) <= RANGE_SPELL + FOCUS_REACH)
   ) {
-    return held.id;
+    return { id: held.id, fixed: false };
   }
-  return focusPick(self, inRange)?.id;
+  return { id: focusPick(self, inRange)?.id, fixed: false };
 }
 
 /**

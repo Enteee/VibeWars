@@ -39,6 +39,7 @@ pred tebou, boti na diaľku vedľa teba, liečitelia za tebou, a idú tam, kam i
 ty. Keď už nejaký čas nečinne stojíš, hrajú ďalej tak, ako by hral tím botov.
 Kým si aktívny, bot, ktorého boj odtiahol ďaleko od teba, sa k tebe vráti, ak nie je ťažko zranený alebo pri ňom nestojí nepriateľ.
 Bot v prvej línii sa obráti proti nepriateľovi, ktorý útočí na liečiteľa alebo čarodejníkov jeho tímu, ak sa práve nechystá dorobiť vlastný cieľ.
+Bot s plošným kúzlom ho zošle tam, kde stoja traja alebo viacerí nepriatelia spolu, ak tím práve nedorába nepriateľa alebo nesleduje ohlásený cieľ.
 
 Proti tímu s plošnými skillmi sa boti na diaľku a liečitelia držia od seba, aby jeden výbuch nezasiahol dvoch z nich. Krytie kvôli tomu nikdy neopustia.
 

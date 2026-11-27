@@ -38,6 +38,7 @@ uzdrowiciele z tyłu, i idą tam, dokąd ty idziesz. Gdy od jakiegoś czasu stoi
 bezczynnie, grają dalej tak, jak grałaby drużyna złożona z botów.
 Dopóki jesteś aktywny, bot, którego walka odciągnęła daleko od ciebie, wraca do ciebie, chyba że jest ciężko ranny albo tuż przy nim stoi wróg.
 Bot z pierwszej linii odwraca się przeciw wrogowi, który atakuje uzdrowiciela lub czarodziejów jego drużyny, chyba że właśnie dobija własny cel.
+Bot z czarem obszarowym rzuca go tam, gdzie trzech lub więcej wrogów stoi razem, chyba że drużyna właśnie dobija wroga albo podąża za wskazanym celem.
 
 Przeciw drużynie z umiejętnościami obszarowymi boty dystansowe i uzdrowiciele trzymają się od siebie z dala, by jeden wybuch nie trafił dwóch z nich. Nigdy nie rezygnują przy tym z osłony.
 

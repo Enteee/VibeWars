@@ -42,6 +42,7 @@ dit du går. När du har stått overksam ett tag spelar de vidare som ett
 lag av bottar skulle göra.
 Medan du är aktiv går en bott som en strid har dragit långt bort från dig tillbaka till dig, om den inte är svårt skadad eller har en fiende alldeles intill sig.
 En frontlinjebott vänder sig mot en fiende som anfaller lagets helare eller besvärjare, om den inte är på väg att göra slut på sitt eget mål.
+En bott med en områdesbesvärjelse kastar den där tre eller fler fiender står samlade, om inte laget håller på att göra slut på en fiende eller följer ett utropat mål.
 
 Mot ett lag med områdesfärdigheter håller avståndsbottar och helare isär, så att en explosion inte träffar två av dem. De ger aldrig upp skydd för det.
 

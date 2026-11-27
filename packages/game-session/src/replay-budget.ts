@@ -44,10 +44,11 @@ export const REPLAY_CHARS_PER_INPUT = 100;
 /**
  * What each player may put in a match's replay (#3572), in characters of
  * its encoding: a token bucket per slot, refilled by match time at
- * `REPLAY_INPUTS_PER_SEAT_SECOND` inputs a second, and never past the time
- * limit. A slot gets at most its share over a whole match, so the slots'
- * inputs and the reserve fit `MAX_REPLAY_CHARS` whatever they send; with
- * more slots than that rate fits, the rate shrinks to fit.
+ * `REPLAY_INPUTS_PER_SEAT_SECOND` inputs a second. A slot spends at most
+ * its share over a whole match, however long sudden death runs it past the
+ * time limit (#4069), so the slots' inputs and the reserve fit
+ * `MAX_REPLAY_CHARS` whatever they send; with more slots than that rate
+ * fits over the time limit, the rate shrinks to fit.
  *
  * A slot that runs out has overrun: the host still plays its input, and
  * stops recording there, naming it (`MatchReplay.overrunBy`). Nobody's
@@ -57,35 +58,35 @@ export const REPLAY_CHARS_PER_INPUT = 100;
  * same slot, with what is left of its share.
  */
 export class ReplayBudget {
+  readonly #share: number;
   readonly #burst: number;
   readonly #ratePerSecond: number;
-  readonly #timeLimitSeconds: number;
-  readonly #buckets = new Map<string, { tokens: number; at: number }>();
+  readonly #buckets = new Map<string, { tokens: number; at: number; spent: number }>();
 
   public constructor(slots: number, timeLimitSeconds: number) {
     const share = Math.floor((MAX_REPLAY_CHARS - REPLAY_RESERVE_CHARS) / Math.max(1, slots));
+    this.#share = share;
     this.#burst = Math.min(REPLAY_BURST_CHARS, Math.floor(share / 2));
     this.#ratePerSecond = Math.min(
       REPLAY_INPUTS_PER_SEAT_SECOND * REPLAY_CHARS_PER_INPUT,
       (share - this.#burst) / timeLimitSeconds,
     );
-    this.#timeLimitSeconds = timeLimitSeconds;
   }
 
   /** Spend `chars` of `slot`'s share at `elapsedSeconds`; false, and nothing spent, if it has not got them. */
   public take(slot: string, chars: number, elapsedSeconds: number): boolean {
-    const at = Math.min(elapsedSeconds, this.#timeLimitSeconds);
-    const bucket = this.#buckets.get(slot) ?? { tokens: this.#burst, at: 0 };
+    const bucket = this.#buckets.get(slot) ?? { tokens: this.#burst, at: 0, spent: 0 };
     bucket.tokens = Math.min(
       this.#burst,
-      bucket.tokens + Math.max(0, at - bucket.at) * this.#ratePerSecond,
+      bucket.tokens + Math.max(0, elapsedSeconds - bucket.at) * this.#ratePerSecond,
     );
-    bucket.at = Math.max(bucket.at, at);
+    bucket.at = Math.max(bucket.at, elapsedSeconds);
     this.#buckets.set(slot, bucket);
-    if (bucket.tokens < chars) {
+    if (bucket.tokens < chars || bucket.spent + chars > this.#share) {
       return false;
     }
     bucket.tokens -= chars;
+    bucket.spent += chars;
     return true;
   }
 }

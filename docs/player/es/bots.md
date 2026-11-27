@@ -42,6 +42,7 @@ adonde vayas. Cuando llevas un rato quieto, siguen jugando como lo haría un
 equipo de bots.
 Mientras estés activo, un bot al que un combate aleje de ti vuelve contigo, salvo que esté muy herido o tenga un enemigo encima.
 Un bot de primera línea se vuelve contra un enemigo que ataca al sanador o a los lanzadores de su equipo, salvo que esté a punto de rematar a su propio objetivo.
+Un bot con un hechizo de área lo lanza donde tres o más enemigos están juntos, salvo que el equipo esté rematando a un enemigo o siguiendo un objetivo marcado.
 
 Contra un equipo con habilidades de área, los bots a distancia y los sanadores se mantienen separados, para que una explosión no alcance a dos de ellos. Nunca renuncian a la cobertura para hacerlo.
 

@@ -59,6 +59,7 @@ function standing(...teams: [number, number, number, boolean?, boolean?][]): Mat
     ),
     recentKillTeams: [],
     recentScoringTeams: [],
+    suddenDeath: false,
   };
 }
 
@@ -138,19 +139,48 @@ describe("evaluateMatch", () => {
     expect(outcome.reason).toBe("time");
   });
 
-  it("calls a tie at time a draw rather than picking an arbitrary winner", () => {
-    let score = emptyScore([0, 1]);
-    score = addPoint(score, 0);
-    score = addPoint(score, 1);
-    const outcome = evaluateMatch(score, BOTH_ALIVE, 60, RULES);
-    expect(outcome.phase).toBe("finished");
-    expect(outcome.winningTeam).toBeUndefined();
-    expect(outcome.reason).toBe("time");
-  });
+  describe("sudden death (#4069)", () => {
+    const SUDDEN = { ...BOTH_ALIVE, suddenDeath: true };
+    const kills = (...points: number[]): MatchScore => ({
+      byTeam: new Map(points.map((value, team) => [team, value])),
+    });
 
-  it("treats a scoreless match at the time limit as a draw", () => {
-    const outcome = evaluateMatch(emptyScore([0, 1]), BOTH_ALIVE, 60, RULES);
-    expect(outcome.winningTeam).toBeUndefined();
+    it("plays on past the time limit while the kills are tied, never picking a winner", () => {
+      expect(evaluateMatch(kills(1, 1), BOTH_ALIVE, 60, RULES)).toBe(MATCH_IN_PROGRESS);
+      expect(evaluateMatch(kills(0, 0), BOTH_ALIVE, 60, RULES)).toBe(MATCH_IN_PROGRESS);
+      expect(evaluateMatch(kills(1, 1), SUDDEN, 600, RULES)).toBe(MATCH_IN_PROGRESS);
+    });
+
+    it("is won by the first kill that leaves one team alone on top", () => {
+      expect(evaluateMatch(kills(1, 2), SUDDEN, 75, RULES)).toEqual({
+        phase: "finished",
+        winningTeam: 1,
+        reason: "sudden-death",
+      });
+    });
+
+    it("keeps playing after a double kill that keeps the tie", () => {
+      expect(evaluateMatch(kills(2, 2), SUDDEN, 75, RULES)).toBe(MATCH_IN_PROGRESS);
+    });
+
+    it("is won at time, not in sudden death, by a team ahead at the limit", () => {
+      expect(evaluateMatch(kills(2, 1), BOTH_ALIVE, 60, RULES).reason).toBe("time");
+    });
+
+    it("is won by score when a team reaches the target in it", () => {
+      expect(evaluateMatch(kills(3, 2), SUDDEN, 75, RULES).reason).toBe("score");
+    });
+
+    it("with three teams, goes on while the top two are tied, whatever the third has", () => {
+      const three = { ...standing([0, 1, 0], [1, 1, 0], [2, 1, 0]), suddenDeath: true };
+      expect(evaluateMatch(kills(2, 2, 0), three, 75, RULES)).toBe(MATCH_IN_PROGRESS);
+      expect(evaluateMatch(kills(2, 2, 2), three, 75, RULES)).toBe(MATCH_IN_PROGRESS);
+      expect(evaluateMatch(kills(2, 1, 1), three, 75, RULES)).toEqual({
+        phase: "finished",
+        winningTeam: 0,
+        reason: "sudden-death",
+      });
+    });
   });
 
   it("prefers a score win over a timeout when both land on the same tick", () => {
@@ -202,12 +232,8 @@ describe("MATCH_MODES (#476)", () => {
     });
   });
 
-  it("kill count: equal kills at 3 minutes is a draw", () => {
-    expect(evaluateMatch({ byTeam: score(5, 5) }, BOTH_ALIVE, 180, rules)).toEqual({
-      phase: "finished",
-      winningTeam: undefined,
-      reason: "time",
-    });
+  it("kill count: equal kills at 3 minutes go to sudden death (#4069)", () => {
+    expect(evaluateMatch({ byTeam: score(5, 5) }, BOTH_ALIVE, 180, rules)).toBe(MATCH_IN_PROGRESS);
   });
 
   it("kill count: 15 kills ends it early", () => {
@@ -374,6 +400,7 @@ describe("evaluateMatch: guild battle (#1222)", () => {
     ]),
     recentKillTeams: [],
     recentScoringTeams: [],
+    suddenDeath: false,
   });
 
   it("plays 28 minutes, the dead down until the shrine raises them, with the death penalty", () => {
@@ -564,6 +591,7 @@ describe("evaluateMatch: capture points (#2690)", () => {
     ),
     recentKillTeams: [],
     recentScoringTeams: [],
+    suddenDeath: false,
   });
 
   it("is won at once by a team 20 points ahead of every other", () => {

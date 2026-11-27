@@ -207,6 +207,7 @@ export function ruleFor(
       (other) => other.combatant.team === self.combatant.team && other.creature === undefined,
     ),
     targetId: undefined,
+    targetFixed: false,
     nearestFirst: (bodies) => [...bodies],
     mayUse: () => true,
     use: (skill, targetId) => ({ ...NOTHING, targetId, useSkillId: skill.id }),
