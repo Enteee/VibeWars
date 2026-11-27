@@ -6,12 +6,8 @@ import type { MapStructure } from "./arena-snapshot.js";
 import { type Box, shapeOutline } from "./layer-surfaces.js";
 import { deckFades } from "./lighting-pass.js";
 import { elevationOf, renderOrder } from "./render-order.js";
-import { alphaOut, deckCrop, TEXTURE_SIZE } from "./vignette-model.js";
+import { type VignetteCell, vignetteCells } from "./vignette-model.js";
 import { boxOfPoints } from "./wall-tops.js";
-
-const TEXTURE = "vignette";
-/** Enough stops that the smooth ramp shows no bands. */
-const GRADIENT_STOPS = 24;
 
 /**
  * The deck tops the vignette darkens (#4070), by deck layer, as drawn:
@@ -36,53 +32,64 @@ export function deckVignetteTops(
   return tops;
 }
 
-/** One deck layer's vignette: its tops' box, and the image drawn through their stencil. */
+/** One deck layer's vignette: its tops' box, and the cells drawn through their stencil. */
 interface DeckPass {
   readonly box: Box;
-  readonly image: Phaser.GameObjects.Image;
-  readonly objects: readonly Phaser.GameObjects.GameObject[];
+  readonly cells: Phaser.GameObjects.Graphics;
+  readonly objects: readonly (Phaser.GameObjects.Stencil | Phaser.GameObjects.Graphics)[];
 }
 
+/** The whole view, centred on the origin, one unit a side: the ground pass, scaled to the view. */
+const UNIT_VIEW: Box = { left: -0.5, top: -0.5, right: 0.5, bottom: 0.5 };
+
 /**
- * The vignette over the world and under every gameplay layer (#4057): one
- * texture, painted once, stretched over the view. It follows the camera,
- * so it is placed in world units wherever the camera points. Each deck
- * layer gets the same texture again over its tops (#4070), kept to them by
- * a stencil and cropped to their box, so ground and decks fall off as one.
+ * The vignette over the world and under every gameplay layer (#4057): its
+ * cells (`vignetteCells`), drawn once over a unit view and scaled over the
+ * view. It follows the camera, so it is placed in world units wherever the
+ * camera points. Each deck layer gets the cells again over its tops
+ * (#4070), cut to their box and kept to them by a stencil, so ground and
+ * decks fall off as one. A deck pass with no cell darkened, its box in the
+ * clear centre or out of view, is not drawn at all (#4130).
  */
 export class Vignette {
   private readonly scene: Phaser.Scene;
-  private readonly image: Phaser.GameObjects.Image;
+  private readonly ground: Phaser.GameObjects.Graphics;
   private decks: DeckPass[] = [];
   private view: Box | undefined;
 
   public constructor(scene: Phaser.Scene) {
     this.scene = scene;
-    paintTexture(scene.textures);
-    this.image = scene.add
-      .image(0, 0, TEXTURE)
-      .setOrigin(0.5)
-      .setDepth(renderOrder({ kind: "vignette" }));
+    this.ground = scene.add.graphics().setDepth(renderOrder({ kind: "vignette" }));
+    fillCells(this.ground, vignetteCells(UNIT_VIEW));
   }
 
   /** Cover the view centred on `centre`, `size` CSS px at `zoom` CSS px per world unit. */
   public place(centre: Vec2, zoom: number, size: { width: number; height: number }): void {
     const [width, height] = [size.width / zoom, size.height / zoom];
-    this.image.setPosition(centre.x, centre.y).setDisplaySize(width, height);
-    this.view = {
+    const view = {
       left: centre.x - width / 2,
       top: centre.y - height / 2,
       right: centre.x + width / 2,
       bottom: centre.y + height / 2,
     };
+    if (
+      view.left === this.view?.left &&
+      view.top === this.view.top &&
+      view.right === this.view.right &&
+      view.bottom === this.view.bottom
+    ) {
+      return;
+    }
+    this.ground.setPosition(centre.x, centre.y).setScale(width, height);
+    this.view = view;
     for (const deck of this.decks) {
-      this.crop(deck);
+      this.shade(deck);
     }
   }
 
   /** Draw the vignette over the view, or not (#4129); its deck tops are `setDecks`'. */
   public setShown(shown: boolean): void {
-    this.image.setVisible(shown);
+    this.ground.setVisible(shown);
   }
 
   /** Darken `tops`, by deck layer, as `deckVignetteTops` gives them; replaces the last ones. */
@@ -116,28 +123,26 @@ export class Vignette {
           );
         }
       });
-      const image = add.image(0, 0, TEXTURE).setOrigin(0.5).setDepth(depth);
+      const cells = add.graphics().setDepth(depth);
       const release = region(0, rect);
-      const deck = { box, image, objects: [shut, open, image, release] };
+      const deck = { box, cells, objects: [shut, open, cells, release] };
       this.decks.push(deck);
-      this.crop(deck);
+      this.shade(deck);
     }
   }
 
   public destroy(): void {
     this.dropDecks();
-    this.image.destroy();
+    this.ground.destroy();
   }
 
-  /** Lay `deck`'s image over the view as the full one is, showing only its box. */
-  private crop(deck: DeckPass): void {
-    const crop = this.view === undefined ? undefined : deckCrop(deck.box, this.view);
-    deck.image.setVisible(crop !== undefined);
-    if (crop !== undefined) {
-      deck.image
-        .setPosition(this.image.x, this.image.y)
-        .setDisplaySize(this.image.displayWidth, this.image.displayHeight)
-        .setCrop(crop.x, crop.y, crop.width, crop.height);
+  /** Draw `deck`'s cells for the view as it is now; skip the pass when none is dark. */
+  private shade(deck: DeckPass): void {
+    const cells = this.view === undefined ? [] : vignetteCells(this.view, deck.box);
+    deck.cells.clear();
+    fillCells(deck.cells, cells);
+    for (const object of deck.objects) {
+      object.setVisible(cells.length > 0);
     }
   }
 
@@ -149,29 +154,14 @@ export class Vignette {
   }
 }
 
-function paintTexture(textures: Phaser.Textures.TextureManager): void {
-  if (textures.exists(TEXTURE)) {
-    return;
+/** `cells` into `g`, black, each shading between its corners. */
+function fillCells(g: Phaser.GameObjects.Graphics, cells: readonly VignetteCell[]): void {
+  for (const { box, topLeft, topRight, bottomLeft, bottomRight } of cells) {
+    g.fillGradientStyle(0, 0, 0, 0, topLeft, topRight, bottomLeft, bottomRight).fillRect(
+      box.left,
+      box.top,
+      box.right - box.left,
+      box.bottom - box.top,
+    );
   }
-  const canvas = textures.createCanvas(TEXTURE, TEXTURE_SIZE, TEXTURE_SIZE);
-  if (canvas === null) {
-    throw new Error("vignette: could not create its texture");
-  }
-  // A circle to the corners of a square: stretched over the view, the ramp `vignetteAlpha` draws.
-  const middle = TEXTURE_SIZE / 2;
-  const gradient = canvas.context.createRadialGradient(
-    middle,
-    middle,
-    0,
-    middle,
-    middle,
-    middle * Math.SQRT2,
-  );
-  for (let stop = 0; stop <= GRADIENT_STOPS; stop += 1) {
-    const out = stop / GRADIENT_STOPS;
-    gradient.addColorStop(out, `rgba(0,0,0,${String(alphaOut(out))})`);
-  }
-  canvas.context.fillStyle = gradient;
-  canvas.context.fillRect(0, 0, TEXTURE_SIZE, TEXTURE_SIZE);
-  canvas.refresh();
 }

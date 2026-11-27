@@ -3,7 +3,13 @@ import { describe, expect, it, vi } from "vitest";
 import { ELEVATION_STEP } from "@vibewars/game-maps/schema";
 
 import { FLAT_STRUCTURE, type MapStructure } from "./arena-snapshot.js";
-import { deckCrop, VIGNETTE, vignetteAlpha } from "./vignette-model.js";
+import {
+  VIGNETTE,
+  VIGNETTE_GRID,
+  type VignetteCell,
+  vignetteAlpha,
+  vignetteCells,
+} from "./vignette-model.js";
 import { deckVignetteTops } from "./vignette.js";
 
 // Phaser probes for a browser when it loads: only its constants are read here.
@@ -99,40 +105,72 @@ describe("the vignette on deck tops (#4070)", () => {
     expect(xs).not.toContain(100);
   });
 
-  it("shades a point on a deck as the ground at the same place on screen", () => {
+  it("shades a deck's cells as the ground's at the same place on screen", () => {
     const view = { left: 0, top: 0, right: WIDTH, bottom: HEIGHT };
     const box = { left: 1000, top: 500, right: 1400, bottom: 900 };
-    const crop = deckCrop(box, view);
-    expect(crop).toBeDefined();
-    if (crop === undefined) {
-      return;
-    }
-    // The texture spans the view, so a pixel of the crop is a share of it.
-    const size = 128;
-    for (const [x, y] of [
-      [1000, 500],
-      [1100, 600],
-      [1280, 720],
-    ] as const) {
-      const u = crop.x + ((x - 1000) / (WIDTH - 1000)) * crop.width;
-      const v = crop.y + ((y - 500) / (HEIGHT - 500)) * crop.height;
-      expect((u / size) * WIDTH).toBeCloseTo(x, 6);
-      expect((v / size) * HEIGHT).toBeCloseTo(y, 6);
-      expect(vignetteAlpha((u / size) * WIDTH, (v / size) * HEIGHT, WIDTH, HEIGHT)).toBeCloseTo(
-        vignetteAlpha(x, y, WIDTH, HEIGHT),
-        9,
-      );
+    const deck = vignetteCells(view, box);
+    expect(deck.length).toBeGreaterThan(0);
+    const ground = vignetteCells(view);
+    for (const cell of deck) {
+      expect(cell.box.left).toBeGreaterThanOrEqual(box.left);
+      expect(cell.box.bottom).toBeLessThanOrEqual(HEIGHT);
+      for (const [x, y, alpha] of [
+        [cell.box.left, cell.box.top, cell.topLeft],
+        [cell.box.right, cell.box.bottom, cell.bottomRight],
+      ] as const) {
+        expect(shadeAt(ground, x, y)).toBeCloseTo(alpha, 9);
+      }
     }
   });
 
-  it("crops to the part of the deck in view, and nothing out of it", () => {
+  it("draws nothing of a deck out of view, or in the clear centre", () => {
     const view = { left: 100, top: 100, right: 300, bottom: 200 };
-    expect(deckCrop({ left: 0, top: 0, right: 1000, bottom: 1000 }, view)).toEqual({
-      x: 0,
-      y: 0,
-      width: 128,
-      height: 128,
-    });
-    expect(deckCrop({ left: 400, top: 0, right: 500, bottom: 50 }, view)).toBeUndefined();
+    expect(vignetteCells(view, { left: 400, top: 0, right: 500, bottom: 50 })).toEqual([]);
+    expect(vignetteCells(view, { left: 190, top: 145, right: 210, bottom: 155 })).toEqual([]);
+  });
+});
+
+/** How dark `cells` shade `(x, y)`, between the corners of the one it falls in; 0 in none. */
+function shadeAt(cells: readonly VignetteCell[], x: number, y: number): number {
+  const cell = cells.find(
+    ({ box }) => box.left <= x && x <= box.right && box.top <= y && y <= box.bottom,
+  );
+  if (cell === undefined) {
+    return 0;
+  }
+  const across = (x - cell.box.left) / (cell.box.right - cell.box.left);
+  const down = (y - cell.box.top) / (cell.box.bottom - cell.box.top);
+  const top = cell.topLeft + (cell.topRight - cell.topLeft) * across;
+  const bottom = cell.bottomLeft + (cell.bottomRight - cell.bottomLeft) * across;
+  return top + (bottom - top) * down;
+}
+
+describe("the vignette's cells (#4130)", () => {
+  const view = { left: 0, top: 0, right: WIDTH, bottom: HEIGHT };
+
+  it("shade within 1 % of vignetteAlpha everywhere", () => {
+    const cells = vignetteCells(view);
+    for (let x = 0; x <= WIDTH; x += 16) {
+      for (let y = 0; y <= HEIGHT; y += 9) {
+        expect(Math.abs(shadeAt(cells, x, y) - vignetteAlpha(x, y, WIDTH, HEIGHT))).toBeLessThan(
+          0.01,
+        );
+      }
+    }
+  });
+
+  it("leave out the clear centre", () => {
+    const cells = vignetteCells(view);
+    expect(cells.length).toBeLessThan(VIGNETTE_GRID * VIGNETTE_GRID);
+    expect(shadeAt(cells, WIDTH / 2, HEIGHT / 2)).toBe(0);
+    expect(
+      cells.some(
+        ({ box }) =>
+          box.left < WIDTH / 2 &&
+          WIDTH / 2 < box.right &&
+          box.top < HEIGHT / 2 &&
+          HEIGHT / 2 < box.bottom,
+      ),
+    ).toBe(false);
   });
 });
