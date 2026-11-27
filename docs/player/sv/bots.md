@@ -47,6 +47,8 @@ En bot med en förlamande eller saktande färdighet använder den på en fiende 
 
 Mot ett lag med områdesfärdigheter håller avståndsbottar och helare isär, så att en explosion inte träffar två av dem. De ger aldrig upp skydd för det.
 
+En distansbott eller helare som en fiende kommer för nära drar sig först tillbaka till sin närmaste frontlinjebott, om någon är nära nog, och slåss där.
+
 Bågskyttar och spjutkastare tar höjden när det är säkert.
 En bott som två fiender fokuserar på, eller som har under halva hälsan och tappar den snabbt, gömmer sig från deras syn i upp till tre sekunder: bakom en mur, under ett däck eller på höjden.
 När ingen fiende är nära drar en bot i en spak som öppnar en kortare väg till fienderna. Två bottar river också en mur som döljer en mycket kortare väg, genom att slå på den med sina vapen.

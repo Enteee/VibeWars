@@ -46,6 +46,8 @@ En bot med en lammende eller sænkende evne bruger den på en fjende ved sin sid
 
 Mod et hold med områdeskills holder afstandsbots og healere sig fra hinanden, så én eksplosion ikke rammer to af dem. De opgiver aldrig dækning for at gøre det.
 
+En afstandsbot eller healer, som en fjende kommer for tæt på, trækker sig først tilbage til sin nærmeste frontlinjebot, hvis en er tæt nok på, og kæmper der.
+
 Bueskytter og spydkastere indtager det høje terræn, når det er sikkert.
 En bot, som to fjender går efter, eller som har under halvt helbred og hurtigt mister det, dukker sig ud af deres syn i op til tre sekunder: bag en mur, under et dæk eller op på højt terræn.
 Når ingen fjende er nær, trækker en bot i et håndtag, der åbner en kortere vej til fjenderne. To bots slår også en mur ned, der skjuler en meget kortere vej, ved at slå på den med deres våben.

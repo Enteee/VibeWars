@@ -57,8 +57,8 @@ const SPIKE_TOLERANCE = 1e-6;
  * An area skill centred on its target at the foe in the middle of a
  * clump (#4147, `clumpTarget`), unless the target is fixed. A snare at
  * a foe at its elbow, else at one diving its healer or casters (#4156,
- * `snareTarget`), unless the target is a ghost, and never held. Spiking waits only for
- * one cast at the team's target.
+ * `snareTarget`), unless the target is a ghost, and never held. Spiking
+ * waits only for one cast at the team's target.
  * A spike skill at the team's target waits for the spike (#2631): until
  * enough of the team's damage dealers could fire with it, the target is
  * low enough to finish, or it has waited `SPIKE_HOLD_MAX_SECONDS`;

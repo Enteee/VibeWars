@@ -19,6 +19,7 @@ import { roleOf, type BotRole } from "./role.js";
 import { BOT_RULES } from "./rules/index.js";
 import regroup from "./rules/regroup.js";
 import {
+  FINISH_FRACTION,
   FOCUS_REACH,
   HEALER_PRIORITY,
   HURT_FRACTION,
@@ -32,12 +33,6 @@ import {
 import type { RuleContext } from "./rules/types.js";
 import { sacrificesTooMuch } from "./skill-intent.js";
 import { floorOf } from "../layer-rules.js";
-
-/**
- * Below this share of its health a foe in reach is the team's target
- * (#2545): one about to fall is worth more than one at full health.
- */
-const FINISH_FRACTION = 0.6;
 
 /**
  * `play-build` (#1189): a participant playing its own skill bar the way a

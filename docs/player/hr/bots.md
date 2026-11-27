@@ -45,6 +45,8 @@ Bot s vještinom koja osakaćuje ili usporava koristi je na protivniku uz sebe i
 
 Protiv tima s vještinama na području, botovi na daljinu i iscjelitelji drže se razmaknuti, da jedna eksplozija ne pogodi dvojicu. Zaklon zbog toga nikad ne napuštaju.
 
+Bot na daljinu ili iscjelitelj kojemu se neprijatelj previše približi najprije se povlači prema najbližem suborcu iz prve linije, ako je dovoljno blizu, i bori se ondje.
+
 Strijelci i kopljanici zauzmu uzvisinu kad je to sigurno.
 Bot na kojeg se usredotoče dva protivnika, ili koji ima manje od pola zdravlja i brzo ga gubi, skloni im se s vida do tri sekunde: iza zida, ispod platforme ili na uzvisinu.
 Kad nijedan neprijatelj nije blizu, bot povuče polugu koja otvara kraći put do neprijatelja. Dva bota također sruše zid koji skriva mnogo kraći put, udarajući ga svojim oružjem.

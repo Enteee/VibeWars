@@ -20,6 +20,8 @@ Un bot con un'abilità che azzoppa o rallenta la usa su un nemico al suo fianco,
 
 Contro una squadra con abilità ad area, i bot a distanza e i guaritori restano separati, così un'esplosione non ne colpisce due. Non rinunciano mai a un riparo per farlo.
 
+Un bot a distanza o un guaritore a cui un nemico si avvicina troppo ripiega prima verso il bot di prima linea più vicino, se ce n'è uno abbastanza vicino, e combatte lì.
+
 Arcieri e lancieri prendono l'altura quando è sicuro.
 Un bot preso di mira da due avversari, o sotto metà salute e in rapido calo, si toglie dalla loro vista fino a tre secondi: dietro un muro, sotto una piattaforma o sull'altura.
 Se non ci sono nemici vicini, un bot aziona la leva che apre una via più breve verso i nemici. Due bot abbattono anche un muro che nasconde una via molto più breve, colpendolo con le loro armi.
