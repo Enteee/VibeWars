@@ -251,6 +251,8 @@ describe("King of the Hill bots (#2582)", () => {
 
   // The rule that a mutual ghost kill costs a priest wave is game-core's (king-of-the-hill.test.ts);
   // on the rebuilt Hall (#3442) the first ghost up the dais claims before the other arrives.
+  // The seed is pinned to a match with no wipe in the 180 s: an annihilation before the first
+  // claim ends the match and leaves #2700 untested (#4147).
   it("takes the Hall's altar in a two-team match with one player idle (#2700, #3442)", () => {
     const hall = loadAllMaps().find((candidate) => candidate.id === "hall-of-heroes-king");
     if (hall === undefined) throw new Error("no map hall-of-heroes-king");
@@ -262,7 +264,7 @@ describe("King of the Hill bots (#2582)", () => {
     };
     const sim = hill(
       twoTeams,
-      "h",
+      "c",
       casterBots(hall, 8, 1).map((spec) =>
         spec.id === "0-0" ? { ...spec, behaviour: undefined } : spec,
       ),
@@ -271,6 +273,12 @@ describe("King of the Hill bots (#2582)", () => {
     for (let t = 0; t < 180 && heldAt === undefined; t += DT) {
       sim.step(DT);
       if (sim.altarState.holder !== null) heldAt = t;
+      const { outcome } = sim;
+      if (heldAt === undefined && outcome.phase === "finished") {
+        throw new Error(
+          `match ended by ${String(outcome.reason)} at ${t.toFixed(0)} s before the altar was held: re-pick the seed`,
+        );
+      }
     }
     expect(heldAt).toBeDefined();
   }, 60_000);
