@@ -142,9 +142,10 @@ interface Threat {
 
 /**
  * The foes within spell range of `ally` targeting it, as `spikedAlly`
- * counts them (#4214): an attacker if it is attacking, or running up to
- * swing at the ally and not casting a spell; else a caster. A warrior
- * closing in on the ally is an attacker before its first swing.
+ * counts them (#4214): a caster if it is casting a spell, a wand order
+ * standing behind it or not; else an attacker if it is attacking or
+ * running up to swing, a warrior closing in before its first swing; else
+ * a caster.
  */
 function threatOn(ally: Participant, foes: readonly Participant[]): Threat {
   let attackers = 0;
@@ -153,8 +154,8 @@ function threatOn(ally: Participant, foes: readonly Participant[]): Threat {
     if (foe.targetId === ally.id && distance(foe.position, ally.position) <= RANGE_SPELL) {
       const { combatant } = foe;
       if (
-        isAttacking(combatant) ||
-        (combatant.attack !== undefined && !isCastingSpell(combatant))
+        !isCastingSpell(combatant) &&
+        (isAttacking(combatant) || combatant.attack !== undefined)
       ) {
         attackers += 1;
       } else {

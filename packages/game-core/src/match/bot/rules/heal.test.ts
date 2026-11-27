@@ -304,6 +304,22 @@ describe("play-build matches the defence to the threat (#4214)", () => {
     expect(askBot(sim, "bot")).toMatchObject({ useSkillId: "warrior.defy-pain", targetId: "bot" });
   });
 
+  it("raises armor against two casters wanding it as they cast a spell at it", () => {
+    const sim = spike(
+      WARRIOR,
+      ["warrior.shield-stance", "warrior.defy-pain"],
+      "bot",
+      ELEMENTALIST,
+      true,
+    );
+    for (const foeId of ["foe0", "foe1"]) {
+      const foe = sim.get(foeId);
+      if (foe === undefined) throw new Error(`no ${foeId}`);
+      foe.combatant.cast.beginCast("elementalist.fireball", "bot", 2, undefined);
+    }
+    expect(askBot(sim, "bot")).toMatchObject({ useSkillId: "warrior.defy-pain", targetId: "bot" });
+  });
+
   it("raises the block stance first against two warriors", () => {
     const sim = spike(
       WARRIOR,
