@@ -49,6 +49,8 @@ Contra un equipo con habilidades de área, los bots a distancia y los sanadores 
 
 Un bot a distancia o un sanador al que un enemigo se le acerca demasiado se repliega primero hacia su bot de primera línea más cercano, si hay uno lo bastante cerca, y lucha allí. Un atacante cuerpo a cuerpo ralentizado, por ejemplo lisiado, no puede seguirle el ritmo, así que ante él retrocede entre disparos en su lugar.
 
+Un bot bajo un maleficio que castiga atacar o lanzar hechizos, como Empathy o Backfire, deja de hacerlo hasta que el maleficio termina.
+
 Los arqueros y lanceros toman el terreno elevado cuando es seguro.
 Un bot al que atacan dos enemigos, o que está por debajo de la mitad de su salud y la pierde rápido, se oculta de su vista hasta tres segundos: tras un muro, bajo una plataforma o en terreno elevado.
 Si no hay ningún enemigo cerca, un bot acciona la palanca que abre un camino más corto hacia los enemigos. Dos bots también derriban un muro que oculta un camino mucho más corto, golpeándolo con sus armas.

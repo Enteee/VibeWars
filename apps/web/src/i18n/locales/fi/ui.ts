@@ -337,6 +337,7 @@ export default {
   "controls.browserKey": "{key} kuuluu selaimelle.",
   "controls.callTarget": "Ilmoita kohteesi",
   "controls.cancelAction": "Peru toiminto; uudelleen: poista kohde",
+  "controls.combo": "{mods} + {key}",
   "controls.custom": "Oma",
   "controls.displacedKeeps": "{key} oli: {action}; {action} säilyttää näppäimen {left}.",
   "controls.displacedNoKey": "{key} oli: {action}; toiminnolla {action} ei nyt ole näppäintä.",
@@ -354,9 +355,11 @@ export default {
   "controls.preset": "Esiasetus",
   "controls.presetClassic": "Klassinen (taidot 1-8, liike WASD)",
   "controls.presetVibeWars": "VibeWars (taidot Q-F, liike nuolilla)",
+  "controls.noComboHere": "Tähän toimintoon käy vain yksi näppäin.",
   "controls.pressAKey": "paina näppäintä...",
+  "controls.reservedCombo": "{combo} kuuluu selaimelle.",
   "controls.shortcutRefusal":
-    "Ctrl-, Alt- ja Windows/Command-näppäimiä ei käytetä koskaan: ne kuuluvat selaimelle.",
+    "Windows/Command-näppäintä ei käytetä koskaan: se kuuluu järjestelmälle.",
   "controls.showNames": "Näytä nimet (pidä pohjassa)",
   "controls.skill1": "Taito 1",
   "controls.skill2": "Taito 2",
@@ -376,7 +379,6 @@ export default {
   "controls.weaponSet3": "Asesarja 3",
   "controls.weaponSet4": "Asesarja 4",
   "controls.weaponSets": "Asesarjat",
-  "controls.withShift": "Shift + {key}",
 
   "cosmetics.item.auraEmber": "Hiillosaura",
   "cosmetics.item.auraFrost": "Huurreaura",
@@ -753,9 +755,11 @@ export default {
   "jukebox.stopPreview": "Lopeta kuuntelu",
 
   "keys.alt": "Alt",
+  "keys.altShort": "Alt",
   "keys.backspace": "Backspace",
   "keys.capsLock": "CapsLock",
   "keys.control": "Control",
+  "keys.ctrlShort": "Ctrl",
   "keys.delete": "Delete",
   "keys.end": "End",
   "keys.enter": "Enter",
@@ -766,6 +770,7 @@ export default {
   "keys.pageDown": "PageDown",
   "keys.pageUp": "PageUp",
   "keys.shift": "Shift",
+  "keys.shiftShort": "⇧",
   "keys.space": "Space",
   "keys.tab": "Tab",
 

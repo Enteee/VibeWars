@@ -3,15 +3,25 @@ import { loadLayoutLabeller, type KeyLabeller } from "../input/key-labels.js";
 import {
   KEYMAP_PRESETS,
   KEY_ACTIONS,
+  MODIFIERS,
+  SINGLE_KEY_ACTIONS,
   SKILL_ACTIONS,
   WEAPON_SET_ACTIONS,
+  actionForBinding,
+  bindingLabel,
   codeLabel,
   isBindable,
-  isShortcut,
+  isModifierCode,
+  isReservedCombo,
+  modsOf,
   presetOf,
   rebind,
+  sameBinding,
   type KeyAction,
+  type KeyBinding,
+  type KeyPress,
   type Keymap,
+  type Modifier,
 } from "../input/keymap.js";
 import { loadKeymap, saveKeymap } from "../input/keymap-preference.js";
 
@@ -67,7 +77,16 @@ export interface KeyCell {
   readonly index: 0 | 1;
 }
 
-export type KeyPress = Pick<KeyboardEvent, "code" | "ctrlKey" | "altKey" | "metaKey">;
+/** The modifier a modifier key is, or `undefined` for Meta and any other key. */
+function modifierOf(code: string): Modifier | undefined {
+  return code.startsWith("Shift")
+    ? "shift"
+    : code.startsWith("Control")
+      ? "ctrl"
+      : code.startsWith("Alt")
+        ? "alt"
+        : undefined;
+}
 
 const MOVE_ACTIONS: readonly KeyAction[] = ["move-up", "move-down", "move-left", "move-right"];
 
@@ -85,6 +104,14 @@ export function noKeyWarning(map: Keymap, action: KeyAction): string {
 export class KeysEditor {
   #map: Keymap;
   #capturing: KeyCell | undefined;
+  /**
+   * The modifier keys held while a cell waits (#4183), by modifier: a key
+   * pressed with them binds the combination, and letting the last go with
+   * none pressed binds that modifier alone.
+   */
+  readonly #held = new Map<Modifier, string>();
+  /** A key was pressed while modifiers were held, so letting them go binds nothing. */
+  #heldUsed = false;
   #line = "";
   #flashed: KeyCell | undefined;
   readonly #save: (map: Keymap) => void;
@@ -125,29 +152,41 @@ export class KeysEditor {
   /** What a cell shows: its key, "press a key...", or "-". */
   cellText(cell: KeyCell): string {
     if (this.#isCapturing(cell)) {
-      return t("controls.pressAKey");
+      const held = MODIFIERS.filter((mod) => this.#held.has(mod));
+      return held.length === 0
+        ? t("controls.pressAKey")
+        : t("controls.combo", {
+            mods: held.map((mod) => this.#modLabel(mod)).join(" + "),
+            key: "…",
+          });
     }
-    const code = this.#map[cell.action][cell.index];
-    return code === undefined ? "-" : this.label(code);
+    const binding = this.#map[cell.action][cell.index];
+    return binding === undefined ? "-" : this.#bindingLabel(binding);
   }
 
   /**
    * What a Previous target cell shows (#3630): Shift with that Next target
    * key, which cycles backwards. With no first key, "no key"; a Shift key
-   * cannot be held with itself, so it reads "no key" too.
+   * cannot be held with itself, a combination takes no more, and Shift
+   * with a key bound to something else is that (#4183), so each reads
+   * "no key" too.
    */
   previousTargetText(index: 0 | 1): string {
-    const code = this.#map["target-next"][index];
-    if (code === undefined) {
+    const next = this.#map["target-next"][index];
+    if (next === undefined) {
       return index === 0 ? t("controls.noKey") : "";
     }
-    return code === "ShiftLeft" || code === "ShiftRight"
+    const shifted: KeyBinding = { code: next.code, mods: ["shift"] };
+    return next.mods.length > 0 ||
+      isModifierCode(next.code) ||
+      actionForBinding(this.#map, shifted) !== undefined
       ? t("controls.noKey")
-      : t("controls.withShift", { key: this.label(code) });
+      : this.#bindingLabel(shifted);
   }
 
   choosePreset(name: keyof typeof KEYMAP_PRESETS): void {
     this.#capturing = undefined;
+    this.#letGo();
     this.#flashed = undefined;
     this.#line = "";
     this.#change(KEYMAP_PRESETS[name]);
@@ -163,14 +202,16 @@ export class KeysEditor {
       return;
     }
     this.#capturing = cell;
+    this.#letGo();
     this.#flashed = undefined;
     this.#line = "";
   }
 
   /**
-   * A keydown while a cell waits. Esc cancels, Backspace or Delete
-   * clears, a bindable key with no Ctrl, Alt or Meta binds; anything else
-   * binds nothing and says why, and the cell keeps waiting.
+   * A keydown while a cell waits. Esc cancels; Backspace or Delete with
+   * no modifier clears; Shift, Ctrl or Alt waits for the key held with it
+   * (#4183); a bindable key or combination binds; anything else binds
+   * nothing and says why, and the cell keeps waiting.
    *
    * @returns whether the press was used, and so is the game's to swallow;
    *   a refused one stays the browser's
@@ -182,41 +223,115 @@ export class KeysEditor {
     }
     if (key.code === "Escape") {
       this.#capturing = undefined;
+      this.#letGo();
       return true;
     }
-    if (key.code === "Backspace" || key.code === "Delete") {
-      this.#bind(cell, null);
-      return true;
-    }
-    if (isShortcut(key) || /^(?:Control|Alt|Meta|OS)/.test(key.code)) {
+    const modifier = modifierOf(key.code);
+    if (key.metaKey || (modifier === undefined && isModifierCode(key.code))) {
       this.#line = t("controls.shortcutRefusal");
       return false;
+    }
+    if (modifier !== undefined) {
+      this.#held.set(modifier, key.code);
+      this.#line = "";
+      return true;
+    }
+    this.#heldUsed = this.#held.size > 0;
+    const mods = modsOf(key);
+    if (mods.length === 0 && (key.code === "Backspace" || key.code === "Delete")) {
+      this.#bind(cell, null);
+      return true;
     }
     if (!isBindable(key.code)) {
       this.#line = t("controls.browserKey", { key: this.label(key.code) });
       return false;
     }
-    this.#bind(cell, key.code);
+    const binding: KeyBinding = { code: key.code, mods };
+    if (mods.length > 0 && SINGLE_KEY_ACTIONS.includes(cell.action)) {
+      this.#line = t("controls.noComboHere");
+      return false;
+    }
+    if (isReservedCombo(binding)) {
+      this.#line = t("controls.reservedCombo", { combo: this.#bindingLabel(binding) });
+      return false;
+    }
+    this.#bind(cell, binding);
     return true;
   }
 
-  #bind(cell: KeyCell, code: string | null): void {
-    const { map, displaced } = rebind(this.#map, cell.action, cell.index, code);
+  /**
+   * A keyup while a cell waits (#4183): letting the last modifier go with
+   * no key pressed binds it alone, where it may be bound alone (Shift);
+   * Ctrl and Alt alone are the browser's.
+   *
+   * @returns whether the release was used
+   */
+  release(key: Pick<KeyboardEvent, "code">): boolean {
+    const cell = this.#capturing;
+    const modifier = modifierOf(key.code);
+    if (cell === undefined || modifier === undefined || !this.#held.has(modifier)) {
+      return false;
+    }
+    this.#held.delete(modifier);
+    if (this.#held.size > 0) {
+      return true;
+    }
+    const used = this.#heldUsed;
+    this.#heldUsed = false;
+    if (used) {
+      return true;
+    }
+    if (!isBindable(key.code)) {
+      this.#line = t("controls.browserKey", { key: this.label(key.code) });
+      return false;
+    }
+    this.#bind(cell, { code: key.code, mods: [] });
+    return true;
+  }
+
+  /** Forget the modifiers held, as when the window loses the keys' keyups. */
+  letGoModifiers(): void {
+    this.#letGo();
+  }
+
+  #letGo(): void {
+    this.#held.clear();
+    this.#heldUsed = false;
+  }
+
+  #modLabel(mod: Modifier): string {
+    return t(mod === "ctrl" ? "keys.control" : mod === "alt" ? "keys.alt" : "keys.shift");
+  }
+
+  #bindingLabel(binding: KeyBinding): string {
+    return bindingLabel(binding, false, this.label);
+  }
+
+  #bind(cell: KeyCell, binding: KeyBinding | null): void {
+    const { map, displaced } = rebind(this.#map, cell.action, cell.index, binding);
     this.#capturing = undefined;
+    this.#letGo();
     this.#flashed = undefined;
     this.#line = "";
     if (displaced !== undefined) {
-      const index = this.#map[displaced.action].indexOf(displaced.code) === 0 ? 0 : 1;
+      const index =
+        this.#map[displaced.action].findIndex((bound) => sameBinding(bound, displaced.binding)) ===
+        0
+          ? 0
+          : 1;
       this.#flashed = { action: displaced.action, index };
       const name = t(ACTION_NAMES[displaced.action]);
       const left = map[displaced.action][0];
       this.#line =
         left === undefined
-          ? t("controls.displacedNoKey", { key: this.label(displaced.code), action: name })
-          : t("controls.displacedKeeps", {
-              key: this.label(displaced.code),
+          ? t("controls.displacedNoKey", {
+              key: this.#bindingLabel(displaced.binding),
               action: name,
-              left: this.label(left),
+            })
+          : t("controls.displacedKeeps", {
+              key: this.#bindingLabel(displaced.binding),
+              action: name,
+              left: this.#bindingLabel(left),
             });
     }
     this.#change(map);
@@ -403,6 +518,21 @@ function mountControls(container: HTMLElement): () => void {
     paint();
   };
   panel.addEventListener("keydown", onKeydown, true);
+  const onKeyup = (event: KeyboardEvent): void => {
+    if (editor.release(event)) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    paint();
+  };
+  panel.addEventListener("keyup", onKeyup, true);
+  // An alt-tab with Shift down never sends its keyup; the focused cell
+  // hears the focus go.
+  const onBlur = (): void => {
+    editor.letGoModifiers();
+    paint();
+  };
+  panel.addEventListener("focusout", onBlur);
 
   void loadLayoutLabeller().then((label) => {
     if (label !== undefined && !disposed) {
@@ -416,5 +546,7 @@ function mountControls(container: HTMLElement): () => void {
   return () => {
     disposed = true;
     panel.removeEventListener("keydown", onKeydown, true);
+    panel.removeEventListener("keyup", onKeyup, true);
+    panel.removeEventListener("focusout", onBlur);
   };
 }

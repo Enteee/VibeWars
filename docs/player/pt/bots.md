@@ -49,6 +49,8 @@ Contra uma equipe com habilidades de área, os bots à distância e os curandeir
 
 Um bot à distância ou curandeiro de quem um inimigo chega perto demais recua primeiro até o seu bot da linha de frente mais próximo, se houver um perto o bastante, e luta ali. Um atacante corpo a corpo desacelerado, aleijado por exemplo, não consegue acompanhar, então diante dele o bot recua entre os disparos.
 
+Um bot sob uma maldição que pune atacar ou lançar feitiços, como Empathy ou Backfire, para de fazê-lo até a maldição acabar.
+
 Arqueiros e lanceiros tomam o terreno alto quando é seguro.
 Um bot que dois inimigos focam, ou que está abaixo de metade da vida e a perde depressa, esconde-se da vista deles até três segundos: atrás de um muro, sob uma plataforma ou em terreno alto.
 Sem nenhum inimigo por perto, um bot puxa a alavanca que abre um caminho mais curto até os inimigos. Dois bots também derrubam uma parede que esconde um caminho muito mais curto, golpeando-a com as suas armas.

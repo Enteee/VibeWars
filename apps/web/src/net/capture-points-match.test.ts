@@ -45,6 +45,7 @@ describe("a hosted 4v4 on Scarred Earth (#2735)", () => {
       nowSeconds: () => 0,
       signetOf: () => 0,
       recordReplay: false,
+      holdBots: false,
       preMatch: null,
     });
     const ticks = Math.ceil(RULES.timeLimitSeconds / DT) + 1;

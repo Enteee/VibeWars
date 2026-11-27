@@ -48,6 +48,8 @@ Tegen een team met gebiedsskills houden afstandsbots en genezers afstand van elk
 
 Een afstandsbot of genezer bij wie een vijand te dichtbij komt, trekt zich eerst terug naar de dichtstbijzijnde frontliniebot, als die dichtbij genoeg is, en vecht daar. Een vertraagde aanvaller van dichtbij, bijvoorbeeld kreupel, kan het niet bijhouden, dus daartegen stapt de bot in plaats daarvan tussen de schoten door achteruit.
 
+Een bot onder een vloek die aanvallen of spreuken bestraft, zoals Empathy of Backfire, stopt daarmee tot de vloek afloopt.
+
 Boogschutters en speerwerpers nemen de hoge grond in als dat veilig is.
 Een bot waar twee vijanden zich op richten, of die onder de helft van zijn gezondheid zit en die snel verliest, duikt tot drie seconden uit hun zicht: achter een muur, onder een platform of op hoge grond.
 Is er geen vijand in de buurt, dan haalt een bot een hendel over die een kortere weg naar de vijanden opent. Twee bots slaan ook een muur neer die een veel kortere weg verbergt, door er met hun wapens op in te hakken.

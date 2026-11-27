@@ -6,6 +6,12 @@ Orice tastă din tabelul de mai jos poate fi schimbată în **Opțiuni**, la
 deja folosită trece la noua acțiune, iar ecranul îți spune care acțiune a
 pierdut-o. Modificările se salvează imediat.
 
+O tastă poate fi și o combinație: ține apăsat Shift, Ctrl sau Alt și apasă
+tasta, de exemplu **Shift + X**. Mișcare și Arată nume primesc o singură
+tastă, iar browserul păstrează câteva combinații pentru el, de exemplu
+Ctrl + W. Când ții Shift ca să arăți numele, tastele tale simple merg în
+continuare, dacă acea combinație cu Shift nu e ea însăși atribuită cuiva.
+
 ## Taste
 
 Presetarea implicită este **Clasic**, pentru mâinile obișnuite cu GW1. **VibeWars** folosește abilitățile cu mâna stângă și se mișcă cu săgețile.

@@ -47,6 +47,8 @@ Against a team with area skills, ranged bots and healers keep apart, so one blas
 
 A ranged bot or healer that a foe comes too close to first falls back to its nearest frontliner, if one is near enough, and fights there. A melee attacker that is slowed, Crippled for example, can't keep up, so against one it backs away between shots instead.
 
+A bot under a hex that punishes attacking or casting, such as Empathy or Backfire, stops doing it until the hex ends.
+
 Archers and spearmen take the high ground when it is safe.
 A bot that two foes focus on, or that is below half health and losing it fast, ducks out of their sight for up to three seconds: behind a wall, under a deck or onto high ground.
 With no foe near, a bot throws a lever that opens a shorter way to the foes. Two bots also break down a wall that hides a much shorter way, striking it with their weapons.

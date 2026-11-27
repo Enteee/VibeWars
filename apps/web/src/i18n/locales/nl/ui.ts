@@ -329,6 +329,7 @@ export default {
   "controls.browserKey": "{key} is van de browser.",
   "controls.callTarget": "Doelwit aanwijzen",
   "controls.cancelAction": "Actie annuleren; nogmaals: doelwit wissen",
+  "controls.combo": "{mods} + {key}",
   "controls.custom": "Eigen",
   "controls.displacedKeeps": "{key} was {action}; {action} houdt {left}.",
   "controls.displacedNoKey": "{key} was {action}; {action} heeft nu geen toets.",
@@ -346,9 +347,11 @@ export default {
   "controls.preset": "Preset",
   "controls.presetClassic": "Klassiek (skills 1-8, bewegen WASD)",
   "controls.presetVibeWars": "VibeWars (skills Q-F, bewegen pijltjes)",
+  "controls.noComboHere": "Deze actie neemt één enkele toets.",
   "controls.pressAKey": "druk op een toets...",
+  "controls.reservedCombo": "{combo} is van de browser.",
   "controls.shortcutRefusal":
-    "Ctrl, Alt en de Windows/Command-toets worden nooit gebruikt: die zijn van de browser.",
+    "De Windows/Command-toets wordt nooit gebruikt: die is van het systeem.",
   "controls.showNames": "Namen tonen (ingedrukt)",
   "controls.skill1": "Skill 1",
   "controls.skill2": "Skill 2",
@@ -368,7 +371,6 @@ export default {
   "controls.weaponSet3": "Wapenset 3",
   "controls.weaponSet4": "Wapenset 4",
   "controls.weaponSets": "Wapensets",
-  "controls.withShift": "Shift + {key}",
 
   "cosmetics.item.auraEmber": "Sintelaura",
   "cosmetics.item.auraFrost": "Vorstaura",
@@ -742,9 +744,11 @@ export default {
   "jukebox.stopPreview": "Voorproef stoppen",
 
   "keys.alt": "Alt",
+  "keys.altShort": "Alt",
   "keys.backspace": "Backspace",
   "keys.capsLock": "CapsLock",
   "keys.control": "Control",
+  "keys.ctrlShort": "Ctrl",
   "keys.delete": "Delete",
   "keys.end": "End",
   "keys.enter": "Enter",
@@ -755,6 +759,7 @@ export default {
   "keys.pageDown": "PageDown",
   "keys.pageUp": "PageUp",
   "keys.shift": "Shift",
+  "keys.shiftShort": "⇧",
   "keys.space": "Space",
   "keys.tab": "Tab",
 

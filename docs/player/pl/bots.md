@@ -45,6 +45,8 @@ Przeciw drużynie z umiejętnościami obszarowymi boty dystansowe i uzdrowiciele
 
 Bot dystansowy lub uzdrowiciel, do którego wróg podejdzie za blisko, najpierw wycofuje się do najbliższego sojusznika z pierwszej linii, jeśli ten jest dość blisko, i tam walczy. Spowolniony napastnik walczący wręcz, na przykład okaleczony, nie nadąża, więc przed nim bot zamiast tego cofa się między strzałami.
 
+Bot pod klątwą, która karze za atakowanie lub rzucanie czarów, taką jak Empathy lub Backfire, przestaje to robić, dopóki klątwa nie minie.
+
 Łucznicy i włócznicy zajmują wzniesienie, gdy jest to bezpieczne.
 Bot, na którym skupiło się dwóch wrogów albo który ma mniej niż połowę zdrowia i szybko je traci, chowa się przed ich wzrokiem na maksymalnie trzy sekundy: za murem, pod pomostem albo na wzniesieniu.
 Gdy w pobliżu nie ma wroga, bot przestawia dźwignię, która otwiera krótszą drogę do wrogów. Dwa boty burzą też mur, który zasłania znacznie krótszą drogę, uderzając w niego bronią.

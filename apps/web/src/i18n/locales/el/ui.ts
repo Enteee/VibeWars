@@ -337,6 +337,7 @@ export default {
   "controls.browserKey": "Το {key} ανήκει στον browser.",
   "controls.callTarget": "Ανακοίνωση στόχου",
   "controls.cancelAction": "Ακύρωση ενέργειας· ξανά: καθαρισμός στόχου",
+  "controls.combo": "{mods} + {key}",
   "controls.custom": "Προσαρμογή",
   "controls.displacedKeeps": "Το {key} ήταν {action}· {action} κρατά {left}.",
   "controls.displacedNoKey": "Το {key} ήταν {action}· {action} μένει χωρίς πλήκτρο.",
@@ -354,9 +355,11 @@ export default {
   "controls.preset": "Προεπιλογή",
   "controls.presetClassic": "Κλασικό (ικανότητες 1-8, κίνηση WASD)",
   "controls.presetVibeWars": "VibeWars (ικανότητες Q-F, κίνηση με βέλη)",
+  "controls.noComboHere": "Αυτή η ενέργεια δέχεται μόνο ένα πλήκτρο.",
   "controls.pressAKey": "πάτα ένα πλήκτρο...",
+  "controls.reservedCombo": "Το {combo} ανήκει στον browser.",
   "controls.shortcutRefusal":
-    "Τα Ctrl, Alt και το πλήκτρο Windows/Command δεν χρησιμοποιούνται ποτέ: ανήκουν στον browser.",
+    "Το πλήκτρο Windows/Command δεν χρησιμοποιείται ποτέ: ανήκει στο σύστημα.",
   "controls.showNames": "Εμφάνιση ονομάτων (κράτα)",
   "controls.skill1": "Ικανότητα 1",
   "controls.skill2": "Ικανότητα 2",
@@ -376,7 +379,6 @@ export default {
   "controls.weaponSet3": "Σετ όπλων 3",
   "controls.weaponSet4": "Σετ όπλων 4",
   "controls.weaponSets": "Σετ όπλων",
-  "controls.withShift": "Shift + {key}",
 
   "cosmetics.item.auraEmber": "Αύρα θράκας",
   "cosmetics.item.auraFrost": "Αύρα παγετού",
@@ -751,9 +753,11 @@ export default {
   "jukebox.stopPreview": "Τέλος δείγματος",
 
   "keys.alt": "Alt",
+  "keys.altShort": "Alt",
   "keys.backspace": "Backspace",
   "keys.capsLock": "CapsLock",
   "keys.control": "Control",
+  "keys.ctrlShort": "Ctrl",
   "keys.delete": "Delete",
   "keys.end": "End",
   "keys.enter": "Enter",
@@ -764,6 +768,7 @@ export default {
   "keys.pageDown": "PageDown",
   "keys.pageUp": "PageUp",
   "keys.shift": "Shift",
+  "keys.shiftShort": "⇧",
   "keys.space": "Space",
   "keys.tab": "Tab",
 

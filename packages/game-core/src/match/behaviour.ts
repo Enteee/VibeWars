@@ -230,6 +230,11 @@ export interface BehaviourIntent {
   readonly useSkillId: string | undefined;
   /** Whom to attack with the weapon, through `requestAttack`. */
   readonly attackTargetId: string | undefined;
+  /**
+   * End the weapon attack that is running, not the cast (#4199): a bot
+   * under Empathy stops swinging.
+   */
+  readonly stopAttack: boolean;
   readonly applyStatuses: readonly StatusApplication[];
   /**
    * A maintained enchantment of its own to end (#2492), as a player's
@@ -639,6 +644,7 @@ const STAND_STILL: BehaviourIntent = {
   targetId: undefined,
   useSkillId: undefined,
   attackTargetId: undefined,
+  stopAttack: false,
   applyStatuses: [],
   endUpkeep: undefined,
 };
@@ -1053,6 +1059,7 @@ function parallel(
     targetId: (casting ?? intents.find((intent) => intent.targetId !== undefined))?.targetId,
     useSkillId: casting?.useSkillId,
     attackTargetId: intents.find((intent) => intent.attackTargetId !== undefined)?.attackTargetId,
+    stopAttack: intents.some((intent) => intent.stopAttack),
     applyStatuses: intents.flatMap((intent) => intent.applyStatuses),
     endUpkeep: intents.find((intent) => intent.endUpkeep !== undefined)?.endUpkeep,
   };

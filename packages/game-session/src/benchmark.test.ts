@@ -117,6 +117,7 @@ async function runScenario(scenario: Scenario): Promise<Result> {
     nowSeconds: () => 0,
     signetOf: testSignet,
     recordReplay: false,
+    holdBots: false,
     preMatch: null,
   });
   const connections: PeerMatchConnection[] = [];

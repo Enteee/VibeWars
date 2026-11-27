@@ -6,6 +6,12 @@ Every key in the table below can be changed in **Options**, under
 already in use moves to the new action, and the screen says which one
 lost it. Changes save at once.
 
+A key can also be a combination: hold Shift, Ctrl or Alt and press the
+key, such as **Shift + X**. Movement and Show names take a single key,
+and the browser keeps a few combinations, such as Ctrl + W. Holding
+Shift to show names still lets your plain keys work, unless that Shift
+combination is bound to something itself.
+
 ## Keys
 
 The default preset is **Classic**, for GW1 hands. **VibeWars** casts with

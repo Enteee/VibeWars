@@ -362,6 +362,7 @@ export default {
   "controls.browserKey": "{key} należy do przeglądarki.",
   "controls.callTarget": "Wskaż cel drużynie",
   "controls.cancelAction": "Anuluj akcję; ponownie: usuń cel",
+  "controls.combo": "{mods} + {key}",
   "controls.custom": "Własny",
   "controls.displacedKeeps": "Klawisz {key} służył do: {action}; {action} zachowuje {left}.",
   "controls.displacedNoKey": "Klawisz {key} służył do: {action}; {action} nie ma teraz klawisza.",
@@ -379,9 +380,10 @@ export default {
   "controls.preset": "Układ",
   "controls.presetClassic": "Klasyczny (umiejętności 1-8, ruch WASD)",
   "controls.presetVibeWars": "VibeWars (umiejętności Q-F, ruch strzałkami)",
+  "controls.noComboHere": "Ta akcja przyjmuje tylko jeden klawisz.",
   "controls.pressAKey": "naciśnij klawisz...",
-  "controls.shortcutRefusal":
-    "Ctrl, Alt i klawisz Windows/Command nie są używane: należą do przeglądarki.",
+  "controls.reservedCombo": "{combo} należy do przeglądarki.",
+  "controls.shortcutRefusal": "Klawisz Windows/Command nie jest używany: należy do systemu.",
   "controls.showNames": "Pokaż nazwy (przytrzymaj)",
   "controls.skill1": "Umiejętność 1",
   "controls.skill2": "Umiejętność 2",
@@ -401,7 +403,6 @@ export default {
   "controls.weaponSet3": "Zestaw broni 3",
   "controls.weaponSet4": "Zestaw broni 4",
   "controls.weaponSets": "Zestawy broni",
-  "controls.withShift": "Shift + {key}",
 
   "cosmetics.item.auraEmber": "Aura żaru",
   "cosmetics.item.auraFrost": "Aura szronu",
@@ -799,9 +800,11 @@ export default {
   "jukebox.stopPreview": "Zatrzymaj podgląd",
 
   "keys.alt": "Alt",
+  "keys.altShort": "Alt",
   "keys.backspace": "Backspace",
   "keys.capsLock": "CapsLock",
   "keys.control": "Control",
+  "keys.ctrlShort": "Ctrl",
   "keys.delete": "Delete",
   "keys.end": "End",
   "keys.enter": "Enter",
@@ -812,6 +815,7 @@ export default {
   "keys.pageDown": "PageDown",
   "keys.pageUp": "PageUp",
   "keys.shift": "Shift",
+  "keys.shiftShort": "⇧",
   "keys.space": "Space",
   "keys.tab": "Tab",
 

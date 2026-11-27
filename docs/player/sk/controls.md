@@ -6,6 +6,12 @@ Každý kláves v tabuľke nižšie môžeš zmeniť v **Nastaveniach** v sekcii
 kláves, ktorý sa už používa, prejde na novú akciu a obrazovka povie, ktorá
 ho stratila. Zmeny sa ukladajú okamžite.
 
+Kláves môže byť aj kombinácia: podrž Shift, Ctrl alebo Alt a stlač kláves,
+napríklad **Shift + X**. Pohyb a Zobraziť mená berú len jeden kláves a
+prehliadač si niekoľko kombinácií necháva pre seba, napríklad Ctrl + W. Keď
+držíš Shift kvôli menám, tvoje obyčajné klávesy fungujú ďalej, pokiaľ
+samotná tá kombinácia so Shift nie je k niečomu priradená.
+
 ## Klávesy
 
 Predvolená predvoľba je **Klasické**, pre ruky zvyknuté na GW1. **VibeWars** zosiela ľavou rukou a pohybuje sa šípkami.

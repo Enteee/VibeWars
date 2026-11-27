@@ -52,6 +52,8 @@ Területi képességekkel bíró csapat ellen a távolsági botok és a gyógyí
 
 Ha egy ellenfél túl közel kerül egy távolsági bothoz vagy gyógyítóhoz, az előbb visszahúzódik a legközelebbi frontvonalbeli csapattársához, ha van elég közel, és ott harcol. Egy lelassított közelharcos, például megnyomorított, nem tud lépést tartani, ezért vele szemben a bot inkább hátrál a lövések között.
 
+Az a bot, amelyen támadást vagy varázslást büntető átok van, például Empathy vagy Backfire, abbahagyja azt, amíg az átok le nem jár.
+
 Az íjászok és a dárdások elfoglalják a magaslatot, ha az biztonságos.
 Az a bot, amelyre két ellenfél összpontosít, vagy amelynek az élete fél alatt van és gyorsan fogy, legfeljebb három másodpercre eltűnik a szemük elől: fal mögé, emelvény alá vagy magaslatra.
 Ha nincs ellenfél a közelben, a bot meghúzza azt a kart, amely rövidebb utat nyit az ellenfelekhez. Két bot egy falat is ledönt, amely egy sokkal rövidebb utat rejt, a fegyvereikkel ütve azt.

@@ -1,4 +1,4 @@
-import { isShortcut, type Keymap } from "./keymap.js";
+import type { Keymap } from "./keymap.js";
 
 type Listenable = Pick<EventTarget, "addEventListener" | "removeEventListener">;
 
@@ -36,7 +36,12 @@ export function attachNameReveal(
 
   const onKeyDown = (event: Event): void => {
     const keyEvent = event as KeyboardEvent;
-    if (codes.includes(keyEvent.code) && !isShortcut(keyEvent)) {
+    if (
+      codes.some((binding) => binding.code === keyEvent.code) &&
+      !keyEvent.ctrlKey &&
+      !keyEvent.altKey &&
+      !keyEvent.metaKey
+    ) {
       down.add(keyEvent.code);
     }
   };

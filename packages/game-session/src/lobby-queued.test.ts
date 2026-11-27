@@ -276,6 +276,7 @@ async function openQueued(options: OpenQueuedOptions = {}): Promise<QueuedLobby>
         nowSeconds: () => 0,
         signetOf: testSignet,
         recordReplay: false,
+        holdBots: false,
         preMatch: null,
       });
     },

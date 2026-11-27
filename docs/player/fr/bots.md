@@ -49,6 +49,8 @@ Face à une équipe qui a des compétences de zone, les bots à distance et les 
 
 Un bot à distance ou un soigneur dont un ennemi s'approche trop se replie d'abord vers son bot de première ligne le plus proche, s'il y en a un assez près, et se bat là. Un attaquant au corps à corps ralenti, estropié par exemple, ne peut pas suivre : face à lui, il recule plutôt entre deux tirs.
 
+Un bot sous un maléfice qui punit l'attaque ou l'incantation, comme Empathy ou Backfire, cesse de le faire jusqu'à la fin du maléfice.
+
 Les archers et les lanciers prennent les hauteurs quand c'est sans danger.
 Un bot que deux adversaires prennent pour cible, ou qui est sous la moitié de sa santé et la perd vite, se met hors de leur vue jusqu'à trois secondes : derrière un mur, sous une plateforme ou sur les hauteurs.
 Sans ennemi à proximité, un bot actionne le levier qui ouvre un chemin plus court vers les ennemis. Deux bots abattent aussi un mur qui cache un chemin bien plus court, en le frappant de leurs armes.
