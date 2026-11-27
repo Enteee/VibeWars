@@ -6,6 +6,12 @@ Elke toets in de tabel hieronder kun je wijzigen in **Opties**, onder
 die al in gebruik is, gaat naar de nieuwe actie, en het scherm zegt welke
 actie hem kwijt is. Wijzigingen worden meteen opgeslagen.
 
+Een toets kan ook een combinatie zijn: houd Shift, Ctrl of Alt ingedrukt en
+druk op de toets, zoals **Shift + X**. Bewegen en Namen tonen nemen maar één
+toets, en de browser houdt een paar combinaties voor zichzelf, zoals Ctrl +
+W. Als je Shift ingedrukt houdt om namen te tonen, werken je gewone toetsen
+nog steeds, tenzij die Shift-combinatie zelf aan iets gekoppeld is.
+
 ## Toetsen
 
 De standaardpreset is **Klassiek**, voor GW1-handen. **VibeWars** cast met de linkerhand en beweegt met de pijltjestoetsen.

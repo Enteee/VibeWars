@@ -1,6 +1,6 @@
 import { ZERO, normalize, vec2, type Vec2 } from "@vibewars/game-core";
 
-import { actionForCode, isShortcut, type KeyAction, type Keymap } from "./keymap.js";
+import { actionForBinding, type KeyAction, type Keymap } from "./keymap.js";
 
 /**
  * Held move actions -> movement direction, as a pure function of "which
@@ -65,12 +65,15 @@ export function attachKeyboardMoveInput(
 
   const handleKeyDown = (event: Event): void => {
     const keyEvent = event as KeyboardEvent;
-    const action = actionForCode(keymap, keyEvent.code);
+    // A move key is a plain key (#4183), held with Shift or not.
+    const action = actionForBinding(keymap, { code: keyEvent.code, mods: [] });
     if (
       action === undefined ||
       !MOVE_ACTIONS.has(action) ||
       pressed.has(keyEvent.code) ||
-      isShortcut(keyEvent)
+      keyEvent.ctrlKey ||
+      keyEvent.altKey ||
+      keyEvent.metaKey
     ) {
       return;
     }

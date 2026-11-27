@@ -6,6 +6,12 @@ klik på en tastecelle og tryk på den tast, du vil have; en tast, der
 allerede er i brug, flyttes til den nye handling, og skærmen fortæller,
 hvilken handling der mistede den. Ændringer gemmes med det samme.
 
+En tast kan også være en kombination: hold Shift, Ctrl eller Alt nede og
+tryk på tasten, fx **Shift + X**. Bevæg dig og Vis navne tager kun én tast,
+og browseren beholder nogle få kombinationer selv, fx Ctrl + W. Når du
+holder Shift for at vise navne, virker dine almindelige taster stadig,
+medmindre den Shift-kombination selv er bundet til noget.
+
 ## Taster
 
 Standardforvalget er **Klassisk**, til GW1-hænder. **VibeWars** kaster med venstre hånd og bevæger sig med piletasterne.

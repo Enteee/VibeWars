@@ -30,7 +30,7 @@ import { attackKeyIntents, escapeIntent } from "./input/attack-key.js";
 import { createDoubleClick } from "./input/double-click.js";
 import { attachKeyboardMoveInput } from "./input/keyboard-move.js";
 import { loadLayoutLabeller } from "./input/key-labels.js";
-import { WEAPON_SET_ACTIONS, actionForCode, isShortcut } from "./input/keymap.js";
+import { WEAPON_SET_ACTIONS, actionForEvent, isShiftedPlain } from "./input/keymap.js";
 import { loadKeymap } from "./input/keymap-preference.js";
 import {
   calledTargetIntent,
@@ -904,7 +904,7 @@ export async function startMatchView(
     if (isTyping(event.target)) {
       return;
     }
-    const action = actionForCode(keymap, event.code);
+    const action = actionForEvent(keymap, event);
     if (action === undefined) {
       return;
     }
@@ -916,7 +916,8 @@ export async function startMatchView(
     }
     if (action === "target-next") {
       const players = viewed.getSnapshot()?.players ?? [];
-      followedId = nextFollowed(players, followedId, event.shiftKey ? -1 : 1) ?? followedId;
+      followedId =
+        nextFollowed(players, followedId, isShiftedPlain(keymap, event) ? -1 : 1) ?? followedId;
     } else if (action === "mute") {
       toggleMute();
     }
@@ -924,8 +925,11 @@ export async function startMatchView(
 
   const handleKeyDown = (event: KeyboardEvent): void => {
     // Ctrl, Alt and Meta are the browser's: Ctrl+R, Ctrl+W and the rest
-    // do what they always do, and no game key fires with them (#302).
-    if (isShortcut(event)) {
+    // do what they always do (#302), unless a binding holds them (#4183).
+    if (
+      (event.ctrlKey || event.altKey || event.metaKey) &&
+      actionForEvent(keymap, event) === undefined
+    ) {
       return;
     }
     // F10, GW1's menu key, asks to leave (#221): the way out without a mouse.
@@ -1001,7 +1005,7 @@ export async function startMatchView(
     if (isTyping(event.target)) {
       return;
     }
-    const action = actionForCode(keymap, event.code);
+    const action = actionForEvent(keymap, event);
     if (action === undefined) {
       return;
     }
@@ -1023,7 +1027,7 @@ export async function startMatchView(
         match.players,
         seat.selfSessionId,
         current,
-        event.shiftKey ? -1 : 1,
+        isShiftedPlain(keymap, event) ? -1 : 1,
       );
       if (next !== undefined && next !== current) {
         seat.sendIntent({ kind: "target", targetSessionId: next });

@@ -207,6 +207,28 @@ describe("the BroadcastChannel transport (#392)", () => {
     await a.leave();
   });
 
+  it("keeps its peers through its own stall, and still sees a dead one go (#4146)", async () => {
+    vi.useFakeTimers({ toFake: ["setInterval", "clearInterval", "Date"] });
+    const code = freshCode();
+    const peer = joinBroadcastRoom(roomOf(code), crypto.randomUUID());
+    const seen: string[] = [];
+    peer.onPeerJoin((id) => seen.push(`+${id}`));
+    peer.onPeerLeave((id) => seen.push(`-${id}`));
+    const raw = new BroadcastChannel(`${APP_ID}:${code}`);
+    raw.postMessage({ kind: "hello", from: "busy" });
+    await settle();
+    // The page hangs past the timeout; its heartbeat runs before the
+    // hellos queued meanwhile reach it.
+    vi.setSystemTime(Date.now() + 2 * PEER_TIMEOUT_MS);
+    vi.advanceTimersByTime(HEARTBEAT_MS);
+    expect(seen).toEqual(["+busy"]);
+    // Silent after it, the peer is gone on time.
+    vi.advanceTimersByTime(PEER_TIMEOUT_MS);
+    expect(seen).toEqual(["+busy", "-busy"]);
+    await peer.leave();
+    raw.close();
+  });
+
   it("parses each frame kind and refuses the rest", () => {
     expect(parseFrame({ kind: "hello", from: "a", extra: 1 })).toEqual({
       kind: "hello",

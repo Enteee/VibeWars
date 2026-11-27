@@ -283,6 +283,12 @@ export interface MatchHostOptions {
    * seats whoever says hello, on alternating teams.
    */
   readonly seats: PlannedSeats | null;
+  /**
+   * Every bot stands still and never acts (#4146): e2e sets it, so bots
+   * cannot wipe idle humans and end a match before a slow runner has
+   * looked at it. Off in play.
+   */
+  readonly holdBots: boolean;
   /** The lobby's id for it (#480): an `observe` naming another is refused. */
   readonly matchId: string;
   /**
@@ -1121,6 +1127,7 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
     // rather than every other player of a team landing on one.
     teammates: [...seats.values()].filter((seat) => seat.team === team).length,
     bot,
+    holds: bot && options.holdBots,
     startMorale,
   });
 

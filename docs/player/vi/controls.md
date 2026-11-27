@@ -6,6 +6,12 @@ Mọi phím trong bảng dưới đây đều có thể đổi trong **Tùy ch�
 được dùng sẽ chuyển sang hành động mới, và màn hình cho biết hành động nào đã
 mất phím đó. Thay đổi được lưu ngay lập tức.
 
+Một phím cũng có thể là tổ hợp: giữ Shift, Ctrl hoặc Alt rồi nhấn phím, ví
+dụ **Shift + X**. Di chuyển và Hiện tên chỉ nhận một phím đơn, và trình
+duyệt giữ riêng vài tổ hợp, ví dụ Ctrl + W. Giữ Shift để hiện tên vẫn để các
+phím thường của bạn hoạt động, trừ khi chính tổ hợp Shift đó được gán cho
+việc gì.
+
 ## Phím
 
 Mẫu mặc định là **Classic**, dành cho tay chơi GW1. **VibeWars** dùng kỹ năng bằng tay trái và di chuyển bằng các phím mũi tên.

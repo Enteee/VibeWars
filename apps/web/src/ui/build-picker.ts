@@ -2,13 +2,7 @@ import type { ProfessionId, SkillDescription, WeaponSetIndex } from "@vibewars/g
 
 import { t } from "../i18n/index.js";
 import { loadLayoutLabeller, type KeyLabeller } from "../input/key-labels.js";
-import {
-  SKILL_ACTIONS,
-  actionForCode,
-  actionLabel,
-  codeLabel,
-  isShortcut,
-} from "../input/keymap.js";
+import { SKILL_ACTIONS, actionForEvent, actionLabel, codeLabel } from "../input/keymap.js";
 import { loadKeymap } from "../input/keymap-preference.js";
 import type { TeamCharacter } from "../storage/schema.js";
 import {
@@ -337,13 +331,12 @@ export function mountBuildPicker<C extends TeamCharacter>(
     }
     const target = event.target;
     if (
-      isShortcut(event) ||
       host.keysBlocked?.() === true ||
       (target instanceof Element && target.closest(`${TAKES_TYPING}, .training`) !== null)
     ) {
       return;
     }
-    const action = actionForCode(keymap, event.code);
+    const action = actionForEvent(keymap, event);
     const slot = action === undefined ? -1 : SKILL_ACTIONS.indexOf(action);
     const focused = document.activeElement?.closest<HTMLElement>(".skill-box");
     const box = focused ?? element.querySelector<HTMLElement>(".skill-box:hover");

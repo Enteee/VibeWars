@@ -6,6 +6,12 @@ albo kliknij pole klawisza i naciśnij wybrany klawisz; klawisz już zajęty
 przechodzi na nową akcję, a ekran mówi, która go straciła. Zmiany zapisują się od
 razu.
 
+Klawisz może być też kombinacją: przytrzymaj Shift, Ctrl lub Alt i naciśnij
+klawisz, np. **Shift + X**. Ruch i Pokaż nazwy przyjmują tylko jeden
+klawisz, a przeglądarka zostawia sobie kilka kombinacji, np. Ctrl + W. Gdy
+trzymasz Shift, żeby pokazać nazwy, twoje zwykłe klawisze nadal działają,
+chyba że ta kombinacja z Shift sama jest do czegoś przypisana.
+
 ## Klawisze
 
 Domyślny układ to **Klasyczny**, dla rąk przyzwyczajonych do GW1. **VibeWars** rzuca umiejętności lewą ręką i porusza się strzałkami.

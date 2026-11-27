@@ -330,6 +330,7 @@ export default {
   "controls.browserKey": "{key} tillhör webbläsaren.",
   "controls.callTarget": "Utpeka ditt mål",
   "controls.cancelAction": "Avbryt handling; igen: rensa mål",
+  "controls.combo": "{mods} + {key}",
   "controls.custom": "Anpassad",
   "controls.displacedKeeps": "{key} var {action}; {action} behåller {left}.",
   "controls.displacedNoKey": "{key} var {action}; {action} har nu ingen tangent.",
@@ -347,9 +348,10 @@ export default {
   "controls.preset": "Förval",
   "controls.presetClassic": "Klassisk (1-8 förmågor, WASD rörelse)",
   "controls.presetVibeWars": "VibeWars (Q-F förmågor, piltangenter rörelse)",
+  "controls.noComboHere": "Den här åtgärden tar bara en enda tangent.",
   "controls.pressAKey": "tryck på en tangent...",
-  "controls.shortcutRefusal":
-    "Ctrl, Alt och Windows-/Command-tangenten används aldrig: de tillhör webbläsaren.",
+  "controls.reservedCombo": "{combo} tillhör webbläsaren.",
+  "controls.shortcutRefusal": "Windows-/Command-tangenten används aldrig: den tillhör systemet.",
   "controls.showNames": "Visa namn (håll in)",
   "controls.skill1": "Förmåga 1",
   "controls.skill2": "Förmåga 2",
@@ -369,7 +371,6 @@ export default {
   "controls.weaponSet3": "Vapenset 3",
   "controls.weaponSet4": "Vapenset 4",
   "controls.weaponSets": "Vapenset",
-  "controls.withShift": "Shift + {key}",
 
   "cosmetics.item.auraEmber": "Glödaura",
   "cosmetics.item.auraFrost": "Frostaura",
@@ -743,9 +744,11 @@ export default {
   "jukebox.stopPreview": "Stoppa provlyssningen",
 
   "keys.alt": "Alt",
+  "keys.altShort": "Alt",
   "keys.backspace": "Backspace",
   "keys.capsLock": "CapsLock",
   "keys.control": "Control",
+  "keys.ctrlShort": "Ctrl",
   "keys.delete": "Delete",
   "keys.end": "End",
   "keys.enter": "Enter",
@@ -756,6 +759,7 @@ export default {
   "keys.pageDown": "PageDown",
   "keys.pageUp": "PageUp",
   "keys.shift": "Shift",
+  "keys.shiftShort": "⇧",
   "keys.space": "Space",
   "keys.tab": "Tab",
 

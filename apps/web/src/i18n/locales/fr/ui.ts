@@ -352,6 +352,7 @@ export default {
   "controls.browserKey": "{key} est réservée au navigateur.",
   "controls.callTarget": "Annoncer ta cible",
   "controls.cancelAction": "Annuler l'action ; à nouveau : retirer la cible",
+  "controls.combo": "{mods} + {key}",
   "controls.custom": "Perso",
   "controls.displacedKeeps": "{key} était assignée à {action} ; {action} garde {left}.",
   "controls.displacedNoKey": "{key} était assignée à {action} ; {action} n'a plus de touche.",
@@ -369,9 +370,11 @@ export default {
   "controls.preset": "Profil",
   "controls.presetClassic": "Classique (compétences 1-8, déplacement WASD)",
   "controls.presetVibeWars": "VibeWars (compétences Q-F, déplacement flèches)",
+  "controls.noComboHere": "Cette action n'accepte qu'une seule touche.",
   "controls.pressAKey": "appuie sur une touche...",
+  "controls.reservedCombo": "{combo} est réservée au navigateur.",
   "controls.shortcutRefusal":
-    "Ctrl, Alt et la touche Windows/Command ne sont jamais utilisées : elles appartiennent au navigateur.",
+    "La touche Windows/Command n'est jamais utilisée : elle appartient au système.",
   "controls.showNames": "Noms (maintenir)",
   "controls.skill1": "Compétence 1",
   "controls.skill2": "Compétence 2",
@@ -391,7 +394,6 @@ export default {
   "controls.weaponSet3": "Set d'armes 3",
   "controls.weaponSet4": "Set d'armes 4",
   "controls.weaponSets": "Sets d'armes",
-  "controls.withShift": "Maj + {key}",
 
   "cosmetics.item.auraEmber": "Aura de braise",
   "cosmetics.item.auraFrost": "Aura de givre",
@@ -781,9 +783,11 @@ export default {
   "jukebox.stopPreview": "Arrêter l'écoute",
 
   "keys.alt": "Alt",
+  "keys.altShort": "Alt",
   "keys.backspace": "Backspace",
   "keys.capsLock": "CapsLock",
   "keys.control": "Control",
+  "keys.ctrlShort": "Ctrl",
   "keys.delete": "Delete",
   "keys.end": "End",
   "keys.enter": "Enter",
@@ -794,6 +798,7 @@ export default {
   "keys.pageDown": "PageDown",
   "keys.pageUp": "PageUp",
   "keys.shift": "Shift",
+  "keys.shiftShort": "⇧",
   "keys.space": "Space",
   "keys.tab": "Tab",
 

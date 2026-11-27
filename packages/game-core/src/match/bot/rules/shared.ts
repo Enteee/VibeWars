@@ -32,12 +32,22 @@ export const NOTHING: BehaviourIntent = {
   targetId: undefined,
   useSkillId: undefined,
   attackTargetId: undefined,
+  stopAttack: false,
   applyStatuses: [],
   endUpkeep: undefined,
 };
 
 /** Below this share of its health, an ally is worth a heal. */
 export const HURT_FRACTION = 0.6;
+
+/**
+ * Below this share of its health, an ally is worth a heal or protection
+ * a punishing hex makes the bot pay for (#4199)...
+ */
+export const PUNISH_SAVE_ALLY = 1 / 3;
+
+/** ...while the bot keeps more than this share of its own health after paying. */
+export const PUNISH_KEEP_SELF = 1 / 2;
 
 /** How many foes on one ally make it a spike to protect against (#2627). */
 export const SPIKE_FOES = 2;

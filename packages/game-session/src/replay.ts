@@ -142,11 +142,20 @@ function parseSeatSetup(value: unknown, teamCount: WireTeamCount): SeatSetup | u
     build !== undefined &&
     isCount(raw.teammates) &&
     typeof raw.bot === "boolean" &&
+    typeof raw.holds === "boolean" &&
     typeof morale === "number" &&
     Number.isInteger(morale) &&
     morale >= MORALE_FLOOR &&
     morale <= MORALE_CEILING
-    ? { id: raw.id, team, build, teammates: raw.teammates, bot: raw.bot, startMorale: morale }
+    ? {
+        id: raw.id,
+        team,
+        build,
+        teammates: raw.teammates,
+        bot: raw.bot,
+        holds: raw.holds,
+        startMorale: morale,
+      }
     : undefined;
 }
 

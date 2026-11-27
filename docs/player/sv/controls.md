@@ -6,6 +6,13 @@ Varje tangent i tabellen nedan kan ändras under **Alternativ**, under
 vill ha; en tangent som redan används flyttas till den nya handlingen,
 och skärmen säger vilken som förlorade den. Ändringar sparas direkt.
 
+En tangent kan också vara en kombination: håll in Shift, Ctrl eller Alt och
+tryck på tangenten, till exempel **Shift + X**. Gå och Visa namn tar bara en
+enda tangent, och webbläsaren behåller några kombinationer själv, till
+exempel Ctrl + W. När du håller in Shift för att visa namn fungerar dina
+vanliga tangenter ändå, om inte den Shift-kombinationen själv är kopplad
+till något.
+
 ## Tangenter
 
 Standardförvalet är **Klassisk**, för GW1-händer. **VibeWars** kastar med vänster hand och rör sig med piltangenterna.

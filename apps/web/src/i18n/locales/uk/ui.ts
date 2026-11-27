@@ -362,6 +362,7 @@ export default {
   "controls.browserKey": "{key} належить браузеру.",
   "controls.callTarget": "Позначити ціль",
   "controls.cancelAction": "Скасувати дію; ще раз: зняти ціль",
+  "controls.combo": "{mods} + {key}",
   "controls.custom": "Власний",
   "controls.displacedKeeps": "{key} була для дії «{action}»; «{action}» зберігає {left}.",
   "controls.displacedNoKey": "{key} була для дії «{action}»; «{action}» тепер без клавіші.",
@@ -379,9 +380,10 @@ export default {
   "controls.preset": "Набір",
   "controls.presetClassic": "Класичний (вміння 1-8, рух WASD)",
   "controls.presetVibeWars": "VibeWars (вміння Q-F, рух стрілками)",
+  "controls.noComboHere": "Ця дія приймає лише одну клавішу.",
   "controls.pressAKey": "натисни клавішу...",
-  "controls.shortcutRefusal":
-    "Ctrl, Alt і клавіша Windows/Command не використовуються: вони належать браузеру.",
+  "controls.reservedCombo": "{combo} належить браузеру.",
+  "controls.shortcutRefusal": "Клавіша Windows/Command не використовується: вона належить системі.",
   "controls.showNames": "Показати імена (утримуй)",
   "controls.skill1": "Вміння 1",
   "controls.skill2": "Вміння 2",
@@ -401,7 +403,6 @@ export default {
   "controls.weaponSet3": "Набір зброї 3",
   "controls.weaponSet4": "Набір зброї 4",
   "controls.weaponSets": "Набори зброї",
-  "controls.withShift": "Shift + {key}",
 
   "cosmetics.item.auraEmber": "Аура жарин",
   "cosmetics.item.auraFrost": "Морозна аура",
@@ -800,9 +801,11 @@ export default {
   "jukebox.stopPreview": "Зупинити прослуховування",
 
   "keys.alt": "Alt",
+  "keys.altShort": "Alt",
   "keys.backspace": "Backspace",
   "keys.capsLock": "CapsLock",
   "keys.control": "Control",
+  "keys.ctrlShort": "Ctrl",
   "keys.delete": "Delete",
   "keys.end": "End",
   "keys.enter": "Enter",
@@ -813,6 +816,7 @@ export default {
   "keys.pageDown": "PageDown",
   "keys.pageUp": "PageUp",
   "keys.shift": "Shift",
+  "keys.shiftShort": "⇧",
   "keys.space": "Space",
   "keys.tab": "Tab",
 

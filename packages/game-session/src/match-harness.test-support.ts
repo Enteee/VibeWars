@@ -283,6 +283,7 @@ export function startMatch(
     nowSeconds: () => TEST_NOW_SECONDS,
     signetOf: options.signetOf ?? testSignet,
     recordReplay: options.recordReplay ?? false,
+    holdBots: false,
     preMatch: options.preMatch ?? null,
   });
   return {

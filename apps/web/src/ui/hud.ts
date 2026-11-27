@@ -239,7 +239,7 @@ export function renderKeyLabels(
 ): void {
   hud.skillBar.querySelectorAll(".hud-skill-key").forEach((node, index) => {
     const action = SKILL_ACTIONS[index];
-    node.textContent = action === undefined ? "" : actionLabel(keymap, action, label);
+    node.textContent = action === undefined ? "" : actionLabel(keymap, action, label, true);
   });
 }
 

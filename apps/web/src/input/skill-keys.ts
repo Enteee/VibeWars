@@ -1,6 +1,6 @@
 import type { SkillSlot } from "@vibewars/game-session";
 
-import { SKILL_ACTIONS, actionForCode, isShortcut, type Keymap } from "./keymap.js";
+import { SKILL_ACTIONS, actionForEvent, type KeyPress, type Keymap } from "./keymap.js";
 
 /**
  * The bar slot a keydown casts, or `undefined` for none: the keymap's
@@ -13,18 +13,18 @@ import { SKILL_ACTIONS, actionForCode, isShortcut, type Keymap } from "./keymap.
  * recharges is a common habit, and at a fast OS repeat rate it would
  * send one `use-skill` per repeat, enough on its own to cross the
  * server's message cap and get the player dropped (#43). One press is
- * one cast. Nor does a press with Ctrl, Alt or Meta held: that is the
- * browser's shortcut. Shift is not; Shift+Q still casts.
+ * one cast. Which skill a press with modifiers casts is `actionForEvent`'s
+ * (#4183): Shift+Q casts Q's unless Shift+Q is bound itself.
  */
 export function skillSlotForKeyDown(
-  event: Pick<KeyboardEvent, "code" | "repeat" | "ctrlKey" | "altKey" | "metaKey">,
+  event: KeyPress & Pick<KeyboardEvent, "repeat">,
   keymap: Keymap,
   bar: readonly (SkillSlot | null)[],
 ): number | undefined {
-  if (event.repeat || isShortcut(event)) {
+  if (event.repeat) {
     return undefined;
   }
-  const action = actionForCode(keymap, event.code);
+  const action = actionForEvent(keymap, event);
   const slot = action === undefined ? -1 : SKILL_ACTIONS.indexOf(action);
   return slot >= 0 && (bar[slot] ?? null) !== null ? slot : undefined;
 }

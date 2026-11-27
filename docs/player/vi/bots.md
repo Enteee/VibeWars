@@ -45,6 +45,8 @@ Khi gặp đội có kỹ năng diện rộng, bot đánh xa và người hồi 
 
 Một bot tầm xa hoặc người hồi máu bị kẻ địch áp sát quá gần sẽ lùi về phía đồng đội tiền tuyến gần nhất trước, nếu có người đủ gần, rồi chiến đấu ở đó. Còn kẻ tấn công cận chiến bị làm chậm, ví dụ bị què, không theo kịp, nên trước kẻ đó bot sẽ lùi lại giữa các phát bắn.
 
+Bot bị trúng lời nguyền trừng phạt việc tấn công hoặc niệm phép, như Empathy hoặc Backfire, sẽ ngừng làm việc đó cho tới khi lời nguyền hết.
+
 Cung thủ và người dùng giáo chiếm chỗ cao khi an toàn.
 Bot bị hai đối thủ dồn đánh, hoặc còn dưới nửa máu và đang mất máu nhanh, sẽ nấp khỏi tầm nhìn của chúng tối đa ba giây: sau tường, dưới sàn hoặc lên chỗ cao.
 Khi không có kẻ địch nào ở gần, bot sẽ kéo cần gạt mở ra lối đi ngắn hơn tới kẻ địch. Hai bot cũng phá đổ bức tường che một lối đi ngắn hơn nhiều, bằng cách dùng vũ khí đánh vào nó.

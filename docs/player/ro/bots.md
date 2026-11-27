@@ -48,6 +48,8 @@ Un bot cu o abilitate care schilodește sau încetinește o folosește asupra un
 
 Un bot la distanță sau un vindecător de care un inamic se apropie prea mult se retrage mai întâi spre cel mai apropiat coechipier din prima linie, dacă e destul de aproape, și luptă acolo. Un atacator corp la corp încetinit, de exemplu schilodit, nu poate ține pasul, așa că în fața lui botul se retrage în schimb între trageri.
 
+Un bot sub un blestem care pedepsește atacul sau vrăjile, precum Empathy sau Backfire, se oprește până când blestemul se termină.
+
 Arcașii și lăncierii ocupă înălțimile când e sigur.
 Un bot asupra căruia se concentrează doi adversari, sau care are sub jumătate din viață și o pierde repede, se ascunde din vederea lor până la trei secunde: după un zid, sub o platformă sau pe înălțimi.
 Când niciun inamic nu e aproape, un bot trage maneta care deschide un drum mai scurt spre inamici. Doi boți dărâmă și un zid care ascunde un drum mult mai scurt, lovindu-l cu armele lor.

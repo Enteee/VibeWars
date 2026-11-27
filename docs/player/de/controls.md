@@ -6,6 +6,12 @@ oder klicke auf ein Tastenfeld und drück die gewünschte Taste. Eine schon bele
 Taste wechselt zur neuen Aktion, und das Fenster sagt dir, welche sie verloren
 hat. Änderungen werden sofort gespeichert.
 
+Eine Taste kann auch eine Kombination sein: Halte Shift, Strg oder Alt und drück
+die Taste, etwa **Shift + X**. Laufen und Namen zeigen nehmen nur eine einzelne
+Taste, und der Browser behält ein paar Kombinationen für sich, etwa Strg + W.
+Hältst du Shift, um Namen zu zeigen, funktionieren deine einfachen Tasten weiter,
+außer diese Shift-Kombination ist selbst mit etwas belegt.
+
 ## Tasten
 
 Die Standardvorlage heißt **Klassisch**, für GW1-Hände. **VibeWars** wirkt Skills mit der linken Hand und läuft mit den Pfeiltasten.

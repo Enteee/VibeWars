@@ -159,7 +159,11 @@ describe("the tutorial runner", () => {
       "ArrowDown",
       "ArrowRight",
     ]);
-    keymap = { ...KEYMAP_PRESETS.classic, "move-up": ["KeyI"], "move-left": ["KeyJ"] };
+    keymap = {
+      ...KEYMAP_PRESETS.classic,
+      "move-up": [{ code: "KeyI", mods: [] }],
+      "move-left": [{ code: "KeyJ", mods: [] }],
+    };
     expect(runner.tick(AWAY, HINT_REPEAT_MS).say?.keys).toEqual([
       "KeyI",
       "KeyJ",

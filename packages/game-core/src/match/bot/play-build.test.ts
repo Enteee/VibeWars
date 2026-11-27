@@ -709,3 +709,65 @@ describe("play-build's frontline peels for its backline (#4141)", () => {
     expect(targetOf(dive(vec2(600, 400), ELEMENTALIST))).not.toBe("d");
   });
 });
+
+describe("play-build under a punishing hex (#4199)", () => {
+  /** Puts `status` on `id`, as a foe's hex lands. */
+  function hex(sim: MatchSimulation, id: string, status: "empathy" | "backfire"): void {
+    sim.get(id)?.combatant.statuses.apply(status, 10, "foe", NO_RANKS);
+  }
+
+  it("an Empathied warrior ends its swing and starts no new one", () => {
+    const sim = match([
+      fighter("w", 0, WARRIOR, vec2(400, 400), { skillBar: [] }),
+      fighter("f", 1, WARRIOR, vec2(440, 400), { behaviour: undefined, skillBar: [] }),
+    ]);
+    for (let t = 0; t < 2 && sim.get("w")?.combatant.attack === undefined; t += DT) sim.step(DT);
+    expect(sim.get("w")?.combatant.attack).toBeDefined();
+    expect(askBot(sim, "w")).toMatchObject({ attackTargetId: "f", stopAttack: false });
+    hex(sim, "w", "empathy");
+    expect(askBot(sim, "w")).toMatchObject({ attackTargetId: undefined, stopAttack: true });
+  });
+
+  it("a Backfired elementalist casts no Fireball, and attacks instead", () => {
+    const sim = match([
+      fighter("e", 0, ELEMENTALIST, vec2(400, 400), { skillBar: ["elementalist.fireball"] }),
+      fighter("f", 1, WARRIOR, vec2(600, 400), { behaviour: undefined, skillBar: [] }),
+    ]);
+    expect(askBot(sim, "e").useSkillId).toBe("elementalist.fireball");
+    hex(sim, "e", "backfire");
+    expect(askBot(sim, "e")).toMatchObject({ useSkillId: undefined, attackTargetId: "f" });
+  });
+
+  /** A Backfired monk at `ownHealth`, a warrior ally at a quarter of its health. */
+  function backfiredHealer(ownHealth: number): BehaviourIntent {
+    const sim = match([
+      fighter("m", 0, MONK, vec2(400, 400), {
+        skillBar: ["monk.orison-of-healing"],
+        startHealthFraction: ownHealth,
+      }),
+      fighter("a", 0, WARRIOR, vec2(480, 400), {
+        behaviour: undefined,
+        startHealthFraction: 0.25,
+      }),
+    ]);
+    hex(sim, "m", "backfire");
+    return askBot(sim, "m");
+  }
+
+  it("a Backfired monk still heals an ally about to fall while it can pay", () => {
+    expect(backfiredHealer(0.9)).toMatchObject({
+      useSkillId: "monk.orison-of-healing",
+      targetId: "a",
+    });
+  });
+
+  it("a Backfired monk does not heal when the price would leave it at half or less", () => {
+    expect(backfiredHealer(0.4).useSkillId).toBeUndefined();
+  });
+
+  it("a Backfired monk takes the hex off itself", () => {
+    const sim = match([fighter("m", 0, MONK, vec2(400, 400), { skillBar: ["monk.remove-hex"] })]);
+    hex(sim, "m", "backfire");
+    expect(askBot(sim, "m")).toMatchObject({ useSkillId: "monk.remove-hex", targetId: "m" });
+  });
+});

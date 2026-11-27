@@ -351,6 +351,7 @@ export default {
   "controls.browserKey": "{key} aparține browserului.",
   "controls.callTarget": "Anunță ținta",
   "controls.cancelAction": "Anulează acțiunea; din nou: șterge ținta",
+  "controls.combo": "{mods} + {key}",
   "controls.custom": "Personal",
   "controls.displacedKeeps": "{key} era {action}; {action} păstrează {left}.",
   "controls.displacedNoKey": "{key} era {action}; {action} nu mai are tastă.",
@@ -368,9 +369,11 @@ export default {
   "controls.preset": "Presetare",
   "controls.presetClassic": "Clasic (abilități 1-8, mișcare WASD)",
   "controls.presetVibeWars": "VibeWars (abilități Q-F, mișcare din săgeți)",
+  "controls.noComboHere": "Această acțiune acceptă o singură tastă.",
   "controls.pressAKey": "apasă o tastă...",
+  "controls.reservedCombo": "{combo} aparține browserului.",
   "controls.shortcutRefusal":
-    "Ctrl, Alt și tasta Windows/Command nu se folosesc niciodată: aparțin browserului.",
+    "Tasta Windows/Command nu se folosește niciodată: aparține sistemului.",
   "controls.showNames": "Arată nume (ține)",
   "controls.skill1": "Abilitate 1",
   "controls.skill2": "Abilitate 2",
@@ -390,7 +393,6 @@ export default {
   "controls.weaponSet3": "Set de arme 3",
   "controls.weaponSet4": "Set de arme 4",
   "controls.weaponSets": "Seturi de arme",
-  "controls.withShift": "Shift + {key}",
 
   "cosmetics.item.auraEmber": "Aură de jar",
   "cosmetics.item.auraFrost": "Aură de brumă",
@@ -779,9 +781,11 @@ export default {
   "jukebox.stopPreview": "Oprește previzualizarea",
 
   "keys.alt": "Alt",
+  "keys.altShort": "Alt",
   "keys.backspace": "Backspace",
   "keys.capsLock": "CapsLock",
   "keys.control": "Control",
+  "keys.ctrlShort": "Ctrl",
   "keys.delete": "Delete",
   "keys.end": "End",
   "keys.enter": "Enter",
@@ -792,6 +796,7 @@ export default {
   "keys.pageDown": "PageDown",
   "keys.pageUp": "PageUp",
   "keys.shift": "Shift",
+  "keys.shiftShort": "⇧",
   "keys.space": "Space",
   "keys.tab": "Tab",
 
