@@ -45,6 +45,8 @@ ideje tétlenül állsz, úgy játszanak tovább, ahogy egy csak botokból áll�
 csapat tenné.
 Amíg aktív vagy, az a bot, amelyet egy harc messzire sodort tőled, visszajön hozzád, hacsak nem súlyosan sebesült, vagy nem áll közvetlenül mellette egy ellenfél.
 
+Területi képességekkel bíró csapat ellen a távolsági botok és a gyógyítók távol tartják magukat egymástól, hogy egy robbanás ne találjon el kettőt közülük. A fedezéket ezért soha nem adják fel.
+
 Az íjászok és a dárdások elfoglalják a magaslatot, ha az biztonságos.
 Az a bot, amelyre két ellenfél összpontosít, vagy amelynek az élete fél alatt van és gyorsan fogy, legfeljebb három másodpercre eltűnik a szemük elől: fal mögé, emelvény alá vagy magaslatra.
 Ha nincs ellenfél a közelben, a bot meghúzza azt a kart, amely rövidebb utat nyit az ellenfelekhez. Két bot egy falat is ledönt, amely egy sokkal rövidebb utat rejt, a fegyvereikkel ütve azt.

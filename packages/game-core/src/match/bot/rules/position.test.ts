@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { RANGE_MELEE, RANGE_SPELL } from "../../../distances.js";
+import { AREA_NEARBY, RANGE_MELEE, RANGE_SPELL } from "../../../distances.js";
 import { distance, vec2, type Vec2 } from "../../../vec2.js";
 import { createCursor, type BehaviourContext } from "../../behaviour.js";
 import type { Participant } from "../../simulation.js";
 import position, { keptSpot } from "./position.js";
-import { POSITION_SLACK, foeReach } from "./shared.js";
+import { POSITION_SLACK, SPREAD_MARGIN, foeReach, spreadDistance } from "./shared.js";
 import { ELEMENTALIST, MONK, RANGER, WARRIOR, fighter, match, ruleFor } from "./test-support.js";
 
 describe("position (#2545)", () => {
@@ -372,5 +372,122 @@ describe("the high ground (#3141)", () => {
     const spot = floorSpot(RANGER);
     expect(think(RANGER, { highGround: ledge(spot, 0) })).toEqual(think(RANGER, {}));
     expect(think(RANGER, { highGround: [] })?.moveTo).toEqual(spot);
+  });
+});
+
+describe("casters and healers spread out against area damage (#4142)", () => {
+  const TARGET = vec2(1200, 400);
+  /** 300 short of the target: a 20° turn about it is 104 off, past Fireball's spread. */
+  const SPOT = vec2(900, 400);
+  /** Ranged bots `ids` on one spot within reach of a target playing `foe`. */
+  const together = (ids: readonly string[], foe = ELEMENTALIST, build = ELEMENTALIST) =>
+    match([...ids.map((id) => fighter(id, 0, build, SPOT)), fighter("foe", 1, foe, TARGET)]);
+  const at = (fight: ReturnType<typeof match>, id: string): Participant => {
+    const found = fight.get(id);
+    if (found === undefined) throw new Error(`no ${id}`);
+    return found;
+  };
+
+  it("reads the widest area on a living foe's bar, plus the margin", () => {
+    const fight = together(["a"]);
+    expect(spreadDistance([at(fight, "foe")])).toBe(AREA_NEARBY + SPREAD_MARGIN);
+    expect(spreadDistance([at(together(["a"], WARRIOR), "foe")])).toBe(0);
+  });
+
+  it("moves the later of two ranged bots on one spot to one no ally crowds, the earlier stays", () => {
+    const fight = together(["a", "b"]);
+    expect(position.decide(ruleFor(fight, "a", { targetId: "foe" }))).toBeUndefined();
+    const rule = ruleFor(fight, "b", { targetId: "foe" });
+    const spot = position.decide(rule)?.moveTo;
+    if (spot === undefined) throw new Error("no move");
+    expect(distance(spot, SPOT)).toBeGreaterThanOrEqual(spreadDistance(rule.foes));
+    expect(distance(spot, TARGET)).toBeCloseTo(distance(SPOT, TARGET));
+  });
+
+  it("keeps both together against a foe with no area skill", () => {
+    const fight = together(["a", "b"], WARRIOR);
+    for (const id of ["a", "b"]) {
+      expect(position.decide(ruleFor(fight, id, { targetId: "foe" }))).toBeUndefined();
+    }
+  });
+
+  it("never moves a frontliner for crowding", () => {
+    const fight = together(["a", "b"], ELEMENTALIST, WARRIOR);
+    expect(position.decide(ruleFor(fight, "b", { targetId: "foe" }))).toBeUndefined();
+  });
+
+  it("settles three bots on one spot within two thinks, then none moves", () => {
+    const fight = together(["a", "b", "c"]);
+    const moves = (): number => {
+      let moved = 0;
+      for (const id of ["a", "b", "c"]) {
+        const spot = position.decide(ruleFor(fight, id, { targetId: "foe" }))?.moveTo;
+        if (spot !== undefined) {
+          at(fight, id).position = spot;
+          moved += 1;
+        }
+      }
+      return moved;
+    };
+    expect(moves()).toBeGreaterThan(0);
+    moves();
+    expect(moves()).toBe(0);
+    const spread = spreadDistance([at(fight, "foe")]);
+    for (const [x, y] of [
+      ["a", "b"],
+      ["a", "c"],
+      ["b", "c"],
+    ] as const) {
+      expect(distance(at(fight, x).position, at(fight, y).position)).toBeGreaterThanOrEqual(spread);
+    }
+  });
+
+  it("takes a crowded spot fewer foes can hit over an uncrowded one more can", () => {
+    const lone = match([
+      fighter("e", 0, ELEMENTALIST, vec2(100, 400)),
+      fighter("foe", 1, ELEMENTALIST, TARGET),
+    ]);
+    const straight = position.decide(ruleFor(lone, "e", { targetId: "foe" }))?.moveTo;
+    if (straight === undefined) throw new Error("no spot");
+    const fight = match([
+      fighter("e", 0, ELEMENTALIST, vec2(100, 400)),
+      fighter("mate", 0, WARRIOR, straight),
+      fighter("foe", 1, ELEMENTALIST, TARGET),
+      fighter("f2", 1, ELEMENTALIST, vec2(1500, 100)),
+    ]);
+    // Equal threat: the turn away from the mate.
+    const away = position.decide(ruleFor(fight, "e", { targetId: "foe" }))?.moveTo;
+    if (away === undefined) throw new Error("no spot");
+    expect(distance(away, straight)).toBeGreaterThan(SPREAD_MARGIN);
+    // `f2` reaches every turn but the straight one, hidden from it.
+    const f2 = at(fight, "f2");
+    const hidden = (from: Vec2, to: Vec2) =>
+      !(from === f2.position && distance(to, straight) < 1e-6);
+    const covered = ruleFor(
+      fight,
+      "e",
+      { targetId: "foe", foeReach: () => 10_000 },
+      { seesBetween: hidden },
+    );
+    const spot = position.decide(covered)?.moveTo;
+    if (spot === undefined) throw new Error("no spot");
+    expect(distance(spot, straight)).toBeLessThan(1e-6);
+  });
+
+  it("moves a crowded healer about its ward, within its reach of it", () => {
+    const ward = vec2(700, 400);
+    const fight = match([
+      fighter("h", 0, MONK, vec2(400, 400)),
+      fighter("m", 0, MONK, vec2(400, 400)),
+      fighter("mate", 0, WARRIOR, ward, { startHealthFraction: 0.4 }),
+      fighter("foe", 1, ELEMENTALIST, vec2(1000, 400)),
+    ]);
+    expect(position.decide(ruleFor(fight, "h"))).toBeUndefined();
+    const rule = ruleFor(fight, "m");
+    expect(rule.role).toBe("healer");
+    const spot = position.decide(rule)?.moveTo;
+    if (spot === undefined) throw new Error("no move");
+    expect(distance(spot, ward)).toBeLessThanOrEqual(0.8 * RANGE_SPELL + 1e-6);
+    expect(distance(spot, vec2(400, 400))).toBeGreaterThanOrEqual(spreadDistance(rule.foes));
   });
 });

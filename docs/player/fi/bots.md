@@ -44,6 +44,8 @@ menetkin. Kun olet seissyt toimettomana jonkin aikaa, ne pelaavat eteenpäin
 niin kuin pelkkien bottien tiimi pelaisi.
 Kun olet aktiivinen, botti, jonka taistelu on vetänyt kauas sinusta, kävelee takaisin luoksesi, ellei se ole pahasti haavoittunut tai vihollinen ole aivan sen vieressä.
 
+Aluetaitoja käyttävää joukkuetta vastaan kaukotaistelijabotit ja parantajat pysyvät erillään, jotta yksi räjähdys ei osu kahteen. Ne eivät koskaan luovu suojasta sen vuoksi.
+
 Jousiampujat ja keihäänheittäjät ottavat korkean maaston, kun se on turvallista.
 Botti, johon kaksi vihollista keskittyy tai jonka terveys on alle puolet ja hupenee nopeasti, piiloutuu heidän näkyvistään enintään kolmeksi sekunniksi: muurin taakse, tasanteen alle tai korkealle maastolle.
 Kun yhtään vihollista ei ole lähellä, botti kääntää vivun, joka avaa lyhyemmän tien vihollisten luo. Kaksi bottia myös murtaa muurin, joka kätkee paljon lyhyemmän tien, lyömällä sitä aseillaan.

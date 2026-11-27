@@ -1,6 +1,7 @@
-import { RANGE_MELEE, RANGE_SPELL } from "../../../distances.js";
+import { AREA_IN_THE_AREA, RANGE_MELEE, RANGE_SPELL } from "../../../distances.js";
 import { energyCostOf } from "../../../skills/activation.js";
 import { canAffordAdrenaline } from "../../../skills/adrenaline.js";
+import { areaRadius } from "../../../skills/area-radius.js";
 import { getSkill } from "../../../skills/catalog.js";
 import { chainAllows } from "../../../skills/chain.js";
 import { getStatusDefinition, preventsAttacks, preventsSpells } from "../../../skills/status.js";
@@ -612,4 +613,26 @@ export function foeReach(cache: Map<string, number>, foe: Participant): number {
   const reach = Math.max(RANGE_MELEE, longest, foe.combatant.equipment.mainHand.weapon.range);
   cache.set(foe.id, reach);
   return reach;
+}
+
+/** A caster or healer keeps this much past a foe's widest area from an ally (#4142). */
+export const SPREAD_MARGIN = 10;
+
+/**
+ * How far apart a team's casters and healers stand against `foes`
+ * (#4142): the widest area on a living foe's bar, recharging or not, and
+ * `SPREAD_MARGIN`, never past `AREA_IN_THE_AREA`'s. No area on any bar: 0,
+ * no spreading.
+ */
+export function spreadDistance(foes: readonly Participant[]): number {
+  let widest = 0;
+  for (const foe of foes) {
+    if (foe.combatant.dead) {
+      continue;
+    }
+    for (const skill of skillsOf(foe)) {
+      widest = Math.max(widest, areaRadius(skill) ?? 0);
+    }
+  }
+  return widest === 0 ? 0 : Math.min(widest, AREA_IN_THE_AREA) + SPREAD_MARGIN;
 }

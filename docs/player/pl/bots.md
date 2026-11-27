@@ -38,6 +38,8 @@ uzdrowiciele z tyłu, i idą tam, dokąd ty idziesz. Gdy od jakiegoś czasu stoi
 bezczynnie, grają dalej tak, jak grałaby drużyna złożona z botów.
 Dopóki jesteś aktywny, bot, którego walka odciągnęła daleko od ciebie, wraca do ciebie, chyba że jest ciężko ranny albo tuż przy nim stoi wróg.
 
+Przeciw drużynie z umiejętnościami obszarowymi boty dystansowe i uzdrowiciele trzymają się od siebie z dala, by jeden wybuch nie trafił dwóch z nich. Nigdy nie rezygnują przy tym z osłony.
+
 Łucznicy i włócznicy zajmują wzniesienie, gdy jest to bezpieczne.
 Bot, na którym skupiło się dwóch wrogów albo który ma mniej niż połowę zdrowia i szybko je traci, chowa się przed ich wzrokiem na maksymalnie trzy sekundy: za murem, pod pomostem albo na wzniesieniu.
 Gdy w pobliżu nie ma wroga, bot przestawia dźwignię, która otwiera krótszą drogę do wrogów. Dwa boty burzą też mur, który zasłania znacznie krótszą drogę, uderzając w niego bronią.

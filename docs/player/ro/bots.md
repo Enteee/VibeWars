@@ -41,6 +41,8 @@ spate, și te urmează oriunde mergi. După ce ai stat inactiv de ceva vreme, jo
 mai departe așa cum ar juca o echipă de boți.
 Cât timp ești activ, un bot pe care o luptă l-a tras departe de tine se întoarce la tine, în afară de cazul în care e grav rănit sau are un inamic chiar lângă el.
 
+Împotriva unei echipe cu abilități de zonă, boții de la distanță și vindecătorii stau departe unii de alții, ca o explozie să nu prindă doi dintre ei. Nu renunță niciodată la adăpost pentru asta.
+
 Arcașii și lăncierii ocupă înălțimile când e sigur.
 Un bot asupra căruia se concentrează doi adversari, sau care are sub jumătate din viață și o pierde repede, se ascunde din vederea lor până la trei secunde: după un zid, sub o platformă sau pe înălțimi.
 Când niciun inamic nu e aproape, un bot trage maneta care deschide un drum mai scurt spre inamici. Doi boți dărâmă și un zid care ascunde un drum mult mai scurt, lovindu-l cu armele lor.

@@ -42,6 +42,8 @@ fica parado por algum tempo, eles continuam jogando como uma equipe só de
 bots jogaria.
 Enquanto você estiver ativo, um bot que uma luta afastou de você volta para perto de você, a menos que esteja muito ferido ou tenha um inimigo colado nele.
 
+Contra uma equipe com habilidades de área, os bots à distância e os curandeiros ficam afastados, para que uma explosão não atinja dois deles. Nunca abrem mão de cobertura para isso.
+
 Arqueiros e lanceiros tomam o terreno alto quando é seguro.
 Um bot que dois inimigos focam, ou que está abaixo de metade da vida e a perde depressa, esconde-se da vista deles até três segundos: atrás de um muro, sob uma plataforma ou em terreno alto.
 Sem nenhum inimigo por perto, um bot puxa a alavanca que abre um caminho mais curto até os inimigos. Dois bots também derrubam uma parede que esconde um caminho muito mais curto, golpeando-a com as suas armas.
