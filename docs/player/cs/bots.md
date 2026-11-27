@@ -18,6 +18,8 @@ Bot v první linii se obrátí proti nepříteli, který útočí na léčitele 
 
 Proti týmu s plošnými skilly se boti na dálku a léčitelé drží od sebe, aby jeden výbuch nezasáhl dva z nich. Krytí kvůli tomu nikdy neopustí.
 
+Bot na dálku nebo léčitel, ke kterému se nepřítel dostane příliš blízko, nejprve ustoupí k nejbližšímu spojenci v první linii, je-li dost blízko, a bojuje tam.
+
 Lučištníci a kopiníci zaujmou vyvýšené místo, když je to bezpečné.
 Bot, na kterého se zaměří dva nepřátelé nebo který má méně než polovinu zdraví a rychle ho ztrácí, se jim až na tři sekundy schová z dohledu: za zeď, pod plošinu nebo na vyvýšené místo.
 Když není žádný nepřítel poblíž, bot přehodí páku, která otevře kratší cestu k nepřátelům. Dva boti také probourají zeď, která skrývá mnohem kratší cestu, a bijí do ní svými zbraněmi.

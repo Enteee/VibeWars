@@ -43,6 +43,8 @@ A frontliner turns on a foe that attacks its team's healer or casters, unless it
 
 Against a team with area skills, ranged bots and healers keep apart, so one blast can't catch two of them. They never give up cover to do it.
 
+A ranged bot or healer that a foe comes too close to first falls back to its nearest frontliner, if one is near enough, and fights there.
+
 Archers and spearmen take the high ground when it is safe.
 A bot that two foes focus on, or that is below half health and losing it fast, ducks out of their sight for up to three seconds: behind a wall, under a deck or onto high ground.
 With no foe near, a bot throws a lever that opens a shorter way to the foes. Two bots also break down a wall that hides a much shorter way, striking it with their weapons.

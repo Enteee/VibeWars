@@ -9,6 +9,7 @@ import dodge from "./dodge.js";
 import dropUpkeep from "./drop-upkeep.js";
 import duck from "./duck.js";
 import energy from "./energy.js";
+import fallBack from "./fall-back.js";
 import fetchRelic from "./fetch-relic.js";
 import flee from "./flee.js";
 import fight from "./fight.js";
@@ -55,6 +56,7 @@ export const BOT_RULES: readonly BotRule[] = inOrder([
   dropUpkeep,
   duck,
   energy,
+  fallBack,
   fetchRelic,
   flee,
   fight,

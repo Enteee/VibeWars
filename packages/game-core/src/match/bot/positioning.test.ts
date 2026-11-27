@@ -1,9 +1,10 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import type { PlayerBuild } from "../../build.js";
 import { distance, dot, length, sub, vec2, type Vec2 } from "../../vec2.js";
 import type { MatchSimulation } from "../simulation.js";
-import { ELBOW_DISTANCE } from "./rules/shared.js";
+import fallBack from "./rules/fall-back.js";
+import { ELBOW_DISTANCE, FALL_BACK_NEAR } from "./rules/shared.js";
 import { DT, ELEMENTALIST, MONK, RANGER, WARRIOR, fighter, match } from "./rules/test-support.js";
 
 const RANGED = ["e0", "r0", "e1", "r1"];
@@ -148,5 +149,67 @@ describe("healer bots hold their post (#2615)", () => {
   it("plays the same fight twice from the same seed", () => {
     const comp = [WARRIOR, WARRIOR, ELEMENTALIST, MONK];
     expect(healerTurns(comp, "a")).toBe(healerTurns(comp, "a"));
+  });
+});
+
+describe("a dived caster falls back to its frontliner (#4151)", () => {
+  /**
+   * 2v2: team 0 a warrior bot and `build` 300 east of it; team 1 a
+   * warrior diving that one and a monk far off, neither of them bots.
+   * Over 12 s, when the dived one first stood within `FALL_BACK_NEAR` of
+   * its warrior, when that warrior first stood swinging at the diver,
+   * and the dived one's health at the end; `off` takes `fall-back` out.
+   */
+  function dive(build: PlayerBuild, seed: string, off = false) {
+    const spy = off ? vi.spyOn(fallBack, "decide").mockReturnValue(undefined) : undefined;
+    const sim = match(
+      [
+        fighter("w0", 0, WARRIOR, vec2(600, 400)),
+        fighter("e0", 0, build, vec2(900, 400)),
+        fighter("d", 1, WARRIOR, vec2(930, 400), { behaviour: undefined }),
+        fighter("x", 1, MONK, vec2(1500, 700), { behaviour: undefined }),
+      ],
+      seed,
+    );
+    sim.requestAttack("d", "e0");
+    const get = (id: string) => {
+      const body = sim.get(id);
+      if (body === undefined) throw new Error(`no ${id}`);
+      return body;
+    };
+    const dived = get("e0");
+    const warrior = get("w0");
+    const diver = get("d");
+    let met: number | undefined;
+    let peeled: number | undefined;
+    for (let at = 0; at < 12; at += DT) {
+      sim.step(DT);
+      if (met === undefined && distance(dived.position, warrior.position) <= FALL_BACK_NEAR) {
+        met = at;
+      }
+      if (
+        peeled === undefined &&
+        warrior.targetId === "d" &&
+        distance(warrior.position, diver.position) <= ELBOW_DISTANCE
+      ) {
+        peeled = at;
+      }
+    }
+    spy?.mockRestore();
+    return { met, peeled, health: dived.combatant.health };
+  }
+
+  it.each([
+    ["an elementalist", ELEMENTALIST],
+    ["a monk", MONK],
+  ])("brings %s's diver to its warrior sooner, and it takes less damage", (_, build) => {
+    const seeds = ["a", "b", "c"];
+    for (const seed of seeds) {
+      const on = dive(build, seed);
+      const off = dive(build, seed, true);
+      expect(on.met).toBeLessThan(off.met ?? Number.POSITIVE_INFINITY);
+      expect(on.peeled).toBeLessThan(off.peeled ?? Number.POSITIVE_INFINITY);
+      expect(on.health).toBeGreaterThan(off.health);
+    }
   });
 });

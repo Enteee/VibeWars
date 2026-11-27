@@ -55,6 +55,22 @@ export const FOCUS_REACH = 150;
  */
 export const PEEL_REACH = 120;
 
+/**
+ * Below this share of its health a foe in reach is the team's target
+ * (#2545): one about to fall is worth more than one at full health.
+ */
+export const FINISH_FRACTION = 0.6;
+
+/**
+ * A caster or healer with a foe at its elbow walks to its nearest
+ * frontliner while that one is farther than this, `PEEL_REACH` (#4151),
+ * so the frontliner peels the diver where they meet...
+ */
+export const FALL_BACK_NEAR = PEEL_REACH;
+
+/** ...and only while that frontliner is no farther than this. */
+export const FALL_BACK_FAR = 600;
+
 export function nearestLiving(
   self: Participant,
   foes: readonly Participant[],
