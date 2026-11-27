@@ -27,7 +27,7 @@ const RUIN = "necromancer.well-of-ruin";
 const DEATH = "necromancer.death-magic";
 const CURSES = "necromancer.curses";
 const GUARDIAN = "monk.guardian";
-const AEGIS = "monk.aegis";
+const SHIELD_GUARDIAN = "monk.shield-guardian";
 const OBSIDIAN_FLESH = "elementalist.obsidian-flesh";
 const NEVER_SURRENDER = "paragon.never-surrender";
 const ANTHEM_OF_FLAME = "paragon.anthem-of-flame";
@@ -80,7 +80,7 @@ const OUTSIDE = vec2(100, 300);
  * `e`, a team-0 Elementalist with Flare.
  */
 function match(): MatchSimulation {
-  const foeBar = [GUARDIAN, AEGIS, OBSIDIAN_FLESH, NEVER_SURRENDER, ANTHEM_OF_FLAME];
+  const foeBar = [GUARDIAN, SHIELD_GUARDIAN, OBSIDIAN_FLESH, NEVER_SURRENDER, ANTHEM_OF_FLAME];
   const sim = new MatchSimulation({
     seed: "necromancer-wells",
     participants: [
@@ -224,12 +224,12 @@ describe("Well of the Profane (#1732)", () => {
       ok: false,
       reason: "invalid-target-unenchantable",
     });
-    // Aegis from outside: the caster gets it, the two inside do not.
+    // Shield Guardian from outside: the caster gets it, the two inside do not.
     expect(sim.requestSkill("h", 1)?.check).toEqual({ ok: true });
-    stepFor(sim, skill(AEGIS).activationSeconds + 2 * DT);
-    expect(get(sim, "h").combatant.statuses.has("aegis")).toBe(true);
-    expect(f.combatant.statuses.has("aegis")).toBe(false);
-    expect(get(sim, "g").combatant.statuses.has("aegis")).toBe(false);
+    stepFor(sim, skill(SHIELD_GUARDIAN).activationSeconds + 2 * DT);
+    expect(get(sim, "h").combatant.statuses.has("shield-guardian")).toBe(true);
+    expect(f.combatant.statuses.has("shield-guardian")).toBe(false);
+    expect(get(sim, "g").combatant.statuses.has("shield-guardian")).toBe(false);
   });
 
   it("lets enchantments land again once its foe walks out, and strips them again walking back in", () => {

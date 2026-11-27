@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { AREA_EARSHOT, RANGE_SPELL } from "../distances.js";
+import { RANGE_SPELL } from "../distances.js";
 import { unarmedResolvedEquipment } from "../equipment/resolve.js";
 import { WEAPONS } from "../equipment/weapons.js";
 import type { CombatLogEntry } from "../match/combat-log.js";
@@ -76,7 +76,17 @@ function described(id: string): string[] {
 
 describe("the ten are the corpus's (#1511)", () => {
   it.each([
-    ["monk.aegis", 257, "enchantment", false, "protection-prayers", 10, 2, 30, "self"],
+    [
+      "monk.aegis",
+      257,
+      "enchantment",
+      false,
+      "protection-prayers",
+      10,
+      0.25,
+      30,
+      "single-other-ally",
+    ],
     [
       "monk.shield-of-deflection",
       259,
@@ -156,21 +166,31 @@ describe("the ten are the corpus's (#1511)", () => {
 });
 
 describe("the enchantments (#1511)", () => {
-  it("Aegis: everyone in earshot, the Monk too, blocks half of all attacks for 13 s", () => {
-    expect(skill("monk.aegis")).toMatchObject({
-      area: { radius: AREA_EARSHOT, origin: "caster", affects: "allies", includesCaster: true },
-      effects: [
-        {
-          kind: "apply-status",
-          statusId: "aegis",
-          durationSeconds: {
-            scaling: { attributeId: "monk.protection-prayers", atZero: 6, atTwelve: 13.2 },
-          },
-        },
-      ],
-    });
-    expect(getStatusDefinition("aegis").block).toEqual({ chance: 0.5, against: "all" });
-  });
+  it.each([
+    [3, 1],
+    [4, 2],
+    [11, 2],
+    [12, 3],
+    // The highest a rank goes (`MAX_EFFECTIVE_RANK`).
+    [16, 3],
+  ])(
+    "Aegis (PvP, #4169): at Protection Prayers %i, one other ally for %i s, spells cannot target it and attacks miss",
+    (rank, seconds) => {
+      const target = ally();
+      use(
+        monk({ attributeRanks: new Map([["monk.protection-prayers", rank]]) }),
+        "monk.aegis",
+        target,
+      );
+      expect(target.statuses.get("aegis")?.durationSeconds).toBe(seconds);
+      expect(skill("monk.aegis").area).toBeUndefined();
+      expect(getStatusDefinition("aegis")).toMatchObject({
+        untargetableByFoeSpells: true,
+        attacksAgainstMiss: true,
+        block: undefined,
+      });
+    },
+  );
 
   it("Shield of Deflection: 75% block and +27 armor for 9 s", () => {
     const target = ally();

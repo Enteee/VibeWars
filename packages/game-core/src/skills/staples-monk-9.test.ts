@@ -373,7 +373,7 @@ describe("Divine Boon (#2286)", () => {
   });
 
   it("answers one on itself too", () => {
-    const match = boonOn([AEGIS]);
+    const match = boonOn([GUARDIAN]);
     const c = get(match, "c");
     c.health = 5e4;
     const log = cast(match, "c", 1, "c");
@@ -434,30 +434,67 @@ describe("Monk staples' tooltips (#2286)", () => {
 });
 
 describe("Aegis recast by rank (#3981)", () => {
-  /** Monks `hi` at Protection Prayers 12 and `lo` at 3, side by side. */
+  /**
+   * Monks `hi` at Protection Prayers 12 and `lo` at 3, side by side, and
+   * `t`, the other ally (#4169) both put it on.
+   */
   function monks() {
     return new MatchSimulation({
       seed: "aegis-recast",
       participants: [
         spec("hi", 0, vec2(0, 0), [AEGIS], new Map([["monk.protection-prayers", 12]])),
         spec("lo", 0, vec2(0, 30), [AEGIS], new Map([["monk.protection-prayers", 3]])),
+        spec("t", 0, vec2(30, 0), [], R0),
       ],
     });
   }
 
   it("a rank-3 Aegis over a rank-12 one is refused: the longer one runs on", () => {
     const match = monks();
-    cast(match, "hi", 0, "hi");
-    cast(match, "lo", 0, "lo");
-    const aegis = get(match, "hi").statuses.get("aegis");
+    cast(match, "hi", 0, "t", 0.5);
+    cast(match, "lo", 0, "t", 0.5);
+    const aegis = get(match, "t").statuses.get("aegis");
     expect(aegis?.sourceId).toBe("hi");
-    expect(aegis?.remainingSeconds).toBeGreaterThan(7.8);
+    expect(aegis?.remainingSeconds).toBeGreaterThan(1.9);
   });
 
   it("a rank-12 Aegis over a rank-3 one replaces it", () => {
     const match = monks();
-    cast(match, "lo", 0, "lo");
-    cast(match, "hi", 0, "hi");
-    expect(get(match, "lo").statuses.get("aegis")?.sourceId).toBe("hi");
+    cast(match, "lo", 0, "t", 0.5);
+    cast(match, "hi", 0, "t", 0.5);
+    expect(get(match, "t").statuses.get("aegis")?.sourceId).toBe("hi");
+  });
+});
+
+describe("Aegis, the PvP skill (#4169)", () => {
+  it("is cast in ¼ s on another ally, never on its caster", () => {
+    const match = arena([AEGIS]);
+    match.setTarget("c", "c");
+    expect(match.requestSkill("c", 0)?.check.ok).toBe(false);
+    cast(match, "c", 0, "ally", 0.25 + 2 * DT);
+    expect(get(match, "ally").statuses.has("aegis")).toBe(true);
+  });
+
+  it("keeps a foe's spell from targeting its bearer", () => {
+    const match = arena([AEGIS]);
+    cast(match, "c", 0, "ally", 0.5);
+    match.setTarget("foe", "ally");
+    expect(match.requestSkill("foe", 0)?.check).toEqual({
+      ok: false,
+      reason: "invalid-target-untargetable",
+    });
+  });
+
+  it("makes a foe's attacks fail: no damage, and none is blocked", () => {
+    const match = arena([AEGIS]);
+    cast(match, "c", 0, "ally", 0.5);
+    expect(match.requestAttack("foe", "ally")?.ok).toBe(true);
+    const events = stepFor(match, 2)
+      .filter(({ sourceId }) => sourceId === "foe")
+      .flatMap((entry) => entry.events);
+    expect(events).toContainEqual(
+      expect.objectContaining({ kind: "attack-missed", targetId: "ally" }),
+    );
+    expect(events.some(({ kind }) => kind === "damage" || kind === "attack-blocked")).toBe(false);
   });
 });

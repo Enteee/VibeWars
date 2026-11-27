@@ -1137,31 +1137,27 @@ export const MONK_SKILLS: readonly Skill[] = [
     attributeId: "monk.protection-prayers",
     cost: { kind: "energy", amount: 10 },
     overcast: 0,
-    activationSeconds: 2,
+    activationSeconds: 0.25,
     rechargeSeconds: 30,
     range: RANGE_SPELL,
-    target: "self",
-    area: {
-      radius: AREA_EARSHOT,
-      origin: "caster",
-      affects: "allies",
-      maxTargets: undefined,
-      includesCaster: true,
-    },
+    target: "single-other-ally",
+    area: undefined,
     attack: undefined,
     whileActivating: undefined,
     corpse: undefined,
     companion: undefined,
     petAttack: undefined,
     projectile: undefined,
-    // "For 6...15 seconds, all party members within earshot have a 50%
-    // chance to block attacks": 13 seconds, its rank-12 value (#1511).
+    // The PvP page (#4169), the split of 257: "For 1...3 seconds,
+    // target other party member cannot be the target of hostile spells, and
+    // attacks against this party member fail": 1...3 is ranks 0...15, so
+    // 3 seconds at rank 12, 4 at 19.
     effects: [
       {
         kind: "apply-status",
         statusId: "aegis",
         durationSeconds: {
-          scaling: { attributeId: "monk.protection-prayers", atZero: 6, atTwelve: 13.2 },
+          scaling: { attributeId: "monk.protection-prayers", atZero: 1, atTwelve: 2.6 },
         },
       },
     ],

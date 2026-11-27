@@ -403,9 +403,9 @@ describe("Feedback (#2287)", () => {
     const enchanted = arena([FEEDBACK], ranks);
     const target = get(enchanted, "foe");
     target.energy = 50;
-    target.statuses.apply("aegis", 60, "foe", NO_RANKS);
+    target.statuses.apply("shield-of-deflection", 60, "foe", NO_RANKS);
     const log = cast(enchanted, "c", 0, "foe", 1.5);
-    expect(target.statuses.has("aegis")).toBe(false);
+    expect(target.statuses.has("shield-of-deflection")).toBe(false);
     expect(eventsOf(log, FEEDBACK)).toContainEqual({
       kind: "energy-loss",
       targetId: "foe",
