@@ -605,3 +605,44 @@ describe("snares on the diver (#4156)", () => {
     ).toMatchObject({ useSkillId: CRIPPLING_SHOT, targetId: ghost });
   });
 });
+
+describe("blinds on an attacker (#4239)", () => {
+  const BLINDING_FLASH = "elementalist.blinding-flash";
+
+  /** An elementalist with Blinding Flash at (400, 400), its monk at (300, 600), the team's target `t` a caster at (700, 400), and `d` at (340, 600). */
+  function dived(attacking: boolean): MatchSimulation {
+    const sim = match([
+      fighter("m", 0, ELEMENTALIST, vec2(400, 400), { skillBar: [BLINDING_FLASH] }),
+      fighter("monk", 0, MONK, vec2(300, 600), { behaviour: undefined }),
+      fighter("t", 1, ELEMENTALIST, vec2(700, 400), { behaviour: undefined }),
+      fighter("d", 1, WARRIOR, vec2(340, 600), { behaviour: undefined }),
+    ]);
+    if (attacking) {
+      sim.setTarget("d", "monk");
+      const foe = sim.get("d");
+      if (foe === undefined) throw new Error("no d");
+      foe.combatant.attack = { targetId: "monk", swingElapsed: 0.1, unreachableSeconds: 0 };
+    }
+    return sim;
+  }
+
+  it("casts Blinding Flash at the warrior on its monk, not the caster it targets", () => {
+    expect(fight.decide(ruleFor(dived(true), "m", { targetId: "t" }))).toMatchObject({
+      useSkillId: BLINDING_FLASH,
+      targetId: "d",
+    });
+  });
+
+  it("casts it at the team's target with no foe attacking", () => {
+    expect(fight.decide(ruleFor(dived(false), "m", { targetId: "t" }))).toMatchObject({
+      useSkillId: BLINDING_FLASH,
+      targetId: "t",
+    });
+  });
+
+  it("casts it at a called target", () => {
+    expect(
+      fight.decide(ruleFor(dived(true), "m", { targetId: "t", targetFixed: true })),
+    ).toMatchObject({ useSkillId: BLINDING_FLASH, targetId: "t" });
+  });
+});
