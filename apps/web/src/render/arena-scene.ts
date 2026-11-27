@@ -3340,11 +3340,6 @@ export class ArenaScene extends Phaser.Scene {
   }
 
   /**
-   * Whether `actor` moved within `MOVING_SECONDS`, and which way: the
-   * snapshot does not move a body every frame, so a frame standing still
-   * between two steps is still moving.
-   */
-  /**
    * The pose `actor`'s figure stands in (#4060): its stride follows how far
    * it has walked, its cape settles once it stops, and it breathes on its
    * own beat.
@@ -3373,6 +3368,11 @@ export class ArenaScene extends Phaser.Scene {
     return motion.turn.drawn;
   }
 
+  /**
+   * Whether `actor` moved within `MOVING_SECONDS`, and which way: the
+   * snapshot does not move a body every frame, so a frame standing still
+   * between two steps is still moving.
+   */
   private trackMotion(actor: RenderableActor): BodyMotion | undefined {
     const { x, y } = actor.position;
     const known = this.bodyMotion.get(actor.id);

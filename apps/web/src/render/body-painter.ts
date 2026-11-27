@@ -132,6 +132,15 @@ export function paintBodyDisc(painter: Painter, body: StandingBody): void {
   }
 }
 
+/** A figure's shadow for a body of radius 1, from its centre: worked out once. */
+const SHADOW_UNIT: readonly { readonly x: number; readonly y: number }[] = Array.from(
+  { length: STACK_SEGMENTS },
+  (_, i) => {
+    const a = (i / STACK_SEGMENTS) * Math.PI * 2;
+    return { x: 0.24 + 0.95 * Math.cos(a), y: 0.21 + 0.7 * Math.sin(a) };
+  },
+);
+
 /**
  * What a stacked figure (ADR-0057) leaves on the ground under it: its
  * shadow, off towards the lower right (#4060: on the ground, so a figure
@@ -142,12 +151,7 @@ export function paintBodyDisc(painter: Painter, body: StandingBody): void {
 export function paintFigureGround(painter: Painter, body: StandingBody): void {
   const { x, y, r } = body;
   painter.fillStyle(0x000000, STACK_SHADOW_ALPHA);
-  painter.fillPoints(
-    Array.from({ length: STACK_SEGMENTS }, (_, i) => {
-      const a = (i / STACK_SEGMENTS) * Math.PI * 2;
-      return { x: x + r * (0.24 + 0.95 * Math.cos(a)), y: y + r * (0.21 + 0.7 * Math.sin(a)) };
-    }),
-  );
+  painter.fillPoints(SHADOW_UNIT.map((point) => ({ x: x + r * point.x, y: y + r * point.y })));
   if (body.team === "self") {
     painter.lineStyle(2, SELF_RIM, 1);
     painter.strokeCircle(body.x, body.y, body.r - 2);
