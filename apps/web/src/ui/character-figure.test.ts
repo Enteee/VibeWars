@@ -30,6 +30,7 @@ import {
 import { teamColour } from "../render/arena-snapshot.js";
 import { type Painter, type StandingBody } from "../render/body-painter.js";
 import {
+  STACK_SHADOW_ALPHA,
   bucketFacing,
   headingBucket,
   stackBadge,
@@ -317,17 +318,6 @@ function recording(at: (x: number, y: number, radius?: number) => void = () => u
       }
     },
     stroke: () => undefined,
-    ellipse: (x, y, rx, ry) => {
-      // The bake draws its ellipses unturned: their four extremes bound them.
-      for (const [dx, dy] of [
-        [rx, 0],
-        [-rx, 0],
-        [0, ry],
-        [0, -ry],
-      ] as const) {
-        at(shift.x + (x + dx) * shift.k, shift.y + (y + dy) * shift.k);
-      }
-    },
     clearRect: () => undefined,
     save: () => {
       saved.push(shift);
@@ -363,8 +353,12 @@ function reach(body: StandingBody, paint: (painter: Painter) => void): number {
   const at = (x: number, y: number, radius = 0): void => {
     farthest = Math.max(farthest, Math.hypot(x - body.x, y - body.y) + radius);
   };
+  // The figure's own shadow on the ground (#4060), as when the bake drew it, is no mark.
+  let shadow = false;
   paint({
-    fillStyle: () => undefined,
+    fillStyle: (colour, alpha) => {
+      shadow = colour === 0x000000 && alpha === STACK_SHADOW_ALPHA;
+    },
     lineStyle: () => undefined,
     fillCircle: (x, y, radius) => {
       if (y !== body.y - stackBadge(body.r).rise) {
@@ -382,7 +376,7 @@ function reach(body: StandingBody, paint: (painter: Painter) => void): number {
     arc: at,
     strokePath: () => undefined,
     fillPoints: (points) => {
-      for (const point of points) {
+      for (const point of shadow ? [] : points) {
         at(point.x, point.y);
       }
     },

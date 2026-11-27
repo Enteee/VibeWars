@@ -327,7 +327,14 @@ export function createCosmeticsPreview(
       const made = tintedGlyph(glyph, pixels);
       tinted = made === undefined ? undefined : { pixels, canvas: made };
     }
-    const pose = stackPose(beat.kind === "walk", false, clock, still);
+    const pose = stackPose({
+      casting: false,
+      walked,
+      stoppedFor: beat.kind === "walk" ? 0 : Number.POSITIVE_INFINITY,
+      now: clock,
+      phase: 0,
+      reducedMotion: still,
+    });
     const decor = matchDecor(body);
     paintFigure(painter, context, body, pose, decor, () => {
       if (tinted !== undefined) {

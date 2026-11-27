@@ -19,6 +19,7 @@ import { capePatternShapes } from "./cape-pattern.js";
 import { emblemFrameShape, type CapeLook, type EmblemPart } from "./cape-shape.js";
 import { paintSwingRibbon, type SwingRibbon } from "./cosmetic-trail.js";
 import { multiplyColour } from "./lighting-model.js";
+import { STACK_SEGMENTS, STACK_SHADOW_ALPHA } from "./sprite-stack.js";
 import { weaponMarkLayout } from "./weapon-mark.js";
 import type { Point } from "./weapon-mark-geometry.js";
 
@@ -132,11 +133,21 @@ export function paintBodyDisc(painter: Painter, body: StandingBody): void {
 }
 
 /**
- * What a stacked figure (ADR-0057) leaves on the ground under it: the self
- * rim on your own, and a swing's ribbon (#3579). The figure itself, its
- * cape included, is an atlas image the scene draws over these.
+ * What a stacked figure (ADR-0057) leaves on the ground under it: its
+ * shadow, off towards the lower right (#4060: on the ground, so a figure
+ * drawn mirrored keeps it there), the self rim on your own, and a swing's
+ * ribbon (#3579). The figure itself, its cape included, is an atlas image
+ * the scene draws over these.
  */
 export function paintFigureGround(painter: Painter, body: StandingBody): void {
+  const { x, y, r } = body;
+  painter.fillStyle(0x000000, STACK_SHADOW_ALPHA);
+  painter.fillPoints(
+    Array.from({ length: STACK_SEGMENTS }, (_, i) => {
+      const a = (i / STACK_SEGMENTS) * Math.PI * 2;
+      return { x: x + r * (0.24 + 0.95 * Math.cos(a)), y: y + r * (0.21 + 0.7 * Math.sin(a)) };
+    }),
+  );
   if (body.team === "self") {
     painter.lineStyle(2, SELF_RIM, 1);
     painter.strokeCircle(body.x, body.y, body.r - 2);

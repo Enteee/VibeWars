@@ -1,7 +1,12 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  STACK_BAKE_RADIUS,
+  STACK_BAKE_SCALE,
+  STACK_FRAME_FEET_X,
+  STACK_FRAME_FEET_Y,
   STACK_FRAME_HEIGHT,
+  STACK_FRAME_WIDTH,
   StackAtlas,
   stackFrameName,
   stackLookKey,
@@ -9,7 +14,15 @@ import {
   type BakeContext,
   type StackLook,
 } from "./stack-atlas.js";
-import { STACK_HEADINGS, STACK_POSES } from "./sprite-stack.js";
+import {
+  STACK_BAKED_HEADINGS,
+  STACK_OUTLINE_WIDTH,
+  STACK_POSES,
+  bucketFacing,
+  stackLayers,
+  stackSlices,
+  stackTones,
+} from "./sprite-stack.js";
 
 const FRIEND: StackLook = { body: 0x59c2ff, cape: undefined };
 const FOE: StackLook = { body: 0xff7b72, cape: undefined };
@@ -17,7 +30,7 @@ const CAPED: StackLook = {
   body: 0x59c2ff,
   cape: { look: { main: 0x203040, trim: 0xc0a060, emblem: "", palette: [] }, pattern: "stripes" },
 };
-const FRAMES = STACK_HEADINGS * STACK_POSES.length;
+const FRAMES = STACK_BAKED_HEADINGS.length * STACK_POSES.length;
 
 /** A canvas that draws nothing: records its frames, uploads and whether it was dropped. */
 class FakeSurface implements AtlasSurface {
@@ -26,8 +39,12 @@ class FakeSurface implements AtlasSurface {
   public destroyed = false;
   public fills = 0;
   public readonly context: BakeContext;
+  public readonly width: number;
+  public readonly height: number;
 
-  public constructor() {
+  public constructor(width: number, height: number) {
+    this.width = width;
+    this.height = height;
     const noop = (): void => undefined;
     this.context = {
       fillStyle: "",
@@ -42,7 +59,6 @@ class FakeSurface implements AtlasSurface {
         this.fills += 1;
       },
       stroke: noop,
-      ellipse: noop,
       clearRect: noop,
     };
   }
@@ -68,8 +84,8 @@ function atlas(): {
   const surfaces: FakeSurface[] = [];
   const queued: (() => void)[] = [];
   const made = new StackAtlas(
-    () => {
-      const surface = new FakeSurface();
+    (width, height) => {
+      const surface = new FakeSurface(width, height);
       surfaces.push(surface);
       return surface;
     },
@@ -79,7 +95,7 @@ function atlas(): {
 }
 
 describe("StackAtlas (ADR-0057, #4031)", () => {
-  it("bakes a look shared by eight bodies once: 8 headings by 4 poses, one upload", () => {
+  it("bakes a look shared by eight bodies once: 9 baked headings by 8 poses, one upload (#4060)", () => {
     const { atlas: made, surfaces } = atlas();
     made.bake(Array.from({ length: 8 }, () => FRIEND));
     expect(made.bakedFigures).toBe(FRAMES);
@@ -101,10 +117,51 @@ describe("StackAtlas (ADR-0057, #4031)", () => {
     ).not.toBe(stackLookKey(CAPED));
   });
 
-  it("names the frame of a baked look by heading bucket and pose", () => {
+  it("names the frame of a baked look by heading bucket and pose, mirrored where it bakes none", () => {
     const { atlas: made } = atlas();
     made.bake([FOE]);
-    expect(made.frame(FOE, Math.PI / 2, "cast")).toBe(stackFrameName(stackLookKey(FOE), 2, "cast"));
+    expect(made.frame(FOE, 4, "cast")).toEqual({
+      name: stackFrameName(stackLookKey(FOE), 4, "cast"),
+      flipped: false,
+    });
+    expect(made.frame(FOE, 1, "contact-a")).toEqual({
+      name: stackFrameName(stackLookKey(FOE), 7, "contact-b"),
+      flipped: true,
+    });
+  });
+
+  it("fits every pose at every baked heading in its frame, outline and all (#4060)", () => {
+    const r = STACK_BAKE_RADIUS * STACK_BAKE_SCALE;
+    const pad = STACK_OUTLINE_WIDTH * STACK_BAKE_SCALE;
+    for (const pose of STACK_POSES) {
+      for (const bucket of STACK_BAKED_HEADINGS) {
+        const layers = stackLayers(
+          stackSlices(pose),
+          bucketFacing(bucket),
+          r,
+          stackTones(FRIEND.body, undefined),
+          undefined,
+        );
+        for (const { x, y } of layers.flatMap((layer) => layer.points)) {
+          expect(STACK_FRAME_FEET_X + x - pad).toBeGreaterThanOrEqual(0);
+          expect(STACK_FRAME_FEET_X + x + pad).toBeLessThanOrEqual(STACK_FRAME_WIDTH);
+          expect(STACK_FRAME_FEET_Y + y - pad).toBeGreaterThanOrEqual(0);
+          expect(STACK_FRAME_FEET_Y + y + pad).toBeLessThanOrEqual(STACK_FRAME_HEIGHT);
+        }
+      }
+    }
+  });
+
+  it("holds sixteen looks in under 16 MB, a row no wider than 4096 px (#4060)", () => {
+    const { atlas: made, surfaces } = atlas();
+    made.bake(
+      Array.from({ length: 16 }, (_, i) => ({ body: 0x100000 * i + 0x40, cape: undefined })),
+    );
+    const surface = surfaces.at(-1);
+    expect(surface?.width).toBe(FRAMES * STACK_FRAME_WIDTH);
+    expect(surface?.width).toBeLessThanOrEqual(4096);
+    // 72 frames of 44 × 75 a look, 4 bytes a pixel: 15.2 MB for sixteen.
+    expect((surface?.width ?? 0) * (surface?.height ?? 0) * 4).toBeLessThan(16e6);
   });
 
   it("bakes a late look off the frame path, once, and shows nothing baked until then", () => {
@@ -119,7 +176,7 @@ describe("StackAtlas (ADR-0057, #4031)", () => {
     expect(made.bakedFigures).toBe(3 * FRAMES);
     queued[0]?.();
     expect(made.bakedFigures).toBe(3 * FRAMES);
-    expect(made.frame(FOE, 0, "stand")).toBe(stackFrameName(stackLookKey(FOE), 0, "stand"));
+    expect(made.frame(FOE, 4, "stand")?.name).toBe(stackFrameName(stackLookKey(FOE), 4, "stand"));
   });
 
   it("grows onto a new canvas when a look no longer fits, baking every row again", () => {

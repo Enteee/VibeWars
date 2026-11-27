@@ -78,8 +78,12 @@ import {
   STACK_BADGE_FILL,
   STACK_BADGE_RIM,
   stackBadge,
+  headingBucket,
   stackOverheadRise,
   stackPose,
+  stepTurn,
+  type StackPose,
+  type StackTurn,
 } from "./sprite-stack.js";
 import {
   STACK_BAKE_RADIUS,
@@ -90,6 +94,7 @@ import {
   STACK_FRAME_WIDTH,
   StackAtlas,
   type BakeContext,
+  type StackFrame,
   type StackLook,
 } from "./stack-atlas.js";
 import {
@@ -644,13 +649,18 @@ const TARGET_RING_OFFSET = 9;
 /** A body that moved this recently still streaks in its stance (#3226): snapshots do not move it every frame. */
 const MOVING_SECONDS = 0.15;
 
-/** Where a body stood last frame, the way it last moved, and when (#3226). */
+/**
+ * Where a body stood last frame, the way it last moved, and when (#3226);
+ * how far it has walked, all told, and the turn its figure is in (#4060).
+ */
 interface BodyMotion {
   x: number;
   y: number;
   ux: number;
   uy: number;
   movedAt: number;
+  walked: number;
+  turn: StackTurn | undefined;
 }
 /** A flag's pole, world units up from its foot (#1225): stand-in shapes until its asset. */
 const FLAG_POLE = 26;
@@ -1189,7 +1199,7 @@ export class ArenaScene extends Phaser.Scene {
   /** The figures this frame draws, gathered as their bodies are drawn. */
   private figures: {
     readonly actor: RenderableActor;
-    readonly frame: string;
+    readonly frame: StackFrame;
     readonly band: number;
   }[] = [];
   /** The casting skill's type badge by each cast bar, one pooled image per actor (#1125). */
@@ -3113,13 +3123,8 @@ export class ArenaScene extends Phaser.Scene {
       };
       const figure = this.stackAtlas?.frame(
         this.stackLook(actor),
-        actor.facing,
-        stackPose(
-          this.trackMotion(actor) !== undefined,
-          actor.castProgress !== undefined,
-          this.now,
-          this.reducedMotion,
-        ),
+        this.figureHeading(actor),
+        this.figurePose(actor),
       );
       if (figure === undefined) {
         // Its look is still baking: the flat disc until it is (ADR-0057).
@@ -3339,11 +3344,48 @@ export class ArenaScene extends Phaser.Scene {
    * snapshot does not move a body every frame, so a frame standing still
    * between two steps is still moving.
    */
+  /**
+   * The pose `actor`'s figure stands in (#4060): its stride follows how far
+   * it has walked, its cape settles once it stops, and it breathes on its
+   * own beat.
+   */
+  private figurePose(actor: RenderableActor): StackPose {
+    this.trackMotion(actor);
+    const motion = this.bodyMotion.get(actor.id);
+    return stackPose({
+      casting: actor.castProgress !== undefined,
+      walked: motion?.walked ?? 0,
+      stoppedFor: this.now - (motion?.movedAt ?? -Infinity) - MOVING_SECONDS,
+      now: this.now,
+      phase: cuePhase(actor.id),
+      reducedMotion: this.reducedMotion,
+    });
+  }
+
+  /** The heading bucket `actor`'s figure is drawn at this frame, easing into its facing (#4060). */
+  private figureHeading(actor: RenderableActor): number {
+    const target = headingBucket(actor.facing);
+    const motion = this.bodyMotion.get(actor.id);
+    if (motion === undefined) {
+      return target;
+    }
+    motion.turn = stepTurn(motion.turn, target, this.now);
+    return motion.turn.drawn;
+  }
+
   private trackMotion(actor: RenderableActor): BodyMotion | undefined {
     const { x, y } = actor.position;
     const known = this.bodyMotion.get(actor.id);
     if (known === undefined) {
-      this.bodyMotion.set(actor.id, { x, y, ux: 0, uy: 0, movedAt: -Infinity });
+      this.bodyMotion.set(actor.id, {
+        x,
+        y,
+        ux: 0,
+        uy: 0,
+        movedAt: -Infinity,
+        walked: 0,
+        turn: undefined,
+      });
       return undefined;
     }
     const dx = x - known.x;
@@ -3355,6 +3397,7 @@ export class ArenaScene extends Phaser.Scene {
       known.ux = dx / step;
       known.uy = dy / step;
       known.movedAt = this.now;
+      known.walked += step;
     }
     return this.now - known.movedAt <= MOVING_SECONDS ? known : undefined;
   }
@@ -4071,7 +4114,7 @@ export class ArenaScene extends Phaser.Scene {
       let image = this.bodyFigures.get(actor.id);
       if (image === undefined) {
         image = this.add
-          .image(0, 0, this.stackTexture, frame)
+          .image(0, 0, this.stackTexture, frame.name)
           .setOrigin(
             STACK_FRAME_FEET_X / STACK_FRAME_WIDTH,
             STACK_FRAME_FEET_Y / STACK_FRAME_HEIGHT,
@@ -4079,10 +4122,12 @@ export class ArenaScene extends Phaser.Scene {
         this.bodyFigures.set(actor.id, image);
       }
       if (image.texture.key !== this.stackTexture) {
-        image.setTexture(this.stackTexture, frame);
-      } else if (image.frame.name !== frame) {
-        image.setFrame(frame);
+        image.setTexture(this.stackTexture, frame.name);
+      } else if (image.frame.name !== frame.name) {
+        image.setFrame(frame.name);
       }
+      // A heading the atlas holds only as its mirror image (#4060); the feet are the frame's middle.
+      image.setFlipX(frame.flipped);
       const size = (scale * actor.radius) / STACK_BAKE_RADIUS;
       const { x, y } = actor.position;
       const depth = renderOrder({ kind: "character", band, part: "figure" });
