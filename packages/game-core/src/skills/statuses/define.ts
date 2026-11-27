@@ -59,6 +59,7 @@ export function define(
     exploitsCorpseOnDeath: false,
     noDeathPenalty: false,
     killsSourceOnDeath: false,
+    endsOnSourceDeath: false,
     resurrectionBonus: undefined,
     physicalDamageTakenBonus: 0,
     elementalDamageTakenAs: undefined,

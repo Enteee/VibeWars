@@ -983,6 +983,7 @@ export const MESMER_STATUSES: Readonly<Record<MesmerStatusId, StatusDefinition>>
   // 1 Energy. If the target foe's Energy drops to 0, Mind Wrack ends and
   // that foe takes 15...100 damage": once, as the hex goes with it.
   "mind-wrack": define("mind-wrack", "Mind Wrack", "hex", {
+    endsOnSourceDeath: true,
     profession: "mesmer",
     attribute: "mesmer.domination-magic",
     triggers: [

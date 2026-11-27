@@ -30,6 +30,7 @@ import {
   damageTypeTaken,
   getStatusDefinition,
   scaledStatusDuration,
+  wholeSeconds,
   type ActiveStatus,
   type OwnSkillBoost,
   type StatusCategory,
@@ -1533,7 +1534,7 @@ function landOnTaker(
   landStatus(
     taker,
     statusId,
-    scaledStatusDuration(taker, statusId, durationSeconds),
+    wholeSeconds(durationSeconds, scaledStatusDuration(taker, statusId, durationSeconds)),
     sourceId,
     ranks,
     events,
@@ -1803,7 +1804,7 @@ function gatherConditions(
       landOnTaker(
         target,
         id,
-        remainingSeconds * effect.durationMultiplier,
+        wholeSeconds(remainingSeconds, remainingSeconds * effect.durationMultiplier),
         caster.id,
         ranks,
         events,
@@ -2427,18 +2428,21 @@ export function applyEffect(
       landOnTaker(
         bearer,
         effect.statusId,
-        base *
-          (context.own?.durationMultiplier ?? 1) *
-          inflictedScale(effect.statusId, bearer, context) *
-          conditionDurationScale(effect.statusId, caster) *
-          // Chilling Winds' (#2311): the next hex of its attribute on the bearer.
-          (getStatusDefinition(effect.statusId).category === "hex"
-            ? bearer.statuses.lengthenIncomingHex(getStatusDefinition(effect.statusId).attribute)
-            : 1) *
-          // Of Enchanting's (#2011): an enchantment its wielder casts lasts longer.
-          (getStatusDefinition(effect.statusId).category === "enchantment"
-            ? caster.equipment.spellMods.enchantmentDurationScale
-            : 1),
+        wholeSeconds(
+          base,
+          base *
+            (context.own?.durationMultiplier ?? 1) *
+            inflictedScale(effect.statusId, bearer, context) *
+            conditionDurationScale(effect.statusId, caster) *
+            // Chilling Winds' (#2311): the next hex of its attribute on the bearer.
+            (getStatusDefinition(effect.statusId).category === "hex"
+              ? bearer.statuses.lengthenIncomingHex(getStatusDefinition(effect.statusId).attribute)
+              : 1) *
+            // Of Enchanting's (#2011): an enchantment its wielder casts lasts longer.
+            (getStatusDefinition(effect.statusId).category === "enchantment"
+              ? caster.equipment.spellMods.enchantmentDurationScale
+              : 1),
+        ),
         caster.id,
         statusRanks(effect.statusId, context.ranksFrom ?? caster, skillAttributeOf(context)),
         events,
@@ -2508,7 +2512,7 @@ export function applyEffect(
         landOnTaker(
           taker,
           id,
-          remainingSeconds * effect.durationMultiplier,
+          wholeSeconds(remainingSeconds, remainingSeconds * effect.durationMultiplier),
           caster.id,
           ranks,
           events,
@@ -2519,7 +2523,7 @@ export function applyEffect(
           landOnTaker(
             combatant,
             id,
-            remainingSeconds * effect.durationMultiplier,
+            wholeSeconds(remainingSeconds, remainingSeconds * effect.durationMultiplier),
             caster.id,
             ranks,
             events,
@@ -2604,7 +2608,10 @@ export function applyEffect(
           landOnTaker(
             combatant,
             id,
-            Math.min(remainingSeconds * extend, effect.maxSeconds ?? Number.POSITIVE_INFINITY),
+            wholeSeconds(
+              remainingSeconds,
+              Math.min(remainingSeconds * extend, effect.maxSeconds ?? Number.POSITIVE_INFINITY),
+            ),
             caster.id,
             ranks,
             events,
@@ -2848,7 +2855,10 @@ export function applyEffect(
       landOnTaker(
         caster,
         effect.statusId,
-        effect.durationSeconds * (context.own?.durationMultiplier ?? 1),
+        wholeSeconds(
+          effect.durationSeconds,
+          effect.durationSeconds * (context.own?.durationMultiplier ?? 1),
+        ),
         caster.id,
         statusRanks(effect.statusId, context.ranksFrom ?? caster, skillAttributeOf(context)),
         events,
@@ -2876,8 +2886,11 @@ export function applyEffect(
       landOnTaker(
         pet,
         effect.statusId,
-        resolveMagnitude(effect.durationSeconds, context.ranksFrom ?? caster) *
-          (context.own?.durationMultiplier ?? 1),
+        wholeSeconds(
+          resolveMagnitude(effect.durationSeconds, context.ranksFrom ?? caster),
+          resolveMagnitude(effect.durationSeconds, context.ranksFrom ?? caster) *
+            (context.own?.durationMultiplier ?? 1),
+        ),
         caster.id,
         statusRanks(effect.statusId, context.ranksFrom ?? caster, skillAttributeOf(context)),
         events,

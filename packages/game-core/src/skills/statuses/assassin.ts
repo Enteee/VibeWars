@@ -157,6 +157,7 @@ export const ASSASSIN_STATUSES: Readonly<Record<AssassinStatusId, StatusDefiniti
   }),
   // "For 1...11 seconds, target foe cannot block your attacks."
   "expose-defenses": define("expose-defenses", "Expose Defenses", "hex", {
+    endsOnSourceDeath: true,
     profession: "assassin",
     unblockableBySource: true,
   }),
@@ -181,6 +182,7 @@ export const ASSASSIN_STATUSES: Readonly<Record<AssassinStatusId, StatusDefiniti
   // "For 5...15 seconds, target foe moves 33% slower and you move 33%
   // faster" (#1757): the foe's half; the 13 s are the skill's.
   "siphon-speed": define("siphon-speed", "Siphon Speed", "hex", {
+    endsOnSourceDeath: true,
     profession: "assassin",
     moveSpeedMultiplier: 0.67,
   }),
@@ -631,6 +633,7 @@ export const ASSASSIN_STATUSES: Readonly<Record<AssassinStatusId, StatusDefiniti
   // against that foe have an additional 50% chance of being a critical
   // hit" (#2502): -41 at 12, the crit only for its own Assassin.
   "siphon-strength": define("siphon-strength", "Siphon Strength", "hex", {
+    endsOnSourceDeath: true,
     profession: "assassin",
     attackDamageDelta: {
       scaling: { attributeId: "assassin.deadly-arts", atZero: -5, atTwelve: -41 },
