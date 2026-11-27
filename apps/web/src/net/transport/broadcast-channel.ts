@@ -10,6 +10,10 @@
  * noticed even though it never said `bye`. A live page can go silent
  * for seconds while it boots an arena (#2777), so that is no time to
  * call a host gone; a page that closes says `bye` anyway.
+ *
+ * A page's own stall is not its peers' silence (#4146): their hellos
+ * wait in its queue behind the late heartbeat, so the stall is credited
+ * to each peer before the sweep.
  */
 import { CHANNELS } from "@vibewars/game-protocol";
 import type { Channel } from "@vibewars/game-protocol";
@@ -130,10 +134,15 @@ export function joinBroadcastRoom(room: LobbyRoom, selfId: string): Transport {
     }
   };
 
+  let lastBeat = Date.now();
   const heartbeat = setInterval(() => {
     post({ kind: "hello", from: selfId });
     const now = Date.now();
-    for (const [peerId, seen] of [...peers]) {
+    const stalled = Math.max(0, now - lastBeat - HEARTBEAT_MS);
+    lastBeat = now;
+    for (const [peerId, heardAt] of [...peers]) {
+      const seen = Math.min(now, heardAt + stalled);
+      peers.set(peerId, seen);
       if (now - seen >= PEER_TIMEOUT_MS) {
         gone(peerId);
       }
