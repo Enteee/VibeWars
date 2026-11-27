@@ -199,6 +199,7 @@ describe("the Hall of Heroes at time (#2700)", () => {
     ]),
     recentKillTeams,
     recentScoringTeams,
+    suddenDeath: false,
   });
   const score = (...points: number[]) => ({
     byTeam: new Map(points.map((value, each) => [each, value])),

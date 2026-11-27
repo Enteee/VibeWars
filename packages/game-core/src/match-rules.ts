@@ -317,6 +317,8 @@ export interface MatchStanding {
   readonly recentKillTeams: readonly number[];
   /** The teams that have scored a relic or an altar point (#2700), latest first: the Halls' other ties. */
   readonly recentScoringTeams: readonly number[];
+  /** A kill-count match reached its time limit tied (#4069): the next lone leader wins in sudden death. */
+  readonly suddenDeath: boolean;
 }
 
 /** `recent` with `team` now the latest (#2700): of two in one step, the one simulated last. */
@@ -361,19 +363,20 @@ export interface TeamStanding {
 }
 
 /**
- * Why a match ended: kill-count's `"score"` and `"time"`, annihilation's
+ * Why a match ended: kill-count's `"score"`, `"time"` and
+ * `"sudden-death"` (#4069), annihilation's
  * `"annihilation"` (a team wiped) and `"morale"` (time ran out, or in a
  * Guild Battle a team all dead at the floor), the Guild Battle's
  * `"guild-lord"` (a lord slain) and `"aggression"` (time ran out, #1222).
  */
 export type MatchEndReason =
-  "score" | "time" | "annihilation" | "morale" | "guild-lord" | "aggression";
+  "score" | "time" | "sudden-death" | "annihilation" | "morale" | "guild-lord" | "aggression";
 
 export interface MatchOutcome {
   readonly phase: MatchPhase;
   /**
-   * The winning team, or `undefined` for an unfinished match, a
-   * kill-count draw, or an annihilation match every team lost.
+   * The winning team, or `undefined` for an unfinished match, a Relic
+   * Run draw, or an annihilation match every team lost.
    */
   readonly winningTeam: number | undefined;
   readonly reason: MatchEndReason | undefined;
@@ -459,7 +462,7 @@ export function evaluateMatch(
 ): MatchOutcome {
   switch (rules.victory) {
     case "kill-count":
-      return evaluateKillCount(score, elapsedSeconds, rules);
+      return evaluateKillCount(score, standing, elapsedSeconds, rules);
     case "annihilation":
     case "priest-annihilation":
       return evaluateAnnihilation(standing, elapsedSeconds, rules);
@@ -473,8 +476,14 @@ export function evaluateMatch(
   }
 }
 
+/**
+ * Kill count: the target wins; at time, more kills win. Equal kills at
+ * the top go to GW1's sudden death (#4069): no clock, and the first kill
+ * that leaves one team alone on top wins.
+ */
 function evaluateKillCount(
   score: MatchScore,
+  standing: MatchStanding,
   elapsedSeconds: number,
   rules: MatchRules,
 ): MatchOutcome {
@@ -483,11 +492,21 @@ function evaluateKillCount(
       return { phase: "finished", winningTeam: team, reason: "score" };
     }
   }
-
-  return evaluateScoreAtTime(score, elapsedSeconds, rules);
+  if (elapsedSeconds < rules.timeLimitSeconds) {
+    return MATCH_IN_PROGRESS;
+  }
+  const team = soleLeader(score);
+  if (team === undefined) {
+    return MATCH_IN_PROGRESS;
+  }
+  return {
+    phase: "finished",
+    winningTeam: team,
+    reason: standing.suddenDeath ? "sudden-death" : "time",
+  };
 }
 
-/** At time, the most points win, kill-count's and a Relic Run's (#1374). */
+/** At time, the most points win a Relic Run (#1374); a tie is a draw. */
 function evaluateScoreAtTime(
   score: MatchScore,
   elapsedSeconds: number,

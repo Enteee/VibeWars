@@ -74,7 +74,8 @@ mittkammen löper en gång vars galler öppnas med en spak där uppe.
 **Flest dödanden på 3 minuter.** De döda kommer tillbaka vid sin
 startplats efter 8 sekunder, och att dö kostar ingen moral. Första laget
 till 15 dödanden vinner direkt. När tiden är slut vinner flest dödanden;
-lika många är oavgjort.
+lika många går till sudden death: ingen klocka, och nästa dödande
+vinner.
 
 Ember Pits spelar det: lavarännor med stenbroar över, en lavatunnel, en
 spakhiss upp på en basaltpelare och ångventiler, för alla lagstorlekar.

@@ -55,6 +55,7 @@ const MATCHES_REFRESH_MS = 60_000;
 const END_REASONS = {
   score: "matches.endScore",
   time: "matches.endTime",
+  "sudden-death": "matches.endSuddenDeath",
   annihilation: "matches.endAnnihilation",
   morale: "matches.endMorale",
   "guild-lord": "matches.endGuildLord",

@@ -64,6 +64,14 @@ const FAIR_SIGMAS = 3;
  * mostly not fought on, and a share of the rest says little.
  */
 const MAX_DRAW_SHARE = 0.25;
+/** Past its time limit, a match ends on its own; the margin only guards against a mode that would not. */
+const TIME_LIMIT_MARGIN_SECONDS = 1;
+/**
+ * How long a kill-count match tied at time plays on in sudden death
+ * (#4069), which has no limit in the game: the bench stops there and
+ * counts it a draw, so every run ends.
+ */
+const SUDDEN_DEATH_CAP_SECONDS = 300;
 
 export interface MapBalanceOptions {
   readonly map: MapData;
@@ -241,7 +249,7 @@ function mirrorMatch(
   seed: number,
   rotation: number,
   swapSides: boolean,
-): { readonly sim: MatchSimulation; readonly timeLimitSeconds: number } {
+): { readonly sim: MatchSimulation; readonly playUntilSeconds: number } {
   const rules = mapMatchRules(map, map.mode);
   const participants = Array.from({ length: map.teams }, (_, team) => {
     const side = swapSides ? (team + 1) % map.teams : team;
@@ -270,7 +278,12 @@ function mirrorMatch(
     ...mapSimulationFields(map, map.teams),
     participants,
   });
-  return { sim, timeLimitSeconds: rules.timeLimitSeconds };
+  return {
+    sim,
+    playUntilSeconds:
+      rules.timeLimitSeconds +
+      (rules.victory === "kill-count" ? SUDDEN_DEATH_CAP_SECONDS : TIME_LIMIT_MARGIN_SECONDS),
+  };
 }
 
 /**
@@ -294,7 +307,7 @@ function holding(
   );
 }
 
-/** One match to its end, or its time limit's. */
+/** One match to its end, or its time limit's; one still on by then counts as a draw. */
 function playMatch(
   map: MapData,
   size: number,
@@ -306,11 +319,10 @@ function playMatch(
   readonly elapsedSeconds: number;
   readonly stuck: StuckTotals;
 } {
-  const { sim, timeLimitSeconds } = mirrorMatch(map, size, seed, rotation, swapSides);
+  const { sim, playUntilSeconds } = mirrorMatch(map, size, seed, rotation, swapSides);
   const meter = new StuckMeter(RULESET.tickRateHz);
   const { ghostField } = mapSimulationFields(map, map.teams);
-  // The time limit ends every match; the margin only guards against a mode that would not.
-  while (sim.phase === "active" && sim.elapsedSeconds < timeLimitSeconds + 1) {
+  while (sim.phase === "active" && sim.elapsedSeconds < playUntilSeconds) {
     const { log } = sim.step(DT);
     const active = new Set<string>();
     for (const entry of log) {

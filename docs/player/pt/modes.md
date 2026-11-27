@@ -80,7 +80,7 @@ lá em cima.
 **Mais abates em 3 minutos.** Os mortos voltam no ponto de início depois
 de 8 segundos, e morrer não custa moral. A primeira equipe a chegar a 15
 abates vence na hora. No fim do tempo, vence quem tem mais abates; abates
-iguais é empate.
+iguais vão para morte súbita: sem relógio, e o próximo abate vence.
 
 Ember Pits joga esse modo: córregos de lava cruzados por pontes de pedra,
 um túnel de lava, um elevador de alavanca até uma coluna de basalto e

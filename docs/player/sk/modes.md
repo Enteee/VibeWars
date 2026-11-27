@@ -72,7 +72,8 @@ mrežu otvára páka hore.
 
 **Najviac zabití za 3 minúty.** Mŕtvi sa po 8 sekundách vrátia na miesto
 zrodu a smrť nestojí morálku. Prvý tím s 15 zabitiami vyhráva okamžite.
-Po uplynutí času vyhráva viac zabití; rovnaký počet je remíza.
+Po uplynutí času vyhráva viac zabití; pri rovnakom počte nasleduje
+náhla smrť: bez časomiery a ďalšie zabitie vyhráva.
 
 Hrá sa na Ember Pits: lávové potôčiky s kamennými mostmi, lávový tunel,
 výťah na páku hore na čadičový stĺp a parné prieduchy, pre každú veľkosť tímu.
