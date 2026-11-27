@@ -252,85 +252,171 @@ const ui = {
 
 // ---------------------------------------------------------------------------
 // ---------------------------------------------------------------------------
-// Projectiles: ranged weapon shots in flight (#161). Not icons: sprites on a
-// 32x12 grid, pointing along +x, so the scene rotates them to the heading.
-// White under a `bg` outline, because the scene tints each one to the
-// shooter's team colour: the tint gives the team, the silhouette the weapon.
-// One path each, outline painted under the fill, so overlapping parts merge.
+// Projectiles: shots in flight (#161, #4055). Not icons: sprites on a 32x12
+// grid, pointing along +x, so the scene rotates them to the heading. Each shot
+// is two sprites: `projectile/` in its own baked colours (steel, flame,
+// stone), and `projectile-team/` in white and grey, which the scene tints to
+// the shooter's team. The tint gives the team, the baked part the weapon or
+// element. A near-black outline is painted under each fill, so parts merge.
+// `projectile-glow/` is the one soft white disc a flying spell glows with.
 // ---------------------------------------------------------------------------
 
-/**
- * One path in white, or several as [path, grey] pairs: the scene's tint
- * multiplies, so a grey part stays a darker tone of the team colour.
- * @param {string | [string, string][]} parts
- */
-const projectileSprite = (parts) =>
-  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 12" width="32" height="12">` +
-  (typeof parts === "string"
-    ? [{ d: parts, fill: "#fff" }]
-    : parts.map(([d, fill]) => ({ d, fill }))
-  )
-    .map(
-      ({ d, fill }) =>
-        `<path d="${d}" fill="${fill}" stroke="${C.bg}" stroke-width="1.5" stroke-linejoin="round" paint-order="stroke"/>`,
-    )
-    .join("") +
-  "</svg>\n";
+const PROJECTILE_OUTLINE =
+  'stroke="#08080a" stroke-width="2" stroke-linejoin="round" paint-order="stroke"';
 
+/** @param {string} body */
+const projectileSvg = (body) =>
+  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 12" width="32" height="12">${body}</svg>\n`;
+
+/**
+ * A top-lit vertical gradient, light from `.35` down to `bottom`.
+ * @param {string} id
+ * @param {string} top
+ * @param {string} bottom
+ */
+const projectileShade = (id, top, bottom) =>
+  `<defs><linearGradient id="${id}" x1="0" y1="0" x2="0" y2="1"><stop offset=".35" stop-color="${top}"/><stop offset="1" stop-color="${bottom}"/></linearGradient></defs>`;
+
+/**
+ * An orb lit from the top right: `core`, `mid`, `rim`.
+ * @param {string} id
+ * @param {string} core
+ * @param {string} mid
+ * @param {string} rim
+ */
+const projectileOrb = (id, core, mid, rim) =>
+  `<defs><radialGradient id="${id}" cx=".6" cy=".3" r=".7"><stop offset="0" stop-color="${core}"/><stop offset=".5" stop-color="${mid}"/><stop offset="1" stop-color="${rim}"/></radialGradient></defs>`;
+
+/**
+ * An outlined path filled with `fill`.
+ * @param {string} d
+ * @param {string} fill
+ */
+const outlined = (d, fill) => `<path d="${d}" fill="${fill}" ${PROJECTILE_OUTLINE}/>`;
+
+/**
+ * An orb head of radius `r` at (`cx`, 6).
+ * @param {string} name
+ * @param {number} cx
+ * @param {number} r
+ * @param {string} core
+ * @param {string} mid
+ * @param {string} rim
+ */
+const orbHead = (name, cx, r, core, mid, rim) =>
+  projectileOrb(`pb-${name}`, core, mid, rim) +
+  `<circle cx="${String(cx)}" cy="6" r="${String(r)}" fill="url(#pb-${name})" ${PROJECTILE_OUTLINE}/>`;
+
+/**
+ * A shaded steel, stone or feather path.
+ * @param {string} name
+ * @param {string} d
+ * @param {string} top
+ * @param {string} bottom
+ */
+const shadedPath = (name, d, top, bottom) =>
+  projectileShade(`pb-${name}`, top, bottom) + outlined(d, `url(#pb-${name})`);
+
+/**
+ * Each shot: `baked`, its own colours; `team`, the path the scene tints. A
+ * `rim` is a white backing under the team part, so it shows round the baked
+ * one too.
+ * @type {Record<string, { baked: string, team: string, rim?: string }>}
+ */
 const projectile = {
-  // Arrow (bows): thin shaft, triangular head, chevron fletching.
-  arrow: "M6 5h17v2H6zM22 2l8 4-8 4zM2 2h3l4 4-4 4H2l3-4z",
-  // Spear: thicker shaft, a long leaf blade, no fletching.
-  spear: "M2 4.75h18v2.5H2zM17 6l5-4L31 6l-9 4z",
-  // Bolt (wand and staff): a bright orb with a tapering comet tail.
-  bolt: "M2 6l20-3.5v7zM24.5 6m-4.5 0a4.5 4.5 0 1 0 9 0a4.5 4.5 0 1 0-9 0",
-  // The flying spells (#1176): white and grey like the rest, so the tint still
-  // gives the team; the silhouette gives the spell.
-  // Fireball: a round head and a ragged flame tail.
-  fireball: [
-    ["M2 6L9 3L11 4.5L15 1.5L17 4L21 2.5V9.5L17 8L15 10.5L11 7.5L9 9Z", "#c8c8c8"],
-    ["M24.5 6m-4.5 0a4.5 4.5 0 1 0 9 0a4.5 4.5 0 1 0-9 0", "#fff"],
-  ],
-  // Lightning orb: a head with jagged sparks forking back from it.
-  "lightning-orb": [
-    ["M20 5.5L15 2.5L16 5L10 1.5L13.5 5.8L7 5L14 7.5L9 10.5L16.5 8L19 8.5Z", "#c8c8c8"],
-    ["M25 6m-4 0a4 4 0 1 0 8 0a4 4 0 1 0-8 0", "#fff"],
-  ],
-  // Ice shard: a long faceted diamond, a pale facet along its top.
-  "ice-shard": [
-    ["M2 6L10 2.2L30 6L10 9.8Z", "#c8c8c8"],
-    ["M2 6L10 2.2L30 6Z", "#fff"],
-  ],
-  // Water trident: a shaft and three parallel prongs on a crossbar.
-  "water-trident": [
-    ["M2 5.2H21V6.8H2Z", "#c8c8c8"],
-    ["M20.5 1.2H23V10.8H20.5ZM22 1.2H30V2.8H22ZM22 5.2H31V6.8H22ZM22 9.2H30V10.8H22Z", "#fff"],
-  ],
-  // Ebon hawk: wings swept back from a small body, a hooked beak.
-  "ebon-hawk": [
-    ["M21 6L9 0.8L3 1.8L13 6L3 10.2L9 11.2Z", "#c8c8c8"],
-    ["M12 6C12 4.4 16 4.2 24 5L30 6L24 7C16 7.8 12 7.6 12 6Z", "#fff"],
-  ],
-  // Stone: a rough boulder with chips flying off behind it.
-  stone: [
-    ["M3 4.5L7 4L6 6.5ZM6 8.5L11 8L10 10.5Z", "#c8c8c8"],
-    ["M14 7L16 2.5L21 1L27 2L30 6L28 10L22 11L16 10Z", "#fff"],
-  ],
-  // Thrown dagger (Disrupting, Crippling): a grey hilt and crossguard, a long
-  // white blade.
-  "thrown-dagger": [
-    ["M2 4.75h7v2.5H2zM9 1.5h2.5v9H9z", "#c8c8c8"],
-    ["M11.5 3.5L26 4.5L31 6L26 7.5L11.5 8.5Z", "#fff"],
-  ],
-  // Deathly swarm (necromancer): a cloud of grey insects trailing a white head.
-  "deathly-swarm": [
-    [
-      "M2 4L5.5 3L6.5 5.5L3.5 6.5ZM5.5 8L9 6.5L10.5 9L7 10.5ZM9 2.5L13 1L14.5 4L11 5.5ZM13 7L17 5.5L18.5 8.5L15 10ZM17.5 2L22 1L23 4.5L19 5Z",
-      "#c8c8c8",
-    ],
-    ["M26 6m-4.5 0a4.5 4.5 0 1 0 9 0a4.5 4.5 0 1 0-9 0", "#fff"],
-  ],
+  // Arrow (bows): a wooden shaft lit along its top, a steel head; team fletching.
+  arrow: {
+    baked:
+      outlined("M6 4.6h17v2.8H6z", "#6a4a2a") +
+      '<path d="M6 4.6h17v.9H6z" fill="#e8d8b0"/>' +
+      projectileShade("pb-arrow", "#f0f2f6", "#7a808c") +
+      outlined("M22 2l8 4-8 4z", "url(#pb-arrow)"),
+    team: "M2 2h3l4 4-4 4H2l3-4z",
+  },
+  // Spear: a long steel leaf blade on a team shaft.
+  spear: {
+    baked: shadedPath("spear", "M20 6l3-4L31 6l-8 4z", "#f0f2f6", "#7a808c"),
+    team: "M2 4.5h19v3H2z",
+  },
+  // Bolt (wand and staff): a violet orb on a team comet tail.
+  bolt: { baked: orbHead("bolt", 24.5, 4.5, "#fff", "#d8c8ff", "#7a5ac8"), team: "M2 6l19-3.5v7z" },
+  // Fireball: a flame orb on a ragged team flame tail.
+  fireball: {
+    baked: orbHead("fireball", 24.5, 4.5, "#fff0a0", "#ffa030", "#e04010"),
+    team: "M2 6L9 3L11 4.5L15 1.5L17 4L21 2.5V9.5L17 8L15 10.5L11 7.5L9 9Z",
+  },
+  // Lightning orb: a blue-white head, team sparks forking back from it.
+  "lightning-orb": {
+    baked: orbHead("lightning-orb", 25, 4, "#fff", "#b8d4ff", "#3a6ad8"),
+    team: "M20 5.5L15 2.5L16 5L10 1.5L13.5 5.8L7 5L14 7.5L9 10.5L16.5 8L19 8.5Z",
+  },
+  // Ice shard: a pale faceted top over a team underside.
+  "ice-shard": {
+    baked:
+      outlined("M2 6L10 2.2L30 6Z", "#e8f8ff") + '<path d="M10 2.2L30 6L14 4.6Z" fill="#9ad4f0"/>',
+    team: "M2 6L10 9.8L30 6Z",
+  },
+  // Water trident: blue prongs on a team shaft.
+  "water-trident": {
+    baked: shadedPath(
+      "water-trident",
+      "M20.5 1.2H23V10.8H20.5ZM22 1.2H30V2.8H22ZM22 5.2H31V6.8H22ZM22 9.2H30V10.8H22Z",
+      "#a8e0ff",
+      "#2a6aa8",
+    ),
+    team: "M2 5.2H21V6.8H2Z",
+  },
+  // Ebon hawk: a dark body and a gold beak, team wings.
+  "ebon-hawk": {
+    baked:
+      shadedPath(
+        "ebon-hawk",
+        "M12 6C12 4.4 16 4.2 24 5L30 6L24 7C16 7.8 12 7.6 12 6Z",
+        "#8a8494",
+        "#2a2630",
+      ) + '<path d="M28 5.6L30 6L28 6.4Z" fill="#d8b060"/>',
+    team: "M21 6L9 0.8L3 1.8L13 6L3 10.2L9 11.2Z",
+  },
+  // Stone: a lit boulder with a team rim, team chips flying off behind it.
+  stone: {
+    baked:
+      shadedPath("stone", "M14 7L16 2.5L21 1L27 2L30 6L28 10L22 11L16 10Z", "#a89880", "#4a3e32") +
+      '<path d="M17 3.5L21 2L26 3L24 4.5L19 4.8Z" fill="#c8bca8"/>',
+    team: "M3 4.5L7 4L6 6.5ZM6 8.5L11 8L10 10.5Z",
+    rim: "M14 7L16 2.5L21 1L27 2L30 6L28 10L22 11L16 10Z",
+  },
+  // Thrown dagger (Disrupting, Crippling): a steel blade, a team hilt and guard.
+  "thrown-dagger": {
+    baked: shadedPath(
+      "thrown-dagger",
+      "M11.5 3.5L26 4.5L31 6L26 7.5L11.5 8.5Z",
+      "#f0f2f6",
+      "#6a707c",
+    ),
+    team: "M2 4.75h7v2.5H2zM9 1.5h2.5v9H9z",
+  },
+  // Deathly swarm (necromancer): a sickly green head trailing team insects.
+  "deathly-swarm": {
+    baked: orbHead("deathly-swarm", 26, 4.5, "#f0f4d0", "#a8c070", "#3a5a28"),
+    team: "M2 4L5.5 3L6.5 5.5L3.5 6.5ZM5.5 8L9 6.5L10.5 9L7 10.5ZM9 2.5L13 1L14.5 4L11 5.5ZM13 7L17 5.5L18.5 8.5L15 10ZM17.5 2L22 1L23 4.5L19 5Z",
+  },
 };
+
+/**
+ * The tinted part: white to grey, so the tint keeps a top light.
+ * @param {string} name
+ * @param {{ team: string, rim?: string }} shot
+ */
+const projectileTeam = (name, { team, rim }) =>
+  projectileSvg(
+    projectileShade(`pt-${name}`, "#fff", "#9a9a9a") +
+      (rim
+        ? `<path d="${rim}" fill="#fff" stroke="#fff" stroke-width="3.5" stroke-linejoin="round"/>`
+        : "") +
+      outlined(team, `url(#pt-${name})`),
+  );
+
+const projectileGlow = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32"><defs><radialGradient id="pg-glow"><stop offset="0" stop-color="#fff"/><stop offset=".4" stop-color="#fff" stop-opacity=".5"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></radialGradient></defs><circle cx="16" cy="16" r="16" fill="url(#pg-glow)"/></svg>\n`;
 
 // ---------------------------------------------------------------------------
 // Weapons and off-hands (#419): the arena's marks (#188, #418, #275) turned to
@@ -723,8 +809,12 @@ const families = {
   mode: Object.fromEntries(Object.entries(mode).map(([k, f]) => [k, svg(f())])),
   ui: Object.fromEntries(Object.entries(ui).map(([k, f]) => [k, svg(f())])),
   projectile: Object.fromEntries(
-    Object.entries(projectile).map(([k, parts]) => [k, projectileSprite(parts)]),
+    Object.entries(projectile).map(([k, { baked }]) => [k, projectileSvg(baked)]),
   ),
+  "projectile-team": Object.fromEntries(
+    Object.entries(projectile).map(([k, shot]) => [k, projectileTeam(k, shot)]),
+  ),
+  "projectile-glow": { glow: projectileGlow },
   status: Object.fromEntries(
     Object.entries(STATUS_ICONS).map(([k, [category, glyph]]) => [
       k,
