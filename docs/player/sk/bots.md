@@ -85,10 +85,12 @@ Bot potrebuje ľudskú chvíľku, zlomok sekundy, aby zareagoval na
 to, čo sa deje, takže rýchle prerušenie alebo neskorý úhyb ho môžu poraziť.
 
 Keď nikto z tvojho tímu nemá určený cieľ, jeden z tvojich botov určí
-nepriateľa, na ktorého útočí, rovnako ako by si to urobil ty: vidíš značku a
-meno bota a všetci boti v tíme sa sústredia na toho nepriateľa. Cieľ, ktorý
-určíš ty, vždy vyhráva. Žiadny bot ho nenahradí a boti určia nový až vtedy, keď
-je určený cieľ mŕtvy alebo preč.
+nepriateľa, na ktorého sa tvoji boti sústredia, rovnako ako by si to urobil ty:
+vidíš značku a meno bota, takže sa môžeš pridať. Cieľ určený botom iba ukazuje,
+kam boti idú; stále chránia spoluhráča a dorazia umierajúceho nepriateľa. Cieľ,
+ktorý určíš ty, vždy vyhráva: všetci boti v tíme sa sústredia na tvoj cieľ,
+žiadny bot ho nenahradí a boti určia nový až vtedy, keď je určený cieľ mŕtvy
+alebo preč.
 
 V boji troch tímov bojujú boti vždy s jedným nepriateľským tímom
 naraz: s tým, ktorý na nich útočí, alebo, kým neútočí nikto, s najviac zraneným

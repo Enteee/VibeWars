@@ -88,10 +88,12 @@ Unui bot îi ia un moment omenesc, o fracțiune de secundă, ca să reacționeze
 ce se întâmplă, așa că o întrerupere rapidă sau o eschivă târzie îl pot păcăli.
 
 Când nimeni din echipa ta nu a anunțat o țintă, unul dintre boții tăi anunță
-inamicul pe care îl atacă, la fel cum ai face tu: vezi marcajul și numele
-botului, iar toți boții echipei se concentrează pe acel inamic. Anunțul tău
-câștigă mereu. Niciun bot nu îl înlocuiește, iar boții anunță din nou doar după
-ce ținta anunțată e moartă sau a dispărut.
+inamicul pe care se concentrează boții tăi, la fel cum ai face tu: vezi
+marcajul și numele botului, ca să te poți alătura. Anunțul unui bot arată doar
+încotro merg boții; ei tot apără un coechipier și termină un inamic muribund.
+Anunțul tău câștigă mereu: toți boții echipei se concentrează pe ținta ta,
+niciun bot nu îți înlocuiește anunțul, iar boții anunță din nou doar după ce
+ținta anunțată e moartă sau a dispărut.
 
 Într-o luptă cu trei echipe, boții luptă cu o singură echipă inamică odată:
 echipa care îi atacă sau, cât timp nu îi atacă nimeni, cea mai rănită echipă la

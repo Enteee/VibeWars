@@ -41,7 +41,7 @@ Bot s přerušením si ho schovává na sesílání, na kterých záleží: nejd
 
 Botovi trvá lidský okamžik, zlomek sekundy, než na událost zareaguje, takže ho rychlé přerušení nebo pozdní úskok může přelstít.
 
-Když nikdo z tvého týmu nemá nahlášený cíl, jeden z tvých botů nahlásí nepřítele, na kterého útočí, stejně jako bys to udělal ty: vidíš značku a jméno bota a všichni boti v týmu se soustředí na toho nepřítele. Tvé nahlášení vždy vyhrává. Žádný bot ho nenahradí a boti nahlásí znovu až tehdy, když je nahlášený cíl mrtvý nebo pryč.
+Když nikdo z tvého týmu nemá nahlášený cíl, jeden z tvých botů nahlásí nepřítele, na kterého se tvoji boti soustředí, stejně jako bys to udělal ty: vidíš značku a jméno bota, takže se můžeš přidat. Nahlášení od bota jen ukazuje, kam boti míří; i tak dál chrání spoluhráče a dorazí umírajícího nepřítele. Tvé nahlášení vždy vyhrává: všichni boti v týmu se soustředí na tvůj cíl, žádný bot tvé nahlášení nenahradí a boti nahlásí znovu až tehdy, když je nahlášený cíl mrtvý nebo pryč.
 
 V boji tří týmů bojují boti vždy s jedním nepřátelským týmem: s tím, který na ně útočí, nebo, když nikdo neútočí, s nejvíc zraněným týmem v dosahu. Na tom týmu zůstávají, dokud jiný nepošle zjevně víc hráčů proti nim, a nevrhají se na čerstvý tým, když na ně útočí jiný. Cíl nahlášený jejich týmem má přednost, ať je na kterémkoli týmu. Počítají se jen hráči: duch nebo stráže týmu stojící poblíž boty na ten tým neobrátí.
 

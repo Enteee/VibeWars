@@ -91,10 +91,12 @@ Un bot prend un temps de réaction humain, une fraction de seconde, face à ce
 qui se passe : une interruption rapide ou une esquive tardive peut le battre.
 
 Quand personne dans ton équipe n'a annoncé de cible, un de tes bots annonce
-l'ennemi qu'il attaque, comme tu le ferais : tu vois le marqueur et le nom du
-bot, et tous les bots de l'équipe se concentrent sur cet ennemi. Ton annonce
-l'emporte toujours. Aucun bot ne la remplace, et les bots n'annoncent à
-nouveau qu'une fois sa cible morte ou partie.
+l'ennemi sur lequel tes bots se concentrent, comme tu le ferais : tu vois le
+marqueur et le nom du bot, pour pouvoir te joindre à eux. L'annonce d'un bot
+montre seulement où vont les bots ; ils protègent quand même un coéquipier et
+achèvent un ennemi mourant. Ton annonce l'emporte toujours : tous les bots de
+l'équipe se concentrent sur ta cible, aucun bot ne remplace ton annonce, et
+les bots n'annoncent à nouveau qu'une fois sa cible morte ou partie.
 
 Dans un combat à trois équipes, les bots affrontent une équipe ennemie à la
 fois : celle qui les attaque, ou, si personne ne le fait, la plus blessée à

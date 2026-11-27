@@ -93,11 +93,13 @@ tapahtumiin, joten nopea keskeytys tai myöhäinen väistö voi päihittää
 sen.
 
 Kun kukaan tiimissäsi ei ole ilmoittanut kohdetta, yksi boteistasi
-ilmoittaa vihollisen, jonka kimppuun se hyökkää, aivan kuten sinä
-tekisit: näet merkin ja botin nimen, ja jokainen tiimin botti keskittyy
-siihen viholliseen. Oma ilmoituksesi voittaa aina. Mikään botti ei
-korvaa sitä, ja botit ilmoittavat uudelleen vasta, kun ilmoitettu kohde
-on kuollut tai poissa.
+ilmoittaa vihollisen, johon botit keskittyvät, aivan kuten sinä
+tekisit: näet merkin ja botin nimen, joten voit liittyä mukaan. Botin
+ilmoitus näyttää vain, minne botit ovat menossa; ne suojaavat silti
+tiimitoveria ja viimeistelevät kuolevan vihollisen. Oma ilmoituksesi
+voittaa aina: jokainen tiimin botti keskittyy kohteeseesi, mikään botti
+ei korvaa ilmoitustasi, ja botit ilmoittavat uudelleen vasta, kun
+ilmoitettu kohde on kuollut tai poissa.
 
 Kolmen tiimin taistelussa botit taistelevat yhtä vihollistiimiä vastaan
 kerrallaan: tiimiä, joka hyökkää niiden kimppuun, tai, kun kukaan ei

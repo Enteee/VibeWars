@@ -86,10 +86,12 @@ Botu treba ljudski trenutak, djelić sekunde, da reagira na
 ono što se događa, pa ga brz prekid ili kasni izmak mogu nadmudriti.
 
 Kad nitko u tvom timu nema označenu metu, jedan od tvojih botova označi
-neprijatelja kojeg napada, baš kao što bi ti: vidiš oznaku i ime bota, a svi
-botovi u timu usredotoče se na tog neprijatelja. Tvoja oznaka uvijek
-pobjeđuje. Nijedan bot je ne zamjenjuje, a botovi ponovno označavaju tek kad
-označena meta umre ili nestane.
+neprijatelja na kojeg se tvoji botovi usredotočuju, baš kao što bi ti: vidiš
+oznaku i ime bota, pa se možeš pridružiti. Oznaka bota samo pokazuje kamo
+botovi idu; oni i dalje štite suigrača i dokrajčuju neprijatelja na
+izdisaju. Tvoja oznaka uvijek pobjeđuje: svi botovi u timu usredotoče se na
+tvoju metu, nijedan bot ne zamjenjuje tvoju oznaku, a botovi ponovno
+označavaju tek kad označena meta umre ili nestane.
 
 U borbi tri tima botovi se bore protiv jednog neprijateljskog tima
 odjednom: tima koji ih napada ili, dok ih nitko ne napada, najranjenijeg tima

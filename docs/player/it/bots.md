@@ -41,7 +41,7 @@ Un bot con un'interruzione la conserva per i lanci che contano: prima una resurr
 
 Un bot impiega un attimo umano, una frazione di secondo, a reagire a ciò che succede: un'interruzione rapida o una schivata all'ultimo possono batterlo.
 
-Quando nessuno della tua squadra ha segnalato un bersaglio, uno dei tuoi bot segnala il nemico che sta attaccando, proprio come faresti tu: vedi l'indicatore e il nome del bot, e tutti i bot della squadra si concentrano su quel nemico. Una tua segnalazione vince sempre. Nessun bot la sostituisce, e i bot segnalano di nuovo solo quando il suo bersaglio è morto o sparito.
+Quando nessuno della tua squadra ha segnalato un bersaglio, uno dei tuoi bot segnala il nemico su cui si stanno concentrando i tuoi bot, proprio come faresti tu: vedi l'indicatore e il nome del bot, così puoi unirti. La segnalazione di un bot mostra solo dove stanno andando i bot; continuano comunque a proteggere un compagno e a finire un nemico morente. Una tua segnalazione vince sempre: tutti i bot della squadra si concentrano sul tuo bersaglio, nessun bot sostituisce la tua segnalazione, e i bot segnalano di nuovo solo quando il suo bersaglio è morto o sparito.
 
 In uno scontro a tre squadre, i bot combattono una squadra nemica alla volta: quella che li attacca o, se nessuno lo fa, la più ferita a portata. Restano su quella squadra finché un'altra non gli mette addosso chiaramente più giocatori, e non caricano una squadra fresca mentre un'altra li sta attaccando. Un bersaglio segnalato dalla loro squadra viene prima, di qualunque squadra sia. Contano solo i giocatori: il fantasma o le guardie di una squadra lì vicino non bastano a farli voltare verso quella squadra.
 

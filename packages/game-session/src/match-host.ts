@@ -1761,8 +1761,8 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
   /** When each team's bots last called a target (#4188). */
   const botCalledAt = new Map<Team, number>();
   /**
-   * A team's caller calls the foe it fights, as `botCalls` allows
-   * (#4188): its lowest-id living bot with a live foe for a target.
+   * A team's caller calls its focus, as `botCalls` allows (#4188): its
+   * lowest-id living bot with a live foe for its team target.
    */
   const botCall = (team: Team): void => {
     const now = sim.elapsedSeconds;
@@ -1819,8 +1819,11 @@ export function createMatchHost(options: MatchHostOptions): MatchHost {
       botCall(team);
     }
     for (const team of callsDirty) {
-      // Its bots fight the called foe (#1193).
-      const target = calls.view(team, sim.elapsedSeconds).target?.targetId;
+      // Its bots fight a human's called foe (#1193). A bot's call shows
+      // their focus and steers nothing (#4188), so they keep peeling,
+      // finishing kills and holding their plan.
+      const up = calls.view(team, sim.elapsedSeconds).target;
+      const target = up !== null && seats.get(up.callerId)?.bot === false ? up.targetId : undefined;
       sim.setCalledTarget(team, target);
       if (calledLogged.get(team) !== (target ?? null)) {
         calledLogged.set(team, target ?? null);

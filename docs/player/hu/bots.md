@@ -96,11 +96,13 @@ reagáljon arra, ami történik, így egy gyors megszakítás vagy egy késői
 kitérés legyőzheti.
 
 Ha a csapatodban senki sem mondott be célpontot, az egyik botod
-bemondja az ellenséget, akit támad, ahogy te is tennéd: látod a jelölőt
-és a bot nevét, és a csapat minden botja arra az ellenségre
-összpontosít. A te bemondásod mindig nyer. Egy bot sem írja felül, és a
-botok csak akkor mondanak be újra, ha a bemondott célpont meghalt vagy
-eltűnt.
+bemondja az ellenséget, akire a botjaid összpontosítanak, ahogy te is
+tennéd: látod a jelölőt és a bot nevét, így csatlakozhatsz. Egy bot
+bemondása csak azt mutatja, merre tartanak a botok; továbbra is
+megvédik a csapattársat, és végeznek a haldokló ellenséggel. A te
+bemondásod mindig nyer: a csapat minden botja a te célpontodra
+összpontosít, egy bot sem írja felül a bemondásodat, és a botok csak
+akkor mondanak be újra, ha a bemondott célpont meghalt vagy eltűnt.
 
 Háromcsapatos harcban a botok egyszerre egy ellenséges csapattal
 harcolnak: azzal, amelyik őket támadja, vagy ha senki sem, az elérhető

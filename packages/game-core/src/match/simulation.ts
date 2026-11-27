@@ -1092,8 +1092,6 @@ interface ParticipantRecord extends Participant {
   avoid: { readonly body: Avoid; readonly until: number } | undefined;
   /** A goal it gave up, boxed in on the way (#3702): its behaviour picks another until `until`. */
   jammedGoal: { readonly at: Vec2; readonly layer: number; readonly until: number } | undefined;
-  /** The target its behaviour last decided on (#4188); `undefined` with none, or for a body no behaviour drives. */
-  decidedTargetId: string | undefined;
   /**
    * Maximum health and energy before morale (#843): the participant's,
    * or its loadout's since the last `rearm`.
@@ -2010,10 +2008,10 @@ export class MatchSimulation {
     return this.#planOverrides.get(team);
   }
 
-  /** The target bot `id` last decided on (#4188): `undefined` for one that is not a bot, or has none. */
+  /** The team target bot `id` last chose (#4188), not a cast aimed aside: `undefined` for one that is not a bot, or has none. */
   public botTargetOf(id: string): string | undefined {
     const record = this.#participants.get(id);
-    return record?.behaviour?.kind === "play-build" ? record.decidedTargetId : undefined;
+    return record?.behaviour?.kind === "play-build" ? record.cursor.focusId : undefined;
   }
 
   public get score(): MatchScore {
@@ -2247,7 +2245,6 @@ export class MatchSimulation {
       passRight: undefined,
       avoid: undefined,
       jammedGoal: undefined,
-      decidedTargetId: undefined,
       teleportReadyAt: 0,
       resolvedMaxHealth: spec.maxHealth ?? this.#ruleset.combat.baseHealth,
       resolvedMaxEnergy: spec.maxEnergy ?? this.#ruleset.combat.baseEnergy,
@@ -5496,7 +5493,6 @@ export class MatchSimulation {
     if (record.followGoal !== undefined) {
       this.#moveInterrupts(record);
     }
-    record.decidedTargetId = intent.targetId;
     this.setTarget(record.id, intent.targetId);
     // Asked only when the attack wanted is not the one going, as a player
     // presses Space once: a pet switches with its owner (#1046). So is

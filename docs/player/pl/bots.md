@@ -83,10 +83,12 @@ Bot potrzebuje ludzkiej chwili, ułamka sekundy, by zareagować na to, co się d
 więc szybkie przerwanie lub spóźniony unik mogą go pokonać.
 
 Gdy nikt w twojej drużynie nie wskazał celu, jeden z twoich botów wskazuje wroga,
-którego atakuje, tak jak zrobiłbyś to ty: widzisz znacznik i nazwę bota, a każdy
-bot w drużynie skupia się na tym wrogu. Twoje wskazanie zawsze wygrywa. Żaden bot
-go nie zastępuje, a boty wskazują ponownie dopiero, gdy wskazany cel zginie lub
-zniknie.
+na którym skupiają się twoje boty, tak jak zrobiłbyś to ty: widzisz znacznik i
+nazwę bota, więc możesz się przyłączyć. Wskazanie bota pokazuje tylko, dokąd
+zmierzają boty; nadal osłaniają sojusznika i dobijają umierającego wroga. Twoje
+wskazanie zawsze wygrywa: każdy bot w drużynie skupia się na twoim celu, żaden
+bot nie zastępuje twojego wskazania, a boty wskazują ponownie dopiero, gdy
+wskazany cel zginie lub zniknie.
 
 W walce trzech drużyn boty walczą z jedną wrogą drużyną naraz: z tą, która je
 atakuje, albo, gdy nikt ich nie atakuje, z najbardziej ranną w zasięgu. Zostają
