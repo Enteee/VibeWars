@@ -44,6 +44,7 @@ melletted, a gyógyítók mögötted, és követnek, amerre mész. Ha már egy
 ideje tétlenül állsz, úgy játszanak tovább, ahogy egy csak botokból álló
 csapat tenné.
 Amíg aktív vagy, az a bot, amelyet egy harc messzire sodort tőled, visszajön hozzád, hacsak nem súlyosan sebesült, vagy nem áll közvetlenül mellette egy ellenfél.
+Egy frontvonalbeli bot ráfordul arra az ellenfélre, amely a csapata gyógyítóját vagy varázslóit támadja, hacsak nem éppen a saját célpontját készül végezni.
 
 Az íjászok és a dárdások elfoglalják a magaslatot, ha az biztonságos.
 Az a bot, amelyre két ellenfél összpontosít, vagy amelynek az élete fél alatt van és gyorsan fogy, legfeljebb három másodpercre eltűnik a szemük elől: fal mögé, emelvény alá vagy magaslatra.
