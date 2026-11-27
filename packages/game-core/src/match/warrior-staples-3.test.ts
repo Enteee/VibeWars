@@ -12,6 +12,8 @@ import type { Skill } from "../skills/types.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import { MatchSimulation, type Participant, type ParticipantSpec } from "./simulation.js";
 import { NO_RANKS } from "../skills/status.js";
+import { resolveMagnitude } from "../skills/scaling.js";
+import { outsideMatch } from "../skills/tick.js";
 import { EN_NAMES, EN_WORDS } from "../skills/describe-words.js";
 
 /**
@@ -41,6 +43,9 @@ const MAGEHUNTER_STRIKE = "warrior.magehunter-strike";
 const BODY_BLOW = "warrior.body-blow";
 const COWARD = "warrior.coward";
 const HEALING_SIGNET = "warrior.healing-signet";
+const EXECUTIONERS_STRIKE = "warrior.executioners-strike";
+const SEVER_ARTERY = "warrior.sever-artery";
+const DISRUPTING_CHOP = "warrior.disrupting-chop";
 const BAR = [
   AXE_TWIST,
   AXE_RAKE,
@@ -58,6 +63,9 @@ const BAR = [
   MAGEHUNTER_STRIKE,
   BODY_BLOW,
   COWARD,
+  EXECUTIONERS_STRIKE,
+  SEVER_ARTERY,
+  DISRUPTING_CHOP,
 ];
 
 function skill(id: string): Skill {
@@ -106,23 +114,23 @@ function spec(id: string, team: number, spawn: Vec2, extra: Partial<ParticipantS
   } satisfies ParticipantSpec;
 }
 
-/** `w`, a rank-12 Warrior holding `skillId`'s weapon, with `BAR`, at the origin. */
-function warrior(skillId: string): ParticipantSpec {
+/** `w`, a Warrior at `rank` holding `skillId`'s weapon, with `BAR`, at the origin. */
+function warrior(skillId: string, rank = 12): ParticipantSpec {
   return spec("w", 0, vec2(0, 0), {
     skillBar: BAR,
     attributeRanks: new Map([
-      ["warrior.strength", 12],
-      ["warrior.axe-mastery", 12],
-      ["warrior.hammer-mastery", 12],
-      ["warrior.swordsmanship", 12],
+      ["warrior.strength", rank],
+      ["warrior.axe-mastery", rank],
+      ["warrior.hammer-mastery", rank],
+      ["warrior.swordsmanship", rank],
     ]),
     equipment: weaponFor(skillId),
   });
 }
 
 /** `w` with `skillId` in hand and its adrenaline full; `f`, its foe, in reach east unless `more` places it. */
-function match(skillId: string, more: readonly ParticipantSpec[] = []) {
-  const participants = [warrior(skillId), ...more];
+function match(skillId: string, more: readonly ParticipantSpec[] = [], rank = 12) {
+  const participants = [warrior(skillId, rank), ...more];
   if (!more.some((participant) => participant.id === "f")) {
     participants.push(spec("f", 1, vec2(RANGE_MELEE / 2, 0)));
   }
@@ -164,9 +172,9 @@ function damageTo(events: readonly CombatEvent[], targetId: string): number[] {
 
 type FoeState = "still" | "deep-wound" | "weakness" | "cracked-armor" | "knocked-down" | "moving";
 
-/** What `skillId` does to `f`, in `state` when it lands. */
-function hit(skillId: string, state: FoeState) {
-  const sim = match(skillId);
+/** What `skillId`, at `rank`, does to `f`, in `state` when it lands. */
+function hit(skillId: string, state: FoeState, rank = 12) {
+  const sim = match(skillId, [], rank);
   const foe = get(sim, "f").combatant;
   if (state === "deep-wound" || state === "weakness" || state === "cracked-armor") {
     foe.statuses.apply(state, 1000, "w", NO_RANKS);
@@ -382,10 +390,14 @@ describe("the Sword attacks (#1658)", () => {
     expect(hit(QUIVERING_BLADE, "still").foe.statuses.has("dazed")).toBe(false);
   });
 
-  it("Steelfang Slash: 4 strikes back on a knocked-down foe only", () => {
-    expect(hit(STEELFANG_SLASH, "knocked-down").strikes).toBe(
-      hit(STEELFANG_SLASH, "still").strikes + 4,
-    );
+  it("Steelfang Slash: 1...5 strikes back by Swordsmanship, on a knocked-down foe only (#4209)", () => {
+    const back = (rank: number) =>
+      hit(STEELFANG_SLASH, "knocked-down", rank).strikes -
+      hit(STEELFANG_SLASH, "still", rank).strikes;
+    // Whole strikes, rounded (#2143): 1, 2.6 and 4.2 at ranks 0, 6 and 12.
+    expect(back(0)).toBe(1);
+    expect(back(6)).toBe(3);
+    expect(back(12)).toBe(4);
   });
 });
 
@@ -465,5 +477,36 @@ describe("the texts (#1658)", () => {
       "If blocked: applies Bleeding for 25s (−3 Health degeneration)",
     ]);
     expect(text(COWARD)).toEqual(["If target is moving: knocks down for 2s"]);
+  });
+});
+
+describe("the GW1 audit numbers (#4209)", () => {
+  it("Executioner's Strike: 7 strikes, +15...45, so +39 at Axe Mastery 12", () => {
+    const strike = skill(EXECUTIONERS_STRIKE);
+    expect(strike.cost).toEqual({ kind: "adrenaline", amount: 7 });
+    const bonus = strike.attack?.bonusDamage;
+    expect(bonus).toBeDefined();
+    if (bonus !== undefined) {
+      const at = (rank: number) =>
+        resolveMagnitude(bonus, outsideMatch(new Map([["warrior.axe-mastery", rank]])));
+      expect([at(0), at(12)]).toEqual([15, 39]);
+    }
+  });
+
+  it("Sever Artery: 3 strikes", () => {
+    expect(skill(SEVER_ARTERY).cost).toEqual({ kind: "adrenaline", amount: 3 });
+  });
+
+  it("Disrupting Chop: 5 strikes and no recharge, so it is ready as soon as they are back", () => {
+    expect(skill(DISRUPTING_CHOP)).toMatchObject({
+      cost: { kind: "adrenaline", amount: 5 },
+      rechargeSeconds: 0,
+    });
+    const sim = match(DISRUPTING_CHOP);
+    used(sim, DISRUPTING_CHOP);
+    const w = get(sim, "w").combatant;
+    expect(w.cast.rechargeRemaining.get(DISRUPTING_CHOP) ?? 0).toBe(0);
+    gainStrikes(w, 5, 0);
+    expect(sim.requestSkill("w", BAR.indexOf(DISRUPTING_CHOP))?.check).toEqual({ ok: true });
   });
 });
