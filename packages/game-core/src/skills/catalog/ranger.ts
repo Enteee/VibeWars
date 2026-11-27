@@ -118,7 +118,7 @@ export const RANGER_SKILLS: readonly Skill[] = [
     attack: {
       weapon: "bow",
       weaponDamage: 1,
-      bonusDamage: { scaling: { attributeId: "ranger.marksmanship", atZero: 5, atTwelve: 12 } },
+      bonusDamage: { scaling: { attributeId: "ranger.marksmanship", atZero: 5, atTwelve: 17 } },
       conditionalBonus: undefined,
       strikes: 1,
       unblockable: false,
@@ -375,8 +375,8 @@ export const RANGER_SKILLS: readonly Skill[] = [
     cost: { kind: "energy", amount: 10 },
     overcast: 0,
     activationSeconds: 0,
-    // The 2026-04-28 revision's 2 s and 1...10...12; its 2010 "twice as
-    // fast" arrow is gone, so it flies at the bow's speed.
+    // The corpus's 2 s (PvP 3450); its 2010 "twice as fast" arrow is
+    // gone, so it flies at the bow's speed.
     rechargeSeconds: 2,
     range: RANGE_LONG,
     target: "single-enemy",
@@ -403,9 +403,17 @@ export const RANGER_SKILLS: readonly Skill[] = [
     companion: undefined,
     petAttack: undefined,
     projectile: undefined,
-    // "If Crippling Shot hits, your target becomes Crippled for 1...10...12
-    // seconds": 10 s, its rank-12 value, when the arrow lands.
-    effects: [{ kind: "apply-status", statusId: "crippled", durationSeconds: { flat: 10 } }],
+    // "Inflicts Crippled condition (4...14 seconds)" (corpus, PvP 3450),
+    // when the arrow lands.
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "crippled",
+        durationSeconds: {
+          scaling: { attributeId: "ranger.marksmanship", atZero: 4, atTwelve: 12 },
+        },
+      },
+    ],
   },
   {
     id: "ranger.debilitating-shot",
@@ -492,8 +500,16 @@ export const RANGER_SKILLS: readonly Skill[] = [
     companion: undefined,
     petAttack: undefined,
     projectile: undefined,
-    // "...and cause Burning for 1...6...7 seconds": 6 s, its rank-12 value.
-    effects: [{ kind: "apply-status", statusId: "burning", durationSeconds: { flat: 6 } }],
+    // "Inflicts Burning condition (2...8 seconds)".
+    effects: [
+      {
+        kind: "apply-status",
+        statusId: "burning",
+        durationSeconds: {
+          scaling: { attributeId: "ranger.marksmanship", atZero: 2, atTwelve: 6.8 },
+        },
+      },
+    ],
   },
   {
     id: "ranger.throw-dirt",
@@ -887,16 +903,16 @@ export const RANGER_SKILLS: readonly Skill[] = [
     corpse: undefined,
     companion: undefined,
     petAttack: undefined,
-    // The PvP version: "You heal your animal companion for 20...87...104
-    // Health. If your companion is dead, it is resurrected with
-    // 10...48...58% Health." The heal skips the dead and the
-    // resurrection the living, so one cast is never both.
+    // The PvP version (3045): "Your pet gains 40...120 Health. Resurrects
+    // your pet (10...58% Health)": 104 and 48.4% at rank 12. The heal
+    // skips the dead and the resurrection the living, so one cast is
+    // never both.
     effects: [
       {
         kind: "heal",
         received: "heal",
         amount: {
-          scaling: { attributeId: "ranger.beast-mastery", atZero: 20, atTwelve: 87 },
+          scaling: { attributeId: "ranger.beast-mastery", atZero: 40, atTwelve: 104 },
         },
       },
       {

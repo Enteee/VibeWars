@@ -204,7 +204,7 @@ describe("describeSkill", () => {
     );
     expect(comfort.targetText).toBe("Your pet");
     expect(comfort.effects.map((e) => e.text)).toEqual([
-      "Heals for 87",
+      "Heals for 104",
       "Returns the target to life with 48% health and 0% energy",
     ]);
     expect(
@@ -645,7 +645,7 @@ describe("describeSkill", () => {
       "−3 Health degeneration",
     );
     expect(describeStatus("regeneration", undefined, EN_WORDS, EN_NAMES)).toContain(
-      "+4 Health regeneration",
+      "+9 Health regeneration",
     );
     expect(describeStatus("malaise", undefined, EN_WORDS, EN_NAMES)).toContain(
       "−1 Energy degeneration",
