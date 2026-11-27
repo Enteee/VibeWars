@@ -1,6 +1,6 @@
 # Pomoc
 
-Strony okna Pomocy w grze, w kolejności, w jakiej wyświetla je wybór strony. Każda strona
+Strony okna Pomocy w grze, w kolejności, w jakiej wyświetla je jego lista stron. Każda strona
 z tego katalogu jest tu wymieniona dokładnie raz.
 
 - [Pierwsze kroki](getting-started.md)

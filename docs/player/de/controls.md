@@ -96,7 +96,7 @@ außer Lobby, unter **☰** oben rechts am Bildschirm, zusammen mit **Verlassen*
 **M** schaltet weiter den Ton aus und **F10** verlässt das Match weiter auch ohne. In einem schmalen Fenster klappen diese Symbole und die
 übrigen Knöpfe des Bildschirms unter **☰** ein; nur sein Hauptknopf bleibt draußen.
 ⚙ öffnet die Optionen als Fenster unter der Leiste, mit dem Bildschirm dahinter; Esc, × oder ein Klick daneben schließt es.
-[?] öffnet die Hilfe genauso, als Fenster darunter mit einer Seitenauswahl oben; ein Match läuft dahinter weiter.
+[?] öffnet die Hilfe genauso, als Fenster darunter mit seinen Seiten links aufgelistet; ein Match läuft dahinter weiter.
 Die Hilfe schließt mit ihrem ×, Esc, einem Klick daneben oder einem weiteren Druck auf [?].
 
 **Teile einen Beat mit deiner Lobby.** Im Beat-Editor (♪, dann **Ändern**) sendet

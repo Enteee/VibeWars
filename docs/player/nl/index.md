@@ -1,7 +1,7 @@
 # Help
 
 De pagina's van het Help-venster in het spel, in de volgorde waarin de
-paginakiezer ze toont. Elke pagina in deze map staat hier precies één keer.
+lijst met pagina's ze toont. Elke pagina in deze map staat hier precies één keer.
 
 - [Aan de slag](getting-started.md)
 - [Besturing](controls.md)

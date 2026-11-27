@@ -431,6 +431,7 @@ export default {
   "effects.untilEnds": "終了まで",
   "effects.you": "自分",
 
+  "flyout.back": "一覧に戻る",
   "fullscreen.enter": "全画面",
   "fullscreen.leave": "全画面を終了",
 

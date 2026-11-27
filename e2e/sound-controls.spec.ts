@@ -1,6 +1,7 @@
 import { expect, test, type Page } from "@playwright/test";
 
 import { hudMenuRow } from "./helpers/hud-menu.js";
+import { optionsEntry } from "./helpers/overlay.js";
 import { startSoloMatch } from "./helpers/peers.js";
 
 /**
@@ -79,6 +80,6 @@ test("Options has no Sound section: the ♪ popover holds the sound controls (#2
 }) => {
   await page.goto("./");
   await page.locator(".topbar-options").click();
-  await expect(page.locator('.options-entry[data-section="player"]')).toBeVisible();
-  await expect(page.locator('.options-entry[data-section="sound"]')).toHaveCount(0);
+  await expect(optionsEntry(page, "player")).toBeVisible();
+  await expect(optionsEntry(page, "sound")).toHaveCount(0);
 });

@@ -484,6 +484,7 @@ export default {
   "effects.untilEnds": "עד שיסתיים",
   "effects.you": "אתה",
 
+  "flyout.back": "חזרה לרשימה",
   "fullscreen.enter": "מסך מלא",
   "fullscreen.leave": "צא ממסך מלא",
 

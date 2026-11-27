@@ -34,6 +34,19 @@ class FakeElement {
   children: FakeElement[] = [];
   readonly attributes = new Map<string, string>();
   readonly listeners = new Map<string, Listener[]>();
+  readonly classList = {
+    add: (name: string): void => {
+      this.classList.toggle(name, true);
+    },
+    remove: (name: string): void => {
+      this.classList.toggle(name, false);
+    },
+    contains: (name: string): boolean => this.className.split(" ").includes(name),
+    toggle: (name: string, on: boolean): void => {
+      const names = this.className.split(" ").filter((other) => other !== "" && other !== name);
+      this.className = (on ? [...names, name] : names).join(" ");
+    },
+  };
 
   constructor(tagName: string) {
     this.tagName = tagName;
@@ -137,6 +150,7 @@ beforeEach(() => {
   vi.stubGlobal("Element", FakeElement);
   vi.stubGlobal("__VIBEWARS_RELEASE__", "0.0.0");
   vi.stubGlobal("__VIBEWARS_BUILD__", "test");
+  vi.stubGlobal("matchMedia", () => ({ matches: false }));
   vi.stubGlobal("document", {
     body,
     createElement: (tag: string) => new FakeElement(tag),
@@ -166,6 +180,9 @@ function helpButton(): { trigger: FakeElement; window: () => FakeElement | undef
 const shownPage = (window: FakeElement | undefined): string | undefined =>
   window?.find("help-page")?.dataset.page;
 
+const entry = (window: FakeElement | undefined, id: string): FakeElement | undefined =>
+  window?.all().find((node) => node.className === "flyout-rail-entry" && node.dataset.id === id);
+
 describe("Help as a window from [?] (#3552)", () => {
   const first = helpDocPages()[0]?.id;
 
@@ -176,8 +193,8 @@ describe("Help as a window from [?] (#3552)", () => {
     expect(window()?.getAttribute("role")).toBe("dialog");
     expect(window()?.getAttribute("aria-modal")).toBe("false");
     expect(shownPage(window())).toBe(first);
-    // The page picker has the focus, so the keyboard can choose a page.
-    expect(focused()).toBe(window()?.find("help-picker"));
+    // The open page's rail entry has the focus, so the keyboard can choose a page.
+    expect(focused()).toBe(entry(window(), first ?? ""));
   });
 
   it("shuts on a second press, Esc and a press outside, and gives focus back to [?]", () => {
@@ -199,16 +216,21 @@ describe("Help as a window from [?] (#3552)", () => {
     expect(focused()).toBe(trigger);
   });
 
-  it("switches page with the picker, and on a link to another page", () => {
+  it("lists every page in the rail, the trailer and licences last", () => {
     const { trigger, window } = helpButton();
     trigger.fire("click");
-    const picker = window()?.find("help-picker");
-    expect(picker).toBeDefined();
-    if (picker === undefined) {
-      return;
-    }
-    picker.value = "controls";
-    picker.fire("change");
+    const ids = window()
+      ?.all()
+      .filter((node) => node.className === "flyout-rail-entry")
+      .map((node) => node.dataset.id);
+    expect(ids).toEqual([...helpDocPages().map((doc) => doc.id), "trailer", "licences"]);
+    expect(ids).toHaveLength(14);
+  });
+
+  it("switches page from the rail, and on a link to another page", () => {
+    const { trigger, window } = helpButton();
+    trigger.fire("click");
+    entry(window(), "controls")?.fire("click");
     expect(shownPage(window())).toBe("controls");
 
     const link = new FakeElement("a");
@@ -216,7 +238,8 @@ describe("Help as a window from [?] (#3552)", () => {
     window()?.find("help-page")?.appendChild(link);
     window()?.find("help-page")?.fire("click", { target: link });
     expect(shownPage(window())).toBe("glossary");
-    expect(picker.value).toBe("glossary");
+    expect(entry(window(), "glossary")?.getAttribute("aria-current")).toBe("page");
+    expect(entry(window(), "controls")?.getAttribute("aria-current")).toBeNull();
   });
 
   it("shuts when another popover opens, one window at a time", () => {

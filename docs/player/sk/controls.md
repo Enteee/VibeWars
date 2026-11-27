@@ -96,7 +96,7 @@ okrem Lobby, v **☰** vpravo hore na obrazovke, spolu s **Odísť**;
 **M** stále stlmí zvuk a **F10** stále odíde aj bez neho. V úzkom okne sa tieto ikony a
 ostatné tlačidlá obrazovky zbalia do **☰**; vonku zostane len jej hlavné tlačidlo.
 ⚙ otvorí Nastavenia ako okno pod lištou, obrazovka zostáva za ním; Esc, × alebo kliknutie mimo ho zatvorí.
-[?] otvorí Pomoc rovnako, ako okno pod ním s výberom stránky hore; zápas za ním beží ďalej.
+[?] otvorí Pomoc rovnako, ako okno pod ním so zoznamom svojich stránok vľavo; zápas za ním beží ďalej.
 Pomoc sa zatvára svojím krížikom ×, klávesom Esc, kliknutím mimo alebo ďalším stlačením [?].
 
 **Zdieľaj beat so svojím lobby.** V editore beatov (♪, potom **Upraviť**)

@@ -462,6 +462,7 @@ export default {
   "effects.untilEnds": "amíg véget nem ér",
   "effects.you": "te",
 
+  "flyout.back": "Vissza a listához",
   "fullscreen.enter": "Teljes képernyő",
   "fullscreen.leave": "Kilépés a teljes képernyőből",
 

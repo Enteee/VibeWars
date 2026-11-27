@@ -103,7 +103,7 @@ a Lobbi kivételével, a képernyő jobb felső sarkában a **☰** mögött van
 az **M** továbbra is némít, az **F10** pedig továbbra is kilép nélküle. Keskeny ablakban ezek az ikonok és
 a képernyő többi gombja a **☰** mögé csukódik; csak a fő gomb marad kint.
 A ⚙ az Opciókat ablakként nyitja meg a sáv alatt, a képernyővel mögötte; az Esc, a × vagy egy kívülre kattintás bezárja.
-A [?] ugyanígy nyitja meg a Súgót, alatta lévő ablakként, felül oldalválasztóval; a meccs mögötte tovább fut.
+A [?] ugyanígy nyitja meg a Súgót, alatta lévő ablakként, bal oldalon felsorolt oldalaival; a meccs mögötte tovább fut.
 A Súgó a saját ×-ével, az Esc-kel, egy kívülre kattintással vagy a [?] újabb megnyomásával zárul be.
 
 **Ossz meg egy ütemet a lobbiddal.** Az ütemszerkesztőben (♪, majd **Szerk.**)
