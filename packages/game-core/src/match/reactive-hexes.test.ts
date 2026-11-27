@@ -155,7 +155,7 @@ describe("Backfire (#469)", () => {
     const match = sim(WEAPONS.axe, vec2(400, 0));
     get(match, "a").statuses.apply("backfire", 10, "m", NO_RANKS);
     use(match, 1);
-    const log = stepFor(match, 1 + 2 * DT);
+    const log = stepFor(match, 1.5 + 2 * DT);
     expect(damageTo(fired(log, BACKFIRE), "a")).toEqual([119]);
     expect(damageTo(log, "m")).toEqual([]);
   });
