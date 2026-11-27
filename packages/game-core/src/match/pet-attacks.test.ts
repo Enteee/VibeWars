@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 
 import { unarmedResolvedEquipment } from "../equipment/resolve.js";
 import { MINIMAL_GW_INSPIRED_PVP_V1 } from "../ruleset.js";
-import { vec2, type Vec2 } from "../vec2.js";
+import { segment } from "../geometry.js";
+import { distance, vec2, type Vec2 } from "../vec2.js";
+import { breakableTargetId } from "./breakables.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type Participant, type ParticipantSpec } from "./simulation.js";
 import { NO_RANKS } from "../skills/status.js";
@@ -286,5 +288,52 @@ describe("a pet attack refused costs nothing (#1046)", () => {
     wolf(sim).position = vec2(-351, 0);
     refused(sim, "companion-too-far");
     expect(get(sim, "r").walkGoal).toBeUndefined();
+  });
+});
+
+describe("a pet strikes the breakable wall its owner strikes (#4220)", () => {
+  const TARGET = breakableTargetId("wall");
+
+  /** `r` and its wolf at the origin, a `maxHealth` wall along x = 150, foe `a` far off. */
+  function walled(maxHealth: number): MatchSimulation {
+    return new MatchSimulation({
+      seed: "pet-wall",
+      participants: [
+        spec("r", 0, vec2(0, 0), {
+          skillBar: BAR,
+          attributeRanks: new Map([["ranger.beast-mastery", 12]]),
+        }),
+        spec("a", 1, vec2(1500, 600)),
+      ],
+      breakables: [
+        {
+          id: "wall",
+          segments: [segment(vec2(150, -400), vec2(150, 400))],
+          layer: 0,
+          maxHealth,
+        },
+      ],
+    });
+  }
+
+  it("walks to its owner's wall and its blows wear it down", () => {
+    const sim = walled(10_000);
+    const pet = wolf(sim);
+    expect(sim.requestAttack("r", TARGET)?.ok).toBe(true);
+    const log = stepFor(sim, 6);
+    expect(pet.combatant.attack?.targetId).toBe(TARGET);
+    expect(blows(log, pet).reduce((sum, entry) => sum + dealt(entry, TARGET), 0)).toBeGreaterThan(
+      0,
+    );
+  });
+
+  it("goes back to heel once the wall crumbles", () => {
+    const sim = walled(60);
+    const pet = wolf(sim);
+    expect(sim.requestAttack("r", TARGET)?.ok).toBe(true);
+    stepFor(sim, 20);
+    expect(sim.breakables[0]?.health).toBe(0);
+    expect(pet.combatant.attack).toBeUndefined();
+    expect(distance(pet.position, get(sim, "r").position)).toBeLessThan(150);
   });
 });
