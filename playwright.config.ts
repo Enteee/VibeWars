@@ -96,13 +96,13 @@ export default defineConfig({
     url: BASE_URL,
     // Its own build id, served in its own `build.json`, so no spec but
     // the one that swaps it sees a newer build (#1268).
-    // A seeded Team Lobby (#2213): seed 4404 draws Word of Healing (Mo) first
-    // and second, so a solo match's foe, whichever side draws first, heals
-    // and never hexes or strips the effects a spec watches.
+    // A seeded Team Lobby (#2213): seed 16 gives a solo match the foe
+    // Flesh Wound (P/W), who never hexes, strips an enchantment or
+    // interrupts, so the effects a spec watches stay put (#4138).
     env: {
       VIBEWARS_BASE: BASE,
       VITE_VIBEWARS_TRANSPORT: "broadcast",
-      VITE_VIBEWARS_LOBBY_SEED: "4404",
+      VITE_VIBEWARS_LOBBY_SEED: "16",
       VITE_VIBEWARS_WORK_BITS: "8",
       VITE_VIBEWARS_SPLASH: "off",
       VITE_VIBEWARS_MENU_BACKGROUND: "off",
