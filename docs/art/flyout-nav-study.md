@@ -23,7 +23,7 @@ So the study mocks the two that have pages. Today's Options is already **B** on 
 
 **A, tab strip.** A tablist under the title. Fits Options (5 short tabs, no scroll). On Help 14 tabs are about three screens wide: the strip scrolls sideways with a faded edge, and a page past the fold is reachable only by scrolling or by the arrow keys (`a-help-narrow-end`). The selected tab must be scrolled into view.
 
-**B, left rail.** A vertical list beside the page: what Options has. Help gets the same rail, so both flyouts match and all 14 pages are visible at once. Narrow: the rail becomes a list and a tap drills into the page, whose bar has a back arrow and the page title (`b-*-narrow` is the list, `b-*-narrow-page` the page). Costs about 11 rem of width on desktop, so the Help flyout would widen to about 800 px, and a drill-down adds a step on a phone.
+**B, left rail.** A vertical list beside the page: what Options has. Help gets the same rail, so both flyouts match and most of the 14 pages are visible at once (the last few are one scroll away). Narrow: the rail becomes a list and a tap drills into the page, whose bar has a back arrow and the page title (`b-*-narrow` is the list, `b-*-narrow-page` the page). Costs about 11 rem of width on desktop, so the Help flyout would widen to about 800 px, and a drill-down adds a step on a phone.
 
 **C, dropdown with breadcrumb.** "Help › Getting started ▾": the page name is a button that opens a list. Costs no width and scales to any page count, at the price of hiding the pages until it is opened (a second click for every page change) and of a breadcrumb that is one level deep today. Narrow it is the same control and the list covers the top of the page.
 

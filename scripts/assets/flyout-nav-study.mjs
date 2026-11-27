@@ -204,7 +204,7 @@ function mock({ flyout, kind, state, long, narrow }) {
       if (narrow) {
         layout.style.display = "block";
         if (state === "page") {
-          rail.hidden = true;
+          rail.style.display = "none";
           const bar = el("div", "mock-back");
           bar.append(
             el("button", "", "‹ Help", { "aria-label": "Back to the list of pages" }),
@@ -212,7 +212,7 @@ function mock({ flyout, kind, state, long, narrow }) {
           );
           layout.before(bar);
         } else {
-          main.hidden = true;
+          main.style.display = "none";
           rail.style.maxHeight = "none";
         }
       }
