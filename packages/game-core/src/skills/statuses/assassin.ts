@@ -183,12 +183,14 @@ export const ASSASSIN_STATUSES: Readonly<Record<AssassinStatusId, StatusDefiniti
   // faster" (#1757): the foe's half; the 13 s are the skill's.
   "siphon-speed": define("siphon-speed", "Siphon Speed", "hex", {
     endsOnSourceDeath: true,
+    casterStatus: "siphon-speed-haste",
     profession: "assassin",
     moveSpeedMultiplier: 0.67,
   }),
-  // Siphon Speed's caster half (#1757), its own status: it stays when the
-  // hex is removed.
+  // Siphon Speed's caster half (#1757), while one of its hexes lives (#4167):
+  // speed boosts never stack, so one is as fast as two.
   "siphon-speed-haste": define("siphon-speed-haste", "Siphon Speed", "skill-effect", {
+    linked: true,
     profession: "assassin",
     moveSpeedMultiplier: 1.33,
   }),

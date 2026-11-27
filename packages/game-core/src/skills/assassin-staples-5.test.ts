@@ -280,20 +280,20 @@ describe("Impale (#1757)", () => {
 });
 
 describe("Siphon Speed (#1757)", () => {
-  it("slows the foe 33% and hastes the caster 33% for 13 s, each its own status", () => {
+  it("slows the foe 33% for 13 s, and hastes the caster 33% while it lives (#4167)", () => {
     const caster = assassin();
     const foe = body("f");
     land("assassin.siphon-speed", caster, foe);
     expect(foe.statuses.get("siphon-speed")?.remainingSeconds).toBe(13);
-    expect(caster.statuses.get("siphon-speed-haste")?.remainingSeconds).toBe(13);
+    expect(getStatusDefinition("siphon-speed").casterStatus).toBe("siphon-speed-haste");
     expect(getStatusDefinition("siphon-speed")).toMatchObject({
       category: "hex",
       moveSpeedMultiplier: 0.67,
     });
     expect(getStatusDefinition("siphon-speed-haste").moveSpeedMultiplier).toBe(1.33);
-    // The haste stays when the hex is removed.
-    foe.statuses.removeByCategory("hex");
-    expect(caster.statuses.has("siphon-speed-haste")).toBe(true);
+    // The simulation links the haste to the hex (siphon-links.test.ts).
+    expect(getStatusDefinition("siphon-speed-haste").linked).toBe(true);
+    expect(caster.statuses.has("siphon-speed-haste")).toBe(false);
   });
 
   it("recharges 50% faster on a moving foe, and as usual on a still one", () => {

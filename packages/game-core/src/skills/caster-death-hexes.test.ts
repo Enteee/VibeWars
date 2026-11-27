@@ -60,10 +60,15 @@ function get(sim: MatchSimulation, id: string): Combatant {
   return found.combatant;
 }
 
-/** `id` burns to death this tick. */
+/**
+ * `id` burns, bleeds and sickens to death this tick: its siphons on two
+ * foes regenerate it more than a burn alone takes (#4167).
+ */
 function kill(sim: MatchSimulation, id: string): void {
   const combatant = get(sim, id);
-  combatant.statuses.apply("burning", 10, "x", NO_RANKS);
+  for (const condition of ["burning", "bleeding", "poison", "disease"] as const) {
+    combatant.statuses.apply(condition, 10, "x", NO_RANKS);
+  }
   combatant.health = 0.2;
   sim.step(DT);
   expect(combatant.dead).toBe(true);

@@ -13,7 +13,7 @@ import {
 import { creatureDamageMultiplier } from "./damage.js";
 import { makeCombatant, withAttackDuration } from "./testing.js";
 import { resolveMagnitude, resolveMagnitudeAtRanks } from "./scaling.js";
-import { STATUS_DEFINITIONS } from "./status.js";
+import { STATUS_DEFINITIONS, getStatusDefinition } from "./status.js";
 import { blowRuleOf, isEasilyInterrupted, type SkillEffect } from "./types.js";
 import { EN_NAMES, EN_WORDS } from "./describe-words.js";
 
@@ -692,8 +692,15 @@ describe("describeSkill", () => {
     // faster flight one, and one per on-crit or failed-to-hit rider
     // (#1486); a volley of arrows one (#1539). A spirit's on-hit effects
     // are a line each, and its death burst one more (#1550); a blow that
-    // deals damage one more (#1631), and a minion's blows one (#1900).
+    // deals damage one more (#1631), and a minion's blows one (#1900). A
+    // hex with a caster half one more for it (#4167).
     const linesOf = (effect: SkillEffect): number => {
+      if (
+        effect.kind === "apply-status" &&
+        getStatusDefinition(effect.statusId).casterStatus !== undefined
+      ) {
+        return 2;
+      }
       if (effect.kind === "if") {
         return effect.effects.length;
       }

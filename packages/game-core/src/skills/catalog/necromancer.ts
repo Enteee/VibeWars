@@ -2438,7 +2438,6 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
           scaling: { attributeId: "necromancer.blood-magic", atZero: 12, atTwelve: 21.6 },
         },
       },
-      { kind: "caster-gains-status", statusId: "life-siphon-regen", durationSeconds: 22 },
     ],
   },
   {
@@ -4864,7 +4863,7 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
     projectile: undefined,
     // "For 6...12 seconds, target foe and adjacent foes suffer -3...8
     // Health degeneration, which you gain as Health regeneration": as Life
-    // Siphon's, the caster's regeneration once.
+    // Siphon's, the caster's regeneration for each foe it hexed (#4167).
     effects: [
       { kind: "apply-status", statusId: "life-transfer", durationSeconds: LIFE_TRANSFER_SECONDS },
       {
@@ -4879,12 +4878,6 @@ export const NECROMANCER_SKILLS: readonly Skill[] = [
             durationSeconds: LIFE_TRANSFER_SECONDS,
           },
         ],
-      },
-      {
-        kind: "apply-status",
-        statusId: "life-transfer-regen",
-        durationSeconds: LIFE_TRANSFER_SECONDS,
-        on: "caster",
       },
     ],
   },

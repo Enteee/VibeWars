@@ -450,14 +450,17 @@ export const NECROMANCER_STATUSES: Readonly<Record<NecromancerStatusId, StatusDe
     endsWhenTriggered: true,
   }),
   // "...target foe suffers -1...3 Health degeneration, and you gain
-  // +1...3 Health regeneration": 3 each, the caster's its own status, so
-  // it lasts its time when the hex is removed early.
+  // +1...3 Health regeneration": 3 each. The caster's half is linked: it
+  // lasts while the hex does and ends with it (#4167).
   "life-siphon": define("life-siphon", "Life Siphon", "hex", {
     endsOnSourceDeath: true,
+    casterStatus: "life-siphon-regen",
     profession: "necromancer",
     healthPips: -3,
   }),
+  // Its caster's half (#4167): +3 for each of the caster's Life Siphons alive.
   "life-siphon-regen": define("life-siphon-regen", "Life Siphon", "skill-effect", {
+    linked: true,
     profession: "necromancer",
     healthPips: 3,
   }),
@@ -1017,13 +1020,15 @@ export const NECROMANCER_STATUSES: Readonly<Record<NecromancerStatusId, StatusDe
   }),
   // "...target foe and adjacent foes suffer -3...8 Health degeneration,
   // which you gain as Health regeneration": 7 at Blood Magic 12, the
-  // caster's once, however many foes it hexed.
+  // caster's once for each foe it hexed (#4167), up to the regeneration cap.
   "life-transfer": define("life-transfer", "Life Transfer", "hex", {
     endsOnSourceDeath: true,
+    casterStatus: "life-transfer-regen",
     profession: "necromancer",
     healthPips: { scaling: { attributeId: "necromancer.blood-magic", atZero: -3, atTwelve: -7 } },
   }),
   "life-transfer-regen": define("life-transfer-regen", "Life Transfer", "skill-effect", {
+    linked: true,
     profession: "necromancer",
     healthPips: { scaling: { attributeId: "necromancer.blood-magic", atZero: 3, atTwelve: 7 } },
   }),

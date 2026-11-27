@@ -660,6 +660,18 @@ export interface StatusDefinition {
    */
   readonly endsOnSourceDeath: boolean;
   /**
+   * A hex's caster half (#4167): its source holds this `linked` status
+   * while any of its hexes of this id lives on a foe, Life Siphon's "you
+   * gain +1...3 Health regeneration", its health pips once for each.
+   * `undefined`: none.
+   */
+  readonly casterStatus: StatusId | undefined;
+  /**
+   * A hex's `casterStatus` (#4167): it has no timer of its own, and the
+   * simulation holds it while its hexes live, stacked once for each.
+   */
+  readonly linked: boolean;
+  /**
    * Percentage points of maximum Health and Energy added to what each
    * resurrection the bearer's skill brings back, each capped at 100 (#2479):
    * "We Shall Return!"'s "their fallen allies return with 10...75% more
@@ -3027,9 +3039,10 @@ export interface ActiveStatus {
   /** Whether `nextIncomingHexDurationMultiplier` is still to lengthen a hex (#2311). */
   hexLengtheningLeft: boolean;
   /**
-   * How many times over its `armorModifier` counts (#2189): Convert Hexes'
-   * +10 for each Necromancer hex removed (`ApplyStatusEffect.stacksPerRemovedOfProfession`).
-   * 1 for every other.
+   * How many times over its `armorModifier` and `healthPips` count (#2189):
+   * Convert Hexes' +10 for each Necromancer hex removed
+   * (`ApplyStatusEffect.stacksPerRemovedOfProfession`), a `linked` status's
+   * pips for each of its hexes alive (#4167). 1 for every other.
    */
   stacks: number;
   /** Who applied it — needed so a future "when this ends, heal the caster"
@@ -3995,6 +4008,60 @@ export class StatusSet {
       this.#endOnGaining("enchantment");
     }
     return !wasActive;
+  }
+
+  /**
+   * Hold `id`, a `linked` caster status (#4167), for `stacks` of the
+   * bearer's hexes alive on foes, the longest of them `remainingSeconds`
+   * of `durationSeconds` from its end: `advance` never expires it, and the
+   * simulation removes it with its last hex. Already held: its stacks and
+   * clock follow, its ranks the ones it landed with. Returns whether it is
+   * newly on the bearer.
+   */
+  public link(
+    id: StatusId,
+    sourceId: string,
+    ranks: ReadonlyMap<string, number>,
+    stacks: number,
+    remainingSeconds: number,
+    durationSeconds: number,
+  ): boolean {
+    const held = this.#statuses.get(id);
+    if (held !== undefined) {
+      held.stacks = stacks;
+      held.remainingSeconds = remainingSeconds;
+      held.durationSeconds = durationSeconds;
+      return false;
+    }
+    this.#statuses.set(id, {
+      id,
+      remainingSeconds,
+      durationSeconds,
+      attacksLeft: undefined,
+      hitsLeft: undefined,
+      hitsTaken: 0,
+      struck: false,
+      unblockableLeft: undefined,
+      attacksMadeLeft: undefined,
+      spellsLeft: undefined,
+      castsLeft: undefined,
+      skillsLeft: undefined,
+      ownSkillsLeft: undefined,
+      triggersLeft: undefined,
+      reflectionsLeft: undefined,
+      touchFailsLeft: undefined,
+      hexLengtheningLeft: false,
+      stacks,
+      sourceId,
+      sourceSkillId: undefined,
+      ranks,
+      outbreak: null,
+      maintained: null,
+      projected: null,
+      returnPoint: null,
+      stepTargetId: null,
+    });
+    return true;
   }
 
   /**
@@ -4993,6 +5060,10 @@ export class StatusSet {
     // a tick allocates nothing for it (#2520).
     const hexesAtStart = this.countByCategory("hex");
     for (const status of this.#statuses.values()) {
+      // A linked one keeps its hexes' clock, set by the simulation (#4167).
+      if (getStatusDefinition(status.id).linked) {
+        continue;
+      }
       const rate = categoryRate[getStatusDefinition(status.id).category] ?? 1;
       this.#pulse(status, dt, rate);
       status.remainingSeconds -= dt * rate;
@@ -5597,7 +5668,7 @@ export function aggregateModifiers(
     }
     const { ranks } = status;
     ownSlow = 1;
-    healthPips += Math.round(statAt(def.healthPips, ranks));
+    healthPips += Math.round(statAt(def.healthPips, ranks)) * (status.stacks ?? 1);
     if (def.healthPipsPerEnchantment !== undefined) {
       const { pips, max } = def.healthPipsPerEnchantment;
       healthPips += pips * Math.min(enchantments, max);

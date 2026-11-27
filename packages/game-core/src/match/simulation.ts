@@ -1793,6 +1793,11 @@ export class MatchSimulation {
    * pass has nothing to do.
    */
   #auras = false;
+  /**
+   * Whether the last caster-half pass found a linked hex (#4167): with none
+   * now and none then, nobody holds a linked status.
+   */
+  #links = false;
 
   public constructor(options: MatchSimulationOptions) {
     this.#ruleset = options.ruleset ?? MINIMAL_GW_INSPIRED_PVP_V1;
@@ -4667,6 +4672,7 @@ export class MatchSimulation {
     this.#fireEnergyEmpty();
     this.#fireSourceApart();
     this.#spreadStatuses();
+    this.#linkCasterStatuses();
     this.#fireStatusChanges();
     this.#breakBonds();
     this.#awardKillMorale();
@@ -4797,6 +4803,76 @@ export class MatchSimulation {
   /** What `caster` pays for the enchantments it maintains, in pips (#837, #2321). */
   #upkeep(caster: Combatant): number {
     return upkeepPips(caster, combatantsOf(this.#participants.values()));
+  }
+
+  /**
+   * Hold every hex's caster half (#4167), once everyone has acted: a
+   * living caster holds a hex's `casterStatus` once for each of its hexes
+   * of that id alive on a living bearer, at the longest one's clock, and
+   * loses it the step its last one ends, however that one ended. A recast
+   * on the same foe is one hex, so it counts once.
+   */
+  #linkCasterStatuses(): void {
+    let links:
+      | Map<
+          string,
+          Map<StatusId, { stacks: number; remainingSeconds: number; durationSeconds: number }>
+        >
+      | undefined;
+    for (const record of this.#participants.values()) {
+      if (record.combatant.dead) {
+        continue;
+      }
+      for (const status of record.combatant.statuses.active) {
+        const { casterStatus } = getStatusDefinition(status.id);
+        if (casterStatus === undefined) {
+          continue;
+        }
+        links ??= new Map();
+        let held = links.get(status.sourceId);
+        if (held === undefined) {
+          held = new Map();
+          links.set(status.sourceId, held);
+        }
+        const link = held.get(casterStatus);
+        if (link === undefined) {
+          held.set(casterStatus, {
+            stacks: 1,
+            remainingSeconds: status.remainingSeconds,
+            durationSeconds: status.durationSeconds,
+          });
+        } else {
+          link.stacks += 1;
+          if (status.remainingSeconds > link.remainingSeconds) {
+            link.remainingSeconds = status.remainingSeconds;
+            link.durationSeconds = status.durationSeconds;
+          }
+        }
+      }
+    }
+    if (links === undefined && !this.#links) {
+      return;
+    }
+    this.#links = links !== undefined;
+    for (const record of this.#participants.values()) {
+      const { statuses } = record.combatant;
+      const held = record.combatant.dead ? undefined : links?.get(record.id);
+      for (const status of statuses.active) {
+        if (getStatusDefinition(status.id).linked && held?.has(status.id) !== true) {
+          statuses.remove(status.id);
+        }
+      }
+      for (const [statusId, link] of held ?? []) {
+        statuses.link(
+          statusId,
+          record.id,
+          statusRanks(statusId, record.combatant),
+          link.stacks,
+          link.remainingSeconds,
+          link.durationSeconds,
+        );
+      }
+    }
   }
 
   /**
