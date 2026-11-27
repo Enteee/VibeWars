@@ -15,6 +15,21 @@ export type RailLabel =
   | "Matches";
 
 /**
+ * Until the drawer (#3947) has stopped sliding. A box measured mid-slide
+ * is mapped through its transform in floats, so a 44 px step can read
+ * 43.999996 (#4196): what a check measures is the settled screen.
+ */
+async function railSettled(page: Page): Promise<void> {
+  await expect
+    .poll(() =>
+      page
+        .locator(".mode-rail")
+        .evaluateAll((rails) => rails.some((rail) => rail.getAnimations().length > 0)),
+    )
+    .toBe(false);
+}
+
+/**
  * The rail in view: on a phone held upright it is a drawer (#3924), which
  * its toggle opens; elsewhere it is always there. Whether it opened it.
  */
@@ -29,6 +44,7 @@ export async function showRail(page: Page): Promise<boolean> {
   }
   await toggle.click();
   await expect(page.locator(".mode-rail")).toBeVisible();
+  await railSettled(page);
   return true;
 }
 
@@ -41,6 +57,7 @@ export async function openRail(page: Page, label: RailLabel): Promise<void> {
     .getByRole("button", { name: label, exact: true, includeHidden: true });
   await entry.click();
   await expect(entry).toHaveAttribute("aria-pressed", "true");
+  await railSettled(page);
 }
 
 /** The card of the character `name`, newest first should two share it. */
