@@ -469,6 +469,7 @@ export default {
   "effects.untilEnds": "kunnes päättyy",
   "effects.you": "sinä",
 
+  "flyout.back": "Takaisin luetteloon",
   "fullscreen.enter": "Koko näyttö",
   "fullscreen.leave": "Poistu koko näytöstä",
 

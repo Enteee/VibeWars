@@ -488,7 +488,7 @@ describe("deep wound (#764)", () => {
     target.statuses.apply("deep-wound", 20, "caster", NO_RANKS);
     target.statuses.apply("regeneration", 20, "caster", NO_RANKS);
     advanceStatuses(target, 1, 0);
-    expect(target.health).toBeCloseTo(200 + 4 * HEALTH_PER_PIP, 9);
+    expect(target.health).toBeCloseTo(200 + 9 * HEALTH_PER_PIP, 9);
   });
 
   it("gives maximum health back when it ends, and leaves current health where it is", () => {

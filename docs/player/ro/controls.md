@@ -97,7 +97,7 @@ Pe un telefon sau o tabletă, într-un meci și pe terenul de antrenament:
 **M** încă oprește sunetul și **F10** încă iese și fără el. Într-o fereastră îngustă, aceste pictograme și
 celelalte butoane ale ecranului se strâng în **☰**; doar butonul principal rămâne afară.
 ⚙ deschide Opțiunile ca fereastră sub bară, cu ecranul încă în spate; Esc, × sau un clic în afară o închide.
-[?] deschide Ajutorul la fel, ca fereastră sub el cu un selector de pagină sus; meciul continuă în spate.
+[?] deschide Ajutorul la fel, ca fereastră sub el cu paginile sale listate în stânga; meciul continuă în spate.
 Ajutorul se închide cu propriul ×, cu Esc, cu un clic în afară sau apăsând din nou [?].
 
 **Trimite un beat lobby-ului tău.** În editorul de beaturi (♪, apoi **Editează**),

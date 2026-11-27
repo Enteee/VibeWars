@@ -1,6 +1,7 @@
 import { versionLine } from "../build-info.js";
 import { t } from "../i18n/index.js";
 import { SOURCE_URL } from "../source.js";
+import { mountFlyoutRail } from "./flyout-rail.js";
 import { h, overlayClose } from "./kit.js";
 import { mountLicences } from "./licences-section.js";
 import { helpDocPages, playerDocTargets, renderPlayerDoc, type DocNode } from "./player-docs.js";
@@ -11,9 +12,9 @@ import { mountTrailer } from "./trailer-section.js";
  * Help (#1257): the player docs of `docs/player/`, as a window that drops
  * from the top bar's [?] or the HUD's (#3552), like Options. A second
  * press on [?], Esc, a click outside or its × puts it away, and the screen
- * or match under it goes on as it was: a match is never paused. A page
- * picker on top chooses the page; a link to another page switches page in
- * place.
+ * or match under it goes on as it was: a match is never paused. A rail of
+ * pages beside the page chooses it (#4216); a link to another page
+ * switches page in place.
  *
  * After the docs, the trailer (#3835) and the third-party licences (#2559)
  * have pages of their own, drawn by code rather than from markdown.
@@ -63,7 +64,7 @@ export function attachHelpWindow(
     helpOpen = true;
     return {
       element: help.panel,
-      focus: help.picker,
+      focus: help.focus,
       dispose() {
         helpOpen = false;
         onClose?.();
@@ -95,11 +96,11 @@ export function isHelpOpen(): boolean {
   return helpOpen;
 }
 
-/** The window: its ×, the page picker, the page, then the source and version. */
+/** The window: its ×, the rail of pages beside the page, then the source and version. */
 function helpPanel(
   close: () => void,
   pageId: string | undefined,
-): { readonly panel: HTMLElement; readonly picker: HTMLSelectElement } {
+): { readonly panel: HTMLElement; readonly focus: HTMLElement } {
   const panel = h("div", "screen help-screen help-window");
   panel.setAttribute("aria-modal", "false");
   panel.setAttribute("aria-label", t("help.label"));
@@ -107,16 +108,7 @@ function helpPanel(
   panel.tabIndex = -1;
   panel.appendChild(overlayClose(close));
 
-  const picker = document.createElement("select");
-  picker.className = "help-picker";
-  picker.setAttribute("aria-label", t("help.pages"));
   const pages = helpDocPages();
-  for (const page of [...pages, TRAILER_PAGE, LICENCES_PAGE]) {
-    const option = document.createElement("option");
-    option.value = page.id;
-    option.textContent = page.title;
-    picker.appendChild(option);
-  }
   const pane = h("article", "help-page");
   const footer = h("div", "help-footer");
   // The AGPL's network clause: whoever plays it is offered the source (#1442).
@@ -130,10 +122,11 @@ function helpPanel(
     source,
     h("p", "help-version", versionLine(__VIBEWARS_RELEASE__, __VIBEWARS_BUILD__)),
   );
-  panel.append(picker, pane, footer);
 
   const targets = playerDocTargets();
-  const show = (id: string, anchor?: string): void => {
+  // The section a link asked for, scrolled to once its page is drawn.
+  let anchor: string | undefined;
+  const show = (id: string): void => {
     if (id === TRAILER_PAGE.id) {
       pane.dataset.page = TRAILER_PAGE.id;
       pane.replaceChildren();
@@ -150,7 +143,6 @@ function helpPanel(
       pane.dataset.page = page.id;
       pane.replaceChildren(...renderPlayerDoc(page.markdown, targets).map(toDom));
     }
-    picker.value = id;
     pane.scrollTop = 0;
     // A link to a section opens at its heading (#3812). Looked up in the
     // pane: an id is not unique across the app.
@@ -159,8 +151,13 @@ function helpPanel(
       section?.scrollIntoView({ block: "start" });
     }
   };
-  picker.addEventListener("change", () => {
-    show(picker.value);
+  const rail = mountFlyoutRail({
+    label: t("help.pages"),
+    entries: [...pages, TRAILER_PAGE, LICENCES_PAGE],
+    pane,
+    show,
+    initial: pageId,
+    drilled: pageId !== undefined,
   });
   // A link to another page stays in the window.
   pane.addEventListener("click", (event) => {
@@ -168,12 +165,14 @@ function helpPanel(
     const link = target instanceof Element ? target.closest<HTMLElement>("a[data-page]") : null;
     if (link?.dataset.page !== undefined) {
       event.preventDefault();
-      show(link.dataset.page, link.dataset.anchor);
+      anchor = link.dataset.anchor;
+      rail.select(link.dataset.page);
+      anchor = undefined;
     }
   });
 
-  show(pageId ?? pages[0]?.id ?? "");
-  return { panel, picker };
+  panel.append(rail.element, footer);
+  return { panel, focus: rail.focusTarget() };
 }
 
 /** A sanitised node as DOM: only `DocTag`s, attributes set one by one, text as text. */

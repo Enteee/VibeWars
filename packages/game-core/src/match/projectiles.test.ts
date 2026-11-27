@@ -775,7 +775,7 @@ describe("Fireball flies (#535)", () => {
 
   it("a wall along the flight stops it: obstructed, no damage", () => {
     const match = fireSim(
-      [target(vec2(300, -200))],
+      [target(vec2(300, -350))],
       [
         { a: vec2(200, 5), b: vec2(220, 5) },
         { a: vec2(220, 5), b: vec2(220, 100) },

@@ -489,6 +489,7 @@ export default {
   "effects.untilEnds": "hasta que termine",
   "effects.you": "tú",
 
+  "flyout.back": "Volver a la lista",
   "fullscreen.enter": "Pantalla completa",
   "fullscreen.leave": "Salir de pantalla completa",
 

@@ -1,6 +1,6 @@
 # Pomoć
 
-Stranice prozora Pomoć u igri, redoslijedom kojim ih navodi njegov birač stranica. Svaka
+Stranice prozora Pomoć u igri, redoslijedom kojim ih prikazuje njegov popis stranica. Svaka
 stranica u ovoj mapi navedena je ovdje točno jednom.
 
 - [Prvi koraci](getting-started.md)

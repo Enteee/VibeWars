@@ -531,6 +531,7 @@ export default {
   "effects.untilEnds": "حتى ينتهي",
   "effects.you": "أنت",
 
+  "flyout.back": "العودة إلى القائمة",
   "fullscreen.enter": "ملء الشاشة",
   "fullscreen.leave": "إنهاء ملء الشاشة",
 

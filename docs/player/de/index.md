@@ -1,6 +1,6 @@
 # Hilfe
 
-Die Seiten des Hilfe-Fensters im Spiel, in der Reihenfolge, in der die Seitenauswahl
+Die Seiten des Hilfe-Fensters im Spiel, in der Reihenfolge, in der seine Seitenliste
 sie aufführt. Jede Seite in diesem Verzeichnis ist hier genau einmal aufgeführt.
 
 - [Erste Schritte](getting-started.md)

@@ -504,6 +504,7 @@ export default {
   "effects.untilEnds": "доки не закінчиться",
   "effects.you": "ти",
 
+  "flyout.back": "Назад до списку",
   "fullscreen.enter": "На весь екран",
   "fullscreen.leave": "Вийти з повного екрана",
 

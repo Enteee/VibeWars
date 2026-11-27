@@ -1,7 +1,7 @@
 # Aide
 
-Les pages de la fenêtre d'Aide du jeu, dans l'ordre où son sélecteur de page
-les liste. Chaque page de ce dossier est listée ici une seule fois.
+Les pages de la fenêtre d'Aide du jeu, dans l'ordre où sa liste de pages
+les affiche. Chaque page de ce dossier est listée ici une seule fois.
 
 - [Bien démarrer](getting-started.md)
 - [Commandes](controls.md)

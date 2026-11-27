@@ -424,6 +424,7 @@ export default {
   "effects.untilEnds": "đến khi hết",
   "effects.you": "bạn",
 
+  "flyout.back": "Quay lại danh sách",
   "fullscreen.enter": "Toàn màn hình",
   "fullscreen.leave": "Thoát toàn màn hình",
 

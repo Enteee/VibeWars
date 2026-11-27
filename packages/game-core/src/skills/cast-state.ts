@@ -99,10 +99,11 @@ export interface ActiveCast {
 }
 
 /**
- * How close to zero an aftercast may be and count as over: 0.75 s in
- * 0.05 s ticks leaves a float crumb that would otherwise cost a tick.
+ * How close to zero a countdown may be and count as over: a cast, a
+ * recharge, a disable, a copy or an aftercast. 3 s or 0.75 s in 0.05 s
+ * ticks leaves a float crumb that would otherwise cost a tick (#4231).
  */
-const AFTERCAST_EPSILON = 1e-9;
+const COUNTDOWN_EPSILON = 1e-9;
 
 /** A wait still running: seconds remaining, and the seconds it started with. */
 type Wait = readonly [remaining: number, total: number];
@@ -455,7 +456,7 @@ export class CastState {
     for (const waits of [this.#recharge, this.#disabled]) {
       for (const [skillId, [remaining, total]] of waits) {
         const next = remaining - dt;
-        if (next <= 0) {
+        if (next <= COUNTDOWN_EPSILON) {
           waits.delete(skillId);
         } else {
           waits.set(skillId, [next, total]);
@@ -469,7 +470,7 @@ export class CastState {
     // starts its own recharge (#469).
     for (const [slot, copy] of [...this.#overrides]) {
       copy.remainingSeconds -= dt;
-      if (copy.remainingSeconds <= 0) {
+      if (copy.remainingSeconds <= COUNTDOWN_EPSILON) {
         this.#overrides.delete(slot);
         this.#forget(copy.key);
         this.startRecharge(copy.restores.skillId, copy.restores.rechargeSeconds);
@@ -478,7 +479,7 @@ export class CastState {
 
     if (this.#aftercastRemaining > 0) {
       this.#aftercastRemaining -= dt;
-      if (this.#aftercastRemaining <= AFTERCAST_EPSILON) {
+      if (this.#aftercastRemaining <= COUNTDOWN_EPSILON) {
         this.#aftercastRemaining = 0;
       }
     }
@@ -489,7 +490,7 @@ export class CastState {
     }
 
     cast.remainingSeconds -= dt;
-    if (cast.remainingSeconds > 0) {
+    if (cast.remainingSeconds > COUNTDOWN_EPSILON) {
       return undefined;
     }
 

@@ -155,7 +155,7 @@ describe("dazed slows spells only (#524)", () => {
 
     match.setTarget("w", "foe");
     match.requestSkill("w", 2);
-    expect(w.cast.activeCast?.totalSeconds).toBe(2);
+    expect(w.cast.activeCast?.totalSeconds).toBe(3);
   });
 });
 

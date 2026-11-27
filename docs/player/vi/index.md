@@ -1,6 +1,6 @@
 # Hỗ trợ
 
-Các trang của cửa sổ Hỗ trợ trong game, theo thứ tự bộ chọn trang liệt kê.
+Các trang của cửa sổ Hỗ trợ trong game, theo thứ tự danh sách trang của nó hiển thị.
 Mỗi trang trong thư mục này được liệt kê ở đây đúng một lần.
 
 - [Bắt đầu](getting-started.md)

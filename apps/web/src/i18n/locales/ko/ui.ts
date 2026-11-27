@@ -428,6 +428,7 @@ export default {
   "effects.untilEnds": "종료될 때까지",
   "effects.you": "나",
 
+  "flyout.back": "목록으로 돌아가기",
   "fullscreen.enter": "전체 화면",
   "fullscreen.leave": "전체 화면 종료",
 

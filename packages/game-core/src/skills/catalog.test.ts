@@ -441,8 +441,8 @@ describe("headless combat simulation", () => {
     const victim = actor(makeCombatant({ id: "victim", team: 1 }), [], 100);
 
     expect(tryCast(ele, "elementalist.fireball", victim)).toBeUndefined();
-    // Finish the 1s cast.
-    for (let i = 0; i < 20; i += 1) {
+    // Finish the 1.5 s cast.
+    for (let i = 0; i < 30; i += 1) {
       tick(ele, victim);
     }
     // Immediately after, the 7s recharge is running.
