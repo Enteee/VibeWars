@@ -4,6 +4,7 @@ import { RANGE_SPELL } from "../../../distances.js";
 import { NO_RANKS, type StatusId } from "../../../skills/status.js";
 import { BOT_REACTION, INSTANT_REACTION, createCursor, decide } from "../../behaviour.js";
 import { vec2, type Vec2 } from "../../../vec2.js";
+import { ghostId } from "../../ghost.js";
 import type { MatchSimulation } from "../../simulation.js";
 import {
   BOT,
@@ -549,5 +550,42 @@ describe("casters aim area skills at clumped foes (#4147)", () => {
     expect(
       decide(BOT, createCursor(), contextFor(sim, "m", { calledTargetId: "t" })),
     ).toMatchObject({ useSkillId: FIREBALL, targetId: "t" });
+  });
+});
+
+describe("snares on the diver (#4156)", () => {
+  const CRIPPLING_SHOT = "ranger.crippling-shot";
+  const HUNTERS_SHOT = "ranger.hunters-shot";
+
+  /** A ranger with `skillBar` at (400, 400), its monk at (300, 600) with `d` on it, the team's target `target` at (800, 400). */
+  function dived(skillBar: string[], target = "t"): MatchSimulation {
+    const sim = match([
+      fighter("r", 0, RANGER, vec2(400, 400), { skillBar }),
+      fighter("monk", 0, MONK, vec2(300, 600), { behaviour: undefined }),
+      fighter(target, 1, WARRIOR, vec2(800, 400), { behaviour: undefined }),
+      fighter("d", 1, WARRIOR, vec2(340, 600), { behaviour: undefined }),
+    ]);
+    sim.setTarget("d", "monk");
+    return sim;
+  }
+
+  it("casts Crippling Shot at the warrior on its healer, its other attacks at the team target", () => {
+    expect(fight.decide(ruleFor(dived([CRIPPLING_SHOT]), "r", { targetId: "t" }))).toMatchObject({
+      useSkillId: CRIPPLING_SHOT,
+      targetId: "d",
+    });
+    expect(
+      fight.decide(ruleFor(dived([HUNTERS_SHOT]), "r", { targetId: "t", spikeHold: false })),
+    ).toMatchObject({
+      useSkillId: HUNTERS_SHOT,
+      targetId: "t",
+    });
+  });
+
+  it("casts it at a ghost team target", () => {
+    const ghost = ghostId(1);
+    expect(
+      fight.decide(ruleFor(dived([CRIPPLING_SHOT], ghost), "r", { targetId: ghost })),
+    ).toMatchObject({ useSkillId: CRIPPLING_SHOT, targetId: ghost });
   });
 });

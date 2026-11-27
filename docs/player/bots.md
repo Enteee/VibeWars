@@ -41,6 +41,7 @@ team of bots would.
 While you are active, a bot that a fight drags far from you walks back to you, unless it is badly hurt or a foe is right on it.
 A frontliner turns on a foe that attacks its team's healer or casters, unless it is about to finish its own target.
 A bot with an area spell drops it where three or more foes stand together, unless the team is finishing a foe or following a called target.
+A bot with a crippling or slowing skill uses it on a foe at its side, or on one diving its healer or casters, before the team's target.
 
 Against a team with area skills, ranged bots and healers keep apart, so one blast can't catch two of them. They never give up cover to do it.
 

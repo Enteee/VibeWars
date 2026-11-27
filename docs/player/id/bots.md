@@ -41,6 +41,7 @@ terus bermain seperti tim yang seluruhnya bot.
 Selama kamu aktif, bot yang terseret pertarungan jauh darimu berjalan kembali kepadamu, kecuali ia terluka parah atau ada lawan tepat di dekatnya.
 Bot garis depan berbalik menyerang musuh yang menyerang penyembuh atau perapal mantra timnya, kecuali ia hampir menghabisi targetnya sendiri.
 Bot yang punya mantra area menjatuhkannya di tempat tiga musuh atau lebih berdiri berdekatan, kecuali timnya sedang menghabisi musuh atau mengikuti target yang ditandai.
+Bot dengan skill yang melumpuhkan atau memperlambat memakainya pada lawan di sampingnya, atau pada lawan yang menyerbu healer atau caster timnya, sebelum target tim.
 
 Melawan tim dengan skill area, bot jarak jauh dan healer saling menjaga jarak, agar satu ledakan tidak mengenai dua dari mereka. Mereka tidak pernah melepas perlindungan untuk itu.
 
