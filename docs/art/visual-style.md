@@ -248,7 +248,8 @@ outlines, and the noise fill on a map without one.
   on the ground and is never baked in; a Ghostly Hero is a pale blue-grey
   body at 0.75 alpha with its axe and no cape, its glyph on a badge on
   top. A creature with no figure yet, a knocked-down one and fallen
-  bodies stay discs.
+  bodies stay discs. At match zoom: `creature-stack-match.png`, discs left,
+  figures right.
   **A wall top**, a deck edge and a cover cap have a 1 px gothic outline,
   `WALL_STROKE` `#08080a`, in every biome (#4056); a prop has a 2 px dark outline. **A zone** has a hard
   bright edge, 2 lines wide, never softer than its fill.
