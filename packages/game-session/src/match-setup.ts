@@ -57,6 +57,8 @@ export interface SeatSetup {
   /** Its team's seats before it, which picks its spawn point. */
   readonly teammates: number;
   readonly bot: boolean;
+  /** A bot that stands still and never acts (#4146), as `holdBots` makes it. */
+  readonly holds: boolean;
   readonly startMorale: number;
 }
 
@@ -88,6 +90,10 @@ export function participantSpec(map: HostMap, seat: SeatSetup): ParticipantSpec 
     ),
     startMorale: seat.startMorale,
     // A human-like moment to react, not the same tick (#2606).
-    behaviour: seat.bot ? { kind: "play-build", reaction: BOT_REACTION } : undefined,
+    behaviour: !seat.bot
+      ? undefined
+      : seat.holds
+        ? { kind: "idle" }
+        : { kind: "play-build", reaction: BOT_REACTION },
   };
 }
