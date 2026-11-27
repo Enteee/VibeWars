@@ -17,9 +17,7 @@ type Text = string | RegExp;
  * Hover `icon` until one tooltip says every one of `says` and none of
  * `omits`. A solo match's foe is a random starter build (#2148): a hex it
  * lands mid-hover reflows the list and the pointer ends on another icon, so
- * every check on the text sits inside the retry. Each try leaves the list
- * first: a tooltip shut by a redraw under a still pointer opens again only
- * on a fresh `mouseenter`, which hovering the same spot never fires (#4138).
+ * every check on the text sits inside the retry.
  */
 async function hoverEffect(
   page: Page,
@@ -28,17 +26,10 @@ async function hoverEffect(
   omits: readonly Text[] = [],
 ): Promise<void> {
   const tip = page.getByRole("tooltip");
-  // The tooltip opens SLOT_TOOLTIP_DELAY_MS (300 ms) after the pointer
-  // enters; 2 s leaves a slow runner room for it.
-  const wait = { timeout: 2000 };
   await expect(async () => {
-    // The top-left corner: no tooltip trigger there in a solo match. The
-    // hover has the short wait too, so a row it cannot land on is retried,
-    // not waited on for the whole test.
-    await page.mouse.move(0, 0);
-    await icon.hover(wait);
-    for (const text of says) await expect(tip).toContainText(text, wait);
-    for (const text of omits) await expect(tip).not.toContainText(text, wait);
+    await icon.hover();
+    for (const text of says) await expect(tip).toContainText(text, { timeout: 1000 });
+    for (const text of omits) await expect(tip).not.toContainText(text, { timeout: 1000 });
   }).toPass();
 }
 

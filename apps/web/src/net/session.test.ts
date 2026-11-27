@@ -1,4 +1,4 @@
-import { pickStarterBuild } from "@vibewars/game-core";
+import { getSkill, pickSoloFoeBuild } from "@vibewars/game-core";
 import {
   LobbyNoAnswerError,
   LobbyRefusedError,
@@ -280,11 +280,11 @@ describe("a Team Lobby's RNG (#2213)", () => {
     expect(lobbyRandom(undefined)).toBe(secureRandom);
   });
 
-  it("with the e2e build's seed, gives every lobby the same solo foe: a healer Monk", () => {
-    const foes = [lobbyRandom("4404"), lobbyRandom("4404")].map((random) =>
-      pickStarterBuild(random),
-    );
-    expect(foes.map((foe) => foe.name)).toEqual(["Word of Healing (Mo)", "Word of Healing (Mo)"]);
+  it("with the e2e build's seed, gives every solo match the same foe, who never hexes", () => {
+    const foes = [lobbyRandom("16"), lobbyRandom("16")].map((random) => pickSoloFoeBuild(random));
+    expect(foes.map((foe) => foe.name)).toEqual(["Flesh Wound (P/W)", "Flesh Wound (P/W)"]);
+    const types = foes[0]?.skillBar.map((id) => (id === null ? null : getSkill(id)?.type));
+    expect(types).not.toContain("hex");
   });
 
   it("refuses a seed that is not a decimal integer, rather than falling back to crypto", () => {
