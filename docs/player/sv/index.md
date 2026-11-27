@@ -1,6 +1,6 @@
 # Hjälp
 
-Sidorna i spelets hjälpfönster, i den ordning sidväljaren listar dem. Varje sida
+Sidorna i spelets hjälpfönster, i den ordning listan med sidor visar dem. Varje sida
 i den här katalogen listas här exakt en gång.
 
 - [Kom igång](getting-started.md)

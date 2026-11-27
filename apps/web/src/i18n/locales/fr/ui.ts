@@ -496,6 +496,7 @@ export default {
   "effects.untilEnds": "jusqu'à sa fin",
   "effects.you": "toi",
 
+  "flyout.back": "Retour à la liste",
   "fullscreen.enter": "Plein écran",
   "fullscreen.leave": "Quitter le plein écran",
 

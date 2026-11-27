@@ -466,6 +466,7 @@ export default {
   "effects.untilEnds": "bis zum Ende",
   "effects.you": "dir",
 
+  "flyout.back": "Zurück zur Liste",
   "fullscreen.enter": "Vollbild",
   "fullscreen.leave": "Vollbild beenden",
 

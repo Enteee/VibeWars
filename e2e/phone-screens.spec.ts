@@ -1,7 +1,7 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
 import { joinFriend, openRail, showRail, type RailLabel } from "./helpers/menu.js";
-import { clickTopbarIcon } from "./helpers/overlay.js";
+import { clickTopbarIcon, optionsEntry } from "./helpers/overlay.js";
 import { copyInvite, hostLobby, openPeers, openToFriends, setTeamSize } from "./helpers/peers.js";
 import {
   PIXEL_8A_LANDSCAPE,
@@ -26,6 +26,11 @@ test.use(PIXEL_8A_PORTRAIT);
 async function openPhone(page: Page, url = "./"): Promise<void> {
   await page.goto(url);
   await expect(page.locator(".rail-title")).toBeVisible();
+}
+
+/** Back from a drilled-in flyout page to its list (#4216). */
+async function backToList(page: Page): Promise<void> {
+  await page.getByRole("button", { name: "Back to the list", exact: true }).click();
 }
 
 /** `locator`'s box is a finger's at least (#3776). */
@@ -115,25 +120,34 @@ for (const label of [
   });
 }
 
-test("Options, every section, fits the phone (#3776)", async ({ page }) => {
+test("Options, every section, fits the phone, drilled into from a list of 44 px entries (#3776, #4216)", async ({
+  page,
+}) => {
   await openPhone(page);
   await clickTopbarIcon(page, ".topbar-options");
-  const entries = page.locator(".options-entry");
+  const entries = page.locator(".flyout-rail-entry");
+  await expect(optionsEntry(page, "player")).toBeFocused();
+  await expectFitsPhone(page, "Options: the list");
   for (let i = 0; i < (await entries.count()); i += 1) {
+    const title = (await entries.nth(i).textContent()) ?? "";
     await entries.nth(i).click();
-    await expectFitsPhone(page, `Options: ${(await entries.nth(i).textContent()) ?? ""}`);
+    await expect(page.locator(".flyout-rail-title")).toHaveText(title);
+    await expectFitsPhone(page, `Options: ${title}`);
+    await backToList(page);
+    await expect(entries.nth(i)).toBeFocused();
   }
 });
 
 test("Help, every page, fits the phone (#3776)", async ({ page }) => {
   await openPhone(page);
   await clickTopbarIcon(page, ".topbar-help");
-  const picker = page.locator(".help-picker");
-  for (const value of await picker
-    .locator("option")
-    .evaluateAll((options) => options.map((option) => (option as HTMLOptionElement).value))) {
-    await picker.selectOption(value);
-    await expectFitsPhone(page, `Help: ${value}`);
+  const entries = page.locator(".flyout-rail-entry");
+  await expect(entries).toHaveCount(14);
+  await expectFitsPhone(page, "Help: the list");
+  for (let i = 0; i < 14; i += 1) {
+    await entries.nth(i).click();
+    await expectFitsPhone(page, `Help: ${(await entries.nth(i).getAttribute("data-id")) ?? ""}`);
+    await backToList(page);
   }
 });
 

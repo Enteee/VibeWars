@@ -462,6 +462,7 @@ export default {
   "effects.untilEnds": "indtil den slutter",
   "effects.you": "dig",
 
+  "flyout.back": "Tilbage til listen",
   "fullscreen.enter": "Fuld skærm",
   "fullscreen.leave": "Afslut fuld skærm",
 

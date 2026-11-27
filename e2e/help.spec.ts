@@ -166,7 +166,11 @@ test("Help's last page is the third-party licences, not Options' (#2559)", async
 
   await page.keyboard.press("Escape");
   await page.locator(".topbar-options").click();
-  await expect(page.locator('.options-entry[data-section="licences"]')).toHaveCount(0);
+  await expect(
+    page
+      .getByRole("navigation", { name: "options sections" })
+      .getByRole("button", { name: /licen/i }),
+  ).toHaveCount(0);
 });
 
 test("Help's Trailer page, first after the docs, fetches nothing from GitHub until Play (#3835)", async ({
@@ -249,11 +253,12 @@ for (const code of ["en", "de", "ar", "ru", "hu", "fi"] satisfies LanguageCode[]
       await clickTopbarIcon(page, ".topbar-help");
       const help = page.getByRole("dialog");
       const pane = help.locator(".help-page");
-      const picker = help.locator(".help-picker");
-      for (const id of await picker
-        .locator("option")
-        .evaluateAll((options) => options.map((option) => (option as HTMLOptionElement).value))) {
-        await picker.selectOption(id);
+      // Narrow, the rail is a list: each page is drilled into, then back (#4216).
+      const entries = help.locator(".flyout-rail-entry");
+      for (const id of await entries.evaluateAll((nodes) =>
+        nodes.map((node) => (node as HTMLElement).dataset.id ?? ""),
+      )) {
+        await help.locator(`.flyout-rail-entry[data-id="${id}"]`).click();
         await expect(pane).toHaveAttribute("data-page", id);
         const { scrollWidth, clientWidth } = await pane.evaluate((node) => ({
           scrollWidth: node.scrollWidth,
@@ -263,6 +268,7 @@ for (const code of ["en", "de", "ar", "ru", "hu", "fi"] satisfies LanguageCode[]
           scrollWidth,
           `${id} is ${String(scrollWidth)} px in ${String(clientWidth)}`,
         ).toBeLessThanOrEqual(clientWidth + 1);
+        await help.locator(".flyout-rail-back-button").click();
       }
     });
   });

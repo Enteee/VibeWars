@@ -434,6 +434,7 @@ export default {
   "effects.untilEnds": "sampai berakhir",
   "effects.you": "kamu",
 
+  "flyout.back": "Kembali ke daftar",
   "fullscreen.enter": "Layar penuh",
   "fullscreen.leave": "Keluar layar penuh",
 

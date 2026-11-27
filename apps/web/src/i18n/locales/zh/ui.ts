@@ -427,6 +427,7 @@ export default {
   "effects.untilEnds": "直至结束",
   "effects.you": "你",
 
+  "flyout.back": "返回列表",
   "fullscreen.enter": "全屏",
   "fullscreen.leave": "退出全屏",
 

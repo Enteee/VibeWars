@@ -492,6 +492,7 @@ export default {
   "effects.untilEnds": "do kraja",
   "effects.you": "ti",
 
+  "flyout.back": "Natrag na popis",
   "fullscreen.enter": "Cijeli zaslon",
   "fullscreen.leave": "Izađi iz cijelog zaslona",
 

@@ -464,6 +464,7 @@ export default {
   "effects.untilEnds": "bitene dek",
   "effects.you": "sen",
 
+  "flyout.back": "Listeye dön",
   "fullscreen.enter": "Tam ekran",
   "fullscreen.leave": "Tam ekrandan çık",
 

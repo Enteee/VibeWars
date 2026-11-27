@@ -1,5 +1,6 @@
 import { t } from "../i18n/index.js";
 import { availableLanguages } from "../i18n/languages.js";
+import { mountFlyoutRail } from "./flyout-rail.js";
 import { overlayClose } from "./kit.js";
 import { optionsSections, type OptionsOwner } from "./options-sections.js";
 import { attachTopbarPopover } from "./topbar-popover.js";
@@ -81,8 +82,7 @@ export function attachOptionsWindow(
     windowOpen = true;
     return {
       element: options.panel,
-      focus:
-        options.panel.querySelector<HTMLElement>(".options-entry.is-selected") ?? options.panel,
+      focus: options.focus(),
       // A click outside leaves a key-rebind that still waits open (#2386).
       holdsOpen: () => options.panel.querySelector(".key-cell.is-capturing") !== null,
       dispose() {
@@ -105,61 +105,34 @@ function optionsPanel(
   owner: OptionsOwner,
 ): {
   readonly panel: HTMLElement;
+  readonly focus: () => HTMLElement;
   readonly dispose: () => void;
 } {
   const panel = document.createElement("div");
   panel.appendChild(overlayClose(close));
 
-  const body = document.createElement("div");
-  body.className = "options-body";
-  const nav = document.createElement("nav");
-  nav.className = "options-nav";
-  nav.setAttribute("aria-label", t("options.sections"));
   const pane = document.createElement("section");
   pane.className = "options-pane";
-  body.append(nav, pane);
-  panel.appendChild(body);
-
   const sections = optionsSections(availableLanguages(), owner);
   const switcher = new SectionSwitcher<HTMLElement>(pane, (container) => {
     container.replaceChildren();
   });
-  const entries = sections.map((section) => {
-    const entry = document.createElement("button");
-    entry.type = "button";
-    entry.className = "options-entry";
-    entry.dataset.section = section.id;
-    entry.textContent = section.title;
-    entry.addEventListener("click", () => {
-      select(section.id);
-    });
-    nav.appendChild(entry);
-    return entry;
-  });
-  const select = (id: string): void => {
-    const section = sections.find((candidate) => candidate.id === id);
-    if (section === undefined) {
-      return;
-    }
-    pane.dataset.section = section.id;
-    switcher.show(section);
-    for (const entry of entries) {
-      const selected = entry.dataset.section === id;
-      entry.classList.toggle("is-selected", selected);
-      if (selected) {
-        entry.setAttribute("aria-current", "true");
-      } else {
-        entry.removeAttribute("aria-current");
+  const rail = mountFlyoutRail({
+    label: t("options.sections"),
+    entries: sections,
+    pane,
+    show: (id) => {
+      const section = sections.find((candidate) => candidate.id === id);
+      if (section !== undefined) {
+        pane.dataset.section = section.id;
+        switcher.show(section);
       }
-    }
-  };
-
-  const [first] = sections;
-  if (first !== undefined) {
-    select(first.id);
-  }
+    },
+  });
+  panel.appendChild(rail.element);
   return {
     panel,
+    focus: rail.focusTarget,
     dispose: () => {
       switcher.close();
     },

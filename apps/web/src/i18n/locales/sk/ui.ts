@@ -507,6 +507,7 @@ export default {
   "effects.untilEnds": "kým neskončí",
   "effects.you": "ty",
 
+  "flyout.back": "Späť na zoznam",
   "fullscreen.enter": "Celá obrazovka",
   "fullscreen.leave": "Ukončiť celú obrazovku",
 

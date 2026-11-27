@@ -1,6 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 
-import { clickTopbarIcon } from "./helpers/overlay.js";
+import { clickTopbarIcon, optionsEntry } from "./helpers/overlay.js";
 
 /**
  * Options > Cosmetics (#4177): the figure wearing the shown look stays in
@@ -17,7 +17,7 @@ const VIEWPORTS = [
 async function openCosmetics(page: Page): Promise<void> {
   await clickTopbarIcon(page, ".topbar-options");
   await expect(page.locator(".options-screen")).toBeVisible();
-  await page.locator('.options-entry[data-section="cosmetics"]').click();
+  await optionsEntry(page, "cosmetics").click();
   await expect(page.locator(".cosmetics-slots")).toBeVisible();
 }
 

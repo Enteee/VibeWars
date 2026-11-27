@@ -463,6 +463,7 @@ export default {
   "effects.untilEnds": "tot het eindigt",
   "effects.you": "jou",
 
+  "flyout.back": "Terug naar de lijst",
   "fullscreen.enter": "Volledig scherm",
   "fullscreen.leave": "Volledig scherm uit",
 

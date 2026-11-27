@@ -495,6 +495,7 @@ export default {
   "effects.untilEnds": "până se încheie",
   "effects.you": "tu",
 
+  "flyout.back": "Înapoi la listă",
   "fullscreen.enter": "Ecran complet",
   "fullscreen.leave": "Ieși din ecran complet",
 

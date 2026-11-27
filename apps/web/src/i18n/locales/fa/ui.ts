@@ -462,6 +462,7 @@ export default {
   "effects.untilEnds": "تا پایانش",
   "effects.you": "تو",
 
+  "flyout.back": "بازگشت به فهرست",
   "fullscreen.enter": "تمام‌صفحه",
   "fullscreen.leave": "خروج از تمام‌صفحه",
 

@@ -471,6 +471,7 @@ export default {
   "effects.untilEnds": "μέχρι να λήξει",
   "effects.you": "εσύ",
 
+  "flyout.back": "Πίσω στη λίστα",
   "fullscreen.enter": "Πλήρης οθόνη",
   "fullscreen.leave": "Έξοδος από πλήρη οθόνη",
 

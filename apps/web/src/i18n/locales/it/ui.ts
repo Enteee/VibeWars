@@ -497,6 +497,7 @@ export default {
   "effects.untilEnds": "fino al termine",
   "effects.you": "tu",
 
+  "flyout.back": "Torna all'elenco",
   "fullscreen.enter": "Schermo intero",
   "fullscreen.leave": "Esci da schermo intero",
 
