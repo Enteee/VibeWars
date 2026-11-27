@@ -1,0 +1,109 @@
+var e=`# Botovi
+
+**Bot** je igrač kojeg igra igra umjesto tebe. U sobi koju vodiš botovi
+igraju svako mjesto koje nitko ne uzme, pa možeš vježbati ili igrati s manje
+prijatelja.
+
+## Tko igra bota
+
+Nitko ne dodaje botove: soba navodi samo svoje ljude. Kad
+[Timska soba](modes.md#timska-soba) završi, svaka strana igra timski sastav koji je
+odabrala, a svakog njegovog lika kojeg nitko nije uzeo igra bot,
+pod imenom tog lika. Strana bez ikoga igra nasumični
+unaprijed zadani tim, samih botova. Tko napusti Timsku sobu, ostavlja svog
+lika botu.
+
+U sobi i Timskoj sobi bot izgleda kao i svi drugi. U
+meču je označen s **BOT** na natpisu s imenom, okviru mete, prozoru
+grupe i sažetku meča.
+
+Botovi se stvaraju za jedan meč: kad završi, soba opet navodi svoje ljude,
+a botovi sljedećeg meča stvaraju se iznova.
+
+## Kako se botovi bore
+
+Bot igra ulogu koju mu daje sastav. Onaj s oružjem za blisku borbu je
+**prva linija**: približava se i napada svoju metu. Onaj s dvije ili više
+vještina liječenja ili zaštite koje može baciti na saveznika je **iscjelitelj**: stoji
+iza saveznika koji je najteže ranjen, podalje od neprijatelja. Kad dva ili više
+neprijatelja napadnu istog saveznika, iscjelitelj stavlja svoju zaštitu na njega prije
+nego što udarac padne. Svaki drugi bot je **dalekometni**: drži se tamo gdje dosežu svi
+njegovi napadi te staje i bori se s neprijateljem koji mu priđe preblizu. Dalekometni
+botovi i iscjelitelji pomiču se onamo gdje ih može dohvatiti manje neprijatelja i koriste stupove
+kao zaklon. Tim se okreće na svakog neprijatelja u dosegu koji padne ispod 60% zdravlja,
+da ga dokrajči. U Kralju brda, dok tvoj tim ne drži oltar,
+Sablasni heroj drugog tima na oltaru dolazi čak i prije toga.
+U timu botova bot koji jako odmakne od tima čeka ostale prije nego što
+krene dalje. Botovi u tvom timu umjesto toga ostaju uz tebe: prva linija
+korak ispred, dalekometni pokraj tebe, iscjelitelji iza, i prate te kamo
+god kreneš. Kad već neko vrijeme stojiš neaktivno, igraju dalje kao što bi
+igrao tim botova.
+Dok si aktivan, bot kojeg je borba odvukla daleko od tebe vraća se k tebi, osim ako je teško ranjen ili mu je neprijatelj odmah uz njega.
+Bot u prvoj liniji okreće se protiv neprijatelja koji napada iscjelitelja ili bacače čarolija njegova tima, osim ako upravo ne dovršava vlastitu metu.
+Bot s čarolijom na području baca je tamo gdje tri ili više neprijatelja stoje zajedno, osim ako tim upravo ne dovršava neprijatelja ili ne prati najavljenu metu.
+Bot s vještinom koja osakaćuje ili usporava koristi je na protivniku uz sebe ili na onome koji napada iscjelitelja ili čarobnjake tima, prije mete tima.
+
+Protiv tima s vještinama na području, botovi na daljinu i iscjelitelji drže se razmaknuti, da jedna eksplozija ne pogodi dvojicu. Zaklon zbog toga nikad ne napuštaju.
+
+Bot na daljinu ili iscjelitelj kojemu se neprijatelj previše približi najprije se povlači prema najbližem suborcu iz prve linije, ako je dovoljno blizu, i bori se ondje. Usporeni napadač iz blizine, primjerice osakaćen, ne može ga sustići, pa se pred njim umjesto toga povlači između hitaca.
+
+Strijelci i kopljanici zauzmu uzvisinu kad je to sigurno.
+Bot na kojeg se usredotoče dva protivnika, ili koji ima manje od pola zdravlja i brzo ga gubi, skloni im se s vida do tri sekunde: iza zida, ispod platforme ili na uzvisinu.
+Kad nijedan neprijatelj nije blizu, bot povuče polugu koja otvara kraći put do neprijatelja. Dva bota također sruše zid koji skriva mnogo kraći put, udarajući ga svojim oružjem.
+
+Botovi koji nanose štetu čuvaju velike udarce, vještine napada i čarolije štete,
+i ispaljuju ih zajedno na metu tima, tako da šteta padne odjednom
+umjesto da kaplje i iscjelitelj je poništi: najsporija čarolija ide
+prva, brža onoliko kasnije koliko je brža. U međuvremenu nastavljaju
+zamahivati i bacati uroke i stanja. Bot čeka suigrače najviše četiri
+sekunde, a uopće ne čeka da dokrajči neprijatelja ispod
+30% zdravlja. Kad je meta pod zaštitnim začaranjem poput
+Protective Spirit ili Aegis, bot s uklanjanjem začaranja, poput Strip
+Enchantment, najprije ga skine, a ostali zadržavaju udarce dok to ne učini.
+
+Teško ranjen bot koji gubi borbu povlači se iza svog iscjelitelja ili
+u svoju bazu te se odmara izvan dosega dok ne povrati većinu zdravlja.
+
+Bot uskrsava palog saveznika samo kad neprijatelji nisu odmah iznad
+tijela, kad je blizu više njegovih nego njihovih, i nikad
+dok neprijatelj u blizini cilja samog bota.
+
+Botovi se izmiču otprilike polovici projektila usmjerenih na njih, poput
+Fireball ili strijele vještine napada, pa zaustavljanje ili okret djeluju
+na njih kao i na tebe.
+
+Botovi zaobilaze zapaljeno tlo i druga štetna mjesta kad zaobilazak nije
+puno duži, i izlaze iz onog u kojem stoje.
+
+Bot s prekidom čuva ga za bacanja koja su važna: najprije
+uskrsnuće ili Sablasnog heroja koji zauzima oltar, zatim liječenje ili
+zaštitu, elitnu vještinu ili velik
+udarac poput vještine napada ili čarolije štete. Sve ostalo,
+i običan udarac oružjem, pušta. Poput igrača, promaši otprilike jedno
+od četiri takva bacanja.
+
+Botu treba ljudski trenutak, djelić sekunde, da reagira na
+ono što se događa, pa ga brz prekid ili kasni izmak mogu nadmudriti.
+
+Kad nitko u tvom timu nema označenu metu, jedan od tvojih botova označi
+neprijatelja na kojeg se tvoji botovi usredotočuju, baš kao što bi ti: vidiš
+oznaku i ime bota, pa se možeš pridružiti. Oznaka bota samo pokazuje kamo
+botovi idu; oni i dalje štite suigrača i dokrajčuju neprijatelja na
+izdisaju. Tvoja oznaka uvijek pobjeđuje: svi botovi u timu usredotoče se na
+tvoju metu, nijedan bot ne zamjenjuje tvoju oznaku, a botovi ponovno
+označavaju tek kad označena meta umre ili nestane.
+
+U borbi tri tima botovi se bore protiv jednog neprijateljskog tima
+odjednom: tima koji ih napada ili, dok ih nitko ne napada, najranjenijeg tima
+u dosegu. Ostaju na tom timu dok drugi ne usmjeri znatno više
+igrača na njih, i ne jure na svjež tim dok ih drugi
+napada. Meta koju je označio njihov tim dolazi prva, u kojem god timu
+bila. Računaju se samo igrači: sablast ili stražari nekog tima u blizini
+ne okreću botove na taj tim.
+
+## Nasumična arena
+
+Nasumična arena nema botova: svako mjesto zauzima pravi igrač, a čekaš
+dok ih dovoljno ne uđe u red.
+`;export{e as default};
+//# sourceMappingURL=bots-B1o-aMDz.js.map
