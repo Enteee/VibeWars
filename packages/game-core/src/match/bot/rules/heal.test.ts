@@ -198,6 +198,11 @@ describe("play-build protects the spiked ally (#2627)", () => {
     expect(askBot(sim, "monk")).toMatchObject({ useSkillId: PROTECTIVE_SPIRIT, targetId: "ally" });
   });
 
+  it("puts Aegis on the spiked ally (#4169)", () => {
+    const sim = target(spike(["monk.aegis"]), "ally", "foe0", "foe1");
+    expect(askBot(sim, "monk")).toMatchObject({ useSkillId: "monk.aegis", targetId: "ally" });
+  });
+
   it("leaves a full-health ally only one foe targets", () => {
     const sim = target(spike([PROTECTIVE_SPIRIT]), "ally", "foe0");
     expect(askBot(sim, "monk").useSkillId).toBeUndefined();
