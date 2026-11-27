@@ -6,6 +6,7 @@ import type { Skill, Surroundings } from "../../../skills/types.js";
 import { distance } from "../../../vec2.js";
 import { isGhostId } from "../../ghost.js";
 import { clumpTarget } from "../clump.js";
+import { snareStatus, snareTarget } from "../snare.js";
 import { feelsHeight, heightRange, heightStep } from "../../layer-rules.js";
 import {
   blindsUser,
@@ -54,8 +55,10 @@ const SPIKE_TOLERANCE = 1e-6;
  * (#2159) only past the Expertise it misses at, with two other skills
  * recharging; Screaming Shot at a foe within earshot not yet Bleeding.
  * An area skill centred on its target at the foe in the middle of a
- * clump (#4147, `clumpTarget`), unless the target is fixed; spiking
- * waits only for one cast at the team's target.
+ * clump (#4147, `clumpTarget`), unless the target is fixed. A snare at
+ * a foe at its elbow, else at one diving its healer or casters (#4156,
+ * `snareTarget`), unless the target is a ghost, and never held. Spiking waits only for
+ * one cast at the team's target.
  * A spike skill at the team's target waits for the spike (#2631): until
  * enough of the team's damage dealers could fire with it, the target is
  * low enough to finish, or it has waited `SPIKE_HOLD_MAX_SECONDS`;
@@ -161,11 +164,20 @@ const fight: BotRule = {
       targetFixed
         ? undefined
         : clumpTarget(held, self, foes, targetId, held.range, (id) => mayUse(held, id));
+    // A snare at a foe at the bot's elbow, else at one diving its healer or
+    // casters (#4156), unless the target is a ghost on the altar. Never at
+    // a clump.
+    const aside = (held: Skill): string | undefined =>
+      snareStatus(held) === undefined
+        ? clump(held)
+        : isGhostId(targetId)
+          ? undefined
+          : snareTarget(held, self, allies, foes, held.range, (id) => mayUse(held, id));
     const castOn = (held: Skill): string =>
       held.target === "self" &&
       stateGateHolds(held, self.combatant, self.combatant, surroundings) !== undefined
         ? self.id
-        : (freshFoe(held) ?? clump(held) ?? targetId);
+        : (freshFoe(held) ?? aside(held) ?? targetId);
     // The team's target is `play-build`'s: a guard's own, or a ghost on
     // the altar (#2600), is fought as it comes.
     if (cursor.spikeTargetId !== targetId) {
@@ -193,6 +205,7 @@ const fight: BotRule = {
       }
       if (
         !isSpikeSkill(held) ||
+        snareStatus(held) !== undefined ||
         castOn(held) !== targetId ||
         healthFraction(target) < SPIKE_FINISH_FRACTION ||
         cursor.spikeHeldSeconds >= SPIKE_HOLD_MAX_SECONDS

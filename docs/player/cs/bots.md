@@ -16,6 +16,7 @@ Bot hraje roli, kterou mu dává jeho build. Ten se zbraní na blízko je **v pr
 Dokud jsi aktivní, bot, kterého boj odtáhne daleko od tebe, se k tobě vrátí, pokud není těžce zraněný nebo u něj nestojí nepřítel.
 Bot v první linii se obrátí proti nepříteli, který útočí na léčitele nebo sesilatele jeho týmu, pokud se právě nechystá dorazit svůj vlastní cíl.
 Bot s plošným kouzlem ho sešle tam, kde stojí tři nebo více nepřátel pohromadě, pokud tým zrovna nedoráží nepřítele nebo nesleduje ohlášený cíl.
+Bot s dovedností, která mrzačí nebo zpomaluje, ji použije na nepřítele po svém boku nebo na toho, kdo napadá léčitele či kouzelníky týmu, dřív než na cíl týmu.
 
 Proti týmu s plošnými skilly se boti na dálku a léčitelé drží od sebe, aby jeden výbuch nezasáhl dva z nich. Krytí kvůli tomu nikdy neopustí.
 

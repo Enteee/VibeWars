@@ -41,6 +41,7 @@ igrao tim botova.
 Dok si aktivan, bot kojeg je borba odvukla daleko od tebe vraća se k tebi, osim ako je teško ranjen ili mu je neprijatelj odmah uz njega.
 Bot u prvoj liniji okreće se protiv neprijatelja koji napada iscjelitelja ili bacače čarolija njegova tima, osim ako upravo ne dovršava vlastitu metu.
 Bot s čarolijom na području baca je tamo gdje tri ili više neprijatelja stoje zajedno, osim ako tim upravo ne dovršava neprijatelja ili ne prati najavljenu metu.
+Bot s vještinom koja osakaćuje ili usporava koristi je na protivniku uz sebe ili na onome koji napada iscjelitelja ili čarobnjake tima, prije mete tima.
 
 Protiv tima s vještinama na području, botovi na daljinu i iscjelitelji drže se razmaknuti, da jedna eksplozija ne pogodi dvojicu. Zaklon zbog toga nikad ne napuštaju.
 
