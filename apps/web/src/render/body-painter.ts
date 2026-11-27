@@ -138,6 +138,12 @@ const SHADOW_UNIT: readonly { readonly x: number; readonly y: number }[] = Array
   },
 );
 
+/** A stacked figure's shadow (ADR-0057) under feet at `x`, `y`, radius `r`: a body's or a creature's (#4171). */
+export function paintFigureShadow(painter: Painter, x: number, y: number, r: number): void {
+  painter.fillStyle(0x000000, STACK_SHADOW_ALPHA);
+  painter.fillPoints(SHADOW_UNIT.map((point) => ({ x: x + r * point.x, y: y + r * point.y })));
+}
+
 /**
  * What a stacked figure (ADR-0057) leaves on the ground under it: its
  * shadow, off towards the lower right (#4060: on the ground, so a figure
@@ -146,9 +152,7 @@ const SHADOW_UNIT: readonly { readonly x: number; readonly y: number }[] = Array
  * the scene draws over these.
  */
 export function paintFigureGround(painter: Painter, body: StandingBody): void {
-  const { x, y, r } = body;
-  painter.fillStyle(0x000000, STACK_SHADOW_ALPHA);
-  painter.fillPoints(SHADOW_UNIT.map((point) => ({ x: x + r * point.x, y: y + r * point.y })));
+  paintFigureShadow(painter, body.x, body.y, body.r);
   if (body.team === "self") {
     painter.lineStyle(2, SELF_RIM, 1);
     painter.strokeCircle(body.x, body.y, body.r - 2);

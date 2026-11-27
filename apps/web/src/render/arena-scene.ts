@@ -15,6 +15,7 @@ import {
   polygonCentre,
   pointInPolygon,
   TELEPORT_COOLDOWN_SECONDS,
+  CREATURE_LOOKS,
   type CreatureLook,
   type StatusId,
   type Vec2,
@@ -78,22 +79,23 @@ import {
   STACK_BADGE_FILL,
   STACK_BADGE_RIM,
   stackBadge,
+  creatureBucket,
+  creaturePose,
+  creatureStack,
   headingBucket,
   stackOverheadRise,
   stackPose,
   stepTurn,
+  type CreatureStack,
   type StackPose,
   type StackTurn,
 } from "./sprite-stack.js";
 import {
   STACK_BAKE_RADIUS,
   STACK_BAKE_SCALE,
-  STACK_FRAME_FEET_X,
-  STACK_FRAME_FEET_Y,
-  STACK_FRAME_HEIGHT,
-  STACK_FRAME_WIDTH,
   StackAtlas,
   type BakeContext,
+  type BodyLook,
   type StackFrame,
   type StackLook,
 } from "./stack-atlas.js";
@@ -538,6 +540,7 @@ import {
   paintBodyMarks,
   paintFormAura,
   paintFigureGround,
+  paintFigureShadow,
   paintStandingBody,
   paintWeaponMark,
   type Painter,
@@ -1214,6 +1217,9 @@ export class ArenaScene extends Phaser.Scene {
     readonly actor: RenderableActor;
     readonly frame: StackFrame;
     readonly band: number;
+    /** How far over its feet it draws, world units: a spirit's bob (#4171). */
+    readonly lift: number;
+    readonly alpha: number;
   }[] = [];
   /** The casting skill's type badge by each cast bar, one pooled image per actor (#1125). */
   private castBadges = new Map<string, Phaser.GameObjects.Image>();
@@ -1314,6 +1320,9 @@ export class ArenaScene extends Phaser.Scene {
    * Bake every look on the roster into the figure atlas (ADR-0057), once,
    * at match start: never on a body's first draw, so no look hitches a
    * frame mid-fight. One that turns up later bakes off the frame path.
+   * Every stacked creature look bakes with them (#4171): the renderer
+   * does not see the bars that summon them, and a look's row is the same
+   * for every team, so they are few and small.
    */
   private bakeRoster(): void {
     const atlas = this.stackAtlas;
@@ -1321,11 +1330,16 @@ export class ArenaScene extends Phaser.Scene {
       return;
     }
     this.rosterBaked = true;
-    atlas.bake(this.snapshot.actors.filter(isStackedFigure).map((actor) => this.stackLook(actor)));
+    atlas.bake([
+      ...this.snapshot.actors
+        .filter(isStackedFigure)
+        .map((actor): StackLook => ({ kind: "body", ...this.stackLook(actor) })),
+      ...CREATURE_LOOKS.map((look): StackLook => ({ kind: "creature", look })),
+    ]);
   }
 
   /** What `actor`'s figure is painted in: its team's colour and its cape (ADR-0056). */
-  private stackLook(actor: RenderableActor): StackLook {
+  private stackLook(actor: RenderableActor): BodyLook {
     return { body: teamColour(actor.team), cape: actor.cape };
   }
 
@@ -3171,6 +3185,8 @@ export class ArenaScene extends Phaser.Scene {
           actor,
           frame: figure,
           band: characterBand(actor.layer, this.snapshot.structure.layerCount),
+          lift: 0,
+          alpha: 1,
         });
       }
       this.drawCastGlow(marks, actor, frame);
@@ -3198,7 +3214,8 @@ export class ArenaScene extends Phaser.Scene {
    * A living creature (#1162, #2047): its ornament, then its hexagon plate,
    * upright standing or knocked down; over the kind glyph, the weapon and
    * off-hand of an armed look, posed like a player's and dropped while it
-   * lies, or else a facing tick.
+   * lies, or else a facing tick. A stacked look standing, once baked, is
+   * its shadow and plate under its figure instead (#4171).
    */
   private drawCreature(
     g: Phaser.GameObjects.Graphics,
@@ -3208,6 +3225,27 @@ export class ArenaScene extends Phaser.Scene {
   ): void {
     const { x, y } = actor.position;
     const team = this.lit(teamColour(actor.team), actor);
+    const stack = creatureStack(look);
+    const figure =
+      stack === undefined || actor.knockedDown
+        ? undefined
+        : this.creatureFigure(actor, look, stack);
+    if (stack !== undefined && figure !== undefined) {
+      paintFigureShadow(phaserPainter(g), x, y, actor.radius);
+      tracePath(g, creatureOutline(x, y, actor.radius));
+      g.fillStyle(team, 1);
+      g.fillPath();
+      g.lineStyle(BODY_EDGE_WIDTH, BODY_EDGE, 1);
+      g.strokePath();
+      this.figures.push({
+        actor,
+        frame: figure,
+        band: characterBand(actor.layer, this.snapshot.structure.layerCount),
+        lift: look === "spirit" ? spiritBob(this.now, cuePhase(actor.id), this.reducedMotion) : 0,
+        alpha: stack.alpha,
+      });
+      return;
+    }
     const colourOf = (colour: OrnamentColour): number =>
       colour === "team" ? team : colour === "ink" ? SELF_RIM : colour;
     for (const ornament of creatureOrnament(look, x, y, actor.radius, actor.facing)) {
@@ -3269,6 +3307,24 @@ export class ArenaScene extends Phaser.Scene {
         cape: undefined,
       });
     }
+  }
+
+  /**
+   * The atlas frame stacked creature `actor` draws in (#4171): its
+   * nearest heading, striding while it walks; `undefined` until baked.
+   */
+  private creatureFigure(
+    actor: RenderableActor,
+    look: CreatureLook,
+    stack: CreatureStack,
+  ): StackFrame | undefined {
+    const motion = this.trackMotion(actor);
+    const walking = motion !== undefined && this.now - motion.movedAt <= MOVING_SECONDS;
+    return this.stackAtlas?.creatureFrame(
+      look,
+      creatureBucket(stack, actor.facing),
+      creaturePose(stack, motion?.walked ?? 0, walking, this.reducedMotion),
+    );
   }
 
   /**
@@ -4143,16 +4199,11 @@ export class ArenaScene extends Phaser.Scene {
     const shown = new Set<string>();
     const scale = 1 / STACK_BAKE_SCALE;
     const depthPerY = this.arena.height > 0 ? FIGURE_DEPTH_SPAN / this.arena.height : 0;
-    for (const { actor, frame, band } of this.figures) {
+    for (const { actor, frame, band, lift, alpha } of this.figures) {
       shown.add(actor.id);
       let image = this.bodyFigures.get(actor.id);
       if (image === undefined) {
-        image = this.add
-          .image(0, 0, this.stackTexture, frame.name)
-          .setOrigin(
-            STACK_FRAME_FEET_X / STACK_FRAME_WIDTH,
-            STACK_FRAME_FEET_Y / STACK_FRAME_HEIGHT,
-          );
+        image = this.add.image(0, 0, this.stackTexture, frame.name);
         this.bodyFigures.set(actor.id, image);
       }
       if (image.texture.key !== this.stackTexture) {
@@ -4162,12 +4213,15 @@ export class ArenaScene extends Phaser.Scene {
       }
       // A heading the atlas holds only as its mirror image (#4060); the feet are the frame's middle.
       image.setFlipX(frame.flipped);
-      const size = (scale * actor.radius) / STACK_BAKE_RADIUS;
+      const { shape } = frame;
+      const size = (scale * actor.radius) / shape.radius;
       const { x, y } = actor.position;
       const depth = renderOrder({ kind: "character", band, part: "figure" });
       image
-        .setDisplaySize(STACK_FRAME_WIDTH * size, STACK_FRAME_HEIGHT * size)
-        .setPosition(x, y)
+        .setOrigin(shape.feetX / shape.width, shape.feetY / shape.height)
+        .setDisplaySize(shape.width * size, shape.height * size)
+        .setPosition(x, y + lift)
+        .setAlpha(alpha)
         .setDepth(depth + Math.min(Math.max(y * depthPerY, 0), FIGURE_DEPTH_SPAN * 0.99))
         .setTint(this.bodyTint(actor) ?? 0xffffff)
         .setVisible(true);

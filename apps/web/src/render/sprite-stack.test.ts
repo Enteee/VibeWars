@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
+import { CREATURE_LOOKS } from "@vibewars/game-core";
+
 import {
+  CREATURE_POSES,
+  CREATURE_TONES,
   STACK_BAKED_HEADINGS,
   STACK_CAPE_SETTLE_SECONDS,
   STACK_HEADINGS,
@@ -12,9 +16,13 @@ import {
   STACK_TURN_SECONDS,
   bakedFrame,
   bucketFacing,
+  creatureBucket,
+  creaturePose,
+  creatureSlices,
+  creatureStack,
   headingBucket,
+  stackHeight,
   stackLayers,
-  stackLifts,
   stackPose,
   stackSlices,
   stackShade,
@@ -35,7 +43,7 @@ describe("sprite-stack (ADR-0057, #4031)", () => {
   it("has the gothic preset's 28 slices in every pose, a slice a twelfth of a radius", () => {
     expect(STACK_SLICES).toBe(28);
     for (const pose of STACK_POSES) {
-      expect(stackLifts(stackSlices(pose))).toBe(STACK_SLICES);
+      expect(stackHeight(stackSlices(pose))).toBe(STACK_SLICES);
     }
     expect(STACK_STEP).toBeCloseTo(1 / 12);
     expect(STACK_HEIGHT).toBeCloseTo(28 / 12);
@@ -46,7 +54,7 @@ describe("sprite-stack (ADR-0057, #4031)", () => {
     expect(tones).toContain("metal");
     expect(tones.filter((tone) => tone === "visor")).toHaveLength(2);
     expect(tones.at(-1)).toBe("crest");
-    expect(tones.filter((tone) => tone === "cape")).toHaveLength(11);
+    expect(tones.filter((tone) => tone === "cape" || tone === "trim")).toHaveLength(11);
     expect(tones).not.toContain("hair");
     // The cape hangs behind: every cape slice is centred behind the body.
     for (const slice of stackSlices("stand").filter((s) => s.tone === "cape")) {
@@ -107,7 +115,7 @@ describe("sprite-stack (ADR-0057, #4031)", () => {
   it("sways its cape out behind as it walks, the hem the most, to one side as it passes", () => {
     const capes = (pose: (typeof STACK_POSES)[number]) =>
       stackSlices(pose)
-        .filter((slice) => slice.tone === "cape")
+        .filter((slice) => slice.tone === "cape" || slice.tone === "trim")
         .map((slice) => {
           const points = slice.parts[0] ?? [];
           return {
@@ -256,19 +264,115 @@ describe("sprite-stack (ADR-0057, #4031)", () => {
   });
 
   it("trims a cape's hem and leaves the rest of its back plain", () => {
-    const tones = stackTones(0x59c2ff, { main: 0x203040, trim: 0xc0a060, emblem: "", palette: [] });
-    const slices = stackSlices("stand");
-    const layers = stackLayers(slices, 0, 12, tones);
-    let cape = 0;
-    let at = 0;
-    for (const slice of slices) {
-      if (slice.tone === "cape") {
-        const tone = cape === 0 ? tones.trim : tones.cape;
-        expect(layers[at]?.colour).toBe(stackShade(tone, slice.light));
-        cape += 1;
-      }
-      at += slice.parts.length;
+    const back = stackSlices("stand").filter((s) => s.tone === "cape" || s.tone === "trim");
+    expect(back[0]?.tone).toBe("trim");
+    expect(back.slice(1).every((slice) => slice.tone === "cape")).toBe(true);
+    expect(back.length).toBeGreaterThan(2);
+  });
+
+  it("paints in ascending lift, ties in list order, so a prop restarting at the hand sits behind (#4171)", () => {
+    const square = (x: number) => [
+      { x, y: 0 },
+      { x: x + 1, y: 0 },
+      { x: x + 1, y: 1 },
+    ];
+    const layers = stackLayers(
+      [
+        { parts: [square(0)], tone: "a", light: 1, lift: 0, rise: 0 },
+        { parts: [square(1)], tone: "a", light: 1, lift: 5, rise: 0 },
+        { parts: [square(2)], tone: "b", light: 1, lift: 2, rise: 0 },
+        { parts: [square(3)], tone: "b", light: 1, lift: 2, rise: 0 },
+      ],
+      0,
+      12,
+      { a: 0xffffff, b: 0x000000 },
+    );
+    expect(layers.map((layer) => layer.points[0]?.x)).toEqual([0, 24, 36, 12]);
+    // Lift n stands n + 1 steps over the feet.
+    expect(layers[0]?.points[0]?.y).toBeCloseTo(-STACK_STEP * 12);
+    expect(layers[3]?.points[0]?.y).toBeCloseTo(-6 * STACK_STEP * 12);
+  });
+
+  it("bakes a body as it did before lifts were absolute (#4171)", () => {
+    // FNV-1a of the layers, as the pipeline drew them with `same` slices.
+    const cape = { main: 0x203040, trim: 0xc0a060, emblem: "", palette: [] };
+    const layers = stackLayers(stackSlices("contact-a"), 1.3, 21, stackTones(0x59c2ff, cape));
+    const text = JSON.stringify(
+      layers.map((l) => [l.colour, l.points.map((p) => [p.x.toFixed(4), p.y.toFixed(4)])]),
+    );
+    let hash = 2166136261;
+    for (const c of text) {
+      hash = Math.imul(hash ^ c.charCodeAt(0), 16777619) >>> 0;
     }
-    expect(cape).toBeGreaterThan(2);
+    expect(hash).toBe(2628465587);
+  });
+});
+
+describe("stacked creatures (#4171)", () => {
+  const radius = (points: readonly { readonly x: number; readonly y: number }[]): number =>
+    Math.max(...points.map((p) => Math.hypot(p.x, p.y)));
+
+  it("stacks a spirit as one heading, one pose: a stone base, then a wisp narrowing upward", () => {
+    expect(creatureStack("spirit")).toMatchObject({ headings: 1, poses: ["stand"] });
+    const slices = creatureSlices("spirit", "stand") ?? [];
+    expect(slices.slice(0, 2).map((slice) => slice.tone)).toEqual(["stone", "stone"]);
+    const wisp = slices.slice(2);
+    expect(wisp.length).toBeGreaterThanOrEqual(8);
+    expect(wisp.length).toBeLessThanOrEqual(10);
+    for (let i = 1; i < wisp.length; i += 1) {
+      expect(wisp[i]?.lift).toBe((wisp[i - 1]?.lift ?? 0) + 1);
+      expect(radius(wisp[i]?.parts[0] ?? [])).toBeLessThan(radius(wisp[i - 1]?.parts[0] ?? []));
+    }
+    expect(wisp.at(-1)?.tone).toBe("wisp-top");
+    expect(
+      creatureBucket(creatureStack("spirit") ?? { headings: 1, poses: [], scale: 1, alpha: 1 }, 2),
+    ).toBe(0);
+  });
+
+  it("stacks the ghostly hero as a capeless body in ghost tones, eight headings by three poses, axe in hand", () => {
+    const stack = creatureStack("ghostly-hero");
+    expect(stack?.headings).toBe(8);
+    expect(stack?.poses).toEqual(CREATURE_POSES);
+    for (const pose of CREATURE_POSES) {
+      const slices = creatureSlices("ghostly-hero", pose) ?? [];
+      const tones = new Set(slices.map((slice) => slice.tone));
+      expect(tones.has("ghost")).toBe(true);
+      for (const tone of tones) {
+        expect(CREATURE_TONES[tone]).toBeDefined();
+      }
+      // The haft rises from the hand, not from over the helmet.
+      const haft = slices.filter(
+        (slice) => slice.tone === "ghost-legs" && slice.parts.length === 1,
+      );
+      expect(Math.min(...haft.map((slice) => slice.lift))).toBe(8);
+      expect(stackHeight(slices)).toBe(STACK_SLICES);
+    }
+    expect(creatureSlices("ghostly-hero", "stride-a")).not.toEqual(
+      creatureSlices("ghostly-hero", "stride-b"),
+    );
+  });
+
+  it("leaves every other look its flat disc", () => {
+    const stacked = CREATURE_LOOKS.filter((look) => creatureStack(look) !== undefined);
+    expect(stacked).toEqual(["spirit", "ghostly-hero"]);
+    for (const look of CREATURE_LOOKS.filter((look) => !stacked.includes(look))) {
+      expect(creatureSlices(look, "stand")).toBeUndefined();
+    }
+  });
+
+  it("strides foot by foot while it walks, and stands still, or under reduced motion", () => {
+    const ghost = creatureStack("ghostly-hero");
+    const spirit = creatureStack("spirit");
+    if (ghost === undefined || spirit === undefined) {
+      throw new Error("not stacked");
+    }
+    expect(creaturePose(ghost, 0, true, false)).toBe("stride-a");
+    expect(creaturePose(ghost, STACK_STRIDE_UNITS / 2, true, false)).toBe("stride-b");
+    expect(creaturePose(ghost, STACK_STRIDE_UNITS, true, false)).toBe("stride-a");
+    expect(creaturePose(ghost, 10, false, false)).toBe("stand");
+    expect(creaturePose(ghost, 10, true, true)).toBe("stand");
+    expect(creaturePose(spirit, 10, true, false)).toBe("stand");
+    expect(creatureBucket(ghost, Math.PI / 2)).toBe(2);
+    expect(creatureBucket(ghost, -Math.PI / 4)).toBe(7);
   });
 });
