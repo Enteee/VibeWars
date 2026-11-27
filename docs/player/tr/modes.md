@@ -165,7 +165,7 @@ yanında bekler. Kalıntını taşıyan bir bot onu doğruca sunağa götürür;
 diğerleri kalıntıyı yalnızca büyü menziline giren bir düşmanla dövüşmek
 için bırakır.
 
-Broken Tower bunu oynatır (4v4 ve 8v8, 5400x2800): yaylalarda bir tepenin üstünde yıkılmış bir kule. Moloz teraslarının merdivenlerinden kule kütüğünün üstündeki sunağa çık ya da terastaki bir kol kapılarını açınca tepenin altındaki mahzenden geç; moloz duvarlar kırılabilir.
+Broken Tower bunu oynatır (4v4 ve 8v8, 5400x2800): yaylalarda bir tepenin üstünde yıkılmış bir kule. Moloz teraslarının merdivenlerinden kule kütüğünün üstündeki sunağa çık ya da terastaki bir kol kapılarını açınca tepenin altındaki mahzenden geç; moloz duvarlar kırılabilir. Her moloz duvarın yanında, biri basınç plakasının üstünde durduğu sürece açık kalan bir demir parmaklık var.
 
 ### Cinder Sanctum
 
@@ -246,7 +246,7 @@ Takımın sunağı tutmuyorken, her bot diğer takımın Hayalet Kahramanını,
 menzillerinde sunağa çıktığı an ilk olarak öldürür: hayaletinin onu ele
 geçirmesini engelleyen tek düşman odur.
 
-Threefold Keep bunu oynatır (4v4 ve 8v8, 5000x4400): yaylalarda bir tepenin üstünde, üç takım için bir kale. Kapının yanındaki merdivenlerden sur yoluna çık ve bir geçit yolundan tepeye geç, sonra kulenin üstündeki sunağa tırman. Her avludaki bir kol dört kapının hepsini açar: surun altındaki kendi kapı geçidin ve tepenin altından uzun yol olan mahzen.
+Threefold Keep bunu oynatır (4v4 ve 8v8, 5000x4400): yaylalarda bir tepenin üstünde, üç takım için bir kale. Kapının yanındaki merdivenlerden sur yoluna çık ve bir geçit yolundan tepeye geç, sonra kulenin üstündeki sunağa tırman. Her avludaki bir kol üç kapının hepsini, surun altındaki geçitleri açar.
 
 ## Nokta Ele Geçirme
 

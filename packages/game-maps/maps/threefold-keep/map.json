@@ -91,8 +91,8 @@
       "id": "south-east-gate-outer-mouth",
       "footprint": {
         "kind": "rect",
-        "x": 3648.69,
-        "y": 2650,
+        "x": 3532.96,
+        "y": 2648.77,
         "width": 120,
         "height": 200
       }
@@ -101,8 +101,8 @@
       "id": "south-east-gate-inner-mouth",
       "footprint": {
         "kind": "rect",
-        "x": 3166.07,
-        "y": 2650,
+        "x": 3248.05,
+        "y": 2648.77,
         "width": 120,
         "height": 200
       }
@@ -111,8 +111,8 @@
       "id": "south-west-gate-outer-mouth",
       "footprint": {
         "kind": "rect",
-        "x": 1231.31,
-        "y": 2650,
+        "x": 1347.04,
+        "y": 2648.77,
         "width": 120,
         "height": 200
       }
@@ -121,50 +121,10 @@
       "id": "south-west-gate-inner-mouth",
       "footprint": {
         "kind": "rect",
-        "x": 1713.93,
-        "y": 2650,
+        "x": 1631.95,
+        "y": 2648.77,
         "width": 120,
         "height": 200
-      }
-    },
-    {
-      "id": "undercroft-east-north-mouth",
-      "footprint": {
-        "kind": "rect",
-        "x": 3403.37,
-        "y": 1275,
-        "width": 110,
-        "height": 120
-      }
-    },
-    {
-      "id": "undercroft-west-north-mouth",
-      "footprint": {
-        "kind": "rect",
-        "x": 1486.63,
-        "y": 1275,
-        "width": 110,
-        "height": 120
-      }
-    },
-    {
-      "id": "undercroft-south-mouth",
-      "footprint": {
-        "kind": "rect",
-        "x": 2445,
-        "y": 3410,
-        "width": 110,
-        "height": 120
-      }
-    },
-    {
-      "id": "undercroft-exit-mouth",
-      "footprint": {
-        "kind": "rect",
-        "x": 2960,
-        "y": 2270,
-        "width": 120,
-        "height": 110
       }
     }
   ],
@@ -183,9 +143,9 @@
       "id": "south-east-gate-passage",
       "footprint": {
         "kind": "rect",
-        "x": 3286.07,
-        "y": 2650,
-        "width": 362.63,
+        "x": 3368.05,
+        "y": 2648.77,
+        "width": 164.91,
         "height": 200
       }
     },
@@ -193,50 +153,10 @@
       "id": "south-west-gate-passage",
       "footprint": {
         "kind": "rect",
-        "x": 1351.31,
-        "y": 2650,
-        "width": 362.63,
+        "x": 1467.04,
+        "y": 2648.77,
+        "width": 164.91,
         "height": 200
-      }
-    },
-    {
-      "id": "undercroft-east-branch",
-      "footprint": {
-        "kind": "rect",
-        "x": 2555,
-        "y": 1395,
-        "width": 958.37,
-        "height": 110
-      }
-    },
-    {
-      "id": "undercroft-west-branch",
-      "footprint": {
-        "kind": "rect",
-        "x": 1486.63,
-        "y": 1395,
-        "width": 958.37,
-        "height": 110
-      }
-    },
-    {
-      "id": "undercroft-spine",
-      "footprint": {
-        "kind": "rect",
-        "x": 2445,
-        "y": 1395,
-        "width": 110,
-        "height": 2015
-      }
-    },
-    {
-      "id": "undercroft-exit",
-      "footprint": {
-        "kind": "rect",
-        "x": 2555,
-        "y": 2270,
-        "width": 405,
-        "height": 110
       }
     }
   ],
@@ -312,15 +232,15 @@
           },
           {
             "x": 3662.07,
-            "y": 2404.9
+            "y": 2404.91
           },
           {
-            "x": 3648.69,
-            "y": 2470
+            "x": 3532.96,
+            "y": 2468.77
           },
           {
-            "x": 3648.69,
-            "y": 3030
+            "x": 3532.96,
+            "y": 3028.77
           },
           {
             "x": 3258.49,
@@ -335,19 +255,19 @@
             "y": 3220
           },
           {
-            "x": 3155.64,
+            "x": 3155.65,
             "y": 2981.37
           },
           {
-            "x": 3286.07,
-            "y": 2850
+            "x": 3368.05,
+            "y": 2848.77
           },
           {
-            "x": 3286.07,
-            "y": 2650
+            "x": 3368.05,
+            "y": 2648.77
           },
           {
-            "x": 3504.5,
+            "x": 3504.51,
             "y": 2377.12
           },
           {
@@ -374,16 +294,16 @@
             "y": 3103.93
           },
           {
-            "x": 1351.31,
-            "y": 3030
+            "x": 1467.04,
+            "y": 3028.77
           },
           {
-            "x": 1351.31,
-            "y": 2470
+            "x": 1467.04,
+            "y": 2468.77
           },
           {
             "x": 1337.93,
-            "y": 2404.9
+            "y": 2404.91
           },
           {
             "x": 1478.09,
@@ -394,19 +314,19 @@
             "y": 1690
           },
           {
-            "x": 1495.5,
+            "x": 1495.49,
             "y": 2377.12
           },
           {
-            "x": 1713.93,
-            "y": 2650
+            "x": 1631.95,
+            "y": 2648.77
           },
           {
-            "x": 1713.93,
-            "y": 2850
+            "x": 1631.95,
+            "y": 2848.77
           },
           {
-            "x": 1844.36,
+            "x": 1844.35,
             "y": 2981.37
           },
           {
@@ -425,26 +345,6 @@
         "kind": "polygon",
         "points": [
           {
-            "x": 1823.85,
-            "y": 2018.83
-          },
-          {
-            "x": 1849.44,
-            "y": 1974.51
-          },
-          {
-            "x": 1525.67,
-            "y": 1787.58
-          },
-          {
-            "x": 1655.67,
-            "y": 1562.42
-          },
-          {
-            "x": 1979.44,
-            "y": 1749.34
-          },
-          {
             "x": 2005.03,
             "y": 1705.03
           },
@@ -453,16 +353,28 @@
             "y": 1523.85
           },
           {
+            "x": 2570,
+            "y": 1524
+          },
+          {
+            "x": 2570,
+            "y": 1644
+          },
+          {
+            "x": 2670,
+            "y": 1644
+          },
+          {
+            "x": 2670,
+            "y": 1524
+          },
+          {
             "x": 2681.17,
             "y": 1523.85
           },
           {
-            "x": 2856.28,
-            "y": 1667.19
-          },
-          {
-            "x": 2976.28,
-            "y": 1667.19
+            "x": 2995,
+            "y": 1705
           },
           {
             "x": 3020.56,
@@ -481,40 +393,36 @@
             "y": 1974.51
           },
           {
-            "x": 3176.15,
+            "x": 3176.14,
             "y": 2018.83
           },
           {
             "x": 3176.15,
-            "y": 2140
+            "y": 2381.18
           },
           {
-            "x": 2960,
-            "y": 2140
+            "x": 3101.51,
+            "y": 2428
           },
           {
-            "x": 2960,
-            "y": 2380
+            "x": 2981.51,
+            "y": 2428
           },
           {
-            "x": 3176.15,
-            "y": 2380
+            "x": 2981.51,
+            "y": 2528
           },
           {
-            "x": 3176.15,
-            "y": 2381.17
+            "x": 3101.51,
+            "y": 2528
           },
           {
-            "x": 2994.97,
+            "x": 2994.98,
             "y": 2694.97
           },
           {
-            "x": 2813.29,
-            "y": 2826.91
-          },
-          {
-            "x": 2693.29,
-            "y": 2826.91
+            "x": 2681.18,
+            "y": 2876.18
           },
           {
             "x": 2630,
@@ -533,20 +441,52 @@
             "y": 2876.15
           },
           {
-            "x": 2306.71,
-            "y": 2826.91
+            "x": 2318.83,
+            "y": 2876.14
           },
           {
-            "x": 2186.71,
-            "y": 2826.91
-          },
-          {
-            "x": 2005.03,
+            "x": 2005.02,
             "y": 2694.97
+          },
+          {
+            "x": 1898.49,
+            "y": 2528
+          },
+          {
+            "x": 2018.49,
+            "y": 2528
+          },
+          {
+            "x": 2018.49,
+            "y": 2428
+          },
+          {
+            "x": 1898.49,
+            "y": 2428
           },
           {
             "x": 1823.85,
-            "y": 2381.17
+            "y": 2381.18
+          },
+          {
+            "x": 1823.82,
+            "y": 2018.82
+          },
+          {
+            "x": 1849.44,
+            "y": 1974.51
+          },
+          {
+            "x": 1525.67,
+            "y": 1787.58
+          },
+          {
+            "x": 1655.67,
+            "y": 1562.42
+          },
+          {
+            "x": 1979.44,
+            "y": 1749.34
           }
         ]
       },
@@ -560,40 +500,40 @@
         "kind": "polygon",
         "points": [
           {
-            "x": 2215.58,
-            "y": 2100.79
-          },
-          {
-            "x": 2215.58,
-            "y": 1970.79
-          },
-          {
-            "x": 2500,
+            "x": 2445,
             "y": 1860
           },
           {
-            "x": 2784.42,
-            "y": 1970.79
-          },
-          {
-            "x": 2784.42,
-            "y": 2100.79
+            "x": 2555,
+            "y": 1860
           },
           {
             "x": 2794.45,
-            "y": 2370
+            "y": 2030
           },
           {
-            "x": 2565,
-            "y": 2528.41
+            "x": 2794.45,
+            "y": 2315
           },
           {
-            "x": 2435,
-            "y": 2528.41
+            "x": 2794.45,
+            "y": 2425
+          },
+          {
+            "x": 2500,
+            "y": 2540
           },
           {
             "x": 2205.55,
-            "y": 2370
+            "y": 2425
+          },
+          {
+            "x": 2205.55,
+            "y": 2315
+          },
+          {
+            "x": 2205.55,
+            "y": 2030
           }
         ]
       },
@@ -619,6 +559,36 @@
       "lift": null
     },
     {
+      "id": "south-east-wall-walk-left-stair",
+      "from": 1,
+      "to": 2,
+      "area": {
+        "kind": "rect",
+        "x": 3532.96,
+        "y": 2468.77,
+        "width": 120,
+        "height": 100
+      },
+      "uphill": "w",
+      "look": "stairs",
+      "lift": null
+    },
+    {
+      "id": "south-west-wall-walk-left-stair",
+      "from": 1,
+      "to": 2,
+      "area": {
+        "kind": "rect",
+        "x": 1347.04,
+        "y": 2928.77,
+        "width": 120,
+        "height": 100
+      },
+      "uphill": "e",
+      "look": "stairs",
+      "lift": null
+    },
+    {
       "id": "north-wall-walk-right-stair",
       "from": 1,
       "to": 2,
@@ -634,47 +604,17 @@
       "lift": null
     },
     {
-      "id": "south-east-wall-walk-left-stair",
-      "from": 1,
-      "to": 2,
-      "area": {
-        "kind": "rect",
-        "x": 3648.69,
-        "y": 2470,
-        "width": 120,
-        "height": 100
-      },
-      "uphill": "w",
-      "look": "stairs",
-      "lift": null
-    },
-    {
       "id": "south-east-wall-walk-right-stair",
       "from": 1,
       "to": 2,
       "area": {
         "kind": "rect",
-        "x": 3648.69,
-        "y": 2930,
+        "x": 3532.96,
+        "y": 2928.77,
         "width": 120,
         "height": 100
       },
       "uphill": "w",
-      "look": "stairs",
-      "lift": null
-    },
-    {
-      "id": "south-west-wall-walk-left-stair",
-      "from": 1,
-      "to": 2,
-      "area": {
-        "kind": "rect",
-        "x": 1231.31,
-        "y": 2470,
-        "width": 120,
-        "height": 100
-      },
-      "uphill": "e",
       "look": "stairs",
       "lift": null
     },
@@ -684,8 +624,8 @@
       "to": 2,
       "area": {
         "kind": "rect",
-        "x": 1231.31,
-        "y": 2930,
+        "x": 1347.04,
+        "y": 2468.77,
         "width": 120,
         "height": 100
       },
@@ -699,8 +639,8 @@
       "to": 2,
       "area": {
         "kind": "rect",
-        "x": 2866.28,
-        "y": 1547.19,
+        "x": 2570,
+        "y": 1524,
         "width": 100,
         "height": 120
       },
@@ -714,12 +654,12 @@
       "to": 2,
       "area": {
         "kind": "rect",
-        "x": 2703.29,
-        "y": 2826.91,
-        "width": 100,
-        "height": 120
+        "x": 2981.51,
+        "y": 2428,
+        "width": 120,
+        "height": 100
       },
-      "uphill": "n",
+      "uphill": "w",
       "look": "stairs",
       "lift": null
     },
@@ -729,23 +669,38 @@
       "to": 2,
       "area": {
         "kind": "rect",
-        "x": 2196.71,
-        "y": 2826.91,
-        "width": 100,
-        "height": 120
+        "x": 1898.49,
+        "y": 2428,
+        "width": 120,
+        "height": 100
       },
-      "uphill": "n",
+      "uphill": "e",
       "look": "stairs",
       "lift": null
     },
     {
-      "id": "tower-east-stair",
+      "id": "tower-north-stair",
       "from": 2,
       "to": 3,
       "area": {
         "kind": "rect",
-        "x": 2784.42,
-        "y": 1980.79,
+        "x": 2445,
+        "y": 1740,
+        "width": 110,
+        "height": 120
+      },
+      "uphill": "s",
+      "look": "stairs",
+      "lift": null
+    },
+    {
+      "id": "tower-south-east-stair",
+      "from": 2,
+      "to": 3,
+      "area": {
+        "kind": "rect",
+        "x": 2794.45,
+        "y": 2315,
         "width": 120,
         "height": 110
       },
@@ -754,28 +709,13 @@
       "lift": null
     },
     {
-      "id": "tower-south-stair",
+      "id": "tower-south-west-stair",
       "from": 2,
       "to": 3,
       "area": {
         "kind": "rect",
-        "x": 2445,
-        "y": 2528.41,
-        "width": 110,
-        "height": 120
-      },
-      "uphill": "n",
-      "look": "stairs",
-      "lift": null
-    },
-    {
-      "id": "tower-west-stair",
-      "from": 2,
-      "to": 3,
-      "area": {
-        "kind": "rect",
-        "x": 2095.58,
-        "y": 1980.79,
+        "x": 2085.55,
+        "y": 2315,
         "width": 120,
         "height": 110
       },
@@ -799,6 +739,36 @@
       "lift": null
     },
     {
+      "id": "south-east-gate-outer-steps",
+      "from": 0,
+      "to": 1,
+      "area": {
+        "kind": "rect",
+        "x": 3532.96,
+        "y": 2648.77,
+        "width": 120,
+        "height": 200
+      },
+      "uphill": "e",
+      "look": "stairs",
+      "lift": null
+    },
+    {
+      "id": "south-west-gate-outer-steps",
+      "from": 0,
+      "to": 1,
+      "area": {
+        "kind": "rect",
+        "x": 1347.04,
+        "y": 2648.77,
+        "width": 120,
+        "height": 200
+      },
+      "uphill": "w",
+      "look": "stairs",
+      "lift": null
+    },
+    {
       "id": "north-gate-inner-steps",
       "from": 0,
       "to": 1,
@@ -814,43 +784,13 @@
       "lift": null
     },
     {
-      "id": "south-east-gate-outer-steps",
-      "from": 0,
-      "to": 1,
-      "area": {
-        "kind": "rect",
-        "x": 3648.69,
-        "y": 2650,
-        "width": 120,
-        "height": 200
-      },
-      "uphill": "e",
-      "look": "stairs",
-      "lift": null
-    },
-    {
       "id": "south-east-gate-inner-steps",
       "from": 0,
       "to": 1,
       "area": {
         "kind": "rect",
-        "x": 3166.07,
-        "y": 2650,
-        "width": 120,
-        "height": 200
-      },
-      "uphill": "w",
-      "look": "stairs",
-      "lift": null
-    },
-    {
-      "id": "south-west-gate-outer-steps",
-      "from": 0,
-      "to": 1,
-      "area": {
-        "kind": "rect",
-        "x": 1231.31,
-        "y": 2650,
+        "x": 3248.05,
+        "y": 2648.77,
         "width": 120,
         "height": 200
       },
@@ -864,87 +804,12 @@
       "to": 1,
       "area": {
         "kind": "rect",
-        "x": 1713.93,
-        "y": 2650,
+        "x": 1631.95,
+        "y": 2648.77,
         "width": 120,
         "height": 200
       },
       "uphill": "e",
-      "look": "stairs",
-      "lift": null
-    },
-    {
-      "id": "undercroft-east-north-steps",
-      "from": 0,
-      "to": 1,
-      "area": {
-        "kind": "rect",
-        "x": 3403.37,
-        "y": 1275,
-        "width": 110,
-        "height": 120
-      },
-      "uphill": "n",
-      "look": "stairs",
-      "lift": null
-    },
-    {
-      "id": "undercroft-west-north-steps",
-      "from": 0,
-      "to": 1,
-      "area": {
-        "kind": "rect",
-        "x": 1486.63,
-        "y": 1275,
-        "width": 110,
-        "height": 120
-      },
-      "uphill": "n",
-      "look": "stairs",
-      "lift": null
-    },
-    {
-      "id": "undercroft-south-steps",
-      "from": 0,
-      "to": 1,
-      "area": {
-        "kind": "rect",
-        "x": 2445,
-        "y": 3410,
-        "width": 110,
-        "height": 120
-      },
-      "uphill": "s",
-      "look": "stairs",
-      "lift": null
-    },
-    {
-      "id": "undercroft-exit-steps",
-      "from": 0,
-      "to": 1,
-      "area": {
-        "kind": "rect",
-        "x": 2960,
-        "y": 2270,
-        "width": 120,
-        "height": 110
-      },
-      "uphill": "e",
-      "look": "stairs",
-      "lift": null
-    },
-    {
-      "id": "undercroft-stair",
-      "from": 1,
-      "to": 2,
-      "area": {
-        "kind": "rect",
-        "x": 3010,
-        "y": 2140,
-        "width": 110,
-        "height": 120
-      },
-      "uphill": "n",
       "look": "stairs",
       "lift": null
     }
@@ -964,22 +829,66 @@
     {
       "layer": 2,
       "from": {
-        "x": 3434.37,
-        "y": 1979.4
+        "x": 2630,
+        "y": 2936.15
+      },
+      "to": {
+        "x": 2630,
+        "y": 3120
+      }
+    },
+    {
+      "layer": 2,
+      "from": {
+        "x": 2370,
+        "y": 2936.15
+      },
+      "to": {
+        "x": 2370,
+        "y": 3120
+      }
+    },
+    {
+      "layer": 2,
+      "from": {
+        "x": 3434.38,
+        "y": 1979.39
       },
       "to": {
         "x": 3453.48,
-        "y": 2087.72
+        "y": 2087.73
+      }
+    },
+    {
+      "layer": 2,
+      "from": {
+        "x": 1797.48,
+        "y": 1944.51
+      },
+      "to": {
+        "x": 1638.26,
+        "y": 1852.58
+      }
+    },
+    {
+      "layer": 2,
+      "from": {
+        "x": 1927.48,
+        "y": 1719.34
+      },
+      "to": {
+        "x": 1768.26,
+        "y": 1627.42
       }
     },
     {
       "layer": 2,
       "from": {
         "x": 2223.86,
-        "y": 3119.49
+        "y": 3119.5
       },
       "to": {
-        "x": 2120.5,
+        "x": 2120.49,
         "y": 3081.87
       }
     },
@@ -1003,50 +912,6 @@
       "to": {
         "x": 3361.74,
         "y": 1852.58
-      }
-    },
-    {
-      "layer": 2,
-      "from": {
-        "x": 2630,
-        "y": 2936.15
-      },
-      "to": {
-        "x": 2630,
-        "y": 3120
-      }
-    },
-    {
-      "layer": 2,
-      "from": {
-        "x": 2370,
-        "y": 2936.15
-      },
-      "to": {
-        "x": 2370,
-        "y": 3120
-      }
-    },
-    {
-      "layer": 2,
-      "from": {
-        "x": 1797.48,
-        "y": 1944.51
-      },
-      "to": {
-        "x": 1638.26,
-        "y": 1852.58
-      }
-    },
-    {
-      "layer": 2,
-      "from": {
-        "x": 1927.48,
-        "y": 1719.34
-      },
-      "to": {
-        "x": 1768.26,
-        "y": 1627.42
       }
     }
   ],
@@ -1114,15 +979,15 @@
         },
         {
           "x": 3662.07,
-          "y": 2404.9
+          "y": 2404.91
         },
         {
-          "x": 3648.69,
-          "y": 2470
+          "x": 3532.96,
+          "y": 2468.77
         },
         {
-          "x": 3648.69,
-          "y": 3030
+          "x": 3532.96,
+          "y": 3028.77
         },
         {
           "x": 3258.49,
@@ -1137,19 +1002,19 @@
           "y": 3220
         },
         {
-          "x": 3155.64,
+          "x": 3155.65,
           "y": 2981.37
         },
         {
-          "x": 3286.07,
-          "y": 2850
+          "x": 3368.05,
+          "y": 2848.77
         },
         {
-          "x": 3286.07,
-          "y": 2650
+          "x": 3368.05,
+          "y": 2648.77
         },
         {
-          "x": 3504.5,
+          "x": 3504.51,
           "y": 2377.12
         },
         {
@@ -1171,16 +1036,16 @@
           "y": 3103.93
         },
         {
-          "x": 1351.31,
-          "y": 3030
+          "x": 1467.04,
+          "y": 3028.77
         },
         {
-          "x": 1351.31,
-          "y": 2470
+          "x": 1467.04,
+          "y": 2468.77
         },
         {
           "x": 1337.93,
-          "y": 2404.9
+          "y": 2404.91
         },
         {
           "x": 1478.09,
@@ -1191,19 +1056,19 @@
           "y": 1690
         },
         {
-          "x": 1495.5,
+          "x": 1495.49,
           "y": 2377.12
         },
         {
-          "x": 1713.93,
-          "y": 2650
+          "x": 1631.95,
+          "y": 2648.77
         },
         {
-          "x": 1713.93,
-          "y": 2850
+          "x": 1631.95,
+          "y": 2848.77
         },
         {
-          "x": 1844.36,
+          "x": 1844.35,
           "y": 2981.37
         },
         {
@@ -1217,10 +1082,6 @@
       "kind": "polygon",
       "points": [
         {
-          "x": 1823.85,
-          "y": 2018.83
-        },
-        {
           "x": 2005.03,
           "y": 1705.03
         },
@@ -1229,68 +1090,92 @@
           "y": 1523.85
         },
         {
+          "x": 2570,
+          "y": 1524
+        },
+        {
+          "x": 2570,
+          "y": 1644
+        },
+        {
+          "x": 2670,
+          "y": 1644
+        },
+        {
+          "x": 2670,
+          "y": 1524
+        },
+        {
           "x": 2681.17,
           "y": 1523.85
         },
         {
-          "x": 2856.28,
-          "y": 1667.19
+          "x": 2995,
+          "y": 1705
         },
         {
-          "x": 2976.28,
-          "y": 1667.19
-        },
-        {
-          "x": 3176.15,
+          "x": 3176.14,
           "y": 2018.83
         },
         {
           "x": 3176.15,
-          "y": 2140
+          "y": 2381.18
         },
         {
-          "x": 2960,
-          "y": 2140
+          "x": 3101.51,
+          "y": 2428
         },
         {
-          "x": 2960,
-          "y": 2380
+          "x": 2981.51,
+          "y": 2428
         },
         {
-          "x": 3176.15,
-          "y": 2380
+          "x": 2981.51,
+          "y": 2528
         },
         {
-          "x": 3176.15,
-          "y": 2381.17
+          "x": 3101.51,
+          "y": 2528
         },
         {
-          "x": 2994.97,
+          "x": 2994.98,
           "y": 2694.97
         },
         {
-          "x": 2813.29,
-          "y": 2826.91
+          "x": 2681.18,
+          "y": 2876.18
         },
         {
-          "x": 2693.29,
-          "y": 2826.91
+          "x": 2318.83,
+          "y": 2876.14
         },
         {
-          "x": 2306.71,
-          "y": 2826.91
-        },
-        {
-          "x": 2186.71,
-          "y": 2826.91
-        },
-        {
-          "x": 2005.03,
+          "x": 2005.02,
           "y": 2694.97
+        },
+        {
+          "x": 1898.49,
+          "y": 2528
+        },
+        {
+          "x": 2018.49,
+          "y": 2528
+        },
+        {
+          "x": 2018.49,
+          "y": 2428
+        },
+        {
+          "x": 1898.49,
+          "y": 2428
         },
         {
           "x": 1823.85,
-          "y": 2381.17
+          "y": 2381.18
+        },
+        {
+          "x": 1823.82,
+          "y": 2018.82
         }
       ],
       "layer": 1
@@ -1299,40 +1184,40 @@
       "kind": "polygon",
       "points": [
         {
-          "x": 2215.58,
-          "y": 2100.79
-        },
-        {
-          "x": 2215.58,
-          "y": 1970.79
-        },
-        {
-          "x": 2500,
+          "x": 2445,
           "y": 1860
         },
         {
-          "x": 2784.42,
-          "y": 1970.79
-        },
-        {
-          "x": 2784.42,
-          "y": 2100.79
+          "x": 2555,
+          "y": 1860
         },
         {
           "x": 2794.45,
-          "y": 2370
+          "y": 2030
         },
         {
-          "x": 2565,
-          "y": 2528.41
+          "x": 2794.45,
+          "y": 2315
         },
         {
-          "x": 2435,
-          "y": 2528.41
+          "x": 2794.45,
+          "y": 2425
+        },
+        {
+          "x": 2500,
+          "y": 2540
         },
         {
           "x": 2205.55,
-          "y": 2370
+          "y": 2425
+        },
+        {
+          "x": 2205.55,
+          "y": 2315
+        },
+        {
+          "x": 2205.55,
+          "y": 2030
         }
       ],
       "layer": 2
@@ -1623,7 +1508,7 @@
       "layer": 1,
       "position": {
         "x": 2440,
-        "y": 630
+        "y": 525
       }
     },
     {
@@ -1631,7 +1516,7 @@
       "layer": 1,
       "position": {
         "x": 2560,
-        "y": 630
+        "y": 525
       }
     },
     {
@@ -1639,7 +1524,7 @@
       "layer": 1,
       "position": {
         "x": 2440,
-        "y": 530
+        "y": 425
       }
     },
     {
@@ -1647,7 +1532,7 @@
       "layer": 1,
       "position": {
         "x": 2560,
-        "y": 530
+        "y": 425
       }
     },
     {
@@ -1655,7 +1540,7 @@
       "layer": 1,
       "position": {
         "x": 2440,
-        "y": 430
+        "y": 325
       }
     },
     {
@@ -1663,7 +1548,7 @@
       "layer": 1,
       "position": {
         "x": 2560,
-        "y": 430
+        "y": 325
       }
     },
     {
@@ -1671,7 +1556,7 @@
       "layer": 1,
       "position": {
         "x": 2440,
-        "y": 330
+        "y": 225
       }
     },
     {
@@ -1679,7 +1564,7 @@
       "layer": 1,
       "position": {
         "x": 2560,
-        "y": 330
+        "y": 225
       }
     },
     {
@@ -1817,8 +1702,8 @@
       "layer": 1,
       "team": 0,
       "position": {
-        "x": 2820,
-        "y": 700
+        "x": 2500,
+        "y": 631.25
       }
     },
     {
@@ -1826,8 +1711,8 @@
       "layer": 1,
       "team": 1,
       "position": {
-        "x": 3639.04,
-        "y": 3227.13
+        "x": 3828.27,
+        "y": 2966.87
       }
     },
     {
@@ -1835,8 +1720,8 @@
       "layer": 1,
       "team": 2,
       "position": {
-        "x": 1040.96,
-        "y": 2672.87
+        "x": 1171.73,
+        "y": 2966.88
       }
     },
     {
@@ -1848,7 +1733,458 @@
       }
     }
   ],
-  "decor": [],
+  "decor": [
+    {
+      "id": "rock-1",
+      "kind": "rock",
+      "at": { "x": 2400, "y": 3711 },
+      "layer": 1,
+      "rotation": 151,
+      "scale": 1.09,
+      "variant": 2
+    },
+    {
+      "id": "rock-2",
+      "kind": "rock",
+      "at": { "x": 3262, "y": 2338 },
+      "layer": 1,
+      "rotation": 287,
+      "scale": 1.25,
+      "variant": 0
+    },
+    {
+      "id": "rock-3",
+      "kind": "rock",
+      "at": { "x": 1189, "y": 1778 },
+      "layer": 1,
+      "rotation": 145,
+      "scale": 0.97,
+      "variant": 0
+    },
+    {
+      "id": "rock-4",
+      "kind": "rock",
+      "at": { "x": 3157, "y": 635 },
+      "layer": 1,
+      "rotation": 270,
+      "scale": 0.94,
+      "variant": 1
+    },
+    {
+      "id": "rock-5",
+      "kind": "rock",
+      "at": { "x": 3386, "y": 848 },
+      "layer": 1,
+      "rotation": 191,
+      "scale": 0.83,
+      "variant": 0
+    },
+    {
+      "id": "rock-6",
+      "kind": "rock",
+      "at": { "x": 3763, "y": 1694 },
+      "layer": 1,
+      "rotation": 215,
+      "scale": 0.89,
+      "variant": 1
+    },
+    {
+      "id": "rock-7",
+      "kind": "rock",
+      "at": { "x": 944, "y": 1497 },
+      "layer": 1,
+      "rotation": 220,
+      "scale": 0.92,
+      "variant": 0
+    },
+    {
+      "id": "rock-8",
+      "kind": "rock",
+      "at": { "x": 3109, "y": 1042 },
+      "layer": 1,
+      "rotation": 81,
+      "scale": 0.85,
+      "variant": 1
+    },
+    {
+      "id": "rock-9",
+      "kind": "rock",
+      "at": { "x": 1071, "y": 2253 },
+      "layer": 1,
+      "rotation": 343,
+      "scale": 1.16,
+      "variant": 0
+    },
+    {
+      "id": "rock-10",
+      "kind": "rock",
+      "at": { "x": 1797, "y": 4125 },
+      "layer": 1,
+      "rotation": 329,
+      "scale": 1,
+      "variant": 1
+    },
+    {
+      "id": "rock-11",
+      "kind": "rock",
+      "at": { "x": 2990, "y": 3649 },
+      "layer": 1,
+      "rotation": 206,
+      "scale": 1.12,
+      "variant": 1
+    },
+    {
+      "id": "rock-12",
+      "kind": "rock",
+      "at": { "x": 2016, "y": 116 },
+      "layer": 1,
+      "rotation": 7,
+      "scale": 0.83,
+      "variant": 3
+    },
+    {
+      "id": "rock-13",
+      "kind": "rock",
+      "at": { "x": 1053, "y": 661 },
+      "layer": 1,
+      "rotation": 112,
+      "scale": 0.87,
+      "variant": 1
+    },
+    {
+      "id": "rock-14",
+      "kind": "rock",
+      "at": { "x": 2171, "y": 3827 },
+      "layer": 1,
+      "rotation": 159,
+      "scale": 1.21,
+      "variant": 1
+    },
+    {
+      "id": "rock-15",
+      "kind": "rock",
+      "at": { "x": 3361, "y": 3678 },
+      "layer": 1,
+      "rotation": 269,
+      "scale": 0.77,
+      "variant": 1
+    },
+    {
+      "id": "rock-16",
+      "kind": "rock",
+      "at": { "x": 1938, "y": 3495 },
+      "layer": 1,
+      "rotation": 91,
+      "scale": 1.18,
+      "variant": 2
+    },
+    {
+      "id": "cairn-1",
+      "kind": "cairn",
+      "at": { "x": 4095, "y": 1171 },
+      "layer": 1,
+      "rotation": 213,
+      "scale": 1.15,
+      "variant": 3
+    },
+    {
+      "id": "cairn-2",
+      "kind": "cairn",
+      "at": { "x": 3034, "y": 3624 },
+      "layer": 1,
+      "rotation": 41,
+      "scale": 0.94,
+      "variant": 0
+    },
+    {
+      "id": "cairn-3",
+      "kind": "cairn",
+      "at": { "x": 4262, "y": 2574 },
+      "layer": 1,
+      "rotation": 346,
+      "scale": 1.13,
+      "variant": 0
+    },
+    {
+      "id": "cairn-4",
+      "kind": "cairn",
+      "at": { "x": 3603, "y": 3732 },
+      "layer": 1,
+      "rotation": 23,
+      "scale": 1.15,
+      "variant": 3
+    },
+    {
+      "id": "cairn-5",
+      "kind": "cairn",
+      "at": { "x": 3196, "y": 3593 },
+      "layer": 1,
+      "rotation": 9,
+      "scale": 1.1,
+      "variant": 1
+    },
+    {
+      "id": "cairn-6",
+      "kind": "cairn",
+      "at": { "x": 4255, "y": 2239 },
+      "layer": 1,
+      "rotation": 228,
+      "scale": 1.02,
+      "variant": 3
+    },
+    {
+      "id": "cairn-7",
+      "kind": "cairn",
+      "at": { "x": 1298, "y": 3754 },
+      "layer": 1,
+      "rotation": 336,
+      "scale": 0.78,
+      "variant": 1
+    },
+    {
+      "id": "cairn-8",
+      "kind": "cairn",
+      "at": { "x": 3147, "y": 424 },
+      "layer": 1,
+      "rotation": 169,
+      "scale": 1.02,
+      "variant": 2
+    },
+    {
+      "id": "cairn-9",
+      "kind": "cairn",
+      "at": { "x": 4226, "y": 2353 },
+      "layer": 1,
+      "rotation": 90,
+      "scale": 0.78,
+      "variant": 1
+    },
+    {
+      "id": "cairn-10",
+      "kind": "cairn",
+      "at": { "x": 1198, "y": 568 },
+      "layer": 1,
+      "rotation": 67,
+      "scale": 1.22,
+      "variant": 0
+    },
+    {
+      "id": "dead-tree-1",
+      "kind": "dead-tree",
+      "at": { "x": 595, "y": 2422 },
+      "layer": 1,
+      "rotation": 112,
+      "scale": 0.77,
+      "variant": 2
+    },
+    {
+      "id": "dead-tree-2",
+      "kind": "dead-tree",
+      "at": { "x": 3236, "y": 4152 },
+      "layer": 1,
+      "rotation": 264,
+      "scale": 1.17,
+      "variant": 3
+    },
+    {
+      "id": "dead-tree-3",
+      "kind": "dead-tree",
+      "at": { "x": 2231, "y": 3844 },
+      "layer": 1,
+      "rotation": 254,
+      "scale": 1.12,
+      "variant": 0
+    },
+    {
+      "id": "dead-tree-4",
+      "kind": "dead-tree",
+      "at": { "x": 3686, "y": 893 },
+      "layer": 1,
+      "rotation": 50,
+      "scale": 1.07,
+      "variant": 1
+    },
+    {
+      "id": "dead-tree-5",
+      "kind": "dead-tree",
+      "at": { "x": 1564, "y": 855 },
+      "layer": 1,
+      "rotation": 88,
+      "scale": 1.06,
+      "variant": 2
+    },
+    {
+      "id": "brazier-1",
+      "kind": "brazier",
+      "at": { "x": 1846, "y": 733 },
+      "layer": 1,
+      "rotation": 317,
+      "scale": 1.12,
+      "variant": 0
+    },
+    {
+      "id": "brazier-2",
+      "kind": "brazier",
+      "at": { "x": 2049, "y": 535 },
+      "layer": 1,
+      "rotation": 63,
+      "scale": 0.96,
+      "variant": 0
+    },
+    {
+      "id": "brazier-3",
+      "kind": "brazier",
+      "at": { "x": 1604, "y": 3401 },
+      "layer": 1,
+      "rotation": 101,
+      "scale": 0.78,
+      "variant": 1
+    },
+    {
+      "id": "brazier-4",
+      "kind": "brazier",
+      "at": { "x": 3997, "y": 1191 },
+      "layer": 1,
+      "rotation": 238,
+      "scale": 0.9,
+      "variant": 3
+    },
+    {
+      "id": "banner-1",
+      "kind": "banner",
+      "at": { "x": 538, "y": 1681 },
+      "layer": 1,
+      "rotation": 216,
+      "scale": 1.11,
+      "variant": 1
+    },
+    {
+      "id": "banner-2",
+      "kind": "banner",
+      "at": { "x": 3798, "y": 2270 },
+      "layer": 1,
+      "rotation": 141,
+      "scale": 1.1,
+      "variant": 0
+    },
+    {
+      "id": "banner-3",
+      "kind": "banner",
+      "at": { "x": 1819, "y": 1250 },
+      "layer": 1,
+      "rotation": 49,
+      "scale": 1.24,
+      "variant": 0
+    },
+    {
+      "id": "banner-4",
+      "kind": "banner",
+      "at": { "x": 3982, "y": 1368 },
+      "layer": 1,
+      "rotation": 283,
+      "scale": 1.16,
+      "variant": 3
+    },
+    {
+      "id": "rock-17",
+      "kind": "rock",
+      "at": { "x": 2303, "y": 1614 },
+      "layer": 2,
+      "rotation": 134,
+      "scale": 0.78,
+      "variant": 0
+    },
+    {
+      "id": "rock-18",
+      "kind": "rock",
+      "at": { "x": 2087, "y": 3120 },
+      "layer": 2,
+      "rotation": 254,
+      "scale": 1.02,
+      "variant": 0
+    },
+    {
+      "id": "rock-19",
+      "kind": "rock",
+      "at": { "x": 2355, "y": 1597 },
+      "layer": 2,
+      "rotation": 250,
+      "scale": 0.99,
+      "variant": 0
+    },
+    {
+      "id": "rock-20",
+      "kind": "rock",
+      "at": { "x": 2076, "y": 1229 },
+      "layer": 2,
+      "rotation": 295,
+      "scale": 0.97,
+      "variant": 0
+    },
+    {
+      "id": "rock-21",
+      "kind": "rock",
+      "at": { "x": 3089, "y": 3098 },
+      "layer": 2,
+      "rotation": 190,
+      "scale": 0.98,
+      "variant": 0
+    },
+    {
+      "id": "rock-22",
+      "kind": "rock",
+      "at": { "x": 1550, "y": 2780 },
+      "layer": 2,
+      "rotation": 130,
+      "scale": 0.86,
+      "variant": 1
+    },
+    {
+      "id": "banner-5",
+      "kind": "banner",
+      "at": { "x": 1647, "y": 1689 },
+      "layer": 2,
+      "rotation": 100,
+      "scale": 1.16,
+      "variant": 3
+    },
+    {
+      "id": "banner-6",
+      "kind": "banner",
+      "at": { "x": 1641, "y": 3035 },
+      "layer": 2,
+      "rotation": 194,
+      "scale": 1.1,
+      "variant": 0
+    },
+    {
+      "id": "cairn-11",
+      "kind": "cairn",
+      "at": { "x": 2769, "y": 1149 },
+      "layer": 2,
+      "rotation": 49,
+      "scale": 0.87,
+      "variant": 1
+    },
+    {
+      "id": "cairn-12",
+      "kind": "cairn",
+      "at": { "x": 2113, "y": 3168 },
+      "layer": 2,
+      "rotation": 148,
+      "scale": 0.99,
+      "variant": 3
+    },
+    {
+      "id": "cairn-13",
+      "kind": "cairn",
+      "at": { "x": 1935, "y": 2346 },
+      "layer": 2,
+      "rotation": 9,
+      "scale": 1.12,
+      "variant": 0
+    }
+  ],
   "gates": [
     {
       "id": "north-gate",
@@ -1870,8 +2206,8 @@
       "id": "south-east-gate",
       "wall": {
         "kind": "rect",
-        "x": 3460.38,
-        "y": 2650,
+        "x": 3443.5,
+        "y": 2648.77,
         "width": 14,
         "height": 200,
         "layer": 0
@@ -1886,26 +2222,10 @@
       "id": "south-west-gate",
       "wall": {
         "kind": "rect",
-        "x": 1525.62,
-        "y": 2650,
+        "x": 1542.5,
+        "y": 2648.77,
         "width": 14,
         "height": 200,
-        "layer": 0
-      },
-      "opener": {
-        "kind": "switch"
-      },
-      "blocks": "all",
-      "look": "portcullis"
-    },
-    {
-      "id": "keep-gate",
-      "wall": {
-        "kind": "rect",
-        "x": 2700,
-        "y": 2270,
-        "width": 14,
-        "height": 110,
         "layer": 0
       },
       "opener": {
@@ -1923,25 +2243,25 @@
         "x": 2250,
         "y": 880
       },
-      "targets": ["north-gate", "south-east-gate", "south-west-gate", "keep-gate"]
+      "targets": ["north-gate", "south-east-gate", "south-west-gate"]
     },
     {
       "id": "south-east-court-lever",
       "layer": 1,
       "position": {
-        "x": 3768.15,
-        "y": 2643.49
+        "x": 3672.96,
+        "y": 2498.77
       },
-      "targets": ["north-gate", "south-east-gate", "south-west-gate", "keep-gate"]
+      "targets": ["north-gate", "south-east-gate", "south-west-gate"]
     },
     {
       "id": "south-west-court-lever",
       "layer": 1,
       "position": {
-        "x": 1481.85,
-        "y": 3076.51
+        "x": 1327.04,
+        "y": 2998.77
       },
-      "targets": ["north-gate", "south-east-gate", "south-west-gate", "keep-gate"]
+      "targets": ["north-gate", "south-east-gate", "south-west-gate"]
     }
   ],
   "breakables": [
@@ -2043,45 +2363,17 @@
       },
       {
         "kind": "rect",
-        "x": 3286.07,
-        "y": 2650,
-        "width": 362.63,
+        "x": 3368.05,
+        "y": 2648.77,
+        "width": 164.91,
         "height": 200
       },
       {
         "kind": "rect",
-        "x": 1351.31,
-        "y": 2650,
-        "width": 362.63,
+        "x": 1467.04,
+        "y": 2648.77,
+        "width": 164.91,
         "height": 200
-      },
-      {
-        "kind": "rect",
-        "x": 2555,
-        "y": 1395,
-        "width": 958.37,
-        "height": 110
-      },
-      {
-        "kind": "rect",
-        "x": 1486.63,
-        "y": 1395,
-        "width": 958.37,
-        "height": 110
-      },
-      {
-        "kind": "rect",
-        "x": 2445,
-        "y": 1395,
-        "width": 110,
-        "height": 2015
-      },
-      {
-        "kind": "rect",
-        "x": 2555,
-        "y": 2270,
-        "width": 315,
-        "height": 110
       }
     ],
     "sun": {
@@ -2106,8 +2398,8 @@
       {
         "id": "torch-south-east-gate",
         "position": {
-          "x": 3467.38,
-          "y": 2750
+          "x": 3450.5,
+          "y": 2748.77
         },
         "layer": 0,
         "radius": 150,
@@ -2118,56 +2410,8 @@
       {
         "id": "torch-south-west-gate",
         "position": {
-          "x": 1532.62,
-          "y": 2750
-        },
-        "layer": 0,
-        "radius": 150,
-        "colour": 16756832,
-        "intensity": 0.85,
-        "flicker": 0.2
-      },
-      {
-        "id": "torch-undercroft-east-mouth",
-        "position": {
-          "x": 3582.53,
-          "y": 1575
-        },
-        "layer": 0,
-        "radius": 150,
-        "colour": 16756832,
-        "intensity": 0.85,
-        "flicker": 0.2
-      },
-      {
-        "id": "torch-undercroft-south-mouth",
-        "position": {
-          "x": 2500,
-          "y": 3450
-        },
-        "layer": 0,
-        "radius": 150,
-        "colour": 16756832,
-        "intensity": 0.85,
-        "flicker": 0.2
-      },
-      {
-        "id": "torch-undercroft-west-mouth",
-        "position": {
-          "x": 1417.47,
-          "y": 1575
-        },
-        "layer": 0,
-        "radius": 150,
-        "colour": 16756832,
-        "intensity": 0.85,
-        "flicker": 0.2
-      },
-      {
-        "id": "torch-keep-gate",
-        "position": {
-          "x": 2640,
-          "y": 2325
+          "x": 1549.5,
+          "y": 2748.77
         },
         "layer": 0,
         "radius": 150,
@@ -2190,8 +2434,8 @@
       {
         "id": "ghost-north-ring",
         "position": {
-          "x": 2820,
-          "y": 700
+          "x": 2500,
+          "y": 631.25
         },
         "layer": 1,
         "radius": 180,
@@ -2202,8 +2446,8 @@
       {
         "id": "ghost-south-east-ring",
         "position": {
-          "x": 3639.04,
-          "y": 3227.13
+          "x": 3828.27,
+          "y": 2966.87
         },
         "layer": 1,
         "radius": 180,
@@ -2214,8 +2458,8 @@
       {
         "id": "ghost-south-west-ring",
         "position": {
-          "x": 1040.96,
-          "y": 2672.87
+          "x": 1171.73,
+          "y": 2966.88
         },
         "layer": 1,
         "radius": 180,
@@ -2238,8 +2482,8 @@
       {
         "id": "lever-south-east-light",
         "position": {
-          "x": 3768.15,
-          "y": 2643.49
+          "x": 3672.96,
+          "y": 2498.77
         },
         "layer": 1,
         "radius": 130,
@@ -2250,14 +2494,50 @@
       {
         "id": "lever-south-west-light",
         "position": {
-          "x": 1481.85,
-          "y": 3076.51
+          "x": 1327.04,
+          "y": 2998.77
         },
         "layer": 1,
         "radius": 130,
         "colour": 16763981,
         "intensity": 0.7,
         "flicker": 0
+      },
+      {
+        "id": "brazier-decor-1",
+        "position": { "x": 1845, "y": 716 },
+        "layer": 1,
+        "radius": 170,
+        "colour": 16752704,
+        "intensity": 0.85,
+        "flicker": 0.3
+      },
+      {
+        "id": "brazier-decor-2",
+        "position": { "x": 2048, "y": 519 },
+        "layer": 1,
+        "radius": 170,
+        "colour": 16752704,
+        "intensity": 0.85,
+        "flicker": 0.3
+      },
+      {
+        "id": "brazier-decor-3",
+        "position": { "x": 1604, "y": 3385 },
+        "layer": 1,
+        "radius": 170,
+        "colour": 16752704,
+        "intensity": 0.85,
+        "flicker": 0.3
+      },
+      {
+        "id": "brazier-decor-4",
+        "position": { "x": 3996, "y": 1175 },
+        "layer": 1,
+        "radius": 170,
+        "colour": 16752704,
+        "intensity": 0.85,
+        "flicker": 0.3
       }
     ]
   },
@@ -2432,8 +2712,8 @@
         "id": "south-east-court-shaft",
         "layer": 1,
         "position": {
-          "x": 3539.23,
-          "y": 2800
+          "x": 3552.96,
+          "y": 2748.77
         },
         "radius": 180
       },
@@ -2441,8 +2721,8 @@
         "id": "south-west-court-shaft",
         "layer": 1,
         "position": {
-          "x": 1460.77,
-          "y": 2800
+          "x": 1447.04,
+          "y": 2748.77
         },
         "radius": 180
       }
@@ -2461,40 +2741,40 @@
         "kind": "polygon",
         "points": [
           {
-            "x": 2258.24,
-            "y": 2115.67
+            "x": 2452.7,
+            "y": 1907.6
           },
           {
-            "x": 2258.24,
-            "y": 2005.17
+            "x": 2547.3,
+            "y": 1907.6
+          },
+          {
+            "x": 2753.23,
+            "y": 2053.8
+          },
+          {
+            "x": 2753.23,
+            "y": 2298.9
+          },
+          {
+            "x": 2753.23,
+            "y": 2393.5
           },
           {
             "x": 2500,
-            "y": 1911
+            "y": 2492.4
           },
           {
-            "x": 2741.76,
-            "y": 2005.17
+            "x": 2246.77,
+            "y": 2393.5
           },
           {
-            "x": 2741.76,
-            "y": 2115.67
+            "x": 2246.77,
+            "y": 2298.9
           },
           {
-            "x": 2750.28,
-            "y": 2344.5
-          },
-          {
-            "x": 2555.25,
-            "y": 2479.15
-          },
-          {
-            "x": 2444.75,
-            "y": 2479.15
-          },
-          {
-            "x": 2249.72,
-            "y": 2344.5
+            "x": 2246.77,
+            "y": 2053.8
           }
         ]
       }

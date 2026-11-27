@@ -10,6 +10,7 @@ export default {
   "app.framedRelayLink": "Nyisd meg a relay linket külön lapon. Semmi sem lett mentve.",
   "app.inviteInLobby": "Menj vissza a menübe, majd nyisd meg újra a meghívó linket.",
   "app.lostMatch": "Megszakadt a kapcsolat a meccsel.",
+  "app.rejoinFailed": "Nem sikerült visszatérni a meccsbe: a helyedet nem tartották meg.",
   "app.malformedRelayLink": "Ez a relay link érvénytelen. Semmi sem lett mentve.",
   "app.ownLobby": "Ez a saját lobbid",
 
@@ -454,7 +455,7 @@ export default {
   "effects.categoryShout": "Kiáltás",
   "effects.categoryStance": "Állás",
   "effects.categoryWeaponSpell": "Fegyvervarázslat",
-  "effects.endHint": "dupla kattintás a befejezéshez",
+  "effects.endHint": "dupla kattintás, Enter vagy Delete a befejezéshez",
   "effects.from": "forrás: {caster}",
   "effects.inRange": "amíg a hatósugarában vagy",
   "effects.maintained": "fenntartott",
@@ -1111,6 +1112,7 @@ export default {
   "recharge.spent": "{skill}, a következő morálnövelésig elhasználva",
 
   "reconnect.detail": "A házigazda kapcsolata megszakadt. A helyed fenntartva.",
+  "reconnect.rejoinDetail": "Visszaviszünk a meccsedbe. A helyed fenntartva.",
   "reconnect.seconds": "{seconds} mp",
   "reconnect.title": "Újracsatlakozás…",
 
@@ -1525,7 +1527,7 @@ export default {
     "Mit tesz valójában egy varázslás: 60 páncélnál pontosan a leírásban álló szám.",
   "training.scenario.time-to-kill.label": "Ölési idő",
   "training.scenario.time-to-kill.teaches":
-    "A folyamatos sebzésed: meddig bír ki egy 500 életerejű varázsló, újra és újra.",
+    "A folyamatos sebzésed: meddig bír ki egy 480 életerejű varázsló, újra és újra.",
   "training.scenario.physical-vs-elemental.label": "Fizikai kontra elemi",
   "training.scenario.physical-vs-elemental.teaches":
     "Hogy a páncél sebzéstípusra felel: egy Warrior Stalwart Insigniával tompítja a kardot, de a Fireballt nem, egy Ranger tompítja a Fireballt, de a kardot nem.",
@@ -1534,7 +1536,7 @@ export default {
     "Hogy a kórok visszaszámlálást indítanak: a Bleeding, a Poison és a Burning másodpercenként 20 életerőt szív el, ennél több nincs, és újabbak hozzáadása frissít, nem halmoz.",
   "training.scenario.condition-removal.label": "Kóreltávolítás",
   "training.scenario.condition-removal.teaches":
-    "Hogy egy kóreltávolítás csak azt veszi le, amit ír: egy 500-ból 200 életerejű szövetségesen öt kór van, köztük Deep Wound, amely felkerülésekor 100-at levesz, és 400-ban korlátozza a gyógyításaidat.",
+    "Hogy egy kóreltávolítás csak azt veszi le, amit ír: egy 480-ból 192 életerejű szövetségesen öt kór van, köztük Deep Wound, amely felkerülésekor 96-at levesz, és 384-ban korlátozza a gyógyításaidat.",
   "training.scenario.armor-ladder.label": "Páncéllétra",
   "training.scenario.armor-ladder.teaches":
     "A csillapítási görbe: ugyanaz a találat 40-től 104 páncélig, egymás mellett.",

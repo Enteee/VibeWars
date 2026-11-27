@@ -2,9 +2,9 @@
 
 ## Darah dan energi
 
-Kamu mulai dengan 500 **Darah** dan 20 **Energi**, dan armormu menambah Energi:
+Kamu mulai dengan 480 **Darah** dan 20 **Energi**, dan armormu menambah Energi:
 tidak ada untuk Warrior, 5 untuk Ranger, Assassin, atau Dervish, 10 untuk yang
-lain. Staff menambah 10 lagi selama kamu memegangnya. Rune dan moral mengubah
+lain. Staff menambah 10 lagi selama kamu memegangnya. Armor Dervish juga menambah 25 Darah. Rune dan moral mengubah
 keduanya. Skill memakan Energi, dan Energi pulih dengan sendirinya, perlahan. ![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior**
 dan ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** memulihkannya paling lambat, ![Ranger](../../../apps/web/public/icons/profession/ranger.svg) **Ranger** sedikit lebih cepat, sisanya
 paling cepat.
@@ -80,7 +80,8 @@ Antek (kecuali Golem Daging), hantu, dan roh tidak berdarah, tidak keracunan, da
 ![Kutukan](../../../apps/web/public/icons/skill-type/hex.svg) **Kutukan** dirapal kepadamu oleh musuh; ![Berkah](../../../apps/web/public/icons/skill-type/enchantment.svg) **berkah** oleh dirimu sendiri atau
 sekutumu. Masing-masing dihapus oleh jenis skill-nya sendiri. Sebagian berkah
 **dipertahankan**: berkah itu bertahan sampai kamu mengakhirinya, memakan satu pip Energi selama
-berjalan. Klik dua kali ikonnya untuk mengakhirinya.
+berjalan. Klik dua kali ikonnya, atau fokuskan ikon itu lalu tekan Enter atau
+Delete, untuk mengakhirinya.
 
 Beberapa skill berhenti bekerja selagi kamu diberkahi, dan bekerja lagi begitu
 tidak lagi. Skill yang bertahan untuk "N serangan berikutnya" menghitung setiap

@@ -3,6 +3,7 @@ import {
   PROTOCOL_VERSION,
   parsePeerRefuse,
   parsePeerRejoinChallenge,
+  parsePeerWelcome,
   type JsonValue,
   type PeerHello,
   type PeerRejoinChallenge,
@@ -694,6 +695,48 @@ describe("a P2P host against peers claiming a dropped player's seat (#593)", () 
     expect(heard.welcomes).toBe(0);
     expect(heard.refusals).toEqual(["match-full"]);
     expect(playerIn(watcher.getSnapshot(), dropped.selfSessionId)).toBeDefined();
+  });
+  it("takes a seat back under a new peer id, last proven page first, still connected or not (#4110)", async () => {
+    const { match, watcher, dropped, thief: reloaded, heard } = await droppedSeat();
+    /** `page` asks for the dropped seat, proves `token`, and is told the next one. */
+    const prove = async (
+      page: Transport,
+      pageHeard: ReturnType<typeof overhear>,
+      token: string,
+    ): Promise<string> => {
+      let next = "";
+      page.on("welcome", (data) => (next = parsePeerWelcome(data)?.rejoinToken ?? ""));
+      page.send("hello", claim(dropped.selfSessionId), "host");
+      await until(() => pageHeard.challenges.length > 0);
+      const proof: PeerRejoinProof = {
+        playerId: dropped.selfSessionId,
+        proof: await rejoinProof(
+          token,
+          pageHeard.challenges[0]?.nonce ?? "",
+          dropped.selfSessionId,
+          page.selfId,
+        ),
+      };
+      page.send("rejoin-proof", proof, "host");
+      await until(() => pageHeard.welcomes > 0);
+      return next;
+    };
+    // A reloaded page is a new peer: with the token it gets the seat back.
+    const token = await prove(reloaded, heard, dropped.rejoinToken);
+
+    // Its token proven again while that page is still connected, as after
+    // a blip the host has not seen (#43): the new peer plays the seat.
+    const blip = match.network.join();
+    await settle();
+    await prove(blip, overhear(blip), token);
+    const x = (): number => playerIn(watcher.getSnapshot(), dropped.selfSessionId)?.x ?? 0;
+    const before = x();
+    reloaded.send("intent", { kind: "move", dirX: 1, dirY: 0 }, "host");
+    await match.step(0.3);
+    expect(x()).toBe(before);
+    blip.send("intent", { kind: "move", dirX: 1, dirY: 0 }, "host");
+    await match.step(0.3);
+    expect(x()).toBeGreaterThan(before);
   });
 
   it("ignores a proof it never asked for, even a right one", async () => {

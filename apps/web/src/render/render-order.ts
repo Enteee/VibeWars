@@ -13,13 +13,13 @@
 import { ELEVATION_STEP } from "@vibewars/game-maps/schema";
 
 /** A body's parts on one character band, in the order they draw. */
-export type CharacterPart = "body" | "glyph" | "marks" | "bar";
+export type CharacterPart = "body" | "figure" | "badge" | "glyph" | "marks" | "bar";
 
-/** A body of water's parts (#2984): its fill and shore, then the ripples on it. */
-export type WaterPart = "surface" | "ripples";
+/** A body of water's parts (#2984): its fill and shore, its drifting cells (#4058), then the ripples on it. */
+export type WaterPart = "surface" | "cells" | "ripples";
 
 /** An effect zone's parts (#3052): its painted ground, then its moving marks and edge. */
-export type ZonePart = "ground" | "marks";
+export type ZonePart = "ground" | "cells" | "marks";
 /** A decor prop's parts (#4013): its shadow, its low strokes, then what stands tall. */
 export type DecorPart = "shadow" | "low" | "tall";
 /**
@@ -44,6 +44,8 @@ export type RenderItem =
   | { readonly kind: "fog"; readonly layer: number }
   | { readonly kind: "plume"; readonly band: number }
   | { readonly kind: "weather" }
+  | { readonly kind: "vignette" }
+  | { readonly kind: "deck-vignette"; readonly deckLayer: number }
   | { readonly kind: "terrain" }
   | { readonly kind: "lighting"; readonly layer: number }
   | { readonly kind: "lit-ground-effect" }
@@ -127,7 +129,21 @@ const DECOR: Record<DecorPart, number> = { shadow: 0.62, low: 0.7, tall: 2.07 };
  * included, so a hit never hides it (#3292); still in its band, so a deck
  * over the body covers its bar too.
  */
-const CHARACTER_PART: Record<CharacterPart, number> = { body: 1, glyph: 1.2, marks: 1.4, bar: 1.5 };
+const CHARACTER_PART: Record<CharacterPart, number> = {
+  body: 1,
+  figure: 1.05,
+  badge: 1.15,
+  glyph: 1.2,
+  marks: 1.4,
+  bar: 1.5,
+};
+
+/**
+ * How far up its band's `figure` depth a stacked figure stands, by how far
+ * down the arena its feet are (ADR-0057): the nearer one covers the one
+ * behind it, and none reaches its band's badges.
+ */
+export const FIGURE_DEPTH_SPAN = 0.05;
 /**
  * Ground water sits on the floor and under the ward and trap circles
  * (#2984), so they stay readable on it; water on a deck sits on that deck
@@ -142,8 +158,8 @@ const GROUND_PAVING = -1.7;
 const DECK_PAVING = 5.55;
 /** A covered tunnel's seam (#3236): over the paving on the ground above it, under its water. */
 const TUNNEL_SEAM = 5.57;
-const GROUND_WATER: Record<WaterPart, number> = { surface: -1.6, ripples: -1.5 };
-const DECK_WATER: Record<WaterPart, number> = { surface: 5.6, ripples: 5.7 };
+const GROUND_WATER: Record<WaterPart, number> = { surface: -1.6, cells: -1.55, ripples: -1.5 };
+const DECK_WATER: Record<WaterPart, number> = { surface: 5.6, cells: 5.65, ripples: 5.7 };
 /**
  * A ground aura or footstep trail (ADR-0056 §4, #3578): on its layer's
  * floor and water, lit as they are, under every ward, trap, zone, torch
@@ -152,12 +168,24 @@ const DECK_WATER: Record<WaterPart, number> = { surface: 5.6, ripples: 5.7 };
 const GROUND_COSMETIC = -1.05;
 const DECK_COSMETIC = 5.75;
 /**
+ * The gothic vignette (#4057): over the ground and what is laid on it,
+ * under the first gameplay layer, so a body or a cue at the edge of the
+ * view keeps its colours while the floor round it darkens.
+ */
+const VIGNETTE = -1.02;
+/**
+ * The vignette on a layer's deck tops (#4070): over the deck and what is
+ * laid on it, as the ground's is over the ground, under its lighting and
+ * every gameplay layer standing on it.
+ */
+const DECK_VIGNETTE = 5.77;
+/**
  * An effect zone (ADR-0053): over its layer's water and lighting, which
  * never darkens it (ADR-0052: what matters to the fight is drawn unlit),
  * and under its torches and whoever stands in it.
  */
-const GROUND_ZONE: Record<ZonePart, number> = { ground: 0.53, marks: 0.55 };
-const DECK_ZONE: Record<ZonePart, number> = { ground: 5.83, marks: 5.85 };
+const GROUND_ZONE: Record<ZonePart, number> = { ground: 0.53, cells: 0.54, marks: 0.55 };
+const DECK_ZONE: Record<ZonePart, number> = { ground: 5.83, cells: 5.84, marks: 5.85 };
 /**
  * A fog bank (#3032): over its layer's ground, water, light and zones,
  * under its wards, torches and whoever stands in it, so the haze never
@@ -237,6 +265,10 @@ export function renderOrder(item: RenderItem): number {
       return item.band * LAYER_STACK + PLUME;
     case "weather":
       return WEATHER;
+    case "vignette":
+      return VIGNETTE;
+    case "deck-vignette":
+      return (item.deckLayer - 1) * LAYER_STACK + DECK_VIGNETTE;
     case "cosmetic-ground":
       return item.layer === 0 ? GROUND_COSMETIC : (item.layer - 1) * LAYER_STACK + DECK_COSMETIC;
     case "ground-effect":

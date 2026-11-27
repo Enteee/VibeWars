@@ -16,6 +16,7 @@ import { isSpell } from "../skills/types.js";
 import { attackDurationSeconds } from "../skills/weapon-attack.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
+import { statusMoveSpeed } from "../skills/tick.js";
 
 /**
  * Paragon echoes (#1423): a refrain renews and a finale fires whenever a
@@ -324,7 +325,7 @@ describe("the eight echoes (#1423)", () => {
     const sim = cast("paragon.hasty-refrain");
     expect(remaining(sim, "hasty-refrain")).toBeGreaterThan(17);
     const modifiers = aggregateModifiers(get(sim, "a").combatant.statuses.active);
-    expect(modifiers.moveSpeedMultiplier).toBeCloseTo(1.25);
+    expect(statusMoveSpeed(modifiers)).toBeCloseTo(1.25);
     expect(getSkill("paragon.hasty-refrain")?.target).toBe("single-ally");
   });
 
@@ -393,13 +394,13 @@ describe("Paragon echoes 2 (#1485)", () => {
       alone.armorModifier,
       alone.attackDurationMultiplier,
       alone.adrenalineGainFaster,
-    ]).toEqual([-20, 1, 0]);
+    ]).toEqual([-20, 1, []]);
     put(sim, CHANT, 0.2, "p");
     const chanted = aggregateModifiers(statuses.active);
     expect(chanted.attackDurationMultiplier).toBe(0.67);
-    expect(chanted.adrenalineGainFaster).toBeCloseTo(0.33);
+    expect(chanted.adrenalineGainFaster).toEqual([0.33]);
     stepFor(sim, 0.5);
     const after = aggregateModifiers(statuses.active);
-    expect([after.attackDurationMultiplier, after.adrenalineGainFaster]).toEqual([1, 0]);
+    expect([after.attackDurationMultiplier, after.adrenalineGainFaster]).toEqual([1, []]);
   });
 });

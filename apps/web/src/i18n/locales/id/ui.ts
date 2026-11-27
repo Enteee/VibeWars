@@ -10,6 +10,7 @@ export default {
   "app.framedRelayLink": "Buka link relay di tab tersendiri. Belum ada yang disimpan.",
   "app.inviteInLobby": "Kembali ke menu, lalu buka lagi link undangannya.",
   "app.lostMatch": "Koneksi ke pertandingan terputus.",
+  "app.rejoinFailed": "Tidak bisa kembali ke pertandingan: kursimu tidak ditahan.",
   "app.malformedRelayLink": "Link relay itu tidak valid. Belum ada yang disimpan.",
   "app.ownLobby": "Itu lobi kamu sendiri",
 
@@ -421,7 +422,7 @@ export default {
   "effects.categoryShout": "Teriakan",
   "effects.categoryStance": "Kuda-kuda",
   "effects.categoryWeaponSpell": "Mantra Senjata",
-  "effects.endHint": "klik dua kali untuk mengakhiri",
+  "effects.endHint": "klik dua kali, Enter, atau Delete untuk mengakhiri",
   "effects.from": "dari {caster}",
   "effects.inRange": "selama dalam jangkauannya",
   "effects.maintained": "dipertahankan",
@@ -1056,6 +1057,7 @@ export default {
   "recharge.spent": "{skill}, habis sampai Dorongan Moral",
 
   "reconnect.detail": "Koneksi host terputus. Tempatmu tetap dijaga.",
+  "reconnect.rejoinDetail": "Mengembalikanmu ke pertandinganmu. Kursimu ditahan.",
   "reconnect.seconds": "{seconds} s",
   "reconnect.title": "Menyambung ulang…",
 
@@ -1443,7 +1445,7 @@ export default {
     "Apa yang sebenarnya dilakukan satu cast: pada armor 60, tepat angka di tooltip.",
   "training.scenario.time-to-kill.label": "Waktu membunuh",
   "training.scenario.time-to-kill.teaches":
-    "Damage berkelanjutanmu: berapa lama caster dengan 500 Darah bertahan, lagi dan lagi.",
+    "Damage berkelanjutanmu: berapa lama caster dengan 480 Darah bertahan, lagi dan lagi.",
   "training.scenario.physical-vs-elemental.label": "Fisik vs elemental",
   "training.scenario.physical-vs-elemental.teaches":
     "Bahwa armor menjawab jenis damage: Warrior dengan Stalwart Insignia meredam pedang tapi tidak Fireball, Ranger meredam Fireball tapi tidak pedang.",
@@ -1452,7 +1454,7 @@ export default {
     "Bahwa Kondisi adalah jam kematian: Bleeding, Poison, dan Burning menguras 20 Darah per detik, batas tertingginya, dan menambah lagi hanya menyegarkan, tidak menumpuk.",
   "training.scenario.condition-removal.label": "Menghapus kondisi",
   "training.scenario.condition-removal.teaches":
-    "Bahwa penghapus Kondisi hanya mengangkat yang disebutkannya: sekutu di 200 dari 500 membawa lima Kondisi, dan Deep Wound di antaranya mengambil 100 saat kena dan membatasi heal-mu di 400.",
+    "Bahwa penghapus Kondisi hanya mengangkat yang disebutkannya: sekutu di 192 dari 480 membawa lima Kondisi, dan Deep Wound di antaranya mengambil 96 saat kena dan membatasi heal-mu di 384.",
   "training.scenario.armor-ladder.label": "Tangga armor",
   "training.scenario.armor-ladder.teaches":
     "Kurva mitigasi: pukulan yang sama terhadap armor 40 sampai 104, berdampingan.",

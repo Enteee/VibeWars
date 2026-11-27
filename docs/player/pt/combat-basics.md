@@ -2,10 +2,10 @@
 
 ## Vida e energia
 
-Você começa com 500 de **vida** e 20 de **energia**, e sua armadura soma
+Você começa com 480 de **vida** e 20 de **energia**, e sua armadura soma
 energia: nada para um Guerreiro, 5 para um Patrulheiro, um Assassino ou um
 Dervixe, 10 para todos os outros. Um cajado soma mais 10 enquanto você o
-segura. Runas e moral mudam as duas. Habilidades custam energia, e ela volta sozinha, devagar.
+segura. A armadura de um Dervixe também soma 25 de vida. Runas e moral mudam as duas. Habilidades custam energia, e ela volta sozinha, devagar.
 ![Guerreiro](../../../apps/web/public/icons/profession/warrior.svg) **Guerreiros** e ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragons** recuperam mais devagar, ![Patrulheiro](../../../apps/web/public/icons/profession/ranger.svg) **Patrulheiros** um pouco mais rápido,
 e todos os outros mais rápido ainda.
 
@@ -86,7 +86,8 @@ Lacaios (exceto o Golem de Carne), fantasmas e espíritos não sangram, não sã
 você ou por aliados. Cada um é removido pelo seu próprio tipo de
 habilidade. Alguns encantamentos são **mantidos**: duram até você
 encerrá-los e custam um pip de energia enquanto duram. Clique duas vezes
-no ícone para encerrar um.
+no ícone, ou coloque o foco nele e pressione Enter ou Delete, para
+encerrar um.
 
 Algumas habilidades param de funcionar enquanto você está encantado e
 voltam quando você não está mais. Uma habilidade que dura seus "próximos

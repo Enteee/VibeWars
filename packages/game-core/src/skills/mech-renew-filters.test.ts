@@ -13,7 +13,7 @@ import {
   type StatusId,
 } from "./status.js";
 import { makeCombatant } from "./testing.js";
-import { attackDamageDeltaOf, effectiveActivationSeconds } from "./tick.js";
+import { attackDamageDeltaOf, effectiveActivationSeconds, statusMoveSpeed } from "./tick.js";
 import type { Combatant, Skill } from "./types.js";
 import { EN_NAMES, EN_WORDS } from "./describe-words.js";
 
@@ -141,7 +141,7 @@ describe("Storm's Embrace (#2501)", () => {
   it("moves 25% faster and is refreshed by elemental damage above 0", () => {
     const set = new StatusSet("fleshy");
     set.apply("storms-embrace", 10, "r", NO_RANKS);
-    expect(aggregateModifiers(set.active).moveSpeedMultiplier).toBeCloseTo(1.25);
+    expect(statusMoveSpeed(aggregateModifiers(set.active))).toBeCloseTo(1.25);
     advance(set, 6);
     set.recordElementalDamage(0);
     expect(left(set, "storms-embrace")).toBeCloseTo(4);
@@ -203,13 +203,13 @@ describe("Soldier's Speed (#2501)", () => {
   it("moves 15% faster, and 15% more again under a shout", () => {
     const set = new StatusSet("fleshy");
     set.apply("soldiers-speed", 15, "w", NO_RANKS);
-    expect(aggregateModifiers(set.active).moveSpeedMultiplier).toBeCloseTo(1.15);
+    expect(statusMoveSpeed(aggregateModifiers(set.active))).toBeCloseTo(1.15);
     const shout = new StatusSet("fleshy");
     shout.apply("call-of-protection", 15, "w", NO_RANKS);
     set.apply("call-of-protection", 15, "w", NO_RANKS);
     expect(
-      aggregateModifiers(set.active).moveSpeedMultiplier /
-        aggregateModifiers(shout.active).moveSpeedMultiplier,
+      statusMoveSpeed(aggregateModifiers(set.active)) /
+        statusMoveSpeed(aggregateModifiers(shout.active)),
     ).toBeCloseTo(1.15 * 1.15);
   });
 

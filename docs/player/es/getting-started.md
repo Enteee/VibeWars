@@ -124,7 +124,8 @@ de quién está dentro; su insignia los cuenta.
   sigue abierta hasta que entras. Una vez dentro, la ventana dice **Sala**, y
   su **Salir** te devuelve a una sala propia nueva, con un enlace de invitación
   nuevo. Un enlace abierto en la pantalla de una sala o en una partida te pide
-  volver antes al menú. Si se cae tu conexión, tu puesto se guarda 30 segundos.
+  volver antes al menú. Si se cae tu conexión, o recargas o vuelves a abrir la
+  página, tu puesto se guarda 30 segundos y vuelves a ocuparlo.
 - **Expulsar a alguien:** como anfitrión, pulsa la **×** junto al nombre de un
   jugador en la ventana de Sala, fuera de una partida. Se le dice que el
   anfitrión lo expulsó, recibe una sala propia nueva y no puede volver a la

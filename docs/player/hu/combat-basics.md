@@ -2,10 +2,10 @@
 
 ## Életerő és energia
 
-500 **Életerővel** és 20 **Energiával** kezdesz, és a páncélod Energiát ad
+480 **Életerővel** és 20 **Energiával** kezdesz, és a páncélod Energiát ad
 hozzá: Warriornak semmit, Rangernek, Assassinnak vagy Dervishnek 5-öt,
 mindenki másnak 10-et. A varázsbot további 10-et ad, amíg a kezedben tartod.
-A rúnák és a morál mindkettőt módosítják. A készségek Energiába kerülnek, és az magától
+A Dervish páncélja 25 Életerőt is ad. A rúnák és a morál mindkettőt módosítják. A készségek Energiába kerülnek, és az magától
 töltődik vissza, lassan. A ![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior** és a ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** nyeri vissza a
 leglassabban, a ![Ranger](../../../apps/web/public/icons/profession/ranger.svg) **Ranger** kicsit gyorsabban, mindenki más a leggyorsabban.
 
@@ -89,7 +89,8 @@ Az ![Átok](../../../apps/web/public/icons/skill-type/hex.svg) **átkokat** az e
 vagy a szövetségeseid. Mindegyiket a saját fajta készsége távolítja el.
 Egyes bűbájok **fenntartottak**: addig tartanak, amíg be nem fejezed
 őket, és közben egy Energia-csíkba kerülnek. Kattints duplán az
-ikonjára, hogy befejezd.
+ikonjára, vagy vidd rá a fókuszt, és nyomd meg az Enter vagy a Delete
+billentyűt, hogy befejezd.
 
 Néhány készség leáll, amíg bűbáj van rajtad, és újra működik, amint
 már nincs. Az a készség, amely a „következő N támadásodig” tart, minden

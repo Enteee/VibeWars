@@ -66,8 +66,12 @@ once, on the hall (floor `#26303f` lands within six points of the mock's `#3a383
 `#4b5a70` on `#5e5a54`), and the same constants apply to every biome. The
 tables here are the tones before the grade. It is applied in one place, where
 `biomeMaterials` and `FLAT` are built, and to the land outside a map
-(`OUTSIDE_LOOK`). Hazards, gameplay marks, water, decor, a breakable wall's
-crack glow and bodies are never graded (§6).
+(`OUTSIDE_LOOK`). Decor is graded too (#4059), except its fire. Hazards, gameplay
+marks, water, fire, a breakable wall's crack glow and bodies are never graded (§6).
+
+**Decor in the gothic look** (#4059): every prop has a 1 px `#08080a` outline
+round its top, and its sides darken toward the ground (contrast 0.75, AO 0.5),
+so its cap is its lightest part. It stays darker and quieter than a body.
 
 **Overhangs** (#3293) are roofs nobody stands on. They hang at their layer's
 height over whoever is under them, with a thin eave below their front edge and
@@ -184,6 +188,25 @@ flame in it (`#ff9040`, `#ffd23d`). A light with no such prefix is a glow
 with no drawn source. Keep a brazier off walk lines, pits and water: it is
 scenery, with no collision.
 
+In the gothic look (#4057) every fire burns the same warm `#ffbe6e`,
+`FIRE_LIGHT_GAIN` brighter and `FIRE_LIGHT_REACH` wider than its map says,
+so a pool reads on the dark floor (`warmFireLights`, `lighting-model.ts`),
+and adds a warm pool over the lit floor at `FIRE_GLOW` 0.35 of its
+intensity, as a tunnel's lights do (`glowOf`, `lighting-pass.ts`).
+A fire is a `torch-`, `fire-` or `brazier-` light that is red at heart: a
+teal brazier burns magic and keeps its colour. A fire's colour in the map is
+not shown; its intensity and radius still set the pool.
+
+The view darkens towards its corners (`vignette-model.ts`): nothing in the
+centre third, rising to `VIGNETTE.alpha` 0.6 at a corner, black. It follows
+the screen and is drawn over the ground and what is laid on it, under every
+gameplay layer (`renderOrder` `vignette`), so a body, a cue or a zone at the
+edge of the view keeps its colours. A raised deck's top darkens as the
+ground beside it does, masked to the deck and drawn just over its cosmetic
+layer (`renderOrder` `deck-vignette`). Fading decks, lowered switched decks,
+walls and tall decor keep their light. The HUD is not on the canvas and
+never darkens.
+
 ## 3. Shadow and height
 
 - **The sun's shadow** is the footprint of what casts it, moved by the sun's
@@ -214,7 +237,11 @@ outlines, and the noise fill on a map without one.
 ## 4. Outline and texture
 
 - **A body** has a 1.5 to 2.5 px dark outline (`#0b0f14`) so it parts from any
-  floor. **A wall top**, a deck edge and a cover cap have a 1 px gothic outline,
+  floor. A standing body is a stacked figure (ADR-0057, `sprite-stack.ts`):
+  helmeted and caped, 1 px outline `#08080a`, shaded dark at its feet to full
+  colour at its cap, its robe in friend or foe colour, its profession glyph
+  on a dark badge disc on top. Creatures and fallen bodies stay discs.
+  **A wall top**, a deck edge and a cover cap have a 1 px gothic outline,
   `WALL_STROKE` `#08080a`, in every biome (#4056); a prop has a 2 px dark outline. **A zone** has a hard
   bright edge, 2 lines wide, never softer than its fill.
 - **No fill is flat** (a zone's is not: `zone-painter.ts`, #3052; nor a layered
@@ -402,15 +429,34 @@ times the zone's half-diagonal: `zone-light.ts` adds it, the map has none.
 
 ### Water, deep and shallow
 
-Deep is dark with a hard pale shore and sparse ripples: a body cannot be
-seen through it. Shallow is clear, shows the floor, and ripples more. Both
-are scenery under the zone tint.
+Deep is dark, still water you cannot see into. Its fill is `0x0e2228`
+with 4 rings darkening toward the middle, so it reads as deep. Its edge sinks
+into a short pit wall in the floor's pit-wall colour, and a stone lip in the
+biome's wall-top colour stands 3 px proud along the shore. The lip and the
+ripples are what tell it from a pit or a tunnel mouth. Shallow is the same hue,
+lighter and at half alpha, so the floor shows through. It has no lip and no
+sunk wall, only a thin lighter shore line: deep against shallow is gameplay,
+and reads at a glance. The hue is the same in every biome; only the lip takes
+the biome's colour. Both are scenery under the zone tint.
+
+Over both fills lie two layers of liquid cells (#4058): a Voronoi network,
+drawn once at load into a 512 px tile that repeats, tinted per depth, at two
+scales, baked into each body of water once per map. They hold still: drifting,
+they cost too much of a frame (#4078). The gaps between cells are the light.
+Ripples are sparse pale ellipses that drift slowly, never sparkles, and hold
+still under reduced motion.
 
 ![water](visual-style/water.svg)
 
-Recipe (now): `WATER_LOOK.deep` = `{ fill: 0x0a1320, fillAlpha: 1, shore:
-0xc4dcee, shoreWidth: 3, ripple: 0x4e6c8a, rippleAlpha: 0.7 }`;
-`WATER_LOOK.shallow` = fill `0x8fb8d6` at 0.3, shore `0x8fb8d6`.
+Recipe (now): `arena-palette.ts` `WATER_LOOK.deep` = `{ fill: 0x0e2228,
+fillAlpha: 1, rings: 4, ring: 0x040c10, ringAlpha: 0.3, lip: true, ripple:
+0xb4d2dc, rippleAlpha: 0.35, cell: 0x3c6a78, cellAlpha: 0.2 }`;
+`WATER_LOOK.shallow` = fill `0x5ea8b8` at 0.5, shore `0xa8d8e0` 1 px, cells
+`0x8cc0cc` at 0.14. The cells come from `liquid-cells.ts` (seed, site count,
+gap, texture size), which the other liquids reuse. The lip, the sunk wall and
+the rings are `water-painter.ts` `WATER_ART`.
+
+![deep water by shallow on Blackwater Ford](visual-style/water-ford.webp)
 
 ### Toxic fog
 

@@ -37,6 +37,7 @@ import type { AttackCast, SpellCast } from "./attack-clock.js";
 import type { ConditionCue } from "./body-conditions.js";
 import type { RenderableBreakable } from "./breakable-objects.js";
 import type { CapeLook } from "./cape-shape.js";
+import { STACK_GLYPH_TINT, stackBadge, stackOverheadRise } from "./sprite-stack.js";
 import type { MapDecor } from "./decor-art.js";
 import type { RenderablePing } from "./call-marks.js";
 import { FOE_COLOUR, FRIEND_COLOUR } from "./colour-wheel.js";
@@ -270,6 +271,8 @@ export interface MapStructure {
   readonly atmosphere?: MapAtmosphere;
   /** Its roads, squares and tracks (#3210), drawn on their layer's floor; a map without it has none. */
   readonly paving?: readonly MapPaving[];
+  /** The render bench's reference map in its build (#4129): drawn with no whole-screen pass. */
+  readonly bare?: true;
   /** Each deck there is now, drawn as its `look` (#3067): a tower, a wall-walk, a bridge. */
   readonly decks: readonly MapDeck[];
   /** Each switched deck that is down (#3068): drawn as what is left of it, and nothing more. */
@@ -995,14 +998,31 @@ export function nameLabelBottom(actor: RenderableActor, zoom: number): number {
   if (actor.dead) {
     return y - actor.radius - screenPx(NAME_GAP_DEAD, zoom);
   }
-  return y - actor.radius - CAST_BAR_TOP - screenPx(NAME_GAP_LIVING, zoom);
+  return y - actor.radius - overheadRise(actor) - CAST_BAR_TOP - screenPx(NAME_GAP_LIVING, zoom);
+}
+
+/**
+ * Whether `actor` stands as a stacked figure (ADR-0057, #4031): a living
+ * body on its feet. A creature, a corpse and a body knocked down stay flat.
+ */
+export function isStackedFigure(actor: RenderableActor): boolean {
+  return !actor.dead && !actor.knockedDown && actor.creatureLook === undefined;
+}
+
+/**
+ * How far over a flat body the health bar, the cast bar and badge, and
+ * the name rise for `actor`: a figure's height and its glyph badge, so
+ * they clear both (ADR-0057). 0 for a flat body.
+ */
+export function overheadRise(actor: RenderableActor): number {
+  return isStackedFigure(actor) ? stackOverheadRise(actor.radius) : 0;
 }
 
 /** The shield: an arc on the body's centre, 45° to 105° left of the facing, at r + 3.5 (#275). */
 const SHIELD_FROM = (45 * Math.PI) / 180;
 const SHIELD_TO = (105 * Math.PI) / 180;
 /** The focus: a ring of radius 1.75 centred 75° left of the facing, at r + 3.5 (#275). */
-const FOCUS_ANGLE = (75 * Math.PI) / 180;
+export const FOCUS_ANGLE = (75 * Math.PI) / 180;
 const FOCUS_RADIUS = 1.75;
 /** Both off-hand marks' centrelines sit this far past the body's edge. */
 const OFFHAND_REACH = 3.5;
@@ -1215,8 +1235,10 @@ export interface BodyGlyphLayout {
 /**
  * The glyph inside `actor`'s body (#1037): upright, centred, a dark mark
  * on the team colour, under the weapon mark. World sized, so it scales
- * with the body at every zoom. A player's is its primary profession's, at
- * 60 %, shrunk to fit its flattened disc when knocked down; a creature's
+ * with the body at every zoom. A player's is its primary profession's: on
+ * the badge on top of its figure, pale and opaque, while it stands
+ * (ADR-0057); at 60 %, shrunk to fit its flattened disc, when knocked
+ * down; a creature's
  * is its kind's (#1162), opaque, and its shape never lies down; a
  * Ghostly Hero's pale (#1377). A corpse greys it.
  *
@@ -1247,6 +1269,17 @@ export function bodyGlyphLayout(actor: RenderableActor): BodyGlyphLayout | undef
       y,
       size,
       tint: actor.exploited ? EXPLOITED_CORPSE_COLOUR : DEAD_COLOUR,
+      alpha: 1,
+    };
+  }
+  if (isStackedFigure(actor)) {
+    // On its badge on top of the figure, pale on the dark disc (ADR-0057).
+    return {
+      glyph,
+      x,
+      y: y - stackBadge(actor.radius).rise,
+      size,
+      tint: STACK_GLYPH_TINT,
       alpha: 1,
     };
   }

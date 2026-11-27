@@ -2,7 +2,7 @@
 
 ## 生命和能量
 
-你一开始有 500 **生命** 和 20 **能量**，护甲会增加能量：Warrior 不加，Ranger、Assassin 或 Dervish 加 5，其他所有人加 10。手持法杖时再加 10。符文和士气会改变这两者。技能消耗能量，而能量会自行缓慢恢复。![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior** 和 ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** 恢复得最慢，![Ranger](../../../apps/web/public/icons/profession/ranger.svg) **Ranger** 稍快，其他所有人最快。
+你一开始有 480 **生命** 和 20 **能量**，护甲会增加能量：Warrior 不加，Ranger、Assassin 或 Dervish 加 5，其他所有人加 10。手持法杖时再加 10。Dervish 的护甲还会增加 25 生命。符文和士气会改变这两者。技能消耗能量，而能量会自行缓慢恢复。![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior** 和 ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** 恢复得最慢，![Ranger](../../../apps/web/public/icons/profession/ranger.svg) **Ranger** 稍快，其他所有人最快。
 
 你的条上的箭头是 **pip**：每一个都代表生命或能量每秒一点一点地恢复或流失。![Bleeding](../../../apps/web/public/icons/status/bleeding.svg) **Bleeding**、![Burning](../../../apps/web/public/icons/status/burning.svg) **Burning** 和 ![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison** 会使生命流失；Regeneration 和治疗法术会增加生命。脱离战斗 5 秒后，你的生命会开始自行恢复，脱离战斗越久恢复越快。
 
@@ -49,7 +49,7 @@
 
 仆从（血肉魔像除外）、幽灵和灵魂不会流血、中毒或染病，灵魂也不受任何咒术，除 **Burning** 外不受任何状态。
 
-![咒术](../../../apps/web/public/icons/skill-type/hex.svg) **咒术** 由敌人施加在你身上；![附魔](../../../apps/web/public/icons/skill-type/enchantment.svg) **附魔** 由你自己或你的队友施加。每一种都由其对应类型的技能移除。有些附魔是 **维持** 的：它们会一直持续到你结束它们，持续期间消耗一个能量 pip。双击其图标即可结束。
+![咒术](../../../apps/web/public/icons/skill-type/hex.svg) **咒术** 由敌人施加在你身上；![附魔](../../../apps/web/public/icons/skill-type/enchantment.svg) **附魔** 由你自己或你的队友施加。每一种都由其对应类型的技能移除。有些附魔是 **维持** 的：它们会一直持续到你结束它们，持续期间消耗一个能量 pip。双击其图标，或将焦点移到图标上并按 Enter 或 Delete，即可结束。
 
 少数技能在你受到附魔时会停止生效，在你不再受附魔时恢复。持续"接下来 N 次攻击"的技能会计算每一次攻击，所以未命中或被格挡和命中一样会消耗一次。
 

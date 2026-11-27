@@ -153,6 +153,28 @@ export function armorEnergyFor(profession: ProfessionId): number {
   return ARMOR_ENERGY_BY_PROFESSION[profession];
 }
 
+/**
+ * Health the armor adds, by primary profession (GW1 wiki "Health"):
+ * "Dervish basic armor includes a 25 health bonus" (#4002). No other
+ * profession's armor adds any.
+ */
+export const ARMOR_HEALTH_BY_PROFESSION: Readonly<Record<ProfessionId, number>> = Object.freeze({
+  warrior: 0,
+  ranger: 0,
+  assassin: 0,
+  dervish: 25,
+  paragon: 0,
+  monk: 0,
+  necromancer: 0,
+  mesmer: 0,
+  elementalist: 0,
+  ritualist: 0,
+});
+
+export function armorHealthFor(profession: ProfessionId): number {
+  return ARMOR_HEALTH_BY_PROFESSION[profession];
+}
+
 /** One of the five pieces, as a build stores it. */
 export interface ArmorPiece {
   readonly insigniaId: InsigniaId | null;

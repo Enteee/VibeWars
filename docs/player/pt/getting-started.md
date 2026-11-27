@@ -126,8 +126,9 @@ uma lista de quem está nela; o selo conta as pessoas.
   aberta até você entrar. Lá dentro, a janela diz **Sala**, e **Sair** leva
   você de volta a uma sala nova só sua, com um novo link de convite. Um
   link aberto na tela de uma sala ou em uma partida pede que você volte ao
-  menu primeiro. Se sua conexão cair, sua vaga fica guardada por 30
-  segundos.
+  menu primeiro. Se sua conexão cair, ou você recarregar ou reabrir a
+  página, sua vaga fica guardada por 30 segundos e você é colocado de volta
+  nela.
 - **Remover alguém:** como host, pressione o **×** ao lado do nome de um
   jogador na janela da Sala, fora de uma partida. Ele é avisado de que o
   host o removeu, recebe uma sala nova só dele e não pode voltar à sua

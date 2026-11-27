@@ -15,6 +15,7 @@ export const en = {
   "app.framedRelayLink": "Open the relay link in its own tab. Nothing was saved.",
   "app.inviteInLobby": "Go back to the menu, then open the invite link again.",
   "app.lostMatch": "Lost the connection to the match.",
+  "app.rejoinFailed": "Could not rejoin the match: your seat was not held.",
   "app.malformedRelayLink": "That relay link is not valid. Nothing was saved.",
   "app.ownLobby": "That is your own lobby",
 
@@ -451,7 +452,7 @@ export const en = {
   "effects.categoryShout": "Shout",
   "effects.categoryStance": "Stance",
   "effects.categoryWeaponSpell": "Weapon Spell",
-  "effects.endHint": "double-click to end",
+  "effects.endHint": "double-click, Enter or Delete to end",
   "effects.from": "from {caster}",
   "effects.inRange": "while in its range",
   "effects.maintained": "maintained",
@@ -1105,6 +1106,7 @@ export const en = {
   "recharge.spent": "{skill}, spent until a morale boost",
 
   "reconnect.detail": "The host's connection dropped. Your seat is held.",
+  "reconnect.rejoinDetail": "Putting you back in your match. Your seat is held.",
   "reconnect.seconds": "{seconds} s",
   "reconnect.title": "Reconnecting…",
 
@@ -1514,7 +1516,7 @@ export const en = {
     "What one cast actually does: at 60 armor, the tooltip's number exactly.",
   "training.scenario.time-to-kill.label": "Time to kill",
   "training.scenario.time-to-kill.teaches":
-    "Your sustained output: how long a 500-health caster lasts, again and again.",
+    "Your sustained output: how long a 480-health caster lasts, again and again.",
   "training.scenario.physical-vs-elemental.label": "Physical vs elemental",
   "training.scenario.physical-vs-elemental.teaches":
     "That armor answers to a damage type: a Warrior and Stalwart blunt a sword and not a Fireball, a Ranger blunts a Fireball and not a sword.",
@@ -1523,7 +1525,7 @@ export const en = {
     "That conditions are a kill clock: bleeding, poison and burning drain 20 health a second, the most there is, and adding more refreshes rather than stacks.",
   "training.scenario.condition-removal.label": "Condition removal",
   "training.scenario.condition-removal.teaches":
-    "That a condition removal takes off only what it says: an ally at 200 of 500 carries five conditions, and deep wound among them takes 100 as it lands and caps your heals at 400.",
+    "That a condition removal takes off only what it says: an ally at 192 of 480 carries five conditions, and deep wound among them takes 96 as it lands and caps your heals at 384.",
   "training.scenario.armor-ladder.label": "Armor ladder",
   "training.scenario.armor-ladder.teaches":
     "The mitigation curve: the same hit against 40 to 104 armor, side by side.",

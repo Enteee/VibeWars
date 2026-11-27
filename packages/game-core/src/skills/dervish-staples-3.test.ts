@@ -14,6 +14,7 @@ import { NO_RANKS, aggregateModifiers } from "./status.js";
 import { makeCombatant } from "./testing.js";
 import type { Combatant, Skill } from "./types.js";
 import { resolveAttackSkill } from "./weapon-attack.js";
+import { statusMoveSpeed } from "./tick.js";
 
 /**
  * Dervish staples 3 (#1667): Reap Impurities, Aura Slicer, Crippling
@@ -454,8 +455,8 @@ describe("in a match (#1667)", () => {
       expect(secondsOf(sim, "c", "onslaught")).toBeCloseTo(7, 0);
       const modifiers = aggregateModifiers(get(sim, "c").statuses.active);
       expect(modifiers.attackDurationMultiplier).toBe(0.75);
-      expect(modifiers.adrenalineGainFaster).toBe(0.25);
-      expect(modifiers.moveSpeedMultiplier).toBe(1);
+      expect(modifiers.adrenalineGainFaster).toEqual([0.25]);
+      expect(statusMoveSpeed(modifiers)).toBe(1);
     });
   });
 
@@ -502,7 +503,7 @@ describe("in a match (#1667)", () => {
       use(sim, "dervish.featherfoot-grace", "c");
       expect(secondsOf(sim, "c", "featherfoot-grace")).toBeCloseTo(17, 0);
       const modifiers = aggregateModifiers(get(sim, "c").statuses.active);
-      expect(modifiers.moveSpeedMultiplier).toBe(1.25);
+      expect(statusMoveSpeed(modifiers)).toBe(1.25);
       expect(modifiers.conditionsExpireFaster).toBe(0.5);
     });
   });
@@ -512,7 +513,7 @@ describe("in a match (#1667)", () => {
       const sim = match();
       use(sim, "dervish.whirling-charge", "c");
       expect(secondsOf(sim, "c", "whirling-charge")).toBeCloseTo(5, 0);
-      expect(aggregateModifiers(get(sim, "c").statuses.active).moveSpeedMultiplier).toBe(1.33);
+      expect(statusMoveSpeed(aggregateModifiers(get(sim, "c").statuses.active))).toBe(1.33);
       const log = swing(sim);
       expect(dealt(log, "dervish.whirling-charge", "h")).toBe(42);
       for (const id of ["f", "g", "far"]) {

@@ -2,9 +2,9 @@
 
 ## Can ve enerji
 
-500 **Can** ve 20 **Enerji** ile başlarsın ve zırhın Enerji ekler:
+480 **Can** ve 20 **Enerji** ile başlarsın ve zırhın Enerji ekler:
 Warrior için hiç, Ranger, Assassin ya da Dervish için 5, diğer herkes
-için 10. Asa, elinde tuttuğun sürece 10 daha ekler. Rünler ve moral ikisini de
+için 10. Asa, elinde tuttuğun sürece 10 daha ekler. Dervish'in zırhı ayrıca 25 Can ekler. Rünler ve moral ikisini de
 değiştirir. Beceriler Enerji harcar ve Enerji kendiliğinden, yavaşça
 geri gelir. ![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior'lar** ve ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon'lar** onu en yavaş, ![Ranger](../../../apps/web/public/icons/profession/ranger.svg) **Ranger'lar** biraz
 daha hızlı, diğer herkes en hızlı geri kazanır.
@@ -87,7 +87,8 @@ Köleler (Et Golemi hariç), hayaletler ve ruhlar kanamaz, zehirlenmez ve hastal
 kendin ya da müttefiklerin tarafından. Her biri kendi türünden bir
 beceriyle kaldırılır. Bazı tılsımlar **sürdürülür**: sen bitirene kadar
 sürerler ve sürdükleri boyunca bir Enerji pip'ine mal olurlar. Birini
-bitirmek için simgesine çift tıkla.
+bitirmek için simgesine çift tıkla ya da simgeye odaklanıp Enter veya
+Delete tuşuna bas.
 
 Birkaç beceri, üzerinde tılsım varken çalışmayı bırakır ve tılsımın
 kalmayınca yeniden çalışır. "Sonraki N saldırın" boyunca süren bir

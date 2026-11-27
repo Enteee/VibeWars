@@ -10,6 +10,7 @@ export default {
   "app.framedRelayLink": "Открой ссылку на релей в отдельной вкладке. Ничего не сохранено.",
   "app.inviteInLobby": "Вернись в меню и снова открой ссылку-приглашение.",
   "app.lostMatch": "Соединение с матчем потеряно.",
+  "app.rejoinFailed": "Не удалось вернуться в матч: твоё место не сохранили.",
   "app.malformedRelayLink": "Эта ссылка на релей недействительна. Ничего не сохранено.",
   "app.ownLobby": "Это твоё лобби",
 
@@ -488,7 +489,7 @@ export default {
   "effects.categoryShout": "Клич",
   "effects.categoryStance": "Стойка",
   "effects.categoryWeaponSpell": "Заклинание оружия",
-  "effects.endHint": "двойной щелчок — завершить",
+  "effects.endHint": "двойной щелчок, Enter или Delete — завершить",
   "effects.from": "от {caster}",
   "effects.inRange": "пока в зоне действия",
   "effects.maintained": "поддерживается",
@@ -1205,6 +1206,7 @@ export default {
   "recharge.spent": "{skill}, израсходован до прилива морали",
 
   "reconnect.detail": "Связь с хостом прервалась. Твоё место сохранено.",
+  "reconnect.rejoinDetail": "Возвращаем тебя в твой матч. Твоё место сохранено.",
   "reconnect.seconds": "{seconds} с",
   "reconnect.title": "Переподключение…",
 
@@ -1639,7 +1641,7 @@ export default {
     "Что на самом деле делает одно применение: при броне 60 — ровно число из подсказки.",
   "training.scenario.time-to-kill.label": "Время убийства",
   "training.scenario.time-to-kill.teaches":
-    "Твой постоянный урон: сколько живёт заклинатель с 500 здоровья, раз за разом.",
+    "Твой постоянный урон: сколько живёт заклинатель с 480 здоровья, раз за разом.",
   "training.scenario.physical-vs-elemental.label": "Физический и стихийный",
   "training.scenario.physical-vs-elemental.teaches":
     "Что броня отвечает типу урона: Warrior со Stalwart гасит меч, но не Fireball, а Ranger гасит Fireball, но не меч.",
@@ -1648,7 +1650,7 @@ export default {
     "Что состояния — это таймер смерти: Bleeding, Poison и Burning отнимают 20 здоровья в секунду, больше не бывает, а новые обновляют длительность, а не складываются.",
   "training.scenario.condition-removal.label": "Снятие состояний",
   "training.scenario.condition-removal.teaches":
-    "Что снятие состояния убирает только то, что написано: у союзника 200 из 500 и пять состояний, а Deep Wound среди них отнимает 100 при наложении и ограничивает твоё лечение до 400.",
+    "Что снятие состояния убирает только то, что написано: у союзника 192 из 480 и пять состояний, а Deep Wound среди них отнимает 96 при наложении и ограничивает твоё лечение до 384.",
   "training.scenario.armor-ladder.label": "Лестница брони",
   "training.scenario.armor-ladder.teaches":
     "Кривая смягчения: один и тот же удар по броне от 40 до 104, бок о бок.",

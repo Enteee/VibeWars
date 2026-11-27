@@ -160,7 +160,7 @@ nepriateľskej relikvii ju pošle domov a ostatní čakajú pri oltári. Bot,
 ktorý nesie tvoju relikviu, s ňou ide rovno na oltár; ostatní opustia
 relikviu, len aby bojovali s nepriateľom, ktorý príde na dostrel kúzla.
 
-Hrá sa na Broken Tower (4v4 a 8v8, 5400x2800): padnutá veža na kopci vo vysočine. Vyšplhaj sa po schodoch terás z trosiek k oltáru na pahýli veže, alebo choď pivnicou pod kopcom, keď páka na terase otvorí jej dvere; múry z trosiek sa dajú rozbiť.
+Hrá sa na Broken Tower (4v4 a 8v8, 5400x2800): padnutá veža na kopci vo vysočine. Vyšplhaj sa po schodoch terás z trosiek k oltáru na pahýli veže, alebo choď pivnicou pod kopcom, keď páka na terase otvorí jej dvere; múry z trosiek sa dajú rozbiť. Vedľa každého múru z trosiek je padacia mreža, ktorá je otvorená, kým niekto stojí na jej nášľapnej doske.
 
 ### Cinder Sanctum
 
@@ -241,7 +241,7 @@ dostrel kúzla. Kým tvoj tím nedrží oltár, každý bot zabije Prízračnéh
 druhého tímu ako prvého, keď stojí na oltári v ich dosahu:
 je to ten jediný nepriateľ, ktorý tvojmu prízraku bráni si ho nárokovať.
 
-Hrá sa na Threefold Keep (4v4 a 8v8, 5000x4400): pevnosť na kopci vo vysočine, pre tri tímy. Vystúp po schodoch vedľa svojej brány na ochodzu hradieb a prejdi po hrádzi na kopec, potom vyšplhaj k oltáru na veži. Páka na každom nádvorí otvorí všetky štyri brány: priechod tvojou bránou pod hradbou a podzemie, dlhú cestu pod kopcom.
+Hrá sa na Threefold Keep (4v4 a 8v8, 5000x4400): pevnosť na kopci vo vysočine, pre tri tímy. Vystúp po schodoch vedľa svojej brány na ochodzu hradieb a prejdi po hrádzi na kopec, potom vyšplhaj k oltáru na veži. Páka na každom nádvorí otvorí všetky tri brány, priechody pod hradbou.
 
 ## Dobývanie bodov
 

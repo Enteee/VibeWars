@@ -13,11 +13,13 @@ import { UPKEEP_DROP_SECONDS } from "./rules/drop-upkeep.js";
 import { idleWander } from "./rules/idle-wander.js";
 import { prepare } from "./rules/prepare.js";
 import { markHealth } from "./rules/duck.js";
+import { diverOn } from "./peel.js";
 import { planPlaced, teamPlan } from "./plan.js";
 import { roleOf, type BotRole } from "./role.js";
 import { BOT_RULES } from "./rules/index.js";
 import regroup from "./rules/regroup.js";
 import {
+  FINISH_FRACTION,
   FOCUS_REACH,
   HEALER_PRIORITY,
   HURT_FRACTION,
@@ -31,12 +33,6 @@ import {
 import type { RuleContext } from "./rules/types.js";
 import { sacrificesTooMuch } from "./skill-intent.js";
 import { floorOf } from "../layer-rules.js";
-
-/**
- * Below this share of its health a foe in reach is the team's target
- * (#2545): one about to fall is worth more than one at full health.
- */
-const FINISH_FRACTION = 0.6;
 
 /**
  * `play-build` (#1189): a participant playing its own skill bar the way a
@@ -414,8 +410,9 @@ function think(
 
 /**
  * The foe the team called (#1193), while it is alive; else, in King of the
- * Hill, a foe's ghost on an altar the team does not hold (#2600); else
- * the foe the team's bots already target, while it is below `FINISH_FRACTION`; else
+ * Hill, a foe's ghost on an altar the team does not hold (#2600); else,
+ * for a frontline bot, a foe diving its healer or casters (#4141,
+ * `peelTarget`); else the foe the team's bots already target, while it is below `FINISH_FRACTION`; else
  * the weakest foe in spell range once it is below `FINISH_FRACTION`
  * (#2545), so the team commits to a kill and never drops one for
  * another; else the team's target, if one is alive within `FOCUS_REACH`
@@ -426,7 +423,7 @@ function think(
  * `planPlaced`), the team's target only within `FOCUS_REACH` past spell
  * range, so a holding, flanking or escorting bot is not pulled across the map into its teammates' fight. With shrines to hold or a relic to run, the team's target only
  * in range. With two foe teams, all but the call and the ghost come from
- * the `front` team (#2685).
+ * the `front` team (#2685); a diver from any.
  */
 function teamTarget(
   context: BehaviourContext,
@@ -449,6 +446,10 @@ function teamTarget(
   // None in spell range: those shooting at it from further are (#3150).
   const reach = (foe: Participant): number => foeReach(cursor.foeReach, foe);
   const inRange = near.length > 0 ? near : foes.filter((foe) => shoots(context, reach, foe, self));
+  const diver = peelTarget(context, cursor, all, inRange);
+  if (diver !== undefined) {
+    return diver.id;
+  }
   const teams = heldTarget(context, foes, inRange);
   const held =
     teams !== undefined &&
@@ -482,6 +483,33 @@ function teamTarget(
     return held.id;
   }
   return focusPick(self, inRange)?.id;
+}
+
+/**
+ * For a frontline bot, the foe of any team diving its team's healer or
+ * casters (#4141, `diverOn`) within `FOCUS_REACH` past spell range: in
+ * GW1 PvP the frontline turns on whoever dives its backline. Not while
+ * the bot spikes, nor while its own target is below `FINISH_FRACTION`:
+ * it finishes the kill first. A creature only while no fighter is in range.
+ */
+function peelTarget(
+  context: BehaviourContext,
+  cursor: BehaviourCursor,
+  foes: readonly Participant[],
+  inRange: readonly Participant[],
+): Participant | undefined {
+  const self = context.self;
+  if (roleOf(self) !== "frontline" || cursor.spikeTargetId !== undefined) {
+    return undefined;
+  }
+  const own = foes.find((foe) => foe.id === self.targetId);
+  if (own !== undefined && healthFraction(own) < FINISH_FRACTION) {
+    return undefined;
+  }
+  const diver = diverOn(livingMembers(context), foes.filter(fightable(inRange)));
+  return diver !== undefined && distance(diver.position, self.position) <= RANGE_SPELL + FOCUS_REACH
+    ? diver
+    : undefined;
 }
 
 /**

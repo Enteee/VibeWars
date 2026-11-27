@@ -2,9 +2,9 @@
 
 ## Liv og energi
 
-Du starter med 500 **Liv** og 20 **Energi**, og din rustning lægger energi
+Du starter med 480 **Liv** og 20 **Energi**, og din rustning lægger energi
 oveni: intet for en Warrior, 5 for en Ranger, en Assassin eller en Dervish,
-10 for alle andre. En stav giver 10 mere, mens du holder den. Runer og moral
+10 for alle andre. En stav giver 10 mere, mens du holder den. En Dervish' rustning giver også 25 Liv. Runer og moral
 ændrer begge. Evner koster energi, og den kommer langsomt tilbage af sig selv.
 ![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warriors** og ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragons** får den langsomst tilbage, ![Ranger](../../../apps/web/public/icons/profession/ranger.svg) **Rangers** lidt hurtigere,
 alle andre hurtigst.
@@ -85,8 +85,8 @@ Tjenere (undtagen Kødgolemen), genfærd og ånder bløder ikke, bliver ikke for
 ![Forbandelse](../../../apps/web/public/icons/skill-type/hex.svg) **Forbandelser** kastes på dig af fjender; ![Fortryllelse](../../../apps/web/public/icons/skill-type/enchantment.svg) **fortryllelser** af dig selv
 eller dine allierede. Hver fjernes af sin egen slags evne. Nogle
 fortryllelser er **vedligeholdte**: de varer, indtil du afslutter dem, og
-koster et energi-pip, mens de kører. Dobbeltklik på ikonet for at
-afslutte en.
+koster et energi-pip, mens de kører. Dobbeltklik på ikonet, eller fokuser
+det og tryk på Enter eller Delete, for at afslutte en.
 
 Nogle få evner holder op med at virke, mens du er fortryllet, og virker
 igen, når du ikke er det længere. En evne, der varer i dine "næste N

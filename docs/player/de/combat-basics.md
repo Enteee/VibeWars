@@ -2,9 +2,9 @@
 
 ## Leben und Energie
 
-Du startest mit 500 **Leben** und 20 **Energie**, und deine Rüstung gibt Energie dazu:
+Du startest mit 480 **Leben** und 20 **Energie**, und deine Rüstung gibt Energie dazu:
 nichts für einen Krieger, 5 für einen Waldläufer, eine Assassine oder einen Derwisch,
-10 für alle anderen. Ein Staff gibt 10 mehr, solange du ihn hältst. Runen und Moral
+10 für alle anderen. Ein Staff gibt 10 mehr, solange du ihn hältst. Die Rüstung eines Derwischs gibt außerdem 25 Leben dazu. Runen und Moral
 verändern beides. Skills kosten Energie, und sie kommt langsam von selbst zurück. ![Krieger](../../../apps/web/public/icons/profession/warrior.svg) **Krieger**
 und ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** regenerieren sie am langsamsten, ![Waldläufer](../../../apps/web/public/icons/profession/ranger.svg) **Waldläufer** etwas schneller, alle anderen
 am schnellsten.
@@ -82,7 +82,8 @@ Diener (außer dem Fleischgolem), Gespenster und Geister bluten nicht, werden ni
 ![Verhexung](../../../apps/web/public/icons/skill-type/hex.svg) **Verhexungen** wirken Gegner auf dich, ![Verzauberung](../../../apps/web/public/icons/skill-type/enchantment.svg) **Verzauberungen** du selbst oder deine
 Verbündeten. Jede wird durch ihre eigene Art von Skill entfernt. Manche
 Verzauberungen werden **aufrechterhalten**: Sie halten, bis du sie beendest, und
-kosten solange einen Energie-Pip. Doppelklicke auf ihr Symbol, um eine zu beenden.
+kosten solange einen Energie-Pip. Doppelklicke auf ihr Symbol oder fokussiere
+es und drücke Enter oder Entf, um eine zu beenden.
 
 Ein paar Skills funktionieren nicht, solange du verzaubert bist, und wieder, wenn
 du es nicht mehr bist. Ein Skill, der für deine „nächsten N Angriffe“ gilt, zählt

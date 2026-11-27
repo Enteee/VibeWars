@@ -10,6 +10,7 @@ export default {
   "app.framedRelayLink": "Hãy mở link relay trong tab riêng. Chưa có gì được lưu.",
   "app.inviteInLobby": "Hãy về menu rồi mở lại link mời.",
   "app.lostMatch": "Mất kết nối với trận đấu.",
+  "app.rejoinFailed": "Không thể vào lại trận: chỗ của bạn đã không được giữ.",
   "app.malformedRelayLink": "Link relay này không hợp lệ. Chưa có gì được lưu.",
   "app.ownLobby": "Đây là sảnh của bạn",
 
@@ -416,7 +417,7 @@ export default {
   "effects.categoryShout": "Hiệu lệnh",
   "effects.categoryStance": "Thế",
   "effects.categoryWeaponSpell": "Phép vũ khí",
-  "effects.endHint": "nhấn đúp để kết thúc",
+  "effects.endHint": "nhấn đúp, Enter hoặc Delete để kết thúc",
   "effects.from": "từ {caster}",
   "effects.inRange": "khi ở trong tầm",
   "effects.maintained": "duy trì",
@@ -1048,6 +1049,7 @@ export default {
   "recharge.spent": "{skill}, đã dùng, chờ tăng sĩ khí",
 
   "reconnect.detail": "Chủ phòng mất kết nối. Chỗ của bạn vẫn được giữ.",
+  "reconnect.rejoinDetail": "Đang đưa bạn trở lại trận đấu. Chỗ của bạn vẫn được giữ.",
   "reconnect.seconds": "{seconds} s",
   "reconnect.title": "Đang kết nối lại…",
 
@@ -1427,7 +1429,7 @@ export default {
     "Một lần dùng phép thực sự gây ra gì: ở 60 giáp, đúng bằng con số trong chú giải.",
   "training.scenario.time-to-kill.label": "Thời gian hạ gục",
   "training.scenario.time-to-kill.teaches":
-    "Sát thương duy trì của bạn: một pháp sư 500 máu trụ được bao lâu, lặp đi lặp lại.",
+    "Sát thương duy trì của bạn: một pháp sư 480 máu trụ được bao lâu, lặp đi lặp lại.",
   "training.scenario.physical-vs-elemental.label": "Vật lý và nguyên tố",
   "training.scenario.physical-vs-elemental.teaches":
     "Giáp ứng với từng loại sát thương: Warrior và Stalwart giảm đòn kiếm chứ không giảm Fireball, Ranger giảm Fireball chứ không giảm đòn kiếm.",
@@ -1436,7 +1438,7 @@ export default {
     "Dị trạng là đồng hồ đếm ngược tới cái chết: Bleeding, Poison và Burning rút 20 máu mỗi giây, mức cao nhất có thể, và thêm nữa chỉ làm mới thời gian chứ không cộng dồn.",
   "training.scenario.condition-removal.label": "Gỡ dị trạng",
   "training.scenario.condition-removal.teaches":
-    "Gỡ dị trạng chỉ gỡ đúng thứ nó ghi: một đồng minh còn 200 trên 500 máu mang năm dị trạng, trong đó Deep Wound lấy 100 máu ngay khi dính và giới hạn lượng hồi máu của bạn ở 400.",
+    "Gỡ dị trạng chỉ gỡ đúng thứ nó ghi: một đồng minh còn 192 trên 480 máu mang năm dị trạng, trong đó Deep Wound lấy 96 máu ngay khi dính và giới hạn lượng hồi máu của bạn ở 384.",
   "training.scenario.armor-ladder.label": "Thang giáp",
   "training.scenario.armor-ladder.teaches":
     "Đường cong giảm sát thương: cùng một đòn đánh vào 40 đến 104 giáp, đặt cạnh nhau.",

@@ -72,9 +72,10 @@ the attacker's statuses' `onAttackHit` riders (a preparation, #525), in
 one place for swings, arrows and attack skills alike: `attackHitRiders`.
 
 **Attack speed.** `StatusDefinition.attackDurationMultiplier` scales
-swings and attack skills alike. As in GW1, only the strongest speed-up and
-the strongest slow-down count, and they multiply. Faintheartedness (#493)
-is its first user: ×1.5, GW1's "50% slower".
+swings and attack skills alike. As in GW1, speed-ups multiply, capped at
+×0.67 (+33%), slow-downs multiply, capped at ×1.5 (−50%), and the two
+multiply (#4095). Faintheartedness (#493) is its first user: ×1.5, GW1's
+"50% slower".
 
 **Out of reach.** Any skill with a target, pressed out of range or out of
 sight of it, is walked into, as Space is (Q49, #415; every skill since

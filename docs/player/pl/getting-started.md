@@ -117,7 +117,8 @@ ich liczy.
   dopóki nie dołączysz. Po dołączeniu okno Lobby ma tytuł **Lobby**, a jego
   **Opuść** przenosi cię do nowego własnego lobby z nowym linkiem z zaproszeniem.
   Link otwarty na ekranie lobby lub w meczu poprosi cię o powrót do menu. Jeśli
-  połączenie zostanie zerwane, twoje miejsce jest rezerwowane przez 30 sekund.
+  połączenie zostanie zerwane albo przeładujesz lub ponownie otworzysz stronę,
+  twoje miejsce jest rezerwowane przez 30 sekund i wracasz na nie.
 - **Usuń kogoś:** jako host naciśnij **×** obok imienia gracza w oknie Lobby, poza
   meczem. Gracz dowie się, że usunął go host, dostanie nowe własne lobby i nie będzie
   mógł wrócić do twojego, dopóki ono trwa.

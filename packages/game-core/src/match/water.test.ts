@@ -214,14 +214,14 @@ describe("shallow water (#3463)", () => {
     expect(stride(sim, "a")).toBeCloseTo(0.375 * FULL_STRIDE, 5);
   });
 
-  it("slows a fast body by a quarter, inside the speed clamp", () => {
+  it("slows a fast body by a quarter, Dash past the cap (#4095)", () => {
     const sim = ford([spec("a", 0, vec2(500, 400), 0), spec("b", 0, vec2(800, 600), 0)]);
     for (const id of ["a", "b"]) {
       get(sim, id).combatant.statuses.apply("dash", 1e6, id, NO_RANKS);
       sim.setInputDirection(id, vec2(1, 0));
     }
-    // Dash's 1.5 is clamped to 1.33 on dry ground; in water 1.5 × 0.75 = 1.125.
-    expect(stride(sim, "a")).toBeCloseTo(1.33 * FULL_STRIDE, 5);
+    // Dash breaks the +33% cap: 1.5 on dry ground; in water 1.5 × 0.75 = 1.125.
+    expect(stride(sim, "a")).toBeCloseTo(1.5 * FULL_STRIDE, 5);
     expect(get(sim, "b").position.x - 800).toBeCloseTo(1.125 * FULL_STRIDE, 5);
   });
 });

@@ -60,7 +60,6 @@ export { resolveMagnitude, resolveMagnitudeAtRanks, statAt, statAtTwelve } from 
 
 export type {
   ActiveStatus,
-  ArmorReduction,
   BlockRule,
   Outbreak,
   StatusCategory,
@@ -100,6 +99,7 @@ export {
   maxHealthLossOf,
   maxHealthLossOfStatusIds,
   moveSpeedMultiplier,
+  statusMoveSpeed,
   naturalHealthPips,
   netPips,
   preCapEnergyPips,

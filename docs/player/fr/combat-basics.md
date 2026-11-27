@@ -2,10 +2,10 @@
 
 ## Santé et énergie
 
-Tu commences avec 500 de **santé** et 20 d'**énergie**, et ton armure ajoute
+Tu commences avec 480 de **santé** et 20 d'**énergie**, et ton armure ajoute
 de l'énergie : rien pour un Guerrier, 5 pour un Rôdeur, un Assassin ou un
 Derviche, 10 pour tous les autres. Un Staff ajoute 10 de plus tant que tu le
-tiens. Les runes et le moral modifient les deux. Les compétences coûtent de l'énergie, qui revient
+tiens. L'armure d'un Derviche ajoute aussi 25 de santé. Les runes et le moral modifient les deux. Les compétences coûtent de l'énergie, qui revient
 toute seule, lentement. Les ![Guerrier](../../../apps/web/public/icons/profession/warrior.svg) **Guerriers** et les ![Parangon](../../../apps/web/public/icons/profession/paragon.svg) **Parangons** la récupèrent le plus
 lentement, les ![Rôdeur](../../../apps/web/public/icons/profession/ranger.svg) **Rôdeurs** un peu plus vite, tous les autres le plus vite.
 
@@ -86,7 +86,8 @@ Les ![Maléfice](../../../apps/web/public/icons/skill-type/hex.svg) **maléfices
 par toi ou tes alliés. Chacun est retiré par son propre type de compétence.
 Certains enchantements sont **maintenus** : ils durent jusqu'à ce que tu y
 mettes fin, et coûtent un pip d'énergie tant qu'ils tournent. Double-clique
-sur son icône pour en terminer un.
+sur son icône, ou donne-lui le focus et appuie sur Entrée ou Suppr, pour en
+terminer un.
 
 Quelques compétences cessent de fonctionner quand tu es enchanté, et
 reprennent quand tu ne l'es plus. Une compétence qui dure pour tes

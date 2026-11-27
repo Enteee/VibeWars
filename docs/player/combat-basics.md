@@ -2,9 +2,9 @@
 
 ## Health and energy
 
-You start with 500 **Health** and 20 **Energy**, and your armor adds to the
+You start with 480 **Health** and 20 **Energy**, and your armor adds to the
 Energy: nothing for a Warrior, 5 for a Ranger, an Assassin or a Dervish,
-10 for everyone else. A staff adds 10 more while you hold it. Runes and
+10 for everyone else. A staff adds 10 more while you hold it. A Dervish's armor also adds 25 Health. Runes and
 morale change both. Skills cost Energy, and it comes back by itself, slowly. ![Warrior](../../apps/web/public/icons/profession/warrior.svg) **Warriors**
 and ![Paragon](../../apps/web/public/icons/profession/paragon.svg) **Paragons** regain it slowest, ![Ranger](../../apps/web/public/icons/profession/ranger.svg) **Rangers** a little faster, everyone else
 fastest.
@@ -80,7 +80,8 @@ Minions (except the Flesh Golem), ghosts and spirits don't bleed, get poisoned o
 ![Hex](../../apps/web/public/icons/skill-type/hex.svg) **Hexes** are cast on you by foes; ![Enchantment](../../apps/web/public/icons/skill-type/enchantment.svg) **enchantments** by yourself or your
 allies. Each is removed by its own kind of skill. Some enchantments are
 **maintained**: they last until you end them, costing an Energy pip while
-they run. Double-click its icon to end one.
+they run. Double-click its icon, or focus it and press Enter or Delete, to
+end one.
 
 A few skills stop working while you are enchanted, and start again once
 you are not. A skill that lasts for your "next N attacks" counts every

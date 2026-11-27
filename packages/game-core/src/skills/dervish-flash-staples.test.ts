@@ -15,6 +15,7 @@ import { makeCombatant } from "./testing.js";
 import type { FiredTrigger } from "./triggers.js";
 import { attackHitRiders, weaponSnapshotOf } from "./weapon-attack.js";
 import { EN_NAMES, EN_WORDS } from "./describe-words.js";
+import { statusMoveSpeed } from "./tick.js";
 
 /**
  * Four Dervish flash enchantments (#1421): Enchanted Haste, Heart of Holy
@@ -114,7 +115,7 @@ describe("Enchanted Haste (#1421)", () => {
   it("moves you 25% faster", () => {
     const self = makeCombatant({ id: "d" });
     self.statuses.apply("enchanted-haste", 7, "d", NO_RANKS);
-    expect(aggregateModifiers(self.statuses.active).moveSpeedMultiplier).toBe(1.25);
+    expect(statusMoveSpeed(aggregateModifiers(self.statuses.active))).toBe(1.25);
   });
 
   it("removed early, takes a condition with it; run out, it does not", () => {
@@ -210,6 +211,6 @@ describe("Harrier's Haste (#1421)", () => {
   it("moves you 25% faster", () => {
     const self = makeCombatant({ id: "d" });
     self.statuses.apply("harriers-haste", 7, "d", NO_RANKS);
-    expect(aggregateModifiers(self.statuses.active).moveSpeedMultiplier).toBe(1.25);
+    expect(statusMoveSpeed(aggregateModifiers(self.statuses.active))).toBe(1.25);
   });
 });

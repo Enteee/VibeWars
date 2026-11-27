@@ -2,9 +2,9 @@
 
 ## Zdravie a energia
 
-Začínaš s 500 **zdravia** a 20 **energie** a brnenie ti pridáva energiu:
+Začínaš s 480 **zdravia** a 20 **energie** a brnenie ti pridáva energiu:
 Bojovníkovi nič, Hraničiarovi, Vrahovi alebo Dervišovi 5, všetkým ostatným 10.
-Palica pridá ďalších 10, kým ju držíš. Runy a morálka menia obe hodnoty. Schopnosti stoja energiu a tá sa pomaly vracia sama. ![Bojovník](../../../apps/web/public/icons/profession/warrior.svg) **Bojovníci**
+Palica pridá ďalších 10, kým ju držíš. Brnenie Derviša pridáva aj 25 zdravia. Runy a morálka menia obe hodnoty. Schopnosti stoja energiu a tá sa pomaly vracia sama. ![Bojovník](../../../apps/web/public/icons/profession/warrior.svg) **Bojovníci**
 a ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragoni** ju získavajú najpomalšie, ![Hraničiar](../../../apps/web/public/icons/profession/ranger.svg) **Hraničiari** o niečo rýchlejšie, všetci
 ostatní najrýchlejšie.
 
@@ -81,7 +81,8 @@ Prisluhovači (okrem Mäsového golema), prízraky a duchovia nekrvácajú, neot
 ![Kliatba](../../../apps/web/public/icons/skill-type/hex.svg) **Kliatby** na teba zosielajú nepriatelia; ![Očarovanie](../../../apps/web/public/icons/skill-type/enchantment.svg) **očarovania** ty sám alebo tvoji
 spojenci. Každé z nich odstraňuje vlastný druh schopnosti. Niektoré očarovania
 sú **udržiavané**: trvajú, kým ich neukončíš, a kým bežia, stoja jeden pip
-energie. Ukončíš ich dvojitým kliknutím na ich ikonu.
+energie. Ukončíš ich dvojitým kliknutím na ich ikonu alebo tak, že na ňu
+presunieš fokus a stlačíš Enter alebo Delete.
 
 Niekoľko schopností prestane fungovať, kým si očarovaný, a znova začne, keď
 už nie si. Schopnosť, ktorá trvá na tvojich „ďalších N útokov“, počíta každý

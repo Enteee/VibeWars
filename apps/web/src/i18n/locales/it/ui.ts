@@ -11,6 +11,7 @@ export default {
     "Apri il link del relay in una scheda separata. Non è stato salvato nulla.",
   "app.inviteInLobby": "Torna al menu, poi apri di nuovo il link d'invito.",
   "app.lostMatch": "Connessione alla partita persa.",
+  "app.rejoinFailed": "Impossibile rientrare nella partita: il tuo posto non è stato tenuto.",
   "app.malformedRelayLink": "Il link del relay non è valido. Non è stato salvato nulla.",
   "app.ownLobby": "Questa è la tua lobby",
 
@@ -480,7 +481,7 @@ export default {
   "effects.categoryShout": "Grido",
   "effects.categoryStance": "Posizione",
   "effects.categoryWeaponSpell": "Incantesimo su arma",
-  "effects.endHint": "doppio clic per terminare",
+  "effects.endHint": "doppio clic, Invio o Canc per terminare",
   "effects.from": "da {caster}",
   "effects.inRange": "finché sei nel raggio",
   "effects.maintained": "mantenuto",
@@ -1171,6 +1172,7 @@ export default {
   "recharge.spent": "{skill}, esaurita fino a un bonus morale",
 
   "reconnect.detail": "La connessione dell'host è caduta. Il tuo posto è riservato.",
+  "reconnect.rejoinDetail": "Ti stiamo riportando nella tua partita. Il tuo posto è tenuto.",
   "reconnect.seconds": "{seconds} s",
   "reconnect.title": "Riconnessione…",
 
@@ -1600,7 +1602,7 @@ export default {
     "Cosa fa davvero un lancio: con 60 di armatura, esattamente il numero del tooltip.",
   "training.scenario.time-to-kill.label": "Tempo per uccidere",
   "training.scenario.time-to-kill.teaches":
-    "Il tuo danno sostenuto: quanto dura un incantatore con 500 di Salute, ancora e ancora.",
+    "Il tuo danno sostenuto: quanto dura un incantatore con 480 di Salute, ancora e ancora.",
   "training.scenario.physical-vs-elemental.label": "Fisico contro elementale",
   "training.scenario.physical-vs-elemental.teaches":
     "Che l'armatura risponde a un tipo di danno: un Guerriero con Insegna robusta attutisce una spada ma non una Palla di fuoco, un Ranger attutisce una Palla di fuoco ma non una spada.",
@@ -1609,7 +1611,7 @@ export default {
     "Che le condizioni sono un conto alla rovescia: Sanguinamento, Veleno e Bruciatura tolgono 20 di Salute al secondo, il massimo possibile, e aggiungerne altre rinnova invece di sommare.",
   "training.scenario.condition-removal.label": "Rimozione delle condizioni",
   "training.scenario.condition-removal.teaches":
-    "Che una rimozione toglie solo quello che dice: un alleato a 200 su 500 ha cinque condizioni, e tra queste Ferita profonda toglie 100 quando arriva e limita le tue cure a 400.",
+    "Che una rimozione toglie solo quello che dice: un alleato a 192 su 480 ha cinque condizioni, e tra queste Ferita profonda toglie 96 quando arriva e limita le tue cure a 384.",
   "training.scenario.armor-ladder.label": "Scala dell'armatura",
   "training.scenario.armor-ladder.teaches":
     "La curva di mitigazione: lo stesso colpo contro armatura da 40 a 104, fianco a fianco.",

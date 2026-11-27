@@ -10,6 +10,7 @@ export default {
   "app.framedRelayLink": "لینک رله را در زبانهٔ جداگانه باز کن. چیزی ذخیره نشد.",
   "app.inviteInLobby": "به منو برگرد و لینک دعوت را دوباره باز کن.",
   "app.lostMatch": "اتصال به مسابقه قطع شد.",
+  "app.rejoinFailed": "بازگشت به مسابقه ممکن نشد: جایگاه شما نگه داشته نشد.",
   "app.malformedRelayLink": "این لینک رله معتبر نیست. چیزی ذخیره نشد.",
   "app.ownLobby": "این لابی خودت است",
 
@@ -449,7 +450,7 @@ export default {
   "effects.categoryShout": "فریاد",
   "effects.categoryStance": "موضع",
   "effects.categoryWeaponSpell": "طلسم سلاح",
-  "effects.endHint": "برای پایان دو بار کلیک کن",
+  "effects.endHint": "برای پایان دو بار کلیک کن یا Enter یا Delete را بزن",
   "effects.from": "از {caster}",
   "effects.inRange": "تا وقتی در بردش هستی",
   "effects.maintained": "پایدار",
@@ -1108,6 +1109,7 @@ export default {
   "recharge.spent": "{skill}، مصرف‌شده تا تقویت روحیه",
 
   "reconnect.detail": "اتصال میزبان قطع شد. جایت نگه داشته شده است.",
+  "reconnect.rejoinDetail": "در حال بازگرداندن تو به مسابقه‌ات. جایگاهت نگه داشته شده است.",
   "reconnect.seconds": "{seconds} ثانیه",
   "reconnect.title": "اتصال دوباره…",
 
@@ -1512,7 +1514,7 @@ export default {
     "یک اجرا واقعاً چه می‌کند: در زره 60، دقیقاً همان عدد راهنما.",
   "training.scenario.time-to-kill.label": "زمان کشتن",
   "training.scenario.time-to-kill.teaches":
-    "خروجی پایدارت: یک جادوگر با 500 سلامتی چقدر دوام می‌آورد، بارها و بارها.",
+    "خروجی پایدارت: یک جادوگر با 480 سلامتی چقدر دوام می‌آورد، بارها و بارها.",
   "training.scenario.physical-vs-elemental.label": "فیزیکی در برابر عنصری",
   "training.scenario.physical-vs-elemental.teaches":
     "اینکه زره به نوع آسیب پاسخ می‌دهد: Warrior و Stalwart شمشیر را کند می‌کنند نه Fireball را، Ranger Fireball را کند می‌کند نه شمشیر را.",
@@ -1521,7 +1523,7 @@ export default {
     "اینکه عارضه‌ها ساعت مرگ‌اند: خونریزی، مسمومیت و سوختن با هم 20 سلامتی در ثانیه می‌کاهند، بیشترین مقدار ممکن، و افزودن بیشتر تازه‌شان می‌کند نه انباشته.",
   "training.scenario.condition-removal.label": "برداشتن عارضه",
   "training.scenario.condition-removal.teaches":
-    "اینکه برداشتن عارضه فقط همان را برمی‌دارد که می‌گوید: هم‌تیمی‌ای با 200 از 500 پنج عارضه دارد، و زخم عمیق میانشان هنگام نشستن 100 می‌گیرد و درمان‌هایت را در 400 سقف می‌زند.",
+    "اینکه برداشتن عارضه فقط همان را برمی‌دارد که می‌گوید: هم‌تیمی‌ای با 192 از 480 پنج عارضه دارد، و زخم عمیق میانشان هنگام نشستن 96 می‌گیرد و درمان‌هایت را در 384 سقف می‌زند.",
   "training.scenario.armor-ladder.label": "نردبان زره",
   "training.scenario.armor-ladder.teaches":
     "منحنی کاهش آسیب: همان ضربه در برابر زره 40 تا 104، کنار هم.",

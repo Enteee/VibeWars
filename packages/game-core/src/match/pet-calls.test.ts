@@ -8,6 +8,7 @@ import { NO_RANKS, aggregateModifiers } from "../skills/status.js";
 import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type Participant, type ParticipantSpec } from "./simulation.js";
+import { statusMoveSpeed } from "../skills/tick.js";
 
 /**
  * Calls and bonds on a Ranger's pet (#1046 child 3, #1108): Call of
@@ -149,7 +150,7 @@ describe("calls on your living pet (#1108)", () => {
     const pet = wolf(sim);
     expect(press(sim, HASTE)?.check).toEqual({ ok: true });
     stepFor(sim, DT);
-    expect(aggregateModifiers(pet.combatant.statuses.active).moveSpeedMultiplier).toBe(1.25);
+    expect(statusMoveSpeed(aggregateModifiers(pet.combatant.statuses.active))).toBe(1.25);
     expect(sim.requestAttack(pet.id, "a")).toEqual({ ok: true });
     const log = stepFor(sim, 8);
     const bites = log

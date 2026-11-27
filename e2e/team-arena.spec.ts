@@ -3,6 +3,7 @@ import { expect, test, type Locator, type Page } from "@playwright/test";
 import { BUILD_FORMAT_VERSION } from "../apps/web/src/storage/build-transfer.js";
 import { TEAM_FORMAT_VERSION } from "../apps/web/src/storage/team-transfer.js";
 import { STARTER_BUILDS } from "../packages/game-core/src/starter-builds.js";
+import { TICKET_TTL_MS } from "../packages/game-protocol/src/queue.js";
 import { hudMenuRow } from "./helpers/hud-menu.js";
 import { joinFriend, lobbyWindow, openRail, shutLobbyWindow } from "./helpers/menu.js";
 import {
@@ -183,17 +184,7 @@ test("#1766: two parties of two queue for Team Arena, meet, and play their own b
     await keepToasts(page);
   }
   // Each page's console, said when the match fails to show (#2777).
-  const consoles: string[] = [];
-  for (const [who, page] of [
-    ["Ann", ann],
-    ["Bea", bea],
-    ["Cid", cid],
-    ["Dot", dot],
-  ] as const) {
-    page.on("console", (message) => {
-      consoles.push(`${String(Date.now())} ${who} ${message.type()}: ${message.text()}`);
-    });
-  }
+  const consoles = keepConsoles({ Ann: ann, Bea: bea, Cid: cid, Dot: dot });
 
   try {
     // Save the Quad on Team Builder; Ann's party proposes it.
@@ -254,8 +245,7 @@ test("#1766: two parties of two queue for Team Arena, meet, and play their own b
     await expect(bea.locator(".lobby-panel")).toContainText("Ann");
     await expect(bea.locator("#topbar .topbar-queue")).toBeHidden();
   } catch (error) {
-    await test.info().attach("consoles", { body: consoles.join("\n"), contentType: "text/plain" });
-    console.log(consoles.join("\n"));
+    await attachConsoles(consoles);
     throw error;
   } finally {
     await context.close();
@@ -272,6 +262,7 @@ test("#3899: a queued party warms up against bots, and goes to its match once an
   for (const page of [ann, bea]) {
     await keepToasts(page);
   }
+  const consoles = keepConsoles({ Ann: ann, Bea: bea, Cid: cid, Dot: dot });
 
   try {
     await formParty([ann, bea], ["Ann", "Bea"]);
@@ -291,9 +282,10 @@ test("#3899: a queued party warms up against bots, and goes to its match once an
       );
     }
 
-    // A minute of warmups: the ticket's heartbeat runs on under a match,
-    // well past its 15 s expiry, or the other party never meets this one.
-    await ann.waitForTimeout(60_000);
+    // Twice the ticket's expiry in a warmup: its heartbeat runs on under a
+    // match, or the other party never meets this one. No longer: the test
+    // already spends most of its budget booting four pages (#4127).
+    await ann.waitForTimeout(2 * TICKET_TTL_MS);
 
     // Another party queues: the warmup ends at once, and all four meet.
     await formParty([cid, dot], ["Cid", "Dot"]);
@@ -313,6 +305,9 @@ test("#3899: a queued party warms up against bots, and goes to its match once an
         timeout: 40_000,
       });
     }
+  } catch (error) {
+    await attachConsoles(consoles);
+    throw error;
   } finally {
     await context.close();
   }
@@ -390,6 +385,23 @@ test("#2107: a Team Arena leader picks 2v2, and the party queues for Team Arena 
     await context.close();
   }
 });
+
+/** Keep every console line of `pages`, stamped and named, for a failure to show. */
+function keepConsoles(pages: Readonly<Record<string, Page>>): string[] {
+  const consoles: string[] = [];
+  for (const [who, page] of Object.entries(pages)) {
+    page.on("console", (message) => {
+      consoles.push(`${String(Date.now())} ${who} ${message.type()}: ${message.text()}`);
+    });
+  }
+  return consoles;
+}
+
+/** Attach the kept console lines to the failed test's report, and print them. */
+async function attachConsoles(consoles: readonly string[]): Promise<void> {
+  await test.info().attach("consoles", { body: consoles.join("\n"), contentType: "text/plain" });
+  console.log(consoles.join("\n"));
+}
 
 /**
  * Make `page`'s ticket keys from `seed`, as random-arena.spec.ts does:

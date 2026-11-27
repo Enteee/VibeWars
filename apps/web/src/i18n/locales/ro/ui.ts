@@ -10,6 +10,7 @@ export default {
   "app.framedRelayLink": "Deschide linkul de releu într-o filă proprie. Nu s-a salvat nimic.",
   "app.inviteInLobby": "Întoarce-te la meniu, apoi deschide din nou linkul de invitație.",
   "app.lostMatch": "Conexiunea cu meciul s-a pierdut.",
+  "app.rejoinFailed": "Nu te-ai putut reconecta la meci: locul tău nu a fost păstrat.",
   "app.malformedRelayLink": "Linkul de releu nu este valid. Nu s-a salvat nimic.",
   "app.ownLobby": "Acesta e lobby-ul tău",
 
@@ -477,7 +478,7 @@ export default {
   "effects.categoryShout": "Strigăt",
   "effects.categoryStance": "Postură",
   "effects.categoryWeaponSpell": "Vrajă de armă",
-  "effects.endHint": "dublu clic pentru a încheia",
+  "effects.endHint": "dublu clic, Enter sau Delete pentru a încheia",
   "effects.from": "de la {caster}",
   "effects.inRange": "cât timp ești în raza sa",
   "effects.maintained": "menținut",
@@ -1170,6 +1171,7 @@ export default {
   "recharge.spent": "{skill}, consumată până la un impuls de moral",
 
   "reconnect.detail": "Conexiunea gazdei a căzut. Locul tău e păstrat.",
+  "reconnect.rejoinDetail": "Te readucem în meciul tău. Locul tău este păstrat.",
   "reconnect.seconds": "{seconds} s",
   "reconnect.title": "Reconectare…",
 
@@ -1599,7 +1601,7 @@ export default {
     "Ce face de fapt o singură lansare: la 60 armură, exact numărul din descriere.",
   "training.scenario.time-to-kill.label": "Timp de ucidere",
   "training.scenario.time-to-kill.teaches":
-    "Daunele tale susținute: cât rezistă un vrăjitor cu 500 viață, iar și iar.",
+    "Daunele tale susținute: cât rezistă un vrăjitor cu 480 viață, iar și iar.",
   "training.scenario.physical-vs-elemental.label": "Fizic vs elemental",
   "training.scenario.physical-vs-elemental.teaches":
     "Că armura răspunde unui tip de daune: un Warrior cu Stalwart atenuează o sabie, nu un Fireball; un Ranger atenuează un Fireball, nu o sabie.",
@@ -1608,7 +1610,7 @@ export default {
     "Că afecțiunile sunt un ceas al morții: Bleeding, Poison și Burning scurg 20 viață pe secundă, maximul posibil, iar aplicarea altora le reîmprospătează, nu le cumulează.",
   "training.scenario.condition-removal.label": "Eliminarea afecțiunilor",
   "training.scenario.condition-removal.teaches":
-    "Că o eliminare de afecțiune scoate doar ce spune: un aliat la 200 din 500 poartă cinci afecțiuni, iar Deep Wound printre ele ia 100 când se aplică și îți limitează vindecările la 400.",
+    "Că o eliminare de afecțiune scoate doar ce spune: un aliat la 192 din 480 poartă cinci afecțiuni, iar Deep Wound printre ele ia 96 când se aplică și îți limitează vindecările la 384.",
   "training.scenario.armor-ladder.label": "Scara armurii",
   "training.scenario.armor-ladder.teaches":
     "Curba de atenuare: aceeași lovitură contra 40 până la 104 armură, una lângă alta.",

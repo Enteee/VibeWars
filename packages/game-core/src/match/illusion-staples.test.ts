@@ -10,6 +10,7 @@ import { vec2, type Vec2 } from "../vec2.js";
 import type { CombatLogEntry } from "./combat-log.js";
 import { MatchSimulation, type ParticipantSpec } from "./simulation.js";
 import { EN_NAMES, EN_WORDS } from "../skills/describe-words.js";
+import { statusMoveSpeed } from "../skills/tick.js";
 
 /**
  * Mesmer Illusion Magic staples (#1228): Conjure Phantasm, Imagined
@@ -182,7 +183,7 @@ describe("Imagined Burden (#1228)", () => {
     cast(sim, "mesmer.imagined-burden");
     expect(worn(sim, "a", "imagined-burden")).toEqual({ sourceId: "m", seconds: 18 });
     expect(get(sim, "a").statuses.has("crippled")).toBe(false);
-    expect(aggregateModifiers(get(sim, "a").statuses.active).moveSpeedMultiplier).toBe(0.5);
+    expect(statusMoveSpeed(aggregateModifiers(get(sim, "a").statuses.active))).toBe(0.5);
   });
 });
 
@@ -224,7 +225,7 @@ describe("Illusion of Haste (#1228)", () => {
     expect(sim.requestSkill("m", SLOT["mesmer.illusion-of-haste"])?.check).toEqual({ ok: true });
     stepFor(sim, 1.25);
     expect(worn(sim, "m", "illusion-of-haste")).toEqual({ sourceId: "m", seconds: 10 });
-    expect(aggregateModifiers(get(sim, "m").statuses.active).moveSpeedMultiplier).toBe(1.33);
+    expect(statusMoveSpeed(aggregateModifiers(get(sim, "m").statuses.active))).toBe(1.33);
     stepFor(sim, 10);
     expect(get(sim, "m").statuses.has("illusion-of-haste")).toBe(false);
     expect(worn(sim, "m", "crippled")).toEqual({ sourceId: "m", seconds: 3 });
@@ -307,7 +308,7 @@ describe("Crippling Anguish (#1228)", () => {
     cast(sim, "mesmer.crippling-anguish");
     expect(worn(sim, "a", "crippling-anguish")).toEqual({ sourceId: "m", seconds: 17 });
     const modifiers = aggregateModifiers(get(sim, "a").statuses.active);
-    expect(modifiers.moveSpeedMultiplier).toBe(0.5);
+    expect(statusMoveSpeed(modifiers)).toBe(0.5);
     expect(modifiers.healthPips).toBe(-5);
   });
 });

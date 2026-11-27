@@ -125,8 +125,8 @@ sekä luettelo aulassa olevista; sen merkki laskee heidät.
   kunnes liittyminen on valmis. Kun olet sisällä, Aula-ikkunassa lukee
   **Aula**, ja sen **Poistu** vie sinut takaisin uuteen omaan aulaasi uudella
   kutsulinkillä. Aulan näkymässä tai ottelussa avattu linkki pyytää sinua
-  ensin palaamaan valikkoon. Jos yhteytesi katkeaa, paikkaasi pidetään
-  30 sekuntia.
+  ensin palaamaan valikkoon. Jos yhteytesi katkeaa tai lataat tai avaat sivun
+  uudelleen, paikkaasi pidetään 30 sekuntia ja pääset takaisin siihen.
 - **Poista joku:** paina isäntänä pelaajan nimen vieressä olevaa **×**
   Aula-ikkunassa ottelun ulkopuolella. Hänelle kerrotaan, että isäntä
   poisti hänet, hän saa uuden oman aulan eikä voi liittyä takaisin

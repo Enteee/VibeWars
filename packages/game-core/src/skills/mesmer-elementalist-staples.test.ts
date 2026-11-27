@@ -10,7 +10,12 @@ import { payCost } from "./activation.js";
 import { getSkill } from "./catalog.js";
 import { mitigate, skillDamage } from "./damage.js";
 import { applySkillEffects, type CombatEvent } from "./effects.js";
-import { NO_RANKS, aggregateModifiers, MAX_RECHARGE_REDUCTION } from "./status.js";
+import {
+  NO_RANKS,
+  aggregateModifiers,
+  MAX_RECHARGE_REDUCTION,
+  stackedRechargeFaster,
+} from "./status.js";
 import { resolveTargets } from "./targeting.js";
 import { makeCombatant } from "./testing.js";
 import { moveSpeedMultiplier } from "./tick.js";
@@ -168,15 +173,12 @@ describe("Ice Spikes and Deep Freeze (#938)", () => {
     expect(moveSpeedMultiplier(target)).toBeCloseTo(0.34, 9);
   });
 
-  it("on a foe Shard Storm already slows, the slows multiply, down to the 25% floor", () => {
+  it("on a foe Shard Storm already slows, the slows stop at the stronger one's 34% (#4095)", () => {
     const target = foe("target");
     target.statuses.apply("shard-storm", 5, "caster", NO_RANKS);
     use(caster(), "elementalist.deep-freeze", [target]);
-    expect(aggregateModifiers(target.statuses.active).moveSpeedMultiplier).toBeCloseTo(
-      0.34 * 0.34,
-      9,
-    );
-    expect(moveSpeedMultiplier(target)).toBe(0.25);
+    expect(aggregateModifiers(target.statuses.active).moveSpeedSlow).toBeCloseTo(0.34 * 0.34, 9);
+    expect(moveSpeedMultiplier(target)).toBeCloseTo(0.34, 9);
   });
 
   it("neither flies: GW1 drops them from the sky", () => {
@@ -237,16 +239,18 @@ describe("Mantra of Recovery (#938)", () => {
   });
 
   it("two such statuses combine as 1 − Π(1 − f), at most 50% (#975)", () => {
-    const one = aggregateModifiers([
-      { id: "mantra-of-recovery", ranks: NO_RANKS },
-    ]).spellRechargeFaster;
-    const two = aggregateModifiers([
-      { id: "mantra-of-recovery", ranks: NO_RANKS },
-      { id: "weapon-of-quickening", ranks: NO_RANKS },
-    ]).spellRechargeFaster;
+    const one = stackedRechargeFaster(
+      aggregateModifiers([{ id: "mantra-of-recovery", ranks: NO_RANKS }]).spellRechargeFaster,
+    );
+    const two = stackedRechargeFaster(
+      aggregateModifiers([
+        { id: "mantra-of-recovery", ranks: NO_RANKS },
+        { id: "weapon-of-quickening", ranks: NO_RANKS },
+      ]).spellRechargeFaster,
+    );
     expect(one).toBeCloseTo(0.33, 9);
     expect(1 - 0.67 * 0.67).toBeGreaterThan(MAX_RECHARGE_REDUCTION);
     expect(two).toBe(MAX_RECHARGE_REDUCTION);
-    expect(aggregateModifiers([]).spellRechargeFaster).toBe(0);
+    expect(aggregateModifiers([]).spellRechargeFaster).toEqual([]);
   });
 });

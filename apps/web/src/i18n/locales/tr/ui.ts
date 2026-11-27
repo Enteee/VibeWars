@@ -10,6 +10,7 @@ export default {
   "app.framedRelayLink": "Relay bağlantısını kendi sekmesinde aç. Hiçbir şey kaydedilmedi.",
   "app.inviteInLobby": "Menüye dön, sonra davet bağlantısını yeniden aç.",
   "app.lostMatch": "Maçla bağlantı koptu.",
+  "app.rejoinFailed": "Maça geri dönülemedi: yerin tutulmadı.",
   "app.malformedRelayLink": "Bu relay bağlantısı geçersiz. Hiçbir şey kaydedilmedi.",
   "app.ownLobby": "Bu senin lobin",
 
@@ -451,7 +452,7 @@ export default {
   "effects.categoryShout": "Haykırış",
   "effects.categoryStance": "Duruş",
   "effects.categoryWeaponSpell": "Silah Büyüsü",
-  "effects.endHint": "bitirmek için çift tıkla",
+  "effects.endHint": "bitirmek için çift tıkla, Enter ya da Delete",
   "effects.from": "kaynak: {caster}",
   "effects.inRange": "menzilindeyken",
   "effects.maintained": "sürdürülüyor",
@@ -1106,6 +1107,7 @@ export default {
   "recharge.spent": "{skill}, Moral Artışına kadar harcandı",
 
   "reconnect.detail": "Kurucunun bağlantısı koptu. Yerin korunuyor.",
+  "reconnect.rejoinDetail": "Seni maçına geri götürüyoruz. Yerin tutuluyor.",
   "reconnect.seconds": "{seconds} sn",
   "reconnect.title": "Yeniden bağlanıyor…",
 
@@ -1517,7 +1519,7 @@ export default {
     "Tek bir büyünün gerçekte ne yaptığı: 60 zırhta, ipucundaki sayının tam kendisi.",
   "training.scenario.time-to-kill.label": "Öldürme süresi",
   "training.scenario.time-to-kill.teaches":
-    "Sürekli hasarın: 500 canlı bir büyücü ne kadar dayanıyor, tekrar tekrar.",
+    "Sürekli hasarın: 480 canlı bir büyücü ne kadar dayanıyor, tekrar tekrar.",
   "training.scenario.physical-vs-elemental.label": "Fiziksel ve elementel",
   "training.scenario.physical-vs-elemental.teaches":
     "Zırhın hasar türüne göre işlediği: Warrior ve Stalwart kılıcı yumuşatır ama Fireball'u değil, Ranger Fireball'u yumuşatır ama kılıcı değil.",
@@ -1526,7 +1528,7 @@ export default {
     "Rahatsızlıkların bir ölüm saati olduğu: Bleeding, Poison ve Burning saniyede 20 can eritir, bu en yüksek değerdir; yenisini eklemek üst üste binmez, süreyi tazeler.",
   "training.scenario.condition-removal.label": "Rahatsızlık kaldırma",
   "training.scenario.condition-removal.teaches":
-    "Rahatsızlık kaldırmanın yalnızca yazdığını kaldırdığı: 500 canın 200'ündeki bir müttefikte beş rahatsızlık var; aralarındaki Deep Wound bindiği anda 100 can alır ve iyileştirmelerini 400'de sınırlar.",
+    "Rahatsızlık kaldırmanın yalnızca yazdığını kaldırdığı: 480 canın 192'ündeki bir müttefikte beş rahatsızlık var; aralarındaki Deep Wound bindiği anda 96 can alır ve iyileştirmelerini 384'de sınırlar.",
   "training.scenario.armor-ladder.label": "Zırh merdiveni",
   "training.scenario.armor-ladder.teaches":
     "Hafifletme eğrisi: aynı vuruş 40 ile 104 arası zırha karşı, yan yana.",

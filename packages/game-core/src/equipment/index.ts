@@ -49,6 +49,7 @@ export type {
 } from "./armor.js";
 export {
   ARMOR_ENERGY_BY_PROFESSION,
+  ARMOR_HEALTH_BY_PROFESSION,
   BASE_ARMOR_BY_PROFESSION,
   BASE_ENERGY_PIPS_BY_PROFESSION,
   HEADGEAR_BONUS,
@@ -57,6 +58,7 @@ export {
   NO_PIECE_ARMOR,
   NO_PIECE_REDUCTION,
   armorEnergyFor,
+  armorHealthFor,
   armorPieces,
   bareArmorSet,
   baseArmorFor,
@@ -153,6 +155,7 @@ export {
   creatureResolvedEquipment,
   effectiveRanks,
   healthSources,
+  listedArmor,
   resolveLoadout,
   unarmedResolvedEquipment,
 } from "./resolve.js";

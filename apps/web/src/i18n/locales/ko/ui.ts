@@ -10,6 +10,7 @@ export default {
   "app.framedRelayLink": "릴레이 링크를 별도 탭에서 여세요. 아무것도 저장되지 않았어요.",
   "app.inviteInLobby": "메뉴로 돌아간 뒤 초대 링크를 다시 여세요.",
   "app.lostMatch": "매치 연결이 끊겼어요.",
+  "app.rejoinFailed": "매치에 다시 들어가지 못했어요: 자리가 유지되지 않았어요.",
   "app.malformedRelayLink": "유효하지 않은 릴레이 링크예요. 아무것도 저장되지 않았어요.",
   "app.ownLobby": "내 로비예요",
 
@@ -419,7 +420,7 @@ export default {
   "effects.categoryShout": "외침",
   "effects.categoryStance": "태세",
   "effects.categoryWeaponSpell": "무기 주문",
-  "effects.endHint": "더블클릭으로 종료",
+  "effects.endHint": "더블클릭, Enter 또는 Delete로 종료",
   "effects.from": "{caster}의 효과",
   "effects.inRange": "범위 안에 있는 동안",
   "effects.maintained": "유지 중",
@@ -1049,6 +1050,7 @@ export default {
   "recharge.spent": "{skill}, 사기 상승까지 사용 불가",
 
   "reconnect.detail": "호스트 연결이 끊겼어요. 자리는 유지돼요.",
+  "reconnect.rejoinDetail": "경기로 돌아가는 중입니다. 자리는 유지됩니다.",
   "reconnect.seconds": "{seconds}초",
   "reconnect.title": "다시 연결 중…",
 
@@ -1431,7 +1433,7 @@ export default {
     "시전 한 번이 실제로 하는 일: 방어력 60에서 툴팁의 숫자 그대로.",
   "training.scenario.time-to-kill.label": "처치 시간",
   "training.scenario.time-to-kill.teaches":
-    "지속 화력: 체력 500의 캐스터가 얼마나 버티는지, 몇 번이고.",
+    "지속 화력: 체력 480의 캐스터가 얼마나 버티는지, 몇 번이고.",
   "training.scenario.physical-vs-elemental.label": "물리 대 원소",
   "training.scenario.physical-vs-elemental.teaches":
     "방어력은 피해 유형에 따라 작용해요: Warrior와 Stalwart Insignia는 검을 막지만 Fireball은 못 막고, Ranger는 Fireball을 막지만 검은 못 막아요.",
@@ -1440,7 +1442,7 @@ export default {
     "상태이상은 죽음의 시계예요: Bleeding, Poison, Burning이 초당 체력 20을 깎는데 이게 최대치이고, 더 걸어도 쌓이지 않고 갱신돼요.",
   "training.scenario.condition-removal.label": "상태이상 제거",
   "training.scenario.condition-removal.teaches":
-    "상태이상 제거는 적힌 것만 없애요: 500 중 200인 아군이 상태이상 다섯 개를 지니고 있고, 그중 Deep Wound는 걸릴 때 100을 깎고 치유를 400으로 제한해요.",
+    "상태이상 제거는 적힌 것만 없애요: 480 중 192인 아군이 상태이상 다섯 개를 지니고 있고, 그중 Deep Wound는 걸릴 때 96을 깎고 치유를 384로 제한해요.",
   "training.scenario.armor-ladder.label": "방어력 단계",
   "training.scenario.armor-ladder.teaches":
     "경감 곡선: 같은 공격을 방어력 40부터 104까지 나란히 비교해요.",

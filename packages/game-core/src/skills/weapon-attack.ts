@@ -265,8 +265,10 @@ export interface WeaponSnapshot {
    * weapon's: an earth scythe blow is still a physical attack.
    */
   readonly damageType: DamageType;
-  /** The least armor penetration the attacker's statuses give (#1519): Judge's Insight's 0.2. */
+  /** The highest base armor penetration the attacker's statuses give (#1519): Sundering Weapon's 0.1. */
   readonly armorPenetration: number;
+  /** The bonus armor penetration they add to it (#4085): Judge's Insight's 0.2. */
+  readonly bonusArmorPenetration: number;
   /**
    * Added to each blow before armor by the attacker's statuses (#1654):
    * Nightmare Weapon's −42, Favorable Winds' +6 to arrows (#1873).
@@ -312,6 +314,7 @@ export function weaponSnapshotOf(attacker: Combatant): WeaponSnapshot {
     preventsCriticals: modifiers.preventsCriticals,
     damageType: attackDamageTypeOf(attacker) ?? mainHand.damageType,
     armorPenetration: modifiers.attackArmorPenetration,
+    bonusArmorPenetration: modifiers.attackBonusArmorPenetration,
     damageDelta: attackDamageDeltaOf(attacker),
     damageDealtAs: damageDealtAsOf(attacker.statuses.active),
     hitMods: attacker.equipment.hitMods,
@@ -789,12 +792,19 @@ export function landBlow(
       victim.statuses.active,
     ),
     source: "weapon",
-    armorPenetration:
+    // The highest base, the blow's, Strength's or a status's, and every
+    // bonus added to it (#4085): a Hornbow's, Judge's Insight's, Sundering's.
+    armorPenetration: Math.min(
+      1,
       Math.max(
         blow.armorPenetration,
-        strengthArmorPenetration(blow.strengthRank, weapon.armorPenetration),
+        strengthArmorPenetration(blow.strengthRank),
         snapshot.armorPenetration,
-      ) + sundered,
+      ) +
+        weapon.armorPenetration +
+        snapshot.bonusArmorPenetration +
+        sundered,
+    ),
     ...(weapon.projectileSpeed === undefined ? {} : { projectile: true }),
     ...(versusSource.armorModifier === 0 ? {} : { armorModifier: versusSource.armorModifier }),
   };

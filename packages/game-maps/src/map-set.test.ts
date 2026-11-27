@@ -630,8 +630,8 @@ describe("Threefold Keep (#2699, #3443)", () => {
     expect(keep.decks.find((deck) => deck.id === "hill")?.layer).toBe(2);
   });
 
-  it("shuts the three approaches' gates and the keep gate, and any one lever opens all four", () => {
-    expect(gates).toEqual(["keep-gate", "north-gate", "south-east-gate", "south-west-gate"]);
+  it("shuts the three approaches' gates, and any one lever opens all three", () => {
+    expect(gates).toEqual(["north-gate", "south-east-gate", "south-west-gate"]);
     for (const gate of keep.gates) expect(gate.opener, gate.id).toEqual({ kind: "switch" });
     expect(keep.switches).toHaveLength(3);
     for (const lever of keep.switches ?? [])

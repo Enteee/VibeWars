@@ -166,7 +166,7 @@ vid altaret. En bot som bär er relik går rakt till altaret; de andra
 lämnar reliken bara för att slåss mot en fiende som kommer inom
 besvärjelseräckhåll.
 
-Broken Tower spelar det (4v4 och 8v8, 5400x2800): ett fallet torn på en kulle i höglandet. Gå uppför spillrorterrassernas trappor till altaret på tornstumpen, eller ta källaren under kullen när en spak på terrassen öppnar dess dörrar; spillrorväggar går att slå sönder.
+Broken Tower spelar det (4v4 och 8v8, 5400x2800): ett fallet torn på en kulle i höglandet. Gå uppför spillrorterrassernas trappor till altaret på tornstumpen, eller ta källaren under kullen när en spak på terrassen öppnar dess dörrar; spillrorväggar går att slå sönder. Bredvid varje spillrorvägg öppnas ett fällgaller medan någon står på dess tryckplatta.
 
 ### Cinder Sanctum
 
@@ -251,7 +251,7 @@ dödar varje bot först det andra lagets spökhjälte när den står på
 altaret inom deras räckhåll: det är den enda fienden som hindrar ert
 spöke från att ta det.
 
-Threefold Keep spelar det (4v4 och 8v8, 5000x4400): en borg på en kulle i höglandet, för tre lag. Gå upp på vallgången via trappan bredvid din port och korsa en vägbank till kullen, och klättra sedan upp till altaret på tornet. En spak på varje borggård öppnar alla fyra portar: din portgång under muren, och kryptan, den långa vägen under kullen.
+Threefold Keep spelar det (4v4 och 8v8, 5000x4400): en borg på en kulle i höglandet, för tre lag. Gå upp på vallgången via trappan bredvid din port och korsa en vägbank till kullen, och klättra sedan upp till altaret på tornet. En spak på varje borggård öppnar alla tre portar, portgångarna under muren.
 
 ## Erövringspunkter
 

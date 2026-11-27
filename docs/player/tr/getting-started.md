@@ -126,7 +126,8 @@ içindekilerin listesini gösteren bir pencere açar; rozeti onları sayar.
   penceresinde **Lobi** yazar ve **Ayrıl** seni yeni bir davet
   bağlantısıyla kendine ait yeni bir lobiye geri götürür. Bir lobi
   ekranında ya da maçta açılan bağlantı önce menüye dönmeni ister.
-  Bağlantın koparsa yerin 30 saniye tutulur.
+  Bağlantın koparsa ya da sayfayı yeniler veya yeniden açarsan
+  yerin 30 saniye tutulur ve yerine geri alınırsın.
 - **Birini çıkar:** kurucu olarak, maç dışındayken Lobi penceresinde bir
   oyuncunun adının yanındaki **×**'e bas. Kurucunun onu çıkardığı
   kendisine söylenir, kendine ait yeni bir lobi alır ve senin lobin

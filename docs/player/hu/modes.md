@@ -176,7 +176,7 @@ oltárnál várnak. Az ereklyédet vivő bot egyenesen az oltárhoz viszi; a
 többiek csak akkor hagyják ott az ereklyét, ha egy ellenség
 varázslattávolságon belülre jön, hogy megküzdjenek vele.
 
-A Broken Tower játssza (4v4 és 8v8, 5400x2800): egy ledőlt torony egy dombon a hegyvidéken. Menj fel a romteraszok lépcsőin az oltárhoz a toronycsonkon, vagy menj át a domb alatti pincén, amint egy kar a teraszon kinyitja az ajtajait; a romfalak összetörhetők.
+A Broken Tower játssza (4v4 és 8v8, 5400x2800): egy ledőlt torony egy dombon a hegyvidéken. Menj fel a romteraszok lépcsőin az oltárhoz a toronycsonkon, vagy menj át a domb alatti pincén, amint egy kar a teraszon kinyitja az ajtajait; a romfalak összetörhetők. Minden romfal mellett van egy csapórács, amely nyitva van, amíg valaki a nyomólapján áll.
 
 ### Cinder Sanctum
 
@@ -265,7 +265,7 @@ először a másik csapat Kísértethősét öli meg, amint az az oltáron áll 
 hatótávjukon belül: ez az egyetlen ellenség, amely megakadályozza, hogy
 a kísértetetek elfoglalja.
 
-A Threefold Keep játssza (4v4 és 8v8, 5000x4400): egy vár egy dombon a hegyvidéken, három csapatnak. Menj fel a kapud melletti lépcsőn a gyilokjáróra, és kelj át egy töltésúton a dombra, aztán mássz fel a torony tetején álló oltárhoz. Minden udvarban egy kar mind a négy kaput kinyitja: a saját kapuátjáródat a fal alatt, és az altemplomot, a hosszú utat a domb alatt.
+A Threefold Keep játssza (4v4 és 8v8, 5000x4400): egy vár egy dombon a hegyvidéken, három csapatnak. Menj fel a kapud melletti lépcsőn a gyilokjáróra, és kelj át egy töltésúton a dombra, aztán mássz fel a torony tetején álló oltárhoz. Minden udvarban egy kar mind a három kaput kinyitja, a fal alatti kapuátjárókat.
 
 ## Pontfoglalás
 

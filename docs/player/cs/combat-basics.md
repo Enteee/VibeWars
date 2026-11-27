@@ -2,7 +2,7 @@
 
 ## Zdraví a energie
 
-Začínáš s 500 **zdraví** a 20 **energie** a zbroj ti energii přidává: Válečníkovi nic, Hraničáři, Zabijákovi nebo Dervišovi 5, všem ostatním 10. Hůl přidá dalších 10, dokud ji držíš. Runy a morálka mění obojí. Dovednosti stojí energii a ta se sama pomalu vrací. ![Válečník](../../../apps/web/public/icons/profession/warrior.svg) **Válečník** a ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** ji získávají nejpomaleji, ![Hraničář](../../../apps/web/public/icons/profession/ranger.svg) **Hraničář** o něco rychleji, všichni ostatní nejrychleji.
+Začínáš s 480 **zdraví** a 20 **energie** a zbroj ti energii přidává: Válečníkovi nic, Hraničáři, Zabijákovi nebo Dervišovi 5, všem ostatním 10. Hůl přidá dalších 10, dokud ji držíš. Zbroj Derviše přidává i 25 zdraví. Runy a morálka mění obojí. Dovednosti stojí energii a ta se sama pomalu vrací. ![Válečník](../../../apps/web/public/icons/profession/warrior.svg) **Válečník** a ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** ji získávají nejpomaleji, ![Hraničář](../../../apps/web/public/icons/profession/ranger.svg) **Hraničář** o něco rychleji, všichni ostatní nejrychleji.
 
 Šipky na tvých ukazatelích jsou **pipy**: každá znamená zdraví nebo energii, která se každou sekundu trochu vrací nebo ubývá. ![Krvácení](../../../apps/web/public/icons/status/bleeding.svg) **Krvácení**, ![Hoření](../../../apps/web/public/icons/status/burning.svg) **Hoření** a ![Otrava](../../../apps/web/public/icons/status/poison.svg) **Otrava** ubírají zdraví; Regeneration a léčivá kouzla ho přidávají. Když jsi 5 sekund mimo boj, začne se ti zdraví vracet samo, tím rychleji, čím déle mimo boj zůstaneš.
 
@@ -49,7 +49,7 @@ Když jsi **sražený**, chvíli se nemůžeš hýbat, útočit ani použít dov
 
 Přisluhovači (kromě Masového golema), přízraky a duchové nekrvácejí, neotráví se ani neonemocní a duchové nedostanou žádné prokletí ani stav kromě **Hoření**.
 
-![Prokletí](../../../apps/web/public/icons/skill-type/hex.svg) **Prokletí** na tebe sesílají nepřátelé, ![Očarování](../../../apps/web/public/icons/skill-type/enchantment.svg) **očarování** ty sám nebo tvoji spojenci. Každé odstraňuje vlastní druh dovedností. Některá očarování jsou **udržovaná**: trvají, dokud je neukončíš, a za jejich běhu stojí jeden pip energie. Ukončíš ho dvojklikem na jeho ikonu.
+![Prokletí](../../../apps/web/public/icons/skill-type/hex.svg) **Prokletí** na tebe sesílají nepřátelé, ![Očarování](../../../apps/web/public/icons/skill-type/enchantment.svg) **očarování** ty sám nebo tvoji spojenci. Každé odstraňuje vlastní druh dovedností. Některá očarování jsou **udržovaná**: trvají, dokud je neukončíš, a za jejich běhu stojí jeden pip energie. Ukončíš ho dvojklikem na jeho ikonu, nebo na ni přesuň fokus a stiskni Enter či Delete.
 
 Několik dovedností přestane fungovat, když jsi pod očarováním, a začne znovu, jakmile nejsi. Dovednost trvající na "dalších N útoků" počítá každý útok, takže minutí nebo blok spotřebuje jeden útok stejně jako zásah.
 

@@ -214,7 +214,10 @@ both are legitimately in scope.
   `BroadcastChannel` between tabs for the browser tests; `host-clock.ts`
   ticks a host from a Worker, so a hidden tab keeps time. `session.ts` runs
   game-session's lobby and match sessions over it: host or join by code, and
-  a dropped peer rejoins inside `RECONNECT_WINDOW_SECONDS` (#515).
+  a dropped peer rejoins inside `RECONNECT_WINDOW_SECONDS` (#515). A guest
+  whose page reloads or reopens mid-match is put back in too: its `pagehide`
+  leaves `rejoin-record.ts`'s record of the seat, and the next page takes it
+  back with the stored tokens (#4110).
 - `render/arena-snapshot.ts` — plain data: actors, walls, target. Phaser-free
   **on purpose**, so it is testable in Node; importing Phaser into a test
   crashes it.

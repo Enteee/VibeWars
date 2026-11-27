@@ -2,9 +2,9 @@
 
 ## Terveys ja energia
 
-Aloitat 500 **terveydellä** ja 20 **energialla**, ja panssarisi lisää
+Aloitat 480 **terveydellä** ja 20 **energialla**, ja panssarisi lisää
 energiaa: Warriorille ei mitään, Rangerille, Assassinille tai Dervishille 5,
-kaikille muille 10. Sauva lisää vielä 10, kun pidät sitä kädessä. Riimut ja
+kaikille muille 10. Sauva lisää vielä 10, kun pidät sitä kädessä. Dervishin panssari lisää myös 25 terveyttä. Riimut ja
 moraali muuttavat molempia. Taidot maksavat energiaa, ja se palautuu itsestään,
 hitaasti. ![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warriorit** ja ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragonit** saavat sitä takaisin hitaimmin, ![Ranger](../../../apps/web/public/icons/profession/ranger.svg) **Rangerit**
 hieman nopeammin, kaikki muut nopeimmin.
@@ -87,7 +87,8 @@ Kätyrit (paitsi Lihagolemi), aaveet ja henget eivät vuoda verta, myrkyty tai s
 liittolaisesi. Kumpikin poistetaan omanlaisellaan taidolla. Jotkin
 lumoukset ovat **ylläpidettyjä**: ne kestävät, kunnes lopetat ne, ja
 maksavat energiapipin niin kauan kuin ne ovat päällä. Lopeta sellainen
-kaksoisnapsauttamalla sen kuvaketta.
+kaksoisnapsauttamalla sen kuvaketta tai siirtämällä kohdistuksen siihen ja
+painamalla Enter tai Delete.
 
 Muutama taito lakkaa toimimasta, kun olet lumottu, ja alkaa taas toimia,
 kun et ole. Taito, joka kestää "seuraavat N hyökkäystäsi", laskee jokaisen

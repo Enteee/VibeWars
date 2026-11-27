@@ -23,13 +23,14 @@ import {
   isUnderAnother,
   ownSkillBoost,
   scaledStatAttributes,
+  stackedActivationMultiplier,
   type ActiveStatus,
-  type ArmorReduction,
   type AttributeDelta,
   type AttributeScope,
   type BlockRule,
   type MaxHealthLoss,
   type StatusId,
+  type StatusModifiers,
 } from "./status.js";
 import { isInvulnerable, isSpell, type Combatant, type Skill } from "./types.js";
 
@@ -331,26 +332,46 @@ export function healingMultiplierOf(combatant: Pick<Combatant, "statuses">): num
   return aggregateModifiers(combatant.statuses.active).healingMultiplier;
 }
 
-/** The slowest and fastest a combination of statuses can make anyone move. */
+/** The slowest and fastest anyone moves, statuses, burden and terrain together. */
 const MOVE_SPEED_MIN = 0.25;
 const MOVE_SPEED_MAX = 1.33;
 
+/** The slowest stacked snares make anyone move (GW1: −50%, #4095). */
+const SNARE_FLOOR = 0.5;
+
 /**
- * The bearer's movement speed multiplier, clamped. The clamp lives here,
- * not in `aggregateModifiers`, so each status's own number ("moves at 50%
- * speed") stays what its tooltip says.
+ * The status part of a bearer's speed (#4095), as GW1 stacks it: boosts
+ * multiply up to +33%, unless a cap-breaker (Dash) is faster on its own;
+ * slows multiply down to −50%, unless one slow is stronger on its own
+ * (Deep Freeze). Each status's own number stays what its tooltip says.
  */
+export function statusMoveSpeed(
+  modifiers: Pick<
+    StatusModifiers,
+    "moveSpeedBoost" | "moveSpeedSlow" | "strongestSlow" | "speedCapBreaker"
+  >,
+): number {
+  const boost = Math.max(
+    Math.min(MOVE_SPEED_MAX, modifiers.moveSpeedBoost),
+    modifiers.speedCapBreaker,
+  );
+  const slow = Math.max(modifiers.moveSpeedSlow, Math.min(SNARE_FLOOR, modifiers.strongestSlow));
+  return boost * slow;
+}
+
+/** The bearer's movement speed multiplier: its statuses', clamped. */
 export function moveSpeedMultiplier(combatant: Combatant): number {
-  return clampMoveSpeed(aggregateModifiers(combatant.statuses.active).moveSpeedMultiplier);
+  const modifiers = aggregateModifiers(combatant.statuses.active);
+  return clampMoveSpeed(statusMoveSpeed(modifiers), modifiers.speedCapBreaker);
 }
 
 /**
- * The clamp keeps stacked slows or speed boosts from bringing a player to a
- * standstill or a sprint: Shard Storm and Deep Freeze together reach the
- * floor (#938).
+ * The final clamp, after a carrier's burden and terrain multiply in: never
+ * below `MOVE_SPEED_MIN`, never above `MOVE_SPEED_MAX` or the active
+ * cap-breaker's own boost (#4095), whichever is faster.
  */
-export function clampMoveSpeed(raw: number): number {
-  return Math.min(MOVE_SPEED_MAX, Math.max(MOVE_SPEED_MIN, raw));
+export function clampMoveSpeed(raw: number, speedCapBreaker: number): number {
+  return Math.min(Math.max(MOVE_SPEED_MAX, speedCapBreaker), Math.max(MOVE_SPEED_MIN, raw));
 }
 
 /** What `rankOf` reads of a combatant: a tooltip outside a match passes no statuses. */
@@ -571,8 +592,9 @@ export function attackDamageTypeOf(combatant: Combatant): DamageType | undefined
  * Healing's half while the caster is not enchanted. A spell an ally casts
  * on a `target` under "Help!" (#1955) takes half as long; the target's own
  * and a foe's do not. One its caster cast on a `target` under Stolen Speed
- * (#2459) takes half as long. Last, the seconds a status takes off its own skills
- * of a kind (#1975), never below 0.
+ * (#2459) takes half as long. Two or more of these together stay within
+ * GW1's −25% to +150%; Fast Casting is outside that (#4089). Last, the
+ * seconds a status takes off its own skills of a kind (#1975), never below 0.
  */
 export function effectiveActivationSeconds(skill: Skill, caster: RankHolder): number;
 export function effectiveActivationSeconds(
@@ -588,37 +610,40 @@ export function effectiveActivationSeconds(
   const fastCasting = fastCastingMultiplier(rankOf(caster, FAST_CASTING_ATTRIBUTE), skill);
   const modifiers = aggregateModifiers(caster.statuses.active);
   const own = ownSkillBoost(caster.statuses.active, skill);
-  const slowed =
-    (skill.type === "attack" || skill.type === "pet-attack"
-      ? 1
-      : modifiers.skillActivationMultiplier) *
-    own.activationMultiplier *
-    activationWhileMultiplier(skill, caster);
+  const slowed = [
+    ...(skill.type === "attack" || skill.type === "pet-attack"
+      ? []
+      : modifiers.skillActivationMultiplier),
+    own.activationMultiplier,
+    activationWhileMultiplier(skill, caster),
+  ];
+  // Every factor but Fast Casting's multiplies within GW1's caps (#4089).
   // Jaundiced Gaze's second (#1975), off after every multiplier.
-  const less = (seconds: number): number => Math.max(0, seconds - own.activationSecondsLess);
+  const seconds = (factors: readonly number[]): number =>
+    Math.max(
+      0,
+      skill.activationSeconds * stackedActivationMultiplier(factors) * fastCasting -
+        own.activationSecondsLess,
+    );
   if (!isSpell(skill.type)) {
-    return less(skill.activationSeconds * fastCasting * slowed);
+    return seconds(slowed);
   }
   if (target === undefined) {
-    return less(skill.activationSeconds * modifiers.castTimeMultiplier * slowed * fastCasting);
+    return seconds([...modifiers.castTimeMultiplier, ...slowed]);
   }
   const onTarget = aggregateModifiers(target.statuses.active);
   const fromAlly = target.id !== caster.id && target.team === caster.team;
   // `aggregateModifiers` keeps no source: read each status's own (#2459).
-  const fromSource = target.statuses.active.reduce(
-    (multiplier, { id, sourceId }) =>
-      sourceId === caster.id
-        ? multiplier * getStatusDefinition(id).sourceSpellCastTimeMultiplier
-        : multiplier,
-    1,
+  const fromSource = target.statuses.active.flatMap(({ id, sourceId }) =>
+    sourceId === caster.id ? [getStatusDefinition(id).sourceSpellCastTimeMultiplier] : [],
   );
-  const targeted =
-    (skill.type === "hex" ? onTarget.incomingHexCastTimeMultiplier : 1) *
-    (fromAlly ? onTarget.incomingAllySpellCastTimeMultiplier : 1) *
-    fromSource;
-  return less(
-    skill.activationSeconds * modifiers.castTimeMultiplier * slowed * fastCasting * targeted,
-  );
+  return seconds([
+    ...modifiers.castTimeMultiplier,
+    ...slowed,
+    ...(skill.type === "hex" ? onTarget.incomingHexCastTimeMultiplier : []),
+    ...(fromAlly ? onTarget.incomingAllySpellCastTimeMultiplier : []),
+    ...fromSource,
+  ]);
 }
 
 /** `skill`'s own `activationWhile` multiplier for `caster` now (#1916); 1 without one. */
@@ -631,8 +656,8 @@ function activationWhileMultiplier(skill: Skill, caster: RankHolder): number {
   return held === (condition.kind === "caster-has") ? multiplier : 1;
 }
 
-/** The bearer's armor reduction (Cracked Armor, #763); `undefined`: none. */
-export function armorReductionOf(combatant: Combatant): ArmorReduction | undefined {
+/** The bearer's armor reduction (Cracked Armor, #763); 0: none. */
+export function armorReductionOf(combatant: Combatant): number {
   return aggregateModifiers(combatant.statuses.active).armorReduction;
 }
 

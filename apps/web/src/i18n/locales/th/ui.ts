@@ -10,6 +10,7 @@ export default {
   "app.framedRelayLink": "เปิดลิงก์รีเลย์ในแท็บของมันเอง ไม่มีการบันทึกใดๆ",
   "app.inviteInLobby": "กลับไปที่เมนู แล้วเปิดลิงก์เชิญอีกครั้ง",
   "app.lostMatch": "ขาดการเชื่อมต่อกับแมตช์",
+  "app.rejoinFailed": "กลับเข้าแมตช์ไม่ได้: ที่นั่งของคุณไม่ได้ถูกเก็บไว้",
   "app.malformedRelayLink": "ลิงก์รีเลย์นี้ไม่ถูกต้อง ไม่มีการบันทึกใดๆ",
   "app.ownLobby": "นี่คือล็อบบี้ของคุณเอง",
 
@@ -417,7 +418,7 @@ export default {
   "effects.categoryShout": "ตะโกน",
   "effects.categoryStance": "ท่าต่อสู้",
   "effects.categoryWeaponSpell": "เวทอาวุธ",
-  "effects.endHint": "ดับเบิลคลิกเพื่อยุติ",
+  "effects.endHint": "ดับเบิลคลิก, Enter หรือ Delete เพื่อยุติ",
   "effects.from": "จาก {caster}",
   "effects.inRange": "ขณะอยู่ในระยะ",
   "effects.maintained": "คงไว้",
@@ -1046,6 +1047,7 @@ export default {
   "recharge.spent": "{skill}, ใช้ไปแล้วจนกว่าจะได้บูสต์ขวัญกำลังใจ",
 
   "reconnect.detail": "การเชื่อมต่อของโฮสต์หลุด ที่นั่งของคุณยังอยู่",
+  "reconnect.rejoinDetail": "กำลังพาคุณกลับเข้าแมตช์ ที่นั่งของคุณยังถูกเก็บไว้",
   "reconnect.seconds": "{seconds} วิ",
   "reconnect.title": "กำลังเชื่อมต่อใหม่…",
 
@@ -1420,7 +1422,7 @@ export default {
     "การร่ายหนึ่งครั้งทำอะไรได้จริง: ที่เกราะ 60 ได้ตัวเลขตรงกับในคำอธิบายพอดี",
   "training.scenario.time-to-kill.label": "เวลาสังหาร",
   "training.scenario.time-to-kill.teaches":
-    "ดาเมจต่อเนื่องของคุณ: ผู้ร่ายเวทพลังชีวิต 500 อยู่ได้นานแค่ไหน ซ้ำแล้วซ้ำเล่า",
+    "ดาเมจต่อเนื่องของคุณ: ผู้ร่ายเวทพลังชีวิต 480 อยู่ได้นานแค่ไหน ซ้ำแล้วซ้ำเล่า",
   "training.scenario.physical-vs-elemental.label": "กายภาพกับธาตุ",
   "training.scenario.physical-vs-elemental.teaches":
     "เกราะตอบสนองต่อประเภทดาเมจ: Warrior และ Stalwart ลดดาเมจดาบแต่ไม่ลด Fireball ส่วน Ranger ลด Fireball แต่ไม่ลดดาบ",
@@ -1429,7 +1431,7 @@ export default {
     "สภาวะผิดปกติคือนาฬิกานับถอยหลังสู่ความตาย: Bleeding, Poison และ Burning ลดพลังชีวิต 20 ต่อวินาที ซึ่งมากที่สุดแล้ว และการใส่เพิ่มจะต่อเวลาแทนที่จะซ้อนกัน",
   "training.scenario.condition-removal.label": "การลบสภาวะผิดปกติ",
   "training.scenario.condition-removal.teaches":
-    "การลบสภาวะผิดปกติจะลบเฉพาะสิ่งที่ระบุไว้: พันธมิตรที่มีพลังชีวิต 200 จาก 500 ติดสภาวะผิดปกติห้าอย่าง และ Deep Wound ในนั้นลดพลังชีวิต 100 ทันทีที่ติด และจำกัดการฮีลของคุณไว้ที่ 400",
+    "การลบสภาวะผิดปกติจะลบเฉพาะสิ่งที่ระบุไว้: พันธมิตรที่มีพลังชีวิต 192 จาก 480 ติดสภาวะผิดปกติห้าอย่าง และ Deep Wound ในนั้นลดพลังชีวิต 96 ทันทีที่ติด และจำกัดการฮีลของคุณไว้ที่ 384",
   "training.scenario.armor-ladder.label": "ขั้นบันไดเกราะ",
   "training.scenario.armor-ladder.teaches":
     "เส้นโค้งการลดดาเมจ: การโจมตีเดียวกันต่อเกราะ 40 ถึง 104 เทียบกันแบบเคียงข้าง",

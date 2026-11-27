@@ -123,7 +123,8 @@ Liste, wer drin ist; das Abzeichen zählt sie.
   der Beitritt durch ist. Danach steht im Lobby-Fenster **Lobby**, und **Verlassen**
   bringt dich zurück in eine neue eigene Lobby mit einem neuen Einladungslink. Ein Link,
   der auf einem Lobby-Bildschirm oder im Match geöffnet wird, bittet dich, erst ins Menü
-  zurückzugehen. Bricht deine Verbindung ab, bleibt dein Platz 30 Sekunden reserviert.
+  zurückzugehen. Bricht deine Verbindung ab oder lädst du die Seite neu oder öffnest sie
+  erneut, bleibt dein Platz 30 Sekunden reserviert und du kommst wieder auf ihn zurück.
 - **Jemanden entfernen:** Drück als Host außerhalb eines Matches das **×** neben dem Namen
   eines Spielers im Lobby-Fenster. Er erfährt, dass der Host ihn entfernt hat, bekommt
   eine neue eigene Lobby und kann deiner nicht wieder beitreten, solange sie besteht.

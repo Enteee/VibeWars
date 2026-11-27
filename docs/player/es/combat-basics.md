@@ -2,10 +2,10 @@
 
 ## Salud y energía
 
-Empiezas con 500 de **salud** y 20 de **energía**, y tu armadura añade
+Empiezas con 480 de **salud** y 20 de **energía**, y tu armadura añade
 energía: nada para un Guerrero, 5 para un Guardabosques, un Asesino o un
 Derviche, 10 para todos los demás. Un Staff añade 10 más mientras lo
-empuñas. Las runas y la moral cambian ambas. Las habilidades cuestan energía, y esta vuelve sola, despacio.
+empuñas. La armadura de un Derviche añade además 25 de salud. Las runas y la moral cambian ambas. Las habilidades cuestan energía, y esta vuelve sola, despacio.
 Los ![Guerrero](../../../apps/web/public/icons/profession/warrior.svg) **Guerreros** y los ![Paragón](../../../apps/web/public/icons/profession/paragon.svg) **Paragones** la recuperan más lento, los ![Guardabosques](../../../apps/web/public/icons/profession/ranger.svg) **Guardabosques** algo más
 rápido y todos los demás, lo más rápido.
 
@@ -82,8 +82,8 @@ Los esbirros (salvo el Gólem de carne), los fantasmas y los espíritus no sangr
 Los ![Maleficio](../../../apps/web/public/icons/skill-type/hex.svg) **maleficios** te los lanzan los enemigos; los ![Encantamiento](../../../apps/web/public/icons/skill-type/enchantment.svg) **encantamientos**, tú
 o tus aliados. Cada uno se elimina con su propio tipo de habilidad. Algunos
 encantamientos son **mantenidos**: duran hasta que los terminas, y cuestan
-una marca de energía mientras siguen. Haz doble clic en su icono para
-terminar uno.
+una marca de energía mientras siguen. Haz doble clic en su icono, o dale el
+foco y pulsa Enter o Supr, para terminar uno.
 
 Algunas habilidades dejan de funcionar mientras estás encantado, y vuelven
 a funcionar cuando dejas de estarlo. Una habilidad que dura tus "próximos N

@@ -19,6 +19,7 @@ const crates: MapDecor = {
   rotation: 30,
   scale: 1.5,
   variant: 2,
+  wading: false,
 };
 
 /** Whether two slots on one sheet share a pixel. */
@@ -39,7 +40,7 @@ describe("decorBounds (#4017)", () => {
     const box = decorBounds(commands, lift);
     for (const command of commands) {
       const points =
-        command.kind === "poly"
+        command.kind === "poly" || command.kind === "outline"
           ? command.points
           : command.kind === "line"
             ? [command.from, command.to]

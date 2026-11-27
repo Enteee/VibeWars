@@ -12,6 +12,8 @@ import {
   lightAt,
   multiplyColour,
   steadyLighting,
+  warmFireLights,
+  FIRE_LIGHT_COLOUR,
 } from "./lighting-model.js";
 
 const DARK = { colour: 0xffffff, intensity: 0 };
@@ -155,5 +157,30 @@ describe("steadyLighting", () => {
 
   it("is made once per lighting, so a frame allocates nothing", () => {
     expect(steadyLighting(lit)).toBe(steadyLighting(lit));
+  });
+});
+
+describe("warmFireLights (#4057)", () => {
+  const light = (id: string, colour: number): MapLighting["lights"][number] => ({
+    ...TORCH,
+    id,
+    colour,
+  });
+
+  it("gives a brazier the warm colour, stronger and wider", () => {
+    const [brazier] = warmFireLights({ ...BASE, lights: [light("brazier-west", 0xff9a40)] }).lights;
+    expect(brazier?.colour).toBe(FIRE_LIGHT_COLOUR);
+    expect(brazier?.intensity).toBeGreaterThan(TORCH.intensity);
+    expect(brazier?.intensity).toBeLessThanOrEqual(1);
+    expect(brazier?.radius).toBeGreaterThan(TORCH.radius);
+  });
+
+  it("leaves a cold light, a magic brazier and an unnamed light as they are", () => {
+    const lights = [
+      light("cold-north", 0x9fc4ff),
+      light("brazier-spirit", 0x4fd1b5),
+      light("skylight-1", 0xfff1d6),
+    ];
+    expect(warmFireLights({ ...BASE, lights }).lights).toEqual(lights);
   });
 });

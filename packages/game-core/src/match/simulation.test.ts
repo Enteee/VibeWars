@@ -1022,16 +1022,19 @@ describe("a dummy's deep wound (#764, #800)", () => {
     });
     const before = participant(sim, "a").combatant.health;
 
+    // Deep Wound takes a fifth of the maximum, a full one here.
+    const wound = before / 5;
+
     const log = sim.step(DT).log;
 
     const lost = log.filter((entry) => entry.events.some((event) => event.kind === "health-lost"));
     expect(lost).toHaveLength(1);
     expect(lost[0]?.sourceId).toBe("b");
     expect(lost[0]?.events).toEqual([
-      { kind: "health-lost", targetId: "a", amount: 100, statusId: "deep-wound" },
+      { kind: "health-lost", targetId: "a", amount: wound, statusId: "deep-wound" },
     ]);
     expect(log.some((entry) => entry.events.some((event) => event.kind === "damage"))).toBe(false);
-    expect(participant(sim, "a").combatant.health).toBe(before - 100);
+    expect(participant(sim, "a").combatant.health).toBe(before - wound);
   });
 });
 

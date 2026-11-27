@@ -10,6 +10,7 @@ export default {
   "app.framedRelayLink": "Отвори линка за релето в отделен раздел. Нищо не е запазено.",
   "app.inviteInLobby": "Върни се в менюто и отвори линка за покана отново.",
   "app.lostMatch": "Връзката с мача е изгубена.",
+  "app.rejoinFailed": "Не успя да се върнеш в мача: мястото ти не беше запазено.",
   "app.malformedRelayLink": "Този линк за реле не е валиден. Нищо не е запазено.",
   "app.ownLobby": "Това е твоето лоби",
 
@@ -454,7 +455,7 @@ export default {
   "effects.categoryShout": "Вик",
   "effects.categoryStance": "Стойка",
   "effects.categoryWeaponSpell": "Заклинание в оръжие",
-  "effects.endHint": "двоен клик за край",
+  "effects.endHint": "двоен клик, Enter или Delete за край",
   "effects.from": "от {caster}",
   "effects.inRange": "докато си в обхвата му",
   "effects.maintained": "поддържано",
@@ -1108,6 +1109,7 @@ export default {
   "recharge.spent": "{skill}, изразходвано до прилив на морал",
 
   "reconnect.detail": "Връзката на домакина прекъсна. Мястото ти се пази.",
+  "reconnect.rejoinDetail": "Връщаме те в мача ти. Мястото ти е запазено.",
   "reconnect.seconds": "{seconds} с",
   "reconnect.title": "Свързване отново…",
 
@@ -1519,7 +1521,7 @@ export default {
     "Какво всъщност прави едно изричане: при 60 броня точно числото от подсказката.",
   "training.scenario.time-to-kill.label": "Време за убийство",
   "training.scenario.time-to-kill.teaches":
-    "Твоите постоянни щети: колко издържа заклинател с 500 здраве, отново и отново.",
+    "Твоите постоянни щети: колко издържа заклинател с 480 здраве, отново и отново.",
   "training.scenario.physical-vs-elemental.label": "Физически срещу стихийни",
   "training.scenario.physical-vs-elemental.teaches":
     "Че бронята отговаря на вид щети: Warrior и Stalwart Insignia омекотяват меч, но не Fireball, а Ranger омекотява Fireball, но не меч.",
@@ -1528,7 +1530,7 @@ export default {
     "Че състоянията са часовник към смъртта: Bleeding, Poison и Burning отнемат по 20 здраве в секунда, повече не може, а нови само ги подновяват, без да се натрупват.",
   "training.scenario.condition-removal.label": "Премахване на състояния",
   "training.scenario.condition-removal.teaches":
-    "Че премахването на състояние маха само каквото пише: съюзник на 200 от 500 носи пет състояния, а Deep Wound сред тях отнема 100 при поставянето си и ограничава лекуването ти до 400.",
+    "Че премахването на състояние маха само каквото пише: съюзник на 192 от 480 носи пет състояния, а Deep Wound сред тях отнема 96 при поставянето си и ограничава лекуването ти до 384.",
   "training.scenario.armor-ladder.label": "Стълба на бронята",
   "training.scenario.armor-ladder.teaches":
     "Кривата на смекчаване: един и същ удар срещу броня от 40 до 104, един до друг.",

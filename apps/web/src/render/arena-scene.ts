@@ -13,6 +13,7 @@ import {
   zoneOffsetAt,
   zonePhaseAt,
   polygonCentre,
+  pointInPolygon,
   TELEPORT_COOLDOWN_SECONDS,
   type CreatureLook,
   type StatusId,
@@ -44,6 +45,8 @@ import {
   SPIRIT_RING_WIDTH,
   spiritRingAlpha,
   nameplateLayout,
+  isStackedFigure,
+  overheadRise,
   placeFloatingText,
   signetTextureKey,
   swingFlashAlpha,
@@ -68,8 +71,27 @@ import {
   fallLift,
   elevationOf,
   renderOrder,
+  FIGURE_DEPTH_SPAN,
   type RenderItem,
 } from "./render-order.js";
+import {
+  STACK_BADGE_FILL,
+  STACK_BADGE_RIM,
+  stackBadge,
+  stackOverheadRise,
+  stackPose,
+} from "./sprite-stack.js";
+import {
+  STACK_BAKE_RADIUS,
+  STACK_BAKE_SCALE,
+  STACK_FRAME_FEET_X,
+  STACK_FRAME_FEET_Y,
+  STACK_FRAME_HEIGHT,
+  STACK_FRAME_WIDTH,
+  StackAtlas,
+  type BakeContext,
+  type StackLook,
+} from "./stack-atlas.js";
 import {
   ARENA_BACKGROUND,
   DECK_LIP,
@@ -87,6 +109,8 @@ import {
   pavingPalette,
   type PavingLookColours,
   type StonePavingLook,
+  type WaterLook,
+  WATER_LOOK,
   SWITCH_MARK_LOOK,
 } from "./arena-palette.js";
 import {
@@ -162,6 +186,8 @@ import {
   walkMarkerTicks,
   type WalkMarker,
 } from "./walk-marker.js";
+import { deckVignetteTops, Vignette } from "./vignette.js";
+import { wholeScreenPasses } from "./whole-screen-passes.js";
 import { weaponMarkLayout, weaponTipAt } from "./weapon-mark.js";
 import { AttackClock, REST_FRAME, shownFrame, type AttackFrame } from "./attack-clock.js";
 import { CAST_GLOW_CORE, CAST_GLOW_CORE_LIFT, castGlow } from "./cast-beats.js";
@@ -417,8 +443,17 @@ import {
   steadyLighting,
   type LightSample,
 } from "./lighting-model.js";
-import { WATER_ART, waterArtKey, type WaterPainter } from "./water-painter.js";
+import { liquidCells, tiledCells, type LiquidCellsOptions } from "./liquid-cells.js";
+import {
+  WATER_ART,
+  WATER_CELLS,
+  waterArtKey,
+  waterSurface,
+  type WaterArtKey,
+  type WaterPainter,
+} from "./water-painter.js";
 import { waterPieces, waterShapeOf, type WaterPiece, type WaterShape } from "./water-shape.js";
+import { WaterFx, paintWaterFx, type WaterAt } from "./water-fx.js";
 import { SPIRE_LOOK, ZONE_EDGE_WIDTH, ZONE_LOOK, strikeEdgeScale } from "./zone-look.js";
 import { HAZARD_ART, hazardKindOf, pathMotionAt, phaseProgressAt } from "./hazard-marks.js";
 import {
@@ -465,12 +500,15 @@ import { fillDisc, strokeDisc } from "./disc.js";
 import { dashedCircle } from "./dashed-circle.js";
 import {
   groundArtOf,
+  liquidOf,
   paintZoneGround,
   paintZoneRelief,
   paintZoneShadow,
   paintZoneMotion,
   zoneArtOf,
   zoneGroundAlpha,
+  CAUSTICS_FRAGMENT,
+  ZONE_CAUSTICS,
   type ZoneArt,
   type ZoneMotionPainter,
 } from "./zone-painter.js";
@@ -482,6 +520,7 @@ import {
   paintBodyDisc,
   paintBodyMarks,
   paintFormAura,
+  paintFigureGround,
   paintStandingBody,
   paintWeaponMark,
   type Painter,
@@ -540,6 +579,13 @@ interface ZoneGround {
   readonly art: ZoneArt;
   readonly image: Phaser.GameObjects.Image;
   readonly key: string;
+  /** A liquid's caustics (#4062) over it, or none. */
+  readonly caustics: ZoneCausticsDraw | undefined;
+}
+/** A liquid zone's caustics (#4062): its shader, and the time and alpha it draws at next. */
+interface ZoneCausticsDraw {
+  readonly shader: Phaser.GameObjects.Shader;
+  readonly uniforms: { time: number; alpha: number };
 }
 /** The hover marker on a layered map (#2831), its dashes on the ground. */
 const HOVER_RING = 0xd7dee8;
@@ -566,6 +612,20 @@ interface WaterOverTunnel {
   readonly ripples: Phaser.GameObjects.Graphics;
   readonly painter: WaterPainter;
 }
+
+/** The liquid cells over the water (#4058), baked with its shapes: an image and its texture per body of water. */
+interface WaterCells {
+  readonly shapes: readonly WaterSplit[];
+  readonly images: readonly Phaser.GameObjects.Image[];
+  readonly textures: readonly string[];
+}
+
+/** Liquid `id`'s cells' texture (#4058, #4062), painted once per game. */
+function liquidCellsTileKey(id: string): string {
+  return `liquid-cells-${id}`;
+}
+/** The longest side, in px, of a body of water's baked cells: a bigger body bakes coarser. */
+const WATER_CELLS_MAX_SIDE = 2048;
 
 const TARGET_RING = 0xffd866;
 /** The `condition` orange: your team's called foe wears its chevron (#443). */
@@ -806,6 +866,8 @@ export class ArenaScene extends Phaser.Scene {
   /** What moves on the floor, and the bodies, under the body glyphs. */
   private bands: readonly {
     readonly body: Phaser.GameObjects.Graphics;
+    /** The glyph badges on top of its stacked figures (ADR-0057). */
+    readonly badge: Phaser.GameObjects.Graphics;
     readonly marks: Phaser.GameObjects.Graphics;
     readonly bar: Phaser.GameObjects.Graphics;
   }[] = [];
@@ -887,6 +949,8 @@ export class ArenaScene extends Phaser.Scene {
    * index: faded with its cover.
    */
   private readonly waterOverTunnels = new Map<number, WaterOverTunnel>();
+  /** The cells baked into the water that is not over a tunnel (#4058), if any. */
+  private waterCells: WaterCells | undefined;
   /** The ripples on each layer's water, drawn every frame. */
   private readonly rippleGraphics = new Map<
     number,
@@ -911,6 +975,8 @@ export class ArenaScene extends Phaser.Scene {
     { readonly graphics: Phaser.GameObjects.Graphics; readonly painter: Painter }
   >();
   private readonly footsteps = new FootstepTrails();
+  /** Wakes and splashes on the water (#4061), drawn with its ripples. */
+  private readonly waterFx = new WaterFx();
   /** Each layer's effect zones (ADR-0053), drawn every frame as they breathe. */
   private readonly zoneGraphics = new Map<number, Phaser.GameObjects.Graphics>();
   /** Fog banks and vents by layer, plumes by band, and the weather over all (#3032). */
@@ -1064,6 +1130,9 @@ export class ArenaScene extends Phaser.Scene {
     {
       image: Phaser.GameObjects.Image;
       to: { x: number; y: number };
+      /** Where it lands on water, unlifted, to splash there (#4061); `undefined` on dry ground. */
+      readonly splash:
+        { readonly x: number; readonly y: number; readonly layer: number } | undefined;
       endedAt: number | undefined;
       /** A flying spell's (#3292): where it left, its trail, and its core's radius. */
       readonly spell:
@@ -1105,6 +1174,21 @@ export class ArenaScene extends Phaser.Scene {
   private signetsAdding = new Set<string>();
   /** The primary profession's glyph inside each body, one pooled image per actor (#1037). */
   private bodyGlyphs = new Map<string, Phaser.GameObjects.Image>();
+  /** Every look's stacked figure, baked once a match (ADR-0057, #4031). */
+  private stackAtlas: StackAtlas | undefined;
+  /** The atlas's canvas texture now, and how many it has had. */
+  private stackTexture = "";
+  private stackTextures = 0;
+  /** Whether the roster's looks are baked: at the first snapshot with bodies in it. */
+  private rosterBaked = false;
+  /** One image per standing body drawn as a figure, by actor id. */
+  private bodyFigures = new Map<string, Phaser.GameObjects.Image>();
+  /** The figures this frame draws, gathered as their bodies are drawn. */
+  private figures: {
+    readonly actor: RenderableActor;
+    readonly frame: string;
+    readonly band: number;
+  }[] = [];
   /** The casting skill's type badge by each cast bar, one pooled image per actor (#1125). */
   private castBadges = new Map<string, Phaser.GameObjects.Image>();
   /** Status ids the server sent that this client has no icon for. */
@@ -1115,6 +1199,7 @@ export class ArenaScene extends Phaser.Scene {
   private now = 0;
   /** The light maps (ADR-0052); `undefined` until `create`. */
   private lightingPass: LightingPass | undefined;
+  private vignette: Vignette | undefined;
   /** Whether Alt is held, for the hover ring (#3020); a key does not wait for the mouse to move. */
   private alt: AltTracker | undefined;
   /** Whether a finger has been held still long enough to pick the ground below (#3878). */
@@ -1159,6 +1244,7 @@ export class ArenaScene extends Phaser.Scene {
     // `view` as it is.
     const snapped = snapView(view, camera);
     camera.centerOn(snapped.x, snapped.y);
+    this.vignette?.place(snapped, view.zoom, camera);
   }
 
   /** The arena's bounds, which the grid covers and the edge line traces. */
@@ -1192,7 +1278,62 @@ export class ArenaScene extends Phaser.Scene {
   /** Replace the snapshot to draw on the next frame. */
   public setSnapshot(snapshot: ArenaSnapshot): void {
     this.snapshot = snapshot;
+    this.bakeRoster();
   }
+
+  /**
+   * Bake every look on the roster into the figure atlas (ADR-0057), once,
+   * at match start: never on a body's first draw, so no look hitches a
+   * frame mid-fight. One that turns up later bakes off the frame path.
+   */
+  private bakeRoster(): void {
+    const atlas = this.stackAtlas;
+    if (atlas === undefined || this.rosterBaked || this.snapshot.actors.length === 0) {
+      return;
+    }
+    this.rosterBaked = true;
+    atlas.bake(this.snapshot.actors.filter(isStackedFigure).map((actor) => this.stackLook(actor)));
+  }
+
+  /** What `actor`'s figure is painted in: its team's colour and its cape (ADR-0056). */
+  private stackLook(actor: RenderableActor): StackLook {
+    const look = actor.cosmetics.cape?.look;
+    return {
+      body: teamColour(actor.team),
+      cape:
+        actor.cape === undefined
+          ? undefined
+          : { look: actor.cape, pattern: look?.kind === "cape" ? look.pattern : undefined },
+    };
+  }
+
+  /** A canvas texture for the figure atlas, `width` × `height`: a new key every time. */
+  private stackSurface(width: number, height: number) {
+    this.stackTextures += 1;
+    const key = `stack-atlas-${String(this.stackTextures)}`;
+    const texture = this.textures.createCanvas(key, width, height);
+    if (texture === null) {
+      throw new Error(`[arena] could not make the figure atlas ${key}`);
+    }
+    this.stackTexture = key;
+    const context: BakeContext = texture.context;
+    return {
+      context,
+      addFrame: (name: string, x: number, y: number, w: number, h: number) => {
+        texture.add(name, 0, x, y, w, h);
+      },
+      refresh: () => {
+        texture.refresh();
+      },
+      destroy: () => {
+        this.textures.remove(key);
+      },
+    };
+  }
+
+  private readonly rebuildStackAtlas = (): void => {
+    this.stackAtlas?.rebuild();
+  };
 
   /** Replace the props to draw from the next frame: none clears them. */
   public setProps(props: readonly TutorialProp[]): void {
@@ -1265,6 +1406,15 @@ export class ArenaScene extends Phaser.Scene {
     }
     this.groundGraphics = this.add.graphics().setDepth(GROUND_DEPTH);
     this.lightingPass = new LightingPass(this);
+    this.vignette = new Vignette(this);
+    this.stackAtlas = new StackAtlas(
+      (width, height) => this.stackSurface(width, height),
+      (bake) => {
+        setTimeout(bake, 0);
+      },
+    );
+    this.game.renderer.on(Phaser.Renderer.Events.RESTORE_WEBGL, this.rebuildStackAtlas);
+    this.bakeRoster();
     this.alt = trackAlt(window);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, () => {
       this.shutdown();
@@ -1280,6 +1430,7 @@ export class ArenaScene extends Phaser.Scene {
     this.mapGraphics = this.add.graphics().setDepth(MAP_DEPTH);
     this.bands = Array.from({ length: CHARACTER_BANDS }, (_, band) => ({
       body: this.add.graphics().setDepth(renderOrder({ kind: "character", band, part: "body" })),
+      badge: this.add.graphics().setDepth(renderOrder({ kind: "character", band, part: "badge" })),
       marks: this.add.graphics().setDepth(renderOrder({ kind: "character", band, part: "marks" })),
       bar: this.add.graphics().setDepth(renderOrder({ kind: "character", band, part: "bar" })),
     }));
@@ -1303,8 +1454,9 @@ export class ArenaScene extends Phaser.Scene {
     if (effects === undefined || floor === undefined) {
       return;
     }
-    for (const { body, marks: bandMarks, bar } of this.bands) {
+    for (const { body, badge, marks: bandMarks, bar } of this.bands) {
       body.clear();
+      badge.clear();
       bandMarks.clear();
       bar.clear();
     }
@@ -1329,7 +1481,7 @@ export class ArenaScene extends Phaser.Scene {
     this.staticCull.cull(view);
     this.drawLifts();
     this.drawBreakables();
-    this.drawRipples();
+    this.drawRipples(dt);
     this.drawZones();
     this.drawAtmosphere(dt, view);
     for (const graphics of this.zoneGraphics.values()) {
@@ -1391,6 +1543,7 @@ export class ArenaScene extends Phaser.Scene {
       }
     }
     this.drawProps();
+    this.figures.length = 0;
     for (const actor of this.drawnActors) {
       const band = this.bandOf(actor.layer);
       if (band !== undefined) {
@@ -1436,6 +1589,7 @@ export class ArenaScene extends Phaser.Scene {
       this.drawImpact(impact);
     }
     this.drawShoutChevrons();
+    this.updateBodyFigures();
     this.updateBodyGlyphs();
     this.updateCastBadges();
     this.updateProjectiles(time / 1000);
@@ -2025,7 +2179,8 @@ export class ArenaScene extends Phaser.Scene {
     const lift = recordFlag(this.recording, flag, this.snapshot.structure.ground, marks.depth);
     const x = flag.position.x;
     const y = flag.position.y - lift;
-    const foot = y - (flag.carried ? FLAG_CARRIED_LIFT : 0);
+    // A carrier is a standing figure: the flag stands over its badge (ADR-0057).
+    const foot = y - (flag.carried ? FLAG_CARRIED_LIFT + stackOverheadRise(STACK_BAKE_RADIUS) : 0);
     const top = foot - FLAG_POLE;
     marks.lineStyle(3, BODY_EDGE, 1);
     marks.lineBetween(x, foot, x, top);
@@ -2693,6 +2848,10 @@ export class ArenaScene extends Phaser.Scene {
         this.projectileImages.set(shot.id, {
           image,
           to: projectileLanding(shot, this.snapshot.structure, this.snapshot.lifts),
+          splash:
+            this.waterAt(shot.to, shot.toLayer) === undefined
+              ? undefined
+              : { x: shot.to.x, y: shot.to.y, layer: shot.toLayer },
           endedAt: undefined,
           spell:
             shot.spell && from !== undefined
@@ -2725,6 +2884,11 @@ export class ArenaScene extends Phaser.Scene {
       }
       if (sent.has(id)) {
         this.endedShots.add(id);
+      }
+      if (shown.endedAt === undefined && shown.splash !== undefined) {
+        // It has just landed, and on water.
+        const { x, y, layer } = shown.splash;
+        this.waterFx.splash(x, y, layer, !fade);
       }
       if (shown.endedAt === undefined && fade) {
         shown.endedAt = now;
@@ -2928,23 +3092,42 @@ export class ArenaScene extends Phaser.Scene {
       this.drawLyingBody(g, marks, actor);
     } else {
       const frame = this.weaponFrame(actor);
-      paintStandingBody(
-        phaserPainter(g),
-        {
-          x,
-          y,
-          r: actor.radius,
-          facing: actor.facing,
-          team: actor.team,
-          weaponId: actor.weaponId,
-          offhandId: actor.offhandId,
-          frame,
-          cape: this.wornCape(actor),
-          tint: this.bodyTint(actor),
-          swingTrail: this.swingTrail(actor, frame),
-        },
-        phaserPainter(marks),
+      const body: StandingBody = {
+        x,
+        y,
+        r: actor.radius,
+        facing: actor.facing,
+        team: actor.team,
+        weaponId: actor.weaponId,
+        offhandId: actor.offhandId,
+        frame,
+        cape: this.wornCape(actor),
+        tint: this.bodyTint(actor),
+        swingTrail: this.swingTrail(actor, frame),
+      };
+      const figure = this.stackAtlas?.frame(
+        this.stackLook(actor),
+        actor.facing,
+        stackPose(
+          this.trackMotion(actor) !== undefined,
+          actor.castProgress !== undefined,
+          this.now,
+          this.reducedMotion,
+        ),
       );
+      if (figure === undefined) {
+        // Its look is still baking: the flat disc until it is (ADR-0057).
+        paintStandingBody(phaserPainter(g), body, phaserPainter(marks));
+      } else {
+        paintFigureGround(phaserPainter(g), body);
+        paintBodyMarks(phaserPainter(marks), body);
+        this.drawFigureBadge(band.badge, actor);
+        this.figures.push({
+          actor,
+          frame: figure,
+          band: characterBand(actor.layer, this.snapshot.structure.layerCount),
+        });
+      }
       this.drawCastGlow(marks, actor, frame);
     }
     // On the body layer, after the body and its self rim: every mark draws over the rings.
@@ -3845,6 +4028,69 @@ export class ArenaScene extends Phaser.Scene {
   }
 
   /**
+   * The stacked figure of every standing body drawn this frame (ADR-0057):
+   * one atlas image each, its feet on the body's centre, tinted by the
+   * light there (ADR-0052), the nearer over the one behind; an actor no
+   * longer drawn as one hides its image, and one that left takes it along.
+   */
+  private updateBodyFigures(): void {
+    const shown = new Set<string>();
+    const scale = 1 / STACK_BAKE_SCALE;
+    const depthPerY = this.arena.height > 0 ? FIGURE_DEPTH_SPAN / this.arena.height : 0;
+    for (const { actor, frame, band } of this.figures) {
+      shown.add(actor.id);
+      let image = this.bodyFigures.get(actor.id);
+      if (image === undefined) {
+        image = this.add
+          .image(0, 0, this.stackTexture, frame)
+          .setOrigin(
+            STACK_FRAME_FEET_X / STACK_FRAME_WIDTH,
+            STACK_FRAME_FEET_Y / STACK_FRAME_HEIGHT,
+          );
+        this.bodyFigures.set(actor.id, image);
+      }
+      if (image.texture.key !== this.stackTexture) {
+        image.setTexture(this.stackTexture, frame);
+      } else if (image.frame.name !== frame) {
+        image.setFrame(frame);
+      }
+      const size = (scale * actor.radius) / STACK_BAKE_RADIUS;
+      const { x, y } = actor.position;
+      const depth = renderOrder({ kind: "character", band, part: "figure" });
+      image
+        .setDisplaySize(STACK_FRAME_WIDTH * size, STACK_FRAME_HEIGHT * size)
+        .setPosition(x, y)
+        .setDepth(depth + Math.min(Math.max(y * depthPerY, 0), FIGURE_DEPTH_SPAN * 0.99))
+        .setTint(this.bodyTint(actor) ?? 0xffffff)
+        .setVisible(true);
+    }
+    for (const [id, image] of this.bodyFigures) {
+      if (shown.has(id)) {
+        continue;
+      }
+      if (this.drawnActors.some((actor) => actor.id === id)) {
+        image.setVisible(false);
+      } else {
+        image.destroy();
+        this.bodyFigures.delete(id);
+      }
+    }
+  }
+
+  /** The dark disc the glyph rides on, on top of `actor`'s figure (ADR-0057). */
+  private drawFigureBadge(g: Phaser.GameObjects.Graphics, actor: RenderableActor): void {
+    if (actor.profession === undefined) {
+      return;
+    }
+    const { x, y } = actor.position;
+    const badge = stackBadge(actor.radius);
+    g.fillStyle(STACK_BADGE_RIM, 1);
+    g.fillCircle(x, y - badge.rise, badge.radius + 1);
+    g.fillStyle(STACK_BADGE_FILL, 1);
+    g.fillCircle(x, y - badge.rise, badge.radius);
+  }
+
+  /**
    * The primary profession's glyph inside every body (#1037): upright,
    * world sized, between the bodies and their marks. Frame, tint and
    * alpha are set only when they change, as the name glyph's are; an actor
@@ -3924,7 +4170,11 @@ export class ArenaScene extends Phaser.Scene {
       if (badge.frame.name !== frame) {
         badge.setFrame(frame);
       }
-      const centre = castBadgeLayout(actor.position.x, actor.position.y, actor.radius);
+      const centre = castBadgeLayout(
+        actor.position.x,
+        actor.position.y - overheadRise(actor),
+        actor.radius,
+      );
       badge
         .setDisplaySize(CAST_BADGE_SIZE, CAST_BADGE_SIZE)
         .setPosition(centre.x, centre.y)
@@ -3959,7 +4209,7 @@ export class ArenaScene extends Phaser.Scene {
   private drawHealthBar(g: Phaser.GameObjects.Graphics, actor: RenderableActor): void {
     const fraction = healthFraction(actor);
     const left = actor.position.x - HEALTH_BAR_WIDTH / 2;
-    const top = actor.position.y - actor.radius - 12;
+    const top = actor.position.y - actor.radius - overheadRise(actor) - 12;
 
     g.fillStyle(HEALTH_BAR_BG, 1);
     g.fillRect(left, top, HEALTH_BAR_WIDTH, HEALTH_BAR_HEIGHT);
@@ -3973,7 +4223,7 @@ export class ArenaScene extends Phaser.Scene {
     progress: number,
   ): void {
     const left = actor.position.x - HEALTH_BAR_WIDTH / 2;
-    const top = actor.position.y - actor.radius - CAST_BAR_RISE;
+    const top = actor.position.y - actor.radius - overheadRise(actor) - CAST_BAR_RISE;
     g.fillStyle(HEALTH_BAR_BG, 1);
     g.fillRect(left, top, HEALTH_BAR_WIDTH, HEALTH_BAR_HEIGHT);
     g.fillStyle(CAST_BAR_FILL, 1);
@@ -4092,10 +4342,12 @@ export class ArenaScene extends Phaser.Scene {
           pieces.length === 1 ? this.waterPainter(surface) : this.piecePainter(surface, piece),
           { ...shape, outline: piece.outline, ripples: piece.ripples },
           line,
+          { wall: pitWall(palette), lip: palette.wallTop, outline: palette.wallStroke },
         );
         surface.restore();
       }
     }
+    this.buildWaterCells(ground);
     this.drawPits(next.structure, line, palette);
     const lifts: { readonly frame: LiftFrame; readonly upperLayer: number }[] = [];
     for (const transition of next.structure.transitions) {
@@ -4269,6 +4521,11 @@ export class ArenaScene extends Phaser.Scene {
         covers,
       );
     }
+    const passes = wholeScreenPasses(next.structure);
+    this.vignette?.setShown(passes.includes("vignette"));
+    this.vignette?.setDecks(
+      passes.includes("deck-vignette") ? deckVignetteTops(next.structure) : new Map(),
+    );
     this.drawOverhangs(next.structure, next.lighting, line);
     for (const dropOff of next.structure.dropOffs) {
       this.drawDropOff(dropOff, ground, line);
@@ -5690,8 +5947,11 @@ export class ArenaScene extends Phaser.Scene {
     this.outside = undefined;
   }
 
-  /** The water's ripples (#2984), at render time; still under reduced motion. */
-  private drawRipples(): void {
+  /**
+   * The water's ripples (#2984), at render time; still under reduced
+   * motion. Over them, the wakes and splashes of the bodies in it (#4061).
+   */
+  private drawRipples(dt: number): void {
     for (const { graphics } of this.rippleGraphics.values()) {
       graphics.clear();
     }
@@ -5717,7 +5977,26 @@ export class ArenaScene extends Phaser.Scene {
         graphics.restore();
       }
     }
+    // Unlifted: a body in water stands on the water's own layer, drawn as it is.
+    this.waterFx.step(this.snapshot.actors, this.waterAt, dt, this.reducedMotion);
+    const { ripple } = WATER_LOOK.shallow;
+    for (const [layer, { graphics }] of this.rippleGraphics) {
+      graphics.save();
+      graphics.translateCanvas(0, -elevationOf(layer, this.snapshot.structure.ground));
+      paintWaterFx(graphics, this.waterFx, layer, line, ripple);
+      graphics.restore();
+    }
   }
+
+  /** The depth of the water at `at` on `layer` (#4061), or `undefined` on dry ground. */
+  private readonly waterAt: WaterAt = (at, layer) => {
+    for (const { shape } of this.waterShapes) {
+      if (shape.layer === layer && pointInPolygon(at, shape.outline)) {
+        return shape.depth;
+      }
+    }
+    return undefined;
+  };
 
   /**
    * Every standing body's ground aura and every footstep trail (ADR-0056
@@ -5818,9 +6097,13 @@ export class ArenaScene extends Phaser.Scene {
       const painted = grounds[index];
       if (painted !== undefined) {
         const { left, top } = painted.art.bounds;
-        painted.image
-          .setPosition(left + moved.x, top + moved.y - lift)
-          .setAlpha(zoneGroundAlpha(painted.art, look, this.now, this.reducedMotion));
+        const alpha = zoneGroundAlpha(painted.art, look, this.now, this.reducedMotion);
+        painted.image.setPosition(left + moved.x, top + moved.y - lift).setAlpha(alpha);
+        if (painted.caustics !== undefined) {
+          painted.caustics.shader.setPosition(left + moved.x, top + moved.y - lift);
+          painted.caustics.uniforms.time = this.reducedMotion ? 0 : this.now;
+          painted.caustics.uniforms.alpha = alpha;
+        }
         paintZoneMotion(this.zoneMotionPainter(g), painted.art, line, this.now, this.reducedMotion);
       }
       // A timed or moving hazard (#3029) is drawn by its phase on the match
@@ -5972,10 +6255,61 @@ export class ArenaScene extends Phaser.Scene {
         return undefined;
       }
       const depth = renderOrder({ kind: "zone", layer: zone.layer, part: "ground" });
-      return { art, ...this.paintGround(art, 0, depth, true) };
+      const ground = this.paintGround(art, 0, depth, true);
+      return { art, ...ground, caustics: this.zoneCausticsOf(art, zone.layer, ground.key) };
     });
     this.zoneGrounds = { zones, grounds };
     return grounds;
+  }
+
+  /**
+   * A liquid zone's caustics (#4062): one shader quad over its bounds, its
+   * ground's texture the mask, added. One draw a zone, no stencil and no
+   * per-frame geometry, the cost #4078 found in masked sprites. None for a
+   * non-liquid.
+   */
+  private zoneCausticsOf(
+    art: ZoneArt,
+    layer: number,
+    ground: string,
+  ): ZoneCausticsDraw | undefined {
+    const liquid = liquidOf(art.painter);
+    if (liquid === undefined) {
+      return undefined;
+    }
+    const { colour, cell, strength } = ZONE_CAUSTICS[liquid];
+    const { left, top, width, height } = art.bounds;
+    const uniforms = { time: 0, alpha: 1 };
+    const shader = this.add
+      .shader(
+        {
+          name: "zone-caustics",
+          fragmentSource: CAUSTICS_FRAGMENT,
+          setupUniforms: (
+            setUniform: (name: string, value: number | readonly number[]) => void,
+          ) => {
+            setUniform("uGround", 0);
+            setUniform("uBounds", [left, top, width, height]);
+            setUniform("uCell", cell);
+            setUniform("uTime", uniforms.time);
+            setUniform("uColour", [
+              ((colour >> 16) & 0xff) / 255,
+              ((colour >> 8) & 0xff) / 255,
+              (colour & 0xff) / 255,
+            ]);
+            setUniform("uAlpha", uniforms.alpha * strength);
+          },
+        },
+        left,
+        top,
+        width,
+        height,
+        [ground],
+      )
+      .setOrigin(0, 0)
+      .setBlendMode(Phaser.BlendModes.ADD)
+      .setDepth(renderOrder({ kind: "zone", layer, part: "cells" }));
+    return { shader, uniforms };
   }
 
   /**
@@ -6021,6 +6355,14 @@ export class ArenaScene extends Phaser.Scene {
   private shutdown(): void {
     this.lightingPass?.destroy();
     this.lightingPass = undefined;
+    this.vignette?.destroy();
+    this.vignette = undefined;
+    // `create` listens for a restored context while it holds an atlas.
+    if (this.stackAtlas !== undefined) {
+      this.game.renderer.off(Phaser.Renderer.Events.RESTORE_WEBGL, this.rebuildStackAtlas);
+      this.stackAtlas.destroy();
+      this.stackAtlas = undefined;
+    }
     this.dropOutside();
     this.dropGrain();
     this.dropZoneGrounds();
@@ -6029,6 +6371,7 @@ export class ArenaScene extends Phaser.Scene {
     this.dropDecorBake();
     this.leverFlips.clear();
     this.footsteps.clear();
+    this.waterFx.clear();
     this.alt?.dispose();
     this.alt = undefined;
   }
@@ -6151,6 +6494,7 @@ export class ArenaScene extends Phaser.Scene {
       if (painted !== undefined) {
         painted.image.destroy();
         this.textures.remove(painted.key);
+        painted.caustics?.shader.destroy();
       }
     }
     this.zoneGrounds = undefined;
@@ -6238,14 +6582,127 @@ export class ArenaScene extends Phaser.Scene {
 
   /** `g` as a piece of water draws through it (#3350): its shore stroked, never a cut edge. */
   private piecePainter(g: Phaser.GameObjects.Graphics, piece: WaterPiece): WaterPainter {
-    return {
-      ...this.waterPainter(g),
-      strokeOutline: () => {
-        for (const [a, b] of piece.shore) {
-          g.lineBetween(a.x, a.y, b.x, b.y);
+    return { ...this.waterPainter(g), shore: () => piece.shore };
+  }
+
+  /**
+   * The liquid cells over the water (#4058), baked when its shapes change:
+   * per body of water, the texture's two layers drawn once into a canvas
+   * clipped to its surface, added over it as one still image. Drifting
+   * sprites held to the water by stencils cost a frame too much (#4078).
+   * The cells hold to the world, so two bodies that meet show no seam.
+   * Water over a tunnel fades with its cover and has none.
+   */
+  private buildWaterCells(ground: number): void {
+    if (this.waterCells?.shapes === this.waterShapes) {
+      return;
+    }
+    for (const image of this.waterCells?.images ?? []) {
+      image.destroy();
+    }
+    for (const key of this.waterCells?.textures ?? []) {
+      this.textures.remove(key);
+    }
+    const tile = this.liquidCellsTile("water", WATER_CELLS);
+    const tinted = new Map<WaterArtKey, HTMLCanvasElement[]>();
+    const images: Phaser.GameObjects.Image[] = [];
+    const textures: string[] = [];
+    for (const { shape, pieces } of this.waterShapes) {
+      const artKey = waterArtKey(shape.depth);
+      const art = WATER_ART[artKey];
+      const lift = elevationOf(shape.layer, ground);
+      const outlines = pieces
+        .filter(({ tunnel }) => tunnel === undefined)
+        .map((piece) =>
+          waterSurface(art, piece.outline, piece.shore).map(({ x, y }) => ({ x, y: y - lift })),
+        );
+      const box = boxOfPoints(...outlines);
+      if (box === undefined) {
+        continue;
+      }
+      const [x, y] = [Math.floor(box.left) - 1, Math.floor(box.top) - 1];
+      const [w, h] = [Math.ceil(box.right) + 1 - x, Math.ceil(box.bottom) + 1 - y];
+      const resolution = Math.min(1, WATER_CELLS_MAX_SIDE / Math.max(w, h));
+      const key = `${liquidCellsTileKey("water")}-${String(textures.length)}`;
+      const texture = this.textures.createCanvas(
+        key,
+        Math.ceil(w * resolution),
+        Math.ceil(h * resolution),
+      );
+      if (texture === null) {
+        throw new Error("water: could not create a body of water's cells");
+      }
+      textures.push(key);
+      const { context } = texture;
+      context.scale(resolution, resolution);
+      context.translate(-x, -y);
+      context.beginPath();
+      for (const points of outlines) {
+        const [first, ...rest] = points;
+        if (first === undefined) {
+          continue;
         }
-      },
-    };
+        context.moveTo(first.x, first.y);
+        for (const { x: px, y: py } of rest) {
+          context.lineTo(px, py);
+        }
+        context.closePath();
+      }
+      context.clip();
+      context.globalCompositeOperation = "lighter";
+      const layers = tinted.get(artKey) ?? art.cells.map(() => tintedCells(tile, art.look));
+      tinted.set(artKey, layers);
+      art.cells.forEach((cell, i) => {
+        const pattern = context.createPattern(layers[i] ?? tile, "repeat");
+        if (pattern === null) {
+          throw new Error("water: could not pattern the liquid cells");
+        }
+        pattern.setTransform(new DOMMatrix().scale(cell.scale));
+        context.fillStyle = pattern;
+        context.fillRect(x, y, w, h);
+      });
+      texture.refresh();
+      images.push(
+        this.add
+          .image(x, y, key)
+          .setOrigin(0, 0)
+          .setScale(1 / resolution)
+          .setBlendMode(Phaser.BlendModes.ADD)
+          .setDepth(renderOrder({ kind: "water", layer: shape.layer, part: "cells" })),
+      );
+    }
+    this.waterCells = { shapes: this.waterShapes, images, textures };
+  }
+
+  /**
+   * Liquid `id`'s cells' texture (#4058, #4062), from `options`: black
+   * cells, white gaps, tinted where it is used. Baked once per id: water
+   * and each liquid zone share this one path.
+   */
+  private liquidCellsTile(id: string, options: LiquidCellsOptions): HTMLCanvasElement {
+    const key = liquidCellsTileKey(id);
+    const existing = this.textures.get(key);
+    if (existing instanceof Phaser.Textures.CanvasTexture) {
+      return existing.getCanvas();
+    }
+    const { size } = options;
+    const texture = this.textures.createCanvas(key, size, size);
+    if (texture === null) {
+      throw new Error("liquids: could not create the liquid cells' tile");
+    }
+    const { context } = texture;
+    context.fillStyle = "#ffffff";
+    context.fillRect(0, 0, size, size);
+    context.fillStyle = "#000000";
+    for (const cell of tiledCells(liquidCells(options), size)) {
+      context.beginPath();
+      for (const { x, y } of cell) {
+        context.lineTo(x, y);
+      }
+      context.closePath();
+      context.fill();
+    }
+    return texture.getCanvas();
   }
 
   /** `g` as water draws through it: outlines filled as triangles, as a wall's are. */
@@ -6256,10 +6713,10 @@ export class ArenaScene extends Phaser.Scene {
       fillOutline: (outline) => {
         this.fillShape(g, { kind: "polygon", points: outline });
       },
-      strokeOutline: (outline) => {
-        this.strokeShape(g, { kind: "polygon", points: outline });
-      },
       lineBetween: (x1, y1, x2, y2) => g.lineBetween(x1, y1, x2, y2),
+      strokeEllipse: (x, y, width, height) => g.strokeEllipse(x, y, width, height),
+      shore: (outline) =>
+        outline.map((a, k) => [a, outline[(k + 1) % outline.length] ?? a] as const),
     };
   }
 
@@ -6511,6 +6968,11 @@ export function paintDecor(
         g.lineStyle(command.width, lit(command.colour, false), command.alpha);
         g.lineBetween(command.from.x, command.from.y, command.to.x, command.to.y);
         break;
+      case "outline":
+        g.lineStyle(command.width, lit(command.colour, false), command.alpha);
+        tracePath(g, command.points);
+        g.strokePath();
+        break;
     }
   }
   g.restore();
@@ -6600,3 +7062,23 @@ export type {
   RenderableWall,
 } from "./arena-snapshot.js";
 export { EMPTY_SNAPSHOT, actorAtPoint, healthFraction, teamColour } from "./arena-snapshot.js";
+
+/**
+ * The liquid cells' tile in `look`'s cell colour at its alpha (#4058),
+ * premultiplied, as it is added over the water: the black cells add nothing.
+ */
+function tintedCells(tile: HTMLCanvasElement, look: WaterLook): HTMLCanvasElement {
+  const canvas = document.createElement("canvas");
+  [canvas.width, canvas.height] = [tile.width, tile.height];
+  const context = canvas.getContext("2d");
+  if (context === null) {
+    throw new Error("water: could not tint the liquid cells");
+  }
+  const channel = (shift: number): number =>
+    Math.round(((look.cell >> shift) & 0xff) * look.cellAlpha);
+  context.drawImage(tile, 0, 0);
+  context.globalCompositeOperation = "multiply";
+  context.fillStyle = `rgb(${[16, 8, 0].map(channel).join(", ")})`;
+  context.fillRect(0, 0, canvas.width, canvas.height);
+  return canvas;
+}

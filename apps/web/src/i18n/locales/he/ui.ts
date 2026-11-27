@@ -10,6 +10,7 @@ export default {
   "app.framedRelayLink": "פתח את קישור ה-relay בכרטיסייה משלו. שום דבר לא נשמר.",
   "app.inviteInLobby": "חזור לתפריט ופתח שוב את קישור ההזמנה.",
   "app.lostMatch": "החיבור למשחק אבד.",
+  "app.rejoinFailed": "לא ניתן לחזור למשחק: המקום שלך לא נשמר.",
   "app.malformedRelayLink": "קישור ה-relay הזה אינו תקין. שום דבר לא נשמר.",
   "app.ownLobby": "זה הלובי שלך",
 
@@ -471,7 +472,7 @@ export default {
   "effects.categoryShout": "קריאה",
   "effects.categoryStance": "עמידה",
   "effects.categoryWeaponSpell": "לחש נשק",
-  "effects.endHint": "לחץ פעמיים כדי לסיים",
+  "effects.endHint": "לחץ פעמיים, Enter או Delete כדי לסיים",
   "effects.from": "מ-{caster}",
   "effects.inRange": "בזמן שהוא בטווח",
   "effects.maintained": "מתמשך",
@@ -1169,6 +1170,7 @@ export default {
   "recharge.spent": "{skill}, מנוצל עד חיזוק מורל",
 
   "reconnect.detail": "החיבור של המארח נפל. המקום שלך שמור.",
+  "reconnect.rejoinDetail": "מחזירים אותך למשחק שלך. המקום שלך שמור.",
   "reconnect.seconds": "{seconds} שנ׳",
   "reconnect.title": "מתחבר מחדש…",
 
@@ -1582,7 +1584,7 @@ export default {
     "מה הטלה אחת עושה באמת: בשריון 60, בדיוק המספר שבחלונית.",
   "training.scenario.time-to-kill.label": "זמן להריגה",
   "training.scenario.time-to-kill.teaches":
-    "התפוקה המתמשכת שלך: כמה זמן מטיל עם 500 חיים שורד, שוב ושוב.",
+    "התפוקה המתמשכת שלך: כמה זמן מטיל עם 480 חיים שורד, שוב ושוב.",
   "training.scenario.physical-vs-elemental.label": "פיזי מול יסודי",
   "training.scenario.physical-vs-elemental.teaches":
     "ששריון עונה לסוג נזק: Warrior ו-Stalwart מקהים חרב ולא Fireball, Ranger מקהה Fireball ולא חרב.",
@@ -1591,7 +1593,7 @@ export default {
     "שפגעים הם שעון מוות: דימום, רעל ובעירה מנקזים יחד 20 חיים בשנייה, המקסימום שיש, והוספת עוד מרעננת אותם ולא נערמת.",
   "training.scenario.condition-removal.label": "הסרת פגעים",
   "training.scenario.condition-removal.teaches":
-    "שהסרת פגע מסירה רק את מה שכתוב בה: בן ברית ב-200 מתוך 500 נושא חמישה פגעים, ופצע עמוק ביניהם לוקח 100 כשהוא נוחת ומגביל את הריפויים שלך ל-400.",
+    "שהסרת פגע מסירה רק את מה שכתוב בה: בן ברית ב-192 מתוך 480 נושא חמישה פגעים, ופצע עמוק ביניהם לוקח 96 כשהוא נוחת ומגביל את הריפויים שלך ל-384.",
   "training.scenario.armor-ladder.label": "סולם שריון",
   "training.scenario.armor-ladder.teaches":
     "עקומת ההפחתה: אותה מכה מול שריון 40 עד 104, זו לצד זו.",

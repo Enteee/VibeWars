@@ -275,6 +275,7 @@ export const MESMER_STATUSES: Readonly<Record<MesmerStatusId, StatusDefinition>>
   // A heal for all its "gain" (#3999): the wiki's Healing page names it
   // an exception, worded as health gain but healing all the same.
   "mantra-of-signets": define("mantra-of-signets", "Mantra of Signets", "stance", {
+    specialArmor: true,
     profession: "mesmer",
     armorModifier: 3,
     triggers: [

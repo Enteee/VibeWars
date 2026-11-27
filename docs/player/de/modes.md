@@ -143,7 +143,7 @@ nur, wenn kein anderer kann, und nie aus einem Kampf. Der nächste zu einem fall
 schickt es nach Hause, und der Rest wartet am Altar. Ein Bot, der dein Relikt trägt, läuft direkt zum
 Altar; die anderen verlassen das Relikt nur, um gegen einen Gegner in Zauberreichweite zu kämpfen.
 
-Broken Tower (4v4 und 8v8, 5400x2800) spielt es: ein gestürzter Turm auf einem Hügel im Hochland. Steig über die Treppen der Trümmerterrassen zum Altar auf dem Turmstumpf oder nimm den Keller unter dem Hügel, sobald ein Hebel auf der Terrasse seine Tore öffnet; Trümmerwände lassen sich zerschlagen.
+Broken Tower (4v4 und 8v8, 5400x2800) spielt es: ein gestürzter Turm auf einem Hügel im Hochland. Steig über die Treppen der Trümmerterrassen zum Altar auf dem Turmstumpf oder nimm den Keller unter dem Hügel, sobald ein Hebel auf der Terrasse seine Tore öffnet; Trümmerwände lassen sich zerschlagen. Neben jeder Trümmerwand öffnet sich ein Fallgitter, solange jemand auf seiner Druckplatte steht.
 
 ### Cinder Sanctum
 
@@ -202,7 +202,7 @@ Zauberreichweite zu kämpfen. Solange dein Team den Altar nicht hält, tötet je
 anderen Teams, sobald er auf dem Altar in ihrer Reichweite steht: Er ist der einzige Gegner, der deinen Geist am
 Einnehmen hindert.
 
-Threefold Keep (4v4 und 8v8, 5000x4400) spielt es: eine Feste auf einem Hügel im Hochland, für drei Teams. Steig über die Treppe neben deinem Tor auf den Wehrgang und überquere einen Damm zum Hügel, dann steig zum Altar auf dem Turm. Ein Hebel in jedem Hof öffnet alle vier Tore: deinen Torgang unter der Mauer und das Gewölbe, den langen Weg unter dem Hügel.
+Threefold Keep (4v4 und 8v8, 5000x4400) spielt es: eine Feste auf einem Hügel im Hochland, für drei Teams. Steig über die Treppe neben deinem Tor auf den Wehrgang und überquere einen Damm zum Hügel, dann steig zum Altar auf dem Turm. Ein Hebel in jedem Hof öffnet alle drei Tore, die Torgänge unter der Mauer.
 
 ## Punkte erobern
 

@@ -2,9 +2,9 @@
 
 ## Gezondheid en energie
 
-Je begint met 500 **Gezondheid** en 20 **Energie**, en je harnas voegt Energie toe:
+Je begint met 480 **Gezondheid** en 20 **Energie**, en je harnas voegt Energie toe:
 niets voor een Krijger, 5 voor een Jager, een Sluipmoordenaar of een Derwisj, 10 voor
-alle anderen. Een Staff geeft er 10 bij zolang je hem vasthoudt. Runen en moraal
+alle anderen. Een Staff geeft er 10 bij zolang je hem vasthoudt. Het harnas van een Derwisj geeft ook 25 Gezondheid. Runen en moraal
 veranderen beide. Skills kosten Energie, en die komt vanzelf langzaam terug. ![Krijger](../../../apps/web/public/icons/profession/warrior.svg) **Krijgers** en
 ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragons** krijgen hem het traagst terug, ![Jager](../../../apps/web/public/icons/profession/ranger.svg) **Jagers** iets sneller, alle anderen het
 snelst.
@@ -82,8 +82,8 @@ Dienaren (behalve de Vleesgolem), geesten en spirits bloeden niet, raken niet ve
 ![Vloek](../../../apps/web/public/icons/skill-type/hex.svg) **Vloeken** worden door vijanden op je gecast; ![Betovering](../../../apps/web/public/icons/skill-type/enchantment.svg) **betoveringen** door jezelf of
 je bondgenoten. Elk wordt verwijderd door een eigen soort skill. Sommige
 betoveringen worden **onderhouden**: ze duren tot jij ze beëindigt, en kosten
-een Energie-pip zolang ze lopen. Dubbelklik op het pictogram om er een te
-beëindigen.
+een Energie-pip zolang ze lopen. Dubbelklik op het pictogram, of geef het de
+focus en druk op Enter of Delete, om er een te beëindigen.
 
 Enkele skills werken niet meer terwijl je betoverd bent, en beginnen weer als
 je dat niet meer bent. Een skill die duurt voor je "next N attacks" telt elke

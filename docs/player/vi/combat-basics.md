@@ -2,9 +2,9 @@
 
 ## Máu và năng lượng
 
-Bạn bắt đầu với 500 **Máu** và 20 **Năng lượng**, và giáp cộng thêm Năng lượng:
+Bạn bắt đầu với 480 **Máu** và 20 **Năng lượng**, và giáp cộng thêm Năng lượng:
 không có gì cho Warrior, 5 cho Ranger, Assassin hoặc Dervish, 10 cho mọi lớp
-khác. Staff cộng thêm 10 khi bạn cầm nó. Rune và sĩ khí thay đổi cả hai. Kỹ năng tốn Năng lượng, và nó tự hồi lại, chậm rãi. ![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior** và
+khác. Staff cộng thêm 10 khi bạn cầm nó. Giáp của Dervish cũng cộng thêm 25 Máu. Rune và sĩ khí thay đổi cả hai. Kỹ năng tốn Năng lượng, và nó tự hồi lại, chậm rãi. ![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior** và
 ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon** hồi chậm nhất, ![Ranger](../../../apps/web/public/icons/profession/ranger.svg) **Ranger** nhanh hơn một chút, mọi lớp khác nhanh nhất.
 
 Các mũi tên trên thanh của bạn là **vạch**: mỗi vạch là Máu hoặc Năng lượng
@@ -79,7 +79,8 @@ Tay sai (trừ Golem Thịt), hồn ma và linh hồn không chảy máu, không
 ![Nguyền](../../../apps/web/public/icons/skill-type/hex.svg) **Nguyền** do địch thi triển lên bạn; ![Phù phép](../../../apps/web/public/icons/skill-type/enchantment.svg) **Phù phép** do chính bạn hoặc đồng
 minh. Mỗi loại bị gỡ bỏ bằng loại kỹ năng riêng của nó. Một số Phù phép được
 **duy trì**: chúng kéo dài đến khi bạn kết thúc, tốn một vạch Năng lượng khi
-còn hiệu lực. Nhấn đúp vào biểu tượng của nó để kết thúc.
+còn hiệu lực. Nhấn đúp vào biểu tượng của nó, hoặc đưa tiêu điểm vào nó rồi
+nhấn Enter hoặc Delete, để kết thúc.
 
 Một vài kỹ năng ngừng hoạt động khi bạn đang có Phù phép, và hoạt động lại
 khi bạn không còn. Kỹ năng kéo dài cho "N đòn tấn công kế tiếp" của bạn tính

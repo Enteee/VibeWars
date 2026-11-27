@@ -2,9 +2,9 @@
 
 ## Zdravlje i energija
 
-Počinješ s 500 **zdravlja** i 20 **energije**, a oklop ti dodaje energiju:
+Počinješ s 480 **zdravlja** i 20 **energije**, a oklop ti dodaje energiju:
 Ratniku ništa, Lovcu, Asasinu ili Dervišu 5, svima ostalima 10. Staff dodaje
-još 10 dok ga držiš. Rune i moral mijenjaju oboje. Vještine troše energiju, a ona se vraća sama od sebe, polako. ![Ratnik](../../../apps/web/public/icons/profession/warrior.svg) **Ratnici**
+još 10 dok ga držiš. Dervišev oklop dodaje i 25 zdravlja. Rune i moral mijenjaju oboje. Vještine troše energiju, a ona se vraća sama od sebe, polako. ![Ratnik](../../../apps/web/public/icons/profession/warrior.svg) **Ratnici**
 i ![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragoni** obnavljaju je najsporije, ![Lovac](../../../apps/web/public/icons/profession/ranger.svg) **Lovci** malo brže, svi ostali
 najbrže.
 
@@ -79,7 +79,8 @@ Sluge (osim Mesnog golema), sablasti i duhovi ne krvare, ne truju se i ne obolij
 ![Urok](../../../apps/web/public/icons/skill-type/hex.svg) **Uroke** na tebe bacaju neprijatelji, a ![Začaranje](../../../apps/web/public/icons/skill-type/enchantment.svg) **začaranja** ti sam ili tvoji
 saveznici. Svako uklanja vlastita vrsta vještine. Neka su začaranja
 **održavana**: traju dok ih ne prekineš i troše jedan pip energije dok
-traju. Dvaput klikni njegovu ikonu da ga prekineš.
+traju. Dvaput klikni njegovu ikonu, ili je fokusiraj i pritisni Enter ili
+Delete, da ga prekineš.
 
 Nekoliko vještina prestaje raditi dok si začaran, a opet rade kad
 više nisi. Vještina koja traje za tvojih "sljedećih N napada" broji svaki

@@ -10,6 +10,7 @@ export default {
   "app.framedRelayLink": "Ouvre le lien du relais dans son propre onglet. Rien n'a été enregistré.",
   "app.inviteInLobby": "Reviens au menu, puis rouvre le lien d'invitation.",
   "app.lostMatch": "Connexion au match perdue.",
+  "app.rejoinFailed": "Impossible de rejoindre le match : ta place n'a pas été gardée.",
   "app.malformedRelayLink": "Ce lien de relais n'est pas valide. Rien n'a été enregistré.",
   "app.ownLobby": "C'est ton propre salon",
 
@@ -478,7 +479,7 @@ export default {
   "effects.categoryShout": "Cri",
   "effects.categoryStance": "Posture",
   "effects.categoryWeaponSpell": "Sort d'arme",
-  "effects.endHint": "double-clic pour terminer",
+  "effects.endHint": "double-clic, Entrée ou Suppr pour terminer",
   "effects.from": "de {caster}",
   "effects.inRange": "tant qu'à portée",
   "effects.maintained": "maintenu",
@@ -1177,6 +1178,7 @@ export default {
   "recharge.spent": "{skill}, épuisée jusqu'à un bonus de moral",
 
   "reconnect.detail": "La connexion de l'hôte a sauté. Ta place est gardée.",
+  "reconnect.rejoinDetail": "Retour dans ton match. Ta place est gardée.",
   "reconnect.seconds": "{seconds} s",
   "reconnect.title": "Reconnexion…",
 
@@ -1611,7 +1613,7 @@ export default {
     "Ce que fait vraiment une incantation : à 60 d'armure, exactement le chiffre de l'infobulle.",
   "training.scenario.time-to-kill.label": "Temps pour tuer",
   "training.scenario.time-to-kill.teaches":
-    "Tes dégâts soutenus : combien de temps tient un lanceur de sorts à 500 de santé, encore et encore.",
+    "Tes dégâts soutenus : combien de temps tient un lanceur de sorts à 480 de santé, encore et encore.",
   "training.scenario.physical-vs-elemental.label": "Physique contre élémentaire",
   "training.scenario.physical-vs-elemental.teaches":
     "Que l'armure répond à un type de dégâts : un Guerrier avec l'Insigne vaillant amortit une épée et pas une Boule de feu, un Rôdeur amortit une Boule de feu et pas une épée.",
@@ -1620,7 +1622,7 @@ export default {
     "Que les altérations sont un compte à rebours : Saignement, Poison et Brûlure drainent 20 de santé par seconde, le maximum possible, et en ajouter rafraîchit au lieu de cumuler.",
   "training.scenario.condition-removal.label": "Retrait d'altérations",
   "training.scenario.condition-removal.teaches":
-    "Qu'un retrait d'altération n'enlève que ce qu'il annonce : un allié à 200 sur 500 porte cinq altérations, dont Blessure profonde, qui retire 100 à l'application et plafonne tes soins à 400.",
+    "Qu'un retrait d'altération n'enlève que ce qu'il annonce : un allié à 192 sur 480 porte cinq altérations, dont Blessure profonde, qui retire 96 à l'application et plafonne tes soins à 384.",
   "training.scenario.armor-ladder.label": "Échelle d'armure",
   "training.scenario.armor-ladder.teaches":
     "La courbe d'atténuation : le même coup contre 40 à 104 d'armure, côte à côte.",

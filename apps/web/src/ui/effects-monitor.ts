@@ -169,7 +169,7 @@ interface Icon {
   shownPx: number;
 }
 
-/** The hover's lines for `row`; `canEnd` when this monitor ends an endable row on a double-click. */
+/** The hover's lines for `row`; `canEnd` when this monitor ends an endable row on a double-click or a key. */
 function renderTip(node: HTMLElement, row: EffectRow, canEnd: boolean): void {
   const title = document.createElement("div");
   title.className = "tip-title";
@@ -224,7 +224,8 @@ function renderTip(node: HTMLElement, row: EffectRow, canEnd: boolean): void {
  * The monitor, in `parent`, with icons `size` px square. `update` reuses
  * each row's icon by bearer and id, so a frame touches only what changed.
  * Its tooltips open on the `placement` side of the icon (#1042).
- * A double-click on an endable row calls `onEnd` (#838); on any other,
+ * A double-click on an endable row, or Enter or Delete on it focused
+ * (#4090), calls `onEnd` (#838); on any other,
  * or with no `onEnd`, it does nothing.
  */
 export function createEffectsMonitor(
@@ -313,10 +314,20 @@ export function createEffectsMonitor(
     item.addEventListener("focus", open);
     item.addEventListener("mouseleave", hide);
     item.addEventListener("blur", hide);
-    item.addEventListener("dblclick", () => {
+    const end = (): boolean => {
       const row = rows.get(key);
-      if (row?.endable === true) {
-        onEnd?.(row.bearerId, row.id);
+      if (row?.endable !== true || onEnd === undefined) {
+        return false;
+      }
+      onEnd(row.bearerId, row.id);
+      return true;
+    };
+    item.addEventListener("dblclick", end);
+    // Focused, Enter or Delete ends it as the double-click does (#4090).
+    item.addEventListener("keydown", (event: KeyboardEvent) => {
+      if ((event.key === "Enter" || event.key === "Delete") && end()) {
+        event.preventDefault();
+        event.stopPropagation();
       }
     });
     const icon: Icon = { item, bar, fill, shownPx: -1 };

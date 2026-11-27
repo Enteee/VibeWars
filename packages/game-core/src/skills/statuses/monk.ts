@@ -281,7 +281,7 @@ export const MONK_STATUSES: Readonly<Record<MonkStatusId, StatusDefinition>> = {
   "judges-insight": define("judges-insight", "Judge's Insight", "enchantment", {
     profession: "monk",
     attackDamageType: "holy",
-    attackArmorPenetration: 0.2,
+    attackBonusArmorPenetration: 0.2,
   }),
   // "For 5...13 seconds, target ally gains +3...10 Health regeneration and
   // 20...45 armor": +9 and +40, its rank-12 values (#1650).

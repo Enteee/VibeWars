@@ -647,3 +647,59 @@ describe("play-build's pull-in gate (#3832)", () => {
     expect(decide(loner, createCursor(), escortView()).targetId).toBe("foe-a");
   });
 });
+
+describe("play-build's frontline peels for its backline (#4141)", () => {
+  /**
+   * Team 0: `peeler` (a bot playing `build`) at `at`, a monk at (300, 400);
+   * team 1: `x` hurt to 0.7 beside the peeler, `d` diving the monk.
+   */
+  function dive(at: Vec2, build = WARRIOR, xHealth = 0.7): MatchSimulation {
+    const sim = match([
+      fighter("peeler", 0, build, at),
+      fighter("monk", 0, MONK, vec2(300, 400)),
+      fighter("x", 1, WARRIOR, vec2(at.x + 40, at.y), {
+        behaviour: undefined,
+        startHealthFraction: xHealth,
+      }),
+      fighter("d", 1, WARRIOR, vec2(340, 400), { behaviour: undefined }),
+    ]);
+    sim.setTarget("d", "monk");
+    return sim;
+  }
+
+  const targetOf = (
+    sim: MatchSimulation,
+    extra: Partial<BehaviourContext> = {},
+    cursor = createCursor(),
+  ) => decide(BOT, cursor, contextFor(sim, "peeler", extra)).targetId;
+
+  it("turns from the foe beside it on the one diving its healer", () => {
+    const sim = dive(vec2(600, 400));
+    expect(targetOf(sim)).toBe("d");
+    sim.setTarget("d", "peeler");
+    expect(targetOf(sim)).toBe("x");
+  });
+
+  it("keeps a target its team called", () => {
+    expect(targetOf(dive(vec2(600, 400)), { calledTargetId: "x" })).toBe("x");
+  });
+
+  it("finishes its own target below FINISH_FRACTION first", () => {
+    const sim = dive(vec2(600, 400), WARRIOR, 0.5);
+    sim.setTarget("peeler", "x");
+    expect(targetOf(sim)).toBe("x");
+  });
+
+  it("finishes a spike first", () => {
+    const cursor = { ...createCursor(), spikeTargetId: "x" };
+    expect(targetOf(dive(vec2(600, 400)), {}, cursor)).not.toBe("d");
+  });
+
+  it("is not pulled back from beyond FOCUS_REACH past spell range", () => {
+    expect(targetOf(dive(vec2(340 + 420 + 150 + 20, 400)))).toBe("x");
+  });
+
+  it("is a frontline's job: a ranged bot keeps its target", () => {
+    expect(targetOf(dive(vec2(600, 400), ELEMENTALIST))).not.toBe("d");
+  });
+});

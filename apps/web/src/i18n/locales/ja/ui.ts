@@ -10,6 +10,7 @@ export default {
   "app.framedRelayLink": "リレーリンクは別のタブで開いてください。何も保存されていません。",
   "app.inviteInLobby": "メニューに戻ってから、招待リンクをもう一度開いてください。",
   "app.lostMatch": "マッチとの接続が切れました。",
+  "app.rejoinFailed": "マッチに戻れませんでした: 席は確保されていませんでした。",
   "app.malformedRelayLink": "このリレーリンクは無効です。何も保存されていません。",
   "app.ownLobby": "自分のロビーです",
 
@@ -423,7 +424,7 @@ export default {
   "effects.categoryShout": "シャウト",
   "effects.categoryStance": "スタンス",
   "effects.categoryWeaponSpell": "武器スペル",
-  "effects.endHint": "ダブルクリックで終了",
+  "effects.endHint": "ダブルクリック、Enter または Delete で終了",
   "effects.from": "{caster}より",
   "effects.inRange": "範囲内にいる間",
   "effects.maintained": "維持中",
@@ -1056,6 +1057,7 @@ export default {
   "recharge.spent": "{skill}、モラルブーストまで使用不可",
 
   "reconnect.detail": "ホストの接続が切れました。席は確保されています。",
+  "reconnect.rejoinDetail": "試合に戻しています。席は確保されています。",
   "reconnect.seconds": "{seconds}秒",
   "reconnect.title": "再接続中…",
 
@@ -1446,7 +1448,7 @@ export default {
     "1回の詠唱が実際に与えるもの: 防御力60なら、ツールチップの数値そのまま。",
   "training.scenario.time-to-kill.label": "撃破時間",
   "training.scenario.time-to-kill.teaches":
-    "持続火力: ヘルス500のキャスターが何秒もつか、何度でも。",
+    "持続火力: ヘルス480のキャスターが何秒もつか、何度でも。",
   "training.scenario.physical-vs-elemental.label": "物理 対 属性",
   "training.scenario.physical-vs-elemental.teaches":
     "防御力はダメージの種類ごとに効く: WarriorとStalwart Insigniaは剣を軽減してもFireballは軽減せず、RangerはFireballを軽減しても剣は軽減しない。",
@@ -1455,7 +1457,7 @@ export default {
     "状態異常は死へのカウントダウン: Bleeding、Poison、Burningで毎秒20ヘルスが削れ、これが上限。重ねても累積せず、効果時間が更新されるだけ。",
   "training.scenario.condition-removal.label": "状態異常の解除",
   "training.scenario.condition-removal.teaches":
-    "状態異常の解除は書かれたものしか取り除かない: 500中200の味方が状態異常を5つ抱え、その中のDeep Woundはかかった瞬間に100を奪い、回復の上限を400にする。",
+    "状態異常の解除は書かれたものしか取り除かない: 480中192の味方が状態異常を5つ抱え、その中のDeep Woundはかかった瞬間に96を奪い、回復の上限を384にする。",
   "training.scenario.armor-ladder.label": "防御力の段階",
   "training.scenario.armor-ladder.teaches":
     "軽減カーブ: 同じ一撃を防御力40から104まで並べて比べる。",

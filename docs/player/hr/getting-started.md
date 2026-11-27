@@ -121,8 +121,9 @@ Izađi te popisom tko je u njoj; značka ih broji.
   dok ulazak ne uspije. Kad uđeš, prozor Sobe glasi **Soba**, a
   njegov **Izađi** vraća te u novu vlastitu sobu, s novom
   pozivnicom. Poveznica otvorena na zaslonu sobe ili u meču traži da
-  se najprije vratiš na izbornik. Ako ti veza pukne, mjesto ti se čuva
-  30 sekundi.
+  se najprije vratiš na izbornik. Ako ti veza pukne ili ponovno učitaš
+  ili otvoriš stranicu, mjesto ti se čuva 30 sekundi i vraćaš se na
+  njega.
 - **Ukloni nekoga:** kao domaćin, pritisni **×** pokraj imena igrača
   u prozoru Sobe, izvan meča. Dobit će poruku da ih je domaćin uklonio,
   novu vlastitu sobu, a u tvoju se ne mogu vratiti dok ona traje.

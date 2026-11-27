@@ -10,6 +10,7 @@ export default {
   "app.framedRelayLink": "请在单独的标签页中打开中继链接。未保存任何内容。",
   "app.inviteInLobby": "请返回菜单，然后重新打开邀请链接。",
   "app.lostMatch": "与对局的连接已断开。",
+  "app.rejoinFailed": "无法重新加入对局：你的位置没有被保留。",
   "app.malformedRelayLink": "该中继链接无效。未保存任何内容。",
   "app.ownLobby": "这是你自己的大厅",
 
@@ -413,7 +414,7 @@ export default {
   "effects.categoryShout": "呐喊",
   "effects.categoryStance": "架势",
   "effects.categoryWeaponSpell": "武器法术",
-  "effects.endHint": "双击结束",
+  "effects.endHint": "双击、Enter 或 Delete 结束",
   "effects.from": "来自 {caster}",
   "effects.inRange": "处于其范围内时",
   "effects.maintained": "维持中",
@@ -1039,6 +1040,7 @@ export default {
   "recharge.spent": "{skill}，需等待士气提升",
 
   "reconnect.detail": "房主连接已断开，你的席位已保留。",
+  "reconnect.rejoinDetail": "正在将你送回比赛。你的位置已保留。",
   "reconnect.seconds": "{seconds} 秒",
   "reconnect.title": "正在重新连接…",
 
@@ -1406,7 +1408,7 @@ export default {
     "一次施法的真实效果：在 60 护甲下，正好是提示中的数字。",
   "training.scenario.time-to-kill.label": "击杀时间",
   "training.scenario.time-to-kill.teaches":
-    "你的持续输出：一个 500 生命的施法者能撑多久，一次又一次。",
+    "你的持续输出：一个 480 生命的施法者能撑多久，一次又一次。",
   "training.scenario.physical-vs-elemental.label": "物理与元素",
   "training.scenario.physical-vs-elemental.teaches":
     "护甲针对伤害类型：Warrior 和 Stalwart 能减轻剑击而不能减轻 Fireball，Ranger 能减轻 Fireball 而不能减轻剑击。",
@@ -1415,7 +1417,7 @@ export default {
     "异常状态是死亡倒计时：Bleeding、Poison 和 Burning 每秒流失 20 点生命，这已是上限，再次施加只会刷新时间而不会叠加。",
   "training.scenario.condition-removal.label": "移除异常状态",
   "training.scenario.condition-removal.teaches":
-    "移除异常状态只移除它写明的那些：一名生命 200/500 的队友身上有五种异常状态，其中的 Deep Wound 生效时立即扣除 100 点生命，并将你的治疗上限压到 400。",
+    "移除异常状态只移除它写明的那些：一名生命 192/480 的队友身上有五种异常状态，其中的 Deep Wound 生效时立即扣除 96 点生命，并将你的治疗上限压到 384。",
   "training.scenario.armor-ladder.label": "护甲阶梯",
   "training.scenario.armor-ladder.teaches": "减伤曲线：同一击分别打在 40 到 104 护甲上，并排对比。",
   "training.scenario.healing-throughput.label": "治疗量",

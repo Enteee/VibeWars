@@ -10,6 +10,7 @@ export default {
   "app.framedRelayLink": "Åbn relay-linket i sin egen fane. Intet blev gemt.",
   "app.inviteInLobby": "Gå tilbage til menuen, og åbn invitationslinket igen.",
   "app.lostMatch": "Forbindelsen til kampen blev afbrudt.",
+  "app.rejoinFailed": "Kunne ikke vende tilbage til kampen: din plads blev ikke holdt.",
   "app.malformedRelayLink": "Det relay-link er ikke gyldigt. Intet blev gemt.",
   "app.ownLobby": "Det er din egen lobby",
 
@@ -449,7 +450,7 @@ export default {
   "effects.categoryShout": "Råb",
   "effects.categoryStance": "Kampstilling",
   "effects.categoryWeaponSpell": "Våbenbesværgelse",
-  "effects.endHint": "dobbeltklik for at afslutte",
+  "effects.endHint": "dobbeltklik, Enter eller Delete for at afslutte",
   "effects.from": "fra {caster}",
   "effects.inRange": "mens du er inden for rækkevidde",
   "effects.maintained": "vedligeholdt",
@@ -1104,6 +1105,7 @@ export default {
   "recharge.spent": "{skill}, brugt indtil et moralløft",
 
   "reconnect.detail": "Værtens forbindelse røg. Din plads holdes.",
+  "reconnect.rejoinDetail": "Vi sætter dig tilbage i din kamp. Din plads holdes.",
   "reconnect.seconds": "{seconds} s",
   "reconnect.title": "Genopretter forbindelse…",
 
@@ -1511,7 +1513,7 @@ export default {
     "Hvad én kastning faktisk gør: ved 60 rustning præcis tallet i værktøjstippet.",
   "training.scenario.time-to-kill.label": "Tid til drab",
   "training.scenario.time-to-kill.teaches":
-    "Din vedvarende skade: hvor længe en caster med 500 liv holder, igen og igen.",
+    "Din vedvarende skade: hvor længe en caster med 480 liv holder, igen og igen.",
   "training.scenario.physical-vs-elemental.label": "Fysisk mod elementar",
   "training.scenario.physical-vs-elemental.teaches":
     "At rustning svarer til en skadetype: en Warrior og Stalwart Insignia dæmper et sværd og ikke en Fireball, en Ranger dæmper en Fireball og ikke et sværd.",
@@ -1520,7 +1522,7 @@ export default {
     "At tilstande er et dødsur: Bleeding, Poison og Burning dræner 20 liv i sekundet, det højeste der findes, og flere fornyer i stedet for at stable.",
   "training.scenario.condition-removal.label": "Fjernelse af tilstande",
   "training.scenario.condition-removal.teaches":
-    "At en tilstandsfjernelse kun tager det, den siger: en allieret på 200 af 500 bærer fem tilstande, og Deep Wound blandt dem tager 100, når den rammer, og sætter loftet for dine helbredelser til 400.",
+    "At en tilstandsfjernelse kun tager det, den siger: en allieret på 192 af 480 bærer fem tilstande, og Deep Wound blandt dem tager 96, når den rammer, og sætter loftet for dine helbredelser til 384.",
   "training.scenario.armor-ladder.label": "Rustningsstige",
   "training.scenario.armor-ladder.teaches":
     "Afbødningskurven: det samme slag mod 40 til 104 rustning, side om side.",

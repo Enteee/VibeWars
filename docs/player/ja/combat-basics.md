@@ -2,7 +2,7 @@
 
 ## ヘルスとエナジー
 
-あなたは500の**ヘルス**と20の**エナジー**で始まり、防具がエナジーを加えます。Warriorは0、Ranger、Assassin、Dervishは5、それ以外の全員は10です。杖は手に持っている間、さらに10を加えます。ルーンとモラルは両方を変化させます。スキルはエナジーを消費し、エナジーはゆっくりと自然に回復します。![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior**と![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon**は回復が最も遅く、![Ranger](../../../apps/web/public/icons/profession/ranger.svg) **Ranger**は少し速く、それ以外の全員が最も速く回復します。
+あなたは480の**ヘルス**と20の**エナジー**で始まり、防具がエナジーを加えます。Warriorは0、Ranger、Assassin、Dervishは5、それ以外の全員は10です。杖は手に持っている間、さらに10を加えます。Dervishの防具はヘルスも25加えます。ルーンとモラルは両方を変化させます。スキルはエナジーを消費し、エナジーはゆっくりと自然に回復します。![Warrior](../../../apps/web/public/icons/profession/warrior.svg) **Warrior**と![Paragon](../../../apps/web/public/icons/profession/paragon.svg) **Paragon**は回復が最も遅く、![Ranger](../../../apps/web/public/icons/profession/ranger.svg) **Ranger**は少し速く、それ以外の全員が最も速く回復します。
 
 バーの矢印は**ピップ**です。1つ1つが、毎秒少しずつ回復していく、または減っていくヘルスやエナジーを表します。![Bleeding](../../../apps/web/public/icons/status/bleeding.svg) **Bleeding**、![Burning](../../../apps/web/public/icons/status/burning.svg) **Burning**、![Poison](../../../apps/web/public/icons/status/poison.svg) **Poison**はヘルスを減らし、Regenerationや回復スペルはヘルスを増やします。5秒間戦闘から離れていると、ヘルスは自然に回復し始め、離れている時間が長いほど速くなります。
 
@@ -49,7 +49,7 @@ Mantra of Concentrationなど一部の![スタンス](../../../apps/web/public/i
 
 ミニオン（フレッシュゴーレムを除く）、ゴースト、スピリットは出血せず、毒にも病気にもかからない。スピリットは呪いを受けず、**Burning** 以外の状態異常も受けない。
 
-![呪い](../../../apps/web/public/icons/skill-type/hex.svg) **呪い**は敵があなたにかけるもの、![エンチャント](../../../apps/web/public/icons/skill-type/enchantment.svg) **エンチャント**はあなた自身や味方がかけるものです。それぞれ専用の種類のスキルで除去されます。一部のエンチャントは**維持**されます。自分で終わらせるまで続き、続く間はエナジーのピップを1つ消費します。終わらせるには、そのアイコンをダブルクリックします。
+![呪い](../../../apps/web/public/icons/skill-type/hex.svg) **呪い**は敵があなたにかけるもの、![エンチャント](../../../apps/web/public/icons/skill-type/enchantment.svg) **エンチャント**はあなた自身や味方がかけるものです。それぞれ専用の種類のスキルで除去されます。一部のエンチャントは**維持**されます。自分で終わらせるまで続き、続く間はエナジーのピップを1つ消費します。終わらせるには、そのアイコンをダブルクリックするか、アイコンにフォーカスしてEnterまたはDeleteを押します。
 
 いくつかのスキルは、エンチャントがかかっている間は効果がなくなり、エンチャントがなくなると再び効果を発揮します。「次のN回の攻撃」の間続くスキルは、すべての攻撃を数えます。そのため、外れても防がれても、当たったときと同じように1回分を消費します。
 

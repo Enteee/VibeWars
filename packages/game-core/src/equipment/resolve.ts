@@ -11,6 +11,7 @@ import {
   NO_PIECE_ARMOR,
   NO_PIECE_REDUCTION,
   armorEnergyFor,
+  armorHealthFor,
   armorPieces,
   baseArmorFor,
   baseEnergyPipsFor,
@@ -136,10 +137,15 @@ export interface ResolvedEquipment {
   readonly spellMods: SpellMods;
   /** Health regeneration the held set's mods give, in pips: Vampiric's -1. */
   readonly healthPips: number;
-  /** Armor before any conditional bonus or status modifier. */
+  /** Core armor before any conditional bonus or status modifier. */
   readonly baseArmor: number;
   /** On every hit: the profession's inherent armor, a creature's, a guard's. */
   readonly conditionalArmor: readonly ConditionalArmor[];
+  /**
+   * The held set's prefix and suffix mods' armor, Defensive to of Warding
+   * (#4085): GW1's bonus armor, pooled with statuses' under the +25 cap.
+   */
+  readonly bonusArmor: readonly ConditionalArmor[];
   /** Insignias, on hits to their own piece only (#1135). */
   readonly pieceArmor: PieceArmor;
   /** Knight's, off a physical hit to its own piece only, after armor (#1142). */
@@ -415,10 +421,14 @@ export function resolveLoadout(input: LoadoutInput, rules: CombatRules): Resolve
 
   // Energy Storage (#532) adds to the maximum like Attunement does, once
   // at join; only an Elementalist primary holds its rank. The armor's
-  // energy is the primary profession's (#3986).
+  // energy (#3986) and health (#4002) are the primary profession's.
   const shared: SharedGear = {
     baseArmor: baseArmorFor(input.primaryProfession),
-    health: rules.baseHealth + runes.healthDelta + runes.insigniaHealth,
+    health:
+      rules.baseHealth +
+      armorHealthFor(input.primaryProfession) +
+      runes.healthDelta +
+      runes.insigniaHealth,
     baseEnergyPips: baseEnergyPipsFor(input.primaryProfession),
     energyDelta:
       armorEnergyFor(input.primaryProfession) +
@@ -447,6 +457,7 @@ export function resolveLoadout(input: LoadoutInput, rules: CombatRules): Resolve
 
 /** Maximum health, part by part: insignia apart from runes, though both sit on armor. */
 export interface HealthSources {
+  /** The character's own, its armor's included (a Dervish's +25, #4002). */
   readonly base: number;
   readonly runes: number;
   readonly insignia: number;
@@ -469,9 +480,10 @@ export function healthSources(
     return undefined;
   }
   const runes = totalRunes(input.equipment, input.primaryProfession);
-  const shared = rules.baseHealth + runes.healthDelta + runes.insigniaHealth;
+  const base = rules.baseHealth + armorHealthFor(input.primaryProfession);
+  const shared = base + runes.healthDelta + runes.insigniaHealth;
   return {
-    base: rules.baseHealth,
+    base,
     runes: runes.healthDelta,
     insignia: runes.insigniaHealth,
     mods: held.maxHealth - shared,
@@ -542,6 +554,7 @@ function resolveWeaponSet(
   let pipsDelta = 0;
   let healthPips = 0;
   let conditionalArmor = shared.conditionalArmor;
+  const bonusArmor: ConditionalArmor[] = [];
   let statusDurationReductions = shared.statusDurationReductions;
   let mainHand = resolvedWeapon;
   let hitMods = NO_HIT_MODS;
@@ -552,8 +565,8 @@ function resolveWeaponSet(
   const rechargeHalves: SpellChance[] = [];
   const attributePlusOne: (SpellChance & { readonly attributeId: string })[] = [];
   let enchantmentDurationScale = 1;
-  for (const { effect, itemAttribute } of mods.flatMap(({ mod, itemAttribute }) =>
-    mod.effects.map((effect) => ({ effect, itemAttribute })),
+  for (const { effect, itemAttribute, slot } of mods.flatMap(({ mod, itemAttribute }) =>
+    mod.effects.map((effect) => ({ effect, itemAttribute, slot: mod.slot })),
   )) {
     // An item with no attribute has none to act on: never one a mod fits.
     const scoped = (chance: number, spells: ModSpells): SpellChance | undefined =>
@@ -572,11 +585,20 @@ function resolveWeaponSet(
       case "energy-regen":
         pipsDelta += effect.pips;
         break;
+      // An inscription's armor is core; a prefix's or suffix's is bonus (#4085).
       case "armor":
-        baseArmor += effect.amount;
+        if (slot === "inscription") {
+          baseArmor += effect.amount;
+        } else {
+          bonusArmor.push({ amount: effect.amount, conditions: [] });
+        }
         break;
       case "armor-vs":
-        conditionalArmor = [...conditionalArmor, modArmor(effect)];
+        if (slot === "inscription") {
+          conditionalArmor = [...conditionalArmor, modArmor(effect)];
+        } else {
+          bonusArmor.push(modArmor(effect));
+        }
         break;
       case "condition-duration": {
         // Adds to a rune of the same condition, as two runes do.
@@ -663,6 +685,7 @@ function resolveWeaponSet(
       healthPips,
       baseArmor,
       conditionalArmor,
+      bonusArmor,
       pieceArmor: shared.pieceArmor,
       pieceReduction: shared.pieceReduction,
       flatPhysicalReduction: shared.flatPhysicalReduction,
@@ -719,6 +742,18 @@ function resolveWeapon(
   };
 }
 
+/**
+ * The armor a player is shown (#4085): core and every bonus that holds on
+ * any hit, before the bonus cap, statuses and penetration.
+ */
+export function listedArmor(
+  equipment: Pick<ResolvedEquipment, "baseArmor" | "bonusArmor">,
+): number {
+  return equipment.bonusArmor
+    .filter((bonus) => bonus.conditions.length === 0)
+    .reduce((sum, bonus) => sum + bonus.amount, equipment.baseArmor);
+}
+
 /** Fists, no armor bonuses, nothing slotted. The default for a bare combatant. */
 export function unarmedResolvedEquipment(baseArmor: number): ResolvedEquipment {
   const unarmed = getWeapon("unarmed");
@@ -738,6 +773,7 @@ export function unarmedResolvedEquipment(baseArmor: number): ResolvedEquipment {
     healthPips: 0,
     baseArmor,
     conditionalArmor: [],
+    bonusArmor: [],
     pieceArmor: NO_PIECE_ARMOR,
     pieceReduction: NO_PIECE_REDUCTION,
     flatPhysicalReduction: 0,

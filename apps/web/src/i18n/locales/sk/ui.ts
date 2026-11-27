@@ -10,6 +10,7 @@ export default {
   "app.framedRelayLink": "Otvor odkaz na relé vo vlastnej karte. Nič sa neuložilo.",
   "app.inviteInLobby": "Vráť sa do menu a znova otvor pozývací odkaz.",
   "app.lostMatch": "Spojenie so zápasom sa stratilo.",
+  "app.rejoinFailed": "Do zápasu sa nepodarilo vrátiť: tvoje miesto nebolo podržané.",
   "app.malformedRelayLink": "Tento odkaz na relé je neplatný. Nič sa neuložilo.",
   "app.ownLobby": "To je tvoje vlastné lobby",
 
@@ -489,7 +490,7 @@ export default {
   "effects.categoryShout": "Pokrik",
   "effects.categoryStance": "Postoj",
   "effects.categoryWeaponSpell": "Zbraňové kúzlo",
-  "effects.endHint": "dvojklikom ukončíš",
+  "effects.endHint": "dvojklikom, Enterom alebo Delete ukončíš",
   "effects.from": "od: {caster}",
   "effects.inRange": "kým si v jeho dosahu",
   "effects.maintained": "udržiavané",
@@ -1206,6 +1207,7 @@ export default {
   "recharge.spent": "{skill}, vyčerpané do posily morálky",
 
   "reconnect.detail": "Spojenie s hostiteľom sa prerušilo. Tvoje miesto zostáva rezervované.",
+  "reconnect.rejoinDetail": "Vraciame ťa do tvojho zápasu. Tvoje miesto je držané.",
   "reconnect.seconds": "{seconds} s",
   "reconnect.title": "Znovu sa pripája…",
 
@@ -1638,7 +1640,7 @@ export default {
     "Čo naozaj urobí jedno zoslanie: pri brnení 60 presne číslo z popisu.",
   "training.scenario.time-to-kill.label": "Čas na zabitie",
   "training.scenario.time-to-kill.teaches":
-    "Tvoje trvalé poškodenie: ako dlho vydrží kúzelník s 500 zdravia, znova a znova.",
+    "Tvoje trvalé poškodenie: ako dlho vydrží kúzelník s 480 zdravia, znova a znova.",
   "training.scenario.physical-vs-elemental.label": "Fyzické vs. živelné",
   "training.scenario.physical-vs-elemental.teaches":
     "Že brnenie odpovedá na typ poškodenia: Bojovník s Vytrvalou insígniou tlmí meč, no nie Ohnivú guľu, Hraničiar tlmí Ohnivú guľu, no nie meč.",
@@ -1647,7 +1649,7 @@ export default {
     "Že neduhy sú hodiny smrti: Krvácanie, Jed a Horenie uberajú 20 zdravia za sekundu, viac sa nedá, a ďalšie ich obnovia namiesto sčítania.",
   "training.scenario.condition-removal.label": "Odstraňovanie neduhov",
   "training.scenario.condition-removal.teaches":
-    "Že odstránenie neduhu zoberie len to, čo hovorí: spojenec na 200 z 500 nesie päť neduhov a Hlboká rana medzi nimi zoberie 100 pri dopade a obmedzí tvoje liečenie na 400.",
+    "Že odstránenie neduhu zoberie len to, čo hovorí: spojenec na 192 z 480 nesie päť neduhov a Hlboká rana medzi nimi zoberie 96 pri dopade a obmedzí tvoje liečenie na 384.",
   "training.scenario.armor-ladder.label": "Rebríček brnenia",
   "training.scenario.armor-ladder.teaches":
     "Krivka zmiernenia: ten istý zásah proti brneniu 40 až 104, vedľa seba.",

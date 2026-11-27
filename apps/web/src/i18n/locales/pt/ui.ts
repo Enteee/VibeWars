@@ -10,6 +10,7 @@ export default {
   "app.framedRelayLink": "Abra o link do relay em uma aba própria. Nada foi salvo.",
   "app.inviteInLobby": "Volte ao menu e abra o link de convite de novo.",
   "app.lostMatch": "A conexão com a partida caiu.",
+  "app.rejoinFailed": "Não foi possível voltar à partida: sua vaga não foi mantida.",
   "app.malformedRelayLink": "Esse link de relay não é válido. Nada foi salvo.",
   "app.ownLobby": "Essa sala é sua",
 
@@ -477,7 +478,7 @@ export default {
   "effects.categoryShout": "Grito",
   "effects.categoryStance": "Postura",
   "effects.categoryWeaponSpell": "Feitiço de Arma",
-  "effects.endHint": "clique duplo para encerrar",
+  "effects.endHint": "clique duplo, Enter ou Delete para encerrar",
   "effects.from": "de {caster}",
   "effects.inRange": "enquanto no alcance",
   "effects.maintained": "mantido",
@@ -1163,6 +1164,7 @@ export default {
   "recharge.spent": "{skill}, gasta até um bônus de moral",
 
   "reconnect.detail": "A conexão do host caiu. Sua vaga está garantida.",
+  "reconnect.rejoinDetail": "A colocar-te de volta na tua partida. O teu lugar está reservado.",
   "reconnect.seconds": "{seconds} s",
   "reconnect.title": "Reconectando…",
 
@@ -1592,7 +1594,7 @@ export default {
     "O que um lançamento faz de verdade: com 60 de armadura, exatamente o número da dica.",
   "training.scenario.time-to-kill.label": "Tempo para abater",
   "training.scenario.time-to-kill.teaches":
-    "Seu dano sustentado: quanto dura um conjurador com 500 de vida, de novo e de novo.",
+    "Seu dano sustentado: quanto dura um conjurador com 480 de vida, de novo e de novo.",
   "training.scenario.physical-vs-elemental.label": "Físico vs elemental",
   "training.scenario.physical-vs-elemental.teaches":
     "Que a armadura responde a um tipo de dano: um Guerreiro com Insígnia Robusta amortece uma espada e não uma Bola de Fogo, um Patrulheiro amortece uma Bola de Fogo e não uma espada.",
@@ -1601,7 +1603,7 @@ export default {
     "Que condições são um relógio de morte: Sangramento, Veneno e Queimadura drenam 20 de vida por segundo, o máximo possível, e aplicar mais renova em vez de acumular.",
   "training.scenario.condition-removal.label": "Remoção de condições",
   "training.scenario.condition-removal.teaches":
-    "Que uma remoção de condição tira só o que diz: um aliado com 200 de 500 carrega cinco condições, e Ferida Profunda entre elas tira 100 ao ser aplicada e limita suas curas a 400.",
+    "Que uma remoção de condição tira só o que diz: um aliado com 192 de 480 carrega cinco condições, e Ferida Profunda entre elas tira 96 ao ser aplicada e limita suas curas a 384.",
   "training.scenario.armor-ladder.label": "Escada de armadura",
   "training.scenario.armor-ladder.teaches":
     "A curva de mitigação: o mesmo golpe contra 40 a 104 de armadura, lado a lado.",

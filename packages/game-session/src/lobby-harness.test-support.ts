@@ -18,7 +18,7 @@ import {
 } from "@vibewars/game-protocol";
 
 import { keyGated } from "./key-gate.js";
-import { joinLobby } from "./lobby-client.js";
+import { joinLobby, type JoinLobbyOptions } from "./lobby-client.js";
 import type { LobbyConnection, MatchStarting } from "./lobby-connection.js";
 import {
   createLobbyHost,
@@ -92,6 +92,8 @@ export interface TestLobby {
     playerKey?: PlayerKey,
     /** What it wears (ADR-0056): nothing by default. */
     cosmetics?: WireCosmetics,
+    /** A page back from a reload (#4110): its host and seat token. */
+    rejoin?: JoinLobbyOptions["rejoin"],
   ): Promise<Member>;
   /** Run `seconds` of the lobby's match, a tick at a time, letting messages land between. */
   step(seconds: number): Promise<void>;
@@ -178,9 +180,11 @@ export async function openLobby(
     relayPub: string | null,
     playerKey: PlayerKey,
     cosmetics: WireCosmetics,
+    rejoin?: JoinLobbyOptions["rejoin"],
   ): Promise<Member> =>
     member(
       await joinLobby({
+        ...(rejoin === undefined ? {} : { rejoin }),
         transport,
         code: CODE,
         proofKey,
@@ -221,7 +225,19 @@ export async function openLobby(
       relayPub = null,
       playerKey = testPlayerKey(),
       cosmetics = testCosmetics,
-    ) => join(network.join(), PROOF_KEY, name, guildTag, guildCape, relayPub, playerKey, cosmetics),
+      rejoin?: JoinLobbyOptions["rejoin"],
+    ) =>
+      join(
+        network.join(),
+        PROOF_KEY,
+        name,
+        guildTag,
+        guildCape,
+        relayPub,
+        playerKey,
+        cosmetics,
+        rejoin,
+      ),
     async step(seconds) {
       const ticks = Math.round(seconds / TICK_SECONDS);
       for (let i = 0; i < ticks; i += 1) {
