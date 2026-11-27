@@ -45,7 +45,7 @@ Measured over `docs/player/*/` titles and `options.*` in `i18n/locales/*`: Vietn
 
 ## Recommendation
 
-**B.** Options already uses it, so it is one change (Help) rather than two; the rail shows all 14 pages with no scrolling and no second click; it wraps long labels without losing any; and the narrow list → page drill-down is the usual phone pattern. A scrolls past Help's page count and hides the later pages. C hides every page behind a click and its breadcrumb adds nothing at one level. The cost of B is the Help flyout's width on desktop and the extra step on a phone: both are accepted by Options today.
+**B.** Options already uses it, so it is one change (Help) rather than two; the rail shows most of the 14 pages at once (the last few a scroll away) and needs no second click; it wraps long labels without losing any; and the narrow list → page drill-down is the usual phone pattern. A scrolls past Help's page count and hides the later pages. C hides every page behind a click and its breadcrumb adds nothing at one level. The cost of B is the Help flyout's width on desktop and the extra step on a phone: both are accepted by Options today.
 
 **The operator's pick is recorded here once made:** B (left rail), Q209.
 
