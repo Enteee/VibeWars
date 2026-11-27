@@ -1,5 +1,5 @@
 import { RANGE_SPELL } from "../../distances.js";
-import type { Skill } from "../../skills/types.js";
+import type { Skill, Surroundings } from "../../skills/types.js";
 import { distance, ZERO, type Vec2 } from "../../vec2.js";
 import type {
   Behaviour,
@@ -13,6 +13,7 @@ import { UPKEEP_DROP_SECONDS } from "./rules/drop-upkeep.js";
 import { idleWander } from "./rules/idle-wander.js";
 import { prepare } from "./rules/prepare.js";
 import { markHealth } from "./rules/duck.js";
+import { blocksMe } from "./block-swap.js";
 import { diverOn } from "./peel.js";
 import { planPlaced, teamPlan } from "./plan.js";
 import { roleOf, type BotRole } from "./role.js";
@@ -352,6 +353,10 @@ function think(
 ): BehaviourIntent {
   const self = context.self;
   markHealth(cursor, context.now, healthFraction(self));
+  // Built only when a rule weighs a blow at a blocker (#4204).
+  let around: Surroundings | undefined;
+  const surroundings = (): Surroundings =>
+    (around ??= new Map(context.participants.map((body) => [body.id, body])));
   const rule: RuleContext = {
     context,
     self,
@@ -360,6 +365,8 @@ function think(
     allies,
     targetId,
     targetFixed,
+    attackTarget: (attackSkill) =>
+      attackTarget(context, foes, targetId, attackSkill, surroundings()),
     nearestFirst: (bodies) =>
       [...bodies].sort(
         (a, b) => distance(a.position, self.position) - distance(b.position, self.position),
@@ -415,6 +422,41 @@ function think(
   return NOTHING;
 }
 
+/**
+ * The foe `context.self` hits with `attackSkill`, or a plain swing when
+ * `undefined` (#4204): the team's `targetId`, unless that foe blocks at
+ * least `BLOCK_SWAP_CHANCE` of the blow (`blocksMe`). Then, as in GW1 PvP,
+ * it swings at the `focusPick` of the other foes in spell range that do
+ * not, and goes back the think the block ends. Never off a human's call
+ * (#4188); with no other foe to hit, at the blocker still. A creature
+ * only while no fighter is in range.
+ */
+function attackTarget(
+  context: BehaviourContext,
+  foes: readonly Participant[],
+  targetId: string | undefined,
+  attackSkill: Skill | undefined,
+  surroundings: Surroundings,
+): string | undefined {
+  const self = context.self;
+  const target = foes.find((foe) => foe.id === targetId);
+  if (
+    target === undefined ||
+    target.id === context.calledTargetId ||
+    !blocksMe(self.combatant, target.combatant, attackSkill, surroundings)
+  ) {
+    return targetId;
+  }
+  const near = foes.filter((foe) => distance(foe.position, self.position) <= RANGE_SPELL);
+  const eligible = fightable([target, ...near]);
+  const others = near.filter(
+    (foe) =>
+      foe.id !== target.id &&
+      eligible(foe) &&
+      !blocksMe(self.combatant, foe.combatant, attackSkill, surroundings),
+  );
+  return focusPick(self, others)?.id ?? targetId;
+}
 /**
  * The foe a bot fights, and whether it is `fixed` (#4147): called, a
  * ghost on the altar or a kill being finished, so not one an area skill
