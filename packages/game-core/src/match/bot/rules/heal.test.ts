@@ -318,6 +318,25 @@ describe("play-build matches the defence to the threat (#4214)", () => {
     });
   });
 
+  it("raises the block stance against two warriors still running up to swing", () => {
+    const sim = spike(
+      WARRIOR,
+      ["warrior.defy-pain", "warrior.shield-stance"],
+      "bot",
+      WARRIOR,
+      true,
+    );
+    for (const foeId of ["foe0", "foe1"]) {
+      const foe = sim.get(foeId);
+      if (foe === undefined) throw new Error(`no ${foeId}`);
+      foe.combatant.moving = true;
+    }
+    expect(askBot(sim, "bot")).toMatchObject({
+      useSkillId: "warrior.shield-stance",
+      targetId: "bot",
+    });
+  });
+
   it("casts general protection, not spell protection, on an ally warriors spike", () => {
     const sim = spike(MONK, ["monk.holy-veil", PROTECTIVE_SPIRIT], "ally", WARRIOR, true);
     expect(askBot(sim, "bot")).toMatchObject({ useSkillId: PROTECTIVE_SPIRIT, targetId: "ally" });

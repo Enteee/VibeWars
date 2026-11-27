@@ -1,7 +1,7 @@
 import type { Participant } from "../../simulation.js";
 import type { Skill } from "../../../skills/types.js";
 import type { StatusId } from "../../../skills/status.js";
-import { isAttacking } from "../../../skills/attacking.js";
+import { isAttacking, isCastingSpell } from "../../../skills/attacking.js";
 import { RANGE_SPELL } from "../../../distances.js";
 import { distance } from "../../../vec2.js";
 import {
@@ -142,14 +142,20 @@ interface Threat {
 
 /**
  * The foes within spell range of `ally` targeting it, as `spikedAlly`
- * counts them (#4214): an attacker if it is attacking, else a caster.
+ * counts them (#4214): an attacker if it is attacking, or running up to
+ * swing at the ally and not casting a spell; else a caster. A warrior
+ * closing in on the ally is an attacker before its first swing.
  */
 function threatOn(ally: Participant, foes: readonly Participant[]): Threat {
   let attackers = 0;
   let casters = 0;
   for (const foe of foes) {
     if (foe.targetId === ally.id && distance(foe.position, ally.position) <= RANGE_SPELL) {
-      if (isAttacking(foe.combatant)) {
+      const { combatant } = foe;
+      if (
+        isAttacking(combatant) ||
+        (combatant.attack !== undefined && !isCastingSpell(combatant))
+      ) {
         attackers += 1;
       } else {
         casters += 1;
