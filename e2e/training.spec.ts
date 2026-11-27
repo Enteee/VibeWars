@@ -1006,7 +1006,12 @@ async function meanColour(
   }, shot.toString("base64"));
 }
 
+/**
+ * Until two shots of the arena match. Motion is reduced first: a standing
+ * body breathes (#4060), so without it the arena never holds still.
+ */
 async function stillArena(page: Page, canvas: Locator): Promise<Buffer> {
+  await page.emulateMedia({ reducedMotion: "reduce" });
   const shot = (): Promise<Buffer> =>
     canvas.screenshot({ mask: [page.locator(".training-overlay")] });
   let previous = await shot();
