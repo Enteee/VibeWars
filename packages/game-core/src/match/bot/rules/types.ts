@@ -22,6 +22,12 @@ export interface RuleContext {
    * finished (#4147): every cast goes to it, never to a clump.
    */
   readonly targetFixed: boolean;
+  /**
+   * The foe its weapon, or `attackSkill`, goes to (#4204): `targetId`,
+   * else another foe while `targetId` blocks it (`swapTarget`). Spells
+   * keep `targetId`.
+   */
+  readonly attackTargetFor: (attackSkill: Skill | undefined) => string | undefined;
   /** `bodies`, nearest to it first. */
   readonly nearestFirst: (bodies: readonly Participant[]) => Participant[];
   /** Whether it may begin `skill` at `targetId` now, walking in if need be. */

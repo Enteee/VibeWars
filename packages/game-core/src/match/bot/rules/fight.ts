@@ -67,6 +67,9 @@ const SPIKE_TOLERANCE = 1e-6;
  * one the difference later. Before it, a bot with a strip ready casts it
  * at the team's target while a defence enchantment is on it (#2634),
  * and its teammates hold for it.
+ * While the target blocks its blows half the time or more, its weapon and
+ * attack skills go to another foe in spell range (#4204, `attackTargetFor`);
+ * its spells stay on the target, and so does what it targets as it swings.
  */
 const fight: BotRule = {
   order: 100,
@@ -81,6 +84,7 @@ const fight: BotRule = {
     spikeHold,
     targetId,
     targetFixed,
+    attackTargetFor,
     nearestFirst,
     mayUse,
     use,
@@ -121,8 +125,16 @@ const fight: BotRule = {
     // it on, never walking in: a step in, a step back is the dance of #2615.
     const covering = role === "healer" && allies.some((ally) => ally.id !== self.id);
     const surroundings: Surroundings = new Map(context.participants.map((body) => [body.id, body]));
+    // An attack skill goes where its blows land (#4204), the rest at the target.
+    const aimedAt = (held: Skill): string =>
+      held.attack === undefined ? targetId : (attackTargetFor(held) ?? targetId);
     const worthUsing = (held: Skill): boolean => {
-      const on = held.target === "self" ? self.combatant : foe;
+      const on =
+        held.target === "self"
+          ? self.combatant
+          : aimedAt(held) === targetId
+            ? foe
+            : context.participants.find((other) => other.id === aimedAt(held))?.combatant;
       if (on === undefined) {
         return false;
       }
@@ -177,7 +189,7 @@ const fight: BotRule = {
       held.target === "self" &&
       stateGateHolds(held, self.combatant, self.combatant, surroundings) !== undefined
         ? self.id
-        : (freshFoe(held) ?? aside(held) ?? targetId);
+        : (freshFoe(held) ?? aside(held) ?? aimedAt(held));
     // The team's target is `play-build`'s: a guard's own, or a ghost on
     // the altar (#2600), is fought as it comes.
     if (cursor.spikeTargetId !== targetId) {
@@ -264,22 +276,25 @@ const fight: BotRule = {
     }
     // The weapon, from where it stands while a step would end what it holds
     // or take a healer off its post.
+    // Off a target that blocks it, at another foe (#4204), still targeting the team's.
+    const swing = attackTargetFor(undefined) ?? targetId;
+    const struck = context.participants.find((other) => other.id === swing);
     const { weapon } = self.combatant.equipment.mainHand;
     const reach = holding
       ? RANGE_MELEE
-      : target === undefined || !feelsHeight(weapon.id)
+      : struck === undefined || !feelsHeight(weapon.id)
         ? weapon.range
         : heightRange(
             weapon.range,
-            heightStep(self.floors, self.layer, target.floors, target.layer),
+            heightStep(self.floors, self.layer, struck.floors, struck.layer),
           );
     if (
       (holding || covering) &&
-      (target === undefined || distance(self.position, target.position) > reach)
+      (struck === undefined || distance(self.position, struck.position) > reach)
     ) {
       return { ...NOTHING, targetId };
     }
-    return { ...NOTHING, targetId, attackTargetId: targetId };
+    return { ...NOTHING, targetId, attackTargetId: swing };
   },
 };
 

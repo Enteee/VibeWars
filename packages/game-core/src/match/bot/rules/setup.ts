@@ -2,7 +2,8 @@ import { energyCostOf } from "../../../skills/activation.js";
 import { isAttacking } from "../../../skills/attacking.js";
 import { getSkill } from "../../../skills/catalog.js";
 import { getStatusDefinition, type StatusId } from "../../../skills/status.js";
-import { isSpell, type Combatant, type Skill } from "../../../skills/types.js";
+import { isSpell, type Skill } from "../../../skills/types.js";
+import { blockChanceAgainst } from "../block-swap.js";
 import { setupOf, type Setup } from "../skill-intent.js";
 import { healthFraction } from "./shared.js";
 import type { BotRule, RuleContext } from "./types.js";
@@ -37,14 +38,6 @@ const HASTE_SKILLS = 2;
 
 /** Above this much Energy, Marksman's Wager is worth its price on a miss (#2159). */
 const WAGER_ENERGY = 10;
-
-/** Whether `combatant` stands in a stance that blocks (#2159), as Marksman's Wager's misses. */
-function inBlockStance(combatant: Combatant): boolean {
-  return combatant.statuses.active.some(({ id }) => {
-    const status = getStatusDefinition(id);
-    return status.category === "stance" && status.block !== undefined;
-  });
-}
 
 /** The setups on its bar (#1975), each with what it sets up. */
 function setupsOf(bar: readonly Skill[]) {
@@ -97,14 +90,14 @@ function applies(skill: Skill, statusId: StatusId): boolean {
  * with Health for its end; Ether Renewal under two enchantments with a
  * spell ready; Elemental Attunement kept up. The Ranger's (#2159):
  * Disrupting Accuracy kept up while it attacks; Marksman's Wager kept up
- * above 10 Energy, never at a foe in a block stance nor while Blinded;
+ * above 10 Energy, never at a foe that may block its shot nor while Blinded;
  * Storm Chaser on retreat, or while a foe casts an Elementalist skill at
  * it.
  */
 const setup: BotRule = {
   order: 95,
   name: "setup",
-  decide: ({ self, bar, foes, allies, targetId, mayUse, use }) => {
+  decide: ({ context, self, bar, foes, allies, targetId, attackTargetFor, mayUse, use }) => {
     if (targetId === undefined) {
       return undefined;
     }
@@ -119,6 +112,13 @@ const setup: BotRule = {
     const recharging = (held: Skill): boolean =>
       (self.combatant.cast.rechargeRemaining.get(held.id) ?? 0) > 0;
     const target = foes.find((other) => other.id === targetId)?.combatant;
+    // Marksman's Wager (#2159) never at a foe that may block its shot,
+    // wherever the shot goes (#4204): a block costs it as a miss does.
+    const blockedAt = (id: string | undefined): boolean => {
+      const struck = foes.find((other) => other.id === id);
+      const surroundings = new Map(context.participants.map((body) => [body.id, body]));
+      return struck === undefined || blockChanceAgainst(self, struck, undefined, surroundings) > 0;
+    };
     const blinded = target?.statuses.has("blind") ?? false;
     const blindReady = bar.some((held) => applies(held, "blind") && mayUse(held, targetId));
     const enchanted = (id: string | undefined): boolean =>
@@ -166,8 +166,7 @@ const setup: BotRule = {
           return (
             combatant.energy > WAGER_ENERGY &&
             !combatant.statuses.has("blind") &&
-            target !== undefined &&
-            !inBlockStance(target)
+            !blockedAt(attackTargetFor(undefined))
           );
         case "elemental-energy":
           return (

@@ -209,6 +209,7 @@ export function ruleFor(
     ),
     targetId: undefined,
     targetFixed: false,
+    attackTargetFor: () => extra.targetId,
     nearestFirst: (bodies) => [...bodies],
     mayUse: () => true,
     use: (skill, targetId) => ({ ...NOTHING, targetId, useSkillId: skill.id }),

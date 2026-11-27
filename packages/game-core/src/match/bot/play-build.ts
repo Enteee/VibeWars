@@ -13,6 +13,7 @@ import { UPKEEP_DROP_SECONDS } from "./rules/drop-upkeep.js";
 import { idleWander } from "./rules/idle-wander.js";
 import { prepare } from "./rules/prepare.js";
 import { markHealth } from "./rules/duck.js";
+import { swapTarget } from "./block-swap.js";
 import { diverOn } from "./peel.js";
 import { planPlaced, teamPlan } from "./plan.js";
 import { roleOf, type BotRole } from "./role.js";
@@ -82,6 +83,7 @@ export function playBuild(
       behaviour.spikeHold !== false,
       behaviour.escort !== false,
       front === undefined ? context.foeCentroid : centroid(foes, front),
+      true,
     );
   });
 }
@@ -167,6 +169,7 @@ export function guard(
         false,
         false,
         context.foeCentroid,
+        false,
       ),
   );
   return behaviour.rooted ? { ...intent, moveDirection: ZERO, moveTo: undefined } : intent;
@@ -336,7 +339,8 @@ function centroid(foes: readonly Participant[], team: number): Vec2 {
 /**
  * One decision against `foes`, for `allies` (its own included), with
  * `targetId` the one to fight and `foeCentroid` where its foes stand: the
- * first of `BOT_RULES` with an answer.
+ * first of `BOT_RULES` with an answer. `swaps`: its weapon leaves a
+ * blocking target for another foe (#4204); a guard's never does.
  */
 function think(
   context: BehaviourContext,
@@ -349,6 +353,7 @@ function think(
   spikeHold: boolean,
   escort: boolean,
   foeCentroid: Vec2 | undefined,
+  swaps: boolean,
 ): BehaviourIntent {
   const self = context.self;
   markHealth(cursor, context.now, healthFraction(self));
@@ -360,6 +365,27 @@ function think(
     allies,
     targetId,
     targetFixed,
+    // A human's call holds against a block, as it always wins (#4188).
+    attackTargetFor: (attackSkill) => {
+      const target =
+        swaps && targetId !== context.calledTargetId
+          ? foes.find((foe) => foe.id === targetId)
+          : undefined;
+      if (target === undefined) {
+        return targetId;
+      }
+      const near = foes.filter((foe) => distance(foe.position, self.position) <= RANGE_SPELL);
+      const surroundings = new Map(context.participants.map((body) => [body.id, body]));
+      const swapped = swapTarget(
+        self,
+        target,
+        near.filter(fightable(near)),
+        attackSkill,
+        surroundings,
+        (candidates) => focusPick(self, candidates),
+      );
+      return swapped?.id ?? targetId;
+    },
     nearestFirst: (bodies) =>
       [...bodies].sort(
         (a, b) => distance(a.position, self.position) - distance(b.position, self.position),
