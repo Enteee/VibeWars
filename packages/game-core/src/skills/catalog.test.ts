@@ -470,8 +470,8 @@ describe("headless combat simulation", () => {
       return ally.combatant.health - 100;
     };
 
-    expect(healAmountAtRank(0)).toBe(20);
-    expect(healAmountAtRank(12)).toBe(60);
+    expect(healAmountAtRank(0)).toBe(30);
+    expect(healAmountAtRank(12)).toBe(70);
     expect(healAmountAtRank(12)).toBeGreaterThan(healAmountAtRank(6));
   });
 
