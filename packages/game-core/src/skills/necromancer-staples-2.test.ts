@@ -11,7 +11,7 @@ import { payCost } from "./activation.js";
 import { getSkill } from "./catalog.js";
 import { describeSkill, describeStatus } from "./describe.js";
 import { applySkillEffects, type CombatEvent } from "./effects.js";
-import { NO_RANKS, aggregateModifiers } from "./status.js";
+import { NO_RANKS, aggregateModifiers, getStatusDefinition } from "./status.js";
 import { makeCombatant } from "./testing.js";
 import type { Combatant, Skill } from "./types.js";
 import { EN_NAMES, EN_WORDS } from "./describe-words.js";
@@ -232,23 +232,22 @@ describe("Wither (#1583)", () => {
 });
 
 describe("Life Siphon (#1583)", () => {
-  it("hexes -3 for 22 s and gives the caster +3 for as long", () => {
+  it("hexes -3 for 22 s, its caster +3 for as long as it lives (#4167)", () => {
     const n = necro();
     const f = foe("f");
     use(n, "necromancer.life-siphon", [f]);
     expect(f.statuses.get("life-siphon")?.sourceId).toBe("n");
     expect(f.statuses.get("life-siphon")?.remainingSeconds).toBe(22);
-    expect(n.statuses.get("life-siphon-regen")?.remainingSeconds).toBe(22);
+    expect(getStatusDefinition("life-siphon").casterStatus).toBe("life-siphon-regen");
     expect(aggregateModifiers([{ id: "life-siphon", ranks: NO_RANKS }]).healthPips).toBe(-3);
     expect(aggregateModifiers([{ id: "life-siphon-regen", ranks: NO_RANKS }]).healthPips).toBe(3);
   });
 
-  it("the caster keeps its regeneration when the hex is removed early", () => {
+  it("the caster's half is no status of its own: the simulation links it (#4167)", () => {
     const n = necro();
-    const f = foe("f");
-    use(n, "necromancer.life-siphon", [f]);
-    f.statuses.removeByCategory("hex");
-    expect(n.statuses.has("life-siphon-regen")).toBe(true);
+    use(n, "necromancer.life-siphon", [foe("f")]);
+    expect(n.statuses.has("life-siphon-regen")).toBe(false);
+    expect(getStatusDefinition("life-siphon-regen").linked).toBe(true);
   });
 });
 

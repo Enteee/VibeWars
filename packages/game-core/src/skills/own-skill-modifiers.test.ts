@@ -396,7 +396,7 @@ describe("in flight, and on its caster (#1761)", () => {
     const lasts = (durationMultiplier: number): number | undefined => {
       const caster = makeCombatant({ id: "m", team: 0 });
       resolveSkillEffects({
-        skill: skill("assassin.siphon-speed"),
+        skill: skill("mesmer.signet-of-midnight"),
         caster,
         targets: [makeCombatant({ id: "w", team: 1 })],
         rng: createRng(1),
@@ -404,10 +404,10 @@ describe("in flight, and on its caster (#1761)", () => {
         surroundings: new Map(),
         own: { ...NO_OWN_SKILL_BOOST, durationMultiplier },
       });
-      return caster.statuses.get("siphon-speed-haste")?.remainingSeconds;
+      return caster.statuses.get("blind")?.remainingSeconds;
     };
-    expect(lasts(1)).toBe(13);
-    expect(lasts(2)).toBe(26);
+    expect(lasts(1)).toBe(15);
+    expect(lasts(2)).toBe(30);
   });
 });
 

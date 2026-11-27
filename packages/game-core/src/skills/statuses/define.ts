@@ -60,6 +60,8 @@ export function define(
     noDeathPenalty: false,
     killsSourceOnDeath: false,
     endsOnSourceDeath: false,
+    casterStatus: undefined,
+    linked: false,
     resurrectionBonus: undefined,
     physicalDamageTakenBonus: 0,
     elementalDamageTakenAs: undefined,

@@ -3630,6 +3630,25 @@ function describeEffects(
       ...describeMinionDeath(say, effect.creature, ranks),
     ];
   }
+  const casterStatus =
+    effect.kind === "apply-status"
+      ? findStatusDefinition(effect.statusId)?.casterStatus
+      : undefined;
+  if (effect.kind === "apply-status" && casterStatus !== undefined) {
+    // A hex's caster half (#4167), for as long as the hex: Life Siphon's
+    // "you gain +1...3 Health regeneration".
+    return [
+      describeEffect(say, effect, ranks),
+      {
+        text: say.words.youGainFor({
+          statusName: say.names.status(casterStatus),
+          durationSeconds: describeMagnitude(effect.durationSeconds, ranks).current,
+          status: statusText(say, casterStatus, ranks),
+        }),
+        magnitude: undefined,
+      },
+    ];
+  }
   if (effect.kind === "create-ground-effect") {
     const { act } = effect;
     if (act.kind === "aura") {

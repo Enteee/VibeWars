@@ -2803,7 +2803,6 @@ export const ASSASSIN_SKILLS: readonly Skill[] = [
           scaling: { attributeId: "assassin.deadly-arts", atZero: 5, atTwelve: 13 },
         },
       },
-      { kind: "caster-gains-status", statusId: "siphon-speed-haste", durationSeconds: 13 },
       {
         kind: "if",
         condition: { kind: "target-moving" },
