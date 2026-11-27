@@ -82,6 +82,12 @@ nó bỏ lỡ khoảng một trên bốn lần thi triển như vậy.
 Bot cần một khoảnh khắc giống con người, một phần của giây, để phản ứng với
 những gì xảy ra, nên một cú ngắt nhanh hay một cú né muộn có thể qua mặt nó.
 
+Khi không ai trong đội bạn gọi mục tiêu, một bot của bạn sẽ gọi kẻ địch mà nó
+đang tấn công, đúng như bạn sẽ làm: bạn thấy dấu đánh dấu và tên của bot, và
+mọi bot trong đội dồn vào kẻ địch đó. Lệnh gọi của bạn luôn được ưu tiên.
+Không bot nào thay thế nó, và các bot chỉ gọi lại khi mục tiêu đó đã chết hoặc
+biến mất.
+
 Trong trận ba đội, bot đánh từng đội địch một: đội đang tấn công chúng,
 hoặc, khi không có ai, đội bị thương nặng nhất trong tầm. Chúng bám đội đó cho
 đến khi một đội khác dồn rõ ràng nhiều người chơi hơn vào chúng, và không lao

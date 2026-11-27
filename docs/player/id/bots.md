@@ -86,6 +86,11 @@ dari empat rapalan itu.
 Bot butuh jeda seperti manusia, sepersekian detik, untuk bereaksi terhadap
 apa yang terjadi, jadi interupsi cepat atau menghindar di detik terakhir bisa mengalahkannya.
 
+Saat tidak ada seorang pun di timmu yang mengumumkan target, salah satu botmu mengumumkan musuh yang
+sedang diserangnya, sama seperti yang akan kamu lakukan: kamu melihat penandanya dan nama bot itu, dan
+setiap bot di tim memusatkan serangan ke musuh itu. Pengumumanmu selalu menang. Tidak ada bot yang
+menggantinya, dan bot baru mengumumkan lagi setelah target itu mati atau hilang.
+
 Dalam pertarungan tiga tim, bot melawan satu tim musuh
 pada satu waktu: tim yang menyerang mereka, atau, selama tidak ada yang menyerang, tim yang paling terluka
 dalam jangkauan. Mereka tetap pada tim itu sampai tim lain jelas mengerahkan lebih banyak

@@ -95,6 +95,13 @@ A bot emberszerű pillanatot, a másodperc törtrészét igényli, hogy
 reagáljon arra, ami történik, így egy gyors megszakítás vagy egy késői
 kitérés legyőzheti.
 
+Ha a csapatodban senki sem mondott be célpontot, az egyik botod
+bemondja az ellenséget, akit támad, ahogy te is tennéd: látod a jelölőt
+és a bot nevét, és a csapat minden botja arra az ellenségre
+összpontosít. A te bemondásod mindig nyer. Egy bot sem írja felül, és a
+botok csak akkor mondanak be újra, ha a bemondott célpont meghalt vagy
+eltűnt.
+
 Háromcsapatos harcban a botok egyszerre egy ellenséges csapattal
 harcolnak: azzal, amelyik őket támadja, vagy ha senki sem, az elérhető
 legjobban megsérült csapattal. Ezen a csapaton maradnak, amíg egy másik

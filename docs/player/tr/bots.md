@@ -90,6 +90,12 @@ Bir bot, olanlara tepki vermek için insan gibi bir an, saniyenin bir
 kesri kadar süre alır; bu yüzden hızlı bir kesinti ya da geç bir kaçış
 onu alt edebilir.
 
+Takımında kimse bir hedef bildirmemişse, botlarından biri saldırdığı
+düşmanı tıpkı senin yapacağın gibi bildirir: işareti ve botun adını
+görürsün, takımdaki her bot o düşmana yoğunlaşır. Senin bildirdiğin
+hedef her zaman kazanır. Hiçbir bot onun yerine geçmez ve botlar ancak
+bildirilen hedef öldüğünde ya da gittiğinde yeniden bildirir.
+
 Üç takımlı bir dövüşte botlar aynı anda tek bir düşman takımıyla
 dövüşür: onlara saldıran takımla ya da kimse saldırmıyorken erişimdeki
 en yaralı takımla. Başka bir takım açıkça daha fazla oyuncuyu üzerlerine

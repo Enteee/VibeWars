@@ -90,6 +90,12 @@ incantations sur quatre.
 Un bot prend un temps de réaction humain, une fraction de seconde, face à ce
 qui se passe : une interruption rapide ou une esquive tardive peut le battre.
 
+Quand personne dans ton équipe n'a annoncé de cible, un de tes bots annonce
+l'ennemi qu'il attaque, comme tu le ferais : tu vois le marqueur et le nom du
+bot, et tous les bots de l'équipe se concentrent sur cet ennemi. Ton annonce
+l'emporte toujours. Aucun bot ne la remplace, et les bots n'annoncent à
+nouveau qu'une fois sa cible morte ou partie.
+
 Dans un combat à trois équipes, les bots affrontent une équipe ennemie à la
 fois : celle qui les attaque, ou, si personne ne le fait, la plus blessée à
 portée. Ils restent sur cette équipe jusqu'à ce qu'une autre envoie nettement

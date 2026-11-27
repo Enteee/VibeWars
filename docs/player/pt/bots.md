@@ -90,6 +90,12 @@ Um bot leva um instante humano, uma fração de segundo, para reagir ao que
 acontece, então uma interrupção rápida ou uma esquiva de última hora
 podem vencê-lo.
 
+Quando ninguém da sua equipe tem um alvo anunciado, um dos seus bots
+anuncia o inimigo que está atacando, assim como você faria: você vê o
+marcador e o nome do bot, e todos os bots da equipe se concentram nesse
+inimigo. Um anúncio seu sempre vence. Nenhum bot o substitui, e os bots
+só anunciam de novo quando o alvo dele estiver morto ou tiver sumido.
+
 Em uma luta de três equipes, os bots enfrentam uma equipe inimiga por
 vez: a que os está atacando ou, se ninguém estiver, a mais ferida ao
 alcance. Eles continuam nessa equipe até outra colocar claramente mais

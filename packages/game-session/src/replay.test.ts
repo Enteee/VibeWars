@@ -130,7 +130,7 @@ describe("a match's replay (#3572)", () => {
     ["at once", null],
     ["after its wait, held (#3818)", PRE_MATCH],
   ] as const)(
-    "of a bot match started %s runs again to the same end, and reaches the player whole",
+    "of a bot match started %s runs again to the same end, its bots' calls too, and reaches the player whole",
     { timeout: 30_000 },
     async (_, preMatch) => {
       const kept: RecordedReplay[] = [];
@@ -184,6 +184,8 @@ describe("a match's replay (#3572)", () => {
       expect(kept).toEqual([recorded]);
       const { replay } = recorded;
       expect(replay.inputs.some((input) => input[1] === "intent")).toBe(true);
+      // Its bots call targets (#4188), and the rerun follows their calls.
+      expect(replay.inputs.some((input) => input[1] === "called" && input[3] !== null)).toBe(true);
 
       const again = rerun(replay, ARENA, RULES);
       expect(again.ticks).toBe(replay.ticks);

@@ -88,6 +88,12 @@ Een bot neemt een menselijk moment, een fractie van een seconde, om te reageren
 op wat er gebeurt, dus een snelle onderbreking of een late ontwijking kan hem
 verslaan.
 
+Als niemand in je team een doelwit heeft aangewezen, wijst een van je bots de
+vijand aan die hij aanvalt, net zoals jij zou doen: je ziet de markering en de
+naam van de bot, en elke bot in het team richt zich op die vijand. Een
+aanwijzing van jou wint altijd. Geen bot vervangt hem, en de bots wijzen pas
+weer aan als dat doelwit dood of weg is.
+
 In een gevecht met drie teams vechten bots tegen één vijandelijk team tegelijk:
 het team dat hen aanvalt, of, als niemand dat doet, het meest gewonde team
 binnen bereik. Ze blijven bij dat team tot een ander duidelijk meer spelers op

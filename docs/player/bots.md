@@ -85,6 +85,12 @@ in four of those casts.
 A bot takes a human-like moment, a fraction of a second, to react to
 what happens, so a quick interrupt or a late dodge can beat it.
 
+When nobody on your team has a target called, one of your bots calls the
+foe it is attacking, just as you would: you see the marker and the bot's
+name, and every bot on the team focuses that foe. A call of yours always
+wins. No bot replaces it, and the bots call again only once its target
+is dead or gone.
+
 In a three-team fight, bots fight one foe team at
 a time: the team attacking them, or, while nobody is, the most hurt team
 within reach. They stay on that team until another sets clearly more

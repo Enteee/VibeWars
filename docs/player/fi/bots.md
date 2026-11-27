@@ -92,6 +92,13 @@ Botilta kuluu ihmismäinen hetki, sekunnin murto-osa, reagoida
 tapahtumiin, joten nopea keskeytys tai myöhäinen väistö voi päihittää
 sen.
 
+Kun kukaan tiimissäsi ei ole ilmoittanut kohdetta, yksi boteistasi
+ilmoittaa vihollisen, jonka kimppuun se hyökkää, aivan kuten sinä
+tekisit: näet merkin ja botin nimen, ja jokainen tiimin botti keskittyy
+siihen viholliseen. Oma ilmoituksesi voittaa aina. Mikään botti ei
+korvaa sitä, ja botit ilmoittavat uudelleen vasta, kun ilmoitettu kohde
+on kuollut tai poissa.
+
 Kolmen tiimin taistelussa botit taistelevat yhtä vihollistiimiä vastaan
 kerrallaan: tiimiä, joka hyökkää niiden kimppuun, tai, kun kukaan ei
 hyökkää, eniten haavoittunutta ulottuvilla olevaa tiimiä. Ne pysyvät

@@ -154,6 +154,22 @@ describe("play-build fights (#1189, #1193, #1965)", () => {
     expect(sim.get("b")?.targetId).toBe("hurt");
   });
 
+  it("tells the host the target a bot decided on, and none for a body no bot drives (#4188)", () => {
+    const sim = match([
+      fighter("a", 0, ELEMENTALIST, vec2(400, 400)),
+      fighter("foe", 1, WARRIOR, vec2(700, 400), { behaviour: undefined }),
+    ]);
+    expect(sim.botTargetOf("a")).toBeUndefined();
+    sim.step(DT);
+    expect(sim.botTargetOf("a")).toBe("foe");
+    const foe = sim.get("foe");
+    if (foe !== undefined) {
+      foe.targetId = "a";
+    }
+    expect(sim.botTargetOf("foe")).toBeUndefined();
+    expect(sim.botTargetOf("nobody")).toBeUndefined();
+  });
+
   it("casts Mirrored Stance only on a foe with a stance on its bar", () => {
     const at = (foeBar: readonly string[]) =>
       match([

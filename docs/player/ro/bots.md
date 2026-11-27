@@ -87,6 +87,12 @@ La fel ca un jucător, ratează cam una din patru astfel de lansări.
 Unui bot îi ia un moment omenesc, o fracțiune de secundă, ca să reacționeze la
 ce se întâmplă, așa că o întrerupere rapidă sau o eschivă târzie îl pot păcăli.
 
+Când nimeni din echipa ta nu a anunțat o țintă, unul dintre boții tăi anunță
+inamicul pe care îl atacă, la fel cum ai face tu: vezi marcajul și numele
+botului, iar toți boții echipei se concentrează pe acel inamic. Anunțul tău
+câștigă mereu. Niciun bot nu îl înlocuiește, iar boții anunță din nou doar după
+ce ținta anunțată e moartă sau a dispărut.
+
 Într-o luptă cu trei echipe, boții luptă cu o singură echipă inamică odată:
 echipa care îi atacă sau, cât timp nu îi atacă nimeni, cea mai rănită echipă la
 îndemână. Rămân pe acea echipă până când alta trimite clar mai mulți jucători
