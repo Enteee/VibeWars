@@ -80,6 +80,7 @@ funciona com eles como funciona com você.
 
 Os bots contornam o chão em chamas e outras zonas nocivas quando o desvio
 não é muito mais longo, e saem de qualquer uma em que estejam.
+Também saem da área nociva de um adversário, como um poço, uma proteção contra eles ou uma tempestade, e lutam a partir da borda.
 
 Um bot com interrupção a guarda para as conjurações que importam: uma
 ressurreição ou um Herói Fantasmagórico tomando o altar primeiro, depois
@@ -91,6 +92,15 @@ em cada quatro dessas conjurações.
 Um bot leva um instante humano, uma fração de segundo, para reagir ao que
 acontece, então uma interrupção rápida ou uma esquiva de última hora
 podem vencê-lo.
+
+Quando ninguém da sua equipe tem um alvo anunciado, um dos seus bots
+anuncia o inimigo em que os seus bots estão concentrados, assim como
+você faria: você vê o marcador e o nome do bot, para poder se juntar a
+eles. O anúncio de um bot só mostra para onde os bots estão indo; eles
+ainda protegem um colega de equipe e finalizam um inimigo quase morto.
+Um anúncio seu sempre vence: todos os bots da equipe se concentram no
+seu alvo, nenhum bot substitui o seu anúncio, e os bots só anunciam de
+novo quando o alvo dele estiver morto ou tiver sumido.
 
 Em uma luta de três equipes, os bots enfrentam uma equipe inimiga por
 vez: a que os está atacando ou, se ninguém estiver, a mais ferida ao

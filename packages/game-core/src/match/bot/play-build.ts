@@ -79,6 +79,7 @@ export function playBuild(
     const front = foeFront(context, foes, cursor.front);
     cursor.front = front;
     const target = teamTarget(context, cursor, foes, front, behaviour.escort !== false);
+    cursor.focusId = target.id;
     return think(
       context,
       cursor,

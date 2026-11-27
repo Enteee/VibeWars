@@ -79,6 +79,7 @@ net als voor jou.
 
 Bots lopen om brandende grond en andere schadelijke plekken heen als de
 omweg niet veel langer is, en stappen uit een plek waar ze in staan.
+Ze stappen ook uit een schadelijk gebied van een tegenstander, zoals een put, een afweer tegen hen of een storm, en vechten vanaf de rand.
 
 Een bot met een onderbreking bewaart die voor de casts die ertoe doen: eerst
 een reanimatie of een Spookheld die het altaar claimt, dan een genezing of een
@@ -89,6 +90,15 @@ speler mist hij ongeveer een op de vier van die casts.
 Een bot neemt een menselijk moment, een fractie van een seconde, om te reageren
 op wat er gebeurt, dus een snelle onderbreking of een late ontwijking kan hem
 verslaan.
+
+Als niemand in je team een doelwit heeft aangewezen, wijst een van je bots de
+vijand aan waar je bots zich op richten, net zoals jij zou doen: je ziet de
+markering en de naam van de bot, zodat je kunt meedoen. Een aanwijzing van een
+bot laat alleen zien waar de bots heen gaan; ze schieten nog steeds een
+teamgenoot te hulp en maken een stervende vijand af. Een aanwijzing van jou
+wint altijd: elke bot in het team richt zich op jouw doelwit, geen bot
+vervangt jouw aanwijzing, en de bots wijzen pas weer aan als dat doelwit dood
+of weg is.
 
 In een gevecht met drie teams vechten bots tegen één vijandelijk team tegelijk:
 het team dat hen aanvalt, of, als niemand dat doet, het meest gewonde team

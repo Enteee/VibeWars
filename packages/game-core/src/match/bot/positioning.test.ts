@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { SKILL_BAR_SLOTS, type PlayerBuild } from "../../build.js";
+import { AREA_ADJACENT } from "../../distances.js";
 import { distance, dot, length, sub, vec2, type Vec2 } from "../../vec2.js";
 import { NO_RANKS } from "../../skills/status.js";
 import type { MatchSimulation } from "../simulation.js";
@@ -306,5 +307,51 @@ describe("a bot under Empathy (#4199)", () => {
     run(sim, 0.3);
     expect(monk?.attack).toBeUndefined();
     expect(monk?.cast.activeCast?.skillId).toBe("monk.orison-of-healing");
+  });
+});
+
+describe("a ranger steps out of a foe's Fire Storm (#4193)", () => {
+  it("stands clear of the storm within 1.5 s of its first pulse, still shooting", () => {
+    const storm = ["elementalist.fire-storm", ...new Array<null>(SKILL_BAR_SLOTS - 1).fill(null)];
+    const sim = match([
+      fighter("r", 0, RANGER, vec2(600, 400), {
+        skillBar: new Array<null>(SKILL_BAR_SLOTS).fill(null),
+      }),
+      fighter("t", 1, WARRIOR, vec2(850, 400), { behaviour: undefined, maxHealth: 1e6 }),
+      fighter("e", 1, ELEMENTALIST, vec2(600, 50), {
+        behaviour: undefined,
+        maxHealth: 1e6,
+        skillBar: storm,
+      }),
+    ]);
+    const ranger = sim.get("r");
+    const target = sim.get("t");
+    if (ranger === undefined || target === undefined) throw new Error("no fighters");
+    sim.setTarget("e", "r");
+    sim.requestSkill("e", 0);
+    let landed: number | undefined;
+    let pulsed = 0;
+    let taken = 0;
+    let shots = 0;
+    for (let at = 0; at < 6; at += DT) {
+      const before = target.combatant.health;
+      sim.step(DT);
+      const effect = sim.groundEffects[0];
+      if (effect === undefined) {
+        continue;
+      }
+      landed ??= at;
+      if (effect.pulsed > pulsed) {
+        pulsed = effect.pulsed;
+        taken += distance(ranger.position, effect.position) <= AREA_ADJACENT ? 1 : 0;
+      }
+      shots += target.combatant.health < before ? 1 : 0;
+      if (at >= landed + 1.5) {
+        expect(distance(ranger.position, effect.position)).toBeGreaterThan(AREA_ADJACENT);
+      }
+    }
+    expect(landed).toBeDefined();
+    expect(taken).toBeLessThanOrEqual(2);
+    expect(shots).toBeGreaterThanOrEqual(1);
   });
 });

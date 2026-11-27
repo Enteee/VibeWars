@@ -80,6 +80,7 @@ vende virker på dem, som det gør på dig.
 
 Bots går uden om brændende jord og andre skadelige områder, når vejen udenom
 ikke er meget længere, og træder ud af et, de står i.
+De træder også ud af en fjendes skadelige område, som en brønd, et værn mod dem eller en storm, og kæmper fra kanten af det.
 
 En bot med en afbrydelse gemmer den til de kast, der betyder noget: en
 genoplivning eller en Spøgelseshelt, der tager alteret, først, derefter
@@ -91,6 +92,14 @@ omkring et ud af fire af de kast.
 En bot bruger et menneskeligt øjeblik, en brøkdel af et sekund, på at
 reagere på det, der sker, så en hurtig afbrydelse eller en sen undvigelse
 kan slå den.
+
+Når ingen på dit hold har udpeget et mål, udpeger en af dine bots den
+fjende, dine bots går efter, ligesom du ville: du ser markøren og
+bottens navn, så du kan være med. Et mål, en bot udpeger, viser kun,
+hvor bots er på vej hen; de beskytter stadig en holdkammerat og gør det
+af med en døende fjende. Et mål, du udpeger, vinder altid: alle bots på
+holdet går efter dit mål, ingen bot erstatter det, og bots udpeger først
+igen, når målet er dødt eller væk.
 
 I en kamp mellem tre hold kæmper bots mod ét fjendehold ad gangen: det
 hold, der angriber dem, eller, mens ingen gør det, det hårdest ramte hold

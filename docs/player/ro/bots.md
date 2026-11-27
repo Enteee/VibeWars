@@ -79,6 +79,7 @@ sau schimbarea direcției funcționează pentru ei ca și pentru tine.
 
 Boții ocolesc pământul în flăcări și alte zone dăunătoare când ocolul nu e
 mult mai lung și ies din cea în care stau.
+Ies și din zona dăunătoare a unui adversar, cum ar fi o fântână, o protecție împotriva lor sau o furtună, și luptă de la marginea ei.
 
 Un bot cu o întrerupere o păstrează pentru lansările care contează: mai întâi o
 înviere sau un Erou Fantomatic care revendică altarul, apoi o vindecare sau o
@@ -88,6 +89,14 @@ La fel ca un jucător, ratează cam una din patru astfel de lansări.
 
 Unui bot îi ia un moment omenesc, o fracțiune de secundă, ca să reacționeze la
 ce se întâmplă, așa că o întrerupere rapidă sau o eschivă târzie îl pot păcăli.
+
+Când nimeni din echipa ta nu a anunțat o țintă, unul dintre boții tăi anunță
+inamicul pe care se concentrează boții tăi, la fel cum ai face tu: vezi
+marcajul și numele botului, ca să te poți alătura. Anunțul unui bot arată doar
+încotro merg boții; ei tot apără un coechipier și termină un inamic muribund.
+Anunțul tău câștigă mereu: toți boții echipei se concentrează pe ținta ta,
+niciun bot nu îți înlocuiește anunțul, iar boții anunță din nou doar după ce
+ținta anunțată e moartă sau a dispărut.
 
 Într-o luptă cu trei echipe, boții luptă cu o singură echipă inamică odată:
 echipa care îi atacă sau, cât timp nu îi atacă nimeni, cea mai rănită echipă la

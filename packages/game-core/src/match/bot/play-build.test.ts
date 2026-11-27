@@ -680,6 +680,12 @@ describe("play-build's frontline peels for its backline (#4141)", () => {
     expect(targetOf(sim)).toBe("x");
   });
 
+  it("keeps the diver as its focus, the one its team's bot caller calls (#4188)", () => {
+    const cursor = createCursor();
+    expect(targetOf(dive(vec2(600, 400)), {}, cursor)).toBe("d");
+    expect(cursor.focusId).toBe("d");
+  });
+
   it("keeps a target its team called", () => {
     expect(targetOf(dive(vec2(600, 400)), { calledTargetId: "x" })).toBe("x");
   });

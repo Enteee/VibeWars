@@ -302,6 +302,7 @@ import {
   type ResetPolicy,
   idleAt,
 } from "./behaviour.js";
+import { hostileGroundOf } from "./bot/hostile-ground.js";
 import { flankWaypoint, PLAN_SECONDS, planPhase, teamPlan } from "./bot/plan.js";
 import { LEVER_WORTH_UNITS } from "./bot/rules/levers.js";
 import { botRoll } from "./bot/rules/shared.js";
@@ -2009,6 +2010,12 @@ export class MatchSimulation {
     return this.#planOverrides.get(team);
   }
 
+  /** The team target bot `id` last chose (#4188), not a cast aimed aside: `undefined` for one that is not a bot, or has none. */
+  public botTargetOf(id: string): string | undefined {
+    const record = this.#participants.get(id);
+    return record?.behaviour?.kind === "play-build" ? record.cursor.focusId : undefined;
+  }
+
   public get score(): MatchScore {
     return this.#score;
   }
@@ -2832,6 +2839,20 @@ export class MatchSimulation {
         (effect.act.kind === "trap" && effect.act.trap.springsAtEnd) ||
         (effect.act.kind === "pulse" && effect.act.atEnd !== undefined),
     );
+  }
+
+  /**
+   * The ground effects bots step out of (#4193), each step while there is
+   * one or bots still read one: unlike the objectives above, they come,
+   * pulse and end all the time.
+   */
+  #refreshHostileGround(): void {
+    if (this.#groundEffects.length > 0 || this.#botObjectives.hostileGround.length > 0) {
+      this.#botObjectives = {
+        ...this.#botObjectives,
+        hostileGround: hostileGroundOf(this.#groundEffects),
+      };
+    }
   }
 
   /**
@@ -4522,6 +4543,7 @@ export class MatchSimulation {
     }
     this.#countControlled();
     this.#advanceGroundEffects(dt);
+    this.#refreshHostileGround();
     this.#projectAuras();
     // Every knockdown counts down before anyone acts, so one lasts its
     // full duration whoever lands it, and the tick it ends is one its
@@ -7867,6 +7889,12 @@ export class MatchSimulation {
     }
     if (this.#harmfulZones.length > 0) {
       this.#botObjectives = { ...this.#botObjectives, harmfulZones: this.#harmfulZonesNow() };
+    }
+    if (this.#groundEffects.length > 0) {
+      this.#botObjectives = {
+        ...this.#botObjectives,
+        hostileGround: hostileGroundOf(this.#groundEffects),
+      };
     }
     if (this.#switches.length > 0) {
       this.#botObjectives = { ...this.#botObjectives, levers: this.#botLevers };

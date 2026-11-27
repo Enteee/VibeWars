@@ -78,6 +78,7 @@ ihnen also genauso wie bei dir.
 
 Bots gehen um brennenden Boden und andere schädliche Flächen herum, wenn der
 Umweg nicht viel länger ist, und treten aus einer heraus, in der sie stehen.
+Sie treten auch aus einer schädlichen Fläche des Gegners heraus, etwa einem Brunnen, einer Schutzzone gegen sie oder einem Sturm, und kämpfen von ihrem Rand aus.
 
 Ein Bot mit einer Unterbrechung spart sie für die Skills auf, die zählen: zuerst
 eine Wiederbelebung oder einen Geisterhelden, der den Altar einnimmt, dann eine
@@ -89,6 +90,15 @@ dieser Unterbrechungen.
 Ein Bot reagiert wie ein Mensch mit einer kurzen Verzögerung, einem Bruchteil
 einer Sekunde. Eine schnelle Unterbrechung oder ein spätes Ausweichen kann ihn
 also schlagen.
+
+Hat niemand in deinem Team ein Ziel angesagt, sagt einer deiner Bots den Gegner
+an, auf den sich deine Bots konzentrieren, genau wie du es tun würdest: Du
+siehst die Markierung und den Namen des Bots, damit du mitmachen kannst. Die
+Ansage eines Bots zeigt nur, wohin die Bots gehen; sie helfen trotzdem einem
+bedrängten Teamkameraden und erledigen einen sterbenden Gegner. Deine Ansage
+gewinnt immer: Jeder Bot im Team konzentriert sich auf dein Ziel, kein Bot
+ersetzt deine Ansage, und die Bots sagen erst wieder an, wenn ihr Ziel tot oder
+verschwunden ist.
 
 In einem Kampf mit drei Teams kämpfen Bots immer nur gegen ein gegnerisches Team:
 das, das sie angreift, oder, solange das niemand tut, das am stärksten verletzte

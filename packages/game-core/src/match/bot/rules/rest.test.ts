@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { vec2 } from "../../../vec2.js";
-import { NO_OBJECTIVES } from "../../behaviour.js";
+import { NO_OBJECTIVES, type HostileGround } from "../../behaviour.js";
 import type { MatchZone } from "../../zones.js";
 import rest from "./rest.js";
 import { NOTHING } from "./shared.js";
@@ -45,5 +45,20 @@ describe("rest (#2549)", () => {
     };
     const objectives = { ...NO_OBJECTIVES, harmfulZones: [zone] };
     expect(rest.decide({ ...hurt, context: { ...hurt.context, objectives } })).toBeUndefined();
+  });
+
+  it("does not rest in a foe's well (#4193)", () => {
+    const hurt = rule(0.5, 1000);
+    const well: HostileGround = {
+      team: 1,
+      hits: "foes",
+      position: vec2(100, 400),
+      layer: 0,
+      radius: 100,
+    };
+    const objectives = { ...NO_OBJECTIVES, hostileGround: [well] };
+    expect(rest.decide({ ...hurt, context: { ...hurt.context, objectives } })).toBeUndefined();
+    const own = { ...NO_OBJECTIVES, hostileGround: [{ ...well, team: 0 }] };
+    expect(rest.decide({ ...hurt, context: { ...hurt.context, objectives: own } })).toBe(NOTHING);
   });
 });

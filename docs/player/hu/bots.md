@@ -85,6 +85,7 @@ fordulás náluk is ugyanúgy működik, mint nálad.
 
 A botok megkerülik az égő talajt és a többi ártalmas foltot, ha a kerülő nem
 sokkal hosszabb, és kilépnek abból, amelyikben állnak.
+Az ellenfél ártó területéből is kilépnek, például egy kútból, egy ellenük szóló védőkörből vagy egy viharból, és a széléről harcolnak.
 
 A megszakítással rendelkező bot a fontos varázslásokra tartogatja: elsőként
 egy feltámasztásra vagy egy oltárt elfoglaló Kísértethősre, aztán egy
@@ -96,6 +97,15 @@ minden negyedik ilyen varázslást elvéti.
 A bot emberszerű pillanatot, a másodperc törtrészét igényli, hogy
 reagáljon arra, ami történik, így egy gyors megszakítás vagy egy késői
 kitérés legyőzheti.
+
+Ha a csapatodban senki sem mondott be célpontot, az egyik botod
+bemondja az ellenséget, akire a botjaid összpontosítanak, ahogy te is
+tennéd: látod a jelölőt és a bot nevét, így csatlakozhatsz. Egy bot
+bemondása csak azt mutatja, merre tartanak a botok; továbbra is
+megvédik a csapattársat, és végeznek a haldokló ellenséggel. A te
+bemondásod mindig nyer: a csapat minden botja a te célpontodra
+összpontosít, egy bot sem írja felül a bemondásodat, és a botok csak
+akkor mondanak be újra, ha a bemondott célpont meghalt vagy eltűnt.
 
 Háromcsapatos harcban a botok egyszerre egy ellenséges csapattal
 harcolnak: azzal, amelyik őket támadja, vagy ha senki sem, az elérhető

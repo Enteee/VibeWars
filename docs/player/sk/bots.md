@@ -75,6 +75,7 @@ funguje rovnako ako na teba.
 
 Boti obchádzajú horiacu zem a iné škodlivé miesta, keď cesta okolo nie je o
 veľa dlhšia, a z takého miesta vystúpia, keď v ňom stoja.
+Vystúpia aj zo škodlivej oblasti nepriateľa, ako je studňa, ochrana proti nim alebo búrka, a bojujú z jej okraja.
 
 Bot s prerušením si ho šetrí na zosielania, na ktorých záleží: najprv
 oživenie alebo Prízračný hrdina, ktorý si nárokuje oltár, potom liečenie alebo
@@ -85,6 +86,14 @@ z každých štyroch takých zosielaní.
 
 Bot potrebuje ľudskú chvíľku, zlomok sekundy, aby zareagoval na
 to, čo sa deje, takže rýchle prerušenie alebo neskorý úhyb ho môžu poraziť.
+
+Keď nikto z tvojho tímu nemá určený cieľ, jeden z tvojich botov určí
+nepriateľa, na ktorého sa tvoji boti sústredia, rovnako ako by si to urobil ty:
+vidíš značku a meno bota, takže sa môžeš pridať. Cieľ určený botom iba ukazuje,
+kam boti idú; stále chránia spoluhráča a dorazia umierajúceho nepriateľa. Cieľ,
+ktorý určíš ty, vždy vyhráva: všetci boti v tíme sa sústredia na tvoj cieľ,
+žiadny bot ho nenahradí a boti určia nový až vtedy, keď je určený cieľ mŕtvy
+alebo preč.
 
 V boji troch tímov bojujú boti vždy s jedným nepriateľským tímom
 naraz: s tým, ktorý na nich útočí, alebo, kým neútočí nikto, s najviac zraneným
